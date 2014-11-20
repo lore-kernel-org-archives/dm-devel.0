@@ -1,142 +1,56 @@
-From: Yao Dongdong <yaodongdong@huawei.com>
-Subject: [PATCH] sched, cleanup, dm bufio: Replace dm_bufio_cond_resched with might_resched
-Date: Thu, 20 Nov 2014 07:35:40 +0000
-Message-ID: <1416468940-8398-1-git-send-email-yaodongdong@huawei.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: dmcache RAID1 bug?
+Date: Thu, 20 Nov 2014 14:04:26 +0000
+Message-ID: <20141120140426.GA16741@debian>
+References: <CAEZ+n-i7kOC3zZzrv5GHbmfuKJ3b1U6COG8DyDW8HjHk9wDf-Q@mail.gmail.com>
+	<20141117144659.GA29929@redhat.com>
+	<CAEZ+n-jJoCS0WqeeiETYf1jAwPJzy+fyEgr_-Qek+7NzS+uERQ@mail.gmail.com>
+	<CAEZ+n-i3yP+qO6bVDs8O0CwkJKBNzVBMW6gOtd=dty9ALj_8eQ@mail.gmail.com>
+	<CAEZ+n-ha0tFew+807rumUQsk-tqYVyxPUTrGoz0DvdCqLK50Og@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: peterz@infradead.org, mingo@redhat.com
-Cc: linux-kernel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, lizefan@huawei.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CAEZ+n-ha0tFew+807rumUQsk-tqYVyxPUTrGoz0DvdCqLK50Og@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-The judge of need_resched() before _cond_resched() in dm_bufio_cond_resched()
-is no need. Because _cond_resched() itself judges should_resched() which means
-need and can resched. In addition, might_resched() can do all these.
+On Wed, Nov 19, 2014 at 07:39:44PM -0200, Leonardo Santos wrote:
+> After run regression tests using 'git bisect', I identify that the error
+> was created after commit 8c081b52c6833a30a69ea3bdcef316eccc740c87
+> 
+> To reproduce this error just:
+> - create a raid1 HDDs for origin device;
+> - create a cache device with SSDs (could or not be raid)
+> - create a metadata device with SSDs (could or not be raid)
+> - create a cache device using prior devices
+> - kernel crashes.
+> 
+> @@ -1115,8 +1142,7 @@ static void check_for_quiesced_migrations(struct cache *cache,
+>  		return;
+>  
+>  	INIT_LIST_HEAD(&work);
+> -	if (pb->all_io_entry)
+> -		dm_deferred_entry_dec(pb->all_io_entry, &work);
+> +	dm_deferred_entry_dec(pb->all_io_entry, &work);
+>  
+>  	if (!list_empty(&work))
+>  		queue_quiesced_migrations(cache, &work);
 
-Signed-off-by: Yao Dongdong <yaodongdong@huawei.com>
----
- drivers/md/dm-bufio.c | 35 +++++++++++------------------------
- 1 file changed, 11 insertions(+), 24 deletions(-)
+This looks suspicious, I believe the all_io_entry is not set if the io
+covers a complete block.  Any chance you could test with this fragment
+backed out please?
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index afe7971..3660a24 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -186,19 +186,6 @@ static void dm_bufio_unlock(struct dm_bufio_client *c)
- 	mutex_unlock(&c->lock);
- }
- 
--/*
-- * FIXME Move to sched.h?
-- */
--#ifdef CONFIG_PREEMPT_VOLUNTARY
--#  define dm_bufio_cond_resched()		\
--do {						\
--	if (unlikely(need_resched()))		\
--		_cond_resched();		\
--} while (0)
--#else
--#  define dm_bufio_cond_resched()                do { } while (0)
--#endif
--
- /*----------------------------------------------------------------*/
- 
- /*
-@@ -648,7 +635,7 @@ static void __flush_write_list(struct list_head *write_list)
- 			list_entry(write_list->next, struct dm_buffer, write_list);
- 		list_del(&b->write_list);
- 		submit_io(b, WRITE, b->block, write_endio);
--		dm_bufio_cond_resched();
-+		might_resched();
- 	}
- 	blk_finish_plug(&plug);
- }
-@@ -687,7 +674,7 @@ static struct dm_buffer *__get_unclaimed_buffer(struct dm_bufio_client *c)
- 			__unlink_buffer(b);
- 			return b;
- 		}
--		dm_bufio_cond_resched();
-+		might_resched();
- 	}
- 
- 	list_for_each_entry_reverse(b, &c->lru[LIST_DIRTY], lru_list) {
-@@ -698,7 +685,7 @@ static struct dm_buffer *__get_unclaimed_buffer(struct dm_bufio_client *c)
- 			__unlink_buffer(b);
- 			return b;
- 		}
--		dm_bufio_cond_resched();
-+		might_resched();
- 	}
- 
- 	return NULL;
-@@ -830,7 +817,7 @@ static void __write_dirty_buffers_async(struct dm_bufio_client *c, int no_wait,
- 			return;
- 
- 		__write_dirty_buffer(b, write_list);
--		dm_bufio_cond_resched();
-+		might_resched();
- 	}
- }
- 
-@@ -880,7 +867,7 @@ static void __check_watermark(struct dm_bufio_client *c,
- 			return;
- 
- 		__free_buffer_wake(b);
--		dm_bufio_cond_resched();
-+		might_resched();
- 	}
- 
- 	if (c->n_buffers[LIST_DIRTY] > threshold_buffers)
-@@ -896,7 +883,7 @@ static struct dm_buffer *__find(struct dm_bufio_client *c, sector_t block)
- 
- 	hlist_for_each_entry(b, &c->cache_hash[DM_BUFIO_HASH(block)],
- 			     hash_list) {
--		dm_bufio_cond_resched();
-+		might_resched();
- 		if (b->block == block)
- 			return b;
- 	}
-@@ -1090,7 +1077,7 @@ void dm_bufio_prefetch(struct dm_bufio_client *c,
- 				submit_io(b, READ, b->block, read_endio);
- 			dm_bufio_release(b);
- 
--			dm_bufio_cond_resched();
-+			might_resched();
- 
- 			if (!n_blocks)
- 				goto flush_plug;
-@@ -1211,7 +1198,7 @@ again:
- 		    !test_bit(B_WRITING, &b->state))
- 			__relink_lru(b, LIST_CLEAN);
- 
--		dm_bufio_cond_resched();
-+		might_resched();
- 
- 		/*
- 		 * If we dropped the lock, the list is no longer consistent,
-@@ -1473,7 +1460,7 @@ static long __scan(struct dm_bufio_client *c, unsigned long nr_to_scan,
- 			freed += __cleanup_old_buffer(b, gfp_mask, 0);
- 			if (!--nr_to_scan)
- 				return freed;
--			dm_bufio_cond_resched();
-+			might_resched();
- 		}
- 	}
- 	return freed;
-@@ -1704,11 +1691,11 @@ static void cleanup_old_buffers(void)
- 				       struct dm_buffer, lru_list);
- 			if (!__cleanup_old_buffer(b, 0, max_age * HZ))
- 				break;
--			dm_bufio_cond_resched();
-+			might_resched();
- 		}
- 
- 		dm_bufio_unlock(c);
--		dm_bufio_cond_resched();
-+		might_resched();
- 	}
- 	mutex_unlock(&dm_bufio_clients_lock);
- }
--- 
-1.8.3.4
+- Joe
