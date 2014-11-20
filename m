@@ -1,57 +1,80 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: dmcache RAID1 bug?
-Date: Thu, 20 Nov 2014 14:10:04 +0000
-Message-ID: <20141120141003.GB16741@debian>
-References: <CAEZ+n-i7kOC3zZzrv5GHbmfuKJ3b1U6COG8DyDW8HjHk9wDf-Q@mail.gmail.com>
-	<20141117144659.GA29929@redhat.com>
-	<CAEZ+n-jJoCS0WqeeiETYf1jAwPJzy+fyEgr_-Qek+7NzS+uERQ@mail.gmail.com>
-	<CAEZ+n-i3yP+qO6bVDs8O0CwkJKBNzVBMW6gOtd=dty9ALj_8eQ@mail.gmail.com>
-	<CAEZ+n-ha0tFew+807rumUQsk-tqYVyxPUTrGoz0DvdCqLK50Og@mail.gmail.com>
-	<20141120140426.GA16741@debian>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] virtio_blk: fix defaults for max_hw_sectors and
+ max_segment_size
+Date: Thu, 20 Nov 2014 14:00:59 -0500
+Message-ID: <20141120190058.GA31214@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20141120140426.GA16741@debian>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: axboe@kernel.dk
+Cc: linux-kernel@vger.kernel.org, martin.petersen@oracle.com, hch@infradead.org, mst@redhat.com, rusty@rustcorp.com.au, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Nov 20, 2014 at 02:04:26PM +0000, Joe Thornber wrote:
-> On Wed, Nov 19, 2014 at 07:39:44PM -0200, Leonardo Santos wrote:
-> > After run regression tests using 'git bisect', I identify that the error
-> > was created after commit 8c081b52c6833a30a69ea3bdcef316eccc740c87
-> > 
-> > To reproduce this error just:
-> > - create a raid1 HDDs for origin device;
-> > - create a cache device with SSDs (could or not be raid)
-> > - create a metadata device with SSDs (could or not be raid)
-> > - create a cache device using prior devices
-> > - kernel crashes.
-> > 
-> > @@ -1115,8 +1142,7 @@ static void check_for_quiesced_migrations(struct cache *cache,
-> >  		return;
-> >  
-> >  	INIT_LIST_HEAD(&work);
-> > -	if (pb->all_io_entry)
-> > -		dm_deferred_entry_dec(pb->all_io_entry, &work);
-> > +	dm_deferred_entry_dec(pb->all_io_entry, &work);
-> >  
-> >  	if (!list_empty(&work))
-> >  		queue_quiesced_migrations(cache, &work);
-> 
-> This looks suspicious, I believe the all_io_entry is not set if the io
-> covers a complete block.  Any chance you could test with this fragment
-> backed out please?
+virtio_blk incorrectly established -1U as the default for these
+queue_limits.  Set these limits to sane default values to avoid crashing
+the kernel.  But the virtio-blk protocol should probably be extended to
+allow proper stacking of the disk's limits from the host.
 
-Ignore me, there's another check for !pb->all_io_entry.
+This change fixes a crash that was reported when virtio-blk was used to
+test linux-dm.git commit 604ea90641b4 ("dm thin: adjust max_sectors_kb
+based on thinp blocksize") that will initially set max_sectors to
+max_hw_sectors and then rounddown to the first power-of-2 factor of the
+DM thin-pool's blocksize.  Basically that commit assumes drivers don't
+suck when establishing max_hw_sectors so it acted like a canary in the
+coal mine.
+
+In the case of a DM thin-pool built ontop of virtio-blk data device
+these are the insane limits that were established for the DM thin-pool:
+
+  # cat /sys/block/dm-6/queue/max_sectors_kb
+  1073741824
+  # cat /sys/block/dm-6/queue/max_hw_sectors_kb
+  2147483647
+
+by stacking the virtio-blk device's limits:
+
+  # cat /sys/block/vdb/queue/max_sectors_kb
+  512
+  # cat /sys/block/vdb/queue/max_hw_sectors_kb
+  2147483647
+
+Attempting to mkfs.xfs against a thin device from this thin-pool quickly
+resulted in fs/direct-io.c:dio_send_cur_page()'s BUG_ON.
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org
+---
+ drivers/block/virtio_blk.c |    9 ++++++---
+ 1 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
+index c6a27d5..68efbdc 100644
+--- a/drivers/block/virtio_blk.c
++++ b/drivers/block/virtio_blk.c
+@@ -674,8 +674,11 @@ static int virtblk_probe(struct virtio_device *vdev)
+ 	/* No need to bounce any requests */
+ 	blk_queue_bounce_limit(q, BLK_BOUNCE_ANY);
+ 
+-	/* No real sector limit. */
+-	blk_queue_max_hw_sectors(q, -1U);
++	/*
++	 * Limited by disk's max_hw_sectors in host, but
++	 * without that info establish a sane default.
++	 */
++	blk_queue_max_hw_sectors(q, BLK_DEF_MAX_SECTORS);
+ 
+ 	/* Host can optionally specify maximum segment size and number of
+ 	 * segments. */
+@@ -684,7 +687,7 @@ static int virtblk_probe(struct virtio_device *vdev)
+ 	if (!err)
+ 		blk_queue_max_segment_size(q, v);
+ 	else
+-		blk_queue_max_segment_size(q, -1U);
++		blk_queue_max_segment_size(q, BLK_MAX_SEGMENT_SIZE);
+ 
+ 	/* Host can optionally specify the block size of the device */
+ 	err = virtio_cread_feature(vdev, VIRTIO_BLK_F_BLK_SIZE,
+-- 
+1.7.4.4
