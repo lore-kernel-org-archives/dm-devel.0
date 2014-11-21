@@ -1,106 +1,806 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: virtio_blk: fix defaults for max_hw_sectors and max_segment_size
-Date: Fri, 21 Nov 2014 10:49:21 -0500
-Message-ID: <20141121154920.GA7644@redhat.com>
-References: <20141120190058.GA31214@redhat.com>
- <20141121095456.GB8866@infradead.org>
+From: Josef Bacik <jbacik@fb.com>
+Subject: [RFC][PATCH] dm: add dm-power-fail target
+Date: Fri, 21 Nov 2014 17:00:31 -0500
+Message-ID: <1416607231-8588-1-git-send-email-jbacik@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20141121095456.GB8866@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: axboe@kernel.dk, martin.petersen@oracle.com, mst@redhat.com, rusty@rustcorp.com.au, linux-kernel@vger.kernel.org, qemu-devel@nongnu.org, dm-devel@redhat.com, Paolo Bonzini <pbonzini@redhat.com>
+Content-Type: text/plain
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: linux-btrfs@vger.kernel.org, david@fromorbit.com, sandeen@redhat.com, zab@redhat.com, clm@facebook.com, dm-devel@redhat.com, hch@infradead.org, linux-fsdevel@vger.kernel.org, tytso@mit.edu
 List-Id: dm-devel.ids
 
-On Fri, Nov 21 2014 at  4:54am -0500,
-Christoph Hellwig <hch@infradead.org> wrote:
+Hello,
 
-> On Thu, Nov 20, 2014 at 02:00:59PM -0500, Mike Snitzer wrote:
-> > virtio_blk incorrectly established -1U as the default for these
-> > queue_limits.  Set these limits to sane default values to avoid crashing
-> > the kernel.  But the virtio-blk protocol should probably be extended to
-> > allow proper stacking of the disk's limits from the host.
-> > 
-> > This change fixes a crash that was reported when virtio-blk was used to
-> > test linux-dm.git commit 604ea90641b4 ("dm thin: adjust max_sectors_kb
-> > based on thinp blocksize") that will initially set max_sectors to
-> > max_hw_sectors and then rounddown to the first power-of-2 factor of the
-> > DM thin-pool's blocksize.  Basically that commit assumes drivers don't
-> > suck when establishing max_hw_sectors so it acted like a canary in the
-> > coal mine.
-> 
-> Is that a crash in the host or guest?  What kind of mishandling did you
-> see?  Unless the recent virtio standard changed anything the host
-> should be able to handle our arbitrary limits, and even if it doesn't
-> that something we need to hash out with qemu and the virtio standards
-> folks.
+I'm hoping some FS guys can weigh in and verify my approach for testing power
+fail conditions, and the DM guys to of course verify I didn't completely fail at
+making a DM target.  All suggestions welcome, I want to have a nice robust tool
+for testing power fail so we can be sure our fsync/commit code is all working
+properly.  Thanks,
 
-Some good news: this guest crash isn't an issue with recent kernels (so
-upstream, fedora 20, RHEL7, etc aren't impacted -- Jens feel free to
-drop my virtio_blk patch; even though some of it's limits are clearly
-broken I'll defer to the virtio_blk developers on the best way forward
--- sorry for the noise!).
+Josef
 
-The BUG I saw only seems to impact RHEL6 kernels so far (note to self,
-actually _test_ on upstream before reporting a crash against upstream!)
 
-[root@RHEL-6 ~]# echo 1073741824 > /sys/block/vdc/queue/max_sectors_kb
-[root@RHEL-6 ~]# lvs
+For power fail testing we want to be able to catch cases where the fs isn't
+waiting for IO to complete properly.  This target aims to do this by creating a
+linear mapping on a device and keeping track of all WRITEs and FLUSH/FUA
+operations.  Any WRITEs are added to a global list on completion, then when we
+submit a FLUSH this list is spliced onto the request and once that request
+completes then it marks those blocks as valid.  FUA bypasses this logic
+altogether and is considered valid once it completes.  There are two modes of
+operation here
 
-Message from syslogd@RHEL-6 at Nov 21 15:32:15 ...
- kernel:Kernel panic - not syncing: Fatal exception
+1) Zero - any WRITE that wasn't flushed will return 0's when we try to read from
+it.  This is meant for BTRFS (or any COW fs) where we only write blocks once, so
+if we try to read a block we didn't properly flush then we can just send back
+0's.
 
-Here is the RHEL6 guest crash, just for full disclosure:
+2) Split - the device is split in half and written to alternating sides.  This
+is for overwriting fs'es (ext*/xfs).  Once a FLUSH occurs we walk all the
+completed WRITEs and set their mirror to whichever mirror they last wrote to.
+Anything that wasn't flushed properly will point to its previous mirror.
 
-kernel BUG at fs/direct-io.c:696!
-invalid opcode: 0000 [#1] SMP
-last sysfs file: /sys/devices/virtual/block/dm-4/dev
-CPU 0
-Modules linked in: nfs lockd fscache auth_rpcgss nfs_acl sunrpc ipv6 ext2 dm_thin_pool dm_bio_prison dm_persistent_data dm_bufio libcrc32c dm_mirror dm_region_hash dm_log dm_mod microcode virtio_balloon i2c_piix4 i2c_core virtio_net ext4 jbd2 mbcache virtio_blk virtio_pci virtio_ring virtio pata_acpi ata_generic ata_piix [last unloaded: speedstep_lib]
+We then have 3 different power fail events we can do
 
-Pid: 1679, comm: lvs Not tainted 2.6.32 #6 Bochs Bochs
-RIP: 0010:[<ffffffff811ce336>]  [<ffffffff811ce336>] __blockdev_direct_IO_newtrunc+0x986/0x1270
-RSP: 0018:ffff88011a11ba48  EFLAGS: 00010287
-RAX: 0000000000000000 RBX: ffff8801192fbd28 RCX: 0000000000001000
-RDX: ffffea0003b3d218 RSI: ffff88011aac4300 RDI: ffff880118572378
-RBP: ffff88011a11bbe8 R08: 0000000000000000 R09: 0000000000000000
-R10: 0000000000000000 R11: 0000000000000000 R12: ffff8801192fbd00
-R13: 0000000000000000 R14: ffff880118c3cac0 R15: 0000000000000000
-FS:  00007fde78bc37a0(0000) GS:ffff880028200000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 00000000012706f0 CR3: 000000011a432000 CR4: 00000000000407f0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-Process lvs (pid: 1679, threadinfo ffff88011a11a000, task ffff8801185a4aa0)
-Stack:
- ffff88011a11bb48 ffff88011a11baa8 ffff88010000000c ffff88011a11bb18
-<d> 0000000000000000 0000000000000000 ffff88011a11bdc8 ffff88011a11beb8
-<d> 0000000c1a11baa8 ffff880118c3cb98 0000000000000000 0000000018c3ccb8
-Call Trace:
- [<ffffffff811c9e90>] ? blkdev_get_block+0x0/0x20
- [<ffffffff811cec97>] __blockdev_direct_IO+0x77/0xe0
- [<ffffffff811c9e90>] ? blkdev_get_block+0x0/0x20
- [<ffffffff811caf17>] blkdev_direct_IO+0x57/0x60
- [<ffffffff811c9e90>] ? blkdev_get_block+0x0/0x20
- [<ffffffff8112619b>] generic_file_aio_read+0x6bb/0x700
- [<ffffffff811cba60>] ? blkdev_get+0x10/0x20
- [<ffffffff811cba70>] ? blkdev_open+0x0/0xc0
- [<ffffffff8118af4f>] ? __dentry_open+0x23f/0x360
- [<ffffffff811ca2d1>] blkdev_aio_read+0x51/0x80
- [<ffffffff8118dc6a>] do_sync_read+0xfa/0x140
- [<ffffffff8109eaf0>] ? autoremove_wake_function+0x0/0x40
- [<ffffffff811ca22c>] ? block_ioctl+0x3c/0x40
- [<ffffffff811a34c2>] ? vfs_ioctl+0x22/0xa0
- [<ffffffff811a3664>] ? do_vfs_ioctl+0x84/0x580
- [<ffffffff8122cee6>] ? security_file_permission+0x16/0x20
- [<ffffffff8118e625>] vfs_read+0xb5/0x1a0
- [<ffffffff8118e761>] sys_read+0x51/0x90
- [<ffffffff810e5aae>] ? __audit_syscall_exit+0x25e/0x290
- [<ffffffff8100b072>] system_call_fastpath+0x16/0x1b
-Code: fe ff ff c7 85 fc fe ff ff 00 00 00 00 48 89 95 10 ff ff ff 8b 95 34 ff ff ff e8 46 ac ff ff 3b 85 34 ff ff ff 0f 84 fc 02 00 00 <0f> 0b eb fe 8b 9d 34 ff ff ff 8b 85 30 ff ff ff 01 d8 85 c0 0f
-RIP  [<ffffffff811ce336>] __blockdev_direct_IO_newtrunc+0x986/0x1270
- RSP <ffff88011a11ba48>
----[ end trace 73be5dcaf8939399 ]---
-Kernel panic - not syncing: Fatal exception
+1) DROP_WRITES - just drop all writes immediately, any new writes are
+immediately completed and outstanding ones are treated as if they never
+completed.
+
+2) DROP_AFTER_FUA - this allows a FUA to go through, and as soon as it completes
+we drop all writes.  This is meant to be really evil about making sure your
+commit code is doing the right thing by dropping at the worst possible moment.
+
+3) DROP_AFTER_FLUSH - this allows a FLUSH to go through, and as soon as it
+completes we drop all writes.  This can be good for testing fdatasync on
+overwrite fs'es that may only issue a FLUSH and not have to update metadata.
+
+There is also an option to return -EIO as soon as we have our power fail event
+to make it easier to script stress tests.
+
+The idea is to be as evil as possible wrt how a device's cache would react to a
+powerfail event.  I had originally bolted this onto dm-flakey but it got
+complicated trying to work in these new options with its original behavior so I
+created a new target instead.
+
+Signed-off-by: Josef Bacik <jbacik@fb.com>
+---
+ drivers/md/Kconfig         |  14 +
+ drivers/md/Makefile        |   1 +
+ drivers/md/dm-power-fail.c | 691 +++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 706 insertions(+)
+ create mode 100644 drivers/md/dm-power-fail.c
+
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 5bdedf6..bc3d6ca 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -432,4 +432,18 @@ config DM_SWITCH
+ 
+ 	  If unsure, say N.
+ 
++config DM_POWER_FAIL
++	tristate "Power fail target support"
++	depends on BLK_DEV_DM
++	---help---
++	  This device-mapper target creates a device that can be used for
++	  testing a file systems ability to survive power fails.  There are
++	  several modes of operation in order to test a variety of power fail
++	  scenarios.
++
++	  To compile this code as a module, choos M here: the module will be
++	  called dm-power-fail.
++
++	  If unsure, say N.
++
+ endif # MD
+diff --git a/drivers/md/Makefile b/drivers/md/Makefile
+index a2da532..c667218 100644
+--- a/drivers/md/Makefile
++++ b/drivers/md/Makefile
+@@ -55,6 +55,7 @@ obj-$(CONFIG_DM_CACHE)		+= dm-cache.o
+ obj-$(CONFIG_DM_CACHE_MQ)	+= dm-cache-mq.o
+ obj-$(CONFIG_DM_CACHE_CLEANER)	+= dm-cache-cleaner.o
+ obj-$(CONFIG_DM_ERA)		+= dm-era.o
++obj-$(CONFIG_DM_POWER_FAIL)	+= dm-power-fail.o
+ 
+ ifeq ($(CONFIG_DM_UEVENT),y)
+ dm-mod-objs			+= dm-uevent.o
+diff --git a/drivers/md/dm-power-fail.c b/drivers/md/dm-power-fail.c
+new file mode 100644
+index 0000000..44c5045
+--- /dev/null
++++ b/drivers/md/dm-power-fail.c
+@@ -0,0 +1,691 @@
++/*
++ * Copyright (C) 2014 Facebook. All rights reserved.
++ *
++ * This file is released under the GPL.
++ */
++
++#include <linux/device-mapper.h>
++
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/blkdev.h>
++#include <linux/bio.h>
++#include <linux/slab.h>
++
++#define DM_MSG_PREFIX "power-fail"
++
++/*
++ * The way this interface is meant to be used is like this
++ *
++ * dmsetup create powerfail
++ * mkfs /dev/powerfail
++ * mount /dev/powerfail /mnt/test
++ * do some stuff &
++ * sleep 30
++ * dmsetup message powerfail (drop_after_flush|drop_after_fua|drop_writes)
++ * umount /mnt/test
++ * dmsetup message powerfail redirect_reads
++ * fsck /dev/powerfail || exit 1
++ * mount /dev/powerfail /mnt/test
++ * <verify contents>
++ *
++ * You can set redirect_reads whenever you want, but the idea is that you want
++ * the teardown stuff to work like normal, and then flip the switch for us to
++ * start returning garbage on any writes that would have failed, and then do
++ * verification checks.  A perfectly functioning fs will recover properly and
++ * not give you IO errors and such.
++ *
++ * There are two modes for this target.
++ *
++ * zero - any write IO's that are lost once the power fail event happens will
++ * return 0's when read after redirect_reads is set.  This is meant for btrfs or
++ * any other future COW fs that comes along.
++ *
++ * split - we split the device in half, and write to alternating sides of the
++ * device.  We track which is the last good mirror to have completed.  Then
++ * whenever the power fail event occurs we will stop updating the last good
++ * mirror for writes and when redirect_reads is turned on we will read from the
++ * last good mirror.
++ */
++
++struct pfail_ctx {
++	struct dm_dev *dev;
++	spinlock_t pending_blocks_lock;
++	struct rb_root pending_blocks;
++	struct list_head unflushed_blocks;
++	long endio_delay;
++	unsigned long flags;
++	bool split;
++	bool error;
++};
++
++enum pfail_flag_bits {
++	DROP_WRITES,
++	DROP_AFTER_FUA,
++	DROP_AFTER_FLUSH,
++	REDIRECT_READS,
++};
++
++struct pending_block {
++	struct rb_node node;
++	struct list_head list;
++	unsigned long long bytenr;
++	unsigned bytes;
++	unsigned good_mirror;
++	unsigned cur_mirror;
++	unsigned rewrite;
++};
++
++struct per_bio_data {
++	struct pending_block *block;
++	struct pfail_ctx *pc;
++	struct work_struct work;
++	int error;
++	bool track;
++};
++
++static int contains(unsigned long long a, unsigned a_len,
++		    unsigned long long b, unsigned b_len)
++{
++	if (a >= (b + b_len))
++		return 0;
++	if (b >= (a + a_len))
++		return 0;
++	return 1;
++}
++
++static struct pending_block *insert_pending_block(struct pfail_ctx *pc,
++						  struct pending_block *block)
++{
++	struct rb_node **p = &pc->pending_blocks.rb_node;
++	struct rb_node *parent = NULL;
++	struct pending_block *entry;
++
++	while (*p) {
++		parent = *p;
++		entry = rb_entry(parent, struct pending_block, node);
++
++		if (contains(block->bytenr, block->bytes, entry->bytenr,
++			     entry->bytes)) {
++			if (!pc->split) {
++				/*
++				 * With zero mode we free up blocks once they
++				 * successfully complete, and assume the fs
++				 * doesn't write to the same block until it has
++				 * been completely written, so if this happens
++				 * we have a problem.
++				 */
++				DMERR("existing block %llu-%u insert "
++				      "%llu-%u", entry->bytenr, entry->bytes,
++				       block->bytenr, block->bytes);
++			} else if (block->bytes > entry->bytes) {
++				printk(KERN_ERR "well shit\n");
++			}
++			kfree(block);
++			return entry;
++		} else if (entry->bytenr > block->bytenr)
++			p = &(*p)->rb_left;
++		else if (entry->bytenr < block->bytenr)
++			p = &(*p)->rb_right;
++	}
++
++	rb_link_node(&block->node, parent, p);
++	rb_insert_color(&block->node, &pc->pending_blocks);
++	return block;
++}
++
++static struct pending_block *find_pending_block(struct pfail_ctx *pc,
++						unsigned long long bytenr,
++						unsigned bytes)
++{
++	struct rb_node *n = pc->pending_blocks.rb_node;
++	struct pending_block *block;
++
++	while (n) {
++		block = rb_entry(n, struct pending_block, node);
++		if (contains(block->bytenr, block->bytes, bytenr, bytes))
++			return block;
++		else if (block->bytenr > bytenr)
++			n = n->rb_left;
++		else if (block->bytenr < bytenr)
++			n = n->rb_right;
++	}
++	return NULL;
++}
++
++static int parse_pfail_features(struct dm_arg_set *as, struct pfail_ctx *pc,
++				struct dm_target *ti)
++{
++	const char *arg_name;
++	unsigned argc;
++	int ret;
++	static struct dm_arg _args[] = {
++		{0, 3, "Invalid number of power fail feature arguments"},
++	};
++
++	if (!as->argc)
++		return 0;
++	ret = dm_read_arg_group(_args, as, &argc, &ti->error);
++	if (ret)
++		return -EINVAL;
++
++	while (argc) {
++		arg_name = dm_shift_arg(as);
++		argc--;
++
++		if (!strcasecmp(arg_name, "split")) {
++			pc->split = true;
++		} else if (!strcasecmp(arg_name, "error_on_fail")) {
++			pc->error = true;
++		} else {
++			ti->error = "Unrecognized power fail feature "
++				"requested";
++			ret = -EINVAL;
++			break;
++		}
++	}
++
++	return ret;
++}
++
++/*
++ * Construct a power-fail mapping:
++ * power-fail <dev_path> <endio_delay> [<#feature args [<arg>]*]
++ *
++ * endio_delay is in jiffies, if it is 0 there will be no delay.  This is
++ * helpful for widening suspected races in your waiting logic.
++ *
++ * Option feature arguments are:
++ *
++ * split - Meant for overwrite fs'es where we need to return the old busted data
++ *	   for reads on uncompleted blocks.  Must pass in a length of >= half of
++ *	   the disk so that we can use one side for pending blocks and one side
++ *	   for completed blocks
++ * error_on_fail - Instead of just pretending that the writes completed normally
++ *		   after the failure event, we will return -EIO.
++ */
++static int pfail_ctr(struct dm_target *ti, unsigned int argc, char **argv)
++{
++	struct pfail_ctx *pc;
++	struct dm_arg_set as;
++	const char *devname;
++	sector_t sectors;
++	long endio_delay;
++	char dummy;
++	int ret;
++
++	as.argc = argc;
++	as.argv = argv;
++
++	if (argc < 2) {
++		ti->error = "Invalid argument count";
++		return -EINVAL;
++	}
++
++	pc = kzalloc(sizeof(*pc), GFP_KERNEL);
++	if (!pc) {
++		ti->error = "Cannot allocate context";
++		return -ENOMEM;
++	}
++	pc->pending_blocks = RB_ROOT;
++	spin_lock_init(&pc->pending_blocks_lock);
++	INIT_LIST_HEAD(&pc->unflushed_blocks);
++
++	devname = dm_shift_arg(&as);
++	if (sscanf(dm_shift_arg(&as), "%ld%c", &endio_delay, &dummy) != 1) {
++		ti->error = "Invalid endio delay";
++		goto bad;
++	}
++	pc->endio_delay = endio_delay;
++	ret = parse_pfail_features(&as, pc, ti);
++	if (ret)
++		goto bad;
++
++	if (dm_get_device(ti, devname, dm_table_get_mode(ti->table), &pc->dev)) {
++		ti->error = "Device lookup failed";
++		goto bad;
++	}
++
++	sectors = PAGE_CACHE_SIZE >> 9;
++	if (pc->split)
++		sectors = 512 >> 9;
++	ret = dm_set_target_max_io_len(ti, sectors);
++	if (ret)
++		goto bad;
++
++	sectors = (i_size_read(pc->dev->bdev->bd_inode) >> 9) - ti->begin;
++	sectors /= 2;
++	if (pc->split && ti->len > sectors) {
++		ti->error = "Using split but specified a device size that is "
++			"too large";
++		dm_put_device(ti, pc->dev);
++		goto bad;
++	}
++
++	ti->num_flush_bios = 1;
++	ti->flush_supported = true;
++	ti->num_discard_bios = 1;
++	ti->per_bio_data_size = sizeof(struct per_bio_data);
++	ti->private = pc;
++	return 0;
++
++bad:
++	kfree(pc);
++	return -EINVAL;
++}
++
++static void pfail_dtr(struct dm_target *ti)
++{
++	struct pfail_ctx *pc = ti->private;
++	struct pending_block *block;
++	struct rb_node *n;
++
++	dm_put_device(ti, pc->dev);
++	while ((n = rb_last(&pc->pending_blocks)) != NULL) {
++		block = rb_entry(n, struct pending_block, node);
++		rb_erase(&block->node, &pc->pending_blocks);
++		kfree(block);
++	}
++	kfree(pc);
++}
++
++static sector_t pfail_map_sector(struct dm_target *ti, sector_t bi_sector,
++				 int mirror)
++{
++	WARN_ON(bi_sector >= ti->len);
++	if (mirror == 2)
++		bi_sector += ti->len;
++	return dm_target_offset(ti, bi_sector);
++}
++
++static void pfail_map_bio(struct dm_target *ti, struct bio *bio, int mirror)
++{
++	struct pfail_ctx *pc = ti->private;
++
++	bio->bi_bdev = pc->dev->bdev;
++	if (bio_sectors(bio))
++		bio->bi_iter.bi_sector =
++			pfail_map_sector(ti, bio->bi_iter.bi_sector, mirror);
++}
++
++static int maybe_zero_bio(struct pfail_ctx *pc, struct bio *bio, int *mirror)
++{
++	struct pending_block *block;
++	char *data = bio_data(bio);
++	unsigned long long bytenr = bio->bi_iter.bi_sector << 9;
++	int good_mirror, cur_mirror;
++	int ret = 0;
++
++	if (!bio_has_data(bio))
++		return 0;
++
++	spin_lock(&pc->pending_blocks_lock);
++	block = find_pending_block(pc, bytenr, bio_cur_bytes(bio));
++	if (block) {
++		good_mirror = block->good_mirror;
++		cur_mirror = block->cur_mirror;
++	}
++	spin_unlock(&pc->pending_blocks_lock);
++	if (!block)
++		return 0;
++
++	if (test_bit(REDIRECT_READS, &pc->flags)) {
++		if (pc->split) {
++			*mirror = good_mirror;
++		} else {
++			memset(data, 0, bio_cur_bytes(bio));
++			ret = 1;
++		}
++	} else if (pc->split) {
++		*mirror = cur_mirror;
++	}
++
++	return ret;
++}
++
++static unsigned bio_bytes(struct bio *bio)
++{
++	if (!bio_has_data(bio))
++		return 0;
++
++	return bio_cur_bytes(bio);
++}
++
++static int pfail_map(struct dm_target *ti, struct bio *bio)
++{
++	struct pfail_ctx *pc = ti->private;
++	struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
++	struct pending_block *block;
++	unsigned mirror = 0;
++	bool fua_bio = (bio->bi_rw & REQ_FUA);
++	bool flush_bio = (bio->bi_rw & REQ_FLUSH);
++
++	if (bio_sectors(bio) || flush_bio)
++		pb->track = true;
++	else
++		pb->track = false;
++	pb->pc = pc;
++	pb->block = NULL;
++
++	/*
++	 * Map reads as normal.
++	 */
++	if (bio_data_dir(bio) == READ) {
++		if (maybe_zero_bio(pc, bio, &mirror)) {
++			bio_endio(bio, 0);
++			return DM_MAPIO_SUBMITTED;
++		}
++		goto map_bio;
++	}
++
++	if (test_bit(DROP_WRITES, &pc->flags)) {
++		if (pc->error)
++			return -EIO;
++		pb->track = false;
++		bio_endio(bio, 0);
++		return DM_MAPIO_SUBMITTED;
++	}
++
++	/*
++	 * If we have just a naked REQ_FLUSH then we need to do alloc a dummy
++	 * block to hold the unflushed blocks.
++	 */
++	if (flush_bio && !fua_bio) {
++		struct pending_block *block;
++
++		block = kzalloc(sizeof(struct pending_block), GFP_NOIO);
++		if (!block) {
++			DMERR("Error allocating pending block");
++			return -ENOMEM;
++		}
++		INIT_LIST_HEAD(&block->list);
++
++		/*
++		 * IMPORTANT NOTE FOR FS DEVELOPERS!!!!
++		 *
++		 * We only take blocks that have already come through the end_io
++		 * handler as flushable blocks.  Anything that is still
++		 * outstanding IO at this point is assumed to be unflushable.
++		 */
++		spin_lock(&pc->pending_blocks_lock);
++		list_splice_init(&pc->unflushed_blocks, &block->list);
++		spin_unlock(&pc->pending_blocks_lock);
++		pb->block = block;
++	} else if (bio_data_dir(bio) == WRITE && bio_sectors(bio)) {
++		if (!pc->split && fua_bio)
++			goto map_bio;
++
++		block = kzalloc(sizeof(struct pending_block), GFP_NOIO);
++		if (!block) {
++			DMERR("Error allocating pending block");
++			return -ENOMEM;
++		}
++		block->bytenr = bio->bi_iter.bi_sector << 9;
++		block->bytes = bio_bytes(bio);
++		INIT_LIST_HEAD(&block->list);
++		spin_lock(&pc->pending_blocks_lock);
++		block = insert_pending_block(pc, block);
++		if (pc->split) {
++			if (block->good_mirror == 0 ||
++			    block->good_mirror == 1)
++				block->cur_mirror = 2;
++			else
++				block->cur_mirror = 1;
++			mirror = block->cur_mirror;
++		}
++		pb->block = block;
++
++		/*
++		 * If we do REQ_FLUSH|REQ_FUA we'll have an actual block and we
++		 * want to do the unflushed blocks dance here.
++		 */
++		if (flush_bio)
++			list_splice_init(&pc->unflushed_blocks, &block->list);
++		spin_unlock(&pc->pending_blocks_lock);
++	}
++map_bio:
++	pfail_map_bio(ti, bio, mirror);
++	return DM_MAPIO_REMAPPED;
++}
++
++static void pfail_write_end_io(struct work_struct *work)
++{
++	struct per_bio_data *pb = container_of(work, struct per_bio_data,
++					       work);
++	struct bio *bio;
++	struct pfail_ctx *pc = pb->pc;
++	struct pending_block *block;
++	bool flush, fua;
++
++	bio = dm_bio_from_per_bio_data(pb, sizeof(struct per_bio_data));
++	flush = bio->bi_rw & REQ_FLUSH;
++	fua = bio->bi_rw & REQ_FUA;
++	pb->track = false;
++	block = pb->block;
++
++	if (pc->endio_delay)
++		schedule_timeout(pc->endio_delay);
++
++	if (test_bit(DROP_WRITES, &pc->flags)) {
++		if (pc->error && !pb->error)
++			pb->error = -EIO;
++		if (flush && block && block->bytes == 0)
++			kfree(block);
++		goto out;
++	}
++
++	if (fua && test_bit(DROP_AFTER_FUA, &pc->flags)) {
++		if (test_and_set_bit(DROP_WRITES, &pc->flags)) {
++			if (pc->error && !pb->error)
++				pb->error = -EIO;
++			goto out;
++		}
++	}
++
++	if (flush && test_bit(DROP_AFTER_FLUSH, &pc->flags)) {
++		if (test_and_set_bit(DROP_WRITES, &pc->flags)) {
++			if (pc->error && !pb->error)
++				pb->error = -EIO;
++			goto out;
++		}
++	}
++
++	if (flush) {
++		struct pending_block *tmp, *n;
++
++		if (!block)
++			goto out;
++
++		spin_lock(&pc->pending_blocks_lock);
++		list_for_each_entry_safe(tmp, n, &block->list, list) {
++			list_del_init(&tmp->list);
++			if (pc->split) {
++				tmp->good_mirror = tmp->cur_mirror;
++			} else {
++				rb_erase(&tmp->node, &pc->pending_blocks);
++				kfree(tmp);
++			}
++			cond_resched_lock(&pc->pending_blocks_lock);
++		}
++		if (block->bytes != 0 && pc->split) {
++			block->good_mirror = block->cur_mirror;
++		} else if (block->bytes == 0) {
++			kfree(block);
++		}
++		spin_unlock(&pc->pending_blocks_lock);
++	} else if (fua) {
++		/*
++		 * FUA goes straight to disk, if it completes then the cur
++		 * mirror is the good mirror.
++		 */
++		if (pc->split) {
++			spin_lock(&pc->pending_blocks_lock);
++			block->good_mirror = block->cur_mirror;
++			spin_unlock(&pc->pending_blocks_lock);
++		}
++	} else if (block) {
++		spin_lock(&pc->pending_blocks_lock);
++		list_move_tail(&block->list, &pc->unflushed_blocks);
++		spin_unlock(&pc->pending_blocks_lock);
++	}
++out:
++	bio_endio(bio, pb->error);
++}
++
++static int pfail_end_io(struct dm_target *ti, struct bio *bio, int error)
++{
++	struct pfail_ctx *pc = ti->private;
++	struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
++
++	if (bio_data_dir(bio) == WRITE && pb->track &&
++	    !test_bit(DROP_WRITES, &pc->flags)) {
++		pb->error = error;
++
++		atomic_inc(&bio->bi_remaining);
++		INIT_WORK(&pb->work, pfail_write_end_io);
++		schedule_work(&pb->work);
++		return DM_ENDIO_INCOMPLETE;
++	}
++
++	return error;
++}
++
++static void pfail_status(struct dm_target *ti, status_type_t type,
++			 unsigned status_flags, char *result, unsigned maxlen)
++{
++	unsigned sz = 0;
++	struct pfail_ctx *pc = ti->private;
++
++	switch (type) {
++	case STATUSTYPE_INFO:
++		result[0] = '\0';
++		break;
++
++	case STATUSTYPE_TABLE:
++		DMEMIT("%s %ld ", pc->dev->name, pc->endio_delay);
++
++		DMEMIT("%u ", pc->split + pc->error);
++
++		if (pc->split)
++			DMEMIT("split ");
++		if (pc->error)
++			DMEMIT("error_on_fail ");
++		break;
++	}
++}
++
++static int pfail_ioctl(struct dm_target *ti, unsigned int cmd, unsigned long arg)
++{
++	struct pfail_ctx *pc = ti->private;
++	struct dm_dev *dev = pc->dev;
++	int r = 0;
++
++	/*
++	 * Only pass ioctls through if the device sizes match exactly.
++	 */
++	if (ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++
++	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
++}
++
++static int pfail_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
++			struct bio_vec *biovec, int max_size)
++{
++	struct pfail_ctx *pc = ti->private;
++	struct request_queue *q = bdev_get_queue(pc->dev->bdev);
++
++	if (!q->merge_bvec_fn)
++		return max_size;
++
++	bvm->bi_bdev = pc->dev->bdev;
++	bvm->bi_sector = pfail_map_sector(ti, bvm->bi_sector, 0);
++
++	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
++}
++
++static int pfail_iterate_devices(struct dm_target *ti,
++				 iterate_devices_callout_fn fn, void *data)
++{
++	struct pfail_ctx *pc = ti->private;
++
++	return fn(ti, pc->dev, 0, ti->len, data);
++}
++
++/*
++ * Valid messages
++ *
++ * drop_after_fua - drop all writes after the next seen fua write.
++ * drop_after_flush - drop all writes after the next seen flush write.
++ * drop_writes - drop all writes from now on.
++ * redirect_reads - start returning 0's/old data for reads done on unflushed
++ *	blocks.
++ * allow_writes - allow writes to start back up again.
++ */
++static int pfail_message(struct dm_target *ti, unsigned argc, char **argv)
++{
++	struct pfail_ctx *pc = ti->private;
++
++	if (argc != 1) {
++		DMWARN("Invalid power-fail message arguments, expect 1 "
++		       "argument, got %d", argc);
++		return -EINVAL;
++	}
++
++	if (!strcasecmp(argv[0], "redirect_reads")) {
++		set_bit(REDIRECT_READS, &pc->flags);
++	} else if (!strcasecmp(argv[0], "drop_after_fua")) {
++		set_bit(DROP_AFTER_FUA, &pc->flags);
++	} else if (!strcasecmp(argv[0], "drop_after_flush")) {
++		set_bit(DROP_AFTER_FLUSH, &pc->flags);
++	} else if (!strcasecmp(argv[0], "drop_writes")) {
++		set_bit(DROP_WRITES, &pc->flags);
++	} else if (!strcasecmp(argv[0], "allow_writes")) {
++		clear_bit(DROP_WRITES, &pc->flags);
++		clear_bit(DROP_AFTER_FUA, &pc->flags);
++		clear_bit(DROP_AFTER_FLUSH, &pc->flags);
++	} else {
++		DMWARN("Invalid argument %s", argv[0]);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++static struct target_type pfail_target = {
++	.name   = "power-fail",
++	.version = {1, 3, 1},
++	.module = THIS_MODULE,
++	.ctr    = pfail_ctr,
++	.dtr    = pfail_dtr,
++	.map    = pfail_map,
++	.end_io = pfail_end_io,
++	.status = pfail_status,
++	.ioctl	= pfail_ioctl,
++	.merge	= pfail_merge,
++	.message = pfail_message,
++	.iterate_devices = pfail_iterate_devices,
++};
++
++static int __init dm_pfail_init(void)
++{
++	int r = dm_register_target(&pfail_target);
++
++	if (r < 0)
++		DMERR("register failed %d", r);
++
++	return r;
++}
++
++static void __exit dm_pfail_exit(void)
++{
++	dm_unregister_target(&pfail_target);
++}
++
++/* Module hooks */
++module_init(dm_pfail_init);
++module_exit(dm_pfail_exit);
++
++MODULE_DESCRIPTION(DM_NAME " power fail target");
++MODULE_AUTHOR("Josef Bacik <jbacik@fb.com>");
++MODULE_LICENSE("GPL");
+-- 
+1.8.3.1
+
