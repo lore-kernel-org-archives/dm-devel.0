@@ -1,8 +1,8 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2] virtio_blk: fix defaults for max_hw_sectors and
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH] virtio_blk: fix defaults for max_hw_sectors and
  max_segment_size
-Date: Thu, 20 Nov 2014 21:11:36 -0500
-Message-ID: <20141121021135.GD2287@redhat.com>
+Date: Fri, 21 Nov 2014 01:54:56 -0800
+Message-ID: <20141121095456.GB8866@infradead.org>
 References: <20141120190058.GA31214@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -10,65 +10,26 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <20141120190058.GA31214@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: axboe@kernel.dk
-Cc: linux-kernel@vger.kernel.org, martin.petersen@oracle.com, hch@infradead.org, mst@redhat.com, rusty@rustcorp.com.au, dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: axboe@kernel.dk, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, hch@infradead.org, mst@redhat.com, rusty@rustcorp.com.au, dm-devel@redhat.com, Paolo Bonzini <pbonzini@redhat.com>, qemu-devel@nongnu.org
 List-Id: dm-devel.ids
 
-virtio_blk incorrectly established -1U as the default for these
-queue_limits.  Set these limits to sane default values to avoid crashing
-the kernel.  But the virtio-blk protocol should probably be extended to
-allow proper stacking of the disk's limits from the host.
+On Thu, Nov 20, 2014 at 02:00:59PM -0500, Mike Snitzer wrote:
+> virtio_blk incorrectly established -1U as the default for these
+> queue_limits.  Set these limits to sane default values to avoid crashing
+> the kernel.  But the virtio-blk protocol should probably be extended to
+> allow proper stacking of the disk's limits from the host.
+> 
+> This change fixes a crash that was reported when virtio-blk was used to
+> test linux-dm.git commit 604ea90641b4 ("dm thin: adjust max_sectors_kb
+> based on thinp blocksize") that will initially set max_sectors to
+> max_hw_sectors and then rounddown to the first power-of-2 factor of the
+> DM thin-pool's blocksize.  Basically that commit assumes drivers don't
+> suck when establishing max_hw_sectors so it acted like a canary in the
+> coal mine.
 
-This change fixes a crash that can occur if the max_sectors_kb is
-modified to even be half of virtio_blk's advertised max_hw_sectors_kb:
-
-  # cat /sys/block/vdb/queue/max_sectors_kb
-  512
-  # cat /sys/block/vdb/queue/max_hw_sectors_kb
-  2147483647
-  # echo 1073741824 > /sys/block/vdb/queue/max_sectors_kb
-
-Attempting to mkfs.xfs against /dev/vdb will result in hitting
-fs/direct-io.c:dio_send_cur_page()'s BUG_ON.
-
-While fixing the blk_queue_max_hw_sectors(q, -1U) call it was
-immediately apparent that the blk_queue_max_segment_size(q, -1U) also
-should be fixed.
-
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: stable@vger.kernel.org
----
- drivers/block/virtio_blk.c |    9 ++++++---
- 1 files changed, 6 insertions(+), 3 deletions(-)
-
-v2: revise header to simplify the scope of the problem explanation
-
-diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
-index c6a27d5..68efbdc 100644
---- a/drivers/block/virtio_blk.c
-+++ b/drivers/block/virtio_blk.c
-@@ -674,8 +674,11 @@ static int virtblk_probe(struct virtio_device *vdev)
- 	/* No need to bounce any requests */
- 	blk_queue_bounce_limit(q, BLK_BOUNCE_ANY);
- 
--	/* No real sector limit. */
--	blk_queue_max_hw_sectors(q, -1U);
-+	/*
-+	 * Limited by disk's max_hw_sectors in host, but
-+	 * without that info establish a sane default.
-+	 */
-+	blk_queue_max_hw_sectors(q, BLK_DEF_MAX_SECTORS);
- 
- 	/* Host can optionally specify maximum segment size and number of
- 	 * segments. */
-@@ -684,7 +687,7 @@ static int virtblk_probe(struct virtio_device *vdev)
- 	if (!err)
- 		blk_queue_max_segment_size(q, v);
- 	else
--		blk_queue_max_segment_size(q, -1U);
-+		blk_queue_max_segment_size(q, BLK_MAX_SEGMENT_SIZE);
- 
- 	/* Host can optionally specify the block size of the device */
- 	err = virtio_cread_feature(vdev, VIRTIO_BLK_F_BLK_SIZE,
--- 
-1.7.4.4
+Is that a crash in the host or guest?  What kind of mishandling did you
+see?  Unless the recent virtio standard changed anything the host
+should be able to handle our arbitrary limits, and even if it doesn't
+that something we need to hash out with qemu and the virtio standards
+folks.
