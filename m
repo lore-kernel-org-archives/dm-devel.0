@@ -1,46 +1,51 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: [PATCH] dm-crypt: use memzero_explicit for on-stack
-	buffer
-Date: Sat, 22 Nov 2014 09:36:04 +0100
-Message-ID: <1416645364-23274-1-git-send-email-gmazyland@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH ] drivers/md: use proper rcu accessor
+Date: Sun, 23 Nov 2014 11:53:59 -0500
+Message-ID: <CAMM=eLe5mXBfg_W=bjkFN3_pVAYi1WqRr4nOb90aveA3LvaGDg@mail.gmail.com>
+References: <20141028220944.GA26114@linux.vnet.ibm.com> <1414534202-27312-1-git-send-email-paulmck@linux.vnet.ibm.com>
+ <1414534202-27312-3-git-send-email-paulmck@linux.vnet.ibm.com>
+ <20141121133145.GA17245@node.dhcp.inet.fi> <546F4C8C.4040904@gmail.com>
+ <20141121145817.GA17710@node.dhcp.inet.fi> <CAJhHMCCE_p+xTibLZwoS5OqW--NO_uEVsW6tfN6LcgZGBquBTQ@mail.gmail.com>
+ <1416760829.17888.19.camel@edumazet-glaptop2.roam.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Milan Broz <gmazyland@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1416760829.17888.19.camel@edumazet-glaptop2.roam.corp.google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Eric Dumazet <eric.dumazet@gmail.com>
+Cc: Pranith Kumar <bobby.prani@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>, Lai Jiangshan <laijs@cn.fujitsu.com>, Dipankar Sarma <dipankar@in.ibm.com>, Andrew Morton <akpm@linux-foundation.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, David Howells <dhowells@redhat.com>, Eric Dumazet <edumazet@google.com>, dvhart@linux.intel.com, =?UTF-8?B?RnLDqWTDqXJpYyBXZWlzYmVja2Vy?= <fweisbec@gmail.com>, Oleg Nesterov <oleg@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Use memzero_explicit to cleanup sensitive data allocated on stack
-to prevent compiler optimize and remove memset() calls.
+On Sun, Nov 23, 2014 at 11:40 AM, Eric Dumazet <eric.dumazet@gmail.com> wrote:
+> From: Eric Dumazet <edumazet@google.com>
+>
+> rcu_dereference() should be used in sections protected by rcu_read_lock.
+>
+> For writers, holding some kind of mutex or lock,
+> rcu_dereference_protected() is the way to go, adding explicit lockdep
+> bits.
+>
+> In __unbind(), although there is no mutex or lock held, we are about
+> to free the mapped device, so can use the constant '1' instead of a
+> lockdep_is_held()
 
-Signed-off-by: Milan Broz <gmazyland@gmail.com>
----
- drivers/md/dm-crypt.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+That isn't true.  dm_hash_remove_all() -- which calls dm_destroy --
+holds _hash_lock.  Why leave __unbind() brittle in the face of future
+DM locking changes?
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index fc93b93..08981be 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -705,7 +705,7 @@ static int crypt_iv_tcw_whitening(struct crypt_config *cc,
- 	for (i = 0; i < ((1 << SECTOR_SHIFT) / 8); i++)
- 		crypto_xor(data + i * 8, buf, 8);
- out:
--	memset(buf, 0, sizeof(buf));
-+	memzero_explicit(buf, sizeof(buf));
- 	return r;
- }
- 
--- 
-2.1.3
+> Reported-by: Kirill A. Shutemov <kirill@shutemov.name>
+> Signed-off-by: Eric Dumazet <edumazet@google.com>
+> Fixes: 33423974bfc1 ("dm: Use rcu_dereference() for accessing rcu pointer")
+> Cc: Pranith Kumar <bobby.prani@gmail.com>
+
+Hi Eric,
+
+I'll pick this up once I get clarification for why your __unbind
+change is safe.. but it really would've helped if you cc'd
+dm-devel@redhat.com or myself directly (not a single person that you
+cc'd actively maintains DM).
+
+Hopefully these DM rcu "fixes" are finished after this.
+
+Thanks,
+Mike
