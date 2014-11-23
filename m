@@ -1,7 +1,7 @@
 From: Eric Dumazet <eric.dumazet@gmail.com>
-Subject: Re: [PATCH ] drivers/md: use proper rcu accessor
-Date: Sun, 23 Nov 2014 09:31:13 -0800
-Message-ID: <1416763873.17888.33.camel@edumazet-glaptop2.roam.corp.google.com>
+Subject: [PATCH v2] drivers/md: use proper rcu accessor
+Date: Sun, 23 Nov 2014 09:34:29 -0800
+Message-ID: <1416764069.17888.36.camel@edumazet-glaptop2.roam.corp.google.com>
 References: <20141028220944.GA26114@linux.vnet.ibm.com>
 	 <1414534202-27312-1-git-send-email-paulmck@linux.vnet.ibm.com>
 	 <1414534202-27312-3-git-send-email-paulmck@linux.vnet.ibm.com>
@@ -9,69 +9,92 @@ References: <20141028220944.GA26114@linux.vnet.ibm.com>
 	 <20141121145817.GA17710@node.dhcp.inet.fi>
 	 <CAJhHMCCE_p+xTibLZwoS5OqW--NO_uEVsW6tfN6LcgZGBquBTQ@mail.gmail.com>
 	 <1416760829.17888.19.camel@edumazet-glaptop2.roam.corp.google.com>
-	 <CAMM=eLe5mXBfg_W=bjkFN3_pVAYi1WqRr4nOb90aveA3LvaGDg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAMM=eLe5mXBfg_W=bjkFN3_pVAYi1WqRr4nOb90aveA3LvaGDg@mail.gmail.com>
+In-Reply-To: <1416760829.17888.19.camel@edumazet-glaptop2.roam.corp.google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Pranith Kumar <bobby.prani@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>, Lai Jiangshan <laijs@cn.fujitsu.com>, Dipankar Sarma <dipankar@in.ibm.com>, Andrew Morton <akpm@linux-foundation.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, David Howells <dhowells@redhat.com>, Eric Dumazet <edumazet@google.com>, dvhart@linux.intel.com, =?ISO-8859-1?Q?Fr=E9d=E9ric?= Weisbecker <fweisbec@gmail.com>, Oleg Nesterov <oleg@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: Pranith Kumar <bobby.prani@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>, Lai Jiangshan <laijs@cn.fujitsu.com>, Dipankar Sarma <dipankar@in.ibm.com>, Andrew Morton <akpm@linux-foundation.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, David Howells <dhowells@redhat.com>, Eric Dumazet <edumazet@google.com>, dvhart@linux.intel.com, =?ISO-8859-1?Q?Fr=E9d=E9ric?= Weisbecker <fweisbec@gmail.com>, Oleg Nesterov <oleg@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, 2014-11-23 at 11:53 -0500, Mike Snitzer wrote:
-> On Sun, Nov 23, 2014 at 11:40 AM, Eric Dumazet <eric.dumazet@gmail.com> wrote:
-> > From: Eric Dumazet <edumazet@google.com>
-> >
-> > rcu_dereference() should be used in sections protected by rcu_read_lock.
-> >
-> > For writers, holding some kind of mutex or lock,
-> > rcu_dereference_protected() is the way to go, adding explicit lockdep
-> > bits.
-> >
-> > In __unbind(), although there is no mutex or lock held, we are about
-> > to free the mapped device, so can use the constant '1' instead of a
-> > lockdep_is_held()
-> 
-> That isn't true.  dm_hash_remove_all() -- which calls dm_destroy --
-> holds _hash_lock.  Why leave __unbind() brittle in the face of future
-> DM locking changes?
-> 
+From: Eric Dumazet <edumazet@google.com>
 
-Well, tell me. Before the 33423974bfc1 patch there was no protection.
+rcu_dereference() should be used in sections protected by rcu_read_lock.
 
-If really you are about to delete an object, you have to be sure no one
-is going to use it.
+For writers, holding some kind of mutex or lock,
+rcu_dereference_protected() is the way to go, adding explicit lockdep
+bits.
 
-rcu_dereference_protected(X, 1) is how we express this thing, there is
-nothing wrong here.
+In __unbind(), we are the last user of this mapped device, so can use
+the constant '1' instead of a lockdep_is_held(), not consistent with
+other uses of rcu_dereference_protected() which use md->suspend_lock
+mutex.
 
-Fact that you hold a lock at this point is irrelevant and wont protect
-the bug from happening. If you believe so, then you are wrong.
+Reported-by: Kirill A. Shutemov <kirill@shutemov.name>
+Signed-off-by: Eric Dumazet <edumazet@google.com>
+Fixes: 33423974bfc1 ("dm: Use rcu_dereference() for accessing rcu pointer")
+Cc: Pranith Kumar <bobby.prani@gmail.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
+---
 
+v2: changed all buggy rcu_dereference()
+    BTW, having a mutex named suspend_lock is ugly, IMO.
 
-> > Reported-by: Kirill A. Shutemov <kirill@shutemov.name>
-> > Signed-off-by: Eric Dumazet <edumazet@google.com>
-> > Fixes: 33423974bfc1 ("dm: Use rcu_dereference() for accessing rcu pointer")
-> > Cc: Pranith Kumar <bobby.prani@gmail.com>
-> 
-> Hi Eric,
-> 
-> I'll pick this up once I get clarification for why your __unbind
-> change is safe.. but it really would've helped if you cc'd
-> dm-devel@redhat.com or myself directly (not a single person that you
-> cc'd actively maintains DM).
-> 
+ drivers/md/dm.c |   14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
 
-Hmm, my mailer complained because the mail had too many recipients
-already. I did a 'reply' on the original thread.
-
-> Hopefully these DM rcu "fixes" are finished after this.
-
-You added a Signed-off-by on 33423974bfc1, not me.
-
-Kirill gave the report 2 days ago and so far nobody fixed it.
-
-I will send a v2 because other rcu_dereference() need to be changed as
-well.
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index a0ece87ad426..5919d933bce9 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2335,7 +2335,8 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+ 
+ 	merge_is_optional = dm_table_merge_is_optional(t);
+ 
+-	old_map = rcu_dereference(md->map);
++	old_map = rcu_dereference_protected(md->map,
++					    lockdep_is_held(&md->suspend_lock));
+ 	rcu_assign_pointer(md->map, t);
+ 	md->immutable_target_type = dm_table_get_immutable_target_type(t);
+ 
+@@ -2355,7 +2356,7 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+  */
+ static struct dm_table *__unbind(struct mapped_device *md)
+ {
+-	struct dm_table *map = rcu_dereference(md->map);
++	struct dm_table *map = rcu_dereference_protected(md->map, 1);
+ 
+ 	if (!map)
+ 		return NULL;
+@@ -2850,7 +2851,8 @@ retry:
+ 		goto retry;
+ 	}
+ 
+-	map = rcu_dereference(md->map);
++	map = rcu_dereference_protected(md->map,
++					lockdep_is_held(&md->suspend_lock));
+ 
+ 	r = __dm_suspend(md, map, suspend_flags, TASK_INTERRUPTIBLE);
+ 	if (r)
+@@ -2908,7 +2910,8 @@ retry:
+ 		goto retry;
+ 	}
+ 
+-	map = rcu_dereference(md->map);
++	map = rcu_dereference_protected(md->map,
++					lockdep_is_held(&md->suspend_lock));
+ 	if (!map || !dm_table_get_size(map))
+ 		goto out;
+ 
+@@ -2943,7 +2946,8 @@ static void __dm_internal_suspend(struct mapped_device *md, unsigned suspend_fla
+ 		return; /* nest suspend */
+ 	}
+ 
+-	map = rcu_dereference(md->map);
++	map = rcu_dereference_protected(md->map,
++					lockdep_is_held(&md->suspend_lock));
+ 
+ 	/*
+ 	 * Using TASK_UNINTERRUPTIBLE because only NOFLUSH internal suspend is
