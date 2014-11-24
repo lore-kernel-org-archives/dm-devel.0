@@ -1,47 +1,84 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] drivers/md: use proper rcu accessor
-Date: Sun, 23 Nov 2014 23:09:04 -0500
-Message-ID: <20141124040903.GB595@redhat.com>
-References: <20141028220944.GA26114@linux.vnet.ibm.com>
- <1414534202-27312-1-git-send-email-paulmck@linux.vnet.ibm.com>
- <1414534202-27312-3-git-send-email-paulmck@linux.vnet.ibm.com>
- <20141121133145.GA17245@node.dhcp.inet.fi>
- <546F4C8C.4040904@gmail.com>
- <20141121145817.GA17710@node.dhcp.inet.fi>
- <CAJhHMCCE_p+xTibLZwoS5OqW--NO_uEVsW6tfN6LcgZGBquBTQ@mail.gmail.com>
- <1416760829.17888.19.camel@edumazet-glaptop2.roam.corp.google.com>
- <1416764069.17888.36.camel@edumazet-glaptop2.roam.corp.google.com>
+From: Kent Overstreet <kmo@daterainc.com>
+Subject: Re: [PATCH 3/6] md/bcache: use generic io stats accounting functions
+ to simplify io stat accounting
+Date: Sun, 23 Nov 2014 20:48:06 -0800
+Message-ID: <20141124044806.GA22025@kmo-pixel>
+References: <1416798327-12817-1-git-send-email-guz.fnst@cn.fujitsu.com>
+ <1416798327-12817-4-git-send-email-guz.fnst@cn.fujitsu.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1416764069.17888.36.camel@edumazet-glaptop2.roam.corp.google.com>
+In-Reply-To: <1416798327-12817-4-git-send-email-guz.fnst@cn.fujitsu.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Eric Dumazet <eric.dumazet@gmail.com>
-Cc: Pranith Kumar <bobby.prani@gmail.com>, dm-devel@redhat.com, "Kirill A. Shutemov" <kirill@shutemov.name>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>, Lai Jiangshan <laijs@cn.fujitsu.com>, Dipankar Sarma <dipankar@in.ibm.com>, Andrew Morton <akpm@linux-foundation.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, David Howells <dhowells@redhat.com>, Eric Dumazet <edumazet@google.com>, dvhart@linux.intel.com, =?iso-8859-1?Q?Fr=E9d=E9ric?= Weisbecker <fweisbec@gmail.com>, Oleg Nesterov <oleg@redhat.com>
+To: Gu Zheng <guz.fnst@cn.fujitsu.com>
+Cc: axboe@kernel.dk, akpm@linux-foundation.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, drbd-user@lists.linbit.com
 List-Id: dm-devel.ids
 
-On Sun, Nov 23 2014 at 12:34pm -0500,
-Eric Dumazet <eric.dumazet@gmail.com> wrote:
+On Mon, Nov 24, 2014 at 11:05:24AM +0800, Gu Zheng wrote:
+> Use generic io stats accounting help functions (generic_{start,end}_io_acct)
+> to simplify io stat accounting.
+> 
+> Signed-off-by: Gu Zheng <guz.fnst@cn.fujitsu.com>
 
-> From: Eric Dumazet <edumazet@google.com>
-> 
-> rcu_dereference() should be used in sections protected by rcu_read_lock.
-> 
-> For writers, holding some kind of mutex or lock,
-> rcu_dereference_protected() is the way to go, adding explicit lockdep
-> bits.
-> 
-> In __unbind(), we are the last user of this mapped device, so can use
-> the constant '1' instead of a lockdep_is_held(), not consistent with
-> other uses of rcu_dereference_protected() which use md->suspend_lock
-> mutex.
-> 
-> Reported-by: Kirill A. Shutemov <kirill@shutemov.name>
-> Signed-off-by: Eric Dumazet <edumazet@google.com>
-> Fixes: 33423974bfc1 ("dm: Use rcu_dereference() for accessing rcu pointer")
-> Cc: Pranith Kumar <bobby.prani@gmail.com>
-> Cc: Mike Snitzer <snitzer@redhat.com>
+Cool!
 
-Thanks, I've staged this for 3.19:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-3.19&id=a12f5d48bdfeb5fe10157ac01c3de29269f457c6
+Acked-by: Kent Overstreet <kmo@datera.io>
+
+> ---
+>  drivers/md/bcache/request.c |   23 ++++++-----------------
+>  1 files changed, 6 insertions(+), 17 deletions(-)
+> 
+> diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
+> index 62e6e98..ab43fad 100644
+> --- a/drivers/md/bcache/request.c
+> +++ b/drivers/md/bcache/request.c
+> @@ -601,13 +601,8 @@ static void request_endio(struct bio *bio, int error)
+>  static void bio_complete(struct search *s)
+>  {
+>  	if (s->orig_bio) {
+> -		int cpu, rw = bio_data_dir(s->orig_bio);
+> -		unsigned long duration = jiffies - s->start_time;
+> -
+> -		cpu = part_stat_lock();
+> -		part_round_stats(cpu, &s->d->disk->part0);
+> -		part_stat_add(cpu, &s->d->disk->part0, ticks[rw], duration);
+> -		part_stat_unlock();
+> +		generic_end_io_acct(bio_data_dir(s->orig_bio),
+> +				    &s->d->disk->part0, s->start_time);
+>  
+>  		trace_bcache_request_end(s->d, s->orig_bio);
+>  		bio_endio(s->orig_bio, s->iop.error);
+> @@ -959,12 +954,9 @@ static void cached_dev_make_request(struct request_queue *q, struct bio *bio)
+>  	struct search *s;
+>  	struct bcache_device *d = bio->bi_bdev->bd_disk->private_data;
+>  	struct cached_dev *dc = container_of(d, struct cached_dev, disk);
+> -	int cpu, rw = bio_data_dir(bio);
+> +	int rw = bio_data_dir(bio);
+>  
+> -	cpu = part_stat_lock();
+> -	part_stat_inc(cpu, &d->disk->part0, ios[rw]);
+> -	part_stat_add(cpu, &d->disk->part0, sectors[rw], bio_sectors(bio));
+> -	part_stat_unlock();
+> +	generic_start_io_acct(rw, bio_sectors(bio), &d->disk->part0);
+>  
+>  	bio->bi_bdev = dc->bdev;
+>  	bio->bi_iter.bi_sector += dc->sb.data_offset;
+> @@ -1074,12 +1066,9 @@ static void flash_dev_make_request(struct request_queue *q, struct bio *bio)
+>  	struct search *s;
+>  	struct closure *cl;
+>  	struct bcache_device *d = bio->bi_bdev->bd_disk->private_data;
+> -	int cpu, rw = bio_data_dir(bio);
+> +	int rw = bio_data_dir(bio);
+>  
+> -	cpu = part_stat_lock();
+> -	part_stat_inc(cpu, &d->disk->part0, ios[rw]);
+> -	part_stat_add(cpu, &d->disk->part0, sectors[rw], bio_sectors(bio));
+> -	part_stat_unlock();
+> +	generic_start_io_acct(rw, bio_sectors(bio), &d->disk->part0);
+>  
+>  	s = search_alloc(bio, d);
+>  	cl = &s->cl;
+> -- 
+> 1.7.7
+> 
