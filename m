@@ -1,90 +1,49 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [git pull] device mapper fixes for 3.18
-Date: Mon, 24 Nov 2014 11:47:52 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1411241146390.8054@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20141113003425.GA9508@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Zach Brown <zab@redhat.com>
+Subject: Re: [RFC][PATCH] dm: add dm-power-fail target
+Date: Mon, 24 Nov 2014 10:45:35 -0800
+Message-ID: <20141124184534.GA24398@lenny.home.zabbo.net>
+References: <1416607231-8588-1-git-send-email-jbacik@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20141113003425.GA9508@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1416607231-8588-1-git-send-email-jbacik@fb.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Josef Bacik <jbacik@fb.com>
+Cc: linux-btrfs@vger.kernel.org, david@fromorbit.com, sandeen@redhat.com, clm@facebook.com, dm-devel@redhat.com, hch@infradead.org, linux-fsdevel@vger.kernel.org, tytso@mit.edu
 List-Id: dm-devel.ids
 
-BTW. also don't forget this:
+On Fri, Nov 21, 2014 at 05:00:31PM -0500, Josef Bacik wrote:
+> Hello,
+> 
+> I'm hoping some FS guys can weigh in and verify my approach for testing power
+> fail conditions, and the DM guys to of course verify I didn't completely fail at
+> making a DM target.  All suggestions welcome, I want to have a nice robust tool
+> for testing power fail so we can be sure our fsync/commit code is all working
+> properly.  Thanks,
 
-https://www.redhat.com/archives/dm-devel/2014-November/msg00031.html
+*All* suggestions welcome?  OK, I'll put on my skeptic hat.
 
-Mikulas
+This implements a writeback cache in kernel data structures so that you
+can race to throw away cached blocks that haven't been flushed.  How is
+that meaningfully different than using an actual writeback caching dm
+target and racing to invalidate it?
 
+Using real caching dm target configurations would let you reuse their
+testing and corner case handling that is, presumably, already slightly
+more advanced than printk() swearing.
 
-On Wed, 12 Nov 2014, Mike Snitzer wrote:
+Implementation of this specific mechanism aside, the architectural
+observation is that device ram disappearing during a power interruption
+is just one, and possibly the most forgiving, outcome.  Pulling the
+power out from under concurrnet cached writes can result in any
+combination of them being written, or not, or scrambled to the point of
+returning read errors.
 
-> Hi Linus,
-> 
-> The following changes since commit 56ec16cb1e1ce46354de8511eef962a417c32c92:
-> 
->   dm log userspace: fix memory leak in dm_ulog_tfr_init failure path (2014-10-05 20:03:38 -0400)
-> 
-> are available in the git repository at:
-> 
->   git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.18-fixes
-> 
-> for you to fetch changes up to 9b460d3699324d570a4d4161c3741431887f102f:
-> 
->   dm btree: fix a recursion depth bug in btree walking code (2014-11-10 15:23:58 -0500)
-> 
-> Please pull, thanks.
-> Mike
-> 
-> ----------------------------------------------------------------
-> . stable fix for dm-thin that avoids normal IO racing with discard
-> 
-> . stable fix for a dm-cache related bug in dm-btree walking code that
->   results from using very large fast device (e.g. 4T) with a very small
->   cache blocksize (e.g. 32K) -- this is a very uncommon configuration
-> 
-> . a couple fixes for dm-raid (one for stable and the other addresses a
->   crash in 3.18-rc1 code)
-> 
-> . stable fix for dm-thinp that addresses a very rare dm-bufio bug having
->   to do with memory reclaimation (via shrinker) when using dm-thinp
->   ontop of loopback devices
-> 
-> . fix a leak in dm-stripe target constructor's error path
-> 
-> ----------------------------------------------------------------
-> Heinz Mauelshagen (2):
->       dm raid: ensure superblock's size matches device's logical block size
->       dm raid: fix inaccessible superblocks causing oops in configure_discard_support
-> 
-> Joe Thornber (2):
->       dm thin: grab a virtual cell before looking up the mapping
->       dm btree: fix a recursion depth bug in btree walking code
-> 
-> Mikulas Patocka (1):
->       dm bufio: change __GFP_IO to __GFP_FS in shrinker callbacks
-> 
-> Pavitra Kumar (1):
->       dm stripe: fix potential for leak in stripe_ctr error path
-> 
->  drivers/md/dm-bufio.c                          | 12 ++++++------
->  drivers/md/dm-raid.c                           | 17 ++++++++++++-----
->  drivers/md/dm-stripe.c                         |  4 +++-
->  drivers/md/dm-thin.c                           | 16 ++++++++++++----
->  drivers/md/persistent-data/dm-btree-internal.h |  6 ++++++
->  drivers/md/persistent-data/dm-btree-spine.c    |  2 +-
->  drivers/md/persistent-data/dm-btree.c          | 24 ++++++++++--------------
->  7 files changed, 50 insertions(+), 31 deletions(-)
-> 
+If we were to justify developing a specific power failure target, I'd
+like to see something that tracks write history and can replay the
+history to offer a resonably exhaustive set of possible write results.
+Verify *those* and you have much more confidence that the file system
+can handle reading the results of its interrupted writes.
+
+- z 
