@@ -1,61 +1,45 @@
-From: Zach Brown <zab@redhat.com>
-Subject: Re: [RFC][PATCH] dm: add dm-power-fail target
-Date: Mon, 24 Nov 2014 14:35:27 -0800
-Message-ID: <20141124223527.GB32205@lenny.home.zabbo.net>
-References: <1416607231-8588-1-git-send-email-jbacik@fb.com>
- <20141124184534.GA24398@lenny.home.zabbo.net>
- <54738154.9010203@fb.com>
- <20141124195749.GA27597@lenny.home.zabbo.net>
- <547391DD.30406@fb.com>
- <20141124221015.GA32205@lenny.home.zabbo.net>
- <5473AF4F.2080408@fb.com>
+From: Gu Zheng <guz.fnst@cn.fujitsu.com>
+Subject: Re: [PATCH 0/6] blk: introduce generic io stat accounting help function
+Date: Tue, 25 Nov 2014 12:48:48 +0800
+Message-ID: <54740A30.8020105@cn.fujitsu.com>
+References: <1416798327-12817-1-git-send-email-guz.fnst@cn.fujitsu.com> <547348DE.60704@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5473AF4F.2080408@fb.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Josef Bacik <jbacik@fb.com>
-Cc: linux-btrfs@vger.kernel.org, david@fromorbit.com, sandeen@redhat.com, clm@fb.com, dm-devel@redhat.com, hch@infradead.org, linux-fsdevel@vger.kernel.org, tytso@mit.edu
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <547348DE.60704@kernel.dk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: kmo@daterainc.com, akpm@linux-foundation.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, drbd-user@lists.linbit.com
 List-Id: dm-devel.ids
 
-> >>That is way complicated, I was just going to take two devices, one that's a
-> >>linear mapping and the other that's the log, and then write to the log the
-> >>sector+data that was written in order that it completes, and then have
-> >>userspace do the replay.  So basically do the flush tracking like I am, then
-> >>write out chunks to the log device to keep a semblance of how the flushing
-> >>would have affected stuff, something like this
-> >>
-> >>write a, write b, a complete, flush, b complete, flush complete
-> >>
-> >>would log out
-> >>
-> >>wrote a, flush, write b, <other writes>, <next flush>
-> >>
-> >>and then we have a userspace thing that could do something like replay all
-> >>writes to a flush, do fs consistency and data consistency checks, walk to
-> >>the next flush, rinse repeat, and that way we could be sure that we always
-> >>have a consistent fs.
-> >
-> >I guess that'd be an ok start, but I don't think you need any clever
-> >kernel code to do that.  I've hacked up something like this in bash with
-> >blktrace, loopback files, and dd :/.
+On 11/24/2014 11:03 PM, Jens Axboe wrote:
+
+> On 11/23/2014 08:05 PM, Gu Zheng wrote:
+>> Many block drivers accounting io stat based on bio (e.g. NVMe...),
+>> the blk_account_io_start/end() which is based on request
+>> does not make sense to them, so here we introduce the similar help
+>> function named generic_start/end_io_acct base on raw sectors, and it can
+>> simplify some driver's open io accounting code.
+>>
+>> Gu Zheng (6):
+>>    blk: introduce generic io stat accounting help function
+>>    NVMe: use generic io stat accounting functions to simplify
+>>      nvme_start/end_io_acct
+>>    md/bcache: use generic io stats accounting functions to simplify io
+>>      stat accounting
+>>    drbd: use generic io stats accounting functions to simplify io stat
+>>      accounting
+>>    md: use generic io stats accounting functions to simplify io stat
+>>      accounting
+>>    block/rsxx: use generic io stats accounting functions to simplify io
+>>      stat accounting
 > 
-> I don't think blktrace gives us the data being written though does it? If it
-> does then hooray I'm done playing a device mapper developer.
+> Thanks, this looks good. I'll apply it, except 2/6, since nvme no longer uses them.
 
-Right, that script was only working with the dumb simple case of using
-manual double buffering and simple test loads that wouldn't overwrite
-blocks.
+OK.
 
-> With the logging approach then it is completely up to us how we replay the
-> log, so we can always go back and do more horrible things with the replay,
-> like replay for a while, skip a flush and write some of the next random crap
-> and see what happens.  Doing horrible things is awesome and that is what I
-> want, but I also want to make sure we're not failing in the simple things
-> too.  Thanks,
+Thanks,
+Gu
 
-Sure, that's fair.  So maybe expand blktrace to include the data
-payloads? :).
-
-- z
+> 
