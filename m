@@ -1,83 +1,37 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-bufio: fix memleak when using a dm_buffer's inline bio
-Date: Wed, 26 Nov 2014 09:28:32 -0500
-Message-ID: <20141126142832.GB29855@redhat.com>
-References: <20141126014515.GE10050@birch.djwong.org>
- <20141126034103.GA26585@redhat.com>
- <20141126040008.GF10050@birch.djwong.org>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: dm-writeboost: About inclusion into mainline
+Date: Thu, 27 Nov 2014 00:02:15 +0900
+Message-ID: <5475EB77.3050004@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20141126040008.GF10050@birch.djwong.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org, gregkh@linuxfoundation.org, corbet@lwn.net, masami.hiramatsu@gmail.com
 List-Id: dm-devel.ids
 
-On Tue, Nov 25 2014 at 11:00pm -0500,
-Darrick J. Wong <darrick.wong@oracle.com> wrote:
+Hi,
 
-> On Tue, Nov 25, 2014 at 10:41:04PM -0500, Mike Snitzer wrote:
-> > On Tue, Nov 25 2014 at  8:45pm -0500,
-> > Darrick J. Wong <darrick.wong@oracle.com> wrote:
-> > 
-> > > When dm-bufio sets out to use the bio built into a struct dm_buffer to
-> > > issue an IO, it needs to call bio_reset after it's done with the bio
-> > > so that we can free things attached to the bio such as the integrity
-> > > payload.  Therefore, inject our own endio callback to take care of
-> > > the bio_reset after calling submit_io's end_io callback.
-> > > 
-> > > Test case:
-> > > 1. modprobe scsi_debug delay=0 dif=1 dix=199 ato=1 dev_size_mb=300
-> > > 2. Set up a dm-bufio client, e.g. dm-verity, on the scsi_debug device
-> > > 3. Repeatedly read metadata and watch kmalloc-192 leak!
-> > > 
-> > > Fix is against 3.18-rc6.
-> > > 
-> > > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-> > 
-> > Thanks for reporting/fixing this.
-> > 
-> > Alternatively I think we could just call bio_reset() in submit_io(),
-> > e.g.:
-> > 
-> > diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-> > index afe7971..e7036e3 100644
-> > --- a/drivers/md/dm-bufio.c
-> > +++ b/drivers/md/dm-bufio.c
-> > @@ -579,6 +579,8 @@ static void submit_io(struct dm_buffer *b, int rw, sector_t block,
-> >  	if (rw == WRITE && b->c->write_callback)
-> >  		b->c->write_callback(b);
-> >  
-> > +	bio_reset(&b->bio);
-> > +
-> >  	if (b->c->block_size <= DM_BUFIO_INLINE_VECS * PAGE_SIZE &&
-> >  	    b->data_mode != DATA_MODE_VMALLOC)
-> >  		use_inline_bio(b, rw, block, end_io);
-> > 
-> > What do you think?
-> 
-> I decided to call bio_reset after calling end_io so that we can free
-> the integrity buffer as soon as we're done with the bio.  Calling
-> bio_reset just prior to the next submit_bio as this snippet does means
-> that the integrity buffer remains attached to the bio until just
-> before the next submit_bio call, which could be a while.
-> 
-> Also, I think use_dmio results in a new bio being used instead of the
-> bio embedded in the dm_buffer, so it shouldn't be necessary to reset
-> the bio if the previous IO had use_dmio'd.
+I am wondering what's the next step of dm-writeboost, my log-structured SSD-caching driver.
+I want to discuss this.
 
-OK, yeah, a new embedded bio is created as a side-effect of allocating a
-new dm_buffer.  So we have to use bi_end_io like you've done.
+I will start from introducing my activity on dm-writeboost.
+It was more than a year ago that I proposed my dm-writeboost for staging.
+Mike Snitzer, a maintainer of device-mapper, rejected it because dm-writeboost at that moment wasn't even suitable for staging.
+(http://www.redhat.com/archives/dm-devel/2013-September/msg00075.html)
+It is clear that the comment was really right. The code was actually terrible.
+Since then, with helps of DM guys, dm-writeboost's design and implementation has been polished.
+And it was included into Joe's linux-2.6 where he develops his drivers.
+(https://github.com/jthornber/linux-2.6/tree/thin-dev/drivers/md)
+I found some bugs and fixed them after this inclusion. I am confident the quality is good enough for staging.
 
-I didn't like seeing your use of .bi_private (because in the context of
-bios that are passed into DM: .bi_private must always be preserved so as
-not to break upper layers of the IO stack that might be using it).
+Now, I can't find the way how I go over the wall.
+It seems that third party drivers are rarely merged into the md.
+The fact is, no third party driver (meaning proposed by other than RH) was included since I am involved with device-mapper, for 2 years.
+I am really afraid dm-writeboost will never be into the md ever after.
 
-But in the context of bufio's embedded bio, using .bi_private seems
-fine.  Just needs a comment.  I'll fixup and get your patch staged (and
-will CC stable).
+In one sense, this sounds too conservative. New features are always rejected. As a result, third party developers, including me, are losing their willingness.
+As you know, developing driver is a hard work and spend lot of time. Actually, I spent hundreds or thousands of my private hours on my driver (hoping that my driver will be included and become famous) but I am almost giving up dm-writeboost if it has no hope. I know, storage softwares should become safe-side but I also know that willingness is the only key for non-paid development.
 
-Thanks again,
-Mike
+- Akira
