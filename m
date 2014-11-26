@@ -1,39 +1,84 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-bufio: fix memleak when using a dm_buffer's
-	inline bio
-Date: Wed, 26 Nov 2014 10:09:08 -0500
-Message-ID: <20141126150908.GB30136@redhat.com>
-References: <20141126014515.GE10050@birch.djwong.org>
-	<20141126034103.GA26585@redhat.com>
-	<20141126040008.GF10050@birch.djwong.org>
-	<20141126142832.GB29855@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: dm-writeboost: About inclusion into mainline
+Date: Wed, 26 Nov 2014 10:28:43 -0500
+Message-ID: <20141126152843.GC30136@redhat.com>
+References: <5475EB77.3050004@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20141126142832.GB29855@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+In-Reply-To: <5475EB77.3050004@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Akira Hayakawa <ruby.wktk@gmail.com>
+Cc: dm-devel@redhat.com, gregkh@linuxfoundation.org, masami.hiramatsu@gmail.com, linux-kernel@vger.kernel.org, corbet@lwn.net
 List-Id: dm-devel.ids
 
-On Wed, Nov 26 2014 at  9:28am -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Wed, Nov 26 2014 at 10:02am -0500,
+Akira Hayakawa <ruby.wktk@gmail.com> wrote:
 
+> Hi,
 > 
-> But in the context of bufio's embedded bio, using .bi_private seems
-> fine.  Just needs a comment.  I'll fixup and get your patch staged (and
-> will CC stable).
+> I am wondering what's the next step of dm-writeboost, my log-structured SSD-caching driver.
+> I want to discuss this.
+> 
+> I will start from introducing my activity on dm-writeboost.
+> It was more than a year ago that I proposed my dm-writeboost for staging.
+> Mike Snitzer, a maintainer of device-mapper, rejected it because dm-writeboost at that moment wasn't even suitable for staging.
+> (http://www.redhat.com/archives/dm-devel/2013-September/msg00075.html)
+> It is clear that the comment was really right. The code was actually terrible.
+> Since then, with helps of DM guys, dm-writeboost's design and implementation has been polished.
+> And it was included into Joe's linux-2.6 where he develops his drivers.
+> (https://github.com/jthornber/linux-2.6/tree/thin-dev/drivers/md)
+> I found some bugs and fixed them after this inclusion. I am confident the quality is good enough for staging.
+> 
+> Now, I can't find the way how I go over the wall.
+> It seems that third party drivers are rarely merged into the md.
+> The fact is, no third party driver (meaning proposed by other than RH) was included since I am involved with device-mapper, for 2 years.
+> I am really afraid dm-writeboost will never be into the md ever after.
+> 
+> In one sense, this sounds too conservative. New features are always rejected. As a result, third party developers, including me, are losing their willingness.
 
-Staged for 3.19, see:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-3.19&id=c370192f925cf34280c7f6257e86dd79f79529d6
+You're painting with a really wide-brush here.  Both dm-verity and
+dm-switch started out as targets from 3rd party developers (Google and
+Dell/Equallogic respectively).  But while their feature was needed their
+implementation was lacking, so Mikulas rewrote them before they were
+included.
+
+But yes, in general, I need to do better about getting to
+review/inclusion of 3rd party DM targets.  I have my hands full
+maintaining what DM targets we already have (not to mention DM core
+itself).
+
+It isn't just full targets (like DM dedup or DM lightnvm) that need
+proper review.  It is also DM core changes like adding blk-mq support to
+request-based DM.  Those changes are very much on my TODO.  DM dedup and
+the blk-mq changes near the top!
+
+But as you can see from what I've staged for 3.19 inclusion I haven't
+been sitting around idle:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-for-3.19
+
+Though you'll note that the focus of development has been on improving
+both DM thinp and DM cache (and DM core as needed).  Those targets are
+the bread winners from my perspective (lots of consumers and need for
+enterprise stability).
+
+All said, I _should_ be able to dedicate time to my backlog of DM review
+tasks the first few weeks of Decemeber.  But sadly that doesn't include
+time for dm-writeboost yet.
+
+> As you know, developing driver is a hard work and spend lot of
+> time. Actually, I spent hundreds or thousands of my private hours on
+> my driver (hoping that my driver will be included and become famous)
+> but I am almost giving up dm-writeboost if it has no hope. I know,
+> storage softwares should become safe-side but I also know that
+> willingness is the only key for non-paid development.
+
+If you're looking for fame you're developing the wrong software.  You're
+working on a well-worn software layer.
+
+Upstream has both dm-cache and bcache.  Please demonstrate that
+dm-writeboost offers an advantage over either of these already upstream
+caching solutions with at least _some_ convincing benchmark data.
+
+Mike
