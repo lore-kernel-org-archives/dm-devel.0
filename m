@@ -1,73 +1,37 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: Some thoughts about providing data block checksumming for ext4
-Date: Wed, 26 Nov 2014 16:39:23 -0800
-Message-ID: <20141127003923.GQ10043@birch.djwong.org>
-References: <20141103233308.GA27842@thunk.org>
- <20141126234706.GN10043@birch.djwong.org>
- <20141127000722.GA310@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20141127000722.GA310@redhat.com>
-Sender: linux-ext4-owner@vger.kernel.org
+From: Erez Zadok <ezk@fsl.cs.sunysb.edu>
+Subject: Re: [PATCH RFCv2 01/10] dm-dedup: main data structures
+Date: Wed, 26 Nov 2014 11:36:06 -0500
+Message-ID: <A29EA256-362D-43EC-ABF5-FB10644E6DF1@fsl.cs.sunysb.edu>
+References: <53ffb64d.c58d320a.14c8.1413@mx.google.com>
+	<20140926152416.GA4464@redhat.com>
+	<CAFTzLMP07qBzEBaaOuFQvi0W219YqLpz8epWdMLO36Sj8gBJoQ@mail.gmail.com>
+	<CAFTzLMNJ7=zc-qTcLY_BLQPRD4hiJYUAvs_AHgTgxsfg3Bb49Q@mail.gmail.com>
+	<20141017174251.GA25948@redhat.com>
+	<20141126153834.GD30136@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0 (Mac OS X Mail 8.1 \(1993\))
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20141126153834.GD30136@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Theodore Ts'o <tytso@mit.edu>, dm-devel@redhat.com, linux-ext4@vger.kernel.org
+Cc: Vasily Tarasov <tarasov@vasily.name>, Joe Thornber <thornber@redhat.com>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Shilane Philip <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Vivek Goyal <vgoyal@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 26, 2014 at 07:07:22PM -0500, Mike Snitzer wrote:
-> On Wed, Nov 26 2014 at  6:47pm -0500,
-> Darrick J. Wong <darrick.wong@oracle.com> wrote:
-> 
-> > Sigh...
-> > 
-> > Well, I wrote up a preliminary version of dm-checksum and then
-> > realized that I've pretty much just built a crappier version of
-> > dm-dedupe, but without the dedupe part.  Given that it stores
-> > checksums in a btree which claims to be robust through failures and
-> > gives us automatic deduplication, I wonder if it we could achieve our
-> > aims by modifying dm-dedupe to verify the checksums on the read path?
-> > 
-> > I guess it would be interesting to see how bad the performance hit is
-> > with the online dedupe part enabled or disabled.  dm-dedupe v2 went
-> > out on the mailing list last August, which I missed. :(
-> > 
-> > Unless... there's a specific reason nobody mentioned dm-dedupe here?
-> 
-> As you may have seen in the dm-dedup thread, we need to actively
-> review/test that target
-
-It was in fact today's exchange on that thread that made me slap myself on
-the forehead and utter "D'oh!".
-
-> (if your initial review focus is on extending it
-> to _optionally_ verify the checksums on the read path then so be it).
-
-Yes, sorry, I meant to say "optionally to verify" in there.  Adding a minor
-feature like that might be a good check to make sure I actually understand
-what's going on. :)
-
-> See: https://www.redhat.com/archives/dm-devel/2014-November/msg00114.html
-> Specifically, the git branch that builds on v2 based on my initial
-> review of v2:
-> 
-> git://git.fsl.cs.stonybrook.edu/scm/git/linux-dmdedup
-> branch: dm-dedup-devel
-> 
-> Your help on getting dm-dedup upstream would be very much appreciated.
-
-<-- reading the OLS paper, as a start.  What happens to the metadata btree if
-someone sets the chunk size to 4KB?  Will it become ungainly huge?  The thing
-that I wrote simply wrote a block's worth of checksums inline with the data,
-which required a certain amount of slicing and dicing of bios but wasn't too
-horrible with performance.
-
---D
-
-> 
-> Thanks,
-> Mike
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-ext4" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+TWlrZSwgVml2ZWssCgpUaGFuayB5b3UgZm9yIHRoZSBlZmZvcnQgYW5kIGVzcGVjaWFsbHkgZm9y
+IGFkZGluZyBtb3JlIG1hbi1wb3dlciB0byB0aGlzIHJldmlldy4gIFdlIGtub3cgaG93IGJ1c3kg
+eW91IGd1eXMgYXJlIHNvIGl04oCZcyB1bmRlcnN0YW5kYWJsZSB0aGF0IHRoaW5ncyBjYW4gdGFr
+ZSBhIHdoaWxlIHRvIGdldCBzdGFydGVkLiAgRWl0aGVyIHdheSwgSeKAmXZlIGluc3RydWN0ZWQg
+bXkgc3R1ZGVudHMgdG8gZ2l2ZSB0aGlzIHByb2plY3QgdGhlIGhpZ2hlc3QgcHJpb3JpdHksIGVz
+cGVjaWFsbHkgb25jZSB3ZSByZWNlaXZlIGNvbW1lbnRzIGZyb20geW91LgoKU2luY2VyZWx5LApF
+cmV6LgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBz
+Oi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
