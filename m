@@ -1,64 +1,111 @@
-From: Vasily Tarasov <tarasov@vasily.name>
-Subject: Re: [PATCH RFCv2 01/10] dm-dedup: main data structures
-Date: Wed, 26 Nov 2014 13:35:34 -0500
-Message-ID: <CAFTzLMOtPggp_V1WVR1JTBNhvYFcn9bBhCVjza6uTF+RZ-ZtwQ@mail.gmail.com>
-References: <53ffb64d.c58d320a.14c8.1413@mx.google.com>
-	<20140926152416.GA4464@redhat.com>
-	<CAFTzLMP07qBzEBaaOuFQvi0W219YqLpz8epWdMLO36Sj8gBJoQ@mail.gmail.com>
-	<CAFTzLMNJ7=zc-qTcLY_BLQPRD4hiJYUAvs_AHgTgxsfg3Bb49Q@mail.gmail.com>
-	<20141017174251.GA25948@redhat.com>
-	<20141126153834.GD30136@redhat.com>
-	<A29EA256-362D-43EC-ABF5-FB10644E6DF1@fsl.cs.sunysb.edu>
-	<20141126164717.GA30610@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: virtio_blk: fix defaults for max_hw_sectors and max_segment_size
+Date: Wed, 26 Nov 2014 12:48:42 -0700
+Message-ID: <54762E9A.2070007@kernel.dk>
+References: <20141120190058.GA31214@redhat.com> <20141121095456.GB8866@infradead.org> <20141121154920.GA7644@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20141126164717.GA30610@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Joe Thornber <thornber@redhat.com>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Shilane Philip <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>, Vivek Goyal <vgoyal@redhat.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20141121154920.GA7644@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>
+Cc: martin.petersen@oracle.com, mst@redhat.com, rusty@rustcorp.com.au, linux-kernel@vger.kernel.org, qemu-devel@nongnu.org, dm-devel@redhat.com, Paolo Bonzini <pbonzini@redhat.com>
 List-Id: dm-devel.ids
 
-SGkgTWlrZSwgVml2ZWssCgpTb3VuZHMgZ29vZCwgdGhhbmtzIGZvciBsb29raW5nIGludG8gdGhp
-cyEKCkF0IHRoaXMgcG9pbnQgd2UgZG9uJ3QgaGF2ZSBhIGRlZHVwX2NoZWNrZXIuIENvdWxkIHlv
-dSBjbGFyaWZ5IGEgYml0Cm9uIHRoZSBtYWluIHVzZSBjYXNlIGZvciBhIGNoZWtlcj8gU3VkZGVu
-IHBvd2VyIGxvc3Mgb3IgYWNjaWRlbnRhbApjb3JydXB0aW9uIG9mIG1ldGFkYXRhLyBkYXRhIGRl
-dmljZXM/CgpJbiBkbS1kZWR1cCwgbWV0YWRhdGEgaXMgc3RvcmVkIHVzaW5nIGRtJ3MgcGVyc2lz
-dGVudC1kYXRhIGxpYnJhcnkKKENPVyBCLXRyZWVzKS4gRGF0YSBibG9ja3MgYXJlIHdyaXR0ZW4g
-YXN5bmNocm9ub3VzbHkgd2l0aCBtZXRhLWRhdGEKYnV0IGFsbG9jYXRlZCBzZXF1ZW50aWFsbHku
-IFNvLCB0aGVvcmV0aWNhbGx5LCBvbiBhIHN1ZGRlbiBwb3dlciBsb3NzCnRoZSBzdGF0ZSBvZiBh
-IGRtLWRlZHVwIHNob3VsZCByZW1haW4gY29uc2lzdGVudC4KCkJ1dCBpZiBzb21lYm9keSBjb3Jy
-dXB0cyBtZXRhZGF0YS9kYXRhIGRldmljZXMgbWFudWFsbHkgdGhlIGNoZWNrZXIKd2lsbCBoZWxw
-LiBJcyBpdCB0aGUgbWFpbiB1c2UgY2FzZT8KCldlJ2xsIGRlZmluaXRlbHkgdGFrZSBhIGxvb2sg
-aW50byB0aGUgdmVyaWZpZXIncyBjb2RlIGZvciB0aGluIGFuZApjYWNoZSB0YXJnZXRzIGFuZCBz
-ZWUgaG93IHRoaXMgYXBwbGllcyB0byBkbS1kZWR1cC4KClRoYW5rcywKVmFzaWx5CgpPbiBXZWQs
-IE5vdiAyNiwgMjAxNCBhdCAxMTo0NyBBTSwgTWlrZSBTbml0emVyIDxzbml0emVyQHJlZGhhdC5j
-b20+IHdyb3RlOgo+IE9uIFdlZCwgTm92IDI2IDIwMTQgYXQgMTE6MzZhbSAtMDUwMCwKPiBFcmV6
-IFphZG9rIDxlemtAZnNsLmNzLnN1bnlzYi5lZHU+IHdyb3RlOgo+Cj4+IE1pa2UsIFZpdmVrLAo+
-Pgo+PiBUaGFuayB5b3UgZm9yIHRoZSBlZmZvcnQgYW5kIGVzcGVjaWFsbHkgZm9yIGFkZGluZyBt
-b3JlIG1hbi1wb3dlciB0bwo+PiB0aGlzIHJldmlldy4gIFdlIGtub3cgaG93IGJ1c3kgeW91IGd1
-eXMgYXJlIHNvIGl04oCZcyB1bmRlcnN0YW5kYWJsZQo+PiB0aGF0IHRoaW5ncyBjYW4gdGFrZSBh
-IHdoaWxlIHRvIGdldCBzdGFydGVkLiAgRWl0aGVyIHdheSwgSeKAmXZlCj4+IGluc3RydWN0ZWQg
-bXkgc3R1ZGVudHMgdG8gZ2l2ZSB0aGlzIHByb2plY3QgdGhlIGhpZ2hlc3QgcHJpb3JpdHksCj4+
-IGVzcGVjaWFsbHkgb25jZSB3ZSByZWNlaXZlIGNvbW1lbnRzIGZyb20geW91Lgo+Cj4gR3JlYXQu
-ICBTbyBhbG9uZyB0aG9zZSBsaW5lcyBoYXZlIHlvdSBndXlzIHdvcmtlZCBvbiB1c2Vyc3BhY2Ug
-dG9vbHMKPiB0aGF0IGNhbiB2ZXJpZnkvcmVwYWlyIHRoZSBvbmRpc2sgbWV0YWRhdGE/Cj4KPiBU
-aGF0IHdpbGwgYmUgYSBwcmVyZXEgZm9yIHVwc3RyZWFtIGluY2x1c2lvbiAoYXQgbGVhc3QgZm9y
-IGRtLWRlZHVwIHRvCj4gYmVjb21lIGFueXRoaW5nIGJ1dCAiZXhwZXJpbWVudGFsIikuCj4KPiBk
-bS1jYWNoZSBhbmQgZG0tdGhpbiB0YXJnZXRzIGhhdmUgdGhlc2UgdHlwZXMgb2YgdG9vbHMKPiAo
-dGhpbl97Y2hlY2sscmVwYWlyfSwgY2FjaGVfe2NoZWNrLHJlcGFpcn0sIGV0YykuICBVcHN0cmVh
-bSByZXBvIGlzIGhlcmUKPiAobWlzbmFtZWQsIGdldHMgcGFja2FnZWQgaW50byBkZXZpY2UtbWFw
-cGVyLXBlcnNpc3RlbnQtZGF0YSBycG0gb24KPiBGZWRvcmEsIFJIRUwsIENlbnRPUywgZXRjKToK
-PiBodHRwczovL2dpdGh1Yi5jb20vanRob3JuYmVyL3RoaW4tcHJvdmlzaW9uaW5nLXRvb2xzCj4K
-PiBNaWtlCj4KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0
-dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 11/21/2014 08:49 AM, Mike Snitzer wrote:
+> On Fri, Nov 21 2014 at  4:54am -0500,
+> Christoph Hellwig <hch@infradead.org> wrote:
+> 
+>> On Thu, Nov 20, 2014 at 02:00:59PM -0500, Mike Snitzer wrote:
+>>> virtio_blk incorrectly established -1U as the default for these
+>>> queue_limits.  Set these limits to sane default values to avoid crashing
+>>> the kernel.  But the virtio-blk protocol should probably be extended to
+>>> allow proper stacking of the disk's limits from the host.
+>>>
+>>> This change fixes a crash that was reported when virtio-blk was used to
+>>> test linux-dm.git commit 604ea90641b4 ("dm thin: adjust max_sectors_kb
+>>> based on thinp blocksize") that will initially set max_sectors to
+>>> max_hw_sectors and then rounddown to the first power-of-2 factor of the
+>>> DM thin-pool's blocksize.  Basically that commit assumes drivers don't
+>>> suck when establishing max_hw_sectors so it acted like a canary in the
+>>> coal mine.
+>>
+>> Is that a crash in the host or guest?  What kind of mishandling did you
+>> see?  Unless the recent virtio standard changed anything the host
+>> should be able to handle our arbitrary limits, and even if it doesn't
+>> that something we need to hash out with qemu and the virtio standards
+>> folks.
+> 
+> Some good news: this guest crash isn't an issue with recent kernels (so
+> upstream, fedora 20, RHEL7, etc aren't impacted -- Jens feel free to
+> drop my virtio_blk patch; even though some of it's limits are clearly
+> broken I'll defer to the virtio_blk developers on the best way forward
+> -- sorry for the noise!).
+> 
+> The BUG I saw only seems to impact RHEL6 kernels so far (note to self,
+> actually _test_ on upstream before reporting a crash against upstream!)
+> 
+> [root@RHEL-6 ~]# echo 1073741824 > /sys/block/vdc/queue/max_sectors_kb
+> [root@RHEL-6 ~]# lvs
+> 
+> Message from syslogd@RHEL-6 at Nov 21 15:32:15 ...
+>  kernel:Kernel panic - not syncing: Fatal exception
+> 
+> Here is the RHEL6 guest crash, just for full disclosure:
+> 
+> kernel BUG at fs/direct-io.c:696!
+> invalid opcode: 0000 [#1] SMP
+> last sysfs file: /sys/devices/virtual/block/dm-4/dev
+> CPU 0
+> Modules linked in: nfs lockd fscache auth_rpcgss nfs_acl sunrpc ipv6 ext2 dm_thin_pool dm_bio_prison dm_persistent_data dm_bufio libcrc32c dm_mirror dm_region_hash dm_log dm_mod microcode virtio_balloon i2c_piix4 i2c_core virtio_net ext4 jbd2 mbcache virtio_blk virtio_pci virtio_ring virtio pata_acpi ata_generic ata_piix [last unloaded: speedstep_lib]
+> 
+> Pid: 1679, comm: lvs Not tainted 2.6.32 #6 Bochs Bochs
+> RIP: 0010:[<ffffffff811ce336>]  [<ffffffff811ce336>] __blockdev_direct_IO_newtrunc+0x986/0x1270
+> RSP: 0018:ffff88011a11ba48  EFLAGS: 00010287
+> RAX: 0000000000000000 RBX: ffff8801192fbd28 RCX: 0000000000001000
+> RDX: ffffea0003b3d218 RSI: ffff88011aac4300 RDI: ffff880118572378
+> RBP: ffff88011a11bbe8 R08: 0000000000000000 R09: 0000000000000000
+> R10: 0000000000000000 R11: 0000000000000000 R12: ffff8801192fbd00
+> R13: 0000000000000000 R14: ffff880118c3cac0 R15: 0000000000000000
+> FS:  00007fde78bc37a0(0000) GS:ffff880028200000(0000) knlGS:0000000000000000
+> CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+> CR2: 00000000012706f0 CR3: 000000011a432000 CR4: 00000000000407f0
+> DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+> DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+> Process lvs (pid: 1679, threadinfo ffff88011a11a000, task ffff8801185a4aa0)
+> Stack:
+>  ffff88011a11bb48 ffff88011a11baa8 ffff88010000000c ffff88011a11bb18
+> <d> 0000000000000000 0000000000000000 ffff88011a11bdc8 ffff88011a11beb8
+> <d> 0000000c1a11baa8 ffff880118c3cb98 0000000000000000 0000000018c3ccb8
+> Call Trace:
+>  [<ffffffff811c9e90>] ? blkdev_get_block+0x0/0x20
+>  [<ffffffff811cec97>] __blockdev_direct_IO+0x77/0xe0
+>  [<ffffffff811c9e90>] ? blkdev_get_block+0x0/0x20
+>  [<ffffffff811caf17>] blkdev_direct_IO+0x57/0x60
+>  [<ffffffff811c9e90>] ? blkdev_get_block+0x0/0x20
+>  [<ffffffff8112619b>] generic_file_aio_read+0x6bb/0x700
+>  [<ffffffff811cba60>] ? blkdev_get+0x10/0x20
+>  [<ffffffff811cba70>] ? blkdev_open+0x0/0xc0
+>  [<ffffffff8118af4f>] ? __dentry_open+0x23f/0x360
+>  [<ffffffff811ca2d1>] blkdev_aio_read+0x51/0x80
+>  [<ffffffff8118dc6a>] do_sync_read+0xfa/0x140
+>  [<ffffffff8109eaf0>] ? autoremove_wake_function+0x0/0x40
+>  [<ffffffff811ca22c>] ? block_ioctl+0x3c/0x40
+>  [<ffffffff811a34c2>] ? vfs_ioctl+0x22/0xa0
+>  [<ffffffff811a3664>] ? do_vfs_ioctl+0x84/0x580
+>  [<ffffffff8122cee6>] ? security_file_permission+0x16/0x20
+>  [<ffffffff8118e625>] vfs_read+0xb5/0x1a0
+>  [<ffffffff8118e761>] sys_read+0x51/0x90
+>  [<ffffffff810e5aae>] ? __audit_syscall_exit+0x25e/0x290
+>  [<ffffffff8100b072>] system_call_fastpath+0x16/0x1b
+> Code: fe ff ff c7 85 fc fe ff ff 00 00 00 00 48 89 95 10 ff ff ff 8b 95 34 ff ff ff e8 46 ac ff ff 3b 85 34 ff ff ff 0f 84 fc 02 00 00 <0f> 0b eb fe 8b 9d 34 ff ff ff 8b 85 30 ff ff ff 01 d8 85 c0 0f
+> RIP  [<ffffffff811ce336>] __blockdev_direct_IO_newtrunc+0x986/0x1270
+>  RSP <ffff88011a11ba48>
+> ---[ end trace 73be5dcaf8939399 ]---
+> Kernel panic - not syncing: Fatal exception
+
+That code isn't even in mainline, as far as I can tell...
+
+-- 
+Jens Axboe
