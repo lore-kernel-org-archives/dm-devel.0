@@ -1,71 +1,83 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: virtio_blk: fix defaults for max_hw_sectors and max_segment_size
-Date: Wed, 26 Nov 2014 09:10:59 -0500
-Message-ID: <20141126141058.GA29855@redhat.com>
-References: <20141120190058.GA31214@redhat.com>
- <20141120203044.GA9078@redhat.com>
- <20141120211521.GA846@redhat.com>
- <87bnnuy03g.fsf@rustcorp.com.au>
+Subject: Re: dm-bufio: fix memleak when using a dm_buffer's inline bio
+Date: Wed, 26 Nov 2014 09:28:32 -0500
+Message-ID: <20141126142832.GB29855@redhat.com>
+References: <20141126014515.GE10050@birch.djwong.org>
+ <20141126034103.GA26585@redhat.com>
+ <20141126040008.GF10050@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <87bnnuy03g.fsf@rustcorp.com.au>
+In-Reply-To: <20141126040008.GF10050@birch.djwong.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Rusty Russell <rusty@rustcorp.com.au>
-Cc: "Michael S. Tsirkin" <mst@redhat.com>, axboe@kernel.dk, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, hch@infradead.org, dm-devel@redhat.com
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 26 2014 at 12:58am -0500,
-Rusty Russell <rusty@rustcorp.com.au> wrote:
+On Tue, Nov 25 2014 at 11:00pm -0500,
+Darrick J. Wong <darrick.wong@oracle.com> wrote:
 
-> Mike Snitzer <snitzer@redhat.com> writes:
-> > On Thu, Nov 20 2014 at  3:30pm -0500,
-> > Michael S. Tsirkin <mst@redhat.com> wrote:
-> >
-> >> On Thu, Nov 20, 2014 at 02:00:59PM -0500, Mike Snitzer wrote:
-> >> > virtio_blk incorrectly established -1U as the default for these
-> >> > queue_limits.  Set these limits to sane default values to avoid crashing
-> >> > the kernel.
-> > ...
-> >> > Attempting to mkfs.xfs against a thin device from this thin-pool quickly
-> >> > resulted in fs/direct-io.c:dio_send_cur_page()'s BUG_ON.
-> >> 
-> >> Why exactly does it BUG_ON?
-> >> Did some memory allocation fail?
-> >
-> > No idea, kernel log doesn't say.. all it has is "kernel BUG" pointing to
-> > fs/direct-io.c:dio_send_cur_page()'s BUG_ON.
-> >
-> > I could dig deeper on _why_ but honestly, there really isn't much point.
+> On Tue, Nov 25, 2014 at 10:41:04PM -0500, Mike Snitzer wrote:
+> > On Tue, Nov 25 2014 at  8:45pm -0500,
+> > Darrick J. Wong <darrick.wong@oracle.com> wrote:
+> > 
+> > > When dm-bufio sets out to use the bio built into a struct dm_buffer to
+> > > issue an IO, it needs to call bio_reset after it's done with the bio
+> > > so that we can free things attached to the bio such as the integrity
+> > > payload.  Therefore, inject our own endio callback to take care of
+> > > the bio_reset after calling submit_io's end_io callback.
+> > > 
+> > > Test case:
+> > > 1. modprobe scsi_debug delay=0 dif=1 dix=199 ato=1 dev_size_mb=300
+> > > 2. Set up a dm-bufio client, e.g. dm-verity, on the scsi_debug device
+> > > 3. Repeatedly read metadata and watch kmalloc-192 leak!
+> > > 
+> > > Fix is against 3.18-rc6.
+> > > 
+> > > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+> > 
+> > Thanks for reporting/fixing this.
+> > 
+> > Alternatively I think we could just call bio_reset() in submit_io(),
+> > e.g.:
+> > 
+> > diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+> > index afe7971..e7036e3 100644
+> > --- a/drivers/md/dm-bufio.c
+> > +++ b/drivers/md/dm-bufio.c
+> > @@ -579,6 +579,8 @@ static void submit_io(struct dm_buffer *b, int rw, sector_t block,
+> >  	if (rw == WRITE && b->c->write_callback)
+> >  		b->c->write_callback(b);
+> >  
+> > +	bio_reset(&b->bio);
+> > +
+> >  	if (b->c->block_size <= DM_BUFIO_INLINE_VECS * PAGE_SIZE &&
+> >  	    b->data_mode != DATA_MODE_VMALLOC)
+> >  		use_inline_bio(b, rw, block, end_io);
+> > 
+> > What do you think?
 > 
-> There is *always* a point in understanding the code you are modifying.
-
-Yes, I agree (and understanding the BUG in question will be pursued).
-But in the context of the patch I proposed it was irrelevent.
-virtio-blk still _should_ fix its limits to reflect those of the block
-device it stacks on.  My patch was a stop-gap until proper virtio-blk
-protocol extensions were added.  But you don't seem inclined to care.
-
-> > virtio-blk doesn't get to live in fantasy-land just because it happens
-> > to think it is limitless.
+> I decided to call bio_reset after calling end_io so that we can free
+> the integrity buffer as soon as we're done with the bio.  Calling
+> bio_reset just prior to the next submit_bio as this snippet does means
+> that the integrity buffer remains attached to the bio until just
+> before the next submit_bio call, which could be a while.
 > 
-> Calm down please.
+> Also, I think use_dmio results in a new bio being used instead of the
+> bio embedded in the dm_buffer, so it shouldn't be necessary to reset
+> the bio if the previous IO had use_dmio'd.
 
-Sure, but it'd have helped if virtio-blk developers demonstrated
-acknowledgement that a stacking block driver should stack the limits of
-the underlying device.  Instead you decided to trim all related portions
-of my reply to mst that were measured and helpful.
+OK, yeah, a new embedded bio is created as a side-effect of allocating a
+new dm_buffer.  So we have to use bi_end_io like you've done.
 
-> We don't have a sector limit.  We have a segment limit, which is set
-> above this line.
+I didn't like seeing your use of .bi_private (because in the context of
+bios that are passed into DM: .bi_private must always be preserved so as
+not to break upper layers of the IO stack that might be using it).
 
-Then at a minimum max_hw_sectors should reflect that segment limit.
+But in the context of bufio's embedded bio, using .bi_private seems
+fine.  Just needs a comment.  I'll fixup and get your patch staged (and
+will CC stable).
 
-But again, the underlying device has limits that should be stacked up.
-Why is that irrelevent to virtio-blk?  Plus, this is a matter of not
-allowing a user to shoot themselves in the foot by fiddling with
-traditional block limits only to find in some kernel (*cough* RHEL6)
-they result in BUG.
-
+Thanks again,
 Mike
