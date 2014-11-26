@@ -1,49 +1,100 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH RFCv2 01/10] dm-dedup: main data structures
-Date: Wed, 26 Nov 2014 11:47:18 -0500
-Message-ID: <20141126164717.GA30610@redhat.com>
-References: <53ffb64d.c58d320a.14c8.1413@mx.google.com>
-	<20140926152416.GA4464@redhat.com>
-	<CAFTzLMP07qBzEBaaOuFQvi0W219YqLpz8epWdMLO36Sj8gBJoQ@mail.gmail.com>
-	<CAFTzLMNJ7=zc-qTcLY_BLQPRD4hiJYUAvs_AHgTgxsfg3Bb49Q@mail.gmail.com>
-	<20141017174251.GA25948@redhat.com>
-	<20141126153834.GD30136@redhat.com>
-	<A29EA256-362D-43EC-ABF5-FB10644E6DF1@fsl.cs.sunysb.edu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [dm-devel] dm-bufio: fix memleak when using a dm_buffer's inline
+ bio
+Date: Wed, 26 Nov 2014 09:28:42 -0800
+Message-ID: <20141126172842.GG10050@birch.djwong.org>
+References: <20141126014515.GE10050@birch.djwong.org>
+ <20141126034103.GA26585@redhat.com>
+ <20141126040008.GF10050@birch.djwong.org>
+ <20141126142832.GB29855@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <A29EA256-362D-43EC-ABF5-FB10644E6DF1@fsl.cs.sunysb.edu>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Erez Zadok <ezk@fsl.cs.sunysb.edu>
-Cc: Vasily Tarasov <tarasov@vasily.name>, Joe Thornber <thornber@redhat.com>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Shilane Philip <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Vivek Goyal <vgoyal@redhat.com>
+In-Reply-To: <20141126142832.GB29855@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCBOb3YgMjYgMjAxNCBhdCAxMTozNmFtIC0wNTAwLApFcmV6IFphZG9rIDxlemtAZnNs
-LmNzLnN1bnlzYi5lZHU+IHdyb3RlOgoKPiBNaWtlLCBWaXZlaywKPiAKPiBUaGFuayB5b3UgZm9y
-IHRoZSBlZmZvcnQgYW5kIGVzcGVjaWFsbHkgZm9yIGFkZGluZyBtb3JlIG1hbi1wb3dlciB0bwo+
-IHRoaXMgcmV2aWV3LiAgV2Uga25vdyBob3cgYnVzeSB5b3UgZ3V5cyBhcmUgc28gaXTigJlzIHVu
-ZGVyc3RhbmRhYmxlCj4gdGhhdCB0aGluZ3MgY2FuIHRha2UgYSB3aGlsZSB0byBnZXQgc3RhcnRl
-ZC4gIEVpdGhlciB3YXksIEnigJl2ZQo+IGluc3RydWN0ZWQgbXkgc3R1ZGVudHMgdG8gZ2l2ZSB0
-aGlzIHByb2plY3QgdGhlIGhpZ2hlc3QgcHJpb3JpdHksCj4gZXNwZWNpYWxseSBvbmNlIHdlIHJl
-Y2VpdmUgY29tbWVudHMgZnJvbSB5b3UuCgpHcmVhdC4gIFNvIGFsb25nIHRob3NlIGxpbmVzIGhh
-dmUgeW91IGd1eXMgd29ya2VkIG9uIHVzZXJzcGFjZSB0b29scwp0aGF0IGNhbiB2ZXJpZnkvcmVw
-YWlyIHRoZSBvbmRpc2sgbWV0YWRhdGE/CgpUaGF0IHdpbGwgYmUgYSBwcmVyZXEgZm9yIHVwc3Ry
-ZWFtIGluY2x1c2lvbiAoYXQgbGVhc3QgZm9yIGRtLWRlZHVwIHRvCmJlY29tZSBhbnl0aGluZyBi
-dXQgImV4cGVyaW1lbnRhbCIpLgoKZG0tY2FjaGUgYW5kIGRtLXRoaW4gdGFyZ2V0cyBoYXZlIHRo
-ZXNlIHR5cGVzIG9mIHRvb2xzCih0aGluX3tjaGVjayxyZXBhaXJ9LCBjYWNoZV97Y2hlY2sscmVw
-YWlyfSwgZXRjKS4gIFVwc3RyZWFtIHJlcG8gaXMgaGVyZQoobWlzbmFtZWQsIGdldHMgcGFja2Fn
-ZWQgaW50byBkZXZpY2UtbWFwcGVyLXBlcnNpc3RlbnQtZGF0YSBycG0gb24KRmVkb3JhLCBSSEVM
-LCBDZW50T1MsIGV0Yyk6Cmh0dHBzOi8vZ2l0aHViLmNvbS9qdGhvcm5iZXIvdGhpbi1wcm92aXNp
-b25pbmctdG9vbHMKCk1pa2UKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
-YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Wed, Nov 26, 2014 at 09:28:32AM -0500, Mike Snitzer wrote:
+> On Tue, Nov 25 2014 at 11:00pm -0500,
+> Darrick J. Wong <darrick.wong@oracle.com> wrote:
+> 
+> > On Tue, Nov 25, 2014 at 10:41:04PM -0500, Mike Snitzer wrote:
+> > > On Tue, Nov 25 2014 at  8:45pm -0500,
+> > > Darrick J. Wong <darrick.wong@oracle.com> wrote:
+> > > 
+> > > > When dm-bufio sets out to use the bio built into a struct dm_buffer to
+> > > > issue an IO, it needs to call bio_reset after it's done with the bio
+> > > > so that we can free things attached to the bio such as the integrity
+> > > > payload.  Therefore, inject our own endio callback to take care of
+> > > > the bio_reset after calling submit_io's end_io callback.
+> > > > 
+> > > > Test case:
+> > > > 1. modprobe scsi_debug delay=0 dif=1 dix=199 ato=1 dev_size_mb=300
+> > > > 2. Set up a dm-bufio client, e.g. dm-verity, on the scsi_debug device
+> > > > 3. Repeatedly read metadata and watch kmalloc-192 leak!
+> > > > 
+> > > > Fix is against 3.18-rc6.
+> > > > 
+> > > > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+> > > 
+> > > Thanks for reporting/fixing this.
+> > > 
+> > > Alternatively I think we could just call bio_reset() in submit_io(),
+> > > e.g.:
+> > > 
+> > > diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+> > > index afe7971..e7036e3 100644
+> > > --- a/drivers/md/dm-bufio.c
+> > > +++ b/drivers/md/dm-bufio.c
+> > > @@ -579,6 +579,8 @@ static void submit_io(struct dm_buffer *b, int rw, sector_t block,
+> > >  	if (rw == WRITE && b->c->write_callback)
+> > >  		b->c->write_callback(b);
+> > >  
+> > > +	bio_reset(&b->bio);
+> > > +
+> > >  	if (b->c->block_size <= DM_BUFIO_INLINE_VECS * PAGE_SIZE &&
+> > >  	    b->data_mode != DATA_MODE_VMALLOC)
+> > >  		use_inline_bio(b, rw, block, end_io);
+> > > 
+> > > What do you think?
+> > 
+> > I decided to call bio_reset after calling end_io so that we can free
+> > the integrity buffer as soon as we're done with the bio.  Calling
+> > bio_reset just prior to the next submit_bio as this snippet does means
+> > that the integrity buffer remains attached to the bio until just
+> > before the next submit_bio call, which could be a while.
+> > 
+> > Also, I think use_dmio results in a new bio being used instead of the
+> > bio embedded in the dm_buffer, so it shouldn't be necessary to reset
+> > the bio if the previous IO had use_dmio'd.
+> 
+> OK, yeah, a new embedded bio is created as a side-effect of allocating a
+> new dm_buffer.  So we have to use bi_end_io like you've done.
+> 
+> I didn't like seeing your use of .bi_private (because in the context of
+> bios that are passed into DM: .bi_private must always be preserved so as
+> not to break upper layers of the IO stack that might be using it).
+
+<nod> I hadn't considered that not restoring .bi_private without
+comment would raise eyebrows in a space where the norm is that they
+must always be preserved.  :)
+
+> But in the context of bufio's embedded bio, using .bi_private seems
+> fine.  Just needs a comment.  I'll fixup and get your patch staged (and
+> will CC stable).
+
+The staged patch looks good, thank you!
+
+--D
+
+> 
+> Thanks again,
+> Mike
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
