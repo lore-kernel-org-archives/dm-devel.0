@@ -1,41 +1,113 @@
-From: Dan Carpenter <dan.carpenter@oracle.com>
-Subject: [patch] dm space map metadata: fix sm_bootstrap_get_nr_blocks()
-Date: Sat, 29 Nov 2014 15:50:21 +0300
-Message-ID: <20141129125021.GD27251@mwanda>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <kernel-janitors-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: kernel-janitors-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Joe Thornber <thornber@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, =?iso-8859-1?Q?J=F6rn?= Engel <joern@purestorage.com>, kernel-janitors@vger.kernel.org
+From: Julia Lawall <Julia.Lawall-L2FTfq7BK8M@public.gmane.org>
+Subject: [PATCH 0/8] replace memset by memzero_explicit
+Date: Sun, 30 Nov 2014 17:59:26 +0100
+Message-ID: <1417366774-32412-1-git-send-email-Julia.Lawall@lip6.fr>
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org, kernel-janitors-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-This function isn't right and it causes a static checker warning:
+Memset on a local variable may be removed when it is called just before the
+variable goes out of scope.  Using memzero_explicit defeats this
+optimization.  The complete semantic patch that makes this change is as
+follows: (http://coccinelle.lip6.fr/)
 
-	drivers/md/dm-thin.c:3016 maybe_resize_data_dev()
-	error: potentially using uninitialized 'sb_data_size'.
+// <smpl>
+@@
+identifier x;
+local idexpression e;
+type T,T1;
+@@
 
-It should set "*count" and return zero on success the same as the
-sm_metadata_get_nr_blocks() function does earlier.
+{
+... when any
+T x[...];
+... when any
+    when exists
+(
+e = (T1)x
+|
+e = (T1)&x[0]
+)
+... when any
+    when exists
+- memset
++ memzero_explicit
+  (x,
+-0,
+  ...)
+... when != x
+    when != e
+    when strict
+}
 
-Fixes: 3241b1d3e0aa ('dm: add persistent data library')
-Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
----
-Static checker stuff.  Not tested.
+@@
+identifier i,x;
+local idexpression e;
+type T;
+@@
 
-diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
-index 786b689..f4e22bc 100644
---- a/drivers/md/persistent-data/dm-space-map-metadata.c
-+++ b/drivers/md/persistent-data/dm-space-map-metadata.c
-@@ -564,7 +564,9 @@ static int sm_bootstrap_get_nr_blocks(struct dm_space_map *sm, dm_block_t *count
- {
- 	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
- 
--	return smm->ll.nr_blocks;
-+	*count = smm->ll.nr_blocks;
-+
-+	return 0;
- }
- 
- static int sm_bootstrap_get_nr_free(struct dm_space_map *sm, dm_block_t *count)
+{
+... when any
+struct i x;
+... when any
+    when exists
+e = (T)&x
+... when any
+    when exists
+- memset
++ memzero_explicit
+  (&x,
+-0,
+  ...)
+... when != x
+    when != e
+    when strict
+}
+
+// ------------------------------------------------------------------------
+
+@@
+identifier x;
+type T,T1;
+expression e;
+@@
+
+{
+... when any
+T x[...];
+... when any
+    when exists
+    when != e = (T1)x
+    when != e = (T1)&x[0]
+- memset
++ memzero_explicit
+  (x,
+-0,
+  ...)
+... when != x
+    when strict
+}
+
+@@
+identifier i,x;
+expression e;
+type T;
+@@
+
+{
+... when any
+struct i x;
+... when any
+    when exists
+    when != e = (T)&x
+- memset
++ memzero_explicit
+  (&x,
+-0,
+  ...)
+... when != x
+    when strict
+}
+// </smpl>
