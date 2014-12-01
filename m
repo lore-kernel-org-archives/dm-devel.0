@@ -1,66 +1,46 @@
-From: Julia Lawall <Julia.Lawall@lip6.fr>
-Subject: [PATCH 5/8 v2] dm: replace memset by memzero_explicit
-Date: Sun, 30 Nov 2014 18:03:46 +0100
-Message-ID: <1417367029-32762-6-git-send-email-Julia.Lawall@lip6.fr>
-References: <1417367029-32762-1-git-send-email-Julia.Lawall@lip6.fr>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1417367029-32762-1-git-send-email-Julia.Lawall@lip6.fr>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>
-Cc: kernel-janitors@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [patch] dm space map metadata: fix sm_bootstrap_get_nr_blocks()
+Date: Mon, 1 Dec 2014 13:56:12 +0000
+Message-ID: <20141201135611.GA3151@debian>
+References: <20141129125021.GD27251@mwanda>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <kernel-janitors-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20141129125021.GD27251@mwanda>
+Sender: kernel-janitors-owner@vger.kernel.org
+To: Dan Carpenter <dan.carpenter@oracle.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, =?iso-8859-1?Q?J=F6rn?= Engel <joern@purestorage.com>, kernel-janitors@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Julia Lawall <Julia.Lawall@lip6.fr>
+Ack, thanks.
 
-Memset on a local variable may be removed when it is called just before the
-variable goes out of scope.  Using memzero_explicit defeats this
-optimization.  A simplified version of the semantic patch that makes this
-change is as follows: (http://coccinelle.lip6.fr/)
-
-// <smpl>
-@@
-identifier x;
-type T;
-@@
-
-{
-... when any
-T x[...];
-... when any
-    when exists
-- memset
-+ memzero_explicit
-  (x,
--0,
-  ...)
-... when != x
-    when strict
-}
-// </smpl>
-
-This change was suggested by Daniel Borkmann <dborkman@redhat.com>
-
-Signed-off-by: Julia Lawall <Julia.Lawall@lip6.fr>
-
----
-Daniel Borkmann suggested that these patches could go through Herbert Xu's
-cryptodev tree.
-
-v2: fixed email address
-
- drivers/md/dm-crypt.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index fc93b93..08981be 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -705,7 +705,7 @@ static int crypt_iv_tcw_whitening(struct crypt_config *cc,
- 	for (i = 0; i < ((1 << SECTOR_SHIFT) / 8); i++)
- 		crypto_xor(data + i * 8, buf, 8);
- out:
--	memset(buf, 0, sizeof(buf));
-+	memzero_explicit(buf, sizeof(buf));
- 	return r;
- }
- 
+On Sat, Nov 29, 2014 at 03:50:21PM +0300, Dan Carpenter wrote:
+> This function isn't right and it causes a static checker warning:
+> 
+> 	drivers/md/dm-thin.c:3016 maybe_resize_data_dev()
+> 	error: potentially using uninitialized 'sb_data_size'.
+> 
+> It should set "*count" and return zero on success the same as the
+> sm_metadata_get_nr_blocks() function does earlier.
+> 
+> Fixes: 3241b1d3e0aa ('dm: add persistent data library')
+> Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
+> ---
+> Static checker stuff.  Not tested.
+> 
+> diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
+> index 786b689..f4e22bc 100644
+> --- a/drivers/md/persistent-data/dm-space-map-metadata.c
+> +++ b/drivers/md/persistent-data/dm-space-map-metadata.c
+> @@ -564,7 +564,9 @@ static int sm_bootstrap_get_nr_blocks(struct dm_space_map *sm, dm_block_t *count
+>  {
+>  	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
+>  
+> -	return smm->ll.nr_blocks;
+> +	*count = smm->ll.nr_blocks;
+> +
+> +	return 0;
+>  }
+>  
+>  static int sm_bootstrap_get_nr_free(struct dm_space_map *sm, dm_block_t *count)
