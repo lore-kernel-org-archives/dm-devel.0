@@ -1,46 +1,107 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [patch] dm space map metadata: fix sm_bootstrap_get_nr_blocks()
-Date: Mon, 1 Dec 2014 13:56:12 +0000
-Message-ID: <20141201135611.GA3151@debian>
-References: <20141129125021.GD27251@mwanda>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH] dm-bufio: fix memleak when using a dm_buffer's
+ inline bio
+Date: Mon, 1 Dec 2014 11:23:24 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1412011117180.27118@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20141126014515.GE10050@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <kernel-janitors-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20141129125021.GD27251@mwanda>
-Sender: kernel-janitors-owner@vger.kernel.org
-To: Dan Carpenter <dan.carpenter@oracle.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, =?iso-8859-1?Q?J=F6rn?= Engel <joern@purestorage.com>, kernel-janitors@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20141126014515.GE10050@birch.djwong.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Ack, thanks.
 
-On Sat, Nov 29, 2014 at 03:50:21PM +0300, Dan Carpenter wrote:
-> This function isn't right and it causes a static checker warning:
+
+On Tue, 25 Nov 2014, Darrick J. Wong wrote:
+
+> When dm-bufio sets out to use the bio built into a struct dm_buffer to
+> issue an IO, it needs to call bio_reset after it's done with the bio
+> so that we can free things attached to the bio such as the integrity
+> payload.  Therefore, inject our own endio callback to take care of
+> the bio_reset after calling submit_io's end_io callback.
 > 
-> 	drivers/md/dm-thin.c:3016 maybe_resize_data_dev()
-> 	error: potentially using uninitialized 'sb_data_size'.
+> Test case:
+> 1. modprobe scsi_debug delay=0 dif=1 dix=199 ato=1 dev_size_mb=300
+> 2. Set up a dm-bufio client, e.g. dm-verity, on the scsi_debug device
+> 3. Repeatedly read metadata and watch kmalloc-192 leak!
 > 
-> It should set "*count" and return zero on success the same as the
-> sm_metadata_get_nr_blocks() function does earlier.
+> Fix is against 3.18-rc6.
 > 
-> Fixes: 3241b1d3e0aa ('dm: add persistent data library')
-> Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
-> ---
-> Static checker stuff.  Not tested.
-> 
-> diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
-> index 786b689..f4e22bc 100644
-> --- a/drivers/md/persistent-data/dm-space-map-metadata.c
-> +++ b/drivers/md/persistent-data/dm-space-map-metadata.c
-> @@ -564,7 +564,9 @@ static int sm_bootstrap_get_nr_blocks(struct dm_space_map *sm, dm_block_t *count
->  {
->  	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
->  
-> -	return smm->ll.nr_blocks;
-> +	*count = smm->ll.nr_blocks;
+> +/* Reset the bio to free attached bio integrity profiles when we're done */
+> +static void inline_endio(struct bio *bio, int error)
+> +{
+> +	bio_end_io_t *end_fn;
 > +
-> +	return 0;
->  }
->  
->  static int sm_bootstrap_get_nr_free(struct dm_space_map *sm, dm_block_t *count)
+> +	end_fn = bio->bi_private;
+> +	end_fn(bio, error);
+> +	bio_reset(bio);
+> +}
+
+This is wrong - when end_fn clears the B_READING or B_WRITING flag, the 
+buffer may be freed by the background cleanup - so bio_reset may be 
+modifying freed memory here. We need to call bio_reset before end_fn.
+
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+When dm-bufio sets out to use the bio built into a struct dm_buffer to
+issue an IO, it needs to call bio_reset after it's done with the bio
+so that we can free things attached to the bio such as the integrity
+payload.  Therefore, inject our own endio callback to take care of
+the bio_reset after calling submit_io's end_io callback.
+
+Test case:
+1. modprobe scsi_debug delay=0 dif=1 dix=199 ato=1 dev_size_mb=300
+2. Set up a dm-bufio client, e.g. dm-verity, on the scsi_debug device
+3. Repeatedly read metadata and watch kmalloc-192 leak!
+
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+
+---
+ drivers/md/dm-bufio.c |   19 ++++++++++++++++++-
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+Index: linux-3.18-rc6/drivers/md/dm-bufio.c
+===================================================================
+--- linux-3.18-rc6.orig/drivers/md/dm-bufio.c	2014-12-01 14:52:35.000000000 +0100
++++ linux-3.18-rc6/drivers/md/dm-bufio.c	2014-12-01 14:52:37.000000000 +0100
+@@ -565,6 +565,18 @@ static void use_dmio(struct dm_buffer *b
+ 		end_io(&b->bio, r);
+ }
+ 
++static void inline_endio(struct bio *bio, int error)
++{
++	bio_end_io_t *end_fn = bio->bi_private;
++	/*
++	 * Reset the bio to free any attached resources
++	 * (e.g. bio integrity profiles).
++	 */
++	bio_reset(bio);
++
++	end_fn(bio, error);
++}
++
+ static void use_inline_bio(struct dm_buffer *b, int rw, sector_t block,
+ 			   bio_end_io_t *end_io)
+ {
+@@ -576,7 +588,12 @@ static void use_inline_bio(struct dm_buf
+ 	b->bio.bi_max_vecs = DM_BUFIO_INLINE_VECS;
+ 	b->bio.bi_iter.bi_sector = block << b->c->sectors_per_block_bits;
+ 	b->bio.bi_bdev = b->c->bdev;
+-	b->bio.bi_end_io = end_io;
++	b->bio.bi_end_io = inline_endio;
++	/*
++	 * Use of .bi_private isn't a problem here because
++	 * the dm_buffer's inline bio is local to bufio.
++	 */
++	b->bio.bi_private = end_io;
+ 
+ 	/*
+ 	 * We assume that if len >= PAGE_SIZE ptr is page-aligned.
