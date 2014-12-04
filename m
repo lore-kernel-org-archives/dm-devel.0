@@ -1,90 +1,51 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH RFCv2 01/10] dm-dedup: main data structures
-Date: Wed, 3 Dec 2014 17:21:50 -0800
-Message-ID: <20141204012150.GB10064@birch.djwong.org>
-References: <53ffb64d.c58d320a.14c8.1413@mx.google.com>
-	<20140926152416.GA4464@redhat.com>
-	<CAFTzLMP07qBzEBaaOuFQvi0W219YqLpz8epWdMLO36Sj8gBJoQ@mail.gmail.com>
-	<CAFTzLMNJ7=zc-qTcLY_BLQPRD4hiJYUAvs_AHgTgxsfg3Bb49Q@mail.gmail.com>
-	<20141017174251.GA25948@redhat.com>
-	<20141126153834.GD30136@redhat.com>
-	<A29EA256-362D-43EC-ABF5-FB10644E6DF1@fsl.cs.sunysb.edu>
-	<20141126164717.GA30610@redhat.com>
-	<CAFTzLMOtPggp_V1WVR1JTBNhvYFcn9bBhCVjza6uTF+RZ-ZtwQ@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: zhangxiao <xiao.zhang@windriver.com>
+Subject: Re: [dm-devel] The DM_BUFIO_HASH_BITS is defined as 20, any plan
+ to make it flexible?
+Date: Thu, 4 Dec 2014 09:26:19 +0800
+Message-ID: <547FB83B.8080401@windriver.com>
+References: <547D7BC6.6070708@windriver.com> <20141202140015.GB5985@redhat.com> <20141203141921.GB6993@debian>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAFTzLMOtPggp_V1WVR1JTBNhvYFcn9bBhCVjza6uTF+RZ-ZtwQ@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Vasily Tarasov <tarasov@vasily.name>, device-mapper development <dm-devel@redhat.com>
-Cc: Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, Shilane Philip <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>, Vivek Goyal <vgoyal@redhat.com>
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20141203141921.GB6993@debian>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-T24gV2VkLCBOb3YgMjYsIDIwMTQgYXQgMDE6MzU6MzRQTSAtMDUwMCwgVmFzaWx5IFRhcmFzb3Yg
-d3JvdGU6Cj4gSGkgTWlrZSwgVml2ZWssCj4gCj4gU291bmRzIGdvb2QsIHRoYW5rcyBmb3IgbG9v
-a2luZyBpbnRvIHRoaXMhCj4gCj4gQXQgdGhpcyBwb2ludCB3ZSBkb24ndCBoYXZlIGEgZGVkdXBf
-Y2hlY2tlci4gQ291bGQgeW91IGNsYXJpZnkgYSBiaXQKPiBvbiB0aGUgbWFpbiB1c2UgY2FzZSBm
-b3IgYSBjaGVrZXI/IFN1ZGRlbiBwb3dlciBsb3NzIG9yIGFjY2lkZW50YWwKPiBjb3JydXB0aW9u
-IG9mIG1ldGFkYXRhLyBkYXRhIGRldmljZXM/Cgo8c2hydWc+IE5vIHJlcGxpZXMgZm9yIGEgd2Vl
-aywgc28gSSdsbCB3YWRlIGluLiAgS2VlcCBpbiBtaW5kIEknbSBhIEZTCmRldmVsb3Blciwgc28g
-ZG9uJ3QgdGFrZSBteSByZXBsaWVzIGFzIG5lY2Vzc2FyaWx5IG1hdGNoaW5nIE1pa2Ugb3IKVml2
-ZWsncyBnb2Fscy4KCj4gSW4gZG0tZGVkdXAsIG1ldGFkYXRhIGlzIHN0b3JlZCB1c2luZyBkbSdz
-IHBlcnNpc3RlbnQtZGF0YSBsaWJyYXJ5Cj4gKENPVyBCLXRyZWVzKS4gRGF0YSBibG9ja3MgYXJl
-IHdyaXR0ZW4gYXN5bmNocm9ub3VzbHkgd2l0aCBtZXRhLWRhdGEKPiBidXQgYWxsb2NhdGVkIHNl
-cXVlbnRpYWxseS4gU28sIHRoZW9yZXRpY2FsbHksIG9uIGEgc3VkZGVuIHBvd2VyIGxvc3MKPiB0
-aGUgc3RhdGUgb2YgYSBkbS1kZWR1cCBzaG91bGQgcmVtYWluIGNvbnNpc3RlbnQuCgpUaGVvcmV0
-aWNhbGx5LCB5ZXMuIDopCgo+IEJ1dCBpZiBzb21lYm9keSBjb3JydXB0cyBtZXRhZGF0YS9kYXRh
-IGRldmljZXMgbWFudWFsbHkgdGhlIGNoZWNrZXIKPiB3aWxsIGhlbHAuIElzIGl0IHRoZSBtYWlu
-IHVzZSBjYXNlPwoKT3IgaWYgdGhlIHN0b3JhZ2UgY29ycnVwdHMgaXRzZWxmIGFuZCB5b3Ugd2Fu
-dC9uZWVkIHRvIHJ1biBhCmNvbnNpc3RlbmN5IGNoZWNrZXIgdG8gc2NyYXBlIHRoZSBicm9rZW4g
-Y3J1ZCBvZmYgdGhlIGRpc2sgc28gdGhhdCB5b3UKY2FuIHJlY292ZXIgd2hhdGV2ZXIncyBsZWZ0
-LiAgVGhlcmUgYXJlIGFsc28gY2FzZXMgc3VjaCBhcyByZWNvdmVyaW5nCmZyb20gYWNjaWRlbnRh
-bCByZWZvcm1hdHMgKGlmIHBvc3NpYmxlKTsgcGF0Y2hpbmcgdGhpbmdzIHVwIGFmdGVyIHRoZQpr
-ZXJuZWwgZXhwbG9kZXMgbWlkd2F5IHRocm91Z2ggc29tZSBvcGVyYXRpb247IGZpeGluZyB1cCB0
-aGUgbWVzcwphZnRlciB5b3VyIG93biBzb2Z0d2FyZSBidWdzIG91dDsgYW5kIHJlY292ZXJpbmcg
-d2hlbiB0aGUgc3RvcmFnZQptaXN3cml0ZXMgYmxvY2tzIHRvIHRoZSB3cm9uZyBwbGFjZS4KCkl0
-IHdvdWxkIGFsc28gYmUgdXNlZnVsIHRvIHZlcmlmeSB0aGF0IGEgYmxvY2sgc3RpbGwgbWF0Y2hl
-cyBpdHMKc3RvcmVkIGhhc2g7IHRoYXQgZm9yIGFsbCBMQk4tPlBCTiBtYXBwaW5ncyB0aGVyZSdz
-IGFsc28gYSBoYXNoLT5QQk4KbWFwcGluZzsgYW5kIChvcHRpb25hbGx5KSB0byBnYXJiYWdlIGNv
-bGxlY3QgYW55IGhhc2gtPlBCTiBtYXBwaW5ncy4KVGhlb3JldGljYWxseSB5b3UgY291bGQgYWxz
-byBkZWZyYWcgdGhlIGRldmljZS4gIE1heWJlIHRoaXMgY2FuIGV2ZW4KYmUgZG9uZSBpbiBhIGJh
-Y2tncm91bmQga2VybmVsIHRocmVhZCAoaGEhKSwgc2luY2UgdGhlIG1ldGFkYXRhJ3MKYWxyZWFk
-eSBzaXR0aW5nIGFyb3VuZCBpbiBtZW1vcnkuCgo+IFdlJ2xsIGRlZmluaXRlbHkgdGFrZSBhIGxv
-b2sgaW50byB0aGUgdmVyaWZpZXIncyBjb2RlIGZvciB0aGluIGFuZAo+IGNhY2hlIHRhcmdldHMg
-YW5kIHNlZSBob3cgdGhpcyBhcHBsaWVzIHRvIGRtLWRlZHVwLgoKTG9va3MgcHJvbWlzaW5nIHNv
-IGZhciwgYXNpZGUgZnJvbSB0aGUgdGhpbmdzIEkgbm90ZWQgaW4geWVzdGVyZGF5J3MKZW1haWwu
-ICBUaGFua3MgZm9yIGNvbnRyaWJ1dGluZyBhbGwgdGhpcyB3b3JrIQoKLS1ECgo+IAo+IFRoYW5r
-cywKPiBWYXNpbHkKPiAKPiBPbiBXZWQsIE5vdiAyNiwgMjAxNCBhdCAxMTo0NyBBTSwgTWlrZSBT
-bml0emVyIDxzbml0emVyQHJlZGhhdC5jb20+IHdyb3RlOgo+ID4gT24gV2VkLCBOb3YgMjYgMjAx
-NCBhdCAxMTozNmFtIC0wNTAwLAo+ID4gRXJleiBaYWRvayA8ZXprQGZzbC5jcy5zdW55c2IuZWR1
-PiB3cm90ZToKPiA+Cj4gPj4gTWlrZSwgVml2ZWssCj4gPj4KPiA+PiBUaGFuayB5b3UgZm9yIHRo
-ZSBlZmZvcnQgYW5kIGVzcGVjaWFsbHkgZm9yIGFkZGluZyBtb3JlIG1hbi1wb3dlciB0bwo+ID4+
-IHRoaXMgcmV2aWV3LiAgV2Uga25vdyBob3cgYnVzeSB5b3UgZ3V5cyBhcmUgc28gaXTigJlzIHVu
-ZGVyc3RhbmRhYmxlCj4gPj4gdGhhdCB0aGluZ3MgY2FuIHRha2UgYSB3aGlsZSB0byBnZXQgc3Rh
-cnRlZC4gIEVpdGhlciB3YXksIEnigJl2ZQo+ID4+IGluc3RydWN0ZWQgbXkgc3R1ZGVudHMgdG8g
-Z2l2ZSB0aGlzIHByb2plY3QgdGhlIGhpZ2hlc3QgcHJpb3JpdHksCj4gPj4gZXNwZWNpYWxseSBv
-bmNlIHdlIHJlY2VpdmUgY29tbWVudHMgZnJvbSB5b3UuCj4gPgo+ID4gR3JlYXQuICBTbyBhbG9u
-ZyB0aG9zZSBsaW5lcyBoYXZlIHlvdSBndXlzIHdvcmtlZCBvbiB1c2Vyc3BhY2UgdG9vbHMKPiA+
-IHRoYXQgY2FuIHZlcmlmeS9yZXBhaXIgdGhlIG9uZGlzayBtZXRhZGF0YT8KPiA+Cj4gPiBUaGF0
-IHdpbGwgYmUgYSBwcmVyZXEgZm9yIHVwc3RyZWFtIGluY2x1c2lvbiAoYXQgbGVhc3QgZm9yIGRt
-LWRlZHVwIHRvCj4gPiBiZWNvbWUgYW55dGhpbmcgYnV0ICJleHBlcmltZW50YWwiKS4KPiA+Cj4g
-PiBkbS1jYWNoZSBhbmQgZG0tdGhpbiB0YXJnZXRzIGhhdmUgdGhlc2UgdHlwZXMgb2YgdG9vbHMK
-PiA+ICh0aGluX3tjaGVjayxyZXBhaXJ9LCBjYWNoZV97Y2hlY2sscmVwYWlyfSwgZXRjKS4gIFVw
-c3RyZWFtIHJlcG8gaXMgaGVyZQo+ID4gKG1pc25hbWVkLCBnZXRzIHBhY2thZ2VkIGludG8gZGV2
-aWNlLW1hcHBlci1wZXJzaXN0ZW50LWRhdGEgcnBtIG9uCj4gPiBGZWRvcmEsIFJIRUwsIENlbnRP
-UywgZXRjKToKPiA+IGh0dHBzOi8vZ2l0aHViLmNvbS9qdGhvcm5iZXIvdGhpbi1wcm92aXNpb25p
-bmctdG9vbHMKPiA+Cj4gPiBNaWtlCj4gPgo+IAo+IC0tCj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0
-Cj4gZG0tZGV2ZWxAcmVkaGF0LmNvbQo+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
-aXN0aW5mby9kbS1kZXZlbAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
-dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 2014=E5=B9=B412=E6=9C=8803=E6=97=A5 22:19, Joe Thornber wrote:
+> On Tue, Dec 02, 2014 at 09:00:17AM -0500, Mike Snitzer wrote:
+>> On Tue, Dec 02 2014 at  3:43am -0500,
+>> zhangxiao <xiao.zhang@windriver.com> wrote:
+>>
+>>> Hi Experts,
+>>>
+>>> See drivers/md/dm-bufio.c as below:
+>>>    50 /*
+>>>    51  * Buffer hash
+>>>    52  */
+>>>    53 #define DM_BUFIO_HASH_BITS      20
+>>>    54 #define DM_BUFIO_HASH(block) \
+>>>    55         ((((block) >> DM_BUFIO_HASH_BITS) ^ (block)) & \
+>>>    56          ((1 << DM_BUFIO_HASH_BITS) - 1))
+>>> "drivers/md/dm-bufio.c" 1854L, 45375C
+>>>
+>>> DM_BUFIO_HASH_BITS was defined as 20 and it maybe not fit for some
+>>> use case with limited resources. Do we have any plan to make it mor=
+e
+>>> flexible? Like module parameter or something else?
+>>
+>> No immediate plans.
+>
+> That hash table has been replaced with a red/black tree.
+>
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.g=
+it/commit/?h=3Ddm-for-3.19&id=3D4e420c452b11edf9d510c8180ac66f529e5b620=
+6
+>
+>
+Great Thanks!
+
+Best Regards
+Xiao
