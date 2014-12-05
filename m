@@ -1,17 +1,18 @@
-From: Vasiliy Tolstov <v.tolstov@selfip.ru>
+From: "Bryn M. Reeves" <bmr@redhat.com>
 Subject: Re: raid1 round-robin scheduler
-Date: Fri, 5 Dec 2014 17:10:39 +0400
-Message-ID: <CACaajQvR7Npo3J4sj=wkgttJG0yQXW1PjneKJaTydnSdHA3FsA@mail.gmail.com>
+Date: Fri, 5 Dec 2014 14:34:59 +0000
+Message-ID: <20141205143458.GD16315@localhost.localdomain>
 References: <CACaajQsaw_GvVNp1t9dGy0xabroskqYtVvrviNA+XxXGhBZgHg@mail.gmail.com>
 	<CACaajQsUBEG3yoQ_8ORVjbgBjtQekgOzVeN0ALEyxMW0U=ERxg@mail.gmail.com>
 	<20141205130239.GC16315@localhost.localdomain>
-	<5481ADE4.1020908@redhat.com>
+	<CACaajQuXv_sPwzS8ascknjAQfNY9PmkPK7ATAwEL5hJrMqJ30Q@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5481ADE4.1020908@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CACaajQuXv_sPwzS8ascknjAQfNY9PmkPK7ATAwEL5hJrMqJ30Q@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,24 +22,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-2014-12-05 16:06 GMT+03:00 Zdenek Kabelac <zkabelac@redhat.com>:
-> Are we talking here about rather deprecated old  dm mirror usage,
-> or a new raid1  (mdraid) ?
->
-> I assume new   dm-raid  target is using everthing what md raid provides.
+On Fri, Dec 05, 2014 at 05:08:59PM +0400, Vasiliy Tolstov wrote:
+> 2014-12-05 16:02 GMT+03:00 Bryn M. Reeves <bmr@redhat.com>:
+> > iirc the patches showed no measurable performance gain.
+> >
+> > Regards,
+> > Bryn.
+> 
+> 
+> Yes in normal read speed not changed, but in case of fully loaded
+> system when one member fully utilized by io, why performance in this
+> case not increased?
 
+I don't think this was ever really explained but the testing that was
+done failed to show a benefit from the patches and as they added more
+complexity to the target for no gain they were not merged.
 
-I'm use raid1 from linux 3.10.x =), i have raid1 from two members ,
-each member exported from dedicated server via srp/srpt.
-In case of round-robin i can utilize two devices for read, but now i
-see that one device have 10% reading, and another is about 90%.
-Because clients have sequential read of data.
+As Zdenek says today the MD-based dm-raid targets are now available
+and those should expose all the features of the MD stack (including
+read balancing).
 
--- 
-Vasiliy Tolstov,
-e-mail: v.tolstov@selfip.ru
-jabber: vase@selfip.ru
+Regards,
+Bryn.
+ 
