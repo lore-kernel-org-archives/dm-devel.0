@@ -1,50 +1,65 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: raid1 round-robin scheduler
-Date: Fri, 5 Dec 2014 14:34:59 +0000
-Message-ID: <20141205143458.GD16315@localhost.localdomain>
-References: <CACaajQsaw_GvVNp1t9dGy0xabroskqYtVvrviNA+XxXGhBZgHg@mail.gmail.com>
-	<CACaajQsUBEG3yoQ_8ORVjbgBjtQekgOzVeN0ALEyxMW0U=ERxg@mail.gmail.com>
-	<20141205130239.GC16315@localhost.localdomain>
-	<CACaajQuXv_sPwzS8ascknjAQfNY9PmkPK7ATAwEL5hJrMqJ30Q@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm thin: optimize away writing all zeroes to
+	unprovisioned blocks
+Date: Fri, 5 Dec 2014 09:47:39 -0500
+Message-ID: <20141205144739.GA26356@redhat.com>
+References: <alpine.DEB.2.00.1409301121470.26721@ware.dreamhost.com>
+	<alpine.DEB.2.02.1412032237010.12556@ware.dreamhost.com>
+	<alpine.DEB.2.02.1412032318290.29609@ware.dreamhost.com>
+	<20141204153358.GA19315@redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <lvm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CACaajQuXv_sPwzS8ascknjAQfNY9PmkPK7ATAwEL5hJrMqJ30Q@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <20141204153358.GA19315@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: Eric Wheeler <ewheeler@ewheeler.net>
+Cc: axboe@kernel.dk, dm-devel@redhat.com, ejt@redhat.com, LVM2 development <lvm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Dec 05, 2014 at 05:08:59PM +0400, Vasiliy Tolstov wrote:
-> 2014-12-05 16:02 GMT+03:00 Bryn M. Reeves <bmr@redhat.com>:
-> > iirc the patches showed no measurable performance gain.
-> >
-> > Regards,
-> > Bryn.
+On Thu, Dec 04 2014 at 10:33am -0500,
+Mike Snitzer <snitzer@redhat.com> wrote:
+
+> From: Mike Snitzer <snitzer@redhat.com>
+> Date: Thu, 4 Dec 2014 10:18:32 -0500
+> Subject: [PATCH] dm thin: optimize away writing all zeroes to unprovisioned blocks
 > 
+> Introduce bio_is_zero_filled() and use it to optimize away writing all
+> zeroes to unprovisioned blocks.  Subsequent reads to the associated
+> unprovisioned blocks will be zero filled.
 > 
-> Yes in normal read speed not changed, but in case of fully loaded
-> system when one member fully utilized by io, why performance in this
-> case not increased?
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> Cc: Eric Wheeler <ewheeler@ewheeler.net>
+> Cc: Jens Axboe <axboe@kernel.dk>
 
-I don't think this was ever really explained but the testing that was
-done failed to show a benefit from the patches and as they added more
-complexity to the target for no gain they were not merged.
+In testing this patch it is now quite clear that this change seriously
+impacts test coverage in the device-mapper-test-suite because dmts'
+wipe_device() uses /dev/zero as the ifile for dd to write to the disk.
+As such, with this patch all tests expecting to see provisioned blocks
+as a side-effect of wipe_device now fail (e.g. DiscardQuickTests).
 
-As Zdenek says today the MD-based dm-raid targets are now available
-and those should expose all the features of the MD stack (including
-read balancing).
+So this change won't go upstream until full test coverage can be
+restored in dmts.  I'll see what I can come up with but it is low
+priority.
 
-Regards,
-Bryn.
- 
+BTW, this also makes me wonder if this change will be extremely
+unintuitive to existing or future user of DM thinp.  So much so that it
+might be best to require a new thin-pool feature flag to enable this
+optimization.
+
+Mike
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
