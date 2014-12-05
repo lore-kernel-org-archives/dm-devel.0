@@ -1,12 +1,13 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
+From: Vasiliy Tolstov <v.tolstov@selfip.ru>
 Subject: Re: raid1 round-robin scheduler
-Date: Fri, 05 Dec 2014 14:06:44 +0100
-Message-ID: <5481ADE4.1020908@redhat.com>
-References: <CACaajQsaw_GvVNp1t9dGy0xabroskqYtVvrviNA+XxXGhBZgHg@mail.gmail.com>	<CACaajQsUBEG3yoQ_8ORVjbgBjtQekgOzVeN0ALEyxMW0U=ERxg@mail.gmail.com>
+Date: Fri, 5 Dec 2014 17:08:59 +0400
+Message-ID: <CACaajQuXv_sPwzS8ascknjAQfNY9PmkPK7ATAwEL5hJrMqJ30Q@mail.gmail.com>
+References: <CACaajQsaw_GvVNp1t9dGy0xabroskqYtVvrviNA+XxXGhBZgHg@mail.gmail.com>
+	<CACaajQsUBEG3yoQ_8ORVjbgBjtQekgOzVeN0ALEyxMW0U=ERxg@mail.gmail.com>
 	<20141205130239.GC16315@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20141205130239.GC16315@localhost.localdomain>
@@ -19,30 +20,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Vasiliy Tolstov <v.tolstov@selfip.ru>
+To: "Bryn M. Reeves" <bmr@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 5.12.2014 v 14:02 Bryn M. Reeves napsal(a):
-> On Fri, Dec 05, 2014 at 04:38:56PM +0400, Vasiliy Tolstov wrote:
->> 2014-12-05 15:25 GMT+03:00 Vasiliy Tolstov <v.tolstov@selfip.ru>:
->>> Hello. Does the somebody create scheduler for raid1 to add ability to
->>> read data from all devices, for example i need to read from all
->>> devices when have sequential read.
->>
->>
->> I found patches in 2012 from Robert Collins, [dm-devel] Load balancing
->> reads on dmraid1 (and 01) arrays
->> why it not merged , does dm devel devs have plans to round-robin raid1
->> reading operations ?
->
+2014-12-05 16:02 GMT+03:00 Bryn M. Reeves <bmr@redhat.com>:
 > iirc the patches showed no measurable performance gain.
 >
+> Regards,
+> Bryn.
 
 
-Are we talking here about rather deprecated old  dm mirror usage,
-or a new raid1  (mdraid) ?
+Yes in normal read speed not changed, but in case of fully loaded
+system when one member fully utilized by io, why performance in this
+case not increased?
 
-I assume new   dm-raid  target is using everthing what md raid provides.
-
-Zdenek
+-- 
+Vasiliy Tolstov,
+e-mail: v.tolstov@selfip.ru
+jabber: vase@selfip.ru
