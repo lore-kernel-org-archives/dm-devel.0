@@ -1,118 +1,74 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [lvm-devel] dm thin: optimize away writing all
- zeroes to unprovisioned blocks
-Date: Tue, 09 Dec 2014 08:41:59 -0700
-Message-ID: <54871847.6020009@kernel.dk>
-References: <alpine.DEB.2.00.1409301121470.26721@ware.dreamhost.com>
-	<alpine.DEB.2.02.1412032237010.12556@ware.dreamhost.com>
-	<alpine.DEB.2.02.1412032318290.29609@ware.dreamhost.com>
-	<20141204153358.GA19315@redhat.com> <5481EB1C.4000202@kernel.dk>
-	<20141205183342.GA27397@redhat.com>
-	<alpine.DEB.2.02.1412061437430.19773@ware.dreamhost.com>
-	<5483B04D.5030606@kernel.dk>
-	<alpine.DEB.2.02.1412062028500.15919@ware.dreamhost.com>
-	<5485D86C.9040800@kernel.dk>
-	<alpine.DEB.2.02.1412082258460.10718@ware.dreamhost.com>
-	<548715D2.1000509@kernel.dk>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: staging: writeboost: Add dm-writeboost
+Date: Tue, 9 Dec 2014 10:48:59 -0500
+Message-ID: <20141209154859.GC26238@redhat.com>
+References: <5484498E.4000202@gmail.com>
+ <20141207200834.GA2322@kroah.com>
+ <5484C0E9.3060707@gmail.com>
+ <20141209151253.GA17660@debian>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <548715D2.1000509@kernel.dk>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Eric Wheeler <lvm-dev@lists.ewheeler.net>
-Cc: dm-devel@redhat.com, ejt@redhat.com, LVM2 development <lvm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20141209151253.GA17660@debian>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Akira Hayakawa <ruby.wktk@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, gregkh@linuxfoundation.org, agk@redhat.com, linux-kernel@vger.kernel.org, ejt@redhat.com
 List-Id: dm-devel.ids
 
-On 12/09/2014 08:31 AM, Jens Axboe wrote:
-> On 12/09/2014 01:02 AM, Eric Wheeler wrote:
->> On Fri, 5 Dec 2014, Mike Snitzer wrote:
->>> I do wonder what the performance impact is on this for dm. Have you
->>> tried a (worst case) test of writing blocks that are zero filled,
->>
->> Jens, thank you for your help w/ fio for generating zeroed writes!
->> Clearly fio is superior to dd as a sequential benchmarking tool; I was
->> actually able to push on the system's memory bandwidth.
->>
->> Results:
->>
->> I hacked block/loop.c and md/dm-thin.c to always call
->> bio_is_zero_filled()
->> and then complete without writing to disk, regardless of the return value
->> from bio_is_zero_filled().  In loop.c this was done in
->> do_bio_filebacked(), and for dm-thin.c this was done within
->> provision_block().
->>
->> This allows us to compare the performance difference between the simple
->> loopback block device driver vs the more complex dm-thinp implementation
->> just prior to block allocation.  These benchmarks give us a sense of how
->> performance differences relate between bio_is_zero_filled() and block
->> device implementation complexity, in addition to the raw performance of
->> bio_is_zero_filled in best- and worst-case scenarios.
->>
->> Since we always complete without writing after the call to
->> bio_is_zero_filled, regardless of the bio's content (all zeros or
->> not), we
->> can benchmark the difference in the common use case of random data, as
->> well as the edge case of skipping writes for bio's that contain all zeros
->> when writing to unallocated space of thin-provisioned volumes.
->>
->> These benchmarks were performed under KVM, so expect them to be lower
->> bounds due to overhead.  The hardware is a Intel(R) Xeon(R) CPU
->> E3-1230 V2
->> @ 3.30GHz.  The VM was allocated 4GB of memory with 4 cpu cores.
->>
->> Benchmarks were performed using fio-2.1.14-33-gf8b8f
->>   --name=writebw
->>   --rw=write
->>   --time_based
->>   --runtime=7 --ramp_time=3
->>   --norandommap
->>   --ioengine=libaio
->>   --group_reporting
->>   --direct=1
->>   --bs=1m
->>   --filename=/dev/X
->>   --numjobs=Y
->>
->> Random data was tested using:
->>    --zero_buffers=0 --scramble_buffers=1
->>
->> Zeroed data was tested using:
->>    --zero_buffers=1 --scramble_buffers=0
->>
->> Values below are from aggrb.
->>
->>                dm-thinp (MB/s)   loopback (MB/s)   loop faster by
->> factor of
->> ==============+======================================================
->> random jobs=4 | 18496.0          33522.0           1.68x
->> zeros  jobs=4 |  8119.2           9767.2           1.20x
->> ==============+======================================================
->> random jobs=1 |  7330.5          12330.0           1.81x
->> zeros  jobs=1 |  4965.2           6799.9           1.11x
->
-> This looks more reasonable in terms of throughput.
->
-> One major worry here is that checking every write is blowing your cache,
-> so you could have a major impact on performance in general. Even for
-> O_DIRECT writes, you are now accessing the memory. Have you looked into
-> doing non-temporal memory compares instead? I think that would be the
-> way to go.
+On Tue, Dec 09 2014 at 10:12am -0500,
+Joe Thornber <thornber@redhat.com> wrote:
 
-So I found your patch in the thread. For each vector, use memcmp() 
-instead and hope it does the right thing. You can compare with 
-empty_zero_page. That should drastically cut down on the amount of hand 
-rolled code you have in bio_is_zero_filled() at the moment.
+> On Mon, Dec 08, 2014 at 06:04:41AM +0900, Akira Hayakawa wrote:
+> > Mike and Alasdair,
+> > I need your ack
+> 
+> Hi Akira,
+> 
+> I just spent some time playing with your latest code.  On the positive
+> side I am seeing some good performance with the fio tests.  Which is
+> great, we know your design should outperform dm-cache with small
+> random io.
+> 
+> However I'm still getting v. poor results with the git-extract test,
+> which clones a linux kernel repo, and then checks out 5 revisions, all
+> with drop_caches in between.
 
--- 
-Jens Axboe
+Thanks for re-evaluating dm-writeboost performance Joe.
+
+> It's fine to have different benefits of the caching software depending
+> on the load.  But I think the worst case should always be close to the
+> performance of the raw spindle device.
+> 
+> If you get the following work items done I will ack to go upstream:
+> 
+> i) Get this test so it's performance is similar to raw spindle.
+> 
+> ii) Write good documentation in Documentation/device-mapper/.  eg. How
+>     do I remove a cache?  When should I use dm-writeboost rather than
+>     bcache or dm-cache?
+> 
+> iii) Provide an equivalent to the fsck tool to repair a damaged cache.
+
+I agree with this TODO list.  But I'd also add:
+ iv) perform full code review to catch various implementation issues,
+     any style nits, etc.
+
+ v) explore/implement read caching support (could the lack of read
+    caching be contributing to why the git_extract test is so poor?)
+
+Item iv) would be a task for myself and anyone else interested in
+getting dm-writeboost ready for inclusion.  Akira, I can start working
+on dm-writeboost code review once I complete review of the dm-dedup
+target (my current priority) -- but realistically that likely won't be
+until the new year.
+
+BTW, I'm really not seeing much point putting dm-writeboost in staging.
+I'd be happy to take dm-writeboost into drivers/md/ once the above list
+is resolved.  BUT if you'd still like dm-writeboost to go into staging
+_without_ any of these 5 work items being completed I'll ack it but to
+be very clear: dm-writeboost will not migrate out of staging until these
+items are resolved.
+
+Thanks,
+Mike
