@@ -1,93 +1,73 @@
-From: Marian Csontos <mcsontos@redhat.com>
-Subject: Re: dm thin: optimize away writing all zeroes to
- unprovisioned blocks
-Date: Tue, 09 Dec 2014 15:38:41 +0100
-Message-ID: <54870971.9060403@redhat.com>
-References: <alpine.DEB.2.00.1409301121470.26721@ware.dreamhost.com>	<alpine.DEB.2.02.1412032237010.12556@ware.dreamhost.com>	<alpine.DEB.2.02.1412032318290.29609@ware.dreamhost.com>	<20141204153358.GA19315@redhat.com>
-	<5481EB1C.4000202@kernel.dk>	<20141205183342.GA27397@redhat.com>	<alpine.DEB.2.02.1412061437430.19773@ware.dreamhost.com>	<5483B04D.5030606@kernel.dk>	<alpine.DEB.2.02.1412062028500.15919@ware.dreamhost.com>
-	<5485D86C.9040800@kernel.dk>
-Reply-To: LVM2 development <lvm-devel@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [dm-devel] [PATCH] staging: writeboost: Add dm-writeboost
+Date: Tue, 9 Dec 2014 15:12:53 +0000
+Message-ID: <20141209151253.GA17660@debian>
+References: <5484498E.4000202@gmail.com>
+ <20141207200834.GA2322@kroah.com>
+ <5484C0E9.3060707@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <lvm-devel-bounces@redhat.com>
-In-Reply-To: <5485D86C.9040800@kernel.dk>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/lvm-devel>
-List-Post: <mailto:lvm-devel@redhat.com>
-List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
-Sender: lvm-devel-bounces@redhat.com
-Errors-To: lvm-devel-bounces@redhat.com
-To: LVM2 development <lvm-devel@redhat.com>, Eric Wheeler <lvm-dev@lists.ewheeler.net>
-Cc: dm-devel@redhat.com, ejt@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <5484C0E9.3060707@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: gregkh@linuxfoundation.org, snitzer@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 12/08/2014 05:57 PM, Jens Axboe wrote:
-> On 12/06/2014 11:30 PM, Eric Wheeler wrote:
->> On Sat, 6 Dec 2014, Jens Axboe wrote:
->>> On 12/06/2014 03:40 PM, Eric Wheeler wrote:
->>>> On Fri, 5 Dec 2014, Mike Snitzer wrote:
->>>>>> I do wonder what the performance impact is on this for dm. Have you
->>>>>> tried a (worst case) test of writing blocks that are zero filled, but
->>>>>> with the last byte not being a zero?
->>>>
->>>> The additional overhead of worst-case should be (nearly) equal to the
->>>> simplest test case of dd if=/dev/zero of=/dev/thinp/vol.  In my testing
->>>> that was 1.4GB/s within KVM on an Intel Xeon(R) CPU E3-1230 V2 @
->>>> 3.30GHz.
->>>
->>> That seems way too slow for checking if it's zero or not... Memory
->>> bandwidth should be way higher than that. The line above, was that
->>> what you ran? How does it look with bs=4k or higher?
->>
->> In userspace I can get ~12GB/s, so I think the algorithm is sound.
->> dd might not be the right tool for this.
->
-> It's straight forward looping through the vectors, it can't really work
-> any other way. But we need to figure out why it's so slow...
+On Mon, Dec 08, 2014 at 06:04:41AM +0900, Akira Hayakawa wrote:
+> Mike and Alasdair,
+> I need your ack
 
-May be a premature optimization without any supporting data, but as this 
-will be a frequently running loop, it is worth optimizing.
+Hi Akira,
 
-Two tips:
+I just spent some time playing with your latest code.  On the positive
+side I am seeing some good performance with the fio tests.  Which is
+great, we know your design should outperform dm-cache with small
+random io.
 
-1. Is the compiler unrolling loops?
+However I'm still getting v. poor results with the git-extract test,
+which clones a linux kernel repo, and then checks out 5 revisions, all
+with drop_caches in between.
 
-Using inline bvec_kunmap_irq in the loop may prevent the compiler from 
-doing so.
-
-Try breaking the loop when *parch is non zero and calling it outside of 
-loop only when i >= count.
-
-2. The function is doing quite a lot of jumping around making CPU 
-pipeline mostly useless.
-
-Try using kernel's built-in memcmp, which I expect to be optimized, and 
-compare with a zero-page.
-
-Perhaps doing few useless bit-or ops for every write would be more 
-effective than this constant jumping.
-
--- Martian
+I'll summarise the results I get here:
 
 
->
->>>  read : io=12233MB, bw=1432.7MB/s, iops=22922, runt=  8539msec
->>
->> Can you suggest the right fio commandline to test sequential writes if
->> all zeros?  I tried --zero_buffers but couldn't get it to write zeros,
->> writes kept going to disk.
->
-> zero_buffers=1
-> scramble_buffers=0
->
-> should get you all zeroes.
->
+    raw SSD:            69, 107
+    raw spindle:        73, 184
 
---
-lvm-devel mailing list
-lvm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/lvm-devel
+    dm-cache:           74, 118
+
+    writeboost type 0:  115, 247
+    writeboost type 1:  193, 275
+
+
+Each result consists of two numbers, the time to do the clone and the
+time to do the extract.
+
+Writeboost is significantly slower than the spindle alone for this
+very simple test.  I do not understand what is causing the issue.  At
+first I thought it was because the working set is larger than the SSD
+space, but I get the same results even if there's more SSD space than
+spindle.
+
+Running the same test using SSD on SSD also yields v. poor results:
+115, 177 and 198, 218 for type 0 and type 1 respectively.  Obviously
+this is a pointless configuration, but it does allow us to see the
+overhead of the caching layer.
+
+It's fine to have different benefits of the caching software depending
+on the load.  But I think the worst case should always be close to the
+performance of the raw spindle device.
+
+If you get the following work items done I will ack to go upstream:
+
+i) Get this test so it's performance is similar to raw spindle.
+
+ii) Write good documentation in Documentation/device-mapper/.  eg. How
+    do I remove a cache?  When should I use dm-writeboost rather than
+    bcache or dm-cache?
+
+iii) Provide an equivalent to the fsck tool to repair a damaged cache.
+
+- Joe
