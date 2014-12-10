@@ -1,106 +1,98 @@
 From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: Re: staging: writeboost: Add dm-writeboost
-Date: Wed, 10 Dec 2014 19:21:13 +0900
-Message-ID: <54881E99.3000309@gmail.com>
-References: <5484498E.4000202@gmail.com> <20141207200834.GA2322@kroah.com> <5484C0E9.3060707@gmail.com> <20141209151253.GA17660@debian> <20141209154859.GC26238@redhat.com>
+Subject: Re: [dm-devel] [PATCH] staging: writeboost: Add dm-writeboost
+Date: Wed, 10 Dec 2014 20:00:13 +0900
+Message-ID: <548827BD.3050803@gmail.com>
+References: <5484498E.4000202@gmail.com> <20141207200834.GA2322@kroah.com>	<5484C0E9.3060707@gmail.com> <20141209151253.GA17660@debian> <20141210100033.GA21108@debian>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20141209154859.GC26238@redhat.com>
+In-Reply-To: <20141210100033.GA21108@debian>
 Sender: linux-kernel-owner@vger.kernel.org
-To: snitzer@redhat.com, gregkh@linuxfoundation.org
-Cc: dm-devel@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org, ejt@redhat.com
+To: ejt@redhat.com
+Cc: dm-devel@redhat.com, gregkh@linuxfoundation.org, snitzer@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi,
+Hi, Joe
 
-> BUT if you'd still like dm-writeboost to go into staging
-> _without_ any of these 5 work items being completed I'll ack it but to
-> be very clear: dm-writeboost will not migrate out of staging until these
-> items are resolved.
-Yes. I will go into staging.
-Greg, I will send you a patch with some fixes on TODO.
+Thanks for continuous evaluation.
 
-I agree with the 5 work times to be done for md.
-I add some comments below,
+I think it's to soon to conclude splitting is the case.
+In general, the time order of memory operations and disk operations is much different.
+So, it's not likely that bio splitting, memory operation, is the case. Again, in general.
+But yes, I will add seq write/read performance tests to dmts to see what's really going on.
 
->> i) Get this test so it's performance is similar to raw spindle.
-Yes.
+By the way, what environment are you using for those tests?
 
->> ii) Write good documentation in Documentation/device-mapper/.  eg. How
->>     do I remove a cache?  When should I use dm-writeboost rather than
->>     bcache or dm-cache?
->>
->> iii) Provide an equivalent to the fsck tool to repair a damaged cache.
-OK. I took a look at tools for DM-cache.
-I will implement something similar.
-But please remember, since Writeboost is log-structured fsck tools aren't essentially needed.
-On power failure, some logs at the head may be half done and discarding these logs can roll the state back.
+My past result of git-extract differ from yours. I think this is strange.
+(http://www.redhat.com/archives/dm-devel/2014-May/msg00052.html)
 
->  iv) perform full code review to catch various implementation issues,
->      any style nits, etc.
->  v) explore/implement read caching support (could the lack of read
->     caching be contributing to why the git_extract test is so poor?)
-This will be my first work in staging.
+WriteboostTestsBackingDevice
+  Elapsed 52.494120792: git_prepare
+  Elapsed 276.545543981: extract all versions
+  Finished in 331.363683334 seconds
+
+WriteboostTestsType0
+  Elapsed 46.966797484: git_prepare
+  Elapsed 215.305219932: extract all versions
+  Finished in 270.176494226 seconds.
+
+WriteboostTestsType1
+  Elapsed 83.344358679: git_prepare
+  Elapsed 236.562481129: extract all versions
+  Finished in 329.684926274 seconds.
+
+I conducted those experiments on physical machine with a HDD and a SSD.
+I will re-evaluate those tests with the current kernel on my machine and
+compare with this result.
 
 - Akira
 
-On 12/10/14 12:48 AM, Mike Snitzer wrote:
-> On Tue, Dec 09 2014 at 10:12am -0500,
-> Joe Thornber <thornber@redhat.com> wrote:
+On 12/10/14 7:00 PM, Joe Thornber wrote:
+> On Tue, Dec 09, 2014 at 03:12:53PM +0000, Joe Thornber wrote:
+>> Writeboost is significantly slower than the spindle alone for this
+>> very simple test.  I do not understand what is causing the issue.
 > 
->> On Mon, Dec 08, 2014 at 06:04:41AM +0900, Akira Hayakawa wrote:
->>> Mike and Alasdair,
->>> I need your ack
->>
->> Hi Akira,
->>
->> I just spent some time playing with your latest code.  On the positive
->> side I am seeing some good performance with the fio tests.  Which is
->> great, we know your design should outperform dm-cache with small
->> random io.
->>
->> However I'm still getting v. poor results with the git-extract test,
->> which clones a linux kernel repo, and then checks out 5 revisions, all
->> with drop_caches in between.
+> I started doing the code review and now understand what's going on,
+> sadly.
 > 
-> Thanks for re-evaluating dm-writeboost performance Joe.
+> You are splitting all bios up into 4k blocks to simplify the metadata
+> layout, and mapping logic.  This murders performance.  File systems
+> and the block layer try really hard to submit the largest bio possible
+> for a reason.
 > 
->> It's fine to have different benefits of the caching software depending
->> on the load.  But I think the worst case should always be close to the
->> performance of the raw spindle device.
->>
->> If you get the following work items done I will ack to go upstream:
->>
->> i) Get this test so it's performance is similar to raw spindle.
->>
->> ii) Write good documentation in Documentation/device-mapper/.  eg. How
->>     do I remove a cache?  When should I use dm-writeboost rather than
->>     bcache or dm-cache?
->>
->> iii) Provide an equivalent to the fsck tool to repair a damaged cache.
+> A simple dd in large chunks across your cache reveals this:
 > 
-> I agree with this TODO list.  But I'd also add:
->  iv) perform full code review to catch various implementation issues,
->      any style nits, etc.
+> raw spindle:        8.9s
+> writeboost type 0:  32.2s
+> writeboost type 1:  71.1s
 > 
->  v) explore/implement read caching support (could the lack of read
->     caching be contributing to why the git_extract test is so poor?)
+> dm-cache and dm-thin do also split io into blocks, but much larger,
+> user configurable blocks.  It's still a performance issue for us,
+> which is why I'm using range locking to move away from this bio
+> splitting (eg, recent cache discard patches).
 > 
-> Item iv) would be a task for myself and anyone else interested in
-> getting dm-writeboost ready for inclusion.  Akira, I can start working
-> on dm-writeboost code review once I complete review of the dm-dedup
-> target (my current priority) -- but realistically that likely won't be
-> until the new year.
+> One of the main advantages of a log based metadata layout is you can
+> cope nicely with arbitrarily sized bios.  Unlike dm-cache for
+> instance, which has to do a read from the origin if it wants to cache
+> a write that partially covers a block (or maintain a 'valid' bit for
+> each sector of every cached block).
 > 
-> BTW, I'm really not seeing much point putting dm-writeboost in staging.
-> I'd be happy to take dm-writeboost into drivers/md/ once the above list
-> is resolved.  BUT if you'd still like dm-writeboost to go into staging
-> _without_ any of these 5 work items being completed I'll ack it but to
-> be very clear: dm-writeboost will not migrate out of staging until these
-> items are resolved.
+> The writeboost target as it stands will only benefit v. small, random
+> io.  It will seriously degrade performance of any other IO profile.
+> I'm NACKing this for upstream, and will not be spending any more time
+> on it at this point.
 > 
-> Thanks,
-> Mike
+> You've put a lot of effort into this so far, so I suggest you redesign
+> the log metadata, and drop the io splitting; you'll end up with
+> something far better.
+> 
+> Sorry,
+> 
+> - Joe
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 > 
