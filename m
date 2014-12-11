@@ -1,43 +1,77 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: Re: [dm-devel] [PATCH] staging: writeboost: Add dm-writeboost
-Date: Wed, 10 Dec 2014 23:43:46 +0900
-Message-ID: <54885C22.3030808@gmail.com>
-References: <5484498E.4000202@gmail.com> <20141207200834.GA2322@kroah.com> <5484C0E9.3060707@gmail.com> <20141209151253.GA17660@debian> <20141210100033.GA21108@debian> <548827BD.3050803@gmail.com> <20141210123349.GC21108@debian> <548843A0.6040906@gmail.com> <20141210131325.GD21108@debian> <54884B33.4090709@gmail.com> <20141210134223.GE21108@debian>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] staging: writeboost: Add dm-writeboost
+Date: Thu, 11 Dec 2014 10:26:26 -0500
+Message-ID: <20141211152626.GA8196@redhat.com>
+References: <54883195.1060304@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20141210134223.GE21108@debian>
-Sender: linux-kernel-owner@vger.kernel.org
-To: ejt@redhat.com
-Cc: dm-devel@redhat.com, gregkh@linuxfoundation.org, snitzer@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+Content-Disposition: inline
+In-Reply-To: <54883195.1060304@gmail.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: Akira Hayakawa <ruby.wktk@gmail.com>
+Cc: gregkh@linuxfoundation.org, dm-devel@redhat.com, driverdev-devel@linuxdriverproject.org, thornber@redhat.com
 List-Id: dm-devel.ids
 
-On 12/10/14 10:42 PM, Joe Thornber wrote:
-> On Wed, Dec 10, 2014 at 10:31:31PM +0900, Akira Hayakawa wrote:
->> Joe,
->>
->>> So you copy the bio payload to a different block of ram and then
->>> complete the bio?  Or does the rambuf refer to the bio payload
->>> directly?
->> Good question.
->> The answer is, copy the data (got by bio_data(bio)) to rambuf once
->> and ack if it's not barrier things.
->> It would be nice if data in rambuf points to bio payload but it now copies
->> because bio payload can be reused after completion. Am I right?
->> Is there a way of eliminate memory copying?
+On Wed, Dec 10 2014 at  6:42am -0500,
+Akira Hayakawa <ruby.wktk@gmail.com> wrote:
+
+> This patch adds dm-writeboost to staging tree.
 > 
-> You *have* to eliminate this memory copying.  Remap the bios to the
-> relevant portion of your log, and don't complete them until you log
-> chunk is coherent.
+> dm-writeboost is a log-structured SSD-caching driver.
+> It caches data in log-structured way on the cache device
+> so that the performance is maximized.
 > 
+> The merit of putting this driver in staging tree is
+> to make it possible to get more feedback from users
+> and polish the codes.
+> 
+> Signed-off-by: Akira Hayakawa <ruby.wktk@gmail.com>
 
-Barrier writes don't ack until the log is written on cache device.
-I guess treating other writes as well will do this work.
+Joe Thornber Nacked this from going into staging based on his further
+review of the code.  On the basis that you should _not_ be copying all
+pages associated with each bio into an in-core buffer.  Have you
+addressed that fundamental problem?
 
-But, it will be much better if I can do this by manipulating reference count
-of the bio payload. I am not sure how the implementation would be.
+But taking a step back: Why do you think going into staging actually
+helps you?  Anyone who is willing to test this code should be able to
+apply a patch to their kernel.  Having to feed changes to Greg to
+deliver updates to any early consumers of this _EXPERIMENTAL_ target
+seems misplaced when you consider that Joe has detailed important
+fixes, capabilties and tools that need addressing before anyone should
+trust their production data to dm-writeboost.
 
-Anyway, thanks for advice,
+I think you're completely missing that you are pushing _hard_ for this
+target to go upstream before it is actually ready.  In doing so you're
+so hung up on that "upstream" milestone that you cannot appreciate the
+reluctance that Joe and I have given the quantity of code you're pushing
+-- especially when coupled with the limited utility of dm-writeboost in
+comparison with full featured upstream drivers like dm-cache and bcache.
 
-- Akira
+As for this v2, you didn't detail what you changed (I can obviously
+apply v1 and then v2 to see the difference but a brief summary would be
+helpful in general when you revise a patch)
+
+But one inline comment:
+
+> diff --git a/drivers/staging/writeboost/TODO b/drivers/staging/writeboost/TODO
+> new file mode 100644
+> index 0000000..761a9fe
+> --- /dev/null
+> +++ b/drivers/staging/writeboost/TODO
+> @@ -0,0 +1,52 @@
+> +TODO:
+> +
+> +- Get the GitExtract test so it's performance is similar to raw spindle.
+
+No, the whole point of a write cache is to improve performance.  You
+should be trying to surpass the performance of the raw spindle.
