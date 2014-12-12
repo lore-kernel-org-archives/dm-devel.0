@@ -1,26 +1,71 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [dm-devel] [PATCH v2] staging: writeboost: Add dm-writeboost
-Date: Fri, 12 Dec 2014 12:41:21 +0100
-Message-ID: <548AD461.1020707@acm.org>
-References: <54883195.1060304@gmail.com> <20141211152626.GA8196@redhat.com> <548A39E7.80508@gmail.com> <548AB172.4000103@acm.org> <548AB6E4.2020302@gmail.com>
+From: Marian Csontos <mcsontos@redhat.com>
+Subject: Re: [dm-devel] [PATCH] staging: writeboost: Add dm-writeboost
+Date: Fri, 12 Dec 2014 13:51:46 +0100
+Message-ID: <548AE4E2.5080508@redhat.com>
+References: <5484498E.4000202@gmail.com> <20141207200834.GA2322@kroah.com>	<5484C0E9.3060707@gmail.com> <20141209151253.GA17660@debian> <20141210100033.GA21108@debian>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <548AB6E4.2020302@gmail.com>
+In-Reply-To: <20141210100033.GA21108@debian>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Akira Hayakawa <ruby.wktk@gmail.com>
-Cc: snitzer@redhat.com, gregkh@linuxfoundation.org, driverdev-devel@linuxdriverproject.org, thornber@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Mark Ruijter <mruijter@gmail.com>
+To: device-mapper development <dm-devel@redhat.com>, gregkh@linuxfoundation.org, snitzer@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 12/12/14 10:35, Akira Hayakawa wrote:
-> Writeboost batches number of writes into a log (that is 512KB large) and submits to SSD
-> which maximizes the throughput and the lifetime of the SSD.
+On 12/10/2014 11:00 AM, Joe Thornber wrote:
+> On Tue, Dec 09, 2014 at 03:12:53PM +0000, Joe Thornber wrote:
+>> Writeboost is significantly slower than the spindle alone for this
+>> very simple test.  I do not understand what is causing the issue.
+>
+> I started doing the code review and now understand what's going on,
+> sadly.
+>
+> You are splitting all bios up into 4k blocks to simplify the metadata
+> layout, and mapping logic.  This murders performance.  File systems
+> and the block layer try really hard to submit the largest bio possible
+> for a reason.
+>
+> A simple dd in large chunks across your cache reveals this:
+>
+> raw spindle:        8.9s
+> writeboost type 0:  32.2s
+> writeboost type 1:  71.1s
+>
+> dm-cache and dm-thin do also split io into blocks, but much larger,
+> user configurable blocks.  It's still a performance issue for us,
+> which is why I'm using range locking to move away from this bio
+> splitting (eg, recent cache discard patches).
+>
+> One of the main advantages of a log based metadata layout is you can
+> cope nicely with arbitrarily sized bios.  Unlike dm-cache for
+> instance, which has to do a read from the origin if it wants to cache
+> a write that partially covers a block (or maintain a 'valid' bit for
+> each sector of every cached block).
+>
+> The writeboost target as it stands will only benefit v. small, random
+> io.  It will seriously degrade performance of any other IO profile.
+> I'm NACKing this for upstream, and will not be spending any more time
+> on it at this point.
 
-Does this mean that dm-writeboost is similar to btier ? If so, this 
-makes me wonder which of these two subsystems would be the best 
-candidate for upstream inclusion. As far as I know btier doesn't split 
-bio's. The source code of btier can be downloaded from 
-http://sourceforge.net/projects/tier/.
+Is not that what some databases are doing?
 
-Bart.
+>
+> You've put a lot of effort into this so far, so I suggest you redesign
+> the log metadata, and drop the io splitting; you'll end up with
+> something far better.
+
+Perhaps passing large writes[1] directly to HDD - consumer SSDs and HDDs 
+sequential write speeds are IIUC almost identical.
+
+[1]: What is large write? In my mental model fits a "tunable".
+
+>
+> Sorry,
+>
+> - Joe
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
