@@ -1,71 +1,51 @@
-From: Marian Csontos <mcsontos@redhat.com>
-Subject: Re: [dm-devel] [PATCH] staging: writeboost: Add dm-writeboost
-Date: Fri, 12 Dec 2014 13:51:46 +0100
-Message-ID: <548AE4E2.5080508@redhat.com>
-References: <5484498E.4000202@gmail.com> <20141207200834.GA2322@kroah.com>	<5484C0E9.3060707@gmail.com> <20141209151253.GA17660@debian> <20141210100033.GA21108@debian>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [PATCH v2] staging: writeboost: Add dm-writeboost
+Date: Fri, 12 Dec 2014 14:24:48 +0000
+Message-ID: <20141212142447.GA30315@debian>
+References: <54883195.1060304@gmail.com> <20141211152626.GA8196@redhat.com>
+ <548A39E7.80508@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20141210100033.GA21108@debian>
-Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, gregkh@linuxfoundation.org, snitzer@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+Content-Disposition: inline
+In-Reply-To: <548A39E7.80508@gmail.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: Akira Hayakawa <ruby.wktk@gmail.com>
+Cc: gregkh@linuxfoundation.org, dm-devel@redhat.com, driverdev-devel@linuxdriverproject.org, linux-kernel@vger.kernel.org, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On 12/10/2014 11:00 AM, Joe Thornber wrote:
-> On Tue, Dec 09, 2014 at 03:12:53PM +0000, Joe Thornber wrote:
->> Writeboost is significantly slower than the spindle alone for this
->> very simple test.  I do not understand what is causing the issue.
->
-> I started doing the code review and now understand what's going on,
-> sadly.
->
-> You are splitting all bios up into 4k blocks to simplify the metadata
-> layout, and mapping logic.  This murders performance.  File systems
-> and the block layer try really hard to submit the largest bio possible
-> for a reason.
->
-> A simple dd in large chunks across your cache reveals this:
->
-> raw spindle:        8.9s
-> writeboost type 0:  32.2s
-> writeboost type 1:  71.1s
->
-> dm-cache and dm-thin do also split io into blocks, but much larger,
-> user configurable blocks.  It's still a performance issue for us,
-> which is why I'm using range locking to move away from this bio
-> splitting (eg, recent cache discard patches).
->
-> One of the main advantages of a log based metadata layout is you can
-> cope nicely with arbitrarily sized bios.  Unlike dm-cache for
-> instance, which has to do a read from the origin if it wants to cache
-> a write that partially covers a block (or maintain a 'valid' bit for
-> each sector of every cached block).
->
-> The writeboost target as it stands will only benefit v. small, random
-> io.  It will seriously degrade performance of any other IO profile.
-> I'm NACKing this for upstream, and will not be spending any more time
-> on it at this point.
+On Fri, Dec 12, 2014 at 09:42:15AM +0900, Akira Hayakawa wrote:
+> The SSD-caching should be log-structured.
 
-Is not that what some databases are doing?
+No argument there, and this is why I've supported you with
+dm-writeboost over the last couple of years.
 
->
-> You've put a lot of effort into this so far, so I suggest you redesign
-> the log metadata, and drop the io splitting; you'll end up with
-> something far better.
+However, after looking at the current code, and using it I think it's
+a long, long way from being ready for production.  As we've already
+discussed there are some very naive design decisions in there, such as
+copying every bio payload to another memory buffer, splitting all io
+down to 4k.  Think about the cpu overhead and memory consumption!
+Think about how it will perform when memory is constrained and it
+can't allocate many of those rambufs!  I'm sure more issues will be
+found if I read further.
 
-Perhaps passing large writes[1] directly to HDD - consumer SSDs and HDDs 
-sequential write speeds are IIUC almost identical.
+I'm sorry to have disappointed you so, but if I let this go upstream
+it would mean a massive amount of support work for me, not to mention
+a damaged reputation for dm.
 
-[1]: What is large write? In my mental model fits a "tunable".
+Mike raised the question of why you want this in the kernel so much?
+You'd find none of the distros would support it; so it doesn't widen
+your audience much.  It's far better for you to maintain it outside of
+the kernel at this point.  Any users will be bold, adventurous people,
+who will be quite capable of building a kernel module.
 
->
-> Sorry,
->
-> - Joe
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+- Joe
