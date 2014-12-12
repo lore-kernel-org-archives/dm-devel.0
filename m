@@ -1,103 +1,72 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
+From: Spelic <spelic@shiftmail.org>
 Subject: Re: [PATCH v2] staging: writeboost: Add dm-writeboost
-Date: Sat, 13 Dec 2014 00:09:11 +0900
-Message-ID: <548B0517.6070603@gmail.com>
-References: <54883195.1060304@gmail.com> <20141211152626.GA8196@redhat.com>
- <548A39E7.80508@gmail.com> <20141212142447.GA30315@debian>
+Date: Fri, 12 Dec 2014 23:18:23 +0100
+Message-ID: <548B69AF.7070403@shiftmail.org>
+References: <54883195.1060304@gmail.com>
+	<20141211152626.GA8196@redhat.com>	<548A39E7.80508@gmail.com>
+	<548AB172.4000103@acm.org>	<548AB6E4.2020302@gmail.com>
+	<548AD461.1020707@acm.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <20141212142447.GA30315@debian>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: thornber@redhat.com
-Cc: gregkh@linuxfoundation.org, dm-devel@redhat.com, driverdev-devel@linuxdriverproject.org, linux-kernel@vger.kernel.org, snitzer@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <548AD461.1020707@acm.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> However, after looking at the current code, and using it I think it's
-> a long, long way from being ready for production.  As we've already
-> discussed there are some very naive design decisions in there, such as
-> copying every bio payload to another memory buffer, splitting all io
-> down to 4k.  Think about the cpu overhead and memory consumption!
-> Think about how it will perform when memory is constrained and it
-> can't allocate many of those rambufs!  I'm sure more issues will be
-> found if I read further.
-These decisions are made based on measurement. They are not naive.
-I am a man who dislikes performance optimization without measurement.
-As a result, I regard things brought by the simplicity much important
-than what's from other design decisions possible.
+On 12/12/2014 12:41, Bart Van Assche wrote:
+> On 12/12/14 10:35, Akira Hayakawa wrote:
+>> Writeboost batches number of writes into a log (that is 512KB large) 
+>> and submits to SSD
+>> which maximizes the throughput and the lifetime of the SSD.
+>
+> Does this mean that dm-writeboost is similar to btier ? If so, this 
+> makes me wonder which of these two subsystems would be the best 
+> candidate for upstream inclusion. As far as I know btier doesn't split 
+> bio's. The source code of btier can be downloaded from 
+> http://sourceforge.net/projects/tier/.
 
-About the CPU consumption,
-the average CPU consumption while performing random write fio
-with consumer level SSD is only 3% or so,
-which is 5 times efficient than bcache per iops.
+No, Btier is a caching (tiering actually but there is little difference) 
+software like bcache or dm-cache, which are are open source software 
+reimplementations of things like LSI CacheCade.
 
-With RAM-backed cache device, it reaches about 1.5GB/sec throughput.
-Even in this case the CPU consumption is only 12%.
-Please see this post,
-http://www.redhat.com/archives/dm-devel/2014-February/msg00000.html
+OTOH dm-writeboost is an open source software reimplementation of a BBWC 
+(battery backed write cache) of disk controllers.
 
-I don't think the CPU consumption is small enough to ignore.
+For this reason dm-writeboost was unique in its class and no doubt it 
+could be blazing fast (untested by me) if correctly implemented, orders 
+of magnitude faster than caching softwares, and I was looking forward to 
+see dm-writeboost into the kernel.
 
-About the memory consumption,
-you seem to misunderstand the fact.
-The rambufs are not dynamically allocated but statically.
-The default amount is 8MB and this is usually not to argue.
+But me too I think that dm-writeboost really needs not to split BIOs 
+(whoever thinks differently has probably never looked at perf while a 
+very fast raid system was writing data), and as much as possible not 
+perform memcopy, and would need to detect and skip sequential I/O 
+(adding logic to still be safe on sync + power loss) and use 
+writethrough for that which I think it also doesn't do. These are 
+absolute requirements for high performance storage systems in the 2-20 
+gigabytes per second range. If Akira doesn't see the need to not perform 
+memcpy or not split BIOs or not skip sequential I/O it is most certainly 
+because he hasn't tried to build a high performance storage system. 
+Unfortunately I think that high performance storage systems are indeed 
+the main market for writeboost, so that's why these things are needed.
 
-> Mike raised the question of why you want this in the kernel so much?
-> You'd find none of the distros would support it; so it doesn't widen
-> your audience much.  It's far better for you to maintain it outside of
-> the kernel at this point.  Any users will be bold, adventurous people,
-> who will be quite capable of building a kernel module.
-Some people deploy Writeboost in their daily use.
-The sound of "log-structured" seems to easily attract storage guys' attention.
-If this driver is merged into upstream, I think it gains many audience and
-thus feedback.
-When my driver was introduced by Phoronix before, it actually drew attentions.
-They must wait for Writeboost become available in upstream.
-http://www.phoronix.com/scan.php?page=news_item&px=MTQ1Mjg
+Another important missing feature is  way to decommission writeboost or 
+put it into writethrough mode, so to be able to snapshot the underlying 
+device. This is totally needed in an industrial-grade production system.
 
-> I'm sorry to have disappointed you so, but if I let this go upstream
-> it would mean a massive amount of support work for me, not to mention
-> a damaged reputation for dm.
-If you read the code further, you will find how simple the mechanism is.
-Not to mention the code itself is.
+OTOH read caching would have been useless for writeboost btw imho, and 
+hence counterproductive. Layer dm-cache or bcache on top of writeboost 
+if you need that.
 
-- Akira
-
-On 12/12/14 11:24 PM, Joe Thornber wrote:
-> On Fri, Dec 12, 2014 at 09:42:15AM +0900, Akira Hayakawa wrote:
->> The SSD-caching should be log-structured.
-> 
-> No argument there, and this is why I've supported you with
-> dm-writeboost over the last couple of years.
-> 
-> However, after looking at the current code, and using it I think it's
-> a long, long way from being ready for production.  As we've already
-> discussed there are some very naive design decisions in there, such as
-> copying every bio payload to another memory buffer, splitting all io
-> down to 4k.  Think about the cpu overhead and memory consumption!
-> Think about how it will perform when memory is constrained and it
-> can't allocate many of those rambufs!  I'm sure more issues will be
-> found if I read further.
-> 
-> I'm sorry to have disappointed you so, but if I let this go upstream
-> it would mean a massive amount of support work for me, not to mention
-> a damaged reputation for dm.
-> 
-> Mike raised the question of why you want this in the kernel so much?
-> You'd find none of the distros would support it; so it doesn't widen
-> your audience much.  It's far better for you to maintain it outside of
-> the kernel at this point.  Any users will be bold, adventurous people,
-> who will be quite capable of building a kernel module.
-> 
-> - Joe
-> 
+S.
