@@ -1,99 +1,137 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCHv2 0/4] blk-mq support for dm multipath
-Date: Fri, 12 Dec 2014 21:08:33 -0500
-Message-ID: <20141213020833.GA21426@redhat.com>
-References: <1413589598-17631-1-git-send-email-keith.busch@intel.com>
-	<alpine.LNX.2.00.1410281808390.4225@localhost.lm.intel.com>
-	<20141028182627.GA28537@redhat.com>
-	<20141205232542.GA1274@redhat.com>
-	<20141206055351.GA2110@redhat.com>
-	<20141206060939.GB2110@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jianjian Huo <samuel.huo@gmail.com>
+Subject: Re: [dm-devel] [PATCH v2] staging: writeboost: Add dm-writeboost
+Date: Fri, 12 Dec 2014 22:45:30 -0800
+Message-ID: <CAB=cV2Rvp95xuKNd0WzfLpMGrwdSCPxGt6npo+FH0H1y_5kY9Q@mail.gmail.com>
+References: <54883195.1060304@gmail.com> <20141211152626.GA8196@redhat.com>
+ <548A39E7.80508@gmail.com> <20141212142447.GA30315@debian>
+ <548B0517.6070603@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20141206060939.GB2110@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Keith Busch <keith.busch@intel.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <548B0517.6070603@gmail.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: gregkh@linuxfoundation.org, driverdev-devel@linuxdriverproject.org, thornber@redhat.com, linux-kernel@vger.kernel.org, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, Dec 06 2014 at  1:09am -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+If I understand it correctly, the whole idea indeed is very simple,
+the consumer/provider and circular buffer model. use SSD as a circular
+write buffer, write flush thread stores incoming writes to this buffer
+sequentially as provider, and writeback thread write those data logs
+sequentially into backing device as consumer.
 
-> On Sat, Dec 06 2014 at 12:53am -0500,
-> Mike Snitzer <snitzer@redhat.com> wrote:
->  
-> > But in general this code needs _a lot_ more testing/review.
-> > Sadly I cannot stage it for 3.19 inclusion.
-> 
-> FYI, even though the mpath device is created without crashing it hangs
-> when IO is issued to it (mkfs.xfs /dev/mapper/mpathi):
-> 
->  kernel: mkfs.xfs        D ffff88033fc34740     0  2792   2457 0x00000080
->  kernel: ffff880319057cb8 0000000000000082 ffff880327e84c80 0000000000014740
->  kernel: ffff880319057fd8 0000000000014740 ffff88032e644c80 ffff880327e84c80
->  kernel: ffff88033fc35058 ffff88033ff940e8 ffff880319057d48 0000000000000082
->  kernel: Call Trace:
->  kernel: [<ffffffff81633a50>] ? bit_wait+0x50/0x50
->  kernel: [<ffffffff8163325d>] io_schedule+0x9d/0x120
->  kernel: [<ffffffff81633a7c>] bit_wait_io+0x2c/0x50
->  kernel: [<ffffffff816337eb>] __wait_on_bit_lock+0x4b/0xb0
->  kernel: [<ffffffff81166da9>] __lock_page_killable+0xb9/0xe0
->  kernel: [<ffffffff810b1c20>] ? autoremove_wake_function+0x40/0x40
->  kernel: [<ffffffff81168e48>] generic_file_read_iter+0x3e8/0x610
->  kernel: [<ffffffff81213bf7>] blkdev_read_iter+0x37/0x40
->  kernel: [<ffffffff811dba1b>] new_sync_read+0x8b/0xd0
->  kernel: [<ffffffff811dc188>] vfs_read+0x98/0x170
->  kernel: [<ffffffff811dce65>] SyS_read+0x55/0xd0
->  kernel: [<ffffffff81637769>] system_call_fastpath+0x16/0x1b
-> 
->  kernel: kdmwork-253:15  D ffff88033fc54740     0  2745      2 0x00000080
->  kernel: ffff88031910bce8 0000000000000046 ffff88032cedb960 0000000000014740
->  kernel: ffff88031910bfd8 0000000000014740 ffff88032e645610 ffff88032cedb960
->  kernel: ffff88033fc55058 ffff880329565420 ffff880327c4f870 ffff880327c4f800
->  kernel: Call Trace:
->  kernel: [<ffffffff8163325d>] io_schedule+0x9d/0x120
->  kernel: [<ffffffff812c47e8>] get_request+0x218/0x770
->  kernel: [<ffffffff810b1be0>] ? prepare_to_wait_event+0xf0/0xf0
->  kernel: [<ffffffff812c4dc7>] blk_get_request+0x87/0xe0
->  kernel: [<ffffffffa0195bb1>] multipath_map+0x121/0x1b0 [dm_multipath]
->  kernel: [<ffffffffa0001032>] map_tio_request+0x52/0x250 [dm_mod]
->  kernel: [<ffffffff81090be2>] kthread_worker_fn+0x82/0x1d0
->  kernel: [<ffffffff81090b60>] ? kthread_stop+0xe0/0xe0
->  kernel: [<ffffffff81090818>] kthread+0xd8/0xf0
->  kernel: [<ffffffff81090740>] ? kthread_create_on_node+0x1a0/0x1a0
->  kernel: [<ffffffff816376bc>] ret_from_fork+0x7c/0xb0
->  kernel: [<ffffffff81090740>] ? kthread_create_on_node+0x1a0/0x1a0
+If writeboost can do that without any random writes, then probably it
+can save SSD/FTL of doing a lot of dirty jobs, and utilize the faster
+sequential read/write performance from SSD. That'll be awesome.
+However, I saw every data log segment in its design has meta data
+header, like dirty_bits, so I guess writeboost has to randomly write
+those data headers of stored data logs in SSD; also, splitting all bio
+into 4KB will hurt its ability to get max raw SSD throughput, modern
+NAND Flash has pages much bigger than 4KB; so overall I think the
+actual benefits writeboost gets from this design will be discounted.
 
-Pretty sure requests weren't completing due to deadlock because with non
-blk-mq use-case special care _must_ be taken not to acquire the clone
-request's queue lock in the completion path.  See the comment in
-drivers/md/dm.c:end_clone_request()
+The good thing is that it seems writeboost doesn't use garbage
+collection to clean old invalid logs, this will avoid the double
+garage collection effect other caching module has, which essentially
+both caching module and internal SSD will perform garbage collections
+twice.
 
-I couldn't come up with a way of salvaging having the old request-based
-path use blk_get_request() in .map_mq and blk_put_request() in .unmap_rq
+And one question, how long will be data logs replay time during init,
+if SSD is almost full of dirty data logs?
 
-Instead I've gone the different direction of training DM core to
-conditionally use either:
-1) old-style request cloning in terms of a DM mempool
-or
-2) new-style blk_get_request+blk_put_request in dm-mpath target
+Jianjian
 
-2 is obviously used if the backing device is using blk-mq.
-
-I've published a rebased patchset here (BUT I haven't tested the blk-mq
-support yet.. I _think_ it should work but it could easily crash due to
-some silly oversight.  I'll test using virtio-blk in a guest on Monday):
-
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-for-3.19-blk-mq
+On Fri, Dec 12, 2014 at 7:09 AM, Akira Hayakawa <ruby.wktk@gmail.com> wrote:
+>> However, after looking at the current code, and using it I think it's
+>> a long, long way from being ready for production.  As we've already
+>> discussed there are some very naive design decisions in there, such as
+>> copying every bio payload to another memory buffer, splitting all io
+>> down to 4k.  Think about the cpu overhead and memory consumption!
+>> Think about how it will perform when memory is constrained and it
+>> can't allocate many of those rambufs!  I'm sure more issues will be
+>> found if I read further.
+> These decisions are made based on measurement. They are not naive.
+> I am a man who dislikes performance optimization without measurement.
+> As a result, I regard things brought by the simplicity much important
+> than what's from other design decisions possible.
+>
+> About the CPU consumption,
+> the average CPU consumption while performing random write fio
+> with consumer level SSD is only 3% or so,
+> which is 5 times efficient than bcache per iops.
+>
+> With RAM-backed cache device, it reaches about 1.5GB/sec throughput.
+> Even in this case the CPU consumption is only 12%.
+> Please see this post,
+> http://www.redhat.com/archives/dm-devel/2014-February/msg00000.html
+>
+> I don't think the CPU consumption is small enough to ignore.
+>
+> About the memory consumption,
+> you seem to misunderstand the fact.
+> The rambufs are not dynamically allocated but statically.
+> The default amount is 8MB and this is usually not to argue.
+>
+>> Mike raised the question of why you want this in the kernel so much?
+>> You'd find none of the distros would support it; so it doesn't widen
+>> your audience much.  It's far better for you to maintain it outside of
+>> the kernel at this point.  Any users will be bold, adventurous people,
+>> who will be quite capable of building a kernel module.
+> Some people deploy Writeboost in their daily use.
+> The sound of "log-structured" seems to easily attract storage guys' attention.
+> If this driver is merged into upstream, I think it gains many audience and
+> thus feedback.
+> When my driver was introduced by Phoronix before, it actually drew attentions.
+> They must wait for Writeboost become available in upstream.
+> http://www.phoronix.com/scan.php?page=news_item&px=MTQ1Mjg
+>
+>> I'm sorry to have disappointed you so, but if I let this go upstream
+>> it would mean a massive amount of support work for me, not to mention
+>> a damaged reputation for dm.
+> If you read the code further, you will find how simple the mechanism is.
+> Not to mention the code itself is.
+>
+> - Akira
+>
+> On 12/12/14 11:24 PM, Joe Thornber wrote:
+>> On Fri, Dec 12, 2014 at 09:42:15AM +0900, Akira Hayakawa wrote:
+>>> The SSD-caching should be log-structured.
+>>
+>> No argument there, and this is why I've supported you with
+>> dm-writeboost over the last couple of years.
+>>
+>> However, after looking at the current code, and using it I think it's
+>> a long, long way from being ready for production.  As we've already
+>> discussed there are some very naive design decisions in there, such as
+>> copying every bio payload to another memory buffer, splitting all io
+>> down to 4k.  Think about the cpu overhead and memory consumption!
+>> Think about how it will perform when memory is constrained and it
+>> can't allocate many of those rambufs!  I'm sure more issues will be
+>> found if I read further.
+>>
+>> I'm sorry to have disappointed you so, but if I let this go upstream
+>> it would mean a massive amount of support work for me, not to mention
+>> a damaged reputation for dm.
+>>
+>> Mike raised the question of why you want this in the kernel so much?
+>> You'd find none of the distros would support it; so it doesn't widen
+>> your audience much.  It's far better for you to maintain it outside of
+>> the kernel at this point.  Any users will be bold, adventurous people,
+>> who will be quite capable of building a kernel module.
+>>
+>> - Joe
+>>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
