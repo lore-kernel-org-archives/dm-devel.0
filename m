@@ -1,10 +1,10 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
+From: Jianjian Huo <samuel.huo@gmail.com>
 Subject: Re: [dm-devel] [PATCH v2] staging: writeboost: Add dm-writeboost
-Date: Sun, 14 Dec 2014 11:12:32 +0900
-Message-ID: <548CF210.2000805@gmail.com>
-References: <54883195.1060304@gmail.com>
- <20141211152626.GA8196@redhat.com>	<548A39E7.80508@gmail.com>
- <20141212142447.GA30315@debian>	<548B0517.6070603@gmail.com>
+Date: Sat, 13 Dec 2014 18:46:29 -0800
+Message-ID: <CAB=cV2QV+o3wmo3cHSVfKHU3LOVkFLzK2v-YKwiRqzK90i6qkg@mail.gmail.com>
+References: <54883195.1060304@gmail.com> <20141211152626.GA8196@redhat.com>
+ <548A39E7.80508@gmail.com> <20141212142447.GA30315@debian>
+ <548B0517.6070603@gmail.com>
  <CAB=cV2Rvp95xuKNd0WzfLpMGrwdSCPxGt6npo+FH0H1y_5kY9Q@mail.gmail.com>
  <548C483E.4020501@gmail.com>
 Mime-Version: 1.0
@@ -21,40 +21,15 @@ List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driver
  <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
 Errors-To: driverdev-devel-bounces@linuxdriverproject.org
 Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: samuel.huo@gmail.com
-Cc: thornber@redhat.com, snitzer@redhat.com, gregkh@linuxfoundation.org, driverdev-devel@linuxdriverproject.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+To: Akira Hayakawa <ruby.wktk@gmail.com>
+Cc: thornber@redhat.com, snitzer@redhat.com, gregkh@linuxfoundation.org, driverdev-devel@linuxdriverproject.org, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
-
-> The major reason is, it needs to read full 512KB segment to calculate checksum to
-> know if the log isn't half written.
-> (Read 500GB SSD that performs 500MB/sec seqread spends 1000secs)
-I've just measured how long the cache resuming is.
-
-I use 2GB SSD for the cache device.
-
-512KB seqread over the cache device:
-8.252sec (242MB/sec)
-
-Resume when all caches are dirty:
-10.339sec
-
-Typically, if you use 128GB SSD it will be 5-10 minutes.
-
-As I predicted, resuming time is close to seqread.
-In other words, it's fully IO-bound.
-(If you read the code you will notice that it first searchs for the
- oldest log as the starting point. It's 4KB metadata reads but spends to some extent.
- The other 2 sec is thought to be spent by this)
-
-- Akira
-
-On 12/13/14 11:07 PM, Akira Hayakawa wrote:
+On Sat, Dec 13, 2014 at 6:07 AM, Akira Hayakawa <ruby.wktk@gmail.com> wrote:
 > Hi,
-> 
+>
 > Jianjian, You really get a point at the fundamental design.
-> 
+>
 >> If I understand it correctly, the whole idea indeed is very simple,
 >> the consumer/provider and circular buffer model. use SSD as a circular
 >> write buffer, write flush thread stores incoming writes to this buffer
@@ -71,24 +46,32 @@ On 12/13/14 11:07 PM, Akira Hayakawa wrote:
 >> NAND Flash has pages much bigger than 4KB; so overall I think the
 >> actual benefits writeboost gets from this design will be discounted.
 > You understand *almost* correctly.
-> 
+>
 > Writeboost has two circular buffers, not one; RAM buffers and SSD.
 > The incoming bio is split into 4KB chunks at the virtual make_request
 > and are NOT directly remapped to the SSD.
 > As you mentioned, if I designed so, many update on the metadata happens.
 > That's really bad since SSD is very bad at small update.
-> 
+>
 > Actually, the 4KB bio is first stored in RAM buffer, which is 512KB large.
 > There are (512-4)/4=127 4KB bio data stored in the RAM buffer and 4KB metadata
 > section at the head is made after that.
-> 
+>
 > The RAM buffer is now called "log" and as you mentioned, flushed to the SSD
 > as 512KB sequential write. This definitely maximizes throughput and lifetime.
-> 
+>
 > Unfortunately, this is not always the case because of barrier request handlings.
 > But, when the writes is really heavy (e.g. massive dirty page writeback),
 > Writeboost works as above.
-> 
+>
+How about invalidating previous writes on same sector address? if
+first write is stored in one 512KB log in SSD, later when user write
+the same address, will writeboost invalid old write by updating meta
+data header in place in that 512KB log?  and other meta data like
+superblock, will writeboost will update them in place? if writeboost
+has those frequent random in-place updates, probably those benefits
+except utilizing the faster sequential writes will be much discounted.
+
 >> The good thing is that it seems writeboost doesn't use garbage
 >> collection to clean old invalid logs, this will avoid the double
 >> garage collection effect other caching module has, which essentially
@@ -96,29 +79,37 @@ On 12/13/14 11:07 PM, Akira Hayakawa wrote:
 >> twice.
 > Yes. And I believe SSDs can remove wear-leveling if I used it as fairly sequential.
 > Am I right? Indeed, Writeboost is really SSD frinedly.
-> 
+>
+Even if writeboost write everything sequentially, probably SSD won't
+be able to recognize that and do its own wear-leveling whatsoever. It
+will be easier, since there is no need to move cold data, etc.
+
+Generally, SSDs vary a lot, IMHO, one certain optimization technique
+may work for certain model, but may not work for others, since they
+internal NAND Flash management algorithms can be very different.
+
 >> And one question, how long will be data logs replay time during init,
 >> if SSD is almost full of dirty data logs?
 > Sorry, I don't have a data now but it's slow as you may imagine.
 > I will measure the time on later.
-> 
+>
 > The major reason is, it needs to read full 512KB segment to calculate checksum to
 > know if the log isn't half written.
 > (Read 500GB SSD that performs 500MB/sec seqread spends 1000secs)
 > I think making the procedure done in parallel to exploit the full internal parallelism
 > inside SSD may improve performance but it's just the matter of coefficient down from 1 to 1/n.
 > Definitely, Writeboost isn't fit for a machine that needs reboot frequently (e.g. desktop).
-> 
+>
 > There is a way to reduce the init time. We can dump "what is the latest log written back"
 > on the superblock. This can skip readings that aren't essential.
-> 
+>
 > The corresponding code is replay_log_on_cache() function. Please read if you are
 > interested.
-> 
+>
 > Thanks,
-> 
+>
 > - Akira
-> 
+>
 > On 12/13/14 3:45 PM, Jianjian Huo wrote:
 >> If I understand it correctly, the whole idea indeed is very simple,
 >> the consumer/provider and circular buffer model. use SSD as a circular
@@ -238,4 +229,4 @@ On 12/13/14 11:07 PM, Akira Hayakawa wrote:
 >> dm-devel@redhat.com
 >> https://www.redhat.com/mailman/listinfo/dm-devel
 >>
-> 
+>
