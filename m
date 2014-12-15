@@ -1,62 +1,53 @@
-From: "Alexander E. Patrakov" <patrakov@gmail.com>
-Subject: Re: multipath breaks with recent udev/systemd
-Date: Mon, 15 Dec 2014 17:53:28 +0500
-Message-ID: <548ED9C8.4030200@gmail.com>
-References: <548EAA80.30604@suse.de>
+From: Loic Pefferkorn <loic@loicp.eu>
+Subject: [PATCH] Update CONFIG_DM_CRYPT help-text link
+Date: Mon, 15 Dec 2014 22:18:43 +0100
+Message-ID: <81c1a7329d2146d37b22d7efa96b3a449cb66d14.1418677931.git.loic@loicp.eu>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <systemd-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <548EAA80.30604@suse.de>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>,
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
-List-Post: <mailto:systemd-devel@lists.freedesktop.org>
-List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>,
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: systemd-devel-bounces@lists.freedesktop.org
-Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
-To: Hannes Reinecke <hare@suse.de>, device-mapper development <dm-devel@redhat.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>, Kay Sievers <kay.sievers@vrfy.org>, systemd Mailing List <systemd-devel@lists.freedesktop.org>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: agk@redhat.com, snitzer@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-MTUuMTIuMjAxNCAxNDozMSwgSGFubmVzIFJlaW5lY2tlIHdyb3RlOgo+IEhpIGFsbCwKPgo+IGlu
-IGNvbW1pdCAzZWJkYjgxZWYwODhhZmQzYjRjNzJiNTE2YmViNTYxMGY4YzkzYTBkCj4gKHVkZXY6
-IHNlcmlhbGl6ZS9zeW5jaHJvbml6ZSBibG9jayBkZXZpY2UgZXZlbnQgaGFuZGxpbmcgd2l0aCBm
-aWxlCj4gbG9ja3MpIHVkZXYgc3RhcnRlZCB1c2luZyBmbG9jaygpIG9uIHRoZSBkZXZpY2Ugbm9k
-ZSwgc3VwcG9zZWRseSB0bwo+IHN5bmNocm9uaXplIHdpdGggYW4gb21pbm91cyAnYmxvY2sgZXZl
-bnQgaGFuZGxpbmcnLgoKVGhpcyBpcyBhIGR1cGxpY2F0ZSBvZiB0aGUgaXNzdWUgdGhhdCBJIGhh
-dmUgcmVwb3J0ZWQgZWFybGllcjoKCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vYXJjaGl2ZXMvZG0t
-ZGV2ZWwvMjAxNC1PY3RvYmVyL21zZzAwMjEwLmh0bWwKClRoZXJlZm9yZSwgSSB3YW50IHRvIGJl
-IENDZWQgb24gcmVwbGllcy4KCj4KPiBUaGUgY29kZSBsb29rcyBsaWtlIHRoaXM6Cj4KPiAgICAg
-ICAgICAgICAgICAgICAgaWYgKGQpIHsKPiAgICAgICAgICAgICAgICAgICAgICAgICAgZmRfbG9j
-ayA9IG9wZW4odWRldl9kZXZpY2VfZ2V0X2Rldm5vZGUoZCksCj4gT19SRE9OTFl8T19DTE9FWEVD
-fE9fTk9GT0xMT1d8T19OT05CTE9DSyk7Cj4gICAgICAgICAgICAgICAgICAgICAgICAgIGlmIChm
-ZF9sb2NrID49IDAgJiYgZmxvY2soZmRfbG9jaywKPiBMT0NLX1NIfExPQ0tfTkIpIDwgMCkgewo+
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGxvZ19kZWJ1ZygiVW5hYmxlIHRvIGZsb2Nr
-KCVzKSwKPiBza2lwcGluZyBldmVudCBoYW5kbGluZzogJW0iLCB1ZGV2X2RldmljZV9nZXRfZGV2
-bm9kZShkKSk7Cj4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgZXJyID0gLUVXT1VMREJM
-T0NLOwo+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGdvdG8gc2tpcDsKPiAgICAgICAg
-ICAgICAgICAgICAgICAgICB9Cj4gICAgICAgICAgICAgICAgICAgICB9Cj4KPiBIb3dldmVyLCBt
-dWx0aXBhdGggc2luY2Ugc2V2ZXJhbCB5ZWFycyBpcyB1c2luZyBhIHNpbWlsYXIgY29uc3RydWN0
-Cj4gdG8gbG9jayBhbGwgZGV2aWNlcyBiZWxvbmdpbmcgdG8gYSBtdWx0aXBhdGggZGV2aWNlIHRh
-YmxlIGJlZm9yZQo+IGNyZWF0aW5nIGEgbXVsaXRwYXRoIGRtLWRldmljZToKPgo+IAl2ZWN0b3Jf
-Zm9yZWFjaF9zbG90IChtcHAtPnBnLCBwZ3AsIGkpIHsKPiAJCWlmICghcGdwLT5wYXRocykKPiAJ
-CQljb250aW51ZTsKPiAJCXZlY3Rvcl9mb3JlYWNoX3Nsb3QocGdwLT5wYXRocywgcHAsIGopIHsK
-PiAJCQlpZiAobG9jayAmJiBmbG9jayhwcC0+ZmQsIExPQ0tfU0ggfCBMT0NLX05CKSAmJgo+IAkJ
-CSAgICBlcnJubyA9PSBFV09VTERCTE9DSykKPiAJCQkJZ290byBmYWlsOwo+IAkJCWVsc2UgaWYg
-KCFsb2NrKQo+IAkJCQlmbG9jayhwcC0+ZmQsIExPQ0tfVU4pOwo+IAkJfQo+IAl9Cj4KPiBTbyBk
-dXJpbmcgYm9vdHVwIGl0J3MgYW55b25lJ3MgZ3Vlc3Mgd2hvJ3MgZmlyc3QsIG11bHRpcGF0aCBv
-ciB1ZGV2Lgo+IEFuZCBkZXBlbmRpbmcgb24gdGhlIHRpbWluZyBlaXRoZXIgbXVsdGlwYXRoIHdp
-bGwgZmFpbCB0byBzZXR1cAo+IHRoZSBkZXZpY2UtbWFwcGVyIGRldmljZSBvciB1ZGV2IHdpbGwg
-c2ltcGx5IGlnbm9yZSB0aGUgZGV2aWNlLgo+IE5laXRoZXIgb2YgdGhvc2UgaXMgYSBnb29kLCBi
-dXQgdGhlIGZpcnN0IGlzIGFuIGFic29sdXRlIGtpbGxlciBmb3IKPiBtb2Rlcm4gc3lzdGVtcyB3
-aGljaCBfcmVseV8gb24gdWRldiB0byBjb25maWd1cmUgZGV2aWNlcy4KPgo+IFNvIGhvdyBpdCB0
-aGlzIHN1cHBvc2VkIHRvIHdvcms/Cj4gV2h5IGRvZXMgdWRldiBpZ25vcmUgdGhlIGVudGlyZSBl
-dmVudCBpZiBpdCBjYW4ndCBnZXQgdGhlIGxvY2s/Cj4gU2hvdWxkbid0IGl0IHJhdGhlciBiZSBy
-ZXRyaWVkPwo+IFdoYXQgaXMgdGhlIHN1cHBvc2VkIHJlY292ZXJ5IGhlcmU/Cj4KPiBDaGVlcnMs
-Cj4KPiBIYW5uZXMKPgoKCi0tIApBbGV4YW5kZXIgRS4gUGF0cmFrb3YKX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18Kc3lzdGVtZC1kZXZlbCBtYWlsaW5nIGxp
-c3QKc3lzdGVtZC1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVk
-ZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3N5c3RlbWQtZGV2ZWwK
+Hello,
+
+This patch fixes the obsolete help-text link of CONFIG_DM_CRYPT.
+Applies against next-20141215.
+
+Fixes: https://bugzilla.kernel.org/show_bug.cgi?id=75111
+
+Signed-off-by: Loic Pefferkorn <loic@loicp.eu>
+---
+ drivers/md/Kconfig | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 5bdedf6..09c89a4b 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -230,9 +230,8 @@ config DM_CRYPT
+ 	  transparently encrypts the data on it. You'll need to activate
+ 	  the ciphers you're going to use in the cryptoapi configuration.
+ 
+-	  Information on how to use dm-crypt can be found on
+-
+-	  <http://www.saout.de/misc/dm-crypt/>
++	  For further information on dm-crypt and userspace tools see:
++	  <http://code.google.com/p/cryptsetup/wiki/DMCrypt>
+ 
+ 	  To compile this code as a module, choose M here: the module will
+ 	  be called dm-crypt.
+-- 
+2.1.3
