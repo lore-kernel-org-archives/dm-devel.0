@@ -1,53 +1,71 @@
-From: Loic Pefferkorn <loic@loicp.eu>
-Subject: [PATCH] Update CONFIG_DM_CRYPT help-text link
-Date: Mon, 15 Dec 2014 22:18:43 +0100
-Message-ID: <81c1a7329d2146d37b22d7efa96b3a449cb66d14.1418677931.git.loic@loicp.eu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: multipath breaks with recent udev/systemd
+Date: Tue, 16 Dec 2014 16:10:44 -0600
+Message-ID: <20141216221044.GK30600@ask-08.lab.msp.redhat.com>
+References: <548EAA80.30604@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <systemd-devel-bounces@lists.freedesktop.org>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, snitzer@redhat.com
-Cc: dm-devel@redhat.com
+In-Reply-To: <548EAA80.30604@suse.de>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
+List-Post: <mailto:systemd-devel@lists.freedesktop.org>
+List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: systemd-devel-bounces@lists.freedesktop.org
+Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Kay Sievers <kay.sievers@vrfy.org>, systemd Mailing List <systemd-devel@lists.freedesktop.org>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Hello,
-
-This patch fixes the obsolete help-text link of CONFIG_DM_CRYPT.
-Applies against next-20141215.
-
-Fixes: https://bugzilla.kernel.org/show_bug.cgi?id=75111
-
-Signed-off-by: Loic Pefferkorn <loic@loicp.eu>
----
- drivers/md/Kconfig | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 5bdedf6..09c89a4b 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -230,9 +230,8 @@ config DM_CRYPT
- 	  transparently encrypts the data on it. You'll need to activate
- 	  the ciphers you're going to use in the cryptoapi configuration.
- 
--	  Information on how to use dm-crypt can be found on
--
--	  <http://www.saout.de/misc/dm-crypt/>
-+	  For further information on dm-crypt and userspace tools see:
-+	  <http://code.google.com/p/cryptsetup/wiki/DMCrypt>
- 
- 	  To compile this code as a module, choose M here: the module will
- 	  be called dm-crypt.
--- 
-2.1.3
+T24gTW9uLCBEZWMgMTUsIDIwMTQgYXQgMTA6MzE6NDRBTSArMDEwMCwgSGFubmVzIFJlaW5lY2tl
+IHdyb3RlOgo+IEhpIGFsbCwKPiAKPiBpbiBjb21taXQgM2ViZGI4MWVmMDg4YWZkM2I0YzcyYjUx
+NmJlYjU2MTBmOGM5M2EwZAo+ICh1ZGV2OiBzZXJpYWxpemUvc3luY2hyb25pemUgYmxvY2sgZGV2
+aWNlIGV2ZW50IGhhbmRsaW5nIHdpdGggZmlsZQo+IGxvY2tzKSB1ZGV2IHN0YXJ0ZWQgdXNpbmcg
+ZmxvY2soKSBvbiB0aGUgZGV2aWNlIG5vZGUsIHN1cHBvc2VkbHkgdG8KPiBzeW5jaHJvbml6ZSB3
+aXRoIGFuIG9taW5vdXMgJ2Jsb2NrIGV2ZW50IGhhbmRsaW5nJy4KPiAKPiBUaGUgY29kZSBsb29r
+cyBsaWtlIHRoaXM6Cj4gCj4gICAgICAgICAgICAgICAgICAgaWYgKGQpIHsKPiAgICAgICAgICAg
+ICAgICAgICAgICAgICBmZF9sb2NrID0gb3Blbih1ZGV2X2RldmljZV9nZXRfZGV2bm9kZShkKSwK
+PiBPX1JET05MWXxPX0NMT0VYRUN8T19OT0ZPTExPV3xPX05PTkJMT0NLKTsKPiAgICAgICAgICAg
+ICAgICAgICAgICAgICBpZiAoZmRfbG9jayA+PSAwICYmIGZsb2NrKGZkX2xvY2ssCj4gTE9DS19T
+SHxMT0NLX05CKSA8IDApIHsKPiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGxvZ19kZWJ1
+ZygiVW5hYmxlIHRvIGZsb2NrKCVzKSwKPiBza2lwcGluZyBldmVudCBoYW5kbGluZzogJW0iLCB1
+ZGV2X2RldmljZV9nZXRfZGV2bm9kZShkKSk7Cj4gICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICBlcnIgPSAtRVdPVUxEQkxPQ0s7Cj4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICBnb3Rv
+IHNraXA7Cj4gICAgICAgICAgICAgICAgICAgICAgICB9Cj4gICAgICAgICAgICAgICAgICAgIH0K
+PiAKPiBIb3dldmVyLCBtdWx0aXBhdGggc2luY2Ugc2V2ZXJhbCB5ZWFycyBpcyB1c2luZyBhIHNp
+bWlsYXIgY29uc3RydWN0Cj4gdG8gbG9jayBhbGwgZGV2aWNlcyBiZWxvbmdpbmcgdG8gYSBtdWx0
+aXBhdGggZGV2aWNlIHRhYmxlIGJlZm9yZQo+IGNyZWF0aW5nIGEgbXVsaXRwYXRoIGRtLWRldmlj
+ZToKPiAKPiAJdmVjdG9yX2ZvcmVhY2hfc2xvdCAobXBwLT5wZywgcGdwLCBpKSB7Cj4gCQlpZiAo
+IXBncC0+cGF0aHMpCj4gCQkJY29udGludWU7Cj4gCQl2ZWN0b3JfZm9yZWFjaF9zbG90KHBncC0+
+cGF0aHMsIHBwLCBqKSB7Cj4gCQkJaWYgKGxvY2sgJiYgZmxvY2socHAtPmZkLCBMT0NLX1NIIHwg
+TE9DS19OQikgJiYKPiAJCQkgICAgZXJybm8gPT0gRVdPVUxEQkxPQ0spCj4gCQkJCWdvdG8gZmFp
+bDsKPiAJCQllbHNlIGlmICghbG9jaykKPiAJCQkJZmxvY2socHAtPmZkLCBMT0NLX1VOKTsKPiAJ
+CX0KPiAJfQo+IAo+IFNvIGR1cmluZyBib290dXAgaXQncyBhbnlvbmUncyBndWVzcyB3aG8ncyBm
+aXJzdCwgbXVsdGlwYXRoIG9yIHVkZXYuCj4gQW5kIGRlcGVuZGluZyBvbiB0aGUgdGltaW5nIGVp
+dGhlciBtdWx0aXBhdGggd2lsbCBmYWlsIHRvIHNldHVwCj4gdGhlIGRldmljZS1tYXBwZXIgZGV2
+aWNlIG9yIHVkZXYgd2lsbCBzaW1wbHkgaWdub3JlIHRoZSBkZXZpY2UuCj4gTmVpdGhlciBvZiB0
+aG9zZSBpcyBhIGdvb2QsIGJ1dCB0aGUgZmlyc3QgaXMgYW4gYWJzb2x1dGUga2lsbGVyIGZvcgo+
+IG1vZGVybiBzeXN0ZW1zIHdoaWNoIF9yZWx5XyBvbiB1ZGV2IHRvIGNvbmZpZ3VyZSBkZXZpY2Vz
+Lgo+IAo+IFNvIGhvdyBpdCB0aGlzIHN1cHBvc2VkIHRvIHdvcms/Cj4gV2h5IGRvZXMgdWRldiBp
+Z25vcmUgdGhlIGVudGlyZSBldmVudCBpZiBpdCBjYW4ndCBnZXQgdGhlIGxvY2s/Cj4gU2hvdWxk
+bid0IGl0IHJhdGhlciBiZSByZXRyaWVkPwo+IFdoYXQgaXMgdGhlIHN1cHBvc2VkIHJlY292ZXJ5
+IGhlcmU/CgpIYW5uZXMsIGFyZSB5b3UgYWdhaW5zdCB0aGUgaWRlYSB0aGF0IEFsZXhhbmRlciBt
+ZW50aW9uZWQgaW4gaGlzIGZpcnN0CmVtYWlsLCBvZiBqdXN0IGxvY2tpbmcgYSBmaWxlIGluIC92
+YXIvbG9jaz8gIE11bHRpcGF0aGQgZG9lc24ndCBjcmVhdGUKZGV2aWNlcyBpbiBwYXJhbGxlbC4g
+TXVsdGlwYXRoIGRvZXNuJ3QgY3JlYXRlIGZpbGVzIGluIHBhcmFsbGVsLiAgV2UgYXJlCmV4cGxp
+Y2l0bHkgdHJ5aW5nIHRvIGF2b2lkIG11bHRpcGF0aCBhbmQgbXVsdGlwYXRoZCBjcmVhdGluZyBm
+aWxlcyBhdAp0aGUgc2FtZSB0aW1lLiBTbywgd2Ugc2hvdWxkIG9ubHkgbmVlZCBhIHNpbmdsZSBm
+aWxlIHRvIGxvY2ssIGFuZAovcnVuL2xvY2sgc2hvdWxkIGFsd2F5cyBiZSB0aGVyZS4KCi1CZW4K
+Cj4gCj4gQ2hlZXJzLAo+IAo+IEhhbm5lcwo+IC0tIAo+IERyLiBIYW5uZXMgUmVpbmVja2UJCSAg
+ICAgICAgICAgICAgIHpTZXJpZXMgJiBTdG9yYWdlCj4gaGFyZUBzdXNlLmRlCQkJICAgICAgICAg
+ICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKPiBTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUs
+IDkwNDA5IE7DvHJuYmVyZwo+IEdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBKLiBH
+dWlsZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCj4gSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCl9f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCnN5c3RlbWQtZGV2
+ZWwgbWFpbGluZyBsaXN0CnN5c3RlbWQtZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHA6
+Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9zeXN0ZW1kLWRldmVsCg==
