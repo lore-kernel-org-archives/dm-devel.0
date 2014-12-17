@@ -1,91 +1,68 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [dm-devel] multipath breaks with recent
-	udev/systemd
-Date: Wed, 17 Dec 2014 13:04:54 +0100
-Message-ID: <54917166.6020406@suse.de>
-References: <548EAA80.30604@suse.de>
- <20141216221044.GK30600@ask-08.lab.msp.redhat.com>
- <20141216221856.GL30600@ask-08.lab.msp.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <systemd-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <20141216221856.GL30600@ask-08.lab.msp.redhat.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>,
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
-List-Post: <mailto:systemd-devel@lists.freedesktop.org>
-List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>,
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: systemd-devel-bounces@lists.freedesktop.org
-Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Kay Sievers <kay.sievers@vrfy.org>, systemd Mailing List <systemd-devel@lists.freedesktop.org>, Mike Snitzer <snitzer@redhat.com>
+From: Marc Dionne <marc.c.dionne@gmail.com>
+Subject: [PATCH] dm thin: Initialize refcount and completion earlier
+Date: Wed, 17 Dec 2014 07:59:59 -0500
+Message-ID: <1418821199-6890-1-git-send-email-marc.dionne@your-file-system.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: snitzer@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: agk@redhat.com, Marc Dionne <marc.dionne@your-file-system.com>
 List-Id: dm-devel.ids
 
-T24gMTIvMTYvMjAxNCAxMToxOCBQTSwgQmVuamFtaW4gTWFyemluc2tpIHdyb3RlOgo+IE9uIFR1
-ZSwgRGVjIDE2LCAyMDE0IGF0IDA0OjEwOjQ0UE0gLTA2MDAsIEJlbmphbWluIE1hcnppbnNraSB3
-cm90ZToKPj4gT24gTW9uLCBEZWMgMTUsIDIwMTQgYXQgMTA6MzE6NDRBTSArMDEwMCwgSGFubmVz
-IFJlaW5lY2tlIHdyb3RlOgpbIC4uIF0KPj4+IFNvIGR1cmluZyBib290dXAgaXQncyBhbnlvbmUn
-cyBndWVzcyB3aG8ncyBmaXJzdCwgbXVsdGlwYXRoIG9yIHVkZXYuCj4+PiBBbmQgZGVwZW5kaW5n
-IG9uIHRoZSB0aW1pbmcgZWl0aGVyIG11bHRpcGF0aCB3aWxsIGZhaWwgdG8gc2V0dXAKPj4+IHRo
-ZSBkZXZpY2UtbWFwcGVyIGRldmljZSBvciB1ZGV2IHdpbGwgc2ltcGx5IGlnbm9yZSB0aGUgZGV2
-aWNlLgo+Pj4gTmVpdGhlciBvZiB0aG9zZSBpcyBhIGdvb2QsIGJ1dCB0aGUgZmlyc3QgaXMgYW4g
-YWJzb2x1dGUga2lsbGVyIGZvcgo+Pj4gbW9kZXJuIHN5c3RlbXMgd2hpY2ggX3JlbHlfIG9uIHVk
-ZXYgdG8gY29uZmlndXJlIGRldmljZXMuCj4+Pgo+Pj4gU28gaG93IGl0IHRoaXMgc3VwcG9zZWQg
-dG8gd29yaz8KPj4+IFdoeSBkb2VzIHVkZXYgaWdub3JlIHRoZSBlbnRpcmUgZXZlbnQgaWYgaXQg
-Y2FuJ3QgZ2V0IHRoZSBsb2NrPwo+Pj4gU2hvdWxkbid0IGl0IHJhdGhlciBiZSByZXRyaWVkPwo+
-Pj4gV2hhdCBpcyB0aGUgc3VwcG9zZWQgcmVjb3ZlcnkgaGVyZT8KPj4KPj4gSGFubmVzLCBhcmUg
-eW91IGFnYWluc3QgdGhlIGlkZWEgdGhhdCBBbGV4YW5kZXIgbWVudGlvbmVkIGluIGhpcyBmaXJz
-dAo+PiBlbWFpbCwgb2YganVzdCBsb2NraW5nIGEgZmlsZSBpbiAvdmFyL2xvY2s/ICBNdWx0aXBh
-dGhkIGRvZXNuJ3QgY3JlYXRlCj4+IGRldmljZXMgaW4gcGFyYWxsZWwuIE11bHRpcGF0aCBkb2Vz
-bid0IGNyZWF0ZSBmaWxlcyBpbiBwYXJhbGxlbC4gIFdlIGFyZQo+PiBleHBsaWNpdGx5IHRyeWlu
-ZyB0byBhdm9pZCBtdWx0aXBhdGggYW5kIG11bHRpcGF0aGQgY3JlYXRpbmcgZmlsZXMgYXQKPj4g
-dGhlIHNhbWUgdGltZS4gU28sIHdlIHNob3VsZCBvbmx5IG5lZWQgYSBzaW5nbGUgZmlsZSB0byBs
-b2NrLCBhbmQKPj4gL3J1bi9sb2NrIHNob3VsZCBhbHdheXMgYmUgdGhlcmUuCj4gCj4gTy5rLiBT
-byBpZiB3ZSB3YW50IHRvIGtlZXAgb3VyIGN1cnJlbnQgbm9uYmxvY2tpbmcgYmVoYXZpb3IsIHdl
-J2xsIG5lZWQKPiBtb3JlIGxvY2tmaWxlcywgZWl0aGVyIG9uZSBwZXIgcGF0aCBvciBvbmUgcGVy
-IHd3aWQuICBUaGlzIHN0aWxsIHNlZW1zCj4gbGlrZSBhIHJlYXNvbmFibGUgaWRlYSwgaWYgdGhl
-cmUgaXMgYSBnb29kIHJlYXNvbiBmb3Igc3lzdGVtZCBkb2luZyB3aGF0Cj4gaXQncyBkb2luZy4K
-PiAKVGhlIHByb2JsZW0gaXMgYXMgZm9sbG93czoKCldoZW4gbXVsdGlwYXRoZCBpcyBydW5uaW5n
-IHdlIHNpbXBseSBfY2Fubm90XyBndWFyYW50ZWUgdGhhdCBubyB1ZGV2CmV2ZW50cyBhcmUgY3Vy
-cmVudGx5IHJ1bm5pbmcuIFRoaXMgY3VycmVudGx5IGhpdHMgdXMgZXNwZWNpYWxseSBiYWQKZHVy
-aW5nIHN5c3RlbSBzdGFydHVwIHdoZW4gZGV2aWNlIHByb2JpbmcgaXMgc3RpbGwgcnVubmluZyBk
-dXJpbmcKbXVsdGlwYXRoZCBzdGFydHVwLgpNdWx0aXBhdGhkIHdpbGwgdGhlbiBlbnVtZXJhdGUg
-YWxsIGJsb2NrIGRldmljZXMgdG8gc2V0dXAgdGhlCmluaXRpYWwgdG9wb2xvZ3kuCkJ1dCBpbiBk
-b2luZyBzbyBpdCBtaWdodCB0cmlwIG92ZXIgZGV2aWNlIHdoaWNoIGFyZSBzdGlsbCBwcm9jZXNz
-ZWQKYnkgdWRldiAob3IsIHdvcnNlIHN0aWxsLCBfbm90IHlldF8gcHJvY2Vzc2VkIGJ5IHVkZXYp
-LgooWWVzLCBJIGtub3csIGxpYnVkZXZfZW51bWVyYXRlIHNob3VsZCBwcm90ZWN0IGFnYWluc3Qg
-dGhpcy4KIEJ1dCBpdCBkb2Vzbid0LiApCgpTbyBpdCdzIGFueW9uZSBndWVzcyB3aGF0J2xsIGhh
-cHBlbiBub3c7IGVpdGhlciBtdWx0aXBhdGggdHJpcHMgb3Zlcgp0aGUgbG9jayBmcm9tIHVkZXYg
-d2hlbiBjYWxsaW5nICdsb2NrX211bHRpcGF0aCcgKGFuZCBjb25zZXF1ZW50bHkKZmFpbGluZyB0
-byBzZXR1cCB0aGUgbXVsdGlwYXRoIGRldmljZSksIG9yIHVkZXYKdHJpcHBpbmcgb3ZlciB0aGUg
-bG9jayBmcm9tIG11bHRpcGF0aCBhbmQgaWdub3JpbmcgdGhlIGV2ZW50LApsZWF2aW5nIHVzIHdp
-dGggYSBub24tZnVuY3Rpb25pbmcgZGV2aWNlLgoKV2UgY2FuIGZpeHVwIHRoZSBzdGFydHVwIHNl
-cXVlbmNlICh3aGljaCB3ZSBuZWVkIHRvIGRvIGFueXdheSwgZ2l2ZW4KdGhlIGxpYnVkZXYgZW51
-bWVyYXRlIGJ1ZykgdG8ganVzdCByZS10cmlnZ2VyIGFsbCBibG9jayBkZXZpY2UKZXZlbnRzLCBi
-dXQgdGhpcyBzdGlsbCBkb2Vzbid0IGZpeCB0aGUgYWN0dWFsIGlzc3VlLgpQb2ludCBpcywgdGhl
-cmUgbWlnaHQgYmUgX3NldmVyYWxfIGV2ZW50cyBmb3IgdGhlIHNhbWUgZGV2aWNlIGJlaW5nCnF1
-ZXVlZCAodGhpbmsgb2YgYSBmbGFreSBwYXRoIHdpdGggc2V2ZXJhbCBQQVRIX0ZBSUxFRCAvClBB
-VEhfUkVJTlNUQVRFRCBldmVudHMgaW4gYSByb3cpLCBhbmQgc28gbXVsdGlwYXRoZCBtaWdodCBi
-ZQpwcm9jZXNzaW5nIG9uZSBldmVudCBmb3IgdGhlIGRldmljZSB3aGlsZSB1ZGV2IGlzIHByb2Nl
-c3NpbmcgdGhlCm5leHQgZXZlbnQgZm9yIHRoZSBzYW1lIGRldmljZS4KCkZvciB0aGlzIHRvIHdv
-cmsgd2UgbmVlZCBzb21lIHN5bmNocm9uaXphdGlvbiB3aXRoIHVkZXY7IF9pZl8gdGhlcmUKd291
-bGQgYmUgYSBsaWJ1ZGV2IGNhbGxvdXQgZm9yICdpcyB0aGVyZSBhbiBldmVudCBmb3IgdGhpcyBk
-ZXZpY2UKcnVubmluZycgd2UgY2FuIGVhc2lseSBmYWlsIHRoZSAnbG9ja19tdWx0aXBhdGgnIG9w
-ZXJhdGlvbiwga25vd2luZwp0aGF0IHdlJ2xsIGJlIGdldHRpbmcgYW5vdGhlciBldmVudCBzaG9y
-dGx5IGZvciB0aGUgc2FtZSBkZXZpY2UuCgpBbHRlcm5hdGl2ZWx5IHdlIGNhbiBjYWxsIGZsb2Nr
-KExPQ0tfRVgpIG9uIHRoYXQgZGV2aWNlLCBidXQgdGhhdAp3aWxsIG9ubHkgd29yayBpZiB1ZGV2
-IHdvdWxkIF9ub3RfIGFib3J0IGV2ZW50IGhhbmRsaW5nIGZvciB0aGF0CmRldmljZSwgYnV0IHJh
-dGhlciBpc3N1ZXMgYSByZXRyeS4KQWZ0ZXIgYWxsLCB0aGVyZSBfaXNfIGEgZGV2aWNlIHRpbWVv
-dXQgaW4gdWRldi4gSXQgc2hvdWxkIGJlCnJlbGF0aXZlbHkgZWFzeSB0byByZXRyeSB0aGUgZXZl
-bnQgYW5kIGxldCBpdCBydW4gaW50byBhIHRpbWVvdXQgaWYKdGhlIGxvY2sgd29uJ3QgYmUgcmVs
-ZWFzZWQuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgICAg
-ICAgICAgIHpTZXJpZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAgICs0
-OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8
-cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBt
-YW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQpfX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpzeXN0ZW1kLWRldmVsIG1haWxpbmcgbGlz
-dApzeXN0ZW1kLWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMuZnJlZWRl
-c2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vc3lzdGVtZC1kZXZlbAo=
+The commit 80e96c5484be (dm thin: do not allow thin device activation
+while pool is suspended) delayed the initialization of the completion
+and setting the initial refcount to 1 until after the new thin is
+added to the pool's active thins list and the pool lock is released.
+This opens a race with a worker thread that walks the list and calls
+thin_get/put, noticing that the refcount goes to 0 and calling
+complete, freezing up the system and giving the oops below:
+
+ kernel: BUG: unable to handle kernel NULL pointer dereference at           (null)
+ kernel: IP: [<ffffffff810d360b>] __wake_up_common+0x2b/0x90
+
+ kernel: Call Trace:
+ kernel: [<ffffffff810d3683>] __wake_up_locked+0x13/0x20
+ kernel: [<ffffffff810d3dc7>] complete+0x37/0x50
+ kernel: [<ffffffffa0595c50>] thin_put+0x20/0x30 [dm_thin_pool]
+ kernel: [<ffffffffa059aab7>] do_worker+0x667/0x870 [dm_thin_pool]
+ kernel: [<ffffffff816a8a4c>] ? __schedule+0x3ac/0x9a0
+ kernel: [<ffffffff810b1aef>] process_one_work+0x14f/0x400
+ kernel: [<ffffffff810b206b>] worker_thread+0x6b/0x490
+ kernel: [<ffffffff810b2000>] ? rescuer_thread+0x260/0x260
+ kernel: [<ffffffff810b6a7b>] kthread+0xdb/0x100
+ kernel: [<ffffffff810b69a0>] ? kthread_create_on_node+0x170/0x170
+ kernel: [<ffffffff816ad7ec>] ret_from_fork+0x7c/0xb0
+ kernel: [<ffffffff810b69a0>] ? kthread_create_on_node+0x170/0x170
+
+Set the initial refcount and initialize the completion
+before dropping the pool lock.
+
+Signed-off-by: Marc Dionne <marc.dionne@your-file-system.com>
+---
+ drivers/md/dm-thin.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 8735543..4133223 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -3814,6 +3814,8 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		r = -EINVAL;
+ 		goto bad;
+ 	}
++	atomic_set(&tc->refcount, 1);
++	init_completion(&tc->can_destroy);
+ 	list_add_tail_rcu(&tc->list, &tc->pool->active_thins);
+ 	spin_unlock_irqrestore(&tc->pool->lock, flags);
+ 	/*
+@@ -3826,9 +3828,6 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 
+ 	dm_put(pool_md);
+ 
+-	atomic_set(&tc->refcount, 1);
+-	init_completion(&tc->can_destroy);
+-
+ 	return 0;
+ 
+ bad:
+-- 
+2.1.0
