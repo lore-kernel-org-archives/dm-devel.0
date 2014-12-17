@@ -1,12 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3 0/8] dm: add request-based blk-mq support
-Date: Tue, 16 Dec 2014 22:59:56 -0500
-Message-ID: <1418788804-1982-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v3 3/8] block: add blk-mq support to
+	blk_insert_cloned_request()
+Date: Tue, 16 Dec 2014 22:59:59 -0500
+Message-ID: <1418788804-1982-4-git-send-email-snitzer@redhat.com>
+References: <1418788804-1982-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1418788804-1982-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,59 +23,32 @@ To: dm-devel@redhat.com, Keith Busch <keith.busch@intel.com>
 Cc: axboe@kernel.dk, hch@infradead.org, j-nomura@ce.jp.nec.com, bvanassche@acm.org
 List-Id: dm-devel.ids
 
-Hi,
+From: Keith Busch <keith.busch@intel.com>
 
-Here is v3 of the request-based DM blk-support patchset.  I've also
-published a git repo here:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-for-3.20-blk-mq
+If the request passed to blk_insert_cloned_request() was allocated by
+a blk-mq device it must be submitted using blk_mq_insert_request().
 
-I found quite a few issues with v2 for both blk-mq and old
-request-based DM.  I've still attributed the original patches from
-Keith to him even though I fixed/rewrote significant portions.  Keith,
-I'm happy to leave attribution like this unless you'd prefer I change
-it.
+Signed-off-by: Keith Busch <keith.busch@intel.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ block/blk-core.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-In general, I'm not in love with the amount of churn in dm.c's
-request-based DM code.  BUT I'm also not opposed to these changes if
-others have a pressing need for blk-mq support landing for
-dm-multipath.  So input on who cares about this work would be
-appreciated.  I'd like to get an idea of the kinds of configurations
-people are looking to deploy.
-
-These changes have seen basic dm-multipath testing against both blk-mq
-(virtio-blk) and traditional SCSI devices.  Error paths are largely
-untested, as is dm-multipath's ability to function properly in the
-face of heavy IO with concurrent path failures.  But I'm publishing
-this work now in the hopes that others with real blk-mq devices can
-test more fully.  Keith, it'd be awesome if you could provide the same
-test coverage you did for blk-mq testing of your v2.
-
-I'll work with Red Hat's Storage QE to hammer on the old request-based
-side.  But with the holiday fast approaching I likely won't have full
-test coverage until after the New Year.
-
-Keith Busch (4):
-  block: require blk_rq_prep_clone() be given an initialized clone request
-  block: add blk-mq support to blk_insert_cloned_request()
-  dm: submit stacked requests in irq enabled context
-  dm: allocate requests from target when stacking on blk-mq devices
-
-Mike Snitzer (4):
-  block: initialize bio member of blk-mq request to NULL
-  block: mark blk-mq devices as stackable
-  dm: remove exports for request-based interfaces without external callers
-  dm: split request structure out from dm_rq_target_io structure
-
- block/blk-core.c              |   7 +-
- block/blk-mq.c                |   1 +
- drivers/md/dm-mpath.c         |  53 +++++--
- drivers/md/dm-table.c         |  34 ++++-
- drivers/md/dm-target.c        |  15 +-
- drivers/md/dm.c               | 336 +++++++++++++++++++++++++++++-------------
- drivers/md/dm.h               |   8 +-
- include/linux/blkdev.h        |   1 +
- include/linux/device-mapper.h |  10 +-
- 9 files changed, 335 insertions(+), 130 deletions(-)
-
+diff --git a/block/blk-core.c b/block/blk-core.c
+index b794cd99..7852844 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -2029,6 +2029,11 @@ int blk_insert_cloned_request(struct request_queue *q, struct request *rq)
+ 	    should_fail_request(&rq->rq_disk->part0, blk_rq_bytes(rq)))
+ 		return -EIO;
+ 
++	if (q->mq_ops) {
++		blk_mq_insert_request(rq, false, true, true);
++		return 0;
++	}
++
+ 	spin_lock_irqsave(q->queue_lock, flags);
+ 	if (unlikely(blk_queue_dying(q))) {
+ 		spin_unlock_irqrestore(q->queue_lock, flags);
 -- 
 1.9.3
