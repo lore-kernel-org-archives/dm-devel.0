@@ -1,83 +1,65 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [dm-devel] multipath breaks with recent
-	udev/systemd
-Date: Tue, 16 Dec 2014 16:18:56 -0600
-Message-ID: <20141216221856.GL30600@ask-08.lab.msp.redhat.com>
-References: <548EAA80.30604@suse.de>
- <20141216221044.GK30600@ask-08.lab.msp.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v3 1/8] block: require blk_rq_prep_clone() be
+	given an initialized clone request
+Date: Tue, 16 Dec 2014 22:59:57 -0500
+Message-ID: <1418788804-1982-2-git-send-email-snitzer@redhat.com>
+References: <1418788804-1982-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <systemd-devel-bounces@lists.freedesktop.org>
-Content-Disposition: inline
-In-Reply-To: <20141216221044.GK30600@ask-08.lab.msp.redhat.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>,
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
-List-Post: <mailto:systemd-devel@lists.freedesktop.org>
-List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>,
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: systemd-devel-bounces@lists.freedesktop.org
-Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Kay Sievers <kay.sievers@vrfy.org>, systemd Mailing List <systemd-devel@lists.freedesktop.org>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1418788804-1982-1-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, Keith Busch <keith.busch@intel.com>
+Cc: axboe@kernel.dk, hch@infradead.org, j-nomura@ce.jp.nec.com, bvanassche@acm.org
 List-Id: dm-devel.ids
 
-T24gVHVlLCBEZWMgMTYsIDIwMTQgYXQgMDQ6MTA6NDRQTSAtMDYwMCwgQmVuamFtaW4gTWFyemlu
-c2tpIHdyb3RlOgo+IE9uIE1vbiwgRGVjIDE1LCAyMDE0IGF0IDEwOjMxOjQ0QU0gKzAxMDAsIEhh
-bm5lcyBSZWluZWNrZSB3cm90ZToKPiA+IEhpIGFsbCwKPiA+IAo+ID4gaW4gY29tbWl0IDNlYmRi
-ODFlZjA4OGFmZDNiNGM3MmI1MTZiZWI1NjEwZjhjOTNhMGQKPiA+ICh1ZGV2OiBzZXJpYWxpemUv
-c3luY2hyb25pemUgYmxvY2sgZGV2aWNlIGV2ZW50IGhhbmRsaW5nIHdpdGggZmlsZQo+ID4gbG9j
-a3MpIHVkZXYgc3RhcnRlZCB1c2luZyBmbG9jaygpIG9uIHRoZSBkZXZpY2Ugbm9kZSwgc3VwcG9z
-ZWRseSB0bwo+ID4gc3luY2hyb25pemUgd2l0aCBhbiBvbWlub3VzICdibG9jayBldmVudCBoYW5k
-bGluZycuCj4gPiAKPiA+IFRoZSBjb2RlIGxvb2tzIGxpa2UgdGhpczoKPiA+IAo+ID4gICAgICAg
-ICAgICAgICAgICAgaWYgKGQpIHsKPiA+ICAgICAgICAgICAgICAgICAgICAgICAgIGZkX2xvY2sg
-PSBvcGVuKHVkZXZfZGV2aWNlX2dldF9kZXZub2RlKGQpLAo+ID4gT19SRE9OTFl8T19DTE9FWEVD
-fE9fTk9GT0xMT1d8T19OT05CTE9DSyk7Cj4gPiAgICAgICAgICAgICAgICAgICAgICAgICBpZiAo
-ZmRfbG9jayA+PSAwICYmIGZsb2NrKGZkX2xvY2ssCj4gPiBMT0NLX1NIfExPQ0tfTkIpIDwgMCkg
-ewo+ID4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICBsb2dfZGVidWcoIlVuYWJsZSB0byBm
-bG9jayglcyksCj4gPiBza2lwcGluZyBldmVudCBoYW5kbGluZzogJW0iLCB1ZGV2X2RldmljZV9n
-ZXRfZGV2bm9kZShkKSk7Cj4gPiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGVyciA9IC1F
-V09VTERCTE9DSzsKPiA+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgZ290byBza2lwOwo+
-ID4gICAgICAgICAgICAgICAgICAgICAgICB9Cj4gPiAgICAgICAgICAgICAgICAgICAgfQo+ID4g
-Cj4gPiBIb3dldmVyLCBtdWx0aXBhdGggc2luY2Ugc2V2ZXJhbCB5ZWFycyBpcyB1c2luZyBhIHNp
-bWlsYXIgY29uc3RydWN0Cj4gPiB0byBsb2NrIGFsbCBkZXZpY2VzIGJlbG9uZ2luZyB0byBhIG11
-bHRpcGF0aCBkZXZpY2UgdGFibGUgYmVmb3JlCj4gPiBjcmVhdGluZyBhIG11bGl0cGF0aCBkbS1k
-ZXZpY2U6Cj4gPiAKPiA+IAl2ZWN0b3JfZm9yZWFjaF9zbG90IChtcHAtPnBnLCBwZ3AsIGkpIHsK
-PiA+IAkJaWYgKCFwZ3AtPnBhdGhzKQo+ID4gCQkJY29udGludWU7Cj4gPiAJCXZlY3Rvcl9mb3Jl
-YWNoX3Nsb3QocGdwLT5wYXRocywgcHAsIGopIHsKPiA+IAkJCWlmIChsb2NrICYmIGZsb2NrKHBw
-LT5mZCwgTE9DS19TSCB8IExPQ0tfTkIpICYmCj4gPiAJCQkgICAgZXJybm8gPT0gRVdPVUxEQkxP
-Q0spCj4gPiAJCQkJZ290byBmYWlsOwo+ID4gCQkJZWxzZSBpZiAoIWxvY2spCj4gPiAJCQkJZmxv
-Y2socHAtPmZkLCBMT0NLX1VOKTsKPiA+IAkJfQo+ID4gCX0KPiA+IAo+ID4gU28gZHVyaW5nIGJv
-b3R1cCBpdCdzIGFueW9uZSdzIGd1ZXNzIHdobydzIGZpcnN0LCBtdWx0aXBhdGggb3IgdWRldi4K
-PiA+IEFuZCBkZXBlbmRpbmcgb24gdGhlIHRpbWluZyBlaXRoZXIgbXVsdGlwYXRoIHdpbGwgZmFp
-bCB0byBzZXR1cAo+ID4gdGhlIGRldmljZS1tYXBwZXIgZGV2aWNlIG9yIHVkZXYgd2lsbCBzaW1w
-bHkgaWdub3JlIHRoZSBkZXZpY2UuCj4gPiBOZWl0aGVyIG9mIHRob3NlIGlzIGEgZ29vZCwgYnV0
-IHRoZSBmaXJzdCBpcyBhbiBhYnNvbHV0ZSBraWxsZXIgZm9yCj4gPiBtb2Rlcm4gc3lzdGVtcyB3
-aGljaCBfcmVseV8gb24gdWRldiB0byBjb25maWd1cmUgZGV2aWNlcy4KPiA+IAo+ID4gU28gaG93
-IGl0IHRoaXMgc3VwcG9zZWQgdG8gd29yaz8KPiA+IFdoeSBkb2VzIHVkZXYgaWdub3JlIHRoZSBl
-bnRpcmUgZXZlbnQgaWYgaXQgY2FuJ3QgZ2V0IHRoZSBsb2NrPwo+ID4gU2hvdWxkbid0IGl0IHJh
-dGhlciBiZSByZXRyaWVkPwo+ID4gV2hhdCBpcyB0aGUgc3VwcG9zZWQgcmVjb3ZlcnkgaGVyZT8K
-PiAKPiBIYW5uZXMsIGFyZSB5b3UgYWdhaW5zdCB0aGUgaWRlYSB0aGF0IEFsZXhhbmRlciBtZW50
-aW9uZWQgaW4gaGlzIGZpcnN0Cj4gZW1haWwsIG9mIGp1c3QgbG9ja2luZyBhIGZpbGUgaW4gL3Zh
-ci9sb2NrPyAgTXVsdGlwYXRoZCBkb2Vzbid0IGNyZWF0ZQo+IGRldmljZXMgaW4gcGFyYWxsZWwu
-IE11bHRpcGF0aCBkb2Vzbid0IGNyZWF0ZSBmaWxlcyBpbiBwYXJhbGxlbC4gIFdlIGFyZQo+IGV4
-cGxpY2l0bHkgdHJ5aW5nIHRvIGF2b2lkIG11bHRpcGF0aCBhbmQgbXVsdGlwYXRoZCBjcmVhdGlu
-ZyBmaWxlcyBhdAo+IHRoZSBzYW1lIHRpbWUuIFNvLCB3ZSBzaG91bGQgb25seSBuZWVkIGEgc2lu
-Z2xlIGZpbGUgdG8gbG9jaywgYW5kCj4gL3J1bi9sb2NrIHNob3VsZCBhbHdheXMgYmUgdGhlcmUu
-CgpPLmsuIFNvIGlmIHdlIHdhbnQgdG8ga2VlcCBvdXIgY3VycmVudCBub25ibG9ja2luZyBiZWhh
-dmlvciwgd2UnbGwgbmVlZAptb3JlIGxvY2tmaWxlcywgZWl0aGVyIG9uZSBwZXIgcGF0aCBvciBv
-bmUgcGVyIHd3aWQuICBUaGlzIHN0aWxsIHNlZW1zCmxpa2UgYSByZWFzb25hYmxlIGlkZWEsIGlm
-IHRoZXJlIGlzIGEgZ29vZCByZWFzb24gZm9yIHN5c3RlbWQgZG9pbmcgd2hhdAppdCdzIGRvaW5n
-LgoKLUJlbgoKPiAKPiAtQmVuCj4gCj4gPiAKPiA+IENoZWVycywKPiA+IAo+ID4gSGFubmVzCj4g
-PiAtLSAKPiA+IERyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgICAgICAgICAgIHpTZXJpZXMgJiBT
-dG9yYWdlCj4gPiBoYXJlQHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4
-OAo+ID4gU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKPiA+
-IEdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBtYW55dSwg
-Ry4gTm9ydG9uCj4gPiBIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKPiAKPiAtLQo+IGRtLWRldmVs
-IG1haWxpbmcgbGlzdAo+IGRtLWRldmVsQHJlZGhhdC5jb20KPiBodHRwczovL3d3dy5yZWRoYXQu
-Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX18Kc3lzdGVtZC1kZXZlbCBtYWlsaW5nIGxpc3QKc3lzdGVtZC1k
-ZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9t
-YWlsbWFuL2xpc3RpbmZvL3N5c3RlbWQtZGV2ZWwK
+From: Keith Busch <keith.busch@intel.com>
+
+Prepare to allow blk_rq_prep_clone() to accept clone requests that were
+allocated from blk-mq request queues.  As such the blk_rq_prep_clone()
+caller must first initialize the clone request.
+
+Signed-off-by: Keith Busch <keith.busch@intel.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ block/blk-core.c | 2 --
+ drivers/md/dm.c  | 1 +
+ 2 files changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 93f9152..b794cd99 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -2926,8 +2926,6 @@ int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
+ 	if (!bs)
+ 		bs = fs_bio_set;
+ 
+-	blk_rq_init(NULL, rq);
+-
+ 	__rq_for_each_bio(bio_src, rq_src) {
+ 		bio = bio_clone_fast(bio_src, gfp_mask, bs);
+ 		if (!bio)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 4c06585..bef5070 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1719,6 +1719,7 @@ static int setup_clone(struct request *clone, struct request *rq,
+ {
+ 	int r;
+ 
++	blk_rq_init(NULL, rq);
+ 	r = blk_rq_prep_clone(clone, rq, tio->md->bs, GFP_ATOMIC,
+ 			      dm_rq_bio_constructor, tio);
+ 	if (r)
+-- 
+1.9.3
