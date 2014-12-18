@@ -1,114 +1,99 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: mempool.c: Replace io_schedule_timeout with
-	io_schedule
-Date: Thu, 18 Dec 2014 10:37:09 -0500
-Message-ID: <20141218153709.GC2293@redhat.com>
-References: <1418863222-25096-1-git-send-email-nefelim4ag@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kay Sievers <kay@vrfy.org>
+Subject: Re: [dm-devel] multipath breaks with recent
+	udev/systemd
+Date: Thu, 18 Dec 2014 21:18:50 +0100
+Message-ID: <CAPXgP12rap3=EkKaxb4zSSJSRHmMK6ArxVTxF6NYk18UMgsG3A@mail.gmail.com>
+References: <548EAA80.30604@suse.de>
+ <20141216221044.GK30600@ask-08.lab.msp.redhat.com>
+ <20141216221856.GL30600@ask-08.lab.msp.redhat.com> <54917166.6020406@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1418863222-25096-1-git-send-email-nefelim4ag@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Timofey Titovets <nefelim4ag@gmail.com>
-Cc: Tejun Heo <tj@kernel.org>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <systemd-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <54917166.6020406@suse.de>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
+List-Post: <mailto:systemd-devel@lists.freedesktop.org>
+List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: systemd-devel-bounces@lists.freedesktop.org
+Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
+To: Hannes Reinecke <hare@suse.de>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>, systemd Mailing List <systemd-devel@lists.freedesktop.org>, device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Dec 17 2014 at  7:40pm -0500,
-Timofey Titovets <nefelim4ag@gmail.com> wrote:
-
-> io_schedule_timeout(5*HZ);
-> Introduced for avoidance dm bug:
-> http://linux.derkeiler.com/Mailing-Lists/Kernel/2006-08/msg04869.html
-> According to description must be replaced with io_schedule()
-> 
-> Can you test it and answer: it produce any regression?
-> 
-> I replace it and recompile kernel, tested it by following script:
-> ---
-> dev=""
-> block_dev=zram #loop
-> if [ "$block_dev" == "loop" ]; then
->         f1=$RANDOM
->         f2=${f1}_2
->         truncate -s 256G ./$f1
->         truncate -s 256G ./$f2
->         dev="$(losetup -f --show ./$f1) $(losetup -f --show ./$f2)"
->         rm ./$f1 ./$f2
-> else
->         modprobe zram num_devices=8
->         # needed ~1g free ram for test
->         echo 128G > /sys/block/zram7/disksize
->         echo 128G > /sys/block/zram6/disksize
->         dev="/dev/zram7 /dev/zram6"
-> fi
-> 
-> md=/dev/md$[$RANDOM%8]
-> echo "y\n" | mdadm --create $md --chunk=4 --level=1 --raid-devices=2 $(echo $dev)
-
-You didn't test using DM, you used MD.
-
-And in the context of 2.6.18 the old dm-raid1 target was all DM had
-(whereas now we also have a DM wrapper around MD raid with the dm-raid
-module).  Should we just kill dm-raid1 now that we have dm-raid?  But
-that is tangential to the question being posed here.
-
-So I'll have to read the thread you linked to to understand if DM raid1
-(or DM core) still suffers from the problem that this hack papered over.
-
-Mike
-
-
-> [ "$block_dev" == "loop" ] && losetup -d $(echo $dev) &
-> 
-> mkfs.xfs -f $md
-> mount $md /mnt
-> 
-> cat /dev/zero > /mnt/$RANDOM &
-> cat /dev/zero > /mnt/$RANDOM &
-> wait
-> umount -l /mnt
-> mdadm --stop $md
-> 
-> if [ "$block_dev" == "zram" ]; then
->         echo 1 > /sys/block/zram7/reset
->         echo 1 > /sys/block/zram6/reset
-> fi
-> ---
-> 
-> i.e. i can't get this error for fast test with zram and slow test with loop devices
-> 
-> Signed-off-by: Timofey Titovets <nefelim4ag@gmail.com>
-> ---
->  mm/mempool.c | 6 +-----
->  1 file changed, 1 insertion(+), 5 deletions(-)
-> 
-> diff --git a/mm/mempool.c b/mm/mempool.c
-> index e209c98..ae230c9 100644
-> --- a/mm/mempool.c
-> +++ b/mm/mempool.c
-> @@ -253,11 +253,7 @@ repeat_alloc:
->  
->  	spin_unlock_irqrestore(&pool->lock, flags);
->  
-> -	/*
-> -	 * FIXME: this should be io_schedule().  The timeout is there as a
-> -	 * workaround for some DM problems in 2.6.18.
-> -	 */
-> -	io_schedule_timeout(5*HZ);
-> +	io_schedule();
->  
->  	finish_wait(&pool->wait, &wait);
->  	goto repeat_alloc;
-> -- 
-> 2.1.3
+T24gV2VkLCBEZWMgMTcsIDIwMTQgYXQgMTowNCBQTSwgSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1
+c2UuZGU+IHdyb3RlOgo+IE9uIDEyLzE2LzIwMTQgMTE6MTggUE0sIEJlbmphbWluIE1hcnppbnNr
+aSB3cm90ZToKPj4gT24gVHVlLCBEZWMgMTYsIDIwMTQgYXQgMDQ6MTA6NDRQTSAtMDYwMCwgQmVu
+amFtaW4gTWFyemluc2tpIHdyb3RlOgo+Pj4gT24gTW9uLCBEZWMgMTUsIDIwMTQgYXQgMTA6MzE6
+NDRBTSArMDEwMCwgSGFubmVzIFJlaW5lY2tlIHdyb3RlOgo+IFsgLi4gXQo+Pj4+IFNvIGR1cmlu
+ZyBib290dXAgaXQncyBhbnlvbmUncyBndWVzcyB3aG8ncyBmaXJzdCwgbXVsdGlwYXRoIG9yIHVk
+ZXYuCj4+Pj4gQW5kIGRlcGVuZGluZyBvbiB0aGUgdGltaW5nIGVpdGhlciBtdWx0aXBhdGggd2ls
+bCBmYWlsIHRvIHNldHVwCj4+Pj4gdGhlIGRldmljZS1tYXBwZXIgZGV2aWNlIG9yIHVkZXYgd2ls
+bCBzaW1wbHkgaWdub3JlIHRoZSBkZXZpY2UuCj4+Pj4gTmVpdGhlciBvZiB0aG9zZSBpcyBhIGdv
+b2QsIGJ1dCB0aGUgZmlyc3QgaXMgYW4gYWJzb2x1dGUga2lsbGVyIGZvcgo+Pj4+IG1vZGVybiBz
+eXN0ZW1zIHdoaWNoIF9yZWx5XyBvbiB1ZGV2IHRvIGNvbmZpZ3VyZSBkZXZpY2VzLgo+Pj4+Cj4+
+Pj4gU28gaG93IGl0IHRoaXMgc3VwcG9zZWQgdG8gd29yaz8KPj4+PiBXaHkgZG9lcyB1ZGV2IGln
+bm9yZSB0aGUgZW50aXJlIGV2ZW50IGlmIGl0IGNhbid0IGdldCB0aGUgbG9jaz8KPj4+PiBTaG91
+bGRuJ3QgaXQgcmF0aGVyIGJlIHJldHJpZWQ/Cj4+Pj4gV2hhdCBpcyB0aGUgc3VwcG9zZWQgcmVj
+b3ZlcnkgaGVyZT8KPj4+Cj4+PiBIYW5uZXMsIGFyZSB5b3UgYWdhaW5zdCB0aGUgaWRlYSB0aGF0
+IEFsZXhhbmRlciBtZW50aW9uZWQgaW4gaGlzIGZpcnN0Cj4+PiBlbWFpbCwgb2YganVzdCBsb2Nr
+aW5nIGEgZmlsZSBpbiAvdmFyL2xvY2s/ICBNdWx0aXBhdGhkIGRvZXNuJ3QgY3JlYXRlCj4+PiBk
+ZXZpY2VzIGluIHBhcmFsbGVsLiBNdWx0aXBhdGggZG9lc24ndCBjcmVhdGUgZmlsZXMgaW4gcGFy
+YWxsZWwuICBXZSBhcmUKPj4+IGV4cGxpY2l0bHkgdHJ5aW5nIHRvIGF2b2lkIG11bHRpcGF0aCBh
+bmQgbXVsdGlwYXRoZCBjcmVhdGluZyBmaWxlcyBhdAo+Pj4gdGhlIHNhbWUgdGltZS4gU28sIHdl
+IHNob3VsZCBvbmx5IG5lZWQgYSBzaW5nbGUgZmlsZSB0byBsb2NrLCBhbmQKPj4+IC9ydW4vbG9j
+ayBzaG91bGQgYWx3YXlzIGJlIHRoZXJlLgo+Pgo+PiBPLmsuIFNvIGlmIHdlIHdhbnQgdG8ga2Vl
+cCBvdXIgY3VycmVudCBub25ibG9ja2luZyBiZWhhdmlvciwgd2UnbGwgbmVlZAo+PiBtb3JlIGxv
+Y2tmaWxlcywgZWl0aGVyIG9uZSBwZXIgcGF0aCBvciBvbmUgcGVyIHd3aWQuICBUaGlzIHN0aWxs
+IHNlZW1zCj4+IGxpa2UgYSByZWFzb25hYmxlIGlkZWEsIGlmIHRoZXJlIGlzIGEgZ29vZCByZWFz
+b24gZm9yIHN5c3RlbWQgZG9pbmcgd2hhdAo+PiBpdCdzIGRvaW5nLgo+Pgo+IFRoZSBwcm9ibGVt
+IGlzIGFzIGZvbGxvd3M6Cj4KPiBXaGVuIG11bHRpcGF0aGQgaXMgcnVubmluZyB3ZSBzaW1wbHkg
+X2Nhbm5vdF8gZ3VhcmFudGVlIHRoYXQgbm8gdWRldgo+IGV2ZW50cyBhcmUgY3VycmVudGx5IHJ1
+bm5pbmcuCgpBbGwgcnVubmluZyBibG9jayBkZXZpY2UgZXZlbnRzIHdpbGwgdGFrZSBhIHNoYXJl
+ZCBsb2NrIG9mIHRoZSBkZXZpY2UKbm9kZS4gVGhpcyBjYW4gYmUgdXNlZD8KCj4gVGhpcyBjdXJy
+ZW50bHkgaGl0cyB1cyBlc3BlY2lhbGx5IGJhZAo+IGR1cmluZyBzeXN0ZW0gc3RhcnR1cCB3aGVu
+IGRldmljZSBwcm9iaW5nIGlzIHN0aWxsIHJ1bm5pbmcgZHVyaW5nCj4gbXVsdGlwYXRoZCBzdGFy
+dHVwLgo+IE11bHRpcGF0aGQgd2lsbCB0aGVuIGVudW1lcmF0ZSBhbGwgYmxvY2sgZGV2aWNlcyB0
+byBzZXR1cCB0aGUKPiBpbml0aWFsIHRvcG9sb2d5Lgo+IEJ1dCBpbiBkb2luZyBzbyBpdCBtaWdo
+dCB0cmlwIG92ZXIgZGV2aWNlIHdoaWNoIGFyZSBzdGlsbCBwcm9jZXNzZWQKPiBieSB1ZGV2IChv
+ciwgd29yc2Ugc3RpbGwsIF9ub3QgeWV0XyBwcm9jZXNzZWQgYnkgdWRldikuCj4gKFllcywgSSBr
+bm93LCBsaWJ1ZGV2X2VudW1lcmF0ZSBzaG91bGQgcHJvdGVjdCBhZ2FpbnN0IHRoaXMuCj4gIEJ1
+dCBpdCBkb2Vzbid0LiApCgpUaGVyZSBpcyBhIHVkZXZfZW51bWVyYXRlX21hdGNoX2lzX2luaXRp
+YWxpemVkKCksIHdoaWNoIGNhbiBoZWxwPwoKPiBTbyBpdCdzIGFueW9uZSBndWVzcyB3aGF0J2xs
+IGhhcHBlbiBub3c7IGVpdGhlciBtdWx0aXBhdGggdHJpcHMgb3Zlcgo+IHRoZSBsb2NrIGZyb20g
+dWRldiB3aGVuIGNhbGxpbmcgJ2xvY2tfbXVsdGlwYXRoJyAoYW5kIGNvbnNlcXVlbnRseQo+IGZh
+aWxpbmcgdG8gc2V0dXAgdGhlIG11bHRpcGF0aCBkZXZpY2UpLCBvciB1ZGV2Cj4gdHJpcHBpbmcg
+b3ZlciB0aGUgbG9jayBmcm9tIG11bHRpcGF0aCBhbmQgaWdub3JpbmcgdGhlIGV2ZW50LAo+IGxl
+YXZpbmcgdXMgd2l0aCBhIG5vbi1mdW5jdGlvbmluZyBkZXZpY2UuCj4KPiBXZSBjYW4gZml4dXAg
+dGhlIHN0YXJ0dXAgc2VxdWVuY2UgKHdoaWNoIHdlIG5lZWQgdG8gZG8gYW55d2F5LCBnaXZlbgo+
+IHRoZSBsaWJ1ZGV2IGVudW1lcmF0ZSBidWcpIHRvIGp1c3QgcmUtdHJpZ2dlciBhbGwgYmxvY2sg
+ZGV2aWNlCj4gZXZlbnRzLCBidXQgdGhpcyBzdGlsbCBkb2Vzbid0IGZpeCB0aGUgYWN0dWFsIGlz
+c3VlLgo+IFBvaW50IGlzLCB0aGVyZSBtaWdodCBiZSBfc2V2ZXJhbF8gZXZlbnRzIGZvciB0aGUg
+c2FtZSBkZXZpY2UgYmVpbmcKPiBxdWV1ZWQgKHRoaW5rIG9mIGEgZmxha3kgcGF0aCB3aXRoIHNl
+dmVyYWwgUEFUSF9GQUlMRUQgLwo+IFBBVEhfUkVJTlNUQVRFRCBldmVudHMgaW4gYSByb3cpLCBh
+bmQgc28gbXVsdGlwYXRoZCBtaWdodCBiZQo+IHByb2Nlc3Npbmcgb25lIGV2ZW50IGZvciB0aGUg
+ZGV2aWNlIHdoaWxlIHVkZXYgaXMgcHJvY2Vzc2luZyB0aGUKPiBuZXh0IGV2ZW50IGZvciB0aGUg
+c2FtZSBkZXZpY2UuCj4KPiBGb3IgdGhpcyB0byB3b3JrIHdlIG5lZWQgc29tZSBzeW5jaHJvbml6
+YXRpb24gd2l0aCB1ZGV2OyBfaWZfIHRoZXJlCj4gd291bGQgYmUgYSBsaWJ1ZGV2IGNhbGxvdXQg
+Zm9yICdpcyB0aGVyZSBhbiBldmVudCBmb3IgdGhpcyBkZXZpY2UKPiBydW5uaW5nJyB3ZSBjYW4g
+ZWFzaWx5IGZhaWwgdGhlICdsb2NrX211bHRpcGF0aCcgb3BlcmF0aW9uLCBrbm93aW5nCj4gdGhh
+dCB3ZSdsbCBiZSBnZXR0aW5nIGFub3RoZXIgZXZlbnQgc2hvcnRseSBmb3IgdGhlIHNhbWUgZGV2
+aWNlLgo+Cj4gQWx0ZXJuYXRpdmVseSB3ZSBjYW4gY2FsbCBmbG9jayhMT0NLX0VYKSBvbiB0aGF0
+IGRldmljZSwgYnV0IHRoYXQKPiB3aWxsIG9ubHkgd29yayBpZiB1ZGV2IHdvdWxkIF9ub3RfIGFi
+b3J0IGV2ZW50IGhhbmRsaW5nIGZvciB0aGF0Cj4gZGV2aWNlLCBidXQgcmF0aGVyIGlzc3VlcyBh
+IHJldHJ5LgoKRXhjbHVzaXZlIGxvY2tzIHNpZ25pZnkgImRldmljZSBvd25lcnNoaXAiIGFuZCB1
+ZGV2IHdpbGwgc3VwcHJlc3MgYWxsCmV2ZW50cyB0byBub3QgZGlzdHVyYiB0aGUgb3duZXIncyBv
+cGVyYXRpb25zLiBUaGVyZSBjYW4ndCBiZSBhbnkgdWRldgpkZXBlbmRlbmNpZXMgb3IgZXhwZWN0
+YXRpb25zIG9mIHVkZXYgZG9pbmcgc29tZXRoaW5nIGR1cmluZyB0aGUgdGltZQphbiBleGNsdXNp
+dmUgbG9jayBpcyBoZWxkLgoKPiBBZnRlciBhbGwsIHRoZXJlIF9pc18gYSBkZXZpY2UgdGltZW91
+dCBpbiB1ZGV2LiBJdCBzaG91bGQgYmUKPiByZWxhdGl2ZWx5IGVhc3kgdG8gcmV0cnkgdGhlIGV2
+ZW50IGFuZCBsZXQgaXQgcnVuIGludG8gYSB0aW1lb3V0IGlmCj4gdGhlIGxvY2sgd29uJ3QgYmUg
+cmVsZWFzZWQuCgpXZSBzaG91bGQgYXZvaWQgYW55IGNvbXBsZXggcnVsZXMgaGVyZSwgYW5kIGlm
+IHBvc3NpYmxlIGp1c3QgcmVkdWNlCnRoZSBzY2hlbWUgdG8gYSBzaW1wbGUgb3duZXJzaGlwIG1v
+ZGVsLgoKVGhhbmtzLApLYXkKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX18Kc3lzdGVtZC1kZXZlbCBtYWlsaW5nIGxpc3QKc3lzdGVtZC1kZXZlbEBsaXN0cy5m
+cmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3Rp
+bmZvL3N5c3RlbWQtZGV2ZWwK
