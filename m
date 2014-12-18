@@ -1,16 +1,14 @@
-From: Keith Busch <keith.busch@intel.com>
-Subject: Re: [PATCH v3 0/8] dm: add request-based blk-mq support
-Date: Thu, 18 Dec 2014 01:41:14 +0000 (UTC)
-Message-ID: <alpine.LNX.2.00.1412180101580.4026@localhost.lm.intel.com>
-References: <1418788804-1982-1-git-send-email-snitzer@redhat.com>
-	<alpine.LNX.2.00.1412172133240.4026@localhost.lm.intel.com>
-	<5491F906.1090004@kernel.dk> <20141217230622.GC15390@redhat.com>
+From: alex chen <alex.chen@huawei.com>
+Subject: Re: dm: check error instead of r in clone_endio
+Date: Thu, 18 Dec 2014 09:41:03 +0800
+Message-ID: <549230AF.4030804@huawei.com>
+References: <54912490.8030808@huawei.com> <20141217173443.GC27737@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20141217230622.GC15390@redhat.com>
+In-Reply-To: <20141217173443.GC27737@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,27 +19,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, hch@infradead.org, bvanassche@acm.org, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, j-nomura@ce.jp.nec.com
+Cc: device-mapper development <dm-devel@redhat.com>, Joseph Qi <joseph.qi@huawei.com>
 List-Id: dm-devel.ids
 
-On Wed, 17 Dec 2014, Mike Snitzer wrote:
-> As for blk-mq support... I don't have access to any NVMe hardware, etc.
-> I only tested with virtio-blk (to a ramdisk, scsi-debug, device on the
-> host) so I'm really going to need to lean on Keith and others to
-> validate blk-mq performance.
 
-There's a reason no one has multipath capable NVMe drives: they are not
-generally available to anyone right now. :) Mine is a prototype so not
-a good candidate for performance comparisons.
+On 2014/12/18 1:34, Mike Snitzer wrote:
+> On Wed, Dec 17 2014 at  1:37am -0500,
+> alex chen <alex.chen@huawei.com> wrote:
+> 
+>> In the clone_endio, when target_type is linear and WRITE SAME bio
+>> fails, r will be always be initialized 0 because of null end_io, and
+>> in this case WRITE SAME will not be disabled.
+>> So we should check error instead of r.
+>>
+>> Signed-off-by: Alex Chen <alex.chen@huawei.com>
+> 
+> I've fixed it a bit differently (clone_endio now matches dm_done) and
+> have staged it for 3.19, see:
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=5164bece1673cdf04782f8ed3fba70743700f5da
+> 
+> Thanks.
 
-I was able to get my loaner back a couple hours ago though, so I built and
-tested your tree and happy to say it is very successful. While running
-filesystem fio, I simulated path alternating hot-removal/add sequences
-and everything worked. So functionally it appears great, but I can't
-speak on performance right now.
-
-One thing with dual ported PCI-e SSDs is each path can be on a different
-pci domain local to different NUMA nodes. I think there's performance
-to gain if we select the target path closest to the CPU that the thread
-is scheduled on. I don't have data to back that up yet, but could such
-a path selection algorithm be considered in the future?
+OK, thank you!
+> 
+> 
