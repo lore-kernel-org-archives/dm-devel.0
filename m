@@ -1,126 +1,81 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v3 0/8] dm: add request-based blk-mq support
-Date: Fri, 19 Dec 2014 12:14:38 -0500
-Message-ID: <20141219171438.GA6347@redhat.com>
-References: <1418788804-1982-1-git-send-email-snitzer@redhat.com>
-	<alpine.LNX.2.00.1412172133240.4026@localhost.lm.intel.com>
-	<5491F906.1090004@kernel.dk> <20141217230622.GC15390@redhat.com>
-	<54943714.2040704@acm.org> <20141219153801.GA8697@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: mempool.c: Replace io_schedule_timeout with io_schedule
+Date: Fri, 19 Dec 2014 14:53:27 -0500
+Message-ID: <20141219195327.GC8697@redhat.com>
+References: <1418863222-25096-1-git-send-email-nefelim4ag@gmail.com>
+ <20141218153709.GC2293@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20141219153801.GA8697@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bvanassche@acm.org>
-Cc: Jens Axboe <axboe@kernel.dk>, hch@infradead.org, Keith Busch <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, j-nomura@ce.jp.nec.com
+In-Reply-To: <20141218153709.GC2293@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Timofey Titovets <nefelim4ag@gmail.com>
+Cc: Tejun Heo <tj@kernel.org>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org
 List-Id: dm-devel.ids
 
-On Fri, Dec 19 2014 at 10:38am -0500,
+On Thu, Dec 18 2014 at 10:37am -0500,
 Mike Snitzer <snitzer@redhat.com> wrote:
 
-> On Fri, Dec 19 2014 at  9:32am -0500,
-> Bart Van Assche <bvanassche@acm.org> wrote:
+> On Wed, Dec 17 2014 at  7:40pm -0500,
+> Timofey Titovets <nefelim4ag@gmail.com> wrote:
 > 
-> > On 12/18/14 00:06, Mike Snitzer wrote:
-> > > So if you know someone with relevant blk-mq hardware who might benefit
-> > > from blk-mq multipathing please point them at this code and have them
-> > > report back!
+> > io_schedule_timeout(5*HZ);
+> > Introduced for avoidance dm bug:
+> > http://linux.derkeiler.com/Mailing-Lists/Kernel/2006-08/msg04869.html
+> > According to description must be replaced with io_schedule()
 > > 
-> > Hello Mike,
+> > Can you test it and answer: it produce any regression?
 > > 
-> > Great to see that you are working on blk-mq multipathing. Unfortunately
-> > a test with the SRP initiator and your dm-for-3.20-blk-mq tree merged
-> > with Linus' latest tree was not successful. This is what was reported
-> > when I tried to start multipathd (without call trace, followed by a
-> > hard lockup):
+> > I replace it and recompile kernel, tested it by following script:
+> > ---
+> > dev=""
+> > block_dev=zram #loop
+> > if [ "$block_dev" == "loop" ]; then
+> >         f1=$RANDOM
+> >         f2=${f1}_2
+> >         truncate -s 256G ./$f1
+> >         truncate -s 256G ./$f2
+> >         dev="$(losetup -f --show ./$f1) $(losetup -f --show ./$f2)"
+> >         rm ./$f1 ./$f2
+> > else
+> >         modprobe zram num_devices=8
+> >         # needed ~1g free ram for test
+> >         echo 128G > /sys/block/zram7/disksize
+> >         echo 128G > /sys/block/zram6/disksize
+> >         dev="/dev/zram7 /dev/zram6"
+> > fi
 > > 
-> > =========================================================
-> > [ INFO: possible irq lock inversion dependency detected ]
-> > 3.18.0-debug+ #1 Tainted: G        W     
-> > ---------------------------------------------------------
-> > kdmwork-253:0/5347 just changed the state of lock:
-> >  (&(&m->lock)->rlock){+.....}, at: [<ffffffffa080eb80>] __multipath_map.isra.15+0x40/0x1f0 [dm_multipath]
-> > but this lock was taken by another, HARDIRQ-safe lock in the past:
-> >  (&(&q->__queue_lock)->rlock){-.-...}
-> >  
-> > and interrupts could create inverse lock ordering between them.
-> >  
-> > other info that might help us debug this:
-> >  Possible interrupt unsafe locking scenario:
+> > md=/dev/md$[$RANDOM%8]
+> > echo "y\n" | mdadm --create $md --chunk=4 --level=1 --raid-devices=2 $(echo $dev)
 > 
-> This "dm: submit stacked requests in irq enabled context" commit
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-3.20-blk-mq&id=1844ba7e2e013fa38c45d646248c517eb363e26c
+> You didn't test using DM, you used MD.
 > 
-> changed the locking needed in the multipath target.  I altered
-> __multipath_map but didn't audit elsewhere.  I'll work through it.
+> And in the context of 2.6.18 the old dm-raid1 target was all DM had
+> (whereas now we also have a DM wrapper around MD raid with the dm-raid
+> module).  Should we just kill dm-raid1 now that we have dm-raid?  But
+> that is tangential to the question being posed here.
 
-Hi Bart,
+Heinz pointed out that dm-raid1 handles clustered raid1 capabilities.
+So we cannot easily replace with dm-raid.
+ 
+> So I'll have to read the thread you linked to to understand if DM raid1
+> (or DM core) still suffers from the problem that this hack papered over.
 
-This patch silences the lockdep inversion splat on my testbed, but I'd
-really appreciate it if you could see if it works for you since you hit
-an actual hang:
+Heinz also pointed out that the primary issue that forced the use of
+io_schedule_timeout() was that dm-log-userspace (used by dm-raid1) makes
+use of a single shared mempool for multiple devices.  Unfortunately,
+dm-log-userspace still has this shared mempool (flush_entry_pool).  So
+we'll need to fix that up to be per-device before mm/mempool.c code can
+be switched to use io_schedule().
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 1fa6f14..4bfa3d9 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -390,7 +390,7 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
- 	struct block_device *bdev;
- 	struct dm_mpath_io *mpio;
- 
--	spin_lock(&m->lock);
-+	spin_lock_irq(&m->lock);
- 
- 	/* Do we need to select a new pgpath? */
- 	if (!m->current_pgpath ||
-@@ -412,8 +412,14 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
- 		/* ENOMEM, requeue */
- 		goto out_unlock;
- 
-+	mpio = map_context->ptr;
-+	mpio->pgpath = pgpath;
-+	mpio->nr_bytes = nr_bytes;
-+
- 	bdev = pgpath->path.dev->bdev;
- 
-+	spin_unlock_irq(&m->lock);
-+
- 	if (clone) {
- 		/* Old request-based interface: allocated clone is passed in */
- 		clone->q = bdev_get_queue(bdev);
-@@ -425,21 +431,18 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
- 					   rq_data_dir(rq), GFP_KERNEL);
- 		if (IS_ERR(*__clone))
- 			/* ENOMEM, requeue */
--			goto out_unlock;
-+			return r;
- 		(*__clone)->cmd_flags |= REQ_FAILFAST_TRANSPORT;
- 	}
- 
--	mpio = map_context->ptr;
--	mpio->pgpath = pgpath;
--	mpio->nr_bytes = nr_bytes;
- 	if (pgpath->pg->ps.type->start_io)
- 		pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
- 					      &pgpath->path,
- 					      nr_bytes);
--	r = DM_MAPIO_REMAPPED;
-+	return DM_MAPIO_REMAPPED;
- 
- out_unlock:
--	spin_unlock(&m->lock);
-+	spin_unlock_irq(&m->lock);
- 
- 	return r;
- }
+I'll add this to my TODO.  But it'll have to wait until after the new
+year.
+
+Mike
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
