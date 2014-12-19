@@ -1,93 +1,87 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [dm-devel] multipath breaks with recent
-	udev/systemd
-Date: Fri, 19 Dec 2014 08:21:57 +0100
-Message-ID: <5493D215.5040509@suse.de>
-References: <548EAA80.30604@suse.de>
- <20141216221044.GK30600@ask-08.lab.msp.redhat.com>
- <20141216221856.GL30600@ask-08.lab.msp.redhat.com> <54917166.6020406@suse.de>
- <20141218220405.GN30600@ask-08.lab.msp.redhat.com>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH v3 0/8] dm: add request-based blk-mq support
+Date: Fri, 19 Dec 2014 15:32:52 +0100
+Message-ID: <54943714.2040704@acm.org>
+References: <1418788804-1982-1-git-send-email-snitzer@redhat.com>	<alpine.LNX.2.00.1412172133240.4026@localhost.lm.intel.com>	<5491F906.1090004@kernel.dk>
+	<20141217230622.GC15390@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <systemd-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <20141218220405.GN30600@ask-08.lab.msp.redhat.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>,
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
-List-Post: <mailto:systemd-devel@lists.freedesktop.org>
-List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>,
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: systemd-devel-bounces@lists.freedesktop.org
-Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Kay Sievers <kay.sievers@vrfy.org>, systemd Mailing List <systemd-devel@lists.freedesktop.org>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20141217230622.GC15390@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>
+Cc: hch@infradead.org, Keith Busch <keith.busch@intel.com>, j-nomura@ce.jp.nec.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMTIvMTgvMjAxNCAxMTowNCBQTSwgQmVuamFtaW4gTWFyemluc2tpIHdyb3RlOgo+IE9uIFdl
-ZCwgRGVjIDE3LCAyMDE0IGF0IDAxOjA0OjU0UE0gKzAxMDAsIEhhbm5lcyBSZWluZWNrZSB3cm90
-ZToKPj4gT24gMTIvMTYvMjAxNCAxMToxOCBQTSwgQmVuamFtaW4gTWFyemluc2tpIHdyb3RlOgo+
-Pj4gT24gVHVlLCBEZWMgMTYsIDIwMTQgYXQgMDQ6MTA6NDRQTSAtMDYwMCwgQmVuamFtaW4gTWFy
-emluc2tpIHdyb3RlOgo+Pj4+IE9uIE1vbiwgRGVjIDE1LCAyMDE0IGF0IDEwOjMxOjQ0QU0gKzAx
-MDAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gWyAuLiBdCj4+Pj4+IFNvIGR1cmluZyBib290
-dXAgaXQncyBhbnlvbmUncyBndWVzcyB3aG8ncyBmaXJzdCwgbXVsdGlwYXRoIG9yIHVkZXYuCj4+
-Pj4+IEFuZCBkZXBlbmRpbmcgb24gdGhlIHRpbWluZyBlaXRoZXIgbXVsdGlwYXRoIHdpbGwgZmFp
-bCB0byBzZXR1cAo+Pj4+PiB0aGUgZGV2aWNlLW1hcHBlciBkZXZpY2Ugb3IgdWRldiB3aWxsIHNp
-bXBseSBpZ25vcmUgdGhlIGRldmljZS4KPj4+Pj4gTmVpdGhlciBvZiB0aG9zZSBpcyBhIGdvb2Qs
-IGJ1dCB0aGUgZmlyc3QgaXMgYW4gYWJzb2x1dGUga2lsbGVyIGZvcgo+Pj4+PiBtb2Rlcm4gc3lz
-dGVtcyB3aGljaCBfcmVseV8gb24gdWRldiB0byBjb25maWd1cmUgZGV2aWNlcy4KPj4+Pj4KPj4+
-Pj4gU28gaG93IGl0IHRoaXMgc3VwcG9zZWQgdG8gd29yaz8KPj4+Pj4gV2h5IGRvZXMgdWRldiBp
-Z25vcmUgdGhlIGVudGlyZSBldmVudCBpZiBpdCBjYW4ndCBnZXQgdGhlIGxvY2s/Cj4+Pj4+IFNo
-b3VsZG4ndCBpdCByYXRoZXIgYmUgcmV0cmllZD8KPj4+Pj4gV2hhdCBpcyB0aGUgc3VwcG9zZWQg
-cmVjb3ZlcnkgaGVyZT8KPj4+Pgo+Pj4+IEhhbm5lcywgYXJlIHlvdSBhZ2FpbnN0IHRoZSBpZGVh
-IHRoYXQgQWxleGFuZGVyIG1lbnRpb25lZCBpbiBoaXMgZmlyc3QKPj4+PiBlbWFpbCwgb2YganVz
-dCBsb2NraW5nIGEgZmlsZSBpbiAvdmFyL2xvY2s/ICBNdWx0aXBhdGhkIGRvZXNuJ3QgY3JlYXRl
-Cj4+Pj4gZGV2aWNlcyBpbiBwYXJhbGxlbC4gTXVsdGlwYXRoIGRvZXNuJ3QgY3JlYXRlIGZpbGVz
-IGluIHBhcmFsbGVsLiAgV2UgYXJlCj4+Pj4gZXhwbGljaXRseSB0cnlpbmcgdG8gYXZvaWQgbXVs
-dGlwYXRoIGFuZCBtdWx0aXBhdGhkIGNyZWF0aW5nIGZpbGVzIGF0Cj4+Pj4gdGhlIHNhbWUgdGlt
-ZS4gU28sIHdlIHNob3VsZCBvbmx5IG5lZWQgYSBzaW5nbGUgZmlsZSB0byBsb2NrLCBhbmQKPj4+
-PiAvcnVuL2xvY2sgc2hvdWxkIGFsd2F5cyBiZSB0aGVyZS4KPj4+Cj4+PiBPLmsuIFNvIGlmIHdl
-IHdhbnQgdG8ga2VlcCBvdXIgY3VycmVudCBub25ibG9ja2luZyBiZWhhdmlvciwgd2UnbGwgbmVl
-ZAo+Pj4gbW9yZSBsb2NrZmlsZXMsIGVpdGhlciBvbmUgcGVyIHBhdGggb3Igb25lIHBlciB3d2lk
-LiAgVGhpcyBzdGlsbCBzZWVtcwo+Pj4gbGlrZSBhIHJlYXNvbmFibGUgaWRlYSwgaWYgdGhlcmUg
-aXMgYSBnb29kIHJlYXNvbiBmb3Igc3lzdGVtZCBkb2luZyB3aGF0Cj4+PiBpdCdzIGRvaW5nLgo+
-Pj4KPj4gVGhlIHByb2JsZW0gaXMgYXMgZm9sbG93czoKPj4KPj4gV2hlbiBtdWx0aXBhdGhkIGlz
-IHJ1bm5pbmcgd2Ugc2ltcGx5IF9jYW5ub3RfIGd1YXJhbnRlZSB0aGF0IG5vIHVkZXYKPj4gZXZl
-bnRzIGFyZSBjdXJyZW50bHkgcnVubmluZy4gVGhpcyBjdXJyZW50bHkgaGl0cyB1cyBlc3BlY2lh
-bGx5IGJhZAo+PiBkdXJpbmcgc3lzdGVtIHN0YXJ0dXAgd2hlbiBkZXZpY2UgcHJvYmluZyBpcyBz
-dGlsbCBydW5uaW5nIGR1cmluZwo+PiBtdWx0aXBhdGhkIHN0YXJ0dXAuCj4+IE11bHRpcGF0aGQg
-d2lsbCB0aGVuIGVudW1lcmF0ZSBhbGwgYmxvY2sgZGV2aWNlcyB0byBzZXR1cCB0aGUKPj4gaW5p
-dGlhbCB0b3BvbG9neS4KPj4gQnV0IGluIGRvaW5nIHNvIGl0IG1pZ2h0IHRyaXAgb3ZlciBkZXZp
-Y2Ugd2hpY2ggYXJlIHN0aWxsIHByb2Nlc3NlZAo+PiBieSB1ZGV2IChvciwgd29yc2Ugc3RpbGws
-IF9ub3QgeWV0XyBwcm9jZXNzZWQgYnkgdWRldikuCj4+IChZZXMsIEkga25vdywgbGlidWRldl9l
-bnVtZXJhdGUgc2hvdWxkIHByb3RlY3QgYWdhaW5zdCB0aGlzLgo+PiAgQnV0IGl0IGRvZXNuJ3Qu
-ICkKPiAKPiBCdXQgd2Ugc3RhcnQgd2FpdGluZyBmb3IgZXZlbnRzIGJlZm9yZSB0aGUgaW5pdGlh
-bCBtdWx0aXBhdGggZGV2aWNlCj4gY29uZmlndXJhdGlvbiwgYW5kIGRvbid0IHByb2Nlc3MgdGhl
-bSB1bnRpbCBhZnRlciB0aGF0IGNvbmZpZ3VyYXRpb24KPiBpcyBjb21wZWxldGUsIHNvIGlmIHRo
-ZXJlIGlzIGV2ZXIgYSBjYXNlIHdoZXJlIHRoZSBpbml0aWFsIGNvbmZpZ3VyYXRpb24KPiBpcyBh
-Y2Nlc3NpbmcgdGhlIGRldmljZSB0byBlYXJseSwgYXJlbid0IHdlIGd1YXJhbnRlZWQgdG8gZ2V0
-IGFuIGV2ZW50Cj4gYWZ0ZXJ3YXJkcywgYXNzdW1pbmcgdGhhdCB1ZGV2IGRvZXNuJ3QgZHJvcCBp
-dD8KPiAKVGhhdCB3YXMgdGhlIGluaXRpYWwgaWRlYS4gT25seSBpdCBkb2Vzbid0IGRvIGl0IGN1
-cnJlbnRseSA6LSkKCj4+Cj4+IFNvIGl0J3MgYW55b25lIGd1ZXNzIHdoYXQnbGwgaGFwcGVuIG5v
-dzsgZWl0aGVyIG11bHRpcGF0aCB0cmlwcyBvdmVyCj4+IHRoZSBsb2NrIGZyb20gdWRldiB3aGVu
-IGNhbGxpbmcgJ2xvY2tfbXVsdGlwYXRoJyAoYW5kIGNvbnNlcXVlbnRseQo+PiBmYWlsaW5nIHRv
-IHNldHVwIHRoZSBtdWx0aXBhdGggZGV2aWNlKSwgb3IgdWRldgo+PiB0cmlwcGluZyBvdmVyIHRo
-ZSBsb2NrIGZyb20gbXVsdGlwYXRoIGFuZCBpZ25vcmluZyB0aGUgZXZlbnQsCj4+IGxlYXZpbmcg
-dXMgd2l0aCBhIG5vbi1mdW5jdGlvbmluZyBkZXZpY2UuCj4gCj4gQnV0IG15IHBvaW50IGFib3Zl
-IGlzIHRoYXQgaWYgd2UgdXNlIGEgbG9ja2ZpbGUgaW5zdGVhZCBvZiBsb2NraW5nIHRoZQo+IHBh
-dGggZGV2aWNlIGl0c2VsZiwgdGhlcmUgd29uJ3QgYmUgYW55IGxvY2sgY29udGVudGlvbiwgYW5k
-IHVkZXYgd29uJ3QKPiBkcm9wIHRoZSBldmVudHMuCj4gClRoZSB1bmRlcmx5aW5nIGlzc3VlIGhl
-cmUgaXM6CgpXaHkgZG9lcyBtdWx0aXBhdGggbG9jayB0aGUgZGV2aWNlcyBfYXQgYWxsXz8KSWYg
-aXQgd2VyZSB0byBwcm90ZWN0IGFnYWluc3QgZGV2aWNlIGRpc2FwcGVhcmluZyB3aGlsZSBkb2lu
-ZyB0aGUKaW9jdGwgdGhhdCdzIGFscmVhZHkgcHJvdmVuIG5vdCB0byB3b3JrLgpBbmQgZm9yIHBy
-b3RlY3RpbmcgYWdhaW5zdCBtb3VudHMgYSBzaW1wbGUgb3BlbihPX0VYQ0wpIHdvdWxkIGJlCnN1
-ZmZpY2llbnQuIFNvIHdob20gYXJlIHdlIGZvb2xpbmcgaGVyZT8KCkNoZWVycywKCkhhbm5lcwot
-LSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgICAgICAgICAgICAgelNlcmllcyAmIFN0b3JhZ2UK
-aGFyZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5V
-WCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEYuIEltZW5kw7ZyZmZl
-ciwgSi4gU21pdGhhcmQsIEouIEd1aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b24KSFJCIDIxMjg0
-IChBRyBOw7xybmJlcmcpCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fCnN5c3RlbWQtZGV2ZWwgbWFpbGluZyBsaXN0CnN5c3RlbWQtZGV2ZWxAbGlzdHMuZnJl
-ZWRlc2t0b3Aub3JnCmh0dHA6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5m
-by9zeXN0ZW1kLWRldmVsCg==
+On 12/18/14 00:06, Mike Snitzer wrote:
+> So if you know someone with relevant blk-mq hardware who might benefit
+> from blk-mq multipathing please point them at this code and have them
+> report back!
+
+Hello Mike,
+
+Great to see that you are working on blk-mq multipathing. Unfortunately
+a test with the SRP initiator and your dm-for-3.20-blk-mq tree merged
+with Linus' latest tree was not successful. This is what was reported
+when I tried to start multipathd (without call trace, followed by a
+hard lockup):
+
+=========================================================
+[ INFO: possible irq lock inversion dependency detected ]
+3.18.0-debug+ #1 Tainted: G        W     
+---------------------------------------------------------
+kdmwork-253:0/5347 just changed the state of lock:
+ (&(&m->lock)->rlock){+.....}, at: [<ffffffffa080eb80>] __multipath_map.isra.15+0x40/0x1f0 [dm_multipath]
+but this lock was taken by another, HARDIRQ-safe lock in the past:
+ (&(&q->__queue_lock)->rlock){-.-...}
+ 
+and interrupts could create inverse lock ordering between them.
+ 
+other info that might help us debug this:
+ Possible interrupt unsafe locking scenario:
+
+This is how objdump translates the assembler code of the above kernel address (0x1b80 below):
+
+static int __multipath_map(struct dm_target *ti, struct request *clone,
+    1b62:       48 89 55 c8             mov    %rdx,-0x38(%rbp)
+    1b66:       4c 89 45 c0             mov    %r8,-0x40(%rbp)
+                           union map_info *map_context,
+                           struct request *rq, struct request **__clone)
+{
+        struct multipath *m = (struct multipath *) ti->private;
+        int r = DM_MAPIO_REQUEUE;
+        size_t nr_bytes = clone ? blk_rq_bytes(clone) : blk_rq_bytes(rq);
+    1b6a:       0f 84 50 01 00 00       je     1cc0 <__multipath_map.isra.15+0x180>
+    1b70:       44 8b 66 5c             mov    0x5c(%rsi),%r12d
+        raw_spin_lock_init(&(_lock)->rlock);            \
+} while (0)
+
+static inline void spin_lock(spinlock_t *lock)
+{
+        raw_spin_lock(&lock->rlock);
+    1b74:       49 8d 5e 28             lea    0x28(%r14),%rbx
+    1b78:       48 89 df                mov    %rbx,%rdi
+    1b7b:       e8 00 00 00 00          callq  1b80 <__multipath_map.isra.15+0x40>
+        struct dm_mpath_io *mpio;
+
+        spin_lock(&m->lock);
+
+        /* Do we need to select a new pgpath? */
+        if (!m->current_pgpath ||
+    1b80:       49 8b 8e d0 00 00 00    mov    0xd0(%r14),%rcx
+    1b87:       48 85 c9                test   %rcx,%rcx
+    1b8a:       74 55                   je     1be1 <__multipath_map.isra.15+0xa1>
+            (!m->queue_io && (m->repeat_count && --m->repeat_count == 0)))
+    1b8c:       41 0f b6 96 ec 00 00    movzbl 0xec(%r14),%edx
+
+Bart.
