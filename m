@@ -1,58 +1,54 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 3.19
-Date: Mon, 22 Dec 2014 13:41:04 -0500
-Message-ID: <20141222184104.GA8054@redhat.com>
+Subject: Re: [PATCH v3 0/8] dm: add request-based blk-mq support
+Date: Mon, 22 Dec 2014 13:49:10 -0500
+Message-ID: <20141222184910.GB8054@redhat.com>
+References: <1418788804-1982-1-git-send-email-snitzer@redhat.com>
+	<alpine.LNX.2.00.1412172133240.4026@localhost.lm.intel.com>
+	<5491F906.1090004@kernel.dk> <20141217230622.GC15390@redhat.com>
+	<54943714.2040704@acm.org> <20141219153801.GA8697@redhat.com>
+	<20141219171438.GA6347@redhat.com> <5498389D.6070909@acm.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, zhendong chen <alex.chen@huawei.com>, Marc Dionne <marc.c.dionne@gmail.com>
+In-Reply-To: <5498389D.6070909@acm.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bart Van Assche <bvanassche@acm.org>
+Cc: Jens Axboe <axboe@kernel.dk>, hch@infradead.org, Keith Busch <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, j-nomura@ce.jp.nec.com
 List-Id: dm-devel.ids
 
-Hi Linus,
+Hi Bart,
 
-The following changes since commit 9b8ec916df67ba31614796037caf606b763e2e79:
+On Mon, Dec 22 2014 at 10:28am -0500,
+Bart Van Assche <bvanassche@acm.org> wrote:
+ 
+> Hello Mike,
+> 
+> Good news: with this patch my standard SRP multipath test ran fine for
+> several hours, after which I stopped the test.
 
-  Merge branch 'for-linus' of git://git.kernel.dk/linux-block (2014-12-15 17:25:20 -0800)
+Great, thanks for testing!  Did you happen to look at the performance of
+your testing?  If so, is it comparable/better/worse?
 
-are available in the git repository at:
+FYI, I went ahead and added your Tested-by: to this commit:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=e596370123136b37757f4c7d01fb6a6cba26452b
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.19-fixes
+And I also staged the entire series in linux-next (for 3.20 at
+earliest).  Still have much more testing to do on these changes but
+it'll be good to let them soak in linux-next over the holiday break.
 
-for you to fetch changes up to 5164bece1673cdf04782f8ed3fba70743700f5da:
+> The only issue I hit during this test is the one mentioned on
+> https://lkml.org/lkml/2014/10/29/523 but that's a bug in the e1000
+> driver that is not related to multipath.
 
-  dm: fix missed error code if .end_io isn't implemented by target_type (2014-12-17 12:31:13 -0500)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-3 stable fixes and 1 fix for a regression introduced during 3.19 merge:
-
-- Fix inability to discard used space when the thin-pool target is in
-  out-of-data-space mode and also transition the thin-pool back to write
-  mode once free space is made available.
-
-- Fix DM core bio-based end_io bug that prevented proper post-processing
-  of the error code returned from the block layer.
-
-- Fix crash in DM thin-pool due to thin device being added to the pool's
-  active_thins list before properly initializing the thin device's
-  refcount.
-
-----------------------------------------------------------------
-Joe Thornber (2):
-      dm thin: fix inability to discard blocks when in out-of-data-space mode
-      dm thin: fix missing out-of-data-space to write mode transition if blocks are released
-
-Marc Dionne (1):
-      dm thin: fix crash by initializing thin device's refcount and completion earlier
-
-zhendong chen (1):
-      dm: fix missed error code if .end_io isn't implemented by target_type
-
- drivers/md/dm-thin.c | 29 +++++++++++++++++++++++------
- drivers/md/dm.c      |  2 +-
- 2 files changed, 24 insertions(+), 7 deletions(-)
+OK, hopefully you'll hear back from the maintainers on that thread soon.
