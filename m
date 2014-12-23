@@ -1,57 +1,69 @@
-From: Dongsu Park <dongsu.park@profitbricks.com>
-Subject: Re: [RFC PATCH 01/17] block: make generic_make_request handle
- arbitrarily sized bios
-Date: Tue, 23 Dec 2014 12:41:40 +0100
-Message-ID: <20141223114140.GB15080@gmail.com>
-References: <cover.1419241597.git.dongsu.park@profitbricks.com>
- <d26a9a0fc9a7d1529c115785ee5935d5750782bd.1419241597.git.dongsu.park@profitbricks.com>
- <20141223101614.GA13138@infradead.org>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH v3 0/8] dm: add request-based blk-mq support
+Date: Tue, 23 Dec 2014 17:24:54 +0100
+Message-ID: <54999756.70303@acm.org>
+References: <1418788804-1982-1-git-send-email-snitzer@redhat.com>	<alpine.LNX.2.00.1412172133240.4026@localhost.lm.intel.com>	<5491F906.1090004@kernel.dk>
+	<20141217230622.GC15390@redhat.com>	<54943714.2040704@acm.org>
+	<20141219153801.GA8697@redhat.com>	<20141219171438.GA6347@redhat.com>
+	<5498389D.6070909@acm.org> <20141222184910.GB8054@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20141223101614.GA13138@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kmo@daterainc.com>, Ming Lin <mlin@minggr.net>, Al Viro <viro@zeniv.linux.org.uk>, Ming Lei <ming.lei@canonical.com>, Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, drbd-dev@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Geoff Levand <geoff@infradead.org>, Jim Paris <jim@jtan.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Oleg Drokin <oleg.drokin@intel.com>, Andreas Dilger <andreas.dilger@intel.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20141222184910.GB8054@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, hch@infradead.org, Keith Busch <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, j-nomura@ce.jp.nec.com
 List-Id: dm-devel.ids
 
-Hi Christoph,
-
-On 23.12.2014 02:16, Christoph Hellwig wrote:
-> > +void blk_queue_split(struct request_queue *q, struct bio **bio,
-> > +		     struct bio_set *bs)
-> > +{
-> > +	struct bio *split;
-> > +
-> > +	if ((*bio)->bi_rw & REQ_DISCARD)
-> > +		split = blk_bio_discard_split(q, *bio, bs);
-> > +	else if ((*bio)->bi_rw & REQ_WRITE_SAME)
-> > +		split = blk_bio_write_same_split(q, *bio, bs);
-> > +	else
-> > +		split = blk_bio_segment_split(q, *bio, q->bio_split);
-> > +
-> > +	if (split) {
-> > +		bio_chain(split, *bio);
-> > +		generic_make_request(*bio);
-> > +		*bio = split;
-> > +	}
-> > +}
-> > +EXPORT_SYMBOL(blk_queue_split);
+On 12/22/14 19:49, Mike Snitzer wrote:
+> On Mon, Dec 22 2014 at 10:28am -0500,
+> Bart Van Assche <bvanassche@acm.org> wrote:
+>> Good news: with this patch my standard SRP multipath test ran fine for
+>> several hours, after which I stopped the test.
 > 
-> I think blk_queue_split needs to explicitly skip BLOCK_PC bios.  Those
-> are SCSI pass through ioctls that we can't split due to their opaque
-> nature.
+> Great, thanks for testing!  Did you happen to look at the performance of
+> your testing?  If so, is it comparable/better/worse?
 
-You mean, checking rq->cmd_type == REQ_TYPE_BLOCK_PC, right?
+Hello Mike,
 
-I'm wondering about how to check that in blk_queue_split().
-At the moment when blk_queue_split() is called, it's even before a request
-is mapped e.g. in blk_sq_make_request().
-Unlike scsi drivers where it's easy to get cmd->rq, blk_queue_split()
-doesn't seem to be able to get a request by blk_get_request().
+I have tried to run a performance comparison but after I had finished
+the measurements without multipath and when I started multipathd I ran
+into the following (typed over from the console):
 
-Or am I missing something?
+BUG: unable to handle kernel NULL pointer dereference at 0000318
+IP: scsi_setup_cmnd+0xe8 [scsi_mod]
+Workqueue: kblockd blk_mq_run_work_fn
+Call Trace:
+scsi_queue_rq+0x5a5
+__blk_mq_run_hw_queue+0x1cb
+blk_mq_run_work_fn+0xd
+process_one_work+0x133
+worker_thread+0x11b
+kthread+0xcd
 
-Thanks,
-Dongsu
+gdb translates the above address as follows:
+
+(gdb) list *(scsi_setup_cmnd+0xe8)
+0x9568 is in scsi_setup_cmnd (include/scsi/scsi_cmnd.h:155).
+150     }
+151
+152     /* make sure not to use it with REQ_TYPE_BLOCK_PC commands */
+153     static inline struct scsi_driver *scsi_cmd_to_driver(struct scsi_cmnd *cmd)
+154     {
+155             return *(struct scsi_driver **)cmd->request->rq_disk->private_data;
+156     }
+157
+158     extern struct scsi_cmnd *scsi_get_command(struct scsi_device *, gfp_t);
+159     extern void scsi_put_command(struct scsi_cmnd *);
+
+Bart.
