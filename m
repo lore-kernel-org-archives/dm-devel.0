@@ -1,33 +1,51 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [RFC PATCH 01/17] block: make generic_make_request handle
- arbitrarily sized bios
-Date: Sat, 27 Dec 2014 07:02:07 -0800
-Message-ID: <20141227150207.GC1094@infradead.org>
-References: <cover.1419241597.git.dongsu.park@profitbricks.com>
- <d26a9a0fc9a7d1529c115785ee5935d5750782bd.1419241597.git.dongsu.park@profitbricks.com>
- <20141223101614.GA13138@infradead.org>
- <20141223114140.GB15080@gmail.com>
+From: Nicholas Krause <xerofoify@gmail.com>
+Subject: [PATCH] drivers:md: Remove unneeded fix me comments in
+	dm-bio-prison.h
+Date: Sat, 27 Dec 2014 23:12:03 -0500
+Message-ID: <1419739923-28799-1-git-send-email-xerofoify@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20141223114140.GB15080@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dongsu Park <dongsu.park@profitbricks.com>
-Cc: Christoph Hellwig <hch@infradead.org>, linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kmo@daterainc.com>, Ming Lin <mlin@minggr.net>, Al Viro <viro@zeniv.linux.org.uk>, Ming Lei <ming.lei@canonical.com>, Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, drbd-dev@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Geoff Levand <geoff@infradead.org>, Jim Paris <jim@jtan.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Oleg Drokin <oleg.drokin@intel.com>, Andreas Dilger <andreas.dilger@intel.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: agk@redhat.com
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Dec 23, 2014 at 12:41:40PM +0100, Dongsu Park wrote:
-> You mean, checking rq->cmd_type == REQ_TYPE_BLOCK_PC, right?
-> 
-> I'm wondering about how to check that in blk_queue_split().
-> At the moment when blk_queue_split() is called, it's even before a request
-> is mapped e.g. in blk_sq_make_request().
-> Unlike scsi drivers where it's easy to get cmd->rq, blk_queue_split()
-> doesn't seem to be able to get a request by blk_get_request().
-> 
-> Or am I missing something?
+Removes two unneeded fix me comments for removing the header files,
+persistent-data/dm-block-manager.h and dm-thin-metadata.h. These
+headers are needed in order to build this file successfully and
+for it to run,thus the comments should be removed as they are no
+longer needed.
 
-You're probably missing what I didn't notice either: BLOCK_PC requests
-are never sent through ->make_request.  Consider my comment withdrawn
-and sorry for the confusion.
+Signed-off-by: Nicholas Krause <xerofoify@gmail.com>
+---
+ drivers/md/dm-bio-prison.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-bio-prison.h b/drivers/md/dm-bio-prison.h
+index 74cf011..15c31cf 100644
+--- a/drivers/md/dm-bio-prison.h
++++ b/drivers/md/dm-bio-prison.h
+@@ -7,8 +7,8 @@
+ #ifndef DM_BIO_PRISON_H
+ #define DM_BIO_PRISON_H
+ 
+-#include "persistent-data/dm-block-manager.h" /* FIXME: for dm_block_t */
+-#include "dm-thin-metadata.h" /* FIXME: for dm_thin_id */
++#include "persistent-data/dm-block-manager.h"
++#include "dm-thin-metadata.h"
+ 
+ #include <linux/bio.h>
+ #include <linux/rbtree.h>
+-- 
+2.1.0
