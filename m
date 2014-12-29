@@ -1,8 +1,8 @@
-From: Nicholas Krause <xerofoify@gmail.com>
-Subject: [PATCH] drivers:md: Remove unneeded fix me comments in
-	dm-bio-prison.h
-Date: Sat, 27 Dec 2014 23:12:03 -0500
-Message-ID: <1419739923-28799-1-git-send-email-xerofoify@gmail.com>
+From: Yingtai Xie <xieyingtai@huawei.com>
+Subject: [PATCH] libmultipath: Fix memory leak problem in
+	print_multipath_topology
+Date: Mon, 29 Dec 2014 14:44:42 +0800
+Message-ID: <54A0F85A.5020301@huawei.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,35 +17,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, snitzer@redhat.com
+To: christophe.varoqui@opensvc.com, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Joseph Qi <joseph.qi@huawei.com>
 List-Id: dm-devel.ids
 
-Removes two unneeded fix me comments for removing the header files,
-persistent-data/dm-block-manager.h and dm-thin-metadata.h. These
-headers are needed in order to build this file successfully and
-for it to run,thus the comments should be removed as they are no
-longer needed.
+/sys/block/ directory has been opened in snprint_devices, the handler
+should be released when returned abnormally. Similar memory leak problem
+happens in print_multipath_topology when carried out multipath -ll command.
 
-Signed-off-by: Nicholas Krause <xerofoify@gmail.com>
+Signed-off-by: Yingtai Xie <xieyingtai@huawei.com>
 ---
- drivers/md/dm-bio-prison.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/print.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-bio-prison.h b/drivers/md/dm-bio-prison.h
-index 74cf011..15c31cf 100644
---- a/drivers/md/dm-bio-prison.h
-+++ b/drivers/md/dm-bio-prison.h
-@@ -7,8 +7,8 @@
- #ifndef DM_BIO_PRISON_H
- #define DM_BIO_PRISON_H
- 
--#include "persistent-data/dm-block-manager.h" /* FIXME: for dm_block_t */
--#include "dm-thin-metadata.h" /* FIXME: for dm_thin_id */
-+#include "persistent-data/dm-block-manager.h"
-+#include "dm-thin-metadata.h"
- 
- #include <linux/bio.h>
- #include <linux/rbtree.h>
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 383eae4..916906f 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -890,6 +890,7 @@ print_multipath_topology (struct multipath * mpp, int verbosity)
+ 		}
+ 	} while (resize);
+ 	printf("%s", buff);
++	FREE(buff);
+ }
+
+ extern int
+@@ -1427,8 +1428,10 @@ snprint_devices (char * buff, int len, struct vectors *vecs)
+ 	if (!(blkdir = opendir("/sys/block")))
+ 		return 1;
+
+-	if ((len - fwd - threshold) <= 0)
++	if ((len - fwd - threshold) <= 0) {
++		closedir(blkdir);
+ 		return len;
++	}
+ 	fwd += snprintf(buff + fwd, len - fwd, "available block devices:\n");
+
+ 	strcpy(devpath,"/sys/block/");
+@@ -1446,8 +1449,10 @@ snprint_devices (char * buff, int len, struct vectors *vecs)
+ 		if (S_ISDIR(statbuf.st_mode) == 0)
+ 			continue;
+
+-		if ((len - fwd - threshold)  <= 0)
++		if ((len - fwd - threshold)  <= 0) {
++			closedir(blkdir);
+ 			return len;
++		}
+
+ 		fwd += snprintf(buff + fwd, len - fwd, "    %s", devptr);
+ 		pp = find_path_by_dev(vecs->pathvec, devptr);
 -- 
-2.1.0
+1.7.12.4
