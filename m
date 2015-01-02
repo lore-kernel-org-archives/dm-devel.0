@@ -1,71 +1,56 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [PATCH v3 0/8] dm: add request-based blk-mq support
-Date: Fri, 02 Jan 2015 18:53:33 +0100
-Message-ID: <54A6DB1D.4030201@acm.org>
-References: <20141219153801.GA8697@redhat.com>
-	<20141219171438.GA6347@redhat.com> <5498389D.6070909@acm.org>
-	<20141222184910.GB8054@redhat.com> <54999756.70303@acm.org>
-	<1v2g6masssbu88ans1r6lres.1419354811001@email.android.com>
-	<CAMM=eLd_A+fRBHDvcDqwF1a9co+G7XZvVhRyBd1AjxOdgjKhbA@mail.gmail.com>
-	<549AB979.4050302@acm.org> <20141224182143.GA12922@redhat.com>
-	<20141224185529.GA13246@redhat.com>
-	<20141224192643.GA30461@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 3.15-3.18] dm thin: fix a race in thin_dtr
+Date: Fri, 2 Jan 2015 16:23:50 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1501021528310.23461@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20141224192643.GA30461@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, Keith Busch <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: stable@vger.kernel.org
+Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 12/24/14 20:26, Mike Snitzer wrote:
-> This fixes it:
-> 
-> diff --git a/block/blk-core.c b/block/blk-core.c
-> index cdd84e9..138ffb2 100644
-> --- a/block/blk-core.c
-> +++ b/block/blk-core.c
-> @@ -2030,6 +2030,8 @@ int blk_insert_cloned_request(struct request_queue *q, struct request *rq)
->  		return -EIO;
->  
->  	if (q->mq_ops) {
-> +		if (blk_queue_io_stat(rq->q))
-> +			blk_account_io_start(rq, true);
->  		blk_mq_insert_request(rq, false, true, true);
->  		return 0;
->  	}
-> 
-> I've folded this fix into this commit (and rebased the 'for-next' and
-> 'dm-for-3.20-blk-mq' branches):
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=1fd5e9c83c4ae6a5144783855e9b29a8f42bdc4a
+Hi
 
-Hello Mike,
+Here I'm sending backport of patch 
+17181fb7a0c3a279196c0eeb2caba65a1519614b. It is suitable for stable 
+branches 3.15 to 3.18.
 
-Thanks, my tests confirm that this patch indeed fixes the issue I had
-reported. Unfortunately this doesn't mean that the blk-mq multipath code
-is already working perfectly. Most of the time I/O requests are
-processed within the expected time but sometimes I/O processing takes
-much more time than what I expected:
+Mikulas
 
-# /usr/bin/time -f %e mkfs.xfs -f /dev/dm-0 >/dev/null
-0.02
-# /usr/bin/time -f %e mkfs.xfs -f /dev/dm-0 >/dev/null
-0.02
-# /usr/bin/time -f %e mkfs.xfs -f /dev/dm-0 >/dev/null
-8.68
 
-However, if I run the same command on the underlying device it always
-completes within the expected time.
+commit 17181fb7a0c3a279196c0eeb2caba65a1519614b
+Author: Mikulas Patocka <mpatocka@redhat.com>
+Date:   Wed Nov 5 17:00:13 2014 -0500
 
-Bart.
+    dm thin: fix a race in thin_dtr
+    
+    As long as struct thin_c is in the list, anyone can grab a reference of
+    it.  Consequently, we must wait for the reference count to drop to zero
+    *after* we remove the structure from the list, not before.
+    
+    Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+    Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 8c5504c..767417a 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -3622,14 +3622,14 @@ static void thin_dtr(struct dm_target *ti)
+ 	struct thin_c *tc = ti->private;
+ 	unsigned long flags;
+ 
+-	thin_put(tc);
+-	wait_for_completion(&tc->can_destroy);
+-
+ 	spin_lock_irqsave(&tc->pool->lock, flags);
+ 	list_del_rcu(&tc->list);
+ 	spin_unlock_irqrestore(&tc->pool->lock, flags);
+ 	synchronize_rcu();
+ 
++	thin_put(tc);
++	wait_for_completion(&tc->can_destroy);
++
+ 	mutex_lock(&dm_thin_pool_table.mutex);
+ 
+ 	__pool_dec(tc->pool);
