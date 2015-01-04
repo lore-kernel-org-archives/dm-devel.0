@@ -1,73 +1,32 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: staged dm_internal_{suspend,
- resume} related changes for wider review
-Date: Fri, 2 Jan 2015 17:56:44 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1501021741470.23294@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20141029012256.GF29288@redhat.com>
-	<alpine.LRH.2.02.1411031823100.29299@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAMM=eLd8iuMDtNr7f4Cu97ZEua3-pOW4pdSdVKji7g02mKXFwQ@mail.gmail.com>
-	<20141105011619.GA11411@redhat.com>
-	<alpine.LRH.2.02.1411050736410.11912@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1411050801270.19559@file01.intranet.prod.int.rdu2.redhat.com>
-	<20141105141147.GA14285@redhat.com>
-	<alpine.LRH.2.02.1411050925450.20317@file01.intranet.prod.int.rdu2.redhat.com>
-	<20141105162912.GA17625@redhat.com>
-	<alpine.LRH.2.02.1411071047430.21255@file01.intranet.prod.int.rdu2.redhat.com>
-	<20141107183321.GA31022@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [LSF/MM ATTEND] discuss blk-mq related to DM-multipath and status of XCOPY
+Date: Sun, 4 Jan 2015 12:16:57 -0500
+Message-ID: <CAMM=eLdGQ4wQDHy0ACzDsYOs0AYC+KAcx7Mx7FmpBTV293d41Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20141107183321.GA31022@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Bryn M. Reeves" <breeves@redhat.com>, ejt@redhat.com, Alasdair G Kergon <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: lsf-pc@lists.linux-foundation.org
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig <hch@infradead.org>, Jej B <James.Bottomley@hansenpartnership.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi, I'm back.
+Hi,
 
-I looked at current internal suspend code in 3.19.
+I'd like to attend LSF (and the first day of Vault).
 
-One thing that seems strange is this:
+As a DM maintainer I'm open to discussing anything DM related.  In
+particular I'd like to at least have hallway track discussions with
+key people interested in DM multipath support for blk-mq devices.
+Keith Busch and I have gone ahead and implemented the bulk of this
+request-based DM support for blk-mq devices, see:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-for-3.20-blk-mq
 
-static void __dm_internal_suspend(struct mapped_device *md, unsigned suspend_flags)
-{
-        struct dm_table *map = NULL;
+But Bart says he is seeing inconsistent performance now that the code
+appears relatively stable.  I'll continue analyzing this aspect of
+things and by the time LSF rolls around I hope the code to be sorted.
 
-        if (dm_suspended_internally_md(md))
-                return; /* nested internal suspend */
-....
-static void __dm_internal_resume(struct mapped_device *md)
-{
-        if (!dm_suspended_internally_md(md))
-                return; /* resume from nested internal suspend */
-
-- the comments imply that the code supports nested internal suspend, while 
-in fact it doesn't. If the caller calls:
-* dm_internal_suspend_noflush
-* dm_internal_suspend_noflush
-* dm_internal_resume
-the device is not suspended while it should be.
-
-The "if" branch in __dm_internal_resume has nothing to do with nested 
-suspend, it's called if the caller calls dm_internal_resume without 
-dm_internal_suspend_noflush - that shouldn't happen, so there should be 
-WARN or BUG.
-
-If you want to support multiple internal suspends (which is needed if one 
-table can have multiple dm-thin targets), you need a counter that counts 
-how many times the device was suspended - the counter doesn't have to be 
-atomic because the code already holds md->suspend_lock. If you don't want 
-to support multiple internal suspends, there should be at least WARN when 
-the caller attempts to do it.
-
-Mikulas
+Another topic we need to come to terms with is the state of XCOPY
+(whether the initial approach needs further work, etc) -- Mikulas
+Patocka reworked aspects of Martin's initial approach but it hasn't
+progressed upstream:
+https://www.redhat.com/archives/dm-devel/2014-October/msg00167.html
