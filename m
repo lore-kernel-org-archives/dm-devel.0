@@ -1,32 +1,29 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [LSF/MM ATTEND] discuss blk-mq related to DM-multipath and status of XCOPY
-Date: Sun, 4 Jan 2015 12:16:57 -0500
-Message-ID: <CAMM=eLdGQ4wQDHy0ACzDsYOs0AYC+KAcx7Mx7FmpBTV293d41Q@mail.gmail.com>
+From: nick <xerofoify@gmail.com>
+Subject: Questions about the function,
+	queue_empty in dm-cache-policy-mq.c
+Date: Sun, 04 Jan 2015 22:24:16 -0500
+Message-ID: <54AA03E0.9020900@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: lsf-pc@lists.linux-foundation.org
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig <hch@infradead.org>, Jej B <James.Bottomley@hansenpartnership.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: agk@redhat.com
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
-
-I'd like to attend LSF (and the first day of Vault).
-
-As a DM maintainer I'm open to discussing anything DM related.  In
-particular I'd like to at least have hallway track discussions with
-key people interested in DM multipath support for blk-mq devices.
-Keith Busch and I have gone ahead and implemented the bulk of this
-request-based DM support for blk-mq devices, see:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-for-3.20-blk-mq
-
-But Bart says he is seeing inconsistent performance now that the code
-appears relatively stable.  I'll continue analyzing this aspect of
-things and by the time LSF rolls around I hope the code to be sorted.
-
-Another topic we need to come to terms with is the state of XCOPY
-(whether the initial approach needs further work, etc) -- Mikulas
-Patocka reworked aspects of Martin's initial approach but it hasn't
-progressed upstream:
-https://www.redhat.com/archives/dm-devel/2014-October/msg00167.html
+Greetings All,
+I have a few questions about the function I stated in the message for this email.
+1. What is the issues with the CPU usage for this function?
+2. What hardware is this on ?
+3. How scalable is this function in terms of NR_QUEUE_LEVELS and how many does it need to handle?
+Nick
