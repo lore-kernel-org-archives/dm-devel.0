@@ -1,29 +1,35 @@
-From: nick <xerofoify@gmail.com>
-Subject: Questions about the function,
-	queue_empty in dm-cache-policy-mq.c
-Date: Sun, 04 Jan 2015 22:24:16 -0500
-Message-ID: <54AA03E0.9020900@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [dm-devel] Questions about the function, queue_empty in
+ dm-cache-policy-mq.c
+Date: Mon, 5 Jan 2015 09:17:08 +0000
+Message-ID: <20150105091707.GA11818@debian>
+References: <54AA03E0.9020900@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, snitzer@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <54AA03E0.9020900@gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: agk@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Greetings All,
-I have a few questions about the function I stated in the message for this email.
-1. What is the issues with the CPU usage for this function?
-2. What hardware is this on ?
-3. How scalable is this function in terms of NR_QUEUE_LEVELS and how many does it need to handle?
-Nick
+On Sun, Jan 04, 2015 at 10:24:16PM -0500, nick wrote:
+> Greetings All,
+> I have a few questions about the function I stated in the message for this email.
+> 1. What is the issues with the CPU usage for this function?
+
+At the moment it can perform up to NR_QUEUE_LEVELS (16) list_empty()
+calls.  Which I consider too much work for a function that is called
+frequently.
+
+> 2. What hardware is this on ?
+
+Irrelevant.
+
+> 3. How scalable is this function in terms of NR_QUEUE_LEVELS and how many does it need to handle?
+
+Linear.  NR_QUEUE_LEVELS is a compile time constant currently set to
+16, and unlikely to change.
+
+- Joe
