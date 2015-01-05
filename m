@@ -1,50 +1,65 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: DM limits setup
-Date: Mon, 5 Jan 2015 10:21:52 +0000
-Message-ID: <20150105102151.GC11818@debian>
-References: <CAFx4rwQudUhVH4rgJYb+uHPe17PKJHYQRsxbUpwr5h_1r2B8+w@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [dm-devel] [LSF/MM ATTEND] discuss blk-mq related to DM-multipath
+ and status of XCOPY
+Date: Mon, 05 Jan 2015 14:25:05 +0100
+Message-ID: <54AA90B1.1030201@suse.de>
+References: <CAMM=eLdGQ4wQDHy0ACzDsYOs0AYC+KAcx7Mx7FmpBTV293d41Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAFx4rwQudUhVH4rgJYb+uHPe17PKJHYQRsxbUpwr5h_1r2B8+w@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: doug@easyco.com, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <CAMM=eLdGQ4wQDHy0ACzDsYOs0AYC+KAcx7Mx7FmpBTV293d41Q@mail.gmail.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Wed, Dec 31, 2014 at 02:10:52PM -0800, Doug Dumitru wrote:
-> Hello all,
-> 
-> I have a test dm target module that I use to validate storage subsystems
-> for data accuracy.  It basically builds weak hashes for every sector of a
-> device when written, and validates these hashes when the sector is read
-> back.  Ugly memory usage, but it is just a test tool.
-> 
-> I can deploy this with an iterator target and it will take on the limits of
-> the device underneath, or I can skip the iterator target and get limits at
-> 2048 sectors.  What I would like to do is set the limit manually.  I know
-> this is "really bad program design", but again, this is a test tool and not
-> anything for production use.
-> 
-> Can anyone point me at an example of where the limits are setup explicitly.
+On 01/04/2015 06:16 PM, Mike Snitzer wrote:
+> Hi,
+>=20
+> I'd like to attend LSF (and the first day of Vault).
+>=20
+> As a DM maintainer I'm open to discussing anything DM related.  In
+> particular I'd like to at least have hallway track discussions with
+> key people interested in DM multipath support for blk-mq devices.
+> Keith Busch and I have gone ahead and implemented the bulk of this
+> request-based DM support for blk-mq devices, see:
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.g=
+it/log/?h=3Ddm-for-3.20-blk-mq
+>=20
+> But Bart says he is seeing inconsistent performance now that the code
+> appears relatively stable.  I'll continue analyzing this aspect of
+> things and by the time LSF rolls around I hope the code to be sorted.
+>=20
+I'd be interested in having a discussion here, too.
+hch and me have discussed an alternative approach for multipathing
+(send the request directly and only clone request if the original
+submission failed) which I'd like to discuss with a broader audience.
+And I'd be interested in getting multipath to work with blk-mq, natural=
+ly.
 
-Hi Doug,
+> Another topic we need to come to terms with is the state of XCOPY
+> (whether the initial approach needs further work, etc) -- Mikulas
+> Patocka reworked aspects of Martin's initial approach but it hasn't
+> progressed upstream:
+> https://www.redhat.com/archives/dm-devel/2014-October/msg00167.html
+>=20
+Yep. That definitely needs to be discussed.
+Especially we'd need to discuss how to handle exceptions, seeing that
+XCOPY might fail basically at any time.
+And there are some corner-cases (bandwidth starvation on the target)
+which needs to be discussed, too.
 
-This sounds like a useful target for testing, any chance you could
-post it here when you finish it please?
+Cheers,
 
-dm-thin does lots of tweaking of limits, so that's probably the best one to look at:
-
-https://github.com/jthornber/linux-2.6/blob/thin-dev/drivers/md/dm-thin.c#L3707
-
-- Joe
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
