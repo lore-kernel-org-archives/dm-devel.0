@@ -1,65 +1,124 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [dm-devel] [LSF/MM ATTEND] discuss blk-mq related to DM-multipath
- and status of XCOPY
-Date: Mon, 05 Jan 2015 14:25:05 +0100
-Message-ID: <54AA90B1.1030201@suse.de>
-References: <CAMM=eLdGQ4wQDHy0ACzDsYOs0AYC+KAcx7Mx7FmpBTV293d41Q@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: staged dm_internal_{suspend,
+ resume} related changes for wider review
+Date: Mon, 5 Jan 2015 10:50:43 -0500
+Message-ID: <20150105155043.GA2260@redhat.com>
+References: <CAMM=eLd8iuMDtNr7f4Cu97ZEua3-pOW4pdSdVKji7g02mKXFwQ@mail.gmail.com>
+	<20141105011619.GA11411@redhat.com>
+	<alpine.LRH.2.02.1411050736410.11912@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1411050801270.19559@file01.intranet.prod.int.rdu2.redhat.com>
+	<20141105141147.GA14285@redhat.com>
+	<alpine.LRH.2.02.1411050925450.20317@file01.intranet.prod.int.rdu2.redhat.com>
+	<20141105162912.GA17625@redhat.com>
+	<alpine.LRH.2.02.1411071047430.21255@file01.intranet.prod.int.rdu2.redhat.com>
+	<20141107183321.GA31022@redhat.com>
+	<alpine.LRH.2.02.1501021741470.23294@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <CAMM=eLdGQ4wQDHy0ACzDsYOs0AYC+KAcx7Mx7FmpBTV293d41Q@mail.gmail.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1501021741470.23294@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Bryn M. Reeves" <breeves@redhat.com>, ejt@redhat.com, Alasdair G Kergon <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-On 01/04/2015 06:16 PM, Mike Snitzer wrote:
-> Hi,
->=20
-> I'd like to attend LSF (and the first day of Vault).
->=20
-> As a DM maintainer I'm open to discussing anything DM related.  In
-> particular I'd like to at least have hallway track discussions with
-> key people interested in DM multipath support for blk-mq devices.
-> Keith Busch and I have gone ahead and implemented the bulk of this
-> request-based DM support for blk-mq devices, see:
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.g=
-it/log/?h=3Ddm-for-3.20-blk-mq
->=20
-> But Bart says he is seeing inconsistent performance now that the code
-> appears relatively stable.  I'll continue analyzing this aspect of
-> things and by the time LSF rolls around I hope the code to be sorted.
->=20
-I'd be interested in having a discussion here, too.
-hch and me have discussed an alternative approach for multipathing
-(send the request directly and only clone request if the original
-submission failed) which I'd like to discuss with a broader audience.
-And I'd be interested in getting multipath to work with blk-mq, natural=
-ly.
+On Fri, Jan 02 2015 at  5:56pm -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> Another topic we need to come to terms with is the state of XCOPY
-> (whether the initial approach needs further work, etc) -- Mikulas
-> Patocka reworked aspects of Martin's initial approach but it hasn't
-> progressed upstream:
-> https://www.redhat.com/archives/dm-devel/2014-October/msg00167.html
->=20
-Yep. That definitely needs to be discussed.
-Especially we'd need to discuss how to handle exceptions, seeing that
-XCOPY might fail basically at any time.
-And there are some corner-cases (bandwidth starvation on the target)
-which needs to be discussed, too.
+> Hi, I'm back.
+> 
+> I looked at current internal suspend code in 3.19.
+> 
+> One thing that seems strange is this:
+> 
+> static void __dm_internal_suspend(struct mapped_device *md, unsigned suspend_flags)
+> {
+>         struct dm_table *map = NULL;
+> 
+>         if (dm_suspended_internally_md(md))
+>                 return; /* nested internal suspend */
+> ....
+> static void __dm_internal_resume(struct mapped_device *md)
+> {
+>         if (!dm_suspended_internally_md(md))
+>                 return; /* resume from nested internal suspend */
+> 
+> - the comments imply that the code supports nested internal suspend, while 
+> in fact it doesn't. If the caller calls:
+> * dm_internal_suspend_noflush
+> * dm_internal_suspend_noflush
+> * dm_internal_resume
+> the device is not suspended while it should be.
 
-Cheers,
+Yes, very true, it should.  But IIRC in practice it doesn't hurt us to
+not be bothered about being so precise given the current caller.
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> The "if" branch in __dm_internal_resume has nothing to do with nested 
+> suspend, it's called if the caller calls dm_internal_resume without 
+> dm_internal_suspend_noflush - that shouldn't happen, so there should be 
+> WARN or BUG.
+
+The first internal resume would've cleared the DM_INTERNAL_SUSPEND_FLAG,
+etc.  So AFAICT the code in question does also cover multiple internal
+suspends/resumes (albeit without the counter you've suggested).
+
+But I did narrowly define "nested suspend" as an internal suspend that
+arrives _after_ a normal suspend.
+
+From the header of commit ffcc39364 ("dm: enhance internal suspend and
+resume interface"):
+
+    Both DM_SUSPEND_FLAG and DM_INTERNAL_SUSPEND_FLAG may be set if a device
+    was already suspended when dm_internal_suspend_noflush() was called --
+    this can be thought of as a "nested suspend".  A "nested suspend" can
+    occur with legacy userspace dm-thin code that might suspend all active
+    thin volumes before suspending the pool for resize.
+
+Could be the reality is "nested suspend" is also supporting the case of
+multiple internal suspends.
+
+> If you want to support multiple internal suspends (which is needed if one 
+> table can have multiple dm-thin targets), you need a counter that counts 
+> how many times the device was suspended - the counter doesn't have to be 
+> atomic because the code already holds md->suspend_lock. If you don't want 
+> to support multiple internal suspends, there should be at least WARN when 
+> the caller attempts to do it.
+
+I'll have a look.  Will need some time to revisit this line of work.
+
+FYI, the device-mapper-test-suite has fairly comprehensive test coverage
+for all supported scenarios, e.g.:
+
+# dmtest run --suite thin-provisioning -t /SuspendTests/
+Loaded suite thin-provisioning
+Started
+SuspendTests
+  nested_internal_suspend_using_inactive_table...PASS
+  suspend_pool_active_thins_no_io...PASS
+  suspend_pool_after_suspend_thin...PASS
+  suspend_pool_concurrent_suspend...PASS
+  suspend_pool_no_active_thins...PASS
+  suspend_pool_no_thins...PASS
+  suspend_pool_resume_thin...PASS
+  suspend_pool_suspended_thin...PASS
+  wait_on_bit_during_resume...PASS
+  wait_on_bit_during_suspend...PASS
+
+# dmtest run --suite thin-provisioning -n activate_thin_while_pool_suspended_fails
+Loaded suite thin-provisioning
+Started
+CreationTests
+  activate_thin_while_pool_suspended_fails...PASS
+
+So any changes in this area need to be verified using dmts.
