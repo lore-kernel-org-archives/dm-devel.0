@@ -1,49 +1,28 @@
-From: Loic Pefferkorn <loic@loicp.eu>
-Subject: Re: [PATCH] Update CONFIG_DM_CRYPT help-text link
-Date: Tue, 6 Jan 2015 20:15:09 +0100
-Message-ID: <20150106191509.GA15700@iron>
-References: <81c1a7329d2146d37b22d7efa96b3a449cb66d14.1418677931.git.loic@loicp.eu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [LSF/MM ATTEND] discuss blk-mq related to DM-multipath and status of XCOPY
+Date: Tue, 06 Jan 2015 18:52:45 -0500
+Message-ID: <yq1bnmb8o1e.fsf@sermon.lab.mkp.net>
+References: <CAMM=eLdGQ4wQDHy0ACzDsYOs0AYC+KAcx7Mx7FmpBTV293d41Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <81c1a7329d2146d37b22d7efa96b3a449cb66d14.1418677931.git.loic@loicp.eu>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, snitzer@redhat.com
-Cc: dm-devel@redhat.com
+Content-Type: text/plain
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <CAMM=eLdGQ4wQDHy0ACzDsYOs0AYC+KAcx7Mx7FmpBTV293d41Q@mail.gmail.com>
+	(Mike Snitzer's message of "Sun, 4 Jan 2015 12:16:57 -0500")
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: lsf-pc@lists.linux-foundation.org, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig <hch@infradead.org>, Jej B <James.Bottomley@hansenpartnership.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCBEZWMgMTUsIDIwMTQgYXQgMTA6MTg6NDNQTSArMDEwMCwgTG9pYyBQZWZmZXJrb3Ju
-IHdyb3RlOgo+IEhlbGxvLAo+IAo+IFRoaXMgcGF0Y2ggZml4ZXMgdGhlIG9ic29sZXRlIGhlbHAt
-dGV4dCBsaW5rIG9mIENPTkZJR19ETV9DUllQVC4KPiBBcHBsaWVzIGFnYWluc3QgbmV4dC0yMDE0
-MTIxNS4KPiAKPiBGaXhlczogaHR0cHM6Ly9idWd6aWxsYS5rZXJuZWwub3JnL3Nob3dfYnVnLmNn
-aT9pZD03NTExMQo+IAo+IFNpZ25lZC1vZmYtYnk6IExvaWMgUGVmZmVya29ybiA8bG9pY0Bsb2lj
-cC5ldT4KPiAtLS0KPiAgZHJpdmVycy9tZC9LY29uZmlnIHwgNSArKy0tLQo+ICAxIGZpbGUgY2hh
-bmdlZCwgMiBpbnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1naXQgYS9k
-cml2ZXJzL21kL0tjb25maWcgYi9kcml2ZXJzL21kL0tjb25maWcKPiBpbmRleCA1YmRlZGY2Li4w
-OWM4OWE0YiAxMDA2NDQKPiAtLS0gYS9kcml2ZXJzL21kL0tjb25maWcKPiArKysgYi9kcml2ZXJz
-L21kL0tjb25maWcKPiBAQCAtMjMwLDkgKzIzMCw4IEBAIGNvbmZpZyBETV9DUllQVAo+ICAJICB0
-cmFuc3BhcmVudGx5IGVuY3J5cHRzIHRoZSBkYXRhIG9uIGl0LiBZb3UnbGwgbmVlZCB0byBhY3Rp
-dmF0ZQo+ICAJICB0aGUgY2lwaGVycyB5b3UncmUgZ29pbmcgdG8gdXNlIGluIHRoZSBjcnlwdG9h
-cGkgY29uZmlndXJhdGlvbi4KPiAgCj4gLQkgIEluZm9ybWF0aW9uIG9uIGhvdyB0byB1c2UgZG0t
-Y3J5cHQgY2FuIGJlIGZvdW5kIG9uCj4gLQo+IC0JICA8aHR0cDovL3d3dy5zYW91dC5kZS9taXNj
-L2RtLWNyeXB0Lz4KPiArCSAgRm9yIGZ1cnRoZXIgaW5mb3JtYXRpb24gb24gZG0tY3J5cHQgYW5k
-IHVzZXJzcGFjZSB0b29scyBzZWU6Cj4gKwkgIDxodHRwOi8vY29kZS5nb29nbGUuY29tL3AvY3J5
-cHRzZXR1cC93aWtpL0RNQ3J5cHQ+Cj4gIAo+ICAJICBUbyBjb21waWxlIHRoaXMgY29kZSBhcyBh
-IG1vZHVsZSwgY2hvb3NlIE0gaGVyZTogdGhlIG1vZHVsZSB3aWxsCj4gIAkgIGJlIGNhbGxlZCBk
-bS1jcnlwdC4KPiAtLSAKPiAyLjEuMwo+IAo+IC0tCj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4g
-ZG0tZGV2ZWxAcmVkaGF0LmNvbQo+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
-aW5mby9kbS1kZXZlbAo+IAoKSGVsbG8gZ3V5cywKCkp1c3QgYSBnZW50bGUgcmVtaW5kZXIsIHBs
-ZWFzZSB0ZWxsIG1lIGlmIHNvbWV0aGluZyBpcyB3cm9uZy4KCi0tIApDaGVlcnMsCkxvw69jCgot
-LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5y
-ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+
+Mike> Another topic we need to come to terms with is the state of XCOPY
+Mike> (whether the initial approach needs further work, etc) -- Mikulas
+Mike> Patocka reworked aspects of Martin's initial approach but it
+Mike> hasn't progressed upstream:
+
+Yeah, I'd like to get that sorted out too. It got stuck on running out
+of request flags and that requires some block layer surgery. I'll try to
+get that piece done right away for 3.20 so we can get xcopy into 3.21.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
