@@ -1,34 +1,44 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: DM limits setup
-Date: Tue, 6 Jan 2015 11:46:20 +0000
-Message-ID: <20150106114619.GA14755@debian>
-References: <CAFx4rwQudUhVH4rgJYb+uHPe17PKJHYQRsxbUpwr5h_1r2B8+w@mail.gmail.com>
-	<20150105102151.GC11818@debian>
-	<CAFx4rwSvuTHyL9qZ_A+7-utm1-+yyd=kAnpAKAkS+pxeMHVDSw@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Asaf Vertz <asaf.vertz@tandemg.com>
+Subject: [PATCH] dm bufio: fix time comparison
+Date: Tue, 6 Jan 2015 15:44:15 +0200
+Message-ID: <20150106134415.GA15873@ubuntu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAFx4rwSvuTHyL9qZ_A+7-utm1-+yyd=kAnpAKAkS+pxeMHVDSw@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: doug@easyco.com, device-mapper development <dm-devel@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: agk@redhat.com
+Cc: snitzer@redhat.com, dm-devel@redhat.com, neilb@suse.de, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Jan 05, 2015 at 03:32:18PM -0800, Doug Dumitru wrote:
-> If you would like a copy, please point me at "contribution" guidelines for
-> device mapper target contributions.
+To be future-proof and for better readability the time comparison
+modified to use time_after_eq() instead of plain, error-prone math.
 
-It's not suitable for going upstream, but would possibly be helpful
-for my own testing.  No guidelines neccessary.
+Signed-off-by: Asaf Vertz <asaf.vertz@tandemg.com>
+---
+ drivers/md/dm-bufio.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-- Joe
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index c33b497..86dbbc7 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -11,6 +11,7 @@
+ #include <linux/device-mapper.h>
+ #include <linux/dm-io.h>
+ #include <linux/slab.h>
++#include <linux/jiffies.h>
+ #include <linux/vmalloc.h>
+ #include <linux/shrinker.h>
+ #include <linux/module.h>
+@@ -1739,7 +1740,7 @@ static unsigned get_max_age_hz(void)
+ 
+ static bool older_than(struct dm_buffer *b, unsigned long age_hz)
+ {
+-	return (jiffies - b->last_accessed) >= age_hz;
++	return time_after_eq(jiffies, b->last_accessed + age_hz);
+ }
+ 
+ static void __evict_old_buffers(struct dm_bufio_client *c, unsigned long age_hz)
+-- 
+1.7.0.4
