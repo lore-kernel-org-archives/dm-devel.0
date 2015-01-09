@@ -1,25 +1,12 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm: handle multiple internal suspends correctly
- (was: staged dm_internal_{suspend, resume} related changes for wider review)
-Date: Thu, 8 Jan 2015 18:52:26 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1501081848440.7624@file01.intranet.prod.int.rdu2.redhat.com>
-References: <CAMM=eLd8iuMDtNr7f4Cu97ZEua3-pOW4pdSdVKji7g02mKXFwQ@mail.gmail.com>
-	<20141105011619.GA11411@redhat.com>
-	<alpine.LRH.2.02.1411050736410.11912@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1411050801270.19559@file01.intranet.prod.int.rdu2.redhat.com>
-	<20141105141147.GA14285@redhat.com>
-	<alpine.LRH.2.02.1411050925450.20317@file01.intranet.prod.int.rdu2.redhat.com>
-	<20141105162912.GA17625@redhat.com>
-	<alpine.LRH.2.02.1411071047430.21255@file01.intranet.prod.int.rdu2.redhat.com>
-	<20141107183321.GA31022@redhat.com>
-	<alpine.LRH.2.02.1501021741470.23294@file01.intranet.prod.int.rdu2.redhat.com>
-	<20150105155043.GA2260@redhat.com>
+From: Suresh Babu Kandukuru <suresh.babu.kandukuru@oracle.com>
+Subject: Device mapper target driver for Write tracking or Write
+	split
+Date: Thu, 8 Jan 2015 21:23:21 -0800 (PST)
+Message-ID: <e1aa69e2-7af2-4003-8b8c-5a2b6987a3e2@default>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============4285877569938459493=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150105155043.GA2260@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,102 +16,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Bryn M. Reeves" <breeves@redhat.com>, ejt@redhat.com, Alasdair G Kergon <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+--===============4285877569938459493==
+Content-Type: multipart/alternative;
+	boundary="__1420781006092212751abhmp0016.oracle.com"
+
+--__1420781006092212751abhmp0016.oracle.com
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: quoted-printable
+
+Hi List,
+
+=20
+
+I am mainly looking at write tracking Device Mapper device .  Do we  have a=
+ny device mapper target driver for write tacking or write splitting ?. or a=
+ny work  happening on this to leverage  ?. Please kindly share any web link=
+s or pointers on this . Thanks in advance .
+
+=20
+
+/Suresh
+
+=20
+
+--__1420781006092212751abhmp0016.oracle.com
+Content-Type: text/html; charset=us-ascii
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
+osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
+//www.w3.org/TR/REC-html40"><head><meta http-equiv=3DContent-Type content=
+=3D"text/html; charset=3Dus-ascii"><meta name=3DGenerator content=3D"Micros=
+oft Word 14 (filtered medium)"><style><!--
+/* Font Definitions */
+@font-face
+=09{font-family:Calibri;
+=09panose-1:2 15 5 2 2 2 4 3 2 4;}
+/* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+=09{margin:0in;
+=09margin-bottom:.0001pt;
+=09font-size:11.0pt;
+=09font-family:"Calibri","sans-serif";}
+a:link, span.MsoHyperlink
+=09{mso-style-priority:99;
+=09color:blue;
+=09text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+=09{mso-style-priority:99;
+=09color:purple;
+=09text-decoration:underline;}
+span.EmailStyle17
+=09{mso-style-type:personal-compose;
+=09font-family:"Calibri","sans-serif";
+=09color:windowtext;}
+.MsoChpDefault
+=09{mso-style-type:export-only;}
+@page WordSection1
+=09{size:8.5in 11.0in;
+=09margin:1.0in 1.0in 1.0in 1.0in;}
+div.WordSection1
+=09{page:WordSection1;}
+--></style><!--[if gte mso 9]><xml>
+<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+<o:shapelayout v:ext=3D"edit">
+<o:idmap v:ext=3D"edit" data=3D"1" />
+</o:shapelayout></xml><![endif]--></head><body lang=3DEN-US link=3Dblue vli=
+nk=3Dpurple><div class=3DWordSection1><p class=3DMsoNormal>Hi List,<o:p></o=
+:p></p><p class=3DMsoNormal><o:p>&nbsp;</o:p></p><p class=3DMsoNormal>I am =
+mainly looking at write tracking Device Mapper device&nbsp;.&nbsp; Do we&nb=
+sp; have any device mapper target driver for write tacking or write splitti=
+ng ?. or any work&nbsp; happening on this to leverage &nbsp;?. Please kindl=
+y share any web links or pointers on this . Thanks in advance .<o:p></o:p><=
+/p><p class=3DMsoNormal><o:p>&nbsp;</o:p></p><p class=3DMsoNormal>/Suresh<o=
+:p></o:p></p><p class=3DMsoNormal><o:p>&nbsp;</o:p></p></div></body></html>
+--__1420781006092212751abhmp0016.oracle.com--
 
 
-On Mon, 5 Jan 2015, Mike Snitzer wrote:
-
-> On Fri, Jan 02 2015 at  5:56pm -0500,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
-> 
-> > Hi, I'm back.
-> > 
-> > I looked at current internal suspend code in 3.19.
-> > 
-> > One thing that seems strange is this:
-> > 
-> > static void __dm_internal_suspend(struct mapped_device *md, unsigned suspend_flags)
-> > {
-> >         struct dm_table *map = NULL;
-> > 
-> >         if (dm_suspended_internally_md(md))
-> >                 return; /* nested internal suspend */
-> > ....
-> > static void __dm_internal_resume(struct mapped_device *md)
-> > {
-> >         if (!dm_suspended_internally_md(md))
-> >                 return; /* resume from nested internal suspend */
-> > 
-> > - the comments imply that the code supports nested internal suspend, while 
-> > in fact it doesn't. If the caller calls:
-> > * dm_internal_suspend_noflush
-> > * dm_internal_suspend_noflush
-> > * dm_internal_resume
-> > the device is not suspended while it should be.
-> 
-> Yes, very true, it should.  But IIRC in practice it doesn't hurt us to
-> not be bothered about being so precise given the current caller.
-
-If the device is not suspended while it should be, it could lead to 
-various subtle bugs. We should either disallow multiple internal suspends 
-(print warning when that happens) or handle it correctly. Here I'm sending 
-a patch to fix it.
-
-Mikulas
+--===============4285877569938459493==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-The current code attempts to handle multiple internal suspends on the same
-device, but it does that incorrectly. When these functions are called in
-this order on the same device
-	dm_internal_suspend_noflush
-	dm_internal_suspend_noflush
-	dm_internal_resume
-the device is not suspended, while it should be. This patch fixes the bug
-by maintaining a counter of suspends, and resuming the device when the
-counter drops to zero.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm.c |    9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
-
-Index: linux-3.19-rc3/drivers/md/dm.c
-===================================================================
---- linux-3.19-rc3.orig/drivers/md/dm.c	2015-01-08 22:04:23.000000000 +0100
-+++ linux-3.19-rc3/drivers/md/dm.c	2015-01-08 22:22:14.000000000 +0100
-@@ -206,6 +206,9 @@ struct mapped_device {
- 	/* zero-length flush that will be cloned and submitted to targets */
- 	struct bio flush_bio;
- 
-+	/* the number of internal suspends */
-+	unsigned internal_suspend_count;
-+
- 	struct dm_stats stats;
- };
- 
-@@ -3023,7 +3026,7 @@ static void __dm_internal_suspend(struct
- {
- 	struct dm_table *map = NULL;
- 
--	if (dm_suspended_internally_md(md))
-+	if (md->internal_suspend_count++)
- 		return; /* nested internal suspend */
- 
- 	if (dm_suspended_md(md)) {
-@@ -3048,7 +3051,9 @@ static void __dm_internal_suspend(struct
- 
- static void __dm_internal_resume(struct mapped_device *md)
- {
--	if (!dm_suspended_internally_md(md))
-+	BUG_ON(!md->internal_suspend_count);
-+
-+	if (--md->internal_suspend_count)
- 		return; /* resume from nested internal suspend */
- 
- 	if (dm_suspended_md(md))
+--===============4285877569938459493==--
