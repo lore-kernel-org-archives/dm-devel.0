@@ -1,20 +1,20 @@
-From: Jens Axboe <axboe@kernel.dk>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: blk-mq request allocation stalls [was: Re: [PATCH v3
  0/8] dm: add request-based blk-mq support]
-Date: Fri, 09 Jan 2015 17:27:08 -0700
-Message-ID: <54B071DC.9000307@kernel.dk>
-References: <54ABAB80.70006@acm.org> <20150106160553.GB10224@redhat.com>
-	<54AC0A39.90801@kernel.dk> <54AD0B63.3010505@acm.org>
+Date: Fri, 9 Jan 2015 20:48:11 -0500
+Message-ID: <20150110014811.GA2384@redhat.com>
+References: <54AC0A39.90801@kernel.dk> <54AD0B63.3010505@acm.org>
 	<alpine.LNX.2.00.1501071755110.4026@localhost.lm.intel.com>
-	<20150109194955.GA32641@redhat.com>
-	<54B042FE.2000205@kernel.dk> <54B043FC.8000902@kernel.dk>
-	<20150109214015.GA1032@redhat.com> <54B04E94.3010403@kernel.dk>
-	<20150109222543.GA1190@redhat.com>
+	<20150109194955.GA32641@redhat.com> <54B042FE.2000205@kernel.dk>
+	<54B043FC.8000902@kernel.dk> <20150109214015.GA1032@redhat.com>
+	<54B04E94.3010403@kernel.dk> <20150109222543.GA1190@redhat.com>
+	<54B071DC.9000307@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------060205060908010403000008"
+Content-Type: multipart/mixed; boundary="vtzGhvizbBRQ85DL"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150109222543.GA1190@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <54B071DC.9000307@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,196 +24,157 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
+To: Jens Axboe <axboe@kernel.dk>
 Cc: Keith Busch <keith.busch@intel.com>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Bart Van Assche <bvanassche@acm.org>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------060205060908010403000008
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
 
-On 01/09/2015 03:25 PM, Mike Snitzer wrote:
-> On Fri, Jan 09 2015 at  4:56pm -0500,
-> Jens Axboe <axboe@kernel.dk> wrote:
-> 
->> On 01/09/2015 02:40 PM, Mike Snitzer wrote:
->>> On Fri, Jan 09 2015 at  4:11pm -0500,
->>> Jens Axboe <axboe@kernel.dk> wrote:
->>>
->>>>
->>>> Actually, try this one instead, it should be a bit more precise than
->>>> the first.
->>>>
->>>
->>> Thanks for the test patch.
->>>
->>> I'm still seeing failures that look wrong (last_tag=127 could be edge
->>> condition not handled properly?):
->>>
->>> [   14.254632] __bt_get: values before for loop: last_tag=127, index=3
->>> [   14.255841] __bt_get: values after  for loop: last_tag=64, index=2
->>> [   14.257036]
->>> [   14.257036] bt_get: __bt_get() returned -1
->>> [   14.258051] queue_num=0, nr_tags=128, reserved_tags=0, bits_per_word=5
->>> [   14.259246] nr_free=128, nr_reserved=0
->>> [   14.259963] active_queues=0
->>>
->>> [  213.115997] __bt_get: values before for loop: last_tag=127, index=3
->>> [  213.117115] __bt_get: values after  for loop: last_tag=96, index=3
->>> [  213.118200]
->>> [  213.118200] bt_get: __bt_get() returned -1
->>> [  213.121593] queue_num=0, nr_tags=128, reserved_tags=0, bits_per_word=5
->>> [  213.123960] nr_free=128, nr_reserved=0
->>> [  213.125880] active_queues=0
->>>
->>> [  239.158079] __bt_get: values before for loop: last_tag=8, index=0
->>> [  239.160363] __bt_get: values after  for loop: last_tag=0, index=0
->>> [  239.162896]
->>> [  239.162896] bt_get: __bt_get() returned -1
->>> [  239.166284] queue_num=0, nr_tags=128, reserved_tags=0, bits_per_word=5
->>> [  239.168623] nr_free=127, nr_reserved=0
->>> [  239.170508] active_queues=0
->>
->> Thanks for testing, can you try this one?
-> 
-> Huh, at least now we're now seeing some nr_free=0... but the last 3
-> failures below look unnecessary still.  E.g. the last_tag=127 case
-> 
-> [   13.895265] __bt_get: values before for loop: last_tag=59, index=1
-> [   13.895265] __bt_get: values after  for loop: last_tag=32, index=1
-> [   13.895266] 
-> [   13.895266] bt_get: __bt_get() returned -1
-> [   13.895267] queue_num=0, nr_tags=128, reserved_tags=0, bits_per_word=5
-> [   13.895267] nr_free=0, nr_reserved=0
-> [   13.895268] active_queues=0
-> 
-> [   13.895269] __bt_get: values before for loop: last_tag=0, index=0
-> [   13.895270] __bt_get: values after  for loop: last_tag=0, index=0
-> [   13.895270] 
-> [   13.895270] bt_get: __bt_get() returned -1
-> [   13.895271] queue_num=0, nr_tags=128, reserved_tags=0, bits_per_word=5
-> [   13.895272] nr_free=0, nr_reserved=0
-> [   13.895272] active_queues=0
-> [   13.895324] __bt_get: values before for loop: last_tag=0, index=0
-> [   13.895324] __bt_get: values after  for loop: last_tag=0, index=0
-> [   13.895325] bt_get: __bt_get() _still_ returned -1
-> [   13.895325] queue_num=0, nr_tags=128, reserved_tags=0, bits_per_word=5
-> [   13.895326] nr_free=0, nr_reserved=0
-> [   13.895326] active_queues=0
-> 
-> [   18.931425] __bt_get: values before for loop: last_tag=127, index=3
-> [   18.933317] __bt_get: values after  for loop: last_tag=0, index=0
-> [   18.935140] 
-> [   18.935140] bt_get: __bt_get() returned -1
-> [   18.936807] queue_num=0, nr_tags=128, reserved_tags=0, bits_per_word=5
-> [   18.938772] nr_free=128, nr_reserved=0
-> [   18.939927] active_queues=0
-> 
-> [  489.119597] __bt_get: values before for loop: last_tag=95, index=2
-> [  489.120621] __bt_get: values after  for loop: last_tag=96, index=3
-> [  489.121624]
-> [  489.121624] bt_get: __bt_get() returned -1
-> [  489.122532] queue_num=0, nr_tags=128, reserved_tags=0, bits_per_word=5
-> [  489.123581] nr_free=128, nr_reserved=0
-> [  489.124206] active_queues=0
-> 
-> [  494.705758] __bt_get: values before for loop: last_tag=127, index=3
-> [  494.707797] __bt_get: values after  for loop: last_tag=0, index=0
-> [  494.709696] 
-> [  494.709696] bt_get: __bt_get() returned -1
-> [  494.712459] queue_num=0, nr_tags=128, reserved_tags=0, bits_per_word=5
-> [  494.714403] nr_free=128, nr_reserved=0
-> [  494.715955] active_queues=0
+--vtzGhvizbBRQ85DL
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-I sent out the half-done v3, unfortunately. Can you try this? Both the
-cases with substantial nr_free are at the end of an index.
+On Fri, Jan 09 2015 at  7:27pm -0500,
+Jens Axboe <axboe@kernel.dk> wrote:
 
-If this one doesn't solve it, I'll reproduce it myself to save the
-ping-pong effort :-)
+> I sent out the half-done v3, unfortunately. Can you try this? Both the
+> cases with substantial nr_free are at the end of an index.
 
+I initially thought it was fixed since I didn't see any failures on boot
+(which I normally do see 3-4).  I then ran the kernel "make install" to
+this virtio-blk root device and also didn't see any failures on the the
+first run.  But the 2nd run triggered these:
 
--- 
-Jens Axboe
+[   83.711724] __bt_get: values before for loop: last_tag=55, index=1
+[   83.713395] __bt_get: values after  for loop: last_tag=32, index=1
+[   83.714464] bt_get: __bt_get() returned -1
+[   83.715183] queue_num=0, nr_tags=128, reserved_tags=0, bits_per_word=5
+[   83.716297] nr_free=128, nr_reserved=0
+[   83.716940] active_queues=0
 
+[   88.716241] __bt_get: values before for loop: last_tag=15, index=0
+[   88.717890] __bt_get: values after  for loop: last_tag=0, index=0
+[   88.718956] bt_get: __bt_get() returned -1
+[   88.719682] queue_num=0, nr_tags=128, reserved_tags=0, bits_per_word=5
+[   88.720866] nr_free=128, nr_reserved=0
+[   88.721536] active_queues=0
 
---------------060205060908010403000008
-Content-Type: text/x-patch;
- name="tag-v4.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
- filename="tag-v4.patch"
+A third "make install" resulted in:
+
+[  543.711782] __bt_get: values before for loop: last_tag=114, index=3
+[  543.713411] __bt_get: values after  for loop: last_tag=96, index=3
+[  543.714495] bt_get: __bt_get() returned -1
+[  543.715222] queue_num=0, nr_tags=128, reserved_tags=0, bits_per_word=5
+[  543.716351] nr_free=128, nr_reserved=0
+[  543.717016] active_queues=0
+
+(things definitely do seem better, e.g. less frequent failure and no
+longer see the last_tag=127 case)
+
+> If this one doesn't solve it, I'll reproduce it myself to save the
+> ping-pong effort :-)
+
+I don't mind testing it since it is really quick.  But OK.
+
+I've attached the debug patch I've been using in case you'd like to use it.
+
+But feel free to send me additional versions for me to test off-list if
+you'd like.
+
+Mike
+
+--vtzGhvizbBRQ85DL
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename="blk-mq-bt_get-debug-v2.patch"
 
 diff --git a/block/blk-mq-tag.c b/block/blk-mq-tag.c
-index 60c9d4a93fe4..1ce031a56080 100644
+index 32e8dbb..4f11e7c 100644
 --- a/block/blk-mq-tag.c
 +++ b/block/blk-mq-tag.c
-@@ -142,29 +142,29 @@ static inline bool hctx_may_queue(struct blk_mq_hw_ctx *hctx,
+@@ -180,12 +180,16 @@ static int __bt_get(struct blk_mq_hw_ctx *hctx, struct blk_mq_bitmap_tags *bt,
+ 	unsigned int last_tag, org_last_tag;
+ 	int index, i, tag;
  
- static int __bt_get_word(struct blk_align_bitmap *bm, unsigned int last_tag)
- {
--	int tag, org_last_tag, end;
--	bool wrap = last_tag != 0;
-+	int tag, org_last_tag = last_tag;
- 
--	org_last_tag = last_tag;
--	end = bm->depth;
--	do {
--restart:
--		tag = find_next_zero_bit(&bm->word, end, last_tag);
--		if (unlikely(tag >= end)) {
-+	while (1) {
-+		tag = find_next_zero_bit(&bm->word, bm->depth, last_tag);
-+		if (unlikely(tag >= bm->depth)) {
- 			/*
- 			 * We started with an offset, start from 0 to
- 			 * exhaust the map.
- 			 */
--			if (wrap) {
--				wrap = false;
--				end = org_last_tag;
--				last_tag = 0;
--				goto restart;
-+			if (org_last_tag) {
-+				last_tag = org_last_tag = 0;
-+				continue;
- 			}
- 			return -1;
- 		}
-+
-+		if (!test_and_set_bit(tag, &bm->word))
-+			break;
-+
- 		last_tag = tag + 1;
--	} while (test_and_set_bit(tag, &bm->word));
-+		if (last_tag >= bm->depth - 1)
-+			last_tag = 0;
+-	if (!hctx_may_queue(hctx, bt))
++	if (!hctx_may_queue(hctx, bt)) {
++		printk("!hctx_may_queue() __bt_get returning -1\n");
+ 		return -1;
 +	}
  
- 	return tag;
- }
-@@ -199,9 +199,13 @@ static int __bt_get(struct blk_mq_hw_ctx *hctx, struct blk_mq_bitmap_tags *bt,
- 			goto done;
- 		}
+ 	last_tag = org_last_tag = *tag_cache;
+ 	index = TAG_TO_INDEX(bt, last_tag);
  
--		last_tag = 0;
--		if (++index >= bt->map_nr)
-+		index++;
-+		last_tag = (index << bt->bits_per_word);
++	WARN_ON(last_tag > 127);
 +
-+		if (index >= bt->map_nr) {
+ 	for (i = 0; i < bt->map_nr; i++) {
+ 		tag = __bt_get_word(&bt->map[index], TAG_TO_BIT(bt, last_tag));
+ 		if (tag != -1) {
+@@ -198,6 +202,11 @@ static int __bt_get(struct blk_mq_hw_ctx *hctx, struct blk_mq_bitmap_tags *bt,
  			index = 0;
-+			last_tag = 0;
-+		}
  	}
  
++	printk("\n%s: values before for loop: last_tag=%u, index=%d\n", __func__,
++	       *tag_cache,  TAG_TO_INDEX(bt, *tag_cache));
++	printk("%s: values after  for loop: last_tag=%u, index=%d\n", __func__,
++	       last_tag, index);
++
  	*tag_cache = 0;
+ 	return -1;
+ 
+@@ -232,6 +241,27 @@ static struct bt_wait_state *bt_wait_ptr(struct blk_mq_bitmap_tags *bt,
+ 	return bs;
+ }
+ 
++static unsigned int bt_unused_tags(struct blk_mq_bitmap_tags *bt);
++
++static void print_hctx_tags_usage(struct blk_mq_hw_ctx *hctx)
++{
++	unsigned int free, res;
++	struct blk_mq_tags *tags = hctx->tags;
++
++	if (!tags)
++		return;
++
++	printk("queue_num=%d, nr_tags=%u, reserved_tags=%u, bits_per_word=%u\n",
++	       hctx->queue_num, tags->nr_tags, tags->nr_reserved_tags,
++	       tags->bitmap_tags.bits_per_word);
++
++	free = bt_unused_tags(&tags->bitmap_tags);
++	res = bt_unused_tags(&tags->breserved_tags);
++
++	printk("nr_free=%u, nr_reserved=%u\n", free, res);
++	printk("active_queues=%u\n", atomic_read(&tags->active_queues));
++}
++
+ static int bt_get(struct blk_mq_alloc_data *data,
+ 		struct blk_mq_bitmap_tags *bt,
+ 		struct blk_mq_hw_ctx *hctx,
+@@ -245,6 +275,10 @@ static int bt_get(struct blk_mq_alloc_data *data,
+ 	if (tag != -1)
+ 		return tag;
+ 
++	printk("%s: __bt_get() returned -1\n", __func__);
++	print_hctx_tags_usage(hctx);
++	//dump_stack();
++
+ 	if (!(data->gfp & __GFP_WAIT))
+ 		return -1;
+ 
+@@ -256,6 +290,9 @@ static int bt_get(struct blk_mq_alloc_data *data,
+ 		if (tag != -1)
+ 			break;
+ 
++		printk("%s: __bt_get() _still_ returned -1\n", __func__);
++		print_hctx_tags_usage(hctx);
++
+ 		/*
+ 		 * We're out of tags on this hardware queue, kick any
+ 		 * pending IO submits before going to sleep waiting for
 
---------------060205060908010403000008
+--vtzGhvizbBRQ85DL
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------060205060908010403000008--
+--vtzGhvizbBRQ85DL--
