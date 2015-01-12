@@ -1,19 +1,25 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Keith Busch <keith.busch@intel.com>
 Subject: Re: blk-mq request allocation stalls
-Date: Mon, 12 Jan 2015 13:19:49 -0500
-Message-ID: <20150112181949.GA21518@redhat.com>
-References: <20150109222543.GA1190@redhat.com> <54B071DC.9000307@kernel.dk>
-	<20150110014811.GA2384@redhat.com> <54B08779.2080705@kernel.dk>
-	<20150110031057.GA2823@redhat.com> <54B3DE54.7090909@sandisk.com>
-	<54B3EB4A.9090404@kernel.dk> <54B3F255.5080802@sandisk.com>
-	<54B3F78D.2020704@kernel.dk> <54B3FE89.200@sandisk.com>
+Date: Mon, 12 Jan 2015 18:22:12 +0000 (UTC)
+Message-ID: <alpine.LNX.2.00.1501121818510.4026@localhost.lm.intel.com>
+References: <alpine.LNX.2.00.1501071755110.4026@localhost.lm.intel.com>
+	<20150109194955.GA32641@redhat.com>
+	<54B042FE.2000205@kernel.dk> <54B043FC.8000902@kernel.dk>
+	<20150109214015.GA1032@redhat.com> <54B04E94.3010403@kernel.dk>
+	<20150109222543.GA1190@redhat.com>
+	<54B071DC.9000307@kernel.dk> <20150110014811.GA2384@redhat.com>
+	<54B08779.2080705@kernel.dk> <20150110031057.GA2823@redhat.com>
+	<54B3DE54.7090909@sandisk.com> <54B3EB4A.9090404@kernel.dk>
+	<54B3F255.5080802@sandisk.com> <54B3F78D.2020704@kernel.dk>
+	<54B3FE89.200@sandisk.com> <54B3FFAE.4070609@kernel.dk>
+	<alpine.LNX.2.00.1501121738000.4026@localhost.lm.intel.com>
+	<54B40E8A.6010005@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <54B3FE89.200@sandisk.com>
+In-Reply-To: <54B40E8A.6010005@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,63 +29,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Keith Busch <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Christoph Hellwig <hch@infradead.org>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, Keith Busch <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-On Mon, Jan 12 2015 at 12:04pm -0500,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+On Mon, 12 Jan 2015, Jens Axboe wrote:
+> On 01/12/2015 10:53 AM, Keith Busch wrote:
+>> Is the nr_active count correct prior to starting the mkfs test? Trying
+>> to see if someone is calling "blk_mq_alloc_tag_set()" twice on the same
+>> set. It might be good to add a WARN if this is detected anyway.
+>
+> That might be a good debug aid, I agree. But the above doesn't look like it's 
+> corrupted. If you add the values, you get 60 and 62 for the two cases, which 
+> seems to indicate that we did bump the values correctly, but for some reason 
+> we never did the decrement on completion. Hence we stabilize around the queue 
+> depth of the device, which will be 62 +/- a bit due to the sharing.
+>
+> I'm not familiar with how rq based dm works. We clone the original request 
+> (which has the RQ_MQ_INFLIGHT flag set), then we issue the clone(s) to the 
+> underlying device(s)? And when that completes, we complete the original? That 
+> would work fine with the flag on the original request. Maybe I'm missing 
+> something, and I'll let more knowledgeable people discuss that.
 
-> On 01/12/15 17:34, Jens Axboe wrote:
-> > 
-> > So that does look a bit off, we have (supposedly) 9 active requests, but 
-> > nothing allocated. When the mkfs is done and things are idle, can you 
-> > try and cat the 'active' file in the mq directory? I want to see if it 
-> > drops to zero or stays elevated.
-> 
-> Hello Jens,
-> 
-> Sorry that I hadn't been more clear but the __bt_get() data in the
-> previous e-mail was gathered when multipathd started instead of when
-> mkfs was started. That was the time at which Mike's debug patch reported
-> for the first time that __bt_get() returned -1. What is also remarkable
-> is that all "__bt_get() returned -1" reports that I checked referred to
-> the /dev/dm-0 device and none to any of the underlying devices
-> (/dev/sd[cd]).
-
-That cannot be, considering the request-based DM device (dm-0) isn't a
-blk-mq device (so it never calls into __bt_get).
-
-How did you draw that conclusion?
-
-> The tag state after having stopped multipathd (systemctl stop
-> multipathd) is as follows:
-> # dmsetup table /dev/dm-0
-> 0 256000 multipath 3 queue_if_no_path pg_init_retries 50 0 1 1
-> service-time 0 2 2 8:48 1 1 8:32 1 1
-> # ls -l /dev/sd[cd]
-> brw-rw---- 1 root disk 8, 32 Jan 12 17:47 /dev/sdc
-> brw-rw---- 1 root disk 8, 48 Jan 12 17:47 /dev/sdd
-> # for d in sdc sdd dm-0; do echo ==== $d; (cd /sys/block/$d/mq &&
->   find|cut -c3-|grep active|xargs grep -aH ''); done
-> ==== sdc
-> 0/active:10
-> 1/active:14
-> 2/active:7
-> 3/active:13
-> 4/active:6
-> 5/active:10
-> ==== sdd
-> 0/active:17
-> 1/active:8
-> 2/active:9
-> 3/active:13
-> 4/active:5
-> 5/active:10
-> ==== dm-0
-> -bash: cd: /sys/block/dm-0/mq: No such file or directory
-
-Confirms dm-0 isn't blk-mq device.  Making request-based DM use blk-mq
-is certainly something I intend to look at.  But the current
-dm-multipath is using old request-based queue (dm-0) in front of
-underlying blk-mq devices (sdc, sdd) as the first step.
+Oh, let's look at "__blk_rq_prep_clone". dm calls that after
+blk_get_request() for the blk-mq based multipath types and overrides the
+destinations cmd_flags with the source's even though the source was not
+allocated from a blk-mq based queue, much less a shared tag.
