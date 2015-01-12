@@ -1,14 +1,20 @@
-From: Nicholas Krause <xerofoify@gmail.com>
-Subject: [PATCH] md:Remove no longer needed fix me comment in
-	dm-region-hash.c for removing the structure pointer,
-	*rh from the definiton of dm_region
-Date: Mon, 12 Jan 2015 22:30:23 -0500
-Message-ID: <1421119823-5864-1-git-send-email-xerofoify@gmail.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: blk-mq request allocation stalls
+Date: Mon, 12 Jan 2015 15:46:44 +0100
+Message-ID: <54B3DE54.7090909@sandisk.com>
+References: <alpine.LNX.2.00.1501071755110.4026@localhost.lm.intel.com>
+	<20150109194955.GA32641@redhat.com>
+	<54B042FE.2000205@kernel.dk> <54B043FC.8000902@kernel.dk>
+	<20150109214015.GA1032@redhat.com> <54B04E94.3010403@kernel.dk>
+	<20150109222543.GA1190@redhat.com> <54B071DC.9000307@kernel.dk>
+	<20150110014811.GA2384@redhat.com> <54B08779.2080705@kernel.dk>
+	<20150110031057.GA2823@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20150110031057.GA2823@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,33 +24,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, snitzer@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>
+Cc: Keith Busch <keith.busch@intel.com>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 List-Id: dm-devel.ids
 
-Removes the no longer needed fix me comment questioning if we need to remove
-the structure pointer,rh as defined as a structure of type dsm_region_hash
-from the definition of the structure, dm_region. Furthermore this  pointer is
-needed in order for various functions to run and build successfully in the file,
-dm-region-hash.c.
+On 01/10/15 04:10, Mike Snitzer wrote:
+> On Fri, Jan 09 2015 at  8:59pm -0500,
+> Jens Axboe <axboe@kernel.dk> wrote:
+>> Bart, could you try the patch (the -v4) and your DM hang and see if
+>> it solves it for you?
+> 
+> Yes, I'm interested to hear from Bart on v4 too.
 
-Signed-off-by: Nicholas Krause <xerofoify@gmail.com>
----
- drivers/md/dm-region-hash.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hello Mike and Jens,
 
-diff --git a/drivers/md/dm-region-hash.c b/drivers/md/dm-region-hash.c
-index b929fd5..823d56f 100644
---- a/drivers/md/dm-region-hash.c
-+++ b/drivers/md/dm-region-hash.c
-@@ -99,7 +99,7 @@ struct dm_region_hash {
- };
- 
- struct dm_region {
--	struct dm_region_hash *rh;	/* FIXME: can we get rid of this ? */
-+	struct dm_region_hash *rh;
- 	region_t key;
- 	int state;
- 
--- 
-2.1.0
+Sorry but even with v4 applied filesystem creation still takes too long.
+The kernel I have been testing with was generated as follows:
+* Started from Mike's dm-for-3.20-blk-mq branch.
+* Merged v3.19-rc4 with this branch.
+* Applied Jens' blk-mq tag patch and Mike's debug patch on top.
+* Modified Mike's patch to make it print the blk-mq "may_queue" state
+  (hctx_may_queue(hctx, bt)).
+
+Here are the results without multipath:
+
+# systemctl disable multipathd
+# systemctl stop multipathd
+# dmsetup remove_all
+# rmmod dm_service_time
+# rmmod dm_multipath
+# rmmod dm_mod
+# time mkfs.xfs -f /dev/sdc >/dev/null
+real    0m0.037s
+user    0m0.000s
+sys     0m0.020s
+# time mkfs.xfs -f /dev/sdd >/dev/null
+real    0m0.030s
+user    0m0.010s
+sys     0m0.010s
+
+With multipath:
+
+# ls -l /dev/sd[cd]
+brw-rw---- 1 root disk 8, 32 Jan 12 15:09 /dev/sdc
+brw-rw---- 1 root disk 8, 48 Jan 12 15:11 /dev/sdd
+# systemctl start multipathd
+# dmsetup table /dev/dm-0
+0 256000 multipath 3 queue_if_no_path pg_init_retries 50 0 1 1
+service-time 0 2 2 8:48 1 1 8:32 1 1
+# time mkfs.xfs -f /dev/dm-0 >/dev/null
+real    0m8.845s
+user    0m0.000s
+sys     0m0.020s
+# time mkfs.xfs -f /dev/dm-0 >/dev/null
+real    0m14.905s
+user    0m0.000s
+sys     0m0.020s
+
+What is remarkable is that Mike's debug patch started to report
+"bt_get() returned -1" as soon as multipathd was started. The first of
+many identical call traces printed by this debug patch was as follows:
+
+bt_get: __bt_get() returned -1
+queue_num=2, nr_tags=62, reserved_tags=0, bits_per_word=3
+nr_free=62, nr_reserved=0, may_queue=0
+active_queues=8
+CPU: 2 PID: 6316 Comm: kdmwork-253:2 Tainted: G        W
+3.19.0-rc4-debug+ #1
+Call Trace:
+ [<ffffffff814d26ea>] dump_stack+0x4c/0x65
+ [<ffffffff81259c91>] bt_get+0xa1/0x1f0
+ [<ffffffff8125a0bf>] blk_mq_get_tag+0x9f/0xd0
+ [<ffffffff8125522b>] __blk_mq_alloc_request+0x1b/0x210
+ [<ffffffff81256a30>] blk_mq_alloc_request+0xa0/0x150
+ [<ffffffff8124ba9e>] blk_get_request+0x2e/0xe0
+ [<ffffffffa06c6d0f>] __multipath_map.isra.15+0x1cf/0x210 [dm_multipath]
+ [<ffffffffa06c6d6a>] multipath_clone_and_map+0x1a/0x20 [dm_multipath]
+ [<ffffffffa07bfbb5>] map_tio_request+0x1d5/0x3a0 [dm_mod]
+ [<ffffffff81075d16>] kthread_worker_fn+0x86/0x1b0
+ [<ffffffff81075c0f>] kthread+0xef/0x110
+ [<ffffffff814db46c>] ret_from_fork+0x7c/0xb0
+
+Bart.
