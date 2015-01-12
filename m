@@ -1,22 +1,19 @@
-From: Jens Axboe <axboe@kernel.dk>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: blk-mq request allocation stalls
-Date: Mon, 12 Jan 2015 09:34:21 -0700
-Message-ID: <54B3F78D.2020704@kernel.dk>
-References: <alpine.LNX.2.00.1501071755110.4026@localhost.lm.intel.com>
-	<20150109194955.GA32641@redhat.com>
-	<54B042FE.2000205@kernel.dk> <54B043FC.8000902@kernel.dk>
-	<20150109214015.GA1032@redhat.com> <54B04E94.3010403@kernel.dk>
-	<20150109222543.GA1190@redhat.com> <54B071DC.9000307@kernel.dk>
-	<20150110014811.GA2384@redhat.com> <54B08779.2080705@kernel.dk>
-	<20150110031057.GA2823@redhat.com>
+Date: Mon, 12 Jan 2015 11:58:22 -0500
+Message-ID: <20150112165822.GA21120@redhat.com>
+References: <54B04E94.3010403@kernel.dk> <20150109222543.GA1190@redhat.com>
+	<54B071DC.9000307@kernel.dk> <20150110014811.GA2384@redhat.com>
+	<54B08779.2080705@kernel.dk> <20150110031057.GA2823@redhat.com>
 	<54B3DE54.7090909@sandisk.com> <54B3EB4A.9090404@kernel.dk>
-	<54B3F255.5080802@sandisk.com>
+	<54B3F255.5080802@sandisk.com> <54B3F78D.2020704@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <54B3F255.5080802@sandisk.com>
+Content-Disposition: inline
+In-Reply-To: <54B3F78D.2020704@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,37 +23,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Keith Busch <keith.busch@intel.com>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Keith Busch <keith.busch@intel.com>, Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-On 01/12/2015 09:12 AM, Bart Van Assche wrote:
-> On 01/12/15 16:42, Jens Axboe wrote:
->> On 01/12/2015 07:46 AM, Bart Van Assche wrote:
->>> bt_get: __bt_get() returned -1
->>> queue_num=2, nr_tags=62, reserved_tags=0, bits_per_word=3
->>> nr_free=62, nr_reserved=0, may_queue=0
->>> active_queues=8
->>
->> Can you add dumping of hctx->nr_active when this fails? You case is that
->> the may_queue logic says no-can-do, so it smells like the nr_active
->> accounting is wonky since you have supposedly no allocated tags, yet it
->> clearly thinks that you do.
->
-> Hello Jens,
->
-> The requested output is as follows:
->
-> bt_get: __bt_get() returned -1
-> queue_num=0, nr_tags=62, reserved_tags=0, bits_per_word=3
-> nr_free=62, nr_reserved=0, hctx->tags->active_queues=7,
-> hctx->nr_active=9, hctx_may_queue()=0
-> active_queues=7
+On Mon, Jan 12 2015 at 11:34am -0500,
+Jens Axboe <axboe@kernel.dk> wrote:
 
-So that does look a bit off, we have (supposedly) 9 active requests, but 
-nothing allocated. When the mkfs is done and things are idle, can you 
-try and cat the 'active' file in the mq directory? I want to see if it 
-drops to zero or stays elevated.
+> On 01/12/2015 09:12 AM, Bart Van Assche wrote:
+> >On 01/12/15 16:42, Jens Axboe wrote:
+> >>On 01/12/2015 07:46 AM, Bart Van Assche wrote:
+> >>>bt_get: __bt_get() returned -1
+> >>>queue_num=2, nr_tags=62, reserved_tags=0, bits_per_word=3
+> >>>nr_free=62, nr_reserved=0, may_queue=0
+> >>>active_queues=8
+> >>
+> >>Can you add dumping of hctx->nr_active when this fails? You case is that
+> >>the may_queue logic says no-can-do, so it smells like the nr_active
+> >>accounting is wonky since you have supposedly no allocated tags, yet it
+> >>clearly thinks that you do.
+> >
+> >Hello Jens,
+> >
+> >The requested output is as follows:
+> >
+> >bt_get: __bt_get() returned -1
+> >queue_num=0, nr_tags=62, reserved_tags=0, bits_per_word=3
+> >nr_free=62, nr_reserved=0, hctx->tags->active_queues=7,
+> >hctx->nr_active=9, hctx_may_queue()=0
+> >active_queues=7
+> 
+> So that does look a bit off, we have (supposedly) 9 active requests,
+> but nothing allocated. When the mkfs is done and things are idle,
+> can you try and cat the 'active' file in the mq directory? I want to
+> see if it drops to zero or stays elevated.
 
--- 
-Jens Axboe
+Could this be something flawed in the iSCSI blk-mq implementation?  I
+haven't ever been able to replicate this problem with virtio-blk.
