@@ -1,97 +1,85 @@
-From: Marian Csontos <mcsontos@redhat.com>
-Subject: Re: [PATCH 3/6] libmultipath: add overrides section to
- multipath.conf
-Date: Tue, 13 Jan 2015 16:56:06 +0100
-Message-ID: <54B54016.7080208@redhat.com>
-References: <1416377859-15073-1-git-send-email-bmarzins@redhat.com>	<1416377859-15073-4-git-send-email-bmarzins@redhat.com>	<CABr-GndVm5ct_E7UoF86no5b36k8MpLU4KD5pYtO=h1NiT4LGQ@mail.gmail.com>	<20150112001525.0000473f@localhost>	<CABr-Gnc_3KwO9THMcHW2Yam=QdzK=cJaFxrbevAS-ATOxuJoXw@mail.gmail.com>
-	<20150113010158.00006883@localhost>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm + blk-mq soft lockup complaint
+Date: Tue, 13 Jan 2015 11:20:52 -0500
+Message-ID: <20150113162052.GA30837@redhat.com>
+References: <54B3FFAE.4070609@kernel.dk>
+ <alpine.LNX.2.00.1501121738000.4026@localhost.lm.intel.com>
+ <54B40E8A.6010005@kernel.dk>
+ <alpine.LNX.2.00.1501121818510.4026@localhost.lm.intel.com>
+ <alpine.LNX.2.00.1501121830010.4026@localhost.lm.intel.com>
+ <20150112191138.GC21518@redhat.com>
+ <20150112202113.GA23234@redhat.com>
+ <54B50F9D.2040000@sandisk.com>
+ <20150113141746.GA30411@redhat.com>
+ <54B52B73.7040807@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150113010158.00006883@localhost>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Sebastian Herbszt <herbszt@gmx.de>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <54B52B73.7040807@sandisk.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: Keith Busch <keith.busch@intel.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 01/13/2015 01:01 AM, Sebastian Herbszt wrote:
-> Hello Christophe,
->
-> Christophe Varoqui wrote:
->> Hi,
->>
->> the precedence chain is :
->>
->> multipaths > user-specified per-device > default per-device > default
->>
->> The issue adressed by Ben's patch would not be solved by your suggestion,
->> as far as I can see. The proposed override section is just a way not repeat
->> a per-device in each multipath (insane) or device (tedious) section.
->
-> care to explain why setting the precedence to
->
-> multipaths > user-specified per-device > default > default per-device
->
-> would not fix the issue?
+On Tue, Jan 13 2015 at  9:28am -0500,
+Bart Van Assche <bart.vanassche@sandisk.com> wrote:
 
-It may very well "fix" the issue but having global default overriding 
-drive-specific default seems to me as wrong as breaking compatibility by 
-such change which would likely introduce more issues.
+> On 01/13/15 15:18, Mike Snitzer wrote:
+> > On Tue, Jan 13 2015 at  7:29am -0500,
+> > Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+> >> However, I hit another issue while running I/O on top of a multipath
+> >> device (on a kernel with lockdep and SLUB memory poisoning enabled):
+> >>
+> >> NMI watchdog: BUG: soft lockup - CPU#7 stuck for 23s! [kdmwork-253:0:3116]
+> >> CPU: 7 PID: 3116 Comm: kdmwork-253:0 Tainted: G        W      3.19.0-rc4-debug+ #1
+> >> Call Trace:
+> >>  [<ffffffff8118e4be>] kmem_cache_alloc+0x28e/0x2c0
+> >>  [<ffffffff81346aca>] alloc_iova_mem+0x1a/0x20
+> >>  [<ffffffff81342c8e>] alloc_iova+0x2e/0x250
+> >>  [<ffffffff81344b65>] intel_alloc_iova+0x95/0xd0
+> >>  [<ffffffff81348a15>] intel_map_sg+0xc5/0x260
+> >>  [<ffffffffa07e0661>] srp_queuecommand+0xa11/0xc30 [ib_srp]
+> >>  [<ffffffffa001698e>] scsi_dispatch_cmd+0xde/0x5a0 [scsi_mod]
+> >>  [<ffffffffa0017480>] scsi_queue_rq+0x630/0x700 [scsi_mod]
+> >>  [<ffffffff8125683d>] __blk_mq_run_hw_queue+0x1dd/0x370
+> >>  [<ffffffff81256aae>] blk_mq_alloc_request+0xde/0x150
+> >>  [<ffffffff8124bade>] blk_get_request+0x2e/0xe0
+> >>  [<ffffffffa07ebd0f>] __multipath_map.isra.15+0x1cf/0x210 [dm_multipath]
+> >>  [<ffffffffa07ebd6a>] multipath_clone_and_map+0x1a/0x20 [dm_multipath]
+> >>  [<ffffffffa044abb5>] map_tio_request+0x1d5/0x3a0 [dm_mod]
+> >>  [<ffffffff81075d16>] kthread_worker_fn+0x86/0x1b0
+> >>  [<ffffffff81075c0f>] kthread+0xef/0x110
+> >>  [<ffffffff814db42c>] ret_from_fork+0x7c/0xb0
+> > 
+> > Unfortunate.  Is this still with a 16MB backing device or is it real
+> > hardware?  Can you share the workload so that myself and/or Keith could
+> > try to reproduce?
+>  
+> Hello Mike,
+> 
+> This is still with a 16MB RAM disk as backing device. The fio job I
+> used to trigger this was as follows:
+> 
+> dev=/dev/sdc
+> fio --bs=4K --ioengine=libaio --rw=randread --buffered=0 --numjobs=12   \
+>     --iodepth=128 --iodepth_batch=64 --iodepth_batch_complete=64        \
+>     --thread --norandommap --loops=$((2**31)) --runtime=60              \
+>     --group_reporting --gtod_reduce=1 --name=$dev --filename=$dev       \
+>     --invalidate=1
 
--- Martian
+OK, I assume you specified the mpath device for the test that failed.
 
->
-> Lets assume the following default device and user configuration:
->
-> .vendor        = "COMPELNT",
-> .product       = "Compellent Vol",
-> .pgpolicy      = MULTIBUS,
-> .pgfailback    = -FAILBACK_IMMEDIATE
-> .no_path_retry = NO_PATH_RETRY_QUEUE,
-> .checker_name  = TUR
->
-> defaults {
-> 	no_path_retry fail
-> }
->
-> devices {
->          device {
->                  vendor "COMPELNT"
->                  product "Compellent Vol"
-> 		path_grouping_policy "group_by_prio"
-> 	}
-> }
->
-> multipaths {
-> 	multipath {
-> 		wwid 1234
-> 		failback 15
-> 	}
-> }
->
-> The default section should change no_path_retry from "queue" to "fail".
-> The device section should change path_grouping_policy from "multibus"
-> to "group_by_prio" for "COMPELNT/Compellent Vol".
-> The multipath section should change failback from "immediate" to 15
-> for wwid 1234.
-> The path_checker would still be "tur".
->
-> Is this not what the "overrides" patch intended?
->
-> Sebastian
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+This test works fine on my 100MB scsi_debug device with 4 paths exported
+over virtio-blk to a guest that assembles the mpath device.
+
+Could be a hang that is unique to scsi-mq.
+
+Any chance you'd be willing to provide a HOWTO for setting up your
+SRP/iscsi configuration?
+
+Are you carrying any related changes that are not upstream?  (I can hunt
+down the email in this thread where you describe your kernel tree...)
+
+I'll try to reproduce but this info could be useful to others that are
+more scsi-mq inclined who might need to chase this too.
