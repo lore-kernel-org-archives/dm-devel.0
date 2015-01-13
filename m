@@ -1,8 +1,9 @@
-From: Brian De Wolf <bldewolf@cpp.edu>
-Subject: multipath-tools-0.5.0 segfault with
-	blacklist/blacklist_exceptions
-Date: Mon, 12 Jan 2015 16:55:57 -0800
-Message-ID: <20150112165557.484d9e3e@cpp.edu>
+From: Nicholas Krause <xerofoify@gmail.com>
+Subject: [PATCH] md:Remove no longer needed fix me comment in
+	dm-region-hash.c for removing the structure pointer,
+	*rh from the definiton of dm_region
+Date: Mon, 12 Jan 2015 22:30:23 -0500
+Message-ID: <1421119823-5864-1-git-send-email-xerofoify@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,31 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: agk@redhat.com
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+Removes the no longer needed fix me comment questioning if we need to remove
+the structure pointer,rh as defined as a structure of type dsm_region_hash
+from the definition of the structure, dm_region. Furthermore this  pointer is
+needed in order for various functions to run and build successfully in the file,
+dm-region-hash.c.
 
-I was upgrading multipath-tools and noticed our old config causes the
-various programs to segfault in libmultipath.  The culprit appeared to
-be our blacklist entries with a vendor listed but no product (for
-filtering the local disk controllers), e.g:
+Signed-off-by: Nicholas Krause <xerofoify@gmail.com>
+---
+ drivers/md/dm-region-hash.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-	blacklist {
-		device {
-			vendor "LSILOGIC"
-		}
-	}
-
-Adding a product of .* makes things work as expected, but this
-shouldn't be necessary.  It looks like this is because compiling the
-product regex is optional:
-
-http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=libmultipath/blacklist.c;h=3f9e80b6bf92502ce01a4a287d17039a1ad9c2ce;hb=HEAD#l89
-
-But the regexec is not:
-
-http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=libmultipath/blacklist.c;h=3f9e80b6bf92502ce01a4a287d17039a1ad9c2ce;hb=HEAD#l151
-
-I couldn't find any posts about this and it didn't look fixed yet,
-so I figured I should report the issue.
+diff --git a/drivers/md/dm-region-hash.c b/drivers/md/dm-region-hash.c
+index b929fd5..823d56f 100644
+--- a/drivers/md/dm-region-hash.c
++++ b/drivers/md/dm-region-hash.c
+@@ -99,7 +99,7 @@ struct dm_region_hash {
+ };
+ 
+ struct dm_region {
+-	struct dm_region_hash *rh;	/* FIXME: can we get rid of this ? */
++	struct dm_region_hash *rh;
+ 	region_t key;
+ 	int state;
+ 
+-- 
+2.1.0
