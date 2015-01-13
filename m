@@ -1,22 +1,19 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: blk-mq request allocation stalls
-Date: Mon, 12 Jan 2015 15:21:14 -0500
-Message-ID: <20150112202113.GA23234@redhat.com>
-References: <54B3EB4A.9090404@kernel.dk> <54B3F255.5080802@sandisk.com>
-	<54B3F78D.2020704@kernel.dk> <54B3FE89.200@sandisk.com>
-	<54B3FFAE.4070609@kernel.dk>
-	<alpine.LNX.2.00.1501121738000.4026@localhost.lm.intel.com>
-	<54B40E8A.6010005@kernel.dk>
-	<alpine.LNX.2.00.1501121818510.4026@localhost.lm.intel.com>
-	<alpine.LNX.2.00.1501121830010.4026@localhost.lm.intel.com>
-	<20150112191138.GC21518@redhat.com>
+From: Sebastian Herbszt <herbszt@gmx.de>
+Subject: Re: [PATCH 3/6] libmultipath: add overrides section to
+ multipath.conf
+Date: Tue, 13 Jan 2015 01:01:58 +0100
+Message-ID: <20150113010158.00006883@localhost>
+References: <1416377859-15073-1-git-send-email-bmarzins@redhat.com>
+	<1416377859-15073-4-git-send-email-bmarzins@redhat.com>
+	<CABr-GndVm5ct_E7UoF86no5b36k8MpLU4KD5pYtO=h1NiT4LGQ@mail.gmail.com>
+	<20150112001525.0000473f@localhost>
+	<CABr-Gnc_3KwO9THMcHW2Yam=QdzK=cJaFxrbevAS-ATOxuJoXw@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20150112191138.GC21518@redhat.com>
+In-Reply-To: <CABr-Gnc_3KwO9THMcHW2Yam=QdzK=cJaFxrbevAS-ATOxuJoXw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,37 +23,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Keith Busch <keith.busch@intel.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Christoph Hellwig <hch@infradead.org>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>
 List-Id: dm-devel.ids
 
-On Mon, Jan 12 2015 at  2:11pm -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Hello Christophe,
 
-> On Mon, Jan 12 2015 at  1:35pm -0500,
-> Keith Busch <keith.busch@intel.com> wrote:
+Christophe Varoqui wrote:
+> Hi,
 > 
-> > On Mon, 12 Jan 2015, Keith Busch wrote:
-> > >Oh, let's look at "__blk_rq_prep_clone". dm calls that after
-> > >blk_get_request() for the blk-mq based multipath types and overrides the
-> > >destinations cmd_flags with the source's even though the source was not
-> > >allocated from a blk-mq based queue, much less a shared tag.
-> > 
-> > Untested patch. This will also preserve the failfast cmd_flag dm-mpath
-> > set after allocating.
+> the precedence chain is :
 > 
-> Ah, good point.  The failfast flag would get cleared with the patch I
-> just proposed (unless REQ_FAILFAST_TRANSPORT was added to
-> REQ_PRESERVE_CLONE_MASK).
+> multipaths > user-specified per-device > default per-device > default
 > 
-> Anyway, I'm happy to see this implemented however you guys think is
-> best.  I think I like Keith's patch better than mine.
+> The issue adressed by Ben's patch would not be solved by your suggestion,
+> as far as I can see. The proposed override section is just a way not repeat
+> a per-device in each multipath (insane) or device (tedious) section.
 
-FYI, I staged Keith's patch here:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-3.20-blk-mq&id=7004ddf2462df38c6e3232ac020ed6ff655cc07e
+care to explain why setting the precedence to
 
-Bart, this is the tip of the linux-dm.git "dm-for-3.20-blk-mq" branch.
-Please test, it should hopefully take care of the stall you've been
-seeing.
+multipaths > user-specified per-device > default > default per-device
 
-Mike
+would not fix the issue?
+
+Lets assume the following default device and user configuration:
+
+.vendor        = "COMPELNT",
+.product       = "Compellent Vol",
+.pgpolicy      = MULTIBUS,
+.pgfailback    = -FAILBACK_IMMEDIATE
+.no_path_retry = NO_PATH_RETRY_QUEUE,
+.checker_name  = TUR
+
+defaults {
+	no_path_retry fail
+}
+
+devices {
+        device {
+                vendor "COMPELNT"
+                product "Compellent Vol"
+		path_grouping_policy "group_by_prio"
+	}
+}
+
+multipaths {
+	multipath {
+		wwid 1234
+		failback 15
+	}
+}
+
+The default section should change no_path_retry from "queue" to "fail".
+The device section should change path_grouping_policy from "multibus"
+to "group_by_prio" for "COMPELNT/Compellent Vol".
+The multipath section should change failback from "immediate" to 15
+for wwid 1234.
+The path_checker would still be "tur".
+
+Is this not what the "overrides" patch intended?
+
+Sebastian
