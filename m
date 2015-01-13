@@ -1,19 +1,13 @@
-From: Sebastian Herbszt <herbszt@gmx.de>
-Subject: Re: [PATCH 3/6] libmultipath: add overrides section to
- multipath.conf
-Date: Tue, 13 Jan 2015 01:01:58 +0100
-Message-ID: <20150113010158.00006883@localhost>
-References: <1416377859-15073-1-git-send-email-bmarzins@redhat.com>
-	<1416377859-15073-4-git-send-email-bmarzins@redhat.com>
-	<CABr-GndVm5ct_E7UoF86no5b36k8MpLU4KD5pYtO=h1NiT4LGQ@mail.gmail.com>
-	<20150112001525.0000473f@localhost>
-	<CABr-Gnc_3KwO9THMcHW2Yam=QdzK=cJaFxrbevAS-ATOxuJoXw@mail.gmail.com>
+From: Brian De Wolf <bldewolf@cpp.edu>
+Subject: multipath-tools-0.5.0 segfault with
+	blacklist/blacklist_exceptions
+Date: Mon, 12 Jan 2015 16:55:57 -0800
+Message-ID: <20150112165557.484d9e3e@cpp.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-Gnc_3KwO9THMcHW2Yam=QdzK=cJaFxrbevAS-ATOxuJoXw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,64 +17,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello Christophe,
+Hello,
 
-Christophe Varoqui wrote:
-> Hi,
-> 
-> the precedence chain is :
-> 
-> multipaths > user-specified per-device > default per-device > default
-> 
-> The issue adressed by Ben's patch would not be solved by your suggestion,
-> as far as I can see. The proposed override section is just a way not repeat
-> a per-device in each multipath (insane) or device (tedious) section.
+I was upgrading multipath-tools and noticed our old config causes the
+various programs to segfault in libmultipath.  The culprit appeared to
+be our blacklist entries with a vendor listed but no product (for
+filtering the local disk controllers), e.g:
 
-care to explain why setting the precedence to
-
-multipaths > user-specified per-device > default > default per-device
-
-would not fix the issue?
-
-Lets assume the following default device and user configuration:
-
-.vendor        = "COMPELNT",
-.product       = "Compellent Vol",
-.pgpolicy      = MULTIBUS,
-.pgfailback    = -FAILBACK_IMMEDIATE
-.no_path_retry = NO_PATH_RETRY_QUEUE,
-.checker_name  = TUR
-
-defaults {
-	no_path_retry fail
-}
-
-devices {
-        device {
-                vendor "COMPELNT"
-                product "Compellent Vol"
-		path_grouping_policy "group_by_prio"
+	blacklist {
+		device {
+			vendor "LSILOGIC"
+		}
 	}
-}
 
-multipaths {
-	multipath {
-		wwid 1234
-		failback 15
-	}
-}
+Adding a product of .* makes things work as expected, but this
+shouldn't be necessary.  It looks like this is because compiling the
+product regex is optional:
 
-The default section should change no_path_retry from "queue" to "fail".
-The device section should change path_grouping_policy from "multibus"
-to "group_by_prio" for "COMPELNT/Compellent Vol".
-The multipath section should change failback from "immediate" to 15
-for wwid 1234.
-The path_checker would still be "tur".
+http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=libmultipath/blacklist.c;h=3f9e80b6bf92502ce01a4a287d17039a1ad9c2ce;hb=HEAD#l89
 
-Is this not what the "overrides" patch intended?
+But the regexec is not:
 
-Sebastian
+http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=libmultipath/blacklist.c;h=3f9e80b6bf92502ce01a4a287d17039a1ad9c2ce;hb=HEAD#l151
+
+I couldn't find any posts about this and it didn't look fixed yet,
+so I figured I should report the issue.
