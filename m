@@ -1,16 +1,12 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH RFCv2 00/10] dm-dedup: device-mapper
- deduplication target
-Date: Wed, 14 Jan 2015 14:43:15 -0500
-Message-ID: <20150114194315.GA9520@redhat.com>
-References: <53ffb64b.257e320a.6ec4.2b61@mx.google.com>
+From: Dan Ehrenberg <dehrenberg@chromium.org>
+Subject: [PATCH] dm: Get devices using name_to_dev_t
+Date: Wed, 14 Jan 2015 16:16:00 -0800
+Message-ID: <1421280960-23984-1-git-send-email-dehrenberg@chromium.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <53ffb64b.257e320a.6ec4.2b61@mx.google.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,95 +16,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vasily Tarasov <tarasov@vasily.name>
-Cc: Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
+To: dm-devel@redhat.com
+Cc: grundler@chromium.org, drewry@chromium.org, gwendal@chromium.org, Dan Ehrenberg <dehrenberg@chromium.org>
 List-Id: dm-devel.ids
 
-On Thu, Aug 28, 2014 at 06:48:28PM -0400, Vasily Tarasov wrote:
-> This is a second request for comments for dm-dedup.
-> 
-> Updates compared to the first submission:
-> 
-> - code is updated to kernel 3.16
-> - construction parameters are now positional (as in other targets)
-> - documentation is extended and brought to the same format as in other targets
-> 
-> Dm-dedup is a device-mapper deduplication target.  Every write coming to the
-> dm-dedup instance is deduplicated against previously written data.  For
-> datasets that contain many duplicates scattered across the disk (e.g.,
-> collections of virtual machine disk images and backups) deduplication provides
-> a significant amount of space savings.
-> 
-> To quickly identify duplicates, dm-dedup maintains an index of hashes for all
-> written blocks.  A block is a user-configurable unit of deduplication with a
-> recommended block size of 4KB.  dm-dedup's index, along with other
-> deduplication metadata, resides on a separate block device, which we refer to
-> as a metadata device.  Although the metadata device can be on any block
-> device, e.g., an HDD or its own partition, for higher performance we recommend
-> to use SSD devices to store metadata.
-> 
-> Dm-dedup is designed to support pluggable metadata backends.  A metadata
-> backend is responsible for storing metadata: LBN-to-PBN and HASH-to-PBN
-> mappings, allocation maps, and reference counters.  (LBN: Logical Block
-> Number, PBN: Physical Block Number).  Currently we implemented "cowbtree" and
-> "inram" backends.  The cowbtree uses device-mapper persistent API to store
-> metadata.  The inram backend stores all metadata in RAM as a hash table.
-> 
-> Detailed design is described here:
-> 
-> http://www.fsl.cs.sunysb.edu/docs/ols-dmdedup/dmdedup-ols14.pdf
-> 
-> Our preliminary experiments on real traces demonstrate that Dmdedup can even
-> exceed the performance of a disk drive running ext4.  The reasons are that (1)
-> deduplication reduces I/O traffic to the data device, and (2) Dmdedup
-> effectively sequentializes random writes to the data device.
-> 
-> Dmdedup is developed by a joint group of researchers from Stony Brook
-> University, Harvey Mudd College, and EMC.  See the documentation patch for
-> more details.
+If a device is used as the root filesystem, it can't be built
+off of devices which are within the root filesystem (just like
+command line arguments to root=). For this reason, Linux has a
+pseudo-filesystem for root= and md initialization based on the
+function name_to_dev_t, which handles different ways of specifying
+devices including PARTUUID and major:minor.
 
-Hi,
+This patch applies name_to_dev_t to dm initialization. Rather
+than assuming that all things which are not major:minor are paths
+in an already-mounted filesystem, this patch first attempts
+name_to_dev_t and tries the filesystem as a fallback.
 
-I have quickly browsed through the paper above and have some very
-basic questions.
+Signed-off-by: Dan Ehrenberg <dehrenberg@chromium.org>
+---
+ drivers/md/dm-table.c | 11 +++--------
+ include/linux/mount.h |  2 +-
+ init/do_mounts.c      |  2 +-
+ 3 files changed, 5 insertions(+), 10 deletions(-)
 
-- What real life workload is really going to benefit from this? Do you
-  have any numbers for that?
-  
-  I see one example of storing multiple linux trees in tar format and for
-  the sequential write case with CBT backend performance has almost halfed
-  with CBT backend. And we had a dedup ratio of 1.88 (for perfect case).
-
-  INRAM numbers I think really don't count because it is not practical to
-  keep all metadata in RAM. And the case of keeping all data in NVRAM is
-  still little futuristic.
-
-  So this sounds like a too huge a performance penalty to me to be really
-  useful on real life workloads?
-
-- Why did you implement an inline deduplication as opposed to out-of-line
-  deduplication? Section 2 (Timeliness) in paper just mentioned
-  out-of-line dedup but does not go into more details that why did you
-  choose an in-line one.
-
-  I am wondering that will it not make sense to first implement an
-  out-of-line dedup and punt lot of cost to worker thread (which kick
-  in only when storage is idle). That way even if don't get a high dedup
-  ratio for a workload, inserting a dedup target in the stack will be less
-  painful from performance point of view.
-
-- You mentioned that random workload will become sequetion with dedup.
-  That will be true only if there is a single writer, isn't it? Have
-  you run your tests with multiple writers doing random writes and did
-  you get same kind of imrovements?
-
-  Also on the flip side a seqeuntial file will become random if multiple
-  writers are overwriting their sequential file (as you always allocate
-  a new block upon overwrite) and that will hit performance.
-
-- What is 4KB chunking? Is it same as saying that block size will be
-  4KB? If yes, I am concerned that this might turn out to be a performance
-  bottleneck.
-
-Thanks
-Vivek
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 3afae9e..03f65ed 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -18,6 +18,7 @@
+ #include <linux/mutex.h>
+ #include <linux/delay.h>
+ #include <linux/atomic.h>
++#include <linux/mount.h>
+ 
+ #define DM_MSG_PREFIX "table"
+ 
+@@ -372,18 +373,12 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 	int r;
+ 	dev_t uninitialized_var(dev);
+ 	struct dm_dev_internal *dd;
+-	unsigned int major, minor;
+ 	struct dm_table *t = ti->table;
+-	char dummy;
+ 
+ 	BUG_ON(!t);
+ 
+-	if (sscanf(path, "%u:%u%c", &major, &minor, &dummy) == 2) {
+-		/* Extract the major/minor numbers */
+-		dev = MKDEV(major, minor);
+-		if (MAJOR(dev) != major || MINOR(dev) != minor)
+-			return -EOVERFLOW;
+-	} else {
++	dev = name_to_dev_t(path);
++	if (!dev) {
+ 		/* convert the path to a device */
+ 		struct block_device *bdev = lookup_bdev(path);
+ 
+diff --git a/include/linux/mount.h b/include/linux/mount.h
+index c2c561d..bca086d 100644
+--- a/include/linux/mount.h
++++ b/include/linux/mount.h
+@@ -92,6 +92,6 @@ extern struct vfsmount *vfs_kern_mount(struct file_system_type *type,
+ extern void mnt_set_expiry(struct vfsmount *mnt, struct list_head *expiry_list);
+ extern void mark_mounts_for_expiry(struct list_head *mounts);
+ 
+-extern dev_t name_to_dev_t(char *name);
++extern dev_t name_to_dev_t(const char *name);
+ 
+ #endif /* _LINUX_MOUNT_H */
+diff --git a/init/do_mounts.c b/init/do_mounts.c
+index eb41008..0584e37 100644
+--- a/init/do_mounts.c
++++ b/init/do_mounts.c
+@@ -207,7 +207,7 @@ done:
+  *	bangs.
+  */
+ 
+-dev_t name_to_dev_t(char *name)
++dev_t name_to_dev_t(const char *name)
+ {
+ 	char s[32];
+ 	char *p;
+-- 
+2.2.0.rc0.207.ga3a616c
