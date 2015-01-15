@@ -1,152 +1,47 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: Re: [PATCH RFCv2 00/10] dm-dedup: device-mapper
- deduplication target
-Date: Thu, 15 Jan 2015 18:08:47 +0900
-Message-ID: <20150115180847.53853d3477b3f668f0db6f46@gmail.com>
-References: <53ffb64b.257e320a.6ec4.2b61@mx.google.com>
-	<20150114194315.GA9520@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm + blk-mq soft lockup complaint
+Date: Thu, 15 Jan 2015 10:43:43 -0500
+Message-ID: <20150115154343.GA11859@redhat.com>
+References: <alpine.LNX.2.00.1501121830010.4026@localhost.lm.intel.com>
+ <20150112191138.GC21518@redhat.com>
+ <20150112202113.GA23234@redhat.com>
+ <54B50F9D.2040000@sandisk.com>
+ <20150113141746.GA30411@redhat.com>
+ <54B52B73.7040807@sandisk.com>
+ <20150113162052.GA30837@redhat.com>
+ <54B633DC.4090806@sandisk.com>
+ <20150114185926.GB6012@redhat.com>
+ <54B7764C.9000402@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150114194315.GA9520@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Vasily Tarasov <tarasov@vasily.name>, Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>, Vivek Goyal <vgoyal@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <54B7764C.9000402@sandisk.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: Keith Busch <keith.busch@intel.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi,
+On Thu, Jan 15 2015 at  3:11am -0500,
+Bart Van Assche <bart.vanassche@sandisk.com> wrote:
 
-Just a comment.
+> On 01/14/15 20:00, Mike Snitzer wrote:
+> > IB aside, I haven't been following along close enough on scsi-mq
+> > developments, but does a regular iscsi initiator have support for
+> > scsi-mq?  I'd like to validate scsi-mq devices with the dm-mpath
+> > changes.
+> 
+> Hello Mike,
+> 
+> scsi-mq support for the iSCSI initiator is being considered but has not
+> yet been implemented. For more information, see also Sagi Grimberg,
+> [LSF/MM TOPIC] iSCSI MQ adoption via MCS discussion, linux-scsi mailing
+> list, January 7, 2015 (http://thread.gmane.org/gmane.linux.scsi/98199).
 
-If I understand correctly, dm-dedup is a block-level fix-sized chunking
-online deduplication.
-That first splits the incoming request into fixed-sized chunk (the smaller
-the chunk is the more efficient the deduplication is) that's typically 4KB.
+OK, thanks.
 
-My caching driver dm-writeboost also splits requests into 4KB chunks but
-the situations aren't the same.
-I think if the backend (not metadata) storage is HDD, the splitting won't be
-a bottleneck but if it's more fast storage like SSD, it probably will. In my case
-on the other hand, the backend storage is always HDD. That's the difference.
+FYI, I just used your fio test against an mpath device that is using 4
+virtio-scsi devices with blk-mq enabled and all worked fine.
 
-In your paper, you mention that the typical combination of backend/metadata storage
-is HDD/SSD but I think the backend storage nowadays can be SSD. Do you think SSD
-deduplicates the data internally and so dm-dedup will not be used in that case?
-
-As you mention in the future work, variable-length chunking can save metadata but
-more complex data management is needed. However, I think avoiding splitting will
-make sense with SSD backend. And because you compute hashing for each chunk, CPU
-usage is relatively high, so you don't need to worry about the another CPU usage.
-
-- Akira
-
-On Wed, 14 Jan 2015 14:43:15 -0500
-Vivek Goyal <vgoyal@redhat.com> wrote:
-
-> On Thu, Aug 28, 2014 at 06:48:28PM -0400, Vasily Tarasov wrote:
-> > This is a second request for comments for dm-dedup.
-> > 
-> > Updates compared to the first submission:
-> > 
-> > - code is updated to kernel 3.16
-> > - construction parameters are now positional (as in other targets)
-> > - documentation is extended and brought to the same format as in other targets
-> > 
-> > Dm-dedup is a device-mapper deduplication target.  Every write coming to the
-> > dm-dedup instance is deduplicated against previously written data.  For
-> > datasets that contain many duplicates scattered across the disk (e.g.,
-> > collections of virtual machine disk images and backups) deduplication provides
-> > a significant amount of space savings.
-> > 
-> > To quickly identify duplicates, dm-dedup maintains an index of hashes for all
-> > written blocks.  A block is a user-configurable unit of deduplication with a
-> > recommended block size of 4KB.  dm-dedup's index, along with other
-> > deduplication metadata, resides on a separate block device, which we refer to
-> > as a metadata device.  Although the metadata device can be on any block
-> > device, e.g., an HDD or its own partition, for higher performance we recommend
-> > to use SSD devices to store metadata.
-> > 
-> > Dm-dedup is designed to support pluggable metadata backends.  A metadata
-> > backend is responsible for storing metadata: LBN-to-PBN and HASH-to-PBN
-> > mappings, allocation maps, and reference counters.  (LBN: Logical Block
-> > Number, PBN: Physical Block Number).  Currently we implemented "cowbtree" and
-> > "inram" backends.  The cowbtree uses device-mapper persistent API to store
-> > metadata.  The inram backend stores all metadata in RAM as a hash table.
-> > 
-> > Detailed design is described here:
-> > 
-> > http://www.fsl.cs.sunysb.edu/docs/ols-dmdedup/dmdedup-ols14.pdf
-> > 
-> > Our preliminary experiments on real traces demonstrate that Dmdedup can even
-> > exceed the performance of a disk drive running ext4.  The reasons are that (1)
-> > deduplication reduces I/O traffic to the data device, and (2) Dmdedup
-> > effectively sequentializes random writes to the data device.
-> > 
-> > Dmdedup is developed by a joint group of researchers from Stony Brook
-> > University, Harvey Mudd College, and EMC.  See the documentation patch for
-> > more details.
-> 
-> Hi,
-> 
-> I have quickly browsed through the paper above and have some very
-> basic questions.
-> 
-> - What real life workload is really going to benefit from this? Do you
->   have any numbers for that?
->   
->   I see one example of storing multiple linux trees in tar format and for
->   the sequential write case with CBT backend performance has almost halfed
->   with CBT backend. And we had a dedup ratio of 1.88 (for perfect case).
-> 
->   INRAM numbers I think really don't count because it is not practical to
->   keep all metadata in RAM. And the case of keeping all data in NVRAM is
->   still little futuristic.
-> 
->   So this sounds like a too huge a performance penalty to me to be really
->   useful on real life workloads?
-> 
-> - Why did you implement an inline deduplication as opposed to out-of-line
->   deduplication? Section 2 (Timeliness) in paper just mentioned
->   out-of-line dedup but does not go into more details that why did you
->   choose an in-line one.
-> 
->   I am wondering that will it not make sense to first implement an
->   out-of-line dedup and punt lot of cost to worker thread (which kick
->   in only when storage is idle). That way even if don't get a high dedup
->   ratio for a workload, inserting a dedup target in the stack will be less
->   painful from performance point of view.
-> 
-> - You mentioned that random workload will become sequetion with dedup.
->   That will be true only if there is a single writer, isn't it? Have
->   you run your tests with multiple writers doing random writes and did
->   you get same kind of imrovements?
-> 
->   Also on the flip side a seqeuntial file will become random if multiple
->   writers are overwriting their sequential file (as you always allocate
->   a new block upon overwrite) and that will hit performance.
-> 
-> - What is 4KB chunking? Is it same as saying that block size will be
->   4KB? If yes, I am concerned that this might turn out to be a performance
->   bottleneck.
-> 
-> Thanks
-> Vivek
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
-
--- 
-Akira Hayakawa <ruby.wktk@gmail.com>
+How easily could you reproduce your SRP hang?  Did it happen every run
+or did it take multiple runs to see it?
