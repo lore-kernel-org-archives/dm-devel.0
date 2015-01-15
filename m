@@ -1,115 +1,36 @@
-From: Daniel Ehrenberg <dehrenberg@google.com>
-Subject: Re: dm: Get devices using name_to_dev_t
-Date: Wed, 14 Jan 2015 20:15:25 -0800
-Message-ID: <CAAK6Zt0yzdyd3zK8zLJh_+Lym_6KujiwVxd6xs3145ghao_-vg@mail.gmail.com>
-References: <1421280960-23984-1-git-send-email-dehrenberg@chromium.org>
-	<20150115022636.GA7967@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: dm + blk-mq soft lockup complaint
+Date: Thu, 15 Jan 2015 09:11:56 +0100
+Message-ID: <54B7764C.9000402@sandisk.com>
+References: <54B40E8A.6010005@kernel.dk>
+ <alpine.LNX.2.00.1501121818510.4026@localhost.lm.intel.com>
+ <alpine.LNX.2.00.1501121830010.4026@localhost.lm.intel.com>
+ <20150112191138.GC21518@redhat.com> <20150112202113.GA23234@redhat.com>
+ <54B50F9D.2040000@sandisk.com> <20150113141746.GA30411@redhat.com>
+ <54B52B73.7040807@sandisk.com> <20150113162052.GA30837@redhat.com>
+ <54B633DC.4090806@sandisk.com> <20150114185926.GB6012@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6764413107540070057=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150115022636.GA7967@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20150114185926.GB6012@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Grant Grundler <grundler@chromium.org>, drewry@chromium.org, Gwendal Grignou <gwendal@chromium.org>, dm-devel@redhat.com
+Cc: Keith Busch <keith.busch@intel.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
---===============6764413107540070057==
-Content-Type: multipart/alternative; boundary=089e01175f2b086886050ca91bef
+On 01/14/15 20:00, Mike Snitzer wrote:
+> IB aside, I haven't been following along close enough on scsi-mq
+> developments, but does a regular iscsi initiator have support for
+> scsi-mq?  I'd like to validate scsi-mq devices with the dm-mpath
+> changes.
 
---089e01175f2b086886050ca91bef
-Content-Type: text/plain; charset=UTF-8
+Hello Mike,
 
-On Jan 14, 2015 6:26 PM, "Mike Snitzer" <snitzer@redhat.com> wrote:
->
-> On Wed, Jan 14 2015 at  7:16pm -0500,
-> Dan Ehrenberg <dehrenberg@chromium.org> wrote:
->
-> > If a device is used as the root filesystem, it can't be built
-> > off of devices which are within the root filesystem (just like
-> > command line arguments to root=). For this reason, Linux has a
-> > pseudo-filesystem for root= and md initialization based on the
-> > function name_to_dev_t, which handles different ways of specifying
-> > devices including PARTUUID and major:minor.
-> >
-> > This patch applies name_to_dev_t to dm initialization. Rather
-> > than assuming that all things which are not major:minor are paths
-> > in an already-mounted filesystem, this patch first attempts
-> > name_to_dev_t and tries the filesystem as a fallback.
->
-> What is all this talk of an already-mounted filesystem?
->
-> dm_get_device() currently assumes either a major:minor or path to the
-> block device is provided.  Please be specific about what functionality
-> this change enables that you cannot do without.
+scsi-mq support for the iSCSI initiator is being considered but has not
+yet been implemented. For more information, see also Sagi Grimberg,
+[LSF/MM TOPIC] iSCSI MQ adoption via MCS discussion, linux-scsi mailing
+list, January 7, 2015 (http://thread.gmane.org/gmane.linux.scsi/98199).
 
-I want to run dm-verity on top of an ubiblock device. Ubiblock uses a
-dynamic major number so I can't just refer to it as a major:minor. Because
-it is the root filesystem I can't refer to it through the lookup_bdev path.
+Bart.
 
-Thanks,
-Dan
-
---089e01175f2b086886050ca91bef
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<p dir=3D"ltr"><br>
-On Jan 14, 2015 6:26 PM, &quot;Mike Snitzer&quot; &lt;<a href=3D"mailto:sni=
-tzer@redhat.com">snitzer@redhat.com</a>&gt; wrote:<br>
-&gt;<br>
-&gt; On Wed, Jan 14 2015 at=C2=A0 7:16pm -0500,<br>
-&gt; Dan Ehrenberg &lt;<a href=3D"mailto:dehrenberg@chromium.org">dehrenber=
-g@chromium.org</a>&gt; wrote:<br>
-&gt;<br>
-&gt; &gt; If a device is used as the root filesystem, it can&#39;t be built=
-<br>
-&gt; &gt; off of devices which are within the root filesystem (just like<br=
->
-&gt; &gt; command line arguments to root=3D). For this reason, Linux has a<=
-br>
-&gt; &gt; pseudo-filesystem for root=3D and md initialization based on the<=
-br>
-&gt; &gt; function name_to_dev_t, which handles different ways of specifyin=
-g<br>
-&gt; &gt; devices including PARTUUID and major:minor.<br>
-&gt; &gt;<br>
-&gt; &gt; This patch applies name_to_dev_t to dm initialization. Rather<br>
-&gt; &gt; than assuming that all things which are not major:minor are paths=
-<br>
-&gt; &gt; in an already-mounted filesystem, this patch first attempts<br>
-&gt; &gt; name_to_dev_t and tries the filesystem as a fallback.<br>
-&gt;<br>
-&gt; What is all this talk of an already-mounted filesystem?<br>
-&gt;<br>
-&gt; dm_get_device() currently assumes either a major:minor or path to the<=
-br>
-&gt; block device is provided.=C2=A0 Please be specific about what function=
-ality<br>
-&gt; this change enables that you cannot do without.</p>
-<p dir=3D"ltr">I want to run dm-verity on top of an ubiblock device. Ubiblo=
-ck uses a dynamic major number so I can&#39;t just refer to it as a major:m=
-inor. Because it is the root filesystem I can&#39;t refer to it through the=
- lookup_bdev path.</p>
-<p dir=3D"ltr">Thanks,<br>
-Dan</p>
-
---089e01175f2b086886050ca91bef--
-
-
---===============6764413107540070057==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============6764413107540070057==--
