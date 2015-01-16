@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 5/8] multipathd: fix memory corruption issue
-Date: Fri, 16 Jan 2015 14:23:29 -0600
-Message-ID: <1421439812-11826-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 8/8] libmutipath: allow blanks in device blacklist
+Date: Fri, 16 Jan 2015 14:23:32 -0600
+Message-ID: <1421439812-11826-9-git-send-email-bmarzins@redhat.com>
 References: <1421439812-11826-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -19,31 +19,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Brian De Wolf <bldewolf@cpp.edu>
 List-Id: dm-devel.ids
 
-setup_multipath already removes the mpp if it fails, so we shouldn't be
-accessing the mpp at all if it fails, and especially not freeing it.
+As Brian De Wolf noticed, multipath crashes if you don't have both
+vendor and product specified in a device blacklist entry. This patch
+makes device blacklists work when either the vendor or the product is
+blank. If both are missing, the entry is ignored.
 
+Cc: Brian De Wolf <bldewolf@cpp.edu>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ libmultipath/blacklist.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 3afed62..a194c80 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -657,9 +657,8 @@ ev_remove_path (struct path *pp, struct vectors * vecs)
- 			/*
- 			 * update our state from kernel
- 			 */
--			if (setup_multipath(vecs, mpp)) {
--				goto fail;
--			}
-+			if (setup_multipath(vecs, mpp))
-+				return 1;
- 			sync_map_state(mpp);
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+index 3f9e80b..05f1697 100644
+--- a/libmultipath/blacklist.c
++++ b/libmultipath/blacklist.c
+@@ -135,8 +135,12 @@ _blacklist_exceptions_device(vector elist, char * vendor, char * product)
+ 	struct blentry_device * ble;
  
- 			condlog(2, "%s [%s]: path removed from map %s",
+ 	vector_foreach_slot (elist, ble, i) {
+-		if (!regexec(&ble->vendor_reg, vendor, 0, NULL, 0) &&
+-		    !regexec(&ble->product_reg, product, 0, NULL, 0))
++		if (!ble->vendor && !ble->product)
++			continue;
++		if ((!ble->vendor ||
++		     !regexec(&ble->vendor_reg, vendor, 0, NULL, 0)) &&
++		    (!ble->product ||
++		     !regexec(&ble->product_reg, product, 0, NULL, 0)))
+ 			return 1;
+ 	}
+ 	return 0;
+@@ -149,8 +153,12 @@ _blacklist_device (vector blist, char * vendor, char * product)
+ 	struct blentry_device * ble;
+ 
+ 	vector_foreach_slot (blist, ble, i) {
+-		if (!regexec(&ble->vendor_reg, vendor, 0, NULL, 0) &&
+-		    !regexec(&ble->product_reg, product, 0, NULL, 0))
++		if (!ble->vendor && !ble->product)
++			continue;
++		if ((!ble->vendor ||
++		     !regexec(&ble->vendor_reg, vendor, 0, NULL, 0)) &&
++		    (!ble->product ||
++		     !regexec(&ble->product_reg, product, 0, NULL, 0)))
+ 			return 1;
+ 	}
+ 	return 0;
 -- 
 1.8.3.1
