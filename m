@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 2/8] libmultipath: fix sysfs_get_size bug
-Date: Fri, 16 Jan 2015 14:23:26 -0600
-Message-ID: <1421439812-11826-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 5/8] multipathd: fix memory corruption issue
+Date: Fri, 16 Jan 2015 14:23:29 -0600
+Message-ID: <1421439812-11826-6-git-send-email-bmarzins@redhat.com>
 References: <1421439812-11826-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,26 +21,29 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-sysfs_get_size wasn't checking for a negative return value from
-sysfs_attr_get_value.
+setup_multipath already removes the mpp if it fails, so we shouldn't be
+accessing the mpp at all if it fails, and especially not freeing it.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/sysfs.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/main.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index f42cda8..0e05316 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -158,7 +158,7 @@ sysfs_get_size (struct path *pp, unsigned long long * size)
- 		return 1;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 3afed62..a194c80 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -657,9 +657,8 @@ ev_remove_path (struct path *pp, struct vectors * vecs)
+ 			/*
+ 			 * update our state from kernel
+ 			 */
+-			if (setup_multipath(vecs, mpp)) {
+-				goto fail;
+-			}
++			if (setup_multipath(vecs, mpp))
++				return 1;
+ 			sync_map_state(mpp);
  
- 	attr[0] = '\0';
--	if (sysfs_attr_get_value(pp->udev, "size", attr, 255) == 0) {
-+	if (sysfs_attr_get_value(pp->udev, "size", attr, 255) <= 0) {
- 		condlog(3, "%s: No size attribute in sysfs", pp->dev);
- 		return 1;
- 	}
+ 			condlog(2, "%s [%s]: path removed from map %s",
 -- 
 1.8.3.1
