@@ -1,32 +1,61 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: dm + blk-mq soft lockup complaint
-Date: Thu, 15 Jan 2015 16:55:11 +0100
-Message-ID: <54B7E2DF.5060409@sandisk.com>
-References: <alpine.LNX.2.00.1501121830010.4026@localhost.lm.intel.com>
- <20150112191138.GC21518@redhat.com> <20150112202113.GA23234@redhat.com>
- <54B50F9D.2040000@sandisk.com> <20150113141746.GA30411@redhat.com>
- <54B52B73.7040807@sandisk.com> <20150113162052.GA30837@redhat.com>
- <54B633DC.4090806@sandisk.com> <20150114185926.GB6012@redhat.com>
- <54B7764C.9000402@sandisk.com> <20150115154343.GA11859@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 0/8] Misc multipath patches.
+Date: Fri, 16 Jan 2015 14:23:24 -0600
+Message-ID: <1421439812-11826-1-git-send-email-bmarzins@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20150115154343.GA11859@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Keith Busch <keith.busch@intel.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, linux-scsi@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 01/15/15 16:44, Mike Snitzer wrote:
-> How easily could you reproduce your SRP hang?  Did it happen every run
-> or did it take multiple runs to see it?
+The first three of these patches are resends of earlier patches, just
+rebased.  The next three are all related to adding support for deferred
+removes to multipath.  With the deferred_remove option set to "yes"
+mutipathed will now use the new device-mapper deferred remove funationality
+to do deferred removes on multipath devices that are sill open when the
+last of their paths has been removed.  This will cause the devices to get
+removed when the last user closes them, unless a path has not reappeared,
+and cancelled the deferred remove.  The last two are new bugfixes.
 
-Hello Mike,
+Benjamin Marzinski (8):
+  correctly set partition delimiter on rename
+  libmultipath: fix sysfs_get_size bug
+  Revert "libmultipath: fixup strlcpy"
+  libmultipath: refactor partmaps code
+  multipathd: fix memory corruption issue
+  multipathd: add deferred_remove support
+  multipathd: don't buffer output with systemd
+  libmutipath: allow blanks in device blacklist
 
-This complaint was easy to trigger. It took less than one minute before
-the soft lockup complaint appeared. The system did not hang after that
-complaint appeared. Maybe this complaint means that a cond_resched()
-call was missing from a loop ?
+ libmultipath/Makefile      |   6 +
+ libmultipath/blacklist.c   |  16 ++-
+ libmultipath/config.c      |   5 +
+ libmultipath/config.h      |   4 +
+ libmultipath/configure.c   |   1 +
+ libmultipath/defaults.h    |   1 +
+ libmultipath/devmapper.c   | 284 +++++++++++++++++++++++++++++----------------
+ libmultipath/devmapper.h   |  11 +-
+ libmultipath/dict.c        |  17 +++
+ libmultipath/propsel.c     |  26 +++++
+ libmultipath/propsel.h     |   1 +
+ libmultipath/structs.h     |   8 ++
+ libmultipath/structs_vec.c |   3 +-
+ libmultipath/sysfs.c       |   2 +-
+ libmultipath/util.c        |   3 +-
+ multipath/multipath.conf.5 |  14 +++
+ multipathd/main.c          |  34 ++++--
+ 17 files changed, 317 insertions(+), 119 deletions(-)
 
-Bart.
+-- 
+1.8.3.1
