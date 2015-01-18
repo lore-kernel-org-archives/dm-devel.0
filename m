@@ -1,66 +1,57 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 7/8] multipathd: don't buffer output with systemd
-Date: Fri, 16 Jan 2015 14:23:31 -0600
-Message-ID: <1421439812-11826-8-git-send-email-bmarzins@redhat.com>
-References: <1421439812-11826-1-git-send-email-bmarzins@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH v3] staging: writeboost: Add dm-writeboost
+Date: Sat, 17 Jan 2015 16:09:52 -0800
+Message-ID: <20150118000952.GB26160@kroah.com>
+References: <54A508F7.1020207@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1421439812-11826-1-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+Content-Disposition: inline
+In-Reply-To: <54A508F7.1020207@gmail.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: Akira Hayakawa <ruby.wktk@gmail.com>
+Cc: ejt@redhat.com, driverdev-devel@linuxdriverproject.org, dm-devel@redhat.com, snitzer@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-When stdout isn't hooked up to a tty (like it isn't when you start
-multipathd through systemd) the stream is buffered, so messages only
-come out in big chunks, or when the program quits. Instead, we should
-send the messages out to systemd as we generate them, so that users
-know what's happening, and in the event of a crash, they get the most
-recent messages.
+On Thu, Jan 01, 2015 at 05:44:39PM +0900, Akira Hayakawa wrote:
+> This patch adds dm-writeboost to staging tree.
+> 
+> dm-writeboost is a log-structured SSD-caching driver.
+> It caches data in log-structured way on the cache device
+> so that the performance is maximized.
+> 
+> The merit of putting this driver in staging tree is
+> to make it possible to get more feedback from users
+> and polish the codes.
+> 
+> v2->v3
+> - rebased onto 3.19-rc2
+> - Add read-caching support (disabled by default)
+>   Several tests are pushed to dmts.
+> - An critical bug fix
+>   flush_proc shouldn't free the work_struct it's running on.
+>   I found this bug while I am testing read-caching.
+>   I am not sure why i didn't exhibit before but it's truly a bug.
+> - Fully revised the README.
+>   Now that we have read-caching support, the old README was completely obsolete.
+> - Update TODO
+>   Implementing read-caching is done.
+> - bump up the copyright year to 2015
+> - fix up comments
+> 
+> 
+> Signed-off-by: Akira Hayakawa <ruby.wktk@gmail.com>
 
-I realize that there is a performance impact to this.  If people are
-against this approach, we could change condlog to print messages above a
-certain priority to stderr and messages below that priority to stdout.
-If we included a configuration option to change the priority level, then
-we could always change it up if we needed to do debugging. However, the
-standard level messages are very helpful in quickly diagnosing a number
-of problems, so you could make a good argument that we always want
-priority 2 messages printed immediately.  And if we intentionally bumped
-up the debugging level, we would usually want those messages printed
-immediately.  This is exactly what we get with just unbuffering stdout.
+I need an ack from a dm developer before I can take this.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/main.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index f9e3f33..bc21d04 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2011,9 +2011,11 @@ main (int argc, char *argv[])
- 		exit(0);
- 	}
- 
--	if (logsink < 1)
-+	if (logsink < 1) {
-+		if (!isatty(fileno(stdout)))
-+			setbuf(stdout, NULL);
- 		err = 0;
--	else
-+	} else
- 		err = daemonize();
- 
- 	if (err < 0)
--- 
-1.8.3.1
+thanks,
+greg k-h
