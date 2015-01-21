@@ -1,40 +1,63 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] livelock on MD RAID5
-Date: Thu, 22 Jan 2015 00:00:15 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1501212355480.30616@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1501192207260.20870@file01.intranet.prod.int.rdu2.redhat.com>
+From: Sourav Basu <sourav.juit@gmail.com>
+Subject: DM-Delay
+Date: Wed, 21 Jan 2015 22:45:53 +0530
+Message-ID: <CAE6Xt1tC7ifisESxLiQaRnJtY9puB8TwJaNv_05=EyVLnx1idQ@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1501192207260.20870@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: NeilBrown <neilb@suse.de>, linux-raid@vger.kernel.org
+Content-Type: multipart/mixed; boundary="===============3251757249204674022=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+--===============3251757249204674022==
+Content-Type: multipart/alternative; boundary=f46d0438948f38af38050d2cb52f
+
+--f46d0438948f38af38050d2cb52f
+Content-Type: text/plain; charset=UTF-8
+
+Hello,
+   I have few questions regarding dm-delay component.
+1. Why type of emulations is targeted while implementation of dm-delay?
+ 2. Is the delay uniform across different i/o going to the device?
+ 3. Can the granularity of be reduced from mili-sec to tens of micro-sec?
+If so how?
+
+My aim is to emulate ssd devices latency varying from 10us to 100ms on
+ramdisk using dm-delay.
+
+Regards,
+Sourav
+
+--f46d0438948f38af38050d2cb52f
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello,<div>=C2=A0 =C2=A0I have few questions regarding dm-=
+delay component.</div><div>1. Why type of emulations is targeted while impl=
+ementation of dm-delay?</div><div>=C2=A02. Is the delay uniform across diff=
+erent i/o going to the device?</div><div>=C2=A03. Can the granularity of be=
+ reduced from mili-sec to tens of micro-sec? If so how?</div><div><br></div=
+><div>My aim is to emulate ssd devices latency varying from 10us to 100ms o=
+n ramdisk using dm-delay.</div><div><br></div><div>Regards,</div><div>Soura=
+v</div></div>
+
+--f46d0438948f38af38050d2cb52f--
 
 
-On Mon, 19 Jan 2015, Mikulas Patocka wrote:
+--===============3251757249204674022==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> Hi Neil
-> 
-> I saw your patch "md/raid5: avoid livelock caused by non-aligned writes". 
-> That patch is only for RAID 6, but we are seeing similar livelock on RAID5 
-> (mdX_raid5 is constantly looping in 
-> raid5d/handle_active_stripes/handle_stripe/ops_run_io and some submitted 
-> bios get stuck). The livelock happens when we issue I/O and simulate disk 
-> failure.
-> 
-> Do you think that the same issue could happen on RAID5 too?
-> 
-> Do you think that the patch "md/raid5: fetch_block must fetch all the 
-> blocks handle_stripe_dirtying wants." could fix it?
-> 
-> Mikulas
 
-So, we verified that this RAID5 livelock was introduced in patch 
-67f455486d2ea20b2d94d6adf5b9b783d079e321. A patch 
-a40687ff73a5b14909d6aa522f7d778b158911c5 fixes a livelock in RAID6, but a 
-similar livelock was introduced in RAID5, that is still unfixed upstream.
-
-Mikulas
+--===============3251757249204674022==--
