@@ -1,100 +1,96 @@
-From: Vasily Tarasov <tarasov@vasily.name>
-Subject: Re: [dm-devel] Some thoughts about providing data block checksumming
- for ext4
-Date: Fri, 23 Jan 2015 11:46:42 -0500
-Message-ID: <CAFTzLMM3CeK=NPcUtCpQyq=m+vT2153XkS95zZuMubnuFZJbiw@mail.gmail.com>
-References: <20141103233308.GA27842@thunk.org>
-	<20141126234706.GN10043@birch.djwong.org>
-	<20141127000722.GA310@redhat.com>
-	<20141127003923.GQ10043@birch.djwong.org>
+From: Keith Busch <keith.busch@intel.com>
+Subject: [PATCH] dm: Respect request queue page gaps flag
+Date: Sat, 24 Jan 2015 15:10:48 -0700
+Message-ID: <1422137448-14747-1-git-send-email-keith.busch@intel.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <20141127003923.GQ10043@birch.djwong.org>
-Sender: linux-ext4-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-ext4@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@fb.com>
+Cc: Keith Busch <keith.busch@intel.com>
 List-Id: dm-devel.ids
 
-Hi Darrick,
+This has request based dm inherit the QUEUE_FLAG_SG_GAPS flags from its
+underlying block devices' request queues, and does not merge two requests
+with sg gaps when required. This fixes problems when submitting cloned
+requests to multipathed devices requiring virtually contiguous buffers.
 
-Somehow I missed your posts in November.
+Signed-off-by: Keith Busch <keith.busch@intel.com>
+---
+ block/blk-merge.c     |   12 ++++++++++++
+ drivers/md/dm-table.c |   13 +++++++++++++
+ 2 files changed, 25 insertions(+)
 
-You're right,  the smaller is the chunk size the larger is the
-metadata - standard dedup problem. The hope is that one recuperates
-the loss of metadata space on better data deduplication ratio, which
-grows as the chunk size decreases.
-
-I find having an "external" B-Tree somewhat more reasonable than
-in-line metadata in dm-dedup (situation is different for dm-checksum,
-though). In dm-dedup we have to allocate blocks on-demand, keep
-reference counters, and garbage collect unused blocks, etc. DM's
-persistent-data library on which we rely helps with this enormously.
-
-Vasily
-
-
-On Wed, Nov 26, 2014 at 7:39 PM, Darrick J. Wong
-<darrick.wong@oracle.com> wrote:
-> On Wed, Nov 26, 2014 at 07:07:22PM -0500, Mike Snitzer wrote:
->> On Wed, Nov 26 2014 at  6:47pm -0500,
->> Darrick J. Wong <darrick.wong@oracle.com> wrote:
->>
->> > Sigh...
->> >
->> > Well, I wrote up a preliminary version of dm-checksum and then
->> > realized that I've pretty much just built a crappier version of
->> > dm-dedupe, but without the dedupe part.  Given that it stores
->> > checksums in a btree which claims to be robust through failures and
->> > gives us automatic deduplication, I wonder if it we could achieve our
->> > aims by modifying dm-dedupe to verify the checksums on the read path?
->> >
->> > I guess it would be interesting to see how bad the performance hit is
->> > with the online dedupe part enabled or disabled.  dm-dedupe v2 went
->> > out on the mailing list last August, which I missed. :(
->> >
->> > Unless... there's a specific reason nobody mentioned dm-dedupe here?
->>
->> As you may have seen in the dm-dedup thread, we need to actively
->> review/test that target
->
-> It was in fact today's exchange on that thread that made me slap myself on
-> the forehead and utter "D'oh!".
->
->> (if your initial review focus is on extending it
->> to _optionally_ verify the checksums on the read path then so be it).
->
-> Yes, sorry, I meant to say "optionally to verify" in there.  Adding a minor
-> feature like that might be a good check to make sure I actually understand
-> what's going on. :)
->
->> See: https://www.redhat.com/archives/dm-devel/2014-November/msg00114.html
->> Specifically, the git branch that builds on v2 based on my initial
->> review of v2:
->>
->> git://git.fsl.cs.stonybrook.edu/scm/git/linux-dmdedup
->> branch: dm-dedup-devel
->>
->> Your help on getting dm-dedup upstream would be very much appreciated.
->
-> <-- reading the OLS paper, as a start.  What happens to the metadata btree if
-> someone sets the chunk size to 4KB?  Will it become ungainly huge?  The thing
-> that I wrote simply wrote a block's worth of checksums inline with the data,
-> which required a certain amount of slicing and dicing of bios but wasn't too
-> horrible with performance.
->
-> --D
->
->>
->> Thanks,
->> Mike
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-ext4" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+diff --git a/block/blk-merge.c b/block/blk-merge.c
+index 89b97b5..f021a11 100644
+--- a/block/blk-merge.c
++++ b/block/blk-merge.c
+@@ -385,6 +385,14 @@ static bool req_no_special_merge(struct request *req)
+ 	return !q->mq_ops && req->special;
+ }
+ 
++static int req_gap_to_prev(struct request *req, struct request *next)
++{
++	struct bio *prev = req->biotail;
++
++	return bvec_gap_to_prev(&prev->bi_io_vec[prev->bi_vcnt - 1],
++					next->bio->bi_io_vec[0].bv_offset);
++}
++
+ static int ll_merge_requests_fn(struct request_queue *q, struct request *req,
+ 				struct request *next)
+ {
+@@ -399,6 +407,10 @@ static int ll_merge_requests_fn(struct request_queue *q, struct request *req,
+ 	if (req_no_special_merge(req) || req_no_special_merge(next))
+ 		return 0;
+ 
++	if ((q->queue_flags & (1 << QUEUE_FLAG_SG_GAPS)) &&
++					req_gap_to_prev(req, next))
++		return 0;
++
+ 	/*
+ 	 * Will it become too large?
+ 	 */
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 14954d8..d7eee6d 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1389,6 +1389,14 @@ static int queue_supports_sg_merge(struct dm_target *ti, struct dm_dev *dev,
+ 	return q && !test_bit(QUEUE_FLAG_NO_SG_MERGE, &q->queue_flags);
+ }
+ 
++static int queue_contiguous_sg(struct dm_target *ti, struct dm_dev *dev,
++				   sector_t start, sector_t len, void *data)
++{
++	struct request_queue *q = bdev_get_queue(dev->bdev);
++
++	return q && !test_bit(QUEUE_FLAG_SG_GAPS, &q->queue_flags);
++}
++
+ static bool dm_table_all_devices_attribute(struct dm_table *t,
+ 					   iterate_devices_callout_fn func)
+ {
+@@ -1509,6 +1517,11 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	else
+ 		queue_flag_set_unlocked(QUEUE_FLAG_NO_SG_MERGE, q);
+ 
++	if (dm_table_all_devices_attribute(t, queue_contiguous_sg))
++		queue_flag_clear_unlocked(QUEUE_FLAG_SG_GAPS, q);
++	else
++		queue_flag_set_unlocked(QUEUE_FLAG_SG_GAPS, q);
++
+ 	dm_table_set_integrity(t);
+ 
+ 	/*
+-- 
+1.7.10.4
