@@ -1,12 +1,14 @@
-From: Keith Busch <keith.busch@intel.com>
-Subject: [PATCH] dm: Respect request queue page gaps flag
-Date: Sat, 24 Jan 2015 15:10:48 -0700
-Message-ID: <1422137448-14747-1-git-send-email-keith.busch@intel.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] a few additional device mapper fixes for 3.19
+	final
+Date: Sat, 24 Jan 2015 21:35:45 -0500
+Message-ID: <20150125023545.GA12497@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,81 +18,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@fb.com>
-Cc: Keith Busch <keith.busch@intel.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Joe Thornber <ejt@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This has request based dm inherit the QUEUE_FLAG_SG_GAPS flags from its
-underlying block devices' request queues, and does not merge two requests
-with sg gaps when required. This fixes problems when submitting cloned
-requests to multipathed devices requiring virtually contiguous buffers.
+Hi Linus,
 
-Signed-off-by: Keith Busch <keith.busch@intel.com>
----
- block/blk-merge.c     |   12 ++++++++++++
- drivers/md/dm-table.c |   13 +++++++++++++
- 2 files changed, 25 insertions(+)
+The following changes since commit 5164bece1673cdf04782f8ed3fba70743700f5da:
 
-diff --git a/block/blk-merge.c b/block/blk-merge.c
-index 89b97b5..f021a11 100644
---- a/block/blk-merge.c
-+++ b/block/blk-merge.c
-@@ -385,6 +385,14 @@ static bool req_no_special_merge(struct request *req)
- 	return !q->mq_ops && req->special;
- }
- 
-+static int req_gap_to_prev(struct request *req, struct request *next)
-+{
-+	struct bio *prev = req->biotail;
-+
-+	return bvec_gap_to_prev(&prev->bi_io_vec[prev->bi_vcnt - 1],
-+					next->bio->bi_io_vec[0].bv_offset);
-+}
-+
- static int ll_merge_requests_fn(struct request_queue *q, struct request *req,
- 				struct request *next)
- {
-@@ -399,6 +407,10 @@ static int ll_merge_requests_fn(struct request_queue *q, struct request *req,
- 	if (req_no_special_merge(req) || req_no_special_merge(next))
- 		return 0;
- 
-+	if ((q->queue_flags & (1 << QUEUE_FLAG_SG_GAPS)) &&
-+					req_gap_to_prev(req, next))
-+		return 0;
-+
- 	/*
- 	 * Will it become too large?
- 	 */
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 14954d8..d7eee6d 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1389,6 +1389,14 @@ static int queue_supports_sg_merge(struct dm_target *ti, struct dm_dev *dev,
- 	return q && !test_bit(QUEUE_FLAG_NO_SG_MERGE, &q->queue_flags);
- }
- 
-+static int queue_contiguous_sg(struct dm_target *ti, struct dm_dev *dev,
-+				   sector_t start, sector_t len, void *data)
-+{
-+	struct request_queue *q = bdev_get_queue(dev->bdev);
-+
-+	return q && !test_bit(QUEUE_FLAG_SG_GAPS, &q->queue_flags);
-+}
-+
- static bool dm_table_all_devices_attribute(struct dm_table *t,
- 					   iterate_devices_callout_fn func)
- {
-@@ -1509,6 +1517,11 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	else
- 		queue_flag_set_unlocked(QUEUE_FLAG_NO_SG_MERGE, q);
- 
-+	if (dm_table_all_devices_attribute(t, queue_contiguous_sg))
-+		queue_flag_clear_unlocked(QUEUE_FLAG_SG_GAPS, q);
-+	else
-+		queue_flag_set_unlocked(QUEUE_FLAG_SG_GAPS, q);
-+
- 	dm_table_set_integrity(t);
- 
- 	/*
--- 
-1.7.10.4
+  dm: fix missed error code if .end_io isn't implemented by target_type (2014-12-17 12:31:13 -0500)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.19-fixes-2
+
+for you to fetch changes up to 96b26c8c64c7a30488b8b404f7a63346df4c3bff:
+
+  dm: fix handling of multiple internal suspends (2015-01-24 14:50:08 -0500)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+2 stable fixes for dm-cache and 1 3.19 DM core fix:
+
+- Fix potential for dm-cache metadata corruption via stale metadata
+  buffers being used when switching an inactive cache table to active;
+  this could occur due to each table having it's own bufio client rather
+  than sharing the client between tables.
+
+- Fix dm-cache target to properly account for discard IO while
+  suspending otherwise IO quiescing could complete prematurely.
+
+- Fix DM core's handling of multiple internal suspends by maintaining an
+  'internal_suspend_count' and only resuming the device when this count
+  drops to zero.
+
+----------------------------------------------------------------
+Joe Thornber (2):
+      dm cache: share cache-metadata object across inactive and active DM tables
+      dm cache: fix problematic dual use of a single migration count variable
+
+Mikulas Patocka (1):
+      dm: fix handling of multiple internal suspends
+
+ drivers/md/dm-cache-metadata.c | 101 ++++++++++++++++++++++++++++++++++++++---
+ drivers/md/dm-cache-target.c   |  89 ++++++++++++++++++++----------------
+ drivers/md/dm.c                |   9 +++-
+ 3 files changed, 152 insertions(+), 47 deletions(-)
