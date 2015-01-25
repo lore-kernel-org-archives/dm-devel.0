@@ -1,68 +1,65 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] a few additional device mapper fixes for 3.19
-	final
-Date: Sat, 24 Jan 2015 21:35:45 -0500
-Message-ID: <20150125023545.GA12497@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH] md: fix raid5 livelock
+Date: Sun, 25 Jan 2015 21:06:20 +0100
+Message-ID: <54C54CBC.50101@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Joe Thornber <ejt@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: "neilb@suse.de >> NeilBrown" <neilb@suse.de>
+Cc: "dm-devel >> device-mapper development" <dm-devel@redhat.com>, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Linus,
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-The following changes since commit 5164bece1673cdf04782f8ed3fba70743700f5da:
+Hi Neil,
 
-  dm: fix missed error code if .end_io isn't implemented by target_type (2014-12-17 12:31:13 -0500)
+the reconstruct write optimization in raid5, function fetch_block causes
+livelocks in LVM raid4/5 tests.
 
-are available in the git repository at:
+Test scenarios:
+the tests wait for full initial array resynchronization before making a 
+filesystem
+on the raid4/5 logical volume, mounting it, writing to the filesystem 
+and failing
+one physical volume holding a raiddev.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.19-fixes-2
+In short, we're seeing livelocks on fully synchronized raid4/5 arrays 
+with a failed device.
 
-for you to fetch changes up to 96b26c8c64c7a30488b8b404f7a63346df4c3bff:
+This patch fixes the issue but likely in a suboptimnal way.
 
-  dm: fix handling of multiple internal suspends (2015-01-24 14:50:08 -0500)
+Do you think there is a better solution to avoid livelocks on 
+reconstruct writes?
 
-Please pull, thanks.
-Mike
+Regards,
+Heinz
 
-----------------------------------------------------------------
-2 stable fixes for dm-cache and 1 3.19 DM core fix:
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+Tested-by: Jon Brassow <jbrassow@redhat.com>
+Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
 
-- Fix potential for dm-cache metadata corruption via stale metadata
-  buffers being used when switching an inactive cache table to active;
-  this could occur due to each table having it's own bufio client rather
-  than sharing the client between tables.
+---
+  drivers/md/raid5.c | 2 +-
+  1 file changed, 1 insertion(+), 1 deletion(-)
 
-- Fix dm-cache target to properly account for discard IO while
-  suspending otherwise IO quiescing could complete prematurely.
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index c1b0d52..0fc8737 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -2915,7 +2915,7 @@ static int fetch_block(struct stripe_head *sh, 
+struct stripe_head_state *s,
+              (s->failed >= 1 && fdev[0]->toread) ||
+              (s->failed >= 2 && fdev[1]->toread) ||
+              (sh->raid_conf->level <= 5 && s->failed && fdev[0]->towrite &&
+-             (!test_bit(R5_Insync, &dev->flags) || 
+test_bit(STRIPE_PREREAD_ACTIVE, &sh->state)) &&
++             (!test_bit(R5_Insync, &dev->flags) || 
+test_bit(STRIPE_PREREAD_ACTIVE, &sh->state) || s->non_overwrite) &&
+               !test_bit(R5_OVERWRITE, &fdev[0]->flags)) ||
+              ((sh->raid_conf->level == 6 ||
+                sh->sector >= sh->raid_conf->mddev->recovery_cp)
+-- 
+2.1.0
 
-- Fix DM core's handling of multiple internal suspends by maintaining an
-  'internal_suspend_count' and only resuming the device when this count
-  drops to zero.
-
-----------------------------------------------------------------
-Joe Thornber (2):
-      dm cache: share cache-metadata object across inactive and active DM tables
-      dm cache: fix problematic dual use of a single migration count variable
-
-Mikulas Patocka (1):
-      dm: fix handling of multiple internal suspends
-
- drivers/md/dm-cache-metadata.c | 101 ++++++++++++++++++++++++++++++++++++++---
- drivers/md/dm-cache-target.c   |  89 ++++++++++++++++++++----------------
- drivers/md/dm.c                |   9 +++-
- 3 files changed, 152 insertions(+), 47 deletions(-)
