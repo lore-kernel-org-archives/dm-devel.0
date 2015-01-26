@@ -1,15 +1,20 @@
-From: Marian Csontos <mcsontos@redhat.com>
-Subject: Re: dm_mirror/dm_raid1 limitations ?.
-Date: Mon, 26 Jan 2015 20:01:54 +0100
-Message-ID: <54C68F22.5080004@redhat.com>
-References: <4d982ea8-3769-46d2-ba73-2d1525faa63b@default>	<54C64C4F.6090601@redhat.com>
-	<E0704006-CC32-460A-AC22-149FD2B76583@oracle.com>
+From: Nick Krause <xerofoify@gmail.com>
+Subject: Re: [PATCH RESEND] md:Remove no longer needed fix me
+ comment in dm-region-hash.c for removing the structure pointer,
+ *rh from the definiton of dm_region
+Date: Mon, 26 Jan 2015 15:09:34 -0500
+Message-ID: <CAPDOMVhR3aaBM=kEVW5mTPrPtMYSkAN8wyykJJWg5DJVVvMd_Q@mail.gmail.com>
+References: <1421723781-21984-1-git-send-email-xerofoify@gmail.com>
+	<20150120111951.GB17599@agk-dp.fab.redhat.com>
+	<54BE3DAA.5080900@gmail.com>
+	<20150120114032.GC17599@agk-dp.fab.redhat.com>
+	<CAPDOMVi8LE6qHQb4iEU1ZNcBz4dbi0OZvMYDqarpU=btc0NnkQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <E0704006-CC32-460A-AC22-149FD2B76583@oracle.com>
+In-Reply-To: <CAPDOMVi8LE6qHQb4iEU1ZNcBz4dbi0OZvMYDqarpU=btc0NnkQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,62 +24,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: nick <xerofoify@gmail.com>, agk@redhat.com, linux-raid@vger.kernel.org, dm-devel@redhat.com, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On 01/26/2015 04:34 PM, suresh.babu.kandukuru@oracle.com wrote:
-> Heinzm,thanks for the quick reply.. We are using dmestup create
-> mirror ..as we want to do that on physical San lun (block devices)
-> ... Not the one ( lv create ) you mentioned below.. Is there any
-> advantage going with logical volume approach lvcreate -type
-
-One of LVM features is monitoring of mirror/raid LVs and 
-removing/replacing any missing legs.
-
-Using dmsetup directly, you have to do this manually.
-
->
-> /Suresh
->
-> Sent from my iPhone
->
->> On Jan 26, 2015, at 7:46 PM, Heinz Mauelshagen <heinzm@redhat.com>
->> wrote:
+On Tue, Jan 20, 2015 at 8:17 AM, Nick Krause <xerofoify@gmail.com> wrote:
+> On Tue, Jan 20, 2015 at 6:40 AM, Alasdair G Kergon <agk@redhat.com> wrote:
+>> On Tue, Jan 20, 2015 at 06:36:10AM -0500, nick wrote:
+>>> Unless we use a union or something similar there seems to be no easy
+>>> way without rewriting a lot of an already function driver file.
+>>
+>> The comment does not restrict itself to 'easy ways'.
+>>
+>> Alasdair
 >>
 >>
->>> On 01/26/2015 02:51 PM, Suresh Babu Kandukuru wrote: Use case is
->>> : Two luns are mapped from storage array to linux host which are
->>> in same SAN fabric . we want to create a mirror on the linux host
->>> with these two luns and let  host use that mirror lun .  basic
->>> tests suggest that dm_mirror working fine . when we have any
->>> intermittent path issues with between host and san array , host
->>> i/o just freeze , never returns back even after the path is
->>> online.
->>
->> Hard to tell what's happening without any kernel log.
->>
->>>
->>> Is dm_mirror viable solution here  ?. Can you point me any link
->>> which gives the limitations of dm_mirror ? . another alternate
->>> solutions you propose here ?. Thanks in advance .
->>
->> We've switched the default away from "mirror" to "raid1" in order
->> to take advantage of th MD runtime. Have you tested  "lvcreate
->> --type raid1 ..." yet? Please do.
->>
->> Regards, Heinz
->>
->>>
->>> Thanks /Suresh
->>>
->>>
->>> -- dm-devel mailing list dm-devel@redhat.com
->>> https://www.redhat.com/mailman/listinfo/dm-devel
->>
->> <Untitled.txt>
->
->
->
-> -- dm-devel mailing list dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+> Then I suggest that I look into this form. Sorry about wasting your time.
+> Nick
+Alasdir,
+After thinking about this for a while, there seems to no way unless we
+rewrite this driver and most of the functions. This is due to lots of
+callers on this pointer.
+Further more due to this I assume either removing the FIXME or
+investigating how much memory these pointers use under various
+workloads.
+Nick
