@@ -1,20 +1,16 @@
-From: Nick Krause <xerofoify@gmail.com>
-Subject: Re: [PATCH RESEND] md:Remove no longer needed fix me
- comment in dm-region-hash.c for removing the structure pointer,
- *rh from the definiton of dm_region
-Date: Mon, 26 Jan 2015 15:09:34 -0500
-Message-ID: <CAPDOMVhR3aaBM=kEVW5mTPrPtMYSkAN8wyykJJWg5DJVVvMd_Q@mail.gmail.com>
-References: <1421723781-21984-1-git-send-email-xerofoify@gmail.com>
-	<20150120111951.GB17599@agk-dp.fab.redhat.com>
-	<54BE3DAA.5080900@gmail.com>
-	<20150120114032.GC17599@agk-dp.fab.redhat.com>
-	<CAPDOMVi8LE6qHQb4iEU1ZNcBz4dbi0OZvMYDqarpU=btc0NnkQ@mail.gmail.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [Lsf-pc] [LSF/MM ATTEND]: Hot spare module ? And
+ Btrfs volume management without mount
+Date: Tue, 27 Jan 2015 11:18:45 +0100
+Message-ID: <20150127101845.GB13522@quack.suse.cz>
+References: <54B8C174.4020802@oracle.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAPDOMVi8LE6qHQb4iEU1ZNcBz4dbi0OZvMYDqarpU=btc0NnkQ@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <54B8C174.4020802@oracle.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,27 +20,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: nick <xerofoify@gmail.com>, agk@redhat.com, linux-raid@vger.kernel.org, dm-devel@redhat.com, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, snitzer@redhat.com
+To: Anand Jain <Anand.Jain@oracle.com>
+Cc: Chris Mason <clm@fb.com>, dm-devel@redhat.com, lsf-pc@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-On Tue, Jan 20, 2015 at 8:17 AM, Nick Krause <xerofoify@gmail.com> wrote:
-> On Tue, Jan 20, 2015 at 6:40 AM, Alasdair G Kergon <agk@redhat.com> wrote:
->> On Tue, Jan 20, 2015 at 06:36:10AM -0500, nick wrote:
->>> Unless we use a union or something similar there seems to be no easy
->>> way without rewriting a lot of an already function driver file.
->>
->> The comment does not restrict itself to 'easy ways'.
->>
->> Alasdair
->>
->>
-> Then I suggest that I look into this form. Sorry about wasting your time.
-> Nick
-Alasdir,
-After thinking about this for a while, there seems to no way unless we
-rewrite this driver and most of the functions. This is due to lots of
-callers on this pointer.
-Further more due to this I assume either removing the FIXME or
-investigating how much memory these pointers use under various
-workloads.
-Nick
+  Hi,
+
+  I'm replying somewhat late but when going through attend requests I was
+wondering:
+
+On Fri 16-01-15 15:44:52, Anand Jain wrote:
+> 1.
+>  Hot spare: is an important feature for the data centers. Hot spare
+>  feature is common to MD, LVM and btrfs. And each of it locks in
+>  resource to be used only at the event of failure. A system running more
+>  than one type of VM like LVM and btrfs would end up having hot spares
+>  assigned to each of the different VMs which looks system under
+>  utilized.
+> 
+>  So to increase the utilization of disk hot spares with in the system,
+>  a common kernel module with API could do a job better, with some
+>  additional features.
+> 
+>  If needed I can provide a shot talk (just talk no slides) so to obtain
+>  feedback and comments from the experts and have discussions.
+  Do you have a concrete proposal or even patches for the module? Because I
+guess the general idea is fine but the issue may be in how should we
+exactly tie into LVM and btrfs. So without the details there won't be
+much to discuss...
+
+									Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
