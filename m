@@ -1,16 +1,18 @@
-From: Anand Jain <anand.jain@oracle.com>
-Subject: Re: [Lsf-pc] [LSF/MM ATTEND]: Hot spare module ? And
- Btrfs volume management without mount
-Date: Wed, 28 Jan 2015 17:45:06 +0700
-Message-ID: <54C8BDB2.1020700@oracle.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [LSF/MM ATTEND]: Hot spare module ? And Btrfs volume
+ management without mount
+Date: Wed, 28 Jan 2015 11:33:24 -0500
+Message-ID: <20150128163324.GA11823@redhat.com>
 References: <54B8C174.4020802@oracle.com>
 	<20150127101845.GB13522@quack.suse.cz>
+	<54C8BDB2.1020700@oracle.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150127101845.GB13522@quack.suse.cz>
+Content-Disposition: inline
+In-Reply-To: <54C8BDB2.1020700@oracle.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,46 +22,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jan Kara <jack@suse.cz>
-Cc: Chris Mason <clm@fb.com>, dm-devel@redhat.com, lsf-pc@lists.linux-foundation.org
+To: Anand Jain <anand.jain@oracle.com>
+Cc: Chris Mason <clm@fb.com>, dm-devel@redhat.com, lsf-pc@lists.linux-foundation.org, Jan Kara <jack@suse.cz>
 List-Id: dm-devel.ids
 
+On Wed, Jan 28 2015 at  5:45am -0500,
+Anand Jain <anand.jain@oracle.com> wrote:
 
+> 
+> 
+> Thanks for the reply.
+> 
+>  now based on your advise, if my participation is confirmed, by march,
+>  I would come up with a concrete proposal or an experimental code
+>  to share results at the conference if needed.
 
-Thanks for the reply.
+Maybe I'm misunderstanding the proposal but..
 
-  now based on your advise, if my participation is confirmed, by march,
-  I would come up with a concrete proposal or an experimental code
-  to share results at the conference if needed.
-
-Thanks, Anand
-
-
-On 01/27/2015 06:18 PM, Jan Kara wrote:
->    Hi,
->
->    I'm replying somewhat late but when going through attend requests I was
-> wondering:
->
-> On Fri 16-01-15 15:44:52, Anand Jain wrote:
->> 1.
->>   Hot spare: is an important feature for the data centers. Hot spare
->>   feature is common to MD, LVM and btrfs. And each of it locks in
->>   resource to be used only at the event of failure. A system running more
->>   than one type of VM like LVM and btrfs would end up having hot spares
->>   assigned to each of the different VMs which looks system under
->>   utilized.
->>
->>   So to increase the utilization of disk hot spares with in the system,
->>   a common kernel module with API could do a job better, with some
->>   additional features.
->>
->>   If needed I can provide a shot talk (just talk no slides) so to obtain
->>   feedback and comments from the experts and have discussions.
->    Do you have a concrete proposal or even patches for the module? Because I
-> guess the general idea is fine but the issue may be in how should we
-> exactly tie into LVM and btrfs. So without the details there won't be
-> much to discuss...
->
-> 									Honza
->
+This seems like such a niche issue I think it isn't ever going to get
+traction.  Having a common pool of hot spares doesn't buy you much if
+all the different volume managers were to experience a failure -- in
+that case the sharing actively works against you (if you've only
+accomodated for say 1 of the 3 different volume managers failing at any
+one time; but if you have provisioned for worst case of all solutions
+failing then what was the point of the exercise?).
