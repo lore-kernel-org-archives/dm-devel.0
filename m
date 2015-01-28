@@ -1,16 +1,16 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [patch] dm cache: fix up IS_ERR vs NULL confusion
-Date: Wed, 28 Jan 2015 12:11:28 +0000
-Message-ID: <20150128121127.GB21433@debian>
-References: <20150128064609.GD30893@mwanda>
- <20150128105311.GA21433@debian>
+From: Anand Jain <anand.jain@oracle.com>
+Subject: Re: [Lsf-pc] [LSF/MM ATTEND]: Hot spare module ? And
+ Btrfs volume management without mount
+Date: Wed, 28 Jan 2015 17:45:06 +0700
+Message-ID: <54C8BDB2.1020700@oracle.com>
+References: <54B8C174.4020802@oracle.com>
+	<20150127101845.GB13522@quack.suse.cz>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20150128105311.GA21433@debian>
+In-Reply-To: <20150127101845.GB13522@quack.suse.cz>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,49 +20,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Jan Kara <jack@suse.cz>
+Cc: Chris Mason <clm@fb.com>, dm-devel@redhat.com, lsf-pc@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-Here's my take.  You were destroying the metadata object with the
-mutex still held, which I'd been trying to avoid.
 
-commit ea87d6105c1b13c13ece0fc8d9add09c78b1aa4c
-Author: Joe Thornber <ejt@redhat.com>
-Date:   Wed Jan 28 12:07:46 2015 +0000
 
-    dm-cache: fixup evil err ptrs that were ommitted from earlier patch.
+Thanks for the reply.
 
-diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
-index 8876250..b6dc968 100644
---- a/drivers/md/dm-cache-metadata.c
-+++ b/drivers/md/dm-cache-metadata.c
-@@ -683,7 +683,7 @@ static struct dm_cache_metadata *metadata_open(struct block_device *bdev,
-        cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
-        if (!cmd) {
-                DMERR("could not allocate metadata struct");
--               return NULL;
-+               return ERR_PTR(-ENOMEM);
-        }
- 
-        atomic_set(&cmd->ref_count, 1);
-@@ -745,7 +745,7 @@ static struct dm_cache_metadata *lookup_or_open(struct block_device *bdev,
-                return cmd;
- 
-        cmd = metadata_open(bdev, data_block_size, may_format_device, policy_hint_size);
--       if (cmd) {
-+       if (!IS_ERR(cmd)) {
-                mutex_lock(&table_lock);
-                cmd2 = lookup(bdev);
-                if (cmd2) {
-@@ -779,9 +779,9 @@ struct dm_cache_metadata *dm_cache_metadata_open(struct block_device *bdev,
-                                                 size_t policy_hint_size)
- {
-        struct dm_cache_metadata *cmd = lookup_or_open(bdev, data_block_size, may_format_device, policy_hint_size);
--       if (cmd && !same_params(cmd, data_block_size)) {
-+       if (!IS_ERR(cmd) && !same_params(cmd, data_block_size)) {
-                dm_cache_metadata_close(cmd);
--               return NULL;
-+               return ERR_PTR(-EINVAL);
-        }
- 
-        return cmd;
+  now based on your advise, if my participation is confirmed, by march,
+  I would come up with a concrete proposal or an experimental code
+  to share results at the conference if needed.
+
+Thanks, Anand
+
+
+On 01/27/2015 06:18 PM, Jan Kara wrote:
+>    Hi,
+>
+>    I'm replying somewhat late but when going through attend requests I was
+> wondering:
+>
+> On Fri 16-01-15 15:44:52, Anand Jain wrote:
+>> 1.
+>>   Hot spare: is an important feature for the data centers. Hot spare
+>>   feature is common to MD, LVM and btrfs. And each of it locks in
+>>   resource to be used only at the event of failure. A system running more
+>>   than one type of VM like LVM and btrfs would end up having hot spares
+>>   assigned to each of the different VMs which looks system under
+>>   utilized.
+>>
+>>   So to increase the utilization of disk hot spares with in the system,
+>>   a common kernel module with API could do a job better, with some
+>>   additional features.
+>>
+>>   If needed I can provide a shot talk (just talk no slides) so to obtain
+>>   feedback and comments from the experts and have discussions.
+>    Do you have a concrete proposal or even patches for the module? Because I
+> guess the general idea is fine but the issue may be in how should we
+> exactly tie into LVM and btrfs. So without the details there won't be
+> much to discuss...
+>
+> 									Honza
+>
