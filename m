@@ -1,15 +1,15 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [patch] dm cache: fix up IS_ERR vs NULL confusion
-Date: Wed, 28 Jan 2015 10:53:12 +0000
-Message-ID: <20150128105311.GA21433@debian>
-References: <20150128064609.GD30893@mwanda>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: [PATCH] md: fix raid5 livelock
+Date: Wed, 28 Jan 2015 13:03:04 +0100
+Message-ID: <54C8CFF8.6000807@redhat.com>
+References: <54C54CBC.50101@redhat.com>
+	<20150128133754.25835582@notabene.brown>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20150128064609.GD30893@mwanda>
+In-Reply-To: <20150128133754.25835582@notabene.brown>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,110 +19,111 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: linux-raid@vger.kernel.org, Joe Thornber <ejt@redhat.com>, kernel-janitors@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: neilBrown <neilb@suse.de>
+Cc: marian Csontos <mcsontos@redhat.com>, "dm-devel >> device-mapper development" <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Dan,
 
-Thanks.  I hate errptrs so my natural inclination is just return NULLs.  I'll fix up and retest.
+Neil,
 
-- Joe
+thanks for providing the patch.
 
-On Wed, Jan 28, 2015 at 09:46:09AM +0300, Dan Carpenter wrote:
-> It used to be that this code used ERR_PTRs consistently, but a recent
-> change mixed it up.  The code sometimes returns NULL, sometimes an
-> ERR_PTR, some code assumes everything is an ERR_PTR and some assumes it
-> returns NULL on error.  I've changed it back so that now everything is
-> an ERR_PTR again.
-> 
-> These new bugs were caught by static checking:
-> 
-> drivers/md/dm-cache-target.c:2409 cache_create() warn: 'cmd' isn't an ERR_PTR
-> drivers/md/dm-cache-metadata.c:754 lookup_or_open() error: 'cmd' dereferencing possible ERR_PTR()
-> drivers/md/dm-cache-metadata.c:757 lookup_or_open() error: 'cmd' dereferencing possible ERR_PTR()
-> 
-> I also reversed some tests for failure so that it was more clear and had
-> fewer indent levels.
-> 
-> Fixes: 9b1cc9f251af ('dm cache: share cache-metadata object across inactive and active DM tables')
-> Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
-> ---
-> The one question I have is that I made dm_cache_metadata_open() either
-> preserve the error code or return -EINVAL.  I haven't tested this so I
-> guess review carefully.  This patch should probably be back ported to
-> stable or folded into Joe's.
-> 
-> diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
-> index 21b1562..3b08cdf 100644
-> --- a/drivers/md/dm-cache-metadata.c
-> +++ b/drivers/md/dm-cache-metadata.c
-> @@ -681,10 +681,8 @@ static struct dm_cache_metadata *metadata_open(struct block_device *bdev,
->  	struct dm_cache_metadata *cmd;
->  
->  	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
-> -	if (!cmd) {
-> -		DMERR("could not allocate metadata struct");
-> -		return NULL;
-> -	}
-> +	if (!cmd)
-> +		return ERR_PTR(-ENOMEM);
->  
->  	atomic_set(&cmd->ref_count, 1);
->  	init_rwsem(&cmd->root_lock);
-> @@ -745,18 +743,19 @@ static struct dm_cache_metadata *lookup_or_open(struct block_device *bdev,
->  		return cmd;
->  
->  	cmd = metadata_open(bdev, data_block_size, may_format_device, policy_hint_size);
-> -	if (cmd) {
-> -		mutex_lock(&table_lock);
-> -		cmd2 = lookup(bdev);
-> -		if (cmd2) {
-> -			mutex_unlock(&table_lock);
-> -			__destroy_persistent_data_objects(cmd);
-> -			kfree(cmd);
-> -			return cmd2;
-> -		}
-> -		list_add(&cmd->list, &table);
-> +	if (IS_ERR(cmd))
-> +		return cmd;
+Test with it will take some hours in order to tell any success.
+
+Regards,
+Heinz
+
+On 01/28/2015 03:37 AM, NeilBrown wrote:
+> On Sun, 25 Jan 2015 21:06:20 +0100 Heinz Mauelshagen <heinzm@redhat.com>
+> wrote:
+>
+>> From: Heinz Mauelshagen <heinzm@redhat.com>
+>>
+>> Hi Neil,
+>>
+>> the reconstruct write optimization in raid5, function fetch_block causes
+>> livelocks in LVM raid4/5 tests.
+>>
+>> Test scenarios:
+>> the tests wait for full initial array resynchronization before making a
+>> filesystem
+>> on the raid4/5 logical volume, mounting it, writing to the filesystem
+>> and failing
+>> one physical volume holding a raiddev.
+>>
+>> In short, we're seeing livelocks on fully synchronized raid4/5 arrays
+>> with a failed device.
+>>
+>> This patch fixes the issue but likely in a suboptimnal way.
+>>
+>> Do you think there is a better solution to avoid livelocks on
+>> reconstruct writes?
+>>
+>> Regards,
+>> Heinz
+>>
+>> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+>> Tested-by: Jon Brassow <jbrassow@redhat.com>
+>> Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
+>>
+>> ---
+>>    drivers/md/raid5.c | 2 +-
+>>    1 file changed, 1 insertion(+), 1 deletion(-)
+>>
+>> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+>> index c1b0d52..0fc8737 100644
+>> --- a/drivers/md/raid5.c
+>> +++ b/drivers/md/raid5.c
+>> @@ -2915,7 +2915,7 @@ static int fetch_block(struct stripe_head *sh,
+>> struct stripe_head_state *s,
+>>                (s->failed >= 1 && fdev[0]->toread) ||
+>>                (s->failed >= 2 && fdev[1]->toread) ||
+>>                (sh->raid_conf->level <= 5 && s->failed && fdev[0]->towrite &&
+>> -             (!test_bit(R5_Insync, &dev->flags) ||
+>> test_bit(STRIPE_PREREAD_ACTIVE, &sh->state)) &&
+>> +             (!test_bit(R5_Insync, &dev->flags) ||
+>> test_bit(STRIPE_PREREAD_ACTIVE, &sh->state) || s->non_overwrite) &&
+>>                 !test_bit(R5_OVERWRITE, &fdev[0]->flags)) ||
+>>                ((sh->raid_conf->level == 6 ||
+>>                  sh->sector >= sh->raid_conf->mddev->recovery_cp)
+>
+> That is a bit heavy handed, but knowing that fixes the problem helps a lot.
+>
+> I think the problem happens when processes a non-overwrite write to a failed
+> device.
+>
+> fetch_block() should, in that case, pre-read all of the working device, but
+> since
+>
+> 	      (!test_bit(R5_Insync, &dev->flags) || test_bit(STRIPE_PREREAD_ACTIVE, &sh->state)) &&
+>
+> was added, it sometimes doesn't.  The root problem is that
+> handle_stripe_dirtying is getting confused because neither rmw or rcw seem to
+> work, so it doesn't start the chain of events to set STRIPE_PREREAD_ACTIVE.
+>
+> The following (which is against mainline) might fix it.  Can you test?
+>
+> Thanks,
+> NeilBrown
+>
+> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+> index c1b0d52bfcb0..793cf2861e97 100644
+> --- a/drivers/md/raid5.c
+> +++ b/drivers/md/raid5.c
+> @@ -3195,6 +3195,10 @@ static void handle_stripe_dirtying(struct r5conf *conf,
+>   					  (unsigned long long)sh->sector,
+>   					  rcw, qread, test_bit(STRIPE_DELAYED, &sh->state));
+>   	}
+> +	if (rcw > disks && rmw > disks &&
+> +	    !test_bit(STRIPE_PREREAD_ACTIVE, &sh->state))
+> +		set_bit(STRIPE_DELAYED, &sh->state);
 > +
-> +	mutex_lock(&table_lock);
-> +	cmd2 = lookup(bdev);
-> +	if (cmd2) {
->  		mutex_unlock(&table_lock);
-> +		__destroy_persistent_data_objects(cmd);
-> +		kfree(cmd);
-> +		return cmd2;
->  	}
-> +	list_add(&cmd->list, &table);
-> +	mutex_unlock(&table_lock);
->  
->  	return cmd;
->  }
-> @@ -778,11 +777,16 @@ struct dm_cache_metadata *dm_cache_metadata_open(struct block_device *bdev,
->  						 bool may_format_device,
->  						 size_t policy_hint_size)
->  {
-> -	struct dm_cache_metadata *cmd = lookup_or_open(bdev, data_block_size,
-> -						       may_format_device, policy_hint_size);
-> -	if (cmd && !same_params(cmd, data_block_size)) {
-> +	struct dm_cache_metadata *cmd;
-> +
-> +	cmd = lookup_or_open(bdev, data_block_size,
-> +			     may_format_device, policy_hint_size);
-> +	if (IS_ERR(cmd))
-> +		return cmd;
-> +
-> +	if (!same_params(cmd, data_block_size)) {
->  		dm_cache_metadata_close(cmd);
-> -		return NULL;
-> +		return ERR_PTR(-EINVAL);
->  	}
->  
->  	return cmd;
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+>   	/* now if nothing is locked, and if we have enough data,
+>   	 * we can start a write request
+>   	 */
+>
+>
+> This code really really needs to be tidied up and commented better!!!
+>
+> Thanks,
+> NeilBrown
