@@ -1,17 +1,23 @@
-From: Anand Jain <Anand.Jain@oracle.com>
-Subject: Re: [LSF/MM ATTEND]: Hot spare module ? And Btrfs volume
- management without mount
-Date: Thu, 29 Jan 2015 16:31:35 +0800
-Message-ID: <54C9EFE7.7040207@oracle.com>
-References: <54B8C174.4020802@oracle.com>
-	<20150127101845.GB13522@quack.suse.cz>
-	<54C8BDB2.1020700@oracle.com> <20150128163324.GA11823@redhat.com>
+From: Keith Busch <keith.busch@intel.com>
+Subject: Re: blk-mq DM changes for 3.20 [was: Re: blk-mq request
+ allocation stalls]X
+Date: Thu, 29 Jan 2015 22:43:56 +0000 (UTC)
+Message-ID: <alpine.LNX.2.00.1501292233230.15481@localhost.lm.intel.com>
+References: <54B3F78D.2020704@kernel.dk> <54B3FE89.200@sandisk.com>
+	<54B3FFAE.4070609@kernel.dk>
+	<alpine.LNX.2.00.1501121738000.4026@localhost.lm.intel.com>
+	<54B40E8A.6010005@kernel.dk>
+	<alpine.LNX.2.00.1501121818510.4026@localhost.lm.intel.com>
+	<alpine.LNX.2.00.1501121830010.4026@localhost.lm.intel.com>
+	<54B532EE.20700@kernel.dk> <20150127184258.GB2078@redhat.com>
+	<54C91172.10002@kernel.dk> <20150128174442.GA11951@redhat.com>
+	<54C92127.4030408@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150128163324.GA11823@redhat.com>
+In-Reply-To: <54C92127.4030408@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,55 +27,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: lsf-pc@lists.linux-foundation.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: Chris Mason <clm@fb.com>, Jan Kara <jack@suse.cz>, "JAIN,
-	ANAND" <anand.jain@oracle.com>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, Keith Busch <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
+On Wed, 28 Jan 2015, Jens Axboe wrote:
+> On 01/28/2015 10:44 AM, Mike Snitzer wrote:
+>> On Wed, Jan 28 2015 at 11:42am -0500,
+>> Jens Axboe <axboe@kernel.dk> wrote:
+>>> I'd prefer to take these prep patches through the block tree.
+>> 
+>> Great, should I send the patches or can you cherry-pick?
+>
+> I already cherry picked them, they are in the for-3.20/core branch.
 
-Hi Mike,
+I might be getting ahead of myself for trying this right now (sorry if
+that's the case) but 'for-3.20/core' is missing necessary parts of the
+series and hits a BUG_ON at blk-core.c:2333. The original request is
+initialized when setting up the clone, and in this branch, that happens
+in prep_fn before the request was dequeued so it's not in the queuelist
+when it started.
 
-  Thanks for looking into this and commenting.
-
-> This seems like such a niche issue I think it isn't ever going to get
-> traction.
-
-  I anticipate some implementation challenges so community participation
-  will help.
-
-  btrfs needs hot spare solution, which I am working on, and its better
-  to have it soon especially for data center uses.
-
-  btrfs is another VM in the system. Now there is more pressure to look
-  at system-wide hot spare efficiency for systems with heterogeneous VMs.
-
-  Its a kind of important that we provide a holistic hot spare solution
-  to the end user.
-
-  In the days when system used to have one type of VM in the system,
-  its global hot spare was really a system-wide global hot spare as well.
-  Now with more types of VMs in the system these global hot spare aren't
-  truly global any more, from the customers point of view who would
-  also be concerned about total cost-per-byte.
-
-
-> Having a common pool of hot spares doesn't buy you much if
-> all the different volume managers were to experience a failure -- in
-> that case the sharing actively works against you (if you've only
-> accomodated for say 1 of the 3 different volume managers failing at any
-> one time; but if you have provisioned for worst case of all solutions
-> failing then what was the point of the exercise?).
-
-  Good point. But what you have mentioned is a solution problem.
-  Currently we do have global hot spare with in a VM containing different
-  Raid volumes, and your point will apply their as well. And we expect
-  customer to configure it properly as per their business needs.
-
-  With system wide hot spare module, it will help to have global hot
-  spare really a global hot spare no matter of whats underlaying VM is.
-  And the same global hot spare rule/algorithm will apply but across VMs
-  and Raids with in the system. As usual customers will still have
-  choice to assign dedicated hot spare for more critical VM-raids if
-  needed.
-
-Thanks, Anand
+One of my commits relocated the initialization, but I didn't realize it
+had a hard dependency on the follow-on commit.  Should we reorder that
+part of the series?
