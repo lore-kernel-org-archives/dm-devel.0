@@ -1,13 +1,19 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] last couple device mapper fixes for 3.19 final
-Date: Thu, 29 Jan 2015 08:49:27 -0500
-Message-ID: <20150129134927.GA663@redhat.com>
+Subject: Re: [LSF/MM ATTEND]: Hot spare module ? And Btrfs volume
+ management without mount
+Date: Thu, 29 Jan 2015 08:59:23 -0500
+Message-ID: <20150129135922.GA668@redhat.com>
+References: <54B8C174.4020802@oracle.com>
+	<20150127101845.GB13522@quack.suse.cz>
+	<54C8BDB2.1020700@oracle.com> <20150128163324.GA11823@redhat.com>
+	<54C9EFE7.7040207@oracle.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <54C9EFE7.7040207@oracle.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,43 +23,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+To: Anand Jain <Anand.Jain@oracle.com>
+Cc: Chris Mason <clm@fb.com>, dm-devel@redhat.com, lsf-pc@lists.linux-foundation.org, Jan Kara <jack@suse.cz>
 List-Id: dm-devel.ids
 
-Hi Linus,
+On Thu, Jan 29 2015 at  3:31P -0500,
+Anand Jain <Anand.Jain@oracle.com> wrote:
 
-The following changes since commit 26bc420b59a38e4e6685a73345a0def461136dce:
+> 
+> Hi Mike,
+> 
+>  Thanks for looking into this and commenting.
+> 
+> >This seems like such a niche issue I think it isn't ever going to get
+> >traction.
+> 
+>  I anticipate some implementation challenges so community participation
+>  will help.
+> 
+>  btrfs needs hot spare solution, which I am working on, and its better
+>  to have it soon especially for data center uses.
+> 
+>  btrfs is another VM in the system. Now there is more pressure to look
+>  at system-wide hot spare efficiency for systems with heterogeneous VMs.
+> 
+>  Its a kind of important that we provide a holistic hot spare solution
+>  to the end user.
+> 
+>  In the days when system used to have one type of VM in the system,
+>  its global hot spare was really a system-wide global hot spare as well.
+>  Now with more types of VMs in the system these global hot spare aren't
+>  truly global any more, from the customers point of view who would
+>  also be concerned about total cost-per-byte.
+> 
+> 
+> >Having a common pool of hot spares doesn't buy you much if
+> >all the different volume managers were to experience a failure -- in
+> >that case the sharing actively works against you (if you've only
+> >accomodated for say 1 of the 3 different volume managers failing at any
+> >one time; but if you have provisioned for worst case of all solutions
+> >failing then what was the point of the exercise?).
+> 
+>  Good point. But what you have mentioned is a solution problem.
+>  Currently we do have global hot spare with in a VM containing different
+>  Raid volumes, and your point will apply their as well. And we expect
+>  customer to configure it properly as per their business needs.
+> 
+>  With system wide hot spare module, it will help to have global hot
+>  spare really a global hot spare no matter of whats underlaying VM is.
+>  And the same global hot spare rule/algorithm will apply but across VMs
+>  and Raids with in the system. As usual customers will still have
+>  choice to assign dedicated hot spare for more critical VM-raids if
+>  needed.
 
-  Linux 3.19-rc6 (2015-01-25 20:04:41 -0800)
+So the btrfs hot-spare needs to be implemented in btrfs.  But any layer
+that needs to manage lvm2, btrfs and MD raid should be implemented in
+userspace, e.g. in SSM, see: http://sourceforge.net/projects/storagemanager/
 
-are available in the git repository at:
+Though if you truly want the all volume managers to have immediate
+access to this global spare for failed member replacement from the
+kernel's failure paths across all volume managers.. that gets more
+complicated (so that must be what you're talking about).
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.19-fixes-3
+This just feels like a "nice to have" that I'm not hearing anyone
+asking for... but I could just be sheltered.
 
-for you to fetch changes up to 2a7eaea02b99b6e267b1e89c79acc6e9a51cee3b:
-
-  dm thin: don't allow messages to be sent to a pool target in READ_ONLY or FAIL mode (2015-01-28 10:00:34 -0500)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-1 stable fix for a dm-cache 3.19-rc6 regression and 1 stable fix for
-dm-thin:
-
-- fix DM cache metadata open/lookup error paths to properly use ERR_PTR
-  and IS_ERR (fixes: 3.19-rc6 "stable" commit 9b1cc9f251)
-
-- fix DM thin-provisioning to disallow userspace from sending messages
-  to the thin-pool if the pool is in READ_ONLY or FAIL mode since no
-  metadata changes are not allowed in these modes.
-
-----------------------------------------------------------------
-Joe Thornber (2):
-      dm cache: fix missing ERR_PTR returns and handling
-      dm thin: don't allow messages to be sent to a pool target in READ_ONLY or FAIL mode
-
- drivers/md/dm-cache-metadata.c | 9 +++++----
- drivers/md/dm-thin.c           | 6 ++++++
- 2 files changed, 11 insertions(+), 4 deletions(-)
+Now that LVM can manage/use MD volumes we already have a common
+interface for managing lvm2 and MD. btrfs isn't something lvm2 would
+naturally take on supporting though.
