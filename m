@@ -1,93 +1,116 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [LSF/MM ATTEND]: Hot spare module ? And Btrfs volume
- management without mount
-Date: Thu, 29 Jan 2015 08:59:23 -0500
-Message-ID: <20150129135922.GA668@redhat.com>
-References: <54B8C174.4020802@oracle.com>
-	<20150127101845.GB13522@quack.suse.cz>
-	<54C8BDB2.1020700@oracle.com> <20150128163324.GA11823@redhat.com>
-	<54C9EFE7.7040207@oracle.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jes Sorensen <Jes.Sorensen@redhat.com>
+Subject: Re: [PATCH] md: fix raid5 livelock
+Date: Thu, 29 Jan 2015 12:17:49 -0500
+Message-ID: <wrfja911zete.fsf@ultrasam.lan.trained-monkey.org>
+References: <54C54CBC.50101@redhat.com>
+	<20150128133754.25835582@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <54C9EFE7.7040207@oracle.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Anand Jain <Anand.Jain@oracle.com>
-Cc: Chris Mason <clm@fb.com>, dm-devel@redhat.com, lsf-pc@lists.linux-foundation.org, Jan Kara <jack@suse.cz>
+Content-Type: text/plain
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20150128133754.25835582@notabene.brown> (NeilBrown's message of
+	"Wed, 28 Jan 2015 13:37:54 +1100")
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, "dm-devel >> device-mapper development" <dm-devel@redhat.com>, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Jan 29 2015 at  3:31P -0500,
-Anand Jain <Anand.Jain@oracle.com> wrote:
+NeilBrown <neilb@suse.de> writes:
+> On Sun, 25 Jan 2015 21:06:20 +0100 Heinz Mauelshagen <heinzm@redhat.com>
+> wrote:
+>
+>> From: Heinz Mauelshagen <heinzm@redhat.com>
+>> 
+>> Hi Neil,
+>> 
+>> the reconstruct write optimization in raid5, function fetch_block causes
+>> livelocks in LVM raid4/5 tests.
+>> 
+>> Test scenarios:
+>> the tests wait for full initial array resynchronization before making a 
+>> filesystem
+>> on the raid4/5 logical volume, mounting it, writing to the filesystem 
+>> and failing
+>> one physical volume holding a raiddev.
+>> 
+>> In short, we're seeing livelocks on fully synchronized raid4/5 arrays 
+>> with a failed device.
+>> 
+>> This patch fixes the issue but likely in a suboptimnal way.
+>> 
+>> Do you think there is a better solution to avoid livelocks on 
+>> reconstruct writes?
+>> 
+>> Regards,
+>> Heinz
+>> 
+>> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+>> Tested-by: Jon Brassow <jbrassow@redhat.com>
+>> Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
+>> 
+>> ---
+>>   drivers/md/raid5.c | 2 +-
+>>   1 file changed, 1 insertion(+), 1 deletion(-)
+>> 
+>> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+>> index c1b0d52..0fc8737 100644
+>> --- a/drivers/md/raid5.c
+>> +++ b/drivers/md/raid5.c
+>> @@ -2915,7 +2915,7 @@ static int fetch_block(struct stripe_head *sh, 
+>> struct stripe_head_state *s,
+>>               (s->failed >= 1 && fdev[0]->toread) ||
+>>               (s->failed >= 2 && fdev[1]->toread) ||
+>>               (sh->raid_conf->level <= 5 && s->failed && fdev[0]->towrite &&
+>> -             (!test_bit(R5_Insync, &dev->flags) || 
+>> test_bit(STRIPE_PREREAD_ACTIVE, &sh->state)) &&
+>> +             (!test_bit(R5_Insync, &dev->flags) || 
+>> test_bit(STRIPE_PREREAD_ACTIVE, &sh->state) || s->non_overwrite) &&
+>>                !test_bit(R5_OVERWRITE, &fdev[0]->flags)) ||
+>>               ((sh->raid_conf->level == 6 ||
+>>                 sh->sector >= sh->raid_conf->mddev->recovery_cp)
+>
+>
+> That is a bit heavy handed, but knowing that fixes the problem helps a lot.
+>
+> I think the problem happens when processes a non-overwrite write to a failed
+> device.
+>
+> fetch_block() should, in that case, pre-read all of the working device, but
+> since
+>
+> 	      (!test_bit(R5_Insync, &dev->flags) || test_bit(STRIPE_PREREAD_ACTIVE, &sh->state)) &&
+>
+> was added, it sometimes doesn't.  The root problem is that
+> handle_stripe_dirtying is getting confused because neither rmw or rcw seem to
+> work, so it doesn't start the chain of events to set STRIPE_PREREAD_ACTIVE.
+>
+> The following (which is against mainline) might fix it.  Can you test?
+>
+> Thanks,
+> NeilBrown
+>
+> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+> index c1b0d52bfcb0..793cf2861e97 100644
+> --- a/drivers/md/raid5.c
+> +++ b/drivers/md/raid5.c
+> @@ -3195,6 +3195,10 @@ static void handle_stripe_dirtying(struct r5conf *conf,
+>  					  (unsigned long long)sh->sector,
+>  					  rcw, qread, test_bit(STRIPE_DELAYED, &sh->state));
+>  	}
+> +	if (rcw > disks && rmw > disks &&
+> +	    !test_bit(STRIPE_PREREAD_ACTIVE, &sh->state))
+> +		set_bit(STRIPE_DELAYED, &sh->state);
+> +
+>  	/* now if nothing is locked, and if we have enough data,
+>  	 * we can start a write request
+>  	 */
+>
+>
+> This code really really needs to be tidied up and commented better!!!
 
-> 
-> Hi Mike,
-> 
->  Thanks for looking into this and commenting.
-> 
-> >This seems like such a niche issue I think it isn't ever going to get
-> >traction.
-> 
->  I anticipate some implementation challenges so community participation
->  will help.
-> 
->  btrfs needs hot spare solution, which I am working on, and its better
->  to have it soon especially for data center uses.
-> 
->  btrfs is another VM in the system. Now there is more pressure to look
->  at system-wide hot spare efficiency for systems with heterogeneous VMs.
-> 
->  Its a kind of important that we provide a holistic hot spare solution
->  to the end user.
-> 
->  In the days when system used to have one type of VM in the system,
->  its global hot spare was really a system-wide global hot spare as well.
->  Now with more types of VMs in the system these global hot spare aren't
->  truly global any more, from the customers point of view who would
->  also be concerned about total cost-per-byte.
-> 
-> 
-> >Having a common pool of hot spares doesn't buy you much if
-> >all the different volume managers were to experience a failure -- in
-> >that case the sharing actively works against you (if you've only
-> >accomodated for say 1 of the 3 different volume managers failing at any
-> >one time; but if you have provisioned for worst case of all solutions
-> >failing then what was the point of the exercise?).
-> 
->  Good point. But what you have mentioned is a solution problem.
->  Currently we do have global hot spare with in a VM containing different
->  Raid volumes, and your point will apply their as well. And we expect
->  customer to configure it properly as per their business needs.
-> 
->  With system wide hot spare module, it will help to have global hot
->  spare really a global hot spare no matter of whats underlaying VM is.
->  And the same global hot spare rule/algorithm will apply but across VMs
->  and Raids with in the system. As usual customers will still have
->  choice to assign dedicated hot spare for more critical VM-raids if
->  needed.
+Neil,
 
-So the btrfs hot-spare needs to be implemented in btrfs.  But any layer
-that needs to manage lvm2, btrfs and MD raid should be implemented in
-userspace, e.g. in SSM, see: http://sourceforge.net/projects/storagemanager/
+Since this one seems to do the trick, will you be pushing it into you
+tree anytime soon?
 
-Though if you truly want the all volume managers to have immediate
-access to this global spare for failed member replacement from the
-kernel's failure paths across all volume managers.. that gets more
-complicated (so that must be what you're talking about).
-
-This just feels like a "nice to have" that I'm not hearing anyone
-asking for... but I could just be sheltered.
-
-Now that LVM can manage/use MD volumes we already have a common
-interface for managing lvm2 and MD. btrfs isn't something lvm2 would
-naturally take on supporting though.
+Cheers,
+Jes
