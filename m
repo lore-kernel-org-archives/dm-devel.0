@@ -1,80 +1,147 @@
-From: Dan Ehrenberg <dehrenberg@chromium.org>
-Subject: [PATCH 1/2] init: Stricter checking of major:minor root=
-	values
-Date: Wed, 28 Jan 2015 14:45:56 -0800
-Message-ID: <1422485157-33423-1-git-send-email-dehrenberg@chromium.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: [dm-devel] [PATCH] md: fix raid5 livelock
+Date: Thu, 29 Jan 2015 12:24:00 +0100
+Message-ID: <54CA1850.1000909@redhat.com>
+References: <54C54CBC.50101@redhat.com>	<20150128133754.25835582@notabene.brown> <54C8CFF8.6000807@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
-Cc: grundler@chromium.org, drewry@chromium.org, gwendal@chromium.org, Dan Ehrenberg <dehrenberg@chromium.org>
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <54C8CFF8.6000807@redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: neilBrown <neilb@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-raid@vger.kernel.org, Brassow Jonathan <jbrassow@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Marian Csontos <mcsontos@redhat.com>
 List-Id: dm-devel.ids
 
-In the kernel command-line, previously, root=1:2jakshflaksjdhfa would
-be accepted and interpreted just like root=1:2. This patch adds
-stricter checking so that additional characters after major:minor are
-rejected by root=.
 
-The patch also makes name_to_dev_t take a const char * rather than a
-char * for improved possibilities for checking const correctness.
+Neil,
 
-The goal of this patch is to help in unifying dm's interpretation of
-its block device argument with the interpretation in other parts of
-the kernel. dm rejects malformed major:minor pairs, and it seems
-reasonable that root= should reject them as well.
+the patch worked fine in overnight test runs without the previous livelock.
+No regressions have been triggered.
 
-Signed-off-by: Dan Ehrenberg <dehrenberg@chromium.org>
----
- include/linux/mount.h | 2 +-
- init/do_mounts.c      | 5 +++--
- 2 files changed, 4 insertions(+), 3 deletions(-)
+Yes, tidying up that optimization logic (e.g. in fetch_block()) is very 
+much appreciated :-)
 
-diff --git a/include/linux/mount.h b/include/linux/mount.h
-index c2c561d..bca086d 100644
---- a/include/linux/mount.h
-+++ b/include/linux/mount.h
-@@ -92,6 +92,6 @@ extern struct vfsmount *vfs_kern_mount(struct file_system_type *type,
- extern void mnt_set_expiry(struct vfsmount *mnt, struct list_head *expiry_list);
- extern void mark_mounts_for_expiry(struct list_head *mounts);
- 
--extern dev_t name_to_dev_t(char *name);
-+extern dev_t name_to_dev_t(const char *name);
- 
- #endif /* _LINUX_MOUNT_H */
-diff --git a/init/do_mounts.c b/init/do_mounts.c
-index eb41008..7e06620 100644
---- a/init/do_mounts.c
-+++ b/init/do_mounts.c
-@@ -207,7 +207,7 @@ done:
-  *	bangs.
-  */
- 
--dev_t name_to_dev_t(char *name)
-+dev_t name_to_dev_t(const char *name)
- {
- 	char s[32];
- 	char *p;
-@@ -226,8 +226,9 @@ dev_t name_to_dev_t(char *name)
- 
- 	if (strncmp(name, "/dev/", 5) != 0) {
- 		unsigned maj, min;
-+		char dummy;
- 
--		if (sscanf(name, "%u:%u", &maj, &min) == 2) {
-+		if (sscanf(name, "%u:%u%c", &maj, &min, &dummy) == 2) {
- 			res = MKDEV(maj, min);
- 			if (maj != MAJOR(res) || min != MINOR(res))
- 				goto fail;
--- 
-2.2.0.rc0.207.ga3a616c
+Thanks,
+Heinz
+
+On 01/28/2015 01:03 PM, Heinz Mauelshagen wrote:
+>
+> Neil,
+>
+> thanks for providing the patch.
+>
+> Test with it will take some hours in order to tell any success.
+>
+> Regards,
+> Heinz
+>
+> On 01/28/2015 03:37 AM, NeilBrown wrote:
+>> On Sun, 25 Jan 2015 21:06:20 +0100 Heinz Mauelshagen <heinzm@redhat.com>
+>> wrote:
+>>
+>>> From: Heinz Mauelshagen <heinzm@redhat.com>
+>>>
+>>> Hi Neil,
+>>>
+>>> the reconstruct write optimization in raid5, function fetch_block 
+>>> causes
+>>> livelocks in LVM raid4/5 tests.
+>>>
+>>> Test scenarios:
+>>> the tests wait for full initial array resynchronization before making a
+>>> filesystem
+>>> on the raid4/5 logical volume, mounting it, writing to the filesystem
+>>> and failing
+>>> one physical volume holding a raiddev.
+>>>
+>>> In short, we're seeing livelocks on fully synchronized raid4/5 arrays
+>>> with a failed device.
+>>>
+>>> This patch fixes the issue but likely in a suboptimnal way.
+>>>
+>>> Do you think there is a better solution to avoid livelocks on
+>>> reconstruct writes?
+>>>
+>>> Regards,
+>>> Heinz
+>>>
+>>> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+>>> Tested-by: Jon Brassow <jbrassow@redhat.com>
+>>> Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
+>>>
+>>> ---
+>>>    drivers/md/raid5.c | 2 +-
+>>>    1 file changed, 1 insertion(+), 1 deletion(-)
+>>>
+>>> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+>>> index c1b0d52..0fc8737 100644
+>>> --- a/drivers/md/raid5.c
+>>> +++ b/drivers/md/raid5.c
+>>> @@ -2915,7 +2915,7 @@ static int fetch_block(struct stripe_head *sh,
+>>> struct stripe_head_state *s,
+>>>                (s->failed >= 1 && fdev[0]->toread) ||
+>>>                (s->failed >= 2 && fdev[1]->toread) ||
+>>>                (sh->raid_conf->level <= 5 && s->failed && 
+>>> fdev[0]->towrite &&
+>>> -             (!test_bit(R5_Insync, &dev->flags) ||
+>>> test_bit(STRIPE_PREREAD_ACTIVE, &sh->state)) &&
+>>> +             (!test_bit(R5_Insync, &dev->flags) ||
+>>> test_bit(STRIPE_PREREAD_ACTIVE, &sh->state) || s->non_overwrite) &&
+>>>                 !test_bit(R5_OVERWRITE, &fdev[0]->flags)) ||
+>>>                ((sh->raid_conf->level == 6 ||
+>>>                  sh->sector >= sh->raid_conf->mddev->recovery_cp)
+>>
+>> That is a bit heavy handed, but knowing that fixes the problem helps 
+>> a lot.
+>>
+>> I think the problem happens when processes a non-overwrite write to a 
+>> failed
+>> device.
+>>
+>> fetch_block() should, in that case, pre-read all of the working 
+>> device, but
+>> since
+>>
+>>           (!test_bit(R5_Insync, &dev->flags) || 
+>> test_bit(STRIPE_PREREAD_ACTIVE, &sh->state)) &&
+>>
+>> was added, it sometimes doesn't.  The root problem is that
+>> handle_stripe_dirtying is getting confused because neither rmw or rcw 
+>> seem to
+>> work, so it doesn't start the chain of events to set 
+>> STRIPE_PREREAD_ACTIVE.
+>>
+>> The following (which is against mainline) might fix it.  Can you test?
+>>
+>> Thanks,
+>> NeilBrown
+>>
+>> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+>> index c1b0d52bfcb0..793cf2861e97 100644
+>> --- a/drivers/md/raid5.c
+>> +++ b/drivers/md/raid5.c
+>> @@ -3195,6 +3195,10 @@ static void handle_stripe_dirtying(struct 
+>> r5conf *conf,
+>>                         (unsigned long long)sh->sector,
+>>                         rcw, qread, test_bit(STRIPE_DELAYED, 
+>> &sh->state));
+>>       }
+>> +    if (rcw > disks && rmw > disks &&
+>> +        !test_bit(STRIPE_PREREAD_ACTIVE, &sh->state))
+>> +        set_bit(STRIPE_DELAYED, &sh->state);
+>> +
+>>       /* now if nothing is locked, and if we have enough data,
+>>        * we can start a write request
+>>        */
+>>
+>>
+>> This code really really needs to be tidied up and commented better!!!
+>>
+>> Thanks,
+>> NeilBrown
+>
+> -- 
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
