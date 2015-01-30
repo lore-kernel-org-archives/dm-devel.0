@@ -1,18 +1,15 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH RFCv2 00/10] dm-dedup: device-mapper
- deduplication target
-Date: Fri, 30 Jan 2015 10:56:39 -0500
-Message-ID: <20150130155639.GA8364@redhat.com>
-References: <53ffb64b.257e320a.6ec4.2b61@mx.google.com>
-	<20150114194315.GA9520@redhat.com>
-	<CAFTzLMNz6JCa8sndMVjyOvaQsJ_DEL1B=gRL0uL0B-Zmw+tdJA@mail.gmail.com>
+Subject: Re: [PATCH RFCv2 10/10] dm-dedup: documentation
+Date: Fri, 30 Jan 2015 13:55:00 -0500
+Message-ID: <20150130185500.GB8364@redhat.com>
+References: <53ffb65d.144d320a.0fce.12eb@mx.google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CAFTzLMNz6JCa8sndMVjyOvaQsJ_DEL1B=gRL0uL0B-Zmw+tdJA@mail.gmail.com>
+In-Reply-To: <53ffb65d.144d320a.0fce.12eb@mx.google.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,60 +20,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Vasily Tarasov <tarasov@vasily.name>
-Cc: Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
+Cc: Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
 List-Id: dm-devel.ids
 
-On Fri, Jan 23, 2015 at 11:27:39AM -0500, Vasily Tarasov wrote:
+On Thu, Aug 28, 2014 at 06:16:50PM -0400, Vasily Tarasov wrote:
 
 [..]
-> > - Why did you implement an inline deduplication as opposed to out-of-line
-> >   deduplication? Section 2 (Timeliness) in paper just mentioned
-> >   out-of-line dedup but does not go into more details that why did you
-> >   choose an in-line one.
-> >
-> >   I am wondering that will it not make sense to first implement an
-> >   out-of-line dedup and punt lot of cost to worker thread (which kick
-> >   in only when storage is idle). That way even if don't get a high dedup
-> >   ratio for a workload, inserting a dedup target in the stack will be less
-> >   painful from performance point of view.
-> 
-> Both in-line and off-line deduplication approaches have their own
-> pluses and minuses. Among the minuses of  the off-line approach is
-> that it requires allocation of extra space to buffer non-deduplicated
-> writes,
+> +Example
+> +=======
+> +
+> +Decide on metadata and data devices:
+> +   # META_DEV=/dev/sdX
+> +   # DATA_DEV=/dev/sdY
+> +
+> +Compute target size assuming 1.5 dedup ratio:
+> +   # DATA_DEV_SIZE=`blockdev --getsz $DATA_DEV`
+> +   # TARGET_SIZE=`expr $DATA_DEV_SIZE \* 10 / 15`
 
-Well, that extra space requirement is temporary. So you got to pay the cost
-somewhere. Personally, I will be more than happy to consume more disk
-space when I am writing and not take a hit and let worker threads optimize
-space usage later.
+Is above correct? With dm dedupe ratio of 1.5, target size
+should be (15/10) * DATA_DEV_SIZE and not vice-a-versa?
 
-> re-reading the data from disk when deduplication happens (i.e.
-> more I/O used).
+> +
+> +Reset metadata device:
+> +   # dd if=/dev/zero of=$META_DEV bs=4096 count=1
+> +
+> +Setup a target:
+> +	echo "0 $TARGET_SIZE dedup $META_DEV $DATA_DEV 4096 md5 cowbtree 100" |\
+> +				dmsetup create mydedup
+> +
 
-Worker threads are supposed to kick in when disk is idle so it might not
-be as big a concern.
+I setup a target and did "dmsetup table" and "dmsetup status" and they
+both seem to be outputting same thing. I think output of "dmsetup table"
+is wrong. As per the man page of dmsetup, you are supposed to output
+the table in a format which can be directly feedback into tagrget for
+loading.
 
-> It also complicates space usage accounting and user
-> might run out of space though deduplication process will discover many
-> duplicated blocks later.
+#dmsetup table
+testdedup: 0 2930287752 dedup 244190646 244190646 0 0 4096 8:32 8:48 0 0
+0 0 0 0
 
-Anyway, user needs to plan for extra space. De-dup is not exact science
-and one does not know how much will be the de-dup ratio in a data set.
-
-> 
-> Our final goal is to support both approaches but for this code
-> submission we wanted to limit the amount of new code. In-line
-> deduplication is a core part, around which we can implement off-line
-> dedup by adding an extra thread that will reuse the same logic as
-> in-line deduplication.
-
-Ok. I am fine with building both if that makes sense. 
-
-I also understand that there are pros/cons to both the approaches. Just
-that given the higt cost of inline dedupe, I am finding it little odd
-that it be implemented first as opposed to offline one. 
-
-Anyway, I will spend some time on patches now.
+#dmsetup status
+testdedup: 0 2930287752 dedup 244190646 244190646 0 0 4096 8:32 8:48 0 0
+0 0 0 0
 
 Thanks
 Vivek
