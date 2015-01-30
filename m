@@ -1,23 +1,18 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: blk-mq DM changes for 3.20 [was: Re: blk-mq request
- allocation stalls]X
-Date: Thu, 29 Jan 2015 19:32:01 -0500
-Message-ID: <20150130003201.GA25136@redhat.com>
-References: <alpine.LNX.2.00.1501121818510.4026@localhost.lm.intel.com>
-	<alpine.LNX.2.00.1501121830010.4026@localhost.lm.intel.com>
-	<54B532EE.20700@kernel.dk> <20150127184258.GB2078@redhat.com>
-	<54C91172.10002@kernel.dk> <20150128174442.GA11951@redhat.com>
-	<54C92127.4030408@kernel.dk>
-	<alpine.LNX.2.00.1501292233230.15481@localhost.lm.intel.com>
-	<20150129230924.GA24657@redhat.com>
-	<alpine.LNX.2.00.1501292310330.15481@localhost.lm.intel.com>
+From: Anand Jain <Anand.Jain@oracle.com>
+Subject: Re: [LSF/MM ATTEND]: Hot spare module ? And Btrfs volume
+ management without mount
+Date: Fri, 30 Jan 2015 10:40:53 +0800
+Message-ID: <54CAEF35.2080906@oracle.com>
+References: <54B8C174.4020802@oracle.com>
+	<20150127101845.GB13522@quack.suse.cz>
+	<54C8BDB2.1020700@oracle.com> <20150128163324.GA11823@redhat.com>
+	<54C9EFE7.7040207@oracle.com> <20150129135922.GA668@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1501292310330.15481@localhost.lm.intel.com>
+In-Reply-To: <20150129135922.GA668@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,54 +22,77 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Keith Busch <keith.busch@intel.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Christoph Hellwig <hch@infradead.org>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Chris Mason <clm@fb.com>, dm-devel@redhat.com, lsf-pc@lists.linux-foundation.org, Jan Kara <jack@suse.cz>
 List-Id: dm-devel.ids
 
-On Thu, Jan 29 2015 at  6:44pm -0500,
-Keith Busch <keith.busch@intel.com> wrote:
 
-> On Thu, 29 Jan 2015, Mike Snitzer wrote:
-> >On Thu, Jan 29 2015 at  5:43pm -0500,
-> >>One of my commits relocated the initialization, but I didn't realize it
-> >>had a hard dependency on the follow-on commit.  Should we reorder that
-> >>part of the series?
-> >
-> >Which follow on commit are you referring to?  Please be specific about
-> >which commits you think are out of order.
-> >
-> >Also, what are you testing... are you using the linux-dm.git tree's
-> >'dm-for-3.20' branch which builds on Jens' 'for-3.20/core'?
-> >
-> >If not please test that and see if you still have problems (without the
-> >associated DM changes all the block preparation changes that Jens
-> >cherry-picked shouldn't cause any problems at all).
-> 
-> I'm using Jens' linux-block for-3.20/core branch. The last dm commit
-> is this:
-> 
->  commit febf71588c2a750e04dc2a8b0824ce120c48bd9e
->  Author: Keith Busch <keith.busch@intel.com>
->  Date:   Fri Oct 17 17:46:35 2014 -0600
-> 
->     block: require blk_rq_prep_clone() be given an initialized clone request
-> 
-> Looking at this again, the above was incorrect in the first place: it
-> initialized the original, but the intent was to initialize the clone. This
-> slipped by me since the next part of the series fixed it. In your linux-dm
-> dm-for-3.20, it's this commit:
-> 
->  commit 102e38b1030e883efc022dfdc7b7e7a3de70d1c5
->  Author: Mike Snitzer <snitzer@redhat.com>
->  Date:   Fri Dec 5 17:11:05 2014 -0500
-> 
->      dm: split request structure out from dm_rq_target_io structure
-> 
-> 
-> So I was confused earlier, there's no need to reorder anything. I just
-> need to fix the broken part.
+Thanks Mike for the comments.
+- Anand
 
-Oof, yeah that first commit should be using: blk_rq_init(NULL, clone);
-
-Jens, any chance you could rebase commit febf71588c2a with s/rq/clone/
-in dm.c:clone_rq's call to blk_rq_init?
+On 01/29/2015 09:59 PM, Mike Snitzer wrote:
+> On Thu, Jan 29 2015 at  3:31P -0500,
+> Anand Jain <Anand.Jain@oracle.com> wrote:
+>
+>>
+>> Hi Mike,
+>>
+>>   Thanks for looking into this and commenting.
+>>
+>>> This seems like such a niche issue I think it isn't ever going to get
+>>> traction.
+>>
+>>   I anticipate some implementation challenges so community participation
+>>   will help.
+>>
+>>   btrfs needs hot spare solution, which I am working on, and its better
+>>   to have it soon especially for data center uses.
+>>
+>>   btrfs is another VM in the system. Now there is more pressure to look
+>>   at system-wide hot spare efficiency for systems with heterogeneous VMs.
+>>
+>>   Its a kind of important that we provide a holistic hot spare solution
+>>   to the end user.
+>>
+>>   In the days when system used to have one type of VM in the system,
+>>   its global hot spare was really a system-wide global hot spare as well.
+>>   Now with more types of VMs in the system these global hot spare aren't
+>>   truly global any more, from the customers point of view who would
+>>   also be concerned about total cost-per-byte.
+>>
+>>
+>>> Having a common pool of hot spares doesn't buy you much if
+>>> all the different volume managers were to experience a failure -- in
+>>> that case the sharing actively works against you (if you've only
+>>> accomodated for say 1 of the 3 different volume managers failing at any
+>>> one time; but if you have provisioned for worst case of all solutions
+>>> failing then what was the point of the exercise?).
+>>
+>>   Good point. But what you have mentioned is a solution problem.
+>>   Currently we do have global hot spare with in a VM containing different
+>>   Raid volumes, and your point will apply their as well. And we expect
+>>   customer to configure it properly as per their business needs.
+>>
+>>   With system wide hot spare module, it will help to have global hot
+>>   spare really a global hot spare no matter of whats underlaying VM is.
+>>   And the same global hot spare rule/algorithm will apply but across VMs
+>>   and Raids with in the system. As usual customers will still have
+>>   choice to assign dedicated hot spare for more critical VM-raids if
+>>   needed.
+>
+> So the btrfs hot-spare needs to be implemented in btrfs.  But any layer
+> that needs to manage lvm2, btrfs and MD raid should be implemented in
+> userspace, e.g. in SSM, see: http://sourceforge.net/projects/storagemanager/
+>
+> Though if you truly want the all volume managers to have immediate
+> access to this global spare for failed member replacement from the
+> kernel's failure paths across all volume managers.. that gets more
+> complicated (so that must be what you're talking about).
+>
+> This just feels like a "nice to have" that I'm not hearing anyone
+> asking for... but I could just be sheltered.
+>
+> Now that LVM can manage/use MD volumes we already have a common
+> interface for managing lvm2 and MD. btrfs isn't something lvm2 would
+> naturally take on supporting though.
+>
