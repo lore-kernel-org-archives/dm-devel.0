@@ -1,16 +1,15 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH RFCv2 02/10] dm-dedup: core deduplication
-	logic
-Date: Mon, 2 Feb 2015 10:23:50 -0500
-Message-ID: <20150202152350.GB3588@redhat.com>
-References: <53ffb64e.4443320a.4df1.28ed@mx.google.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: dm create error
+Date: Mon, 2 Feb 2015 14:03:11 -0600
+Message-ID: <20150202200311.GG11463@ask-08.lab.msp.redhat.com>
+References: <CAE6Xo7gFEx75vBotN1KKcRriUTe6S-rUNWd1LNDciXK5uwMuaA@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <53ffb64e.4443320a.4df1.28ed@mx.google.com>
+In-Reply-To: <CAE6Xo7gFEx75vBotN1KKcRriUTe6S-rUNWd1LNDciXK5uwMuaA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,228 +19,144 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vasily Tarasov <tarasov@vasily.name>
-Cc: Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Aug 28, 2014 at 06:02:11PM -0400, Vasily Tarasov wrote:
+On Tue, Jan 27, 2015 at 05:33:09PM +0800, Xiaoqiang Zhou wrote:
+>    Hi ALL:
+>    A  A  A  I have some problem with dm. A 
+>    A  A  A  when I add a multipath occur some error in message file:
+>    A  A  A 
+>    Jan 27 17:09:41 localhost kernel: device-mapper: table: 253:5: multipath:
+>    error getting deviceA 
+>    Jan 27 17:09:41 localhost kernel: device-mapper: ioctl: error adding
+>    target to tableA 
 
-Hi,
+This looks like one of the path devices to this device may already be in
+use.
 
-Spend some time looking at this patch. Few comments are inline.
-
-> +static void process_bio(struct dedup_config *dc, struct bio *bio)
-> +{
-> +	switch (bio_data_dir(bio)) {
-> +	case READ:
-> +		handle_read(dc, bio);
-> +		break;
-> +	case WRITE:
-> +		handle_write(dc, bio);
-> +		break;
-> +	default:
-> +		DMERR("Unknown request type!");
-> +		bio_endio(bio, -EINVAL);
-> +	}
-
-I guess some of this error checking could go in map function and if bio is
-not of desired type and return error right then and there.
-
-> +}
-> +
-> +static void do_work(struct work_struct *ws)
-> +{
-> +	struct dedup_work *data = container_of(ws, struct dedup_work, worker);
-> +	struct dedup_config *dc = (struct dedup_config *)data->config;
-> +	struct bio *bio = (struct bio *)data->bio;
-> +
-> +	mempool_free(data, dc->dedup_work_pool);
-> +
-> +	process_bio(dc, bio);
-> +}
-> +
-> +static void dedup_defer_bio(struct dedup_config *dc, struct bio *bio)
-> +{
-> +	struct dedup_work *data;
-> +
-> +	data = mempool_alloc(dc->dedup_work_pool, GFP_NOIO);
-> +	if (!data) {
-> +		bio_endio(bio, -ENOMEM);
-> +		return;
-> +	}
-
-So why are we allocating one work struct for each bio. Why not have a 
-work struct embedded in say dedup_config and queue incoming bios in a
-list and wake up worker. And worker will go through list of bios and
-process bios. 
-
-Does not look like there is a need to create one work struct for each
-bio.
-
-Please look at other targets how they have handled it.
+-Ben
 
 
-[..]
-> +static int dm_dedup_ctr_fn(struct dm_target *ti, unsigned int argc, char **argv)
-> +{
-> +	struct dedup_args *da;
-> +	struct dedup_config *dc;
-> +	struct workqueue_struct *wq;
-> +
-> +	struct init_param_inram iparam_inram;
-> +	struct init_param_cowbtree iparam_cowbtree;
-> +	void *iparam;
-> +	struct metadata *md = NULL;
-> +
-> +	uint64_t data_size;
-> +	int r;
-> +	int crypto_key_size;
-> +
-> +	struct on_disk_stats *data = NULL;
-> +	uint64_t logical_block_counter = 0;
-> +	uint64_t physical_block_counter = 0;
-> +
-> +	uint32_t flushrq = 0;
-> +	mempool_t *dedup_work_pool = NULL;
-> +
-> +	bool unformatted;
-> +
-> +	da = kzalloc(sizeof(*da), GFP_KERNEL);
-> +	if (!da) {
-> +		ti->error = "Error allocating memory for dedup arguments";
-> +		return -ENOMEM;
-> +	}
-> +
-> +	da->ti = ti;
-> +
-> +	r = parse_dedup_args(da, argc, argv, &ti->error);
-> +	if (r)
-> +		goto out;
-> +
-> +	dc = kmalloc(sizeof(*dc), GFP_NOIO);
-> +	if (!dc) {
-> +		ti->error = "Error allocating memory for dedup config";
-> +		r = -ENOMEM;
-> +		goto out;
-> +	}
-> +
-> +	wq = create_singlethread_workqueue("dm-dedup");
-> +	if (!wq) {
-> +		ti->error = "failed to create workqueue";
-> +		r = -ENOMEM;
-> +		goto bad_wq;
-> +	}
-> +
-> +	dedup_work_pool = mempool_create_kmalloc_pool(MIN_DEDUP_WORK_IO,
-> +						sizeof(struct dedup_work));
-> +	if (!dedup_work_pool) {
-> +		r = -ENOMEM;
-> +		ti->error = "failed to create mempool";
-> +		goto bad_mempool;
-> +	}
-> +
-> +	dc->io_client = dm_io_client_create();
-> +	if (IS_ERR(dc->io_client)) {
-> +		r = PTR_ERR(dc->io_client);
-> +		ti->error = "failed to create dm_io_client";
-> +		goto bad_io_client;
-> +	}
-> +
-> +	dc->block_size = da->block_size;
-> +	dc->sectors_per_block = to_sector(da->block_size);
-> +	dc->lblocks = ti->len / dc->sectors_per_block;
-> +
-> +	data_size = i_size_read(da->data_dev->bdev->bd_inode);
-> +	dc->pblocks = data_size / da->block_size;
-> +
-> +	/* Meta-data backend specific part */
-> +	if (da->backend == BKND_INRAM) {
-> +		dc->mdops = &metadata_ops_inram;
-> +		iparam_inram.blocks = dc->pblocks;
-> +		iparam = &iparam_inram;
-> +	} else if (da->backend == BKND_COWBTREE) {
-> +		r = -EINVAL;
-> +		dc->mdops = &metadata_ops_cowbtree;
-> +		iparam_cowbtree.blocks = dc->pblocks;
-> +		iparam_cowbtree.metadata_bdev = da->meta_dev->bdev;
-> +		iparam = &iparam_cowbtree;
-> +	} else
-> +		BUG();
-> +
-> +	md = dc->mdops->init_meta(iparam, &unformatted);
-> +	if (IS_ERR(md)) {
-> +		ti->error = "failed to initialize backend metadata";
-> +		r = PTR_ERR(md);
-> +		goto bad_metadata_init;
-> +	}
-> +
-> +	dc->desc_table = desc_table_init(da->hash_algo);
-> +	if (!dc->desc_table || IS_ERR(dc->desc_table)) {
-> +		ti->error = "failed to initialize crypto API";
-> +		r = PTR_ERR(dc->desc_table);
-> +		goto bad_metadata_init;
-> +	}
-> +
-> +	crypto_key_size = get_hash_digestsize(dc->desc_table);
+>    Jan 27 17:09:41 localhost multipathd: uevent 'add' from
+>    '/devices/virtual/block/dm-5'A 
+>    Jan 27 17:09:41 localhost multipathd: uevent 'remove' from
+>    '/devices/virtual/block/dm-5'A 
+>    Jan 27 17:09:41 localhost multipathd: dm-5: remove map (uevent)A 
+>    Jan 27 17:09:41 localhost multipathd: dm-5: No DM_NAME in uevent,
+>    ignoringA 
+>    Jan 27 17:09:41 localhost multipathd: uevent 'remove' from
+>    '/devices/virtual/block/dm-5'A 
+>    Jan 27 17:09:41 localhost multipathd: dm-5: remove map (uevent)A 
+>    Jan 27 17:09:41 localhost multipathd: dm-5: No DM_NAME in uevent, ignoring
+>    A  A  A  A [root@localhost ovirt-node-nfs]# multipath -lA 
+>    Jan 27 17:22:56 | multipath.conf +6, invalid keyword: getuid_calloutA 
+>    Jan 27 17:22:56 | multipath.conf +21, invalid keyword: getuid_calloutA 
+>    Jan 27 17:22:56 | multipath.conf +41, invalid keyword: getuid_calloutA 
+>    Jan 27 17:22:56 | libdevmapper version 1.02.84-RHEL7 (2014-03-26)A 
+>    Jan 27 17:22:56 | DM multipath kernel driver v1.6.0A 
+>    Jan 27 17:22:56 | loading /lib64/multipath/libcheckdirectio.so checkerA 
+>    Jan 27 17:22:56 | loading /lib64/multipath/libprioconst.so prioritizerA 
+>    Jan 27 17:22:56 | Discover device
+>    /sys/devices/pci0000:00/0000:00:02.2/0000:03:00.0/host0/target0:2:0/0:2:0:0/block/sdaA 
+>    Jan 27 17:22:56 | sda: not found in pathvecA 
+>    Jan 27 17:22:56 | sda: mask = 0x21A 
+>    Jan 27 17:22:56 | sda: dev_t = 8:0A 
+>    Jan 27 17:22:56 | open
+>    '/sys/devices/pci0000:00/0000:00:02.2/0000:03:00.0/host0/target0:2:0/0:2:0:0/block/sda/size'A 
+>    Jan 27 17:22:56 | sda: size = 3904897024A 
+>    Jan 27 17:22:56 | sda: vendor = DELLA 
+>    Jan 27 17:22:56 | sda: product = PERC H310A 
+>    Jan 27 17:22:56 | sda: rev = 2.12A 
+>    Jan 27 17:22:56 | sda: h:b:t:l = 0:2:0:0A 
+>    Jan 27 17:22:56 | open
+>    '/sys/devices/pci0000:00/0000:00:02.2/0000:03:00.0/host0/target0:2:0/0:2:0:0/state'A 
+>    Jan 27 17:22:56 | sda: path state = runningA 
+> 
+>    Jan 27 17:22:56 | Discover device
+>    /sys/devices/pci0000:00/0000:00:02.2/0000:03:00.0/host0/target0:2:0/0:2:0:0/block/sda/sda1A 
+>    Jan 27 17:22:56 | Discover device
+>    /sys/devices/pci0000:00/0000:00:02.2/0000:03:00.0/host0/target0:2:0/0:2:0:0/block/sda/sda2A 
+>    Jan 27 17:22:56 | Discover device
+>    /sys/devices/pci0000:00/0000:00:1f.2/ata5/host5/target5:0:0/5:0:0:0/block/sr0A 
+>    Jan 27 17:22:56 | sr0: device node name blacklistedA 
+>    Jan 27 17:22:56 | Discover device /sys/devices/virtual/block/loop0A 
+>    Jan 27 17:22:56 | loop0: device node name blacklistedA 
+>    Jan 27 17:22:56 | Discover device /sys/devices/virtual/block/loop1A 
+>    Jan 27 17:22:56 | loop1: device node name blacklistedA 
+>    Jan 27 17:22:56 | Discover device /sys/devices/virtual/block/dm-0A 
+>    Jan 27 17:22:56 | dm-0: device node name blacklistedA 
+>    Jan 27 17:22:56 | Discover device /sys/devices/virtual/block/dm-1A 
+>    Jan 27 17:22:56 | dm-1: device node name blacklistedA 
+>    Jan 27 17:22:56 | Discover device /sys/devices/virtual/block/dm-2A 
+>    Jan 27 17:22:56 | dm-2: device node name blacklistedA 
+>    Jan 27 17:22:56 | Discover device /sys/devices/virtual/block/dm-3A 
+>    Jan 27 17:22:56 | dm-3: device node name blacklistedA 
+>    Jan 27 17:22:56 | Discover device /sys/devices/virtual/block/dm-4A 
+>    Jan 27 17:22:56 | dm-4: device node name blacklistedA 
+>    Jan 27 17:22:56 | Discovery status 0A 
+>    ===== paths list =====A 
+>    uuid hcil dev dev_t pri dm_st chk_st vend/prod/rev dev_stA 
+>    0:2:0:0 sda 8:0 -1 undef undef DELL ,PERC H310 runningA 
+>    Jan 27 17:22:56 | unloading const prioritizerA 
+>    Jan 27 17:22:56 | unloading directio checker
+>    [root@localhost etc]# cat multipath.confA 
+>    # RHEV REVISION 1.1A 
+> 
+>    defaults {A 
+>    polling_interval 5A 
+>    #getuid_callout "/usr/lib/udev/scsi_id --whitelisted --replace-whitespace
+>    --device=/dev/%n"A 
+>    getuid_callout "/lib/udev/scsi_id --whitelisted --replace-whitespace
+>    --device=/dev/%n"A 
+>    no_path_retry 5A 
+>    user_friendly_names noA 
+>    flush_on_last_del yesA 
+>    fast_io_fail_tmo 5A 
+>    dev_loss_tmo 30A 
+>    max_fds 4096A 
+>    verbosity 4A 
+>    }A 
+> 
+>    devices {A 
+>    device {A 
+>    vendor "HITACHI"A 
+>    product "DF.*"A 
+>    #getuid_callout "/usr/lib/udev/scsi_id --whitelisted --replace-whitespace
+>    --device=/dev/%n"A 
+>    getuid_callout "/lib/udev/scsi_id --whitelisted --replace-whitespace
+>    --device=/dev/%n"A 
+>    }A 
+>    device {A 
+>    vendor "COMPELNT"A 
+>    product "Compellent Vol"A 
+>    no_path_retry 5A 
+>    }A 
+>    device {A 
+>    # multipath.conf.defaultA 
+>    vendor "DGC"A 
+>    product ".*"A 
+>    product_blacklist "LUNZ"A 
+>    path_grouping_policy "group_by_prio"A 
+>    path_checker "emc_clariion"A 
+>    hardware_handler "1 emc"A 
+>    prio "emc"A 
+>    failback immediateA 
+>    rr_weight "uniform"A 
+>    # vdsm required configurationA 
+>    #getuid_callout "/usr/lib/udev/scsi_id --whitelisted --replace-whitespace
+>    --device=/dev/%n"A 
+>    getuid_callout "/lib/udev/scsi_id --whitelisted --replace-whitespace
+>    --device=/dev/%n"A 
+>    features "0"A 
+>    no_path_retry 5A 
+>    }A 
+>    }A 
+>    [root@localhost etc]#A 
+>    I can not fix this issue .A This problem is hard enough to perplex .A 
+>    someone can give me some suggest with it.
 
-Looks like this function has been defined in patch3 but used in patch2.
-That means compilation will fail only if series is applied till patch 2.
-That's not a good idea. You patch series should be bisectable.
-
-So any definitions you want to use, introduce them first.
-
-Seconly I had a quick look at patch 3 and this function also seems to
-be doing following.
-
-+
-+       slot = get_next_slot(desc_table);
-+       desc = slot_to_desc(desc_table, slot);
-
-This is odd. This function is supposed to return the size of hash and
-not do extra magic of getting next free slot and then getting to desc
-associated with slot.
-
-Break out this logic in separate function appropriately.
-
-[..]
-> +static int dm_dedup_message_fn(struct dm_target *ti,
-> +				unsigned argc, char **argv)
-> +{
-> +	int r = 0;
-> +
-
-I think we should document these messages in documentation file and
-explain what do they do.
-
-Also looks like mark_and sweep has been replaced by garbage_collect later,
-why?
-
-> +	struct dedup_config *dc = ti->private;
-> +
-> +	if (!strcasecmp(argv[0], "mark_and_sweep")) {
-> +		r = mark_and_sweep(dc);
-> +		if (r < 0)
-> +			DMERR("Error in performing mark_and_sweep: %d.", r);
-> +	} else if (!strcasecmp(argv[0], "drop_bufio_cache")) {
-> +		if (dc->mdops->flush_bufio_cache)
-> +			dc->mdops->flush_bufio_cache(dc->bmd);
-> +		else
-> +			r = -ENOTSUPP;
-> +	} else
-> +		r = -EINVAL;
-> +
-> +	return r;
-> +}
-> +
-> +static int dm_dedup_endio_fn(struct dm_target *ti, struct bio *bio, int error)
-> +{
-> +	if (error || bio_data_dir(bio) != READ)
-> +		return 0;
-> +
-> +	return 0;
-> +}
-
-So this function always returns 0. What's the point of that if block then?
-
-Thanks
-Vivek
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
