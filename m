@@ -1,52 +1,66 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] Remove might_sleep from wait_event_cmd
-Date: Mon, 2 Feb 2015 09:39:02 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1502020935580.13510@file01.intranet.prod.int.rdu2.redhat.com>
+From: SF Markus Elfring <elfring@users.sourceforge.net>
+Subject: [PATCH 1/3] dm snapshot: Deletion of unnecessary checks before the
+ function call "vfree"
+Date: Mon, 02 Feb 2015 16:17:40 +0100
+Message-ID: <54CF9514.70502@users.sourceforge.net>
+References: <5307CAA2.8060406@users.sourceforge.net> <alpine.DEB.2.02.1402212321410.2043@localhost6.localdomain6> <530A086E.8010901@users.sourceforge.net> <alpine.DEB.2.02.1402231635510.1985@localhost6.localdomain6> <530A72AA.3000601@users.sourceforge.net> <alpine.DEB.2.02.1402240658210.2090@localhost6.localdomain6> <530B5FB6.6010207@users.sourceforge.net> <alpine.DEB.2.10.1402241710370.2074@hadrien> <530C5E18.1020800@users.sourceforge.net> <alpine.DEB.2.10.1402251014170.2080@hadrien> <530CD2C4.4050903@users.sourceforge.net> <alpine.DEB.2.10.1402251840450.7035@hadrien> <530CF8FF.8080600@users.sourceforge.net> <alpine.DEB.2.02.1402252117150.2047@localhost6.localdomain6> <530DD06F.4090703@users.sourceforge.net> <alpine.DEB.2.02.1402262129250.2221@localhost6.localdomain6> <5317A59D.4@users.so
+ urceforge.net> <54CF93BB.40206@users.sourceforge.net>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <54CF93BB.40206@users.sourceforge.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Zdenek Kabelac <zkabelac@redhat.com>, tglx@linutronix.de, ilya.dryomov@inktank.com, umgwanakikbuti@gmail.com, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@kernel.org>, Neil Brown <neilb@suse.de>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, dm-devel@redhat.com, linux-raid@vger.kernel.org
+Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
 List-Id: dm-devel.ids
 
-Hi
+From: Markus Elfring <elfring@users.sourceforge.net>
+Date: Mon, 2 Feb 2015 14:38:29 +0100
 
-Please apply this before 3.19 is released.
+The vfree() function performs also input parameter validation.
+Thus the test around the call is not needed.
 
-Mikulas
+This issue was detected by using the Coccinelle software.
 
-
-The patch e22b886a8a43b147e1994a9f970f678fc0df2033 introduced a bug in the
-raid5 subsystem.
-
-The function raid5_quiesce (and resize_stripes) calls 
-lock_all_device_hash_locks_irq that disables interrupts and takes a few 
-spinlocks, then it calls wait_event_cmd with cmd1 
-unlock_all_device_hash_locks_irq(conf) and cmd2 
-lock_all_device_hash_locks_irq(conf). cmd1 unlocks the spinlocks and 
-enables interrupts, cmd2 disables interrupts and locks the spinlock.
-
-The patch e22b886a8a43b147e1994a9f970f678fc0df2033 adds might_sleep() to a
-position where spinlocks are taken, thus it introduces a bug.
-
-This patch removes might_sleep() from wait_event_cmd.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
+Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
 ---
- include/linux/wait.h |    1 -
- 1 file changed, 1 deletion(-)
+ drivers/md/dm-snap-persistent.c | 14 ++++----------
+ 1 file changed, 4 insertions(+), 10 deletions(-)
 
-Index: linux-2.6/include/linux/wait.h
-===================================================================
---- linux-2.6.orig/include/linux/wait.h	2014-12-30 01:19:25.564231262 +0100
-+++ linux-2.6/include/linux/wait.h	2015-02-02 15:30:16.766354658 +0100
-@@ -363,7 +363,6 @@ do {									\
-  */
- #define wait_event_cmd(wq, condition, cmd1, cmd2)			\
- do {									\
--	might_sleep();							\
- 	if (condition)							\
- 		break;							\
- 	__wait_event_cmd(wq, condition, cmd1, cmd2);			\
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index d6e8817..808b841 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -200,16 +200,11 @@ err_area:
+ 
+ static void free_area(struct pstore *ps)
+ {
+-	if (ps->area)
+-		vfree(ps->area);
++	vfree(ps->area);
+ 	ps->area = NULL;
+-
+-	if (ps->zero_area)
+-		vfree(ps->zero_area);
++	vfree(ps->zero_area);
+ 	ps->zero_area = NULL;
+-
+-	if (ps->header_area)
+-		vfree(ps->header_area);
++	vfree(ps->header_area);
+ 	ps->header_area = NULL;
+ }
+ 
+@@ -605,8 +600,7 @@ static void persistent_dtr(struct dm_exception_store *store)
+ 	free_area(ps);
+ 
+ 	/* Allocated in persistent_read_metadata */
+-	if (ps->callbacks)
+-		vfree(ps->callbacks);
++	vfree(ps->callbacks);
+ 
+ 	kfree(ps);
+ }
+-- 
+2.2.2
