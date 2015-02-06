@@ -1,39 +1,60 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 3/3] dm ioctl: Delete an unnecessary check before the
- function call "dm_table_destroy"
-Date: Fri, 6 Feb 2015 16:12:34 -0500
-Message-ID: <20150206211234.GA14803@redhat.com>
-References: <alpine.DEB.2.10.1402251014170.2080@hadrien>
- <530CD2C4.4050903@users.sourceforge.net>
- <alpine.DEB.2.10.1402251840450.7035@hadrien>
- <530CF8FF.8080600@users.sourceforge.net>
- <alpine.DEB.2.02.1402252117150.2047@localhost6.localdomain6>
- <530DD06F.4090703@users.sourceforge.net>
- <alpine.DEB.2.02.1402262129250.2221@localhost6.localdomain6>
- <5317A59D.4@users.sourceforge.net>
- <54CF93BB.40206@users.sourceforge.net>
- <54CF9666.5060407@users.sourceforge.net>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH RFCv2 03/10] dm-dedup: hash computation
+Date: Fri, 6 Feb 2015 16:42:07 -0500
+Message-ID: <20150206214207.GA27130@redhat.com>
+References: <53ffb650.0878320a.243a.133d@mx.google.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <54CF9666.5060407@users.sourceforge.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: SF Markus Elfring <elfring@users.sourceforge.net>
-Cc: Alasdair Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>, kernel-janitors@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
+In-Reply-To: <53ffb650.0878320a.243a.133d@mx.google.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
 List-Id: dm-devel.ids
 
-On Mon, Feb 02 2015 at 10:23am -0500,
-SF Markus Elfring <elfring@users.sourceforge.net> wrote:
+On Thu, Aug 28, 2014 at 06:04:55PM -0400, Vasily Tarasov wrote:
 
-> From: Markus Elfring <elfring@users.sourceforge.net>
-> Date: Mon, 2 Feb 2015 15:30:37 +0100
-> 
-> The dm_table_destroy() function tests whether its argument is NULL and then
-> returns immediately. Thus the test around the call is not needed.
-> 
-> This issue was detected by using the Coccinelle software.
+[..]
+> +#include "dm-dedup-target.h"
+> +#include "dm-dedup-hash.h"
+> +#include <linux/atomic.h>
+> +#include <linux/blk_types.h>
+> +
+> +/*
+> + * We are declaring and initalizaing global hash_desc, because
+> + * we need to do hash computation in endio function, and this
+> + * function is called in softirq context. Hence we are not
+> + * allowed to perform any operation on that path which can sleep.
+> + * And tfm allocation in hash_desc, at one point, tries to take
+> + * semaphore and hence tries to sleep. And because of this we get
+> + * BUG, which complains "Scheduling while atomic". Hence to avoid
+> + * this scenario, we moved the declaration and initialization out
+> + * of critical path.
+> + */
 
-Your proposed patch (while technically correct) hurts code clarity.
+Hi,
 
-Nack.
+Is this comment still valid? We calculate hash when bio is submitted
+from the worker thread context. So where is the softirq context here?
+
+do_work()
+ process_bio()
+  handle_write()
+   compute_hash_bio()
+
+This all is happening in worker worker thread context and not softirq
+context?
+
+Thanks
+Vivek
