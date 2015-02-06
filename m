@@ -1,16 +1,19 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH RFCv2 02/10] dm-dedup: core deduplication
-	logic
-Date: Thu, 5 Feb 2015 15:21:01 -0500
-Message-ID: <20150205202101.GA407@redhat.com>
-References: <53ffb64e.4443320a.4df1.28ed@mx.google.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dmcache RAID1 bug?
+Date: Fri, 6 Feb 2015 11:33:19 -0500
+Message-ID: <20150206163319.GA13544@redhat.com>
+References: <CAEZ+n-i7kOC3zZzrv5GHbmfuKJ3b1U6COG8DyDW8HjHk9wDf-Q@mail.gmail.com>
+	<20141117144659.GA29929@redhat.com>
+	<CAEZ+n-jJoCS0WqeeiETYf1jAwPJzy+fyEgr_-Qek+7NzS+uERQ@mail.gmail.com>
+	<CAEZ+n-i3yP+qO6bVDs8O0CwkJKBNzVBMW6gOtd=dty9ALj_8eQ@mail.gmail.com>
+	<CAEZ+n-ha0tFew+807rumUQsk-tqYVyxPUTrGoz0DvdCqLK50Og@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <53ffb64e.4443320a.4df1.28ed@mx.google.com>
+In-Reply-To: <CAEZ+n-ha0tFew+807rumUQsk-tqYVyxPUTrGoz0DvdCqLK50Og@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,100 +23,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vasily Tarasov <tarasov@vasily.name>
-Cc: Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
+To: Leonardo Santos <heiligerstein@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Aug 28, 2014 at 06:02:11PM -0400, Vasily Tarasov wrote:
+On Wed, Nov 19 2014 at  4:39pm -0500,
+Leonardo Santos <heiligerstein@gmail.com> wrote:
 
-[..]
-> +static void handle_read(struct dedup_config *dc, struct bio *bio)
-> +{
-> +	uint64_t lbn;
-> +	uint32_t vsize;
-> +	struct lbn_pbn_value lbnpbn_value;
-> +	int r;
-> +
-> +	lbn = bio_lbn(dc, bio);
-> +
-> +	r = dc->kvs_lbn_pbn->kvs_lookup(dc->kvs_lbn_pbn, (void *)&lbn,
-> +			sizeof(lbn), (void *)&lbnpbn_value, &vsize);
-> +	if (r == 0)
-> +		bio_zero_endio(bio);
-> +	else if (r == 1)
-> +		do_io(dc, bio, lbnpbn_value.pbn);
-> +	else
-> +		BUG();
+> After run regression tests using 'git bisect', I identify that the error
+> was created after commit 8c081b52c6833a30a69ea3bdcef316eccc740c87
+> 
+> To reproduce this error just:
+> - create a raid1 HDDs for origin device;
+> - create a cache device with SSDs (could or not be raid)
+> - create a metadata device with SSDs (could or not be raid)
+> - create a cache device using prior devices
+> - kernel crashes.
+> 
+> I attached the bitseclog and diff file!
 
-kvs_lookup() return values look little odd to me. I am wondering how
-this function will ever return any errors. Because if it returns error,
-we will call BUG().
+Hi, Joe recently fixed a couple issues in dm-cache that were only seen
+when a DM raid device lost a raid member (while not exact as your
+report, could resolve your issues).  Could you please retest with these
+3 dm-cache commits applied to your kernel (all commits are in latest
+3.19-rc kernel)?
 
-I think this function should return 0 upon success and negative error
-code in case of error. And that error code should be propagated upwards.
-
-To differentiate between whether key was found or not, may be you
-can set vsize to zero before calling the function and check vsize
-value after the call. If it is non zero, you know key has been
-found.
-
-> +}
-> +
-> +static int allocate_block(struct dedup_config *dc, uint64_t *pbn_new)
-> +{
-> +	int r;
-> +
-> +	r = dc->mdops->alloc_data_block(dc->bmd, pbn_new);
-> +
-> +	if (!r) {
-> +		dc->logical_block_counter++;
-
-I am not sure why we are bumping up logical_block_counter here. Right
-now we are just allocating a physical block and that has nothing to
-do with bumping up logical block count.
-
-> +		dc->physical_block_counter++;
-> +	}
-> +
-> +	return r;
-> +}
-> +
-> +static int write_to_new_block(struct dedup_config *dc, uint64_t *pbn_new,
-> +				struct bio *bio, uint64_t lbn)
-> +{
-> +	int r = 0;
-> +	struct lbn_pbn_value lbnpbn_value;
-> +
-> +	r = allocate_block(dc, pbn_new);
-> +	if (r < 0) {
-> +		r = -EIO;
-
-Is this a common practice to overwrite error code with -EIO?
-
-> +		return r;
-> +	}
-> +
-> +	lbnpbn_value.pbn = *pbn_new;
-> +
-> +	do_io(dc, bio, *pbn_new);
-> +
-> +	r = dc->kvs_lbn_pbn->kvs_insert(dc->kvs_lbn_pbn, (void *)&lbn,
-> +		sizeof(lbn), (void *)&lbnpbn_value, sizeof(lbnpbn_value));
-> +	if (r < 0)
-> +		BUG();
-> +
-
-I think everywhere we need to fix this BUG() thing. If there is an error
-propagate it upwards instead of saying bug. Let the IO fail but why
-crash the OS?
-
-Also I am assuming that kvs_insert() is going to allocate memory. What
-if that memory allocation fails. Write to block will succeed but we will
-never create an entry in lbn to pbn kvs and next time read comes, we can't
-read that data and lost the data?
-
-I think this needs to be though through more properly and one needs to
-think about all the corner error cases.
-
-Thanks
-Vivek
+9b1cc9f dm cache: share cache-metadata object across inactive and active DM tables
+a59db67 dm cache: fix problematic dual use of a single migration count variable
+766a788 dm cache: fix missing ERR_PTR returns and handling
