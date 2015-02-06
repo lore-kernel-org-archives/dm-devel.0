@@ -1,11 +1,16 @@
-From: Zhichao Cao <caozhichao91@gmail.com>
-Subject: dm-dedup can not make module
-Date: Fri, 6 Feb 2015 16:51:48 -0600
-Message-ID: <CAOhDoTEumgSehwa-NtrjwZjW7yOWPwXNEoqK1BPFY6Qe9XSkLw@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2] block: do not merge two requests with sg gaps
+ if unsupported
+Date: Fri, 6 Feb 2015 17:00:53 -0500
+Message-ID: <20150206220053.GA12141@redhat.com>
+References: <1422137448-14747-1-git-send-email-keith.busch@intel.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7715423299268842786=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1422137448-14747-1-git-send-email-keith.busch@intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,111 +20,113 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Keith Busch <keith.busch@intel.com>, Jens Axboe <axboe@fb.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============7715423299268842786==
-Content-Type: multipart/alternative; boundary=047d7b6226e6fcf593050e734330
+On Sat, Jan 24 2015 at  5:10P -0500,
+Keith Busch <keith.busch@intel.com> wrote:
 
---047d7b6226e6fcf593050e734330
-Content-Type: text/plain; charset=UTF-8
+> This has request based dm inherit the QUEUE_FLAG_SG_GAPS flags from its
+> underlying block devices' request queues, and does not merge two requests
+> with sg gaps when required. This fixes problems when submitting cloned
+> requests to multipathed devices requiring virtually contiguous buffers.
+> 
+> Signed-off-by: Keith Busch <keith.busch@intel.com>
 
-Hi Mike,
+Hi Keith,
 
-I'm a UMN CS student and just the beginer. I'm working on primary dedup
-project and read the dm-dedup paper, which might be very useful for me, so
-I want to try and learn it.
+I reviewed your patch and cleaned it up a little.  Just some whitespace
+nits and used test_bit().  I also renamed dm-table.c's
+queue_contiguous_sg() to queue_supports_sg_gaps() to follow the pattern
+established by the existing queue_supports_sg_merge().
 
-However, when I tried to make dm-dedup as a module and insmod it, it always
-failed.
+Jens, provided you and Keith agree with my changes, and given that the
+initial request-based DM support for blk-mq will land during the 3.20
+merge: can you please pick this fix up for 3.20?  If you'd prefer to
+just take the block change I'm fine with picking up the DM portion.
 
-make -C /lib/modules/`uname -r`/build M=/root/Downloads/md
-make[1]: Entering directory `/usr/src/linux-3.18.5'
-  Building modules, stage 2.
-  MODPOST 0 modules
-make[1]: Leaving directory `/usr/src/linux-3.18.5'
-
-No module was built after make, and my Makefile is:
-
-dm-dedup-y += dm-dedup-target.o dm-dedup-hash.o dm-dedup-rw.o
-dm-dedup-cbt.o dm-dedup-ram.o
-
-obj-$(CONFIG_DM_DEDUP) += dm-dedup.o
-
-ifeq ($(CONFIG_DM_UEVENT),y)
-dm-mod-objs += dm-uevent.o
-endif
-
-all:
-make -C /lib/modules/`uname -r`/build M=$(PWD)
-clean:
-make -C /lib/modules/`uname -r`/build M=$(PWD) clean
-install:
-install -m 755 *.ko /lib/modules/`uname -r`/kernel/drivers/md/
-
-The dm-dedup source files are pulled from git://
-git.fsl.cs.stonybrook.edu/linux-dmdedup.git
-branch dm-dedup-devel
-
-Can you help me and give me some advises?
-
-Thanks a lot!
+Let me know, thanks!
+Mike
 
 
-Zhichao
+From: Keith Busch <keith.busch@intel.com>
+Date: Sat, 24 Jan 2015 15:10:48 -0700
+Subject: [PATCH] block: do not merge two requests with sg gaps if unsupported
 
---047d7b6226e6fcf593050e734330
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Also, a DM device must inherit the QUEUE_FLAG_SG_GAPS flags from its
+underlying block devices' request queues.
 
-<div dir=3D"ltr"><font size=3D"4">Hi Mike,</font><div style=3D"font-size:13=
-px"><font size=3D"4"><br></font></div><div style=3D"font-size:13px"><font s=
-ize=3D"4">I&#39;m a UMN CS student and just the beginer. I&#39;m working on=
- primary dedup project and read the dm-dedup paper, which might be very use=
-ful for me, so I want to try and learn it.=C2=A0</font></div><div style=3D"=
-font-size:13px"><font size=3D"4"><br></font></div><div style=3D"font-size:1=
-3px"><font size=3D"4">However, when I tried to make dm-dedup as a module an=
-d insmod it, it always failed.</font></div><div style=3D"font-size:13px"><b=
-r></div><div style=3D"font-size:13px"><div>make -C /lib/modules/`uname -r`/=
-build M=3D/root/Downloads/md</div><div>make[1]: Entering directory `/usr/sr=
-c/linux-3.18.5&#39;</div><div>=C2=A0 Building modules, stage 2.</div><div>=
-=C2=A0 MODPOST 0 modules</div><div>make[1]: Leaving directory `/usr/src/lin=
-ux-3.18.5&#39;</div></div><div style=3D"font-size:13px"><br></div><div styl=
-e=3D"font-size:13px"><font size=3D"4">No module was built after make, and m=
-y Makefile is:</font></div><div style=3D"font-size:13px"><br></div><div sty=
-le=3D"font-size:13px"><div>dm-dedup-y<span style=3D"white-space:pre-wrap">	=
-</span>+=3D dm-dedup-target.o dm-dedup-hash.o dm-dedup-rw.o dm-dedup-cbt.o =
-dm-dedup-ram.o</div><div><br></div><div>obj-$(CONFIG_DM_DEDUP)<span style=
-=3D"white-space:pre-wrap">		</span>+=3D dm-dedup.o</div><div><br></div><div=
->ifeq ($(CONFIG_DM_UEVENT),y)</div><div>dm-mod-objs<span style=3D"white-spa=
-ce:pre-wrap">			</span>+=3D dm-uevent.o</div><div>endif</div><div><br></div=
-><div>all:</div><div><span style=3D"white-space:pre-wrap">	</span>make -C /=
-lib/modules/`uname -r`/build M=3D$(PWD)</div><div>clean:</div><div><span st=
-yle=3D"white-space:pre-wrap">	</span>make -C /lib/modules/`uname -r`/build =
-M=3D$(PWD) clean</div><div>install:</div><div><span style=3D"white-space:pr=
-e-wrap">	</span>install -m 755 *.ko /lib/modules/`uname -r`/kernel/drivers/=
-md/</div></div><div style=3D"font-size:13px"><br></div><div><font size=3D"4=
-">The dm-dedup source files are pulled from=C2=A0</font><code><span style=
-=3D"font-family:&#39;Times New Roman&#39;,serif;color:black"><font size=3D"=
-4">git://<a href=3D"http://git.fsl.cs.stonybrook.edu/linux-dmdedup.git">git=
-.fsl.cs.stonybrook.edu/linux-dmdedup.git</a>=C2=A0</font></span></code></di=
-v><div><code><span style=3D"font-family:&#39;Times New Roman&#39;,serif;col=
-or:black"><font size=3D"4">branch dm-dedup-devel</font></span></code></div>=
-<div><font size=3D"4"><br></font></div><div><font size=3D"4">Can you help m=
-e and give me some advises?</font></div><div style=3D"font-size:13px"><font=
- size=3D"4"><br></font></div><div style=3D"font-size:13px"><font size=3D"4"=
->Thanks a lot!</font></div><div style=3D"font-size:13px"><br></div><div sty=
-le=3D"font-size:13px"><font size=3D"4"><br></font></div><div style=3D"font-=
-size:13px"><font size=3D"4">Zhichao</font></div></div>
+This fixes problems when submitting cloned requests to multipathed
+devices requiring virtually contiguous buffers.
 
---047d7b6226e6fcf593050e734330--
+Signed-off-by: Keith Busch <keith.busch@intel.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ block/blk-merge.c     | 12 ++++++++++++
+ drivers/md/dm-table.c | 13 +++++++++++++
+ 2 files changed, 25 insertions(+)
 
-
---===============7715423299268842786==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7715423299268842786==--
+diff --git a/block/blk-merge.c b/block/blk-merge.c
+index 89b97b5..1ae46e5 100644
+--- a/block/blk-merge.c
++++ b/block/blk-merge.c
+@@ -385,6 +385,14 @@ static bool req_no_special_merge(struct request *req)
+ 	return !q->mq_ops && req->special;
+ }
+ 
++static int req_gap_to_prev(struct request *req, struct request *next)
++{
++	struct bio *prev = req->biotail;
++
++	return bvec_gap_to_prev(&prev->bi_io_vec[prev->bi_vcnt - 1],
++				next->bio->bi_io_vec[0].bv_offset);
++}
++
+ static int ll_merge_requests_fn(struct request_queue *q, struct request *req,
+ 				struct request *next)
+ {
+@@ -399,6 +407,10 @@ static int ll_merge_requests_fn(struct request_queue *q, struct request *req,
+ 	if (req_no_special_merge(req) || req_no_special_merge(next))
+ 		return 0;
+ 
++	if (test_bit(QUEUE_FLAG_SG_GAPS, q->queue_flags) &&
++	    req_gap_to_prev(req, next))
++		return 0;
++
+ 	/*
+ 	 * Will it become too large?
+ 	 */
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 14954d8..6554d91 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1389,6 +1389,14 @@ static int queue_supports_sg_merge(struct dm_target *ti, struct dm_dev *dev,
+ 	return q && !test_bit(QUEUE_FLAG_NO_SG_MERGE, &q->queue_flags);
+ }
+ 
++static int queue_supports_sg_gaps(struct dm_target *ti, struct dm_dev *dev,
++				  sector_t start, sector_t len, void *data)
++{
++	struct request_queue *q = bdev_get_queue(dev->bdev);
++
++	return q && !test_bit(QUEUE_FLAG_SG_GAPS, &q->queue_flags);
++}
++
+ static bool dm_table_all_devices_attribute(struct dm_table *t,
+ 					   iterate_devices_callout_fn func)
+ {
+@@ -1509,6 +1517,11 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	else
+ 		queue_flag_set_unlocked(QUEUE_FLAG_NO_SG_MERGE, q);
+ 
++	if (dm_table_all_devices_attribute(t, queue_supports_sg_gaps))
++		queue_flag_clear_unlocked(QUEUE_FLAG_SG_GAPS, q);
++	else
++		queue_flag_set_unlocked(QUEUE_FLAG_SG_GAPS, q);
++
+ 	dm_table_set_integrity(t);
+ 
+ 	/*
+-- 
+1.9.3 (Apple Git-50)
