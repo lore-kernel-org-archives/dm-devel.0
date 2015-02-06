@@ -1,15 +1,16 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH RFCv2 03/10] dm-dedup: hash computation
-Date: Fri, 6 Feb 2015 16:42:07 -0500
-Message-ID: <20150206214207.GA27130@redhat.com>
-References: <53ffb650.0878320a.243a.133d@mx.google.com>
+From: Keith Busch <keith.busch@intel.com>
+Subject: Re: [PATCH v2] block: do not merge two requests with sg
+ gaps if unsupported
+Date: Fri, 6 Feb 2015 22:13:27 +0000 (UTC)
+Message-ID: <alpine.LNX.2.00.1502062207520.15481@localhost.lm.intel.com>
+References: <1422137448-14747-1-git-send-email-keith.busch@intel.com>
+	<20150206220053.GA12141@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <53ffb650.0878320a.243a.133d@mx.google.com>
+In-Reply-To: <20150206220053.GA12141@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,42 +20,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Keith Busch <keith.busch@intel.com>, Jens Axboe <axboe@fb.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Aug 28, 2014 at 06:04:55PM -0400, Vasily Tarasov wrote:
+On Fri, 6 Feb 2015, Mike Snitzer wrote:
+> On Sat, Jan 24 2015 at  5:10P -0500,
+> Keith Busch <keith.busch@intel.com> wrote:
+>
+>> This has request based dm inherit the QUEUE_FLAG_SG_GAPS flags from its
+>> underlying block devices' request queues, and does not merge two requests
+>> with sg gaps when required. This fixes problems when submitting cloned
+>> requests to multipathed devices requiring virtually contiguous buffers.
+>>
+>> Signed-off-by: Keith Busch <keith.busch@intel.com>
+>
+> Hi Keith,
+>
+> I reviewed your patch and cleaned it up a little.  Just some whitespace
+> nits and used test_bit().  I also renamed dm-table.c's
+> queue_contiguous_sg() to queue_supports_sg_gaps() to follow the pattern
+> established by the existing queue_supports_sg_merge().
 
-[..]
-> +#include "dm-dedup-target.h"
-> +#include "dm-dedup-hash.h"
-> +#include <linux/atomic.h>
-> +#include <linux/blk_types.h>
-> +
-> +/*
-> + * We are declaring and initalizaing global hash_desc, because
-> + * we need to do hash computation in endio function, and this
-> + * function is called in softirq context. Hence we are not
-> + * allowed to perform any operation on that path which can sleep.
-> + * And tfm allocation in hash_desc, at one point, tries to take
-> + * semaphore and hence tries to sleep. And because of this we get
-> + * BUG, which complains "Scheduling while atomic". Hence to avoid
-> + * this scenario, we moved the declaration and initialization out
-> + * of critical path.
-> + */
+Thanks Mike! Your modifications look good to me. I try to adapt to the
+local lingo, but rarely get it right. :)
 
-Hi,
-
-Is this comment still valid? We calculate hash when bio is submitted
-from the worker thread context. So where is the softirq context here?
-
-do_work()
- process_bio()
-  handle_write()
-   compute_hash_bio()
-
-This all is happening in worker worker thread context and not softirq
-context?
-
-Thanks
-Vivek
+> Jens, provided you and Keith agree with my changes, and given that the
+> initial request-based DM support for blk-mq will land during the 3.20
+> merge: can you please pick this fix up for 3.20?  If you'd prefer to
+> just take the block change I'm fine with picking up the DM portion.
+>
+> Let me know, thanks!
+> Mike
