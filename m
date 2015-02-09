@@ -1,208 +1,64 @@
-From: "BK, GirishKumar" <GirishKumar.BK@netapp.com>
-Subject: dm-cache: Promote-Demote Policy.  How it works ?
-Date: Mon, 9 Feb 2015 13:19:44 +0000
-Message-ID: <D0FEB1C5.11407%GirishKumar.BK@netapp.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Dongsu Park <dongsu.park@profitbricks.com>
+Subject: blk-mq crash with dm-multipath in for-3.20/core
+Date: Mon, 9 Feb 2015 17:38:56 +0100
+Message-ID: <20150209163856.GA12781@posteo.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8898368880165525843=="
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Keith Busch <keith.busch@intel.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
---===============8898368880165525843==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_D0FEB1C511407GirishKumarBKnetappcom_"
+Hi Jens,
 
---_000_D0FEB1C511407GirishKumarBKnetappcom_
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+during testing with the linux-block for-3.20/core branch, I hit a BUG
+like below. It's reproducible by running xfstests/xfs/279.
 
-HI,
+Bisecting showed that the first bad commit is 6d6285c45f5a ("block:
+require blk_rq_prep_clone() be given an initialized clone request").
+With reverting this commit, the crash disappears.
+The linux-dm's branch dm-for-3.20 works fine without crash too.
 
-I'm new and trying to understand how exactly the "read_promote_adjustment" =
-and "write_promote_adjustment" work in dm-cache. From the description in th=
-e http://lxr.free-electrons.com/source/Documentation/device-mapper/cache-po=
-licies.txt#L45 its not clear as to how promotion works.
+As pointed out already by Keith Busch in a thread, [1] that commit should
+not be there in the first place. Commit 102e38b1030e ("dm: split
+request structure out from dm_rq_target_io structure") from linux-dm tree
+[2] is going to move the blk_rq_init() call again to __clone_rq().
 
-For example:
+So that commit 6d6285c45f5a should be either reverted, or moved to
+linux-dm tree, doesn't it?
 
- 61<http://lxr.free-electrons.com/source/Documentation/device-mapper/cache-=
-policies.txt#L61> Internally the mq policy maintains a promotion threshold =
-variable.  If
- 62<http://lxr.free-electrons.com/source/Documentation/device-mapper/cache-=
-policies.txt#L62> the hit count of a block not in the cache goes above this=
- threshold it
- 63<http://lxr.free-electrons.com/source/Documentation/device-mapper/cache-=
-policies.txt#L63> gets promoted to the cache.
+Cheers,
+Dongsu
 
-Here, the hit count is mentioned for the block not in cache.  Which means t=
-hat, blocks are not moved to cache unless there are susequent requests for =
-the same block until the read_promote_thresold is reached.  Meaning all tho=
-se time the data was being read from slower disk.  Why isn't the block move=
-d to cache on first miss ?
+[1] https://www.redhat.com/archives/dm-devel/2015-January/msg00171.html
+[2] https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-3.20&id=102e38b1030e883efc022dfdc7b7e7a3de70d1c5
 
-What does write_promote_adjustment mean here ? Meaning after this count rea=
-ches some threshold ( not sure how this count is incremented ?) then the di=
-rty data from cache is written to slow disk ?
-
-Can anyone please the scenarios under which each of the counters used ?
-
-Thanks,
-
-/Girish BK
-
-
-
-
-
-
-
-
-
-
-
-
-45<http://lxr.free-electrons.com/source/Documentation/device-mapper/cache-p=
-olicies.txt#L45>         'read_promote_adjustment <value>'
- 46<http://lxr.free-electrons.com/source/Documentation/device-mapper/cache-=
-policies.txt#L46>         'write_promote_adjustment <value>'
- 47<http://lxr.free-electrons.com/source/Documentation/device-mapper/cache-=
-policies.txt#L47>         'discard_promote_adjustment <value>'
-
---_000_D0FEB1C511407GirishKumarBKnetappcom_
-Content-Type: text/html; charset="iso-8859-1"
-Content-ID: <B938DA30AAA86F4C988466D4BFED2297@hq.netapp.com>
-Content-Transfer-Encoding: quoted-printable
-
-<html>
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859-=
-1">
-</head>
-<body style=3D"word-wrap: break-word; -webkit-nbsp-mode: space; -webkit-lin=
-e-break: after-white-space;">
-<pre style=3D"color: rgb(120, 120, 120); font-family: Monaco, 'Courier New'=
-, Courier, monospace; font-size: 0.95em; padding: 1em; overflow: auto; font=
--weight: bold; background-color: rgb(255, 255, 255);"><div>HI,</div></pre>
-<pre style=3D"color: rgb(120, 120, 120); font-family: Monaco, 'Courier New'=
-, Courier, monospace; font-size: 0.95em; padding: 1em; overflow: auto; font=
--weight: bold; background-color: rgb(255, 255, 255);">I&#8217;m new and try=
-ing to understand how exactly the &#8220;read_promote_adjustment&#8221; and=
- &#8220;write_promote_adjustment&#8221; work in dm-cache. From the descript=
-ion in the <a href=3D"http://lxr.free-electrons.com/source/Documentation/de=
-vice-mapper/cache-policies.txt#L45" style=3D"font-family: Calibri, sans-ser=
-if; font-size: 14px;">http://lxr.free-electrons.com/source/Documentation/de=
-vice-mapper/cache-policies.txt#L45</a> its not clear as to how promotion wo=
-rks.</pre>
-<pre style=3D"color: rgb(120, 120, 120); font-family: Monaco, 'Courier New'=
-, Courier, monospace; font-size: 0.95em; padding: 1em; overflow: auto; font=
--weight: bold;">For example: </pre>
-<pre style=3D"padding: 1em; overflow: auto;"><pre style=3D"color: rgb(120, =
-120, 120); font-family: Monaco, 'Courier New', Courier, monospace; font-siz=
-e: 0.95em; font-weight: bold; padding: 1em; overflow: auto; background-colo=
-r: rgb(255, 255, 255);"> <a name=3D"L61" href=3D"http://lxr.free-electrons.=
-com/source/Documentation/device-mapper/cache-policies.txt#L61" style=3D"tex=
-t-decoration: none; border-bottom-width: 1px; border-bottom-style: dotted; =
-border-bottom-color: rgb(153, 153, 153); color: black;">61</a> Internally t=
-he mq policy maintains a promotion threshold variable.  If
- <a name=3D"L62" href=3D"http://lxr.free-electrons.com/source/Documentation=
-/device-mapper/cache-policies.txt#L62" style=3D"text-decoration: none; bord=
-er-bottom-width: 1px; border-bottom-style: dotted; border-bottom-color: rgb=
-(153, 153, 153); color: black;">62</a> the hit count of a block not in the =
-cache goes above this threshold it
- <a name=3D"L63" href=3D"http://lxr.free-electrons.com/source/Documentation=
-/device-mapper/cache-policies.txt#L63" style=3D"text-decoration: none; bord=
-er-bottom-width: 1px; border-bottom-style: dotted; border-bottom-color: rgb=
-(153, 153, 153); color: black;">63</a> gets promoted to the cache. </pre><p=
-re style=3D"color: rgb(120, 120, 120); font-family: Monaco, 'Courier New', =
-Courier, monospace; font-size: 0.95em; font-weight: bold; padding: 1em; ove=
-rflow: auto; background-color: rgb(255, 255, 255);">Here, the hit count is =
-mentioned for the block not in cache.  Which means that, blocks are not mov=
-ed to cache unless there are susequent requests for the same block until th=
-e read_promote_thresold is reached.  Meaning all those time the data was be=
-ing read from slower disk.  Why isn&#8217;t the block moved to cache on fir=
-st miss ?</pre><pre style=3D"color: rgb(120, 120, 120); font-family: Monaco=
-, 'Courier New', Courier, monospace; font-size: 0.95em; font-weight: bold; =
-padding: 1em; overflow: auto; background-color: rgb(255, 255, 255);">What d=
-oes write_promote_adjustment mean here ? Meaning after this count reaches s=
-ome threshold ( not sure how this count is incremented ?) then the dirty da=
-ta from cache is written to slow disk ?</pre><pre style=3D"padding: 1em; ov=
-erflow: auto;"><span style=3D"background-color: rgb(255, 254, 254);"><font =
-color=3D"#787878" face=3D"Monaco,Courier New,Courier,monospace"><span style=
-=3D"font-size: 0.95em;"><b>Can anyone please the scenarios under which each=
- of the counters used ? </b></span></font></span></pre><pre style=3D"color:=
- rgb(120, 120, 120); font-family: Monaco, 'Courier New', Courier, monospace=
-; font-size: 0.95em; font-weight: bold; padding: 1em; overflow: auto;"><spa=
-n style=3D"background-color: rgb(255, 254, 254);">Thanks,</span></pre><pre =
-style=3D"color: rgb(120, 120, 120); font-family: Monaco, 'Courier New', Cou=
-rier, monospace; font-size: 0.95em; font-weight: bold; padding: 1em; overfl=
-ow: auto;"><span style=3D"background-color: rgb(254, 253, 253);">/Girish BK=
-</span></pre><pre style=3D"color: rgb(120, 120, 120); font-family: Monaco, =
-'Courier New', Courier, monospace; font-size: 0.95em; font-weight: bold; pa=
-dding: 1em; overflow: auto;"><span style=3D"background-color: rgb(255, 254,=
- 254);"><br></span></pre><pre style=3D"color: rgb(120, 120, 120); font-fami=
-ly: Monaco, 'Courier New', Courier, monospace; font-size: 0.95em; font-weig=
-ht: bold; padding: 1em; overflow: auto; background-color: rgb(255, 255, 255=
-);"><br></pre><pre style=3D"color: rgb(120, 120, 120); font-family: Monaco,=
- 'Courier New', Courier, monospace; font-size: 0.95em; font-weight: bold; p=
-adding: 1em; overflow: auto; background-color: rgb(255, 255, 255);"><br></p=
-re><pre style=3D"color: rgb(120, 120, 120); font-family: Monaco, 'Courier N=
-ew', Courier, monospace; font-size: 0.95em; font-weight: bold; padding: 1em=
-; overflow: auto; background-color: rgb(255, 255, 255);"> </pre><pre style=
-=3D"color: rgb(120, 120, 120); font-family: Monaco, 'Courier New', Courier,=
- monospace; font-size: 0.95em; font-weight: bold; padding: 1em; overflow: a=
-uto; background-color: rgb(255, 255, 255);"><br></pre></pre>
-<pre style=3D"color: rgb(120, 120, 120); font-family: Monaco, 'Courier New'=
-, Courier, monospace; font-size: 0.95em; padding: 1em; overflow: auto; font=
--weight: bold; background-color: rgb(255, 255, 255);"><br></pre>
-<pre style=3D"color: rgb(120, 120, 120); font-family: Monaco, 'Courier New'=
-, Courier, monospace; font-size: 0.95em; padding: 1em; overflow: auto; font=
--weight: bold; background-color: rgb(255, 255, 255);"><br></pre>
-<pre style=3D"color: rgb(120, 120, 120); font-family: Monaco, 'Courier New'=
-, Courier, monospace; font-size: 0.95em; padding: 1em; overflow: auto; font=
--weight: bold; background-color: rgb(255, 255, 255);">&nbsp;</pre>
-<pre style=3D"color: rgb(120, 120, 120); font-family: Monaco, 'Courier New'=
-, Courier, monospace; font-size: 0.95em; padding: 1em; overflow: auto; font=
--weight: bold; background-color: rgb(255, 255, 255);"><br></pre>
-<pre style=3D"color: rgb(120, 120, 120); font-family: Monaco, 'Courier New'=
-, Courier, monospace; font-size: 0.95em; padding: 1em; overflow: auto; font=
--weight: bold; background-color: rgb(255, 255, 255);"><a name=3D"L45" href=
-=3D"http://lxr.free-electrons.com/source/Documentation/device-mapper/cache-=
-policies.txt#L45" style=3D"text-decoration: none; border-bottom-width: 1px;=
- border-bottom-style: dotted; border-bottom-color: rgb(153, 153, 153); colo=
-r: black;">45</a>         'read_promote_adjustment &lt;value&gt;'
- <a name=3D"L46" href=3D"http://lxr.free-electrons.com/source/Documentation=
-/device-mapper/cache-policies.txt#L46" style=3D"text-decoration: none; bord=
-er-bottom-width: 1px; border-bottom-style: dotted; border-bottom-color: rgb=
-(153, 153, 153); color: black;">46</a>         'write_promote_adjustment &l=
-t;value&gt;'
- <a name=3D"L47" href=3D"http://lxr.free-electrons.com/source/Documentation=
-/device-mapper/cache-policies.txt#L47" style=3D"text-decoration: none; bord=
-er-bottom-width: 1px; border-bottom-style: dotted; border-bottom-color: rgb=
-(153, 153, 153); color: black;">47</a>         'discard_promote_adjustment =
-&lt;value&gt;'</pre>
-</body>
-</html>
-
---_000_D0FEB1C511407GirishKumarBKnetappcom_--
-
-
---===============8898368880165525843==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============8898368880165525843==--
+------------[ cut here ]------------
+kernel BUG at block/blk-core.c:2333!
+RIP: 0010: [<ffffffff814c6858>] blk_dequeue_request+0x78/0x90
+Call Trace:
+ [<ffffffff814c6886>] blk_start_request+0x16/0x70
+ [<ffffffff8169f9fa>] dm_start_request+0x1a/0x50
+ [<ffffffff8169fce6>] dm_request_fn+0x2b6/0x3e0
+ [<ffffffff814c0087>] __blk_run_queue+0x37/0x50
+ [<ffffffff814c31ed>] queue_unplugged+0x5d/0x230
+ [<ffffffff814c710c>] blk_flush_plug_list+0x1ac/0x230
+ [<ffffffff814c7708>] blk_finish_plug+0x18/0x60
+ [<ffffffff811baea1>] __do_page_cache_readahead+0x2b1/0x320
+ [<ffffffff811bad55>] ? __do_page_cache_readahead+0x165/0x320
+ [<ffffffff811baff2>] ondemand_readahead+0xe2/0x480
+ [<ffffffff811ac3ff>] ? pagecache_get_page+0x2f/0x200
+ [<ffffffff811bb4c1>] page_cache_sync_readahead+0x31/0x50
+ [<ffffffff811ad5bc>] generic_file_read_iter+0x51c/0x630
+ [<ffffffff811dd00e>] ? might_fault+0x5e/0xc0
+ [<ffffffff81261e37>] blkdev_read_iter+0x37/0x40
+ [<ffffffff8121fa4e>] new_sync_read+0x7e/0xb0
+ [<ffffffff81220ce8>] __vfs_read+0x18/0x50
+ [<ffffffff81220dad>] vfs_read+0x8d/0x150
+ [<ffffffff81220eb9>] SyS_read+0x49/0xb0
+ [<ffffffff817dce52>] system_call_fastpath+0x12/0x17
+RIP  [<ffffffff814c6858>] blk_dequeue_request+0x78/0x90
+ RSP <ffff88006e1eba68>
+---[ end trace dcfc3d438518b1aa ]---
