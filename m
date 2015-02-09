@@ -1,48 +1,69 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: blk-mq crash with dm-multipath in for-3.20/core
-Date: Mon, 9 Feb 2015 12:13:12 -0500
-Message-ID: <20150209171311.GC1599@redhat.com>
+Subject: [PATCH] dm: fix multipath regression due to initializing wrong
+ request
+Date: Mon, 9 Feb 2015 12:35:15 -0500
+Message-ID: <20150209173514.GA14199@redhat.com>
 References: <20150209163856.GA12781@posteo.de>
  <20150209164855.GB1599@redhat.com>
  <alpine.LNX.2.00.1502091651310.15481@localhost.lm.intel.com>
+ <20150209171311.GC1599@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1502091651310.15481@localhost.lm.intel.com>
+In-Reply-To: <20150209171311.GC1599@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Keith Busch <keith.busch@intel.com>
-Cc: Dongsu Park <dongsu.park@profitbricks.com>, Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Keith Busch <keith.busch@intel.com>, Jens Axboe <axboe@kernel.dk>
+Cc: Dongsu Park <dongsu.park@profitbricks.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Feb 09 2015 at 12:07pm -0500,
-Keith Busch <keith.busch@intel.com> wrote:
+On Mon, Feb 09 2015 at 12:13P -0500,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-> On Mon, 9 Feb 2015, Mike Snitzer wrote:
-> >On Mon, Feb 09 2015 at 11:38am -0500,
-> >Dongsu Park <dongsu.park@profitbricks.com> wrote:
-> >>So that commit 6d6285c45f5a should be either reverted, or moved to
-> >>linux-dm tree, doesn't it?
-> >>
-> >>Cheers,
-> >>Dongsu
-> >>
-> >>[1] https://www.redhat.com/archives/dm-devel/2015-January/msg00171.html
-> >>[2] https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-3.20&id=102e38b1030e883efc022dfdc7b7e7a3de70d1c5
-> >
-> >Right, we're aware of this typo in 6d6285c45f5a.  Sorry about that, but
-> >as you noted, once both the linux-block and linux-dm branches for 3.20
-> >are merged all is back to working.
-> >
-> >So we're planning to just leave the block commit as broken and let the
-> >dm commit you noted fix it up.  In the end 3.20-rc1 will have a working
-> >dm-multipath.
+> On Mon, Feb 09 2015 at 12:07pm -0500,
+> Keith Busch <keith.busch@intel.com> wrote:
 > 
-> Oh, we're not going rebase the series with the correction? I'm concerned
-> someone biscecting a completely unrelated problem might step on this
-> commit. Up to you guys. It's my fault, so I'll deal with the consequences.
+> > Oh, we're not going rebase the series with the correction? I'm concerned
+> > someone biscecting a completely unrelated problem might step on this
+> > commit. Up to you guys. It's my fault, so I'll deal with the consequences.
+> 
+> Rebasing this late (3.20 merge already opened) is generally not done.
+> Unfortunately we'll just have to suck it up and deal with the fallout
+> during bisect -- would wager very few are bisecting with multipath as
+> the focus of their test.
 
-Rebasing this late (3.20 merge already opened) is generally not done.
-Unfortunately we'll just have to suck it up and deal with the fallout
-during bisect -- would wager very few are bisecting with multipath as
-the focus of their test.
+Jens and I discussed this further and given that linux-block breaks
+dm-multipath it is best to fix linux-block and let Linus resolve the
+merge when I send him the linux-dm pull.
+
+Here is the patch to fix the regression:
+
+From: Mike Snitzer <snitzer@redhat.com>
+Date: Mon, 9 Feb 2015 12:21:54 -0500
+Subject: [PATCH] dm: fix multipath regression due to initializing wrong request
+
+Commit febf715 ("block: require blk_rq_prep_clone() be given an
+initialized clone request") introduced a regression by calling
+blk_rq_init() on the original request rather than the clone
+request that is passed to setup_clone().
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index f251633..71e6b73 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1719,7 +1719,7 @@ static int setup_clone(struct request *clone, struct request *rq,
+ {
+ 	int r;
+ 
+-	blk_rq_init(NULL, rq);
++	blk_rq_init(NULL, clone);
+ 	r = blk_rq_prep_clone(clone, rq, tio->md->bs, GFP_ATOMIC,
+ 			      dm_rq_bio_constructor, tio);
+ 	if (r)
+-- 
+1.9.3 (Apple Git-50)
