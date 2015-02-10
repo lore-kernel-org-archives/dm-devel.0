@@ -1,42 +1,89 @@
-From: Dongsu Park <dongsu.park@profitbricks.com>
-Subject: Re: [PATCH] dm: fix multipath regression due to initializing wrong
- request
-Date: Tue, 10 Feb 2015 11:42:09 +0100
-Message-ID: <20150210104209.GA13686@posteo.de>
-References: <20150209163856.GA12781@posteo.de>
- <20150209164855.GB1599@redhat.com>
- <alpine.LNX.2.00.1502091651310.15481@localhost.lm.intel.com>
- <20150209171311.GC1599@redhat.com>
- <20150209173514.GA14199@redhat.com>
- <54D8F2A7.6050501@kernel.dk>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH RFCv2 05/10] dm-dedup: COW B-tree backend
+Date: Tue, 10 Feb 2015 10:25:41 -0500
+Message-ID: <20150210152541.GA13266@redhat.com>
+References: <53ffb654.c86f320a.5069.ffffc210@mx.google.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <54D8F2A7.6050501@kernel.dk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mike Snitzer <snitzer@redhat.com>, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+In-Reply-To: <53ffb654.c86f320a.5069.ffffc210@mx.google.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Vasily Tarasov <tarasov@vasily.name>
+Cc: Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
 List-Id: dm-devel.ids
 
-On 09.02.2015 10:47, Jens Axboe wrote:
-> On 02/09/2015 10:35 AM, Mike Snitzer wrote:
-> >On Mon, Feb 09 2015 at 12:13P -0500,
-> >Mike Snitzer <snitzer@redhat.com> wrote:
-> >
-> >Jens and I discussed this further and given that linux-block breaks
-> >dm-multipath it is best to fix linux-block and let Linus resolve the
-> >merge when I send him the linux-dm pull.
-> >
-> >Here is the patch to fix the regression:
-> 
-> Added, thanks. I don't think this is worth rebasing for, so just added to
-> the top of for-3.20/core (since that's where the buggy commit was added).
+On Thu, Aug 28, 2014 at 06:07:29PM -0400, Vasily Tarasov wrote:
 
-Thanks a lot. Now the branch for-3.20/core works without hitting the BUG.
+[..]
+> +static struct metadata *init_meta_cowbtree(void *input_param, bool *unformatted)
+> +{
+> +	int ret;
+> +	struct metadata *md;
+> +	struct dm_block_manager *meta_bm;
+> +	struct dm_space_map *meta_sm;
+> +	struct dm_space_map *data_sm = NULL;
+> +	struct dm_transaction_manager *tm;
+> +	struct init_param_cowbtree *p =
+> +				(struct init_param_cowbtree *)input_param;
+> +
+> +	DMINFO("Initializing COWBTREE backend");
+> +
+> +	md = kzalloc(sizeof(*md), GFP_NOIO);
+> +	if (!md)
+> +		return ERR_PTR(-ENOMEM);
+> +
+> +	meta_bm = dm_block_manager_create(p->metadata_bdev, METADATA_BSIZE,
+> +				METADATA_CACHESIZE, METADATA_MAXLOCKS);
+> +	if (IS_ERR(meta_bm)) {
+> +		md = (struct metadata *)meta_bm;
+> +		goto badbm;
+> +	}
 
-Dongsu
+I am wondering how is the error handling working in this function. Upon
+error, we are replacing the md pointer (which is pointing to a kzalloc
+memory) and later calling kfree(md).
 
-> -- 
-> Jens Axboe
-> 
+md = kzalloc(sizeof(*md), GFP_NOIO);
+if (err)
+  md = struct metadata *)meta_bm;
+kfree(md).
+
+What am I missing here.
+
+[..]
+> +badwritesuper:
+> +	dm_sm_destroy(data_sm);
+> +badsm:
+> +	dm_tm_destroy(tm);
+> +	dm_sm_destroy(meta_sm);
+> +badtm:
+> +	dm_block_manager_destroy(meta_bm);
+> +badbm:
+> +	kfree(md);
+> +	return md;
+> +}
+
+There are multiple such substituions in this function. I think these are
+bugs (until and unless I am missing something). I will fix these.
+
+For now, I have pulled in dm-dedup-devel branch and will do code changes
+locally. I am planning to push my branch in following repo for everybody
+to have a look.
+
+https://github.com/rhvgoyal/linux
+
+I have yet to push a branch though.
+
+Thanks
+Vivek
