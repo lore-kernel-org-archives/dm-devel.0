@@ -1,7 +1,7 @@
 From: Dan Ehrenberg <dehrenberg@chromium.org>
 Subject: [PATCH v2 1/3] init: Export name_to_dev_t and mark it const
-Date: Tue, 10 Feb 2015 15:20:17 -0800
-Message-ID: <1423610419-22553-1-git-send-email-dehrenberg@chromium.org>
+Date: Tue, 10 Feb 2015 15:20:49 -0800
+Message-ID: <1423610451-22600-1-git-send-email-dehrenberg@chromium.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: viro@zeniv.linux.org.uk, snitzer@redhat.com, agk@redhat.com
