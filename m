@@ -1,8 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 6/7] dm-crypt: make it possible to disable
- offload to thread
-Date: Fri, 13 Feb 2015 08:27:08 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1502130826050.6449@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 7/7] dm-crypt: sort writes
+Date: Fri, 13 Feb 2015 08:27:41 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1502130827100.6449@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,119 +20,141 @@ To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, Ondrej Ko
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-There are some situation where offloading bios to a thread degrades
-performance twice, so we make an option to disable this feature. The
-feature can be disabled by passing performance_no_offload as an optional
-table argument performance_no_offload.
+Write requests are sorted in a red-black tree structure and are submitted
+in the sorted order.
 
-We increase target version to 14 so that userspace can be aware of this
-feature.
+In theory the sorting should be performed by the underlying disk scheduler,
+however, in practice the disk scheduler accepts and sorts only 128 requests.
+In order to sort more requests, we need to implement our own sorting.
 
-The default is to offload bios because for CFQ it is benefical to do so.
+In testing, it was shown that this patch slightly increases performance in
+some situations
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-crypt.c |   46 +++++++++++++++++++++++++++++++++-------------
- 1 file changed, 33 insertions(+), 13 deletions(-)
+ drivers/md/dm-crypt.c |   50 +++++++++++++++++++++++++++++++++++---------------
+ 1 file changed, 35 insertions(+), 15 deletions(-)
 
 Index: linux-3.19/drivers/md/dm-crypt.c
 ===================================================================
---- linux-3.19.orig/drivers/md/dm-crypt.c	2015-02-12 17:52:40.000000000 +0100
-+++ linux-3.19/drivers/md/dm-crypt.c	2015-02-12 19:01:41.000000000 +0100
-@@ -110,7 +110,7 @@ struct iv_tcw_private {
-  * Crypt: maps a linear range of a block device
-  * and encrypts / decrypts at the same time.
-  */
--enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID };
-+enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID, DM_CRYPT_NO_OFFLOAD };
+--- linux-3.19.orig/drivers/md/dm-crypt.c	2015-02-12 18:40:56.000000000 +0100
++++ linux-3.19/drivers/md/dm-crypt.c	2015-02-12 18:41:32.000000000 +0100
+@@ -22,6 +22,7 @@
+ #include <linux/backing-dev.h>
+ #include <linux/atomic.h>
+ #include <linux/scatterlist.h>
++#include <linux/rbtree.h>
+ #include <asm/page.h>
+ #include <asm/unaligned.h>
+ #include <crypto/hash.h>
+@@ -60,7 +61,7 @@ struct dm_crypt_io {
+ 	int error;
+ 	sector_t sector;
  
- /*
-  * The fields in here must be read only after initialization.
-@@ -1239,6 +1239,11 @@ static void kcryptd_crypt_write_io_submi
+-	struct list_head list;
++	struct rb_node rb_node;
+ } CRYPTO_MINALIGN_ATTR;
  
- 	clone->bi_iter.bi_sector = cc->start + io->sector;
+ struct dm_crypt_request {
+@@ -133,7 +134,7 @@ struct crypt_config {
  
-+	if (test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags) && likely(!async)) {
-+		generic_make_request(clone);
-+		return;
-+	}
-+
- 	spin_lock_irqsave(&cc->write_thread_wait.lock, flags);
- 	list_add_tail(&io->list, &cc->write_thread_list);
- 	wake_up_locked(&cc->write_thread_wait);
-@@ -1693,7 +1698,7 @@ static int crypt_ctr(struct dm_target *t
- 	char dummy;
+ 	struct task_struct *write_thread;
+ 	wait_queue_head_t write_thread_wait;
+-	struct list_head write_thread_list;
++	struct rb_root write_tree;
  
- 	static struct dm_arg _args[] = {
--		{0, 1, "Invalid number of feature args"},
-+		{0, 2, "Invalid number of feature args"},
- 	};
- 
- 	if (argc < 5) {
-@@ -1789,15 +1794,21 @@ static int crypt_ctr(struct dm_target *t
- 		if (ret)
- 			goto bad;
- 
--		opt_string = dm_shift_arg(&as);
-+		while (opt_params--) {
-+			opt_string = dm_shift_arg(&as);
-+			if (!opt_string) {
-+				ti->error = "Not enough feature arguments";
-+				goto bad;
-+			}
- 
--		if (opt_params == 1 && opt_string &&
--		    !strcasecmp(opt_string, "allow_discards"))
--			ti->num_discard_bios = 1;
--		else if (opt_params) {
--			ret = -EINVAL;
--			ti->error = "Invalid feature arguments";
--			goto bad;
-+			if (!strcasecmp(opt_string, "allow_discards")) {
-+				ti->num_discard_bios = 1;
-+			} else if (!strcasecmp(opt_string, "performance_no_offload")) {
-+				set_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);
-+			} else {
-+				ti->error = "Invalid feature arguments";
-+				goto bad;
-+			}
- 		}
- 	}
- 
-@@ -1873,6 +1884,7 @@ static void crypt_status(struct dm_targe
+ 	char *cipher;
+ 	char *cipher_string;
+@@ -1172,7 +1173,7 @@ static int dmcrypt_write(void *data)
  {
- 	struct crypt_config *cc = ti->private;
- 	unsigned i, sz = 0;
-+	int n_feature_args;
+ 	struct crypt_config *cc = data;
+ 	while (1) {
+-		struct list_head local_list;
++		struct rb_root write_tree;
+ 		struct blk_plug plug;
  
- 	switch (type) {
- 	case STATUSTYPE_INFO:
-@@ -1891,8 +1903,16 @@ static void crypt_status(struct dm_targe
- 		DMEMIT(" %llu %s %llu", (unsigned long long)cc->iv_offset,
- 				cc->dev->name, (unsigned long long)cc->start);
+ 		DECLARE_WAITQUEUE(wait, current);
+@@ -1180,7 +1181,7 @@ static int dmcrypt_write(void *data)
+ 		spin_lock_irq(&cc->write_thread_wait.lock);
+ continue_locked:
  
--		if (ti->num_discard_bios)
--			DMEMIT(" 1 allow_discards");
-+		n_feature_args = 0;
-+		n_feature_args += !!ti->num_discard_bios;
-+		n_feature_args += test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);
-+		if (n_feature_args) {
-+			DMEMIT(" %d", n_feature_args);
-+			if (ti->num_discard_bios)
-+				DMEMIT(" allow_discards");
-+			if (test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags))
-+				DMEMIT(" performance_no_offload");
-+		}
+-		if (!list_empty(&cc->write_thread_list))
++		if (!RB_EMPTY_ROOT(&cc->write_tree))
+ 			goto pop_from_list;
  
- 		break;
+ 		__set_current_state(TASK_INTERRUPTIBLE);
+@@ -1202,20 +1203,23 @@ continue_locked:
+ 		goto continue_locked;
+ 
+ pop_from_list:
+-		local_list = cc->write_thread_list;
+-		local_list.next->prev = &local_list;
+-		local_list.prev->next = &local_list;
+-		INIT_LIST_HEAD(&cc->write_thread_list);
+-
++		write_tree = cc->write_tree;
++		cc->write_tree = RB_ROOT;
+ 		spin_unlock_irq(&cc->write_thread_wait.lock);
+ 
++		BUG_ON(rb_parent(write_tree.rb_node));
++
++		/*
++		 * Note: we cannot walk the tree here with rb_next because
++		 * the structures may be freed when kcryptd_io_write is called.
++		 */
+ 		blk_start_plug(&plug);
+ 		do {
+-			struct dm_crypt_io *io = container_of(local_list.next,
+-						struct dm_crypt_io, list);
+-			list_del(&io->list);
++			struct dm_crypt_io *io = rb_entry(rb_first(&write_tree),
++						struct dm_crypt_io, rb_node);
++			rb_erase(&io->rb_node, &write_tree);
+ 			kcryptd_io_write(io);
+-		} while (!list_empty(&local_list));
++		} while (!RB_EMPTY_ROOT(&write_tree));
+ 		blk_finish_plug(&plug);
  	}
-@@ -1989,7 +2009,7 @@ static int crypt_iterate_devices(struct 
+ 	return 0;
+@@ -1226,6 +1230,8 @@ static void kcryptd_crypt_write_io_submi
+ 	struct bio *clone = io->ctx.bio_out;
+ 	struct crypt_config *cc = io->cc;
+ 	unsigned long flags;
++	sector_t sector;
++	struct rb_node **p, *parent;
  
- static struct target_type crypt_target = {
- 	.name   = "crypt",
--	.version = {1, 13, 0},
-+	.version = {1, 14, 0},
- 	.module = THIS_MODULE,
- 	.ctr    = crypt_ctr,
- 	.dtr    = crypt_dtr,
+ 	if (unlikely(io->error < 0)) {
+ 		crypt_free_buffer_pages(cc, clone);
+@@ -1245,7 +1251,21 @@ static void kcryptd_crypt_write_io_submi
+ 	}
+ 
+ 	spin_lock_irqsave(&cc->write_thread_wait.lock, flags);
+-	list_add_tail(&io->list, &cc->write_thread_list);
++	p = &cc->write_tree.rb_node;
++	parent = NULL;
++	sector = io->sector;
++	while (*p) {
++		parent = *p;
++#define io_node rb_entry(parent, struct dm_crypt_io, rb_node)
++		if (sector < io_node->sector)
++			p = &io_node->rb_node.rb_left;
++		else
++			p = &io_node->rb_node.rb_right;
++#undef io_node
++	}
++	rb_link_node(&io->rb_node, parent, p);
++	rb_insert_color(&io->rb_node, &cc->write_tree);
++
+ 	wake_up_locked(&cc->write_thread_wait);
+ 	spin_unlock_irqrestore(&cc->write_thread_wait.lock, flags);
+ }
+@@ -1827,7 +1847,7 @@ static int crypt_ctr(struct dm_target *t
+ 	}
+ 
+ 	init_waitqueue_head(&cc->write_thread_wait);
+-	INIT_LIST_HEAD(&cc->write_thread_list);
++	cc->write_tree = RB_ROOT;
+ 
+ 	cc->write_thread = kthread_create(dmcrypt_write, cc, "dmcrypt_write");
+ 	if (IS_ERR(cc->write_thread)) {
