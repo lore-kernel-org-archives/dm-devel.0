@@ -1,7 +1,8 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 5/7] dm-crypt: offload writes to thread
-Date: Fri, 13 Feb 2015 08:25:59 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1502130825270.6449@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 6/7] dm-crypt: make it possible to disable
+ offload to thread
+Date: Fri, 13 Feb 2015 08:27:08 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1502130826050.6449@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,214 +21,119 @@ To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, Ondrej Ko
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Submitting write bios directly in the encryption thread caused serious
-performance degradation. On multiprocessor machine encryption requests
-finish in a different order than they were submitted in. Consequently, write
-requests would be submitted in a different order and it could cause severe
-performance degradation.
+There are some situation where offloading bios to a thread degrades
+performance twice, so we make an option to disable this feature. The
+feature can be disabled by passing performance_no_offload as an optional
+table argument performance_no_offload.
 
-This patch moves submitting write requests to a separate thread so that
-the requests can be sorted before submitting.
+We increase target version to 14 so that userspace can be aware of this
+feature.
 
-Sorting is implemented in the next patch.
-
-Note: it is required that a previous patch "dm-crypt: don't allocate pages
-for a partial request." is applied before applying this patch. Without
-that, this patch could introduce a crash.
+The default is to offload bios because for CFQ it is benefical to do so.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-crypt.c |  114 +++++++++++++++++++++++++++++++++++++++++---------
- 1 file changed, 94 insertions(+), 20 deletions(-)
+ drivers/md/dm-crypt.c |   46 +++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 33 insertions(+), 13 deletions(-)
 
 Index: linux-3.19/drivers/md/dm-crypt.c
 ===================================================================
---- linux-3.19.orig/drivers/md/dm-crypt.c	2015-02-12 17:45:07.000000000 +0100
-+++ linux-3.19/drivers/md/dm-crypt.c	2015-02-12 17:46:20.000000000 +0100
-@@ -18,6 +18,7 @@
- #include <linux/slab.h>
- #include <linux/crypto.h>
- #include <linux/workqueue.h>
-+#include <linux/kthread.h>
- #include <linux/backing-dev.h>
- #include <linux/atomic.h>
- #include <linux/scatterlist.h>
-@@ -58,6 +59,8 @@ struct dm_crypt_io {
- 	atomic_t io_pending;
- 	int error;
- 	sector_t sector;
-+
-+	struct list_head list;
- } CRYPTO_MINALIGN_ATTR;
+--- linux-3.19.orig/drivers/md/dm-crypt.c	2015-02-12 17:52:40.000000000 +0100
++++ linux-3.19/drivers/md/dm-crypt.c	2015-02-12 19:01:41.000000000 +0100
+@@ -110,7 +110,7 @@ struct iv_tcw_private {
+  * Crypt: maps a linear range of a block device
+  * and encrypts / decrypts at the same time.
+  */
+-enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID };
++enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID, DM_CRYPT_NO_OFFLOAD };
  
- struct dm_crypt_request {
-@@ -128,6 +131,10 @@ struct crypt_config {
- 	struct workqueue_struct *io_queue;
- 	struct workqueue_struct *crypt_queue;
- 
-+	struct task_struct *write_thread;
-+	wait_queue_head_t write_thread_wait;
-+	struct list_head write_thread_list;
-+
- 	char *cipher;
- 	char *cipher_string;
- 
-@@ -1136,37 +1143,89 @@ static int kcryptd_io_read(struct dm_cry
- 	return 0;
- }
- 
-+static void kcryptd_io_read_work(struct work_struct *work)
-+{
-+	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
-+
-+	crypt_inc_pending(io);
-+	if (kcryptd_io_read(io, GFP_NOIO))
-+		io->error = -ENOMEM;
-+	crypt_dec_pending(io);
-+}
-+
-+static void kcryptd_queue_read(struct dm_crypt_io *io)
-+{
-+	struct crypt_config *cc = io->cc;
-+
-+	INIT_WORK(&io->work, kcryptd_io_read_work);
-+	queue_work(cc->io_queue, &io->work);
-+}
-+
- static void kcryptd_io_write(struct dm_crypt_io *io)
- {
- 	struct bio *clone = io->ctx.bio_out;
-+
- 	generic_make_request(clone);
- }
- 
--static void kcryptd_io(struct work_struct *work)
-+static int dmcrypt_write(void *data)
- {
--	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
-+	struct crypt_config *cc = data;
-+	while (1) {
-+		struct list_head local_list;
-+		struct blk_plug plug;
- 
--	if (bio_data_dir(io->base_bio) == READ) {
--		crypt_inc_pending(io);
--		if (kcryptd_io_read(io, GFP_NOIO))
--			io->error = -ENOMEM;
--		crypt_dec_pending(io);
--	} else
--		kcryptd_io_write(io);
--}
-+		DECLARE_WAITQUEUE(wait, current);
- 
--static void kcryptd_queue_io(struct dm_crypt_io *io)
--{
--	struct crypt_config *cc = io->cc;
-+		spin_lock_irq(&cc->write_thread_wait.lock);
-+continue_locked:
- 
--	INIT_WORK(&io->work, kcryptd_io);
--	queue_work(cc->io_queue, &io->work);
-+		if (!list_empty(&cc->write_thread_list))
-+			goto pop_from_list;
-+
-+		__set_current_state(TASK_INTERRUPTIBLE);
-+		__add_wait_queue(&cc->write_thread_wait, &wait);
-+
-+		spin_unlock_irq(&cc->write_thread_wait.lock);
-+
-+		if (unlikely(kthread_should_stop())) {
-+			set_task_state(current, TASK_RUNNING);
-+			remove_wait_queue(&cc->write_thread_wait, &wait);
-+			break;
-+		}
-+
-+		schedule();
-+
-+		set_task_state(current, TASK_RUNNING);
-+		spin_lock_irq(&cc->write_thread_wait.lock);
-+		__remove_wait_queue(&cc->write_thread_wait, &wait);
-+		goto continue_locked;
-+
-+pop_from_list:
-+		local_list = cc->write_thread_list;
-+		local_list.next->prev = &local_list;
-+		local_list.prev->next = &local_list;
-+		INIT_LIST_HEAD(&cc->write_thread_list);
-+
-+		spin_unlock_irq(&cc->write_thread_wait.lock);
-+
-+		blk_start_plug(&plug);
-+		do {
-+			struct dm_crypt_io *io = container_of(local_list.next,
-+						struct dm_crypt_io, list);
-+			list_del(&io->list);
-+			kcryptd_io_write(io);
-+		} while (!list_empty(&local_list));
-+		blk_finish_plug(&plug);
-+	}
-+	return 0;
- }
- 
- static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
- {
- 	struct bio *clone = io->ctx.bio_out;
- 	struct crypt_config *cc = io->cc;
-+	unsigned long flags;
- 
- 	if (unlikely(io->error < 0)) {
- 		crypt_free_buffer_pages(cc, clone);
-@@ -1180,10 +1239,10 @@ static void kcryptd_crypt_write_io_submi
+ /*
+  * The fields in here must be read only after initialization.
+@@ -1239,6 +1239,11 @@ static void kcryptd_crypt_write_io_submi
  
  	clone->bi_iter.bi_sector = cc->start + io->sector;
  
--	if (async)
--		kcryptd_queue_io(io);
--	else
--		generic_make_request(clone);
-+	spin_lock_irqsave(&cc->write_thread_wait.lock, flags);
-+	list_add_tail(&io->list, &cc->write_thread_list);
-+	wake_up_locked(&cc->write_thread_wait);
-+	spin_unlock_irqrestore(&cc->write_thread_wait.lock, flags);
- }
- 
- static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
-@@ -1426,6 +1485,9 @@ static void crypt_dtr(struct dm_target *
- 	if (!cc)
- 		return;
- 
-+	if (cc->write_thread)
-+		kthread_stop(cc->write_thread);
++	if (test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags) && likely(!async)) {
++		generic_make_request(clone);
++		return;
++	}
 +
- 	if (cc->io_queue)
- 		destroy_workqueue(cc->io_queue);
- 	if (cc->crypt_queue)
-@@ -1753,6 +1815,18 @@ static int crypt_ctr(struct dm_target *t
- 		goto bad;
+ 	spin_lock_irqsave(&cc->write_thread_wait.lock, flags);
+ 	list_add_tail(&io->list, &cc->write_thread_list);
+ 	wake_up_locked(&cc->write_thread_wait);
+@@ -1693,7 +1698,7 @@ static int crypt_ctr(struct dm_target *t
+ 	char dummy;
+ 
+ 	static struct dm_arg _args[] = {
+-		{0, 1, "Invalid number of feature args"},
++		{0, 2, "Invalid number of feature args"},
+ 	};
+ 
+ 	if (argc < 5) {
+@@ -1789,15 +1794,21 @@ static int crypt_ctr(struct dm_target *t
+ 		if (ret)
+ 			goto bad;
+ 
+-		opt_string = dm_shift_arg(&as);
++		while (opt_params--) {
++			opt_string = dm_shift_arg(&as);
++			if (!opt_string) {
++				ti->error = "Not enough feature arguments";
++				goto bad;
++			}
+ 
+-		if (opt_params == 1 && opt_string &&
+-		    !strcasecmp(opt_string, "allow_discards"))
+-			ti->num_discard_bios = 1;
+-		else if (opt_params) {
+-			ret = -EINVAL;
+-			ti->error = "Invalid feature arguments";
+-			goto bad;
++			if (!strcasecmp(opt_string, "allow_discards")) {
++				ti->num_discard_bios = 1;
++			} else if (!strcasecmp(opt_string, "performance_no_offload")) {
++				set_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);
++			} else {
++				ti->error = "Invalid feature arguments";
++				goto bad;
++			}
+ 		}
  	}
  
-+	init_waitqueue_head(&cc->write_thread_wait);
-+	INIT_LIST_HEAD(&cc->write_thread_list);
-+
-+	cc->write_thread = kthread_create(dmcrypt_write, cc, "dmcrypt_write");
-+	if (IS_ERR(cc->write_thread)) {
-+		ret = PTR_ERR(cc->write_thread);
-+		cc->write_thread = NULL;
-+		ti->error = "Couldn't spawn write thread";
-+		goto bad;
-+	}
-+	wake_up_process(cc->write_thread);
-+
- 	ti->num_flush_bios = 1;
- 	ti->discard_zeroes_data_unsupported = true;
+@@ -1873,6 +1884,7 @@ static void crypt_status(struct dm_targe
+ {
+ 	struct crypt_config *cc = ti->private;
+ 	unsigned i, sz = 0;
++	int n_feature_args;
  
-@@ -1787,7 +1861,7 @@ static int crypt_map(struct dm_target *t
+ 	switch (type) {
+ 	case STATUSTYPE_INFO:
+@@ -1891,8 +1903,16 @@ static void crypt_status(struct dm_targe
+ 		DMEMIT(" %llu %s %llu", (unsigned long long)cc->iv_offset,
+ 				cc->dev->name, (unsigned long long)cc->start);
  
- 	if (bio_data_dir(io->base_bio) == READ) {
- 		if (kcryptd_io_read(io, GFP_NOWAIT))
--			kcryptd_queue_io(io);
-+			kcryptd_queue_read(io);
- 	} else
- 		kcryptd_queue_crypt(io);
+-		if (ti->num_discard_bios)
+-			DMEMIT(" 1 allow_discards");
++		n_feature_args = 0;
++		n_feature_args += !!ti->num_discard_bios;
++		n_feature_args += test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);
++		if (n_feature_args) {
++			DMEMIT(" %d", n_feature_args);
++			if (ti->num_discard_bios)
++				DMEMIT(" allow_discards");
++			if (test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags))
++				DMEMIT(" performance_no_offload");
++		}
  
+ 		break;
+ 	}
+@@ -1989,7 +2009,7 @@ static int crypt_iterate_devices(struct 
+ 
+ static struct target_type crypt_target = {
+ 	.name   = "crypt",
+-	.version = {1, 13, 0},
++	.version = {1, 14, 0},
+ 	.module = THIS_MODULE,
+ 	.ctr    = crypt_ctr,
+ 	.dtr    = crypt_dtr,
