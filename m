@@ -1,12 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 7/7] dm-crypt: sort writes
-Date: Fri, 13 Feb 2015 08:27:41 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1502130827100.6449@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-io: reject unsupported DISCARD/WRITE SAME
+ requests with EOPNOTSUPP
+Date: Fri, 13 Feb 2015 10:55:50 -0500
+Message-ID: <20150213155550.GA32670@redhat.com>
+References: <20150213092432.GC11034@birch.djwong.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20150213092432.GC11034@birch.djwong.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,145 +20,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, Ondrej Kozina <okozina@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: dm-devel@redhat.com, "Martin K. Petersen" <martin.petersen@oracle.com>, agk@redhat.com, Srinivas Eeda <srinivas.eeda@oracle.com>
 List-Id: dm-devel.ids
 
-Write requests are sorted in a red-black tree structure and are submitted
-in the sorted order.
+On Fri, Feb 13 2015 at  4:24am -0500,
+Darrick J. Wong <darrick.wong@oracle.com> wrote:
 
-In theory the sorting should be performed by the underlying disk scheduler,
-however, in practice the disk scheduler accepts and sorts only 128 requests.
-In order to sort more requests, we need to implement our own sorting.
+> I created a dm-raid1 device backed by a device that supports DISCARD
+> and another device that does NOT support DISCARD with the following
+> dm configuration:
+> 
+> # echo '0 2048 mirror core 1 512 2 /dev/sda 0 /dev/sdb 0' | dmsetup create moo
+> # lsblk -D
+> NAME         DISC-ALN DISC-GRAN DISC-MAX DISC-ZERO
+> sda                 0        4K       1G         0
+> `-moo (dm-0)        0        4K       1G         0
+> sdb                 0        0B       0B         0
+> `-moo (dm-0)        0        4K       1G         0
+> 
+> Notice that the mirror device /dev/mapper/moo advertises DISCARD
+> support even though one of the mirror halves doesn't.
+> 
+> If I issue a DISCARD request (via fstrim, mount -o discard, or ioctl
+> BLKDISCARD) through the mirror, kmirrord gets stuck in an infinite
+> loop in do_region() when it tries to issue a DISCARD request to sdb.
+> The problem is that when we call do_region() against sdb, num_sectors
+> is set to zero because q->limits.max_discard_sectors is zero.
+> Therefore, "remaining" never decreases and the loop never terminates.
+> 
+> Before entering the loop, check for the combination of REQ_DISCARD and
+> no discard and return -EOPNOTSUPP to avoid hanging up the mirror
+> device.  Fix the same problem with WRITE_DISCARD while we're at it.
+> 
+> This bug was found by the unfortunate coincidence of pvmove and a
+> discard operation in the RHEL 6.5 kernel; 3.19 is also affected.
+> 
+> Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+> Cc: "Martin K. Petersen" <martin.petersen@oracle.com>
+> Cc: Srinivas Eeda <srinivas.eeda@oracle.com>
 
-In testing, it was shown that this patch slightly increases performance in
-some situations
+Your patch looks fine but it is laser focused on dm-io.  Again, that is
+fine (fixes a real problem).  But I'm wondering how other targets will
+respond in the face of partial discard support across the logical
+address space of the DM device.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+When I implemented dm_table_supports_discards() I consciously allowed a
+DM table to contain a mix of discard support.  I'm now wondering where
+it is we benefit from that?  Seems like more of a liability than
+anything -- so a bigger hammer approach to fixing this would be to
+require all targets and all devices in a DM table support discard.
+Which amounts to changing dm_table_supports_discards() to be like
+dm_table_supports_write_same().
 
----
- drivers/md/dm-crypt.c |   50 +++++++++++++++++++++++++++++++++++---------------
- 1 file changed, 35 insertions(+), 15 deletions(-)
+BTW, given dm_table_supports_write_same(), your patch shouldn't need to
+worry about WRITE SAME.  Did you experience issues with WRITE SAME too
+or were you just being proactive?
 
-Index: linux-3.19/drivers/md/dm-crypt.c
-===================================================================
---- linux-3.19.orig/drivers/md/dm-crypt.c	2015-02-12 18:40:56.000000000 +0100
-+++ linux-3.19/drivers/md/dm-crypt.c	2015-02-12 18:41:32.000000000 +0100
-@@ -22,6 +22,7 @@
- #include <linux/backing-dev.h>
- #include <linux/atomic.h>
- #include <linux/scatterlist.h>
-+#include <linux/rbtree.h>
- #include <asm/page.h>
- #include <asm/unaligned.h>
- #include <crypto/hash.h>
-@@ -60,7 +61,7 @@ struct dm_crypt_io {
- 	int error;
- 	sector_t sector;
- 
--	struct list_head list;
-+	struct rb_node rb_node;
- } CRYPTO_MINALIGN_ATTR;
- 
- struct dm_crypt_request {
-@@ -133,7 +134,7 @@ struct crypt_config {
- 
- 	struct task_struct *write_thread;
- 	wait_queue_head_t write_thread_wait;
--	struct list_head write_thread_list;
-+	struct rb_root write_tree;
- 
- 	char *cipher;
- 	char *cipher_string;
-@@ -1172,7 +1173,7 @@ static int dmcrypt_write(void *data)
- {
- 	struct crypt_config *cc = data;
- 	while (1) {
--		struct list_head local_list;
-+		struct rb_root write_tree;
- 		struct blk_plug plug;
- 
- 		DECLARE_WAITQUEUE(wait, current);
-@@ -1180,7 +1181,7 @@ static int dmcrypt_write(void *data)
- 		spin_lock_irq(&cc->write_thread_wait.lock);
- continue_locked:
- 
--		if (!list_empty(&cc->write_thread_list))
-+		if (!RB_EMPTY_ROOT(&cc->write_tree))
- 			goto pop_from_list;
- 
- 		__set_current_state(TASK_INTERRUPTIBLE);
-@@ -1202,20 +1203,23 @@ continue_locked:
- 		goto continue_locked;
- 
- pop_from_list:
--		local_list = cc->write_thread_list;
--		local_list.next->prev = &local_list;
--		local_list.prev->next = &local_list;
--		INIT_LIST_HEAD(&cc->write_thread_list);
--
-+		write_tree = cc->write_tree;
-+		cc->write_tree = RB_ROOT;
- 		spin_unlock_irq(&cc->write_thread_wait.lock);
- 
-+		BUG_ON(rb_parent(write_tree.rb_node));
-+
-+		/*
-+		 * Note: we cannot walk the tree here with rb_next because
-+		 * the structures may be freed when kcryptd_io_write is called.
-+		 */
- 		blk_start_plug(&plug);
- 		do {
--			struct dm_crypt_io *io = container_of(local_list.next,
--						struct dm_crypt_io, list);
--			list_del(&io->list);
-+			struct dm_crypt_io *io = rb_entry(rb_first(&write_tree),
-+						struct dm_crypt_io, rb_node);
-+			rb_erase(&io->rb_node, &write_tree);
- 			kcryptd_io_write(io);
--		} while (!list_empty(&local_list));
-+		} while (!RB_EMPTY_ROOT(&write_tree));
- 		blk_finish_plug(&plug);
- 	}
- 	return 0;
-@@ -1226,6 +1230,8 @@ static void kcryptd_crypt_write_io_submi
- 	struct bio *clone = io->ctx.bio_out;
- 	struct crypt_config *cc = io->cc;
- 	unsigned long flags;
-+	sector_t sector;
-+	struct rb_node **p, *parent;
- 
- 	if (unlikely(io->error < 0)) {
- 		crypt_free_buffer_pages(cc, clone);
-@@ -1245,7 +1251,21 @@ static void kcryptd_crypt_write_io_submi
- 	}
- 
- 	spin_lock_irqsave(&cc->write_thread_wait.lock, flags);
--	list_add_tail(&io->list, &cc->write_thread_list);
-+	p = &cc->write_tree.rb_node;
-+	parent = NULL;
-+	sector = io->sector;
-+	while (*p) {
-+		parent = *p;
-+#define io_node rb_entry(parent, struct dm_crypt_io, rb_node)
-+		if (sector < io_node->sector)
-+			p = &io_node->rb_node.rb_left;
-+		else
-+			p = &io_node->rb_node.rb_right;
-+#undef io_node
-+	}
-+	rb_link_node(&io->rb_node, parent, p);
-+	rb_insert_color(&io->rb_node, &cc->write_tree);
-+
- 	wake_up_locked(&cc->write_thread_wait);
- 	spin_unlock_irqrestore(&cc->write_thread_wait.lock, flags);
- }
-@@ -1827,7 +1847,7 @@ static int crypt_ctr(struct dm_target *t
- 	}
- 
- 	init_waitqueue_head(&cc->write_thread_wait);
--	INIT_LIST_HEAD(&cc->write_thread_list);
-+	cc->write_tree = RB_ROOT;
- 
- 	cc->write_thread = kthread_create(dmcrypt_write, cc, "dmcrypt_write");
- 	if (IS_ERR(cc->write_thread)) {
+Mike
