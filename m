@@ -1,16 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
 Subject: Re: dm-io: reject unsupported DISCARD/WRITE SAME
  requests with EOPNOTSUPP
-Date: Fri, 13 Feb 2015 10:55:50 -0500
-Message-ID: <20150213155550.GA32670@redhat.com>
+Date: Fri, 13 Feb 2015 09:01:30 -0800
+Message-ID: <20150213170130.GB14719@birch.djwong.org>
 References: <20150213092432.GC11034@birch.djwong.org>
+	<20150213155550.GA32670@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20150213092432.GC11034@birch.djwong.org>
+In-Reply-To: <20150213155550.GA32670@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,61 +21,89 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
+To: Mike Snitzer <snitzer@redhat.com>
 Cc: dm-devel@redhat.com, "Martin K. Petersen" <martin.petersen@oracle.com>, agk@redhat.com, Srinivas Eeda <srinivas.eeda@oracle.com>
 List-Id: dm-devel.ids
 
-On Fri, Feb 13 2015 at  4:24am -0500,
-Darrick J. Wong <darrick.wong@oracle.com> wrote:
+On Fri, Feb 13, 2015 at 10:55:50AM -0500, Mike Snitzer wrote:
+> On Fri, Feb 13 2015 at  4:24am -0500,
+> Darrick J. Wong <darrick.wong@oracle.com> wrote:
+> 
+> > I created a dm-raid1 device backed by a device that supports DISCARD
+> > and another device that does NOT support DISCARD with the following
+> > dm configuration:
+> > 
+> > # echo '0 2048 mirror core 1 512 2 /dev/sda 0 /dev/sdb 0' | dmsetup create moo
+> > # lsblk -D
+> > NAME         DISC-ALN DISC-GRAN DISC-MAX DISC-ZERO
+> > sda                 0        4K       1G         0
+> > `-moo (dm-0)        0        4K       1G         0
+> > sdb                 0        0B       0B         0
+> > `-moo (dm-0)        0        4K       1G         0
+> > 
+> > Notice that the mirror device /dev/mapper/moo advertises DISCARD
+> > support even though one of the mirror halves doesn't.
+> > 
+> > If I issue a DISCARD request (via fstrim, mount -o discard, or ioctl
+> > BLKDISCARD) through the mirror, kmirrord gets stuck in an infinite
+> > loop in do_region() when it tries to issue a DISCARD request to sdb.
+> > The problem is that when we call do_region() against sdb, num_sectors
+> > is set to zero because q->limits.max_discard_sectors is zero.
+> > Therefore, "remaining" never decreases and the loop never terminates.
+> > 
+> > Before entering the loop, check for the combination of REQ_DISCARD and
+> > no discard and return -EOPNOTSUPP to avoid hanging up the mirror
+> > device.  Fix the same problem with WRITE_DISCARD while we're at it.
+> > 
+> > This bug was found by the unfortunate coincidence of pvmove and a
+> > discard operation in the RHEL 6.5 kernel; 3.19 is also affected.
+> > 
+> > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+> > Cc: "Martin K. Petersen" <martin.petersen@oracle.com>
+> > Cc: Srinivas Eeda <srinivas.eeda@oracle.com>
+> 
+> Your patch looks fine but it is laser focused on dm-io.  Again, that is
+> fine (fixes a real problem).  But I'm wondering how other targets will
+> respond in the face of partial discard support across the logical
+> address space of the DM device.
 
-> I created a dm-raid1 device backed by a device that supports DISCARD
-> and another device that does NOT support DISCARD with the following
-> dm configuration:
-> 
-> # echo '0 2048 mirror core 1 512 2 /dev/sda 0 /dev/sdb 0' | dmsetup create moo
-> # lsblk -D
-> NAME         DISC-ALN DISC-GRAN DISC-MAX DISC-ZERO
-> sda                 0        4K       1G         0
-> `-moo (dm-0)        0        4K       1G         0
-> sdb                 0        0B       0B         0
-> `-moo (dm-0)        0        4K       1G         0
-> 
-> Notice that the mirror device /dev/mapper/moo advertises DISCARD
-> support even though one of the mirror halves doesn't.
-> 
-> If I issue a DISCARD request (via fstrim, mount -o discard, or ioctl
-> BLKDISCARD) through the mirror, kmirrord gets stuck in an infinite
-> loop in do_region() when it tries to issue a DISCARD request to sdb.
-> The problem is that when we call do_region() against sdb, num_sectors
-> is set to zero because q->limits.max_discard_sectors is zero.
-> Therefore, "remaining" never decreases and the loop never terminates.
-> 
-> Before entering the loop, check for the combination of REQ_DISCARD and
-> no discard and return -EOPNOTSUPP to avoid hanging up the mirror
-> device.  Fix the same problem with WRITE_DISCARD while we're at it.
-> 
-> This bug was found by the unfortunate coincidence of pvmove and a
-> discard operation in the RHEL 6.5 kernel; 3.19 is also affected.
-> 
-> Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-> Cc: "Martin K. Petersen" <martin.petersen@oracle.com>
-> Cc: Srinivas Eeda <srinivas.eeda@oracle.com>
+I'm not sure.  As far as I could tell, the simple dm targets seem happy enough
+to pass along the -EOPNOTSUPP code to whomever gave it the bio.  I didn't look
+at complicated things like dm-thin*, dm-cache, or dm-raid456.  It might be
+worth having a regression test that can be applied to all the dm* devices in
+rapid succession so we can find out.
 
-Your patch looks fine but it is laser focused on dm-io.  Again, that is
-fine (fixes a real problem).  But I'm wondering how other targets will
-respond in the face of partial discard support across the logical
-address space of the DM device.
+Of the callers that I audited, ext4, xfs, btrfs, and f2fs silently ignore the
+EOPNOTSUPP code.  jfs and swapfiles printk about the error but take no other
+action.  BLKDISCARD (the ioctl) simply returns the error code to userspace.
+gfs2 and nilfs2 will disable discards; and fat doesn't check error codes at
+all.  None of them panic or otherwise go bonkers.
 
-When I implemented dm_table_supports_discards() I consciously allowed a
-DM table to contain a mix of discard support.  I'm now wondering where
-it is we benefit from that?  Seems like more of a liability than
-anything -- so a bigger hammer approach to fixing this would be to
-require all targets and all devices in a DM table support discard.
-Which amounts to changing dm_table_supports_discards() to be like
-dm_table_supports_write_same().
+It seems that most FSes expect transient discard failures and/or partial
+support.
 
-BTW, given dm_table_supports_write_same(), your patch shouldn't need to
-worry about WRITE SAME.  Did you experience issues with WRITE SAME too
-or were you just being proactive?
+> When I implemented dm_table_supports_discards() I consciously allowed a
+> DM table to contain a mix of discard support.  I'm now wondering where
+> it is we benefit from that?  Seems like more of a liability than
 
-Mike
+<shrug> Given the result above, I think we can leave it this way if we perform
+a code audit, though certainly this cautious approach would mask any other bugs
+that could be lurking.
+
+> anything -- so a bigger hammer approach to fixing this would be to
+> require all targets and all devices in a DM table support discard.
+> Which amounts to changing dm_table_supports_discards() to be like
+> dm_table_supports_write_same().
+> 
+> BTW, given dm_table_supports_write_same(), your patch shouldn't need to
+> worry about WRITE SAME.  Did you experience issues with WRITE SAME too
+> or were you just being proactive?
+
+I was being (perhaps overly) proactive, at 1am. :)
+
+That part of the if statement can go away.  I'll send a v2.
+
+--D
+
+> 
+> Mike
