@@ -1,9 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH 2/3] md raid0: access mddev->queue (request queue
-	member) conditionally because it is not set when accessed
-	from dm-raid
-Date: Fri, 13 Feb 2015 19:48:07 +0100
-Message-ID: <1423853288-6278-3-git-send-email-heinzm@redhat.com>
+Subject: [PATCH 0/3] md raid: enhancements to support the device
+	mapper dm-raid target
+Date: Fri, 13 Feb 2015 19:48:05 +0100
+Message-ID: <1423853288-6278-1-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,90 +23,43 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-The patch makes 3 references to mddev->queue in the raid0 personality
-conditional in order to allow for it to be accessed from dm-raid.
-Mandatory, because md instances underneath dm-raid don't manage
-a request queue of their own which'd lead to oopses without the patch.
+I'm enhancing the device mapper raid target (dm-raid) to take
+advantage of so far unused md raid kernel funtionality:
+takeover, reshape, resize, addition and removal of devices to/from raid sets.
+
+This series of patches remove constraints doing so.
 
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
----
- drivers/md/raid0.c | 48 +++++++++++++++++++++++++++---------------------
- 1 file changed, 27 insertions(+), 21 deletions(-)
+Patch #1:
+add 2 API functions to allow dm-raid to access the raid takeover
+and resize functionality (namely md_takeover() and md_resize());
+reshape APIs are not needed in lieu of the existing personalilty ones
 
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index a13f738..d2e037d 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -271,14 +271,16 @@ static int create_strip_zones(struct mddev *mddev, struct r0conf **private_conf)
- 		goto abort;
- 	}
- 
--	blk_queue_io_min(mddev->queue, mddev->chunk_sectors << 9);
--	blk_queue_io_opt(mddev->queue,
--			 (mddev->chunk_sectors << 9) * mddev->raid_disks);
--
--	if (!discard_supported)
--		queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
--	else
--		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
-+	if (mddev->queue) {
-+		blk_queue_io_min(mddev->queue, mddev->chunk_sectors << 9);
-+		blk_queue_io_opt(mddev->queue,
-+				 (mddev->chunk_sectors << 9) * mddev->raid_disks);
-+
-+		if (!discard_supported)
-+			queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
-+		else
-+			queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
-+	}
- 
- 	pr_debug("md/raid0:%s: done.\n", mdname(mddev));
- 	*private_conf = conf;
-@@ -429,9 +431,12 @@ static int raid0_run(struct mddev *mddev)
- 	}
- 	if (md_check_no_bitmap(mddev))
- 		return -EINVAL;
--	blk_queue_max_hw_sectors(mddev->queue, mddev->chunk_sectors);
--	blk_queue_max_write_same_sectors(mddev->queue, mddev->chunk_sectors);
--	blk_queue_max_discard_sectors(mddev->queue, mddev->chunk_sectors);
-+
-+	if (mddev->queue) {
-+		blk_queue_max_hw_sectors(mddev->queue, mddev->chunk_sectors);
-+		blk_queue_max_write_same_sectors(mddev->queue, mddev->chunk_sectors);
-+		blk_queue_max_discard_sectors(mddev->queue, mddev->chunk_sectors);
-+	}
- 
- 	/* if private is not null, we are here after takeover */
- 	if (mddev->private == NULL) {
-@@ -448,16 +453,17 @@ static int raid0_run(struct mddev *mddev)
- 	printk(KERN_INFO "md/raid0:%s: md_size is %llu sectors.\n",
- 	       mdname(mddev),
- 	       (unsigned long long)mddev->array_sectors);
--	/* calculate the max read-ahead size.
--	 * For read-ahead of large files to be effective, we need to
--	 * readahead at least twice a whole stripe. i.e. number of devices
--	 * multiplied by chunk size times 2.
--	 * If an individual device has an ra_pages greater than the
--	 * chunk size, then we will not drive that device as hard as it
--	 * wants.  We consider this a configuration error: a larger
--	 * chunksize should be used in that case.
--	 */
--	{
-+
-+	if (mddev->queue) {
-+		/* calculate the max read-ahead size.
-+		 * For read-ahead of large files to be effective, we need to
-+		 * readahead at least twice a whole stripe. i.e. number of devices
-+		 * multiplied by chunk size times 2.
-+		 * If an individual device has an ra_pages greater than the
-+		 * chunk size, then we will not drive that device as hard as it
-+		 * wants.  We consider this a configuration error: a larger
-+		 * chunksize should be used in that case.
-+		 */
- 		int stripe = mddev->raid_disks *
- 			(mddev->chunk_sectors << 9) / PAGE_SIZE;
- 		if (mddev->queue->backing_dev_info.ra_pages < 2* stripe)
+Patch #2:
+because device mapper core manages a request queue per mapped device
+utilizing the md make_request API to pass on bios via the dm-raid target,
+no md instance underneath it needs to manage a request queue of its own.
+Thus dm-raid can't use the md raid0 personality as is, because the latter
+accesses the request queue unconditionally in 3 places via mddev->queue
+which this patch addresses.
+
+Patch #3:
+when dm-raid processes a down takeover to raid0, it needs to destroy
+any existing bitmap, because raid0 does not require one. The patch
+exports the bitmap_destroy() API to allow dm-raid to remove bitmaps.
+
+
+Heinz Mauelshagen (3):
+  md core:   add 2 API functions for takeover and resize to support dm-raid
+  md raid0:  access mddev->queue (request queue member) conditionally
+             because it is not set when accessed from dm-raid
+  md bitmap: export bitmap_destroy() to support dm-raid down takover to raid0
+
+ drivers/md/bitmap.c |  1 +
+ drivers/md/md.c     | 39 ++++++++++++++++++++++++++++++---------
+ drivers/md/md.h     |  3 +++
+ drivers/md/raid0.c  | 48 +++++++++++++++++++++++++++---------------------
+ 4 files changed, 61 insertions(+), 30 deletions(-)
+
 -- 
 2.1.0
