@@ -1,102 +1,79 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper changes for 3.20
-Date: Thu, 12 Feb 2015 17:01:45 -0500
-Message-ID: <20150212220145.GA27455@redhat.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: [PATCH] dm-io: reject unsupported DISCARD/WRITE SAME
+ requests with EOPNOTSUPP
+Date: Fri, 13 Feb 2015 01:24:32 -0800
+Message-ID: <20150213092432.GC11034@birch.djwong.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Asaf Vertz <asaf.vertz@tandemg.com>, Dan Carpenter <dan.carpenter@oracle.com>, Johannes Thumshirn <morbidrsa@gmail.com>, Junxiao Bi <junxiao.bi@oracle.com>, Keith Busch <keith.busch@intel.com>, Loic Pefferkorn <loic@loicp.eu>, Manuel =?iso-8859-1?Q?Sch=F6lling?= <manuel.schoelling@gmx.de>, Markus Elfring <elfring@users.sourceforge.net>, Rickard Strandqvist <rickard_strandqvist@spectrumdigital.se>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: snitzer@redhat.com, agk@redhat.com, darrick.wong@oracle.com
+Cc: dm-devel@redhat.com, "Martin K. Petersen" <martin.petersen@oracle.com>, Srinivas Eeda <srinivas.eeda@oracle.com>
 List-Id: dm-devel.ids
 
-Hi Linus,
+I created a dm-raid1 device backed by a device that supports DISCARD
+and another device that does NOT support DISCARD with the following
+dm configuration:
 
-These changes build on linux-block.git's for-3.20/core branch.
+# echo '0 2048 mirror core 1 512 2 /dev/sda 0 /dev/sdb 0' | dmsetup create moo
+# lsblk -D
+NAME         DISC-ALN DISC-GRAN DISC-MAX DISC-ZERO
+sda                 0        4K       1G         0
+`-moo (dm-0)        0        4K       1G         0
+sdb                 0        0B       0B         0
+`-moo (dm-0)        0        4K       1G         0
 
-The following changes since commit db507b3ffd9b7a1c87e732ac6e2c3a5d0bab=
-b15a:
+Notice that the mirror device /dev/mapper/moo advertises DISCARD
+support even though one of the mirror halves doesn't.
 
-  dm: fix multipath regression due to initializing wrong request (2015-=
-02-09 10:46:08 -0700)
+If I issue a DISCARD request (via fstrim, mount -o discard, or ioctl
+BLKDISCARD) through the mirror, kmirrord gets stuck in an infinite
+loop in do_region() when it tries to issue a DISCARD request to sdb.
+The problem is that when we call do_region() against sdb, num_sectors
+is set to zero because q->limits.max_discard_sectors is zero.
+Therefore, "remaining" never decreases and the loop never terminates.
 
-are available in the git repository at:
+Before entering the loop, check for the combination of REQ_DISCARD and
+no discard and return -EOPNOTSUPP to avoid hanging up the mirror
+device.  Fix the same problem with WRITE_DISCARD while we're at it.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.=
-git tags/dm-3.20-changes
+This bug was found by the unfortunate coincidence of pvmove and a
+discard operation in the RHEL 6.5 kernel; 3.19 is also affected.
 
-for you to fetch changes up to a4afe76b2b922e6197944d7be0be7a18b53175ae=
-:
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Srinivas Eeda <srinivas.eeda@oracle.com>
+---
+ drivers/md/dm-io.c |    7 +++++++
+ 1 file changed, 7 insertions(+)
 
-  dm: inherit QUEUE_FLAG_SG_GAPS flags from underlying queues (2015-02-=
-11 10:25:46 -0500)
 
-----------------------------------------------------------------
-- Most significant change this cycle is request-based DM now supports
-  stacking ontop of blk-mq devices.  This blk-mq support changes the
-  model request-based DM uses for cloning a request to relying on
-  calling blk_get_request() directly from the underlying blk-mq device.
-  Early consumer of this code is Intel's emerging NVMe hardware; thanks
-  to Keith Busch for working on, and pushing for, these changes.
-
-- A few other small fixes and cleanups across other DM targets.
-
-----------------------------------------------------------------
-Asaf Vertz (1):
-      dm bufio: fix time comparison to use time_after_eq()
-
-Dan Carpenter (1):
-      dm raid: fix a couple integer overflows
-
-Johannes Thumshirn (1):
-      dm mpath: simplify failure path of dm_multipath_init()
-
-Junxiao Bi (1):
-      dm ioctl: fix stale comment above dm_get_inactive_table()
-
-Keith Busch (3):
-      dm: submit stacked requests in irq enabled context
-      dm: prepare for allocating blk-mq clone requests in target
-      dm: inherit QUEUE_FLAG_SG_GAPS flags from underlying queues
-
-Loic Pefferkorn (1):
-      dm crypt: update url in CONFIG_DM_CRYPT help text
-
-Manuel Sch=F6lling (1):
-      dm: use time_in_range() and time_after()
-
-Markus Elfring (1):
-      dm snapshot: remove unnecessary NULL checks before vfree() calls
-
-Mike Snitzer (4):
-      dm: remove exports for request-based interfaces without external =
-callers
-      dm: split request structure out from dm_rq_target_io structure
-      dm: allocate requests in target when stacking on blk-mq devices
-      dm table: train hybrid target type detection to select blk-mq if =
-appropriate
-
-Rickard Strandqvist (1):
-      dm thin metadata: remove unused dm_pool_get_data_block_size()
-
- drivers/md/Kconfig                 |   5 +-
- drivers/md/dm-bufio.c              |   3 +-
- drivers/md/dm-cache-target.c       |   5 +-
- drivers/md/dm-ioctl.c              |   4 +-
- drivers/md/dm-log-userspace-base.c |   5 +-
- drivers/md/dm-mpath.c              |  87 +++++++---
- drivers/md/dm-raid.c               |  16 +-
- drivers/md/dm-snap-persistent.c    |  14 +-
- drivers/md/dm-table.c              |  72 ++++++--
- drivers/md/dm-target.c             |  15 +-
- drivers/md/dm-thin-metadata.c      |   9 -
- drivers/md/dm-thin-metadata.h      |   2 -
- drivers/md/dm-thin.c               |   5 +-
- drivers/md/dm.c                    | 347 +++++++++++++++++++++++++----=
---------
- drivers/md/dm.h                    |  11 +-
- include/linux/device-mapper.h      |  10 +-
- include/uapi/linux/dm-ioctl.h      |   4 +-
- 17 files changed, 416 insertions(+), 198 deletions(-)
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index c09359d..32d330a 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -290,6 +290,13 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
+ 	unsigned short logical_block_size = queue_logical_block_size(q);
+ 	sector_t num_sectors;
+ 
++	/* Reject unsupported discard/write same requests */
++	if (((rw & REQ_DISCARD) && !blk_queue_discard(q)) ||
++	    ((rw & REQ_WRITE_SAME) && !bdev_write_same(where->bdev))) {
++		dec_count(io, region, -EOPNOTSUPP);
++		return;
++	}
++
+ 	/*
+ 	 * where->count may be zero if rw holds a flush and we need to
+ 	 * send a zero-sized flush.
