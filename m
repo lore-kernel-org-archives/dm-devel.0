@@ -1,17 +1,14 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: dm-io: reject unsupported DISCARD/WRITE SAME
- requests with EOPNOTSUPP
-Date: Fri, 13 Feb 2015 09:01:30 -0800
-Message-ID: <20150213170130.GB14719@birch.djwong.org>
-References: <20150213092432.GC11034@birch.djwong.org>
-	<20150213155550.GA32670@redhat.com>
+From: heinzm@redhat.com
+Subject: [PATCH 2/3] md raid0: access mddev->queue (request queue
+	member) conditionally because it is not set when accessed
+	from dm-raid
+Date: Fri, 13 Feb 2015 19:48:07 +0100
+Message-ID: <1423853288-6278-3-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20150213155550.GA32670@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,89 +18,96 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, "Martin K. Petersen" <martin.petersen@oracle.com>, agk@redhat.com, Srinivas Eeda <srinivas.eeda@oracle.com>
+To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Feb 13, 2015 at 10:55:50AM -0500, Mike Snitzer wrote:
-> On Fri, Feb 13 2015 at  4:24am -0500,
-> Darrick J. Wong <darrick.wong@oracle.com> wrote:
-> 
-> > I created a dm-raid1 device backed by a device that supports DISCARD
-> > and another device that does NOT support DISCARD with the following
-> > dm configuration:
-> > 
-> > # echo '0 2048 mirror core 1 512 2 /dev/sda 0 /dev/sdb 0' | dmsetup create moo
-> > # lsblk -D
-> > NAME         DISC-ALN DISC-GRAN DISC-MAX DISC-ZERO
-> > sda                 0        4K       1G         0
-> > `-moo (dm-0)        0        4K       1G         0
-> > sdb                 0        0B       0B         0
-> > `-moo (dm-0)        0        4K       1G         0
-> > 
-> > Notice that the mirror device /dev/mapper/moo advertises DISCARD
-> > support even though one of the mirror halves doesn't.
-> > 
-> > If I issue a DISCARD request (via fstrim, mount -o discard, or ioctl
-> > BLKDISCARD) through the mirror, kmirrord gets stuck in an infinite
-> > loop in do_region() when it tries to issue a DISCARD request to sdb.
-> > The problem is that when we call do_region() against sdb, num_sectors
-> > is set to zero because q->limits.max_discard_sectors is zero.
-> > Therefore, "remaining" never decreases and the loop never terminates.
-> > 
-> > Before entering the loop, check for the combination of REQ_DISCARD and
-> > no discard and return -EOPNOTSUPP to avoid hanging up the mirror
-> > device.  Fix the same problem with WRITE_DISCARD while we're at it.
-> > 
-> > This bug was found by the unfortunate coincidence of pvmove and a
-> > discard operation in the RHEL 6.5 kernel; 3.19 is also affected.
-> > 
-> > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-> > Cc: "Martin K. Petersen" <martin.petersen@oracle.com>
-> > Cc: Srinivas Eeda <srinivas.eeda@oracle.com>
-> 
-> Your patch looks fine but it is laser focused on dm-io.  Again, that is
-> fine (fixes a real problem).  But I'm wondering how other targets will
-> respond in the face of partial discard support across the logical
-> address space of the DM device.
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-I'm not sure.  As far as I could tell, the simple dm targets seem happy enough
-to pass along the -EOPNOTSUPP code to whomever gave it the bio.  I didn't look
-at complicated things like dm-thin*, dm-cache, or dm-raid456.  It might be
-worth having a regression test that can be applied to all the dm* devices in
-rapid succession so we can find out.
+The patch makes 3 references to mddev->queue in the raid0 personality
+conditional in order to allow for it to be accessed from dm-raid.
+Mandatory, because md instances underneath dm-raid don't manage
+a request queue of their own which'd lead to oopses without the patch.
 
-Of the callers that I audited, ext4, xfs, btrfs, and f2fs silently ignore the
-EOPNOTSUPP code.  jfs and swapfiles printk about the error but take no other
-action.  BLKDISCARD (the ioctl) simply returns the error code to userspace.
-gfs2 and nilfs2 will disable discards; and fat doesn't check error codes at
-all.  None of them panic or otherwise go bonkers.
 
-It seems that most FSes expect transient discard failures and/or partial
-support.
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/raid0.c | 48 +++++++++++++++++++++++++++---------------------
+ 1 file changed, 27 insertions(+), 21 deletions(-)
 
-> When I implemented dm_table_supports_discards() I consciously allowed a
-> DM table to contain a mix of discard support.  I'm now wondering where
-> it is we benefit from that?  Seems like more of a liability than
-
-<shrug> Given the result above, I think we can leave it this way if we perform
-a code audit, though certainly this cautious approach would mask any other bugs
-that could be lurking.
-
-> anything -- so a bigger hammer approach to fixing this would be to
-> require all targets and all devices in a DM table support discard.
-> Which amounts to changing dm_table_supports_discards() to be like
-> dm_table_supports_write_same().
-> 
-> BTW, given dm_table_supports_write_same(), your patch shouldn't need to
-> worry about WRITE SAME.  Did you experience issues with WRITE SAME too
-> or were you just being proactive?
-
-I was being (perhaps overly) proactive, at 1am. :)
-
-That part of the if statement can go away.  I'll send a v2.
-
---D
-
-> 
-> Mike
+diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
+index a13f738..d2e037d 100644
+--- a/drivers/md/raid0.c
++++ b/drivers/md/raid0.c
+@@ -271,14 +271,16 @@ static int create_strip_zones(struct mddev *mddev, struct r0conf **private_conf)
+ 		goto abort;
+ 	}
+ 
+-	blk_queue_io_min(mddev->queue, mddev->chunk_sectors << 9);
+-	blk_queue_io_opt(mddev->queue,
+-			 (mddev->chunk_sectors << 9) * mddev->raid_disks);
+-
+-	if (!discard_supported)
+-		queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
+-	else
+-		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
++	if (mddev->queue) {
++		blk_queue_io_min(mddev->queue, mddev->chunk_sectors << 9);
++		blk_queue_io_opt(mddev->queue,
++				 (mddev->chunk_sectors << 9) * mddev->raid_disks);
++
++		if (!discard_supported)
++			queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
++		else
++			queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
++	}
+ 
+ 	pr_debug("md/raid0:%s: done.\n", mdname(mddev));
+ 	*private_conf = conf;
+@@ -429,9 +431,12 @@ static int raid0_run(struct mddev *mddev)
+ 	}
+ 	if (md_check_no_bitmap(mddev))
+ 		return -EINVAL;
+-	blk_queue_max_hw_sectors(mddev->queue, mddev->chunk_sectors);
+-	blk_queue_max_write_same_sectors(mddev->queue, mddev->chunk_sectors);
+-	blk_queue_max_discard_sectors(mddev->queue, mddev->chunk_sectors);
++
++	if (mddev->queue) {
++		blk_queue_max_hw_sectors(mddev->queue, mddev->chunk_sectors);
++		blk_queue_max_write_same_sectors(mddev->queue, mddev->chunk_sectors);
++		blk_queue_max_discard_sectors(mddev->queue, mddev->chunk_sectors);
++	}
+ 
+ 	/* if private is not null, we are here after takeover */
+ 	if (mddev->private == NULL) {
+@@ -448,16 +453,17 @@ static int raid0_run(struct mddev *mddev)
+ 	printk(KERN_INFO "md/raid0:%s: md_size is %llu sectors.\n",
+ 	       mdname(mddev),
+ 	       (unsigned long long)mddev->array_sectors);
+-	/* calculate the max read-ahead size.
+-	 * For read-ahead of large files to be effective, we need to
+-	 * readahead at least twice a whole stripe. i.e. number of devices
+-	 * multiplied by chunk size times 2.
+-	 * If an individual device has an ra_pages greater than the
+-	 * chunk size, then we will not drive that device as hard as it
+-	 * wants.  We consider this a configuration error: a larger
+-	 * chunksize should be used in that case.
+-	 */
+-	{
++
++	if (mddev->queue) {
++		/* calculate the max read-ahead size.
++		 * For read-ahead of large files to be effective, we need to
++		 * readahead at least twice a whole stripe. i.e. number of devices
++		 * multiplied by chunk size times 2.
++		 * If an individual device has an ra_pages greater than the
++		 * chunk size, then we will not drive that device as hard as it
++		 * wants.  We consider this a configuration error: a larger
++		 * chunksize should be used in that case.
++		 */
+ 		int stripe = mddev->raid_disks *
+ 			(mddev->chunk_sectors << 9) / PAGE_SIZE;
+ 		if (mddev->queue->backing_dev_info.ra_pages < 2* stripe)
+-- 
+2.1.0
