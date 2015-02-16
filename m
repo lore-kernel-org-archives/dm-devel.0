@@ -1,18 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 3/7] dm-crypt: avoid deadlock in mempools
-Date: Mon, 16 Feb 2015 08:58:52 -0500
-Message-ID: <20150216135852.GA20220@redhat.com>
-References: <alpine.LRH.2.02.1502130823540.6449@file01.intranet.prod.int.rdu2.redhat.com>
-	<20150213211614.GA7180@redhat.com>
-	<alpine.LRH.2.02.1502131708030.447@file01.intranet.prod.int.rdu2.redhat.com>
-	<20150214011445.GA14223@redhat.com> <54E1B8D9.3050803@redhat.com>
+Subject: Re: [PATCH 6/7] dm-crypt: make it possible to disable
+ offload to thread
+Date: Mon, 16 Feb 2015 09:08:48 -0500
+Message-ID: <20150216140848.GA20303@redhat.com>
+References: <alpine.LRH.2.02.1502130826050.6449@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <54E1B8D9.3050803@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1502130826050.6449@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,57 +20,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <mbroz@redhat.com>
-Cc: Ondrej Kozina <okozina@redhat.com>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Feb 16 2015 at  4:31am -0500,
-Milan Broz <mbroz@redhat.com> wrote:
+On Fri, Feb 13 2015 at  8:27am -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> On 02/14/2015 02:14 AM, Mike Snitzer wrote:
-> > On Fri, Feb 13 2015 at  5:09P -0500,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> >>
-> >>
-> >> On Fri, 13 Feb 2015, Mike Snitzer wrote:
-> >>
-> >>>   * In order to not degrade performance with excessive locking, we try
-> >>> - * non-blocking allocations without a mutex first and if it fails, we fallback
-> >>> + * non-blocking allocation without a mutex first and if it fails, we fallback
-> >>>   * to a blocking allocation with a mutex.
-> >>>   */
-> >>>  static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
-> >>
-> >> There are multiple allocations, so I would leave plural there.
-> > 
-> > Fixed, and tweaked the headers (already did that last time around so
-> > nothing new, you just didn't pick up my headers for your v2).  I pushed
-> > your patchset to linux-next (for 3.21), see:
-> > https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=for-next
-> > 
-> > Ondrej and Milan, please let us know if you hit any problems with this
-> > patchset and/or branch.
+> There are some situation where offloading bios to a thread degrades
+> performance twice, so we make an option to disable this feature. The
+> feature can be disabled by passing performance_no_offload as an optional
+> table argument performance_no_offload.
 > 
-> Will try to test it soon on some strange configurations :)
-
-OK, see if you and Ondrej can re-test with urgency over the next few
-days.
- 
-> Just to be sure - nothing of this patchset is planned for 3.20?
+> We increase target version to 14 so that userspace can be aware of this
+> feature.
 > 
-> (TBH I would like to see it upstream asap but too late for 3.20 here I guess...)
+> The default is to offload bios because for CFQ it is benefical to do so.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-I'm not opposed to sending them for the current merge (we still have a
-week) purely because this code has been around for quite a long time
-and is overdue for landing upstream.  Mikulas' recent change is
-localized to adding the knob to shutoff offloading write bios to a
-separate thread -- so nothing that should invalidate prior testing, etc.
+I changed the option to 'submit_writes_from_encrypt_threads', see:
 
-Let me know what you guys think and please share results.  If we have
-the results ideally we can decide by end of day Thursday.
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-3.20&id=70a296ba4bfff0355fd57d29ad607ad79590635d
 
-I will rebase real quick to get these changes at the front of the
-dm-for-3.20 followon work.
-
-Mike
+I'm open to other names for this option but felt your original
+'performance_no_offload' was too opaque to users.
