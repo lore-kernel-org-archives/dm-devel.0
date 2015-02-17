@@ -1,51 +1,24 @@
-From: Thanos Makatos <thanos.makatos@onapp.com>
-Subject: dm-cache metadata memory footprint
-Date: Tue, 17 Feb 2015 12:22:33 +0000
-Message-ID: <CAM2wQBvH8cjKes5MVvFQtcOkiu5NVM9DD2i8qEqDQBKSyvHboQ@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 15/45] dm-log-userspace.h: include stdint.h in userspace
+Date: Tue, 17 Feb 2015 13:38:06 +0000
+Message-ID: <20150217133806.GA5220@agk-dp.fab.redhat.com>
+References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi> <1424127948-22484-16-git-send-email-mikko.rapeli@iki.fi> <2309592.iOl8K3u7d8@wuerfel>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2906250915595927988=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <2309592.iOl8K3u7d8@wuerfel>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-api@vger.kernel.org
 List-Id: dm-devel.ids
 
---===============2906250915595927988==
-Content-Type: multipart/alternative; boundary=001a113edadae76dea050f47c134
+On Tue, Feb 17, 2015 at 10:08:56AM +0100, Arnd Bergmann wrote:
+> The normal way to do this in kernel headers is to use linux/types.h
+> but change the data structures to use __u64 instead of uint64_t
+> to avoid the build error.
+ 
+That's what happened to dm-ioctl.h.
+(Or someone could adjust linux/types.h to include these as standard.)
 
---001a113edadae76dea050f47c134
-Content-Type: text/plain; charset=UTF-8
-
-Is there some formula that could indicate the metadata memory footprint of
-dm-cache for given SSD and HDD capacities? Is there anything else that
-would affect the metadata footprint (e.g. write-through vs. write back,
-cache line size, etc.)?
-
---001a113edadae76dea050f47c134
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Is there some formula that could indicate the metadata mem=
-ory footprint of dm-cache for given SSD and HDD capacities? Is there anythi=
-ng else that would affect the metadata footprint (e.g. write-through vs. wr=
-ite back, cache line size, etc.)?</div>
-
---001a113edadae76dea050f47c134--
-
-
---===============2906250915595927988==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2906250915595927988==--
+Alasdair
