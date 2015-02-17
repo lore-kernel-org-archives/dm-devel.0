@@ -1,38 +1,77 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH 15/45] dm-log-userspace.h: include stdint.h in userspace
-Date: Tue, 17 Feb 2015 10:08:56 +0100
-Message-ID: <2309592.iOl8K3u7d8@wuerfel>
-References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi> <1424127948-22484-16-git-send-email-mikko.rapeli@iki.fi>
+From: Thanos Makatos <thanos.makatos@onapp.com>
+Subject: dm-cache failure semantics in write-back mode
+Date: Tue, 17 Feb 2015 12:15:30 +0000
+Message-ID: <CAM2wQBtW2Bit2rx-1+hngUyh1gObtt+vjWQkDVWcTfm=axCyDw@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1424127948-22484-16-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: multipart/mixed; boundary="===============2510199085580466613=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tuesday 17 February 2015 00:05:18 Mikko Rapeli wrote:
-> --- a/include/uapi/linux/dm-log-userspace.h
-> +++ b/include/uapi/linux/dm-log-userspace.h
-> @@ -7,6 +7,11 @@
->  #ifndef __DM_LOG_USERSPACE_H__
->  #define __DM_LOG_USERSPACE_H__
->  
-> +#ifdef __KERNEL__
-> +#include <linux/types.h>
-> +#else
-> +#include <stdint.h>
-> +#endif
->  #include <linux/dm-ioctl.h> /* For DM_UUID_LEN */
-> 
+--===============2510199085580466613==
+Content-Type: multipart/alternative; boundary=047d7bdc11d6b4abd7050f47a8e9
 
-The normal way to do this in kernel headers is to use linux/types.h
-but change the data structures to use __u64 instead of uint64_t
-to avoid the build error.
+--047d7bdc11d6b4abd7050f47a8e9
+Content-Type: text/plain; charset=UTF-8
 
-It's possible that the maintainers of this code have a strong opinion
-on this matter, but try doing that first.
+Hi,
 
-	Arnd
+I'm trying to understand the failure semantics of dm-cache in write-back
+mode. In Documentation/device-mapper/cache.txt it is stated:
+
+"On-disk metadata is committed every time a FLUSH or FUA bio is written.
+If no such requests are made then commits will occur every second.  This
+means the cache behaves like a physical disk that has a volatile write
+cache.  If power is lost you may lose some recent writes.  The metadata
+should always be consistent in spite of any crash."
+
+Which I admit confuses me. Assumie that no FLUSH/FUA requerst is issued
+(e.g. the user of the cached device is a Windows VM) and a failure occurs
+(e.g. there is a power failure but both the HDD and the SSD are fine)
+immediatelly after a write I/O request, but before on-disk metadata get
+commited (e.g. the failure occurs less than a second after the write I/O
+request was completed). After the hosts reboots, is this completed write
+I/O request going to be lost?
+
+--047d7bdc11d6b4abd7050f47a8e9
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi,</div><div><br></div><div>I&#39;m trying to unders=
+tand the failure semantics of dm-cache in write-back mode. In Documentation=
+/device-mapper/cache.txt it is stated:</div><div><br></div><div><div>&quot;=
+On-disk metadata is committed every time a FLUSH or FUA bio is written.</di=
+v><div>If no such requests are made then commits will occur every second.=
+=C2=A0 This</div><div>means the cache behaves like a physical disk that has=
+ a volatile write</div><div>cache.=C2=A0 If power is lost you may lose some=
+ recent writes.=C2=A0 The metadata</div><div>should always be consistent in=
+ spite of any crash.&quot;</div></div><div><br></div><div>Which I admit con=
+fuses me. Assumie that no FLUSH/FUA requerst is issued (e.g. the user of th=
+e cached device is a Windows VM) and a failure occurs (e.g. there is a powe=
+r failure but both the HDD and the SSD are fine) immediatelly after a write=
+ I/O request, but before on-disk metadata get commited (e.g. the failure oc=
+curs less than a second after the write I/O request was completed). After t=
+he hosts reboots, is this completed write I/O request going to be lost?</di=
+v></div>
+
+--047d7bdc11d6b4abd7050f47a8e9--
+
+
+--===============2510199085580466613==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2510199085580466613==--
