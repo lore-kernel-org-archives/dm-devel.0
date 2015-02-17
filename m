@@ -1,13 +1,18 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-snapshot: fix a possible invalid memory
- access on unload
-Date: Tue, 17 Feb 2015 14:34:00 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1502171430540.13128@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: [PATCH] dm-mirror: do not degrade the mirror on
+ discard error
+Date: Tue, 17 Feb 2015 14:59:37 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1502171455140.13128@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1502121007010.24282@file01.intranet.prod.int.rdu2.redhat.com>
+	<1423967994.19864.9.camel@HansenPartnership.com>
+	<alpine.LRH.2.02.1502160742030.14038@file01.intranet.prod.int.rdu2.redhat.com>
+	<1424096844.2089.2.camel@HansenPartnership.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1424096844.2089.2.camel@HansenPartnership.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,51 +22,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-When the snapshot target is unloaded, the function snapshot_dtr waits
-until pending_exceptions_count drops to zero. Then, it destroys the
-snapshot. Therefore, the function that decrements pending_exceptions_count
-should not touch the snapshot structure after the decrement.
 
-The function pending_complete calls free_pending_exception (that
-decrements pending_exceptions_count) and then it performs
-up_write(&s->lock) and it calls retry_origin_bios that dereferences
-s->origin. These two memory accesses to the fields of the snapshot may
-touch the dm_snapshot struture after it is freed.
 
-This patch moves free_pending_exception to the end of pending_complete, so
-that the snapshot could not be destroyed while pending_complete is in
-progress.
+On Mon, 16 Feb 2015, James Bottomley wrote:
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@kernel.org
+> I already said this in the first sentence of the last paragraph of my
+> email.  The point isn't what it does today it's what might happen
+> tomorrow and the principle of least surprise.  One day, someone might
+> propagate the error.  When that happens, they'll be surprised to find
+> every discard failure reported as -ENOTSUPP and it will cost someone
+> time and effort to investigate and fix.  If you just propagate the error
+> today, you save all that work in the future.
+> 
+> James
 
----
- drivers/md/dm-snap.c |   13 ++++++++-----
- 1 file changed, 8 insertions(+), 5 deletions(-)
+The question is if this case is so important that it justifies dm-io 
+change.
 
-Index: linux-2.6/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap.c
-+++ linux-2.6/drivers/md/dm-snap.c
-@@ -1432,8 +1432,6 @@ out:
- 		full_bio->bi_private = pe->full_bio_private;
- 		atomic_inc(&full_bio->bi_remaining);
- 	}
--	free_pending_exception(pe);
--
- 	increment_pending_exceptions_done_count();
- 
- 	up_write(&s->lock);
-@@ -1450,6 +1448,8 @@ out:
- 	}
- 
- 	retry_origin_bios(s, origin_bios);
-+
-+	free_pending_exception(pe);
- }
- 
- static void commit_callback(void *context, int success)
+The SSD may ignore discards and report them as sucesfully completed, so no 
+one should depend on the return code anyway. The error code may be used as 
+a hint that it is futile to send more discards in the future, but relying 
+on the return code is already not correct.
+
+Mikulas
