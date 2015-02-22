@@ -1,75 +1,45 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: Re: [PATCH v3] staging: writeboost: Add dm-writeboost
-Date: Sat, 21 Feb 2015 10:36:53 +0900
-Message-ID: <54E7E135.3060507@gmail.com>
-References: <54A508F7.1020207@gmail.com> <20150118000952.GB26160@kroah.com>
- <20150220174401.4badb3cbad7be3eed449f4c1@gmail.com>
- <20150220150614.GA4740@debian> <54E75201.9030202@gmail.com>
- <20150220155036.GB4740@debian> <54E75B70.1010007@gmail.com>
- <20150220161759.GC4740@debian>
+From: Anssi Hannula <anssi.hannula@iki.fi>
+Subject: Re: System freeze for few seconds when using dm-cache on
+ high load
+Date: Sun, 22 Feb 2015 23:39:22 +0200
+Message-ID: <54EA4C8A.8010502@iki.fi>
+References: <54B6626E.8020606@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <20150220161759.GC4740@debian>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: ejt@redhat.com
-Cc: Greg KH <gregkh@linuxfoundation.org>, dm-devel@redhat.com, driverdev-devel@linuxdriverproject.org, linux-kernel@vger.kernel.org, snitzer@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <54B6626E.8020606@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-To be clear, bio's semantics doesn't require a io is written on
-persistent medium before any ack. The border line is that ios that's acked
-are persitent before ack to REQ_FLUSH request.
-So, writing on the volatile buffer (log chunk in this case) and then ack
-is safe if the data gets persistent before some future REQ_FLUSH
-request is acked. That's dm-writeboost does.
-And in general, ack should be quick as possible otherwise may incur
-some problems such as upper layer may suspend any other requests.
-
-The bio_vecs solution works only for a tiny prototype.
-If I apply the solution there will appear the following problems
-
-1. The write to the cache device isn't one single write.
-    This causes atomicity problem. And may cause performance
-    degradation.
-2. We need to compute checksum of the entire log chunk before write.
-    Without this, the user isn't safe from partial write problem.
-    Like the 1 above, atomicity is to be cared.
-    (btw, I don't think dm-cache that has separete data device and
-     metadata device can guarantee this level of safetiness)
-3. Don't ack any bios until the full buffer is written is harmful.
-    We should ack as quick as possible as explained above.
-4. Read caching becomes infeasible. It needs copying of the read data.
-
-My conclusion is write buffer in practice should be a single buffer and
-copying is inevitable.
-
-From a engineering point of view, memory copy can't be the bottleneck
-(before that, SSD's throughput hits) so we shouldn't hack for the little
-improvement.
-
-- Akira
-
-On 2015/02/21 1:17, Joe Thornber wrote:
-> On Sat, Feb 21, 2015 at 01:06:08AM +0900, Akira Hayakawa wrote:
->> The size is configurable but typically 512KB (that's the default).
->>
->> Refer to bio payload sounds really dangerous but it may be possible
->> in some tricky way. but at the moment I am not sure how the
->> implementation would be.
->>
->> Is there some fancy function that is like memcpy but actually "move"
->> the ownership?
-> When building up your log chunk bio copy the bio_vecs (not the data)
-> from the original bios.  You can't complete the original bios until
-> your log chunk has been written.
->
-> - Joe
+SGksCgoxNC4wMS4yMDE1LCAxNDozNCwgTWljaGHFgiBadWJrb3dpY3oga2lyam9pdHRpOgo+IEkn
+bSB1c2luZyBkbS1jYWNoZSBvbiBzdWNoIHNldHVwOgo+IGRtLWNhY2hlIC0+IGx1a3MgLT4gbHZt
+MiAtPmV4dDQKPiBLZXJuZWwgdmVyc2lvbjogMy4xMy4wLTQzCj4gCj4gT24gaGlnaCBkaXNrIGxv
+YWQgKGllIHdoZW4gc2F2aW5nIHZpcnR1YWwgbWFjaGluZSBzdGF0ZSkgd2hvbGUgc3lzdGVtIAo+
+IGZyZWV6ZXMgZm9yIGEgZmV3IHNlY29uZHMuCj4gSSd2ZSB0cmllZCBhbHJlYWR5IHRvIGNoYW5n
+ZSBzY2hlZHVsZXIgKGZyb20gZGVhZGxpbmUgdG8gY2JxKSwgY2hhbmdlIAo+IGV4dDQgbW91bnQg
+b3B0aW9ucywgbm93IGkndmUgZ290Ogo+IGVycm9ycz1yZW1vdW50LXJvLG5vYXRpbWUsbm9kaXJh
+dGltZSxkaXNjYXJkLGJhcnJpZXI9MCxyZWxhdGltZQo+IAo+IFRoZXJlIGlzIHNvbWV0aGluZyBJ
+IHNob3VsZCBjaGVjaywgb3IgbWF5YmUgaXQncyBhICdub3JtYWwnIGJlaGF2aW91ciwgCj4gb3Ig
+bWF5YmUgbXkgIHdob2xlIHNldHVwIGlzIHdyb25nPwo+IAoKQ2FuJ3QgcmVhbGx5IGhlbHAgeW91
+IGRpcmVjdGx5LCBidXQganVzdCBmb3IgdGhlIHJlY29yZCwgSSBhbHNvIGdldAp3aG9sZS1zeXN0
+ZW0gKGkuZS4gbm90IGp1c3QgZnJvemVuIGRpc2tzKSBmcmVlemVzIG9mIDEwLTYwIHNlY29uZHMg
+b24KaGVhdnkgZGlzayBsb2FkIG9uIGEgc29tZXdoYXQgc2ltaWxhciBzeXN0ZW06Cmtlcm5lbCAz
+LjE0LjI3LAptZC1yYWlkNiAoMTZ4IDRUQikgLT4gbHZtIHdpdGggbHZtLWNhY2hlIChkbS1jYWNo
+ZSkgLT4gbHVrcyAtPiBleHQ0LgoKSGF2ZW4ndCBoYWQgdGhlIHRpbWUgdG8gaW52ZXN0aWdhdGUg
+ZnVydGhlciwgYW5kIHRoZXkgYXJlIHN0aWxsIHJhdGhlcgpyYXJlIGZvciBtZSAofjEgcGVyIG1v
+bnRoKS4KVGhleSBzZWVtZWQgdG8gc3RhcnQgd2hlbiBJIGFkZGVkIGRtLWNhY2hlIGFuZCBsdWtz
+IHRvIHRoZSBzZXR1cC4KCk5vIG1lc3NhZ2VzIGFwcGVhciBpbiBrZXJuZWwgbG9nIHdoZW4gaXQg
+aGFwcGVucy4KCgotLSAKQW5zc2kgSGFubnVsYQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
+LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZv
+L2RtLWRldmVs
