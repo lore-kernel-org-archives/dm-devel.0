@@ -1,18 +1,18 @@
-From: "Merla, ShivaKrishna" <ShivaKrishna.Merla@netapp.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
 Subject: Re: [Lsf] dm-mpath request merging concerns [was: Re:
  It's time to put together the schedule]
-Date: Mon, 23 Feb 2015 19:35:24 +0000
-Message-ID: <caaf5f35a4604a1fbc479589325a5e5d@hioexcmbx01-prd.hq.netapp.com>
+Date: Mon, 23 Feb 2015 12:34:22 -0600
+Message-ID: <20150223183422.GU11463@ask-08.lab.msp.redhat.com>
 References: <1424395745.2603.27.camel@HansenPartnership.com>
-	<54EAD453.6040907@suse.de>	<20150223135057.GA3362@redhat.com>
+	<54EAD453.6040907@suse.de> <20150223135057.GA3362@redhat.com>
 	<54EB60EC.6080706@cs.wisc.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 In-Reply-To: <54EB60EC.6080706@cs.wisc.edu>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,96 +22,81 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.de>
-Cc: "lsf@lists.linux-foundation.org" <lsf@lists.linux-foundation.org>, Jeff Moyer <jmoyer@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: lsf@lists.linux-foundation.org, Jeff Moyer <jmoyer@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-
-
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-
-> bounces@redhat.com] On Behalf Of Mike Christie
-> Sent: Monday, February 23, 2015 11:19 AM
-> To: Mike Snitzer; Hannes Reinecke
-> Cc: lsf@lists.linux-foundation.org; Jeff Moyer; dm-devel@redhat.com
-> Subject: Re: [dm-devel] [Lsf] dm-mpath request merging concerns [was: Re:
-> It's time to put together the schedule]
-> 
+On Mon, Feb 23, 2015 at 11:18:36AM -0600, Mike Christie wrote:
 > On 2/23/15, 7:50 AM, Mike Snitzer wrote:
-> > On Mon, Feb 23 2015 at  2:18am -0500,
-> > Hannes Reinecke <hare@suse.de> wrote:
+> >On Mon, Feb 23 2015 at  2:18am -0500,
+> >Hannes Reinecke <hare@suse.de> wrote:
 > >
-> >> On 02/20/2015 02:29 AM, James Bottomley wrote:
-> >>> In the absence of any strong requests, the Programme Committee has
-> taken
-> >>> a first stab at an agenda here:
+> >>On 02/20/2015 02:29 AM, James Bottomley wrote:
+> >>>In the absence of any strong requests, the Programme Committee has taken
+> >>>a first stab at an agenda here:
 > >>>
+> >>>https://docs.google.com/spreadsheet/pub?key=0ArurRVMVCSnkdEl4a0NrNTgtU2JrWDNtWGRDOWRhZnc
 > >>>
-> https://docs.google.com/spreadsheet/pub?key=0ArurRVMVCSnkdEl4a0NrN
-> TgtU2JrWDNtWGRDOWRhZnc
+> >>>If there's anything you think should be discussed (or shouldn't be
+> >>>discussed) speak now ...
 > >>>
-> >>> If there's anything you think should be discussed (or shouldn't be
-> >>> discussed) speak now ...
-> >>>
-> >> Recently we've found a rather worrysome queueing degradation with
-> >> multipathing, which pointed to a deficiency in the scheduler itself:
-> >> SAP found that a device with 4 paths had less I/O throughput than a
-> >> system with 2 paths. When they've reduced the queue depth on the 4
-> >> path system they managed to increase the throughput somewhat, but
-> >> still less than they've had with two paths.
+> >>Recently we've found a rather worrysome queueing degradation with
+> >>multipathing, which pointed to a deficiency in the scheduler itself:
+> >>SAP found that a device with 4 paths had less I/O throughput than a
+> >>system with 2 paths. When they've reduced the queue depth on the 4
+> >>path system they managed to increase the throughput somewhat, but
+> >>still less than they've had with two paths.
 > >
-> > The block layer doesn't have any understanding of how many paths are
-> > behind the top-level dm-mpath request_queue that is supposed to be
-> doing
-> > the merging.
+> >The block layer doesn't have any understanding of how many paths are
+> >behind the top-level dm-mpath request_queue that is supposed to be doing
+> >the merging.
 > >
-> > So from a pure design level it is surprising that 2 vs 4 is impacting
-> > the merging at all.  I think Jeff Moyer (cc'd) has dealt with SAP
-> > performance recently too.
+> >So from a pure design level it is surprising that 2 vs 4 is impacting
+> >the merging at all.  I think Jeff Moyer (cc'd) has dealt with SAP
+> >performance recently too.
 > >
-> >> As it turns out, with 4 paths the system rarely did any I/O merging,
-> >> but rather fired off the 4k requests as fast as possible.
-> >> With two paths it was able to do some merging, leading to improved
-> >> performance.
+> >>As it turns out, with 4 paths the system rarely did any I/O merging,
+> >>but rather fired off the 4k requests as fast as possible.
+> >>With two paths it was able to do some merging, leading to improved
+> >>performance.
 > >>
-> >> I was under the impression that the merging algorithm in the block
-> >> layer would only unplug the queue once the request had been fully
-> >> formed, ie after merging has happened. But apparently that is not
-> >> the case here.
+> >>I was under the impression that the merging algorithm in the block
+> >>layer would only unplug the queue once the request had been fully
+> >>formed, ie after merging has happened. But apparently that is not
+> >>the case here.
 > >
-> > Just because you aren't seeing merging are you sure it has anything to
-> > do with unpluging?  Would be nice to know more about the workload.
+> >Just because you aren't seeing merging are you sure it has anything to
+> >do with unpluging?  Would be nice to know more about the workload.
 > >
 > 
-> I think I remember this problem. In the original request based design we
-> hit this issue and Kiyoshi or Jun'ichi did some changes for it.
+> I think I remember this problem. In the original request based design we hit
+> this issue and Kiyoshi or Jun'ichi did some changes for it.
 > 
-> I think it was related to the busy/dm_lld_busy code in dm.c and
-> dm-mpath.c. The problem was that we do the merging in the dm level
-> queue. The underlying paths do not merge bios. They just take the
-> request sent to them. The change that was done to promote (I do not
-> think we ever completely fixed the issue) was that normally the workload
-> was heavy enough or the paths slow enough so the busy check would return
-> true enough to cause the dm layers queue not dispatch requests so
-> quickly. They then had time to sit in the dm queue and merge with other
-> bios.
+> I think it was related to the busy/dm_lld_busy code in dm.c and dm-mpath.c.
+> The problem was that we do the merging in the dm level queue. The underlying
+> paths do not merge bios. They just take the request sent to them. The change
+> that was done to promote (I do not think we ever completely fixed the issue)
+> was that normally the workload was heavy enough or the paths slow enough so
+> the busy check would return true enough to cause the dm layers queue not
+> dispatch requests so quickly. They then had time to sit in the dm queue and
+> merge with other bios.
 > 
-> If the device/transport is fast or the workload is low, the
-> multipath_busy never returns busy, then we can hit Hannes's issue. For 4
-> paths, we just might not be able to fill up the paths and hit the busy
-> check. With only 2 paths, we might be slow enough or the workload is
-> heavy enough to keep the paths busy and so we hit the busy check and do
-> more merging.
-> 
-Yes, Indeed this the exact issue we saw at NetApp. While running sequential
-4K write I/O with large thread count, 2 paths yield better performance than
-4 paths and performance drastically drops with 4 paths. The device queue_depth
-as 32 and with blktrace we could see better I/O merging happening and average 
-request size was > 8K through iostat. With 4 paths none of the I/O gets merged and
-always average request size is 4K. Scheduler used was noop as we are using SSD 
-based storage. We could get I/O merging to happen even with 4 paths but with lower
-device queue_depth of 16. Even then the performance was lacking compared to 2 paths.
+> If the device/transport is fast or the workload is low, the multipath_busy
+> never returns busy, then we can hit Hannes's issue. For 4 paths, we just
+> might not be able to fill up the paths and hit the busy check. With only 2
+> paths, we might be slow enough or the workload is heavy enough to keep the
+> paths busy and so we hit the busy check and do more merging.
 
+Netapp is seeing this same issue.  It seems like we might want to make
+multipath_busy more aggressive about returning busy, which would
+probably require multipath tracking the size and frequency of the
+requests.  If it determines that it's getting a lot of requests that
+could have been merged, it could start throttling how fast requests are
+getting pulled off the queue, even there underlying paths aren't busy.
+
+-Ben
+
+> 
 > --
 > dm-devel mailing list
 > dm-devel@redhat.com
