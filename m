@@ -1,13 +1,12 @@
-From: Juliano da Costa <juliano.dacosta@gmail.com>
-Subject: Duplicate multipathd process
-Date: Thu, 27 Aug 2015 12:53:00 -0300
-Message-ID: <CAAKMKp4nFdd54uuFv8jZ9d9_5z-WcjW95htEA9va+2TD2oCA3w@mail.gmail.com>
-References: <CAAKMKp6sA7T-g9zWHK4MOsCmLLssPyd5gijeE0DF_4t8QaYknQ@mail.gmail.com>
+From: Coly Li <i@coly.li>
+Subject: [PATCH 0/4] dm-latency: Introduction
+Date: Tue, 24 Feb 2015 01:27:43 +0800
+Message-ID: <54EB630F.2070403@coly.li>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5154827214692874808=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAAKMKp6sA7T-g9zWHK4MOsCmLLssPyd5gijeE0DF_4t8QaYknQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,97 +17,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, Laurence Oberman <loberman@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
---===============5154827214692874808==
-Content-Type: multipart/alternative; boundary=f46d04428804341a9b051e4cf6e5
+From: Coly Li <bosong.ly@alibaba-inc.com>
 
---f46d04428804341a9b051e4cf6e5
-Content-Type: text/plain; charset=UTF-8
+Dm-latency patch set is an effort to measure hard disk I/O latency on
+top of device mapper layer. The original motivation of I/O latency
+measurement was to predict hard disk failure by machine learning method,
+I/O latency information was one of the inputs sent to machine learning
+model.
 
-Hi ALL.
+This patch set was written in Aug~Sep 2013, I deployed it on many
+servers of Alibaba cloud infrastructure. After running for weeks, some
+interesting data about hard disk I/O latency was observed. In 2013, I
+gave a talk on OpenSuSE Conference about this topic
+(http://blog.coly.li/docs/osc13-coly.pdf).
 
-I'm having some problems and could not find solution with technical support.
+When generating time stamp for I/O request, clock source is a global
+unique resource which is protected by spin-locks. Dm-latency was tested
+on SAS/SATA hard disk and SATA SSD, it worked well as expected. Running
+dm-latency on PCI-e or NVMe SSD should work (I didn't test), but there
+will be spin-lock scalability issue, when accessing clock source for
+time stamping.
 
-My server is two multipathd running processes. I noticed that when there is
-a failure to communicate with the SAN device looks like this:
+Dm-latency is good for I/O latency measurement to hard disk based
+storage, no matter local or distributed storage via network. For PCI-e
+or NVMe SSD, I suggest people to look for device provided statistic
+information, if there is.
 
-volclu2 (36000144000000010700aa26e0e57b5b9) dm-36 EMC Invista
-size = 1.0G features = '0' hwhandler = '0' wp = rw
-`- + - Policy = 'queue-length 0' prio = 0 status = enabled
-| - 0: 0: 0: 20 65:64 sdu failed running faulty
-| - 0: 0: 1: 20 sdaq 66: 160 failed running faulty
-| - 1: 0: 0: 20 sddf 70: 208 failed running faulty
-`- 1: 0: 1: 20 sdeb 128: 48 failed running faulty
+The code is very simple, there is no resource allocation/destory, no
+spin_lock/spin_unlock. The patch set gets merged into Alibaba kernel
+more than 1 year, no bug reported in last 12 months.
 
-And then the communication is re-established looks like this:
+This patch set has 4 patches,
+- [PATCH 1/4] dm-latency: move struct mapped_device from dm.c to dm.h
+- [PATCH 2/4] dm-latency: add I/O latency measurement in device mapper
+- [PATCH 3/4] dm-latency: add sysfs interface
+- [PATCH 4/4] dm-latency: add reset function to dm-latency in sysfs
+interface
+All these patches are rebased on Linux 4.0-rc1.
 
-volclu2 (36000144000000010700aa26e0e57b5b9) dm-36 EMC Invista
-size = 1.0G features = '0' hwhandler = '0' wp = rw
-`- + - Policy = 'queue-length 0' prio = 1 Status = enabled
-| - 0: 0: 0: 20 65:64 sdu failed running ready
-| - 0: 0: 1: 20 sdaq 66: 160 failed running ready
-| - 1: 0: 0: 20 sddf 70: 208 failed running ready
-`- 1: 0: 1: 20 sdeb 128: 48  failed running ready
+Today Laurence Oberman from Redhat sent me an email asking whether this
+patch set is upstream merged, because he is thinking of pulling this
+patch set into their kernel. I'd like to maintain this patch set, hope
+it could be merged.
 
-The failback is not being automatic. The status of the device is "enable"
-rather than "active".
+Thanks in advance.
 
-The status only changes to "active" when I run "multipath -v3".
-
-- What can cause the creation of two daemon multipathd?
-
-Regards,
-    Juliano.
-
---f46d04428804341a9b051e4cf6e5
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<p dir=3D"ltr">Hi ALL.<br></p>
-<p dir=3D"ltr">I&#39;m having some problems and could not find solution wit=
-h technical support.</p>
-<p dir=3D"ltr">My server is two multipathd running processes. I noticed tha=
-t when there is a failure to communicate with the SAN device looks like thi=
-s:</p>
-<p dir=3D"ltr">volclu2 (36000144000000010700aa26e0e57b5b9) dm-36 EMC Invist=
-a<br>
-size =3D 1.0G features =3D &#39;0&#39; hwhandler =3D &#39;0&#39; wp =3D rw<=
-br>
-`- + - Policy =3D &#39;queue-length 0&#39; prio =3D 0 status =3D enabled<br=
->
-| - 0: 0: 0: 20 65:64 sdu failed running faulty<br>
-| - 0: 0: 1: 20 sdaq 66: 160 failed running faulty<br>
-| - 1: 0: 0: 20 sddf 70: 208 failed running faulty<br>
-`- 1: 0: 1: 20 sdeb 128: 48 failed running faulty</p>
-<p dir=3D"ltr">And then the communication is re-established looks like this=
-:</p>
-<p dir=3D"ltr">volclu2 (36000144000000010700aa26e0e57b5b9) dm-36 EMC Invist=
-a<br>
-size =3D 1.0G features =3D &#39;0&#39; hwhandler =3D &#39;0&#39; wp =3D rw<=
-br>
-`- + - Policy =3D &#39;queue-length 0&#39; prio =3D 1 Status =3D enabled<br=
->
-| - 0: 0: 0: 20 65:64 sdu failed running ready<br>
-| - 0: 0: 1: 20 sdaq 66: 160 failed running ready<br>
-| - 1: 0: 0: 20 sddf 70: 208 failed running ready<br>
-`- 1: 0: 1: 20 sdeb 128: 48=C2=A0 failed running ready</p>
-<p dir=3D"ltr">The failback is not being automatic. The status of the devic=
-e is &quot;enable&quot; rather than &quot;active&quot;.</p>
-<p dir=3D"ltr">The status only changes to &quot;active&quot; when I run &qu=
-ot;multipath -v3&quot;.</p>
-<p dir=3D"ltr">- What can cause the creation of two daemon multipathd?</p>
-<p dir=3D"ltr">Regards,<br>
-=C2=A0=C2=A0=C2=A0 Juliano.</p>
-
---f46d04428804341a9b051e4cf6e5--
-
-
---===============5154827214692874808==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5154827214692874808==--
+Coly Li
