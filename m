@@ -1,19 +1,19 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: dm-mpath request merging concerns [was: Re: It's
  time to put together the schedule]
-Date: Mon, 23 Feb 2015 14:56:03 -0500
-Message-ID: <20150223195603.GB4693@redhat.com>
+Date: Mon, 23 Feb 2015 15:39:33 -0500
+Message-ID: <20150223203933.GC4693@redhat.com>
 References: <1424395745.2603.27.camel@HansenPartnership.com>
 	<54EAD453.6040907@suse.de> <20150223135057.GA3362@redhat.com>
-	<54EB60EC.6080706@cs.wisc.edu>
-	<20150223183422.GU11463@ask-08.lab.msp.redhat.com>
+	<54EB60EC.6080706@cs.wisc.edu> <20150223195057.GA4693@redhat.com>
+	<20150223200838.GA27810@lst.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20150223183422.GU11463@ask-08.lab.msp.redhat.com>
+In-Reply-To: <20150223200838.GA27810@lst.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,33 +23,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: lsf@lists.linux-foundation.org, axboe@kernel.dk, device-mapper development <dm-devel@redhat.com>, Jeff Moyer <jmoyer@redhat.com>
+To: Christoph Hellwig <hch@lst.de>
+Cc: axboe@kernel.dk, Mike Christie <michaelc@cs.wisc.edu>, dm-devel@redhat.com, lsf@lists.linux-foundation.org, Jeff Moyer <jmoyer@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Feb 23 2015 at  1:34pm -0500,
-Benjamin Marzinski <bmarzins@redhat.com> wrote:
-
-> On Mon, Feb 23, 2015 at 11:18:36AM -0600, Mike Christie wrote:
-> > 
-> > If the device/transport is fast or the workload is low, the multipath_busy
-> > never returns busy, then we can hit Hannes's issue. For 4 paths, we just
-> > might not be able to fill up the paths and hit the busy check. With only 2
-> > paths, we might be slow enough or the workload is heavy enough to keep the
-> > paths busy and so we hit the busy check and do more merging.
-> 
-> Netapp is seeing this same issue.  It seems like we might want to make
-> multipath_busy more aggressive about returning busy, which would
-> probably require multipath tracking the size and frequency of the
-> requests.  If it determines that it's getting a lot of requests that
-> could have been merged, it could start throttling how fast requests are
-> getting pulled off the queue, even there underlying paths aren't busy.
-
-the ->busy() checks are just an extra check the shouldn't be the primary
-method for governing the effectiveness of the DM-mpath queue's elevator.
-
-I need to get back to basics to appreciate how the existing block layer
-is able to have an effective elevator regardless of the device's speed.
-And why isn't request-based DM able to just take advantage of it?
-
-(my money is on request-based DM being overly clever but we'll see)
+T24gTW9uLCBGZWIgMjMgMjAxNSBhdCAgMzowOHBtIC0wNTAwLApDaHJpc3RvcGggSGVsbHdpZyA8
+aGNoQGxzdC5kZT4gd3JvdGU6Cgo+IE9uIE1vbiwgRmViIDIzLCAyMDE1IGF0IDAyOjUwOjU3UE0g
+LTA1MDAsIE1pa2UgU25pdHplciB3cm90ZToKPiA+IC0gU2hvdWxkIHJlcXVlc3QtYmFzZWQgRE0g
+d2lyZSB1cCBibGtfY2hlY2tfcGx1Z2dlZCgpIHRvIGFsbG93IHRoZSBibG9jawo+ID4gICBsYXll
+cidzIHBsdWdnaW5nIHRvIG1vcmUgZGlyZWN0bHkgaW5mbHVlbmNlIHdoZW4gYmxrX3N0YXJ0X3Jl
+cXVlc3QoKQo+ID4gICBpcyBjYWxsZWQgZnJvbSBkbV9yZXF1ZXN0X2ZuPwo+ID4gCj4gPiAtIFB1
+dCBkaWZmZXJlbnRseTogaW4gYWRkaXRpb24gdG8gY2hlY2tpbmcgLT5idXN5IHNob3VsZCBkbV9y
+ZXF1ZXN0X2ZuCj4gPiAgIGFsc28gbWFpbnRhaW4gYW5kIGNoZWNrIHBsdWdnaW5nIHN0YXRlIHRo
+YXQgaXMgaW5mbHVlbmNlZCBieQo+ID4gICBibGtfY2hlY2tfcGx1Z2dlZCgpPwo+ID4gCj4gPiAo
+b3IgaXMgdGhpcyBtb290IGdpdmVuIHRoYXQgdGhlIGJsb2NrIGxheWVyIHdpbGwgb25seSBjYWxs
+IHEtPnJlcXVlc3RfZm4KPiA+IHdoZW4gdGhlIHF1ZXVlIGlzbid0IHBsdWdnZWQgYW55d2F5IT8p
+Cj4gPiAKPiA+IEJhc2ljYWxseSB0aGUgbG9uZyBhbmQgc2hvcnQgb2YgdGhpcyBpczogdGhlIGJs
+b2NrIGxheWVyIGlzbid0IGhlbHBpbmcKPiA+IHVzIGxpa2Ugd2UgdGhvdWdodCAoZWxldmF0b3Ig
+aXMgZWZmZWN0aXZlbHkgdXNlbGVzcyBhbmQvb3IgYmVpbmcKPiA+IGNpcmN1bXZlbnRlZCkuICBB
+bmQgdGhpcyBhcHBhcmVudGx5IGlzbid0IG5ldy4KPiA+IAo+ID4gSSdsbCB0YWtlIGEgbW9yZSBt
+ZWFzdXJlZCBsb29rIGF0IGFsbCBvZiB0aGlzIHdoaWxlIGFsc28gdHJ5aW5nIHRvCj4gPiBtYWtl
+IHNlbnNlIG9mIHN3aXRjaGluZyByZXF1ZXN0LWJhc2VkIERNIG92ZXIgdG8gdXNpbmcgYmxrLW1x
+Lgo+IAo+IEknZCBsaWtlIHRvIHJlcGhyYXNlIHRoZSBxdWVzdGlvbiBhIGxpdHRsZSBiaXQ6ICBJ
+cyB0aGUgcmVxdWVzdCBsYXllciArCj4gZGV2aWNlIG1hcHBlciByZWFsbHkgdGhlIHJpZ2h0IGNv
+bWJpbmF0aW9uIGZvciBkcml2aW5nIG11bHRpcGF0aCBJL08/Cj4gCj4gSWYgd2Ugd2VyZSBtb3Zp
+bmcgaXQgdG8gYSBzZXQgb2YgaGVscGVycyB3aGVyZSBibGstbXEgZHJpdmVycyBjb3VsZAo+IGp1
+c3QgYXNrIGZvciByZXN1Ym1pdHRpbmcgSS9PIG9uIGFub3RoZXIgZGV2aWNlIG9mIGl0J3MgY2hv
+aWNlIHdlCj4gd291bGQgYmUgYWJsZSB0byBjdXQgdGhlIG1pZGRsZSBtYW4gd2l0aCBhbGwgdGhl
+IHByb2JsZW1zIHRoYXQgaGF2aW5nCj4gYSBtaWRkbGUgbWFuIGVudGFpbHMuIFRoYXQgaXMgYWxs
+IHRoZSBidXN5IGNoZWNrcyB0aGF0IG5lZWQgdG8gYmUKPiBwcm9wYWdhdGVkLCB0aGUgcGx1Z2dp
+bmcgcXVlc3Rpb24sIHRoZSB2YXJpb3VzIG1lcmdlIHBhcmFtZXRlcnMgdGhhdCBuZWVkCj4gdG8g
+YmUgY29tbXVuaWNhdGVkIGZyb20gdGhlIGRyaXZlciwgdGhlIHNlbnNlIGNvZGUgaW50ZXByZXRh
+dGlvbiBmb3Igd2hpY2gKPiBkbSBuZWVkcyB0byBjYWxsIGJhY2sgaW50byBTQ1NJIChvciBOVk1l
+IGZvciB0aGF0IG1hdHRlcikuICBUbyBtZQo+IGl0IHNlZW1zIGxpa2UgYSBtdWNoIGJldHRlciBp
+ZGVhIHRvIGxldCB0aGUgZHJpdmVyICgqKSBkcml2ZXIgdGhlCj4gZGVjaXNpb24sIHdpdGggYSBm
+ZXcgbGlicmFyeSBoZWxwZXJzIHByb3ZpZGVkIHRvIGRlYWwgd2l0aCBxdWV1ZSBzZWxlY3Rpb24K
+PiBhbGdvcml0aG1zIGFuZCBvdGhlciBmYdGWcmx5IGdlbmVyaWMgcGllY2VzIG9mIGNvZGUuCj4g
+Cj4gKCopIHRoYXQgaXMgYmxvY2sgbGF5ZXIgZHJpdmVyLCBpbiBjYXNlIG9mIFNDU0kgaXQgd291
+bGQgc3RpbGwgYmUgdGhlCj4gbWlkbGF5ZXIgcHVsbGluZyB0aGUgc3RyaW5ncy4KCk9LLCBmYWly
+IHF1ZXN0aW9uLiAgQnV0IG1ha2luZyBleGlzdGluZyBETS1tdWx0aXBhdGggd29yayBhcyBleHBl
+Y3RlZAooZWZmZWN0aXZlIGNvbnN1bWVyIG9mIG9sZCBibG9jaydzIGVsZXZhdG9ycykgd291bGQg
+YmUgYSBuaWNlIHRoaW5nIHRvCmRvIGJlZm9yZSBibG93aW5nIGl0IHVwIHdpdGggYSByZWRlc2ln
+bi4KClRoZXJlIGlzIGEgbG90IG9mIGJsb2NrIGNvZGUgdGhhdCBpcyBvbmx5IHVzZWQgYnkgcmVx
+dWVzdC1iYXNlZCBETSwgdGhlCmJpZyBvbmUgYmVpbmcgYmxrX3F1ZXVlX2JpbygpLiAgQ291bGQg
+YmUgYSByZWdyZXNzaW9uIGNyZXB0IGluIGFuZCBpdAp3ZW50IHVubm90aWNlZCB1bnRpbCBub3cu
+ICBOb3Qgc3VyZS4KCkhhcHB5IHRvIGVudGVydGFpbiB5b3VyIHF1ZXN0aW9uIG9uY2UgdGhpcyBp
+bW1lZGlhdGUgaXNzdWUgaXMgdW5kZXIKY29udHJvbCAob3IgYXQgbGVhc3QgdW5kZXJzdG9vZCku
+ICBCdXQgaXQgaXMgb2J2aW91c2x5IGEgd29ydGh5CmRpc2N1c3Npb24gZm9yIExTRi4KCi0tCmRt
+LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
+dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
