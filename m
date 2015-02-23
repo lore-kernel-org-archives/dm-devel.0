@@ -1,8 +1,8 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [Lsf] dm-mpath request merging concerns [was: Re:
- It's time to put together the schedule]
-Date: Mon, 23 Feb 2015 12:34:22 -0600
-Message-ID: <20150223183422.GU11463@ask-08.lab.msp.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-mpath request merging concerns [was: Re: It's
+ time to put together the schedule]
+Date: Mon, 23 Feb 2015 14:50:57 -0500
+Message-ID: <20150223195057.GA4693@redhat.com>
 References: <1424395745.2603.27.camel@HansenPartnership.com>
 	<54EAD453.6040907@suse.de> <20150223135057.GA3362@redhat.com>
 	<54EB60EC.6080706@cs.wisc.edu>
@@ -22,11 +22,13 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: lsf@lists.linux-foundation.org, Jeff Moyer <jmoyer@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Mike Christie <michaelc@cs.wisc.edu>
+Cc: lsf@lists.linux-foundation.org, axboe@kernel.dk, Jeff Moyer <jmoyer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Feb 23, 2015 at 11:18:36AM -0600, Mike Christie wrote:
+On Mon, Feb 23 2015 at 12:18pm -0500,
+Mike Christie <michaelc@cs.wisc.edu> wrote:
+
 > On 2/23/15, 7:50 AM, Mike Snitzer wrote:
 > >On Mon, Feb 23 2015 at  2:18am -0500,
 > >Hannes Reinecke <hare@suse.de> wrote:
@@ -69,35 +71,63 @@ On Mon, Feb 23, 2015 at 11:18:36AM -0600, Mike Christie wrote:
 > >do with unpluging?  Would be nice to know more about the workload.
 > >
 > 
-> I think I remember this problem. In the original request based design we hit
-> this issue and Kiyoshi or Jun'ichi did some changes for it.
+> I think I remember this problem. In the original request based
+> design we hit this issue and Kiyoshi or Jun'ichi did some changes
+> for it.
 > 
-> I think it was related to the busy/dm_lld_busy code in dm.c and dm-mpath.c.
-> The problem was that we do the merging in the dm level queue. The underlying
-> paths do not merge bios. They just take the request sent to them. The change
-> that was done to promote (I do not think we ever completely fixed the issue)
-> was that normally the workload was heavy enough or the paths slow enough so
-> the busy check would return true enough to cause the dm layers queue not
-> dispatch requests so quickly. They then had time to sit in the dm queue and
-> merge with other bios.
-> 
-> If the device/transport is fast or the workload is low, the multipath_busy
-> never returns busy, then we can hit Hannes's issue. For 4 paths, we just
-> might not be able to fill up the paths and hit the busy check. With only 2
-> paths, we might be slow enough or the workload is heavy enough to keep the
-> paths busy and so we hit the busy check and do more merging.
+> I think it was related to the busy/dm_lld_busy code in dm.c and
+> dm-mpath.c. The problem was that we do the merging in the dm level
+> queue. The underlying paths do not merge bios. They just take the
+> request sent to them.
 
-Netapp is seeing this same issue.  It seems like we might want to make
-multipath_busy more aggressive about returning busy, which would
-probably require multipath tracking the size and frequency of the
-requests.  If it determines that it's getting a lot of requests that
-could have been merged, it could start throttling how fast requests are
-getting pulled off the queue, even there underlying paths aren't busy.
+Digging in to this a little, seems pretty clear that DM-mpath doesn't
+have enough integration with the block layer related to queue plugging.
 
--Ben
+DM is looking for back-pressure in terms of "busy" in 2 ways:
 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+1) from blk_queue_lld_busy() callback:
+dm_lld_busy -> dm_table_any_busy_target -> multipath_busy -> 
+__pgpath_busy -> dm_underlying_device_busy -> blk_lld_busy
+
+2) from q->request_fn:
+dm_request_fn -> multipath_busy ->
+__pgpath_busy -> dm_underlying_device_busy -> blk_lld_busy
+
+(btw, I'm tempted to remove dm_underlying_device_busy since it just
+calls blk_lld_busy... not seeing the point of the DM wrapper.  BUT to my
+amazement, dm_underlying_device_busy is the only caller of
+blk_lld_busy.  And the only other caller of blk_queue_lld_busy() is
+scsi_alloc_queue().  Meaning this is a useless hook for non-SCSI devices
+that might be used by multipath in the future, e.g. NVMe.  Also, we
+don't support stacked request-based DM targets so I'm missing _why_ DM
+is even bothering to call blk_queue_lld_busy -- I think it shouldn't) 
+
+Anyway, as was noted earlier, mpath's underlying devices could be too
+fast to show any signs of "busy" pressure.  And ontop of it, the check
+for "busy" is racey given that there is no guarantee that the queue that
+is checked will be the actual underlying queue the request will get
+dispatched to.
+
+Switching gears slightly, DM is blind to plugging and only relies on
+"busy" -- this looks like a recipe for blindly dispatching requests to
+the underlying queues.
+
+questions:
+
+- Should request-based DM wire up blk_check_plugged() to allow the block
+  layer's plugging to more directly influence when blk_start_request()
+  is called from dm_request_fn?
+
+- Put differently: in addition to checking ->busy should dm_request_fn
+  also maintain and check plugging state that is influenced by
+  blk_check_plugged()?
+
+(or is this moot given that the block layer will only call q->request_fn
+when the queue isn't plugged anyway!?)
+
+Basically the long and short of this is: the block layer isn't helping
+us like we thought (elevator is effectively useless and/or being
+circumvented).  And this apparently isn't new.
+
+I'll take a more measured look at all of this while also trying to
+make sense of switching request-based DM over to using blk-mq.
