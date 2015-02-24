@@ -1,13 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 0/4] dm: simplify request-based DM a bit and an
-	RFC-like perf tweak
-Date: Tue, 24 Feb 2015 11:44:06 -0500
-Message-ID: <1424796250-38553-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 1/4] dm: remove unnecessary wrapper around
+	blk_lld_busy
+Date: Tue, 24 Feb 2015 11:44:07 -0500
+Message-ID: <1424796250-38553-2-git-send-email-snitzer@redhat.com>
+References: <1424796250-38553-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1424796250-38553-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,42 +23,59 @@ To: dm-devel@redhat.com
 Cc: axboe@kernel.dk, shivakrishna.merla@netapp.com, jmoyer@redhat.com
 List-Id: dm-devel.ids
 
-These changes were born out of me staring at the DM core code that
-deals with request-based DM, in response to this thread:
-https://www.redhat.com/archives/dm-devel/2015-February/msg00118.html
+There is no need for DM to export a wrapper around the already exported
+blk_lld_busy().
 
-I've tested patches 1-3.  Patch 4 is more an RFC patch that fell out
-of discussion I had with Jeff Moyer ("phro" below):
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-mpath.c         | 2 +-
+ drivers/md/dm.c               | 6 ------
+ include/linux/device-mapper.h | 5 -----
+ 3 files changed, 1 insertion(+), 12 deletions(-)
 
-<phro> are you sure it isn't just i/o completion that's pulling more requests off the queue?
-<phro> at least at the lower layer, that's what happens.  you get an interrupt for i/o completion, and in that contxt you submit any pending i/o
-<snitm> in drivers/md/dm.c: dm_end_request -> rq_completed -> blk_run_queue_async
-<snitm> so could very well be
-<phro> ok, only difference is you kick it off to a work queue
-<phro> for immediate dispatch
-<snitm> right
-<phro> so that makes sense.  as soon as an i/o is completed, a new one is issued
-<snitm> could impose a delay on the running of the queue
-<phro> right
-<snitm> e.g. how dm.c:dm_request_fn does blk_delay_queue(q, HZ / 10);
-<snitm> (which is what promotes merging in the ->lld_busy_fn returning true case)
-<snitm> that _could_ be enough to slow things down slightly
-<phro> it's worth a shot
-
-Mike Snitzer (4):
-  dm: remove unnecessary wrapper around blk_lld_busy
-  dm: remove request-based DM queue's lld_busy_fn hook
-  dm: remove request-based logic from make_request_fn wrapper
-  dm: delay running the queue slightly during request completion
-
- block/blk-core.c              |  5 ++--
- drivers/md/dm-mpath.c         |  2 +-
- drivers/md/dm-table.c         | 14 -----------
- drivers/md/dm.c               | 54 +++++++++++--------------------------------
- drivers/md/dm.h               |  1 -
- include/linux/blkdev.h        |  2 --
- include/linux/device-mapper.h |  5 ----
- 7 files changed, 17 insertions(+), 66 deletions(-)
-
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index d376dc8..add6391 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1627,7 +1627,7 @@ static int __pgpath_busy(struct pgpath *pgpath)
+ {
+ 	struct request_queue *q = bdev_get_queue(pgpath->path.dev->bdev);
+ 
+-	return dm_underlying_device_busy(q);
++	return blk_lld_busy(q);
+ }
+ 
+ /*
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 73f2880..1766ba0 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2003,12 +2003,6 @@ out:
+ 	dm_put_live_table(md, srcu_idx);
+ }
+ 
+-int dm_underlying_device_busy(struct request_queue *q)
+-{
+-	return blk_lld_busy(q);
+-}
+-EXPORT_SYMBOL_GPL(dm_underlying_device_busy);
+-
+ static int dm_lld_busy(struct request_queue *q)
+ {
+ 	int r;
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 2646aed..3e4db11 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -604,9 +604,4 @@ static inline unsigned long to_bytes(sector_t n)
+ 	return (n << SECTOR_SHIFT);
+ }
+ 
+-/*-----------------------------------------------------------------
+- * Helper for block layer and dm core operations
+- *---------------------------------------------------------------*/
+-int dm_underlying_device_busy(struct request_queue *q);
+-
+ #endif	/* _LINUX_DEVICE_MAPPER_H */
 -- 
 1.9.3 (Apple Git-50)
