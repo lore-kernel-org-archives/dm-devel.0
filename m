@@ -1,121 +1,64 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [RFC PATCH 4/4 v2] dm: delay running the queue
- slightly during request completion
-Date: Tue, 24 Feb 2015 09:52:56 -0800
-Message-ID: <54ECBA78.6020204@kernel.dk>
-References: <1424796250-38553-1-git-send-email-snitzer@redhat.com>
-	<1424796250-38553-5-git-send-email-snitzer@redhat.com>
-	<54ECAC08.7040603@kernel.dk> <20150224172259.GA39226@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: NeilBrown <neilb@suse.de>
+Subject: Re: [dm-devel] [PATCH 0/3] md raid: enhancements to support the
+ device mapper dm-raid target
+Date: Wed, 25 Feb 2015 09:12:43 +1100
+Message-ID: <20150225091243.33fdd5f6@notabene.brown>
+References: <1423853282-6218-1-git-send-email-heinzm@redhat.com>
+	<20150218130328.3ce5ab53@notabene.brown>
+	<54E47C88.1080203@redhat.com>
+	<20150223120718.03806a87@notabene.brown>
+	<54EB13AC.4010006@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150224172259.GA39226@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: jmoyer@redhat.com, dm-devel@redhat.com, shivakrishna.merla@netapp.com
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ boundary="Sig_/7Z8Wos5taslwdITppz9un1o"; protocol="application/pgp-signature"
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <54EB13AC.4010006@redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "jbras >> Brassow Jonathan" <jbrassow@redhat.com>, linux RAID <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 02/24/2015 09:22 AM, Mike Snitzer wrote:
-> On Tue, Feb 24 2015 at 11:51P -0500,
-> Jens Axboe <axboe@kernel.dk> wrote:
->
->> On 02/24/2015 08:44 AM, Mike Snitzer wrote:
->>> On really fast storage it can be beneficial to delay running the
->>> request_queue to allow the elevator more opportunity to merge requests.
->>>
->>> Otherwise, it has been observed that requests are being sent to
->>> q->request_fn much quicker than is ideal on IOPS-bound backends.
->>>
->>> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
->>> ---
->>>   drivers/md/dm.c | 2 +-
->>>   1 file changed, 1 insertion(+), 1 deletion(-)
->>>
->>> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
->>> index fc92899..92091e0 100644
->>> --- a/drivers/md/dm.c
->>> +++ b/drivers/md/dm.c
->>> @@ -1034,7 +1034,7 @@ static void rq_completed(struct mapped_device *md, int rw, bool run_queue)
->>>   	 * queue lock again.
->>>   	 */
->>>   	if (run_queue)
->>> -		blk_run_queue_async(md->queue);
->>> +		blk_delay_queue(md->queue, HZ / 10);
->>
->> This looks dangerous... How will this impact sync IO? Heuristics like this
->> will always come back and bite you in the ass.
->>
->> A slightly more friendly heuristic might be to delay running the queue, if
->> you still have pending IO. That would give you a more sawtooth like queue
->> depth management, so it would potentially slow down a bit, but the upside
->> would be more efficient merging since it would allow some requests so sit a
->> little bit before being dispatched.
->
-> OK, thanks for the suggestion, sending RFC patches FTW:
->
-> From: Mike Snitzer <snitzer@redhat.com>
-> Subject: [PATCH] dm: delay running the queue slightly during request
->   completion
->
-> On really fast storage it can be beneficial to delay running the
-> request_queue to allow the elevator more opportunity to merge requests.
->
-> Otherwise, it has been observed that requests are being sent to
-> q->request_fn much quicker than is ideal on IOPS-bound backends.
->
-> To avoid impacting sync IO, the delay when running the queue is only
-> used if there is pending IO.  As Jens put it when suggesting this
-> heuristic:
->   "That would give you a more sawtooth like queue depth management, so it
->   would potentially slow down a bit, but the upside would be more
->   efficient merging since it would allow some requests to sit a little
->   bit before being dispatched."
->
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->   drivers/md/dm.c | 8 ++++++--
->   1 file changed, 6 insertions(+), 2 deletions(-)
->
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index fc92899..85b8919 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1033,8 +1033,12 @@ static void rq_completed(struct mapped_device *md, int rw, bool run_queue)
->   	 * back into ->request_fn() could deadlock attempting to grab the
->   	 * queue lock again.
->   	 */
-> -	if (run_queue)
-> -		blk_run_queue_async(md->queue);
-> +	if (run_queue) {
-> +		if (md->queue->nr_pending)
-> +			blk_delay_queue(md->queue, HZ / 10);
-> +		else
-> +			blk_run_queue_async(md->queue);
-> +	}
+--Sig_/7Z8Wos5taslwdITppz9un1o
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-So all of this needs to be tested and performance vetted. But my 
-original suggestion was something like:
+On Mon, 23 Feb 2015 12:49:00 +0100 Heinz Mauelshagen <heinzm@redhat.com>
+wrote:
 
-if (run_queue && !md->queue->nr_pending)
-	blk_run_queue_async(md->queue);
+> Sure.
+> I'd like to see the raid0 conditonal request queue patch though.
+>=20
 
-which might be a bit extreme, but if we hit 0, that's the only case 
-where you truly do need to run the queue. So that kind of logic would 
-give you the highest chance of merge success, potentially at the cost of 
-reduced performance for other cases.
 
-That aside, where did you pull this ->nr_pending from? I think you need 
-to look at that again...
+ok, I've applied that one.  It should turn up in my -next by the end of the
+week.
 
--- 
-Jens Axboe
+I'll look forward to your other results.
+
+Thanks,
+NeilBrown
+
+
+--Sig_/7Z8Wos5taslwdITppz9un1o
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIVAwUBVOz3Wznsnt1WYoG5AQJJag/+NcI1EtReSUQ9IgBjkABDHdkInlzoJ+Og
++Tt4Zz3RdCMZBKj+CNWAx2TUbYzX0tzHM8ys+2jGShGbbPWHoEF+aQ8UG4h/7ZAU
+neSkFTsS8QR0otKiRDxEUtk2SczaWfj+fGlroB0UX+w3DiCWW2MZ4hGzQMhrk8nM
+yUWw663bgrbiut3D90ZkpK5eRe1UIOGqlX91yHpcXRe5BUgMXIDBV5carSpcb1YE
+JMSX4nZ387vzfR2DaeLrxRGGRVdFnzNjcSGxwOPr+1jHd2JaR0IlPjQn0hJEwdM4
+inqJxkNj7pzIFRl34GdedvVldFBXCcoSEAx0i1wvu4U+t2vrUWzjMPNXNVMCbp3i
+od/+KYpCODngWTqRgc4tHz/bSZT7rL2O90GDINJFhACkLk+0uDgnRThYc+mu0izI
+lumTUedReCR53wVDYf/8J2FGKerTDx+2yW35sPPKPF9sZFIvPrD6tvqZT+61Sr28
+0vYgjqWYyLNCEjLdrQwh1pz6KmLbk++A2EvvUkyfqRmi3quZUxi2oAHiydKlI2IK
+54zGi30KnDpaK9PNsi2Lvh1giszEohL+FI75/fXkb7DLmxRu5OGkGLjqJHCfIsk6
+1AGOiz/lpJSa5Jl7XOHy8hsJi90MyQ7iyCBYrUKkGV+cbn++pDPAM3ElZyNofoPK
+3xLA9LmQsBc=
+=M1ew
+-----END PGP SIGNATURE-----
+
+--Sig_/7Z8Wos5taslwdITppz9un1o--
