@@ -1,25 +1,13 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-mpath request merging concerns [was: Re: It's
- time to put together the schedule]
-Date: Tue, 24 Feb 2015 09:59:41 -0500
-Message-ID: <20150224145941.GA10255@redhat.com>
-References: <54EB60EC.6080706@cs.wisc.edu>
-	<20150223183422.GU11463@ask-08.lab.msp.redhat.com>
-	<20150223195603.GB4693@redhat.com>
-	<20150223211918.GW11463@ask-08.lab.msp.redhat.com>
-	<20150223224637.GB5503@redhat.com>
-	<20150223221438.GX11463@ask-08.lab.msp.redhat.com>
-	<20150224003900.GA6421@redhat.com>
-	<20150224003816.GY11463@ask-08.lab.msp.redhat.com>
-	<20150224020231.GA6761@redhat.com>
-	<x49k2z7l6mg.fsf@segfault.boston.devel.redhat.com>
+Subject: [PATCH 0/4] dm: simplify request-based DM a bit and an
+	RFC-like perf tweak
+Date: Tue, 24 Feb 2015 11:44:06 -0500
+Message-ID: <1424796250-38553-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <x49k2z7l6mg.fsf@segfault.boston.devel.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,36 +17,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: lsf@lists.linux-foundation.org, axboe@kernel.dk, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: axboe@kernel.dk, shivakrishna.merla@netapp.com, jmoyer@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Feb 24 2015 at  9:35am -0500,
-Jeff Moyer <jmoyer@redhat.com> wrote:
+These changes were born out of me staring at the DM core code that
+deals with request-based DM, in response to this thread:
+https://www.redhat.com/archives/dm-devel/2015-February/msg00118.html
 
-> Mike Snitzer <snitzer@redhat.com> writes:
-> 
-> > Jens and/or Jeff Moyer, are there any knobs that you'd suggest to try to
-> > promote request merging on a really fast block device?  Any scheduler
-> > and knobs you'd suggest would be appreciated.
-> 
-> There's a small chance that CFQ does what you want.  It has logic to
-> detect when multiple processes are submitting interleaved I/O, and it
-> will try to wait until requests are merged before dispatching (see
-> the comment in cfq_rq_enqueued).
+I've tested patches 1-3.  Patch 4 is more an RFC patch that fell out
+of discussion I had with Jeff Moyer ("phro" below):
 
-That comment wasn't overly insightful on CFQ's ability to wait for
-merging when IO is being submitted larger than a page size to begin
-with.  Why will it "immediately let it rip" if the request is only just
-larger than a single page?  Seems we'd like that threshold to be higher
-depending on the workload (would it be wrong to make it tunable?).
-Maybe it is a perfectly fine heuristic as is and I'm just missing it?
+<phro> are you sure it isn't just i/o completion that's pulling more requests off the queue?
+<phro> at least at the lower layer, that's what happens.  you get an interrupt for i/o completion, and in that contxt you submit any pending i/o
+<snitm> in drivers/md/dm.c: dm_end_request -> rq_completed -> blk_run_queue_async
+<snitm> so could very well be
+<phro> ok, only difference is you kick it off to a work queue
+<phro> for immediate dispatch
+<snitm> right
+<phro> so that makes sense.  as soon as an i/o is completed, a new one is issued
+<snitm> could impose a delay on the running of the queue
+<phro> right
+<snitm> e.g. how dm.c:dm_request_fn does blk_delay_queue(q, HZ / 10);
+<snitm> (which is what promotes merging in the ->lld_busy_fn returning true case)
+<snitm> that _could_ be enough to slow things down slightly
+<phro> it's worth a shot
 
-FYI, CFQ didn't work any better for NetApp when they tested it last
-night; but they likely didn't set rotational.
+Mike Snitzer (4):
+  dm: remove unnecessary wrapper around blk_lld_busy
+  dm: remove request-based DM queue's lld_busy_fn hook
+  dm: remove request-based logic from make_request_fn wrapper
+  dm: delay running the queue slightly during request completion
 
-> Aside from that, make sure /sys/block/<dev>/queue/rotational is set to 1.
+ block/blk-core.c              |  5 ++--
+ drivers/md/dm-mpath.c         |  2 +-
+ drivers/md/dm-table.c         | 14 -----------
+ drivers/md/dm.c               | 54 +++++++++++--------------------------------
+ drivers/md/dm.h               |  1 -
+ include/linux/blkdev.h        |  2 --
+ include/linux/device-mapper.h |  5 ----
+ 7 files changed, 17 insertions(+), 66 deletions(-)
 
-Fair point (albeit unintuitive to the user who has an SSD backend).
-
-I'll see if NetApp can re-test CFQ with rotational set.
+-- 
+1.9.3 (Apple Git-50)
