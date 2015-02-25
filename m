@@ -1,8 +1,8 @@
-From: Keith Busch <keith.busch@intel.com>
-Subject: Re: awful request merge results while simulating high
- IOPS multipath
-Date: Wed, 25 Feb 2015 04:14:29 +0000 (UTC)
-Message-ID: <alpine.LNX.2.00.1502250401330.32385@localhost.lm.intel.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: FIXED! [was: awful request merge results while
+ simulating high IOPS] multipath
+Date: Tue, 24 Feb 2015 23:38:08 -0500
+Message-ID: <20150225043808.GA14060@redhat.com>
 References: <1424796250-38553-1-git-send-email-snitzer@redhat.com>
 	<1424796250-38553-5-git-send-email-snitzer@redhat.com>
 	<54ECAC08.7040603@kernel.dk> <20150224172259.GA39226@redhat.com>
@@ -11,9 +11,10 @@ References: <1424796250-38553-1-git-send-email-snitzer@redhat.com>
 	<20150225005608.GA13348@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 In-Reply-To: <20150225005608.GA13348@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -24,159 +25,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, shivakrishna.merla@netapp.com, Bart Van Assche <bvanassche@acm.org>, dm-devel@redhat.com, Keith Busch <keith.busch@intel.com>, jmoyer@redhat.com
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Keith Busch <keith.busch@intel.com>, jmoyer@redhat.com, shivakrishna.merla@netapp.com, dm-devel@redhat.com, Bart Van Assche <bvanassche@acm.org>
 List-Id: dm-devel.ids
 
-To be honest, we also see underwhelming performance on high IOPS PCIe
-SSDs. We know of some bottlenecks and ideas to test, but hoping to work
-out the kinks in those ideas before Vault in two weeks.
+New multipath results using these 2 additional DM patches:
 
-On Tue, 24 Feb 2015, Mike Snitzer wrote:
-> On Tue, Feb 24 2015 at  1:32pm -0500,
-> Mike Snitzer <snitzer@redhat.com> wrote:
->
->> On Tue, Feb 24 2015 at  1:16pm -0500,
->> Jens Axboe <axboe@kernel.dk> wrote:
->>>>>
->>>>> So all of this needs to be tested and performance vetted. But my
->>>>> original suggestion was something like:
->>>>>
->>>>> if (run_queue && !md->queue->nr_pending)
->>>>> 	blk_run_queue_async(md->queue);
->>>>>
->>>>> which might be a bit extreme, but if we hit 0, that's the only case
->>>>> where you truly do need to run the queue. So that kind of logic
->>>>> would give you the highest chance of merge success, potentially at
->>>>> the cost of reduced performance for other cases.
->>>>
->>>> Yeah, I was wondering about not running the queue at all when discussing
->>>> with Jeff earlier today.  Seemed extreme, and Jeff thought it could
->>>> cause performance to really take a hit.
->>>
->>> Whether you have to or not depends on how you break out of queueing
->>> loops. But you definitely don't have to run it on every single
->>> request completion...
->>
->> OK, thanks for clarifying.
->>
->> Will see how the initial RFC patch I shared works for Netapp's testcase
->> but based on those results will work to arrive at a more
->> generic/intelligent solution.
->
-> That initial RFC didn't do well.  And given my results below, I'm not
-> holding out any hope for this io completion change, which we already
-> discussed as being more sane, having any impact:
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=9068f2f15d5fc7a5c9dc6e6963913216ede0c745
->
-> Here is the sorry state of affairs:
->
-> Summary:
-> ========
->
-> Request-based DM is somehow breaking the block layer's ability to properly merge requests.
-> Only good news is I seem to have a testbed that I can use to chase this issue down.
->
-> Test kernel is v4.0-rc1 with a few DM patches, see:
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=for-next
->
->
-> baseline:
-> =========
->
-> Writing to an STEC PCIe SSD using 64 threads, each using 4K sequentional IOs.
-> There are clearly merges happening.
->
-> fio job:
-> --------
-> [64_seq_write]
-> filename=/dev/skd0
-> rw=write
-> rwmixread=0
-> blocksize=4k
-> iodepth=16
-> direct=1
-> numjobs=64
-> #nrfiles=1
-> runtime=100
-> ioengine=libaio
-> time_based
->
-> deadline:
-> ---------
-> Run status group 0 (all jobs):
->  WRITE: io=33356MB, aggrb=341513KB/s, minb=4082KB/s, maxb=5463KB/s, mint=100001msec, maxt=100014msec
->
-> Disk stats (read/write):
->  skd0: ios=0/638099, merge=0/7483318, ticks=0/8015451, in_queue=8073672, util=100.00%
->
-> cfq:
-> ----
-> rotational=0
-> ------------
-> Run status group 0 (all jobs):
->  WRITE: io=20970MB, aggrb=214663KB/s, minb=3202KB/s, maxb=3620KB/s, mint=100001msec, maxt=100030msec
->
-> Disk stats (read/write):
->  skd0: ios=47/390277, merge=0/4939075, ticks=0/7082618, in_queue=7109995, util=100.00%
->
-> rotational=1
-> ------------
-> Run status group 0 (all jobs):
->  WRITE: io=30075MB, aggrb=307130KB/s, minb=2613KB/s, maxb=10247KB/s, mint=100001msec, maxt=100271msec
->
-> Disk stats (read/write):
->  skd0: ios=57/2217835, merge=0/5414906, ticks=0/6110715, in_queue=6120362, util=99.97%
->
->
-> multipath:
-> ==========
->
-> Same workload as above, but this time through a request-based DM multipath target.
-> There are clearly _no_ merges happening.
->
-> echo "0 1563037696 multipath 0 0 1 1 service-time 0 1 2 /dev/skd0 1000 1" | dmsetup create skd_mpath
->
-> [64_seq_write]
-> #filename=/dev/mapper/skd_mpath
-> filename=/dev/dm-9
-> rw=write
-> rwmixread=0
-> blocksize=4k
-> iodepth=16
-> direct=1
-> numjobs=64
-> #nrfiles=1
-> runtime=100
-> ioengine=libaio
-> time_based
->
-> deadline:
-> ---------
-> Run status group 0 (all jobs):
->  WRITE: io=22559MB, aggrb=230976KB/s, minb=3565KB/s, maxb=3659KB/s, mint=100001msec, maxt=100011msec
->
-> Disk stats (read/write):
->    dm-9: ios=71/5772755, merge=0/0, ticks=3/15309410, in_queue=15360084, util=100.00%, aggrios=164/5775057, aggrmerge=0/0, aggrticks=16/14960469, aggrin_queue=14956943, aggrutil=99.92%
->  skd0: ios=164/5775057, merge=0/0, ticks=16/14960469, in_queue=14956943, util=99.92%
->
-> cfq:
-> ----
-> rotational=0
-> ------------
-> Run status group 0 (all jobs):
->  WRITE: io=19477MB, aggrb=199424KB/s, minb=3001KB/s, maxb=3268KB/s, mint=100001msec, maxt=100010msec
->
-> Disk stats (read/write):
->    dm-9: ios=40/4811814, merge=0/159762, ticks=0/14866276, in_queue=14912510, util=100.00%, aggrios=224/4814462, aggrmerge=0/0, aggrticks=13/14399688, aggrin_queue=14396342, aggrutil=99.92%
->  skd0: ios=224/4814462, merge=0/0, ticks=13/14399688, in_queue=14396342, util=99.92%
->
-> rotational=1
-> ------------
-> Run status group 0 (all jobs):
->  WRITE: io=21051MB, aggrb=215188KB/s, minb=2147KB/s, maxb=8671KB/s, mint=100001msec, maxt=100175msec
->
-> Disk stats (read/write):
->    dm-9: ios=59/1468500, merge=0/3836597, ticks=2/5928782, in_queue=5959348, util=100.00%, aggrios=152/1469016, aggrmerge=0/0, aggrticks=5/395471, aggrin_queue=395287, aggrutil=71.17%
->  skd0: ios=152/1469016, merge=0/0, ticks=5/395471, in_queue=395287, util=71.17%
->
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=d379ecbac533d3ac45c7f155b1fc1b760abace6e
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=d379ecbac533d3ac45c7f155b1fc1b760abace6e
+
+(the important one being the last patch, thanks to Jens for the suggestion!)
+
+Both deadline and noop schedulers work really well this fio test now
+(cfq is slightly slower):
+
+[64_seq_write]
+#filename=/dev/mapper/skd_mpath
+filename=/dev/dm-7
+rw=write
+rwmixread=0
+blocksize=4k
+iodepth=16
+direct=1
+numjobs=64
+runtime=100
+ioengine=libaio
+time_based
+
+deadline:
+---------
+Run status group 0 (all jobs):
+  WRITE: io=64402MB, aggrb=659426KB/s, minb=8960KB/s, maxb=10348KB/s, mint=100001msec, maxt=100007msec
+
+Disk stats (read/write):
+    dm-7: ios=78/951571, merge=0/14721874, ticks=1/6766375, in_queue=6868921, util=100.00%, aggrios=257/951897, aggrmerge=0/0, aggrticks=3/3467932, aggrin_queue=3467835, aggrutil=99.09%
+  skd0: ios=257/951897, merge=0/0, ticks=3/3467932, in_queue=3467835, util=99.09%
+
+(deadline is _really_ fast with this test now, noop is fast too, see below)
+
+cfq:
+----
+rotational=0
+------------
+Run status group 0 (all jobs):
+  WRITE: io=18719MB, aggrb=191652KB/s, minb=2639KB/s, maxb=4210KB/s, mint=100001msec, maxt=100018msec
+
+Disk stats (read/write):
+    dm-7: ios=91/368755, merge=0/4407385, ticks=2/6783504, in_queue=6815287, util=100.00%, aggrios=273/368851, aggrmerge=0/0, aggrticks=5/2962495, aggrin_queue=2962487, aggrutil=95.40%
+  skd0: ios=273/368851, merge=0/0, ticks=5/2962495, in_queue=2962487, util=95.40%
+
+rotational=1
+------------
+Run status group 0 (all jobs):
+  WRITE: io=19660MB, aggrb=200940KB/s, minb=2304KB/s, maxb=6441KB/s, mint=100001msec, maxt=100188msec
+
+Disk stats (read/write):
+    dm-7: ios=91/786111, merge=0/4179472, ticks=2/5820606, in_queue=5834058, util=99.98%, aggrios=182/786507, aggrmerge=0/0, aggrticks=4/131800, aggrin_queue=131758, aggrutil=70.55%
+  skd0: ios=182/786507, merge=0/0, ticks=4/131800, in_queue=131758, util=70.55%
+
+noop:
+-----
+Run status group 0 (all jobs):
+  WRITE: io=58264MB, aggrb=596517KB/s, minb=9301KB/s, maxb=9354KB/s, mint=100001msec, maxt=100018msec
+
+Disk stats (read/write):
+    dm-7: ios=116/998937, merge=0/13874486, ticks=4/6853397, in_queue=6934793, util=100.00%, aggrios=295/999061, aggrmerge=0/0, aggrticks=8/3776141, aggrin_queue=3776117, aggrutil=98.81%
+  skd0: ios=295/999061, merge=0/0, ticks=8/3776141, in_queue=3776117, util=98.81%
