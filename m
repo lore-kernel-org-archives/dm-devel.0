@@ -1,45 +1,43 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: FIXED! [was: awful request merge results while
- simulating high IOPS] multipath
-Date: Tue, 24 Feb 2015 23:41:57 -0500
-Message-ID: <20150225044156.GB14060@redhat.com>
-References: <1424796250-38553-1-git-send-email-snitzer@redhat.com>
-	<1424796250-38553-5-git-send-email-snitzer@redhat.com>
-	<54ECAC08.7040603@kernel.dk> <20150224172259.GA39226@redhat.com>
-	<54ECBA78.6020204@kernel.dk> <20150224181257.GA11444@redhat.com>
-	<54ECC000.40604@kernel.dk> <20150224183256.GA11566@redhat.com>
-	<20150225005608.GA13348@redhat.com>
-	<20150225043808.GA14060@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: [dm-devel] [PATCH 0/3] md raid: enhancements to support the device
+ mapper dm-raid target
+Date: Wed, 25 Feb 2015 11:10:19 +0100
+Message-ID: <54ED9F8B.4040204@redhat.com>
+References: <1423853282-6218-1-git-send-email-heinzm@redhat.com>	<20150218130328.3ce5ab53@notabene.brown>	<54E47C88.1080203@redhat.com>	<20150223120718.03806a87@notabene.brown>	<54EB13AC.4010006@redhat.com> <20150225091243.33fdd5f6@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20150225043808.GA14060@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Keith Busch <keith.busch@intel.com>, jmoyer@redhat.com, shivakrishna.merla@netapp.com, dm-devel@redhat.com, Bart Van Assche <bvanassche@acm.org>
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20150225091243.33fdd5f6@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, "jbras >> Brassow Jonathan" <jbrassow@redhat.com>, linux RAID <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Tue, Feb 24 2015 at 11:38pm -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
 
-> New multipath results using these 2 additional DM patches:
-> 
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=d379ecbac533d3ac45c7f155b1fc1b760abace6e
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=d379ecbac533d3ac45c7f155b1fc1b760abace6e
-> 
-> (the important one being the last patch, thanks to Jens for the suggestion!)
+On 02/24/2015 11:12 PM, NeilBrown wrote:
+> On Mon, 23 Feb 2015 12:49:00 +0100 Heinz Mauelshagen <heinzm@redhat.com>
+> wrote:
+>
+>> Sure.
+>> I'd like to see the raid0 conditonal request queue patch though.
+>>
+>
+> ok, I've applied that one.  It should turn up in my -next by the end of the
+> week.
 
-Bleh, pasted the same url twice, this is the less signifcant patch of
-the 2:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=489ab49e738667ba9d40b6d2b0b47910b5194208
+Thanks for the heads up.
+
+>
+> I'll look forward to your other results.
+
+Ok, will inform when I have something working.
+
+Cheers,
+Heinz
+
+>
+> Thanks,
+> NeilBrown
+>
+
