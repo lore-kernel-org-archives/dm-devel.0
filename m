@@ -1,7 +1,8 @@
 From: Coly Li <colyli@gmail.com>
-Subject: [PATCH 0/4] dm-latency: Introduction
-Date: Thu, 26 Feb 2015 14:39:43 +0800
-Message-ID: <54EEBFAF.4000002@gmail.com>
+Subject: [PATCH 4/4] dm-latency: add reset function to dm-latency
+ in sysfs interface
+Date: Thu, 26 Feb 2015 14:43:21 +0800
+Message-ID: <54EEC089.9000802@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
@@ -22,47 +23,111 @@ List-Id: dm-devel.ids
 
 From: Coly Li <bosong.ly@alibaba-inc.com>
 
-Dm-latency patch set is an effort to measure hard disk I/O latency on
-top of device mapper layer. The original motivation of I/O latency
-measurement was to predict hard disk failure by machine learning method,
-I/O latency information was one of the inputs sent to machine learning
-model.
+Now echo any thing into /sys/block/dm-X/dm/io_latency_reset may
+reset all counters in /sys/block/dm-X/dm/io_latency_{s,ms, us} to 0.
 
-This patch set was written in Aug~Sep 2013, I deployed it on many
-servers of Alibaba cloud infrastructure. After running for weeks, some
-interesting data about hard disk I/O latency was observed. In 2013, I
-gave a talk on OpenSuSE Conference about this topic
-(http://blog.coly.li/docs/osc13-coly.pdf).
+This function might be helpful to application developers.
 
-When generating time stamp for I/O request, clock source is a global
-unique resource which is protected by spin-locks. Dm-latency was tested
-on SAS/SATA hard disk and SATA SSD, it worked well as expected. Running
-dm-latency on PCI-e or NVMe SSD should work (I didn't test), but there
-will be spin-lock scalability issue, when accessing clock source for
-time stamping.
+Signed-off-by: Coly Li <bosong.ly@alibaba-inc.com>
+Reviewed-by: Robin Dong <sanbai@alibaba-inc.com>
+Reviewed-by: Tao Ma <boyu.mt@taobao.com>
+---
+  drivers/md/dm-sysfs.c |   45 ++++++++++++++++++++++++++++++++++++++++++++-
+  1 file changed, 44 insertions(+), 1 deletion(-)
 
-Dm-latency is good for I/O latency measurement to hard disk based
-storage, no matter local or distributed storage via network. For PCI-e
-or NVMe SSD, I suggest people to look for device provided statistic
-information, if there is.
+diff --git a/drivers/md/dm-sysfs.c b/drivers/md/dm-sysfs.c
+index eab2dde..1a4864d 100644
+--- a/drivers/md/dm-sysfs.c
++++ b/drivers/md/dm-sysfs.c
+@@ -12,13 +12,17 @@
+  struct dm_sysfs_attr {
+  	struct attribute attr;
+  	ssize_t (*show)(struct mapped_device *, char *);
+-	ssize_t (*store)(struct mapped_device *, char *);
++	ssize_t (*store)(struct mapped_device *, const char *, size_t len);
+  };
 
-The code is very simple, there is no resource allocation/destory, no
-spin_lock/spin_unlock. The patch set gets merged into Alibaba kernel
-more than 1 year, no bug reported in last 12 months.
+  #define DM_ATTR_RO(_name) \
+  struct dm_sysfs_attr dm_attr_##_name = \
+  	__ATTR(_name, S_IRUGO, dm_attr_##_name##_show, NULL)
 
-This patch set has 4 patches,
-- [PATCH 1/4] dm-latency: move struct mapped_device from dm.c to dm.h
-- [PATCH 2/4] dm-latency: add I/O latency measurement in device mapper
-- [PATCH 3/4] dm-latency: add sysfs interface
-- [PATCH 4/4] dm-latency: add reset function to dm-latency in sysfs
-interface
-All these patches are rebased on Linux 4.0-rc1.
++#define DM_ATTR_RW(_name) \
++struct dm_sysfs_attr dm_attr_##_name = \
++	__ATTR(_name, S_IRUGO | S_IWUSR, NULL, dm_attr_##_name##_store)
++
+  static ssize_t dm_attr_show(struct kobject *kobj, struct attribute *attr,
+  			    char *page)
+  {
+@@ -40,6 +44,27 @@ static ssize_t dm_attr_show(struct kobject *kobj,
+struct attribute *attr,
+  	return ret;
+  }
 
-Today Laurence Oberman from Redhat sent me an email asking whether this
-patch set is upstream merged, because he is thinking of pulling this
-patch set into their kernel. I'd like to maintain this patch set, hope
-it could be merged.
++static ssize_t dm_attr_store(struct kobject *kobj, struct attribute *attr,
++			     const char *page, size_t len)
++{
++	struct dm_sysfs_attr *dm_attr;
++	struct mapped_device *md;
++	ssize_t ret;
++
++	dm_attr = container_of(attr, struct dm_sysfs_attr, attr);
++	if (!dm_attr->store)
++		return -EIO;
++
++	md = dm_get_from_kobject(kobj);
++	if (!md)
++		return -EINVAL;
++
++	ret = dm_attr->store(md, page, len);
++	dm_put(md);
++
++	return ret;
++}
++
+  static ssize_t dm_attr_name_show(struct mapped_device *md, char *buf)
+  {
+  	if (dm_copy_name_and_uuid(md, buf, NULL))
+@@ -128,12 +153,27 @@ static ssize_t dm_attr_io_latency_s_show(struct
+mapped_device *md, char *buf)
+  	return strlen(buf);
+  }
 
-Thanks in advance.
++static ssize_t dm_attr_io_latency_reset_store(struct mapped_device *md,
++					      const char *buf,
++					      size_t len)
++{
++	int i;
++	for (i = 0; i < DM_LATENCY_STATS_US_NR; i++)
++		atomic_set(&md->latency_stats_us[i], 0);
++	for (i = 0; i < DM_LATENCY_STATS_MS_NR; i++)
++		atomic_set(&md->latency_stats_ms[i], 0);
++	for (i = 0; i < DM_LATENCY_STATS_S_NR; i++)
++		atomic_set(&md->latency_stats_s[i], 0);
++	return len;
++}
++
+  static DM_ATTR_RO(name);
+  static DM_ATTR_RO(uuid);
+  static DM_ATTR_RO(suspended);
+  static DM_ATTR_RO(io_latency_us);
+  static DM_ATTR_RO(io_latency_ms);
+  static DM_ATTR_RO(io_latency_s);
++static DM_ATTR_RW(io_latency_reset);
 
-Coly Li
+  static struct attribute *dm_attrs[] = {
+  	&dm_attr_name.attr,
+@@ -142,11 +182,14 @@ static struct attribute *dm_attrs[] = {
+  	&dm_attr_io_latency_us.attr,
+  	&dm_attr_io_latency_ms.attr,
+  	&dm_attr_io_latency_s.attr,
++	&dm_attr_io_latency_reset.attr,
+  	NULL,
+  };
+
+  static const struct sysfs_ops dm_sysfs_ops = {
+  	.show	= dm_attr_show,
++	.store	= dm_attr_store,
++
+  };
+
+  /*
