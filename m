@@ -1,7 +1,7 @@
-From: Laurence Oberman <loberman@redhat.com>
+From: "Bryn M. Reeves" <bmr@redhat.com>
 Subject: Re: [PATCH 0/4] dm-latency: Introduction
-Date: Thu, 26 Feb 2015 12:00:47 -0500 (EST)
-Message-ID: <1377703243.9422950.1424970047797.JavaMail.zimbra@redhat.com>
+Date: Thu, 26 Feb 2015 17:25:18 +0000
+Message-ID: <20150226172518.GJ18511@localhost.localdomain>
 References: <54EEBFAF.4000002@gmail.com>
 	<alpine.LRH.2.02.1502261142590.13050@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -9,6 +9,7 @@ Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 In-Reply-To: <alpine.LRH.2.02.1502261142590.13050@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,97 +20,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Tao Ma <boyu.mt@taobao.com>, device-mapper development <dm-devel@redhat.com>, Robin Dong <sanbai@alibaba-inc.com>, Coly Li <colyli@gmail.com>, Alasdair Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, Laurence Oberman <loberman@redhat.com>, Coly Li <colyli@gmail.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Mikulas
-Thanks
-This came from customer asking for support for similar functionality in proprietary solutions such as PowerPath and HDLM.
-I had seen the information from Coly Li and asked if he could submit for comments.
-I will look into what can be done with what is is /sys/block/dm-xxx/stat
+On Thu, Feb 26, 2015 at 11:49:28AM -0500, Mikulas Patocka wrote:
+> We have already dm-statistics that counts various events - see 
+> Documentation/device-mapper/statistics.txt. It counts the nubmer of 
+> requests and the time spent servicing each request, thus you can 
+> calculate average latency from these values.
 
+Right: average service time (as reported by iostat etc.) is easily derived
+from the existing stats.
 
-Laurence Oberman
-Red Hat Global Support Service
-SEG Team
+Does the separate latency accounting buy anything additional?
 
------ Original Message -----
-From: "Mikulas Patocka" <mpatocka@redhat.com>
-To: "device-mapper development" <dm-devel@redhat.com>, "Coly Li" <colyli@gmail.com>
-Cc: "Tao Ma" <boyu.mt@taobao.com>, "Robin Dong" <sanbai@alibaba-inc.com>, "Laurence Oberman" <loberman@redhat.com>, "Alasdair Kergon" <agk@redhat.com>
-Sent: Thursday, February 26, 2015 11:49:28 AM
-Subject: Re: [dm-devel] [PATCH 0/4] dm-latency: Introduction
+> Please look at dm-statistics to see if it fits your purpose. If you need 
+> additional information not provided by dm-statistics, it would be better 
+> to extend the statistics code rather than introduce new "latency" 
+> infrastructure.
 
-Hi
+Agreed; I'm working on userspace support for dm-statistics at the moment
+and if there is a need for these additional measurements I would greatly
+prefer to consume them as additional fields in the existing dm-stats
+counter set.
 
-We have already dm-statistics that counts various events - see 
-Documentation/device-mapper/statistics.txt. It counts the nubmer of 
-requests and the time spent servicing each request, thus you can 
-calculate average latency from these values.
+This also has the advantage of benefiting from the existing step and
+area support allowing a device to be subdivided into discrete stats
+regions.
 
-Please look at dm-statistics to see if it fits your purpose. If you need 
-additional information not provided by dm-statistics, it would be better 
-to extend the statistics code rather than introduce new "latency" 
-infrastructure.
-
-Mikulas
-
-
-On Thu, 26 Feb 2015, Coly Li wrote:
-
-> From: Coly Li <bosong.ly@alibaba-inc.com>
-> 
-> Dm-latency patch set is an effort to measure hard disk I/O latency on
-> top of device mapper layer. The original motivation of I/O latency
-> measurement was to predict hard disk failure by machine learning method,
-> I/O latency information was one of the inputs sent to machine learning
-> model.
-> 
-> This patch set was written in Aug~Sep 2013, I deployed it on many
-> servers of Alibaba cloud infrastructure. After running for weeks, some
-> interesting data about hard disk I/O latency was observed. In 2013, I
-> gave a talk on OpenSuSE Conference about this topic
-> (http://blog.coly.li/docs/osc13-coly.pdf).
-> 
-> When generating time stamp for I/O request, clock source is a global
-> unique resource which is protected by spin-locks. Dm-latency was tested
-> on SAS/SATA hard disk and SATA SSD, it worked well as expected. Running
-> dm-latency on PCI-e or NVMe SSD should work (I didn't test), but there
-> will be spin-lock scalability issue, when accessing clock source for
-> time stamping.
-> 
-> Dm-latency is good for I/O latency measurement to hard disk based
-> storage, no matter local or distributed storage via network. For PCI-e
-> or NVMe SSD, I suggest people to look for device provided statistic
-> information, if there is.
-> 
-> The code is very simple, there is no resource allocation/destory, no
-> spin_lock/spin_unlock. The patch set gets merged into Alibaba kernel
-> more than 1 year, no bug reported in last 12 months.
-> 
-> This patch set has 4 patches,
-> - [PATCH 1/4] dm-latency: move struct mapped_device from dm.c to dm.h
-> - [PATCH 2/4] dm-latency: add I/O latency measurement in device mapper
-> - [PATCH 3/4] dm-latency: add sysfs interface
-> - [PATCH 4/4] dm-latency: add reset function to dm-latency in sysfs
-> interface
-> All these patches are rebased on Linux 4.0-rc1.
-> 
-> Today Laurence Oberman from Redhat sent me an email asking whether this
-> patch set is upstream merged, because he is thinking of pulling this
-> patch set into their kernel. I'd like to maintain this patch set, hope
-> it could be merged.
-> 
-> Thanks in advance.
-> 
-> Coly Li
-> 
-> 
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+Regards,
+Bryn.
