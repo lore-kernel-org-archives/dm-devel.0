@@ -1,11 +1,11 @@
-From: Coly Li <colyli@gmail.com>
-Subject: [PATCH 2/4] dm-latency: add I/O latency measurement in
-	device mapper
-Date: Thu, 26 Feb 2015 14:42:33 +0800
-Message-ID: <54EEC059.7000303@gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 1/2] dm-snapshot: suspend origin when doing
+ exception handover
+Date: Thu, 26 Feb 2015 11:40:35 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1502261137120.13050@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -17,176 +17,242 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, Laurence Oberman <loberman@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Coly Li <bosong.ly@alibaba-inc.com>
+In the function snapshot_resume we perform exception store handover. If
+there is another active snapshot target, the exception store is moved from
+this target to the target that is being resume.
 
-This patch adds I/O latency measurement code in dm.c. The basic idea is,
-1) add timestamp in struct dm_io as unsigned long start_time_usec
-2) set timestamp when dm_io issued to underlaying block layer.
-3) when all sub-I/O completed, calculate time difference against
-start_time_usec as I/O latency.
-4) account the latency to corresponding counters like,
-    - latency_stats_us
-    - latency_stats_ms
-    - latency_stats_s
+The problem is that if there is some pending exception, it will point to
+an incorrect exception store after that handover, causing crash in BUG in
+dm-snap-persistent.c:get_exception - see bug 1177389.
 
-Signed-off-by: Coly Li <bosong.ly@alibaba-inc.com>
-Reviewed-by: Robin Dong <sanbai@alibaba-inc.com>
-Reviewed-by: Tao Ma <boyu.mt@taobao.com>
+This bug can be triggered by repeatedly changing snapshot permissions with
+"lvchange -p r" and "lvchange -p rw" while there are writes on the
+associated origin device.
+
+To fix this bug, we must suspend the origin device when doing the
+exception store handover to make sure that there is no pending exception.
+
+This patch:
+- introdices _origin_hash that keeps track of dm_origin structures.
+- introduces function __lookup_dm_origin, __insert_dm_origin and
+  __remove_dm_origin that manipulate the origin hash.
+- modifies snapshot_resume so that it calls dm_internal_suspend_fast and
+  dm_internal_resume_fast on the origin device.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
 ---
-  drivers/md/dm.c |   69
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  drivers/md/dm.h |   13 +++++++++++++
-  2 files changed, 82 insertions(+)
+ drivers/md/dm-snap.c |   70 ++++++++++++++++++++++++++++++++++++++++++++++-----
+ drivers/md/dm.c      |    2 +
+ 2 files changed, 66 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index e2532c8..200954a 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -20,6 +20,7 @@
-  #include <linux/hdreg.h>
-  #include <linux/delay.h>
-  #include <linux/wait.h>
-+#include <linux/clocksource.h>
-
-  #include <trace/events/block.h>
-
-@@ -67,6 +68,7 @@ struct dm_io {
-  	atomic_t io_count;
-  	struct bio *bio;
-  	unsigned long start_time;
-+	unsigned long start_time_usec;
-  	spinlock_t endio_lock;
-  	struct dm_stats_aux stats_aux;
-  };
-@@ -521,14 +523,72 @@ static int md_in_flight(struct mapped_device *md)
-  	       atomic_read(&md->pending[WRITE]);
-  }
-
-+static unsigned long long us2msecs(unsigned long long usec)
-+{
-+	usec += 500;
-+	do_div(usec, 1000);
-+	return usec;
-+}
+Index: linux-2.6-debug/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6-debug.orig/drivers/md/dm-snap.c
++++ linux-2.6-debug/drivers/md/dm-snap.c
+@@ -20,6 +20,8 @@
+ #include <linux/log2.h>
+ #include <linux/dm-kcopyd.h>
+ 
++#include "dm.h"
 +
-+static unsigned long long us2secs(unsigned long long usec)
-+{
-+	usec += 500;
-+	do_div(usec, 1000);
-+	usec += 500;
-+	do_div(usec, 1000);
-+	return usec;
-+}
+ #include "dm-exception-store.h"
+ 
+ #define DM_MSG_PREFIX "snapshots"
+@@ -291,12 +293,23 @@ struct origin {
+ };
+ 
+ /*
++ * This structure is allocated for each origin target
++ */
++struct dm_origin {
++	struct dm_dev *dev;
++	struct dm_target *ti;
++	unsigned split_boundary;
++	struct list_head hash_list;
++};
 +
-+static void update_latency_stats(struct mapped_device *md, struct dm_io
-*io)
-+{
-+	uint64_t now, latency;
-+	int idx;
-+	ktime_t ts;
++/*
+  * Size of the hash table for origin volumes. If we make this
+  * the size of the minors list then it should be nearly perfect
+  */
+ #define ORIGIN_HASH_SIZE 256
+ #define ORIGIN_MASK      0xFF
+ static struct list_head *_origins;
++static struct list_head *_dm_origins;
+ static struct rw_semaphore _origins_lock;
+ 
+ static DECLARE_WAIT_QUEUE_HEAD(_pending_exceptions_done);
+@@ -313,9 +326,20 @@ static int init_origin_hash(void)
+ 		DMERR("unable to allocate memory");
+ 		return -ENOMEM;
+ 	}
+-
+ 	for (i = 0; i < ORIGIN_HASH_SIZE; i++)
+ 		INIT_LIST_HEAD(_origins + i);
 +
-+	ts = ktime_get();
-+	now = (uint64_t)ktime_to_us(ts);
-+
-+	/*
-+	 * if now <= io->start_time_usec, it means counter
-+	 * in ktime_get() over flows, just ignore this I/O
-+	 */
-+	if (unlikely(now < io->start_time_usec))
-+		return;
-+
-+	latency = (uint64_t)(now - io->start_time_usec);
-+	if (latency < 1000) {
-+		/* microseconds */
-+		idx = latency/DM_LATENCY_STATS_US_GRAINSIZE;
-+		if (idx > (DM_LATENCY_STATS_US_NR - 1))
-+			idx = DM_LATENCY_STATS_US_NR - 1;
-+		atomic_inc(&(md->latency_stats_us[idx]));
-+	} else if (latency < 1000000) {
-+		/* milliseconds */
-+		idx = us2msecs(latency)/DM_LATENCY_STATS_MS_GRAINSIZE;
-+		if (idx > (DM_LATENCY_STATS_MS_NR - 1))
-+			idx = DM_LATENCY_STATS_MS_NR - 1;
-+		atomic_inc(&(md->latency_stats_ms[idx]));
-+	} else {
-+		/* seconds */
-+		idx = us2secs(latency)/DM_LATENCY_STATS_S_GRAINSIZE;
-+		if (idx > (DM_LATENCY_STATS_S_NR - 1))
-+			idx = DM_LATENCY_STATS_S_NR - 1;
-+		atomic_inc(&(md->latency_stats_s[idx]));
++	_dm_origins = kmalloc(ORIGIN_HASH_SIZE * sizeof(struct list_head),
++			   GFP_KERNEL);
++	if (!_dm_origins) {
++		DMERR("unable to allocate memory");
++		kfree(_origins);
++		return -ENOMEM;
 +	}
++	for (i = 0; i < ORIGIN_HASH_SIZE; i++)
++		INIT_LIST_HEAD(_dm_origins + i);
++
++
+ 	init_rwsem(&_origins_lock);
+ 
+ 	return 0;
+@@ -324,6 +348,7 @@ static int init_origin_hash(void)
+ static void exit_origin_hash(void)
+ {
+ 	kfree(_origins);
++	kfree(_dm_origins);
+ }
+ 
+ static unsigned origin_hash(struct block_device *bdev)
+@@ -350,6 +375,30 @@ static void __insert_origin(struct origi
+ 	list_add_tail(&o->hash_list, sl);
+ }
+ 
++static struct dm_origin *__lookup_dm_origin(struct block_device *origin)
++{
++	struct list_head *ol;
++	struct dm_origin *o;
++
++	ol = &_dm_origins[origin_hash(origin)];
++	list_for_each_entry (o, ol, hash_list)
++		if (bdev_equal(o->dev->bdev, origin))
++			return o;
++
++	return NULL;
 +}
 +
-  static void start_io_acct(struct dm_io *io)
-  {
-  	struct mapped_device *md = io->md;
-  	struct bio *bio = io->bio;
-+	ktime_t ts;
++static void __insert_dm_origin(struct dm_origin *o)
++{
++	struct list_head *sl = &_dm_origins[origin_hash(o->dev->bdev)];
++	list_add_tail(&o->hash_list, sl);
++}
 +
-  	int cpu;
-  	int rw = bio_data_dir(bio);
-
-  	io->start_time = jiffies;
-+	ts = ktime_get();
-+	io->start_time_usec = (unsigned long)ktime_to_us(ts);
-
-  	cpu = part_stat_lock();
-  	part_round_stats(cpu, &dm_disk(md)->part0);
-@@ -549,6 +609,7 @@ static void end_io_acct(struct dm_io *io)
-  	int pending;
-  	int rw = bio_data_dir(bio);
-
-+	update_latency_stats(md, io);
-  	generic_end_io_acct(rw, &dm_disk(md)->part0, io->start_time);
-
-  	if (unlikely(dm_stats_used(&md->stats)))
-@@ -2118,6 +2179,14 @@ static struct mapped_device *alloc_dev(int minor)
-
-  	dm_stats_init(&md->stats);
-
-+	/* initial latency stats buckets */
-+	for (r = 0; r < DM_LATENCY_STATS_S_NR; r++)
-+		atomic_set(&(md->latency_stats_s[r]), 0);
-+	for (r = 0; r < DM_LATENCY_STATS_MS_NR; r++)
-+		atomic_set(&(md->latency_stats_ms[r]), 0);
-+	for (r = 0; r < DM_LATENCY_STATS_US_NR; r++)
-+		atomic_set(&(md->latency_stats_us[r]), 0);
++static void __remove_dm_origin(struct dm_origin *o)
++{
++	list_del(&o->hash_list);
++}
 +
-  	/* Populate the mapping, nobody knows we exist yet */
-  	spin_lock(&_minor_lock);
-  	old_md = idr_replace(&_minor_idr, md, minor);
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 3014667..6c254f4 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -32,6 +32,14 @@
-   */
-  #define DM_STATUS_NOFLUSH_FLAG		(1 << 0)
-
-+/* 100s is long enough to measure disk I/O latency */
-+#define DM_LATENCY_STATS_S_NR		100
-+#define DM_LATENCY_STATS_S_GRAINSIZE	(1000/DM_LATENCY_STATS_S_NR)
-+#define DM_LATENCY_STATS_MS_NR		100
-+#define DM_LATENCY_STATS_MS_GRAINSIZE	(1000/DM_LATENCY_STATS_MS_NR)
-+#define DM_LATENCY_STATS_US_NR		100
-+#define DM_LATENCY_STATS_US_GRAINSIZE	(1000/DM_LATENCY_STATS_US_NR)
+ /*
+  * _origins_lock must be held when calling this function.
+  * Returns number of snapshots registered using the supplied cow device, plus:
+@@ -1841,8 +1890,20 @@ static void snapshot_resume(struct dm_ta
+ {
+ 	struct dm_snapshot *s = ti->private;
+ 	struct dm_snapshot *snap_src = NULL, *snap_dest = NULL;
++	struct dm_origin *o;
++	struct mapped_device *origin_md = NULL;
+ 
+ 	down_read(&_origins_lock);
 +
-  /*
-   * Type of table and mapped_device's mempool
-   */
-@@ -135,6 +143,11 @@ struct mapped_device {
-
-  	struct kthread_worker kworker;
-  	struct task_struct *kworker_task;
++	o = __lookup_dm_origin(s->origin->bdev);
++	if (o)
++		origin_md = dm_table_get_md(o->ti->table);
++	if (origin_md == dm_table_get_md(ti->table))
++		origin_md = NULL;
 +
-+	/* latency statistic buckets */
-+	atomic_t latency_stats_s[DM_LATENCY_STATS_S_NR];
-+	atomic_t latency_stats_ms[DM_LATENCY_STATS_MS_NR];
-+	atomic_t latency_stats_us[DM_LATENCY_STATS_US_NR];
-  };
-
-  /*
++	if (origin_md)
++		dm_internal_suspend_fast(origin_md);
++
+ 	(void) __find_snapshots_sharing_cow(s, &snap_src, &snap_dest, NULL);
+ 	if (snap_src && snap_dest) {
+ 		down_write(&snap_src->lock);
+@@ -1851,6 +1912,10 @@ static void snapshot_resume(struct dm_ta
+ 		up_write(&snap_dest->lock);
+ 		up_write(&snap_src->lock);
+ 	}
++
++	if (origin_md)
++		dm_internal_resume_fast(origin_md);
++
+ 	up_read(&_origins_lock);
+ 
+ 	/* Now we have correct chunk size, reregister */
+@@ -2133,11 +2198,6 @@ static int origin_write_extent(struct dm
+  * Origin: maps a linear range of a device, with hooks for snapshotting.
+  */
+ 
+-struct dm_origin {
+-	struct dm_dev *dev;
+-	unsigned split_boundary;
+-};
+-
+ /*
+  * Construct an origin mapping: <dev_path>
+  * The context for an origin is merely a 'struct dm_dev *'
+@@ -2166,6 +2226,7 @@ static int origin_ctr(struct dm_target *
+ 		goto bad_open;
+ 	}
+ 
++	o->ti = ti;
+ 	ti->private = o;
+ 	ti->num_flush_bios = 1;
+ 
+@@ -2180,6 +2241,7 @@ bad_alloc:
+ static void origin_dtr(struct dm_target *ti)
+ {
+ 	struct dm_origin *o = ti->private;
++
+ 	dm_put_device(ti, o->dev);
+ 	kfree(o);
+ }
+@@ -2216,6 +2278,19 @@ static void origin_resume(struct dm_targ
+ 	struct dm_origin *o = ti->private;
+ 
+ 	o->split_boundary = get_origin_minimum_chunksize(o->dev->bdev);
++
++	down_write(&_origins_lock);
++	__insert_dm_origin(o);
++	up_write(&_origins_lock);
++}
++
++static void origin_postsuspend(struct dm_target *ti)
++{
++	struct dm_origin *o = ti->private;
++
++	down_write(&_origins_lock);
++	__remove_dm_origin(o);
++	up_write(&_origins_lock);
+ }
+ 
+ static void origin_status(struct dm_target *ti, status_type_t type,
+@@ -2264,6 +2339,7 @@ static struct target_type origin_target
+ 	.dtr     = origin_dtr,
+ 	.map     = origin_map,
+ 	.resume  = origin_resume,
++	.postsuspend = origin_postsuspend,
+ 	.status  = origin_status,
+ 	.merge	 = origin_merge,
+ 	.iterate_devices = origin_iterate_devices,
+Index: linux-2.6-debug/drivers/md/dm.c
+===================================================================
+--- linux-2.6-debug.orig/drivers/md/dm.c
++++ linux-2.6-debug/drivers/md/dm.c
+@@ -3001,6 +3001,7 @@ void dm_internal_suspend_fast(struct map
+ 	flush_workqueue(md->wq);
+ 	dm_wait_for_completion(md, TASK_UNINTERRUPTIBLE);
+ }
++EXPORT_SYMBOL_GPL(dm_internal_suspend_fast);
+ 
+ void dm_internal_resume_fast(struct mapped_device *md)
+ {
+@@ -3012,6 +3013,7 @@ void dm_internal_resume_fast(struct mapp
+ done:
+ 	mutex_unlock(&md->suspend_lock);
+ }
++EXPORT_SYMBOL_GPL(dm_internal_resume_fast);
+ 
+ /*-----------------------------------------------------------------
+  * Event notification.
