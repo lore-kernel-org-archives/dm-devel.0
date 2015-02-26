@@ -1,8 +1,8 @@
 From: Coly Li <colyli@gmail.com>
-Subject: [PATCH 4/4] dm-latency: add reset function to dm-latency
- in sysfs interface
-Date: Thu, 26 Feb 2015 14:43:21 +0800
-Message-ID: <54EEC089.9000802@gmail.com>
+Subject: [PATCH 1/4] dm-latency: move struct mapped_device from
+	dm.c to dm.h
+Date: Thu, 26 Feb 2015 14:41:52 +0800
+Message-ID: <54EEC030.1050500@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
@@ -23,111 +23,255 @@ List-Id: dm-devel.ids
 
 From: Coly Li <bosong.ly@alibaba-inc.com>
 
-Now echo any thing into /sys/block/dm-X/dm/io_latency_reset may
-reset all counters in /sys/block/dm-X/dm/io_latency_{s,ms, us} to 0.
-
-This function might be helpful to application developers.
+Because struct mapped_device will be referenced in dm-sysfs.c, move its
+definition into dm.h which is included by dm-sysfs.c
 
 Signed-off-by: Coly Li <bosong.ly@alibaba-inc.com>
 Reviewed-by: Robin Dong <sanbai@alibaba-inc.com>
 Reviewed-by: Tao Ma <boyu.mt@taobao.com>
 ---
-  drivers/md/dm-sysfs.c |   45 ++++++++++++++++++++++++++++++++++++++++++++-
-  1 file changed, 44 insertions(+), 1 deletion(-)
+  drivers/md/dm.c |   89
+--------------------------------------------------------------------------------------
+  drivers/md/dm.h |  106
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--------
+  2 files changed, 98 insertions(+), 97 deletions(-)
 
-diff --git a/drivers/md/dm-sysfs.c b/drivers/md/dm-sysfs.c
-index eab2dde..1a4864d 100644
---- a/drivers/md/dm-sysfs.c
-+++ b/drivers/md/dm-sysfs.c
-@@ -12,13 +12,17 @@
-  struct dm_sysfs_attr {
-  	struct attribute attr;
-  	ssize_t (*show)(struct mapped_device *, char *);
--	ssize_t (*store)(struct mapped_device *, char *);
-+	ssize_t (*store)(struct mapped_device *, const char *, size_t len);
-  };
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 73f2880..e2532c8 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -20,7 +20,6 @@
+  #include <linux/hdreg.h>
+  #include <linux/delay.h>
+  #include <linux/wait.h>
+-#include <linux/kthread.h>
 
-  #define DM_ATTR_RO(_name) \
-  struct dm_sysfs_attr dm_attr_##_name = \
-  	__ATTR(_name, S_IRUGO, dm_attr_##_name##_show, NULL)
+  #include <trace/events/block.h>
 
-+#define DM_ATTR_RW(_name) \
-+struct dm_sysfs_attr dm_attr_##_name = \
-+	__ATTR(_name, S_IRUGO | S_IWUSR, NULL, dm_attr_##_name##_store)
-+
-  static ssize_t dm_attr_show(struct kobject *kobj, struct attribute *attr,
-  			    char *page)
-  {
-@@ -40,6 +44,27 @@ static ssize_t dm_attr_show(struct kobject *kobj,
-struct attribute *attr,
-  	return ret;
-  }
-
-+static ssize_t dm_attr_store(struct kobject *kobj, struct attribute *attr,
-+			     const char *page, size_t len)
-+{
-+	struct dm_sysfs_attr *dm_attr;
-+	struct mapped_device *md;
-+	ssize_t ret;
-+
-+	dm_attr = container_of(attr, struct dm_sysfs_attr, attr);
-+	if (!dm_attr->store)
-+		return -EIO;
-+
-+	md = dm_get_from_kobject(kobj);
-+	if (!md)
-+		return -EINVAL;
-+
-+	ret = dm_attr->store(md, page, len);
-+	dm_put(md);
-+
-+	return ret;
-+}
-+
-  static ssize_t dm_attr_name_show(struct mapped_device *md, char *buf)
-  {
-  	if (dm_copy_name_and_uuid(md, buf, NULL))
-@@ -128,12 +153,27 @@ static ssize_t dm_attr_io_latency_s_show(struct
-mapped_device *md, char *buf)
-  	return strlen(buf);
-  }
-
-+static ssize_t dm_attr_io_latency_reset_store(struct mapped_device *md,
-+					      const char *buf,
-+					      size_t len)
-+{
-+	int i;
-+	for (i = 0; i < DM_LATENCY_STATS_US_NR; i++)
-+		atomic_set(&md->latency_stats_us[i], 0);
-+	for (i = 0; i < DM_LATENCY_STATS_MS_NR; i++)
-+		atomic_set(&md->latency_stats_ms[i], 0);
-+	for (i = 0; i < DM_LATENCY_STATS_S_NR; i++)
-+		atomic_set(&md->latency_stats_s[i], 0);
-+	return len;
-+}
-+
-  static DM_ATTR_RO(name);
-  static DM_ATTR_RO(uuid);
-  static DM_ATTR_RO(suspended);
-  static DM_ATTR_RO(io_latency_us);
-  static DM_ATTR_RO(io_latency_ms);
-  static DM_ATTR_RO(io_latency_s);
-+static DM_ATTR_RW(io_latency_reset);
-
-  static struct attribute *dm_attrs[] = {
-  	&dm_attr_name.attr,
-@@ -142,11 +182,14 @@ static struct attribute *dm_attrs[] = {
-  	&dm_attr_io_latency_us.attr,
-  	&dm_attr_io_latency_ms.attr,
-  	&dm_attr_io_latency_s.attr,
-+	&dm_attr_io_latency_reset.attr,
-  	NULL,
-  };
-
-  static const struct sysfs_ops dm_sysfs_ops = {
-  	.show	= dm_attr_show,
-+	.store	= dm_attr_store,
-+
+@@ -131,94 +130,6 @@ struct dm_table {
   };
 
   /*
+- * Work processed by per-device workqueue.
+- */
+-struct mapped_device {
+-	struct srcu_struct io_barrier;
+-	struct mutex suspend_lock;
+-	atomic_t holders;
+-	atomic_t open_count;
+-
+-	/*
+-	 * The current mapping.
+-	 * Use dm_get_live_table{_fast} or take suspend_lock for
+-	 * dereference.
+-	 */
+-	struct dm_table __rcu *map;
+-
+-	struct list_head table_devices;
+-	struct mutex table_devices_lock;
+-
+-	unsigned long flags;
+-
+-	struct request_queue *queue;
+-	unsigned type;
+-	/* Protect queue and type against concurrent access. */
+-	struct mutex type_lock;
+-
+-	struct target_type *immutable_target_type;
+-
+-	struct gendisk *disk;
+-	char name[16];
+-
+-	void *interface_ptr;
+-
+-	/*
+-	 * A list of ios that arrived while we were suspended.
+-	 */
+-	atomic_t pending[2];
+-	wait_queue_head_t wait;
+-	struct work_struct work;
+-	struct bio_list deferred;
+-	spinlock_t deferred_lock;
+-
+-	/*
+-	 * Processing queue (flush)
+-	 */
+-	struct workqueue_struct *wq;
+-
+-	/*
+-	 * io objects are allocated from here.
+-	 */
+-	mempool_t *io_pool;
+-	mempool_t *rq_pool;
+-
+-	struct bio_set *bs;
+-
+-	/*
+-	 * Event handling.
+-	 */
+-	atomic_t event_nr;
+-	wait_queue_head_t eventq;
+-	atomic_t uevent_seq;
+-	struct list_head uevent_list;
+-	spinlock_t uevent_lock; /* Protect access to uevent_list */
+-
+-	/*
+-	 * freeze/thaw support require holding onto a super block
+-	 */
+-	struct super_block *frozen_sb;
+-	struct block_device *bdev;
+-
+-	/* forced geometry settings */
+-	struct hd_geometry geometry;
+-
+-	/* kobject and completion */
+-	struct dm_kobject_holder kobj_holder;
+-
+-	/* zero-length flush that will be cloned and submitted to targets */
+-	struct bio flush_bio;
+-
+-	/* the number of internal suspends */
+-	unsigned internal_suspend_count;
+-
+-	struct dm_stats stats;
+-
+-	struct kthread_worker kworker;
+-	struct task_struct *kworker_task;
+-};
+-
+-/*
+   * For mempools pre-allocation at the table loading time.
+   */
+  struct dm_md_mempools {
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index 59f53e7..3014667 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -17,6 +17,7 @@
+  #include <linux/hdreg.h>
+  #include <linux/completion.h>
+  #include <linux/kobject.h>
++#include <linux/kthread.h>
+
+  #include "dm-stats.h"
+
+@@ -39,6 +40,103 @@
+  #define DM_TYPE_REQUEST_BASED		2
+  #define DM_TYPE_MQ_REQUEST_BASED	3
+
++
++/*
++ * sysfs interface
++ */
++struct dm_kobject_holder {
++	struct kobject kobj;
++	struct completion completion;
++};
++
++/*
++ * Work processed by per-device workqueue.
++ */
++struct mapped_device {
++	struct srcu_struct io_barrier;
++	struct mutex suspend_lock;
++	atomic_t holders;
++	atomic_t open_count;
++
++	/*
++	 * The current mapping.
++	 * Use dm_get_live_table{_fast} or take suspend_lock for
++	 * dereference.
++	 */
++	struct dm_table __rcu *map;
++
++	struct list_head table_devices;
++	struct mutex table_devices_lock;
++
++	unsigned long flags;
++
++	struct request_queue *queue;
++	unsigned type;
++	/* Protect queue and type against concurrent access. */
++	struct mutex type_lock;
++
++	struct target_type *immutable_target_type;
++
++	struct gendisk *disk;
++	char name[16];
++
++	void *interface_ptr;
++
++	/*
++	 * A list of ios that arrived while we were suspended.
++	 */
++	atomic_t pending[2];
++	wait_queue_head_t wait;
++	struct work_struct work;
++	struct bio_list deferred;
++	spinlock_t deferred_lock;
++
++	/*
++	 * Processing queue (flush)
++	 */
++	struct workqueue_struct *wq;
++
++	/*
++	 * io objects are allocated from here.
++	 */
++	mempool_t *io_pool;
++	mempool_t *rq_pool;
++
++	struct bio_set *bs;
++
++	/*
++	 * Event handling.
++	 */
++	atomic_t event_nr;
++	wait_queue_head_t eventq;
++	atomic_t uevent_seq;
++	struct list_head uevent_list;
++	spinlock_t uevent_lock; /* Protect access to uevent_list */
++
++	/*
++	 * freeze/thaw support require holding onto a super block
++	 */
++	struct super_block *frozen_sb;
++	struct block_device *bdev;
++
++	/* forced geometry settings */
++	struct hd_geometry geometry;
++
++	/* kobject and completion */
++	struct dm_kobject_holder kobj_holder;
++
++	/* zero-length flush that will be cloned and submitted to targets */
++	struct bio flush_bio;
++
++	/* the number of internal suspends */
++	unsigned internal_suspend_count;
++
++	struct dm_stats stats;
++
++	struct kthread_worker kworker;
++	struct task_struct *kworker_task;
++};
++
+  /*
+   * List of devices that a metadevice uses and should open/close.
+   */
+@@ -158,14 +256,6 @@ void dm_deferred_remove(void);
+  int dm_interface_init(void);
+  void dm_interface_exit(void);
+
+-/*
+- * sysfs interface
+- */
+-struct dm_kobject_holder {
+-	struct kobject kobj;
+-	struct completion completion;
+-};
+-
+  static inline struct completion *dm_get_completion_from_kobject(struct
+kobject *kobj)
+  {
+  	return &container_of(kobj, struct dm_kobject_holder, kobj)->completion;
