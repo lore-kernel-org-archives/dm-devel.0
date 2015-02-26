@@ -1,16 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Laurence Oberman <loberman@redhat.com>
 Subject: Re: [PATCH 0/4] dm-latency: Introduction
-Date: Thu, 26 Feb 2015 14:34:40 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1502261426090.10276@file01.intranet.prod.int.rdu2.redhat.com>
+Date: Thu, 26 Feb 2015 14:45:43 -0500 (EST)
+Message-ID: <1647891142.9505344.1424979943736.JavaMail.zimbra@redhat.com>
 References: <54EEBFAF.4000002@gmail.com>
 	<alpine.LRH.2.02.1502261142590.13050@file01.intranet.prod.int.rdu2.redhat.com>
 	<20150226172518.GJ18511@localhost.localdomain>
+	<alpine.LRH.2.02.1502261426090.10276@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150226172518.GJ18511@localhost.localdomain>
+In-Reply-To: <alpine.LRH.2.02.1502261426090.10276@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,9 +21,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Bryn M. Reeves" <bmr@redhat.com>
-Cc: Laurence Oberman <loberman@redhat.com>, Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, device-mapper development <dm-devel@redhat.com>, Coly Li <colyli@gmail.com>, Alasdair Kergon <agk@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Tao Ma <boyu.mt@taobao.com>, "Bryn M. Reeves" <bmr@redhat.com>, Coly Li <colyli@gmail.com>, device-mapper development <dm-devel@redhat.com>, Robin Dong <sanbai@alibaba-inc.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
+
+For my particular use case its about providing the ability to warn on latencies being seen for multipath devices based on a given threshold.
+Of course this can simply be a userspace tool using what we already expose and do the calculations to make it work.
+When we have these latencies we then focus on which SAN path may or may not be contributing.
+Within multipathd we can already configure service time as a load balancer, perhaps we can do the monitoring in the same place.
+i.e. warn on service time above a threshold.
+
+When a customer says "I currently use the following xxxx for multipath  on RHEL however I want to go to native multipathing, but you don't provide the monitoring I need" I want to work to an enhancement.
+
+For example I had Ben add the ability just recently to multipath to control re-establishing path usage based on path health when the path returns to mimic what DMP can do to avoid recovery due to path flapping. 
+
+Thanks
+
+Laurence Oberman
+Red Hat Global Support Service
+SEG Team
+
+----- Original Message -----
+From: "Mikulas Patocka" <mpatocka@redhat.com>
+To: "Bryn M. Reeves" <bmr@redhat.com>
+Cc: "device-mapper development" <dm-devel@redhat.com>, "Tao Ma" <boyu.mt@taobao.com>, "Robin Dong" <sanbai@alibaba-inc.com>, "Laurence Oberman" <loberman@redhat.com>, "Coly Li" <colyli@gmail.com>, "Alasdair Kergon" <agk@redhat.com>
+Sent: Thursday, February 26, 2015 2:34:40 PM
+Subject: Re: [dm-devel] [PATCH 0/4] dm-latency: Introduction
 
 
 
