@@ -1,23 +1,12 @@
-From: Keith Busch <keith.busch@intel.com>
-Subject: Re: awful request merge results while simulating high
- IOPS multipath
-Date: Thu, 26 Feb 2015 00:28:39 +0000 (UTC)
-Message-ID: <alpine.LNX.2.00.1502260018560.32385@localhost.lm.intel.com>
-References: <54ECBA78.6020204@kernel.dk> <20150224181257.GA11444@redhat.com>
-	<54ECC000.40604@kernel.dk> <20150224183256.GA11566@redhat.com>
-	<20150225005608.GA13348@redhat.com>
-	<alpine.LNX.2.00.1502250401330.32385@localhost.lm.intel.com>
-	<54EDE62D.7010308@kernel.dk>
-	<B58D82457FDA0744A320A2FC5AC253B93BA8BF21@fmsmsx104.amr.corp.intel.com>
-	<20150225221047.GA22281@redhat.com>
-	<alpine.LNX.2.00.1502252327150.32385@localhost.lm.intel.com>
-	<20150226001114.GA22484@redhat.com>
+From: Coly Li <colyli@gmail.com>
+Subject: [PATCH 3/4] dm-latency: add sysfs interface
+Date: Thu, 26 Feb 2015 14:43:06 +0800
+Message-ID: <54EEC07A.5050800@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150226001114.GA22484@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,19 +16,125 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, shivakrishna.merla@netapp.com, Bart Van Assche <bvanassche@acm.org>, jmoyer@redhat.com, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, Laurence Oberman <loberman@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 25 Feb 2015, Mike Snitzer wrote:
-> On Wed, Feb 25 2015 at  6:57pm -0500,
-> Keith Busch <keith.busch@intel.com> wrote:
->
->> Yes, I'm also looking at blk-mq. It appears conversion helps a lot.
->
-> Oh, so you've already started a conversion of request-based DM?
+From: Coly Li <bosong.ly@alibaba-inc.com>
 
-Actually no, I've only barely started looking at it. I'm guessing
-improvement based on using a bio-based device mapper on top of nvme. In
-my experience blk-mq performs similiar or better than bio on benchmarks,
-so I hope it's a fair assumption here too.
+This patch adds sysfs interface to display io latency statistic info.
+3 files are used to export statistic info based on delay unit level,
+- /sys/block/dm-X/dm/io_latency_us
+- /sys/block/dm-X/dm/io_latency_ms
+- /sys/block/dm-X/dm/io_latency_s
+
+The statistic counter is increasing only, a user space application
+should calculate "delta" value for a sampling interval.
+
+Signed-off-by: Coly Li <bosong.ly@alibaba-inc.com>
+Reviewed-by: Robin Dong <sanbai@alibaba-inc.com>
+Reviewed-by: Tao Ma <boyu.mt@taobao.com>
+---
+  drivers/md/dm-sysfs.c |   70
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  1 file changed, 70 insertions(+)
+
+diff --git a/drivers/md/dm-sysfs.c b/drivers/md/dm-sysfs.c
+index c62c5ab..eab2dde 100644
+--- a/drivers/md/dm-sysfs.c
++++ b/drivers/md/dm-sysfs.c
+@@ -6,6 +6,7 @@
+
+  #include <linux/sysfs.h>
+  #include <linux/dm-ioctl.h>
++#include <asm/atomic.h>
+  #include "dm.h"
+
+  struct dm_sysfs_attr {
+@@ -64,14 +65,83 @@ static ssize_t dm_attr_suspended_show(struct
+mapped_device *md, char *buf)
+  	return strlen(buf);
+  }
+
++static ssize_t dm_attr_io_latency_us_show(struct mapped_device *md,
+char *buf)
++{
++	int slot_base = 0;
++	int i, nr, ptr;
++
++	for (ptr = 0, i = 0; i < DM_LATENCY_STATS_US_NR; i++) {
++		nr = sprintf(buf + ptr,
++			     "%d-%d(us):%d\n",
++			     slot_base,
++			     slot_base + DM_LATENCY_STATS_US_GRAINSIZE - 1,
++			     atomic_read(&md->latency_stats_us[i]));
++		if (nr < 0)
++			break;
++
++		slot_base += DM_LATENCY_STATS_US_GRAINSIZE;
++		ptr += nr;
++	}
++
++	return strlen(buf);
++}
++
++static ssize_t dm_attr_io_latency_ms_show(struct mapped_device *md,
+char *buf)
++{
++	int slot_base = 0;
++	int i, nr, ptr;
++
++	for (ptr = 0, i = 0; i < DM_LATENCY_STATS_MS_NR; i++) {
++		nr = sprintf(buf + ptr,
++			     "%d-%d(ms):%d\n",
++			     slot_base,
++			     slot_base + DM_LATENCY_STATS_MS_GRAINSIZE - 1,
++			     atomic_read(&(md->latency_stats_ms[i])));
++		if (nr < 0)
++			break;
++
++		slot_base += DM_LATENCY_STATS_MS_GRAINSIZE;
++		ptr += nr;
++	}
++
++	return strlen(buf);
++}
++
++static ssize_t dm_attr_io_latency_s_show(struct mapped_device *md, char
+*buf)
++{
++	int slot_base = 0;
++	int i, nr , ptr;
++
++	for(ptr = 0, i = 0; i < DM_LATENCY_STATS_S_NR; i++) {
++		nr = sprintf(buf + ptr,
++			      "%d-%d(s):%d\n",
++			      slot_base,
++			      slot_base + DM_LATENCY_STATS_S_GRAINSIZE - 1,
++			      atomic_read(&(md->latency_stats_s[i])));
++		if (nr < 0)
++			break;
++
++		slot_base += DM_LATENCY_STATS_S_GRAINSIZE;
++		ptr += nr;
++	}
++
++	return strlen(buf);
++}
++
+  static DM_ATTR_RO(name);
+  static DM_ATTR_RO(uuid);
+  static DM_ATTR_RO(suspended);
++static DM_ATTR_RO(io_latency_us);
++static DM_ATTR_RO(io_latency_ms);
++static DM_ATTR_RO(io_latency_s);
+
+  static struct attribute *dm_attrs[] = {
+  	&dm_attr_name.attr,
+  	&dm_attr_uuid.attr,
+  	&dm_attr_suspended.attr,
++	&dm_attr_io_latency_us.attr,
++	&dm_attr_io_latency_ms.attr,
++	&dm_attr_io_latency_s.attr,
+  	NULL,
+  };
