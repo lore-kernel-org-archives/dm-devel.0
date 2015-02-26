@@ -1,7 +1,7 @@
 From: Coly Li <colyli@gmail.com>
-Subject: [PATCH 3/4] dm-latency: add sysfs interface
-Date: Thu, 26 Feb 2015 14:43:06 +0800
-Message-ID: <54EEC07A.5050800@gmail.com>
+Subject: [PATCH 0/4] dm-latency: Introduction
+Date: Thu, 26 Feb 2015 14:39:43 +0800
+Message-ID: <54EEBFAF.4000002@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
@@ -22,119 +22,47 @@ List-Id: dm-devel.ids
 
 From: Coly Li <bosong.ly@alibaba-inc.com>
 
-This patch adds sysfs interface to display io latency statistic info.
-3 files are used to export statistic info based on delay unit level,
-- /sys/block/dm-X/dm/io_latency_us
-- /sys/block/dm-X/dm/io_latency_ms
-- /sys/block/dm-X/dm/io_latency_s
+Dm-latency patch set is an effort to measure hard disk I/O latency on
+top of device mapper layer. The original motivation of I/O latency
+measurement was to predict hard disk failure by machine learning method,
+I/O latency information was one of the inputs sent to machine learning
+model.
 
-The statistic counter is increasing only, a user space application
-should calculate "delta" value for a sampling interval.
+This patch set was written in Aug~Sep 2013, I deployed it on many
+servers of Alibaba cloud infrastructure. After running for weeks, some
+interesting data about hard disk I/O latency was observed. In 2013, I
+gave a talk on OpenSuSE Conference about this topic
+(http://blog.coly.li/docs/osc13-coly.pdf).
 
-Signed-off-by: Coly Li <bosong.ly@alibaba-inc.com>
-Reviewed-by: Robin Dong <sanbai@alibaba-inc.com>
-Reviewed-by: Tao Ma <boyu.mt@taobao.com>
----
-  drivers/md/dm-sysfs.c |   70
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  1 file changed, 70 insertions(+)
+When generating time stamp for I/O request, clock source is a global
+unique resource which is protected by spin-locks. Dm-latency was tested
+on SAS/SATA hard disk and SATA SSD, it worked well as expected. Running
+dm-latency on PCI-e or NVMe SSD should work (I didn't test), but there
+will be spin-lock scalability issue, when accessing clock source for
+time stamping.
 
-diff --git a/drivers/md/dm-sysfs.c b/drivers/md/dm-sysfs.c
-index c62c5ab..eab2dde 100644
---- a/drivers/md/dm-sysfs.c
-+++ b/drivers/md/dm-sysfs.c
-@@ -6,6 +6,7 @@
+Dm-latency is good for I/O latency measurement to hard disk based
+storage, no matter local or distributed storage via network. For PCI-e
+or NVMe SSD, I suggest people to look for device provided statistic
+information, if there is.
 
-  #include <linux/sysfs.h>
-  #include <linux/dm-ioctl.h>
-+#include <asm/atomic.h>
-  #include "dm.h"
+The code is very simple, there is no resource allocation/destory, no
+spin_lock/spin_unlock. The patch set gets merged into Alibaba kernel
+more than 1 year, no bug reported in last 12 months.
 
-  struct dm_sysfs_attr {
-@@ -64,14 +65,83 @@ static ssize_t dm_attr_suspended_show(struct
-mapped_device *md, char *buf)
-  	return strlen(buf);
-  }
+This patch set has 4 patches,
+- [PATCH 1/4] dm-latency: move struct mapped_device from dm.c to dm.h
+- [PATCH 2/4] dm-latency: add I/O latency measurement in device mapper
+- [PATCH 3/4] dm-latency: add sysfs interface
+- [PATCH 4/4] dm-latency: add reset function to dm-latency in sysfs
+interface
+All these patches are rebased on Linux 4.0-rc1.
 
-+static ssize_t dm_attr_io_latency_us_show(struct mapped_device *md,
-char *buf)
-+{
-+	int slot_base = 0;
-+	int i, nr, ptr;
-+
-+	for (ptr = 0, i = 0; i < DM_LATENCY_STATS_US_NR; i++) {
-+		nr = sprintf(buf + ptr,
-+			     "%d-%d(us):%d\n",
-+			     slot_base,
-+			     slot_base + DM_LATENCY_STATS_US_GRAINSIZE - 1,
-+			     atomic_read(&md->latency_stats_us[i]));
-+		if (nr < 0)
-+			break;
-+
-+		slot_base += DM_LATENCY_STATS_US_GRAINSIZE;
-+		ptr += nr;
-+	}
-+
-+	return strlen(buf);
-+}
-+
-+static ssize_t dm_attr_io_latency_ms_show(struct mapped_device *md,
-char *buf)
-+{
-+	int slot_base = 0;
-+	int i, nr, ptr;
-+
-+	for (ptr = 0, i = 0; i < DM_LATENCY_STATS_MS_NR; i++) {
-+		nr = sprintf(buf + ptr,
-+			     "%d-%d(ms):%d\n",
-+			     slot_base,
-+			     slot_base + DM_LATENCY_STATS_MS_GRAINSIZE - 1,
-+			     atomic_read(&(md->latency_stats_ms[i])));
-+		if (nr < 0)
-+			break;
-+
-+		slot_base += DM_LATENCY_STATS_MS_GRAINSIZE;
-+		ptr += nr;
-+	}
-+
-+	return strlen(buf);
-+}
-+
-+static ssize_t dm_attr_io_latency_s_show(struct mapped_device *md, char
-*buf)
-+{
-+	int slot_base = 0;
-+	int i, nr , ptr;
-+
-+	for(ptr = 0, i = 0; i < DM_LATENCY_STATS_S_NR; i++) {
-+		nr = sprintf(buf + ptr,
-+			      "%d-%d(s):%d\n",
-+			      slot_base,
-+			      slot_base + DM_LATENCY_STATS_S_GRAINSIZE - 1,
-+			      atomic_read(&(md->latency_stats_s[i])));
-+		if (nr < 0)
-+			break;
-+
-+		slot_base += DM_LATENCY_STATS_S_GRAINSIZE;
-+		ptr += nr;
-+	}
-+
-+	return strlen(buf);
-+}
-+
-  static DM_ATTR_RO(name);
-  static DM_ATTR_RO(uuid);
-  static DM_ATTR_RO(suspended);
-+static DM_ATTR_RO(io_latency_us);
-+static DM_ATTR_RO(io_latency_ms);
-+static DM_ATTR_RO(io_latency_s);
+Today Laurence Oberman from Redhat sent me an email asking whether this
+patch set is upstream merged, because he is thinking of pulling this
+patch set into their kernel. I'd like to maintain this patch set, hope
+it could be merged.
 
-  static struct attribute *dm_attrs[] = {
-  	&dm_attr_name.attr,
-  	&dm_attr_uuid.attr,
-  	&dm_attr_suspended.attr,
-+	&dm_attr_io_latency_us.attr,
-+	&dm_attr_io_latency_ms.attr,
-+	&dm_attr_io_latency_s.attr,
-  	NULL,
-  };
+Thanks in advance.
+
+Coly Li
