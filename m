@@ -1,16 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 1/2] dm-snapshot: suspend origin when doing
- exception handover
-Date: Fri, 27 Feb 2015 15:00:49 -0500
-Message-ID: <20150227200049.GC6945@redhat.com>
-References: <alpine.LRH.2.02.1502261137120.13050@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: [PATCH 2/2] dm-snapshot: suspend merging snapshot
+ when doing exception handover
+Date: Fri, 27 Feb 2015 15:02:57 -0500
+Message-ID: <20150227200257.GD6945@redhat.com>
+References: <alpine.LRH.2.02.1502261140380.13050@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1502261137120.13050@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1502261140380.13050@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,33 +24,56 @@ To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Feb 26 2015 at 11:40am -0500,
+On Thu, Feb 26 2015 at 11:41am -0500,
 Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> In the function snapshot_resume we perform exception store handover. If
-> there is another active snapshot target, the exception store is moved from
-> this target to the target that is being resume.
+> There was a bug when that resulted in a crash when there were pending
+> exceptions and snapshot exception store handover was performed at the
+> same time - and there was a patch that fixed it.
 > 
-> The problem is that if there is some pending exception, it will point to
-> an incorrect exception store after that handover, causing crash in BUG in
-> dm-snap-persistent.c:get_exception - see bug 1177389.
+> However, a similar problem exists in snapshot merging. When snapshot
+> merging is in progress, we use the target "snapshot-merge" instead of
+> "snapshot-origin". Consequently, during exception store handover, we must
+> find the snapshot-merge target and suspend it's associated md.
 > 
-> This bug can be triggered by repeatedly changing snapshot permissions with
-> "lvchange -p r" and "lvchange -p rw" while there are writes on the
-> associated origin device.
+> To avoid lockdep warnings, the target must be suspended and resumed
+> without holding _origins_lock.
 > 
-> To fix this bug, we must suspend the origin device when doing the
-> exception store handover to make sure that there is no pending exception.
+> This patch introduces a function dm_hold that grabs a reference on
+> mapped_device, but unlike dm_get, it doesn't crash if the devices has the
+> flag DMF_FREEING, it returns and error in this case.
 > 
-> This patch:
-> - introdices _origin_hash that keeps track of dm_origin structures.
-> - introduces function __lookup_dm_origin, __insert_dm_origin and
->   __remove_dm_origin that manipulate the origin hash.
-> - modifies snapshot_resume so that it calls dm_internal_suspend_fast and
->   dm_internal_resume_fast on the origin device.
+> In snapshot_resume we grab the reference to the origin device using
+> dm_hold while holding _origins_lock (_origins_lock guarantees that the
+> device won't disappear). Then we release _origins_lock, suspend the
+> device and grab _origins_lock again.
 > 
 > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-I staged this for 4.0 here (note I bumped the target versions and
-revised the header slightly):
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-4.0&id=b735fede8d957d9d255e9c5cf3964cfa59799637
+Staged for 4.0 here (again bumped target version and tweaked header):
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-4.0&id=09ee96b21456883e108c3b00597bb37ec512151b
+ 
+> Index: linux-2.6-debug/drivers/md/dm.c
+> ===================================================================
+> --- linux-2.6-debug.orig/drivers/md/dm.c
+> +++ linux-2.6-debug/drivers/md/dm.c
+> @@ -2526,10 +2539,16 @@ static void __dm_destroy(struct mapped_d
+>  	set_bit(DMF_FREEING, &md->flags);
+>  	spin_unlock(&_minor_lock);
+>  
+> +	/*
+> +	 * Take suspend_lock so that presuspend and postsuspend methods
+> +	 * do not race with internal suspend.
+> +	 */
+> +	mutex_lock(&md->suspend_lock);
+>  	if (!dm_suspended_md(md)) {
+>  		dm_table_presuspend_targets(map);
+>  		dm_table_postsuspend_targets(map);
+>  	}
+> +	mutex_unlock(&md->suspend_lock);
+>  
+>  	/* dm_put_live_table must be before msleep, otherwise deadlock is possible */
+>  	dm_put_live_table(md, srcu_idx);
+
+I split this chunk out to a new commit for 4.0 here:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-4.0&id=ab7c7bb6f4ab95dbca96fcfc4463cd69843e3e24
