@@ -1,17 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] dm-io: deal with wandering queue limits
- when handling REQ_DISCARD and REQ_WRITE_SAME
-Date: Fri, 27 Feb 2015 14:58:26 -0500
-Message-ID: <20150227195826.GB6945@redhat.com>
-References: <20150227184438.GF5519@birch.djwong.org>
-	<alpine.LRH.2.02.1502271407010.32344@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: [PATCH 1/2] dm-snapshot: suspend origin when doing
+ exception handover
+Date: Fri, 27 Feb 2015 15:00:49 -0500
+Message-ID: <20150227200049.GC6945@redhat.com>
+References: <alpine.LRH.2.02.1502261137120.13050@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1502271407010.32344@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1502261137120.13050@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,45 +21,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Srinivas Eeda <srinivas.eeda@oracle.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, agk@redhat.com, "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Feb 27 2015 at  2:09pm -0500,
+On Thu, Feb 26 2015 at 11:40am -0500,
 Mikulas Patocka <mpatocka@redhat.com> wrote:
 
+> In the function snapshot_resume we perform exception store handover. If
+> there is another active snapshot target, the exception store is moved from
+> this target to the target that is being resume.
 > 
+> The problem is that if there is some pending exception, it will point to
+> an incorrect exception store after that handover, causing crash in BUG in
+> dm-snap-persistent.c:get_exception - see bug 1177389.
 > 
-> On Fri, 27 Feb 2015, Darrick J. Wong wrote:
+> This bug can be triggered by repeatedly changing snapshot permissions with
+> "lvchange -p r" and "lvchange -p rw" while there are writes on the
+> associated origin device.
 > 
-> > Since it's apparently possible that the queue limits for discard and
-> > write same can change while the upper level command is being sliced
-> > and diced, fix up both of them (a) to reject IO if the special command
-> > is unsupported at the start of the function and (b) read the limits
-> > once and let the commands error out on their own if the status happens
-> > to change.
-> > 
-> > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+> To fix this bug, we must suspend the origin device when doing the
+> exception store handover to make sure that there is no pending exception.
 > 
-> > +	unsigned int special_cmd_max_sectors;
-> > +
-> > +	/* Reject unsupported discard and write same requests */
-> > +	if (rw & REQ_DISCARD)
-> > +		special_cmd_max_sectors = q->limits.max_discard_sectors;
-> > +	else if (rw & REQ_WRITE_SAME)
-> > +		special_cmd_max_sectors = q->limits.max_write_same_sectors;
-> > +	if ((rw & (REQ_DISCARD | REQ_WRITE_SAME)) &&
-> > +	    special_cmd_max_sectors == 0) {
+> This patch:
+> - introdices _origin_hash that keeps track of dm_origin structures.
+> - introduces function __lookup_dm_origin, __insert_dm_origin and
+>   __remove_dm_origin that manipulate the origin hash.
+> - modifies snapshot_resume so that it calls dm_internal_suspend_fast and
+>   dm_internal_resume_fast on the origin device.
 > 
-> That results in uninitialized variable warning (although the warning is 
-> false positive). We need the macro uninitialized_var to suppress the 
-> warning.
-> 
-> It's better to use ACCESS_ONCE on variables that may be changing so that 
-> the compiler doesn't load them multiple times.
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-I dropped the use of ACCESS_ONCE.  We access queue_limits all over block
-related code.  If the performance is quantifiable then all accesses
-should be updated.  Until then, I'm maintaining status-quo.
-
-Slightly tweaked commit is staged for 4.0 here:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-4.0&id=e5db29806b99ce2b2640d2e4d4fcb983cea115c5
+I staged this for 4.0 here (note I bumped the target versions and
+revised the header slightly):
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-4.0&id=b735fede8d957d9d255e9c5cf3964cfa59799637
