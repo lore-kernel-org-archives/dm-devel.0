@@ -1,17 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] dm-io: deal with wandering queue limits
- when handling REQ_DISCARD and REQ_WRITE_SAME
-Date: Fri, 27 Feb 2015 14:19:04 -0500
-Message-ID: <20150227191904.GA6945@redhat.com>
-References: <20150227184438.GF5519@birch.djwong.org>
-	<alpine.LRH.2.02.1502271407010.32344@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 1/2] dm-snapshot: suspend origin when doing
+ exception handover
+Date: Fri, 27 Feb 2015 14:20:31 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1502271413251.32344@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1502261137120.13050@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1502271407010.32344@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1502261137120.13050@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,50 +19,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Srinivas Eeda <srinivas.eeda@oracle.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, agk@redhat.com, "Darrick J. Wong" <darrick.wong@oracle.com>
+To: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Feb 27 2015 at  2:09pm -0500,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> 
-> 
-> On Fri, 27 Feb 2015, Darrick J. Wong wrote:
-> 
-> > Since it's apparently possible that the queue limits for discard and
-> > write same can change while the upper level command is being sliced
-> > and diced, fix up both of them (a) to reject IO if the special command
-> > is unsupported at the start of the function and (b) read the limits
-> > once and let the commands error out on their own if the status happens
-> > to change.
-> > 
-> > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-> 
-> > +	unsigned int special_cmd_max_sectors;
-> > +
-> > +	/* Reject unsupported discard and write same requests */
-> > +	if (rw & REQ_DISCARD)
-> > +		special_cmd_max_sectors = q->limits.max_discard_sectors;
-> > +	else if (rw & REQ_WRITE_SAME)
-> > +		special_cmd_max_sectors = q->limits.max_write_same_sectors;
-> > +	if ((rw & (REQ_DISCARD | REQ_WRITE_SAME)) &&
-> > +	    special_cmd_max_sectors == 0) {
-> 
-> That results in uninitialized variable warning (although the warning is 
-> false positive). We need the macro uninitialized_var to suppress the 
-> warning.
-> 
-> It's better to use ACCESS_ONCE on variables that may be changing so that 
-> the compiler doesn't load them multiple times.
-> 
-> Here I'm sending the updated patch.
-> 
-> Mikulas
-> 
-> 
-> From: Mikulas Patocka <mpatocka@redhat.com>
-...
 
-I'm reviewing this now, but just to be clear, this patch will still be
-attributed to Darrick.
+On Thu, 26 Feb 2015, Mikulas Patocka wrote:
+
+> In the function snapshot_resume we perform exception store handover. If
+> there is another active snapshot target, the exception store is moved from
+> this target to the target that is being resume.
+> 
+> The problem is that if there is some pending exception, it will point to
+> an incorrect exception store after that handover, causing crash in BUG in
+> dm-snap-persistent.c:get_exception - see bug 1177389.
+> 
+> This bug can be triggered by repeatedly changing snapshot permissions with
+> "lvchange -p r" and "lvchange -p rw" while there are writes on the
+> associated origin device.
+> 
+> To fix this bug, we must suspend the origin device when doing the
+> exception store handover to make sure that there is no pending exception.
+> 
+> This patch:
+> - introdices _origin_hash that keeps track of dm_origin structures.
+> - introduces function __lookup_dm_origin, __insert_dm_origin and
+>   __remove_dm_origin that manipulate the origin hash.
+> - modifies snapshot_resume so that it calls dm_internal_suspend_fast and
+>   dm_internal_resume_fast on the origin device.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+I forgot to add
+
+Cc: stable@vger.kernel.org
+
+Note to people who backport it:
+
+When backporting to kernels 3.12-3.18, use dm_internal_suspend and 
+dm_internal_resume instead of dm_internal_suspend_fast and 
+dm_internal_resume_fast.
+
+When backporting to kernels older than 3.12, you need to pick functions 
+dm_internal_suspend and dm_internal_resume from the patch 
+fd2ed4d252701d3bbed4cd3e3d267ad469bb832a.
+
+Mikulas
