@@ -1,19 +1,18 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: [PATCH 0/4] dm-latency: Introduction
-Date: Fri, 27 Feb 2015 10:23:52 +0000
-Message-ID: <20150227102352.GA27817@localhost.localdomain>
-References: <54EEBFAF.4000002@gmail.com>
-	<alpine.LRH.2.02.1502261142590.13050@file01.intranet.prod.int.rdu2.redhat.com>
-	<20150226172518.GJ18511@localhost.localdomain>
-	<alpine.LRH.2.02.1502261426090.10276@file01.intranet.prod.int.rdu2.redhat.com>
-	<1647891142.9505344.1424979943736.JavaMail.zimbra@redhat.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: dm-io: reject unsupported DISCARD/WRITE SAME
+ requests with EOPNOTSUPP
+Date: Fri, 27 Feb 2015 10:42:09 -0800
+Message-ID: <20150227184209.GE5519@birch.djwong.org>
+References: <20150213092432.GC11034@birch.djwong.org>
+	<20150213155550.GA32670@redhat.com>
+	<alpine.LRH.2.02.1502261446360.15041@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1647891142.9505344.1424979943736.JavaMail.zimbra@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1502261446360.15041@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,33 +22,118 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Laurence Oberman <loberman@redhat.com>
-Cc: Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Coly Li <colyli@gmail.com>, Alasdair Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, agk@redhat.com, Srinivas Eeda <srinivas.eeda@oracle.com>
 List-Id: dm-devel.ids
 
-On Thu, Feb 26, 2015 at 02:45:43PM -0500, Laurence Oberman wrote:
-> For my particular use case its about providing the ability to warn on latencies being seen for multipath devices based on a given threshold.
-> Of course this can simply be a userspace tool using what we already expose and do the calculations to make it work.
-> When we have these latencies we then focus on which SAN path may or may not be contributing.
-> Within multipathd we can already configure service time as a load balancer, perhaps we can do the monitoring in the same place.
-> i.e. warn on service time above a threshold.
+On Thu, Feb 26, 2015 at 02:56:20PM -0500, Mikulas Patocka wrote:
+> 
+> 
+> On Fri, 13 Feb 2015, Mike Snitzer wrote:
+> 
+> > On Fri, Feb 13 2015 at  4:24am -0500,
+> > Darrick J. Wong <darrick.wong@oracle.com> wrote:
+> > 
+> > > I created a dm-raid1 device backed by a device that supports DISCARD
+> > > and another device that does NOT support DISCARD with the following
+> > > dm configuration:
+> > > 
+> > > # echo '0 2048 mirror core 1 512 2 /dev/sda 0 /dev/sdb 0' | dmsetup create moo
+> > > # lsblk -D
+> > > NAME         DISC-ALN DISC-GRAN DISC-MAX DISC-ZERO
+> > > sda                 0        4K       1G         0
+> > > `-moo (dm-0)        0        4K       1G         0
+> > > sdb                 0        0B       0B         0
+> > > `-moo (dm-0)        0        4K       1G         0
+> > > 
+> > > Notice that the mirror device /dev/mapper/moo advertises DISCARD
+> > > support even though one of the mirror halves doesn't.
+> > > 
+> > > If I issue a DISCARD request (via fstrim, mount -o discard, or ioctl
+> > > BLKDISCARD) through the mirror, kmirrord gets stuck in an infinite
+> > > loop in do_region() when it tries to issue a DISCARD request to sdb.
+> > > The problem is that when we call do_region() against sdb, num_sectors
+> > > is set to zero because q->limits.max_discard_sectors is zero.
+> > > Therefore, "remaining" never decreases and the loop never terminates.
+> > > 
+> > > Before entering the loop, check for the combination of REQ_DISCARD and
+> > > no discard and return -EOPNOTSUPP to avoid hanging up the mirror
+> > > device.  Fix the same problem with WRITE_DISCARD while we're at it.
+> > > 
+> > > This bug was found by the unfortunate coincidence of pvmove and a
+> > > discard operation in the RHEL 6.5 kernel; 3.19 is also affected.
+> > > 
+> > > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+> > > Cc: "Martin K. Petersen" <martin.petersen@oracle.com>
+> > > Cc: Srinivas Eeda <srinivas.eeda@oracle.com>
+> > 
+> > Your patch looks fine but it is laser focused on dm-io.  Again, that is
+> > fine (fixes a real problem).  But I'm wondering how other targets will
+> > respond in the face of partial discard support across the logical
+> > address space of the DM device.
+> > 
+> > When I implemented dm_table_supports_discards() I consciously allowed a
+> > DM table to contain a mix of discard support.  I'm now wondering where
+> > it is we benefit from that?  Seems like more of a liability than
+> > anything -- so a bigger hammer approach to fixing this would be to
+> > require all targets and all devices in a DM table support discard.
+> > Which amounts to changing dm_table_supports_discards() to be like
+> > dm_table_supports_write_same().
+> > 
+> > BTW, given dm_table_supports_write_same(), your patch shouldn't need to
+> > worry about WRITE SAME.  Did you experience issues with WRITE SAME too
+> > or were you just being proactive?
+> > 
+> > Mike
+> 
+> I think that Darrick's patch is needed even for WRITE SAME.
+> 
+> Note that queue limits and flags can't be reliably prevent bios from 
+> coming in.
+> 
+> For example:
+> 
+> 1. Some piece of code tests queue flags and sees that 
+> max_write_same_sectors is non-zero, it constructs WRITE_SAME bio and sends 
+> it with submit_bio.
+> 
+> 2. Meanwhile, the device is reconfigured so that it doesn't support 
+> WRITE_SAME. q->limits.max_write_same_sectors is set to zero.
+> 
+> 3. The bio submitted at step 1 can't be reverted, so it arrives at the 
+> device mapper even if it advertises that it doesn't support write same - 
+> now, it causes the lockup that Darrick observed.
 
-One limitation here is that the dm-mpath target is request-based.
-Currently dm-statistics are only available for bio-based targets. This
-means that to obtain fine-grained stats for multipath devices we need to
-insert a linear layer on top of the dm-mpath device.
+I'd pondered patching the WRITE SAME case too.
 
-If we wanted to take this further and apply counters to each underlying
-path then that would require a similar layer to be added between the sd
-devices and the dm-mpath map.
+> Another problem is that queue flags are not propagated up when you reload 
+> a single device - someone could reload a mirror leg with a different dm 
+> table that doesn't support write_same, and even after the reload, the 
+> mirror keeps advertising that it does support WRITE_SAME.
 
-> When a customer says "I currently use the following xxxx for multipath
-> on RHEL however I want to go to native multipathing, but you don't
-> provide the monitoring I need" I want to work to an enhancement.
+Not sure how to deal with that -- I suppose we could save the 'last recorded q
+limits' and watch for changes, but I suppose that depends on how resilient
+callers are against DISCARD and WRITE SAME returning -EOPNOTSUPP.  So far as I
+can tell the in-kernel caller handles it gracefully enough, and I'd hope that
+any sane userland program would know to follow up with a regular write (if
+applicable), but who knows...
 
-Average wait times are easily obtained from the current kernel counter
-set but (aside from the ability to hone in on subsections of the device)
-this doesn't buy you that much beyond vanilla iostat.
+> It comes to another idea - if the limits change while the do-while loop is 
+> in progress, even the original Darrick's patch is wrong and fails to 
+> prevent the lockup. So - we need to read the limits in advance, test them 
+> and never re-read them.
 
-Regards,
-Bryn.
+Agreed.  I /think/ issuing discard/write same to a device that no longer
+supports it will return an error... or at least in my crummy 5 minute test it
+seemed to work.
+
+--D
+
+> 
+> 
+> Mikulas
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
