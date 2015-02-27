@@ -1,15 +1,19 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH v2] dm-io: deal with wandering queue limits when
- handling REQ_DISCARD and REQ_WRITE_SAME
-Date: Fri, 27 Feb 2015 14:09:35 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1502271407010.32344@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20150227184438.GF5519@birch.djwong.org>
+Subject: Re: [PATCH 0/4] dm-latency: Introduction
+Date: Fri, 27 Feb 2015 14:13:02 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1502271412250.32344@file01.intranet.prod.int.rdu2.redhat.com>
+References: <54EEBFAF.4000002@gmail.com>
+	<alpine.LRH.2.02.1502261142590.13050@file01.intranet.prod.int.rdu2.redhat.com>
+	<20150226172518.GJ18511@localhost.localdomain>
+	<alpine.LRH.2.02.1502261426090.10276@file01.intranet.prod.int.rdu2.redhat.com>
+	<1647891142.9505344.1424979943736.JavaMail.zimbra@redhat.com>
+	<20150227102352.GA27817@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150227184438.GF5519@birch.djwong.org>
+In-Reply-To: <20150227102352.GA27817@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,101 +23,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <msnitzer@redhat.com>, agk@redhat.com, Srinivas Eeda <srinivas.eeda@oracle.com>
+To: "Bryn M. Reeves" <bmr@redhat.com>
+Cc: Laurence Oberman <loberman@redhat.com>, Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, device-mapper development <dm-devel@redhat.com>, Coly Li <colyli@gmail.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
 
 
-On Fri, 27 Feb 2015, Darrick J. Wong wrote:
+On Fri, 27 Feb 2015, Bryn M. Reeves wrote:
 
-> Since it's apparently possible that the queue limits for discard and
-> write same can change while the upper level command is being sliced
-> and diced, fix up both of them (a) to reject IO if the special command
-> is unsupported at the start of the function and (b) read the limits
-> once and let the commands error out on their own if the status happens
-> to change.
+> On Thu, Feb 26, 2015 at 02:45:43PM -0500, Laurence Oberman wrote:
+> > For my particular use case its about providing the ability to warn on latencies being seen for multipath devices based on a given threshold.
+> > Of course this can simply be a userspace tool using what we already expose and do the calculations to make it work.
+> > When we have these latencies we then focus on which SAN path may or may not be contributing.
+> > Within multipathd we can already configure service time as a load balancer, perhaps we can do the monitoring in the same place.
+> > i.e. warn on service time above a threshold.
 > 
-> Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+> One limitation here is that the dm-mpath target is request-based.
+> Currently dm-statistics are only available for bio-based targets. This
+> means that to obtain fine-grained stats for multipath devices we need to
+> insert a linear layer on top of the dm-mpath device.
 
-> +	unsigned int special_cmd_max_sectors;
-> +
-> +	/* Reject unsupported discard and write same requests */
-> +	if (rw & REQ_DISCARD)
-> +		special_cmd_max_sectors = q->limits.max_discard_sectors;
-> +	else if (rw & REQ_WRITE_SAME)
-> +		special_cmd_max_sectors = q->limits.max_write_same_sectors;
-> +	if ((rw & (REQ_DISCARD | REQ_WRITE_SAME)) &&
-> +	    special_cmd_max_sectors == 0) {
-
-That results in uninitialized variable warning (although the warning is 
-false positive). We need the macro uninitialized_var to suppress the 
-warning.
-
-It's better to use ACCESS_ONCE on variables that may be changing so that 
-the compiler doesn't load them multiple times.
-
-Here I'm sending the updated patch.
+Someone could hack dm statistics to work on request based targets.
 
 Mikulas
-
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-Since it's apparently possible that the queue limits for discard and
-write same can change while the upper level command is being sliced
-and diced, fix up both of them (a) to reject IO if the special command
-is unsupported at the start of the function and (b) read the limits
-once and let the commands error out on their own if the status happens
-to change.
-
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-
----
- drivers/md/dm-io.c |   18 +++++++++++++-----
- 1 file changed, 13 insertions(+), 5 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-io.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-io.c
-+++ linux-2.6/drivers/md/dm-io.c
-@@ -289,9 +289,15 @@ static void do_region(int rw, unsigned r
- 	struct request_queue *q = bdev_get_queue(where->bdev);
- 	unsigned short logical_block_size = queue_logical_block_size(q);
- 	sector_t num_sectors;
-+	unsigned int uninitialized_var(special_cmd_max_sectors);
- 
--	/* Reject unsupported discard requests */
--	if ((rw & REQ_DISCARD) && !blk_queue_discard(q)) {
-+	/* Reject unsupported discard and write same requests */
-+	if (rw & REQ_DISCARD)
-+		special_cmd_max_sectors = ACCESS_ONCE(q->limits.max_discard_sectors);
-+	else if (rw & REQ_WRITE_SAME)
-+		special_cmd_max_sectors = ACCESS_ONCE(q->limits.max_write_same_sectors);
-+	if ((rw & (REQ_DISCARD | REQ_WRITE_SAME)) &&
-+	    special_cmd_max_sectors == 0) {
- 		dec_count(io, region, -EOPNOTSUPP);
- 		return;
- 	}
-@@ -317,7 +323,8 @@ static void do_region(int rw, unsigned r
- 		store_io_and_region_in_bio(bio, io, region);
- 
- 		if (rw & REQ_DISCARD) {
--			num_sectors = min_t(sector_t, q->limits.max_discard_sectors, remaining);
-+			num_sectors = min_t(sector_t, special_cmd_max_sectors,
-+					    remaining);
- 			bio->bi_iter.bi_size = num_sectors << SECTOR_SHIFT;
- 			remaining -= num_sectors;
- 		} else if (rw & REQ_WRITE_SAME) {
-@@ -326,7 +333,8 @@ static void do_region(int rw, unsigned r
- 			 */
- 			dp->get_page(dp, &page, &len, &offset);
- 			bio_add_page(bio, page, logical_block_size, offset);
--			num_sectors = min_t(sector_t, q->limits.max_write_same_sectors, remaining);
-+			num_sectors = min_t(sector_t, special_cmd_max_sectors,
-+					    remaining);
- 			bio->bi_iter.bi_size = num_sectors << SECTOR_SHIFT;
- 
- 			offset = 0;
