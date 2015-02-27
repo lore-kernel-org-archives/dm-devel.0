@@ -1,15 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 2/2] dm-snapshot: suspend merging snapshot
- when doing exception handover
-Date: Fri, 27 Feb 2015 14:23:12 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1502271421410.32344@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1502261140380.13050@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] dm-io: deal with wandering queue limits
+ when handling REQ_DISCARD and REQ_WRITE_SAME
+Date: Fri, 27 Feb 2015 14:58:26 -0500
+Message-ID: <20150227195826.GB6945@redhat.com>
+References: <20150227184438.GF5519@birch.djwong.org>
+	<alpine.LRH.2.02.1502271407010.32344@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1502261140380.13050@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1502271407010.32344@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,43 +21,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Srinivas Eeda <srinivas.eeda@oracle.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, agk@redhat.com, "Darrick J. Wong" <darrick.wong@oracle.com>
 List-Id: dm-devel.ids
 
+On Fri, Feb 27 2015 at  2:09pm -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-
-On Thu, 26 Feb 2015, Mikulas Patocka wrote:
-
-> There was a bug when that resulted in a crash when there were pending
-> exceptions and snapshot exception store handover was performed at the
-> same time - and there was a patch that fixed it.
 > 
-> However, a similar problem exists in snapshot merging. When snapshot
-> merging is in progress, we use the target "snapshot-merge" instead of
-> "snapshot-origin". Consequently, during exception store handover, we must
-> find the snapshot-merge target and suspend it's associated md.
 > 
-> To avoid lockdep warnings, the target must be suspended and resumed
-> without holding _origins_lock.
+> On Fri, 27 Feb 2015, Darrick J. Wong wrote:
 > 
-> This patch introduces a function dm_hold that grabs a reference on
-> mapped_device, but unlike dm_get, it doesn't crash if the devices has the
-> flag DMF_FREEING, it returns and error in this case.
+> > Since it's apparently possible that the queue limits for discard and
+> > write same can change while the upper level command is being sliced
+> > and diced, fix up both of them (a) to reject IO if the special command
+> > is unsupported at the start of the function and (b) read the limits
+> > once and let the commands error out on their own if the status happens
+> > to change.
+> > 
+> > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
 > 
-> In snapshot_resume we grab the reference to the origin device using
-> dm_hold while holding _origins_lock (_origins_lock guarantees that the
-> device won't disappear). Then we release _origins_lock, suspend the
-> device and grab _origins_lock again.
+> > +	unsigned int special_cmd_max_sectors;
+> > +
+> > +	/* Reject unsupported discard and write same requests */
+> > +	if (rw & REQ_DISCARD)
+> > +		special_cmd_max_sectors = q->limits.max_discard_sectors;
+> > +	else if (rw & REQ_WRITE_SAME)
+> > +		special_cmd_max_sectors = q->limits.max_write_same_sectors;
+> > +	if ((rw & (REQ_DISCARD | REQ_WRITE_SAME)) &&
+> > +	    special_cmd_max_sectors == 0) {
 > 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> That results in uninitialized variable warning (although the warning is 
+> false positive). We need the macro uninitialized_var to suppress the 
+> warning.
+> 
+> It's better to use ACCESS_ONCE on variables that may be changing so that 
+> the compiler doesn't load them multiple times.
 
-I forgot to add
+I dropped the use of ACCESS_ONCE.  We access queue_limits all over block
+related code.  If the performance is quantifiable then all accesses
+should be updated.  Until then, I'm maintaining status-quo.
 
-Cc: stable@vger.kernel.org
-
-When backporting to kernels 3.18 and older, use dm_internal_suspend and 
-dm_internal_resume instead of dm_internal_suspend_fast and 
-dm_internal_resume_fast.
-
-Mikulas
+Slightly tweaked commit is staged for 4.0 here:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-4.0&id=e5db29806b99ce2b2640d2e4d4fcb983cea115c5
