@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 3/8] dm: remove request-based logic from
-	make_request_fn wrapper
-Date: Tue,  3 Mar 2015 19:47:06 -0500
-Message-ID: <1425430031-78140-4-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 7/8] dm sysfs: introduce ability to add writable
+	attributes
+Date: Tue,  3 Mar 2015 19:47:10 -0500
+Message-ID: <1425430031-78140-8-git-send-email-snitzer@redhat.com>
 References: <1425430031-78140-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,136 +23,71 @@ To: dm-devel@redhat.com
 Cc: axboe@kernel.dk, jmoyer@redhat.com
 List-Id: dm-devel.ids
 
-The old dm_request() method used for q->make_request_fn had a branch for
-request-based DM support but it isn't needed given that
-dm_init_request_based_queue() sets it to the standard blk_queue_bio()
-anyway.
-
-Cleanup dm_init_md_queue() to be DM device-type agnostic and have
-dm_setup_md_queue() properly finish queue setup based on DM device-type
-(bio-based vs request-based).
-
-Also, remove the export for blk_queue_bio() now that DM no longer calls
-it directly.  Doing so required a forward declaration in blk-core.c.
+Add DM_ATTR_RW() macro and establish .store method in dm_sysfs_ops.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- block/blk-core.c       |  5 +++--
- drivers/md/dm.c        | 29 ++++++++++++-----------------
- include/linux/blkdev.h |  2 --
- 3 files changed, 15 insertions(+), 21 deletions(-)
+ drivers/md/dm-sysfs.c | 32 +++++++++++++++++++++++++++-----
+ 1 file changed, 27 insertions(+), 5 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 794c3e7..4bcd739 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -719,6 +719,8 @@ blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
- }
- EXPORT_SYMBOL(blk_init_queue_node);
+diff --git a/drivers/md/dm-sysfs.c b/drivers/md/dm-sysfs.c
+index c62c5ab..1271c31 100644
+--- a/drivers/md/dm-sysfs.c
++++ b/drivers/md/dm-sysfs.c
+@@ -11,7 +11,7 @@
+ struct dm_sysfs_attr {
+ 	struct attribute attr;
+ 	ssize_t (*show)(struct mapped_device *, char *);
+-	ssize_t (*store)(struct mapped_device *, char *);
++	ssize_t (*store)(struct mapped_device *, const char *, size_t count);
+ };
  
-+static void blk_queue_bio(struct request_queue *q, struct bio *bio);
+ #define DM_ATTR_RO(_name) \
+@@ -39,6 +39,31 @@ static ssize_t dm_attr_show(struct kobject *kobj, struct attribute *attr,
+ 	return ret;
+ }
+ 
++#define DM_ATTR_RW(_name) \
++struct dm_sysfs_attr dm_attr_##_name = \
++	__ATTR(_name, S_IRUGO | S_IWUSR, dm_attr_##_name##_show, dm_attr_##_name##_store)
 +
- struct request_queue *
- blk_init_allocated_queue(struct request_queue *q, request_fn_proc *rfn,
- 			 spinlock_t *lock)
-@@ -1563,7 +1565,7 @@ void init_request_from_bio(struct request *req, struct bio *bio)
- 	blk_rq_bio_prep(req->q, req, bio);
- }
- 
--void blk_queue_bio(struct request_queue *q, struct bio *bio)
-+static void blk_queue_bio(struct request_queue *q, struct bio *bio)
- {
- 	const bool sync = !!(bio->bi_rw & REQ_SYNC);
- 	struct blk_plug *plug;
-@@ -1671,7 +1673,6 @@ out_unlock:
- 		spin_unlock_irq(q->queue_lock);
- 	}
- }
--EXPORT_SYMBOL_GPL(blk_queue_bio);	/* for device mapper only */
- 
- /*
-  * If bio->bi_dev is a partition, remap the location
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index fcc3203..6a85bd4 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1690,7 +1690,7 @@ out:
-  * The request function that just remaps the bio built up by
-  * dm_merge_bvec.
-  */
--static void _dm_request(struct request_queue *q, struct bio *bio)
-+static void dm_make_request(struct request_queue *q, struct bio *bio)
- {
- 	int rw = bio_data_dir(bio);
- 	struct mapped_device *md = q->queuedata;
-@@ -1722,16 +1722,6 @@ int dm_request_based(struct mapped_device *md)
- 	return blk_queue_stackable(md->queue);
- }
- 
--static void dm_request(struct request_queue *q, struct bio *bio)
--{
--	struct mapped_device *md = q->queuedata;
--
--	if (dm_request_based(md))
--		blk_queue_bio(q, bio);
--	else
--		_dm_request(q, bio);
--}
--
- static void dm_dispatch_clone_request(struct request *clone, struct request *rq)
- {
- 	int r;
-@@ -2097,9 +2087,8 @@ static void dm_init_md_queue(struct mapped_device *md)
- 	md->queue->queuedata = md;
- 	md->queue->backing_dev_info.congested_fn = dm_any_congested;
- 	md->queue->backing_dev_info.congested_data = md;
--	blk_queue_make_request(md->queue, dm_request);
++static ssize_t dm_attr_store(struct kobject *kobj, struct attribute *attr,
++			     const char *page, size_t count)
++{
++	struct dm_sysfs_attr *dm_attr;
++	struct mapped_device *md;
++	ssize_t ret;
 +
- 	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
--	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
- }
- 
- /*
-@@ -2330,7 +2319,7 @@ int dm_queue_merge_is_compulsory(struct request_queue *q)
- 	if (!q->merge_bvec_fn)
- 		return 0;
- 
--	if (q->make_request_fn == dm_request) {
-+	if (q->make_request_fn == dm_make_request) {
- 		dev_md = q->queuedata;
- 		if (test_bit(DMF_MERGE_IS_OPTIONAL, &dev_md->flags))
- 			return 0;
-@@ -2540,9 +2529,15 @@ static int dm_init_request_based_queue(struct mapped_device *md)
-  */
- int dm_setup_md_queue(struct mapped_device *md)
++	dm_attr = container_of(attr, struct dm_sysfs_attr, attr);
++	if (!dm_attr->store)
++		return -EIO;
++
++	md = dm_get_from_kobject(kobj);
++	if (!md)
++		return -EINVAL;
++
++	ret = dm_attr->store(md, page, count);
++	dm_put(md);
++
++	return ret;
++}
++
+ static ssize_t dm_attr_name_show(struct mapped_device *md, char *buf)
  {
--	if (dm_md_type_request_based(md) && !dm_init_request_based_queue(md)) {
--		DMWARN("Cannot initialize queue for request-based mapped device");
--		return -EINVAL;
-+	if (dm_md_type_request_based(md)) {
-+		if (!dm_init_request_based_queue(md)) {
-+			DMWARN("Cannot initialize queue for request-based mapped device");
-+			return -EINVAL;
-+		}
-+	} else {
-+		/* bio-based specific initialization */
-+		blk_queue_make_request(md->queue, dm_make_request);
-+		blk_queue_merge_bvec(md->queue, dm_merge_bvec);
- 	}
+ 	if (dm_copy_name_and_uuid(md, buf, NULL))
+@@ -77,12 +102,9 @@ static struct attribute *dm_attrs[] = {
  
- 	return 0;
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 7f9a516..5d93a66 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -821,8 +821,6 @@ extern int scsi_cmd_ioctl(struct request_queue *, struct gendisk *, fmode_t,
- extern int sg_scsi_ioctl(struct request_queue *, struct gendisk *, fmode_t,
- 			 struct scsi_ioctl_command __user *);
+ static const struct sysfs_ops dm_sysfs_ops = {
+ 	.show	= dm_attr_show,
++	.store	= dm_attr_store,
+ };
  
--extern void blk_queue_bio(struct request_queue *q, struct bio *bio);
--
- /*
-  * A queue has just exitted congestion.  Note this in the global counter of
-  * congested queues, and wake up anyone who was waiting for requests to be
+-/*
+- * dm kobject is embedded in mapped_device structure
+- * no need to define release function here
+- */
+ static struct kobj_type dm_ktype = {
+ 	.sysfs_ops	= &dm_sysfs_ops,
+ 	.default_attrs	= dm_attrs,
 -- 
 1.9.3 (Apple Git-50)
