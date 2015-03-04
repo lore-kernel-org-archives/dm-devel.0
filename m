@@ -1,15 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 7/8] dm sysfs: introduce ability to add writable
-	attributes
-Date: Tue,  3 Mar 2015 19:47:10 -0500
-Message-ID: <1425430031-78140-8-git-send-email-snitzer@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 6/8] dm: don't start current request if it
+ would've merged with the previous
+Date: Wed, 04 Mar 2015 07:36:04 +0100
+Message-ID: <54F6A7D4.8040806@suse.de>
 References: <1425430031-78140-1-git-send-email-snitzer@redhat.com>
+	<1425430031-78140-7-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1425430031-78140-1-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1425430031-78140-7-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,75 +20,102 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: axboe@kernel.dk, jmoyer@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Add DM_ATTR_RW() macro and establish .store method in dm_sysfs_ops.
+On 03/04/2015 01:47 AM, Mike Snitzer wrote:
+> Request-based DM's dm_request_fn() is so fast to pull requests off the
+> queue that steps need to be taken to promote merging by avoiding request
+> processing if it makes sense.
+> =
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-sysfs.c | 32 +++++++++++++++++++++++++++-----
- 1 file changed, 27 insertions(+), 5 deletions(-)
+> If the current request would've merged with previous request let the
+> current request stay on the queue longer.
+> =
 
-diff --git a/drivers/md/dm-sysfs.c b/drivers/md/dm-sysfs.c
-index c62c5ab..1271c31 100644
---- a/drivers/md/dm-sysfs.c
-+++ b/drivers/md/dm-sysfs.c
-@@ -11,7 +11,7 @@
- struct dm_sysfs_attr {
- 	struct attribute attr;
- 	ssize_t (*show)(struct mapped_device *, char *);
--	ssize_t (*store)(struct mapped_device *, char *);
-+	ssize_t (*store)(struct mapped_device *, const char *, size_t count);
- };
- 
- #define DM_ATTR_RO(_name) \
-@@ -39,6 +39,31 @@ static ssize_t dm_attr_show(struct kobject *kobj, struct attribute *attr,
- 	return ret;
- }
- 
-+#define DM_ATTR_RW(_name) \
-+struct dm_sysfs_attr dm_attr_##_name = \
-+	__ATTR(_name, S_IRUGO | S_IWUSR, dm_attr_##_name##_show, dm_attr_##_name##_store)
-+
-+static ssize_t dm_attr_store(struct kobject *kobj, struct attribute *attr,
-+			     const char *page, size_t count)
-+{
-+	struct dm_sysfs_attr *dm_attr;
-+	struct mapped_device *md;
-+	ssize_t ret;
-+
-+	dm_attr = container_of(attr, struct dm_sysfs_attr, attr);
-+	if (!dm_attr->store)
-+		return -EIO;
-+
-+	md = dm_get_from_kobject(kobj);
-+	if (!md)
-+		return -EINVAL;
-+
-+	ret = dm_attr->store(md, page, count);
-+	dm_put(md);
-+
-+	return ret;
-+}
-+
- static ssize_t dm_attr_name_show(struct mapped_device *md, char *buf)
- {
- 	if (dm_copy_name_and_uuid(md, buf, NULL))
-@@ -77,12 +102,9 @@ static struct attribute *dm_attrs[] = {
- 
- static const struct sysfs_ops dm_sysfs_ops = {
- 	.show	= dm_attr_show,
-+	.store	= dm_attr_store,
- };
- 
--/*
-- * dm kobject is embedded in mapped_device structure
-- * no need to define release function here
-- */
- static struct kobj_type dm_ktype = {
- 	.sysfs_ops	= &dm_sysfs_ops,
- 	.default_attrs	= dm_attrs,
--- 
-1.9.3 (Apple Git-50)
+> Suggested-by: Jens Axboe <axboe@fb.com>
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  drivers/md/dm.c | 12 ++++++++++++
+>  1 file changed, 12 insertions(+)
+> =
+
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index c13477a..3242f4c 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -21,6 +21,7 @@
+>  #include <linux/delay.h>
+>  #include <linux/wait.h>
+>  #include <linux/kthread.h>
+> +#include <linux/elevator.h> /* for rq_end_sector() */
+>  =
+
+>  #include <trace/events/block.h>
+>  =
+
+> @@ -216,6 +217,10 @@ struct mapped_device {
+>  =
+
+>  	struct kthread_worker kworker;
+>  	struct task_struct *kworker_task;
+> +
+> +	/* for request-based merge heuristic in dm_request_fn() */
+> +	sector_t last_rq_pos;
+> +	int last_rq_rw;
+>  };
+>  =
+
+>  /*
+> @@ -1927,6 +1932,9 @@ static void dm_start_request(struct mapped_device *=
+md, struct request *orig)
+>  	blk_start_request(orig);
+>  	atomic_inc(&md->pending[rq_data_dir(orig)]);
+>  =
+
+> +	md->last_rq_pos =3D rq_end_sector(orig);
+> +	md->last_rq_rw =3D rq_data_dir(orig);
+> +
+>  	/*
+>  	 * Hold the md reference here for the in-flight I/O.
+>  	 * We can't rely on the reference count by device opener,
+> @@ -1979,6 +1987,10 @@ static void dm_request_fn(struct request_queue *q)
+>  			continue;
+>  		}
+>  =
+
+> +		if (md_in_flight(md) && rq->bio && rq->bio->bi_vcnt =3D=3D 1 &&
+> +		    md->last_rq_pos =3D=3D pos && md->last_rq_rw =3D=3D rq_data_dir(rq=
+))
+> +			goto delay_and_out;
+> +
+>  		if (ti->type->busy && ti->type->busy(ti))
+>  			goto delay_and_out;
+>  =
+
+> =
+
+That's one of the things I'm slightly uneasy with.
+
+It essentially means we're out-guessing the I/O scheduler here, and
+assume that _any_ scheduler will be merging requests which are aligned.
+While this is apparently true for the existing schedulers, is this a
+requirement for any I/O scheduler?
+
+I"ll probably show my ignorance here, but why can we even pull these
+requests off the request queue?
+_Especially_ as they'll be merged with another bio/request just a few us
+later?
+
+Nevertheless, thank you Mike for these patches. They helped a lot.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
