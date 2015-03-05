@@ -1,13 +1,17 @@
 From: Thanos Makatos <thanos.makatos@onapp.com>
-Subject: Re: dm-cache metadata memory footprint
-Date: Thu, 5 Mar 2015 14:27:02 +0000
-Message-ID: <CAM2wQBu2G1=Vndt+R6hh9fKVdv50j3_JHeLrAfJLC=ZuKt39Fg@mail.gmail.com>
-References: <CAM2wQBvH8cjKes5MVvFQtcOkiu5NVM9DD2i8qEqDQBKSyvHboQ@mail.gmail.com>
+Subject: Re: dm-cache failure semantics in write-back mode
+Date: Thu, 5 Mar 2015 14:06:29 +0000
+Message-ID: <CAM2wQBsHdYPWoysVSYzYQKk+rDjBJk2jJ=W705E+bBfea30gAQ@mail.gmail.com>
+References: <CAM2wQBtW2Bit2rx-1+hngUyh1gObtt+vjWQkDVWcTfm=axCyDw@mail.gmail.com>
+	<CAM2wQBsGay5cnTR+CO_BpSL8SiYiaQm-MnWFDQC_hG1AH3PcQw@mail.gmail.com>
+	<20150303161935.GA23166@debian>
+	<CAM2wQBsS2hyA674CspKx6xZ49Fc1a=53UghaT5JkAPpjT3D_Ng@mail.gmail.com>
+	<54F62E68.4040002@shiftmail.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============9179880953332830080=="
+Content-Type: multipart/mixed; boundary="===============1686762593250998002=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAM2wQBvH8cjKes5MVvFQtcOkiu5NVM9DD2i8qEqDQBKSyvHboQ@mail.gmail.com>
+In-Reply-To: <54F62E68.4040002@shiftmail.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,88 +21,118 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, thornber@redhat.com, heinzm@redhat.com, snitzer@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============9179880953332830080==
-Content-Type: multipart/alternative; boundary=001a11c3bcbc8bab2e05108b5cc0
+--===============1686762593250998002==
+Content-Type: multipart/alternative; boundary=001a113f7ec80ec7bf05108b131a
 
---001a11c3bcbc8bab2e05108b5cc0
+--001a113f7ec80ec7bf05108b131a
 Content-Type: text/plain; charset=UTF-8
 
-Ping!
+Thanks for clarifying this. My concern is that an "application writer" can
+be a Windows VM via qemu and I don't know if flush requests are supported
+in the specific qemu version we're using, I'm in the process of confirming
+that.
 
-I'd like to generalize my question to what is the general memory footprint
-of dm-cache. Does dm-cache keeps all metadata in memory or only part of it?
-Are there any other memory overheads? Are the metadata pinned or
-dynamically cached, according to available memory? I need to know such
-information in order to tell whether my system has currently enough
-resources to create a dm-cache target.
+On Tue, Mar 3, 2015 at 9:58 PM, Spelic <spelic@shiftmail.org> wrote:
 
-I understand that the metadata size is dictated by the size of the SSD and
-the size of the disk doesn't have anything to do with it. To test how
-memory utilization is affected, I created one hundred 1 GB dm-cache targets
-using 128 KB cache block size. I calculated the size of the metadata
-according to
-https://www.redhat.com/archives/dm-devel/2012-December/msg00046.html, which
-is 4.12 MB per dm-cache target. Memory utilization did increase but not as
-much as I expected: it increased by 183 MB and not by 4.12*100 which would
-be the case if all metadata were kept in memory. (I didn't do any I/O to
-the dm-cache targets.)
-
-If this information is not readily available, are there any specific parts
-in the code I should focus in order to figure  this out?
-
-On Tue, Feb 17, 2015 at 12:22 PM, Thanos Makatos <thanos.makatos@onapp.com>
-wrote:
-
-> Is there some formula that could indicate the metadata memory footprint of
-> dm-cache for given SSD and HDD capacities? Is there anything else that
-> would affect the metadata footprint (e.g. write-through vs. write back,
-> cache line size, etc.)?
+> On 03/03/2015 18:13, Thanos Makatos wrote:
+>
+>> Thanks, Joe. So just to make sure I've understood correctly, if the SSD
+>> cache is configured as a write-back cache but the device cache is
+>> disabled/set to write-though on the HDD and the SSD, then there is no risk
+>> of data loss in the event of a failure. Is my understanding correct?
+>>
+>>
+> You don't seem to understand the semantics of flush.
+> Writes on filesystems and databases are made more or less like a
+> copy-on-write semantic:
+> - New data is written elsewhere
+> - a flush is issued
+> - when flush returns you are sure that such new data is on stable storage
+> (disk platters or similar)
+> - change one pointer to point from old data to new data (so small that
+> this change is atomic)
+> - flush again
+> when this flush returns you are sure that the data on-disk is updated.
+>
+> Now you understand why dm-cache has the semantics that it has, which is
+> the same semantics as DRAM caches on HDDs.
+>
+> Applications writers have to follow the semantics described above, in
+> order to have "atomic" updates on disk. This is true with dm-cache but also
+> with DRAM caches on HDDs.
+> Partial data losses are irrelevant if the above logic is followed.
+>
+> S.
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 >
 
---001a11c3bcbc8bab2e05108b5cc0
+--001a113f7ec80ec7bf05108b131a
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr"><div>Ping!</div><div><br></div>I&#39;d like to generalize =
-my question to what is the general memory footprint of dm-cache. Does dm-ca=
-che keeps all metadata in memory or only part of it? Are there any other me=
-mory overheads? Are the metadata pinned or dynamically cached, according to=
- available memory? I need to know such information in order to tell whether=
- my system has currently enough resources to create a dm-cache target.<div>=
-<br><div><div>I understand that the metadata size is dictated by the size o=
-f the SSD and the size of the disk doesn&#39;t have anything to do with it.=
- To test how memory utilization is affected, I created one hundred 1 GB dm-=
-cache targets using 128 KB cache block size. I calculated the size of the m=
-etadata according to=C2=A0<a href=3D"https://www.redhat.com/archives/dm-dev=
-el/2012-December/msg00046.html" target=3D"_blank">https://www.redhat.com/ar=
-chives/dm-devel/2012-December/msg00046.html</a>, which is 4.12 MB per dm-ca=
-che target. Memory utilization did increase but not as much as I expected: =
-it increased by 183 MB and not by 4.12*100 which would be the case if all m=
-etadata were kept in memory. (I didn&#39;t do any I/O to the dm-cache targe=
-ts.)</div></div></div><div><br></div><div>If this information is not readil=
-y available, are there any specific parts in the code I should focus in ord=
-er to figure =C2=A0this out?</div><div class=3D"gmail_extra"><br><div class=
-=3D"gmail_quote">On Tue, Feb 17, 2015 at 12:22 PM, Thanos Makatos <span dir=
-=3D"ltr">&lt;<a href=3D"mailto:thanos.makatos@onapp.com" target=3D"_blank">=
-thanos.makatos@onapp.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmai=
-l_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left=
-:1ex"><div dir=3D"ltr">Is there some formula that could indicate the metada=
-ta memory footprint of dm-cache for given SSD and HDD capacities? Is there =
-anything else that would affect the metadata footprint (e.g. write-through =
-vs. write back, cache line size, etc.)?</div>
-</blockquote></div><br></div></div>
+<div dir=3D"ltr">Thanks for clarifying this. My concern is that an &quot;ap=
+plication writer&quot; can be a Windows VM via qemu and I don&#39;t know if=
+ flush requests are supported in the specific qemu version we&#39;re using,=
+ I&#39;m in the process of confirming that.</div><div class=3D"gmail_extra"=
+><br><div class=3D"gmail_quote">On Tue, Mar 3, 2015 at 9:58 PM, Spelic <spa=
+n dir=3D"ltr">&lt;<a href=3D"mailto:spelic@shiftmail.org" target=3D"_blank"=
+>spelic@shiftmail.org</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_q=
+uote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1e=
+x"><span class=3D"">On 03/03/2015 18:13, Thanos Makatos wrote:<br>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
+x #ccc solid;padding-left:1ex">
+Thanks, Joe. So just to make sure I&#39;ve understood correctly, if the SSD=
+ cache is configured as a write-back cache but the device cache is disabled=
+/set to write-though on the HDD and the SSD, then there is no risk of data =
+loss in the event of a failure. Is my understanding correct?<br>
+<br>
+</blockquote>
+<br></span>
+You don&#39;t seem to understand the semantics of flush.<br>
+Writes on filesystems and databases are made more or less like a copy-on-wr=
+ite semantic:<br>
+- New data is written elsewhere<br>
+- a flush is issued<br>
+- when flush returns you are sure that such new data is on stable storage (=
+disk platters or similar)<br>
+- change one pointer to point from old data to new data (so small that this=
+ change is atomic)<br>
+- flush again<br>
+when this flush returns you are sure that the data on-disk is updated.<br>
+<br>
+Now you understand why dm-cache has the semantics that it has, which is the=
+ same semantics as DRAM caches on HDDs.<br>
+<br>
+Applications writers have to follow the semantics described above, in order=
+ to have &quot;atomic&quot; updates on disk. This is true with dm-cache but=
+ also with DRAM caches on HDDs.<br>
+Partial data losses are irrelevant if the above logic is followed.<br>
+<br>
+S.<br>
+<br>
+--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
+m</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
+nk">https://www.redhat.com/<u></u>mailman/listinfo/dm-devel</a><br>
+</blockquote></div><br></div>
 
---001a11c3bcbc8bab2e05108b5cc0--
+--001a113f7ec80ec7bf05108b131a--
 
 
---===============9179880953332830080==
+--===============1686762593250998002==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============9179880953332830080==--
+--===============1686762593250998002==--
