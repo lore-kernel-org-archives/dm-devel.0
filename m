@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 05/15] multipathd: fix memory corruption issue
-Date: Sat,  7 Mar 2015 21:31:36 -0600
-Message-ID: <1425785506-20419-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 10/15] multipath: blacklist virtio-blk devices
+Date: Sat,  7 Mar 2015 21:31:41 -0600
+Message-ID: <1425785506-20419-11-git-send-email-bmarzins@redhat.com>
 References: <1425785506-20419-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,29 +22,40 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-setup_multipath already removes the mpp if it fails, so we shouldn't be
-accessing the mpp at all if it fails, and especially not freeing it.
+virtio-blk devices don't report anything to use as a WWID, so
+multipath shouldn't waste it's time checking them.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ libmultipath/blacklist.c | 2 +-
+ multipath.conf.defaults  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 3afed62..a194c80 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -657,9 +657,8 @@ ev_remove_path (struct path *pp, struct vectors * vecs)
- 			/*
- 			 * update our state from kernel
- 			 */
--			if (setup_multipath(vecs, mpp)) {
--				goto fail;
--			}
-+			if (setup_multipath(vecs, mpp))
-+				return 1;
- 			sync_map_state(mpp);
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+index 05f1697..cea128c 100644
+--- a/libmultipath/blacklist.c
++++ b/libmultipath/blacklist.c
+@@ -178,7 +178,7 @@ setup_default_blist (struct config * conf)
+ 	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+ 		return 1;
  
- 			condlog(2, "%s [%s]: path removed from map %s",
+-	str = STRDUP("^(td|hd)[a-z]");
++	str = STRDUP("^(td|hd|vd)[a-z]");
+ 	if (!str)
+ 		return 1;
+ 	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+diff --git a/multipath.conf.defaults b/multipath.conf.defaults
+index cf8cfdb..5e46fd8 100644
+--- a/multipath.conf.defaults
++++ b/multipath.conf.defaults
+@@ -29,7 +29,7 @@
+ #}
+ #blacklist {
+ #	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+-#	devnode "^hd[a-z]"
++#	devnode "^(td|hd|vd)[a-z]"
+ #	devnode "^dcssblk[0-9]*"
+ #	devnode "^nvme.*"
+ #	device {
 -- 
 1.8.3.1
