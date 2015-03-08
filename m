@@ -1,61 +1,66 @@
-From: Vasily Tarasov <tarasov@vasily.name>
-Subject: Re: [PATCH RFC 00/10] dm-dedup: device-mapper
- deduplication target
-Date: Sat, 7 Mar 2015 16:31:31 -0500
-Message-ID: <CAFTzLMPgN5ee4CEoCtNfSxhPnRKFnEA4MGK7cd5Tt8FwODfOYg@mail.gmail.com>
-References: <535ed0d2.0729e00a.4489.0c48@mx.google.com>
-	<20150306183722.GD15736@redhat.com> <54FA38D0.8090002@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: David Rientjes <rientjes@google.com>
+Subject: [patch] dm log userspace: use mempool_create_kmalloc_pool()
+Date: Sat, 7 Mar 2015 16:43:55 -0800 (PST)
+Message-ID: <alpine.DEB.2.10.1503071642540.2772@chino.kir.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <54FA38D0.8090002@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Akira Hayakawa <ruby.wktk@gmail.com>
-Cc: Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Neil Brown <neilb@suse.de>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-@Vivek, thanks, we'll take a look at it.
+Mempools created for kmalloc caches should use
+mempool_create_kmalloc_pool().
 
-@Akira, thanks, we'll add dm test-suite to our testbed.
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: Neil Brown <neilb@suse.de>
+Signed-off-by: David Rientjes <rientjes@google.com>
+---
+ drivers/md/dm-log-userspace-base.c | 19 ++++---------------
+ 1 file changed, 4 insertions(+), 15 deletions(-)
 
-Vasily
-
-On Fri, Mar 6, 2015 at 6:31 PM, Akira Hayakawa <ruby.wktk@gmail.com> wrote:
-> Vasily,
->
-> I recommend you to add tests into dmts
-> https://github.com/jthornber/device-mapper-test-suite
->
-> This testing framework can eliminate such trivial bugs.
-> And the tests become available to other developers are
-> valuable too.
-> It's written in Ruby and Joe designed carefully. So it's
-> really easy to add tests.
->
-> - Akira
->
-> On 2015/03/07 3:37, Vivek Goyal wrote:
->> On Mon, Apr 28, 2014 at 06:03:06PM -0400, Vasily Tarasov wrote:
->>> This is a request for comments for Dmdedup.
->>
->> mkfs.xfs crash the dm-dedup driver. mkfs.ext4 worked find though for me.
->>
->> Thanks
->> Vivek
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
->>
->
+diff --git a/drivers/md/dm-log-userspace-base.c b/drivers/md/dm-log-userspace-base.c
+--- a/drivers/md/dm-log-userspace-base.c
++++ b/drivers/md/dm-log-userspace-base.c
+@@ -74,18 +74,6 @@ struct log_c {
+ 	uint32_t integrated_flush;
+ };
+ 
+-static mempool_t *flush_entry_pool;
+-
+-static void *flush_entry_alloc(gfp_t gfp_mask, void *pool_data)
+-{
+-	return kmalloc(sizeof(struct flush_entry), gfp_mask);
+-}
+-
+-static void flush_entry_free(void *element, void *pool_data)
+-{
+-	kfree(element);
+-}
+-
+ static int userspace_do_request(struct log_c *lc, const char *uuid,
+ 				int request_type, char *data, size_t data_size,
+ 				char *rdata, size_t *rdata_size)
+@@ -537,6 +525,8 @@ static int flush_by_group(struct log_c *lc, struct list_head *flush_list,
+ 	return r;
+ }
+ 
++static mempool_t *flush_entry_pool;
++
+ /*
+  * userspace_flush
+  *
+@@ -886,9 +876,8 @@ static int __init userspace_dirty_log_init(void)
+ {
+ 	int r = 0;
+ 
+-	flush_entry_pool = mempool_create(100, flush_entry_alloc,
+-					  flush_entry_free, NULL);
+-
++	flush_entry_pool = mempool_create_kmalloc_pool(100,
++						sizeof(struct flush_entry));
+ 	if (!flush_entry_pool) {
+ 		DMWARN("Unable to create flush_entry_pool:  No memory.");
+ 		return -ENOMEM;
