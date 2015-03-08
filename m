@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 02/15] libmultipath: fix sysfs_get_size bug
-Date: Sat,  7 Mar 2015 21:31:33 -0600
-Message-ID: <1425785506-20419-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 15/15] libmultipath: autodetect ALUA CLARiiON
+	configurations
+Date: Sat,  7 Mar 2015 21:31:46 -0600
+Message-ID: <1425785506-20419-16-git-send-email-bmarzins@redhat.com>
 References: <1425785506-20419-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,26 +23,40 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-sysfs_get_size wasn't checking for a negative return value from
-sysfs_attr_get_value.
+This patch enables ALUA autodetection on EMC CLARiiON devices. EMC has
+tested the change.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/sysfs.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/hwtable.c  | 2 ++
+ multipath.conf.defaults | 2 ++
+ 2 files changed, 4 insertions(+)
 
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index f42cda8..0e05316 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -158,7 +158,7 @@ sysfs_get_size (struct path *pp, unsigned long long * size)
- 		return 1;
- 
- 	attr[0] = '\0';
--	if (sysfs_attr_get_value(pp->udev, "size", attr, 255) == 0) {
-+	if (sysfs_attr_get_value(pp->udev, "size", attr, 255) <= 0) {
- 		condlog(3, "%s: No size attribute in sysfs", pp->dev);
- 		return 1;
- 	}
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index bf2c2ca..d51dcb8 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -272,6 +272,8 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = EMC_CLARIION,
+ 		.prio_name     = PRIO_EMC,
+ 		.prio_args     = NULL,
++		.retain_hwhandler = RETAIN_HWHANDLER_ON,
++		.detect_prio   = DETECT_PRIO_ON,
+ 	},
+ 	{
+ 		.vendor        = "EMC",
+diff --git a/multipath.conf.defaults b/multipath.conf.defaults
+index 5f43c57..a12a4f4 100644
+--- a/multipath.conf.defaults
++++ b/multipath.conf.defaults
+@@ -263,6 +263,8 @@
+ #		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 60
++#		retain_attached_hw_handler yes
++#		detect_prio yes
+ #	}
+ #	device {
+ #		vendor "EMC"
 -- 
 1.8.3.1
