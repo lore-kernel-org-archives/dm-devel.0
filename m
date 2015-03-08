@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 07/15] multipathd: don't buffer output with
-	systemd
-Date: Sat,  7 Mar 2015 21:31:38 -0600
-Message-ID: <1425785506-20419-8-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 03/15] Revert "libmultipath: fixup strlcpy"
+Date: Sat,  7 Mar 2015 21:31:34 -0600
+Message-ID: <1425785506-20419-4-git-send-email-bmarzins@redhat.com>
 References: <1425785506-20419-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,46 +22,37 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-When stdout isn't hooked up to a tty (like it isn't when you start
-multipathd through systemd) the stream is buffered, so messages only
-come out in big chunks, or when the program quits. Instead, we should
-send the messages out to systemd as we generate them, so that users
-know what's happening, and in the event of a crash, they get the most
-recent messages.
+This reverts commit 3a64d6491a1e83adcaf5f97edd18b7898dce241d.
 
-I realize that there is a performance impact to this.  If people are
-against this approach, we could change condlog to print messages above a
-certain priority to stderr and messages below that priority to stdout.
-If we included a configuration option to change the priority level, then
-we could always change it up if we needed to do debugging. However, the
-standard level messages are very helpful in quickly diagnosing a number
-of problems, so you could make a good argument that we always want
-priority 2 messages printed immediately.  And if we intentionally bumped
-up the debugging level, we would usually want those messages printed
-immediately.  This is exactly what we get with just unbuffering stdout.
+strlcpy already had a check to make sure that as long as the size passed in
+wasn't zero, it would leave enough space to write the final null. So, the
+only check that was necessary was to see if strlcpy was called with
+size = 0.
 
+strlcpy returns the number of bytes that it took, or would take, to write
+the entire string. There is no reason why bytes would usually end up
+equalling size, so this commit caused strlcpy to stop null terminating many
+strings.
+
+Cc: "Hannes Reinecke <hare@suse.de>"
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ libmultipath/util.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index f9e3f33..bc21d04 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2011,9 +2011,11 @@ main (int argc, char *argv[])
- 		exit(0);
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index b8487ac..ac0d1b2 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -112,7 +112,8 @@ size_t strlcpy(char *dst, const char *src, size_t size)
+ 		bytes++;
  	}
  
--	if (logsink < 1)
-+	if (logsink < 1) {
-+		if (!isatty(fileno(stdout)))
-+			setbuf(stdout, NULL);
- 		err = 0;
--	else
-+	} else
- 		err = daemonize();
- 
- 	if (err < 0)
+-	if (bytes == size)
++	/* If size == 0 there is no space for a final null... */
++	if (size)
+ 		*q = '\0';
+ 	return bytes;
+ }
 -- 
 1.8.3.1
