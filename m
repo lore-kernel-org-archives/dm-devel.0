@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 14/15] Fix doublee free of alias after map add
-	failure
-Date: Sat,  7 Mar 2015 21:31:45 -0600
-Message-ID: <1425785506-20419-15-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 09/15] multipathd: read-only bindings
+Date: Sat,  7 Mar 2015 21:31:40 -0600
+Message-ID: <1425785506-20419-10-git-send-email-bmarzins@redhat.com>
 References: <1425785506-20419-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,39 +22,54 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-In ev_add_map(), if add_map_without_path() fails, the alias will have
-been freed by free_multipath(), so you can't access it anymore. Also,
-if the multipath device already exists, but you fail to register it,
-there's no point in trying to create the device. It will fail.
+Multipath already uses -B to run in a mode where it won't write the the
+bindings file (which can be useful in the initramfs). Its simple to make
+multipathd able to work this way as well.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 13 +++++++++----
- 1 file changed, 9 insertions(+), 4 deletions(-)
+ multipathd/main.c       | 5 ++++-
+ multipathd/multipathd.8 | 5 +++++
+ 2 files changed, 9 insertions(+), 1 deletion(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index aac8a19..62339ae 100644
+index bc21d04..7429f66 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -314,10 +314,15 @@ ev_add_map (char * dev, char * alias, struct vectors * vecs)
- 	/*
- 	 * now we can register the map
- 	 */
--	if (map_present && (mpp = add_map_without_path(vecs, alias))) {
--		sync_map_state(mpp);
--		condlog(2, "%s: devmap %s registered", alias, dev);
--		return 0;
-+	if (map_present) {
-+		if ((mpp = add_map_without_path(vecs, alias))) {
-+			sync_map_state(mpp);
-+			condlog(2, "%s: devmap %s registered", alias, dev);
-+			return 0;
-+		} else {
-+			condlog(2, "%s: uev_add_map failed", dev);
-+			return 1;
-+		}
- 	}
- 	r = get_refwwid(dev, DEV_DEVMAP, vecs->pathvec, &refwwid);
+@@ -1971,7 +1971,7 @@ main (int argc, char *argv[])
+ 	if (!conf)
+ 		exit(1);
+ 
+-	while ((arg = getopt(argc, argv, ":dsv:k::")) != EOF ) {
++	while ((arg = getopt(argc, argv, ":dsv:k::B")) != EOF ) {
+ 	switch(arg) {
+ 		case 'd':
+ 			logsink = 0;
+@@ -1990,6 +1990,9 @@ main (int argc, char *argv[])
+ 		case 'k':
+ 			uxclnt(optarg);
+ 			exit(0);
++		case 'B':
++			conf->bindings_read_only = 1;
++			break;
+ 		default:
+ 			;
+ 		}
+diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
+index 358141d..7fe6597 100644
+--- a/multipathd/multipathd.8
++++ b/multipathd/multipathd.8
+@@ -28,6 +28,11 @@ Suppress timestamps. Do not prefix logging messages with a timestamp.
+ .B -v "level"
+ Verbosity level. Print additional information while running multipathd. A  level of 0 means only print errors. A level of 3 or greater prints debugging information as well. 
+ .TP
++.B -B
++Read-only bindings file. Multipathd will not write to the user_friendly_names
++bindings file. If a user_friendly_name doesn't already exist for a device, it
++will use its WWID as its alias.
++.TP
+ .B -k 
+ multipathd will enter interactive mode. From this mode, the available commands can be viewed by entering "help". When you are finished entering commands, press CTRL-D to quit.
  
 -- 
 1.8.3.1
