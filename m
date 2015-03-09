@@ -1,18 +1,18 @@
-From: Sebastian Herbszt <herbszt@gmx.de>
-Subject: Re: [PATCH 11/15] multipath: enable configuration
- directory
-Date: Mon, 9 Mar 2015 01:42:48 +0100
-Message-ID: <20150309014248.00007306@localhost>
-References: <1425785506-20419-1-git-send-email-bmarzins@redhat.com>
-	<1425785506-20419-12-git-send-email-bmarzins@redhat.com>
-	<20150308232706.000039e7@localhost>
-	<CABr-GncekSo0WLREj6B2XZehaEvbd32vcAt747bcJufgqd+nnA@mail.gmail.com>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH 6/8] dm: don't start current request if it
+ would've merged with the previous
+Date: Mon, 9 Mar 2015 01:04:51 +0000
+Message-ID: <54FCF1B2.8030007@ce.jp.nec.com>
+References: <1425430031-78140-1-git-send-email-snitzer@redhat.com>
+	<1425430031-78140-7-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-GncekSo0WLREj6B2XZehaEvbd32vcAt747bcJufgqd+nnA@mail.gmail.com>
+In-Reply-To: <1425430031-78140-7-git-send-email-snitzer@redhat.com>
+Content-Language: ja-JP
+Content-ID: <B864E26E89517048BA0314E6EBD5CE74@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,40 +22,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>
+To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "jmoyer@redhat.com" <jmoyer@redhat.com>, Shiva Krishna Merla <shivakrishna.merla@netapp.com>
 List-Id: dm-devel.ids
 
-Christophe Varoqui wrote:
-> I had the same thought reading the patch, but I couldn't see any
-> consistency in existing "*.d" directory locations in modern distros I
-> couldn't decently object to Ben's proposal :
-
-On my fairly recent openSUSE I (also) have
-
-> Following Ben's proposal :
-> /etc/udev/*.d
-> /etc/mysql/conf.d
-> /etc/apm/*.d
-
-/etc/X11/xorg.conf.d
-/etc/fonts/conf.d
- 
-> Following your proposal :
-> /etc/rsyslog.d
-> /etc/sysctl.d
-> /etc/profile.d
-
-/etc/auto.master.d
-/etc/ld.so.conf.d
-/etc/sudoers.d
-/etc/permissions.d
-/etc/aliases.d
-/etc/gdbinit.d
- 
-> Does somebody know if the LSB FHS gives guidelines for this ?
+On 03/04/15 09:47, Mike Snitzer wrote:
+> Request-based DM's dm_request_fn() is so fast to pull requests off the
+> queue that steps need to be taken to promote merging by avoiding request
+> processing if it makes sense.
 > 
-> Best regards,
-> Christophe Varoqui
+> If the current request would've merged with previous request let the
+> current request stay on the queue longer.
 
-Sebastian
+Hi Mike,
+
+Looking at this thread, I think there are 2 different problems mixed.
+
+Firstly, "/dev/skd" is STEC S1120 block driver, which doesn't have
+lld_busy function. So back pressure doesn't propagate to request-based
+dm device and dm feeds as many request as possible to the lower driver.
+("pulling too fast" situation)
+If you still have access to the device, can you try the patch like
+the attached one?
+
+Secondly, for this comment from Merla ShivaKrishna:
+
+> Yes, Indeed this the exact issue we saw at NetApp. While running sequential
+> 4K write I/O with large thread count, 2 paths yield better performance than
+> 4 paths and performance drastically drops with 4 paths. The device queue_depth
+> as 32 and with blktrace we could see better I/O merging happening and average 
+> request size was > 8K through iostat. With 4 paths none of the I/O gets merged and
+> always average request size is 4K. Scheduler used was noop as we are using SSD 
+> based storage. We could get I/O merging to happen even with 4 paths but with lower
+> device queue_depth of 16. Even then the performance was lacking compared to 2 paths.
+
+Have you tried increasing nr_requests of the dm device?
+E.g. setting nr_requests to 256.
+
+4 paths with each queue depth 32 means that it can have 128 I/Os in flight.
+With the default value of nr_requests 128, the request queue is almost
+always empty and I/O merge could not happen.
+Increasing nr_requests of the dm device allows some more requests queued,
+thus the chance of merging may increase.
+Reducing the lower device queue depth could be another solution. But if
+the depth is too low, you might not be able to keep the optimal speed.
+
+----
+Jun'ichi Nomura, NEC Corporation
+
+
+[PATCH] skd: Add lld_busy function for request-based stacking driver
+
+diff --git a/drivers/block/skd_main.c b/drivers/block/skd_main.c
+index 1e46eb2..0e8f466 100644
+--- a/drivers/block/skd_main.c
++++ b/drivers/block/skd_main.c
+@@ -565,6 +565,16 @@ skd_prep_discard_cdb(struct skd_scsi_request *scsi_req,
+ 	blk_add_request_payload(req, page, len);
+ }
+ 
++static int skd_lld_busy(struct request_queue *q)
++{
++	struct skd_device *skdev = q->queuedata;
++
++	if (skdev->in_flight >= skdev->cur_max_queue_depth)
++		return 1;
++
++	return 0;
++}
++
+ static void skd_request_fn_not_online(struct request_queue *q);
+ 
+ static void skd_request_fn(struct request_queue *q)
+@@ -4419,6 +4429,8 @@ static int skd_cons_disk(struct skd_device *skdev)
+ 	/* set sysfs ptimal_io_size to 8K */
+ 	blk_queue_io_opt(q, 8192);
+ 
++	/* register feed back function for stacking driver */
++	blk_queue_lld_busy(q, skd_lld_busy);
++
+ 	/* DISCARD Flag initialization. */
+ 	q->limits.discard_granularity = 8192;
+ 	q->limits.discard_alignment = 0;
