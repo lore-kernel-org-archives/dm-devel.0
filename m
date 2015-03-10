@@ -1,11 +1,14 @@
-From: Gerhard Wichert <Gerhard.Wichert@ts.fujitsu.com>
-Subject: [PATCH] Update ETERNUS DX entry
-Date: Mon, 09 Mar 2015 15:57:37 +0100
-Message-ID: <44563972.MCcuCWMjxF@tabasco>
+From: konstantin <kkv@clodo.ru>
+Subject: Re: raid1 round-robin scheduler
+Date: Tue, 10 Mar 2015 14:55:19 +0300
+Message-ID: <54FEDBA7.2010809@clodo.ru>
+References: <54E58F6A.9040108@clodo.ru> <54E5FAFC.3010800@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5366929027042260641=="
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <54E5FAFC.3010800@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,107 +19,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: "Wilck, Martin" <Martin.Wilck@ts.fujitsu.com>, "Montag,
-	Rainer" <Rainer.Montag@ts.fujitsu.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
-
---===============5366929027042260641==
-Content-Type: multipart/alternative; boundary="nextPart1562563.Li4glXt3aQ"
-Content-Transfer-Encoding: 7Bit
-
-This is a multi-part message in MIME format.
-
---nextPart1562563.Li4glXt3aQ
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="us-ascii"
-
-Add DX8700 S3 and DX8900 S3
-
-Signed-off-by: Gerhard Wichert <gerhard.wichert@ts.fujitsu.com>
----
- libmultipath/hwtable.c  | 2 +-
- multipath.conf.defaults | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index bf2c2ca..6de915b 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -308,7 +308,7 @@ static struct hwentry default_hw[] = {
-        },
-        {
-                .vendor        = "FUJITSU",
--               .product       = "ETERNUS_DX(L|M|400|8000)",
-+               .product       = "ETERNUS_DX(H|L|M|400|8000)",
-                .features      = "1 queue_if_no_path",
-                .hwhandler     = DEFAULT_HWHANDLER,
-                .pgpolicy      = GROUP_BY_PRIO,
-diff --git a/multipath.conf.defaults b/multipath.conf.defaults
-index cf8cfdb..c5f12e8 100644
---- a/multipath.conf.defaults
-+++ b/multipath.conf.defaults
-@@ -285,7 +285,7 @@
- #      }
- #      device {
- #              vendor "FUJITSU"
--#              product "ETERNUS_DX(L|M|400|8000)"
-+#              product "ETERNUS_DX(H|L|M|400|8000)"
- #              path_grouping_policy "group_by_prio"
- #              path_checker "tur"
- #              features "1 queue_if_no_path"
-
-
---nextPart1562563.Li4glXt3aQ
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/html; charset="us-ascii"
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
-<html><head><meta name="qrichtext" content="1" /><style type="text/css">
-p, li { white-space: pre-wrap; }
-</style></head><body style=" font-family:'Monospace'; font-size:9pt; font-weight:400; font-style:normal;">
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; -qt-user-state:0;">Add DX8700 S3 and DX8900 S3</p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; ">&nbsp;</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-family:'Courier New,courier'; font-size:medium; color:#000000;">Signed-off-by: Gerhard Wichert &lt;gerhard.wichert@ts.fujitsu.com&gt;</span></p>
-<pre style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-family:'Courier New,courier'; font-size:medium; color:#000000;">---</span></pre>
-<pre style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-family:'Courier New,courier'; font-size:medium; color:#000000;"> libmultipath/hwtable.c  | 2 +-</span></pre>
-<pre style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-family:'Courier New,courier'; font-size:medium; color:#000000;"> multipath.conf.defaults | 2 +-</span></pre>
-<pre style=" margin-top:0px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-family:'Courier New,courier'; font-size:medium; color:#000000;"> 2 files changed, 2 insertions(+), 2 deletions(-)</span></pre>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">index bf2c2ca..6de915b 100644</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">--- a/libmultipath/hwtable.c</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">+++ b/libmultipath/hwtable.c</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">@@ -308,7 +308,7 @@ static struct hwentry default_hw[] = {</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">        },</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">        {</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">                .vendor        = &quot;FUJITSU&quot;,</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">-               .product       = &quot;ETERNUS_DX(L|M|400|8000)&quot;,</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">+               .product       = &quot;ETERNUS_DX(H|L|M|400|8000)&quot;,</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">                .features      = &quot;1 queue_if_no_path&quot;,</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">                .hwhandler     = DEFAULT_HWHANDLER,</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">                .pgpolicy      = GROUP_BY_PRIO,</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">diff --git a/multipath.conf.defaults b/multipath.conf.defaults</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">index cf8cfdb..c5f12e8 100644</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">--- a/multipath.conf.defaults</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">+++ b/multipath.conf.defaults</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">@@ -285,7 +285,7 @@</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"> #      }</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"> #      device {</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"> #              vendor &quot;FUJITSU&quot;</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">-#              product &quot;ETERNUS_DX(L|M|400|8000)&quot;</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">+#              product &quot;ETERNUS_DX(H|L|M|400|8000)&quot;</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"> #              path_grouping_policy &quot;group_by_prio&quot;</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"> #              path_checker &quot;tur&quot;</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"> #              features &quot;1 queue_if_no_path&quot;</p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; ">&nbsp;</p></body></html>
---nextPart1562563.Li4glXt3aQ--
-
-
---===============5366929027042260641==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5366929027042260641==--
+CgoxOS4wMi4yMDE1IDE4OjAyLCBIZWlueiBNYXVlbHNoYWdlbiDQv9C40YjQtdGCOgo+Cj4KPiBk
+bS1taXJyb3IgKGkuZS4gImx2Y3JlYXRlIC0tdHlwZSBtaXJyb3IiIG9yIHJlc3BlY3RpdmUgImRt
+c2V0dXAgY3JlYXRlCj4gLS10YWJsZSAuLi4iLAo+IHdoaWNoIGlzIG5vdCB0aGUgcmVjb21tZW5k
+ZWQgcmFpZDEgbGF5b3V0IGFueSBtb3JlKSBwcm92aWRlcyByZWFkCj4gcm91bmQtcm9iaW4gc2lu
+Y2UgbG9uZyB0aW1lLgo+IFlvdSdkIG5lZWQgYW4gYW5jaWVudCBrZXJuZWwgbm90IHRvIGhhdmUg
+aXQgc3VwcG9ydGVkLgo+Cj4gInJhaWQxIi8icmFpZDEwIiAodGhlIHJlY29tbWVuZGVkIHRhcmdl
+dHMpICwgaS5lLiB0aGUgbWQtcmFpZCBiYXNlZAo+IG1hcHBpbmdzIGFjY2Vzc2libGUgdmlhIHRo
+ZSBkbS1yYWlkIHRhcmdldAo+IGRvIHJlYWQgb3B0aW1pemF0aW9ucyBhcyB3ZWxsLiBVc2UgImx2
+Y3JlYXRlIC0tdHlwZSByYWlkMS9yYWlkMTAgLi4uIiBvcgo+IGEgcmVzcGVjdGl2ZSBkbSB0YWJs
+ZSB0byBzZXQKPiB0aG9zZSB1cC4gVGhlIGZvcm1lciAoInJhaWQxIikgaXMgdGhlIGRlZmF1bHQg
+aW4gbW9kZXJuIGRpc3RyaWJ1dGlvbnMKPiBhbmQgY29uZmlndXJhYmxlIHZpYSBzZXR0aW5nCj4g
+J21pcnJvcl9zZWd0eXBlX2RlZmF1bHQgPSAicmFpZDEiJyBpbiAvZXRjL2x2bS9sdm0uY29uZi4K
+Pgo+IEhlaW56Cj4KPgo+Cj4KPiBPbiAwMi8xOS8yMDE1IDA4OjIzIEFNLCBrb25zdGFudGluIHdy
+b3RlOgo+PiBXaGF0IHZlcnNpb24gb2YgdGhlIGtlcm5lbCBzaG91bGQgSSB1c2UgdG8gZ2V0IGEg
+cm91bmQtcm9iaW4gcmVhZAo+PiBpbXBsZW1lbnRhdGlvbiBvbiBMViByYWlkMT8KPj4KPgo+IC0t
+Cj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4gZG0tZGV2ZWxAcmVkaGF0LmNvbQo+IGh0dHBzOi8v
+d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAoKSSdtIGNyZWF0ZSByYWlk
+MSBsdiB3aXRoICJsdmNyZWF0ZSAtLXR5cGUgcmFpZDEgLW0xIC1MNUcgLW4gcjFsdiByMXZnIiAK
+b24gdmcgd2l0aCB0d28gcGh5c2ljYWwgZGV2aWNlczoKCmx2cyAtYSAtbyArZGV2aWNlcwogICBM
+ViAgICAgICAgICAgICAgVkcgICBBdHRyICAgICBMU2l6ZSBQb29sIE9yaWdpbiBEYXRhJSAgTW92
+ZSBMb2cgQ29weSUgCiAgQ29udmVydCBEZXZpY2VzCiAgIHIxbHYgICAgICAgICAgICByMXZnIHJ3
+aS1hLW0tIDUuMDBnIDEwMC4wMCAKcjFsdl9yaW1hZ2VfMCgwKSxyMWx2X3JpbWFnZV8xKDApCiAg
+IFtyMWx2X3JpbWFnZV8wXSByMXZnIGl3aS1hb3ItIDUuMDBnICAgICAgICAgICAvZGV2L3NkYSgx
+KQogICBbcjFsdl9yaW1hZ2VfMV0gcjF2ZyBpd2ktYW9yLSA1LjAwZyAgICAgICAgICAgL2Rldi9z
+ZGIoMSkKICAgW3IxbHZfcm1ldGFfMF0gIHIxdmcgZXdpLWFvci0gNC4wMG0gICAgICAgICAgIC9k
+ZXYvc2RhKDApCiAgIFtyMWx2X3JtZXRhXzFdICByMXZnIGV3aS1hb3ItIDQuMDBtICAgICAgICAg
+ICAvZGV2L3NkYigwKQoKYnV0LCByZWFkaW5nIGlzIG9ubHkgb25lIG9mIHRoZSBkZXZpY2VzIChp
+IHNlZSBubW9uIGxpdmUgZGlzayAKdXRpbGl6YXRpb24pLiBUaGVyZSBhcmUgc29sdXRpb25zIHRv
+IGVuc3VyZSByZWFkaW5nIGZyb20gdGhlIHR3byBkZXZpY2VzPwoKLS0gCldCUgpLb25zdGFudGlu
+IFYuIEtyb3RvdgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
+aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
