@@ -1,13 +1,22 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] Update ETERNUS DX entry
-Date: Mon, 9 Mar 2015 22:49:59 +0100
-Message-ID: <CABr-Gnc4mgS_ywcQV2TFtJXOvbw_FTCoSYnMVp9cva+YmEE1uA@mail.gmail.com>
-References: <44563972.MCcuCWMjxF@tabasco>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH 6/8] dm: don't start current request if it
+ would've merged with the previous
+Date: Tue, 10 Mar 2015 01:05:37 +0000
+Message-ID: <54FE4361.50102@ce.jp.nec.com>
+References: <1425430031-78140-1-git-send-email-snitzer@redhat.com>
+	<1425430031-78140-7-git-send-email-snitzer@redhat.com>
+	<54FCF1B2.8030007@ce.jp.nec.com>
+	<230f5fbd7d6c403ab81327a69a52361f@hioexcmbx01-prd.hq.netapp.com>
+	<54FD3934.5060700@ce.jp.nec.com>
+	<6e1381e2553a40c491db7912357f0461@hioexcmbx01-prd.hq.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============9127990030875670399=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <44563972.MCcuCWMjxF@tabasco>
+In-Reply-To: <6e1381e2553a40c491db7912357f0461@hioexcmbx01-prd.hq.netapp.com>
+Content-Language: ja-JP
+Content-ID: <33A78947559E5544AD0276CF720B89AD@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,203 +26,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Gerhard Wichert <Gerhard.Wichert@ts.fujitsu.com>
-Cc: "Wilck, Martin" <Martin.Wilck@ts.fujitsu.com>, device-mapper development <dm-devel@redhat.com>, "Montag,
-	Rainer" <Rainer.Montag@ts.fujitsu.com>
+To: "Merla, ShivaKrishna" <ShivaKrishna.Merla@netapp.com>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, device-mapper development <dm-devel@redhat.com>, "jmoyer@redhat.com" <jmoyer@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
---===============9127990030875670399==
-Content-Type: multipart/alternative; boundary=001a1141c7b4067ba20510e20484
+On 03/10/15 01:10, Merla, ShivaKrishna wrote:
+>> did you try increasing nr_requests of dm request queue?
+>> If so, what was the increased value of nr_requests in the case of
+>> device queue_depth 32?
+>>
+> Yes, we tried increasing it to 256, the average merge count
+> certainly increased a little bit but not comparable as to Mike's change.
+> 
+> 
+> 03/09/2015 11:07:54 AM
+> Device:         rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await r_await w_await  svctm  %util
+> sdak              0.00     0.00    0.00 21737.00     0.00 101064.00     9.30    11.93    0.55    0.00    0.55   0.04  93.00
+> sdu               0.00     0.00    0.00 21759.00     0.00 101728.00     9.35    11.55    0.53    0.00    0.53   0.04  93.60
+> sdm               0.00     0.00    0.00 21669.00     0.00 101168.00     9.34    11.76    0.54    0.00    0.54   0.04  94.00
+> sdac              0.00     0.00    0.00 21812.00     0.00 101540.00     9.31    11.74    0.54    0.00    0.54   0.04  92.50
+> dm-6              0.00 14266.00    0.00 86980.00     0.00 405496.00     9.32    48.44    0.56    0.00    0.56   0.01  98.70
+> 
+> With tunable delay of 20us here are the results.
+> 
+> 03/09/2015 11:08:43 AM
+> Device:         rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await r_await w_await  svctm  %util
+> sdak              0.00     0.00    0.00 11740.00     0.00 135344.00    23.06     4.42    0.38    0.00    0.38   0.05  62.60
+> sdu               0.00     0.00    0.00 11781.00     0.00 140800.00    23.90     3.23    0.27    0.00    0.27   0.05  62.80
+> sdm               0.00     0.00    0.00 11770.00     0.00 137592.00    23.38     4.53    0.39    0.00    0.39   0.06  65.60
+> sdac              0.00     0.00    0.00 11664.00     0.00 137976.00    23.66     3.36    0.29    0.00    0.29   0.05  60.80
+> dm-6              0.00 88446.00    0.00 46937.00     0.00 551684.00    23.51    17.88    0.38    0.00    0.38   0.02  99.30
 
---001a1141c7b4067ba20510e20484
-Content-Type: text/plain; charset=UTF-8
+Oh I see. Thank you.
+So it's not that requests weren't queued for merging but that CPUs
+could not pile the requests fast enough...
 
-Applied.
-Thanks.
+If possible, it would be interesting to see the results with much
+lower device queue_depth like 4 or 2.
 
-On Mon, Mar 9, 2015 at 3:57 PM, Gerhard Wichert <
-Gerhard.Wichert@ts.fujitsu.com> wrote:
-
->  Add DX8700 S3 and DX8900 S3
->
->
->
-> Signed-off-by: Gerhard Wichert <gerhard.wichert@ts.fujitsu.com>
->
-> ---
->
->  libmultipath/hwtable.c  | 2 +-
->
->  multipath.conf.defaults | 2 +-
->
->  2 files changed, 2 insertions(+), 2 deletions(-)
->
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
->
-> index bf2c2ca..6de915b 100644
->
-> --- a/libmultipath/hwtable.c
->
-> +++ b/libmultipath/hwtable.c
->
-> @@ -308,7 +308,7 @@ static struct hwentry default_hw[] = {
->
-> },
->
-> {
->
-> .vendor = "FUJITSU",
->
-> - .product = "ETERNUS_DX(L|M|400|8000)",
->
-> + .product = "ETERNUS_DX(H|L|M|400|8000)",
->
-> .features = "1 queue_if_no_path",
->
-> .hwhandler = DEFAULT_HWHANDLER,
->
-> .pgpolicy = GROUP_BY_PRIO,
->
-> diff --git a/multipath.conf.defaults b/multipath.conf.defaults
->
-> index cf8cfdb..c5f12e8 100644
->
-> --- a/multipath.conf.defaults
->
-> +++ b/multipath.conf.defaults
->
-> @@ -285,7 +285,7 @@
->
-> # }
->
-> # device {
->
-> # vendor "FUJITSU"
->
-> -# product "ETERNUS_DX(L|M|400|8000)"
->
-> +# product "ETERNUS_DX(H|L|M|400|8000)"
->
-> # path_grouping_policy "group_by_prio"
->
-> # path_checker "tur"
->
-> # features "1 queue_if_no_path"
->
->
->
-
---001a1141c7b4067ba20510e20484
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Applied.<div>Thanks.</div></div><div class=3D"gmail_extra"=
-><br><div class=3D"gmail_quote">On Mon, Mar 9, 2015 at 3:57 PM, Gerhard Wic=
-hert <span dir=3D"ltr">&lt;<a href=3D"mailto:Gerhard.Wichert@ts.fujitsu.com=
-" target=3D"_blank">Gerhard.Wichert@ts.fujitsu.com</a>&gt;</span> wrote:<br=
-><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1=
-px #ccc solid;padding-left:1ex"><u></u>
-<div style=3D"font-family:&#39;Monospace&#39;;font-size:9pt;font-weight:400=
-;font-style:normal">
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">Add DX8700 S3 and DX8900 S3</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">=C2=A0</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px"><span style=3D"font-family:&#39;Courier New,courier&#39=
-;;font-size:medium;color:#000000">Signed-off-by: Gerhard Wichert &lt;<a hre=
-f=3D"mailto:gerhard.wichert@ts.fujitsu.com" target=3D"_blank">gerhard.wiche=
-rt@ts.fujitsu.com</a>&gt;</span></p>
-<pre style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right=
-:0px;text-indent:0px"><span style=3D"font-family:&#39;Courier New,courier&#=
-39;;font-size:medium;color:#000000">---</span></pre>
-<pre style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right=
-:0px;text-indent:0px"><span style=3D"font-family:&#39;Courier New,courier&#=
-39;;font-size:medium;color:#000000"> libmultipath/hwtable.c  | 2 +-</span><=
-/pre>
-<pre style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right=
-:0px;text-indent:0px"><span style=3D"font-family:&#39;Courier New,courier&#=
-39;;font-size:medium;color:#000000"> multipath.conf.defaults | 2 +-</span><=
-/pre>
-<pre style=3D"margin-top:0px;margin-bottom:12px;margin-left:0px;margin-righ=
-t:0px;text-indent:0px"><span style=3D"font-family:&#39;Courier New,courier&=
-#39;;font-size:medium;color:#000000"> 2 files changed, 2 insertions(+), 2 d=
-eletions(-)</span></pre>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">diff --git a/libmultipath/hwtable.c b/libmultipath/hwta=
-ble.c</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">index bf2c2ca..6de915b 100644</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">--- a/libmultipath/hwtable.c</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">+++ b/libmultipath/hwtable.c</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">@@ -308,7 +308,7 @@ static struct hwentry default_hw[] =
-=3D {</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">        },</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">        {</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">                .vendor        =3D &quot;FUJITSU&quot;,=
-</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">-               .product       =3D &quot;ETERNUS_DX(L|M=
-|400|8000)&quot;,</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">+               .product       =3D &quot;ETERNUS_DX(H|L=
-|M|400|8000)&quot;,</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">                .features      =3D &quot;1 queue_if_no_=
-path&quot;,</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">                .hwhandler     =3D DEFAULT_HWHANDLER,</=
-p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">                .pgpolicy      =3D GROUP_BY_PRIO,</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">diff --git a/multipath.conf.defaults b/multipath.conf.d=
-efaults</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">index cf8cfdb..c5f12e8 100644</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">--- a/multipath.conf.defaults</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">+++ b/multipath.conf.defaults</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">@@ -285,7 +285,7 @@</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px"> #      }</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px"> #      device {</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px"> #              vendor &quot;FUJITSU&quot;</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">-#              product &quot;ETERNUS_DX(L|M|400|8000)&=
-quot;</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">+#              product &quot;ETERNUS_DX(H|L|M|400|8000=
-)&quot;</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px"> #              path_grouping_policy &quot;group_by_pri=
-o&quot;</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px"> #              path_checker &quot;tur&quot;</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px"> #              features &quot;1 queue_if_no_path&quot;=
-</p>
-<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
-px;text-indent:0px">=C2=A0</p></div></blockquote></div><br></div>
-
---001a1141c7b4067ba20510e20484--
-
-
---===============9127990030875670399==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============9127990030875670399==--
+-- 
+Jun'ichi Nomura, NEC Corporation
