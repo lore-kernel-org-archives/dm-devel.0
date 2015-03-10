@@ -1,58 +1,53 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: raid1 round-robin scheduler
-Date: Tue, 10 Mar 2015 15:22:47 +0100
-Message-ID: <54FEFE37.80207@redhat.com>
-References: <54E58F6A.9040108@clodo.ru> <54E5FAFC.3010800@redhat.com>
-	<54FEDBA7.2010809@clodo.ru>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Subject: Re: [PATCH 15/45] dm-log-userspace.h: include stdint.h in userspace
+Date: Wed, 11 Mar 2015 00:48:00 +0200
+Message-ID: <20150310224800.GX12550@lakka.kapsi.fi>
+References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
+ <2309592.iOl8K3u7d8@wuerfel>
+ <20150217133806.GA5220@agk-dp.fab.redhat.com>
+ <2286739.alIuOL4vnt@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <54FEDBA7.2010809@clodo.ru>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <2286739.alIuOL4vnt@wuerfel>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-Ck9uIDAzLzEwLzIwMTUgMTI6NTUgUE0sIGtvbnN0YW50aW4gd3JvdGU6Cj4KPgo+IDE5LjAyLjIw
-MTUgMTg6MDIsIEhlaW56IE1hdWVsc2hhZ2VuINC/0LjRiNC10YI6Cj4+Cj4+Cj4+IGRtLW1pcnJv
-ciAoaS5lLiAibHZjcmVhdGUgLS10eXBlIG1pcnJvciIgb3IgcmVzcGVjdGl2ZSAiZG1zZXR1cCBj
-cmVhdGUKPj4gLS10YWJsZSAuLi4iLAo+PiB3aGljaCBpcyBub3QgdGhlIHJlY29tbWVuZGVkIHJh
-aWQxIGxheW91dCBhbnkgbW9yZSkgcHJvdmlkZXMgcmVhZAo+PiByb3VuZC1yb2JpbiBzaW5jZSBs
-b25nIHRpbWUuCj4+IFlvdSdkIG5lZWQgYW4gYW5jaWVudCBrZXJuZWwgbm90IHRvIGhhdmUgaXQg
-c3VwcG9ydGVkLgo+Pgo+PiAicmFpZDEiLyJyYWlkMTAiICh0aGUgcmVjb21tZW5kZWQgdGFyZ2V0
-cykgLCBpLmUuIHRoZSBtZC1yYWlkIGJhc2VkCj4+IG1hcHBpbmdzIGFjY2Vzc2libGUgdmlhIHRo
-ZSBkbS1yYWlkIHRhcmdldAo+PiBkbyByZWFkIG9wdGltaXphdGlvbnMgYXMgd2VsbC4gVXNlICJs
-dmNyZWF0ZSAtLXR5cGUgcmFpZDEvcmFpZDEwIC4uLiIgb3IKPj4gYSByZXNwZWN0aXZlIGRtIHRh
-YmxlIHRvIHNldAo+PiB0aG9zZSB1cC4gVGhlIGZvcm1lciAoInJhaWQxIikgaXMgdGhlIGRlZmF1
-bHQgaW4gbW9kZXJuIGRpc3RyaWJ1dGlvbnMKPj4gYW5kIGNvbmZpZ3VyYWJsZSB2aWEgc2V0dGlu
-Zwo+PiAnbWlycm9yX3NlZ3R5cGVfZGVmYXVsdCA9ICJyYWlkMSInIGluIC9ldGMvbHZtL2x2bS5j
-b25mLgo+Pgo+PiBIZWluego+Pgo+Pgo+Pgo+Pgo+PiBPbiAwMi8xOS8yMDE1IDA4OjIzIEFNLCBr
-b25zdGFudGluIHdyb3RlOgo+Pj4gV2hhdCB2ZXJzaW9uIG9mIHRoZSBrZXJuZWwgc2hvdWxkIEkg
-dXNlIHRvIGdldCBhIHJvdW5kLXJvYmluIHJlYWQKPj4+IGltcGxlbWVudGF0aW9uIG9uIExWIHJh
-aWQxPwo+Pj4KPj4KPj4gLS0gCj4+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+PiBkbS1kZXZlbEBy
-ZWRoYXQuY29tCj4+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
-ZXZlbAo+Cj4gSSdtIGNyZWF0ZSByYWlkMSBsdiB3aXRoICJsdmNyZWF0ZSAtLXR5cGUgcmFpZDEg
-LW0xIC1MNUcgLW4gcjFsdiByMXZnIiAKPiBvbiB2ZyB3aXRoIHR3byBwaHlzaWNhbCBkZXZpY2Vz
-Ogo+Cj4gbHZzIC1hIC1vICtkZXZpY2VzCj4gICBMViAgICAgICAgICAgICAgVkcgICBBdHRyICAg
-ICBMU2l6ZSBQb29sIE9yaWdpbiBEYXRhJSAgTW92ZSBMb2cgCj4gQ29weSUgIENvbnZlcnQgRGV2
-aWNlcwo+ICAgcjFsdiAgICAgICAgICAgIHIxdmcgcndpLWEtbS0gNS4wMGcgMTAwLjAwIAo+IHIx
-bHZfcmltYWdlXzAoMCkscjFsdl9yaW1hZ2VfMSgwKQo+ICAgW3IxbHZfcmltYWdlXzBdIHIxdmcg
-aXdpLWFvci0gNS4wMGcgICAgICAgICAgIC9kZXYvc2RhKDEpCj4gICBbcjFsdl9yaW1hZ2VfMV0g
-cjF2ZyBpd2ktYW9yLSA1LjAwZyAgICAgICAgICAgL2Rldi9zZGIoMSkKPiAgIFtyMWx2X3JtZXRh
-XzBdICByMXZnIGV3aS1hb3ItIDQuMDBtICAgICAgICAgICAvZGV2L3NkYSgwKQo+ICAgW3IxbHZf
-cm1ldGFfMV0gIHIxdmcgZXdpLWFvci0gNC4wMG0gICAgICAgICAgIC9kZXYvc2RiKDApCj4KPiBi
-dXQsIHJlYWRpbmcgaXMgb25seSBvbmUgb2YgdGhlIGRldmljZXMgKGkgc2VlIG5tb24gbGl2ZSBk
-aXNrIAo+IHV0aWxpemF0aW9uKS4gVGhlcmUgYXJlIHNvbHV0aW9ucyB0byBlbnN1cmUgcmVhZGlu
-ZyBmcm9tIHRoZSB0d28gZGV2aWNlcz8KPgoKSG93IGRvIHlvdSB0ZXN0PwpEbyB5b3UgcmVhZCBm
-cm9tIG11bHRpcGxlIHRocmVhZHM/CgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
-bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
-ZXZlbA==
+On Tue, Feb 17, 2015 at 02:55:49PM +0100, Arnd Bergmann wrote:
+> On Tuesday 17 February 2015 13:38:06 Alasdair G Kergon wrote:
+> > On Tue, Feb 17, 2015 at 10:08:56AM +0100, Arnd Bergmann wrote:
+> > > The normal way to do this in kernel headers is to use linux/types.h
+> > > but change the data structures to use __u64 instead of uint64_t
+> > > to avoid the build error.
+> >  
+> > That's what happened to dm-ioctl.h.
+> 
+> Ah, indeed. It turns out that it was my own change that did this:
+> 
+> 
+> commit 9adfbfb611307060db54691bc7e6d53fdc12312b
+> Author: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+> Date:   Thu Feb 26 00:51:40 2009 +0100
+> 
+>     make most exported headers use strict integer types
+>     
+>     This takes care of all files that have only a small number
+>     of non-strict integer type uses.
+> 
+> > (Or someone could adjust linux/types.h to include these as standard.)
+> 
+> No, that wouldn't work. The C user space headers are not meant to
+> be included implicitly by any standard headers, which might pull
+> in linux/types.h implicitly.
+> 
+> I think it would be best to change all patches in the new series
+> in the same way for consistency and try to avoid using stdint.h
+> as much as we can.
+
+Ok, I'll change all patches to use __u8 etc types instead of uint8_t etc via
+stdint.h.
+
+-Mikko
