@@ -1,81 +1,27 @@
-From: konstantin <kkv@clodo.ru>
-Subject: Re: raid1 round-robin scheduler
-Date: Wed, 11 Mar 2015 15:44:48 +0300
-Message-ID: <550038C0.8030400@clodo.ru>
-References: <54E58F6A.9040108@clodo.ru>	<54E5FAFC.3010800@redhat.com>	<54FEDBA7.2010809@clodo.ru>	<54FEFE37.80207@redhat.com>	<54FFED3A.10507@clodo.ru>
-	<55001F38.7060103@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm log userspace: use mempool_create_kmalloc_pool()
+Date: Wed, 11 Mar 2015 08:58:52 -0400
+Message-ID: <20150311125852.GA28768@redhat.com>
+References: <alpine.DEB.2.10.1503071642540.2772@chino.kir.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <55001F38.7060103@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.10.1503071642540.2772@chino.kir.corp.google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Rientjes <rientjes@google.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CgoxMS4wMy4yMDE1IDEzOjU1LCBIZWlueiBNYXVlbHNoYWdlbiDQv9C40YjQtdGCOgo+Cj4gT24g
-MDMvMTEvMjAxNSAwODoyMiBBTSwga29uc3RhbnRpbiB3cm90ZToKPj4KPj4gMTAuMDMuMjAxNSAx
-NzoyMiwgSGVpbnogTWF1ZWxzaGFnZW4gd3JvdGU6Cj4+Pgo+Pj4gT24gMDMvMTAvMjAxNSAxMjo1
-NSBQTSwga29uc3RhbnRpbiB3cm90ZToKPj4+Pgo+Pj4+Cj4+Pj4gMTkuMDIuMjAxNSAxODowMiwg
-SGVpbnogTWF1ZWxzaGFnZW4g0L/QuNGI0LXRgjoKPj4+Pj4KPj4+Pj4KPj4+Pj4gZG0tbWlycm9y
-IChpLmUuICJsdmNyZWF0ZSAtLXR5cGUgbWlycm9yIiBvciByZXNwZWN0aXZlICJkbXNldHVwIGNy
-ZWF0ZQo+Pj4+PiAtLXRhYmxlIC4uLiIsCj4+Pj4+IHdoaWNoIGlzIG5vdCB0aGUgcmVjb21tZW5k
-ZWQgcmFpZDEgbGF5b3V0IGFueSBtb3JlKSBwcm92aWRlcyByZWFkCj4+Pj4+IHJvdW5kLXJvYmlu
-IHNpbmNlIGxvbmcgdGltZS4KPj4+Pj4gWW91J2QgbmVlZCBhbiBhbmNpZW50IGtlcm5lbCBub3Qg
-dG8gaGF2ZSBpdCBzdXBwb3J0ZWQuCj4+Pj4+Cj4+Pj4+ICJyYWlkMSIvInJhaWQxMCIgKHRoZSBy
-ZWNvbW1lbmRlZCB0YXJnZXRzKSAsIGkuZS4gdGhlIG1kLXJhaWQgYmFzZWQKPj4+Pj4gbWFwcGlu
-Z3MgYWNjZXNzaWJsZSB2aWEgdGhlIGRtLXJhaWQgdGFyZ2V0Cj4+Pj4+IGRvIHJlYWQgb3B0aW1p
-emF0aW9ucyBhcyB3ZWxsLiBVc2UgImx2Y3JlYXRlIC0tdHlwZSByYWlkMS9yYWlkMTAKPj4+Pj4g
-Li4uIiBvcgo+Pj4+PiBhIHJlc3BlY3RpdmUgZG0gdGFibGUgdG8gc2V0Cj4+Pj4+IHRob3NlIHVw
-LiBUaGUgZm9ybWVyICgicmFpZDEiKSBpcyB0aGUgZGVmYXVsdCBpbiBtb2Rlcm4gZGlzdHJpYnV0
-aW9ucwo+Pj4+PiBhbmQgY29uZmlndXJhYmxlIHZpYSBzZXR0aW5nCj4+Pj4+ICdtaXJyb3Jfc2Vn
-dHlwZV9kZWZhdWx0ID0gInJhaWQxIicgaW4gL2V0Yy9sdm0vbHZtLmNvbmYuCj4+Pj4+Cj4+Pj4+
-IEhlaW56Cj4+Pj4+Cj4+Pj4+Cj4+Pj4+Cj4+Pj4+Cj4+Pj4+IE9uIDAyLzE5LzIwMTUgMDg6MjMg
-QU0sIGtvbnN0YW50aW4gd3JvdGU6Cj4+Pj4+PiBXaGF0IHZlcnNpb24gb2YgdGhlIGtlcm5lbCBz
-aG91bGQgSSB1c2UgdG8gZ2V0IGEgcm91bmQtcm9iaW4gcmVhZAo+Pj4+Pj4gaW1wbGVtZW50YXRp
-b24gb24gTFYgcmFpZDE/Cj4+Pj4+Pgo+Pj4+Pgo+Pj4+PiAtLQo+Pj4+PiBkbS1kZXZlbCBtYWls
-aW5nIGxpc3QKPj4+Pj4gZG0tZGV2ZWxAcmVkaGF0LmNvbQo+Pj4+PiBodHRwczovL3d3dy5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKPj4+Pgo+Pj4+IEknbSBjcmVhdGUgcmFp
-ZDEgbHYgd2l0aCAibHZjcmVhdGUgLS10eXBlIHJhaWQxIC1tMSAtTDVHIC1uIHIxbHYgcjF2ZyIK
-Pj4+PiBvbiB2ZyB3aXRoIHR3byBwaHlzaWNhbCBkZXZpY2VzOgo+Pj4+Cj4+Pj4gbHZzIC1hIC1v
-ICtkZXZpY2VzCj4+Pj4gICBMViAgICAgICAgICAgICAgVkcgICBBdHRyICAgICBMU2l6ZSBQb29s
-IE9yaWdpbiBEYXRhJSAgTW92ZSBMb2cKPj4+PiBDb3B5JSAgQ29udmVydCBEZXZpY2VzCj4+Pj4g
-ICByMWx2ICAgICAgICAgICAgcjF2ZyByd2ktYS1tLSA1LjAwZyAxMDAuMDAKPj4+PiByMWx2X3Jp
-bWFnZV8wKDApLHIxbHZfcmltYWdlXzEoMCkKPj4+PiAgIFtyMWx2X3JpbWFnZV8wXSByMXZnIGl3
-aS1hb3ItIDUuMDBnICAgICAgICAgICAvZGV2L3NkYSgxKQo+Pj4+ICAgW3IxbHZfcmltYWdlXzFd
-IHIxdmcgaXdpLWFvci0gNS4wMGcgICAgICAgICAgIC9kZXYvc2RiKDEpCj4+Pj4gICBbcjFsdl9y
-bWV0YV8wXSAgcjF2ZyBld2ktYW9yLSA0LjAwbSAgICAgICAgICAgL2Rldi9zZGEoMCkKPj4+PiAg
-IFtyMWx2X3JtZXRhXzFdICByMXZnIGV3aS1hb3ItIDQuMDBtICAgICAgICAgICAvZGV2L3NkYigw
-KQo+Pj4+Cj4+Pj4gYnV0LCByZWFkaW5nIGlzIG9ubHkgb25lIG9mIHRoZSBkZXZpY2VzIChpIHNl
-ZSBubW9uIGxpdmUgZGlzawo+Pj4+IHV0aWxpemF0aW9uKS4gVGhlcmUgYXJlIHNvbHV0aW9ucyB0
-byBlbnN1cmUgcmVhZGluZyBmcm9tIHRoZSB0d28KPj4+PiBkZXZpY2VzPwo+Pj4+Cj4+Pgo+Pj4g
-SG93IGRvIHlvdSB0ZXN0Pwo+Pj4gRG8geW91IHJlYWQgZnJvbSBtdWx0aXBsZSB0aHJlYWRzPwo+
-Pj4KPj4+Cj4+Pgo+Pj4gLS0KPj4+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+Pj4gZG0tZGV2ZWxA
-cmVkaGF0LmNvbQo+Pj4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
-LWRldmVsCj4+Cj4+IHJlYWxseSAuLiBJIHVzZWQgZGQgdG8gdGVzdCBpbiBvbmUgdGhyZWFkLAo+
-Cj4gVGhhdCdzIHdoYXQgSSBhc3N1bWVkLgo+Cj4+IGJ1dCB3aHkgd2hlbiBJIHJlYWQgaW4gb25l
-IHRocmVhZCBJIGNhbiBub3QgcmVhZCBmcm9tIHR3byBQViBkZXZpY2VzCj4+IGF0IHRoZSBzYW1l
-IHRpbWU/Cj4+Cj4KPiBZb3VyIGRkIGV4YW1wbGUgY2F1c2VzIHN0cmVhbWluZyBpbyB3aGljaCBp
-cyB3aGF0IHNwaW5kbGVzIGNhbiBoYW5kbGUgYmVzdC4KPiBUaHVzIGl0IHdvdWxkIG5vdCBtYWtl
-IHNlbnNlIHRvIHNwbGl0IGlvcyB1cC4KPiBGb3Igc3VjaCBraW5kIG9mIHNpbmdsZS10aHJlYWRl
-ZCBzdHJlYW1pbmcgaW8gd2l0aCBzZW5zZWZ1bGwgYmxvY2sgc2l6ZQo+IGEgc3RyaXBlZCBtYXBw
-aW5nIHdvdWxkIGRvIGJldHRlci4KPgo+IFRyeSBydW5uaW5nIGRkL2Zpby8uLi4gbXVsdGlwbGUg
-dGltZXMgaW4gcGFyYWxsZWwgYW5kIHlvdSBzaG91bGQgc2VlIHRoZQo+IGV4cGVjdGVkIGVmZmVj
-dC4KPgo+Cj4gLS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiBkbS1kZXZlbEByZWRoYXQuY29t
-Cj4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCgpteSBW
-RyBiYXNlZCBvbiB0d28gUFYgcmVtb3RlIGNvbm5lY3RlZCBieSBJbmZpbmlCYW5kIGRpc2sgc3Rv
-cmFnZXMuIEkgCnJlYWNoIHRoZSBsaW1pdCBvZiBwZXJmb3JtYW5jZSBJbmZpbmlCYW5kIHBvcnRz
-IG9uIG15IGhvc3QgYW5kIEkgd291bGQgCmxpa2UgdG8gcGFyYWxsZWxpemUgdGhlIGxvYWQgYmV0
-d2VlbiB0aGUgdHdvIHJhaWQxIGxlZ3MgKGRpc2sgc3RvcmFnZXMpIAp0aGF0IGNvbnRhaW4gdGhl
-IHNhbWUgZGF0YS4KCi0tIApXQlIKS29uc3RhbnRpbiBWLiBLcm90b3YKCi0tCmRtLWRldmVsIG1h
-aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFp
-bG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Sat, Mar 07 2015 at  7:43pm -0500,
+David Rientjes <rientjes@google.com> wrote:
+
+> Mempools created for kmalloc caches should use
+> mempool_create_kmalloc_pool().
+> 
+> Cc: Alasdair Kergon <agk@redhat.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: Neil Brown <neilb@suse.de>
+> Signed-off-by: David Rientjes <rientjes@google.com>
+
+Thanks David, I'll get this queued up.
