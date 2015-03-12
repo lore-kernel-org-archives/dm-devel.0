@@ -1,27 +1,35 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm log userspace: use mempool_create_kmalloc_pool()
-Date: Wed, 11 Mar 2015 08:58:52 -0400
-Message-ID: <20150311125852.GA28768@redhat.com>
-References: <alpine.DEB.2.10.1503071642540.2772@chino.kir.corp.google.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Subject: [PATCH 1/7] blk-mq: fix use of incorrect goto label in blk_mq_init_queue error path
+Date: Wed, 11 Mar 2015 23:56:36 -0400
+Message-ID: <1426132602-34331-2-git-send-email-snitzer@redhat.com>
+References: <1426132602-34331-1-git-send-email-snitzer@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.10.1503071642540.2772@chino.kir.corp.google.com>
+In-Reply-To: <1426132602-34331-1-git-send-email-snitzer@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Rientjes <rientjes@google.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
+To: Jens Axboe <axboe@kernel.dk>, Keith Busch <keith.busch@intel.com>
+Cc: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, Mar 07 2015 at  7:43pm -0500,
-David Rientjes <rientjes@google.com> wrote:
+If percpu_ref_init() fails the 'err_hctxs' label should be used instead
+of 'err_map'.
 
-> Mempools created for kmalloc caches should use
-> mempool_create_kmalloc_pool().
-> 
-> Cc: Alasdair Kergon <agk@redhat.com>
-> Cc: Mike Snitzer <snitzer@redhat.com>
-> Cc: Neil Brown <neilb@suse.de>
-> Signed-off-by: David Rientjes <rientjes@google.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ block/blk-mq.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Thanks David, I'll get this queued up.
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index 4f4bea2..459840c 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -1938,7 +1938,7 @@ struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *set)
+ 	 */
+ 	if (percpu_ref_init(&q->mq_usage_counter, blk_mq_usage_counter_release,
+ 			    PERCPU_REF_INIT_ATOMIC, GFP_KERNEL))
+-		goto err_map;
++		goto err_hctxs;
+ 
+ 	setup_timer(&q->timeout, blk_mq_rq_timer, (unsigned long) q);
+ 	blk_queue_rq_timeout(q, 30000);
+-- 
+1.9.5 (Apple Git-50.3)
