@@ -1,65 +1,70 @@
-From: Sebastian Herbszt <herbszt@gmx.de>
-Subject: Re: [PATCH] Update ETERNUS DX entry
-Date: Fri, 13 Mar 2015 15:11:53 +0100
-Message-ID: <20150313151153.00001b2a@localhost>
-References: <44563972.MCcuCWMjxF@tabasco>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH 0/7] dm: add full blk-mq support to request-based DM
+Date: Fri, 13 Mar 2015 08:34:06 -0600
+Message-ID: <5502F55E.6070907@kernel.dk>
+References: <1426132602-34331-1-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <44563972.MCcuCWMjxF@tabasco>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Wilck, Martin" <Martin.Wilck@ts.fujitsu.com>, Gerhard.Wichert@ts.fujitsu.com, "Montag,
-	Rainer" <Rainer.Montag@ts.fujitsu.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1426132602-34331-1-git-send-email-snitzer@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, Keith Busch <keith.busch@intel.com>
+Cc: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Gerhard Wichert wrote:
-> Add DX8700 S3 and DX8900 S3
-> 
-> Signed-off-by: Gerhard Wichert <gerhard.wichert@ts.fujitsu.com>
-> ---
->  libmultipath/hwtable.c  | 2 +-
->  multipath.conf.defaults | 2 +-
->  2 files changed, 2 insertions(+), 2 deletions(-)
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index bf2c2ca..6de915b 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -308,7 +308,7 @@ static struct hwentry default_hw[] = {
->         },
->         {
->                 .vendor        = "FUJITSU",
-> -               .product       = "ETERNUS_DX(L|M|400|8000)",
-> +               .product       = "ETERNUS_DX(H|L|M|400|8000)",
->                 .features      = "1 queue_if_no_path",
->                 .hwhandler     = DEFAULT_HWHANDLER,
->                 .pgpolicy      = GROUP_BY_PRIO,
-> diff --git a/multipath.conf.defaults b/multipath.conf.defaults
-> index cf8cfdb..c5f12e8 100644
-> --- a/multipath.conf.defaults
-> +++ b/multipath.conf.defaults
-> @@ -285,7 +285,7 @@
->  #      }
->  #      device {
->  #              vendor "FUJITSU"
-> -#              product "ETERNUS_DX(L|M|400|8000)"
-> +#              product "ETERNUS_DX(H|L|M|400|8000)"
->  #              path_grouping_policy "group_by_prio"
->  #              path_checker "tur"
->  #              features "1 queue_if_no_path"
-> 
+On 03/11/2015 09:56 PM, Mike Snitzer wrote:
+> This patchset updates request-based DM (used exclussively by DM
+> multipath) to support blk-mq I/O path or the old ->request_fn I/O
+> path -- the default is still the old ->request_fn I/O path.
+>
+> Like was done for SCSI, I've exposed a dm-mod.ko 'use_blk_mq' module
+> parameter and a CONFIG_DM_MQ_DEFAULT.  I've queued these patches in
+> linux-next via linux-dm.git's 'for-next' branch -- my goal is for
+> these changes to land upstream in 4.1.
+>
+> I've tested all 4 supported permutations of rq-based queue stacking:
+> 1) blk-mq mpath stacked on blk-mq device(s)
+> 2) blk-mq mpath stacked on ->request_fn device(s)
+> 3) old ->request_fn mpath stacked on blk-mq device(s)
+> 4) old ->request_fn mpath stacked on old ->request_fn device(s)
+>
+> There is definitely much more room for optimizing the blk-mq mpath
+> queue (via dm_mq_ops setup) to have more awareness about the
+> characteristics of the underlying blk-mq device(s) -- Jens offered
+> some suggestions that are worth pursuing.  Goal being to leverage the
+> ability to have multiple software submission queues that map to the
+> underlying paths' HW queue.  I expect Keith to be the most likely
+> person to pursue these follow-on optimizations given his immediate
+> access to NVMe devices, etc.
+>
+> blk-mq allows for the removal of 2 of the 3 mempools and associated
+> allocations that were traditionally performed using old ->request_fn
+> I/O path.  The md->bs bioset still remains for cloning a request's
+> bios.
+>
+> I'll be pursuing the possibility of removing the bio cloning that
+> happens when cloning a request (it was put in place for partial
+> completion of a request's bios but the prospect of avoiding those bio
+> clones warrants further review of how useful those partial completions
+> are, see: http://www.redhat.com/archives/dm-devel/2014-June/msg00030.html)
+>
+> Jens and Keith, special thanks for your help answering more blk-mq
+> questions than I'd have hoped would be needed while at LSF/MM.
+>
+> Keith Busch (1):
+>    blk-mq: don't wait in blk_mq_queue_enter() if __GFP_WAIT isn't set
+>
+> Mike Snitzer (6):
+>    blk-mq: fix use of incorrect goto label in blk_mq_init_queue error path
+>    blk-mq: add blk_mq_init_allocated_queue and export blk_mq_register_disk
+>    blk-mq: export blk_mq_run_hw_queues
+>    dm: add full blk-mq support to request-based DM
+>    dm: optimize dm_mq_queue_rq to _not_ use kthread if using pure blk-mq
+>    dm: add 'use_blk_mq' module param and expose in per-device ro sysfs attr
 
-Can we keep the product list sorted (entry, mid-range, high-end)?
-Like "ETERNUS_DX(L|M|400|H|8000)" or "ETERNUS_DX(L|400|M|8000|H)".
+Applied patch 1 to current tree, marked for stable. 2-4 are applied for 
+4.1, in for-4.1/core.
 
-Sebastian
+-- 
+Jens Axboe
