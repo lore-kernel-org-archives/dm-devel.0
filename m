@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 3/3] Add find_multipaths to multipath.conf man
-	page
-Date: Fri, 13 Mar 2015 13:27:27 -0500
-Message-ID: <1426271247-21345-4-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 2/3] libmultipath: only add uninitialized paths
+	in check_path
+Date: Fri, 13 Mar 2015 13:27:26 -0500
+Message-ID: <1426271247-21345-3-git-send-email-bmarzins@redhat.com>
 References: <1426271247-21345-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,45 +23,64 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-find_multipaths wasn't listed in the multipath.conf man page. Add it.
+With find_multipaths enabled, there can be non-blacklisted paths that
+are not supposed to be part of any multipath device. To make sure that
+check_path doesn't keep checking them, this patch marks paths which are
+fully initialized. Only uninitialized paths are checked, if they don't
+belong to a multipath device.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipath/multipath.conf.5 | 22 ++++++++++++++++++++++
- 1 file changed, 22 insertions(+)
+ libmultipath/discovery.c | 2 ++
+ libmultipath/structs.h   | 1 +
+ multipathd/main.c        | 3 +++
+ 3 files changed, 6 insertions(+)
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 3fe56bc..d60dc2e 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -91,6 +91,28 @@ directory where the dynamic shared objects are stored; default is system
- dependent, commonly
- .I /lib/multipath
- .TP
-+.B find_multipaths
-+If set to
-+.I yes
-+, instead of trying to create a multipath device for every non-blacklisted
-+path, multipath will only create a device if one of three condidions are
-+met.
-+.I 1
-+There are at least two non-blacklisted paths with the same wwid,
-+.I 2
-+the user manually forces the creation, by specifying a device with the multipath
-+command, or
-+.I 3
-+a path has the same WWID as a multipath device that was previously created
-+while find_multipaths was set (even if that multipath device doesn't currently
-+exist).
-+Whenever a multipath device is created with find_multipaths set, multipath will
-+remeber the WWID of the device, so that it will automatically create the
-+device again, as soon as it sees a path with that WWID. This should allow most
-+users to have multipath automatically choose the correct paths to make into
-+multipath devices, without having to edit the blacklist; Default is
-+.I no
-+.TP
- .B verbosity
- default verbosity. Higher values increase the verbosity level. Valid
- levels are between 0 and 6; default is
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index af2aa20..91eab74 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1250,6 +1250,7 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ 		}
+ 	}
+ 
++	pp->initialized = 1;
+ 	return 0;
+ 
+ blank:
+@@ -1258,6 +1259,7 @@ blank:
+ 	 */
+ 	memset(pp->wwid, 0, WWID_SIZE);
+ 	pp->chkrstate = pp->state = PATH_DOWN;
++	pp->initialized = 0;
+ 
+ 	return 0;
+ }
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index c02c76d..c1fce04 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -200,6 +200,7 @@ struct path {
+ 	struct checker checker;
+ 	struct multipath * mpp;
+ 	int fd;
++	int initialized;
+ 
+ 	/* configlet pointers */
+ 	struct hwentry * hwe;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 3aedaaa..a160d75 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1140,6 +1140,9 @@ check_path (struct vectors * vecs, struct path * pp)
+ 	int chkr_new_path_up = 0;
+ 	int oldchkrstate = pp->chkrstate;
+ 
++	if (pp->initialized && !pp->mpp)
++		return 0;
++
+ 	if (pp->tick && --pp->tick)
+ 		return 0; /* don't check this path yet */
+ 
 -- 
 1.8.3.1
