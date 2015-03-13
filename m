@@ -1,58 +1,58 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 2/7 v2] blk-mq: add
- blk_mq_init_allocated_queue and export blk_mq_register_disk
-Date: Thu, 12 Mar 2015 13:14:39 -0400
-Message-ID: <5501C97F.3060004@suse.de>
-References: <1426132602-34331-1-git-send-email-snitzer@redhat.com>	<1426132602-34331-3-git-send-email-snitzer@redhat.com>
-	<20150312142921.GB3159@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 1/7] blk-mq: fix use of incorrect goto label in
+ blk_mq_init_queue error path
+Date: Thu, 12 Mar 2015 23:29:23 -0400
+Message-ID: <20150313032923.GA7312@redhat.com>
+References: <1426132602-34331-1-git-send-email-snitzer@redhat.com>
+ <1426132602-34331-2-git-send-email-snitzer@redhat.com>
+ <CACVXFVN7zpb3+wcOdsa5yyrRJ-EDw7EcMNJOao45UgRZO3rpcQ@mail.gmail.com>
+ <20150312135147.GA3444@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150312142921.GB3159@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150312135147.GA3444@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Ming Lei <tom.leiming@gmail.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Keith Busch <keith.busch@intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux SCSI List <linux-scsi@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 03/12/2015 10:29 AM, Mike Snitzer wrote:
-> Add a variant of blk_mq_init_queue that allows a previously allocated
-> queue to be initialized.  blk_mq_init_allocated_queue models
-> blk_init_allocated_queue -- which was also created for DM's use.
-> =
+On Thu, Mar 12 2015 at  9:51am -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-> DM's approach to device creation requires a placeholder request_queue be
-> allocated for use with alloc_dev() but the decision about what type of
-> request_queue will be ultimately created is deferred until all component
-> devices referenced in the DM table are processed to determine the table
-> type (request-based, blk-mq request-based, or bio-based).
-> =
+> On Thu, Mar 12 2015 at  3:48am -0400,
+> Ming Lei <tom.leiming@gmail.com> wrote:
+> 
+> > On Thu, Mar 12, 2015 at 11:56 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+> > > If percpu_ref_init() fails the 'err_hctxs' label should be used instead
+> > > of 'err_map'.
+> > >
+> > > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > > ---
+> > >  block/blk-mq.c | 2 +-
+> > >  1 file changed, 1 insertion(+), 1 deletion(-)
+> > >
+> > > diff --git a/block/blk-mq.c b/block/blk-mq.c
+> > > index 4f4bea2..459840c 100644
+> > > --- a/block/blk-mq.c
+> > > +++ b/block/blk-mq.c
+> > > @@ -1938,7 +1938,7 @@ struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *set)
+> > >          */
+> > >         if (percpu_ref_init(&q->mq_usage_counter, blk_mq_usage_counter_release,
+> > >                             PERCPU_REF_INIT_ATOMIC, GFP_KERNEL))
+> > > -               goto err_map;
+> > > +               goto err_hctxs;
+> > 
+> > If it is changed to 'goto err_hctxs', percpu_ref_init() need to
+> > move before blk_alloc_queue_node(), otherwise just 'goto err_hw'
+> > is enough, but the former is better.
+> 
+> Yes, you're correct.  Patch 2 happened to eliminate this problem.  But
+> I'll get it fixed up and post v2.
 
-> Also, because of DM's late finalization of the request_queue type
-> the call to blk_mq_register_disk() doesn't happen during alloc_dev().
-> Must export blk_mq_register_disk() so that DM can backfill the 'mq' dir
-> once the blk-mq queue is fully allocated.
-> =
+Actually, percpu_ref_init clearly cannot go before blk_alloc_queue_node
+since percpu_ref_init deferences q.  (buildbot just emailed complaining
+about crashes with my v2 patch).  I didn't test this 1/7 patch in
+isolation but should have -- when 2/7 is applied the problem goes away.
 
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> Reviewed-by: Ming Lei <ming.lei@canonical.com>
-
-Reviewed-by: Hannes Reinecke <hare@suse.de>
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+v3 of these first 2 patches will be inbound shortly.
