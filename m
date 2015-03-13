@@ -1,12 +1,14 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 0/3][RESEND] resending find_multipaths patches
-Date: Fri, 13 Mar 2015 13:27:24 -0500
-Message-ID: <1426271247-21345-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 1/3] add find_multipaths option
+Date: Fri, 13 Mar 2015 13:27:25 -0500
+Message-ID: <1426271247-21345-2-git-send-email-bmarzins@redhat.com>
+References: <1426271247-21345-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1426271247-21345-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,40 +22,272 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-I'm resending my find_multipaths patch, based on the conversation I had
-here. If nothing else, I'd at least like a discussion about why these
-shouldn't go in.
+This patch adds a new option (find_multipaths) to the defaults section
+of multipath.conf.  This is used to keep multipath from simply creating
+multipath devices on top of any non-blacklisted device.  When this is
+set to "yes", multipath will only create multipath devices when there
+are actually multiple paths to the storage.  This means that in most
+setups where find_multipaths is set, users don't need to bother with the
+editting the blacklist, because multipath will do the work for them.
+The only case where blacklisting is still necessary is if user want to
+disable multipathing on LUNs that actually have multiple paths.
 
-http://www.redhat.com/archives/dm-devel/2014-July/msg00029.html
+One of the issues with only grabbing devices with multiple paths is that
+multipath can't know when it first sees a path device whether a second
+path device will appear. This could be a problem, because if multipath
+doesn't claim the device, something else might. For instance, a
+filesystem could be automounted on a path device before the second path
+device appeared.
 
-Just to clarify. find_multipaths is a configurable option that when set to
-'yes' will make multipath only run on devices have more than one path.  This
-means that users can mostly leave the blacklist alone, and they will only get
-the multipath devices that they want. The only time the blacklist is necessary
-is when users actually have multiple paths to a device, but still don't want
-multipath set up on it.  It's been around since RHEL6, and it is turned on
-in the default multipath.conf file in RHEL7. The internal default is "off".
+Multipath deals with this by using the /etc/multipaths/wwids file.  If
+the device wwid is listed in this file, multipath knows that it is a
+path device, and can create a multipath device on it as soon as it
+appears.  This means that after multipath has created a multipath device
+once, it will automatically create it in the future as soon as the first
+path is discovered.
 
-Hannes, do you still object to these?
+In general, there are three conditions for find_multipaths to allow the
+creation of a device. After passing all the checks that multipath
+currently does to allow device creation, one of these three conditions
+must also be true for device creation, if find_multipaths is enabled.
 
-Benjamin Marzinski (3):
-  add find_multipaths option
-  libmultipath: only add uninitialized paths in check_path
-  Add find_multipaths to multipath.conf man page
+1. There are at least two non-blacklisted paths with the same wwid
+2. The creation was manually forced, by specifying the device with the
+   multipath command
+3. The path's wwid is in the wwids file, which means that multipath has
+   previously created a multipath device with that wwid.
 
- libmultipath/config.c      |  1 +
- libmultipath/config.h      |  1 +
- libmultipath/configure.c   | 11 +++++++++++
- libmultipath/defaults.h    |  1 +
- libmultipath/dict.c        |  4 ++++
- libmultipath/discovery.c   |  2 ++
- libmultipath/structs.h     |  1 +
- libmultipath/wwids.c       | 26 ++++++++++++++++++++++++++
- libmultipath/wwids.h       |  1 +
- multipath/main.c           | 27 +++++++++++++++++++++++++--
- multipath/multipath.conf.5 | 22 ++++++++++++++++++++++
- multipathd/main.c          |  9 +++++++++
- 12 files changed, 104 insertions(+), 2 deletions(-)
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/config.c    |  1 +
+ libmultipath/config.h    |  1 +
+ libmultipath/configure.c | 11 +++++++++++
+ libmultipath/defaults.h  |  1 +
+ libmultipath/dict.c      |  4 ++++
+ libmultipath/wwids.c     | 26 ++++++++++++++++++++++++++
+ libmultipath/wwids.h     |  1 +
+ multipath/main.c         | 27 +++++++++++++++++++++++++--
+ multipathd/main.c        |  6 ++++++
+ 9 files changed, 76 insertions(+), 2 deletions(-)
 
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index e88bae0..79c6bc1 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -616,6 +616,7 @@ load_config (char * file, struct udev *udev)
+ 	conf->force_sync = 0;
+ 	conf->partition_delim = NULL;
+ 	conf->processed_main_config = 0;
++	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
+ 
+ 	/*
+ 	 * preload default hwtable
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 9b1d9a1..a680e2b 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -122,6 +122,7 @@ struct config {
+ 	unsigned int dev_loss;
+ 	int log_checker_err;
+ 	int allow_queueing;
++	int find_multipaths;
+ 	uid_t uid;
+ 	gid_t gid;
+ 	mode_t mode;
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 6c96633..1e6a0c5 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -743,6 +743,10 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+ 
+ 	memset(empty_buff, 0, WWID_SIZE);
+ 
++	/* ignore refwwid if it's empty */
++	if (refwwid && !strlen(refwwid))
++		refwwid = NULL;
++
+ 	if (force_reload) {
+ 		vector_foreach_slot (pathvec, pp1, k) {
+ 			pp1->mpp = NULL;
+@@ -772,6 +776,13 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+ 		if (refwwid && strncmp(pp1->wwid, refwwid, WWID_SIZE))
+ 			continue;
+ 
++		/* If find_multipaths was selected check if the path is valid */
++		if (conf->find_multipaths && !refwwid &&
++		    !should_multipath(pp1, pathvec)) {
++			orphan_path(pp1, "only one path");
++			continue;
++		}
++
+ 		/*
+ 		 * at this point, we know we really got a new mp
+ 		 */
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 23a0871..fd64a12 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -13,6 +13,7 @@
+ #define DEFAULT_NO_PATH_RETRY  NO_PATH_RETRY_UNDEF
+ #define DEFAULT_VERBOSITY	2
+ #define DEFAULT_REASSIGN_MAPS	1
++#define DEFAULT_FIND_MULTIPATHS	0
+ #define DEFAULT_FAST_IO_FAIL	5
+ #define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_OFF
+ #define DEFAULT_DETECT_PRIO DETECT_PRIO_OFF
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 4a79445..35a1cf2 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -236,6 +236,9 @@ declare_def_snprint(multipath_dir, print_str)
+ declare_def_handler(partition_delim, set_str)
+ declare_def_snprint(partition_delim, print_str)
+ 
++declare_def_handler(find_multipaths, set_yes_no)
++declare_def_snprint(find_multipaths, print_yes_no)
++
+ declare_def_handler(selector, set_str)
+ declare_def_snprint_defstr(selector, print_str, DEFAULT_SELECTOR)
+ declare_hw_handler(selector, set_str)
+@@ -1331,6 +1334,7 @@ init_keywords(void)
+ 	install_keyword("config_dir", &def_config_dir_handler, &snprint_def_config_dir);
+ 	install_keyword("delay_watch_checks", &def_delay_watch_checks_handler, &snprint_def_delay_watch_checks);
+ 	install_keyword("delay_wait_checks", &def_delay_wait_checks_handler, &snprint_def_delay_wait_checks);
++	install_keyword("find_multipaths", &def_find_multipaths_handler, &snprint_def_find_multipaths);
+ 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
+ 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
+ 	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
+diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+index eca1799..f6f8ea8 100644
+--- a/libmultipath/wwids.c
++++ b/libmultipath/wwids.c
+@@ -261,6 +261,32 @@ out:
+ }
+ 
+ int
++should_multipath(struct path *pp1, vector pathvec)
++{
++	int i;
++	struct path *pp2;
++
++	condlog(4, "checking if %s should be multipathed", pp1->dev);
++	vector_foreach_slot(pathvec, pp2, i) {
++		if (pp1->dev == pp2->dev)
++			continue;
++		if (strncmp(pp1->wwid, pp2->wwid, WWID_SIZE) == 0) {
++			condlog(3, "found multiple paths with wwid %s, "
++				"multipathing %s", pp1->wwid, pp1->dev);
++			return 1;
++		}
++	}
++	if (check_wwids_file(pp1->wwid, 0) < 0) {
++		condlog(3, "wwid %s not in wwids file, skipping %s",
++			pp1->wwid, pp1->dev);
++		return 0;
++	}
++	condlog(3, "found wwid %s in wwids file, multipathing %s", pp1->wwid,
++		pp1->dev);
++	return 1;
++}
++
++int
+ remember_wwid(char *wwid)
+ {
+ 	int ret = check_wwids_file(wwid, 1);
+diff --git a/libmultipath/wwids.h b/libmultipath/wwids.h
+index f3b21fa..9527012 100644
+--- a/libmultipath/wwids.h
++++ b/libmultipath/wwids.h
+@@ -12,6 +12,7 @@
+ "#\n" \
+ "# Valid WWIDs:\n"
+ 
++int should_multipath(struct path *pp, vector pathvec);
+ int remember_wwid(char *wwid);
+ int check_wwids_file(char *wwid, int write_wwid);
+ int remove_wwid(char *wwid);
+diff --git a/multipath/main.c b/multipath/main.c
+index ea453b4..d085f64 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -197,6 +197,9 @@ get_dm_mpvec (vector curmp, vector pathvec, char * refwwid)
+ 			continue;
+ 		}
+ 
++		if (conf->cmd == CMD_VALID_PATH)
++			continue;
++
+ 		dm_get_map(mpp->alias, &mpp->size, params);
+ 		condlog(3, "params = %s", params);
+ 		dm_get_status(mpp->alias, status);
+@@ -307,7 +310,13 @@ configure (void)
+ 			goto out;
+ 		}
+ 		condlog(3, "scope limited to %s", refwwid);
+-		if (conf->cmd == CMD_VALID_PATH) {
++		/* If you are ignoring the wwids file and find_multipaths is
++		 * set, you need to actually check if there are two available
++		 * paths to determine if this path should be multipathed. To
++		 * do this, we put off the check until after discovering all
++		 * the paths */
++		if (conf->cmd == CMD_VALID_PATH &&
++		    (!conf->find_multipaths || !conf->ignore_wwids)) {
+ 			if (conf->ignore_wwids ||
+ 			    check_wwids_file(refwwid, 0) == 0)
+ 				r = 0;
+@@ -347,6 +356,20 @@ configure (void)
+ 
+ 	filter_pathvec(pathvec, refwwid);
+ 
++
++	if (conf->cmd == CMD_VALID_PATH) {
++		/* This only happens if find_multipaths is and
++		 * ignore_wwids is set.
++		 * If there is currently a multipath device matching
++		 * the refwwid, or there is more than one path matching
++		 * the refwwid, then the path is valid */
++		if (VECTOR_SIZE(curmp) != 0 || VECTOR_SIZE(pathvec) > 1)
++			r = 0;
++		printf("%s %s a valid multipath device path\n",
++		       conf->dev, r == 0 ? "is" : "is not");
++		goto out;
++	}
++
+ 	if (conf->cmd != CMD_CREATE && conf->cmd != CMD_DRY_RUN) {
+ 		r = 0;
+ 		goto out;
+@@ -355,7 +378,7 @@ configure (void)
+ 	/*
+ 	 * core logic entry point
+ 	 */
+-	r = coalesce_paths(&vecs, NULL, NULL, conf->force_reload);
++	r = coalesce_paths(&vecs, NULL, refwwid, conf->force_reload);
+ 
+ out:
+ 	if (refwwid)
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 62339ae..3aedaaa 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -54,6 +54,7 @@
+ #include <print.h>
+ #include <configure.h>
+ #include <prio.h>
++#include <wwids.h>
+ #include <pgpolicies.h>
+ #include <uevent.h>
+ #include <log.h>
+@@ -513,6 +514,11 @@ rescan:
+ 			return 1;
+ 		}
+ 
++		if (conf->find_multipaths &&
++		    !should_multipath(pp, vecs->pathvec)) {
++			orphan_path(pp, "only one path");
++			return 0;
++		}
+ 		condlog(4,"%s: creating new map", pp->dev);
+ 		if ((mpp = add_map_with_path(vecs, pp, 1))) {
+ 			mpp->action = ACT_CREATE;
 -- 
 1.8.3.1
