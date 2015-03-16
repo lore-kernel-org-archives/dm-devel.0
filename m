@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 06/78] libmultipath: Prefer deprecated 'getuid'
-	callout
-Date: Mon, 16 Mar 2015 13:35:53 +0100
-Message-ID: <1426509425-15978-7-git-send-email-hare@suse.de>
+Subject: [PATCH 08/78] Make systemd installation path configurable
+Date: Mon, 16 Mar 2015 13:35:55 +0100
+Message-ID: <1426509425-15978-9-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,33 +22,42 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We need first to check if the deprecated 'getuid' callout
-should be used, otherwise it might never be called.
+Older systems might have systemd installed in /lib, so make
+the path for systemd and udev configurable.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/propsel.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ Makefile.inc | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 46f8f63..f64d5e4 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -351,12 +351,12 @@ select_getuid (struct path * pp)
- {
- 	char *origin;
+diff --git a/Makefile.inc b/Makefile.inc
+index 20ae23e..c3ed73f 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -27,10 +27,14 @@ ifndef SYSTEMD
+ 	endif
+ endif
  
--	pp_set_ovr(uid_attribute);
- 	pp_set_ovr(getuid);
--	pp_set_hwe(uid_attribute);
-+	pp_set_ovr(uid_attribute);
- 	pp_set_hwe(getuid);
--	pp_set_conf(uid_attribute);
-+	pp_set_hwe(uid_attribute);
- 	pp_set_conf(getuid);
-+	pp_set_conf(uid_attribute);
- 	pp_set_default(uid_attribute, DEFAULT_UID_ATTRIBUTE);
- out:
- 	if (pp->uid_attribute)
++ifndef SYSTEMDPATH
++	SYSTEMDPATH=usr/lib
++endif
++
+ prefix      = 
+ exec_prefix = $(prefix)
+ bindir      = $(exec_prefix)/sbin
+-libudevdir  = ${prefix}/lib/udev
++libudevdir  = $(prefix)/$(SYSTEMDPATH)/udev
+ udevrulesdir = $(libudevdir)/rules.d
+ multipathdir = $(TOPDIR)/libmultipath
+ mandir      = $(prefix)/usr/share/man/man8
+@@ -39,7 +43,7 @@ man3dir      = $(prefix)/usr/share/man/man3
+ rcdir	    = $(prefix)/etc/init.d
+ syslibdir   = $(prefix)/$(LIB)
+ libdir	    = $(prefix)/$(LIB)/multipath
+-unitdir     = $(prefix)/usr/lib/systemd/system
++unitdir     = $(prefix)/$(SYSTEMDPATH)/systemd/system
+ mpathpersistdir = $(TOPDIR)/libmpathpersist
+ 
+ GZIP        = gzip -9 -c
 -- 
 1.8.4.5
