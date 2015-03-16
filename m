@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 71/78] Do not automatically fall back to vpd uid
-	generation
-Date: Mon, 16 Mar 2015 13:36:58 +0100
-Message-ID: <1426509425-15978-72-git-send-email-hare@suse.de>
+Subject: [PATCH 73/78] multipathd: push down lock in checkerloop()
+Date: Mon, 16 Mar 2015 13:37:00 +0100
+Message-ID: <1426509425-15978-74-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,83 +22,63 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When a wwid via uid_attribute cannot be generated we should
-not fall back to using sysfs vpd attributes automatically.
-The uid_attribute can be set to virtually anything and an
-automatic fallback will then generated a different wwid,
-leading to an incorrect setup.
-A fallback is only valid if the uid_attribute value
-is the default setting of 'ID_SERIAL', for which the
-format is fixed.
+Instead of grabbing the lock at the start of the checkerloop
+and releasing it at the end we should be holding it only
+during the time when we actually need it.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c | 39 ++++++++++++++++-----------------------
- 1 file changed, 16 insertions(+), 23 deletions(-)
+ multipathd/main.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 009ef0c..d1a16e6 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1509,7 +1509,7 @@ static int
- get_uid (struct path * pp)
- {
- 	char *c;
--	const char *origin = "none";
-+	const char *origin = "unknown";
- 	ssize_t len = 0;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index f876258..9e7bf4f 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1399,32 +1399,40 @@ checkerloop (void *ap)
  
- 	if (!pp->uid_attribute && !pp->getuid)
-@@ -1542,35 +1542,28 @@ get_uid (struct path * pp)
- 			len = get_udev_uid(pp, pp->uid_attribute);
- 			origin = "udev";
- 			if (len <= 0)
--				condlog(2,
--					"%s: failed to get UID attribute '%s'",
--					pp->dev, pp->uid_attribute);
-+				condlog(1,
-+					"%s: failed to get udev uid: %s",
-+					pp->dev, strerror(-len));
-+
- 		}
--		if (len <= 0) {
-+		if (len <= 0 &&
-+		    !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) {
- 			len = get_vpd_uid(pp);
--			if (len > 0) {
--				origin = "sysfs";
--				pp->uid_attribute = NULL;
--			} else {
--				condlog(2, "%s: failed to get sysfs vpd pg83",
--					pp->dev);
--			}
--		}
--		if (len <= 0) {
--			len = get_vpd_sgio(pp->fd, 0x83, pp->wwid,
--					   WWID_SIZE);
--			if (len > 0) {
-+			origin = "sysfs";
-+			pp->uid_attribute = NULL;
-+			if (len < 0) {
-+				condlog(1, "%s: failed to get sysfs uid: %s",
-+					pp->dev, strerror(-len));
-+				len = get_vpd_sgio(pp->fd, 0x83, pp->wwid,
-+						   WWID_SIZE);
- 				origin = "sgio";
--				pp->uid_attribute = NULL;
--			} else {
--				condlog(2, "%s: failed to get sgio vpd pg83",
--					pp->dev);
+ 		if (gettimeofday(&start_time, NULL) != 0)
+ 			start_time.tv_sec = 0;
+-		pthread_cleanup_push(cleanup_lock, &vecs->lock);
+-		lock(vecs->lock);
+-		pthread_testcancel();
+ 		condlog(4, "tick");
+ #ifdef USE_SYSTEMD
+ 		if (use_watchdog)
+ 			sd_notify(0, "WATCHDOG=1");
+ #endif
+ 		if (vecs->pathvec) {
++			pthread_cleanup_push(cleanup_lock, &vecs->lock);
++			lock(vecs->lock);
++			pthread_testcancel();
+ 			vector_foreach_slot (vecs->pathvec, pp, i) {
+ 				num_paths += check_path(vecs, pp);
  			}
++			lock_cleanup_pop(vecs->lock);
  		}
- 	}
- 	if ( len < 0 ) {
--		condlog(1, "%s: failed to get uid: %s",
--			pp->dev, strerror(-len));
-+		condlog(1, "%s: failed to get %s uid: %s",
-+			pp->dev, origin, strerror(-len));
- 		memset(pp->wwid, 0x0, WWID_SIZE);
- 	} else {
- 		/* Strip any trailing blanks */
+ 		if (vecs->mpvec) {
++			pthread_cleanup_push(cleanup_lock, &vecs->lock);
++			lock(vecs->lock);
++			pthread_testcancel();
+ 			defered_failback_tick(vecs->mpvec);
+ 			retry_count_tick(vecs->mpvec);
++			lock_cleanup_pop(vecs->lock);
+ 		}
+ 		if (count)
+ 			count--;
+ 		else {
++			pthread_cleanup_push(cleanup_lock, &vecs->lock);
++			lock(vecs->lock);
++			pthread_testcancel();
+ 			condlog(4, "map garbage collection");
+ 			mpvec_garbage_collector(vecs);
+ 			count = MAPGCINT;
++			lock_cleanup_pop(vecs->lock);
+ 		}
+ 
+-		lock_cleanup_pop(vecs->lock);
+ 		if (start_time.tv_sec &&
+ 		    gettimeofday(&end_time, NULL) == 0 &&
+ 		    num_paths) {
 -- 
 1.8.4.5
