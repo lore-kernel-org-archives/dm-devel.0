@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 49/78] multipathd: do not remove paths without
-	uevents
-Date: Mon, 16 Mar 2015 13:36:36 +0100
-Message-ID: <1426509425-15978-50-git-send-email-hare@suse.de>
+Subject: [PATCH 44/78] multipath: do not print state 'orphan' for
+	option '-l'
+Date: Mon, 16 Mar 2015 13:36:31 +0100
+Message-ID: <1426509425-15978-45-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,38 +23,27 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-multipathd should not remove any paths without the corresponding
-uevent. Otherwise the daemon will never be able to reinstate that
-path as it wouldn't get any uevents.
+When called with '-l' multipath would mistakenly print a state
+of 'orphan' instead off 'running' of 'offline'.
+This is a regression introduced by commit 7023d320.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipathd/main.c | 13 ++++++++-----
- 1 file changed, 8 insertions(+), 5 deletions(-)
+ libmultipath/print.c | 2 --
+ 1 file changed, 2 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 2eade36..0608f06 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1152,11 +1152,14 @@ check_path (struct vectors * vecs, struct path * pp)
- 	pp->tick = conf->checkint;
- 
- 	newstate = path_offline(pp);
--	if (newstate == PATH_REMOVED) {
--		condlog(2, "%s: remove path (checker)", pp->dev);
--		ev_remove_path(pp, vecs);
--		return 0;
--	}
-+	/*
-+	 * Wait for uevent for removed paths;
-+	 * some LLDDs like zfcp keep paths unavailable
-+	 * without sending uevents.
-+	 */
-+	if (newstate == PATH_REMOVED)
-+		newstate = PATH_DOWN;
-+
- 	if (newstate == PATH_UP)
- 		newstate = get_state(pp, 1);
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 39b4f98..5d63ed3 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -322,8 +322,6 @@ snprint_offline (char * buff, size_t len, struct path * pp)
+ 		return snprintf(buff, len, "unknown");
+ 	else if (pp->offline)
+ 		return snprintf(buff, len, "offline");
+-	else if (!pp->mpp)
+-		return snprintf(buff, len, "orphan");
  	else
+ 		return snprintf(buff, len, "running");
+ }
 -- 
 1.8.4.5
