@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 19/78] multipathd: implement 'list path <path>'
-	cli command
-Date: Mon, 16 Mar 2015 13:36:06 +0100
-Message-ID: <1426509425-15978-20-git-send-email-hare@suse.de>
+Subject: [PATCH 39/78] multipath: Use standard 'major' macro
+Date: Mon, 16 Mar 2015 13:36:26 +0100
+Message-ID: <1426509425-15978-40-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,112 +22,45 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Implement CLI command for printing the status of a single path.
+Instead of carrying our own hand-crafted macros we should be using
+the system-provided 'major' macro.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipathd/cli.c          |  1 +
- multipathd/cli_handlers.c | 44 ++++++++++++++++++++++++++++++++++++++++++++
- multipathd/cli_handlers.h |  1 +
- multipathd/main.c         |  1 +
- 4 files changed, 47 insertions(+)
+ multipath/dev_t.h | 3 ---
+ multipath/main.c  | 3 +--
+ 2 files changed, 1 insertion(+), 5 deletions(-)
+ delete mode 100644 multipath/dev_t.h
 
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index 2a5edfa..acc4249 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -425,6 +425,7 @@ cli_init (void) {
+diff --git a/multipath/dev_t.h b/multipath/dev_t.h
+deleted file mode 100644
+index aa80d5e..0000000
+--- a/multipath/dev_t.h
++++ /dev/null
+@@ -1,3 +0,0 @@
+-#define MAJOR(dev)      ((dev & 0xfff00) >> 8)
+-#define MINOR(dev)      ((dev & 0xff) | ((dev >> 12) & 0xfff00))
+-#define MKDEV(ma,mi)    ((mi & 0xff) | (ma << 8) | ((mi & ~0xff) << 12))
+diff --git a/multipath/main.c b/multipath/main.c
+index ce8fb5b..1c1191a 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -57,7 +57,6 @@
+ #include <sys/resource.h>
+ #include <wwids.h>
+ #include <uxsock.h>
+-#include "dev_t.h"
  
- 	add_handler(LIST+PATHS, NULL);
- 	add_handler(LIST+PATHS+FMT, NULL);
-+	add_handler(LIST+PATH, NULL);
- 	add_handler(LIST+STATUS, NULL);
- 	add_handler(LIST+DAEMON, NULL);
- 	add_handler(LIST+MAPS, NULL);
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 43372d3..6abe72a 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -71,6 +71,35 @@ show_paths (char ** r, int * len, struct vectors * vecs, char * style)
- }
+ int logsink;
  
- int
-+show_path (char ** r, int * len, struct vectors * vecs, struct path *pp,
-+	   char * style)
-+{
-+	char * c;
-+	char * reply;
-+	unsigned int maxlen = INITIAL_REPLY_LEN;
-+	int again = 1;
-+
-+	get_path_layout(vecs->pathvec, 1);
-+	reply = MALLOC(maxlen);
-+
-+	while (again) {
-+		if (!reply)
-+			return 1;
-+
-+		c = reply;
-+
-+		c += snprint_path(c, reply + maxlen - c, style, pp);
-+
-+		again = ((c - reply) == (maxlen - 1));
-+
-+		REALLOC_REPLY(reply, again, maxlen);
-+	}
-+	*r = reply;
-+	*len = (int)(c - reply + 1);
-+	return 0;
-+}
-+
-+int
- show_map_topology (char ** r, int * len, struct multipath * mpp,
- 		   struct vectors * vecs)
- {
-@@ -239,6 +268,21 @@ cli_list_paths_fmt (void * v, char ** reply, int * len, void * data)
- }
+@@ -454,7 +453,7 @@ get_dev_type(char *dev) {
+ 	int i;
  
- int
-+cli_list_path (void * v, char ** reply, int * len, void * data)
-+{
-+	struct vectors * vecs = (struct vectors *)data;
-+	char * param = get_keyparam(v, PATH);
-+	struct path *pp;
-+
-+	param = convert_dev(param, 1);
-+	condlog(3, "%s: list path (operator)", param);
-+
-+	pp = find_path_by_dev(vecs->pathvec, param);
-+
-+	return show_path(reply, len, vecs, pp, "%o");
-+}
-+
-+int
- cli_list_map_topology (void * v, char ** reply, int * len, void * data)
- {
- 	struct multipath * mpp;
-diff --git a/multipathd/cli_handlers.h b/multipathd/cli_handlers.h
-index de51961..c4636d2 100644
---- a/multipathd/cli_handlers.h
-+++ b/multipathd/cli_handlers.h
-@@ -1,5 +1,6 @@
- int cli_list_paths (void * v, char ** reply, int * len, void * data);
- int cli_list_paths_fmt (void * v, char ** reply, int * len, void * data);
-+int cli_list_path (void * v, char ** reply, int * len, void * data);
- int cli_list_status (void * v, char ** reply, int * len, void * data);
- int cli_list_daemon (void * v, char ** reply, int * len, void * data);
- int cli_list_maps (void * v, char ** reply, int * len, void * data);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 3e22ad1..2107113 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -886,6 +886,7 @@ uxlsnrloop (void * ap)
- 
- 	set_handler_callback(LIST+PATHS, cli_list_paths);
- 	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
-+	set_handler_callback(LIST+PATH, cli_list_path);
- 	set_handler_callback(LIST+MAPS, cli_list_maps);
- 	set_handler_callback(LIST+STATUS, cli_list_status);
- 	set_handler_callback(LIST+DAEMON, cli_list_daemon);
+ 	if (stat(dev, &buf) == 0 && S_ISBLK(buf.st_mode)) {
+-		if (dm_is_dm_major(MAJOR(buf.st_rdev)))
++		if (dm_is_dm_major(major(buf.st_rdev)))
+ 			return DEV_DEVMAP;
+ 		return DEV_DEVNODE;
+ 	}
 -- 
 1.8.4.5
