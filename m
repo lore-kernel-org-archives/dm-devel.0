@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 31/78] multipath: check for running daemon when
-	called with '-u'
-Date: Mon, 16 Mar 2015 13:36:18 +0100
-Message-ID: <1426509425-15978-32-git-send-email-hare@suse.de>
+Subject: [PATCH 65/78] Use sysfs attribute vpd_pg80 to read
+	serial number
+Date: Mon, 16 Mar 2015 13:36:52 +0100
+Message-ID: <1426509425-15978-66-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,46 +23,71 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When multipath is called to check for a valid device it really
-should check if the daemon is running. Otherwise it'll blindly
-assume the device to be eligible for multipathing even though
-the daemon isn't running.
+There is no need to issue an ioctl to read the serial number
+as it's already present in sysfs. And we should not print
+out the serial number unconditionally but rather check
+the discovery mask.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipath/main.c | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ libmultipath/discovery.c | 36 ++++++++++++++++++++++++++++--------
+ 1 file changed, 28 insertions(+), 8 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 08ba66c..ce8fb5b 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -56,6 +56,7 @@
- #include <sys/time.h>
- #include <sys/resource.h>
- #include <wwids.h>
-+#include <uxsock.h>
- #include "dev_t.h"
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index b1cd6a0..f8a0503 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1026,9 +1026,6 @@ scsi_sysfs_pathinfo (struct path * pp)
  
- int logsink;
-@@ -622,6 +623,18 @@ main (int argc, char *argv[])
- 		condlog(0, "the -c option requires a path to check");
- 		goto out;
- 	}
-+	if (conf->cmd == CMD_VALID_PATH &&
-+	    conf->dev_type == DEV_UEVENT) {
-+		int fd;
+ 	condlog(3, "%s: rev = %s", pp->dev, pp->rev);
+ 
+-	if (get_vpd(parent, 0x80, pp->serial, SERIAL_SIZE) >= 0)
+-		condlog(3, "%s: serial = %s", pp->dev, pp->serial);
+-
+ 	/*
+ 	 * set the hwe configlet pointer
+ 	 */
+@@ -1276,13 +1273,36 @@ sysfs_pathinfo(struct path * pp)
+ static int
+ scsi_ioctl_pathinfo (struct path * pp, int mask)
+ {
+-	if (mask & DI_SERIAL) {
+-		if (strlen(pp->serial) == 0)
+-			get_serial(pp->serial, SERIAL_SIZE, pp->fd);
+-		condlog(3, "%s: serial = %s", pp->dev, pp->serial);
++	struct udev_device *parent;
++	const char *attr_path = NULL;
 +
-+		fd = ux_socket_connect(DEFAULT_SOCKET);
-+		if (fd == -1) {
-+			printf("%s is not a valid multipath device path\n",
-+				conf->dev);
-+			goto out;
++	if (!(mask & DI_SERIAL))
++		return 0;
++
++	parent = pp->udev;
++	while (parent) {
++		const char *subsys = udev_device_get_subsystem(parent);
++		if (subsys && !strncmp(subsys, "scsi", 4)) {
++			attr_path = udev_device_get_sysname(parent);
++			if (!attr_path)
++				break;
++			if (sscanf(attr_path, "%i:%i:%i:%i",
++				   &pp->sg_id.host_no,
++				   &pp->sg_id.channel,
++				   &pp->sg_id.scsi_id,
++				   &pp->sg_id.lun) == 4)
++				break;
 +		}
-+		close(fd);
-+	}
- 	if (conf->cmd == CMD_REMOVE_WWID && !conf->dev) {
- 		condlog(0, "the -w option requires a device");
- 		goto out;
++		parent = udev_device_get_parent(parent);
+ 	}
++	if (!attr_path || pp->sg_id.host_no == -1)
++		return -ENODEV;
+ 
+-	return 0;
++	if (get_vpd(parent, 0x80, pp->serial, SERIAL_SIZE) > 0)
++		condlog(3, "%s: serial = %s",
++			pp->dev, pp->serial);
++
++	return strlen(pp->serial) ? 0 : -EIO;
+ }
+ 
+ static int
 -- 
 1.8.4.5
