@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 65/78] Use sysfs attribute vpd_pg80 to read
-	serial number
-Date: Mon, 16 Mar 2015 13:36:52 +0100
-Message-ID: <1426509425-15978-66-git-send-email-hare@suse.de>
+Subject: [PATCH 41/78] Add paths with a size of '0' as 'ghost'
+	paths
+Date: Mon, 16 Mar 2015 13:36:28 +0100
+Message-ID: <1426509425-15978-42-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,71 +23,89 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-There is no need to issue an ioctl to read the serial number
-as it's already present in sysfs. And we should not print
-out the serial number unconditionally but rather check
-the discovery mask.
+SPC-3 does not require that a port in 'standby' has to support
+the 'READ CAPACITY' command. As such we should not reject those
+paths, but rather add them as 'ghost' paths.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c | 36 ++++++++++++++++++++++++++++--------
- 1 file changed, 28 insertions(+), 8 deletions(-)
+ libmultipath/discovery.c   |  5 +++++
+ libmultipath/structs_vec.c |  2 +-
+ multipathd/main.c          | 26 +++++---------------------
+ 3 files changed, 11 insertions(+), 22 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index b1cd6a0..f8a0503 100644
+index 7d3ff49..6ba14ac 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1026,9 +1026,6 @@ scsi_sysfs_pathinfo (struct path * pp)
+@@ -1215,6 +1215,11 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ 				goto blank;
+ 			if (pp->state == PATH_TIMEOUT)
+ 				pp->state = PATH_DOWN;
++			if (pp->state == PATH_UP && !pp->size) {
++				condlog(3, "%s: device size is 0, "
++					"path unuseable", pp->dev);
++				pp->state = PATH_GHOST;
++			}
+ 		} else {
+ 			condlog(3, "%s: path inaccessible", pp->dev);
+ 			pp->chkrstate = pp->state = path_state;
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 79f31b1..6be8c51 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -558,7 +558,7 @@ int update_multipath (struct vectors *vecs, char *mapname, int reset)
  
- 	condlog(3, "%s: rev = %s", pp->dev, pp->rev);
- 
--	if (get_vpd(parent, 0x80, pp->serial, SERIAL_SIZE) >= 0)
--		condlog(3, "%s: serial = %s", pp->dev, pp->serial);
+ 			if (pp->state != PATH_DOWN) {
+ 				int oldstate = pp->state;
+-				condlog(2, "%s: mark as failed", pp->dev_t);
++				condlog(2, "%s: mark as failed", pp->dev);
+ 				mpp->stat_path_failures++;
+ 				pp->state = PATH_DOWN;
+ 				if (oldstate == PATH_UP ||
+diff --git a/multipathd/main.c b/multipathd/main.c
+index ac1e1a2..6a3fd5e 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -479,15 +479,10 @@ ev_add_path (struct path * pp, struct vectors * vecs)
+ 	mpp = pp->mpp = find_mp_by_wwid(vecs->mpvec, pp->wwid);
+ rescan:
+ 	if (mpp) {
+-		if ((!pp->size) || (mpp->size != pp->size)) {
+-			if (!pp->size)
+-				condlog(0, "%s: failed to add new path %s, "
+-					"device size is 0",
+-					mpp->alias, pp->dev);
+-			else
+-				condlog(0, "%s: failed to add new path %s, "
+-					"device size mismatch",
+-					mpp->alias, pp->dev);
++		if (mpp->size != pp->size) {
++			condlog(0, "%s: failed to add new path %s, "
++				"device size mismatch",
++				mpp->alias, pp->dev);
+ 			int i = find_slot(vecs->pathvec, (void *)pp);
+ 			if (i != -1)
+ 				vector_del_slot(vecs->pathvec, i);
+@@ -503,18 +498,7 @@ rescan:
+ 		verify_paths(mpp, vecs, NULL);
+ 		mpp->flush_on_last_del = FLUSH_UNDEF;
+ 		mpp->action = ACT_RELOAD;
+-	}
+-	else {
+-		if (!pp->size) {
+-			condlog(0, "%s: failed to create new map,"
+-				" device size is 0 ", pp->dev);
+-			int i = find_slot(vecs->pathvec, (void *)pp);
+-			if (i != -1)
+-				vector_del_slot(vecs->pathvec, i);
+-			free_path(pp);
+-			return 1;
+-		}
 -
- 	/*
- 	 * set the hwe configlet pointer
- 	 */
-@@ -1276,13 +1273,36 @@ sysfs_pathinfo(struct path * pp)
- static int
- scsi_ioctl_pathinfo (struct path * pp, int mask)
- {
--	if (mask & DI_SERIAL) {
--		if (strlen(pp->serial) == 0)
--			get_serial(pp->serial, SERIAL_SIZE, pp->fd);
--		condlog(3, "%s: serial = %s", pp->dev, pp->serial);
-+	struct udev_device *parent;
-+	const char *attr_path = NULL;
-+
-+	if (!(mask & DI_SERIAL))
-+		return 0;
-+
-+	parent = pp->udev;
-+	while (parent) {
-+		const char *subsys = udev_device_get_subsystem(parent);
-+		if (subsys && !strncmp(subsys, "scsi", 4)) {
-+			attr_path = udev_device_get_sysname(parent);
-+			if (!attr_path)
-+				break;
-+			if (sscanf(attr_path, "%i:%i:%i:%i",
-+				   &pp->sg_id.host_no,
-+				   &pp->sg_id.channel,
-+				   &pp->sg_id.scsi_id,
-+				   &pp->sg_id.lun) == 4)
-+				break;
-+		}
-+		parent = udev_device_get_parent(parent);
- 	}
-+	if (!attr_path || pp->sg_id.host_no == -1)
-+		return -ENODEV;
- 
--	return 0;
-+	if (get_vpd(parent, 0x80, pp->serial, SERIAL_SIZE) > 0)
-+		condlog(3, "%s: serial = %s",
-+			pp->dev, pp->serial);
-+
-+	return strlen(pp->serial) ? 0 : -EIO;
- }
- 
- static int
++	} else {
+ 		if (conf->find_multipaths &&
+ 		    !should_multipath(pp, vecs->pathvec)) {
+ 			orphan_path(pp, "only one path");
 -- 
 1.8.4.5
