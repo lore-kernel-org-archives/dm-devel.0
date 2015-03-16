@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 17/78] Allow for empty path argument when
-	printing information
-Date: Mon, 16 Mar 2015 13:36:04 +0100
-Message-ID: <1426509425-15978-18-git-send-email-hare@suse.de>
+Subject: [PATCH 09/78] Add multipath rules for systemd support
+Date: Mon, 16 Mar 2015 13:35:56 +0100
+Message-ID: <1426509425-15978-10-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,96 +22,55 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When calling the various print functions we should be
-allowing for empty path argument.
+Systemd and dracut rely on the DM_MULTIPATH_DEVICE_PATH setting
+to mark the devices as used by multipathing. So add a ruleset
+providing this setting.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/print.c | 22 ++++++++++++++++------
- 1 file changed, 16 insertions(+), 6 deletions(-)
+ multipath/Makefile        |  2 ++
+ multipath/multipath.rules | 13 +++++++++++++
+ 2 files changed, 15 insertions(+)
+ create mode 100644 multipath/multipath.rules
 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 130a9af..39b4f98 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -287,7 +287,7 @@ snprint_path_uuid (char * buff, size_t len, struct path * pp)
- static int
- snprint_hcil (char * buff, size_t len, struct path * pp)
- {
--	if (pp->sg_id.host_no < 0)
-+	if (!pp || pp->sg_id.host_no < 0)
- 		return snprintf(buff, len, "#:#:#:#");
+diff --git a/multipath/Makefile b/multipath/Makefile
+index e295676..9f2e963 100644
+--- a/multipath/Makefile
++++ b/multipath/Makefile
+@@ -23,6 +23,7 @@ install:
+ 	$(INSTALL_PROGRAM) -m 755 $(EXEC) $(DESTDIR)$(bindir)/
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(udevrulesdir)
+ 	$(INSTALL_PROGRAM) -m 644 11-dm-mpath.rules $(DESTDIR)$(udevrulesdir)
++	$(INSTALL_PROGRAM) -m 644 $(EXEC).rules $(DESTDIR)$(libudevdir)/rules.d/40-multipath.rules
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(mandir)
+ 	$(INSTALL_PROGRAM) -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(man5dir)
+@@ -31,6 +32,7 @@ install:
+ uninstall:
+ 	rm $(DESTDIR)$(bindir)/$(EXEC)
+ 	rm $(DESTDIR)$(udevrulesdir)/11-dm-mpath.rules
++	rm $(DESTDIR)$(libudevdir)/rules.d/40-multipath.rules
+ 	rm $(DESTDIR)$(mandir)/$(EXEC).8.gz
+ 	rm $(DESTDIR)$(man5dir)/$(EXEC).conf.5.gz
  
- 	return snprintf(buff, len, "%i:%i:%i:%i",
-@@ -300,7 +300,7 @@ snprint_hcil (char * buff, size_t len, struct path * pp)
- static int
- snprint_dev (char * buff, size_t len, struct path * pp)
- {
--	if (!strlen(pp->dev))
-+	if (!pp || !strlen(pp->dev))
- 		return snprintf(buff, len, "-");
- 	else
- 		return snprint_str(buff, len, pp->dev);
-@@ -309,7 +309,7 @@ snprint_dev (char * buff, size_t len, struct path * pp)
- static int
- snprint_dev_t (char * buff, size_t len, struct path * pp)
- {
--	if (!strlen(pp->dev))
-+	if (!pp || !strlen(pp->dev))
- 		return snprintf(buff, len, "#:#");
- 	else
- 		return snprint_str(buff, len, pp->dev_t);
-@@ -318,8 +318,12 @@ snprint_dev_t (char * buff, size_t len, struct path * pp)
- static int
- snprint_offline (char * buff, size_t len, struct path * pp)
- {
--	if (pp->offline)
-+	if (!pp)
-+		return snprintf(buff, len, "unknown");
-+	else if (pp->offline)
- 		return snprintf(buff, len, "offline");
-+	else if (!pp->mpp)
-+		return snprintf(buff, len, "orphan");
- 	else
- 		return snprintf(buff, len, "running");
- }
-@@ -327,6 +331,9 @@ snprint_offline (char * buff, size_t len, struct path * pp)
- static int
- snprint_chk_state (char * buff, size_t len, struct path * pp)
- {
-+	if (!pp)
-+		return snprintf(buff, len, "undef");
+diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+new file mode 100644
+index 0000000..799fbb0
+--- /dev/null
++++ b/multipath/multipath.rules
+@@ -0,0 +1,13 @@
++# Set DM_MULTIPATH_DEVICE_PATH if the device should be handled by multipath
++SUBSYSTEM!="block", GOTO="end_mpath"
 +
- 	switch (pp->state) {
- 	case PATH_UP:
- 		return snprintf(buff, len, "ready");
-@@ -350,6 +357,9 @@ snprint_chk_state (char * buff, size_t len, struct path * pp)
- static int
- snprint_dm_path_state (char * buff, size_t len, struct path * pp)
- {
-+	if (!pp)
-+		return snprintf(buff, len, "undef");
++ENV{MPATH_SBIN_PATH}="/sbin"
++TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
 +
- 	switch (pp->dmstate) {
- 	case PSTATE_ACTIVE:
- 		return snprintf(buff, len, "active");
-@@ -370,7 +380,7 @@ snprint_vpr (char * buff, size_t len, struct path * pp)
- static int
- snprint_next_check (char * buff, size_t len, struct path * pp)
- {
--	if (!pp->mpp)
-+	if (!pp || !pp->mpp)
- 		return snprintf(buff, len, "orphan");
- 
- 	return snprint_progress(buff, len, pp->tick, pp->checkint);
-@@ -379,7 +389,7 @@ snprint_next_check (char * buff, size_t len, struct path * pp)
- static int
- snprint_pri (char * buff, size_t len, struct path * pp)
- {
--	return snprint_int(buff, len, pp->priority);
-+	return snprint_int(buff, len, pp ? pp->priority : -1);
- }
- 
- static int
++SUBSYSTEM=="block", ACTION=="add|change", KERNEL!="dm-*", \
++	ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
++	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -v 0 -c $tempnode", \
++	ENV{DM_MULTIPATH_DEVICE_PATH}="1" \
++	ENV{SYSTEMD_READY}="0"
++
++LABEL="end_mpath"
 -- 
 1.8.4.5
