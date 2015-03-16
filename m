@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 47/78] Do not print empty multipaths section
-Date: Mon, 16 Mar 2015 13:36:34 +0100
-Message-ID: <1426509425-15978-48-git-send-email-hare@suse.de>
+Subject: [PATCH 27/78] kpartx.rules: Skip kpartx for multipath
+	events
+Date: Mon, 16 Mar 2015 13:36:14 +0100
+Message-ID: <1426509425-15978-28-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,56 +23,31 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The CLI command 'show config' or the 'multipath -t' command
-should not print an empty 'multipaths' section.
+Whenever multipath signals a PATH_FAILED or PATH_REINSTATED
+event we don't have to call 'kpartx'; the contents on the disk
+haven't changed.
+And we should never call kpartx if all paths are down, irrespective
+of the uevent.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipath/main.c          | 11 +++++++----
- multipathd/cli_handlers.c |  9 ++++++---
- 2 files changed, 13 insertions(+), 7 deletions(-)
+ kpartx/kpartx.rules | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index c46a9f6..ebca4dc 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -436,10 +436,13 @@ dump_config (void)
- 			reply = REALLOC(reply, maxlen *= 2);
- 			continue;
- 		}
--		c += snprint_mptable(c, reply + maxlen - c, conf->mptable);
--		again = ((c - reply) == maxlen);
--		if (again)
--			reply = REALLOC(reply, maxlen *= 2);
-+		if (VECTOR_SIZE(conf->mptable) > 0) {
-+			c += snprint_mptable(c, reply + maxlen - c,
-+					     conf->mptable);
-+			again = ((c - reply) == maxlen);
-+			if (again)
-+				reply = REALLOC(reply, maxlen *= 2);
-+		}
- 	}
+diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
+index 226e44a..022361f 100644
+--- a/kpartx/kpartx.rules
++++ b/kpartx/kpartx.rules
+@@ -40,8 +40,8 @@ ENV{ID_FS_USAGE}=="filesystem|other", ENV{ID_FS_LABEL_ENC}=="?*", \
+ 	SYMLINK+="disk/by-label/$env{ID_FS_LABEL_ENC}"
  
- 	printf("%s", reply);
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 772531e..dc96c45 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -229,9 +229,12 @@ show_config (char ** r, int * len)
- 			maxlen *= 2;
- 			continue;
- 		}
--		c += snprint_mptable(c, reply + maxlen - c, conf->mptable);
--		again = ((c - reply) == maxlen);
--		REALLOC_REPLY(reply, again, maxlen);
-+		if (VECTOR_SIZE(conf->mptable) > 0) {
-+			c += snprint_mptable(c, reply + maxlen - c,
-+					     conf->mptable);
-+			again = ((c - reply) == maxlen);
-+			REALLOC_REPLY(reply, again, maxlen);
-+		}
- 	}
- 	*r = reply;
- 	*len = (int)(c - reply + 1);
+ # Create dm tables for partitions
+-ENV{DM_ACTION}=="PATH_FAILED", ENV{DM_NR_VALID_PATHS}=="0", \
+-	GOTO="kpartx_end"
++ENV{DM_ACTION}=="PATH_FAILED|PATH_REINSTATED", GOTO="kpartx_end"
++ENV{DM_NR_VALID_PATHS}=="0", GOTO="kpartx_end"
+ ENV{DM_STATE}!="SUSPENDED", ENV{DM_UUID}=="mpath-*", \
+         RUN+="/sbin/kpartx -u -p -part /dev/$name"
+ 
 -- 
 1.8.4.5
