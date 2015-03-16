@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 33/78] Do not treat 'transport-offline' paths as
-	'offline'
-Date: Mon, 16 Mar 2015 13:36:20 +0100
-Message-ID: <1426509425-15978-34-git-send-email-hare@suse.de>
+Subject: [PATCH 01/78] libmultipath: remove compilation warning
+	in devmapper.c
+Date: Mon, 16 Mar 2015 13:35:48 +0100
+Message-ID: <1426509425-15978-2-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,37 +23,27 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-'transport-offline' status is entered whenever the transport has
-detected an offline device, but the SCSI midlayer still has
-references to it.
-Once the last reference drops the SCSI midlayer will properly
-deregister the device and multipath will be updating the status.
-But until then we should treat this device as simply 'path down',
-and not marking it offline.
-After all, some transports like FC will be entering the
-'transport-offline' state after fast_io_fail triggered, and
-might revert back to 'running' after reconfiguration.
-
-References: bnc#888378
+When LIBDM_API_DEFERRED is not defined the compiler would warn
+about 'dm_cancel_remove_partmaps' being defined but never used.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ libmultipath/devmapper.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index cf37813..899cbd5 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -957,8 +957,7 @@ path_offline (struct path * pp)
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 69491a3..5e68aeb 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -32,7 +32,9 @@
+ #define UUID_PREFIX "mpath-"
+ #define UUID_PREFIX_LEN 6
  
- 	condlog(3, "%s: path state = %s", pp->dev, buff);
++#ifdef LIBDM_API_DEFERRED
+ static int dm_cancel_remove_partmaps(const char * mapname);
++#endif
  
--	if (!strncmp(buff, "offline", 7) ||
--	    !strncmp(buff, "transport-offline", 17)) {
-+	if (!strncmp(buff, "offline", 7)) {
- 		pp->offline = 1;
- 		return PATH_DOWN;
- 	}
+ #ifndef LIBDM_API_COOKIE
+ static inline int dm_task_set_cookie(struct dm_task *dmt, uint32_t *c, int a)
 -- 
 1.8.4.5
