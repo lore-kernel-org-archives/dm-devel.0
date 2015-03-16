@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 56/78] multipathd: lock cli client list
-Date: Mon, 16 Mar 2015 13:36:43 +0100
-Message-ID: <1426509425-15978-57-git-send-email-hare@suse.de>
+Subject: [PATCH 26/78] 11-dm-mpath.rules: Import blkid values if
+	all paths are down
+Date: Mon, 16 Mar 2015 13:36:13 +0100
+Message-ID: <1426509425-15978-27-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,104 +23,34 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+When all paths are failed we should not try to run any programs
+requiring disk access. However, we still need to create the
+symlinks so as not to confuse systemd.
+So import the blkid values from the database in these cases.
+
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipathd/uxlsnr.c | 24 ++++++++++++++++--------
- 1 file changed, 16 insertions(+), 8 deletions(-)
+ multipath/11-dm-mpath.rules | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 550dcc4..61ba49a 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -44,7 +44,7 @@ struct client {
- };
+diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
+index 69c24b5..2e7076d 100644
+--- a/multipath/11-dm-mpath.rules
++++ b/multipath/11-dm-mpath.rules
+@@ -6,7 +6,13 @@ ENV{DM_UUID}!="mpath-?*", GOTO="mpath_end"
+ # otherwise there would be a hang or IO error on access.
+ # We'd like to avoid this, especially within udev processing.
+ ENV{DM_NR_VALID_PATHS}!="?*", IMPORT{db}="DM_NR_VALID_PATHS"
+-ENV{DM_NR_VALID_PATHS}=="0", ENV{DM_NOSCAN}="1"
++ENV{DM_NR_VALID_PATHS}!="0", GOTO="mpath_blkid_end"
++IMPORT{db}="ID_FS_TYPE"
++IMPORT{db}="ID_FS_USAGE"
++IMPORT{db}="ID_FS_UUID"
++IMPORT{db}="ID_FS_UUID_ENC"
++IMPORT{db}="ID_FS_VERSION"
++LABEL="mpath_blkid_end"
  
- LIST_HEAD(clients);
--static unsigned num_clients;
-+pthread_mutex_t client_lock = PTHREAD_MUTEX_INITIALIZER;
- struct pollfd *polls;
- volatile sig_atomic_t reconfig_sig = 0;
- volatile sig_atomic_t log_reset_sig = 0;
-@@ -64,14 +64,15 @@ static void new_client(int ux_sock)
- 	if (fd == -1)
- 		return;
- 
--	/* put it in our linked list */
- 	c = (struct client *)MALLOC(sizeof(*c));
- 	memset(c, 0, sizeof(*c));
- 	INIT_LIST_HEAD(&c->node);
- 	c->fd = fd;
- 
-+	/* put it in our linked list */
-+	pthread_mutex_lock(&client_lock);
- 	list_add_tail(&c->node, &clients);
--	num_clients++;
-+	pthread_mutex_unlock(&client_lock);
- }
- 
- /*
-@@ -79,11 +80,12 @@ static void new_client(int ux_sock)
-  */
- static void dead_client(struct client *c)
- {
-+	pthread_mutex_lock(&client_lock);
-+	list_del_init(&c->node);
-+	pthread_mutex_unlock(&client_lock);
- 	close(c->fd);
- 	c->fd = -1;
--	list_del_init(&c->node);
- 	FREE(c);
--	num_clients--;
- }
- 
- void free_polls (void)
-@@ -150,7 +152,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 	sigdelset(&mask, SIGUSR1);
- 	while (1) {
- 		struct client *c, *tmp;
--		int i, poll_count;
-+		int i, poll_count, num_clients;
- 
- 		/*
- 		 * Store configuration timeout;
-@@ -161,6 +163,11 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 			timeout = conf->uxsock_timeout;
- 
- 		/* setup for a poll */
-+		pthread_mutex_lock(&client_lock);
-+		num_clients = 0;
-+		list_for_each_entry(c, &clients, node) {
-+			num_clients++;
-+		}
- 		polls = REALLOC(polls, (1+num_clients) * sizeof(*polls));
- 		polls[0].fd = ux_sock;
- 		polls[0].events = POLLIN;
-@@ -170,10 +177,9 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 		list_for_each_entry(c, &clients, node) {
- 			polls[i].fd = c->fd;
- 			polls[i].events = POLLIN;
--			if (i > num_clients)
--				break;
- 			i++;
- 		}
-+		pthread_mutex_unlock(&client_lock);
- 
- 		/* most of our life is spent in this call */
- 		poll_count = ppoll(polls, i, &sleep_time, &mask);
-@@ -198,12 +204,14 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 				struct timeval start_time;
- 
- 				c = NULL;
-+				pthread_mutex_lock(&client_lock);
- 				list_for_each_entry(tmp, &clients, node) {
- 					if (tmp->fd == polls[i].fd) {
- 						c = tmp;
- 						break;
- 					}
- 				}
-+				pthread_mutex_unlock(&client_lock);
- 				if (!c) {
- 					condlog(3, "cli%d: invalid fd %d",
- 						i, polls[i].fd);
+ # Also skip all foreign rules if no path is available.
+ # Remember the original value of DM_DISABLE_OTHER_RULES_FLAG
 -- 
 1.8.4.5
