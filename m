@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 14/78] kpartx.rules: do not call blkid
-Date: Mon, 16 Mar 2015 13:36:01 +0100
-Message-ID: <1426509425-15978-15-git-send-email-hare@suse.de>
+Subject: [PATCH 12/78] multipathd: set correct PID when running
+	in debug mode
+Date: Mon, 16 Mar 2015 13:35:59 +0100
+Message-ID: <1426509425-15978-13-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,30 +23,25 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-blkid is already called by the device-mapper rules, no need
-to do it ourselves.
+When running in debug mode the PID is not set, causing
+the PID in the pidfile to always be set to '0'.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- kpartx/kpartx.rules | 6 ------
- 1 file changed, 6 deletions(-)
+ multipathd/main.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index 5c0d0ff..226e44a 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -12,12 +12,6 @@ ENV{DM_DEPS}=="0", GOTO="kpartx_end"
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 4f02211..3e22ad1 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2056,6 +2056,7 @@ main (int argc, char *argv[])
+ 		if (!isatty(fileno(stdout)))
+ 			setbuf(stdout, NULL);
+ 		err = 0;
++		daemon_pid = getpid();
+ 	} else
+ 		err = daemonize();
  
- ENV{DM_UUID}=="?*", IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
- 
--ENV{DM_ACTION}=="PATH_FAILED", ENV{DM_NR_VALID_PATHS}=="0", \
--	GOTO="blkid_end"
--ENV{DM_UUID}=="mpath-*", IMPORT{program}="/sbin/blkid -o udev -p $tempnode"
--ENV{DM_PART}=="?*", IMPORT{program}="/sbin/blkid -o udev -p $tempnode"
--LABEL="blkid_end"
--
- OPTIONS="link_priority=50"
- 
- # Create persistent links for multipath tables
 -- 
 1.8.4.5
