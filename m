@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 04/78] Double uevent stacksize yet again
-Date: Mon, 16 Mar 2015 13:35:51 +0100
-Message-ID: <1426509425-15978-5-git-send-email-hare@suse.de>
+Subject: [PATCH 59/78] Revert to ACT_RELOAD in domap if the map
+	exists
+Date: Mon, 16 Mar 2015 13:36:46 +0100
+Message-ID: <1426509425-15978-60-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,39 +23,80 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Another report indicates that the uevent stacksize might still be
-too small.
+ACT_CREATE checks for an existing map already, so we might as
+well revert to ACT_RELOAD in these cases and avoid an error
+during configuration.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/defaults.h | 1 +
- multipathd/main.c       | 2 +-
- 2 files changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/configure.c | 16 ++++++++--------
+ libmultipath/devmapper.c |  5 ++++-
+ 2 files changed, 12 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index fd64a12..7831992 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -19,6 +19,7 @@
- #define DEFAULT_DETECT_PRIO DETECT_PRIO_OFF
- #define DEFAULT_DEFERRED_REMOVE DEFERRED_REMOVE_OFF
- #define DEFAULT_DELAY_CHECKS DELAY_CHECKS_OFF
-+#define DEFAULT_UEVENT_STACKSIZE 256
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index ef217de..24ad948 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -577,7 +577,7 @@ fail:
+ extern int
+ domap (struct multipath * mpp, char * params)
+ {
+-	int r = 0;
++	int r = DOMAP_FAIL;
  
- #define DEFAULT_CHECKINT	5
- #define MAX_CHECKINT(a)		(a << 2)
-diff --git a/multipathd/main.c b/multipathd/main.c
-index a160d75..9667ba1 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1710,7 +1710,7 @@ child (void * param)
- 	udev = udev_new();
+ 	/*
+ 	 * last chance to quit before touching the devmaps
+@@ -587,6 +587,12 @@ domap (struct multipath * mpp, char * params)
+ 		return DOMAP_DRY;
+ 	}
  
- 	setup_thread_attr(&misc_attr, 64 * 1024, 1);
--	setup_thread_attr(&uevent_attr, 128 * 1024, 1);
-+	setup_thread_attr(&uevent_attr, DEFAULT_UEVENT_STACKSIZE * 1024, 1);
- 	setup_thread_attr(&waiter_attr, 32 * 1024, 1);
++	if (mpp->action == ACT_CREATE &&
++	    dm_map_present(mpp->alias)) {
++		condlog(3, "%s: map already present", mpp->alias);
++		mpp->action = ACT_RELOAD;
++	}
++
+ 	switch (mpp->action) {
+ 	case ACT_REJECT:
+ 	case ACT_NOTHING:
+@@ -609,12 +615,6 @@ domap (struct multipath * mpp, char * params)
+ 			return DOMAP_RETRY;
+ 		}
  
- 	if (logsink == 1) {
+-		if (dm_map_present(mpp->alias)) {
+-			condlog(3, "%s: map already present", mpp->alias);
+-			lock_multipath(mpp, 0);
+-			break;
+-		}
+-
+ 		r = dm_addmap_create(mpp, params);
+ 
+ 		lock_multipath(mpp, 0);
+@@ -650,7 +650,7 @@ domap (struct multipath * mpp, char * params)
+ 		break;
+ 	}
+ 
+-	if (r) {
++	if (r == DOMAP_OK) {
+ 		/*
+ 		 * DM_DEVICE_CREATE, DM_DEVICE_RENAME, or DM_DEVICE_RELOAD
+ 		 * succeeded
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 1712c56..560d418 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -347,8 +347,11 @@ dm_addmap_create (struct multipath *mpp, char * params) {
+ 			condlog(3, "%s: failed to load map (a path might be in use)", mpp->alias);
+ 			dm_flush_map_nosync(mpp->alias);
+ 		}
+-		if (err != EROFS)
++		if (err != EROFS) {
++			condlog(3, "%s: failed to load map, error %d",
++				mpp->alias, err);
+ 			break;
++		}
+ 	}
+ 	return 0;
+ }
 -- 
 1.8.4.5
