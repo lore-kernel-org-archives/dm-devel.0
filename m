@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 73/78] multipathd: push down lock in checkerloop()
-Date: Mon, 16 Mar 2015 13:37:00 +0100
-Message-ID: <1426509425-15978-74-git-send-email-hare@suse.de>
+Subject: [PATCH 47/78] Do not print empty multipaths section
+Date: Mon, 16 Mar 2015 13:36:34 +0100
+Message-ID: <1426509425-15978-48-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,63 +22,56 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Instead of grabbing the lock at the start of the checkerloop
-and releasing it at the end we should be holding it only
-during the time when we actually need it.
+The CLI command 'show config' or the 'multipath -t' command
+should not print an empty 'multipaths' section.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipathd/main.c | 16 ++++++++++++----
- 1 file changed, 12 insertions(+), 4 deletions(-)
+ multipath/main.c          | 11 +++++++----
+ multipathd/cli_handlers.c |  9 ++++++---
+ 2 files changed, 13 insertions(+), 7 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index f876258..9e7bf4f 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1399,32 +1399,40 @@ checkerloop (void *ap)
+diff --git a/multipath/main.c b/multipath/main.c
+index c46a9f6..ebca4dc 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -436,10 +436,13 @@ dump_config (void)
+ 			reply = REALLOC(reply, maxlen *= 2);
+ 			continue;
+ 		}
+-		c += snprint_mptable(c, reply + maxlen - c, conf->mptable);
+-		again = ((c - reply) == maxlen);
+-		if (again)
+-			reply = REALLOC(reply, maxlen *= 2);
++		if (VECTOR_SIZE(conf->mptable) > 0) {
++			c += snprint_mptable(c, reply + maxlen - c,
++					     conf->mptable);
++			again = ((c - reply) == maxlen);
++			if (again)
++				reply = REALLOC(reply, maxlen *= 2);
++		}
+ 	}
  
- 		if (gettimeofday(&start_time, NULL) != 0)
- 			start_time.tv_sec = 0;
--		pthread_cleanup_push(cleanup_lock, &vecs->lock);
--		lock(vecs->lock);
--		pthread_testcancel();
- 		condlog(4, "tick");
- #ifdef USE_SYSTEMD
- 		if (use_watchdog)
- 			sd_notify(0, "WATCHDOG=1");
- #endif
- 		if (vecs->pathvec) {
-+			pthread_cleanup_push(cleanup_lock, &vecs->lock);
-+			lock(vecs->lock);
-+			pthread_testcancel();
- 			vector_foreach_slot (vecs->pathvec, pp, i) {
- 				num_paths += check_path(vecs, pp);
- 			}
-+			lock_cleanup_pop(vecs->lock);
+ 	printf("%s", reply);
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 772531e..dc96c45 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -229,9 +229,12 @@ show_config (char ** r, int * len)
+ 			maxlen *= 2;
+ 			continue;
  		}
- 		if (vecs->mpvec) {
-+			pthread_cleanup_push(cleanup_lock, &vecs->lock);
-+			lock(vecs->lock);
-+			pthread_testcancel();
- 			defered_failback_tick(vecs->mpvec);
- 			retry_count_tick(vecs->mpvec);
-+			lock_cleanup_pop(vecs->lock);
- 		}
- 		if (count)
- 			count--;
- 		else {
-+			pthread_cleanup_push(cleanup_lock, &vecs->lock);
-+			lock(vecs->lock);
-+			pthread_testcancel();
- 			condlog(4, "map garbage collection");
- 			mpvec_garbage_collector(vecs);
- 			count = MAPGCINT;
-+			lock_cleanup_pop(vecs->lock);
- 		}
- 
--		lock_cleanup_pop(vecs->lock);
- 		if (start_time.tv_sec &&
- 		    gettimeofday(&end_time, NULL) == 0 &&
- 		    num_paths) {
+-		c += snprint_mptable(c, reply + maxlen - c, conf->mptable);
+-		again = ((c - reply) == maxlen);
+-		REALLOC_REPLY(reply, again, maxlen);
++		if (VECTOR_SIZE(conf->mptable) > 0) {
++			c += snprint_mptable(c, reply + maxlen - c,
++					     conf->mptable);
++			again = ((c - reply) == maxlen);
++			REALLOC_REPLY(reply, again, maxlen);
++		}
+ 	}
+ 	*r = reply;
+ 	*len = (int)(c - reply + 1);
 -- 
 1.8.4.5
