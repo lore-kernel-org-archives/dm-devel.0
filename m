@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 41/78] Add paths with a size of '0' as 'ghost'
-	paths
-Date: Mon, 16 Mar 2015 13:36:28 +0100
-Message-ID: <1426509425-15978-42-git-send-email-hare@suse.de>
+Subject: [PATCH 70/78] multipathd: use SG_IO as fallback to
+	generate uid
+Date: Mon, 16 Mar 2015 13:36:57 +0100
+Message-ID: <1426509425-15978-71-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,89 +23,123 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SPC-3 does not require that a port in 'standby' has to support
-the 'READ CAPACITY' command. As such we should not reject those
-paths, but rather add them as 'ghost' paths.
+If both udev attribute and sysfs vpd fails to generate a valid
+WWID fallback to use SG_IO directly.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c   |  5 +++++
- libmultipath/structs_vec.c |  2 +-
- multipathd/main.c          | 26 +++++---------------------
- 3 files changed, 11 insertions(+), 22 deletions(-)
+ libmultipath/discovery.c | 61 +++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 50 insertions(+), 11 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 7d3ff49..6ba14ac 100644
+index 50444db..009ef0c 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1215,6 +1215,11 @@ pathinfo (struct path *pp, vector hwtable, int mask)
- 				goto blank;
- 			if (pp->state == PATH_TIMEOUT)
- 				pp->state = PATH_DOWN;
-+			if (pp->state == PATH_UP && !pp->size) {
-+				condlog(3, "%s: device size is 0, "
-+					"path unuseable", pp->dev);
-+				pp->state = PATH_GHOST;
-+			}
- 		} else {
- 			condlog(3, "%s: path inaccessible", pp->dev);
- 			pp->chkrstate = pp->state = path_state;
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 79f31b1..6be8c51 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -558,7 +558,7 @@ int update_multipath (struct vectors *vecs, char *mapname, int reset)
+@@ -998,7 +998,7 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ }
  
- 			if (pp->state != PATH_DOWN) {
- 				int oldstate = pp->state;
--				condlog(2, "%s: mark as failed", pp->dev_t);
-+				condlog(2, "%s: mark as failed", pp->dev);
- 				mpp->stat_path_failures++;
- 				pp->state = PATH_DOWN;
- 				if (oldstate == PATH_UP ||
-diff --git a/multipathd/main.c b/multipathd/main.c
-index ac1e1a2..6a3fd5e 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -479,15 +479,10 @@ ev_add_path (struct path * pp, struct vectors * vecs)
- 	mpp = pp->mpp = find_mp_by_wwid(vecs->mpvec, pp->wwid);
- rescan:
- 	if (mpp) {
--		if ((!pp->size) || (mpp->size != pp->size)) {
--			if (!pp->size)
--				condlog(0, "%s: failed to add new path %s, "
--					"device size is 0",
--					mpp->alias, pp->dev);
--			else
--				condlog(0, "%s: failed to add new path %s, "
--					"device size mismatch",
--					mpp->alias, pp->dev);
-+		if (mpp->size != pp->size) {
-+			condlog(0, "%s: failed to add new path %s, "
-+				"device size mismatch",
-+				mpp->alias, pp->dev);
- 			int i = find_slot(vecs->pathvec, (void *)pp);
- 			if (i != -1)
- 				vector_del_slot(vecs->pathvec, i);
-@@ -503,18 +498,7 @@ rescan:
- 		verify_paths(mpp, vecs, NULL);
- 		mpp->flush_on_last_del = FLUSH_UNDEF;
- 		mpp->action = ACT_RELOAD;
--	}
--	else {
--		if (!pp->size) {
--			condlog(0, "%s: failed to create new map,"
--				" device size is 0 ", pp->dev);
--			int i = find_slot(vecs->pathvec, (void *)pp);
--			if (i != -1)
--				vector_del_slot(vecs->pathvec, i);
--			free_path(pp);
--			return 1;
+ static int
+-get_vpd (struct udev_device *parent, int fd, int pg, char * str, int maxlen)
++get_vpd_sysfs (struct udev_device *parent, int pg, char * str, int maxlen)
+ {
+ 	int len, buff_len;
+ 	unsigned char buff[4096];
+@@ -1006,11 +1006,39 @@ get_vpd (struct udev_device *parent, int fd, int pg, char * str, int maxlen)
+ 	memset(buff, 0x0, 4096);
+ 	if (!parent || sysfs_get_vpd(parent, pg, buff, 4096) <= 0) {
+ 		condlog(3, "failed to read sysfs vpd pg%02x", pg);
+-		if (sgio_get_vpd(buff, 4096, fd) <= 0) {
+-			condlog(3, "failed to issue vpd inquiry for pg%02x",
+-				pg);
+-			return -errno;
 -		}
--
-+	} else {
- 		if (conf->find_multipaths &&
- 		    !should_multipath(pp, vecs->pathvec)) {
- 			orphan_path(pp, "only one path");
++		return -EINVAL;
++	}
++
++	if (buff[1] != pg) {
++		condlog(3, "vpd pg%02x error, invalid vpd page %02x",
++			pg, buff[1]);
++		return -ENODATA;
++	}
++	buff_len = (buff[2] << 8) + buff[3] + 4;
++	if (buff_len > 4096)
++		condlog(3, "vpd pg%02x page truncated", pg);
++
++	if (pg == 0x80)
++		len = parse_vpd_pg80(buff, str, maxlen);
++	else if (pg == 0x83)
++		len = parse_vpd_pg83(buff, buff_len, str, maxlen);
++	else
++		len = -ENOSYS;
++
++	return len;
++}
++
++static int
++get_vpd_sgio (int fd, int pg, char * str, int maxlen)
++{
++	int len, buff_len;
++	unsigned char buff[4096];
++
++	memset(buff, 0x0, 4096);
++	if (sgio_get_vpd(buff, 4096, fd) <= 0) {
++		condlog(3, "failed to issue vpd inquiry for pg%02x",
++			pg);
++		return -errno;
+ 	}
+ 
+ 	if (buff[1] != pg) {
+@@ -1344,7 +1372,7 @@ scsi_ioctl_pathinfo (struct path * pp, int mask)
+ 	if (!attr_path || pp->sg_id.host_no == -1)
+ 		return -ENODEV;
+ 
+-	if (get_vpd(parent, pp->fd, 0x80, pp->serial, SERIAL_SIZE) > 0)
++	if (get_vpd_sysfs(parent, 0x80, pp->serial, SERIAL_SIZE) > 0)
+ 		condlog(3, "%s: serial = %s",
+ 			pp->dev, pp->serial);
+ 
+@@ -1474,7 +1502,7 @@ get_vpd_uid(struct path * pp)
+ 		parent = udev_device_get_parent(parent);
+ 	}
+ 
+-	return get_vpd(parent, pp->fd, 0x83, pp->wwid, WWID_SIZE);
++	return get_vpd_sysfs(parent, 0x83, pp->wwid, WWID_SIZE);
+ }
+ 
+ static int
+@@ -1513,19 +1541,30 @@ get_uid (struct path * pp)
+ 		if (pp->uid_attribute) {
+ 			len = get_udev_uid(pp, pp->uid_attribute);
+ 			origin = "udev";
++			if (len <= 0)
++				condlog(2,
++					"%s: failed to get UID attribute '%s'",
++					pp->dev, pp->uid_attribute);
+ 		}
+ 		if (len <= 0) {
+ 			len = get_vpd_uid(pp);
+ 			if (len > 0) {
+ 				origin = "sysfs";
+ 				pp->uid_attribute = NULL;
++			} else {
++				condlog(2, "%s: failed to get sysfs vpd pg83",
++					pp->dev);
+ 			}
+ 		}
+ 		if (len <= 0) {
+-			len = get_udev_uid(pp, DEFAULT_UID_ATTRIBUTE);
++			len = get_vpd_sgio(pp->fd, 0x83, pp->wwid,
++					   WWID_SIZE);
+ 			if (len > 0) {
+-				origin = "default";
+-				pp->uid_attribute = DEFAULT_UID_ATTRIBUTE;
++				origin = "sgio";
++				pp->uid_attribute = NULL;
++			} else {
++				condlog(2, "%s: failed to get sgio vpd pg83",
++					pp->dev);
+ 			}
+ 		}
+ 	}
 -- 
 1.8.4.5
