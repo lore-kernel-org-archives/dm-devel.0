@@ -1,14 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 69/78] Separate out vpd parsing functions
-Date: Mon, 16 Mar 2015 13:36:56 +0100
-Message-ID: <1426509425-15978-70-git-send-email-hare@suse.de>
-References: <1426509425-15978-1-git-send-email-hare@suse.de>
+From: Sami Tolvanen <samitolvanen@google.com>
+Subject: [PATCH] dm-verity: Add error handling modes for
+	corrupted blocks
+Date: Mon, 16 Mar 2015 15:55:59 +0000
+Message-ID: <20150316155559.GA32397@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1426509425-15978-1-git-send-email-hare@suse.de>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,401 +18,233 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>
+To: mpatocka@redhat.com, msb@chromium.org, wad@chromium.org
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- libmultipath/discovery.c | 367 +++++++++++++++++++++++++----------------------
- 1 file changed, 193 insertions(+), 174 deletions(-)
+Add device specific modes to dm-verity to specify how corrupted
+blocks should be handled. The following modes are defined:
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 8e6b228..50444db 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -811,9 +811,196 @@ get_geometry(struct path *pp)
+  - DM_VERITY_MODE_EIO is the default behavior, where reading a
+    corrupted block results in -EIO.
+
+  - DM_VERITY_MODE_LOGGING only logs corrupted blocks, but does
+    not block the read.
+
+  - DM_VERITY_MODE_RESTART calls kernel_restart when a corrupted
+    block is discovered.
+
+In addition, each mode sends a uevent to notify userspace of
+corruption and to allow further recovery actions.
+
+The driver defaults to previous behavior (DM_VERITY_MODE_EIO)
+and other modes can be enabled with an additional parameter to
+the verity table.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+
+---
+ Documentation/device-mapper/verity.txt |   15 ++++-
+ drivers/md/dm-verity.c                 |   98 +++++++++++++++++++++++++++++----
+ 2 files changed, 103 insertions(+), 10 deletions(-)
+
+diff --git a/Documentation/device-mapper/verity.txt b/Documentation/device-mapper/verity.txt
+index 9884681..470f14c 100644
+--- a/Documentation/device-mapper/verity.txt
++++ b/Documentation/device-mapper/verity.txt
+@@ -10,7 +10,7 @@ Construction Parameters
+     <version> <dev> <hash_dev>
+     <data_block_size> <hash_block_size>
+     <num_data_blocks> <hash_start_block>
+-    <algorithm> <digest> <salt>
++    <algorithm> <digest> <salt> <mode>
+ 
+ <version>
+     This is the type of the on-disk hash format.
+@@ -62,6 +62,19 @@ Construction Parameters
+ <salt>
+     The hexadecimal encoding of the salt value.
+ 
++<mode>
++    Optional. The mode of operation.
++
++    0 is the normal mode of operation where a corrupted block will result in an
++      I/O error.
++
++    1 is logging mode where corrupted blocks are logged, but the read operation
++      will still succeed normally.
++
++    2 is restart mode, where a corrupted block will result in the system being
++      immediately restarted.
++
++
+ Theory of operation
+ ===================
+ 
+diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+index 7a7bab8..ab72062 100644
+--- a/drivers/md/dm-verity.c
++++ b/drivers/md/dm-verity.c
+@@ -18,20 +18,36 @@
+ 
+ #include <linux/module.h>
+ #include <linux/device-mapper.h>
++#include <linux/reboot.h>
+ #include <crypto/hash.h>
+ 
+ #define DM_MSG_PREFIX			"verity"
+ 
++#define DM_VERITY_ENV_LENGTH		42
++#define DM_VERITY_ENV_VAR_NAME		"VERITY_ERR_BLOCK_NR"
++
+ #define DM_VERITY_IO_VEC_INLINE		16
+ #define DM_VERITY_MEMPOOL_SIZE		4
+ #define DM_VERITY_DEFAULT_PREFETCH_SIZE	262144
+ 
+ #define DM_VERITY_MAX_LEVELS		63
++#define DM_VERITY_MAX_CORRUPTED_ERRS	100
+ 
+ static unsigned dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE;
+ 
+ module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, S_IRUGO | S_IWUSR);
+ 
++enum verity_mode {
++	DM_VERITY_MODE_EIO = 0,
++	DM_VERITY_MODE_LOGGING = 1,
++	DM_VERITY_MODE_RESTART = 2
++};
++
++enum verity_block_type {
++	DM_VERITY_BLOCK_TYPE_DATA,
++	DM_VERITY_BLOCK_TYPE_METADATA
++};
++
+ struct dm_verity {
+ 	struct dm_dev *data_dev;
+ 	struct dm_dev *hash_dev;
+@@ -54,6 +70,8 @@ struct dm_verity {
+ 	unsigned digest_size;	/* digest size for the current hash algorithm */
+ 	unsigned shash_descsize;/* the size of temporary space for crypto */
+ 	int hash_failed;	/* set to 1 if hash of any block failed */
++	enum verity_mode mode;	/* mode for handling verification errors */
++	unsigned corrupted_errs;/* Number of errors for corrupted blocks */
+ 
+ 	mempool_t *vec_mempool;	/* mempool of bio vector */
+ 
+@@ -175,6 +193,54 @@ static void verity_hash_at_level(struct dm_verity *v, sector_t block, int level,
  }
  
- static int
-+parse_vpd_pg80(const unsigned char *in, char *out, size_t out_len)
+ /*
++ * Handle verification errors.
++ */
++static int verity_handle_err(struct dm_verity *v, enum verity_block_type type,
++				 unsigned long long block)
 +{
-+	char *p = NULL;
-+	int len = in[3] + (in[2] << 8);
++	char verity_env[DM_VERITY_ENV_LENGTH];
++	char *envp[] = { verity_env, NULL };
++	const char *type_str = "";
++	struct mapped_device *md = dm_table_get_md(v->ti->table);
 +
-+	if (len >= out_len) {
-+		condlog(2, "vpd pg80 overflow, %d/%d bytes required",
-+			len, (int)out_len);
-+		len = out_len;
++	if (v->corrupted_errs >= DM_VERITY_MAX_CORRUPTED_ERRS)
++		goto out;
++
++	++v->corrupted_errs;
++
++	switch (type) {
++	case DM_VERITY_BLOCK_TYPE_DATA:
++		type_str = "data";
++		break;
++	case DM_VERITY_BLOCK_TYPE_METADATA:
++		type_str = "metadata";
++		break;
++	default:
++		BUG();
 +	}
-+	if (len > 0) {
-+		memcpy(out, in + 4, len);
-+		out[len] = '\0';
-+	}
-+	/*
-+	 * Strip trailing whitspaces
-+	 */
-+	p = out + len - 1;
-+	while (p > out && *p == ' ') {
-+		*p = '\0';
-+		p--;
-+		len --;
-+	}
-+	return len;
++
++	DMERR_LIMIT("%s: %s block %llu is corrupted", v->data_dev->name,
++		type_str, block);
++
++	if (v->corrupted_errs == DM_VERITY_MAX_CORRUPTED_ERRS)
++		DMERR("%s: reached maximum errors", v->data_dev->name);
++
++	snprintf(verity_env, DM_VERITY_ENV_LENGTH, "%s=%d,%llu",
++		DM_VERITY_ENV_VAR_NAME, type, block);
++
++	kobject_uevent_env(&disk_to_dev(dm_disk(md))->kobj, KOBJ_CHANGE, envp);
++
++out:
++	if (v->mode == DM_VERITY_MODE_LOGGING)
++		return 0;
++
++	if (v->mode == DM_VERITY_MODE_RESTART)
++		kernel_restart("dm-verity device corrupted");
++
++	return 1;
 +}
 +
-+static int
-+parse_vpd_pg83(const unsigned char *in, size_t in_len,
-+	       char *out, size_t out_len)
-+{
-+	unsigned char *d;
-+	unsigned char *vpd = NULL;
-+	int len = -ENODATA, vpd_type, vpd_len, prio = -1, i, naa_prio;
++/*
+  * Verify hash of a metadata block pertaining to the specified data block
+  * ("block" argument) at a specified level ("level" argument).
+  *
+@@ -251,11 +317,13 @@ static int verity_verify_level(struct dm_verity_io *io, sector_t block,
+ 			goto release_ret_r;
+ 		}
+ 		if (unlikely(memcmp(result, io_want_digest(v, io), v->digest_size))) {
+-			DMERR_LIMIT("metadata block %llu is corrupted",
+-				(unsigned long long)hash_block);
+ 			v->hash_failed = 1;
+-			r = -EIO;
+-			goto release_ret_r;
 +
-+	d = (unsigned char *)in + 4;
-+	while (d < (unsigned char *)in + in_len) {
-+		/* Select 'association: LUN' */
-+		if ((d[1] & 0x30) != 0) {
-+			d += d[3] + 4;
-+			continue;
++			if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_METADATA,
++					      hash_block)) {
++				r = -EIO;
++				goto release_ret_r;
++			}
+ 		} else
+ 			aux->hash_verified = 1;
+ 	}
+@@ -367,10 +435,11 @@ test_block_hash:
+ 			return r;
+ 		}
+ 		if (unlikely(memcmp(result, io_want_digest(v, io), v->digest_size))) {
+-			DMERR_LIMIT("data block %llu is corrupted",
+-				(unsigned long long)(io->block + b));
+ 			v->hash_failed = 1;
+-			return -EIO;
++
++			if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA,
++					      io->block + b))
++				return -EIO;
+ 		}
+ 	}
+ 
+@@ -668,8 +737,8 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		goto bad;
+ 	}
+ 
+-	if (argc != 10) {
+-		ti->error = "Invalid argument count: exactly 10 arguments required";
++	if (argc < 10 || argc > 11) {
++		ti->error = "Invalid argument count: 10-11 arguments required";
+ 		r = -EINVAL;
+ 		goto bad;
+ 	}
+@@ -790,6 +859,17 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		}
+ 	}
+ 
++	if (argc > 10) {
++		if (sscanf(argv[10], "%d%c", &num, &dummy) != 1 ||
++			num < DM_VERITY_MODE_EIO ||
++			num > DM_VERITY_MODE_RESTART) {
++			ti->error = "Invalid mode";
++			r = -EINVAL;
++			goto bad;
 +		}
-+		switch (d[1] & 0xf) {
-+		case 0x3:
-+			/* NAA: Prio 5 */
-+			switch (d[4] >> 4) {
-+			case 6:
-+				/* IEEE Registered Extended: Prio 8 */
-+				naa_prio = 8;
-+				break;
-+			case 5:
-+				/* IEEE Registered: Prio 7 */
-+				naa_prio = 7;
-+				break;
-+			case 2:
-+				/* IEEE Extended: Prio 6 */
-+				naa_prio = 6;
-+				break;
-+			case 3:
-+				/* IEEE Locally assigned: Prio 1 */
-+				naa_prio = 1;
-+				break;
-+			default:
-+				/* Default: no priority */
-+				naa_prio = -1;
-+				break;
-+			}
-+			if (prio < naa_prio) {
-+				prio = naa_prio;
-+				vpd = d;
-+			}
-+			break;
-+		case 0x8:
-+			/* SCSI Name: Prio 4 */
-+			if (memcmp(d + 4, "eui.", 4) &&
-+			    memcmp(d + 4, "naa.", 4) &&
-+			    memcmp(d + 4, "iqn.", 4))
-+				continue;
-+			if (prio < 4) {
-+				prio = 4;
-+				vpd = d;
-+			}
-+			break;
-+		case 0x2:
-+			/* EUI-64: Prio 3 */
-+			if (prio < 3) {
-+				prio = 3;
-+				vpd = d;
-+			}
-+			break;
-+		case 0x1:
-+			/* T-10 Vendor ID: Prio 2 */
-+			if (prio < 2) {
-+				prio = 2;
-+				vpd = d;
-+			}
-+			break;
-+		}
-+		d += d[3] + 4;
++		v->mode = num;
 +	}
-+	if (prio > 0) {
-+		vpd_type = vpd[1] & 0xf;
-+		vpd_len = vpd[3];
-+		vpd += 4;
-+		if (vpd_type == 0x2 || vpd_type == 0x3) {
-+			int i;
 +
-+			len = sprintf(out, "%d", vpd_type);
-+			for (i = 0; i < vpd_len; i++) {
-+				len += sprintf(out + len,
-+					       "%02x", vpd[i]);
-+				if (len >= out_len)
-+					break;
-+			}
-+		} else if (vpd_type == 0x8) {
-+			if (!memcmp("eui.", vpd, 4)) {
-+				out[0] =  '2';
-+				len = 1;
-+				vpd += 4;
-+				vpd_len -= 4;
-+				for (i = 0; i < vpd_len; i++) {
-+					len += sprintf(out + len, "%c",
-+						       tolower(vpd[i]));
-+					if (len >= out_len)
-+						break;
-+				}
-+				len = vpd_len + 1;
-+				out[len] = '\0';
-+			} else if (!memcmp("naa.", vpd, 4)) {
-+				out[0] = '3';
-+				len = 1;
-+				vpd += 4;
-+				vpd_len -= 4;
-+				for (i = 0; i < vpd_len; i++) {
-+					len += sprintf(out + len, "%c",
-+						       tolower(vpd[i]));
-+					if (len >= out_len)
-+						break;
-+				}
-+				len = vpd_len + 1;
-+				out[len] = '\0';
-+			} else {
-+				out[0] = '8';
-+				len = 1;
-+				vpd += 4;
-+				vpd_len -= 4;
-+				if (vpd_len > out_len + 2)
-+					vpd_len = out_len - 2;
-+				memcpy(out, vpd, vpd_len);
-+				len = vpd_len + 1;
-+				out[len] = '\0';
-+			}
-+		} else if (vpd_type == 0x1) {
-+			unsigned char *p;
-+			int p_len;
-+
-+			out[0] = '1';
-+			len = 1;
-+			p = vpd;
-+			while ((p = memchr(vpd, ' ', vpd_len))) {
-+				p_len = p - vpd;
-+				if (len + p_len > out_len - 1)
-+					p_len = out_len - len - 2;
-+				memcpy(out + len, vpd, p_len);
-+				len += p_len;
-+				if (len >= out_len - 1) {
-+					out[len] = '\0';
-+					break;
-+				}
-+				out[len] = '_';
-+				len ++;
-+				vpd = p;
-+				vpd_len -= p_len;
-+				while (vpd && *vpd == ' ') {
-+					vpd++;
-+					vpd_len --;
-+				}
-+			}
-+			if (len > 1 && out[len - 1] == '_') {
-+				out[len - 1] = '\0';
-+				len--;
-+			}
-+		}
-+	}
-+	return len;
-+}
-+
-+static int
- get_vpd (struct udev_device *parent, int fd, int pg, char * str, int maxlen)
- {
--	int len = -ENODATA, buff_len;
-+	int len, buff_len;
- 	unsigned char buff[4096];
+ 	v->hash_per_block_bits =
+ 		__fls((1 << v->hash_dev_block_bits) / v->digest_size);
  
- 	memset(buff, 0x0, 4096);
-@@ -835,179 +1022,11 @@ get_vpd (struct udev_device *parent, int fd, int pg, char * str, int maxlen)
- 	if (buff_len > 4096)
- 		condlog(3, "vpd pg%02x page truncated", pg);
- 
--	if (pg == 0x80) {
--		char *p = NULL;
--		len = buff[3] + (buff[2] << 8);
--		if (len >= maxlen) {
--			condlog(3, "vpd pg%02x overflow, %d/%d bytes required",
--				pg, len, maxlen);
--			return -EINVAL;
--		}
--		if (len > 0) {
--			memcpy(str, buff + 4, len);
--			str[len] = '\0';
--		}
--		p = str + len - 1;
--		while (p > str && *p == ' ') {
--			*p = '\0';
--			p--;
--			len --;
--		}
--	} else if (pg == 0x83) {
--		unsigned char *d;
--		unsigned char *vpd = NULL;
--		int vpd_type, vpd_len, prio = -1, i, naa_prio;
--
--		d = (unsigned char *)buff + 4;
--		while (d < (unsigned char *)buff + buff_len) {
--			/* Select 'association: LUN' */
--			if ((d[1] & 0x30) != 0) {
--				d += d[3] + 4;
--				continue;
--			}
--			switch (d[1] & 0xf) {
--			case 0x3:
--				/* NAA: Prio 5 */
--				switch (d[4] >> 4) {
--				case 6:
--					/* IEEE Registered Extended: Prio 8 */
--					naa_prio = 8;
--					break;
--				case 5:
--					/* IEEE Registered: Prio 7 */
--					naa_prio = 7;
--					break;
--				case 2:
--					/* IEEE Extended: Prio 6 */
--					naa_prio = 6;
--					break;
--				case 3:
--					/* IEEE Locally assigned: Prio 1 */
--					naa_prio = 1;
--					break;
--				default:
--					/* Default: no priority */
--					naa_prio = -1;
--					break;
--				}
--				if (prio < naa_prio) {
--					prio = naa_prio;
--					vpd = d;
--				}
--				break;
--			case 0x8:
--				/* SCSI Name: Prio 4 */
--				if (memcmp(d + 4, "eui.", 4) &&
--				    memcmp(d + 4, "naa.", 4) &&
--				    memcmp(d + 4, "iqn.", 4))
--					continue;
--				if (prio < 4) {
--					prio = 4;
--					vpd = d;
--				}
--				break;
--			case 0x2:
--				/* EUI-64: Prio 3 */
--				if (prio < 3) {
--					prio = 3;
--					vpd = d;
--				}
--				break;
--			case 0x1:
--				/* T-10 Vendor ID: Prio 2 */
--				if (prio < 2) {
--					prio = 2;
--					vpd = d;
--				}
--				break;
--			}
--			d += d[3] + 4;
--		}
--		if (prio > 0) {
--			vpd_type = vpd[1] & 0xf;
--			vpd_len = vpd[3];
--			vpd += 4;
--			if (vpd_type == 0x2 || vpd_type == 0x3) {
--				int i;
--
--				len = sprintf(str, "%d", vpd_type);
--				for (i = 0; i < vpd_len; i++) {
--					len += sprintf(str + len,
--						       "%02x", vpd[i]);
--					if (len >= maxlen)
--						break;
--				}
--			} else if (vpd_type == 0x8) {
--				if (!memcmp("eui.", vpd, 4)) {
--					str[0] =  '2';
--					len = 1;
--					vpd += 4;
--					vpd_len -= 4;
--					for (i = 0; i < vpd_len; i++) {
--						len += sprintf(str + len, "%c",
--							       tolower(vpd[i]));
--						if (len >= maxlen)
--							break;
--					}
--					len = vpd_len + 1;
--					str[len] = '\0';
--				} else if (!memcmp("naa.", vpd, 4)) {
--					str[0] = '3';
--					len = 1;
--					vpd += 4;
--					vpd_len -= 4;
--					for (i = 0; i < vpd_len; i++) {
--						len += sprintf(str + len, "%c",
--							       tolower(vpd[i]));
--						if (len >= maxlen)
--							break;
--					}
--					len = vpd_len + 1;
--					str[len] = '\0';
--				} else {
--					str[0] = '8';
--					len = 1;
--					vpd += 4;
--					vpd_len -= 4;
--					if (vpd_len > maxlen + 2)
--						vpd_len = maxlen - 2;
--					memcpy(str, vpd, vpd_len);
--					len = vpd_len + 1;
--					str[len] = '\0';
--				}
--			} else if (vpd_type == 0x1) {
--				unsigned char *p;
--				int p_len;
--
--				str[0] = '1';
--				len = 1;
--				p = vpd;
--				while ((p = memchr(vpd, ' ', vpd_len))) {
--					p_len = p - vpd;
--					if (len + p_len > maxlen - 1)
--						p_len = maxlen - len - 2;
--					memcpy(str + len, vpd, p_len);
--					len += p_len;
--					if (len >= maxlen - 1) {
--						str[len] = '\0';
--						break;
--					}
--					str[len] = '_';
--					len ++;
--					vpd = p;
--					vpd_len -= p_len;
--					while (vpd && *vpd == ' ') {
--						vpd++;
--						vpd_len --;
--					}
--				}
--				if (len > 1 && str[len - 1] == '_') {
--					str[len - 1] = '\0';
--					len--;
--				}
--			}
--		}
--	} else
-+	if (pg == 0x80)
-+		len = parse_vpd_pg80(buff, str, maxlen);
-+	else if (pg == 0x83)
-+		len = parse_vpd_pg83(buff, buff_len, str, maxlen);
-+	else
- 		len = -ENOSYS;
- 
- 	return len;
--- 
-1.8.4.5
