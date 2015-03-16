@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 03/78] libmultipath: filter for missing property
-	in get_refwwid()
-Date: Mon, 16 Mar 2015 13:35:50 +0100
-Message-ID: <1426509425-15978-4-git-send-email-hare@suse.de>
+Subject: [PATCH 10/78] Fixup multipathd.socket to resolve
+	ordering dependeny
+Date: Mon, 16 Mar 2015 13:35:57 +0100
+Message-ID: <1426509425-15978-11-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,37 +23,47 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-get_refwwid() needs to filter for missing udev properties,
-otherwise it'll accept just about any SCSI device.
+Per default any socket file is started after /run is available,
+as the socket might be placed there.
+This results in a dependency cycle as multipathd requires the
+socket, but the daemon should be started as early as possible,
+and certainly before /run is mounted.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/configure.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ multipathd/multipathd.service | 3 ++-
+ multipathd/multipathd.socket  | 8 +++++---
+ 2 files changed, 7 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 1e6a0c5..9012258 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -962,6 +962,9 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
- 				return ret;
- 			}
- 		}
-+		if (pp->udev && filter_property(conf, pp->udev) > 0)
-+			return 2;
+diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
+index be3ba3f..1ecc151 100644
+--- a/multipathd/multipathd.service
++++ b/multipathd/multipathd.service
+@@ -1,8 +1,9 @@
+ [Unit]
+ Description=Device-Mapper Multipath Device Controller
+ Before=iscsi.service iscsid.service lvm2-activation-early.service
+-After=syslog.target
++Before=local-fs-pre.target
+ DefaultDependencies=no
++Wants=multipathd.socket
+ Conflicts=shutdown.target
+ 
+ [Service]
+diff --git a/multipathd/multipathd.socket b/multipathd/multipathd.socket
+index 3d4b6da..921706d 100644
+--- a/multipathd/multipathd.socket
++++ b/multipathd/multipathd.socket
+@@ -1,5 +1,7 @@
++[Unit]
++Description=multipathd control socket
++DefaultDependencies=no
++Before=sockets.target
 +
- 		refwwid = pp->wwid;
- 		goto out;
- 	}
-@@ -986,6 +989,9 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
- 				return ret;
- 			}
- 		}
-+		if (pp->udev && filter_property(conf, pp->udev) > 0)
-+			return 2;
-+
- 		refwwid = pp->wwid;
- 		goto out;
- 	}
+ [Socket]
+ ListenStream=@/org/kernel/linux/storage/multipathd
+-
+-[Install]
+-WantedBy=sockets.target
 -- 
 1.8.4.5
