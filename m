@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 53/78] Use strlen() when checking for valid wwid
-Date: Mon, 16 Mar 2015 13:36:40 +0100
-Message-ID: <1426509425-15978-54-git-send-email-hare@suse.de>
+Subject: [PATCH 60/78] multipathd: use local variable for
+	watchdog configuration
+Date: Mon, 16 Mar 2015 13:36:47 +0100
+Message-ID: <1426509425-15978-61-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,65 +23,61 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The wwid is required to be a string, so we should be using
-strlen() when checking for a valid WWID.
+The 'watchdog' setting in struct config needs to be a local
+variable in multipathd/main.c, as the config will be freed
+during reconfiguration and the checkerloop might then
+access an invalid structure.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/configure.c | 5 +----
- multipathd/main.c        | 3 +--
- 2 files changed, 2 insertions(+), 6 deletions(-)
+ libmultipath/config.h | 1 -
+ multipathd/main.c     | 8 ++++++--
+ 2 files changed, 6 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index ddbd3ed..ef217de 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -734,7 +734,6 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
- {
- 	int r = 1;
- 	int k, i;
--	char empty_buff[WWID_SIZE];
- 	char params[PARAMS_SIZE];
- 	struct multipath * mpp;
- 	struct path * pp1;
-@@ -742,8 +741,6 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
- 	vector curmp = vecs->mpvec;
- 	vector pathvec = vecs->pathvec;
- 
--	memset(empty_buff, 0, WWID_SIZE);
--
- 	/* ignore refwwid if it's empty */
- 	if (refwwid && !strlen(refwwid))
- 		refwwid = NULL;
-@@ -757,7 +754,7 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
- 		/* skip this path for some reason */
- 
- 		/* 1. if path has no unique id or wwid blacklisted */
--		if (memcmp(empty_buff, pp1->wwid, WWID_SIZE) == 0 ||
-+		if (strlen(pp1->wwid) == 0 ||
- 		    filter_path(conf, pp1) > 0) {
- 			orphan_path(pp1, "wwid blacklisted");
- 			continue;
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 0149ad3..0183969 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -116,7 +116,6 @@ struct config {
+ 	int ignore_wwids;
+ 	int checker_timeout;
+ 	int daemon;
+-	int watchdog;
+ 	int flush_on_last_del;
+ 	int attribute_flags;
+ 	int fast_io_fail;
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 2d527df..b86e3b6 100644
+index fd3514f..f876258 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -482,7 +482,6 @@ int
- ev_add_path (struct path * pp, struct vectors * vecs)
- {
- 	struct multipath * mpp;
--	char empty_buff[WWID_SIZE] = {0};
- 	char params[PARAMS_SIZE] = {0};
- 	int retries = 3;
- 	int start_waiter = 0;
-@@ -491,7 +490,7 @@ ev_add_path (struct path * pp, struct vectors * vecs)
- 	/*
- 	 * need path UID to go any further
- 	 */
--	if (memcmp(empty_buff, pp->wwid, WWID_SIZE) == 0) {
-+	if (strlen(pp->wwid) == 0) {
- 		condlog(0, "%s: failed to get path uid", pp->dev);
- 		goto fail; /* leave path added to pathvec */
+@@ -29,6 +29,10 @@
+  */
+ #include <checkers.h>
+ 
++#ifdef USE_SYSTEMD
++static int use_watchdog;
++#endif
++
+ /*
+  * libmultipath
+  */
+@@ -1400,7 +1404,7 @@ checkerloop (void *ap)
+ 		pthread_testcancel();
+ 		condlog(4, "tick");
+ #ifdef USE_SYSTEMD
+-		if (conf->watchdog)
++		if (use_watchdog)
+ 			sd_notify(0, "WATCHDOG=1");
+ #endif
+ 		if (vecs->pathvec) {
+@@ -1830,7 +1834,7 @@ child (void * param)
+ 			conf->checkint = conf->max_checkint / 4;
+ 		condlog(3, "enabling watchdog, interval %d max %d",
+ 			conf->checkint, conf->max_checkint);
+-		conf->watchdog = conf->checkint;
++		use_watchdog = conf->checkint;
  	}
+ #endif
+ 	/*
 -- 
 1.8.4.5
