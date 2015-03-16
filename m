@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 28/78] multipathd: handle DOMAP_RETRY
-Date: Mon, 16 Mar 2015 13:36:15 +0100
-Message-ID: <1426509425-15978-29-git-send-email-hare@suse.de>
+Subject: [PATCH 57/78] multipath: enable sync support
+Date: Mon, 16 Mar 2015 13:36:44 +0100
+Message-ID: <1426509425-15978-58-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,44 +22,26 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Calling domap() will first check if all paths are available by
-using 'flock' on each path. This might fail if other processes
-are holding the lock already. In these cases we should retry
-domap() as the processes should terminate eventually.
+multipath didn't enable 'sync support' for device-mapper,
+causing device-mapper to create the device nodes internally
+rather than relying on udev here.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipathd/main.c | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+ multipath/main.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 2107113..494f4bb 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -467,6 +467,7 @@ ev_add_path (struct path * pp, struct vectors * vecs)
- 	char params[PARAMS_SIZE] = {0};
- 	int retries = 3;
- 	int start_waiter = 0;
-+	int ret;
+diff --git a/multipath/main.c b/multipath/main.c
+index ebca4dc..bee9a65 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -582,6 +582,7 @@ main (int argc, char *argv[])
+ 	if (dm_prereq())
+ 		exit(1);
+ 	dm_drv_version(conf->version, TGT_MPATH);
++	udev_set_sync_support(1);
  
- 	/*
- 	 * need path UID to go any further
-@@ -546,7 +547,15 @@ rescan:
- 	/*
- 	 * reload the map for the multipath mapped device
- 	 */
--	if (domap(mpp, params) <= 0) {
-+retry:
-+	ret = domap(mpp, params);
-+	if (ret <= 0) {
-+		if (ret < 0 && retries-- > 0) {
-+			condlog(0, "%s: retry domap for addition of new "
-+				"path %s", mpp->alias, pp->dev);
-+			sleep(1);
-+			goto retry;
-+		}
- 		condlog(0, "%s: failed in domap for addition of new "
- 			"path %s", mpp->alias, pp->dev);
- 		/*
+ 	if (optind < argc) {
+ 		conf->dev = MALLOC(FILE_NAME_SIZE);
 -- 
 1.8.4.5
