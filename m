@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 27/78] kpartx.rules: Skip kpartx for multipath
-	events
-Date: Mon, 16 Mar 2015 13:36:14 +0100
-Message-ID: <1426509425-15978-28-git-send-email-hare@suse.de>
+Subject: [PATCH 29/78] multipathd: cleanup foreground operation
+Date: Mon, 16 Mar 2015 13:36:16 +0100
+Message-ID: <1426509425-15978-30-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,31 +22,49 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Whenever multipath signals a PATH_FAILED or PATH_REINSTATED
-event we don't have to call 'kpartx'; the contents on the disk
-haven't changed.
-And we should never call kpartx if all paths are down, irrespective
-of the uevent.
+When specifying '-d' it actually does two things, namely do not
+daemonize the program and prints logging messages to stdout
+instead of syslog.
+This partially clashes with '-s' which suppresses the timestamp
+printing. So separate both use cases and ensure that '-d' doesn't
+overwrite '-s' if specified later.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- kpartx/kpartx.rules | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ multipathd/main.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index 226e44a..022361f 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -40,8 +40,8 @@ ENV{ID_FS_USAGE}=="filesystem|other", ENV{ID_FS_LABEL_ENC}=="?*", \
- 	SYMLINK+="disk/by-label/$env{ID_FS_LABEL_ENC}"
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 494f4bb..ac1e1a2 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1998,6 +1998,7 @@ main (int argc, char *argv[])
+ 	extern int optind;
+ 	int arg;
+ 	int err;
++	int foreground = 0;
  
- # Create dm tables for partitions
--ENV{DM_ACTION}=="PATH_FAILED", ENV{DM_NR_VALID_PATHS}=="0", \
--	GOTO="kpartx_end"
-+ENV{DM_ACTION}=="PATH_FAILED|PATH_REINSTATED", GOTO="kpartx_end"
-+ENV{DM_NR_VALID_PATHS}=="0", GOTO="kpartx_end"
- ENV{DM_STATE}!="SUSPENDED", ENV{DM_UUID}=="mpath-*", \
-         RUN+="/sbin/kpartx -u -p -part /dev/$name"
+ 	logsink = 1;
+ 	running_state = DAEMON_INIT;
+@@ -2022,7 +2023,9 @@ main (int argc, char *argv[])
+ 	while ((arg = getopt(argc, argv, ":dsv:k::B")) != EOF ) {
+ 	switch(arg) {
+ 		case 'd':
+-			logsink = 0;
++			foreground = 1;
++			if (logsink > 0)
++				logsink = 0;
+ 			//debug=1; /* ### comment me out ### */
+ 			break;
+ 		case 'v':
+@@ -2062,7 +2065,7 @@ main (int argc, char *argv[])
+ 		exit(0);
+ 	}
  
+-	if (logsink < 1) {
++	if (foreground) {
+ 		if (!isatty(fileno(stdout)))
+ 			setbuf(stdout, NULL);
+ 		err = 0;
 -- 
 1.8.4.5
