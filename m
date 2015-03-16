@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 11/78] Fixup dependencies in multipathd.service
-Date: Mon, 16 Mar 2015 13:35:58 +0100
-Message-ID: <1426509425-15978-12-git-send-email-hare@suse.de>
+Subject: [PATCH 38/78] kpartx: use standard 'major' and 'minor'
+	macros
+Date: Mon, 16 Mar 2015 13:36:25 +0100
+Message-ID: <1426509425-15978-39-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,31 +23,71 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The multipathd.service should be started after the .socket,
-and it requires local-fs-pre to be reached.
-Otherwise it won't be able to access /sys etc.
-
-References: bnc#872712
+Instead of hand-coding our own versions we should be using the
+standard 'major' and 'minor' macros.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipathd/multipathd.service | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ kpartx/devmapper.h |  7 ++++---
+ kpartx/kpartx.c    | 13 +++++--------
+ 2 files changed, 9 insertions(+), 11 deletions(-)
 
-diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-index 1ecc151..b5b755b 100644
---- a/multipathd/multipathd.service
-+++ b/multipathd/multipathd.service
-@@ -2,8 +2,9 @@
- Description=Device-Mapper Multipath Device Controller
- Before=iscsi.service iscsid.service lvm2-activation-early.service
- Before=local-fs-pre.target
-+After=multipathd.socket
- DefaultDependencies=no
--Wants=multipathd.socket
-+Wants=local-fs-pre.target multipathd.socket
- Conflicts=shutdown.target
+diff --git a/kpartx/devmapper.h b/kpartx/devmapper.h
+index d962e43..4b867df 100644
+--- a/kpartx/devmapper.h
++++ b/kpartx/devmapper.h
+@@ -1,6 +1,5 @@
+-#define MAJOR(dev)      ((dev & 0xfff00) >> 8)
+-#define MINOR(dev)      ((dev & 0xff) | ((dev >> 12) & 0xfff00))
+-#define MKDEV(ma,mi)    ((mi & 0xff) | (ma << 8) | ((mi & ~0xff) << 12))
++#ifndef _KPARTX_DEVMAPPER_H
++#define _KPARTX_DEVMAPPER_H
  
- [Service]
+ #ifdef DM_SUBSYSTEM_UDEV_FLAG0
+ #define MPATH_UDEV_RELOAD_FLAG DM_SUBSYSTEM_UDEV_FLAG0
+@@ -20,3 +19,5 @@ dev_t dm_get_first_dep(char *devname);
+ char * dm_mapuuid(int major, int minor);
+ int dm_devn (char * mapname, int *major, int *minor);
+ int dm_no_partitions(int major, int minor);
++
++#endif /* _KPARTX_DEVMAPPER_H */
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index fac98dc..18c1d23 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -168,8 +168,8 @@ get_hotplug_device(void)
+ 	if (stat(devname, &buf))
+ 		return NULL;
+ 
+-	major = (unsigned int)MAJOR(buf.st_rdev);
+-	minor = (unsigned int)MINOR(buf.st_rdev);
++	major = major(buf.st_rdev);
++	minor = minor(buf.st_rdev);
+ 
+ 	if (!(mapname = dm_mapname(major, minor))) /* Not dm device. */
+ 		return NULL;
+@@ -327,10 +327,8 @@ main(int argc, char **argv){
+ 	off = find_devname_offset(device);
+ 
+ 	if (!loopdev) {
+-		uuid = dm_mapuuid((unsigned int)MAJOR(buf.st_rdev),
+-				  (unsigned int)MINOR(buf.st_rdev));
+-		mapname = dm_mapname((unsigned int)MAJOR(buf.st_rdev),
+-				     (unsigned int)MINOR(buf.st_rdev));
++		uuid = dm_mapuuid(major(buf.st_rdev), minor(buf.st_rdev));
++		mapname = dm_mapname(major(buf.st_rdev), minor(buf.st_rdev));
+ 	}
+ 
+ 	if (!uuid)
+@@ -339,8 +337,7 @@ main(int argc, char **argv){
+ 	if (!mapname)
+ 		mapname = device + off;
+ 	else if (!force_devmap &&
+-		 dm_no_partitions((unsigned int)MAJOR(buf.st_rdev),
+-				  (unsigned int)MINOR(buf.st_rdev))) {
++		 dm_no_partitions(major(buf.st_rdev), minor(buf.st_rdev))) {
+ 		/* Feature 'no_partitions' is set, return */
+ 		return 0;
+ 	}
 -- 
 1.8.4.5
