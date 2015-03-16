@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 67/78] libmultipath: Fall back to SG_IO if no UID
-	could be assigned
-Date: Mon, 16 Mar 2015 13:36:54 +0100
-Message-ID: <1426509425-15978-68-git-send-email-hare@suse.de>
+Subject: [PATCH 19/78] multipathd: implement 'list path <path>'
+	cli command
+Date: Mon, 16 Mar 2015 13:36:06 +0100
+Message-ID: <1426509425-15978-20-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,117 +23,112 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Relying on udev attributes or sysfs vpd pages might fail,
-in which case we're unable to assign an UID and multipath
-will fail to start up.
-Implement a fallback to read VPD page 0x83 directly in
-these cases.
+Implement CLI command for printing the status of a single path.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c | 53 +++++++++++++++++++++++++++++++++++-------------
- 1 file changed, 39 insertions(+), 14 deletions(-)
+ multipathd/cli.c          |  1 +
+ multipathd/cli_handlers.c | 44 ++++++++++++++++++++++++++++++++++++++++++++
+ multipathd/cli_handlers.h |  1 +
+ multipathd/main.c         |  1 +
+ 4 files changed, 47 insertions(+)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index f8a0503..d5dda2c 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -770,6 +770,29 @@ get_serial (char * str, int maxlen, int fd)
- 	return 1;
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index 2a5edfa..acc4249 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -425,6 +425,7 @@ cli_init (void) {
+ 
+ 	add_handler(LIST+PATHS, NULL);
+ 	add_handler(LIST+PATHS+FMT, NULL);
++	add_handler(LIST+PATH, NULL);
+ 	add_handler(LIST+STATUS, NULL);
+ 	add_handler(LIST+DAEMON, NULL);
+ 	add_handler(LIST+MAPS, NULL);
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 43372d3..6abe72a 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -71,6 +71,35 @@ show_paths (char ** r, int * len, struct vectors * vecs, char * style)
  }
  
-+#define DEFAULT_SGIO_LEN 254
-+
-+static int
-+sgio_get_vpd (unsigned char * buff, int maxlen, int fd)
+ int
++show_path (char ** r, int * len, struct vectors * vecs, struct path *pp,
++	   char * style)
 +{
-+	int len = DEFAULT_SGIO_LEN;
++	char * c;
++	char * reply;
++	unsigned int maxlen = INITIAL_REPLY_LEN;
++	int again = 1;
 +
-+	if (fd < 0) {
-+		errno = EBADF;
-+		return -1;
++	get_path_layout(vecs->pathvec, 1);
++	reply = MALLOC(maxlen);
++
++	while (again) {
++		if (!reply)
++			return 1;
++
++		c = reply;
++
++		c += snprint_path(c, reply + maxlen - c, style, pp);
++
++		again = ((c - reply) == (maxlen - 1));
++
++		REALLOC_REPLY(reply, again, maxlen);
 +	}
-+retry:
-+	if (0 == do_inq(fd, 0, 1, 0x83, buff, len)) {
-+		len = buff[3] + (buff[2] << 8);
-+		if (len >= maxlen)
-+			return len;
-+		if (len > DEFAULT_SGIO_LEN)
-+			goto retry;
-+		return 0;
-+	}
-+	return -1;
++	*r = reply;
++	*len = (int)(c - reply + 1);
++	return 0;
 +}
 +
- static int
- get_geometry(struct path *pp)
++int
+ show_map_topology (char ** r, int * len, struct multipath * mpp,
+ 		   struct vectors * vecs)
  {
-@@ -788,15 +811,19 @@ get_geometry(struct path *pp)
+@@ -239,6 +268,21 @@ cli_list_paths_fmt (void * v, char ** reply, int * len, void * data)
  }
  
- static int
--get_vpd (struct udev_device *parent, int pg, char * str, int maxlen)
-+get_vpd (struct udev_device *parent, int fd, int pg, char * str, int maxlen)
+ int
++cli_list_path (void * v, char ** reply, int * len, void * data)
++{
++	struct vectors * vecs = (struct vectors *)data;
++	char * param = get_keyparam(v, PATH);
++	struct path *pp;
++
++	param = convert_dev(param, 1);
++	condlog(3, "%s: list path (operator)", param);
++
++	pp = find_path_by_dev(vecs->pathvec, param);
++
++	return show_path(reply, len, vecs, pp, "%o");
++}
++
++int
+ cli_list_map_topology (void * v, char ** reply, int * len, void * data)
  {
- 	int len = -ENODATA, buff_len;
- 	unsigned char buff[4096];
+ 	struct multipath * mpp;
+diff --git a/multipathd/cli_handlers.h b/multipathd/cli_handlers.h
+index de51961..c4636d2 100644
+--- a/multipathd/cli_handlers.h
++++ b/multipathd/cli_handlers.h
+@@ -1,5 +1,6 @@
+ int cli_list_paths (void * v, char ** reply, int * len, void * data);
+ int cli_list_paths_fmt (void * v, char ** reply, int * len, void * data);
++int cli_list_path (void * v, char ** reply, int * len, void * data);
+ int cli_list_status (void * v, char ** reply, int * len, void * data);
+ int cli_list_daemon (void * v, char ** reply, int * len, void * data);
+ int cli_list_maps (void * v, char ** reply, int * len, void * data);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 3e22ad1..2107113 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -886,6 +886,7 @@ uxlsnrloop (void * ap)
  
- 	memset(buff, 0x0, 4096);
--	if (sysfs_get_vpd(parent, pg, buff, 4096) <= 0) {
--		condlog(3, "failed to get vpd pg%02x", pg);
--		return -EIO;
-+	if (!parent || sysfs_get_vpd(parent, pg, buff, 4096) <= 0) {
-+		condlog(3, "failed to read sysfs vpd pg%02x", pg);
-+		if (sgio_get_vpd(buff, 4096, fd) <= 0) {
-+			condlog(3, "failed to issue vpd inquiry for pg%02x",
-+				pg);
-+			return -errno;
-+		}
- 	}
- 
- 	if (buff[1] != pg) {
-@@ -1298,7 +1325,7 @@ scsi_ioctl_pathinfo (struct path * pp, int mask)
- 	if (!attr_path || pp->sg_id.host_no == -1)
- 		return -ENODEV;
- 
--	if (get_vpd(parent, 0x80, pp->serial, SERIAL_SIZE) > 0)
-+	if (get_vpd(parent, pp->fd, 0x80, pp->serial, SERIAL_SIZE) > 0)
- 		condlog(3, "%s: serial = %s",
- 			pp->dev, pp->serial);
- 
-@@ -1428,11 +1455,7 @@ get_vpd_uid(struct path * pp)
- 		parent = udev_device_get_parent(parent);
- 	}
- 
--	if (!parent) {
--		condlog(3, "%s: no scsi device found in sysfs", pp->dev);
--		return -ENXIO;
--	}
--	return get_vpd(parent, 0x83, pp->wwid, WWID_SIZE);
-+	return get_vpd(parent, pp->fd, 0x83, pp->wwid, WWID_SIZE);
- }
- 
- static int
-@@ -1471,14 +1494,16 @@ get_uid (struct path * pp)
- 		if (pp->uid_attribute) {
- 			len = get_udev_uid(pp, pp->uid_attribute);
- 			origin = "udev";
--		} else {
-+		}
-+		if (len <= 0) {
- 			len = get_vpd_uid(pp);
- 			if (len > 0)
- 				origin = "sysfs";
--			else {
--				len = get_udev_uid(pp, DEFAULT_UID_ATTRIBUTE);
-+		}
-+		if (len <= 0) {
-+			len = get_udev_uid(pp, DEFAULT_UID_ATTRIBUTE);
-+			if (len > 0)
- 				origin = "udev";
--			}
- 		}
- 	}
- 	if ( len < 0 ) {
+ 	set_handler_callback(LIST+PATHS, cli_list_paths);
+ 	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
++	set_handler_callback(LIST+PATH, cli_list_path);
+ 	set_handler_callback(LIST+MAPS, cli_list_maps);
+ 	set_handler_callback(LIST+STATUS, cli_list_status);
+ 	set_handler_callback(LIST+DAEMON, cli_list_daemon);
 -- 
 1.8.4.5
