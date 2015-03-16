@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 50/78] Allow zero-sized devices during
-	configuration
-Date: Mon, 16 Mar 2015 13:36:37 +0100
-Message-ID: <1426509425-15978-51-git-send-email-hare@suse.de>
+Subject: [PATCH 53/78] Use strlen() when checking for valid wwid
+Date: Mon, 16 Mar 2015 13:36:40 +0100
+Message-ID: <1426509425-15978-54-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,43 +22,65 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-A size of '0' doesn't indicate an invalid device; other paths might
-end up with a correct size.
+The wwid is required to be a string, so we should be using
+strlen() when checking for a valid WWID.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/configure.c | 11 ++++++-----
- 1 file changed, 6 insertions(+), 5 deletions(-)
+ libmultipath/configure.c | 5 +----
+ multipathd/main.c        | 3 +--
+ 2 files changed, 2 insertions(+), 6 deletions(-)
 
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 2c10c22..ddbd3ed 100644
+index ddbd3ed..ef217de 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
-@@ -768,8 +768,8 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+@@ -734,7 +734,6 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+ {
+ 	int r = 1;
+ 	int k, i;
+-	char empty_buff[WWID_SIZE];
+ 	char params[PARAMS_SIZE];
+ 	struct multipath * mpp;
+ 	struct path * pp1;
+@@ -742,8 +741,6 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+ 	vector curmp = vecs->mpvec;
+ 	vector pathvec = vecs->pathvec;
+ 
+-	memset(empty_buff, 0, WWID_SIZE);
+-
+ 	/* ignore refwwid if it's empty */
+ 	if (refwwid && !strlen(refwwid))
+ 		refwwid = NULL;
+@@ -757,7 +754,7 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+ 		/* skip this path for some reason */
+ 
+ 		/* 1. if path has no unique id or wwid blacklisted */
+-		if (memcmp(empty_buff, pp1->wwid, WWID_SIZE) == 0 ||
++		if (strlen(pp1->wwid) == 0 ||
+ 		    filter_path(conf, pp1) > 0) {
+ 			orphan_path(pp1, "wwid blacklisted");
  			continue;
- 
- 		/* 3. if path has disappeared */
--		if (!pp1->size) {
--			orphan_path(pp1, "invalid size");
-+		if (pp1->state == PATH_REMOVED) {
-+			orphan_path(pp1, "path removed");
- 			continue;
- 		}
- 
-@@ -806,10 +806,11 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
- 			if (strcmp(pp1->wwid, pp2->wwid))
- 				continue;
- 
--			if (!pp2->size)
--				continue;
-+			if (!mpp->size && pp2->size)
-+				mpp->size = pp2->size;
- 
--			if (pp2->size != mpp->size) {
-+			if (mpp->size && pp2->size &&
-+			    pp2->size != mpp->size) {
- 				/*
- 				 * ouch, avoid feeding that to the DM
- 				 */
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 2d527df..b86e3b6 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -482,7 +482,6 @@ int
+ ev_add_path (struct path * pp, struct vectors * vecs)
+ {
+ 	struct multipath * mpp;
+-	char empty_buff[WWID_SIZE] = {0};
+ 	char params[PARAMS_SIZE] = {0};
+ 	int retries = 3;
+ 	int start_waiter = 0;
+@@ -491,7 +490,7 @@ ev_add_path (struct path * pp, struct vectors * vecs)
+ 	/*
+ 	 * need path UID to go any further
+ 	 */
+-	if (memcmp(empty_buff, pp->wwid, WWID_SIZE) == 0) {
++	if (strlen(pp->wwid) == 0) {
+ 		condlog(0, "%s: failed to get path uid", pp->dev);
+ 		goto fail; /* leave path added to pathvec */
+ 	}
 -- 
 1.8.4.5
