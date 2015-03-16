@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 25/78] multipath.rules: fixup race condition with
-	systemd
-Date: Mon, 16 Mar 2015 13:36:12 +0100
-Message-ID: <1426509425-15978-26-git-send-email-hare@suse.de>
+Subject: [PATCH 13/78] Do not print empty device strings during
+	discovery
+Date: Mon, 16 Mar 2015 13:36:00 +0100
+Message-ID: <1426509425-15978-14-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,34 +23,32 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-systemd will call 'fsck' on any device, even if no device
-type is found. This might cause a race between the mount call
-and any fsck call on the device-mapper device.
-So for multipath we should arbitrary set the device type to
-'none', as then systemd with detect a missing 'fsck.none'
-command and skip fsck here.
+If the path provides no information we should not print out
+empty strings, but rather an instructive message telling us so.
+
+References: bnc#872712
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipath/multipath.rules | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/structs_vec.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/multipath/multipath.rules b/multipath/multipath.rules
-index 56056bf..c76e6b8 100644
---- a/multipath/multipath.rules
-+++ b/multipath/multipath.rules
-@@ -4,10 +4,11 @@ SUBSYSTEM!="block", GOTO="end_mpath"
- ENV{MPATH_SBIN_PATH}="/sbin"
- TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index a15e3c0..a1f2212 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -226,6 +226,12 @@ extract_hwe_from_path(struct multipath * mpp)
+ 	}
  
--SUBSYSTEM=="block", ACTION=="add|change", KERNEL=="sd*[!0-9]|dasd*[!0-9]", \
-+SUBSYSTEM=="block", ACTION=="add|change", KERNEL=="sd*|dasd*", \
- 	ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
- 	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
- 	ENV{DM_MULTIPATH_DEVICE_PATH}="1" \
-+	ENV{ID_FS_TYPE}="none" \
- 	ENV{SYSTEMD_READY}="0"
- 
- LABEL="end_mpath"
+ 	if (pp) {
++		if (!strlen(pp->vendor_id) ||
++		    !strlen(pp->product_id) ||
++		    !strlen(pp->rev)) {
++			condlog(3, "%s: no device details available", pp->dev);
++			return NULL;
++		}
+ 		condlog(3, "%s: vendor = %s", pp->dev, pp->vendor_id);
+ 		condlog(3, "%s: product = %s", pp->dev, pp->product_id);
+ 		condlog(3, "%s: rev = %s", pp->dev, pp->rev);
 -- 
 1.8.4.5
