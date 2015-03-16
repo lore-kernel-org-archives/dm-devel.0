@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 57/78] multipath: enable sync support
-Date: Mon, 16 Mar 2015 13:36:44 +0100
-Message-ID: <1426509425-15978-58-git-send-email-hare@suse.de>
+Subject: [PATCH 30/78] Update hwtable for EMC XtremIO
+Date: Mon, 16 Mar 2015 13:36:17 +0100
+Message-ID: <1426509425-15978-31-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,26 +22,34 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-multipath didn't enable 'sync support' for device-mapper,
-causing device-mapper to create the device nodes internally
-rather than relying on udev here.
-
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipath/main.c | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/hwtable.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index ebca4dc..bee9a65 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -582,6 +582,7 @@ main (int argc, char *argv[])
- 	if (dm_prereq())
- 		exit(1);
- 	dm_drv_version(conf->version, TGT_MPATH);
-+	udev_set_sync_support(1);
- 
- 	if (optind < argc) {
- 		conf->dev = MALLOC(FILE_NAME_SIZE);
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index ead4d48..13611fe 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -289,6 +289,19 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = DEFAULT_PRIO,
+ 		.prio_args     = NULL,
+ 	},
++	{
++		.vendor        = "XtremIO",
++		.product       = "XtremApp",
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.pgpolicy      = MULTIBUS,
++		.pgfailback    = FAILBACK_UNDEF,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 5,
++		.checker_name  = TUR,
++		.prio_name     = DEFAULT_PRIO,
++		.prio_args     = NULL,
++	},
+ 	/*
+ 	 * Fujitsu controller family
+ 	 *
 -- 
 1.8.4.5
