@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 70/78] multipathd: use SG_IO as fallback to
-	generate uid
-Date: Mon, 16 Mar 2015 13:36:57 +0100
-Message-ID: <1426509425-15978-71-git-send-email-hare@suse.de>
+Subject: [PATCH 16/78] Fixup wwid blacklist printing
+Date: Mon, 16 Mar 2015 13:36:03 +0100
+Message-ID: <1426509425-15978-17-git-send-email-hare@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,123 +22,98 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If both udev attribute and sysfs vpd fails to generate a valid
-WWID fallback to use SG_IO directly.
+When a wwid is blacklisted the log message looks like
+'(null): wwid XXX blacklisted'.
+Fix it up by printing either the corresponding device or
+avoid printing the '(null)' entry if no corresponding
+device is given.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c | 61 +++++++++++++++++++++++++++++++++++++++---------
- 1 file changed, 50 insertions(+), 11 deletions(-)
+ libmultipath/blacklist.c  | 6 ++++--
+ libmultipath/blacklist.h  | 2 +-
+ libmultipath/configure.c  | 2 +-
+ libmultipath/discovery.c  | 2 +-
+ multipathd/cli_handlers.c | 2 +-
+ 5 files changed, 8 insertions(+), 6 deletions(-)
 
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+index 30c5031..2400eda 100644
+--- a/libmultipath/blacklist.c
++++ b/libmultipath/blacklist.c
+@@ -228,6 +228,8 @@ setup_default_blist (struct config * conf)
+ 	if (vendor && product)						\
+ 		condlog(3, "%s: (%s:%s) %s %s",				\
+ 			dev, vendor, product, (M), (S));		\
++	else if (wwid && !dev)						\
++		condlog(3, "%s: %s %s", wwid, (M), (S));		\
+ 	else if (wwid)							\
+ 		condlog(3, "%s: %s %s %s", dev, (M), wwid, (S));	\
+ 	else if (env)							\
+@@ -328,10 +330,10 @@ _filter_wwid (vector blist, vector elist, char * wwid)
+ }
+ 
+ int
+-filter_wwid (vector blist, vector elist, char * wwid)
++filter_wwid (vector blist, vector elist, char * wwid, char * dev)
+ {
+ 	int r = _filter_wwid(blist, elist, wwid);
+-	log_filter(NULL, NULL, NULL, wwid, NULL, r);
++	log_filter(dev, NULL, NULL, wwid, NULL, r);
+ 	return r;
+ }
+ 
+diff --git a/libmultipath/blacklist.h b/libmultipath/blacklist.h
+index 0e90e9a..24a5fa5 100644
+--- a/libmultipath/blacklist.h
++++ b/libmultipath/blacklist.h
+@@ -32,7 +32,7 @@ struct blentry_device {
+ int setup_default_blist (struct config *);
+ int alloc_ble_device (vector);
+ int filter_devnode (vector, vector, char *);
+-int filter_wwid (vector, vector, char *);
++int filter_wwid (vector, vector, char *, char *);
+ int filter_device (vector, vector, char *, char *);
+ int filter_path (struct config *, struct path *);
+ int filter_property(struct config *, struct udev_device *);
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 9012258..c9f16c7 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -1025,7 +1025,7 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
+ check:
+ 		if (refwwid && strlen(refwwid)) {
+ 			if (filter_wwid(conf->blist_wwid, conf->elist_wwid,
+-					refwwid) > 0)
++					refwwid, NULL) > 0)
+ 			return 2;
+ 		}
+ 	}
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 50444db..009ef0c 100644
+index 948fa49..6d6a508 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -998,7 +998,7 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
- }
- 
- static int
--get_vpd (struct udev_device *parent, int fd, int pg, char * str, int maxlen)
-+get_vpd_sysfs (struct udev_device *parent, int pg, char * str, int maxlen)
- {
- 	int len, buff_len;
- 	unsigned char buff[4096];
-@@ -1006,11 +1006,39 @@ get_vpd (struct udev_device *parent, int fd, int pg, char * str, int maxlen)
- 	memset(buff, 0x0, 4096);
- 	if (!parent || sysfs_get_vpd(parent, pg, buff, 4096) <= 0) {
- 		condlog(3, "failed to read sysfs vpd pg%02x", pg);
--		if (sgio_get_vpd(buff, 4096, fd) <= 0) {
--			condlog(3, "failed to issue vpd inquiry for pg%02x",
--				pg);
--			return -errno;
--		}
-+		return -EINVAL;
-+	}
-+
-+	if (buff[1] != pg) {
-+		condlog(3, "vpd pg%02x error, invalid vpd page %02x",
-+			pg, buff[1]);
-+		return -ENODATA;
-+	}
-+	buff_len = (buff[2] << 8) + buff[3] + 4;
-+	if (buff_len > 4096)
-+		condlog(3, "vpd pg%02x page truncated", pg);
-+
-+	if (pg == 0x80)
-+		len = parse_vpd_pg80(buff, str, maxlen);
-+	else if (pg == 0x83)
-+		len = parse_vpd_pg83(buff, buff_len, str, maxlen);
-+	else
-+		len = -ENOSYS;
-+
-+	return len;
-+}
-+
-+static int
-+get_vpd_sgio (int fd, int pg, char * str, int maxlen)
-+{
-+	int len, buff_len;
-+	unsigned char buff[4096];
-+
-+	memset(buff, 0x0, 4096);
-+	if (sgio_get_vpd(buff, 4096, fd) <= 0) {
-+		condlog(3, "failed to issue vpd inquiry for pg%02x",
-+			pg);
-+		return -errno;
- 	}
- 
- 	if (buff[1] != pg) {
-@@ -1344,7 +1372,7 @@ scsi_ioctl_pathinfo (struct path * pp, int mask)
- 	if (!attr_path || pp->sg_id.host_no == -1)
- 		return -ENODEV;
- 
--	if (get_vpd(parent, pp->fd, 0x80, pp->serial, SERIAL_SIZE) > 0)
-+	if (get_vpd_sysfs(parent, 0x80, pp->serial, SERIAL_SIZE) > 0)
- 		condlog(3, "%s: serial = %s",
- 			pp->dev, pp->serial);
- 
-@@ -1474,7 +1502,7 @@ get_vpd_uid(struct path * pp)
- 		parent = udev_device_get_parent(parent);
- 	}
- 
--	return get_vpd(parent, pp->fd, 0x83, pp->wwid, WWID_SIZE);
-+	return get_vpd_sysfs(parent, 0x83, pp->wwid, WWID_SIZE);
- }
- 
- static int
-@@ -1513,19 +1541,30 @@ get_uid (struct path * pp)
- 		if (pp->uid_attribute) {
- 			len = get_udev_uid(pp, pp->uid_attribute);
- 			origin = "udev";
-+			if (len <= 0)
-+				condlog(2,
-+					"%s: failed to get UID attribute '%s'",
-+					pp->dev, pp->uid_attribute);
- 		}
- 		if (len <= 0) {
- 			len = get_vpd_uid(pp);
- 			if (len > 0) {
- 				origin = "sysfs";
- 				pp->uid_attribute = NULL;
-+			} else {
-+				condlog(2, "%s: failed to get sysfs vpd pg83",
-+					pp->dev);
- 			}
- 		}
- 		if (len <= 0) {
--			len = get_udev_uid(pp, DEFAULT_UID_ATTRIBUTE);
-+			len = get_vpd_sgio(pp->fd, 0x83, pp->wwid,
-+					   WWID_SIZE);
- 			if (len > 0) {
--				origin = "default";
--				pp->uid_attribute = DEFAULT_UID_ATTRIBUTE;
-+				origin = "sgio";
-+				pp->uid_attribute = NULL;
-+			} else {
-+				condlog(2, "%s: failed to get sgio vpd pg83",
-+					pp->dev);
- 			}
+@@ -1232,7 +1232,7 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ 	if (mask & DI_BLACKLIST && mask & DI_WWID) {
+ 		if (!strlen(pp->wwid) ||
+ 		    filter_wwid(conf->blist_wwid, conf->elist_wwid,
+-				pp->wwid) > 0) {
++				pp->wwid, pp->dev) > 0) {
+ 			return PATHINFO_SKIPPED;
  		}
  	}
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 0ce1408..43372d3 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -494,7 +494,7 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
+ 	param = convert_dev(param, 0);
+ 	condlog(2, "%s: add map (operator)", param);
+ 
+-	if (filter_wwid(conf->blist_wwid, conf->elist_wwid, param) > 0) {
++	if (filter_wwid(conf->blist_wwid, conf->elist_wwid, param, NULL) > 0) {
+ 		*reply = strdup("blacklisted\n");
+ 		*len = strlen(*reply) + 1;
+ 		condlog(2, "%s: map blacklisted", param);
 -- 
 1.8.4.5
