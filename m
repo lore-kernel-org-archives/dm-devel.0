@@ -1,17 +1,15 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCHv2] dm-verity: Add error handling modes
-	for	corrupted blocks
-Date: Tue, 17 Mar 2015 18:50:53 +0000
-Message-ID: <20150317185053.GC21831@agk-dp.fab.redhat.com>
-References: <20150316155559.GA32397@google.com>
-	<20150317163707.GA39776@google.com>
+From: "Wilck, Martin" <martin.wilck@ts.fujitsu.com>
+Subject: Re: [PATCH] Update ETERNUS DX entry
+Date: Tue, 17 Mar 2015 13:52:03 +0100
+Message-ID: <1426596723.3096.60.camel@ts.fujitsu.com>
+References: <44563972.MCcuCWMjxF@tabasco> <20150313151153.00001b2a@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20150317163707.GA39776@google.com>
+In-Reply-To: <20150313151153.00001b2a@localhost>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,35 +19,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Sami Tolvanen <samitolvanen@google.com>
-Cc: wad@chromium.org, msb@chromium.org, mpatocka@redhat.com, dm-devel@redhat.com
+To: "herbszt@gmx.de" <herbszt@gmx.de>
+Cc: "Montag, Rainer" <rainer.montag@ts.fujitsu.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "Wichert,
+	Gerhard" <gerhard.wichert@ts.fujitsu.com>
 List-Id: dm-devel.ids
 
-On Tue, Mar 17, 2015 at 04:37:07PM +0000, Sami Tolvanen wrote:
-> +<mode>
-> +    Optional. 
+On Fr, 2015-03-13 at 15:11 +0100, Sebastian Herbszt wrote:
+> Gerhard Wichert wrote:
+> > Add DX8700 S3 and DX8900 S3
+> >
 
-The format needs to remain easily extendable.
+> Can we keep the product list sorted (entry, mid-range, high-end)?
+> Like "ETERNUS_DX(L|M|400|H|8000)" or "ETERNUS_DX(L|400|M|8000|H)".
 
-Two alternatives:
+Sure, no problem.
 
-  Document this as a required field going forward, but say that if
-  it is missing the default will be assumed.
-
-  eio|logging|restart  (but those names are confusing)
-
-
-Or (my preference) use a 'features' approach like most other targets do:
-
-<number of feature> <feature arguments>
-
-"error" is the existing default, so doesn't need stating.
-
-The other two could be:
-  restart_on_corruption
-  ignore_corruption
-
-Logging and events would happen in all cases, but if they did need
-controlling independently, additional feature arguments could do that.
-
-Alasdair
+Martin
