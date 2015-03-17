@@ -1,35 +1,41 @@
-From: Sami Tolvanen <samitolvanen@google.com>
-Subject: Re: [PATCH] dm-verity: Add error handling modes for
- corrupted blocks
-Date: Tue, 17 Mar 2015 10:36:19 +0000
-Message-ID: <20150317103619.GB40896@google.com>
-References: <20150316155559.GA32397@google.com>
-	<20150317003746.GA21831@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20150317003746.GA21831@agk-dp.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: mpatocka@redhat.com, msb@chromium.org, wad@chromium.org, dm-devel@redhat.com
+From: Nicholas Mc Guire <hofrat@osadl.org>
+Subject: [PATCH] dm delay: use msecs_to_jiffies for time conversion
+Date: Tue, 17 Mar 2015 07:47:58 -0400
+Message-ID: <1426592878-3843-1-git-send-email-hofrat@osadl.org>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Nicholas Mc Guire <hofrat@osadl.org>
 List-Id: dm-devel.ids
 
-On Tue, Mar 17, 2015 at 12:37:47AM +0000, Alasdair G Kergon wrote:
-> The usual dm style uses a word rather than hiding behind a numeric code that has
-> to be learned or looked up.
+Converting milliseconds to jiffies by "val * HZ / 1000" is technically
+OK but msecs_to_jiffies(val) is the cleaner solution and handles all
+corner cases correctly. This is a minor API consolidation only and
+should make things more readable.
 
-> Missing DM_ prefix?
+Signed-off-by: Nicholas Mc Guire <hofrat@osadl.org>
+---
 
-Thanks for the comments, I will fix these in the next version.
+Patch was compile tested with x86_64_defconfig + CONFIG_DM_DELAY=m
 
-Sami
+Patch is against 4.0-rc4 (localversion-next is -next-20150317)
+
+ drivers/md/dm-delay.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
+index 42c3a27..57b6a19 100644
+--- a/drivers/md/dm-delay.c
++++ b/drivers/md/dm-delay.c
+@@ -236,7 +236,7 @@ static int delay_bio(struct delay_c *dc, int delay, struct bio *bio)
+ 	delayed = dm_per_bio_data(bio, sizeof(struct dm_delay_info));
+ 
+ 	delayed->context = dc;
+-	delayed->expires = expires = jiffies + (delay * HZ / 1000);
++	delayed->expires = expires = jiffies + msecs_to_jiffies(delay);
+ 
+ 	mutex_lock(&delayed_bios_lock);
+ 
+-- 
+1.7.10.4
+
