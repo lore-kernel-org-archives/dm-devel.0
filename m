@@ -1,16 +1,18 @@
-From: Sami Tolvanen <samitolvanen@google.com>
-Subject: [PATCHv2] dm-verity: Add error handling modes for
-	corrupted blocks
-Date: Tue, 17 Mar 2015 16:37:07 +0000
-Message-ID: <20150317163707.GA39776@google.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH] dm-verity: Add error handling modes for
+ corrupted blocks
+Date: Tue, 17 Mar 2015 14:03:58 -0400
+Message-ID: <20150317180358.GD24901@redhat.com>
 References: <20150316155559.GA32397@google.com>
+	<20150317152749.GA24901@redhat.com>
+	<20150317160649.GA36193@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20150316155559.GA32397@google.com>
+In-Reply-To: <20150317160649.GA36193@google.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,271 +22,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mpatocka@redhat.com, msb@chromium.org, wad@chromium.org
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: wad@chromium.org, msb@chromium.org, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-Add device specific modes to dm-verity to specify how corrupted
-blocks should be handled. The following modes are defined:
+On Tue, Mar 17, 2015 at 04:06:49PM +0000, Sami Tolvanen wrote:
+> On Tue, Mar 17, 2015 at 11:27:49AM -0400, Vivek Goyal wrote:
+> > What's the idea behind kernel restart mode ? If a corrupted block is in
+> > the path of boot, will we not get into a continuous reboot cycle.
+> 
+> It depends on how dm-verity is used. If we have PSTORE_CONSOLE enabled, for
+> example, after a restart we can check if the restart was caused by dm-verity
+> and then use a different mode when setting up the verity device. Most likely
+> for some systems this is not a reasonable recovery method, but we find it to
+> be useful on Android at least.
 
-  - DM_VERITY_MODE_EIO is the default behavior, where reading a
-    corrupted block results in -EIO.
+Ok.
 
-  - DM_VERITY_MODE_LOGGING only logs corrupted blocks, but does
-    not block the read.
+Without knowing too much of detail, asking kernel to restart because one
+block was corrupt sounds little drastic. If you are sending user space
+events, why not let user space initiate the start and manage policy in
+user space.
 
-  - DM_VERITY_MODE_RESTART calls kernel_restart when a corrupted
-    block is discovered.
-
-In addition, each mode sends a uevent to notify userspace of
-corruption and to allow further recovery actions.
-
-The driver defaults to previous behavior (DM_VERITY_MODE_EIO)
-and other modes can be enabled with an additional parameter to
-the verity table.
-
-Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
-
----
-Changes since v1:
-  Use words instead of numeric values as the mode parameter
-  Use DMERR when logging corrupted blocks
-  Add the operating mode to STATUSTYPE_TABLE output
-  Add a DM_ prefix to the uevent variable name
-
----
- Documentation/device-mapper/verity.txt |   17 +++
- drivers/md/dm-verity.c                 |  122 ++++++++++++++++++++---
- 2 files changed, 127 insertions(+), 12 deletions(-)
-
-diff --git a/Documentation/device-mapper/verity.txt b/Documentation/device-mapper/verity.txt
-index 9884681..7fe478b 100644
---- a/Documentation/device-mapper/verity.txt
-+++ b/Documentation/device-mapper/verity.txt
-@@ -10,7 +10,7 @@ Construction Parameters
-     <version> <dev> <hash_dev>
-     <data_block_size> <hash_block_size>
-     <num_data_blocks> <hash_start_block>
--    <algorithm> <digest> <salt>
-+    <algorithm> <digest> <salt> <mode>
- 
- <version>
-     This is the type of the on-disk hash format.
-@@ -62,6 +62,21 @@ Construction Parameters
- <salt>
-     The hexadecimal encoding of the salt value.
- 
-+<mode>
-+    Optional. The mode of operation.
-+
-+    eio
-+    - The default mode of operation where a corrupted block will result in an
-+      I/O error.
-+
-+    logging
-+    - Corrupted blocks are logged, but the read operation will still succeed
-+      normally.
-+
-+    restart
-+    - A corrupted block will result in the system being immediately restarted.
-+
-+
- Theory of operation
- ===================
- 
-diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
-index 7a7bab8..35fc1bc 100644
---- a/drivers/md/dm-verity.c
-+++ b/drivers/md/dm-verity.c
-@@ -18,20 +18,40 @@
- 
- #include <linux/module.h>
- #include <linux/device-mapper.h>
-+#include <linux/reboot.h>
- #include <crypto/hash.h>
- 
- #define DM_MSG_PREFIX			"verity"
- 
-+#define DM_VERITY_ENV_LENGTH		42
-+#define DM_VERITY_ENV_VAR_NAME		"DM_VERITY_ERR_BLOCK_NR"
-+
- #define DM_VERITY_IO_VEC_INLINE		16
- #define DM_VERITY_MEMPOOL_SIZE		4
- #define DM_VERITY_DEFAULT_PREFETCH_SIZE	262144
- 
- #define DM_VERITY_MAX_LEVELS		63
-+#define DM_VERITY_MAX_CORRUPTED_ERRS	100
-+
-+#define DM_VERITY_MODE_NAME_EIO		"eio"
-+#define DM_VERITY_MODE_NAME_LOGGING	"logging"
-+#define DM_VERITY_MODE_NAME_RESTART	"restart"
- 
- static unsigned dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE;
- 
- module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, S_IRUGO | S_IWUSR);
- 
-+enum verity_mode {
-+	DM_VERITY_MODE_EIO,
-+	DM_VERITY_MODE_LOGGING,
-+	DM_VERITY_MODE_RESTART
-+};
-+
-+enum verity_block_type {
-+	DM_VERITY_BLOCK_TYPE_DATA,
-+	DM_VERITY_BLOCK_TYPE_METADATA
-+};
-+
- struct dm_verity {
- 	struct dm_dev *data_dev;
- 	struct dm_dev *hash_dev;
-@@ -54,6 +74,8 @@ struct dm_verity {
- 	unsigned digest_size;	/* digest size for the current hash algorithm */
- 	unsigned shash_descsize;/* the size of temporary space for crypto */
- 	int hash_failed;	/* set to 1 if hash of any block failed */
-+	enum verity_mode mode;	/* mode for handling verification errors */
-+	unsigned corrupted_errs;/* Number of errors for corrupted blocks */
- 
- 	mempool_t *vec_mempool;	/* mempool of bio vector */
- 
-@@ -175,6 +197,57 @@ static void verity_hash_at_level(struct dm_verity *v, sector_t block, int level,
- }
- 
- /*
-+ * Handle verification errors.
-+ */
-+static int verity_handle_err(struct dm_verity *v, enum verity_block_type type,
-+				 unsigned long long block)
-+{
-+	char verity_env[DM_VERITY_ENV_LENGTH];
-+	char *envp[] = { verity_env, NULL };
-+	const char *type_str = "";
-+	struct mapped_device *md = dm_table_get_md(v->ti->table);
-+
-+	/* Corruption should be visible in device status in all modes */
-+	v->hash_failed = 1;
-+
-+	if (v->corrupted_errs >= DM_VERITY_MAX_CORRUPTED_ERRS)
-+		goto out;
-+
-+	++v->corrupted_errs;
-+
-+	switch (type) {
-+	case DM_VERITY_BLOCK_TYPE_DATA:
-+		type_str = "data";
-+		break;
-+	case DM_VERITY_BLOCK_TYPE_METADATA:
-+		type_str = "metadata";
-+		break;
-+	default:
-+		BUG();
-+	}
-+
-+	DMERR("%s: %s block %llu is corrupted", v->data_dev->name, type_str,
-+		block);
-+
-+	if (v->corrupted_errs == DM_VERITY_MAX_CORRUPTED_ERRS)
-+		DMERR("%s: reached maximum errors", v->data_dev->name);
-+
-+	snprintf(verity_env, DM_VERITY_ENV_LENGTH, "%s=%d,%llu",
-+		DM_VERITY_ENV_VAR_NAME, type, block);
-+
-+	kobject_uevent_env(&disk_to_dev(dm_disk(md))->kobj, KOBJ_CHANGE, envp);
-+
-+out:
-+	if (v->mode == DM_VERITY_MODE_LOGGING)
-+		return 0;
-+
-+	if (v->mode == DM_VERITY_MODE_RESTART)
-+		kernel_restart("dm-verity device corrupted");
-+
-+	return 1;
-+}
-+
-+/*
-  * Verify hash of a metadata block pertaining to the specified data block
-  * ("block" argument) at a specified level ("level" argument).
-  *
-@@ -251,11 +324,11 @@ static int verity_verify_level(struct dm_verity_io *io, sector_t block,
- 			goto release_ret_r;
- 		}
- 		if (unlikely(memcmp(result, io_want_digest(v, io), v->digest_size))) {
--			DMERR_LIMIT("metadata block %llu is corrupted",
--				(unsigned long long)hash_block);
--			v->hash_failed = 1;
--			r = -EIO;
--			goto release_ret_r;
-+			if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_METADATA,
-+					      hash_block)) {
-+				r = -EIO;
-+				goto release_ret_r;
-+			}
- 		} else
- 			aux->hash_verified = 1;
- 	}
-@@ -367,10 +440,9 @@ test_block_hash:
- 			return r;
- 		}
- 		if (unlikely(memcmp(result, io_want_digest(v, io), v->digest_size))) {
--			DMERR_LIMIT("data block %llu is corrupted",
--				(unsigned long long)(io->block + b));
--			v->hash_failed = 1;
--			return -EIO;
-+			if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA,
-+					      io->block + b))
-+				return -EIO;
- 		}
- 	}
- 
-@@ -546,6 +618,20 @@ static void verity_status(struct dm_target *ti, status_type_t type,
- 		else
- 			for (x = 0; x < v->salt_size; x++)
- 				DMEMIT("%02x", v->salt[x]);
-+		DMEMIT(" ");
-+		switch (v->mode) {
-+		case DM_VERITY_MODE_EIO:
-+			DMEMIT(DM_VERITY_MODE_NAME_EIO);
-+			break;
-+		case DM_VERITY_MODE_LOGGING:
-+			DMEMIT(DM_VERITY_MODE_NAME_LOGGING);
-+			break;
-+		case DM_VERITY_MODE_RESTART:
-+			DMEMIT(DM_VERITY_MODE_NAME_RESTART);
-+			break;
-+		default:
-+			BUG();
-+		}
- 		break;
- 	}
- }
-@@ -668,8 +754,8 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 		goto bad;
- 	}
- 
--	if (argc != 10) {
--		ti->error = "Invalid argument count: exactly 10 arguments required";
-+	if (argc < 10 || argc > 11) {
-+		ti->error = "Invalid argument count: 10-11 arguments required";
- 		r = -EINVAL;
- 		goto bad;
- 	}
-@@ -790,6 +876,20 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 		}
- 	}
- 
-+	if (argc > 10) {
-+		if (!strcmp(argv[10], DM_VERITY_MODE_NAME_EIO))
-+			v->mode = DM_VERITY_MODE_EIO;
-+		else if (!strcmp(argv[10], DM_VERITY_MODE_NAME_LOGGING))
-+			v->mode = DM_VERITY_MODE_LOGGING;
-+		else if (!strcmp(argv[10], DM_VERITY_MODE_NAME_RESTART))
-+			v->mode = DM_VERITY_MODE_RESTART;
-+		else {
-+			ti->error = "Invalid mode";
-+			r = -EINVAL;
-+			goto bad;
-+		}
-+	}
-+
- 	v->hash_per_block_bits =
- 		__fls((1 << v->hash_dev_block_bits) / v->digest_size);
- 
+Thanks
+Vivek
