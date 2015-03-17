@@ -1,18 +1,17 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH] dm-verity: Add error handling modes for
- corrupted blocks
-Date: Tue, 17 Mar 2015 14:03:58 -0400
-Message-ID: <20150317180358.GD24901@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCHv2] dm-verity: Add error handling modes
+	for	corrupted blocks
+Date: Tue, 17 Mar 2015 18:50:53 +0000
+Message-ID: <20150317185053.GC21831@agk-dp.fab.redhat.com>
 References: <20150316155559.GA32397@google.com>
-	<20150317152749.GA24901@redhat.com>
-	<20150317160649.GA36193@google.com>
+	<20150317163707.GA39776@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20150317160649.GA36193@google.com>
+In-Reply-To: <20150317163707.GA39776@google.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,27 +21,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: wad@chromium.org, msb@chromium.org, mpatocka@redhat.com
+To: Sami Tolvanen <samitolvanen@google.com>
+Cc: wad@chromium.org, msb@chromium.org, mpatocka@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Mar 17, 2015 at 04:06:49PM +0000, Sami Tolvanen wrote:
-> On Tue, Mar 17, 2015 at 11:27:49AM -0400, Vivek Goyal wrote:
-> > What's the idea behind kernel restart mode ? If a corrupted block is in
-> > the path of boot, will we not get into a continuous reboot cycle.
-> 
-> It depends on how dm-verity is used. If we have PSTORE_CONSOLE enabled, for
-> example, after a restart we can check if the restart was caused by dm-verity
-> and then use a different mode when setting up the verity device. Most likely
-> for some systems this is not a reasonable recovery method, but we find it to
-> be useful on Android at least.
+On Tue, Mar 17, 2015 at 04:37:07PM +0000, Sami Tolvanen wrote:
+> +<mode>
+> +    Optional. 
 
-Ok.
+The format needs to remain easily extendable.
 
-Without knowing too much of detail, asking kernel to restart because one
-block was corrupt sounds little drastic. If you are sending user space
-events, why not let user space initiate the start and manage policy in
-user space.
+Two alternatives:
 
-Thanks
-Vivek
+  Document this as a required field going forward, but say that if
+  it is missing the default will be assumed.
+
+  eio|logging|restart  (but those names are confusing)
+
+
+Or (my preference) use a 'features' approach like most other targets do:
+
+<number of feature> <feature arguments>
+
+"error" is the existing default, so doesn't need stating.
+
+The other two could be:
+  restart_on_corruption
+  ignore_corruption
+
+Logging and events would happen in all cases, but if they did need
+controlling independently, additional feature arguments could do that.
+
+Alasdair
