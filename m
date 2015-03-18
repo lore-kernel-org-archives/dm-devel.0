@@ -1,21 +1,16 @@
 From: Sami Tolvanen <samitolvanen@google.com>
-Subject: Re: [PATCH] dm-verity: Add error handling modes for
- corrupted blocks
-Date: Wed, 18 Mar 2015 15:49:51 +0000
-Message-ID: <20150318154951.GA29369@google.com>
+Subject: [PATCHv3] dm-verity: Add error handling modes for
+	corrupted blocks
+Date: Wed, 18 Mar 2015 15:52:14 +0000
+Message-ID: <20150318155214.GB29369@google.com>
 References: <20150316155559.GA32397@google.com>
-	<20150317152749.GA24901@redhat.com>
-	<20150317160649.GA36193@google.com>
-	<20150317180358.GD24901@redhat.com>
-	<20150318132453.GA3176@google.com>
-	<alpine.LRH.2.02.1503181135461.29107@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1503181135461.29107@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20150316155559.GA32397@google.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,16 +20,312 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, wad@chromium.org, msb@chromium.org
+To: mpatocka@redhat.com, msb@chromium.org, wad@chromium.org
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Mar 18, 2015 at 11:42:47AM -0400, Mikulas Patocka wrote:
-> I hope that you at least turn this feature off after a few reboots and 
-> give the user a chance to save his data.
+Add device specific modes to dm-verity to specify how corrupted
+blocks should be handled. The following modes are defined:
 
-Of course. We prompt the user after the reboot and ask them if they want
-to proceed using the device without verification. We don't want to disable
-verification before the user has been notified though.
+  - DM_VERITY_MODE_EIO is the default behavior, where reading a
+    corrupted block results in -EIO.
 
-Sami
+  - DM_VERITY_MODE_LOGGING only logs corrupted blocks, but does
+    not block the read.
+
+  - DM_VERITY_MODE_RESTART calls kernel_restart when a corrupted
+    block is discovered.
+
+In addition, each mode sends a uevent to notify userspace of
+corruption and to allow further recovery actions.
+
+The driver defaults to previous behavior (DM_VERITY_MODE_EIO)
+and other modes can be enabled with an additional parameter to
+the verity table.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+
+---
+Changes since v2:
+  Make feature arguments extendable
+  Change argument names to be more understandable
+
+Changes since v1:
+  Use words instead of numeric values as the mode parameter
+  Use DMERR when logging corrupted blocks
+  Add the operating mode to STATUSTYPE_TABLE output
+  Add a DM_ prefix to the uevent variable name
+
+---
+ Documentation/device-mapper/verity.txt |   17 ++
+ drivers/md/dm-verity.c                 |  146 +++++++++++++++++++++--
+ 2 files changed, 151 insertions(+), 12 deletions(-)
+
+diff --git a/Documentation/device-mapper/verity.txt b/Documentation/device-mapper/verity.txt
+index 9884681..64ccc5a 100644
+--- a/Documentation/device-mapper/verity.txt
++++ b/Documentation/device-mapper/verity.txt
+@@ -11,6 +11,7 @@ Construction Parameters
+     <data_block_size> <hash_block_size>
+     <num_data_blocks> <hash_start_block>
+     <algorithm> <digest> <salt>
++    [<#opt_params> <opt_params>]
+ 
+ <version>
+     This is the type of the on-disk hash format.
+@@ -62,6 +63,22 @@ Construction Parameters
+ <salt>
+     The hexadecimal encoding of the salt value.
+ 
++<#opt_params>
++    Number of optional parameters. If there are no optional parameters,
++    the optional paramaters section can be skipped or #opt_params can be zero.
++    Otherwise #opt_params is the number of following arguments.
++
++    Example of optional parameters section:
++        1 ignore_corruption
++
++ignore_corruption
++    Log corrupted blocks, but allow read operations to proceed normally.
++
++restart_on_corruption
++    Restart the system when a corrupted block is discovered. This option is
++    not compatible with ignore_corruption and requires user space support to
++    avoid restart loops.
++
+ Theory of operation
+ ===================
+ 
+diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+index 7a7bab8..6824adc 100644
+--- a/drivers/md/dm-verity.c
++++ b/drivers/md/dm-verity.c
+@@ -18,20 +18,39 @@
+ 
+ #include <linux/module.h>
+ #include <linux/device-mapper.h>
++#include <linux/reboot.h>
+ #include <crypto/hash.h>
+ 
+ #define DM_MSG_PREFIX			"verity"
+ 
++#define DM_VERITY_ENV_LENGTH		42
++#define DM_VERITY_ENV_VAR_NAME		"DM_VERITY_ERR_BLOCK_NR"
++
+ #define DM_VERITY_IO_VEC_INLINE		16
+ #define DM_VERITY_MEMPOOL_SIZE		4
+ #define DM_VERITY_DEFAULT_PREFETCH_SIZE	262144
+ 
+ #define DM_VERITY_MAX_LEVELS		63
++#define DM_VERITY_MAX_CORRUPTED_ERRS	100
++
++#define DM_VERITY_OPT_LOGGING		"ignore_corruption"
++#define DM_VERITY_OPT_RESTART		"restart_on_corruption"
+ 
+ static unsigned dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE;
+ 
+ module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, S_IRUGO | S_IWUSR);
+ 
++enum verity_mode {
++	DM_VERITY_MODE_EIO,
++	DM_VERITY_MODE_LOGGING,
++	DM_VERITY_MODE_RESTART
++};
++
++enum verity_block_type {
++	DM_VERITY_BLOCK_TYPE_DATA,
++	DM_VERITY_BLOCK_TYPE_METADATA
++};
++
+ struct dm_verity {
+ 	struct dm_dev *data_dev;
+ 	struct dm_dev *hash_dev;
+@@ -54,6 +73,8 @@ struct dm_verity {
+ 	unsigned digest_size;	/* digest size for the current hash algorithm */
+ 	unsigned shash_descsize;/* the size of temporary space for crypto */
+ 	int hash_failed;	/* set to 1 if hash of any block failed */
++	enum verity_mode mode;	/* mode for handling verification errors */
++	unsigned corrupted_errs;/* Number of errors for corrupted blocks */
+ 
+ 	mempool_t *vec_mempool;	/* mempool of bio vector */
+ 
+@@ -175,6 +196,57 @@ static void verity_hash_at_level(struct dm_verity *v, sector_t block, int level,
+ }
+ 
+ /*
++ * Handle verification errors.
++ */
++static int verity_handle_err(struct dm_verity *v, enum verity_block_type type,
++				 unsigned long long block)
++{
++	char verity_env[DM_VERITY_ENV_LENGTH];
++	char *envp[] = { verity_env, NULL };
++	const char *type_str = "";
++	struct mapped_device *md = dm_table_get_md(v->ti->table);
++
++	/* Corruption should be visible in device status in all modes */
++	v->hash_failed = 1;
++
++	if (v->corrupted_errs >= DM_VERITY_MAX_CORRUPTED_ERRS)
++		goto out;
++
++	++v->corrupted_errs;
++
++	switch (type) {
++	case DM_VERITY_BLOCK_TYPE_DATA:
++		type_str = "data";
++		break;
++	case DM_VERITY_BLOCK_TYPE_METADATA:
++		type_str = "metadata";
++		break;
++	default:
++		BUG();
++	}
++
++	DMERR("%s: %s block %llu is corrupted", v->data_dev->name, type_str,
++		block);
++
++	if (v->corrupted_errs == DM_VERITY_MAX_CORRUPTED_ERRS)
++		DMERR("%s: reached maximum errors", v->data_dev->name);
++
++	snprintf(verity_env, DM_VERITY_ENV_LENGTH, "%s=%d,%llu",
++		DM_VERITY_ENV_VAR_NAME, type, block);
++
++	kobject_uevent_env(&disk_to_dev(dm_disk(md))->kobj, KOBJ_CHANGE, envp);
++
++out:
++	if (v->mode == DM_VERITY_MODE_LOGGING)
++		return 0;
++
++	if (v->mode == DM_VERITY_MODE_RESTART)
++		kernel_restart("dm-verity device corrupted");
++
++	return 1;
++}
++
++/*
+  * Verify hash of a metadata block pertaining to the specified data block
+  * ("block" argument) at a specified level ("level" argument).
+  *
+@@ -251,11 +323,11 @@ static int verity_verify_level(struct dm_verity_io *io, sector_t block,
+ 			goto release_ret_r;
+ 		}
+ 		if (unlikely(memcmp(result, io_want_digest(v, io), v->digest_size))) {
+-			DMERR_LIMIT("metadata block %llu is corrupted",
+-				(unsigned long long)hash_block);
+-			v->hash_failed = 1;
+-			r = -EIO;
+-			goto release_ret_r;
++			if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_METADATA,
++					      hash_block)) {
++				r = -EIO;
++				goto release_ret_r;
++			}
+ 		} else
+ 			aux->hash_verified = 1;
+ 	}
+@@ -367,10 +439,9 @@ test_block_hash:
+ 			return r;
+ 		}
+ 		if (unlikely(memcmp(result, io_want_digest(v, io), v->digest_size))) {
+-			DMERR_LIMIT("data block %llu is corrupted",
+-				(unsigned long long)(io->block + b));
+-			v->hash_failed = 1;
+-			return -EIO;
++			if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA,
++					      io->block + b))
++				return -EIO;
+ 		}
+ 	}
+ 
+@@ -546,6 +617,19 @@ static void verity_status(struct dm_target *ti, status_type_t type,
+ 		else
+ 			for (x = 0; x < v->salt_size; x++)
+ 				DMEMIT("%02x", v->salt[x]);
++		if (v->mode != DM_VERITY_MODE_EIO) {
++			DMEMIT(" 1");
++			switch (v->mode) {
++			case DM_VERITY_MODE_LOGGING:
++				DMEMIT(DM_VERITY_OPT_LOGGING);
++				break;
++			case DM_VERITY_MODE_RESTART:
++				DMEMIT(DM_VERITY_OPT_RESTART);
++				break;
++			default:
++				BUG();
++			}
++		}
+ 		break;
+ 	}
+ }
+@@ -647,13 +731,19 @@ static void verity_dtr(struct dm_target *ti)
+ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ {
+ 	struct dm_verity *v;
+-	unsigned num;
++	struct dm_arg_set as;
++	const char *opt_string;
++	unsigned int num, opt_params;
+ 	unsigned long long num_ll;
+ 	int r;
+ 	int i;
+ 	sector_t hash_position;
+ 	char dummy;
+ 
++	static struct dm_arg _args[] = {
++		{0, 1, "Invalid number of feature args"},
++	};
++
+ 	v = kzalloc(sizeof(struct dm_verity), GFP_KERNEL);
+ 	if (!v) {
+ 		ti->error = "Cannot allocate verity structure";
+@@ -668,8 +758,8 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		goto bad;
+ 	}
+ 
+-	if (argc != 10) {
+-		ti->error = "Invalid argument count: exactly 10 arguments required";
++	if (argc < 10) {
++		ti->error = "Not enough arguments";
+ 		r = -EINVAL;
+ 		goto bad;
+ 	}
+@@ -790,6 +880,38 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		}
+ 	}
+ 
++	argv += 10;
++	argc -= 10;
++
++	/* Optional parameters */
++	if (argc) {
++		as.argc = argc;
++		as.argv = argv;
++
++		r = dm_read_arg_group(_args, &as, &opt_params, &ti->error);
++		if (r)
++			goto bad;
++
++		while (opt_params--) {
++			opt_string = dm_shift_arg(&as);
++			if (!opt_string) {
++				ti->error = "Not enough feature arguments";
++				r = -EINVAL;
++				goto bad;
++			}
++
++			if (!strcasecmp(opt_string, DM_VERITY_OPT_LOGGING))
++				v->mode = DM_VERITY_MODE_LOGGING;
++			else if (!strcasecmp(opt_string, DM_VERITY_OPT_RESTART))
++				v->mode = DM_VERITY_MODE_RESTART;
++			else {
++				ti->error = "Invalid feature arguments";
++				r = -EINVAL;
++				goto bad;
++			}
++		}
++	}
++
+ 	v->hash_per_block_bits =
+ 		__fls((1 << v->hash_dev_block_bits) / v->digest_size);
+ 
