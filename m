@@ -1,42 +1,75 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm log userspace: use mempool_create_kmalloc_pool()
-Date: Wed, 18 Mar 2015 18:30:46 -0400
-Message-ID: <20150318223045.GA17765@redhat.com>
-References: <alpine.DEB.2.10.1503071642540.2772@chino.kir.corp.google.com>
- <20150311125852.GA28768@redhat.com>
+From: Maxim Patlasov <mpatlasov@parallels.com>
+Subject: dm thin: How to shrink think pool device?
+Date: Wed, 18 Mar 2015 16:46:17 -0700
+Message-ID: <CAFmwnFZU56G8EAHprspPhsXsihRj017RhuansYtgEAuoCBG9qA@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150311125852.GA28768@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Rientjes <rientjes@google.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
+Content-Type: multipart/mixed; boundary="===============2478856125817616881=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Mar 11 2015 at  8:58am -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+--===============2478856125817616881==
+Content-Type: multipart/alternative; boundary=047d7bf0f5fe8229ba051198b099
 
-> On Sat, Mar 07 2015 at  7:43pm -0500,
-> David Rientjes <rientjes@google.com> wrote:
-> 
-> > Mempools created for kmalloc caches should use
-> > mempool_create_kmalloc_pool().
-> > 
-> > Cc: Alasdair Kergon <agk@redhat.com>
-> > Cc: Mike Snitzer <snitzer@redhat.com>
-> > Cc: Neil Brown <neilb@suse.de>
-> > Signed-off-by: David Rientjes <rientjes@google.com>
-> 
-> Thanks David, I'll get this queued up.
+--047d7bf0f5fe8229ba051198b099
+Content-Type: text/plain; charset=UTF-8
 
-Turns out I already fixed this a different way about a month ago and
-staged it for 4.1, see:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=db57216e710ea5c517f1030fafe7eb21ac938dc5
+Hi,
 
-You'll be interested to note this portion of that commit's header:
-"This _should_ eliminate DM's need for io_schedule_timeout() in
-mempool_alloc(); so io_schedule() should be sufficient now."
+It seems that a "trim" pool message was planned long time ago, but never
+implemented. Could someone update about current status of that? The
+question came from the following use-case:
 
-I'll defer to you on whether you'd like to pursue switching to
-io_schedule() in mempool_alloc().
+Suppose we have a thin pool on top of LVM volume group. The group comprises
+of several storage drives. Now I need to (physically) remove one of them.
+The intention is to use pvmove and vgreduce, but obviously thin pool must
+be requested to shrink itself at first.
+
+Btw, Documentation/device-mapper/thin-provisioning.txt still has a leftover
+about it:
+
+> If you wish to reduce the size of your thin device and potentially
+> regain some space then send the 'trim' message to the pool.
+
+Thanks,
+Maxim
+
+--047d7bf0f5fe8229ba051198b099
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><div><div><div><div>Hi,<br><br></div>It seems that a =
+&quot;trim&quot; pool message was planned long time ago, but never implemen=
+ted. Could someone update about current status of that? The question came f=
+rom the following use-case:<br><br></div>Suppose we have a thin pool on top=
+ of LVM volume group. The group comprises of several storage drives. Now I =
+need to (physically) remove one of them. The intention is to use pvmove and=
+ vgreduce, but obviously thin pool must be requested to shrink itself at fi=
+rst.<br><br></div>Btw, Documentation/device-mapper/thin-provisioning.txt st=
+ill has a leftover about it:<br><br>&gt; If you wish to reduce the size of =
+your thin device and potentially<br>&gt; regain some space then send the &#=
+39;trim&#39; message to the pool.<br><br></div>Thanks,<br></div>Maxim<br></=
+div>
+
+--047d7bf0f5fe8229ba051198b099--
+
+
+--===============2478856125817616881==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2478856125817616881==--
