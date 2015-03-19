@@ -1,67 +1,35 @@
-From: Maxim Patlasov <mpatlasov@parallels.com>
-Subject: Re: dm thin: How to shrink think pool device?
-Date: Wed, 18 Mar 2015 18:42:44 -0700
-Message-ID: <550A2994.5000601@parallels.com>
-References: <CAFmwnFZU56G8EAHprspPhsXsihRj017RhuansYtgEAuoCBG9qA@mail.gmail.com>
-	<20150319005144.GA18305@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Josef Bacik <jbacik@fb.com>
+Subject: [PATCH 0/3] Device mapper log writes patches
+Date: Thu, 19 Mar 2015 16:31:07 -0400
+Message-ID: <1426797070-27463-1-git-send-email-jbacik@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150319005144.GA18305@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain
+Return-path: <fstests-owner@vger.kernel.org>
+Sender: fstests-owner@vger.kernel.org
+To: linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, zab@redhat.com, fstests@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 03/18/2015 05:51 PM, Mike Snitzer wrote:
-> On Wed, Mar 18 2015 at  7:46pm -0400,
-> Maxim Patlasov <mpatlasov@parallels.com> wrote:
->
->> Hi,
->>
->> It seems that a "trim" pool message was planned long time ago, but never
->> implemented. Could someone update about current status of that? The
->> question came from the following use-case:
->>
->> Suppose we have a thin pool on top of LVM volume group. The group comprises
->> of several storage drives. Now I need to (physically) remove one of them.
->> The intention is to use pvmove and vgreduce, but obviously thin pool must
->> be requested to shrink itself at first.
-> We only support growing the pool.  If a drive used by the pool goes
-> missing then thin_repair will need to fix things.
+Here are my patches for adding the dm-log-writes target to the kernel and the
+supporting xfstests to go along with it.  The dm patch has a pretty detailed
+documentation file to describe the methodology behind the target and how to use
+it.  The xfstest that is generic has been tested on btrfs, xfs and ext4 and
+currently fails on all of them in different ways with my kernel (which is just
+3.19 so don't be too alarmed).  The btrfs specific one passes currently, more
+evil tests will come later.
 
-Do you think a feature allowing to shrink pool data device on-line 
-smoothly will be useful (w.r.t all code complications needed to relocate 
-data blocks inside dm-thin while handling i/o at the same time)?
+Basically the idea behind this target and these tests are to give our file
+systems a more thorough power fail scenario testing.  The target logs writes in
+order that things would have made it safely to disk and then the tests replay
+that log in various ways and check the result.
 
->   
->> Btw, Documentation/device-mapper/thin-provisioning.txt still has a leftover
->> about it:
->>
->>> If you wish to reduce the size of your thin device and potentially
->>> regain some space then send the 'trim' message to the pool.
-> I'll remove that stale documentation (commit 5ec02084f6 should've done
-> that).
->
-> The 'trim' message was never about reducing pool space.  The usage for
-> the trim message (sent to the pool device) was:
->   trim <dev_id> <new_size_in_sectors>
->
-> It was to reduce the size of the thin volume; don't think it was ever
-> wired up because it wasn't needed.
+You can find the supporting userspace program here
 
-Hm... "dmset load <thin-volume>" seems to do exactly that. But, yes, it 
-has nothing to do with reclaiming storage space back to the system.
+https://github.com/josefbacik/log-writes
 
-Thanks,
-Maxim
+I apologize for it being ugly, I was trying to get it working as quickly as
+possible.  There is an example script in there that you can use to do an
+exhaustive step by step through a log to make sure your file system is always
+consistent.  Thanks,
+
+Josef
+
