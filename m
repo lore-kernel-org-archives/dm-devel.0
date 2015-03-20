@@ -1,70 +1,49 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH 1/3] dm: log writes target
-Date: Sun, 22 Mar 2015 08:50:51 +1100
-Message-ID: <20150321215051.GP10105@dastard>
-References: <1426797070-27463-1-git-send-email-jbacik@fb.com>
- <1426797070-27463-2-git-send-email-jbacik@fb.com>
+From: Vaughan Cao <vaughan.cao@oracle.com>
+Subject: [PATCH] dm-multipath: fix get_word return value when the
+	last word is found
+Date: Fri, 20 Mar 2015 17:01:54 +0800
+Message-ID: <1426842114-3335-1-git-send-email-vaughan.cao@oracle.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1426797070-27463-2-git-send-email-jbacik@fb.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Josef Bacik <jbacik@fb.com>
-Cc: linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, zab@redhat.com, fstests@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: vaughan.cao@oracle.com
 List-Id: dm-devel.ids
 
-On Thu, Mar 19, 2015 at 04:31:08PM -0400, Josef Bacik wrote:
-> This creates a new target that is meant for file system developers to test file
-> system integrity at particular points in the life of a file system.  We capture
-> all write requests and the data and log the requests and the data to a separate
-> device for later replay.  There is a userspace utility to do this replay.  The
-> idea behind this is to give file system developers to verify that the file
-> system is always consistent.  Thanks,
-> 
-> Signed-off-by: Josef Bacik <jbacik@fb.com>
-> ---
->  Documentation/device-mapper/dm-log-writes.txt | 136 +++++
->  drivers/md/Kconfig                            |  16 +
->  drivers/md/Makefile                           |   1 +
->  drivers/md/dm-log-writes.c                    | 809 ++++++++++++++++++++++++++
->  4 files changed, 962 insertions(+)
->  create mode 100644 Documentation/device-mapper/dm-log-writes.txt
->  create mode 100644 drivers/md/dm-log-writes.c
-> 
-> diff --git a/Documentation/device-mapper/dm-log-writes.txt b/Documentation/device-mapper/dm-log-writes.txt
-> new file mode 100644
-> index 0000000..f3a9fa2
-> --- /dev/null
-> +++ b/Documentation/device-mapper/dm-log-writes.txt
-> @@ -0,0 +1,136 @@
-> +dm-log-writes
-> +=============
-> +
-> +This target takes 2 devices, one to pass all IO to normally, and one to log all
-> +of the write operations to.  This is intended for file system developers wishing
-> +to verify the integrity of metadata or data as the file system is written to.
-> +There is a log_writes_entry written for every WRITE request and the target is
-> +able to take arbitrary data from userspace to insert into the log.  The data
-> +that is in the WRITE requests is copied into the log to make the replay happen
-> +exactly as it happened originally.
+get_word() returns how many bytes it has parsed when it gets a new word.
+But the deleted code will cause 0 returned for the last word, which
+breaks this semantic. It hasn't cause any trouble yet because we have
+been calling it as we are certain there is an word left.
 
-Hmm - terminology thing here - "log writes" have specific meaning to
-any application that does write ahead logging. E.g. journalling
-filesystems, databases, etc. So I find this name extremely confusing
-because a dm-log-write device has nothing to do with write ahead
-logging, log writes or journalling...
+Signed-off-by: Vaughan Cao <vaughan.cao@oracle.com>
+---
+ libmultipath/util.c | 3 ---
+ 1 file changed, 3 deletions(-)
 
-I'm sure lots of other people are going to have the same problem
-understanding what this device is for because of that.
-
-I know this is effectively bikeshedding, but I think a less
-ambiguous name would be a good thing to have. e.g. dm-iotracer.
-Nobody will get confused that way....
-
-Cheers,
-
-Dave.
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index ac0d1b2..0bb9c15 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -93,9 +93,6 @@ get_word (char * sentence, char ** word)
+ 	strchop(*word);
+ 	condlog(4, "*word = %s, len = %i", *word, len);
+ 
+-	if (*p == '\0')
+-		return 0;
+-
+ 	return skip + len;
+ }
+ 
 -- 
-Dave Chinner
-david@fromorbit.com
+1.9.0
