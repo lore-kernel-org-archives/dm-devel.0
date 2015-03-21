@@ -1,65 +1,47 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.0-rc5
-Date: Fri, 20 Mar 2015 16:31:58 -0400
-Message-ID: <20150320203157.GA3735@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 11/12] fs: don't reassign dirty inodes to default_backing_dev_info
+Date: Sat, 21 Mar 2015 11:11:09 -0400
+Message-ID: <CAMM=eLe6Tt+g7dLcnn5a1fQboDknkasazsMiOFBziWPZemnYtg@mail.gmail.com>
+References: <1421228561-16857-1-git-send-email-hch@lst.de> <1421228561-16857-12-git-send-email-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Joe Thornber <ejt@redhat.com>, Alasdair G Kergon <agk@redhat.com>, "Darrick J. Wong" <darrick.wong@oracle.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1421228561-16857-12-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hi Linus,
+On Wed, Jan 14, 2015 at 4:42 AM, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
+> If we have dirty inodes we need to call the filesystem for it, even if the
+> device has been removed and the filesystem will error out early.  The
+> current code does that by reassining all dirty inodes to the default
+> backing_dev_info when a bdi is unlinked, but that's pretty pointless given
+> that the bdi must always outlive the super block.
+>
+> Instead of stopping writeback at unregister time and moving inodes to the
+> default bdi just keep the current bdi alive until it is destroyed.  The
+> containing objects of the bdi ensure this doesn't happen until all
+> writeback has finished by erroring out.
+>
+> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+> Reviewed-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> ---
+>  mm/backing-dev.c | 91 +++++++++++++++-----------------------------------------
+>  1 file changed, 24 insertions(+), 67 deletions(-)
 
-The following changes since commit c517d838eb7d07bbe9507871fab3931deccff539:
+Hey Christoph,
 
-  Linux 4.0-rc1 (2015-02-22 18:21:14 -0800)
+Just a heads up: your commit c4db59d31e39ea067c32163ac961e9c80198fd37
+is suspected as the first bad commit in a bisect performed to track
+down the cause of DM crashes reported in this BZ:
+https://bugzilla.redhat.com/show_bug.cgi?id=1202449
 
-are available in the git repository at:
+I've yet to look closely at _why_ this commit but figured I'd share
+since this appears to be a 4.0-rcX regression.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.0-fixes
-
-for you to fetch changes up to e5db29806b99ce2b2640d2e4d4fcb983cea115c5:
-
-  dm io: deal with wandering queue limits when handling REQ_DISCARD and REQ_WRITE_SAME (2015-02-27 14:53:32 -0500)
-
-Please pull, thanks.
 Mike
-
-----------------------------------------------------------------
-A handful of stable fixes for DM:
-- fix thin target to always zero-fill reads to unprovisioned blocks
-- fix to interlock device destruction's suspend from internal suspends
-- fix 2 snapshot exception store handover bugs
-- fix dm-io to cope with DISCARD and WRITE_SAME capabilities changing
-
-----------------------------------------------------------------
-Darrick J. Wong (1):
-      dm io: deal with wandering queue limits when handling REQ_DISCARD and REQ_WRITE_SAME
-
-Joe Thornber (1):
-      dm thin: fix to consistently zero-fill reads to unprovisioned blocks
-
-Mikulas Patocka (3):
-      dm: hold suspend_lock while suspending device during device deletion
-      dm snapshot: suspend origin when doing exception handover
-      dm snapshot: suspend merging snapshot when doing exception handover
-
- drivers/md/dm-io.c            |  15 ++++--
- drivers/md/dm-snap.c          | 120 ++++++++++++++++++++++++++++++++++++++----
- drivers/md/dm-thin.c          |  11 ----
- drivers/md/dm.c               |  21 ++++++++
- include/linux/device-mapper.h |   1 +
- 5 files changed, 142 insertions(+), 26 deletions(-)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
