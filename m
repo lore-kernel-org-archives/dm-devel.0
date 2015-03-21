@@ -1,47 +1,70 @@
-From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 11/12] fs: don't reassign dirty inodes to default_backing_dev_info
-Date: Sat, 21 Mar 2015 11:11:09 -0400
-Message-ID: <CAMM=eLe6Tt+g7dLcnn5a1fQboDknkasazsMiOFBziWPZemnYtg@mail.gmail.com>
-References: <1421228561-16857-1-git-send-email-hch@lst.de> <1421228561-16857-12-git-send-email-hch@lst.de>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH 1/3] dm: log writes target
+Date: Sun, 22 Mar 2015 08:50:51 +1100
+Message-ID: <20150321215051.GP10105@dastard>
+References: <1426797070-27463-1-git-send-email-jbacik@fb.com>
+ <1426797070-27463-2-git-send-email-jbacik@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1421228561-16857-12-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1426797070-27463-2-git-send-email-jbacik@fb.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Josef Bacik <jbacik@fb.com>
+Cc: linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, zab@redhat.com, fstests@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, Jan 14, 2015 at 4:42 AM, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
-> If we have dirty inodes we need to call the filesystem for it, even if the
-> device has been removed and the filesystem will error out early.  The
-> current code does that by reassining all dirty inodes to the default
-> backing_dev_info when a bdi is unlinked, but that's pretty pointless given
-> that the bdi must always outlive the super block.
->
-> Instead of stopping writeback at unregister time and moving inodes to the
-> default bdi just keep the current bdi alive until it is destroyed.  The
-> containing objects of the bdi ensure this doesn't happen until all
-> writeback has finished by erroring out.
->
-> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-> Reviewed-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+On Thu, Mar 19, 2015 at 04:31:08PM -0400, Josef Bacik wrote:
+> This creates a new target that is meant for file system developers to test file
+> system integrity at particular points in the life of a file system.  We capture
+> all write requests and the data and log the requests and the data to a separate
+> device for later replay.  There is a userspace utility to do this replay.  The
+> idea behind this is to give file system developers to verify that the file
+> system is always consistent.  Thanks,
+> 
+> Signed-off-by: Josef Bacik <jbacik@fb.com>
 > ---
->  mm/backing-dev.c | 91 +++++++++++++++-----------------------------------------
->  1 file changed, 24 insertions(+), 67 deletions(-)
+>  Documentation/device-mapper/dm-log-writes.txt | 136 +++++
+>  drivers/md/Kconfig                            |  16 +
+>  drivers/md/Makefile                           |   1 +
+>  drivers/md/dm-log-writes.c                    | 809 ++++++++++++++++++++++++++
+>  4 files changed, 962 insertions(+)
+>  create mode 100644 Documentation/device-mapper/dm-log-writes.txt
+>  create mode 100644 drivers/md/dm-log-writes.c
+> 
+> diff --git a/Documentation/device-mapper/dm-log-writes.txt b/Documentation/device-mapper/dm-log-writes.txt
+> new file mode 100644
+> index 0000000..f3a9fa2
+> --- /dev/null
+> +++ b/Documentation/device-mapper/dm-log-writes.txt
+> @@ -0,0 +1,136 @@
+> +dm-log-writes
+> +=============
+> +
+> +This target takes 2 devices, one to pass all IO to normally, and one to log all
+> +of the write operations to.  This is intended for file system developers wishing
+> +to verify the integrity of metadata or data as the file system is written to.
+> +There is a log_writes_entry written for every WRITE request and the target is
+> +able to take arbitrary data from userspace to insert into the log.  The data
+> +that is in the WRITE requests is copied into the log to make the replay happen
+> +exactly as it happened originally.
 
-Hey Christoph,
+Hmm - terminology thing here - "log writes" have specific meaning to
+any application that does write ahead logging. E.g. journalling
+filesystems, databases, etc. So I find this name extremely confusing
+because a dm-log-write device has nothing to do with write ahead
+logging, log writes or journalling...
 
-Just a heads up: your commit c4db59d31e39ea067c32163ac961e9c80198fd37
-is suspected as the first bad commit in a bisect performed to track
-down the cause of DM crashes reported in this BZ:
-https://bugzilla.redhat.com/show_bug.cgi?id=1202449
+I'm sure lots of other people are going to have the same problem
+understanding what this device is for because of that.
 
-I've yet to look closely at _why_ this commit but figured I'd share
-since this appears to be a 4.0-rcX regression.
+I know this is effectively bikeshedding, but I think a less
+ambiguous name would be a good thing to have. e.g. dm-iotracer.
+Nobody will get confused that way....
 
-Mike
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
