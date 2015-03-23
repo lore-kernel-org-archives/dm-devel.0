@@ -1,49 +1,39 @@
-From: Vaughan Cao <vaughan.cao@oracle.com>
-Subject: [PATCH] dm-multipath: fix get_word return value when the
-	last word is found
-Date: Fri, 20 Mar 2015 17:01:54 +0800
-Message-ID: <1426842114-3335-1-git-send-email-vaughan.cao@oracle.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [dm-devel] [PATCH 1/3] dm: log writes target
+Date: Mon, 23 Mar 2015 14:02:45 -0400
+Message-ID: <20150323180245.GE3172@redhat.com>
+References: <1426797070-27463-1-git-send-email-jbacik@fb.com>
+ <1426797070-27463-2-git-send-email-jbacik@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: vaughan.cao@oracle.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <fstests-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1426797070-27463-2-git-send-email-jbacik@fb.com>
+Sender: fstests-owner@vger.kernel.org
+To: Josef Bacik <jbacik@fb.com>
+Cc: linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, zab@redhat.com, fstests@vger.kernel.org
 List-Id: dm-devel.ids
 
-get_word() returns how many bytes it has parsed when it gets a new word.
-But the deleted code will cause 0 returned for the last word, which
-breaks this semantic. It hasn't cause any trouble yet because we have
-been calling it as we are certain there is an word left.
+On Thu, Mar 19, 2015 at 04:31:08PM -0400, Josef Bacik wrote:
 
-Signed-off-by: Vaughan Cao <vaughan.cao@oracle.com>
----
- libmultipath/util.c | 3 ---
- 1 file changed, 3 deletions(-)
+[..]
+> + * We log writes only after they have been flushed, this makes the log describe
+> + * close to the order in which the data hits the actual disk, not its cache.  So
+> + * for example the following sequence (W means write, C means complete)
+> + *
+> + * Wa,Wb,Wc,Cc,Ca,FLUSH,FUAd,Cb,CFLUSH,CFUAd
+> + *
+> + * Would result in the log looking like this
+> + *
+> + * c,a,flush,fuad,b,<other writes>,<next flush>
+> + *
 
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index ac0d1b2..0bb9c15 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -93,9 +93,6 @@ get_word (char * sentence, char ** word)
- 	strchop(*word);
- 	condlog(4, "*word = %s, len = %i", *word, len);
- 
--	if (*p == '\0')
--		return 0;
--
- 	return skip + len;
- }
- 
--- 
-1.9.0
+A minor nit, Should this sequence be following.
+
+c,a,b, flush,fuad,<other writes>,<next flush>
+
+when flush completed by that time write of b has completed too. So it
+should be written first?
+
+Thanks
+Vivek
