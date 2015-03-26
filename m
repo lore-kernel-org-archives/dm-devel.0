@@ -1,16 +1,13 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 43/78] Fixup device-mapper 'cookie' handling
-Date: Thu, 26 Mar 2015 15:20:09 +0100
-Message-ID: <55141599.2060704@suse.de>
-References: <1426509425-15978-1-git-send-email-hare@suse.de>
-	<1426509425-15978-44-git-send-email-hare@suse.de>
-	<20150325163057.GO29132@octiron.msp.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fix for 4.0-rc6
+Date: Thu, 26 Mar 2015 17:26:57 -0400
+Message-ID: <20150326212657.GA55395@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150325163057.GO29132@octiron.msp.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,84 +17,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 03/25/2015 05:30 PM, Benjamin Marzinski wrote:
-> On Mon, Mar 16, 2015 at 01:36:30PM +0100, Hannes Reinecke wrote:
->> device-mapper has a 'cookie', which is inserted with the ioctl
->> for modifying device-mapper devices.
->> It is used as a synchronization point between udev and any other
->> applications to notify the latter when udev has finished
->> processing the event.
->> Originally multipath would only use a single cookie for every
->> transaction, and wait for that cookie at the end of the program.
->> Which works well if you only have one transaction, but for several
->> (like calling 'multipath') it will actually overwrite the cookie
->> and fail to wait for earlier events.
-> =
+Hi Linus,
 
-> That shouldn't be happening.  Looking at the dm_task_set_cookie code
-> =
+The following changes since commit e5db29806b99ce2b2640d2e4d4fcb983cea115c5:
 
->         if (*cookie) {
->                 if (!_get_cookie_sem(*cookie, &semid))
->                         goto_bad;
->         } else if (!_udev_notify_sem_create(cookie, &semid))
->                 goto_bad;
-> =
+  dm io: deal with wandering queue limits when handling REQ_DISCARD and REQ_WRITE_SAME (2015-02-27 14:53:32 -0500)
 
-> The first time we use that cookie, it should be zero, so a new semaphore
-> will be created, and the id will be returned to us.  Subsequent calls to
-> dm_task_set_cookie with the same cookie (which is now non-zero) should
-> just be using the same semaphore, allowing you you wait just one time on
-> all the actions linked to that cookie.  This should be more efficient
-> than having to wait on each action (since udev can complete them in the
-> background as we go on).
-> =
+are available in the git repository at:
 
-> If there really are cookies that are not waited for, you should be able
-> to see that by running
-> =
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.0-fix-2
 
-> # dmsetup udevcookies
-> =
+for you to fetch changes up to 63a4f065ece613b6d575b538234375b0e9c23bbc:
 
-> After running the multipath command.  Cookies won't go away until
-> someone waits for them. If there are cookies listed there, then my guess
-> would be that something is resetting conf->cookie to 0 after our first
-> call to dm_task_set_cookie.  If there aren't, then it would appear that
-> something else, instead of not waiting for the cookies, is causing
-> device mapper to fail back to manual device node creation.
-> =
+  dm: fix add_disk() NULL pointer due to race with free_dev() (2015-03-23 18:14:00 -0400)
 
-> If you can verify that you are passing the cookie value that you get
-> back from the first call to dm_task_set_cookie() into sebsequent calls,
-> and you still are seeing non-watited for cookies with "dmsetup
-> udevcookies" then that sounds to me like a problem in device-mapper, and
-> we should check that out.
-> =
+Please pull, thanks.
+Mike
 
-Hmm. It _might_ have been caused by multipathd not properly
-synchronized with udev (the original service files didn't have a
-dependency on udev), hence the call to dm_udev_set_sync_support()
-would cause device-mapper to switch off the udev fallback.
+----------------------------------------------------------------
+. Fix DM core device cleanup regression -- due to a latent race that was
+  exposed by the bdi changes that were introduced during the 4.0 merge.
 
-Speaking of nasty side-effects ...
-Can't we have a proper warning in dm_udev_set_sync_support(),
-alerting us that the system will not behave as expected?
+----------------------------------------------------------------
+Mike Snitzer (1):
+      dm: fix add_disk() NULL pointer due to race with free_dev()
 
-But with that resolved it might be that indeed the patch is not
-required. I'll check.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		               zSeries & Storage
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+ drivers/md/dm.c | 26 ++++++++++++++++----------
+ 1 file changed, 16 insertions(+), 10 deletions(-)
