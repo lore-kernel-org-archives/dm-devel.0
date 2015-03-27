@@ -1,17 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 78/78] multipathd: trigger all devices on
-	startup
-Date: Fri, 27 Mar 2015 08:22:32 +0100
-Message-ID: <55150538.9000405@suse.de>
+Subject: Re: [PATCH 77/78] multipathd: asynchronous configuration
+Date: Fri, 27 Mar 2015 09:09:35 +0100
+Message-ID: <5515103F.8020903@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
-	<1426509425-15978-79-git-send-email-hare@suse.de>
-	<20150327055947.GX29132@octiron.msp.redhat.com>
+	<1426509425-15978-78-git-send-email-hare@suse.de>
+	<20150327055820.GW29132@octiron.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150327055947.GX29132@octiron.msp.redhat.com>
+In-Reply-To: <20150327055820.GW29132@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,24 +21,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 03/27/2015 06:59 AM, Benjamin Marzinski wrote:
-> On Mon, Mar 16, 2015 at 01:37:05PM +0100, Hannes Reinecke wrote:
->> During startup multipathd might race with udev and device discovery.
->> During that time any information from libudev might not be fully
->> available, leading to spurious multipathd failures during startup.
->> So instead of scanning all devices on our own we should just
->> re-trigger the existing devices; with that we'll read _all_
->> devices via uevents during startup and avoid the race condition.
+On 03/27/2015 06:58 AM, Benjamin Marzinski wrote:
+> On Mon, Mar 16, 2015 at 01:37:04PM +0100, Hannes Reinecke wrote:
+>> For initial configuration multipathd waits it has synchronized
+>> with the existing setup. On larger systems this takes up quite
+>> some time (I've measured 80 seconds on a system with 1024 paths)
+>> causing systemd to stall and the system to fail booting.
+>> This patch makes the initial configuration asynchronous, and
+>> using the same codepath as the existing 'reconfigure' CLI
+>> command.
 > =
 
-> Should we also be sending change uevents for the dm devices?
+> If the issue is that configure takes too long, and is keeping multipath
+> from resetting the watchdog timer, can't this problem still happen?
 > =
 
-No. We just need to retrigger the 'sd' devices, as with them we'll
-be reconfiguring the dm devices anyway.
+> reconfigure still is called under the vecs lock, and checkerloop still
+> locks the vecs lock, so a call to reconfigure can still stall the
+> checker loop for just as long.
+> =
+
+> Or am I missing something?
+
+The problem here is that on large configurations multipathd might
+spend too much time in configure(), so the sd_notify() call with
+'RUNNING' is would be later than the default systemd service timeout.
+Hence multipathd will be killed by systemd with a job timeout, with
+no chance to get it to run, ever.
 
 Cheers,
 
