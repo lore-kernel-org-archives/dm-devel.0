@@ -1,17 +1,17 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 50/78] Allow zero-sized devices during
-	configuration
-Date: Thu, 26 Mar 2015 22:56:09 -0500
-Message-ID: <20150327035609.GR29132@octiron.msp.redhat.com>
+Subject: Re: [PATCH 68/78] libmultipath: unset 'uid_attribute' on
+	failure
+Date: Thu, 26 Mar 2015 23:10:37 -0500
+Message-ID: <20150327041037.GS29132@octiron.msp.redhat.com>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
-	<1426509425-15978-51-git-send-email-hare@suse.de>
+	<1426509425-15978-69-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1426509425-15978-51-git-send-email-hare@suse.de>
+In-Reply-To: <1426509425-15978-69-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,52 +22,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 16, 2015 at 01:36:37PM +0100, Hannes Reinecke wrote:
-> A size of '0' doesn't indicate an invalid device; other paths might
-> end up with a correct size.
+On Mon, Mar 16, 2015 at 01:36:55PM +0100, Hannes Reinecke wrote:
+> Due to a race condition within udev the 'uid_attribute'
+> might not always be set. So we should be zeroing the
+> 'uid_attribute' when retrieving the uid by other means,
+> otherwise the discovery process will blacklist the device.
 
-don't we also need to change this is ev_add_path, then?
+Possibly I'm just missing obvious here, but I don't get the point of
+zeroing out the uid_attribute.  Won't it just get reset on the next call
+to get_uid?
 
 -Ben
 
 > 
 > Signed-off-by: Hannes Reinecke <hare@suse.de>
 > ---
->  libmultipath/configure.c | 11 ++++++-----
->  1 file changed, 6 insertions(+), 5 deletions(-)
+>  libmultipath/discovery.c | 10 +++++++---
+>  1 file changed, 7 insertions(+), 3 deletions(-)
 > 
-> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> index 2c10c22..ddbd3ed 100644
-> --- a/libmultipath/configure.c
-> +++ b/libmultipath/configure.c
-> @@ -768,8 +768,8 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
->  			continue;
->  
->  		/* 3. if path has disappeared */
-> -		if (!pp1->size) {
-> -			orphan_path(pp1, "invalid size");
-> +		if (pp1->state == PATH_REMOVED) {
-> +			orphan_path(pp1, "path removed");
->  			continue;
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index d5dda2c..8e6b228 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -1497,13 +1497,17 @@ get_uid (struct path * pp)
 >  		}
->  
-> @@ -806,10 +806,11 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
->  			if (strcmp(pp1->wwid, pp2->wwid))
->  				continue;
->  
-> -			if (!pp2->size)
-> -				continue;
-> +			if (!mpp->size && pp2->size)
-> +				mpp->size = pp2->size;
->  
-> -			if (pp2->size != mpp->size) {
-> +			if (mpp->size && pp2->size &&
-> +			    pp2->size != mpp->size) {
->  				/*
->  				 * ouch, avoid feeding that to the DM
->  				 */
+>  		if (len <= 0) {
+>  			len = get_vpd_uid(pp);
+> -			if (len > 0)
+> +			if (len > 0) {
+>  				origin = "sysfs";
+> +				pp->uid_attribute = NULL;
+> +			}
+>  		}
+>  		if (len <= 0) {
+>  			len = get_udev_uid(pp, DEFAULT_UID_ATTRIBUTE);
+> -			if (len > 0)
+> -				origin = "udev";
+> +			if (len > 0) {
+> +				origin = "default";
+> +				pp->uid_attribute = DEFAULT_UID_ATTRIBUTE;
+> +			}
+>  		}
+>  	}
+>  	if ( len < 0 ) {
 > -- 
 > 1.8.4.5
