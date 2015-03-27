@@ -1,17 +1,17 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 26/78] 11-dm-mpath.rules: Import blkid values
- if all paths are down
-Date: Thu, 26 Mar 2015 22:42:42 -0500
-Message-ID: <20150327034242.GQ29132@octiron.msp.redhat.com>
+Subject: Re: [PATCH 50/78] Allow zero-sized devices during
+	configuration
+Date: Thu, 26 Mar 2015 22:56:09 -0500
+Message-ID: <20150327035609.GR29132@octiron.msp.redhat.com>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
-	<1426509425-15978-27-git-send-email-hare@suse.de>
+	<1426509425-15978-51-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1426509425-15978-27-git-send-email-hare@suse.de>
+In-Reply-To: <1426509425-15978-51-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,43 +22,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 16, 2015 at 01:36:13PM +0100, Hannes Reinecke wrote:
-> When all paths are failed we should not try to run any programs
-> requiring disk access. However, we still need to create the
-> symlinks so as not to confuse systemd.
-> So import the blkid values from the database in these cases.
+On Mon, Mar 16, 2015 at 01:36:37PM +0100, Hannes Reinecke wrote:
+> A size of '0' doesn't indicate an invalid device; other paths might
+> end up with a correct size.
 
-Don't we still need to set DM_NOSCAN here?
+don't we also need to change this is ev_add_path, then?
 
 -Ben
 
 > 
 > Signed-off-by: Hannes Reinecke <hare@suse.de>
 > ---
->  multipath/11-dm-mpath.rules | 8 +++++++-
->  1 file changed, 7 insertions(+), 1 deletion(-)
+>  libmultipath/configure.c | 11 ++++++-----
+>  1 file changed, 6 insertions(+), 5 deletions(-)
 > 
-> diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
-> index 69c24b5..2e7076d 100644
-> --- a/multipath/11-dm-mpath.rules
-> +++ b/multipath/11-dm-mpath.rules
-> @@ -6,7 +6,13 @@ ENV{DM_UUID}!="mpath-?*", GOTO="mpath_end"
->  # otherwise there would be a hang or IO error on access.
->  # We'd like to avoid this, especially within udev processing.
->  ENV{DM_NR_VALID_PATHS}!="?*", IMPORT{db}="DM_NR_VALID_PATHS"
-> -ENV{DM_NR_VALID_PATHS}=="0", ENV{DM_NOSCAN}="1"
-> +ENV{DM_NR_VALID_PATHS}!="0", GOTO="mpath_blkid_end"
-> +IMPORT{db}="ID_FS_TYPE"
-> +IMPORT{db}="ID_FS_USAGE"
-> +IMPORT{db}="ID_FS_UUID"
-> +IMPORT{db}="ID_FS_UUID_ENC"
-> +IMPORT{db}="ID_FS_VERSION"
-> +LABEL="mpath_blkid_end"
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index 2c10c22..ddbd3ed 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -768,8 +768,8 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+>  			continue;
 >  
->  # Also skip all foreign rules if no path is available.
->  # Remember the original value of DM_DISABLE_OTHER_RULES_FLAG
+>  		/* 3. if path has disappeared */
+> -		if (!pp1->size) {
+> -			orphan_path(pp1, "invalid size");
+> +		if (pp1->state == PATH_REMOVED) {
+> +			orphan_path(pp1, "path removed");
+>  			continue;
+>  		}
+>  
+> @@ -806,10 +806,11 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+>  			if (strcmp(pp1->wwid, pp2->wwid))
+>  				continue;
+>  
+> -			if (!pp2->size)
+> -				continue;
+> +			if (!mpp->size && pp2->size)
+> +				mpp->size = pp2->size;
+>  
+> -			if (pp2->size != mpp->size) {
+> +			if (mpp->size && pp2->size &&
+> +			    pp2->size != mpp->size) {
+>  				/*
+>  				 * ouch, avoid feeding that to the DM
+>  				 */
 > -- 
 > 1.8.4.5
