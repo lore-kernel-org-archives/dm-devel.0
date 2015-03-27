@@ -1,19 +1,18 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 26/78] 11-dm-mpath.rules: Import blkid values
- if all paths are down
-Date: Fri, 27 Mar 2015 11:14:51 -0500
-Message-ID: <20150327161451.GY29132@octiron.msp.redhat.com>
-References: <1426509425-15978-1-git-send-email-hare@suse.de>
-	<1426509425-15978-27-git-send-email-hare@suse.de>
-	<20150327034242.GQ29132@octiron.msp.redhat.com>
-	<55157F3A.3030600@suse.de>
+From: "Stewart, Sean" <Sean.Stewart@netapp.com>
+Subject: Re: A path to a different device was added to an
+ existing mapth
+Date: Fri, 27 Mar 2015 23:26:22 +0000
+Message-ID: <1427498782.22396.29.camel@ict-vth-stewarts01.ict.englab.netapp.com>
+References: <1426759835576.51213@kaminario.com>
+	<1426761325229.70001@kaminario.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <55157F3A.3030600@suse.de>
+In-Reply-To: <1426761325229.70001@kaminario.com>
+Content-Language: en-US
+Content-ID: <56B3C84CB8CC484E80C6280F80268BD3@hq.netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,50 +22,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Guy Keren <guy.keren@kaminario.com>, Eli Malul <eli.malul@kaminario.com>, Shahar Salzman <shahar.salzman@kaminario.com>
 List-Id: dm-devel.ids
 
-On Fri, Mar 27, 2015 at 05:03:06PM +0100, Hannes Reinecke wrote:
-> On 03/27/2015 04:42 AM, Benjamin Marzinski wrote:
-> > On Mon, Mar 16, 2015 at 01:36:13PM +0100, Hannes Reinecke wrote:
-> >> When all paths are failed we should not try to run any programs
-> >> requiring disk access. However, we still need to create the
-> >> symlinks so as not to confuse systemd.
-> >> So import the blkid values from the database in these cases.
-> > =
+Hi Ilan,
 
-> > Don't we still need to set DM_NOSCAN here?
-> > =
 
-> I have no idea at all. I just found the setting somewhere and
-> thought it'd be a good idea.
-> But don't ask me what's for; device-mapper/LVM udev variables
-> are an arcane subject which I've yet to grasp.
+I believe this is solved by the following patch:
+http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=commit;h=5adec73edcdee912821ca8378439dc105e82c60f 
 
-But what I mean is that your patch removes DM_NOSCAN
+Per the patch description:
+When a system is booted to the SAN, a condition can occur where one
+user friendly name is given to a disk during boot, but multipathd tries
+to allocate a different one after boot. If the second alias is already
+used by another device, multipathd can't rename it. Multipathd then has
+incorrect information about the alias/wwid relationships, which can
+result in paths being added to the wrong map.
 
--ENV{DM_NR_VALID_PATHS}=3D=3D"0", ENV{DM_NOSCAN}=3D"1"
+On Thu, 2015-03-19 at 10:35 +0000, Ilan Steinberg wrote:
 
-I assume that this is an oversight, since as you mentioned, we
-don't want to be running blkid on a device with no valid paths.
+> multipathd> show maps
+> name    sysfs uuid
+> mpathiw dm-13 20024f400d5190010
 
--Ben
+This shows the current running configuration, that multipathd is
+operating believing that mpathiw should have be 20024f400d5190010. 
 
-> =
+> This might be useful info - in the bindings file I see:
+> 
+> ...
+> 
+> mpathiv 20024f400d5190010
+> <---------------------------------------- this is the scsi_sn of sdag
+> 
+> mpathiw 20024f400d5190026
+> <---------------------------------------- this is the scsi_sn of sdz/w
+> 
+> ...
+> 
+So what must have happened was that the bindings file was out of sync on
+the initramfs and the local fs (which you can check by unwrapping the
+initramfs and comparing the wwids in each file), and it created the
+device with one name, tried to rename it, couldn't, and multipathd then
+starts adding into the wrong map. It's hard to explain clearly. :)  If
+we could see what both bindings files say, maybe I could explain it
+better.
 
-> Incidentally, a similar fix is needed for 10-dm.rules.
-> But I'll prepare a separate patch for this.
-> =
+To work around it, remaking the initramfs to sync the bindings should
+suffice, or you could define aliases via the multipath sections
+multipath.conf.
 
-> Cheers,
-> =
+Hope this helps.
 
-> Hannes
-> -- =
 
-> Dr. Hannes Reinecke		               zSeries & Storage
-> hare@suse.de			               +49 911 74053 688
-> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-> HRB 21284 (AG N=FCrnberg)
+Thanks,
+Sean Stewart
