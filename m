@@ -1,17 +1,17 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 50/78] Allow zero-sized devices during
-	configuration
-Date: Fri, 27 Mar 2015 08:16:23 +0100
-Message-ID: <551503C7.1010007@suse.de>
+Subject: Re: [PATCH 68/78] libmultipath: unset 'uid_attribute' on
+	failure
+Date: Fri, 27 Mar 2015 08:17:47 +0100
+Message-ID: <5515041B.1040505@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
-	<1426509425-15978-51-git-send-email-hare@suse.de>
-	<20150327035609.GR29132@octiron.msp.redhat.com>
+	<1426509425-15978-69-git-send-email-hare@suse.de>
+	<20150327041037.GS29132@octiron.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150327035609.GR29132@octiron.msp.redhat.com>
+In-Reply-To: <20150327041037.GS29132@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,19 +22,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 03/27/2015 04:56 AM, Benjamin Marzinski wrote:
-> On Mon, Mar 16, 2015 at 01:36:37PM +0100, Hannes Reinecke wrote:
->> A size of '0' doesn't indicate an invalid device; other paths might
->> end up with a correct size.
+On 03/27/2015 05:10 AM, Benjamin Marzinski wrote:
+> On Mon, Mar 16, 2015 at 01:36:55PM +0100, Hannes Reinecke wrote:
+>> Due to a race condition within udev the 'uid_attribute'
+>> might not always be set. So we should be zeroing the
+>> 'uid_attribute' when retrieving the uid by other means,
+>> otherwise the discovery process will blacklist the device.
 > =
 
-> don't we also need to change this is ev_add_path, then?
+> Possibly I'm just missing obvious here, but I don't get the point of
+> zeroing out the uid_attribute.  Won't it just get reset on the next call
+> to get_uid?
 > =
 
-Probably. I'll check.
+The uid_attribute setting is evaluated later on, so when we're not
+zeroing it the code assumes we've got the UID from the udev
+attribute, which is untrue.
 
 Cheers,
 
