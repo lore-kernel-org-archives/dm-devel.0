@@ -1,16 +1,17 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 77/78] multipathd: asynchronous configuration
-Date: Fri, 27 Mar 2015 09:09:35 +0100
-Message-ID: <5515103F.8020903@suse.de>
+Subject: Re: [PATCH 26/78] 11-dm-mpath.rules: Import blkid values
+ if all paths are down
+Date: Fri, 27 Mar 2015 17:03:06 +0100
+Message-ID: <55157F3A.3030600@suse.de>
 References: <1426509425-15978-1-git-send-email-hare@suse.de>
-	<1426509425-15978-78-git-send-email-hare@suse.de>
-	<20150327055820.GW29132@octiron.msp.redhat.com>
+	<1426509425-15978-27-git-send-email-hare@suse.de>
+	<20150327034242.GQ29132@octiron.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150327055820.GW29132@octiron.msp.redhat.com>
+In-Reply-To: <20150327034242.GQ29132@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,33 +25,24 @@ To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 03/27/2015 06:58 AM, Benjamin Marzinski wrote:
-> On Mon, Mar 16, 2015 at 01:37:04PM +0100, Hannes Reinecke wrote:
->> For initial configuration multipathd waits it has synchronized
->> with the existing setup. On larger systems this takes up quite
->> some time (I've measured 80 seconds on a system with 1024 paths)
->> causing systemd to stall and the system to fail booting.
->> This patch makes the initial configuration asynchronous, and
->> using the same codepath as the existing 'reconfigure' CLI
->> command.
+On 03/27/2015 04:42 AM, Benjamin Marzinski wrote:
+> On Mon, Mar 16, 2015 at 01:36:13PM +0100, Hannes Reinecke wrote:
+>> When all paths are failed we should not try to run any programs
+>> requiring disk access. However, we still need to create the
+>> symlinks so as not to confuse systemd.
+>> So import the blkid values from the database in these cases.
 > =
 
-> If the issue is that configure takes too long, and is keeping multipath
-> from resetting the watchdog timer, can't this problem still happen?
+> Don't we still need to set DM_NOSCAN here?
 > =
 
-> reconfigure still is called under the vecs lock, and checkerloop still
-> locks the vecs lock, so a call to reconfigure can still stall the
-> checker loop for just as long.
-> =
+I have no idea at all. I just found the setting somewhere and
+thought it'd be a good idea.
+But don't ask me what's for; device-mapper/LVM udev variables
+are an arcane subject which I've yet to grasp.
 
-> Or am I missing something?
-
-The problem here is that on large configurations multipathd might
-spend too much time in configure(), so the sd_notify() call with
-'RUNNING' is would be later than the default systemd service timeout.
-Hence multipathd will be killed by systemd with a job timeout, with
-no chance to get it to run, ever.
+Incidentally, a similar fix is needed for 10-dm.rules.
+But I'll prepare a separate patch for this.
 
 Cheers,
 
