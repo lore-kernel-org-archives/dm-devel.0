@@ -1,80 +1,67 @@
-From: "Stewart, Sean" <Sean.Stewart@netapp.com>
-Subject: Re: A path to a different device was added to an
- existing mapth
-Date: Fri, 27 Mar 2015 23:26:22 +0000
-Message-ID: <1427498782.22396.29.camel@ict-vth-stewarts01.ict.englab.netapp.com>
-References: <1426759835576.51213@kaminario.com>
-	<1426761325229.70001@kaminario.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 2/2] lib/lcm.c: lcm(n,0)=lcm(0,n) is 0, not n
+Date: Sat, 28 Mar 2015 22:44:28 -0400
+Message-ID: <CAMM=eLdw+7zfoufBEBSKhVR5d=g-a-GdzTA4WBgXUcMx=Av91A@mail.gmail.com>
+References: <1418158984-25546-1-git-send-email-linux@rasmusvillemoes.dk> <1418158984-25546-2-git-send-email-linux@rasmusvillemoes.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1426761325229.70001@kaminario.com>
-Content-Language: en-US
-Content-ID: <56B3C84CB8CC484E80C6280F80268BD3@hq.netapp.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Guy Keren <guy.keren@kaminario.com>, Eli Malul <eli.malul@kaminario.com>, Shahar Salzman <shahar.salzman@kaminario.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1418158984-25546-2-git-send-email-linux@rasmusvillemoes.dk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+Cc: Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, device-mapper development <dm-devel@redhat.com>, Jens Axboe <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-Hi Ilan,
+On Tue, Dec 9, 2014 at 4:03 PM, Rasmus Villemoes
+<linux@rasmusvillemoes.dk> wrote:
+> Return the mathematically correct answer when an argument is 0.
+>
+> Signed-off-by: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+> ---
+>  lib/lcm.c | 6 ++----
+>  1 file changed, 2 insertions(+), 4 deletions(-)
+>
+> diff --git a/lib/lcm.c b/lib/lcm.c
+> index 01b3aa922dda..51cc6b13cd52 100644
+> --- a/lib/lcm.c
+> +++ b/lib/lcm.c
+> @@ -8,9 +8,7 @@ unsigned long lcm(unsigned long a, unsigned long b)
+>  {
+>         if (a && b)
+>                 return (a / gcd(a, b)) * b;
+> -       else if (b)
+> -               return b;
+> -
+> -       return a;
+> +       else
+> +               return 0;
+>  }
+>  EXPORT_SYMBOL_GPL(lcm);
 
+This change is the source of 3.19 regression for stacking device
+limits, via commit 69c953c ("lib/lcm.c: lcm(n,0)=lcm(0,n) is 0, not
+n").
 
-I believe this is solved by the following patch:
-http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=commit;h=5adec73edcdee912821ca8378439dc105e82c60f 
+Test:
+# modprobe scsi_debug dev_size_mb=10 num_tgts=1 opt_blks=1536
+# cat /sys/block/sde/queue/optimal_io_size
+786432
+# dmsetup create node --table "0 100 linear /dev/sde 0"
 
-Per the patch description:
-When a system is booted to the SAN, a condition can occur where one
-user friendly name is given to a disk during boot, but multipathd tries
-to allocate a different one after boot. If the second alias is already
-used by another device, multipathd can't rename it. Multipathd then has
-incorrect information about the alias/wwid relationships, which can
-result in paths being added to the wrong map.
+Before commit 69c953c:
+# cat /sys/block/dm-5/queue/optimal_io_size
+786432
 
-On Thu, 2015-03-19 at 10:35 +0000, Ilan Steinberg wrote:
+After commit 69c953c:
+# cat /sys/block/dm-5/queue/optimal_io_size
+0
 
-> multipathd> show maps
-> name    sysfs uuid
-> mpathiw dm-13 20024f400d5190010
+Rasmus, mathematical purity of lcm() aside, it'd have been nice if you
+looked at the lcm() callers to determine whether you'd be breaking
+them.
 
-This shows the current running configuration, that multipathd is
-operating believing that mpathiw should have be 20024f400d5190010. 
+It looks like we need a new lcm_not_zero() and blk_stack_limits()
+should be changed to use it, and the patch needs to cc stable.  Martin
+and/or Jens, what do you think?
 
-> This might be useful info - in the bindings file I see:
-> 
-> ...
-> 
-> mpathiv 20024f400d5190010
-> <---------------------------------------- this is the scsi_sn of sdag
-> 
-> mpathiw 20024f400d5190026
-> <---------------------------------------- this is the scsi_sn of sdz/w
-> 
-> ...
-> 
-So what must have happened was that the bindings file was out of sync on
-the initramfs and the local fs (which you can check by unwrapping the
-initramfs and comparing the wwids in each file), and it created the
-device with one name, tried to rename it, couldn't, and multipathd then
-starts adding into the wrong map. It's hard to explain clearly. :)  If
-we could see what both bindings files say, maybe I could explain it
-better.
-
-To work around it, remaking the initramfs to sync the bindings should
-suffice, or you could define aliases via the multipath sections
-multipath.conf.
-
-Hope this helps.
-
-
-Thanks,
-Sean Stewart
+Mike
