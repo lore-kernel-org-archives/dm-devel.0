@@ -1,14 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 30/78] Update hwtable for EMC XtremIO
-Date: Mon, 30 Mar 2015 08:08:07 +0200
-Message-ID: <5518E847.8060005@suse.de>
-References: <55185F93.9090604@gmail.com>
+Subject: [PATCH 2/2] Merge Dell MD3XXX hardware table entries
+Date: Mon, 30 Mar 2015 08:23:23 +0200
+Message-ID: <1427696603-15184-2-git-send-email-hare@suse.de>
+References: <1427696603-15184-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <55185F93.9090604@gmail.com>
+In-Reply-To: <1427696603-15184-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,33 +18,96 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>, christophe.varoqui@opensvc.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gMDMvMjkvMjAxNSAxMDoyNCBQTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+IEhhbm5l
-cyBSZWluZWNrZSB3cm90ZToKPiAKPj4gU2lnbmVkLW9mZi1ieTogSGFubmVzIFJlaW5lY2tlIDxo
-YXJlQHN1c2UuZGU+Cj4+IC0tLQo+PiAgbGlibXVsdGlwYXRoL2h3dGFibGUuYyB8IDEzICsrKysr
-KysrKysrKysKPj4gIDEgZmlsZSBjaGFuZ2VkLCAxMyBpbnNlcnRpb25zKCspCj4+Cj4+IGRpZmYg
-LS1naXQgYS9saWJtdWx0aXBhdGgvaHd0YWJsZS5jIGIvbGlibXVsdGlwYXRoL2h3dGFibGUuYwo+
-PiBpbmRleCBlYWQ0ZDQ4Li4xMzYxMWZlIDEwMDY0NAo+PiAtLS0gYS9saWJtdWx0aXBhdGgvaHd0
-YWJsZS5jCj4+ICsrKyBiL2xpYm11bHRpcGF0aC9od3RhYmxlLmMKPj4gQEAgLTI4OSw2ICsyODks
-MTkgQEAgc3RhdGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKPj4gIAkJLnByaW9f
-bmFtZSAgICAgPSBERUZBVUxUX1BSSU8sCj4+ICAJCS5wcmlvX2FyZ3MgICAgID0gTlVMTCwKPj4g
-IAl9LAo+PiArCXsKPj4gKwkJLnZlbmRvciAgICAgICAgPSAiWHRyZW1JTyIsCj4+ICsJCS5wcm9k
-dWN0ICAgICAgID0gIlh0cmVtQXBwIiwKPj4gKwkJLmZlYXR1cmVzICAgICAgPSBERUZBVUxUX0ZF
-QVRVUkVTLAo+PiArCQkuaHdoYW5kbGVyICAgICA9IERFRkFVTFRfSFdIQU5ETEVSLAo+PiArCQku
-cGdwb2xpY3kgICAgICA9IE1VTFRJQlVTLAo+PiArCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNL
-X1VOREVGLAo+PiArCQkucnJfd2VpZ2h0ICAgICA9IFJSX1dFSUdIVF9OT05FLAo+PiArCQkubm9f
-cGF0aF9yZXRyeSA9IDUsCj4+ICsJCS5jaGVja2VyX25hbWUgID0gVFVSLAo+PiArCQkucHJpb19u
-YW1lICAgICA9IERFRkFVTFRfUFJJTywKPj4gKwkJLnByaW9fYXJncyAgICAgPSBOVUxMLAo+PiAr
-CX0sCj4+ICAJLyoKPj4gIAkgKiBGdWppdHN1IGNvbnRyb2xsZXIgZmFtaWx5Cj4+ICAJICoKPiAK
-PiBUaGlzIHBhdGNoW2I0N2U2MDc0MDhlMWVkY2UzYTAzNzQ0YjRhZWZhMjkyNzIzYzdmYzZdICph
-ZGQqIGEgbmV3Cj4gWHRyZW1JTy9YdHJlbUFwcCBlbnRyeS4gSW5zdGVhZCBvZiByZXBsYWNpbmcg
-dGhlIG9sZCB2YWx1ZXMuCj4gClllcywgdGhhdCdzIGFuIG1lcmdlIGVycm9yLiBTb3JyeS4KCkNo
-ZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgICAgICAgICAgICAgelNl
-cmllcyAmIFN0b3JhZ2UKaGFyZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1
-MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKR0Y6
-IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxkLCBELiBVcG1hbnl1LCBHLiBO
-b3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QK
-ZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
-Zm8vZG0tZGV2ZWw=
+Remove duplicate entries and merge MD36xxi/MD36xxf into a single
+one.
+
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ libmultipath/hwtable.c | 53 ++++----------------------------------------------
+ 1 file changed, 4 insertions(+), 49 deletions(-)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index fa4b20f..f83f3e7 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -728,7 +728,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_args     = NULL,
+ 	},
+ 	{
+-		/* DELL MD3000 */
++		/* DELL MD3000/MD3000i */
+ 		.vendor        = "DELL",
+ 		.product       = "MD3000",
+ 		.bl_product    = "Universal Xport",
+@@ -743,22 +743,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_args     = NULL,
+ 	},
+ 	{
+-		/* DELL MD3000i */
+-		.vendor        = "DELL",
+-		.product       = "MD3000i",
+-		.bl_product    = "Universal Xport",
+-		.features      = "2 pg_init_retries 50",
+-		.hwhandler     = "1 rdac",
+-		.pgpolicy      = GROUP_BY_PRIO,
+-		.pgfailback    = -FAILBACK_IMMEDIATE,
+-		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = 15,
+-		.checker_name  = RDAC,
+-		.prio_name     = PRIO_RDAC,
+-		.prio_args     = NULL,
+-	},
+-	{
+-		/* DELL MD32xx */
++		/* DELL MD32xx/MD32xxi */
+ 		.vendor        = "DELL",
+ 		.product       = "MD32xx",
+ 		.bl_product    = "Universal Xport",
+@@ -773,39 +758,9 @@ static struct hwentry default_hw[] = {
+ 		.prio_args     = NULL,
+ 	},
+ 	{
+-		/* DELL MD32xxi */
+-		.vendor        = "DELL",
+-		.product       = "MD32xxi",
+-		.bl_product    = "Universal Xport",
+-		.features      = "2 pg_init_retries 50",
+-		.hwhandler     = "1 rdac",
+-		.pgpolicy      = GROUP_BY_PRIO,
+-		.pgfailback    = -FAILBACK_IMMEDIATE,
+-		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = 15,
+-		.checker_name  = RDAC,
+-		.prio_name     = PRIO_RDAC,
+-		.prio_args     = NULL,
+-	},
+-	{
+-		/* DELL MD36xxi */
+-		.vendor        = "DELL",
+-		.product       = "MD36xxi",
+-		.bl_product    = "Universal Xport",
+-		.features      = "2 pg_init_retries 50",
+-		.hwhandler     = "1 rdac",
+-		.pgpolicy      = GROUP_BY_PRIO,
+-		.pgfailback    = -FAILBACK_IMMEDIATE,
+-		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = 15,
+-		.checker_name  = RDAC,
+-		.prio_name     = PRIO_RDAC,
+-		.prio_args     = NULL,
+-	},
+-	{
+-		/* DELL MD36xxf */
++		/* DELL MD36xxi/MD36xxf */
+ 		.vendor        = "DELL",
+-		.product       = "MD36xxf",
++		.product       = "MD36xx(i|f)",
+ 		.bl_product    = "Universal Xport",
+ 		.features      = "2 pg_init_retries 50",
+ 		.hwhandler     = "1 rdac",
+-- 
+1.8.4.5
