@@ -1,38 +1,47 @@
-From: Rasmus Villemoes <linux@rasmusvillemoes.dk>
-Subject: Re: [PATCH 2/2] lib/lcm.c: lcm(n,0)=lcm(0,n) is 0, not n
-Date: Mon, 30 Mar 2015 21:38:27 +0200
-Message-ID: <87y4me8edo.fsf@rasmusvillemoes.dk>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH] block: fix blk_stack_limits() regression due to lcm() change
+Date: Mon, 30 Mar 2015 16:53:06 -0400
+Message-ID: <yq1fv8mmclp.fsf@sermon.lab.mkp.net>
 References: <1418158984-25546-1-git-send-email-linux@rasmusvillemoes.dk>
 	<1418158984-25546-2-git-send-email-linux@rasmusvillemoes.dk>
 	<CAMM=eLdw+7zfoufBEBSKhVR5d=g-a-GdzTA4WBgXUcMx=Av91A@mail.gmail.com>
+	<20150330173909.GA4836@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAMM=eLdw+7zfoufBEBSKhVR5d=g-a-GdzTA4WBgXUcMx=Av91A@mail.gmail.com>
-	(Mike Snitzer's message of "Sat, 28 Mar 2015 22:44:28 -0400")
+In-Reply-To: <20150330173909.GA4836@redhat.com> (Mike Snitzer's message of
+	"Mon, 30 Mar 2015 13:39:09 -0400")
 Sender: linux-kernel-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, device-mapper development <dm-devel@redhat.com>, Jens Axboe <axboe@kernel.dk>
+Cc: Jens Axboe <axboe@kernel.dk>, Andrew Morton <akpm@linux-foundation.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>
 List-Id: dm-devel.ids
 
-On Sun, Mar 29 2015, Mike Snitzer <snitzer@redhat.com> wrote:
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-> On Tue, Dec 9, 2014 at 4:03 PM, Rasmus Villemoes
-> <linux@rasmusvillemoes.dk> wrote:
->> Return the mathematically correct answer when an argument is 0.
->>
->> Signed-off-by: Rasmus Villemoes <linux@rasmusvillemoes.dk>
->
-> This change is the source of 3.19 regression for stacking device
-> limits, via commit 69c953c ("lib/lcm.c: lcm(n,0)=lcm(0,n) is 0, not
-> n").
->
->
-> Rasmus, mathematical purity of lcm() aside, it'd have been nice if you
-> looked at the lcm() callers to determine whether you'd be breaking
-> them.
+Mike> Linux 3.19 commit 69c953c ("lib/lcm.c: lcm(n,0)=lcm(0,n) is 0, not
+Mike> n") caused blk_stack_limits() to not properly stack queue_limits
+Mike> for stacked devices (e.g. DM).
 
-I'm sorry about this. I thought I did check the callers, but evidently
-not well enough.
+Mike> Fix this regression by establishing lcm_not_zero() and switching
+Mike> blk_stack_limits() over to using it.
 
-Rasmus
+I'm OK with that approach. The original lcm() behavior made sense when
+we were the only user.
+
++unsigned long lcm_not_zero(unsigned long a, unsigned long b)
++{
++	unsigned long l = lcm(a, b);
++
++	if (l)
++		return l;
++
++	return (b ? : a);
++}
+
+I always blink when I read b ?: a instead of b ? b : a. But no
+biggie. That's just my personal preference.
+
+Acked-by: Martin K. Petersen <martin.petersen@oracle.com>
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
