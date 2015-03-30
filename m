@@ -1,103 +1,116 @@
-From: guy keren <guy.keren@kaminario.com>
-Subject: Re: A path to a different device was added to an
- existing mapth
-Date: Sat, 28 Mar 2015 14:32:11 +0300
-Message-ID: <5516913B.9080600@kaminario.com>
-References: <1426759835576.51213@kaminario.com>	
-	<1426761325229.70001@kaminario.com>
-	<1427498782.22396.29.camel@ict-vth-stewarts01.ict.englab.netapp.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] block: fix blk_stack_limits() regression due to lcm() change
+Date: Mon, 30 Mar 2015 13:39:09 -0400
+Message-ID: <20150330173909.GA4836@redhat.com>
+References: <1418158984-25546-1-git-send-email-linux@rasmusvillemoes.dk>
+ <1418158984-25546-2-git-send-email-linux@rasmusvillemoes.dk>
+ <CAMM=eLdw+7zfoufBEBSKhVR5d=g-a-GdzTA4WBgXUcMx=Av91A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1427498782.22396.29.camel@ict-vth-stewarts01.ict.englab.netapp.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Stewart, Sean" <Sean.Stewart@netapp.com>, device-mapper development <dm-devel@redhat.com>
-Cc: Eli Malul <eli.malul@kaminario.com>, Shahar Salzman <shahar.salzman@kaminario.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAMM=eLdw+7zfoufBEBSKhVR5d=g-a-GdzTA4WBgXUcMx=Av91A@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Andrew Morton <akpm@linux-foundation.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>
 List-Id: dm-devel.ids
 
+Linux 3.19 commit 69c953c ("lib/lcm.c: lcm(n,0)=lcm(0,n) is 0, not n")
+caused blk_stack_limits() to not properly stack queue_limits for stacked
+devices (e.g. DM).
 
-hi Sean,
+Fix this regression by establishing lcm_not_zero() and switching
+blk_stack_limits() over to using it.
 
-in the case stated, the host was not rebooted during this test. what has 
-changed is LUNs exposure to the host (unmapping and re-mapping of LUNs, 
-deleting and re-creating of LUNs).
+DM uses blk_set_stacking_limits() to establish the initial top-level
+queue_limits that are then built up based on underlying devices' limits
+using blk_stack_limits().  In the case of optimal_io_size (io_opt)
+blk_set_stacking_limits() establishes a default value of 0.  With commit
+69c953c, lcm(0, n) is no longer n, which compromises proper stacking of
+the underlying devices' io_opt.
 
-could these kind of operations trigger similar issues?
+Test:
+$ modprobe scsi_debug dev_size_mb=10 num_tgts=1 opt_blks=1536
+$ cat /sys/block/sde/queue/optimal_io_size
+786432
+$ dmsetup create node --table "0 100 linear /dev/sde 0"
 
-from what we saw, multipathd's state made it think that some paths, that 
-have different WWIDs, should be bound to the same multipath device 
-(which is incorrect).
+Before this fix:
+$ cat /sys/block/dm-5/queue/optimal_io_size
+0
 
-a different question comes to mind:
+After this fix:
+$ cat /sys/block/dm-5/queue/optimal_io_size
+786432
 
-   if we avoid using the friendly names, and instead use the 
-/dev/mapper/<wwid> device paths - is this likely to avoid the problem in 
-the first place?
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org # 3.19+
+---
+ block/blk-settings.c |    6 +++---
+ include/linux/lcm.h  |    1 +
+ lib/lcm.c            |   11 +++++++++++
+ 3 files changed, 15 insertions(+), 3 deletions(-)
 
---guy
-
-
-On 03/28/2015 02:26 AM, Stewart, Sean wrote:
-> Hi Ilan,
->
->
-> I believe this is solved by the following patch:
-> http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=commit;h=5adec73edcdee912821ca8378439dc105e82c60f
->
-> Per the patch description:
-> When a system is booted to the SAN, a condition can occur where one
-> user friendly name is given to a disk during boot, but multipathd tries
-> to allocate a different one after boot. If the second alias is already
-> used by another device, multipathd can't rename it. Multipathd then has
-> incorrect information about the alias/wwid relationships, which can
-> result in paths being added to the wrong map.
->
-> On Thu, 2015-03-19 at 10:35 +0000, Ilan Steinberg wrote:
->
->> multipathd> show maps
->> name    sysfs uuid
->> mpathiw dm-13 20024f400d5190010
-> This shows the current running configuration, that multipathd is
-> operating believing that mpathiw should have be 20024f400d5190010.
->
->> This might be useful info - in the bindings file I see:
->>
->> ...
->>
->> mpathiv 20024f400d5190010
->> <---------------------------------------- this is the scsi_sn of sdag
->>
->> mpathiw 20024f400d5190026
->> <---------------------------------------- this is the scsi_sn of sdz/w
->>
->> ...
->>
-> So what must have happened was that the bindings file was out of sync on
-> the initramfs and the local fs (which you can check by unwrapping the
-> initramfs and comparing the wwids in each file), and it created the
-> device with one name, tried to rename it, couldn't, and multipathd then
-> starts adding into the wrong map. It's hard to explain clearly. :)  If
-> we could see what both bindings files say, maybe I could explain it
-> better.
->
-> To work around it, remaking the initramfs to sync the bindings should
-> suffice, or you could define aliases via the multipath sections
-> multipath.conf.
->
-> Hope this helps.
->
->
-> Thanks,
-> Sean Stewart
->
->
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index 6ed2cbe..12600bf 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -585,7 +585,7 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+ 				     b->physical_block_size);
+ 
+ 	t->io_min = max(t->io_min, b->io_min);
+-	t->io_opt = lcm(t->io_opt, b->io_opt);
++	t->io_opt = lcm_not_zero(t->io_opt, b->io_opt);
+ 
+ 	t->cluster &= b->cluster;
+ 	t->discard_zeroes_data &= b->discard_zeroes_data;
+@@ -616,7 +616,7 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+ 		    b->raid_partial_stripes_expensive);
+ 
+ 	/* Find lowest common alignment_offset */
+-	t->alignment_offset = lcm(t->alignment_offset, alignment)
++	t->alignment_offset = lcm_not_zero(t->alignment_offset, alignment)
+ 		% max(t->physical_block_size, t->io_min);
+ 
+ 	/* Verify that new alignment_offset is on a logical block boundary */
+@@ -643,7 +643,7 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+ 						      b->max_discard_sectors);
+ 		t->discard_granularity = max(t->discard_granularity,
+ 					     b->discard_granularity);
+-		t->discard_alignment = lcm(t->discard_alignment, alignment) %
++		t->discard_alignment = lcm_not_zero(t->discard_alignment, alignment) %
+ 			t->discard_granularity;
+ 	}
+ 
+diff --git a/include/linux/lcm.h b/include/linux/lcm.h
+index 7bf01d7..1ce79a7 100644
+--- a/include/linux/lcm.h
++++ b/include/linux/lcm.h
+@@ -4,5 +4,6 @@
+ #include <linux/compiler.h>
+ 
+ unsigned long lcm(unsigned long a, unsigned long b) __attribute_const__;
++unsigned long lcm_not_zero(unsigned long a, unsigned long b) __attribute_const__;
+ 
+ #endif /* _LCM_H */
+diff --git a/lib/lcm.c b/lib/lcm.c
+index e97dbd5..03d7fcb 100644
+--- a/lib/lcm.c
++++ b/lib/lcm.c
+@@ -12,3 +12,14 @@ unsigned long lcm(unsigned long a, unsigned long b)
+ 		return 0;
+ }
+ EXPORT_SYMBOL_GPL(lcm);
++
++unsigned long lcm_not_zero(unsigned long a, unsigned long b)
++{
++	unsigned long l = lcm(a, b);
++
++	if (l)
++		return l;
++
++	return (b ? : a);
++}
++EXPORT_SYMBOL_GPL(lcm_not_zero);
+-- 
+1.7.4.4
