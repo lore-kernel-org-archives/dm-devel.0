@@ -1,14 +1,12 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 2/2] Merge Dell MD3XXX hardware table entries
-Date: Mon, 30 Mar 2015 08:23:23 +0200
-Message-ID: <1427696603-15184-2-git-send-email-hare@suse.de>
-References: <1427696603-15184-1-git-send-email-hare@suse.de>
+Subject: [PATCH 1/2] Remove duplicate hwtable entry for XtremIO
+Date: Mon, 30 Mar 2015 08:23:22 +0200
+Message-ID: <1427696603-15184-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1427696603-15184-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,92 +20,52 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Remove duplicate entries and merge MD36xxi/MD36xxf into a single
+Commit b47e607408e1edce3a03744b4aefa292723c7fc6 introduced a new
+hwtable entry for EMC XtremIO instead of updating the existing
 one.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/hwtable.c | 53 ++++----------------------------------------------
- 1 file changed, 4 insertions(+), 49 deletions(-)
+ libmultipath/hwtable.c | 17 ++---------------
+ 1 file changed, 2 insertions(+), 15 deletions(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index fa4b20f..f83f3e7 100644
+index 13611fe..fa4b20f 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -728,7 +728,7 @@ static struct hwentry default_hw[] = {
+@@ -294,11 +294,11 @@ static struct hwentry default_hw[] = {
+ 		.product       = "XtremApp",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = "queue-length 0",
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+-		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = 5,
+ 		.checker_name  = TUR,
++		.fast_io_fail  = 5,
+ 		.prio_name     = DEFAULT_PRIO,
  		.prio_args     = NULL,
  	},
- 	{
--		/* DELL MD3000 */
-+		/* DELL MD3000/MD3000i */
- 		.vendor        = "DELL",
- 		.product       = "MD3000",
- 		.bl_product    = "Universal Xport",
-@@ -743,22 +743,7 @@ static struct hwentry default_hw[] = {
+@@ -1166,19 +1166,6 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
  		.prio_args     = NULL,
  	},
- 	{
--		/* DELL MD3000i */
--		.vendor        = "DELL",
--		.product       = "MD3000i",
--		.bl_product    = "Universal Xport",
--		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
--		.pgpolicy      = GROUP_BY_PRIO,
+-	{
+-		.vendor        = "XtremIO",
+-		.product       = "XtremApp",
+-		.features      = DEFAULT_FEATURES,
+-		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = "queue-length 0",
+-		.pgpolicy      = MULTIBUS,
 -		.pgfailback    = -FAILBACK_IMMEDIATE,
--		.rr_weight     = RR_WEIGHT_NONE,
--		.no_path_retry = 15,
--		.checker_name  = RDAC,
--		.prio_name     = PRIO_RDAC,
+-		.checker_name  = DIRECTIO,
+-		.fast_io_fail  = 15,
+-		.prio_name     = DEFAULT_PRIO,
 -		.prio_args     = NULL,
 -	},
--	{
--		/* DELL MD32xx */
-+		/* DELL MD32xx/MD32xxi */
- 		.vendor        = "DELL",
- 		.product       = "MD32xx",
- 		.bl_product    = "Universal Xport",
-@@ -773,39 +758,9 @@ static struct hwentry default_hw[] = {
- 		.prio_args     = NULL,
- 	},
- 	{
--		/* DELL MD32xxi */
--		.vendor        = "DELL",
--		.product       = "MD32xxi",
--		.bl_product    = "Universal Xport",
--		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
--		.pgpolicy      = GROUP_BY_PRIO,
--		.pgfailback    = -FAILBACK_IMMEDIATE,
--		.rr_weight     = RR_WEIGHT_NONE,
--		.no_path_retry = 15,
--		.checker_name  = RDAC,
--		.prio_name     = PRIO_RDAC,
--		.prio_args     = NULL,
--	},
--	{
--		/* DELL MD36xxi */
--		.vendor        = "DELL",
--		.product       = "MD36xxi",
--		.bl_product    = "Universal Xport",
--		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
--		.pgpolicy      = GROUP_BY_PRIO,
--		.pgfailback    = -FAILBACK_IMMEDIATE,
--		.rr_weight     = RR_WEIGHT_NONE,
--		.no_path_retry = 15,
--		.checker_name  = RDAC,
--		.prio_name     = PRIO_RDAC,
--		.prio_args     = NULL,
--	},
--	{
--		/* DELL MD36xxf */
-+		/* DELL MD36xxi/MD36xxf */
- 		.vendor        = "DELL",
--		.product       = "MD36xxf",
-+		.product       = "MD36xx(i|f)",
- 		.bl_product    = "Universal Xport",
- 		.features      = "2 pg_init_retries 50",
- 		.hwhandler     = "1 rdac",
+ 	/*
+ 	 * EOL
+ 	 */
 -- 
 1.8.4.5
