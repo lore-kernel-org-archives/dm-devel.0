@@ -1,15 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 00/78] SUSE SLES resync
-Date: Mon, 30 Mar 2015 08:07:25 +0200
-Message-ID: <5518E81D.9050701@suse.de>
-References: <1426509425-15978-1-git-send-email-hare@suse.de>
-	<CABr-Gne1sYtJzKRGPTQJA7QOzFJ-MvD9Y0NphB8chFWsw9VKKA@mail.gmail.com>
+Subject: Re: [PATCH 30/78] Update hwtable for EMC XtremIO
+Date: Mon, 30 Mar 2015 08:08:07 +0200
+Message-ID: <5518E847.8060005@suse.de>
+References: <55185F93.9090604@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-Gne1sYtJzKRGPTQJA7QOzFJ-MvD9Y0NphB8chFWsw9VKKA@mail.gmail.com>
+In-Reply-To: <55185F93.9090604@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,20 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>, christophe.varoqui@opensvc.com
 List-Id: dm-devel.ids
 
-T24gMDMvMjkvMjAxNSAwNjoyOCBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+IEhpLAo+
-IAo+IFRoaXMgcGF0Y2hzZXQgaXMgbWVyZ2VkIHVwCj4gdG8gNzU3MzRhZjM3MjY3MTAwNzc4NDY4
-MzE5ODEzY2VjYzA1MGJlZmIxYSA6IG11bHRpcGF0aGQ6IHB1c2ggZG93bgo+IGxvY2sgaW4gY2hl
-Y2tlcmxvb3AoKS4KPiAKPiBCZW4sCj4gaW5jaWRlbnRhbGx5IHRoZSBmaW5kX211bHRpcGF0aCBw
-YXRjaGVzIGFyZSBpbi4KPiAKVGhhbmtzLiBJJ2xsIGJlIHdvcmtpbmcgb24gdGhlIHJlbWFpbmlu
-ZyBvbmVzIHRvIGFkZHJlc3MgdGhlCm9iamVjdGlvbnMgQmVuIHJhaXNlZC4KCkNoZWVycywKCkhh
-bm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgICAgICAgICAgICAgelNlcmllcyAmIFN0
-b3JhZ2UKaGFyZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VT
-RSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEYuIEltZW5k
-w7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b24KSFJC
-IDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
-cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
-ZWw=
+T24gMDMvMjkvMjAxNSAxMDoyNCBQTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+IEhhbm5l
+cyBSZWluZWNrZSB3cm90ZToKPiAKPj4gU2lnbmVkLW9mZi1ieTogSGFubmVzIFJlaW5lY2tlIDxo
+YXJlQHN1c2UuZGU+Cj4+IC0tLQo+PiAgbGlibXVsdGlwYXRoL2h3dGFibGUuYyB8IDEzICsrKysr
+KysrKysrKysKPj4gIDEgZmlsZSBjaGFuZ2VkLCAxMyBpbnNlcnRpb25zKCspCj4+Cj4+IGRpZmYg
+LS1naXQgYS9saWJtdWx0aXBhdGgvaHd0YWJsZS5jIGIvbGlibXVsdGlwYXRoL2h3dGFibGUuYwo+
+PiBpbmRleCBlYWQ0ZDQ4Li4xMzYxMWZlIDEwMDY0NAo+PiAtLS0gYS9saWJtdWx0aXBhdGgvaHd0
+YWJsZS5jCj4+ICsrKyBiL2xpYm11bHRpcGF0aC9od3RhYmxlLmMKPj4gQEAgLTI4OSw2ICsyODks
+MTkgQEAgc3RhdGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKPj4gIAkJLnByaW9f
+bmFtZSAgICAgPSBERUZBVUxUX1BSSU8sCj4+ICAJCS5wcmlvX2FyZ3MgICAgID0gTlVMTCwKPj4g
+IAl9LAo+PiArCXsKPj4gKwkJLnZlbmRvciAgICAgICAgPSAiWHRyZW1JTyIsCj4+ICsJCS5wcm9k
+dWN0ICAgICAgID0gIlh0cmVtQXBwIiwKPj4gKwkJLmZlYXR1cmVzICAgICAgPSBERUZBVUxUX0ZF
+QVRVUkVTLAo+PiArCQkuaHdoYW5kbGVyICAgICA9IERFRkFVTFRfSFdIQU5ETEVSLAo+PiArCQku
+cGdwb2xpY3kgICAgICA9IE1VTFRJQlVTLAo+PiArCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNL
+X1VOREVGLAo+PiArCQkucnJfd2VpZ2h0ICAgICA9IFJSX1dFSUdIVF9OT05FLAo+PiArCQkubm9f
+cGF0aF9yZXRyeSA9IDUsCj4+ICsJCS5jaGVja2VyX25hbWUgID0gVFVSLAo+PiArCQkucHJpb19u
+YW1lICAgICA9IERFRkFVTFRfUFJJTywKPj4gKwkJLnByaW9fYXJncyAgICAgPSBOVUxMLAo+PiAr
+CX0sCj4+ICAJLyoKPj4gIAkgKiBGdWppdHN1IGNvbnRyb2xsZXIgZmFtaWx5Cj4+ICAJICoKPiAK
+PiBUaGlzIHBhdGNoW2I0N2U2MDc0MDhlMWVkY2UzYTAzNzQ0YjRhZWZhMjkyNzIzYzdmYzZdICph
+ZGQqIGEgbmV3Cj4gWHRyZW1JTy9YdHJlbUFwcCBlbnRyeS4gSW5zdGVhZCBvZiByZXBsYWNpbmcg
+dGhlIG9sZCB2YWx1ZXMuCj4gClllcywgdGhhdCdzIGFuIG1lcmdlIGVycm9yLiBTb3JyeS4KCkNo
+ZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgICAgICAgICAgICAgelNl
+cmllcyAmIFN0b3JhZ2UKaGFyZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1
+MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKR0Y6
+IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxkLCBELiBVcG1hbnl1LCBHLiBO
+b3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QK
+ZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
+Zm8vZG0tZGV2ZWw=
