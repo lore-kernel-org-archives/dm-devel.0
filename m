@@ -1,116 +1,100 @@
-From: Pali =?utf-8?q?Roh=C3=A1r?= <pali.rohar@gmail.com>
-Subject: Re: [PATCH 0/3] dm-crypt: Adds support for wiping key when doing suspend/hibernation
-Date: Mon, 6 Apr 2015 23:27:35 +0200
-Message-ID: <201504062327.35325@pali>
-References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com> <201504061529.57299@pali> <20150406181738.GC9978@amd>
+From: Ben Collins <ben.c@servergy.com>
+Subject: [PATCH] dm-crypt: Fix deadlock when algo returns -EBUSY
+Date: Fri,  3 Apr 2015 16:09:46 +0000
+Message-ID: <1428077387-2292-1-git-send-email-ben.c@servergy.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed;
-  boundary="nextPart4075191.yf6hhQT2n7";
-  protocol="application/pgp-signature";
-  micalg=pgp-sha1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-pm-owner@vger.kernel.org>
-In-Reply-To: <20150406181738.GC9978@amd>
-Sender: linux-pm-owner@vger.kernel.org
-To: Pavel Machek <pavel@ucw.cz>
-Cc: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Ben Collins <ben.c@servergy.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
---nextPart4075191.yf6hhQT2n7
-Content-Type: Text/Plain;
-  charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
+I suspect this doesn't show up for most anyone because software
+algorithms typically don't have a sense of being too busy. However,
+when working with the Freescale CAAM driver, it would, under heavy
+load, return -EBUSY on occasion, which would leave dm-crypt dead
+locked and quite unhappy.
 
-On Monday 06 April 2015 20:17:38 Pavel Machek wrote:
-> On Mon 2015-04-06 15:29:57, Pali Roh=C3=A1r wrote:
-> > On Monday 06 April 2015 15:00:46 Mike Snitzer wrote:
-> > > On Sun, Apr 05 2015 at  1:20pm -0400,
-> > >=20
-> > > Pali Roh=C3=A1r <pali.rohar@gmail.com> wrote:
-> > > > This patch series increase security of suspend and
-> > > > hibernate actions. It allows user to safely wipe crypto
-> > > > keys before suspend and hibernate actions starts
-> > > > without race conditions on userspace process with heavy
-> > > > I/O.
-> > > >=20
-> > > > To automatically wipe cryto key for <device> before
-> > > > hibernate action call: $ dmsetup message <device> 0 key
-> > > > wipe_on_hibernation 1
-> > > >=20
-> > > > To automatically wipe cryto key for <device> before
-> > > > suspend action call: $ dmsetup message <device> 0 key
-> > > > wipe_on_suspend 1
-> > > >=20
-> > > > (Value 0 after wipe_* string reverts original behaviour
-> > > > - to not wipe key)
-> > >=20
-> > > Can you elaborate on the attack vector your changes are
-> > > meant to protect against?  The user already authorized
-> > > access, why is it inherently dangerous to _not_ wipe the
-> > > associated key across these events?
-> >=20
-> > Hi,
-> >=20
-> > yes, I will try to explain current problems with cryptsetup
-> > luksSuspend command and hibernation.
-> >=20
-> > First, sometimes it is needed to put machine into other
-> > hands. You can still watch other person what is doing with
-> > machine, but once if you let machine unlocked (e.g opened
-> > luks disk), she/he can access encrypted data.
-> >=20
-> > If you turn off machine, it could be safe, because luks disk
-> > devices are locked. But if you enter machine into suspend or
-> > hibernate state luks devices are still open. And my patches
-> > try to achieve similar security as when machine is off (=3D
-> > no crypto keys in RAM or on swap).
-> >=20
-> > When doing hibernate on unencrypted swap it is to prevent
-> > leaking crypto keys to hibernate image (which is stored in
-> > swap).
-> >=20
-> > When doing suspend action it is again to prevent leaking
-> > crypto keys. E.g when you suspend laptop and put it off
-> > (somebody can remove RAMs and do some cold boot attack).
-> >=20
-> > The most common situation is:
-> > You have mounted partition from dm-crypt device (e.g.
-> > /home/), some userspace processes access it (e.g opened
-> > firefox which still reads/writes to cache ~/.firefox/) and
-> > you want to drop crypto keys from kernel for some time.
-> >=20
-> > For that operation there is command cryptsetup luksSuspend,
-> > which suspend dm device and then tell kernel to wipe crypto
-> > keys. All I/O operations are then stopped and userspace
-> > processes which want to do some those I/O operations are
-> > stopped too (until you call cryptsetup luksResume and enter
-> > correct key).
->=20
-> Actually... is the list of sites where the process wait small
-> enough? Could we modify them to be freezeable? Suspend should
-> work even if user stopped the his crypto partitions...
->=20
-> 								Pavel
+After checking the logic in some other drivers, the scheme for
+crypt_convert() and it's callback, kcryptd_async_done() were not
+correctly laid out to handle -EBUSY properly (nor -EINPROGRESS for
+that matter).
 
-If you suspend dm device and then you want to read file from fs=20
-which is on that device, then process freeze and you even cannot=20
-kill it with SIGKILL. Before entering suspend kernel tries to do=20
-sync and that operation also fails...
+This patch corrects that and makes things pretty happy. Where-as I
+could cause a lockup withing 1-2 minutes, I've not been able to run
+the reproduction test with CAAM drivers fully installed for over
+24 hours now. I've regression tested it against software algorithms
+on PPC32 and x86_64, and things seem perfectly happy there as well.
 
-=2D-=20
-Pali Roh=C3=A1r
-pali.rohar@gmail.com
+I've tested this all the way back to 3.13, and a few iterations
+in-between. Please consider pushing this to various stable trees.
 
---nextPart4075191.yf6hhQT2n7
-Content-Type: application/pgp-signature; name=signature.asc 
-Content-Description: This is a digitally signed message part.
+Cc: dm-devel@redhat.com
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Ben Collins <ben.c@servergy.com>
+---
+ drivers/md/dm-crypt.c | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-
-iEYEABECAAYFAlUi+kcACgkQi/DJPQPkQ1LtpQCfYAKMN41fzSvwf3/7NSbH3OAh
-WbAAoLH3VSH0KYKZbwGtlm7vORo18BuH
-=TmEZ
------END PGP SIGNATURE-----
-
---nextPart4075191.yf6hhQT2n7--
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 713a962..3891f26 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -925,11 +925,10 @@ static int crypt_convert(struct crypt_config *cc,
+ 
+ 		switch (r) {
+ 		/* async */
++		case -EINPROGRESS:
+ 		case -EBUSY:
+ 			wait_for_completion(&ctx->restart);
+ 			reinit_completion(&ctx->restart);
+-			/* fall through*/
+-		case -EINPROGRESS:
+ 			ctx->req = NULL;
+ 			ctx->cc_sector++;
+ 			continue;
+@@ -1346,10 +1345,8 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ 	struct dm_crypt_io *io = container_of(ctx, struct dm_crypt_io, ctx);
+ 	struct crypt_config *cc = io->cc;
+ 
+-	if (error == -EINPROGRESS) {
+-		complete(&ctx->restart);
++	if (error == -EINPROGRESS)
+ 		return;
+-	}
+ 
+ 	if (!error && cc->iv_gen_ops && cc->iv_gen_ops->post)
+ 		error = cc->iv_gen_ops->post(cc, iv_of_dmreq(cc, dmreq), dmreq);
+@@ -1359,13 +1356,17 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ 
+ 	crypt_free_req(cc, req_of_dmreq(cc, dmreq), io->base_bio);
+ 
+-	if (!atomic_dec_and_test(&ctx->cc_pending))
++	if (!atomic_dec_and_test(&ctx->cc_pending)) {
++		complete(&ctx->restart);
+ 		return;
++	}
+ 
+ 	if (bio_data_dir(io->base_bio) == READ)
+ 		kcryptd_crypt_read_done(io);
+ 	else
+ 		kcryptd_crypt_write_io_submit(io, 1);
++
++	complete(&ctx->restart);
+ }
+ 
+ static void kcryptd_crypt(struct work_struct *work)
+-- 
+1.9.1
