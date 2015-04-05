@@ -1,92 +1,47 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: [PATCH] dm-crypt: Update URLs to new cryptsetup project
-	page.
-Date: Sun,  5 Apr 2015 18:03:10 +0200
-Message-ID: <1428249790-13835-1-git-send-email-gmazyland@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: =?UTF-8?q?Pali=20Roh=C3=A1r?= <pali.rohar@gmail.com>
+Subject: [PATCH 0/3] dm-crypt: Adds support for wiping key when doing suspend/hibernation
+Date: Sun,  5 Apr 2015 19:20:16 +0200
+Message-ID: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Milan Broz <gmazyland@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-pm-owner@vger.kernel.org>
+Sender: linux-pm-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>
+Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, =?UTF-8?q?Pali=20Roh=C3=A1r?= <pali.rohar@gmail.com>
 List-Id: dm-devel.ids
 
-Cryptsetup home page moved to GitLab.
-Also remove link to abandonded Truecrypt page.
+This patch series increase security of suspend and hibernate actions. I=
+t allows
+user to safely wipe crypto keys before suspend and hibernate actions st=
+arts
+without race conditions on userspace process with heavy I/O.
 
-Signed-off-by: Milan Broz <gmazyland@gmail.com>
----
- Documentation/device-mapper/dm-crypt.txt | 4 ++--
- Documentation/device-mapper/verity.txt   | 4 ++--
- drivers/md/dm-crypt.c                    | 2 +-
- 3 files changed, 5 insertions(+), 5 deletions(-)
+To automatically wipe cryto key for <device> before hibernate action ca=
+ll:
+$ dmsetup message <device> 0 key wipe_on_hibernation 1
 
-diff --git a/Documentation/device-mapper/dm-crypt.txt b/Documentation/device-mapper/dm-crypt.txt
-index ad69778..692171f 100644
---- a/Documentation/device-mapper/dm-crypt.txt
-+++ b/Documentation/device-mapper/dm-crypt.txt
-@@ -5,7 +5,7 @@ Device-Mapper's "crypt" target provides transparent encryption of block devices
- using the kernel crypto API.
- 
- For a more detailed description of supported parameters see:
--http://code.google.com/p/cryptsetup/wiki/DMCrypt
-+https://gitlab.com/cryptsetup/cryptsetup/wikis/DMCrypt
- 
- Parameters: <cipher> <key> <iv_offset> <device path> \
- 	      <offset> [<#opt_params> <opt_params>]
-@@ -80,7 +80,7 @@ Example scripts
- ===============
- LUKS (Linux Unified Key Setup) is now the preferred way to set up disk
- encryption with dm-crypt using the 'cryptsetup' utility, see
--http://code.google.com/p/cryptsetup/
-+https://gitlab.com/cryptsetup/cryptsetup
- 
- [[
- #!/bin/sh
-diff --git a/Documentation/device-mapper/verity.txt b/Documentation/device-mapper/verity.txt
-index 9884681..0075f70 100644
---- a/Documentation/device-mapper/verity.txt
-+++ b/Documentation/device-mapper/verity.txt
-@@ -125,7 +125,7 @@ block boundary) are the hash blocks which are stored a depth at a time
- 
- The full specification of kernel parameters and on-disk metadata format
- is available at the cryptsetup project's wiki page
--  http://code.google.com/p/cryptsetup/wiki/DMVerity
-+  https://gitlab.com/cryptsetup/cryptsetup/wikis/DMVerity
- 
- Status
- ======
-@@ -142,7 +142,7 @@ Set up a device:
- 
- A command line tool veritysetup is available to compute or verify
- the hash tree or activate the kernel device. This is available from
--the cryptsetup upstream repository http://code.google.com/p/cryptsetup/
-+the cryptsetup upstream repository https://gitlab.com/cryptsetup/cryptsetup/
- (as a libcryptsetup extension).
- 
- Create hash on the device:
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 713a962..ea09d54 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -228,7 +228,7 @@ static struct crypto_ablkcipher *any_tfm(struct crypt_config *cc)
-  *
-  * tcw:  Compatible implementation of the block chaining mode used
-  *       by the TrueCrypt device encryption system (prior to version 4.1).
-- *       For more info see: http://www.truecrypt.org
-+ *       For more info see: https://gitlab.com/cryptsetup/cryptsetup/wikis/TrueCryptOnDiskFormat
-  *       It operates on full 512 byte sectors and uses CBC
-  *       with an IV derived from initial key and the sector number.
-  *       In addition, whitening value is applied on every sector, whitening
--- 
-2.1.4
+To automatically wipe cryto key for <device> before suspend action call=
+:
+$ dmsetup message <device> 0 key wipe_on_suspend 1
+
+(Value 0 after wipe_* string reverts original behaviour - to not wipe k=
+ey)
+
+Pali Roh=C3=A1r (3):
+  PM suspend/hibernate: Call notifier after freezing processes
+  dm: Export function dm_suspend_md()
+  dm-crypt: Adds support for wiping key when doing suspend/hibernation
+
+ drivers/md/dm-crypt.c    |  109 ++++++++++++++++++++++++++++++++++++++=
++++++---
+ drivers/md/dm.c          |    6 +++
+ drivers/md/dm.h          |    5 +++
+ include/linux/suspend.h  |    2 +
+ kernel/power/hibernate.c |    2 +
+ kernel/power/suspend.c   |    4 +-
+ 6 files changed, 120 insertions(+), 8 deletions(-)
+
+--=20
+1.7.9.5
+
