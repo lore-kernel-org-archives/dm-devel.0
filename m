@@ -1,63 +1,46 @@
-From: =?UTF-8?q?Pali=20Roh=C3=A1r?= <pali.rohar@gmail.com>
-Subject: [PATCH 2/3] dm: Export function dm_suspend_md()
-Date: Sun,  5 Apr 2015 19:20:18 +0200
-Message-ID: <1428254419-7334-3-git-send-email-pali.rohar@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 0/3] dm-crypt: Adds support for wiping key when doing
+ suspend/hibernation
+Date: Mon, 6 Apr 2015 09:00:46 -0400
+Message-ID: <20150406130045.GA18583@redhat.com>
 References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>
-Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, =?UTF-8?q?Pali=20Roh=C3=A1r?= <pali.rohar@gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Pali =?iso-8859-1?Q?Roh=E1r?= <pali.rohar@gmail.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: dm-devel.ids
 
-This patch exports function dm_suspend_md() which suspend mapped device=
- so other
-kernel drivers can use it and could suspend mapped device when needed.
+On Sun, Apr 05 2015 at  1:20pm -0400,
+Pali Roh=E1r <pali.rohar@gmail.com> wrote:
 
-Signed-off-by: Pali Roh=C3=A1r <pali.rohar@gmail.com>
----
- drivers/md/dm.c |    6 ++++++
- drivers/md/dm.h |    5 +++++
- 2 files changed, 11 insertions(+)
+> This patch series increase security of suspend and hibernate actions.=
+ It allows
+> user to safely wipe crypto keys before suspend and hibernate actions =
+starts
+> without race conditions on userspace process with heavy I/O.
+>=20
+> To automatically wipe cryto key for <device> before hibernate action =
+call:
+> $ dmsetup message <device> 0 key wipe_on_hibernation 1
+>=20
+> To automatically wipe cryto key for <device> before suspend action ca=
+ll:
+> $ dmsetup message <device> 0 key wipe_on_suspend 1
+>=20
+> (Value 0 after wipe_* string reverts original behaviour - to not wipe=
+ key)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 8001fe9..919ce95 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -3053,6 +3053,12 @@ out:
- 	return r;
- }
-=20
-+int dm_suspend_md(struct mapped_device *md)
-+{
-+	return dm_suspend(md, DM_SUSPEND_LOCKFS_FLAG);
-+}
-+EXPORT_SYMBOL_GPL(dm_suspend_md);
-+
- /*
-  * Internal suspend/resume works like userspace-driven suspend. It wai=
-ts
-  * until all bios finish and prevents issuing new bios to the target d=
-rivers.
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 59f53e7..623c9a8 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -152,6 +152,11 @@ int dm_test_deferred_remove_flag(struct mapped_dev=
-ice *md);
- void dm_deferred_remove(void);
-=20
- /*
-+ * Suspend mapped_device
-+ */
-+int dm_suspend_md(struct mapped_device *md);
-+
-+/*
-  * The device-mapper can be driven through one of two interfaces;
-  * ioctl or filesystem, depending which patch you have applied.
-  */
---=20
-1.7.9.5
+Can you elaborate on the attack vector your changes are meant to protec=
+t
+against?  The user already authorized access, why is it inherently
+dangerous to _not_ wipe the associated key across these events?
+--
+To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
