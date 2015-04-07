@@ -1,49 +1,113 @@
-From: Josef Bacik <jbacik@fb.com>
-Subject: Re: [dm-devel] [PATCH 1/3] dm: log writes target
-Date: Tue, 7 Apr 2015 10:45:52 -0400
-Message-ID: <5523EDA0.9080504@fb.com>
-References: <1426797070-27463-1-git-send-email-jbacik@fb.com> <1426797070-27463-2-git-send-email-jbacik@fb.com> <20150323180245.GE3172@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-crypt: Fix deadlock when algo returns -EBUSY
+Date: Tue, 7 Apr 2015 11:55:01 -0400
+Message-ID: <20150407155501.GA29040@redhat.com>
+References: <1428077387-2292-1-git-send-email-ben.c@servergy.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20150323180245.GE3172@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, zab@redhat.com, fstests@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1428077387-2292-1-git-send-email-ben.c@servergy.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ben Collins <ben.c@servergy.com>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 03/23/2015 02:02 PM, Vivek Goyal wrote:
-> On Thu, Mar 19, 2015 at 04:31:08PM -0400, Josef Bacik wrote:
->
-> [..]
->> + * We log writes only after they have been flushed, this makes the log describe
->> + * close to the order in which the data hits the actual disk, not its cache.  So
->> + * for example the following sequence (W means write, C means complete)
->> + *
->> + * Wa,Wb,Wc,Cc,Ca,FLUSH,FUAd,Cb,CFLUSH,CFUAd
->> + *
->> + * Would result in the log looking like this
->> + *
->> + * c,a,flush,fuad,b,<other writes>,<next flush>
->> + *
->
-> A minor nit, Should this sequence be following.
->
-> c,a,b, flush,fuad,<other writes>,<next flush>
->
-> when flush completed by that time write of b has completed too. So it
-> should be written first?
->
+On Fri, Apr 03 2015 at 12:09pm -0400,
+Ben Collins <ben.c@servergy.com> wrote:
 
-So we want to catch file systems behaving badly by not waiting for the 
-IO they care about to complete before issuing their flush, so we take 
-the super pessimistic view that only IO that has completed by FLUSH 
-issue time can truly be safe.  For all we know the flush could have 
-happened first and we just happen to get the endio called for b first 
-instead of the flush, so to make it mostly likely that we catch fs bugs 
-we enforce this idea that only completed IO can be sure to have been 
-flushed at flush submit time.  Thanks,
+> I suspect this doesn't show up for most anyone because software
+> algorithms typically don't have a sense of being too busy. However,
+> when working with the Freescale CAAM driver, it would, under heavy
+> load, return -EBUSY on occasion, which would leave dm-crypt dead
+> locked and quite unhappy.
+> 
+> After checking the logic in some other drivers, the scheme for
+> crypt_convert() and it's callback, kcryptd_async_done() were not
+> correctly laid out to handle -EBUSY properly (nor -EINPROGRESS for
+> that matter).
+> 
+> This patch corrects that and makes things pretty happy. Where-as I
+> could cause a lockup withing 1-2 minutes, I've not been able to run
+> the reproduction test with CAAM drivers fully installed for over
+> 24 hours now. I've regression tested it against software algorithms
+> on PPC32 and x86_64, and things seem perfectly happy there as well.
+> 
+> I've tested this all the way back to 3.13, and a few iterations
+> in-between. Please consider pushing this to various stable trees.
+> 
+> Cc: dm-devel@redhat.com
+> Cc: Alasdair Kergon <agk@redhat.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Signed-off-by: Ben Collins <ben.c@servergy.com>
+> ---
+>  drivers/md/dm-crypt.c | 13 +++++++------
+>  1 file changed, 7 insertions(+), 6 deletions(-)
+> 
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 713a962..3891f26 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -925,11 +925,10 @@ static int crypt_convert(struct crypt_config *cc,
+>  
+>  		switch (r) {
+>  		/* async */
+> +		case -EINPROGRESS:
+>  		case -EBUSY:
+>  			wait_for_completion(&ctx->restart);
+>  			reinit_completion(&ctx->restart);
+> -			/* fall through*/
+> -		case -EINPROGRESS:
+>  			ctx->req = NULL;
+>  			ctx->cc_sector++;
+>  			continue;
+> @@ -1346,10 +1345,8 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+>  	struct dm_crypt_io *io = container_of(ctx, struct dm_crypt_io, ctx);
+>  	struct crypt_config *cc = io->cc;
+>  
+> -	if (error == -EINPROGRESS) {
+> -		complete(&ctx->restart);
+> +	if (error == -EINPROGRESS)
+>  		return;
+> -	}
+>  
+>  	if (!error && cc->iv_gen_ops && cc->iv_gen_ops->post)
+>  		error = cc->iv_gen_ops->post(cc, iv_of_dmreq(cc, dmreq), dmreq);
+> @@ -1359,13 +1356,17 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+>  
+>  	crypt_free_req(cc, req_of_dmreq(cc, dmreq), io->base_bio);
+>  
+> -	if (!atomic_dec_and_test(&ctx->cc_pending))
+> +	if (!atomic_dec_and_test(&ctx->cc_pending)) {
+> +		complete(&ctx->restart);
+>  		return;
+> +	}
+>  
+>  	if (bio_data_dir(io->base_bio) == READ)
+>  		kcryptd_crypt_read_done(io);
+>  	else
+>  		kcryptd_crypt_write_io_submit(io, 1);
+> +
+> +	complete(&ctx->restart);
+>  }
+>  
+>  static void kcryptd_crypt(struct work_struct *work)
 
-Josef
+It looks like you're _always_ using the completion regardless of whether
+crypt_convert() will be waiting (e.g. even if error is 0).
 
+I can see this "working" but it seems less than ideal.  Would it be
+better to record the need to use the completion in ctx and then
+conditionally call complete()?
+
+Mike
