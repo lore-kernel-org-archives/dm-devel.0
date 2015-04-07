@@ -1,60 +1,43 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: thin_check doesn't use data space map to open data
- mapping tree
-Date: Tue, 7 Apr 2015 11:12:05 +0100
-Message-ID: <20150407101204.GA10327@rh-vpn>
-References: <CAAYit8RNtGwdSMWfD2ve8hS9iUPj+v49Gg+whnNp-WQHpB4GNw@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH 3/3] dm-crypt: Adds support for wiping key
+	when doing suspend/hibernation
+Date: Tue, 7 Apr 2015 14:55:52 +0100
+Message-ID: <20150407135552.GA32694@agk-dp.fab.redhat.com>
+References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com> <1428254419-7334-4-git-send-email-pali.rohar@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-pm-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAAYit8RNtGwdSMWfD2ve8hS9iUPj+v49Gg+whnNp-WQHpB4GNw@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <1428254419-7334-4-git-send-email-pali.rohar@gmail.com>
+Sender: linux-pm-owner@vger.kernel.org
+To: Pali =?iso-8859-1?Q?Roh=E1r?= <pali.rohar@gmail.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Apr 06, 2015 at 10:18:45PM +0800, M.H. Tsai wrote:
-> Hi All,
-> 
-> I found two doubtful points in thin-provisioning-tools,
-> which might need your help to provide some opinions:
+On Sun, Apr 05, 2015 at 07:20:19PM +0200, Pali Roh=E1r wrote:
+> This patch adds dm message commands and option strings to optionally =
+wipe key
+> from dm-crypt device before entering suspend or hibernate state.
+=20
+Try to avoid 0/1 - use descriptive options instead.=20
+E.g. key wipe_on_hibernation / key retain_on_hibernation  (message)
+     wipe_key_on_hiberation ('dmsetup table' - don't forget the reporti=
+ng interface!)
 
-Firstly well done for digging through these tools.  I love it when
-people take the time to read code.
+Have you tested against every state the driver might be in at the time =
+of
+suspend/hibernation?
 
-> 1. thin_check doesn't open metadata and data space maps.
->    It uses the core space_map to open the mapping_tree,
->    instead of the data space map. Is that legal?
->    (Although block_time_ref_counter was never used during tree traversal)
+> +static void crypt_suspend_and_wipe_key(struct crypt_config *cc)
+> +{
+> +	dm_suspend_md(dm_table_get_md(cc->ti->table));
 
-Is it legal?  Yes, walking the mappings doesn't require any
-use of the space map.
+I'm not particularly keen on this - silently ignoring expected error st=
+ates
+like -EINVAL rather than checking first and not calling the function at=
+ all
+when it's known not to be needed.
 
-But it does highlight the fact that I'm not checking the space maps
-correctness currently.  The first release of the tools _did_ do this,
-but it was ommitted when I did a big tidy up.  There is a branch with
-some work for this area that I need to merge in.
+Alasdair
 
-> 2. Class mapping_tree_detail::ll_damage_visitor should not be used to
-> traverse
->    a single_mapping_tree. This class was designed for two-level data
-> mapping tree,
->    or the top-level data mapping tree (i.e., mapping_tree and dev_tree
-> types).
->    It generates missing_devices while visiting a damage with
-> zero-length-path,
->    which is not semantically suitable for single_mapping_tree.
-
-Yep, I think you're right.  Thanks.
-
-- Joe
