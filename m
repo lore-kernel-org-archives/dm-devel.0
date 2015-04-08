@@ -1,16 +1,13 @@
-From: Ben Collins <ben.c@servergy.com>
-Subject: Re: [PATCH v2] dm crypt: fix deadlock when algo returns
-	-EBUSY
-Date: Tue, 7 Apr 2015 12:10:35 -0500
-Message-ID: <BA6189A5-1C3D-4A43-B494-D6FEC7200E7D@servergy.com>
-References: <1428077387-2292-1-git-send-email-ben.c@servergy.com>
-	<20150407155501.GA29040@redhat.com>
-	<20150407162842.GA54137@redhat.com>
+From: heinzm@redhat.com
+Subject: [PATCH 1/2] dm-raid1: [PATCH RFC] dm-raid1: keep writing
+	after leg failure
+Date: Wed,  8 Apr 2015 14:27:33 +0200
+Message-ID: <1428496054-5837-2-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2070.6\))
-Content-Type: multipart/mixed; boundary="===============7745236767006083145=="
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150407162842.GA54137@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,170 +17,92 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-
---===============7745236767006083145==
-Content-Type: multipart/signed;
-	boundary="Apple-Mail=_A289DC1D-61FB-4FD8-9702-AF4814B30701";
-	protocol="application/pgp-signature"; micalg=pgp-sha256
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
 
---Apple-Mail=_A289DC1D-61FB-4FD8-9702-AF4814B30701
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain;
-	charset=utf-8
+Lidongs initial patch rebased to 4.0.0-rc7
 
+---
+ drivers/md/dm-raid1.c | 30 ++++++++++++++++++++++++++----
+ 1 file changed, 26 insertions(+), 4 deletions(-)
 
-> On Apr 7, 2015, at 11:28 AM, Mike Snitzer <snitzer@redhat.com> wrote:
->=20
-> On Tue, Apr 07 2015 at 11:55P -0400,
-> Mike Snitzer <snitzer@redhat.com> wrote:
->=20
->> It looks like you're _always_ using the completion regardless of =
-whether
->> crypt_convert() will be waiting (e.g. even if error is 0).
->>=20
->> I can see this "working" but it seems less than ideal.  Would it be
->> better to record the need to use the completion in ctx and then
->> conditionally call complete()?
->=20
-> Actually, how about using !completion_done() before calling =
-complete()?
-> If you think this would be OK, any chance you could re-test with this?
-
-I'll be able to test it before Friday (out of town). Thanks
-
-
-
-> From: Ben Collins <ben.c@servergy.com>
-> Date: Fri, 3 Apr 2015 16:09:46 +0000
-> Subject: [PATCH] dm crypt: fix deadlock when algo returns -EBUSY
->=20
-> I suspect this doesn't show up for most anyone because software
-> algorithms typically don't have a sense of being too busy.  However,
-> when working with the Freescale CAAM driver it will return -EBUSY on
-> occasion under heavy -- which resulted in dm-crypt deadlock.
->=20
-> After checking the logic in some other drivers, the scheme for
-> crypt_convert() and it's callback, kcryptd_async_done(), were not
-> correctly laid out to properly handle -EBUSY or -EINPROGRESS.
->=20
-> Fix this by using the completion for both -EBUSY and -EINPROGRESS.
-> Before this fix dm-crypt would lockup within 1-2 minutes running with
-> the CAAM driver.  Fix was regression tested against software =
-algorithms
-> on PPC32 and x86_64, and things seem perfectly happy there as well.
->=20
-> Signed-off-by: Ben Collins <ben.c@servergy.com>
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> Cc: stable@vger.kernel.org
-> ---
-> drivers/md/dm-crypt.c | 12 ++++++------
-> 1 file changed, 6 insertions(+), 6 deletions(-)
->=20
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index ea09d54..cab96ca 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -925,11 +925,10 @@ static int crypt_convert(struct crypt_config =
-*cc,
->=20
-> 		switch (r) {
-> 		/* async */
-> +		case -EINPROGRESS:
-> 		case -EBUSY:
-> 			wait_for_completion(&ctx->restart);
-> 			reinit_completion(&ctx->restart);
-> -			/* fall through*/
-> -		case -EINPROGRESS:
-> 			ctx->req =3D NULL;
-> 			ctx->cc_sector++;
-> 			continue;
-> @@ -1346,10 +1345,8 @@ static void kcryptd_async_done(struct =
-crypto_async_request *async_req,
-> 	struct dm_crypt_io *io =3D container_of(ctx, struct dm_crypt_io, =
-ctx);
-> 	struct crypt_config *cc =3D io->cc;
->=20
-> -	if (error =3D=3D -EINPROGRESS) {
-> -		complete(&ctx->restart);
-> +	if (error =3D=3D -EINPROGRESS)
-> 		return;
-> -	}
->=20
-> 	if (!error && cc->iv_gen_ops && cc->iv_gen_ops->post)
-> 		error =3D cc->iv_gen_ops->post(cc, iv_of_dmreq(cc, =
-dmreq), dmreq);
-> @@ -1360,12 +1357,15 @@ static void kcryptd_async_done(struct =
-crypto_async_request *async_req,
-> 	crypt_free_req(cc, req_of_dmreq(cc, dmreq), io->base_bio);
->=20
-> 	if (!atomic_dec_and_test(&ctx->cc_pending))
-> -		return;
-> +		goto done;
->=20
-> 	if (bio_data_dir(io->base_bio) =3D=3D READ)
-> 		kcryptd_crypt_read_done(io);
-> 	else
-> 		kcryptd_crypt_write_io_submit(io, 1);
-> +done:
-> +	if (!completion_done(&ctx->restart))
-> +		complete(&ctx->restart);
-> }
->=20
-> static void kcryptd_crypt(struct work_struct *work)
-> --
-> 1.9.5 (Apple Git-50.3)
->=20
-
-=E2=80=94=E2=80=94
-Ben Collins
-Cyphre Champion
-=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=
-=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94
-Principal Architect
-Servergy, Inc.
-469-919-5634 (O)
-757-243-7557 (M)
-
-
---Apple-Mail=_A289DC1D-61FB-4FD8-9702-AF4814B30701
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
-	filename=signature.asc
-Content-Type: application/pgp-signature;
-	name=signature.asc
-Content-Description: Message signed with OpenPGP using GPGMail
-
------BEGIN PGP SIGNATURE-----
-Comment: GPGTools - http://gpgtools.org
-
-iQIcBAEBCAAGBQJVJA+LAAoJEF1aV8ckKyLPLcEP/jAbxEQUQl8/YRx6cgJdU0BN
-tVHCCuVuK37ebLBrfZUEBZUsTRgi6PXe6phVVzMG6Vw8BTvmqUisJa4tSeg9B8p+
-KfZXMgNAiKXa7TQO+gfw9ZgWOptDVZyodgLFYefXrqhcdnONACvjPlAcSxStBvFu
-MEsbKGP2rEXp8lhSVqRPaned/zpuKz5gGiPBbYV4pYSeNFxk0qWQMJsgiDg2tQ5/
-evi1jPchdUxb5zgfKYFolDmfLcFBk0gsTF3w8onnSWORt9c+m47dGMlShH7Vng/1
-byhV4fEQvfxwwFhP8GxWK9LeyIzA9Sfq3gqu10Y4JSgcvhXqbMiXokpAc2VkCEWv
-jcJVrQJclT2Sx6O7gHjk1gxWnq5I5NUFYgFAPr60v4F74JkAaIQRg5mALhTv1jDU
-WbAg2l1vCdw0Kv2dHPBZCY9VzTHH3igUOsSiMpI2XxguORQXGaMfFp3SOhNwH5AW
-fSZASgUaWglD4xnaXx8aucvT0c3I9I8Im4vAVDoyExPRPqHGFFlbSEHnl1jv0+X7
-rPRm+yxbqh2gSYjph5A4Hc9mEL5oKS4Eh2aNiIj3vY3HwN7jPhvW6N5VGYQTtUBs
-Vma3VARM36LCGHXYNGTGkmvKE01o/0W51RmU9ztKNLY9VG2vdLCT82/SCB0mJ62o
-WfSlhCDDacGGPpYhgd71
-=23LL
------END PGP SIGNATURE-----
-
---Apple-Mail=_A289DC1D-61FB-4FD8-9702-AF4814B30701--
-
-
---===============7745236767006083145==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7745236767006083145==--
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index 089d627..ef5f20c 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -24,7 +24,9 @@
+ #define MAX_RECOVERY 1	/* Maximum number of regions recovered in parallel. */
+ 
+ #define DM_RAID1_HANDLE_ERRORS 0x01
++#define DM_RAID1_KEEP_LOG      0x02
+ #define errors_handled(p)	((p)->features & DM_RAID1_HANDLE_ERRORS)
++#define keep_log(p)	        ((p)->features & DM_RAID1_KEEP_LOG)
+ 
+ static DECLARE_WAIT_QUEUE_HEAD(_kmirrord_recovery_stopped);
+ 
+@@ -759,7 +761,7 @@ static void do_writes(struct mirror_set *ms, struct bio_list *writes)
+ 		dm_rh_delay(ms->rh, bio);
+ 
+ 	while ((bio = bio_list_pop(&nosync))) {
+-		if (unlikely(ms->leg_failure) && errors_handled(ms)) {
++		if (unlikely(ms->leg_failure) && errors_handled(ms) && !keep_log(ms)) {
+ 			spin_lock_irq(&ms->lock);
+ 			bio_list_add(&ms->failures, bio);
+ 			spin_unlock_irq(&ms->lock);
+@@ -809,9 +811,19 @@ static void do_failures(struct mirror_set *ms, struct bio_list *failures)
+ 		 * be wrong if the failed leg returned after reboot and
+ 		 * got replicated back to the good legs.)
+ 		 */
+-		if (!get_valid_mirror(ms))
++
++		/*
++		 * we return EIO when the log device is failed if keep_log is set
++		 */
++		if (!get_valid_mirror(ms) || (keep_log(ms) && !ms->log_failure))
+ 			bio_endio(bio, -EIO);
+-		else if (errors_handled(ms))
++		/*
++		 * After the userspace get noticed that the leg has failed,
++		 * we just pretend that the bio has suceeded since the region 
++		 * has already been marked nosync. It's OK do the recovery after
++		 * the device comes back
++		 */
++		else if (errors_handled(ms) && !keep_log(ms))
+ 			hold_bio(ms, bio);
+ 		else
+ 			bio_endio(bio, 0);
+@@ -1014,8 +1026,15 @@ static int parse_features(struct mirror_set *ms, unsigned argc, char **argv,
+ 		return -EINVAL;
+ 	}
+ 
++	argc--;
++	argv++;
+ 	(*args_used)++;
+ 
++	if (!strcmp("keep_log", argv[0])) {
++		ms->features |= DM_RAID1_KEEP_LOG;
++		(*args_used)++;
++	}
++
+ 	return 0;
+ }
+ 
+@@ -1394,8 +1413,11 @@ static void mirror_status(struct dm_target *ti, status_type_t type,
+ 			DMEMIT(" %s %llu", ms->mirror[m].dev->name,
+ 			       (unsigned long long)ms->mirror[m].offset);
+ 
+-		if (ms->features & DM_RAID1_HANDLE_ERRORS)
++		if (errors_handled(ms) && keep_log(ms))
++			DMEMIT(" 2 handle_errors keep_log");
++		else if (errors_handled(ms))
+ 			DMEMIT(" 1 handle_errors");
++
+ 	}
+ }
+ 
+-- 
+2.1.0
