@@ -1,85 +1,137 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH 2/2][v2] blk-plug: don't flush nested plug lists
-Date: Thu, 9 Apr 2015 10:54:23 +1000
-Message-ID: <20150409005423.GD13731@dastard>
-References: <1428347694-17704-1-git-send-email-jmoyer@redhat.com>
- <1428347694-17704-2-git-send-email-jmoyer@redhat.com>
- <x49wq1nrcoe.fsf_-_@segfault.boston.devel.redhat.com>
- <20150408230203.GG15810@dastard>
+From: "Lidong Zhong" <lzhong@suse.com>
+Subject: Re: [PATCH RFC] dm-raid1: keep writing after leg failure
+Date: Wed, 08 Apr 2015 20:40:40 -0600
+Message-ID: <55265728020000E100020418@relay2.provo.novell.com>
+References: <1428033061-5625-1-git-send-email-lzhong@suse.com>
+	<55251EBC.3060101@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <target-devel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <55251EBC.3060101@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20150408230203.GG15810@dastard>
-Sender: target-devel-owner@vger.kernel.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, xen-devel@lists.xenproject.org, linux-raid@vger.kernel.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nfs@vger.kernel.org, linux-mm@kvack.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-[ Sending again with a trimmed CC list to just the lists. Jeff - cc
-lists that large get blocked by mailing lists... ]
+>>> On 4/8/2015 at 08:27 PM, in message <55251EBC.3060101@redhat.com>, Heinz
+Mauelshagen <heinzm@redhat.com> wrote: 
+> Lidong, 
+>  
+> please see the patch series of 3 in response with $Subject. 
+>  
 
-On Tue, Apr 07, 2015 at 02:55:13PM -0400, Jeff Moyer wrote:
-> The way the on-stack plugging currently works, each nesting level
-> flushes its own list of I/Os.  This can be less than optimal (read
-> awful) for certain workloads.  For example, consider an application
-> that issues asynchronous O_DIRECT I/Os.  It can send down a bunch of
-> I/Os together in a single io_submit call, only to have each of them
-> dispatched individually down in the bowels of the dirct I/O code.
-> The reason is that there are blk_plug-s instantiated both at the upper
-> call site in do_io_submit and down in do_direct_IO.  The latter will
-> submit as little as 1 I/O at a time (if you have a small enough I/O
-> size) instead of performing the batching that the plugging
-> infrastructure is supposed to provide.
+Hi Heinz,
+Thanks for your correction.
 
-I'm wondering what impact this will have on filesystem metadata IO
-that needs to be issued immediately. e.g. we are doing writeback, so
-there is a high level plug in place and we need to page in btree
-blocks to do extent allocation. We do readahead at this point,
-but it looks like this change will prevent the readahead from being
-issued by the unplug in xfs_buf_iosubmit().
+Regards,
+Lidong
 
-So while I can see how this can make your single microbenchmark
-better (because it's only doing concurrent direct IO to the block
-device and hence there are no dependencies between individual IOs),
-I have significant reservations that it's actually a win for
-filesystem-based workloads where we need direct control of flushing
-to minimise IO latency due to IO dependencies...
-
-Patches like this one:
-
-https://lkml.org/lkml/2015/3/20/442
-
-show similar real-world workload improvements to your patchset by
-being smarter about using high level plugging to enable cross-file
-merging of IO, but it still relies on the lower layers of plugging
-to resolve latency bubbles caused by IO dependencies in the
-filesystems.
-
-> NOTE TO SUBSYSTEM MAINTAINERS: Before this patch, blk_finish_plug
-> would always flush the plug list.  After this patch, this is only the
-> case for the outer-most plug.  If you require the plug list to be
-> flushed, you should be calling blk_flush_plug(current).  Btrfs and dm
-> maintainers should take a close look at this patch and ensure they get
-> the right behavior in the end.
-
-IOWs, you are saying we need to change all our current unplugs to
-blk_flush_plug(current) to *try* to maintain the same behaviour as
-we currently have? I say *try*, because no instead of just flushing
-the readahead IO on the plug, we'll also flush all the queued data
-writeback IO onthe high level plug. We don't actually want to do
-that; we only want to submit the readahead and not the bulk IO that
-will delay the latency sensitive dependent IOs....
-
-If that is the case, shouldn't you actually be trying to fix the
-specific plugging problem you've identified (i.e. do_direct_IO() is
-flushing far too frequently) rather than making a sweeping
-generalisation that the IO stack plugging infrastructure
-needs fundamental change?
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+> Heinz 
+>  
+> On 04/03/2015 05:51 AM, Lidong Zhong wrote: 
+> > Currently if there is a leg failure, the bio will be put into the hold 
+> > list until userspace replace/remove the leg. Here we are trying to make 
+> > dm-raid1 ignore the failure and keep the following bios going on. 
+> > This is because there maybe a temporary path failure in clvmd 
+> > which leads to cluster raid1 remove/replace the fake device failure. And 
+> > it takes a long time to do the full sync if we readd the device back. 
+> > --- 
+> >   drivers/md/dm-raid1.c | 30 ++++++++++++++++++++++++++---- 
+> >   1 file changed, 26 insertions(+), 4 deletions(-) 
+> > 
+> > diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c 
+> > index 9584443..e237c42 100644 
+> > --- a/drivers/md/dm-raid1.c 
+> > +++ b/drivers/md/dm-raid1.c 
+> > @@ -24,7 +24,9 @@ 
+> >   #define MAX_RECOVERY 1	/* Maximum number of regions recovered in parallel.  
+> */ 
+> >    
+> >   #define DM_RAID1_HANDLE_ERRORS 0x01 
+> > +#define DM_RAID1_KEEP_LOG      0x02 
+> >   #define errors_handled(p)	((p)->features & DM_RAID1_HANDLE_ERRORS) 
+> > +#define keep_log(p)	        ((p)->features & DM_RAID1_KEEP_LOG) 
+> >    
+> >   static DECLARE_WAIT_QUEUE_HEAD(_kmirrord_recovery_stopped); 
+> >    
+> > @@ -750,7 +752,7 @@ static void do_writes(struct mirror_set *ms, struct  
+> bio_list *writes) 
+> >   		dm_rh_delay(ms->rh, bio); 
+> >    
+> >   	while ((bio = bio_list_pop(&nosync))) { 
+> > -		if (unlikely(ms->leg_failure) && errors_handled(ms)) { 
+> > +		if (unlikely(ms->leg_failure) && errors_handled(ms) && !keep_log(ms)) { 
+> >   			spin_lock_irq(&ms->lock); 
+> >   			bio_list_add(&ms->failures, bio); 
+> >   			spin_unlock_irq(&ms->lock); 
+> > @@ -800,9 +802,19 @@ static void do_failures(struct mirror_set *ms, struct  
+> bio_list *failures) 
+> >   		 * be wrong if the failed leg returned after reboot and 
+> >   		 * got replicated back to the good legs.) 
+> >   		 */ 
+> > -		if (!get_valid_mirror(ms)) 
+> > + 
+> > +		/* 
+> > +		 * we return EIO when the log device is failed if keep_log is set 
+> > +		 */ 
+> > +		if (!get_valid_mirror(ms) || (keep_log(ms) && !ms->log_failure)) 
+> >   			bio_endio(bio, -EIO); 
+> > -		else if (errors_handled(ms)) 
+> > +		/* 
+> > +		 * After the userspace get noticed that the leg has failed, 
+> > +		 * we just pretend that the bio has suceeded since the region 
+> > +		 * has already been marked nosync. It's OK do the recovery after 
+> > +		 * the device comes back 
+> > +		 */ 
+> > +		else if (errors_handled(ms) && !keep_log(ms)) 
+> >   			hold_bio(ms, bio); 
+> >   		else 
+> >   			bio_endio(bio, 0); 
+> > @@ -1005,8 +1017,15 @@ static int parse_features(struct mirror_set *ms,  
+> unsigned argc, char **argv, 
+> >   		return -EINVAL; 
+> >   	} 
+> >    
+> > +	argc--; 
+> > +	argv++; 
+> >   	(*args_used)++; 
+> >    
+> > +	if (!strcmp("keep_log", argv[0])) { 
+> > +		ms->features |= DM_RAID1_KEEP_LOG; 
+> > +		(*args_used)++; 
+> > +	} 
+> > + 
+> >   	return 0; 
+> >   } 
+> >    
+> > @@ -1382,8 +1401,11 @@ static void mirror_status(struct dm_target *ti,  
+> status_type_t type, 
+> >   			DMEMIT(" %s %llu", ms->mirror[m].dev->name, 
+> >   			       (unsigned long long)ms->mirror[m].offset); 
+> >    
+> > -		if (ms->features & DM_RAID1_HANDLE_ERRORS) 
+> > +		if (errors_handled(ms) && keep_log(ms)) 
+> > +			DMEMIT(" 2 handle_errors keep_log"); 
+> > +		else if (errors_handled(ms)) 
+> >   			DMEMIT(" 1 handle_errors"); 
+> > + 
+> >   	} 
+> >   } 
+> >    
+>  
+> -- 
+> dm-devel mailing list 
+> dm-devel@redhat.com 
+> https://www.redhat.com/mailman/listinfo/dm-devel 
+>  
+>  
