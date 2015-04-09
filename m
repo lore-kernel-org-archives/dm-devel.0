@@ -1,127 +1,103 @@
-From: Pali =?utf-8?q?Roh=C3=A1r?= <pali.rohar@gmail.com>
-Subject: Re: [PATCH 1/3] PM suspend/hibernate: Call notifier after freezing processes
-Date: Thu, 9 Apr 2015 08:36:57 +0200
-Message-ID: <201504090836.57365@pali>
-References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com> <1428254419-7334-2-git-send-email-pali.rohar@gmail.com> <1530775.n2Kjx1bffW@vostro.rjw.lan>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 0/3] dm-crypt: Adds support for wiping key when doing
+ suspend/hibernation
+Date: Thu, 9 Apr 2015 09:12:08 -0400
+Message-ID: <20150409131208.GA9504@redhat.com>
+References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
+ <20150406130045.GA18583@redhat.com>
+ <201504061529.57299@pali>
 Mime-Version: 1.0
-Content-Type: multipart/signed;
-  boundary="nextPart2566388.gOmNIJrIqI";
-  protocol="application/pgp-signature";
-  micalg=pgp-sha1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <1530775.n2Kjx1bffW@vostro.rjw.lan>
-Sender: linux-raid-owner@vger.kernel.org
-To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-pm-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <201504061529.57299@pali>
+Sender: linux-pm-owner@vger.kernel.org
+To: Pali =?iso-8859-1?Q?Roh=E1r?= <pali.rohar@gmail.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: dm-devel.ids
 
---nextPart2566388.gOmNIJrIqI
-Content-Type: Text/Plain;
-  charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
+On Mon, Apr 06 2015 at  9:29am -0400,
+Pali Roh=E1r <pali.rohar@gmail.com> wrote:
 
-On Thursday 09 April 2015 02:28:41 Rafael J. Wysocki wrote:
-> On Sunday, April 05, 2015 07:20:17 PM Pali Roh=C3=A1r wrote:
-> > To prevent race conditions on userspace processes with I/O
-> > some taks must be called after processes are freezed. This
-> > patch adds new events which are delivered by
-> > pm_notifier_call_chain() after freezing processes when
-> > doing suspend or hibernate action.
+> On Monday 06 April 2015 15:00:46 Mike Snitzer wrote:
+> > On Sun, Apr 05 2015 at  1:20pm -0400,
 > >=20
-> > Signed-off-by: Pali Roh=C3=A1r <pali.rohar@gmail.com>
+> > Pali Roh=E1r <pali.rohar@gmail.com> wrote:
+> > > This patch series increase security of suspend and hibernate
+> > > actions. It allows user to safely wipe crypto keys before
+> > > suspend and hibernate actions starts without race
+> > > conditions on userspace process with heavy I/O.
+> > >=20
+> > > To automatically wipe cryto key for <device> before
+> > > hibernate action call: $ dmsetup message <device> 0 key
+> > > wipe_on_hibernation 1
+> > >=20
+> > > To automatically wipe cryto key for <device> before suspend
+> > > action call: $ dmsetup message <device> 0 key
+> > > wipe_on_suspend 1
+> > >=20
+> > > (Value 0 after wipe_* string reverts original behaviour - to
+> > > not wipe key)
+> >=20
+> > Can you elaborate on the attack vector your changes are meant
+> > to protect against?  The user already authorized access, why
+> > is it inherently dangerous to _not_ wipe the associated key
+> > across these events?
 >=20
-> Please don't add more notifiers.  Just call whatever you need
-> directly from where you need to call that.
+> Hi,
 >=20
-> If that is device-related, try to use device PM
-> suspend/hibernate callbacks instead.
+> yes, I will try to explain current problems with cryptsetup=20
+> luksSuspend command and hibernation.
 >=20
+> First, sometimes it is needed to put machine into other hands.=20
+> You can still watch other person what is doing with machine, but=20
+> once if you let machine unlocked (e.g opened luks disk), she/he=20
+> can access encrypted data.
+>=20
+> If you turn off machine, it could be safe, because luks disk=20
+> devices are locked. But if you enter machine into suspend or=20
+> hibernate state luks devices are still open. And my patches try=20
+> to achieve similar security as when machine is off (=3D no crypto=20
+> keys in RAM or on swap).
+>=20
+> When doing hibernate on unencrypted swap it is to prevent leaking=20
+> crypto keys to hibernate image (which is stored in swap).
+>=20
+> When doing suspend action it is again to prevent leaking crypto=20
+> keys. E.g when you suspend laptop and put it off (somebody can=20
+> remove RAMs and do some cold boot attack).
+>=20
+> The most common situation is:
+> You have mounted partition from dm-crypt device (e.g. /home/),=20
+> some userspace processes access it (e.g opened firefox which=20
+> still reads/writes to cache ~/.firefox/) and you want to drop=20
+> crypto keys from kernel for some time.
+>=20
+> For that operation there is command cryptsetup luksSuspend, which=20
+> suspend dm device and then tell kernel to wipe crypto keys. All=20
+> I/O operations are then stopped and userspace processes which=20
+> want to do some those I/O operations are stopped too (until you=20
+> call cryptsetup luksResume and enter correct key).
+>=20
+> Now if you want to suspend/hiberate your machine (when some of dm=20
+> devices are suspeneded and some processes are stopped due to=20
+> pending I/O) it is not possible. Kernel freeze_processes function=20
+> will fail because userspace processes are still stopped inside=20
+> some I/O syscall (read/write, etc,...).
+>=20
+> My patches fixes this problem and do those operations (suspend dm=20
+> device, wipe crypto keys, enter suspend/hiberate) in correct=20
+> order and without race condition.
+>=20
+> dm device is suspended *after* userspace processes are freezed=20
+> and after that are crypto keys wiped. And then computer/laptop=20
+> enters into suspend/hibernate state.
 
-Hi! It is not possible to use any exiting pm notifiers! This is=20
-reason why I added new ones. As I wrote wiping dm crypt keys must=20
-be done *after* userspace processes are freezed to prevent race=20
-conditions...
+Wouldn't it be better to fix freeze_processes() to be tolerant of
+processes that are hung as a side-effect of their backing storage being
+suspended?  A hibernate shouldn't fail simply because a user chose to
+suspend a DM device.
 
-> > ---
-> >=20
-> >  include/linux/suspend.h  |    2 ++
-> >  kernel/power/hibernate.c |    2 ++
-> >  kernel/power/suspend.c   |    4 +++-
-> >  3 files changed, 7 insertions(+), 1 deletion(-)
-> >=20
-> > diff --git a/include/linux/suspend.h
-> > b/include/linux/suspend.h index 5efe743..bc743c8 100644
-> > --- a/include/linux/suspend.h
-> > +++ b/include/linux/suspend.h
-> > @@ -368,6 +368,8 @@ static inline bool
-> > hibernation_available(void) { return false; }
-> >=20
-> >  #define PM_POST_SUSPEND		0x0004 /* Suspend finished */
-> >  #define PM_RESTORE_PREPARE	0x0005 /* Going to restore a
-> >  saved image */ #define PM_POST_RESTORE		0x0006 /*
-> >  Restore
-> >  failed */
-> >=20
-> > +#define PM_HIBERNATION_AFTER_FREEZE	0x0007 /* After
-> > hibernation freeze */ +#define
-> > PM_SUSPEND_AFTER_FREEZE		0x0008 /* After suspend freeze */
-> >=20
-> >  extern struct mutex pm_mutex;
-> >=20
-> > diff --git a/kernel/power/hibernate.c
-> > b/kernel/power/hibernate.c index 2329daa..184f7ee 100644
-> > --- a/kernel/power/hibernate.c
-> > +++ b/kernel/power/hibernate.c
-> > @@ -671,6 +671,8 @@ int hibernate(void)
-> >=20
-> >  	if (error)
-> >  =09
-> >  		goto Exit;
-> >=20
-> > +	pm_notifier_call_chain(PM_HIBERNATION_AFTER_FREEZE);
-> > +
-> >=20
-> >  	lock_device_hotplug();
-> >  	/* Allocate memory management structures */
-> >  	error =3D create_basic_memory_bitmaps();
-> >=20
-> > diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
-> > index b7d6b3a..1776938 100644
-> > --- a/kernel/power/suspend.c
-> > +++ b/kernel/power/suspend.c
-> > @@ -268,8 +268,10 @@ static int
-> > suspend_prepare(suspend_state_t state)
-> >=20
-> >  	trace_suspend_resume(TPS("freeze_processes"), 0, true);
-> >  	error =3D suspend_freeze_processes();
-> >  	trace_suspend_resume(TPS("freeze_processes"), 0, false);
-> >=20
-> > -	if (!error)
-> > +	if (!error) {
-> > +		pm_notifier_call_chain(PM_SUSPEND_AFTER_FREEZE);
-> >=20
-> >  		return 0;
-> >=20
-> > +	}
-> >=20
-> >  	suspend_stats.failed_freeze++;
-> >  	dpm_save_failed_step(SUSPEND_FREEZE);
-
-=2D-=20
-Pali Roh=C3=A1r
-pali.rohar@gmail.com
-
---nextPart2566388.gOmNIJrIqI
-Content-Type: application/pgp-signature; name=signature.asc 
-Content-Description: This is a digitally signed message part.
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-
-iEYEABECAAYFAlUmHgkACgkQi/DJPQPkQ1KqBQCgsCMPDSjapvieT2WGen4RFz1c
-FZ0AoLar16geldAQXYKF7cbDoVv1l2bf
-=QehT
------END PGP SIGNATURE-----
-
---nextPart2566388.gOmNIJrIqI--
+Then this entire problem goes away and the key can be wiped from
+userspace (like you said above).
