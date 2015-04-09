@@ -1,137 +1,127 @@
-From: "Lidong Zhong" <lzhong@suse.com>
-Subject: Re: [PATCH RFC] dm-raid1: keep writing after leg failure
-Date: Wed, 08 Apr 2015 20:40:40 -0600
-Message-ID: <55265728020000E100020418@relay2.provo.novell.com>
-References: <1428033061-5625-1-git-send-email-lzhong@suse.com>
-	<55251EBC.3060101@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Pali =?utf-8?q?Roh=C3=A1r?= <pali.rohar@gmail.com>
+Subject: Re: [PATCH 1/3] PM suspend/hibernate: Call notifier after freezing processes
+Date: Thu, 9 Apr 2015 08:36:57 +0200
+Message-ID: <201504090836.57365@pali>
+References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com> <1428254419-7334-2-git-send-email-pali.rohar@gmail.com> <1530775.n2Kjx1bffW@vostro.rjw.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: multipart/signed;
+  boundary="nextPart2566388.gOmNIJrIqI";
+  protocol="application/pgp-signature";
+  micalg=pgp-sha1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <55251EBC.3060101@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <1530775.n2Kjx1bffW@vostro.rjw.lan>
+Sender: linux-raid-owner@vger.kernel.org
+To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: dm-devel.ids
 
->>> On 4/8/2015 at 08:27 PM, in message <55251EBC.3060101@redhat.com>, Heinz
-Mauelshagen <heinzm@redhat.com> wrote: 
-> Lidong, 
->  
-> please see the patch series of 3 in response with $Subject. 
->  
+--nextPart2566388.gOmNIJrIqI
+Content-Type: Text/Plain;
+  charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hi Heinz,
-Thanks for your correction.
+On Thursday 09 April 2015 02:28:41 Rafael J. Wysocki wrote:
+> On Sunday, April 05, 2015 07:20:17 PM Pali Roh=C3=A1r wrote:
+> > To prevent race conditions on userspace processes with I/O
+> > some taks must be called after processes are freezed. This
+> > patch adds new events which are delivered by
+> > pm_notifier_call_chain() after freezing processes when
+> > doing suspend or hibernate action.
+> >=20
+> > Signed-off-by: Pali Roh=C3=A1r <pali.rohar@gmail.com>
+>=20
+> Please don't add more notifiers.  Just call whatever you need
+> directly from where you need to call that.
+>=20
+> If that is device-related, try to use device PM
+> suspend/hibernate callbacks instead.
+>=20
 
-Regards,
-Lidong
+Hi! It is not possible to use any exiting pm notifiers! This is=20
+reason why I added new ones. As I wrote wiping dm crypt keys must=20
+be done *after* userspace processes are freezed to prevent race=20
+conditions...
 
-> Heinz 
->  
-> On 04/03/2015 05:51 AM, Lidong Zhong wrote: 
-> > Currently if there is a leg failure, the bio will be put into the hold 
-> > list until userspace replace/remove the leg. Here we are trying to make 
-> > dm-raid1 ignore the failure and keep the following bios going on. 
-> > This is because there maybe a temporary path failure in clvmd 
-> > which leads to cluster raid1 remove/replace the fake device failure. And 
-> > it takes a long time to do the full sync if we readd the device back. 
-> > --- 
-> >   drivers/md/dm-raid1.c | 30 ++++++++++++++++++++++++++---- 
-> >   1 file changed, 26 insertions(+), 4 deletions(-) 
-> > 
-> > diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c 
-> > index 9584443..e237c42 100644 
-> > --- a/drivers/md/dm-raid1.c 
-> > +++ b/drivers/md/dm-raid1.c 
-> > @@ -24,7 +24,9 @@ 
-> >   #define MAX_RECOVERY 1	/* Maximum number of regions recovered in parallel.  
-> */ 
-> >    
-> >   #define DM_RAID1_HANDLE_ERRORS 0x01 
-> > +#define DM_RAID1_KEEP_LOG      0x02 
-> >   #define errors_handled(p)	((p)->features & DM_RAID1_HANDLE_ERRORS) 
-> > +#define keep_log(p)	        ((p)->features & DM_RAID1_KEEP_LOG) 
-> >    
-> >   static DECLARE_WAIT_QUEUE_HEAD(_kmirrord_recovery_stopped); 
-> >    
-> > @@ -750,7 +752,7 @@ static void do_writes(struct mirror_set *ms, struct  
-> bio_list *writes) 
-> >   		dm_rh_delay(ms->rh, bio); 
-> >    
-> >   	while ((bio = bio_list_pop(&nosync))) { 
-> > -		if (unlikely(ms->leg_failure) && errors_handled(ms)) { 
-> > +		if (unlikely(ms->leg_failure) && errors_handled(ms) && !keep_log(ms)) { 
-> >   			spin_lock_irq(&ms->lock); 
-> >   			bio_list_add(&ms->failures, bio); 
-> >   			spin_unlock_irq(&ms->lock); 
-> > @@ -800,9 +802,19 @@ static void do_failures(struct mirror_set *ms, struct  
-> bio_list *failures) 
-> >   		 * be wrong if the failed leg returned after reboot and 
-> >   		 * got replicated back to the good legs.) 
-> >   		 */ 
-> > -		if (!get_valid_mirror(ms)) 
-> > + 
-> > +		/* 
-> > +		 * we return EIO when the log device is failed if keep_log is set 
-> > +		 */ 
-> > +		if (!get_valid_mirror(ms) || (keep_log(ms) && !ms->log_failure)) 
-> >   			bio_endio(bio, -EIO); 
-> > -		else if (errors_handled(ms)) 
-> > +		/* 
-> > +		 * After the userspace get noticed that the leg has failed, 
-> > +		 * we just pretend that the bio has suceeded since the region 
-> > +		 * has already been marked nosync. It's OK do the recovery after 
-> > +		 * the device comes back 
-> > +		 */ 
-> > +		else if (errors_handled(ms) && !keep_log(ms)) 
-> >   			hold_bio(ms, bio); 
-> >   		else 
-> >   			bio_endio(bio, 0); 
-> > @@ -1005,8 +1017,15 @@ static int parse_features(struct mirror_set *ms,  
-> unsigned argc, char **argv, 
-> >   		return -EINVAL; 
-> >   	} 
-> >    
-> > +	argc--; 
-> > +	argv++; 
-> >   	(*args_used)++; 
-> >    
-> > +	if (!strcmp("keep_log", argv[0])) { 
-> > +		ms->features |= DM_RAID1_KEEP_LOG; 
-> > +		(*args_used)++; 
-> > +	} 
-> > + 
-> >   	return 0; 
-> >   } 
-> >    
-> > @@ -1382,8 +1401,11 @@ static void mirror_status(struct dm_target *ti,  
-> status_type_t type, 
-> >   			DMEMIT(" %s %llu", ms->mirror[m].dev->name, 
-> >   			       (unsigned long long)ms->mirror[m].offset); 
-> >    
-> > -		if (ms->features & DM_RAID1_HANDLE_ERRORS) 
-> > +		if (errors_handled(ms) && keep_log(ms)) 
-> > +			DMEMIT(" 2 handle_errors keep_log"); 
-> > +		else if (errors_handled(ms)) 
-> >   			DMEMIT(" 1 handle_errors"); 
-> > + 
-> >   	} 
-> >   } 
-> >    
->  
-> -- 
-> dm-devel mailing list 
-> dm-devel@redhat.com 
-> https://www.redhat.com/mailman/listinfo/dm-devel 
->  
->  
+> > ---
+> >=20
+> >  include/linux/suspend.h  |    2 ++
+> >  kernel/power/hibernate.c |    2 ++
+> >  kernel/power/suspend.c   |    4 +++-
+> >  3 files changed, 7 insertions(+), 1 deletion(-)
+> >=20
+> > diff --git a/include/linux/suspend.h
+> > b/include/linux/suspend.h index 5efe743..bc743c8 100644
+> > --- a/include/linux/suspend.h
+> > +++ b/include/linux/suspend.h
+> > @@ -368,6 +368,8 @@ static inline bool
+> > hibernation_available(void) { return false; }
+> >=20
+> >  #define PM_POST_SUSPEND		0x0004 /* Suspend finished */
+> >  #define PM_RESTORE_PREPARE	0x0005 /* Going to restore a
+> >  saved image */ #define PM_POST_RESTORE		0x0006 /*
+> >  Restore
+> >  failed */
+> >=20
+> > +#define PM_HIBERNATION_AFTER_FREEZE	0x0007 /* After
+> > hibernation freeze */ +#define
+> > PM_SUSPEND_AFTER_FREEZE		0x0008 /* After suspend freeze */
+> >=20
+> >  extern struct mutex pm_mutex;
+> >=20
+> > diff --git a/kernel/power/hibernate.c
+> > b/kernel/power/hibernate.c index 2329daa..184f7ee 100644
+> > --- a/kernel/power/hibernate.c
+> > +++ b/kernel/power/hibernate.c
+> > @@ -671,6 +671,8 @@ int hibernate(void)
+> >=20
+> >  	if (error)
+> >  =09
+> >  		goto Exit;
+> >=20
+> > +	pm_notifier_call_chain(PM_HIBERNATION_AFTER_FREEZE);
+> > +
+> >=20
+> >  	lock_device_hotplug();
+> >  	/* Allocate memory management structures */
+> >  	error =3D create_basic_memory_bitmaps();
+> >=20
+> > diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
+> > index b7d6b3a..1776938 100644
+> > --- a/kernel/power/suspend.c
+> > +++ b/kernel/power/suspend.c
+> > @@ -268,8 +268,10 @@ static int
+> > suspend_prepare(suspend_state_t state)
+> >=20
+> >  	trace_suspend_resume(TPS("freeze_processes"), 0, true);
+> >  	error =3D suspend_freeze_processes();
+> >  	trace_suspend_resume(TPS("freeze_processes"), 0, false);
+> >=20
+> > -	if (!error)
+> > +	if (!error) {
+> > +		pm_notifier_call_chain(PM_SUSPEND_AFTER_FREEZE);
+> >=20
+> >  		return 0;
+> >=20
+> > +	}
+> >=20
+> >  	suspend_stats.failed_freeze++;
+> >  	dpm_save_failed_step(SUSPEND_FREEZE);
+
+=2D-=20
+Pali Roh=C3=A1r
+pali.rohar@gmail.com
+
+--nextPart2566388.gOmNIJrIqI
+Content-Type: application/pgp-signature; name=signature.asc 
+Content-Description: This is a digitally signed message part.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+
+iEYEABECAAYFAlUmHgkACgkQi/DJPQPkQ1KqBQCgsCMPDSjapvieT2WGen4RFz1c
+FZ0AoLar16geldAQXYKF7cbDoVv1l2bf
+=QehT
+-----END PGP SIGNATURE-----
+
+--nextPart2566388.gOmNIJrIqI--
