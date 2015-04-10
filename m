@@ -1,89 +1,58 @@
-From: Pali =?utf-8?q?Roh=C3=A1r?= <pali.rohar@gmail.com>
-Subject: Re: [PATCH 1/3] PM suspend/hibernate: Call notifier after freezing processes
-Date: Thu, 9 Apr 2015 18:55:01 +0200
-Message-ID: <201504091855.01927@pali>
-References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com> <201504090836.57365@pali> <1856560.gNHsvxOS0D@vostro.rjw.lan>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] dm crypt: fix deadlock when algo returns
+	-EBUSY
+Date: Fri, 10 Apr 2015 11:11:14 -0400
+Message-ID: <20150410151113.GA16795@redhat.com>
+References: <1428077387-2292-1-git-send-email-ben.c@servergy.com>
+	<20150407155501.GA29040@redhat.com>
+	<20150407162842.GA54137@redhat.com>
+	<BA6189A5-1C3D-4A43-B494-D6FEC7200E7D@servergy.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed;
-  boundary="nextPart1969028.4ke9EkrGWW";
-  protocol="application/pgp-signature";
-  micalg=pgp-sha1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-pm-owner@vger.kernel.org>
-In-Reply-To: <1856560.gNHsvxOS0D@vostro.rjw.lan>
-Sender: linux-pm-owner@vger.kernel.org
-To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <BA6189A5-1C3D-4A43-B494-D6FEC7200E7D@servergy.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ben Collins <ben.c@servergy.com>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
---nextPart1969028.4ke9EkrGWW
-Content-Type: Text/Plain;
-  charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
+On Tue, Apr 07 2015 at  1:10pm -0400,
+Ben Collins <ben.c@servergy.com> wrote:
 
-On Thursday 09 April 2015 19:13:55 Rafael J. Wysocki wrote:
-> On Thursday, April 09, 2015 08:36:57 AM Pali Roh=C3=A1r wrote:
-> > --nextPart2566388.gOmNIJrIqI
-> > Content-Type: Text/Plain;
-> >=20
-> >   charset=3D"utf-8"
-> >=20
-> > Content-Transfer-Encoding: quoted-printable
-> >=20
-> > On Thursday 09 April 2015 02:28:41 Rafael J. Wysocki wrote:
-> > > On Sunday, April 05, 2015 07:20:17 PM Pali Roh=3DC3=3DA1r
-> > > wrote:
-> > > > To prevent race conditions on userspace processes with
-> > > > I/O some taks must be called after processes are
-> > > > freezed. This patch adds new events which are delivered
-> > > > by
-> > > > pm_notifier_call_chain() after freezing processes when
-> > > > doing suspend or hibernate action.
-> > > >
-> > > >=3D20
-> > > >
-> > > > Signed-off-by: Pali Roh=3DC3=3DA1r <pali.rohar@gmail.com>
-> > >
-> > >=3D20
-> > >
-> > > Please don't add more notifiers.  Just call whatever you
-> > > need directly from where you need to call that.
-> > >
-> > >=3D20
-> > >
-> > > If that is device-related, try to use device PM
-> > > suspend/hibernate callbacks instead.
-> > >
-> > >=3D20
-> >=20
-> > Hi! It is not possible to use any exiting pm notifiers! This
-> > is=3D20 reason why I added new ones. As I wrote wiping dm
-> > crypt keys must=3D20 be done *after* userspace processes are
-> > freezed to prevent race=3D20 conditions...
->=20
-> I'm not talking about using the existing notifiers.  I'm
-> talking about calling the function you need to call directly
-> from a suitable place in the system suspend code.
+> 
+> > On Apr 7, 2015, at 11:28 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+> > 
+> > On Tue, Apr 07 2015 at 11:55P -0400,
+> > Mike Snitzer <snitzer@redhat.com> wrote:
+> > 
+> >> It looks like you're _always_ using the completion regardless of whether
+> >> crypt_convert() will be waiting (e.g. even if error is 0).
+> >> 
+> >> I can see this "working" but it seems less than ideal.  Would it be
+> >> better to record the need to use the completion in ctx and then
+> >> conditionally call complete()?
+> > 
+> > Actually, how about using !completion_done() before calling complete()?
+> > If you think this would be OK, any chance you could re-test with this?
+> 
+> I'll be able to test it before Friday (out of town). Thanks
 
-I need to wipe crypto keys from dm-crypt module. That module can=20
-be compiled as external .ko file and so kernel cannot call=20
-directly needed function. This is reason why I'm adding new=20
-notifier event.
+Hi Ben,
 
-=2D-=20
-Pali Roh=C3=A1r
-pali.rohar@gmail.com
+I'm still waiting for test feedback from you on v2.  Fairly certain
+you'll have the same results but I'd like to be certain before pushing
+this upstream.
 
---nextPart1969028.4ke9EkrGWW
-Content-Type: application/pgp-signature; name=signature.asc 
-Content-Description: This is a digitally signed message part.
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-
-iEYEABECAAYFAlUmruUACgkQi/DJPQPkQ1IhZgCgvM2Jf7nmY89Mr0DEAObogRFI
-b3AAnjvhsMuF1Momnm4dmBQwyuq0+Yvr
-=1tgs
------END PGP SIGNATURE-----
-
---nextPart1969028.4ke9EkrGWW--
+Thanks,
+Mike
