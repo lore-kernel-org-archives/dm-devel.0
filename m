@@ -1,12 +1,18 @@
-From: "wuyi@inspur.com" <wuyi@inspur.com>
-Subject: the multipath  for EMC CX700
-Date: Mon, 13 Apr 2015 09:48:37 +0800
-Message-ID: <2015041309483678622826@inspur.com>
-References: <9205a8130740845778fe0e86bffb13f0@g.corp-email.com>
+From: Ben Collins <ben.c@servergy.com>
+Subject: Re: [PATCH v2] dm crypt: fix deadlock when algo returns
+	-EBUSY
+Date: Fri, 10 Apr 2015 13:56:46 -0400
+Message-ID: <CCE29825-C051-4612-86DD-1CA7A5CF095F@servergy.com>
+References: <1428077387-2292-1-git-send-email-ben.c@servergy.com>
+	<20150407155501.GA29040@redhat.com>
+	<20150407162842.GA54137@redhat.com>
+	<BA6189A5-1C3D-4A43-B494-D6FEC7200E7D@servergy.com>
+	<20150410151113.GA16795@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3312698923488977470=="
+Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2070.6\))
+Content-Type: multipart/mixed; boundary="===============3535868728584442280=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20150410151113.GA16795@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,149 +22,102 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
---===============3312698923488977470==
-Content-Type: multipart/alternative;
-	boundary="----=_001_NextPart840542030146_=----"
 
-------=_001_NextPart840542030146_=----
-Content-Type: text/plain; charset="GB2312"
-Content-Transfer-Encoding: base64
+--===============3535868728584442280==
+Content-Type: multipart/signed;
+	boundary="Apple-Mail=_A80E2E9A-9A19-4D2B-9B76-F47D893B2AED";
+	protocol="application/pgp-signature"; micalg=pgp-sha256
 
-aGk6DQogICAgSSBoYXZlICBzb21lIHByb2JsZW1zIGFib3V0IG11bHRpcGF0aCBmb3IgRU1DIENY
-NzAwLHRoZSBFTUMgY2hlY2tlciBpbmRpY2F0ZWQgIlNHX0lORk9fT0tfTUFTSyIuYnV0IHRoZXJl
-IGlzIG5vIGtlcm5lbCBpbmZvIGluZGljYXRlZCB0aGF0IHRoZSBzdGF0dXMsIGRyaXZlciBzdGF0
-dXMgb3IgaG9zdCBzdGF0dXMgd2FzIGZhaWxlZC5BbmQgbmV4dCBjaGVja2VyIHdpbGwgdXAgdGhl
-IHBhdGggaW1tZWRpYXRlbHkuU28gaSB0aGluayB0aGVyZSBzaG91bGQgYmUgYSAgInJldHJ5IiBj
-aGVja2VyIHRvIGluc3VyZSB0aGUgcGF0aCBpcyByZWFsbHkgZG93bi4NCg0KDQpUaGUgIG1lc3Nh
-Z2U6DQpNYXIgMTYgMTk6Mzg6MjMgbm9kZTcgc3NoZFsxOTg2N106IEFjY2VwdGVkIHBhc3N3b3Jk
-IGZvciByb290IGZyb20gMTAuMTY1LjE0LjE5NCBwb3J0IDU5NDIxIHNzaDIgDQpNYXIgMTYgMTk6
-NDY6MTQgbm9kZTcgOiBlcnJvciBpbml0aWFsaXppbmc6IE5vIG1vZHVsZSBuYW1lZCB1cDJkYXRl
-X2NsaWVudC51cDJkYXRlQXV0aCANCk1hciAxNiAxOTo0Njo1NyBub2RlNyBtdWx0aXBhdGhkOiBz
-ZGI6IGVtY19jbGFyaWlvbl9jaGVja2VyOiBxdWVyeSBjb21tYW5kIGluZGljYXRlcyBlcnJvciAN
-Ck1hciAxNiAxOTo0Njo1NyBub2RlNyBtdWx0aXBhdGhkOiBjaGVja2VyIGZhaWxlZCBwYXRoIDg6
-MTYgaW4gbWFwIG1wYXRoNCANCk1hciAxNiAxOTo0Njo1NyBub2RlNyBrZXJuZWw6IFsxMTEyMC45
-MjQ1NzNdIHFsYTJ4eHggMDAwMDo4MjowMC4wOiBzY3NpKDQ6MDowKTogQWJvcnQgY29tbWFuZCBp
-c3N1ZWQgLS0gMSA0YTEgMjAwMi4gDQpNYXIgMTYgMTk6NDY6NTcgbm9kZTcga2VybmVsOiBbMTEx
-MjAuOTI1MzA3XSBkZXZpY2UtbWFwcGVyOiBtdWx0aXBhdGg6IEZhaWxpbmcgcGF0aCA4OjE2LiAN
-Ck1hciAxNiAxOTo0Njo1NyBub2RlNyBtdWx0aXBhdGhkOiBtcGF0aDQ6IHJlbWFpbmluZyBhY3Rp
-dmUgcGF0aHM6IDEgDQpNYXIgMTYgMTk6NDY6NTcgbm9kZTcgbXVsdGlwYXRoZDogbXBhdGg0OiBz
-d2l0Y2ggdG8gcGF0aCBncm91cCAjMiANCk1hciAxNiAxOTo0NzowMiBub2RlNyBtdWx0aXBhdGhk
-OiBzZGI6IGVtY19jbGFyaWlvbl9jaGVja2VyOiBQYXRoIGhlYWx0aHkgDQpNYXIgMTYgMTk6NDc6
-MDIgbm9kZTcgbXVsdGlwYXRoZDogODoxNjogcmVpbnN0YXRlZCANCk1hciAxNiAxOTo0NzowMiBu
-b2RlNyBtdWx0aXBhdGhkOiBtcGF0aDQ6IHJlbWFpbmluZyBhY3RpdmUgcGF0aHM6IDIgDQpNYXIg
-MTYgMTk6NDc6MDIgbm9kZTcgbXVsdGlwYXRoZDogbXBhdGg0OiBzd2l0Y2ggdG8gcGF0aCBncm91
-cCAjMQ0KDQpUaGUgZGlmZjoNCi0tLSBsaWJjaGVja2Vycy9lbWNfY2xhcmlpb24uYy5vbGQgMjAx
-NS0wNC0xMyAwOTozMTowNC4wMDAwMDAwMDAgKzA4MDAgDQorKysgbGliY2hlY2tlcnMvZW1jX2Ns
-YXJpaW9uLmMgMjAxNS0wNC0xMyAwOTozNDo0Ny4wMDAwMDAwMDAgKzA4MDAgDQpAQCAtNDAsNiAr
-NDAsOCBAQCANCg0KaW50IGVtY19jbGFyaWlvbihzdHJ1Y3QgY2hlY2tlciAqIGMpIA0KeyANCisg
-aW50IHJldHJ5dGltZXMgPSAzOyANCisgDQp1bnNpZ25lZCBjaGFyIHNlbnNlX2J1ZmZlclsyNTZd
-ID0geyAwLCB9OyANCnVuc2lnbmVkIGNoYXIgc2JbMTI4XSA9IHsgMCwgfTsgDQp1bnNpZ25lZCBj
-aGFyIGlucUNtZEJsa1tJTlFVSVJZX0NNRExFTl0gPSB7SU5RVUlSWV9DTUQsIDEsIDB4QzAsIDAs
-IA0KQEAgLTU5LDEyICs2MSwxOCBAQCANCmlvX2hkci5zYnAgPSBzYjsgDQppb19oZHIudGltZW91
-dCA9IERFRl9USU1FT1VUOyANCmlvX2hkci5wYWNrX2lkID0gMDsgDQorIA0KK3JldHJ5OiANCmlm
-IChpb2N0bChjLT5mZCwgU0dfSU8sICZpb19oZHIpIDwgMCkgeyANCk1TRyhjLCAiZW1jX2NsYXJp
-aW9uX2NoZWNrZXI6IHNlbmRpbmcgcXVlcnkgY29tbWFuZCBmYWlsZWQiKTsgDQpyZXR1cm4gUEFU
-SF9ET1dOOyANCn0gDQppZiAoaW9faGRyLmluZm8gJiBTR19JTkZPX09LX01BU0spIHsgDQpNU0co
-YywgImVtY19jbGFyaWlvbl9jaGVja2VyOiBxdWVyeSBjb21tYW5kIGluZGljYXRlcyBlcnJvciIp
-OyANCisgaWYocmV0cnl0aW1lcyl7DQorIHJldHJ5dGltZXMtLTsgDQorIGdvdG8gcmV0cnk7IA0K
-KyB9IA0KcmV0dXJuIFBBVEhfRE9XTjsgDQp9IA0KaWYgKC8qIFZlcmlmeSB0aGUgY29kZSBwYWdl
-IC0gcmlnaHQgcGFnZSAmIHJldmlzaW9uICovDQoNCg0KDQoNCg0KSSBkb25gdCB0aGluayBteSBt
-b2RpZmljYXRpb24gaXMgZ29vZCBlbm91Z2gsc28gaSBob3BlIHlvdSBjYW4gZ2l2ZSBtZSBzb21l
-IHVzZWZ1bCBpZGVhcyB0byBtYWtlIGl0IGJldHRlci4NCg0K
 
-------=_001_NextPart840542030146_=----
-Content-Type: text/html; charset="GB2312"
+--Apple-Mail=_A80E2E9A-9A19-4D2B-9B76-F47D893B2AED
 Content-Transfer-Encoding: quoted-printable
-
-<html><head><meta http-equiv=3D"content-type" content=3D"text/html; charse=
-t=3DGB2312"><style>body { line-height: 1.5; }p { margin-top: 0px; margin-b=
-ottom: 0px; }body { font-size: 10.5pt; font-family: =CE=A2=C8=ED=D1=C5=BA=
-=DA; color: rgb(0, 0, 0); line-height: 1.5; }body { font-size: 10.5pt; fon=
-t-family: =CE=A2=C8=ED=D1=C5=BA=DA; color: rgb(0, 0, 0); line-height: 1.5;=
- }</style></head><body>=0A<div><span></span></div><div><span><div style=3D=
-"MARGIN: 10px; FONT-FAMILY: verdana; FONT-SIZE: 10pt"><div style=3D"font-f=
-amily: =CE=A2=C8=ED=D1=C5=BA=DA;">hi:</div><div style=3D"font-family: =CE=
-=A2=C8=ED=D1=C5=BA=DA;"><span style=3D"background-color: rgba(0, 0, 0, 0);=
-">&nbsp; &nbsp; I have &nbsp;some problems about multipath for EMC CX700,t=
-he EMC checker indicated "</span><span style=3D"background-color: rgba(0, =
-0, 0, 0); font-size: 10pt; line-height: 1.5;">SG_INFO_OK_MASK</span><span =
-style=3D"background-color: rgba(0, 0, 0, 0); font-size: 10pt; line-height:=
- 1.5;">".but there is no kernel info indicated that the status, driver sta=
-tus or host status was failed.And next checker will up the path immediatel=
-y.So i think there should be a &nbsp;"retry" checker to insure the path is=
- really down.</span></div><div style=3D"font-family: =CE=A2=C8=ED=D1=C5=BA=
-=DA;"><span style=3D"background-color: rgba(0, 0, 0, 0); font-size: 10pt; =
-line-height: 1.5;"><br></span></div><div style=3D"font-family: =CE=A2=C8=
-=ED=D1=C5=BA=DA;"><span style=3D"background-color: rgba(0, 0, 0, 0); font-=
-size: 10pt; line-height: 1.5;"><br></span></div><div style=3D"font-family:=
- =CE=A2=C8=ED=D1=C5=BA=DA;"><span style=3D"background-color: rgba(0, 0, 0,=
- 0); font-size: 10pt; line-height: 1.5;">The &nbsp;message:</span></div><d=
-iv style=3D"font-family: =CE=A2=C8=ED=D1=C5=BA=DA;"><span style=3D"backgro=
-und-color: rgba(0, 0, 0, 0);">Mar 16 19:38:23 node7 sshd[19867]: Accepted =
-password for root from 10.165.14.194 port 59421 ssh2=0A<br>Mar 16 19:46:14=
- node7 : error initializing: No module named up2date_client.up2dateAuth=0A=
-<br>Mar 16 19:46:57 node7 multipathd: sdb: emc_clariion_checker: query com=
-mand indicates error =0A<br>Mar 16 19:46:57 node7 multipathd: checker fail=
-ed path 8:16 in map mpath4 =0A<br>Mar 16 19:46:57 node7 kernel: [11120.924=
-573] qla2xxx 0000:82:00.0: scsi(4:0:0): Abort command issued -- 1 4a1 2002=
-.=0A<br>Mar 16 19:46:57 node7 kernel: [11120.925307] device-mapper: multip=
-ath: Failing path 8:16.=0A<br>Mar 16 19:46:57 node7 multipathd: mpath4: re=
-maining active paths: 1=0A<br>Mar 16 19:46:57 node7 multipathd: mpath4: sw=
-itch to path group #2=0A<br>Mar 16 19:47:02 node7 multipathd: sdb: emc_cla=
-riion_checker: Path healthy=0A<br>Mar 16 19:47:02 node7 multipathd: 8:16: =
-reinstated=0A<br>Mar 16 19:47:02 node7 multipathd: mpath4: remaining activ=
-e paths: 2=0A<br>Mar 16 19:47:02 node7 multipathd: mpath4: switch to path =
-group #1</span></div><div style=3D"font-family: =CE=A2=C8=ED=D1=C5=BA=DA;"=
-><span style=3D"background-color: rgba(0, 0, 0, 0);"><br></span></div><div=
- style=3D"font-family: =CE=A2=C8=ED=D1=C5=BA=DA;"><span style=3D"backgroun=
-d-color: rgba(0, 0, 0, 0);">The diff:</span></div><div style=3D"font-famil=
-y: =CE=A2=C8=ED=D1=C5=BA=DA;"><span style=3D"background-color: rgba(0, 0, =
-0, 0);">--- libcheckers/emc_clariion.c.old      2015-04-13 09:31:04.000000=
-000 +0800=0A<br>+++ libcheckers/emc_clariion.c  2015-04-13 09:34:47.000000=
-000 +0800=0A<br>@@ -40,6 +40,8 @@=0A<br> =0A<br> int emc_clariion(struct c=
-hecker * c)=0A<br> {=0A<br>+       int retrytimes =3D 3;=0A<br>+=0A<br>   =
-     unsigned char sense_buffer[256] =3D { 0, };=0A<br>        unsigned ch=
-ar sb[128] =3D { 0, };=0A<br>        unsigned char inqCmdBlk[INQUIRY_CMDLE=
-N] =3D {INQUIRY_CMD, 1, 0xC0, 0,=0A<br>@@ -59,12 +61,18 @@=0A<br>        i=
-o_hdr.sbp =3D sb;=0A<br>        io_hdr.timeout =3D DEF_TIMEOUT;=0A<br>    =
-    io_hdr.pack_id =3D 0;=0A<br>+=0A<br>+retry:=0A<br>        if (ioctl(c-=
-&gt;fd, SG_IO, &amp;io_hdr) &lt; 0) {=0A<br>                MSG(c, "emc_cl=
-ariion_checker: sending query command failed");=0A<br>                retu=
-rn PATH_DOWN;=0A<br>        }=0A<br>        if (io_hdr.info &amp; SG_INFO_=
-OK_MASK) {=0A<br>                MSG(c, "emc_clariion_checker: query comma=
-nd indicates error");=0A<br>+               if(retrytimes){</span></div><d=
-iv style=3D"font-family: =CE=A2=C8=ED=D1=C5=BA=DA;">+ retrytimes--;&nbsp;<=
-span style=3D"background-color: rgba(0, 0, 0, 0);"><br>+                  =
-     goto retry;=0A<br>+               }=0A<br>                return PATH=
-_DOWN;=0A<br>        }=0A<br>        if (/* Verify the code page - right p=
-age &amp; revision */</span></div><div style=3D"font-family: =CE=A2=C8=ED=
-=D1=C5=BA=DA;"><span style=3D"background-color: rgba(0, 0, 0, 0);"><br></s=
-pan></div><div style=3D"font-family: =CE=A2=C8=ED=D1=C5=BA=DA;"><span styl=
-e=3D"background-color: rgba(0, 0, 0, 0);"><br></span></div><div style=3D"f=
-ont-family: =CE=A2=C8=ED=D1=C5=BA=DA;"><span style=3D"background-color: rg=
-ba(0, 0, 0, 0);"><br></span></div><div style=3D"font-family: =CE=A2=C8=ED=
-=D1=C5=BA=DA;"><span style=3D"background-color: rgba(0, 0, 0, 0);"><br></s=
-pan></div><div style=3D"font-family: =CE=A2=C8=ED=D1=C5=BA=DA;"><span styl=
-e=3D"background-color: rgba(0, 0, 0, 0);"><br></span></div><div style=3D"f=
-ont-family: =CE=A2=C8=ED=D1=C5=BA=DA;"><span style=3D"background-color: rg=
-ba(0, 0, 0, 0);">I don`t think my modification is good enough,so i hope yo=
-u can give me some useful ideas to make it better.</span></div><div><div s=
-tyle=3D"position: static !important;"><div style=3D"position: static !impo=
-rtant;"><div style=3D"position: static !important;"><div style=3D"position=
-: static !important;"><p class=3D"MsoNormal" style=3D"margin-top: 0px; mar=
-gin-bottom: 0px;"><br></p></div></div></div></div></div></div></span></div=
->=0A</body></html>
-------=_001_NextPart840542030146_=------
+Content-Type: text/plain;
+	charset=utf-8
 
 
---===============3312698923488977470==
+> On Apr 10, 2015, at 11:11 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+>=20
+> On Tue, Apr 07 2015 at  1:10pm -0400,
+> Ben Collins <ben.c@servergy.com> wrote:
+>=20
+>>=20
+>>> On Apr 7, 2015, at 11:28 AM, Mike Snitzer <snitzer@redhat.com> =
+wrote:
+>>>=20
+>>> On Tue, Apr 07 2015 at 11:55P -0400,
+>>> Mike Snitzer <snitzer@redhat.com> wrote:
+>>>=20
+>>>> It looks like you're _always_ using the completion regardless of =
+whether
+>>>> crypt_convert() will be waiting (e.g. even if error is 0).
+>>>>=20
+>>>> I can see this "working" but it seems less than ideal.  Would it be
+>>>> better to record the need to use the completion in ctx and then
+>>>> conditionally call complete()?
+>>>=20
+>>> Actually, how about using !completion_done() before calling =
+complete()?
+>>> If you think this would be OK, any chance you could re-test with =
+this?
+>>=20
+>> I'll be able to test it before Friday (out of town). Thanks
+>=20
+> Hi Ben,
+>=20
+> I'm still waiting for test feedback from you on v2.  Fairly certain
+> you'll have the same results but I'd like to be certain before pushing
+> this upstream.
+
+As expected, this patch works as well as what I had originally done.
+Thanks for reviewing it.
+
+=E2=80=94=E2=80=94
+Ben Collins
+Cyphre Champion
+=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=
+=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94
+Principal Architect
+Servergy, Inc.
+469-919-5634 (O)
+
+--Apple-Mail=_A80E2E9A-9A19-4D2B-9B76-F47D893B2AED
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+	filename=signature.asc
+Content-Type: application/pgp-signature;
+	name=signature.asc
+Content-Description: Message signed with OpenPGP using GPGMail
+
+-----BEGIN PGP SIGNATURE-----
+Comment: GPGTools - http://gpgtools.org
+
+iQIcBAEBCAAGBQJVKA7eAAoJEF1aV8ckKyLP7XQP/AseGEBSDu7FUypMiNltO5W0
+TfhTERP0s84r9ShP9WfJ1t2zdP4iX5d9oYEOVp/ELmwVzk+yb4aEM1zwdF6Z3Bfj
+3QNqmupien0qjVaCblaxTww3BYpPZIIgKtlHV4Zgz3QsNsKLKSA+58gySdgQesDw
+eb1TQOUQHJgAE3+EMGnrQ4H7L3ZclrpvE4B3vsqKb+oTDrdQJyF1YH58SDO6n+GH
+pJfmMP5mOgBpOEKG68raciW8fgy8UFrIK44ZIYEyeMbYU7mKpAYWLM+EWnLltHV4
+o19spkWaIB41exAxIw4f1q8Pn2zS5y7u4P5hUezeBJQ5K4/dyD7/ThELsxqAAA3V
+TZR027akUYQVXYt4CNKuI4/HxpC/WYQjxWvA0X9WoNXwKBUwxAVPOM+pY6KDd8tD
+UaM1uhq0ReLo7oDwCWq5RDS+G84Z0Irb9JDrVsenJ4/UpyltBohv3GioxiRSf4UM
+WbwkDLmqElQq4kFa97srxQikFf5qybyMrq9rQDSoIpV9IJDkxuEQtAauHgAOwOWE
+5viJqa+FXFEJQxwUY8j2w/m9Sd6sRXinlEJ7WLdOVsBQEIaoZi+Lsf5CoF5vbG+W
+FVV4Enqcq5Xgp7HKzkI/SbpLqfBqfqxRPKNfCCftsqqbVAeMRg6A7p/BAIcZNgVG
+pM/IcEZ4WIe3gck9MA3C
+=M5hD
+-----END PGP SIGNATURE-----
+
+--Apple-Mail=_A80E2E9A-9A19-4D2B-9B76-F47D893B2AED--
+
+
+--===============3535868728584442280==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============3312698923488977470==--
+--===============3535868728584442280==--
