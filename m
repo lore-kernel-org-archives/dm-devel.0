@@ -1,8 +1,8 @@
 From: Ben Collins <ben.c@servergy.com>
 Subject: Re: [PATCH v2] dm crypt: fix deadlock when algo returns
 	-EBUSY
-Date: Fri, 10 Apr 2015 13:56:46 -0400
-Message-ID: <CCE29825-C051-4612-86DD-1CA7A5CF095F@servergy.com>
+Date: Fri, 10 Apr 2015 11:12:40 -0400
+Message-ID: <88C5DE20-FA1B-4F37-B54C-F7388AA41023@servergy.com>
 References: <1428077387-2292-1-git-send-email-ben.c@servergy.com>
 	<20150407155501.GA29040@redhat.com>
 	<20150407162842.GA54137@redhat.com>
@@ -10,7 +10,7 @@ References: <1428077387-2292-1-git-send-email-ben.c@servergy.com>
 	<20150410151113.GA16795@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2070.6\))
-Content-Type: multipart/mixed; boundary="===============3535868728584442280=="
+Content-Type: multipart/mixed; boundary="===============3371426391350474215=="
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20150410151113.GA16795@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -27,13 +27,13 @@ Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <gmaz
 List-Id: dm-devel.ids
 
 
---===============3535868728584442280==
+--===============3371426391350474215==
 Content-Type: multipart/signed;
-	boundary="Apple-Mail=_A80E2E9A-9A19-4D2B-9B76-F47D893B2AED";
+	boundary="Apple-Mail=_11D624F3-A26D-450D-BE07-43F066F3C0B7";
 	protocol="application/pgp-signature"; micalg=pgp-sha256
 
 
---Apple-Mail=_A80E2E9A-9A19-4D2B-9B76-F47D893B2AED
+--Apple-Mail=_11D624F3-A26D-450D-BE07-43F066F3C0B7
 Content-Transfer-Encoding: quoted-printable
 Content-Type: text/plain;
 	charset=utf-8
@@ -72,8 +72,7 @@ this?
 > you'll have the same results but I'd like to be certain before pushing
 > this upstream.
 
-As expected, this patch works as well as what I had originally done.
-Thanks for reviewing it.
+I'll have a response within a couple hours...
 
 =E2=80=94=E2=80=94
 Ben Collins
@@ -82,9 +81,8 @@ Cyphre Champion
 =80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94=E2=80=94
 Principal Architect
 Servergy, Inc.
-469-919-5634 (O)
 
---Apple-Mail=_A80E2E9A-9A19-4D2B-9B76-F47D893B2AED
+--Apple-Mail=_11D624F3-A26D-450D-BE07-43F066F3C0B7
 Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment;
 	filename=signature.asc
@@ -95,29 +93,29 @@ Content-Description: Message signed with OpenPGP using GPGMail
 -----BEGIN PGP SIGNATURE-----
 Comment: GPGTools - http://gpgtools.org
 
-iQIcBAEBCAAGBQJVKA7eAAoJEF1aV8ckKyLP7XQP/AseGEBSDu7FUypMiNltO5W0
-TfhTERP0s84r9ShP9WfJ1t2zdP4iX5d9oYEOVp/ELmwVzk+yb4aEM1zwdF6Z3Bfj
-3QNqmupien0qjVaCblaxTww3BYpPZIIgKtlHV4Zgz3QsNsKLKSA+58gySdgQesDw
-eb1TQOUQHJgAE3+EMGnrQ4H7L3ZclrpvE4B3vsqKb+oTDrdQJyF1YH58SDO6n+GH
-pJfmMP5mOgBpOEKG68raciW8fgy8UFrIK44ZIYEyeMbYU7mKpAYWLM+EWnLltHV4
-o19spkWaIB41exAxIw4f1q8Pn2zS5y7u4P5hUezeBJQ5K4/dyD7/ThELsxqAAA3V
-TZR027akUYQVXYt4CNKuI4/HxpC/WYQjxWvA0X9WoNXwKBUwxAVPOM+pY6KDd8tD
-UaM1uhq0ReLo7oDwCWq5RDS+G84Z0Irb9JDrVsenJ4/UpyltBohv3GioxiRSf4UM
-WbwkDLmqElQq4kFa97srxQikFf5qybyMrq9rQDSoIpV9IJDkxuEQtAauHgAOwOWE
-5viJqa+FXFEJQxwUY8j2w/m9Sd6sRXinlEJ7WLdOVsBQEIaoZi+Lsf5CoF5vbG+W
-FVV4Enqcq5Xgp7HKzkI/SbpLqfBqfqxRPKNfCCftsqqbVAeMRg6A7p/BAIcZNgVG
-pM/IcEZ4WIe3gck9MA3C
-=M5hD
+iQIcBAEBCAAGBQJVJ+hpAAoJEF1aV8ckKyLP4skQAKm+bpAv99vKcgDv/xlKpK99
+LPtX3ErTxgGsod2vWmBXuLxj8eAF5N7YmhCwx9F4diyhRAV+F4/YpybXUEBq6CAa
+HSnAL4s+O1+AWOI4SJxMzeqn7HTUXhlQLdfQ8xKDPmAiaUmRlrOlEGKTINSVwB/+
+HT7weknCc0jBTFuFNonmek3WQHIrPu7nJNZye7oy+ywqkxqFKG2+pBos+dmL2Txq
+f4eghbBa6yuxyXPcrjahP8hI7BiVuk0Ibw9skAgN3jKXBT1D5MWBEsPxhRZ3UvDO
+A7rYyRc5Uj7UShSbooXMtpeWdFLEJcS5wUiy3OelR5RvFrCbqhkhXUtgg6YEgOfm
+pW4hdimYIMbSS/AFYuHtNWgm2nkkM1Dy3Q4NyeZfpvvlitqzr5Yl4OkiK8TqxcF5
+7AEUg2M68TJaPFU9lkYyWy+5hXpy7tU+KgIxEQsR4+zKpoGEDlVljjZBkMjJ9fVI
+XgZWkgMm/DHNYJUBZQCMBL/7WgS3ghBGX87pQkpxQklW2bv/URNuzWA3qpKTziNA
+jLccbidt74cy2Km5Z2NWaUaENaL2q8msY5Ectni+50rP1T6sgnSxDf8/y/D5cIey
+gAMmO7QVofSARDmHAajVN31tb+pQADp3KsW5vqISZotI/XOHuvD1FCOdYb0SO2KI
+Z3uUVzKH5nNMAJf9d0x7
+=Dspd
 -----END PGP SIGNATURE-----
 
---Apple-Mail=_A80E2E9A-9A19-4D2B-9B76-F47D893B2AED--
+--Apple-Mail=_11D624F3-A26D-450D-BE07-43F066F3C0B7--
 
 
---===============3535868728584442280==
+--===============3371426391350474215==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============3535868728584442280==--
+--===============3371426391350474215==--
