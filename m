@@ -1,7 +1,7 @@
 From: Dmitry Monakhov <dmonakhov@openvz.org>
-Subject: [PATCH 5/7] md: use block_device name vsprintf helper
-Date: Mon, 13 Apr 2015 16:31:38 +0400
-Message-ID: <1428928300-9132-6-git-send-email-dmonakhov@openvz.org>
+Subject: [PATCH 4/7] fs: use block_device name vsprintf helper
+Date: Mon, 13 Apr 2015 16:31:37 +0400
+Message-ID: <1428928300-9132-5-git-send-email-dmonakhov@openvz.org>
 References: <1428928300-9132-1-git-send-email-dmonakhov@openvz.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,1425 +25,658 @@ List-Id: dm-devel.ids
 
 Signed-off-by: Dmitry Monakhov <dmonakhov@openvz.org>
 ---
- drivers/md/bcache/debug.c    |    6 +-
- drivers/md/bcache/io.c       |    8 +--
- drivers/md/bcache/super.c    |   32 ++++------
- drivers/md/dm-cache-target.c |    5 +-
- drivers/md/dm-table.c        |   32 ++++-----
- drivers/md/dm-thin.c         |    8 +--
- drivers/md/linear.c          |    5 +-
- drivers/md/md.c              |  141 ++++++++++++++++--------------------------
- drivers/md/multipath.c       |   29 +++-----
- drivers/md/raid0.c           |   33 ++++------
- drivers/md/raid1.c           |   37 ++++-------
- drivers/md/raid10.c          |   64 +++++++------------
- drivers/md/raid5.c           |   37 +++++------
- 13 files changed, 171 insertions(+), 266 deletions(-)
+ fs/btrfs/super.c      |    4 +---
+ fs/buffer.c           |   21 ++++++---------------
+ fs/ext2/xattr.c       |    6 ++----
+ fs/ext3/super.c       |    5 ++---
+ fs/ext3/xattr.c       |    5 ++---
+ fs/ext4/page-io.c     |    5 ++---
+ fs/ext4/xattr.c       |    6 ++----
+ fs/f2fs/debug.c       |    6 ++----
+ fs/gfs2/ops_fstype.c  |    4 +---
+ fs/jbd/commit.c       |    4 +---
+ fs/jbd/journal.c      |   34 ++++++++++++----------------------
+ fs/jbd/transaction.c  |    6 ++----
+ fs/jbd2/transaction.c |    6 ++----
+ fs/minix/itree_v1.c   |    9 ++++-----
+ fs/minix/itree_v2.c   |    9 ++++-----
+ fs/nilfs2/super.c     |    6 ++----
+ fs/reiserfs/journal.c |   24 ++++++++++--------------
+ fs/reiserfs/prints.c  |    9 +++------
+ fs/reiserfs/procfs.c  |    5 ++---
+ fs/squashfs/super.c   |    7 +++----
+ fs/super.c            |    4 +---
+ fs/xfs/xfs_buf.c      |    8 ++------
+ 22 files changed, 68 insertions(+), 125 deletions(-)
 
-diff --git a/drivers/md/bcache/debug.c b/drivers/md/bcache/debug.c
-index 8b1f1d5..fb61f55 100644
---- a/drivers/md/bcache/debug.c
-+++ b/drivers/md/bcache/debug.c
-@@ -104,7 +104,6 @@ void bch_btree_verify(struct btree *b)
- 
- void bch_data_verify(struct cached_dev *dc, struct bio *bio)
- {
--	char name[BDEVNAME_SIZE];
- 	struct bio *check;
- 	struct bio_vec bv, *bv2;
- 	struct bvec_iter iter;
-@@ -127,9 +126,8 @@ void bch_data_verify(struct cached_dev *dc, struct bio *bio)
- 					p2 + bv.bv_offset,
- 					bv.bv_len),
- 				 dc->disk.c,
--				 "verify failed at dev %s sector %llu",
--				 bdevname(dc->bdev, name),
--				 (uint64_t) bio->bi_iter.bi_sector);
-+				 "verify failed at dev %pg sector %llu",
-+				 dc->bdev, (uint64_t) bio->bi_iter.bi_sector);
- 
- 		kunmap_atomic(p1);
- 	}
-diff --git a/drivers/md/bcache/io.c b/drivers/md/bcache/io.c
-index fa028fa..7e21113 100644
---- a/drivers/md/bcache/io.c
-+++ b/drivers/md/bcache/io.c
-@@ -188,18 +188,16 @@ void bch_count_io_errors(struct cache *ca, int error, const char *m)
- 	}
- 
- 	if (error) {
--		char buf[BDEVNAME_SIZE];
- 		unsigned errors = atomic_add_return(1 << IO_ERROR_SHIFT,
- 						    &ca->io_errors);
- 		errors >>= IO_ERROR_SHIFT;
- 
- 		if (errors < ca->set->error_limit)
--			pr_err("%s: IO error on %s, recovering",
--			       bdevname(ca->bdev, buf), m);
-+			pr_err("%pg: IO error on %s, recovering", ca->bdev , m);
- 		else
- 			bch_cache_set_error(ca->set,
--					    "%s: too many IO errors %s",
--					    bdevname(ca->bdev, buf), m);
-+					    "%pg: too many IO errors %s",
-+					    ca->bdev, m);
- 	}
- }
- 
-diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
-index 4dd2bb7..b15b7db 100644
---- a/drivers/md/bcache/super.c
-+++ b/drivers/md/bcache/super.c
-@@ -907,7 +907,6 @@ void bch_cached_dev_run(struct cached_dev *dc)
- static void cached_dev_detach_finish(struct work_struct *w)
- {
- 	struct cached_dev *dc = container_of(w, struct cached_dev, detach);
--	char buf[BDEVNAME_SIZE];
- 	struct closure cl;
- 	closure_init_stack(&cl);
- 
-@@ -930,7 +929,7 @@ static void cached_dev_detach_finish(struct work_struct *w)
- 
- 	mutex_unlock(&bch_register_lock);
- 
--	pr_info("Caching disabled for %s", bdevname(dc->bdev, buf));
-+	pr_info("Caching disabled for %pg", dc->bdev);
- 
- 	/* Drop ref we took in cached_dev_detach() */
- 	closure_put(&dc->disk.cl);
-@@ -960,27 +959,24 @@ int bch_cached_dev_attach(struct cached_dev *dc, struct cache_set *c)
- {
- 	uint32_t rtime = cpu_to_le32(get_seconds());
- 	struct uuid_entry *u;
--	char buf[BDEVNAME_SIZE];
+diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
+index 68ee619..0405a2f 100644
+--- a/fs/btrfs/super.c
++++ b/fs/btrfs/super.c
+@@ -1376,9 +1376,7 @@ static struct dentry *btrfs_mount(struct file_system_type *fs_type, int flags,
+ 		if ((flags ^ s->s_flags) & MS_RDONLY)
+ 			error = -EBUSY;
+ 	} else {
+-		char b[BDEVNAME_SIZE];
 -
--	bdevname(dc->bdev, buf);
+-		strlcpy(s->s_id, bdevname(bdev, b), sizeof(s->s_id));
++		snprintf(s->s_id, sizeof(s->s_id), "%pg", bdev);
+ 		btrfs_sb(s)->bdev_holder = fs_type;
+ 		error = btrfs_fill_super(s, fs_devices, data,
+ 					 flags & MS_SILENT ? 1 : 0);
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 20805db..6697cc8 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -130,13 +130,10 @@ __clear_page_buffers(struct page *page)
  
- 	if (memcmp(dc->sb.set_uuid, c->sb.set_uuid, 16))
- 		return -ENOENT;
+ static void buffer_io_error(struct buffer_head *bh, char *msg)
+ {
+-	char b[BDEVNAME_SIZE];
+-
+ 	if (!test_bit(BH_Quiet, &bh->b_state))
+ 		printk_ratelimited(KERN_ERR
+-			"Buffer I/O error on dev %s, logical block %llu%s\n",
+-			bdevname(bh->b_bdev, b),
+-			(unsigned long long)bh->b_blocknr, msg);
++			"Buffer I/O error on dev %pg, logical block %llu%s\n",
++			bh->b_bdev, (unsigned long long)bh->b_blocknr, msg);
+ }
  
- 	if (dc->disk.c) {
--		pr_err("Can't attach %s: already attached", buf);
-+		pr_err("Can't attach %pg: already attached", dc->bdev);
- 		return -EINVAL;
+ /*
+@@ -233,15 +230,13 @@ __find_get_block_slow(struct block_device *bdev, sector_t block)
+ 	 * elsewhere, don't buffer_error if we had some unmapped buffers
+ 	 */
+ 	if (all_mapped) {
+-		char b[BDEVNAME_SIZE];
+-
+ 		printk("__find_get_block_slow() failed. "
+ 			"block=%llu, b_blocknr=%llu\n",
+ 			(unsigned long long)block,
+ 			(unsigned long long)bh->b_blocknr);
+ 		printk("b_state=0x%08lx, b_size=%zu\n",
+ 			bh->b_state, bh->b_size);
+-		printk("device %s blocksize: %d\n", bdevname(bdev, b),
++		printk("device %pg blocksize: %d\n", bdev,
+ 			1 << bd_inode->i_blkbits);
+ 	}
+ out_unlock:
+@@ -527,10 +522,8 @@ repeat:
+ 
+ static void do_thaw_one(struct super_block *sb, void *unused)
+ {
+-	char b[BDEVNAME_SIZE];
+ 	while (sb->s_bdev && !thaw_bdev(sb->s_bdev, sb))
+-		printk(KERN_WARNING "Emergency Thaw on %s\n",
+-		       bdevname(sb->s_bdev, b));
++		printk(KERN_WARNING "Emergency Thaw on %pg\n", sb->s_bdev);
+ }
+ 
+ static void do_thaw_all(struct work_struct *work)
+@@ -1057,12 +1050,10 @@ grow_buffers(struct block_device *bdev, sector_t block, int size, gfp_t gfp)
+ 	 * pagecache index.  (this comparison is done using sector_t types).
+ 	 */
+ 	if (unlikely(index != block >> sizebits)) {
+-		char b[BDEVNAME_SIZE];
+-
+ 		printk(KERN_ERR "%s: requested out-of-range block %llu for "
+-			"device %s\n",
++			"device %pg\n",
+ 			__func__, (unsigned long long)block,
+-			bdevname(bdev, b));
++			bdev);
+ 		return -EIO;
  	}
  
- 	if (test_bit(CACHE_SET_STOPPING, &c->flags)) {
--		pr_err("Can't attach %s: shutting down", buf);
-+		pr_err("Can't attach %pg: shutting down", dc->bdev);
- 		return -EINVAL;
+diff --git a/fs/ext2/xattr.c b/fs/ext2/xattr.c
+index 0b6bfd3..192679e 100644
+--- a/fs/ext2/xattr.c
++++ b/fs/ext2/xattr.c
+@@ -77,10 +77,8 @@
+ 		printk("\n"); \
+ 	} while (0)
+ # define ea_bdebug(bh, f...) do { \
+-		char b[BDEVNAME_SIZE]; \
+-		printk(KERN_DEBUG "block %s:%lu: ", \
+-			bdevname(bh->b_bdev, b), \
+-			(unsigned long) bh->b_blocknr); \
++		printk(KERN_DEBUG "block %pg:%lu: ", \
++			bh->b_bdev, (unsigned long) bh->b_blocknr); \
+ 		printk(f); \
+ 		printk("\n"); \
+ 	} while (0)
+diff --git a/fs/ext3/super.c b/fs/ext3/super.c
+index 30abbab..bd184e8 100644
+--- a/fs/ext3/super.c
++++ b/fs/ext3/super.c
+@@ -1429,9 +1429,8 @@ static int ext3_setup_super(struct super_block *sb, struct ext3_super_block *es,
+ 			sbi->s_mount_opt);
+ 
+ 	if (EXT3_SB(sb)->s_journal->j_inode == NULL) {
+-		char b[BDEVNAME_SIZE];
+-		ext3_msg(sb, KERN_INFO, "using external journal on %s",
+-			bdevname(EXT3_SB(sb)->s_journal->j_dev, b));
++		ext3_msg(sb, KERN_INFO, "using external journal on %pg",
++			 EXT3_SB(sb)->s_journal->j_dev);
+ 	} else {
+ 		ext3_msg(sb, KERN_INFO, "using internal journal");
  	}
+diff --git a/fs/ext3/xattr.c b/fs/ext3/xattr.c
+index a5591d7..9e9ea20 100644
+--- a/fs/ext3/xattr.c
++++ b/fs/ext3/xattr.c
+@@ -76,9 +76,8 @@
+ 		printk("\n"); \
+ 	} while (0)
+ # define ea_bdebug(bh, f...) do { \
+-		char b[BDEVNAME_SIZE]; \
+-		printk(KERN_DEBUG "block %s:%lu: ", \
+-			bdevname(bh->b_bdev, b), \
++		printk(KERN_DEBUG "block %pg:%lu: ", \
++			bh->b_bdev,
+ 			(unsigned long) bh->b_blocknr); \
+ 		printk(f); \
+ 		printk("\n"); \
+diff --git a/fs/ext4/page-io.c b/fs/ext4/page-io.c
+index 4649842..c1ead0a 100644
+--- a/fs/ext4/page-io.c
++++ b/fs/ext4/page-io.c
+@@ -54,9 +54,8 @@ void ext4_exit_pageio(void)
+  */
+ static void buffer_io_error(struct buffer_head *bh)
+ {
+-	char b[BDEVNAME_SIZE];
+-	printk_ratelimited(KERN_ERR "Buffer I/O error on device %s, logical block %llu\n",
+-			bdevname(bh->b_bdev, b),
++	printk_ratelimited(KERN_ERR "Buffer I/O error on device %pg, logical block %llu\n",
++		       bh->b_bdev,
+ 			(unsigned long long)bh->b_blocknr);
+ }
  
- 	if (dc->sb.block_size < c->sb.block_size) {
- 		/* Will die */
--		pr_err("Couldn't attach %s: block size less than set's block size",
--		       buf);
-+		pr_err("Couldn't attach %pg: block size less than set's block size",
-+		       dc->bdev);
- 		return -EINVAL;
- 	}
+diff --git a/fs/ext4/xattr.c b/fs/ext4/xattr.c
+index 1993532..821fe3d 100644
+--- a/fs/ext4/xattr.c
++++ b/fs/ext4/xattr.c
+@@ -69,10 +69,8 @@
+ 		printk("\n"); \
+ 	} while (0)
+ # define ea_bdebug(bh, f...) do { \
+-		char b[BDEVNAME_SIZE]; \
+-		printk(KERN_DEBUG "block %s:%lu: ", \
+-			bdevname(bh->b_bdev, b), \
+-			(unsigned long) bh->b_blocknr); \
++		printk(KERN_DEBUG "block %pg:%lu: ",		   \
++		       bh->b_bdev, (unsigned long) bh->b_blocknr); \
+ 		printk(f); \
+ 		printk("\n"); \
+ 	} while (0)
+diff --git a/fs/f2fs/debug.c b/fs/f2fs/debug.c
+index e671373..57beaa3 100644
+--- a/fs/f2fs/debug.c
++++ b/fs/f2fs/debug.c
+@@ -201,12 +201,10 @@ static int stat_show(struct seq_file *s, void *v)
  
-@@ -996,13 +992,13 @@ int bch_cached_dev_attach(struct cached_dev *dc, struct cache_set *c)
+ 	mutex_lock(&f2fs_stat_mutex);
+ 	list_for_each_entry(si, &f2fs_stat_list, stat_list) {
+-		char devname[BDEVNAME_SIZE];
+-
+ 		update_general_status(si->sbi);
  
- 	if (!u) {
- 		if (BDEV_STATE(&dc->sb) == BDEV_STATE_DIRTY) {
--			pr_err("Couldn't find uuid for %s in set", buf);
-+			pr_err("Couldn't find uuid for %pg in set", dc->bdev);
- 			return -ENOENT;
+-		seq_printf(s, "\n=====[ partition info(%s). #%d ]=====\n",
+-			bdevname(si->sbi->sb->s_bdev, devname), i++);
++		seq_printf(s, "\n=====[ partition info(%pg). #%d ]=====\n",
++			si->sbi->sb->s_bdev, i++);
+ 		seq_printf(s, "[SB: 1] [CP: 2] [SIT: %d] [NAT: %d] ",
+ 			   si->sit_area_segs, si->nat_area_segs);
+ 		seq_printf(s, "[SSA: %d] [MAIN: %d",
+diff --git a/fs/gfs2/ops_fstype.c b/fs/gfs2/ops_fstype.c
+index 35b49f4..b597edf 100644
+--- a/fs/gfs2/ops_fstype.c
++++ b/fs/gfs2/ops_fstype.c
+@@ -1311,10 +1311,8 @@ static struct dentry *gfs2_mount(struct file_system_type *fs_type, int flags,
+ 		if ((flags ^ s->s_flags) & MS_RDONLY)
+ 			goto error_super;
+ 	} else {
+-		char b[BDEVNAME_SIZE];
+-
+ 		s->s_mode = mode;
+-		strlcpy(s->s_id, bdevname(bdev, b), sizeof(s->s_id));
++		snprintf(s->s_id, sizeof(s->s_id), "%pg", bdev);
+ 		sb_set_blocksize(s, block_size(bdev));
+ 		error = fill_super(s, &args, flags & MS_SILENT ? 1 : 0);
+ 		if (error)
+diff --git a/fs/jbd/commit.c b/fs/jbd/commit.c
+index bb217dc..77b6045 100644
+--- a/fs/jbd/commit.c
++++ b/fs/jbd/commit.c
+@@ -493,11 +493,9 @@ void journal_commit_transaction(journal_t *journal)
+ 	spin_unlock(&journal->j_list_lock);
+ 
+ 	if (err) {
+-		char b[BDEVNAME_SIZE];
+-
+ 		printk(KERN_WARNING
+ 			"JBD: Detected IO errors while flushing file data "
+-			"on %s\n", bdevname(journal->j_fs_dev, b));
++			"on %pg\n", journal->j_fs_dev);
+ 		if (journal->j_flags & JFS_ABORT_ON_SYNCDATA_ERR)
+ 			journal_abort(journal, err);
+ 		err = 0;
+diff --git a/fs/jbd/journal.c b/fs/jbd/journal.c
+index c46a79a..2279101 100644
+--- a/fs/jbd/journal.c
++++ b/fs/jbd/journal.c
+@@ -88,7 +88,7 @@ EXPORT_SYMBOL(journal_force_commit);
+ 
+ static int journal_convert_superblock_v1(journal_t *, journal_superblock_t *);
+ static void __journal_abort_soft (journal_t *journal, int errno);
+-static const char *journal_dev_name(journal_t *journal, char *buffer);
++static struct block_device *journal_dev(journal_t *journal);
+ 
+ #ifdef CONFIG_JBD_DEBUG
+ void __jbd_debug(int level, const char *file, const char *func,
+@@ -679,13 +679,10 @@ int journal_bmap(journal_t *journal, unsigned int blocknr,
+ 		if (ret)
+ 			*retp = ret;
+ 		else {
+-			char b[BDEVNAME_SIZE];
+-
+ 			printk(KERN_ALERT "%s: journal block not found "
+-					"at offset %u on %s\n",
++					"at offset %u on %pg\n",
+ 				__func__,
+-				blocknr,
+-				bdevname(journal->j_dev, b));
++				blocknr, journal->j_dev);
+ 			err = -EIO;
+ 			__journal_abort_soft(journal, err);
  		}
- 
- 		u = uuid_find_empty(c);
- 		if (!u) {
--			pr_err("Not caching %s, no room for UUID", buf);
-+			pr_err("Not caching %pg, no room for UUID", dc->bdev);
- 			return -EINVAL;
- 		}
+@@ -1062,7 +1059,6 @@ static void journal_write_superblock(journal_t *journal, int write_op)
+ 		write_op &= ~(REQ_FUA | REQ_FLUSH);
+ 	lock_buffer(bh);
+ 	if (buffer_write_io_error(bh)) {
+-		char b[BDEVNAME_SIZE];
+ 		/*
+ 		 * Oh, dear.  A previous attempt to write the journal
+ 		 * superblock failed.  This could happen because the
+@@ -1072,8 +1068,8 @@ static void journal_write_superblock(journal_t *journal, int write_op)
+ 		 * write and hope for the best.
+ 		 */
+ 		printk(KERN_ERR "JBD: previous I/O error detected "
+-		       "for journal superblock update for %s.\n",
+-		       journal_dev_name(journal, b));
++		       "for journal superblock update for %pg.\n",
++		       journal_dev(journal));
+ 		clear_buffer_write_io_error(bh);
+ 		set_buffer_uptodate(bh);
  	}
-@@ -1054,8 +1050,8 @@ int bch_cached_dev_attach(struct cached_dev *dc, struct cache_set *c)
- 	bch_cached_dev_run(dc);
- 	bcache_device_link(&dc->disk, c, "bdev");
- 
--	pr_info("Caching %s as %s on set %pU",
--		bdevname(dc->bdev, buf), dc->disk.disk->disk_name,
-+	pr_info("Caching %pg as %s on set %pU",
-+		dc->bdev, dc->disk.disk->disk_name,
- 		dc->disk.c->sb.set_uuid);
- 	return 0;
- }
-@@ -1161,7 +1157,6 @@ static void register_bdev(struct cache_sb *sb, struct page *sb_page,
- 				 struct block_device *bdev,
- 				 struct cached_dev *dc)
- {
--	char name[BDEVNAME_SIZE];
- 	const char *err = "cannot allocate memory";
- 	struct cache_set *c;
- 
-@@ -1185,7 +1180,7 @@ static void register_bdev(struct cache_sb *sb, struct page *sb_page,
- 	if (bch_cache_accounting_add_kobjs(&dc->accounting, &dc->disk.kobj))
- 		goto err;
- 
--	pr_info("registered backing device %s", bdevname(bdev, name));
-+	pr_info("registered backing device %pg", bdev);
- 
- 	list_add(&dc->list, &uncached_devices);
- 	list_for_each_entry(c, &bch_cache_sets, list)
-@@ -1197,7 +1192,7 @@ static void register_bdev(struct cache_sb *sb, struct page *sb_page,
- 
- 	return;
- err:
--	pr_notice("error opening %s: %s", bdevname(bdev, name), err);
-+	pr_notice("error opening %pg: %s", bdev, err);
- 	bcache_device_stop(&dc->disk);
+@@ -1088,10 +1084,9 @@ static void journal_write_superblock(journal_t *journal, int write_op)
+ 		ret = -EIO;
+ 	}
+ 	if (ret) {
+-		char b[BDEVNAME_SIZE];
+ 		printk(KERN_ERR "JBD: Error %d detected "
+-		       "when updating journal superblock for %s.\n",
+-		       ret, journal_dev_name(journal, b));
++		       "when updating journal superblock for %pg.\n",
++		       ret, journal_dev(journal));
+ 	}
  }
  
-@@ -1860,7 +1855,6 @@ static int cache_alloc(struct cache_sb *sb, struct cache *ca)
- static void register_cache(struct cache_sb *sb, struct page *sb_page,
- 				struct block_device *bdev, struct cache *ca)
+@@ -1650,16 +1645,12 @@ int journal_wipe(journal_t *journal, int write)
+  * device this journal is present.
+  */
+ 
+-static const char *journal_dev_name(journal_t *journal, char *buffer)
++static struct block_device *journal_dev(journal_t *journal)
  {
--	char name[BDEVNAME_SIZE];
- 	const char *err = "cannot allocate memory";
+-	struct block_device *bdev;
+-
+ 	if (journal->j_inode)
+-		bdev = journal->j_inode->i_sb->s_bdev;
+-	else
+-		bdev = journal->j_dev;
++		return journal->j_inode->i_sb->s_bdev;
++	return journal->j_dev;
  
- 	memcpy(&ca->sb, sb, sizeof(struct cache_sb));
-@@ -1890,12 +1884,12 @@ static void register_cache(struct cache_sb *sb, struct page *sb_page,
- 	if (err)
- 		goto err;
- 
--	pr_info("registered cache device %s", bdevname(bdev, name));
-+	pr_info("registered cache device %pg", bdev);
- out:
- 	kobject_put(&ca->kobj);
- 	return;
- err:
--	pr_notice("error opening %s: %s", bdevname(bdev, name), err);
-+	pr_notice("error opening %pg: %s", bdev, err);
- 	goto out;
+-	return bdevname(bdev, buffer);
  }
  
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 7755af3..f31cfdf 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -2027,7 +2027,6 @@ static int parse_metadata_dev(struct cache_args *ca, struct dm_arg_set *as,
+ /*
+@@ -1678,13 +1669,12 @@ static const char *journal_dev_name(journal_t *journal, char *buffer)
+ static void __journal_abort_hard(journal_t *journal)
  {
- 	int r;
- 	sector_t metadata_dev_size;
+ 	transaction_t *transaction;
 -	char b[BDEVNAME_SIZE];
  
- 	if (!at_least_one_arg(as, error))
- 		return -EINVAL;
-@@ -2041,8 +2040,8 @@ static int parse_metadata_dev(struct cache_args *ca, struct dm_arg_set *as,
+ 	if (journal->j_flags & JFS_ABORT)
+ 		return;
  
- 	metadata_dev_size = get_dev_size(ca->metadata_dev);
- 	if (metadata_dev_size > DM_CACHE_METADATA_MAX_SECTORS_WARNING)
--		DMWARN("Metadata device %s is larger than %u sectors: excess space will not be used.",
--		       bdevname(ca->metadata_dev->bdev, b), THIN_METADATA_MAX_SECTORS);
-+		DMWARN("Metadata device %pg is larger than %u sectors: excess space will not be used.",
-+		       ca->metadata_dev->bdev, THIN_METADATA_MAX_SECTORS);
+-	printk(KERN_ERR "Aborting journal on device %s.\n",
+-		journal_dev_name(journal, b));
++	printk(KERN_ERR "Aborting journal on device %pg.\n",
++	       journal_dev(journal));
  
- 	return 0;
- }
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 6554d91..8c1e279 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -282,7 +282,6 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
- 		i_size_read(bdev->bd_inode) >> SECTOR_SHIFT;
- 	unsigned short logical_block_size_sectors =
- 		limits->logical_block_size >> SECTOR_SHIFT;
+ 	spin_lock(&journal->j_state_lock);
+ 	journal->j_flags |= JFS_ABORT;
+diff --git a/fs/jbd/transaction.c b/fs/jbd/transaction.c
+index 1695ba8..1e268df 100644
+--- a/fs/jbd/transaction.c
++++ b/fs/jbd/transaction.c
+@@ -496,13 +496,11 @@ void journal_unlock_updates (journal_t *journal)
+ 
+ static void warn_dirty_buffer(struct buffer_head *bh)
+ {
 -	char b[BDEVNAME_SIZE];
+-
+ 	printk(KERN_WARNING
+-	       "JBD: Spotted dirty metadata buffer (dev = %s, blocknr = %llu). "
++	       "JBD: Spotted dirty metadata buffer (dev = %pg, blocknr = %llu). "
+ 	       "There's a risk of filesystem corruption in case of system "
+ 	       "crash.\n",
+-	       bdevname(bh->b_bdev, b), (unsigned long long)bh->b_blocknr);
++	       bh->b_bdev, (unsigned long long)bh->b_blocknr);
+ }
+ 
+ /*
+diff --git a/fs/jbd2/transaction.c b/fs/jbd2/transaction.c
+index 5f09370..0052807 100644
+--- a/fs/jbd2/transaction.c
++++ b/fs/jbd2/transaction.c
+@@ -754,13 +754,11 @@ void jbd2_journal_unlock_updates (journal_t *journal)
+ 
+ static void warn_dirty_buffer(struct buffer_head *bh)
+ {
+-	char b[BDEVNAME_SIZE];
+-
+ 	printk(KERN_WARNING
+-	       "JBD2: Spotted dirty metadata buffer (dev = %s, blocknr = %llu). "
++	       "JBD2: Spotted dirty metadata buffer (dev = %pg, blocknr = %llu). "
+ 	       "There's a risk of filesystem corruption in case of system "
+ 	       "crash.\n",
+-	       bdevname(bh->b_bdev, b), (unsigned long long)bh->b_blocknr);
++	       bh->b_bdev, (unsigned long long)bh->b_blocknr);
+ }
+ 
+ /*
+diff --git a/fs/minix/itree_v1.c b/fs/minix/itree_v1.c
+index 282e15a..46ca39d 100644
+--- a/fs/minix/itree_v1.c
++++ b/fs/minix/itree_v1.c
+@@ -24,16 +24,15 @@ static inline block_t *i_data(struct inode *inode)
+ static int block_to_path(struct inode * inode, long block, int offsets[DEPTH])
+ {
+ 	int n = 0;
+-	char b[BDEVNAME_SIZE];
+ 
+ 	if (block < 0) {
+-		printk("MINIX-fs: block_to_path: block %ld < 0 on dev %s\n",
+-			block, bdevname(inode->i_sb->s_bdev, b));
++		printk("MINIX-fs: block_to_path: block %ld < 0 on dev %pg\n",
++			block, inode->i_sb->s_bdev);
+ 	} else if (block >= (minix_sb(inode->i_sb)->s_max_size/BLOCK_SIZE)) {
+ 		if (printk_ratelimit())
+ 			printk("MINIX-fs: block_to_path: "
+-			       "block %ld too big on dev %s\n",
+-				block, bdevname(inode->i_sb->s_bdev, b));
++			       "block %ld too big on dev %pg\n",
++				block, inode->i_sb->s_bdev);
+ 	} else if (block < 7) {
+ 		offsets[n++] = block;
+ 	} else if ((block -= 7) < 512) {
+diff --git a/fs/minix/itree_v2.c b/fs/minix/itree_v2.c
+index 78e2d93..1ee1013 100644
+--- a/fs/minix/itree_v2.c
++++ b/fs/minix/itree_v2.c
+@@ -26,18 +26,17 @@ static inline block_t *i_data(struct inode *inode)
+ static int block_to_path(struct inode * inode, long block, int offsets[DEPTH])
+ {
+ 	int n = 0;
+-	char b[BDEVNAME_SIZE];
+ 	struct super_block *sb = inode->i_sb;
+ 
+ 	if (block < 0) {
+-		printk("MINIX-fs: block_to_path: block %ld < 0 on dev %s\n",
+-			block, bdevname(sb->s_bdev, b));
++		printk("MINIX-fs: block_to_path: block %ld < 0 on dev %pg\n",
++			block, sb->s_bdev);
+ 	} else if ((u64)block * (u64)sb->s_blocksize >=
+ 			minix_sb(sb)->s_max_size) {
+ 		if (printk_ratelimit())
+ 			printk("MINIX-fs: block_to_path: "
+-			       "block %ld too big on dev %s\n",
+-				block, bdevname(sb->s_bdev, b));
++			       "block %ld too big on dev %pg\n",
++				block, sb->s_bdev);
+ 	} else if (block < DIRCOUNT) {
+ 		offsets[n++] = block;
+ 	} else if ((block -= DIRCOUNT) < INDIRCOUNT(sb)) {
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 282fb10..b893b73 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -1313,13 +1313,11 @@ nilfs_mount(struct file_system_type *fs_type, int flags,
+ 	}
+ 
+ 	if (!s->s_root) {
+-		char b[BDEVNAME_SIZE];
+-
+-		s_new = true;
++ 		s_new = true;
+ 
+ 		/* New superblock instance created */
+ 		s->s_mode = mode;
+-		strlcpy(s->s_id, bdevname(sd.bdev, b), sizeof(s->s_id));
++		snprintf(s->s_id, sizeof(s->s_id), "%pg", sd.bdev);
+ 		sb_set_blocksize(s, block_size(sd.bdev));
+ 
+ 		err = nilfs_fill_super(s, data, flags & MS_SILENT ? 1 : 0);
+diff --git a/fs/reiserfs/journal.c b/fs/reiserfs/journal.c
+index 9d6486d..44c2bdc 100644
+--- a/fs/reiserfs/journal.c
++++ b/fs/reiserfs/journal.c
+@@ -618,12 +618,10 @@ static void release_buffer_page(struct buffer_head *bh)
+ 
+ static void reiserfs_end_buffer_io_sync(struct buffer_head *bh, int uptodate)
+ {
+-	char b[BDEVNAME_SIZE];
+-
+ 	if (buffer_journaled(bh)) {
+ 		reiserfs_warning(NULL, "clm-2084",
+-				 "pinned buffer %lu:%s sent to disk",
+-				 bh->b_blocknr, bdevname(bh->b_bdev, b));
++				 "pinned buffer %lu:%pg sent to disk",
++				 bh->b_blocknr, bh->b_bdev);
+ 	}
+ 	if (uptodate)
+ 		set_buffer_uptodate(bh);
+@@ -2387,11 +2385,10 @@ static int journal_read(struct super_block *sb)
+ 	int replay_count = 0;
+ 	int continue_replay = 1;
+ 	int ret;
+-	char b[BDEVNAME_SIZE];
+ 
+ 	cur_dblock = SB_ONDISK_JOURNAL_1st_BLOCK(sb);
+-	reiserfs_info(sb, "checking transaction log (%s)\n",
+-		      bdevname(journal->j_dev_bd, b));
++	reiserfs_info(sb, "checking transaction log (%pg)\n",
++		      journal->j_dev_bd);
+ 	start = get_seconds();
  
  	/*
- 	 * Some devices exist without request functions,
-@@ -291,9 +290,9 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
- 	 */
- 	q = bdev_get_queue(bdev);
- 	if (!q || !q->make_request_fn) {
--		DMWARN("%s: %s is not yet initialised: "
-+		DMWARN("%s: %pg is not yet initialised: "
- 		       "start=%llu, len=%llu, dev_size=%llu",
--		       dm_device_name(ti->table->md), bdevname(bdev, b),
-+		       dm_device_name(ti->table->md), bdev,
- 		       (unsigned long long)start,
- 		       (unsigned long long)len,
- 		       (unsigned long long)dev_size);
-@@ -304,9 +303,9 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
- 		return 0;
+@@ -2651,8 +2648,8 @@ static int journal_init_dev(struct super_block *super,
  
- 	if ((start >= dev_size) || (start + len > dev_size)) {
--		DMWARN("%s: %s too small for target: "
-+		DMWARN("%s: %pg too small for target: "
- 		       "start=%llu, len=%llu, dev_size=%llu",
--		       dm_device_name(ti->table->md), bdevname(bdev, b),
-+		       dm_device_name(ti->table->md), bdev,
- 		       (unsigned long long)start,
- 		       (unsigned long long)len,
- 		       (unsigned long long)dev_size);
-@@ -318,19 +317,19 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+ 	set_blocksize(journal->j_dev_bd, super->s_blocksize);
+ 	reiserfs_info(super,
+-		      "journal_init_dev: journal device: %s\n",
+-		      bdevname(journal->j_dev_bd, b));
++		      "journal_init_dev: journal device: %pg\n",
++		      journal->j_dev_bd);
+ 	return 0;
+ }
  
- 	if (start & (logical_block_size_sectors - 1)) {
- 		DMWARN("%s: start=%llu not aligned to h/w "
--		       "logical block size %u of %s",
-+		       "logical block size %u of %pg",
- 		       dm_device_name(ti->table->md),
- 		       (unsigned long long)start,
--		       limits->logical_block_size, bdevname(bdev, b));
-+		       limits->logical_block_size, bdev);
+@@ -2724,7 +2721,6 @@ int journal_init(struct super_block *sb, const char *j_dev_name,
+ 	struct reiserfs_journal_header *jh;
+ 	struct reiserfs_journal *journal;
+ 	struct reiserfs_journal_list *jl;
+-	char b[BDEVNAME_SIZE];
+ 	int ret;
+ 
+ 	journal = SB_JOURNAL(sb) = vzalloc(sizeof(struct reiserfs_journal));
+@@ -2794,10 +2790,10 @@ int journal_init(struct super_block *sb, const char *j_dev_name,
+ 	    && (le32_to_cpu(jh->jh_journal.jp_journal_magic) !=
+ 		sb_jp_journal_magic(rs))) {
+ 		reiserfs_warning(sb, "sh-460",
+-				 "journal header magic %x (device %s) does "
++				 "journal header magic %x (device %pg) does "
+ 				 "not match to magic found in super block %x",
+ 				 jh->jh_journal.jp_journal_magic,
+-				 bdevname(journal->j_dev_bd, b),
++				 journal->j_dev_bd,
+ 				 sb_jp_journal_magic(rs));
+ 		brelse(bhjh);
+ 		goto free_and_return;
+@@ -2818,10 +2814,10 @@ int journal_init(struct super_block *sb, const char *j_dev_name,
+ 		journal->j_max_trans_age = commit_max_age;
+ 	}
+ 
+-	reiserfs_info(sb, "journal params: device %s, size %u, "
++	reiserfs_info(sb, "journal params: device %pg, size %u, "
+ 		      "journal first block %u, max trans len %u, max batch %u, "
+ 		      "max commit age %u, max trans age %u\n",
+-		      bdevname(journal->j_dev_bd, b),
++		      journal->j_dev_bd,
+ 		      SB_ONDISK_JOURNAL_SIZE(sb),
+ 		      SB_ONDISK_JOURNAL_1st_BLOCK(sb),
+ 		      journal->j_trans_max,
+diff --git a/fs/reiserfs/prints.c b/fs/reiserfs/prints.c
+index ae1dc84..4f3f928 100644
+--- a/fs/reiserfs/prints.c
++++ b/fs/reiserfs/prints.c
+@@ -139,11 +139,9 @@ static void sprintf_block_head(char *buf, struct buffer_head *bh)
+ 
+ static void sprintf_buffer_head(char *buf, struct buffer_head *bh)
+ {
+-	char b[BDEVNAME_SIZE];
+-
+ 	sprintf(buf,
+-		"dev %s, size %zd, blocknr %llu, count %d, state 0x%lx, page %p, (%s, %s, %s)",
+-		bdevname(bh->b_bdev, b), bh->b_size,
++		"dev %pg, size %zd, blocknr %llu, count %d, state 0x%lx, page %p, (%s, %s, %s)",
++		bh->b_bdev, bh->b_size,
+ 		(unsigned long long)bh->b_blocknr, atomic_read(&(bh->b_count)),
+ 		bh->b_state, bh->b_page,
+ 		buffer_uptodate(bh) ? "UPTODATE" : "!UPTODATE",
+@@ -530,7 +528,6 @@ static int print_super_block(struct buffer_head *bh)
+ 	    (struct reiserfs_super_block *)(bh->b_data);
+ 	int skipped, data_blocks;
+ 	char *version;
+-	char b[BDEVNAME_SIZE];
+ 
+ 	if (is_reiserfs_3_5(rs)) {
+ 		version = "3.5";
+@@ -543,7 +540,7 @@ static int print_super_block(struct buffer_head *bh)
  		return 1;
  	}
  
- 	if (len & (logical_block_size_sectors - 1)) {
- 		DMWARN("%s: len=%llu not aligned to h/w "
--		       "logical block size %u of %s",
-+		       "logical block size %u of %pg",
- 		       dm_device_name(ti->table->md),
- 		       (unsigned long long)len,
--		       limits->logical_block_size, bdevname(bdev, b));
-+		       limits->logical_block_size, bdev);
- 		return 1;
- 	}
- 
-@@ -425,19 +424,18 @@ static int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
- 	struct queue_limits *limits = data;
- 	struct block_device *bdev = dev->bdev;
- 	struct request_queue *q = bdev_get_queue(bdev);
+-	printk("%s\'s super block is in block %llu\n", bdevname(bh->b_bdev, b),
++	printk("%pg\'s super block is in block %llu\n", bh->b_bdev,
+ 	       (unsigned long long)bh->b_blocknr);
+ 	printk("Reiserfs version %s\n", version);
+ 	printk("Block count %u\n", sb_block_count(rs));
+diff --git a/fs/reiserfs/procfs.c b/fs/reiserfs/procfs.c
+index 621b9f3..fe99915 100644
+--- a/fs/reiserfs/procfs.c
++++ b/fs/reiserfs/procfs.c
+@@ -303,11 +303,10 @@ static int show_journal(struct seq_file *m, void *unused)
+ 	struct reiserfs_sb_info *r = REISERFS_SB(sb);
+ 	struct reiserfs_super_block *rs = r->s_rs;
+ 	struct journal_params *jp = &rs->s_v1.s_journal;
 -	char b[BDEVNAME_SIZE];
  
- 	if (unlikely(!q)) {
--		DMWARN("%s: Cannot set limits for nonexistent device %s",
--		       dm_device_name(ti->table->md), bdevname(bdev, b));
-+		DMWARN("%s: Cannot set limits for nonexistent device %pg",
-+		       dm_device_name(ti->table->md), bdev);
- 		return 0;
- 	}
- 
- 	if (bdev_stack_limits(limits, bdev, start) < 0)
--		DMWARN("%s: adding target device %s caused an alignment inconsistency: "
-+		DMWARN("%s: adding target device %pg caused an alignment inconsistency: "
- 		       "physical_block_size=%u, logical_block_size=%u, "
- 		       "alignment_offset=%u, start=%llu",
--		       dm_device_name(ti->table->md), bdevname(bdev, b),
-+		       dm_device_name(ti->table->md), bdev,
- 		       q->limits.physical_block_size,
- 		       q->limits.logical_block_size,
- 		       q->limits.alignment_offset,
-@@ -1660,14 +1658,12 @@ int dm_table_any_congested(struct dm_table *t, int bdi_bits)
- 
- 	list_for_each_entry(dd, devices, list) {
- 		struct request_queue *q = bdev_get_queue(dd->dm_dev->bdev);
--		char b[BDEVNAME_SIZE];
- 
- 		if (likely(q))
- 			r |= bdi_congested(&q->backing_dev_info, bdi_bits);
- 		else
--			DMWARN_LIMIT("%s: any_congested: nonexistent device %s",
--				     dm_device_name(t->md),
--				     bdevname(dd->dm_dev->bdev, b));
-+			DMWARN_LIMIT("%s: any_congested: nonexistent device %pg",
-+				     dm_device_name(t->md), dd->dm_dev->bdev);
- 	}
- 
- 	list_for_each_entry(cb, &t->target_callbacks, list)
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 921aafd..c15e1c1 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -2427,7 +2427,6 @@ static void disable_passdown_if_not_supported(struct pool_c *pt)
- 	struct queue_limits *data_limits = &bdev_get_queue(data_bdev)->limits;
- 	sector_t block_size = pool->sectors_per_block << SECTOR_SHIFT;
- 	const char *reason = NULL;
--	char buf[BDEVNAME_SIZE];
- 
- 	if (!pt->adjusted_pf.discard_passdown)
- 		return;
-@@ -2445,7 +2444,7 @@ static void disable_passdown_if_not_supported(struct pool_c *pt)
- 		reason = "discard granularity not a factor of block size";
- 
- 	if (reason) {
--		DMWARN("Data device (%s) %s: Disabling discard passdown.", bdevname(data_bdev, buf), reason);
-+		DMWARN("Data device (%pg) %s: Disabling discard passdown.", data_bdev, reason);
- 		pt->adjusted_pf.discard_passdown = false;
- 	}
- }
-@@ -2770,11 +2769,10 @@ static sector_t get_dev_size(struct block_device *bdev)
- static void warn_if_metadata_device_too_big(struct block_device *bdev)
+ 	seq_printf(m,		/* on-disk fields */
+ 		   "jp_journal_1st_block: \t%i\n"
+-		   "jp_journal_dev: \t%s[%x]\n"
++		   "jp_journal_dev: \t%pg[%x]\n"
+ 		   "jp_journal_size: \t%i\n"
+ 		   "jp_journal_trans_max: \t%i\n"
+ 		   "jp_journal_magic: \t%i\n"
+@@ -348,7 +347,7 @@ static int show_journal(struct seq_file *m, void *unused)
+ 		   "prepare: \t%12lu\n"
+ 		   "prepare_retry: \t%12lu\n",
+ 		   DJP(jp_journal_1st_block),
+-		   bdevname(SB_JOURNAL(sb)->j_dev_bd, b),
++		   SB_JOURNAL(sb)->j_dev_bd,
+ 		   DJP(jp_journal_dev),
+ 		   DJP(jp_journal_size),
+ 		   DJP(jp_journal_trans_max),
+diff --git a/fs/squashfs/super.c b/fs/squashfs/super.c
+index 5056bab..dded920 100644
+--- a/fs/squashfs/super.c
++++ b/fs/squashfs/super.c
+@@ -80,7 +80,6 @@ static int squashfs_fill_super(struct super_block *sb, void *data, int silent)
  {
- 	sector_t metadata_dev_size = get_dev_size(bdev);
--	char buffer[BDEVNAME_SIZE];
- 
- 	if (metadata_dev_size > THIN_METADATA_MAX_SECTORS_WARNING)
--		DMWARN("Metadata device %s is larger than %u sectors: excess space will not be used.",
--		       bdevname(bdev, buffer), THIN_METADATA_MAX_SECTORS);
-+		DMWARN("Metadata device %pg is larger than %u sectors: excess space will not be used.",
-+		       bdev, THIN_METADATA_MAX_SECTORS);
- }
- 
- static sector_t get_metadata_dev_size(struct block_device *bdev)
-diff --git a/drivers/md/linear.c b/drivers/md/linear.c
-index fa7d577..48425d6 100644
---- a/drivers/md/linear.c
-+++ b/drivers/md/linear.c
-@@ -258,7 +258,6 @@ static void linear_free(struct mddev *mddev, void *priv)
- 
- static void linear_make_request(struct mddev *mddev, struct bio *bio)
- {
+ 	struct squashfs_sb_info *msblk;
+ 	struct squashfs_super_block *sblk = NULL;
 -	char b[BDEVNAME_SIZE];
- 	struct dev_info *tmp_dev;
- 	struct bio *split;
- 	sector_t start_sector, end_sector, data_offset;
-@@ -306,10 +305,10 @@ static void linear_make_request(struct mddev *mddev, struct bio *bio)
- out_of_bounds:
- 	printk(KERN_ERR
- 	       "md/linear:%s: make_request: Sector %llu out of bounds on "
--	       "dev %s: %llu sectors, offset %llu\n",
-+	       "dev %pg: %llu sectors, offset %llu\n",
- 	       mdname(mddev),
- 	       (unsigned long long)bio->bi_iter.bi_sector,
--	       bdevname(tmp_dev->rdev->bdev, b),
-+	       tmp_dev->rdev->bdev,
- 	       (unsigned long long)tmp_dev->rdev->sectors,
- 	       (unsigned long long)start_sector);
- 	bio_io_error(bio);
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 717daad..fd7aa19 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -788,8 +788,6 @@ EXPORT_SYMBOL_GPL(sync_page_io);
- 
- static int read_disk_sb(struct md_rdev *rdev, int size)
- {
--	char b[BDEVNAME_SIZE];
--
- 	if (rdev->sb_loaded)
- 		return 0;
- 
-@@ -799,8 +797,8 @@ static int read_disk_sb(struct md_rdev *rdev, int size)
- 	return 0;
- 
- fail:
--	printk(KERN_WARNING "md: disabled device %s, could not read superblock.\n",
--		bdevname(rdev->bdev,b));
-+	printk(KERN_WARNING "md: disabled device %pg, could not read superblock.\n",
-+		rdev->bdev);
- 	return -EINVAL;
- }
- 
-@@ -947,7 +945,6 @@ EXPORT_SYMBOL(md_check_no_bitmap);
-  */
- static int super_90_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_version)
- {
--	char b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
- 	mdp_super_t *sb;
- 	int ret;
- 
-@@ -964,21 +961,20 @@ static int super_90_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor
- 
- 	ret = -EINVAL;
- 
--	bdevname(rdev->bdev, b);
- 	sb = page_address(rdev->sb_page);
- 
- 	if (sb->md_magic != MD_SB_MAGIC) {
--		printk(KERN_ERR "md: invalid raid superblock magic on %s\n",
--		       b);
-+		printk(KERN_ERR "md: invalid raid superblock magic on %pg\n",
-+		       rdev->bdev);
- 		goto abort;
+ 	struct inode *root;
+ 	long long root_inode;
+ 	unsigned short flags;
+@@ -124,8 +123,8 @@ static int squashfs_fill_super(struct super_block *sb, void *data, int silent)
+ 	sb->s_magic = le32_to_cpu(sblk->s_magic);
+ 	if (sb->s_magic != SQUASHFS_MAGIC) {
+ 		if (!silent)
+-			ERROR("Can't find a SQUASHFS superblock on %s\n",
+-						bdevname(sb->s_bdev, b));
++			ERROR("Can't find a SQUASHFS superblock on %pg\n",
++						sb->s_bdev);
+ 		goto failed_mount;
  	}
  
- 	if (sb->major_version != 0 ||
- 	    sb->minor_version < 90 ||
- 	    sb->minor_version > 91) {
--		printk(KERN_WARNING "Bad version number %d.%d on %s\n",
-+		printk(KERN_WARNING "Bad version number %d.%d on %pg\n",
- 			sb->major_version, sb->minor_version,
--			b);
-+			rdev->bdev);
- 		goto abort;
- 	}
+@@ -178,7 +177,7 @@ static int squashfs_fill_super(struct super_block *sb, void *data, int silent)
+ 	msblk->inodes = le32_to_cpu(sblk->inodes);
+ 	flags = le16_to_cpu(sblk->flags);
  
-@@ -986,8 +982,8 @@ static int super_90_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor
- 		goto abort;
- 
- 	if (md_csum_fold(calc_sb_csum(sb)) != md_csum_fold(sb->sb_csum)) {
--		printk(KERN_WARNING "md: invalid superblock checksum on %s\n",
--			b);
-+		printk(KERN_WARNING "md: invalid superblock checksum on %pg\n",
-+			rdev->bdev);
- 		goto abort;
- 	}
- 
-@@ -1008,14 +1004,14 @@ static int super_90_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor
- 		__u64 ev1, ev2;
- 		mdp_super_t *refsb = page_address(refdev->sb_page);
- 		if (!uuid_equal(refsb, sb)) {
--			printk(KERN_WARNING "md: %s has different UUID to %s\n",
--				b, bdevname(refdev->bdev,b2));
-+			printk(KERN_WARNING "md: %pg has different UUID to %pg\n",
-+				rdev->bdev, refdev->bdev);
- 			goto abort;
- 		}
- 		if (!sb_equal(refsb, sb)) {
--			printk(KERN_WARNING "md: %s has same UUID"
--			       " but different superblock to %s\n",
--			       b, bdevname(refdev->bdev, b2));
-+			printk(KERN_WARNING "md: %pg has same UUID"
-+			       " but different superblock to %pg\n",
-+			       rdev->bdev, refdev->bdev);
- 			goto abort;
- 		}
- 		ev1 = md_event(sb);
-@@ -1373,7 +1369,6 @@ static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_
- 	int ret;
- 	sector_t sb_start;
- 	sector_t sectors;
--	char b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
- 	int bmask;
- 
- 	/*
-@@ -1417,13 +1412,11 @@ static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_
- 		return -EINVAL;
- 
- 	if (calc_sb_1_csum(sb) != sb->sb_csum) {
--		printk("md: invalid superblock checksum on %s\n",
--			bdevname(rdev->bdev,b));
-+		printk("md: invalid superblock checksum on %pg\n", rdev->bdev);
- 		return -EINVAL;
- 	}
- 	if (le64_to_cpu(sb->data_size) < 10) {
--		printk("md: data_size too small on %s\n",
--		       bdevname(rdev->bdev,b));
-+		printk("md: data_size too small on %pg\n", rdev->bdev);
- 		return -EINVAL;
- 	}
- 	if (sb->pad0 ||
-@@ -1508,10 +1501,9 @@ static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_
- 		    sb->level != refsb->level ||
- 		    sb->layout != refsb->layout ||
- 		    sb->chunksize != refsb->chunksize) {
--			printk(KERN_WARNING "md: %s has strangely different"
--				" superblock to %s\n",
--				bdevname(rdev->bdev,b),
--				bdevname(refdev->bdev,b2));
-+			printk(KERN_WARNING "md: %pg has strangely different"
-+				" superblock to %pg\n",
-+				rdev->bdev, refdev->bdev);
- 			return -EINVAL;
- 		}
- 		ev1 = le64_to_cpu(sb->events);
-@@ -2096,11 +2088,9 @@ static void md_delayed_delete(struct work_struct *ws)
- 
- static void unbind_rdev_from_array(struct md_rdev *rdev)
- {
--	char b[BDEVNAME_SIZE];
--
- 	bd_unlink_disk_holder(rdev->bdev, rdev->mddev->gendisk);
- 	list_del_rcu(&rdev->same_set);
--	printk(KERN_INFO "md: unbind<%s>\n", bdevname(rdev->bdev,b));
-+	printk(KERN_INFO "md: unbind<%pg>\n", rdev->bdev);
- 	rdev->mddev = NULL;
- 	sysfs_remove_link(&rdev->kobj, "block");
- 	sysfs_put(rdev->sysfs_state);
-@@ -2149,10 +2139,8 @@ void md_autodetect_dev(dev_t dev);
- 
- static void export_rdev(struct md_rdev *rdev)
- {
--	char b[BDEVNAME_SIZE];
- 
--	printk(KERN_INFO "md: export_rdev(%s)\n",
--		bdevname(rdev->bdev,b));
-+	printk(KERN_INFO "md: export_rdev(%pg)\n", rdev->bdev);
- 	md_rdev_clear(rdev);
- #ifndef MODULE
- 	if (test_bit(AutoDetected, &rdev->flags))
-@@ -2310,8 +2298,6 @@ repeat:
- 
- 	bitmap_update_sb(mddev->bitmap);
- 	rdev_for_each(rdev, mddev) {
--		char b[BDEVNAME_SIZE];
--
- 		if (rdev->sb_loaded != 1)
- 			continue; /* no noise on spare devices */
- 
-@@ -2319,8 +2305,8 @@ repeat:
- 			md_super_write(mddev,rdev,
- 				       rdev->sb_start, rdev->sb_size,
- 				       rdev->sb_page);
--			pr_debug("md: (write) %s's sb offset: %llu\n",
--				 bdevname(rdev->bdev, b),
-+			pr_debug("md: (write) %pg's sb offset: %llu\n",
-+				 rdev->bdev,
- 				 (unsigned long long)rdev->sb_start);
- 			rdev->sb_events = mddev->events;
- 			if (rdev->badblocks.size) {
-@@ -2332,8 +2318,7 @@ repeat:
- 			}
- 
- 		} else
--			pr_debug("md: %s (skipping faulty)\n",
--				 bdevname(rdev->bdev, b));
-+			pr_debug("md: %pg (skipping faulty)\n", rdev->bdev);
- 
- 		if (mddev->level == LEVEL_MULTIPATH)
- 			/* only need to write one superblock... */
-@@ -3037,7 +3022,6 @@ EXPORT_SYMBOL_GPL(md_rdev_init);
-  */
- static struct md_rdev *md_import_device(dev_t newdev, int super_format, int super_minor)
- {
--	char b[BDEVNAME_SIZE];
- 	int err;
- 	struct md_rdev *rdev;
- 	sector_t size;
-@@ -3064,8 +3048,8 @@ static struct md_rdev *md_import_device(dev_t newdev, int super_format, int supe
- 	size = i_size_read(rdev->bdev->bd_inode) >> BLOCK_SIZE_BITS;
- 	if (!size) {
- 		printk(KERN_WARNING
--			"md: %s has zero or unknown size, marking faulty!\n",
--			bdevname(rdev->bdev,b));
-+			"md: %pg has zero or unknown size, marking faulty!\n",
-+			rdev->bdev);
- 		err = -EINVAL;
- 		goto abort_free;
- 	}
-@@ -3075,16 +3059,15 @@ static struct md_rdev *md_import_device(dev_t newdev, int super_format, int supe
- 			load_super(rdev, NULL, super_minor);
- 		if (err == -EINVAL) {
- 			printk(KERN_WARNING
--				"md: %s does not have a valid v%d.%d "
-+				"md: %pg does not have a valid v%d.%d "
- 			       "superblock, not importing!\n",
--				bdevname(rdev->bdev,b),
--			       super_format, super_minor);
-+				rdev->bdev, super_format, super_minor);
- 			goto abort_free;
- 		}
- 		if (err < 0) {
- 			printk(KERN_WARNING
--				"md: could not read %s's sb, not importing!\n",
--				bdevname(rdev->bdev,b));
-+				"md: could not read %pg's sb, not importing!\n",
-+				rdev->bdev);
- 			goto abort_free;
- 		}
- 	}
-@@ -3107,7 +3090,6 @@ static void analyze_sbs(struct mddev *mddev)
- {
- 	int i;
- 	struct md_rdev *rdev, *freshest, *tmp;
--	char b[BDEVNAME_SIZE];
- 
- 	freshest = NULL;
- 	rdev_for_each_safe(rdev, tmp, mddev)
-@@ -3120,9 +3102,8 @@ static void analyze_sbs(struct mddev *mddev)
- 			break;
- 		default:
- 			printk( KERN_ERR \
--				"md: fatal superblock inconsistency in %s"
--				" -- removing from array\n",
--				bdevname(rdev->bdev,b));
-+				"md: fatal superblock inconsistency in %pg"
-+				" -- removing from array\n", rdev->bdev);
- 			kick_rdev_from_array(rdev);
- 		}
- 
-@@ -3135,8 +3116,8 @@ static void analyze_sbs(struct mddev *mddev)
- 		    (rdev->desc_nr >= mddev->max_disks ||
- 		     i > mddev->max_disks)) {
- 			printk(KERN_WARNING
--			       "md: %s: %s: only %d devices permitted\n",
--			       mdname(mddev), bdevname(rdev->bdev, b),
-+			       "md: %s: %pg: only %d devices permitted\n",
-+			       mdname(mddev), rdev->bdev,
- 			       mddev->max_disks);
- 			kick_rdev_from_array(rdev);
- 			continue;
-@@ -3144,9 +3125,8 @@ static void analyze_sbs(struct mddev *mddev)
- 		if (rdev != freshest)
- 			if (super_types[mddev->major_version].
- 			    validate_super(mddev, rdev)) {
--				printk(KERN_WARNING "md: kicking non-fresh %s"
--					" from array!\n",
--					bdevname(rdev->bdev,b));
-+				printk(KERN_WARNING "md: kicking non-fresh %pg"
-+					" from array!\n", rdev->bdev);
- 				kick_rdev_from_array(rdev);
- 				continue;
- 			}
-@@ -5024,7 +5004,6 @@ int md_run(struct mddev *mddev)
- 		/* Warn if this is a potentially silly
- 		 * configuration.
- 		 */
--		char b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
- 		struct md_rdev *rdev2;
- 		int warned = 0;
- 
-@@ -5034,12 +5013,11 @@ int md_run(struct mddev *mddev)
- 				    rdev->bdev->bd_contains ==
- 				    rdev2->bdev->bd_contains) {
- 					printk(KERN_WARNING
--					       "%s: WARNING: %s appears to be"
-+					       "%s: WARNING: %pg appears to be"
- 					       " on the same physical disk as"
--					       " %s.\n",
-+					       " %pg.\n",
- 					       mdname(mddev),
--					       bdevname(rdev->bdev,b),
--					       bdevname(rdev2->bdev,b2));
-+					       rdev->bdev,rdev2->bdev);
- 					warned = 1;
- 				}
- 			}
-@@ -5469,8 +5447,7 @@ static void autorun_array(struct mddev *mddev)
- 	printk(KERN_INFO "md: running: ");
- 
- 	rdev_for_each(rdev, mddev) {
--		char b[BDEVNAME_SIZE];
--		printk("<%s>", bdevname(rdev->bdev,b));
-+		printk("<%pg>", rdev->bdev);
- 	}
- 	printk("\n");
- 
-@@ -5497,7 +5474,6 @@ static void autorun_devices(int part)
- {
- 	struct md_rdev *rdev0, *rdev, *tmp;
- 	struct mddev *mddev;
--	char b[BDEVNAME_SIZE];
- 
- 	printk(KERN_INFO "md: autorun ...\n");
- 	while (!list_empty(&pending_raid_disks)) {
-@@ -5507,13 +5483,12 @@ static void autorun_devices(int part)
- 		rdev0 = list_entry(pending_raid_disks.next,
- 					 struct md_rdev, same_set);
- 
--		printk(KERN_INFO "md: considering %s ...\n",
--			bdevname(rdev0->bdev,b));
-+		printk(KERN_INFO "md: considering %pg ...\n", rdev0->bdev);
- 		INIT_LIST_HEAD(&candidates);
- 		rdev_for_each_list(rdev, tmp, &pending_raid_disks)
- 			if (super_90_load(rdev, rdev0, 0) >= 0) {
--				printk(KERN_INFO "md:  adding %s ...\n",
--					bdevname(rdev->bdev,b));
-+				printk(KERN_INFO "md:  adding %pg ...\n",
-+				       rdev->bdev);
- 				list_move(&rdev->same_set, &candidates);
- 			}
- 		/*
-@@ -5530,8 +5505,8 @@ static void autorun_devices(int part)
- 			unit = MINOR(dev);
- 		}
- 		if (rdev0->preferred_minor != unit) {
--			printk(KERN_INFO "md: unit number in %s is bad: %d\n",
--			       bdevname(rdev0->bdev, b), rdev0->preferred_minor);
-+			printk(KERN_INFO "md: unit number in %pg is bad: %d\n",
-+			       rdev0->bdev, rdev0->preferred_minor);
- 			break;
- 		}
- 
-@@ -5550,8 +5525,8 @@ static void autorun_devices(int part)
- 		else if (mddev->raid_disks || mddev->major_version
- 			 || !list_empty(&mddev->disks)) {
- 			printk(KERN_WARNING
--				"md: %s already running, cannot run %s\n",
--				mdname(mddev), bdevname(rdev0->bdev,b));
-+				"md: %s already running, cannot run %pg\n",
-+				mdname(mddev), rdev0->bdev);
- 			mddev_unlock(mddev);
- 		} else {
- 			printk(KERN_INFO "md: created %s\n", mdname(mddev));
-@@ -5716,7 +5691,6 @@ static int get_disk_info(struct mddev *mddev, void __user * arg)
- 
- static int add_new_disk(struct mddev *mddev, mdu_disk_info_t *info)
- {
--	char b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
- 	struct md_rdev *rdev;
- 	dev_t dev = MKDEV(info->major,info->minor);
- 
-@@ -5741,9 +5715,8 @@ static int add_new_disk(struct mddev *mddev, mdu_disk_info_t *info)
- 				.load_super(rdev, rdev0, mddev->minor_version);
- 			if (err < 0) {
- 				printk(KERN_WARNING
--					"md: %s has different UUID to %s\n",
--					bdevname(rdev->bdev,b),
--					bdevname(rdev0->bdev,b2));
-+					"md: %pg has different UUID to %pg\n",
-+					rdev->bdev, rdev0->bdev);
- 				export_rdev(rdev);
- 				return -EINVAL;
- 			}
-@@ -5884,7 +5857,6 @@ static int add_new_disk(struct mddev *mddev, mdu_disk_info_t *info)
- 
- static int hot_remove_disk(struct mddev *mddev, dev_t dev)
- {
--	char b[BDEVNAME_SIZE];
- 	struct md_rdev *rdev;
- 
- 	rdev = find_rdev(mddev, dev);
-@@ -5903,14 +5875,13 @@ static int hot_remove_disk(struct mddev *mddev, dev_t dev)
- 
- 	return 0;
- busy:
--	printk(KERN_WARNING "md: cannot remove active disk %s from %s ...\n",
--		bdevname(rdev->bdev,b), mdname(mddev));
-+	printk(KERN_WARNING "md: cannot remove active disk %pg from %s ...\n",
-+		rdev->bdev, mdname(mddev));
- 	return -EBUSY;
- }
- 
- static int hot_add_disk(struct mddev *mddev, dev_t dev)
- {
--	char b[BDEVNAME_SIZE];
- 	int err;
- 	struct md_rdev *rdev;
- 
-@@ -5947,8 +5918,8 @@ static int hot_add_disk(struct mddev *mddev, dev_t dev)
- 
- 	if (test_bit(Faulty, &rdev->flags)) {
- 		printk(KERN_WARNING
--			"md: can not hot-add faulty %s disk to %s!\n",
--			bdevname(rdev->bdev,b), mdname(mddev));
-+			"md: can not hot-add faulty %pg disk to %s!\n",
-+			rdev->bdev, mdname(mddev));
- 		err = -EINVAL;
- 		goto abort_export;
- 	}
-@@ -6905,10 +6876,8 @@ static void status_unused(struct seq_file *seq)
- 	seq_printf(seq, "unused devices: ");
- 
- 	list_for_each_entry(rdev, &pending_raid_disks, same_set) {
--		char b[BDEVNAME_SIZE];
- 		i++;
--		seq_printf(seq, "%s ",
--			      bdevname(rdev->bdev,b));
-+		seq_printf(seq, "%pg ", rdev->bdev);
- 	}
- 	if (!i)
- 		seq_printf(seq, "<none>");
-@@ -7102,9 +7071,7 @@ static int md_seq_show(struct seq_file *seq, void *v)
- 		sectors = 0;
- 		rcu_read_lock();
- 		rdev_for_each_rcu(rdev, mddev) {
--			char b[BDEVNAME_SIZE];
--			seq_printf(seq, " %s[%d]",
--				bdevname(rdev->bdev,b), rdev->desc_nr);
-+			seq_printf(seq, " %pg[%d]", rdev->bdev, rdev->desc_nr);
- 			if (test_bit(WriteMostly, &rdev->flags))
- 				seq_printf(seq, "(W)");
- 			if (test_bit(Faulty, &rdev->flags)) {
-diff --git a/drivers/md/multipath.c b/drivers/md/multipath.c
-index ac3ede2..ae2eec2 100644
---- a/drivers/md/multipath.c
-+++ b/drivers/md/multipath.c
-@@ -94,11 +94,9 @@ static void multipath_end_request(struct bio *bio, int error)
- 		/*
- 		 * oops, IO error:
- 		 */
--		char b[BDEVNAME_SIZE];
- 		md_error (mp_bh->mddev, rdev);
--		printk(KERN_ERR "multipath: %s: rescheduling sector %llu\n",
--		       bdevname(rdev->bdev,b),
--		       (unsigned long long)bio->bi_iter.bi_sector);
-+		printk(KERN_ERR "multipath: %pg: rescheduling sector %llu\n",
-+		       rdev->bdev, (unsigned long long)bio->bi_iter.bi_sector);
- 		multipath_reschedule_retry(mp_bh);
- 	} else
- 		multipath_end_bh_io(mp_bh, error);
-@@ -181,7 +179,6 @@ static int multipath_congested(struct mddev *mddev, int bits)
- static void multipath_error (struct mddev *mddev, struct md_rdev *rdev)
- {
- 	struct mpconf *conf = mddev->private;
--	char b[BDEVNAME_SIZE];
- 
- 	if (conf->raid_disks - mddev->degraded <= 1) {
- 		/*
-@@ -205,12 +202,11 @@ static void multipath_error (struct mddev *mddev, struct md_rdev *rdev)
- 	}
- 	set_bit(Faulty, &rdev->flags);
- 	set_bit(MD_CHANGE_DEVS, &mddev->flags);
--	printk(KERN_ALERT "multipath: IO failure on %s,"
-+	printk(KERN_ALERT "multipath: IO failure on %pg,"
- 	       " disabling IO path.\n"
- 	       "multipath: Operation continuing"
- 	       " on %d IO paths.\n",
--	       bdevname(rdev->bdev, b),
--	       conf->raid_disks - mddev->degraded);
-+	       rdev->bdev,  conf->raid_disks - mddev->degraded);
- }
- 
- static void print_multipath_conf (struct mpconf *conf)
-@@ -227,12 +223,11 @@ static void print_multipath_conf (struct mpconf *conf)
- 			 conf->raid_disks);
- 
- 	for (i = 0; i < conf->raid_disks; i++) {
--		char b[BDEVNAME_SIZE];
- 		tmp = conf->multipaths + i;
- 		if (tmp->rdev)
--			printk(" disk%d, o:%d, dev:%s\n",
--				i,!test_bit(Faulty, &tmp->rdev->flags),
--			       bdevname(tmp->rdev->bdev,b));
-+			printk(" disk%d, o:%d, dev:%pg\n",
-+			       i,!test_bit(Faulty, &tmp->rdev->flags),
-+			       tmp->rdev->bdev);
- 	}
- }
- 
-@@ -337,7 +332,6 @@ static void multipathd(struct md_thread *thread)
- 
- 	md_check_recovery(mddev);
- 	for (;;) {
--		char b[BDEVNAME_SIZE];
- 		spin_lock_irqsave(&conf->device_lock, flags);
- 		if (list_empty(head))
- 			break;
-@@ -349,15 +343,14 @@ static void multipathd(struct md_thread *thread)
- 		bio->bi_iter.bi_sector = mp_bh->master_bio->bi_iter.bi_sector;
- 
- 		if ((mp_bh->path = multipath_map (conf))<0) {
--			printk(KERN_ALERT "multipath: %s: unrecoverable IO read"
-+			printk(KERN_ALERT "multipath: %pg: unrecoverable IO read"
- 				" error for block %llu\n",
--				bdevname(bio->bi_bdev,b),
-+				bio->bi_bdev,
- 				(unsigned long long)bio->bi_iter.bi_sector);
- 			multipath_end_bh_io(mp_bh, -EIO);
- 		} else {
--			printk(KERN_ERR "multipath: %s: redirecting sector %llu"
--				" to another IO path\n",
--				bdevname(bio->bi_bdev,b),
-+			printk(KERN_ERR "multipath: %pg: redirecting sector %llu"
-+				" to another IO path\n", bio->bi_bdev,
- 				(unsigned long long)bio->bi_iter.bi_sector);
- 			*bio = *(mp_bh->master_bio);
- 			bio->bi_iter.bi_sector +=
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index 3ed9f42..e954f01 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -48,18 +48,17 @@ static void dump_zones(struct mddev *mddev)
- 	int j, k;
- 	sector_t zone_size = 0;
- 	sector_t zone_start = 0;
--	char b[BDEVNAME_SIZE];
- 	struct r0conf *conf = mddev->private;
- 	int raid_disks = conf->strip_zone[0].nb_dev;
-+
- 	printk(KERN_INFO "md: RAID0 configuration for %s - %d zone%s\n",
- 	       mdname(mddev),
- 	       conf->nr_strip_zones, conf->nr_strip_zones==1?"":"s");
- 	for (j = 0; j < conf->nr_strip_zones; j++) {
- 		printk(KERN_INFO "md: zone%d=[", j);
- 		for (k = 0; k < conf->strip_zone[j].nb_dev; k++)
--			printk(KERN_CONT "%s%s", k?"/":"",
--			bdevname(conf->devlist[j*raid_disks
--						+ k]->bdev, b));
-+			printk(KERN_CONT "%s%pg", k?"/":"",
-+			       (conf->devlist[j*raid_disks + k]->bdev));
- 		printk(KERN_CONT "]\n");
- 
- 		zone_size  = conf->strip_zone[j].zone_end - zone_start;
-@@ -80,17 +79,14 @@ static int create_strip_zones(struct mddev *mddev, struct r0conf **private_conf)
- 	struct md_rdev *smallest, *rdev1, *rdev2, *rdev, **dev;
- 	struct strip_zone *zone;
- 	int cnt;
--	char b[BDEVNAME_SIZE];
--	char b2[BDEVNAME_SIZE];
- 	struct r0conf *conf = kzalloc(sizeof(*conf), GFP_KERNEL);
- 	bool discard_supported = false;
- 
- 	if (!conf)
- 		return -ENOMEM;
- 	rdev_for_each(rdev1, mddev) {
--		pr_debug("md/raid0:%s: looking at %s\n",
--			 mdname(mddev),
--			 bdevname(rdev1->bdev, b));
-+		pr_debug("md/raid0:%s: looking at %pg\n",
-+			 mdname(mddev), rdev1->bdev);
- 		c = 0;
- 
- 		/* round size to chunk_size */
-@@ -99,12 +95,11 @@ static int create_strip_zones(struct mddev *mddev, struct r0conf **private_conf)
- 		rdev1->sectors = sectors * mddev->chunk_sectors;
- 
- 		rdev_for_each(rdev2, mddev) {
--			pr_debug("md/raid0:%s:   comparing %s(%llu)"
--				 " with %s(%llu)\n",
--				 mdname(mddev),
--				 bdevname(rdev1->bdev,b),
-+			pr_debug("md/raid0:%s:   comparing %pg(%llu)"
-+				 " with %pg(%llu)\n",
-+				 mdname(mddev), rdev1->bdev,
- 				 (unsigned long long)rdev1->sectors,
--				 bdevname(rdev2->bdev,b2),
-+				 rdev2->bdev,
- 				 (unsigned long long)rdev2->sectors);
- 			if (rdev2 == rdev1) {
- 				pr_debug("md/raid0:%s:   END\n",
-@@ -227,15 +222,13 @@ static int create_strip_zones(struct mddev *mddev, struct r0conf **private_conf)
- 		for (j=0; j<cnt; j++) {
- 			rdev = conf->devlist[j];
- 			if (rdev->sectors <= zone->dev_start) {
--				pr_debug("md/raid0:%s: checking %s ... nope\n",
--					 mdname(mddev),
--					 bdevname(rdev->bdev, b));
-+				pr_debug("md/raid0:%s: checking %pg ... nope\n",
-+					 mdname(mddev), rdev->bdev);
- 				continue;
- 			}
--			pr_debug("md/raid0:%s: checking %s ..."
-+			pr_debug("md/raid0:%s: checking %pg ..."
- 				 " contained as device %d\n",
--				 mdname(mddev),
--				 bdevname(rdev->bdev, b), c);
-+				 mdname(mddev),rdev->bdev, c);
- 			dev[c] = rdev;
- 			c++;
- 			if (!smallest || rdev->sectors < smallest->sectors) {
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index d34e238..1927ef5 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -348,13 +348,11 @@ static void raid1_end_read_request(struct bio *bio, int error)
- 		/*
- 		 * oops, read error:
- 		 */
--		char b[BDEVNAME_SIZE];
- 		printk_ratelimited(
--			KERN_ERR "md/raid1:%s: %s: "
-+			KERN_ERR "md/raid1:%s: %pg: "
- 			"rescheduling sector %llu\n",
- 			mdname(conf->mddev),
--			bdevname(conf->mirrors[mirror].rdev->bdev,
--				 b),
-+			conf->mirrors[mirror].rdev->bdev,
- 			(unsigned long long)r1_bio->sector);
- 		set_bit(R1BIO_ReadError, &r1_bio->state);
- 		reschedule_retry(r1_bio);
-@@ -1462,7 +1460,6 @@ static void status(struct seq_file *seq, struct mddev *mddev)
- 
- static void error(struct mddev *mddev, struct md_rdev *rdev)
- {
--	char b[BDEVNAME_SIZE];
- 	struct r1conf *conf = mddev->private;
- 
- 	/*
-@@ -1497,9 +1494,9 @@ static void error(struct mddev *mddev, struct md_rdev *rdev)
- 	set_bit(MD_RECOVERY_INTR, &mddev->recovery);
- 	set_bit(MD_CHANGE_DEVS, &mddev->flags);
- 	printk(KERN_ALERT
--	       "md/raid1:%s: Disk failure on %s, disabling device.\n"
-+	       "md/raid1:%s: Disk failure on %pg, disabling device.\n"
- 	       "md/raid1:%s: Operation continuing on %d devices.\n",
--	       mdname(mddev), bdevname(rdev->bdev, b),
-+	       mdname(mddev), rdev->bdev,
- 	       mdname(mddev), conf->raid_disks - mddev->degraded);
- }
- 
-@@ -1517,13 +1514,12 @@ static void print_conf(struct r1conf *conf)
- 
- 	rcu_read_lock();
- 	for (i = 0; i < conf->raid_disks; i++) {
--		char b[BDEVNAME_SIZE];
- 		struct md_rdev *rdev = rcu_dereference(conf->mirrors[i].rdev);
- 		if (rdev)
--			printk(KERN_DEBUG " disk %d, wo:%d, o:%d, dev:%s\n",
-+			printk(KERN_DEBUG " disk %d, wo:%d, o:%d, dev:%pg\n",
- 			       i, !test_bit(In_sync, &rdev->flags),
- 			       !test_bit(Faulty, &rdev->flags),
--			       bdevname(rdev->bdev,b));
-+			       rdev->bdev);
- 	}
- 	rcu_read_unlock();
- }
-@@ -1861,17 +1857,15 @@ static int fix_sync_read_error(struct r1bio *r1_bio)
- 		} while (!success && d != r1_bio->read_disk);
- 
- 		if (!success) {
--			char b[BDEVNAME_SIZE];
- 			int abort = 0;
- 			/* Cannot read from anywhere, this block is lost.
- 			 * Record a bad block on each device.  If that doesn't
- 			 * work just disable and interrupt the recovery.
- 			 * Don't fail devices as that won't really help.
- 			 */
--			printk(KERN_ALERT "md/raid1:%s: %s: unrecoverable I/O read error"
-+			printk(KERN_ALERT "md/raid1:%s: %pg: unrecoverable I/O read error"
- 			       " for block %llu\n",
--			       mdname(mddev),
--			       bdevname(bio->bi_bdev, b),
-+			       mdname(mddev), bio->bi_bdev,
- 			       (unsigned long long)r1_bio->sector);
- 			for (d = 0; d < conf->raid_disks * 2; d++) {
- 				rdev = conf->mirrors[d].rdev;
-@@ -2146,7 +2140,6 @@ static void fix_read_error(struct r1conf *conf, int read_disk,
- 		}
- 		d = start;
- 		while (d != read_disk) {
--			char b[BDEVNAME_SIZE];
- 			if (d==0)
- 				d = conf->raid_disks * 2;
- 			d--;
-@@ -2158,11 +2151,11 @@ static void fix_read_error(struct r1conf *conf, int read_disk,
- 					atomic_add(s, &rdev->corrected_errors);
- 					printk(KERN_INFO
- 					       "md/raid1:%s: read error corrected "
--					       "(%d sectors at %llu on %s)\n",
-+					       "(%d sectors at %llu on %pg)\n",
- 					       mdname(mddev), s,
- 					       (unsigned long long)(sect +
- 					           rdev->data_offset),
--					       bdevname(rdev->bdev, b));
-+					       rdev->bdev);
- 				}
- 			}
- 		}
-@@ -2306,7 +2299,6 @@ static void handle_read_error(struct r1conf *conf, struct r1bio *r1_bio)
- 	int max_sectors;
- 	struct mddev *mddev = conf->mddev;
- 	struct bio *bio;
--	char b[BDEVNAME_SIZE];
- 	struct md_rdev *rdev;
- 
- 	clear_bit(R1BIO_ReadError, &r1_bio->state);
-@@ -2328,13 +2320,12 @@ static void handle_read_error(struct r1conf *conf, struct r1bio *r1_bio)
- 	rdev_dec_pending(conf->mirrors[r1_bio->read_disk].rdev, conf->mddev);
- 
- 	bio = r1_bio->bios[r1_bio->read_disk];
--	bdevname(bio->bi_bdev, b);
- read_more:
- 	disk = read_balance(conf, r1_bio, &max_sectors);
- 	if (disk == -1) {
--		printk(KERN_ALERT "md/raid1:%s: %s: unrecoverable I/O"
-+		printk(KERN_ALERT "md/raid1:%s: %pg: unrecoverable I/O"
- 		       " read error for block %llu\n",
--		       mdname(mddev), b, (unsigned long long)r1_bio->sector);
-+		       mdname(mddev), bio->bi_bdev, (unsigned long long)r1_bio->sector);
- 		raid_end_bio_io(r1_bio);
+-	TRACE("Found valid superblock on %s\n", bdevname(sb->s_bdev, b));
++	TRACE("Found valid superblock on %pg\n", sb->s_bdev);
+ 	TRACE("Inodes are %scompressed\n", SQUASHFS_UNCOMPRESSED_INODES(flags)
+ 				? "un" : "");
+ 	TRACE("Data is %scompressed\n", SQUASHFS_UNCOMPRESSED_DATA(flags)
+diff --git a/fs/super.c b/fs/super.c
+index 2b7dc90..581e0ad 100644
+--- a/fs/super.c
++++ b/fs/super.c
+@@ -997,10 +997,8 @@ struct dentry *mount_bdev(struct file_system_type *fs_type,
+ 		blkdev_put(bdev, mode);
+ 		down_write(&s->s_umount);
  	} else {
- 		const unsigned long do_sync
-@@ -2352,10 +2343,10 @@ read_more:
- 		rdev = conf->mirrors[disk].rdev;
- 		printk_ratelimited(KERN_ERR
- 				   "md/raid1:%s: redirecting sector %llu"
--				   " to other mirror: %s\n",
-+				   " to other mirror: %pg\n",
- 				   mdname(mddev),
- 				   (unsigned long long)r1_bio->sector,
--				   bdevname(rdev->bdev, b));
-+				   rdev->bdev);
- 		bio->bi_iter.bi_sector = r1_bio->sector + rdev->data_offset;
- 		bio->bi_bdev = rdev->bdev;
- 		bio->bi_end_io = raid1_end_read_request;
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index a7196c4..f37779d 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -402,11 +402,9 @@ static void raid10_end_read_request(struct bio *bio, int error)
- 		/*
- 		 * oops, read error - keep the refcount on the rdev
- 		 */
 -		char b[BDEVNAME_SIZE];
- 		printk_ratelimited(KERN_ERR
--				   "md/raid10:%s: %s: rescheduling sector %llu\n",
--				   mdname(conf->mddev),
--				   bdevname(rdev->bdev, b),
-+				   "md/raid10:%s: %pg: rescheduling sector %llu\n",
-+				   mdname(conf->mddev), rdev->bdev,
- 				   (unsigned long long)r10_bio->sector);
- 		set_bit(R10BIO_ReadError, &r10_bio->state);
- 		reschedule_retry(r10_bio);
-@@ -1653,7 +1651,6 @@ static int enough(struct r10conf *conf, int ignore)
+-
+ 		s->s_mode = mode;
+-		strlcpy(s->s_id, bdevname(bdev, b), sizeof(s->s_id));
++		snprintf(s->s_id, sizeof(s->s_id), "%pg", bdev);
+ 		sb_set_blocksize(s, block_size(bdev));
+ 		error = fill_super(s, data, flags & MS_SILENT ? 1 : 0);
+ 		if (error) {
+diff --git a/fs/xfs/xfs_buf.c b/fs/xfs/xfs_buf.c
+index 1790b00..cd5f060 100644
+--- a/fs/xfs/xfs_buf.c
++++ b/fs/xfs/xfs_buf.c
+@@ -1633,13 +1633,9 @@ xfs_setsize_buftarg(
+ 	btp->bt_meta_sectormask = sectorsize - 1;
  
- static void error(struct mddev *mddev, struct md_rdev *rdev)
- {
--	char b[BDEVNAME_SIZE];
- 	struct r10conf *conf = mddev->private;
- 	unsigned long flags;
- 
-@@ -1683,9 +1680,9 @@ static void error(struct mddev *mddev, struct md_rdev *rdev)
- 	set_bit(MD_CHANGE_DEVS, &mddev->flags);
- 	spin_unlock_irqrestore(&conf->device_lock, flags);
- 	printk(KERN_ALERT
--	       "md/raid10:%s: Disk failure on %s, disabling device.\n"
-+	       "md/raid10:%s: Disk failure on %pg, disabling device.\n"
- 	       "md/raid10:%s: Operation continuing on %d devices.\n",
--	       mdname(mddev), bdevname(rdev->bdev, b),
-+	       mdname(mddev), rdev->bdev,
- 	       mdname(mddev), conf->geo.raid_disks - mddev->degraded);
- }
- 
-@@ -1703,13 +1700,12 @@ static void print_conf(struct r10conf *conf)
- 		conf->geo.raid_disks);
- 
- 	for (i = 0; i < conf->geo.raid_disks; i++) {
--		char b[BDEVNAME_SIZE];
- 		tmp = conf->mirrors + i;
- 		if (tmp->rdev)
--			printk(KERN_DEBUG " disk %d, wo:%d, o:%d, dev:%s\n",
-+			printk(KERN_DEBUG " disk %d, wo:%d, o:%d, dev:%pg\n",
- 				i, !test_bit(In_sync, &tmp->rdev->flags),
- 			        !test_bit(Faulty, &tmp->rdev->flags),
--				bdevname(tmp->rdev->bdev,b));
-+				tmp->rdev->bdev);
+ 	if (set_blocksize(btp->bt_bdev, sectorsize)) {
+-		char name[BDEVNAME_SIZE];
+-
+-		bdevname(btp->bt_bdev, name);
+-
+ 		xfs_warn(btp->bt_mount,
+-			"Cannot set_blocksize to %u on device %s",
+-			sectorsize, name);
++			"Cannot set_blocksize to %u on device %pg",
++			sectorsize, btp->bt_bdev);
+ 		return -EINVAL;
  	}
- }
- 
-@@ -2371,17 +2367,14 @@ static void fix_read_error(struct r10conf *conf, struct mddev *mddev, struct r10
- 	check_decay_read_errors(mddev, rdev);
- 	atomic_inc(&rdev->read_errors);
- 	if (atomic_read(&rdev->read_errors) > max_read_errors) {
--		char b[BDEVNAME_SIZE];
--		bdevname(rdev->bdev, b);
--
- 		printk(KERN_NOTICE
--		       "md/raid10:%s: %s: Raid device exceeded "
-+		       "md/raid10:%s: %pg: Raid device exceeded "
- 		       "read_error threshold [cur %d:max %d]\n",
--		       mdname(mddev), b,
-+		       mdname(mddev), rdev->bdev,
- 		       atomic_read(&rdev->read_errors), max_read_errors);
- 		printk(KERN_NOTICE
--		       "md/raid10:%s: %s: Failing raid device\n",
--		       mdname(mddev), b);
-+		       "md/raid10:%s: %pg: Failing raid device\n",
-+		       mdname(mddev), rdev->bdev);
- 		md_error(mddev, conf->mirrors[d].rdev);
- 		r10_bio->devs[r10_bio->read_slot].bio = IO_BLOCKED;
- 		return;
-@@ -2450,8 +2443,6 @@ static void fix_read_error(struct r10conf *conf, struct mddev *mddev, struct r10
- 		/* write it back and re-read */
- 		rcu_read_lock();
- 		while (sl != r10_bio->read_slot) {
--			char b[BDEVNAME_SIZE];
--
- 			if (sl==0)
- 				sl = conf->copies;
- 			sl--;
-@@ -2473,25 +2464,22 @@ static void fix_read_error(struct r10conf *conf, struct mddev *mddev, struct r10
- 				printk(KERN_NOTICE
- 				       "md/raid10:%s: read correction "
- 				       "write failed"
--				       " (%d sectors at %llu on %s)\n",
-+				       " (%d sectors at %llu on %pg)\n",
- 				       mdname(mddev), s,
- 				       (unsigned long long)(
- 					       sect +
- 					       choose_data_offset(r10_bio,
- 								  rdev)),
--				       bdevname(rdev->bdev, b));
--				printk(KERN_NOTICE "md/raid10:%s: %s: failing "
-+				       rdev->bdev);
-+				printk(KERN_NOTICE "md/raid10:%s: %pg: failing "
- 				       "drive\n",
--				       mdname(mddev),
--				       bdevname(rdev->bdev, b));
-+				       mdname(mddev), rdev->bdev);
- 			}
- 			rdev_dec_pending(rdev, mddev);
- 			rcu_read_lock();
- 		}
- 		sl = start;
- 		while (sl != r10_bio->read_slot) {
--			char b[BDEVNAME_SIZE];
--
- 			if (sl==0)
- 				sl = conf->copies;
- 			sl--;
-@@ -2513,26 +2501,25 @@ static void fix_read_error(struct r10conf *conf, struct mddev *mddev, struct r10
- 				printk(KERN_NOTICE
- 				       "md/raid10:%s: unable to read back "
- 				       "corrected sectors"
--				       " (%d sectors at %llu on %s)\n",
-+				       " (%d sectors at %llu on %pg)\n",
- 				       mdname(mddev), s,
- 				       (unsigned long long)(
- 					       sect +
- 					       choose_data_offset(r10_bio, rdev)),
--				       bdevname(rdev->bdev, b));
--				printk(KERN_NOTICE "md/raid10:%s: %s: failing "
-+				       rdev->bdev);
-+				printk(KERN_NOTICE "md/raid10:%s: %pg: failing "
- 				       "drive\n",
--				       mdname(mddev),
--				       bdevname(rdev->bdev, b));
-+				       mdname(mddev), rdev->bdev);
- 				break;
- 			case 1:
- 				printk(KERN_INFO
- 				       "md/raid10:%s: read error corrected"
--				       " (%d sectors at %llu on %s)\n",
-+				       " (%d sectors at %llu on %pg)\n",
- 				       mdname(mddev), s,
- 				       (unsigned long long)(
- 					       sect +
- 					       choose_data_offset(r10_bio, rdev)),
--				       bdevname(rdev->bdev, b));
-+				       rdev->bdev);
- 				atomic_add(s, &rdev->corrected_errors);
- 			}
- 
-@@ -2610,7 +2597,6 @@ static void handle_read_error(struct mddev *mddev, struct r10bio *r10_bio)
- 	struct bio *bio;
- 	struct r10conf *conf = mddev->private;
- 	struct md_rdev *rdev = r10_bio->devs[slot].rdev;
--	char b[BDEVNAME_SIZE];
- 	unsigned long do_sync;
- 	int max_sectors;
- 
-@@ -2623,7 +2609,6 @@ static void handle_read_error(struct mddev *mddev, struct r10bio *r10_bio)
- 	 * frozen.
- 	 */
- 	bio = r10_bio->devs[slot].bio;
--	bdevname(bio->bi_bdev, b);
- 	bio_put(bio);
- 	r10_bio->devs[slot].bio = NULL;
- 
-@@ -2639,9 +2624,9 @@ static void handle_read_error(struct mddev *mddev, struct r10bio *r10_bio)
- read_more:
- 	rdev = read_balance(conf, r10_bio, &max_sectors);
- 	if (rdev == NULL) {
--		printk(KERN_ALERT "md/raid10:%s: %s: unrecoverable I/O"
-+		printk(KERN_ALERT "md/raid10:%s: %pg: unrecoverable I/O"
- 		       " read error for block %llu\n",
--		       mdname(mddev), b,
-+		       mdname(mddev), bio->bi_bdev,
- 		       (unsigned long long)r10_bio->sector);
- 		raid_end_bio_io(r10_bio);
- 		return;
-@@ -2651,10 +2636,9 @@ read_more:
- 	slot = r10_bio->read_slot;
- 	printk_ratelimited(
- 		KERN_ERR
--		"md/raid10:%s: %s: redirecting "
-+		"md/raid10:%s: %pg: redirecting "
- 		"sector %llu to another mirror\n",
--		mdname(mddev),
--		bdevname(rdev->bdev, b),
-+		mdname(mddev), rdev->bdev,
- 		(unsigned long long)r10_bio->sector);
- 	bio = bio_clone_mddev(r10_bio->master_bio,
- 			      GFP_NOIO, mddev);
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index cd2f96b..6a5f777 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -1971,7 +1971,6 @@ static void raid5_end_read_request(struct bio * bi, int error)
- 	struct r5conf *conf = sh->raid_conf;
- 	int disks = sh->disks, i;
- 	int uptodate = test_bit(BIO_UPTODATE, &bi->bi_flags);
--	char b[BDEVNAME_SIZE];
- 	struct md_rdev *rdev = NULL;
- 	sector_t s;
- 
-@@ -2010,10 +2009,10 @@ static void raid5_end_read_request(struct bio * bi, int error)
- 			printk_ratelimited(
- 				KERN_INFO
- 				"md/raid:%s: read error corrected"
--				" (%lu sectors at %llu on %s)\n",
-+				" (%lu sectors at %llu on %pg)\n",
- 				mdname(conf->mddev), STRIPE_SECTORS,
- 				(unsigned long long)s,
--				bdevname(rdev->bdev, b));
-+				rdev->bdev);
- 			atomic_add(STRIPE_SECTORS, &rdev->corrected_errors);
- 			clear_bit(R5_ReadError, &sh->dev[i].flags);
- 			clear_bit(R5_ReWrite, &sh->dev[i].flags);
-@@ -2023,7 +2022,6 @@ static void raid5_end_read_request(struct bio * bi, int error)
- 		if (atomic_read(&rdev->read_errors))
- 			atomic_set(&rdev->read_errors, 0);
- 	} else {
--		const char *bdn = bdevname(rdev->bdev, b);
- 		int retry = 0;
- 		int set_bad = 0;
- 
-@@ -2033,34 +2031,34 @@ static void raid5_end_read_request(struct bio * bi, int error)
- 			printk_ratelimited(
- 				KERN_WARNING
- 				"md/raid:%s: read error on replacement device "
--				"(sector %llu on %s).\n",
-+				"(sector %llu on %pg).\n",
- 				mdname(conf->mddev),
- 				(unsigned long long)s,
--				bdn);
-+				rdev->bdev);
- 		else if (conf->mddev->degraded >= conf->max_degraded) {
- 			set_bad = 1;
- 			printk_ratelimited(
- 				KERN_WARNING
- 				"md/raid:%s: read error not correctable "
--				"(sector %llu on %s).\n",
-+				"(sector %llu on %pg).\n",
- 				mdname(conf->mddev),
- 				(unsigned long long)s,
--				bdn);
-+				rdev->bdev);
- 		} else if (test_bit(R5_ReWrite, &sh->dev[i].flags)) {
- 			/* Oh, no!!! */
- 			set_bad = 1;
- 			printk_ratelimited(
- 				KERN_WARNING
- 				"md/raid:%s: read error NOT corrected!! "
--				"(sector %llu on %s).\n",
-+				"(sector %llu on %pg).\n",
- 				mdname(conf->mddev),
- 				(unsigned long long)s,
--				bdn);
-+				rdev->bdev);
- 		} else if (atomic_read(&rdev->read_errors)
- 			 > conf->max_nr_stripes)
- 			printk(KERN_WARNING
--			       "md/raid:%s: Too many read errors, failing device %s.\n",
--			       mdname(conf->mddev), bdn);
-+			       "md/raid:%s: Too many read errors, failing device %pg.\n",
-+			       mdname(conf->mddev), rdev->bdev);
- 		else
- 			retry = 1;
- 		if (set_bad && test_bit(In_sync, &rdev->flags)
-@@ -2182,7 +2180,6 @@ static void raid5_build_block(struct stripe_head *sh, int i, int previous)
- 
- static void error(struct mddev *mddev, struct md_rdev *rdev)
- {
--	char b[BDEVNAME_SIZE];
- 	struct r5conf *conf = mddev->private;
- 	unsigned long flags;
- 	pr_debug("raid456: error called\n");
-@@ -2197,10 +2194,10 @@ static void error(struct mddev *mddev, struct md_rdev *rdev)
- 	set_bit(Faulty, &rdev->flags);
- 	set_bit(MD_CHANGE_DEVS, &mddev->flags);
- 	printk(KERN_ALERT
--	       "md/raid:%s: Disk failure on %s, disabling device.\n"
-+	       "md/raid:%s: Disk failure on %pg, disabling device.\n"
- 	       "md/raid:%s: Operation continuing on %d devices.\n",
- 	       mdname(mddev),
--	       bdevname(rdev->bdev, b),
-+	       rdev->bdev,
- 	       mdname(mddev),
- 	       conf->raid_disks - mddev->degraded);
- }
-@@ -5930,10 +5927,9 @@ static struct r5conf *setup_conf(struct mddev *mddev)
- 		}
- 
- 		if (test_bit(In_sync, &rdev->flags)) {
--			char b[BDEVNAME_SIZE];
--			printk(KERN_INFO "md/raid:%s: device %s operational as raid"
-+			printk(KERN_INFO "md/raid:%s: device %pg operational as raid"
- 			       " disk %d\n",
--			       mdname(mddev), bdevname(rdev->bdev, b), raid_disk);
-+			       mdname(mddev), rdev->bdev, raid_disk);
- 		} else if (rdev->saved_raid_disk != raid_disk)
- 			/* Cannot rely on bitmap to complete recovery */
- 			conf->fullsync = 1;
-@@ -6387,12 +6383,11 @@ static void print_raid5_conf (struct r5conf *conf)
- 	       conf->raid_disks - conf->mddev->degraded);
- 
- 	for (i = 0; i < conf->raid_disks; i++) {
--		char b[BDEVNAME_SIZE];
- 		tmp = conf->disks + i;
- 		if (tmp->rdev)
--			printk(KERN_DEBUG " disk %d, o:%d, dev:%s\n",
-+			printk(KERN_DEBUG " disk %d, o:%d, dev:%pg\n",
- 			       i, !test_bit(Faulty, &tmp->rdev->flags),
--			       bdevname(tmp->rdev->bdev, b));
-+			       tmp->rdev->bdev);
- 	}
- }
  
 -- 
 1.7.1
