@@ -1,117 +1,111 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: ALUA - rescan device capacity on zero sized block
- devices
-Date: Mon, 13 Apr 2015 19:44:42 +0200
-Message-ID: <552C008A.9070201@sandisk.com>
-References: <1887682221.152035.1428939145196.JavaMail.zimbra@kangaroot.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 0/3] dm-crypt: Adds support for wiping key when doing
+ suspend/hibernation
+Date: Tue, 14 Apr 2015 08:41:48 +0200
+Message-ID: <20150414064148.GA20597@amd>
+References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
+ <20150406130045.GA18583@redhat.com>
+ <201504061529.57299@pali>
+ <20150409131208.GA9504@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1887682221.152035.1428939145196.JavaMail.zimbra@kangaroot.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Thomas Wouters <thomas@kangaroot.net>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-pm-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150409131208.GA9504@redhat.com>
+Sender: linux-pm-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Pali =?iso-8859-1?Q?Roh=E1r?= <pali.rohar@gmail.com>, Alasdair Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 04/13/15 17:32, Thomas Wouters wrote:
-> We're performing some tests with open-iscsi and multipath on two 3par
-> servers and their peer persistence feature.
-> 3par is a commercial storage solution that uses ALUA to allow failover.
-> We have two connections from each 3par server to a linux server.
->
-> Every 3par server has two network controllers, so on our linux server we
-> initiate 4 iscsi connections.
-> Multipath detects that two of these connections are active paths (both
-> to the same 3par device, that is active at that point) and two are ghost
-> paths, to the passive 3par device.
->
-> At this moment we have four block devices, the active paths show the
-> actual device size and the standby paths show the devices as zero sized:
->
-> # multipath -ll
-> 360002ac000000000000000420001510c dm-3 3PARdata,VV
-> size=100G features='1 queue_if_no_path' hwhandler='1 alua' wp=rw
-> |-+- policy='round-robin 0' prio=130 status=active
-> | |- 48:0:0:123 sdc 8:32 active ready running
-> | `- 50:0:0:123 sdb 8:16 active ready running
-> `-+- policy='round-robin 0' prio=1 status=enabled
->    |- 49:0:0:123 sdd 8:48 active ghost running
->    `- 51:0:0:123 sde 8:64 active ghost running
->
-> # cat /sys/block/sdb/size
-> 209715200
-> # cat /sys/block/sdc/size
-> 209715200
-> # cat /sys/block/sdd/size
-> 0
-> # cat /sys/block/sde/size
-> 0
->
-> As soon as we perform a switchover on the 3par systems, multipath
-> detects the priority changes and switches paths but the new active paths
-> fail.
-> We believe this is because 3par doesn't allow us to read the capacity of
-> the disk on a standby path - and we have proof of this in the logs:
->
-> Apr 13 15:05:12 deb-3par-test kernel: [   40.079736] sd 5:0:0:0: [sdc]
-> READ CAPACITY failed
->
-> Unfortunately, once we perform the switchover on 3par, the capacity of
-> those old ghost paths, now active paths, is not re-read.  The multipath
-> device is therefore reduced to a size of 0 and the filesystem becomes
-> unavailable.
->
-> If we only login on the two active paths without starting multipath,
-> perform a switchover, then login on the two new active paths and start
-> multipath, we have four block devices with a non-zero size and we can
-> perform switchovers at will without any issues.
->
-> We've found some older discussions describing these issues on the scsi
-> target-devel and dm-devel mailinglists:
-> - http://permalink.gmane.org/gmane.linux.scsi.target.devel/6531
-> - https://www.redhat.com/archives/dm-devel/2014-July/msg00156.html
->
-> As far as we can conclude after reading these messages, it is correct
-> behavior for disallowing READ CAPACITY on ghost paths.  However, once
-> the path becomes active, we do need a reread of the capacity in order
-> for the path to be functional...
->
-> We've created a workaround for our issue but we're not sure we're going
-> in the right direction.
->
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index f876258..ff32681 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -1235,6 +1235,11 @@ check_path (struct vectors * vecs, struct path * pp)
->
-> pp->chkrstate = newstate;
-> if (newstate != pp->state) {
-> +
-> + if (newstate == PATH_UP && pp->size != pp->mpp->size ) {
-> + sysfs_attr_set_value(pp->udev, "device/rescan", "1\n",2);
-> + }
-> +
-> int oldstate = pp->state;
-> pp->state = newstate;
+On Thu 2015-04-09 09:12:08, Mike Snitzer wrote:
+> On Mon, Apr 06 2015 at  9:29am -0400,
+> Pali Roh=E1r <pali.rohar@gmail.com> wrote:
+>=20
+> > On Monday 06 April 2015 15:00:46 Mike Snitzer wrote:
+> > > On Sun, Apr 05 2015 at  1:20pm -0400,
+> > >=20
+> > > Pali Roh=E1r <pali.rohar@gmail.com> wrote:
+> > > > This patch series increase security of suspend and hibernate
+> > > > actions. It allows user to safely wipe crypto keys before
+> > > > suspend and hibernate actions starts without race
+> > > > conditions on userspace process with heavy I/O.
+> > > >=20
+> > > > To automatically wipe cryto key for <device> before
+> > > > hibernate action call: $ dmsetup message <device> 0 key
+> > > > wipe_on_hibernation 1
+> > > >=20
+> > > > To automatically wipe cryto key for <device> before suspend
+> > > > action call: $ dmsetup message <device> 0 key
+> > > > wipe_on_suspend 1
+> > > >=20
+> > > > (Value 0 after wipe_* string reverts original behaviour - to
+> > > > not wipe key)
+> > >=20
+> > > Can you elaborate on the attack vector your changes are meant
+> > > to protect against?  The user already authorized access, why
+> > > is it inherently dangerous to _not_ wipe the associated key
+> > > across these events?
+> >=20
+> > Hi,
+> >=20
+> > yes, I will try to explain current problems with cryptsetup=20
+> > luksSuspend command and hibernation.
+> >=20
+> > First, sometimes it is needed to put machine into other hands.=20
+> > You can still watch other person what is doing with machine, but=20
+> > once if you let machine unlocked (e.g opened luks disk), she/he=20
+> > can access encrypted data.
+> >=20
+> > If you turn off machine, it could be safe, because luks disk=20
+> > devices are locked. But if you enter machine into suspend or=20
+> > hibernate state luks devices are still open. And my patches try=20
+> > to achieve similar security as when machine is off (=3D no crypto=20
+> > keys in RAM or on swap).
+> >=20
+> > When doing hibernate on unencrypted swap it is to prevent leaking=20
+> > crypto keys to hibernate image (which is stored in swap).
+> >=20
+> > When doing suspend action it is again to prevent leaking crypto=20
+> > keys. E.g when you suspend laptop and put it off (somebody can=20
+> > remove RAMs and do some cold boot attack).
+> >=20
+> > The most common situation is:
+> > You have mounted partition from dm-crypt device (e.g. /home/),=20
+> > some userspace processes access it (e.g opened firefox which=20
+> > still reads/writes to cache ~/.firefox/) and you want to drop=20
+> > crypto keys from kernel for some time.
+> >=20
+> > For that operation there is command cryptsetup luksSuspend, which=20
+> > suspend dm device and then tell kernel to wipe crypto keys. All=20
+> > I/O operations are then stopped and userspace processes which=20
+> > want to do some those I/O operations are stopped too (until you=20
+> > call cryptsetup luksResume and enter correct key).
+> >=20
+> > Now if you want to suspend/hiberate your machine (when some of dm=20
+> > devices are suspeneded and some processes are stopped due to=20
+> > pending I/O) it is not possible. Kernel freeze_processes function=20
+> > will fail because userspace processes are still stopped inside=20
+> > some I/O syscall (read/write, etc,...).
+> >=20
+> > My patches fixes this problem and do those operations (suspend dm=20
+> > device, wipe crypto keys, enter suspend/hiberate) in correct=20
+> > order and without race condition.
+> >=20
+> > dm device is suspended *after* userspace processes are freezed=20
+> > and after that are crypto keys wiped. And then computer/laptop=20
+> > enters into suspend/hibernate state.
+>=20
+> Wouldn't it be better to fix freeze_processes() to be tolerant of
+> processes that are hung as a side-effect of their backing storage bei=
+ng
+> suspended?  A hibernate shouldn't fail simply because a user chose to
+> suspend a DM device.
 
-Hello Thomas,
-
-The above patch will trigger a rescan after every failover and failback. 
-I'm afraid that will slow down failover and failback, especially if the 
-number of LUNs is large. I would appreciate it if the capacity would be 
-reexamined only if it is not yet known.
-
-Thanks,
-
-Bart.
+That would be nice, I agree. But that's non-trivial ammount of work
+and might be (close to) impossible.
+									Pavel
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses=
+/blog.html
