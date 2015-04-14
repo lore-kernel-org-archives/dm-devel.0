@@ -1,124 +1,120 @@
 From: Jan Kara <jack@suse.cz>
-Subject: Re: [PATCH 2/7] lib/vsprintf: add %*pg format specifier
-Date: Tue, 14 Apr 2015 11:15:09 +0200
-Message-ID: <20150414091509.GE23327@quack.suse.cz>
+Subject: Re: [PATCH 3/7] block: use block_device name vsprintf helper
+Date: Tue, 14 Apr 2015 11:16:24 +0200
+Message-ID: <20150414091624.GF23327@quack.suse.cz>
 References: <1428928300-9132-1-git-send-email-dmonakhov@openvz.org>
- <1428928300-9132-3-git-send-email-dmonakhov@openvz.org>
+ <1428928300-9132-4-git-send-email-dmonakhov@openvz.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1428928300-9132-3-git-send-email-dmonakhov@openvz.org>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <1428928300-9132-4-git-send-email-dmonakhov@openvz.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: Dmitry Monakhov <dmonakhov@openvz.org>
 Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, viro@zeniv.linux.org.uk, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon 13-04-15 16:31:35, Dmitry Monakhov wrote:
-> This allow to directly print block_device name.
-> Currently one should use bdevname() with temporal char buffer.
-> This is very ineffective because bloat stack usage for deep IO call-traces
-> 
-> Example:
-> 	%pg  ->    sda, sda1 or loop0p1
-> 
-> Signed-off-by: Dmitry Monakhov <dmonakhov@openvz.org>
-  I like this. Seeing how many places use bdevname() it seems as a
-worthwhile simplification. %pg is somewhat arbitrary but I don't know about
-a better free letter either... You can add:
-  Reviewed-by: Jan Kara <jack@suse.cz>
+On Mon 13-04-15 16:31:36, Dmitry Monakhov wrote:
+  Looks good. You can add:
+Reviewed-by: Jan Kara <jack@suse.cz>
 
 								Honza
 
-> ---
->  Documentation/printk-formats.txt |    6 ++++++
->  lib/vsprintf.c                   |   28 ++++++++++++++++++++++++++++
->  2 files changed, 34 insertions(+), 0 deletions(-)
 > 
-> diff --git a/Documentation/printk-formats.txt b/Documentation/printk-formats.txt
-> index 5a615c1..de2f18f 100644
-> --- a/Documentation/printk-formats.txt
-> +++ b/Documentation/printk-formats.txt
-> @@ -216,6 +216,12 @@ dentry names:
->  	equivalent of %s dentry->d_name.name we used to use, %pd<n> prints
->  	n last components.  %pD does the same thing for struct file.
+> Signed-off-by: Dmitry Monakhov <dmonakhov@openvz.org>
+> ---
+>  block/blk-core.c     |   30 ++++++++++++------------------
+>  block/blk-settings.c |    9 ++-------
+>  2 files changed, 14 insertions(+), 25 deletions(-)
+> 
+> diff --git a/block/blk-core.c b/block/blk-core.c
+> index 794c3e7..88a4c94 100644
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -1694,12 +1694,9 @@ static inline void blk_partition_remap(struct bio *bio)
 >  
-> +block_device names:
-> +
-> +	%pg	sda, sda1 or loop0p1
-> +
-> +	For printing name of block_device pointers.
-> +
->  struct va_format:
+>  static void handle_bad_sector(struct bio *bio)
+>  {
+> -	char b[BDEVNAME_SIZE];
+> -
+>  	printk(KERN_INFO "attempt to access beyond end of device\n");
+> -	printk(KERN_INFO "%s: rw=%ld, want=%Lu, limit=%Lu\n",
+> -			bdevname(bio->bi_bdev, b),
+> -			bio->bi_rw,
+> +	printk(KERN_INFO "%pg: rw=%ld, want=%Lu, limit=%Lu\n",
+> +	       		bio->bi_bdev,bio->bi_rw,
+>  			(unsigned long long)bio_end_sector(bio),
+>  			(long long)(i_size_read(bio->bi_bdev->bd_inode) >> 9));
 >  
->  	%pV
-> diff --git a/lib/vsprintf.c b/lib/vsprintf.c
-> index b235c96..57f6fa9 100644
-> --- a/lib/vsprintf.c
-> +++ b/lib/vsprintf.c
-> @@ -29,6 +29,9 @@
->  #include <linux/dcache.h>
->  #include <linux/cred.h>
->  #include <net/addrconf.h>
-> +#ifdef CONFIG_BLOCK
-> +#include <linux/blkdev.h>
-> +#endif
+> @@ -1776,7 +1773,6 @@ generic_make_request_checks(struct bio *bio)
+>  	struct request_queue *q;
+>  	int nr_sectors = bio_sectors(bio);
+>  	int err = -EIO;
+> -	char b[BDEVNAME_SIZE];
+>  	struct hd_struct *part;
 >  
->  #include <asm/page.h>		/* for PAGE_SIZE */
->  #include <asm/sections.h>	/* for dereference_function_descriptor() */
-> @@ -610,6 +613,23 @@ char *dentry_name(char *buf, char *end, const struct dentry *d, struct printf_sp
->  	return buf;
->  }
->  
-> +#ifdef CONFIG_BLOCK
-> +static noinline_for_stack
-> +char *bdev_name(char *buf, char *end, struct block_device *bdev,
-> +		struct printf_spec spec, const char *fmt)
-> +{
-> +	struct gendisk *hd = bdev->bd_disk;
-> +	
-> +	buf = string(buf, end, hd->disk_name, spec);
-> +	if (bdev->bd_part->partno) {
-> +		if (isdigit(hd->disk_name[strlen(hd->disk_name)-1]) && buf < end)
-> +			*buf++ = 'p';
-> +		buf = number(buf, end, bdev->bd_part->partno, spec);
-> +	}
-> +	return buf;
-> +}
-> +#endif
-> +
->  static noinline_for_stack
->  char *symbol_string(char *buf, char *end, void *ptr,
->  		    struct printf_spec spec, const char *fmt)
-> @@ -1404,6 +1424,8 @@ int kptr_restrict __read_mostly;
->   *           (default assumed to be phys_addr_t, passed by reference)
->   * - 'd[234]' For a dentry name (optionally 2-4 last components)
->   * - 'D[234]' Same as 'd' but for a struct file
-> + * - 'g' For block_device name (gendisk + partition number)
-> +
->   *
->   * Note: The difference between 'S' and 'F' is that on ia64 and ppc64
->   * function pointers are really function descriptors, which contain a
-> @@ -1552,6 +1574,11 @@ char *pointer(const char *fmt, char *buf, char *end, void *ptr,
->  		return dentry_name(buf, end,
->  				   ((const struct file *)ptr)->f_path.dentry,
->  				   spec, fmt);
-> +#ifdef CONFIG_BLOCK
-> +	case 'g':
-> +		return bdev_name(buf, end, ptr, spec, fmt);
-> +#endif
-> +
+>  	might_sleep();
+> @@ -1788,16 +1784,16 @@ generic_make_request_checks(struct bio *bio)
+>  	if (unlikely(!q)) {
+>  		printk(KERN_ERR
+>  		       "generic_make_request: Trying to access "
+> -			"nonexistent block-device %s (%Lu)\n",
+> -			bdevname(bio->bi_bdev, b),
+> -			(long long) bio->bi_iter.bi_sector);
+> +		       "nonexistent block-device %pg (%Lu)\n",
+> +		       bio->bi_bdev,
+> +		       (long long) bio->bi_iter.bi_sector);
+>  		goto end_io;
 >  	}
->  	spec.flags |= SMALL;
->  	if (spec.field_width == -1) {
-> @@ -1779,6 +1806,7 @@ qualifier:
->   * %pF output the name of a function pointer with its offset
->   * %pf output the name of a function pointer without its offset
->   * %pB output the name of a backtrace symbol with its offset
-> + * %pg output the name of a block_device
->   * %pR output the address range in a struct resource with decoded flags
->   * %pr output the address range in a struct resource with raw flags
->   * %pb output the bitmap with field width as the number of bits
+>  
+>  	if (likely(bio_is_rw(bio) &&
+>  		   nr_sectors > queue_max_hw_sectors(q))) {
+> -		printk(KERN_ERR "bio too big device %s (%u > %u)\n",
+> -		       bdevname(bio->bi_bdev, b),
+> +		printk(KERN_ERR "bio too big device %pg (%u > %u)\n",
+> +		       bio->bi_bdev,
+>  		       bio_sectors(bio),
+>  		       queue_max_hw_sectors(q));
+>  		goto end_io;
+> @@ -1970,13 +1966,11 @@ void submit_bio(int rw, struct bio *bio)
+>  		}
+>  
+>  		if (unlikely(block_dump)) {
+> -			char b[BDEVNAME_SIZE];
+> -			printk(KERN_DEBUG "%s(%d): %s block %Lu on %s (%u sectors)\n",
+> -			current->comm, task_pid_nr(current),
+> -				(rw & WRITE) ? "WRITE" : "READ",
+> -				(unsigned long long)bio->bi_iter.bi_sector,
+> -				bdevname(bio->bi_bdev, b),
+> -				count);
+> +			printk(KERN_DEBUG "%s(%d): %s block %Lu on %pg (%u sectors)\n",
+> +			       current->comm, task_pid_nr(current),
+> +			       (rw & WRITE) ? "WRITE" : "READ",
+> +			       (unsigned long long)bio->bi_iter.bi_sector,
+> +			       bio->bi_bdev, count);
+>  		}
+>  	}
+>  
+> diff --git a/block/blk-settings.c b/block/blk-settings.c
+> index 12600bf..6f9157c 100644
+> --- a/block/blk-settings.c
+> +++ b/block/blk-settings.c
+> @@ -689,13 +689,8 @@ void disk_stack_limits(struct gendisk *disk, struct block_device *bdev,
+>  	struct request_queue *t = disk->queue;
+>  
+>  	if (bdev_stack_limits(&t->limits, bdev, offset >> 9) < 0) {
+> -		char top[BDEVNAME_SIZE], bottom[BDEVNAME_SIZE];
+> -
+> -		disk_name(disk, 0, top);
+> -		bdevname(bdev, bottom);
+> -
+> -		printk(KERN_NOTICE "%s: Warning: Device %s is misaligned\n",
+> -		       top, bottom);
+> +		printk(KERN_NOTICE "%s: Warning: Device %pg is misaligned\n",
+> +		       disk->disk_name, bdev);
+>  	}
+>  }
+>  EXPORT_SYMBOL(disk_stack_limits);
 > -- 
 > 1.7.1
 > 
