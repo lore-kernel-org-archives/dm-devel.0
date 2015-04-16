@@ -1,8 +1,8 @@
 From: Lidong Zhong <lzhong@suse.com>
-Subject: [PATCH 1/3] dm-raid1: fix the parameter passed into the
-	kernel
-Date: Thu, 16 Apr 2015 11:43:22 +0800
-Message-ID: <1429155804-5022-2-git-send-email-lzhong@suse.com>
+Subject: [PATCH 2/3] dm-raid1: remove the error flags in the
+	mirror set when it's in sync
+Date: Thu, 16 Apr 2015 11:43:23 +0800
+Message-ID: <1429155804-5022-3-git-send-email-lzhong@suse.com>
 References: <1429155804-5022-1-git-send-email-lzhong@suse.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,56 +23,44 @@ To: dm-devel@redhat.com
 Cc: heinzm@redhat.com
 List-Id: dm-devel.ids
 
-If the userspace does not pass the new feature parameter, it will lead
-to a kernel crash
+Because it's in sync now, we can remove all kinds of error flags during
+the recovery. Otherwise, it will affect the valid mirror legs and the write
+bio.
 
 Signed-off-by: Lidong Zhong <lzhong@suse.com>
 ---
- drivers/md/dm-raid1.c | 24 ++++++++++++------------
- 1 file changed, 12 insertions(+), 12 deletions(-)
+ drivers/md/dm-raid1.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
 diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index 00b1fbd..8e32c4e 100644
+index 8e32c4e..95ec822 100644
 --- a/drivers/md/dm-raid1.c
 +++ b/drivers/md/dm-raid1.c
-@@ -990,6 +990,7 @@ static int parse_features(struct mirror_set *ms, unsigned argc, char **argv,
- 	unsigned num_features;
- 	struct dm_target *ti = ms->ti;
- 	char dummy;
-+	int i;
+@@ -372,6 +372,17 @@ static int recover(struct mirror_set *ms, struct dm_region *reg)
+ 	return r;
+ }
  
- 	*args_used = 0;
- 
-@@ -1010,19 +1011,18 @@ static int parse_features(struct mirror_set *ms, unsigned argc, char **argv,
- 		return -EINVAL;
++static void reset_ms_flags(struct mirror_set *ms)
++{
++	unsigned int m;
++
++	ms->leg_failure = 0;
++	for (m = 0; m < ms->nr_mirrors; m++) {
++		atomic_set(&(ms->mirror[m].error_count), 0);
++		ms->mirror[m].error_type = 0;
++	}
++}
++
+ static void do_recovery(struct mirror_set *ms)
+ {
+ 	struct dm_region *reg;
+@@ -400,6 +411,7 @@ static void do_recovery(struct mirror_set *ms)
+ 		/* the sync is complete */
+ 		dm_table_event(ms->ti->table);
+ 		ms->in_sync = 1;
++		reset_ms_flags(ms);
  	}
- 
--	if (!strcmp("handle_errors", argv[0]))
--		ms->features |= DM_RAID1_HANDLE_ERRORS;
--	else {
--		ti->error = "Unrecognised feature requested";
--		return -EINVAL;
--	}
--
--	argc--;
--	argv++;
--	(*args_used)++;
-+	for (i = 0; i < num_features; i++) {
-+		if (!strcmp("handle_errors", argv[0]))
-+			ms->features |= DM_RAID1_HANDLE_ERRORS;
-+		else if (!strcmp("keep_log", argv[0])) 
-+			ms->features |= DM_RAID1_KEEP_LOG;
-+		else {
-+			ti->error = "Unrecognised feature requested";
-+			return -EINVAL;
-+		}
- 
--	if (!strcmp("keep_log", argv[0])) {
--		ms->features |= DM_RAID1_KEEP_LOG;
-+		argc--;
-+		argv++;
- 		(*args_used)++;
- 	}
+ }
  
 -- 
 1.8.1.4
