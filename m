@@ -1,15 +1,18 @@
-From: Lidong Zhong <lzhong@suse.com>
-Subject: [PATCH 3/3] dm-raid1: change default mirror when it's
-	not in sync
-Date: Thu, 16 Apr 2015 11:43:24 +0800
-Message-ID: <1429155804-5022-4-git-send-email-lzhong@suse.com>
-References: <1429155804-5022-1-git-send-email-lzhong@suse.com>
+From: Alex Elsayed <eternaleye@gmail.com>
+Subject: Re: [PATCH 0/3] dm-crypt: Adds support for wiping key
+	when doing suspend/hibernation
+Date: Thu, 16 Apr 2015 02:23:27 -0700
+Message-ID: <mgnv2g$if5$2@ger.gmane.org>
+References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
+	<20150406130045.GA18583@redhat.com> <201504061529.57299@pali>
+	<20150409131208.GA9504@redhat.com>
+	<20150409132836.GD12339@atrey.karlin.mff.cuni.cz>
+	<20150409140842.GA9779@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1429155804-5022-1-git-send-email-lzhong@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,29 +23,100 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: heinzm@redhat.com
+Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: dm-devel.ids
 
-Change the default mirror to a valid leg even when it's not in sync,
-otherwise the mirror set will recover from a non-integrated mirror
-
-Signed-off-by: Lidong Zhong <lzhong@suse.com>
----
- drivers/md/dm-raid1.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index 95ec822..db0ccb9 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -231,7 +231,7 @@ static void fail_mirror(struct mirror *m, enum dm_raid1_error error_type)
- 	if (m != get_default_mirror(ms))
- 		goto out;
- 
--	if (!ms->in_sync) {
-+	if (!ms->in_sync && !keep_log(ms)) {
- 		/*
- 		 * Better to issue requests to same failing device
- 		 * than to risk returning corrupt data.
--- 
-1.8.1.4
+TWlrZSBTbml0emVyIHdyb3RlOgoKPiBPbiBUaHUsIEFwciAwOSAyMDE1IGF0ICA5OjI4YW0gLTA0
+MDAsCj4gUGFsaSBSb2jDoXIgPHBhbGkucm9oYXJAZ21haWwuY29tPiB3cm90ZToKPiAKPj4gT24g
+VGh1cnNkYXkgMDkgQXByaWwgMjAxNSAwOToxMjowOCBNaWtlIFNuaXR6ZXIgd3JvdGU6Cj4+ID4g
+T24gTW9uLCBBcHIgMDYgMjAxNSBhdCAgOToyOWFtIC0wNDAwLAo+PiA+IFBhbGkgUm9ow6FyIDxw
+YWxpLnJvaGFyQGdtYWlsLmNvbT4gd3JvdGU6Cj4+ID4gCj4+ID4gPiBPbiBNb25kYXkgMDYgQXBy
+aWwgMjAxNSAxNTowMDo0NiBNaWtlIFNuaXR6ZXIgd3JvdGU6Cj4+ID4gPiA+IE9uIFN1biwgQXBy
+IDA1IDIwMTUgYXQgIDE6MjBwbSAtMDQwMCwKPj4gPiA+ID4gCj4+ID4gPiA+IFBhbGkgUm9ow6Fy
+IDxwYWxpLnJvaGFyQGdtYWlsLmNvbT4gd3JvdGU6Cj4+ID4gPiA+ID4gVGhpcyBwYXRjaCBzZXJp
+ZXMgaW5jcmVhc2Ugc2VjdXJpdHkgb2Ygc3VzcGVuZCBhbmQgaGliZXJuYXRlCj4+ID4gPiA+ID4g
+YWN0aW9ucy4gSXQgYWxsb3dzIHVzZXIgdG8gc2FmZWx5IHdpcGUgY3J5cHRvIGtleXMgYmVmb3Jl
+Cj4+ID4gPiA+ID4gc3VzcGVuZCBhbmQgaGliZXJuYXRlIGFjdGlvbnMgc3RhcnRzIHdpdGhvdXQg
+cmFjZQo+PiA+ID4gPiA+IGNvbmRpdGlvbnMgb24gdXNlcnNwYWNlIHByb2Nlc3Mgd2l0aCBoZWF2
+eSBJL08uCj4+ID4gPiA+ID4gCj4+ID4gPiA+ID4gVG8gYXV0b21hdGljYWxseSB3aXBlIGNyeXRv
+IGtleSBmb3IgPGRldmljZT4gYmVmb3JlCj4+ID4gPiA+ID4gaGliZXJuYXRlIGFjdGlvbiBjYWxs
+OiAkIGRtc2V0dXAgbWVzc2FnZSA8ZGV2aWNlPiAwIGtleQo+PiA+ID4gPiA+IHdpcGVfb25faGli
+ZXJuYXRpb24gMQo+PiA+ID4gPiA+IAo+PiA+ID4gPiA+IFRvIGF1dG9tYXRpY2FsbHkgd2lwZSBj
+cnl0byBrZXkgZm9yIDxkZXZpY2U+IGJlZm9yZSBzdXNwZW5kCj4+ID4gPiA+ID4gYWN0aW9uIGNh
+bGw6ICQgZG1zZXR1cCBtZXNzYWdlIDxkZXZpY2U+IDAga2V5Cj4+ID4gPiA+ID4gd2lwZV9vbl9z
+dXNwZW5kIDEKPj4gPiA+ID4gPiAKPj4gPiA+ID4gPiAoVmFsdWUgMCBhZnRlciB3aXBlXyogc3Ry
+aW5nIHJldmVydHMgb3JpZ2luYWwgYmVoYXZpb3VyIC0gdG8KPj4gPiA+ID4gPiBub3Qgd2lwZSBr
+ZXkpCj4+ID4gPiA+IAo+PiA+ID4gPiBDYW4geW91IGVsYWJvcmF0ZSBvbiB0aGUgYXR0YWNrIHZl
+Y3RvciB5b3VyIGNoYW5nZXMgYXJlIG1lYW50Cj4+ID4gPiA+IHRvIHByb3RlY3QgYWdhaW5zdD8g
+IFRoZSB1c2VyIGFscmVhZHkgYXV0aG9yaXplZCBhY2Nlc3MsIHdoeQo+PiA+ID4gPiBpcyBpdCBp
+bmhlcmVudGx5IGRhbmdlcm91cyB0byBfbm90XyB3aXBlIHRoZSBhc3NvY2lhdGVkIGtleQo+PiA+
+ID4gPiBhY3Jvc3MgdGhlc2UgZXZlbnRzPwo+PiA+ID4gCj4+ID4gPiBIaSwKPj4gPiA+IAo+PiA+
+ID4geWVzLCBJIHdpbGwgdHJ5IHRvIGV4cGxhaW4gY3VycmVudCBwcm9ibGVtcyB3aXRoIGNyeXB0
+c2V0dXAKPj4gPiA+IGx1a3NTdXNwZW5kIGNvbW1hbmQgYW5kIGhpYmVybmF0aW9uLgo+PiA+ID4g
+Cj4+ID4gPiBGaXJzdCwgc29tZXRpbWVzIGl0IGlzIG5lZWRlZCB0byBwdXQgbWFjaGluZSBpbnRv
+IG90aGVyIGhhbmRzLgo+PiA+ID4gWW91IGNhbiBzdGlsbCB3YXRjaCBvdGhlciBwZXJzb24gd2hh
+dCBpcyBkb2luZyB3aXRoIG1hY2hpbmUsIGJ1dAo+PiA+ID4gb25jZSBpZiB5b3UgbGV0IG1hY2hp
+bmUgdW5sb2NrZWQgKGUuZyBvcGVuZWQgbHVrcyBkaXNrKSwgc2hlL2hlCj4+ID4gPiBjYW4gYWNj
+ZXNzIGVuY3J5cHRlZCBkYXRhLgo+PiA+ID4gCj4+ID4gPiBJZiB5b3UgdHVybiBvZmYgbWFjaGlu
+ZSwgaXQgY291bGQgYmUgc2FmZSwgYmVjYXVzZSBsdWtzIGRpc2sKPj4gPiA+IGRldmljZXMgYXJl
+IGxvY2tlZC4gQnV0IGlmIHlvdSBlbnRlciBtYWNoaW5lIGludG8gc3VzcGVuZCBvcgo+PiA+ID4g
+aGliZXJuYXRlIHN0YXRlIGx1a3MgZGV2aWNlcyBhcmUgc3RpbGwgb3Blbi4gQW5kIG15IHBhdGNo
+ZXMgdHJ5Cj4+ID4gPiB0byBhY2hpZXZlIHNpbWlsYXIgc2VjdXJpdHkgYXMgd2hlbiBtYWNoaW5l
+IGlzIG9mZiAoPSBubyBjcnlwdG8KPj4gPiA+IGtleXMgaW4gUkFNIG9yIG9uIHN3YXApLgo+PiA+
+ID4gCj4+ID4gPiBXaGVuIGRvaW5nIGhpYmVybmF0ZSBvbiB1bmVuY3J5cHRlZCBzd2FwIGl0IGlz
+IHRvIHByZXZlbnQgbGVha2luZwo+PiA+ID4gY3J5cHRvIGtleXMgdG8gaGliZXJuYXRlIGltYWdl
+ICh3aGljaCBpcyBzdG9yZWQgaW4gc3dhcCkuCj4+ID4gPiAKPj4gPiA+IFdoZW4gZG9pbmcgc3Vz
+cGVuZCBhY3Rpb24gaXQgaXMgYWdhaW4gdG8gcHJldmVudCBsZWFraW5nIGNyeXB0bwo+PiA+ID4g
+a2V5cy4gRS5nIHdoZW4geW91IHN1c3BlbmQgbGFwdG9wIGFuZCBwdXQgaXQgb2ZmIChzb21lYm9k
+eSBjYW4KPj4gPiA+IHJlbW92ZSBSQU1zIGFuZCBkbyBzb21lIGNvbGQgYm9vdCBhdHRhY2spLgo+
+PiA+ID4gCj4+ID4gPiBUaGUgbW9zdCBjb21tb24gc2l0dWF0aW9uIGlzOgo+PiA+ID4gWW91IGhh
+dmUgbW91bnRlZCBwYXJ0aXRpb24gZnJvbSBkbS1jcnlwdCBkZXZpY2UgKGUuZy4gL2hvbWUvKSwK
+Pj4gPiA+IHNvbWUgdXNlcnNwYWNlIHByb2Nlc3NlcyBhY2Nlc3MgaXQgKGUuZyBvcGVuZWQgZmly
+ZWZveCB3aGljaAo+PiA+ID4gc3RpbGwgcmVhZHMvd3JpdGVzIHRvIGNhY2hlIH4vLmZpcmVmb3gv
+KSBhbmQgeW91IHdhbnQgdG8gZHJvcAo+PiA+ID4gY3J5cHRvIGtleXMgZnJvbSBrZXJuZWwgZm9y
+IHNvbWUgdGltZS4KPj4gPiA+IAo+PiA+ID4gRm9yIHRoYXQgb3BlcmF0aW9uIHRoZXJlIGlzIGNv
+bW1hbmQgY3J5cHRzZXR1cCBsdWtzU3VzcGVuZCwgd2hpY2gKPj4gPiA+IHN1c3BlbmQgZG0gZGV2
+aWNlIGFuZCB0aGVuIHRlbGwga2VybmVsIHRvIHdpcGUgY3J5cHRvIGtleXMuIEFsbAo+PiA+ID4g
+SS9PIG9wZXJhdGlvbnMgYXJlIHRoZW4gc3RvcHBlZCBhbmQgdXNlcnNwYWNlIHByb2Nlc3NlcyB3
+aGljaAo+PiA+ID4gd2FudCB0byBkbyBzb21lIHRob3NlIEkvTyBvcGVyYXRpb25zIGFyZSBzdG9w
+cGVkIHRvbyAodW50aWwgeW91Cj4+ID4gPiBjYWxsIGNyeXB0c2V0dXAgbHVrc1Jlc3VtZSBhbmQg
+ZW50ZXIgY29ycmVjdCBrZXkpLgo+PiA+ID4gCj4+ID4gPiBOb3cgaWYgeW91IHdhbnQgdG8gc3Vz
+cGVuZC9oaWJlcmF0ZSB5b3VyIG1hY2hpbmUgKHdoZW4gc29tZSBvZiBkbQo+PiA+ID4gZGV2aWNl
+cyBhcmUgc3VzcGVuZWRlZCBhbmQgc29tZSBwcm9jZXNzZXMgYXJlIHN0b3BwZWQgZHVlIHRvCj4+
+ID4gPiBwZW5kaW5nIEkvTykgaXQgaXMgbm90IHBvc3NpYmxlLiBLZXJuZWwgZnJlZXplX3Byb2Nl
+c3NlcyBmdW5jdGlvbgo+PiA+ID4gd2lsbCBmYWlsIGJlY2F1c2UgdXNlcnNwYWNlIHByb2Nlc3Nl
+cyBhcmUgc3RpbGwgc3RvcHBlZCBpbnNpZGUKPj4gPiA+IHNvbWUgSS9PIHN5c2NhbGwgKHJlYWQv
+d3JpdGUsIGV0YywuLi4pLgo+PiA+ID4gCj4+ID4gPiBNeSBwYXRjaGVzIGZpeGVzIHRoaXMgcHJv
+YmxlbSBhbmQgZG8gdGhvc2Ugb3BlcmF0aW9ucyAoc3VzcGVuZCBkbQo+PiA+ID4gZGV2aWNlLCB3
+aXBlIGNyeXB0byBrZXlzLCBlbnRlciBzdXNwZW5kL2hpYmVyYXRlKSBpbiBjb3JyZWN0Cj4+ID4g
+PiBvcmRlciBhbmQgd2l0aG91dCByYWNlIGNvbmRpdGlvbi4KPj4gPiA+IAo+PiA+ID4gZG0gZGV2
+aWNlIGlzIHN1c3BlbmRlZCAqYWZ0ZXIqIHVzZXJzcGFjZSBwcm9jZXNzZXMgYXJlIGZyZWV6ZWQK
+Pj4gPiA+IGFuZCBhZnRlciB0aGF0IGFyZSBjcnlwdG8ga2V5cyB3aXBlZC4gQW5kIHRoZW4gY29t
+cHV0ZXIvbGFwdG9wCj4+ID4gPiBlbnRlcnMgaW50byBzdXNwZW5kL2hpYmVybmF0ZSBzdGF0ZS4K
+Pj4gPiAKPj4gPiBXb3VsZG4ndCBpdCBiZSBiZXR0ZXIgdG8gZml4IGZyZWV6ZV9wcm9jZXNzZXMo
+KSB0byBiZSB0b2xlcmFudCBvZgo+PiA+IHByb2Nlc3NlcyB0aGF0IGFyZSBodW5nIGFzIGEgc2lk
+ZS1lZmZlY3Qgb2YgdGhlaXIgYmFja2luZyBzdG9yYWdlIGJlaW5nCj4+ID4gc3VzcGVuZGVkPyAg
+QSBoaWJlcm5hdGUgc2hvdWxkbid0IGZhaWwgc2ltcGx5IGJlY2F1c2UgYSB1c2VyIGNob3NlIHRv
+Cj4+ID4gc3VzcGVuZCBhIERNIGRldmljZS4KPj4gPiAKPj4gPiBUaGVuIHRoaXMgZW50aXJlIHBy
+b2JsZW0gZ29lcyBhd2F5IGFuZCB0aGUga2V5IGNhbiBiZSB3aXBlZCBmcm9tCj4+ID4gdXNlcnNw
+YWNlIChsaWtlIHlvdSBzYWlkIGFib3ZlKS4KPj4gCj4+IFN0aWxsIHRoZXJlIHdpbGwgYmUgcmFj
+ZSBjb25kaXRpb24uIEJlZm9yZSBoaWJlcm5hdGlvbiAoYW5kIGRldmljZQo+PiBwb3dlcm9mZikg
+d2Ugc2hvdWxkIGhhdmUgc3luY2VkIGRpc2tzIGFuZCBmaWxlc3lzdGVtcyB0byBwcmV2ZW50IGRh
+dGEKPj4gbG9zZSAob3Igb3RoZXIgZGFtYWdlKSBhcyBtb3JlIGFzIHdlIGNhbi4gQW5kIGlmIHRo
+ZXJlIHdpbGwgYmUgc29tZQo+PiBhcHBsaWNhdGlvbiB3aGljaCB1c2luZyBsb3Qgb2YgSS9PIChl
+Lmcgbm9ybWFsIGZpcmVmb3gpIHRoZW4gdGhlcmUKPj4gYWx3YXlzIHdpbGwgYmUgcmFjZSBjb25k
+dGlvbi4KPiAKPiBUaGUgRE0gc3VzcGVuZCB3aWxsIHRha2UgY2FyZSBvZiBmbHVzaGluZyBhbnkg
+cGVuZGluZyBJL08uICBTbyBJIGRvbid0Cj4gc2VlIHdoZXJlIHRoZSBzdXBwb3NlZCByYWNlIGlz
+Li4uCj4gCj4gQW55dGhpbmcgZWxzZSB0aGF0IGlzIHRyYXBwZWQgaW4gdXNlcnNwYWNlIG1lbW9y
+eSB3aWxsIGJlIHRoZXJlIHdoZW4gdGhlCj4gbWFjaGluZSByZXN1bWVzLgo+IAo+PiBTbyBwcm9w
+ZXIgd2F5IGlzIHRvIHdpcGUgbHVrcyBjcnlwdG8ga2V5cyAqYWZ0ZXIqIHVzZXJzcGFjZSBwcm9j
+ZXNzZXMKPj4gYXJlIGZyZWV6ZWQuCj4gCj4gSSBrbm93IHlvdSBiZWxpZXZlIHRoYXQgSSdtIGp1
+c3Qgbm90IGFjY2VwdGluZyB0aGF0IGF0IGZhY2UgdmFsdWUuCgpVbSwgcGFyZG9uIG1lIGlmIEkn
+bSBiZWluZyBuYWl2ZSwgYnV0IHdoYXQgYWJvdXQgdGhlIGNhc2Ugb2YgaGliZXJuYXRpb24gCndo
+ZXJlIHRoZSBzd2FwZGV2IGFuZCB0aGUgcm9vdCBkZXZpY2UgYXJlIGJvdGggTFZzIG9uIHRoZSBz
+YW1lIGRtX2NyeXB0IApkZXZpY2U/CgpUaGUga2VybmVsIGlzIHdyaXRpbmcgdG8gc3dhcCBfYWZ0
+ZXJfIHVzZXJzcGFjZSBwcm9jZXNzZXMgYXJlIGFsbCBmcm96ZW47IAp0aGF0IHNlZW1zIHRvIG1l
+IGxpa2UgYW4gb3JkZXJpbmcgZGVwZW5kZW5jeSBlbnRpcmVseSBpbmNvbXBhdGlibGUgd2l0aCAK
+dXNlcnNwYWNlIGRyb3BwaW5nIHRoZSBrZXkuLi4KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApk
+bS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
+by9kbS1kZXZlbA==
