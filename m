@@ -1,15 +1,15 @@
 From: Lidong Zhong <lzhong@suse.com>
-Subject: [PATCH] dm-raid1: change default mirror when it's not in
-	sync
-Date: Wed, 15 Apr 2015 18:50:40 +0800
-Message-ID: <1429095040-12658-4-git-send-email-lzhong@suse.com>
-References: <1429095040-12658-1-git-send-email-lzhong@suse.com>
+Subject: [PATCH 1/3] dm-raid1: fix the parameter passed into the
+	kernel
+Date: Thu, 16 Apr 2015 11:43:22 +0800
+Message-ID: <1429155804-5022-2-git-send-email-lzhong@suse.com>
+References: <1429155804-5022-1-git-send-email-lzhong@suse.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1429095040-12658-1-git-send-email-lzhong@suse.com>
+In-Reply-To: <1429155804-5022-1-git-send-email-lzhong@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,26 +23,56 @@ To: dm-devel@redhat.com
 Cc: heinzm@redhat.com
 List-Id: dm-devel.ids
 
-Change the default mirror to a valid leg even when it's not in sync,
-otherwise the mirror set will recover from a non-integrated mirror
+If the userspace does not pass the new feature parameter, it will lead
+to a kernel crash
 
 Signed-off-by: Lidong Zhong <lzhong@suse.com>
 ---
- drivers/md/dm-raid1.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-raid1.c | 24 ++++++++++++------------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index 95ec822..db0ccb9 100644
+index 00b1fbd..8e32c4e 100644
 --- a/drivers/md/dm-raid1.c
 +++ b/drivers/md/dm-raid1.c
-@@ -231,7 +231,7 @@ static void fail_mirror(struct mirror *m, enum dm_raid1_error error_type)
- 	if (m != get_default_mirror(ms))
- 		goto out;
+@@ -990,6 +990,7 @@ static int parse_features(struct mirror_set *ms, unsigned argc, char **argv,
+ 	unsigned num_features;
+ 	struct dm_target *ti = ms->ti;
+ 	char dummy;
++	int i;
  
--	if (!ms->in_sync) {
-+	if (!ms->in_sync && !keep_log(ms)) {
- 		/*
- 		 * Better to issue requests to same failing device
- 		 * than to risk returning corrupt data.
+ 	*args_used = 0;
+ 
+@@ -1010,19 +1011,18 @@ static int parse_features(struct mirror_set *ms, unsigned argc, char **argv,
+ 		return -EINVAL;
+ 	}
+ 
+-	if (!strcmp("handle_errors", argv[0]))
+-		ms->features |= DM_RAID1_HANDLE_ERRORS;
+-	else {
+-		ti->error = "Unrecognised feature requested";
+-		return -EINVAL;
+-	}
+-
+-	argc--;
+-	argv++;
+-	(*args_used)++;
++	for (i = 0; i < num_features; i++) {
++		if (!strcmp("handle_errors", argv[0]))
++			ms->features |= DM_RAID1_HANDLE_ERRORS;
++		else if (!strcmp("keep_log", argv[0])) 
++			ms->features |= DM_RAID1_KEEP_LOG;
++		else {
++			ti->error = "Unrecognised feature requested";
++			return -EINVAL;
++		}
+ 
+-	if (!strcmp("keep_log", argv[0])) {
+-		ms->features |= DM_RAID1_KEEP_LOG;
++		argc--;
++		argv++;
+ 		(*args_used)++;
+ 	}
+ 
 -- 
 1.8.1.4
