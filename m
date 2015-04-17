@@ -1,8 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH 3/3] raid0: conditional mddev->queue access to
-	suit dm-raid
-Date: Fri, 17 Apr 2015 14:39:46 +0200
-Message-ID: <1429274386-16385-4-git-send-email-heinzm@redhat.com>
+Subject: [PATCH 2/3] dm core: export dm_disk to allow for dm-raid
+	to pass it on to the MD raid0 personality
+Date: Fri, 17 Apr 2015 14:39:45 +0200
+Message-ID: <1429274386-16385-3-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,94 +24,26 @@ List-Id: dm-devel.ids
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
 This patch is a prerequisite for dm-raid "raid0" support to allow
-dm-raid to access the MD RAID0 personality doing unconditional
-accesses to mddev->queue, which is NULL in case of dm-raid stacked
-on top of MD.
-
-This patch is here for completeness; it has been send to Neil Brown
-and linux-raid, Neil said he applied it on Feb 23rd but it did not
-show up in upstream as yet.
-
+dm-raid to set rs->md.gendisk, which is required by the MD RAID0
+pesonality to set disk stacking limits.
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
 
 ---
- drivers/md/raid0.c | 48 +++++++++++++++++++++++++++---------------------
- 1 file changed, 27 insertions(+), 21 deletions(-)
+ drivers/md/dm.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index 3ed9f42..e074813 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -271,14 +271,16 @@ static int create_strip_zones(struct mddev *mddev, struct r0conf **private_conf)
- 		goto abort;
- 	}
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 8001fe9..f11e2f5 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -3206,6 +3206,7 @@ struct gendisk *dm_disk(struct mapped_device *md)
+ {
+ 	return md->disk;
+ }
++EXPORT_SYMBOL_GPL(dm_disk);
  
--	blk_queue_io_min(mddev->queue, mddev->chunk_sectors << 9);
--	blk_queue_io_opt(mddev->queue,
--			 (mddev->chunk_sectors << 9) * mddev->raid_disks);
--
--	if (!discard_supported)
--		queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
--	else
--		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
-+	if (mddev->queue) {
-+		blk_queue_io_min(mddev->queue, mddev->chunk_sectors << 9);
-+		blk_queue_io_opt(mddev->queue,
-+				 (mddev->chunk_sectors << 9) * mddev->raid_disks);
-+
-+		if (!discard_supported)
-+			queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
-+		else
-+			queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
-+	}
- 
- 	pr_debug("md/raid0:%s: done.\n", mdname(mddev));
- 	*private_conf = conf;
-@@ -429,9 +431,12 @@ static int raid0_run(struct mddev *mddev)
- 	}
- 	if (md_check_no_bitmap(mddev))
- 		return -EINVAL;
--	blk_queue_max_hw_sectors(mddev->queue, mddev->chunk_sectors);
--	blk_queue_max_write_same_sectors(mddev->queue, mddev->chunk_sectors);
--	blk_queue_max_discard_sectors(mddev->queue, mddev->chunk_sectors);
-+
-+	if (mddev->queue) {
-+		blk_queue_max_hw_sectors(mddev->queue, mddev->chunk_sectors);
-+		blk_queue_max_write_same_sectors(mddev->queue, mddev->chunk_sectors);
-+		blk_queue_max_discard_sectors(mddev->queue, mddev->chunk_sectors);
-+	}
- 
- 	/* if private is not null, we are here after takeover */
- 	if (mddev->private == NULL) {
-@@ -448,16 +453,17 @@ static int raid0_run(struct mddev *mddev)
- 	printk(KERN_INFO "md/raid0:%s: md_size is %llu sectors.\n",
- 	       mdname(mddev),
- 	       (unsigned long long)mddev->array_sectors);
--	/* calculate the max read-ahead size.
--	 * For read-ahead of large files to be effective, we need to
--	 * readahead at least twice a whole stripe. i.e. number of devices
--	 * multiplied by chunk size times 2.
--	 * If an individual device has an ra_pages greater than the
--	 * chunk size, then we will not drive that device as hard as it
--	 * wants.  We consider this a configuration error: a larger
--	 * chunksize should be used in that case.
--	 */
--	{
-+
-+	if (mddev->queue) {
-+		/* calculate the max read-ahead size.
-+		 * For read-ahead of large files to be effective, we need to
-+		 * readahead at least twice a whole stripe. i.e. number of devices
-+		 * multiplied by chunk size times 2.
-+		 * If an individual device has an ra_pages greater than the
-+		 * chunk size, then we will not drive that device as hard as it
-+		 * wants.  We consider this a configuration error: a larger
-+		 * chunksize should be used in that case.
-+		 */
- 		int stripe = mddev->raid_disks *
- 			(mddev->chunk_sectors << 9) / PAGE_SIZE;
- 		if (mddev->queue->backing_dev_info.ra_pages < 2* stripe)
+ struct kobject *dm_kobject(struct mapped_device *md)
+ {
 -- 
 2.1.0
