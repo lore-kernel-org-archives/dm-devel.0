@@ -1,63 +1,50 @@
 From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: [PATCH] dm log: Use ULL suffix for 64-bit constants
-Date: Sun, 19 Apr 2015 00:07:30 +0200
-Message-ID: <1429394850-8480-1-git-send-email-geert@linux-m68k.org>
+Subject: dm log: struct log_write_super and padding (was: Re: dm: add log
+ writes target)
+Date: Sun, 19 Apr 2015 00:16:05 +0200
+Message-ID: <CAMuHMdUfvo1V_2fYky9JmHXbSV0kJLt7VmayW2=okNCfaQd0DQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
 To: Josef Bacik <jbacik@fb.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Geert Uytterhoeven <geert@linux-m68k.org>
+Cc: dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 32-bit:
+On Sat, Apr 18, 2015 at 2:34 PM, Linux Kernel Mailing List
+<linux-kernel@vger.kernel.org> wrote:
+> Gitweb:     http://git.kernel.org/linus/;a=commit;h=0e9cebe724597a76ab1b0ebc0a21e16f7db11b47
+> Commit:     0e9cebe724597a76ab1b0ebc0a21e16f7db11b47
 
-drivers/md/dm-log-writes.c: In function =E2=80=98log_super=E2=80=99:
-drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
-for =E2=80=98long=E2=80=99 type
-drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
-for =E2=80=98long=E2=80=99 type
-drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
-for =E2=80=98long=E2=80=99 type
-drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
-for =E2=80=98long=E2=80=99 type
-drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
-for =E2=80=98long=E2=80=99 type
-drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
-for =E2=80=98long=E2=80=99 type
-drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
-for =E2=80=98long=E2=80=99 type
-drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
-for =E2=80=98long=E2=80=99 type
-drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
-for =E2=80=98long=E2=80=99 type
-drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
-for =E2=80=98long=E2=80=99 type
+> --- /dev/null
+> +++ b/drivers/md/dm-log-writes.c
+> @@ -0,0 +1,825 @@
 
-Add a ULL suffix to WRITE_LOG_MAGIC to fix this.
-Also add a ULL suffix to WRITE_LOG_VERSION as it's stored in a __le64
-field.
+> +/*
+> + * Basic info about the log for userspace.
+> + */
+> +struct log_write_super {
+> +       __le64 magic;
+> +       __le64 version;
+> +       __le64 nr_entries;
+> +       __le32 sectorsize;
 
-Signed-off-by: Geert Uytterhoeven <geert@linux-m68k.org>
----
- drivers/md/dm-log-writes.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+Should there be an explicit padding of 4 bytes?
+Does anything assume that sizeof(struct log_write_super) is always 4 * 8?
 
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index 93e08446a87d06ff..ad1b049ae2ab80a9 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -55,8 +55,8 @@
- #define LOG_DISCARD_FLAG (1 << 2)
- #define LOG_MARK_FLAG (1 << 3)
-=20
--#define WRITE_LOG_VERSION 1
--#define WRITE_LOG_MAGIC 0x6a736677736872
-+#define WRITE_LOG_VERSION 1ULL
-+#define WRITE_LOG_MAGIC 0x6a736677736872ULL
-=20
- /*
-  * The disk format for this is braindead simple.
---=20
-1.9.1
+On architectures where the natural alignment of 64-bit quantities is less
+than 8 bytes, sizeof(struct log_write_super) is smaller than 32 bytes
+(e.g. on m68k it's 28).
+
+> +};
+
+Gr{oetje,eeting}s,
+
+                        Geert
+
+--
+Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
+
+In personal conversations with technical people, I call myself a hacker. But
+when I'm talking to journalists I just say "programmer" or something like that.
+                                -- Linus Torvalds
