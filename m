@@ -1,36 +1,63 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: Device mapper failed to open temporary keystore device
-Date: Sat, 18 Apr 2015 10:00:21 +0800
-Message-ID: <20150418020021.GA2432@gondor.apana.org.au>
-References: <CA+LKeY6Vm=hWj+gaKxm5JqLqehu8557OX2101a8roKas6WcsFg@mail.gmail.com>
- <20150417223848.GD4028@redhat.com>
+From: Geert Uytterhoeven <geert@linux-m68k.org>
+Subject: [PATCH] dm log: Use ULL suffix for 64-bit constants
+Date: Sun, 19 Apr 2015 00:07:30 +0200
+Message-ID: <1429394850-8480-1-git-send-email-geert@linux-m68k.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150417223848.GD4028@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Murilo Opsfelder =?iso-8859-1?Q?Ara=FAjo?= <mopsfelder@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
+To: Josef Bacik <jbacik@fb.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Geert Uytterhoeven <geert@linux-m68k.org>
 List-Id: dm-devel.ids
 
-On Fri, Apr 17, 2015 at 06:38:49PM -0400, Mike Snitzer wrote:
->
-> There are also some crypto changes that could very easily be the cause
-> of your problem (cc'ing Herbert), e.g.:
-> 
-> $ git diff next-20150410^..next-20150413 -- crypto | diffstat
+On 32-bit:
 
-My guess is that you guys need this patch:
+drivers/md/dm-log-writes.c: In function =E2=80=98log_super=E2=80=99:
+drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
+for =E2=80=98long=E2=80=99 type
+drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
+for =E2=80=98long=E2=80=99 type
+drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
+for =E2=80=98long=E2=80=99 type
+drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
+for =E2=80=98long=E2=80=99 type
+drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
+for =E2=80=98long=E2=80=99 type
+drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
+for =E2=80=98long=E2=80=99 type
+drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
+for =E2=80=98long=E2=80=99 type
+drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
+for =E2=80=98long=E2=80=99 type
+drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
+for =E2=80=98long=E2=80=99 type
+drivers/md/dm-log-writes.c:323: warning: integer constant is too large =
+for =E2=80=98long=E2=80=99 type
 
-commit 34c9a0ffc75ad25b6a60f61e27c4a4b1189b8085
-Author: Herbert Xu <herbert@gondor.apana.org.au>
-Date:   Thu Apr 16 11:07:13 2015 +0800
+Add a ULL suffix to WRITE_LOG_MAGIC to fix this.
+Also add a ULL suffix to WRITE_LOG_VERSION as it's stored in a __le64
+field.
 
-    crypto: fix broken crypto_register_instance() module handling
+Signed-off-by: Geert Uytterhoeven <geert@linux-m68k.org>
+---
+ drivers/md/dm-log-writes.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Cheers,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index 93e08446a87d06ff..ad1b049ae2ab80a9 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -55,8 +55,8 @@
+ #define LOG_DISCARD_FLAG (1 << 2)
+ #define LOG_MARK_FLAG (1 << 3)
+=20
+-#define WRITE_LOG_VERSION 1
+-#define WRITE_LOG_MAGIC 0x6a736677736872
++#define WRITE_LOG_VERSION 1ULL
++#define WRITE_LOG_MAGIC 0x6a736677736872ULL
+=20
+ /*
+  * The disk format for this is braindead simple.
+--=20
+1.9.1
