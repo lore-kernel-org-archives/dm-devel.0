@@ -1,73 +1,44 @@
 From: =?ISO-8859-1?Q?Murilo_Opsfelder_Ara=FAjo?= <mopsfelder@gmail.com>
 Subject: Re: Device mapper failed to open temporary keystore device
-Date: Sun, 19 Apr 2015 14:03:56 -0300
-Message-ID: <CA+LKeY7U_+y0kEwG8MB3EPPYgXvfBX_cT5CWv9kjw78p3kE0rg@mail.gmail.com>
+Date: Sun, 19 Apr 2015 14:08:38 -0300
+Message-ID: <CA+LKeY5onPt_sJHQOgiuQjxqaT3cJv11DEeoDCqpHqn74on0bA@mail.gmail.com>
 References: <CA+LKeY6Vm=hWj+gaKxm5JqLqehu8557OX2101a8roKas6WcsFg@mail.gmail.com>
- <20150417223848.GD4028@redhat.com>
+ <20150417223848.GD4028@redhat.com> <20150418020021.GA2432@gondor.apana.org.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150417223848.GD4028@redhat.com>
+In-Reply-To: <20150418020021.GA2432@gondor.apana.org.au>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Herbert Xu <herbert@gondor.apana.org.au>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Mike Snitzer <snitzer@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Apr 17, 2015 at 7:38 PM, Mike Snitzer <snitzer@redhat.com> wrot=
-e:
-> On Fri, Apr 17 2015 at  4:11pm -0400,
-> Murilo Opsfelder Ara=FAjo <mopsfelder@gmail.com> wrote:
->
->> Hello, everyone.
+On Fri, Apr 17, 2015 at 11:00 PM, Herbert Xu
+<herbert@gondor.apana.org.au> wrote:
+> On Fri, Apr 17, 2015 at 06:38:49PM -0400, Mike Snitzer wrote:
 >>
->> Right after I enter my passphrase to unlock my cryptsetup partition,
->> it displays the following error and asks for cryptsetup password aga=
-in
->> (it got stuck on this loop).
+>> There are also some crypto changes that could very easily be the cause
+>> of your problem (cc'ing Herbert), e.g.:
 >>
->> This issue was introduced in next-20150413.  next-20150410 is workin=
-g just fine.
->>
->> Any hint on how to debug this?
->>
->> Unlocking the disk /dev/disk/by-uuid/<uuid> (sda5_crypt)
->> Enter passphrase: *****
->> [  244.239821] device-mapper: table: 252:0: crypt: Error allocating =
-crypto tfm
->> device-mapper: reload ioctl on  failed: No such file or directory
->> Failed to open temporary keystore device.
->> device-mapper: remove ioctl on temporary-cryptsetup-239 failed: No
->> such device or address
->> device-mapper: reload ioctl on temporary-cryptsetup-239 failed: No
->> such device or address
->> device-mapper: remove ioctl on temporary-cryptsetup-239 failed: No
->> such device or address
->> device-mapper: remove ioctl on temporary-cryptsetup-239 failed: No
->> such device or address
->> device-mapper: remove ioctl on temporary-cryptsetup-239 failed: No
->> such device or address
->> device-mapper: remove ioctl on temporary-cryptsetup-239 failed: No
->> such device or address
+>> $ git diff next-20150410^..next-20150413 -- crypto | diffstat
 >
-> git diff next-20150410^..next-20150413 drivers/md/dm-crypt.c points t=
-o
-> this commit as the nly dm-crpt.c change:
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.g=
-it/commit/?h=3Dfor-next&id=3D5977907937afa2b5584a874d44ba6c0f56aeaa9c
+> My guess is that you guys need this patch:
 >
-> Which appears unrelated given your "crypt: Error allocating crypto tf=
-m"
-> error.
+> commit 34c9a0ffc75ad25b6a60f61e27c4a4b1189b8085
+> Author: Herbert Xu <herbert@gondor.apana.org.au>
+> Date:   Thu Apr 16 11:07:13 2015 +0800
 >
-> But any chance you can try reverting that commit from next-20150413 a=
-nd
-> re-test just to be absolutely sure?
+>     crypto: fix broken crypto_register_instance() module handling
+>
+> Cheers,
+> --
+> Email: Herbert Xu <herbert@gondor.apana.org.au>
+> Home Page: http://gondor.apana.org.au/~herbert/
+> PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
 
-Hello, Mike.
+Hello, Herbert.
 
-I've reverted that commit from both next-20150413 and next-20150415.
-In both cases, I got the same error, no success.
+Sorry for my ignorance but which tree and branch does this commit come from?
 
---=20
+-- 
 Murilo
