@@ -1,44 +1,49 @@
-From: =?ISO-8859-1?Q?Murilo_Opsfelder_Ara=FAjo?= <mopsfelder@gmail.com>
-Subject: Re: Device mapper failed to open temporary keystore device
-Date: Sun, 19 Apr 2015 14:08:38 -0300
-Message-ID: <CA+LKeY5onPt_sJHQOgiuQjxqaT3cJv11DEeoDCqpHqn74on0bA@mail.gmail.com>
-References: <CA+LKeY6Vm=hWj+gaKxm5JqLqehu8557OX2101a8roKas6WcsFg@mail.gmail.com>
- <20150417223848.GD4028@redhat.com> <20150418020021.GA2432@gondor.apana.org.au>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: ALUA - rescan device capacity on zero sized block
+ devices
+Date: Mon, 20 Apr 2015 07:58:24 +0200
+Message-ID: <55349580.1040205@suse.de>
+References: <1887682221.152035.1428939145196.JavaMail.zimbra@kangaroot.net>	<552C008A.9070201@sandisk.com>	<987831457.156812.1428996031503.JavaMail.zimbra@kangaroot.net>	<552CCC77.9040703@suse.de>	<552CE2C2.8000809@sandisk.com>
+	<CABr-GnefEhc_dOKs360Hox7asbvO5qN8BqPczqC+V8CQ6Myh8w@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150418020021.GA2432@gondor.apana.org.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Mike Snitzer <snitzer@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CABr-GnefEhc_dOKs360Hox7asbvO5qN8BqPczqC+V8CQ6Myh8w@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Apr 17, 2015 at 11:00 PM, Herbert Xu
-<herbert@gondor.apana.org.au> wrote:
-> On Fri, Apr 17, 2015 at 06:38:49PM -0400, Mike Snitzer wrote:
->>
->> There are also some crypto changes that could very easily be the cause
->> of your problem (cc'ing Herbert), e.g.:
->>
->> $ git diff next-20150410^..next-20150413 -- crypto | diffstat
->
-> My guess is that you guys need this patch:
->
-> commit 34c9a0ffc75ad25b6a60f61e27c4a4b1189b8085
-> Author: Herbert Xu <herbert@gondor.apana.org.au>
-> Date:   Thu Apr 16 11:07:13 2015 +0800
->
->     crypto: fix broken crypto_register_instance() module handling
->
-> Cheers,
-> --
-> Email: Herbert Xu <herbert@gondor.apana.org.au>
-> Home Page: http://gondor.apana.org.au/~herbert/
-> PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
-
-Hello, Herbert.
-
-Sorry for my ignorance but which tree and branch does this commit come from?
-
--- 
-Murilo
+T24gMDQvMTkvMjAxNSAxMjo1NiBBTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+IEFib3V0
+IGZpdmUgeWVhcnMgYWdvLCB3ZSBmYWNlZCBhIHNvbWV3aGF0IHNpbXVsYXIgaXNzdWUgd2l0aAo+
+IFN5bW1ldHJpeCBhcnJheXMsIHdoZXJlIHRoZSByZXBsaWNhdGVkIExVIG9mIGEgU1JERiBwYWly
+IChSMikgd2FzCj4gZmxhZ2dlZCByZWFkLW9ubHkgYnkgdGhlIGtlcm5lbCB1cG9uIGRpc2NvdmVy
+eS4gU3BsaXR0aW5nIHRoZSBwYWlyCj4gd2l0aCBhIHN5bWNsaSBjb21tYW5kICBtYWRlIHRoZSBM
+VSByZWFkLXdyaXRlIGZyb20gdGhlIGFycmF5Cj4gY29udHJvbGxlciBwb2ludCBvZiB2aWV3LCBi
+dXQgdGhlIExpbnV4IGtlcm5lbCB3b3VsZCBub3QgcHJvbW90ZSBpdAo+IHJlYWQtd3JpdGUgZHlu
+YW1pY2FsbHkuCj4gCj4gSSBkb24ndCBrbm93IGlmIHRoZSBTeW1tZXRyaXggYXJyYXkgYWxzbyB1
+c2UgYSB1bml0IGF0dGVudGlvbiB0bwo+IHNpZ25hbCB0aGUgY2hhbmdlIHRvIHRoZSBpbml0aWF0
+b3JzLiBJZiBpdCBkb2VzLCBpdCBtaWdodCBiZSB3b3J0aAo+IHRyeWluZyB0byBhZGRyZXNzIGJv
+dGggdGhlIDNwYXIgcGVlciBwZXJzaXN0YW5jZSBhbmQgdGhlIFN5bW1ldHJpeAo+IFNSREYgc2l0
+dWF0aW9ucy4KPiAKPiBPbiB0aGUgb3RoZXIgaGFuZCwgaWYgdGhlIFNSREYgUjIgcncgcHJvbW90
+aW9uIGlzc3VlIGhhcyBiZWVuIGZpeGVkCj4gc2luY2UsIHRoZSBwYXRjaCBtaWdodCBnaXZlIGd1
+aWRhbmNlIGFib3V0IHdoZXJlL2hvdyB0byBwbHVnIHRoZQo+IDNwYXIgcGVlciBwZXJzaXN0YW5j
+ZSBnaG9zdCBwYXRoIHJlc2NhbnMuCj4gCkl0J3Mgbm90IG9ubHkgdGhhdDsgaWYgeW91IGFyZSBm
+YWNlZCB3aXRoIExVTnMgaW4gc3RhbmRieSBldmVuIHRoZQprZXJuZWwgd291bGRuJ3QgZGV0ZWN0
+IHRoZW0gcHJvcGVybHkuCgpJJ20gY3VycmVudGx5IGRlYnVnZ2luZyB0aGlzIGlzc3VlIGFuZCB3
+aWxsIGhhdmUgYW4gdXBkYXRlIHNvb24oLWlzaCkuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBI
+YW5uZXMgUmVpbmVja2UJCSAgICAgICAgICAgICAgIHpTZXJpZXMgJiBTdG9yYWdlCmhhcmVAc3Vz
+ZS5kZQkJCSAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21iSCwg
+TWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNt
+aXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8
+cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
+cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
