@@ -1,15 +1,15 @@
 From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: [PATCH 2/3] dm core: export dm_disk to allow for
-	dm-raid to pass it on to the MD raid0 personality
-Date: Tue, 21 Apr 2015 10:57:50 -0500
-Message-ID: <40F0784D-F4FB-4068-83A2-DEA7AD6B358D@redhat.com>
-References: <1429274386-16385-3-git-send-email-heinzm@redhat.com>
+Subject: Re: [PATCH 3/3] raid0: conditional mddev->queue access
+	to suit dm-raid
+Date: Tue, 21 Apr 2015 11:00:29 -0500
+Message-ID: <5E3718B1-96FF-4531-8651-80E28360B424@redhat.com>
+References: <1429274386-16385-4-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2070.6\))
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1429274386-16385-3-git-send-email-heinzm@redhat.com>
+In-Reply-To: <1429274386-16385-4-git-send-email-heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,19 +23,102 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-Cj4gT24gQXByIDE3LCAyMDE1LCBhdCA3OjM5IEFNLCBoZWluem1AcmVkaGF0LmNvbSB3cm90ZToK
-PiAKPiBGcm9tOiBIZWlueiBNYXVlbHNoYWdlbiA8aGVpbnptQHJlZGhhdC5jb20+Cj4gCj4gVGhp
-cyBwYXRjaCBpcyBhIHByZXJlcXVpc2l0ZSBmb3IgZG0tcmFpZCAicmFpZDAiIHN1cHBvcnQgdG8g
-YWxsb3cKPiBkbS1yYWlkIHRvIHNldCBycy0+bWQuZ2VuZGlzaywgd2hpY2ggaXMgcmVxdWlyZWQg
-YnkgdGhlIE1EIFJBSUQwCj4gcGVzb25hbGl0eSB0byBzZXQgZGlzayBzdGFja2luZyBsaW1pdHMu
-Cj4gCj4gU2lnbmVkLW9mZi1ieTogSGVpbnogTWF1ZWxzaGFnZW4gPGhlaW56bUByZWRoYXQuY29t
-Pgo+IAo+IC0tLQo+IGRyaXZlcnMvbWQvZG0uYyB8IDEgKwo+IDEgZmlsZSBjaGFuZ2VkLCAxIGlu
-c2VydGlvbigrKQo+IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLmMgYi9kcml2ZXJzL21k
-L2RtLmMKPiBpbmRleCA4MDAxZmU5Li5mMTFlMmY1IDEwMDY0NAo+IC0tLSBhL2RyaXZlcnMvbWQv
-ZG0uYwo+ICsrKyBiL2RyaXZlcnMvbWQvZG0uYwo+IEBAIC0zMjA2LDYgKzMyMDYsNyBAQCBzdHJ1
-Y3QgZ2VuZGlzayAqZG1fZGlzayhzdHJ1Y3QgbWFwcGVkX2RldmljZSAqbWQpCj4gewo+IAlyZXR1
-cm4gbWQtPmRpc2s7Cj4gfQo+ICtFWFBPUlRfU1lNQk9MX0dQTChkbV9kaXNrKTsKPiAKPiBzdHJ1
-Y3Qga29iamVjdCAqZG1fa29iamVjdChzdHJ1Y3QgbWFwcGVkX2RldmljZSAqbWQpCj4gewo+IOKA
-lCAKClRoaXMgcGF0Y2ggZ29lcyBhd2F5IGR1ZSB0byBjaGFuZ2VzIGluIHByZXYgcGF0Y2guCgog
-YnJhc3NvdwoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
-cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+
+> On Apr 17, 2015, at 7:39 AM, heinzm@redhat.com wrote:
+> 
+> From: Heinz Mauelshagen <heinzm@redhat.com>
+> 
+> This patch is a prerequisite for dm-raid "raid0" support to allow
+> dm-raid to access the MD RAID0 personality doing unconditional
+> accesses to mddev->queue, which is NULL in case of dm-raid stacked
+> on top of MD.
+> 
+> This patch is here for completeness; it has been send to Neil Brown
+> and linux-raid, Neil said he applied it on Feb 23rd but it did not
+> show up in upstream as yet.
+> 
+> 
+> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+> Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
+> 
+> ---
+> drivers/md/raid0.c | 48 +++++++++++++++++++++++++++---------------------
+> 1 file changed, 27 insertions(+), 21 deletions(-)
+> 
+> diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
+> index 3ed9f42..e074813 100644
+> --- a/drivers/md/raid0.c
+> +++ b/drivers/md/raid0.c
+> @@ -271,14 +271,16 @@ static int create_strip_zones(struct mddev *mddev, struct r0conf **private_conf)
+> 		goto abort;
+> 	}
+> 
+> -	blk_queue_io_min(mddev->queue, mddev->chunk_sectors << 9);
+> -	blk_queue_io_opt(mddev->queue,
+> -			 (mddev->chunk_sectors << 9) * mddev->raid_disks);
+> -
+> -	if (!discard_supported)
+> -		queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
+> -	else
+> -		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
+> +	if (mddev->queue) {
+> +		blk_queue_io_min(mddev->queue, mddev->chunk_sectors << 9);
+> +		blk_queue_io_opt(mddev->queue,
+> +				 (mddev->chunk_sectors << 9) * mddev->raid_disks);
+> +
+> +		if (!discard_supported)
+> +			queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
+> +		else
+> +			queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
+> +	}
+> 
+> 	pr_debug("md/raid0:%s: done.\n", mdname(mddev));
+> 	*private_conf = conf;
+> @@ -429,9 +431,12 @@ static int raid0_run(struct mddev *mddev)
+> 	}
+> 	if (md_check_no_bitmap(mddev))
+> 		return -EINVAL;
+> -	blk_queue_max_hw_sectors(mddev->queue, mddev->chunk_sectors);
+> -	blk_queue_max_write_same_sectors(mddev->queue, mddev->chunk_sectors);
+> -	blk_queue_max_discard_sectors(mddev->queue, mddev->chunk_sectors);
+> +
+> +	if (mddev->queue) {
+> +		blk_queue_max_hw_sectors(mddev->queue, mddev->chunk_sectors);
+> +		blk_queue_max_write_same_sectors(mddev->queue, mddev->chunk_sectors);
+> +		blk_queue_max_discard_sectors(mddev->queue, mddev->chunk_sectors);
+> +	}
+> 
+> 	/* if private is not null, we are here after takeover */
+> 	if (mddev->private == NULL) {
+> @@ -448,16 +453,17 @@ static int raid0_run(struct mddev *mddev)
+> 	printk(KERN_INFO "md/raid0:%s: md_size is %llu sectors.\n",
+> 	       mdname(mddev),
+> 	       (unsigned long long)mddev->array_sectors);
+> -	/* calculate the max read-ahead size.
+> -	 * For read-ahead of large files to be effective, we need to
+> -	 * readahead at least twice a whole stripe. i.e. number of devices
+> -	 * multiplied by chunk size times 2.
+> -	 * If an individual device has an ra_pages greater than the
+> -	 * chunk size, then we will not drive that device as hard as it
+> -	 * wants.  We consider this a configuration error: a larger
+> -	 * chunksize should be used in that case.
+> -	 */
+> -	{
+> +
+> +	if (mddev->queue) {
+> +		/* calculate the max read-ahead size.
+> +		 * For read-ahead of large files to be effective, we need to
+> +		 * readahead at least twice a whole stripe. i.e. number of devices
+> +		 * multiplied by chunk size times 2.
+> +		 * If an individual device has an ra_pages greater than the
+> +		 * chunk size, then we will not drive that device as hard as it
+> +		 * wants.  We consider this a configuration error: a larger
+> +		 * chunksize should be used in that case.
+> +		 */
+> 		int stripe = mddev->raid_disks *
+> 			(mddev->chunk_sectors << 9) / PAGE_SIZE;
+> 		if (mddev->queue->backing_dev_info.ra_pages < 2* stripe)
+
+fold in with conditionalization of gendisk structure?
+
+ brassow
