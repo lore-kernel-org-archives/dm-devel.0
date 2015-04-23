@@ -1,41 +1,82 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: Bisected, with rfc/patch - was Re: BUG: unable to handle
-	kernel NULL pointer dereference at sysfs_do_create_link_sd (after
-	mdadm)
-Date: Thu, 23 Apr 2015 18:10:51 +0200
-Message-ID: <20150423161051.GA18971@lst.de>
-References: <20150414171537.GH25394@azat> <20150423160551.45345f96@notabene.brown> <20150423073724.GA8139@lst.de> <20150423180314.367c0876@notabene.brown>
+From: Pali =?utf-8?B?Um9ow6Fy?= <pali.rohar@gmail.com>
+Subject: Re: [PATCH 0/3] dm-crypt: Adds support for wiping key when doing
+ suspend/hibernation
+Date: Thu, 23 Apr 2015 19:02:11 +0200
+Message-ID: <20150423170211.GI7646@pali>
+References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
+ <20150406130045.GA18583@redhat.com>
+ <201504061529.57299@pali>
+ <20150409131208.GA9504@redhat.com>
+ <20150409132836.GD12339@atrey.karlin.mff.cuni.cz>
+ <20150409140842.GA9779@redhat.com>
+ <20150409141633.GJ12339@atrey.karlin.mff.cuni.cz>
+ <20150409142658.GA9839@redhat.com>
+ <20150409143827.GK12339@atrey.karlin.mff.cuni.cz>
+ <20150414065016.GB20597@amd>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-pm-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150423180314.367c0876@notabene.brown>
-Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: Christoph Hellwig <hch@lst.de>, Azat Khuzhin <a3at.mail@gmail.com>, "Kernel.org-Linux-RAID" <linux-raid@vger.kernel.org>, Guoqing Jiang <GQJiang@suse.com>, Tejun Heo <tj@kernel.org>, Jan Kara <jack@suse.cz>, Jens Axboe <axboe@fb.com>, dm-devel@redhat.com
+In-Reply-To: <20150414065016.GB20597@amd>
+Sender: linux-pm-owner@vger.kernel.org
+To: Pavel Machek <pavel@ucw.cz>
+Cc: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Apr 23, 2015 at 06:03:14PM +1000, NeilBrown wrote:
-> On Thu, 23 Apr 2015 09:37:24 +0200 Christoph Hellwig <hch@lst.de> wrote:
-> 
-> > Plase fix your device name lifetimes.
-> 
-> Any chance you could be more explicit?
->
-> The commit you identified doesn't seem to help much - md and dm are quite
-> different in this area.
-> 
-> It seems that it is no longer safe to call 'add_disk' between calling
-> 'del_gendisk' and bdi_destroy being called.  How can I find out if I am in
-> that window, or wait for bdi_destroy to be called?
+On Tuesday 14 April 2015 08:50:16 Pavel Machek wrote:
+> Hi!
+>=20
+> > > > > > So proper way is to wipe luks crypto keys *after* userspace=
+ processes
+> > > > > > are freezed.
+> > > > >=20
+> > > > > I know you believe that I'm just not accepting that at face v=
+alue.
+> > > >=20
+> > > > If disks are synced before any DM suspend operation then we hav=
+e higher
+> > > > chance of preventing data corruption.
+> > >=20
+> > > disks are already synced as part of the DM suspend operation!
+> > >=20
+> >=20
+> > Yes, but part of hibernate operation is also sync call.
+>=20
+> Yes. Maybe that was a mistake.
+>=20
 
-The bdi is only around if the device is open, either through a device
-node, or through a blkdev_get from a file system.  If you get duplicate
-names that means you're trying to allocate a new gendisk while the old
-one is still around.
+I think not. I do not see any reason why system should not sync disks..=
+=2E
 
-In theory you're fine once the device gets ->release called.
+> > > > I still think that correct order is only:
+> > > >=20
+> > > > * freeze processes (which doing continous I/O)
+> > > > * fs & disk sync
+> > > > * DM suspend
+> > > > * wipe crypto keys
+> > > > * enter hibernate
+> > >=20
+> > > I just don't think that extreme is _required_ to have a hibernate=
+/resume
+> > > that incorporates dm-crypt key wiping.
+> >=20
+> > Ok, and what other developers think?
+>=20
+> If someone can fix freezer to work with LUKS stopped, that would be a=
+=20
+> good thing. Can you do it, Mike? Then we can look if it works well
+> enough for Pali.
+>=20
 
-Except that we can hold sysfs reference to the qeue, eww.  So for now
-try to follow the dm model, but I'll need to add a callback to the
-queue called once the request_queue actually is released for this.
+Its not only LUKS devices. Its for all dm devices when are suspended.
+
+> But that might be too hard / impossible. And at that point, I think
+> Pali's patch is right thing to do.
+> 									Pavel
+
+Yes I think it is hard too...
+
+--=20
+Pali Roh=C3=A1r
+pali.rohar@gmail.com
