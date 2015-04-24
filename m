@@ -1,12 +1,13 @@
-From: Christoph Hellwig <hch@lst.de>
+From: Christoph Hellwig <hch@infradead.org>
 Subject: [PATCH] block, dm: don't copy bios for request clones
-Date: Fri, 24 Apr 2015 21:33:40 +0200
-Message-ID: <1429904020-16363-1-git-send-email-hch@lst.de>
+Date: Fri, 24 Apr 2015 12:52:57 -0700
+Message-ID: <20150424195257.GA24082@infradead.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,9 +17,12 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@fb.com>
-Cc: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com
 List-Id: dm-devel.ids
+
+[recent, the dm-devel list server doesn't seem to like mail sent using
+git-send-email..]
 
 Currently dm-multipath has to clone the bios for every request sent
 to the lower devices, which wastes cpu cycles and ties down memory.
@@ -44,7 +48,7 @@ Signed-off-by: Christoph Hellwig <hch@lst.de>
  6 files changed, 73 insertions(+), 220 deletions(-)
 
 diff --git a/block/blk-core.c b/block/blk-core.c
-index 449d9d5..4085265 100644
+index fd154b9..57da507 100644
 --- a/block/blk-core.c
 +++ b/block/blk-core.c
 @@ -128,7 +128,8 @@ static void req_bio_endio(struct request *rq, struct bio *bio,
@@ -57,7 +61,7 @@ index 449d9d5..4085265 100644
  		bio_endio(bio, error);
  }
  
-@@ -2899,95 +2900,22 @@ int blk_lld_busy(struct request_queue *q)
+@@ -2901,95 +2902,22 @@ int blk_lld_busy(struct request_queue *q)
  }
  EXPORT_SYMBOL_GPL(blk_lld_busy);
  
@@ -456,10 +460,10 @@ index 59f53e7..35887b8 100644
  
  /*
 diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 09c7a2c..b0a5bff 100644
+index 93d2e71..992ef58 100644
 --- a/include/linux/blk_types.h
 +++ b/include/linux/blk_types.h
-@@ -192,6 +192,7 @@ enum rq_flag_bits {
+@@ -195,6 +195,7 @@ enum rq_flag_bits {
  	__REQ_HASHED,		/* on IO scheduler merge hash */
  	__REQ_MQ_INFLIGHT,	/* track inflight for MQ */
  	__REQ_NO_TIMEOUT,	/* requests may never expire */
@@ -467,7 +471,7 @@ index 09c7a2c..b0a5bff 100644
  	__REQ_NR_BITS,		/* stops here */
  };
  
-@@ -246,5 +247,6 @@ enum rq_flag_bits {
+@@ -249,5 +250,6 @@ enum rq_flag_bits {
  #define REQ_HASHED		(1ULL << __REQ_HASHED)
  #define REQ_MQ_INFLIGHT		(1ULL << __REQ_MQ_INFLIGHT)
  #define REQ_NO_TIMEOUT		(1ULL << __REQ_NO_TIMEOUT)
