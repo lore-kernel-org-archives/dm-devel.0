@@ -1,16 +1,15 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: CONFIG_DM_MQ_DEFAULT makes my kernel unhappy..
-Date: Sat, 25 Apr 2015 08:37:32 -0700
-Message-ID: <20150425153732.GA10612@infradead.org>
-References: <20150425092358.GA15550@infradead.org>
-	<20150425152856.GB28453@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH v2] block,
+ dm: don't copy bios for request clones
+Date: Sat, 25 Apr 2015 20:13:28 +0200
+Message-ID: <553BD948.5040302@suse.de>
+References: <1429957432-20672-1-git-send-email-hch@lst.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20150425152856.GB28453@redhat.com>
+In-Reply-To: <1429957432-20672-1-git-send-email-hch@lst.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,30 +19,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Jens Axboe <axboe@fb.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Apr 25, 2015 at 11:28:57AM -0400, Mike Snitzer wrote:
-> On Sat, Apr 25 2015 at  5:23am -0400,
-> Christoph Hellwig <hch@infradead.org> wrote:
-> 
-> > Running dm-mpath against a tcm_loop target with two ALUA paths makes
-> > the kernel very unhappy when CONFIG_DM_MQ_DEFAULT is set.  Without it
-> > it's perfectly happy.
-> 
-> Wonder if commit 63a4f065ec ("dm: fix add_disk() NULL pointer due to
-> race with free_dev()") left something not quite right relative to
-> blk-mq?  Or maybe this is a problem confined to blk-mq itself.
+On 04/25/2015 12:23 PM, Christoph Hellwig wrote:
+> Currently dm-multipath has to clone the bios for every request sent
+> to the lower devices, which wastes cpu cycles and ties down memory.
+> =
 
-I'll give it a spin.
+> This patch instead adds a new REQ_CLONE flag that instructs req_bio_endio
+> to not complete bios attached to a request, which we set on clone
+> requests similar to bios in a flush sequence.  With this change I/O
+> errors on a path failure only get propagated to dm-multipath, which
+> can then either resubmit the I/O or complete the bios on the original
+> request.
+> =
 
-> What were you actually testing when this happened?  Were you failing
-> paths under IO load or something?
+Hehe.
 
-This happened on the initial udev-direct scan of the devices.
+I seem to remember having sent a similar patch about a year ago;
+which then got shot down due to the missing partial completion
+handling.
 
-> Also, which upstream commit was your tree based on?  Did you have any
-> non-upstream patches applied that I should be aware of?
+> I've done some basic testing of this on a Linux target with ALUA support,
+> and it survives path failures during I/O nicely.
+> =
 
-Latest Linus tree as of this morning.
+So did I ...
+
+Anyway; we've discussed this at LSF in Boston, haven't we?
+AFAICR we've found that having to resubmit the entire command
+in the case of partial completion is okay with the storage
+vendors, so this patch is a viable way of handling things.
+
+_But_ I really would like to have a consensus here that this
+_is_ the correct way of handling partial request; because
+if that is the case then we should adopt this strategy
+throughout the SCSI layer (ie in scsi_io_completion())
+and document the fact.
+
+I really don't like to have two different completion paths;
+we should decide on one way and then use it throughout
+the stack.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
