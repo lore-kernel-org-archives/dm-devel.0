@@ -1,15 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: block, dm: don't copy bios for request clones
-Date: Fri, 24 Apr 2015 20:15:24 -0400
-Message-ID: <20150425001524.GB18601@redhat.com>
-References: <1429904020-16363-1-git-send-email-hch@lst.de>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: CONFIG_DM_MQ_DEFAULT makes my kernel unhappy..
+Date: Sat, 25 Apr 2015 02:23:58 -0700
+Message-ID: <20150425092358.GA15550@infradead.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1429904020-16363-1-git-send-email-hch@lst.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,81 +17,128 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@fb.com>, dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Apr 24 2015 at  3:33pm -0400,
-Christoph Hellwig <hch@lst.de> wrote:
+Running dm-mpath against a tcm_loop target with two ALUA paths makes
+the kernel very unhappy when CONFIG_DM_MQ_DEFAULT is set.  Without it
+it's perfectly happy.
 
-> Currently dm-multipath has to clone the bios for every request sent
-> to the lower devices, which wastes cpu cycles and ties down memory.
-> 
-> This patch instead adds a new REQ_CLONE flag that instructs req_bio_endio
-> to not complete bios attached to a request, which we set on clone
-> requests similar to bios in a flush sequence.  With this change I/O
-> errors on a path failure only get propagated to dm-multipath, which
-> can then either resubmit the I/O or complete the bios on the original
-> request.
-> 
-> I've done some basic testing of this on a Linux target with ALUA support,
-> and it survives path failures during I/O nicely.
-
-Thanks for working on this (it slipped in priority on my TODO list).
-Will be great to get this reviewed/tested/staged for 4.2.
-
-But your patch needs rebasing against latest upstream code.  I'd imagine
-this means you also haven't tested with "use_blk_mq" enabled (from
-commit 17e149b8f).
-
-I'll do a much more careful review once you rebase but I noticed one
-thing worth mentioning now:
-
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index 6554d91..4ac0a47 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -941,23 +941,30 @@ bool dm_table_mq_request_based(struct dm_table *t)
->  
->  static int dm_table_alloc_md_mempools(struct dm_table *t)
->  {
-> -	unsigned type = dm_table_get_type(t);
-> +	int type = dm_table_get_type(t);
->  	unsigned per_bio_data_size = 0;
-> -	struct dm_target *tgt;
->  	unsigned i;
->  
-> -	if (unlikely(type == DM_TYPE_NONE)) {
-> +	switch (type) {
-
-You're missing a case statement here for DM_TYPE_BIO_BASED:
-
-> +		for (i = 0; i < t->num_targets; i++) {
-> +			struct dm_target *tgt = t->targets + i;
-> +
-> +			per_bio_data_size = max(per_bio_data_size,
-> +						tgt->per_bio_data_size);
-> +		}
-> +
-> +		t->mempools = dm_alloc_bio_mempools(t->integrity_supported,
-> +				per_bio_data_size);
-> +		break;
-> +	case DM_TYPE_REQUEST_BASED:
-> +	case DM_TYPE_MQ_REQUEST_BASED:
-> +		t->mempools = dm_alloc_rq_mempools(type);
-> +		break;
-> +	default:
->  		DMWARN("no table type is set, can't allocate mempools");
->  		return -EINVAL;
->  	}
->  
-> -	if (type == DM_TYPE_BIO_BASED)
-> -		for (i = 0; i < t->num_targets; i++) {
-> -			tgt = t->targets + i;
-> -			per_bio_data_size = max(per_bio_data_size, tgt->per_bio_data_size);
-> -		}
-> -
-> -	t->mempools = dm_alloc_md_mempools(type, t->integrity_supported, per_bio_data_size);
->  	if (!t->mempools)
->  		return -ENOMEM;
->  
+[   12.865522] ------------[ cut here ]------------
+[   12.866119] WARNING: CPU: 0 PID: 3736 at ../lib/debugobjects.c:263 debug_print_object+0x8c/0xb0()
+[   12.866679] ODEBUG: init active (active state 0) object type: timer_list hint: blk_mq_rq_timer+0x0/0x100
+[   12.866679] Modules linked in:
+[   12.866679] CPU: 0 PID: 3736 Comm: multipathd Not tainted 4.0.0+ #335
+[   12.866679] Hardware name: Bochs Bochs, BIOS Bochs 01/01/2007
+[   12.866679]  ffffffff822b7186 ffff88007887b9e8 ffffffff81dfff1f 0000000000000000
+[   12.866679]  ffff88007887ba38 ffff88007887ba28 ffffffff810c4dc2 0000000000000000
+[   12.866679]  ffff88007b554b88 ffffffff82427f80 ffffffff823606cd 00000000000316c0
+[   12.866679] Call Trace:
+[   12.866679]  [<ffffffff81dfff1f>] dump_stack+0x45/0x57
+[   12.866679]  [<ffffffff810c4dc2>] warn_slowpath_common+0x92/0xd0
+[   12.866679]  [<ffffffff810c4ea1>] warn_slowpath_fmt+0x41/0x50
+[   12.866679]  [<ffffffff817dcaac>] debug_print_object+0x8c/0xb0
+[   12.866679]  [<ffffffff817a02a0>] ? blk_mq_free_request+0x40/0x40
+[   12.866679]  [<ffffffff817dcbdc>] ? __debug_object_init+0x5c/0x430
+[   12.866679]  [<ffffffff817dcdd3>] __debug_object_init+0x253/0x430
+[   12.866679]  [<ffffffff817dcfcb>] debug_object_init+0x1b/0x20
+[   12.866679]  [<ffffffff81131654>] init_timer_key+0x34/0xa0
+[   12.866679]  [<ffffffff817a2b88>] blk_mq_init_allocated_queue+0x1b8/0x8f0
+[   12.866679]  [<ffffffff81c7b6ef>] dm_setup_md_queue+0x1bf/0x2f0
+[   12.866679]  [<ffffffff81c81060>] table_load+0x1b0/0x340
+[   12.866679]  [<ffffffff81c80eb0>] ? table_clear+0xd0/0xd0
+[   12.866679]  [<ffffffff81c81e2a>] ctl_ioctl+0x25a/0x4f0
+[   12.866679]  [<ffffffff8110bf00>] ? match_held_lock+0x160/0x1f0
+[   12.866679]  [<ffffffff81c820ce>] dm_ctl_ioctl+0xe/0x20
+[   12.866679]  [<ffffffff811f2dc3>] do_vfs_ioctl+0x83/0x5b0
+[   12.866679]  [<ffffffff811fe761>] ? __fget+0xb1/0x1e0
+[   12.866679]  [<ffffffff811fe6b0>] ? put_unused_fd+0x60/0x60
+[   12.866679]  [<ffffffff811fe8d5>] ? __fget_light+0x25/0x90
+[   12.866679]  [<ffffffff811f3337>] SyS_ioctl+0x47/0x90
+[   12.866679]  [<ffffffff81e0a7ae>] system_call_fastpath+0x12/0x76
+[   12.866679] ---[ end trace f30ef5dd5b6c1afd ]---
+[   12.888707] kobject (ffff88007b898df0): tried to init an initialized object, something is seriously wrong.
+[   12.889790] CPU: 0 PID: 3736 Comm: multipathd Tainted: G        W       4.0.0+ #335
+[   12.890704] Hardware name: Bochs Bochs, BIOS Bochs 01/01/2007
+[   12.891355]  ffffffff824b5980 ffff88007887bba8 ffffffff81dfff1f ffff88007b534f10
+[   12.892542]  ffff88007b898df0 ffff88007887bbc8 ffffffff817bf957 ffff88007b898690
+[   12.893805]  0000000000000000 ffff88007887bc08 ffffffff817a4e54 ffff88007887bc38
+[   12.894911] Call Trace:
+[   12.895279]  [<ffffffff81dfff1f>] dump_stack+0x45/0x57
+[   12.895888]  [<ffffffff817bf957>] kobject_init+0x87/0xa0
+[   12.896502]  [<ffffffff817a4e54>] blk_mq_register_disk+0x34/0x160
+[   12.897360]  [<ffffffff81c7b716>] dm_setup_md_queue+0x1e6/0x2f0
+[   12.898151]  [<ffffffff81c81060>] table_load+0x1b0/0x340
+[   12.898834]  [<ffffffff81c80eb0>] ? table_clear+0xd0/0xd0
+[   12.899454]  [<ffffffff81c81e2a>] ctl_ioctl+0x25a/0x4f0
+[   12.900075]  [<ffffffff8110bf00>] ? match_held_lock+0x160/0x1f0
+[   12.900737]  [<ffffffff81c820ce>] dm_ctl_ioctl+0xe/0x20
+[   12.901346]  [<ffffffff811f2dc3>] do_vfs_ioctl+0x83/0x5b0
+[   12.901964]  [<ffffffff811fe761>] ? __fget+0xb1/0x1e0
+[   12.902553]  [<ffffffff811fe6b0>] ? put_unused_fd+0x60/0x60
+[   12.903184]  [<ffffffff811fe8d5>] ? __fget_light+0x25/0x90
+[   12.903818]  [<ffffffff811f3337>] SyS_ioctl+0x47/0x90
+[   12.904409]  [<ffffffff81e0a7ae>] system_call_fastpath+0x12/0x76
+[   12.905168] ------------[ cut here ]------------
+[   12.905730] WARNING: CPU: 0 PID: 3736 at ../fs/sysfs/dir.c:31 sysfs_warn_dup+0x6a/0x80()
+[   12.906676] sysfs: cannot create duplicate filename '/devices/virtual/block/dm-0/mq'
+[   12.907588] Modules linked in:
+[   12.908071] CPU: 0 PID: 3736 Comm: multipathd Tainted: G        W       4.0.0+ #335
+[   12.908973] Hardware name: Bochs Bochs, BIOS Bochs 01/01/2007
+[   12.909621]  ffffffff8229a8ae ffff88007887b9e8 ffffffff81dfff1f ffff88007b534f10
+[   12.910771]  ffff88007887ba38 ffff88007887ba28 ffffffff810c4dc2 ffff88007b298000
+[   12.911907]  ffff88007b298000 ffff88007abe5be0 ffff88007b29a2e0 ffff88007b5a58a0
+[   12.913024] Call Trace:
+[   12.913408]  [<ffffffff81dfff1f>] dump_stack+0x45/0x57
+[   12.914006]  [<ffffffff810c4dc2>] warn_slowpath_common+0x92/0xd0
+[   12.914675]  [<ffffffff810c4ea1>] warn_slowpath_fmt+0x41/0x50
+[   12.915323]  [<ffffffff8125bb00>] ? kernfs_path+0x50/0x70
+[   12.915940]  [<ffffffff8125f3aa>] sysfs_warn_dup+0x6a/0x80
+[   12.916564]  [<ffffffff8125f446>] sysfs_create_dir_ns+0x86/0x90
+[   12.917242]  [<ffffffff817c0125>] kobject_add_internal+0xa5/0x2e0
+[   12.917920]  [<ffffffff817c0577>] kobject_add+0x67/0xc0
+[   12.918522]  [<ffffffff817a4efa>] blk_mq_register_disk+0xda/0x160
+[   12.919201]  [<ffffffff81c7b716>] dm_setup_md_queue+0x1e6/0x2f0
+[   12.919864]  [<ffffffff81c81060>] table_load+0x1b0/0x340
+[   12.920482]  [<ffffffff81c80eb0>] ? table_clear+0xd0/0xd0
+[   12.921101]  [<ffffffff81c81e2a>] ctl_ioctl+0x25a/0x4f0
+[   12.921704]  [<ffffffff8110bf00>] ? match_held_lock+0x160/0x1f0
+[   12.922365]  [<ffffffff81c820ce>] dm_ctl_ioctl+0xe/0x20
+[   12.922963]  [<ffffffff811f2dc3>] do_vfs_ioctl+0x83/0x5b0
+[   12.923696]  [<ffffffff811fe761>] ? __fget+0xb1/0x1e0
+[   12.924390]  [<ffffffff811fe6b0>] ? put_unused_fd+0x60/0x60
+[   12.925204]  [<ffffffff811fe8d5>] ? __fget_light+0x25/0x90
+[   12.925838]  [<ffffffff811f3337>] SyS_ioctl+0x47/0x90
+[   12.926430]  [<ffffffff81e0a7ae>] system_call_fastpath+0x12/0x76
+[   12.927120] ---[ end trace f30ef5dd5b6c1afe ]---
+[   12.927704] ------------[ cut here ]------------
+[   12.928349] WARNING: CPU: 0 PID: 3736 at ../lib/kobject.c:240 kobject_add_internal+0x274/0x2e0()
+[   12.929581] kobject_add_internal failed for mq with -EEXIST, don't try to register things with the same name in the same directory.
+[   12.930926] Modules linked in:
+[   12.931415] CPU: 0 PID: 3736 Comm: multipathd Tainted: G        W       4.0.0+ #335
+[   12.932315] Hardware name: Bochs Bochs, BIOS Bochs 01/01/2007
+[   12.932962]  ffffffff822b6a52 ffff88007887ba48 ffffffff81dfff1f ffff88007b534f10
+[   12.934104]  ffff88007887ba98 ffff88007887ba88 ffffffff810c4dc2 ffff88007887ba88
+[   12.935194]  ffff88007b898df0 0000000000000000 00000000ffffffef ffff88007b5a58a0
+[   12.936286] Call Trace:
+[   12.936651]  [<ffffffff81dfff1f>] dump_stack+0x45/0x57
+[   12.937268]  [<ffffffff810c4dc2>] warn_slowpath_common+0x92/0xd0
+[   12.937942]  [<ffffffff810c4ea1>] warn_slowpath_fmt+0x41/0x50
+[   12.938591]  [<ffffffff8125f446>] ? sysfs_create_dir_ns+0x86/0x90
+[   12.939271]  [<ffffffff817c02f4>] kobject_add_internal+0x274/0x2e0
+[   12.939961]  [<ffffffff817c0577>] kobject_add+0x67/0xc0
+[   12.940574]  [<ffffffff817a4efa>] blk_mq_register_disk+0xda/0x160
+[   12.941268]  [<ffffffff81c7b716>] dm_setup_md_queue+0x1e6/0x2f0
+[   12.941932]  [<ffffffff81c81060>] table_load+0x1b0/0x340
+[   12.942540]  [<ffffffff81c80eb0>] ? table_clear+0xd0/0xd0
+[   12.943148]  [<ffffffff81c81e2a>] ctl_ioctl+0x25a/0x4f0
+[   12.951270]  [<ffffffff8110bf00>] ? match_held_lock+0x160/0x1f0
+[   12.951936]  [<ffffffff81c820ce>] dm_ctl_ioctl+0xe/0x20
+[   12.952542]  [<ffffffff811f2dc3>] do_vfs_ioctl+0x83/0x5b0
+[   12.953166]  [<ffffffff811fe761>] ? __fget+0xb1/0x1e0
+[   12.953838]  [<ffffffff811fe6b0>] ? put_unused_fd+0x60/0x60
+[   12.954759]  [<ffffffff811fe8d5>] ? __fget_light+0x25/0x90
+[   12.955566]  [<ffffffff811f3337>] SyS_ioctl+0x47/0x90
+[   12.956174]  [<ffffffff81e0a7ae>] system_call_fastpath+0x12/0x76
+[   12.956875] ---[ end trace f30ef5dd5b6c1aff ]---
