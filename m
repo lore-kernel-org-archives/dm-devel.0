@@ -1,17 +1,18 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH v2] block,
- dm: don't copy bios for request clones
-Date: Sun, 26 Apr 2015 07:20:23 -0700
-Message-ID: <20150426142020.GB7085@infradead.org>
-References: <1429957432-20672-1-git-send-email-hch@lst.de>
-	<553BD948.5040302@suse.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: CONFIG_DM_MQ_DEFAULT makes my kernel unhappy..
+Date: Mon, 27 Apr 2015 11:59:15 -0400
+Message-ID: <20150427155915.GA9976@redhat.com>
+References: <20150425092358.GA15550@infradead.org>
+	<20150425152856.GB28453@redhat.com>
+	<20150425153732.GA10612@infradead.org>
+	<20150426141628.GA7085@infradead.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <553BD948.5040302@suse.de>
+In-Reply-To: <20150426141628.GA7085@infradead.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,40 +22,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@fb.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Christoph Hellwig <hch@infradead.org>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, Apr 25, 2015 at 08:13:28PM +0200, Hannes Reinecke wrote:
-> I seem to remember having sent a similar patch about a year ago;
+On Sun, Apr 26 2015 at 10:16am -0400,
+Christoph Hellwig <hch@infradead.org> wrote:
 
-This one?
-http://www.redhat.com/archives/dm-devel/2014-June/msg00023.html
+> On Sat, Apr 25, 2015 at 08:37:32AM -0700, Christoph Hellwig wrote:
+> > I'll give it a spin.
+> > 
+> > > What were you actually testing when this happened?  Were you failing
+> > > paths under IO load or something?
+> > 
+> > This happened on the initial udev-direct scan of the devices.
+> > 
+> > > Also, which upstream commit was your tree based on?  Did you have any
+> > > non-upstream patches applied that I should be aware of?
+> > 
+> > Latest Linus tree as of this morning.
+> 
+> Seems like the first warning goes away without CONFIG_DEBUG_OBJECTS.
+> Note that in either way I/O over dm-mpath actually works fine.
+> 
+> Btw, this is the script used to reproduce it, you need
+> CONFIG_TARGET_CORE, CONFIG_TCM_IBLOCK and CONFIG_LOOPBACK_TARGET
+> enabled.  It jsut creates two different targets with a lun each,
+> pointing to the same device.  The target code automatically supports
+> ALUA in this case.
+> 
+> ---
+> #!/bin/bash
+> 
+> # add your own device
+> #DEV=/dev/sda
+> 
+> mount -t configfs none /sys/kernel/config/
+> 
+> tcm_node --block iblock_0/array /dev/sda
+> 
+> line=$(tcm_loop --createnexus=0)
+> wwn=$(echo $line | awk '{print $15}')
+> tcm_loop --addlun=$wwn 0 0 iblock_0/array
+> 
+> line=$(tcm_loop --createnexus=1)
+> wwn=$(echo $line | awk '{print $15}')
+> tcm_loop --addlun=$wwn 1 0 iblock_0/array
+> 
 
-> which then got shot down due to the missing partial completion
-> handling.
+So you're still using lio-utils?  Seems "lio-utils are deprecated and
+have been superseded by targetcli".. what am I missing?
 
-It got shot down because it passed the upper level request down,
-which is a non-no for blk-mq.
-
-> Anyway; we've discussed this at LSF in Boston, haven't we?
-> AFAICR we've found that having to resubmit the entire command
-> in the case of partial completion is okay with the storage
-> vendors, so this patch is a viable way of handling things.
-
-Yes.  But even if it wasn't for some reason we could inspect blk_rq_bytes()
-on the clone and do a partial completion on the original request, but
-I'd prefer to avoid special casing this case if we can avoid it.
-
-> _But_ I really would like to have a consensus here that this
-> _is_ the correct way of handling partial request; because
-> if that is the case then we should adopt this strategy
-> throughout the SCSI layer (ie in scsi_io_completion())
-> and document the fact.
-
-SCSI is a very different case, we do regularly get patial completions
-from arrays, and we need to handle them efficiently in the normal
-I/O path.  The only case where we will resubmit completed I/O in
-dm-mpath is when we got a successfull partial completion in SCSI,
-and then a following completions returns an error that causes a
-failover.  I don't think there is a need to micro-optimize this case.
+What lio-utils repo should I be using to get the utils that'll work with
+your script?
