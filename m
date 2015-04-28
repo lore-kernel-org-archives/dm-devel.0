@@ -1,267 +1,183 @@
-From: NeilBrown <neilb@suse.de>
-Subject: Re: [PATCH -stable] block: destroy bdi before blockdev is
- unregistered.
-Date: Wed, 29 Apr 2015 07:25:30 +1000
-Message-ID: <20150429072530.39d38b00@notabene.brown>
-References: <20150414171537.GH25394@azat>
-	<20150423160551.45345f96@notabene.brown>
-	<20150427141222.5dac22f1@notabene.brown>
-	<CAMM=eLf2aFFH29xeDVrS7beFj6T8kqUQRh=4KB1YO0kWGa7Rog@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Kernel v4.1-rc1 + MQ dm-multipath + MQ SRP oops
+Date: Tue, 28 Apr 2015 17:54:57 -0400
+Message-ID: <20150428215456.GA18306@redhat.com>
+References: <553F7474.70905@sandisk.com>
+ <20150428135258.GA16267@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- boundary="Sig_/a/y=o1PKzbldPLSytCnnabX"; protocol="application/pgp-signature"
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <CAMM=eLf2aFFH29xeDVrS7beFj6T8kqUQRh=4KB1YO0kWGa7Rog@mail.gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <axboe@fb.com>, Azat Khuzhin <a3at.mail@gmail.com>, Christoph Hellwig <hch@lst.de>, "Kernel.org-Linux-RAID" <linux-raid@vger.kernel.org>, Guoqing Jiang <GQJiang@suse.com>, Tejun Heo <tj@kernel.org>, Jan Kara <jack@suse.cz>, lkml <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20150428135258.GA16267@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
---Sig_/a/y=o1PKzbldPLSytCnnabX
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+On Tue, Apr 28 2015 at  9:52am -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-On Tue, 28 Apr 2015 12:41:18 -0400 Mike Snitzer <snitzer@redhat.com> wrote:
+> On Tue, Apr 28 2015 at  7:52am -0400,
+> Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+> 
+> > Hello,
+> > 
+> > Earlier today I started testing an SRP initiator patch series on top
+> > of Linux kernel v4.1-rc1. Although that patch series works reliably
+> > on top of kernel v4.0, a test during which I triggered
+> > scsi_remove_host() + relogin (for p in
+> > /sys/class/srp_remote_ports/*; do echo 1 >$p/delete & done; wait;
+> > srp_daemon -oaec) triggered the following kernel oops:
+> > 
+> > device-mapper: multipath: Failing path 8:0.
+> > BUG: unable to handle kernel NULL pointer dereference at 0000000000000138
+> > IP: [<ffffffffa045f8e9>] free_rq_clone+0x29/0xb0 [dm_mod]
+> ...
+>  
+> > In case anyone wants to see the translation of the crash address:
+> > 
+> > (gdb) list *(free_rq_clone+0x29)
+> > 0x919 is in free_rq_clone (drivers/md/dm.c:1092).
+> > 1087            struct dm_rq_target_io *tio = clone->end_io_data;
+> > 1088            struct mapped_device *md = tio->md;
+> > 1089
+> > 1090            blk_rq_unprep_clone(clone);
+> > 1091
+> > 1092            if (clone->q->mq_ops)
+> > 1093                    tio->ti->type->release_clone_rq(clone);
+> > 1094            else if (!md->queue->mq_ops)
+> > 1095                    /* request_fn queue stacked on request_fn
+> > queue(s) */
+> > 1096                    free_clone_request(md, clone);
+> 
+> I saw a crash like this yesterday with 4.1-rc1 (definitely due to
+> clone->q being NULL) but I didn't get a full backtrace over serial
+> console so I cannot be sure it is exactly like yours.
+> 
+> In my case I was using hch's lio-utils based test setup that he
+> documented here:
+> https://www.redhat.com/archives/dm-devel/2015-April/msg00138.html
+> 
+> But I got the crash the first time I ran this script:
+> multipathd -F
+> tcm_loop --unload
+> tcm_node --freedev iblock_0/array
 
-> On Mon, Apr 27, 2015 at 12:12 AM, NeilBrown <neilb@suse.de> wrote:
-> >
-> > Because of the peculiar way that md devices are created (automatically
-> > when the device node is opened), a new device can be created and
-> > registered immediately after the
-> >         blk_unregister_region(disk_devt(disk), disk->minors);
-> > call in del_gendisk().
-> >
-> > Therefore it is important that all visible artifacts of the previous
-> > device are removed before this call.  In particular, the 'bdi'.
-> >
-> > Since:
-> > commit c4db59d31e39ea067c32163ac961e9c80198fd37
-> > Author: Christoph Hellwig <hch@lst.de>
-> >     fs: don't reassign dirty inodes to default_backing_dev_info
-> >
-> > moved the
-> >    device_unregister(bdi->dev);
-> > call from bdi_unregister() to bdi_destroy() it has been quite easy to
-> > lose a race and have a new (e.g.) "md127" be created after the
-> > blk_unregister_region() call and before bdi_destroy() is ultimately
-> > called by the final 'put_disk', which must come after del_gendisk().
-> >
-> > The new device finds that the bdi name is already registered in sysfs
-> > and complains
-> >
-> >> [ 9627.630029] WARNING: CPU: 18 PID: 3330 at fs/sysfs/dir.c:31 sysfs_w=
-arn_dup+0x5a/0x70()
-> >> [ 9627.630032] sysfs: cannot create duplicate filename '/devices/virtu=
-al/bdi/9:127'
-> >
-> > We can fix this by moving the bdi_destroy() call out of
-> > blk_release_queue() (which can happen very late when a refcount
-> > reaches zero) and into blk_cleanup_queue() - which happens exactly when=
- the md
-> > device driver calls it.
-> >
-> > Then it is only necessary for md to call blk_cleanup_queue() before
-> > del_gendisk().  As loop.c devices are also created on demand by
-> > opening the device node, we make the same change there.
-> >
-> > Fixes: c4db59d31e39ea067c32163ac961e9c80198fd37
-> > Reported-by: Azat Khuzhin <a3at.mail@gmail.com>
-> > Cc: Christoph Hellwig <hch@lst.de>
-> > Cc: stable@vger.kernel.org (v4.0)
-> > Signed-off-by: NeilBrown <neilb@suse.de>
-> >
-> > --
-> > Hi Jens,
-> >  if you could check this and forward on to Linus I'd really appreciate =
-it.
-> >
-> > Thanks,
-> > NeilBrown
-> >
-> >
-> > diff --git a/block/blk-core.c b/block/blk-core.c
-> > index fd154b94447a..7871603f0a29 100644
-> > --- a/block/blk-core.c
-> > +++ b/block/blk-core.c
-> > @@ -552,6 +552,8 @@ void blk_cleanup_queue(struct request_queue *q)
-> >                 q->queue_lock =3D &q->__queue_lock;
-> >         spin_unlock_irq(lock);
-> >
-> > +       bdi_destroy(&q->backing_dev_info);
-> > +
-> >         /* @q is and will stay empty, shutdown and put */
-> >         blk_put_queue(q);
-> >  }
-> > diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-> > index faaf36ade7eb..2b8fd302f677 100644
-> > --- a/block/blk-sysfs.c
-> > +++ b/block/blk-sysfs.c
-> > @@ -522,8 +522,6 @@ static void blk_release_queue(struct kobject *kobj)
-> >
-> >         blk_trace_shutdown(q);
-> >
-> > -       bdi_destroy(&q->backing_dev_info);
-> > -
-> >         ida_simple_remove(&blk_queue_ida, q->id);
-> >         call_rcu(&q->rcu_head, blk_free_queue_rcu);
-> >  }
-> > diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-> > index ae3fcb4199e9..d7173cb1ea76 100644
-> > --- a/drivers/block/loop.c
-> > +++ b/drivers/block/loop.c
-> > @@ -1620,8 +1620,8 @@ out:
-> >
-> >  static void loop_remove(struct loop_device *lo)
-> >  {
-> > -       del_gendisk(lo->lo_disk);
-> >         blk_cleanup_queue(lo->lo_queue);
-> > +       del_gendisk(lo->lo_disk);
-> >         blk_mq_free_tag_set(&lo->tag_set);
-> >         put_disk(lo->lo_disk);
-> >         kfree(lo);
-> > diff --git a/drivers/md/md.c b/drivers/md/md.c
-> > index d4f31e195e26..593a02476c78 100644
-> > --- a/drivers/md/md.c
-> > +++ b/drivers/md/md.c
-> > @@ -4818,12 +4818,12 @@ static void md_free(struct kobject *ko)
-> >         if (mddev->sysfs_state)
-> >                 sysfs_put(mddev->sysfs_state);
-> >
-> > +       if (mddev->queue)
-> > +               blk_cleanup_queue(mddev->queue);
-> >         if (mddev->gendisk) {
-> >                 del_gendisk(mddev->gendisk);
-> >                 put_disk(mddev->gendisk);
-> >         }
-> > -       if (mddev->queue)
-> > -               blk_cleanup_queue(mddev->queue);
-> >
-> >         kfree(mddev);
-> >  }
->=20
-> I've taken this patch into consideration relative to DM, please see:
-> http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=
-=3Dwip&id=3D5dac86fb79697e93297edb6a316b429236d00137
->=20
-> Point is in my private snitzer/wip branch DM now calls
-> blk_cleanup_queue() before del_gendisk().
->=20
-> With your patch:
-> 1) blk_cleanup_queue -> bdi_destroy -> bdi->dev =3D NULL;
-> 2) del_gendisk -> bdi_unregister -> WARN_ON_ONCE(!bdi->dev)
->=20
-> So, in testing with DM I'm hitting bdi_unregister's WARN_ON(), are you
-> seeing this WARN_ON?
+Turns out that after running hch's script, with multipathd having setup
+an mpath device ontop of tcm_loop, if I just do:
 
-Hmmm.  Yes I am.  I wonder how I missed that.  Thanks!
+tcm_loop --unload
 
-As bdi_set_min_ratio doesn't touch bdi->dev, there seems to be no need for
-the test, or the warning.
+(tcm_loop appears to allow me to remove the devices out from underneath dm-multipath)
 
-I wonder if it would make sense to move the bdi_set_min_ratio() call to
-bdi_destroy, and discard bdi_unregister??
-There is a comment which suggests bdi_unregister might be of use later, but
-it might be best to have a clean slate in which to add whatever might be
-needed??
+I get:
 
-NeilBrown
+[  463.168175] sd 10:0:1:0: alua: Detached
+[  463.172808] sd 10:0:1:0: [sdk] Synchronizing SCSI cache
+[  463.211388] device-mapper: multipath: Failing path 8:144.
+[  463.211494] sd 9:0:0:0: alua: Detached
+[  463.211621] sd 9:0:0:0: [sdj] Synchronizing SCSI cache
+[  463.227362] blk_update_request: I/O error, dev dm-13, sector 32
+[  463.234238] BUG: unable to handle kernel NULL pointer dereference at 00000000000000d8
+[  463.242990] IP: [<ffffffffa0000bd7>] free_rq_clone+0x17/0x90 [dm_mod]
+[  463.250188] PGD 0
+[  463.252437] Oops: 0000 [#1] SMP
+[  463.256051] Modules linked in: tcm_loop dm_service_time dm_multipath target_core_iblock target_core_mod sg iscsi_tcp libiscsi_tcp libiscsi scsi_transport_iscsi core
+temp kvm_intel kvm ixgbe igb crct10dif_pclmul crc32_pclmul crc32c_intel mdio ptp ghash_clmulni_intel pps_core aesni_intel dca ipmi_si iTCO_wdt glue_helper lrw gf128mul
+ shpchp ablk_helper ipmi_msghandler cryptd iTCO_vendor_support lpc_ich mfd_core i7core_edac pcspkr edac_core i2c_i801 acpi_power_meter acpi_cpufreq xfs libcrc32c sr_mo
+d cdrom sd_mod mgag200 syscopyarea sysfillrect sysimgblt i2c_algo_bit drm_kms_helper ata_generic ttm pata_acpi ata_piix drm libata iomemory_vsl(POE) megaraid_sas i2c_c
+ore skd dm_mirror dm_region_hash dm_log dm_mod [last unloaded: tcm_loop]
+[  463.328610] CPU: 3 PID: 29 Comm: ksoftirqd/3 Tainted: P        W IOE   4.1.0-rc1.snitm+ #55
+[  463.337923] Hardware name: FUJITSU                          PRIMERGY RX300 S6             /D2619, BIOS 6.00 Rev. 1.10.2619.N1           05/24/2011
+[  463.352566] task: ffff880330c60000 ti: ffff880330c5c000 task.ti: ffff880330c5c000
+[  463.360911] RIP: 0010:[<ffffffffa0000bd7>]  [<ffffffffa0000bd7>] free_rq_clone+0x17/0x90 [dm_mod]
+[  463.370817] RSP: 0018:ffff880330c5fd58  EFLAGS: 00010297
+[  463.376740] RAX: ffff8803301f0000 RBX: ffff8803301f0000 RCX: dead000000200200
+[  463.384698] RDX: 0000000000000000 RSI: 0000000000000000 RDI: ffff880310bb8000
+[  463.392654] RBP: ffff880330c5fd68 R08: ffffffffa04cf970 R09: ffff880321bf4d80
+[  463.400610] R10: 0000000000000d71 R11: 000000000000bc00 R12: ffff880310bb8000
+[  463.408568] R13: ffff88032aa1db50 R14: ffff88032bcae800 R15: 0000000000000000
+[  463.416524] FS:  0000000000000000(0000) GS:ffff8803332c0000(0000) knlGS:0000000000000000
+[  463.425548] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[  463.431955] CR2: 00000000000000d8 CR3: 000000000198a000 CR4: 00000000000007e0
+[  463.439910] Stack:
+[  463.442150]  00000000fffffffb ffff880310bb8000 ffff880330c5fda8 ffffffffa0001837
+[  463.450434]  ffff8803332d7540 ffff88032aa1dbc8 ffff88032aa1db50 ffff880330c5fdc0
+[  463.458719]  0000000000000100 0000000000000000 ffff880330c5fdf8 ffffffff812f1c10
+[  463.467001] Call Trace:
+[  463.469730]  [<ffffffffa0001837>] dm_softirq_done+0x137/0x250 [dm_mod]
+[  463.477010]  [<ffffffff812f1c10>] blk_done_softirq+0x90/0xc0
+[  463.483321]  [<ffffffff81080264>] __do_softirq+0xf4/0x2d0
+[  463.489340]  [<ffffffff81080469>] run_ksoftirqd+0x29/0x50
+[  463.495360]  [<ffffffff8109eddf>] smpboot_thread_fn+0x12f/0x180
+[  463.501963]  [<ffffffff8109ecb0>] ? sort_range+0x30/0x30
+[  463.507886]  [<ffffffff8109b448>] kthread+0xd8/0xf0
+[  463.513323]  [<ffffffff8109b370>] ? kthread_create_on_node+0x1b0/0x1b0
+[  463.520604]  [<ffffffff81683322>] ret_from_fork+0x42/0x70
+[  463.526624]  [<ffffffff8109b370>] ? kthread_create_on_node+0x1b0/0x1b0
+[  463.533921] Code: a4 62 67 e1 0f 0b 66 66 66 66 66 2e 0f 1f 84 00 00 00 00 00 66 66 66 66 90 55 48 89 e5 41 54 53 48 8b 57 30 48 8b 9f 60 01 00 00 <48> 83 ba d8 00
+00 00 00 4c 8b 23 74 2c 48 8b 53 08 48 8b 52 08
+[  463.555555] RIP  [<ffffffffa0000bd7>] free_rq_clone+0x17/0x90 [dm_mod]
+[  463.562846]  RSP <ffff880330c5fd58>
+[  463.566733] CR2: 00000000000000d8
+[  463.570426] ---[ end trace 4f71f94089df7bda ]---
+[  465.155661] INFO: NMI handler (ghes_notify_nmi) took too long to run: 2.541 msecs
+[  469.833245] Kernel panic - not syncing: Fatal exception in interrupt
+[  469.833257] ------------[ cut here ]------------
 
-diff --git a/block/genhd.c b/block/genhd.c
-index e351fc521053..1d4435478e8a 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -657,7 +657,6 @@ void del_gendisk(struct gendisk *disk)
- 	disk->flags &=3D ~GENHD_FL_UP;
-=20
- 	sysfs_remove_link(&disk_to_dev(disk)->kobj, "bdi");
--	bdi_unregister(&disk->queue->backing_dev_info);
- 	blk_unregister_queue(disk);
- 	blk_unregister_region(disk_devt(disk), disk->minors);
-=20
-diff --git a/include/linux/backing-dev.h b/include/linux/backing-dev.h
-index aff923ae8c4b..d87d8eced064 100644
---- a/include/linux/backing-dev.h
-+++ b/include/linux/backing-dev.h
-@@ -116,7 +116,6 @@ __printf(3, 4)
- int bdi_register(struct backing_dev_info *bdi, struct device *parent,
- 		const char *fmt, ...);
- int bdi_register_dev(struct backing_dev_info *bdi, dev_t dev);
--void bdi_unregister(struct backing_dev_info *bdi);
- int __must_check bdi_setup_and_register(struct backing_dev_info *, char *);
- void bdi_start_writeback(struct backing_dev_info *bdi, long nr_pages,
- 			enum wb_reason reason);
-diff --git a/include/trace/events/writeback.h b/include/trace/events/writeb=
-ack.h
-index 880dd7437172..c178d13d6f4c 100644
---- a/include/trace/events/writeback.h
-+++ b/include/trace/events/writeback.h
-@@ -250,7 +250,6 @@ DEFINE_EVENT(writeback_class, name, \
- DEFINE_WRITEBACK_EVENT(writeback_nowork);
- DEFINE_WRITEBACK_EVENT(writeback_wake_background);
- DEFINE_WRITEBACK_EVENT(writeback_bdi_register);
--DEFINE_WRITEBACK_EVENT(writeback_bdi_unregister);
-=20
- DECLARE_EVENT_CLASS(wbc_class,
- 	TP_PROTO(struct writeback_control *wbc, struct backing_dev_info *bdi),
-diff --git a/mm/backing-dev.c b/mm/backing-dev.c
-index 6dc4580df2af..000e7b3b9896 100644
---- a/mm/backing-dev.c
-+++ b/mm/backing-dev.c
-@@ -359,23 +359,6 @@ static void bdi_wb_shutdown(struct backing_dev_info *b=
-di)
- 	flush_delayed_work(&bdi->wb.dwork);
- }
-=20
--/*
-- * Called when the device behind @bdi has been removed or ejected.
-- *
-- * We can't really do much here except for reducing the dirty ratio at
-- * the moment.  In the future we should be able to set a flag so that
-- * the filesystem can handle errors at mark_inode_dirty time instead
-- * of only at writeback time.
-- */
--void bdi_unregister(struct backing_dev_info *bdi)
--{
--	if (WARN_ON_ONCE(!bdi->dev))
--		return;
--
--	bdi_set_min_ratio(bdi, 0);
--}
--EXPORT_SYMBOL(bdi_unregister);
--
- static void bdi_wb_init(struct bdi_writeback *wb, struct backing_dev_info =
-*bdi)
- {
- 	memset(wb, 0, sizeof(*wb));
-@@ -443,6 +426,7 @@ void bdi_destroy(struct backing_dev_info *bdi)
- 	int i;
-=20
- 	bdi_wb_shutdown(bdi);
-+	bdi_set_min_ratio(bdi, 0);
-=20
- 	WARN_ON(!list_empty(&bdi->work_list));
- 	WARN_ON(delayed_work_pending(&bdi->wb.dwork));
+> Rough first experience with LIO ;)  So I just chalked it up to tcm_loop
+> or something not being careful about device lifetime.
 
---Sig_/a/y=o1PKzbldPLSytCnnabX
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
+Think this is an issue where the cloned request doesn't have a reference
+on the underlying device (with above I'm testing with old request_fn
+_not_ blk-mq dm-mpath).
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
+Christoph, if I do use blk-mq dm-multpath with:
+echo Y > /sys/module/dm_mod/parameters/use_blk_mq
 
-iQIVAwUBVT/6yznsnt1WYoG5AQJz9Q/9GlKTZ1e3UXcDuQ8Sh2wC9nYbDSvE4pKP
-0UEMZs8A/Vs9SGPsztRwBlc3voXEZZPxul4Tkp4NVAz0saHER6PVw+Lit+i3am2x
-jEgQDh/NX2agzxxAps9lihsGpIM3ueO3C1updmR4VR9eAVZ6eVgXXa26M6HL6zoG
-nXmOasCw6hN4pWZZYZduw9gRXNXwgI6+JKZAo7mJbv3sxooMrAS+JlCDYOoP36GW
-NYy61w4dCmPPVXMQW4IbUgCVwfL/30mUJiBHlx5iRIfG8gn2v/kqLUZsBTIw/t7w
-H569vT5Tl5Z3Z03nsxbJo+cMSBJV42Zc9j2yB5WTir6OPRTW3gz2B1yBaUUPWWb2
-oLfrxlf2Ci2JBkL0MJVgQK/WCTBY2MB2OSy78oPy/3fBgQIDODw/n/AryFgGpuOc
-uFNY6/3jcMSD8Zx/0pwSuCveSkzHBZuuy9qD8R7L0xa1yQwwsreZZfzonWtjHCo0
-017a41a+CX3KNhccx3IaezS5wOHF4b7Deqtg/Dt7CUSkPchuH4K144t+V3Dzg2Ny
-dT+nGYmtTYnnZt90IezEuhxyHSf1Vz6ArBiLrCnzAa8wVevLUPyaTkaaFwBbr8y2
-EECADzrqpK0PxgL2bz2/fcsrVFHcqsZH2TBEsFSscgNrQtI1/h1CbRM/pYdL/ZnY
-YxDdQOdRrvs=
-=6SHG
------END PGP SIGNATURE-----
+Then run your script; I'm able to reproduce the failure you reported as
+soon as I run:
 
---Sig_/a/y=o1PKzbldPLSytCnnabX--
+# tcm_loop --unload
+sas_target_naa: naa.6001405ac0a3d2eb
+sas_target_tpgt: tpgt_1
+sas_target_lun: lun_0
+Succesfully deleted local virtual SCSI Logical Unit from SAS Target Port
+Successfully deleted virtual SCSI I_T Nexus between TCM and Linux/SCSI HBA
+Successfully removed NAA based SAS Target Address: /sys/kernel/config/target/loopback/naa.6001405ac0a3d2eb//sys/kernel/config/target/loopback/naa.6001405ac0a3d2eb/tpgt_1
+sas_target_naa: naa.6001405b0a839d09
+sas_target_tpgt: tpgt_0
+sas_target_lun: lun_0
+
+Falls over much like you saw but then ultimately crashes with the same
+as above:
+
+[  232.179074] WARNING: CPU: 9 PID: 2836 at lib/list_debug.c:36 __list_add+0x92/0xc0()
+...
+[  232.443124] kobject (ffff880035625fd0): tried to init an initialized object, something is seriously wrong.
+...
+[  232.621489] sysfs: cannot create duplicate filename '/devices/virtual/block/dm-13/mq'
+...
+[  234.514036] NULL pointer dereference at 00000000000000d8
+[  234.520168] IP: [<ffffffffa0000bd7>] free_rq_clone+0x17/0x90 [dm_mod]
+[  234.527363] PGD 0
+[  234.529610] Oops: 0000 [#1] SMP
+
+Basically, the dm-mq error path needs proper testing (multipathd's
+reloading of the associated blk-mq request-based DM table is causing
+these list_add and duplicate object problems; will hopefully be easy
+enough to fix).
+
+But as for the NULL pointer crash, in both cases the underlying paths
+are being ripped out from under dm-multipath.  That just should not be
+possible while IO is still in-flight/completing.
