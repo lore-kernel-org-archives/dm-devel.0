@@ -1,22 +1,79 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 01/10] block: make generic_make_request handle
-	arbitrarily sized bios
-Date: Tue, 28 Apr 2015 13:43:20 +0200
-Message-ID: <20150428114320.GA9790@lst.de>
-References: <1430203717-13307-1-git-send-email-mlin@kernel.org> <1430203717-13307-2-git-send-email-mlin@kernel.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Kernel v4.1-rc1 + MQ dm-multipath + MQ SRP oops
+Date: Tue, 28 Apr 2015 09:52:58 -0400
+Message-ID: <20150428135258.GA16267@redhat.com>
+References: <553F7474.70905@sandisk.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1430203717-13307-2-git-send-email-mlin@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ming Lin <mlin@kernel.org>
-Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dongsu.park@profitbricks.com>, Christoph Hellwig <hch@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Ming Lei <ming.lei@canonical.com>, Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Geoff Levand <geoff@infradead.org>, Jim Paris <jim@jtan.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Oleg Drokin <oleg.drokin@intel.com>, Andreas Dilger <andreas.dilger@intel.com>, Keith Busch <keith.busch@intel.com>
+In-Reply-To: <553F7474.70905@sandisk.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-This seems to lack support for QUEUE_FLAG_SG_GAPS to work around
-the retarded PPR format in the NVMe driver.  I'm actually not
-sure we have a way to reproduce them for BLOCK_PC requests, but I think
-we should make sure to properly handle them.
+On Tue, Apr 28 2015 at  7:52am -0400,
+Bart Van Assche <bart.vanassche@sandisk.com> wrote:
 
-Maybe Keith or Jens have a good reproducer for these.
+> Hello,
+> 
+> Earlier today I started testing an SRP initiator patch series on top
+> of Linux kernel v4.1-rc1. Although that patch series works reliably
+> on top of kernel v4.0, a test during which I triggered
+> scsi_remove_host() + relogin (for p in
+> /sys/class/srp_remote_ports/*; do echo 1 >$p/delete & done; wait;
+> srp_daemon -oaec) triggered the following kernel oops:
+> 
+> device-mapper: multipath: Failing path 8:0.
+> BUG: unable to handle kernel NULL pointer dereference at 0000000000000138
+> IP: [<ffffffffa045f8e9>] free_rq_clone+0x29/0xb0 [dm_mod]
+...
+ 
+> In case anyone wants to see the translation of the crash address:
+> 
+> (gdb) list *(free_rq_clone+0x29)
+> 0x919 is in free_rq_clone (drivers/md/dm.c:1092).
+> 1087            struct dm_rq_target_io *tio = clone->end_io_data;
+> 1088            struct mapped_device *md = tio->md;
+> 1089
+> 1090            blk_rq_unprep_clone(clone);
+> 1091
+> 1092            if (clone->q->mq_ops)
+> 1093                    tio->ti->type->release_clone_rq(clone);
+> 1094            else if (!md->queue->mq_ops)
+> 1095                    /* request_fn queue stacked on request_fn
+> queue(s) */
+> 1096                    free_clone_request(md, clone);
+
+I saw a crash like this yesterday with 4.1-rc1 (definitely due to
+clone->q being NULL) but I didn't get a full backtrace over serial
+console so I cannot be sure it is exactly like yours.
+
+In my case I was using hch's lio-utils based test setup that he
+documented here:
+https://www.redhat.com/archives/dm-devel/2015-April/msg00138.html
+
+But I got the crash the first time I ran this script:
+multipathd -F
+tcm_loop --unload
+tcm_node --freedev iblock_0/array
+
+Rough first experience with LIO ;)  So I just chalked it up to tcm_loop
+or something not being careful about device lifetime.
+
+So we now have 2 data points (each using different storage backend).  I
+haven't been able to reproduce the issue again though -- but I switch
+away from using multipathd to create the multipath device and resorted
+to using dmsetup directly (with a dmsetup remove for cleanup instead of
+multipath -F).
