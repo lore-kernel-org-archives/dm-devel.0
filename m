@@ -1,89 +1,22 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 2/1] dm: do not allocate any mempools for
- blk-mq request-based DM
-Date: Tue, 28 Apr 2015 06:22:04 -0400
-Message-ID: <20150428102204.GB15131@redhat.com>
-References: <1429957432-20672-1-git-send-email-hch@lst.de>
-	<20150428005950.GA31039@redhat.com>
-	<20150428010303.GB31039@redhat.com> <20150428062843.GA19065@lst.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 01/10] block: make generic_make_request handle
+	arbitrarily sized bios
+Date: Tue, 28 Apr 2015 13:43:20 +0200
+Message-ID: <20150428114320.GA9790@lst.de>
+References: <1430203717-13307-1-git-send-email-mlin@kernel.org> <1430203717-13307-2-git-send-email-mlin@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150428062843.GA19065@lst.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@fb.com>, dm-devel@redhat.com
+In-Reply-To: <1430203717-13307-2-git-send-email-mlin@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ming Lin <mlin@kernel.org>
+Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dongsu.park@profitbricks.com>, Christoph Hellwig <hch@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Ming Lei <ming.lei@canonical.com>, Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Geoff Levand <geoff@infradead.org>, Jim Paris <jim@jtan.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Oleg Drokin <oleg.drokin@intel.com>, Andreas Dilger <andreas.dilger@intel.com>, Keith Busch <keith.busch@intel.com>
 List-Id: dm-devel.ids
 
-On Tue, Apr 28 2015 at  2:28am -0400,
-Christoph Hellwig <hch@lst.de> wrote:
+This seems to lack support for QUEUE_FLAG_SG_GAPS to work around
+the retarded PPR format in the NVMe driver.  I'm actually not
+sure we have a way to reproduce them for BLOCK_PC requests, but I think
+we should make sure to properly handle them.
 
-> On Mon, Apr 27, 2015 at 09:03:04PM -0400, Mike Snitzer wrote:
-> > Do not allocate the io_pool mempool for blk-mq request-based DM
-> > (DM_TYPE_MQ_REQUEST_BASED) in dm_alloc_rq_mempools().
-> > 
-> > Also refine __bind_mempools() to have more precise awareness of which
-> > mempools each type of DM device uses -- avoids mempool churn when
-> > reloading DM tables (particularly for DM_TYPE_REQUEST_BASED).
-> 
-> Btw, I looked into this code and didn't dare to touch it before I
-> understood how we deal with the case of dm-mpath using blk-mq and
-> low level driver not or the other way around.
-
-Current code does deal with:
-1) blk-mq queue on non-blk-mq underlying devices
-2) blk-mq queue on blk-mq underlying devices
-3) non-blk-mq queue on non-blk-mq underlying devices
-4) non-blk-mq queue on blk-mq underlying devices
-
-But all these permutations do definitely make the code less
-approachable and maintainable.
-
-> As far as I can see we'd need the request mempool as long as the
-> low level driver does not use dm-mq, independent of what dm-mpath
-> itsel uses.
-> 
-> The code doesn't seem to handle this right, but as mentioned I'm not
-> 100% sure and need to dive deeper into this.  Is there a place enforcing
-> dm-mpath is using the same request type as the underlying devices?
-
-It is dm-table.c:dm_table_set_type() that determines whether a given DM
-table load references underlying devices that are all blk-mq or not.
-Based on what it finds it either establishes the type as
-DM_TYPE_REQUEST_BASED or DM_TYPE_MQ_REQUEST_BASED.
-
-DM_TYPE_REQUEST_BASED will make use of io_pool, whereas
-DM_TYPE_MQ_REQUEST_BASED won't.  There is an awkward duality where
-use_blk_mq governs which mempools are created based on filter_md_type().
-filter_md_type() is needed because the table's type is really only
-concerned with the underlying devices' types -- not the top-level DM
-queue.  So things are awkward until we establish the top-level queue
-(then we just make use of q->mq_ops like normal).
-
-It is dm.c:dm_setup_md_queue() that establishes the top-level DM queue
-based on the type.
-
-How the DM queue's requests are cloned depends the underlying devices
-(e.g. blk-mq vs not).
-
-Top-level blk-mq DM device uses the md's type (DM_TYPE_REQUEST_BASED vs
-DM_TYPE_MQ_REQUEST_BASED) to judge how to clone the request.
-DM_TYPE_REQUEST_BASED implies legacy path.
-
-There is still some awkward branching in the IO path but it ended up
-being surprisingly manageable.  Only concern I have is: in the long-run
-will all this duality in the code compromise maintainability?  But
-hopefully we can kill the old request_fn path in block core (if/when
-blk-mq IO scheduling lands) and the DM code can be cleaned up
-accordingly.
+Maybe Keith or Jens have a good reproducer for these.
