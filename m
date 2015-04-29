@@ -1,8 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH v2 4/4] dm-raid: remove bogus parse_raid_params()
-	comment about devices_handle_discards_safely
-Date: Wed, 29 Apr 2015 14:03:07 +0200
-Message-ID: <1430308987-24703-5-git-send-email-heinzm@redhat.com>
+Subject: [PATCH] dm-raid: unsynced raid snapshot
+	creation/deletion causes panic (work queue teardown race)
+Date: Wed, 29 Apr 2015 14:33:09 +0200
+Message-ID: <1430310789-564-1-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,28 +23,53 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-This patch removes a bogus comment on parse_raid_params() claiming
-"devices_handle_discard_safely" being a table line argument when
-it actually is a module parameter.
+This patch avoids oopses caused by a callback racing
+with the destrution of a mapping.
+
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
+
 
 ---
- drivers/md/dm-raid.c | 2 --
- 1 file changed, 2 deletions(-)
+ drivers/md/dm-raid.c | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index c541d5a..97e1651 100644
+index 88e4c7f..fc4bc83 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -479,8 +479,6 @@ too_many:
-  *                                      will form the "stripe"
-  *    [[no]sync]			Force or prevent recovery of the
-  *                                      entire array
-- *    [devices_handle_discard_safely]	Allow discards on RAID4/5/6; useful if RAID
-- *					member device(s) properly support TRIM/UNMAP
-  *    [rebuild <idx>]			Rebuild the drive indicated by the index
-  *    [daemon_sleep <ms>]		Time between bitmap daemon work to
-  *                                      clear bits
+@@ -1614,6 +1614,17 @@ static void raid_presuspend(struct dm_target *ti)
+ {
+ 	struct raid_set *rs = ti->private;
+ 
++	/*
++	 * Address a teardown race when calling
++	 * raid_(pre|post)suspend followed by raid_dtr:
++	 *
++	 * MD's call chain md_stop_writes()->md_reap_sync_thread()
++	 * causes work to be queued on the md_misc_wq queue
++	 * not flushing it, hence the callback can occur after
++	 * a potential destruction of the raid set causing an oops.
++	 */
++	rs->md.event_work.func = NULL;
++
+ 	md_stop_writes(&rs->md);
+ }
+ 
+@@ -1684,6 +1695,13 @@ static void raid_resume(struct dm_target *ti)
+ {
+ 	struct raid_set *rs = ti->private;
+ 
++	/*
++	 * See "Address a teardown race" in raid_presuspend()
++	 *
++	 * Reenable the worker function.
++	 */
++	rs->md.event_work.func = do_table_event;
++
+ 	set_bit(MD_CHANGE_DEVS, &rs->md.flags);
+ 	if (!rs->bitmap_loaded) {
+ 		bitmap_load(&rs->md);
 -- 
 2.1.0
