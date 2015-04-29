@@ -1,61 +1,75 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH -stable] block: destroy bdi before blockdev is
- unregistered.
-Date: Wed, 29 Apr 2015 18:02:58 +0200
-Message-ID: <20150429160258.GK17717@twins.programming.kicks-ass.net>
-References: <20150414171537.GH25394@azat>
- <20150423160551.45345f96@notabene.brown>
- <20150427141222.5dac22f1@notabene.brown>
- <CAMM=eLf2aFFH29xeDVrS7beFj6T8kqUQRh=4KB1YO0kWGa7Rog@mail.gmail.com>
- <20150429072530.39d38b00@notabene.brown>
- <20150429133512.GA4436@lst.de>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Storage Management Job Vacancy at Red Hat
+Date: Wed, 29 Apr 2015 19:55:06 +0100
+Message-ID: <20150429185506.GH31048@agk-dp.fab.redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <lvm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20150429133512.GA4436@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: NeilBrown <neilb@suse.de>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@fb.com>, Azat Khuzhin <a3at.mail@gmail.com>, "Kernel.org-Linux-RAID" <linux-raid@vger.kernel.org>, Guoqing Jiang <GQJiang@suse.com>, Tejun Heo <tj@kernel.org>, Jan Kara <jack@suse.cz>, lkml <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, linux-lvm@redhat.com, lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Apr 29, 2015 at 03:35:12PM +0200, Christoph Hellwig wrote:
-> On Wed, Apr 29, 2015 at 07:25:30AM +1000, NeilBrown wrote:
-> > As bdi_set_min_ratio doesn't touch bdi->dev, there seems to be no need for
-> > the test, or the warning.
-> > 
-> > I wonder if it would make sense to move the bdi_set_min_ratio() call to
-> > bdi_destroy, and discard bdi_unregister??
-> > There is a comment which suggests bdi_unregister might be of use later, but
-> > it might be best to have a clean slate in which to add whatever might be
-> > needed??
-> 
-> This seems fine to me from the block dev point of view.  I don't really
-> understand the bdi_min_ratio logic, but Peter might have a better idea.
-
-Ah, that was a bit of digging, I've not looked at that in ages :-)
-
-So if you look at bdi_dirty_limit()'s comment:
-
- * The bdi's share of dirty limit will be adapting to its throughput and
- * bounded by the bdi->min_ratio and/or bdi->max_ratio parameters, if set.
-
-So the min_ratio is a minimum guaranteed fraction of the total
-throughput.
-
-Now the problem before commit ccb6108f5b0b ("mm/backing-dev.c: reset bdi
-min_ratio in bdi_unregister()") was that since bdi_set_min_ratio()
-keeps a global sum of bdi->min_ratio, you need to subtract from said
-global sum when taking the BDI away. Otherwise we loose/leak a fraction
-of the total throughput available (to the other BDIs).
-
-Which is what that bdi_set_min_ratio(bdi, 0) in unregister does. It
-resets the min_ratio for the bdi being taken out and frees up the min
-allocated bandwidth for the others.
-
-So I think moving that do destroy would be fine; assuming the delay
-between unregister and destroy is typically 'short'. Because without
-that you can 'leak' this min ratio for extended periods which means the
-bandwidth is unavailable for other BDIs.
-
-Does that make sense?
+V2UncmUgc2Vla2luZyB0byByZWNydWl0IGFub3RoZXIgZXhwZXJpZW5jZWQgbGludXggZGV2ZWxv
+cGVyIHRvIHdvcmsgb24KbWFuYWdlbWVudCBvZiB0aGUgc3RvcmFnZSBzdGFjayB3aGljaCBpbmNs
+dWRlcyBkZXZpY2UtbWFwcGVyIGFuZCBMVk0KYW1vbmdzdCBvdGhlciBjb21wb25lbnRzLgoKQ2Fu
+ZGlkYXRlcyBzaG91bGQgYXBwbHkgZGlyZWN0bHkgdGhyb3VnaCB0aGUgd2Vic2l0ZS4KICBodHRw
+Oi8vam9icy5yZWRoYXQuY29tL2pvYnMvZGVzY3JpcHRpb25zL3ByaW5jaXBhbC1zb2Z0d2FyZS1l
+bmdpbmVlci1zdG9yYWdlLW1hbmFnZW1lbnQtd2VzdGZvcmQtbWFzc2FjaHVzZXR0cy1qb2ItMS01
+MjQ0NjI0CgpOb3RlIHRoYXQgYWx0aG91Z2ggaXQgaXMgbGlzdGVkIHVuZGVyIG91ciBtYWluIGVu
+Z2luZWVyaW5nIG9mZmljZSBhdApXZXN0Zm9yZCBvdXRzaWRlIEJvc3RvbiwgTUEsIGl0IGlzIGFs
+c28gb3BlbiB0byBnb29kIGNhbmRpZGF0ZXMgd2hvCndvdWxkIHByZWZlciB0byBiZSBiYXNlZCBh
+dCBvdGhlciBSZWQgSGF0IG9mZmljZXMgd29ybGR3aWRlIChvciB0byB3b3JrCmZyb20gaG9tZSku
+ICBJZiB0aGlzIHdvdWxkIGJlIHRoZSBjYXNlLCBwbGVhc2UgbWVudGlvbiBpdCB3aGVuIGFwcGx5
+aW5nLgoKICAgICAgICAgICAgICAgICAgICAgICAgLS0tLS0tLS0tLS0tLS0tLS0tLS0KClJlZCBI
+YXQgaXMgc2Vla2luZyBhbiBleHBlcmllbmNlZCBQcmluY2lwYWwgU29mdHdhcmUgRW5naW5lZXIg
+dG8gd29yayBvbgpvdXIgTGludXggc3RvcmFnZSBzdGFjay4gVGhlIHN0YWNrIHByb3ZpZGVzIGEg
+cmljaCBzZXQgb2YgY2FwYWJpbGl0aWVzCnRvIGNvbmZpZ3VyZSwgY29udHJvbCwgYW5kIG1vbml0
+b3Igc3RvcmFnZSByZXNvdXJjZXMsIGFuZCBleHRlbmRzIGZyb20Kc3RvcmFnZSBoYXJkd2FyZSB0
+byBvcGVyYXRpbmcgc3lzdGVtIGRldmljZSBkcml2ZXJzLCBwcm90b2NvbCBkcml2ZXJzCmxpa2Ug
+U0NTSSBhbmQgU0FUQSwgZGV2aWNlLW1hcHBlciwgY3J5cHRvLCBtdWx0aXBhdGgsIHNvZnR3YXJl
+IFJBSUQsIGFuZApMVk0uIEluIHRoaXMgcm9sZSwgeW91IHdpbGwgZGV2ZWxvcCBBUElzIHRvIHBy
+b3ZpZGUgYWNjZXNzIHRvIHRoZQptYW5hZ2VtZW50IG9mIGVhY2ggb2YgdGhlc2UgY29tcG9uZW50
+cy4gVGhlIEFQSXMgd2lsbCBzZXJ2ZSBhcyB0aGUgYmFzaXMKZm9yIGRldmVsb3BpbmcgaGlnaGVy
+LWxldmVsIHRvb2xzLCBtYW5hZ2luZyB0aGUgZGF0YSBjZW50ZXIsIGFuZCBmb3IKcGxhdGZvcm1z
+IHN1Y2ggYXMgT3BlblN0YWNrLgoKUHJpbWFyeSBqb2IgcmVzcG9uc2liaWxpdGllczoKCi0gRGV0
+ZXJtaW5lIHRoZSByZXF1aXJlbWVudHMgb2YgdGhlIGhpZ2hlci1sZXZlbCB0b29scyB0aGF0IHdp
+bGwgbWFrZQogIHVzZSBvZiB0aGUgc3RvcmFnZSBtYW5hZ2VtZW50IEFQSXMKCi0gSW52ZXN0aWdh
+dGUgdGhlIGRlc2lnbiBhbmQgY2FwYWJpbGl0aWVzIG9mIGVhY2ggY29tcG9uZW50IHRvIGJlCiAg
+bWFuYWdlZAoKLSBEZXRlcm1pbmUgZmVhc2liaWxpdHksIGFuZCBjb2xsYWJvcmF0ZSB0byBkZXNp
+Z24gdGhlIEFQSQoKLSBEZXZlbG9wIHRoZSBDIGFuZCBQeXRob24gQVBJcyBuZWVkZWQgdG8gYWxs
+b3cgbWFuYWdlbWVudCBvZiBlYWNoCiAgY29tcG9uZW50IGluIHRoZSBMaW51eCBzdG9yYWdlIHN0
+YWNrCgotIFRlc3QgdGhlIGludGVyZmFjZXM7IGRlYnVnLCBkb2N1bWVudCwgYW5kIGRlbGl2ZXIg
+Zm9yIHVzZSBieQogIGhpZ2hlci1sZXZlbCBzeXN0ZW0gbWFuYWdlbWVudCB0b29scwoKICAgICAg
+ICAgICAgICAgICAgICAgICAgLS0tLS0tLS0tLS0tLS0tLS0tLS0KUmVxdWlyZWQgc2tpbGxzOgoK
+LSBQcm9mZXNzaW9uYWwgZGV2ZWxvcG1lbnQgZXhwZXJpZW5jZSB3aXRoIEMKLSBTb2xpZCBzY3Jp
+cHRpbmcgc2tpbGxzOyBleHBlcmllbmNlIHdpdGggUHl0aG9uIGlzIGFuIGFkdmFudGFnZQotIEV4
+cGVyaWVuY2UgZGV2ZWxvcGluZyBJbnRlci1Qcm9jZXNzIENvbW11bmljYXRpb24gKElQQykgc3lz
+dGVtczsKICBmYW1pbGlhcml0eSB3aXRoIEQtQnVzIG1lc3NhZ2UgYnVzIGlzIGEgcGx1cwotIEV4
+cGVyaWVuY2Ugd2l0aCBzdG9yYWdlIGNvbmNlcHRzIGxpa2UgZGV2aWNlIGRyaXZlcnMsIFJBSUQs
+IGRldmljZQogIG1hcHBlciwgbXVsdGlwYXRoLCAoaSlTQ1NJLCBvciBTQVRBIGlzIGEgcGx1cwot
+IFVuZGVyc3RhbmRpbmcgb2YgaG93IHRvIGRldmVsb3AgbWFuYWdlbWVudCBjb2RlIGF0IHRoZSBo
+YXJkd2FyZSBvcgogIHNvZnR3YXJlIGludGVyZmFjZSBpcyBhIHBsdXMKLSBDb21taXR0ZWQgdG8g
+b3BlbiBzb3VyY2Ugc29mdHdhcmUgZGV2ZWxvcG1lbnQgYW5kIGZvc3RlcmluZwogIGNvbW11bml0
+eSBlbmdhZ2VtZW50Ci0gRXhwZXJpZW5jZSB3b3JraW5nIHdpdGggb3BlbiBzb3VyY2UgcHJvamVj
+dHMgaXMgYSBwbHVzCgogICAgICAgICAgICAgICAgICAgICAgICAtLS0tLS0tLS0tLS0tLS0tLS0t
+LQoKUmVkIEhhdCBpcyBwcm91ZCB0byBiZSBhbiBlcXVhbCBvcHBvcnR1bml0eSB3b3JrcGxhY2Ug
+YW5kIGFuIGFmZmlybWF0aXZlCmFjdGlvbiBlbXBsb3llci4gV2UgcmV2aWV3IGFwcGxpY2F0aW9u
+cyBmb3IgZW1wbG95bWVudCB3aXRob3V0IHJlZ2FyZCB0bwphcHBsaWNhbnRz4oCZIHJhY2UsIGNv
+bG9yLCByZWxpZ2lvbiwgbmF0aW9uYWwgb3JpZ2luLCBhbmNlc3RyeSwKY2l0aXplbnNoaXAsIHNl
+eCwgZ2VuZGVyLCBhZ2UsIHVuaWZvcm1lZCBzZXJ2aWNlcywgZ2VuZXRpYyBpbmZvcm1hdGlvbiwK
+cGh5c2ljYWwgb3IgbWVudGFsIGRpc2FiaWxpdHksIG1lZGljYWwgY29uZGl0aW9uLCBtYXJpdGFs
+IHN0YXR1cywgb3IgYW55Cm90aGVyIGJhc2lzIHByb2hpYml0ZWQgYnkgbGF3LgoKICAgICAgICAg
+ICAgICAgICAgICAgICAgLS0tLS0tLS0tLS0tLS0tLS0tLS0KCkFsYXNkYWlyCi0tIAphZ2tAcmVk
+aGF0LmNvbQoKLS0KbHZtLWRldmVsIG1haWxpbmcgbGlzdApsdm0tZGV2ZWxAcmVkaGF0LmNvbQpo
+dHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vbHZtLWRldmVs
