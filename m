@@ -1,13 +1,17 @@
-From: heinzm@redhat.com
-Subject: [PATCH] dm-raid: unsynced raid snapshot
-	creation/deletion causes panic (work queue teardown race)
-Date: Wed, 29 Apr 2015 14:33:09 +0200
-Message-ID: <1430310789-564-1-git-send-email-heinzm@redhat.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH] dm: fix blk-mq request-based DM queue
+	initialization
+Date: Wed, 29 Apr 2015 15:00:37 +0200
+Message-ID: <20150429130037.GA3017@lst.de>
+References: <20150425092358.GA15550@infradead.org>
+	<1430269153-647-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1430269153-647-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,59 +21,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <heinzm@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
+On Tue, Apr 28, 2015 at 08:59:13PM -0400, Mike Snitzer wrote:
+> Commit bfebd1cdb4 ("dm: add full blk-mq support to request-based DM")
+> didn't properly account for the need to short-circuit re-initializing
+> DM's blk-mq request_queue if it was already initialized.
+> 
+> Fix dm_init_request_based_blk_mq_queue() to return early if the
+> mapped_device's tag_set already has its driver_data set to the
+> mapped_device pointer.
 
-This patch avoids oopses caused by a callback racing
-with the destrution of a mapping.
-
-
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
-
-
----
- drivers/md/dm-raid.c | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
-
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 88e4c7f..fc4bc83 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -1614,6 +1614,17 @@ static void raid_presuspend(struct dm_target *ti)
- {
- 	struct raid_set *rs = ti->private;
- 
-+	/*
-+	 * Address a teardown race when calling
-+	 * raid_(pre|post)suspend followed by raid_dtr:
-+	 *
-+	 * MD's call chain md_stop_writes()->md_reap_sync_thread()
-+	 * causes work to be queued on the md_misc_wq queue
-+	 * not flushing it, hence the callback can occur after
-+	 * a potential destruction of the raid set causing an oops.
-+	 */
-+	rs->md.event_work.func = NULL;
-+
- 	md_stop_writes(&rs->md);
- }
- 
-@@ -1684,6 +1695,13 @@ static void raid_resume(struct dm_target *ti)
- {
- 	struct raid_set *rs = ti->private;
- 
-+	/*
-+	 * See "Address a teardown race" in raid_presuspend()
-+	 *
-+	 * Reenable the worker function.
-+	 */
-+	rs->md.event_work.func = do_table_event;
-+
- 	set_bit(MD_CHANGE_DEVS, &rs->md.flags);
- 	if (!rs->bitmap_loaded) {
- 		bitmap_load(&rs->md);
--- 
-2.1.0
+I'm not quite up to speed with this area of code, but shouldn't
+we always tear the queue fully down before trying to reinitialize it?
