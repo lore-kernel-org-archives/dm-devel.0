@@ -1,39 +1,28 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: Kernel v4.1-rc1 + MQ dm-multipath + MQ SRP oops
-Date: Wed, 29 Apr 2015 15:24:03 +0200
-Message-ID: <20150429132403.GB3876@lst.de>
-References: <553F7474.70905@sandisk.com> <20150428135258.GA16267@redhat.com>
-	<20150428215456.GA18306@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH -stable] block: destroy bdi before blockdev is
+	unregistered.
+Date: Wed, 29 Apr 2015 15:35:12 +0200
+Message-ID: <20150429133512.GA4436@lst.de>
+References: <20150414171537.GH25394@azat> <20150423160551.45345f96@notabene.brown> <20150427141222.5dac22f1@notabene.brown> <CAMM=eLf2aFFH29xeDVrS7beFj6T8kqUQRh=4KB1YO0kWGa7Rog@mail.gmail.com> <20150429072530.39d38b00@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150428215456.GA18306@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>
+In-Reply-To: <20150429072530.39d38b00@notabene.brown>
+Sender: linux-kernel-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@fb.com>, Azat Khuzhin <a3at.mail@gmail.com>, Christoph Hellwig <hch@lst.de>, "Kernel.org-Linux-RAID" <linux-raid@vger.kernel.org>, Guoqing Jiang <GQJiang@suse.com>, Tejun Heo <tj@kernel.org>, Jan Kara <jack@suse.cz>, lkml <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Peter Zijlstra <peterz@infradead.org>
 List-Id: dm-devel.ids
 
-On Tue, Apr 28, 2015 at 05:54:57PM -0400, Mike Snitzer wrote:
-> Turns out that after running hch's script, with multipathd having setup
-> an mpath device ontop of tcm_loop, if I just do:
+On Wed, Apr 29, 2015 at 07:25:30AM +1000, NeilBrown wrote:
+> As bdi_set_min_ratio doesn't touch bdi->dev, there seems to be no need for
+> the test, or the warning.
 > 
-> tcm_loop --unload
-> 
-> (tcm_loop appears to allow me to remove the devices out from underneath dm-multipath)
+> I wonder if it would make sense to move the bdi_set_min_ratio() call to
+> bdi_destroy, and discard bdi_unregister??
+> There is a comment which suggests bdi_unregister might be of use later, but
+> it might be best to have a clean slate in which to add whatever might be
+> needed??
 
-That has nothing to do with tcm_loop.  SCSI devices can get unregistered
-any time, and we use refcountin to ensure the structures stay in place
-forever.
-
-See my reply to Bart for what I suspect is the real issue.
+This seems fine to me from the block dev point of view.  I don't really
+understand the bdi_min_ratio logic, but Peter might have a better idea.
