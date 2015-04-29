@@ -1,84 +1,36 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm: fix blk-mq request-based DM queue
-	initialization
-Date: Tue, 28 Apr 2015 20:59:13 -0400
-Message-ID: <1430269153-647-1-git-send-email-snitzer@redhat.com>
-References: <20150425092358.GA15550@infradead.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ming Lin <mlin@kernel.org>
+Subject: Re: [PATCH 07/10] block: kill merge_bvec_fn() completely
+Date: Tue, 28 Apr 2015 23:32:00 -0700
+Message-ID: <CAF1ivSb0OfbH8diZwep+ay-gYy3eV8yaY_RbdMjTs7Vp2t=WOg@mail.gmail.com>
+References: <1430203717-13307-1-git-send-email-mlin@kernel.org>
+	<1430203717-13307-8-git-send-email-mlin@kernel.org>
+	<20150428173137.GC12975@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150425092358.GA15550@infradead.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@lst.de>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Return-path: <ceph-devel-owner@vger.kernel.org>
+In-Reply-To: <20150428173137.GC12975@agk-dp.fab.redhat.com>
+Sender: ceph-devel-owner@vger.kernel.org
+To: lkml <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dongsu.park@profitbricks.com>, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Yehuda Sadeh <yehuda@inktank.com>, Sage Weil <sage@inktank.com>, Alex Elder <elder@kernel.org>, ceph-devel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Dave Chinner <dchinner@redhat.com>, Wu Fengguang <fengguang.wu@intel.com>
 List-Id: dm-devel.ids
 
-Commit bfebd1cdb4 ("dm: add full blk-mq support to request-based DM")
-didn't properly account for the need to short-circuit re-initializing
-DM's blk-mq request_queue if it was already initialized.
+On Tue, Apr 28, 2015 at 10:31 AM, Alasdair G Kergon <agk@redhat.com> wrote:
+> On Mon, Apr 27, 2015 at 11:48:34PM -0700, Ming Lin wrote:
+>> As generic_make_request() is now able to handle arbitrarily sized bios,
+>> it's no longer necessary for each individual block driver to define its
+>> own ->merge_bvec_fn() callback. Remove every invocation completely.
+>
+> merge_bvec_fn is also about telling the code building up bios what optimum
+> maximum size to use.
+>
+> Have you got some test data to demonstrate that we won't find some situations
+> where performance is now lost by code building up bios that are far too big
+> and are always going to have to be split up later?
 
-Fix dm_init_request_based_blk_mq_queue() to return early if the
-mapped_device's tag_set already has its driver_data set to the
-mapped_device pointer.
+Not yet.
+Fengguang will help to run some tests.
 
-Otherwise, reloading a blk-mq request-based DM table (either manually or
-via multipathd) resulted in errors like the following:
+Thanks.
 
-WARNING: CPU: 9 PID: 2836 at lib/list_debug.c:36 __list_add+0x92/0xc0()
-...
-kobject (ffff880035625fd0): tried to init an initialized object, something is seriously wrong.
-...
-sysfs: cannot create duplicate filename '/devices/virtual/block/dm-13/mq'
-...
-kobject_add_internal failed for mq with -EEXIST, don't try to register things with the same name in the same directory.
-
-Reported-by: Christoph Hellwig <hch@lst.de>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 1567f6c..c834a94 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2704,6 +2704,9 @@ static int dm_init_request_based_blk_mq_queue(struct mapped_device *md)
- 	struct request_queue *q;
- 	int err;
- 
-+	if (md->tag_set.driver_data == md)
-+		return 0;
-+
- 	memset(&md->tag_set, 0, sizeof(md->tag_set));
- 	md->tag_set.ops = &dm_mq_ops;
- 	md->tag_set.queue_depth = BLKDEV_MAX_RQ;
-@@ -2719,7 +2722,7 @@ static int dm_init_request_based_blk_mq_queue(struct mapped_device *md)
- 
- 	err = blk_mq_alloc_tag_set(&md->tag_set);
- 	if (err)
--		return err;
-+		goto out;
- 
- 	q = blk_mq_init_allocated_queue(&md->tag_set, md->queue);
- 	if (IS_ERR(q)) {
-@@ -2739,6 +2742,8 @@ static int dm_init_request_based_blk_mq_queue(struct mapped_device *md)
- 
- out_tag_set:
- 	blk_mq_free_tag_set(&md->tag_set);
-+out:
-+	memset(&md->tag_set, 0, sizeof(md->tag_set));
- 	return err;
- }
- 
--- 
-2.3.2 (Apple Git-55)
+>
+> Alasdair
+>
