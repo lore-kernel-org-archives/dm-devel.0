@@ -1,9 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH v2 3/4] Documentation: add version history
-	entries for raid0 support _and_ forgotten
-	devices_handle_discards_safely module paramater
-Date: Wed, 29 Apr 2015 14:03:06 +0200
-Message-ID: <1430308987-24703-4-git-send-email-heinzm@redhat.com>
+Subject: [PATCH v2 4/4] dm-raid: remove bogus parse_raid_params()
+	comment about devices_handle_discards_safely
+Date: Wed, 29 Apr 2015 14:03:07 +0200
+Message-ID: <1430308987-24703-5-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,26 +23,28 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-This patch adds version history for md raid0 to dm-raid.txt
-_and_
-adds forgotten doc for the 1.6.0 version change as well
+This patch removes a bogus comment on parse_raid_params() claiming
+"devices_handle_discard_safely" being a table line argument when
+it actually is a module parameter.
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 
 ---
- Documentation/device-mapper/dm-raid.txt | 3 +++
- 1 file changed, 3 insertions(+)
+ drivers/md/dm-raid.c | 2 --
+ 1 file changed, 2 deletions(-)
 
-diff --git a/Documentation/device-mapper/dm-raid.txt b/Documentation/device-mapper/dm-raid.txt
-index ef8ba9f..bceb865 100644
---- a/Documentation/device-mapper/dm-raid.txt
-+++ b/Documentation/device-mapper/dm-raid.txt
-@@ -224,3 +224,6 @@ Version History
- 	New status (STATUSTYPE_INFO) fields: sync_action and mismatch_cnt.
- 1.5.1   Add ability to restore transiently failed devices on resume.
- 1.5.2   'mismatch_cnt' is zero unless [last_]sync_action is "check".
-+1.6.0   Add devices_handle_discards_safely module parameter to
-+	allow discards on disks announcing uncertain discard_zeroes_data
-+1.7.0   Add support for MD RAID0 mappings
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index c541d5a..97e1651 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -479,8 +479,6 @@ too_many:
+  *                                      will form the "stripe"
+  *    [[no]sync]			Force or prevent recovery of the
+  *                                      entire array
+- *    [devices_handle_discard_safely]	Allow discards on RAID4/5/6; useful if RAID
+- *					member device(s) properly support TRIM/UNMAP
+  *    [rebuild <idx>]			Rebuild the drive indicated by the index
+  *    [daemon_sleep <ms>]		Time between bitmap daemon work to
+  *                                      clear bits
 -- 
 2.1.0
