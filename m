@@ -1,61 +1,64 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: dm: fix blk-mq request-based DM queue initialization
-Date: Thu, 30 Apr 2015 10:23:16 +0200
-Message-ID: <20150430082315.GA17074@lst.de>
-References: <20150425092358.GA15550@infradead.org>
-	<1430269153-647-1-git-send-email-snitzer@redhat.com>
-	<20150429130037.GA3017@lst.de> <20150430014152.GA26430@redhat.com>
-	<20150430072200.GB15819@lst.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH stable] block: discard bdi_unregister() in favour of
+ bdi_destroy()
+Date: Thu, 30 Apr 2015 10:35:03 +0200
+Message-ID: <20150430083503.GU5029@twins.programming.kicks-ass.net>
+References: <20150414171537.GH25394@azat>
+ <20150423160551.45345f96@notabene.brown>
+ <20150427141222.5dac22f1@notabene.brown>
+ <CAMM=eLf2aFFH29xeDVrS7beFj6T8kqUQRh=4KB1YO0kWGa7Rog@mail.gmail.com>
+ <20150429072530.39d38b00@notabene.brown>
+ <20150429133512.GA4436@lst.de>
+ <20150429160258.GK17717@twins.programming.kicks-ass.net>
+ <20150430103233.75227693@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150430072200.GB15819@lst.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>
+In-Reply-To: <20150430103233.75227693@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: Jens Axboe <axboe@fb.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, Azat Khuzhin <a3at.mail@gmail.com>, "Kernel.org-Linux-RAID" <linux-raid@vger.kernel.org>, Guoqing Jiang <GQJiang@suse.com>, Tejun Heo <tj@kernel.org>, Jan Kara <jack@suse.cz>, lkml <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCBBcHIgMzAsIDIwMTUgYXQgMDk6MjI6MDBBTSArMDIwMCwgQ2hyaXN0b3BoIEhlbGx3
-aWcgd3JvdGU6Cj4gV2VsbCAtIHdlJ3JlIG9idmlvdXNseSB0cnlpbmcgdG8gcmVpbml0aWFsaXpl
-IGl0IGhlcmUgYW5kIG9ubHkgZXJyb3IKPiBvdXQgdmVyeSBsb3cgbGV2ZWwgd2l0aCB5b3VyIHBh
-dGNoLiAgV2hhdCBJIG1lYW4gaXMgdGhhdCB3ZSBzaG91bGRuJ3QKPiBldmVuIHRyeSB0byByZWlu
-aXRpYWxpemUgaXQgYXQgYSBtdWNoIGhpZ2hlciBsZXZlbCwgc28gd2UgZG9uJ3QgbmVlZAo+IHRo
-aXMgYmxrLW1xIHNwZWNpZmljIGhhY2sgZG93biBoZXJlLgoKRllJLCB0aGlzIGZpeGVzIHRoZSBp
-c3NzdWUgZm9yIG1lIGFuZCBzZWVtcyB0byBiZSAibW9yZSBjb3JyZWN0IiBhdAphIGhpZ2hlciBs
-ZXZlbDoKCi0tLQpGcm9tOiBDaHJpc3RvcGggSGVsbHdpZyA8aGNoQGxzdC5kZT4KU3ViamVjdDog
-W1BBVENIXSBkbTogb25seSBpbml0aWFsaXplIHJlcXVlc3RfcXVldWUgb25jZQoKV2Ugc2hvdWxk
-IG9ubHkgaW7Rlm5pdGlhbGl6ZSB0aGUgcmVxdWVzdF9xdWV1ZSBvbiB0aGUgaW5pdGlhbCB0YWJs
-ZSBsb2FkIHdoZW4Kd2UgYXNzaW5nIHRoZSBkZXZpY2UgdHlwZS4KClNpZ25lZC1vZmYtYnk6IENo
-cmlzdG9waCBIZWxsd2lnIDxoY2hAbHN0LmRlPgoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0t
-aW9jdGwuYyBiL2RyaXZlcnMvbWQvZG0taW9jdGwuYwppbmRleCBjOGExOGU0Li5kZTkyNjYyIDEw
-MDY0NAotLS0gYS9kcml2ZXJzL21kL2RtLWlvY3RsLmMKKysrIGIvZHJpdmVycy9tZC9kbS1pb2N0
-bC5jCkBAIC0xMjk4LDIxICsxMjk4LDIyIEBAIHN0YXRpYyBpbnQgdGFibGVfbG9hZChzdHJ1Y3Qg
-ZG1faW9jdGwgKnBhcmFtLCBzaXplX3QgcGFyYW1fc2l6ZSkKIAkJZ290byBlcnJfdW5sb2NrX21k
-X3R5cGU7CiAJfQogCi0JaWYgKGRtX2dldF9tZF90eXBlKG1kKSA9PSBETV9UWVBFX05PTkUpCisJ
-aWYgKGRtX2dldF9tZF90eXBlKG1kKSA9PSBETV9UWVBFX05PTkUpIHsKIAkJLyogSW5pdGlhbCB0
-YWJsZSBsb2FkOiBhY3F1aXJlIHR5cGUgb2YgdGFibGUuICovCiAJCWRtX3NldF9tZF90eXBlKG1k
-LCBkbV90YWJsZV9nZXRfdHlwZSh0KSk7Ci0JZWxzZSBpZiAoZG1fZ2V0X21kX3R5cGUobWQpICE9
-IGRtX3RhYmxlX2dldF90eXBlKHQpKSB7CisJCisJCS8qIHNldHVwIG1kLT5xdWV1ZSB0byByZWZs
-ZWN0IG1kJ3MgdHlwZSAobWF5IGJsb2NrKSAqLworCQlyID0gZG1fc2V0dXBfbWRfcXVldWUobWQp
-OworCQlpZiAocikgeworCQkJRE1XQVJOKCJ1bmFibGUgdG8gc2V0IHVwIGRldmljZSBxdWV1ZSBm
-b3IgbmV3IHRhYmxlLiIpOworCQkJZ290byBlcnJfdW5sb2NrX21kX3R5cGU7CisJCX0KKwl9IGVs
-c2UgaWYgKGRtX2dldF9tZF90eXBlKG1kKSAhPSBkbV90YWJsZV9nZXRfdHlwZSh0KSkgewogCQlE
-TVdBUk4oImNhbid0IGNoYW5nZSBkZXZpY2UgdHlwZSBhZnRlciBpbml0aWFsIHRhYmxlIGxvYWQu
-Iik7CiAJCXIgPSAtRUlOVkFMOwogCQlnb3RvIGVycl91bmxvY2tfbWRfdHlwZTsKIAl9CiAKLQkv
-KiBzZXR1cCBtZC0+cXVldWUgdG8gcmVmbGVjdCBtZCdzIHR5cGUgKG1heSBibG9jaykgKi8KLQly
-ID0gZG1fc2V0dXBfbWRfcXVldWUobWQpOwotCWlmIChyKSB7Ci0JCURNV0FSTigidW5hYmxlIHRv
-IHNldCB1cCBkZXZpY2UgcXVldWUgZm9yIG5ldyB0YWJsZS4iKTsKLQkJZ290byBlcnJfdW5sb2Nr
-X21kX3R5cGU7Ci0JfQogCWRtX3VubG9ja19tZF90eXBlKG1kKTsKIAogCS8qIHN0YWdlIGluYWN0
-aXZlIHRhYmxlICovCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
-bQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Thu, Apr 30, 2015 at 10:32:33AM +1000, NeilBrown wrote:
+> 
+> bdi_unregister() now contains very little functionality.
+> 
+> It contains a "WARN_ON" if bdi->dev is NULL.  This warning is of no
+> real consequence as bdi->dev isn't needed by anything else in the function,
+> and it triggers if
+>    blk_cleanup_queue() -> bdi_destroy()
+> is called before bdi_unregister, which a subsequent patch will make happen.
+> So this isn't wanted.
+> 
+> It also calls bdi_set_min_ratio().  This needs to be called after
+> writes through the bdi have all been flushed, and before the bdi is destroyed.
+> Calling it early is better than calling it late as it frees up a global
+> resource.
+> 
+> Calling it immediately after bdi_wb_shutdown() in bdi_destroy()
+> perfectly fits these requirements.
+> 
+> So bdi_unregister can be discarded with the important content moved to
+> bdi_destroy, as can the
+>   writeback_bdi_unregister
+> event which is already not used.
+> 
+> This is tagged for 'stable' as it is a pre-requisite for a subsequent
+> patch which moves calls to blk_cleanup_queue() before calls to
+> del_gendisk().  The commit identified as 'Fixes' removed a lot of
+> other functionality from bdi_unregister(), and made a change which
+> necessitated moving the blk_cleanup_queue() calls.
+> 
+> Reported-by: Mike Snitzer <snitzer@redhat.com>
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: Peter Zijlstra <peterz@infradead.org>
+> Cc: stable@vger.kernel.org (v4.0)
+> Fixes: c4db59d31e39ea067c32163ac961e9c80198fd37
+
+Fixes: c4db59d31e39 ("fs: don't reassign dirty inodes to default_backing_dev_info")
+
+> Signed-off-by: NeilBrown <neilb@suse.de>
+
+Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
