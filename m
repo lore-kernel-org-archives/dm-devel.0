@@ -1,64 +1,68 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH stable] block: discard bdi_unregister() in favour of
- bdi_destroy()
-Date: Thu, 30 Apr 2015 10:35:03 +0200
-Message-ID: <20150430083503.GU5029@twins.programming.kicks-ass.net>
-References: <20150414171537.GH25394@azat>
- <20150423160551.45345f96@notabene.brown>
- <20150427141222.5dac22f1@notabene.brown>
- <CAMM=eLf2aFFH29xeDVrS7beFj6T8kqUQRh=4KB1YO0kWGa7Rog@mail.gmail.com>
- <20150429072530.39d38b00@notabene.brown>
- <20150429133512.GA4436@lst.de>
- <20150429160258.GK17717@twins.programming.kicks-ass.net>
- <20150430103233.75227693@notabene.brown>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: fix blk-mq request-based DM queue initialization
+Date: Thu, 30 Apr 2015 08:47:41 -0400
+Message-ID: <20150430124741.GA29757@redhat.com>
+References: <20150425092358.GA15550@infradead.org>
+	<1430269153-647-1-git-send-email-snitzer@redhat.com>
+	<20150429130037.GA3017@lst.de> <20150430014152.GA26430@redhat.com>
+	<20150430072200.GB15819@lst.de> <20150430082315.GA17074@lst.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20150430103233.75227693@notabene.brown>
-Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: Jens Axboe <axboe@fb.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, Azat Khuzhin <a3at.mail@gmail.com>, "Kernel.org-Linux-RAID" <linux-raid@vger.kernel.org>, Guoqing Jiang <GQJiang@suse.com>, Tejun Heo <tj@kernel.org>, Jan Kara <jack@suse.cz>, lkml <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <20150430082315.GA17074@lst.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christoph Hellwig <hch@lst.de>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Apr 30, 2015 at 10:32:33AM +1000, NeilBrown wrote:
-> 
-> bdi_unregister() now contains very little functionality.
-> 
-> It contains a "WARN_ON" if bdi->dev is NULL.  This warning is of no
-> real consequence as bdi->dev isn't needed by anything else in the function,
-> and it triggers if
->    blk_cleanup_queue() -> bdi_destroy()
-> is called before bdi_unregister, which a subsequent patch will make happen.
-> So this isn't wanted.
-> 
-> It also calls bdi_set_min_ratio().  This needs to be called after
-> writes through the bdi have all been flushed, and before the bdi is destroyed.
-> Calling it early is better than calling it late as it frees up a global
-> resource.
-> 
-> Calling it immediately after bdi_wb_shutdown() in bdi_destroy()
-> perfectly fits these requirements.
-> 
-> So bdi_unregister can be discarded with the important content moved to
-> bdi_destroy, as can the
->   writeback_bdi_unregister
-> event which is already not used.
-> 
-> This is tagged for 'stable' as it is a pre-requisite for a subsequent
-> patch which moves calls to blk_cleanup_queue() before calls to
-> del_gendisk().  The commit identified as 'Fixes' removed a lot of
-> other functionality from bdi_unregister(), and made a change which
-> necessitated moving the blk_cleanup_queue() calls.
-> 
-> Reported-by: Mike Snitzer <snitzer@redhat.com>
-> Cc: Christoph Hellwig <hch@lst.de>
-> Cc: Peter Zijlstra <peterz@infradead.org>
-> Cc: stable@vger.kernel.org (v4.0)
-> Fixes: c4db59d31e39ea067c32163ac961e9c80198fd37
-
-Fixes: c4db59d31e39 ("fs: don't reassign dirty inodes to default_backing_dev_info")
-
-> Signed-off-by: NeilBrown <neilb@suse.de>
-
-Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+T24gVGh1LCBBcHIgMzAgMjAxNSBhdCAgNDoyM2FtIC0wNDAwLApDaHJpc3RvcGggSGVsbHdpZyA8
+aGNoQGxzdC5kZT4gd3JvdGU6Cgo+IE9uIFRodSwgQXByIDMwLCAyMDE1IGF0IDA5OjIyOjAwQU0g
+KzAyMDAsIENocmlzdG9waCBIZWxsd2lnIHdyb3RlOgo+ID4gV2VsbCAtIHdlJ3JlIG9idmlvdXNs
+eSB0cnlpbmcgdG8gcmVpbml0aWFsaXplIGl0IGhlcmUgYW5kIG9ubHkgZXJyb3IKPiA+IG91dCB2
+ZXJ5IGxvdyBsZXZlbCB3aXRoIHlvdXIgcGF0Y2guICBXaGF0IEkgbWVhbiBpcyB0aGF0IHdlIHNo
+b3VsZG4ndAo+ID4gZXZlbiB0cnkgdG8gcmVpbml0aWFsaXplIGl0IGF0IGEgbXVjaCBoaWdoZXIg
+bGV2ZWwsIHNvIHdlIGRvbid0IG5lZWQKPiA+IHRoaXMgYmxrLW1xIHNwZWNpZmljIGhhY2sgZG93
+biBoZXJlLgoKT0ssIHVuZGVyc3Rvb2QuCgo+IEZZSSwgdGhpcyBmaXhlcyB0aGUgaXNzc3VlIGZv
+ciBtZSBhbmQgc2VlbXMgdG8gYmUgIm1vcmUgY29ycmVjdCIgYXQKPiBhIGhpZ2hlciBsZXZlbDoK
+ClllYWgsIEkgbGlrZSB0aGlzLiAgTWVhbnMgdGhlIGVhcmx5IHJldHVybiBpbgpkbV9pbml0X3Jl
+cXVlc3RfYmFzZWRfcXVldWUoKSBjYW4gYmUgcmVtb3ZlZCB0b28uCgo+IC0tLQo+IEZyb206IENo
+cmlzdG9waCBIZWxsd2lnIDxoY2hAbHN0LmRlPgo+IFN1YmplY3Q6IFtQQVRDSF0gZG06IG9ubHkg
+aW5pdGlhbGl6ZSByZXF1ZXN0X3F1ZXVlIG9uY2UKPiAKPiBXZSBzaG91bGQgb25seSBpbtGWbml0
+aWFsaXplIHRoZSByZXF1ZXN0X3F1ZXVlIG9uIHRoZSBpbml0aWFsIHRhYmxlIGxvYWQgd2hlbgo+
+IHdlIGFzc2luZyB0aGUgZGV2aWNlIHR5cGUuCgoiYXNzaW5nIiA7KSAgV2lsbCBmaXggdXAgYW5k
+IGFsc28gYWRkIHRoYXQgdGhpcyBwYXRjaCBmaXhlcyB0aGUgaXNzdWUKeW91IHJlcG9ydGVkLCB0
+aGFua3MuCgo+IFNpZ25lZC1vZmYtYnk6IENocmlzdG9waCBIZWxsd2lnIDxoY2hAbHN0LmRlPgo+
+IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLWlvY3RsLmMgYi9kcml2ZXJzL21kL2RtLWlv
+Y3RsLmMKPiBpbmRleCBjOGExOGU0Li5kZTkyNjYyIDEwMDY0NAo+IC0tLSBhL2RyaXZlcnMvbWQv
+ZG0taW9jdGwuYwo+ICsrKyBiL2RyaXZlcnMvbWQvZG0taW9jdGwuYwo+IEBAIC0xMjk4LDIxICsx
+Mjk4LDIyIEBAIHN0YXRpYyBpbnQgdGFibGVfbG9hZChzdHJ1Y3QgZG1faW9jdGwgKnBhcmFtLCBz
+aXplX3QgcGFyYW1fc2l6ZSkKPiAgCQlnb3RvIGVycl91bmxvY2tfbWRfdHlwZTsKPiAgCX0KPiAg
+Cj4gLQlpZiAoZG1fZ2V0X21kX3R5cGUobWQpID09IERNX1RZUEVfTk9ORSkKPiArCWlmIChkbV9n
+ZXRfbWRfdHlwZShtZCkgPT0gRE1fVFlQRV9OT05FKSB7Cj4gIAkJLyogSW5pdGlhbCB0YWJsZSBs
+b2FkOiBhY3F1aXJlIHR5cGUgb2YgdGFibGUuICovCj4gIAkJZG1fc2V0X21kX3R5cGUobWQsIGRt
+X3RhYmxlX2dldF90eXBlKHQpKTsKPiAtCWVsc2UgaWYgKGRtX2dldF9tZF90eXBlKG1kKSAhPSBk
+bV90YWJsZV9nZXRfdHlwZSh0KSkgewo+ICsJCj4gKwkJLyogc2V0dXAgbWQtPnF1ZXVlIHRvIHJl
+ZmxlY3QgbWQncyB0eXBlIChtYXkgYmxvY2spICovCj4gKwkJciA9IGRtX3NldHVwX21kX3F1ZXVl
+KG1kKTsKPiArCQlpZiAocikgewo+ICsJCQlETVdBUk4oInVuYWJsZSB0byBzZXQgdXAgZGV2aWNl
+IHF1ZXVlIGZvciBuZXcgdGFibGUuIik7Cj4gKwkJCWdvdG8gZXJyX3VubG9ja19tZF90eXBlOwo+
+ICsJCX0KPiArCX0gZWxzZSBpZiAoZG1fZ2V0X21kX3R5cGUobWQpICE9IGRtX3RhYmxlX2dldF90
+eXBlKHQpKSB7Cj4gIAkJRE1XQVJOKCJjYW4ndCBjaGFuZ2UgZGV2aWNlIHR5cGUgYWZ0ZXIgaW5p
+dGlhbCB0YWJsZSBsb2FkLiIpOwo+ICAJCXIgPSAtRUlOVkFMOwo+ICAJCWdvdG8gZXJyX3VubG9j
+a19tZF90eXBlOwo+ICAJfQo+ICAKPiAtCS8qIHNldHVwIG1kLT5xdWV1ZSB0byByZWZsZWN0IG1k
+J3MgdHlwZSAobWF5IGJsb2NrKSAqLwo+IC0JciA9IGRtX3NldHVwX21kX3F1ZXVlKG1kKTsKPiAt
+CWlmIChyKSB7Cj4gLQkJRE1XQVJOKCJ1bmFibGUgdG8gc2V0IHVwIGRldmljZSBxdWV1ZSBmb3Ig
+bmV3IHRhYmxlLiIpOwo+IC0JCWdvdG8gZXJyX3VubG9ja19tZF90eXBlOwo+IC0JfQo+ICAJZG1f
+dW5sb2NrX21kX3R5cGUobWQpOwo+ICAKPiAgCS8qIHN0YWdlIGluYWN0aXZlIHRhYmxlICovCgot
+LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5y
+ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
