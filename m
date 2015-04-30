@@ -1,18 +1,20 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: fix blk-mq request-based DM queue initialization
-Date: Thu, 30 Apr 2015 08:47:41 -0400
-Message-ID: <20150430124741.GA29757@redhat.com>
-References: <20150425092358.GA15550@infradead.org>
-	<1430269153-647-1-git-send-email-snitzer@redhat.com>
-	<20150429130037.GA3017@lst.de> <20150430014152.GA26430@redhat.com>
-	<20150430072200.GB15819@lst.de> <20150430082315.GA17074@lst.de>
+Subject: Re: dm: fix free_rq_clone() NULL pointer when requeueing
+ unmapped request
+Date: Thu, 30 Apr 2015 08:56:06 -0400
+Message-ID: <20150430125606.GB29757@redhat.com>
+References: <553F7474.70905@sandisk.com> <20150429132029.GA3876@lst.de>
+	<20150429133433.GA23127@redhat.com>
+	<20150429185345.GA5975@redhat.com> <55412CE0.4060909@sandisk.com>
+	<20150429195342.GA6110@redhat.com>
+	<20150430091105.GC1200@ak-desktop.emea.nsn-net.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20150430082315.GA17074@lst.de>
+In-Reply-To: <20150430091105.GC1200@ak-desktop.emea.nsn-net.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,47 +24,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@lst.de>
-Cc: dm-devel@redhat.com
+To: Aaro Koskinen <aaro.koskinen@nokia.com>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-T24gVGh1LCBBcHIgMzAgMjAxNSBhdCAgNDoyM2FtIC0wNDAwLApDaHJpc3RvcGggSGVsbHdpZyA8
-aGNoQGxzdC5kZT4gd3JvdGU6Cgo+IE9uIFRodSwgQXByIDMwLCAyMDE1IGF0IDA5OjIyOjAwQU0g
-KzAyMDAsIENocmlzdG9waCBIZWxsd2lnIHdyb3RlOgo+ID4gV2VsbCAtIHdlJ3JlIG9idmlvdXNs
-eSB0cnlpbmcgdG8gcmVpbml0aWFsaXplIGl0IGhlcmUgYW5kIG9ubHkgZXJyb3IKPiA+IG91dCB2
-ZXJ5IGxvdyBsZXZlbCB3aXRoIHlvdXIgcGF0Y2guICBXaGF0IEkgbWVhbiBpcyB0aGF0IHdlIHNo
-b3VsZG4ndAo+ID4gZXZlbiB0cnkgdG8gcmVpbml0aWFsaXplIGl0IGF0IGEgbXVjaCBoaWdoZXIg
-bGV2ZWwsIHNvIHdlIGRvbid0IG5lZWQKPiA+IHRoaXMgYmxrLW1xIHNwZWNpZmljIGhhY2sgZG93
-biBoZXJlLgoKT0ssIHVuZGVyc3Rvb2QuCgo+IEZZSSwgdGhpcyBmaXhlcyB0aGUgaXNzc3VlIGZv
-ciBtZSBhbmQgc2VlbXMgdG8gYmUgIm1vcmUgY29ycmVjdCIgYXQKPiBhIGhpZ2hlciBsZXZlbDoK
-ClllYWgsIEkgbGlrZSB0aGlzLiAgTWVhbnMgdGhlIGVhcmx5IHJldHVybiBpbgpkbV9pbml0X3Jl
-cXVlc3RfYmFzZWRfcXVldWUoKSBjYW4gYmUgcmVtb3ZlZCB0b28uCgo+IC0tLQo+IEZyb206IENo
-cmlzdG9waCBIZWxsd2lnIDxoY2hAbHN0LmRlPgo+IFN1YmplY3Q6IFtQQVRDSF0gZG06IG9ubHkg
-aW5pdGlhbGl6ZSByZXF1ZXN0X3F1ZXVlIG9uY2UKPiAKPiBXZSBzaG91bGQgb25seSBpbtGWbml0
-aWFsaXplIHRoZSByZXF1ZXN0X3F1ZXVlIG9uIHRoZSBpbml0aWFsIHRhYmxlIGxvYWQgd2hlbgo+
-IHdlIGFzc2luZyB0aGUgZGV2aWNlIHR5cGUuCgoiYXNzaW5nIiA7KSAgV2lsbCBmaXggdXAgYW5k
-IGFsc28gYWRkIHRoYXQgdGhpcyBwYXRjaCBmaXhlcyB0aGUgaXNzdWUKeW91IHJlcG9ydGVkLCB0
-aGFua3MuCgo+IFNpZ25lZC1vZmYtYnk6IENocmlzdG9waCBIZWxsd2lnIDxoY2hAbHN0LmRlPgo+
-IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLWlvY3RsLmMgYi9kcml2ZXJzL21kL2RtLWlv
-Y3RsLmMKPiBpbmRleCBjOGExOGU0Li5kZTkyNjYyIDEwMDY0NAo+IC0tLSBhL2RyaXZlcnMvbWQv
-ZG0taW9jdGwuYwo+ICsrKyBiL2RyaXZlcnMvbWQvZG0taW9jdGwuYwo+IEBAIC0xMjk4LDIxICsx
-Mjk4LDIyIEBAIHN0YXRpYyBpbnQgdGFibGVfbG9hZChzdHJ1Y3QgZG1faW9jdGwgKnBhcmFtLCBz
-aXplX3QgcGFyYW1fc2l6ZSkKPiAgCQlnb3RvIGVycl91bmxvY2tfbWRfdHlwZTsKPiAgCX0KPiAg
-Cj4gLQlpZiAoZG1fZ2V0X21kX3R5cGUobWQpID09IERNX1RZUEVfTk9ORSkKPiArCWlmIChkbV9n
-ZXRfbWRfdHlwZShtZCkgPT0gRE1fVFlQRV9OT05FKSB7Cj4gIAkJLyogSW5pdGlhbCB0YWJsZSBs
-b2FkOiBhY3F1aXJlIHR5cGUgb2YgdGFibGUuICovCj4gIAkJZG1fc2V0X21kX3R5cGUobWQsIGRt
-X3RhYmxlX2dldF90eXBlKHQpKTsKPiAtCWVsc2UgaWYgKGRtX2dldF9tZF90eXBlKG1kKSAhPSBk
-bV90YWJsZV9nZXRfdHlwZSh0KSkgewo+ICsJCj4gKwkJLyogc2V0dXAgbWQtPnF1ZXVlIHRvIHJl
-ZmxlY3QgbWQncyB0eXBlIChtYXkgYmxvY2spICovCj4gKwkJciA9IGRtX3NldHVwX21kX3F1ZXVl
-KG1kKTsKPiArCQlpZiAocikgewo+ICsJCQlETVdBUk4oInVuYWJsZSB0byBzZXQgdXAgZGV2aWNl
-IHF1ZXVlIGZvciBuZXcgdGFibGUuIik7Cj4gKwkJCWdvdG8gZXJyX3VubG9ja19tZF90eXBlOwo+
-ICsJCX0KPiArCX0gZWxzZSBpZiAoZG1fZ2V0X21kX3R5cGUobWQpICE9IGRtX3RhYmxlX2dldF90
-eXBlKHQpKSB7Cj4gIAkJRE1XQVJOKCJjYW4ndCBjaGFuZ2UgZGV2aWNlIHR5cGUgYWZ0ZXIgaW5p
-dGlhbCB0YWJsZSBsb2FkLiIpOwo+ICAJCXIgPSAtRUlOVkFMOwo+ICAJCWdvdG8gZXJyX3VubG9j
-a19tZF90eXBlOwo+ICAJfQo+ICAKPiAtCS8qIHNldHVwIG1kLT5xdWV1ZSB0byByZWZsZWN0IG1k
-J3MgdHlwZSAobWF5IGJsb2NrKSAqLwo+IC0JciA9IGRtX3NldHVwX21kX3F1ZXVlKG1kKTsKPiAt
-CWlmIChyKSB7Cj4gLQkJRE1XQVJOKCJ1bmFibGUgdG8gc2V0IHVwIGRldmljZSBxdWV1ZSBmb3Ig
-bmV3IHRhYmxlLiIpOwo+IC0JCWdvdG8gZXJyX3VubG9ja19tZF90eXBlOwo+IC0JfQo+ICAJZG1f
-dW5sb2NrX21kX3R5cGUobWQpOwo+ICAKPiAgCS8qIHN0YWdlIGluYWN0aXZlIHRhYmxlICovCgot
-LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5y
-ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Thu, Apr 30 2015 at  5:11am -0400,
+Aaro Koskinen <aaro.koskinen@nokia.com> wrote:
+
+> Hi,
+> 
+> On Wed, Apr 29, 2015 at 03:53:42PM -0400, Mike Snitzer wrote:
+> > http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=wip2
+> > 
+> > Anyway, here it is rebased to 4.1-rc1 (BTW, I'm open to dropping the
+> > WARN_ON_ONCE but I need to research further.. if you guys think that
+> > there are perfectly resonable ways to explain why clone->q is NULL in
+> > the IO completion path then I'm all ears):
+> 
+> This fixes the crash I'm seeing, but the WARN ON is still triggering
+> on almost (*) every boot. I'm using rootfs where multipathd is built
+> and started with the default configuration it ships with, and it looks
+> like this:
+
+Can you show multipath -ll for the device in question?  Are you saying
+that you're using multipath for the root device?
+
+Do you have the scsi_dh module that the device uses getting preloaded
+at boot? (e.g. add "rdloaddriver=scsi_dh_alua" to the grub kernel
+commandline).  Alternatively the relevant scsi_dh can just be built-in
+to the kernel, that way it'll always get attached when the SCSI device
+scan occurs.
+
+> [  OK  ] Started Device-Mapper Multipath Device Controller.
+> [  OK  ] Started Network Service.
+>          Starting Network Name Resolution...
+> [  OK  ] Reached target Network.
+>          Starting GlusterFS, a clustered file-system server...
+> [   16.562604] device-mapper: multipath service-time: version 0.2.0 loaded
+> [   16.586067] device-mapper: table: 253:0: multipath: error getting device
+> [   16.586428] device-mapper: ioctl: error adding target to table
+> [   16.679048] device-mapper: multipath: Failing path 8:16.
+> [  OK  ] Started Network Name Resolution.
+> [*     ] A start job is running for GlusterF...le-system server (13s / 5min 7s)
+> [...]
+> [   23.034550] ------------[ cut here ]------------
+> [   23.035525] WARNING: CPU: 0 PID: 3 at /home/aakoskin/linux/drivers/md/dm.c:1090 free_rq_clone+0xbc/0x130 [dm_mod]()
+> [...]
+> [   23.041885] Call Trace:
+> [   23.042064] [<ffffffff8010bc90>] show_stack+0x78/0x90
+> [   23.042505] [<ffffffff80133764>] warn_slowpath_common+0xa4/0xe0
+> [   23.043019] [<ffffffffc000e37c>] free_rq_clone+0xbc/0x130 [dm_mod]
+> [   23.043412] [<ffffffffc000e830>] dm_softirq_done+0x198/0x2c0 [dm_mod]
+> [   23.043775] [<ffffffff803388dc>] blk_done_softirq+0xac/0xc0
+> [   23.044076] [<ffffffff80136894>] __do_softirq+0x174/0x368
+> [   23.044376] [<ffffffff80136af8>] run_ksoftirqd+0x70/0xa8
+> [   23.044668] [<ffffffff8015604c>] smpboot_thread_fn+0x1bc/0x1c8
+> [   23.044980] [<ffffffff80152440>] kthread+0xe0/0xf8
+> [   23.045247] [<ffffffff80105768>] ret_from_kernel_thread+0x14/0x1c
+> [   23.045673]
+> [   23.045824] ---[ end trace e0e5377c5d7b858b ]---
+> [   23.046326] blk_update_request: I/O error, dev dm-0, sector 0
+> [   23.056271] blk_update_request: I/O error, dev dm-0, sector 0
+> [   23.056745] Buffer I/O error on dev dm-0, logical block 0, async page read
+> [   23.070427] blk_update_request: I/O error, dev dm-0, sector 0
+> [   23.070833] Buffer I/O error on dev dm-0, logical block 0, async page read
+> 
+> (*) Strange thing is that it only happens when my test bot is booting
+> the system. With interactive console it's OK without any I/O errors.
+> 
+> A.
