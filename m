@@ -1,143 +1,108 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: fix free_rq_clone() NULL pointer when requeueing
- unmapped request
-Date: Wed, 29 Apr 2015 15:53:42 -0400
-Message-ID: <20150429195342.GA6110@redhat.com>
-References: <553F7474.70905@sandisk.com> <20150429132029.GA3876@lst.de>
-	<20150429133433.GA23127@redhat.com>
-	<20150429185345.GA5975@redhat.com> <55412CE0.4060909@sandisk.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: NeilBrown <neilb@suse.de>
+Subject: Re: [PATCH -stable] block: destroy bdi before blockdev is
+ unregistered.
+Date: Thu, 30 Apr 2015 10:06:31 +1000
+Message-ID: <20150430100631.25dfefe5@notabene.brown>
+References: <20150414171537.GH25394@azat>
+	<20150423160551.45345f96@notabene.brown>
+	<20150427141222.5dac22f1@notabene.brown>
+	<CAMM=eLf2aFFH29xeDVrS7beFj6T8kqUQRh=4KB1YO0kWGa7Rog@mail.gmail.com>
+	<20150429072530.39d38b00@notabene.brown>
+	<20150429133512.GA4436@lst.de>
+	<20150429160258.GK17717@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <55412CE0.4060909@sandisk.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Aaro Koskinen <aaro.koskinen@nokia.com>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ boundary="Sig_/AuoirUB0FjIyO29ieaMiDxl"; protocol="application/pgp-signature"
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20150429160258.GK17717@twins.programming.kicks-ass.net>
+Sender: linux-raid-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@fb.com>, Azat Khuzhin <a3at.mail@gmail.com>, "Kernel.org-Linux-RAID" <linux-raid@vger.kernel.org>, Guoqing Jiang <GQJiang@suse.com>, Tejun Heo <tj@kernel.org>, Jan Kara <jack@suse.cz>, lkml <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 29 2015 at  3:11P -0400,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+--Sig_/AuoirUB0FjIyO29ieaMiDxl
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-> On 04/29/15 20:53, Mike Snitzer wrote:
-> >Actually, here is the proper 4.1-only fix (Bart please verify this works
-> >for you):
-> 
-> Hello Mike,
-> 
-> Thanks for the patch. But against which tree has this patch been generated ?
-> It doesn't seem to apply on v4.1-rc1:
-> 
-> $ git reset --hard v4.1-rc1
-> HEAD is now at b787f68 Linux 4.1-rc1
-> $ patch -p1 < ~/\[PATCH\]\ dm\:\ fix\ free_rq_clone\(\)\ NULL\ pointer\
-> when\ requeueing\ unmapped\ request.eml
-> (Stripping trailing CRs from patch; use --binary to disable.)
-> patching file drivers/md/dm.c
-> Hunk #1 FAILED at 1031.
-> Hunk #2 succeeded at 1124 (offset 53 lines).
-> Hunk #3 succeeded at 1143 (offset 53 lines).
-> 1 out of 3 hunks FAILED -- saving rejects to file drivers/md/dm.c.rej
+On Wed, 29 Apr 2015 18:02:58 +0200 Peter Zijlstra <peterz@infradead.org>
+wrote:
 
-It was implemented against my "private" wip2 branch (since rebased):
-http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=wip2
+> On Wed, Apr 29, 2015 at 03:35:12PM +0200, Christoph Hellwig wrote:
+> > On Wed, Apr 29, 2015 at 07:25:30AM +1000, NeilBrown wrote:
+> > > As bdi_set_min_ratio doesn't touch bdi->dev, there seems to be no nee=
+d for
+> > > the test, or the warning.
+> > >=20
+> > > I wonder if it would make sense to move the bdi_set_min_ratio() call =
+to
+> > > bdi_destroy, and discard bdi_unregister??
+> > > There is a comment which suggests bdi_unregister might be of use late=
+r, but
+> > > it might be best to have a clean slate in which to add whatever might=
+ be
+> > > needed??
+> >=20
+> > This seems fine to me from the block dev point of view.  I don't really
+> > understand the bdi_min_ratio logic, but Peter might have a better idea.
+>=20
+> Ah, that was a bit of digging, I've not looked at that in ages :-)
+>=20
+> So if you look at bdi_dirty_limit()'s comment:
+>=20
+>  * The bdi's share of dirty limit will be adapting to its throughput and
+>  * bounded by the bdi->min_ratio and/or bdi->max_ratio parameters, if set.
+>=20
+> So the min_ratio is a minimum guaranteed fraction of the total
+> throughput.
+>=20
+> Now the problem before commit ccb6108f5b0b ("mm/backing-dev.c: reset bdi
+> min_ratio in bdi_unregister()") was that since bdi_set_min_ratio()
+> keeps a global sum of bdi->min_ratio, you need to subtract from said
+> global sum when taking the BDI away. Otherwise we loose/leak a fraction
+> of the total throughput available (to the other BDIs).
+>=20
+> Which is what that bdi_set_min_ratio(bdi, 0) in unregister does. It
+> resets the min_ratio for the bdi being taken out and frees up the min
+> allocated bandwidth for the others.
+>=20
+> So I think moving that do destroy would be fine; assuming the delay
+> between unregister and destroy is typically 'short'. Because without
+> that you can 'leak' this min ratio for extended periods which means the
+> bandwidth is unavailable for other BDIs.
+>=20
+> Does that make sense?
 
-Anyway, here it is rebased to 4.1-rc1 (BTW, I'm open to dropping the
-WARN_ON_ONCE but I need to research further.. if you guys think that
-there are perfectly resonable ways to explain why clone->q is NULL in
-the IO completion path then I'm all ears):
+Your assessment is almost exactly what I had come up with, so it definitely
+makes sense :-)
+'destroy' does come very shortly after 'unregister' (and immediately before
+'blk_put_queue' which actually frees the struct).  However the driving force
+for this patch was a desire to move blk_cleanup_queue(), which calls
+'destroy', earlier.  So the net result is that bdi_set_min_ratio will be
+called slightly sooner.
 
-From: Mike Snitzer <snitzer@redhat.com>
-Date: Wed, 29 Apr 2015 10:48:09 -0400
-Subject: dm: fix free_rq_clone() NULL pointer when requeueing unmapped request
+Thanks,
+NeilBrown
 
-Commit 022333427a ("dm: optimize dm_mq_queue_rq to _not_ use kthread if
-using pure blk-mq") mistakenly removed free_rq_clone()'s clone->q check
-before testing clone->q->mq_ops.  It was an oversight to discontinue
-that check for 1 of the 2 use-cases for free_rq_clone():
-1) free_rq_clone() called when an unmapped original request is requeued
-2) free_rq_clone() called in the request-based IO completion path
+--Sig_/AuoirUB0FjIyO29ieaMiDxl
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
 
-The clone->q check made sense for case #1 but not for #2.  However, we
-cannot just reinstate the check as it'd mask a serious bug in the IO
-completion case #2 -- no in-flight request should have an uninitialized
-request_queue (basic block layer refcounting _should_ ensure this).
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
 
-The NULL pointer seen for case #1 is detailed here:
-https://www.redhat.com/archives/dm-devel/2015-April/msg00160.html
+iQIVAwUBVUFyCDnsnt1WYoG5AQJ0Lw//ZxUnM4HoQsw9GQO10dRfzMSHTIGXSsMp
+0kjDNJxNBp2UDtKQybQ36hYqFWRS8jYmxhJwz8F528WRXkk7OoUBn6W9+TRQFyT9
+01fkbHEX96yXhuNVpRvAmjbfomAyuutrtbXBLC+TVxJ+bo/ipLgj8nP7q4pTmt1k
+wfu9xstZCdECHSQpEMgLmx2oTUDRglqKX9wu1jO2RJTT3xB1KNSx3vDoOSc7hCsU
+lYQ8fKXCX+PrmQ+kvA77tRBPnvzG28zzUXwY+A5SnUKmWcE2frevu6vzY482LWSF
+E9pt9wBlRdiC1f/sJv0ctrU6V2C7O1sO8eADFYD5cQ3tdr2W3d1UWbCNwDeZ/oKI
+T21tBufavN+9mw3V7OTylqMrdNZwq+SE3Sfc44c8/kpEwDtQZVOU502hX8O9Wr5d
+9gN23f86iGOGT8dc0/FUYPa9g1AYeLJk5I7KmqvdcJs7qWl40BtZRDHrYkiTkqQX
+agilvIoGkVauUjZwomUXVndaOSbG76AHUXBZpuGW33+xdts59mDk5ThPTWnRPqgZ
+glcogXis56wBeWKczCEdp/7CTxzuoVl94v/BzEdcQZGwZ3HiMqR8IayAu9nObgmU
+agOm4bLickinQ8hu8ugwmbY8xHS0fEaBh21FSQR9cktqq/ZFyOGbxo1wPuUbDbuB
+3hTqYFE5J98=
+=u3qF
+-----END PGP SIGNATURE-----
 
-Fix this free_rq_clone() NULL pointer by simply checking if the
-mapped_device's type is DM_TYPE_MQ_REQUEST_BASED (clone's queue is
-blk-mq) rather than checking clone->q->mq_ops.  This avoids the need to
-dereference clone->q, but a WARN_ON_ONCE is added to let us know if an
-uninitialized clone request is being completed.
-
-Reported-by: Bart Van Assche <bart.vanassche@sandisk.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm.c | 16 ++++++++++++----
- 1 file changed, 12 insertions(+), 4 deletions(-)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 6754bbd..dfb7bde 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1082,18 +1082,26 @@ static void rq_completed(struct mapped_device *md, int rw, bool run_queue)
- 	dm_put(md);
- }
- 
--static void free_rq_clone(struct request *clone)
-+static void free_rq_clone(struct request *clone, bool must_be_mapped)
- {
- 	struct dm_rq_target_io *tio = clone->end_io_data;
- 	struct mapped_device *md = tio->md;
- 
-+	WARN_ON_ONCE(must_be_mapped && !clone->q);
-+
- 	blk_rq_unprep_clone(clone);
- 
--	if (clone->q->mq_ops)
-+	if (md->type == DM_TYPE_MQ_REQUEST_BASED)
-+		/* stacked on blk-mq queue(s) */
- 		tio->ti->type->release_clone_rq(clone);
- 	else if (!md->queue->mq_ops)
- 		/* request_fn queue stacked on request_fn queue(s) */
- 		free_clone_request(md, clone);
-+	/*
-+	 * NOTE: for the blk-mq queue stacked on request_fn queue(s) case:
-+	 * no need to call free_clone_request() because we leverage blk-mq by
-+	 * allocating the clone at the end of the blk-mq pdu (see: clone_rq)
-+	 */
- 
- 	if (!md->queue->mq_ops)
- 		free_rq_tio(tio);
-@@ -1124,7 +1132,7 @@ static void dm_end_request(struct request *clone, int error)
- 			rq->sense_len = clone->sense_len;
- 	}
- 
--	free_rq_clone(clone);
-+	free_rq_clone(clone, true);
- 	if (!rq->q->mq_ops)
- 		blk_end_request_all(rq, error);
- 	else
-@@ -1143,7 +1151,7 @@ static void dm_unprep_request(struct request *rq)
- 	}
- 
- 	if (clone)
--		free_rq_clone(clone);
-+		free_rq_clone(clone, false);
- }
- 
- /*
--- 
-2.3.2 (Apple Git-55)
+--Sig_/AuoirUB0FjIyO29ieaMiDxl--
