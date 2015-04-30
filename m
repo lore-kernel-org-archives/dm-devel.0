@@ -1,13 +1,17 @@
-From: Adam Drew <Adam.Drew@nimblestorage.com>
-Subject: Trouble with ALUA on controller failover
-Date: Thu, 30 Apr 2015 14:34:00 +0000
-Message-ID: <2C57E63023777C48B6C9F37639B365170E3EE72A@MBX02.nimblestorage.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: dm: fix free_rq_clone() NULL pointer when requeueing
+ unmapped request
+Date: Thu, 30 Apr 2015 11:07:52 +0200
+Message-ID: <5541F0E8.4030103@sandisk.com>
+References: <553F7474.70905@sandisk.com> <20150429132029.GA3876@lst.de>
+	<20150429133433.GA23127@redhat.com> <20150429185345.GA5975@redhat.com>
+	<55412CE0.4060909@sandisk.com> <20150429195342.GA6110@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20150429195342.GA6110@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,103 +21,130 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Aaro Koskinen <aaro.koskinen@nokia.com>
 List-Id: dm-devel.ids
 
-Hi all,
+On 04/29/15 21:53, Mike Snitzer wrote:
+> On Wed, Apr 29 2015 at  3:11P -0400,
+> Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+>
+>> On 04/29/15 20:53, Mike Snitzer wrote:
+>>> Actually, here is the proper 4.1-only fix (Bart please verify this works
+>>> for you):
+>>
+>> Hello Mike,
+>>
+>> Thanks for the patch. But against which tree has this patch been generated ?
+>> It doesn't seem to apply on v4.1-rc1:
+>>
+>> $ git reset --hard v4.1-rc1
+>> HEAD is now at b787f68 Linux 4.1-rc1
+>> $ patch -p1 < ~/\[PATCH\]\ dm\:\ fix\ free_rq_clone\(\)\ NULL\ pointer\
+>> when\ requeueing\ unmapped\ request.eml
+>> (Stripping trailing CRs from patch; use --binary to disable.)
+>> patching file drivers/md/dm.c
+>> Hunk #1 FAILED at 1031.
+>> Hunk #2 succeeded at 1124 (offset 53 lines).
+>> Hunk #3 succeeded at 1143 (offset 53 lines).
+>> 1 out of 3 hunks FAILED -- saving rejects to file drivers/md/dm.c.rej
+>
+> It was implemented against my "private" wip2 branch (since rebased):
+> http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=wip2
+>
+> Anyway, here it is rebased to 4.1-rc1 (BTW, I'm open to dropping the
+> WARN_ON_ONCE but I need to research further.. if you guys think that
+> there are perfectly resonable ways to explain why clone->q is NULL in
+> the IO completion path then I'm all ears):
+>
+> From: Mike Snitzer <snitzer@redhat.com>
+> Date: Wed, 29 Apr 2015 10:48:09 -0400
+> Subject: dm: fix free_rq_clone() NULL pointer when requeueing unmapped request
+>
+> Commit 022333427a ("dm: optimize dm_mq_queue_rq to _not_ use kthread if
+> using pure blk-mq") mistakenly removed free_rq_clone()'s clone->q check
+> before testing clone->q->mq_ops.  It was an oversight to discontinue
+> that check for 1 of the 2 use-cases for free_rq_clone():
+> 1) free_rq_clone() called when an unmapped original request is requeued
+> 2) free_rq_clone() called in the request-based IO completion path
+>
+> The clone->q check made sense for case #1 but not for #2.  However, we
+> cannot just reinstate the check as it'd mask a serious bug in the IO
+> completion case #2 -- no in-flight request should have an uninitialized
+> request_queue (basic block layer refcounting _should_ ensure this).
+>
+> The NULL pointer seen for case #1 is detailed here:
+> https://www.redhat.com/archives/dm-devel/2015-April/msg00160.html
+>
+> Fix this free_rq_clone() NULL pointer by simply checking if the
+> mapped_device's type is DM_TYPE_MQ_REQUEST_BASED (clone's queue is
+> blk-mq) rather than checking clone->q->mq_ops.  This avoids the need to
+> dereference clone->q, but a WARN_ON_ONCE is added to let us know if an
+> uninitialized clone request is being completed.
+>
+> Reported-by: Bart Van Assche <bart.vanassche@sandisk.com>
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>   drivers/md/dm.c | 16 ++++++++++++----
+>   1 file changed, 12 insertions(+), 4 deletions(-)
+>
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 6754bbd..dfb7bde 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1082,18 +1082,26 @@ static void rq_completed(struct mapped_device *md, int rw, bool run_queue)
+>   	dm_put(md);
+>   }
+>
+> -static void free_rq_clone(struct request *clone)
+> +static void free_rq_clone(struct request *clone, bool must_be_mapped)
+>   {
+>   	struct dm_rq_target_io *tio = clone->end_io_data;
+>   	struct mapped_device *md = tio->md;
+>
+> +	WARN_ON_ONCE(must_be_mapped && !clone->q);
+> +
+>   	blk_rq_unprep_clone(clone);
+>
+> -	if (clone->q->mq_ops)
+> +	if (md->type == DM_TYPE_MQ_REQUEST_BASED)
+> +		/* stacked on blk-mq queue(s) */
+>   		tio->ti->type->release_clone_rq(clone);
+>   	else if (!md->queue->mq_ops)
+>   		/* request_fn queue stacked on request_fn queue(s) */
+>   		free_clone_request(md, clone);
+> +	/*
+> +	 * NOTE: for the blk-mq queue stacked on request_fn queue(s) case:
+> +	 * no need to call free_clone_request() because we leverage blk-mq by
+> +	 * allocating the clone at the end of the blk-mq pdu (see: clone_rq)
+> +	 */
+>
+>   	if (!md->queue->mq_ops)
+>   		free_rq_tio(tio);
+> @@ -1124,7 +1132,7 @@ static void dm_end_request(struct request *clone, int error)
+>   			rq->sense_len = clone->sense_len;
+>   	}
+>
+> -	free_rq_clone(clone);
+> +	free_rq_clone(clone, true);
+>   	if (!rq->q->mq_ops)
+>   		blk_end_request_all(rq, error);
+>   	else
+> @@ -1143,7 +1151,7 @@ static void dm_unprep_request(struct request *rq)
+>   	}
+>
+>   	if (clone)
+> -		free_rq_clone(clone);
+> +		free_rq_clone(clone, false);
+>   }
+>
+>   /*
 
-We're facing a bit of a strange problem and would like some input on debugging and next steps.
+Hello Mike,
 
-We have RHEL 7 connected to a Nimble CS-series array via FC. We're running device-mapper-multipath-0.4.9-77.el7.x86_64 and 3.10.0-123.el7.x86_64. Our multipath config is very simple:
+This patch survives my SRP initiator tests without triggering any kernel 
+warning.
 
-devices {
-     device {
-          vendor "Nimble"
-          product "Server"
-          prio          alua
-          path_grouping_policy group_by_prio
-          path_checker tur
-          features      "1 queue_if_no_path"
-          rr_weight priorities
-          rr_min_io 20
-          failback manual
-          path_selector "round-robin 0"
-          dev_loss_tmo infinity
-          fast_io_fail_tmo 5
-     }
-}
+Thanks !
 
-And our devices look as expected:
-mpathek (29b72fe86f66a2a366c9ce9009d9a9742) dm-0 Nimble  ,Server          
-size=244G features='1 queue_if_no_path' hwhandler='0' wp=rw
-|-+- policy='round-robin 0' prio=50 status=active
-| `- 9:0:0:0 sdb 8:16 active ready running
-`-+- policy='round-robin 0' prio=1 status=enabled
-  `- 9:0:1:0 sdc 8:32 active ghost running
-
-When we initiate controller failover we never switch over to the correct path:
-
-[  822.192772] sd 9:0:0:0: rejecting I/O to offline device                                          
-[  822.198633] device-mapper: multipath: Failing path 8:16.                                         
-[  822.204595] device-mapper: multipath: Failing path 8:32.                                         
-[  824.099448] sd 9:0:1:0: Parameters changed                                                       
-[  825.043943] device-mapper: multipath: Failing path 8:32.                                         
-[  830.052981] device-mapper: multipath: Failing path 8:32.                                         
-[  835.062030] device-mapper: multipath: Failing path 8:32.                                         
-[  840.071071] device-mapper: multipath: Failing path 8:32.                                         
-[  845.080060] device-mapper: multipath: Failing path 8:32.                                         
-[  850.089089] device-mapper: multipath: Failing path 8:32.                                         
-[  855.098110] device-mapper: multipath: Failing path 8:32.
-
-The path status is strange. The path that should be active ready running now, 9:0:1:0, is failed ready  running:
-mpathek (29b72fe86f66a2a366c9ce9009d9a9742) dm-0 Nimble  ,Server          
-size=244G features='1 queue_if_no_path' hwhandler='0' wp=rw
-|-+- policy='round-robin 0' prio=0 status=enabled
-| `- 9:0:0:0 sdb 8:16 failed faulty offline
-`-+- policy='round-robin 0' prio=50 status=enabled
-  `- 9:0:1:0 sdc 8:32 failed ready  running
-
-Multipath tries to send IO down that path but:
-[  405.078481] Add. Sense: Logical unit not accessible, target port in standby state                
-[  405.086856] sd 9:0:1:0: [sdc] CDB:                                                               
-[  405.090748] Write(10): 2a 00 1c fe 95 30 00 00 08 00                                             
-[  405.096456] sd 9:0:1:0: [sdc] Device not ready                                                   
-[  405.101419] sd 9:0:1:0: [sdc]                                                                    
-[  405.104934] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE                                      
-[  405.111162] sd 9:0:1:0: [sdc]                                                                    
-[  405.114678] Sense Key : Not Ready [current]                                                      
-[  405.119481] Info fld=0x0                                                                         
-[  405.122321] sd 9:0:1:0: [sdc]                                                                    
-[  405.125838] Add. Sense: Logical unit not accessible, target port in standby state                
-[  405.134202] sd 9:0:1:0: [sdc] CDB:                                                               
-[  405.138096] Write(10): 2a 00 1b 64 94 b0 00 00 02 00                                             
-[  405.143785] sd 9:0:1:0: [sdc] Device not ready                                                   
-[  405.148736] sd 9:0:1:0: [sdc]                                                                    
-[  405.152254] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE                                      
-[  405.158488] sd 9:0:1:0: [sdc]                                                                    
-[  405.162003] Sense Key : Not Ready [current]  
-
-When we point RHEL 6 at this same array, and same volume, failover goes over without a hitch. We've been able to reproduce this on the RHEL 7 kernel / device-mapper-multipath combo on several systems.
-
-We've been tearing through the device-mapper-multipath-libs and kernel code to see if we can find the cause of the problem, and we've been testing quite a bit, but have as yet been unable to resolve this. We'd like some input on next steps for debugging and testing.
-
-The only thing we've found so far that looks promising is with the parameter data format on RTPG during failover. RHEL 7 is sending a parameter data format of 1, but we answer 0 (which is within spec). Here's the message on our array side:
-
-dsd.log.2:19485 2015-04-20,11:45:46.746395-07 INFO: scsi.core:_scsi_report_target_group: parameter data format = 1, treating it as length only format(0)
-dsd.log.2:19485 2015-04-20,11:45:46.747362-07 INFO: scsi.core:_scsi_report_target_group: parameter data format = 1, treating it as length only format(0)
-
-But on the RHEL side we see:
-Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: host1: Assigned Port ID 720080
-Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: Direct-Access Nimble Server 1.0 PQ: 0 ANSI: 5
-Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: supports implicit TPGS
-Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: port group 01 rel port 01
-Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: rtpg failed with 8000002
-Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: port group 01 state S non-preferred supports tolusna
-Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: Attached
-
-We're wondering if the RTPG failure is causing us to be unable to instate the new active path, and we wonder if this is due to RHEL 7 kernel or dmm not liking the 0 pdf response on 1. However, we're unsure if this would be in the kernel ALUA scsi_dh code, or in the device-mapper-multipath-libs alua code.
-
-Any helped is appreciated. We'll supply any data request.
-
-Adam Drew
-Nimble Storage
+Bart.
