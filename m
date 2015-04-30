@@ -1,51 +1,75 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: fix blk-mq request-based DM queue initialization
-Date: Wed, 29 Apr 2015 21:41:52 -0400
-Message-ID: <20150430014152.GA26430@redhat.com>
-References: <20150425092358.GA15550@infradead.org>
-	<1430269153-647-1-git-send-email-snitzer@redhat.com>
-	<20150429130037.GA3017@lst.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Joel Stanley <joel@jms.id.au>
+Subject: ppc64le crash in dm on 4.1+
+Date: Thu, 30 Apr 2015 13:29:34 +1000
+Message-ID: <CACPK8XeQjdmwFScvEDMo4ie7=-e6WfW0cvW=NMLqC+zpOOJeTg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20150429130037.GA3017@lst.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@lst.de>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: linuxppc-dev@lists.ozlabs.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Apr 29 2015 at  9:00am -0400,
-Christoph Hellwig <hch@lst.de> wrote:
-
-> On Tue, Apr 28, 2015 at 08:59:13PM -0400, Mike Snitzer wrote:
-> > Commit bfebd1cdb4 ("dm: add full blk-mq support to request-based DM")
-> > didn't properly account for the need to short-circuit re-initializing
-> > DM's blk-mq request_queue if it was already initialized.
-> > 
-> > Fix dm_init_request_based_blk_mq_queue() to return early if the
-> > mapped_device's tag_set already has its driver_data set to the
-> > mapped_device pointer.
-> 
-> I'm not quite up to speed with this area of code, but shouldn't
-> we always tear the queue fully down before trying to reinitialize it?
-
-No, the same request_queue should be used for the lifetime of a DM
-device.
-
-I'm not interested in reinitializing the queue.  A DM table reload has
-no need to destroy and recreate the request_queue associated with 
-the DM device.  It would be bad to do so too because we actually use the
-queue across table reloads in the case of dm-multipath with no paths
-(see: map_request's handling of DM_MAPIO_REQUEUE which triggers
-dm_requeue_request).
+SGVsbG8sCgpJIGp1c3QgYm9vdGVkIDNkOTllM2ZlMTNkNDczYWM0NTc4YzM3ZjQ3N2E1OWI4Mjk1
+MzA3NjQgKGxpbnVzJyB0cmVlIGFzCm9mIHRoaXMgbW9ybmluZykgb24gYSBUdWxldHRhIGFuZCBn
+b3QgdGhlIGZvbGxvd2luZzoKClsgICA0MS40MDkwMzNdIFVuYWJsZSB0byBoYW5kbGUga2VybmVs
+IHBhZ2luZyByZXF1ZXN0IGZvciBkYXRhIGF0CmFkZHJlc3MgMHgwMDAwMDBkMApbICAgNDEuNDA5
+MTI1XSBGYXVsdGluZyBpbnN0cnVjdGlvbiBhZGRyZXNzOiAweGMwMDAwMDAwMDBjMjkwNjgKY3B1
+IDB4MjM6IFZlY3RvcjogMzAwIChEYXRhIEFjY2VzcykgYXQgW2MwMDAwMDBmZTk0NWY5NDBdCiAg
+ICBwYzogYzAwMDAwMDAwMGMyOTA2ODogZnJlZV9ycV9jbG9uZSsweDM4LzB4MTAwCiAgICBscjog
+YzAwMDAwMDAwMGMyOTA2MDogZnJlZV9ycV9jbG9uZSsweDMwLzB4MTAwCiAgICBzcDogYzAwMDAw
+MGZlOTQ1ZmJjMAogICBtc3I6IDkwMDAwMDAwMDAwMDkwMzMKICAgZGFyOiBkMAogZHNpc3I6IDQw
+MDAwMDAwCiAgY3VycmVudCA9IDB4YzAwMDAwMGZlOTNhOTc0MAogIHBhY2EgICAgPSAweGMwMDAw
+MDAwMGZlODY5MDAgc29mdGU6IDAgaXJxX2hhcHBlbmVkOiAweDAxCiAgICBwaWQgICA9IDY2ODIs
+IGNvbW0gPSBrZG13b3JrLTI1MjowCmVudGVyID8gZm9yIGhlbHAKW2MwMDAwMDBmZTk0NWZjMDBd
+IGMwMDAwMDAwMDBjMjkyYzgKZG1fcmVxdWV1ZV91bm1hcHBlZF9vcmlnaW5hbF9yZXF1ZXN0KzB4
+NTgvMHgxMzAKW2MwMDAwMDBmZTk0NWZjNTBdIGMwMDAwMDAwMDBjMmE0YjggbWFwX3JlcXVlc3Qu
+aXNyYS4yMCsweGU4LzB4MmUwCltjMDAwMDAwZmU5NDVmY2YwXSBjMDAwMDAwMDAwYzJhNmU0IG1h
+cF90aW9fcmVxdWVzdCsweDM0LzB4ODAKW2MwMDAwMDBmZTk0NWZkMjBdIGMwMDAwMDAwMDAwYTUz
+MDAga3RocmVhZF93b3JrZXJfZm4rMHgxMDAvMHgxZTAKW2MwMDAwMDBmZTk0NWZkODBdIGMwMDAw
+MDAwMDAwYTUxZGMga3RocmVhZCsweDEwYy8weDEzMApbYzAwMDAwMGZlOTQ1ZmUzMF0gYzAwMDAw
+MDAwMDAwOTRhYyByZXRfZnJvbV9rZXJuZWxfdGhyZWFkKzB4NWMvMHhiMAotLS0gRXhjZXB0aW9u
+OiAwICBhdCAwMDAwMDAwMDAwMDAwMDAwCjIzOm1vbj4KMjM6bW9uPiByClIwMCA9IGMwMDAwMDAw
+MDBjMjkwNjAgICBSMTYgPSAwMDAwMDAwMDAwMDAwMDAwClIwMSA9IGMwMDAwMDBmZTk0NWZiYzAg
+ICBSMTcgPSAwMDAwMDAwMDAwMDAwMDAwClIwMiA9IGMwMDAwMDAwMDEzOGUyMjAgICBSMTggPSAw
+MDAwMDAwMDAwMDAwMDAwClIwMyA9IDAwMDAwMDAwMDAwMDAwMDAgICBSMTkgPSAwMDAwMDAwMDAw
+MDAwMDAwClIwNCA9IGYwMDAwMDAwMDM3YWZlNTggICBSMjAgPSAwMDAwMDAwMDAwMDAwMDAwClIw
+NSA9IGMwMDAwMDBmZTkxZGJlMDAgICBSMjEgPSAwMDAwMDAwMDAwMDAwMDAwClIwNiA9IGMwMDAw
+MDAwMDAxMzhjZDQgICBSMjIgPSAwMDAwMDAwMDAwMDAwMDAwClIwNyA9IDAwMDAwMDAwODAwMDAw
+MDAgICBSMjMgPSAwMDAwMDAwMDAwMDAwMDAwClIwOCA9IDAwMDAwMDAwMDAwMDAwZmYgICBSMjQg
+PSAwMDAwMDAwMDAwMDAwMDAwClIwOSA9IDAwMDAwMDAwMDAwMDAwMDAgICBSMjUgPSAwMDAwMDAw
+MDAwMDAwMDAwClIxMCA9IDAwMDAwMDAwMDAwMDAwMDEgICBSMjYgPSAwMDAwMDAwMDAwMDAwMDAw
+ClIxMSA9IGMwMDAwMDBmZTk0NWZiZjggICBSMjcgPSBjMDAwMDAwZmRmZmEwM2E4ClIxMiA9IGMw
+MDAwMDAwMDAxMzhjYjAgICBSMjggPSBjMDAwMDAwZmRmZmEwMDAwClIxMyA9IGMwMDAwMDAwMGZl
+ODY5MDAgICBSMjkgPSBjMDAwMDAwZmRmZmEwMDAwClIxNCA9IGMwMDAwMDAwMDAwYTUwZDggICBS
+MzAgPSBjMDAwMDAwZmNmMDkwMDAwClIxNSA9IGMwMDAwMDBmZTVhY2JmMDAgICBSMzEgPSBjMDAw
+MDAwZmUzYmEwZWM4CnBjICA9IGMwMDAwMDAwMDBjMjkwNjggZnJlZV9ycV9jbG9uZSsweDM4LzB4
+MTAwCmNmYXI9IGMwMDAwMDAwMDAwMDg0NTggc2xiX21pc3NfcmVhbG1vZGUrMHg0Yy8weDc0Cmxy
+ICA9IGMwMDAwMDAwMDBjMjkwNjAgZnJlZV9ycV9jbG9uZSsweDMwLzB4MTAwCm1zciA9IDkwMDAw
+MDAwMDAwMDkwMzMgICBjciAgPSA0MjliODk0MgpjdHIgPSBjMDAwMDAwMDAwMTM4Y2IwICAgeGVy
+ID0gMDAwMDAwMDAyMDAwMDAwMCAgIHRyYXAgPSAgMzAwCmRhciA9IDAwMDAwMDAwMDAwMDAwZDAg
+ICBkc2lzciA9IDQwMDAwMDAwCjIzOm1vbj4gZGkgJXBjCmMwMDAwMDAwMDBjMjkwNjggIGU5Mjkw
+MGQwIGxkIHI5LDIwOChyOSkKYzAwMDAwMDAwMGMyOTA2YyAgMmZhOTAwMDAgY21wZGkgY3I3LHI5
+LDAKYzAwMDAwMDAwMGMyOTA3MCAgNDE5ZTAwNjAgYmVxIGNyNyxjMDAwMDAwMDAwYzI5MGQwICMg
+ZnJlZV9ycV9jbG9uZSsweGEwLzB4MTAwCmMwMDAwMDAwMDBjMjkwNzQgIGU5M2UwMDA4IGxkIHI5
+LDgocjMwKQpjMDAwMDAwMDAwYzI5MDc4ICA3ZmUzZmI3OCBtciByMyxyMzEKYzAwMDAwMDAwMGMy
+OTA3YyAgZTkyOTAwMDggbGQgcjksOChyOSkKYzAwMDAwMDAwMGMyOTA4MCAgZTkyOTAwNTAgbGQg
+cjksODAocjkpCmMwMDAwMDAwMDBjMjkwODQgIGY4NDEwMDE4IHN0ZCByMiwyNChyMSkKYzAwMDAw
+MDAwMGMyOTA4OCAgN2QyOTAzYTYgbXRjdHIgcjkKYzAwMDAwMDAwMGMyOTA4YyAgN2QyYzRiNzgg
+bXIgcjEyLHI5CmMwMDAwMDAwMDBjMjkwOTAgIDRlODAwNDIxIGJjdHJsCmMwMDAwMDAwMDBjMjkw
+OTQgIGU4NDEwMDE4IGxkIHIyLDI0KHIxKQpjMDAwMDAwMDAwYzI5MDk4ICBlOTNkMDEzOCBsZCBy
+OSwzMTIocjI5KQpjMDAwMDAwMDAwYzI5MDljICBlOTI5MDBkMCBsZCByOSwyMDgocjkpCmMwMDAw
+MDAwMDBjMjkwYTAgIDJmYTkwMDAwIGNtcGRpIGNyNyxyOSwwCmMwMDAwMDAwMDBjMjkwYTQgIDQx
+OWUwMDVjIGJlcSBjcjcsYzAwMDAwMDAwMGMyOTEwMCAjIGZyZWVfcnFfY2xvbmUrMHhkMC8weDEw
+MAoKQ2hlZXJzLAoKSm9lbApfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fXwpMaW51eHBwYy1kZXYgbWFpbGluZyBsaXN0CkxpbnV4cHBjLWRldkBsaXN0cy5vemxh
+YnMub3JnCmh0dHBzOi8vbGlzdHMub3psYWJzLm9yZy9saXN0aW5mby9saW51eHBwYy1kZXY=
