@@ -1,47 +1,106 @@
-From: Abelardo Ricart III <aricart@memnix.com>
-Subject: Re: [dm-devel] Regression: Disk corruption with dm-crypt and
- kernels >= 4.0
-Date: Fri, 01 May 2015 20:19:16 -0400
-Message-ID: <1430525956.5803.4.camel@memnix.com>
-References: <1430455027.7012.32.camel@memnix.com>
-	 <20150501214728.GL19922@agk-dp.fab.redhat.com>
+From: Ming Lin <mlin@kernel.org>
+Subject: Re: [PATCH 07/10] block: kill merge_bvec_fn() completely
+Date: Mon, 04 May 2015 00:47:39 -0700
+Message-ID: <5547241B.1040903@kernel.org>
+References: <1430203717-13307-1-git-send-email-mlin@kernel.org>	<1430203717-13307-8-git-send-email-mlin@kernel.org> <20150429080919.342fddfd@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150501214728.GL19922@agk-dp.fab.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, mpatocka@redhat.com, linux-kernel@vger.kernel.org, snitzer@redhat.com
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20150429080919.342fddfd@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dongsu.park@profitbricks.com>, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Yehuda Sadeh <yehuda@inktank.com>, Sage Weil <sage@inktank.com>, Alex Elder <elder@kernel.org>, ceph-devel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-On Fri, 2015-05-01 at 22:47 +0100, Alasdair G Kergon wrote:
-> On Fri, May 01, 2015 at 12:37:07AM -0400, Abelardo Ricart III wrote:
-> > # first bad commit: [cf2f1abfbd0dba701f7f16ef619e4d2485de3366] dm crypt: 
-> > don't
-> > allocate pages for a partial request
->  
-> That's not a particularly good commit to identify.
+On 04/28/2015 03:09 PM, NeilBrown wrote:
+> On Mon, 27 Apr 2015 23:48:34 -0700 Ming Lin <mlin@kernel.org> wrote:
 > 
-> If you didn't already, can you confirm whether or not the code works at the
-> patch immediately following?
+>> From: Kent Overstreet <kent.overstreet@gmail.com>
+>>
+>> As generic_make_request() is now able to handle arbitrarily sized bios,
+>> it's no longer necessary for each individual block driver to define its
+>> own ->merge_bvec_fn() callback. Remove every invocation completely.
 > 
->   7145c241a1bf2841952c3e297c4080b357b3e52d
+> This patch it just a little premature I think.
 > 
-> Alasdair
+> md/raid5 still assumes read requests will mostly fit within a single chunk
+> (which merge_bvec_fn encourages) so they can be serviced without using the
+> stripe-cache.
+> You've just broken that assumption.
 > 
-Just built that revision and it failed almost immediately with more ata errors. It also corrupted my testing log.
+> I think 'chunk_aligned_read' needs to get a loop using bio_split, a bit like
+> raid0, first.
 
-As an aside, here's my fstab in case it's of any use
+How about below?
 
--------------------->8--------------------
-/dev/mapper/root        /             f2fs              rw,relatime,flush_merge,background_gc=on,user_xattr,acl,active_logs=6   0 0
+ drivers/md/raid5.c | 35 ++++++++++++++++++++++++++++++++---
+ 1 file changed, 32 insertions(+), 3 deletions(-)
 
-/dev/mapper/home        /home           f2fs            rw,relatime,flush_merge,background_gc=on,user_xattr,acl,active_logs=6   0 2
-
-/dev/sda2               /boot           ext4            rw,relatime,data=ordered        0 2
-
-/dev/sda1               /boot/EFI       vfat            rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro    0 2
-
-tmpfs                   /scratch        tmpfs           nodev,nosuid,size=12G           0 0
--------------------->8--------------------
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index e42b624..2ddfa1e 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -4709,7 +4709,7 @@ static void raid5_align_endio(struct bio *bi, int error)
+ 	add_bio_to_retry(raid_bi, conf);
+ }
+ 
+-static int chunk_aligned_read(struct mddev *mddev, struct bio * raid_bio)
++static int __chunk_aligned_read(struct mddev *mddev, struct bio *raid_bio)
+ {
+ 	struct r5conf *conf = mddev->private;
+ 	int dd_idx;
+@@ -4718,7 +4718,7 @@ static int chunk_aligned_read(struct mddev *mddev, struct bio * raid_bio)
+ 	sector_t end_sector;
+ 
+ 	if (!in_chunk_boundary(mddev, raid_bio)) {
+-		pr_debug("chunk_aligned_read : non aligned\n");
++		pr_debug("__chunk_aligned_read : non aligned\n");
+ 		return 0;
+ 	}
+ 	/*
+@@ -4793,6 +4793,35 @@ static int chunk_aligned_read(struct mddev *mddev, struct bio * raid_bio)
+ 	}
+ }
+ 
++static struct bio *chunk_aligned_read(struct mddev *mddev, struct bio *raid_bio)
++{
++	struct bio *split;
++
++	do {
++		sector_t sector = raid_bio->bi_iter.bi_sector;
++		unsigned chunk_sects = mddev->chunk_sectors;
++
++		unsigned sectors = chunk_sects -
++			(likely(is_power_of_2(chunk_sects))
++			 ? (sector & (chunk_sects-1))
++			 : sector_div(sector, chunk_sects));
++
++		if (sectors < bio_sectors(raid_bio)) {
++			split = bio_split(raid_bio, sectors, GFP_NOIO, fs_bio_set);
++			bio_chain(split, raid_bio);
++		} else
++			split = raid_bio;
++
++		if (!__chunk_aligned_read(mddev, split)) {
++			if (split != raid_bio)
++				generic_make_request(raid_bio);
++			return split;
++		}
++	} while (split != raid_bio);
++
++	return NULL;
++}
++
+ /* __get_priority_stripe - get the next stripe to process
+  *
+  * Full stripe writes are allowed to pass preread active stripes up until
+@@ -5071,7 +5100,7 @@ static void make_request(struct mddev *mddev, struct bio * bi)
+ 	 */
+ 	if (rw == READ && mddev->degraded == 0 &&
+ 	     mddev->reshape_position == MaxSector &&
+-	     chunk_aligned_read(mddev,bi))
++	     (!(bi = chunk_aligned_read(mddev, bi))))
+ 		return;
+ 
+ 	if (unlikely(bi->bi_rw & REQ_DISCARD)) {
