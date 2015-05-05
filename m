@@ -1,71 +1,64 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: 4.1-rc2 dm-multipath-mq kernel warning
-Date: Tue, 5 May 2015 16:04:21 +0200
-Message-ID: <5548CDE5.9@sandisk.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Rafael J. Wysocki" <rjw@rjwysocki.net>
+Subject: Re: [4.1-rc1][Hibernation failed]  bisect result  included
+Date: Tue, 05 May 2015 22:48:01 +0200
+Message-ID: <1578315.Syt0DGTIqh@vostro.rjw.lan>
+References: <36DF59CE26D8EE47B0655C516E9CE6402CA0E2@SHSMSX101.ccr.corp.intel.com> <20150504142654.GA985@redhat.com> <55482B44.6060407@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-pm-owner@vger.kernel.org>
+In-Reply-To: <55482B44.6060407@intel.com>
+Sender: linux-pm-owner@vger.kernel.org
+To: Yu Chen <yu.c.chen@intel.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Dan Ehrenberg <dehrenberg@chromium.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-pm@vger.kernel.org" <linux-pm@vger.kernel.org>, "Wysocki, Rafael J" <rafael.j.wysocki@intel.com>, "Zhang, Rui" <rui.zhang@intel.com>, "Lu, Aaron" <aaron.lu@intel.com>, Martin Steigerwald <martin@lichtvoll.de>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello Mike,
+On Tuesday, May 05, 2015 10:30:28 AM Yu Chen wrote:
+> On 05/04/2015 10:26 PM, Mike Snitzer wrote:
+> > On Mon, May 04 2015 at 10:08am -0400,
+> > Rafael J. Wysocki <rjw@rjwysocki.net> wrote:
+> >
+> >> On Sunday, May 03, 2015 03:54:39 PM Chen, Yu C wrote:
+> >>> Hi,all,
+> >>> When we are doing QA test, a hibernation failor was found on latest kernel 4.1-rc1,
+> >>> resume from hibernation failed with the following error:
+> >>>
+> >>> PM: Hibernation image not present or could not be loaded.
+> >>>
+> >>> Bisect shows following commit might trigger this problem:
+> >>> commit 283e7ad0241155710f99a9f39d13313a53336926
+> >>>
+> >>> The  reason for failor is that, some distribution use klibc in initrd
+> >>> to restore the image, and klibc will provide kernel with the device
+> >>> format of major:minor:offset,
+> >>> for example, 8:3:0 represents a swap partition, and klibc will
+> >>> echo 8:3:0 > /sys/power/resume to resume the system manually.
+> >>> However in current implementation, format of 8:3:0 will be regarded
+> >>> as an invalid device, so restoring from hibernation failed.
+> >>>
+> >>> Do we need to add support for device format like 8:3:0?
+> >>> I'm happy to debug more specifically if you can let me know what
+> >>> would be of use, and I've also attached a temporary patch
+> >>> for this problem, not sure if it is suitable,  thanks.
+> >>
+> >> It'd be better to send the patch inline so it is not lost in replies.
+> >> Reproduced below.
+> >>
+> >> Dan, Mike, any chance to look at this?  It is a functional regression for
+> >> some people.
+> >
+> > Sorry about this.  Wasn't aware that such a strange format was being
+> > used.  The proposed patch looks good to me (formatting is a bit weird
+> > though, the last "&dummy) == 3)) {" line shouldnt be needed if previous
+> > line isn't indented so far.
+> >
+> 
+> Thank you very much, Mike and Rafeal,
+> I'll send another version titled with V2 for review.
 
-While retesting my SRP initiator patches on top of kernel v4.1-rc2 with 
-DM_MQ_DEFAULT=y I ran into the kernel warning below. Does this mean that 
-I'm missing any device mapper related patches ? This warning was 
-reported shortly after scsi_remove_host() had been invoked.
+Have you sent it already?  Where is it if so?
 
-Thanks,
 
-Bart.
-
-[  636.982089] device-mapper: multipath: Failing path 8:16.
-[  636.982395] blk_update_request: I/O error, dev dm-1, sector 42378
-[  636.987025] ------------[ cut here ]------------
-[  636.987053] WARNING: CPU: 0 PID: 3 at drivers/md/dm.c:1090 
-free_rq_clone+0x7a/0xf0 [dm_mod]()
-[  636.987070] Modules linked in: dm_service_time dm_multipath scsi_dh 
-ib_srp scsi_transport_srp netconsole configfs fuse dm_crypt xts gf128mul 
-algif_skcipher af_alg loop rdma_ucm rdma_cm iw_cm ib_ipoib ib_cm 
-ib_uverbs ib_umad mlx4_en ptp pps_core iscsi_ibft iscsi_boot_sysfs 
-af_packet mlx4_ib ib_sa ib_mad ib_core ib_addr mlx4_core iTCO_wdt sky2 
-iTCO_vendor_support coretemp lpc_ich shpchp mfd_core pcspkr serio_raw 
-i2c_i801 acpi_cpufreq tpm_infineon tpm_tis tpm asus_atk0110 button 
-processor dm_mod sr_mod cdrom ata_generic radeon ata_piix firewire_ohci 
-i2c_algo_bit firewire_core crc_itu_t drm_kms_helper ttm pata_marvell drm 
-floppy sg [last unloaded: scsi_transport_srp]
-[  636.998755] CPU: 0 PID: 3 Comm: ksoftirqd/0 Not tainted 
-4.1.0-rc2-debug+ #1
-[  636.998771] Hardware name: System manufacturer P5Q DELUXE/P5Q DELUXE, 
-BIOS 2301    07/10/2009
-[  636.998786]  ffffffffa02ce8ad ffff8801b81efca8 ffffffff81606de3 
-ffff8801bfc0fff8
-[  636.998862]  0000000000000000 ffff8801b81efce8 ffffffff81052940 
-ffffffff81e3d288
-[  636.998953]  ffff8800a1f82580 ffff8800a1e40000 ffff8800a1f82530 
-ffff8800a1e40000
-[  636.999032] Call Trace:
-[  636.999054]  [<ffffffff81606de3>] dump_stack+0x4c/0x6e
-[  636.999074]  [<ffffffff81052940>] warn_slowpath_common+0x80/0xc0
-[  636.999092]  [<ffffffff81052a25>] warn_slowpath_null+0x15/0x20
-[  636.999115]  [<ffffffffa02bdc2a>] free_rq_clone+0x7a/0xf0 [dm_mod]
-[  636.999139]  [<ffffffffa02be45c>] dm_softirq_done+0x13c/0x250 [dm_mod]
-[  636.999162]  [<ffffffff812c6ec8>] blk_done_softirq+0x78/0x90
-[  636.999181]  [<ffffffff81056a2a>] __do_softirq+0x10a/0x240
-[  636.999200]  [<ffffffff81056b7a>] run_ksoftirqd+0x1a/0x70
-[  636.999218]  [<ffffffff81076adf>] smpboot_thread_fn+0x16f/0x260
-[  636.999256]  [<ffffffff81073099>] kthread+0xf9/0x110
-[  636.999294]  [<ffffffff8160fce2>] ret_from_fork+0x42/0x70
-[  636.999338] ---[ end trace ba34bc950a902b8f ]---
+-- 
+I speak only for myself.
+Rafael J. Wysocki, Intel Open Source Technology Center.
