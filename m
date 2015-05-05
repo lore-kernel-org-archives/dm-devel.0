@@ -1,76 +1,71 @@
-From: =?UTF-8?B?SG9yaWEgR2VhbnTEgw==?= <horia.geanta@freescale.com>
-Subject: Re: [PATCH] Revert "dm crypt: fix deadlock when async crypto algorithm
- returns -EBUSY"
-Date: Tue, 5 May 2015 16:22:57 +0300
-Message-ID: <5548C431.9000304@freescale.com>
-References: <20150505125040.GB7782@redhat.com>
- <1430831756-13155-1-git-send-email-rabin.vincent@axis.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: 4.1-rc2 dm-multipath-mq kernel warning
+Date: Tue, 5 May 2015 16:04:21 +0200
+Message-ID: <5548CDE5.9@sandisk.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <1430831756-13155-1-git-send-email-rabin.vincent@axis.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Rabin Vincent <rabin.vincent@axis.com>, snitzer@redhat.com
-Cc: ben.c@servergy.com, dm-devel@redhat.com, linux-crypto@vger.kernel.org, mbroz@redhat.com, herbert@gondor.apana.org.au, Rabin Vincent <rabinv@axis.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 5/5/2015 4:15 PM, Rabin Vincent wrote:
-> This reverts commit 0618764cb25f6fa9fb31152995de42a8a0496475.
-> 
-> The problem which that commit attempts to fix actually lies in the
-> Freescale CAAM crypto driver.
-> 
-> dm-crypt uses CRYPTO_TFM_REQ_MAY_BACKLOG.  This means the the crypto
-> driver should internally backlog requests which arrive when the queue is
-> full and process them later.  Until the crypto hw's queue becomes full,
-> the driver returns -EINPROGRESS.  When the crypto hw's queue if full,
-> the driver returns -EBUSY, and if CRYPTO_TFM_REQ_MAY_BACKLOG is set, is
-> expected to backlog the request and process it when the hardware has
-> queue space.  At the point when the driver takes the request from the
-> backlog and starts processing it, it calls the completion function with
-> a status of -EINPROGRESS.  The completion function is called (for a
-> second time, in the case of backlogged requests) with a status/err of 0
-> when a request is done.
-> 
-> Crypto drivers for hardware without hardware queueing use the helpers,
-> crypto_init_queue(), crypto_enqueue_request(), crypto_dequeue_request()
-> and crypto_get_backlog() helpers to implement this behaviour correctly,
-> while others implement this behaviour without these helpers (ccp, for
-> example).
-> 
-> dm-crypt (before this patch) uses this API correctly.  It queues up as
-> many requests as the hw queues will allow (i.e. as long as it gets back
-> -EINPROGRESS from the request function).  Then, when it sees at least
-> one backlogged request (gets -EBUSY), it waits till that backlogged
-> request is handled (completion gets called with -EINPROGRESS), and then
-> continues.  The references to af_alg_wait_for_completion() and
-> af_alg_complete() in that commit's commit message are irrelevant because
-> those functions only handle one request at a time, unlink dm-crypt.
-> 
-> The problem is that the Freescale CAAM driver, which that commit
-> describes as having being tested with, fails to implement the
-> backlogging behaviour correctly.  In cam_jr_enqueue(), if the hardware
-> queue is full, it simply returns -EBUSY without backlogging the request.
-> What the observed deadlock was is not described in the commit message
-> but it is obviously the wait_for_completion() in crypto_convert() where
-> dm-crypto would wait for the completion being called with -EINPROGRESS
-> in the case of backlogged requests.  This completion will never be
-> completed due to the bug in the CAAM driver.
-> 
-> What that commit does is that it makes dm-crypt wait for every request,
-> even when the driver/hardware queues are not full, which means that
-> dm-crypt will never see -EBUSY.  This means that that commit will cause
-> a performance regression on all crypto drivers which implement the API
-> correctly.
-> 
-> Revert it.  Correct backlog handling should be implemented in the CAAM
-> driver instead.
-> 
-> Signed-off-by: Rabin Vincent <rabin.vincent@axis.com>
+Hello Mike,
 
-Reviewed-by: Horia Geanta <horia.geanta@freescale.com>
+While retesting my SRP initiator patches on top of kernel v4.1-rc2 with 
+DM_MQ_DEFAULT=y I ran into the kernel warning below. Does this mean that 
+I'm missing any device mapper related patches ? This warning was 
+reported shortly after scsi_remove_host() had been invoked.
 
-I confirm CAAM crypto driver currently lacks backlogging support.
+Thanks,
 
-Horia
+Bart.
+
+[  636.982089] device-mapper: multipath: Failing path 8:16.
+[  636.982395] blk_update_request: I/O error, dev dm-1, sector 42378
+[  636.987025] ------------[ cut here ]------------
+[  636.987053] WARNING: CPU: 0 PID: 3 at drivers/md/dm.c:1090 
+free_rq_clone+0x7a/0xf0 [dm_mod]()
+[  636.987070] Modules linked in: dm_service_time dm_multipath scsi_dh 
+ib_srp scsi_transport_srp netconsole configfs fuse dm_crypt xts gf128mul 
+algif_skcipher af_alg loop rdma_ucm rdma_cm iw_cm ib_ipoib ib_cm 
+ib_uverbs ib_umad mlx4_en ptp pps_core iscsi_ibft iscsi_boot_sysfs 
+af_packet mlx4_ib ib_sa ib_mad ib_core ib_addr mlx4_core iTCO_wdt sky2 
+iTCO_vendor_support coretemp lpc_ich shpchp mfd_core pcspkr serio_raw 
+i2c_i801 acpi_cpufreq tpm_infineon tpm_tis tpm asus_atk0110 button 
+processor dm_mod sr_mod cdrom ata_generic radeon ata_piix firewire_ohci 
+i2c_algo_bit firewire_core crc_itu_t drm_kms_helper ttm pata_marvell drm 
+floppy sg [last unloaded: scsi_transport_srp]
+[  636.998755] CPU: 0 PID: 3 Comm: ksoftirqd/0 Not tainted 
+4.1.0-rc2-debug+ #1
+[  636.998771] Hardware name: System manufacturer P5Q DELUXE/P5Q DELUXE, 
+BIOS 2301    07/10/2009
+[  636.998786]  ffffffffa02ce8ad ffff8801b81efca8 ffffffff81606de3 
+ffff8801bfc0fff8
+[  636.998862]  0000000000000000 ffff8801b81efce8 ffffffff81052940 
+ffffffff81e3d288
+[  636.998953]  ffff8800a1f82580 ffff8800a1e40000 ffff8800a1f82530 
+ffff8800a1e40000
+[  636.999032] Call Trace:
+[  636.999054]  [<ffffffff81606de3>] dump_stack+0x4c/0x6e
+[  636.999074]  [<ffffffff81052940>] warn_slowpath_common+0x80/0xc0
+[  636.999092]  [<ffffffff81052a25>] warn_slowpath_null+0x15/0x20
+[  636.999115]  [<ffffffffa02bdc2a>] free_rq_clone+0x7a/0xf0 [dm_mod]
+[  636.999139]  [<ffffffffa02be45c>] dm_softirq_done+0x13c/0x250 [dm_mod]
+[  636.999162]  [<ffffffff812c6ec8>] blk_done_softirq+0x78/0x90
+[  636.999181]  [<ffffffff81056a2a>] __do_softirq+0x10a/0x240
+[  636.999200]  [<ffffffff81056b7a>] run_ksoftirqd+0x1a/0x70
+[  636.999218]  [<ffffffff81076adf>] smpboot_thread_fn+0x16f/0x260
+[  636.999256]  [<ffffffff81073099>] kthread+0xf9/0x110
+[  636.999294]  [<ffffffff8160fce2>] ret_from_fork+0x42/0x70
+[  636.999338] ---[ end trace ba34bc950a902b8f ]---
