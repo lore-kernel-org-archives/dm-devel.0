@@ -1,14 +1,16 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: 4.1-rc2 dm-multipath-mq kernel warning
-Date: Wed, 6 May 2015 09:45:18 +0200
-Message-ID: <5549C68E.2050705@sandisk.com>
-References: <5548CDE5.9@sandisk.com> <20150506022332.GA12096@redhat.com>
+From: "Stewart, Sean" <Sean.Stewart@netapp.com>
+Subject: Re: Trouble with ALUA on controller failover
+Date: Wed, 6 May 2015 14:56:07 +0000
+Message-ID: <1430924167.1436.10.camel@localhost>
+References: <2C57E63023777C48B6C9F37639B365170E3EE72A@MBX02.nimblestorage.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150506022332.GA12096@redhat.com>
+In-Reply-To: <2C57E63023777C48B6C9F37639B365170E3EE72A@MBX02.nimblestorage.com>
+Content-Language: en-US
+Content-ID: <807381593C3AC64E84AA7AA0CCE26598@hq.netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,88 +20,92 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 05/06/15 04:23, Mike Snitzer wrote:
-> On Tue, May 05 2015 at 10:04am -0400,
-> Bart Van Assche <bart.vanassche@sandisk.com> wrote:
->> While retesting my SRP initiator patches on top of kernel v4.1-rc2
->> with DM_MQ_DEFAULT=y I ran into the kernel warning below. Does this
->> mean that I'm missing any device mapper related patches ? This
->> warning was reported shortly after scsi_remove_host() had been
->> invoked.
+Hi Adam,
+
+On Thu, 2015-04-30 at 14:34 +0000, Adam Drew wrote:
+> Hi all,
 > 
-> I put the warning in place because, to me, if it triggers it speaks to
-> unsafe teardown occuring (request is still completing but the queue it
-> was issued from no longer exists).
+> We're facing a bit of a strange problem and would like some input on debugging and next steps.
 > 
-> Like I said before I'm open to removing the WARN_ON_ONCE() if this
-> scenario is perfectly valid.  But I just haven't had time to revisit
-> what appears to be a potentially serious problem with the underlying
-> paths' teardown vs upper level mpath IO.
+> We have RHEL 7 connected to a Nimble CS-series array via FC. We're running device-mapper-multipath-0.4.9-77.el7.x86_64 and 3.10.0-123.el7.x86_64. Our multipath config is very simple:
+...
+> The path status is strange. The path that should be active ready running now, 9:0:1:0, is failed ready  running:
+> mpathek (29b72fe86f66a2a366c9ce9009d9a9742) dm-0 Nimble  ,Server          
+> size=244G features='1 queue_if_no_path' hwhandler='0' wp=rw
+> |-+- policy='round-robin 0' prio=0 status=enabled
+> | `- 9:0:0:0 sdb 8:16 failed faulty offline
+> `-+- policy='round-robin 0' prio=50 status=enabled
+>   `- 9:0:1:0 sdc 8:32 failed ready  running
+
+The "failed ready" path status is from the fact that the last I/O dm
+sent down sdc came back failed, which can be seen below.
+
 > 
-> I'll try to revisit this week.  But I welcome input from others too.
+> Multipath tries to send IO down that path but:
+> [  405.078481] Add. Sense: Logical unit not accessible, target port in standby state                
+> [  405.086856] sd 9:0:1:0: [sdc] CDB:                                                               
+> [  405.090748] Write(10): 2a 00 1c fe 95 30 00 00 08 00                                             
+> [  405.096456] sd 9:0:1:0: [sdc] Device not ready                                                   
+> [  405.101419] sd 9:0:1:0: [sdc]                                                                    
+> [  405.104934] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE                                      
+> [  405.111162] sd 9:0:1:0: [sdc]                                                                    
+> [  405.114678] Sense Key : Not Ready [current]                                                      
+> [  405.119481] Info fld=0x0                                                                         
+> [  405.122321] sd 9:0:1:0: [sdc]                                                                    
+> [  405.125838] Add. Sense: Logical unit not accessible, target port in standby state                
+> [  405.134202] sd 9:0:1:0: [sdc] CDB:                                                               
+> [  405.138096] Write(10): 2a 00 1b 64 94 b0 00 00 02 00                                             
+> [  405.143785] sd 9:0:1:0: [sdc] Device not ready                                                   
+> [  405.148736] sd 9:0:1:0: [sdc]                                                                    
+> [  405.152254] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE                                      
+> [  405.158488] sd 9:0:1:0: [sdc]                                                                    
+> [  405.162003] Sense Key : Not Ready [current]  
 > 
-> (Just thinking about it further now, it could be that the way the clone
-> request is allocated in the case of blk-mq DM is as part of the original
-> request's pdu... meaning there isn't a proper get_request() call against
-> the underlying queue.. so the expected refcounting likely isn't
-> happening.  And given the request won't be free'd from that underlying
-> request_queue there really isn't a need to artificially link these
-> cloned requests with the underlying request_queue... so I'm now leaning
-> toward just removing the WARN_ON_ONCE.. but I'll look closer tomorrow)
+It's getting an 02/04/0b check condition from your storage, because it's
+still in the standby AAS.
 
-Hello Mike,
+> When we point RHEL 6 at this same array, and same volume, failover goes over without a hitch. We've been able to reproduce this on the RHEL 7 kernel / device-mapper-multipath combo on several systems.
 
-With CONFIG_SCSI_MQ_DEFAULT=y and CONFIG_DM_MQ_DEFAULT=n I just ran into
-the bug report below. I will continue my v4.1-rc2 tests with SCSI_MQ=n.
+I'm not sure how this is possible, because the code should be very
+similar between RHEL6 and RHEL7 in these areas.
 
-[  288.035205] BUG: unable to handle kernel NULL pointer dereference at 0000000000000068
-[  288.035415] IP: [<ffffffff812bda07>] blk_rq_prep_clone+0x87/0x160
-[  288.035565] PGD a1890067 PUD a432f067 PMD 0 
-[  288.035753] Oops: 0000 [#1] PREEMPT SMP 
-[  288.035957] Modules linked in: dm_service_time dm_multipath scsi_dh netconsole configfs fuse dm_crypt xts gf128mul algif_skcipher af_alg loop rdma_ucm rdma_cm iw_cm ib_srp scsi_transport_srp ib_ipoib ib_cm ib_uverbs ib_umad mlx4_en ptp pps_core mlx4_ib ib_sa iscsi_ibft ib_mad iscsi_boot_sysfs ib_core ib_addr af_packet mlx4_core iTCO_wdt tpm_infineon tpm_tis iTCO_vendor_support sky2 lpc_ich tpm mfd_core shpchp serio_raw acpi_cpufreq i2c_i801 asus_atk0110 button processor pcspkr coretemp dm_mod sr_mod cdrom ata_generic ata_piix firewire_ohci radeon firewire_core crc_itu_t i2c_algo_bit drm_kms_helper ttm drm pata_marvell floppy sg
-[  288.040008] CPU: 0 PID: 2223 Comm: kdmwork-254:1 Not tainted 4.1.0-rc2-debug+ #4
-[  288.040008] Hardware name: System manufacturer P5Q DELUXE/P5Q DELUXE, BIOS 2301    07/10/2009
-[  288.040008] task: ffff8801a2f75180 ti: ffff88019d008000 task.ti: ffff88019d008000
-[  288.040008] RIP: 0010:[<ffffffff812bda07>]  [<ffffffff812bda07>] blk_rq_prep_clone+0x87/0x160
-[  288.040008] RSP: 0018:ffff88019d00bd38  EFLAGS: 00010246
-[  288.040008] RAX: 0000000000000000 RBX: ffffffffa02914f0 RCX: 0000000000000001
-[  288.040008] RDX: ffff8800a0cec660 RSI: ffff8801b7d22880 RDI: ffff8800a0cbed10
-[  288.040008] RBP: ffff88019d00bd88 R08: 0000000000000020 R09: 0000000000000000
-[  288.040008] R10: 0000000000000001 R11: ffff8800a0cbd200 R12: ffff8800a43cc618
-[  288.040008] R13: ffff8801b7d22880 R14: ffff8800a0cbed10 R15: 0000000000000000
-[  288.040008] FS:  0000000000000000(0000) GS:ffff8801bfc00000(0000) knlGS:0000000000000000
-[  288.040008] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-[  288.040008] CR2: 0000000000000068 CR3: 00000000a1a15000 CR4: 00000000000407f0
-[  288.040008] Stack:
-[  288.040008]  ffff88019d00bda0 ffff88019b80c828 ffff8800a0cec660 00000020a0cec660
-[  288.040008]  ffff8801b6101148 ffff8800a0cec660 0000000000000002 ffff88019b80c828
-[  288.040008]  ffffc90001f12040 0000000000000000 ffff88019d00bdd8 ffffffffa0292a71
-[  288.040008] Call Trace:
-[  288.040008]  [<ffffffffa0292a71>] map_request.isra.39+0x191/0x230 [dm_mod]
-[  288.040008]  [<ffffffffa0292b2a>] map_tio_request+0x1a/0x40 [dm_mod]
-[  288.040008]  [<ffffffff8107318e>] kthread_worker_fn+0x7e/0x1b0
-[  288.040008]  [<ffffffff81073110>] ? __init_kthread_worker+0x60/0x60
-[  288.040008]  [<ffffffff81073099>] kthread+0xf9/0x110
-[  288.040008]  [<ffffffff81072fa0>] ? kthread_create_on_node+0x230/0x230
-[  288.040008]  [<ffffffff8160fee2>] ret_from_fork+0x42/0x70
-[  288.040008]  [<ffffffff81072fa0>] ? kthread_create_on_node+0x230/0x230
+> We've been tearing through the device-mapper-multipath-libs and kernel code to see if we can find the cause of the problem, and we've been testing quite a bit, but have as yet been unable to resolve this. We'd like some input on next steps for debugging and testing.
+> 
+> The only thing we've found so far that looks promising is with the parameter data format on RTPG during failover. RHEL 7 is sending a parameter data format of 1, but we answer 0 (which is within spec). Here's the message on our array side:
+> 
+> dsd.log.2:19485 2015-04-20,11:45:46.746395-07 INFO: scsi.core:_scsi_report_target_group: parameter data format = 1, treating it as length only format(0)
+> dsd.log.2:19485 2015-04-20,11:45:46.747362-07 INFO: scsi.core:_scsi_report_target_group: parameter data format = 1, treating it as length only format(0)
+> 
+> But on the RHEL side we see:
+> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: host1: Assigned Port ID 720080
+> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: Direct-Access Nimble Server 1.0 PQ: 0 ANSI: 5
+> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: supports implicit TPGS
+> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: port group 01 rel port 01
+> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: rtpg failed with 8000002
+> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: port group 01 state S non-preferred supports tolusna
+> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: Attached
+> 
+> We're wondering if the RTPG failure is causing us to be unable to instate the new active path, and we wonder if this is due to RHEL 7 kernel or dmm not liking the 0 pdf response on 1. However, we're unsure if this would be in the kernel ALUA scsi_dh code, or in the device-mapper-multipath-libs alua code.
+> 
+The RTPG failure should not be causing this problem, as you see with the
+subsequent "port group 01 state S non-preferred supports tolusna"
+message that the RTPG does complete successfully. The first attempt uses
+extended RTPG headers, and if it gets an illegal request back, it
+disables it and tries again.
 
-# gdb vmlinux
-(gdb) list *(blk_rq_prep_clone+0x87)
-0xffffffff812bda07 is in blk_rq_prep_clone (block/blk-core.c:2976).
-2971                            goto free_and_out;
-2972
-2973                    if (bio_ctr && bio_ctr(bio, bio_src, data))
-2974                            goto free_and_out;
-2975
-2976                    if (rq->bio) {
-2977                            rq->biotail->bi_next = bio;
-2978                            rq->biotail = bio;
-2979                    } else
-2980                            rq->bio = rq->biotail = bio;
+Your RTPG data indicates that only implicit TPGS is supported. Also, the
+multipath configuration and multipath -ll output shows that no hardware
+handler is being used for failover and failback (but I see the alua
+handler is attached, which must be happening on device discovery and not
+because of dm).  Basically, in this configuration, it would be up to the
+array to change the AAS to allow I/O on the other path.
 
-Bart.
+I have to wonder if there's some configuration difference, or reporting
+difference between the two cases. Sorry I don't have all the answers,
+but hopefully this helps to some extent.
+
+Thanks,
+Sean Stewart
