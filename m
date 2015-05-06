@@ -1,81 +1,65 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [dm-devel] [PATCH stable] block: discard bdi_unregister() in
- favour of bdi_destroy()
-Date: Wed, 6 May 2015 09:11:19 -0700
-Message-ID: <CAA9_cmcNfpNAuJbVVbNN-cacVg4Dn-=VroUQ0T-PZz-j69S+iQ@mail.gmail.com>
-References: <20150414171537.GH25394@azat>
-	<20150423160551.45345f96@notabene.brown>
-	<20150427141222.5dac22f1@notabene.brown>
-	<CAMM=eLf2aFFH29xeDVrS7beFj6T8kqUQRh=4KB1YO0kWGa7Rog@mail.gmail.com>
-	<20150429072530.39d38b00@notabene.brown>
-	<20150429133512.GA4436@lst.de>
-	<20150429160258.GK17717@twins.programming.kicks-ass.net>
-	<20150430103233.75227693@notabene.brown>
+From: Ming Lin <mlin@kernel.org>
+Subject: Re: [PATCH 07/10] block: kill merge_bvec_fn() completely
+Date: Wed, 6 May 2015 10:05:09 -0700
+Message-ID: <CAF1ivSaSAqfG3-U37T5U3a7_L4q-PD7Mw980K51CqzrtXx8CGA@mail.gmail.com>
+References: <1430203717-13307-1-git-send-email-mlin@kernel.org>
+	<1430203717-13307-8-git-send-email-mlin@kernel.org>
+	<20150429080919.342fddfd@notabene.brown>
+	<5547241B.1040903@kernel.org>
+	<20150506072637.GB23083@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150430103233.75227693@notabene.brown>
+In-Reply-To: <20150506072637.GB23083@lst.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Jens Axboe <axboe@fb.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, Azat Khuzhin <a3at.mail@gmail.com>, Peter Zijlstra <peterz@infradead.org>, lkml <linux-kernel@vger.kernel.org>, "Kernel.org-Linux-RAID" <linux-raid@vger.kernel.org>, Guoqing Jiang <GQJiang@suse.com>, Tejun Heo <tj@kernel.org>, Christoph Hellwig <hch@lst.de>, nicholas.w.moulin@linux.intel.com
+To: Christoph Hellwig <hch@lst.de>
+Cc: Ming Lin <mlin@kernel.org>, NeilBrown <neilb@suse.de>, lkml <linux-kernel@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dongsu.park@profitbricks.com>, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Yehuda Sadeh <yehuda@inktank.com>, Sage Weil <sage@inktank.com>, Alex Elder <elder@kernel.org>, ceph-devel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 29, 2015 at 5:32 PM, NeilBrown <neilb@suse.de> wrote:
+On Wed, May 6, 2015 at 12:26 AM, Christoph Hellwig <hch@lst.de> wrote:
+>> -static int chunk_aligned_read(struct mddev *mddev, struct bio * raid_bio)
+>> +static int __chunk_aligned_read(struct mddev *mddev, struct bio *raid_bio)
 >
-> bdi_unregister() now contains very little functionality.
+> Call it raid5_read_one_chunk or something similar descriptive?
 >
-> It contains a "WARN_ON" if bdi->dev is NULL.  This warning is of no
-> real consequence as bdi->dev isn't needed by anything else in the function,
-> and it triggers if
->    blk_cleanup_queue() -> bdi_destroy()
-> is called before bdi_unregister, which a subsequent patch will make happen.
-> So this isn't wanted.
+>>  {
+>>       struct r5conf *conf = mddev->private;
+>>       int dd_idx;
+>> @@ -4718,7 +4718,7 @@ static int chunk_aligned_read(struct mddev *mddev, struct bio * raid_bio)
+>>       sector_t end_sector;
+>>
+>>       if (!in_chunk_boundary(mddev, raid_bio)) {
+>> -             pr_debug("chunk_aligned_read : non aligned\n");
+>> +             pr_debug("__chunk_aligned_read : non aligned\n");
 >
-> It also calls bdi_set_min_ratio().  This needs to be called after
-> writes through the bdi have all been flushed, and before the bdi is destroyed.
-> Calling it early is better than calling it late as it frees up a global
-> resource.
+> Switch to __func__?
 >
-> Calling it immediately after bdi_wb_shutdown() in bdi_destroy()
-> perfectly fits these requirements.
+>> +static struct bio *chunk_aligned_read(struct mddev *mddev, struct bio *raid_bio)
+>> +{
+>> +     struct bio *split;
+>> +
+>> +     do {
+>> +             sector_t sector = raid_bio->bi_iter.bi_sector;
+>> +             unsigned chunk_sects = mddev->chunk_sectors;
+>> +
+>> +             unsigned sectors = chunk_sects -
+>> +                     (likely(is_power_of_2(chunk_sects))
+>> +                      ? (sector & (chunk_sects-1))
+>> +                      : sector_div(sector, chunk_sects));
 >
-> So bdi_unregister can be discarded with the important content moved to
-> bdi_destroy, as can the
->   writeback_bdi_unregister
-> event which is already not used.
+> This would be a lot more readable with a good old if.
 >
-> This is tagged for 'stable' as it is a pre-requisite for a subsequent
-> patch which moves calls to blk_cleanup_queue() before calls to
-> del_gendisk().  The commit identified as 'Fixes' removed a lot of
-> other functionality from bdi_unregister(), and made a change which
-> necessitated moving the blk_cleanup_queue() calls.
+>>       if (rw == READ && mddev->degraded == 0 &&
+>>            mddev->reshape_position == MaxSector &&
+>> -          chunk_aligned_read(mddev,bi))
+>> +          (!(bi = chunk_aligned_read(mddev, bi))))
+>>               return;
 >
-> Reported-by: Mike Snitzer <snitzer@redhat.com>
-> Cc: Christoph Hellwig <hch@lst.de>
-> Cc: Peter Zijlstra <peterz@infradead.org>
-> Cc: stable@vger.kernel.org (v4.0)
-> Fixes: c4db59d31e39ea067c32163ac961e9c80198fd37
-> Signed-off-by: NeilBrown <neilb@suse.de>
->
-> ---
->
-> Hi again Jens,
->  would you be able to queue this patch *before* the other one:
->    block: destroy bdi before blockdev is unregistered.
->
->  If it has to come after I'll need to re-write the text a bit.
->  If you could give me the commit hash to reference I'll do that.
+>         if (rw == READ && mddev->degraded == 0 &&
+>             mddev->reshape_position == MaxSector) {
+>                 bi = chunk_aligned_read(mddev, bi);
+>                 if (!bi)
+>                         return;
+>         }
 
-Seems it is after:
-
-http://git.kernel.dk/?p=linux-block.git;a=commit;h=6cd18e71
-
-Also, we gave both patches a try internally after seeing the duplicate
-sysfs warning.  You can add:
-
-Acked-by: Dan Williams <dan.j.williams@intel.com>
-Tested-by: Nicholas Moulin <nicholas.w.moulin@linux.intel.com>
-
-...on the re-send.
-
-Thanks Neil!
+Will update all. Thanks.
