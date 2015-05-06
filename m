@@ -1,111 +1,81 @@
-From: "Stewart, Sean" <Sean.Stewart@netapp.com>
-Subject: Re: Trouble with ALUA on controller failover
-Date: Wed, 6 May 2015 14:56:07 +0000
-Message-ID: <1430924167.1436.10.camel@localhost>
-References: <2C57E63023777C48B6C9F37639B365170E3EE72A@MBX02.nimblestorage.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [dm-devel] [PATCH stable] block: discard bdi_unregister() in
+ favour of bdi_destroy()
+Date: Wed, 6 May 2015 09:11:19 -0700
+Message-ID: <CAA9_cmcNfpNAuJbVVbNN-cacVg4Dn-=VroUQ0T-PZz-j69S+iQ@mail.gmail.com>
+References: <20150414171537.GH25394@azat>
+	<20150423160551.45345f96@notabene.brown>
+	<20150427141222.5dac22f1@notabene.brown>
+	<CAMM=eLf2aFFH29xeDVrS7beFj6T8kqUQRh=4KB1YO0kWGa7Rog@mail.gmail.com>
+	<20150429072530.39d38b00@notabene.brown>
+	<20150429133512.GA4436@lst.de>
+	<20150429160258.GK17717@twins.programming.kicks-ass.net>
+	<20150430103233.75227693@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2C57E63023777C48B6C9F37639B365170E3EE72A@MBX02.nimblestorage.com>
-Content-Language: en-US
-Content-ID: <807381593C3AC64E84AA7AA0CCE26598@hq.netapp.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150430103233.75227693@notabene.brown>
+Sender: linux-kernel-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Jens Axboe <axboe@fb.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, Azat Khuzhin <a3at.mail@gmail.com>, Peter Zijlstra <peterz@infradead.org>, lkml <linux-kernel@vger.kernel.org>, "Kernel.org-Linux-RAID" <linux-raid@vger.kernel.org>, Guoqing Jiang <GQJiang@suse.com>, Tejun Heo <tj@kernel.org>, Christoph Hellwig <hch@lst.de>, nicholas.w.moulin@linux.intel.com
 List-Id: dm-devel.ids
 
-Hi Adam,
+On Wed, Apr 29, 2015 at 5:32 PM, NeilBrown <neilb@suse.de> wrote:
+>
+> bdi_unregister() now contains very little functionality.
+>
+> It contains a "WARN_ON" if bdi->dev is NULL.  This warning is of no
+> real consequence as bdi->dev isn't needed by anything else in the function,
+> and it triggers if
+>    blk_cleanup_queue() -> bdi_destroy()
+> is called before bdi_unregister, which a subsequent patch will make happen.
+> So this isn't wanted.
+>
+> It also calls bdi_set_min_ratio().  This needs to be called after
+> writes through the bdi have all been flushed, and before the bdi is destroyed.
+> Calling it early is better than calling it late as it frees up a global
+> resource.
+>
+> Calling it immediately after bdi_wb_shutdown() in bdi_destroy()
+> perfectly fits these requirements.
+>
+> So bdi_unregister can be discarded with the important content moved to
+> bdi_destroy, as can the
+>   writeback_bdi_unregister
+> event which is already not used.
+>
+> This is tagged for 'stable' as it is a pre-requisite for a subsequent
+> patch which moves calls to blk_cleanup_queue() before calls to
+> del_gendisk().  The commit identified as 'Fixes' removed a lot of
+> other functionality from bdi_unregister(), and made a change which
+> necessitated moving the blk_cleanup_queue() calls.
+>
+> Reported-by: Mike Snitzer <snitzer@redhat.com>
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: Peter Zijlstra <peterz@infradead.org>
+> Cc: stable@vger.kernel.org (v4.0)
+> Fixes: c4db59d31e39ea067c32163ac961e9c80198fd37
+> Signed-off-by: NeilBrown <neilb@suse.de>
+>
+> ---
+>
+> Hi again Jens,
+>  would you be able to queue this patch *before* the other one:
+>    block: destroy bdi before blockdev is unregistered.
+>
+>  If it has to come after I'll need to re-write the text a bit.
+>  If you could give me the commit hash to reference I'll do that.
 
-On Thu, 2015-04-30 at 14:34 +0000, Adam Drew wrote:
-> Hi all,
-> 
-> We're facing a bit of a strange problem and would like some input on debugging and next steps.
-> 
-> We have RHEL 7 connected to a Nimble CS-series array via FC. We're running device-mapper-multipath-0.4.9-77.el7.x86_64 and 3.10.0-123.el7.x86_64. Our multipath config is very simple:
-...
-> The path status is strange. The path that should be active ready running now, 9:0:1:0, is failed ready  running:
-> mpathek (29b72fe86f66a2a366c9ce9009d9a9742) dm-0 Nimble  ,Server          
-> size=244G features='1 queue_if_no_path' hwhandler='0' wp=rw
-> |-+- policy='round-robin 0' prio=0 status=enabled
-> | `- 9:0:0:0 sdb 8:16 failed faulty offline
-> `-+- policy='round-robin 0' prio=50 status=enabled
->   `- 9:0:1:0 sdc 8:32 failed ready  running
+Seems it is after:
 
-The "failed ready" path status is from the fact that the last I/O dm
-sent down sdc came back failed, which can be seen below.
+http://git.kernel.dk/?p=linux-block.git;a=commit;h=6cd18e71
 
-> 
-> Multipath tries to send IO down that path but:
-> [  405.078481] Add. Sense: Logical unit not accessible, target port in standby state                
-> [  405.086856] sd 9:0:1:0: [sdc] CDB:                                                               
-> [  405.090748] Write(10): 2a 00 1c fe 95 30 00 00 08 00                                             
-> [  405.096456] sd 9:0:1:0: [sdc] Device not ready                                                   
-> [  405.101419] sd 9:0:1:0: [sdc]                                                                    
-> [  405.104934] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE                                      
-> [  405.111162] sd 9:0:1:0: [sdc]                                                                    
-> [  405.114678] Sense Key : Not Ready [current]                                                      
-> [  405.119481] Info fld=0x0                                                                         
-> [  405.122321] sd 9:0:1:0: [sdc]                                                                    
-> [  405.125838] Add. Sense: Logical unit not accessible, target port in standby state                
-> [  405.134202] sd 9:0:1:0: [sdc] CDB:                                                               
-> [  405.138096] Write(10): 2a 00 1b 64 94 b0 00 00 02 00                                             
-> [  405.143785] sd 9:0:1:0: [sdc] Device not ready                                                   
-> [  405.148736] sd 9:0:1:0: [sdc]                                                                    
-> [  405.152254] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE                                      
-> [  405.158488] sd 9:0:1:0: [sdc]                                                                    
-> [  405.162003] Sense Key : Not Ready [current]  
-> 
-It's getting an 02/04/0b check condition from your storage, because it's
-still in the standby AAS.
+Also, we gave both patches a try internally after seeing the duplicate
+sysfs warning.  You can add:
 
-> When we point RHEL 6 at this same array, and same volume, failover goes over without a hitch. We've been able to reproduce this on the RHEL 7 kernel / device-mapper-multipath combo on several systems.
+Acked-by: Dan Williams <dan.j.williams@intel.com>
+Tested-by: Nicholas Moulin <nicholas.w.moulin@linux.intel.com>
 
-I'm not sure how this is possible, because the code should be very
-similar between RHEL6 and RHEL7 in these areas.
+...on the re-send.
 
-> We've been tearing through the device-mapper-multipath-libs and kernel code to see if we can find the cause of the problem, and we've been testing quite a bit, but have as yet been unable to resolve this. We'd like some input on next steps for debugging and testing.
-> 
-> The only thing we've found so far that looks promising is with the parameter data format on RTPG during failover. RHEL 7 is sending a parameter data format of 1, but we answer 0 (which is within spec). Here's the message on our array side:
-> 
-> dsd.log.2:19485 2015-04-20,11:45:46.746395-07 INFO: scsi.core:_scsi_report_target_group: parameter data format = 1, treating it as length only format(0)
-> dsd.log.2:19485 2015-04-20,11:45:46.747362-07 INFO: scsi.core:_scsi_report_target_group: parameter data format = 1, treating it as length only format(0)
-> 
-> But on the RHEL side we see:
-> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: host1: Assigned Port ID 720080
-> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: Direct-Access Nimble Server 1.0 PQ: 0 ANSI: 5
-> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: supports implicit TPGS
-> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: port group 01 rel port 01
-> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: rtpg failed with 8000002
-> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: port group 01 state S non-preferred supports tolusna
-> Apr 14 18:05:54 UCS-PGUO-RHEL7 kernel: scsi 1:0:0:0: alua: Attached
-> 
-> We're wondering if the RTPG failure is causing us to be unable to instate the new active path, and we wonder if this is due to RHEL 7 kernel or dmm not liking the 0 pdf response on 1. However, we're unsure if this would be in the kernel ALUA scsi_dh code, or in the device-mapper-multipath-libs alua code.
-> 
-The RTPG failure should not be causing this problem, as you see with the
-subsequent "port group 01 state S non-preferred supports tolusna"
-message that the RTPG does complete successfully. The first attempt uses
-extended RTPG headers, and if it gets an illegal request back, it
-disables it and tries again.
-
-Your RTPG data indicates that only implicit TPGS is supported. Also, the
-multipath configuration and multipath -ll output shows that no hardware
-handler is being used for failover and failback (but I see the alua
-handler is attached, which must be happening on device discovery and not
-because of dm).  Basically, in this configuration, it would be up to the
-array to change the AAS to allow I/O on the other path.
-
-I have to wonder if there's some configuration difference, or reporting
-difference between the two cases. Sorry I don't have all the answers,
-but hopefully this helps to some extent.
-
-Thanks,
-Sean Stewart
+Thanks Neil!
