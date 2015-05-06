@@ -1,65 +1,73 @@
-From: Ming Lin <mlin@kernel.org>
-Subject: Re: [PATCH 07/10] block: kill merge_bvec_fn() completely
-Date: Wed, 6 May 2015 10:05:09 -0700
-Message-ID: <CAF1ivSaSAqfG3-U37T5U3a7_L4q-PD7Mw980K51CqzrtXx8CGA@mail.gmail.com>
-References: <1430203717-13307-1-git-send-email-mlin@kernel.org>
-	<1430203717-13307-8-git-send-email-mlin@kernel.org>
-	<20150429080919.342fddfd@notabene.brown>
-	<5547241B.1040903@kernel.org>
-	<20150506072637.GB23083@lst.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: 4.1-rc2 dm-multipath-mq kernel warning
+Date: Wed, 6 May 2015 14:29:42 -0400
+Message-ID: <20150506182942.GA15545@redhat.com>
+References: <5548CDE5.9@sandisk.com> <20150506022332.GA12096@redhat.com>
+	<5549C68E.2050705@sandisk.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150506072637.GB23083@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Ming Lin <mlin@kernel.org>, NeilBrown <neilb@suse.de>, lkml <linux-kernel@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dongsu.park@profitbricks.com>, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Yehuda Sadeh <yehuda@inktank.com>, Sage Weil <sage@inktank.com>, Alex Elder <elder@kernel.org>, ceph-devel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "Martin K. Petersen" <martin.petersen@oracle.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <5549C68E.2050705@sandisk.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, May 6, 2015 at 12:26 AM, Christoph Hellwig <hch@lst.de> wrote:
->> -static int chunk_aligned_read(struct mddev *mddev, struct bio * raid_bio)
->> +static int __chunk_aligned_read(struct mddev *mddev, struct bio *raid_bio)
->
-> Call it raid5_read_one_chunk or something similar descriptive?
->
->>  {
->>       struct r5conf *conf = mddev->private;
->>       int dd_idx;
->> @@ -4718,7 +4718,7 @@ static int chunk_aligned_read(struct mddev *mddev, struct bio * raid_bio)
->>       sector_t end_sector;
->>
->>       if (!in_chunk_boundary(mddev, raid_bio)) {
->> -             pr_debug("chunk_aligned_read : non aligned\n");
->> +             pr_debug("__chunk_aligned_read : non aligned\n");
->
-> Switch to __func__?
->
->> +static struct bio *chunk_aligned_read(struct mddev *mddev, struct bio *raid_bio)
->> +{
->> +     struct bio *split;
->> +
->> +     do {
->> +             sector_t sector = raid_bio->bi_iter.bi_sector;
->> +             unsigned chunk_sects = mddev->chunk_sectors;
->> +
->> +             unsigned sectors = chunk_sects -
->> +                     (likely(is_power_of_2(chunk_sects))
->> +                      ? (sector & (chunk_sects-1))
->> +                      : sector_div(sector, chunk_sects));
->
-> This would be a lot more readable with a good old if.
->
->>       if (rw == READ && mddev->degraded == 0 &&
->>            mddev->reshape_position == MaxSector &&
->> -          chunk_aligned_read(mddev,bi))
->> +          (!(bi = chunk_aligned_read(mddev, bi))))
->>               return;
->
->         if (rw == READ && mddev->degraded == 0 &&
->             mddev->reshape_position == MaxSector) {
->                 bi = chunk_aligned_read(mddev, bi);
->                 if (!bi)
->                         return;
->         }
+On Wed, May 06 2015 at  3:45am -0400,
+Bart Van Assche <bart.vanassche@sandisk.com> wrote:
 
-Will update all. Thanks.
+> On 05/06/15 04:23, Mike Snitzer wrote:
+> > On Tue, May 05 2015 at 10:04am -0400,
+> > Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+> >> While retesting my SRP initiator patches on top of kernel v4.1-rc2
+> >> with DM_MQ_DEFAULT=y I ran into the kernel warning below. Does this
+> >> mean that I'm missing any device mapper related patches ? This
+> >> warning was reported shortly after scsi_remove_host() had been
+> >> invoked.
+> > 
+> > I put the warning in place because, to me, if it triggers it speaks to
+> > unsafe teardown occuring (request is still completing but the queue it
+> > was issued from no longer exists).
+> > 
+> > Like I said before I'm open to removing the WARN_ON_ONCE() if this
+> > scenario is perfectly valid.  But I just haven't had time to revisit
+> > what appears to be a potentially serious problem with the underlying
+> > paths' teardown vs upper level mpath IO.
+> > 
+> > I'll try to revisit this week.  But I welcome input from others too.
+> > 
+> > (Just thinking about it further now, it could be that the way the clone
+> > request is allocated in the case of blk-mq DM is as part of the original
+> > request's pdu... meaning there isn't a proper get_request() call against
+> > the underlying queue.. so the expected refcounting likely isn't
+> > happening.  And given the request won't be free'd from that underlying
+> > request_queue there really isn't a need to artificially link these
+> > cloned requests with the underlying request_queue... so I'm now leaning
+> > toward just removing the WARN_ON_ONCE.. but I'll look closer tomorrow)
+> 
+> Hello Mike,
+> 
+> With CONFIG_SCSI_MQ_DEFAULT=y and CONFIG_DM_MQ_DEFAULT=n I just ran into
+> the bug report below. I will continue my v4.1-rc2 tests with SCSI_MQ=n.
+
+What were you doing when this happened?  Quite a strange place to get a
+NULL pointer (it should be noted that for 4.2 hch's patch does away with
+cloning the request's bios).  Is there an easy reproducer (unlikely
+considering I've tested CONFIG_SCSI_MQ_DEFAULT=y and
+CONFIG_DM_MQ_DEFAULT=n a fair amount).
+
+BTW, my "Just thinking about it further now" above was relative to
+CONFIG_DM_MQ_DEFAULT=y and CONFIG_SCSI_MQ_DEFAULT=n.
+
+Mike
