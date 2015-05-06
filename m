@@ -1,57 +1,32 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: 4.1-rc2 dm-multipath-mq kernel warning
-Date: Tue, 5 May 2015 22:23:32 -0400
-Message-ID: <20150506022332.GA12096@redhat.com>
-References: <5548CDE5.9@sandisk.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Yu Chen <yu.c.chen@intel.com>
+Subject: Re: [4.1-rc1][Hibernation failed]  bisect result  included
+Date: Wed, 06 May 2015 10:59:17 +0800
+Message-ID: <55498385.7050401@intel.com>
+References: <36DF59CE26D8EE47B0655C516E9CE6402CA0E2@SHSMSX101.ccr.corp.intel.com> <20150504142654.GA985@redhat.com> <55482B44.6060407@intel.com> <1578315.Syt0DGTIqh@vostro.rjw.lan> <20150506020138.GA12034@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <5548CDE5.9@sandisk.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150506020138.GA12034@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>
+Cc: Dan Ehrenberg <dehrenberg@chromium.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-pm@vger.kernel.org" <linux-pm@vger.kernel.org>, "Wysocki, Rafael J" <rafael.j.wysocki@intel.com>, "Zhang, Rui" <rui.zhang@intel.com>, "Lu, Aaron" <aaron.lu@intel.com>, Martin Steigerwald <martin@lichtvoll.de>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, May 05 2015 at 10:04am -0400,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
-
-> Hello Mike,
-> 
-> While retesting my SRP initiator patches on top of kernel v4.1-rc2
-> with DM_MQ_DEFAULT=y I ran into the kernel warning below. Does this
-> mean that I'm missing any device mapper related patches ? This
-> warning was reported shortly after scsi_remove_host() had been
-> invoked.
-
-I put the warning in place because, to me, if it triggers it speaks to
-unsafe teardown occuring (request is still completing but the queue it
-was issued from no longer exists).
-
-Like I said before I'm open to removing the WARN_ON_ONCE() if this
-scenario is perfectly valid.  But I just haven't had time to revisit
-what appears to be a potentially serious problem with the underlying
-paths' teardown vs upper level mpath IO.
-
-I'll try to revisit this week.  But I welcome input from others too.
-
-(Just thinking about it further now, it could be that the way the clone
-request is allocated in the case of blk-mq DM is as part of the original
-request's pdu... meaning there isn't a proper get_request() call against
-the underlying queue.. so the expected refcounting likely isn't
-happening.  And given the request won't be free'd from that underlying
-request_queue there really isn't a need to artificially link these
-cloned requests with the underlying request_queue... so I'm now leaning
-toward just removing the WARN_ON_ONCE.. but I'll look closer tomorrow)
-
-Mike
+On 05/06/2015 10:01 AM, Mike Snitzer wrote:
+> On Tue, May 05 2015 at  4:48pm -0400,
+> Rafael J. Wysocki <rjw@rjwysocki.net> wrote:
+>
+>> On Tuesday, May 05, 2015 10:30:28 AM Yu Chen wrote:
+>>>
+>>> Thank you very much, Mike and Rafeal,
+>>> I'll send another version titled with V2 for review.
+>>
+>> Have you sent it already?  Where is it if so?
+>
+> I staged what I was expecting v2 to be in linux-dm.git's 'for-next'
+> earlier today.  I am planning to send it to Linus on Thursday, see:
+>
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=cb31ef485dd4c6a205d1064b42027f82076d00c8
+>
+Thanks, Mike
