@@ -1,15 +1,13 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: 4.1-rc2 dm-multipath-mq kernel warning
-Date: Thu, 7 May 2015 12:19:14 +0200
-Message-ID: <554B3C22.4060305@sandisk.com>
-References: <5548CDE5.9@sandisk.com> <20150506022332.GA12096@redhat.com>
-	<5549C68E.2050705@sandisk.com> <20150506182942.GA15545@redhat.com>
+From: Frederick Grose <fgrose@gmail.com>
+Subject: Re: Dumb question; please help
+Date: Thu, 7 May 2015 14:04:33 -0400
+Message-ID: <CAEcBt+Wm=dR9q5CLuMGPZsjsUF9fV7S=W5vH3TpMLVV=vgRAFg@mail.gmail.com>
+References: <CAC5dixFNZ_FBQ8osQiCgDuvXrWBNydC2A173o4RfYqcWCX814Q@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============6292603418018375938=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150506182942.GA15545@redhat.com>
+In-Reply-To: <CAC5dixFNZ_FBQ8osQiCgDuvXrWBNydC2A173o4RfYqcWCX814Q@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,66 +17,167 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 05/06/15 20:29, Mike Snitzer wrote:
-> On Wed, May 06 2015 at  3:45am -0400,
-> Bart Van Assche <bart.vanassche@sandisk.com> wrote:
->
->> On 05/06/15 04:23, Mike Snitzer wrote:
->>> On Tue, May 05 2015 at 10:04am -0400,
->>> Bart Van Assche <bart.vanassche@sandisk.com> wrote:
->>>> While retesting my SRP initiator patches on top of kernel v4.1-rc2
->>>> with DM_MQ_DEFAULT=y I ran into the kernel warning below. Does this
->>>> mean that I'm missing any device mapper related patches ? This
->>>> warning was reported shortly after scsi_remove_host() had been
->>>> invoked.
->>>
->>> I put the warning in place because, to me, if it triggers it speaks to
->>> unsafe teardown occuring (request is still completing but the queue it
->>> was issued from no longer exists).
->>>
->>> Like I said before I'm open to removing the WARN_ON_ONCE() if this
->>> scenario is perfectly valid.  But I just haven't had time to revisit
->>> what appears to be a potentially serious problem with the underlying
->>> paths' teardown vs upper level mpath IO.
->>>
->>> I'll try to revisit this week.  But I welcome input from others too.
->>>
->>> (Just thinking about it further now, it could be that the way the clone
->>> request is allocated in the case of blk-mq DM is as part of the original
->>> request's pdu... meaning there isn't a proper get_request() call against
->>> the underlying queue.. so the expected refcounting likely isn't
->>> happening.  And given the request won't be free'd from that underlying
->>> request_queue there really isn't a need to artificially link these
->>> cloned requests with the underlying request_queue... so I'm now leaning
->>> toward just removing the WARN_ON_ONCE.. but I'll look closer tomorrow)
->>
->> Hello Mike,
->>
->> With CONFIG_SCSI_MQ_DEFAULT=y and CONFIG_DM_MQ_DEFAULT=n I just ran into
->> the bug report below. I will continue my v4.1-rc2 tests with SCSI_MQ=n.
->
-> What were you doing when this happened?  Quite a strange place to get a
-> NULL pointer (it should be noted that for 4.2 hch's patch does away with
-> cloning the request's bios).  Is there an easy reproducer (unlikely
-> considering I've tested CONFIG_SCSI_MQ_DEFAULT=y and
-> CONFIG_DM_MQ_DEFAULT=n a fair amount).
->
-> BTW, my "Just thinking about it further now" above was relative to
-> CONFIG_DM_MQ_DEFAULT=y and CONFIG_SCSI_MQ_DEFAULT=n.
+--===============6292603418018375938==
+Content-Type: multipart/alternative; boundary=001a1134cf34d2ca95051581c0c3
 
-Hello Mike,
+--001a1134cf34d2ca95051581c0c3
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-With kernel v4.1-rc2, with CONFIG_SCSI_MQ_DEFAULT=y and 
-CONFIG_DM_MQ_DEFAULT=n if I run "for p in /sys/class/srp_remote_ports/*; 
-do echo 1 > $p/delete; done" if no I/O is running that command works 
-fine. That command triggers a call of scsi_remove_host(). But if I run 
-the same command while I/O is running the message "BUG: unable to handle 
-kernel NULL pointer dereference at 0000000000000068 / IP: 
-blk_rq_prep_clone+0x87/0x160" appears. I just reproduced this after 
-having rebuilt the kernel after a "make clean".
+On Wed, May 6, 2015 at 1:45 PM, Locane <locane@gmail.com> wrote:
 
-Bart.
+> Hello, I apologize in advance for asking this question, but I can't seem
+> to find the information in documentation or anything online.
+>
+> Short explanation:
+>
+> - I have a CentOS 6.6 LiveCD that is dying after lots of file system thra=
+sh
+> - I use "dmsetup status" to check on when it's dying
+> - I don't know what the numbers in "dmsetup status" represent - they're
+> not labeled
+>
+> Can anyone answer this question
+> <http://superuser.com/questions/900783/dmsetup-status-fields-explained> o=
+r
+> label the following fields for me and explain what they are?
+>
+> [root@localhost ~]# dmsetup status
+> live-osimg-min: 0 4194304 snapshot 1272/1272 16
+> live-rw: 0 4194304 snapshot 7568/1048576 40
+>
+> What are the <number>/<number>s?  What is the 2 digit number following
+> them?
+>
+
+<sectors_allocated>/<total_sectors> <metadata_sectors>
+=E2=80=8B
+
+> My LiveCD dies when the 7568 number in this example gets to the (I assume
+> gibabyte) 1048576 number.  Can I increase this base size?
+>
+
+=E2=80=8BWith=E2=80=8B
+
+=E2=80=8Brecent dracut versions, there are startup options, rd.live.overlay=
+.size
+and rd.writable.fsimg=E2=80=8B, that may be considered.
+
+See
+http://git.kernel.org/?p=3Dboot/dracut/dracut.git;a=3Dblob;f=3Dmodules.d/90=
+dmsquash-live/dmsquash-live-root.sh;hb=3DHEAD
+
+https://fedoraproject.org/wiki/LiveOS_image may also be helpful.
+
+        --Fred
+
+
+>
+> I apologize again for asking such a rudimentary question on this mailing
+> list, but I am desperate.
+>
+> Thanks in advance.
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
+
+--001a1134cf34d2ca95051581c0c3
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div class=3D"gmail_default" style=3D"font-family:&#39;tre=
+buchet ms&#39;,sans-serif;font-size:small;color:rgb(0,0,153)"><span style=
+=3D"font-family:arial,sans-serif;color:rgb(34,34,34)">On Wed, May 6, 2015 a=
+t 1:45 PM, Locane </span><span dir=3D"ltr" style=3D"font-family:arial,sans-=
+serif;color:rgb(34,34,34)">&lt;<a href=3D"mailto:locane@gmail.com" target=
+=3D"_blank">locane@gmail.com</a>&gt;</span><span style=3D"font-family:arial=
+,sans-serif;color:rgb(34,34,34)"> wrote:</span><br></div><div class=3D"gmai=
+l_extra"><div class=3D"gmail_quote"><blockquote class=3D"gmail_quote" style=
+=3D"margin:0px 0px 0px 0.8ex;border-left-width:1px;border-left-color:rgb(20=
+4,204,204);border-left-style:solid;padding-left:1ex"><div dir=3D"ltr">Hello=
+, I apologize in advance for asking this question, but I can&#39;t seem to =
+find the information in documentation or anything online.<div><br></div><di=
+v>Short explanation:</div><div><br></div><div>- I have a CentOS 6.6 LiveCD =
+that is dying after lots of file system thrash</div><div>- I use &quot;dmse=
+tup status&quot; to check on when it&#39;s dying</div><div>- I don&#39;t kn=
+ow what the numbers in &quot;dmsetup status&quot; represent - they&#39;re n=
+ot labeled</div><div><br></div><div>Can anyone <a href=3D"http://superuser.=
+com/questions/900783/dmsetup-status-fields-explained" target=3D"_blank">ans=
+wer this question</a>=C2=A0or label the following fields for me and explain=
+ what they are?</div><div><font face=3D"monospace, monospace"><br></font></=
+div><font face=3D"monospace, monospace">[root@localhost ~]# dmsetup status=
+=C2=A0</font><div><font face=3D"monospace, monospace">live-osimg-min: 0 419=
+4304 snapshot 1272/1272 16=C2=A0</font></div><div><font face=3D"monospace, =
+monospace">live-rw: 0 4194304 snapshot 7568/1048576 40</font></div><div><fo=
+nt face=3D"monospace, monospace"><br></font></div><div><font face=3D"arial,=
+ helvetica, sans-serif">What are the &lt;number&gt;/&lt;number&gt;s?=C2=A0 =
+What is the 2 digit number following them?</font></div></div></blockquote><=
+div><br></div><div class=3D"gmail_default" style=3D"font-family:&#39;trebuc=
+het ms&#39;,sans-serif;font-size:small;color:rgb(0,0,153)"><span style=3D"c=
+olor:rgb(0,0,0);white-space:pre-wrap;font-family:arial,sans-serif">&lt;sect=
+ors_allocated&gt;/&lt;total_sectors&gt; &lt;metadata_sectors&gt;</span><br>=
+</div><div class=3D"gmail_default" style=3D"font-family:&#39;trebuchet ms&#=
+39;,sans-serif;font-size:small;color:rgb(0,0,153)">=E2=80=8B</div><blockquo=
+te class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left-widt=
+h:1px;border-left-color:rgb(204,204,204);border-left-style:solid;padding-le=
+ft:1ex"><div dir=3D"ltr"><div><span style=3D"font-family:arial,helvetica,sa=
+ns-serif">My LiveCD dies when the 7568 number in this example gets to the (=
+I assume gibabyte) 1048576 number.=C2=A0 Can I increase this base size?</sp=
+an></div></div></blockquote><div><br></div><div><div class=3D"gmail_default=
+" style=3D"font-family:&#39;trebuchet ms&#39;,sans-serif;font-size:small;co=
+lor:rgb(0,0,153);display:inline">=E2=80=8BWith=E2=80=8B</div>=C2=A0<div cla=
+ss=3D"gmail_default" style=3D"font-family:&#39;trebuchet ms&#39;,sans-serif=
+;font-size:small;color:rgb(0,0,153);display:inline">=E2=80=8Brecent dracut =
+versions, there are startup options, rd.live.overlay.size and rd.writable.f=
+simg=E2=80=8B, that may be considered.</div></div><div><div class=3D"gmail_=
+default" style=3D"font-family:&#39;trebuchet ms&#39;,sans-serif;font-size:s=
+mall;color:rgb(0,0,153);display:inline"><br></div></div><div><div class=3D"=
+gmail_default" style=3D"font-family:&#39;trebuchet ms&#39;,sans-serif;font-=
+size:small;color:rgb(0,0,153);display:inline">See <a href=3D"http://git.ker=
+nel.org/?p=3Dboot/dracut/dracut.git;a=3Dblob;f=3Dmodules.d/90dmsquash-live/=
+dmsquash-live-root.sh;hb=3DHEAD">http://git.kernel.org/?p=3Dboot/dracut/dra=
+cut.git;a=3Dblob;f=3Dmodules.d/90dmsquash-live/dmsquash-live-root.sh;hb=3DH=
+EAD</a></div></div><div><div class=3D"gmail_default" style=3D"font-family:&=
+#39;trebuchet ms&#39;,sans-serif;font-size:small;color:rgb(0,0,153);display=
+:inline"><br></div></div><div><div class=3D"gmail_default" style=3D"display=
+:inline"><font color=3D"#000099" face=3D"trebuchet ms, sans-serif"><a href=
+=3D"https://fedoraproject.org/wiki/LiveOS_image">https://fedoraproject.org/=
+wiki/LiveOS_image</a> may also be helpful.</font><br></div></div><div><div =
+class=3D"gmail_default" style=3D"display:inline"><font color=3D"#000099" fa=
+ce=3D"trebuchet ms, sans-serif"><br></font></div></div><div><div class=3D"g=
+mail_default" style=3D"display:inline"><font color=3D"#000099" face=3D"treb=
+uchet ms, sans-serif">=C2=A0 =C2=A0 =C2=A0 =C2=A0 --Fred</font></div></div>=
+<div><div class=3D"gmail_default" style=3D"font-family:&#39;trebuchet ms&#3=
+9;,sans-serif;font-size:small;color:rgb(0,0,153);display:inline"><br></div>=
+</div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;b=
+order-left-width:1px;border-left-color:rgb(204,204,204);border-left-style:s=
+olid;padding-left:1ex"><div dir=3D"ltr"><div><br></div><div><font face=3D"a=
+rial, helvetica, sans-serif"><br></font></div><div><font face=3D"arial, hel=
+vetica, sans-serif">I apologize again for asking such a rudimentary questio=
+n on this mailing list, but I am desperate.</font></div><div><font face=3D"=
+arial, helvetica, sans-serif"><br></font></div><div><font face=3D"arial, he=
+lvetica, sans-serif">Thanks in advance.</font></div></div>
+<br>--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
+nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br></blockquote></=
+div><br></div></div>
+
+--001a1134cf34d2ca95051581c0c3--
+
+
+--===============6292603418018375938==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6292603418018375938==--
