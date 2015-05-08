@@ -1,16 +1,15 @@
 From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: [PATCH v2 3/4] Documentation: add version history
-	entries for raid0 support _and_ forgotten
-	devices_handle_discards_safely module paramater
-Date: Fri, 8 May 2015 11:03:28 -0500
-Message-ID: <B561FA32-A0F7-4986-BE99-E85A4D307A56@redhat.com>
-References: <1430308987-24703-4-git-send-email-heinzm@redhat.com>
+Subject: Re: [PATCH v2 4/4] dm-raid: remove bogus
+	parse_raid_params() comment about devices_handle_discards_safely
+Date: Fri, 8 May 2015 11:06:13 -0500
+Message-ID: <2CF74109-EBD9-438E-93CA-ACB86DA47A41@redhat.com>
+References: <1430308987-24703-5-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1430308987-24703-4-git-send-email-heinzm@redhat.com>
+In-Reply-To: <1430308987-24703-5-git-send-email-heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,30 +23,37 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-Cj4gT24gQXByIDI5LCAyMDE1LCBhdCA3OjAzIEFNLCBoZWluem1AcmVkaGF0LmNvbSB3cm90ZToK
-PiAKPiBGcm9tOiBIZWlueiBNYXVlbHNoYWdlbiA8aGVpbnptQHJlZGhhdC5jb20+Cj4gCj4gVGhp
-cyBwYXRjaCBhZGRzIHZlcnNpb24gaGlzdG9yeSBmb3IgbWQgcmFpZDAgdG8gZG0tcmFpZC50eHQK
-PiBfYW5kXwo+IGFkZHMgZm9yZ290dGVuIGRvYyBmb3IgdGhlIDEuNi4wIHZlcnNpb24gY2hhbmdl
-IGFzIHdlbGwKPiAKPiBTaWduZWQtb2ZmLWJ5OiBIZWlueiBNYXVlbHNoYWdlbiA8aGVpbnptQHJl
-ZGhhdC5jb20+Cj4gCj4gLS0tCj4gRG9jdW1lbnRhdGlvbi9kZXZpY2UtbWFwcGVyL2RtLXJhaWQu
-dHh0IHwgMyArKysKPiAxIGZpbGUgY2hhbmdlZCwgMyBpbnNlcnRpb25zKCspCj4gCj4gZGlmZiAt
-LWdpdCBhL0RvY3VtZW50YXRpb24vZGV2aWNlLW1hcHBlci9kbS1yYWlkLnR4dCBiL0RvY3VtZW50
-YXRpb24vZGV2aWNlLW1hcHBlci9kbS1yYWlkLnR4dAo+IGluZGV4IGVmOGJhOWYuLmJjZWI4NjUg
-MTAwNjQ0Cj4gLS0tIGEvRG9jdW1lbnRhdGlvbi9kZXZpY2UtbWFwcGVyL2RtLXJhaWQudHh0Cj4g
-KysrIGIvRG9jdW1lbnRhdGlvbi9kZXZpY2UtbWFwcGVyL2RtLXJhaWQudHh0Cj4gQEAgLTIyNCwz
-ICsyMjQsNiBAQCBWZXJzaW9uIEhpc3RvcnkKPiAJTmV3IHN0YXR1cyAoU1RBVFVTVFlQRV9JTkZP
-KSBmaWVsZHM6IHN5bmNfYWN0aW9uIGFuZCBtaXNtYXRjaF9jbnQuCj4gMS41LjEgICBBZGQgYWJp
-bGl0eSB0byByZXN0b3JlIHRyYW5zaWVudGx5IGZhaWxlZCBkZXZpY2VzIG9uIHJlc3VtZS4KPiAx
-LjUuMiAgICdtaXNtYXRjaF9jbnQnIGlzIHplcm8gdW5sZXNzIFtsYXN0X11zeW5jX2FjdGlvbiBp
-cyAiY2hlY2siLgo+ICsxLjYuMCAgIEFkZCBkZXZpY2VzX2hhbmRsZV9kaXNjYXJkc19zYWZlbHkg
-bW9kdWxlIHBhcmFtZXRlciB0bwo+ICsJYWxsb3cgZGlzY2FyZHMgb24gZGlza3MgYW5ub3VuY2lu
-ZyB1bmNlcnRhaW4gZGlzY2FyZF96ZXJvZXNfZGF0YQo+ICsxLjcuMCAgIEFkZCBzdXBwb3J0IGZv
-ciBNRCBSQUlEMCBtYXBwaW5ncwo+IC0tIAo+IDIuMS4wCgpJIHdhcyBob3BpbmcgZm9yIGEgbmV3
-IHNlY3Rpb24oZS5nLiDigJxESVNDQVJEU+KAnSkgdG8gYmUgYWRkZWQgdG8gdGhlIGRvYyBmaWxl
-IGZvciB0aGUg4oCYZGV2aWNlc19oYW5kbGVfZGlzY2FyZHNfc2FmZWx54oCZLgoKV2FzbuKAmXQg
-MS42LjAgd2hlcmUgZGlzY2FyZCBzdXBwb3J0IHdhcyBhZGRlZD8gIElmIHNvLCAxLjYuMCBzaG91
-bGQganVzdCBiZSDigJxBZGQgZGlzY2FyZCBzdXBwb3J04oCdLiAgVGhlIG5ldyBzZWN0aW9uIHNo
-b3VsZCBleHBsYWluIGFsbCB0aGUgc2hvcnQtY29taW5ncyBhbmQgaXNzdWVzIHdpdGggZGlzY2Fy
-ZHMgKyBwYXJpdHkgUkFJRC4KCiBicmFzc293CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
-ZG0tZGV2ZWw=
+
+> On Apr 29, 2015, at 7:03 AM, heinzm@redhat.com wrote:
+> 
+> From: Heinz Mauelshagen <heinzm@redhat.com>
+> 
+> This patch removes a bogus comment on parse_raid_params() claiming
+> "devices_handle_discard_safely" being a table line argument when
+> it actually is a module parameter.
+> 
+> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+> 
+> ---
+> drivers/md/dm-raid.c | 2 --
+> 1 file changed, 2 deletions(-)
+> 
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index c541d5a..97e1651 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -479,8 +479,6 @@ too_many:
+>  *                                      will form the "stripe"
+>  *    [[no]sync]			Force or prevent recovery of the
+>  *                                      entire array
+> - *    [devices_handle_discard_safely]	Allow discards on RAID4/5/6; useful if RAID
+> - *					member device(s) properly support TRIM/UNMAP
+>  *    [rebuild <idx>]			Rebuild the drive indicated by the index
+>  *    [daemon_sleep <ms>]		Time between bitmap daemon work to
+>  *                                      clear bits
+> -- 
+> 2.1.0
+
+Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
+
+ brassow
