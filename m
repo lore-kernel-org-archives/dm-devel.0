@@ -1,13 +1,15 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: dm-snap-persistent: chunk_io doesn't call
- destroy_work_on_stack in 3.10.76
-Date: Fri, 08 May 2015 16:38:24 +0900
-Message-ID: <554C67F0.3070707@gmail.com>
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: [PATCH v2 1/4] dm-raid: Add support for the MD RAID0
+	personality
+Date: Fri, 8 May 2015 10:52:53 -0500
+Message-ID: <AC2F4636-4D03-4D9F-82A7-0503A04B4160@redhat.com>
+References: <1430308987-24703-2-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1430308987-24703-2-git-send-email-heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,21 +20,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
-
-I am looking at 3.10.76 kernel and found that
-chunk_io function of dm-snap-persistent doesn't call
-destroy_work_on_stack to pair with INIT_WORK_ON_STACK.
-
-        INIT_WORK_ONSTACK(&req.work, do_metadata);
-        queue_work(ps->metadata_wq, &req.work);
-        flush_workqueue(ps->metadata_wq);
-        // I think you need it here
- 
-        return req.result;
-
-Is it not buggy?
-
-- Akira
+Cj4gT24gQXByIDI5LCAyMDE1LCBhdCA3OjAzIEFNLCBoZWluem1AcmVkaGF0LmNvbSB3cm90ZToK
+PiAKPiBGcm9tOiBIZWlueiBNYXVlbHNoYWdlbiA8aGVpbnptQHJlZGhhdC5jb20+Cj4gCj4gCj4g
+VGhpcyBwYXRjaCBhZGRzIGFjY2VzcyB0byB0aGUgTUQgUkFJRDAgcGVyc29uYWxpdHkgdG8gZG0t
+cmFpZAo+IChpbiBhZGRpdGlvbiB0byB0aGUgYWxyZWFkeSBzdXBwb3J0ZWQgcmFpZDEvMTAvNC81
+LzYgcGVyc29uYWxpdGllcykKPiB0byBlbmFibGUgc2luZ2xlIHpvbmUgc3RyaXBpbmcuCj4gCj4g
+SXQgYXZvaWRzIHNldHRpbmcgcnMtPm1kLmdlbmRpc2sgYnkgaW50cm9kdWNpbmcgYSBjb25kaXRp
+b25hbAo+IHRvIE1EIHJhaWQwLCBiZWNhdXNlIGRldmljZSBzdGFjayBhbmQgZGlzY2FyZCBzZXR0
+aW5ncyBhcmUgZG9uZQo+IGJ5IGRtIGNvcmUKPiAKPiBUaGUgZm9sbG93aW5nIGNoYW5nZXMgZW5h
+YmxlIHRoYXQgYWNjZXNzOgo+IC0gYWRkIHR5cGUgZGVmaW5pdGlvbiB0byByYWlkX3R5cGVzIGFy
+cmF5Cj4gLSBtYWtlIGJpdG1hcCBjcmVhdGlvbiBjb25kaXRvbmFsIGluIHN1cGVyX3ZhbGlkYXRl
+KCksIGJlY2F1c2UKPiAgYml0bWFwcyBhcmUgbm90IGFsbG93ZWQgaW4gcmFpZDAKPiAtIHNldCBy
+ZGV2LT5zZWN0b3JzIHRvIHRoZSBkYXRhIGltYWdlIHNpemUgaW4gc3VwZXJfdmFsaWRhdGUoKQo+
+ICB0byBhbGxvdyB0aGUgcmFpZDAgcGVyc29uYWxpdHkgdG8gY2FsY3VsYXRlIHRoZSBNRCBhcnJh
+eQo+ICBzaXplIHByb3Blcmx5Cj4gLSB1c2UgbWRkZGV2KHVuKWxvY2soKSBmdW5jdGlvbnMgaW5z
+dGVhZCBvZiBkaXJlY3QgbXV0ZXhfKHVuKWxvY2soKQo+ICAod3JhcHBlZCBpbiBoZXJlIGJlY2F1
+c2UgaXQncyBhIHRyaXZpYWwgY2hhbmdlKQo+IC0gZW5oYW5jZSByYWlkX3N0YXR1cygpIHRvIGFs
+d2F5cyByZXBvcnQgZnVsbCBzeW5jIGZvciByYWlkMAo+ICBzbyB0aGF0IHVzZXJzcGFjZSBjaGVj
+a3MgZm9yIDEwMCUgc3luYyB3aWxsIHN1Y2NlZWQgYW5kIGFsbG93Cj4gIGZvciByZXNpemUgKGFu
+ZCB0YWtlb3Zlci9yZXNoYXBlIG9uY2UgYWRkZWQgaW4gZnV0dXJlIHBhY2hlcykKPiAtIGVuaGFu
+Y2UgcmFpZF9yZXN1bWUoKSB0byBub3QgbG9hZCBiaXRtYXAgaW4gY2FzZSBvZiByYWlkMAo+IC0g
+cmFpc2UgdmVyc2lvbiB0byAxLjcuMCBiZWNhdXNlIG9mIHRoZSByYWlkMCBBUEkgY2hhbmdlCj4g
+Cj4gQXMgc2lkZSBjaGFuZ2VzIEkgYXBwbGllZDoKPiAtIGVuc3VyZSBtYXhpbXVtIGRldmljZSBs
+aW1pdCBpbiBzdXBlcmJsb2NrCj4gLSByZW5hbWUgRE1QRl8qIChwcmludCBmbGFncykgdG8gQ1RS
+X0ZMQUdfKiAoY29uc3RydWN0b3IgZmxhZ3MpCj4gIGFuZCB0aGVpciByZXNwZWN0aXZlIHN0cnVj
+dCByYWlkX3NldCBtZW1iZXIKPiAtIHVzZSBzdHJjYXNlY21wKCkgaW4gcmFpZDEwX2Zvcm1hdF90
+b19tZF9sYXlvdXQoKSBhcyBpbiB0aGUgY29uc3RydWN0b3IKCkl0IHdvdWxkIGhhdmUgYmVlbiBu
+aWNlIHRvIGhhdmUgdGhlIGZsYWcgcmVuYW1pbmcgYXMgYSBzZXBhcmF0ZSBwYXRjaOKApiBvciBw
+ZXJoYXBzIGFsbCBvZiB0aGUgbWlub3IgY2xlYW4tdXAgc3R1ZmYgYXMgYSBzZXBhcmF0ZSBwYXRj
+aDsgYnV0IEkgc3VwcG9zZSBpdCBpcyBmaW5lLgoKUmV2aWV3ZWQtYnk6IEpvbmF0aGFuIEJyYXNz
+b3cgPGpicmFzc293QHJlZGhhdC5jb20+CgogYnJhc3NvdwoKLS0KZG0tZGV2ZWwgbWFpbGluZyBs
+aXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xp
+c3RpbmZvL2RtLWRldmVs
