@@ -1,183 +1,176 @@
-From: Frederick Grose <fgrose@gmail.com>
-Subject: Re: Dumb question; please help
-Date: Thu, 7 May 2015 14:04:33 -0400
-Message-ID: <CAEcBt+Wm=dR9q5CLuMGPZsjsUF9fV7S=W5vH3TpMLVV=vgRAFg@mail.gmail.com>
-References: <CAC5dixFNZ_FBQ8osQiCgDuvXrWBNydC2A173o4RfYqcWCX814Q@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: NeilBrown <neilb@suse.de>
+Subject: [PATCH v2] block: discard bdi_unregister() in favour of
+ bdi_destroy()
+Date: Fri, 8 May 2015 15:09:24 +1000
+Message-ID: <20150508150924.33c3bca8@notabene.brown>
+References: <20150414171537.GH25394@azat>
+	<20150423160551.45345f96@notabene.brown>
+	<20150427141222.5dac22f1@notabene.brown>
+	<CAMM=eLf2aFFH29xeDVrS7beFj6T8kqUQRh=4KB1YO0kWGa7Rog@mail.gmail.com>
+	<20150429072530.39d38b00@notabene.brown>
+	<20150429133512.GA4436@lst.de>
+	<20150429160258.GK17717@twins.programming.kicks-ass.net>
+	<20150430103233.75227693@notabene.brown>
+	<CAA9_cmcNfpNAuJbVVbNN-cacVg4Dn-=VroUQ0T-PZz-j69S+iQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6292603418018375938=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAC5dixFNZ_FBQ8osQiCgDuvXrWBNydC2A173o4RfYqcWCX814Q@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ boundary="Sig_/DYSlBWqL6QlZFRGZsNqcQpo"; protocol="application/pgp-signature"
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <CAA9_cmcNfpNAuJbVVbNN-cacVg4Dn-=VroUQ0T-PZz-j69S+iQ@mail.gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Jens Axboe <axboe@fb.com>
+Cc: Dan Williams <dan.j.williams@intel.com>, device-mapper development <dm-devel@redhat.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, Azat Khuzhin <a3at.mail@gmail.com>, Peter Zijlstra <peterz@infradead.org>, lkml <linux-kernel@vger.kernel.org>, "Kernel.org-Linux-RAID" <linux-raid@vger.kernel.org>, Guoqing Jiang <GQJiang@suse.com>, Tejun Heo <tj@kernel.org>, Christoph Hellwig <hch@lst.de>, nicholas.w.moulin@linux.intel.com
 List-Id: dm-devel.ids
 
---===============6292603418018375938==
-Content-Type: multipart/alternative; boundary=001a1134cf34d2ca95051581c0c3
-
---001a1134cf34d2ca95051581c0c3
-Content-Type: text/plain; charset=UTF-8
+--Sig_/DYSlBWqL6QlZFRGZsNqcQpo
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, May 6, 2015 at 1:45 PM, Locane <locane@gmail.com> wrote:
-
-> Hello, I apologize in advance for asking this question, but I can't seem
-> to find the information in documentation or anything online.
->
-> Short explanation:
->
-> - I have a CentOS 6.6 LiveCD that is dying after lots of file system thra=
-sh
-> - I use "dmsetup status" to check on when it's dying
-> - I don't know what the numbers in "dmsetup status" represent - they're
-> not labeled
->
-> Can anyone answer this question
-> <http://superuser.com/questions/900783/dmsetup-status-fields-explained> o=
-r
-> label the following fields for me and explain what they are?
->
-> [root@localhost ~]# dmsetup status
-> live-osimg-min: 0 4194304 snapshot 1272/1272 16
-> live-rw: 0 4194304 snapshot 7568/1048576 40
->
-> What are the <number>/<number>s?  What is the 2 digit number following
-> them?
->
-
-<sectors_allocated>/<total_sectors> <metadata_sectors>
-=E2=80=8B
-
-> My LiveCD dies when the 7568 number in this example gets to the (I assume
-> gibabyte) 1048576 number.  Can I increase this base size?
->
-
-=E2=80=8BWith=E2=80=8B
-
-=E2=80=8Brecent dracut versions, there are startup options, rd.live.overlay=
-.size
-and rd.writable.fsimg=E2=80=8B, that may be considered.
-
-See
-http://git.kernel.org/?p=3Dboot/dracut/dracut.git;a=3Dblob;f=3Dmodules.d/90=
-dmsquash-live/dmsquash-live-root.sh;hb=3DHEAD
-
-https://fedoraproject.org/wiki/LiveOS_image may also be helpful.
-
-        --Fred
 
 
->
-> I apologize again for asking such a rudimentary question on this mailing
-> list, but I am desperate.
->
-> Thanks in advance.
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+bdi_unregister() now contains very little functionality.
 
---001a1134cf34d2ca95051581c0c3
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+It contains a "WARN_ON" if bdi->dev is NULL.  This warning is of no
+real consequence as bdi->dev isn't needed by anything else in the function,
+and it triggers if
+   blk_cleanup_queue() -> bdi_destroy()
+is called before bdi_unregister, which happens since
+  Commit: 6cd18e711dd8 ("block: destroy bdi before blockdev is unregistered=
+.")
 
-<div dir=3D"ltr"><div class=3D"gmail_default" style=3D"font-family:&#39;tre=
-buchet ms&#39;,sans-serif;font-size:small;color:rgb(0,0,153)"><span style=
-=3D"font-family:arial,sans-serif;color:rgb(34,34,34)">On Wed, May 6, 2015 a=
-t 1:45 PM, Locane </span><span dir=3D"ltr" style=3D"font-family:arial,sans-=
-serif;color:rgb(34,34,34)">&lt;<a href=3D"mailto:locane@gmail.com" target=
-=3D"_blank">locane@gmail.com</a>&gt;</span><span style=3D"font-family:arial=
-,sans-serif;color:rgb(34,34,34)"> wrote:</span><br></div><div class=3D"gmai=
-l_extra"><div class=3D"gmail_quote"><blockquote class=3D"gmail_quote" style=
-=3D"margin:0px 0px 0px 0.8ex;border-left-width:1px;border-left-color:rgb(20=
-4,204,204);border-left-style:solid;padding-left:1ex"><div dir=3D"ltr">Hello=
-, I apologize in advance for asking this question, but I can&#39;t seem to =
-find the information in documentation or anything online.<div><br></div><di=
-v>Short explanation:</div><div><br></div><div>- I have a CentOS 6.6 LiveCD =
-that is dying after lots of file system thrash</div><div>- I use &quot;dmse=
-tup status&quot; to check on when it&#39;s dying</div><div>- I don&#39;t kn=
-ow what the numbers in &quot;dmsetup status&quot; represent - they&#39;re n=
-ot labeled</div><div><br></div><div>Can anyone <a href=3D"http://superuser.=
-com/questions/900783/dmsetup-status-fields-explained" target=3D"_blank">ans=
-wer this question</a>=C2=A0or label the following fields for me and explain=
- what they are?</div><div><font face=3D"monospace, monospace"><br></font></=
-div><font face=3D"monospace, monospace">[root@localhost ~]# dmsetup status=
-=C2=A0</font><div><font face=3D"monospace, monospace">live-osimg-min: 0 419=
-4304 snapshot 1272/1272 16=C2=A0</font></div><div><font face=3D"monospace, =
-monospace">live-rw: 0 4194304 snapshot 7568/1048576 40</font></div><div><fo=
-nt face=3D"monospace, monospace"><br></font></div><div><font face=3D"arial,=
- helvetica, sans-serif">What are the &lt;number&gt;/&lt;number&gt;s?=C2=A0 =
-What is the 2 digit number following them?</font></div></div></blockquote><=
-div><br></div><div class=3D"gmail_default" style=3D"font-family:&#39;trebuc=
-het ms&#39;,sans-serif;font-size:small;color:rgb(0,0,153)"><span style=3D"c=
-olor:rgb(0,0,0);white-space:pre-wrap;font-family:arial,sans-serif">&lt;sect=
-ors_allocated&gt;/&lt;total_sectors&gt; &lt;metadata_sectors&gt;</span><br>=
-</div><div class=3D"gmail_default" style=3D"font-family:&#39;trebuchet ms&#=
-39;,sans-serif;font-size:small;color:rgb(0,0,153)">=E2=80=8B</div><blockquo=
-te class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left-widt=
-h:1px;border-left-color:rgb(204,204,204);border-left-style:solid;padding-le=
-ft:1ex"><div dir=3D"ltr"><div><span style=3D"font-family:arial,helvetica,sa=
-ns-serif">My LiveCD dies when the 7568 number in this example gets to the (=
-I assume gibabyte) 1048576 number.=C2=A0 Can I increase this base size?</sp=
-an></div></div></blockquote><div><br></div><div><div class=3D"gmail_default=
-" style=3D"font-family:&#39;trebuchet ms&#39;,sans-serif;font-size:small;co=
-lor:rgb(0,0,153);display:inline">=E2=80=8BWith=E2=80=8B</div>=C2=A0<div cla=
-ss=3D"gmail_default" style=3D"font-family:&#39;trebuchet ms&#39;,sans-serif=
-;font-size:small;color:rgb(0,0,153);display:inline">=E2=80=8Brecent dracut =
-versions, there are startup options, rd.live.overlay.size and rd.writable.f=
-simg=E2=80=8B, that may be considered.</div></div><div><div class=3D"gmail_=
-default" style=3D"font-family:&#39;trebuchet ms&#39;,sans-serif;font-size:s=
-mall;color:rgb(0,0,153);display:inline"><br></div></div><div><div class=3D"=
-gmail_default" style=3D"font-family:&#39;trebuchet ms&#39;,sans-serif;font-=
-size:small;color:rgb(0,0,153);display:inline">See <a href=3D"http://git.ker=
-nel.org/?p=3Dboot/dracut/dracut.git;a=3Dblob;f=3Dmodules.d/90dmsquash-live/=
-dmsquash-live-root.sh;hb=3DHEAD">http://git.kernel.org/?p=3Dboot/dracut/dra=
-cut.git;a=3Dblob;f=3Dmodules.d/90dmsquash-live/dmsquash-live-root.sh;hb=3DH=
-EAD</a></div></div><div><div class=3D"gmail_default" style=3D"font-family:&=
-#39;trebuchet ms&#39;,sans-serif;font-size:small;color:rgb(0,0,153);display=
-:inline"><br></div></div><div><div class=3D"gmail_default" style=3D"display=
-:inline"><font color=3D"#000099" face=3D"trebuchet ms, sans-serif"><a href=
-=3D"https://fedoraproject.org/wiki/LiveOS_image">https://fedoraproject.org/=
-wiki/LiveOS_image</a> may also be helpful.</font><br></div></div><div><div =
-class=3D"gmail_default" style=3D"display:inline"><font color=3D"#000099" fa=
-ce=3D"trebuchet ms, sans-serif"><br></font></div></div><div><div class=3D"g=
-mail_default" style=3D"display:inline"><font color=3D"#000099" face=3D"treb=
-uchet ms, sans-serif">=C2=A0 =C2=A0 =C2=A0 =C2=A0 --Fred</font></div></div>=
-<div><div class=3D"gmail_default" style=3D"font-family:&#39;trebuchet ms&#3=
-9;,sans-serif;font-size:small;color:rgb(0,0,153);display:inline"><br></div>=
-</div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;b=
-order-left-width:1px;border-left-color:rgb(204,204,204);border-left-style:s=
-olid;padding-left:1ex"><div dir=3D"ltr"><div><br></div><div><font face=3D"a=
-rial, helvetica, sans-serif"><br></font></div><div><font face=3D"arial, hel=
-vetica, sans-serif">I apologize again for asking such a rudimentary questio=
-n on this mailing list, but I am desperate.</font></div><div><font face=3D"=
-arial, helvetica, sans-serif"><br></font></div><div><font face=3D"arial, he=
-lvetica, sans-serif">Thanks in advance.</font></div></div>
-<br>--<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
-nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br></blockquote></=
-div><br></div></div>
+So this isn't wanted.
 
---001a1134cf34d2ca95051581c0c3--
+It also calls bdi_set_min_ratio().  This needs to be called after
+writes through the bdi have all been flushed, and before the bdi is destroy=
+ed.
+Calling it early is better than calling it late as it frees up a global
+resource.
+
+Calling it immediately after bdi_wb_shutdown() in bdi_destroy()
+perfectly fits these requirements.
+
+So bdi_unregister() can be discarded with the important content moved to
+bdi_destroy(), as can the
+  writeback_bdi_unregister
+event which is already not used.
+
+Reported-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org (v4.0)
+Fixes: c4db59d31e39 ("fs: don't reassign dirty inodes to default_backing_de=
+v_info")
+Fixes: 6cd18e711dd8 ("block: destroy bdi before blockdev is unregistered.")
+Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Acked-by: Dan Williams <dan.j.williams@intel.com>
+Tested-by: Nicholas Moulin <nicholas.w.moulin@linux.intel.com>
+Signed-off-by: NeilBrown <neilb@suse.de>
+
+---
+
+hi Jens,
+ this is a revised version of the comment - no code change - make it suitab=
+le to add
+to your linux-block tree.
+
+Thanks,
+NeilBrown
 
 
---===============6292603418018375938==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+diff --git a/block/genhd.c b/block/genhd.c
+index e351fc521053..1d4435478e8a 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -657,7 +657,6 @@ void del_gendisk(struct gendisk *disk)
+ 	disk->flags &=3D ~GENHD_FL_UP;
+=20
+ 	sysfs_remove_link(&disk_to_dev(disk)->kobj, "bdi");
+-	bdi_unregister(&disk->queue->backing_dev_info);
+ 	blk_unregister_queue(disk);
+ 	blk_unregister_region(disk_devt(disk), disk->minors);
+=20
+diff --git a/include/linux/backing-dev.h b/include/linux/backing-dev.h
+index aff923ae8c4b..d87d8eced064 100644
+--- a/include/linux/backing-dev.h
++++ b/include/linux/backing-dev.h
+@@ -116,7 +116,6 @@ __printf(3, 4)
+ int bdi_register(struct backing_dev_info *bdi, struct device *parent,
+ 		const char *fmt, ...);
+ int bdi_register_dev(struct backing_dev_info *bdi, dev_t dev);
+-void bdi_unregister(struct backing_dev_info *bdi);
+ int __must_check bdi_setup_and_register(struct backing_dev_info *, char *);
+ void bdi_start_writeback(struct backing_dev_info *bdi, long nr_pages,
+ 			enum wb_reason reason);
+diff --git a/include/trace/events/writeback.h b/include/trace/events/writeb=
+ack.h
+index 880dd7437172..c178d13d6f4c 100644
+--- a/include/trace/events/writeback.h
++++ b/include/trace/events/writeback.h
+@@ -250,7 +250,6 @@ DEFINE_EVENT(writeback_class, name, \
+ DEFINE_WRITEBACK_EVENT(writeback_nowork);
+ DEFINE_WRITEBACK_EVENT(writeback_wake_background);
+ DEFINE_WRITEBACK_EVENT(writeback_bdi_register);
+-DEFINE_WRITEBACK_EVENT(writeback_bdi_unregister);
+=20
+ DECLARE_EVENT_CLASS(wbc_class,
+ 	TP_PROTO(struct writeback_control *wbc, struct backing_dev_info *bdi),
+diff --git a/mm/backing-dev.c b/mm/backing-dev.c
+index 6dc4580df2af..000e7b3b9896 100644
+--- a/mm/backing-dev.c
++++ b/mm/backing-dev.c
+@@ -359,23 +359,6 @@ static void bdi_wb_shutdown(struct backing_dev_info *b=
+di)
+ 	flush_delayed_work(&bdi->wb.dwork);
+ }
+=20
+-/*
+- * Called when the device behind @bdi has been removed or ejected.
+- *
+- * We can't really do much here except for reducing the dirty ratio at
+- * the moment.  In the future we should be able to set a flag so that
+- * the filesystem can handle errors at mark_inode_dirty time instead
+- * of only at writeback time.
+- */
+-void bdi_unregister(struct backing_dev_info *bdi)
+-{
+-	if (WARN_ON_ONCE(!bdi->dev))
+-		return;
+-
+-	bdi_set_min_ratio(bdi, 0);
+-}
+-EXPORT_SYMBOL(bdi_unregister);
+-
+ static void bdi_wb_init(struct bdi_writeback *wb, struct backing_dev_info =
+*bdi)
+ {
+ 	memset(wb, 0, sizeof(*wb));
+@@ -443,6 +426,7 @@ void bdi_destroy(struct backing_dev_info *bdi)
+ 	int i;
+=20
+ 	bdi_wb_shutdown(bdi);
++	bdi_set_min_ratio(bdi, 0);
+=20
+ 	WARN_ON(!list_empty(&bdi->work_list));
+ 	WARN_ON(delayed_work_pending(&bdi->wb.dwork));
 
+--Sig_/DYSlBWqL6QlZFRGZsNqcQpo
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
 
---===============6292603418018375938==--
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIVAwUBVUxFBDnsnt1WYoG5AQJAvhAAmM61o0LVwV0XxcwWl6SRC5BJ1cY+7p0o
+Clg3P9WDnuSldP/h8Yrr2/6IlFwNvvOc8YKyJvx6QSE3BQ50C4WKcMROomK4uJkB
++yN0sVrO1ZJYq5RmLFW/ukdvSM32pVA3PEqFu3tI34tQcDGeXchL0sN/f2Zu09Sc
+u1P4iLNYXHUM+wcGXyP2a6m2lFSRWK8StSXORs3GVLv7EYHEbWSjnzAa+c5zWgJE
+OLfvTEfMb0TPupoQMaconf5lvv86A6Yf+w5cUFwHBKw60rcWCT93RuHaA7vffD9w
+XsyAPpsfvHHOw0ntspKqBYZMsPue6EfaX/vo4znW6Agck7HBtv9dCedtV35y3aag
+4lhlqaYyOF3yEMQB+3xwr/kXhT0E97VUk3yoABVH8ZRAIviEccg/D0BeReqWicTM
+eUkWBoR8OWqswxFtYGmPVMKxAVSRdP2ixkYYj1V09ORkQ8//iBsmJt0OE4iZVVFj
+yOFIx4Lnv+sSHpJspEM6MjqpMJuPsivnqlln01vN6DeM5tsCsADntycdDU+ytFgj
+k+7o91RNZvWlJJwlJpKLAor2IVmCcVCGmfVsPPtTQcSjSZybwB4HI4Y9tq7fyfy6
+GHmqccVhnJExhCyu++Zpf/hnH1Q2V+JQv25E6lcCZcH7VHVWQ94dWSCJnQ7EJI9c
+4McCAPOiUSo=
+=uTUf
+-----END PGP SIGNATURE-----
+
+--Sig_/DYSlBWqL6QlZFRGZsNqcQpo--
