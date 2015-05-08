@@ -1,15 +1,16 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: [PATCH v2 4/4] dm-raid: remove bogus
-	parse_raid_params() comment about devices_handle_discards_safely
-Date: Fri, 8 May 2015 11:06:13 -0500
-Message-ID: <2CF74109-EBD9-438E-93CA-ACB86DA47A41@redhat.com>
-References: <1430308987-24703-5-git-send-email-heinzm@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: [PATCH v2 2/4] md-raid0: conditional mddev->queue
+ access to suit dm-raid
+Date: Fri, 08 May 2015 18:52:37 +0200
+Message-ID: <554CE9D5.4080103@redhat.com>
+References: <1430308987-24703-3-git-send-email-heinzm@redhat.com>
+	<709E3551-BC68-46FE-9AEB-B2A834FC6199@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1430308987-24703-5-git-send-email-heinzm@redhat.com>
+In-Reply-To: <709E3551-BC68-46FE-9AEB-B2A834FC6199@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,41 +20,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Heinz Mauelshagen <heinzm@redhat.com>
+To: Brassow Jonathan <jbrassow@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-
-> On Apr 29, 2015, at 7:03 AM, heinzm@redhat.com wrote:
-> 
-> From: Heinz Mauelshagen <heinzm@redhat.com>
-> 
-> This patch removes a bogus comment on parse_raid_params() claiming
-> "devices_handle_discard_safely" being a table line argument when
-> it actually is a module parameter.
-> 
-> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-> 
-> ---
-> drivers/md/dm-raid.c | 2 --
-> 1 file changed, 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> index c541d5a..97e1651 100644
-> --- a/drivers/md/dm-raid.c
-> +++ b/drivers/md/dm-raid.c
-> @@ -479,8 +479,6 @@ too_many:
->  *                                      will form the "stripe"
->  *    [[no]sync]			Force or prevent recovery of the
->  *                                      entire array
-> - *    [devices_handle_discard_safely]	Allow discards on RAID4/5/6; useful if RAID
-> - *					member device(s) properly support TRIM/UNMAP
->  *    [rebuild <idx>]			Rebuild the drive indicated by the index
->  *    [daemon_sleep <ms>]		Time between bitmap daemon work to
->  *                                      clear bits
-> -- 
-> 2.1.0
-
-Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
-
- brassow
+CgpPbiAwNS8wOC8yMDE1IDA2OjAwIFBNLCBCcmFzc293IEpvbmF0aGFuIHdyb3RlOgo+PiBPbiBB
+cHIgMjksIDIwMTUsIGF0IDc6MDMgQU0sIGhlaW56bUByZWRoYXQuY29tIHdyb3RlOgo+Pgo+PiBG
+cm9tOiBIZWlueiBNYXVlbHNoYWdlbiA8aGVpbnptQHJlZGhhdC5jb20+Cj4+Cj4+Cj4+IFRoaXMg
+cGF0Y2ggaXMgYSBwcmVyZXF1aXNpdGUgZm9yIGRtLXJhaWQgInJhaWQwIiBzdXBwb3J0IHRvIGFs
+bG93Cj4+IGRtLXJhaWQgdG8gYWNjZXNzIHRoZSBNRCBSQUlEMCBwZXJzb25hbGl0eSBkb2luZyB1
+bmNvbmRpdGlvbmFsCj4+IGFjY2Vzc2VzIHRvIG1kZGV2LT5xdWV1ZSwgd2hpY2ggaXMgTlVMTCBp
+biBjYXNlIG9mIGRtLXJhaWQgc3RhY2tlZAo+PiBvbiB0b3Agb2YgTUQuCj4+Cj4+IE1vc3Qgb2Yg
+dGhlIGNvbmRpdGlvbmFsIG1kZGV2LT5xdWV1ZSBhY2Nlc3NlcyBtYWRlIGl0IHRvIHVwc3RyZWFt
+Cj4+IGJ1dCB0aGlzIG1pc3Npbmcgb25lLCB3aGljaCBwcm9oaWJpdHMgbWQgcmFpZDAgdG8gc2V0
+IGRpc2sgc3RhY2sgbGltaXRzCj4+IChiZWluZyBkb25lIGluIGRtIGNvcmUgaW4gY2FzZSBvZiBt
+ZCB1bmRlcm5lYXRoIGRtKS4KPj4KPj4KPj4gU2lnbmVkLW9mZi1ieTogSGVpbnogTWF1ZWxzaGFn
+ZW4gPGhlaW56bUByZWRoYXQuY29tPgo+PiBUZXN0ZWQtYnk6IEhlaW56IE1hdWVsc2hhZ2VuIDxo
+ZWluem1AcmVkaGF0LmNvbT4KPj4KPj4gLS0tCj4+IGRyaXZlcnMvbWQvcmFpZDAuYyB8IDUgKysr
+LS0KPj4gMSBmaWxlIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKPj4K
+Pj4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvcmFpZDAuYyBiL2RyaXZlcnMvbWQvcmFpZDAuYwo+
+PiBpbmRleCAyY2I1OWE2Li42YTY4ZWY1IDEwMDY0NAo+PiAtLS0gYS9kcml2ZXJzL21kL3JhaWQw
+LmMKPj4gKysrIGIvZHJpdmVycy9tZC9yYWlkMC5jCj4+IEBAIC0xODgsOCArMTg4LDkgQEAgc3Rh
+dGljIGludCBjcmVhdGVfc3RyaXBfem9uZXMoc3RydWN0IG1kZGV2ICptZGRldiwgc3RydWN0IHIw
+Y29uZiAqKnByaXZhdGVfY29uZikKPj4gCQl9Cj4+IAkJZGV2W2pdID0gcmRldjE7Cj4+Cj4+IC0J
+CWRpc2tfc3RhY2tfbGltaXRzKG1kZGV2LT5nZW5kaXNrLCByZGV2MS0+YmRldiwKPj4gLQkJCQkg
+IHJkZXYxLT5kYXRhX29mZnNldCA8PCA5KTsKPj4gKwkJaWYgKG1kZGV2LT5xdWV1ZSkKPj4gKwkJ
+CWRpc2tfc3RhY2tfbGltaXRzKG1kZGV2LT5nZW5kaXNrLCByZGV2MS0+YmRldiwKPj4gKwkJCQkJ
+ICByZGV2MS0+ZGF0YV9vZmZzZXQgPDwgOSk7Cj4+Cj4+IAkJaWYgKHJkZXYxLT5iZGV2LT5iZF9k
+aXNrLT5xdWV1ZS0+bWVyZ2VfYnZlY19mbikKPj4gCQkJY29uZi0+aGFzX21lcmdlX2J2ZWMgPSAx
+Owo+IEFyZW7igJl0IHlvdSBtaXNzaW5nIGEgY29uZGl0aW9uPwo+Cj4gIEZyb20gdGhlIGNvZGU6
+Cj4gICAgICAgICAgLyoKPiAgICAgICAgICAgKiBub3cgc2luY2Ugd2UgaGF2ZSB0aGUgaGFyZCBz
+ZWN0b3Igc2l6ZXMsIHdlIGNhbiBtYWtlIHN1cmUKPiAgICAgICAgICAgKiBjaHVuayBzaXplIGlz
+IGEgbXVsdGlwbGUgb2YgdGhhdCBzZWN0b3Igc2l6ZQo+ICAgICAgICAgICAqLwo+ICAgICAgICAg
+IGlmICgobWRkZXYtPmNodW5rX3NlY3RvcnMgPDwgOSkgJSBxdWV1ZV9sb2dpY2FsX2Jsb2NrX3Np
+emUobWRkZXYtPnF1ZXVlKSkgewo+ICAgICAgICAgICAgICAgICAgcHJpbnRrKEtFUk5fRVJSICJt
+ZC9yYWlkMDolczogY2h1bmtfc2l6ZSBvZiAlZCBub3QgdmFsaWRcbiIsCj4gICAgICAgICAgICAg
+ICAgICAgICAgICAgbWRuYW1lKG1kZGV2KSwKPiAgICAgICAgICAgICAgICAgICAgICAgICBtZGRl
+di0+Y2h1bmtfc2VjdG9ycyA8PCA5KTsKPiAgICAgICAgICAgICAgICAgIGdvdG8gYWJvcnQ7Cj4g
+ICAgICAgICAgfQo+Cj4gICAgICAgICAgaWYgKG1kZGV2LT5xdWV1ZSkgewo+Cj4gU2hvdWxkbuKA
+mXQgdGhhdCDigJhxdWV1ZV9sb2dpY2FsX2Jsb2NrX3NpemUgYmUgaW5zaWRlIHRoZSBsb3dlciDi
+gJhpZuKAmT8KCnF1ZXVlX2xvZ2ljYWxfYmxvY2tfc2l6ZSBpcyBzYWZlIHdoZW4gbWRkZXYtPnF1
+ZXVlID09IE5VTEwsCnNvIGl0cyBubyBwcm9ibGVtLgoKSGVpbnoKCj4KPiAgIGJyYXNzb3cKCi0t
+IAo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT0KSGVpbnogTWF1ZWxzaGFnZW4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+KzQ5IDI2MjYgMTQxMjAwCkNvbnN1bHRpbmcgRGV2ZWxvcG1lbnQgRW5naW5lZXIgICAgICAgICAg
+ICAgRkFYICs0OSAyNjI2IDkyNDQ0NgpSZWQgSGF0IEdtYkgKQW0gU29ubmVuaGFuZyAxMQo1NjI0
+MiBNYXJpZW5yYWNoZG9yZgpHZXJtYW55ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgaGVpbnptQHJlZGhhdC5jb20KPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QK
+ZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
+Zm8vZG0tZGV2ZWw=
