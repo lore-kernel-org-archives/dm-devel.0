@@ -1,17 +1,13 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH v2 3/4] Documentation: add version history
- entries for raid0 support _and_ forgotten devices_handle_discards_safely
- module paramater
-Date: Fri, 08 May 2015 19:14:21 +0200
-Message-ID: <554CEEED.3010208@redhat.com>
-References: <1430308987-24703-4-git-send-email-heinzm@redhat.com>
-	<B561FA32-A0F7-4986-BE99-E85A4D307A56@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 4.1-rc3
+Date: Fri, 8 May 2015 16:08:04 -0400
+Message-ID: <20150508200803.GA32437@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <B561FA32-A0F7-4986-BE99-E85A4D307A56@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,38 +17,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Brassow Jonathan <jbrassow@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, Rabin Vincent <rabin.vincent@axis.com>, Chen Yu <yu.c.chen@intel.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-CgpPbiAwNS8wOC8yMDE1IDA2OjAzIFBNLCBCcmFzc293IEpvbmF0aGFuIHdyb3RlOgo+PiBPbiBB
-cHIgMjksIDIwMTUsIGF0IDc6MDMgQU0sIGhlaW56bUByZWRoYXQuY29tIHdyb3RlOgo+Pgo+PiBG
-cm9tOiBIZWlueiBNYXVlbHNoYWdlbiA8aGVpbnptQHJlZGhhdC5jb20+Cj4+Cj4+IFRoaXMgcGF0
-Y2ggYWRkcyB2ZXJzaW9uIGhpc3RvcnkgZm9yIG1kIHJhaWQwIHRvIGRtLXJhaWQudHh0Cj4+IF9h
-bmRfCj4+IGFkZHMgZm9yZ290dGVuIGRvYyBmb3IgdGhlIDEuNi4wIHZlcnNpb24gY2hhbmdlIGFz
-IHdlbGwKPj4KPj4gU2lnbmVkLW9mZi1ieTogSGVpbnogTWF1ZWxzaGFnZW4gPGhlaW56bUByZWRo
-YXQuY29tPgo+Pgo+PiAtLS0KPj4gRG9jdW1lbnRhdGlvbi9kZXZpY2UtbWFwcGVyL2RtLXJhaWQu
-dHh0IHwgMyArKysKPj4gMSBmaWxlIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKQo+Pgo+PiBkaWZm
-IC0tZ2l0IGEvRG9jdW1lbnRhdGlvbi9kZXZpY2UtbWFwcGVyL2RtLXJhaWQudHh0IGIvRG9jdW1l
-bnRhdGlvbi9kZXZpY2UtbWFwcGVyL2RtLXJhaWQudHh0Cj4+IGluZGV4IGVmOGJhOWYuLmJjZWI4
-NjUgMTAwNjQ0Cj4+IC0tLSBhL0RvY3VtZW50YXRpb24vZGV2aWNlLW1hcHBlci9kbS1yYWlkLnR4
-dAo+PiArKysgYi9Eb2N1bWVudGF0aW9uL2RldmljZS1tYXBwZXIvZG0tcmFpZC50eHQKPj4gQEAg
-LTIyNCwzICsyMjQsNiBAQCBWZXJzaW9uIEhpc3RvcnkKPj4gCU5ldyBzdGF0dXMgKFNUQVRVU1RZ
-UEVfSU5GTykgZmllbGRzOiBzeW5jX2FjdGlvbiBhbmQgbWlzbWF0Y2hfY250Lgo+PiAxLjUuMSAg
-IEFkZCBhYmlsaXR5IHRvIHJlc3RvcmUgdHJhbnNpZW50bHkgZmFpbGVkIGRldmljZXMgb24gcmVz
-dW1lLgo+PiAxLjUuMiAgICdtaXNtYXRjaF9jbnQnIGlzIHplcm8gdW5sZXNzIFtsYXN0X11zeW5j
-X2FjdGlvbiBpcyAiY2hlY2siLgo+PiArMS42LjAgICBBZGQgZGV2aWNlc19oYW5kbGVfZGlzY2Fy
-ZHNfc2FmZWx5IG1vZHVsZSBwYXJhbWV0ZXIgdG8KPj4gKwlhbGxvdyBkaXNjYXJkcyBvbiBkaXNr
-cyBhbm5vdW5jaW5nIHVuY2VydGFpbiBkaXNjYXJkX3plcm9lc19kYXRhCj4+ICsxLjcuMCAgIEFk
-ZCBzdXBwb3J0IGZvciBNRCBSQUlEMCBtYXBwaW5ncwo+PiAtLSAKPj4gMi4xLjAKPiBJIHdhcyBo
-b3BpbmcgZm9yIGEgbmV3IHNlY3Rpb24oZS5nLiDigJxESVNDQVJEU+KAnSkgdG8gYmUgYWRkZWQg
-dG8gdGhlIGRvYyBmaWxlIGZvciB0aGUg4oCYZGV2aWNlc19oYW5kbGVfZGlzY2FyZHNfc2FmZWx5
-4oCZLgo+Cj4gV2FzbuKAmXQgMS42LjAgd2hlcmUgZGlzY2FyZCBzdXBwb3J0IHdhcyBhZGRlZD8g
-IElmIHNvLCAxLjYuMCBzaG91bGQganVzdCBiZSDigJxBZGQgZGlzY2FyZCBzdXBwb3J04oCdLiAg
-VGhlIG5ldyBzZWN0aW9uIHNob3VsZCBleHBsYWluIGFsbCB0aGUgc2hvcnQtY29taW5ncyBhbmQg
-aXNzdWVzIHdpdGggZGlzY2FyZHMgKyBwYXJpdHkgUkFJRC4KPgo+ICAgYnJhc3NvdwoKWWVzLCAx
-LjYuMCBhZGRlZCBkaXNjYXJkIHN1cHBvcnQgZm9yIHJhaWQxLzEwIGFuZCBkaXNhYmxlZCBpdCBm
-b3IgcmFpZDQvNS82CndpdGggY29tbWl0IHVwc3RyZWFtIDc1YjhlMDRiYmYwMWJkZDVjNDJhMWQ4
-YWM1NGFiZjc1NzE5NmNlNDkKCkxldCdzIGFkZCBtb3JlIGRvY3VlbXRuYXRpb24gd2l0aCBhIGZv
-bGxvd3VwIHBhdGNoIHRoZW4KCkhlaW56CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2
-ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0t
-ZGV2ZWw=
+Hi Linus,
+
+The following changes since commit aa6df8dd28c01d9a3d2cfcfe9dd0a4a334d1cd81:
+
+  dm: fix free_rq_clone() NULL pointer when requeueing unmapped request (2015-04-30 10:25:21 -0400)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.1-fixes-2
+
+for you to fetch changes up to cb31ef485dd4c6a205d1064b42027f82076d00c8:
+
+  init: fix regression by supporting devices with major:minor:offset format (2015-05-05 12:31:37 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+Two additional fixes for changes introduced via DM during the 4.1 merge
+window: The first reverts a dm-crypt change that wasn't correct.  The
+second fixes a device format regression that impacted userspace.
+
+----------------------------------------------------------------
+Chen Yu (1):
+      init: fix regression by supporting devices with major:minor:offset format
+
+Rabin Vincent (1):
+      Revert "dm crypt: fix deadlock when async crypto algorithm returns -EBUSY"
+
+ drivers/md/dm-crypt.c | 12 ++++++------
+ init/do_mounts.c      |  5 +++--
+ 2 files changed, 9 insertions(+), 8 deletions(-)
