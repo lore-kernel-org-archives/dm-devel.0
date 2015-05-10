@@ -1,13 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.1-rc3
-Date: Fri, 8 May 2015 16:08:04 -0400
-Message-ID: <20150508200803.GA32437@redhat.com>
+From: Minfei Huang <minfei.huang@hotmail.com>
+Subject: Re: dm-snap-persistent: chunk_io doesn't call
+ destroy_work_on_stack in 3.10.76
+Date: Sun, 10 May 2015 10:22:09 +0800
+Message-ID: <BLU436-SMTP5454046CDE9BC646F7362294DC0@phx.gbl>
+References: <554C67F0.3070707@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <554C67F0.3070707@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,39 +20,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, Rabin Vincent <rabin.vincent@axis.com>, Chen Yu <yu.c.chen@intel.com>, Alasdair G Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Linus,
+On 05/08/15 at 04:38P, Akira Hayakawa wrote:
+> Hi,
+> 
+> I am looking at 3.10.76 kernel and found that
+> chunk_io function of dm-snap-persistent doesn't call
+> destroy_work_on_stack to pair with INIT_WORK_ON_STACK.
+> 
+>         INIT_WORK_ONSTACK(&req.work, do_metadata);
+>         queue_work(ps->metadata_wq, &req.work);
+>         flush_workqueue(ps->metadata_wq);
+>         // I think you need it here
+>  
+>         return req.result;
+> 
+> Is it not buggy?
 
-The following changes since commit aa6df8dd28c01d9a3d2cfcfe9dd0a4a334d1cd81:
+commit c1a6416021b311fdb5b98e40ed8b29508845ed16
+Author: Chuansheng Liu <chuansheng.liu@intel.com>
+Date:   Tue Jan 7 16:56:18 2014 +0800
 
-  dm: fix free_rq_clone() NULL pointer when requeueing unmapped request (2015-04-30 10:25:21 -0400)
+    dm snapshot: call destroy_work_on_stack() to pair with INIT_WORK_ONSTACK()
+    
+    In case CONFIG_DEBUG_OBJECTS_WORK is defined, it is needed to
+    call destroy_work_on_stack() which frees the debug object to pair
+    with INIT_WORK_ONSTACK().
+    
+    Signed-off-by: Liu, Chuansheng <chuansheng.liu@intel.com>
+    Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 
-are available in the git repository at:
+Thanks
+Minfei
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.1-fixes-2
-
-for you to fetch changes up to cb31ef485dd4c6a205d1064b42027f82076d00c8:
-
-  init: fix regression by supporting devices with major:minor:offset format (2015-05-05 12:31:37 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-Two additional fixes for changes introduced via DM during the 4.1 merge
-window: The first reverts a dm-crypt change that wasn't correct.  The
-second fixes a device format regression that impacted userspace.
-
-----------------------------------------------------------------
-Chen Yu (1):
-      init: fix regression by supporting devices with major:minor:offset format
-
-Rabin Vincent (1):
-      Revert "dm crypt: fix deadlock when async crypto algorithm returns -EBUSY"
-
- drivers/md/dm-crypt.c | 12 ++++++------
- init/do_mounts.c      |  5 +++--
- 2 files changed, 9 insertions(+), 8 deletions(-)
+> 
+> - Akira
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
