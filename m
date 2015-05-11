@@ -1,16 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/3] [RESEND]dm-raid1: several fixes about
- writing on out of sync mirror device
-Date: Mon, 11 May 2015 14:55:12 -0400
-Message-ID: <20150511185512.GA3393@redhat.com>
-References: <1429155804-5022-1-git-send-email-lzhong@suse.com>
+Subject: Re: dm-raid: unsynced raid snapshot creation/deletion
+ causes panic (work queue teardown race)
+Date: Mon, 11 May 2015 16:30:03 -0400
+Message-ID: <20150511203003.GB3804@redhat.com>
+References: <1430310789-564-1-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1429155804-5022-1-git-send-email-lzhong@suse.com>
+In-Reply-To: <1430310789-564-1-git-send-email-heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,34 +20,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Lidong Zhong <lzhong@suse.com>
-Cc: heinzm@redhat.com, dm-devel@redhat.com
+To: heinzm@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Apr 15 2015 at 11:43pm -0400,
-Lidong Zhong <lzhong@suse.com> wrote:
+On Wed, Apr 29 2015 at  8:33am -0400,
+heinzm@redhat.com <heinzm@redhat.com> wrote:
 
-> Hi List/Heinz,
+> From: Heinz Mauelshagen <heinzm@redhat.com>
 > 
-> These three patches are done based on last patch series that replied on April 8.
+> This patch avoids oopses caused by a callback racing
+> with the destrution of a mapping.
+> 
+> 
+> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+> Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
+> 
+> 
+> ---
+>  drivers/md/dm-raid.c | 18 ++++++++++++++++++
+>  1 file changed, 18 insertions(+)
+> 
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index 88e4c7f..fc4bc83 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -1614,6 +1614,17 @@ static void raid_presuspend(struct dm_target *ti)
+>  {
+>  	struct raid_set *rs = ti->private;
+>  
+> +	/*
+> +	 * Address a teardown race when calling
+> +	 * raid_(pre|post)suspend followed by raid_dtr:
+> +	 *
+> +	 * MD's call chain md_stop_writes()->md_reap_sync_thread()
+> +	 * causes work to be queued on the md_misc_wq queue
+> +	 * not flushing it, hence the callback can occur after
+> +	 * a potential destruction of the raid set causing an oops.
+> +	 */
+> +	rs->md.event_work.func = NULL;
+> +
+>  	md_stop_writes(&rs->md);
+>  }
+>  
+> @@ -1684,6 +1695,13 @@ static void raid_resume(struct dm_target *ti)
+>  {
+>  	struct raid_set *rs = ti->private;
+>  
+> +	/*
+> +	 * See "Address a teardown race" in raid_presuspend()
+> +	 *
+> +	 * Reenable the worker function.
+> +	 */
+> +	rs->md.event_work.func = do_table_event;
+> +
+>  	set_bit(MD_CHANGE_DEVS, &rs->md.flags);
+>  	if (!rs->bitmap_loaded) {
+>  		bitmap_load(&rs->md);
 
-Unless the current upstream code can crash (and there is an isolated fix
-for that crash that should cc stable): I'd prefer to see all related
-patches folded into a single patch and the patch header updated to
-clearly document what is being fixed with these changes.  Also is there
-a userspace dependency that is required for this kernel patch to work?
-If so please say as much.
+The subject of this patch is strange (snapshot?)
 
-So my current understanding is you should be able to fold all 5 of these
-patches together and resubmit a single patch:
+Anyway, what flushes the md_misc_wq before you set it to NULL?
+Shouldn't that happen as part of presuspend?
 
-https://patchwork.kernel.org/patch/6179141/
-https://patchwork.kernel.org/patch/6179151/
-https://patchwork.kernel.org/patch/6223631/
-https://patchwork.kernel.org/patch/6223651/
-https://patchwork.kernel.org/patch/6223641/
-
-I'd be OK taking numerous patches but we aren't talking a lot of code
-here... not seeing a need to make things more complex than needed.
+Also, is it really safe to set this to NULL out from underneath MD?
+Should a helper get exposed from MD with some extra locking?
 
 Mike
