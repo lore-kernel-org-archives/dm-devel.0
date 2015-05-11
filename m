@@ -1,66 +1,53 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] block: remove export for blk_queue_bio
-Date: Mon, 11 May 2015 14:06:32 -0400
-Message-ID: <1431367592-36546-1-git-send-email-snitzer@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Subject: Re: [PATCH 0/3] [RESEND]dm-raid1: several fixes about
+ writing on out of sync mirror device
+Date: Mon, 11 May 2015 14:55:12 -0400
+Message-ID: <20150511185512.GA3393@redhat.com>
+References: <1429155804-5022-1-git-send-email-lzhong@suse.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1429155804-5022-1-git-send-email-lzhong@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Lidong Zhong <lzhong@suse.com>
+Cc: heinzm@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-With commit ff36ab345 ("dm: remove request-based logic from
-make_request_fn wrapper") DM no longer calls blk_queue_bio() directly,
-so remove its export.  Doing so required a forward declaration in
-blk-core.c.
+On Wed, Apr 15 2015 at 11:43pm -0400,
+Lidong Zhong <lzhong@suse.com> wrote:
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- block/blk-core.c       | 5 +++--
- include/linux/blkdev.h | 2 --
- 2 files changed, 3 insertions(+), 4 deletions(-)
+> Hi List/Heinz,
+> 
+> These three patches are done based on last patch series that replied on April 8.
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index fd154b9..1638a4f 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -732,6 +732,8 @@ blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
- }
- EXPORT_SYMBOL(blk_init_queue_node);
- 
-+static void blk_queue_bio(struct request_queue *q, struct bio *bio);
-+
- struct request_queue *
- blk_init_allocated_queue(struct request_queue *q, request_fn_proc *rfn,
- 			 spinlock_t *lock)
-@@ -1576,7 +1578,7 @@ void init_request_from_bio(struct request *req, struct bio *bio)
- 	blk_rq_bio_prep(req->q, req, bio);
- }
- 
--void blk_queue_bio(struct request_queue *q, struct bio *bio)
-+static void blk_queue_bio(struct request_queue *q, struct bio *bio)
- {
- 	const bool sync = !!(bio->bi_rw & REQ_SYNC);
- 	struct blk_plug *plug;
-@@ -1684,7 +1686,6 @@ out_unlock:
- 		spin_unlock_irq(q->queue_lock);
- 	}
- }
--EXPORT_SYMBOL_GPL(blk_queue_bio);	/* for device mapper only */
- 
- /*
-  * If bio->bi_dev is a partition, remap the location
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 7f9a516..5d93a66 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -821,8 +821,6 @@ extern int scsi_cmd_ioctl(struct request_queue *, struct gendisk *, fmode_t,
- extern int sg_scsi_ioctl(struct request_queue *, struct gendisk *, fmode_t,
- 			 struct scsi_ioctl_command __user *);
- 
--extern void blk_queue_bio(struct request_queue *q, struct bio *bio);
--
- /*
-  * A queue has just exitted congestion.  Note this in the global counter of
-  * congested queues, and wake up anyone who was waiting for requests to be
--- 
-2.3.2 (Apple Git-55)
+Unless the current upstream code can crash (and there is an isolated fix
+for that crash that should cc stable): I'd prefer to see all related
+patches folded into a single patch and the patch header updated to
+clearly document what is being fixed with these changes.  Also is there
+a userspace dependency that is required for this kernel patch to work?
+If so please say as much.
+
+So my current understanding is you should be able to fold all 5 of these
+patches together and resubmit a single patch:
+
+https://patchwork.kernel.org/patch/6179141/
+https://patchwork.kernel.org/patch/6179151/
+https://patchwork.kernel.org/patch/6223631/
+https://patchwork.kernel.org/patch/6223651/
+https://patchwork.kernel.org/patch/6223641/
+
+I'd be OK taking numerous patches but we aren't talking a lot of code
+here... not seeing a need to make things more complex than needed.
+
+Mike
