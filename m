@@ -1,16 +1,12 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: dm-raid: unsynced raid snapshot creation/deletion
- causes panic (work queue teardown race)
-Date: Tue, 12 May 2015 12:38:10 +0200
-Message-ID: <5551D812.1050106@redhat.com>
-References: <1430310789-564-1-git-send-email-heinzm@redhat.com>
-	<20150511203003.GB3804@redhat.com>
+From: "BK, GirishKumar" <GirishKumar.BK@netapp.com>
+Subject: Writes going to source device in write-back mode
+Date: Tue, 12 May 2015 13:36:16 +0000
+Message-ID: <D177FFA7.18BDB%GirishKumar.BK@netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1161560119258936846=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150511203003.GB3804@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,107 +16,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+--===============1161560119258936846==
+Content-Language: en-US
+Content-Type: multipart/alternative;
+	boundary="_000_D177FFA718BDBGirishKumarBKnetappcom_"
+
+--_000_D177FFA718BDBGirishKumarBKnetappcom_
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Hi,
+
+I have observed (via iostat) dm-cache is writing to source device also in w=
+rite back mode (equivalent to IOS going to cache device) even though cache =
+is filled with 25% cache size.
+
+Any explanation as to why this behavior when it is expected that none of th=
+e IOS (random 4 K writes) should be going to source device in write back mo=
+de?
+
+Thanks,
+#Girish_BK
+
+Here are test parameters:
+RHEL: 7.0 (3.19 kernel)
+Dm-cache policy set to 'write back' and cache block size set to 32K.
+
+0 16384000 cache 8 637/2048000 64 17/256000 189 84 84 524204 0 17 0 1 write=
+back 2 migration_threshold 2048 mq 10 random_threshold 4 sequential_thresho=
+ld 512 discard_promote_adjustment 1 read_promote_adjustment 4 write_promote=
+_adjustment 8
+
+Test run was with fio: Random 4K write (100%)
 
 
-On 05/11/2015 10:30 PM, Mike Snitzer wrote:
-> On Wed, Apr 29 2015 at  8:33am -0400,
-> heinzm@redhat.com <heinzm@redhat.com> wrote:
->
->> From: Heinz Mauelshagen <heinzm@redhat.com>
->>
->> This patch avoids oopses caused by a callback racing
->> with the destrution of a mapping.
->>
->>
->> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
->> Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
->>
->>
->> ---
->>   drivers/md/dm-raid.c | 18 ++++++++++++++++++
->>   1 file changed, 18 insertions(+)
->>
->> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
->> index 88e4c7f..fc4bc83 100644
->> --- a/drivers/md/dm-raid.c
->> +++ b/drivers/md/dm-raid.c
->> @@ -1614,6 +1614,17 @@ static void raid_presuspend(struct dm_target *ti)
->>   {
->>   	struct raid_set *rs = ti->private;
->>   
->> +	/*
->> +	 * Address a teardown race when calling
->> +	 * raid_(pre|post)suspend followed by raid_dtr:
->> +	 *
->> +	 * MD's call chain md_stop_writes()->md_reap_sync_thread()
->> +	 * causes work to be queued on the md_misc_wq queue
->> +	 * not flushing it, hence the callback can occur after
->> +	 * a potential destruction of the raid set causing an oops.
->> +	 */
->> +	rs->md.event_work.func = NULL;
->> +
->>   	md_stop_writes(&rs->md);
->>   }
->>   
->> @@ -1684,6 +1695,13 @@ static void raid_resume(struct dm_target *ti)
->>   {
->>   	struct raid_set *rs = ti->private;
->>   
->> +	/*
->> +	 * See "Address a teardown race" in raid_presuspend()
->> +	 *
->> +	 * Reenable the worker function.
->> +	 */
->> +	rs->md.event_work.func = do_table_event;
->> +
->>   	set_bit(MD_CHANGE_DEVS, &rs->md.flags);
->>   	if (!rs->bitmap_loaded) {
->>   		bitmap_load(&rs->md);
-> The subject of this patch is strange (snapshot?)
 
-Mike,
-it was hit it with a test where a snapshot LV was created on a raid LV..
 
->
-> Anyway, what flushes the md_misc_wq before you set it to NULL?
+--_000_D177FFA718BDBGirishKumarBKnetappcom_
+Content-Type: text/html; charset="iso-8859-1"
+Content-ID: <C5DAA546F40471458AE066759CABD2BF@hq.netapp.com>
+Content-Transfer-Encoding: quoted-printable
 
-The work queue is empty when I set it to NULL, because recovery is still
-ongoing. The OOPs is being triggered because md_reap_sync_thread()
-being called from __md_stop_writes queues work again in case the worker
-function is not NULL, hence causing it to be called when the raid_dtr() 
-has teared
-down the dm mapping already.
+<html>
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859-=
+1">
+</head>
+<body style=3D"word-wrap: break-word; -webkit-nbsp-mode: space; -webkit-lin=
+e-break: after-white-space; color: rgb(0, 0, 0); font-size: 14px; font-fami=
+ly: Calibri, sans-serif;">
+<div>Hi,</div>
+<div><br>
+</div>
+<div>I have observed (via iostat) dm-cache is writing to source device also=
+ in write back mode (equivalent to IOS going to cache device) even though c=
+ache is filled with 25% cache size.</div>
+<div><br>
+</div>
+<div>Any explanation as to why this behavior when it is expected that none =
+of the IOS (random 4 K writes) should be going to source device in write ba=
+ck mode?</div>
+<div><br>
+</div>
+<div>Thanks,</div>
+<div>#Girish_BK</div>
+<div><br>
+</div>
+<div><b><u>Here are test parameters:</u></b></div>
+<div>RHEL: 7.0 (3.19 kernel)</div>
+<div>Dm-cache policy set to &#8216;write back&#8217; and cache block size s=
+et to 32K.</div>
+<div><br>
+</div>
+<div><span style=3D"color: rgb(31, 73, 125); font-size: 15px;">0 16384000 c=
+ache 8 637/2048000 64 17/256000 189 84 84 524204 0 17 0 1 writeback 2 migra=
+tion_threshold 2048 mq 10 random_threshold 4 sequential_threshold 512 disca=
+rd_promote_adjustment 1 read_promote_adjustment
+ 4 write_promote_adjustment 8</span></div>
+<div><br>
+</div>
+<div>Test run was with fio: Random 4K write (100%) &nbsp;</div>
+<div><br>
+</div>
+<div><br>
+</div>
+<br>
+</body>
+</html>
 
-> Shouldn't that happen as part of presuspend?
->
-> Also, is it really safe to set this to NULL out from underneath MD?
+--_000_D177FFA718BDBGirishKumarBKnetappcom_--
 
-Rethinking based on your remark there may still be a race, because setting
-the worker function to NULL  in raid_preresume() may  occur after an md 
-worker
-has queued event work for dm-raid already (e.g. in the cours of md error 
-processng)
-but md_misc_wq has not yet been run.
 
-> Should a helper get exposed from MD with some extra locking?
+--===============1161560119258936846==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-A lightweight solution could be an MD recovery flag 
-(MD_RECOVERY_DONT_CALLBACK ?) set
-in raid_presuspend() preventing md_reap_sync_thread() from queueing work?
 
-I.e.:
-         if (mddev->event_work.func && 
-!test_bit(MD_RECOVERY_DONT_CALLBACK, &mddev->recovery))
-                   queue_work(md_misc_wq, &mddev->event_work);
-
-Neil,
-what do you think about this idea?
-
-Heinz
-
->
-> Mike
+--===============1161560119258936846==--
