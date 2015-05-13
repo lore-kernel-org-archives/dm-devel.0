@@ -1,12 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: multipath-tools git repository is unavailable
-Date: Tue, 12 May 2015 10:41:55 -0500
-Message-ID: <20150512154155.GF3001@octiron.msp.redhat.com>
+From: "Lidong Zhong" <lzhong@suse.com>
+Subject: Re: [PATCH 0/3] [RESEND]dm-raid1: several fixes about
+ writing on out of sync mirror device
+Date: Wed, 13 May 2015 00:01:34 -0600
+Message-ID: <5553593E020000E100024356@relay2.provo.novell.com>
+References: <1429155804-5022-1-git-send-email-lzhong@suse.com>
+	<20150511185512.GA3393@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20150511185512.GA3393@redhat.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,22 +21,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I've just recently tried a "git pull" on my multipath repository, and I
-got:
+>> On 5/12/2015 at 02:55 AM, in message <20150511185512.GA3393@redhat.com>, Mike
+Snitzer <snitzer@redhat.com> wrote: 
+> On Wed, Apr 15 2015 at 11:43pm -0400, 
+> Lidong Zhong <lzhong@suse.com> wrote: 
+>  
+> > Hi List/Heinz, 
+> >  
+> > These three patches are done based on last patch series that replied on  
+> April 8. 
+>  
+> Unless the current upstream code can crash (and there is an isolated fix 
+> for that crash that should cc stable): I'd prefer to see all related 
+> patches folded into a single patch and the patch header updated to 
+> clearly document what is being fixed with these changes.  Also is there 
+> a userspace dependency that is required for this kernel patch to work? 
+> If so please say as much. 
+>  
+> So my current understanding is you should be able to fold all 5 of these 
+> patches together and resubmit a single patch: 
+>  
+> https://patchwork.kernel.org/patch/6179141/ 
+> https://patchwork.kernel.org/patch/6179151/ 
+> https://patchwork.kernel.org/patch/6223631/ 
+> https://patchwork.kernel.org/patch/6223651/ 
+> https://patchwork.kernel.org/patch/6223641/ 
+>  
+> I'd be OK taking numerous patches but we aren't talking a lot of code 
+> here... not seeing a need to make things more complex than needed. 
+>  
 
-$ git pull
-fatal: repository 'http://git.opensvc.com/multipath-tools/.git/' not found
+Understood.
+I will send the patch later. Thanks.
 
-I appear to be completely unable to access the repository through either
-http or git. Everything looks fine through Gitweb, however.
-
-Just to check, I tried to clone some of the other repositories at
-git.opensvc.com, and I can't access any of them.
-
-Any idea what's up?
-
--Ben
+Regards,
+Lidong
+> Mike 
+>  
+> -- 
+> dm-devel mailing list 
+> dm-devel@redhat.com 
+> https://www.redhat.com/mailman/listinfo/dm-devel 
+>  
+>  
