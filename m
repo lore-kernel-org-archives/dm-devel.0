@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-4.2 14/14] dm thin metadata: remove in-core
-	'read_only' flag
-Date: Thu, 14 May 2015 17:05:12 -0400
-Message-ID: <1431637512-64245-15-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-4.2 07/14] dm: factor out a common
+	cleanup_mapped_device()
+Date: Thu, 14 May 2015 17:05:05 -0400
+Message-ID: <1431637512-64245-8-git-send-email-snitzer@redhat.com>
 References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,89 +23,143 @@ To: dm-devel@redhat.com
 Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Leverage the block manager's read_only flag instead of duplicating it;
-access with new dm_bm_is_read_only() method.
+Introduce a single common method for cleaning up a DM device's
+mapped_device.  No functional change, just eliminates duplication of
+delicate mapped_device cleanup code.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin-metadata.c                 | 6 +-----
- drivers/md/persistent-data/dm-block-manager.c | 6 ++++++
- drivers/md/persistent-data/dm-block-manager.h | 1 +
- 3 files changed, 8 insertions(+), 5 deletions(-)
+ drivers/md/dm.c | 78 +++++++++++++++++++++++++++++++--------------------------
+ 1 file changed, 43 insertions(+), 35 deletions(-)
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index 40359e9..8b521e3 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -184,7 +184,6 @@ struct dm_pool_metadata {
- 	uint64_t trans_id;
- 	unsigned long flags;
- 	sector_t data_block_size;
--	bool read_only:1;
- 
- 	/*
- 	 * Set if a transaction has to be aborted but the attempt to roll back
-@@ -836,7 +835,6 @@ struct dm_pool_metadata *dm_pool_metadata_open(struct block_device *bdev,
- 	init_rwsem(&pmd->root_lock);
- 	pmd->time = 0;
- 	INIT_LIST_HEAD(&pmd->thin_devices);
--	pmd->read_only = false;
- 	pmd->fail_io = false;
- 	pmd->bdev = bdev;
- 	pmd->data_block_size = data_block_size;
-@@ -880,7 +878,7 @@ int dm_pool_metadata_close(struct dm_pool_metadata *pmd)
- 		return -EBUSY;
- 	}
- 
--	if (!pmd->read_only && !pmd->fail_io) {
-+	if (!dm_bm_is_read_only(pmd->bm) && !pmd->fail_io) {
- 		r = __commit_transaction(pmd);
- 		if (r < 0)
- 			DMWARN("%s: __commit_transaction() failed, error = %d",
-@@ -1850,7 +1848,6 @@ int dm_pool_resize_metadata_dev(struct dm_pool_metadata *pmd, dm_block_t new_cou
- void dm_pool_metadata_read_only(struct dm_pool_metadata *pmd)
- {
- 	down_write(&pmd->root_lock);
--	pmd->read_only = true;
- 	dm_bm_set_read_only(pmd->bm);
- 	up_write(&pmd->root_lock);
- }
-@@ -1858,7 +1855,6 @@ void dm_pool_metadata_read_only(struct dm_pool_metadata *pmd)
- void dm_pool_metadata_read_write(struct dm_pool_metadata *pmd)
- {
- 	down_write(&pmd->root_lock);
--	pmd->read_only = false;
- 	dm_bm_set_read_write(pmd->bm);
- 	up_write(&pmd->root_lock);
- }
-diff --git a/drivers/md/persistent-data/dm-block-manager.c b/drivers/md/persistent-data/dm-block-manager.c
-index 087411c..4d6c9b6 100644
---- a/drivers/md/persistent-data/dm-block-manager.c
-+++ b/drivers/md/persistent-data/dm-block-manager.c
-@@ -609,6 +609,12 @@ void dm_bm_prefetch(struct dm_block_manager *bm, dm_block_t b)
- 	dm_bufio_prefetch(bm->bufio, b, 1);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index c894d13..d31f7a3 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2167,6 +2167,40 @@ static void dm_init_old_md_queue(struct mapped_device *md)
+ 	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
  }
  
-+bool dm_bm_is_read_only(struct dm_block_manager *bm)
++static void cleanup_mapped_device(struct mapped_device *md)
 +{
-+	return bm->read_only;
-+}
-+EXPORT_SYMBOL_GPL(dm_bm_is_read_only);
++	cleanup_srcu_struct(&md->io_barrier);
 +
- void dm_bm_set_read_only(struct dm_block_manager *bm)
- {
- 	bm->read_only = true;
-diff --git a/drivers/md/persistent-data/dm-block-manager.h b/drivers/md/persistent-data/dm-block-manager.h
-index 1b95dfc..84330f5 100644
---- a/drivers/md/persistent-data/dm-block-manager.h
-+++ b/drivers/md/persistent-data/dm-block-manager.h
-@@ -123,6 +123,7 @@ void dm_bm_prefetch(struct dm_block_manager *bm, dm_block_t b);
-  * Additionally you should not use dm_bm_unlock_move, however no error will
-  * be returned if you do.
++	if (md->wq)
++		destroy_workqueue(md->wq);
++	if (md->kworker_task)
++		kthread_stop(md->kworker_task);
++	if (md->io_pool)
++		mempool_destroy(md->io_pool);
++	if (md->rq_pool)
++		mempool_destroy(md->rq_pool);
++	if (md->bs)
++		bioset_free(md->bs);
++
++	if (md->disk) {
++		spin_lock(&_minor_lock);
++		md->disk->private_data = NULL;
++		spin_unlock(&_minor_lock);
++		if (blk_get_integrity(md->disk))
++			blk_integrity_unregister(md->disk);
++		del_gendisk(md->disk);
++		put_disk(md->disk);
++	}
++
++	if (md->queue)
++		blk_cleanup_queue(md->queue);
++
++	if (md->bdev) {
++		bdput(md->bdev);
++		md->bdev = NULL;
++	}
++}
++
+ /*
+  * Allocate and initialise a blank device with a given minor.
   */
-+bool dm_bm_is_read_only(struct dm_block_manager *bm);
- void dm_bm_set_read_only(struct dm_block_manager *bm);
- void dm_bm_set_read_write(struct dm_block_manager *bm);
+@@ -2212,13 +2246,13 @@ static struct mapped_device *alloc_dev(int minor)
  
+ 	md->queue = blk_alloc_queue(GFP_KERNEL);
+ 	if (!md->queue)
+-		goto bad_queue;
++		goto bad;
+ 
+ 	dm_init_md_queue(md);
+ 
+ 	md->disk = alloc_disk(1);
+ 	if (!md->disk)
+-		goto bad_disk;
++		goto bad;
+ 
+ 	atomic_set(&md->pending[0], 0);
+ 	atomic_set(&md->pending[1], 0);
+@@ -2239,11 +2273,11 @@ static struct mapped_device *alloc_dev(int minor)
+ 
+ 	md->wq = alloc_workqueue("kdmflush", WQ_MEM_RECLAIM, 0);
+ 	if (!md->wq)
+-		goto bad_thread;
++		goto bad;
+ 
+ 	md->bdev = bdget_disk(md->disk, 0);
+ 	if (!md->bdev)
+-		goto bad_bdev;
++		goto bad;
+ 
+ 	bio_init(&md->flush_bio);
+ 	md->flush_bio.bi_bdev = md->bdev;
+@@ -2260,15 +2294,8 @@ static struct mapped_device *alloc_dev(int minor)
+ 
+ 	return md;
+ 
+-bad_bdev:
+-	destroy_workqueue(md->wq);
+-bad_thread:
+-	del_gendisk(md->disk);
+-	put_disk(md->disk);
+-bad_disk:
+-	blk_cleanup_queue(md->queue);
+-bad_queue:
+-	cleanup_srcu_struct(&md->io_barrier);
++bad:
++	cleanup_mapped_device(md);
+ bad_io_barrier:
+ 	free_minor(minor);
+ bad_minor:
+@@ -2285,32 +2312,13 @@ static void free_dev(struct mapped_device *md)
+ 	int minor = MINOR(disk_devt(md->disk));
+ 
+ 	unlock_fs(md);
+-	destroy_workqueue(md->wq);
+ 
+-	if (md->kworker_task)
+-		kthread_stop(md->kworker_task);
+-	if (md->io_pool)
+-		mempool_destroy(md->io_pool);
+-	if (md->rq_pool)
+-		mempool_destroy(md->rq_pool);
+-	if (md->bs)
+-		bioset_free(md->bs);
++	cleanup_mapped_device(md);
++	if (md->use_blk_mq)
++		blk_mq_free_tag_set(&md->tag_set);
+ 
+-	cleanup_srcu_struct(&md->io_barrier);
+ 	free_table_devices(&md->table_devices);
+ 	dm_stats_cleanup(&md->stats);
+-
+-	spin_lock(&_minor_lock);
+-	md->disk->private_data = NULL;
+-	spin_unlock(&_minor_lock);
+-	if (blk_get_integrity(md->disk))
+-		blk_integrity_unregister(md->disk);
+-	del_gendisk(md->disk);
+-	put_disk(md->disk);
+-	blk_cleanup_queue(md->queue);
+-	if (md->use_blk_mq)
+-		blk_mq_free_tag_set(&md->tag_set);
+-	bdput(md->bdev);
+ 	free_minor(minor);
+ 
+ 	module_put(THIS_MODULE);
 -- 
 2.3.2 (Apple Git-55)
