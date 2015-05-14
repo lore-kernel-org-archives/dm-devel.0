@@ -1,300 +1,506 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-4.2 01/14] block: remove management of bi_remaining when restoring original bi_end_io
-Date: Thu, 14 May 2015 17:04:59 -0400
-Message-ID: <1431637512-64245-2-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-4.2 03/14] block, dm: don't copy bios for request clones
+Date: Thu, 14 May 2015 17:05:01 -0400
+Message-ID: <1431637512-64245-4-git-send-email-snitzer@redhat.com>
 References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, Jan Kara <jack@suse.cz>, Chris Mason <clm@fb.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@lst.de>, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Commit c4cf5261 ("bio: skip atomic inc/dec of ->bi_remaining for
-non-chains") regressed all existing callers that followed this pattern:
- 1) saving a bio's original bi_end_io
- 2) wiring up an intermediate bi_end_io
- 3) restoring the original bi_end_io from intermediate bi_end_io
- 4) calling bio_endio() to execute the restored original bi_end_io
+From: Christoph Hellwig <hch@lst.de>
 
-The regression was due to BIO_CHAIN only ever getting set if
-bio_inc_remaining() is called.  For the above pattern it isn't set until
-step 3 above (step 2 would've needed to establish BIO_CHAIN).  As such
-the first bio_endio(), in step 2 above, never decremented __bi_remaining
-before calling the intermediate bi_end_io -- leaving __bi_remaining with
-the value 1 instead of 0.  When bio_inc_remaining() occurred during step
-3 it brought it to a value of 2.  When the second bio_endio() was
-called, in step 4 above, it should've called the original bi_end_io but
-it didn't because there was an extra reference that wasn't dropped (due
-to atomic operations being optimized away since BIO_CHAIN wasn't set
-upfront).
+Currently dm-multipath has to clone the bios for every request sent
+to the lower devices, which wastes cpu cycles and ties down memory.
 
-Fix this issue by removing the __bi_remaining management complexity for
-all callers that use the above pattern -- bio_chain() is the only
-interface that _needs_ to be concerned with __bi_remaining.  For the
-above pattern callers just expect the bi_end_io they set to get called!
-Remove bio_endio_nodec() and also remove all bio_inc_remaining() calls
-that aren't associated with the bio_chain() interface.
+This patch instead adds a new REQ_CLONE flag that instructs req_bio_endio
+to not complete bios attached to a request, which we set on clone
+requests similar to bios in a flush sequence.  With this change I/O
+errors on a path failure only get propagated to dm-multipath, which
+can then either resubmit the I/O or complete the bios on the original
+request.
 
-The bio_inc_remaining() interface has been left exported because it is
-still useful for more elaborate uses of bio_chain() -- it will be used
-in an upcoming DM commit "dm thin: range discard support".
+I've done some basic testing of this on a Linux target with ALUA support,
+and it survives path failures during I/O nicely.
 
-Fixes: c4cf5261 ("bio: skip atomic inc/dec of ->bi_remaining for non-chains")
+Signed-off-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: Jan Kara <jack@suse.cz>
-Cc: Chris Mason <clm@fb.com>
 ---
- block/bio-integrity.c        |  4 ++--
- block/bio.c                  | 20 --------------------
- drivers/md/bcache/io.c       |  2 +-
- drivers/md/dm-cache-target.c |  6 ------
- drivers/md/dm-raid1.c        |  2 --
- drivers/md/dm-snap.c         |  1 -
- drivers/md/dm-thin.c         |  9 +++------
- drivers/md/dm-verity.c       |  2 +-
- fs/btrfs/disk-io.c           |  2 +-
- fs/btrfs/volumes.c           | 16 +++++-----------
- fs/btrfs/volumes.h           |  2 --
- include/linux/bio.h          |  1 -
- 12 files changed, 13 insertions(+), 54 deletions(-)
+ block/blk-core.c          |  94 +++----------------------
+ drivers/md/dm-table.c     |  25 ++++---
+ drivers/md/dm.c           | 171 +++++++++++-----------------------------------
+ drivers/md/dm.h           |   5 +-
+ include/linux/blk_types.h |   2 +
+ include/linux/blkdev.h    |   6 +-
+ 6 files changed, 73 insertions(+), 230 deletions(-)
 
-diff --git a/block/bio-integrity.c b/block/bio-integrity.c
-index 5cbd5d9..0436c21 100644
---- a/block/bio-integrity.c
-+++ b/block/bio-integrity.c
-@@ -361,7 +361,7 @@ static void bio_integrity_verify_fn(struct work_struct *work)
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 69035cb..8605dce 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -117,7 +117,7 @@ EXPORT_SYMBOL(blk_rq_init);
+ static void req_bio_endio(struct request *rq, struct bio *bio,
+ 			  unsigned int nbytes, int error)
+ {
+-	if (error)
++	if (error && !(rq->cmd_flags & REQ_CLONE))
+ 		clear_bit(BIO_UPTODATE, &bio->bi_flags);
+ 	else if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
+ 		error = -EIO;
+@@ -128,7 +128,8 @@ static void req_bio_endio(struct request *rq, struct bio *bio,
+ 	bio_advance(bio, nbytes);
  
- 	/* Restore original bio completion handler */
- 	bio->bi_end_io = bip->bip_end_io;
--	bio_endio_nodec(bio, error);
-+	bio_endio(bio, error);
+ 	/* don't actually finish bio if it's part of flush sequence */
+-	if (bio->bi_iter.bi_size == 0 && !(rq->cmd_flags & REQ_FLUSH_SEQ))
++	if (bio->bi_iter.bi_size == 0 &&
++	    !(rq->cmd_flags & (REQ_FLUSH_SEQ|REQ_CLONE)))
+ 		bio_endio(bio, error);
  }
  
- /**
-@@ -388,7 +388,7 @@ void bio_integrity_endio(struct bio *bio, int error)
- 	 */
- 	if (error) {
- 		bio->bi_end_io = bip->bip_end_io;
--		bio_endio_nodec(bio, error);
-+		bio_endio(bio, error);
+@@ -2914,95 +2915,22 @@ int blk_lld_busy(struct request_queue *q)
+ }
+ EXPORT_SYMBOL_GPL(blk_lld_busy);
  
- 		return;
- 	}
-diff --git a/block/bio.c b/block/bio.c
-index c2ff8a8..3690f1c 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -1809,26 +1809,6 @@ void bio_endio(struct bio *bio, int error)
- EXPORT_SYMBOL(bio_endio);
- 
- /**
-- * bio_endio_nodec - end I/O on a bio, without decrementing bi_remaining
-- * @bio:	bio
-- * @error:	error, if any
+-/**
+- * blk_rq_unprep_clone - Helper function to free all bios in a cloned request
+- * @rq: the clone request to be cleaned up
 - *
-- * For code that has saved and restored bi_end_io; thing hard before using this
-- * function, probably you should've cloned the entire bio.
-- **/
--void bio_endio_nodec(struct bio *bio, int error)
+- * Description:
+- *     Free all bios in @rq for a cloned request.
+- */
+-void blk_rq_unprep_clone(struct request *rq)
 -{
--	/*
--	 * If it's not flagged as a chain, we are not going to dec the count
--	 */
--	if (bio_flagged(bio, BIO_CHAIN))
--		bio_inc_remaining(bio);
+-	struct bio *bio;
 -
--	bio_endio(bio, error);
+-	while ((bio = rq->bio) != NULL) {
+-		rq->bio = bio->bi_next;
+-
+-		bio_put(bio);
+-	}
 -}
--EXPORT_SYMBOL(bio_endio_nodec);
+-EXPORT_SYMBOL_GPL(blk_rq_unprep_clone);
+-
+-/*
+- * Copy attributes of the original request to the clone request.
+- * The actual data parts (e.g. ->cmd, ->sense) are not copied.
+- */
+-static void __blk_rq_prep_clone(struct request *dst, struct request *src)
++void blk_rq_prep_clone(struct request *dst, struct request *src)
+ {
+ 	dst->cpu = src->cpu;
+-	dst->cmd_flags |= (src->cmd_flags & REQ_CLONE_MASK) | REQ_NOMERGE;
++	dst->cmd_flags |= (src->cmd_flags & REQ_CLONE_MASK);
++	dst->cmd_flags |= REQ_NOMERGE | REQ_CLONE;
+ 	dst->cmd_type = src->cmd_type;
+ 	dst->__sector = blk_rq_pos(src);
+ 	dst->__data_len = blk_rq_bytes(src);
+ 	dst->nr_phys_segments = src->nr_phys_segments;
+ 	dst->ioprio = src->ioprio;
+ 	dst->extra_len = src->extra_len;
+-}
 -
 -/**
-  * bio_split - split a bio
-  * @bio:	bio to split
-  * @sectors:	number of sectors to split from the front of @bio
-diff --git a/drivers/md/bcache/io.c b/drivers/md/bcache/io.c
-index fa028fa..cb64e64a 100644
---- a/drivers/md/bcache/io.c
-+++ b/drivers/md/bcache/io.c
-@@ -55,7 +55,7 @@ static void bch_bio_submit_split_done(struct closure *cl)
+- * blk_rq_prep_clone - Helper function to setup clone request
+- * @rq: the request to be setup
+- * @rq_src: original request to be cloned
+- * @bs: bio_set that bios for clone are allocated from
+- * @gfp_mask: memory allocation mask for bio
+- * @bio_ctr: setup function to be called for each clone bio.
+- *           Returns %0 for success, non %0 for failure.
+- * @data: private data to be passed to @bio_ctr
+- *
+- * Description:
+- *     Clones bios in @rq_src to @rq, and copies attributes of @rq_src to @rq.
+- *     The actual data parts of @rq_src (e.g. ->cmd, ->sense)
+- *     are not copied, and copying such parts is the caller's responsibility.
+- *     Also, pages which the original bios are pointing to are not copied
+- *     and the cloned bios just point same pages.
+- *     So cloned bios must be completed before original bios, which means
+- *     the caller must complete @rq before @rq_src.
+- */
+-int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
+-		      struct bio_set *bs, gfp_t gfp_mask,
+-		      int (*bio_ctr)(struct bio *, struct bio *, void *),
+-		      void *data)
+-{
+-	struct bio *bio, *bio_src;
+-
+-	if (!bs)
+-		bs = fs_bio_set;
+-
+-	__rq_for_each_bio(bio_src, rq_src) {
+-		bio = bio_clone_fast(bio_src, gfp_mask, bs);
+-		if (!bio)
+-			goto free_and_out;
+-
+-		if (bio_ctr && bio_ctr(bio, bio_src, data))
+-			goto free_and_out;
+-
+-		if (rq->bio) {
+-			rq->biotail->bi_next = bio;
+-			rq->biotail = bio;
+-		} else
+-			rq->bio = rq->biotail = bio;
+-	}
+-
+-	__blk_rq_prep_clone(rq, rq_src);
+-
+-	return 0;
+-
+-free_and_out:
+-	if (bio)
+-		bio_put(bio);
+-	blk_rq_unprep_clone(rq);
+-
+-	return -ENOMEM;
++	dst->bio = src->bio;
++	dst->biotail = src->biotail;
++	dst->cmd = src->cmd;
++	dst->cmd_len = src->cmd_len;
++	dst->sense = src->sense;
+ }
+ EXPORT_SYMBOL_GPL(blk_rq_prep_clone);
  
- 	s->bio->bi_end_io = s->bi_end_io;
- 	s->bio->bi_private = s->bi_private;
--	bio_endio_nodec(s->bio, 0);
-+	bio_endio(s->bio, 0);
- 
- 	closure_debug_destroy(&s->cl);
- 	mempool_free(s, s->p->bio_split_hook);
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 705eb7b..41b2594 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -86,12 +86,6 @@ static void dm_unhook_bio(struct dm_hook_info *h, struct bio *bio)
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index d9b00b8..3662b2e 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -940,21 +940,28 @@ static int dm_table_alloc_md_mempools(struct dm_table *t, struct mapped_device *
  {
- 	bio->bi_end_io = h->bi_end_io;
- 	bio->bi_private = h->bi_private;
+ 	unsigned type = dm_table_get_type(t);
+ 	unsigned per_bio_data_size = 0;
+-	struct dm_target *tgt;
+ 	unsigned i;
+ 
+-	if (unlikely(type == DM_TYPE_NONE)) {
++	switch (type) {
++	case DM_TYPE_BIO_BASED:
++		for (i = 0; i < t->num_targets; i++) {
++			struct dm_target *tgt = t->targets + i;
++
++			per_bio_data_size = max(per_bio_data_size,
++						tgt->per_bio_data_size);
++		}
++		t->mempools = dm_alloc_bio_mempools(t->integrity_supported,
++						    per_bio_data_size);
++		break;
++	case DM_TYPE_REQUEST_BASED:
++	case DM_TYPE_MQ_REQUEST_BASED:
++		t->mempools = dm_alloc_rq_mempools(md, type);
++		break;
++	default:
+ 		DMWARN("no table type is set, can't allocate mempools");
+ 		return -EINVAL;
+ 	}
+ 
+-	if (type == DM_TYPE_BIO_BASED)
+-		for (i = 0; i < t->num_targets; i++) {
+-			tgt = t->targets + i;
+-			per_bio_data_size = max(per_bio_data_size, tgt->per_bio_data_size);
+-		}
+-
+-	t->mempools = dm_alloc_md_mempools(md, type, t->integrity_supported, per_bio_data_size);
+ 	if (!t->mempools)
+ 		return -ENOMEM;
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index a930b72..38837f8 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -990,57 +990,6 @@ static void clone_endio(struct bio *bio, int error)
+ 	dec_pending(io, error);
+ }
+ 
+-/*
+- * Partial completion handling for request-based dm
+- */
+-static void end_clone_bio(struct bio *clone, int error)
+-{
+-	struct dm_rq_clone_bio_info *info =
+-		container_of(clone, struct dm_rq_clone_bio_info, clone);
+-	struct dm_rq_target_io *tio = info->tio;
+-	struct bio *bio = info->orig;
+-	unsigned int nr_bytes = info->orig->bi_iter.bi_size;
+-
+-	bio_put(clone);
+-
+-	if (tio->error)
+-		/*
+-		 * An error has already been detected on the request.
+-		 * Once error occurred, just let clone->end_io() handle
+-		 * the remainder.
+-		 */
+-		return;
+-	else if (error) {
+-		/*
+-		 * Don't notice the error to the upper layer yet.
+-		 * The error handling decision is made by the target driver,
+-		 * when the request is completed.
+-		 */
+-		tio->error = error;
+-		return;
+-	}
 -
 -	/*
--	 * Must bump bi_remaining to allow bio to complete with
--	 * restored bi_end_io.
+-	 * I/O for the bio successfully completed.
+-	 * Notice the data completion to the upper layer.
 -	 */
--	bio_inc_remaining(bio);
- }
- 
- /*----------------------------------------------------------------*/
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index d6a1c09..743fa9b 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -1254,8 +1254,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
- 			dm_bio_restore(bd, bio);
- 			bio_record->details.bi_bdev = NULL;
- 
--			bio_inc_remaining(bio);
 -
- 			queue_bio(ms, bio, rw);
- 			return DM_ENDIO_INCOMPLETE;
- 		}
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 8bfeae2..7c82d3c 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -1478,7 +1478,6 @@ out:
- 	if (full_bio) {
- 		full_bio->bi_end_io = pe->full_bio_end_io;
- 		full_bio->bi_private = pe->full_bio_private;
--		bio_inc_remaining(full_bio);
- 	}
- 	increment_pending_exceptions_done_count();
- 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 342dbda..e852602c 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -793,10 +793,9 @@ static void inc_remap_and_issue_cell(struct thin_c *tc,
- 
- static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
+-	/*
+-	 * bios are processed from the head of the list.
+-	 * So the completing bio should always be rq->bio.
+-	 * If it's not, something wrong is happening.
+-	 */
+-	if (tio->orig->bio != bio)
+-		DMERR("bio completion is going in the middle of the request");
+-
+-	/*
+-	 * Update the original request.
+-	 * Do not use blk_end_request() here, because it may complete
+-	 * the original request before the clone, and break the ordering.
+-	 */
+-	blk_update_request(tio->orig, 0, nr_bytes);
+-}
+-
+ static struct dm_rq_target_io *tio_from_request(struct request *rq)
  {
--	if (m->bio) {
-+	if (m->bio)
- 		m->bio->bi_end_io = m->saved_bi_end_io;
--		bio_inc_remaining(m->bio);
--	}
-+
- 	cell_error(m->tc->pool, m->cell);
- 	list_del(&m->list);
- 	mempool_free(m, m->tc->pool->mapping_pool);
-@@ -810,10 +809,8 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
- 	int r;
+ 	return (rq->q->mq_ops ? blk_mq_rq_to_pdu(rq) : rq->special);
+@@ -1089,8 +1038,6 @@ static void free_rq_clone(struct request *clone, bool must_be_mapped)
  
- 	bio = m->bio;
--	if (bio) {
-+	if (bio)
- 		bio->bi_end_io = m->saved_bi_end_io;
--		bio_inc_remaining(bio);
--	}
+ 	WARN_ON_ONCE(must_be_mapped && !clone->q);
  
- 	if (m->err) {
- 		cell_error(pool, m->cell);
-diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
-index 66616db..bb9c6a0 100644
---- a/drivers/md/dm-verity.c
-+++ b/drivers/md/dm-verity.c
-@@ -459,7 +459,7 @@ static void verity_finish_io(struct dm_verity_io *io, int error)
- 	bio->bi_end_io = io->orig_bi_end_io;
- 	bio->bi_private = io->orig_bi_private;
- 
--	bio_endio_nodec(bio, error);
-+	bio_endio(bio, error);
+-	blk_rq_unprep_clone(clone);
+-
+ 	if (md->type == DM_TYPE_MQ_REQUEST_BASED)
+ 		/* stacked on blk-mq queue(s) */
+ 		tio->ti->type->release_clone_rq(clone);
+@@ -1821,39 +1768,13 @@ static void dm_dispatch_clone_request(struct request *clone, struct request *rq)
+ 		dm_complete_request(rq, r);
  }
  
- static void verity_work(struct work_struct *w)
-diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
-index 2ef9a4b..fbdbee4 100644
---- a/fs/btrfs/disk-io.c
-+++ b/fs/btrfs/disk-io.c
-@@ -1745,7 +1745,7 @@ static void end_workqueue_fn(struct btrfs_work *work)
- 	bio->bi_private = end_io_wq->private;
- 	bio->bi_end_io = end_io_wq->end_io;
- 	kmem_cache_free(btrfs_end_io_wq_cache, end_io_wq);
--	bio_endio_nodec(bio, error);
-+	bio_endio(bio, error);
- }
- 
- static int cleaner_kthread(void *arg)
-diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
-index 8e8d1d1..dac77d4 100644
---- a/fs/btrfs/volumes.c
-+++ b/fs/btrfs/volumes.c
-@@ -5585,10 +5585,10 @@ int btrfs_rmap_block(struct btrfs_mapping_tree *map_tree,
- 
- static inline void btrfs_end_bbio(struct btrfs_bio *bbio, struct bio *bio, int err)
+-static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
+-				 void *data)
++static void setup_clone(struct request *clone, struct request *rq,
++		        struct dm_rq_target_io *tio)
  {
--	if (likely(bbio->flags & BTRFS_BIO_ORIG_BIO_SUBMITTED))
--		bio_endio_nodec(bio, err);
--	else
--		bio_endio(bio, err);
-+	bio->bi_private = bbio->private;
-+	bio->bi_end_io = bbio->end_io;
-+	bio_endio(bio, err);
-+
- 	btrfs_put_bbio(bbio);
+-	struct dm_rq_target_io *tio = data;
+-	struct dm_rq_clone_bio_info *info =
+-		container_of(bio, struct dm_rq_clone_bio_info, clone);
+-
+-	info->orig = bio_orig;
+-	info->tio = tio;
+-	bio->bi_end_io = end_clone_bio;
+-
+-	return 0;
+-}
+-
+-static int setup_clone(struct request *clone, struct request *rq,
+-		       struct dm_rq_target_io *tio, gfp_t gfp_mask)
+-{
+-	int r;
+-
+-	r = blk_rq_prep_clone(clone, rq, tio->md->bs, gfp_mask,
+-			      dm_rq_bio_constructor, tio);
+-	if (r)
+-		return r;
+-
+-	clone->cmd = rq->cmd;
+-	clone->cmd_len = rq->cmd_len;
+-	clone->sense = rq->sense;
++	blk_rq_prep_clone(clone, rq);
+ 	clone->end_io = end_clone_request;
+ 	clone->end_io_data = tio;
+-
+ 	tio->clone = clone;
+-
+-	return 0;
  }
  
-@@ -5632,8 +5632,6 @@ static void btrfs_end_bio(struct bio *bio, int err)
- 			bio = bbio->orig_bio;
+ static struct request *clone_rq(struct request *rq, struct mapped_device *md,
+@@ -1874,12 +1795,7 @@ static struct request *clone_rq(struct request *rq, struct mapped_device *md,
+ 		clone = tio->clone;
+ 
+ 	blk_rq_init(NULL, clone);
+-	if (setup_clone(clone, rq, tio, gfp_mask)) {
+-		/* -ENOMEM */
+-		if (alloc_clone)
+-			free_clone_request(md, clone);
+-		return NULL;
+-	}
++	setup_clone(clone, rq, tio);
+ 
+ 	return clone;
+ }
+@@ -1973,11 +1889,7 @@ static int map_request(struct dm_rq_target_io *tio, struct request *rq,
  		}
- 
--		bio->bi_private = bbio->private;
--		bio->bi_end_io = bbio->end_io;
- 		btrfs_io_bio(bio)->mirror_num = bbio->mirror_num;
- 		/* only send an error to the higher layers if it is
- 		 * beyond the tolerance of the btrfs bio
-@@ -5815,8 +5813,6 @@ static void bbio_error(struct btrfs_bio *bbio, struct bio *bio, u64 logical)
- 		/* Shoud be the original bio. */
- 		WARN_ON(bio != bbio->orig_bio);
- 
--		bio->bi_private = bbio->private;
--		bio->bi_end_io = bbio->end_io;
- 		btrfs_io_bio(bio)->mirror_num = bbio->mirror_num;
- 		bio->bi_iter.bi_sector = logical >> 9;
- 
-@@ -5897,10 +5893,8 @@ int btrfs_map_bio(struct btrfs_root *root, int rw, struct bio *bio,
- 		if (dev_nr < total_devs - 1) {
- 			bio = btrfs_bio_clone(first_bio, GFP_NOFS);
- 			BUG_ON(!bio); /* -ENOMEM */
--		} else {
-+		} else
- 			bio = first_bio;
--			bbio->flags |= BTRFS_BIO_ORIG_BIO_SUBMITTED;
+ 		if (IS_ERR(clone))
+ 			return DM_MAPIO_REQUEUE;
+-		if (setup_clone(clone, rq, tio, GFP_ATOMIC)) {
+-			/* -ENOMEM */
+-			ti->type->release_clone_rq(clone);
+-			return DM_MAPIO_REQUEUE;
 -		}
++		setup_clone(clone, rq, tio);
+ 	}
  
- 		submit_stripe_bio(root, bbio, bio,
- 				  bbio->stripes[dev_nr].physical, dev_nr, rw,
-diff --git a/fs/btrfs/volumes.h b/fs/btrfs/volumes.h
-index ebc3133..cedae03 100644
---- a/fs/btrfs/volumes.h
-+++ b/fs/btrfs/volumes.h
-@@ -292,8 +292,6 @@ struct btrfs_bio_stripe {
- struct btrfs_bio;
- typedef void (btrfs_bio_end_io_t) (struct btrfs_bio *bio, int err);
+ 	switch (r) {
+@@ -2431,8 +2343,6 @@ static void __bind_mempools(struct mapped_device *md, struct dm_table *t)
+ 		goto out;
+ 	}
  
--#define BTRFS_BIO_ORIG_BIO_SUBMITTED	(1 << 0)
+-	BUG_ON(!p || md->io_pool || md->rq_pool || md->bs);
 -
- struct btrfs_bio {
- 	atomic_t refs;
- 	atomic_t stripes_pending;
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 7486ea1..fe0a88d 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -427,7 +427,6 @@ static inline struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
+ 	md->io_pool = p->io_pool;
+ 	p->io_pool = NULL;
+ 	md->rq_pool = p->rq_pool;
+@@ -3536,48 +3446,23 @@ int dm_noflush_suspending(struct dm_target *ti)
+ }
+ EXPORT_SYMBOL_GPL(dm_noflush_suspending);
+ 
+-struct dm_md_mempools *dm_alloc_md_mempools(struct mapped_device *md, unsigned type,
+-					    unsigned integrity, unsigned per_bio_data_size)
++struct dm_md_mempools *dm_alloc_bio_mempools(unsigned integrity,
++					     unsigned per_bio_data_size)
+ {
+-	struct dm_md_mempools *pools = kzalloc(sizeof(*pools), GFP_KERNEL);
+-	struct kmem_cache *cachep = NULL;
+-	unsigned int pool_size = 0;
++	struct dm_md_mempools *pools;
++	unsigned int pool_size = dm_get_reserved_bio_based_ios();
+ 	unsigned int front_pad;
+ 
++	pools = kzalloc(sizeof(*pools), GFP_KERNEL);
+ 	if (!pools)
+ 		return NULL;
+ 
+-	type = filter_md_type(type, md);
++	front_pad = roundup(per_bio_data_size, __alignof__(struct dm_target_io)) +
++		offsetof(struct dm_target_io, clone);
+ 
+-	switch (type) {
+-	case DM_TYPE_BIO_BASED:
+-		cachep = _io_cache;
+-		pool_size = dm_get_reserved_bio_based_ios();
+-		front_pad = roundup(per_bio_data_size, __alignof__(struct dm_target_io)) + offsetof(struct dm_target_io, clone);
+-		break;
+-	case DM_TYPE_REQUEST_BASED:
+-		cachep = _rq_tio_cache;
+-		pool_size = dm_get_reserved_rq_based_ios();
+-		pools->rq_pool = mempool_create_slab_pool(pool_size, _rq_cache);
+-		if (!pools->rq_pool)
+-			goto out;
+-		/* fall through to setup remaining rq-based pools */
+-	case DM_TYPE_MQ_REQUEST_BASED:
+-		if (!pool_size)
+-			pool_size = dm_get_reserved_rq_based_ios();
+-		front_pad = offsetof(struct dm_rq_clone_bio_info, clone);
+-		/* per_bio_data_size is not used. See __bind_mempools(). */
+-		WARN_ON(per_bio_data_size != 0);
+-		break;
+-	default:
+-		BUG();
+-	}
+-
+-	if (cachep) {
+-		pools->io_pool = mempool_create_slab_pool(pool_size, cachep);
+-		if (!pools->io_pool)
+-			goto out;
+-	}
++	pools->io_pool = mempool_create_slab_pool(pool_size, _io_cache);
++	if (!pools->io_pool)
++		goto out;
+ 
+ 	pools->bs = bioset_create_nobvec(pool_size, front_pad);
+ 	if (!pools->bs)
+@@ -3587,10 +3472,34 @@ struct dm_md_mempools *dm_alloc_md_mempools(struct mapped_device *md, unsigned t
+ 		goto out;
+ 
+ 	return pools;
+-
+ out:
+ 	dm_free_md_mempools(pools);
++	return NULL;
++}
++
++struct dm_md_mempools *dm_alloc_rq_mempools(struct mapped_device *md,
++					    unsigned type)
++{
++	unsigned int pool_size = dm_get_reserved_rq_based_ios();
++	struct dm_md_mempools *pools;
+ 
++	pools = kzalloc(sizeof(*pools), GFP_KERNEL);
++	if (!pools)
++		return NULL;
++
++	if (filter_md_type(type, md) == DM_TYPE_REQUEST_BASED) {
++		pools->rq_pool = mempool_create_slab_pool(pool_size, _rq_cache);
++		if (!pools->rq_pool)
++			goto out;
++	}
++
++	pools->io_pool = mempool_create_slab_pool(pool_size, _rq_tio_cache);
++	if (!pools->io_pool)
++		goto out;
++
++	return pools;
++out:
++	dm_free_md_mempools(pools);
+ 	return NULL;
  }
  
- extern void bio_endio(struct bio *, int);
--extern void bio_endio_nodec(struct bio *, int);
- struct request_queue;
- extern int bio_phys_segments(struct request_queue *, struct bio *);
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index 6123c2b..e6e66d0 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -222,8 +222,9 @@ void dm_kcopyd_exit(void);
+ /*
+  * Mempool operations
+  */
+-struct dm_md_mempools *dm_alloc_md_mempools(struct mapped_device *md, unsigned type,
+-					    unsigned integrity, unsigned per_bio_data_size);
++struct dm_md_mempools *dm_alloc_bio_mempools(unsigned integrity,
++					     unsigned per_bio_data_size);
++struct dm_md_mempools *dm_alloc_rq_mempools(struct mapped_device *md, unsigned type);
+ void dm_free_md_mempools(struct dm_md_mempools *pools);
  
+ /*
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index cc2e85a..745588b 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -195,6 +195,7 @@ enum rq_flag_bits {
+ 	__REQ_HASHED,		/* on IO scheduler merge hash */
+ 	__REQ_MQ_INFLIGHT,	/* track inflight for MQ */
+ 	__REQ_NO_TIMEOUT,	/* requests may never expire */
++	__REQ_CLONE,		/* cloned bios */
+ 	__REQ_NR_BITS,		/* stops here */
+ };
+ 
+@@ -249,5 +250,6 @@ enum rq_flag_bits {
+ #define REQ_HASHED		(1ULL << __REQ_HASHED)
+ #define REQ_MQ_INFLIGHT		(1ULL << __REQ_MQ_INFLIGHT)
+ #define REQ_NO_TIMEOUT		(1ULL << __REQ_NO_TIMEOUT)
++#define REQ_CLONE		(1ULL << __REQ_CLONE)
+ 
+ #endif /* __LINUX_BLK_TYPES_H */
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index c8cb30e..cd14e2d 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -775,11 +775,7 @@ extern void blk_add_request_payload(struct request *rq, struct page *page,
+ 		unsigned int len);
+ extern int blk_rq_check_limits(struct request_queue *q, struct request *rq);
+ extern int blk_lld_busy(struct request_queue *q);
+-extern int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
+-			     struct bio_set *bs, gfp_t gfp_mask,
+-			     int (*bio_ctr)(struct bio *, struct bio *, void *),
+-			     void *data);
+-extern void blk_rq_unprep_clone(struct request *rq);
++extern void blk_rq_prep_clone(struct request *rq, struct request *rq_src);
+ extern int blk_insert_cloned_request(struct request_queue *q,
+ 				     struct request *rq);
+ extern void blk_delay_queue(struct request_queue *, unsigned long);
 -- 
 2.3.2 (Apple Git-55)
