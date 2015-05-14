@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-4.2 09/14] dm thin metadata: add
-	dm_thin_find_mapped_range()
-Date: Thu, 14 May 2015 17:05:07 -0400
-Message-ID: <1431637512-64245-10-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-4.2 12/14] dm thin: cleanup overwrite's endio
+	restore to be centralized
+Date: Thu, 14 May 2015 17:05:10 -0400
+Message-ID: <1431637512-64245-13-git-send-email-snitzer@redhat.com>
 References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,108 +20,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-From: Joe Thornber <ejt@redhat.com>
-
-Retrieve the next run of contiguously mapped blocks.  Useful for working
-out where to break up IO.
-
-Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin-metadata.c | 57 +++++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-thin-metadata.h |  9 +++++++
- 2 files changed, 66 insertions(+)
+ drivers/md/dm-thin.c | 11 +++--------
+ 1 file changed, 3 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index 79f6941..edcf4fb 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -1419,6 +1419,63 @@ int dm_thin_find_block(struct dm_thin_device *td, dm_block_t block,
- 	return r;
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index aa71bdd..b316450 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -766,6 +766,8 @@ static void overwrite_endio(struct bio *bio, int err)
+ 	struct dm_thin_endio_hook *h = dm_per_bio_data(bio, sizeof(struct dm_thin_endio_hook));
+ 	struct dm_thin_new_mapping *m = h->overwrite_mapping;
+ 
++	bio->bi_end_io = m->saved_bi_end_io;
++
+ 	m->err = err;
+ 	complete_mapping_preparation(m);
  }
+@@ -854,9 +856,6 @@ static void inc_remap_and_issue_cell(struct thin_c *tc,
  
-+/* FIXME: write a more efficient one in btree */
-+int dm_thin_find_mapped_range(struct dm_thin_device *td,
-+			      dm_block_t begin, dm_block_t end,
-+			      dm_block_t *thin_begin, dm_block_t *thin_end,
-+			      dm_block_t *pool_begin, bool *maybe_shared)
-+{
-+	int r;
-+	dm_block_t pool_end;
-+	struct dm_thin_lookup_result lookup;
-+
-+	if (end < begin)
-+		return -ENODATA;
-+
-+	/*
-+	 * Find first mapped block.
-+	 */
-+	while (begin < end) {
-+		r = dm_thin_find_block(td, begin, true, &lookup);
-+		if (r) {
-+			if (r != -ENODATA)
-+				return r;
-+		} else
-+			break;
-+
-+		begin++;
-+	}
-+
-+	if (begin == end)
-+		return -ENODATA;
-+
-+	*thin_begin = begin;
-+	*pool_begin = lookup.block;
-+	*maybe_shared = lookup.shared;
-+
-+	begin++;
-+	pool_end = *pool_begin + 1;
-+	while (begin != end) {
-+		r = dm_thin_find_block(td, begin, true, &lookup);
-+		if (r) {
-+			if (r == -ENODATA)
-+				break;
-+			else
-+				return r;
-+		}
-+
-+		if ((lookup.block != pool_end) ||
-+		    (lookup.shared != *maybe_shared))
-+			break;
-+
-+		pool_end++;
-+		begin++;
-+	}
-+
-+	*thin_end = begin;
-+	return 0;
-+}
-+
- static int __insert(struct dm_thin_device *td, dm_block_t block,
- 		    dm_block_t data_block)
+ static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
  {
-diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
-index fac01a9..f11f140 100644
---- a/drivers/md/dm-thin-metadata.h
-+++ b/drivers/md/dm-thin-metadata.h
-@@ -147,6 +147,15 @@ int dm_thin_find_block(struct dm_thin_device *td, dm_block_t block,
- 		       int can_issue_io, struct dm_thin_lookup_result *result);
+-	if (m->bio)
+-		m->bio->bi_end_io = m->saved_bi_end_io;
+-
+ 	cell_error(m->tc->pool, m->cell);
+ 	list_del(&m->list);
+ 	mempool_free(m, m->tc->pool->mapping_pool);
+@@ -866,13 +865,9 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
+ {
+ 	struct thin_c *tc = m->tc;
+ 	struct pool *pool = tc->pool;
+-	struct bio *bio;
++	struct bio *bio = m->bio;
+ 	int r;
  
- /*
-+ * Retrieve the next run of contiguously mapped blocks.  Useful for working
-+ * out where to break up IO.  Returns 0 on success, < 0 on error.
-+ */
-+int dm_thin_find_mapped_range(struct dm_thin_device *td,
-+			      dm_block_t begin, dm_block_t end,
-+			      dm_block_t *thin_begin, dm_block_t *thin_end,
-+			      dm_block_t *pool_begin, bool *maybe_shared);
-+
-+/*
-  * Obtain an unused block.
-  */
- int dm_pool_alloc_data_block(struct dm_pool_metadata *pmd, dm_block_t *result);
+-	bio = m->bio;
+-	if (bio)
+-		bio->bi_end_io = m->saved_bi_end_io;
+-
+ 	if (m->err) {
+ 		cell_error(pool, m->cell);
+ 		goto out;
 -- 
 2.3.2 (Apple Git-55)
