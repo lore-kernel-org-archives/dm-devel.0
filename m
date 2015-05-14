@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-4.2 07/14] dm: factor out a common
-	cleanup_mapped_device()
-Date: Thu, 14 May 2015 17:05:05 -0400
-Message-ID: <1431637512-64245-8-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-4.2 10/14] dm thin metadata: add
+	dm_thin_remove_range()
+Date: Thu, 14 May 2015 17:05:08 -0400
+Message-ID: <1431637512-64245-11-git-send-email-snitzer@redhat.com>
 References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,146 +20,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Introduce a single common method for cleaning up a DM device's
-mapped_device.  No functional change, just eliminates duplication of
-delicate mapped_device cleanup code.
+From: Joe Thornber <ejt@redhat.com>
 
+Removes a range of blocks from the btree.
+
+Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm.c | 78 +++++++++++++++++++++++++++++++--------------------------
- 1 file changed, 43 insertions(+), 35 deletions(-)
+ drivers/md/dm-thin-metadata.c | 54 +++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-thin-metadata.h |  2 ++
+ 2 files changed, 56 insertions(+)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index c894d13..d31f7a3 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2167,6 +2167,40 @@ static void dm_init_old_md_queue(struct mapped_device *md)
- 	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+index edcf4fb..40359e9 100644
+--- a/drivers/md/dm-thin-metadata.c
++++ b/drivers/md/dm-thin-metadata.c
+@@ -1528,6 +1528,47 @@ static int __remove(struct dm_thin_device *td, dm_block_t block)
+ 	return 0;
  }
  
-+static void cleanup_mapped_device(struct mapped_device *md)
++static int __remove_range(struct dm_thin_device *td, dm_block_t begin, dm_block_t end)
 +{
-+	cleanup_srcu_struct(&md->io_barrier);
++	int r;
++	unsigned count;
++	struct dm_pool_metadata *pmd = td->pmd;
++	dm_block_t keys[1] = { td->id };
++	__le64 value;
++	dm_block_t mapping_root;
 +
-+	if (md->wq)
-+		destroy_workqueue(md->wq);
-+	if (md->kworker_task)
-+		kthread_stop(md->kworker_task);
-+	if (md->io_pool)
-+		mempool_destroy(md->io_pool);
-+	if (md->rq_pool)
-+		mempool_destroy(md->rq_pool);
-+	if (md->bs)
-+		bioset_free(md->bs);
++	/*
++	 * Find the mapping tree
++	 */
++	r = dm_btree_lookup(&pmd->tl_info, pmd->root, keys, &value);
++	if (r)
++		return r;
 +
-+	if (md->disk) {
-+		spin_lock(&_minor_lock);
-+		md->disk->private_data = NULL;
-+		spin_unlock(&_minor_lock);
-+		if (blk_get_integrity(md->disk))
-+			blk_integrity_unregister(md->disk);
-+		del_gendisk(md->disk);
-+		put_disk(md->disk);
-+	}
++	/*
++	 * Remove from the mapping tree, taking care to inc the
++	 * ref count so it doesn't get deleted.
++	 */
++	mapping_root = le64_to_cpu(value);
++	dm_tm_inc(pmd->tm, mapping_root);
++	r = dm_btree_remove(&pmd->tl_info, pmd->root, keys, &pmd->root);
++	if (r)
++		return r;
 +
-+	if (md->queue)
-+		blk_cleanup_queue(md->queue);
++	r = dm_btree_remove_leaves(&pmd->bl_info, mapping_root, &begin, end, &mapping_root, &count);
++	if (r)
++		return r;
 +
-+	if (md->bdev) {
-+		bdput(md->bdev);
-+		md->bdev = NULL;
-+	}
++	td->mapped_blocks -= count;
++	td->changed = 1;
++
++	/*
++	 * Reinsert the mapping tree.
++	 */
++	value = cpu_to_le64(mapping_root);
++	__dm_bless_for_disk(&value);
++	return dm_btree_insert(&pmd->tl_info, pmd->root, keys, &value, &pmd->root);
 +}
 +
+ int dm_thin_remove_block(struct dm_thin_device *td, dm_block_t block)
+ {
+ 	int r = -EINVAL;
+@@ -1540,6 +1581,19 @@ int dm_thin_remove_block(struct dm_thin_device *td, dm_block_t block)
+ 	return r;
+ }
+ 
++int dm_thin_remove_range(struct dm_thin_device *td,
++			 dm_block_t begin, dm_block_t end)
++{
++	int r = -EINVAL;
++
++	down_write(&td->pmd->root_lock);
++	if (!td->pmd->fail_io)
++		r = __remove_range(td, begin, end);
++	up_write(&td->pmd->root_lock);
++
++	return r;
++}
++
+ int dm_pool_block_is_used(struct dm_pool_metadata *pmd, dm_block_t b, bool *result)
+ {
+ 	int r;
+diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
+index f11f140..a938bab 100644
+--- a/drivers/md/dm-thin-metadata.h
++++ b/drivers/md/dm-thin-metadata.h
+@@ -167,6 +167,8 @@ int dm_thin_insert_block(struct dm_thin_device *td, dm_block_t block,
+ 			 dm_block_t data_block);
+ 
+ int dm_thin_remove_block(struct dm_thin_device *td, dm_block_t block);
++int dm_thin_remove_range(struct dm_thin_device *td,
++			 dm_block_t begin, dm_block_t end);
+ 
  /*
-  * Allocate and initialise a blank device with a given minor.
-  */
-@@ -2212,13 +2246,13 @@ static struct mapped_device *alloc_dev(int minor)
- 
- 	md->queue = blk_alloc_queue(GFP_KERNEL);
- 	if (!md->queue)
--		goto bad_queue;
-+		goto bad;
- 
- 	dm_init_md_queue(md);
- 
- 	md->disk = alloc_disk(1);
- 	if (!md->disk)
--		goto bad_disk;
-+		goto bad;
- 
- 	atomic_set(&md->pending[0], 0);
- 	atomic_set(&md->pending[1], 0);
-@@ -2239,11 +2273,11 @@ static struct mapped_device *alloc_dev(int minor)
- 
- 	md->wq = alloc_workqueue("kdmflush", WQ_MEM_RECLAIM, 0);
- 	if (!md->wq)
--		goto bad_thread;
-+		goto bad;
- 
- 	md->bdev = bdget_disk(md->disk, 0);
- 	if (!md->bdev)
--		goto bad_bdev;
-+		goto bad;
- 
- 	bio_init(&md->flush_bio);
- 	md->flush_bio.bi_bdev = md->bdev;
-@@ -2260,15 +2294,8 @@ static struct mapped_device *alloc_dev(int minor)
- 
- 	return md;
- 
--bad_bdev:
--	destroy_workqueue(md->wq);
--bad_thread:
--	del_gendisk(md->disk);
--	put_disk(md->disk);
--bad_disk:
--	blk_cleanup_queue(md->queue);
--bad_queue:
--	cleanup_srcu_struct(&md->io_barrier);
-+bad:
-+	cleanup_mapped_device(md);
- bad_io_barrier:
- 	free_minor(minor);
- bad_minor:
-@@ -2285,32 +2312,13 @@ static void free_dev(struct mapped_device *md)
- 	int minor = MINOR(disk_devt(md->disk));
- 
- 	unlock_fs(md);
--	destroy_workqueue(md->wq);
- 
--	if (md->kworker_task)
--		kthread_stop(md->kworker_task);
--	if (md->io_pool)
--		mempool_destroy(md->io_pool);
--	if (md->rq_pool)
--		mempool_destroy(md->rq_pool);
--	if (md->bs)
--		bioset_free(md->bs);
-+	cleanup_mapped_device(md);
-+	if (md->use_blk_mq)
-+		blk_mq_free_tag_set(&md->tag_set);
- 
--	cleanup_srcu_struct(&md->io_barrier);
- 	free_table_devices(&md->table_devices);
- 	dm_stats_cleanup(&md->stats);
--
--	spin_lock(&_minor_lock);
--	md->disk->private_data = NULL;
--	spin_unlock(&_minor_lock);
--	if (blk_get_integrity(md->disk))
--		blk_integrity_unregister(md->disk);
--	del_gendisk(md->disk);
--	put_disk(md->disk);
--	blk_cleanup_queue(md->queue);
--	if (md->use_blk_mq)
--		blk_mq_free_tag_set(&md->tag_set);
--	bdput(md->bdev);
- 	free_minor(minor);
- 
- 	module_put(THIS_MODULE);
+  * Queries.
 -- 
 2.3.2 (Apple Git-55)
