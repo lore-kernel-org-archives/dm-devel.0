@@ -1,68 +1,168 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-4.2 02/14] block: remove export for blk_queue_bio
-Date: Thu, 14 May 2015 17:05:00 -0400
-Message-ID: <1431637512-64245-3-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-4.2 04/14] block: factor out blkdev_issue_discard_async
+Date: Thu, 14 May 2015 17:05:02 -0400
+Message-ID: <1431637512-64245-5-git-send-email-snitzer@redhat.com>
 References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org
+Cc: Jens Axboe <axboe@kernel.dk>, Joe Thornber <ejt@redhat.com>, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-With commit ff36ab345 ("dm: remove request-based logic from
-make_request_fn wrapper") DM no longer calls blk_queue_bio() directly,
-so remove its export.  Doing so required a forward declaration in
-blk-core.c.
+From: Joe Thornber <ejt@redhat.com>
 
+Useful for callers who wish to manage the async completion of discard(s)
+without explicitly blocking waiting for completion.
+
+blkdev_issue_discard() is updated to call blkdev_issue_discard_async()
+and DM thinp will make use of blkdev_issue_discard_async() in the
+upcoming "dm thin: range discard support" commit.
+
+Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- block/blk-core.c       | 5 +++--
- include/linux/blkdev.h | 2 --
- 2 files changed, 3 insertions(+), 4 deletions(-)
+ block/blk-lib.c           | 57 +++++++++++++++++++++++++++++++++++++----------
+ include/linux/blk_types.h |  1 +
+ include/linux/blkdev.h    |  3 +++
+ 3 files changed, 49 insertions(+), 12 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 96b24b0..69035cb 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -735,6 +735,8 @@ blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
+diff --git a/block/blk-lib.c b/block/blk-lib.c
+index 7688ee3..2815973 100644
+--- a/block/blk-lib.c
++++ b/block/blk-lib.c
+@@ -26,26 +26,36 @@ static void bio_batch_end_io(struct bio *bio, int err)
+ 	bio_put(bio);
  }
- EXPORT_SYMBOL(blk_init_queue_node);
  
-+static void blk_queue_bio(struct request_queue *q, struct bio *bio);
++static void bio_batch_set_completion(struct bio *bio, void *data)
++{
++	struct bio_batch *bb = data;
 +
- struct request_queue *
- blk_init_allocated_queue(struct request_queue *q, request_fn_proc *rfn,
- 			 spinlock_t *lock)
-@@ -1588,7 +1590,7 @@ void init_request_from_bio(struct request *req, struct bio *bio)
- 	blk_rq_bio_prep(req->q, req, bio);
- }
- 
--void blk_queue_bio(struct request_queue *q, struct bio *bio)
-+static void blk_queue_bio(struct request_queue *q, struct bio *bio)
++	bio->bi_end_io = bio_batch_end_io;
++	bio->bi_private = data;
++	atomic_inc(&bb->done);
++}
++
+ /**
+- * blkdev_issue_discard - queue a discard
++ * blkdev_issue_discard_async - queue a discard with async completion
+  * @bdev:	blockdev to issue discard for
+  * @sector:	start sector
+  * @nr_sects:	number of sectors to discard
+  * @gfp_mask:	memory allocation flags (for bio_alloc)
+  * @flags:	BLKDEV_IFL_* flags to control behaviour
++ * @set_completion: callback to set completion mechanism for discard bios
++ * @data:       callback data passed to @set_completion
+  *
+  * Description:
+  *    Issue a discard request for the sectors in question.
+  */
+-int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+-		sector_t nr_sects, gfp_t gfp_mask, unsigned long flags)
++int blkdev_issue_discard_async(struct block_device *bdev, sector_t sector,
++			       sector_t nr_sects, gfp_t gfp_mask, unsigned long flags,
++			       bio_discard_completion_t set_completion, void *data)
  {
- 	const bool sync = !!(bio->bi_rw & REQ_SYNC);
- 	struct blk_plug *plug;
-@@ -1696,7 +1698,6 @@ out_unlock:
- 		spin_unlock_irq(q->queue_lock);
+-	DECLARE_COMPLETION_ONSTACK(wait);
+ 	struct request_queue *q = bdev_get_queue(bdev);
+ 	int type = REQ_WRITE | REQ_DISCARD;
+ 	unsigned int max_discard_sectors, granularity;
+ 	int alignment;
+-	struct bio_batch bb;
+ 	struct bio *bio;
+ 	int ret = 0;
+ 	struct blk_plug plug;
+@@ -77,10 +87,6 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+ 		type |= REQ_SECURE;
  	}
- }
--EXPORT_SYMBOL_GPL(blk_queue_bio);	/* for device mapper only */
+ 
+-	atomic_set(&bb.done, 1);
+-	bb.flags = 1 << BIO_UPTODATE;
+-	bb.wait = &wait;
+-
+ 	blk_start_plug(&plug);
+ 	while (nr_sects) {
+ 		unsigned int req_sects;
+@@ -108,16 +114,15 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+ 			req_sects = end_sect - sector;
+ 		}
+ 
++		set_completion(bio, data);
++
+ 		bio->bi_iter.bi_sector = sector;
+-		bio->bi_end_io = bio_batch_end_io;
+ 		bio->bi_bdev = bdev;
+-		bio->bi_private = &bb;
+ 
+ 		bio->bi_iter.bi_size = req_sects << 9;
+ 		nr_sects -= req_sects;
+ 		sector = end_sect;
+ 
+-		atomic_inc(&bb.done);
+ 		submit_bio(type, bio);
+ 
+ 		/*
+@@ -129,6 +134,34 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+ 		cond_resched();
+ 	}
+ 	blk_finish_plug(&plug);
++	return ret;
++}
++EXPORT_SYMBOL(blkdev_issue_discard_async);
++
++/**
++ * blkdev_issue_discard - queue a discard
++ * @bdev:	blockdev to issue discard for
++ * @sector:	start sector
++ * @nr_sects:	number of sectors to discard
++ * @gfp_mask:	memory allocation flags (for bio_alloc)
++ * @flags:	BLKDEV_IFL_* flags to control behaviour
++ *
++ * Description:
++ *    Issue a discard request for the sectors in question.
++ */
++int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
++			 sector_t nr_sects, gfp_t gfp_mask, unsigned long flags)
++{
++	int ret;
++	DECLARE_COMPLETION_ONSTACK(wait);
++	struct bio_batch bb;
++
++	atomic_set(&bb.done, 1);
++	bb.flags = 1 << BIO_UPTODATE;
++	bb.wait = &wait;
++
++	ret = blkdev_issue_discard_async(bdev, sector, nr_sects, gfp_mask, flags,
++					 bio_batch_set_completion, &bb);
+ 
+ 	/* Wait for bios in-flight */
+ 	if (!atomic_dec_and_test(&bb.done))
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index 745588b..a0c00e8 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -16,6 +16,7 @@ struct io_context;
+ struct cgroup_subsys_state;
+ typedef void (bio_end_io_t) (struct bio *, int);
+ typedef void (bio_destructor_t) (struct bio *);
++typedef void (bio_discard_completion_t) (struct bio *, void *);
  
  /*
-  * If bio->bi_dev is a partition, remap the location
+  * was unsigned short, but we might as well be ready for > 64kB I/O pages
 diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 2da818a..c8cb30e 100644
+index cd14e2d..16beac3 100644
 --- a/include/linux/blkdev.h
 +++ b/include/linux/blkdev.h
-@@ -792,8 +792,6 @@ extern int scsi_cmd_ioctl(struct request_queue *, struct gendisk *, fmode_t,
- extern int sg_scsi_ioctl(struct request_queue *, struct gendisk *, fmode_t,
- 			 struct scsi_ioctl_command __user *);
- 
--extern void blk_queue_bio(struct request_queue *q, struct bio *bio);
--
- /*
-  * A queue has just exitted congestion.  Note this in the global counter of
-  * congested queues, and wake up anyone who was waiting for requests to be
+@@ -1128,6 +1128,9 @@ static inline struct request *blk_map_queue_find_tag(struct blk_queue_tag *bqt,
+ extern int blkdev_issue_flush(struct block_device *, gfp_t, sector_t *);
+ extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+ 		sector_t nr_sects, gfp_t gfp_mask, unsigned long flags);
++extern int blkdev_issue_discard_async(struct block_device *bdev, sector_t sector,
++	        sector_t nr_sects, gfp_t gfp_mask, unsigned long flags,
++		bio_discard_completion_t set_completion, void *data);
+ extern int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
+ 		sector_t nr_sects, gfp_t gfp_mask, struct page *page);
+ extern int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 -- 
 2.3.2 (Apple Git-55)
