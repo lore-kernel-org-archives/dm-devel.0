@@ -1,118 +1,75 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: linux-next dm-thinp regression due to "bio: skip
- atomic inc/dec of ->bi_remaining for non-chains"
-Date: Thu, 14 May 2015 11:05:55 -0400
-Message-ID: <20150514150554.GA21561@redhat.com>
-References: <20150513192827.GA15831@redhat.com>
-	<20150514024953.GA17947@redhat.com>
-	<20150514032953.GB17947@redhat.com>
-	<20150514075829.GA13656@quack.suse.cz>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20150514075829.GA13656@quack.suse.cz>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jan Kara <jack@suse.cz>
-Cc: axboe@kernel.dk, Robert Elliott <elliott@hp.com>, dm-devel@redhat.com, hch@lst.de, Kent Overstreet <kent.overstreet@gmail.com>
+Subject: [PATCH for-4.2 00/14] block, dm: first batch of changes for 4.2
+Date: Thu, 14 May 2015 17:04:58 -0400
+Message-ID: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, May 14 2015 at  3:58am -0400,
-Jan Kara <jack@suse.cz> wrote:
+Here is the start of the DM changes I've queued for 4.2 (via
+linux-dm.git's for-next branch).
 
-> On Wed 13-05-15 23:29:53, Mike Snitzer wrote:
-> > On Wed, May 13 2015 at 10:49pm -0400,
-> > Mike Snitzer <snitzer@redhat.com> wrote:
-> >  
-> > > As you know commit c4cf5261 avoids the atomic operations during endio
-> > > unless BIO_CHAIN is set.  It only gets set if bio_inc_remaining() is
-> > > used.  But bio_inc_remaining() is only used _after_ the initial endio --
-> > > we needed BIO_CHAIN set earlier for these cases.  Seems we need a new
-> > > function to register the intent to cascade endios (to allow for proper
-> > > accounting)?
-> > > 
-> > > We could then switch callers to something like:
-> > > 
-> > >   bio_set_chain(bio); // establishes BIO_CHAIN iff __bio_remaining is 1?
-> > >   old = io->bi_end_io;
-> > >   bio->bi_end_io = new;
-> > > 
-> > >  in new():
-> > >   bio->bi_end_io = old;
-> > >   bio_inc_remaining(bio)
-> > > 
-> > > Anyway, not sure about the proper fix -- I do know this commit is a
-> > > definite regression (but it does nicely avoid the costly atomics ;)
-> > 
-> > Just adding this to dm-thin.c:save_and_set_endio() fixed it:
-> >  bio->bi_flags |= (1 << BIO_CHAIN);
-> > 
-> > (setting a bit doesn't need a bio_set_chain fn like I suggested above).
-> > 
-> > But, all relevant callers would need this treatment (I'd imagine
-> > bio_endio_nodec callers need help too? -- either that or __bi_remaining
-> > is completely irrelevant for all old users except for bio_chain()).
->   From my mostly outsider view of block layer and dm, it seems that
-> dm-thinp isn't really interested in bi_remaining value. It just needs
-> bio_endio() to call the original completion function and to achieve that
-> dm-thinp increments bi_remaining.
+I'm posting them to the lists mainly to get feedback on the block
+changes (first 4 patches) and to publish Joe's dm-thinp discard
+improvements which depend on the new blkdev_issue_discard_async
+interface.
 
-None of the existing users (including bio_endio_nodec) _really_ care
-about the specifics of bi_remaining.  But they have to care because that
-is how the implementation is.  It is unfortunate bi_remaining (or more
-specifically the need to increment or not) was ever exposed to begin
-with.
+Jens, if all looks OK please pick up the first 4 block patches.  The
+"block: remove management of bi_remaining when restoring original
+bi_end_io" has been tested in terms of DM.  I haven't tested btrfs,
+bcache, etc.
 
-All these callers only ever care about their endio getting called.
- 
-> What we could do is the following:
-> 1) bio_remaining_done() would clear BIO_CHAIN flag when __bi_remaining()
->    drops to 0. That way bio_endio() will end up calling ->bi_end_io() always
->    as soon as __bi_remaining drops to 0 or if bio was never chained. This
->    wouldn't be needed if nobody can chain on bios previously modified by
->    e.g. dm-thinp but AFAIU we cannot assume that.
-
-Not completely following what you're proposing or how it helps fix this
-regression considering 1) something will have needed to set BIO_CHAIN to
-begin with (you're missing where that'd happen). 2) the entire intent
-behind commit c4cf5261 is to optimize away the atomic operations.
-
-So, given that is the intent.. do we just rip out all the callers' code
-that tries to adjust __bi_remaining?
-
-Then the only case that opts in to the BIO_CHAIN atomic operation
-accounting is bio_chain().
-
-> 2) remove bio_inc_remaining() from dm-thinp, dm-snap, dm-raid1,
->    dm-cache-target as they all look like situations where we only want newly
->    set bi_end_io function to be called by bio_endio().
-
-Yes that is correct.
-
-> 3) as a bonus bi_remaining handling is now fully inside block/bio.c and
->    bio_inc_remaining() can be static there.
-
-Almost, we still have bio_endio_nodec() to deal with.  Which is the same
-pattern as we've been discussing.  It just happens to be microoptimized
-via api to:
-1) reestablish the final endio
-2) immediately call that final endio (rather than arm the bio to have
-   endio called at a later time).
-
-So I _think_ bio_endio_nodec() would go away completely.
-
-The devil is in the details.  I'll have a go at implementing this and
-see what falls out.
-
-Thanks,
+All review/feedback is welcome.  Thanks!
 Mike
+
+Christoph Hellwig (1):
+  block, dm: don't copy bios for request clones
+
+Joe Thornber (5):
+  block: factor out blkdev_issue_discard_async
+  dm btree: add dm_btree_remove_leaves()
+  dm thin metadata: add dm_thin_find_mapped_range()
+  dm thin metadata: add dm_thin_remove_range()
+  dm thin: range discard support
+
+Mike Snitzer (8):
+  block: remove management of bi_remaining when restoring original bi_end_io
+  block: remove export for blk_queue_bio
+  dm: do not allocate any mempools for blk-mq request-based DM
+  dm: rename methods that requeue requests
+  dm: factor out a common cleanup_mapped_device()
+  dm thin: cleanup overwrite's endio restore to be centralized
+  dm thin: cleanup schedule_zero() to read more logically
+  dm thin metadata: remove in-core 'read_only' flag
+
+ block/bio-integrity.c                         |   4 +-
+ block/bio.c                                   |  20 --
+ block/blk-core.c                              |  99 +-----
+ block/blk-lib.c                               |  57 ++-
+ drivers/md/bcache/io.c                        |   2 +-
+ drivers/md/dm-cache-target.c                  |   6 -
+ drivers/md/dm-raid1.c                         |   2 -
+ drivers/md/dm-snap.c                          |   1 -
+ drivers/md/dm-table.c                         |  29 +-
+ drivers/md/dm-thin-metadata.c                 | 117 +++++-
+ drivers/md/dm-thin-metadata.h                 |  11 +
+ drivers/md/dm-thin.c                          | 493 +++++++++++++++++---------
+ drivers/md/dm-verity.c                        |   2 +-
+ drivers/md/dm.c                               | 314 +++++++---------
+ drivers/md/dm.h                               |   5 +-
+ drivers/md/persistent-data/dm-block-manager.c |   6 +
+ drivers/md/persistent-data/dm-block-manager.h |   1 +
+ drivers/md/persistent-data/dm-btree-remove.c  | 127 +++++++
+ drivers/md/persistent-data/dm-btree.h         |   9 +
+ fs/btrfs/disk-io.c                            |   2 +-
+ fs/btrfs/volumes.c                            |  16 +-
+ fs/btrfs/volumes.h                            |   2 -
+ include/linux/bio.h                           |   1 -
+ include/linux/blk_types.h                     |   3 +
+ include/linux/blkdev.h                        |  11 +-
+ 25 files changed, 806 insertions(+), 534 deletions(-)
+
+-- 
+2.3.2 (Apple Git-55)
