@@ -1,15 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-raid1: keep writing after leg failure
-Date: Fri, 15 May 2015 12:11:08 -0400
-Message-ID: <20150515161108.GA28234@redhat.com>
-References: <1431497050-10098-1-git-send-email-lzhong@suse.com>
+From: Atom2 <ariel.atom2@web2web.at>
+Subject: Re: snapshot-origin freezes system - what am I doing
+	wrong?
+Date: Fri, 15 May 2015 18:47:17 +0200
+Message-ID: <55562315.4060707@web2web.at>
+References: <5555CE5D.3030404@web2web.at> <5555E25A.2040106@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1431497050-10098-1-git-send-email-lzhong@suse.com>
+In-Reply-To: <5555E25A.2040106@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,38 +19,87 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Lidong Zhong <lzhong@suse.com>
-Cc: lwang@suse.com, heinzm@redhat.com, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, May 13 2015 at  2:04am -0400,
-Lidong Zhong <lzhong@suse.com> wrote:
+Am 15.05.15 um 14:11 schrieb Zdenek Kabelac:
+> Dne 15.5.2015 v 12:45 Atom2 napsal(a):
+>> Hello list,
+>> I am trying to setup a cow snapshot for a LV that is used as a master 
+>> image
+>> for a number of VMs. The idea basically is to be able to update the 
+>> master
+>> image even when VMs are up and running; the VMs should then still see 
+>> the old
+>> state of the image and only when they are restarted they should 
+>> connect to the
+>> new image.
+>> Searching the net seemed to point towards a snapshot-origin/snapshot 
+>> solution
+>> - however I am unable to get this to work. Information on the net 
+>> seems to be
+>> sparse, so I though I'd ask the experts on the list. Here are my steps:
+>>
+>> 1.) I have a LV in volume group VG named master.ROOT
+>> (/dev/mapper/VG-master.ROOT), 8GB, formatted as ext4
+>> 2.) I create a sparese file: truncate -size=8G /tmp/snapshot
+>> 3.) losetup -f /tmp/snapshot --> gives /dev/loop0
+>> 4.) dmsetup create mytest.img --table "0 $(blockdev --getsz
+>> /dev/mapper/VG-master.ROOT) snapshot-origin /dev/mapper/VG-master.ROOT
+>> 5.) dmsetup create mytest.img.cow --table "0 $(blockdev --getsz 
+>> /dev/loop0)
+>> snapshot /dev/mapper/VG-master.ROOT /dev/loop0 P 8"
+>>
+>> So far so good ... however, when I try to mount the origin device by
+>> 6.) mount /dev/mapper/mytest.img
+>> the mount call doesn't return and the system gets 
+>> unresponsive/freezes up to a
+>> point when OOM-killer is being invoked. Login attempts on the console 
+>> time out
+>> and in essence it is only possible to reboot the system using 
+>> magic-sysreq key
+>> combinations.
+>>
+>> I'd be very much obliged if someone in the know could provide me with
+>> information what's wrong with this approach.
+>>
+>> Many thanks in advance Atom2
+>
+> Do you have any  scientific reason to not  use LVM2  here ?
+As far as I understand the snapshot-origin target with a cow snapshot is 
+not (yet) directly supported by LVM2.
 
-> Currently if there is a leg failure, the bio will be put into the hold
-> list until userspace replace/remove the leg. Here we are trying to make
-> dm-raid1 ignore the failure and keep the following bios going on.
-> This is because there maybe a temporary path failure in clvmd
-> which leads to cluster raid1 remove/replace the fake device failure. And
-> it takes a long time to do the full sync if we readd the device back.
-> 
-> This patch merges the former five small patches to implement this
-> feature. The userspace should pass "keep_log" into kernel to make this feature to
-> take effect when creating dm-raid1, same as "handle_errors".
-> 
-> Signed-off-by: Lidong Zhong <lzhong@suse.com>
-> Tested-by: Liuhua Wang <lwang@suse.com>
+Therefore I have so far worked from an assumption that I need to use 
+dmsetup directly to solve my use case. If, however, you tell me 
+otherwise and are able to show me how to use LVM2 instead, I am more 
+than happy to go down that route. Let me once again outline my use case:
 
-I've staged a revised patch for 4.2 here:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=164a064dd85801986f3190e6edd119b6fc9a05c5
+I have a LV (that's the master image/template which was actually setup 
+with LVM2) which is maintained from within a template VM and serves as 
+the (r/o) root image for a number of other (dependent) virtual machines. 
+All dependent virtual machines mount that template LV r/o and overlay it 
+with an overlayfs as a r/w layer for write access.
+I now want to be able to update the master image from within the 
+template VM and be able to update it at any time; running dependent VMs 
+should however not see any changes to the image while they are up, hence 
+the requirement to have a snapshot-origin target and a snapshot that 
+would cow buffer any changes in the template (origin) target until such 
+time the dependent VM is restarted. At that point in time the dependent 
+VM would (if required setup and) connect to a new snapshot.
 
-The big things I clarified/cleaned are:
-1) keep_log depends on handle_errors feature
-2) feature reporting via 'dmsetup table' needed to be decoupled
-   otherwise any future feature would've forced this same cleanup.
-3) Cleaned up header and in-code comments.
-4) bumped the target version
+I hope that clarifies my setup.
 
-Please let me know if you see nay issues with this version.
+Furthermore, IMHO and in any case mounting a dm-target should under no 
+circumstances in essence bring down a machine - even if something is 
+horribly wrong.
 
-Thanks,
-Mike
+> Management of snapshot target is not trivial - especially the order
+> of individual table loads and resumes.
+>
+> You could look at  'lvcreate -s -vvvv' if you are interested in ioctl 
+> ordering of all operations here.
+>
+I am probably missing something here, but my steps listed above do not 
+involve lvcreate ... so how could I use that -vvv?
+
+Thanks, Atom2
