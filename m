@@ -1,13 +1,14 @@
-From: Dennis Yang <shinrairis@gmail.com>
-Subject: Possible BUG in the entry removal process of dm-btree
-	structure
-Date: Mon, 18 May 2015 15:21:52 +0800
-Message-ID: <CAKTMprNmf7KKAPMj0CFj32y+0OpYJPiqQTbiQiuUAiteJiQeEg@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ritesh Raj Sarraf <rrs@researchut.com>
+Subject: Re: multipath-tools git repository is unavailable
+Date: Fri, 15 May 2015 15:37:36 +0530
+Message-ID: <84tg2c-gag.ln1@news.learner.researchut.com>
+References: <20150512154155.GF3001@octiron.msp.redhat.com>
+Reply-To: rrs@researchut.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+in-reply-to: <20150512154155.GF3001@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,96 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
-
-Recently, I had run into the same dm-btree-remove bug reported before
-in this mailing list.
-(https://www.redhat.com/archives/dm-devel/2013-February/msg00063.html)
-I google this and it turns out there is someone else had faced the
-same issue with CentOS couple of days ago.
-(http://mogu.io/docker_crash).
-
-Also, since we will run thin_check every couple of hours on our server
-to check if the metadata is corrupted, we do occasionally find that
-the key ordering of some btree nodes become unsorted by using the
-thin_debug tool to examine them. Therefore, my colleague and I have
-traced the dm-btree-remove.c and find something which might be the
-root cause of these issues.
-
-In dm-btree-remove.c, there is a redistribute3() function which is
-called when we try to rebalance the entry of three nodes with their
-total entry count is higher than a defined threshold. I paste the code
-below for further discussion.
-
-target = (nr_left + nr_center + nr_right) / 3;
-if (nr_left < nr_right) {
-    s = nr_left - target;
-
-    if (s < 0 && nr_center < -s) {
-        /* not enough in central node */
-        shift(left, center, nr_center);
-        s = nr_center - target;
-        shift(left, right, s);
-        nr_right += s;
-    } else
-        shift(left, center, s);
-
-    shift(center, right, target - nr_right);
-} else {
-
-If the entry count of left node is smaller than target and the entry
-count of center node is not enough to cover this gap, I think what we
-try to do here is to move all the entries in the center node to the
-left node first, then move some entries from the right node to the
-left one to make its entry count equals to target. However, since
-nr_center is always positive, the code above will first move up to
-nr_center entries from the left node to the center node. This, in our
-opinion, might trigger the BUG_ON in shift(), for we cannot sure left
-node has nr_center nodes to be moved. At this point, the left node
-will have (nr_left - nr_center) entries, and the center node will have
-(2 * nr_center) entries. Then, it will try to move (target -
-nr_center) entries from right to left. Since the center node still
-have (2 * nr_center) entries, moving entries directly from right to
-left will mess up the ordering of entries between left and center
-node.
-
-To fix this issue, I think we should stick with the plan that move all
-the entries from center node to left/right node first, and then make
-it up to target entries by moving them from right/left node to it. I
-have attached a simple patch to demonstrate the idea here.
-
-Any help would be grateful.
-Thanks.
-
-Dennis
-
-diff --git a/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-b/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-index b88757c..9026fb8 100644
---- a/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-+++ b/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-@@ -309,8 +309,9 @@ static void redistribute3(struct dm_btree_info
-*info, struct btree_node *parent,
-
-          if (s < 0 && nr_center < -s) {
-          /* not enough in central node */
--             shift(left, center, nr_center);
--             s = nr_center - target;
-+            shift(center, left, nr_center);
-+            s += nr_center;
-              shift(left, right, s);
-              nr_right += s;
-         } else
-@@ -323,7 +324,7 @@ static void redistribute3(struct dm_btree_info
-*info, struct btree_node *parent,
-        if (s > 0 && nr_center < s) {
-        /* not enough in central node */
-            shift(center, right, nr_center);
--           s = target - nr_center;
-+          s -= nr_center;
-            shift(left, right, s);
-            nr_left -= s;
-       } else
+CgpPbiBUdWVzZGF5IDEyIE1heSAyMDE1IDA5OjExIFBNLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gSSd2ZSBqdXN0IHJlY2VudGx5IHRyaWVkIGEgImdpdCBwdWxsIiBvbiBteSBtdWx0aXBh
+dGggcmVwb3NpdG9yeSwgYW5kIEkKPiBnb3Q6Cj4gCj4gJCBnaXQgcHVsbAo+IGZhdGFsOiByZXBv
+c2l0b3J5ICdodHRwOi8vZ2l0Lm9wZW5zdmMuY29tL211bHRpcGF0aC10b29scy8uZ2l0Lycgbm90
+IGZvdW5kCj4gCj4gSSBhcHBlYXIgdG8gYmUgY29tcGxldGVseSB1bmFibGUgdG8gYWNjZXNzIHRo
+ZSByZXBvc2l0b3J5IHRocm91Z2ggZWl0aGVyCj4gaHR0cCBvciBnaXQuIEV2ZXJ5dGhpbmcgbG9v
+a3MgZmluZSB0aHJvdWdoIEdpdHdlYiwgaG93ZXZlci4KPiAKCkkgaGFkIHRoZSBzYW1lIHByb2Js
+ZW0gdG9kYXkuCgoKcnJzQGxlYXJuZXI6fi9Db21tdW5pdHkvUGFja2FnaW5nL3BrZy1sdm0vbXVs
+dGlwYXRoLXRvb2xzIChtYXN0ZXIpJCBnaXQKZmV0Y2ggLXZ2dnYgY2hyaXN0b3BoCndhbGsgNzcw
+ZTZkMGRhMDM1ZGVhY2VkODI4ODU5MzkxNjFjMmI2OTIyNWUxMApHZXR0aW5nIGFsdGVybmF0ZXMg
+bGlzdCBmb3IgaHR0cDovL2dpdC5vcGVuc3ZjLmNvbS9tdWx0aXBhdGgtdG9vbHMvLmdpdApHZXR0
+aW5nIHBhY2sgbGlzdCBmb3IgaHR0cDovL2dpdC5vcGVuc3ZjLmNvbS9tdWx0aXBhdGgtdG9vbHMv
+LmdpdAplcnJvcjogVW5hYmxlIHRvIGZpbmQgMzI3NTJmYmRiYTRhNGRhNGI1MmVlZTE1OWE3MGEw
+M2ZjNmZhNmVlYiB1bmRlcgpodHRwOi8vZ2l0Lm9wZW5zdmMuY29tL211bHRpcGF0aC10b29scy8u
+Z2l0CkNhbm5vdCBvYnRhaW4gbmVlZGVkIG9iamVjdCAzMjc1MmZiZGJhNGE0ZGE0YjUyZWVlMTU5
+YTcwYTAzZmM2ZmE2ZWViCndoaWxlIHByb2Nlc3NpbmcgY29tbWl0IDc3MGU2ZDBkYTAzNWRlYWNl
+ZDgyODg1OTM5MTYxYzJiNjkyMjVlMTAuCmVycm9yOiBmZXRjaCBmYWlsZWQuCjE0OjU4IOKZkuKZ
+kuKZkiAgICDimLkgID0+IDEyOAoKCj4gSnVzdCB0byBjaGVjaywgSSB0cmllZCB0byBjbG9uZSBz
+b21lIG9mIHRoZSBvdGhlciByZXBvc2l0b3JpZXMgYXQKPiBnaXQub3BlbnN2Yy5jb20sIGFuZCBJ
+IGNhbid0IGFjY2VzcyBhbnkgb2YgdGhlbS4KPiAKPiBBbnkgaWRlYSB3aGF0J3MgdXA/CgpGb3Ig
+bWUsIGEgZnJlc2ggY2xvbmUgd29ya2VkLgoKcnJzQGxlYXJuZXI6L3RtcCQgZ2l0IGNsb25lIGh0
+dHA6Ly9naXQub3BlbnN2Yy5jb20vbXVsdGlwYXRoLXRvb2xzLy5naXQKCgpDbG9uaW5nIGludG8g
+J211bHRpcGF0aC10b29scycuLi4KCgpDaGVja2luZyBjb25uZWN0aXZpdHkuLi4gZG9uZS4KCgox
+NDoyNSDimZLimZLimZIgICDimLoKCgotLSAKR2l2ZW4gdGhlIGxhcmdlIG51bWJlciBvZiBtYWls
+aW5nIGxpc3RzIEkgZm9sbG93LCBJIHJlcXVlc3QgeW91IHRvIENDIG1lCmluIHJlcGxpZXMgZm9y
+IHF1aWNrZXIgcmVzcG9uc2UKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
+YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
