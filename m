@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 05/10] update multipath rules to deal with
-	partition devices
-Date: Fri, 15 May 2015 18:14:08 -0500
-Message-ID: <1431731653-3892-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 10/10] resize reply buffer for mutipathd help
+	message
+Date: Fri, 15 May 2015 18:14:13 -0500
+Message-ID: <1431731653-3892-11-git-send-email-bmarzins@redhat.com>
 References: <1431731653-3892-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,45 +23,192 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Partition devices should inherit the DM_MULTIPATH_DEVICE_PATH
-state of their parents, and if they are part of multipath path devices,
-they shouldn't have their own ID_FS_TYPE
+Unlike the other reply messages from multipathd, the generic help
+message code couldn't resize the buffer, and the reply had grown too big
+for the initial buffer size. This was causing memory corruption and
+crashing multipathd instead of printing a help message. This patch
+increases the size of the initial reply buffer, and makes the help
+message code able to resize the buffer so this doesn't happen in the
+future.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipath/multipath.rules | 16 ++++++++++++----
- 1 file changed, 12 insertions(+), 4 deletions(-)
+ multipathd/cli.c          | 88 +++++++++++++++++++++++++++++++++--------------
+ multipathd/cli.h          | 16 ++++++++-
+ multipathd/cli_handlers.c | 14 --------
+ 3 files changed, 78 insertions(+), 40 deletions(-)
 
-diff --git a/multipath/multipath.rules b/multipath/multipath.rules
-index c76e6b8..c8fb7e6 100644
---- a/multipath/multipath.rules
-+++ b/multipath/multipath.rules
-@@ -1,14 +1,22 @@
- # Set DM_MULTIPATH_DEVICE_PATH if the device should be handled by multipath
- SUBSYSTEM!="block", GOTO="end_mpath"
-+ACTION!="add|change", GOTO="end_mpath"
-+KERNEL!="sd*|dasd*", GOTO="end_mpath"
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index acc4249..8d26956 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -320,52 +320,90 @@ alloc_handlers (void)
+ }
+ 
+ static int
+-genhelp_sprint_aliases (char * reply, vector keys, struct key * refkw)
++genhelp_sprint_aliases (char * reply, int maxlen, vector keys,
++			struct key * refkw)
+ {
+-	int i, fwd = 0;
++	int i, len = 0;
+ 	struct key * kw;
+ 
+-	vector_foreach_slot (keys, kw, i)
+-		if (kw->code == refkw->code && kw != refkw)
+-			fwd += sprintf(reply, "|%s", kw->str);
++	vector_foreach_slot (keys, kw, i) {
++		if (kw->code == refkw->code && kw != refkw) {
++			len += snprintf(reply + len, maxlen - len,
++					"|%s", kw->str);
++			if (len >= maxlen)
++				return len;
++		}
++	}
+ 
+-	return fwd;
++	return len;
+ }
+ 
+-static char *
+-genhelp_handler (void)
+-{
++static int
++do_genhelp(char *reply, int maxlen) {
++	int len = 0;
+ 	int i, j;
+ 	unsigned long fp;
+ 	struct handler * h;
+ 	struct key * kw;
+-	char * reply;
+-	char * p;
+-
+-	reply = MALLOC(INITIAL_REPLY_LEN);
+ 
+-	if (!reply)
+-		return NULL;
+-
+-	p = reply;
+-	p += sprintf(p, VERSION_STRING);
+-	p += sprintf(p, "CLI commands reference:\n");
++	len += snprintf(reply + len, maxlen - len, VERSION_STRING);
++	if (len >= maxlen)
++		goto out;
++	len += snprintf(reply + len, maxlen - len, "CLI commands reference:\n");
++	if (len >= maxlen)
++		goto out;
+ 
+ 	vector_foreach_slot (handlers, h, i) {
+ 		fp = h->fingerprint;
+ 		vector_foreach_slot (keys, kw, j) {
+ 			if ((kw->code & fp)) {
+ 				fp -= kw->code;
+-				p += sprintf(p, " %s", kw->str);
+-				p += genhelp_sprint_aliases(p, keys, kw);
+-
+-				if (kw->has_param)
+-					p += sprintf(p, " $%s", kw->str);
++				len += snprintf(reply + len , maxlen - len,
++						" %s", kw->str);
++				if (len >= maxlen)
++					goto out;
++				len += genhelp_sprint_aliases(reply + len,
++							      maxlen - len,
++							      keys, kw);
++				if (len >= maxlen)
++					goto out;
 +
-+ENV{DEVTYPE}!="partition", GOTO="test_dev"
-+IMPORT{parent}="DM_MULTIPATH_DEVICE_PATH"
-+ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="none", \
-+	ENV{SYSTEMD_READY}="0"
-+GOTO="end_mpath"
++				if (kw->has_param) {
++					len += snprintf(reply + len,
++							maxlen - len,
++							" $%s", kw->str);
++					if (len >= maxlen)
++						goto out;
++				}
+ 			}
+ 		}
+-		p += sprintf(p, "\n");
++		len += snprintf(reply + len, maxlen - len, "\n");
++		if (len >= maxlen)
++			goto out;
+ 	}
++out:
++	return len;
++}
 +
-+LABEL="test_dev"
  
- ENV{MPATH_SBIN_PATH}="/sbin"
- TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
++static char *
++genhelp_handler (void)
++{
++	char * reply;
++	char * p = NULL;
++	int maxlen = INITIAL_REPLY_LEN;
++	int again = 1;
++
++	reply = MALLOC(maxlen);
++
++	while (again) {
++		if (!reply)
++			return NULL;
++		p = reply;
++		p += do_genhelp(reply, maxlen);
++		again = ((p - reply) >= maxlen);
++		REALLOC_REPLY(reply, again, maxlen);
++	}
+ 	return reply;
+ }
  
--SUBSYSTEM=="block", ACTION=="add|change", KERNEL=="sd*|dasd*", \
--	ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
-+ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
- 	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
--	ENV{DM_MULTIPATH_DEVICE_PATH}="1" \
--	ENV{ID_FS_TYPE}="none" \
-+	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="none", \
- 	ENV{SYSTEMD_READY}="0"
+diff --git a/multipathd/cli.h b/multipathd/cli.h
+index 09fdc68..2e0e1da 100644
+--- a/multipathd/cli.h
++++ b/multipathd/cli.h
+@@ -71,7 +71,21 @@ enum {
+ #define SETPRSTATUS	(1UL << __SETPRSTATUS)
+ #define UNSETPRSTATUS	(1UL << __UNSETPRSTATUS)
  
- LABEL="end_mpath"
+-#define INITIAL_REPLY_LEN	1100
++#define INITIAL_REPLY_LEN	1200
++
++#define REALLOC_REPLY(r, a, m)					\
++	do {							\
++		if ((a)) {					\
++			char *tmp = (r);			\
++			(r) = REALLOC((r), (m) * 2);		\
++			if ((r)) {				\
++				memset((r) + (m), 0, (m));	\
++				(m) *= 2;			\
++			}					\
++			else					\
++				free(tmp);			\
++		}						\
++	} while (0)
+ 
+ struct key {
+ 	char * str;
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 305cd7f..8cde810 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -23,20 +23,6 @@
+ #include "cli.h"
+ #include "uevent.h"
+ 
+-#define REALLOC_REPLY(r, a, m)					\
+-	do {							\
+-		if ((a)) {					\
+-			char *tmp = (r);			\
+-			(r) = REALLOC((r), (m) * 2);		\
+-			if ((r)) {				\
+-				memset((r) + (m), 0, (m));	\
+-				(m) *= 2;			\
+-			}					\
+-			else					\
+-				free(tmp);			\
+-		}						\
+-	} while (0)
+-
+ int
+ show_paths (char ** r, int * len, struct vectors * vecs, char * style)
+ {
 -- 
 1.8.3.1
