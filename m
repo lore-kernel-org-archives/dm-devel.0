@@ -1,12 +1,15 @@
-From: heinzm@redhat.com
-Subject: [PATCH v2 5/4] dm-raid: add merge method to target
-Date: Fri, 15 May 2015 16:03:49 +0200
-Message-ID: <1431698629-29805-1-git-send-email-heinzm@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [PATCH] dm crypt: Add comments to better describe crypto
+	processing logic.
+Date: Fri, 15 May 2015 17:00:25 +0200
+Message-ID: <1431702025-17925-1-git-send-email-mbroz@redhat.com>
+References: <20150504213254.GA27445@debian>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20150504213254.GA27445@debian>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,68 +20,92 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
+A crypto driver can process request synchronously or asynchronously
+and can use internal driver queue to backlog requests.
+Add some comments to clarify internal logic and completion return codes.
 
-Patch series
-"[PATCH v2 0/4] dm-raid: Add support for the MD RAID0 personality"
-is missing a merge function which can lead to data corruption
-on read ahead.
-
-This patch introduces it
-It inquires the MD raid0 personalities mergeable_bvec
-to make sure, that read ahead payload gets limited properly.
-
-The problem did not occur with the other raid levels,
-because it either did not apply without striping or got
-avoided via stripe caching.
-
-
-Signed-of-by: Heinz Mauelshagen <heinzm@redhat.com>
-Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
-
+Signed-off-by: Milan Broz <mbroz@redhat.com>
 ---
- drivers/md/dm-raid.c | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
+ drivers/md/dm-crypt.c | 30 ++++++++++++++++++++++++------
+ 1 file changed, 24 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 97e1651..06f9d63 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -1717,6 +1717,24 @@ static void raid_resume(struct dm_target *ti)
- 	mddev_resume(&rs->md);
- }
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 5503e43..0f48fed 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1,7 +1,7 @@
+ /*
+  * Copyright (C) 2003 Jana Saout <jana@saout.de>
+  * Copyright (C) 2004 Clemens Fruhwirth <clemens@endorphin.org>
+- * Copyright (C) 2006-2009 Red Hat, Inc. All rights reserved.
++ * Copyright (C) 2006-2015 Red Hat, Inc. All rights reserved.
+  * Copyright (C) 2013 Milan Broz <gmazyland@gmail.com>
+  *
+  * This file is released under the GPL.
+@@ -891,6 +891,11 @@ static void crypt_alloc_req(struct crypt_config *cc,
+ 		ctx->req = mempool_alloc(cc->req_pool, GFP_NOIO);
  
-+static int raid_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
-+		      struct bio_vec *biovec, int max_size)
-+{
-+	struct raid_set *rs = ti->private;
-+	struct md_personality *pers = rs->md.pers;
-+
-+	if (pers && pers->mergeable_bvec)
-+		return min(max_size, pers->mergeable_bvec(&rs->md, bvm, biovec));
+ 	ablkcipher_request_set_tfm(ctx->req, cc->tfms[key_index]);
 +
 +	/*
-+	 * In case we can't request the personality because
-+	 * the raid set is not running yet
-+	 *
-+	 * -> return safe minimum
++	 * Use REQ_MAY_BACKLOG so a cipher driver internally backlogs
++	 * requests if driver request queue is full.
 +	 */
-+	return rs->md.chunk_sectors;
-+}
-+
- static struct target_type raid_target = {
- 	.name = "raid",
- 	.version = {1, 7, 0},
-@@ -1731,6 +1749,7 @@ static struct target_type raid_target = {
- 	.presuspend = raid_presuspend,
- 	.postsuspend = raid_postsuspend,
- 	.resume = raid_resume,
-+	.merge = raid_merge
- };
+ 	ablkcipher_request_set_callback(ctx->req,
+ 	    CRYPTO_TFM_REQ_MAY_BACKLOG | CRYPTO_TFM_REQ_MAY_SLEEP,
+ 	    kcryptd_async_done, dmreq_of_req(cc, ctx->req));
+@@ -924,24 +929,32 @@ static int crypt_convert(struct crypt_config *cc,
+ 		r = crypt_convert_block(cc, ctx, ctx->req);
  
- static int __init dm_raid_init(void)
+ 		switch (r) {
+-		/* async */
++		/*
++		 * The request was queued by a crypto driver
++		 * but the driver request queue is full, let's wait.
++		 */
+ 		case -EBUSY:
+ 			wait_for_completion(&ctx->restart);
+ 			reinit_completion(&ctx->restart);
+-			/* fall through*/
++			/* fall through */
++		/*
++		 * The request is queued and processed asynchronously,
++		 * completion function kcryptd_async_done() will be called.
++		 */
+ 		case -EINPROGRESS:
+ 			ctx->req = NULL;
+ 			ctx->cc_sector++;
+ 			continue;
+-
+-		/* sync */
++		/*
++		 * The request was already processed (synchronously).
++		 */
+ 		case 0:
+ 			atomic_dec(&ctx->cc_pending);
+ 			ctx->cc_sector++;
+ 			cond_resched();
+ 			continue;
+ 
+-		/* error */
++		/* There was an error while processing the request. */
+ 		default:
+ 			atomic_dec(&ctx->cc_pending);
+ 			return r;
+@@ -1346,6 +1359,11 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ 	struct dm_crypt_io *io = container_of(ctx, struct dm_crypt_io, ctx);
+ 	struct crypt_config *cc = io->cc;
+ 
++	/*
++	 * A request from crypto driver backlog is going to be processed now,
++	 * finish the completion and continue in crypt_convert().
++	 * (Callback will be called for the second time for this request.)
++	 */
+ 	if (error == -EINPROGRESS) {
+ 		complete(&ctx->restart);
+ 		return;
 -- 
-2.1.0
+2.1.4
