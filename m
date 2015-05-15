@@ -1,50 +1,56 @@
-From: Brandon Smith <freedom@reardencode.com>
-Subject: Re: Regression: Disk corruption with dm-crypt and kernels >= 4.0
-Date: Fri, 15 May 2015 08:04:42 -0700
-Message-ID: <20150515150442.GB35834@hank.reardencode.com>
-References: <1430455027.7012.32.camel@memnix.com>
- <20150501211703.GA15030@redhat.com>
- <1430519090.5537.4.camel@memnix.com>
- <1430523735.5352.1.camel@memnix.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-raid1: keep writing after leg failure
+Date: Fri, 15 May 2015 12:11:08 -0400
+Message-ID: <20150515161108.GA28234@redhat.com>
+References: <1431497050-10098-1-git-send-email-lzhong@suse.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1430523735.5352.1.camel@memnix.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Abelardo Ricart III <aricart@memnix.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, mpatocka@redhat.com, linux-kernel@vger.kernel.org
+In-Reply-To: <1431497050-10098-1-git-send-email-lzhong@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Lidong Zhong <lzhong@suse.com>
+Cc: lwang@suse.com, heinzm@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2015-05-01 (Fri) at 19:42:15 -0400, Abelardo Ricart III wrote:
-> > > The patchset in question was tested quite heavily so this is a
-> > > surprising report.  I'm noticing you are opting in to dm-crypt discard
-> > > support.  Have you tested without discards enabled?
-> > 
-> > I've disabled discards universally and rebuilt a vanilla kernel. After running
-> > my heavy read-write-sync scripts, everything seems to be working fine now. I
-> > suppose this could be something that used to fail silently before, but now
-> > produces bad behavior? I seem to remember having something in my message log
-> > about "discards not supported on this device" when running with it enabled
-> > before.
+On Wed, May 13 2015 at  2:04am -0400,
+Lidong Zhong <lzhong@suse.com> wrote:
+
+> Currently if there is a leg failure, the bio will be put into the hold
+> list until userspace replace/remove the leg. Here we are trying to make
+> dm-raid1 ignore the failure and keep the following bios going on.
+> This is because there maybe a temporary path failure in clvmd
+> which leads to cluster raid1 remove/replace the fake device failure. And
+> it takes a long time to do the full sync if we readd the device back.
 > 
-> Forgive me, but I spoke too soon. The corruption and libata errors are still
-> there, as was evidenced when I went to reboot and got treated to an eye full of
-> "read-only filesystem" and ata errors.
+> This patch merges the former five small patches to implement this
+> feature. The userspace should pass "keep_log" into kernel to make this feature to
+> take effect when creating dm-raid1, same as "handle_errors".
 > 
-> So no, disabling discards unfortunately did nothing to help.
+> Signed-off-by: Lidong Zhong <lzhong@suse.com>
+> Tested-by: Liuhua Wang <lwang@suse.com>
 
-I've been experiencing the same problem.  Vanilla 4.0 series kernels,
-dm-crypt, with/or without discards, on a ThinkPad X1 Carbon with a
-LiteOn LGT-256M6G SSD.   
+I've staged a revised patch for 4.2 here:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=164a064dd85801986f3190e6edd119b6fc9a05c5
 
-After some of googling around, I found some chatter relating to changes
-in NCQ on SSDs in 4.0.   Been running w/o NCQ for a full kernel build so
-far without issue.  Perhaps there's been some change in the interaction
-between dm-crypt and NCQ?
+The big things I clarified/cleaned are:
+1) keep_log depends on handle_errors feature
+2) feature reporting via 'dmsetup table' needed to be decoupled
+   otherwise any future feature would've forced this same cleanup.
+3) Cleaned up header and in-code comments.
+4) bumped the target version
 
-Abelardo, can you try w/o NCQ and see if that helps your situation?
+Please let me know if you see nay issues with this version.
 
-Best,
-
---Brandon
+Thanks,
+Mike
