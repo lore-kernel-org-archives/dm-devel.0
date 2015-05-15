@@ -1,55 +1,59 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Let's get a File & Storage miniconf going at LPC2015!
-Date: Fri, 15 May 2015 13:58:25 -0700
-Message-ID: <20150515205825.GC24967@birch.djwong.org>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 07/10] make kpartx -d remove all partitions
+Date: Fri, 15 May 2015 18:14:10 -0500
+Message-ID: <1431731653-3892-8-git-send-email-bmarzins@redhat.com>
+References: <1431731653-3892-1-git-send-email-bmarzins@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-Content-Disposition: inline
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Ric Wheeler <ricwheeler@gmail.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, xfs@oss.sgi.com, device-mapper development <dm-devel@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1431731653-3892-1-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Hi again,
+Currently kpartx -d only removes the partitions that have entries in the
+partition table.  If you remove a partition from the device, and then
+run kpartx -d, it will not delete that partition (kpartx -u will).  I don't
+see any value in leaving partition devices for partitions that don't even
+exist anymore, so this patch makes -d delete all partitions.
 
-Early registration for this summer's Plumbers in Seattle, Washington ends
-next Friday the 22nd.  With that in mind, I still don't have quite enough
-people listed on the File & Storage miniconf wiki page for the organizers
-to declare us an official miniconference, so if you're planning to go, or
-even think you might go, please take a look at the planning page[1] and
-add your name!
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ kpartx/kpartx.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-At a bare minimum, it seems like we can continue the ongoing discussions
-around SMR exploration; the work going on with persistent memory and how to
-expose it to filesystems and user apps; I see a proposal for the refereed
-talks about the ongoing Open SSD work; and there have been prompts for more
-conversation about rich ACL integration and supporting RDMA in NFS and Samba.
-I think it would also be a good place to talk more about how to better
-accomodate userspace filesystems like Ceph, giving things like the recent
-O_NOMTIME thread, and other things like copy_file_range().
-
-We of course are not limited to just those topics -- if there's something
-you'd really like to discuss with everyone, please add that to the wiki.
-I realize that mid-August is family vacation time for many people, but
-those are the constraints the conference has to work with this year.
-There are fun things to do around Seattle, and that's probably the best
-time of year to visit.
-
---Darrick
-
-[1] http://wiki.linuxplumbersconf.org/2015:file_and_storage_systems
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index d69f9af..a9d4c98 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -426,7 +426,7 @@ main(int argc, char **argv){
+ 			break;
+ 
+ 		case DELETE:
+-			for (j = n-1; j >= 0; j--) {
++			for (j = MAXSLICES-1; j >= 0; j--) {
+ 				if (safe_sprintf(partname, "%s%s%d",
+ 					     mapname, delim, j+1)) {
+ 					fprintf(stderr, "partname too small\n");
+@@ -434,7 +434,7 @@ main(int argc, char **argv){
+ 				}
+ 				strip_slash(partname);
+ 
+-				if (!slices[j].size || !dm_map_present(partname))
++				if (!dm_map_present(partname))
+ 					continue;
+ 
+ 				if (!dm_simplecmd(DM_DEVICE_REMOVE, partname,
+-- 
+1.8.3.1
