@@ -1,33 +1,39 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [dm-devel] [PATCH for-4.2 04/14] block: factor out
- blkdev_issue_discard_async
-Date: Mon, 18 May 2015 01:27:56 -0700
-Message-ID: <20150518082756.GB5439@infradead.org>
+Subject: Re: [PATCH for-4.2 06/14] dm: rename methods that
+ requeue requests
+Date: Mon, 18 May 2015 01:29:44 -0700
+Message-ID: <20150518082944.GC5439@infradead.org>
 References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
- <1431637512-64245-5-git-send-email-snitzer@redhat.com>
+	<1431637512-64245-7-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1431637512-64245-5-git-send-email-snitzer@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <1431637512-64245-7-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Jens Axboe <axboe@kernel.dk>, Joe Thornber <ejt@redhat.com>, linux-kernel@vger.kernel.org
+Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, May 14, 2015 at 05:05:02PM -0400, Mike Snitzer wrote:
-> From: Joe Thornber <ejt@redhat.com>
-> 
-> Useful for callers who wish to manage the async completion of discard(s)
-> without explicitly blocking waiting for completion.
-> 
-> blkdev_issue_discard() is updated to call blkdev_issue_discard_async()
-> and DM thinp will make use of blkdev_issue_discard_async() in the
-> upcoming "dm thin: range discard support" commit.
+On Thu, May 14, 2015 at 05:05:04PM -0400, Mike Snitzer wrote:
+> More often than not a request that is requeued _is_ mapped (meaning the
+> clone request is allocated and clone->q is initialized).  Rename
+> dm_requeue_unmapped_original_request() and dm_requeue_unmapped_request()
+> to avoid potential confusion due to function names containing "unmapped".
 
-I think this is the wrong level of interface.  I think dm should just
-submit the bios directly, which will also allow it to use bio_chain
-properly instead of needing the inc_remaining hack.  Instead export
-helpers that properly split up the discard chunk sectors without
-touching the bio itself.  And with bio split on demand work even
-that will hopefully go away soon.
+Can you also just kill off dm_requeue_unmapped_request / dm_requeue_request
+while you're at it?  Both callers have the dm_rq_target_io at hand,
+so it's rather poinless.
+
+Also for the blk-mq case please just return BLK_MQ_RQ_QUEUE_BUSY from
+->queue_rq insted of requeing the request.
