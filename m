@@ -1,61 +1,101 @@
-From: Abelardo Ricart III <aricart@memnix.com>
-Subject: Re: Regression: Disk corruption with dm-crypt and kernels >= 4.0
-Date: Mon, 18 May 2015 10:36:38 -0400
-Message-ID: <1431959798.19977.4.camel@memnix.com>
-References: <1430455027.7012.32.camel@memnix.com>
-	 <20150501211703.GA15030@redhat.com> <1430519090.5537.4.camel@memnix.com>
-	 <1430523735.5352.1.camel@memnix.com>
-	 <20150515150442.GB35834@hank.reardencode.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH for-4.2 01/14] block: remove management of bi_remaining
+ when restoring original bi_end_io
+Date: Mon, 18 May 2015 17:36:44 +0200
+Message-ID: <20150518153644.GA10187@quack.suse.cz>
+References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
+ <1431637512-64245-2-git-send-email-snitzer@redhat.com>
+ <20150518072237.GE26351@quack.suse.cz>
+ <20150518131358.GA13998@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150515150442.GB35834@hank.reardencode.com>
+Content-Disposition: inline
+In-Reply-To: <20150518131358.GA13998@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Brandon Smith <freedom@reardencode.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, mpatocka@redhat.com, linux-kernel@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jan Kara <jack@suse.cz>, dm-devel@redhat.com, Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, Chris Mason <clm@fb.com>
 List-Id: dm-devel.ids
 
-On Fri, 2015-05-15 at 08:04 -0700, Brandon Smith wrote:
-> On 2015-05-01 (Fri) at 19:42:15 -0400, Abelardo Ricart III wrote:
-> > > > The patchset in question was tested quite heavily so this is a
-> > > > surprising report.  I'm noticing you are opting in to dm-crypt discard
-> > > > support.  Have you tested without discards enabled?
+On Mon 18-05-15 09:13:59, Mike Snitzer wrote:
+> On Mon, May 18 2015 at  3:22am -0400,
+> Jan Kara <jack@suse.cz> wrote:
+> 
+> > On Thu 14-05-15 17:04:59, Mike Snitzer wrote:
+> > > Commit c4cf5261 ("bio: skip atomic inc/dec of ->bi_remaining for
+> > > non-chains") regressed all existing callers that followed this pattern:
+> > >  1) saving a bio's original bi_end_io
+> > >  2) wiring up an intermediate bi_end_io
+> > >  3) restoring the original bi_end_io from intermediate bi_end_io
+> > >  4) calling bio_endio() to execute the restored original bi_end_io
 > > > 
-> > > I've disabled discards universally and rebuilt a vanilla kernel. After 
-> > > running
-> > > my heavy read-write-sync scripts, everything seems to be working fine now. 
-> > > I
-> > > suppose this could be something that used to fail silently before, but now
-> > > produces bad behavior? I seem to remember having something in my message 
-> > > log
-> > > about "discards not supported on this device" when running with it enabled
-> > > before.
-> > 
-> > Forgive me, but I spoke too soon. The corruption and libata errors are still
-> > there, as was evidenced when I went to reboot and got treated to an eye full 
-> > of
-> > "read-only filesystem" and ata errors.
-> > 
-> > So no, disabling discards unfortunately did nothing to help.
+> > > The regression was due to BIO_CHAIN only ever getting set if
+> > > bio_inc_remaining() is called.  For the above pattern it isn't set until
+> > > step 3 above (step 2 would've needed to establish BIO_CHAIN).  As such
+> > > the first bio_endio(), in step 2 above, never decremented __bi_remaining
+> > > before calling the intermediate bi_end_io -- leaving __bi_remaining with
+> > > the value 1 instead of 0.  When bio_inc_remaining() occurred during step
+> > > 3 it brought it to a value of 2.  When the second bio_endio() was
+> > > called, in step 4 above, it should've called the original bi_end_io but
+> > > it didn't because there was an extra reference that wasn't dropped (due
+> > > to atomic operations being optimized away since BIO_CHAIN wasn't set
+> > > upfront).
+> > > 
+> > > Fix this issue by removing the __bi_remaining management complexity for
+> > > all callers that use the above pattern -- bio_chain() is the only
+> > > interface that _needs_ to be concerned with __bi_remaining.  For the
+> > > above pattern callers just expect the bi_end_io they set to get called!
+> > > Remove bio_endio_nodec() and also remove all bio_inc_remaining() calls
+> > > that aren't associated with the bio_chain() interface.
+> > > 
+> > > The bio_inc_remaining() interface has been left exported because it is
+> > > still useful for more elaborate uses of bio_chain() -- it will be used
+> > > in an upcoming DM commit "dm thin: range discard support".
+> > > 
+> > > Fixes: c4cf5261 ("bio: skip atomic inc/dec of ->bi_remaining for non-chains")
+> > > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > > Cc: Jan Kara <jack@suse.cz>
+> > > Cc: Chris Mason <clm@fb.com>
+> >   One question: What happens if you stack dm-thin on top of e.g. dm-linear?
+> > dm-thin will do it's thing to a bio and passes it to dm-linear. That will
+> > split & chain the bio so BIO_CHAIN will be set. And on IO completion you
+> > will have troubles in dm-thinp as now bi_remaining gets decremented in
+> > bio_endio(). That's the reason why I suggested that we should clear
+> > BIO_CHAIN once bi_remaining hits zero...
 > 
-> I've been experiencing the same problem.  Vanilla 4.0 series kernels,
-> dm-crypt, with/or without discards, on a ThinkPad X1 Carbon with a
-> LiteOn LGT-256M6G SSD.   
+> I think you need to be more precise in explaining the scenario you're
+> concerned about.  Could be there is an issue but I'm not seeing it yet.
 > 
-> After some of googling around, I found some chatter relating to changes
-> in NCQ on SSDs in 4.0.   Been running w/o NCQ for a full kernel build so
-> far without issue.  Perhaps there's been some change in the interaction
-> between dm-crypt and NCQ?
-> 
-> Abelardo, can you try w/o NCQ and see if that helps your situation?
-> 
-> Best,
-> 
-> --Brandon
+> Are you referring to the patch that makes DM thinp use the proposed
+> blkdev_issue_discard_async() interface?  The bios issued to DM linear
+> are generated by blkdev_issue_discard_async().  By using bio_chain()
+> they establish ancestory with the parent DM thinp bio (which has
+> had BIO_CHAIN set even before calling blkdev_issue_discard_async because
+> there is potential for DM thinp to complete the parent bio before all N
+> blkdev_issue_discard_async() generated bios complete -- so that is why
+> DM thinp itself takes an extra reference on the parent bio using
+> bio_inc_remaining() before calling blkdev_issue_discard_async)
 
-I've been running with NCQ disabled and been stress testing for awhile and the
-issue is indeed gone. Thanks for the workaround!
+  No, I'm not referring to your proposed interface. I'm referring to
+current kernel + your patch to remove bio_inc_remaining() from all the dm
+targets. Ah, after checking again I see where misunderstanding may have
+come from - the device below has to be handled by drivers/md/linear.c which
+is MD linear driver, not DM one. I confused those two. Anyway here is the
+failure I envision (and frankly, I don't understand dm details much so I may
+be just completely wrong but I'd like to understand what prevents the following
+from happening):
+* We have dm-thin stacked on top of drivers/dm/linear.c
+* FS issues bio to dm-thin. remap_and_issue_overwrite() sets bi_end_io to
+  overwrite_endio. dm-thin eventually calls generic_make_request(bio).
+* Now linear_make_request() gets called and it ends up calling
+  bio_chain(split, bio). This sets BIO_CHAIN on bio.
+* IO for all chained bios is completed. So bio->bi_remaining is now zero,
+  bio still has BIO_CHAIN set and overwrite_endio gets called.
+* process_prepared_mapping() will eventually try to call original bi_end_io
+  callback but that never happens because bi_remaining is 0 and BIO_CHAIN
+  remained set.
 
-So it seems the issue is somehow related to the combination of NCQ, dm-crypt,
-and possibly (some?) SSDs.
+								Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
