@@ -1,48 +1,48 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH for-4.2 06/14] dm: rename methods that
-	requeue requests
-Date: Mon, 18 May 2015 11:44:40 -0400
-Message-ID: <20150518154440.GD13998@redhat.com>
+Subject: Re: [PATCH for-4.2 01/14] block: remove management of bi_remaining
+ when restoring original bi_end_io
+Date: Mon, 18 May 2015 11:59:48 -0400
+Message-ID: <20150518155948.GE13998@redhat.com>
 References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
-	<1431637512-64245-7-git-send-email-snitzer@redhat.com>
-	<20150518082944.GC5439@infradead.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+ <1431637512-64245-2-git-send-email-snitzer@redhat.com>
+ <20150518072237.GE26351@quack.suse.cz>
+ <20150518131358.GA13998@redhat.com>
+ <20150518153644.GA10187@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150518082944.GC5439@infradead.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com
+In-Reply-To: <20150518153644.GA10187@quack.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jan Kara <jack@suse.cz>
+Cc: Jens Axboe <axboe@kernel.dk>, Chris Mason <clm@fb.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, May 18 2015 at  4:29am -0400,
-Christoph Hellwig <hch@infradead.org> wrote:
-
-> On Thu, May 14, 2015 at 05:05:04PM -0400, Mike Snitzer wrote:
-> > More often than not a request that is requeued _is_ mapped (meaning the
-> > clone request is allocated and clone->q is initialized).  Rename
-> > dm_requeue_unmapped_original_request() and dm_requeue_unmapped_request()
-> > to avoid potential confusion due to function names containing "unmapped".
-> 
-> Can you also just kill off dm_requeue_unmapped_request / dm_requeue_request
-> while you're at it?  Both callers have the dm_rq_target_io at hand,
-> so it's rather poinless.
-
-Good point, will do.
+On Mon, May 18 2015 at 11:36am -0400,
+Jan Kara <jack@suse.cz> wrote:
  
-> Also for the blk-mq case please just return BLK_MQ_RQ_QUEUE_BUSY from
-> ->queue_rq insted of requeing the request.
+>   No, I'm not referring to your proposed interface. I'm referring to
+> current kernel + your patch to remove bio_inc_remaining() from all the dm
+> targets. Ah, after checking again I see where misunderstanding may have
+> come from - the device below has to be handled by drivers/md/linear.c which
+> is MD linear driver, not DM one. I confused those two. Anyway here is the
+> failure I envision (and frankly, I don't understand dm details much so I may
+> be just completely wrong but I'd like to understand what prevents the following
+> from happening):
+> * We have dm-thin stacked on top of drivers/dm/linear.c
+> * FS issues bio to dm-thin. remap_and_issue_overwrite() sets bi_end_io to
+>   overwrite_endio. dm-thin eventually calls generic_make_request(bio).
+> * Now linear_make_request() gets called and it ends up calling
+>   bio_chain(split, bio). This sets BIO_CHAIN on bio.
+> * IO for all chained bios is completed. So bio->bi_remaining is now zero,
+>   bio still has BIO_CHAIN set and overwrite_endio gets called.
+> * process_prepared_mapping() will eventually try to call original bi_end_io
+>   callback but that never happens because bi_remaining is 0 and BIO_CHAIN
+>   remained set.
 
-I'll make a note to revisit this (need to audit what, if any,
-implications doing so has).
+Makes sense, you have a valid concern (I knew you and hch must, I just
+didn't understand).
+
+I'll clear the BIO_CHAIN like you suggest and post v2.
+
+Thanks!
