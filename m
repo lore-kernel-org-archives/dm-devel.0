@@ -1,101 +1,48 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [PATCH for-4.2 01/14] block: remove management of bi_remaining
- when restoring original bi_end_io
-Date: Mon, 18 May 2015 17:36:44 +0200
-Message-ID: <20150518153644.GA10187@quack.suse.cz>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH for-4.2 06/14] dm: rename methods that
+	requeue requests
+Date: Mon, 18 May 2015 11:44:40 -0400
+Message-ID: <20150518154440.GD13998@redhat.com>
 References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
- <1431637512-64245-2-git-send-email-snitzer@redhat.com>
- <20150518072237.GE26351@quack.suse.cz>
- <20150518131358.GA13998@redhat.com>
+	<1431637512-64245-7-git-send-email-snitzer@redhat.com>
+	<20150518082944.GC5439@infradead.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20150518131358.GA13998@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jan Kara <jack@suse.cz>, dm-devel@redhat.com, Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, Chris Mason <clm@fb.com>
+In-Reply-To: <20150518082944.GC5439@infradead.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon 18-05-15 09:13:59, Mike Snitzer wrote:
-> On Mon, May 18 2015 at  3:22am -0400,
-> Jan Kara <jack@suse.cz> wrote:
-> 
-> > On Thu 14-05-15 17:04:59, Mike Snitzer wrote:
-> > > Commit c4cf5261 ("bio: skip atomic inc/dec of ->bi_remaining for
-> > > non-chains") regressed all existing callers that followed this pattern:
-> > >  1) saving a bio's original bi_end_io
-> > >  2) wiring up an intermediate bi_end_io
-> > >  3) restoring the original bi_end_io from intermediate bi_end_io
-> > >  4) calling bio_endio() to execute the restored original bi_end_io
-> > > 
-> > > The regression was due to BIO_CHAIN only ever getting set if
-> > > bio_inc_remaining() is called.  For the above pattern it isn't set until
-> > > step 3 above (step 2 would've needed to establish BIO_CHAIN).  As such
-> > > the first bio_endio(), in step 2 above, never decremented __bi_remaining
-> > > before calling the intermediate bi_end_io -- leaving __bi_remaining with
-> > > the value 1 instead of 0.  When bio_inc_remaining() occurred during step
-> > > 3 it brought it to a value of 2.  When the second bio_endio() was
-> > > called, in step 4 above, it should've called the original bi_end_io but
-> > > it didn't because there was an extra reference that wasn't dropped (due
-> > > to atomic operations being optimized away since BIO_CHAIN wasn't set
-> > > upfront).
-> > > 
-> > > Fix this issue by removing the __bi_remaining management complexity for
-> > > all callers that use the above pattern -- bio_chain() is the only
-> > > interface that _needs_ to be concerned with __bi_remaining.  For the
-> > > above pattern callers just expect the bi_end_io they set to get called!
-> > > Remove bio_endio_nodec() and also remove all bio_inc_remaining() calls
-> > > that aren't associated with the bio_chain() interface.
-> > > 
-> > > The bio_inc_remaining() interface has been left exported because it is
-> > > still useful for more elaborate uses of bio_chain() -- it will be used
-> > > in an upcoming DM commit "dm thin: range discard support".
-> > > 
-> > > Fixes: c4cf5261 ("bio: skip atomic inc/dec of ->bi_remaining for non-chains")
-> > > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> > > Cc: Jan Kara <jack@suse.cz>
-> > > Cc: Chris Mason <clm@fb.com>
-> >   One question: What happens if you stack dm-thin on top of e.g. dm-linear?
-> > dm-thin will do it's thing to a bio and passes it to dm-linear. That will
-> > split & chain the bio so BIO_CHAIN will be set. And on IO completion you
-> > will have troubles in dm-thinp as now bi_remaining gets decremented in
-> > bio_endio(). That's the reason why I suggested that we should clear
-> > BIO_CHAIN once bi_remaining hits zero...
-> 
-> I think you need to be more precise in explaining the scenario you're
-> concerned about.  Could be there is an issue but I'm not seeing it yet.
-> 
-> Are you referring to the patch that makes DM thinp use the proposed
-> blkdev_issue_discard_async() interface?  The bios issued to DM linear
-> are generated by blkdev_issue_discard_async().  By using bio_chain()
-> they establish ancestory with the parent DM thinp bio (which has
-> had BIO_CHAIN set even before calling blkdev_issue_discard_async because
-> there is potential for DM thinp to complete the parent bio before all N
-> blkdev_issue_discard_async() generated bios complete -- so that is why
-> DM thinp itself takes an extra reference on the parent bio using
-> bio_inc_remaining() before calling blkdev_issue_discard_async)
+On Mon, May 18 2015 at  4:29am -0400,
+Christoph Hellwig <hch@infradead.org> wrote:
 
-  No, I'm not referring to your proposed interface. I'm referring to
-current kernel + your patch to remove bio_inc_remaining() from all the dm
-targets. Ah, after checking again I see where misunderstanding may have
-come from - the device below has to be handled by drivers/md/linear.c which
-is MD linear driver, not DM one. I confused those two. Anyway here is the
-failure I envision (and frankly, I don't understand dm details much so I may
-be just completely wrong but I'd like to understand what prevents the following
-from happening):
-* We have dm-thin stacked on top of drivers/dm/linear.c
-* FS issues bio to dm-thin. remap_and_issue_overwrite() sets bi_end_io to
-  overwrite_endio. dm-thin eventually calls generic_make_request(bio).
-* Now linear_make_request() gets called and it ends up calling
-  bio_chain(split, bio). This sets BIO_CHAIN on bio.
-* IO for all chained bios is completed. So bio->bi_remaining is now zero,
-  bio still has BIO_CHAIN set and overwrite_endio gets called.
-* process_prepared_mapping() will eventually try to call original bi_end_io
-  callback but that never happens because bi_remaining is 0 and BIO_CHAIN
-  remained set.
+> On Thu, May 14, 2015 at 05:05:04PM -0400, Mike Snitzer wrote:
+> > More often than not a request that is requeued _is_ mapped (meaning the
+> > clone request is allocated and clone->q is initialized).  Rename
+> > dm_requeue_unmapped_original_request() and dm_requeue_unmapped_request()
+> > to avoid potential confusion due to function names containing "unmapped".
+> 
+> Can you also just kill off dm_requeue_unmapped_request / dm_requeue_request
+> while you're at it?  Both callers have the dm_rq_target_io at hand,
+> so it's rather poinless.
 
-								Honza
--- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+Good point, will do.
+ 
+> Also for the blk-mq case please just return BLK_MQ_RQ_QUEUE_BUSY from
+> ->queue_rq insted of requeing the request.
+
+I'll make a note to revisit this (need to audit what, if any,
+implications doing so has).
