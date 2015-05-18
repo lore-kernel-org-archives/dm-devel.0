@@ -1,59 +1,61 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH for-4.2 04/14] block: factor out
- blkdev_issue_discard_async
-Date: Mon, 18 May 2015 09:32:23 -0400
-Message-ID: <20150518133223.GC13998@redhat.com>
-References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
- <1431637512-64245-5-git-send-email-snitzer@redhat.com>
- <20150518082756.GB5439@infradead.org>
+From: Abelardo Ricart III <aricart@memnix.com>
+Subject: Re: Regression: Disk corruption with dm-crypt and kernels >= 4.0
+Date: Mon, 18 May 2015 10:36:38 -0400
+Message-ID: <1431959798.19977.4.camel@memnix.com>
+References: <1430455027.7012.32.camel@memnix.com>
+	 <20150501211703.GA15030@redhat.com> <1430519090.5537.4.camel@memnix.com>
+	 <1430523735.5352.1.camel@memnix.com>
+	 <20150515150442.GB35834@hank.reardencode.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150518082756.GB5439@infradead.org>
+In-Reply-To: <20150515150442.GB35834@hank.reardencode.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: dm-devel@redhat.com, Jens Axboe <axboe@kernel.dk>, Joe Thornber <ejt@redhat.com>, linux-kernel@vger.kernel.org
+To: Brandon Smith <freedom@reardencode.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, mpatocka@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, May 18 2015 at  4:27am -0400,
-Christoph Hellwig <hch@infradead.org> wrote:
-
-> On Thu, May 14, 2015 at 05:05:02PM -0400, Mike Snitzer wrote:
-> > From: Joe Thornber <ejt@redhat.com>
+On Fri, 2015-05-15 at 08:04 -0700, Brandon Smith wrote:
+> On 2015-05-01 (Fri) at 19:42:15 -0400, Abelardo Ricart III wrote:
+> > > > The patchset in question was tested quite heavily so this is a
+> > > > surprising report.  I'm noticing you are opting in to dm-crypt discard
+> > > > support.  Have you tested without discards enabled?
+> > > 
+> > > I've disabled discards universally and rebuilt a vanilla kernel. After 
+> > > running
+> > > my heavy read-write-sync scripts, everything seems to be working fine now. 
+> > > I
+> > > suppose this could be something that used to fail silently before, but now
+> > > produces bad behavior? I seem to remember having something in my message 
+> > > log
+> > > about "discards not supported on this device" when running with it enabled
+> > > before.
 > > 
-> > Useful for callers who wish to manage the async completion of discard(s)
-> > without explicitly blocking waiting for completion.
+> > Forgive me, but I spoke too soon. The corruption and libata errors are still
+> > there, as was evidenced when I went to reboot and got treated to an eye full 
+> > of
+> > "read-only filesystem" and ata errors.
 > > 
-> > blkdev_issue_discard() is updated to call blkdev_issue_discard_async()
-> > and DM thinp will make use of blkdev_issue_discard_async() in the
-> > upcoming "dm thin: range discard support" commit.
+> > So no, disabling discards unfortunately did nothing to help.
 > 
-> I think this is the wrong level of interface.  I think dm should just
-> submit the bios directly, which will also allow it to use bio_chain
-> properly instead of needing the inc_remaining hack.  Instead export
-> helpers that properly split up the discard chunk sectors without
-> touching the bio itself.  And with bio split on demand work even
-> that will hopefully go away soon.
+> I've been experiencing the same problem.  Vanilla 4.0 series kernels,
+> dm-crypt, with/or without discards, on a ThinkPad X1 Carbon with a
+> LiteOn LGT-256M6G SSD.   
+> 
+> After some of googling around, I found some chatter relating to changes
+> in NCQ on SSDs in 4.0.   Been running w/o NCQ for a full kernel build so
+> far without issue.  Perhaps there's been some change in the interaction
+> between dm-crypt and NCQ?
+> 
+> Abelardo, can you try w/o NCQ and see if that helps your situation?
+> 
+> Best,
+> 
+> --Brandon
 
-The proposed blkdev_issue_discard_async interface allows DM (or any
-caller) to not have to concern itself with how discard(s) gets issued.
+I've been running with NCQ disabled and been stress testing for awhile and the
+issue is indeed gone. Thanks for the workaround!
 
-It leaves all the details of how large a discard can be, etc to block
-core.  The entire point of doing things this way is to _not_ pollute DM
-with code that breaks up a discard into N bios based on the discard
-limits of the underlying device.
-
-What you're suggesting sounds a lot like having DM open code
-blkdev_issue_discard() -- blkdev_issue_discard_async() was engineered to
-avoid that completely.
-
-I hope we can reach consensus on this because as it stands I know Jens
-will be less inclined to take this blkdev_issue_discard_async() change
-given your early disapproval.  Which basically pretty much screws me up
-for the coming merge window.. I'm OK with that (and exploring
-alternatives) but I _really_ hope you've explored this carefully (not
-getting that vibe yet given your suggestion appears to be "open code all
-of blkdev_issue_discard in DM").
-
-Mike
+So it seems the issue is somehow related to the combination of NCQ, dm-crypt,
+and possibly (some?) SSDs.
