@@ -1,14 +1,16 @@
-From: Ritesh Raj Sarraf <rrs@researchut.com>
-Subject: Re: multipath-tools git repository is unavailable
-Date: Fri, 15 May 2015 15:37:36 +0530
-Message-ID: <84tg2c-gag.ln1@news.learner.researchut.com>
-References: <20150512154155.GF3001@octiron.msp.redhat.com>
-Reply-To: rrs@researchut.com, device-mapper development <dm-devel@redhat.com>
+From: "Lidong Zhong" <lzhong@suse.com>
+Subject: Re: dm-raid1: keep writing after leg failure
+Date: Sun, 17 May 2015 21:49:26 -0600
+Message-ID: <5559D1C6020000E100024B78@relay2.provo.novell.com>
+References: <1431497050-10098-1-git-send-email-lzhong@suse.com>
+	<20150515161108.GA28234@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-in-reply-to: <20150512154155.GF3001@octiron.msp.redhat.com>
+In-Reply-To: <20150515161108.GA28234@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,33 +20,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Liuhua Wang <LWang@suse.com>, heinzm@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CgpPbiBUdWVzZGF5IDEyIE1heSAyMDE1IDA5OjExIFBNLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gSSd2ZSBqdXN0IHJlY2VudGx5IHRyaWVkIGEgImdpdCBwdWxsIiBvbiBteSBtdWx0aXBh
-dGggcmVwb3NpdG9yeSwgYW5kIEkKPiBnb3Q6Cj4gCj4gJCBnaXQgcHVsbAo+IGZhdGFsOiByZXBv
-c2l0b3J5ICdodHRwOi8vZ2l0Lm9wZW5zdmMuY29tL211bHRpcGF0aC10b29scy8uZ2l0Lycgbm90
-IGZvdW5kCj4gCj4gSSBhcHBlYXIgdG8gYmUgY29tcGxldGVseSB1bmFibGUgdG8gYWNjZXNzIHRo
-ZSByZXBvc2l0b3J5IHRocm91Z2ggZWl0aGVyCj4gaHR0cCBvciBnaXQuIEV2ZXJ5dGhpbmcgbG9v
-a3MgZmluZSB0aHJvdWdoIEdpdHdlYiwgaG93ZXZlci4KPiAKCkkgaGFkIHRoZSBzYW1lIHByb2Js
-ZW0gdG9kYXkuCgoKcnJzQGxlYXJuZXI6fi9Db21tdW5pdHkvUGFja2FnaW5nL3BrZy1sdm0vbXVs
-dGlwYXRoLXRvb2xzIChtYXN0ZXIpJCBnaXQKZmV0Y2ggLXZ2dnYgY2hyaXN0b3BoCndhbGsgNzcw
-ZTZkMGRhMDM1ZGVhY2VkODI4ODU5MzkxNjFjMmI2OTIyNWUxMApHZXR0aW5nIGFsdGVybmF0ZXMg
-bGlzdCBmb3IgaHR0cDovL2dpdC5vcGVuc3ZjLmNvbS9tdWx0aXBhdGgtdG9vbHMvLmdpdApHZXR0
-aW5nIHBhY2sgbGlzdCBmb3IgaHR0cDovL2dpdC5vcGVuc3ZjLmNvbS9tdWx0aXBhdGgtdG9vbHMv
-LmdpdAplcnJvcjogVW5hYmxlIHRvIGZpbmQgMzI3NTJmYmRiYTRhNGRhNGI1MmVlZTE1OWE3MGEw
-M2ZjNmZhNmVlYiB1bmRlcgpodHRwOi8vZ2l0Lm9wZW5zdmMuY29tL211bHRpcGF0aC10b29scy8u
-Z2l0CkNhbm5vdCBvYnRhaW4gbmVlZGVkIG9iamVjdCAzMjc1MmZiZGJhNGE0ZGE0YjUyZWVlMTU5
-YTcwYTAzZmM2ZmE2ZWViCndoaWxlIHByb2Nlc3NpbmcgY29tbWl0IDc3MGU2ZDBkYTAzNWRlYWNl
-ZDgyODg1OTM5MTYxYzJiNjkyMjVlMTAuCmVycm9yOiBmZXRjaCBmYWlsZWQuCjE0OjU4IOKZkuKZ
-kuKZkiAgICDimLkgID0+IDEyOAoKCj4gSnVzdCB0byBjaGVjaywgSSB0cmllZCB0byBjbG9uZSBz
-b21lIG9mIHRoZSBvdGhlciByZXBvc2l0b3JpZXMgYXQKPiBnaXQub3BlbnN2Yy5jb20sIGFuZCBJ
-IGNhbid0IGFjY2VzcyBhbnkgb2YgdGhlbS4KPiAKPiBBbnkgaWRlYSB3aGF0J3MgdXA/CgpGb3Ig
-bWUsIGEgZnJlc2ggY2xvbmUgd29ya2VkLgoKcnJzQGxlYXJuZXI6L3RtcCQgZ2l0IGNsb25lIGh0
-dHA6Ly9naXQub3BlbnN2Yy5jb20vbXVsdGlwYXRoLXRvb2xzLy5naXQKCgpDbG9uaW5nIGludG8g
-J211bHRpcGF0aC10b29scycuLi4KCgpDaGVja2luZyBjb25uZWN0aXZpdHkuLi4gZG9uZS4KCgox
-NDoyNSDimZLimZLimZIgICDimLoKCgotLSAKR2l2ZW4gdGhlIGxhcmdlIG51bWJlciBvZiBtYWls
-aW5nIGxpc3RzIEkgZm9sbG93LCBJIHJlcXVlc3QgeW91IHRvIENDIG1lCmluIHJlcGxpZXMgZm9y
-IHF1aWNrZXIgcmVzcG9uc2UKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
-YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+>>> On 5/16/2015 at 12:11 AM, in message <20150515161108.GA28234@redhat.com>, Mike
+Snitzer <snitzer@redhat.com> wrote: 
+> On Wed, May 13 2015 at  2:04am -0400, 
+> Lidong Zhong <lzhong@suse.com> wrote: 
+>  
+> > Currently if there is a leg failure, the bio will be put into the hold 
+> > list until userspace replace/remove the leg. Here we are trying to make 
+> > dm-raid1 ignore the failure and keep the following bios going on. 
+> > This is because there maybe a temporary path failure in clvmd 
+> > which leads to cluster raid1 remove/replace the fake device failure. And 
+> > it takes a long time to do the full sync if we readd the device back. 
+> >  
+> > This patch merges the former five small patches to implement this 
+> > feature. The userspace should pass "keep_log" into kernel to make this  
+> feature to 
+> > take effect when creating dm-raid1, same as "handle_errors". 
+> >  
+> > Signed-off-by: Lidong Zhong <lzhong@suse.com> 
+> > Tested-by: Liuhua Wang <lwang@suse.com> 
+>  
+> I've staged a revised patch for 4.2 here: 
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit 
+> /?h=for-next&id=164a064dd85801986f3190e6edd119b6fc9a05c5 
+>  
+> The big things I clarified/cleaned are: 
+> 1) keep_log depends on handle_errors feature 
+> 2) feature reporting via 'dmsetup table' needed to be decoupled 
+>    otherwise any future feature would've forced this same cleanup. 
+> 3) Cleaned up header and in-code comments. 
+> 4) bumped the target version 
+>  
+> Please let me know if you see nay issues with this version. 
+>  
+
+Hi Mike,
+
+All look good to me. Thanks.
+
+Regards,
+Lidong
+> Thanks, 
+> Mike 
+>  
+>  
