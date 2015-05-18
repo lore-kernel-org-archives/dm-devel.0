@@ -1,204 +1,319 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 08/10] Fix issues with user_friendly_names
-	initramfs bindings
-Date: Fri, 15 May 2015 18:14:11 -0500
-Message-ID: <1431731653-3892-9-git-send-email-bmarzins@redhat.com>
-References: <1431731653-3892-1-git-send-email-bmarzins@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH for-4.2 01/14] block: remove management of bi_remaining
+ when restoring original bi_end_io
+Date: Mon, 18 May 2015 09:22:37 +0200
+Message-ID: <20150518072237.GE26351@quack.suse.cz>
+References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
+ <1431637512-64245-2-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1431731653-3892-1-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Stewart, Sean" <Sean.Stewart@netapp.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1431637512-64245-2-git-send-email-snitzer@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, Jan Kara <jack@suse.cz>, Chris Mason <clm@fb.com>
 List-Id: dm-devel.ids
 
-Multipath has an issue with user_friendly_names set in the initramfs.
-If the bindings are in the initramfs bindings file, it will create them,
-and it may use bindings that are different than the ones in the regular
-file system.  Once multipathd starts up in the regular file system, it
-will try to register the existing bindings, but that may (and in many
-cases, is likely to) fail. If it can't reanme it, will pick a new
-binding. Since when multipathd starts discovering the existing devices,
-it obviously doesn't know all of the existing devices yet, it may very
-well pick a binding that's already in use by a device that it hasn't
-discovered yet. In this case multipath will be unable to rename the
-device to the new binding. Unfortunately, if it fails the rename, it
-never resets the alias of the device stored in the mpvec to current
-alias of the actual dm device. So multipath will have devices in the
-mpvec where the alias and the wwid don't match the actual dm devices
-that exist.  This can cause all sorts of problems.
+On Thu 14-05-15 17:04:59, Mike Snitzer wrote:
+> Commit c4cf5261 ("bio: skip atomic inc/dec of ->bi_remaining for
+> non-chains") regressed all existing callers that followed this pattern:
+>  1) saving a bio's original bi_end_io
+>  2) wiring up an intermediate bi_end_io
+>  3) restoring the original bi_end_io from intermediate bi_end_io
+>  4) calling bio_endio() to execute the restored original bi_end_io
+> 
+> The regression was due to BIO_CHAIN only ever getting set if
+> bio_inc_remaining() is called.  For the above pattern it isn't set until
+> step 3 above (step 2 would've needed to establish BIO_CHAIN).  As such
+> the first bio_endio(), in step 2 above, never decremented __bi_remaining
+> before calling the intermediate bi_end_io -- leaving __bi_remaining with
+> the value 1 instead of 0.  When bio_inc_remaining() occurred during step
+> 3 it brought it to a value of 2.  When the second bio_endio() was
+> called, in step 4 above, it should've called the original bi_end_io but
+> it didn't because there was an extra reference that wasn't dropped (due
+> to atomic operations being optimized away since BIO_CHAIN wasn't set
+> upfront).
+> 
+> Fix this issue by removing the __bi_remaining management complexity for
+> all callers that use the above pattern -- bio_chain() is the only
+> interface that _needs_ to be concerned with __bi_remaining.  For the
+> above pattern callers just expect the bi_end_io they set to get called!
+> Remove bio_endio_nodec() and also remove all bio_inc_remaining() calls
+> that aren't associated with the bio_chain() interface.
+> 
+> The bio_inc_remaining() interface has been left exported because it is
+> still useful for more elaborate uses of bio_chain() -- it will be used
+> in an upcoming DM commit "dm thin: range discard support".
+> 
+> Fixes: c4cf5261 ("bio: skip atomic inc/dec of ->bi_remaining for non-chains")
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> Cc: Jan Kara <jack@suse.cz>
+> Cc: Chris Mason <clm@fb.com>
+  One question: What happens if you stack dm-thin on top of e.g. dm-linear?
+dm-thin will do it's thing to a bio and passes it to dm-linear. That will
+split & chain the bio so BIO_CHAIN will be set. And on IO completion you
+will have troubles in dm-thinp as now bi_remaining gets decremented in
+bio_endio(). That's the reason why I suggested that we should clear
+BIO_CHAIN once bi_remaining hits zero...
 
-This patch does two things to deal with this.  First, it makes sure that
-if the rename fails, the device will reset its alias to the one that it
-currently has.
+								Honza
 
-Second, it adds a new option to help avoid the problem in the first
-place.  There actually already is a solution to this issue. If
-multipathd is started with -B, it makes the bindings file read-only. If
-multipathd is started this way in the initramfs, it will never make new
-bindings for a device. If the device doesn't already have a binding, it
-will simply be named with its wwid. The problem with this method is that
-AFAICT it causes a maintenance problem with dracut.  At least on RedHat,
-dracut is simply copying the regular multipathd.service file into the
-initramfs. I don't see a way in multipathd.service to only start
-multipathd with the -B option in the initramfs (If there is a way, I'd
-be happy to use that). So, the only alternative that lets us use -B is
-to have a separate multipathd.service file that dracut uses for the
-initramfs.  This seems like more work than it's worth.
-
-Instead, this patch pulls some code from systemd to detect if multipathd
-is running in the initramfs.  If it is, and if new_bindings_in_boot is
-not set, multipathd will set the bindings file to read-only, just like
-the -B option does.
-
-Cc: "Stewart, Sean" <Sean.Stewart@netapp.com>
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/config.c    |  4 ++++
- libmultipath/config.h    |  1 +
- libmultipath/configure.c |  3 +++
- libmultipath/dict.c      |  4 ++++
- libmultipath/util.c      | 30 ++++++++++++++++++++++++++++++
- libmultipath/util.h      |  1 +
- 6 files changed, 43 insertions(+)
-
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index cfcc685..f0aae53 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -621,6 +621,7 @@ load_config (char * file, struct udev *udev)
- 	conf->uid_attribute = set_default(DEFAULT_UID_ATTRIBUTE);
- 	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
- 	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
-+	conf->new_bindings_in_boot = 0;
- 
- 	/*
- 	 * preload default hwtable
-@@ -735,6 +736,9 @@ load_config (char * file, struct udev *udev)
- 	    !conf->wwids_file)
- 		goto out;
- 
-+	 if (conf->new_bindings_in_boot == 0 && in_initrd())
-+		conf->bindings_read_only = 1;
-+
- 	return 0;
- out:
- 	free_config(conf);
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 372eace..05f1f6d 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -137,6 +137,7 @@ struct config {
- 	int uxsock_timeout;
- 	int retrigger_tries;
- 	int retrigger_delay;
-+	int new_bindings_in_boot;
- 	unsigned int version[3];
- 
- 	char * dev;
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 24ad948..3559c01 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -421,6 +421,9 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 		condlog(2, "%s: unable to rename %s to %s (%s is used by %s)",
- 			mpp->wwid, cmpp->alias, mpp->alias,
- 			mpp->alias, cmpp_by_name->wwid);
-+		/* reset alias to existing alias */
-+		FREE(mpp->alias);
-+		mpp->alias = STRDUP(cmpp->alias);
- 		mpp->action = ACT_NOTHING;
- 		return;
- 	}
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index e3bc67e..1952b1e 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -395,6 +395,9 @@ declare_def_snprint(retrigger_tries, print_int)
- declare_def_handler(retrigger_delay, set_int)
- declare_def_snprint(retrigger_delay, print_int)
- 
-+declare_def_handler(new_bindings_in_boot, set_yes_no)
-+declare_def_snprint(new_bindings_in_boot, print_yes_no)
-+
- static int
- def_config_dir_handler(vector strvec)
- {
-@@ -1373,6 +1376,7 @@ init_keywords(void)
- 	install_keyword("uxsock_timeout", &def_uxsock_timeout_handler, &snprint_def_uxsock_timeout);
- 	install_keyword("retrigger_tries", &def_retrigger_tries_handler, &snprint_def_retrigger_tries);
- 	install_keyword("retrigger_delay", &def_retrigger_delay_handler, &snprint_def_retrigger_delay);
-+	install_keyword("new_bindings_in_boot", &def_new_bindings_in_boot_handler, &snprint_def_new_bindings_in_boot);
- 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
- 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
- 	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index ac0d1b2..fcab5fc 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -3,6 +3,8 @@
- #include <sys/types.h>
- #include <sys/stat.h>
- #include <unistd.h>
-+#include <sys/vfs.h>
-+#include <linux/magic.h>
- 
- #include "debug.h"
- #include "memory.h"
-@@ -258,3 +260,31 @@ dev_t parse_devt(const char *dev_t)
- 
- 	return makedev(maj, min);
- }
-+
-+/* This define was taken from systemd. src/shared/macro.h */
-+#define F_TYPE_EQUAL(a, b) (a == (typeof(a)) b)
-+
-+/* This function was taken from systemd. src/shared/util.c */
-+int in_initrd(void) {
-+	static int saved = -1;
-+	struct statfs s;
-+
-+	if (saved >= 0)
-+		return saved;
-+
-+	/* We make two checks here:
-+	 *
-+	 * 1. the flag file /etc/initrd-release must exist
-+	 * 2. the root file system must be a memory file system
-+	 * The second check is extra paranoia, since misdetecting an
-+	 * initrd can have bad bad consequences due the initrd
-+	 * emptying when transititioning to the main systemd.
-+	 */
-+
-+	saved = access("/etc/initrd-release", F_OK) >= 0 &&
-+		statfs("/", &s) >= 0 &&
-+		(F_TYPE_EQUAL(s.f_type, TMPFS_MAGIC) ||
-+		 F_TYPE_EQUAL(s.f_type, RAMFS_MAGIC));
-+
-+	return saved;
-+}
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index 257912c..a1404f2 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -10,6 +10,7 @@ size_t strlcat(char *dst, const char *src, size_t size);
- int devt2devname (char *, int, char *);
- dev_t parse_devt(const char *dev_t);
- char *convert_dev(char *dev, int is_path_device);
-+int in_initrd(void);
- 
- #define safe_sprintf(var, format, args...)	\
- 	snprintf(var, sizeof(var), format, ##args) >= sizeof(var)
+> ---
+>  block/bio-integrity.c        |  4 ++--
+>  block/bio.c                  | 20 --------------------
+>  drivers/md/bcache/io.c       |  2 +-
+>  drivers/md/dm-cache-target.c |  6 ------
+>  drivers/md/dm-raid1.c        |  2 --
+>  drivers/md/dm-snap.c         |  1 -
+>  drivers/md/dm-thin.c         |  9 +++------
+>  drivers/md/dm-verity.c       |  2 +-
+>  fs/btrfs/disk-io.c           |  2 +-
+>  fs/btrfs/volumes.c           | 16 +++++-----------
+>  fs/btrfs/volumes.h           |  2 --
+>  include/linux/bio.h          |  1 -
+>  12 files changed, 13 insertions(+), 54 deletions(-)
+> 
+> diff --git a/block/bio-integrity.c b/block/bio-integrity.c
+> index 5cbd5d9..0436c21 100644
+> --- a/block/bio-integrity.c
+> +++ b/block/bio-integrity.c
+> @@ -361,7 +361,7 @@ static void bio_integrity_verify_fn(struct work_struct *work)
+>  
+>  	/* Restore original bio completion handler */
+>  	bio->bi_end_io = bip->bip_end_io;
+> -	bio_endio_nodec(bio, error);
+> +	bio_endio(bio, error);
+>  }
+>  
+>  /**
+> @@ -388,7 +388,7 @@ void bio_integrity_endio(struct bio *bio, int error)
+>  	 */
+>  	if (error) {
+>  		bio->bi_end_io = bip->bip_end_io;
+> -		bio_endio_nodec(bio, error);
+> +		bio_endio(bio, error);
+>  
+>  		return;
+>  	}
+> diff --git a/block/bio.c b/block/bio.c
+> index c2ff8a8..3690f1c 100644
+> --- a/block/bio.c
+> +++ b/block/bio.c
+> @@ -1809,26 +1809,6 @@ void bio_endio(struct bio *bio, int error)
+>  EXPORT_SYMBOL(bio_endio);
+>  
+>  /**
+> - * bio_endio_nodec - end I/O on a bio, without decrementing bi_remaining
+> - * @bio:	bio
+> - * @error:	error, if any
+> - *
+> - * For code that has saved and restored bi_end_io; thing hard before using this
+> - * function, probably you should've cloned the entire bio.
+> - **/
+> -void bio_endio_nodec(struct bio *bio, int error)
+> -{
+> -	/*
+> -	 * If it's not flagged as a chain, we are not going to dec the count
+> -	 */
+> -	if (bio_flagged(bio, BIO_CHAIN))
+> -		bio_inc_remaining(bio);
+> -
+> -	bio_endio(bio, error);
+> -}
+> -EXPORT_SYMBOL(bio_endio_nodec);
+> -
+> -/**
+>   * bio_split - split a bio
+>   * @bio:	bio to split
+>   * @sectors:	number of sectors to split from the front of @bio
+> diff --git a/drivers/md/bcache/io.c b/drivers/md/bcache/io.c
+> index fa028fa..cb64e64a 100644
+> --- a/drivers/md/bcache/io.c
+> +++ b/drivers/md/bcache/io.c
+> @@ -55,7 +55,7 @@ static void bch_bio_submit_split_done(struct closure *cl)
+>  
+>  	s->bio->bi_end_io = s->bi_end_io;
+>  	s->bio->bi_private = s->bi_private;
+> -	bio_endio_nodec(s->bio, 0);
+> +	bio_endio(s->bio, 0);
+>  
+>  	closure_debug_destroy(&s->cl);
+>  	mempool_free(s, s->p->bio_split_hook);
+> diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+> index 705eb7b..41b2594 100644
+> --- a/drivers/md/dm-cache-target.c
+> +++ b/drivers/md/dm-cache-target.c
+> @@ -86,12 +86,6 @@ static void dm_unhook_bio(struct dm_hook_info *h, struct bio *bio)
+>  {
+>  	bio->bi_end_io = h->bi_end_io;
+>  	bio->bi_private = h->bi_private;
+> -
+> -	/*
+> -	 * Must bump bi_remaining to allow bio to complete with
+> -	 * restored bi_end_io.
+> -	 */
+> -	bio_inc_remaining(bio);
+>  }
+>  
+>  /*----------------------------------------------------------------*/
+> diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+> index d6a1c09..743fa9b 100644
+> --- a/drivers/md/dm-raid1.c
+> +++ b/drivers/md/dm-raid1.c
+> @@ -1254,8 +1254,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
+>  			dm_bio_restore(bd, bio);
+>  			bio_record->details.bi_bdev = NULL;
+>  
+> -			bio_inc_remaining(bio);
+> -
+>  			queue_bio(ms, bio, rw);
+>  			return DM_ENDIO_INCOMPLETE;
+>  		}
+> diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+> index 8bfeae2..7c82d3c 100644
+> --- a/drivers/md/dm-snap.c
+> +++ b/drivers/md/dm-snap.c
+> @@ -1478,7 +1478,6 @@ out:
+>  	if (full_bio) {
+>  		full_bio->bi_end_io = pe->full_bio_end_io;
+>  		full_bio->bi_private = pe->full_bio_private;
+> -		bio_inc_remaining(full_bio);
+>  	}
+>  	increment_pending_exceptions_done_count();
+>  
+> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> index 342dbda..e852602c 100644
+> --- a/drivers/md/dm-thin.c
+> +++ b/drivers/md/dm-thin.c
+> @@ -793,10 +793,9 @@ static void inc_remap_and_issue_cell(struct thin_c *tc,
+>  
+>  static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
+>  {
+> -	if (m->bio) {
+> +	if (m->bio)
+>  		m->bio->bi_end_io = m->saved_bi_end_io;
+> -		bio_inc_remaining(m->bio);
+> -	}
+> +
+>  	cell_error(m->tc->pool, m->cell);
+>  	list_del(&m->list);
+>  	mempool_free(m, m->tc->pool->mapping_pool);
+> @@ -810,10 +809,8 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
+>  	int r;
+>  
+>  	bio = m->bio;
+> -	if (bio) {
+> +	if (bio)
+>  		bio->bi_end_io = m->saved_bi_end_io;
+> -		bio_inc_remaining(bio);
+> -	}
+>  
+>  	if (m->err) {
+>  		cell_error(pool, m->cell);
+> diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+> index 66616db..bb9c6a0 100644
+> --- a/drivers/md/dm-verity.c
+> +++ b/drivers/md/dm-verity.c
+> @@ -459,7 +459,7 @@ static void verity_finish_io(struct dm_verity_io *io, int error)
+>  	bio->bi_end_io = io->orig_bi_end_io;
+>  	bio->bi_private = io->orig_bi_private;
+>  
+> -	bio_endio_nodec(bio, error);
+> +	bio_endio(bio, error);
+>  }
+>  
+>  static void verity_work(struct work_struct *w)
+> diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
+> index 2ef9a4b..fbdbee4 100644
+> --- a/fs/btrfs/disk-io.c
+> +++ b/fs/btrfs/disk-io.c
+> @@ -1745,7 +1745,7 @@ static void end_workqueue_fn(struct btrfs_work *work)
+>  	bio->bi_private = end_io_wq->private;
+>  	bio->bi_end_io = end_io_wq->end_io;
+>  	kmem_cache_free(btrfs_end_io_wq_cache, end_io_wq);
+> -	bio_endio_nodec(bio, error);
+> +	bio_endio(bio, error);
+>  }
+>  
+>  static int cleaner_kthread(void *arg)
+> diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
+> index 8e8d1d1..dac77d4 100644
+> --- a/fs/btrfs/volumes.c
+> +++ b/fs/btrfs/volumes.c
+> @@ -5585,10 +5585,10 @@ int btrfs_rmap_block(struct btrfs_mapping_tree *map_tree,
+>  
+>  static inline void btrfs_end_bbio(struct btrfs_bio *bbio, struct bio *bio, int err)
+>  {
+> -	if (likely(bbio->flags & BTRFS_BIO_ORIG_BIO_SUBMITTED))
+> -		bio_endio_nodec(bio, err);
+> -	else
+> -		bio_endio(bio, err);
+> +	bio->bi_private = bbio->private;
+> +	bio->bi_end_io = bbio->end_io;
+> +	bio_endio(bio, err);
+> +
+>  	btrfs_put_bbio(bbio);
+>  }
+>  
+> @@ -5632,8 +5632,6 @@ static void btrfs_end_bio(struct bio *bio, int err)
+>  			bio = bbio->orig_bio;
+>  		}
+>  
+> -		bio->bi_private = bbio->private;
+> -		bio->bi_end_io = bbio->end_io;
+>  		btrfs_io_bio(bio)->mirror_num = bbio->mirror_num;
+>  		/* only send an error to the higher layers if it is
+>  		 * beyond the tolerance of the btrfs bio
+> @@ -5815,8 +5813,6 @@ static void bbio_error(struct btrfs_bio *bbio, struct bio *bio, u64 logical)
+>  		/* Shoud be the original bio. */
+>  		WARN_ON(bio != bbio->orig_bio);
+>  
+> -		bio->bi_private = bbio->private;
+> -		bio->bi_end_io = bbio->end_io;
+>  		btrfs_io_bio(bio)->mirror_num = bbio->mirror_num;
+>  		bio->bi_iter.bi_sector = logical >> 9;
+>  
+> @@ -5897,10 +5893,8 @@ int btrfs_map_bio(struct btrfs_root *root, int rw, struct bio *bio,
+>  		if (dev_nr < total_devs - 1) {
+>  			bio = btrfs_bio_clone(first_bio, GFP_NOFS);
+>  			BUG_ON(!bio); /* -ENOMEM */
+> -		} else {
+> +		} else
+>  			bio = first_bio;
+> -			bbio->flags |= BTRFS_BIO_ORIG_BIO_SUBMITTED;
+> -		}
+>  
+>  		submit_stripe_bio(root, bbio, bio,
+>  				  bbio->stripes[dev_nr].physical, dev_nr, rw,
+> diff --git a/fs/btrfs/volumes.h b/fs/btrfs/volumes.h
+> index ebc3133..cedae03 100644
+> --- a/fs/btrfs/volumes.h
+> +++ b/fs/btrfs/volumes.h
+> @@ -292,8 +292,6 @@ struct btrfs_bio_stripe {
+>  struct btrfs_bio;
+>  typedef void (btrfs_bio_end_io_t) (struct btrfs_bio *bio, int err);
+>  
+> -#define BTRFS_BIO_ORIG_BIO_SUBMITTED	(1 << 0)
+> -
+>  struct btrfs_bio {
+>  	atomic_t refs;
+>  	atomic_t stripes_pending;
+> diff --git a/include/linux/bio.h b/include/linux/bio.h
+> index 7486ea1..fe0a88d 100644
+> --- a/include/linux/bio.h
+> +++ b/include/linux/bio.h
+> @@ -427,7 +427,6 @@ static inline struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
+>  }
+>  
+>  extern void bio_endio(struct bio *, int);
+> -extern void bio_endio_nodec(struct bio *, int);
+>  struct request_queue;
+>  extern int bio_phys_segments(struct request_queue *, struct bio *);
+>  
+> -- 
+> 2.3.2 (Apple Git-55)
+> 
 -- 
-1.8.3.1
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
