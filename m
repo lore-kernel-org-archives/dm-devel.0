@@ -1,35 +1,52 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v3 01/11] block: make generic_make_request handle
-	arbitrarily sized bios
-Date: Mon, 18 May 2015 19:22:59 +0200
-Message-ID: <20150518172259.GA8116@lst.de>
-References: <1430980461-5235-1-git-send-email-mlin@kernel.org> <1430980461-5235-2-git-send-email-mlin@kernel.org> <x49twv9kevg.fsf@segfault.boston.devel.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH for-4.2 04/14] block: factor out
+ blkdev_issue_discard_async
+Date: Mon, 18 May 2015 15:18:30 -0400
+Message-ID: <20150518191830.GA15656@redhat.com>
+References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
+ <1431637512-64245-5-git-send-email-snitzer@redhat.com>
+ <20150518082756.GB5439@infradead.org>
+ <20150518133223.GC13998@redhat.com>
+ <20150518161721.GA28385@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <x49twv9kevg.fsf@segfault.boston.devel.redhat.com>
+In-Reply-To: <20150518161721.GA28385@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: Ming Lin <mlin@kernel.org>, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dpark@posteo.net>, Christoph Hellwig <hch@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Ming Lei <ming.lei@canonical.com>, Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Geoff Levand <geoff@infradead.org>, Jim Paris <jim@jtan.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Oleg Drokin <oleg.drokin@intel.com>, Andreas Dilger <andreas.dilger@intel.com>
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, May 18, 2015 at 12:52:03PM -0400, Jeff Moyer wrote:
-> > +	return bio_split(bio, split_sectors, GFP_NOIO, bs);
+On Mon, May 18 2015 at 12:17pm -0400,
+Christoph Hellwig <hch@infradead.org> wrote:
+
+> On Mon, May 18, 2015 at 09:32:23AM -0400, Mike Snitzer wrote:
+> > The proposed blkdev_issue_discard_async interface allows DM (or any
+> > caller) to not have to concern itself with how discard(s) gets issued.
+> > 
+> > It leaves all the details of how large a discard can be, etc to block
+> > core.  The entire point of doing things this way is to _not_ pollute DM
+> > with code that breaks up a discard into N bios based on the discard
+> > limits of the underlying device.
+> > 
+> > What you're suggesting sounds a lot like having DM open code
+> > blkdev_issue_discard() -- blkdev_issue_discard_async() was engineered to
+> > avoid that completely.
 > 
-> Much of this function is cut-n-paste from blk-lib.c.  Is there any way
-> to factor it out?
+> Parts of it anyway.  The splitting logic can still be factored into
+> helpers to keep the nasty details out of DM.  But except for that I
+> think async discards should be handled exactly like async reads, writes
+> or flushes.
 
-The code in blk-lib.c can go away now that any driver that cares
-does the split.
+OK.
 
-> > +static struct bio *blk_bio_segment_split(struct request_queue *q,
-> > +					 struct bio *bio,
-> > +					 struct bio_set *bs)
-> > +{
-> 
-> Funny name for a function that also merges segments.  ;-)  I admit I am
-> at a loss for coming up with a better name that won't overflow 80
-> columns.
+> And besides that generic high level sentiment I think the interface
+> for blkdev_issue_discard_async is simply wrong.  Either you want to keep
+> the internals private and just expose a completion callback that gets
+> your private data and an error, or you want to build your own bios as
+> suggested above.  But not one that is mostly opaque except for allowing
+> the caller to hook into the submission process and thus taking over I/O
+> completion.
 
-I'd keep the name and add a funny comment instead.
+I'll see what I can come up with.
