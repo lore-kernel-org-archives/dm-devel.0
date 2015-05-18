@@ -1,119 +1,83 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: Possible BUG in the entry removal process of
- dm-btree structure
-Date: Mon, 18 May 2015 13:51:53 +0100
-Message-ID: <20150518125152.GA10459@rh-vpn>
-References: <CAKTMprNmf7KKAPMj0CFj32y+0OpYJPiqQTbiQiuUAiteJiQeEg@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH for-4.2 01/14] block: remove management of bi_remaining
+ when restoring original bi_end_io
+Date: Mon, 18 May 2015 09:13:59 -0400
+Message-ID: <20150518131358.GA13998@redhat.com>
+References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
+ <1431637512-64245-2-git-send-email-snitzer@redhat.com>
+ <20150518072237.GE26351@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAKTMprNmf7KKAPMj0CFj32y+0OpYJPiqQTbiQiuUAiteJiQeEg@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <20150518072237.GE26351@quack.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jan Kara <jack@suse.cz>
+Cc: dm-devel@redhat.com, Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, Chris Mason <clm@fb.com>
 List-Id: dm-devel.ids
 
-On Mon, May 18, 2015 at 03:21:52PM +0800, Dennis Yang wrote:
-> Hi,
-> 
-> Recently, I had run into the same dm-btree-remove bug reported before
-> in this mailing list.
+On Mon, May 18 2015 at  3:22am -0400,
+Jan Kara <jack@suse.cz> wrote:
 
-Hi Dennis,
+> On Thu 14-05-15 17:04:59, Mike Snitzer wrote:
+> > Commit c4cf5261 ("bio: skip atomic inc/dec of ->bi_remaining for
+> > non-chains") regressed all existing callers that followed this pattern:
+> >  1) saving a bio's original bi_end_io
+> >  2) wiring up an intermediate bi_end_io
+> >  3) restoring the original bi_end_io from intermediate bi_end_io
+> >  4) calling bio_endio() to execute the restored original bi_end_io
+> > 
+> > The regression was due to BIO_CHAIN only ever getting set if
+> > bio_inc_remaining() is called.  For the above pattern it isn't set until
+> > step 3 above (step 2 would've needed to establish BIO_CHAIN).  As such
+> > the first bio_endio(), in step 2 above, never decremented __bi_remaining
+> > before calling the intermediate bi_end_io -- leaving __bi_remaining with
+> > the value 1 instead of 0.  When bio_inc_remaining() occurred during step
+> > 3 it brought it to a value of 2.  When the second bio_endio() was
+> > called, in step 4 above, it should've called the original bi_end_io but
+> > it didn't because there was an extra reference that wasn't dropped (due
+> > to atomic operations being optimized away since BIO_CHAIN wasn't set
+> > upfront).
+> > 
+> > Fix this issue by removing the __bi_remaining management complexity for
+> > all callers that use the above pattern -- bio_chain() is the only
+> > interface that _needs_ to be concerned with __bi_remaining.  For the
+> > above pattern callers just expect the bi_end_io they set to get called!
+> > Remove bio_endio_nodec() and also remove all bio_inc_remaining() calls
+> > that aren't associated with the bio_chain() interface.
+> > 
+> > The bio_inc_remaining() interface has been left exported because it is
+> > still useful for more elaborate uses of bio_chain() -- it will be used
+> > in an upcoming DM commit "dm thin: range discard support".
+> > 
+> > Fixes: c4cf5261 ("bio: skip atomic inc/dec of ->bi_remaining for non-chains")
+> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > Cc: Jan Kara <jack@suse.cz>
+> > Cc: Chris Mason <clm@fb.com>
+>   One question: What happens if you stack dm-thin on top of e.g. dm-linear?
+> dm-thin will do it's thing to a bio and passes it to dm-linear. That will
+> split & chain the bio so BIO_CHAIN will be set. And on IO completion you
+> will have troubles in dm-thinp as now bi_remaining gets decremented in
+> bio_endio(). That's the reason why I suggested that we should clear
+> BIO_CHAIN once bi_remaining hits zero...
 
-You diagnosis looks correct, though I think your patch introduces
-entry reordering.
+I think you need to be more precise in explaining the scenario you're
+concerned about.  Could be there is an issue but I'm not seeing it yet.
 
-> In dm-btree-remove.c, there is a redistribute3() function which is
-> called when we try to rebalance the entry of three nodes with their
-> total entry count is higher than a defined threshold. I paste the code
-> below for further discussion.
-> 
-> target = (nr_left + nr_center + nr_right) / 3;
-> if (nr_left < nr_right) {
->     s = nr_left - target;
-> 
->     if (s < 0 && nr_center < -s) {
->         /* not enough in central node */
->         shift(left, center, nr_center);
->         s = nr_center - target;
->         shift(left, right, s);
->         nr_right += s;
->     } else
->         shift(left, center, s);
-> 
->     shift(center, right, target - nr_right);
-> } else {
-> 
-> If the entry count of left node is smaller than target and the entry
-> count of center node is not enough to cover this gap, I think what we
-> try to do here is to move all the entries in the center node to the
-> left node first, then move some entries from the right node to the
-> left one to make its entry count equals to target. However, since
-> nr_center is always positive, the code above will first move up to
-> nr_center entries from the left node to the center node.
+Are you referring to the patch that makes DM thinp use the proposed
+blkdev_issue_discard_async() interface?  The bios issued to DM linear
+are generated by blkdev_issue_discard_async().  By using bio_chain()
+they establish ancestory with the parent DM thinp bio (which has
+had BIO_CHAIN set even before calling blkdev_issue_discard_async because
+there is potential for DM thinp to complete the parent bio before all N
+blkdev_issue_discard_async() generated bios complete -- so that is why
+DM thinp itself takes an extra reference on the parent bio using
+bio_inc_remaining() before calling blkdev_issue_discard_async)
 
-Yep, this is a bug, it should be -nr_center.
+In practice I'm not having any problems with the
+device-mapper-test-suite's thin-provisioning tests, e.g.:
+dmtest run --suite thin-provisioning -n /discard/
 
-> To fix this issue, I think we should stick with the plan that move all
-> the entries from center node to left/right node first, and then make
-> it up to target entries by moving them from right/left node to it. I
-> have attached a simple patch to demonstrate the idea here.
-> 
-> diff --git a/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-> b/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-> index b88757c..9026fb8 100644
-> --- a/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-> +++ b/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-> @@ -309,8 +309,9 @@ static void redistribute3(struct dm_btree_info
-> *info, struct btree_node *parent,
-> 
->           if (s < 0 && nr_center < -s) {
->           /* not enough in central node */
-> -             shift(left, center, nr_center);
-> -             s = nr_center - target;
-> +            shift(center, left, nr_center);
+(dmts happily uses dm-linear devices and stacks DM thinp ontop.)
 
-You can't put the nodes out of order, what you actually want to do is:
-shift(left, center, -nr_center).  Other than that your patch looks
-good.  Updated patch below.
-
-Thanks,
-
-- Joe
-
-
-diff --git a/drivers/md/persistent-data/dm-btree-remove.c b/drivers/md/persistent-data/dm-btree-remove.c
-index e04cfd2..9836c0a 100644
---- a/drivers/md/persistent-data/dm-btree-remove.c
-+++ b/drivers/md/persistent-data/dm-btree-remove.c
-@@ -309,8 +309,8 @@ static void redistribute3(struct dm_btree_info *info, struct btree_node *parent,
- 
-                if (s < 0 && nr_center < -s) {
-                        /* not enough in central node */
--                       shift(left, center, nr_center);
--                       s = nr_center - target;
-+                       shift(left, center, -nr_center);
-+                       s += nr_center;
-                        shift(left, right, s);
-                        nr_right += s;
-                } else
-@@ -323,7 +323,7 @@ static void redistribute3(struct dm_btree_info *info, struct btree_node *parent,
-                if (s > 0 && nr_center < s) {
-                        /* not enough in central node */
-                        shift(center, right, nr_center);
--                       s = target - nr_center;
-+                       s -= nr_center;
-                        shift(left, right, s);
-                        nr_left -= s;
-                } else
+Mike
