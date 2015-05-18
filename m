@@ -1,15 +1,12 @@
 From: "Lidong Zhong" <lzhong@suse.com>
 Subject: Re: dm-raid1: keep writing after leg failure
-Date: Sun, 17 May 2015 21:49:26 -0600
-Message-ID: <5559D1C6020000E100024B78@relay2.provo.novell.com>
-References: <1431497050-10098-1-git-send-email-lzhong@suse.com>
-	<20150515161108.GA28234@redhat.com>
+Date: Sun, 17 May 2015 23:31:02 -0600
+Message-ID: <5559E996020000E100024B9A@relay2.provo.novell.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150515161108.GA28234@redhat.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
