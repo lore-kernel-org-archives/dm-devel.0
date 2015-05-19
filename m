@@ -1,356 +1,165 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-4.2 v2 01/14] block: remove management of bi_remaining
- when restoring original bi_end_io
-Date: Mon, 18 May 2015 16:40:17 -0400
-Message-ID: <20150518204017.GA17202@redhat.com>
-References: <1431637512-64245-1-git-send-email-snitzer@redhat.com>
- <1431637512-64245-2-git-send-email-snitzer@redhat.com>
- <20150518072237.GE26351@quack.suse.cz>
- <20150518131358.GA13998@redhat.com>
- <20150518153644.GA10187@quack.suse.cz>
- <20150518155948.GE13998@redhat.com>
+From: NeilBrown <neilb@suse.de>
+Subject: [PATCH v2 RESEND] block: discard bdi_unregister() in favour of
+ bdi_destroy()
+Date: Tue, 19 May 2015 15:58:37 +1000
+Message-ID: <20150519155837.456ad30e@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ boundary="Sig_/A9M.MAB1L=Enx=LbcHHHp0w"; protocol="application/pgp-signature"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150518155948.GE13998@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>, hch@infradead.org, Jens Axboe <axboe@kernel.dk>
-Cc: Chris Mason <clm@fb.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Jens Axboe <axboe@fb.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Kernel.org-Linux-RAID" <linux-raid@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@lst.de>, stable@vger.kernel.org, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Greg KH <gregkh@linuxfoundation.org>
 List-Id: dm-devel.ids
 
-Commit c4cf5261 ("bio: skip atomic inc/dec of ->bi_remaining for
-non-chains") regressed all existing callers that followed this pattern:
- 1) saving a bio's original bi_end_io
- 2) wiring up an intermediate bi_end_io
- 3) restoring the original bi_end_io from intermediate bi_end_io
- 4) calling bio_endio() to execute the restored original bi_end_io
+--Sig_/A9M.MAB1L=Enx=LbcHHHp0w
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-The regression was due to BIO_CHAIN only ever getting set if
-bio_inc_remaining() is called.  For the above pattern it isn't set until
-step 3 above (step 2 would've needed to establish BIO_CHAIN).  As such
-the first bio_endio(), in step 2 above, never decremented __bi_remaining
-before calling the intermediate bi_end_io -- leaving __bi_remaining with
-the value 1 instead of 0.  When bio_inc_remaining() occurred during step
-3 it brought it to a value of 2.  When the second bio_endio() was
-called, in step 4 above, it should've called the original bi_end_io but
-it didn't because there was an extra reference that wasn't dropped (due
-to atomic operations being optimized away since BIO_CHAIN wasn't set
-upfront).
 
-Fix this issue by removing the __bi_remaining management complexity for
-all callers that use the above pattern -- bio_chain() is the only
-interface that _needs_ to be concerned with __bi_remaining.  For the
-above pattern callers just expect the bi_end_io they set to get called!
-Remove bio_endio_nodec() and also remove all bio_inc_remaining() calls
-that aren't associated with the bio_chain() interface.
 
-changes in v2:
-Care is now taken to clear the BIO_CHAIN flag once ->__bi_remaining
-drops to 0.  Also, the bio_inc_remaining() interface has moved local to
-bio.c.
+bdi_unregister() now contains very little functionality.
 
-Fixes: c4cf5261 ("bio: skip atomic inc/dec of ->bi_remaining for non-chains")
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+It contains a "WARN_ON" if bdi->dev is NULL.  This warning is of no
+real consequence as bdi->dev isn't needed by anything else in the function,
+and it triggers if
+   blk_cleanup_queue() -> bdi_destroy()
+is called before bdi_unregister, which happens since
+  Commit: 6cd18e711dd8 ("block: destroy bdi before blockdev is unregistered=
+.")
+
+So this isn't wanted.
+
+It also calls bdi_set_min_ratio().  This needs to be called after
+writes through the bdi have all been flushed, and before the bdi is destroy=
+ed.
+Calling it early is better than calling it late as it frees up a global
+resource.
+
+Calling it immediately after bdi_wb_shutdown() in bdi_destroy()
+perfectly fits these requirements.
+
+So bdi_unregister() can be discarded with the important content moved to
+bdi_destroy(), as can the
+  writeback_bdi_unregister
+event which is already not used.
+
+Reported-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org (v4.0)
+Fixes: c4db59d31e39 ("fs: don't reassign dirty inodes to default_backing_de=
+v_info")
+Fixes: 6cd18e711dd8 ("block: destroy bdi before blockdev is unregistered.")
+Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Acked-by: Dan Williams <dan.j.williams@intel.com>
+Tested-by: Nicholas Moulin <nicholas.w.moulin@linux.intel.com>
+Signed-off-by: NeilBrown <neilb@suse.de>
+
 ---
- block/bio-integrity.c        |  4 ++--
- block/bio.c                  | 35 ++++++++++++++---------------------
- drivers/md/bcache/io.c       |  2 +-
- drivers/md/dm-cache-target.c |  6 ------
- drivers/md/dm-raid1.c        |  2 --
- drivers/md/dm-snap.c         |  1 -
- drivers/md/dm-thin.c         |  9 +++------
- drivers/md/dm-verity.c       |  2 +-
- fs/btrfs/disk-io.c           |  2 +-
- fs/btrfs/volumes.c           | 16 +++++-----------
- fs/btrfs/volumes.h           |  2 --
- include/linux/bio.h          | 12 ------------
- 12 files changed, 27 insertions(+), 66 deletions(-)
 
-diff --git a/block/bio-integrity.c b/block/bio-integrity.c
-index 5cbd5d9..0436c21 100644
---- a/block/bio-integrity.c
-+++ b/block/bio-integrity.c
-@@ -361,7 +361,7 @@ static void bio_integrity_verify_fn(struct work_struct *work)
- 
- 	/* Restore original bio completion handler */
- 	bio->bi_end_io = bip->bip_end_io;
--	bio_endio_nodec(bio, error);
-+	bio_endio(bio, error);
+hi Jens,
+ It seems you might have missed this, possibly buried in a long thread.
+It would be good you it could get to Linux and thence to -stable promptly.
+
+Thanks,
+NeilBrown
+
+
+diff --git a/block/genhd.c b/block/genhd.c
+index e351fc521053..1d4435478e8a 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -657,7 +657,6 @@ void del_gendisk(struct gendisk *disk)
+ 	disk->flags &=3D ~GENHD_FL_UP;
+=20
+ 	sysfs_remove_link(&disk_to_dev(disk)->kobj, "bdi");
+-	bdi_unregister(&disk->queue->backing_dev_info);
+ 	blk_unregister_queue(disk);
+ 	blk_unregister_region(disk_devt(disk), disk->minors);
+=20
+diff --git a/include/linux/backing-dev.h b/include/linux/backing-dev.h
+index aff923ae8c4b..d87d8eced064 100644
+--- a/include/linux/backing-dev.h
++++ b/include/linux/backing-dev.h
+@@ -116,7 +116,6 @@ __printf(3, 4)
+ int bdi_register(struct backing_dev_info *bdi, struct device *parent,
+ 		const char *fmt, ...);
+ int bdi_register_dev(struct backing_dev_info *bdi, dev_t dev);
+-void bdi_unregister(struct backing_dev_info *bdi);
+ int __must_check bdi_setup_and_register(struct backing_dev_info *, char *);
+ void bdi_start_writeback(struct backing_dev_info *bdi, long nr_pages,
+ 			enum wb_reason reason);
+diff --git a/include/trace/events/writeback.h b/include/trace/events/writeb=
+ack.h
+index 880dd7437172..c178d13d6f4c 100644
+--- a/include/trace/events/writeback.h
++++ b/include/trace/events/writeback.h
+@@ -250,7 +250,6 @@ DEFINE_EVENT(writeback_class, name, \
+ DEFINE_WRITEBACK_EVENT(writeback_nowork);
+ DEFINE_WRITEBACK_EVENT(writeback_wake_background);
+ DEFINE_WRITEBACK_EVENT(writeback_bdi_register);
+-DEFINE_WRITEBACK_EVENT(writeback_bdi_unregister);
+=20
+ DECLARE_EVENT_CLASS(wbc_class,
+ 	TP_PROTO(struct writeback_control *wbc, struct backing_dev_info *bdi),
+diff --git a/mm/backing-dev.c b/mm/backing-dev.c
+index 6dc4580df2af..000e7b3b9896 100644
+--- a/mm/backing-dev.c
++++ b/mm/backing-dev.c
+@@ -359,23 +359,6 @@ static void bdi_wb_shutdown(struct backing_dev_info *b=
+di)
+ 	flush_delayed_work(&bdi->wb.dwork);
  }
- 
- /**
-@@ -388,7 +388,7 @@ void bio_integrity_endio(struct bio *bio, int error)
- 	 */
- 	if (error) {
- 		bio->bi_end_io = bip->bip_end_io;
--		bio_endio_nodec(bio, error);
-+		bio_endio(bio, error);
- 
- 		return;
- 	}
-diff --git a/block/bio.c b/block/bio.c
-index c2ff8a8..259197d 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -303,6 +303,17 @@ static void bio_chain_endio(struct bio *bio, int error)
- 	bio_put(bio);
- }
- 
-+/*
-+ * Increment chain count for the bio. Make sure the CHAIN flag update
-+ * is visible before the raised count.
-+ */
-+static inline void bio_inc_remaining(struct bio *bio)
-+{
-+	bio->bi_flags |= (1 << BIO_CHAIN);
-+	smp_mb__before_atomic();
-+	atomic_inc(&bio->__bi_remaining);
-+}
-+
- /**
-  * bio_chain - chain bio completions
-  * @bio: the target bio
-@@ -1756,8 +1767,10 @@ static inline bool bio_remaining_done(struct bio *bio)
- 
- 	BUG_ON(atomic_read(&bio->__bi_remaining) <= 0);
- 
--	if (atomic_dec_and_test(&bio->__bi_remaining))
-+	if (atomic_dec_and_test(&bio->__bi_remaining)) {
-+		clear_bit(BIO_CHAIN, &bio->bi_flags);
- 		return true;
-+	}
- 
- 	return false;
- }
-@@ -1809,26 +1822,6 @@ void bio_endio(struct bio *bio, int error)
- EXPORT_SYMBOL(bio_endio);
- 
- /**
-- * bio_endio_nodec - end I/O on a bio, without decrementing bi_remaining
-- * @bio:	bio
-- * @error:	error, if any
-- *
-- * For code that has saved and restored bi_end_io; thing hard before using this
-- * function, probably you should've cloned the entire bio.
-- **/
--void bio_endio_nodec(struct bio *bio, int error)
--{
--	/*
--	 * If it's not flagged as a chain, we are not going to dec the count
--	 */
--	if (bio_flagged(bio, BIO_CHAIN))
--		bio_inc_remaining(bio);
--
--	bio_endio(bio, error);
--}
--EXPORT_SYMBOL(bio_endio_nodec);
--
--/**
-  * bio_split - split a bio
-  * @bio:	bio to split
-  * @sectors:	number of sectors to split from the front of @bio
-diff --git a/drivers/md/bcache/io.c b/drivers/md/bcache/io.c
-index fa028fa..cb64e64a 100644
---- a/drivers/md/bcache/io.c
-+++ b/drivers/md/bcache/io.c
-@@ -55,7 +55,7 @@ static void bch_bio_submit_split_done(struct closure *cl)
- 
- 	s->bio->bi_end_io = s->bi_end_io;
- 	s->bio->bi_private = s->bi_private;
--	bio_endio_nodec(s->bio, 0);
-+	bio_endio(s->bio, 0);
- 
- 	closure_debug_destroy(&s->cl);
- 	mempool_free(s, s->p->bio_split_hook);
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 705eb7b..41b2594 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -86,12 +86,6 @@ static void dm_unhook_bio(struct dm_hook_info *h, struct bio *bio)
- {
- 	bio->bi_end_io = h->bi_end_io;
- 	bio->bi_private = h->bi_private;
--
--	/*
--	 * Must bump bi_remaining to allow bio to complete with
--	 * restored bi_end_io.
--	 */
--	bio_inc_remaining(bio);
- }
- 
- /*----------------------------------------------------------------*/
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index d6a1c09..743fa9b 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -1254,8 +1254,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
- 			dm_bio_restore(bd, bio);
- 			bio_record->details.bi_bdev = NULL;
- 
--			bio_inc_remaining(bio);
--
- 			queue_bio(ms, bio, rw);
- 			return DM_ENDIO_INCOMPLETE;
- 		}
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 8bfeae2..7c82d3c 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -1478,7 +1478,6 @@ out:
- 	if (full_bio) {
- 		full_bio->bi_end_io = pe->full_bio_end_io;
- 		full_bio->bi_private = pe->full_bio_private;
--		bio_inc_remaining(full_bio);
- 	}
- 	increment_pending_exceptions_done_count();
- 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 342dbda..e852602c 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -793,10 +793,9 @@ static void inc_remap_and_issue_cell(struct thin_c *tc,
- 
- static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
- {
--	if (m->bio) {
-+	if (m->bio)
- 		m->bio->bi_end_io = m->saved_bi_end_io;
--		bio_inc_remaining(m->bio);
--	}
-+
- 	cell_error(m->tc->pool, m->cell);
- 	list_del(&m->list);
- 	mempool_free(m, m->tc->pool->mapping_pool);
-@@ -810,10 +809,8 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
- 	int r;
- 
- 	bio = m->bio;
--	if (bio) {
-+	if (bio)
- 		bio->bi_end_io = m->saved_bi_end_io;
--		bio_inc_remaining(bio);
--	}
- 
- 	if (m->err) {
- 		cell_error(pool, m->cell);
-diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
-index 66616db..bb9c6a0 100644
---- a/drivers/md/dm-verity.c
-+++ b/drivers/md/dm-verity.c
-@@ -459,7 +459,7 @@ static void verity_finish_io(struct dm_verity_io *io, int error)
- 	bio->bi_end_io = io->orig_bi_end_io;
- 	bio->bi_private = io->orig_bi_private;
- 
--	bio_endio_nodec(bio, error);
-+	bio_endio(bio, error);
- }
- 
- static void verity_work(struct work_struct *w)
-diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
-index 2ef9a4b..fbdbee4 100644
---- a/fs/btrfs/disk-io.c
-+++ b/fs/btrfs/disk-io.c
-@@ -1745,7 +1745,7 @@ static void end_workqueue_fn(struct btrfs_work *work)
- 	bio->bi_private = end_io_wq->private;
- 	bio->bi_end_io = end_io_wq->end_io;
- 	kmem_cache_free(btrfs_end_io_wq_cache, end_io_wq);
--	bio_endio_nodec(bio, error);
-+	bio_endio(bio, error);
- }
- 
- static int cleaner_kthread(void *arg)
-diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
-index 8e8d1d1..dac77d4 100644
---- a/fs/btrfs/volumes.c
-+++ b/fs/btrfs/volumes.c
-@@ -5585,10 +5585,10 @@ int btrfs_rmap_block(struct btrfs_mapping_tree *map_tree,
- 
- static inline void btrfs_end_bbio(struct btrfs_bio *bbio, struct bio *bio, int err)
- {
--	if (likely(bbio->flags & BTRFS_BIO_ORIG_BIO_SUBMITTED))
--		bio_endio_nodec(bio, err);
--	else
--		bio_endio(bio, err);
-+	bio->bi_private = bbio->private;
-+	bio->bi_end_io = bbio->end_io;
-+	bio_endio(bio, err);
-+
- 	btrfs_put_bbio(bbio);
- }
- 
-@@ -5632,8 +5632,6 @@ static void btrfs_end_bio(struct bio *bio, int err)
- 			bio = bbio->orig_bio;
- 		}
- 
--		bio->bi_private = bbio->private;
--		bio->bi_end_io = bbio->end_io;
- 		btrfs_io_bio(bio)->mirror_num = bbio->mirror_num;
- 		/* only send an error to the higher layers if it is
- 		 * beyond the tolerance of the btrfs bio
-@@ -5815,8 +5813,6 @@ static void bbio_error(struct btrfs_bio *bbio, struct bio *bio, u64 logical)
- 		/* Shoud be the original bio. */
- 		WARN_ON(bio != bbio->orig_bio);
- 
--		bio->bi_private = bbio->private;
--		bio->bi_end_io = bbio->end_io;
- 		btrfs_io_bio(bio)->mirror_num = bbio->mirror_num;
- 		bio->bi_iter.bi_sector = logical >> 9;
- 
-@@ -5897,10 +5893,8 @@ int btrfs_map_bio(struct btrfs_root *root, int rw, struct bio *bio,
- 		if (dev_nr < total_devs - 1) {
- 			bio = btrfs_bio_clone(first_bio, GFP_NOFS);
- 			BUG_ON(!bio); /* -ENOMEM */
--		} else {
-+		} else
- 			bio = first_bio;
--			bbio->flags |= BTRFS_BIO_ORIG_BIO_SUBMITTED;
--		}
- 
- 		submit_stripe_bio(root, bbio, bio,
- 				  bbio->stripes[dev_nr].physical, dev_nr, rw,
-diff --git a/fs/btrfs/volumes.h b/fs/btrfs/volumes.h
-index ebc3133..cedae03 100644
---- a/fs/btrfs/volumes.h
-+++ b/fs/btrfs/volumes.h
-@@ -292,8 +292,6 @@ struct btrfs_bio_stripe {
- struct btrfs_bio;
- typedef void (btrfs_bio_end_io_t) (struct btrfs_bio *bio, int err);
- 
--#define BTRFS_BIO_ORIG_BIO_SUBMITTED	(1 << 0)
--
- struct btrfs_bio {
- 	atomic_t refs;
- 	atomic_t stripes_pending;
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 7486ea1..f0291cf 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -427,7 +427,6 @@ static inline struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
- }
- 
- extern void bio_endio(struct bio *, int);
--extern void bio_endio_nodec(struct bio *, int);
- struct request_queue;
- extern int bio_phys_segments(struct request_queue *, struct bio *);
- 
-@@ -659,17 +658,6 @@ static inline struct bio *bio_list_get(struct bio_list *bl)
- }
- 
- /*
-- * Increment chain count for the bio. Make sure the CHAIN flag update
-- * is visible before the raised count.
-- */
--static inline void bio_inc_remaining(struct bio *bio)
--{
--	bio->bi_flags |= (1 << BIO_CHAIN);
--	smp_mb__before_atomic();
--	atomic_inc(&bio->__bi_remaining);
--}
--
+=20
 -/*
-  * bio_set is used to allow other portions of the IO system to
-  * allocate their own private memory pools for bio and iovec structures.
-  * These memory pools in turn all allocate from the bio_slab
--- 
-2.3.2 (Apple Git-55)
+- * Called when the device behind @bdi has been removed or ejected.
+- *
+- * We can't really do much here except for reducing the dirty ratio at
+- * the moment.  In the future we should be able to set a flag so that
+- * the filesystem can handle errors at mark_inode_dirty time instead
+- * of only at writeback time.
+- */
+-void bdi_unregister(struct backing_dev_info *bdi)
+-{
+-	if (WARN_ON_ONCE(!bdi->dev))
+-		return;
+-
+-	bdi_set_min_ratio(bdi, 0);
+-}
+-EXPORT_SYMBOL(bdi_unregister);
+-
+ static void bdi_wb_init(struct bdi_writeback *wb, struct backing_dev_info =
+*bdi)
+ {
+ 	memset(wb, 0, sizeof(*wb));
+@@ -443,6 +426,7 @@ void bdi_destroy(struct backing_dev_info *bdi)
+ 	int i;
+=20
+ 	bdi_wb_shutdown(bdi);
++	bdi_set_min_ratio(bdi, 0);
+=20
+ 	WARN_ON(!list_empty(&bdi->work_list));
+ 	WARN_ON(delayed_work_pending(&bdi->wb.dwork));
+
+--Sig_/A9M.MAB1L=Enx=LbcHHHp0w
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIVAwUBVVrRDTnsnt1WYoG5AQLuow/+Oyo+a1pm/nG58hhCi3GeeVV0UBykBfJ5
+cWz9kIQkT8YX86cZfji3B65CtaU3YFz5N47hrFMEcy5A6rl0H/Y8oTFfRkPGuEQm
+pF/GIWyL4WLDkun+MSfnIUDCHw5wopKMZFQmOD0iSk3RR9P1jiRvLxNFDN9ezcfw
+rPa1OEOWe4LMNxsUUQn2EShInj9TI8J6pCeDT5TwugyH5Cc+an34giLLjhfA6K1u
+rEbkK5pEdfv8lsPORL0X44wLf/wiLOru32KIEao4nwWbfB8PU6n+rHfkI4siZKjQ
+ttL1rmMC+QYW3R2pqDM7qs9G+xsCSsKW1H5p5Ba/hbX1PXmtDuNblq3ODDKDdZML
+62476DjCb/8Iclo/Icr0impJMRrgW+jbhU6/5YQdOP45KlHt9H5k0BPY7Ovxgu92
+zX/IP2XhbTUOl36AFI0181eFi3GS7JFJNo7nHEttyKCtExNHqt2K1MKA/ttsvBwV
+6659Kxz6Zx+TMOrvCo3YhW8FR/92TN0Xz8HTW0AYlZFIOU3k2EGF0bTnpg/dCQ/I
+OCrmuuXPM3GaqyYv4ikv1TG8zcIAbyM73cR0UJ4vNjJh09YK6msjtQWz1ZSKPKGN
+lPOpbWHhxJ0EIryA8aKB6FKTu+Z10aAqbLSmGb6RWnByzGpkNA7HAwULVAZW/AdZ
+CIFHrCxbNRU=
+=MWhd
+-----END PGP SIGNATURE-----
+
+--Sig_/A9M.MAB1L=Enx=LbcHHHp0w--
