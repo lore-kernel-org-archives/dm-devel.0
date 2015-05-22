@@ -1,88 +1,149 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: Proposal for annotating _unstable_ pages
-Date: Thu, 21 May 2015 21:21:12 +0200
-Message-ID: <20150521192112.GA2665@quack.suse.cz>
-References: <20150515205825.GC24967@birch.djwong.org>
- <20150519154200.GA2559@kmo-pixel>
- <20150519201055.GD27115@birch.djwong.org>
- <20150521010440.GA17405@kmo-pixel>
- <20150521165453.GK27863@quack.suse.cz>
- <20150521180954.GA27397@kmo-pixel>
+From: Ming Lin <mlin@kernel.org>
+Subject: Re: [PATCH v3 01/11] block: make generic_make_request handle arbitrarily
+ sized bios
+Date: Fri, 22 May 2015 00:51:03 -0700
+Message-ID: <555EDFE7.2020304@kernel.org>
+References: <1430980461-5235-1-git-send-email-mlin@kernel.org> <1430980461-5235-2-git-send-email-mlin@kernel.org> <x49twv9kevg.fsf@segfault.boston.devel.redhat.com> <20150518172259.GA8116@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150521180954.GA27397@kmo-pixel>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Kent Overstreet <kent.overstreet@gmail.com>
-Cc: Jan Kara <jack@suse.cz>, "Darrick J. Wong" <darrick.wong@oracle.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, linux-btrfs@vger.kernel.org, axboe@fb.com, zab@zabbo.net, neilb@suse.de
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150518172259.GA8116@lst.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>, Jeff Moyer <jmoyer@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dpark@posteo.net>, Christoph Hellwig <hch@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Ming Lei <ming.lei@canonical.com>, Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Geoff Levand <geoff@infradead.org>, Jim Paris <jim@jtan.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Oleg Drokin <oleg.drokin@intel.com>, Andreas Dilger <andreas.dilger@intel.com>
 List-Id: dm-devel.ids
 
-On Thu 21-05-15 11:09:55, Kent Overstreet wrote:
-> On Thu, May 21, 2015 at 06:54:53PM +0200, Jan Kara wrote:
-> > On Wed 20-05-15 18:04:40, Kent Overstreet wrote:
-> > > > Yeah.  I never figured out a sane way to migrate pages and keep everything
-> > > > else happy.  Daniel Phillips is having a go at page forking for tux3; let's
-> > > > see if the questions about that get resolved.
-> > > 
-> > > That would be great, we need something.
-> > > 
-> > > I'd also be really curious what btrfs is doing today - is it just bouncing
-> > > everything internally, or did they come up with something more clever?
-> > 
-> > Btrfs is just waiting for IO to complete.
-> > 
-> > > > > Also, there's probably always going to be situations where we're reading or
-> > > > > writing to pages user space can stomp on (dio) - IMO we need to add a bio flag
-> > > > > to annotate this - "if you need this to be stable you have to bounce it".
-> > > > > Otherwise either filesystems/block drivers are going to be stuck bouncing
-> > > > > everything, or it'll just (continue to be) buggy.
-> > > > 
-> > > > Well, for now there's BIO_SNAP_STABLE that forces the block layer to bounce it,
-> > > > but right now ext3 is the last user of it, and afaict btrfs is the only other
-> > > > FS that takes care of stable pages on its own.
-> > > 
-> > > I have no idea what BIO_SNAP_STABLE was supposed to be for, but I don't see how
-> > > it's useful for anything sane.
-> > 
-> > It's for the case where lower layer requests it needs stable pages but
-> > upper layer isn't able to provide them (as is the case of ext3). Then block
-> > layer bounces the data for the caller.
-> > 
-> > > But that's the complete opposite of the problem stable pages are supposed to
-> > > solve: stable pages are for when the _lower_ layer (be it filesystem, bcache,
-> > > md, lvm) needs the memory being either read to or written from (both, it's not
-> > > just writes) to not be diddled over while the IO is in flight.
-> > > 
-> > > Now, a point that I think has been missed is that stable pages are _not_ a
-> > > complete solution, at least for consumers in the block layer.
-> > > 
-> > > The situation today is that if I'm in the block layer, and I get a handed a read
-> > > or write bio, I _don't know_ if it's from something that's going to diddle over
-> > > those pages or not. So if I require stable pages - be it for data checksumming
-> > > or for other things - I've just got to bounce the bio myself.
-> > > 
-> > > And then the really annoying thing is that if you've got stacked things that all
-> > > need stable pages (maybe btrfs on top of bcache on top of md) - they _all_ have
-> > > to assume the pages aren't going to be stable, so if they need them they _all_
-> > > have to bounce - even though once the first layer bounced the bio that made it
-> > > stable for everything underneath it.
-> > 
-> > The current design is that if you need stable pages for your device, set
-> > bdi capability BDI_CAP_STABLE_WRITES, fs then takes care of not scribbling
-> > over your page while it is under writeback or uses BIO_SNAP_STABLE if it
-> > cannot.
+On 05/18/2015 10:22 AM, Christoph Hellwig wrote:
+> On Mon, May 18, 2015 at 12:52:03PM -0400, Jeff Moyer wrote:
+>>> +	return bio_split(bio, split_sectors, GFP_NOIO, bs);
+>>
+>> Much of this function is cut-n-paste from blk-lib.c.  Is there any way
+>> to factor it out?
 > 
-> But if I need stable pages, I still have to bounce because that _does not_
-> guarantee stable pages, it only gives me stable pages for some of the IOs and in
-> the lower layers you can't tell which is which.
-> 
-> Do you see the problem? What good is BDI_CAP_STABLE_WRITES if it's not a
-> guarantee and I can't tell if I need to bounce or not?
-  So fix the upper layers to make it a guarantee? You mentioned direct IO
-needs fixing. Anything else?
+> The code in blk-lib.c can go away now that any driver that cares
+> does the split.
 
-								Honza
+How about below?
+
+From 23aec71f3e44a21aece46f7939715e022b7d3daa Mon Sep 17 00:00:00 2001
+From: Ming Lin <mlin@kernel.org>
+Date: Fri, 22 May 2015 00:46:56 -0700
+Subject: [PATCH] block: remove split code in blkdev_issue_discard
+
+The split code in blkdev_issue_discard() can go away now
+that any driver that cares does the split.
+
+Signed-off-by: Ming Lin <mlin@kernel.org>
+---
+ block/blk-lib.c | 73 +++++++++++----------------------------------------------
+ 1 file changed, 14 insertions(+), 59 deletions(-)
+
+diff --git a/block/blk-lib.c b/block/blk-lib.c
+index 7688ee3..3bf3c4a 100644
+--- a/block/blk-lib.c
++++ b/block/blk-lib.c
+@@ -43,34 +43,17 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+ 	DECLARE_COMPLETION_ONSTACK(wait);
+ 	struct request_queue *q = bdev_get_queue(bdev);
+ 	int type = REQ_WRITE | REQ_DISCARD;
+-	unsigned int max_discard_sectors, granularity;
+-	int alignment;
+ 	struct bio_batch bb;
+ 	struct bio *bio;
+ 	int ret = 0;
+ 	struct blk_plug plug;
+ 
+-	if (!q)
++	if (!q || !nr_sects)
+ 		return -ENXIO;
+ 
+ 	if (!blk_queue_discard(q))
+ 		return -EOPNOTSUPP;
+ 
+-	/* Zero-sector (unknown) and one-sector granularities are the same.  */
+-	granularity = max(q->limits.discard_granularity >> 9, 1U);
+-	alignment = (bdev_discard_alignment(bdev) >> 9) % granularity;
+-
+-	/*
+-	 * Ensure that max_discard_sectors is of the proper
+-	 * granularity, so that requests stay aligned after a split.
+-	 */
+-	max_discard_sectors = min(q->limits.max_discard_sectors, UINT_MAX >> 9);
+-	max_discard_sectors -= max_discard_sectors % granularity;
+-	if (unlikely(!max_discard_sectors)) {
+-		/* Avoid infinite loop below. Being cautious never hurts. */
+-		return -EOPNOTSUPP;
+-	}
+-
+ 	if (flags & BLKDEV_DISCARD_SECURE) {
+ 		if (!blk_queue_secdiscard(q))
+ 			return -EOPNOTSUPP;
+@@ -82,52 +65,24 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+ 	bb.wait = &wait;
+ 
+ 	blk_start_plug(&plug);
+-	while (nr_sects) {
+-		unsigned int req_sects;
+-		sector_t end_sect, tmp;
+ 
+-		bio = bio_alloc(gfp_mask, 1);
+-		if (!bio) {
+-			ret = -ENOMEM;
+-			break;
+-		}
++	bio = bio_alloc(gfp_mask, 1);
++	if (!bio) {
++		ret = -ENOMEM;
++		goto out;
++	}
+ 
+-		req_sects = min_t(sector_t, nr_sects, max_discard_sectors);
+-
+-		/*
+-		 * If splitting a request, and the next starting sector would be
+-		 * misaligned, stop the discard at the previous aligned sector.
+-		 */
+-		end_sect = sector + req_sects;
+-		tmp = end_sect;
+-		if (req_sects < nr_sects &&
+-		    sector_div(tmp, granularity) != alignment) {
+-			end_sect = end_sect - alignment;
+-			sector_div(end_sect, granularity);
+-			end_sect = end_sect * granularity + alignment;
+-			req_sects = end_sect - sector;
+-		}
++	bio->bi_iter.bi_sector = sector;
++	bio->bi_end_io = bio_batch_end_io;
++	bio->bi_bdev = bdev;
++	bio->bi_private = &bb;
+ 
+-		bio->bi_iter.bi_sector = sector;
+-		bio->bi_end_io = bio_batch_end_io;
+-		bio->bi_bdev = bdev;
+-		bio->bi_private = &bb;
++	bio->bi_iter.bi_size = nr_sects << 9;
+ 
+-		bio->bi_iter.bi_size = req_sects << 9;
+-		nr_sects -= req_sects;
+-		sector = end_sect;
++	atomic_inc(&bb.done);
++	submit_bio(type, bio);
+ 
+-		atomic_inc(&bb.done);
+-		submit_bio(type, bio);
+-
+-		/*
+-		 * We can loop for a long time in here, if someone does
+-		 * full device discards (like mkfs). Be nice and allow
+-		 * us to schedule out to avoid softlocking if preempt
+-		 * is disabled.
+-		 */
+-		cond_resched();
+-	}
++out:
+ 	blk_finish_plug(&plug);
+ 
+ 	/* Wait for bios in-flight */
 -- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+1.9.1
