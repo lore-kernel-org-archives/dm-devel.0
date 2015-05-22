@@ -1,55 +1,34 @@
-From: michaelc@cs.wisc.edu
-Subject: [PATCH 1/1] scsi: add Synology to 1024 sector blacklist
-Date: Fri, 22 May 2015 14:22:52 -0500
-Message-ID: <1432322572-5879-1-git-send-email-michaelc@cs.wisc.edu>
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
-Cc: Mike Christie <michaelc@cs.wisc.edu>
+From: kbuild test robot <fengguang.wu@intel.com>
+Subject: [PATCH dm] dm thin: __blkdev_issue_discard_async() can be static
+Date: Sat, 23 May 2015 05:37:23 +0800
+Message-ID: <20150522213723.GA89951@lkp-sb04>
+References: <201505230502.WN0Nq7Zv%fengguang.wu@intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <201505230502.WN0Nq7Zv%fengguang.wu@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Joe Thornber <ejt@redhat.com>
+Cc: kbuild-all@01.org, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Mike Christie <michaelc@cs.wisc.edu>
 
-Another day another iSCSI target that cannot handle large IOs.
-The Synology iSCSI targets report:
-
-Block limits VPD page (SBC):
-  Write same no zero (WSNZ): 0
-  Maximum compare and write length: 0 blocks
-  Optimal transfer length granularity: 0 blocks
-  Maximum transfer length: 0 blocks
-  Optimal transfer length: 0 blocks
-  Maximum prefetch length: 0 blocks
-  Maximum unmap LBA count: 0
-  Maximum unmap block descriptor count: 0
-  Optimal unmap granularity: 0
-  Unmap granularity alignment valid: 0
-  Unmap granularity alignment: 0
-  Maximum write same length: 0x0 blocks
-
-and the size of the command it can handle seems to depend on how much
-memory it can allocate at the time. This results in IO errors when
-handling large IOs. This patch just has us use the old 1024 default
-sectors for this target by adding it to the scsi blacklist.
-
-Reported-by: Ancoron Luciferis <ancoron.luciferis@googlemail.com>
-Signed-off-by: Mike Christie <michaelc@cs.wisc.edu>
+Signed-off-by: Fengguang Wu <fengguang.wu@intel.com>
 ---
- drivers/scsi/scsi_devinfo.c | 1 +
- 1 file changed, 1 insertion(+)
+ dm-thin.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/scsi/scsi_devinfo.c b/drivers/scsi/scsi_devinfo.c
-index 848c7ca..d2a8bdf 100644
---- a/drivers/scsi/scsi_devinfo.c
-+++ b/drivers/scsi/scsi_devinfo.c
-@@ -227,6 +227,7 @@ static struct {
- 	{"Promise", "VTrak E610f", NULL, BLIST_SPARSELUN | BLIST_NO_RSOC},
- 	{"Promise", "", NULL, BLIST_SPARSELUN},
- 	{"QNAP", "iSCSI Storage", NULL, BLIST_MAX_1024}, 
-+	{"SYNOLOGY", "iSCSI Storage", NULL, BLIST_MAX_1024},
- 	{"QUANTUM", "XP34301", "1071", BLIST_NOTQ},
- 	{"REGAL", "CDC-4X", NULL, BLIST_MAX5LUN | BLIST_SINGLELUN},
- 	{"SanDisk", "ImageMate CF-SD1", NULL, BLIST_FORCELUN},
--- 
-1.8.3.1
-
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index c2634a5..ef47420 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -335,7 +335,7 @@ struct thin_c {
+  *    that is being kept local to DM thinp until the block changes to allow
+  *    late bio splitting land upstream.
+  */
+-int __blkdev_issue_discard_async(struct block_device *bdev, sector_t sector,
++static int __blkdev_issue_discard_async(struct block_device *bdev, sector_t sector,
+ 				 sector_t nr_sects, gfp_t gfp_mask, unsigned long flags,
+ 				 struct bio *parent_bio)
+ {
