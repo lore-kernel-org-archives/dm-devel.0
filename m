@@ -1,547 +1,1621 @@
 From: Ming Lin <mlin@kernel.org>
-Subject: [PATCH v4 01/11] block: make generic_make_request handle arbitrarily
- sized bios
-Date: Fri, 22 May 2015 11:18:33 -0700
-Message-ID: <1432318723-18829-2-git-send-email-mlin@kernel.org>
+Subject: [PATCH v4 08/11] block: kill merge_bvec_fn() completely
+Date: Fri, 22 May 2015 11:18:40 -0700
+Message-ID: <1432318723-18829-9-git-send-email-mlin@kernel.org>
 References: <1432318723-18829-1-git-send-email-mlin@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <ceph-devel-owner@vger.kernel.org>
 In-reply-to: <1432318723-18829-1-git-send-email-mlin@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: ceph-devel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Christoph Hellwig <hch@lst.de>, Kent Overstreet <kent.overstreet@gmail.com>, Jens Axboe <axboe@kernel.dk>, Dongsu Park <dpark@posteo.net>, Ming Lin <mlin@kernel.org>, Christoph Hellwig <hch@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Ming Lei <ming.lei@canonical.com>, Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Geoff Levand <geoff@infradead.org>, Jim Paris <jim@jtan.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Oleg Drokin <oleg.drokin@intel.com>, Andreas Dilger <andreas.dilger@intel.com>
+Cc: Christoph Hellwig <hch@lst.de>, Kent Overstreet <kent.overstreet@gmail.com>, Jens Axboe <axboe@kernel.dk>, Dongsu Park <dpark@posteo.net>, Ming Lin <mlin@kernel.org>, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Yehuda Sadeh <yehuda@inktank.com>, Sage Weil <sage@inktank.com>, Alex Elder <elder@kernel.org>, ceph-devel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
 From: Kent Overstreet <kent.overstreet@gmail.com>
 
-The way the block layer is currently written, it goes to great lengths
-to avoid having to split bios; upper layer code (such as bio_add_page())
-checks what the underlying device can handle and tries to always create
-bios that don't need to be split.
-
-But this approach becomes unwieldy and eventually breaks down with
-stacked devices and devices with dynamic limits, and it adds a lot of
-complexity. If the block layer could split bios as needed, we could
-eliminate a lot of complexity elsewhere - particularly in stacked
-drivers. Code that creates bios can then create whatever size bios are
-convenient, and more importantly stacked drivers don't have to deal with
-both their own bio size limitations and the limitations of the
-(potentially multiple) devices underneath them.  In the future this will
-let us delete merge_bvec_fn and a bunch of other code.
-
-We do this by adding calls to blk_queue_split() to the various
-make_request functions that need it - a few can already handle arbitrary
-size bios. Note that we add the call _after_ any call to
-blk_queue_bounce(); this means that blk_queue_split() and
-blk_recalc_rq_segments() don't need to be concerned with bouncing
-affecting segment merging.
-
-Some make_request_fn() callbacks were simple enough to audit and verify
-they don't need blk_queue_split() calls. The skipped ones are:
-
- * nfhd_make_request (arch/m68k/emu/nfblock.c)
- * axon_ram_make_request (arch/powerpc/sysdev/axonram.c)
- * simdisk_make_request (arch/xtensa/platforms/iss/simdisk.c)
- * brd_make_request (ramdisk - drivers/block/brd.c)
- * mtip_submit_request (drivers/block/mtip32xx/mtip32xx.c)
- * loop_make_request
- * null_queue_bio
- * bcache's make_request fns
-
-Some others are almost certainly safe to remove now, but will be left
-for future patches.
+As generic_make_request() is now able to handle arbitrarily sized bios,
+it's no longer necessary for each individual block driver to define its
+own ->merge_bvec_fn() callback. Remove every invocation completely.
 
 Cc: Jens Axboe <axboe@kernel.dk>
-Cc: Christoph Hellwig <hch@infradead.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Ming Lei <ming.lei@canonical.com>
-Cc: Neil Brown <neilb@suse.de>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
 Cc: Lars Ellenberg <drbd-dev@lists.linbit.com>
 Cc: drbd-user@lists.linbit.com
 Cc: Jiri Kosina <jkosina@suse.cz>
-Cc: Geoff Levand <geoff@infradead.org>
-Cc: Jim Paris <jim@jtan.com>
-Cc: Joshua Morris <josh.h.morris@us.ibm.com>
-Cc: Philip Kelleher <pjk1939@linux.vnet.ibm.com>
-Cc: Minchan Kim <minchan@kernel.org>
-Cc: Nitin Gupta <ngupta@vflare.org>
-Cc: Oleg Drokin <oleg.drokin@intel.com>
-Cc: Andreas Dilger <andreas.dilger@intel.com>
+Cc: Yehuda Sadeh <yehuda@inktank.com>
+Cc: Sage Weil <sage@inktank.com>
+Cc: Alex Elder <elder@kernel.org>
+Cc: ceph-devel@vger.kernel.org
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
+Cc: Neil Brown <neilb@suse.de>
+Cc: linux-raid@vger.kernel.org
+Cc: Christoph Hellwig <hch@infradead.org>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>
 Signed-off-by: Kent Overstreet <kent.overstreet@gmail.com>
-[dpark: skip more mq-based drivers, resolve merge conflicts, etc.]
+[dpark: also remove ->merge_bvec_fn() in dm-thin as well as
+ dm-era-target, and resolve merge conflicts]
 Signed-off-by: Dongsu Park <dpark@posteo.net>
 Signed-off-by: Ming Lin <mlin@kernel.org>
 ---
- block/blk-core.c                            |  19 ++--
- block/blk-merge.c                           | 159 ++++++++++++++++++++++++++--
- block/blk-mq.c                              |   4 +
- drivers/block/drbd/drbd_req.c               |   2 +
- drivers/block/pktcdvd.c                     |   6 +-
- drivers/block/ps3vram.c                     |   2 +
- drivers/block/rsxx/dev.c                    |   2 +
- drivers/block/umem.c                        |   2 +
- drivers/block/zram/zram_drv.c               |   2 +
- drivers/md/dm.c                             |   2 +
- drivers/md/md.c                             |   2 +
- drivers/s390/block/dcssblk.c                |   2 +
- drivers/s390/block/xpram.c                  |   2 +
- drivers/staging/lustre/lustre/llite/lloop.c |   2 +
- include/linux/blkdev.h                      |   3 +
- 15 files changed, 189 insertions(+), 22 deletions(-)
+ block/blk-merge.c              |  17 +-----
+ block/blk-settings.c           |  22 --------
+ drivers/block/drbd/drbd_int.h  |   1 -
+ drivers/block/drbd/drbd_main.c |   1 -
+ drivers/block/drbd/drbd_req.c  |  35 ------------
+ drivers/block/pktcdvd.c        |  21 -------
+ drivers/block/rbd.c            |  47 ----------------
+ drivers/md/dm-cache-target.c   |  21 -------
+ drivers/md/dm-crypt.c          |  16 ------
+ drivers/md/dm-era-target.c     |  15 -----
+ drivers/md/dm-flakey.c         |  16 ------
+ drivers/md/dm-linear.c         |  16 ------
+ drivers/md/dm-log-writes.c     |  16 ------
+ drivers/md/dm-snap.c           |  15 -----
+ drivers/md/dm-stripe.c         |  21 -------
+ drivers/md/dm-table.c          |   8 ---
+ drivers/md/dm-thin.c           |  31 -----------
+ drivers/md/dm-verity.c         |  16 ------
+ drivers/md/dm.c                | 120 +---------------------------------------
+ drivers/md/dm.h                |   2 -
+ drivers/md/linear.c            |  43 ---------------
+ drivers/md/md.c                |  26 ---------
+ drivers/md/md.h                |  12 ----
+ drivers/md/multipath.c         |  21 -------
+ drivers/md/raid0.c             |  56 -------------------
+ drivers/md/raid0.h             |   2 -
+ drivers/md/raid1.c             |  58 +-------------------
+ drivers/md/raid10.c            | 121 +----------------------------------------
+ drivers/md/raid5.c             |  32 -----------
+ include/linux/blkdev.h         |  10 ----
+ include/linux/device-mapper.h  |   4 --
+ 31 files changed, 9 insertions(+), 833 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 7871603..fbbb337 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -619,6 +619,10 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
- 	if (q->id < 0)
- 		goto fail_q;
- 
-+	q->bio_split = bioset_create(BIO_POOL_SIZE, 0);
-+	if (!q->bio_split)
-+		goto fail_id;
-+
- 	q->backing_dev_info.ra_pages =
- 			(VM_MAX_READAHEAD * 1024) / PAGE_CACHE_SIZE;
- 	q->backing_dev_info.state = 0;
-@@ -628,7 +632,7 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
- 
- 	err = bdi_init(&q->backing_dev_info);
- 	if (err)
--		goto fail_id;
-+		goto fail_split;
- 
- 	setup_timer(&q->backing_dev_info.laptop_mode_wb_timer,
- 		    laptop_mode_timer_fn, (unsigned long) q);
-@@ -670,6 +674,8 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
- 
- fail_bdi:
- 	bdi_destroy(&q->backing_dev_info);
-+fail_split:
-+	bioset_free(q->bio_split);
- fail_id:
- 	ida_simple_remove(&blk_queue_ida, q->id);
- fail_q:
-@@ -1586,6 +1592,8 @@ void blk_queue_bio(struct request_queue *q, struct bio *bio)
- 	struct request *req;
- 	unsigned int request_count = 0;
- 
-+	blk_queue_split(q, &bio, q->bio_split);
-+
- 	/*
- 	 * low level driver can indicate that it wants pages above a
- 	 * certain limit bounced to low memory (ie for highmem, or even
-@@ -1809,15 +1817,6 @@ generic_make_request_checks(struct bio *bio)
- 		goto end_io;
- 	}
- 
--	if (likely(bio_is_rw(bio) &&
--		   nr_sectors > queue_max_hw_sectors(q))) {
--		printk(KERN_ERR "bio too big device %s (%u > %u)\n",
--		       bdevname(bio->bi_bdev, b),
--		       bio_sectors(bio),
--		       queue_max_hw_sectors(q));
--		goto end_io;
--	}
--
- 	part = bio->bi_bdev->bd_part;
- 	if (should_fail_request(part, bio->bi_iter.bi_size) ||
- 	    should_fail_request(&part_to_disk(part)->part0,
 diff --git a/block/blk-merge.c b/block/blk-merge.c
-index fd3fee8..dc14255 100644
+index dc14255..25cafb8 100644
 --- a/block/blk-merge.c
 +++ b/block/blk-merge.c
-@@ -9,12 +9,158 @@
- 
- #include "blk.h"
- 
-+static struct bio *blk_bio_discard_split(struct request_queue *q,
-+					 struct bio *bio,
-+					 struct bio_set *bs)
-+{
-+	unsigned int max_discard_sectors, granularity;
-+	int alignment;
-+	sector_t tmp;
-+	unsigned split_sectors;
-+
-+	/* Zero-sector (unknown) and one-sector granularities are the same.  */
-+	granularity = max(q->limits.discard_granularity >> 9, 1U);
-+
-+	max_discard_sectors = min(q->limits.max_discard_sectors, UINT_MAX >> 9);
-+	max_discard_sectors -= max_discard_sectors % granularity;
-+
-+	if (unlikely(!max_discard_sectors)) {
-+		/* XXX: warn */
-+		return NULL;
-+	}
-+
-+	if (bio_sectors(bio) <= max_discard_sectors)
-+		return NULL;
-+
-+	split_sectors = max_discard_sectors;
-+
-+	/*
-+	 * If the next starting sector would be misaligned, stop the discard at
-+	 * the previous aligned sector.
-+	 */
-+	alignment = (q->limits.discard_alignment >> 9) % granularity;
-+
-+	tmp = bio->bi_iter.bi_sector + split_sectors - alignment;
-+	tmp = sector_div(tmp, granularity);
-+
-+	if (split_sectors > tmp)
-+		split_sectors -= tmp;
-+
-+	return bio_split(bio, split_sectors, GFP_NOIO, bs);
-+}
-+
-+static struct bio *blk_bio_write_same_split(struct request_queue *q,
-+					    struct bio *bio,
-+					    struct bio_set *bs)
-+{
-+	if (!q->limits.max_write_same_sectors)
-+		return NULL;
-+
-+	if (bio_sectors(bio) <= q->limits.max_write_same_sectors)
-+		return NULL;
-+
-+	return bio_split(bio, q->limits.max_write_same_sectors, GFP_NOIO, bs);
-+}
-+
-+static struct bio *blk_bio_segment_split(struct request_queue *q,
-+					 struct bio *bio,
-+					 struct bio_set *bs)
-+{
-+	struct bio *split;
-+	struct bio_vec bv, bvprv;
-+	struct bvec_iter iter;
-+	unsigned seg_size = 0, nsegs = 0;
-+	int prev = 0;
-+
-+	struct bvec_merge_data bvm = {
-+		.bi_bdev	= bio->bi_bdev,
-+		.bi_sector	= bio->bi_iter.bi_sector,
-+		.bi_size	= 0,
-+		.bi_rw		= bio->bi_rw,
-+	};
-+
-+	bio_for_each_segment(bv, bio, iter) {
-+		if (q->merge_bvec_fn &&
-+		    q->merge_bvec_fn(q, &bvm, &bv) < (int) bv.bv_len)
-+			goto split;
-+
-+		bvm.bi_size += bv.bv_len;
-+
-+		if (bvm.bi_size >> 9 > queue_max_sectors(q))
-+			goto split;
-+
-+		/*
-+		 * If the queue doesn't support SG gaps and adding this
-+		 * offset would create a gap, disallow it.
-+		 */
-+		if (q->queue_flags & (1 << QUEUE_FLAG_SG_GAPS) &&
-+		    prev && bvec_gap_to_prev(&bvprv, bv.bv_offset))
-+			goto split;
-+
-+		if (prev && blk_queue_cluster(q)) {
-+			if (seg_size + bv.bv_len > queue_max_segment_size(q))
-+				goto new_segment;
-+			if (!BIOVEC_PHYS_MERGEABLE(&bvprv, &bv))
-+				goto new_segment;
-+			if (!BIOVEC_SEG_BOUNDARY(q, &bvprv, &bv))
-+				goto new_segment;
-+
-+			seg_size += bv.bv_len;
-+			bvprv = bv;
-+			prev = 1;
-+			continue;
-+		}
-+new_segment:
-+		if (nsegs == queue_max_segments(q))
-+			goto split;
-+
-+		nsegs++;
-+		bvprv = bv;
-+		prev = 1;
-+		seg_size = bv.bv_len;
-+	}
-+
-+	return NULL;
-+split:
-+	split = bio_clone_bioset(bio, GFP_NOIO, bs);
-+
-+	split->bi_iter.bi_size -= iter.bi_size;
-+	bio->bi_iter = iter;
-+
-+	if (bio_integrity(bio)) {
-+		bio_integrity_advance(bio, split->bi_iter.bi_size);
-+		bio_integrity_trim(split, 0, bio_sectors(split));
-+	}
-+
-+	return split;
-+}
-+
-+void blk_queue_split(struct request_queue *q, struct bio **bio,
-+		     struct bio_set *bs)
-+{
-+	struct bio *split;
-+
-+	if ((*bio)->bi_rw & REQ_DISCARD)
-+		split = blk_bio_discard_split(q, *bio, bs);
-+	else if ((*bio)->bi_rw & REQ_WRITE_SAME)
-+		split = blk_bio_write_same_split(q, *bio, bs);
-+	else
-+		split = blk_bio_segment_split(q, *bio, q->bio_split);
-+
-+	if (split) {
-+		bio_chain(split, *bio);
-+		generic_make_request(*bio);
-+		*bio = split;
-+	}
-+}
-+EXPORT_SYMBOL(blk_queue_split);
-+
- static unsigned int __blk_recalc_rq_segments(struct request_queue *q,
- 					     struct bio *bio,
- 					     bool no_sg_merge)
- {
- 	struct bio_vec bv, bvprv = { NULL };
--	int cluster, high, highprv = 1;
-+	int cluster, prev = 0;
- 	unsigned int seg_size, nr_phys_segs;
- 	struct bio *fbio, *bbio;
+@@ -69,24 +69,13 @@ static struct bio *blk_bio_segment_split(struct request_queue *q,
+ 	struct bio *split;
+ 	struct bio_vec bv, bvprv;
  	struct bvec_iter iter;
-@@ -36,7 +182,6 @@ static unsigned int __blk_recalc_rq_segments(struct request_queue *q,
- 	cluster = blk_queue_cluster(q);
- 	seg_size = 0;
- 	nr_phys_segs = 0;
--	high = 0;
- 	for_each_bio(bio) {
- 		bio_for_each_segment(bv, bio, iter) {
- 			/*
-@@ -46,13 +191,7 @@ static unsigned int __blk_recalc_rq_segments(struct request_queue *q,
- 			if (no_sg_merge)
- 				goto new_segment;
+-	unsigned seg_size = 0, nsegs = 0;
++	unsigned seg_size = 0, nsegs = 0, sectors = 0;
+ 	int prev = 0;
  
--			/*
--			 * the trick here is making sure that a high page is
--			 * never considered part of another segment, since
--			 * that might change with the bounce page.
--			 */
--			high = page_to_pfn(bv.bv_page) > queue_bounce_pfn(q);
--			if (!high && !highprv && cluster) {
-+			if (prev && cluster) {
- 				if (seg_size + bv.bv_len
- 				    > queue_max_segment_size(q))
- 					goto new_segment;
-@@ -72,8 +211,8 @@ new_segment:
+-	struct bvec_merge_data bvm = {
+-		.bi_bdev	= bio->bi_bdev,
+-		.bi_sector	= bio->bi_iter.bi_sector,
+-		.bi_size	= 0,
+-		.bi_rw		= bio->bi_rw,
+-	};
+-
+ 	bio_for_each_segment(bv, bio, iter) {
+-		if (q->merge_bvec_fn &&
+-		    q->merge_bvec_fn(q, &bvm, &bv) < (int) bv.bv_len)
+-			goto split;
+-
+-		bvm.bi_size += bv.bv_len;
++		sectors += bv.bv_len >> 9;
  
- 			nr_phys_segs++;
- 			bvprv = bv;
-+			prev = 1;
- 			seg_size = bv.bv_len;
--			highprv = high;
- 		}
- 		bbio = bio;
- 	}
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index e68b71b..e7fae76 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -1256,6 +1256,8 @@ static void blk_mq_make_request(struct request_queue *q, struct bio *bio)
- 		return;
- 	}
+-		if (bvm.bi_size >> 9 > queue_max_sectors(q))
++		if (sectors > queue_max_sectors(q))
+ 			goto split;
  
-+	blk_queue_split(q, &bio, q->bio_split);
-+
- 	rq = blk_mq_map_request(q, bio, &data);
- 	if (unlikely(!rq))
- 		return;
-@@ -1339,6 +1341,8 @@ static void blk_sq_make_request(struct request_queue *q, struct bio *bio)
- 		return;
- 	}
+ 		/*
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index 12600bf..e90d477 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -53,28 +53,6 @@ void blk_queue_unprep_rq(struct request_queue *q, unprep_rq_fn *ufn)
+ }
+ EXPORT_SYMBOL(blk_queue_unprep_rq);
  
-+	blk_queue_split(q, &bio, q->bio_split);
-+
- 	if (use_plug && !blk_queue_nomerges(q) &&
- 	    blk_attempt_plug_merge(q, bio, &request_count))
- 		return;
+-/**
+- * blk_queue_merge_bvec - set a merge_bvec function for queue
+- * @q:		queue
+- * @mbfn:	merge_bvec_fn
+- *
+- * Usually queues have static limitations on the max sectors or segments that
+- * we can put in a request. Stacking drivers may have some settings that
+- * are dynamic, and thus we have to query the queue whether it is ok to
+- * add a new bio_vec to a bio at a given offset or not. If the block device
+- * has such limitations, it needs to register a merge_bvec_fn to control
+- * the size of bio's sent to it. Note that a block device *must* allow a
+- * single page to be added to an empty bio. The block device driver may want
+- * to use the bio_split() function to deal with these bio's. By default
+- * no merge_bvec_fn is defined for a queue, and only the fixed limits are
+- * honored.
+- */
+-void blk_queue_merge_bvec(struct request_queue *q, merge_bvec_fn *mbfn)
+-{
+-	q->merge_bvec_fn = mbfn;
+-}
+-EXPORT_SYMBOL(blk_queue_merge_bvec);
+-
+ void blk_queue_softirq_done(struct request_queue *q, softirq_done_fn *fn)
+ {
+ 	q->softirq_done_fn = fn;
+diff --git a/drivers/block/drbd/drbd_int.h b/drivers/block/drbd/drbd_int.h
+index b905e98..63ce2b0 100644
+--- a/drivers/block/drbd/drbd_int.h
++++ b/drivers/block/drbd/drbd_int.h
+@@ -1449,7 +1449,6 @@ extern void do_submit(struct work_struct *ws);
+ extern void __drbd_make_request(struct drbd_device *, struct bio *, unsigned long);
+ extern void drbd_make_request(struct request_queue *q, struct bio *bio);
+ extern int drbd_read_remote(struct drbd_device *device, struct drbd_request *req);
+-extern int drbd_merge_bvec(struct request_queue *q, struct bvec_merge_data *bvm, struct bio_vec *bvec);
+ extern int is_valid_ar_handle(struct drbd_request *, sector_t);
+ 
+ 
+diff --git a/drivers/block/drbd/drbd_main.c b/drivers/block/drbd/drbd_main.c
+index 81fde9e..771e68c 100644
+--- a/drivers/block/drbd/drbd_main.c
++++ b/drivers/block/drbd/drbd_main.c
+@@ -2774,7 +2774,6 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	   This triggers a max_bio_size message upon first attach or connect */
+ 	blk_queue_max_hw_sectors(q, DRBD_MAX_BIO_SIZE_SAFE >> 8);
+ 	blk_queue_bounce_limit(q, BLK_BOUNCE_ANY);
+-	blk_queue_merge_bvec(q, drbd_merge_bvec);
+ 	q->queue_lock = &resource->req_lock;
+ 
+ 	device->md_io.page = alloc_page(GFP_KERNEL);
 diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
-index 3907202..a6265bc 100644
+index a6265bc..7523f00 100644
 --- a/drivers/block/drbd/drbd_req.c
 +++ b/drivers/block/drbd/drbd_req.c
-@@ -1497,6 +1497,8 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
- 	struct drbd_device *device = (struct drbd_device *) q->queuedata;
- 	unsigned long start_jif;
+@@ -1510,41 +1510,6 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
+ 	__drbd_make_request(device, bio, start_jif);
+ }
  
-+	blk_queue_split(q, &bio, q->bio_split);
-+
- 	start_jif = jiffies;
- 
- 	/*
+-/* This is called by bio_add_page().
+- *
+- * q->max_hw_sectors and other global limits are already enforced there.
+- *
+- * We need to call down to our lower level device,
+- * in case it has special restrictions.
+- *
+- * We also may need to enforce configured max-bio-bvecs limits.
+- *
+- * As long as the BIO is empty we have to allow at least one bvec,
+- * regardless of size and offset, so no need to ask lower levels.
+- */
+-int drbd_merge_bvec(struct request_queue *q, struct bvec_merge_data *bvm, struct bio_vec *bvec)
+-{
+-	struct drbd_device *device = (struct drbd_device *) q->queuedata;
+-	unsigned int bio_size = bvm->bi_size;
+-	int limit = DRBD_MAX_BIO_SIZE;
+-	int backing_limit;
+-
+-	if (bio_size && get_ldev(device)) {
+-		unsigned int max_hw_sectors = queue_max_hw_sectors(q);
+-		struct request_queue * const b =
+-			device->ldev->backing_bdev->bd_disk->queue;
+-		if (b->merge_bvec_fn) {
+-			bvm->bi_bdev = device->ldev->backing_bdev;
+-			backing_limit = b->merge_bvec_fn(b, bvm, bvec);
+-			limit = min(limit, backing_limit);
+-		}
+-		put_ldev(device);
+-		if ((limit >> 9) > max_hw_sectors)
+-			limit = max_hw_sectors << 9;
+-	}
+-	return limit;
+-}
+-
+ void request_timer_fn(unsigned long data)
+ {
+ 	struct drbd_device *device = (struct drbd_device *) data;
 diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
-index 09e628da..ea10bd9 100644
+index ea10bd9..85eac23 100644
 --- a/drivers/block/pktcdvd.c
 +++ b/drivers/block/pktcdvd.c
-@@ -2446,6 +2446,10 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
- 	char b[BDEVNAME_SIZE];
- 	struct bio *split;
+@@ -2505,26 +2505,6 @@ end_io:
  
-+	blk_queue_bounce(q, &bio);
-+
-+	blk_queue_split(q, &bio, q->bio_split);
-+
- 	pd = q->queuedata;
- 	if (!pd) {
- 		pr_err("%s incorrect request queue\n",
-@@ -2476,8 +2480,6 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
- 		goto end_io;
- 	}
  
--	blk_queue_bounce(q, &bio);
+ 
+-static int pkt_merge_bvec(struct request_queue *q, struct bvec_merge_data *bmd,
+-			  struct bio_vec *bvec)
+-{
+-	struct pktcdvd_device *pd = q->queuedata;
+-	sector_t zone = get_zone(bmd->bi_sector, pd);
+-	int used = ((bmd->bi_sector - zone) << 9) + bmd->bi_size;
+-	int remaining = (pd->settings.size << 9) - used;
+-	int remaining2;
 -
- 	do {
- 		sector_t zone = get_zone(bio->bi_iter.bi_sector, pd);
- 		sector_t last_zone = get_zone(bio_end_sector(bio) - 1, pd);
-diff --git a/drivers/block/ps3vram.c b/drivers/block/ps3vram.c
-index ef45cfb..e32e799 100644
---- a/drivers/block/ps3vram.c
-+++ b/drivers/block/ps3vram.c
-@@ -605,6 +605,8 @@ static void ps3vram_make_request(struct request_queue *q, struct bio *bio)
+-	/*
+-	 * A bio <= PAGE_SIZE must be allowed. If it crosses a packet
+-	 * boundary, pkt_make_request() will split the bio.
+-	 */
+-	remaining2 = PAGE_SIZE - bmd->bi_size;
+-	remaining = max(remaining, remaining2);
+-
+-	BUG_ON(remaining < 0);
+-	return remaining;
+-}
+-
+ static void pkt_init_queue(struct pktcdvd_device *pd)
+ {
+ 	struct request_queue *q = pd->disk->queue;
+@@ -2532,7 +2512,6 @@ static void pkt_init_queue(struct pktcdvd_device *pd)
+ 	blk_queue_make_request(q, pkt_make_request);
+ 	blk_queue_logical_block_size(q, CD_FRAMESIZE);
+ 	blk_queue_max_hw_sectors(q, PACKET_MAX_SECTORS);
+-	blk_queue_merge_bvec(q, pkt_merge_bvec);
+ 	q->queuedata = pd;
+ }
  
- 	dev_dbg(&dev->core, "%s\n", __func__);
+diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
+index ec6c5c6..f50edb3 100644
+--- a/drivers/block/rbd.c
++++ b/drivers/block/rbd.c
+@@ -3440,52 +3440,6 @@ static int rbd_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 	return BLK_MQ_RQ_QUEUE_OK;
+ }
  
-+	blk_queue_split(q, &bio, q->bio_split);
-+
- 	spin_lock_irq(&priv->lock);
- 	busy = !bio_list_empty(&priv->list);
- 	bio_list_add(&priv->list, bio);
-diff --git a/drivers/block/rsxx/dev.c b/drivers/block/rsxx/dev.c
-index ac8c62c..50ef199 100644
---- a/drivers/block/rsxx/dev.c
-+++ b/drivers/block/rsxx/dev.c
-@@ -148,6 +148,8 @@ static void rsxx_make_request(struct request_queue *q, struct bio *bio)
- 	struct rsxx_bio_meta *bio_meta;
- 	int st = -EINVAL;
+-/*
+- * a queue callback. Makes sure that we don't create a bio that spans across
+- * multiple osd objects. One exception would be with a single page bios,
+- * which we handle later at bio_chain_clone_range()
+- */
+-static int rbd_merge_bvec(struct request_queue *q, struct bvec_merge_data *bmd,
+-			  struct bio_vec *bvec)
+-{
+-	struct rbd_device *rbd_dev = q->queuedata;
+-	sector_t sector_offset;
+-	sector_t sectors_per_obj;
+-	sector_t obj_sector_offset;
+-	int ret;
+-
+-	/*
+-	 * Find how far into its rbd object the partition-relative
+-	 * bio start sector is to offset relative to the enclosing
+-	 * device.
+-	 */
+-	sector_offset = get_start_sect(bmd->bi_bdev) + bmd->bi_sector;
+-	sectors_per_obj = 1 << (rbd_dev->header.obj_order - SECTOR_SHIFT);
+-	obj_sector_offset = sector_offset & (sectors_per_obj - 1);
+-
+-	/*
+-	 * Compute the number of bytes from that offset to the end
+-	 * of the object.  Account for what's already used by the bio.
+-	 */
+-	ret = (int) (sectors_per_obj - obj_sector_offset) << SECTOR_SHIFT;
+-	if (ret > bmd->bi_size)
+-		ret -= bmd->bi_size;
+-	else
+-		ret = 0;
+-
+-	/*
+-	 * Don't send back more than was asked for.  And if the bio
+-	 * was empty, let the whole thing through because:  "Note
+-	 * that a block device *must* allow a single page to be
+-	 * added to an empty bio."
+-	 */
+-	rbd_assert(bvec->bv_len <= PAGE_SIZE);
+-	if (ret > (int) bvec->bv_len || !bmd->bi_size)
+-		ret = (int) bvec->bv_len;
+-
+-	return ret;
+-}
+-
+ static void rbd_free_disk(struct rbd_device *rbd_dev)
+ {
+ 	struct gendisk *disk = rbd_dev->disk;
+@@ -3784,7 +3738,6 @@ static int rbd_init_disk(struct rbd_device *rbd_dev)
+ 	q->limits.max_discard_sectors = segment_size / SECTOR_SIZE;
+ 	q->limits.discard_zeroes_data = 1;
  
-+	blk_queue_split(q, &bio, q->bio_split);
-+
- 	might_sleep();
+-	blk_queue_merge_bvec(q, rbd_merge_bvec);
+ 	disk->queue = q;
  
- 	if (!card)
-diff --git a/drivers/block/umem.c b/drivers/block/umem.c
-index 4cf81b5..13d577c 100644
---- a/drivers/block/umem.c
-+++ b/drivers/block/umem.c
-@@ -531,6 +531,8 @@ static void mm_make_request(struct request_queue *q, struct bio *bio)
- 		 (unsigned long long)bio->bi_iter.bi_sector,
- 		 bio->bi_iter.bi_size);
+ 	q->queuedata = rbd_dev;
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 7755af3..2e47e35 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -3289,26 +3289,6 @@ static int cache_iterate_devices(struct dm_target *ti,
+ 	return r;
+ }
  
-+	blk_queue_split(q, &bio, q->bio_split);
-+
- 	spin_lock_irq(&card->lock);
- 	*card->biotail = bio;
- 	bio->bi_next = NULL;
-diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
-index 8dcbced..36a004e 100644
---- a/drivers/block/zram/zram_drv.c
-+++ b/drivers/block/zram/zram_drv.c
-@@ -981,6 +981,8 @@ static void zram_make_request(struct request_queue *queue, struct bio *bio)
- 	if (unlikely(!zram_meta_get(zram)))
- 		goto error;
- 
-+	blk_queue_split(queue, &bio, queue->bio_split);
-+
- 	if (!valid_io_request(zram, bio->bi_iter.bi_sector,
- 					bio->bi_iter.bi_size)) {
- 		atomic64_inc(&zram->stats.invalid_io);
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index a930b72..34f6063 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1784,6 +1784,8 @@ static void dm_make_request(struct request_queue *q, struct bio *bio)
- 
- 	map = dm_get_live_table(md, &srcu_idx);
- 
-+	blk_queue_split(q, &bio, q->bio_split);
-+
- 	generic_start_io_acct(rw, bio_sectors(bio), &dm_disk(md)->part0);
- 
- 	/* if we're suspended, we have to queue this io for later */
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 593a024..046b3c9 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -257,6 +257,8 @@ static void md_make_request(struct request_queue *q, struct bio *bio)
- 	unsigned int sectors;
- 	int cpu;
- 
-+	blk_queue_split(q, &bio, q->bio_split);
-+
- 	if (mddev == NULL || mddev->pers == NULL
- 	    || !mddev->ready) {
- 		bio_io_error(bio);
-diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
-index da21281..267ca3a 100644
---- a/drivers/s390/block/dcssblk.c
-+++ b/drivers/s390/block/dcssblk.c
-@@ -826,6 +826,8 @@ dcssblk_make_request(struct request_queue *q, struct bio *bio)
- 	unsigned long source_addr;
- 	unsigned long bytes_done;
- 
-+	blk_queue_split(q, &bio, q->bio_split);
-+
- 	bytes_done = 0;
- 	dev_info = bio->bi_bdev->bd_disk->private_data;
- 	if (dev_info == NULL)
-diff --git a/drivers/s390/block/xpram.c b/drivers/s390/block/xpram.c
-index 7d4e939..1305ed3 100644
---- a/drivers/s390/block/xpram.c
-+++ b/drivers/s390/block/xpram.c
-@@ -190,6 +190,8 @@ static void xpram_make_request(struct request_queue *q, struct bio *bio)
- 	unsigned long page_addr;
- 	unsigned long bytes;
- 
-+	blk_queue_split(q, &bio, q->bio_split);
-+
- 	if ((bio->bi_iter.bi_sector & 7) != 0 ||
- 	    (bio->bi_iter.bi_size & 4095) != 0)
- 		/* Request is not page-aligned. */
-diff --git a/drivers/staging/lustre/lustre/llite/lloop.c b/drivers/staging/lustre/lustre/llite/lloop.c
-index 413a840..a8645a9 100644
---- a/drivers/staging/lustre/lustre/llite/lloop.c
-+++ b/drivers/staging/lustre/lustre/llite/lloop.c
-@@ -340,6 +340,8 @@ static void loop_make_request(struct request_queue *q, struct bio *old_bio)
- 	int rw = bio_rw(old_bio);
- 	int inactive;
- 
-+	blk_queue_split(q, &old_bio, q->bio_split);
-+
- 	if (!lo)
- 		goto err;
- 
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 7f9a516..93b81a2 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -488,6 +488,7 @@ struct request_queue {
- 
- 	struct blk_mq_tag_set	*tag_set;
- 	struct list_head	tag_set_list;
-+	struct bio_set		*bio_split;
+-/*
+- * We assume I/O is going to the origin (which is the volume
+- * more likely to have restrictions e.g. by being striped).
+- * (Looking up the exact location of the data would be expensive
+- * and could always be out of date by the time the bio is submitted.)
+- */
+-static int cache_bvec_merge(struct dm_target *ti,
+-			    struct bvec_merge_data *bvm,
+-			    struct bio_vec *biovec, int max_size)
+-{
+-	struct cache *cache = ti->private;
+-	struct request_queue *q = bdev_get_queue(cache->origin_dev->bdev);
+-
+-	if (!q->merge_bvec_fn)
+-		return max_size;
+-
+-	bvm->bi_bdev = cache->origin_dev->bdev;
+-	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
+-}
+-
+ static void set_discard_limits(struct cache *cache, struct queue_limits *limits)
+ {
+ 	/*
+@@ -3352,7 +3332,6 @@ static struct target_type cache_target = {
+ 	.status = cache_status,
+ 	.message = cache_message,
+ 	.iterate_devices = cache_iterate_devices,
+-	.merge = cache_bvec_merge,
+ 	.io_hints = cache_io_hints,
  };
  
- #define QUEUE_FLAG_QUEUED	1	/* uses generic tag queueing */
-@@ -812,6 +813,8 @@ extern void blk_rq_unprep_clone(struct request *rq);
- extern int blk_insert_cloned_request(struct request_queue *q,
- 				     struct request *rq);
- extern void blk_delay_queue(struct request_queue *, unsigned long);
-+extern void blk_queue_split(struct request_queue *, struct bio **,
-+			    struct bio_set *);
- extern void blk_recount_segments(struct request_queue *, struct bio *);
- extern int scsi_verify_blk_ioctl(struct block_device *, unsigned int);
- extern int scsi_cmd_blk_ioctl(struct block_device *, fmode_t,
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 5503e43..d13f330 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -2017,21 +2017,6 @@ error:
+ 	return -EINVAL;
+ }
+ 
+-static int crypt_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+-		       struct bio_vec *biovec, int max_size)
+-{
+-	struct crypt_config *cc = ti->private;
+-	struct request_queue *q = bdev_get_queue(cc->dev->bdev);
+-
+-	if (!q->merge_bvec_fn)
+-		return max_size;
+-
+-	bvm->bi_bdev = cc->dev->bdev;
+-	bvm->bi_sector = cc->start + dm_target_offset(ti, bvm->bi_sector);
+-
+-	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
+-}
+-
+ static int crypt_iterate_devices(struct dm_target *ti,
+ 				 iterate_devices_callout_fn fn, void *data)
+ {
+@@ -2052,7 +2037,6 @@ static struct target_type crypt_target = {
+ 	.preresume = crypt_preresume,
+ 	.resume = crypt_resume,
+ 	.message = crypt_message,
+-	.merge  = crypt_merge,
+ 	.iterate_devices = crypt_iterate_devices,
+ };
+ 
+diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
+index ad913cd..0119ebf 100644
+--- a/drivers/md/dm-era-target.c
++++ b/drivers/md/dm-era-target.c
+@@ -1673,20 +1673,6 @@ static int era_iterate_devices(struct dm_target *ti,
+ 	return fn(ti, era->origin_dev, 0, get_dev_size(era->origin_dev), data);
+ }
+ 
+-static int era_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+-		     struct bio_vec *biovec, int max_size)
+-{
+-	struct era *era = ti->private;
+-	struct request_queue *q = bdev_get_queue(era->origin_dev->bdev);
+-
+-	if (!q->merge_bvec_fn)
+-		return max_size;
+-
+-	bvm->bi_bdev = era->origin_dev->bdev;
+-
+-	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
+-}
+-
+ static void era_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ {
+ 	struct era *era = ti->private;
+@@ -1717,7 +1703,6 @@ static struct target_type era_target = {
+ 	.status = era_status,
+ 	.message = era_message,
+ 	.iterate_devices = era_iterate_devices,
+-	.merge = era_merge,
+ 	.io_hints = era_io_hints
+ };
+ 
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index b257e46..d955b3e 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -387,21 +387,6 @@ static int flakey_ioctl(struct dm_target *ti, unsigned int cmd, unsigned long ar
+ 	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+ }
+ 
+-static int flakey_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+-			struct bio_vec *biovec, int max_size)
+-{
+-	struct flakey_c *fc = ti->private;
+-	struct request_queue *q = bdev_get_queue(fc->dev->bdev);
+-
+-	if (!q->merge_bvec_fn)
+-		return max_size;
+-
+-	bvm->bi_bdev = fc->dev->bdev;
+-	bvm->bi_sector = flakey_map_sector(ti, bvm->bi_sector);
+-
+-	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
+-}
+-
+ static int flakey_iterate_devices(struct dm_target *ti, iterate_devices_callout_fn fn, void *data)
+ {
+ 	struct flakey_c *fc = ti->private;
+@@ -419,7 +404,6 @@ static struct target_type flakey_target = {
+ 	.end_io = flakey_end_io,
+ 	.status = flakey_status,
+ 	.ioctl	= flakey_ioctl,
+-	.merge	= flakey_merge,
+ 	.iterate_devices = flakey_iterate_devices,
+ };
+ 
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 53e848c..7dd5fc8 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -130,21 +130,6 @@ static int linear_ioctl(struct dm_target *ti, unsigned int cmd,
+ 	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+ }
+ 
+-static int linear_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+-			struct bio_vec *biovec, int max_size)
+-{
+-	struct linear_c *lc = ti->private;
+-	struct request_queue *q = bdev_get_queue(lc->dev->bdev);
+-
+-	if (!q->merge_bvec_fn)
+-		return max_size;
+-
+-	bvm->bi_bdev = lc->dev->bdev;
+-	bvm->bi_sector = linear_map_sector(ti, bvm->bi_sector);
+-
+-	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
+-}
+-
+ static int linear_iterate_devices(struct dm_target *ti,
+ 				  iterate_devices_callout_fn fn, void *data)
+ {
+@@ -162,7 +147,6 @@ static struct target_type linear_target = {
+ 	.map    = linear_map,
+ 	.status = linear_status,
+ 	.ioctl  = linear_ioctl,
+-	.merge  = linear_merge,
+ 	.iterate_devices = linear_iterate_devices,
+ };
+ 
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index 93e0844..4325808 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -728,21 +728,6 @@ static int log_writes_ioctl(struct dm_target *ti, unsigned int cmd,
+ 	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+ }
+ 
+-static int log_writes_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+-			    struct bio_vec *biovec, int max_size)
+-{
+-	struct log_writes_c *lc = ti->private;
+-	struct request_queue *q = bdev_get_queue(lc->dev->bdev);
+-
+-	if (!q->merge_bvec_fn)
+-		return max_size;
+-
+-	bvm->bi_bdev = lc->dev->bdev;
+-	bvm->bi_sector = dm_target_offset(ti, bvm->bi_sector);
+-
+-	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
+-}
+-
+ static int log_writes_iterate_devices(struct dm_target *ti,
+ 				      iterate_devices_callout_fn fn,
+ 				      void *data)
+@@ -796,7 +781,6 @@ static struct target_type log_writes_target = {
+ 	.end_io = normal_end_io,
+ 	.status = log_writes_status,
+ 	.ioctl	= log_writes_ioctl,
+-	.merge	= log_writes_merge,
+ 	.message = log_writes_message,
+ 	.iterate_devices = log_writes_iterate_devices,
+ 	.io_hints = log_writes_io_hints,
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index f83a0f3..274cbec 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -2331,20 +2331,6 @@ static void origin_status(struct dm_target *ti, status_type_t type,
+ 	}
+ }
+ 
+-static int origin_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+-			struct bio_vec *biovec, int max_size)
+-{
+-	struct dm_origin *o = ti->private;
+-	struct request_queue *q = bdev_get_queue(o->dev->bdev);
+-
+-	if (!q->merge_bvec_fn)
+-		return max_size;
+-
+-	bvm->bi_bdev = o->dev->bdev;
+-
+-	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
+-}
+-
+ static int origin_iterate_devices(struct dm_target *ti,
+ 				  iterate_devices_callout_fn fn, void *data)
+ {
+@@ -2363,7 +2349,6 @@ static struct target_type origin_target = {
+ 	.resume  = origin_resume,
+ 	.postsuspend = origin_postsuspend,
+ 	.status  = origin_status,
+-	.merge	 = origin_merge,
+ 	.iterate_devices = origin_iterate_devices,
+ };
+ 
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index f8b37d4..09bb2fe 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -412,26 +412,6 @@ static void stripe_io_hints(struct dm_target *ti,
+ 	blk_limits_io_opt(limits, chunk_size * sc->stripes);
+ }
+ 
+-static int stripe_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+-			struct bio_vec *biovec, int max_size)
+-{
+-	struct stripe_c *sc = ti->private;
+-	sector_t bvm_sector = bvm->bi_sector;
+-	uint32_t stripe;
+-	struct request_queue *q;
+-
+-	stripe_map_sector(sc, bvm_sector, &stripe, &bvm_sector);
+-
+-	q = bdev_get_queue(sc->stripe[stripe].dev->bdev);
+-	if (!q->merge_bvec_fn)
+-		return max_size;
+-
+-	bvm->bi_bdev = sc->stripe[stripe].dev->bdev;
+-	bvm->bi_sector = sc->stripe[stripe].physical_start + bvm_sector;
+-
+-	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
+-}
+-
+ static struct target_type stripe_target = {
+ 	.name   = "striped",
+ 	.version = {1, 5, 1},
+@@ -443,7 +423,6 @@ static struct target_type stripe_target = {
+ 	.status = stripe_status,
+ 	.iterate_devices = stripe_iterate_devices,
+ 	.io_hints = stripe_io_hints,
+-	.merge  = stripe_merge,
+ };
+ 
+ int __init dm_stripe_init(void)
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index d9b00b8..19c9b01 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -440,14 +440,6 @@ static int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+ 		       q->limits.alignment_offset,
+ 		       (unsigned long long) start << SECTOR_SHIFT);
+ 
+-	/*
+-	 * Check if merge fn is supported.
+-	 * If not we'll force DM to use PAGE_SIZE or
+-	 * smaller I/O, just to be safe.
+-	 */
+-	if (dm_queue_merge_is_compulsory(q) && !ti->type->merge)
+-		blk_limits_max_hw_sectors(limits,
+-					  (unsigned int) (PAGE_SIZE >> 9));
+ 	return 0;
+ }
+ 
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 921aafd..03552fe 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -3562,20 +3562,6 @@ static int pool_iterate_devices(struct dm_target *ti,
+ 	return fn(ti, pt->data_dev, 0, ti->len, data);
+ }
+ 
+-static int pool_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+-		      struct bio_vec *biovec, int max_size)
+-{
+-	struct pool_c *pt = ti->private;
+-	struct request_queue *q = bdev_get_queue(pt->data_dev->bdev);
+-
+-	if (!q->merge_bvec_fn)
+-		return max_size;
+-
+-	bvm->bi_bdev = pt->data_dev->bdev;
+-
+-	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
+-}
+-
+ static void set_discard_limits(struct pool_c *pt, struct queue_limits *limits)
+ {
+ 	struct pool *pool = pt->pool;
+@@ -3667,7 +3653,6 @@ static struct target_type pool_target = {
+ 	.resume = pool_resume,
+ 	.message = pool_message,
+ 	.status = pool_status,
+-	.merge = pool_merge,
+ 	.iterate_devices = pool_iterate_devices,
+ 	.io_hints = pool_io_hints,
+ };
+@@ -3992,21 +3977,6 @@ err:
+ 	DMEMIT("Error");
+ }
+ 
+-static int thin_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+-		      struct bio_vec *biovec, int max_size)
+-{
+-	struct thin_c *tc = ti->private;
+-	struct request_queue *q = bdev_get_queue(tc->pool_dev->bdev);
+-
+-	if (!q->merge_bvec_fn)
+-		return max_size;
+-
+-	bvm->bi_bdev = tc->pool_dev->bdev;
+-	bvm->bi_sector = dm_target_offset(ti, bvm->bi_sector);
+-
+-	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
+-}
+-
+ static int thin_iterate_devices(struct dm_target *ti,
+ 				iterate_devices_callout_fn fn, void *data)
+ {
+@@ -4041,7 +4011,6 @@ static struct target_type thin_target = {
+ 	.presuspend = thin_presuspend,
+ 	.postsuspend = thin_postsuspend,
+ 	.status = thin_status,
+-	.merge = thin_merge,
+ 	.iterate_devices = thin_iterate_devices,
+ };
+ 
+diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+index 66616db..3b85460 100644
+--- a/drivers/md/dm-verity.c
++++ b/drivers/md/dm-verity.c
+@@ -648,21 +648,6 @@ static int verity_ioctl(struct dm_target *ti, unsigned cmd,
+ 				     cmd, arg);
+ }
+ 
+-static int verity_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+-			struct bio_vec *biovec, int max_size)
+-{
+-	struct dm_verity *v = ti->private;
+-	struct request_queue *q = bdev_get_queue(v->data_dev->bdev);
+-
+-	if (!q->merge_bvec_fn)
+-		return max_size;
+-
+-	bvm->bi_bdev = v->data_dev->bdev;
+-	bvm->bi_sector = verity_map_sector(v, bvm->bi_sector);
+-
+-	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
+-}
+-
+ static int verity_iterate_devices(struct dm_target *ti,
+ 				  iterate_devices_callout_fn fn, void *data)
+ {
+@@ -995,7 +980,6 @@ static struct target_type verity_target = {
+ 	.map		= verity_map,
+ 	.status		= verity_status,
+ 	.ioctl		= verity_ioctl,
+-	.merge		= verity_merge,
+ 	.iterate_devices = verity_iterate_devices,
+ 	.io_hints	= verity_io_hints,
+ };
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 34f6063..f732a7a 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -121,9 +121,8 @@ EXPORT_SYMBOL_GPL(dm_get_rq_mapinfo);
+ #define DMF_FREEING 3
+ #define DMF_DELETING 4
+ #define DMF_NOFLUSH_SUSPENDING 5
+-#define DMF_MERGE_IS_OPTIONAL 6
+-#define DMF_DEFERRED_REMOVE 7
+-#define DMF_SUSPENDED_INTERNALLY 8
++#define DMF_DEFERRED_REMOVE 6
++#define DMF_SUSPENDED_INTERNALLY 7
+ 
+ /*
+  * A dummy definition to make RCU happy.
+@@ -1717,60 +1716,6 @@ static void __split_and_process_bio(struct mapped_device *md,
+  * CRUD END
+  *---------------------------------------------------------------*/
+ 
+-static int dm_merge_bvec(struct request_queue *q,
+-			 struct bvec_merge_data *bvm,
+-			 struct bio_vec *biovec)
+-{
+-	struct mapped_device *md = q->queuedata;
+-	struct dm_table *map = dm_get_live_table_fast(md);
+-	struct dm_target *ti;
+-	sector_t max_sectors;
+-	int max_size = 0;
+-
+-	if (unlikely(!map))
+-		goto out;
+-
+-	ti = dm_table_find_target(map, bvm->bi_sector);
+-	if (!dm_target_is_valid(ti))
+-		goto out;
+-
+-	/*
+-	 * Find maximum amount of I/O that won't need splitting
+-	 */
+-	max_sectors = min(max_io_len(bvm->bi_sector, ti),
+-			  (sector_t) queue_max_sectors(q));
+-	max_size = (max_sectors << SECTOR_SHIFT) - bvm->bi_size;
+-	if (unlikely(max_size < 0)) /* this shouldn't _ever_ happen */
+-		max_size = 0;
+-
+-	/*
+-	 * merge_bvec_fn() returns number of bytes
+-	 * it can accept at this offset
+-	 * max is precomputed maximal io size
+-	 */
+-	if (max_size && ti->type->merge)
+-		max_size = ti->type->merge(ti, bvm, biovec, max_size);
+-	/*
+-	 * If the target doesn't support merge method and some of the devices
+-	 * provided their merge_bvec method (we know this by looking for the
+-	 * max_hw_sectors that dm_set_device_limits may set), then we can't
+-	 * allow bios with multiple vector entries.  So always set max_size
+-	 * to 0, and the code below allows just one page.
+-	 */
+-	else if (queue_max_hw_sectors(q) <= PAGE_SIZE >> 9)
+-		max_size = 0;
+-
+-out:
+-	dm_put_live_table_fast(md);
+-	/*
+-	 * Always allow an entire first page
+-	 */
+-	if (max_size <= biovec->bv_len && !(bvm->bi_size >> SECTOR_SHIFT))
+-		max_size = biovec->bv_len;
+-
+-	return max_size;
+-}
+-
+ /*
+  * The request function that just remaps the bio built up by
+  * dm_merge_bvec.
+@@ -2477,59 +2422,6 @@ static void __set_size(struct mapped_device *md, sector_t size)
+ }
+ 
+ /*
+- * Return 1 if the queue has a compulsory merge_bvec_fn function.
+- *
+- * If this function returns 0, then the device is either a non-dm
+- * device without a merge_bvec_fn, or it is a dm device that is
+- * able to split any bios it receives that are too big.
+- */
+-int dm_queue_merge_is_compulsory(struct request_queue *q)
+-{
+-	struct mapped_device *dev_md;
+-
+-	if (!q->merge_bvec_fn)
+-		return 0;
+-
+-	if (q->make_request_fn == dm_make_request) {
+-		dev_md = q->queuedata;
+-		if (test_bit(DMF_MERGE_IS_OPTIONAL, &dev_md->flags))
+-			return 0;
+-	}
+-
+-	return 1;
+-}
+-
+-static int dm_device_merge_is_compulsory(struct dm_target *ti,
+-					 struct dm_dev *dev, sector_t start,
+-					 sector_t len, void *data)
+-{
+-	struct block_device *bdev = dev->bdev;
+-	struct request_queue *q = bdev_get_queue(bdev);
+-
+-	return dm_queue_merge_is_compulsory(q);
+-}
+-
+-/*
+- * Return 1 if it is acceptable to ignore merge_bvec_fn based
+- * on the properties of the underlying devices.
+- */
+-static int dm_table_merge_is_optional(struct dm_table *table)
+-{
+-	unsigned i = 0;
+-	struct dm_target *ti;
+-
+-	while (i < dm_table_get_num_targets(table)) {
+-		ti = dm_table_get_target(table, i++);
+-
+-		if (ti->type->iterate_devices &&
+-		    ti->type->iterate_devices(ti, dm_device_merge_is_compulsory, NULL))
+-			return 0;
+-	}
+-
+-	return 1;
+-}
+-
+-/*
+  * Returns old map, which caller must destroy.
+  */
+ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+@@ -2538,7 +2430,6 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+ 	struct dm_table *old_map;
+ 	struct request_queue *q = md->queue;
+ 	sector_t size;
+-	int merge_is_optional;
+ 
+ 	size = dm_table_get_size(t);
+ 
+@@ -2564,17 +2455,11 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+ 
+ 	__bind_mempools(md, t);
+ 
+-	merge_is_optional = dm_table_merge_is_optional(t);
+-
+ 	old_map = rcu_dereference_protected(md->map, lockdep_is_held(&md->suspend_lock));
+ 	rcu_assign_pointer(md->map, t);
+ 	md->immutable_target_type = dm_table_get_immutable_target_type(t);
+ 
+ 	dm_table_set_restrictions(t, q, limits);
+-	if (merge_is_optional)
+-		set_bit(DMF_MERGE_IS_OPTIONAL, &md->flags);
+-	else
+-		clear_bit(DMF_MERGE_IS_OPTIONAL, &md->flags);
+ 	if (old_map)
+ 		dm_sync_table(md);
+ 
+@@ -2852,7 +2737,6 @@ int dm_setup_md_queue(struct mapped_device *md)
+ 	case DM_TYPE_BIO_BASED:
+ 		dm_init_old_md_queue(md);
+ 		blk_queue_make_request(md->queue, dm_make_request);
+-		blk_queue_merge_bvec(md->queue, dm_merge_bvec);
+ 		break;
+ 	}
+ 
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index 6123c2b..7d61cca 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -77,8 +77,6 @@ bool dm_table_mq_request_based(struct dm_table *t);
+ void dm_table_free_md_mempools(struct dm_table *t);
+ struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
+ 
+-int dm_queue_merge_is_compulsory(struct request_queue *q);
+-
+ void dm_lock_md_type(struct mapped_device *md);
+ void dm_unlock_md_type(struct mapped_device *md);
+ void dm_set_md_type(struct mapped_device *md, unsigned type);
+diff --git a/drivers/md/linear.c b/drivers/md/linear.c
+index fa7d577..8721ef9 100644
+--- a/drivers/md/linear.c
++++ b/drivers/md/linear.c
+@@ -52,48 +52,6 @@ static inline struct dev_info *which_dev(struct mddev *mddev, sector_t sector)
+ 	return conf->disks + lo;
+ }
+ 
+-/**
+- *	linear_mergeable_bvec -- tell bio layer if two requests can be merged
+- *	@q: request queue
+- *	@bvm: properties of new bio
+- *	@biovec: the request that could be merged to it.
+- *
+- *	Return amount of bytes we can take at this offset
+- */
+-static int linear_mergeable_bvec(struct mddev *mddev,
+-				 struct bvec_merge_data *bvm,
+-				 struct bio_vec *biovec)
+-{
+-	struct dev_info *dev0;
+-	unsigned long maxsectors, bio_sectors = bvm->bi_size >> 9;
+-	sector_t sector = bvm->bi_sector + get_start_sect(bvm->bi_bdev);
+-	int maxbytes = biovec->bv_len;
+-	struct request_queue *subq;
+-
+-	dev0 = which_dev(mddev, sector);
+-	maxsectors = dev0->end_sector - sector;
+-	subq = bdev_get_queue(dev0->rdev->bdev);
+-	if (subq->merge_bvec_fn) {
+-		bvm->bi_bdev = dev0->rdev->bdev;
+-		bvm->bi_sector -= dev0->end_sector - dev0->rdev->sectors;
+-		maxbytes = min(maxbytes, subq->merge_bvec_fn(subq, bvm,
+-							     biovec));
+-	}
+-
+-	if (maxsectors < bio_sectors)
+-		maxsectors = 0;
+-	else
+-		maxsectors -= bio_sectors;
+-
+-	if (maxsectors <= (PAGE_SIZE >> 9 ) && bio_sectors == 0)
+-		return maxbytes;
+-
+-	if (maxsectors > (maxbytes >> 9))
+-		return maxbytes;
+-	else
+-		return maxsectors << 9;
+-}
+-
+ static int linear_congested(struct mddev *mddev, int bits)
+ {
+ 	struct linear_conf *conf;
+@@ -338,7 +296,6 @@ static struct md_personality linear_personality =
+ 	.size		= linear_size,
+ 	.quiesce	= linear_quiesce,
+ 	.congested	= linear_congested,
+-	.mergeable_bvec	= linear_mergeable_bvec,
+ };
+ 
+ static int __init linear_init (void)
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 046b3c9..f101981 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -352,29 +352,6 @@ static int md_congested(void *data, int bits)
+ 	return mddev_congested(mddev, bits);
+ }
+ 
+-static int md_mergeable_bvec(struct request_queue *q,
+-			     struct bvec_merge_data *bvm,
+-			     struct bio_vec *biovec)
+-{
+-	struct mddev *mddev = q->queuedata;
+-	int ret;
+-	rcu_read_lock();
+-	if (mddev->suspended) {
+-		/* Must always allow one vec */
+-		if (bvm->bi_size == 0)
+-			ret = biovec->bv_len;
+-		else
+-			ret = 0;
+-	} else {
+-		struct md_personality *pers = mddev->pers;
+-		if (pers && pers->mergeable_bvec)
+-			ret = pers->mergeable_bvec(mddev, bvm, biovec);
+-		else
+-			ret = biovec->bv_len;
+-	}
+-	rcu_read_unlock();
+-	return ret;
+-}
+ /*
+  * Generic flush handling for md
+  */
+@@ -5165,7 +5142,6 @@ int md_run(struct mddev *mddev)
+ 	if (mddev->queue) {
+ 		mddev->queue->backing_dev_info.congested_data = mddev;
+ 		mddev->queue->backing_dev_info.congested_fn = md_congested;
+-		blk_queue_merge_bvec(mddev->queue, md_mergeable_bvec);
+ 	}
+ 	if (pers->sync_request) {
+ 		if (mddev->kobj.sd &&
+@@ -5293,7 +5269,6 @@ static void md_clean(struct mddev *mddev)
+ 	mddev->changed = 0;
+ 	mddev->degraded = 0;
+ 	mddev->safemode = 0;
+-	mddev->merge_check_needed = 0;
+ 	mddev->bitmap_info.offset = 0;
+ 	mddev->bitmap_info.default_offset = 0;
+ 	mddev->bitmap_info.default_space = 0;
+@@ -5489,7 +5464,6 @@ static int do_md_stop(struct mddev *mddev, int mode,
+ 
+ 		__md_stop_writes(mddev);
+ 		__md_stop(mddev);
+-		mddev->queue->merge_bvec_fn = NULL;
+ 		mddev->queue->backing_dev_info.congested_fn = NULL;
+ 
+ 		/* tell userspace to handle 'inactive' */
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index 4046a6c..cf7141a 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -133,10 +133,6 @@ enum flag_bits {
+ 	Bitmap_sync,		/* ..actually, not quite In_sync.  Need a
+ 				 * bitmap-based recovery to get fully in sync
+ 				 */
+-	Unmerged,		/* device is being added to array and should
+-				 * be considerred for bvec_merge_fn but not
+-				 * yet for actual IO
+-				 */
+ 	WriteMostly,		/* Avoid reading if at all possible */
+ 	AutoDetected,		/* added by auto-detect */
+ 	Blocked,		/* An error occurred but has not yet
+@@ -373,10 +369,6 @@ struct mddev {
+ 	int				degraded;	/* whether md should consider
+ 							 * adding a spare
+ 							 */
+-	int				merge_check_needed; /* at least one
+-							     * member device
+-							     * has a
+-							     * merge_bvec_fn */
+ 
+ 	atomic_t			recovery_active; /* blocks scheduled, but not written */
+ 	wait_queue_head_t		recovery_wait;
+@@ -531,10 +523,6 @@ struct md_personality
+ 	/* congested implements bdi.congested_fn().
+ 	 * Will not be called while array is 'suspended' */
+ 	int (*congested)(struct mddev *mddev, int bits);
+-	/* mergeable_bvec is use to implement ->merge_bvec_fn */
+-	int (*mergeable_bvec)(struct mddev *mddev,
+-			      struct bvec_merge_data *bvm,
+-			      struct bio_vec *biovec);
+ };
+ 
+ struct md_sysfs_entry {
+diff --git a/drivers/md/multipath.c b/drivers/md/multipath.c
+index ac3ede2..7ee27fb 100644
+--- a/drivers/md/multipath.c
++++ b/drivers/md/multipath.c
+@@ -257,18 +257,6 @@ static int multipath_add_disk(struct mddev *mddev, struct md_rdev *rdev)
+ 			disk_stack_limits(mddev->gendisk, rdev->bdev,
+ 					  rdev->data_offset << 9);
+ 
+-		/* as we don't honour merge_bvec_fn, we must never risk
+-		 * violating it, so limit ->max_segments to one, lying
+-		 * within a single page.
+-		 * (Note: it is very unlikely that a device with
+-		 * merge_bvec_fn will be involved in multipath.)
+-		 */
+-			if (q->merge_bvec_fn) {
+-				blk_queue_max_segments(mddev->queue, 1);
+-				blk_queue_segment_boundary(mddev->queue,
+-							   PAGE_CACHE_SIZE - 1);
+-			}
+-
+ 			spin_lock_irq(&conf->device_lock);
+ 			mddev->degraded--;
+ 			rdev->raid_disk = path;
+@@ -432,15 +420,6 @@ static int multipath_run (struct mddev *mddev)
+ 		disk_stack_limits(mddev->gendisk, rdev->bdev,
+ 				  rdev->data_offset << 9);
+ 
+-		/* as we don't honour merge_bvec_fn, we must never risk
+-		 * violating it, not that we ever expect a device with
+-		 * a merge_bvec_fn to be involved in multipath */
+-		if (rdev->bdev->bd_disk->queue->merge_bvec_fn) {
+-			blk_queue_max_segments(mddev->queue, 1);
+-			blk_queue_segment_boundary(mddev->queue,
+-						   PAGE_CACHE_SIZE - 1);
+-		}
+-
+ 		if (!test_bit(Faulty, &rdev->flags))
+ 			working_disks++;
+ 	}
+diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
+index 6a68ef5..1440bd4 100644
+--- a/drivers/md/raid0.c
++++ b/drivers/md/raid0.c
+@@ -192,9 +192,6 @@ static int create_strip_zones(struct mddev *mddev, struct r0conf **private_conf)
+ 			disk_stack_limits(mddev->gendisk, rdev1->bdev,
+ 					  rdev1->data_offset << 9);
+ 
+-		if (rdev1->bdev->bd_disk->queue->merge_bvec_fn)
+-			conf->has_merge_bvec = 1;
+-
+ 		if (!smallest || (rdev1->sectors < smallest->sectors))
+ 			smallest = rdev1;
+ 		cnt++;
+@@ -351,58 +348,6 @@ static struct md_rdev *map_sector(struct mddev *mddev, struct strip_zone *zone,
+ 			     + sector_div(sector, zone->nb_dev)];
+ }
+ 
+-/**
+- *	raid0_mergeable_bvec -- tell bio layer if two requests can be merged
+- *	@mddev: the md device
+- *	@bvm: properties of new bio
+- *	@biovec: the request that could be merged to it.
+- *
+- *	Return amount of bytes we can accept at this offset
+- */
+-static int raid0_mergeable_bvec(struct mddev *mddev,
+-				struct bvec_merge_data *bvm,
+-				struct bio_vec *biovec)
+-{
+-	struct r0conf *conf = mddev->private;
+-	sector_t sector = bvm->bi_sector + get_start_sect(bvm->bi_bdev);
+-	sector_t sector_offset = sector;
+-	int max;
+-	unsigned int chunk_sectors = mddev->chunk_sectors;
+-	unsigned int bio_sectors = bvm->bi_size >> 9;
+-	struct strip_zone *zone;
+-	struct md_rdev *rdev;
+-	struct request_queue *subq;
+-
+-	if (is_power_of_2(chunk_sectors))
+-		max =  (chunk_sectors - ((sector & (chunk_sectors-1))
+-						+ bio_sectors)) << 9;
+-	else
+-		max =  (chunk_sectors - (sector_div(sector, chunk_sectors)
+-						+ bio_sectors)) << 9;
+-	if (max < 0)
+-		max = 0; /* bio_add cannot handle a negative return */
+-	if (max <= biovec->bv_len && bio_sectors == 0)
+-		return biovec->bv_len;
+-	if (max < biovec->bv_len)
+-		/* too small already, no need to check further */
+-		return max;
+-	if (!conf->has_merge_bvec)
+-		return max;
+-
+-	/* May need to check subordinate device */
+-	sector = sector_offset;
+-	zone = find_zone(mddev->private, &sector_offset);
+-	rdev = map_sector(mddev, zone, sector, &sector_offset);
+-	subq = bdev_get_queue(rdev->bdev);
+-	if (subq->merge_bvec_fn) {
+-		bvm->bi_bdev = rdev->bdev;
+-		bvm->bi_sector = sector_offset + zone->dev_start +
+-			rdev->data_offset;
+-		return min(max, subq->merge_bvec_fn(subq, bvm, biovec));
+-	} else
+-		return max;
+-}
+-
+ static sector_t raid0_size(struct mddev *mddev, sector_t sectors, int raid_disks)
+ {
+ 	sector_t array_sectors = 0;
+@@ -725,7 +670,6 @@ static struct md_personality raid0_personality=
+ 	.takeover	= raid0_takeover,
+ 	.quiesce	= raid0_quiesce,
+ 	.congested	= raid0_congested,
+-	.mergeable_bvec	= raid0_mergeable_bvec,
+ };
+ 
+ static int __init raid0_init (void)
+diff --git a/drivers/md/raid0.h b/drivers/md/raid0.h
+index 05539d9..7127a62 100644
+--- a/drivers/md/raid0.h
++++ b/drivers/md/raid0.h
+@@ -12,8 +12,6 @@ struct r0conf {
+ 	struct md_rdev		**devlist; /* lists of rdevs, pointed to
+ 					    * by strip_zone->dev */
+ 	int			nr_strip_zones;
+-	int			has_merge_bvec;	/* at least one member has
+-						 * a merge_bvec_fn */
+ };
+ 
+ #endif
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index 9157a29..478878f 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -557,7 +557,6 @@ static int read_balance(struct r1conf *conf, struct r1bio *r1_bio, int *max_sect
+ 		rdev = rcu_dereference(conf->mirrors[disk].rdev);
+ 		if (r1_bio->bios[disk] == IO_BLOCKED
+ 		    || rdev == NULL
+-		    || test_bit(Unmerged, &rdev->flags)
+ 		    || test_bit(Faulty, &rdev->flags))
+ 			continue;
+ 		if (!test_bit(In_sync, &rdev->flags) &&
+@@ -708,38 +707,6 @@ static int read_balance(struct r1conf *conf, struct r1bio *r1_bio, int *max_sect
+ 	return best_disk;
+ }
+ 
+-static int raid1_mergeable_bvec(struct mddev *mddev,
+-				struct bvec_merge_data *bvm,
+-				struct bio_vec *biovec)
+-{
+-	struct r1conf *conf = mddev->private;
+-	sector_t sector = bvm->bi_sector + get_start_sect(bvm->bi_bdev);
+-	int max = biovec->bv_len;
+-
+-	if (mddev->merge_check_needed) {
+-		int disk;
+-		rcu_read_lock();
+-		for (disk = 0; disk < conf->raid_disks * 2; disk++) {
+-			struct md_rdev *rdev = rcu_dereference(
+-				conf->mirrors[disk].rdev);
+-			if (rdev && !test_bit(Faulty, &rdev->flags)) {
+-				struct request_queue *q =
+-					bdev_get_queue(rdev->bdev);
+-				if (q->merge_bvec_fn) {
+-					bvm->bi_sector = sector +
+-						rdev->data_offset;
+-					bvm->bi_bdev = rdev->bdev;
+-					max = min(max, q->merge_bvec_fn(
+-							  q, bvm, biovec));
+-				}
+-			}
+-		}
+-		rcu_read_unlock();
+-	}
+-	return max;
+-
+-}
+-
+ static int raid1_congested(struct mddev *mddev, int bits)
+ {
+ 	struct r1conf *conf = mddev->private;
+@@ -1268,8 +1235,7 @@ read_again:
+ 			break;
+ 		}
+ 		r1_bio->bios[i] = NULL;
+-		if (!rdev || test_bit(Faulty, &rdev->flags)
+-		    || test_bit(Unmerged, &rdev->flags)) {
++		if (!rdev || test_bit(Faulty, &rdev->flags)) {
+ 			if (i < conf->raid_disks)
+ 				set_bit(R1BIO_Degraded, &r1_bio->state);
+ 			continue;
+@@ -1614,7 +1580,6 @@ static int raid1_add_disk(struct mddev *mddev, struct md_rdev *rdev)
+ 	struct raid1_info *p;
+ 	int first = 0;
+ 	int last = conf->raid_disks - 1;
+-	struct request_queue *q = bdev_get_queue(rdev->bdev);
+ 
+ 	if (mddev->recovery_disabled == conf->recovery_disabled)
+ 		return -EBUSY;
+@@ -1622,11 +1587,6 @@ static int raid1_add_disk(struct mddev *mddev, struct md_rdev *rdev)
+ 	if (rdev->raid_disk >= 0)
+ 		first = last = rdev->raid_disk;
+ 
+-	if (q->merge_bvec_fn) {
+-		set_bit(Unmerged, &rdev->flags);
+-		mddev->merge_check_needed = 1;
+-	}
+-
+ 	for (mirror = first; mirror <= last; mirror++) {
+ 		p = conf->mirrors+mirror;
+ 		if (!p->rdev) {
+@@ -1658,19 +1618,6 @@ static int raid1_add_disk(struct mddev *mddev, struct md_rdev *rdev)
+ 			break;
+ 		}
+ 	}
+-	if (err == 0 && test_bit(Unmerged, &rdev->flags)) {
+-		/* Some requests might not have seen this new
+-		 * merge_bvec_fn.  We must wait for them to complete
+-		 * before merging the device fully.
+-		 * First we make sure any code which has tested
+-		 * our function has submitted the request, then
+-		 * we wait for all outstanding requests to complete.
+-		 */
+-		synchronize_sched();
+-		freeze_array(conf, 0);
+-		unfreeze_array(conf);
+-		clear_bit(Unmerged, &rdev->flags);
+-	}
+ 	md_integrity_add_rdev(rdev, mddev);
+ 	if (mddev->queue && blk_queue_discard(bdev_get_queue(rdev->bdev)))
+ 		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
+@@ -2807,8 +2754,6 @@ static struct r1conf *setup_conf(struct mddev *mddev)
+ 			goto abort;
+ 		disk->rdev = rdev;
+ 		q = bdev_get_queue(rdev->bdev);
+-		if (q->merge_bvec_fn)
+-			mddev->merge_check_needed = 1;
+ 
+ 		disk->head_position = 0;
+ 		disk->seq_start = MaxSector;
+@@ -3173,7 +3118,6 @@ static struct md_personality raid1_personality =
+ 	.quiesce	= raid1_quiesce,
+ 	.takeover	= raid1_takeover,
+ 	.congested	= raid1_congested,
+-	.mergeable_bvec	= raid1_mergeable_bvec,
+ };
+ 
+ static int __init raid_init(void)
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index e793ab6..a46c402 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -672,93 +672,6 @@ static sector_t raid10_find_virt(struct r10conf *conf, sector_t sector, int dev)
+ 	return (vchunk << geo->chunk_shift) + offset;
+ }
+ 
+-/**
+- *	raid10_mergeable_bvec -- tell bio layer if a two requests can be merged
+- *	@mddev: the md device
+- *	@bvm: properties of new bio
+- *	@biovec: the request that could be merged to it.
+- *
+- *	Return amount of bytes we can accept at this offset
+- *	This requires checking for end-of-chunk if near_copies != raid_disks,
+- *	and for subordinate merge_bvec_fns if merge_check_needed.
+- */
+-static int raid10_mergeable_bvec(struct mddev *mddev,
+-				 struct bvec_merge_data *bvm,
+-				 struct bio_vec *biovec)
+-{
+-	struct r10conf *conf = mddev->private;
+-	sector_t sector = bvm->bi_sector + get_start_sect(bvm->bi_bdev);
+-	int max;
+-	unsigned int chunk_sectors;
+-	unsigned int bio_sectors = bvm->bi_size >> 9;
+-	struct geom *geo = &conf->geo;
+-
+-	chunk_sectors = (conf->geo.chunk_mask & conf->prev.chunk_mask) + 1;
+-	if (conf->reshape_progress != MaxSector &&
+-	    ((sector >= conf->reshape_progress) !=
+-	     conf->mddev->reshape_backwards))
+-		geo = &conf->prev;
+-
+-	if (geo->near_copies < geo->raid_disks) {
+-		max = (chunk_sectors - ((sector & (chunk_sectors - 1))
+-					+ bio_sectors)) << 9;
+-		if (max < 0)
+-			/* bio_add cannot handle a negative return */
+-			max = 0;
+-		if (max <= biovec->bv_len && bio_sectors == 0)
+-			return biovec->bv_len;
+-	} else
+-		max = biovec->bv_len;
+-
+-	if (mddev->merge_check_needed) {
+-		struct {
+-			struct r10bio r10_bio;
+-			struct r10dev devs[conf->copies];
+-		} on_stack;
+-		struct r10bio *r10_bio = &on_stack.r10_bio;
+-		int s;
+-		if (conf->reshape_progress != MaxSector) {
+-			/* Cannot give any guidance during reshape */
+-			if (max <= biovec->bv_len && bio_sectors == 0)
+-				return biovec->bv_len;
+-			return 0;
+-		}
+-		r10_bio->sector = sector;
+-		raid10_find_phys(conf, r10_bio);
+-		rcu_read_lock();
+-		for (s = 0; s < conf->copies; s++) {
+-			int disk = r10_bio->devs[s].devnum;
+-			struct md_rdev *rdev = rcu_dereference(
+-				conf->mirrors[disk].rdev);
+-			if (rdev && !test_bit(Faulty, &rdev->flags)) {
+-				struct request_queue *q =
+-					bdev_get_queue(rdev->bdev);
+-				if (q->merge_bvec_fn) {
+-					bvm->bi_sector = r10_bio->devs[s].addr
+-						+ rdev->data_offset;
+-					bvm->bi_bdev = rdev->bdev;
+-					max = min(max, q->merge_bvec_fn(
+-							  q, bvm, biovec));
+-				}
+-			}
+-			rdev = rcu_dereference(conf->mirrors[disk].replacement);
+-			if (rdev && !test_bit(Faulty, &rdev->flags)) {
+-				struct request_queue *q =
+-					bdev_get_queue(rdev->bdev);
+-				if (q->merge_bvec_fn) {
+-					bvm->bi_sector = r10_bio->devs[s].addr
+-						+ rdev->data_offset;
+-					bvm->bi_bdev = rdev->bdev;
+-					max = min(max, q->merge_bvec_fn(
+-							  q, bvm, biovec));
+-				}
+-			}
+-		}
+-		rcu_read_unlock();
+-	}
+-	return max;
+-}
+-
+ /*
+  * This routine returns the disk from which the requested read should
+  * be done. There is a per-array 'next expected sequential IO' sector
+@@ -821,12 +734,10 @@ retry:
+ 		disk = r10_bio->devs[slot].devnum;
+ 		rdev = rcu_dereference(conf->mirrors[disk].replacement);
+ 		if (rdev == NULL || test_bit(Faulty, &rdev->flags) ||
+-		    test_bit(Unmerged, &rdev->flags) ||
+ 		    r10_bio->devs[slot].addr + sectors > rdev->recovery_offset)
+ 			rdev = rcu_dereference(conf->mirrors[disk].rdev);
+ 		if (rdev == NULL ||
+-		    test_bit(Faulty, &rdev->flags) ||
+-		    test_bit(Unmerged, &rdev->flags))
++		    test_bit(Faulty, &rdev->flags))
+ 			continue;
+ 		if (!test_bit(In_sync, &rdev->flags) &&
+ 		    r10_bio->devs[slot].addr + sectors > rdev->recovery_offset)
+@@ -1326,11 +1237,9 @@ retry_write:
+ 			blocked_rdev = rrdev;
+ 			break;
+ 		}
+-		if (rdev && (test_bit(Faulty, &rdev->flags)
+-			     || test_bit(Unmerged, &rdev->flags)))
++		if (rdev && (test_bit(Faulty, &rdev->flags)))
+ 			rdev = NULL;
+-		if (rrdev && (test_bit(Faulty, &rrdev->flags)
+-			      || test_bit(Unmerged, &rrdev->flags)))
++		if (rrdev && (test_bit(Faulty, &rrdev->flags)))
+ 			rrdev = NULL;
+ 
+ 		r10_bio->devs[i].bio = NULL;
+@@ -1777,7 +1686,6 @@ static int raid10_add_disk(struct mddev *mddev, struct md_rdev *rdev)
+ 	int mirror;
+ 	int first = 0;
+ 	int last = conf->geo.raid_disks - 1;
+-	struct request_queue *q = bdev_get_queue(rdev->bdev);
+ 
+ 	if (mddev->recovery_cp < MaxSector)
+ 		/* only hot-add to in-sync arrays, as recovery is
+@@ -1790,11 +1698,6 @@ static int raid10_add_disk(struct mddev *mddev, struct md_rdev *rdev)
+ 	if (rdev->raid_disk >= 0)
+ 		first = last = rdev->raid_disk;
+ 
+-	if (q->merge_bvec_fn) {
+-		set_bit(Unmerged, &rdev->flags);
+-		mddev->merge_check_needed = 1;
+-	}
+-
+ 	if (rdev->saved_raid_disk >= first &&
+ 	    conf->mirrors[rdev->saved_raid_disk].rdev == NULL)
+ 		mirror = rdev->saved_raid_disk;
+@@ -1833,19 +1736,6 @@ static int raid10_add_disk(struct mddev *mddev, struct md_rdev *rdev)
+ 		rcu_assign_pointer(p->rdev, rdev);
+ 		break;
+ 	}
+-	if (err == 0 && test_bit(Unmerged, &rdev->flags)) {
+-		/* Some requests might not have seen this new
+-		 * merge_bvec_fn.  We must wait for them to complete
+-		 * before merging the device fully.
+-		 * First we make sure any code which has tested
+-		 * our function has submitted the request, then
+-		 * we wait for all outstanding requests to complete.
+-		 */
+-		synchronize_sched();
+-		freeze_array(conf, 0);
+-		unfreeze_array(conf);
+-		clear_bit(Unmerged, &rdev->flags);
+-	}
+ 	md_integrity_add_rdev(rdev, mddev);
+ 	if (mddev->queue && blk_queue_discard(bdev_get_queue(rdev->bdev)))
+ 		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, mddev->queue);
+@@ -2404,7 +2294,6 @@ static void fix_read_error(struct r10conf *conf, struct mddev *mddev, struct r10
+ 			d = r10_bio->devs[sl].devnum;
+ 			rdev = rcu_dereference(conf->mirrors[d].rdev);
+ 			if (rdev &&
+-			    !test_bit(Unmerged, &rdev->flags) &&
+ 			    test_bit(In_sync, &rdev->flags) &&
+ 			    is_badblock(rdev, r10_bio->devs[sl].addr + sect, s,
+ 					&first_bad, &bad_sectors) == 0) {
+@@ -2458,7 +2347,6 @@ static void fix_read_error(struct r10conf *conf, struct mddev *mddev, struct r10
+ 			d = r10_bio->devs[sl].devnum;
+ 			rdev = rcu_dereference(conf->mirrors[d].rdev);
+ 			if (!rdev ||
+-			    test_bit(Unmerged, &rdev->flags) ||
+ 			    !test_bit(In_sync, &rdev->flags))
+ 				continue;
+ 
+@@ -3652,8 +3540,6 @@ static int run(struct mddev *mddev)
+ 			disk->rdev = rdev;
+ 		}
+ 		q = bdev_get_queue(rdev->bdev);
+-		if (q->merge_bvec_fn)
+-			mddev->merge_check_needed = 1;
+ 		diff = (rdev->new_data_offset - rdev->data_offset);
+ 		if (!mddev->reshape_backwards)
+ 			diff = -diff;
+@@ -4706,7 +4592,6 @@ static struct md_personality raid10_personality =
+ 	.start_reshape	= raid10_start_reshape,
+ 	.finish_reshape	= raid10_finish_reshape,
+ 	.congested	= raid10_congested,
+-	.mergeable_bvec	= raid10_mergeable_bvec,
+ };
+ 
+ static int __init raid_init(void)
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index b6c6ace..18d2b23 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -4625,35 +4625,6 @@ static int raid5_congested(struct mddev *mddev, int bits)
+ 	return 0;
+ }
+ 
+-/* We want read requests to align with chunks where possible,
+- * but write requests don't need to.
+- */
+-static int raid5_mergeable_bvec(struct mddev *mddev,
+-				struct bvec_merge_data *bvm,
+-				struct bio_vec *biovec)
+-{
+-	sector_t sector = bvm->bi_sector + get_start_sect(bvm->bi_bdev);
+-	int max;
+-	unsigned int chunk_sectors = mddev->chunk_sectors;
+-	unsigned int bio_sectors = bvm->bi_size >> 9;
+-
+-	/*
+-	 * always allow writes to be mergeable, read as well if array
+-	 * is degraded as we'll go through stripe cache anyway.
+-	 */
+-	if ((bvm->bi_rw & 1) == WRITE || mddev->degraded)
+-		return biovec->bv_len;
+-
+-	if (mddev->new_chunk_sectors < mddev->chunk_sectors)
+-		chunk_sectors = mddev->new_chunk_sectors;
+-	max =  (chunk_sectors - ((sector & (chunk_sectors - 1)) + bio_sectors)) << 9;
+-	if (max < 0) max = 0;
+-	if (max <= biovec->bv_len && bio_sectors == 0)
+-		return biovec->bv_len;
+-	else
+-		return max;
+-}
+-
+ static int in_chunk_boundary(struct mddev *mddev, struct bio *bio)
+ {
+ 	sector_t sector = bio->bi_iter.bi_sector + get_start_sect(bio->bi_bdev);
+@@ -7722,7 +7693,6 @@ static struct md_personality raid6_personality =
+ 	.quiesce	= raid5_quiesce,
+ 	.takeover	= raid6_takeover,
+ 	.congested	= raid5_congested,
+-	.mergeable_bvec	= raid5_mergeable_bvec,
+ };
+ static struct md_personality raid5_personality =
+ {
+@@ -7746,7 +7716,6 @@ static struct md_personality raid5_personality =
+ 	.quiesce	= raid5_quiesce,
+ 	.takeover	= raid5_takeover,
+ 	.congested	= raid5_congested,
+-	.mergeable_bvec	= raid5_mergeable_bvec,
+ };
+ 
+ static struct md_personality raid4_personality =
+@@ -7771,7 +7740,6 @@ static struct md_personality raid4_personality =
+ 	.quiesce	= raid5_quiesce,
+ 	.takeover	= raid4_takeover,
+ 	.congested	= raid5_congested,
+-	.mergeable_bvec	= raid5_mergeable_bvec,
+ };
+ 
+ static int __init raid5_init(void)
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 93b81a2..6927b76 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -239,14 +239,6 @@ typedef int (prep_rq_fn) (struct request_queue *, struct request *);
+ typedef void (unprep_rq_fn) (struct request_queue *, struct request *);
+ 
+ struct bio_vec;
+-struct bvec_merge_data {
+-	struct block_device *bi_bdev;
+-	sector_t bi_sector;
+-	unsigned bi_size;
+-	unsigned long bi_rw;
+-};
+-typedef int (merge_bvec_fn) (struct request_queue *, struct bvec_merge_data *,
+-			     struct bio_vec *);
+ typedef void (softirq_done_fn)(struct request *);
+ typedef int (dma_drain_needed_fn)(struct request *);
+ typedef int (lld_busy_fn) (struct request_queue *q);
+@@ -331,7 +323,6 @@ struct request_queue {
+ 	make_request_fn		*make_request_fn;
+ 	prep_rq_fn		*prep_rq_fn;
+ 	unprep_rq_fn		*unprep_rq_fn;
+-	merge_bvec_fn		*merge_bvec_fn;
+ 	softirq_done_fn		*softirq_done_fn;
+ 	rq_timed_out_fn		*rq_timed_out_fn;
+ 	dma_drain_needed_fn	*dma_drain_needed;
+@@ -1041,7 +1032,6 @@ extern void blk_queue_lld_busy(struct request_queue *q, lld_busy_fn *fn);
+ extern void blk_queue_segment_boundary(struct request_queue *, unsigned long);
+ extern void blk_queue_prep_rq(struct request_queue *, prep_rq_fn *pfn);
+ extern void blk_queue_unprep_rq(struct request_queue *, unprep_rq_fn *ufn);
+-extern void blk_queue_merge_bvec(struct request_queue *, merge_bvec_fn *);
+ extern void blk_queue_dma_alignment(struct request_queue *, int);
+ extern void blk_queue_update_dma_alignment(struct request_queue *, int);
+ extern void blk_queue_softirq_done(struct request_queue *, softirq_done_fn *);
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 51cc1de..76d23fa 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -82,9 +82,6 @@ typedef int (*dm_message_fn) (struct dm_target *ti, unsigned argc, char **argv);
+ typedef int (*dm_ioctl_fn) (struct dm_target *ti, unsigned int cmd,
+ 			    unsigned long arg);
+ 
+-typedef int (*dm_merge_fn) (struct dm_target *ti, struct bvec_merge_data *bvm,
+-			    struct bio_vec *biovec, int max_size);
+-
+ /*
+  * These iteration functions are typically used to check (and combine)
+  * properties of underlying devices.
+@@ -160,7 +157,6 @@ struct target_type {
+ 	dm_status_fn status;
+ 	dm_message_fn message;
+ 	dm_ioctl_fn ioctl;
+-	dm_merge_fn merge;
+ 	dm_busy_fn busy;
+ 	dm_iterate_devices_fn iterate_devices;
+ 	dm_io_hints_fn io_hints;
 -- 
 1.9.1
+
