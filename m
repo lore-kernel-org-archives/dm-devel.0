@@ -1,34 +1,55 @@
-From: Kent Overstreet <kent.overstreet@gmail.com>
-Subject: Re: [dm-devel] Proposal for annotating _unstable_ pages
-Date: Fri, 22 May 2015 11:33:04 -0700
-Message-ID: <20150522183304.GB27397@kmo-pixel>
-References: <20150515205825.GC24967@birch.djwong.org>
- <20150519154200.GA2559@kmo-pixel>
- <20150519201055.GD27115@birch.djwong.org>
- <20150521010440.GA17405@kmo-pixel>
- <20150521165453.GK27863@quack.suse.cz>
- <20150521180954.GA27397@kmo-pixel>
- <20150521192112.GA2665@quack.suse.cz>
- <20150522181759.GB32090@birch.djwong.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: michaelc@cs.wisc.edu
+Subject: [PATCH 1/1] scsi: add Synology to 1024 sector blacklist
+Date: Fri, 22 May 2015 14:22:52 -0500
+Message-ID: <1432322572-5879-1-git-send-email-michaelc@cs.wisc.edu>
 Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150522181759.GB32090@birch.djwong.org>
 Sender: linux-scsi-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Jan Kara <jack@suse.cz>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, axboe@fb.com, Linux FS Devel <linux-fsdevel@vger.kernel.org>, zab@zabbo.net, linux-btrfs@vger.kernel.org
+To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Cc: Mike Christie <michaelc@cs.wisc.edu>
 List-Id: dm-devel.ids
 
-On Fri, May 22, 2015 at 11:17:59AM -0700, Darrick J. Wong wrote:
-> Back when I was writing the stable pages patches, I observed that some of the
-> filesystems didn't hold the pages containing their own metadata stable during
-> writeback on a stable-writes device.  The journalling filesystems were fine
-> because they had various means to take care of that.
-> 
-> ISTR ext2 and vfat were the biggest culprits, but both maintainers rejected
-> the patches to fix that behavior.  This might no longer be the case; those
-> patches were so long ago I can't find them in Google.
+From: Mike Christie <michaelc@cs.wisc.edu>
 
-Not at all surprised. Yeah, this would solve that problem - we just annotate
-those bios so we don't bounce them until we hit a point where we need to.
+Another day another iSCSI target that cannot handle large IOs.
+The Synology iSCSI targets report:
+
+Block limits VPD page (SBC):
+  Write same no zero (WSNZ): 0
+  Maximum compare and write length: 0 blocks
+  Optimal transfer length granularity: 0 blocks
+  Maximum transfer length: 0 blocks
+  Optimal transfer length: 0 blocks
+  Maximum prefetch length: 0 blocks
+  Maximum unmap LBA count: 0
+  Maximum unmap block descriptor count: 0
+  Optimal unmap granularity: 0
+  Unmap granularity alignment valid: 0
+  Unmap granularity alignment: 0
+  Maximum write same length: 0x0 blocks
+
+and the size of the command it can handle seems to depend on how much
+memory it can allocate at the time. This results in IO errors when
+handling large IOs. This patch just has us use the old 1024 default
+sectors for this target by adding it to the scsi blacklist.
+
+Reported-by: Ancoron Luciferis <ancoron.luciferis@googlemail.com>
+Signed-off-by: Mike Christie <michaelc@cs.wisc.edu>
+---
+ drivers/scsi/scsi_devinfo.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/scsi/scsi_devinfo.c b/drivers/scsi/scsi_devinfo.c
+index 848c7ca..d2a8bdf 100644
+--- a/drivers/scsi/scsi_devinfo.c
++++ b/drivers/scsi/scsi_devinfo.c
+@@ -227,6 +227,7 @@ static struct {
+ 	{"Promise", "VTrak E610f", NULL, BLIST_SPARSELUN | BLIST_NO_RSOC},
+ 	{"Promise", "", NULL, BLIST_SPARSELUN},
+ 	{"QNAP", "iSCSI Storage", NULL, BLIST_MAX_1024}, 
++	{"SYNOLOGY", "iSCSI Storage", NULL, BLIST_MAX_1024},
+ 	{"QUANTUM", "XP34301", "1071", BLIST_NOTQ},
+ 	{"REGAL", "CDC-4X", NULL, BLIST_MAX5LUN | BLIST_SINGLELUN},
+ 	{"SanDisk", "ImageMate CF-SD1", NULL, BLIST_FORCELUN},
+-- 
+1.8.3.1
+
