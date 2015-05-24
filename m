@@ -1,15 +1,13 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: [PATCH 6/4 v2] dm-raid: enhance discard_zeroes_data
-	documentation
-Date: Sun, 24 May 2015 15:36:20 -0400
-Message-ID: <0A3CD7BF-6CE0-4808-90C6-9666855F2CEF@redhat.com>
-References: <1431714910-375-1-git-send-email-heinzm@redhat.com>
+From: Johannes Bauer <dfnsonfsduifb@gmx.de>
+Subject: dmsetup remove gives EBUSY (even though it shouldn't be
+	busy)
+Date: Mon, 25 May 2015 00:31:25 +0200
+Message-ID: <5562513D.3080203@gmx.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1431714910-375-1-git-send-email-heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,49 +17,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Heinz Mauelshagen <heinzm@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-TmFjay4KClBsZWFzZSBsZWF2ZSB0aGUg4oCYdmVyc2lvbiBoaXN0b3J54oCZIHNlY3Rpb24gYXQg
-dGhlIGVuZC4KClRoZSBuZXcgZGlzY2FyZCBzZWN0aW9uIHNob3VsZCBoYXZlIGEgaGVhZGVyIGxp
-a2UgYWxsIHRoZSBvdGhlciBzZWN0aW9ucywgZS5nLiB0aGUgc2VjdGlvbiBuYW1lIHVuZGVybGlu
-ZWQgYnkgc2luZ2xlIGRhc2hlcy4KCiBicmFzc293CgoKCgo+IE9uIE1heSAxNSwgMjAxNSwgYXQg
-MjozNSBQTSwgaGVpbnptQHJlZGhhdC5jb20gd3JvdGU6Cj4gCj4gRnJvbTogSGVpbnogTWF1ZWxz
-aGFnZW4gPGhlaW56bUByZWRoYXQuY29tPgo+IAo+IFRoaXMgcGF0Y2ggYWRkcyBkb2N1bWVudGF0
-aW9uIGV4cGxhaW5pbmcgYmFja2dyb3VuZCBvZgo+IGRpc2NhcmRfemVyb2VzX2RhdGEgaXNzdWVz
-IHdpdGggcmFpZDQvNS82IGFuZCB0aGUgcmVsYXRlZAo+IGRldmljZXNfaGFuZGxlX2Rpc2NhcmRz
-X3NhZmVseSBtb2R1bGUgcGFyYW1ldGVyLgo+IAo+IAo+IFNpZ25lZC1vZi1ieTogSGVpbnogTWF1
-ZWxzaGFnZW4gPGhlaW56bUByZWRoYXQuY29tPgo+IAo+IC0tLQo+IERvY3VtZW50YXRpb24vZGV2
-aWNlLW1hcHBlci9kbS1yYWlkLnR4dCB8IDIxICsrKysrKysrKysrKysrKysrKysrKwo+IDEgZmls
-ZSBjaGFuZ2VkLCAyMSBpbnNlcnRpb25zKCspCj4gCj4gZGlmZiAtLWdpdCBhL0RvY3VtZW50YXRp
-b24vZGV2aWNlLW1hcHBlci9kbS1yYWlkLnR4dCBiL0RvY3VtZW50YXRpb24vZGV2aWNlLW1hcHBl
-ci9kbS1yYWlkLnR4dAo+IGluZGV4IGJjZWI4NjUuLjcxMzczOWIgMTAwNjQ0Cj4gLS0tIGEvRG9j
-dW1lbnRhdGlvbi9kZXZpY2UtbWFwcGVyL2RtLXJhaWQudHh0Cj4gKysrIGIvRG9jdW1lbnRhdGlv
-bi9kZXZpY2UtbWFwcGVyL2RtLXJhaWQudHh0Cj4gQEAgLTIyNiw0ICsyMjYsMjUgQEAgVmVyc2lv
-biBIaXN0b3J5Cj4gMS41LjIgICAnbWlzbWF0Y2hfY250JyBpcyB6ZXJvIHVubGVzcyBbbGFzdF9d
-c3luY19hY3Rpb24gaXMgImNoZWNrIi4KPiAxLjYuMCAgIEFkZCBkZXZpY2VzX2hhbmRsZV9kaXNj
-YXJkc19zYWZlbHkgbW9kdWxlIHBhcmFtZXRlciB0bwo+IAlhbGxvdyBkaXNjYXJkcyBvbiBkaXNr
-cyBhbm91bmNpbmcgdW5jZXJ0YWluIGRpc2NhcmRfemVyb2VzX2RhdGEKPiArCShzZWUgKmRpc2Nh
-cmQqIGJlbG93IGZvciBtb3JlIGRldGFpbHMpCj4gMS43LjAgICBBZGQgc3VwcG9ydCBmb3IgTUQg
-UkFJRDAgbWFwcGluZ3MKPiArCj4gKypkaXNjYXJkJwo+ICtUaGUgTUQgcmFpZDQvNS82IHBlcnNv
-bmFsaXRpZXMgdHJ1c3QgZGlzY2FyZF96ZXJvZXNfZGF0YSBlbnN1cmluZwo+ICt0byByZXR1cm4g
-emVyb2VzIGFzIGJsb2NrIGNvbnRlbnQgYWZ0ZXIgYSBkaXNjYXJkIGFuZCB0aHVzIGF2b2lkCj4g
-K3Jld3JpdGluZyB0aGVtOyB0aGUgemVyb2VkIGNvbnRlbnQgaXMgdXNlZCB0byByZWNvbnN0cnVj
-dCBkYXRhCj4gK29uIGEgZGlzayBmYWlsdXJlIHRodXMgbGVhZGluZyB0byBjb3JydXBpb24gaW4g
-YW55IHJlY29uc3RydWN0ZWQKPiArYmxvY2sgZGVyaXZlZCBmcm9tIGRpc2NhcmRlZCBvbmVzLgo+
-ICsKPiArRmllbGQgcmVwb3J0cyBzaG93ZWQsIHRoYXQgYW4gdW5rbm93biBudW1iZXIgb2YgZGlz
-a3MgZmFpbCBzdXBwb3J0aW5nCj4gK2Rpc2NhcmRfemVyb2VzX2RhdGEgcHJvcGVybHksIGhlbmNl
-IHRoZXkgbWF5IHJldHVybiBub24temVybyBibG9jawo+ICtjb250ZW50IGFmdGVyIGEgZGlzY2Fy
-ZC4KPiArCj4gK0luIG9yZGVyIHRvIGF2b2lkIGRhdGEgY29ycnVwdGlvbiBvbiByZWNvdmVyeSBv
-ZiBmYWlsZWQgUkFJRCBkZXZpY2UKPiArY29udGVudCB1c2luZyBkaXNjYXJkZWQgYmxvY2tzLCB3
-ZSBoYXZlIHRvIGF2b2lkIHVzaW5nIHRoZSBmZWF0dXJlCj4gK2J5IGRlZmF1bHQuCj4gKwo+ICtG
-b3IgY29udmVuaWVuY2UsIHRoZSBtb2R1bGUgcGFyYW1ldGVyIGRldmljZXNfaGFuZGxlX2Rpc2Nh
-cmRzX3NhZmVseQo+ICthbGxvd3MgdXNlcnMga25vd2luZyBmb3Igc3VyZSB0aGF0IGRpc2NhcmRf
-emVyb2VzX2RhdGEgd29ya3MgcHJvcGVybHkKPiArb24gYWxsIHRoZWlyIHJhaWQgZGlza3MgdG8g
-b3ZlcndyaXRlIHRoZSBkZWZhdWx0IGFuZCBtYWtlIHVzZQo+ICtvZiB0aGUgZGlzY2FyZF96ZXJv
-ZXNfZGF0YSBvcHRpbWl6YXRpb24uCj4gLS0gCj4gMi4xLjAKPiAKPiAtLQo+IGRtLWRldmVsIG1h
-aWxpbmcgbGlzdAo+IGRtLWRldmVsQHJlZGhhdC5jb20KPiBodHRwczovL3d3dy5yZWRoYXQuY29t
-L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
-ZG0tZGV2ZWw=
+Hi list,
+
+apologies if I'm at the wrong place, but I think this is dm related
+(even though in practice the device I'm talking about is using the
+dm-crypt target).
+
+This is my problem: I have a open dm-crypt mapping (LUKS) on which I do
+perform some block operations (copying). There are no mounted file
+systems on the copied device handles at any time. Let's say my device is
+called under /dev/mapper/foobar and I'm writing to that block device.
+
+The file descriptor that points to the /dev/mapper/foobar is then closed
+via close(2). Then I call sync(2).
+
+Afterwards I fork/exec the command "dmsetup remove foobar". This yields:
+
+device-mapper: remove ioctl on foobar failed: Device or resource busy
+Command failed
+
+And results in return code 1. I'm only getting this behavior with slow
+disks (i.e. cannot reproduce with a loop device that points to /dev/shm
+as underlying block device). And I'm guessing there's some
+buffers/caches still in use (i.e. pending writes) which is why dmsetup
+returns EBUSY. What I don't understand is why the sync(2) call does not
+block until all pending writes have been flushed.
+
+If I do insert sleep(10) before my "dmsetup remove" call, it works
+smoothly -- but this is hardly a solution.
+
+Do you have any pointers on why this happens and how I can cleanly solve
+this?
+
+Thank you very much,
+Cheers,
+Johannes
