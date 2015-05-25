@@ -1,55 +1,102 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: dmsetup remove gives EBUSY (even though it shouldn't
-	be busy)
-Date: Mon, 25 May 2015 14:38:43 +0200
-Message-ID: <556317D3.6070901@redhat.com>
-References: <5562513D.3080203@gmx.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH v4 08/11] block: kill merge_bvec_fn() completely
+Date: Mon, 25 May 2015 16:04:13 +0200
+Message-ID: <20150525140413.GA26065@lst.de>
+References: <1432318723-18829-1-git-send-email-mlin@kernel.org> <1432318723-18829-9-git-send-email-mlin@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5562513D.3080203@gmx.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1432318723-18829-9-git-send-email-mlin@kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Ming Lin <mlin@kernel.org>
+Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Kent Overstreet <kent.overstreet@gmail.com>, Jens Axboe <axboe@kernel.dk>, Dongsu Park <dpark@posteo.net>, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Yehuda Sadeh <yehuda@inktank.com>, Sage Weil <sage@inktank.com>, Alex Elder <elder@kernel.org>, ceph-devel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Alex Elder <elder@linaro.org>
 List-Id: dm-devel.ids
 
-On 05/25/2015 12:31 AM, Johannes Bauer wrote:
-> This is my problem: I have a open dm-crypt mapping (LUKS) on which I do
-> perform some block operations (copying). There are no mounted file
-> systems on the copied device handles at any time. Let's say my device is
-> called under /dev/mapper/foobar and I'm writing to that block device.
+On Fri, May 22, 2015 at 11:18:40AM -0700, Ming Lin wrote:
+> From: Kent Overstreet <kent.overstreet@gmail.com>
 > 
-> The file descriptor that points to the /dev/mapper/foobar is then closed
-> via close(2). Then I call sync(2).
-> 
-> Afterwards I fork/exec the command "dmsetup remove foobar". This yields:
-> 
-> device-mapper: remove ioctl on foobar failed: Device or resource busy
-> Command failed
+> As generic_make_request() is now able to handle arbitrarily sized bios,
+> it's no longer necessary for each individual block driver to define its
+> own ->merge_bvec_fn() callback. Remove every invocation completely.
 
-Usually this is caused by running blkid (automatically running from udev rules)
-which react to close-on-write on the device and keep the device open while scanning.
-(You can try to run lsof, there is a chance you will see the process blocking
-this device.)
+It might be good to replace patch 1 and this one by a patch per driver
+to remove the merge_bvec_fn instance and add the blk_queue_split call
+for all those drivers that actually had a ->merge_bvec_fn.  As some
+of them were non-trivial attention from the maintainers would be helpful,
+and a patch per driver might help with that.
 
-Recent device mapper tries to retry removal operation, so if you use
-recent dmsetup (or cryptsetup close command) you should see that it
-tries several times.
+> -/* This is called by bio_add_page().
+> - *
+> - * q->max_hw_sectors and other global limits are already enforced there.
+> - *
+> - * We need to call down to our lower level device,
+> - * in case it has special restrictions.
+> - *
+> - * We also may need to enforce configured max-bio-bvecs limits.
+> - *
+> - * As long as the BIO is empty we have to allow at least one bvec,
+> - * regardless of size and offset, so no need to ask lower levels.
+> - */
+> -int drbd_merge_bvec(struct request_queue *q, struct bvec_merge_data *bvm, struct bio_vec *bvec)
 
-First option is to disable WATCH rule in udev rules and check if this helps.
-(Unfortunately this has some side effects.)
 
-Better solution is probably explicitly call "udevadm settle" instead
-of sleep(). Still not perfect (it waits for all devices/udev processes),
-but I am afraid there is nothing better yet to synchronize with these scans.
+This just checks the lower device, so it looks obviously fine.
 
-Milan
+> -static int pkt_merge_bvec(struct request_queue *q, struct bvec_merge_data *bmd,
+> -			  struct bio_vec *bvec)
+> -{
+> -	struct pktcdvd_device *pd = q->queuedata;
+> -	sector_t zone = get_zone(bmd->bi_sector, pd);
+> -	int used = ((bmd->bi_sector - zone) << 9) + bmd->bi_size;
+> -	int remaining = (pd->settings.size << 9) - used;
+> -	int remaining2;
+> -
+> -	/*
+> -	 * A bio <= PAGE_SIZE must be allowed. If it crosses a packet
+> -	 * boundary, pkt_make_request() will split the bio.
+> -	 */
+> -	remaining2 = PAGE_SIZE - bmd->bi_size;
+> -	remaining = max(remaining, remaining2);
+> -
+> -	BUG_ON(remaining < 0);
+> -	return remaining;
+> -}
+
+As mentioned in the comment pkt_make_request will split the bio so pkt
+looks fine.
+
+> diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
+> index ec6c5c6..f50edb3 100644
+> --- a/drivers/block/rbd.c
+> +++ b/drivers/block/rbd.c
+> @@ -3440,52 +3440,6 @@ static int rbd_queue_rq(struct blk_mq_hw_ctx *hctx,
+>  	return BLK_MQ_RQ_QUEUE_OK;
+>  }
+>  
+> -/*
+> - * a queue callback. Makes sure that we don't create a bio that spans across
+> - * multiple osd objects. One exception would be with a single page bios,
+> - * which we handle later at bio_chain_clone_range()
+> - */
+> -static int rbd_merge_bvec(struct request_queue *q, struct bvec_merge_data *bmd,
+> -			  struct bio_vec *bvec)
+
+It seems rbd handles requests spanning objects just fine, so I don't
+really understand why rbd_merge_bvec even exists.  Getting some form
+of ACK from the ceph folks would be useful.
+
+> -/*
+> - * We assume I/O is going to the origin (which is the volume
+> - * more likely to have restrictions e.g. by being striped).
+> - * (Looking up the exact location of the data would be expensive
+> - * and could always be out of date by the time the bio is submitted.)
+> - */
+> -static int cache_bvec_merge(struct dm_target *ti,
+> -			    struct bvec_merge_data *bvm,
+> -			    struct bio_vec *biovec, int max_size)
+> -{
+
+DM seems to have the most complex merge functions of all drivers, so
+I'd really love to see an ACK from Mike.
+
