@@ -1,121 +1,57 @@
-From: Alex Elder <elder@linaro.org>
-Subject: Re: [PATCH v4 08/11] block: kill merge_bvec_fn() completely
-Date: Mon, 25 May 2015 10:35:24 -0500
-Message-ID: <5563413C.3060906@linaro.org>
-References: <1432318723-18829-1-git-send-email-mlin@kernel.org>	<1432318723-18829-9-git-send-email-mlin@kernel.org>	<20150525140413.GA26065@lst.de> <CAOi1vP8vNEXw2e1eWa4LqKD14SA7XtSQ_C8+4d_sz20t4nfEng@mail.gmail.com>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH for-4.2 2/3] block,
+ dm: don't copy bios for request clones
+Date: Tue, 26 May 2015 06:20:43 +0000
+Message-ID: <556410BB.3000103@ce.jp.nec.com>
+References: <1432300445-9543-1-git-send-email-snitzer@redhat.com>
+	<1432300445-9543-2-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <CAOi1vP8vNEXw2e1eWa4LqKD14SA7XtSQ_C8+4d_sz20t4nfEng@mail.gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Ilya Dryomov <idryomov@gmail.com>, Christoph Hellwig <hch@lst.de>
-Cc: Ming Lin <mlin@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, Jens Axboe <axboe@kernel.dk>, Dongsu Park <dpark@posteo.net>, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Yehuda Sadeh <yehuda@inktank.com>, Sage Weil <sage@inktank.com>, Alex Elder <elder@kernel.org>, Ceph Development <ceph-devel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "Martin K. Petersen" <martin.petersen@oracle.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1432300445-9543-2-git-send-email-snitzer@redhat.com>
+Content-Language: ja-JP
+Content-ID: <DB73D74CB5403B4CB1E75118C99ACB45@gisp.nec.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 05/25/2015 10:02 AM, Ilya Dryomov wrote:
-> On Mon, May 25, 2015 at 5:04 PM, Christoph Hellwig <hch@lst.de> wrote:
->> On Fri, May 22, 2015 at 11:18:40AM -0700, Ming Lin wrote:
->>> From: Kent Overstreet <kent.overstreet@gmail.com>
->>>
->>> As generic_make_request() is now able to handle arbitrarily sized bios,
->>> it's no longer necessary for each individual block driver to define its
->>> own ->merge_bvec_fn() callback. Remove every invocation completely.
->>
->> It might be good to replace patch 1 and this one by a patch per driver
->> to remove the merge_bvec_fn instance and add the blk_queue_split call
->> for all those drivers that actually had a ->merge_bvec_fn.  As some
->> of them were non-trivial attention from the maintainers would be helpful,
->> and a patch per driver might help with that.
->>
->>> -/* This is called by bio_add_page().
->>> - *
->>> - * q->max_hw_sectors and other global limits are already enforced there.
->>> - *
->>> - * We need to call down to our lower level device,
->>> - * in case it has special restrictions.
->>> - *
->>> - * We also may need to enforce configured max-bio-bvecs limits.
->>> - *
->>> - * As long as the BIO is empty we have to allow at least one bvec,
->>> - * regardless of size and offset, so no need to ask lower levels.
->>> - */
->>> -int drbd_merge_bvec(struct request_queue *q, struct bvec_merge_data *bvm, struct bio_vec *bvec)
->>
->>
->> This just checks the lower device, so it looks obviously fine.
->>
->>> -static int pkt_merge_bvec(struct request_queue *q, struct bvec_merge_data *bmd,
->>> -                       struct bio_vec *bvec)
->>> -{
->>> -     struct pktcdvd_device *pd = q->queuedata;
->>> -     sector_t zone = get_zone(bmd->bi_sector, pd);
->>> -     int used = ((bmd->bi_sector - zone) << 9) + bmd->bi_size;
->>> -     int remaining = (pd->settings.size << 9) - used;
->>> -     int remaining2;
->>> -
->>> -     /*
->>> -      * A bio <= PAGE_SIZE must be allowed. If it crosses a packet
->>> -      * boundary, pkt_make_request() will split the bio.
->>> -      */
->>> -     remaining2 = PAGE_SIZE - bmd->bi_size;
->>> -     remaining = max(remaining, remaining2);
->>> -
->>> -     BUG_ON(remaining < 0);
->>> -     return remaining;
->>> -}
->>
->> As mentioned in the comment pkt_make_request will split the bio so pkt
->> looks fine.
->>
->>> diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
->>> index ec6c5c6..f50edb3 100644
->>> --- a/drivers/block/rbd.c
->>> +++ b/drivers/block/rbd.c
->>> @@ -3440,52 +3440,6 @@ static int rbd_queue_rq(struct blk_mq_hw_ctx *hctx,
->>>       return BLK_MQ_RQ_QUEUE_OK;
->>>  }
->>>
->>> -/*
->>> - * a queue callback. Makes sure that we don't create a bio that spans across
->>> - * multiple osd objects. One exception would be with a single page bios,
->>> - * which we handle later at bio_chain_clone_range()
->>> - */
->>> -static int rbd_merge_bvec(struct request_queue *q, struct bvec_merge_data *bmd,
->>> -                       struct bio_vec *bvec)
->>
->> It seems rbd handles requests spanning objects just fine, so I don't
->> really understand why rbd_merge_bvec even exists.  Getting some form
->> of ACK from the ceph folks would be useful.
+On 05/22/15 22:14, Mike Snitzer wrote:
+> From: Christoph Hellwig <hch@lst.de>
 > 
-> I'm not Alex, but yeah, we have all the clone/split machinery and so we
-> can handle a spanning case just fine.  I think rbd_merge_bvec() exists
-> to make sure we don't have to do that unless it's really necessary -
-> like when a single page gets submitted at an inconvenient offset.
-
-I am Alex.  This is something I never removed.  I haven't
-looked at it closely now, but it seems to me that after I
-created a function that split stuff properly up *before*
-the BIO layer got to it (which has since been replaced by
-code related to Kent's immutable BIO work), there has been
-no need for this function.  Removing this was on a long-ago
-to-do list--but I didn't want to do it without spending some
-time ensuring it wouldn't break anything.
-
-If you want me to work through it in more detail so I can
-give a more certain response, let me know and I will do so.
-
-					-Alex
-
-> I have a patch that adds a blk_queue_chunk_sectors(object_size) call to
-> rbd_init_disk() but I haven't had a chance to play with it yet.  In any
-> case, we should be fine with getting rid of rbd_merge_bvec().  If this
-> ends up a per-driver patchset, I can make rbd_merge_bvec() ->
-> blk_queue_chunk_sectors() a single patch and push it through
-> ceph-client.git.
+> Currently dm-multipath has to clone the bios for every request sent
+> to the lower devices, which wastes cpu cycles and ties down memory.
 > 
-> Thanks,
-> 
->                 Ilya
-> 
+> This patch instead adds a new REQ_CLONE flag that instructs req_bio_endio
+> to not complete bios attached to a request, which we set on clone
+> requests similar to bios in a flush sequence.  With this change I/O
+> errors on a path failure only get propagated to dm-multipath, which
+> can then either resubmit the I/O or complete the bios on the original
+> request.
+..
+> @@ -128,7 +128,8 @@ static void req_bio_endio(struct request *rq, struct bio *bio,
+>  	bio_advance(bio, nbytes);
+>  
+>  	/* don't actually finish bio if it's part of flush sequence */
+> -	if (bio->bi_iter.bi_size == 0 && !(rq->cmd_flags & REQ_FLUSH_SEQ))
+> +	if (bio->bi_iter.bi_size == 0 &&
+> +	    !(rq->cmd_flags & (REQ_FLUSH_SEQ|REQ_CLONE)))
+>  		bio_endio(bio, error);
+>  }
 
+Not completing bios is not sufficient.
+If you advance the bi_iter to the end, you need to somehow rewind it
+or the re-submission will be incomplete, that would end up as a data
+corruption...
+
+-- 
+Jun'ichi Nomura, NEC Corporation
