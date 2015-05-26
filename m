@@ -1,18 +1,14 @@
 From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH for-4.2 2/3] block,
- dm: don't copy bios for request clones
-Date: Tue, 26 May 2015 06:20:43 +0000
-Message-ID: <556410BB.3000103@ce.jp.nec.com>
-References: <1432300445-9543-1-git-send-email-snitzer@redhat.com>
-	<1432300445-9543-2-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for 4.1-rc] dm: run queue on re-queue
+Date: Tue, 26 May 2015 08:25:54 +0000
+Message-ID: <55642E11.6010500@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1432300445-9543-2-git-send-email-snitzer@redhat.com>
 Content-Language: ja-JP
-Content-ID: <DB73D74CB5403B4CB1E75118C99ACB45@gisp.nec.co.jp>
+Content-ID: <8A0BECB8043EA94782AC28E505FB84DB@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,36 +18,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 05/22/15 22:14, Mike Snitzer wrote:
-> From: Christoph Hellwig <hch@lst.de>
-> 
-> Currently dm-multipath has to clone the bios for every request sent
-> to the lower devices, which wastes cpu cycles and ties down memory.
-> 
-> This patch instead adds a new REQ_CLONE flag that instructs req_bio_endio
-> to not complete bios attached to a request, which we set on clone
-> requests similar to bios in a flush sequence.  With this change I/O
-> errors on a path failure only get propagated to dm-multipath, which
-> can then either resubmit the I/O or complete the bios on the original
-> request.
-..
-> @@ -128,7 +128,8 @@ static void req_bio_endio(struct request *rq, struct bio *bio,
->  	bio_advance(bio, nbytes);
->  
->  	/* don't actually finish bio if it's part of flush sequence */
-> -	if (bio->bi_iter.bi_size == 0 && !(rq->cmd_flags & REQ_FLUSH_SEQ))
-> +	if (bio->bi_iter.bi_size == 0 &&
-> +	    !(rq->cmd_flags & (REQ_FLUSH_SEQ|REQ_CLONE)))
->  		bio_endio(bio, error);
->  }
+Without kicking queue, requeued request may stay forever in
+the queue if there are no other I/O activities to the device.
 
-Not completing bios is not sufficient.
-If you advance the bi_iter to the end, you need to somehow rewind it
-or the re-submission will be incomplete, that would end up as a data
-corruption...
+The original error had been in v2.6.39 with commit 7eaceaccab5f
+("block: remove per-queue plugging"), which replaced conditional
+plugging by periodic runqueue.
 
--- 
-Jun'ichi Nomura, NEC Corporation
+Commit 9d1deb83d489 in v4.1-rc1 removed the periodic runqueue
+and the problem started to manifest.
+
+Fixes: 9d1deb83d489 ("dm: don't schedule delayed run of the queue if nothing to do")
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index a930b72..0bf79a0 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1164,6 +1164,7 @@ static void old_requeue_request(struct request *rq)
+ 
+ 	spin_lock_irqsave(q->queue_lock, flags);
+ 	blk_requeue_request(q, rq);
++	blk_run_queue_async(q);
+ 	spin_unlock_irqrestore(q->queue_lock, flags);
+ }
+ 
