@@ -1,57 +1,54 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH for 4.1-rc] dm: run queue on re-queue
-Date: Tue, 26 May 2015 09:09:17 -0400
-Message-ID: <20150526130916.GB16369@redhat.com>
-References: <55642E11.6010500@ce.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH v4 01/11] block: make generic_make_request handle
+ arbitrarily sized bios
+Date: Tue, 26 May 2015 10:36:26 -0400
+Message-ID: <20150526143626.GA4315@redhat.com>
+References: <1432318723-18829-1-git-send-email-mlin@kernel.org>
+ <1432318723-18829-2-git-send-email-mlin@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <55642E11.6010500@ce.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Jens Axboe <axboe@kernel.dk>, device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <1432318723-18829-2-git-send-email-mlin@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ming Lin <mlin@kernel.org>
+Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Kent Overstreet <kent.overstreet@gmail.com>, Jens Axboe <axboe@kernel.dk>, Dongsu Park <dpark@posteo.net>, Christoph Hellwig <hch@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Ming Lei <ming.lei@canonical.com>, Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Geoff Levand <geoff@infradead.org>, Jim Paris <jim@jtan.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Oleg Drokin <oleg.drokin@intel.com>, Andreas Dilger <andreas.dilger@intel.com>
 List-Id: dm-devel.ids
 
-On Tue, May 26 2015 at  4:25P -0400,
-Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
+On Fri, May 22 2015 at  2:18pm -0400,
+Ming Lin <mlin@kernel.org> wrote:
 
-> Without kicking queue, requeued request may stay forever in
-> the queue if there are no other I/O activities to the device.
+> From: Kent Overstreet <kent.overstreet@gmail.com>
 > 
-> The original error had been in v2.6.39 with commit 7eaceaccab5f
-> ("block: remove per-queue plugging"), which replaced conditional
-> plugging by periodic runqueue.
+> The way the block layer is currently written, it goes to great lengths
+> to avoid having to split bios; upper layer code (such as bio_add_page())
+> checks what the underlying device can handle and tries to always create
+> bios that don't need to be split.
 > 
-> Commit 9d1deb83d489 in v4.1-rc1 removed the periodic runqueue
-> and the problem started to manifest.
-> 
-> Fixes: 9d1deb83d489 ("dm: don't schedule delayed run of the queue if nothing to do")
-> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index a930b72..0bf79a0 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1164,6 +1164,7 @@ static void old_requeue_request(struct request *rq)
->  
->  	spin_lock_irqsave(q->queue_lock, flags);
->  	blk_requeue_request(q, rq);
-> +	blk_run_queue_async(q);
->  	spin_unlock_irqrestore(q->queue_lock, flags);
->  }
+> But this approach becomes unwieldy and eventually breaks down with
+> stacked devices and devices with dynamic limits, and it adds a lot of
+> complexity. If the block layer could split bios as needed, we could
+> eliminate a lot of complexity elsewhere - particularly in stacked
+> drivers. Code that creates bios can then create whatever size bios are
+> convenient, and more importantly stacked drivers don't have to deal with
+> both their own bio size limitations and the limitations of the
+> (potentially multiple) devices underneath them.  In the future this will
+> let us delete merge_bvec_fn and a bunch of other code.
 
-Thanks Junichi.  The new blk-mq path did kick the queue, but obviously
-the old request_fn path didn't.  I'll get this queued for 4.1.
+This series doesn't take any steps to train upper layers
+(e.g. filesystems) to size their bios larger (which is defined as
+"whatever size bios are convenient" above).
 
+bio_add_page(), and merge_bvec_fn, served as the means for upper layers
+(and direct IO) to build up optimally sized bios.  Without a replacement
+(that I can see anyway) how is this patchset making forward progress
+(getting Acks, etc)!?
+
+I like the idea of reduced complexity associated with these late bio
+splitting changes I'm just not seeing how this is ready given there are
+no upper layer changes that speak to building larger bios..
+
+What am I missing?
+
+Please advise, thanks!
 Mike
