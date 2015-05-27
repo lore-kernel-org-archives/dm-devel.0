@@ -1,73 +1,23 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: [PATCH] dm: Fix oops when clone_and_map_rq returns
- !DM_MAPIO_REMAPPED
-Date: Wed, 27 May 2015 04:22:07 +0000
-Message-ID: <5565466F.3@ce.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [dm-devel] [PATCH v4 01/11] block: make generic_make_request
+	handle arbitrarily sized bios
+Date: Wed, 27 May 2015 10:20:18 +0200
+Message-ID: <20150527082018.GB25575@lst.de>
+References: <1432318723-18829-1-git-send-email-mlin@kernel.org> <1432318723-18829-2-git-send-email-mlin@kernel.org> <20150526143626.GA4315@redhat.com> <CAF1ivSb3ptYObS3_8bJwWhq98EcNgAgRhN_L-c3uyFfCzdn=9A@mail.gmail.com> <20150526153414.GA31182@agk-dp.fab.redhat.com> <20150527090640.44c346e2@notabene.brown> <20150527004022.GD31182@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: ja-JP
-Content-ID: <2F797D0A45041E4BB41FF01BDA491C1E@gisp.nec.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150527004022.GD31182@agk-dp.fab.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Ming Lei <ming.lei@canonical.com>, Al@redhat.com, Christoph Hellwig <hch@lst.de>, Lars Ellenberg <drbd-dev@lists.linbit.com>, Oleg@redhat.com, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Christoph Hellwig <hch@infradead.org>, Kent@redhat.com, Overstreet <kent.overstreet@gmail.com>, Nitin Gupta <ngupta@vflare.org>, Drokin <oleg.drokin@intel.com>, Viro <viro@zeniv.linux.org.uk>, Dave Chinner <dchinner@redhat.com>, Ming Lin <mlin@kernel.org>, Jens Axboe <axboe@kernel.dk>, Andreas Dilger <andreas.dilger@intel.com>, Geoff Levand <geoff@infradead.org>, Jiri Kosina <jkosina@suse.cz>, lkml <linux-kernel@vger.kernel.org>, Jim Paris <jim@jtan.com>, Minchan Kim <minchan@kernel.org>, Dongsu Park <dpark@posteo.net>
 List-Id: dm-devel.ids
 
-When stacking request-based dm on blk_mq device,
-request cloning and remapping are done in a single call to
-target's clone_and_map_rq(). Only when the return value is
-DM_MAPIO_REMAPPED, the clone is valid and owned by dm core.
+On Wed, May 27, 2015 at 01:40:22AM +0100, Alasdair G Kergon wrote:
+> It does sometimes make a significant difference to device-mapper stacks.
+> DM only uses it for performance reasons - it can already split bios when
+> it needs to.  I tried to remove merge_bvec_fn from DM several years ago but
+> couldn't because of the adverse performance impact of lots of splitting activity.
 
-"IS_ERR(clone)" does not cover all the !DM_MAPIO_REMAPPED cases.
-E.g. if underlying devices are not ready or unavailable, the
-function may return DM_MAPIO_REQUEUE.
-
-Without this fix, dm core may call setup_clone() for NULL clone
-and oops like this:
-
-   BUG: unable to handle kernel NULL pointer dereference at 0000000000000068
-   IP: [<ffffffff81227525>] blk_rq_prep_clone+0x7d/0x137
-   ...
-   CPU: 2 PID: 5793 Comm: kdmwork-253:3 Not tainted 4.0.0-nm #1
-   ...
-   Call Trace:
-    [<ffffffffa01d1c09>] map_tio_request+0xa9/0x258 [dm_mod]
-    [<ffffffff81071de9>] kthread_worker_fn+0xfd/0x150
-    [<ffffffff81071cec>] ? kthread_parkme+0x24/0x24
-    [<ffffffff81071cec>] ? kthread_parkme+0x24/0x24
-    [<ffffffff81071fdd>] kthread+0xe6/0xee
-    [<ffffffff81093a59>] ? put_lock_stats+0xe/0x20
-    [<ffffffff81071ef7>] ? __init_kthread_worker+0x5b/0x5b
-    [<ffffffff814c2d98>] ret_from_fork+0x58/0x90
-    [<ffffffff81071ef7>] ? __init_kthread_worker+0x5b/0x5b
-
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-
---
-This patch is a minimal fix.
-map_request() function could be refactored in better shape.
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 0bf79a0..1c62ed8 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1972,8 +1972,8 @@ static int map_request(struct dm_rq_target_io *tio, struct request *rq,
- 			dm_kill_unmapped_request(rq, r);
- 			return r;
- 		}
--		if (IS_ERR(clone))
--			return DM_MAPIO_REQUEUE;
-+		if (r != DM_MAPIO_REMAPPED)
-+			return r;
- 		if (setup_clone(clone, rq, tio, GFP_ATOMIC)) {
- 			/* -ENOMEM */
- 			ti->type->release_clone_rq(clone);
+Does it still?  Since the move to immutable biovecs the bio splits are
+pretty cheap now, but I'd really like to see this verified by benchmarks.
