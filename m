@@ -1,17 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: 4.1-rc2 dm-multipath-mq kernel warning
-Date: Wed, 27 May 2015 08:57:32 -0400
-Message-ID: <20150527125732.GA15911@redhat.com>
-References: <5548CDE5.9@sandisk.com> <20150506022332.GA12096@redhat.com>
-	<5549C68E.2050705@sandisk.com> <20150506182942.GA15545@redhat.com>
-	<554B3C22.4060305@sandisk.com>
+Subject: Re: dm: Fix oops when clone_and_map_rq returns
+	!DM_MAPIO_REMAPPED
+Date: Wed, 27 May 2015 09:22:53 -0400
+Message-ID: <20150527132253.GA16050@redhat.com>
+References: <5565466F.3@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <554B3C22.4060305@sandisk.com>
+In-Reply-To: <5565466F.3@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,76 +20,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, May 07 2015 at  6:19am -0400,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+On Wed, May 27 2015 at 12:22am -0400,
+Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
 
-> On 05/06/15 20:29, Mike Snitzer wrote:
-> >On Wed, May 06 2015 at  3:45am -0400,
-> >Bart Van Assche <bart.vanassche@sandisk.com> wrote:
-> >
-> >>On 05/06/15 04:23, Mike Snitzer wrote:
-> >>>On Tue, May 05 2015 at 10:04am -0400,
-> >>>Bart Van Assche <bart.vanassche@sandisk.com> wrote:
-> >>>>While retesting my SRP initiator patches on top of kernel v4.1-rc2
-> >>>>with DM_MQ_DEFAULT=y I ran into the kernel warning below. Does this
-> >>>>mean that I'm missing any device mapper related patches ? This
-> >>>>warning was reported shortly after scsi_remove_host() had been
-> >>>>invoked.
-> >>>
-> >>>I put the warning in place because, to me, if it triggers it speaks to
-> >>>unsafe teardown occuring (request is still completing but the queue it
-> >>>was issued from no longer exists).
-> >>>
-> >>>Like I said before I'm open to removing the WARN_ON_ONCE() if this
-> >>>scenario is perfectly valid.  But I just haven't had time to revisit
-> >>>what appears to be a potentially serious problem with the underlying
-> >>>paths' teardown vs upper level mpath IO.
-> >>>
-> >>>I'll try to revisit this week.  But I welcome input from others too.
-> >>>
-> >>>(Just thinking about it further now, it could be that the way the clone
-> >>>request is allocated in the case of blk-mq DM is as part of the original
-> >>>request's pdu... meaning there isn't a proper get_request() call against
-> >>>the underlying queue.. so the expected refcounting likely isn't
-> >>>happening.  And given the request won't be free'd from that underlying
-> >>>request_queue there really isn't a need to artificially link these
-> >>>cloned requests with the underlying request_queue... so I'm now leaning
-> >>>toward just removing the WARN_ON_ONCE.. but I'll look closer tomorrow)
-> >>
-> >>Hello Mike,
-> >>
-> >>With CONFIG_SCSI_MQ_DEFAULT=y and CONFIG_DM_MQ_DEFAULT=n I just ran into
-> >>the bug report below. I will continue my v4.1-rc2 tests with SCSI_MQ=n.
-> >
-> >What were you doing when this happened?  Quite a strange place to get a
-> >NULL pointer (it should be noted that for 4.2 hch's patch does away with
-> >cloning the request's bios).  Is there an easy reproducer (unlikely
-> >considering I've tested CONFIG_SCSI_MQ_DEFAULT=y and
-> >CONFIG_DM_MQ_DEFAULT=n a fair amount).
-> >
-> >BTW, my "Just thinking about it further now" above was relative to
-> >CONFIG_DM_MQ_DEFAULT=y and CONFIG_SCSI_MQ_DEFAULT=n.
+> When stacking request-based dm on blk_mq device,
+> request cloning and remapping are done in a single call to
+> target's clone_and_map_rq(). Only when the return value is
+> DM_MAPIO_REMAPPED, the clone is valid and owned by dm core.
 > 
-> Hello Mike,
+> "IS_ERR(clone)" does not cover all the !DM_MAPIO_REMAPPED cases.
+> E.g. if underlying devices are not ready or unavailable, the
+> function may return DM_MAPIO_REQUEUE.
 > 
-> With kernel v4.1-rc2, with CONFIG_SCSI_MQ_DEFAULT=y and
-> CONFIG_DM_MQ_DEFAULT=n if I run "for p in
-> /sys/class/srp_remote_ports/*; do echo 1 > $p/delete; done" if no
-> I/O is running that command works fine. That command triggers a call
-> of scsi_remove_host(). But if I run the same command while I/O is
-> running the message "BUG: unable to handle kernel NULL pointer
-> dereference at 0000000000000068 / IP: blk_rq_prep_clone+0x87/0x160"
-> appears. I just reproduced this after having rebuilt the kernel
-> after a "make clean".
+> Without this fix, dm core may call setup_clone() for NULL clone
+> and oops like this:
+> 
+>    BUG: unable to handle kernel NULL pointer dereference at 0000000000000068
+>    IP: [<ffffffff81227525>] blk_rq_prep_clone+0x7d/0x137
+>    ...
+>    CPU: 2 PID: 5793 Comm: kdmwork-253:3 Not tainted 4.0.0-nm #1
+>    ...
+>    Call Trace:
+>     [<ffffffffa01d1c09>] map_tio_request+0xa9/0x258 [dm_mod]
+>     [<ffffffff81071de9>] kthread_worker_fn+0xfd/0x150
+>     [<ffffffff81071cec>] ? kthread_parkme+0x24/0x24
+>     [<ffffffff81071cec>] ? kthread_parkme+0x24/0x24
+>     [<ffffffff81071fdd>] kthread+0xe6/0xee
+>     [<ffffffff81093a59>] ? put_lock_stats+0xe/0x20
+>     [<ffffffff81071ef7>] ? __init_kthread_worker+0x5b/0x5b
+>     [<ffffffff814c2d98>] ret_from_fork+0x58/0x90
+>     [<ffffffff81071ef7>] ? __init_kthread_worker+0x5b/0x5b
+> 
+> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+> 
+> --
+> This patch is a minimal fix.
+> map_request() function could be refactored in better shape.
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 0bf79a0..1c62ed8 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1972,8 +1972,8 @@ static int map_request(struct dm_rq_target_io *tio, struct request *rq,
+>  			dm_kill_unmapped_request(rq, r);
+>  			return r;
+>  		}
+> -		if (IS_ERR(clone))
+> -			return DM_MAPIO_REQUEUE;
+> +		if (r != DM_MAPIO_REMAPPED)
+> +			return r;
+>  		if (setup_clone(clone, rq, tio, GFP_ATOMIC)) {
+>  			/* -ENOMEM */
+>  			ti->type->release_clone_rq(clone);
 
-Hey Bart,
+Hi Junichi,
 
-Looks like Junichi likely fixed this issue you reported, please try this
-patch: https://patchwork.kernel.org/patch/6487321/
+In reviewing this patch I wondered if it better to xplicitly check for a
+return of DM_MAPIO_REQUEUE in map_request() since that is the only other
+return that is possible.  I'm still on the fence but your patch is more
+conservative and at least we won't go on to try to setup_clone, etc if
+for some reason in the future a new DM_MAPIO_* were invented and
+returned from clone_and_map_rq().
 
-Thanks,
+I do intend to revise the header slightly to make explicit references to
+function names in some places to improve clarity.  I'll have to double
+check but I _think_ this should cc stable@ too since blk-mq support was
+added in Linux 4.0 (IIRC).
+
+All said, thanks for fixing this issue!
 Mike
