@@ -1,20 +1,18 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: 4.1-rc2 dm-multipath-mq kernel warning
-Date: Wed, 27 May 2015 18:37:41 -0400
-Message-ID: <20150527223741.GA18501@redhat.com>
-References: <5548CDE5.9@sandisk.com> <20150506022332.GA12096@redhat.com>
-	<5549C68E.2050705@sandisk.com> <20150506182942.GA15545@redhat.com>
-	<554B3C22.4060305@sandisk.com> <20150527125732.GA15911@redhat.com>
-	<5565E2EA.2000302@sandisk.com> <5565E3E3.4080801@sandisk.com>
-	<20150527161415.GA22520@redhat.com>
-	<20150527170001.GA22548@redhat.com>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: dm: Fix oops when clone_and_map_rq returns
+	!DM_MAPIO_REMAPPED
+Date: Wed, 27 May 2015 22:48:15 +0000
+Message-ID: <556649AF.4050303@ce.jp.nec.com>
+References: <5565466F.3@ce.jp.nec.com> <20150527132253.GA16050@redhat.com>
+	<20150527135012.GB16050@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20150527170001.GA22548@redhat.com>
+In-Reply-To: <20150527135012.GB16050@redhat.com>
+Content-Language: ja-JP
+Content-ID: <7736E32F56E7524CB8B8BBF7C8E74955@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,61 +22,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
+To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, May 27 2015 at  1:00pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On 05/27/15 22:50, Mike Snitzer wrote:
+>> Hi Junichi,
+>>
+>> In reviewing this patch I wondered if it better to xplicitly check for a
+>> return of DM_MAPIO_REQUEUE in map_request() since that is the only other
+>> return that is possible.  I'm still on the fence but your patch is more
+>> conservative and at least we won't go on to try to setup_clone, etc if
+>> for some reason in the future a new DM_MAPIO_* were invented and
+>> returned from clone_and_map_rq().
 
-> On Wed, May 27 2015 at 12:14P -0400,
-> Mike Snitzer <snitzer@redhat.com> wrote:
+Either way should work. But I wanted to make it explicit
+to call setup_clone() only when DM_MAPIO_REMAPPED is returned.
+
+>> I do intend to revise the header slightly to make explicit references to
+>> function names in some places to improve clarity.  I'll have to double
+>> check but I _think_ this should cc stable@ too since blk-mq support was
+>> added in Linux 4.0 (IIRC).
 > 
-> > On Wed, May 27 2015 at 11:33am -0400,
-> > Bart Van Assche <bart.vanassche@sandisk.com> wrote:
-> > 
-> > > On 05/27/15 17:29, Bart Van Assche wrote:
-> > > >On 05/27/15 14:57, Mike Snitzer wrote:
-> > > >>Looks like Junichi likely fixed this issue you reported, please try this
-> > > >>patch: https://patchwork.kernel.org/patch/6487321/
-> > > >
-> > > >Hello Mike,
-> > > >
-> > > >On a setup on which an I/O verification test passes with
-> > > >blk-mq/scsi-mq/dm-mq disabled, this is what fio reports after a few
-> > > >minutes with scsi-mq and dm-mq enabled:
-> > > >
-> > > >test: Laying out IO file(s) (1 file(s) / 10MB)
-> > > >fio: io_u error on file /mnt/test.0.0: Input/output error: write
-> > > >offset=8327168, buflen=4096
-> > > >fio: io_u error on file /mnt/test.0.0: Input/output error: write
-> > > >offset=9007104, buflen=4096
-> > > >fio: pid=4568, err=5/file:io_u.c:1564, func=io_u error,
-> > > >error=Input/output error
-> > 
-> > I'll look closer at this.. so NULL pointer is fixed but this test hits
-> > IO errors.
-> 
-> Further code inspection revealed an issue with dm-mq enabled but scsi-mq
-> disabled (when requeuing the original request after clone_rq() failure DM
-> core wasn't unwinding the dm_start_request() accounting).  The following
-> patch will fix this issue.  I've also switched the dm-mq on scsi-mq case
-> to return BLK_MQ_RQ_QUEUE_BUSY directly (like hch suggested last week).
-> I have no idea if this would actually fix your case (would be surprising
-> but worth a shot I suppose).
-> 
-> Anyway, feel free to try this patch:
+> FYI, here is the revised header:
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.1&id=3a1407559a593d4360af12dd2df5296bf8eb0d28
 
-FYI, I've staged a variant patch for 4.1 that is simpler; along with the
-various fixes I've picked up from Junichi and the leak fix I emailed
-earlier.  They are now in linux-next and available in this 'dm-4.1'
-specific branch (based on 4.1-rc5):
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.1
+Thanks for the nice revision.
 
-Please try and let me know if your test works.
-
-I don't have SRP setup otherwise I'd try your reproducer you shared a
-while ago.  Any chance you're aware of a way to reproduce with LIO (and
-tcm utils)?
-
-Mike
+-- 
+Jun'ichi Nomura, NEC Corporation
