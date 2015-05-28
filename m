@@ -1,16 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [dm:dm-4.1-for-ejt 33/33]
- drivers/md/dm-thin.c:1543:25: error: 'BIO_CHAIN' undeclared
-Date: Thu, 28 May 2015 13:41:15 -0400
-Message-ID: <20150528174115.GA23716@redhat.com>
-References: <201505290001.JuTn0HF0%fengguang.wu@intel.com>
+Subject: Re: dm: fix false alarm in free_rq_clone() for non
+	blk-mq target
+Date: Thu, 28 May 2015 15:14:57 -0400
+Message-ID: <20150528191457.GA26218@redhat.com>
+References: <5566CAE8.4070404@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <201505290001.JuTn0HF0%fengguang.wu@intel.com>
+In-Reply-To: <5566CAE8.4070404@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,47 +20,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: kbuild test robot <fengguang.wu@intel.com>
-Cc: Joe Thornber <ejt@redhat.com>, kbuild-all@01.org, dm-devel@redhat.com
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, May 28 2015 at 12:46pm -0400,
-kbuild test robot <fengguang.wu@intel.com> wrote:
+On Thu, May 28 2015 at  3:59am -0400,
+Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
 
-> tree:   git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git dm-4.1-for-ejt
-> head:   b8112c1e5d7658f3f6a300f6efeb5fae6ec135eb
-> commit: b8112c1e5d7658f3f6a300f6efeb5fae6ec135eb [33/33] dm thin: range discard support
-> config: x86_64-rhel (attached as .config)
-> reproduce:
->   git checkout b8112c1e5d7658f3f6a300f6efeb5fae6ec135eb
->   # save the attached .config to linux build tree
->   make ARCH=x86_64 
+> When stacking request-based dm device on non blk-mq device
+> and device-mapper target could not map the request
+> (error target is used, multipath target with all paths down, etc),
+> following warning will show up once:
 > 
-> All error/warnings:
+>   WARNING: CPU: 7 PID: 0 at drivers/md/dm.c:1090 free_rq_clone+0x7a/0xf0
+>   CPU: 7 PID: 0 Comm: swapper/7 Not tainted 4.1.0-rc5+ #1
+>   ..
+>   Call Trace:
+>    <IRQ>  [<ffffffff81558095>] dump_stack+0x45/0x57
+>    [<ffffffff8105ef3a>] warn_slowpath_common+0x8a/0xc0
+>    [<ffffffff8105f02a>] warn_slowpath_null+0x1a/0x20
+>    [<ffffffffa020bf3a>] free_rq_clone+0x7a/0xf0 [dm_mod]
+>    [<ffffffffa020c7cc>] dm_softirq_done+0x13c/0x250 [dm_mod]
+>    [<ffffffff812b87a0>] blk_done_softirq+0x80/0xa0
+>    [<ffffffff81062f44>] __do_softirq+0xf4/0x2d0
+>    [<ffffffff81063425>] irq_exit+0x125/0x130
+>    [<ffffffff81037f05>] smp_call_function_single_interrupt+0x35/0x40
+>    [<ffffffff8156027e>] call_function_single_interrupt+0x6e/0x80
+>    <EOI>  [<ffffffff8104b576>] ? native_safe_halt+0x6/0x10
+>    [<ffffffff810b6348>] ? rcu_eqs_enter+0x68/0x90
+>    [<ffffffff8100d6fe>] default_idle+0x1e/0xc0
+>    [<ffffffff8100e1df>] arch_cpu_idle+0xf/0x20
+>    [<ffffffff810a269c>] cpu_startup_entry+0x2fc/0x3a0
+>    [<ffffffff81038892>] start_secondary+0x182/0x1b0
 > 
->    drivers/md/dm-thin.c: In function '__bio_inc_remaining':
-> >> drivers/md/dm-thin.c:1543:25: error: 'BIO_CHAIN' undeclared (first use in this function)
->      bio->bi_flags |= (1 << BIO_CHAIN);
->                             ^
->    drivers/md/dm-thin.c:1543:25: note: each undeclared identifier is reported only once for each function it appears in
-> >> drivers/md/dm-thin.c:1545:17: error: 'struct bio' has no member named '__bi_remaining'
->      atomic_inc(&bio->__bi_remaining);
->                     ^
+> The warning was added by commit aa6df8dd28c0 ("dm: fix free_rq_clone()
+> NULL pointer when requeueing unmapped request").
 > 
-> vim +/BIO_CHAIN +1543 drivers/md/dm-thin.c
-> 
->   1537	 * FIXME: DM local hack to defer parent bios's end_io until we
->   1538	 * _know_ all chained sub range discard bios have completed.
->   1539	 * Will go away once late bio splitting lands upstream!
->   1540	 */
->   1541	static inline void __bio_inc_remaining(struct bio *bio)
->   1542	{
-> > 1543		bio->bi_flags |= (1 << BIO_CHAIN);
->   1544		smp_mb__before_atomic();
-> > 1545		atomic_inc(&bio->__bi_remaining);
->   1546	}
->   1547	
->   1548	static void break_up_discard_bio(struct thin_c *tc, dm_block_t begin, dm_block_t end,
+> But free_rq_clone() with clone->q == NULL is valid usage for non blk-mq
+> underlying device. Such a call can happen via dm_kill_unmapped_request().
 
-I fixed this up.. but this is a temporary branch for Joe... please move
-along, nothing to see here :)
+dm_kill_unmapped_request() is called from the blk-mq error path too
+(e.g. if clone_and_map_rq fails with an error).  So this isn't non
+blk-mq specific.
+
+dm_kill_unmapped_request() sets REQ_FAILED, which dm_softirq_done()
+checks for and will set 'mapped' to false.  I think a proper fix is to
+pass 'mapped' into dm_end_request() and then pass it to free_rq_clone().
+Like so, what do you think?
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 1badfb2..17f1d0e 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1112,7 +1112,7 @@ static void free_rq_clone(struct request *clone, bool must_be_mapped)
+  * Must be called without clone's queue lock held,
+  * see end_clone_request() for more details.
+  */
+-static void dm_end_request(struct request *clone, int error)
++static void dm_end_request(struct request *clone, int error, bool mapped)
+ {
+ 	int rw = rq_data_dir(clone);
+ 	struct dm_rq_target_io *tio = clone->end_io_data;
+@@ -1132,7 +1132,7 @@ static void dm_end_request(struct request *clone, int error)
+ 			rq->sense_len = clone->sense_len;
+ 	}
+ 
+-	free_rq_clone(clone, true);
++	free_rq_clone(clone, mapped);
+ 	if (!rq->q->mq_ops)
+ 		blk_end_request_all(rq, error);
+ 	else
+@@ -1249,7 +1249,7 @@ static void dm_done(struct request *clone, int error, bool mapped)
+ 
+ 	if (r <= 0)
+ 		/* The target wants to complete the I/O */
+-		dm_end_request(clone, r);
++		dm_end_request(clone, r, mapped);
+ 	else if (r == DM_ENDIO_INCOMPLETE)
+ 		/* The target will handle the I/O */
+ 		return;
