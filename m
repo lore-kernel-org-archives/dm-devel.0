@@ -1,12 +1,20 @@
-From: Nikolay Borisov <kernel@kyup.com>
-Subject: Question about suspending a device
-Date: Thu, 28 May 2015 16:06:12 +0300
-Message-ID: <556712C4.3010704@kyup.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: 4.1-rc2 dm-multipath-mq kernel warning
+Date: Thu, 28 May 2015 09:10:52 -0400
+Message-ID: <20150528131051.GA22527@redhat.com>
+References: <5549C68E.2050705@sandisk.com> <20150506182942.GA15545@redhat.com>
+	<554B3C22.4060305@sandisk.com> <20150527125732.GA15911@redhat.com>
+	<5565E2EA.2000302@sandisk.com> <5565E3E3.4080801@sandisk.com>
+	<20150527161415.GA22520@redhat.com>
+	<20150527170001.GA22548@redhat.com>
+	<20150527223741.GA18501@redhat.com> <5566CFAB.7060408@sandisk.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <5566CFAB.7060408@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,64 +24,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: mm@1h.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-Hello,
+On Thu, May 28 2015 at  4:19am -0400,
+Bart Van Assche <bart.vanassche@sandisk.com> wrote:
 
-I'm currently working on a dm target which supports the ability to
-resize its internal data structures. In order to do that what I do is
-the following sequence of operations. In my message handler I have the
-following operations sequence:
+> On 05/28/15 00:37, Mike Snitzer wrote:
+> >FYI, I've staged a variant patch for 4.1 that is simpler; along with the
+> >various fixes I've picked up from Junichi and the leak fix I emailed
+> >earlier.  They are now in linux-next and available in this 'dm-4.1'
+> >specific branch (based on 4.1-rc5):
+> >https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.1
+> >
+> >Please try and let me know if your test works.
+> 
+> No data corruption was reported this time but a very large number of
+> memory leaks were reported by kmemleak. The initiator system ran out
+> of memory after some time due to these leaks. Here is an example of
+> a leak reported by kmemleak:
+> 
+> unreferenced object 0xffff8800a39fc1a8 (size 96):
+>    comm "srp_daemon", pid 2116, jiffies 4294955508 (age 137.600s)
+>    hex dump (first 32 bytes):
+>      00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+>      00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+>    backtrace:
+>      [<ffffffff81600029>] kmemleak_alloc+0x49/0xb0
+>      [<ffffffff81167d19>] kmem_cache_alloc_node+0xd9/0x190
+>      [<ffffffff81425400>] scsi_init_request+0x20/0x40
+>      [<ffffffff812cbb98>] blk_mq_init_rq_map+0x228/0x290
+>      [<ffffffff812cbcc6>] blk_mq_alloc_tag_set+0xc6/0x220
+>      [<ffffffff81427488>] scsi_mq_setup_tags+0xc8/0xd0
+>      [<ffffffff8141e34f>] scsi_add_host_with_dma+0x6f/0x300
+>      [<ffffffffa04c62bf>] srp_create_target+0x11cf/0x1600 [ib_srp]
+>      [<ffffffff813f9c93>] dev_attr_store+0x13/0x20
+>      [<ffffffff81200a33>] sysfs_kf_write+0x43/0x60
+>      [<ffffffff811fff8b>] kernfs_fop_write+0x13b/0x1a0
+>      [<ffffffff81183e53>] __vfs_write+0x23/0xe0
+>      [<ffffffff81184524>] vfs_write+0xa4/0x1b0
+>      [<ffffffff811852d4>] SyS_write+0x44/0xb0
+>      [<ffffffff81613cdb>] system_call_fastpath+0x16/0x73
+>      [<ffffffffffffffff>] 0xffffffffffffffff
 
-dm_internal_suspend_noflush(dm_table_get_md(ti->table))
+I suspect I'm missing some cleanup of the request I got from the
+underlying blk-mq device.  I'll have a closer look.
 
-drain_workqueue(my_work_queue)
+> >I don't have SRP setup otherwise I'd try your reproducer you shared a
+> >while ago.  Any chance you're aware of a way to reproduce with LIO (and
+> >tcm utils)?
+> 
+> If I find a way to reproduce this with LIO I'll let you know.
 
-//doo necessary work to resize the internal
-//metadata
-
-
-dm_internals_resume(dm_table_get_md(ti->table))
-
-
-My question is whether I'm invoking the correct dm functions to suspend
-my device so that while I'm doing my resize no bios are being accepted.
-Currently what I'm observing is that my code locks inside
-dm_internal_suspend_flush. Here is a backtrace of my dmsetup command:
-
-PID: 6232   TASK: ffff8808165b9300  CPU: 5   COMMAND: "dmsetup"
- #0 [ffff880858a97940] __schedule+0x3fd at ffffffff815e0f1d
- #1 [ffff880858a979a0] schedule+0x3e at ffffffff815e15ae
- #2 [ffff880858a979c0] schedule_timeout+0x195 at ffffffff815e6485
- #3 [ffff880858a97a80] wait_for_completion+0xa9 at ffffffff815e28a9
- #4 [ffff880858a97ae0] __synchronize_srcu+0x11d at ffffffff810b2d7d
- #5 [ffff880858a97b80] synchronize_srcu+0x1d at ffffffff810b2e1d
- #6 [ffff880858a97b90] __dm_suspend+0x62 at ffffffff814accd2
- #7 [ffff880858a97bd0] dm_internal_suspend_noflush+0x8c at ffffffff814acedc
- #8 [ffff880858a97c00] dm_dedup_extend+0xb2 at ffffffffa02db192 [dm_dedup]
- #9 [ffff880858a97c60] dm_dedup_message_fn+0xf7 at ffffffffa02db357
-[dm_dedup]
-#10 [ffff880858a97ca0] target_message+0x28d at ffffffff814b4acd
-#11 [ffff880858a97d10] ctl_ioctl+0x1dc at ffffffff814b68fc
-#12 [ffff880858a97ed0] dm_ctl_ioctl+0x13 at ffffffff814b6a23
-#13 [ffff880858a97ee0] do_vfs_ioctl+0x85 at ffffffff811c2785
-#14 [ffff880858a97f30] sys_ioctl+0xa1 at ffffffff811c2ad1
-#15 [ffff880858a97f80] system_call_fastpath+0x12 at ffffffff815e7e89
-    RIP: 00007ff94d7ce8c7  RSP: 00007fffd5e5fed8  RFLAGS: 00010206
-    RAX: ffffffffffffffda  RBX: ffffffff815e7e89  RCX: 0000000000000000
-    RDX: 00007ff94fad7120  RSI: 00000000c138fd0e  RDI: 0000000000000003
-    RBP: 00007ff94dabe374   R8: 00007ff94dabed90   R9: 00007fffd5e5fb50
-    R10: 00007ff94dabe374  R11: 0000000000000246  R12: 00007ff94fad71d0
-    R13: 00007ff94fad7150  R14: 00007ff94fad7120  R15: 00007ff94dabe374
-    ORIG_RAX: 0000000000000010  CS: 0033  SS: 002b
-
-Inside __dm_suspend the only srcu is this:
-synchronize_srcu(&md->io_barrier); But I have no idea where the
-io_barrier is being used from. I have also enabled lockdep in case I'm
-doing any lock violations but this is not the case.
-
-
-Regards,
-Nikolay
+Could you try Junichi's script that he posted today to see if it at
+least shows the leak?  I'll do the same but I need to rebuild with
+kmemleak enabled, etc.
