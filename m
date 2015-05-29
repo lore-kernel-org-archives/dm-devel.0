@@ -1,15 +1,19 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: [PATCH] dm: fix reload failure of 0 path multipath
- mapping on blk-mq devices
-Date: Fri, 29 May 2015 08:51:03 +0000
-Message-ID: <55682877.5040800@ce.jp.nec.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: 4.1-rc2 dm-multipath-mq kernel warning
+Date: Fri, 29 May 2015 12:04:23 +0200
+Message-ID: <556839A7.9020307@sandisk.com>
+References: <20150527125732.GA15911@redhat.com> <5565E2EA.2000302@sandisk.com>
+	<5565E3E3.4080801@sandisk.com> <20150527161415.GA22520@redhat.com>
+	<20150527170001.GA22548@redhat.com>	<20150527223741.GA18501@redhat.com>
+	<5566CFAB.7060408@sandisk.com>	<20150528131051.GA22527@redhat.com>
+	<20150528140702.GA25917@redhat.com> <55672C11.2080809@sandisk.com>
+	<20150528150645.GA23017@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: ja-JP
-Content-ID: <E142D52516CE614E83C4555A44D05527@gisp.nec.co.jp>
+In-Reply-To: <20150528150645.GA23017@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,83 +23,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-dm-multipath accepts 0 path mapping.
+On 05/28/15 17:06, Mike Snitzer wrote:
+> So you can confirm that with dm-4.1 your test passes?  If possible
+> please try your test a fews times.  Also, if time permits, please vary
+> scsi-mq and dm-mq enable/disable (4 permutations) to make sure all
+> supported modes pass your SRP torture test.
+>
+> I just have to review Junichi's patch from today to silence the WARN_ON
+> I added; once I work through that I'll likely send dm-4.1 to Linus.
 
-  # echo '0 2097152 multipath 0 0 0 0' | dmsetup create newdev
+Hello Mike,
 
-Such a mapping can be used to release underlying devices while still
-holding requests in its queue until working paths come back.
+Good news: with the latest dm-4.1 branch and with both scsi-mq and dm-mq 
+enabled my SRP fail-over test passes.
 
-However, once the multipath device is created over blk-mq devices,
-it rejects reloading of 0 path mapping:
+Thanks,
 
-  # echo '0 2097152 multipath 0 0 1 1 queue-length 0 1 1 /dev/sda 1' \
-      | dmsetup create mpath1
-  # echo '0 2097152 multipath 0 0 0 0' | dmsetup load mpath1
-  device-mapper: reload ioctl on mpath1 failed: Invalid argument
-  Command failed
-
-With following kernel message:
-  device-mapper: ioctl: can't change device type after initial table load.
-
-DM tries to inherit the current table type using dm_table_set_type()
-but it doesn't work as expected because of unnecessary check about
-whether the target type is hybrid or not.
-
-Hybrid type is for targets that work as either request-based or bio-based
-and not required for blk-mq or non blk-mq checking.
-
-Fixes: 65803c205983 ("dm table: train hybrid target type detection to select blk-mq if appropriate")
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index d9b00b8..16ba55a 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -820,6 +820,12 @@ void dm_consume_args(struct dm_arg_set *as, unsigned num_args)
- }
- EXPORT_SYMBOL(dm_consume_args);
- 
-+static bool __table_type_request_based(unsigned table_type)
-+{
-+	return (table_type == DM_TYPE_REQUEST_BASED ||
-+		table_type == DM_TYPE_MQ_REQUEST_BASED);
-+}
-+
- static int dm_table_set_type(struct dm_table *t)
- {
- 	unsigned i;
-@@ -852,8 +858,7 @@ static int dm_table_set_type(struct dm_table *t)
- 		 * Determine the type from the live device.
- 		 * Default to bio-based if device is new.
- 		 */
--		if (live_md_type == DM_TYPE_REQUEST_BASED ||
--		    live_md_type == DM_TYPE_MQ_REQUEST_BASED)
-+		if (__table_type_request_based(live_md_type))
- 			request_based = 1;
- 		else
- 			bio_based = 1;
-@@ -903,7 +908,7 @@ static int dm_table_set_type(struct dm_table *t)
- 			}
- 		t->type = DM_TYPE_MQ_REQUEST_BASED;
- 
--	} else if (hybrid && list_empty(devices) && live_md_type != DM_TYPE_NONE) {
-+	} else if (list_empty(devices) && __table_type_request_based(live_md_type)) {
- 		/* inherit live MD type */
- 		t->type = live_md_type;
- 
-@@ -925,10 +930,7 @@ struct target_type *dm_table_get_immutable_target_type(struct dm_table *t)
- 
- bool dm_table_request_based(struct dm_table *t)
- {
--	unsigned table_type = dm_table_get_type(t);
--
--	return (table_type == DM_TYPE_REQUEST_BASED ||
--		table_type == DM_TYPE_MQ_REQUEST_BASED);
-+	return __table_type_request_based(dm_table_get_type(t));
- }
- 
- bool dm_table_mq_request_based(struct dm_table *t)
+Bart.
