@@ -1,51 +1,101 @@
-From: Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v4 01/11] block: make generic_make_request
- handle arbitrarily sized bios
-Date: Fri, 29 May 2015 00:05:27 -0700
-Message-ID: <CAF1ivSY1w40wixbRZJq0dnT9K15uOMmMmAEUELLdrG5=owFsLA@mail.gmail.com>
-References: <1432318723-18829-1-git-send-email-mlin@kernel.org>
-	<1432318723-18829-2-git-send-email-mlin@kernel.org>
-	<20150526143626.GA4315@redhat.com>
-	<CAF1ivSb3ptYObS3_8bJwWhq98EcNgAgRhN_L-c3uyFfCzdn=9A@mail.gmail.com>
-	<20150526160400.GB4715@redhat.com>
-	<CAF1ivSZ351yV4re1Ghf5yqPjgq6aXjrZT4yWd+T9msAFsBnDSw@mail.gmail.com>
-	<20150528003627.GD32216@agk-dp.fab.redhat.com>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: [PATCH] dm: fix reload failure of 0 path multipath
+ mapping on blk-mq devices
+Date: Fri, 29 May 2015 08:51:03 +0000
+Message-ID: <55682877.5040800@ce.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-In-Reply-To: <20150528003627.GD32216-FDJ95KluN3Z0klwcnFlA1dvLeJWuRmrY@public.gmane.org>
-List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Lars Ellenberg <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>, drbd-user-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Geoff Levand <geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jim Paris <jim-XrPbb/hENzg@public.gmane.org>, Joshua Morris <josh.h.morris-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Philip Kelleher <pjk1939-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Nitin Gupta <ngupta-KNmc09w0p+Ednm+yROfE0A@public.gmane.org>, Oleg Drokin <oleg.drokin-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andreas Dilger <andreas.dilger-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: ja-JP
+Content-ID: <E142D52516CE614E83C4555A44D05527@gisp.nec.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, May 27, 2015 at 5:36 PM, Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> On Wed, May 27, 2015 at 04:42:44PM -0700, Ming Lin wrote:
->> Here are fio results of XFS on a DM stripped target with 2 SSDs + 1 HDD.
->> Does it make sense?
->
-> To stripe across devices with different characteristics?
->
-> Some suggestions.
->
-> Prepare 3 kernels.
->   O - Old kernel.
->   M - Old kernel with merge_bvec_fn disabled.
+dm-multipath accepts 0 path mapping.
 
-How to disable it?
-Maybe just hack it as below?
+  # echo '0 2097152 multipath 0 0 0 0' | dmsetup create newdev
 
-void blk_queue_merge_bvec(struct request_queue *q, merge_bvec_fn *mbfn)
-{
-        //q->merge_bvec_fn = mbfn;
-}
+Such a mapping can be used to release underlying devices while still
+holding requests in its queue until working paths come back.
 
->   N - New kernel.
+However, once the multipath device is created over blk-mq devices,
+it rejects reloading of 0 path mapping:
+
+  # echo '0 2097152 multipath 0 0 1 1 queue-length 0 1 1 /dev/sda 1' \
+      | dmsetup create mpath1
+  # echo '0 2097152 multipath 0 0 0 0' | dmsetup load mpath1
+  device-mapper: reload ioctl on mpath1 failed: Invalid argument
+  Command failed
+
+With following kernel message:
+  device-mapper: ioctl: can't change device type after initial table load.
+
+DM tries to inherit the current table type using dm_table_set_type()
+but it doesn't work as expected because of unnecessary check about
+whether the target type is hybrid or not.
+
+Hybrid type is for targets that work as either request-based or bio-based
+and not required for blk-mq or non blk-mq checking.
+
+Fixes: 65803c205983 ("dm table: train hybrid target type detection to select blk-mq if appropriate")
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index d9b00b8..16ba55a 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -820,6 +820,12 @@ void dm_consume_args(struct dm_arg_set *as, unsigned num_args)
+ }
+ EXPORT_SYMBOL(dm_consume_args);
+ 
++static bool __table_type_request_based(unsigned table_type)
++{
++	return (table_type == DM_TYPE_REQUEST_BASED ||
++		table_type == DM_TYPE_MQ_REQUEST_BASED);
++}
++
+ static int dm_table_set_type(struct dm_table *t)
+ {
+ 	unsigned i;
+@@ -852,8 +858,7 @@ static int dm_table_set_type(struct dm_table *t)
+ 		 * Determine the type from the live device.
+ 		 * Default to bio-based if device is new.
+ 		 */
+-		if (live_md_type == DM_TYPE_REQUEST_BASED ||
+-		    live_md_type == DM_TYPE_MQ_REQUEST_BASED)
++		if (__table_type_request_based(live_md_type))
+ 			request_based = 1;
+ 		else
+ 			bio_based = 1;
+@@ -903,7 +908,7 @@ static int dm_table_set_type(struct dm_table *t)
+ 			}
+ 		t->type = DM_TYPE_MQ_REQUEST_BASED;
+ 
+-	} else if (hybrid && list_empty(devices) && live_md_type != DM_TYPE_NONE) {
++	} else if (list_empty(devices) && __table_type_request_based(live_md_type)) {
+ 		/* inherit live MD type */
+ 		t->type = live_md_type;
+ 
+@@ -925,10 +930,7 @@ struct target_type *dm_table_get_immutable_target_type(struct dm_table *t)
+ 
+ bool dm_table_request_based(struct dm_table *t)
+ {
+-	unsigned table_type = dm_table_get_type(t);
+-
+-	return (table_type == DM_TYPE_REQUEST_BASED ||
+-		table_type == DM_TYPE_MQ_REQUEST_BASED);
++	return __table_type_request_based(dm_table_get_type(t));
+ }
+ 
+ bool dm_table_mq_request_based(struct dm_table *t)
