@@ -1,18 +1,12 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: dm: fix false alarm in free_rq_clone() for non
-	blk-mq target
-Date: Fri, 29 May 2015 00:29:06 +0000
-Message-ID: <5567B2D2.5080907@ce.jp.nec.com>
-References: <5566CAE8.4070404@ce.jp.nec.com>
-	<20150528191457.GA26218@redhat.com>
+From: Dennis Yang <shinrairis@gmail.com>
+Subject: Re: Poor snapshot performance in linux-3.19
+Date: Fri, 29 May 2015 11:03:28 +0800
+Message-ID: <CAKTMprOX0aF_vwWeO7hFSk9F+AekbqpPLYp7vV+UtCNhGaYXKg@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150528191457.GA26218@redhat.com>
-Content-Language: ja-JP
-Content-ID: <A7B6AB3C4414F44597F151C1D42E3D83@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,98 +16,96 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 05/29/15 04:14, Mike Snitzer wrote:
-> On Thu, May 28 2015 at  3:59am -0400,
-> Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
-> 
->> When stacking request-based dm device on non blk-mq device
->> and device-mapper target could not map the request
->> (error target is used, multipath target with all paths down, etc),
->> following warning will show up once:
+> Dne 28.5.2015 v 12:18 Dennis Yang napsal(a):
+>> Hi,
 >>
->>   WARNING: CPU: 7 PID: 0 at drivers/md/dm.c:1090 free_rq_clone+0x7a/0xf0
->>   CPU: 7 PID: 0 Comm: swapper/7 Not tainted 4.1.0-rc5+ #1
->>   ..
->>   Call Trace:
->>    <IRQ>  [<ffffffff81558095>] dump_stack+0x45/0x57
->>    [<ffffffff8105ef3a>] warn_slowpath_common+0x8a/0xc0
->>    [<ffffffff8105f02a>] warn_slowpath_null+0x1a/0x20
->>    [<ffffffffa020bf3a>] free_rq_clone+0x7a/0xf0 [dm_mod]
->>    [<ffffffffa020c7cc>] dm_softirq_done+0x13c/0x250 [dm_mod]
->>    [<ffffffff812b87a0>] blk_done_softirq+0x80/0xa0
->>    [<ffffffff81062f44>] __do_softirq+0xf4/0x2d0
->>    [<ffffffff81063425>] irq_exit+0x125/0x130
->>    [<ffffffff81037f05>] smp_call_function_single_interrupt+0x35/0x40
->>    [<ffffffff8156027e>] call_function_single_interrupt+0x6e/0x80
->>    <EOI>  [<ffffffff8104b576>] ? native_safe_halt+0x6/0x10
->>    [<ffffffff810b6348>] ? rcu_eqs_enter+0x68/0x90
->>    [<ffffffff8100d6fe>] default_idle+0x1e/0xc0
->>    [<ffffffff8100e1df>] arch_cpu_idle+0xf/0x20
->>    [<ffffffff810a269c>] cpu_startup_entry+0x2fc/0x3a0
->>    [<ffffffff81038892>] start_secondary+0x182/0x1b0
+>> I have a workstation which runs Fedora 21 with linux-3.19 kernel and
+>> create a thin pool onto of a RAID0 (chunksize = 512KB) with five
+>> Crucial 256GB SSDs.
+>> [root@localhost ~]# dmsetup create pool --table "0 2478300160
+>> thin-pool /dev/md0p1 /dev/md0p2 1024 0 1 skip_block_zeroing"
 >>
->> The warning was added by commit aa6df8dd28c0 ("dm: fix free_rq_clone()
->> NULL pointer when requeueing unmapped request").
+>> Then, I create a small thin volume with the following commands.
+>> [root@localhost ~]# dmsetup message pool 0 "create_thin 0"
+>> [root@localhost ~]# dmsetup create thin --table "0 400000000 thin
+>> /dev/mapper/pool 0"
 >>
->> But free_rq_clone() with clone->q == NULL is valid usage for non blk-mq
->> underlying device. Such a call can happen via dm_kill_unmapped_request().
-> 
-> dm_kill_unmapped_request() is called from the blk-mq error path too
+>> After that, I use both dd and fio for throughput testing and get the
+>> following result.
+>> [root@localhost ~]# dd if=/dev/zero of=/dev/mapper/thin bs=2M count=25k
+>> 25600+0 records in
+>> 25600+0 records out
+>> 53687091200 bytes (54 GB) copied, 29.0871 s, 1.8 GB/s
+>>
+>> The 1.8 GB/s throughput looks pretty reasonable to me. However, after
+>> taking a single snapshot of this thin device, I get a pretty low
+>> throughput with the same command.
+>> [root@localhost ~]# dd if=/dev/zero of=/dev/mapper/thin bs=2M count=25k
+>> 25600+0 records in
+>> 25600+0 records out
+>> 53687091200 bytes (54 GB) copied, 191.495 s, 280 MB/s
+>>
+>> I am aware of that writing to a snapshotted device will trigger lots
+>> of copy-on-write requests, so I was expecting a 50~60% performance
+>> loss in this case. However, 85% performance loss can be observed in my
+>> test above. Am I doing anything wrong or is there anything I can tune
+>> to make this right? If someone can point direction for me, I am glad
+>> to test or even modify the source code to solve this case.
+>
+>
+> Hi
+>
+> Using  0.5MB chunks and expecting fast snapshots is not going to work.
+> Have you measured speed with smaller chunks -  i.e. 64k/128k ?
+>
+> Zdenek
+>
 
-Yes, but:
+Hi,
 
-> (e.g. if clone_and_map_rq fails with an error).  So this isn't non
-> blk-mq specific.
+I have run the same test on pool with 64K/128K block size thin-pool on
+linux-3.19 and get these results.
+<<< 64k block size - before snapshot>>>
+[root@localhost ~]# dd if=/dev/zero of=/dev/mapper/thin bs=2M
+count=25k
+25600+0 records in
+25600+0 records out
+53687091200 bytes (54 GB) copied, 205.887 s, 261 MB/s
 
-unmapped request does not have clone in the case of blk-mq?
-(as the clone_and_map_rq() API suggests)
+<<< 64k block size - after snapshot>>>
+[root@localhost ~]# dd if=/dev/zero of=/dev/mapper/thin bs=2M
+count=25k
+25600+0 records in
+25600+0 records out
+53687091200 bytes (54 GB) copied, 205.887 s, 261 MB/s
 
-Then dm_softirq_done(orig) for dm_kill_unmapped_request() will fall
-into 'if (!clone)' path.
-Thus neither of dm_done(clone), dm_end_request(clone) nor free_rq_clone()
-will be called.
+<<< 128k block size - before snapshot>>>
+[root@localhost ~]# dd if=/dev/zero of=/dev/mapper/thin bs=2M count=25k
+25600+0 records in
+25600+0 records out
+53687091200 bytes (54 GB) copied, 29.5981 s, 1.8 GB/s
 
-> dm_kill_unmapped_request() sets REQ_FAILED, which dm_softirq_done()
-> checks for and will set 'mapped' to false.  I think a proper fix is to
-> pass 'mapped' into dm_end_request() and then pass it to free_rq_clone().
-> Like so, what do you think?
+<<< 128k block size - after snapshot>>>
+[root@localhost ~]# dd if=/dev/zero of=/dev/mapper/thin bs=2M
+count=25k
+25600+0 records in
+25600+0 records out
+53687091200 bytes (54 GB) copied, 197.798 s, 271 MB/s
 
-So I don't think it's necessary to extend dm_end_request() with 'mapped'
-parameter.
+I also run the similar test with fio to observe the throughput across
+the snapshot test. The throughput will first reach 1.1GB/s and then
+keep bouncing between 700MB/s to 40MB/s.
+The average queue size of data device will keep bouncing between 700k
+~ 200k, while the average queue size of RAID0 could reach 7 million.
+One thing weird is that even after the test is over, the avgqu-sz of
+RAID0 is still around 2 million with 100% utilization.
 
-For blk-mq underlying device, we can (and should be able to) assume
-unmapped request as not having clone.
-It might be better to clear tio->clone in free_rq_clone().
-Currently it doesn't seem matter because tio is not reused for non-mq DM
-and always re-initialized for mq DM, though.
+The server I have tested is equipped with Xeon E3-1246 with 4 physical
+cores, so I think CPU might not be the bottleneck of the storage
+throughput.
+Any idea?
 
--- 
-Jun'ichi Nomura, NEC Corporation
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 1c62ed8..f252adc 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1087,14 +1087,14 @@ static void free_rq_clone(struct request *clone, bool must_be_mapped)
- 	struct dm_rq_target_io *tio = clone->end_io_data;
- 	struct mapped_device *md = tio->md;
- 
--	WARN_ON_ONCE(must_be_mapped && !clone->q);
--
- 	blk_rq_unprep_clone(clone);
- 
--	if (md->type == DM_TYPE_MQ_REQUEST_BASED)
-+	if (md->type == DM_TYPE_MQ_REQUEST_BASED) {
- 		/* stacked on blk-mq queue(s) */
-+		WARN_ON_ONCE(must_be_mapped && !clone->q);
- 		tio->ti->type->release_clone_rq(clone);
-+		tio->clone = NULL;
--	else if (!md->queue->mq_ops)
-+	} else if (!md->queue->mq_ops)
- 		/* request_fn queue stacked on request_fn queue(s) */
- 		free_clone_request(md, clone);
- 	/*
+Dennis
