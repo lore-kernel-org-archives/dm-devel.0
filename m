@@ -1,83 +1,119 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH for-4.2 2/3] block,
- dm: don't copy bios for request clones
-Date: Mon, 1 Jun 2015 01:19:13 +0000
-Message-ID: <556BB311.7050505@ce.jp.nec.com>
-References: <1432300445-9543-1-git-send-email-snitzer@redhat.com>
-	<1432300445-9543-2-git-send-email-snitzer@redhat.com>
-	<556410BB.3000103@ce.jp.nec.com> <20150527082157.GA25993@lst.de>
-	<5565935A.4060408@ce.jp.nec.com> <20150529165545.GB2682@lst.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v4 01/11] block: make generic_make_request
+ handle arbitrarily sized bios
+Date: Sun, 31 May 2015 23:02:31 -0700
+Message-ID: <1433138551.11778.4.camel@hasee>
+References: <1432318723-18829-1-git-send-email-mlin@kernel.org>
+	<1432318723-18829-2-git-send-email-mlin@kernel.org>
+	<20150526143626.GA4315@redhat.com>
+	<CAF1ivSb3ptYObS3_8bJwWhq98EcNgAgRhN_L-c3uyFfCzdn=9A@mail.gmail.com>
+	<20150526160400.GB4715@redhat.com>
+	<CAF1ivSZ351yV4re1Ghf5yqPjgq6aXjrZT4yWd+T9msAFsBnDSw@mail.gmail.com>
+	<20150528003627.GD32216@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150529165545.GB2682@lst.de>
-Content-Language: ja-JP
-Content-ID: <F6B8B2CDDB45B9428FD175B225C8C933@gisp.nec.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <20150528003627.GD32216-FDJ95KluN3Z0klwcnFlA1dvLeJWuRmrY@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Lars Ellenberg <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>, Philip Kelleher <pjk1939-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joshua Morris <josh.h.morris-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Nitin Gupta <ngupta-KNmc09w0p+Ednm+yROfE0A@public.gmane.org>, Oleg Drokin <oleg.drokin-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Andreas Dilger <andreas.dilger-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Geoff Levand <geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jim Paris <jim-XrPbb/hENzg@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, drbd-user-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-On 05/30/15 01:55, Christoph Hellwig wrote:
-> On Wed, May 27, 2015 at 09:50:18AM +0000, Junichi Nomura wrote:
->> Can you test this scenario with your patch?
->>   1. Set up a multipath device with fail-over mode
->>   2. Write something to the multipath device.
->>      After the clone request is sent to the primary path
->>      and before the data goes to the disk, 
->>      down the primary path
->>      (e.g. echo offline > /sys/block/sdXX/device/state)
->>   3. (dm-mpath will retry from the secondary path and
->>       the write will eventually succeed)
->>   4. Verify if the written data is really on the disk
+On Thu, 2015-05-28 at 01:36 +0100, Alasdair G Kergon wrote:
+> On Wed, May 27, 2015 at 04:42:44PM -0700, Ming Lin wrote:
+> > Here are fio results of XFS on a DM stripped target with 2 SSDs + 1 HDD.
+> > Does it make sense?
 > 
-> Verified as not working correctly.  The patch below fixes it,
-> but it needs more testing and some comments:
-
-Thanks. But just skipping bio_advance() is not good.
-
-For example, blk_update_request() does this:
-
->         while (req->bio) {
->                 struct bio *bio = req->bio;
->                 unsigned bio_bytes = min(bio->bi_iter.bi_size, nr_bytes);
+> To stripe across devices with different characteristics?
 > 
->                 if (bio_bytes == bio->bi_iter.bi_size)
->                         req->bio = bio->bi_next;
+> Some suggestions.
+> 
+> Prepare 3 kernels.
+>   O - Old kernel.
+>   M - Old kernel with merge_bvec_fn disabled.
+>   N - New kernel.
+> 
+> You're trying to search for counter-examples to the hypothesis that 
+> "Kernel N always outperforms Kernel O".  Then if you find any, trying 
+> to show either that the performance impediment is small enough that
+> it doesn't matter or that the cases are sufficiently rare or obscure
+> that they may be ignored because of the greater benefits of N in much more
+> common cases.
+> 
+> (1) You're looking to set up configurations where kernel O performs noticeably
+> better than M.  Then you're comparing the performance of O and N in those
+> situations.
+> 
+> (2) You're looking at other sensible configurations where O and M have
+> similar performance, and comparing that with the performance of N.
 
-if bi_iter.bi_size is not correct, we possibly fail
-to move the req->bio pointer.
+I didn't find case (1).
 
-So other test case could be:
+But the important thing for this series is to simplify block layer
+based on immutable biovecs. I don't expect performance improvement.
 
-1. Create a bio with 1MB size
-2. Submit a request with the bio
-3. From lower driver,
-   firstly partial complete 512KB with error,
-   secondly partial complete 512KB without error
-4. The I/O should complete successfully.
+Here is the changes statistics.
 
-And yet another test:
+"68 files changed, 336 insertions(+), 1331 deletions(-)"
 
-1. Create 4 READ bios with each 4KB
-2. Submit a request with the 4 bios
-3. From lower driver,
-   partial complete 8KB without error,
-   partial complete 4KB with error (emulate medium error),
-   partial complete 4KB without error
-4. Verify the read data.
-   Only the 3rd 4KB should be failed.
-   Others should have correct contents.
+I run below 3 test cases to make sure it didn't bring any regressions.
+Test environment: 2 NVMe drives on 2 sockets server.
+Each case run for 30 minutes.
 
--- 
-Jun'ichi Nomura, NEC Corporation
+2) btrfs radi0
+
+mkfs.btrfs -f -d raid0 /dev/nvme0n1 /dev/nvme1n1
+mount /dev/nvme0n1 /mnt
+
+Then run 8K read.
+
+[global]
+ioengine=libaio
+iodepth=64
+direct=1
+runtime=1800
+time_based
+group_reporting
+numjobs=4
+rw=read
+
+[job1]
+bs=8K
+directory=/mnt
+size=1G
+
+2) ext4 on MD raid5
+
+mdadm --create /dev/md0 --level=5 --raid-devices=2 /dev/nvme0n1 /dev/nvme1n1
+mkfs.ext4 /dev/md0
+mount /dev/md0 /mnt
+
+fio script same as btrfs test
+
+3) xfs on DM stripped target
+
+pvcreate /dev/nvme0n1 /dev/nvme1n1
+vgcreate striped_vol_group /dev/nvme0n1 /dev/nvme1n1
+lvcreate -i2 -I4 -L250G -nstriped_logical_volume striped_vol_group
+mkfs.xfs -f /dev/striped_vol_group/striped_logical_volume
+mount /dev/striped_vol_group/striped_logical_volume /mnt
+
+fio script same as btrfs test
+
+------
+
+Results:
+
+	4.1-rc4		4.1-rc4-patched
+btrfs	1818.6MB/s	1874.1MB/s
+ext4	717307KB/s	714030KB/s
+xfs	1396.6MB/s	1398.6MB/s
