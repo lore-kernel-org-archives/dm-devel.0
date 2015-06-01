@@ -1,119 +1,56 @@
-From: Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v4 01/11] block: make generic_make_request
- handle arbitrarily sized bios
-Date: Sun, 31 May 2015 23:02:31 -0700
-Message-ID: <1433138551.11778.4.camel@hasee>
-References: <1432318723-18829-1-git-send-email-mlin@kernel.org>
-	<1432318723-18829-2-git-send-email-mlin@kernel.org>
-	<20150526143626.GA4315@redhat.com>
-	<CAF1ivSb3ptYObS3_8bJwWhq98EcNgAgRhN_L-c3uyFfCzdn=9A@mail.gmail.com>
-	<20150526160400.GB4715@redhat.com>
-	<CAF1ivSZ351yV4re1Ghf5yqPjgq6aXjrZT4yWd+T9msAFsBnDSw@mail.gmail.com>
-	<20150528003627.GD32216@agk-dp.fab.redhat.com>
+From: Dennis Yang <shinrairis@gmail.com>
+Subject: Re: Poor snapshot performance in linux-3.19
+Date: Mon, 1 Jun 2015 18:39:43 +0800
+Message-ID: <CAKTMprNub3b2e9w8Y+5QnZW4c-gXf138hq2hS8_78SzyYVJB=w@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-In-Reply-To: <20150528003627.GD32216-FDJ95KluN3Z0klwcnFlA1dvLeJWuRmrY@public.gmane.org>
-List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Lars Ellenberg <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>, Philip Kelleher <pjk1939-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joshua Morris <josh.h.morris-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Nitin Gupta <ngupta-KNmc09w0p+Ednm+yROfE0A@public.gmane.org>, Oleg Drokin <oleg.drokin-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Andreas Dilger <andreas.dilger-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Geoff Levand <geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jim Paris <jim-XrPbb/hENzg@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, drbd-user-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 2015-05-28 at 01:36 +0100, Alasdair G Kergon wrote:
-> On Wed, May 27, 2015 at 04:42:44PM -0700, Ming Lin wrote:
-> > Here are fio results of XFS on a DM stripped target with 2 SSDs + 1 HDD.
-> > Does it make sense?
-> 
-> To stripe across devices with different characteristics?
-> 
-> Some suggestions.
-> 
-> Prepare 3 kernels.
->   O - Old kernel.
->   M - Old kernel with merge_bvec_fn disabled.
->   N - New kernel.
-> 
-> You're trying to search for counter-examples to the hypothesis that 
-> "Kernel N always outperforms Kernel O".  Then if you find any, trying 
-> to show either that the performance impediment is small enough that
-> it doesn't matter or that the cases are sufficiently rare or obscure
-> that they may be ignored because of the greater benefits of N in much more
-> common cases.
-> 
-> (1) You're looking to set up configurations where kernel O performs noticeably
-> better than M.  Then you're comparing the performance of O and N in those
-> situations.
-> 
-> (2) You're looking at other sensible configurations where O and M have
-> similar performance, and comparing that with the performance of N.
+> Message: 12
+> Date: Fri, 29 May 2015 16:29:37 +0100
+> From: Joe Thornber <thornber@redhat.com>
+> To: device-mapper development <dm-devel@redhat.com>
+> Subject: Re: [dm-devel] Poor snapshot performance in linux-3.19
+> Message-ID: <20150529152936.GA4297@rh-vpn>
+> Content-Type: text/plain; charset=us-ascii
+>
+> On Fri, May 29, 2015 at 11:03:28AM +0800, Dennis Yang wrote:
+>> The server I have tested is equipped with Xeon E3-1246 with 4 physical
+>> cores, so I think CPU might not be the bottleneck of the storage
+>> throughput.
+>> Any idea?
+>
+> Is it any better with this patch?
+>
+> https://github.com/jthornber/linux-2.6/commit/56db3d227ea7e11e42b2b67f8ddc9f6d40c3a3a4
+>
 
-I didn't find case (1).
+Hi,
 
-But the important thing for this series is to simplify block layer
-based on immutable biovecs. I don't expect performance improvement.
+I just gave it a try this morning, but it looks like the performance
+is still the same (drop from 1.8GB/s to 270MB/s after snapshot). I
+also make some other experiments. If I make a EXT4 filesystem on top
+of a thin device with 64K pool block size, the file I/O throughput
+after snapshot is great (drop from 1.2GB/s to 1GB/s only) because of
+the bio size is 64KB equals to the pool block size. This makes me
+start wondering what throughput level we should expect after
+snapshotted. Since we are making 1 write to (1 read + 1 write) + 1
+write to complete a write request, maybe the best performance we can
+get here is around 25~30% of throughput before snapshot. Please
+correct me if I get anything wrong.
 
-Here is the changes statistics.
-
-"68 files changed, 336 insertions(+), 1331 deletions(-)"
-
-I run below 3 test cases to make sure it didn't bring any regressions.
-Test environment: 2 NVMe drives on 2 sockets server.
-Each case run for 30 minutes.
-
-2) btrfs radi0
-
-mkfs.btrfs -f -d raid0 /dev/nvme0n1 /dev/nvme1n1
-mount /dev/nvme0n1 /mnt
-
-Then run 8K read.
-
-[global]
-ioengine=libaio
-iodepth=64
-direct=1
-runtime=1800
-time_based
-group_reporting
-numjobs=4
-rw=read
-
-[job1]
-bs=8K
-directory=/mnt
-size=1G
-
-2) ext4 on MD raid5
-
-mdadm --create /dev/md0 --level=5 --raid-devices=2 /dev/nvme0n1 /dev/nvme1n1
-mkfs.ext4 /dev/md0
-mount /dev/md0 /mnt
-
-fio script same as btrfs test
-
-3) xfs on DM stripped target
-
-pvcreate /dev/nvme0n1 /dev/nvme1n1
-vgcreate striped_vol_group /dev/nvme0n1 /dev/nvme1n1
-lvcreate -i2 -I4 -L250G -nstriped_logical_volume striped_vol_group
-mkfs.xfs -f /dev/striped_vol_group/striped_logical_volume
-mount /dev/striped_vol_group/striped_logical_volume /mnt
-
-fio script same as btrfs test
-
-------
-
-Results:
-
-	4.1-rc4		4.1-rc4-patched
-btrfs	1818.6MB/s	1874.1MB/s
-ext4	717307KB/s	714030KB/s
-xfs	1396.6MB/s	1398.6MB/s
+Thanks,
+Dennis
