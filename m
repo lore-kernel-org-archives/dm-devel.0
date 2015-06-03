@@ -1,8 +1,8 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 3.14] dm snapshot: suspend origin when doing exception
+Subject: [PATCH 3.10] dm snapshot: suspend origin when doing exception
  handover
-Date: Wed, 3 Jun 2015 11:03:48 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1506031102370.14129@file01.intranet.prod.int.rdu2.redhat.com>
+Date: Wed, 3 Jun 2015 11:04:58 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1506031103530.14129@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <stable-owner@vger.kernel.org>
@@ -11,7 +11,7 @@ To: stable@vger.kernel.org, gregkh@linuxfoundation.org
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is backport of b735fede8d957d9d255e9c5cf3964cfa59799637 for 3.14 
+This is backport of b735fede8d957d9d255e9c5cf3964cfa59799637 for 3.10 
 kernel.
 
 commit b735fede8d957d9d255e9c5cf3964cfa59799637
@@ -56,14 +56,14 @@ Date:   Thu Feb 26 11:40:35 2015 -0500
     Cc: stable@vger.kernel.org
 
 ---
- drivers/md/dm-snap.c |   91 ++++++++++++++++++++++++++++++++++++++++++++++-----
+ drivers/md/dm-snap.c |   89 ++++++++++++++++++++++++++++++++++++++++++++++-----
  drivers/md/dm.c      |    2 +
- 2 files changed, 85 insertions(+), 8 deletions(-)
+ 2 files changed, 84 insertions(+), 7 deletions(-)
 
 Index: linux-stable/drivers/md/dm-snap.c
 ===================================================================
---- linux-stable.orig/drivers/md/dm-snap.c	2015-06-02 18:19:38.000000000 +0200
-+++ linux-stable/drivers/md/dm-snap.c	2015-06-02 18:31:13.000000000 +0200
+--- linux-stable.orig/drivers/md/dm-snap.c	2015-06-03 16:40:21.000000000 +0200
++++ linux-stable/drivers/md/dm-snap.c	2015-06-03 16:41:00.000000000 +0200
 @@ -20,6 +20,8 @@
  #include <linux/log2.h>
  #include <linux/dm-kcopyd.h>
@@ -73,7 +73,7 @@ Index: linux-stable/drivers/md/dm-snap.c
  #include "dm-exception-store.h"
  
  #define DM_MSG_PREFIX "snapshots"
-@@ -291,12 +293,22 @@ struct origin {
+@@ -271,12 +273,22 @@ struct origin {
  };
  
  /*
@@ -96,7 +96,7 @@ Index: linux-stable/drivers/md/dm-snap.c
  static struct rw_semaphore _origins_lock;
  
  static DECLARE_WAIT_QUEUE_HEAD(_pending_exceptions_done);
-@@ -310,12 +322,22 @@ static int init_origin_hash(void)
+@@ -290,12 +302,22 @@ static int init_origin_hash(void)
  	_origins = kmalloc(ORIGIN_HASH_SIZE * sizeof(struct list_head),
  			   GFP_KERNEL);
  	if (!_origins) {
@@ -121,7 +121,7 @@ Index: linux-stable/drivers/md/dm-snap.c
  	init_rwsem(&_origins_lock);
  
  	return 0;
-@@ -324,6 +346,7 @@ static int init_origin_hash(void)
+@@ -304,6 +326,7 @@ static int init_origin_hash(void)
  static void exit_origin_hash(void)
  {
  	kfree(_origins);
@@ -129,7 +129,7 @@ Index: linux-stable/drivers/md/dm-snap.c
  }
  
  static unsigned origin_hash(struct block_device *bdev)
-@@ -350,6 +373,30 @@ static void __insert_origin(struct origi
+@@ -330,6 +353,30 @@ static void __insert_origin(struct origi
  	list_add_tail(&o->hash_list, sl);
  }
  
@@ -160,7 +160,7 @@ Index: linux-stable/drivers/md/dm-snap.c
  /*
   * _origins_lock must be held when calling this function.
   * Returns number of snapshots registered using the supplied cow device, plus:
-@@ -1849,8 +1896,20 @@ static void snapshot_resume(struct dm_ta
+@@ -1792,8 +1839,20 @@ static void snapshot_resume(struct dm_ta
  {
  	struct dm_snapshot *s = ti->private;
  	struct dm_snapshot *snap_src = NULL, *snap_dest = NULL;
@@ -181,7 +181,7 @@ Index: linux-stable/drivers/md/dm-snap.c
  	(void) __find_snapshots_sharing_cow(s, &snap_src, &snap_dest, NULL);
  	if (snap_src && snap_dest) {
  		down_write(&snap_src->lock);
-@@ -1859,6 +1918,10 @@ static void snapshot_resume(struct dm_ta
+@@ -1802,6 +1861,10 @@ static void snapshot_resume(struct dm_ta
  		up_write(&snap_dest->lock);
  		up_write(&snap_src->lock);
  	}
@@ -192,7 +192,7 @@ Index: linux-stable/drivers/md/dm-snap.c
  	up_read(&_origins_lock);
  
  	/* Now we have correct chunk size, reregister */
-@@ -2141,10 +2204,6 @@ static int origin_write_extent(struct dm
+@@ -2084,10 +2147,6 @@ static int origin_write_extent(struct dm
   * Origin: maps a linear range of a device, with hooks for snapshotting.
   */
  
@@ -203,7 +203,7 @@ Index: linux-stable/drivers/md/dm-snap.c
  /*
   * Construct an origin mapping: <dev_path>
   * The context for an origin is merely a 'struct dm_dev *'
-@@ -2173,6 +2232,7 @@ static int origin_ctr(struct dm_target *
+@@ -2116,6 +2175,7 @@ static int origin_ctr(struct dm_target *
  		goto bad_open;
  	}
  
@@ -211,7 +211,7 @@ Index: linux-stable/drivers/md/dm-snap.c
  	ti->private = o;
  	ti->num_flush_bios = 1;
  
-@@ -2187,6 +2247,7 @@ bad_alloc:
+@@ -2130,6 +2190,7 @@ bad_alloc:
  static void origin_dtr(struct dm_target *ti)
  {
  	struct dm_origin *o = ti->private;
@@ -219,7 +219,7 @@ Index: linux-stable/drivers/md/dm-snap.c
  	dm_put_device(ti, o->dev);
  	kfree(o);
  }
-@@ -2212,6 +2273,19 @@ static void origin_resume(struct dm_targ
+@@ -2155,6 +2216,19 @@ static void origin_resume(struct dm_targ
  	struct dm_origin *o = ti->private;
  
  	ti->max_io_len = get_origin_minimum_chunksize(o->dev->bdev);
@@ -239,7 +239,7 @@ Index: linux-stable/drivers/md/dm-snap.c
  }
  
  static void origin_status(struct dm_target *ti, status_type_t type,
-@@ -2254,12 +2328,13 @@ static int origin_iterate_devices(struct
+@@ -2197,12 +2271,13 @@ static int origin_iterate_devices(struct
  
  static struct target_type origin_target = {
  	.name    = "snapshot-origin",
@@ -254,20 +254,11 @@ Index: linux-stable/drivers/md/dm-snap.c
  	.status  = origin_status,
  	.merge	 = origin_merge,
  	.iterate_devices = origin_iterate_devices,
-@@ -2267,7 +2342,7 @@ static struct target_type origin_target 
- 
- static struct target_type snapshot_target = {
- 	.name    = "snapshot",
--	.version = {1, 12, 0},
-+	.version = {1, 13, 0},
- 	.module  = THIS_MODULE,
- 	.ctr     = snapshot_ctr,
- 	.dtr     = snapshot_dtr,
 Index: linux-stable/drivers/md/dm.c
 ===================================================================
---- linux-stable.orig/drivers/md/dm.c	2015-06-02 18:17:32.000000000 +0200
-+++ linux-stable/drivers/md/dm.c	2015-06-02 18:30:38.000000000 +0200
-@@ -2713,6 +2713,7 @@ void dm_internal_suspend(struct mapped_d
+--- linux-stable.orig/drivers/md/dm.c	2015-06-03 16:40:23.000000000 +0200
++++ linux-stable/drivers/md/dm.c	2015-06-03 16:41:00.000000000 +0200
+@@ -2682,6 +2682,7 @@ void dm_internal_suspend(struct mapped_d
  	flush_workqueue(md->wq);
  	dm_wait_for_completion(md, TASK_UNINTERRUPTIBLE);
  }
@@ -275,7 +266,7 @@ Index: linux-stable/drivers/md/dm.c
  
  void dm_internal_resume(struct mapped_device *md)
  {
-@@ -2724,6 +2725,7 @@ void dm_internal_resume(struct mapped_de
+@@ -2693,6 +2694,7 @@ void dm_internal_resume(struct mapped_de
  done:
  	mutex_unlock(&md->suspend_lock);
  }
