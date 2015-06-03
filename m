@@ -1,20 +1,13 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH for-4.2 2/3] block,
-	dm: don't copy bios for	request clones
-Date: Wed, 3 Jun 2015 09:39:56 +0200
-Message-ID: <20150603073956.GB12072@lst.de>
-References: <1432300445-9543-1-git-send-email-snitzer@redhat.com>
-	<1432300445-9543-2-git-send-email-snitzer@redhat.com>
-	<556410BB.3000103@ce.jp.nec.com> <20150527082157.GA25993@lst.de>
-	<5565935A.4060408@ce.jp.nec.com> <20150529165545.GB2682@lst.de>
-	<556BB311.7050505@ce.jp.nec.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: Next release plans?
+Date: Wed, 3 Jun 2015 09:44:37 +0200
+Message-ID: <CABr-Gndc0PGyAn2DG3KgZgp+cdXOuZEGz6LrXsapDOHzDvnPFw@mail.gmail.com>
+References: <1433263568.11156.7.camel@ubuntu.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============5581249354387206421=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <556BB311.7050505@ce.jp.nec.com>
+In-Reply-To: <1433263568.11156.7.camel@ubuntu.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,37 +17,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Jens Axboe <axboe@kernel.dk>, device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jun 01, 2015 at 01:19:13AM +0000, Junichi Nomura wrote:
-> For example, blk_update_request() does this:
-> 
-> >         while (req->bio) {
-> >                 struct bio *bio = req->bio;
-> >                 unsigned bio_bytes = min(bio->bi_iter.bi_size, nr_bytes);
-> > 
-> >                 if (bio_bytes == bio->bi_iter.bi_size)
-> >                         req->bio = bio->bi_next;
-> 
-> if bi_iter.bi_size is not correct, we possibly fail
-> to move the req->bio pointer.
-> 
-> So other test case could be:
-> 
-> 1. Create a bio with 1MB size
-> 2. Submit a request with the bio
-> 3. From lower driver,
->    firstly partial complete 512KB with error,
->    secondly partial complete 512KB without error
-> 4. The I/O should complete successfully.
+--===============5581249354387206421==
+Content-Type: multipart/alternative; boundary=001a11c3cdbc1874060517983b47
 
-It will be returned to the upper layer after the first completion
-as mentioned in my previous mail.  Same for the other test.
+--001a11c3cdbc1874060517983b47
+Content-Type: text/plain; charset=UTF-8
 
-Think of partial completion as a way for SCSI targets to chunk
-transfers, higher layers will only see full success/failure cases.
+Hi,
 
-For that reason we also removed the bytes completed argument to
-->bi_end_io because the callers should not care about these details.
+yes, you can expect a formal release before summer holidays.
+I still have to catch up with the patches my inbox before.
+
+Best regards,
+Christophe Varoqui
+OpenSVC
+
+On Tue, Jun 2, 2015 at 6:46 PM, Mathieu Trudel-Lapierre <
+mathieu.tl@gmail.com> wrote:
+
+> Hi!
+>
+> I'm curious, are there any plans to cut a new formal release tarball in
+> the near future?
+>
+> The 0.5.0 release was done more than a year ago, and it seems like there
+> are quite a lot of bug fixes which may benefit everyone. In Ubuntu, I've
+> so far been cherry-picking patches as necessary, but it's obvious this
+> can't scale well (and that then important patches may go unnoticed).
+>
+> Kind regards,
+>
+> --
+> Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>
+> Freenode: cyphermox, Jabber: mathieu.tl@gmail.com
+> 4096R/DC95CA5A 36E2 CF22 B077 FEFE 725C  80D3 C7DA A946 DC95 CA5A
+>
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
+
+--001a11c3cdbc1874060517983b47
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<div><br></div><div>yes, you can expect a formal releas=
+e before summer holidays.</div><div>I still have to catch up with the patch=
+es my inbox before.</div><div><br></div><div>Best regards,</div><div>Christ=
+ophe Varoqui</div><div>OpenSVC</div></div><div class=3D"gmail_extra"><br><d=
+iv class=3D"gmail_quote">On Tue, Jun 2, 2015 at 6:46 PM, Mathieu Trudel-Lap=
+ierre <span dir=3D"ltr">&lt;<a href=3D"mailto:mathieu.tl@gmail.com" target=
+=3D"_blank">mathieu.tl@gmail.com</a>&gt;</span> wrote:<br><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex">Hi!<br>
+<br>
+I&#39;m curious, are there any plans to cut a new formal release tarball in=
+<br>
+the near future?<br>
+<br>
+The 0.5.0 release was done more than a year ago, and it seems like there<br=
+>
+are quite a lot of bug fixes which may benefit everyone. In Ubuntu, I&#39;v=
+e<br>
+so far been cherry-picking patches as necessary, but it&#39;s obvious this<=
+br>
+can&#39;t scale well (and that then important patches may go unnoticed).<br=
+>
+<br>
+Kind regards,<br>
+<span class=3D"HOEnZb"><font color=3D"#888888"><br>
+--<br>
+Mathieu Trudel-Lapierre &lt;<a href=3D"mailto:mathieu-tl@ubuntu.com">mathie=
+u-tl@ubuntu.com</a>&gt;<br>
+Freenode: cyphermox, Jabber: <a href=3D"mailto:mathieu.tl@gmail.com">mathie=
+u.tl@gmail.com</a><br>
+4096R/DC95CA5A 36E2 CF22 B077 FEFE 725C=C2=A0 80D3 C7DA A946 DC95 CA5A<br>
+<br>
+<br>
+<br>
+--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
+nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br>
+</font></span></blockquote></div><br></div>
+
+--001a11c3cdbc1874060517983b47--
+
+
+--===============5581249354387206421==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5581249354387206421==--
