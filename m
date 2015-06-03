@@ -1,7 +1,8 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 3.10] add dm_internal_suspend and dm_internal_resume
-Date: Wed, 3 Jun 2015 11:02:34 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1506031100260.14129@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 3.14] dm snapshot: suspend origin when doing exception
+ handover
+Date: Wed, 3 Jun 2015 11:03:48 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1506031102370.14129@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <stable-owner@vger.kernel.org>
@@ -10,106 +11,275 @@ To: stable@vger.kernel.org, gregkh@linuxfoundation.org
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is partial backport of fd2ed4d252701d3bbed4cd3e3d267ad469bb832a 
-(only the dm_internal_suspend and dm_internal_resume functions are 
-backported). This is needed for further patches.
+This is backport of b735fede8d957d9d255e9c5cf3964cfa59799637 for 3.14 
+kernel.
 
-Mikulas
-
-
-commit fd2ed4d252701d3bbed4cd3e3d267ad469bb832a
+commit b735fede8d957d9d255e9c5cf3964cfa59799637
 Author: Mikulas Patocka <mpatocka@redhat.com>
-Date:   Fri Aug 16 10:54:23 2013 -0400
+Date:   Thu Feb 26 11:40:35 2015 -0500
 
-    dm: add statistics support
+    dm snapshot: suspend origin when doing exception handover
     
-    Support the collection of I/O statistics on user-defined regions of
-    a DM device.  If no regions are defined no statistics are collected so
-    there isn't any performance impact.  Only bio-based DM devices are
-    currently supported.
+    In the function snapshot_resume we perform exception store handover.  If
+    there is another active snapshot target, the exception store is moved
+    from this target to the target that is being resumed.
     
-    Each user-defined region specifies a starting sector, length and step.
-    Individual statistics will be collected for each step-sized area within
-    the range specified.
+    The problem is that if there is some pending exception, it will point to
+    an incorrect exception store after that handover, causing a crash due to
+    dm-snap-persistent.c:get_exception()'s BUG_ON.
     
-    The I/O statistics counters for each step-sized area of a region are
-    in the same format as /sys/block/*/stat or /proc/diskstats but extra
-    counters (12 and 13) are provided: total time spent reading and
-    writing in milliseconds.  All these counters may be accessed by sending
-    the @stats_print message to the appropriate DM device via dmsetup.
+    This bug can be triggered by repeatedly changing snapshot permissions
+    with "lvchange -p r" and "lvchange -p rw" while there are writes on the
+    associated origin device.
     
-    The creation of DM statistics will allocate memory via kmalloc or
-    fallback to using vmalloc space.  At most, 1/4 of the overall system
-    memory may be allocated by DM statistics.  The admin can see how much
-    memory is used by reading
-    /sys/module/dm_mod/parameters/stats_current_allocated_bytes
+    To fix this bug, we must suspend the origin device when doing the
+    exception store handover to make sure that there are no pending
+    exceptions:
+    - introduce _origin_hash that keeps track of dm_origin structures.
+    - introduce functions __lookup_dm_origin, __insert_dm_origin and
+      __remove_dm_origin that manipulate the origin hash.
+    - modify snapshot_resume so that it calls dm_internal_suspend_fast() and
+      dm_internal_resume_fast() on the origin device.
     
-    See Documentation/device-mapper/statistics.txt for more details.
+    NOTE to stable@ people:
+    
+    When backporting to kernels 3.12-3.18, use dm_internal_suspend and
+    dm_internal_resume instead of dm_internal_suspend_fast and
+    dm_internal_resume_fast.
+    
+    When backporting to kernels older than 3.12, you need to pick functions
+    dm_internal_suspend and dm_internal_resume from the commit
+    fd2ed4d252701d3bbed4cd3e3d267ad469bb832a.
     
     Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
     Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-    Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+    Cc: stable@vger.kernel.org
 
 ---
- drivers/md/dm.c |   33 +++++++++++++++++++++++++++++++++
- drivers/md/dm.h |    3 +++
- 2 files changed, 36 insertions(+)
+ drivers/md/dm-snap.c |   91 ++++++++++++++++++++++++++++++++++++++++++++++-----
+ drivers/md/dm.c      |    2 +
+ 2 files changed, 85 insertions(+), 8 deletions(-)
 
-Index: linux-stable/drivers/md/dm.c
+Index: linux-stable/drivers/md/dm-snap.c
 ===================================================================
---- linux-stable.orig/drivers/md/dm.c	2015-06-03 16:46:06.000000000 +0200
-+++ linux-stable/drivers/md/dm.c	2015-06-03 16:54:13.000000000 +0200
-@@ -2680,6 +2680,39 @@ out:
- 	return r;
+--- linux-stable.orig/drivers/md/dm-snap.c	2015-06-02 18:19:38.000000000 +0200
++++ linux-stable/drivers/md/dm-snap.c	2015-06-02 18:31:13.000000000 +0200
+@@ -20,6 +20,8 @@
+ #include <linux/log2.h>
+ #include <linux/dm-kcopyd.h>
+ 
++#include "dm.h"
++
+ #include "dm-exception-store.h"
+ 
+ #define DM_MSG_PREFIX "snapshots"
+@@ -291,12 +293,22 @@ struct origin {
+ };
+ 
+ /*
++ * This structure is allocated for each origin target
++ */
++struct dm_origin {
++	struct dm_dev *dev;
++	struct dm_target *ti;
++	struct list_head hash_list;
++};
++
++/*
+  * Size of the hash table for origin volumes. If we make this
+  * the size of the minors list then it should be nearly perfect
+  */
+ #define ORIGIN_HASH_SIZE 256
+ #define ORIGIN_MASK      0xFF
+ static struct list_head *_origins;
++static struct list_head *_dm_origins;
+ static struct rw_semaphore _origins_lock;
+ 
+ static DECLARE_WAIT_QUEUE_HEAD(_pending_exceptions_done);
+@@ -310,12 +322,22 @@ static int init_origin_hash(void)
+ 	_origins = kmalloc(ORIGIN_HASH_SIZE * sizeof(struct list_head),
+ 			   GFP_KERNEL);
+ 	if (!_origins) {
+-		DMERR("unable to allocate memory");
++		DMERR("unable to allocate memory for _origins");
+ 		return -ENOMEM;
+ 	}
+-
+ 	for (i = 0; i < ORIGIN_HASH_SIZE; i++)
+ 		INIT_LIST_HEAD(_origins + i);
++
++	_dm_origins = kmalloc(ORIGIN_HASH_SIZE * sizeof(struct list_head),
++			      GFP_KERNEL);
++	if (!_dm_origins) {
++		DMERR("unable to allocate memory for _dm_origins");
++		kfree(_origins);
++		return -ENOMEM;
++	}
++	for (i = 0; i < ORIGIN_HASH_SIZE; i++)
++		INIT_LIST_HEAD(_dm_origins + i);
++
+ 	init_rwsem(&_origins_lock);
+ 
+ 	return 0;
+@@ -324,6 +346,7 @@ static int init_origin_hash(void)
+ static void exit_origin_hash(void)
+ {
+ 	kfree(_origins);
++	kfree(_dm_origins);
  }
  
-+/*
-+ * Internal suspend/resume works like userspace-driven suspend. It waits
-+ * until all bios finish and prevents issuing new bios to the target drivers.
-+ * It may be used only from the kernel.
-+ *
-+ * Internal suspend holds md->suspend_lock, which prevents interaction with
-+ * userspace-driven suspend.
-+ */
-+
-+void dm_internal_suspend(struct mapped_device *md)
+ static unsigned origin_hash(struct block_device *bdev)
+@@ -350,6 +373,30 @@ static void __insert_origin(struct origi
+ 	list_add_tail(&o->hash_list, sl);
+ }
+ 
++static struct dm_origin *__lookup_dm_origin(struct block_device *origin)
 +{
-+	mutex_lock(&md->suspend_lock);
-+	if (dm_suspended_md(md))
-+		return;
++	struct list_head *ol;
++	struct dm_origin *o;
 +
-+	down_write(&md->io_lock);
-+	set_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags);
-+	up_write(&md->io_lock);
-+	flush_workqueue(md->wq);
-+	dm_wait_for_completion(md, TASK_UNINTERRUPTIBLE);
++	ol = &_dm_origins[origin_hash(origin)];
++	list_for_each_entry (o, ol, hash_list)
++		if (bdev_equal(o->dev->bdev, origin))
++			return o;
++
++	return NULL;
 +}
 +
-+void dm_internal_resume(struct mapped_device *md)
++static void __insert_dm_origin(struct dm_origin *o)
 +{
-+	if (dm_suspended_md(md))
-+		goto done;
-+
-+	dm_queue_flush(md);
-+
-+done:
-+	mutex_unlock(&md->suspend_lock);
++	struct list_head *sl = &_dm_origins[origin_hash(o->dev->bdev)];
++	list_add_tail(&o->hash_list, sl);
 +}
 +
++static void __remove_dm_origin(struct dm_origin *o)
++{
++	list_del(&o->hash_list);
++}
++
+ /*
+  * _origins_lock must be held when calling this function.
+  * Returns number of snapshots registered using the supplied cow device, plus:
+@@ -1849,8 +1896,20 @@ static void snapshot_resume(struct dm_ta
+ {
+ 	struct dm_snapshot *s = ti->private;
+ 	struct dm_snapshot *snap_src = NULL, *snap_dest = NULL;
++	struct dm_origin *o;
++	struct mapped_device *origin_md = NULL;
+ 
+ 	down_read(&_origins_lock);
++
++	o = __lookup_dm_origin(s->origin->bdev);
++	if (o)
++		origin_md = dm_table_get_md(o->ti->table);
++	if (origin_md == dm_table_get_md(ti->table))
++		origin_md = NULL;
++
++	if (origin_md)
++		dm_internal_suspend(origin_md);
++
+ 	(void) __find_snapshots_sharing_cow(s, &snap_src, &snap_dest, NULL);
+ 	if (snap_src && snap_dest) {
+ 		down_write(&snap_src->lock);
+@@ -1859,6 +1918,10 @@ static void snapshot_resume(struct dm_ta
+ 		up_write(&snap_dest->lock);
+ 		up_write(&snap_src->lock);
+ 	}
++
++	if (origin_md)
++		dm_internal_resume(origin_md);
++
+ 	up_read(&_origins_lock);
+ 
+ 	/* Now we have correct chunk size, reregister */
+@@ -2141,10 +2204,6 @@ static int origin_write_extent(struct dm
+  * Origin: maps a linear range of a device, with hooks for snapshotting.
+  */
+ 
+-struct dm_origin {
+-	struct dm_dev *dev;
+-};
+-
+ /*
+  * Construct an origin mapping: <dev_path>
+  * The context for an origin is merely a 'struct dm_dev *'
+@@ -2173,6 +2232,7 @@ static int origin_ctr(struct dm_target *
+ 		goto bad_open;
+ 	}
+ 
++	o->ti = ti;
+ 	ti->private = o;
+ 	ti->num_flush_bios = 1;
+ 
+@@ -2187,6 +2247,7 @@ bad_alloc:
+ static void origin_dtr(struct dm_target *ti)
+ {
+ 	struct dm_origin *o = ti->private;
++
+ 	dm_put_device(ti, o->dev);
+ 	kfree(o);
+ }
+@@ -2212,6 +2273,19 @@ static void origin_resume(struct dm_targ
+ 	struct dm_origin *o = ti->private;
+ 
+ 	ti->max_io_len = get_origin_minimum_chunksize(o->dev->bdev);
++
++	down_write(&_origins_lock);
++	__insert_dm_origin(o);
++	up_write(&_origins_lock);
++}
++
++static void origin_postsuspend(struct dm_target *ti)
++{
++	struct dm_origin *o = ti->private;
++
++	down_write(&_origins_lock);
++	__remove_dm_origin(o);
++	up_write(&_origins_lock);
+ }
+ 
+ static void origin_status(struct dm_target *ti, status_type_t type,
+@@ -2254,12 +2328,13 @@ static int origin_iterate_devices(struct
+ 
+ static struct target_type origin_target = {
+ 	.name    = "snapshot-origin",
+-	.version = {1, 8, 1},
++	.version = {1, 9, 0},
+ 	.module  = THIS_MODULE,
+ 	.ctr     = origin_ctr,
+ 	.dtr     = origin_dtr,
+ 	.map     = origin_map,
+ 	.resume  = origin_resume,
++	.postsuspend = origin_postsuspend,
+ 	.status  = origin_status,
+ 	.merge	 = origin_merge,
+ 	.iterate_devices = origin_iterate_devices,
+@@ -2267,7 +2342,7 @@ static struct target_type origin_target 
+ 
+ static struct target_type snapshot_target = {
+ 	.name    = "snapshot",
+-	.version = {1, 12, 0},
++	.version = {1, 13, 0},
+ 	.module  = THIS_MODULE,
+ 	.ctr     = snapshot_ctr,
+ 	.dtr     = snapshot_dtr,
+Index: linux-stable/drivers/md/dm.c
+===================================================================
+--- linux-stable.orig/drivers/md/dm.c	2015-06-02 18:17:32.000000000 +0200
++++ linux-stable/drivers/md/dm.c	2015-06-02 18:30:38.000000000 +0200
+@@ -2713,6 +2713,7 @@ void dm_internal_suspend(struct mapped_d
+ 	flush_workqueue(md->wq);
+ 	dm_wait_for_completion(md, TASK_UNINTERRUPTIBLE);
+ }
++EXPORT_SYMBOL_GPL(dm_internal_suspend);
+ 
+ void dm_internal_resume(struct mapped_device *md)
+ {
+@@ -2724,6 +2725,7 @@ void dm_internal_resume(struct mapped_de
+ done:
+ 	mutex_unlock(&md->suspend_lock);
+ }
++EXPORT_SYMBOL_GPL(dm_internal_resume);
+ 
  /*-----------------------------------------------------------------
   * Event notification.
-  *---------------------------------------------------------------*/
-Index: linux-stable/drivers/md/dm.h
-===================================================================
---- linux-stable.orig/drivers/md/dm.h	2015-06-03 16:54:17.000000000 +0200
-+++ linux-stable/drivers/md/dm.h	2015-06-03 16:54:32.000000000 +0200
-@@ -167,6 +167,9 @@ int dm_lock_for_deletion(struct mapped_d
- int dm_kobject_uevent(struct mapped_device *md, enum kobject_action action,
- 		      unsigned cookie);
- 
-+void dm_internal_suspend(struct mapped_device *md);
-+void dm_internal_resume(struct mapped_device *md);
-+
- int dm_io_init(void);
- void dm_io_exit(void);
- 
