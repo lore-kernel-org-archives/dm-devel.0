@@ -1,128 +1,117 @@
-From: Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v4 01/11] block: make generic_make_request
- handle arbitrarily sized bios
-Date: Tue, 2 Jun 2015 13:59:06 -0700
-Message-ID: <CAF1ivSY_7M1OhrMuXg0OKu7BPy=SbTHSHCk+2q6vfEVgvJL8YA@mail.gmail.com>
-References: <1432318723-18829-1-git-send-email-mlin@kernel.org>
-	<1432318723-18829-2-git-send-email-mlin@kernel.org>
-	<20150526143626.GA4315@redhat.com>
-	<CAF1ivSb3ptYObS3_8bJwWhq98EcNgAgRhN_L-c3uyFfCzdn=9A@mail.gmail.com>
-	<20150526160400.GB4715@redhat.com>
-	<CAF1ivSZ351yV4re1Ghf5yqPjgq6aXjrZT4yWd+T9msAFsBnDSw@mail.gmail.com>
-	<20150528003627.GD32216@agk-dp.fab.redhat.com>
-	<1433138551.11778.4.camel@hasee>
+From: Abelardo Ricart III <aricart@memnix.com>
+Subject: Re: Regression: Disk corruption with dm-crypt and
+	kernels >= 4.0
+Date: Tue, 02 Jun 2015 22:21:10 -0400
+Message-ID: <1433298070.5798.1.camel@memnix.com>
+References: <1430455027.7012.32.camel@memnix.com>
+	<20150501211703.GA15030@redhat.com>
+	<1430519090.5537.4.camel@memnix.com>
+	<1430523735.5352.1.camel@memnix.com>
+	<20150515150442.GB35834@hank.reardencode.com>
+	<1431959798.19977.4.camel@memnix.com>
+	<alpine.LRH.2.02.1506021345310.22804@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-In-Reply-To: <1433138551.11778.4.camel@hasee>
-List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>, Philip Kelleher <pjk1939-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joshua Morris <josh.h.morris-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Nitin Gupta <ngupta-KNmc09w0p+Ednm+yROfE0A@public.gmane.org>, Oleg Drokin <oleg.drokin-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Andreas Dilger <andreas.dilger-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Geoff Levand <geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jim Paris <jim-XrPbb/hENzg@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, drbd-user-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1506021345310.22804@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, Brandon Smith <freedom@reardencode.com>, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, May 31, 2015 at 11:02 PM, Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> On Thu, 2015-05-28 at 01:36 +0100, Alasdair G Kergon wrote:
->> On Wed, May 27, 2015 at 04:42:44PM -0700, Ming Lin wrote:
->> > Here are fio results of XFS on a DM stripped target with 2 SSDs + 1 HDD.
->> > Does it make sense?
->>
->> To stripe across devices with different characteristics?
->>
->> Some suggestions.
->>
->> Prepare 3 kernels.
->>   O - Old kernel.
->>   M - Old kernel with merge_bvec_fn disabled.
->>   N - New kernel.
->>
->> You're trying to search for counter-examples to the hypothesis that
->> "Kernel N always outperforms Kernel O".  Then if you find any, trying
->> to show either that the performance impediment is small enough that
->> it doesn't matter or that the cases are sufficiently rare or obscure
->> that they may be ignored because of the greater benefits of N in much more
->> common cases.
->>
->> (1) You're looking to set up configurations where kernel O performs noticeably
->> better than M.  Then you're comparing the performance of O and N in those
->> situations.
->>
->> (2) You're looking at other sensible configurations where O and M have
->> similar performance, and comparing that with the performance of N.
->
-> I didn't find case (1).
->
-> But the important thing for this series is to simplify block layer
-> based on immutable biovecs. I don't expect performance improvement.
->
-> Here is the changes statistics.
->
-> "68 files changed, 336 insertions(+), 1331 deletions(-)"
->
-> I run below 3 test cases to make sure it didn't bring any regressions.
-> Test environment: 2 NVMe drives on 2 sockets server.
-> Each case run for 30 minutes.
->
-> 2) btrfs radi0
->
-> mkfs.btrfs -f -d raid0 /dev/nvme0n1 /dev/nvme1n1
-> mount /dev/nvme0n1 /mnt
->
-> Then run 8K read.
->
-> [global]
-> ioengine=libaio
-> iodepth=64
-> direct=1
-> runtime=1800
-> time_based
-> group_reporting
-> numjobs=4
-> rw=read
->
-> [job1]
-> bs=8K
-> directory=/mnt
-> size=1G
->
-> 2) ext4 on MD raid5
->
-> mdadm --create /dev/md0 --level=5 --raid-devices=2 /dev/nvme0n1 /dev/nvme1n1
-> mkfs.ext4 /dev/md0
-> mount /dev/md0 /mnt
->
-> fio script same as btrfs test
->
-> 3) xfs on DM stripped target
->
-> pvcreate /dev/nvme0n1 /dev/nvme1n1
-> vgcreate striped_vol_group /dev/nvme0n1 /dev/nvme1n1
-> lvcreate -i2 -I4 -L250G -nstriped_logical_volume striped_vol_group
-> mkfs.xfs -f /dev/striped_vol_group/striped_logical_volume
-> mount /dev/striped_vol_group/striped_logical_volume /mnt
->
-> fio script same as btrfs test
->
-> ------
->
-> Results:
->
->         4.1-rc4         4.1-rc4-patched
-> btrfs   1818.6MB/s      1874.1MB/s
-> ext4    717307KB/s      714030KB/s
-> xfs     1396.6MB/s      1398.6MB/s
+On Tue, 2015-06-02 at 13:51 -0400, Mikulas Patocka wrote:
+> 
+> On Mon, 18 May 2015, Abelardo Ricart III wrote:
+> 
+> > On Fri, 2015-05-15 at 08:04 -0700, Brandon Smith wrote:
+> > > On 2015-05-01 (Fri) at 19:42:15 -0400, Abelardo Ricart III wrote:
+> > > > > > The patchset in question was tested quite heavily so this is a
+> > > > > > surprising report.  I'm noticing you are opting in to dm-crypt 
+> discard
+> > > > > > support.  Have you tested without discards enabled?
+> > > > > 
+> > > > > I've disabled discards universally and rebuilt a vanilla kernel. After 
+> 
+> > > > > running
+> > > > > my heavy read-write-sync scripts, everything seems to be working fine 
+> now. 
+> > > > > I
+> > > > > suppose this could be something that used to fail silently before, but 
+> now
+> > > > > produces bad behavior? I seem to remember having something in my 
+> message 
+> > > > > log
+> > > > > about "discards not supported on this device" when running with it 
+> enabled
+> > > > > before.
+> > > > 
+> > > > Forgive me, but I spoke too soon. The corruption and libata errors are 
+> still
+> > > > there, as was evidenced when I went to reboot and got treated to an eye 
+> full 
+> > > > of
+> > > > "read-only filesystem" and ata errors.
+> > > > 
+> > > > So no, disabling discards unfortunately did nothing to help.
+> > > 
+> > > I've been experiencing the same problem.  Vanilla 4.0 series kernels,
+> > > dm-crypt, with/or without discards, on a ThinkPad X1 Carbon with a
+> > > LiteOn LGT-256M6G SSD.   
+> > > 
+> > > After some of googling around, I found some chatter relating to changes
+> > > in NCQ on SSDs in 4.0.   Been running w/o NCQ for a full kernel build so
+> > > far without issue.  Perhaps there's been some change in the interaction
+> > > between dm-crypt and NCQ?
+> > > 
+> > > Abelardo, can you try w/o NCQ and see if that helps your situation?
+> > > 
+> > > Best,
+> > > 
+> > > --Brandon
+> > 
+> > I've been running with NCQ disabled and been stress testing for awhile and 
+> the
+> > issue is indeed gone. Thanks for the workaround!
+> > 
+> > So it seems the issue is somehow related to the combination of NCQ, dm
+> -crypt,
+> > and possibly (some?) SSDs.
+> 
+> Hi
+> 
+> I suspect that this is a bug in kernel NCQ processing or in SSD firmware 
+> and recent dm-crypt changes made the bug show up.
+> 
+> I suggest this:
+> 
+> If you have some test that reliably reproduces the bug, please do this: 
+> take kernel 3.19 or 3.18 and apply dm-crypt parallelization patches 
+> (commits f3396c58fd8442850e759843457d78b6ec3a9589, 
+> cf2f1abfbd0dba701f7f16ef619e4d2485de3366, 
+> 7145c241a1bf2841952c3e297c4080b357b3e52d, 
+> 94f5e0243c48aa01441c987743dc468e2d6eaca2, 
+> dc2676210c425ee8e5cb1bec5bc84d004ddf4179, 
+> 0f5d8e6ee758f7023e4353cca75d785b2d4f6abe, 
+> b3c5fd3052492f1b8d060799d4f18be5a5438add) on it. If the bug doesn't show 
+> up with the older kernel and dm-crypt parallelization patches, use git 
+> bisect to find out which patch broken NCQ. When you test a kernel with 
+> bisect, apply the above mentioned patches to it.
+> 
+> Mikulas
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
 
-Hi Alasdair & Mike,
-
-Would you like these numbers?
-I'd like to address your concerns to move forward.
-
-Thanks.
+Alright, I'll try this next and report back soon.
