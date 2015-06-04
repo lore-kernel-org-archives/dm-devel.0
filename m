@@ -1,110 +1,50 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: block: add a bi_error field to struct bio
-Date: Thu, 4 Jun 2015 11:31:07 -0400
-Message-ID: <20150604153106.GA31567@redhat.com>
-References: <1433338959-24808-1-git-send-email-hch@lst.de>
- <1433338959-24808-2-git-send-email-hch@lst.de>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Please submit specific discussion proposals for the File & Storage
+	miniconf at LPC2015
+Date: Thu, 4 Jun 2015 11:22:20 -0700
+Message-ID: <20150604182220.GA5167@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
 Content-Disposition: inline
-In-Reply-To: <1433338959-24808-2-git-send-email-hch@lst.de>
-Sender: linux-raid-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Ric Wheeler <ricwheeler@gmail.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, xfs@oss.sgi.com, device-mapper development <dm-devel@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, Jun 03 2015 at  9:42P -0400,
-Christoph Hellwig <hch@lst.de> wrote:
+Hi folks,
 
-> Currently we have two different ways to signal an I/O error on a BIO:
-> 
->  (1) by clearing the BIO_UPTODATE flag
->  (2) by returning a Linux errno value to the bi_end_io callback
-> 
-> The first one has the drawback of only communicating a single possible
-> error (-EIO), and the second one has the drawback of not beeing persistent
-> when bios are queued up, and are not passed along from child to parent
-> bio in the ever more popular chaining scenario.  Having both mechanisms
-> available has the additional drawback of utterly confusing driver authors
-> and introducing bugs where various I/O submitters only deal with one of
-> them, and the others have to add boilerplate code to deal with both kinds
-> of error returns.
-> 
-> So add a new bi_error field to store an errno value directly in struct
-> bio and remove the existing mechanisms to clean all this up.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+Well, we made it!  As of yesterday, the File & Storage systems microconf has
+been approved for Plumbers!  If you're interested in attending, I highly
+recommend that you register[0] immediately, as the earlybird deadline is
+tomorrow, June 5th.
 
-This patch _really_ concerns me because just in DM alone I found you
-took liberties that you shouldn't have and created a regression.  First
-issue is a real bug (your proposed dm-io.c:dmio_complete change missed
-that dm-io uses error_bits and not traditional error code like expected)
-the other issue being you added extra branching that isn't needed and
-made review more tedious (dm.c:clone_endio).
+We have a solid list of discussion ideas on the wiki page[1], and three hours
+in which to conduct those discussions!  If you are interested in leading one of
+the three hourlong sessions, it is now time to submit[2] a specific proposal
+for consideration.  People selected to be session leaders can have their
+registrations changed to the speaker package even after registering.
 
-I'll defer to others to check their respective areas of expertise but my
-experience with this review should really underscore the need for more
-eyes on this patch.  That said, I do appreciate your effort on cleaning
-this up!
+Proposals needn't be strictly limited to the fourteen bullet points on the wiki
+page.  I will try to have the three key discussions lined up by the end of the
+month, so please send in proposals!
 
-For DM, please add Signed-off-by: Mike Snitzer <snitzer@redhat.com> once
-you've folded in this patch, thanks!
+--Darrick
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index 86dbbc7..d2fc49f 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -545,7 +545,8 @@ static void dmio_complete(unsigned long error, void *context)
- {
- 	struct dm_buffer *b = context;
- 
--	b->bio.bi_end_io(&b->bio, error ? -EIO : 0);
-+	b->bio.bi_error = error ? -EIO : 0;
-+	b->bio.bi_end_io(&b->bio);
- }
- 
- static void use_dmio(struct dm_buffer *b, int rw, sector_t block,
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 767bce9..85a7c3d 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -954,25 +954,22 @@ static void disable_write_same(struct mapped_device *md)
- 	limits->max_write_same_sectors = 0;
- }
- 
--static void clone_endio(struct bio *bio, int error)
-+static void clone_endio(struct bio *bio)
- {
--	int r = error;
-+	int r = bio->bi_error;
- 	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
- 	struct dm_io *io = tio->io;
- 	struct mapped_device *md = tio->io->md;
- 	dm_endio_fn endio = tio->ti->type->end_io;
- 
--	if (!bio_flagged(bio, BIO_UPTODATE) && !error)
--		error = -EIO;
--
- 	if (endio) {
--		r = endio(tio->ti, bio, error);
-+		r = endio(tio->ti, bio, bio->bi_error);
- 		if (r < 0 || r == DM_ENDIO_REQUEUE)
- 			/*
- 			 * error and requeue request are handled
- 			 * in dec_pending().
- 			 */
--			error = r;
-+			;
- 		else if (r == DM_ENDIO_INCOMPLETE)
- 			/* The target will handle the io */
- 			return;
-@@ -987,7 +984,7 @@ static void clone_endio(struct bio *bio, int error)
- 		disable_write_same(md);
- 
- 	free_tio(md, tio);
--	dec_pending(io, error);
-+	dec_pending(io, r);
- }
- 
- static struct dm_rq_target_io *tio_from_request(struct request *rq)
+[0] https://www.regonline.com/register/login.aspx?eventID=1623891&MethodId=0&EventsessionId=
+[1] http://wiki.linuxplumbersconf.org/2015:file_and_storage_systems
+[2] https://linuxplumbersconf.org/2015/ocw/events/LPC2015/proposals
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
