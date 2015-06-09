@@ -1,15 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 4/4] dm stats: support statistics on
-	requests-based devices
-Date: Tue, 9 Jun 2015 17:22:49 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1506091722120.1545@file01.intranet.prod.int.rdu2.redhat.com>
+From: Laurence Oberman <loberman@redhat.com>
+Subject: Re: [PATCH 4/4] dm stats: support statistics on
+ requests-based devices
+Date: Tue, 9 Jun 2015 17:23:59 -0400 (EDT)
+Message-ID: <1185981540.11910821.1433885039023.JavaMail.zimbra@redhat.com>
 References: <alpine.LRH.2.02.1506091705160.1545@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1506091722120.1545@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1506091705160.1545@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1506091722120.1545@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,9 +20,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Coly Li <colyli@gmail.com>
-Cc: Tao Ma <boyu.mt@taobao.com>, dm-devel@redhat.com, Laurence Oberman <loberman@redhat.com>, Robin Dong <sanbai@alibaba-inc.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, dm-devel@redhat.com, Coly Li <colyli@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
+
+Awesome.
+Thanks I will pull the patches build and test.
+
+Regards
+Laurence
+
+Laurence Oberman
+Red Hat Global Support Service
+SEG Team
+
+----- Original Message -----
+From: "Mikulas Patocka" <mpatocka@redhat.com>
+To: "Alasdair G. Kergon" <agk@redhat.com>, "Mike Snitzer" <msnitzer@redhat.com>, "Coly Li" <colyli@gmail.com>
+Cc: dm-devel@redhat.com, "Tao Ma" <boyu.mt@taobao.com>, "Robin Dong" <sanbai@alibaba-inc.com>, "Laurence Oberman" <loberman@redhat.com>
+Sent: Tuesday, June 9, 2015 5:22:49 PM
+Subject: [PATCH 4/4] dm stats: support statistics on requests-based devices
 
 This patch makes it possible to use dm stats on multipath.
 
