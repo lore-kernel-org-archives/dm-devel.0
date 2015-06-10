@@ -1,148 +1,75 @@
-From: Laurence Oberman <loberman@redhat.com>
-Subject: Re: [PATCH 4/4] dm stats: support statistics on
- requests-based devices
-Date: Tue, 9 Jun 2015 17:23:59 -0400 (EDT)
-Message-ID: <1185981540.11910821.1433885039023.JavaMail.zimbra@redhat.com>
-References: <alpine.LRH.2.02.1506091705160.1545@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1506091722120.1545@file01.intranet.prod.int.rdu2.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Neil Brown <neilb@suse.de>
+Subject: Re: [dm-devel] [PATCH] block: add a bi_error field to struct bio
+Date: Wed, 10 Jun 2015 12:50:54 +1000
+Message-ID: <20150610125054.3da2abcc@home.neil.brown.name>
+References: <1433338959-24808-1-git-send-email-hch@lst.de>
+	<1433338959-24808-2-git-send-email-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1506091722120.1545@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, dm-devel@redhat.com, Coly Li <colyli@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <1433338959-24808-2-git-send-email-hch@lst.de>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-Awesome.
-Thanks I will pull the patches build and test.
+On Wed,  3 Jun 2015 15:42:39 +0200
+Christoph Hellwig <hch@lst.de> wrote:
 
-Regards
-Laurence
+> Currently we have two different ways to signal an I/O error on a BIO:
+> 
+>  (1) by clearing the BIO_UPTODATE flag
+>  (2) by returning a Linux errno value to the bi_end_io callback
+> 
+> The first one has the drawback of only communicating a single possible
+> error (-EIO), and the second one has the drawback of not beeing persistent
+> when bios are queued up, and are not passed along from child to parent
+> bio in the ever more popular chaining scenario.  Having both mechanisms
+> available has the additional drawback of utterly confusing driver authors
+> and introducing bugs where various I/O submitters only deal with one of
+> them, and the others have to add boilerplate code to deal with both kinds
+> of error returns.
+> 
+> So add a new bi_error field to store an errno value directly in struct
+> bio and remove the existing mechanisms to clean all this up.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-Laurence Oberman
-Red Hat Global Support Service
-SEG Team
+I really like this clean up.
+It is unfortunate that the patch is so big, but I guess it has to be.
 
------ Original Message -----
-From: "Mikulas Patocka" <mpatocka@redhat.com>
-To: "Alasdair G. Kergon" <agk@redhat.com>, "Mike Snitzer" <msnitzer@redhat.com>, "Coly Li" <colyli@gmail.com>
-Cc: dm-devel@redhat.com, "Tao Ma" <boyu.mt@taobao.com>, "Robin Dong" <sanbai@alibaba-inc.com>, "Laurence Oberman" <loberman@redhat.com>
-Sent: Tuesday, June 9, 2015 5:22:49 PM
-Subject: [PATCH 4/4] dm stats: support statistics on requests-based devices
+It mostly looks good, but review is hard and testing is harder :-(
 
-This patch makes it possible to use dm stats on multipath.
+I found:
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+> index f80f1af..1bad16f 100644
+> --- a/drivers/md/raid1.c
+> +++ b/drivers/md/raid1.c
+....
+> @@ -1800,7 +1799,7 @@ static void end_sync_write(struct bio *bio, int error)
+>  			reschedule_retry(r1_bio);
+>  		else {
+>  			put_buf(r1_bio);
+> -			md_done_sync(mddev, s, uptodate);
+> +			md_done_sync(mddev, s, !bio->bi_error);
+>  		}
+>  	}
+>  }
 
----
- drivers/md/dm-stats.c |    5 -----
- drivers/md/dm.c       |   27 +++++++++++++++++++++++++++
- 2 files changed, 27 insertions(+), 5 deletions(-)
+This introduces a use-after-free.  put_buf(r1_bio) can  result in bio_put on
+'bio'.
+It is safe to move the put_buf call after the md_done_sync(), but it is
+probably best to leave the 'update' variable as it.  i.e. Just change:
 
-Index: linux-4.1-rc7/drivers/md/dm-stats.c
-===================================================================
---- linux-4.1-rc7.orig/drivers/md/dm-stats.c	2015-06-09 13:53:26.000000000 +0200
-+++ linux-4.1-rc7/drivers/md/dm-stats.c	2015-06-09 13:53:35.000000000 +0200
-@@ -1155,11 +1155,6 @@ int dm_stats_message(struct mapped_devic
- {
- 	int r;
- 
--	if (dm_request_based(md)) {
--		DMWARN("Statistics are only supported for bio-based devices");
--		return -EOPNOTSUPP;
--	}
--
- 	/* All messages here must start with '@' */
- 	if (!strcasecmp(argv[0], "@stats_create"))
- 		r = message_stats_create(md, argc, argv, result, maxlen);
-Index: linux-4.1-rc7/drivers/md/dm.c
-===================================================================
---- linux-4.1-rc7.orig/drivers/md/dm.c	2015-06-09 13:53:50.000000000 +0200
-+++ linux-4.1-rc7/drivers/md/dm.c	2015-06-09 16:07:35.000000000 +0200
-@@ -86,6 +86,9 @@ struct dm_rq_target_io {
- 	struct kthread_work work;
- 	int error;
- 	union map_info info;
-+	struct dm_stats_aux stats_aux;
-+	unsigned long duration_jiffies;
-+	unsigned n_sectors;
- };
- 
- /*
-@@ -1084,6 +1087,17 @@ static struct dm_rq_target_io *tio_from_
- 	return (rq->q->mq_ops ? blk_mq_rq_to_pdu(rq) : rq->special);
- }
- 
-+static void rq_end_stats(struct mapped_device *md, struct request *orig)
-+{
-+	if (unlikely(dm_stats_used(&md->stats))) {
-+		struct dm_rq_target_io *tio = tio_from_request(orig);
-+		tio->duration_jiffies = jiffies - tio->duration_jiffies;
-+		dm_stats_account_io(&md->stats, orig->cmd_flags, blk_rq_pos(orig),
-+				    tio->n_sectors, true, tio->duration_jiffies,
-+				    &tio->stats_aux);
-+	}
-+}
-+
- /*
-  * Don't touch any member of the md after calling this function because
-  * the md may be freed in dm_put() at the end of this function.
-@@ -1169,6 +1183,7 @@ static void dm_end_request(struct reques
- 	}
- 
- 	free_rq_clone(clone);
-+	rq_end_stats(md, rq);
- 	if (!rq->q->mq_ops)
- 		blk_end_request_all(rq, error);
- 	else
-@@ -1211,6 +1226,7 @@ static void dm_requeue_unmapped_original
- 
- 	dm_unprep_request(rq);
- 
-+	rq_end_stats(md, rq);
- 	if (!rq->q->mq_ops)
- 		old_requeue_request(rq);
- 	else {
-@@ -1309,6 +1325,7 @@ static void dm_softirq_done(struct reque
- 	int rw;
- 
- 	if (!clone) {
-+		rq_end_stats(tio->md, rq);
- 		rw = rq_data_dir(rq);
- 		if (!rq->q->mq_ops) {
- 			blk_end_request_all(rq, tio->error);
-@@ -2120,6 +2137,15 @@ static void dm_start_request(struct mapp
- 		md->last_rq_start_time = ktime_get();
- 	}
- 
-+	if (unlikely(dm_stats_used(&md->stats))) {
-+		struct dm_rq_target_io *tio = tio_from_request(orig);
-+		tio->duration_jiffies = jiffies;
-+		tio->n_sectors = blk_rq_sectors(orig);
-+		dm_stats_account_io(&md->stats, orig->cmd_flags, blk_rq_pos(orig),
-+				    tio->n_sectors, false, 0,
-+				    &tio->stats_aux);
-+	}
-+
- 	/*
- 	 * Hold the md reference here for the in-flight I/O.
- 	 * We can't rely on the reference count by device opener,
-@@ -2853,6 +2879,7 @@ static int dm_mq_queue_rq(struct blk_mq_
- 		/* Direct call is fine since .queue_rq allows allocations */
- 		if (map_request(tio, rq, md) == DM_MAPIO_REQUEUE) {
- 			/* Undo dm_start_request() before requeuing */
-+			rq_end_stats(md, rq);
- 			rq_completed(md, rq_data_dir(rq), false);
- 			return BLK_MQ_RQ_QUEUE_BUSY;
- 		}
+-	int uptodate = test_bit(BIO_UPTODATE, &bio->bi_flags);
++	int uptodate = !bio->bi_error;
+
+
+I can't see any other problems with the md changes.
+
+Reviewed-by: NeilBrown <neilb@suse.de> (md/raid parts)
+
+Thanks,
+NeilBrown
