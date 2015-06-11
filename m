@@ -1,91 +1,53 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [dm-devel] ALUA - rescan device capacity on zero sized block
- devices
-Date: Thu, 11 Jun 2015 07:52:06 +0200
-Message-ID: <55792206.3090505@suse.de>
-References: <1887682221.152035.1428939145196.JavaMail.zimbra@kangaroot.net>	 <552C008A.9070201@sandisk.com>	 <987831457.156812.1428996031503.JavaMail.zimbra@kangaroot.net>	 <552CCC77.9040703@suse.de>	<552CE2C2.8000809@sandisk.com>	 <CABr-GnefEhc_dOKs360Hox7asbvO5qN8BqPczqC+V8CQ6Myh8w@mail.gmail.com>	 <55349580.1040205@suse.de> <1433948530.27387.92.camel@localhost.localdomain>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: block: add a bi_error field to struct bio
+Date: Thu, 11 Jun 2015 09:53:27 +0200
+Message-ID: <20150611075327.GA2113@lst.de>
+References: <1433338959-24808-1-git-send-email-hch@lst.de> <1433338959-24808-2-git-send-email-hch@lst.de> <20150604153106.GA31567@redhat.com> <20150610081138.GA3841@lst.de> <20150610152649.GA31140@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1433948530.27387.92.camel@localhost.localdomain>
-Sender: linux-scsi-owner@vger.kernel.org
-To: emilne@redhat.com, device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150610152649.GA31140@redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 06/10/2015 05:02 PM, Ewan Milne wrote:
-> On Mon, 2015-04-20 at 07:58 +0200, Hannes Reinecke wrote:
->> On 04/19/2015 12:56 AM, Christophe Varoqui wrote:
->>> About five years ago, we faced a somewhat simular issue with
->>> Symmetrix arrays, where the replicated LU of a SRDF pair (R2) was
->>> flagged read-only by the kernel upon discovery. Splitting the pair
->>> with a symcli command  made the LU read-write from the array
->>> controller point of view, but the Linux kernel would not promote it
->>> read-write dynamically.
->>>
->>> I don't know if the Symmetrix array also use a unit attention to
->>> signal the change to the initiators. If it does, it might be worth
->>> trying to address both the 3par peer persistance and the Symmetrix
->>> SRDF situations.
->>>
->>> On the other hand, if the SRDF R2 rw promotion issue has been fixed
->>> since, the patch might give guidance about where/how to plug the
->>> 3par peer persistance ghost path rescans.
->>>
->> It's not only that; if you are faced with LUNs in standby even the
->> kernel wouldn't detect them properly.
->>
->> I'm currently debugging this issue and will have an update soon(-ish=
-).
->=20
-> I have a patch set to have the kernel automatically rescan the device
-> when the ALUA state changes to an ACTIVE state, if it couldn't read
-> capacity when the device was initially probed.  I've had it for a whi=
-le,
-> but I haven't had *any* response from the vendor if it actually works
-> with their product, so I haven't posted it to the list for review yet=
-=2E
->=20
-Please hold off that patchset.
+On Wed, Jun 10, 2015 at 11:26:49AM -0400, Mike Snitzer wrote:
+> Unfortunately by dropping the original error (e.g. -EREMOTEIO) on the
+> floor (in the 'if (endio) {' branch) you're breaking the REQ_WRITE_SAME
+> check.
 
-I've posted the ALUA update patchset a while ago, and are working on
-including the suggestions from hch.
+I think this also happens in the old code before my patch, e.g.:
 
-Please check if that patchset fixes the issue.
+static void clone_endio(struct bio *bio, int error)
+{
+        int r = error;
 
-Additionally, I've got some patches for lio-target which will blank
-out the READ CAPACITY command when in standby; with that one has an
-easy testbed for this kind of issues.
+	...
 
-> I did point out to them that the T10 spec does not *prohibit* support=
-ing
-> the READ CAPACITY command in the ALUA standby state, which would avoi=
-d
-> the problem, and is what other vendors seem to do.  However, they the=
-n
-> raised the issue that if the capacity changes in the standby state th=
-en
-> they should be generating the capacity changed UA, etc and you can so=
-rt
-> of see their point of why this gets complicated.
->=20
-Which is actually not true. The capacity did _not_ change, it's just
-the command which isn't supported. If the command was supported and
-would have reported a size of '0' in standby _then_ it would have
-been a capacity change. But that's not the case here.
+	if (endio) {
+		r = endio(tio->ti, bio, error);
+		...
+	}
 
-Cheers,
+	if (unlikely(r == -EREMOTEIO && (bio->bi_rw & REQ_WRITE_SAME) &&
 
-Hannes
---=20
-Dr. Hannes Reinecke		               zSeries & Storage
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+so we already check the return value that comes from the endio handler,
+not any different from my patch.
+
+In the original code r and error are basically always the same, execept
+after this:
+
+	if (!bio_flagged(bio, BIO_UPTODATE) && !error)
+		error = -EIO;
+
+error might be -EIO and r might be 0. Now if we take the endio branch
+we replace both error and r with the return value of endio for all
+branches that don't immediately return or BUG().  For the non
+endio branch we might check in REQ_WRITE_SAME branch, but r can
+only be -EREMOTEIO if it got that value from error, so it doesn't
+matter which one we test there.
+
+Based on that I'm pretty sure my prep patch is transformation that
+does not change behavior.
