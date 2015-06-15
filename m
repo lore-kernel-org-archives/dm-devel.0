@@ -1,15 +1,12 @@
 From: Johannes Bauer <dfnsonfsduifb@gmx.de>
-Subject: Re: dmsetup remove gives EBUSY (even though it shouldn't
- be busy)
-Date: Mon, 15 Jun 2015 20:22:10 +0200
-Message-ID: <557F17D2.8090708@gmx.de>
-References: <5562513D.3080203@gmx.de> <556317D3.6070901@redhat.com>
+Subject: Newbie device mapper questions
+Date: Mon, 15 Jun 2015 20:39:54 +0200
+Message-ID: <557F1BFA.2080504@gmx.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <556317D3.6070901@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,53 +16,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: mbroz@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hey Milan,
+Hi list,
 
-sorry for the late answer -- I thought nobody replied to the topic
-because I had the grouping setting messed up in my mail client. Only now
-that I looked in the messages again because of something totally
-unrelated I saw your response.
+so I've had this idea stuck in my head for a while and am finally not
+intimidated enough my the dm API to actually give it a shot and play
+around. I'm just getting used to the DM internals so please apologize if
+I sound like an idiot, I'm just new to the DM.
 
-On 25.05.2015 14:38, Milan Broz wrote:
+Something that I would like to implement first is a device mapper target
+that takes three block devices as input: Two equally sized devices (src1
+and src2) and a separate metadata device (meta). I want to map chunks of
+the src devices to bits of a bitmap in the meta device. If the bit is
+set in the meta device decides whether src1 and src2 is returned.
 
->> Afterwards I fork/exec the command "dmsetup remove foobar". This yields:
->>
->> device-mapper: remove ioctl on foobar failed: Device or resource busy
->> Command failed
-> 
-> Usually this is caused by running blkid (automatically running from udev rules)
-> which react to close-on-write on the device and keep the device open while scanning.
-> (You can try to run lsof, there is a chance you will see the process blocking
-> this device.)
+Sounds pretty easy and I also got surprisingly far with my little kernel
+module. I've so far implemented ctr, dtr, map and status.
 
-Ah, yes, indeed I do see a blkid process there.
+In map() I actually do the switching operation. I've looked at how
+dm-linear implements this and copied a lot of information. Currently I
+do static switching (fixed block size, ingoring the meta device). Here
+are my questions:
 
-> Recent device mapper tries to retry removal operation, so if you use
-> recent dmsetup (or cryptsetup close command) you should see that it
-> tries several times.
+- How can I read within the kernel from the block device lc->meta->bdev?
+If I call "read_dev_sector" from "map" this results in a deadlock, I'm
+guessing this is now how it's supposed to work. The bcache module must
+perform something similar (because it also reads and writes metadata,
+only much more complex), but I'll be damned but couldn't find out where
+the actual reading/writing is performed in the code. What are things
+that I should look at?
 
-Yes, I saw that option, but in some cases it wouldn't wait long enough
-in my case and still return EBUSY.
+- Is the ctr callback the appropriate place to fail if a logical error
+occurs? For example, if two src devices of dissimilar size are passed to
+dmsetup?
 
-> First option is to disable WATCH rule in udev rules and check if this helps.
-> (Unfortunately this has some side effects.)
-> 
-> Better solution is probably explicitly call "udevadm settle" instead
-> of sleep(). Still not perfect (it waits for all devices/udev processes),
-> but I am afraid there is nothing better yet to synchronize with these scans.
+- Is i_size_read(lc->src1dev->bdev->bd_inode) the correct way of
+determining the size of the underlying block device? If not, which
+function is?
 
-Hm, I don't think I want a change in the udev config, so I'm going to
-navigate around this issue somhow. In any case my main worry was that I
-was doing something wrong which would cause this behavior. That udev
-calls blkid which causes the EBUSY actually is a good thing (because I
-can reasonably assume that blkid will terminate after a rather short
-amount of time).
+- Can I safely assume the logical sector size is fixed to be 512 bytes
+in all cases?
 
-So I thank you for your response, clearing this up.
+- In the dm-linear example, bio_sectors(bio) is checked. This gives, if
+I understand it correctly, the size in sectors of the BIO (usually this
+is 8). What I don't understand is in which cases this can become zero
+(dm-linear has a if that checks for bio_sectors(bio) != 0).
 
+- Can I determine the size the bio in map() will have already in ctr()
+somehow? Can I assume it will never change if it was once determined?
+The reason is that for my example I need to make sure the chunk size is
+a integer multiple of the bio size and I would only like to check this
+once (in ctr) and not every time (in map).
+
+Thank you very much for helping out a complete newbie :-)
 Best regards,
 Johannes
