@@ -1,16 +1,16 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 0/4] Integrate dm-latency functionality to
- dm-statistics
-Date: Mon, 15 Jun 2015 08:47:38 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1506150729150.7275@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: [PATCH 2/4] dm stats: support precise timestamps
+Date: Mon, 15 Jun 2015 09:04:02 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1506150847460.7275@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1506091705160.1545@file01.intranet.prod.int.rdu2.redhat.com>
-	<557C6214.4010506@gmail.com>
+	<alpine.LRH.2.02.1506091721180.1545@file01.intranet.prod.int.rdu2.redhat.com>
+	<557C6266.3040008@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <557C6214.4010506@gmail.com>
+In-Reply-To: <557C6266.3040008@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,71 +28,175 @@ List-Id: dm-devel.ids
 
 On Sun, 14 Jun 2015, Coly Li wrote:
 
-> ? 15/6/10 ??5:20, Mikulas Patocka ??:
-> > Hi
+> ? 15/6/10 ??5:21, Mikulas Patocka ??:
+> > This patch makes it possible to use precise timestamps with nanosecond
+> > granularity in dm statistics.
 > >
-> > Here I'm sending patches that add funcionality provided by dm-latency into 
-> > dm-statistics framework. Dm-latency was introduced in this post 
-> > https://www.redhat.com/archives/dm-devel/2015-February/msg00158.html , 
-> > however, there is already similar framework dm-statistics in the kernel. 
-> > In order to have cleaner and easier to maintain code, it is better to 
-> > integrate dm-latency functionality into dm-statistics, rather than having 
-> > two frameworks that do similar things.
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 > >
-> > This patch series makes these changes:
-> > * it is possible to use precise time measurement with nanosecond 
-> >   granularity (previously, time was measured in jiffies)
-> > * it is possible to collect histogram of latencies. The histogram 
-> >   boundaries may be selected by the user and there is unlimited number of 
-> >   possible boundaries (in dm-latency, the histogram boundaries were fixed)
-> > * it is possible to use dm-statistics on multipath
+> > ---
+> >  Documentation/device-mapper/statistics.txt |   25 ++++-
+> >  drivers/md/dm-stats.c                      |  139 +++++++++++++++++++++--------
+> >  drivers/md/dm-stats.h                      |    4 
+> >  3 files changed, 125 insertions(+), 43 deletions(-)
 > >
-> > The documentation of these extensions is in 
-> > Documentation/device-mapper/statistics.txt
-> >
-> > I'd like to ask people who designed dm-latency to check this patchset, try 
-> > to use it and tell us if it provides sufficient functionality to them (the 
-> > indended functinality of dm-latency was to predict hard disk failures from 
-> > i/o request latency histogram).
-> >
+> > Index: linux-4.1-rc7/drivers/md/dm-stats.c
+> > ===================================================================
+> > --- linux-4.1-rc7.orig/drivers/md/dm-stats.c	2015-06-08 16:02:27.000000000 +0200
+> > +++ linux-4.1-rc7/drivers/md/dm-stats.c	2015-06-08 16:38:43.000000000 +0200
+> > @@ -33,13 +33,14 @@ struct dm_stat_percpu {
+> >  
+> [snip]
+> > @@ -560,8 +578,17 @@ void dm_stats_account_io(struct dm_stats
+> >  
+> >  	rcu_read_lock();
+> >  
+> > -	list_for_each_entry_rcu(s, &stats->list, list_entry)
+> > -		__dm_stat_bio(s, bi_rw, bi_sector, end_sector, end, duration, stats_aux);
+> > +	got_precise_time = false;
+> > +	list_for_each_entry_rcu(s, &stats->list, list_entry) {
+> > +		if (s->stat_flags & STAT_PRECISE_TIMESTAMPS && !got_precise_time) {
+> > +			if (!end)
+> > +				stats_aux->duration_ns = ktime_to_ns(ktime_get());
+> > +			else
+> > +				stats_aux->duration_ns = ktime_to_ns(ktime_get()) - stats_aux->duration_ns;
+> > +			got_precise_time = true;
+> > +		}
+> There are many conditions user space processes may query the global
+> timer resource frequently. ktime_get() will call spin_lock when
+> accessing global timer resource, calling ktime_get() for each list entry
+> might introduce locking contention when stats->list is quite large.
+
+The above code doesn't call ktime_get() for each list entry - it calls 
+ktime_get() only once, then sets got_precise_time, and doesn't call it 
+anymore.
+
+> A satisfied solution might be something like this,
 > 
-> Hi Mikulas,
-> 
-> I was in travel last week, sorry for late response. Here are some
-> comments from me, just for your information,
-> 
-> 1, If I understand correctly, latency histogram boundaries are organized 
-> by list in your implementation, and the list is searched in linear 
-> order. We had a similar but a little bit simple implementation, with 
-> very high I/O request work load on multiple hard disks, we observed 1% 
-> CPU performance cost. This is why dm-latency uses a very simple static 
-> array of counters to record I/O latency. I suggest you should do some 
-> benchmarks to compare the performance cost.
+> +    now = ktime_to_ns(ktime_get());
+> +    list_for_each_entry_rcu(s, &stats->list, list_entry) {
+> +        if (s->stat_flags & STAT_PRECISE_TIMESTAMPS && !got_precise_time) {
+> +            if (!end)
+> +                stats_aux->duration_ns = now;
+> +            else
+> +                stats_aux->duration_ns = now - stats_aux->duration_ns;
+> +            got_precise_time = true;
+> +        }
 
-It is searched using binary search - so the complexity is logarithmic.
+This is worse that the previous code - this piece of code calls 
+ktime_get() even if no list entry requires precise timestamps. The 
+previous code called ktime_get() only if there is at least one list entry 
+that has STAT_PRECISE_TIMESTAMPS set.
 
-> 2, There should be a maximum latency histogram boundaries limitation. 
-> Maybe you do it in the patch and I missed it, that's should be my fault.
+> In this case the global timer could be access only once, locking
+> contention should be much less. Yes, it looks to be some inaccurate, but
+> for hard disk I/O latency measurement, the difference almost could be
+> ignored.
+> > +		__dm_stat_bio(s, bi_rw, bi_sector, end_sector, end, duration_jiffies, stats_aux);
+> > +	}
+> >  
+> >  	rcu_read_unlock();
+> >  }
+> [snip]
+> > @@ -772,21 +803,31 @@ static int message_stats_create(struct m
+> >  	unsigned long long start, end, len, step;
+> >  	unsigned divisor;
+> >  	const char *program_id, *aux_data;
+> > +	unsigned stat_flags = 0;
+> > +
+> > +	struct dm_arg_set as, as_backup;
+> > +	const char *a;
+> > +	unsigned feature_args;
+> >  
+> >  	/*
+> >  	 * Input format:
+> > -	 *   <range> <step> [<program_id> [<aux_data>]]
+> > +	 *   <range> <step> [<extra_parameters> <parameters>] [<program_id> [<aux_data>]]
+> >  	 */
+> >  
+> > -	if (argc < 3 || argc > 5)
+> > +	if (argc < 3)
+> >  		return -EINVAL;
+> >  
+> > -	if (!strcmp(argv[1], "-")) {
+> > +	as.argc = argc;
+> > +	as.argv = argv;
+> > +	dm_consume_args(&as, 1);
+> > +
+> > +	a = dm_shift_arg(&as);
+> > +	if (!strcmp(a, "-")) {
+> >  		start = 0;
+> >  		len = dm_get_size(md);
+> >  		if (!len)
+> >  			len = 1;
+> > -	} else if (sscanf(argv[1], "%llu+%llu%c", &start, &len, &dummy) != 2 ||
+> > +	} else if (sscanf(a, "%llu+%llu%c", &start, &len, &dummy) != 2 ||
+> >  		   start != (sector_t)start || len != (sector_t)len)
+> >  		return -EINVAL;
+> >  
+> > @@ -794,7 +835,8 @@ static int message_stats_create(struct m
+> >  	if (start >= end)
+> >  		return -EINVAL;
+> >  
+> > -	if (sscanf(argv[2], "/%u%c", &divisor, &dummy) == 1) {
+> > +	a = dm_shift_arg(&as);
+> > +	if (sscanf(a, "/%u%c", &divisor, &dummy) == 1) {
+> >  		if (!divisor)
+> >  			return -EINVAL;
+> >  		step = end - start;
+> > @@ -802,18 +844,39 @@ static int message_stats_create(struct m
+> >  			step++;
+> >  		if (!step)
+> >  			step = 1;
+> > -	} else if (sscanf(argv[2], "%llu%c", &step, &dummy) != 1 ||
+> > +	} else if (sscanf(a, "%llu%c", &step, &dummy) != 1 ||
+> >  		   step != (sector_t)step || !step)
+> >  		return -EINVAL;
+> >  
+> > +	as_backup = as;
+> > +	a = dm_shift_arg(&as);
+> > +	if (a && sscanf(a, "%u%c", &feature_args, &dummy) == 1) {
+> > +		while (feature_args--) {
+> > +			a = dm_shift_arg(&as);
+> > +			if (!a)
+> > +				return -EINVAL;
+> > +			if (!strcasecmp(a, "precise_timestamps"))
+> > +				stat_flags |= STAT_PRECISE_TIMESTAMPS;
+> > +			else
+> > +				return -EINVAL;
+> > +		}
+> > +	} else {
+> > +		as = as_backup;
+> > +	}
+> > +
+> >  	program_id = "-";
+> >  	aux_data = "-";
+> >  
+> > -	if (argc > 3)
+> > -		program_id = argv[3];
+> > +	a = dm_shift_arg(&as);
+> > +	if (a)
+> > +		program_id = a;
+> > +
+> > +	a = dm_shift_arg(&as);
+> > +	if (a)
+> > +		aux_data = a;
+> >  
+> > -	if (argc > 4)
+> > -		aux_data = argv[4];
+> > +	if (as.argc)
+> > +		return -EINVAL;
+> >  
+> If I could, I would simplify the design to remove the above changes in
+> message_stats_create(). Just my suggestion ...
 
-There is no maximum - and there doesn't need to be any maximum because the 
-array is allocated dynamically.
-
-> 3, in message_stats_create() I see more code to handle arguments 
-> checking. hmm, I don't check this cold block very carefully, but I 
-> suggest that string checking in kernel space should be very careful, if 
-> you may simplify current designment and remove the code for arguments 
-> checking, it might be better.
-
-I don't know why should I remove the code for arguments checking. We check 
-arguments in the kernel, even if the function may be only called by root - 
-to prevent bugs in userspace tools from causing kernel crash.
-
-> 4, there are some minor suggestions, I will add my comments in other 
-> emails.
-> 
-> For rest of the patch set, they are good to me. Thanks for your effort 
-> to make a good start :-)
-> 
-> Coly
+I don't know what you mean - if you remove the above changes in 
+message_stats_create - then obviously - the user will not be able to 
+enable precise timestamps or histogram.
 
 Mikulas
+
+> [snip]
+> 
+> Coly
+> 
