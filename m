@@ -1,18 +1,17 @@
-From: Minfei Huang <mnfhuang@gmail.com>
-Subject: Re: Newbie device mapper questions
-Date: Tue, 16 Jun 2015 09:18:09 +0800
-Message-ID: <20150616011809.GA3277@huangminfeis-MacBook-Pro.local>
-References: <557F1BFA.2080504@gmx.de>
-	<CAFx4rwQ0ganzZn5FjQZTVtk1DK1Qr1pmMCTxRCwxd793+-anHg@mail.gmail.com>
-	<20150615222018.GA29625@redhat.com>
-	<CAKoi8FLeqGON2EyHeie8MTgi_Cz0hdRJyid09gq1KudNRaM3Vg@mail.gmail.com>
+From: Coly Li <colyli@gmail.com>
+Subject: Re: [PATCH 2/4] dm stats: support precise timestamps
+Date: Mon, 15 Jun 2015 22:17:05 +0800
+Message-ID: <557EDE61.8060905@gmail.com>
+References: <alpine.LRH.2.02.1506091705160.1545@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1506091721180.1545@file01.intranet.prod.int.rdu2.redhat.com>
+	<557C6266.3040008@gmail.com>
+	<alpine.LRH.2.02.1506150847460.7275@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="gbk"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAKoi8FLeqGON2EyHeie8MTgi_Cz0hdRJyid09gq1KudNRaM3Vg@mail.gmail.com>
+In-Reply-To: <alpine.LRH.2.02.1506150847460.7275@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,75 +21,117 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dfnsonfsduifb@gmx.de
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Laurence Oberman <loberman@redhat.com>, Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 06/16/15 at 08:55P, Minfei Huang wrote:
-> On Tue, Jun 16, 2015 at 6:20 AM, Vivek Goyal <vgoyal@redhat.com> wrote:
-> > On Mon, Jun 15, 2015 at 12:52:57PM -0700, Doug Dumitru wrote:
-> >> >
-> >> > - Is i_size_read(lc->src1dev->bdev->bd_inode) the correct way of
-> >> > determining the size of the underlying block device? If not, which
-> >> > function is?
-> >> >
-> >
-> > I believe that's correct. Look at block/blk-core.c
-> >
-> > handle_bad_sector(struct bio *bio)
-> > {
-> > }
-> >
-> 
-> Kernel will call i_size_write to assign the device capacity, when the
-> device try to be registered(register_disk). During the period of
-> register, the function blkdev_get will call bd_set_size to set the
-> capacity.
-> 
-> So it is correct that you can call i_size_read to determine the device's
-> capacity.
-> 
-> >>
-> >> ... I am happy to leave out answers that I don't know ...
-> >>
-> >>
-> >> >
-> >> > - Can I safely assume the logical sector size is fixed to be 512 bytes
-> >> > in all cases?
-> >> >
-> >>
-> >> Probably not, but maybe.  You are in control of the hardware.
-> >
-> > You mean block size or sector size? I think sector sizes can vary and
-> > targets can allow user space to specify one. Typically metadata is per
-> > block can lead to smaller metadata foot print.
-> >
-> 
-> For now, the minimum align unit is 512 bytes. But as I know, a lot of
-> devices start to support 4KB align unit.
-
-Correct it.
-
-Although the device supports the physical sector to extend to 4KB, the
-device will divide physical sector into 8 pieces (one pieces is 512
-bytes, call logical sector).
-
-$ sudo hdparm -I /dev/sda | egrep -i "physical|logical|device size with M"
-Logical		max	current
-Logical  Sector size:                   512 bytes
-Physical Sector size:                  4096 bytes
-Logical Sector-0 offset:                  0 bytes
-device size with M = 1024*1024:      953869 MBytes
-device size with M = 1000*1000:     1000204 MBytes (1000 GB)
-
-So I think you can use logical sector(512 bytes) to align the start
-position and count.
-
-Thanks
-Minfei
-
-> 
-> Please correct me if there is something wrong in the comment.
-> 
-> Thanks
-> Minfei
+1NogMTUvNi8xNSDPws7nOTowNCwgTWlrdWxhcyBQYXRvY2thINC0tcA6Cj4KPiBPbiBTdW4sIDE0
+IEp1biAyMDE1LCBDb2x5IExpIHdyb3RlOgo+Cj4+ID8gMTUvNi8xMCA/PzU6MjEsIE1pa3VsYXMg
+UGF0b2NrYSA/PzoKPj4+IFRoaXMgcGF0Y2ggbWFrZXMgaXQgcG9zc2libGUgdG8gdXNlIHByZWNp
+c2UgdGltZXN0YW1wcyB3aXRoIG5hbm9zZWNvbmQKPj4+IGdyYW51bGFyaXR5IGluIGRtIHN0YXRp
+c3RpY3MuCj4+Pgo+Pj4gU2lnbmVkLW9mZi1ieTogTWlrdWxhcyBQYXRvY2thIDxtcGF0b2NrYUBy
+ZWRoYXQuY29tPgo+Pj4KPj4+IC0tLQo+Pj4gIERvY3VtZW50YXRpb24vZGV2aWNlLW1hcHBlci9z
+dGF0aXN0aWNzLnR4dCB8ICAgMjUgKysrKy0KPj4+ICBkcml2ZXJzL21kL2RtLXN0YXRzLmMgICAg
+ICAgICAgICAgICAgICAgICAgfCAgMTM5ICsrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0tCj4+
+PiAgZHJpdmVycy9tZC9kbS1zdGF0cy5oICAgICAgICAgICAgICAgICAgICAgIHwgICAgNCAKPj4+
+ICAzIGZpbGVzIGNoYW5nZWQsIDEyNSBpbnNlcnRpb25zKCspLCA0MyBkZWxldGlvbnMoLSkKPj4+
+Cj4+PiBJbmRleDogbGludXgtNC4xLXJjNy9kcml2ZXJzL21kL2RtLXN0YXRzLmMKPj4+ID09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT0KPj4+IC0tLSBsaW51eC00LjEtcmM3Lm9yaWcvZHJpdmVycy9tZC9kbS1zdGF0cy5jCTIw
+MTUtMDYtMDggMTY6MDI6MjcuMDAwMDAwMDAwICswMjAwCj4+PiArKysgbGludXgtNC4xLXJjNy9k
+cml2ZXJzL21kL2RtLXN0YXRzLmMJMjAxNS0wNi0wOCAxNjozODo0My4wMDAwMDAwMDAgKzAyMDAK
+Pj4+IEBAIC0zMywxMyArMzMsMTQgQEAgc3RydWN0IGRtX3N0YXRfcGVyY3B1IHsKPj4+ICAKPj4g
+W3NuaXBdCj4+PiBAQCAtNTYwLDggKzU3OCwxNyBAQCB2b2lkIGRtX3N0YXRzX2FjY291bnRfaW8o
+c3RydWN0IGRtX3N0YXRzCj4+PiAgCj4+PiAgCXJjdV9yZWFkX2xvY2soKTsKPj4+ICAKPj4+IC0J
+bGlzdF9mb3JfZWFjaF9lbnRyeV9yY3UocywgJnN0YXRzLT5saXN0LCBsaXN0X2VudHJ5KQo+Pj4g
+LQkJX19kbV9zdGF0X2JpbyhzLCBiaV9ydywgYmlfc2VjdG9yLCBlbmRfc2VjdG9yLCBlbmQsIGR1
+cmF0aW9uLCBzdGF0c19hdXgpOwo+Pj4gKwlnb3RfcHJlY2lzZV90aW1lID0gZmFsc2U7Cj4+PiAr
+CWxpc3RfZm9yX2VhY2hfZW50cnlfcmN1KHMsICZzdGF0cy0+bGlzdCwgbGlzdF9lbnRyeSkgewo+
+Pj4gKwkJaWYgKHMtPnN0YXRfZmxhZ3MgJiBTVEFUX1BSRUNJU0VfVElNRVNUQU1QUyAmJiAhZ290
+X3ByZWNpc2VfdGltZSkgewo+Pj4gKwkJCWlmICghZW5kKQo+Pj4gKwkJCQlzdGF0c19hdXgtPmR1
+cmF0aW9uX25zID0ga3RpbWVfdG9fbnMoa3RpbWVfZ2V0KCkpOwo+Pj4gKwkJCWVsc2UKPj4+ICsJ
+CQkJc3RhdHNfYXV4LT5kdXJhdGlvbl9ucyA9IGt0aW1lX3RvX25zKGt0aW1lX2dldCgpKSAtIHN0
+YXRzX2F1eC0+ZHVyYXRpb25fbnM7Cj4+PiArCQkJZ290X3ByZWNpc2VfdGltZSA9IHRydWU7Cj4+
+PiArCQl9Cj4+IFRoZXJlIGFyZSBtYW55IGNvbmRpdGlvbnMgdXNlciBzcGFjZSBwcm9jZXNzZXMg
+bWF5IHF1ZXJ5IHRoZSBnbG9iYWwKPj4gdGltZXIgcmVzb3VyY2UgZnJlcXVlbnRseS4ga3RpbWVf
+Z2V0KCkgd2lsbCBjYWxsIHNwaW5fbG9jayB3aGVuCj4+IGFjY2Vzc2luZyBnbG9iYWwgdGltZXIg
+cmVzb3VyY2UsIGNhbGxpbmcga3RpbWVfZ2V0KCkgZm9yIGVhY2ggbGlzdCBlbnRyeQo+PiBtaWdo
+dCBpbnRyb2R1Y2UgbG9ja2luZyBjb250ZW50aW9uIHdoZW4gc3RhdHMtPmxpc3QgaXMgcXVpdGUg
+bGFyZ2UuCj4gVGhlIGFib3ZlIGNvZGUgZG9lc24ndCBjYWxsIGt0aW1lX2dldCgpIGZvciBlYWNo
+IGxpc3QgZW50cnkgLSBpdCBjYWxscyAKPiBrdGltZV9nZXQoKSBvbmx5IG9uY2UsIHRoZW4gc2V0
+cyBnb3RfcHJlY2lzZV90aW1lLCBhbmQgZG9lc24ndCBjYWxsIGl0IAo+IGFueW1vcmUuCj4KPj4g
+QSBzYXRpc2ZpZWQgc29sdXRpb24gbWlnaHQgYmUgc29tZXRoaW5nIGxpa2UgdGhpcywKPj4KPj4g
+KyAgICBub3cgPSBrdGltZV90b19ucyhrdGltZV9nZXQoKSk7Cj4+ICsgICAgbGlzdF9mb3JfZWFj
+aF9lbnRyeV9yY3UocywgJnN0YXRzLT5saXN0LCBsaXN0X2VudHJ5KSB7Cj4+ICsgICAgICAgIGlm
+IChzLT5zdGF0X2ZsYWdzICYgU1RBVF9QUkVDSVNFX1RJTUVTVEFNUFMgJiYgIWdvdF9wcmVjaXNl
+X3RpbWUpIHsKPj4gKyAgICAgICAgICAgIGlmICghZW5kKQo+PiArICAgICAgICAgICAgICAgIHN0
+YXRzX2F1eC0+ZHVyYXRpb25fbnMgPSBub3c7Cj4+ICsgICAgICAgICAgICBlbHNlCj4+ICsgICAg
+ICAgICAgICAgICAgc3RhdHNfYXV4LT5kdXJhdGlvbl9ucyA9IG5vdyAtIHN0YXRzX2F1eC0+ZHVy
+YXRpb25fbnM7Cj4+ICsgICAgICAgICAgICBnb3RfcHJlY2lzZV90aW1lID0gdHJ1ZTsKPj4gKyAg
+ICAgICAgfQo+IFRoaXMgaXMgd29yc2UgdGhhdCB0aGUgcHJldmlvdXMgY29kZSAtIHRoaXMgcGll
+Y2Ugb2YgY29kZSBjYWxscyAKPiBrdGltZV9nZXQoKSBldmVuIGlmIG5vIGxpc3QgZW50cnkgcmVx
+dWlyZXMgcHJlY2lzZSB0aW1lc3RhbXBzLiBUaGUgCj4gcHJldmlvdXMgY29kZSBjYWxsZWQga3Rp
+bWVfZ2V0KCkgb25seSBpZiB0aGVyZSBpcyBhdCBsZWFzdCBvbmUgbGlzdCBlbnRyeSAKPiB0aGF0
+IGhhcyBTVEFUX1BSRUNJU0VfVElNRVNUQU1QUyBzZXQuClllcyB5b3UgYXJlIHJpZ2h0LCBJIG1h
+ZGUgYSBtaXN0YWtlIGhlcmUuCgo+PiBJbiB0aGlzIGNhc2UgdGhlIGdsb2JhbCB0aW1lciBjb3Vs
+ZCBiZSBhY2Nlc3Mgb25seSBvbmNlLCBsb2NraW5nCj4+IGNvbnRlbnRpb24gc2hvdWxkIGJlIG11
+Y2ggbGVzcy4gWWVzLCBpdCBsb29rcyB0byBiZSBzb21lIGluYWNjdXJhdGUsIGJ1dAo+PiBmb3Ig
+aGFyZCBkaXNrIEkvTyBsYXRlbmN5IG1lYXN1cmVtZW50LCB0aGUgZGlmZmVyZW5jZSBhbG1vc3Qg
+Y291bGQgYmUKPj4gaWdub3JlZC4KPj4+ICsJCV9fZG1fc3RhdF9iaW8ocywgYmlfcncsIGJpX3Nl
+Y3RvciwgZW5kX3NlY3RvciwgZW5kLCBkdXJhdGlvbl9qaWZmaWVzLCBzdGF0c19hdXgpOwo+Pj4g
+Kwl9Cj4+PiAgCj4+PiAgCXJjdV9yZWFkX3VubG9jaygpOwo+Pj4gIH0KPj4gW3NuaXBdCj4+PiBA
+QCAtNzcyLDIxICs4MDMsMzEgQEAgc3RhdGljIGludCBtZXNzYWdlX3N0YXRzX2NyZWF0ZShzdHJ1
+Y3QgbQo+Pj4gIAl1bnNpZ25lZCBsb25nIGxvbmcgc3RhcnQsIGVuZCwgbGVuLCBzdGVwOwo+Pj4g
+IAl1bnNpZ25lZCBkaXZpc29yOwo+Pj4gIAljb25zdCBjaGFyICpwcm9ncmFtX2lkLCAqYXV4X2Rh
+dGE7Cj4+PiArCXVuc2lnbmVkIHN0YXRfZmxhZ3MgPSAwOwo+Pj4gKwo+Pj4gKwlzdHJ1Y3QgZG1f
+YXJnX3NldCBhcywgYXNfYmFja3VwOwo+Pj4gKwljb25zdCBjaGFyICphOwo+Pj4gKwl1bnNpZ25l
+ZCBmZWF0dXJlX2FyZ3M7Cj4+PiAgCj4+PiAgCS8qCj4+PiAgCSAqIElucHV0IGZvcm1hdDoKPj4+
+IC0JICogICA8cmFuZ2U+IDxzdGVwPiBbPHByb2dyYW1faWQ+IFs8YXV4X2RhdGE+XV0KPj4+ICsJ
+ICogICA8cmFuZ2U+IDxzdGVwPiBbPGV4dHJhX3BhcmFtZXRlcnM+IDxwYXJhbWV0ZXJzPl0gWzxw
+cm9ncmFtX2lkPiBbPGF1eF9kYXRhPl1dCj4+PiAgCSAqLwo+Pj4gIAo+Pj4gLQlpZiAoYXJnYyA8
+IDMgfHwgYXJnYyA+IDUpCj4+PiArCWlmIChhcmdjIDwgMykKPj4+ICAJCXJldHVybiAtRUlOVkFM
+Owo+Pj4gIAo+Pj4gLQlpZiAoIXN0cmNtcChhcmd2WzFdLCAiLSIpKSB7Cj4+PiArCWFzLmFyZ2Mg
+PSBhcmdjOwo+Pj4gKwlhcy5hcmd2ID0gYXJndjsKPj4+ICsJZG1fY29uc3VtZV9hcmdzKCZhcywg
+MSk7Cj4+PiArCj4+PiArCWEgPSBkbV9zaGlmdF9hcmcoJmFzKTsKPj4+ICsJaWYgKCFzdHJjbXAo
+YSwgIi0iKSkgewo+Pj4gIAkJc3RhcnQgPSAwOwo+Pj4gIAkJbGVuID0gZG1fZ2V0X3NpemUobWQp
+Owo+Pj4gIAkJaWYgKCFsZW4pCj4+PiAgCQkJbGVuID0gMTsKPj4+IC0JfSBlbHNlIGlmIChzc2Nh
+bmYoYXJndlsxXSwgIiVsbHUrJWxsdSVjIiwgJnN0YXJ0LCAmbGVuLCAmZHVtbXkpICE9IDIgfHwK
+Pj4+ICsJfSBlbHNlIGlmIChzc2NhbmYoYSwgIiVsbHUrJWxsdSVjIiwgJnN0YXJ0LCAmbGVuLCAm
+ZHVtbXkpICE9IDIgfHwKPj4+ICAJCSAgIHN0YXJ0ICE9IChzZWN0b3JfdClzdGFydCB8fCBsZW4g
+IT0gKHNlY3Rvcl90KWxlbikKPj4+ICAJCXJldHVybiAtRUlOVkFMOwo+Pj4gIAo+Pj4gQEAgLTc5
+NCw3ICs4MzUsOCBAQCBzdGF0aWMgaW50IG1lc3NhZ2Vfc3RhdHNfY3JlYXRlKHN0cnVjdCBtCj4+
+PiAgCWlmIChzdGFydCA+PSBlbmQpCj4+PiAgCQlyZXR1cm4gLUVJTlZBTDsKPj4+ICAKPj4+IC0J
+aWYgKHNzY2FuZihhcmd2WzJdLCAiLyV1JWMiLCAmZGl2aXNvciwgJmR1bW15KSA9PSAxKSB7Cj4+
+PiArCWEgPSBkbV9zaGlmdF9hcmcoJmFzKTsKPj4+ICsJaWYgKHNzY2FuZihhLCAiLyV1JWMiLCAm
+ZGl2aXNvciwgJmR1bW15KSA9PSAxKSB7Cj4+PiAgCQlpZiAoIWRpdmlzb3IpCj4+PiAgCQkJcmV0
+dXJuIC1FSU5WQUw7Cj4+PiAgCQlzdGVwID0gZW5kIC0gc3RhcnQ7Cj4+PiBAQCAtODAyLDE4ICs4
+NDQsMzkgQEAgc3RhdGljIGludCBtZXNzYWdlX3N0YXRzX2NyZWF0ZShzdHJ1Y3QgbQo+Pj4gIAkJ
+CXN0ZXArKzsKPj4+ICAJCWlmICghc3RlcCkKPj4+ICAJCQlzdGVwID0gMTsKPj4+IC0JfSBlbHNl
+IGlmIChzc2NhbmYoYXJndlsyXSwgIiVsbHUlYyIsICZzdGVwLCAmZHVtbXkpICE9IDEgfHwKPj4+
+ICsJfSBlbHNlIGlmIChzc2NhbmYoYSwgIiVsbHUlYyIsICZzdGVwLCAmZHVtbXkpICE9IDEgfHwK
+Pj4+ICAJCSAgIHN0ZXAgIT0gKHNlY3Rvcl90KXN0ZXAgfHwgIXN0ZXApCj4+PiAgCQlyZXR1cm4g
+LUVJTlZBTDsKPj4+ICAKPj4+ICsJYXNfYmFja3VwID0gYXM7Cj4+PiArCWEgPSBkbV9zaGlmdF9h
+cmcoJmFzKTsKPj4+ICsJaWYgKGEgJiYgc3NjYW5mKGEsICIldSVjIiwgJmZlYXR1cmVfYXJncywg
+JmR1bW15KSA9PSAxKSB7Cj4+PiArCQl3aGlsZSAoZmVhdHVyZV9hcmdzLS0pIHsKPj4+ICsJCQlh
+ID0gZG1fc2hpZnRfYXJnKCZhcyk7Cj4+PiArCQkJaWYgKCFhKQo+Pj4gKwkJCQlyZXR1cm4gLUVJ
+TlZBTDsKPj4+ICsJCQlpZiAoIXN0cmNhc2VjbXAoYSwgInByZWNpc2VfdGltZXN0YW1wcyIpKQo+
+Pj4gKwkJCQlzdGF0X2ZsYWdzIHw9IFNUQVRfUFJFQ0lTRV9USU1FU1RBTVBTOwo+Pj4gKwkJCWVs
+c2UKPj4+ICsJCQkJcmV0dXJuIC1FSU5WQUw7Cj4+PiArCQl9Cj4+PiArCX0gZWxzZSB7Cj4+PiAr
+CQlhcyA9IGFzX2JhY2t1cDsKPj4+ICsJfQo+Pj4gKwo+Pj4gIAlwcm9ncmFtX2lkID0gIi0iOwo+
+Pj4gIAlhdXhfZGF0YSA9ICItIjsKPj4+ICAKPj4+IC0JaWYgKGFyZ2MgPiAzKQo+Pj4gLQkJcHJv
+Z3JhbV9pZCA9IGFyZ3ZbM107Cj4+PiArCWEgPSBkbV9zaGlmdF9hcmcoJmFzKTsKPj4+ICsJaWYg
+KGEpCj4+PiArCQlwcm9ncmFtX2lkID0gYTsKPj4+ICsKPj4+ICsJYSA9IGRtX3NoaWZ0X2FyZygm
+YXMpOwo+Pj4gKwlpZiAoYSkKPj4+ICsJCWF1eF9kYXRhID0gYTsKPj4+ICAKPj4+IC0JaWYgKGFy
+Z2MgPiA0KQo+Pj4gLQkJYXV4X2RhdGEgPSBhcmd2WzRdOwo+Pj4gKwlpZiAoYXMuYXJnYykKPj4+
+ICsJCXJldHVybiAtRUlOVkFMOwo+Pj4gIAo+PiBJZiBJIGNvdWxkLCBJIHdvdWxkIHNpbXBsaWZ5
+IHRoZSBkZXNpZ24gdG8gcmVtb3ZlIHRoZSBhYm92ZSBjaGFuZ2VzIGluCj4+IG1lc3NhZ2Vfc3Rh
+dHNfY3JlYXRlKCkuIEp1c3QgbXkgc3VnZ2VzdGlvbiAuLi4KPiBJIGRvbid0IGtub3cgd2hhdCB5
+b3UgbWVhbiAtIGlmIHlvdSByZW1vdmUgdGhlIGFib3ZlIGNoYW5nZXMgaW4gCj4gbWVzc2FnZV9z
+dGF0c19jcmVhdGUgLSB0aGVuIG9idmlvdXNseSAtIHRoZSB1c2VyIHdpbGwgbm90IGJlIGFibGUg
+dG8gCj4gZW5hYmxlIHByZWNpc2UgdGltZXN0YW1wcyBvciBoaXN0b2dyYW0uCkkganVzdCBzdWdn
+ZXN0IGEgc2ltcGxlciBpbnRlcmZhY2UuIE11bHRpcGxlIGJvdW5kYXJpZXMgbWlnaHQgYmUgb3Zl
+cgpkZXNpZ25lZCBoZXJlLCBtYXliZSBhIHByZS1kZWZpbmVkIGxhdGVuY3kgYm91bmRhcmllcyB3
+aWxsIG1ha2UgOTAlKwp1c2VycyBoYXBweS4gSG93IGFib3V0IGp1c3QgYSAicHJlY2lzZV90aW1l
+c3RhbXBzIiBwYXJhbWV0ZXIgYW5kCmFsbG9jYXRlIHRoZSBhcnJheSBkeW5hbWljYWxseSBzdGls
+bCA/CgpDb2x5CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpo
+dHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
