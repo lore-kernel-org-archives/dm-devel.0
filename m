@@ -1,15 +1,16 @@
-From: Coly Li <colyli@gmail.com>
-Subject: Re: [PATCH 3/4] dm stats: report histogram of latencies
-Date: Sun, 14 Jun 2015 01:03:46 +0800
-Message-ID: <557C6272.8070200@gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 0/4] Integrate dm-latency functionality to
+ dm-statistics
+Date: Mon, 15 Jun 2015 08:47:38 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1506150729150.7275@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1506091705160.1545@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1506091721430.1545@file01.intranet.prod.int.rdu2.redhat.com>
+	<557C6214.4010506@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1506091721430.1545@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <557C6214.4010506@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,69 +20,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
-Cc: Tao Ma <boyu.mt@taobao.com>, dm-devel@redhat.com, Laurence Oberman <loberman@redhat.com>, Robin Dong <sanbai@alibaba-inc.com>
+To: Coly Li <colyli@gmail.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Laurence Oberman <loberman@redhat.com>, Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-5ZyoIDE1LzYvMTAg5LiK5Y2INToyMiwgTWlrdWxhcyBQYXRvY2thIOWGmemBkzoKPiBUaGlzIHBh
-dGNoIGFkZHMgYW4gb3B0aW9uIHRvIGRtIHN0YXRpc3RpY3MgdG8gY29sbGVjdCBhbmQgcmVwb3J0
-IHRoZQo+IGhpc3RvZ3JhbSBvZiBsYXRlbmNpZXMuCj4KPiBTaWduZWQtb2ZmLWJ5OiBNaWt1bGFz
-IFBhdG9ja2EgPG1wYXRvY2thQHJlZGhhdC5jb20+Cj4KPiAtLS0KPiAgRG9jdW1lbnRhdGlvbi9k
-ZXZpY2UtbWFwcGVyL3N0YXRpc3RpY3MudHh0IHwgICAyMSArKy0KPiAgZHJpdmVycy9tZC9kbS1z
-dGF0cy5jICAgICAgICAgICAgICAgICAgICAgIHwgIDIwMSArKysrKysrKysrKysrKysrKysrKysr
-KysrLS0tLQo+ICAyIGZpbGVzIGNoYW5nZWQsIDE5NiBpbnNlcnRpb25zKCspLCAyNiBkZWxldGlv
-bnMoLSkKPgo+IEluZGV4OiBsaW51eC00LjEtcmM3L2RyaXZlcnMvbWQvZG0tc3RhdHMuYwo+ID09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT0KPiAtLS0gbGludXgtNC4xLXJjNy5vcmlnL2RyaXZlcnMvbWQvZG0tc3RhdHMuYwky
-MDE1LTA2LTA4IDE2OjM4OjQzLjAwMDAwMDAwMCArMDIwMAo+ICsrKyBsaW51eC00LjEtcmM3L2Ry
-aXZlcnMvbWQvZG0tc3RhdHMuYwkyMDE1LTA2LTA4IDE3OjAyOjAxLjAwMDAwMDAwMCArMDIwMAo+
-IEBAIC0yOSw2ICsyOSw3IEBAIHN0cnVjdCBkbV9zdGF0X3BlcmNwdSB7Cj4gIAl1bnNpZ25lZCBs
-b25nIGxvbmcgaW9fdGlja3NbMl07Cj4gIAl1bnNpZ25lZCBsb25nIGxvbmcgaW9fdGlja3NfdG90
-YWw7Cj4gIAl1bnNpZ25lZCBsb25nIGxvbmcgdGltZV9pbl9xdWV1ZTsKPiArCXVuc2lnbmVkIGxv
-bmcgbG9uZyAqaGlzdG9ncmFtOwo+ICB9Owo+ICAKPiAgc3RydWN0IGRtX3N0YXRfc2hhcmVkIHsK
-W3NuaXBdCj4gQEAgLTYxOSw2ICs3MDAsMTEgQEAgc3RhdGljIHZvaWQgX19kbV9zdGF0X2luaXRf
-dGVtcG9yYXJ5X3Blcgo+ICAJCXNoYXJlZC0+dG1wLmlvX3RpY2tzW1dSSVRFXSArPSBBQ0NFU1Nf
-T05DRShwLT5pb190aWNrc1tXUklURV0pOwo+ICAJCXNoYXJlZC0+dG1wLmlvX3RpY2tzX3RvdGFs
-ICs9IEFDQ0VTU19PTkNFKHAtPmlvX3RpY2tzX3RvdGFsKTsKPiAgCQlzaGFyZWQtPnRtcC50aW1l
-X2luX3F1ZXVlICs9IEFDQ0VTU19PTkNFKHAtPnRpbWVfaW5fcXVldWUpOwo+ICsJCWlmIChzLT5u
-X2hpc3RvZ3JhbV9lbnRyaWVzKSB7Cj4gKwkJCXVuc2lnbmVkIGk7Cj4gKwkJCWZvciAoaSA9IDA7
-IGkgPCBzLT5uX2hpc3RvZ3JhbV9lbnRyaWVzICsgMTsgaSsrKQo+ICsJCQkJc2hhcmVkLT50bXAu
-aGlzdG9ncmFtW2ldICs9IEFDQ0VTU19PTkNFKHAtPmhpc3RvZ3JhbVtpXSk7CgpzLT5uX2hpc3Rv
-Z3JhbV9lbnRyaWVzICsgMSBpbiBmb3IoKSBsb29waW5nIHdpbGwgYmUgY2FsY3VsYXRlZCBtYW55
-IHRpbWVzLCBtYXliZSB0aGlzIHdheSBjb3VsZCBiZSBiZXR0ZXIsCgorCQlpZiAocy0+bl9oaXN0
-b2dyYW1fZW50cmllcykgeworCQkJdW5zaWduZWQgaSwgajsKKwkJCWogPSBzLT5uX2hpc3RvZ3Jh
-bV9lbnRyaWVzICsgMTsKKwkJCWZvciAoaSA9IDA7IGkgPCBqOyBpKyspCisJCQkJc2hhcmVkLT50
-bXAuaGlzdG9ncmFtW2ldICs9IEFDQ0VTU19PTkNFKHAtPmhpc3RvZ3JhbVtpXSk7Cgo+ICsJCX0K
-PiAgCX0KPiAgfQo+ICAKPiBAQCAtNjQ4LDYgKzczNCwxNSBAQCBzdGF0aWMgdm9pZCBfX2RtX3N0
-YXRfY2xlYXIoc3RydWN0IGRtX3N0Cj4gIAkJcC0+aW9fdGlja3NfdG90YWwgLT0gc2hhcmVkLT50
-bXAuaW9fdGlja3NfdG90YWw7Cj4gIAkJcC0+dGltZV9pbl9xdWV1ZSAtPSBzaGFyZWQtPnRtcC50
-aW1lX2luX3F1ZXVlOwo+ICAJCWxvY2FsX2lycV9lbmFibGUoKTsKPiArCQlpZiAocy0+bl9oaXN0
-b2dyYW1fZW50cmllcykgewo+ICsJCQl1bnNpZ25lZCBpOwo+ICsJCQlmb3IgKGkgPSAwOyBpIDwg
-cy0+bl9oaXN0b2dyYW1fZW50cmllcyArIDE7IGkrKykgewpTYW1lIHNpdHVhdGlvbiBoZXJlLAoK
-KyAgICAgICAgICAgIHVuc2lnbmVkIGksIGo7CisgICAgICAgICAgICBqID0gcy0+bl9oaXN0b2dy
-YW1fZW50cmllcyArIDE7CisgICAgICAgICAgICBmb3IgKGkgPSAwOyBpIDwgajsgaSsrKSB7Cgo+
-ICsJCQkJbG9jYWxfaXJxX2Rpc2FibGUoKTsKPiArCQkJCXAgPSAmcy0+c3RhdF9wZXJjcHVbc21w
-X3Byb2Nlc3Nvcl9pZCgpXVt4XTsKPiArCQkJCXAtPmhpc3RvZ3JhbVtpXSAtPSBzaGFyZWQtPnRt
-cC5oaXN0b2dyYW1baV07Cj4gKwkJCQlsb2NhbF9pcnFfZW5hYmxlKCk7Cj4gKwkJCX0KPiArCQl9
-Cj4gIAl9Cj4gIH0KPiAgCj4gQEAgLTczNyw3ICs4MzIsNyBAQCBzdGF0aWMgaW50IGRtX3N0YXRz
-X3ByaW50KHN0cnVjdCBkbV9zdGF0Cj4gIAo+ICAJCV9fZG1fc3RhdF9pbml0X3RlbXBvcmFyeV9w
-ZXJjcHVfdG90YWxzKHNoYXJlZCwgcywgeCk7Cj4gIAo+IC0JCURNRU1JVCgiJWxsdSslbGx1ICVs
-bHUgJWxsdSAlbGx1ICVsbHUgJWxsdSAlbGx1ICVsbHUgJWxsdSAlZCAlbGx1ICVsbHUgJWxsdSAl
-bGx1XG4iLAo+ICsJCURNRU1JVCgiJWxsdSslbGx1ICVsbHUgJWxsdSAlbGx1ICVsbHUgJWxsdSAl
-bGx1ICVsbHUgJWxsdSAlZCAlbGx1ICVsbHUgJWxsdSAlbGx1IiwKPiAgCQkgICAgICAgKHVuc2ln
-bmVkIGxvbmcgbG9uZylzdGFydCwKPiAgCQkgICAgICAgKHVuc2lnbmVkIGxvbmcgbG9uZylzdGVw
-LAo+ICAJCSAgICAgICBzaGFyZWQtPnRtcC5pb3NbUkVBRF0sCj4gQEAgLTc1Myw2ICs4NDgsMTMg
-QEAgc3RhdGljIGludCBkbV9zdGF0c19wcmludChzdHJ1Y3QgZG1fc3RhdAo+ICAJCSAgICAgICBk
-bV9qaWZmaWVzX3RvX21zZWM2NChzLCBzaGFyZWQtPnRtcC50aW1lX2luX3F1ZXVlKSwKPiAgCQkg
-ICAgICAgZG1famlmZmllc190b19tc2VjNjQocywgc2hhcmVkLT50bXAuaW9fdGlja3NbUkVBRF0p
-LAo+ICAJCSAgICAgICBkbV9qaWZmaWVzX3RvX21zZWM2NChzLCBzaGFyZWQtPnRtcC5pb190aWNr
-c1tXUklURV0pKTsKPiArCQlpZiAocy0+bl9oaXN0b2dyYW1fZW50cmllcykgewo+ICsJCQl1bnNp
-Z25lZCBpOwo+ICsJCQlmb3IgKGkgPSAwOyBpIDwgcy0+bl9oaXN0b2dyYW1fZW50cmllcyArIDE7
-IGkrKykgewpTYW1lIHNpdHVhdGlvbiBoZXJlLAoKKyAgICAgICAgICAgICAgICAgICAgICAgIHVu
-c2lnbmVkIGksIGo7CisgICAgICAgICAgICAgICAgICAgICAgICBqID0gcy0+bl9oaXN0b2dyYW1f
-ZW50cmllcyArIDE7CisgICAgICAgICAgICAgICAgICAgICAgICBmb3IgKGkgPSAwOyBpIDwgajsg
-aSsrKSB7Cgo+ICsJCQkJRE1FTUlUKCIlcyVsbHUiLCAhaSA/ICIgIiA6ICI6Iiwgc2hhcmVkLT50
-bXAuaGlzdG9ncmFtW2ldKTsKPiArCQkJfQo+ICsJCX0KPiArCQlETUVNSVQoIlxuIik7Cj4gIAo+
-ICAJCWlmICh1bmxpa2VseShzeiArIDEgPj0gbWF4bGVuKSkKPiAgCQkJZ290byBidWZmZXJfb3Zl
-cmZsb3c7CltzbmlwXQoKQ29seQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
-ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+
+
+On Sun, 14 Jun 2015, Coly Li wrote:
+
+> ? 15/6/10 ??5:20, Mikulas Patocka ??:
+> > Hi
+> >
+> > Here I'm sending patches that add funcionality provided by dm-latency into 
+> > dm-statistics framework. Dm-latency was introduced in this post 
+> > https://www.redhat.com/archives/dm-devel/2015-February/msg00158.html , 
+> > however, there is already similar framework dm-statistics in the kernel. 
+> > In order to have cleaner and easier to maintain code, it is better to 
+> > integrate dm-latency functionality into dm-statistics, rather than having 
+> > two frameworks that do similar things.
+> >
+> > This patch series makes these changes:
+> > * it is possible to use precise time measurement with nanosecond 
+> >   granularity (previously, time was measured in jiffies)
+> > * it is possible to collect histogram of latencies. The histogram 
+> >   boundaries may be selected by the user and there is unlimited number of 
+> >   possible boundaries (in dm-latency, the histogram boundaries were fixed)
+> > * it is possible to use dm-statistics on multipath
+> >
+> > The documentation of these extensions is in 
+> > Documentation/device-mapper/statistics.txt
+> >
+> > I'd like to ask people who designed dm-latency to check this patchset, try 
+> > to use it and tell us if it provides sufficient functionality to them (the 
+> > indended functinality of dm-latency was to predict hard disk failures from 
+> > i/o request latency histogram).
+> >
+> 
+> Hi Mikulas,
+> 
+> I was in travel last week, sorry for late response. Here are some
+> comments from me, just for your information,
+> 
+> 1, If I understand correctly, latency histogram boundaries are organized 
+> by list in your implementation, and the list is searched in linear 
+> order. We had a similar but a little bit simple implementation, with 
+> very high I/O request work load on multiple hard disks, we observed 1% 
+> CPU performance cost. This is why dm-latency uses a very simple static 
+> array of counters to record I/O latency. I suggest you should do some 
+> benchmarks to compare the performance cost.
+
+It is searched using binary search - so the complexity is logarithmic.
+
+> 2, There should be a maximum latency histogram boundaries limitation. 
+> Maybe you do it in the patch and I missed it, that's should be my fault.
+
+There is no maximum - and there doesn't need to be any maximum because the 
+array is allocated dynamically.
+
+> 3, in message_stats_create() I see more code to handle arguments 
+> checking. hmm, I don't check this cold block very carefully, but I 
+> suggest that string checking in kernel space should be very careful, if 
+> you may simplify current designment and remove the code for arguments 
+> checking, it might be better.
+
+I don't know why should I remove the code for arguments checking. We check 
+arguments in the kernel, even if the function may be only called by root - 
+to prevent bugs in userspace tools from causing kernel crash.
+
+> 4, there are some minor suggestions, I will add my comments in other 
+> emails.
+> 
+> For rest of the patch set, they are good to me. Thanks for your effort 
+> to make a good start :-)
+> 
+> Coly
+
+Mikulas
