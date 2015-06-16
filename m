@@ -1,15 +1,16 @@
-From: Johannes Bauer <dfnsonfsduifb@gmx.de>
-Subject: Re: Newbie device mapper questions
-Date: Tue, 16 Jun 2015 20:54:33 +0200
-Message-ID: <558070E9.70607@gmx.de>
-References: <557F1BFA.2080504@gmx.de>
-	<CAFx4rwQ0ganzZn5FjQZTVtk1DK1Qr1pmMCTxRCwxd793+-anHg@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 2/4] dm stats: support precise timestamps
+Date: Tue, 16 Jun 2015 15:27:48 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1506161523430.30788@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1506091705160.1545@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1506091721180.1545@file01.intranet.prod.int.rdu2.redhat.com>
+	<20150616153345.GA1069@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAFx4rwQ0ganzZn5FjQZTVtk1DK1Qr1pmMCTxRCwxd793+-anHg@mail.gmail.com>
+In-Reply-To: <20150616153345.GA1069@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,85 +20,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, doug@easyco.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Laurence Oberman <loberman@redhat.com>, Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, dm-devel@redhat.com, Coly Li <colyli@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMTUuMDYuMjAxNSAyMTo1MiwgRG91ZyBEdW1pdHJ1IHdyb3RlOgoKPj4gU291bmRzIHByZXR0
-eSBlYXN5IGFuZCBJIGFsc28gZ290IHN1cnByaXNpbmdseSBmYXIgd2l0aCBteSBsaXR0bGUga2Vy
-bmVsCj4+IG1vZHVsZS4gSSd2ZSBzbyBmYXIgaW1wbGVtZW50ZWQgY3RyLCBkdHIsIG1hcCBhbmQg
-c3RhdHVzLgo+IAo+IOKAi0NvbmdyYXR1bGF0aW9ucywgeW91IGFyZSBhY3R1YWxseSBhIGxvbmcg
-d2F5IHRoZXJlLuKAiwoKVGhhbmtzIGJ1dCBJIHRoaW5rIEkgaGF2ZSB0aGUgbW91bnRhaW4gc3Rp
-bGwgYWhlYWQgLS0gc3RpbGwsIEkgd291bGQKcmVhbGx5IGxpa2UgdG8gZmlndXJlIG91dCB0aGUg
-bml0dHktZ3JpdHR5LgoKPiDigItZb3UgaGF2ZSB0byBhbGxvY2F0ZSBhIGJpbywgcG9wdWxhdGUg
-aXQsIGFsbG9jYXRlIHBhZ2VzIGZvciBidWZmZXIsCj4gcG9wdWxhdGUgdGhlIGJ2ZWMsIGFuZCBj
-YWxsIG1ha2VfcmVxdWVzdCAob3IgZ2VuZXJpYyBtYWtlIHJlcXVlc3QpLiAgWW91Cj4gd2lsbCBn
-ZXQgdGhlIGNvbXBsZXRpb24gZnJvbSB0aGUgYmlvIG9uIHRoZSBib3R0b20gaGFsZiBvZiB0aGUg
-aW50ZXJydXB0Cj4gaGFuZGxlciwgc28gaG93IG11Y2ggd29yayB5b3UgY2FuIGRvIHRoZXJlIGlz
-IGRlYmF0YWJsZS4gIFlvdSBjYW5ub3Qgc3RhcnQKPiBhbiBuZXcgSU8gZnJvbSB0aGVyZSwgd2hp
-Y2ggeW91IG5lZWQgdG8uICBZb3Ugd2lsbCBwcm9iYWJseSB3YW50IHRvIHN0YXJ0IGEKPiBoZWxw
-ZXIgdGhyZWFkIGFuZCBoYXZlIHRoZSBjb21wbGV0aW9uIHJvdXRpbmUgc2NoZWR1bGUgaXRzZWxm
-IG9udG8geW91cgo+IHRocmVhZC4gIE9uY2UgeW91IGFyZSBiYWNrIG9uIHlvdXIgdGhyZWFkLCB5
-b3UgY2FuIGRvIGp1c3QgYWJvdXQgYW55dGhpbmcuCj4gCj4gQmVjYXVzZSB5b3UgbmVlZCB0byBk
-byBJTywgeW91IHdpbGwgbm90IGJlIGFibGUgdG8gZG8gYSBzaW1wbGUgYmlvICJib3VuY2UKPiBy
-ZWRpcmVjdCIuICBZb3Ugd2lsbCBuZWVkIHRvIGRvIHRoZSBJTyB5b3VzZWxmIChpZSwgY2FsbCBh
-bm90aGVyIG1ha2UKPiByZXF1ZXN0KSwgYnV0IHlvdSBjYW4gdXNlIHRoZSBjYWxsZXJzIGJ2ZWMg
-Zm9yIHRoaXMsIHNvIHRoZXJlIGlzIG5vIGRhdGEKPiBjb3B5IHJlcXVpcmVkLiAgT25jZSB0aGUg
-cmVxdWVzdCBjb21wbGV0ZXMsIHlvdSBjYW4gdGhlbiBmaW4gdGhlIGNhbGxlci4KCk9oLCB3b3cu
-IFRoaXMgc291bmRzIHRydWx5IHRlcnJpZnlpbmcuIExldCdzIGRpdmUgaW4hCgpJIHRyaWVkIHRv
-IHJlYWQgeW91ciBoaW50cyBvbmUgd29yZCBhdCBhIHRpbWUuIFNvIGhlcmUncyB0aGUgc29tZXdo
-YXQKcHNldWRvY29kaXNoIHNvbHV0aW9uIHRvIG15IGhvbWV3b3JrOgoKc3RydWN0IGJpbyAqYiA9
-IGJpb19hbGxvYyhHRlBfTk9JTywgMSk7CmItPmJpX3NpemUgPSA4OwpiaW9fYWxsb2NfcGFnZXMo
-YiwgR0ZQX05PSU8pOwpiLT5iaV9zZWN0b3IgPSAxMjM0OwpiLT5iaV9iZGV2ID0gbGMtPm1ldGFk
-ZXYtPmJkZXY7CmItPmJpX3J3ID0gUkVBRDsKYi0+YmlfcHJpdmF0ZSA9IGxvY2FsX2N0eDsKYi0+
-YmlfZW5kX2lvID0gcmVhZF9jb21wbGV0ZV9jYWxsYmFjazsKZ2VuZXJpY19tYWtlX3JlcXVlc3Qo
-YmkpOwoKc3RhdGljIHZvaWQgcmVhZF9jb21wbGV0ZV9jYWxsYmFjayhzdHJ1Y3QgYmlvICpiLCBp
-bnQgZXJyb3IpIHsKICAvLyA/Pz8KICBwcmludGsoS0VSTl9JTkZPICJGaXJzdCByZWFkIGJ5dGU6
-ICUwMnhcbiIsCiAgICAgYi0+YmlfaW9fdmVjWzBdLT5idl9wYWdlWzBdKTsKfQoKU28gSSBob3Bl
-IHRoaXMgaXMgZXZlbiByZW1vdGVseSBjbG9zZSB0byB3aGF0IEkgc2hvdWxkIGVuZCB1cCB3aXRo
-LgoKVGhpcyB3aWxsIGFsbG9jIGEgbmV3IGJpbyB3aXRoLCBhcyBJIHVuZGVyc3RhbmQgaXQsIG9u
-ZSBwYWdlIGJ1ZmZlciBpbgpiLT5iaV9pb192ZWMuIFRoaXMgYnVmZmVyIGlzIHRoZW4gYWxsb2Nh
-dGVkIHdpdGggYmlvX2FsbG9jX3BhZ2VzIHRvIDgKc2VjdG9ycyBpbiBzaXplIChpLmUuIGV4YWN0
-bHkgb25lIHBhZ2Ugb2YgNDA5NiBieXRlcykuIFRoZW4gdGhlIHJlYWQKYWRkcmVzcywgYmxvY2sg
-ZGV2aWNlIGFuZCByZWFkIG1vZGUgaXMgc2V0LiBJIHBhc3Mgc29tZSBraW5kIG9mIGxvY2FsCmNv
-bnRleHQgc28gSSBjYW4gZG8gc29tZXRoaW5nIG1lYW5pbmdmdWwgaW4gdGhlIGNhbGxiYWNrIGFu
-ZCBzcGVjaWZ5IHRoZQpjYWxsYmFjayBmdW5jdGlvbi4gVGhlbiBJIGV4ZWN1dGUgdGhlIHJlcXVl
-c3QuCgpBcyBJIHVuZGVyc3RhbmQsIHRoaXMgZXhlY3V0ZXMgYXN5bmNocm9ub3VzbHkuIFNvIGhl
-cmUgY29tZXMgdGhlCnRocmVhZGluZyBpbnRvIHBsYXksIHJpZ2h0PyBKdXN0IHBzZXVkb2NvZGUg
-KGJlY2F1c2UgSSBjYW4ndCBqdWRnZSBob3cKZmFyIEknbSBvZmYgaGVyZSksIGJ1dCBsZXQncyBz
-YXkgdGhpcyBpcyBtYXAoKToKCnZvaWQgcmVhZF9jb21wbGV0ZV9jYWxsYmFjaygpIHsKICAgIHNl
-bWFwaG9yZV9pbmMobG9jYWxfY3R4KTsKfQoKdm9pZCBtYXAoKSB7CiAgIGxvY2FsX2N0eC0+c2Vt
-YXBob3JlLT52YWx1ZSA9IDA7CgogICAvLyBJc3N1ZSByZWFkIGFzIGFib3ZlCiAgIGdlbmVyaWNf
-bWFrZV9yZXF1ZXN0KGJpKTsKCiAgIHNlbWFwaG9yZV9kZWMoJmxvY2FsX2N0eC0+c2VtYXBob3Jl
-KTsKCiAgIC8vIE5vdyB0aGUgY29uY3VycmVudCBhc3luYyBJTyBoYXMgZmluaXNoZWQgYW5kIHdl
-IGludGVycHJldCB0aGUgZGF0YQogICBbLi4uXQp9CgpPaCBib3kgSSByZWFsbHkgZG9uJ3Qga25v
-dyBpZiB0aGlzIGlzIGV2ZW4gcmVtb3RlbHkgY2xvc2UuIEFueSBoaW50cywgYXMKZWFzeSBhcyB0
-aGV5IG1heSBzZWVtIHRvIHlvdSBndXlzLCBhcmUgcmVhbGx5IGdyZWF0bHkgYXBwcmVjaWF0ZWQu
-IEkndmUKbmV2ZXIgd29ya2VkIHdpdGggdGhpcyBzdHVmZi4KCj4g4oCLSWYgeW91IGNhbm5vdCBj
-b250aW51ZSBiZWNhdXNlIGRldmljZXMgYXJlIG5vdCBwcmVzZW50IG9yIHRoZSByaWdodCBzaXpl
-LAo+IHllcyB5b3Ugc2hvdWxkIGZhaWwgdGhlIGN0ciByb3V0aW5lLgoKQWxyaWdodCEKCj4gSWYg
-eW91IHdhbnQgdG8gc2V0dXAgL3Byb2Mgb3Igb3RoZXIgbW9uaXRvcmluZyBzdHVmZiwgeW91IGNh
-biB1c2UgdGhlIGluaXQKPiByb3V0aW5lLCBwcm9iYWJseSBwbHVzIHNvbWUgc3RhdGljcywgdG8g
-c2V0dXAgInZpZXdzIiBpbnRvIHlvdXIgbW9kdWxlLiAgSWYKPiB5b3Ugd2FudCB0byBzdXBwb3J0
-IG11bHRpcGxlIGluc3RhbmNlcyAoYW5kIHlvdSBzaG91bGQpLCBzZXR1cCBhCj4gL3Byb2Mve3lv
-dXJuYW1lfSBkaXJlY3Rvcnkgb24gdGhlIGluaXQgYW5kIHRoZW4gcG9wdWxhdGUgaXQgd2l0aAo+
-IHN1Yi1kaXJlY3RvcmllcyBldmVyeSB0aW1lIHlvdSBjcmVhdGUgYSBkZXZpY2UuCgpPa2F5LCBJ
-J2xsIHRyeSB0byBkbyB0aGlzICh3YW50IHRvIG1ha2Ugc3RhdGlzdGljcyBhdmFpbGFibGUgdmlh
-IHByb2NmcwpsYXRlciBvbiksIGJ1dCBvbmUgY29uc3RydWN0aW9uIHNpdGUgYXQgYSB0aW1lIGZv
-ciBtZS4KCj4+IC0gQ2FuIEkgZGV0ZXJtaW5lIHRoZSBzaXplIHRoZSBiaW8gaW4gbWFwKCkgd2ls
-bCBoYXZlIGFscmVhZHkgaW4gY3RyKCkKPj4gc29tZWhvdz8gQ2FuIEkgYXNzdW1lIGl0IHdpbGwg
-bmV2ZXIgY2hhbmdlIGlmIGl0IHdhcyBvbmNlIGRldGVybWluZWQ/Cj4+IFRoZSByZWFzb24gaXMg
-dGhhdCBmb3IgbXkgZXhhbXBsZSBJIG5lZWQgdG8gbWFrZSBzdXJlIHRoZSBjaHVuayBzaXplIGlz
-Cj4+IGEgaW50ZWdlciBtdWx0aXBsZSBvZiB0aGUgYmlvIHNpemUgYW5kIEkgd291bGQgb25seSBs
-aWtlIHRvIGNoZWNrIHRoaXMKPj4gb25jZSAoaW4gY3RyKSBhbmQgbm90IGV2ZXJ5IHRpbWUgKGlu
-IG1hcCkuCj4gCj4g4oCLQmxvY2sgc2l6ZSB3aWxsIG5vdCBjaGFuZ2UuICBUaGUgc2l6ZSBvZiBy
-ZXF1ZXN0cyB0byB5b3UgaXMgbGltaXRlZCBieSB0aGUKPiBzZXR1cCBvZiB0aS0+bWF4X2lvX2xl
-bi4gIElmIHlvdSBkb24ndCBzZXQgdGhpcyB3aXRoIHJlY2VudCBrZXJuZWxzLCB5b3UKPiB3aWxs
-IG9ubHkgZ2V0IDRLLCB3aGljaCBpcyBub3QgYWxsIHRoYXQgZWZmaWNpZW50LiAgVGhpcyBpcyBh
-Y3R1YWxseSBwYXJ0Cj4gb2YgYW5vdGhlciBiaWcgdG9waWMgb2YgInN0YWNrZWQgbGltaXRzIiwg
-d2hpY2ggc29tZW9uZSBjb3VsZCB3cml0ZSBhIGJvb2sKPiBvbiAoYW5kIEkgd291bGQgcmVhZCBp
-dCku4oCLCgpTbyBpZiBJIHdvdWxkIHdhbnQgdG8gZG8gYSBsYXJnZSBJL08gb3BlcmF0aW9uIChz
-YXkgd3JpdGUgb25lIG1lZ2FieXRlCm9mIGRhdGEgdG8gYSBibG9jayBkZXZpY2Ugc29tZXdoZXJl
-IHdpdGhpbiBteSBkcml2ZXIpIEknZCBoYXZlIHRvIG1ha2UKbG90cyBvZiBjYWxscyB0byBnZW5l
-cmljX21ha2VfcmVxdWVzdD8KClRoYW5rIHlvdSBzbyBtdWNoIGZvciB5b3VyIGhlbHAsCkJlc3Qg
-cmVnYXJkcywKSm9oYW5uZXMKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
-YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+
+
+On Tue, 16 Jun 2015, Vivek Goyal wrote:
+
+> On Tue, Jun 09, 2015 at 05:21:39PM -0400, Mikulas Patocka wrote:
+> 
+> [..]
+> >  Messages
+> >  ========
+> >  
+> > -    @stats_create <range> <step> [<program_id> [<aux_data>]]
+> > +    @stats_create <range> <step>
+> > +    		[<number_of_optional_arguments> <optional_arguments>...]
+> > +		[<program_id> [<aux_data>]]
+> >  
+> >  	Create a new region and return the region_id.
+> >  
+> > @@ -48,6 +54,17 @@ Messages
+> >  	  "/<number_of_areas>" - the range is subdivided into the specified
+> >  				 number of areas.
+> >  
+> > +	<number_of_optional_arguments>
+> > +	  The number of optional arguments
+> > +
+> > +	<optional_arguments>
+> > +	  The following optional arguments are supported
+> > +	  precise_timestamps - use precise timer with nanosecond resolution
+> > +	  	instead of the "jiffies" variable.  When this argument is
+> > +		used, the resulting times are in nanoseconds instead of
+> > +		milliseconds.  Precise timestamps are a little bit slower
+> > +		to obtain than jiffies-based timestamps.
+> > +
+> 
+> Instead of "precise_timestams" will it make sense to call it
+> "nanosecond_timestamps" or "ns_timestamps".
+> 
+> 
+> >  	<program_id>
+> >  	  An optional parameter.  A name that uniquely identifies
+> >  	  the userspace owner of the range.  This groups ranges together
+> 
+> We are adding these new parameters/arguments in between existing parameters.
+> Will it break any of the existing scritps. Will it make sense to add these
+> new parameters at the end. It is more intuitive.
+
+It could break someone who uses number as program_id - but there is no 
+program on Linux with name that is a pure number.
+
+We can't add it at the end because program_id and aux_data are already 
+optional arguments.
+
+> Also, I was wondering that why do we need to introduce this notion of
+> number of optional arguments. Can't we just introduce another optional
+> parameter [ns_timestamps]. That feels little simpler.
+
+Then, it will clash with program_id "ns_timestamps". Device mapper uses 
+this "number of optional arguments" notation at other places, so I used it 
+too,
+
+Mikulas
+
+> Thanks
+> Vivek
