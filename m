@@ -1,17 +1,16 @@
-From: Coly Li <colyli@gmail.com>
-Subject: Re: [PATCH 0/4] Integrate dm-latency functionality to
-	dm-statistics
-Date: Mon, 15 Jun 2015 22:35:44 +0800
-Message-ID: <557EE2C0.2070003@gmail.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH 2/4] dm stats: support precise timestamps
+Date: Tue, 16 Jun 2015 11:33:45 -0400
+Message-ID: <20150616153345.GA1069@redhat.com>
 References: <alpine.LRH.2.02.1506091705160.1545@file01.intranet.prod.int.rdu2.redhat.com>
-	<557C6214.4010506@gmail.com>
-	<alpine.LRH.2.02.1506150729150.7275@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1506091721180.1545@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="gbk"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1506150729150.7275@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1506091721180.1545@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,72 +21,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Laurence Oberman <loberman@redhat.com>, Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Laurence Oberman <loberman@redhat.com>, Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, dm-devel@redhat.com, Coly Li <colyli@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-1NogMTUvNi8xNSDPws7nODo0NywgTWlrdWxhcyBQYXRvY2thINC0tcA6Cj4KPiBPbiBTdW4sIDE0
-IEp1biAyMDE1LCBDb2x5IExpIHdyb3RlOgo+Cj4+ID8gMTUvNi8xMCA/PzU6MjAsIE1pa3VsYXMg
-UGF0b2NrYSA/PzoKPj4+IEhpCj4+Pgo+Pj4gSGVyZSBJJ20gc2VuZGluZyBwYXRjaGVzIHRoYXQg
-YWRkIGZ1bmNpb25hbGl0eSBwcm92aWRlZCBieSBkbS1sYXRlbmN5IGludG8gCj4+PiBkbS1zdGF0
-aXN0aWNzIGZyYW1ld29yay4gRG0tbGF0ZW5jeSB3YXMgaW50cm9kdWNlZCBpbiB0aGlzIHBvc3Qg
-Cj4+PiBodHRwczovL3d3dy5yZWRoYXQuY29tL2FyY2hpdmVzL2RtLWRldmVsLzIwMTUtRmVicnVh
-cnkvbXNnMDAxNTguaHRtbCAsIAo+Pj4gaG93ZXZlciwgdGhlcmUgaXMgYWxyZWFkeSBzaW1pbGFy
-IGZyYW1ld29yayBkbS1zdGF0aXN0aWNzIGluIHRoZSBrZXJuZWwuIAo+Pj4gSW4gb3JkZXIgdG8g
-aGF2ZSBjbGVhbmVyIGFuZCBlYXNpZXIgdG8gbWFpbnRhaW4gY29kZSwgaXQgaXMgYmV0dGVyIHRv
-IAo+Pj4gaW50ZWdyYXRlIGRtLWxhdGVuY3kgZnVuY3Rpb25hbGl0eSBpbnRvIGRtLXN0YXRpc3Rp
-Y3MsIHJhdGhlciB0aGFuIGhhdmluZyAKPj4+IHR3byBmcmFtZXdvcmtzIHRoYXQgZG8gc2ltaWxh
-ciB0aGluZ3MuCj4+Pgo+Pj4gVGhpcyBwYXRjaCBzZXJpZXMgbWFrZXMgdGhlc2UgY2hhbmdlczoK
-Pj4+ICogaXQgaXMgcG9zc2libGUgdG8gdXNlIHByZWNpc2UgdGltZSBtZWFzdXJlbWVudCB3aXRo
-IG5hbm9zZWNvbmQgCj4+PiAgIGdyYW51bGFyaXR5IChwcmV2aW91c2x5LCB0aW1lIHdhcyBtZWFz
-dXJlZCBpbiBqaWZmaWVzKQo+Pj4gKiBpdCBpcyBwb3NzaWJsZSB0byBjb2xsZWN0IGhpc3RvZ3Jh
-bSBvZiBsYXRlbmNpZXMuIFRoZSBoaXN0b2dyYW0gCj4+PiAgIGJvdW5kYXJpZXMgbWF5IGJlIHNl
-bGVjdGVkIGJ5IHRoZSB1c2VyIGFuZCB0aGVyZSBpcyB1bmxpbWl0ZWQgbnVtYmVyIG9mIAo+Pj4g
-ICBwb3NzaWJsZSBib3VuZGFyaWVzIChpbiBkbS1sYXRlbmN5LCB0aGUgaGlzdG9ncmFtIGJvdW5k
-YXJpZXMgd2VyZSBmaXhlZCkKPj4+ICogaXQgaXMgcG9zc2libGUgdG8gdXNlIGRtLXN0YXRpc3Rp
-Y3Mgb24gbXVsdGlwYXRoCj4+Pgo+Pj4gVGhlIGRvY3VtZW50YXRpb24gb2YgdGhlc2UgZXh0ZW5z
-aW9ucyBpcyBpbiAKPj4+IERvY3VtZW50YXRpb24vZGV2aWNlLW1hcHBlci9zdGF0aXN0aWNzLnR4
-dAo+Pj4KPj4+IEknZCBsaWtlIHRvIGFzayBwZW9wbGUgd2hvIGRlc2lnbmVkIGRtLWxhdGVuY3kg
-dG8gY2hlY2sgdGhpcyBwYXRjaHNldCwgdHJ5IAo+Pj4gdG8gdXNlIGl0IGFuZCB0ZWxsIHVzIGlm
-IGl0IHByb3ZpZGVzIHN1ZmZpY2llbnQgZnVuY3Rpb25hbGl0eSB0byB0aGVtICh0aGUgCj4+PiBp
-bmRlbmRlZCBmdW5jdGluYWxpdHkgb2YgZG0tbGF0ZW5jeSB3YXMgdG8gcHJlZGljdCBoYXJkIGRp
-c2sgZmFpbHVyZXMgZnJvbSAKPj4+IGkvbyByZXF1ZXN0IGxhdGVuY3kgaGlzdG9ncmFtKS4KPj4+
-Cj4+IEhpIE1pa3VsYXMsCj4+Cj4+IEkgd2FzIGluIHRyYXZlbCBsYXN0IHdlZWssIHNvcnJ5IGZv
-ciBsYXRlIHJlc3BvbnNlLiBIZXJlIGFyZSBzb21lCj4+IGNvbW1lbnRzIGZyb20gbWUsIGp1c3Qg
-Zm9yIHlvdXIgaW5mb3JtYXRpb24sCj4+Cj4+IDEsIElmIEkgdW5kZXJzdGFuZCBjb3JyZWN0bHks
-IGxhdGVuY3kgaGlzdG9ncmFtIGJvdW5kYXJpZXMgYXJlIG9yZ2FuaXplZCAKPj4gYnkgbGlzdCBp
-biB5b3VyIGltcGxlbWVudGF0aW9uLCBhbmQgdGhlIGxpc3QgaXMgc2VhcmNoZWQgaW4gbGluZWFy
-IAo+PiBvcmRlci4gV2UgaGFkIGEgc2ltaWxhciBidXQgYSBsaXR0bGUgYml0IHNpbXBsZSBpbXBs
-ZW1lbnRhdGlvbiwgd2l0aCAKPj4gdmVyeSBoaWdoIEkvTyByZXF1ZXN0IHdvcmsgbG9hZCBvbiBt
-dWx0aXBsZSBoYXJkIGRpc2tzLCB3ZSBvYnNlcnZlZCAxJSAKPj4gQ1BVIHBlcmZvcm1hbmNlIGNv
-c3QuIFRoaXMgaXMgd2h5IGRtLWxhdGVuY3kgdXNlcyBhIHZlcnkgc2ltcGxlIHN0YXRpYyAKPj4g
-YXJyYXkgb2YgY291bnRlcnMgdG8gcmVjb3JkIEkvTyBsYXRlbmN5LiBJIHN1Z2dlc3QgeW91IHNo
-b3VsZCBkbyBzb21lIAo+PiBiZW5jaG1hcmtzIHRvIGNvbXBhcmUgdGhlIHBlcmZvcm1hbmNlIGNv
-c3QuCj4gSXQgaXMgc2VhcmNoZWQgdXNpbmcgYmluYXJ5IHNlYXJjaCAtIHNvIHRoZSBjb21wbGV4
-aXR5IGlzIGxvZ2FyaXRobWljLgpJdCBzZWVtcyBJIGRpZG4ndCB1bmRlcnN0YW5kIGRtIHN0YXRz
-IGNvZGUgdmVyeSB3ZWxsLCBJIG5lZWQgbW9yZSB0aW1lCnRvIHJlYWQgYW5kIHVuZGVyc3RhbmQg
-eW91ciBwYXRjaGVzIDotKQoKSSB3aWxsIHRlc3QgdGhlIHBhdGNoZXMgaW4gb3VyIHN0b3JhZ2Ug
-cHJvZHVjdCBlbnZpcm9ubWVudCBmb3IgdGhlCnBlcmZvcm1hbmNlIG51bWJlciwgaG9wZSBpdCBp
-cyBnb29kLgo+Cj4+IDIsIFRoZXJlIHNob3VsZCBiZSBhIG1heGltdW0gbGF0ZW5jeSBoaXN0b2dy
-YW0gYm91bmRhcmllcyBsaW1pdGF0aW9uLiAKPj4gTWF5YmUgeW91IGRvIGl0IGluIHRoZSBwYXRj
-aCBhbmQgSSBtaXNzZWQgaXQsIHRoYXQncyBzaG91bGQgYmUgbXkgZmF1bHQuCj4gVGhlcmUgaXMg
-bm8gbWF4aW11bSAtIGFuZCB0aGVyZSBkb2Vzbid0IG5lZWQgdG8gYmUgYW55IG1heGltdW0gYmVj
-YXVzZSB0aGUgCj4gYXJyYXkgaXMgYWxsb2NhdGVkIGR5bmFtaWNhbGx5LgpNYXliZSBJIGFtIHRv
-byBwYXJhbm9pZCwgSU1ITyBkeW5hbWljYWxseSBhbGxvY2F0ZWQgb2JqZWN0IHNob3VsZCBoYXZl
-IGEKbWF4aW11bSBsaW1pdGF0aW9uLCBpbiBjYXNlIG9mIGl0IG9jY3VwaWVzIHRvbyBtdWNoIHN5
-c3RlbSByZXNvdXJjZSAoZS5nCm1lbW9yeSBoZXJlKS4KCj4KPj4gMywgaW4gbWVzc2FnZV9zdGF0
-c19jcmVhdGUoKSBJIHNlZSBtb3JlIGNvZGUgdG8gaGFuZGxlIGFyZ3VtZW50cyAKPj4gY2hlY2tp
-bmcuIGhtbSwgSSBkb24ndCBjaGVjayB0aGlzIGNvbGQgYmxvY2sgdmVyeSBjYXJlZnVsbHksIGJ1
-dCBJIAo+PiBzdWdnZXN0IHRoYXQgc3RyaW5nIGNoZWNraW5nIGluIGtlcm5lbCBzcGFjZSBzaG91
-bGQgYmUgdmVyeSBjYXJlZnVsLCBpZiAKPj4geW91IG1heSBzaW1wbGlmeSBjdXJyZW50IGRlc2ln
-bm1lbnQgYW5kIHJlbW92ZSB0aGUgY29kZSBmb3IgYXJndW1lbnRzIAo+PiBjaGVja2luZywgaXQg
-bWlnaHQgYmUgYmV0dGVyLgo+IEkgZG9uJ3Qga25vdyB3aHkgc2hvdWxkIEkgcmVtb3ZlIHRoZSBj
-b2RlIGZvciBhcmd1bWVudHMgY2hlY2tpbmcuIFdlIGNoZWNrIAo+IGFyZ3VtZW50cyBpbiB0aGUg
-a2VybmVsLCBldmVuIGlmIHRoZSBmdW5jdGlvbiBtYXkgYmUgb25seSBjYWxsZWQgYnkgcm9vdCAt
-IAo+IHRvIHByZXZlbnQgYnVncyBpbiB1c2Vyc3BhY2UgdG9vbHMgZnJvbSBjYXVzaW5nIGtlcm5l
-bCBjcmFzaC4KPgpJIGRpZG4ndCBleHByZXNzIG15c2VsZiB3ZWxsLiBJIG1lYW50IHRvIG1pbmlt
-aXplIHRoZSBudW1iZXIgb2YKcGFyYW1ldGVycywgc28gbW9zdCBvZiB0aGUgYXJndW1lbnRzIGNo
-ZWNraW5nIGNvZGUgY291bGQgYmUgcmVtb3ZlZC4KSSBkaWRuJ3QgbWVhbiBub3QgY2hlY2tpbmcg
-dGhlIGFyZ3VtZW50cywgSSBtZWFudCB0aGF0IGl0IGNvdWxkIGJlCmJldHRlciBpZiBtdWNoIGxl
-c3MgcGFyYW1ldGVycyBzZW50IGZyb20gdXNlciBzcGFjZS4KCkNvbHkKCgotLQpkbS1kZXZlbCBt
-YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
-aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Tue, Jun 09, 2015 at 05:21:39PM -0400, Mikulas Patocka wrote:
+
+[..]
+>  Messages
+>  ========
+>  
+> -    @stats_create <range> <step> [<program_id> [<aux_data>]]
+> +    @stats_create <range> <step>
+> +    		[<number_of_optional_arguments> <optional_arguments>...]
+> +		[<program_id> [<aux_data>]]
+>  
+>  	Create a new region and return the region_id.
+>  
+> @@ -48,6 +54,17 @@ Messages
+>  	  "/<number_of_areas>" - the range is subdivided into the specified
+>  				 number of areas.
+>  
+> +	<number_of_optional_arguments>
+> +	  The number of optional arguments
+> +
+> +	<optional_arguments>
+> +	  The following optional arguments are supported
+> +	  precise_timestamps - use precise timer with nanosecond resolution
+> +	  	instead of the "jiffies" variable.  When this argument is
+> +		used, the resulting times are in nanoseconds instead of
+> +		milliseconds.  Precise timestamps are a little bit slower
+> +		to obtain than jiffies-based timestamps.
+> +
+
+Instead of "precise_timestams" will it make sense to call it
+"nanosecond_timestamps" or "ns_timestamps".
+
+
+>  	<program_id>
+>  	  An optional parameter.  A name that uniquely identifies
+>  	  the userspace owner of the range.  This groups ranges together
+
+We are adding these new parameters/arguments in between existing parameters.
+Will it break any of the existing scritps. Will it make sense to add these
+new parameters at the end. It is more intuitive.
+
+Also, I was wondering that why do we need to introduce this notion of
+number of optional arguments. Can't we just introduce another optional
+parameter [ns_timestamps]. That feels little simpler.
+
+Thanks
+Vivek
