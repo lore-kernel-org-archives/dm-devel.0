@@ -1,90 +1,196 @@
-From: Sebastian Parschauer <sebastian.riemer@profitbricks.com>
-Subject: 3.12.y: srcu warning during free_dev() with dm-multipath
-Date: Wed, 17 Jun 2015 18:26:57 +0200
-Message-ID: <55819FD1.4010306@profitbricks.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v4 01/11] block: make generic_make_request
+ handle arbitrarily sized bios
+Date: Wed, 17 Jun 2015 22:27:33 -0700
+Message-ID: <CAF1ivSbHMUmEYd3V-55Dackyb87W=WeJACbC+Qv6iF7-sqm3dQ@mail.gmail.com>
+References: <20150526143626.GA4315@redhat.com>
+	<CAF1ivSb3ptYObS3_8bJwWhq98EcNgAgRhN_L-c3uyFfCzdn=9A@mail.gmail.com>
+	<20150526160400.GB4715@redhat.com>
+	<CAF1ivSZ351yV4re1Ghf5yqPjgq6aXjrZT4yWd+T9msAFsBnDSw@mail.gmail.com>
+	<20150528003627.GD32216@agk-dp.fab.redhat.com>
+	<1433138551.11778.4.camel@hasee>
+	<CAF1ivSY_7M1OhrMuXg0OKu7BPy=SbTHSHCk+2q6vfEVgvJL8YA@mail.gmail.com>
+	<20150604210617.GA23710@redhat.com> <1433830169.1197.6.camel@hasee>
+	<CAF1ivSbo456n+1JxDp7eAHAgKs5qBOcomN4N9hhCEXmy8i4nPQ@mail.gmail.com>
+	<20150610214611.GA744@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel <dm-devel@redhat.com>, Sebastian Parschauer <sebastian.riemer@profitbricks.com>
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <20150610214611.GA744-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Oleg Drokin <oleg.drokin-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andreas Dilger <andreas.dilger-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Geoff Levand <geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Philip Kelleher <pjk1939-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Joshua Morris <josh.h.morris-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, drbd-user-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, Jim Paris <jim-XrPbb/hENzg@public.gmane.org>, Nitin Gupta <ngupta-KNmc09w0p+Ednm+yROfE0A@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hi dm developers,
+On Wed, Jun 10, 2015 at 2:46 PM, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On Wed, Jun 10 2015 at  5:20pm -0400,
+> Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>
+>> On Mon, Jun 8, 2015 at 11:09 PM, Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>> > On Thu, 2015-06-04 at 17:06 -0400, Mike Snitzer wrote:
+>> >> We need to test on large HW raid setups like a Netapp filer (or even
+>> >> local SAS drives connected via some SAS controller).  Like a 8+2 drive
+>> >> RAID6 or 8+1 RAID5 setup.  Testing with MD raid on JBOD setups with 8
+>> >> devices is also useful.  It is larger RAID setups that will be more
+>> >> sensitive to IO sizes being properly aligned on RAID stripe and/or chunk
+>> >> size boundaries.
+>> >
+>> > Here are tests results of xfs/ext4/btrfs read/write on HW RAID6/MD RAID6/DM stripe target.
+>> > Each case run 0.5 hour, so it took 36 hours to finish all the tests on 4.1-rc4 and 4.1-rc4-patched kernels.
+>> >
+>> > No performance regressions were introduced.
+>> >
+>> > Test server: Dell R730xd(2 sockets/48 logical cpus/264G memory)
+>> > HW RAID6/MD RAID6/DM stripe target were configured with 10 HDDs, each 280G
+>> > Stripe size 64k and 128k were tested.
+>> >
+>> > devs="/dev/sdb /dev/sdc /dev/sdd /dev/sde /dev/sdf /dev/sdg /dev/sdh /dev/sdi /dev/sdj /dev/sdk"
+>> > spare_devs="/dev/sdl /dev/sdm"
+>> > stripe_size=64 (or 128)
+>> >
+>> > MD RAID6 was created by:
+>> > mdadm --create --verbose /dev/md0 --level=6 --raid-devices=10 $devs --spare-devices=2 $spare_devs -c $stripe_size
+>> >
+>> > DM stripe target was created by:
+>> > pvcreate $devs
+>> > vgcreate striped_vol_group $devs
+>> > lvcreate -i10 -I${stripe_size} -L2T -nstriped_logical_volume striped_vol_group
+>
+> DM had a regression relative to merge_bvec that wasn't fixed until
+> recently (it wasn't in 4.1-rc4), see commit 1c220c69ce0 ("dm: fix
+> casting bug in dm_merge_bvec()").  It was introduced in 4.1.
+>
+> So your 4.1-rc4 DM stripe testing may have effectively been with
+> merge_bvec disabled.
+>
+>> > Here is an example of fio script for stripe size 128k:
+>> > [global]
+>> > ioengine=libaio
+>> > iodepth=64
+>> > direct=1
+>> > runtime=1800
+>> > time_based
+>> > group_reporting
+>> > numjobs=48
+>> > gtod_reduce=0
+>> > norandommap
+>> > write_iops_log=fs
+>> >
+>> > [job1]
+>> > bs=1280K
+>> > directory=/mnt
+>> > size=5G
+>> > rw=read
+>> >
+>> > All results here: http://minggr.net/pub/20150608/fio_results/
+>> >
+>> > Results summary:
+>> >
+>> > 1. HW RAID6: stripe size 64k
+>> >                 4.1-rc4         4.1-rc4-patched
+>> >                 -------         ---------------
+>> >                 (MB/s)          (MB/s)
+>> > xfs read:       821.23          812.20  -1.09%
+>> > xfs write:      753.16          754.42  +0.16%
+>> > ext4 read:      827.80          834.82  +0.84%
+>> > ext4 write:     783.08          777.58  -0.70%
+>> > btrfs read:     859.26          871.68  +1.44%
+>> > btrfs write:    815.63          844.40  +3.52%
+>> >
+>> > 2. HW RAID6: stripe size 128k
+>> >                 4.1-rc4         4.1-rc4-patched
+>> >                 -------         ---------------
+>> >                 (MB/s)          (MB/s)
+>> > xfs read:       948.27          979.11  +3.25%
+>> > xfs write:      820.78          819.94  -0.10%
+>> > ext4 read:      978.35          997.92  +2.00%
+>> > ext4 write:     853.51          847.97  -0.64%
+>> > btrfs read:     1013.1          1015.6  +0.24%
+>> > btrfs write:    854.43          850.42  -0.46%
+>> >
+>> > 3. MD RAID6: stripe size 64k
+>> >                 4.1-rc4         4.1-rc4-patched
+>> >                 -------         ---------------
+>> >                 (MB/s)          (MB/s)
+>> > xfs read:       847.34          869.43  +2.60%
+>> > xfs write:      198.67          199.03  +0.18%
+>> > ext4 read:      763.89          767.79  +0.51%
+>> > ext4 write:     281.44          282.83  +0.49%
+>> > btrfs read:     756.02          743.69  -1.63%
+>> > btrfs write:    268.37          265.93  -0.90%
+>> >
+>> > 4. MD RAID6: stripe size 128k
+>> >                 4.1-rc4         4.1-rc4-patched
+>> >                 -------         ---------------
+>> >                 (MB/s)          (MB/s)
+>> > xfs read:       993.04          1014.1  +2.12%
+>> > xfs write:      293.06          298.95  +2.00%
+>> > ext4 read:      1019.6          1020.9  +0.12%
+>> > ext4 write:     371.51          371.47  -0.01%
+>> > btrfs read:     1000.4          1020.8  +2.03%
+>> > btrfs write:    241.08          246.77  +2.36%
+>> >
+>> > 5. DM: stripe size 64k
+>> >                 4.1-rc4         4.1-rc4-patched
+>> >                 -------         ---------------
+>> >                 (MB/s)          (MB/s)
+>> > xfs read:       1084.4          1080.1  -0.39%
+>> > xfs write:      1071.1          1063.4  -0.71%
+>> > ext4 read:      991.54          1003.7  +1.22%
+>> > ext4 write:     1069.7          1052.2  -1.63%
+>> > btrfs read:     1076.1          1082.1  +0.55%
+>> > btrfs write:    968.98          965.07  -0.40%
+>> >
+>> > 6. DM: stripe size 128k
+>> >                 4.1-rc4         4.1-rc4-patched
+>> >                 -------         ---------------
+>> >                 (MB/s)          (MB/s)
+>> > xfs read:       1020.4          1066.1  +4.47%
+>> > xfs write:      1058.2          1066.6  +0.79%
+>> > ext4 read:      990.72          988.19  -0.25%
+>> > ext4 write:     1050.4          1070.2  +1.88%
+>> > btrfs read:     1080.9          1074.7  -0.57%
+>> > btrfs write:    975.10          972.76  -0.23%
+>>
+>> Hi Mike,
+>>
+>> How about these numbers?
+>
+> Looks fairly good.  I just am not sure the workload is going to test the
+> code paths in question like we'd hope.  I'll have to set aside some time
+> to think through scenarios to test.
 
-we hit the srcu warning in cleanup_srcu_struct() when removing
-dm-multipath devices. We run v3.12.40 but there is no change compared to
-v3.12.44 in drivers/md/dm.c or kernel/srcu.c.
+Hi Mike,
 
-Would the following upstream commit fix this?
+Will you get a chance to think about it?
 
-63a4f06 dm: fix add_disk() NULL pointer due to race with free_dev()
+Thanks.
 
-Thanks,
-Sebastian
-
-
-===============
-Details:
-
-> WARNING: CPU: 36 PID: 3772 at kernel/srcu.c:285 cleanup_srcu_struct+0x8d/0x90()
-> CPU: 36 PID: 3772 Comm: multipathd Tainted: G           O 3.12.40-2 #1
-> 0000000000000009 ffff882803213bc8 ffffffff817138b0 0000000000000007
-> 0000000000000000 ffff882803213c08 ffffffff81045fb7 ffff8827035a0870
-> 0000000000000001 ffffffff81cbf760 ffff8827fea77808 ffff8827fea77800
-> Call Trace:
->  [<ffffffff817138b0>] dump_stack+0x46/0x58
->  [<ffffffff81045fb7>] warn_slowpath_common+0x87/0xb0
->  [<ffffffff81045ff5>] warn_slowpath_null+0x15/0x20
->  [<ffffffff8106bd5d>] cleanup_srcu_struct+0x8d/0x90
->  [<ffffffff81594986>] __dm_destroy+0x176/0x240
->  [<ffffffff8159550e>] dm_destroy+0xe/0x10
->  [<ffffffff8159ae9f>] dev_remove+0x9f/0x100
->  [<ffffffff8159ae00>] ? __hash_remove+0xd0/0xd0
->  [<ffffffff8159b2f6>] ctl_ioctl+0x246/0x4d0
->  [<ffffffff81032c19>] ? physflat_send_IPI_mask+0x9/0x10
->  [<ffffffff8159b58e>] dm_ctl_ioctl+0xe/0x20
->  [<ffffffff8116d587>] do_vfs_ioctl+0x87/0x510
->  [<ffffffff8105478a>] ? recalc_sigpending+0x1a/0x60
->  [<ffffffff81055362>] ? __set_task_blocked+0x32/0x80
->  [<ffffffff8116daa1>] SyS_ioctl+0x91/0xb0
->  [<ffffffff81721a02>] system_call_fastpath+0x16/0x1b
-> ---[ end trace 8c8c7b2a24a51f9c ]---
-
-> (gdb) list *__dm_destroy+0x172
-> 0xffffffff8159fc72 is in __dm_destroy (drivers/md/dm.c:2140).
-> 2135            mempool_destroy(md->io_pool);
-> 2136        if (md->bs)
-> 2137            bioset_free(md->bs);
-> 2138        blk_integrity_unregister(md->disk);
-> 2139        del_gendisk(md->disk);
-> 2140        cleanup_srcu_struct(&md->io_barrier);
-> 2141        free_minor(minor);
-> 2142    
-> 2143        spin_lock(&_minor_lock);
-> 2144        md->disk->private_data = NULL;
-
-This is located in the function free_dev() in fact.
-
-> (gdb) list *cleanup_srcu_struct+0x89
-> 0xffffffff8106f2c9 is in cleanup_srcu_struct (kernel/srcu.c:285).
-> 280     * Must invoke this after you are finished using a given srcu_struct that
-> 281     * was initialized via init_srcu_struct(), else you leak memory.
-> 282     */
-> 283    void cleanup_srcu_struct(struct srcu_struct *sp)
-> 284    {
-> 285        if (WARN_ON(srcu_readers_active(sp)))
-> 286            return; /* Leakage unless caller handles error. */
-> 287        free_percpu(sp->per_cpu_ref);
-> 288        sp->per_cpu_ref = NULL;
-> 289    }
+>
+> My concern still remains that at some point it the future we'll regret
+> not having merge_bvec but it'll be too late.  That is just my own FUD at
+> this point...
+>
+>> I'm also happy to run other fio jobs your team used.
+>
+> I've been busy getting DM changes for the 4.2 merge window finalized.
+> As such I haven't connected with others on the team to discuss this
+> issue.
+>
+> I'll see if we can make time in the next 2 days.  But I also have
+> RHEL-specific kernel deadlines I'm coming up against.
+>
+> Seems late to be staging this extensive a change for 4.2... are you
+> pushing for this code to land in the 4.2 merge window?  Or do we have
+> time to work this further and target the 4.3 merge?
+>
+> Mike
