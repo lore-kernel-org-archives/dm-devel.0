@@ -1,35 +1,46 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: WARNING: at fs/block_dev.c:5 when removing LV on removed device
-Date: Fri, 19 Jun 2015 08:47:21 +0200
-Message-ID: <20150619064721.GA1183@lst.de>
-References: <20150618165713.GB19417@two.firstfloor.org> <20150618180408.GD2321@redhat.com> <20150618180804.GC19417@two.firstfloor.org> <20150618181619.GE2321@redhat.com> <20150618190815.GA6390@redhat.com> <20150618192821.GA4027@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Persistent memory interface
+Date: Fri, 19 Jun 2015 12:33:09 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1506191211480.30318@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150618192821.GA4027@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Vivek Goyal <vgoyal@redhat.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, linux-nvdimm@ml01.01.org
+Cc: Boaz Harrosh <boaz@plexistor.com>, Keith Busch <keith.busch@intel.com>, Andy Lutomirski <luto@amacapital.net>, Jens Axboe <axboe@fb.com>, dm-devel@redhat.com, Borislav Petkov <bp@alien8.de>, "H. Peter Anvin" <hpa@zytor.com>, Matthew Wilcox <willy@linux.intel.com>, Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>
 List-Id: dm-devel.ids
 
-On Thu, Jun 18, 2015 at 03:28:21PM -0400, Mike Snitzer wrote:
-> > WARN_ON_ONCE(write_inode_now(inode, true))
-> > 
-> > If we failed to write back inode, then warning about it sounds right?
-> 
-> A warning is fine.. not a WARN_ON().  Pretty alarming backtrace spew but
-> maybe I'm missing something and DM's blkdev refcount mgmt couldn't
-> trigger this WARN_ON()?  I fail to see how to avoid it given the device
-> isn't thre so write_inode_now() fails.
-> 
-> > What's wrong with that? Should it be just a kernel log of level KERN_WARN
-> > instead?
-> 
-> Ideally, but I honestly don't have all the details paged in my head to
-> say definitively.  First need to answer how vitrio-blk isn't hitting
-> this (and DM is).  Could it be that __blkdev_put isn't getting called
-> for virtio-blk!?
+Hi
 
-Just a warnings if fine.  In fact we can probably remove that as well
-as it will happen after a hot removal all the time.
+I looked at the new the persistent memory block device driver 
+(drivers/block/pmem.c and arch/x86/kernel/pmem.c) and it seems that the 
+interface between them is incorrect.
+
+If I want to use persistent memory in another driver, for a different 
+purpose, how can I make sure that that drivers/block/pmem.c doesn't attach 
+to this piece of memory and export it? It seems not possible. 
+drivers/block/pmem.c attaches to everything without regard that there may 
+be other users of persistent memory.
+
+I think a correct solution would be to add a partition table at the 
+beginning of persistent memory area and this partition table would 
+describe which parts belong to which programs - so that different programs 
+could use persistent memory and not step over each other's data. Is there 
+some effort to standardize the partition table ongoing?
+
+
+BTW. some journaling filesystems assume that 512-byte sector is written 
+atomically. drivers/block/pmem.c breaks this requirement. Persistent 
+memory only gurantees 8-byte atomic writes.
+
+Mikulas
