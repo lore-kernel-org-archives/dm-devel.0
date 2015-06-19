@@ -1,14 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Unnecessary snapshot validation
-Date: Sun, 21 Jun 2015 16:31:33 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1506211212010.9520@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20150130234959.GQ23957@agk-dp.fab.redhat.com>
+From: Matthew Wilcox <willy@linux.intel.com>
+Subject: Re: Persistent memory interface
+Date: Fri, 19 Jun 2015 12:48:25 -0400
+Message-ID: <20150619164825.GB1971@linux.intel.com>
+References: <alpine.LRH.2.02.1506191211480.30318@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150130234959.GQ23957@agk-dp.fab.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1506191211480.30318@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,126 +19,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Boaz Harrosh <boaz@plexistor.com>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, linux-nvdimm@ml01.01.org, Keith Busch <keith.busch@intel.com>, Andy Lutomirski <luto@amacapital.net>, Jens Axboe <axboe@fb.com>, dm-devel@redhat.com, Borislav Petkov <bp@alien8.de>, "H. Peter Anvin" <hpa@zytor.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
+On Fri, Jun 19, 2015 at 12:33:09PM -0400, Mikulas Patocka wrote:
+> If I want to use persistent memory in another driver, for a different 
+> purpose, how can I make sure that that drivers/block/pmem.c doesn't attach 
+> to this piece of memory and export it? It seems not possible. 
+> drivers/block/pmem.c attaches to everything without regard that there may 
+> be other users of persistent memory.
 
+You need to look at the patches that Dan has been posting to add support
+for Labels (and NFIT and ...).  Those weren't available earlier because
+the label spec wasn't public.
 
-On Fri, 30 Jan 2015, Alasdair G Kergon wrote:
+> BTW. some journaling filesystems assume that 512-byte sector is written 
+> atomically. drivers/block/pmem.c breaks this requirement. Persistent 
+> memory only gurantees 8-byte atomic writes.
 
-> I've had a complaint tonight at FOSDEM that we invalidate old-style
-> snapshots in a particular case where there is no need to!
-> 
-> If you take a snapshot of an origin, then keep writing to the *snapshot*
-> and fill it up we should just return errors on any further such writes
-> *without* invalidating the snapshot - so reads can still be performed
-> successfully.
-> 
-> (check for -ENOSPC from prepare_exception in __find_pending_exception?)
-> 
-> Alasdair
-
-Hi
-
-Here I'm sending a patch that keeps data when the snapshot fills up.
-
-The user can extend the overflowed snapshot, deactivate and activate it 
-again, run fsck (if journaling filesystem is not used) mount it and 
-recover the data.
-
-Mikulas
-
-
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-dm snapshot: don't invalidate on-disk image on snapshot write overflow
-
-When the snapshot overflows because of a write to the origin, the on-disk
-image has to be invalidated. However, when the snapshot overflows because
-of a write to the snapshot, the on-disk image doesn't have to be
-invalidated. This patch changes the behavior, so that the on-disk image is
-not invalidated in this case.
-
-When the snapshot overflows, the variable snapshot_overflowed is set. All
-writes to the snapshot are disallowed to minimize filesystem corruption -
-this condition is cleared when the snapshot is deactivated and activated.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-snap.c |   18 ++++++++++++++----
- 1 file changed, 14 insertions(+), 4 deletions(-)
-
-Index: linux-4.1-rc8/drivers/md/dm-snap.c
-===================================================================
---- linux-4.1-rc8.orig/drivers/md/dm-snap.c	2015-06-19 20:57:04.000000000 +0200
-+++ linux-4.1-rc8/drivers/md/dm-snap.c	2015-06-21 17:11:10.000000000 +0200
-@@ -63,6 +63,13 @@ struct dm_snapshot {
- 	 */
- 	int valid;
- 
-+	/*
-+	 * The snasphot overflowed because of write to the snapshot device.
-+	 * We don't have to invalidate the snapshot in this case, but we need
-+	 * to prevent further writes.
-+	 */
-+	int snapshot_overflowed;
-+
- 	/* Origin writes don't trigger exceptions until this is set */
- 	int active;
- 
-@@ -1152,6 +1159,7 @@ static int snapshot_ctr(struct dm_target
- 
- 	s->ti = ti;
- 	s->valid = 1;
-+	s->snapshot_overflowed = 0;
- 	s->active = 0;
- 	atomic_set(&s->pending_exceptions_count, 0);
- 	s->exception_start_sequence = 0;
-@@ -1301,6 +1309,7 @@ static void __handover_exceptions(struct
- 
- 	snap_dest->ti->max_io_len = snap_dest->store->chunk_size;
- 	snap_dest->valid = snap_src->valid;
-+	snap_dest->snapshot_overflowed = snap_src->snapshot_overflowed;
- 
- 	/*
- 	 * Set source invalid to ensure it receives no further I/O.
-@@ -1692,7 +1701,7 @@ static int snapshot_map(struct dm_target
- 	 * to copy an exception */
- 	down_write(&s->lock);
- 
--	if (!s->valid) {
-+	if (!s->valid || (unlikely(s->snapshot_overflowed) && bio_rw(bio) == WRITE)) {
- 		r = -EIO;
- 		goto out_unlock;
- 	}
-@@ -1716,7 +1725,7 @@ static int snapshot_map(struct dm_target
- 			pe = alloc_pending_exception(s);
- 			down_write(&s->lock);
- 
--			if (!s->valid) {
-+			if (!s->valid || s->snapshot_overflowed) {
- 				free_pending_exception(pe);
- 				r = -EIO;
- 				goto out_unlock;
-@@ -1731,7 +1740,8 @@ static int snapshot_map(struct dm_target
- 
- 			pe = __find_pending_exception(s, pe, chunk);
- 			if (!pe) {
--				__invalidate_snapshot(s, -ENOMEM);
-+				s->snapshot_overflowed = 1;
-+				DMERR("Invalidating snapshot: Unable to allocate exception.");
- 				r = -EIO;
- 				goto out_unlock;
- 			}
-@@ -1987,7 +1997,7 @@ static void snapshot_status(struct dm_ta
- 
- 		down_write(&snap->lock);
- 
--		if (!snap->valid)
-+		if (!snap->valid || snap->snapshot_overflowed)
- 			DMEMIT("Invalid");
- 		else if (snap->merge_failed)
- 			DMEMIT("Merge failed");
+... and that's addressed by the BTT patches.
