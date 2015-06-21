@@ -1,64 +1,50 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: Persistent memory interface
-Date: Fri, 19 Jun 2015 12:23:13 -0700
-Message-ID: <CAPcyv4i7e-wu6kJq5_0AV24RdqorJ5wwTrgOnJfjbyJcytc2hw@mail.gmail.com>
-References: <alpine.LRH.2.02.1506191211480.30318@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAPcyv4iS4v0=QTzjBqRx=hv6egfYECAFNmtmZBrH0VOLM3H+Jw@mail.gmail.com>
-	<alpine.LRH.2.02.1506191510300.28742@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAPcyv4ihXLfHcEGx=ZWMWCmfgJpibYQiPiTZBPH5HVuYOmdzkQ@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: =?UTF-8?q?Pali=20Roh=C3=A1r?= <pali.rohar@gmail.com>
+Subject: [PATCH v2 0/3] dm-crypt: Adds support for wiping key when doing suspend/hibernation
+Date: Sun, 21 Jun 2015 13:20:31 +0200
+Message-ID: <1434885634-19895-1-git-send-email-pali.rohar@gmail.com>
+References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAPcyv4ihXLfHcEGx=ZWMWCmfgJpibYQiPiTZBPH5HVuYOmdzkQ@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@fb.com>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, linux-nvdimm <linux-nvdimm@ml01.01.org>, Andy Lutomirski <luto@amacapital.net>, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, Borislav Petkov <bp@alien8.de>, "H. Peter Anvin" <hpa@zytor.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-pm-owner@vger.kernel.org>
+In-Reply-To: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
+Sender: linux-pm-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>
+Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, =?UTF-8?q?Pali=20Roh=C3=A1r?= <pali.rohar@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 19, 2015 at 12:22 PM, Dan Williams <dan.j.williams@intel.com> wrote:
-> On Fri, Jun 19, 2015 at 12:14 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
->>
->>
->> On Fri, 19 Jun 2015, Dan Williams wrote:
->>
->>> On Fri, Jun 19, 2015 at 9:33 AM, Mikulas Patocka <mpatocka@redhat.com> wrote:
->>> > Hi
->>> >
->>> > I looked at the new the persistent memory block device driver
->>> > (drivers/block/pmem.c and arch/x86/kernel/pmem.c) and it seems that the
->>> > interface between them is incorrect.
->>> >
->>> > If I want to use persistent memory in another driver, for a different
->>> > purpose, how can I make sure that that drivers/block/pmem.c doesn't attach
->>> > to this piece of memory and export it? It seems not possible.
->>> > drivers/block/pmem.c attaches to everything without regard that there may
->>> > be other users of persistent memory.
->>>
->>> Simply partition the pmem device however you see fit and then
->>> blkdev_get_by_path(<dev>, FMODE_EXCL, <holder>) the resulting
->>> partition(s).
->>
->> But that still means accessing it through the block layer.
->>
->> I need to access persistent memory directly - map it into the kernel space
->> and access it as mapped memory - and if I do it, it will fight with
->> drivers/block/pmem.c over ownership of the memory :-(
->>
->
-> See the latest definition of struct block_device_operations in these
-> patches.  We now have ->direct_access() in the 4.0 kernel and will
-> have ->rw_bytes() in the 4.2 kernel if you want to directly access the
-> memory published by a pmem device.
+This patch series increase security of suspend and hibernate actions. I=
+t allows
+user to safely wipe crypto keys before suspend and hibernate actions st=
+arts
+without race conditions on userspace process with heavy I/O.
 
-I'll include you on the next rev of patches that add a
-kmap_atomic_pfn_t(): https://lkml.org/lkml/2015/6/5/802
+To automatically wipe cryto key for <device> before hibernate action ca=
+ll:
+$ dmsetup message <device> 0 key wipe_on_hibernation
+
+To automatically wipe cryto key for <device> before suspend action call=
+:
+$ dmsetup message <device> 0 key wipe_on_suspend
+
+To disable automatic wipe call retain_on_suspend/retain_on_hibernation.
+
+Pali Roh=C3=A1r (3):
+  PM suspend/hibernate: Call notifier after freezing processes
+  dm: Export function dm_suspend_md()
+  dm-crypt: Adds support for wiping key when doing suspend/hibernation
+
+ drivers/md/dm-crypt.c    |  126 ++++++++++++++++++++++++++++++++++++++=
++++++---
+ drivers/md/dm.c          |    6 +++
+ drivers/md/dm.h          |    5 ++
+ include/linux/suspend.h  |    2 +
+ kernel/power/hibernate.c |    2 +
+ kernel/power/suspend.c   |    4 +-
+ 6 files changed, 136 insertions(+), 9 deletions(-)
+
+--=20
+1.7.9.5
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-pm" in
