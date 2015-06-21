@@ -1,81 +1,143 @@
-From: =?UTF-8?q?Pali=20Roh=C3=A1r?= <pali.rohar@gmail.com>
-Subject: [PATCH v2 1/3] PM suspend/hibernate: Call notifier after freezing processes
-Date: Sun, 21 Jun 2015 13:20:32 +0200
-Message-ID: <1434885634-19895-2-git-send-email-pali.rohar@gmail.com>
-References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
- <1434885634-19895-1-git-send-email-pali.rohar@gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Unnecessary snapshot validation
+Date: Sun, 21 Jun 2015 16:31:33 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1506211212010.9520@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20150130234959.GQ23957@agk-dp.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <1434885634-19895-1-git-send-email-pali.rohar@gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>
-Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, =?UTF-8?q?Pali=20Roh=C3=A1r?= <pali.rohar@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20150130234959.GQ23957@agk-dp.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-To prevent race conditions on userspace processes with I/O some taks mu=
-st be
-called after processes are freezed. This patch adds new events which ar=
-e
-delivered by pm_notifier_call_chain() after freezing processes when doi=
-ng
-suspend or hibernate action.
 
-Signed-off-by: Pali Roh=C3=A1r <pali.rohar@gmail.com>
+
+On Fri, 30 Jan 2015, Alasdair G Kergon wrote:
+
+> I've had a complaint tonight at FOSDEM that we invalidate old-style
+> snapshots in a particular case where there is no need to!
+> 
+> If you take a snapshot of an origin, then keep writing to the *snapshot*
+> and fill it up we should just return errors on any further such writes
+> *without* invalidating the snapshot - so reads can still be performed
+> successfully.
+> 
+> (check for -ENOSPC from prepare_exception in __find_pending_exception?)
+> 
+> Alasdair
+
+Hi
+
+Here I'm sending a patch that keeps data when the snapshot fills up.
+
+The user can extend the overflowed snapshot, deactivate and activate it 
+again, run fsck (if journaling filesystem is not used) mount it and 
+recover the data.
+
+Mikulas
+
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+dm snapshot: don't invalidate on-disk image on snapshot write overflow
+
+When the snapshot overflows because of a write to the origin, the on-disk
+image has to be invalidated. However, when the snapshot overflows because
+of a write to the snapshot, the on-disk image doesn't have to be
+invalidated. This patch changes the behavior, so that the on-disk image is
+not invalidated in this case.
+
+When the snapshot overflows, the variable snapshot_overflowed is set. All
+writes to the snapshot are disallowed to minimize filesystem corruption -
+this condition is cleared when the snapshot is deactivated and activated.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
 ---
- include/linux/suspend.h  |    2 ++
- kernel/power/hibernate.c |    2 ++
- kernel/power/suspend.c   |    4 +++-
- 3 files changed, 7 insertions(+), 1 deletion(-)
+ drivers/md/dm-snap.c |   18 ++++++++++++++----
+ 1 file changed, 14 insertions(+), 4 deletions(-)
 
-diff --git a/include/linux/suspend.h b/include/linux/suspend.h
-index 5efe743..bc743c8 100644
---- a/include/linux/suspend.h
-+++ b/include/linux/suspend.h
-@@ -368,6 +368,8 @@ static inline bool hibernation_available(void) { re=
-turn false; }
- #define PM_POST_SUSPEND		0x0004 /* Suspend finished */
- #define PM_RESTORE_PREPARE	0x0005 /* Going to restore a saved image */
- #define PM_POST_RESTORE		0x0006 /* Restore failed */
-+#define PM_HIBERNATION_AFTER_FREEZE	0x0007 /* After hibernation freeze=
- */
-+#define PM_SUSPEND_AFTER_FREEZE		0x0008 /* After suspend freeze */
-=20
- extern struct mutex pm_mutex;
-=20
-diff --git a/kernel/power/hibernate.c b/kernel/power/hibernate.c
-index 2329daa..184f7ee 100644
---- a/kernel/power/hibernate.c
-+++ b/kernel/power/hibernate.c
-@@ -671,6 +671,8 @@ int hibernate(void)
- 	if (error)
- 		goto Exit;
-=20
-+	pm_notifier_call_chain(PM_HIBERNATION_AFTER_FREEZE);
+Index: linux-4.1-rc8/drivers/md/dm-snap.c
+===================================================================
+--- linux-4.1-rc8.orig/drivers/md/dm-snap.c	2015-06-19 20:57:04.000000000 +0200
++++ linux-4.1-rc8/drivers/md/dm-snap.c	2015-06-21 17:11:10.000000000 +0200
+@@ -63,6 +63,13 @@ struct dm_snapshot {
+ 	 */
+ 	int valid;
+ 
++	/*
++	 * The snasphot overflowed because of write to the snapshot device.
++	 * We don't have to invalidate the snapshot in this case, but we need
++	 * to prevent further writes.
++	 */
++	int snapshot_overflowed;
 +
- 	lock_device_hotplug();
- 	/* Allocate memory management structures */
- 	error =3D create_basic_memory_bitmaps();
-diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
-index 8d7a1ef..ba2a945 100644
---- a/kernel/power/suspend.c
-+++ b/kernel/power/suspend.c
-@@ -277,8 +277,10 @@ static int suspend_prepare(suspend_state_t state)
- 	trace_suspend_resume(TPS("freeze_processes"), 0, true);
- 	error =3D suspend_freeze_processes();
- 	trace_suspend_resume(TPS("freeze_processes"), 0, false);
--	if (!error)
-+	if (!error) {
-+		pm_notifier_call_chain(PM_SUSPEND_AFTER_FREEZE);
- 		return 0;
-+	}
-=20
- 	suspend_stats.failed_freeze++;
- 	dpm_save_failed_step(SUSPEND_FREEZE);
---=20
-1.7.9.5
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
-n
+ 	/* Origin writes don't trigger exceptions until this is set */
+ 	int active;
+ 
+@@ -1152,6 +1159,7 @@ static int snapshot_ctr(struct dm_target
+ 
+ 	s->ti = ti;
+ 	s->valid = 1;
++	s->snapshot_overflowed = 0;
+ 	s->active = 0;
+ 	atomic_set(&s->pending_exceptions_count, 0);
+ 	s->exception_start_sequence = 0;
+@@ -1301,6 +1309,7 @@ static void __handover_exceptions(struct
+ 
+ 	snap_dest->ti->max_io_len = snap_dest->store->chunk_size;
+ 	snap_dest->valid = snap_src->valid;
++	snap_dest->snapshot_overflowed = snap_src->snapshot_overflowed;
+ 
+ 	/*
+ 	 * Set source invalid to ensure it receives no further I/O.
+@@ -1692,7 +1701,7 @@ static int snapshot_map(struct dm_target
+ 	 * to copy an exception */
+ 	down_write(&s->lock);
+ 
+-	if (!s->valid) {
++	if (!s->valid || (unlikely(s->snapshot_overflowed) && bio_rw(bio) == WRITE)) {
+ 		r = -EIO;
+ 		goto out_unlock;
+ 	}
+@@ -1716,7 +1725,7 @@ static int snapshot_map(struct dm_target
+ 			pe = alloc_pending_exception(s);
+ 			down_write(&s->lock);
+ 
+-			if (!s->valid) {
++			if (!s->valid || s->snapshot_overflowed) {
+ 				free_pending_exception(pe);
+ 				r = -EIO;
+ 				goto out_unlock;
+@@ -1731,7 +1740,8 @@ static int snapshot_map(struct dm_target
+ 
+ 			pe = __find_pending_exception(s, pe, chunk);
+ 			if (!pe) {
+-				__invalidate_snapshot(s, -ENOMEM);
++				s->snapshot_overflowed = 1;
++				DMERR("Invalidating snapshot: Unable to allocate exception.");
+ 				r = -EIO;
+ 				goto out_unlock;
+ 			}
+@@ -1987,7 +1997,7 @@ static void snapshot_status(struct dm_ta
+ 
+ 		down_write(&snap->lock);
+ 
+-		if (!snap->valid)
++		if (!snap->valid || snap->snapshot_overflowed)
+ 			DMEMIT("Invalid");
+ 		else if (snap->merge_failed)
+ 			DMEMIT("Merge failed");
