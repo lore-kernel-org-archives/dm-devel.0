@@ -1,85 +1,63 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.2-rc1
-Date: Fri, 26 Jun 2015 11:20:04 -0400
-Message-ID: <20150626152004.GA62003@redhat.com>
-References: <20150625143716.GA13739@kernel.dk>
- <20150626061510.GA15036@xzibit.linux.bs1.fc.nec.co.jp>
- <CA+55aFzke6FF6j+1_cDZbCtM4YEF+1vy==JD72LxbKWzxBkWJA@mail.gmail.com>
- <20150626080533.GA16471@xzibit.linux.bs1.fc.nec.co.jp>
+Subject: Re: DM_CACHE_SMQ is experimental and enabled by default? (was: Re:
+ dm cache: add stochastic-multi-queue (smq) policy)
+Date: Fri, 26 Jun 2015 12:05:50 -0400
+Message-ID: <20150626160549.GA15434@redhat.com>
+References: <CAMuHMdVfK8x8xXqaq=yX41qZA0L3VP-sezKfDureYMa-QqfM6g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150626080533.GA16471@xzibit.linux.bs1.fc.nec.co.jp>
+In-Reply-To: <CAMuHMdVfK8x8xXqaq=yX41qZA0L3VP-sezKfDureYMa-QqfM6g@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>, Junichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Jens Axboe <axboe@fb.com>
+To: Geert Uytterhoeven <geert@linux-m68k.org>
+Cc: Joe Thornber <ejt@redhat.com>, linux-raid@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jun 26 2015 at  4:05P -0400,
-Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
+On Fri, Jun 26 2015 at  3:47am -0400,
+Geert Uytterhoeven <geert@linux-m68k.org> wrote:
 
-> On 06/26/15 15:41, Linus Torvalds wrote:
-> > On Jun 25, 2015 23:17, "Junichi Nomura" <j-nomura@ce.jp.nec.com <mailto:j-nomura@ce.jp.nec.com>> wrote:
-> >> On 06/25/15 23:37, Jens Axboe wrote:
-> >> >       block, dm: don't copy bios for request clones
-> >>
-> >> this change should not be pushed to mainline yet.
-> > 
-> > Hmm. I merged all of Jens' pull requests today, so it's now in my tree. What do?
+> On Fri, Jun 26, 2015 at 2:13 AM, Linux Kernel Mailing List
+> <linux-kernel@vger.kernel.org> wrote:
+> > Gitweb:     http://git.kernel.org/linus/;a=commit;h=66a636356647a9be8885c2ce2948de126577698a
+> > Commit:     66a636356647a9be8885c2ce2948de126577698a
+> > Parent:     40775257b97e27305cf5c2425be7acaa6edee4ea
+> > Refname:    refs/heads/master
+> > Author:     Joe Thornber <ejt@redhat.com>
+> > AuthorDate: Fri May 15 15:33:34 2015 +0100
+> > Committer:  Mike Snitzer <snitzer@redhat.com>
+> > CommitDate: Thu Jun 11 17:12:59 2015 -0400
+> >
+> >     dm cache: add stochastic-multi-queue (smq) policy
 > 
-> Then I think following 3 commits should be reverted.
+> > diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+> > index edcf4ab..b597273 100644
+> > --- a/drivers/md/Kconfig
+> > +++ b/drivers/md/Kconfig
+> > @@ -304,6 +304,18 @@ config DM_CACHE_MQ
+> >           This is meant to be a general purpose policy.  It prioritises
+> >           reads over writes.
+> >
+> > +config DM_CACHE_SMQ
+> > +       tristate "Stochastic MQ Cache Policy (EXPERIMENTAL)"
+> > +       depends on DM_CACHE
+> > +       default y
 > 
-> 2d76fff dm: cleanup methods that requeue requests
-> cbc4e3c dm: do not allocate any mempools for blk-mq request-based DM
-> 5f1b670 block, dm: don't copy bios for request clones
-> 
-> Reverting 5f1b670 involves conflicts in drvers/md/dm.c for
-> these 2 hunks due to diff contexts difference.
-> It's ok to revert those changes ignoring the contexts.
+> A feature cannot be "EXPERIMENTAL", and be enabled by default.
+> Please drop (at least) one of them.
 
-That is more than I'd care to put on Linus at this point.  I've prepared
-a DM pull request that fixes things up.  Apologies for not pressing this
-request-based DM partial completion issue further, it was an oversight
-on my part.  We'll have to get it fixed up properly and revisit for a
-future release.
+Thanks for your concern, but: no.
 
-Linus,
+If you look closer the entirety of DM cache is marked EXPERIMENTAL:
 
-The following changes since commit e262f34741522e0d821642e5449c6eeb512723fc:
-
-  dm stats: add support for request-based DM devices (2015-06-17 12:40:41 -0400)
-
-are available in the git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.2-fixes
-
-for you to fetch changes up to b5451e456840af027b794afc2c7c84c2a17f569b:
-
-  dm cache policy smq: fix "default" version to be 1.4.0 (2015-06-26 10:14:28 -0400)
-
-----------------------------------------------------------------
-- Revert block and DM core changes that removed request-based DM's
-  ability to handle partial request completions -- otherwise with the
-  current SCSI LLDs these changes could lead to silent data corruption.
-
-- Fix two DM version bumps that were missing from the initial 4.2 DM
-  pull request (enabled userspace lvm2 to know certain changes have been
-  made).
-
-----------------------------------------------------------------
-Mike Snitzer (4):
-      Revert "dm: do not allocate any mempools for blk-mq request-based DM"
-      Revert "block, dm: don't copy bios for request clones"
-      dm: bump the ioctl version to 4.32.0
-      dm cache policy smq: fix "default" version to be 1.4.0
-
- block/blk-core.c                 |  94 +++++++++++++++--
- drivers/md/dm-cache-policy-smq.c |   2 +-
- drivers/md/dm-table.c            |  29 ++----
- drivers/md/dm.c                  | 220 +++++++++++++++++++++++++++------------
- drivers/md/dm.h                  |   5 +-
- include/linux/blk_types.h        |   2 -
- include/linux/blkdev.h           |   6 +-
- include/uapi/linux/dm-ioctl.h    |   4 +-
- 8 files changed, 256 insertions(+), 106 deletions(-)
+config DM_CACHE
+       tristate "Cache target (EXPERIMENTAL)"
+...
+config DM_CACHE_MQ
+       tristate "MQ Cache Policy (EXPERIMENTAL)"
+...
+config DM_CACHE_SMQ
+       tristate "Stochastic MQ Cache Policy (EXPERIMENTAL)"
+...
+config DM_CACHE_CLEANER
+       tristate "Cleaner Cache Policy (EXPERIMENTAL)"
