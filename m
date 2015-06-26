@@ -1,37 +1,74 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [GIT PULL] Core block IO bits for 4.2
-Date: Fri, 26 Jun 2015 06:15:12 +0000
-Message-ID: <20150626061510.GA15036@xzibit.linux.bs1.fc.nec.co.jp>
+Date: Thu, 25 Jun 2015 23:41:06 -0700
+Message-ID: <CA+55aFzke6FF6j+1_cDZbCtM4YEF+1vy==JD72LxbKWzxBkWJA@mail.gmail.com>
 References: <20150625143716.GA13739@kernel.dk>
+	<20150626061510.GA15036@xzibit.linux.bs1.fc.nec.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-2022-jp"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150625143716.GA13739@kernel.dk>
-Content-Language: ja-JP
-Content-ID: <9435C87A9B9A0B4A84F5D31022C095BF@gisp.nec.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@fb.com>, "torvalds@linuxfoundation.org" <torvalds@linuxfoundation.org>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: multipart/mixed; boundary="===============0557951563339818264=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20150626061510.GA15036@xzibit.linux.bs1.fc.nec.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Jens Axboe <axboe@fb.com>, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi Jens,
+--===============0557951563339818264==
+Content-Type: multipart/alternative; boundary=001a11c2d4624bb5220519660664
 
-On 06/25/15 23:37, Jens Axboe wrote:
->       block, dm: don't copy bios for request clones
+--001a11c2d4624bb5220519660664
+Content-Type: text/plain; charset=UTF-8
 
-this change should not be pushed to mainline yet.
+On Jun 25, 2015 23:17, "Junichi Nomura" <j-nomura@ce.jp.nec.com> wrote:
+>
+> Hi Jens,
+>
+> On 06/25/15 23:37, Jens Axboe wrote:
+> >       block, dm: don't copy bios for request clones
+>
+> this change should not be pushed to mainline yet.
 
-Firstly, Christoph has a newer version of the patch that fixes silent
-data corruption problem:
-  https://www.redhat.com/archives/dm-devel/2015-May/msg00229.html
+Hmm. I merged all of Jens' pull requests today, so it's now in my tree.
+What do?
 
-And the new version still depends on LLDDs to always complete requests
-to the end when error happens, while block API doesn't enforce such a
-requirement. If the assumption is ever broken, the inconsistency between
-request and bio (e.g. rq->__sector and rq->bio) will cause silent data
-corruption:
-  https://www.redhat.com/archives/dm-devel/2015-June/msg00022.html
+     Linus
 
--- 
-Jun'ichi Nomura, NEC Corporation
+--001a11c2d4624bb5220519660664
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<p dir=3D"ltr"><br>
+On Jun 25, 2015 23:17, &quot;Junichi Nomura&quot; &lt;<a href=3D"mailto:j-n=
+omura@ce.jp.nec.com">j-nomura@ce.jp.nec.com</a>&gt; wrote:<br>
+&gt;<br>
+&gt; Hi Jens,<br>
+&gt;<br>
+&gt; On 06/25/15 23:37, Jens Axboe wrote:<br>
+&gt; &gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0block, dm: don&#39;t copy bios for requ=
+est clones<br>
+&gt;<br>
+&gt; this change should not be pushed to mainline yet.</p>
+<p dir=3D"ltr">Hmm. I merged all of Jens&#39; pull requests today, so it&#3=
+9;s now in my tree. What do?</p>
+<p dir=3D"ltr">=C2=A0=C2=A0=C2=A0=C2=A0 Linus</p>
+
+--001a11c2d4624bb5220519660664--
+
+
+--===============0557951563339818264==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0557951563339818264==--
