@@ -1,67 +1,84 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: udev cookie on DM_DEVICE_RELOAD
-Date: Mon, 29 Jun 2015 15:46:04 +0200
-Message-ID: <55914C1C.6050309@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: udev cookie on DM_DEVICE_RELOAD
+Date: Mon, 29 Jun 2015 10:02:20 -0400
+Message-ID: <20150629140220.GA1604@redhat.com>
+References: <55914C1C.6050309@suse.de>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <lvm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <55914C1C.6050309@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>, lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SGkgYWxsLAoKSSd2ZSBiZWVuIGRlYnVnZ2luZyB3ZWlyZCBmYWlsdXJlcyBpbiBtdWx0aXBhdGhp
-bmcsIHdoZXJlICdtdWx0aXBhdGgKLXInIHdvdWxkIG9jY2FzaW9uYWxseSBpbmNpZGUgbGliZGV2
-bWFwcGVyIHRvIGNyZWF0ZQpkZXZpY2Ugbm9kZXMgdW5kZXIgL2Rldi9tYXBwZXIgb24gaXQncyBv
-d24sIGluc3RlYWQgb2YgcmVseWluZyBvbgp1ZGV2IGZvciBkb2luZyBzby4KTG9va2luZyBpbiB0
-aGUgbG9ncywgSSd2ZSBmb3VuZDoKCkp1biAyOSAxNToxNTowNSB8IGxpYmRldm1hcHBlcjogaW9j
-dGwvbGliZG0taWZhY2UuYygxNzI1KTogZG0gcmVsb2FkCjM2MDA1MDhiNDAwMGNmMWMzMDAwMDgw
-MDAwMDJiMDAwMCAgTkYgICBbMTYzODRdICgqMSkKSnVuIDI5IDE1OjE1OjA1IHwgbGliZGV2bWFw
-cGVyOiBpb2N0bC9saWJkbS1pZmFjZS5jKDE2ODkpOiBDb29raWUKdmFsdWUgaXMgbm90IHNldCB3
-aGlsZSB0cnlpbmcgdG8gY2FsbCBETV9ERVZJQ0VfUkVTVU1FIGlvY3RsLgpQbGVhc2UsIGNvbnNp
-ZGVyIHVzaW5nIGxpYmRldm1hcHBlcidzIHVkZXYgc3luY2hyb25pc2F0aW9uIGludGVyZmFjZQpv
-ciBkaXNhYmxlIGl0IGV4cGxpY2l0bHkgYnkgY2FsbGluZyBkbV91ZGV2X3NldF9zeW5jX3N1cHBv
-cnQoMCkuCkp1biAyOSAxNToxNTowNSB8IGxpYmRldm1hcHBlcjogaW9jdGwvbGliZG0taWZhY2Uu
-YygxNjkxKTogU3dpdGNoaW5nCm9mZiBkZXZpY2UtbWFwcGVyIGFuZCBhbGwgc3Vic3lzdGVtIHJl
-bGF0ZWQgdWRldiBydWxlcy4gRmFsbGluZyBiYWNrCnRvIGxpYmRldm1hcHBlciBub2RlIGNyZWF0
-aW9uLgoKT2theSwgdGhhdCdsbCBleHBsYWluIGl0LgpUaGVuIEkndmUgYWRkZWQgYSBjb29raWUg
-dG8gdGhlIGNhbGwgb2YgRE1fREVWSUNFX1JFTE9BRCwgYW5kCmVuY291bnRlcmVkIGEgaGFuZzoK
-SnVuIDI5IDE1OjQxOjU1IHwgMzYwMDUwOGIxMDAxMDQ3Mzk1NjU2NTQzMTMxNTgwMDAxOiBhZGRt
-YXAgWzAKMTQzMzA1OTIwIG11bHRpcGF0aCAxIHF1ZXVlX2lmX25vX3BhdGggMCAxIDEgc2Vydmlj
-ZS10aW1lIDAgMSAxIDEwNDowIDFdCkp1biAyOSAxNTo0MTo1NSB8IGxpYmRldm1hcHBlcjogbGli
-ZG0tY29tbW9uLmMoMjEwNSk6IFVkZXYgY29va2llCjB4ZDRkNzI0NiAoc2VtaWQgNjA2MjA5OCkg
-Y3JlYXRlZApKdW4gMjkgMTU6NDE6NTUgfCBsaWJkZXZtYXBwZXI6IGxpYmRtLWNvbW1vbi5jKDIx
-MjUpOiBVZGV2IGNvb2tpZQoweGQ0ZDcyNDYgKHNlbWlkIDYwNjIwOTgpIGluY3JlbWVudGVkIHRv
-IDEKSnVuIDI5IDE1OjQxOjU1IHwgbGliZGV2bWFwcGVyOiBsaWJkbS1jb21tb24uYygxOTk3KTog
-VWRldiBjb29raWUKMHhkNGQ3MjQ2IChzZW1pZCA2MDYyMDk4KSBpbmNyZW1lbnRlZCB0byAyCkp1
-biAyOSAxNTo0MTo1NSB8IGxpYmRldm1hcHBlcjogbGliZG0tY29tbW9uLmMoMjIzOCk6IFVkZXYg
-Y29va2llCjB4ZDRkNzI0NiAoc2VtaWQgNjA2MjA5OCkgYXNzaWduZWQgdG8gUkVMT0FEIHRhc2so
-MSkgd2l0aCBmbGFncwpESVNBQkxFX0xJQlJBUllfRkFMTEJBQ0sgKDB4MjApCkp1biAyOSAxNTo0
-MTo1NSB8IGxpYmRldm1hcHBlcjogaW9jdGwvbGliZG0taWZhY2UuYygxNzI1KTogZG0gcmVsb2Fk
-CjM2MDA1MDhiMTAwMTA0NzM5NTY1NjU0MzEzMTU4MDAwMSAgTk5TICAgIFsxNjM4NF0gKCoxKQpK
-dW4gMjkgMTU6NDE6NTUgfCBsaWJkZXZtYXBwZXI6IGxpYmRtLWNvbW1vbi5jKDIwMzIpOiBVZGV2
-IGNvb2tpZQoweGQ0ZDcyNDYgKHNlbWlkIDYwNjIwOTgpIGRlY3JlbWVudGVkIHRvIDEKSnVuIDI5
-IDE1OjQxOjU1IHwgbGliZGV2bWFwcGVyOiBsaWJkbS1jb21tb24uYygyMjg4KTogVWRldiBjb29r
-aWUKMHhkNGQ3MjQ2IChzZW1pZCA2MDYyMDk4KSB3YWl0aW5nIGZvciB6ZXJvCihoYW5ncykKClNv
-IGFwcGFyZW50bHkgeW91IGNhbiBvbmx5IHNldCB0aGUgY29va2llIGZvciBETV9ERVZJQ0VfUkVT
-VU1FLApfbm90XyBETV9ERVZJQ0VfUkVMT0FELgoKV2hpY2ggaXMgb2RkLCBhcyBETV9ERVZJQ0Vf
-UkVMT0FEIGlzIHRoZSBvbmx5IGNhbGwgSSdsbCBldmVyIGRvOwphcHBhcmVudGx5IGl0J3MgYmVp
-bmcgdHJhbnNsYXRlZCBpbnRlcm5hbGx5IGludG8gYQpzdXNwZW5kL3JlbG9hZC9yZXN1bWUgY3lj
-bGUuCgpTaG91bGRuJ3QgZGV2aWNlLW1hcHBlciB0YWtlIGNhcmUgb2Ygc2V0dGluZyB0aGUgY29v
-a2llIGNvcnJlY3RseT8KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJ
-ICAgICAgICAgICAgICAgelNlcmllcyAmIFN0b3JhZ2UKaGFyZUBzdXNlLmRlCQkJICAgICAgICAg
-ICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5
-MDQwOSBOw7xybmJlcmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxk
-LCBELiBVcG1hbnl1LCBHLiBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1k
-ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
-Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Mon, Jun 29 2015 at  9:46am -0400,
+Hannes Reinecke <hare@suse.de> wrote:
+
+> Hi all,
+> 
+> I've been debugging weird failures in multipathing, where 'multipath
+> -r' would occasionally incide libdevmapper to create
+> device nodes under /dev/mapper on it's own, instead of relying on
+> udev for doing so.
+> Looking in the logs, I've found:
+> 
+> Jun 29 15:15:05 | libdevmapper: ioctl/libdm-iface.c(1725): dm reload
+> 3600508b4000cf1c300008000002b0000  NF   [16384] (*1)
+> Jun 29 15:15:05 | libdevmapper: ioctl/libdm-iface.c(1689): Cookie
+> value is not set while trying to call DM_DEVICE_RESUME ioctl.
+> Please, consider using libdevmapper's udev synchronisation interface
+> or disable it explicitly by calling dm_udev_set_sync_support(0).
+> Jun 29 15:15:05 | libdevmapper: ioctl/libdm-iface.c(1691): Switching
+> off device-mapper and all subsystem related udev rules. Falling back
+> to libdevmapper node creation.
+> 
+> Okay, that'll explain it.
+> Then I've added a cookie to the call of DM_DEVICE_RELOAD, and
+> encountered a hang:
+> Jun 29 15:41:55 | 3600508b1001047395656543131580001: addmap [0
+> 143305920 multipath 1 queue_if_no_path 0 1 1 service-time 0 1 1 104:0 1]
+> Jun 29 15:41:55 | libdevmapper: libdm-common.c(2105): Udev cookie
+> 0xd4d7246 (semid 6062098) created
+> Jun 29 15:41:55 | libdevmapper: libdm-common.c(2125): Udev cookie
+> 0xd4d7246 (semid 6062098) incremented to 1
+> Jun 29 15:41:55 | libdevmapper: libdm-common.c(1997): Udev cookie
+> 0xd4d7246 (semid 6062098) incremented to 2
+> Jun 29 15:41:55 | libdevmapper: libdm-common.c(2238): Udev cookie
+> 0xd4d7246 (semid 6062098) assigned to RELOAD task(1) with flags
+> DISABLE_LIBRARY_FALLBACK (0x20)
+> Jun 29 15:41:55 | libdevmapper: ioctl/libdm-iface.c(1725): dm reload
+> 3600508b1001047395656543131580001  NNS    [16384] (*1)
+> Jun 29 15:41:55 | libdevmapper: libdm-common.c(2032): Udev cookie
+> 0xd4d7246 (semid 6062098) decremented to 1
+> Jun 29 15:41:55 | libdevmapper: libdm-common.c(2288): Udev cookie
+> 0xd4d7246 (semid 6062098) waiting for zero
+> (hangs)
+> 
+> So apparently you can only set the cookie for DM_DEVICE_RESUME,
+> _not_ DM_DEVICE_RELOAD.
+> 
+> Which is odd, as DM_DEVICE_RELOAD is the only call I'll ever do;
+> apparently it's being translated internally into a
+> suspend/reload/resume cycle.
+> 
+> Shouldn't device-mapper take care of setting the cookie correctly?
+
+This is really a question for the lvm2 developers (Alasdair and Peter
+Rajnoha specifically, cc'd).
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
