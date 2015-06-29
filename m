@@ -1,13 +1,11 @@
-From: Doug Dumitru <doug@easyco.com>
+From: Gili B <gilib123@hotmail.com>
 Subject: Re: Device Mapper Persistent Configuration
-Date: Sun, 28 Jun 2015 10:18:46 -0700
-Message-ID: <CAFx4rwRQmB7EoxWOPRxqKgJ6mJPYcvVC7c58Q1aipec=Yz_u3Q@mail.gmail.com>
-References: <DUB115-W2767FC5A5D22E9D12ADFB596AB0@phx.gbl>
-Reply-To: doug@easyco.com, device-mapper development <dm-devel@redhat.com>
+Date: Mon, 29 Jun 2015 06:42:14 +0000
+Message-ID: <DUB115-W79BBA138E7A868AB8AA5696AA0@phx.gbl>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4421407946300985344=="
+Content-Type: multipart/mixed; boundary="===============1506608438445630244=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <DUB115-W2767FC5A5D22E9D12ADFB596AB0@phx.gbl>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,172 +15,159 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============4421407946300985344==
-Content-Type: multipart/alternative; boundary=20cf3078151c39b4cc0519972cec
+--===============1506608438445630244==
+Content-Type: multipart/alternative;
+	boundary="_154caf5e-745d-4a52-b4a8-d72f6f415440_"
 
---20cf3078151c39b4cc0519972cec
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+--_154caf5e-745d-4a52-b4a8-d72f6f415440_
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On Sun, Jun 28, 2015 at 8:21 AM, Gili B <gilib123@hotmail.com> wrote:
+SGkNCkkgZGlkbnQgcmVjZWl2ZSB0aGUgZW1haWwgYmVsb3csIHNvIEkndmUgY29waWVkIGFuZCBw
+YXN0ZWQgaXQgZnJvbSB0aGUgYXJjaGl2ZSAsIHNvcnkgLg0KIA0KVGhhbmtzIGZvciB0aGUgcmVw
+bHkgLi4NCkkgaGF2ZSBhIGZldyBmb2xsb3d1cCBxdWVzaW9uczoNCjEpIElmIEkgdXNlIGEgc3Bl
+Y2lhbCBzaWduYXR1cmUgdG8gaWRlbnRpZnkgZGlza3MsIGxpa2UgaW4gbWRyYWlkLCB3aHkgbXVz
+dCBJIGhhdmUgYSB1c2VyIHNwYWNlIHRvb2wgdG8gZGlzY292ZXIgZGlza3M/DQpJZiBJIHdhbnQg
+YWxsIHZvbHVtZXMgdXAgYW5kIHJlYWR5IGR1cmluZyBhIHJlYm9vdCwgSSBwcmVmZXIgdGhhdCB0
+aGUgbW9kdWxlIGRvIGl0IHdoZW4gaXQgbG9hZHMuDQpBIHVzZXIgc3BhY2UgcHJvZ3JhbSB3aWxs
+IHN0YXJ0IHRvbyBsYXRlIGluIHRoZSBib290IHByb2Nlc3MuDQoyKUNhbiB5b3UgcG9pbnQgbWUg
+dG8gc29tZSBndWlkZSBvbiBob3cgdG8gZXhwb3J0IHN0dWZmIGluIHByb2MgPw0KIA0KVGhhbmtz
+DQotZ2lsaQ0KIA0KIE9uIFN1biwgSnVuIDI4LCAyMDE1IGF0IDg6MjEgQU0sIEdpbGkgQiA8Z2ls
+aWIxMjMgaG90bWFpbCBjb20+IHdyb3RlOg0KDQpoaQ0KV2UgYXJlIHN0YXJ0aW5nIHdvcmtpbmcg
+b24gYSBuZXcgZGV2aWNlIG1hcHBlciBtb2R1bGUgd2hpY2ggaGFzIHRhcmdldHMgc2ltaWxhcg0K
+dG8gdGhlIG9uZXMgaW4gdGhpbiBtb2R1bGUgKHBvb2wgYW5kIHRoaW4pLCAgYnV0IGl0IGFkZHMg
+c29tZSBhZGRpdGlvbmFsIGZlYXR1cmVzLg0KVGhlIHVzZXIgc2hvdWxkIGJlIGFibGUgdG8gY3Jl
+YXRlIGFuZCB1c2UgZmlsZSBzeXN0ZW1zIG9uIHRoZSB0aGluIHZvbHVtZXMuDQpJIHdhbnRlZCB0
+byBrbm93IHdoYXQgaXMgdGhlIHJlY29tbWVuZGVkICB3YXkgdG8gbWFrZSB0aGUgY29uZmlndXJh
+dGlvbiB3aXRoIGRtc2V0dXANCnBlcnNpc3RlbnQgPw0KDQrigItZb3Ugc2hvdWxkIHByb2JhYmx5
+IHVzZSBtZHJhaWQgYXMgYW4gaW5zcGlyYXRpb24uICBQdXQgYSBzaWduYXR1cmUgYmxvY2sgb24g
+ZXZlcnkgbWVtYmVyIGRldmljZS4gIFlvdSBjYW4gdGhlbiB3cml0ZSBhIHVzZXItc3BhY2UgdG9v
+bCB0byBzY2FuIGRldmljZXMgYW5kIGZpbmQgdGhlIGNvbGxlY3Rpb25zLiAgQmUgc3VyZSB0byB1
+c2UgYSBnb29kICJzaWduYXR1cmUiIGZvciB5b3VyIHR5cGUgb2YgZGV2aWNlLCBwbHVzIGEgZ29v
+ZCBVVUlEIHNpZ25hdHVyZSBzbyB0aGF0IGRpZmZlcmVudCBnZW5lcmF0aW9ucyBjYW4gYmUgaWRl
+bnRpZmllZC4NCuKAiyBXZSB3YW50IHRoYXQgYWxsIGZpbGUgc3lzdGVtcyB3aWxsIGJlIGF2YWls
+YWJsZSBhZnRlciByZWJvb3QuDQoNCuKAi0lmIHlvdSBnZXQgdGhlIGRldmljZSBydW5uaW5nIGVh
+cmx5IGVub3VnaCwgdGhlbiBmc3RhYiBzaG91bGQgYmUgYWJsZSB0byBtb3VudCBmaWxlIHN5c3Rl
+bXMuDQrigIsgU2hvdWxkIHdlIHdyaXRlIG91ciBvd24gY29uZmlndXJhdGlvbiB0b29sPyAgc2hv
+dWxkIHdlIGFkZCBzcGVjaWFsIGNvbmZpZ3VyYXRpb24gZmlsZXM/DQoNCuKAi1lvdSB3aWxsIHBy
+b2JhYmx5IG5lZWQgYSB1c2VyLXNwYWNlIHRvb2wuICBZb3UgY2FuIHByb2JhYmx5IGdldCBhd2F5
+IHdpdGggbm8gY29uZmlndXJhdGlvbiBmaWxlLCBidXQgeW91IHNob3VsZCBhZ2FpbiB1c2UgbWRy
+YWlkIGFzIGluc3BpcmF0aW9uIHNvIHRoYXQgeW91ciB1c2VyLXNwYWNlIHRvb2wgZ2V0cyBsaW1p
+dHMgb2Ygd2hlcmUgdG8gbG9vayBmb3IgbWVtYmVyIHBpZWNlcy4NCuKAiyBTaG91bGQgdGhlIGtl
+cm5lbCBtb2R1bGUgd2Ugd3JpdGUgLCBhdXRvbWF0aWNhbGx5IGRpc2NvdmVyIGFsbCB0aGUgY29u
+ZmlncmF0aW9uIGFuZCBpbml0aWFsaXplIGFjY29yZGluZ2x5Pw0KIA0KIA0KUmVnYXJkaW5nIGRl
+YnVnIC0gSXMgdGhlcmUgYSBnZW5lcmljIHdheSB0byBydW4gZG1zZXR1cCBmb3IgZXhhbXBsZSB0
+aGF0DQpwcmludHMgc29tZSBpbnNpZGUgZGV0YWlscyBvbiB0aGUgdGFyZ2V0cz8gKGZvciBleGFt
+cGxlIG51bWJlciBvZiBvdXRzdGFuZGluZyBpb3MsIG1lbW9yeSB1c2VkIGV0YykNCg0K4oCLWW91
+IGNhbiBkbyB0aGlzIHRocmVlIHdheXMuICAxKSAgYnVpbGQgaW4gSU9DVEwgaW50byB5b3VyIG1v
+ZHVsZSB0aGF0IGNhbiBxdWVyeSBzdHVmZi4gIDIpIGV4cG9ydCBzdHVmZiBpbiAvc3lzLiAgMykg
+ZXhwb3J0IHN0dWZmIGluIC9wcm9jLiAgSSBwZXJzb25hbGx5IGxpa2UgZXhwb3J0aW5nIGRlYnVn
+IHN0dWZmIGludG8gL3Byb2MuICBSZW1lbWJlciB0aGF0IHByaW50ayBpcyB5b3VyIGZyaWVuZC4g
+IEkgaGF2ZSBldmVuIGNyZWF0ZWQgImNvbW1hbmQiIGZpbGUgaW4gcHJvYyB0aGF0IHRoZW4gZHVt
+cCBkZWJ1ZyBpbmZvcm1hdGlvbiB3aXRoIHByaW50ay4gIElmIHlvdSB1c2UgL3Byb2MsIHlvdSBu
+ZWVkIHRvIGhhbmRsZSBtdWx0aXBsZSBpbnN0YW5jZXMgb2YgeW91ciBtYXBwZXIuICBJIHVzZSAv
+cHJvYy97bXlfcHJvamVjdF9uYW1lfS97aW5zdGFuY2VfbmFtZX0vLi4uDQogICAJCSAJICAgCQkg
+IA==
 
-> hi
-> We are starting working on a new device mapper module which has targets
-> similar
-> to the ones in thin module (pool and thin),  but it adds some additional
-> features.
-> The user should be able to create and use file systems on the thin volume=
-s.
-> I wanted to know what is the recommended  way to make the configuration
-> with dmsetup
-> persistent ?
->
+--_154caf5e-745d-4a52-b4a8-d72f6f415440_
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-=E2=80=8BYou should probably use mdraid as an inspiration.  Put a signature=
- block
-on every member device.  You can then write a user-space tool to scan
-devices and find the collections.  Be sure to use a good "signature" for
-your type of device, plus a good UUID signature so that different
-generations can be identified.
-=E2=80=8B
+PGh0bWw+DQo8aGVhZD4NCjxzdHlsZT48IS0tDQouaG1tZXNzYWdlIFANCnsNCm1hcmdpbjowcHg7
+DQpwYWRkaW5nOjBweA0KfQ0KYm9keS5obW1lc3NhZ2UNCnsNCmZvbnQtc2l6ZTogMTJwdDsNCmZv
+bnQtZmFtaWx5OkNhbGlicmkNCn0NCi0tPjwvc3R5bGU+PC9oZWFkPg0KPGJvZHkgY2xhc3M9J2ht
+bWVzc2FnZSc+PGRpdiBkaXI9J2x0cic+SGk8QlI+SSBkaWRudCByZWNlaXZlIHRoZSBlbWFpbCBi
+ZWxvdywgc28gSSd2ZSBjb3BpZWQgYW5kIHBhc3RlZCBpdCBmcm9tIHRoZSBhcmNoaXZlICwgc29y
+eSAuPEJSPiZuYnNwOzxCUj5UaGFua3MgZm9yIHRoZSByZXBseSAuLjxCUj5JIGhhdmUgYSBmZXcg
+Zm9sbG93dXAgcXVlc2lvbnM6PEJSPjEpIElmIEkgdXNlIGEgc3BlY2lhbCBzaWduYXR1cmUgdG8g
+aWRlbnRpZnkgZGlza3MsIGxpa2UgaW4gbWRyYWlkLCB3aHkgbXVzdCBJIGhhdmUgYSB1c2VyIHNw
+YWNlIHRvb2wgdG8gZGlzY292ZXIgZGlza3M/PEJSPklmIEkgd2FudCBhbGwgdm9sdW1lcyB1cCBh
+bmQgcmVhZHkgZHVyaW5nIGEgcmVib290LCBJIHByZWZlciB0aGF0IHRoZSBtb2R1bGUgZG8gaXQg
+d2hlbiBpdCBsb2Fkcy48QlI+QSB1c2VyIHNwYWNlIHByb2dyYW0gd2lsbCBzdGFydCB0b28gbGF0
+ZSBpbiB0aGUgYm9vdCBwcm9jZXNzLjxCUj4yKUNhbiB5b3UgcG9pbnQgbWUgdG8gc29tZSBndWlk
+ZSBvbiBob3cgdG8gZXhwb3J0IHN0dWZmIGluIHByb2MgPzxCUj4mbmJzcDs8QlI+VGhhbmtzPEJS
+Pi1naWxpPEJSPiZuYnNwOzxCUj4mbmJzcDtPbiBTdW4sIEp1biAyOCwgMjAxNSBhdCA4OjIxIEFN
+LCBHaWxpIEIgPHNwYW4gZGlyPSJsdHIiPiZsdDs8YSBocmVmPSJtYWlsdG86Z2lsaWIxMjMlMjBo
+b3RtYWlsJTIwY29tIiB0YXJnZXQ9Il9ibGFuayIgcmVsPSJub2ZvbGxvdyI+Z2lsaWIxMjMgaG90
+bWFpbCBjb208L2E+Jmd0Ozwvc3Bhbj4gd3JvdGU6PGJyPjxCUj48YmxvY2txdW90ZSBjbGFzcz0i
+Z21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46IDBweCAwcHggMHB4IDAuOGV4OyBwYWRkaW5nLWxl
+ZnQ6IDFleDsgYm9yZGVyLWxlZnQtY29sb3I6IHJnYigyMDQsIDIwNCwgMjA0KTsgYm9yZGVyLWxl
+ZnQtd2lkdGg6IDFweDsgYm9yZGVyLWxlZnQtc3R5bGU6IHNvbGlkOyI+PGRpdj48ZGl2IGRpcj0i
+bHRyIj5oaTxicj5XZSBhcmUgc3RhcnRpbmcgd29ya2luZyBvbiBhIG5ldyBkZXZpY2UgbWFwcGVy
+IG1vZHVsZSB3aGljaCZuYnNwO2hhcyB0YXJnZXRzIHNpbWlsYXI8YnI+dG8gdGhlIG9uZXMgaW4g
+dGhpbiBtb2R1bGUgKHBvb2wgYW5kIHRoaW4pLCZuYnNwOyBidXQgaXQgYWRkcyBzb21lIGFkZGl0
+aW9uYWwgZmVhdHVyZXMuPGJyPlRoZSB1c2VyIHNob3VsZCBiZSBhYmxlIHRvIGNyZWF0ZSBhbmQg
+dXNlIGZpbGUgc3lzdGVtcyBvbiB0aGUgdGhpbiB2b2x1bWVzLjxicj5JIHdhbnRlZCB0byBrbm93
+IHdoYXQmbmJzcDtpcyB0aGUgcmVjb21tZW5kZWQgJm5ic3A7d2F5IHRvIG1ha2UgdGhlIGNvbmZp
+Z3VyYXRpb24gd2l0aCBkbXNldHVwPGJyPnBlcnNpc3RlbnQgPzxicj48L2Rpdj48L2Rpdj48L2Js
+b2NrcXVvdGU+PGRpdj48YnI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQt
+ZmFtaWx5OiBhcmlhbCxoZWx2ZXRpY2Esc2Fucy1zZXJpZjsgZm9udC1zaXplOiBzbWFsbDsgZGlz
+cGxheTogaW5saW5lOyI+4oCLWW91IHNob3VsZCBwcm9iYWJseSB1c2UgbWRyYWlkIGFzIGFuIGlu
+c3BpcmF0aW9uLiZuYnNwOyBQdXQgYSBzaWduYXR1cmUgYmxvY2sgb24gZXZlcnkgbWVtYmVyIGRl
+dmljZS4mbmJzcDsgWW91IGNhbiB0aGVuIHdyaXRlIGEgdXNlci1zcGFjZSB0b29sIHRvIHNjYW4g
+ZGV2aWNlcyBhbmQgZmluZCB0aGUgY29sbGVjdGlvbnMuJm5ic3A7IEJlIHN1cmUgdG8gdXNlIGEg
+Z29vZCAic2lnbmF0dXJlIiBmb3IgeW91ciB0eXBlIG9mIGRldmljZSwgcGx1cyBhIGdvb2QgVVVJ
+RCBzaWduYXR1cmUgc28gdGhhdCBkaWZmZXJlbnQgZ2VuZXJhdGlvbnMgY2FuIGJlIGlkZW50aWZp
+ZWQuPGJyPuKAizwvZGl2PiZuYnNwOzwvZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90
+ZSIgc3R5bGU9Im1hcmdpbjogMHB4IDBweCAwcHggMC44ZXg7IHBhZGRpbmctbGVmdDogMWV4OyBi
+b3JkZXItbGVmdC1jb2xvcjogcmdiKDIwNCwgMjA0LCAyMDQpOyBib3JkZXItbGVmdC13aWR0aDog
+MXB4OyBib3JkZXItbGVmdC1zdHlsZTogc29saWQ7Ij48ZGl2PjxkaXYgZGlyPSJsdHIiPldlJm5i
+c3A7d2FudCB0aGF0IGFsbCBmaWxlIHN5c3RlbXMgd2lsbCBiZSBhdmFpbGFibGUgYWZ0ZXIgcmVi
+b290Ljxicj48L2Rpdj48L2Rpdj48L2Jsb2NrcXVvdGU+PGRpdj48YnI+PGRpdiBjbGFzcz0iZ21h
+aWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiBhcmlhbCxoZWx2ZXRpY2Esc2Fucy1zZXJp
+ZjsgZm9udC1zaXplOiBzbWFsbDsgZGlzcGxheTogaW5saW5lOyI+4oCLSWYgeW91IGdldCB0aGUg
+ZGV2aWNlIHJ1bm5pbmcgZWFybHkgZW5vdWdoLCB0aGVuIGZzdGFiIHNob3VsZCBiZSBhYmxlIHRv
+IG1vdW50IGZpbGUgc3lzdGVtcy48YnI+4oCLPC9kaXY+Jm5ic3A7PC9kaXY+PGJsb2NrcXVvdGUg
+Y2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOiAwcHggMHB4IDBweCAwLjhleDsgcGFk
+ZGluZy1sZWZ0OiAxZXg7IGJvcmRlci1sZWZ0LWNvbG9yOiByZ2IoMjA0LCAyMDQsIDIwNCk7IGJv
+cmRlci1sZWZ0LXdpZHRoOiAxcHg7IGJvcmRlci1sZWZ0LXN0eWxlOiBzb2xpZDsiPjxkaXY+PGRp
+diBkaXI9Imx0ciI+U2hvdWxkIHdlIHdyaXRlIG91ciBvd24gY29uZmlndXJhdGlvbiB0b29sPyAm
+bmJzcDtzaG91bGQgd2UgYWRkIHNwZWNpYWwgY29uZmlndXJhdGlvbiBmaWxlcz88YnI+PC9kaXY+
+PC9kaXY+PC9ibG9ja3F1b3RlPjxkaXY+PGJyPjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0
+eWxlPSJmb250LWZhbWlseTogYXJpYWwsaGVsdmV0aWNhLHNhbnMtc2VyaWY7IGZvbnQtc2l6ZTog
+c21hbGw7IGRpc3BsYXk6IGlubGluZTsiPuKAi1lvdSB3aWxsIHByb2JhYmx5IG5lZWQgYSB1c2Vy
+LXNwYWNlIHRvb2wuJm5ic3A7IFlvdSBjYW4gcHJvYmFibHkgZ2V0IGF3YXkgd2l0aCBubyBjb25m
+aWd1cmF0aW9uIGZpbGUsIGJ1dCB5b3Ugc2hvdWxkIGFnYWluIHVzZSBtZHJhaWQgYXMgaW5zcGly
+YXRpb24gc28gdGhhdCB5b3VyIHVzZXItc3BhY2UgdG9vbCBnZXRzIGxpbWl0cyBvZiB3aGVyZSB0
+byBsb29rIGZvciBtZW1iZXIgcGllY2VzLjxicj7igIs8L2Rpdj4mbmJzcDs8L2Rpdj48YmxvY2tx
+dW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46IDBweCAwcHggMHB4IDAuOGV4
+OyBwYWRkaW5nLWxlZnQ6IDFleDsgYm9yZGVyLWxlZnQtY29sb3I6IHJnYigyMDQsIDIwNCwgMjA0
+KTsgYm9yZGVyLWxlZnQtd2lkdGg6IDFweDsgYm9yZGVyLWxlZnQtc3R5bGU6IHNvbGlkOyI+PGRp
+dj48ZGl2IGRpcj0ibHRyIj5TaG91bGQgdGhlIGtlcm5lbCBtb2R1bGUgd2Ugd3JpdGUgLCBhdXRv
+bWF0aWNhbGx5IGRpc2NvdmVyIGFsbCB0aGUgY29uZmlncmF0aW9uIGFuZCBpbml0aWFsaXplIGFj
+Y29yZGluZ2x5Pzxicj4mbmJzcDs8YnI+Jm5ic3A7PGJyPlJlZ2FyZGluZyBkZWJ1ZyAtIElzIHRo
+ZXJlIGEgZ2VuZXJpYyB3YXkgdG8gcnVuIGRtc2V0dXAgZm9yIGV4YW1wbGUgdGhhdDxicj5wcmlu
+dHMgc29tZSBpbnNpZGUgZGV0YWlscyBvbiB0aGUgdGFyZ2V0cz8gKGZvciBleGFtcGxlIG51bWJl
+ciBvZiBvdXRzdGFuZGluZyBpb3MsIG1lbW9yeSB1c2VkIGV0Yyk8YnI+PC9kaXY+PC9kaXY+PC9i
+bG9ja3F1b3RlPjxkaXY+PGJyPjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250
+LWZhbWlseTogYXJpYWwsaGVsdmV0aWNhLHNhbnMtc2VyaWY7IGZvbnQtc2l6ZTogc21hbGw7IGRp
+c3BsYXk6IGlubGluZTsiPuKAi1lvdSBjYW4gZG8gdGhpcyB0aHJlZSB3YXlzLiZuYnNwOyAxKSZu
+YnNwOyBidWlsZCBpbiBJT0NUTCBpbnRvIHlvdXIgbW9kdWxlIHRoYXQgY2FuIHF1ZXJ5IHN0dWZm
+LiZuYnNwOyAyKSBleHBvcnQgc3R1ZmYgaW4gL3N5cy4mbmJzcDsgMykgZXhwb3J0IHN0dWZmIGlu
+IC9wcm9jLiZuYnNwOyBJIHBlcnNvbmFsbHkgbGlrZSBleHBvcnRpbmcgZGVidWcgc3R1ZmYgaW50
+byAvcHJvYy4mbmJzcDsgUmVtZW1iZXIgdGhhdCBwcmludGsgaXMgeW91ciBmcmllbmQuJm5ic3A7
+IEkgaGF2ZSBldmVuIGNyZWF0ZWQgImNvbW1hbmQiIGZpbGUgaW4gcHJvYyB0aGF0IHRoZW4gZHVt
+cCBkZWJ1ZyBpbmZvcm1hdGlvbiB3aXRoIHByaW50ay4mbmJzcDsgSWYgeW91IHVzZSAvcHJvYywg
+eW91IG5lZWQgdG8gaGFuZGxlIG11bHRpcGxlIGluc3RhbmNlcyBvZiB5b3VyIG1hcHBlci4mbmJz
+cDsgSSB1c2UgL3Byb2Mve215X3Byb2plY3RfbmFtZX0ve2luc3RhbmNlX25hbWV9Ly4uLjxicj48
+L2Rpdj48L2Rpdj48ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZh
+bWlseTogYXJpYWwsaGVsdmV0aWNhLHNhbnMtc2VyaWY7IGZvbnQtc2l6ZTogc21hbGw7IGRpc3Bs
+YXk6IGlubGluZTsiPiZuYnNwOzwvZGl2PjwvZGl2PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVm
+YXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiBhcmlhbCxoZWx2ZXRpY2Esc2Fucy1zZXJpZjsgZm9u
+dC1zaXplOiBzbWFsbDsgZGlzcGxheTogaW5saW5lOyI+Jm5ic3A7PC9kaXY+PC9kaXY+IAkJIAkg
+ICAJCSAgPC9kaXY+PC9ib2R5Pg0KPC9odG1sPg==
 
-
-> We want that all file systems will be available after reboot.
->
-
-=E2=80=8BIf you get the device running early enough, then fstab should be a=
-ble to
-mount file systems.
-=E2=80=8B
-
-
-> Should we write our own configuration tool?  should we add special
-> configuration files?
->
-
-=E2=80=8BYou will probably need a user-space tool.  You can probably get aw=
-ay with
-no configuration file, but you should again use mdraid as inspiration so
-that your user-space tool gets limits of where to look for member pieces.
-=E2=80=8B
-
-
-> Should the kernel module we write , automatically discover all the
-> configration and initialize accordingly?
->
->
-> Regarding debug - Is there a generic way to run dmsetup for example that
-> prints some inside details on the targets? (for example number of
-> outstanding ios, memory used etc)
->
-
-=E2=80=8BYou can do this three ways.  1)  build in IOCTL into your module t=
-hat can
-query stuff.  2) export stuff in /sys.  3) export stuff in /proc.  I
-personally like exporting debug stuff into /proc.  Remember that printk is
-your friend.  I have even created "command" file in proc that then dump
-debug information with printk.  If you use /proc, you need to handle
-multiple instances of your mapper.  I use
-/proc/{my_project_name}/{instance_name}/...
-=E2=80=8B
-
-
->
->
-> Thanks
-> -gili
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
-
-
-
---=20
-Doug Dumitru
-EasyCo LLC
-
---20cf3078151c39b4cc0519972cec
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><div class=3D"gmail_default" style=3D"font-family:arial,he=
-lvetica,sans-serif;font-size:small"><br></div><div class=3D"gmail_extra"><b=
-r><div class=3D"gmail_quote">On Sun, Jun 28, 2015 at 8:21 AM, Gili B <span =
-dir=3D"ltr">&lt;<a href=3D"mailto:gilib123@hotmail.com" target=3D"_blank">g=
-ilib123@hotmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quo=
-te" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"=
->
-
-
-<div><div dir=3D"ltr">hi<br>We are starting working on a new device mapper =
-module which=C2=A0has targets similar<br>to the ones in thin module (pool a=
-nd thin),=C2=A0 but it adds some additional features.<br>The user should be=
- able to create and use file systems on the thin volumes.<br>I wanted to kn=
-ow what=C2=A0is the recommended =C2=A0way to make the configuration with dm=
-setup<br>persistent ?<br></div></div></blockquote><div><br><div class=3D"gm=
-ail_default" style=3D"font-family:arial,helvetica,sans-serif;font-size:smal=
-l;display:inline">=E2=80=8BYou should probably use mdraid as an inspiration=
-.=C2=A0 Put a signature block on every member device.=C2=A0 You can then wr=
-ite a user-space tool to scan devices and find the collections.=C2=A0 Be su=
-re to use a good &quot;signature&quot; for your type of device, plus a good=
- UUID signature so that different generations can be identified.<br>=E2=80=
-=8B</div>=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 =
-0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div><div dir=3D"ltr">W=
-e=C2=A0want that all file systems will be available after reboot.<br></div>=
-</div></blockquote><div><br><div class=3D"gmail_default" style=3D"font-fami=
-ly:arial,helvetica,sans-serif;font-size:small;display:inline">=E2=80=8BIf y=
-ou get the device running early enough, then fstab should be able to mount =
-file systems.<br>=E2=80=8B</div>=C2=A0</div><blockquote class=3D"gmail_quot=
-e" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">=
-<div><div dir=3D"ltr">Should we write our own configuration tool? =C2=A0sho=
-uld we add special configuration files?<br></div></div></blockquote><div><b=
-r><div class=3D"gmail_default" style=3D"font-family:arial,helvetica,sans-se=
-rif;font-size:small;display:inline">=E2=80=8BYou will probably need a user-=
-space tool.=C2=A0 You can probably get away with no configuration file, but=
- you should again use mdraid as inspiration so that your user-space tool ge=
-ts limits of where to look for member pieces.<br>=E2=80=8B</div>=C2=A0</div=
-><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1=
-px #ccc solid;padding-left:1ex"><div><div dir=3D"ltr">Should the kernel mod=
-ule we write , automatically discover all the configration and initialize a=
-ccordingly?<br>=C2=A0<br>=C2=A0<br>Regarding debug - Is there a generic way=
- to run dmsetup for example that<br>prints some inside details on the targe=
-ts? (for example number of outstanding ios, memory used etc)<br></div></div=
-></blockquote><div><br><div class=3D"gmail_default" style=3D"font-family:ar=
-ial,helvetica,sans-serif;font-size:small;display:inline">=E2=80=8BYou can d=
-o this three ways.=C2=A0 1)=C2=A0 build in IOCTL into your module that can =
-query stuff.=C2=A0 2) export stuff in /sys.=C2=A0 3) export stuff in /proc.=
-=C2=A0 I personally like exporting debug stuff into /proc.=C2=A0 Remember t=
-hat printk is your friend.=C2=A0 I have even created &quot;command&quot; fi=
-le in proc that then dump debug information with printk.=C2=A0 If you use /=
-proc, you need to handle multiple instances of your mapper.=C2=A0 I use /pr=
-oc/{my_project_name}/{instance_name}/...<br>=E2=80=8B</div>=C2=A0</div><blo=
-ckquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #c=
-cc solid;padding-left:1ex"><div><div dir=3D"ltr">=C2=A0<br>=C2=A0<br>Thanks=
-<span class=3D"HOEnZb"><font color=3D"#888888"><br>-gili<br> 		 	   		  </f=
-ont></span></div></div>
-<br>--<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
-<br></blockquote></div><br><br clear=3D"all"><br>-- <br><div class=3D"gmail=
-_signature">Doug Dumitru<br>EasyCo LLC<br></div>
-</div></div>
-
---20cf3078151c39b4cc0519972cec--
+--_154caf5e-745d-4a52-b4a8-d72f6f415440_--
 
 
---===============4421407946300985344==
+--===============1506608438445630244==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============4421407946300985344==--
+--===============1506608438445630244==--
