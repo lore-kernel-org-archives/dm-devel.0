@@ -1,13 +1,12 @@
-From: Sami Tolvanen <samitolvanen@google.com>
-Subject: [PATCH] dm verity: remove unused mempool
-Date: Mon, 29 Jun 2015 14:14:00 +0100
-Message-ID: <20150629131400.GA18829@google.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: udev cookie on DM_DEVICE_RELOAD
+Date: Mon, 29 Jun 2015 15:46:04 +0200
+Message-ID: <55914C1C.6050309@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,62 +16,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Since commit 003b5c5719f159f4f4bf97511c4702a0638313dd, vec_mempool in
-struct dm-verity is no longer used. Remove it and related definitions.
-
-Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
-
---
- drivers/md/dm-verity.c |   15 ---------------
- 1 file changed, 15 deletions(-)
-
-diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
-index bb9c6a0..3adb332 100644
---- a/drivers/md/dm-verity.c
-+++ b/drivers/md/dm-verity.c
-@@ -26,8 +26,6 @@
- #define DM_VERITY_ENV_LENGTH		42
- #define DM_VERITY_ENV_VAR_NAME		"DM_VERITY_ERR_BLOCK_NR"
- 
--#define DM_VERITY_IO_VEC_INLINE		16
--#define DM_VERITY_MEMPOOL_SIZE		4
- #define DM_VERITY_DEFAULT_PREFETCH_SIZE	262144
- 
- #define DM_VERITY_MAX_LEVELS		63
-@@ -76,8 +74,6 @@ struct dm_verity {
- 	enum verity_mode mode;	/* mode for handling verification errors */
- 	unsigned corrupted_errs;/* Number of errors for corrupted blocks */
- 
--	mempool_t *vec_mempool;	/* mempool of bio vector */
--
- 	struct workqueue_struct *verify_wq;
- 
- 	/* starting blocks for each tree level. 0 is the lowest level. */
-@@ -691,9 +687,6 @@ static void verity_dtr(struct dm_target *ti)
- 	if (v->verify_wq)
- 		destroy_workqueue(v->verify_wq);
- 
--	if (v->vec_mempool)
--		mempool_destroy(v->vec_mempool);
--
- 	if (v->bufio)
- 		dm_bufio_client_destroy(v->bufio);
- 
-@@ -962,14 +955,6 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 
- 	ti->per_bio_data_size = roundup(sizeof(struct dm_verity_io) + v->shash_descsize + v->digest_size * 2, __alignof__(struct dm_verity_io));
- 
--	v->vec_mempool = mempool_create_kmalloc_pool(DM_VERITY_MEMPOOL_SIZE,
--					BIO_MAX_PAGES * sizeof(struct bio_vec));
--	if (!v->vec_mempool) {
--		ti->error = "Cannot allocate vector mempool";
--		r = -ENOMEM;
--		goto bad;
--	}
--
- 	/* WQ_UNBOUND greatly improves performance when running on ramdisk */
- 	v->verify_wq = alloc_workqueue("kverityd", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND, num_online_cpus());
- 	if (!v->verify_wq) {
+SGkgYWxsLAoKSSd2ZSBiZWVuIGRlYnVnZ2luZyB3ZWlyZCBmYWlsdXJlcyBpbiBtdWx0aXBhdGhp
+bmcsIHdoZXJlICdtdWx0aXBhdGgKLXInIHdvdWxkIG9jY2FzaW9uYWxseSBpbmNpZGUgbGliZGV2
+bWFwcGVyIHRvIGNyZWF0ZQpkZXZpY2Ugbm9kZXMgdW5kZXIgL2Rldi9tYXBwZXIgb24gaXQncyBv
+d24sIGluc3RlYWQgb2YgcmVseWluZyBvbgp1ZGV2IGZvciBkb2luZyBzby4KTG9va2luZyBpbiB0
+aGUgbG9ncywgSSd2ZSBmb3VuZDoKCkp1biAyOSAxNToxNTowNSB8IGxpYmRldm1hcHBlcjogaW9j
+dGwvbGliZG0taWZhY2UuYygxNzI1KTogZG0gcmVsb2FkCjM2MDA1MDhiNDAwMGNmMWMzMDAwMDgw
+MDAwMDJiMDAwMCAgTkYgICBbMTYzODRdICgqMSkKSnVuIDI5IDE1OjE1OjA1IHwgbGliZGV2bWFw
+cGVyOiBpb2N0bC9saWJkbS1pZmFjZS5jKDE2ODkpOiBDb29raWUKdmFsdWUgaXMgbm90IHNldCB3
+aGlsZSB0cnlpbmcgdG8gY2FsbCBETV9ERVZJQ0VfUkVTVU1FIGlvY3RsLgpQbGVhc2UsIGNvbnNp
+ZGVyIHVzaW5nIGxpYmRldm1hcHBlcidzIHVkZXYgc3luY2hyb25pc2F0aW9uIGludGVyZmFjZQpv
+ciBkaXNhYmxlIGl0IGV4cGxpY2l0bHkgYnkgY2FsbGluZyBkbV91ZGV2X3NldF9zeW5jX3N1cHBv
+cnQoMCkuCkp1biAyOSAxNToxNTowNSB8IGxpYmRldm1hcHBlcjogaW9jdGwvbGliZG0taWZhY2Uu
+YygxNjkxKTogU3dpdGNoaW5nCm9mZiBkZXZpY2UtbWFwcGVyIGFuZCBhbGwgc3Vic3lzdGVtIHJl
+bGF0ZWQgdWRldiBydWxlcy4gRmFsbGluZyBiYWNrCnRvIGxpYmRldm1hcHBlciBub2RlIGNyZWF0
+aW9uLgoKT2theSwgdGhhdCdsbCBleHBsYWluIGl0LgpUaGVuIEkndmUgYWRkZWQgYSBjb29raWUg
+dG8gdGhlIGNhbGwgb2YgRE1fREVWSUNFX1JFTE9BRCwgYW5kCmVuY291bnRlcmVkIGEgaGFuZzoK
+SnVuIDI5IDE1OjQxOjU1IHwgMzYwMDUwOGIxMDAxMDQ3Mzk1NjU2NTQzMTMxNTgwMDAxOiBhZGRt
+YXAgWzAKMTQzMzA1OTIwIG11bHRpcGF0aCAxIHF1ZXVlX2lmX25vX3BhdGggMCAxIDEgc2Vydmlj
+ZS10aW1lIDAgMSAxIDEwNDowIDFdCkp1biAyOSAxNTo0MTo1NSB8IGxpYmRldm1hcHBlcjogbGli
+ZG0tY29tbW9uLmMoMjEwNSk6IFVkZXYgY29va2llCjB4ZDRkNzI0NiAoc2VtaWQgNjA2MjA5OCkg
+Y3JlYXRlZApKdW4gMjkgMTU6NDE6NTUgfCBsaWJkZXZtYXBwZXI6IGxpYmRtLWNvbW1vbi5jKDIx
+MjUpOiBVZGV2IGNvb2tpZQoweGQ0ZDcyNDYgKHNlbWlkIDYwNjIwOTgpIGluY3JlbWVudGVkIHRv
+IDEKSnVuIDI5IDE1OjQxOjU1IHwgbGliZGV2bWFwcGVyOiBsaWJkbS1jb21tb24uYygxOTk3KTog
+VWRldiBjb29raWUKMHhkNGQ3MjQ2IChzZW1pZCA2MDYyMDk4KSBpbmNyZW1lbnRlZCB0byAyCkp1
+biAyOSAxNTo0MTo1NSB8IGxpYmRldm1hcHBlcjogbGliZG0tY29tbW9uLmMoMjIzOCk6IFVkZXYg
+Y29va2llCjB4ZDRkNzI0NiAoc2VtaWQgNjA2MjA5OCkgYXNzaWduZWQgdG8gUkVMT0FEIHRhc2so
+MSkgd2l0aCBmbGFncwpESVNBQkxFX0xJQlJBUllfRkFMTEJBQ0sgKDB4MjApCkp1biAyOSAxNTo0
+MTo1NSB8IGxpYmRldm1hcHBlcjogaW9jdGwvbGliZG0taWZhY2UuYygxNzI1KTogZG0gcmVsb2Fk
+CjM2MDA1MDhiMTAwMTA0NzM5NTY1NjU0MzEzMTU4MDAwMSAgTk5TICAgIFsxNjM4NF0gKCoxKQpK
+dW4gMjkgMTU6NDE6NTUgfCBsaWJkZXZtYXBwZXI6IGxpYmRtLWNvbW1vbi5jKDIwMzIpOiBVZGV2
+IGNvb2tpZQoweGQ0ZDcyNDYgKHNlbWlkIDYwNjIwOTgpIGRlY3JlbWVudGVkIHRvIDEKSnVuIDI5
+IDE1OjQxOjU1IHwgbGliZGV2bWFwcGVyOiBsaWJkbS1jb21tb24uYygyMjg4KTogVWRldiBjb29r
+aWUKMHhkNGQ3MjQ2IChzZW1pZCA2MDYyMDk4KSB3YWl0aW5nIGZvciB6ZXJvCihoYW5ncykKClNv
+IGFwcGFyZW50bHkgeW91IGNhbiBvbmx5IHNldCB0aGUgY29va2llIGZvciBETV9ERVZJQ0VfUkVT
+VU1FLApfbm90XyBETV9ERVZJQ0VfUkVMT0FELgoKV2hpY2ggaXMgb2RkLCBhcyBETV9ERVZJQ0Vf
+UkVMT0FEIGlzIHRoZSBvbmx5IGNhbGwgSSdsbCBldmVyIGRvOwphcHBhcmVudGx5IGl0J3MgYmVp
+bmcgdHJhbnNsYXRlZCBpbnRlcm5hbGx5IGludG8gYQpzdXNwZW5kL3JlbG9hZC9yZXN1bWUgY3lj
+bGUuCgpTaG91bGRuJ3QgZGV2aWNlLW1hcHBlciB0YWtlIGNhcmUgb2Ygc2V0dGluZyB0aGUgY29v
+a2llIGNvcnJlY3RseT8KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJ
+ICAgICAgICAgICAgICAgelNlcmllcyAmIFN0b3JhZ2UKaGFyZUBzdXNlLmRlCQkJICAgICAgICAg
+ICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5
+MDQwOSBOw7xybmJlcmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxk
+LCBELiBVcG1hbnl1LCBHLiBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1k
+ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
+Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
