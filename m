@@ -1,8 +1,9 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm: test return value for DM_MAPIO_SUBMITTED
-Date: Wed, 1 Jul 2015 17:30:36 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1507011730020.16375@file01.intranet.prod.int.rdu2.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ilya Basin <basinilya@gmail.com>
+Subject: thin metadata raw backup
+Date: Thu, 2 Jul 2015 16:22:21 +0300
+Message-ID: <1857391099.20150702162221@gmail.com>
+Reply-To: Ilya Basin <basinilya@gmail.com>,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,30 +17,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-In properly written code we should not assume that DM_MAPIO_SUBMITTED is
-zero. We should test the return value for DM_MAPIO_SUBMITTED rather than
-testing it for zero.
+Hello.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Can you help me with creating pool metadata backups (raw, not xml)? I
+wanted to simply use `dd if=/dev/mapper/vg_xxx-pool_tmeta`, but the
+copies are always dirty on a heavily loaded machine.
 
----
- drivers/md/dm.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Running `thin_check device` prints no error.
 
-Index: linux-4.1/drivers/md/dm.c
-===================================================================
---- linux-4.1.orig/drivers/md/dm.c	2015-06-29 19:38:06.000000000 +0200
-+++ linux-4.1/drivers/md/dm.c	2015-06-29 19:38:33.000000000 +0200
-@@ -1526,7 +1526,7 @@ static void __map_bio(struct dm_target_i
- 		md = tio->io->md;
- 		dec_pending(tio->io, r);
- 		free_tio(md, tio);
--	} else if (r) {
-+	} else if (r != DM_MAPIO_SUBMITTED) {
- 		DMWARN("unimplemented target map return value: %d", r);
- 		BUG();
- 	}
+Silly attempt:
+
+    [root@oktest-stage-db-1 ~]# dmsetup message /dev/mapper/vg_oktestdb1-pool 0 "reserve_metadata_snap"
+    device-mapper: message ioctl on vg_oktestdb1-pool failed: Invalid argument
+    Command failed
+
+`dmsetup suspend` didn't help too:
+
+    [root@oktest-stage-db-1 ~]# dev=/dev/mapper/vg_oktestdb1-pool_tmeta
+    [root@oktest-stage-db-1 ~]# (
+    > dd bs=8192 if="$dev" status=none of=/dev/null
+    > dmsetup suspend "$dev"
+    > dd bs=8192 if="$dev" status=none of=test1
+    > dmsetup resume "$dev"
+    > )
+    [root@oktest-stage-db-1 ~]# thin_check test1
+    examining superblock
+    examining devices tree
+    examining mapping tree
+      thin device 29 is missing mappings [911084, 941316]
+        the last key of the previous leaf was 932618 and the first key of this leaf is 912369the last key of the previous leaf was 932618 and the first key of this leaf is 913257the last key of the previous leaf was 932618 and the first key of this leaf is 913401the last key of the previous leaf was 932618 and the first key of this leaf is 919481
+
+        
