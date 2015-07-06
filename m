@@ -1,16 +1,15 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: Getting mapped device namw
-Date: Mon, 6 Jul 2015 14:19:42 +0200
-Message-ID: <559A725E.9080903@redhat.com>
-References: <DUB115-W139FD64ED5BB7A83E674F2696930@phx.gbl>
-	<559A6486.3010704@gmail.com>
-	<DUB115-W96AFB4B73047869480AB5F96930@phx.gbl>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH 4/7] dm: introduce dm_kvmalloc
+Date: Mon, 6 Jul 2015 08:42:12 -0400
+Message-ID: <20150706124212.GA4515@redhat.com>
+References: <alpine.LRH.2.02.1507031658500.28837@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <DUB115-W96AFB4B73047869480AB5F96930@phx.gbl>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1507031658500.28837@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,16 +19,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Edward Thornber <thornber@redhat.com>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 6.7.2015 v 14:04 Gili B napsal(a):
-> Thanks
-> My module is creating target similar to pool and thin from dm_thin.c.
-> if the user creates a pool named "Pool1", and now he wishes
+On Fri, Jul 03, 2015 at 04:59:54PM -0400, Mikulas Patocka wrote:
+[..]
+> Index: linux-4.1/drivers/md/dm-table.c
+> ===================================================================
+> --- linux-4.1.orig/drivers/md/dm-table.c	2015-07-02 19:21:16.000000000 +0200
+> +++ linux-4.1/drivers/md/dm-table.c	2015-07-02 19:28:18.000000000 +0200
+> @@ -131,6 +131,43 @@ static int setup_btree_index(unsigned in
+>  	return 0;
+>  }
+>  
+> +void *dm_kvmalloc_node(size_t size, gfp_t gfp, int node)
+> +{
+> +	void *p;
+> +	unsigned uninitialized_var(noio_flag);
+> +
+> +	/* vmalloc doesn't support no-wait allocations */
+> +	WARN_ON(!(gfp & __GFP_WAIT));
+> +
 
-Have you checked  dm statistic support ?
+Should this WARN_ON() be moved after kmalloc(). This should be triggered
+only if we use vmalloc().
 
-https://www.kernel.org/doc/Documentation/device-mapper/statistics.txt
-
-Zdenek
+Thanks
+Vivek
