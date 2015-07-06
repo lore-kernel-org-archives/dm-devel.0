@@ -1,14 +1,14 @@
-From: Gili B <gilib123@hotmail.com>
-Subject: Re: Getting mapped device namw
-Date: Mon, 6 Jul 2015 09:40:37 +0000
-Message-ID: <DUB115-W711C5EDD3B9DD92DCD95F796930@phx.gbl>
-References: <DUB115-W139FD64ED5BB7A83E674F2696930@phx.gbl>,
-	<559A4B31.9000509@kyup.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: Integrating new DM targets to LVM
+Date: Mon, 6 Jul 2015 13:04:45 +0200
+Message-ID: <559A60CD.3060406@redhat.com>
+References: <DUB115-W4666AD5D48645E8BF4CFD096940@phx.gbl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4331319154233797474=="
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <559A4B31.9000509@kyup.com>
+In-Reply-To: <DUB115-W4666AD5D48645E8BF4CFD096940@phx.gbl>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,81 +21,21 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============4331319154233797474==
-Content-Type: multipart/alternative;
-	boundary="_edabedda-b8bd-48a2-b37e-5e2fa976e590_"
-
---_edabedda-b8bd-48a2-b37e-5e2fa976e590_
-Content-Type: text/plain; charset="windows-1255"
-Content-Transfer-Encoding: base64
-
-VGhhbmtzDQpoYXNoX2NlbGwgaXMgZGVmaW5lZCBwcml2YXRlbHkgaW4gZG1faW9jdGwuYyAsIHNv
-IEkgY2Fubm90IGFjY2VzcyBpdC4NCmFsc28gZG1fZ2V0X21kcHRyICxpcyBub3QgZXh0ZXJuIHNv
-IEkgY2FuJ3QgYWNjZXNzIGl0IG5laXRoZXIuDQogDQpUaGFua3MNCi1naWxpDQogDQo+IERhdGU6
-IE1vbiwgNiBKdWwgMjAxNSAxMjozMjozMyArMDMwMA0KPiBGcm9tOiBrZXJuZWxAa3l1cC5jb20N
-Cj4gVG86IGRtLWRldmVsQHJlZGhhdC5jb20NCj4gU3ViamVjdDogUmU6IFtkbS1kZXZlbF0gR2V0
-dGluZyBtYXBwZWQgZGV2aWNlIG5hbXcNCj4gDQo+IA0KPiBPbiAwNy8wNi8yMDE1IDEyOjIwIFBN
-LCBHaWxpIEIgd3JvdGU6DQo+ID4gaGkNCj4gPiB3aGVuIGEgdXNlciBydW4gOg0KPiA+IGRtc2V0
-dXAgY3JlYXRlIFtkZXZpY2UgbmFtZV0gLi4uLg0KPiA+IENhbiBhIGRldmljZSBtYXBwZXIgdGFy
-Z2V0IGZpbmQgb3V0IHRoZSBkZXZpY2UgbmFtZSB0aGF0IHRoZSB1c2VyIGVudGVyZWQgPw0KPiAN
-Cj4gQXBwYXJlbnRseSB0aGUgbmFtZSBpcyBiZWluZyBhc3NvY2lhdGVkIHdpdGggYSBoYXNoX2Nl
-bGwgb2JqZWN0LCB3aGljaA0KPiBpbiB0dXJuIGlzIGFzc29jaWF0ZWQgd2l0aCBzdHJ1Y3QgbWFw
-cGVkX2RldmljZSBpbiBkbV9oYXNoX2luc2VydA0KPiAoY2FsbGVkIGZyb20gZGV2X2NyZWF0ZSwg
-d2hpY2ggaXMgaW52b2tlZCBhcyBwYXJ0IG9mIHRoZSBjcmVhdGUgSU9DVEwpLg0KPiBTbyBwcmVz
-dW1hYmx5IGlmIHlvdSBnZXQgYW4gaW5zdGFuY2Ugb2Ygc3RydWN0IG1hcHBlZF9kZXZpY2UgYW5k
-IHRoZW4NCj4gaW52b2tlIGRtX2dldF9tZHB0cihtZCkuIFdoYXQgeW91J2QgZ2V0IGlzIGEgcG9p
-bnRlciB0byBzdHJ1Y3QgaGFzaF9jZWxsDQo+IA0KPiA+IEkgbmVlZCBpdCBmb3IgY3JlYXRpbmcg
-ZW50cmllcyBpbiBwcm9jIGZvciBleGFtcGxlLg0KPiA+ICANCj4gPiBUaGFua3MNCj4gPiAtZ2ls
-aQ0KPiA+ICAJCSAJICAgCQkgIA0KPiA+IA0KPiA+IA0KPiA+IA0KPiA+IC0tDQo+ID4gZG0tZGV2
-ZWwgbWFpbGluZyBsaXN0DQo+ID4gZG0tZGV2ZWxAcmVkaGF0LmNvbQ0KPiA+IGh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA0KPiA+IA0KPiANCj4gLS0NCj4g
-ZG0tZGV2ZWwgbWFpbGluZyBsaXN0DQo+IGRtLWRldmVsQHJlZGhhdC5jb20NCj4gaHR0cHM6Ly93
-d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsDQogCQkgCSAgIAkJICA=
-
---_edabedda-b8bd-48a2-b37e-5e2fa976e590_
-Content-Type: text/html; charset="windows-1255"
-Content-Transfer-Encoding: base64
-
-PGh0bWw+DQo8aGVhZD4NCjxzdHlsZT48IS0tDQouaG1tZXNzYWdlIFANCnsNCm1hcmdpbjowcHg7
-DQpwYWRkaW5nOjBweA0KfQ0KYm9keS5obW1lc3NhZ2UNCnsNCmZvbnQtc2l6ZTogMTJwdDsNCmZv
-bnQtZmFtaWx5OkNhbGlicmkNCn0NCi0tPjwvc3R5bGU+PC9oZWFkPg0KPGJvZHkgY2xhc3M9J2ht
-bWVzc2FnZSc+PGRpdiBkaXI9J2x0cic+VGhhbmtzPEJSPmhhc2hfY2VsbCBpcyBkZWZpbmVkIHBy
-aXZhdGVseSZuYnNwO2luIGRtX2lvY3RsLmMgLCBzbyBJIGNhbm5vdCBhY2Nlc3MgaXQuPEJSPmFs
-c28gZG1fZ2V0X21kcHRyICxpcyBub3QgZXh0ZXJuIHNvIEkgY2FuJ3QmbmJzcDthY2Nlc3MgaXQg
-bmVpdGhlci48QlI+Jm5ic3A7PEJSPlRoYW5rczxCUj4tZ2lsaTxicj4mbmJzcDs8QlI+PGRpdj4m
-Z3Q7IERhdGU6IE1vbiwgNiBKdWwgMjAxNSAxMjozMjozMyArMDMwMDxicj4mZ3Q7IEZyb206IGtl
-cm5lbEBreXVwLmNvbTxicj4mZ3Q7IFRvOiBkbS1kZXZlbEByZWRoYXQuY29tPGJyPiZndDsgU3Vi
-amVjdDogUmU6IFtkbS1kZXZlbF0gR2V0dGluZyBtYXBwZWQgZGV2aWNlIG5hbXc8YnI+Jmd0OyA8
-YnI+Jmd0OyA8YnI+Jmd0OyBPbiAwNy8wNi8yMDE1IDEyOjIwIFBNLCBHaWxpIEIgd3JvdGU6PGJy
-PiZndDsgJmd0OyBoaTxicj4mZ3Q7ICZndDsgd2hlbiBhIHVzZXIgcnVuIDo8YnI+Jmd0OyAmZ3Q7
-IGRtc2V0dXAgY3JlYXRlIFtkZXZpY2UgbmFtZV0gLi4uLjxicj4mZ3Q7ICZndDsgQ2FuIGEgZGV2
-aWNlIG1hcHBlciB0YXJnZXQgZmluZCBvdXQgdGhlIGRldmljZSBuYW1lIHRoYXQgdGhlIHVzZXIg
-ZW50ZXJlZCA/PGJyPiZndDsgPGJyPiZndDsgQXBwYXJlbnRseSB0aGUgbmFtZSBpcyBiZWluZyBh
-c3NvY2lhdGVkIHdpdGggYSBoYXNoX2NlbGwgb2JqZWN0LCB3aGljaDxicj4mZ3Q7IGluIHR1cm4g
-aXMgYXNzb2NpYXRlZCB3aXRoIHN0cnVjdCBtYXBwZWRfZGV2aWNlIGluIGRtX2hhc2hfaW5zZXJ0
-PGJyPiZndDsgKGNhbGxlZCBmcm9tIGRldl9jcmVhdGUsIHdoaWNoIGlzIGludm9rZWQgYXMgcGFy
-dCBvZiB0aGUgY3JlYXRlIElPQ1RMKS48YnI+Jmd0OyBTbyBwcmVzdW1hYmx5IGlmIHlvdSBnZXQg
-YW4gaW5zdGFuY2Ugb2Ygc3RydWN0IG1hcHBlZF9kZXZpY2UgYW5kIHRoZW48YnI+Jmd0OyBpbnZv
-a2UgZG1fZ2V0X21kcHRyKG1kKS4gV2hhdCB5b3UnZCBnZXQgaXMgYSBwb2ludGVyIHRvIHN0cnVj
-dCBoYXNoX2NlbGw8YnI+Jmd0OyA8YnI+Jmd0OyAmZ3Q7IEkgbmVlZCBpdCBmb3IgY3JlYXRpbmcg
-ZW50cmllcyBpbiBwcm9jIGZvciBleGFtcGxlLjxicj4mZ3Q7ICZndDsgIDxicj4mZ3Q7ICZndDsg
-VGhhbmtzPGJyPiZndDsgJmd0OyAtZ2lsaTxicj4mZ3Q7ICZndDsgIAkJIAkgICAJCSAgPGJyPiZn
-dDsgJmd0OyA8YnI+Jmd0OyAmZ3Q7IDxicj4mZ3Q7ICZndDsgPGJyPiZndDsgJmd0OyAtLTxicj4m
-Z3Q7ICZndDsgZG0tZGV2ZWwgbWFpbGluZyBsaXN0PGJyPiZndDsgJmd0OyBkbS1kZXZlbEByZWRo
-YXQuY29tPGJyPiZndDsgJmd0OyBodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
-Zm8vZG0tZGV2ZWw8YnI+Jmd0OyAmZ3Q7IDxicj4mZ3Q7IDxicj4mZ3Q7IC0tPGJyPiZndDsgZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0PGJyPiZndDsgZG0tZGV2ZWxAcmVkaGF0LmNvbTxicj4mZ3Q7IGh0
-dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbDxicj48L2Rpdj4g
-CQkgCSAgIAkJICA8L2Rpdj48L2JvZHk+DQo8L2h0bWw+
-
---_edabedda-b8bd-48a2-b37e-5e2fa976e590_--
+Dne 5.7.2015 v 15:05 Gili B napsal(a):
+> hi
+> We are working on a new DM target which is similar to the ones in dm-thin but
+> it adds SSD specific features.
+> I want to evaluate how complicated is it to integrate new targets to LVM.
+>
+> Is there any guide/ documentation that explains what needs to be done?
+>
 
 
---===============4331319154233797474==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Hi
+
+Would be probably much better to start with description of your new DM target.
+
+Regards
 
 
---===============4331319154233797474==--
+Zdenek
