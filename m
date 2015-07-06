@@ -1,8 +1,8 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 2/2] dm-btree-remove: Remove function
-	get_nr_entries()
-Date: Mon,  6 Jul 2015 11:55:41 -0400
-Message-ID: <1436198141-19730-3-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 1/2] Remove unused parameter in
+	btree_split_sibling()
+Date: Mon,  6 Jul 2015 11:55:40 -0400
+Message-ID: <1436198141-19730-2-git-send-email-vgoyal@redhat.com>
 References: <1436198141-19730-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,59 +23,37 @@ To: dm-devel@redhat.com
 Cc: thornber@redhat.com, Vivek Goyal <vgoyal@redhat.com>, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Looks like get_nr_entries() returns results in local variable child_entries
-which is never used. Remove the call as well function as there are no more
-users of it.
+Looks like "dm_block_t root" is unused parameter in btree_split_sibling().
+Remove it.
 
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- drivers/md/persistent-data/dm-btree-remove.c | 22 ----------------------
- 1 file changed, 22 deletions(-)
+ drivers/md/persistent-data/dm-btree.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/persistent-data/dm-btree-remove.c b/drivers/md/persistent-data/dm-btree-remove.c
-index e04cfd2..0ef78a5 100644
---- a/drivers/md/persistent-data/dm-btree-remove.c
-+++ b/drivers/md/persistent-data/dm-btree-remove.c
-@@ -409,29 +409,11 @@ static int rebalance3(struct shadow_spine *s, struct dm_btree_info *info,
- 	return 0;
- }
- 
--static int get_nr_entries(struct dm_transaction_manager *tm,
--			  dm_block_t b, uint32_t *result)
--{
--	int r;
--	struct dm_block *block;
--	struct btree_node *n;
--
--	r = dm_tm_read_lock(tm, b, &btree_node_validator, &block);
--	if (r)
--		return r;
--
--	n = dm_block_data(block);
--	*result = le32_to_cpu(n->header.nr_entries);
--
--	return dm_tm_unlock(tm, block);
--}
--
- static int rebalance_children(struct shadow_spine *s,
- 			      struct dm_btree_info *info,
- 			      struct dm_btree_value_type *vt, uint64_t key)
+diff --git a/drivers/md/persistent-data/dm-btree.c b/drivers/md/persistent-data/dm-btree.c
+index 200ac12..052e48b 100644
+--- a/drivers/md/persistent-data/dm-btree.c
++++ b/drivers/md/persistent-data/dm-btree.c
+@@ -420,8 +420,8 @@ EXPORT_SYMBOL_GPL(dm_btree_lookup);
+  *
+  * Where A* is a shadow of A.
+  */
+-static int btree_split_sibling(struct shadow_spine *s, dm_block_t root,
+-			       unsigned parent_index, uint64_t key)
++static int btree_split_sibling(struct shadow_spine *s, unsigned parent_index,
++			       uint64_t key)
  {
- 	int i, r, has_left_sibling, has_right_sibling;
--	uint32_t child_entries;
- 	struct btree_node *n;
+ 	int r;
+ 	size_t size;
+@@ -625,7 +625,7 @@ static int btree_insert_raw(struct shadow_spine *s, dm_block_t root,
+ 			if (top)
+ 				r = btree_split_beneath(s, key);
+ 			else
+-				r = btree_split_sibling(s, root, i, key);
++				r = btree_split_sibling(s, i, key);
  
- 	n = dm_block_data(shadow_current(s));
-@@ -458,10 +440,6 @@ static int rebalance_children(struct shadow_spine *s,
- 	if (i < 0)
- 		return -ENODATA;
- 
--	r = get_nr_entries(info->tm, value64(n, i), &child_entries);
--	if (r)
--		return r;
--
- 	has_left_sibling = i > 0;
- 	has_right_sibling = i < (le32_to_cpu(n->header.nr_entries) - 1);
- 
+ 			if (r < 0)
+ 				return r;
 -- 
 2.1.0
