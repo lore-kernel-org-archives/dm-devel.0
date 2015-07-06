@@ -1,14 +1,14 @@
-From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
+From: Gili B <gilib123@hotmail.com>
 Subject: Re: Getting mapped device namw
-Date: Mon, 6 Jul 2015 13:20:38 +0200
-Message-ID: <559A6486.3010704@gmail.com>
-References: <DUB115-W139FD64ED5BB7A83E674F2696930@phx.gbl>
+Date: Mon, 6 Jul 2015 12:04:26 +0000
+Message-ID: <DUB115-W96AFB4B73047869480AB5F96930@phx.gbl>
+References: <DUB115-W139FD64ED5BB7A83E674F2696930@phx.gbl>,
+	<559A6486.3010704@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1620423483737385761=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <DUB115-W139FD64ED5BB7A83E674F2696930@phx.gbl>
+In-Reply-To: <559A6486.3010704@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,17 +21,82 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 6.7.2015 v 11:20 Gili B napsal(a):
-> hi
-> when a user run :
-> dmsetup create [device name] ....
-> Can a device mapper target find out the device name that the user entered ?
-> I need it for creating entries in proc for example.
+--===============1620423483737385761==
+Content-Type: multipart/alternative;
+	boundary="_6688c7d8-93a3-4a63-9d37-30df17295b74_"
 
-It's probably worth to note here - the dm target should always care ONLY about 
-major:minor - it should never care about the name of device.
-It looks like you are doing something weird in your target.
+--_6688c7d8-93a3-4a63-9d37-30df17295b74_
+Content-Type: text/plain; charset="windows-1255"
+Content-Transfer-Encoding: base64
 
-Regards
+VGhhbmtzDQpNeSBtb2R1bGUgaXMgY3JlYXRpbmcgdGFyZ2V0IHNpbWlsYXIgdG8gcG9vbCBhbmQg
+dGhpbiBmcm9tIGRtX3RoaW4uYy4gDQppZiB0aGUgdXNlciBjcmVhdGVzIGEgcG9vbCBuYW1lZCAi
+UG9vbDEiLCBhbmQgbm93IGhlIHdpc2hlcw0KdG8gd2F0Y2ggc3RhdGlzdGljcy9pbnNpZGUgaW5m
+byByZWdhcmRpbmcgdGhpcyBwb29sLA0KSSB3YW50ZWQgdG8gY3JlYXRlIGEgcHJvYyBlbnRyeQ0K
+L3Byb2MvbXkgbW9kdWxlIG5hbWUvcG9vbHMvUG9vbDEgDQogDQpmb3IgdGhhdCBJIG5lZWQgdGhl
+IHBvb2wgbmFtZSB3aGljaCBub3cgaXQgc2VlbXMgdG8gbWUgdGhhdCBJIGNhbm5vdCBmaW5kIG91
+dC4NCiANCkkgY2FuIGFzayB0aGUgdXNlciB0byBhZGQgYW5vdGhlciBwYXJhbWV0ZXIgZHVyaW5n
+IHRoZSBwb29sIGNyZWF0aW9uLCBidXQgc2VlbXMNCkxpa2UgYW4gb3ZlcmhlYWQgYW5kIEknbGwg
+bmVlZCB0byBkbyBzb21lIGV4dHJhIHZlcmVmaWNhdGlvbnMgZXRjLg0KIA0KUmVnYXJkcw0KLWdp
+bGkNCg0KIA0KPiBUbzogZG0tZGV2ZWxAcmVkaGF0LmNvbQ0KPiBGcm9tOiB6ZGVuZWsua2FiZWxh
+Y0BnbWFpbC5jb20NCj4gRGF0ZTogTW9uLCA2IEp1bCAyMDE1IDEzOjIwOjM4ICswMjAwDQo+IFN1
+YmplY3Q6IFJlOiBbZG0tZGV2ZWxdIEdldHRpbmcgbWFwcGVkIGRldmljZSBuYW13DQo+IA0KPiBE
+bmUgNi43LjIwMTUgdiAxMToyMCBHaWxpIEIgbmFwc2FsKGEpOg0KPiA+IGhpDQo+ID4gd2hlbiBh
+IHVzZXIgcnVuIDoNCj4gPiBkbXNldHVwIGNyZWF0ZSBbZGV2aWNlIG5hbWVdIC4uLi4NCj4gPiBD
+YW4gYSBkZXZpY2UgbWFwcGVyIHRhcmdldCBmaW5kIG91dCB0aGUgZGV2aWNlIG5hbWUgdGhhdCB0
+aGUgdXNlciBlbnRlcmVkID8NCj4gPiBJIG5lZWQgaXQgZm9yIGNyZWF0aW5nIGVudHJpZXMgaW4g
+cHJvYyBmb3IgZXhhbXBsZS4NCj4gDQo+IEl0J3MgcHJvYmFibHkgd29ydGggdG8gbm90ZSBoZXJl
+IC0gdGhlIGRtIHRhcmdldCBzaG91bGQgYWx3YXlzIGNhcmUgT05MWSBhYm91dCANCj4gbWFqb3I6
+bWlub3IgLSBpdCBzaG91bGQgbmV2ZXIgY2FyZSBhYm91dCB0aGUgbmFtZSBvZiBkZXZpY2UuDQo+
+IEl0IGxvb2tzIGxpa2UgeW91IGFyZSBkb2luZyBzb21ldGhpbmcgd2VpcmQgaW4geW91ciB0YXJn
+ZXQuDQo+IA0KPiBSZWdhcmRzDQo+IA0KPiBaZGVlbmsNCj4gDQo+IC0tDQo+IGRtLWRldmVsIG1h
+aWxpbmcgbGlzdA0KPiBkbS1kZXZlbEByZWRoYXQuY29tDQo+IGh0dHBzOi8vd3d3LnJlZGhhdC5j
+b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA0KIAkJIAkgICAJCSAg
 
-Zdeenk
+--_6688c7d8-93a3-4a63-9d37-30df17295b74_
+Content-Type: text/html; charset="windows-1255"
+Content-Transfer-Encoding: base64
+
+PGh0bWw+DQo8aGVhZD4NCjxzdHlsZT48IS0tDQouaG1tZXNzYWdlIFANCnsNCm1hcmdpbjowcHg7
+DQpwYWRkaW5nOjBweA0KfQ0KYm9keS5obW1lc3NhZ2UNCnsNCmZvbnQtc2l6ZTogMTJwdDsNCmZv
+bnQtZmFtaWx5OkNhbGlicmkNCn0NCi0tPjwvc3R5bGU+PC9oZWFkPg0KPGJvZHkgY2xhc3M9J2ht
+bWVzc2FnZSc+PGRpdiBkaXI9J2x0cic+VGhhbmtzPEJSPk15IG1vZHVsZSBpcyBjcmVhdGluZyB0
+YXJnZXQgc2ltaWxhciB0byBwb29sIGFuZCB0aGluIGZyb20gZG1fdGhpbi5jLiA8QlI+aWYgdGhl
+IHVzZXIgY3JlYXRlcyBhIHBvb2wgbmFtZWQgIlBvb2wxIiwgYW5kIG5vdyBoZSB3aXNoZXM8QlI+
+dG8gd2F0Y2ggc3RhdGlzdGljcy9pbnNpZGUgaW5mbyByZWdhcmRpbmcgdGhpcyBwb29sLDxCUj5J
+Jm5ic3A7d2FudGVkIHRvIGNyZWF0ZSBhIHByb2MgZW50cnk8QlI+L3Byb2MvbXkgbW9kdWxlJm5i
+c3A7bmFtZS9wb29scy9Qb29sMSA8QlI+Jm5ic3A7PEJSPmZvciB0aGF0IEkgbmVlZCB0aGUgcG9v
+bCBuYW1lIHdoaWNoIG5vdyBpdCZuYnNwO3NlZW1zIHRvIG1lIHRoYXQgSSBjYW5ub3QgZmluZCBv
+dXQuPEJSPiZuYnNwOzxCUj5JIGNhbiBhc2sgdGhlIHVzZXIgdG8gYWRkIGFub3RoZXIgcGFyYW1l
+dGVyIGR1cmluZyB0aGUgcG9vbCBjcmVhdGlvbiwgYnV0IHNlZW1zPEJSPkxpa2UgYW4gb3Zlcmhl
+YWQgYW5kIEknbGwgbmVlZCB0byBkbyZuYnNwO3NvbWUmbmJzcDtleHRyYSB2ZXJlZmljYXRpb25z
+IGV0Yy48QlI+Jm5ic3A7PEJSPlJlZ2FyZHM8QlI+LWdpbGk8QlI+PGJyPiZuYnNwOzxCUj48ZGl2
+PiZndDsgVG86IGRtLWRldmVsQHJlZGhhdC5jb208YnI+Jmd0OyBGcm9tOiB6ZGVuZWsua2FiZWxh
+Y0BnbWFpbC5jb208YnI+Jmd0OyBEYXRlOiBNb24sIDYgSnVsIDIwMTUgMTM6MjA6MzggKzAyMDA8
+YnI+Jmd0OyBTdWJqZWN0OiBSZTogW2RtLWRldmVsXSBHZXR0aW5nIG1hcHBlZCBkZXZpY2UgbmFt
+dzxicj4mZ3Q7IDxicj4mZ3Q7IERuZSA2LjcuMjAxNSB2IDExOjIwIEdpbGkgQiBuYXBzYWwoYSk6
+PGJyPiZndDsgJmd0OyBoaTxicj4mZ3Q7ICZndDsgd2hlbiBhIHVzZXIgcnVuIDo8YnI+Jmd0OyAm
+Z3Q7IGRtc2V0dXAgY3JlYXRlIFtkZXZpY2UgbmFtZV0gLi4uLjxicj4mZ3Q7ICZndDsgQ2FuIGEg
+ZGV2aWNlIG1hcHBlciB0YXJnZXQgZmluZCBvdXQgdGhlIGRldmljZSBuYW1lIHRoYXQgdGhlIHVz
+ZXIgZW50ZXJlZCA/PGJyPiZndDsgJmd0OyBJIG5lZWQgaXQgZm9yIGNyZWF0aW5nIGVudHJpZXMg
+aW4gcHJvYyBmb3IgZXhhbXBsZS48YnI+Jmd0OyA8YnI+Jmd0OyBJdCdzIHByb2JhYmx5IHdvcnRo
+IHRvIG5vdGUgaGVyZSAtIHRoZSBkbSB0YXJnZXQgc2hvdWxkIGFsd2F5cyBjYXJlIE9OTFkgYWJv
+dXQgPGJyPiZndDsgbWFqb3I6bWlub3IgLSBpdCBzaG91bGQgbmV2ZXIgY2FyZSBhYm91dCB0aGUg
+bmFtZSBvZiBkZXZpY2UuPGJyPiZndDsgSXQgbG9va3MgbGlrZSB5b3UgYXJlIGRvaW5nIHNvbWV0
+aGluZyB3ZWlyZCBpbiB5b3VyIHRhcmdldC48YnI+Jmd0OyA8YnI+Jmd0OyBSZWdhcmRzPGJyPiZn
+dDsgPGJyPiZndDsgWmRlZW5rPGJyPiZndDsgPGJyPiZndDsgLS08YnI+Jmd0OyBkbS1kZXZlbCBt
+YWlsaW5nIGxpc3Q8YnI+Jmd0OyBkbS1kZXZlbEByZWRoYXQuY29tPGJyPiZndDsgaHR0cHM6Ly93
+d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsPGJyPjwvZGl2PiAJCSAJICAg
+CQkgIDwvZGl2PjwvYm9keT4NCjwvaHRtbD4=
+
+--_6688c7d8-93a3-4a63-9d37-30df17295b74_--
+
+
+--===============1620423483737385761==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1620423483737385761==--
