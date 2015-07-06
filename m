@@ -1,16 +1,11 @@
-From: Nikolay Borisov <n.borisov@siteground.com>
-Subject: Re: Getting mapped device namw
-Date: Mon, 06 Jul 2015 12:49:56 +0300
-Message-ID: <559A4F44.6050200@siteground.com>
-References: <DUB115-W139FD64ED5BB7A83E674F2696930@phx.gbl>,
-	<559A4B31.9000509@kyup.com>
-	<DUB115-W711C5EDD3B9DD92DCD95F796930@phx.gbl>
+From: Risto Kankkunen <risto.kankkunen@f-secure.com>
+Subject: [PATCH] kpartx: use inode to identify loopback mounts
+Date: Mon, 6 Jul 2015 14:56:59 +0300
+Message-ID: <559A6D0B.5090602@f-secure.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="------------090901080200040400080801"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <DUB115-W711C5EDD3B9DD92DCD95F796930@phx.gbl>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,70 +15,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Risto Kankkunen <Risto.Kankkunen@f-secure.com>
 List-Id: dm-devel.ids
 
+--------------090901080200040400080801
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+
+This is a patch which I submitted to Launchpad 
+(https://bugs.launchpad.net/ubuntu/+source/multipath-tools/+bug/1469143). I 
+was told to submit it to this list instead.
+
+Currently kpartx doesn't work correctly with relative path names, 
+hardlinks, symlinks or paths longer than 63 characters. This is because 
+it tries to identify mounts by a non-unique name it gives to the mount. 
+The loopinfo struct contains the device and inode information of the 
+backing image, it is better to identify mounts by those.
+
+--------------090901080200040400080801
+Content-Type: text/plain; charset="windows-1252";
+	name="0014-kpartx-long-path.patch"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="0014-kpartx-long-path.patch"
+
+RnJvbTogUmlzdG8gS2Fua2t1bmVuIDxyaXN0by5rYW5ra3VuZW5AZi1zZWN1cmUuY29tPgpE
+YXRlOiBNb24sIDI5IEp1biAyMDE1IDE4OjM5OjQ4ICswMzAwClN1YmplY3Q6IFVzZSBpbWFn
+ZSBmaWxlIGRldmljZS9pbm9kZSB0byBmaW5kIHRoZSBjb3JyZWN0IGxvb3AgZGV2aWNlIGlu
+IGtwYXJ0eAoKUHJldmlvdXNseSBrcGFydHggdXNlZCB0aGUgImxvX25hbWUiIGZpZWxkIG9m
+IHN0cnVjdCBsb29wX2luZm8gdG8gc3RvcmUgCmFuZCBtYXRjaCB0aGUgaW1hZ2UgZmlsZSBu
+YW1lLiBUaGF0IGZpZWxkIGlzIG5vdCBpbnRlbmRlZCB0byBzdG9yZSBwYXRoIApuYW1lcyAo
+aXQncyBub3QgYmlnIGVub3VnaCkuIFRoZXJlZm9yZSBrcGFydHggd2FzIHVuYWJsZSB0byBk
+ZWxldGUgCm1hcHBpbmdzIHRvIGZpbGUgcGF0aHMgbG9uZ2VyIHRoYW4gNjMgY2hhcmFjdGVy
+cy4gSXQgYWxzbyBkaWRuJ3QgCnByb3Blcmx5IGhhbmRsZSByZWxhdGl2ZSBmaWxlIHBhdGhz
+OiB0d28gZGlmZmVyZW50IGZpbGVzIHdpdGggaWRlbnRpY2FsCnJlbGF0aXZlIHBhdGggbmFt
+ZXMgY291bGQgbm90IGJlIG1hcHBlZC4gSW5zdGVhZCBrcGFydHggd291bGQgbW9kaWZ5CnRo
+ZSBleGlzdGluZyBtYXBwaW5nIHdoZW4gc2VlaW5nIGEgbmV3IGZpbGUgd2l0aCB0aGUgc2Ft
+ZSByZWxhdGl2ZSBwYXRoLgoKVGhlICJsb29waW5mbyIgc3RydWN0dXJlIGNvbnRhaW5zIHRo
+ZSBpbWFnZSBmaWxlIGRldmljZSBhbmQgaW5vZGUgCm51bWJlcnMuIFVzZSB0aG9zZSB0byB1
+bmlxdWVseSBpZGVudGlmeSB0aGUgY29ycmVjdCBsb29wIGRldmljZS4KCi0tLSBhL2twYXJ0
+eC9sb3BhcnQuYworKysgYi9rcGFydHgvbG9wYXJ0LmMKQEAgLTEwMyw2ICsxMDMsMTQgQEAK
+IAlpbnQgaSwgaiwgZmQ7CiAJc3RydWN0IHN0YXQgc3RhdGJ1ZjsKIAlzdHJ1Y3QgbG9vcF9p
+bmZvIGxvb3BpbmZvOworCWRldl90IGZpbGVfZGV2OworCWlub190IGZpbGVfaW5vOworCisJ
+aWYgKHN0YXQgKGZpbGVuYW1lLCAmc3RhdGJ1ZikgIT0gMCkgeworCQlyZXR1cm4gTlVMTDsK
+Kwl9CisJZmlsZV9kZXYgPSBzdGF0YnVmLnN0X2RldjsKKwlmaWxlX2lubyA9IHN0YXRidWYu
+c3RfaW5vOwogCiAJZm9yIChqID0gMDsgaiA8IFNJWkUobG9vcF9mb3JtYXRzKTsgaisrKSB7
+CiAKQEAgLTEyMyw3ICsxMzEsNyBAQAogCQkJCWNvbnRpbnVlOwogCQkJfQogCi0JCQlpZiAo
+MCA9PSBzdHJjbXAoZmlsZW5hbWUsIGxvb3BpbmZvLmxvX25hbWUpKSB7CisJCQlpZiAobG9v
+cGluZm8ubG9fZGV2aWNlID09IGZpbGVfZGV2ICYmIGxvb3BpbmZvLmxvX2lub2RlID09IGZp
+bGVfaW5vKSB7CiAJCQkJY2xvc2UgKGZkKTsKIAkJCQlyZXR1cm4geHN0cmR1cChkZXYpOyAv
+KmZvdW5kICovCiAJCQl9Cg==
+--------------090901080200040400080801
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
-On 07/06/2015 12:40 PM, Gili B wrote:
-> Thanks
-> hash_cell is defined privately in dm_ioctl.c , so I cannot access it.
-The beauty of open source software is that you can always export it for
-you own needs :)
-
-> also dm_get_mdptr ,is not extern so I can't access it neither.
-The function is exposed via device_mapper.h so you can just include this
-header. Poke the code around you might come up with an even better idea.
-But generally you wouldn't want to use the name the user provided.
-Instead, use the name of the block device being created e.g. dm-1. This
-can be obtained from the  dm_get_device function and using the dm_dev struct
-
->  
-> Thanks
-> -gili
->  
->> Date: Mon, 6 Jul 2015 12:32:33 +0300
->> From: kernel@kyup.com
->> To: dm-devel@redhat.com
->> Subject: Re: [dm-devel] Getting mapped device namw
->>
->>
->> On 07/06/2015 12:20 PM, Gili B wrote:
->>> hi
->>> when a user run :
->>> dmsetup create [device name] ....
->>> Can a device mapper target find out the device name that the user entered ?
->>
->> Apparently the name is being associated with a hash_cell object, which
->> in turn is associated with struct mapped_device in dm_hash_insert
->> (called from dev_create, which is invoked as part of the create IOCTL).
->> So presumably if you get an instance of struct mapped_device and then
->> invoke dm_get_mdptr(md). What you'd get is a pointer to struct hash_cell
->>
->>> I need it for creating entries in proc for example.
->>>  
->>> Thanks
->>> -gili
->>>  		 	   		  
->>>
->>>
->>>
->>> --
->>> dm-devel mailing list
->>> dm-devel@redhat.com
->>> https://www.redhat.com/mailman/listinfo/dm-devel
->>>
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
->  		 	   		  
-> 
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+--------------090901080200040400080801--
