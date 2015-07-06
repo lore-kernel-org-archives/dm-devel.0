@@ -1,14 +1,14 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: Integrating new DM targets to LVM
-Date: Mon, 6 Jul 2015 13:04:45 +0200
-Message-ID: <559A60CD.3060406@redhat.com>
-References: <DUB115-W4666AD5D48645E8BF4CFD096940@phx.gbl>
+From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
+Subject: Re: Getting mapped device namw
+Date: Mon, 6 Jul 2015 13:20:38 +0200
+Message-ID: <559A6486.3010704@gmail.com>
+References: <DUB115-W139FD64ED5BB7A83E674F2696930@phx.gbl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <DUB115-W4666AD5D48645E8BF4CFD096940@phx.gbl>
+In-Reply-To: <DUB115-W139FD64ED5BB7A83E674F2696930@phx.gbl>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,21 +21,17 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 5.7.2015 v 15:05 Gili B napsal(a):
+Dne 6.7.2015 v 11:20 Gili B napsal(a):
 > hi
-> We are working on a new DM target which is similar to the ones in dm-thin but
-> it adds SSD specific features.
-> I want to evaluate how complicated is it to integrate new targets to LVM.
->
-> Is there any guide/ documentation that explains what needs to be done?
->
+> when a user run :
+> dmsetup create [device name] ....
+> Can a device mapper target find out the device name that the user entered ?
+> I need it for creating entries in proc for example.
 
-
-Hi
-
-Would be probably much better to start with description of your new DM target.
+It's probably worth to note here - the dm target should always care ONLY about 
+major:minor - it should never care about the name of device.
+It looks like you are doing something weird in your target.
 
 Regards
 
-
-Zdenek
+Zdeenk
