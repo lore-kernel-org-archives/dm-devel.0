@@ -1,16 +1,18 @@
-From: Gili B <gilib123@hotmail.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
 Subject: Re: Getting mapped device namw
-Date: Tue, 7 Jul 2015 06:22:54 +0000
-Message-ID: <DUB115-W744B7F70728296C3FC54E296920@phx.gbl>
-References: <DUB115-W139FD64ED5BB7A83E674F2696930@phx.gbl>,
-	<559A6486.3010704@gmail.com>,
-	<DUB115-W96AFB4B73047869480AB5F96930@phx.gbl>,
+Date: Tue, 7 Jul 2015 08:30:19 +0200
+Message-ID: <559B71FB.9040200@redhat.com>
+References: <DUB115-W139FD64ED5BB7A83E674F2696930@phx.gbl>
+	<559A6486.3010704@gmail.com>
+	<DUB115-W96AFB4B73047869480AB5F96930@phx.gbl>
 	<559A725E.9080903@redhat.com>
+	<DUB115-W744B7F70728296C3FC54E296920@phx.gbl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0914785544388529655=="
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <559A725E.9080903@redhat.com>
+In-Reply-To: <DUB115-W744B7F70728296C3FC54E296920@phx.gbl>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,77 +25,15 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============0914785544388529655==
-Content-Type: multipart/alternative;
-	boundary="_6c350de5-e23e-4374-ac92-c357f50517d1_"
+Dne 7.7.2015 v 08:22 Gili B napsal(a):
+> Thanks
+> I've looked at it and it loks like something that can assist us.
+> The general info mechanism we are working on requires more that just
+> statistics though.
+> Regarding the statistics :
+> When I run dmsetup (centos 6.5)  on my device, it sais that my target doesnt
 
---_6c350de5-e23e-4374-ac92-c357f50517d1_
-Content-Type: text/plain; charset="windows-1255"
-Content-Transfer-Encoding: base64
+Centos 6.5 is way too old for this feature.
+It appears in 7.2.
 
-VGhhbmtzDQpJJ3ZlIGxvb2tlZCBhdCBpdCBhbmQgaXQgbG9rcyBsaWtlIHNvbWV0aGluZyB0aGF0
-IGNhbiBhc3Npc3QgdXMuDQpUaGUgZ2VuZXJhbCBpbmZvIG1lY2hhbmlzbSB3ZSBhcmUgd29ya2lu
-ZyBvbiByZXF1aXJlcyBtb3JlIHRoYXQganVzdCBzdGF0aXN0aWNzIHRob3VnaC4NClJlZ2FyZGlu
-ZyB0aGUgc3RhdGlzdGljcyA6DQpXaGVuIEkgcnVuIGRtc2V0dXAgKGNlbnRvcyA2LjUpICBvbiBt
-eSBkZXZpY2UsIGl0IHNhaXMgdGhhdCBteSB0YXJnZXQgZG9lc250IHN1cHBvcnQgbWVzc2FnZXMo
-aGEgYmVjYXVzZSB3ZSANCmRpZG4ndCBpbXBsZW1lbnQgYW55IHlldCApICwgZnJvbSB0aGUgZGVz
-Y3JpcHRpb24gaW4gdGhlIGxpbmsgeW91J3ZlIHNlbnQsIGl0IHNvdW5kcyBsaWtlIGFueSBkbSB0
-YXJnZXQgaW5oZXJpdHMNCnRoaXMgZnVuY3Rpb25hbGl0eS4NCkFyZSB0aGVyZSBhbnkgbWV0aG9k
-cyBJIG5lZWQgdG8gY2FsbCwgb3IgZG8gSSBuZWVkIHRvIHJlLWltcGxlbWVudCB0aGlzIGluIG15
-IHRhcmdldD8NCiANClRoYW5rcw0KLWdpbGkNCiANCj4gVG86IGRtLWRldmVsQHJlZGhhdC5jb20N
-Cj4gRnJvbTogemthYmVsYWNAcmVkaGF0LmNvbQ0KPiBEYXRlOiBNb24sIDYgSnVsIDIwMTUgMTQ6
-MTk6NDIgKzAyMDANCj4gU3ViamVjdDogUmU6IFtkbS1kZXZlbF0gR2V0dGluZyBtYXBwZWQgZGV2
-aWNlIG5hbXcNCj4gDQo+IERuZSA2LjcuMjAxNSB2IDE0OjA0IEdpbGkgQiBuYXBzYWwoYSk6DQo+
-ID4gVGhhbmtzDQo+ID4gTXkgbW9kdWxlIGlzIGNyZWF0aW5nIHRhcmdldCBzaW1pbGFyIHRvIHBv
-b2wgYW5kIHRoaW4gZnJvbSBkbV90aGluLmMuDQo+ID4gaWYgdGhlIHVzZXIgY3JlYXRlcyBhIHBv
-b2wgbmFtZWQgIlBvb2wxIiwgYW5kIG5vdyBoZSB3aXNoZXMNCj4gDQo+IEhhdmUgeW91IGNoZWNr
-ZWQgIGRtIHN0YXRpc3RpYyBzdXBwb3J0ID8NCj4gDQo+IGh0dHBzOi8vd3d3Lmtlcm5lbC5vcmcv
-ZG9jL0RvY3VtZW50YXRpb24vZGV2aWNlLW1hcHBlci9zdGF0aXN0aWNzLnR4dA0KPiANCj4gWmRl
-bmVrDQo+IA0KPiANCj4gDQo+IC0tDQo+IGRtLWRldmVsIG1haWxpbmcgbGlzdA0KPiBkbS1kZXZl
-bEByZWRoYXQuY29tDQo+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
-bS1kZXZlbA0KIAkJIAkgICAJCSAg
-
---_6c350de5-e23e-4374-ac92-c357f50517d1_
-Content-Type: text/html; charset="windows-1255"
-Content-Transfer-Encoding: base64
-
-PGh0bWw+DQo8aGVhZD4NCjxzdHlsZT48IS0tDQouaG1tZXNzYWdlIFANCnsNCm1hcmdpbjowcHg7
-DQpwYWRkaW5nOjBweA0KfQ0KYm9keS5obW1lc3NhZ2UNCnsNCmZvbnQtc2l6ZTogMTJwdDsNCmZv
-bnQtZmFtaWx5OkNhbGlicmkNCn0NCi0tPjwvc3R5bGU+PC9oZWFkPg0KPGJvZHkgY2xhc3M9J2ht
-bWVzc2FnZSc+PGRpdiBkaXI9J2x0cic+VGhhbmtzPEJSPkkndmUgbG9va2VkIGF0IGl0IGFuZCBp
-dCBsb2tzIGxpa2Ugc29tZXRoaW5nIHRoYXQgY2FuJm5ic3A7YXNzaXN0IHVzLjxCUj5UaGUgZ2Vu
-ZXJhbCBpbmZvJm5ic3A7bWVjaGFuaXNtIHdlIGFyZSB3b3JraW5nIG9uIHJlcXVpcmVzJm5ic3A7
-bW9yZSB0aGF0IGp1c3Qgc3RhdGlzdGljcyB0aG91Z2guPEJSPlJlZ2FyZGluZyB0aGUgc3RhdGlz
-dGljcyA6PEJSPldoZW4gSSBydW4gZG1zZXR1cCAoY2VudG9zIDYuNSkmbmJzcDsgb24gbXkgZGV2
-aWNlLCBpdCBzYWlzIHRoYXQmbmJzcDtteSB0YXJnZXQgZG9lc250IHN1cHBvcnQgbWVzc2FnZXMo
-aGEgYmVjYXVzZSZuYnNwO3dlIDxCUj5kaWRuJ3QgaW1wbGVtZW50IGFueSB5ZXQgKSAsIGZyb20g
-dGhlIGRlc2NyaXB0aW9uJm5ic3A7aW4gdGhlIGxpbmsgeW91J3ZlIHNlbnQsIGl0IHNvdW5kcyBs
-aWtlIGFueSBkbSB0YXJnZXQgaW5oZXJpdHM8QlI+dGhpcyBmdW5jdGlvbmFsaXR5LjxCUj5BcmUg
-dGhlcmUgYW55IG1ldGhvZHMmbmJzcDtJIG5lZWQgdG8gY2FsbCwgb3IgZG8gSSBuZWVkIHRvIHJl
-LWltcGxlbWVudCB0aGlzIGluIG15IHRhcmdldD88QlI+Jm5ic3A7PEJSPlRoYW5rczxCUj4tZ2ls
-aTxicj4mbmJzcDs8QlI+PGRpdj4mZ3Q7IFRvOiBkbS1kZXZlbEByZWRoYXQuY29tPGJyPiZndDsg
-RnJvbTogemthYmVsYWNAcmVkaGF0LmNvbTxicj4mZ3Q7IERhdGU6IE1vbiwgNiBKdWwgMjAxNSAx
-NDoxOTo0MiArMDIwMDxicj4mZ3Q7IFN1YmplY3Q6IFJlOiBbZG0tZGV2ZWxdIEdldHRpbmcgbWFw
-cGVkIGRldmljZSBuYW13PGJyPiZndDsgPGJyPiZndDsgRG5lIDYuNy4yMDE1IHYgMTQ6MDQgR2ls
-aSBCIG5hcHNhbChhKTo8YnI+Jmd0OyAmZ3Q7IFRoYW5rczxicj4mZ3Q7ICZndDsgTXkgbW9kdWxl
-IGlzIGNyZWF0aW5nIHRhcmdldCBzaW1pbGFyIHRvIHBvb2wgYW5kIHRoaW4gZnJvbSBkbV90aGlu
-LmMuPGJyPiZndDsgJmd0OyBpZiB0aGUgdXNlciBjcmVhdGVzIGEgcG9vbCBuYW1lZCAiUG9vbDEi
-LCBhbmQgbm93IGhlIHdpc2hlczxicj4mZ3Q7IDxicj4mZ3Q7IEhhdmUgeW91IGNoZWNrZWQgIGRt
-IHN0YXRpc3RpYyBzdXBwb3J0ID88YnI+Jmd0OyA8YnI+Jmd0OyBodHRwczovL3d3dy5rZXJuZWwu
-b3JnL2RvYy9Eb2N1bWVudGF0aW9uL2RldmljZS1tYXBwZXIvc3RhdGlzdGljcy50eHQ8YnI+Jmd0
-OyA8YnI+Jmd0OyBaZGVuZWs8YnI+Jmd0OyA8YnI+Jmd0OyA8YnI+Jmd0OyA8YnI+Jmd0OyAtLTxi
-cj4mZ3Q7IGRtLWRldmVsIG1haWxpbmcgbGlzdDxicj4mZ3Q7IGRtLWRldmVsQHJlZGhhdC5jb208
-YnI+Jmd0OyBodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw8
-YnI+PC9kaXY+IAkJIAkgICAJCSAgPC9kaXY+PC9ib2R5Pg0KPC9odG1sPg==
-
---_6c350de5-e23e-4374-ac92-c357f50517d1_--
-
-
---===============0914785544388529655==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0914785544388529655==--
+Zdenek
