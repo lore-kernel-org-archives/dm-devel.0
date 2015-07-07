@@ -1,39 +1,62 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: Getting mapped device namw
-Date: Tue, 7 Jul 2015 08:30:19 +0200
-Message-ID: <559B71FB.9040200@redhat.com>
-References: <DUB115-W139FD64ED5BB7A83E674F2696930@phx.gbl>
-	<559A6486.3010704@gmail.com>
-	<DUB115-W96AFB4B73047869480AB5F96930@phx.gbl>
-	<559A725E.9080903@redhat.com>
-	<DUB115-W744B7F70728296C3FC54E296920@phx.gbl>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Pali =?utf-8?B?Um9ow6Fy?= <pali.rohar@gmail.com>
+Subject: Re: [PATCH v2 0/3] dm-crypt: Adds support for wiping key when doing
+ suspend/hibernation
+Date: Tue, 7 Jul 2015 09:59:41 +0200
+Message-ID: <20150707075941.GD12087@pali>
+References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
+ <1434885634-19895-1-git-send-email-pali.rohar@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <DUB115-W744B7F70728296C3FC54E296920@phx.gbl>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1434885634-19895-1-git-send-email-pali.rohar@gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>
+Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: dm-devel.ids
 
-Dne 7.7.2015 v 08:22 Gili B napsal(a):
-> Thanks
-> I've looked at it and it loks like something that can assist us.
-> The general info mechanism we are working on requires more that just
-> statistics though.
-> Regarding the statistics :
-> When I run dmsetup (centos 6.5)  on my device, it sais that my target doesnt
+On Sunday 21 June 2015 13:20:31 Pali Roh=C3=A1r wrote:
+> This patch series increase security of suspend and hibernate actions.=
+ It allows
+> user to safely wipe crypto keys before suspend and hibernate actions =
+starts
+> without race conditions on userspace process with heavy I/O.
+>=20
+> To automatically wipe cryto key for <device> before hibernate action =
+call:
+> $ dmsetup message <device> 0 key wipe_on_hibernation
+>=20
+> To automatically wipe cryto key for <device> before suspend action ca=
+ll:
+> $ dmsetup message <device> 0 key wipe_on_suspend
+>=20
+> To disable automatic wipe call retain_on_suspend/retain_on_hibernatio=
+n.
+>=20
+> Pali Roh=C3=A1r (3):
+>   PM suspend/hibernate: Call notifier after freezing processes
+>   dm: Export function dm_suspend_md()
+>   dm-crypt: Adds support for wiping key when doing suspend/hibernatio=
+n
+>=20
+>  drivers/md/dm-crypt.c    |  126 ++++++++++++++++++++++++++++++++++++=
++++++++---
+>  drivers/md/dm.c          |    6 +++
+>  drivers/md/dm.h          |    5 ++
+>  include/linux/suspend.h  |    2 +
+>  kernel/power/hibernate.c |    2 +
+>  kernel/power/suspend.c   |    4 +-
+>  6 files changed, 136 insertions(+), 9 deletions(-)
+>=20
 
-Centos 6.5 is way too old for this feature.
-It appears in 7.2.
+Hello, can somebody look and review this (v2) patch series?
 
-Zdenek
+--=20
+Pali Roh=C3=A1r
+pali.rohar@gmail.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
