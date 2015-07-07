@@ -1,94 +1,116 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 7/7] dm: make dm_vcalloc use kvmalloc
-Date: Tue, 7 Jul 2015 11:13:17 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1507071112280.23387@file01.intranet.prod.int.rdu2.redhat.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH 2/7] mm: introduce kvmalloc and kvmalloc_node
+Date: Tue, 7 Jul 2015 14:41:17 -0700
+Message-ID: <20150707144117.5b38ac38efda238af8a1f536@linux-foundation.org>
 References: <alpine.LRH.2.02.1507071058350.23387@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1507071109490.23387@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <alpine.LRH.2.02.1507071058350.23387@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1507071109490.23387@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: owner-linux-mm@kvack.org
-To: Mike Snitzer <msnitzer@redhat.com>
-Cc: "Alasdair G. Kergon" <agk@redhat.com>, Edward Thornber <thornber@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, David Rientjes <rientjes@google.com>, Vivek Goyal <vgoyal@redhat.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Edward Thornber <thornber@redhat.com>, David Rientjes <rientjes@google.com>, Vivek Goyal <vgoyal@redhat.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: dm-devel.ids
 
-Make dm_vcalloc use kvmalloc, so that smaller allocations are done with
-kmalloc (which is faster).
+On Tue, 7 Jul 2015 11:10:09 -0400 (EDT) Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Introduce the functions kvmalloc and kvmalloc_node. These functions
+> provide reliable allocation of object of arbitrary size. They attempt to
+> do allocation with kmalloc and if it fails, use vmalloc. Memory allocated
+> with these functions should be freed with kvfree.
 
----
- drivers/md/dm-snap-persistent.c |    2 +-
- drivers/md/dm-snap.c            |    2 +-
- drivers/md/dm-table.c           |    8 ++++----
- 3 files changed, 6 insertions(+), 6 deletions(-)
+Sigh.  We've resisted doing this because vmalloc() is somewhat of a bad
+thing, and we don't want to make it easy for people to do bad things.
 
-Index: linux-4.2-rc1/drivers/md/dm-snap-persistent.c
-===================================================================
---- linux-4.2-rc1.orig/drivers/md/dm-snap-persistent.c	2015-07-07 15:50:23.000000000 +0200
-+++ linux-4.2-rc1/drivers/md/dm-snap-persistent.c	2015-07-07 15:59:43.000000000 +0200
-@@ -600,7 +600,7 @@ static void persistent_dtr(struct dm_exc
- 	free_area(ps);
- 
- 	/* Allocated in persistent_read_metadata */
--	vfree(ps->callbacks);
-+	kvfree(ps->callbacks);
- 
- 	kfree(ps);
- }
-Index: linux-4.2-rc1/drivers/md/dm-snap.c
-===================================================================
---- linux-4.2-rc1.orig/drivers/md/dm-snap.c	2015-07-07 15:50:23.000000000 +0200
-+++ linux-4.2-rc1/drivers/md/dm-snap.c	2015-07-07 15:59:43.000000000 +0200
-@@ -633,7 +633,7 @@ static void dm_exception_table_exit(stru
- 			kmem_cache_free(mem, ex);
- 	}
- 
--	vfree(et->table);
-+	kvfree(et->table);
- }
- 
- static uint32_t exception_hash(struct dm_exception_table *et, chunk_t chunk)
-Index: linux-4.2-rc1/drivers/md/dm-table.c
-===================================================================
---- linux-4.2-rc1.orig/drivers/md/dm-table.c	2015-07-07 15:50:25.000000000 +0200
-+++ linux-4.2-rc1/drivers/md/dm-table.c	2015-07-07 15:59:43.000000000 +0200
-@@ -143,7 +143,7 @@ void *dm_vcalloc(unsigned long nmemb, un
- 		return NULL;
- 
- 	size = nmemb * elem_size;
--	addr = vzalloc(size);
-+	addr = kvmalloc(size, GFP_KERNEL | __GFP_ZERO);
- 
- 	return addr;
- }
-@@ -171,7 +171,7 @@ static int alloc_targets(struct dm_table
- 	n_targets = (struct dm_target *) (n_highs + num);
- 
- 	memset(n_highs, -1, sizeof(*n_highs) * num);
--	vfree(t->highs);
-+	kvfree(t->highs);
- 
- 	t->num_allocated = num;
- 	t->highs = n_highs;
-@@ -235,7 +235,7 @@ void dm_table_destroy(struct dm_table *t
- 
- 	/* free the indexes */
- 	if (t->depth >= 2)
--		vfree(t->index[t->depth - 2]);
-+		kvfree(t->index[t->depth - 2]);
- 
- 	/* free the targets */
- 	for (i = 0; i < t->num_targets; i++) {
-@@ -247,7 +247,7 @@ void dm_table_destroy(struct dm_table *t
- 		dm_put_target_type(tgt->type);
- 	}
- 
--	vfree(t->highs);
-+	kvfree(t->highs);
- 
- 	/* free the device list */
- 	free_devices(&t->devices, t->md);
+And vmalloc is bad because a) it's slow and b) it does GFP_KERNEL
+allocations for page tables and c) it is susceptible to arena
+fragmentation.
+
+We'd prefer that people fix their junk so it doesn't depend upon large
+contiguous allocations.  This isn't userspace - kernel space is hostile
+and kernel code should be robust.
+
+So I dunno.  Should we continue to make it a bit more awkward to use
+vmalloc()?  Probably that tactic isn't being very successful - people
+will just go ahead and open-code it.  And given the surprising amount
+of stuff you've placed in kvmalloc_node(), they'll implement it
+incorrectly...
+
+How about we compromise: add kvmalloc_node(), but include a BUG_ON("you
+suck") to it?
+
+>
+> ...
+>
+> +void *kvmalloc_node(size_t size, gfp_t gfp, int node)
+> +{
+> +	void *p;
+> +	unsigned uninitialized_var(noio_flag);
+> +
+> +	/* vmalloc doesn't support no-wait allocations */
+> +	WARN_ON(!(gfp & __GFP_WAIT));
+
+It could be a WARN_ON_ONCE, but that doesn't seem very important.
+
+> +	if (likely(size <= KMALLOC_MAX_SIZE)) {
+> +		p = kmalloc_node(size, gfp | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN, node);
+
+There is no way in which a reader will be able to work out the reason
+for this selection of flags.  Heck, this reviewer can't work it out
+either.
+
+Can we please have a code comment in there which reveals all this?
+
+Also, it would be nice to find a tasteful way of squeezing this into 80
+cols.
+
+> +		if (likely(p != NULL))
+> +			return p;
+> +	}
+> +	if ((gfp & (__GFP_IO | __GFP_FS)) != (__GFP_IO | __GFP_FS)) {
+> +		/*
+> +		 * vmalloc allocates page tables with GFP_KERNEL, regardless
+> +		 * of GFP flags passed to it. If we are no GFP_NOIO context,
+> +		 * we call memalloc_noio_save, so that all allocations are
+> +		 * implicitly done with GFP_NOIO.
+
+OK.  But why do we turn on __GFP_HIGH?
+
+> +		 */
+> +		noio_flag = memalloc_noio_save();
+> +		gfp |= __GFP_HIGH;
+> +	}
+> +	p = __vmalloc_node_flags(size, node, gfp | __GFP_REPEAT | __GFP_HIGHMEM);
+
+Again, please document the __GFP_REPEAT reasoning.
+
+__vmalloc_node_flags() handles __GFP_ZERO, I believe?  So we presently
+don't have a kvzalloc() - callers are to open-code the __GFP_ZERO.
+
+I suppose we may as well go ahead and add the 4-line wrapper for
+kvzalloc().
+
+> +	if ((gfp & (__GFP_IO | __GFP_FS)) != (__GFP_IO | __GFP_FS)) {
+> +		memalloc_noio_restore(noio_flag);
+> +	}
+
+scripts/checkpatch.pl is your friend!
+
+> +	return p;
+> +}
+> +EXPORT_SYMBOL(kvmalloc_node);
+> +
+> +void *kvmalloc(size_t size, gfp_t gfp)
+> +{
+> +	return kvmalloc_node(size, gfp, NUMA_NO_NODE);
+> +}
+> +EXPORT_SYMBOL(kvmalloc);
+
+It's probably better to switch this to a static inline.  That's a bit
+faster and will save a bit of stack on a stack-heavy code path.  Unless
+gcc manages to do a tailcall, but it doesn't seem to do that much.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
