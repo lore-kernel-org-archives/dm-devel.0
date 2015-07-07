@@ -1,64 +1,26 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH] bio integrity: do not assume bio_integrity_pool
- exists if bioset exists
-Date: Tue, 7 Jul 2015 09:57:21 -0400
-Message-ID: <20150707135721.GA16040@redhat.com>
-References: <20150701165740.GA1573@redhat.com>
- <559BD866.6030305@kernel.dk>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 0/7] mm: reliable memory allocation with kvmalloc
+Date: Tue, 7 Jul 2015 11:08:54 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1507071058350.23387@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <559BD866.6030305@kernel.dk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, mpatocka@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: Mike Snitzer <msnitzer@redhat.com>
+Cc: "Alasdair G. Kergon" <agk@redhat.com>, Edward Thornber <thornber@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, David Rientjes <rientjes@google.com>, Vivek Goyal <vgoyal@redhat.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Jul 07 2015 at  9:47am -0400,
-Jens Axboe <axboe@kernel.dk> wrote:
+This patchset introduces function kvmalloc and kvmalloc_node. These 
+functions allow reliable allocation of objects of arbitrary size. They 
+attempt to do allocation with kmalloc and if it fails, use vmalloc. Memory 
+allocated with these functions should be freed with kvfree.
 
-> On 07/01/2015 10:57 AM, Mike Snitzer wrote:
-> >bio_integrity_alloc() and bio_integrity_free() assume that if a bio was
-> >allocated from a bioset that that bioset also had its bio_integrity_pool
-> >allocated using bioset_integrity_create().  This is a very bad
-> >assumption given that bioset_create() and bioset_integrity_create() are
-> >completely disjoint.  Not all callers of bioset_create() have been
-> >trained to also call bioset_integrity_create() -- and they may not care
-> >to be.
-> >
-> >Fix this by falling back to kmalloc'ing 'struct bio_integrity_payload'
-> >rather than force all bioset consumers to (wastefully) preallocate a
-> >bio_integrity_pool that they very likely won't actually need (given the
-> >niche nature of the current block integrity support).
-> >
-> >Otherwise, a NULL pointer "Kernel BUG" with a trace like the following
-> >will be observed (as seen on s390x using zfcp storage) because dm-io
-> >doesn't use bioset_integrity_create() when creating its bioset:
-> >
-> >     [  791.643338] Call Trace:
-> >     [  791.643339] ([<00000003df98b848>] 0x3df98b848)
-> >     [  791.643341]  [<00000000002c5de8>] bio_integrity_alloc+0x48/0xf8
-> >     [  791.643348]  [<00000000002c6486>] bio_integrity_prep+0xae/0x2f0
-> >     [  791.643349]  [<0000000000371e38>] blk_queue_bio+0x1c8/0x3d8
-> >     [  791.643355]  [<000000000036f8d0>] generic_make_request+0xc0/0x100
-> >     [  791.643357]  [<000000000036f9b2>] submit_bio+0xa2/0x198
-> >     [  791.643406]  [<000003ff801f9774>] dispatch_io+0x15c/0x3b0 [dm_mod]
-> >     [  791.643419]  [<000003ff801f9b3e>] dm_io+0x176/0x2f0 [dm_mod]
-> >     [  791.643423]  [<000003ff8074b28a>] do_reads+0x13a/0x1a8 [dm_mirror]
-> >     [  791.643425]  [<000003ff8074b43a>] do_mirror+0x142/0x298 [dm_mirror]
-> >     [  791.643428]  [<0000000000154fca>] process_one_work+0x18a/0x3f8
-> >     [  791.643432]  [<000000000015598a>] worker_thread+0x132/0x3b0
-> >     [  791.643435]  [<000000000015d49a>] kthread+0xd2/0xd8
-> >     [  791.643438]  [<00000000005bc0ca>] kernel_thread_starter+0x6/0xc
-> >     [  791.643446]  [<00000000005bc0c4>] kernel_thread_starter+0x0/0xc
-> >
-> >Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> >Cc: stable@vger.kernel.org
-> >---
-> >  block/bio-integrity.c | 4 ++--
-> >  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> Applied for this series.
+The patchset makes modification to device mapper to use these functions.
 
-Awesome, thanks.
+Mikulas
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
