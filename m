@@ -1,46 +1,37 @@
-From: Baruch Siach <baruch@tkos.co.il>
-Subject: [PATCH] dm: crypt: update wiki page URL
-Date: Sun,  5 Jul 2015 09:55:44 +0300
-Message-ID: <4616c7fad2117bb4daa909344079fc9e945d00bb.1436079344.git.baruch@tkos.co.il>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 4/7] dm: introduce dm_kvmalloc
+Date: Tue, 7 Jul 2015 08:50:36 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1507070848480.3944@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1507031658500.28837@file01.intranet.prod.int.rdu2.redhat.com> <20150706134750.GA31600@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Baruch Siach <baruch@tkos.co.il>, Milan Broz <gmazyland@gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150706134750.GA31600@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "Alasdair G. Kergon" <agk@redhat.com>, Edward Thornber <thornber@redhat.com>, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Cryptsetup moved to gitlab. This is a leftover from commit e44f23b32dc7 (dm
-crypt: update URLs to new cryptsetup project page, 2015-04-05).
 
-Cc: Milan Broz <gmazyland@gmail.com>
-Signed-off-by: Baruch Siach <baruch@tkos.co.il>
----
- drivers/md/Kconfig | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index b59727309072..bfec3bdfe598 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -259,7 +259,7 @@ config DM_CRYPT
- 	  the ciphers you're going to use in the cryptoapi configuration.
- 
- 	  For further information on dm-crypt and userspace tools see:
--	  <http://code.google.com/p/cryptsetup/wiki/DMCrypt>
-+	  <https://gitlab.com/cryptsetup/cryptsetup/wikis/DMCrypt>
- 
- 	  To compile this code as a module, choose M here: the module will
- 	  be called dm-crypt.
--- 
-2.1.4
+On Mon, 6 Jul 2015, Mike Snitzer wrote:
+
+> In general I like what you've done with this patchset _except_ I'm not
+> seeing why dm_kvmalloc() should be in DM at all.  It should probably be
+> elevated to an kvmalloc() export from mm/util.c and include/linux/mm.h
+> along-side kvfree().
+
+If memory management maintainers agree to put it into mm core, it would be 
+nice. If not, put it into device mapper.
+
+Mikulas
+
+> David and/or Andrew, what do you think?
+> 
+> FYI, full patchset starts here:
+> https://www.redhat.com/archives/dm-devel/2015-July/msg00004.html
+> 
+> (but Mikulas didn't chain the reply so the 7 patches aren't properly
+> threaded/navigated, you can dig out the patches toward the top of the
+> list here: https://patchwork.kernel.org/project/dm-devel/list/ )
+> 
