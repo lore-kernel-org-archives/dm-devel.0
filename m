@@ -1,76 +1,37 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [PATCH 4/7] dm: introduce dm_kvmalloc
-Date: Tue, 7 Jul 2015 08:52:06 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1507070851170.3944@file01.intranet.prod.int.rdu2.redhat.com>
+Date: Tue, 7 Jul 2015 09:25:42 -0400
+Message-ID: <20150707132542.GA15860@redhat.com>
 References: <alpine.LRH.2.02.1507031658500.28837@file01.intranet.prod.int.rdu2.redhat.com>
-	<20150706124212.GA4515@redhat.com>
-	<alpine.LRH.2.02.1507060902220.27204@file01.intranet.prod.int.rdu2.redhat.com>
-	<20150706130716.GC4515@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+ <20150706134750.GA31600@redhat.com>
+ <alpine.LRH.2.02.1507070848480.3944@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150706130716.GC4515@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Edward Thornber <thornber@redhat.com>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1507070848480.3944@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: "Alasdair G. Kergon" <agk@redhat.com>, Edward Thornber <thornber@redhat.com>, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
+On Tue, Jul 07 2015 at  8:50am -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-
-On Mon, 6 Jul 2015, Vivek Goyal wrote:
-
-> On Mon, Jul 06, 2015 at 09:04:34AM -0400, Mikulas Patocka wrote:
-> > 
-> > 
-> > On Mon, 6 Jul 2015, Vivek Goyal wrote:
-> > 
-> > > On Fri, Jul 03, 2015 at 04:59:54PM -0400, Mikulas Patocka wrote:
-> > > [..]
-> > > > Index: linux-4.1/drivers/md/dm-table.c
-> > > > ===================================================================
-> > > > --- linux-4.1.orig/drivers/md/dm-table.c	2015-07-02 19:21:16.000000000 +0200
-> > > > +++ linux-4.1/drivers/md/dm-table.c	2015-07-02 19:28:18.000000000 +0200
-> > > > @@ -131,6 +131,43 @@ static int setup_btree_index(unsigned in
-> > > >  	return 0;
-> > > >  }
-> > > >  
-> > > > +void *dm_kvmalloc_node(size_t size, gfp_t gfp, int node)
-> > > > +{
-> > > > +	void *p;
-> > > > +	unsigned uninitialized_var(noio_flag);
-> > > > +
-> > > > +	/* vmalloc doesn't support no-wait allocations */
-> > > > +	WARN_ON(!(gfp & __GFP_WAIT));
-> > > > +
-> > > 
-> > > Should this WARN_ON() be moved after kmalloc(). This should be triggered
-> > > only if we use vmalloc().
-> > > 
-> > > Thanks
-> > > Vivek
-> > 
-> > I think not - it would just hide the problematic usage. Warning always is 
-> > better than warning with some low probability when kmalloc fails.
 > 
-> Ok, so you don't want this function to be used if __GFP_WAIT is not
-> specified and caller needs to call kmalloc() directly in that case. If
-> that's the intent, it is fine.
-
-Yes, if the caller doesn't specify __GFP_WAIT, he should use kmalloc 
-directly.
-
-Mikulas
-
-> Thanks
-> Vivek
 > 
+> On Mon, 6 Jul 2015, Mike Snitzer wrote:
+> 
+> > In general I like what you've done with this patchset _except_ I'm not
+> > seeing why dm_kvmalloc() should be in DM at all.  It should probably be
+> > elevated to an kvmalloc() export from mm/util.c and include/linux/mm.h
+> > along-side kvfree().
+> 
+> If memory management maintainers agree to put it into mm core, it would be 
+> nice. If not, put it into device mapper.
+
+Please rework your patches so that the mm changes are split out into
+clean patch(es) at the start of the series.
+
+Please cc Andrew and David on posting v2.  Also, please chain the reply
+so that the patchset is properly threaded.
