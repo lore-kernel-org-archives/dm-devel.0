@@ -1,23 +1,57 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [RFC PATCH] bio integrity: do not assume bio_integrity_pool exists if bioset exists
-Date: Tue, 07 Jul 2015 20:19:33 -0400
-Message-ID: <yq1zj37wley.fsf@sermon.lab.mkp.net>
-References: <20150701165740.GA1573@redhat.com>
+From: Doug Dumitru <doug@easyco.com>
+Subject: API for multi-segment atomic IO
+Date: Tue, 7 Jul 2015 20:33:32 -0700
+Message-ID: <CAFx4rwRyVL4Kt_DgHyHMRZ9SBM3Ao=VubCk7nXBS3Qg68YD_hw@mail.gmail.com>
+Reply-To: doug@easyco.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150701165740.GA1573@redhat.com> (Mike Snitzer's message of
-	"Wed, 1 Jul 2015 12:57:40 -0400")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, mpatocka@redhat.com
+Content-Type: multipart/mixed; boundary="===============3569471422430467491=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
->>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+--===============3569471422430467491==
+Content-Type: multipart/alternative; boundary=bcaec547c95759b086051a54cf0f
 
-Sorry I'm a bit late to the game here. Just got back from vacation.
+--bcaec547c95759b086051a54cf0f
+Content-Type: text/plain; charset=UTF-8
 
-But I agree with the patch.
+... is anyone working on such an animal.  I was thinking of a "struct bio"
+extension.  I know that Fusion had a private API for this, but I am not a
+Fusion customer so I have not seen their concepts.
 
 -- 
-Martin K. Petersen	Oracle Linux Engineering
+Doug Dumitru
+EasyCo LLC
+
+--bcaec547c95759b086051a54cf0f
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div class=3D"gmail_default" style=3D"font-family:arial,he=
+lvetica,sans-serif;font-size:small">... is anyone working on such an animal=
+.=C2=A0 I was thinking of a &quot;struct bio&quot; extension.=C2=A0 I know =
+that Fusion had a private API for this, but I am not a Fusion customer so I=
+ have not seen their concepts.<br clear=3D"all"></div><br>-- <br><div class=
+=3D"gmail_signature">Doug Dumitru<br>EasyCo LLC<br></div>
+</div>
+
+--bcaec547c95759b086051a54cf0f--
+
+
+--===============3569471422430467491==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============3569471422430467491==--
