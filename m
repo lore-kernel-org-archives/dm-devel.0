@@ -1,74 +1,79 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: [dm-devel] [PATCH 2/7] mm: introduce kvmalloc and kvmalloc_node
-Date: Wed, 8 Jul 2015 09:34:27 +0200
-Message-ID: <559CD283.4020605@redhat.com>
-References: <alpine.LRH.2.02.1507071058350.23387@file01.intranet.prod.int.rdu2.redhat.com>
- <alpine.LRH.2.02.1507071109490.23387@file01.intranet.prod.int.rdu2.redhat.com>
- <20150707144117.5b38ac38efda238af8a1f536@linux-foundation.org>
+From: Christian Borntraeger <borntraeger@de.ibm.com>
+Subject: 4.1: 9a0e609e3fd ("dm: only run the queue on completion if ....")
+ causes significant overhead in osq_lock on ext4/multipath
+Date: Wed, 08 Jul 2015 10:37:34 +0200
+Message-ID: <559CE14E.7010209@de.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150707144117.5b38ac38efda238af8a1f536@linux-foundation.org>
-Sender: owner-linux-mm@kvack.org
-To: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Edward Thornber <thornber@redhat.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, "Alasdair G. Kergon" <agk@redhat.com>, David Rientjes <rientjes@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Vivek Goyal <vgoyal@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, "linux-kernel@vger.kernel.org >> Linux Kernel Mailing List" <linux-kernel@vger.kernel.org>, linux-s390 <linux-s390@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, linux-ext4@vger.kernel.org
 List-Id: dm-devel.ids
 
-Dne 7.7.2015 v 23:41 Andrew Morton napsal(a):
-> On Tue, 7 Jul 2015 11:10:09 -0400 (EDT) Mikulas Patocka <mpatocka@redhat.com> wrote:
->
->> Introduce the functions kvmalloc and kvmalloc_node. These functions
->> provide reliable allocation of object of arbitrary size. They attempt to
->> do allocation with kmalloc and if it fails, use vmalloc. Memory allocated
->> with these functions should be freed with kvfree.
->
-> Sigh.  We've resisted doing this because vmalloc() is somewhat of a bad
-> thing, and we don't want to make it easy for people to do bad things.
->
-> And vmalloc is bad because a) it's slow and b) it does GFP_KERNEL
-> allocations for page tables and c) it is susceptible to arena
-> fragmentation.
->
-> We'd prefer that people fix their junk so it doesn't depend upon large
-> contiguous allocations.  This isn't userspace - kernel space is hostile
-> and kernel code should be robust.
->
-> So I dunno.  Should we continue to make it a bit more awkward to use
-> vmalloc()?  Probably that tactic isn't being very successful - people
-> will just go ahead and open-code it.  And given the surprising amount
-> of stuff you've placed in kvmalloc_node(), they'll implement it
-> incorrectly...
+not sure if this actually a mutex/s390/dm or ext4 problem, but it bisects down to a dm commit:
 
-Hi
+Mike,
 
- From my naive view:  4K-128K were nice restriction in the age of 16MB Pentium 
-machines - but the time has changed and now users need to work with TB of memory.
+commit 9a0e609e3fd8a95c96629b9fbde6b8c5b9a1456a ("dm: only run the queue on 
+completion if congested or no requests pending") causes a significant overhead
+if multiple processes access the same file on an ext4 file system on multipath,
+with direct io.
 
-So if the kernel driver is going to maintain such a huge chunk - it could 
-hardly fit its resources into KB blocks.
+This actually appeared first with a kvm guest that has I/O on 500 virtio disks that
+are backed up by the same image file (I used this to test something else)
 
-So there are options - you could make complex code inside the driver to 
-address every little kmalloc-ed chunk (and have a lot of potential for bugs) 
-or you could always use vmalloc() and leave it on 'slow/GFP_KERNEL'.
+but something like the following (without kvm)
 
-So IMHO it's quite right to have the 'middle' road here - if there is enough 
-memory to proceed with kmalloc - fine and if not - then driver will be 
-somewhat slower but the coder will not have to spend months of coding 
-reinvention of the wheel...
+for ((d=1; d<500; d++)); do  dd if=fileonmultipathext4 of=/dev/null bs=4096 iflag=direct & done
 
-Personally I even find 128K pretty small if this limit comes from MB era and 
-we are in the age of commonly available 32G laptops...
+keeps most CPUs on the osq_lock (optimistic spinning for mutex)
 
-IMHO also it's kind of weird when kernel is not able to satisfy  128K 
-allocation if there are gigabytes of free RAM in my system - there should be 
-some defrag process running behind if there is such constrained kmalloc 
-interface...
+# Overhead  Command         Shared Object        Symbol                                     
+# ........  ..............  ...................  ...........................................
+#
+    73.91%  dd              [kernel.vmlinux]     [k] osq_lock                               
+     3.15%  dd              [kernel.vmlinux]     [k] mutex_spin_on_owner.isra.5             
+     3.03%  swapper         [kernel.vmlinux]     [k] osq_lock                               
+     1.08%  kdmwork-252:28  [kernel.vmlinux]     [k] osq_lock                               
+     0.91%  dd              [kernel.vmlinux]     [k] arch_spin_lock_wait_flags              
+     0.36%  dd              [kernel.vmlinux]     [k] kmem_cache_free                        
+     0.29%  dd              [kernel.vmlinux]     [k] account_system_time                    
+     0.25%  dd              [kernel.vmlinux]     [k] __blockdev_direct_IO                   
+     0.25%  dd              [kernel.vmlinux]     [k] _mix_pool_bytes                        
+     0.22%  dd              [kernel.vmlinux]     [k] __schedule                             
+     0.22%  dd              [kernel.vmlinux]     [k] pcpu_ec_call                           
+     0.21%  dd              [kernel.vmlinux]     [k] enqueue_entity                         
+     0.18%  dd              [kernel.vmlinux]     [k] vtime_account_irq_enter                
+     0.17%  dd              [dm_multipath]       [k] multipath_status                       
+     0.17%  dd              [kernel.vmlinux]     [k] try_to_wake_up                         
+     0.17%  dd              [kernel.vmlinux]     [k] update_cfs_shares                      
+     0.16%  dd              [kernel.vmlinux]     [k] blk_update_request  
 
-Zdenek
+With that patch reverted the system is much less contendent on osq_lock
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+# Overhead  Command         Shared Object      Symbol                                     
+# ........  ..............  .................  ...........................................
+#
+    30.22%  dd              [kernel.vmlinux]   [k] osq_lock                               
+     5.57%  dd              [kernel.vmlinux]   [k] mutex_spin_on_owner.isra.5             
+     5.48%  swapper         [kernel.vmlinux]   [k] osq_lock                               
+     1.61%  dd              [kernel.vmlinux]   [k] arch_spin_lock_wait_flags              
+     1.38%  dd              [kernel.vmlinux]   [k] arch_spin_lock_wait                    
+     1.17%  swapper         [kernel.vmlinux]   [k] mutex_spin_on_owner.isra.5             
+     0.67%  dd              [kernel.vmlinux]   [k] kmem_cache_free                        
+     0.63%  dd              [kernel.vmlinux]   [k] try_to_wake_up                         
+     0.63%  kdmwork-252:22  [kernel.vmlinux]   [k] osq_lock                               
+     0.57%  dd              [kernel.vmlinux]   [k] _mix_pool_bytes                        
+     0.57%  dd              [kernel.vmlinux]   [k] account_system_time                    
+     0.49%  dd              [kernel.vmlinux]   [k] pcpu_ec_call                           
+     0.48%  dd              [kernel.vmlinux]   [k] vtime_account_irq_enter                
+     0.44%  dd              [kernel.vmlinux]   [k] zfcp_fsf_reqid_check                   
+     0.42%  dd              [kernel.vmlinux]   [k] __blockdev_direct_IO                   
+     0.42%  dd              [kernel.vmlinux]   [k] enqueue_entity    
+
+
+Do you have any idea why this patch seems to affect mutex/sem hold times?
+
+Christian
