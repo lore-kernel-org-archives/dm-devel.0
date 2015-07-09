@@ -1,102 +1,154 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 2/7] mm: introduce kvmalloc and kvmalloc_node
-Date: Thu, 9 Jul 2015 10:45:30 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1507091039440.30842@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1507071058350.23387@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.1507071109490.23387@file01.intranet.prod.int.rdu2.redhat.com> <20150707144117.5b38ac38efda238af8a1f536@linux-foundation.org>
- <alpine.LRH.2.02.1507081855340.32526@file01.intranet.prod.int.rdu2.redhat.com> <20150708161815.bdff609d77868dbdc2e1ce64@linux-foundation.org>
+From: Doug Dumitru <doug@easyco.com>
+Subject: Re: API for multi-segment atomic IO
+Date: Thu, 9 Jul 2015 08:41:10 -0700
+Message-ID: <CAFx4rwR980To5cK=UgW1-qe8psgeQFYYm0-g_sPz1cEs48JiYg@mail.gmail.com>
+References: <CAFx4rwRyVL4Kt_DgHyHMRZ9SBM3Ao=VubCk7nXBS3Qg68YD_hw@mail.gmail.com>
+	<559D43F7.9010506@sandisk.com>
+	<CAFx4rwTEe5i1s0na0oncht9OEbJVhtgJe21VmS_0E-zxK_Vdrg@mail.gmail.com>
+	<20150708193832.GA26268@infradead.org>
+Reply-To: doug@easyco.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150708161815.bdff609d77868dbdc2e1ce64@linux-foundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Edward Thornber <thornber@redhat.com>, David Rientjes <rientjes@google.com>, Vivek Goyal <vgoyal@redhat.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>
+Content-Type: multipart/mixed; boundary="===============0464730813509028136=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20150708193832.GA26268@infradead.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+--===============0464730813509028136==
+Content-Type: multipart/alternative; boundary=089e0111d57c64461f051a7317d5
+
+--089e0111d57c64461f051a7317d5
+Content-Type: text/plain; charset=UTF-8
+
+Mr. Hellwig,
+
+I usually like to start with an interface and then implement the driver's
+from there.
+
+In this case, this is a block-level interface that supports new
+functionality (atomic writes).  In the past, you would approach this type
+of problem by having the atomic and user layers as a monolithic solution.
+Consider database updates and the complexity that they go through to insure
+database integrity.  If a block device could provide a database with an
+atomic update interface, the database would get a lot simpler.  The same
+discussion holds true for file systems.  Depending on the atomic update
+implementation, you might end up in the same place in terms of total code,
+but you might also end up somewhere completely different.
+
+The impetus for this is some research on file system "write
+amplification".  In general, file system design seems to be heading in the
+direction of higher and higher write amplification.  For example, the tree
+structure of zfs is shockingly inefficient in terms of write overhead.
+This is happening at the same time as Flash is becoming popular but is also
+moving to smaller and smaller geometries.  So write efficiency is becoming
+more and more important.
+
+By decoupling the atomic update semantics from file system and other block
+device "users", this gives devices the opportunity to implement atomic
+updates internal to or in cooperation with Flash management algorithms.  In
+theory, you can implement atomic updates without any extra writes.  In
+practice, some devices will be better than others.
+
+I was hoping to stumble across someone interested in this as a concept, or
+someone who has researched this area, as I don't have any near production
+existing code.  I could pretty easily hack in a couple of extra fields in
+struct bio that would accomplish what I see, but others might have
+differing input.
+
+Doug Dumitru
+
+On Wed, Jul 8, 2015 at 12:38 PM, Christoph Hellwig <hch@infradead.org>
+wrote:
+
+> On Wed, Jul 08, 2015 at 09:21:21AM -0700, Doug Dumitru wrote:
+> > I have a "smart" block device that can implement multi-segment atomic
+> > writes.
+>
+> How about submitting your driver upstream first and then we can work
+> with you on an API that fits the devices and the consumers needs.
+>
 
 
-On Wed, 8 Jul 2015, Andrew Morton wrote:
 
-> On Wed, 8 Jul 2015 19:03:08 -0400 (EDT) Mikulas Patocka <mpatocka@redhat.com> wrote:
-> 
-> > 
-> > 
-> > On Tue, 7 Jul 2015, Andrew Morton wrote:
-> > 
-> > > On Tue, 7 Jul 2015 11:10:09 -0400 (EDT) Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > > 
-> > > > Introduce the functions kvmalloc and kvmalloc_node. These functions
-> > > > provide reliable allocation of object of arbitrary size. They attempt to
-> > > > do allocation with kmalloc and if it fails, use vmalloc. Memory allocated
-> > > > with these functions should be freed with kvfree.
-> > > 
-> > > Sigh.  We've resisted doing this because vmalloc() is somewhat of a bad
-> > > thing, and we don't want to make it easy for people to do bad things.
-> > > 
-> > > And vmalloc is bad because a) it's slow and b) it does GFP_KERNEL
-> > > allocations for page tables and c) it is susceptible to arena
-> > > fragmentation.
-> > 
-> > This patch makes less use of vmalloc.
-> > 
-> > The typical pattern is that someone notices random failures due to memory 
-> > fragmentation in some subsystem that uses large kmalloc - so he replaces 
-> > kmalloc with vmalloc - and the code gets slower because of that. With this 
-> > patch, you can replace many vmalloc users with kvmalloc - and vmalloc will 
-> > be used only very rarely, when the memory is too fragmented for kmalloc.
-> 
-> Yes, I guess there is that.
-> 
-> > Here I'm sending next version of the patch with comments added.
-> 
-> You didn't like kvzalloc()?  We can always add those later...
-> 
-> > --- linux-4.2-rc1.orig/include/linux/mm.h	2015-07-07 15:58:11.000000000 +0200
-> > +++ linux-4.2-rc1/include/linux/mm.h	2015-07-08 19:22:24.000000000 +0200
-> > @@ -400,6 +400,11 @@ static inline int is_vmalloc_or_module_a
-> >  }
-> >  #endif
-> >  
-> > +extern void *kvmalloc_node(size_t size, gfp_t gfp, int node);
-> > +static inline void *kvmalloc(size_t size, gfp_t gfp)
-> > +{
-> > +	return kvmalloc_node(size, gfp, NUMA_NO_NODE);
-> > +}
-> >  extern void kvfree(const void *addr);
-> >  
-> >  static inline void compound_lock(struct page *page)
-> > Index: linux-4.2-rc1/mm/util.c
-> > ===================================================================
-> > --- linux-4.2-rc1.orig/mm/util.c	2015-07-07 15:58:11.000000000 +0200
-> > +++ linux-4.2-rc1/mm/util.c	2015-07-08 19:22:26.000000000 +0200
-> > @@ -316,6 +316,61 @@ unsigned long vm_mmap(struct file *file,
-> >  }
-> >  EXPORT_SYMBOL(vm_mmap);
-> >  
-> > +void *kvmalloc_node(size_t size, gfp_t gfp, int node)
-> > +{
-> > +	void *p;
-> > +	unsigned uninitialized_var(noio_flag);
-> > +
-> > +	/* vmalloc doesn't support no-wait allocations */
-> > +	WARN_ON_ONCE(!(gfp & __GFP_WAIT));
-> > +
-> > +	if (likely(size <= KMALLOC_MAX_SIZE)) {
-> > +		/*
-> > +		 * Use __GFP_NORETRY so that we don't loop waiting for the
-> > +		 *	allocation - we don't have to loop here, if the memory
-> > +		 *	is too fragmented, we fallback to vmalloc.
-> 
-> I'm not sure about this decision.  The direct reclaim retry code is the
-> normal default behaviour and becomes more important with larger allocation
-> attempts.  So why turn it off, and make it more likely that we return
-> vmalloc memory?
+-- 
+Doug Dumitru
+EasyCo LLC
 
-It can avoid triggering the OOM killer in case of fragmented memory.
+--089e0111d57c64461f051a7317d5
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-This is general question - if the code can handle allocation failure 
-gracefully, what gfp flags should it use? Maybe add some flag 
-__GFP_MAYFAIL instead of __GFP_NORETRY that changes the behavior in 
-desired way?
+<div dir=3D"ltr"><div class=3D"gmail_default" style=3D"font-family:arial,he=
+lvetica,sans-serif;font-size:small">Mr. Hellwig,<br><br></div><div class=3D=
+"gmail_default" style=3D"font-family:arial,helvetica,sans-serif;font-size:s=
+mall">I usually like to start with an interface and then implement the driv=
+er&#39;s from there.<br><br></div><div class=3D"gmail_default" style=3D"fon=
+t-family:arial,helvetica,sans-serif;font-size:small">In this case, this is =
+a block-level interface that supports new functionality (atomic writes).=C2=
+=A0 In the past, you would approach this type of problem by having the atom=
+ic and user layers as a monolithic solution.=C2=A0 Consider database update=
+s and the complexity that they go through to insure database integrity.=C2=
+=A0 If a block device could provide a database with an atomic update interf=
+ace, the database would get a lot simpler.=C2=A0 The same discussion holds =
+true for file systems.=C2=A0 Depending on the atomic update implementation,=
+ you might end up in the same place in terms of total code, but you might a=
+lso end up somewhere completely different.<br><br></div><div class=3D"gmail=
+_default" style=3D"font-family:arial,helvetica,sans-serif;font-size:small">=
+The impetus for this is some research on file system &quot;write amplificat=
+ion&quot;.=C2=A0 In general, file system design seems to be heading in the =
+direction of higher and higher write amplification.=C2=A0 For example, the =
+tree structure of zfs is shockingly inefficient in terms of write overhead.=
+=C2=A0 This is happening at the same time as Flash is becoming popular but =
+is also moving to smaller and smaller geometries.=C2=A0 So write efficiency=
+ is becoming more and more important.<br><br></div><div class=3D"gmail_defa=
+ult" style=3D"font-family:arial,helvetica,sans-serif;font-size:small">By de=
+coupling the atomic update semantics from file system and other block devic=
+e &quot;users&quot;, this gives devices the opportunity to implement atomic=
+ updates internal to or in cooperation with Flash management algorithms.=C2=
+=A0 In theory, you can implement atomic updates without any extra writes.=
+=C2=A0 In practice, some devices will be better than others.<br><br></div><=
+div class=3D"gmail_default" style=3D"font-family:arial,helvetica,sans-serif=
+;font-size:small">I was hoping to stumble across someone interested in this=
+ as a concept, or someone who has researched this area, as I don&#39;t have=
+ any near production existing code.=C2=A0 I could pretty easily hack in a c=
+ouple of extra fields in struct bio that would accomplish what I see, but o=
+thers might have differing input.<br><br></div><div class=3D"gmail_default"=
+ style=3D"font-family:arial,helvetica,sans-serif;font-size:small">Doug Dumi=
+tru<br></div></div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote=
+">On Wed, Jul 8, 2015 at 12:38 PM, Christoph Hellwig <span dir=3D"ltr">&lt;=
+<a href=3D"mailto:hch@infradead.org" target=3D"_blank">hch@infradead.org</a=
+>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 =
+0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span class=3D"">On W=
+ed, Jul 08, 2015 at 09:21:21AM -0700, Doug Dumitru wrote:<br>
+&gt; I have a &quot;smart&quot; block device that can implement multi-segme=
+nt atomic<br>
+&gt; writes.<br>
+<br>
+</span>How about submitting your driver upstream first and then we can work=
+<br>
+with you on an API that fits the devices and the consumers needs.<br>
+</blockquote></div><br><br clear=3D"all"><br>-- <br><div class=3D"gmail_sig=
+nature">Doug Dumitru<br>EasyCo LLC<br></div>
+</div>
 
-Mikulas
+--089e0111d57c64461f051a7317d5--
+
+
+--===============0464730813509028136==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0464730813509028136==--
