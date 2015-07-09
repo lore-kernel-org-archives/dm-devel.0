@@ -1,14 +1,18 @@
-From: Christoph Nelles <evilazrael@evilazrael.de>
-Subject: Re: DM-Cache Writeback & Direct IO?
-Date: Thu, 09 Jul 2015 17:51:50 +0200
-Message-ID: <559E9896.3040305@evilazrael.de>
-References: <9E0DEE10BA62134F89BB5A513CA84BC3A1A6B5CA@MAILSERVER01.trt9a.local>	<CAEZ+n-j_9QGWi7pdZY71VAmF-tnuRWb_8neWBd3iKMTm-yQU1A@mail.gmail.com>
-	<CAEZ+n-hF2EUPAHYC98ao0x_Q2nWXFodaxXkBqjg8ZvpqNviVKQ@mail.gmail.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: API for multi-segment atomic IO
+Date: Thu, 9 Jul 2015 09:34:37 -0700
+Message-ID: <559EA29D.9000700@sandisk.com>
+References: <CAFx4rwRyVL4Kt_DgHyHMRZ9SBM3Ao=VubCk7nXBS3Qg68YD_hw@mail.gmail.com>
+	<559D43F7.9010506@sandisk.com>
+	<CAFx4rwTEe5i1s0na0oncht9OEbJVhtgJe21VmS_0E-zxK_Vdrg@mail.gmail.com>
+	<20150708193832.GA26268@infradead.org>
+	<CAFx4rwR980To5cK=UgW1-qe8psgeQFYYm0-g_sPz1cEs48JiYg@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0584186564011214562=="
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAEZ+n-hF2EUPAHYC98ao0x_Q2nWXFodaxXkBqjg8ZvpqNviVKQ@mail.gmail.com>
+In-Reply-To: <CAFx4rwR980To5cK=UgW1-qe8psgeQFYYm0-g_sPz1cEs48JiYg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,113 +22,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: doug@easyco.com, device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---===============0584186564011214562==
-Content-Type: multipart/alternative;
-	boundary="------------020104090005010205010004"
-
-This is a multi-part message in MIME format.
---------------020104090005010205010004
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-
-Hi Leonardo,
-
-I am aware that sequential IO is routed directly to the backing device. 
-And I also played with the parameters like sequential_threshold and the 
-write_promote_adjustment introduced in 3.14.
-To test this i ran ./fio --name=test --filename=/dev/mapper/dmcache  
---rw=randwrite  --filesize=16G --bs=64k --ioengine=libaio --direct=1 
---iodepth=1000 in a endless loop.
-
-Regards
-
-Christoph
-
-
-Am 08.07.2015 um 19:55 schrieb Leonardo Santos:
-> Are you using sequential or random workload?
-> It's important, since DMCache bypasses sequential I/O based on theshold.
+On 07/09/2015 08:41 AM, Doug Dumitru wrote:> Mr. Hellwig,
+> On Wed, Jul 8, 2015 at 12:38 PM, Christoph Hellwig <hch@infradead.org
+> <mailto:hch@infradead.org>> wrote:
 >
+>     On Wed, Jul 08, 2015 at 09:21:21AM -0700, Doug Dumitru wrote:
+>     > I have a "smart" block device that can implement multi-segment atomic
+>     > writes.
 >
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+>     How about submitting your driver upstream first and then we can work
+>     with you on an API that fits the devices and the consumers needs.
+>
+> I usually like to start with an interface and then implement the
+> driver's from there.
+>
+> In this case, this is a block-level interface that supports new
+> functionality (atomic writes).  In the past, you would approach this
+> type of problem by having the atomic and user layers as a monolithic
+> solution.  Consider database updates and the complexity that they go
+> through to insure database integrity.  If a block device could provide a
+> database with an atomic update interface, the database would get a lot
+> simpler.  The same discussion holds true for file systems.  Depending on
+> the atomic update implementation, you might end up in the same place in
+> terms of total code, but you might also end up somewhere completely
+> different.
+>
+> The impetus for this is some research on file system "write
+> amplification".  In general, file system design seems to be heading in
+> the direction of higher and higher write amplification.  For example,
+> the tree structure of zfs is shockingly inefficient in terms of write
+> overhead.  This is happening at the same time as Flash is becoming
+> popular but is also moving to smaller and smaller geometries.  So write
+> efficiency is becoming more and more important.
+>
+> By decoupling the atomic update semantics from file system and other
+> block device "users", this gives devices the opportunity to implement
+> atomic updates internal to or in cooperation with Flash management
+> algorithms.  In theory, you can implement atomic updates without any
+> extra writes.  In practice, some devices will be better than others.
+>
+> I was hoping to stumble across someone interested in this as a concept,
+> or someone who has researched this area, as I don't have any near
+> production existing code.  I could pretty easily hack in a couple of
+> extra fields in struct bio that would accomplish what I see, but others
+> might have differing input.
 
+Hello Doug,
 
---------------020104090005010205010004
-Content-Type: text/html; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
-X-MIME-Autoconverted: from 8bit to quoted-printable by mx4-phx2.redhat.com id t69FpojF027438
+When designing such an API, please try to stay close to the semantics of 
+the already standardized SCSI commands. As you probably know the Linux 
+SCSI core has been implemented as a block driver. Any new command that 
+is added to the Linux block layer has to be translated by the Linux SCSI 
+core into a SCSI command. An example of a patch series that adds support 
+for a new block layer primitive is the patch series that adds 
+compare-and-write support 
+(http://thread.gmane.org/gmane.linux.scsi/95869). Although that patch 
+series is not yet upstream I think it is a good example of how to add 
+new functionality to the block layer and SCSI core.
 
-<html>
-  <head>
-    <meta content=3D"text/html; charset=3Dwindows-1252"
-      http-equiv=3D"Content-Type">
-  </head>
-  <body bgcolor=3D"#FFFFFF" text=3D"#000000">
-    <div class=3D"moz-cite-prefix">Hi Leonardo, <br>
-      <br>
-      I am aware that sequential IO is routed directly to the backing
-      device. And I also played with the parameters like
-      sequential_threshold and the write_promote_adjustment introduced
-      in 3.14. <br>
-      To test this i ran ./fio --name=3Dtest
-      --filename=3D/dev/mapper/dmcache=A0 --rw=3Drandwrite=A0 --filesize=3D=
-16G=A0
-      --bs=3D64k --ioengine=3Dlibaio --direct=3D1 --iodepth=3D1000 in a e=
-ndless
-      loop. <br>
-      <br>
-      Regards <br>
-      <br>
-      Christoph<br>
-      <br>
-      <br>
-      Am 08.07.2015 um 19:55 schrieb Leonardo Santos:<br>
-    </div>
-    <blockquote
-cite=3D"mid:CAEZ+n-hF2EUPAHYC98ao0x_Q2nWXFodaxXkBqjg8ZvpqNviVKQ@mail.gmai=
-l.com"
-      type=3D"cite">
-      <div dir=3D"ltr">
-        <div class=3D"gmail_extra">
-          <div class=3D"gmail_quote">
-            <pre style=3D"color:rgb(0,0,0)"><font face=3D"arial, sans-ser=
-if">Are you using sequential or random workload?=A0</font></pre>
-            <pre style=3D"color:rgb(0,0,0)"><span style=3D"font-family:ar=
-ial,sans-serif">It's important, since DMCache bypasses sequential I/O bas=
-ed on theshold.</span></pre>
-          </div>
-        </div>
-      </div>
-      <br>
-      <fieldset class=3D"mimeAttachmentHeader"></fieldset>
-      <br>
-      <pre wrap=3D"">--
-dm-devel mailing list
-<a class=3D"moz-txt-link-abbreviated" href=3D"mailto:dm-devel@redhat.com"=
->dm-devel@redhat.com</a>
-<a class=3D"moz-txt-link-freetext" href=3D"https://www.redhat.com/mailman=
-/listinfo/dm-devel">https://www.redhat.com/mailman/listinfo/dm-devel</a><=
-/pre>
-    </blockquote>
-    <br>
-  </body>
-</html>
-
---------------020104090005010205010004--
-
-
---===============0584186564011214562==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Disposition: inline
-Content-Transfer-Encoding: 7bit
-
-
---===============0584186564011214562==--
+Bart.
