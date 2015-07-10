@@ -1,20 +1,11 @@
-From: Doug Dumitru <doug@easyco.com>
-Subject: Re: API for multi-segment atomic IO
-Date: Thu, 9 Jul 2015 13:39:19 -0700
-Message-ID: <CAFx4rwSyd7MVrtPbDvqTmCRZnXqKm7tz-2iWFWR1wqg6r9VArw@mail.gmail.com>
-References: <CAFx4rwRyVL4Kt_DgHyHMRZ9SBM3Ao=VubCk7nXBS3Qg68YD_hw@mail.gmail.com>
-	<559D43F7.9010506@sandisk.com>
-	<CAFx4rwTEe5i1s0na0oncht9OEbJVhtgJe21VmS_0E-zxK_Vdrg@mail.gmail.com>
-	<20150708193832.GA26268@infradead.org>
-	<CAFx4rwR980To5cK=UgW1-qe8psgeQFYYm0-g_sPz1cEs48JiYg@mail.gmail.com>
-	<559EA29D.9000700@sandisk.com>
-	<CAFx4rwRBh4ix1d84rzo=_0MiLABNObA54cbBNZ5RKTnWpT78mg@mail.gmail.com>
-	<559EAE46.8000706@sandisk.com>
-Reply-To: doug@easyco.com, device-mapper development <dm-devel@redhat.com>
+From: Tejaswini Poluri <tejaswinipoluri3@gmail.com>
+Subject: [PATCH] multipathd: add map feature fix
+Date: Fri, 10 Jul 2015 15:49:55 +0530
+Message-ID: <CAH=b03tRJCct+nX-=XAYqpfP_YtZyxwS9L69RBcr4qKDMrcckQ@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4039537066141677996=="
+Content-Type: multipart/mixed; boundary=089e0102f4569fba57051a82b6da
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <559EAE46.8000706@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,176 +15,155 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>, dm-devel-request@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>, Benjamin Marzinski <bmarzins@redhat.com>
 List-Id: dm-devel.ids
 
---===============4039537066141677996==
-Content-Type: multipart/alternative; boundary=20cf3078151caf74bf051a774195
+--089e0102f4569fba57051a82b6da
+Content-Type: multipart/alternative; boundary=089e0102f4569fba50051a82b6d8
 
---20cf3078151caf74bf051a774195
+--089e0102f4569fba50051a82b6d8
 Content-Type: text/plain; charset=UTF-8
 
-Mr. Assche,
+Hii,
 
-Thank you for the link.  The proposal describes quite well "why"
-multi-segment atomic writes are useful.  I am not sure that this proposal
-actually made it into the SPC-5 spec.  It looks like it might overload some
-of the data integrity fields and use them to link transactions together,
-but I am rusty at reading specs like these.  I will re-read it again over
-the weekend.  If anyone "knows" whether the multi-segment support is IN or
-OUT of the SPC-5 spec, please chime in.
+Its found that the add map feature of multipathd tools is not working. i.e
+its  not able to add the map again once removed. The following is the test
+case:
 
-Doug
+*Case  : remove and add map.*
+root@x86-generic-64:~# multipathd -k'show maps'
+name    sysfs uuid
+dmpath0 dm-0  1IET_00010001
+root@x86-generic-64:~# multipathd -k'remove map dmpath0'
+ok
+root@x86-generic-64:~# multipathd -k'show maps'
+root@x86-generic-64:~# multipathd -k'add map dmpath0'
+ok
+root@x86-generic-64:~# multipathd -k'show maps'
+root@x86-generic-64:~#
+Once a map is removed, we are able to add it only using #multipath  command
+and not using multipathd tools.
 
+I worked on a fix for the same and the following patch solves the problem.
+There is also some unused code which could removed here in ev_add_map
+function.
+PFA the patches.
 
+It would be great if the patches are reviewed. It would also help if
+someone could share the procedure for submission of patches.
 
+Regards,
+Tejaswini
 
-On Thu, Jul 9, 2015 at 10:24 AM, Bart Van Assche <bart.vanassche@sandisk.com
-> wrote:
-
-> On 07/09/2015 10:09 AM, Doug Dumitru wrote:
->
->> The problem with this is that the SCSI commands do not go far enough to
->> actually address the needs of applications that need atomic updates.  An
->> application would "like" to be able to update a large arbitrary set, of
->> sectors on a device with atomic semantics. The SCSI commands require the
->> set to be contiguous.  Application design starts to get interesting when
->> the contiguous restriction goes away.
->>
->> My initial thoughts are to tag multiple IO requests with an ID and
->> combined length field.  This would be compatible with the SCSI spec if
->> the request was contiguous, but nonsensical if the request were
->> multi-segment.  On the other hand, just hitting the SCSI spec is
->> probably as simple as adding an "atomic" bit to the current structure so
->> that IO pieces are not cut up.  But then, you don't address the
->> multi-segment functionality that is possible.  Regardless, there will be
->> issues as pieces of the current stack don't lend themselves well to
->> propagating atomic operations up and down the stack.  Just how do you
->> split an atomic write across scsi devices in a raid set anyway?
->>
->> What I am most interested in is keeping the stack working with at least
->> 1:1 mapping layers, and with 1:many layers below the layer that
->> implements the atomic functionality.  Think of a dm-atomic.ko device
->> that uses a log internally to implement multi-segment atomic writes.  It
->> can talk safely to raid below it, but lvm should be able to sit above it
->> and still have a file system that expects atomic functionality to work.
->> Now getting a SAN connection to work like this would involve a new
->> transport as iSCSI doesn't really have the semantics for this, but maybe
->> there are some extra "transaction ID" bits that could be put into play
->> (it has been a long time since I dug into the depths of the SCSI layers).
->>
->
-> Hello Doug,
->
-> The original proposal, from which the SBC-4 ATOMIC WRITE specification has
-> been derived, had support for scattered writes and gathered reads. The
-> title of that document is "SBC-4 SPC-5 Atomic writes and reads" (
-> http://www.t10.org/cgi-bin/ac.pl?t=d&f=14-043r4.pdf).
->
-> Bart.
->
->
-
-
--- 
-Doug Dumitru
-EasyCo LLC
-
---20cf3078151caf74bf051a774195
+--089e0102f4569fba50051a82b6d8
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr"><div class=3D"gmail_default" style=3D"font-family:arial,he=
-lvetica,sans-serif;font-size:small">Mr. Assche,<br><br></div><div class=3D"=
-gmail_default" style=3D"font-family:arial,helvetica,sans-serif;font-size:sm=
-all">Thank you for the link.=C2=A0 The proposal describes quite well &quot;=
-why&quot; multi-segment atomic writes are useful.=C2=A0 I am not sure that =
-this proposal actually made it into the SPC-5 spec.=C2=A0 It looks like it =
-might overload some of the data integrity fields and use them to link trans=
-actions together, but I am rusty at reading specs like these.=C2=A0 I will =
-re-read it again over the weekend.=C2=A0 If anyone &quot;knows&quot; whethe=
-r the multi-segment support is IN or OUT of the SPC-5 spec, please chime in=
-.<br><br></div><div class=3D"gmail_default" style=3D"font-family:arial,helv=
-etica,sans-serif;font-size:small">Doug<br><br></div><div class=3D"gmail_def=
-ault" style=3D"font-family:arial,helvetica,sans-serif;font-size:small"><br>=
-<br></div></div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">O=
-n Thu, Jul 9, 2015 at 10:24 AM, Bart Van Assche <span dir=3D"ltr">&lt;<a hr=
-ef=3D"mailto:bart.vanassche@sandisk.com" target=3D"_blank">bart.vanassche@s=
-andisk.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=
-=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div cla=
-ss=3D"HOEnZb"><div class=3D"h5">On 07/09/2015 10:09 AM, Doug Dumitru wrote:=
-<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex">
-The problem with this is that the SCSI commands do not go far enough to<br>
-actually address the needs of applications that need atomic updates.=C2=A0 =
-An<br>
-application would &quot;like&quot; to be able to update a large arbitrary s=
-et, of<br>
-sectors on a device with atomic semantics. The SCSI commands require the<br=
->
-set to be contiguous.=C2=A0 Application design starts to get interesting wh=
-en<br>
-the contiguous restriction goes away.<br>
-<br>
-My initial thoughts are to tag multiple IO requests with an ID and<br>
-combined length field.=C2=A0 This would be compatible with the SCSI spec if=
-<br>
-the request was contiguous, but nonsensical if the request were<br>
-multi-segment.=C2=A0 On the other hand, just hitting the SCSI spec is<br>
-probably as simple as adding an &quot;atomic&quot; bit to the current struc=
-ture so<br>
-that IO pieces are not cut up.=C2=A0 But then, you don&#39;t address the<br=
->
-multi-segment functionality that is possible.=C2=A0 Regardless, there will =
-be<br>
-issues as pieces of the current stack don&#39;t lend themselves well to<br>
-propagating atomic operations up and down the stack.=C2=A0 Just how do you<=
-br>
-split an atomic write across scsi devices in a raid set anyway?<br>
-<br>
-What I am most interested in is keeping the stack working with at least<br>
-1:1 mapping layers, and with 1:many layers below the layer that<br>
-implements the atomic functionality.=C2=A0 Think of a dm-atomic.ko device<b=
-r>
-that uses a log internally to implement multi-segment atomic writes.=C2=A0 =
-It<br>
-can talk safely to raid below it, but lvm should be able to sit above it<br=
->
-and still have a file system that expects atomic functionality to work.<br>
-Now getting a SAN connection to work like this would involve a new<br>
-transport as iSCSI doesn&#39;t really have the semantics for this, but mayb=
-e<br>
-there are some extra &quot;transaction ID&quot; bits that could be put into=
- play<br>
-(it has been a long time since I dug into the depths of the SCSI layers).<b=
-r>
-</blockquote>
-<br></div></div>
-Hello Doug,<br>
-<br>
-The original proposal, from which the SBC-4 ATOMIC WRITE specification has =
-been derived, had support for scattered writes and gathered reads. The titl=
-e of that document is &quot;SBC-4 SPC-5 Atomic writes and reads&quot; (<a h=
-ref=3D"http://www.t10.org/cgi-bin/ac.pl?t=3Dd&amp;f=3D14-043r4.pdf" rel=3D"=
-noreferrer" target=3D"_blank">http://www.t10.org/cgi-bin/ac.pl?t=3Dd&amp;f=
-=3D14-043r4.pdf</a>).<span class=3D"HOEnZb"><font color=3D"#888888"><br>
-<br>
-Bart.<br>
-<br>
-</font></span></blockquote></div><br><br clear=3D"all"><br>-- <br><div clas=
-s=3D"gmail_signature">Doug Dumitru<br>EasyCo LLC<br></div>
-</div>
+<div dir=3D"ltr">Hii,=C2=A0<div><br></div><div>Its found that the add map f=
+eature of multipathd tools is not working. i.e its =C2=A0not able to add th=
+e map again once removed. The following is the test case:</div><div><b styl=
+e=3D"font-size:12.8000001907349px"><br></b></div><div><b style=3D"font-size=
+:12.8000001907349px">Case =C2=A0: remove and add map.</b><br style=3D"font-=
+size:12.8000001907349px"><span style=3D"font-size:12.8000001907349px">root@=
+x86-generic-64:~# multipathd -k&#39;show maps&#39;</span><br style=3D"font-=
+size:12.8000001907349px"><span style=3D"font-size:12.8000001907349px">name=
+=C2=A0=C2=A0=C2=A0 sysfs uuid</span><br style=3D"font-size:12.8000001907349=
+px"><span style=3D"font-size:12.8000001907349px">dmpath0 dm-0=C2=A0 1IET_00=
+010001</span><br style=3D"font-size:12.8000001907349px"><span style=3D"font=
+-size:12.8000001907349px">root@x86-generic-64:~# multipathd -k&#39;remove m=
+ap dmpath0&#39;</span><br style=3D"font-size:12.8000001907349px"><span styl=
+e=3D"font-size:12.8000001907349px">ok</span><br style=3D"font-size:12.80000=
+01907349px"><span style=3D"font-size:12.8000001907349px">root@x86-generic-6=
+4:~# multipathd -k&#39;show maps&#39;</span><br style=3D"font-size:12.80000=
+01907349px"><span style=3D"font-size:12.8000001907349px">root@x86-generic-6=
+4:~# multipathd -k&#39;add map dmpath0&#39;</span><br style=3D"font-size:12=
+.8000001907349px"><span style=3D"font-size:12.8000001907349px">ok</span><br=
+ style=3D"font-size:12.8000001907349px"><span style=3D"font-size:12.8000001=
+907349px">root@x86-generic-64:~# multipathd -k&#39;show maps&#39;</span><br=
+ style=3D"font-size:12.8000001907349px"><span style=3D"font-size:12.8000001=
+907349px">root@x86-generic-64:~#</span><br style=3D"font-size:12.8000001907=
+349px"><span style=3D"font-size:12.8000001907349px">Once a map is removed, =
+we are able to add it only using #multipath=C2=A0 command and not using mul=
+tipathd tools.</span></div><div><span style=3D"font-size:12.8000001907349px=
+"><br></span></div><div><span style=3D"font-size:12.8000001907349px">I work=
+ed on a fix for the same and the following patch solves the problem. There =
+is also some unused code which could removed here in ev_add_map function.=
+=C2=A0</span></div><div><span style=3D"font-size:12.8000001907349px">PFA th=
+e patches.</span></div><div><span style=3D"font-size:12.8000001907349px"><b=
+r></span></div><div><span style=3D"font-size:12.8000001907349px">It would b=
+e great if the patches are reviewed. It would also help if someone could sh=
+are the procedure for submission of patches.</span></div><div><br></div><di=
+v><span style=3D"font-size:12.8000001907349px">Regards,</span></div><div><s=
+pan style=3D"font-size:12.8000001907349px">Tejaswini=C2=A0</span><br style=
+=3D"font-size:12.8000001907349px"></div></div>
 
---20cf3078151caf74bf051a774195--
+--089e0102f4569fba50051a82b6d8--
 
+--089e0102f4569fba57051a82b6da
+Content-Type: text/x-patch; charset=US-ASCII; name="disable_code.patch"
+Content-Disposition: attachment; filename="disable_code.patch"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_ibxh0h2g0
 
---===============4039537066141677996==
+Y29tbWl0IDkxMGI0YTgyZWM0ODNiNDhlYWY4YjI0ZWIzZDc4MjkyNzNjNjkwZWQKQXV0aG9yOiBU
+ZWphc3dpbmkgPHRlamFzd2luaXBvbHVyaTNAZ21haWwuY29tPgpEYXRlOiAgIFdlZCBKdWwgOCAx
+NzoxODowMyAyMDE1ICswNTMwCgogICAgbXVsdGlwYXRoZDogRGlzYWJsZWQgY29kZSB0aGF0IGlz
+IG5vdCBiZWluZyB1c2VkLgogICAgCiAgICBUaGlzIHBhcnQgb2YgdGhlIGNvZGUgaXMgbW92ZWQg
+dG8gY2xpX2FkZF9tYXAgYW5kCiAgICBkaXNhYmxlZCBoZXJlIGFzIGl0IGlzIG5vdCB1c2VkIGJ5
+IGFueSBmdW5jdGlvbiBjYWxsCiAgICBoZXJlLgogICAgCiAgICBTaWduZWQtb2ZmLWJ5OiBUZWph
+c3dpbmkgPHRlamFzd2luaXBvbHVyaTNAZ21haWwuY29tPgoKZGlmZiAtLWdpdCBhL211bHRpcGF0
+aGQvbWFpbi5jIGIvbXVsdGlwYXRoZC9tYWluLmMKaW5kZXggZjg3NjI1OC4uMDYwMjM3YyAxMDA2
+NDQKLS0tIGEvbXVsdGlwYXRoZC9tYWluLmMKKysrIGIvbXVsdGlwYXRoZC9tYWluLmMKQEAgLTMy
+OSw2ICszMjksOCBAQCBldl9hZGRfbWFwIChjaGFyICogZGV2LCBjaGFyICogYWxpYXMsIHN0cnVj
+dCB2ZWN0b3JzICogdmVjcykKIAkJCXJldHVybiAxOwogCQl9CiAJfQorI2lmIDAgLypEaXNhYmxl
+ZCBhcyB0aGUgY29kZSBpcyBub3QgYmVpbmcgdXNlZCBieSBhbnlvbmUuCisJVE9ETzpjb25maXJt
+IHRoYXQgbm8gZmVhdHVyZSByZXF1aXJlcyB0aGlzIGNvZGUqLwogCXIgPSBnZXRfcmVmd3dpZChk
+ZXYsIERFVl9ERVZNQVAsIHZlY3MtPnBhdGh2ZWMsICZyZWZ3d2lkKTsKIAogCWlmIChyZWZ3d2lk
+KSB7CkBAIC0zNDQsNiArMzQ2LDcgQEAgZXZfYWRkX21hcCAoY2hhciAqIGRldiwgY2hhciAqIGFs
+aWFzLCBzdHJ1Y3QgdmVjdG9ycyAqIHZlY3MpCiAJCWNvbmRsb2coMCwgIiVzOiB1ZXZfYWRkX21h
+cCAlcyBmYWlsZWQiLCBhbGlhcywgZGV2KTsKIAogCUZSRUUocmVmd3dpZCk7CisjZW5kaWYKIAly
+ZXR1cm4gcjsKIH0KIAo=
+--089e0102f4569fba57051a82b6da
+Content-Type: text/x-patch; charset=US-ASCII; name="add_map.patch"
+Content-Disposition: attachment; filename="add_map.patch"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_ibxh0h2z1
+
+Y29tbWl0IDc5YWI5MDkwZDNmYmNkYjU4NDQ0Nzg0MTkxMzVkMTM5MGNmNTQ4YzIKQXV0aG9yOiBU
+ZWphc3dpbmkgPHRlamFzd2luaXBvbHVyaTNAZ21haWwuY29tPgpEYXRlOiAgIFdlZCBKdWwgOCAx
+NTowODo1NiAyMDE1ICswNTMwCgogICAgbXVsdGlwYXRoZDogRml4aW5nIGFkZCBtYXAgZnVuY3Rp
+b25hbGl0eQogICAgCiAgICBBZGQgbWFwIGZlYXR1cmUgb2YgbXVsdGlwYXRoZCB0b29scyBmYWls
+cyBhcyB0aGUgZGV2aWNlCiAgICBpcyBhbHNvIGJlZW4gY29tcGxldGVseSByZW1vdmVkIGFsb25n
+IHdpdGggcmVtb3ZpbmcgdGhlIG1hcAogICAgaW4gdGhlIHJlbW92ZSBtYXAgY29kZS4gU28gd2hl
+biBhZGQgbWFwIGlzIGNhbGxlZCB3ZSBhcmUKICAgIGNyZWF0aW5nIHRoZSBkZXZpY2UgYWdhaW4g
+aW4ga2VybmVsIGFuZCBkb2luZyBhZGQgbWFwCiAgICB1c2luZyB0aGUgY29sb2FzY2VfcGF0aHMg
+Y29kZS4KICAgIAogICAgU2lnbmVkLW9mZi1ieTogVGVqYXN3aW5pIFBvbHVyaSA8dHBvbHVyaUBt
+dmlzdGEuY29tPgoKZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmMgYi9tdWx0
+aXBhdGhkL2NsaV9oYW5kbGVycy5jCmluZGV4IGRjOTZjNDUuLmM1NGM3NjcgMTAwNjQ0Ci0tLSBh
+L211bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmMKKysrIGIvbXVsdGlwYXRoZC9jbGlfaGFuZGxlcnMu
+YwpAQCAtNTM3LDcgKzUzNyw3IEBAIGNsaV9hZGRfbWFwICh2b2lkICogdiwgY2hhciAqKiByZXBs
+eSwgaW50ICogbGVuLCB2b2lkICogZGF0YSkKIAljaGFyIGRldl9wYXRoW1BBVEhfU0laRV07CiAJ
+Y2hhciAqYWxpYXM7CiAJaW50IHJjOwotCisJY2hhciAqcmVmd3dpZDsKIAlwYXJhbSA9IGNvbnZl
+cnRfZGV2KHBhcmFtLCAwKTsKIAljb25kbG9nKDIsICIlczogYWRkIG1hcCAob3BlcmF0b3IpIiwg
+cGFyYW0pOwogCkBAIC01NDcsNiArNTQ3LDE0IEBAIGNsaV9hZGRfbWFwICh2b2lkICogdiwgY2hh
+ciAqKiByZXBseSwgaW50ICogbGVuLCB2b2lkICogZGF0YSkKIAkJY29uZGxvZygyLCAiJXM6IG1h
+cCBibGFja2xpc3RlZCIsIHBhcmFtKTsKIAkJcmV0dXJuIDA7CiAJfQorCXJjID0gZ2V0X3JlZnd3
+aWQocGFyYW0sIERFVl9ERVZNQVAsIHZlY3MtPnBhdGh2ZWMsICZyZWZ3d2lkKTsKKworICAgICAg
+ICBpZiAocmVmd3dpZCkgeworICAgICAgICAgICAgICAgIGNvbmRsb2coMiwgIiVzOiBhZGQgbWFw
+IChvcGVyYXRvcikiLCByZWZ3d2lkKTsKKyAgICAgICAgICAgICAgICBpZihjb2FsZXNjZV9wYXRo
+cyh2ZWNzLCBOVUxMLCByZWZ3d2lkLCAwKSkKKwkJCWNvbmRsb2coMiwgIiVzOiBjb2FsZXNjZS1w
+YXRocyBmYWlsZWQiLCBwYXJhbSk7CisgICAgICAgICAgICAgICAgZG1fbGliX3JlbGVhc2UoKTsK
+KyAgICAgICAgfQogCW1pbm9yID0gZG1fZ2V0X21pbm9yKHBhcmFtKTsKIAlpZiAobWlub3IgPCAw
+KSB7CiAJCWNvbmRsb2coMiwgIiVzOiBub3QgYSBkZXZpY2UgbWFwcGVyIHRhYmxlIiwgcGFyYW0p
+OwpAQCAtNTY2LDYgKzU3NCw3IEBAIGNsaV9hZGRfbWFwICh2b2lkICogdiwgY2hhciAqKiByZXBs
+eSwgaW50ICogbGVuLCB2b2lkICogZGF0YSkKIAl9CiAJcmMgPSBldl9hZGRfbWFwKGRldl9wYXRo
+LCBhbGlhcywgdmVjcyk7CiAJRlJFRShhbGlhcyk7CisJRlJFRShyZWZ3d2lkKTsKIAlyZXR1cm4g
+cmM7CiB9CiAK
+--089e0102f4569fba57051a82b6da
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============4039537066141677996==--
+--089e0102f4569fba57051a82b6da--
