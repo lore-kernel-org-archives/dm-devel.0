@@ -1,109 +1,93 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v5 00/11] simplify block layer based on immutable biovecs
-Date: Mon, 13 Jul 2015 11:35:37 -0400
-Message-ID: <20150713153537.GA30898@redhat.com>
-References: <1436166674-31362-1-git-send-email-mlin@kernel.org>
- <1436764355.30675.10.camel@hasee>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [RFC PATCH] bio integrity: do not assume bio_integrity_pool
+ exists if bioset exists
+Date: Tue, 14 Jul 2015 13:48:54 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1507141348360.14474@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20150701165740.GA1573@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1436764355.30675.10.camel@hasee>
+In-Reply-To: <20150701165740.GA1573@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ming Lin <mlin@kernel.org>
-Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dpark@posteo.net>, NeilBrown <neilb@suse.de>, "Alasdair G. Kergon" <agk@redhat.com>, Jeff Moyer <jmoyer@redhat.com>, dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Jul 13 2015 at  1:12am -0400,
-Ming Lin <mlin@kernel.org> wrote:
 
-> On Mon, 2015-07-06 at 00:11 -0700, mlin@kernel.org wrote:
-> > Hi Mike,
-> > 
-> > On Wed, 2015-06-10 at 17:46 -0400, Mike Snitzer wrote:
-> > > I've been busy getting DM changes for the 4.2 merge window finalized.
-> > > As such I haven't connected with others on the team to discuss this
-> > > issue.
-> > > 
-> > > I'll see if we can make time in the next 2 days.  But I also have
-> > > RHEL-specific kernel deadlines I'm coming up against.
-> > > 
-> > > Seems late to be staging this extensive a change for 4.2... are you
-> > > pushing for this code to land in the 4.2 merge window?  Or do we have
-> > > time to work this further and target the 4.3 merge?
-> > > 
-> > 
-> > 4.2-rc1 was out.
-> > Would you have time to work together for 4.3 merge? 
+
+On Wed, 1 Jul 2015, Mike Snitzer wrote:
+
+> bio_integrity_alloc() and bio_integrity_free() assume that if a bio was
+> allocated from a bioset that that bioset also had its bio_integrity_pool
+> allocated using bioset_integrity_create().  This is a very bad
+> assumption given that bioset_create() and bioset_integrity_create() are
+> completely disjoint.  Not all callers of bioset_create() have been
+> trained to also call bioset_integrity_create() -- and they may not care
+> to be.
 > 
-> Ping ...
+> Fix this by falling back to kmalloc'ing 'struct bio_integrity_payload'
+> rather than force all bioset consumers to (wastefully) preallocate a
+> bio_integrity_pool that they very likely won't actually need (given the
+> niche nature of the current block integrity support).
 > 
-> What can I do to move forward?
-
-You can show further testing.  Particularly that you've covered all the
-edge cases.
-
-Until someone can produce some perf test results where they are actually
-properly controlling for the splitting, we have no useful information.
-
-The primary concerns associated with this patchset are:
-1) In the context of RAID, XFS's use of bio_add_page() used to build up
-   optimal IOs when the underlying block device provides striping info
-   via IO limits.  With this patchset how large will bios become in
-   practice _without_ bio_add_page() being bounded by the underlying IO
-   limits?
-
-2) The late splitting that occurs for the (presummably) large bios that
-   are sent down.. how does it cope/perform in the face of very
-   low/fragmented system memory?
-
-3) More open-ended comment than question: Linux has evolved to perform
-   well on "enterprise" systems.  We generally don't fall off a cliff on 
-   performance like we used to.  The concern associated with this
-   patchset is that if it goes in without _real_ due-diligence on
-   "enterprise" scale systems and workloads it'll be too late once we
-   notice the problem(s).
-
-So we really need answers to 1 and 2 above in order to feel better about
-the risks associated 3.
-
-Alasdair's feedback to you on testing still applies (and hasn't been
-done AFAIK):
-https://www.redhat.com/archives/dm-devel/2015-May/msg00203.html
-
-Particularly:
-"you might need to instrument the kernels to tell you the sizes of the
-bios being created and the amount of splitting actually happening."
-
-and
-
-"You may also want to test systems with a restricted amount of available
-memory to show how the splitting via worker thread performs.  (Again,
-instrument to prove the extent to which the new code is being exercised.)"
-
-> This patchset not only simplify block layer a lot, it's also a
-> prerequisite of the direct IO rewrite patches, which I saw 40%
-> performance improvement for null_blk and 10% improvement for NVMe
-> drives. I have been fixing bugs for the direct IO patches. I'll post it
-> once it passes xfstests.
+> Otherwise, a NULL pointer "Kernel BUG" with a trace like the following
+> will be observed (as seen on s390x using zfcp storage) because dm-io
+> doesn't use bioset_integrity_create() when creating its bioset:
 > 
-> Mike,
-> Can I have your ACK? Or do you have other test plan?
+>     [  791.643338] Call Trace:
+>     [  791.643339] ([<00000003df98b848>] 0x3df98b848)
+>     [  791.643341]  [<00000000002c5de8>] bio_integrity_alloc+0x48/0xf8
+>     [  791.643348]  [<00000000002c6486>] bio_integrity_prep+0xae/0x2f0
+>     [  791.643349]  [<0000000000371e38>] blk_queue_bio+0x1c8/0x3d8
+>     [  791.643355]  [<000000000036f8d0>] generic_make_request+0xc0/0x100
+>     [  791.643357]  [<000000000036f9b2>] submit_bio+0xa2/0x198
+>     [  791.643406]  [<000003ff801f9774>] dispatch_io+0x15c/0x3b0 [dm_mod]
+>     [  791.643419]  [<000003ff801f9b3e>] dm_io+0x176/0x2f0 [dm_mod]
+>     [  791.643423]  [<000003ff8074b28a>] do_reads+0x13a/0x1a8 [dm_mirror]
+>     [  791.643425]  [<000003ff8074b43a>] do_mirror+0x142/0x298 [dm_mirror]
+>     [  791.643428]  [<0000000000154fca>] process_one_work+0x18a/0x3f8
+>     [  791.643432]  [<000000000015598a>] worker_thread+0x132/0x3b0
+>     [  791.643435]  [<000000000015d49a>] kthread+0xd2/0xd8
+>     [  791.643438]  [<00000000005bc0ca>] kernel_thread_starter+0x6/0xc
+>     [  791.643446]  [<00000000005bc0c4>] kernel_thread_starter+0x0/0xc
+> 
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> Cc: stable@vger.kernel.org
 
-I'm not the only person with concerns.  I share Alasdair's concerns.
-Jeff Moyer is also concerned about the implications of this patchset.
-We're all in favor of this patchset's cleanup _if and only if_ it can be
-proven that we aren't going to be falling off a cliff on performance due
-to some pathological workload (be it under memory pressure or whatever).
+Acked-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Apologies for not being able to put time to this like I hoped.  But that
-doesn't mean you are off the hook on showing you've done the testing and
-understand the scope and implications of the changes you're pushing for.
-
-I will do additional review to answer 1 and 2 above.  And Jeff Moyer
-told me he'd test the patchset on one of his testbeds.
-
-But if you can help answer 1 and 2 above that'd go a long way.
-
-Thanks,
-Mike
+> ---
+>  block/bio-integrity.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> NOTE: this serves as a more generic fix in the block layer rather than
+> the dm-io specific fix which isn't ideal (due to potential for memory
+> waste), see:
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=17dbe96d4f8a6f87004e6cfb5944872dfe2edb9f
+> 
+> diff --git a/block/bio-integrity.c b/block/bio-integrity.c
+> index 0436c21..719b715 100644
+> --- a/block/bio-integrity.c
+> +++ b/block/bio-integrity.c
+> @@ -51,7 +51,7 @@ struct bio_integrity_payload *bio_integrity_alloc(struct bio *bio,
+>  	unsigned long idx = BIO_POOL_NONE;
+>  	unsigned inline_vecs;
+>  
+> -	if (!bs) {
+> +	if (!bs || !bs->bio_integrity_pool) {
+>  		bip = kmalloc(sizeof(struct bio_integrity_payload) +
+>  			      sizeof(struct bio_vec) * nr_vecs, gfp_mask);
+>  		inline_vecs = nr_vecs;
+> @@ -104,7 +104,7 @@ void bio_integrity_free(struct bio *bio)
+>  		kfree(page_address(bip->bip_vec->bv_page) +
+>  		      bip->bip_vec->bv_offset);
+>  
+> -	if (bs) {
+> +	if (bs && bs->bio_integrity_pool) {
+>  		if (bip->bip_slab != BIO_POOL_NONE)
+>  			bvec_free(bs->bvec_integrity_pool, bip->bip_vec,
+>  				  bip->bip_slab);
+> -- 
+> 2.3.2 (Apple Git-55)
+> 
+> 
