@@ -1,119 +1,76 @@
-From: Ming Lin <mlin@kernel.org>
-Subject: Re: [PATCH v5 00/11] simplify block layer based on immutable biovecs
-Date: Tue, 14 Jul 2015 13:51:26 -0700
-Message-ID: <1436907086.16756.1.camel@ssi>
-References: <1436166674-31362-1-git-send-email-mlin@kernel.org>
-	 <1436764355.30675.10.camel@hasee> <20150713153537.GA30898@redhat.com>
+From: David Rientjes <rientjes@google.com>
+Subject: Re: [PATCH 2/7] mm: introduce kvmalloc and kvmalloc_node
+Date: Tue, 14 Jul 2015 14:13:16 -0700 (PDT)
+Message-ID: <alpine.DEB.2.10.1507141401170.16182@chino.kir.corp.google.com>
+References: <alpine.LRH.2.02.1507071058350.23387@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.1507071109490.23387@file01.intranet.prod.int.rdu2.redhat.com> <20150707144117.5b38ac38efda238af8a1f536@linux-foundation.org>
+ <alpine.LRH.2.02.1507081855340.32526@file01.intranet.prod.int.rdu2.redhat.com> <20150708161815.bdff609d77868dbdc2e1ce64@linux-foundation.org> <alpine.LRH.2.02.1507091039440.30842@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150713153537.GA30898@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dpark@posteo.net>, NeilBrown <neilb@suse.de>, "Alasdair G. Kergon" <agk@redhat.com>, Jeff Moyer <jmoyer@redhat.com>, dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <alpine.LRH.2.02.1507091039440.30842@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Edward Thornber <thornber@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: dm-devel.ids
 
-On Mon, 2015-07-13 at 11:35 -0400, Mike Snitzer wrote:
-> On Mon, Jul 13 2015 at  1:12am -0400,
-> Ming Lin <mlin@kernel.org> wrote:
-> 
-> > On Mon, 2015-07-06 at 00:11 -0700, mlin@kernel.org wrote:
-> > > Hi Mike,
-> > > 
-> > > On Wed, 2015-06-10 at 17:46 -0400, Mike Snitzer wrote:
-> > > > I've been busy getting DM changes for the 4.2 merge window finalized.
-> > > > As such I haven't connected with others on the team to discuss this
-> > > > issue.
-> > > > 
-> > > > I'll see if we can make time in the next 2 days.  But I also have
-> > > > RHEL-specific kernel deadlines I'm coming up against.
-> > > > 
-> > > > Seems late to be staging this extensive a change for 4.2... are you
-> > > > pushing for this code to land in the 4.2 merge window?  Or do we have
-> > > > time to work this further and target the 4.3 merge?
-> > > > 
-> > > 
-> > > 4.2-rc1 was out.
-> > > Would you have time to work together for 4.3 merge? 
+On Thu, 9 Jul 2015, Mikulas Patocka wrote:
+
+> > > Index: linux-4.2-rc1/mm/util.c
+> > > ===================================================================
+> > > --- linux-4.2-rc1.orig/mm/util.c	2015-07-07 15:58:11.000000000 +0200
+> > > +++ linux-4.2-rc1/mm/util.c	2015-07-08 19:22:26.000000000 +0200
+> > > @@ -316,6 +316,61 @@ unsigned long vm_mmap(struct file *file,
+> > >  }
+> > >  EXPORT_SYMBOL(vm_mmap);
+> > >  
+> > > +void *kvmalloc_node(size_t size, gfp_t gfp, int node)
+> > > +{
+> > > +	void *p;
+> > > +	unsigned uninitialized_var(noio_flag);
+> > > +
+> > > +	/* vmalloc doesn't support no-wait allocations */
+> > > +	WARN_ON_ONCE(!(gfp & __GFP_WAIT));
+> > > +
+> > > +	if (likely(size <= KMALLOC_MAX_SIZE)) {
+> > > +		/*
+> > > +		 * Use __GFP_NORETRY so that we don't loop waiting for the
+> > > +		 *	allocation - we don't have to loop here, if the memory
+> > > +		 *	is too fragmented, we fallback to vmalloc.
 > > 
-> > Ping ...
-> > 
-> > What can I do to move forward?
+> > I'm not sure about this decision.  The direct reclaim retry code is the
+> > normal default behaviour and becomes more important with larger allocation
+> > attempts.  So why turn it off, and make it more likely that we return
+> > vmalloc memory?
 > 
-> You can show further testing.  Particularly that you've covered all the
-> edge cases.
+> It can avoid triggering the OOM killer in case of fragmented memory.
 > 
-> Until someone can produce some perf test results where they are actually
-> properly controlling for the splitting, we have no useful information.
+> This is general question - if the code can handle allocation failure 
+> gracefully, what gfp flags should it use? Maybe add some flag 
+> __GFP_MAYFAIL instead of __GFP_NORETRY that changes the behavior in 
+> desired way?
 > 
-> The primary concerns associated with this patchset are:
-> 1) In the context of RAID, XFS's use of bio_add_page() used to build up
->    optimal IOs when the underlying block device provides striping info
->    via IO limits.  With this patchset how large will bios become in
->    practice _without_ bio_add_page() being bounded by the underlying IO
->    limits?
-> 
-> 2) The late splitting that occurs for the (presummably) large bios that
->    are sent down.. how does it cope/perform in the face of very
->    low/fragmented system memory?
-> 
-> 3) More open-ended comment than question: Linux has evolved to perform
->    well on "enterprise" systems.  We generally don't fall off a cliff on 
->    performance like we used to.  The concern associated with this
->    patchset is that if it goes in without _real_ due-diligence on
->    "enterprise" scale systems and workloads it'll be too late once we
->    notice the problem(s).
-> 
-> So we really need answers to 1 and 2 above in order to feel better about
-> the risks associated 3.
-> 
-> Alasdair's feedback to you on testing still applies (and hasn't been
-> done AFAIK):
-> https://www.redhat.com/archives/dm-devel/2015-May/msg00203.html
-> 
-> Particularly:
-> "you might need to instrument the kernels to tell you the sizes of the
-> bios being created and the amount of splitting actually happening."
-> 
-> and
-> 
-> "You may also want to test systems with a restricted amount of available
-> memory to show how the splitting via worker thread performs.  (Again,
-> instrument to prove the extent to which the new code is being exercised.)"
-> 
-> > This patchset not only simplify block layer a lot, it's also a
-> > prerequisite of the direct IO rewrite patches, which I saw 40%
-> > performance improvement for null_blk and 10% improvement for NVMe
-> > drives. I have been fixing bugs for the direct IO patches. I'll post it
-> > once it passes xfstests.
-> > 
-> > Mike,
-> > Can I have your ACK? Or do you have other test plan?
-> 
-> I'm not the only person with concerns.  I share Alasdair's concerns.
-> Jeff Moyer is also concerned about the implications of this patchset.
-> We're all in favor of this patchset's cleanup _if and only if_ it can be
-> proven that we aren't going to be falling off a cliff on performance due
-> to some pathological workload (be it under memory pressure or whatever).
-> 
-> Apologies for not being able to put time to this like I hoped.  But that
-> doesn't mean you are off the hook on showing you've done the testing and
-> understand the scope and implications of the changes you're pushing for.
-> 
-> I will do additional review to answer 1 and 2 above.  And Jeff Moyer
-> told me he'd test the patchset on one of his testbeds.
-> 
-> But if you can help answer 1 and 2 above that'd go a long way.
 
-Thanks for the response.
-I'm working on more testing.
+There's a misunderstanding in regards to the comment: __GFP_NORETRY 
+doesn't turn direct reclaim or compaction off, it is still attempted and 
+with the same priority as any other allocation.  This only stops the page 
+allocator from calling the oom killer, which will free memory or panic the 
+system, and looping when memory is available.
 
-I'll ask if I have question about the testing.
+In regards to the proposal in general, I think it's unnecessary because we 
+are still left behind with other users who open code their call to 
+vmalloc.  I was interested in commit 058504edd026 ("fs/seq_file: fallback 
+to vmalloc allocation") since it solved an issue with high memory 
+fragmentation.  Note how it falls back to vmalloc(): _without_ this 
+__GFP_NORETRY.  That's because we only want to fallback when high-order 
+allocations fail and the page allocator doesn't implicitly loop due to the 
+order.  ext4_kvmalloc(), ext4_kzmalloc() does the same.
 
-Thanks,
-Ming
+The differences in implementations between those that do kmalloc() and 
+fallback to vmalloc() are different enough that I don't think we need this 
+addition.
 
-> 
-> Thanks,
-> Mike
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
