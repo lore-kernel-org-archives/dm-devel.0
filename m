@@ -1,24 +1,69 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [dm-devel] [PATCH] dm-mpath: always return reservation conflict
-Date: Thu, 16 Jul 2015 09:54:50 +0200
-Message-ID: <20150716075450.GA23334@lst.de>
-References: <1436959404-14035-1-git-send-email-hare@suse.de> <1436960108.31121.41.camel@HansenPartnership.com> <CABr-GncMR4y+Sv=cXnhbXyX+ko2d13hgsPg2xbWSp9Z-v8=nqQ@mail.gmail.com>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [PATCH v5 00/11] simplify block layer based on immutable biovecs
+Date: Thu, 16 Jul 2015 09:13:49 -0400
+Message-ID: <x498uagtfci.fsf@segfault.boston.devel.redhat.com>
+References: <1436166674-31362-1-git-send-email-mlin@kernel.org>
+	<1436764355.30675.10.camel@hasee> <20150713153537.GA30898@redhat.com>
+	<1437030372.3618.5.camel@hasee>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CABr-GncMR4y+Sv=cXnhbXyX+ko2d13hgsPg2xbWSp9Z-v8=nqQ@mail.gmail.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1437030372.3618.5.camel@hasee> (Ming Lin's message of "Thu, 16
+	Jul 2015 00:06:12 -0700")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ming Lin <mlin@kernel.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dpark@posteo.net>, NeilBrown <neilb@suse.de>, "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Jul 16, 2015 at 05:07:03AM +0000, Christophe Varoqui wrote:
-> For reference the opensvc crm does use type 5 pr, and aims for all paths
-> registered. It still does not make use of the multipathd pr janitoring
-> features, and uses sg_persist directly for pr status and actions.
+Ming Lin <mlin@kernel.org> writes:
 
-The type doesn't matter here.  It's important to set the ALL_TG_PT bit
-when registering the key.  As dm-mpath opens the underlying devices
-exclusively, and doesn't give you a choice which path to send to you're
-in a world of pain without that.
+> On Mon, 2015-07-13 at 11:35 -0400, Mike Snitzer wrote:
+>> I will do additional review to answer 1 and 2 above.  And Jeff Moyer
+>> told me he'd test the patchset on one of his testbeds.
+>
+> Hi Jeff,
+>
+> FYI, here is a fix for patch 1.
+> Or you can pull from my tree.
+> https://git.kernel.org/cgit/linux/kernel/git/mlin/linux.git/log/?h=block-generic-req
+
+Thanks, Ming.  I'll let you know as soon as I have results worth sharing.
+
+Cheers,
+Jeff
+
+>
+> diff --git a/block/blk-mq.c b/block/blk-mq.c
+> index 40d08e3..181f343 100644
+> --- a/block/blk-mq.c
+> +++ b/block/blk-mq.c
+> @@ -1287,12 +1287,12 @@ static void blk_mq_make_request(struct request_queue *q, struct bio *bio)
+>  		return;
+>  	}
+>  
+> +	blk_queue_split(q, &bio, q->bio_split);
+> +
+>  	if (!is_flush_fua && !blk_queue_nomerges(q) &&
+>  	    blk_attempt_plug_merge(q, bio, &request_count, &same_queue_rq))
+>  		return;
+>  
+> -	blk_queue_split(q, &bio, q->bio_split);
+> -
+>  	rq = blk_mq_map_request(q, bio, &data);
+>  	if (unlikely(!rq))
+>  		return;
+> @@ -1374,12 +1374,12 @@ static void blk_sq_make_request(struct request_queue *q, struct bio *bio)
+>  		return;
+>  	}
+>  
+> +	blk_queue_split(q, &bio, q->bio_split);
+> +
+>  	if (!is_flush_fua && !blk_queue_nomerges(q) &&
+>  	    blk_attempt_plug_merge(q, bio, &request_count, NULL))
+>  		return;
+>  
+> -	blk_queue_split(q, &bio, q->bio_split);
+> -
+>  	rq = blk_mq_map_request(q, bio, &data);
+>  	if (unlikely(!rq))
+>  		return;
