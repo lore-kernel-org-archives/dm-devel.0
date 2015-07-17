@@ -1,137 +1,87 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2 2/3] dm: Export function dm_suspend_md()
-Date: Fri, 17 Jul 2015 13:31:47 -0400
-Message-ID: <20150717173147.GA5060@redhat.com>
-References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
- <20150717152253.GA1021@redhat.com>
- <20150717153045.GB1021@redhat.com>
- <201507171913.57104@pali>
+Subject: [git pull] device mapper fixes for 4.2-rc3
+Date: Fri, 17 Jul 2015 14:27:33 -0400
+Message-ID: <20150717182733.GA830@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <201507171913.57104@pali>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Pali =?iso-8859-1?Q?Roh=E1r?= <pali.rohar@gmail.com>
-Cc: Len Brown <len.brown@intel.com>, linux-pm@vger.kernel.org, "Rafael J. Wysocki" <rjw@rjwysocki.net>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Pavel Machek <pavel@ucw.cz>, Alasdair Kergon <agk@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Joe Thornber <ejt@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Dennis Yang <shinrairis@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Jul 17 2015 at  1:13pm -0400,
-Pali Roh=E1r <pali.rohar@gmail.com> wrote:
+Hi Linus,
 
-> On Friday 17 July 2015 17:30:45 Mike Snitzer wrote:
-> > On Fri, Jul 17 2015 at 11:22am -0400,
-> >=20
-> > Mike Snitzer <snitzer@redhat.com> wrote:
-> > > On Fri, Jul 17 2015 at 10:22am -0400,
-> > >=20
-> > > Pali Roh=E1r <pali.rohar@gmail.com> wrote:
-> > > > On Friday 17 July 2015 10:04:39 Mike Snitzer wrote:
-> > > > > On Sun, Jun 21 2015 at  7:20am -0400,
-> > > > >=20
-> > > > > Pali Roh=E1r <pali.rohar@gmail.com> wrote:
-> > > > > > This patch exports function dm_suspend_md() which suspend
-> > > > > > mapped device so other kernel drivers can use it and could
-> > > > > > suspend mapped device when needed.
-> > > > > >=20
-> > > > > > Signed-off-by: Pali Roh=E1r <pali.rohar@gmail.com>
-> > > > > > ---
-> > > > > >=20
-> > > > > >  drivers/md/dm.c |    6 ++++++
-> > > > > >  drivers/md/dm.h |    5 +++++
-> > > > > >  2 files changed, 11 insertions(+)
-> > > > > >=20
-> > > > > > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > > > > > index 2caf492..03298ff 100644
-> > > > > > --- a/drivers/md/dm.c
-> > > > > > +++ b/drivers/md/dm.c
-> > > > > >=20
-> > > > > > @@ -3343,6 +3343,12 @@ out:
-> > > > > >  	return r;
-> > > > > > =20
-> > > > > >  }
-> > > > > >=20
-> > > > > > +int dm_suspend_md(struct mapped_device *md)
-> > > > > > +{
-> > > > > > +	return dm_suspend(md, DM_SUSPEND_LOCKFS_FLAG);
-> > > > > > +}
-> > > > > > +EXPORT_SYMBOL_GPL(dm_suspend_md);
-> > > > > > +
-> > > > > >=20
-> > > > > >  /*
-> > > > > > =20
-> > > > > >   * Internal suspend/resume works like userspace-driven
-> > > > > >   suspend. It waits * until all bios finish and prevents
-> > > > > >   issuing new bios to the target drivers.
-> > > > >=20
-> > > > > To do this properly you should be introducing a variant of
-> > > > > dm_internal_suspend.  We currently have two variants:
-> > > > > dm_internal_suspend_fast
-> > > > > dm_internal_suspend_noflush
-> > > > >=20
-> > > > > The reason to use a dm_internal_suspend variant is this suspe=
-nd
-> > > > > was _not_ initiated by an upper level ioctl (from userspace).=
-=20
-> > > > > It was done internally from within the target.
-> > > > >=20
-> > > > > You're explicitly using DM_SUSPEND_LOCKFS_FLAG above.. meanin=
-g
-> > > > > you're interested in flushing all pending IO (in the FS
-> > > > > layered on dm-crupt, if one exists).
-> > > > >=20
-> > > > > But see the comment in __dm_internal_suspend() about
-> > > > > TASK_UNINTERRUPTIBLE. If you're OK with the dm-crypt initiate=
-d
-> > > > > suspend being TASK_UNINTERRUPTIBLE then you could just
-> > > > > introduce:
-> > > > >=20
-> > > > > void dm_internal_suspend_uninterruptible_flush(struct
-> > > > > mapped_device *md) {
-> > > > >=20
-> > > > >         mutex_lock(&md->suspend_lock);
-> > > > >         __dm_internal_suspend(md, DM_SUSPEND_LOCKFS_FLAG);
-> > > > >         mutex_unlock(&md->suspend_lock);
-> > > > >=20
-> > > > > }
-> > > > > EXPORT_SYMBOL_GPL(dm_internal_suspend_uninterruptible_flush);
-> > > > >=20
-> > > > > Otherwise, there is much more extensive DM core changes neede=
-d
-> > > > > to __dm_internal_suspend() and .presuspend to properly suppor=
-t
-> > > > > TASK_INTERRUPTIBLE.
-> > > >=20
-> > > > Hi! I will look at dm_internal_suspend. Anyway use case for
-> > > > suspend is from dm-crypt to do both operations: suspend + key
-> > > > wipe. It means that without entering key again from userspace,
-> > > > resume is not possible. So my question is: It is possible to do
-> > > > internal suspend and then using resume from userspace via ioctl=
-?
-> > >=20
-> > > Good question: no, userspace resume would block waiting for
-> > > internal resume.
-> > >=20
-> > > Soooo... I'll have to look at your patch 3 to understand why
-> > > dm-crypt is needing to initiate the suspend internally but then
-> > > userspace is initiating the resume... this imbalance is
-> > > concerning.
-> >=20
-> > Why not introduce a new message that allows you to wipe the key aft=
-er
-> > suspend?  Both initiated from userspace.
->=20
-> There is already message for wiping key and it will success only if d=
-m=20
-> is suspended.
->=20
-> But this patch series is fixing another problem: wipe key before=20
-> suspend/hibernation action happend and to have it race free it must b=
-e=20
-> done after userspace is freezed!
+The following changes since commit d770e558e21961ad6cfdf0ff7df0eb5d7d4f0754:
 
-Yes, I remember now.  So it isn't even userspace initiating the
-suspend_and_wipe, it is the PM chain notifier code you're adding.
+  Linux 4.2-rc1 (2015-07-05 11:01:52 -0700)
 
-I'll think more about your use of dm_suspend()
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.2-fixes-2
+
+for you to fetch changes up to 665022d72f9b5762f21b5ea02fa0503d04802849:
+
+  dm cache: avoid calls to prealloc_free_structs() if possible (2015-07-16 22:32:08 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+- Revert a request-based DM core change that caused IO latency to
+  increase and adversely impact both throughput and system load
+
+- Fix for a use after free bug in DM core's device cleanup
+
+- A couple DM btree removal fixes (used by dm-thinp)
+
+- A DM thinp fix for order-5 allocation failure
+
+- A DM thinp fix to not degrade to read-only metadata mode when in
+  out-of-data-space mode for longer than the 'no_space_timeout'
+
+- Fix a long-standing oversight in both dm-thinp and dm-cache by
+  now exporting 'needs_check' in status if it was set in metadata
+
+- Fix an embarrassing dm-cache busy-loop that caused worker threads to
+  eat cpu even if no IO was actively being issued to the cache device
+
+----------------------------------------------------------------
+Dennis Yang (1):
+      dm btree remove: fix bug in redistribute3
+
+Joe Thornber (2):
+      dm thin: allocate the cell_sort_array dynamically
+      dm btree: silence lockdep lock inversion in dm_btree_del()
+
+Mike Snitzer (7):
+      Revert "dm: only run the queue on completion if congested or no requests pending"
+      dm thin: stay in out-of-data-space mode once no_space_timeout expires
+      dm thin: display 'needs_check' in status if it is set
+      dm cache: display 'needs_check' in status if it is set
+      dm cache: do not wake_worker() in free_migration()
+      dm cache: avoid preallocation if no work in writeback_some_dirty_blocks()
+      dm cache: avoid calls to prealloc_free_structs() if possible
+
+Mikulas Patocka (1):
+      dm: fix use after free crash due to incorrect cleanup sequence
+
+ Documentation/device-mapper/cache.txt             |  6 ++++
+ Documentation/device-mapper/thin-provisioning.txt |  9 ++++-
+ drivers/md/dm-cache-target.c                      | 38 ++++++++++++--------
+ drivers/md/dm-thin.c                              | 44 +++++++++++++++++++----
+ drivers/md/dm.c                                   | 12 +++----
+ drivers/md/persistent-data/dm-btree-remove.c      |  6 ++--
+ drivers/md/persistent-data/dm-btree.c             |  2 +-
+ 7 files changed, 82 insertions(+), 35 deletions(-)
