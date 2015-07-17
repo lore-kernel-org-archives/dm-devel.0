@@ -1,87 +1,108 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.2-rc3
-Date: Fri, 17 Jul 2015 14:27:33 -0400
-Message-ID: <20150717182733.GA830@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Rafael J. Wysocki" <rjw@rjwysocki.net>
+Subject: Re: [PATCH v2 1/3] PM suspend/hibernate: Call notifier after freezing processes
+Date: Sat, 18 Jul 2015 01:27:15 +0200
+Message-ID: <3179448.TScsKEAuyR@vostro.rjw.lan>
+References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com> <3729395.1oJCgMXcLU@vostro.rjw.lan> <20150716073302.GA10393@pali>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Joe Thornber <ejt@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Dennis Yang <shinrairis@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-pm-owner@vger.kernel.org>
+In-Reply-To: <20150716073302.GA10393@pali>
+Sender: linux-pm-owner@vger.kernel.org
+To: Pali =?ISO-8859-1?Q?Roh=E1r?= <pali.rohar@gmail.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Linus,
+On Thursday, July 16, 2015 09:33:02 AM Pali Roh=C3=A1r wrote:
+> On Thursday 16 July 2015 03:02:03 Rafael J. Wysocki wrote:
+> > On Sunday, June 21, 2015 01:20:32 PM Pali Roh=C3=A1r wrote:
+> > > To prevent race conditions on userspace processes with I/O some t=
+aks must be
+> > > called after processes are freezed. This patch adds new events wh=
+ich are
+> > > delivered by pm_notifier_call_chain() after freezing processes wh=
+en doing
+> > > suspend or hibernate action.
+> > >=20
+> > > Signed-off-by: Pali Roh=C3=A1r <pali.rohar@gmail.com>
+> > > ---
+> > >  include/linux/suspend.h  |    2 ++
+> > >  kernel/power/hibernate.c |    2 ++
+> > >  kernel/power/suspend.c   |    4 +++-
+> > >  3 files changed, 7 insertions(+), 1 deletion(-)
+> > >=20
+> > > diff --git a/include/linux/suspend.h b/include/linux/suspend.h
+> > > index 5efe743..bc743c8 100644
+> > > --- a/include/linux/suspend.h
+> > > +++ b/include/linux/suspend.h
+> > > @@ -368,6 +368,8 @@ static inline bool hibernation_available(void=
+) { return false; }
+> > >  #define PM_POST_SUSPEND		0x0004 /* Suspend finished */
+> > >  #define PM_RESTORE_PREPARE	0x0005 /* Going to restore a saved im=
+age */
+> > >  #define PM_POST_RESTORE		0x0006 /* Restore failed */
+> > > +#define PM_HIBERNATION_AFTER_FREEZE	0x0007 /* After hibernation =
+freeze */
+> > > +#define PM_SUSPEND_AFTER_FREEZE		0x0008 /* After suspend freeze =
+*/
+> > > =20
+> > >  extern struct mutex pm_mutex;
+> > > =20
+> > > diff --git a/kernel/power/hibernate.c b/kernel/power/hibernate.c
+> > > index 2329daa..184f7ee 100644
+> > > --- a/kernel/power/hibernate.c
+> > > +++ b/kernel/power/hibernate.c
+> > > @@ -671,6 +671,8 @@ int hibernate(void)
+> > >  	if (error)
+> > >  		goto Exit;
+> > > =20
+> > > +	pm_notifier_call_chain(PM_HIBERNATION_AFTER_FREEZE);
+> >=20
+> > Don't we need to check errors from these?
+> >=20
+>=20
+> If yes, what to do in this case? Fail hibernation and goto Exit?
 
-The following changes since commit d770e558e21961ad6cfdf0ff7df0eb5d7d4f0754:
+Yes, fail the transition in progress.
 
-  Linux 4.2-rc1 (2015-07-05 11:01:52 -0700)
 
-are available in the git repository at:
+> > Also, if you're adding AFTER_FREEZE, it would be good to add BEFORE=
+_THAW too
+> > for symmetry.
+> >=20
+>=20
+> But there is no use case for BEFORE_THAW. At least it is not needed f=
+or now.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.2-fixes-2
+=46or your use case, a single function pointer would be sufficient too.
 
-for you to fetch changes up to 665022d72f9b5762f21b5ea02fa0503d04802849:
 
-  dm cache: avoid calls to prealloc_free_structs() if possible (2015-07-16 22:32:08 -0400)
+> > > +
+> > >  	lock_device_hotplug();
+> > >  	/* Allocate memory management structures */
+> > >  	error =3D create_basic_memory_bitmaps();
+> > > diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
+> > > index 8d7a1ef..ba2a945 100644
+> > > --- a/kernel/power/suspend.c
+> > > +++ b/kernel/power/suspend.c
+> > > @@ -277,8 +277,10 @@ static int suspend_prepare(suspend_state_t s=
+tate)
+> > >  	trace_suspend_resume(TPS("freeze_processes"), 0, true);
+> > >  	error =3D suspend_freeze_processes();
+> > >  	trace_suspend_resume(TPS("freeze_processes"), 0, false);
+> > > -	if (!error)
+> > > +	if (!error) {
+> > > +		pm_notifier_call_chain(PM_SUSPEND_AFTER_FREEZE);
+> > >  		return 0;
+> > > +	}
+> > > =20
+> > >  	suspend_stats.failed_freeze++;
+> > >  	dpm_save_failed_step(SUSPEND_FREEZE);
+> > >=20
+> >=20
+>=20
+>=20
 
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-- Revert a request-based DM core change that caused IO latency to
-  increase and adversely impact both throughput and system load
-
-- Fix for a use after free bug in DM core's device cleanup
-
-- A couple DM btree removal fixes (used by dm-thinp)
-
-- A DM thinp fix for order-5 allocation failure
-
-- A DM thinp fix to not degrade to read-only metadata mode when in
-  out-of-data-space mode for longer than the 'no_space_timeout'
-
-- Fix a long-standing oversight in both dm-thinp and dm-cache by
-  now exporting 'needs_check' in status if it was set in metadata
-
-- Fix an embarrassing dm-cache busy-loop that caused worker threads to
-  eat cpu even if no IO was actively being issued to the cache device
-
-----------------------------------------------------------------
-Dennis Yang (1):
-      dm btree remove: fix bug in redistribute3
-
-Joe Thornber (2):
-      dm thin: allocate the cell_sort_array dynamically
-      dm btree: silence lockdep lock inversion in dm_btree_del()
-
-Mike Snitzer (7):
-      Revert "dm: only run the queue on completion if congested or no requests pending"
-      dm thin: stay in out-of-data-space mode once no_space_timeout expires
-      dm thin: display 'needs_check' in status if it is set
-      dm cache: display 'needs_check' in status if it is set
-      dm cache: do not wake_worker() in free_migration()
-      dm cache: avoid preallocation if no work in writeback_some_dirty_blocks()
-      dm cache: avoid calls to prealloc_free_structs() if possible
-
-Mikulas Patocka (1):
-      dm: fix use after free crash due to incorrect cleanup sequence
-
- Documentation/device-mapper/cache.txt             |  6 ++++
- Documentation/device-mapper/thin-provisioning.txt |  9 ++++-
- drivers/md/dm-cache-target.c                      | 38 ++++++++++++--------
- drivers/md/dm-thin.c                              | 44 +++++++++++++++++++----
- drivers/md/dm.c                                   | 12 +++----
- drivers/md/persistent-data/dm-btree-remove.c      |  6 ++--
- drivers/md/persistent-data/dm-btree.c             |  2 +-
- 7 files changed, 82 insertions(+), 35 deletions(-)
+--=20
+I speak only for myself.
+Rafael J. Wysocki, Intel Open Source Technology Center.
