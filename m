@@ -1,53 +1,79 @@
-From: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Subject: Re: [PATCH v2 1/3] PM suspend/hibernate: Call notifier after freezing processes
-Date: Mon, 20 Jul 2015 23:46:32 +0200
-Message-ID: <1715416.hWBvT0iLvO@vostro.rjw.lan>
-References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com> <3179448.TScsKEAuyR@vostro.rjw.lan> <20150720073226.GB25910@pali>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [RFC PATCH] block: xfs: dm thin: train XFS to give up on
+	retrying IO if thinp is out of space
+Date: Tue, 21 Jul 2015 08:36:10 +1000
+Message-ID: <20150720223610.GV7943@dastard>
+References: <20150720151849.GA2282@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-pm-owner@vger.kernel.org>
-In-Reply-To: <20150720073226.GB25910@pali>
-Sender: linux-pm-owner@vger.kernel.org
-To: Pali =?ISO-8859-1?Q?Roh=E1r?= <pali.rohar@gmail.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
+Content-Disposition: inline
+In-Reply-To: <20150720151849.GA2282@redhat.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: axboe@kernel.dk, sandeen@redhat.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, hch@lst.de
 List-Id: dm-devel.ids
 
-On Monday, July 20, 2015 09:32:26 AM Pali Roh=C3=A1r wrote:
-> On Saturday 18 July 2015 01:27:15 Rafael J. Wysocki wrote:
-> > On Thursday, July 16, 2015 09:33:02 AM Pali Roh=C3=A1r wrote:
-> > > On Thursday 16 July 2015 03:02:03 Rafael J. Wysocki wrote:
-> > > > Also, if you're adding AFTER_FREEZE, it would be good to add BE=
-=46ORE_THAW too
-> > > > for symmetry.
-> > > >=20
-> > >=20
-> > > But there is no use case for BEFORE_THAW. At least it is not need=
-ed for now.
-> >=20
-> > For your use case, a single function pointer would be sufficient to=
-o.
-> >=20
->=20
-> What do you mean by single function pointer? kernel/power is part of
-> kernel image and dm-crypt is external kernel module.
+On Mon, Jul 20, 2015 at 11:18:49AM -0400, Mike Snitzer wrote:
+> If XFS fails to write metadata it will retry the write indefinitely
+> (with the hope that the write will succeed at some point in the future).
+> 
+> Others can possibly speak to historic reason(s) why this is a sane
+> default for XFS.  But when XFS is deployed ontop of DM thin provisioning
+> this infinite retry is very unwelcome -- especially if DM thinp was
+> configured to be automatically extended with free space but the admin
+> hasn't provided (or restored) adequate free space.
+> 
+> To fix this infinite retry a new bdev_has_space () hook is added to XFS
+> to break out of its metadata retry loop if the underlying block device
+> reports it no longer has free space.  DM thin provisioning is now
+> trained to respond accordingly, which enables XFS to not cause a cascade
+> of tasks blocked on IO waiting for XFS's infinite retry.
+> 
+> All other block devices, which don't implement a .has_space method in
+> block_device_operations, will always return true for bdev_has_space().
+> 
+> With this change XFS will fail the metadata IO, force shutdown, and the
+> XFS filesystem may be unmounted.  This enables an admin to recover from
+> their oversight, of not having provided enough free space, without
+> having to force a hard reset of the system to get XFS to unwedge.
+> 
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 
-Well, if there is a function pointer in the core suspend code initially=
- set to
-NULL and exported to modules such that the dm-crypt code can set it to
-something else, that should be sufficient, shouldn't it?
+Shouldn't dm-thinp just return the bio with ENOSPC as it's error?
+The scsi layers already do this for hardware thinp ENOSPC failures,
+so dm-thinp should behave exactly the same (i.e. via
+__scsi_error_from_host_byte()). The behaviour of the filesystem
+should be the same in all cases - making it conditional on whether
+the thinp implementation can be polled for available space is wrong
+as most hardware thinp can't be polled by the kernel forthis info..
 
-So if you're adding new PM notifier events, that's already more than *y=
-ou* need.
 
-Anyway, I guess the "post freeze" new one should be enough for now, but=
- please
-change the name to POST_FREEZE.
+If dm-thinp just returns ENOSPC from on the BIO like other hardware
+thinp devices, then it is up to the filesystem to handle that
+appropriately.  i.e. whether an ENOSPC IO error is fatal to the
+filesystem is determined by filesystem configuration and context of
+the IO error, not whether the block device has no space (which we
+should already know from the ENOSPC error delivered by IO
+completion).
 
-Also I think we don't need separate "post freeze" events for suspend an=
-d
-hibernation.
+Cheers,
 
-Thanks,
-Rafael
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
 
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
