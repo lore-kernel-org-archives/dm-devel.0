@@ -1,236 +1,212 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [RFC PATCH] block: xfs: dm thin: train XFS to give up on retrying IO
- if thinp is out of space
-Date: Mon, 20 Jul 2015 11:18:49 -0400
-Message-ID: <20150720151849.GA2282@redhat.com>
+From: Thanos Makatos <thanos.makatos@onapp.com>
+Subject: back-ported dm-cache not forwarding read-ahead bios to
+	origin
+Date: Mon, 20 Jul 2015 17:50:07 +0100
+Message-ID: <CAM2wQBv43BGGhe+NHOEAz+usppL6CcR-2m_ratKNKR65GB+XVA@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: axboe@kernel.dk, david@fromorbit.com, hch@lst.de, sandeen@redhat.com
-Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, xfs@oss.sgi.com
+Content-Type: multipart/mixed; boundary="===============5248636548016075899=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: ejt@redhat.com, snitzer@redhat.com, Mauelshagen@redhat.com
 List-Id: dm-devel.ids
 
-If XFS fails to write metadata it will retry the write indefinitely
-(with the hope that the write will succeed at some point in the future).
+--===============5248636548016075899==
+Content-Type: multipart/alternative; boundary=047d7bdca29c87b801051b515470
 
-Others can possibly speak to historic reason(s) why this is a sane
-default for XFS.  But when XFS is deployed ontop of DM thin provisioning
-this infinite retry is very unwelcome -- especially if DM thinp was
-configured to be automatically extended with free space but the admin
-hasn't provided (or restored) adequate free space.
+--047d7bdca29c87b801051b515470
+Content-Type: text/plain; charset=UTF-8
 
-To fix this infinite retry a new bdev_has_space () hook is added to XFS
-to break out of its metadata retry loop if the underlying block device
-reports it no longer has free space.  DM thin provisioning is now
-trained to respond accordingly, which enables XFS to not cause a cascade
-of tasks blocked on IO waiting for XFS's infinite retry.
+I'm working on a back-ported dm-cache version for kernel 2.6.32-431.29.2
+(the CentOS 6 patched one) and I'm trying to solve a corruption bug
+apparently introduced during the back-port. I can consistently reproduce it
+by simply mounting an ext4 file-system that contains some data and running
+stat(1) against a specific directory. stat(1) fails with "Input/output
+error" and dmesg says:"EXT4-fs error (device dm-8): ext4_lookup: deleted
+inode referenced: 29". The file-system is mounted with options
+"data=writeback,ro,nodiscard,inode_readahead_blks=1" in order to minimise
+noise.
 
-All other block devices, which don't implement a .has_space method in
-block_device_operations, will always return true for bdev_has_space().
+Since I'm using the pass-through mode, my theory is that dm-cache:
+(1) forwards the bio to the wrong device, and/or
+(2) forwards the bio to the wrong location of the device (e,g, bio length
+and/or offset are wrong), and/or
+(3) copies the wrong piece of data from a forwarded bio to the original
+bio, assuming it copies data in the first place (I don't know much about
+the device mapper at this point).
 
-With this change XFS will fail the metadata IO, force shutdown, and the
-XFS filesystem may be unmounted.  This enables an admin to recover from
-their oversight, of not having provided enough free space, without
-having to force a hard reset of the system to get XFS to unwedge.
+I tried to confirm which of the above 3 could be happening by checking
+which bio goes where using btrace(8). Specifically, I ran btrace(8) against
+the cache target, the HDD, the SSD data and metadata devices (4 traces in
+total). I observed that no bios go to the SSD data and metadata devices, so
+this rules out (1). I also observed that read-ahead requests issued to the
+cache target don't get forwarded to the HDD. I don't know whether or not
+this can be a problem in the first place (can read-ahead bios be ignored?),
+let alone identifying this being the problem, but I think it's worth it
+ensuring that it really doesn't cause any problems.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-thin.c          | 27 +++++++++++++++++++++++++--
- drivers/md/dm.c               | 33 +++++++++++++++++++++++++++++++++
- fs/block_dev.c                | 10 ++++++++++
- fs/xfs/xfs_buf_item.c         |  3 +++
- include/linux/blkdev.h        |  3 +++
- include/linux/device-mapper.h |  8 ++++++++
- 6 files changed, 82 insertions(+), 2 deletions(-)
+Below are the traces when mounting the file-system:
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 1c50c58..55ee3cf 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -3948,7 +3948,7 @@ static struct target_type pool_target = {
- 	.name = "thin-pool",
- 	.features = DM_TARGET_SINGLETON | DM_TARGET_ALWAYS_WRITEABLE |
- 		    DM_TARGET_IMMUTABLE,
--	.version = {1, 16, 0},
-+	.version = {1, 17, 0},
- 	.module = THIS_MODULE,
- 	.ctr = pool_ctr,
- 	.dtr = pool_dtr,
-@@ -4333,9 +4333,31 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 	limits->max_discard_sectors = 2048 * 1024 * 16; /* 16G */
- }
- 
-+static bool thin_has_space(struct dm_target *ti)
-+{
-+	struct thin_c *tc = ti->private;
-+	struct pool *pool = tc->pool;
-+	enum pool_mode m = get_pool_mode(pool);
-+
-+	/*
-+	 * The thin-pool has space if it is either in write mode _or_
-+	 * it is still waiting for space to be added.
-+	 *
-+	 * If 'error_if_no_space' was configured the pool will not queue
-+	 * IO at all, even though the pool will stay in OODS mode, so
-+	 * there is no point having upper layers (e.g. XFS) retry IO
-+	 * given 'error_if_no_space' is meant to _not_ queue IO.
-+	 */
-+	if (m == PM_WRITE ||
-+	    (m == PM_OUT_OF_DATA_SPACE && !pool->pf.error_if_no_space))
-+		return true;
-+
-+	return false;
-+}
-+
- static struct target_type thin_target = {
- 	.name = "thin",
--	.version = {1, 16, 0},
-+	.version = {1, 17, 0},
- 	.module	= THIS_MODULE,
- 	.ctr = thin_ctr,
- 	.dtr = thin_dtr,
-@@ -4348,6 +4370,7 @@ static struct target_type thin_target = {
- 	.merge = thin_merge,
- 	.iterate_devices = thin_iterate_devices,
- 	.io_hints = thin_io_hints,
-+	.has_space = thin_has_space,
- };
- 
- /*----------------------------------------------------------------*/
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index ab37ae1..14bf9df 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -597,6 +597,38 @@ out:
- 	return r;
- }
- 
-+static bool dm_blk_has_space(struct block_device *bdev)
-+{
-+	struct mapped_device *md = bdev->bd_disk->private_data;
-+	int srcu_idx;
-+	struct dm_table *map;
-+	struct dm_target *tgt;
-+	bool r = true;
-+
-+	map = dm_get_live_table(md, &srcu_idx);
-+
-+	if (!map || !dm_table_get_size(map))
-+		goto out;
-+
-+	/* We only support devices that have a single target */
-+	if (dm_table_get_num_targets(map) != 1)
-+		goto out;
-+
-+	tgt = dm_table_get_target(map, 0);
-+	if (!tgt->type->has_space)
-+		goto out;
-+
-+	if (dm_suspended_md(md))
-+		goto out;
-+
-+	r = tgt->type->has_space(tgt);
-+
-+out:
-+	dm_put_live_table(md, srcu_idx);
-+
-+	return r;
-+}
-+
- static struct dm_io *alloc_io(struct mapped_device *md)
- {
- 	return mempool_alloc(md->io_pool, GFP_NOIO);
-@@ -3647,6 +3679,7 @@ static const struct block_device_operations dm_blk_dops = {
- 	.release = dm_blk_close,
- 	.ioctl = dm_blk_ioctl,
- 	.getgeo = dm_blk_getgeo,
-+	.has_space = dm_blk_has_space,
- 	.owner = THIS_MODULE
- };
- 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 1982437..5034361 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -469,6 +469,16 @@ long bdev_direct_access(struct block_device *bdev, sector_t sector,
- }
- EXPORT_SYMBOL_GPL(bdev_direct_access);
- 
-+bool bdev_has_space(struct block_device *bdev)
-+{
-+	const struct block_device_operations *ops = bdev->bd_disk->fops;
-+
-+	if (!ops->has_space)
-+		return true;
-+	return ops->has_space(bdev);
-+}
-+EXPORT_SYMBOL_GPL(bdev_has_space);
-+
- /*
-  * pseudo-fs
-  */
-diff --git a/fs/xfs/xfs_buf_item.c b/fs/xfs/xfs_buf_item.c
-index 092d652..98efbca 100644
---- a/fs/xfs/xfs_buf_item.c
-+++ b/fs/xfs/xfs_buf_item.c
-@@ -1059,6 +1059,9 @@ xfs_buf_iodone_callbacks(
- 	if (likely(!bp->b_error))
- 		goto do_callbacks;
- 
-+	if (!bdev_has_space(bp->b_target->bt_bdev))
-+		xfs_force_shutdown(mp, SHUTDOWN_REMOTE_REQ);
-+
- 	/*
- 	 * If we've already decided to shutdown the filesystem because of
- 	 * I/O errors, there's no point in giving this a retry.
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index d4068c17d..1ba66bc 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1566,6 +1566,7 @@ struct block_device_operations {
- 	int (*getgeo)(struct block_device *, struct hd_geometry *);
- 	/* this callback is with swap_lock and sometimes page table lock held */
- 	void (*swap_slot_free_notify) (struct block_device *, unsigned long);
-+	bool (*has_space) (struct block_device *);
- 	struct module *owner;
- };
- 
-@@ -1576,6 +1577,8 @@ extern int bdev_write_page(struct block_device *, sector_t, struct page *,
- 						struct writeback_control *);
- extern long bdev_direct_access(struct block_device *, sector_t, void **addr,
- 						unsigned long *pfn, long size);
-+extern bool bdev_has_space(struct block_device *);
-+
- #else /* CONFIG_BLOCK */
- 
- struct block_device;
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 51cc1de..c55053e 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -119,6 +119,13 @@ typedef void (*dm_io_hints_fn) (struct dm_target *ti,
-  */
- typedef int (*dm_busy_fn) (struct dm_target *ti);
- 
-+/*
-+ * Returns:
-+ *    false: The target has no space that may be allocated.
-+ *    true:  The target has space that may be allocated.
-+ */
-+typedef bool (*dm_has_space_fn) (struct dm_target *ti);
-+
- void dm_error(const char *message);
- 
- struct dm_dev {
-@@ -164,6 +171,7 @@ struct target_type {
- 	dm_busy_fn busy;
- 	dm_iterate_devices_fn iterate_devices;
- 	dm_io_hints_fn io_hints;
-+	dm_has_space_fn has_space;
- 
- 	/* For internal device-mapper use. */
- 	struct list_head list;
--- 
-2.3.2 (Apple Git-55)
+cache target trace:
+253,8    7        3    27.218701098 28536  Q   R 2 + 2 [mount]
+253,8    7        4    27.218726465 28536  U   N [mount] 0
+253,8    7        5    27.222694538 28536  Q   R 0 + 8 [mount]
+253,8    7        6    27.222707270 28536  U   N [mount] 0
+253,8    7        7    27.226580397 28536  Q   R 8 + 8 [mount]
+253,8    7        8    27.226598088 28536  U   N [mount] 0
+253,8    7        9    27.229666137 28536  Q  RA 2832 + 8 [mount]
+253,8    7       10    27.229677500 28536  Q  RM 2824 + 8 [mount]
+253,8    7       11    27.229679348 28536  U   N [mount] 0
+253,8    1        2    27.222630997 28198  C   R 2 + 2 [0]
+253,8    1        3    27.226560799 28198  C   R 0 + 8 [0]
+253,8    1        4    27.229570827 28198  C   R 8 + 8 [0]
+253,8    1        5    27.232313463 28198  C  RM 2824 + 8 [0]
+253,8    3        1    27.229683980 28291  C  RA 2832 + 8 [0]
+253,8    7       12    27.232360573 28536  Q   R 4456448 + 8 [mount]
+253,8    7       13    27.232402040 28536  U   N [mount] 0
+253,8    6        1    27.243263044 28204  C   R 4456448 + 8 [0]
+
+HDD trace:
+253,5    1        3    27.222584291 28198  C   R 2 + 2 [0]
+253,5    7        2    27.218685545 28536  U   N [(null)] 0
+253,5    7        3    27.222664774 28536  U   N [(null)] 0
+253,5    3        1    27.218694575 28291  Q   R 2 + 2 [dm-cache]
+253,5    3        2    27.222670216 28291  Q   R 0 + 8 [dm-cache]
+253,5    3        3    27.226566647 28291  Q   R 8 + 8 [dm-cache]
+253,5    1        4    27.226516192 28198  C   R 0 + 8 [0]
+253,5    1        5    27.229526352 28198  C   R 8 + 8 [0]
+253,5    1        6    27.232269516 28198  C  RM 2824 + 8 [0]
+253,5    7        4    27.226555641 28536  U   N [(null)] 0
+253,5    7        5    27.229636877 28536  U   N [(null)] 0
+253,5    7        6    27.232331776 28536  A   R 4456448 + 8 <- (253,8)
+4456448
+253,5    7        7    27.232332898 28536  Q   R 4456448 + 8 [(null)]
+253,5    7        8    27.232359557 28536  U   N [(null)] 0
+253,5    3        4    27.229649990 28291  Q  RM 2824 + 8 [dm-cache]
+253,5    6        1    27.243215063 28204  C   R 4456448 + 8 [0]
+
+The "RA 2832 + 8" request (7th line in the 1st trace) issued to the cache
+target gets completed without ever reaching the HDD. Is this OK? I've
+started looking at the code but I haven't found yet anything specific to
+read-ahead bios.
+
+Regarding my 3rd theory (data getting corrupted by dm-cache after read from
+the HDD), is there some relatively easy way to confirm this? E.g. could
+btrace tell me when a bio completes the checksum of the bio's data?
+
+Is there something else that could be wrong?
+
+--047d7bdca29c87b801051b515470
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I&#39;m working on a back-ported dm-cache version for kern=
+el 2.6.32-431.29.2 (the CentOS 6 patched one) and I&#39;m trying to solve a=
+ corruption bug apparently introduced during the back-port. I can consisten=
+tly reproduce it by simply mounting an ext4 file-system that contains some =
+data and running stat(1) against a specific directory. stat(1) fails with &=
+quot;Input/output error&quot; and dmesg says:&quot;EXT4-fs error (device dm=
+-8): ext4_lookup: deleted inode referenced: 29&quot;. The file-system is mo=
+unted with options &quot;data=3Dwriteback,ro,nodiscard,inode_readahead_blks=
+=3D1&quot; in order to minimise noise.<div><br></div><div>Since I&#39;m usi=
+ng the pass-through mode, my theory is that dm-cache:</div><div>(1) forward=
+s the bio to the wrong device, and/or</div><div>(2) forwards the bio to the=
+ wrong location of the device (e,g, bio length and/or offset are wrong), an=
+d/or</div><div>(3) copies the wrong piece of data from a forwarded bio to t=
+he original bio, assuming it copies data in the first place (I don&#39;t kn=
+ow much about the device mapper at this point).</div><div><br></div><div>I =
+tried to confirm which of the above 3 could be happening by checking which =
+bio goes where using btrace(8). Specifically, I ran btrace(8) against the c=
+ache target, the HDD, the SSD data and metadata devices (4 traces in total)=
+. I observed that no bios go to the SSD data and metadata devices, so this =
+rules out (1). I also observed that read-ahead requests issued to the cache=
+ target don&#39;t get forwarded to the HDD. I don&#39;t know whether or not=
+ this can be a problem in the first place (can read-ahead bios be ignored?)=
+, let alone identifying this being the problem, but I think it&#39;s worth =
+it ensuring that it really doesn&#39;t cause any problems.</div><div><br></=
+div><div>Below are the traces when mounting the file-system:<br></div><div>=
+<br></div><div>cache target trace:</div><div><div>253,8 =C2=A0 =C2=A07 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A03 =C2=A0 =C2=A027.218701098 28536 =C2=A0Q =C2=A0 R =
+2 + 2 [mount]</div><div>253,8 =C2=A0 =C2=A07 =C2=A0 =C2=A0 =C2=A0 =C2=A04 =
+=C2=A0 =C2=A027.218726465 28536 =C2=A0U =C2=A0 N [mount] 0</div><div>253,8 =
+=C2=A0 =C2=A07 =C2=A0 =C2=A0 =C2=A0 =C2=A05 =C2=A0 =C2=A027.222694538 28536=
+ =C2=A0Q =C2=A0 R 0 + 8 [mount]</div><div>253,8 =C2=A0 =C2=A07 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A06 =C2=A0 =C2=A027.222707270 28536 =C2=A0U =C2=A0 N [mount]=
+ 0</div><div>253,8 =C2=A0 =C2=A07 =C2=A0 =C2=A0 =C2=A0 =C2=A07 =C2=A0 =C2=
+=A027.226580397 28536 =C2=A0Q =C2=A0 R 8 + 8 [mount]</div><div>253,8 =C2=A0=
+ =C2=A07 =C2=A0 =C2=A0 =C2=A0 =C2=A08 =C2=A0 =C2=A027.226598088 28536 =C2=
+=A0U =C2=A0 N [mount] 0</div><div>253,8 =C2=A0 =C2=A07 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A09 =C2=A0 =C2=A027.229666137 28536 =C2=A0Q =C2=A0RA 2832 + 8 [mount]<=
+/div><div>253,8 =C2=A0 =C2=A07 =C2=A0 =C2=A0 =C2=A0 10 =C2=A0 =C2=A027.2296=
+77500 28536 =C2=A0Q =C2=A0RM 2824 + 8 [mount]</div><div>253,8 =C2=A0 =C2=A0=
+7 =C2=A0 =C2=A0 =C2=A0 11 =C2=A0 =C2=A027.229679348 28536 =C2=A0U =C2=A0 N =
+[mount] 0</div><div>253,8 =C2=A0 =C2=A01 =C2=A0 =C2=A0 =C2=A0 =C2=A02 =C2=
+=A0 =C2=A027.222630997 28198 =C2=A0C =C2=A0 R 2 + 2 [0]</div><div>253,8 =C2=
+=A0 =C2=A01 =C2=A0 =C2=A0 =C2=A0 =C2=A03 =C2=A0 =C2=A027.226560799 28198 =
+=C2=A0C =C2=A0 R 0 + 8 [0]</div><div>253,8 =C2=A0 =C2=A01 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A04 =C2=A0 =C2=A027.229570827 28198 =C2=A0C =C2=A0 R 8 + 8 [0]</div=
+><div>253,8 =C2=A0 =C2=A01 =C2=A0 =C2=A0 =C2=A0 =C2=A05 =C2=A0 =C2=A027.232=
+313463 28198 =C2=A0C =C2=A0RM 2824 + 8 [0]</div><div>253,8 =C2=A0 =C2=A03 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A01 =C2=A0 =C2=A027.229683980 28291 =C2=A0C =C2=A0=
+RA 2832 + 8 [0]</div><div>253,8 =C2=A0 =C2=A07 =C2=A0 =C2=A0 =C2=A0 12 =C2=
+=A0 =C2=A027.232360573 28536 =C2=A0Q =C2=A0 R 4456448 + 8 [mount]</div><div=
+>253,8 =C2=A0 =C2=A07 =C2=A0 =C2=A0 =C2=A0 13 =C2=A0 =C2=A027.232402040 285=
+36 =C2=A0U =C2=A0 N [mount] 0</div><div>253,8 =C2=A0 =C2=A06 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A01 =C2=A0 =C2=A027.243263044 28204 =C2=A0C =C2=A0 R 4456448 + 8=
+ [0]</div></div><div><br></div><div>HDD trace:</div><div><div>253,5 =C2=A0 =
+=C2=A01 =C2=A0 =C2=A0 =C2=A0 =C2=A03 =C2=A0 =C2=A027.222584291 28198 =C2=A0=
+C =C2=A0 R 2 + 2 [0]</div><div>253,5 =C2=A0 =C2=A07 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A02 =C2=A0 =C2=A027.218685545 28536 =C2=A0U =C2=A0 N [(null)] 0</div><d=
+iv>253,5 =C2=A0 =C2=A07 =C2=A0 =C2=A0 =C2=A0 =C2=A03 =C2=A0 =C2=A027.222664=
+774 28536 =C2=A0U =C2=A0 N [(null)] 0</div><div>253,5 =C2=A0 =C2=A03 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A01 =C2=A0 =C2=A027.218694575 28291 =C2=A0Q =C2=A0 R 2 +=
+ 2 [dm-cache]</div><div>253,5 =C2=A0 =C2=A03 =C2=A0 =C2=A0 =C2=A0 =C2=A02 =
+=C2=A0 =C2=A027.222670216 28291 =C2=A0Q =C2=A0 R 0 + 8 [dm-cache]</div><div=
+>253,5 =C2=A0 =C2=A03 =C2=A0 =C2=A0 =C2=A0 =C2=A03 =C2=A0 =C2=A027.22656664=
+7 28291 =C2=A0Q =C2=A0 R 8 + 8 [dm-cache]</div><div>253,5 =C2=A0 =C2=A01 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A04 =C2=A0 =C2=A027.226516192 28198 =C2=A0C =C2=A0=
+ R 0 + 8 [0]</div><div>253,5 =C2=A0 =C2=A01 =C2=A0 =C2=A0 =C2=A0 =C2=A05 =
+=C2=A0 =C2=A027.229526352 28198 =C2=A0C =C2=A0 R 8 + 8 [0]</div><div>253,5 =
+=C2=A0 =C2=A01 =C2=A0 =C2=A0 =C2=A0 =C2=A06 =C2=A0 =C2=A027.232269516 28198=
+ =C2=A0C =C2=A0RM 2824 + 8 [0]</div><div>253,5 =C2=A0 =C2=A07 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A04 =C2=A0 =C2=A027.226555641 28536 =C2=A0U =C2=A0 N [(null)] 0=
+</div><div>253,5 =C2=A0 =C2=A07 =C2=A0 =C2=A0 =C2=A0 =C2=A05 =C2=A0 =C2=A02=
+7.229636877 28536 =C2=A0U =C2=A0 N [(null)] 0</div><div>253,5 =C2=A0 =C2=A0=
+7 =C2=A0 =C2=A0 =C2=A0 =C2=A06 =C2=A0 =C2=A027.232331776 28536 =C2=A0A =C2=
+=A0 R 4456448 + 8 &lt;- (253,8) 4456448</div><div>253,5 =C2=A0 =C2=A07 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A07 =C2=A0 =C2=A027.232332898 28536 =C2=A0Q =C2=A0 R =
+4456448 + 8 [(null)]</div><div>253,5 =C2=A0 =C2=A07 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A08 =C2=A0 =C2=A027.232359557 28536 =C2=A0U =C2=A0 N [(null)] 0</div><d=
+iv>253,5 =C2=A0 =C2=A03 =C2=A0 =C2=A0 =C2=A0 =C2=A04 =C2=A0 =C2=A027.229649=
+990 28291 =C2=A0Q =C2=A0RM 2824 + 8 [dm-cache]</div><div>253,5 =C2=A0 =C2=
+=A06 =C2=A0 =C2=A0 =C2=A0 =C2=A01 =C2=A0 =C2=A027.243215063 28204 =C2=A0C =
+=C2=A0 R 4456448 + 8 [0]</div></div><div><br></div><div>The &quot;RA 2832 +=
+ 8&quot; request (7th line in the 1st trace) issued to the cache target get=
+s completed without ever reaching the HDD. Is this OK? I&#39;ve started loo=
+king at the code but I haven&#39;t found yet anything specific to read-ahea=
+d bios.</div><div><br></div><div>Regarding my 3rd theory (data getting corr=
+upted by dm-cache after read from the HDD), is there some relatively easy w=
+ay to confirm this? E.g. could btrace tell me when a bio completes the chec=
+ksum of the bio&#39;s data?</div><div><br></div><div>Is there something els=
+e that could be wrong?</div></div>
+
+--047d7bdca29c87b801051b515470--
+
+
+--===============5248636548016075899==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5248636548016075899==--
