@@ -1,16 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: back-ported dm-cache not forwarding read-ahead bios
-	to origin
-Date: Mon, 20 Jul 2015 13:22:26 -0400
-Message-ID: <20150720172226.GA27018@redhat.com>
-References: <CAM2wQBv43BGGhe+NHOEAz+usppL6CcR-2m_ratKNKR65GB+XVA@mail.gmail.com>
+From: Nicholas Krause <xerofoify@gmail.com>
+Subject: [PATCH] md:Check if call to thaw_bdev fails in unlock_fs
+Date: Mon, 20 Jul 2015 15:35:48 -0400
+Message-ID: <1437420948-26201-1-git-send-email-xerofoify@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAM2wQBv43BGGhe+NHOEAz+usppL6CcR-2m_ratKNKR65GB+XVA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,34 +16,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Thanos Makatos <thanos.makatos@onapp.com>
-Cc: device-mapper development <dm-devel@redhat.com>, ejt@redhat.com, Mauelshagen@redhat.com
+To: agk@redhat.com
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, neilb@suse.com, snitzer@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Jul 20 2015 at 12:50pm -0400,
-Thanos Makatos <thanos.makatos@onapp.com> wrote:
+This adds a check to the function unlock_fs to check if the call
+to thaw_bdev failed by returning a return code and if so print
+on the log level of KERN_CRIT that the thaw has failed on the
+passed device structure pointer's name before returnin immediately
+to this function's caller.
 
-> I'm working on a back-ported dm-cache version for kernel 2.6.32-431.29.2
-> (the CentOS 6 patched one) and I'm trying to solve a corruption bug
-> apparently introduced during the back-port. I can consistently reproduce it
-> by simply mounting an ext4 file-system that contains some data and running
-> stat(1) against a specific directory. stat(1) fails with "Input/output
-> error" and dmesg says:"EXT4-fs error (device dm-8): ext4_lookup: deleted
-> inode referenced: 29". The file-system is mounted with options
-> "data=writeback,ro,nodiscard,inode_readahead_blks=1" in order to minimise
-> noise.
+Signed-off-by: Nicholas Krause <xerofoify@gmail.com>
+---
+ drivers/md/dm.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-Upstream backports to RHEL6 are tricky because it doesn't have
-upstream's latest block changes.  Care must be taken during the
-backport.  I could easily see someone less aware of the pitfalls
-producing a buggy kernel that cause corruption like you've reported.
-
-The last dm-cache backport to RHEL6 was kernel-2.6.32-528.el6.
-That backport sync'd dm-cache changes through upstream Linux 3.19.
-
-I'm not going to put any time to this report.  Your best bet is to
-rebase to the >= 528.el6 kernel and go from there (this translates to
-the forthcoming RHEL6.7 kernel as the first publicly available release
-with the changes in question).
-
-Mike
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index ab37ae1..20ccc36 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -3152,7 +3152,11 @@ static void unlock_fs(struct mapped_device *md)
+ 	if (!test_bit(DMF_FROZEN, &md->flags))
+ 		return;
+ 
+-	thaw_bdev(md->bdev, md->frozen_sb);
++	if (!thaw_bdev(md->bdev, md->frozen_sb)) {
++		pr_crit("Thaw failed on the file device %s\n", md->name);
++		return;
++	}
++
+ 	md->frozen_sb = NULL;
+ 	clear_bit(DMF_FROZEN, &md->flags);
+ }
+-- 
+2.1.4
