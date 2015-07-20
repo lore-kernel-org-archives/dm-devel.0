@@ -1,52 +1,53 @@
-From: Nicholas Krause <xerofoify@gmail.com>
-Subject: [PATCH] md:Check if call to thaw_bdev fails in unlock_fs
-Date: Mon, 20 Jul 2015 15:35:48 -0400
-Message-ID: <1437420948-26201-1-git-send-email-xerofoify@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Rafael J. Wysocki" <rjw@rjwysocki.net>
+Subject: Re: [PATCH v2 1/3] PM suspend/hibernate: Call notifier after freezing processes
+Date: Mon, 20 Jul 2015 23:46:32 +0200
+Message-ID: <1715416.hWBvT0iLvO@vostro.rjw.lan>
+References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com> <3179448.TScsKEAuyR@vostro.rjw.lan> <20150720073226.GB25910@pali>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, neilb@suse.com, snitzer@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-pm-owner@vger.kernel.org>
+In-Reply-To: <20150720073226.GB25910@pali>
+Sender: linux-pm-owner@vger.kernel.org
+To: Pali =?ISO-8859-1?Q?Roh=E1r?= <pali.rohar@gmail.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: dm-devel.ids
 
-This adds a check to the function unlock_fs to check if the call
-to thaw_bdev failed by returning a return code and if so print
-on the log level of KERN_CRIT that the thaw has failed on the
-passed device structure pointer's name before returnin immediately
-to this function's caller.
+On Monday, July 20, 2015 09:32:26 AM Pali Roh=C3=A1r wrote:
+> On Saturday 18 July 2015 01:27:15 Rafael J. Wysocki wrote:
+> > On Thursday, July 16, 2015 09:33:02 AM Pali Roh=C3=A1r wrote:
+> > > On Thursday 16 July 2015 03:02:03 Rafael J. Wysocki wrote:
+> > > > Also, if you're adding AFTER_FREEZE, it would be good to add BE=
+=46ORE_THAW too
+> > > > for symmetry.
+> > > >=20
+> > >=20
+> > > But there is no use case for BEFORE_THAW. At least it is not need=
+ed for now.
+> >=20
+> > For your use case, a single function pointer would be sufficient to=
+o.
+> >=20
+>=20
+> What do you mean by single function pointer? kernel/power is part of
+> kernel image and dm-crypt is external kernel module.
 
-Signed-off-by: Nicholas Krause <xerofoify@gmail.com>
----
- drivers/md/dm.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+Well, if there is a function pointer in the core suspend code initially=
+ set to
+NULL and exported to modules such that the dm-crypt code can set it to
+something else, that should be sufficient, shouldn't it?
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index ab37ae1..20ccc36 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -3152,7 +3152,11 @@ static void unlock_fs(struct mapped_device *md)
- 	if (!test_bit(DMF_FROZEN, &md->flags))
- 		return;
- 
--	thaw_bdev(md->bdev, md->frozen_sb);
-+	if (!thaw_bdev(md->bdev, md->frozen_sb)) {
-+		pr_crit("Thaw failed on the file device %s\n", md->name);
-+		return;
-+	}
-+
- 	md->frozen_sb = NULL;
- 	clear_bit(DMF_FROZEN, &md->flags);
- }
--- 
-2.1.4
+So if you're adding new PM notifier events, that's already more than *y=
+ou* need.
+
+Anyway, I guess the "post freeze" new one should be enough for now, but=
+ please
+change the name to POST_FREEZE.
+
+Also I think we don't need separate "post freeze" events for suspend an=
+d
+hibernation.
+
+Thanks,
+Rafael
+
