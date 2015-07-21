@@ -1,75 +1,82 @@
-From: Christoph Nelles <evilazrael@evilazrael.de>
-Subject: Re: DM-Cache Writeback & Direct IO?
-Date: Tue, 21 Jul 2015 15:51:21 +0200
-Message-ID: <55AE4E59.1040407@evilazrael.de>
-References: <559CE76E.6020504@evilazrael.de> <20150708144829.GA5058@rh-vpn>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Eric Sandeen <sandeen@redhat.com>
+Subject: Re: [RFC PATCH] block: xfs: dm thin: train XFS to give up on retrying
+	IO if thinp is out of space
+Date: Tue, 21 Jul 2015 10:34:08 -0500
+Message-ID: <55AE6670.40903@redhat.com>
+References: <20150720151849.GA2282@redhat.com> <20150720223610.GV7943@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150708144829.GA5058@rh-vpn>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <xfs-bounces@oss.sgi.com>
+In-Reply-To: <20150720223610.GV7943@dastard>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Dave Chinner <david@fromorbit.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: axboe@kernel.dk, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, hch@lst.de
 List-Id: dm-devel.ids
 
-Hello Joe,
+On 7/20/15 5:36 PM, Dave Chinner wrote:
+> On Mon, Jul 20, 2015 at 11:18:49AM -0400, Mike Snitzer wrote:
+>> If XFS fails to write metadata it will retry the write indefinitely
+>> (with the hope that the write will succeed at some point in the future).
+>>
+>> Others can possibly speak to historic reason(s) why this is a sane
+>> default for XFS.  But when XFS is deployed ontop of DM thin provisioning
+>> this infinite retry is very unwelcome -- especially if DM thinp was
+>> configured to be automatically extended with free space but the admin
+>> hasn't provided (or restored) adequate free space.
+>>
+>> To fix this infinite retry a new bdev_has_space () hook is added to XFS
+>> to break out of its metadata retry loop if the underlying block device
+>> reports it no longer has free space.  DM thin provisioning is now
+>> trained to respond accordingly, which enables XFS to not cause a cascade
+>> of tasks blocked on IO waiting for XFS's infinite retry.
+>>
+>> All other block devices, which don't implement a .has_space method in
+>> block_device_operations, will always return true for bdev_has_space().
+>>
+>> With this change XFS will fail the metadata IO, force shutdown, and the
+>> XFS filesystem may be unmounted.  This enables an admin to recover from
+>> their oversight, of not having provided enough free space, without
+>> having to force a hard reset of the system to get XFS to unwedge.
+>>
+>> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> 
+> Shouldn't dm-thinp just return the bio with ENOSPC as it's error?
+> The scsi layers already do this for hardware thinp ENOSPC failures,
+> so dm-thinp should behave exactly the same (i.e. via
+> __scsi_error_from_host_byte()). The behaviour of the filesystem
+> should be the same in all cases - making it conditional on whether
+> the thinp implementation can be polled for available space is wrong
+> as most hardware thinp can't be polled by the kernel forthis info..
+> 
+> 
+> If dm-thinp just returns ENOSPC from on the BIO like other hardware
+> thinp devices, then it is up to the filesystem to handle that
+> appropriately.  i.e. whether an ENOSPC IO error is fatal to the
+> filesystem is determined by filesystem configuration and context of
+> the IO error, not whether the block device has no space (which we
+> should already know from the ENOSPC error delivered by IO
+> completion).
 
+The issue we had discussed previously is that there is no agreement
+across block devices about whether ENOSPC is a permanent or temporary
+condition.  Asking the admin to tune  the fs to each block device's
+behavior sucks, IMHO.
 
-Am 08.07.2015 um 16:48 schrieb Joe Thornber:
-> Could you try with the latest kernels and the new smq policy please? 
+This interface could at least be defined to reflect a permanent and
+unambiguous state...
 
-I changed my test a little bit and after warming up and waiting a couple 
-of minutes until there was no activity I rerun the same test. Result is 
-that the writes are split roughly 2/3 to the caching device and 1/3 to 
-the backing device. The backing device is a HDD raid and utilized to 
-100%, so it is throttling fio's speed down.
+-Eric
 
-In bcache I could force to write the full IO to the cache by changing 
-the congested_*_threshold_us to 0 and it worked quite well to accelerate 
-new writes without the need to warm up. It looks like dm-cache can only 
-do hotspot acceleration, right?
-
-My test was dm-cache with smq with sde being a fast SSD RAID0 used for 
-cache and metadata and sdb used as backing device. This time I used XFS 
-the device and ran fio repeatedly on the same file without deleting it. 
-So the same HDD blocks should be involved.
-
-The fio command is ./fio --name=test --filename=/mnt/somefile.dat 
---rw=randwrite  --filesize=16G  --bs=64k --ioengine=libaio --direct=1 
---iodepth=1000
-The final statistics are
-  WRITE: io=16384MB, aggrb=158933KB/s, minb=158933KB/s, maxb=158933KB/s, 
-mint=105561msec, maxt=105561msec
-
-Disk stats (read/write):
-     dm-2: ios=0/262149, merge=0/0, ticks=0/103875140, 
-in_queue=104066916, util=100.00%, aggrios=175/131307, aggrmerge=232/243, 
-aggrticks=9982/7629026, aggrin_queue=7638856, aggrutil=100.00%
-   sdb: ios=72/88760, merge=132/344, ticks=19276/15245864, 
-in_queue=15265104, util=100.00%
-   sde: ios=279/173854, merge=333/143, ticks=688/12188, in_queue=12608, 
-util=10.03%
-
-The dmcache status is before
-dmcache: 0 6442450943 cache 8 8915/4161600 512 114081/2913051 1757 121 
-90280078 90791892 0 25373 24692 1 writeback 2 migration_threshold 2048 
-smq 0 rw
-and after the test
-dmcache: 0 6442450943 cache 8 8915/4161600 512 114132/2913051 1757 121 
-90453546 90867517 0 25424 36538 1 writeback 2 migration_threshold 2048 
-smq 0 rw
-
-
-
-Kind regards
-
-Christoph
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
