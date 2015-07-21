@@ -1,104 +1,71 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH] block: xfs: dm thin: train XFS to give up on
-	retrying IO if thinp is out of space
-Date: Tue, 21 Jul 2015 13:47:53 -0400
-Message-ID: <20150721174753.GA8563@redhat.com>
-References: <20150720151849.GA2282@redhat.com> <20150720223610.GV7943@dastard>
-	<55AE6670.40903@redhat.com>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [PATCH v2 1/3] PM suspend/hibernate: Call notifier after
+ freezing processes
+Date: Wed, 22 Jul 2015 08:08:27 +1000
+Message-ID: <20150722080827.5adcf5f1@noble>
+References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
+	<3179448.TScsKEAuyR@vostro.rjw.lan>
+	<20150720073226.GB25910@pali>
+	<1715416.hWBvT0iLvO@vostro.rjw.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-Content-Disposition: inline
-In-Reply-To: <55AE6670.40903@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Eric Sandeen <sandeen@redhat.com>
-Cc: axboe@kernel.dk, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, hch@lst.de, Vivek Goyal <vgoyal@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1715416.hWBvT0iLvO@vostro.rjw.lan>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
+Cc: Pali =?UTF-8?B?Um9ow6Fy?= <pali.rohar@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Jul 21 2015 at 11:34am -0400,
-Eric Sandeen <sandeen@redhat.com> wrote:
+On Mon, 20 Jul 2015 23:46:32 +0200 "Rafael J. Wysocki"
+<rjw@rjwysocki.net> wrote:
 
-> On 7/20/15 5:36 PM, Dave Chinner wrote:
-> > On Mon, Jul 20, 2015 at 11:18:49AM -0400, Mike Snitzer wrote:
-> >> If XFS fails to write metadata it will retry the write indefinitely
-> >> (with the hope that the write will succeed at some point in the future).
-> >>
-> >> Others can possibly speak to historic reason(s) why this is a sane
-> >> default for XFS.  But when XFS is deployed ontop of DM thin provisioning
-> >> this infinite retry is very unwelcome -- especially if DM thinp was
-> >> configured to be automatically extended with free space but the admin
-> >> hasn't provided (or restored) adequate free space.
-> >>
-> >> To fix this infinite retry a new bdev_has_space () hook is added to XFS
-> >> to break out of its metadata retry loop if the underlying block device
-> >> reports it no longer has free space.  DM thin provisioning is now
-> >> trained to respond accordingly, which enables XFS to not cause a cascade
-> >> of tasks blocked on IO waiting for XFS's infinite retry.
-> >>
-> >> All other block devices, which don't implement a .has_space method in
-> >> block_device_operations, will always return true for bdev_has_space().
-> >>
-> >> With this change XFS will fail the metadata IO, force shutdown, and the
-> >> XFS filesystem may be unmounted.  This enables an admin to recover from
-> >> their oversight, of not having provided enough free space, without
-> >> having to force a hard reset of the system to get XFS to unwedge.
-> >>
-> >> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> > 
-> > Shouldn't dm-thinp just return the bio with ENOSPC as it's error?
-> > The scsi layers already do this for hardware thinp ENOSPC failures,
-> > so dm-thinp should behave exactly the same (i.e. via
-> > __scsi_error_from_host_byte()). The behaviour of the filesystem
-> > should be the same in all cases - making it conditional on whether
-> > the thinp implementation can be polled for available space is wrong
-> > as most hardware thinp can't be polled by the kernel forthis info..
-> > 
-> > 
-> > If dm-thinp just returns ENOSPC from on the BIO like other hardware
-> > thinp devices, then it is up to the filesystem to handle that
-> > appropriately.  i.e. whether an ENOSPC IO error is fatal to the
-> > filesystem is determined by filesystem configuration and context of
-> > the IO error, not whether the block device has no space (which we
-> > should already know from the ENOSPC error delivered by IO
-> > completion).
-> 
-> The issue we had discussed previously is that there is no agreement
-> across block devices about whether ENOSPC is a permanent or temporary
-> condition.  Asking the admin to tune  the fs to each block device's
-> behavior sucks, IMHO.
+> On Monday, July 20, 2015 09:32:26 AM Pali Roh=C3=A1r wrote:
+> > On Saturday 18 July 2015 01:27:15 Rafael J. Wysocki wrote:
+> > > On Thursday, July 16, 2015 09:33:02 AM Pali Roh=C3=A1r wrote:
+> > > > On Thursday 16 July 2015 03:02:03 Rafael J. Wysocki wrote:
+> > > > > Also, if you're adding AFTER_FREEZE, it would be good to add =
+BEFORE_THAW too
+> > > > > for symmetry.
+> > > > >=20
+> > > >=20
+> > > > But there is no use case for BEFORE_THAW. At least it is not ne=
+eded for now.
+> > >=20
+> > > For your use case, a single function pointer would be sufficient =
+too.
+> > >=20
+> >=20
+> > What do you mean by single function pointer? kernel/power is part o=
+f
+> > kernel image and dm-crypt is external kernel module.
+>=20
+> Well, if there is a function pointer in the core suspend code initial=
+ly set to
+> NULL and exported to modules such that the dm-crypt code can set it t=
+o
+> something else, that should be sufficient, shouldn't it?
 
-It does suck, but it beats the alternative of XFS continuing to do
-nothing about the problem.
+As long as the dm-crypt module is never unloaded.  And as long as no
+other module could very possible want functionality like this. Ever.
 
-Disucssing more with Vivek, might be that XFS would be best served to
-model what dm-thinp has provided with its 'no_space_timeout'.  It
-defaults to queueing IO for 60 seconds, once the timeout expires the
-queued IOs getted errored.  If set to 0 dm-thinp will queue IO
-indefinitely.
+If a module wants to be notified - the providing a notifier chain
+really seems like the right thing to do...
 
-So for XFS's use-case: s/queue/retry/
+NeilBrown
 
-> This interface could at least be defined to reflect a permanent and
-> unambiguous state...
 
-The proposed bdev_has_space() interface enabled XFS to defer to the
-block device.  But it obviously doesn't help at all if the blockdevice
-isn't providing a .has_space method -- so I can see value in XFS
-having something like a 'no_space_timeout' knob.
-
-But something needs to happen.  No more bike-shedding allowed on this
-one.. PLEASE DO SOMETHING! :)
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+>=20
+> So if you're adding new PM notifier events, that's already more than =
+*you* need.
+>=20
+> Anyway, I guess the "post freeze" new one should be enough for now, b=
+ut please
+> change the name to POST_FREEZE.
+>=20
+> Also I think we don't need separate "post freeze" events for suspend =
+and
+> hibernation.
+>=20
+> Thanks,
+> Rafael
