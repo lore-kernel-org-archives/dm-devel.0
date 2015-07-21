@@ -1,55 +1,53 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [dm-devel] [PATCH] block: add a bi_error field to struct bio
-Date: Tue, 21 Jul 2015 10:19:08 +0200
-Message-ID: <55AE007C.9030807@suse.de>
-References: <1437398977-8492-1-git-send-email-hch@lst.de> <1437398977-8492-2-git-send-email-hch@lst.de>
+From: Thanos Makatos <thanos.makatos@onapp.com>
+Subject: Re: back-ported dm-cache not forwarding read-ahead bios
+	to origin
+Date: Tue, 21 Jul 2015 10:56:05 +0100
+Message-ID: <CAM2wQBucP2rmVNv=+Aq2VG+3gCH529ngyYOoen7PEbmt88Em2w@mail.gmail.com>
+References: <CAM2wQBv43BGGhe+NHOEAz+usppL6CcR-2m_ratKNKR65GB+XVA@mail.gmail.com>
+	<20150720172226.GA27018@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1437398977-8492-2-git-send-email-hch@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, Jens Axboe <axboe@kernel.dk>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Liu Bo <bo.li.liu@oracle.com>, linux-btrfs@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20150720172226.GA27018@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, ejt@redhat.com, Mauelshagen@redhat.com
 List-Id: dm-devel.ids
 
-On 07/20/2015 03:29 PM, Christoph Hellwig wrote:
-> Currently we have two different ways to signal an I/O error on a BIO:
->=20
->  (1) by clearing the BIO_UPTODATE flag
->  (2) by returning a Linux errno value to the bi_end_io callback
->=20
-> The first one has the drawback of only communicating a single possibl=
-e
-> error (-EIO), and the second one has the drawback of not beeing persi=
-stent
-> when bios are queued up, and are not passed along from child to paren=
-t
-> bio in the ever more popular chaining scenario.  Having both mechanis=
-ms
-> available has the additional drawback of utterly confusing driver aut=
-hors
-> and introducing bugs where various I/O submitters only deal with one =
-of
-> them, and the others have to add boilerplate code to deal with both k=
-inds
-> of error returns.
->=20
-> So add a new bi_error field to store an errno value directly in struc=
-t
-> bio and remove the existing mechanisms to clean all this up.
->=20
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
-Very good improvement.
+> Upstream backports to RHEL6 are tricky because it doesn't have
+> upstream's latest block changes.  Care must be taken during the
+> backport.  I could easily see someone less aware of the pitfalls
+> producing a buggy kernel that cause corruption like you've reported.
+>
+> The last dm-cache backport to RHEL6 was kernel-2.6.32-528.el6.
+> That backport sync'd dm-cache changes through upstream Linux 3.19.
+>
+> I'm not going to put any time to this report.  Your best bet is to
+> rebase to the >= 528.el6 kernel and go from there (this translates to
+> the forthcoming RHEL6.7 kernel as the first publicly available release
+> with the changes in question).
 
-Reviewed-by: Hannes Reinecke <hare@suse.de>
+Thanks Mike, had I known that there was a back-port planned for 6.7 I wouldn't
+have bothered back-porting it myself... I tried to look for an existing
+back-port for CentOS a few months back but didn't find anything. Just to teach
+myself a lesson, if I had asked on this list whether a back-port was planned,
+would I have gotten a response, or such information could not have been
+disclosed?
 
-Cheers,
+Because our product is based on CentOS, it might take some time for dm-cache
+to become available through CentOS 6.7. So for now I'll have to continue using
+my broken version in order to integrate it with our product. Any help
+appreciated
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+--
+Thanos Makatos
