@@ -1,164 +1,54 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [RFC PATCH] block: xfs: dm thin: train XFS to give up on
-	retrying IO if thinp is out of space
-Date: Wed, 22 Jul 2015 12:37:12 +1000
-Message-ID: <20150722023711.GD7943@dastard>
-References: <20150720151849.GA2282@redhat.com> <20150720223610.GV7943@dastard>
-	<55AE6670.40903@redhat.com> <20150721174753.GA8563@redhat.com>
-	<20150722000923.GB7943@dastard> <20150722010056.GC7943@dastard>
-	<20150722014029.GA10628@redhat.com>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [PATCH] block: add a bi_error field to struct bio
+Date: Wed, 22 Jul 2015 15:00:47 +1000
+Message-ID: <20150722150047.5c5d59df@noble>
+References: <1437398977-8492-1-git-send-email-hch@lst.de>
+	<1437398977-8492-2-git-send-email-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-Content-Disposition: inline
-In-Reply-To: <20150722014029.GA10628@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: axboe@kernel.dk, Eric Sandeen <sandeen@redhat.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, hch@lst.de, Vivek Goyal <vgoyal@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1437398977-8492-2-git-send-email-hch@lst.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, "Martin K. Petersen" <martin.petersen@oracle.com>, Neil Brown <neilb@suse.de>, Liu Bo <bo.li.liu@oracle.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Jul 21, 2015 at 09:40:29PM -0400, Mike Snitzer wrote:
-> On Tue, Jul 21 2015 at  9:00pm -0400,
-> Dave Chinner <david@fromorbit.com> wrote:
+On Mon, 20 Jul 2015 15:29:37 +0200 Christoph Hellwig <hch@lst.de> wrote:
+
+> Currently we have two different ways to signal an I/O error on a BIO:
 > 
-> > On Wed, Jul 22, 2015 at 10:09:23AM +1000, Dave Chinner wrote:
-> > > On Tue, Jul 21, 2015 at 01:47:53PM -0400, Mike Snitzer wrote:
-> > > > On Tue, Jul 21 2015 at 11:34am -0400, Eric Sandeen <sandeen@redhat.com> wrote:
-> > > > > On 7/20/15 5:36 PM, Dave Chinner wrote:
-> > > > > The issue we had discussed previously is that there is no agreement
-> > > > > across block devices about whether ENOSPC is a permanent or temporary
-> > > > > condition.  Asking the admin to tune  the fs to each block device's
-> > > > > behavior sucks, IMHO.
-> > > > 
-> > > > It does suck, but it beats the alternative of XFS continuing to do
-> > > > nothing about the problem.
-> > > 
-> > > Just a comment on that: doing nothing is better than doing the wrong
-> > > thing and being stuck with it forever. :)
-> > > 
-> > > > Disucssing more with Vivek, might be that XFS would be best served to
-> > > > model what dm-thinp has provided with its 'no_space_timeout'.  It
-> > > > defaults to queueing IO for 60 seconds, once the timeout expires the
-> > > > queued IOs getted errored.  If set to 0 dm-thinp will queue IO
-> > > > indefinitely.
-> > > 
-> > > Yes, that's exactly what I proposed in the thread I referenced in
-> > > my previous email, and what got stuck on the bikeshed wall because
-> > > of these concerns about knob twiddling:
-> > > 
-> > > http://oss.sgi.com/archives/xfs/2015-02/msg00346.html
-> > > 
-> > > | e.g. if we need configurable error handling, it needs to be
-> > > | configurable for different error types, and it needs to be
-> > > | configurable on a per-mount basis. And it needs to be configurable
-> > > | at runtime, not just at mount time. That kind of leads to using
-> > > | sysfs for this. e.g. for each error type we ned to handle different
-> > > | behaviour for:
-> > > | 
-> > > | $ cat /sys/fs/xfs/vda/meta_write_errors/enospc/type
-> > > | [transient] permanent
-> > > | $ cat /sys/fs/xfs/vda/meta_write_errors/enospc/perm_timeout_seconds
-> > > | 300
-> > > | $ cat
-> > > | /sys/fs/xfs/vda/meta_write_errors/enospc/perm_max_retry_attempts
-> > > | 50
-> > > | $ cat
-> > > | /sys/fs/xfs/vda/meta_write_errors/enospc/transient_fail_at_umount
-> > > | 1
-> > > 
-> > > I've rebased this patchset, and I'm cleaning it up now, so in a few
-> > > days I'll have something for review, likely for the 4.3 merge
-> > > window....
-> > 
-> > Just thinking a bit more on how to make this simpler to configure,
-> > is there a simple way for the filesystem to determine the current
-> > config of the dm thinp volume? i.e. if the dm-thinp volume is
-> > configured to error out immediately on enospc, then XFS should
-> > default to doing the same thing. having XFS be able to grab this
-> > status at mount time and change the default ENOSPC error config from
-> > transient to permanent on such dm-thinp volumes would go a long way
-> > to making these configs Just Do The Right Thing on block dev enospc
-> > errors...
-> > 
-> > e.g. if dm-thinp is configured to queue for 60s and then fail on
-> > ENOSPC, we want XFS to fail immediately on ENOSPC in metadata IO. If
-> > dm-thinp is configured to ENOSPC instantly (i.e. no queueing) then
-> > we want XFS to retry and use it's default retry maximums before
-> > failing permanently.
+>  (1) by clearing the BIO_UPTODATE flag
+>  (2) by returning a Linux errno value to the bi_end_io callback
 > 
-> Yes, that'd be nice.  But there isn't a way to easily get the DM thinp
-> device's config from within the kernel (unless XFS wants to get into the
-> business of issuing ioctls to DM devices.. unlikely). 
+> The first one has the drawback of only communicating a single possible
+> error (-EIO), and the second one has the drawback of not beeing persistent
+> when bios are queued up, and are not passed along from child to parent
+> bio in the ever more popular chaining scenario.  Having both mechanisms
+> available has the additional drawback of utterly confusing driver authors
+> and introducing bugs where various I/O submitters only deal with one of
+> them, and the others have to add boilerplate code to deal with both kinds
+> of error returns.
+> 
+> So add a new bi_error field to store an errno value directly in struct
+> bio and remove the existing mechanisms to clean all this up.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
 
-Not really.
+Reviewed-by: NeilBrown <neilb@suse.com> (umem and md/raid).
 
-> I could be
-> persuaded to expose a per-device sysfs file to get the status (would
-> avoid need for ioctl), e.g.:
->  # cat /sys/block/dm-5/dm/status
-> (but that doesn't _really_ help in-kernel access, awkward for filesystem
-> code to be opening sysfs files!)
+i.e. these files.
+>  drivers/block/umem.c                |  4 +--
+>  drivers/md/faulty.c                 |  4 +--
+>  drivers/md/linear.c                 |  2 +-
+>  drivers/md/md.c                     | 18 +++++------
+>  drivers/md/multipath.c              | 12 +++----
+>  drivers/md/raid0.c                  |  2 +-
+>  drivers/md/raid1.c                  | 53 ++++++++++++++++---------------
+>  drivers/md/raid10.c                 | 55 +++++++++++++++-----------------
+>  drivers/md/raid5.c                  | 52 +++++++++++++++----------------
 
-No, not going that way.  We have direct access through the bdev we
-opened, so that's the communications channel we'd need to use.
 
-> SO userspace (mkfs.xfs) could easily check the thinp device's setup
-> using 'dmsetup status <device>' (output will either contain
-> 'queue_if_no_space' or 'error_if_no_space').  The DM thinp
-> 'no_space_timeout' (applicable if queue_if_no_space) is a thinp global
-> accessed using a module param:
->  # cat /sys/module/dm_thin_pool/parameters/no_space_timeout
->  60
-
-Mkfs is not the right interface - users can change dm-thinp
-behaviour long after the filesystem was created and so the XFS
-config needs to be configurable, too. Further, I really don't want
-to have to add anything to the on-disk format to support error
-configuration because, well, that drives the level of complexity up
-a couple or orders of magnitude (mkfs, repair, metadump, db, etc all
-need to support it), especially when it can be driven easily from
-userspace after mount with far less constraints and support burden.
-
-> I'm open to considering alternative interfaces for getting you the info
-> you need.  I just don't have a great sense for what mechanism you'd like
-> to use.  Do we invent a new block device operations table method that
-> sets values in a 'struct no_space_strategy' passed in to the
-> blockdevice?
-
-It's long been frowned on having the filesystems dig into block
-device structures. We have lots of wrapper functions for getting
-information from or performing operations on block devices. (e.g.
-bdev_read_only(), bdev_get_queue(), blkdev_issue_flush(),
-blkdev_issue_zeroout(), etc) and so I think this is the pattern we'd
-need to follow. If we do that - bdev_get_nospace_strategy() - then
-how that information gets to the filesystem is completely opaque
-at the fs level, and the block layer can implement it in whatever
-way is considered sane...
-
-And, realistically, all we really need returned is a enum to tell us
-how the bdev behaves on enospc:
-	- bdev fails fast, (i.e. immediate ENOSPC)
-	- bdev fails slow, (i.e. queue for some time, then ENOSPC)
-	- bdev never fails (i.e. queue forever)
-	- bdev doesn't support this (i.e. EOPNOTSUPP)
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+Thanks,
+NeilBrown
