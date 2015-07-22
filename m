@@ -1,54 +1,59 @@
-From: NeilBrown <neilb@suse.com>
-Subject: Re: [PATCH] block: add a bi_error field to struct bio
-Date: Wed, 22 Jul 2015 15:00:47 +1000
-Message-ID: <20150722150047.5c5d59df@noble>
-References: <1437398977-8492-1-git-send-email-hch@lst.de>
-	<1437398977-8492-2-git-send-email-hch@lst.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [RFC PATCH] block: xfs: dm thin: train XFS to give up on
+ retrying IO if thinp is out of space
+Date: Wed, 22 Jul 2015 09:34:51 -0400
+Message-ID: <20150722133451.GB16842@redhat.com>
+References: <20150720151849.GA2282@redhat.com>
+ <20150720223610.GV7943@dastard>
+ <55AE6670.40903@redhat.com>
+ <20150721174753.GA8563@redhat.com>
+ <20150722000923.GB7943@dastard>
+ <20150722010056.GC7943@dastard>
+ <20150722014029.GA10628@redhat.com>
+ <20150722023711.GD7943@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1437398977-8492-2-git-send-email-hch@lst.de>
+Content-Disposition: inline
+In-Reply-To: <20150722023711.GD7943@dastard>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, "Martin K. Petersen" <martin.petersen@oracle.com>, Neil Brown <neilb@suse.de>, Liu Bo <bo.li.liu@oracle.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: axboe@kernel.dk, Eric Sandeen <sandeen@redhat.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, hch@lst.de, Vivek Goyal <vgoyal@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 20 Jul 2015 15:29:37 +0200 Christoph Hellwig <hch@lst.de> wrote:
+On Tue, Jul 21 2015 at 10:37pm -0400,
+Dave Chinner <david@fromorbit.com> wrote:
 
-> Currently we have two different ways to signal an I/O error on a BIO:
+> On Tue, Jul 21, 2015 at 09:40:29PM -0400, Mike Snitzer wrote:
 > 
->  (1) by clearing the BIO_UPTODATE flag
->  (2) by returning a Linux errno value to the bi_end_io callback
+> > I'm open to considering alternative interfaces for getting you the info
+> > you need.  I just don't have a great sense for what mechanism you'd like
+> > to use.  Do we invent a new block device operations table method that
+> > sets values in a 'struct no_space_strategy' passed in to the
+> > blockdevice?
 > 
-> The first one has the drawback of only communicating a single possible
-> error (-EIO), and the second one has the drawback of not beeing persistent
-> when bios are queued up, and are not passed along from child to parent
-> bio in the ever more popular chaining scenario.  Having both mechanisms
-> available has the additional drawback of utterly confusing driver authors
-> and introducing bugs where various I/O submitters only deal with one of
-> them, and the others have to add boilerplate code to deal with both kinds
-> of error returns.
+> It's long been frowned on having the filesystems dig into block
+> device structures. We have lots of wrapper functions for getting
+> information from or performing operations on block devices. (e.g.
+> bdev_read_only(), bdev_get_queue(), blkdev_issue_flush(),
+> blkdev_issue_zeroout(), etc) and so I think this is the pattern we'd
+> need to follow. If we do that - bdev_get_nospace_strategy() - then
+> how that information gets to the filesystem is completely opaque
+> at the fs level, and the block layer can implement it in whatever
+> way is considered sane...
 > 
-> So add a new bi_error field to store an errno value directly in struct
-> bio and remove the existing mechanisms to clean all this up.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
+> And, realistically, all we really need returned is a enum to tell us
+> how the bdev behaves on enospc:
+> 	- bdev fails fast, (i.e. immediate ENOSPC)
+> 	- bdev fails slow, (i.e. queue for some time, then ENOSPC)
+> 	- bdev never fails (i.e. queue forever)
+> 	- bdev doesn't support this (i.e. EOPNOTSUPP)
 
-Reviewed-by: NeilBrown <neilb@suse.com> (umem and md/raid).
+This 'struct no_space_strategy' would be invented purely for
+informational purposes for upper layers' benefit -- I don't consider it
+a "block device structure" it the traditional sense.
 
-i.e. these files.
->  drivers/block/umem.c                |  4 +--
->  drivers/md/faulty.c                 |  4 +--
->  drivers/md/linear.c                 |  2 +-
->  drivers/md/md.c                     | 18 +++++------
->  drivers/md/multipath.c              | 12 +++----
->  drivers/md/raid0.c                  |  2 +-
->  drivers/md/raid1.c                  | 53 ++++++++++++++++---------------
->  drivers/md/raid10.c                 | 55 +++++++++++++++-----------------
->  drivers/md/raid5.c                  | 52 +++++++++++++++----------------
-
-
-Thanks,
-NeilBrown
+I was thinking upper layers would like to know the actual timeout value
+for the "fails slow" case.  As such the 'struct no_space_strategy' would
+have the enum and the timeout.  And would be returned with a call:
+     bdev_get_nospace_strategy(bdev, &no_space_strategy)
