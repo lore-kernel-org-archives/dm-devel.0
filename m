@@ -1,65 +1,39 @@
-From: <gilib123@hotmail.com>
-Subject: DM dtr activation context
-Date: Wed, 22 Jul 2015 18:22:43 +0000
-Message-ID: <DUB402-EAS280500A2CD20054611B6D0E96830@phx.gbl>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH] block: add a bi_error field to struct bio
+Date: Wed, 22 Jul 2015 12:51:47 -0600
+Message-ID: <55AFE643.5000704@kernel.dk>
+References: <1437398977-8492-1-git-send-email-hch@lst.de> <1437398977-8492-2-git-send-email-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7730981560282083406=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1437398977-8492-2-git-send-email-hch@lst.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Neil Brown <neilb@suse.de>, Liu Bo <bo.li.liu@oracle.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
---===============7730981560282083406==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_2486_8912523.1437589363921"
+On 07/20/2015 07:29 AM, Christoph Hellwig wrote:
+> Currently we have two different ways to signal an I/O error on a BIO:
+>
+>   (1) by clearing the BIO_UPTODATE flag
+>   (2) by returning a Linux errno value to the bi_end_io callback
+>
+> The first one has the drawback of only communicating a single possible
+> error (-EIO), and the second one has the drawback of not beeing persistent
+> when bios are queued up, and are not passed along from child to parent
+> bio in the ever more popular chaining scenario.  Having both mechanisms
+> available has the additional drawback of utterly confusing driver authors
+> and introducing bugs where various I/O submitters only deal with one of
+> them, and the others have to add boilerplate code to deal with both kinds
+> of error returns.
+>
+> So add a new bi_error field to store an errno value directly in struct
+> bio and remove the existing mechanisms to clean all this up.
 
-------=_Part_2486_8912523.1437589363921
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+I think this is a good change, the only part I _really_ dislike is that 
+this now bumps a struct bio from 2 cache lines to 3. Have you done any 
+perf testing?
 
-Hi=0A=
-=0A=
-Is there a "nice" way to distinguish between a dtr call as a result of dmse=
-tup remove and a call during DM unloading in reboot?=0A=
-=0A=
-=0A=
-Thanks=0A=
-=0A=
--gili=0A=
-=0A=
-=0A=
-Sent by Outlook for Android=
-
-------=_Part_2486_8912523.1437589363921
-Content-Type: text/html; charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
-
-<p dir=3D"ltr">Hi<br>=0A=
-Is there a "nice" way to distinguish between a dtr call as a result of dmse=
-tup remove and a call during DM unloading in reboot?</p>=0A=
-<p dir=3D"ltr">Thanks<br>=0A=
--gili</p>=0A=
-<p dir=3D"ltr">Sent by <a href=3D"http://taps.io/outlookmobile">Outlook</a>=
- for Android<br>=0A=
-</p>=0A=
-
-------=_Part_2486_8912523.1437589363921--
-
-
---===============7730981560282083406==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7730981560282083406==--
+-- 
+Jens Axboe
