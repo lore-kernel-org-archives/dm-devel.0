@@ -1,119 +1,172 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [RFC PATCH] block: xfs: dm thin: train XFS to give
-	up on retrying IO if thinp is out of space
-Date: Thu, 23 Jul 2015 13:08:36 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1507231306160.16526@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20150720151849.GA2282@redhat.com> <20150720223610.GV7943@dastard>
-	<55AE6670.40903@redhat.com> <20150721174753.GA8563@redhat.com>
-	<20150722000923.GB7943@dastard> <20150722010056.GC7943@dastard>
+From: Ming Lin <mlin@kernel.org>
+Subject: Re: [PATCH v5 00/11] simplify block layer based on immutable biovecs
+Date: Thu, 23 Jul 2015 11:21:42 -0700
+Message-ID: <1437675702.11359.25.camel@ssi>
+References: <1436166674-31362-1-git-send-email-mlin@kernel.org>
+	 <1436764355.30675.10.camel@hasee> <20150713153537.GA30898@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <20150722010056.GC7943@dastard>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: axboe@kernel.dk, Eric Sandeen <sandeen@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, linux-fsdevel@vger.kernel.org, hch@lst.de, Vivek Goyal <vgoyal@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150713153537.GA30898@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dpark@posteo.net>, NeilBrown <neilb@suse.de>, "Alasdair G. Kergon" <agk@redhat.com>, Jeff Moyer <jmoyer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-
-On Wed, 22 Jul 2015, Dave Chinner wrote:
-
-> On Wed, Jul 22, 2015 at 10:09:23AM +1000, Dave Chinner wrote:
-> > On Tue, Jul 21, 2015 at 01:47:53PM -0400, Mike Snitzer wrote:
-> > > On Tue, Jul 21 2015 at 11:34am -0400, Eric Sandeen <sandeen@redhat.com> wrote:
-> > > > On 7/20/15 5:36 PM, Dave Chinner wrote:
-> > > > The issue we had discussed previously is that there is no agreement
-> > > > across block devices about whether ENOSPC is a permanent or temporary
-> > > > condition.  Asking the admin to tune  the fs to each block device's
-> > > > behavior sucks, IMHO.
+On Mon, 2015-07-13 at 11:35 -0400, Mike Snitzer wrote:
+> On Mon, Jul 13 2015 at  1:12am -0400,
+> Ming Lin <mlin@kernel.org> wrote:
+> 
+> > On Mon, 2015-07-06 at 00:11 -0700, mlin@kernel.org wrote:
+> > > Hi Mike,
 > > > 
-> > > It does suck, but it beats the alternative of XFS continuing to do
-> > > nothing about the problem.
+> > > On Wed, 2015-06-10 at 17:46 -0400, Mike Snitzer wrote:
+> > > > I've been busy getting DM changes for the 4.2 merge window finalized.
+> > > > As such I haven't connected with others on the team to discuss this
+> > > > issue.
+> > > > 
+> > > > I'll see if we can make time in the next 2 days.  But I also have
+> > > > RHEL-specific kernel deadlines I'm coming up against.
+> > > > 
+> > > > Seems late to be staging this extensive a change for 4.2... are you
+> > > > pushing for this code to land in the 4.2 merge window?  Or do we have
+> > > > time to work this further and target the 4.3 merge?
+> > > > 
+> > > 
+> > > 4.2-rc1 was out.
+> > > Would you have time to work together for 4.3 merge? 
 > > 
-> > Just a comment on that: doing nothing is better than doing the wrong
-> > thing and being stuck with it forever. :)
+> > Ping ...
 > > 
-> > > Disucssing more with Vivek, might be that XFS would be best served to
-> > > model what dm-thinp has provided with its 'no_space_timeout'.  It
-> > > defaults to queueing IO for 60 seconds, once the timeout expires the
-> > > queued IOs getted errored.  If set to 0 dm-thinp will queue IO
-> > > indefinitely.
-> > 
-> > Yes, that's exactly what I proposed in the thread I referenced in
-> > my previous email, and what got stuck on the bikeshed wall because
-> > of these concerns about knob twiddling:
-> > 
-> > http://oss.sgi.com/archives/xfs/2015-02/msg00346.html
-> > 
-> > | e.g. if we need configurable error handling, it needs to be
-> > | configurable for different error types, and it needs to be
-> > | configurable on a per-mount basis. And it needs to be configurable
-> > | at runtime, not just at mount time. That kind of leads to using
-> > | sysfs for this. e.g. for each error type we ned to handle different
-> > | behaviour for:
-> > | 
-> > | $ cat /sys/fs/xfs/vda/meta_write_errors/enospc/type
-> > | [transient] permanent
-> > | $ cat /sys/fs/xfs/vda/meta_write_errors/enospc/perm_timeout_seconds
-> > | 300
-> > | $ cat
-> > | /sys/fs/xfs/vda/meta_write_errors/enospc/perm_max_retry_attempts
-> > | 50
-> > | $ cat
-> > | /sys/fs/xfs/vda/meta_write_errors/enospc/transient_fail_at_umount
-> > | 1
-> > 
-> > I've rebased this patchset, and I'm cleaning it up now, so in a few
-> > days I'll have something for review, likely for the 4.3 merge
-> > window....
+> > What can I do to move forward?
 > 
-> Just thinking a bit more on how to make this simpler to configure,
-> is there a simple way for the filesystem to determine the current
-> config of the dm thinp volume?
+> You can show further testing.  Particularly that you've covered all the
+> edge cases.
+> 
+> Until someone can produce some perf test results where they are actually
+> properly controlling for the splitting, we have no useful information.
+> 
+> The primary concerns associated with this patchset are:
+> 1) In the context of RAID, XFS's use of bio_add_page() used to build up
+>    optimal IOs when the underlying block device provides striping info
+>    via IO limits.  With this patchset how large will bios become in
+>    practice _without_ bio_add_page() being bounded by the underlying IO
+>    limits?
 
-You can just stop retrying the I/Os when the user attempts to unmount the 
-filesystem - then, you don't need any configuration option.
+Totally new to XFS code.
+Did you mean xfs_buf_ioapply_map() -> bio_add_page()?
 
-Mikulas
+The largest size could be BIO_MAX_PAGES pages, that is 256 pages(1M
+bytes).
 
-> i.e. if the dm-thinp volume is
-> configured to error out immediately on enospc, then XFS should
-> default to doing the same thing. having XFS be able to grab this
-> status at mount time and change the default ENOSPC error config from
-> transient to permanent on such dm-thinp volumes would go a long way
-> to making these configs Just Do The Right Thing on block dev enospc
-> errors...
 > 
-> e.g. if dm-thinp is configured to queue for 60s and then fail on
-> ENOSPC, we want XFS to fail immediately on ENOSPC in metadata IO. If
-> dm-thinp is configured to ENOSPC instantly (i.e. no queueing) then
-> we want XFS to retry and use it's default retry maximums before
-> failing permanently.
-> 
-> Cheers,
-> 
-> Dave.
-> -- 
-> Dave Chinner
-> david@fromorbit.com
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+> 2) The late splitting that occurs for the (presummably) large bios that
+>    are sent down.. how does it cope/perform in the face of very
+>    low/fragmented system memory?
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+I tested in qemu-kvm with 1G/1100M/1200M memory.
+10 HDDs were attached to qemu via virtio-blk.
+Then created MD RAID6 array and mkfs.xfs on it.
+
+I use bs=2M, so there will be a lot of bio splits.
+
+[global]
+ioengine=libaio
+iodepth=64
+direct=1
+runtime=1200
+time_based
+group_reporting
+numjobs=8
+gtod_reduce=0
+norandommap
+
+[job1]
+bs=2M
+directory=/mnt
+size=100M
+rw=write
+
+Here is the results:
+
+memory		4.2-rc2		4.2-rc2-patched
+------		-------		---------------
+1G		OOM		OOM
+1100M		fail		OK
+1200M		OK		OK
+
+"fail" means it hit a page allocation failure.
+http://minggr.net/pub/block_patches_tests/dmesg.4.2.0-rc2
+
+I tested 3 times for each kernel to confirm that with 1100M memory,
+4.2-rc2 always hit a page allocation failure and 4.2-rc2-patched is OK.
+
+So the patched kernel performs better in this case.
+
+> 
+> 3) More open-ended comment than question: Linux has evolved to perform
+>    well on "enterprise" systems.  We generally don't fall off a cliff on 
+>    performance like we used to.  The concern associated with this
+>    patchset is that if it goes in without _real_ due-diligence on
+>    "enterprise" scale systems and workloads it'll be too late once we
+>    notice the problem(s).
+> 
+> So we really need answers to 1 and 2 above in order to feel better about
+> the risks associated 3.
+> 
+> Alasdair's feedback to you on testing still applies (and hasn't been
+> done AFAIK):
+> https://www.redhat.com/archives/dm-devel/2015-May/msg00203.html
+> 
+> Particularly:
+> "you might need to instrument the kernels to tell you the sizes of the
+> bios being created and the amount of splitting actually happening."
+
+I added a debug patch to record the amount of splitting actually
+happened. https://goo.gl/Iiyg4Y
+
+In the qemu 1200M memory test case,
+
+$ cat /sys/block/md0/queue/split
+discard split: 0, write same split: 0, segment split: 27400
+
+> 
+> and
+> 
+> "You may also want to test systems with a restricted amount of available
+> memory to show how the splitting via worker thread performs.  (Again,
+> instrument to prove the extent to which the new code is being exercised.)"
+
+Does above test with qemu make sense?
+
+Thanks,
+Ming
+
+> 
+> > This patchset not only simplify block layer a lot, it's also a
+> > prerequisite of the direct IO rewrite patches, which I saw 40%
+> > performance improvement for null_blk and 10% improvement for NVMe
+> > drives. I have been fixing bugs for the direct IO patches. I'll post it
+> > once it passes xfstests.
+> > 
+> > Mike,
+> > Can I have your ACK? Or do you have other test plan?
+> 
+> I'm not the only person with concerns.  I share Alasdair's concerns.
+> Jeff Moyer is also concerned about the implications of this patchset.
+> We're all in favor of this patchset's cleanup _if and only if_ it can be
+> proven that we aren't going to be falling off a cliff on performance due
+> to some pathological workload (be it under memory pressure or whatever).
+> 
+> Apologies for not being able to put time to this like I hoped.  But that
+> doesn't mean you are off the hook on showing you've done the testing and
+> understand the scope and implications of the changes you're pushing for.
+> 
+> I will do additional review to answer 1 and 2 above.  And Jeff Moyer
+> told me he'd test the patchset on one of his testbeds.
+> 
+> But if you can help answer 1 and 2 above that'd go a long way.
+> 
+> Thanks,
+> Mike
