@@ -1,16 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: crypt: update wiki page URL
-Date: Mon, 27 Jul 2015 08:14:50 -0400
-Message-ID: <20150727121449.GB2312@redhat.com>
-References: <4616c7fad2117bb4daa909344079fc9e945d00bb.1436079344.git.baruch@tkos.co.il>
-	<20150724062254.GT13027@tarshish>
+From: "Bryn M. Reeves" <bmr@redhat.com>
+Subject: Re: [PATCH 2/4] dm stats: support precise timestamps
+Date: Mon, 27 Jul 2015 16:11:09 +0100
+Message-ID: <20150727151108.GA18547@localhost.localdomain>
+References: <alpine.LRH.2.02.1506091705160.1545@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1506091721180.1545@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20150724062254.GT13027@tarshish>
+In-Reply-To: <alpine.LRH.2.02.1506091721180.1545@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,20 +20,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Baruch Siach <baruch@tkos.co.il>
-Cc: dm-devel@redhat.com, Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Laurence Oberman <loberman@redhat.com>, Tao Ma <boyu.mt@taobao.com>, Robin Dong <sanbai@alibaba-inc.com>, Coly Li <colyli@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jul 24 2015 at  2:22P -0400,
-Baruch Siach <baruch@tkos.co.il> wrote:
+On Tue, Jun 09, 2015 at 05:21:39PM -0400, Mikulas Patocka wrote:
+>  	/*
+>  	 * Input format:
+> -	 *   <range> <step> [<program_id> [<aux_data>]]
+> +	 *   <range> <step> [<extra_parameters> <parameters>] [<program_id> [<aux_data>]]
+>  	 */
 
-> Hi Alasdair, Mike,
-> 
-> On Sun, Jul 05, 2015 at 09:55:44AM +0300, Baruch Siach wrote:
-> > Cryptsetup moved to gitlab. This is a leftover from commit e44f23b32dc7 (dm
-> > crypt: update URLs to new cryptsetup project page, 2015-04-05).
-> 
-> Ping?
+Rather than adding optional parameters would it make sense to add a new
+create method? E.g. "@stats_create_precise".
 
-Applied, thanks:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=6ed443c07f1e7f819983422b16598facb152250d
+In some ways this is easier to deal with in userspace and there's alrady
+a precedent for it with @stats_print vs. @stats_print_clear.
+
+It's not a huge deal either way though - just simplifies formatting of
+the messages a little.
+
+Regards,
+Bryn.
