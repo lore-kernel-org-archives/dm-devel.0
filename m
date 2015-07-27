@@ -1,96 +1,32 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: multipathd removing DM devices that don't belong to
- it
-Date: Mon, 27 Jul 2015 11:12:34 +0200
-Message-ID: <55B5F602.1020206@suse.de>
-References: <DM2PR11MB0335ECB1EAC777CF47163BEED5810@DM2PR11MB0335.namprd11.prod.outlook.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm cache: fix alloc_bitset check that always evaluates as false
+Date: Mon, 27 Jul 2015 08:15:29 -0400
+Message-ID: <20150727121529.GC2312@redhat.com>
+References: <1437666479-24633-1-git-send-email-colin.king@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <DM2PR11MB0335ECB1EAC777CF47163BEED5810@DM2PR11MB0335.namprd11.prod.outlook.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1437666479-24633-1-git-send-email-colin.king@canonical.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Colin King <colin.king@canonical.com>
+Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 07/24/2015 07:53 PM, Artem Danielov wrote:
-> Hi,
-> =
+On Thu, Jul 23 2015 at 11:47P -0400,
+Colin King <colin.king@canonical.com> wrote:
 
-> Any chance you guys have looked into this problem? Thank you!
-> =
+> From: Colin Ian King <colin.king@canonical.com>
+> 
+> static analysis by cppcheck has found a check on alloc_bitset that
+> always evaluates as false and hence never finds an allocation failure:
+> 
+> [drivers/md/dm-cache-policy-smq.c:1689]: (warning) Logical conjunction
+>   always evaluates to false: !EXPR && EXPR.
+> 
+> Fix this by removing the incorrect mq->cache_hit_bits check
+> 
+> Signed-off-by: Colin Ian King <colin.king@canonical.com>
 
->  =
-
-> =
-
-> *From:* Artem Danielov
-> *Sent:* Tuesday, June 16, 2015 15:02
-> *To:* 'dm-devel@redhat.com'
-> *Subject:* multipathd removing DM devices that don't belong to it
-> =
-
->  =
-
-> =
-
-> Hello,
-> =
-
-> Looking for an advice on whether this is an expected behavior or a bug.
-> =
-
-> device-mapper-multipath-0.4.9-77.el7.x86_64
-> =
-
->  =
-
-> =
-
-> When multipathd service starts it will remove any DM devices with
-> multipath target, _even if the underlying devices are blacklisted_.
-> =
-
-> We are trying to use dmsetup directly  to implement custom multipath
-> management logic separate from multipathd. But unfortunately if
-> multipathd is present and enabled it removes DM devices with
-> multipath target that we create.
-> =
-
-Well, hardly surprising.
-ATM multipathd expects to be the only one creating multipath tables,
-so of course it would try to 'rectify' the situation.
-
-What one could try is to use a different UUID prefix (ie something
-else than 'mpath') and then teach multipath to ignore all
-device-mapper devices of type 'multipath' but without the 'mpath'
-UUID prefix.
-
->  =
-
-> =
-
-> Is this a bug?
-> =
-
-Not as such.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		               zSeries & Storage
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+Applied for 4.2-rc5 inclussion, thanks:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=134bf30c06f057d6b8d90132e8f8b3cd2be79572
