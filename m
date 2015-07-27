@@ -1,16 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: linux-4.2-rc4/drivers/md/dm-cache-policy-smq.c:1689:
- bad if test ?
-Date: Mon, 27 Jul 2015 08:14:13 -0400
-Message-ID: <20150727121413.GA2312@redhat.com>
-References: <DUB128-W57EEA6D50E9781025705219C8E0@phx.gbl>
+Subject: Re: dm: crypt: update wiki page URL
+Date: Mon, 27 Jul 2015 08:14:50 -0400
+Message-ID: <20150727121449.GB2312@redhat.com>
+References: <4616c7fad2117bb4daa909344079fc9e945d00bb.1436079344.git.baruch@tkos.co.il>
+	<20150724062254.GT13027@tarshish>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <DUB128-W57EEA6D50E9781025705219C8E0@phx.gbl>
+In-Reply-To: <20150724062254.GT13027@tarshish>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,34 +20,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: David Binderman <dcb314@hotmail.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Baruch Siach <baruch@tkos.co.il>
+Cc: dm-devel@redhat.com, Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jul 27 2015 at  3:00P -0400,
-David Binderman <dcb314@hotmail.com> wrote:
+On Fri, Jul 24 2015 at  2:22P -0400,
+Baruch Siach <baruch@tkos.co.il> wrote:
 
-> Hello there,
-> =
+> Hi Alasdair, Mike,
+> 
+> On Sun, Jul 05, 2015 at 09:55:44AM +0300, Baruch Siach wrote:
+> > Cryptsetup moved to gitlab. This is a leftover from commit e44f23b32dc7 (dm
+> > crypt: update URLs to new cryptsetup project page, 2015-04-05).
+> 
+> Ping?
 
-> [linux-4.2-rc4/drivers/md/dm-cache-policy-smq.c:1689]: (warning) Logical =
-conjunction always evaluates to false: !EXPR && EXPR.
-> =
-
-> Source code is
-> =
-
-> =A0 if (!mq->cache_hit_bits && mq->cache_hit_bits) {
-> =
-
-> Maybe
-> =
-
-> =A0 if (!mq->cache_hit_bits) {
-> =
-
-> was intended.
-
-Thanks, was fixed with this, will go upstream for 4.2-rc5:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/com=
-mit/?h=3Dfor-next&id=3D134bf30c06f057d6b8d90132e8f8b3cd2be79572
+Applied, thanks:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=6ed443c07f1e7f819983422b16598facb152250d
