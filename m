@@ -1,49 +1,69 @@
-From: Pali =?utf-8?B?Um9ow6Fy?= <pali.rohar@gmail.com>
-Subject: Re: [PATCH v2 3/3] dm-crypt: Adds support for wiping key when doing
- suspend/hibernation
-Date: Tue, 28 Jul 2015 16:48:12 +0200
-Message-ID: <20150728144812.GS13765@pali>
-References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
- <1434885634-19895-1-git-send-email-pali.rohar@gmail.com>
- <1434885634-19895-4-git-send-email-pali.rohar@gmail.com>
- <20150728144419.GA19760@amd>
+From: Leonardo Santos <heiligerstein@gmail.com>
+Subject: DMCache Desing Questions
+Date: Tue, 28 Jul 2015 14:02:23 -0300
+Message-ID: <CAEZ+n-j1GkLWN653xR7RO-N3KAS7L6x38Oyi6LTirwsDVH_2dQ@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150728144419.GA19760@amd>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Pavel Machek <pavel@ucw.cz>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
+Content-Type: multipart/mixed; boundary="===============6618632744954321367=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tuesday 28 July 2015 16:44:19 Pavel Machek wrote:
-> On Sun 2015-06-21 13:20:34, Pali Roh=C3=A1r wrote:
-> > This patch adds dm message commands and option strings to optionall=
-y wipe key
-> > from dm-crypt device before entering suspend or hibernate state.
-> >=20
-> > Before key is wiped dm device must be suspended. To prevent race co=
-nditions with
-> > I/O and userspace processes, wiping action must be called after pro=
-cesses are
-> > freezed. Otherwise userspace processes could start reading/writing =
-to disk after
-> > dm device is suspened and freezing processes before suspend/hiberna=
-te action
-> > will fail.
->=20
-> Are you sure this is enough?
->=20
-> We still may need to allocate memory after userspace is frozen, and
-> that could mean writing dirty buffers out to make some memory free...
->=20
-> 								Pavel
-> 							=09
+--===============6618632744954321367==
+Content-Type: multipart/alternative; boundary=089e0111c0a4148cbc051bf26fca
 
-Hm... good question. Maybe it is needed to also flush all buffers?
+--089e0111c0a4148cbc051bf26fca
+Content-Type: text/plain; charset=UTF-8
 
---=20
-Pali Roh=C3=A1r
-pali.rohar@gmail.com
+Hello,
+
+Could anyone explain me about DMCache structure answering some questions?
+
+1. How is metadata structure organized? B+ Tree from DM, so is it like
+BCache?
+2. What is the I/O path (i.e. when does lookup, policies and operation
+modes act and in what order) ?
+3. Is MQ completely based in paper from Yuanyuan Zhou et. al. "Second-Level
+Buffer Cache Management" (except pre_cache (fifo) changed to MQ in DMCache)
+or there is another change?
+4. Is DMCache inspired by another DMCache implementation like "DMCache"
+from Ming Zhao?
+
+Thanks!
+Leonardo Santos
+
+--089e0111c0a4148cbc051bf26fca
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello,<div><br></div><div>Could anyone explain me about DM=
+Cache structure answering some questions?</div><div><br></div><div>1. How i=
+s metadata structure organized? B+ Tree from DM, so is it like BCache?<br><=
+/div><div>2. What is the I/O path (i.e. when does lookup, policies and oper=
+ation modes act and in what order) ?<br></div><div>3. Is MQ completely base=
+d in paper from Yuanyuan Zhou et. al. &quot;Second-Level Buffer Cache Manag=
+ement&quot; (except pre_cache (fifo) changed to MQ in DMCache) or there is =
+another change?</div><div>4. Is DMCache inspired by another DMCache impleme=
+ntation like &quot;DMCache&quot; from Ming Zhao?</div><div><br></div><div>T=
+hanks!</div><div>Leonardo Santos</div></div>
+
+--089e0111c0a4148cbc051bf26fca--
+
+
+--===============6618632744954321367==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6618632744954321367==--
