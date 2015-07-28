@@ -1,36 +1,26 @@
-From: Ming Lin <mlin@kernel.org>
-Subject: Re: [PATCH v5 00/11] simplify block layer based on immutable biovecs
-Date: Mon, 27 Jul 2015 15:16:08 -0700
-Message-ID: <CAF1ivSaQvJE2WNA1eyRwueV-4+6XyLHZwkAAQ6Pp3OpZJF8XGw@mail.gmail.com>
-References: <1436166674-31362-1-git-send-email-mlin@kernel.org>
-	<1436764355.30675.10.camel@hasee>
-	<20150713153537.GA30898@redhat.com>
-	<1437675702.11359.25.camel@ssi>
-	<20150727175048.GA18183@redhat.com>
-	<1438035090.28978.19.camel@ssi>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH] block: add a bi_error field to struct bio
+Date: Tue, 28 Jul 2015 13:12:49 +0200
+Message-ID: <20150728111249.GA19647@lst.de>
+References: <1437398977-8492-1-git-send-email-hch@lst.de> <1437398977-8492-2-git-send-email-hch@lst.de> <55AFE643.5000704@kernel.dk> <55B01252.90004@kernel.dk> <20150724104946.GA25145@lst.de> <55B2699D.6010400@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1438035090.28978.19.camel@ssi>
+Content-Disposition: inline
+In-Reply-To: <55B2699D.6010400@kernel.dk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ming Lin <mlin@kernel.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, lkml <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@lst.de>, Jeff Moyer <jmoyer@redhat.com>, Dongsu Park <dpark@posteo.net>, Kent Overstreet <kent.overstreet@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Neil Brown <neilb@suse.de>, Liu Bo <bo.li.liu@oracle.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Jul 27, 2015 at 3:11 PM, Ming Lin <mlin@kernel.org> wrote:
-> It's more interesting if we look at how many bios are allocated for each
-> application IO request.
->
-> e.g. 10+2 RAID6 with 128K chunk.
->
-> Assume we only consider device max_segments limitation.
->
-> # cat /sys/block/md0/queue/max_segments
-> 126
->
-> So blk_queue_split() will split the bio if its size > 126 pages(504K
-> bytes).
+On Fri, Jul 24, 2015 at 10:36:45AM -0600, Jens Axboe wrote:
+> Right, I don't think we need to do that though. If you look at the flags 
+> usage, it's all over the map. Some use test/set_bit, some set it just by 
+> OR'ing the mask. There's no reason we can't make this work without relying 
+> on set/test_bit, and then shrink it to an unsigned int.
 
-Fix myself.
+Yes, the current mess doesn't look kosher.  The bvec pool bits don't
+really make it better.
 
-I mean, blk_queue_split() will split the bio if bi_phys_segments > 126
+But do we really need the cmpxchg hack? Seems like most flags aren't
+exposed to concurrency at all, althugh this would need a careful audit.
