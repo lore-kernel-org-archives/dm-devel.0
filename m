@@ -1,35 +1,45 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH] block: add a bi_error field to struct bio
-Date: Tue, 28 Jul 2015 08:33:45 -0600
-Message-ID: <55B792C9.2000605@kernel.dk>
-References: <1437398977-8492-1-git-send-email-hch@lst.de> <1437398977-8492-2-git-send-email-hch@lst.de> <55AFE643.5000704@kernel.dk> <55B01252.90004@kernel.dk> <20150724104946.GA25145@lst.de> <55B2699D.6010400@kernel.dk> <20150728111249.GA19647@lst.de>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH v2 3/3] dm-crypt: Adds support for wiping key when doing
+ suspend/hibernation
+Date: Tue, 28 Jul 2015 16:44:19 +0200
+Message-ID: <20150728144419.GA19760@amd>
+References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com>
+ <1434885634-19895-1-git-send-email-pali.rohar@gmail.com>
+ <1434885634-19895-4-git-send-email-pali.rohar@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150728111249.GA19647@lst.de>
+Content-Disposition: inline
+In-Reply-To: <1434885634-19895-4-git-send-email-pali.rohar@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Neil Brown <neilb@suse.de>, Liu Bo <bo.li.liu@oracle.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Pali =?iso-8859-1?Q?Roh=E1r?= <pali.rohar@gmail.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 07/28/2015 05:12 AM, Christoph Hellwig wrote:
-> On Fri, Jul 24, 2015 at 10:36:45AM -0600, Jens Axboe wrote:
->> Right, I don't think we need to do that though. If you look at the flags
->> usage, it's all over the map. Some use test/set_bit, some set it just by
->> OR'ing the mask. There's no reason we can't make this work without relying
->> on set/test_bit, and then shrink it to an unsigned int.
->
-> Yes, the current mess doesn't look kosher.  The bvec pool bits don't
-> really make it better.
->
-> But do we really need the cmpxchg hack? Seems like most flags aren't
-> exposed to concurrency at all, althugh this would need a careful audit.
+On Sun 2015-06-21 13:20:34, Pali Roh=E1r wrote:
+> This patch adds dm message commands and option strings to optionally =
+wipe key
+> from dm-crypt device before entering suspend or hibernate state.
+>=20
+> Before key is wiped dm device must be suspended. To prevent race cond=
+itions with
+> I/O and userspace processes, wiping action must be called after proce=
+sses are
+> freezed. Otherwise userspace processes could start reading/writing to=
+ disk after
+> dm device is suspened and freezing processes before suspend/hibernate=
+ action
+> will fail.
 
-I actually don't think that we do need it at all. With the uptodate bit 
-gone, we really should not have any concurrency issues on it at all. 
-CHAIN and REFFED need serialization, but that is already done previous 
-to this change.
+Are you sure this is enough?
 
--- 
-Jens Axboe
+We still may need to allocate memory after userspace is frozen, and
+that could mean writing dirty buffers out to make some memory free...
+
+								Pavel
+							=09
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses=
+/blog.html
