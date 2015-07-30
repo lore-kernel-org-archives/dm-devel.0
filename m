@@ -1,116 +1,173 @@
-From: Frederick Grose <fgrose-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [Fedora-livecd-list] [dm-devel] Unnecessary snapshot validation
-Date: Thu, 30 Jul 2015 12:01:19 -0400
-Message-ID: <CAEcBt+Xw8Sh7=BYhZSfQUm+9xitsgPpJZppr=MY2JZ0gzkMQ8w@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Unnecessary snapshot validation
+Date: Thu, 30 Jul 2015 13:17:49 -0400
+Message-ID: <20150730171749.GA8751@redhat.com>
 References: <20150130234959.GQ23957@agk-dp.fab.redhat.com>
 	<alpine.LRH.2.02.1506211212010.9520@file01.intranet.prod.int.rdu2.redhat.com>
-Reply-To: livecd-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org
+	<CAEcBt+Xw8Sh7=BYhZSfQUm+9xitsgPpJZppr=MY2JZ0gzkMQ8w@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <livecd-bounces-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org>
-In-Reply-To: <alpine.LRH.2.02.1506211212010.9520-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
-List-Unsubscribe: <https://admin.fedoraproject.org/mailman/options/livecd>,
-	<mailto:livecd-request-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.fedoraproject.org/pipermail/livecd/>
-List-Post: <mailto:livecd-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org>
-List-Help: <mailto:livecd-request-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org?subject=help>
-List-Subscribe: <https://admin.fedoraproject.org/mailman/listinfo/livecd>,
-	<mailto:livecd-request-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org?subject=subscribe>
-Sender: livecd-bounces-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org
-Errors-To: livecd-bounces-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org
-To: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, livecd-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CAEcBt+Xw8Sh7=BYhZSfQUm+9xitsgPpJZppr=MY2JZ0gzkMQ8w@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Frederick Grose <fgrose@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, livecd@lists.fedoraproject.org
 List-Id: dm-devel.ids
 
-T24gU3VuLCBKdW4gMjEsIDIwMTUgYXQgNDozMSBQTSwgTWlrdWxhcyBQYXRvY2thIDxtcGF0b2Nr
-YUByZWRoYXQuY29tPiB3cm90ZToKPgo+Cj4gT24gRnJpLCAzMCBKYW4gMjAxNSwgQWxhc2RhaXIg
-RyBLZXJnb24gd3JvdGU6Cj4KPj4gSSd2ZSBoYWQgYSBjb21wbGFpbnQgdG9uaWdodCBhdCBGT1NE
-RU0gdGhhdCB3ZSBpbnZhbGlkYXRlIG9sZC1zdHlsZQo+PiBzbmFwc2hvdHMgaW4gYSBwYXJ0aWN1
-bGFyIGNhc2Ugd2hlcmUgdGhlcmUgaXMgbm8gbmVlZCB0byEKPj4KPj4gSWYgeW91IHRha2UgYSBz
-bmFwc2hvdCBvZiBhbiBvcmlnaW4sIHRoZW4ga2VlcCB3cml0aW5nIHRvIHRoZSAqc25hcHNob3Qq
-Cj4+IGFuZCBmaWxsIGl0IHVwIHdlIHNob3VsZCBqdXN0IHJldHVybiBlcnJvcnMgb24gYW55IGZ1
-cnRoZXIgc3VjaCB3cml0ZXMKPj4gKndpdGhvdXQqIGludmFsaWRhdGluZyB0aGUgc25hcHNob3Qg
-LSBzbyByZWFkcyBjYW4gc3RpbGwgYmUgcGVyZm9ybWVkCj4+IHN1Y2Nlc3NmdWxseS4KPj4KPj4g
-KGNoZWNrIGZvciAtRU5PU1BDIGZyb20gcHJlcGFyZV9leGNlcHRpb24gaW4gX19maW5kX3BlbmRp
-bmdfZXhjZXB0aW9uPykKPj4KPj4gQWxhc2RhaXIKPgo+IEhpCj4KPiBIZXJlIEknbSBzZW5kaW5n
-IGEgcGF0Y2ggdGhhdCBrZWVwcyBkYXRhIHdoZW4gdGhlIHNuYXBzaG90IGZpbGxzIHVwLgo+Cj4g
-VGhlIHVzZXIgY2FuIGV4dGVuZCB0aGUgb3ZlcmZsb3dlZCBzbmFwc2hvdCwgZGVhY3RpdmF0ZSBh
-bmQgYWN0aXZhdGUgaXQKPiBhZ2FpbiwgcnVuIGZzY2sgKGlmIGpvdXJuYWxpbmcgZmlsZXN5c3Rl
-bSBpcyBub3QgdXNlZCkgbW91bnQgaXQgYW5kCj4gcmVjb3ZlciB0aGUgZGF0YS4KPgo+IE1pa3Vs
-YXMKPgo+Cj4KPiBGcm9tOiBNaWt1bGFzIFBhdG9ja2EgPG1wYXRvY2thQHJlZGhhdC5jb20+Cj4K
-PiBkbSBzbmFwc2hvdDogZG9uJ3QgaW52YWxpZGF0ZSBvbi1kaXNrIGltYWdlIG9uIHNuYXBzaG90
-IHdyaXRlIG92ZXJmbG93Cj4KPiBXaGVuIHRoZSBzbmFwc2hvdCBvdmVyZmxvd3MgYmVjYXVzZSBv
-ZiBhIHdyaXRlIHRvIHRoZSBvcmlnaW4sIHRoZSBvbi1kaXNrCj4gaW1hZ2UgaGFzIHRvIGJlIGlu
-dmFsaWRhdGVkLiBIb3dldmVyLCB3aGVuIHRoZSBzbmFwc2hvdCBvdmVyZmxvd3MgYmVjYXVzZQo+
-IG9mIGEgd3JpdGUgdG8gdGhlIHNuYXBzaG90LCB0aGUgb24tZGlzayBpbWFnZSBkb2Vzbid0IGhh
-dmUgdG8gYmUKPiBpbnZhbGlkYXRlZC4gVGhpcyBwYXRjaCBjaGFuZ2VzIHRoZSBiZWhhdmlvciwg
-c28gdGhhdCB0aGUgb24tZGlzayBpbWFnZSBpcwo+IG5vdCBpbnZhbGlkYXRlZCBpbiB0aGlzIGNh
-c2UuCj4KPiBXaGVuIHRoZSBzbmFwc2hvdCBvdmVyZmxvd3MsIHRoZSB2YXJpYWJsZSBzbmFwc2hv
-dF9vdmVyZmxvd2VkIGlzIHNldC4gQWxsCj4gd3JpdGVzIHRvIHRoZSBzbmFwc2hvdCBhcmUgZGlz
-YWxsb3dlZCB0byBtaW5pbWl6ZSBmaWxlc3lzdGVtIGNvcnJ1cHRpb24gLQo+IHRoaXMgY29uZGl0
-aW9uIGlzIGNsZWFyZWQgd2hlbiB0aGUgc25hcHNob3QgaXMgZGVhY3RpdmF0ZWQgYW5kIGFjdGl2
-YXRlZC4KPgo+IFNpZ25lZC1vZmYtYnk6IE1pa3VsYXMgUGF0b2NrYSA8bXBhdG9ja2FAcmVkaGF0
-LmNvbT4KPgo+IC0tLQo+ICBkcml2ZXJzL21kL2RtLXNuYXAuYyB8ICAgMTggKysrKysrKysrKysr
-KystLS0tCj4gIDEgZmlsZSBjaGFuZ2VkLCAxNCBpbnNlcnRpb25zKCspLCA0IGRlbGV0aW9ucygt
-KQo+Cj4gSW5kZXg6IGxpbnV4LTQuMS1yYzgvZHJpdmVycy9tZC9kbS1zbmFwLmMKPiA9PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09Cj4gLS0tIGxpbnV4LTQuMS1yYzgub3JpZy9kcml2ZXJzL21kL2RtLXNuYXAuYyAgICAgMjAx
-NS0wNi0xOSAyMDo1NzowNC4wMDAwMDAwMDAgKzAyMDAKPiArKysgbGludXgtNC4xLXJjOC9kcml2
-ZXJzL21kL2RtLXNuYXAuYyAgMjAxNS0wNi0yMSAxNzoxMToxMC4wMDAwMDAwMDAgKzAyMDAKPiBA
-QCAtNjMsNiArNjMsMTMgQEAgc3RydWN0IGRtX3NuYXBzaG90IHsKPiAgICAgICAgICAqLwo+ICAg
-ICAgICAgaW50IHZhbGlkOwo+Cj4gKyAgICAgICAvKgo+ICsgICAgICAgICogVGhlIHNuYXNwaG90
-IG92ZXJmbG93ZWQgYmVjYXVzZSBvZiB3cml0ZSB0byB0aGUgc25hcHNob3QgZGV2aWNlLgo+ICsg
-ICAgICAgICogV2UgZG9uJ3QgaGF2ZSB0byBpbnZhbGlkYXRlIHRoZSBzbmFwc2hvdCBpbiB0aGlz
-IGNhc2UsIGJ1dCB3ZSBuZWVkCj4gKyAgICAgICAgKiB0byBwcmV2ZW50IGZ1cnRoZXIgd3JpdGVz
-Lgo+ICsgICAgICAgICovCj4gKyAgICAgICBpbnQgc25hcHNob3Rfb3ZlcmZsb3dlZDsKPiArCj4g
-ICAgICAgICAvKiBPcmlnaW4gd3JpdGVzIGRvbid0IHRyaWdnZXIgZXhjZXB0aW9ucyB1bnRpbCB0
-aGlzIGlzIHNldCAqLwo+ICAgICAgICAgaW50IGFjdGl2ZTsKPgo+IEBAIC0xMTUyLDYgKzExNTks
-NyBAQCBzdGF0aWMgaW50IHNuYXBzaG90X2N0cihzdHJ1Y3QgZG1fdGFyZ2V0Cj4KPiAgICAgICAg
-IHMtPnRpID0gdGk7Cj4gICAgICAgICBzLT52YWxpZCA9IDE7Cj4gKyAgICAgICBzLT5zbmFwc2hv
-dF9vdmVyZmxvd2VkID0gMDsKPiAgICAgICAgIHMtPmFjdGl2ZSA9IDA7Cj4gICAgICAgICBhdG9t
-aWNfc2V0KCZzLT5wZW5kaW5nX2V4Y2VwdGlvbnNfY291bnQsIDApOwo+ICAgICAgICAgcy0+ZXhj
-ZXB0aW9uX3N0YXJ0X3NlcXVlbmNlID0gMDsKPiBAQCAtMTMwMSw2ICsxMzA5LDcgQEAgc3RhdGlj
-IHZvaWQgX19oYW5kb3Zlcl9leGNlcHRpb25zKHN0cnVjdAo+Cj4gICAgICAgICBzbmFwX2Rlc3Qt
-PnRpLT5tYXhfaW9fbGVuID0gc25hcF9kZXN0LT5zdG9yZS0+Y2h1bmtfc2l6ZTsKPiAgICAgICAg
-IHNuYXBfZGVzdC0+dmFsaWQgPSBzbmFwX3NyYy0+dmFsaWQ7Cj4gKyAgICAgICBzbmFwX2Rlc3Qt
-PnNuYXBzaG90X292ZXJmbG93ZWQgPSBzbmFwX3NyYy0+c25hcHNob3Rfb3ZlcmZsb3dlZDsKPgo+
-ICAgICAgICAgLyoKPiAgICAgICAgICAqIFNldCBzb3VyY2UgaW52YWxpZCB0byBlbnN1cmUgaXQg
-cmVjZWl2ZXMgbm8gZnVydGhlciBJL08uCj4gQEAgLTE2OTIsNyArMTcwMSw3IEBAIHN0YXRpYyBp
-bnQgc25hcHNob3RfbWFwKHN0cnVjdCBkbV90YXJnZXQKPiAgICAgICAgICAqIHRvIGNvcHkgYW4g
-ZXhjZXB0aW9uICovCj4gICAgICAgICBkb3duX3dyaXRlKCZzLT5sb2NrKTsKPgo+IC0gICAgICAg
-aWYgKCFzLT52YWxpZCkgewo+ICsgICAgICAgaWYgKCFzLT52YWxpZCB8fCAodW5saWtlbHkocy0+
-c25hcHNob3Rfb3ZlcmZsb3dlZCkgJiYgYmlvX3J3KGJpbykgPT0gV1JJVEUpKSB7Cj4gICAgICAg
-ICAgICAgICAgIHIgPSAtRUlPOwo+ICAgICAgICAgICAgICAgICBnb3RvIG91dF91bmxvY2s7Cj4g
-ICAgICAgICB9Cj4gQEAgLTE3MTYsNyArMTcyNSw3IEBAIHN0YXRpYyBpbnQgc25hcHNob3RfbWFw
-KHN0cnVjdCBkbV90YXJnZXQKPiAgICAgICAgICAgICAgICAgICAgICAgICBwZSA9IGFsbG9jX3Bl
-bmRpbmdfZXhjZXB0aW9uKHMpOwo+ICAgICAgICAgICAgICAgICAgICAgICAgIGRvd25fd3JpdGUo
-JnMtPmxvY2spOwo+Cj4gLSAgICAgICAgICAgICAgICAgICAgICAgaWYgKCFzLT52YWxpZCkgewo+
-ICsgICAgICAgICAgICAgICAgICAgICAgIGlmICghcy0+dmFsaWQgfHwgcy0+c25hcHNob3Rfb3Zl
-cmZsb3dlZCkgewo+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgZnJlZV9wZW5kaW5n
-X2V4Y2VwdGlvbihwZSk7Cj4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICByID0gLUVJ
-TzsKPiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGdvdG8gb3V0X3VubG9jazsKPiBA
-QCAtMTczMSw3ICsxNzQwLDggQEAgc3RhdGljIGludCBzbmFwc2hvdF9tYXAoc3RydWN0IGRtX3Rh
-cmdldAo+Cj4gICAgICAgICAgICAgICAgICAgICAgICAgcGUgPSBfX2ZpbmRfcGVuZGluZ19leGNl
-cHRpb24ocywgcGUsIGNodW5rKTsKPiAgICAgICAgICAgICAgICAgICAgICAgICBpZiAoIXBlKSB7
-Cj4gLSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBfX2ludmFsaWRhdGVfc25hcHNob3Qo
-cywgLUVOT01FTSk7Cj4gKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBzLT5zbmFwc2hv
-dF9vdmVyZmxvd2VkID0gMTsKPiArICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIERNRVJS
-KCJJbnZhbGlkYXRpbmcgc25hcHNob3Q6IFVuYWJsZSB0byBhbGxvY2F0ZSBleGNlcHRpb24uIik7
-Cj4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICByID0gLUVJTzsKPiAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgIGdvdG8gb3V0X3VubG9jazsKPiAgICAgICAgICAgICAgICAg
-ICAgICAgICB9Cj4gQEAgLTE5ODcsNyArMTk5Nyw3IEBAIHN0YXRpYyB2b2lkIHNuYXBzaG90X3N0
-YXR1cyhzdHJ1Y3QgZG1fdGEKPgo+ICAgICAgICAgICAgICAgICBkb3duX3dyaXRlKCZzbmFwLT5s
-b2NrKTsKPgo+IC0gICAgICAgICAgICAgICBpZiAoIXNuYXAtPnZhbGlkKQo+ICsgICAgICAgICAg
-ICAgICBpZiAoIXNuYXAtPnZhbGlkIHx8IHNuYXAtPnNuYXBzaG90X292ZXJmbG93ZWQpCj4gICAg
-ICAgICAgICAgICAgICAgICAgICAgRE1FTUlUKCJJbnZhbGlkIik7Cj4gICAgICAgICAgICAgICAg
-IGVsc2UgaWYgKHNuYXAtPm1lcmdlX2ZhaWxlZCkKPiAgICAgICAgICAgICAgICAgICAgICAgICBE
-TUVNSVQoIk1lcmdlIGZhaWxlZCIpOwo+Cj4gLS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiBk
-bS1kZXZlbEByZWRoYXQuY29tCj4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVsCgpJZiBJIHJlYWQgdGhpcyBjb3JyZWN0bHksIHRoaXMgY2hhbmdlIHdpbGwg
-YWxsb3cgTGl2ZSBVU0IgZGV2aWNlcwooaGF2aW5nIHJlYWQtb25seSBvcmlnaW5zKSB0byBvdmVy
-ZmxvdyB0aGVpciBvdmVybGF5IGZpbGUgYW5kIG5vdApjcmFzaCB3aXRoIEkvTyBlcnJvcnMgYW5k
-IGZhaWwgdG8gYm9vdCBiZWNhdXNlIG9mIHRoZSBpbnZhbGlkIG92ZXJsYXkuCgpJcyB0aGlzIGNv
-cnJlY3Q/CgpJZiBzbywgd2hlbiB3b3VsZCB0aGlzIHJlbGVhc2VkLCBhbmQgY291bGQgaXQgYmUg
-YmFjayBwb3J0ZWQgdG8gRjIxICYKRjIyIHVwZGF0ZXM/CgogICAgICAtLUZyZWQKLS0KbGl2ZWNk
-IG1haWxpbmcgbGlzdApsaXZlY2RAbGlzdHMuZmVkb3JhcHJvamVjdC5vcmcKaHR0cHM6Ly9hZG1p
-bi5mZWRvcmFwcm9qZWN0Lm9yZy9tYWlsbWFuL2xpc3RpbmZvL2xpdmVjZA==
+On Thu, Jul 30 2015 at 12:01pm -0400,
+Frederick Grose <fgrose@gmail.com> wrote:
+
+> On Sun, Jun 21, 2015 at 4:31 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
+> >
+> >
+> > On Fri, 30 Jan 2015, Alasdair G Kergon wrote:
+> >
+> >> I've had a complaint tonight at FOSDEM that we invalidate old-style
+> >> snapshots in a particular case where there is no need to!
+> >>
+> >> If you take a snapshot of an origin, then keep writing to the *snapshot*
+> >> and fill it up we should just return errors on any further such writes
+> >> *without* invalidating the snapshot - so reads can still be performed
+> >> successfully.
+> >>
+> >> (check for -ENOSPC from prepare_exception in __find_pending_exception?)
+> >>
+> >> Alasdair
+> >
+> > Hi
+> >
+> > Here I'm sending a patch that keeps data when the snapshot fills up.
+> >
+> > The user can extend the overflowed snapshot, deactivate and activate it
+> > again, run fsck (if journaling filesystem is not used) mount it and
+> > recover the data.
+> >
+> > Mikulas
+> >
+> >
+> >
+> > From: Mikulas Patocka <mpatocka@redhat.com>
+> >
+> > dm snapshot: don't invalidate on-disk image on snapshot write overflow
+> >
+> > When the snapshot overflows because of a write to the origin, the on-disk
+> > image has to be invalidated. However, when the snapshot overflows because
+> > of a write to the snapshot, the on-disk image doesn't have to be
+> > invalidated. This patch changes the behavior, so that the on-disk image is
+> > not invalidated in this case.
+> >
+> > When the snapshot overflows, the variable snapshot_overflowed is set. All
+> > writes to the snapshot are disallowed to minimize filesystem corruption -
+> > this condition is cleared when the snapshot is deactivated and activated.
+> >
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> >
+> > ---
+> >  drivers/md/dm-snap.c |   18 ++++++++++++++----
+> >  1 file changed, 14 insertions(+), 4 deletions(-)
+> >
+> > Index: linux-4.1-rc8/drivers/md/dm-snap.c
+> > ===================================================================
+> > --- linux-4.1-rc8.orig/drivers/md/dm-snap.c     2015-06-19 20:57:04.000000000 +0200
+> > +++ linux-4.1-rc8/drivers/md/dm-snap.c  2015-06-21 17:11:10.000000000 +0200
+> > @@ -63,6 +63,13 @@ struct dm_snapshot {
+> >          */
+> >         int valid;
+> >
+> > +       /*
+> > +        * The snasphot overflowed because of write to the snapshot device.
+> > +        * We don't have to invalidate the snapshot in this case, but we need
+> > +        * to prevent further writes.
+> > +        */
+> > +       int snapshot_overflowed;
+> > +
+> >         /* Origin writes don't trigger exceptions until this is set */
+> >         int active;
+> >
+> > @@ -1152,6 +1159,7 @@ static int snapshot_ctr(struct dm_target
+> >
+> >         s->ti = ti;
+> >         s->valid = 1;
+> > +       s->snapshot_overflowed = 0;
+> >         s->active = 0;
+> >         atomic_set(&s->pending_exceptions_count, 0);
+> >         s->exception_start_sequence = 0;
+> > @@ -1301,6 +1309,7 @@ static void __handover_exceptions(struct
+> >
+> >         snap_dest->ti->max_io_len = snap_dest->store->chunk_size;
+> >         snap_dest->valid = snap_src->valid;
+> > +       snap_dest->snapshot_overflowed = snap_src->snapshot_overflowed;
+> >
+> >         /*
+> >          * Set source invalid to ensure it receives no further I/O.
+> > @@ -1692,7 +1701,7 @@ static int snapshot_map(struct dm_target
+> >          * to copy an exception */
+> >         down_write(&s->lock);
+> >
+> > -       if (!s->valid) {
+> > +       if (!s->valid || (unlikely(s->snapshot_overflowed) && bio_rw(bio) == WRITE)) {
+> >                 r = -EIO;
+> >                 goto out_unlock;
+> >         }
+> > @@ -1716,7 +1725,7 @@ static int snapshot_map(struct dm_target
+> >                         pe = alloc_pending_exception(s);
+> >                         down_write(&s->lock);
+> >
+> > -                       if (!s->valid) {
+> > +                       if (!s->valid || s->snapshot_overflowed) {
+> >                                 free_pending_exception(pe);
+> >                                 r = -EIO;
+> >                                 goto out_unlock;
+> > @@ -1731,7 +1740,8 @@ static int snapshot_map(struct dm_target
+> >
+> >                         pe = __find_pending_exception(s, pe, chunk);
+> >                         if (!pe) {
+> > -                               __invalidate_snapshot(s, -ENOMEM);
+> > +                               s->snapshot_overflowed = 1;
+> > +                               DMERR("Invalidating snapshot: Unable to allocate exception.");
+> >                                 r = -EIO;
+> >                                 goto out_unlock;
+> >                         }
+
+This DMERR saying "Invalidating snapshot" isn't really accurate.
+
+> > @@ -1987,7 +1997,7 @@ static void snapshot_status(struct dm_ta
+> >
+> >                 down_write(&snap->lock);
+> >
+> > -               if (!snap->valid)
+> > +               if (!snap->valid || snap->snapshot_overflowed)
+> >                         DMEMIT("Invalid");
+> >                 else if (snap->merge_failed)
+> >                         DMEMIT("Merge failed");
+> >
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> If I read this correctly, this change will allow Live USB devices
+> (having read-only origins) to overflow their overlay file and not
+> crash with I/O errors and fail to boot because of the invalid overlay.
+> 
+> Is this correct?
+
+Any writes (to the snapshot) will still get an IO error.  Reads will not.
+
+> If so, when would this released, and could it be back ported to F21 &
+> F22 updates?
+
+Needs further review.  This patch was sent right when the 4.2 merge
+window opened so it was already too late for 4.2 consideration.
+Earliest this will land is in Linux 4.3
