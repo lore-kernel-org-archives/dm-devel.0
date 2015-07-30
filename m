@@ -1,88 +1,69 @@
-From: Andreas Hartmann <andihartmann@freenet.de>
-Subject: Re: [dm-devel] AMD-Vi IO_PAGE_FAULTs and ata3.00: failed command:
- READ FPDMA QUEUED errors since Linux 4.0
-Date: Wed, 29 Jul 2015 19:23:49 +0200
-Message-ID: <55B90C25.8030502@maya.org>
-References: <55B7BEA2.30205@01019freenet.de>
- <20150728175054.GB24782@redhat.com> <55B7C800.2070702@maya.org>
- <20150728185811.GA25060@redhat.com> <55B7D6BE.5010203@maya.org>
- <20150728193101.GB25264@redhat.com> <55B7E14A.4050500@maya.org>
- <20150728212441.GA25761@redhat.com> <55B87005.7010409@redhat.com>
- <55B8759B.8070400@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 4.2-rc5
+Date: Wed, 29 Jul 2015 20:05:18 -0400
+Message-ID: <20150730000517.GA7489@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-pci-owner@vger.kernel.org>
-In-Reply-To: <55B8759B.8070400@redhat.com>
-Sender: linux-pci-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>, Ondrej Kozina <okozina@redhat.com>, device-mapper development <dm-devel@redhat.com>
-Cc: linux-pci <linux-pci@vger.kernel.org>, mpatocka@redhat.com, Mike Snitzer <msnitzer@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Colin Ian King <colin.king@canonical.com>, dm-devel@redhat.com, Baruch Siach <baruch@tkos.co.il>, Joe Thornber <ejt@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 07/29/2015 at 08:41 AM Milan Broz wrote:
-> On 07/29/2015 08:17 AM, Ondrej Kozina wrote:
->> On 07/28/2015 11:24 PM, Mike Snitzer wrote:
->>>>
->>>> I am willing to do tests if you have any idea to be tested - I can
->>>> reproduce it quite easily.
->>>
->>> You can try disabling dm-crypt's parallelization by specifying these 2
->>> features: same_cpu_crypt submit_from_crypt_cpus
->>>
->>
->> Hi,
->>
->> please try adding follwoing cryptsetup perf. options while unlocking 
->> your LUKS containers: --perf-submit_from_crypt_cpus and 
->> --perf-same_cpu_crypt.
->>
->> Perhaps focus on SSD disk as previous unresolved report mentioned SSD too
+Hi Linus,
 
-I'll next try to just boot from the rotational disk. If the problem
-doesn't show up here, it could be SSD related, too.
+The following changes since commit cbfe8fa6cd672011c755c3cd85c9ffd4e2d10a6f:
 
-> 
-> Just you need to use cryptsetup 1.6.7 version (older versions do not have this options yet).
+  Linux 4.2-rc4 (2015-07-26 12:26:21 -0700)
 
-Thanks for this hint.
+are available in the git repository at:
 
-I compiled this version and applied it and verified it, if it's really
-in initrd. It was in initrd and the additional options where applied, too.
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.2-fixes-3
 
-But: nothing changed with enabled ncq - exactly same problem as before
-(w/ linux 3.19.8 + additional patches and Linux 4.1 - no difference in
-behavior).
+for you to fetch changes up to 795e633a2dc6cbbeac68bc7f6006082150d38bb7:
 
-> Anyway, it seems strange that one patch triggers such a problem (leading to a conclusion
-> that the patch is wrong) but dm-crypt is know to reveal many problems in other systems
-> exactly this way...
+  dm cache: fix device destroy hang due to improper prealloc_used accounting (2015-07-29 14:32:09 -0400)
 
-Maybe - maybe not.
+Please pull, thanks.
+Mike
 
-> The patches were tested on so many systems without problem that I really believe
-> the dmcrypt patch is just trigger for a bug elsewhere.
+----------------------------------------------------------------
+- Fix DM thinp to consistently return -ENOSPC when out of data space
 
-I'm having another machine, which doesn't show the problem - but this
-machine can't be compared w/ the failing machine, because the other
-machine does have a totally different and easy setup (1 ssd crypted lvm
-and 3 or 4 logical filesystems - that's it) - and it's much slower :-).
+- Fix a logic bug in the DM cache smq policy's creation error path
 
-Here I'm  having: 3 disks (1 ssd, 2 x 3 TB rotational), 1 crypted SW
-Raid 1 w/ LVM on the rotational disks, another LVM on the ssd and 29 (!)
-logical volumes each with xfs and 8 CPU cores, which guarantee high
-degree of parallelism. I'm not sure if this is a "usual" setup which is
-tested heavily. The error always comes up while mounting the partitions
-on boot. Reducing the amount of mounted partitions reduced the amount of
-errors (AMD-Vi IO_PAGE_FAULTs).
+- Revert a DM cache 4.2-rc3 change that reduced writeback efficiency
 
-> 
-> Anyway, if we can find configuration which fails here, I would like to help to find
-> the core problem... Papering here just means it will break data later elsewhere.
-> 
-> Thanks for testing it!
+- Fix a hang on DM cache device destruction due to improper
+  prealloc_used accounting introduced in 4.2-rc3
 
-I hope we can find the problem.
+- Update URL for dm-crypt wiki page
 
+----------------------------------------------------------------
+Baruch Siach (1):
+      dm crypt: update wiki page URL
 
-Regards,
-Andreas
+Colin Ian King (1):
+      dm cache policy smq: fix alloc_bitset check that always evaluates as false
+
+Mike Snitzer (3):
+      dm thin: return -ENOSPC when erroring retry list due to out of data space
+      Revert "dm cache: do not wake_worker() in free_migration()"
+      dm cache: fix device destroy hang due to improper prealloc_used accounting
+
+ drivers/md/Kconfig               |  2 +-
+ drivers/md/dm-cache-policy-smq.c |  2 +-
+ drivers/md/dm-cache-target.c     |  7 ++++---
+ drivers/md/dm-thin.c             | 11 ++++++++---
+ 4 files changed, 14 insertions(+), 8 deletions(-)
