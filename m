@@ -1,40 +1,93 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [dm-devel] AMD-Vi IO_PAGE_FAULTs and ata3.00: failed command:
- READ FPDMA QUEUED errors since Linux 4.0
-Date: Fri, 31 Jul 2015 10:28:53 +0200
-Message-ID: <55BB31C5.9020407@redhat.com>
-References: <55B7BEA2.30205@01019freenet.de>
- <20150728175054.GB24782@redhat.com> <55B7C800.2070702@maya.org>
- <20150728185811.GA25060@redhat.com> <55B7D6BE.5010203@maya.org>
- <20150728193101.GB25264@redhat.com> <55B7E14A.4050500@maya.org>
- <20150728212441.GA25761@redhat.com> <55B87005.7010409@redhat.com>
- <55B8759B.8070400@redhat.com> <55B90C25.8030502@maya.org>
- <55BA895D.30509@maya.org> <55BB2284.1060706@redhat.com>
- <55BB2A02.70700@maya.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-pci-owner@vger.kernel.org>
-In-Reply-To: <55BB2A02.70700@maya.org>
-Sender: linux-pci-owner@vger.kernel.org
-To: Andreas Hartmann <andihartmann@freenet.de>, device-mapper development <dm-devel@redhat.com>, Ondrej Kozina <okozina@redhat.com>
-Cc: linux-pci <linux-pci@vger.kernel.org>, Mike Snitzer <msnitzer@redhat.com>, mpatocka@redhat.com
+From: Viresh Kumar <viresh.kumar@linaro.org>
+Subject: [PATCH 06/15] drivers: md: Drop unlikely before IS_ERR(_OR_NULL)
+Date: Fri, 31 Jul 2015 14:08:26 +0530
+Message-ID: <93a74cd75c841f6b1ed176fe6fa71367ca64eb69.1438331416.git.viresh.kumar@linaro.org>
+References: <cover.1438331416.git.viresh.kumar@linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1438331416.git.viresh.kumar@linaro.org>
+In-Reply-To: <cover.1438331416.git.viresh.kumar@linaro.org>
+References: <cover.1438331416.git.viresh.kumar@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: akpm@linux-foundation.org
+Cc: linaro-kernel@lists.linaro.org, linux-kernel@vger.kernel.org, Viresh Kumar <viresh.kumar@linaro.org>, Alasdair Kergon <agk@redhat.com>, "maintainer:DEVICE-MAPPER LVM" <dm-devel@redhat.com>, "open list:SOFTWARE RAID Multiple Disks
+	SUPPORT" <linux-raid@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.com>
 List-Id: dm-devel.ids
 
-On 07/31/2015 09:55 AM, Andreas Hartmann wrote:
-> On 07/31/2015 at 09:23 AM, Milan Broz wrote:
+IS_ERR(_OR_NULL) already contain an 'unlikely' compiler flag and there
+is no need to do that again from its callers. Drop it.
 
-...
+Signed-off-by: Viresh Kumar <viresh.kumar@linaro.org>
+---
+ drivers/md/dm-snap-persistent.c               | 2 +-
+ drivers/md/dm-verity.c                        | 2 +-
+ drivers/md/persistent-data/dm-block-manager.c | 8 ++++----
+ 3 files changed, 6 insertions(+), 6 deletions(-)
 
->> - if you disable NCQ, the problems goes away?
-> 
-> As I already wrote in another post - than other error came up instead
-> (radeon). But I will try it especially again in conjunction w/
-> --perf-submit_from_crypt_cpus --perf-same_cpu_crypt.
-
-Yes, I know, But this is probably just some unfortunate side effect,
-this code definitely does not relate to Radeon code.
-(Could be some minor compiler change, whatever...)
-
-Thanks,
-Milan
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index 808b8419bc48..bf71583296f7 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -533,7 +533,7 @@ static int read_exceptions(struct pstore *ps,
+ 		chunk = area_location(ps, ps->current_area);
+ 
+ 		area = dm_bufio_read(client, chunk, &bp);
+-		if (unlikely(IS_ERR(area))) {
++		if (IS_ERR(area)) {
+ 			r = PTR_ERR(area);
+ 			goto ret_destroy_bufio;
+ 		}
+diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+index bb9c6a00e4b0..1d131519ed21 100644
+--- a/drivers/md/dm-verity.c
++++ b/drivers/md/dm-verity.c
+@@ -271,7 +271,7 @@ static int verity_verify_level(struct dm_verity_io *io, sector_t block,
+ 	verity_hash_at_level(v, block, level, &hash_block, &offset);
+ 
+ 	data = dm_bufio_read(v->bufio, hash_block, &buf);
+-	if (unlikely(IS_ERR(data)))
++	if (IS_ERR(data))
+ 		return PTR_ERR(data);
+ 
+ 	aux = dm_bufio_get_aux_data(buf);
+diff --git a/drivers/md/persistent-data/dm-block-manager.c b/drivers/md/persistent-data/dm-block-manager.c
+index 4d6c9b689eaa..88dbe7b97c2c 100644
+--- a/drivers/md/persistent-data/dm-block-manager.c
++++ b/drivers/md/persistent-data/dm-block-manager.c
+@@ -454,7 +454,7 @@ int dm_bm_read_lock(struct dm_block_manager *bm, dm_block_t b,
+ 	int r;
+ 
+ 	p = dm_bufio_read(bm->bufio, b, (struct dm_buffer **) result);
+-	if (unlikely(IS_ERR(p)))
++	if (IS_ERR(p))
+ 		return PTR_ERR(p);
+ 
+ 	aux = dm_bufio_get_aux_data(to_buffer(*result));
+@@ -490,7 +490,7 @@ int dm_bm_write_lock(struct dm_block_manager *bm,
+ 		return -EPERM;
+ 
+ 	p = dm_bufio_read(bm->bufio, b, (struct dm_buffer **) result);
+-	if (unlikely(IS_ERR(p)))
++	if (IS_ERR(p))
+ 		return PTR_ERR(p);
+ 
+ 	aux = dm_bufio_get_aux_data(to_buffer(*result));
+@@ -523,7 +523,7 @@ int dm_bm_read_try_lock(struct dm_block_manager *bm,
+ 	int r;
+ 
+ 	p = dm_bufio_get(bm->bufio, b, (struct dm_buffer **) result);
+-	if (unlikely(IS_ERR(p)))
++	if (IS_ERR(p))
+ 		return PTR_ERR(p);
+ 	if (unlikely(!p))
+ 		return -EWOULDBLOCK;
+@@ -559,7 +559,7 @@ int dm_bm_write_lock_zero(struct dm_block_manager *bm,
+ 		return -EPERM;
+ 
+ 	p = dm_bufio_new(bm->bufio, b, (struct dm_buffer **) result);
+-	if (unlikely(IS_ERR(p)))
++	if (IS_ERR(p))
+ 		return PTR_ERR(p);
+ 
+ 	memset(p, 0, dm_bm_block_size(bm));
+-- 
+2.4.0
