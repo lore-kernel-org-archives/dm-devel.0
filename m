@@ -1,442 +1,163 @@
-From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] device mapper support for strace
-Date: Fri, 31 Jul 2015 12:04:48 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1507311202320.29679@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1507311043370.4689@file01.intranet.prod.int.rdu2.redhat.com>
-	<20150731153520.GA20404@altlinux.org>
-Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v5 01/11] block: make generic_make_request handle
+ arbitrarily sized bios
+Date: Fri, 31 Jul 2015 15:23:38 -0400
+Message-ID: <20150731192337.GA8907@redhat.com>
+References: <1436168690-32102-1-git-send-email-mlin@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-In-Reply-To: <20150731153520.GA20404-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/strace-devel>,
-	<mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=strace-devel>
-List-Post: <mailto:strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Help: <mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/strace-devel>,
-	<mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
-Errors-To: strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-To: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1436168690-32102-1-git-send-email-mlin@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ming Lin <mlin@kernel.org>
+Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dpark@posteo.net>, Christoph Hellwig <hch@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Ming Lei <ming.lei@canonical.com>, Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Geoff Levand <geoff@infradead.org>, Jim Paris <jim@jtan.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Oleg Drokin <oleg.drokin@intel.com>, Andreas Dilger <andreas.dilger@intel.com>, Ming Lin <ming.l@ssi.samsung.com>
 List-Id: dm-devel.ids
 
+On Mon, Jul 06 2015 at  3:44P -0400,
+Ming Lin <mlin@kernel.org> wrote:
 
-
-On Fri, 31 Jul 2015, Dmitry V. Levin wrote:
-
-> Hi,
+> From: Kent Overstreet <kent.overstreet@gmail.com>
 > 
-> On Fri, Jul 31, 2015 at 10:49:44AM -0400, Mikulas Patocka wrote:
-> > Hi
-> > 
-> > Here I'm sending a patch that makes it possible to decode device mapper 
-> > ioctls in strace.
-> > 
-> > 
-> > How to apply the patch:
-> > 
-> > Download strace 4.10 from 
-> > http://downloads.sourceforge.net/project/strace/strace/4.10/strace-4.10.tar.xz
+> The way the block layer is currently written, it goes to great lengths
+> to avoid having to split bios; upper layer code (such as bio_add_page())
+> checks what the underlying device can handle and tries to always create
+> bios that don't need to be split.
 > 
-> Please rebase onto strace.git HEAD (v4.10-277-gd9fb450 at this moment).
-> Use ./bootstrap to regenerate dev files.
+> But this approach becomes unwieldy and eventually breaks down with
+> stacked devices and devices with dynamic limits, and it adds a lot of
+> complexity. If the block layer could split bios as needed, we could
+> eliminate a lot of complexity elsewhere - particularly in stacked
+> drivers. Code that creates bios can then create whatever size bios are
+> convenient, and more importantly stacked drivers don't have to deal with
+> both their own bio size limitations and the limitations of the
+> (potentially multiple) devices underneath them.  In the future this will
+> let us delete merge_bvec_fn and a bunch of other code.
+> 
+> We do this by adding calls to blk_queue_split() to the various
+> make_request functions that need it - a few can already handle arbitrary
+> size bios. Note that we add the call _after_ any call to
+> blk_queue_bounce(); this means that blk_queue_split() and
+> blk_recalc_rq_segments() don't need to be concerned with bouncing
+> affecting segment merging.
+> 
+> Some make_request_fn() callbacks were simple enough to audit and verify
+> they don't need blk_queue_split() calls. The skipped ones are:
+> 
+>  * nfhd_make_request (arch/m68k/emu/nfblock.c)
+>  * axon_ram_make_request (arch/powerpc/sysdev/axonram.c)
+>  * simdisk_make_request (arch/xtensa/platforms/iss/simdisk.c)
+>  * brd_make_request (ramdisk - drivers/block/brd.c)
+>  * mtip_submit_request (drivers/block/mtip32xx/mtip32xx.c)
+>  * loop_make_request
+>  * null_queue_bio
+>  * bcache's make_request fns
+> 
+> Some others are almost certainly safe to remove now, but will be left
+> for future patches.
+> 
+> Cc: Jens Axboe <axboe@kernel.dk>
+> Cc: Christoph Hellwig <hch@infradead.org>
+> Cc: Al Viro <viro@zeniv.linux.org.uk>
+> Cc: Ming Lei <ming.lei@canonical.com>
+> Cc: Neil Brown <neilb@suse.de>
+> Cc: Alasdair Kergon <agk@redhat.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: dm-devel@redhat.com
+> Cc: Lars Ellenberg <drbd-dev@lists.linbit.com>
+> Cc: drbd-user@lists.linbit.com
+> Cc: Jiri Kosina <jkosina@suse.cz>
+> Cc: Geoff Levand <geoff@infradead.org>
+> Cc: Jim Paris <jim@jtan.com>
+> Cc: Joshua Morris <josh.h.morris@us.ibm.com>
+> Cc: Philip Kelleher <pjk1939@linux.vnet.ibm.com>
+> Cc: Minchan Kim <minchan@kernel.org>
+> Cc: Nitin Gupta <ngupta@vflare.org>
+> Cc: Oleg Drokin <oleg.drokin@intel.com>
+> Cc: Andreas Dilger <andreas.dilger@intel.com>
+> Acked-by: NeilBrown <neilb@suse.de> (for the 'md/md.c' bits)
+> Signed-off-by: Kent Overstreet <kent.overstreet@gmail.com>
+> [dpark: skip more mq-based drivers, resolve merge conflicts, etc.]
+> Signed-off-by: Dongsu Park <dpark@posteo.net>
+> Signed-off-by: Ming Lin <ming.l@ssi.samsung.com>
+...
+> diff --git a/block/blk-merge.c b/block/blk-merge.c
+> index 30a0d9f..3707f30 100644
+> --- a/block/blk-merge.c
+> +++ b/block/blk-merge.c
+> @@ -9,12 +9,158 @@
+>  
+>  #include "blk.h"
+>  
+> +static struct bio *blk_bio_discard_split(struct request_queue *q,
+> +					 struct bio *bio,
+> +					 struct bio_set *bs)
+> +{
+> +	unsigned int max_discard_sectors, granularity;
+> +	int alignment;
+> +	sector_t tmp;
+> +	unsigned split_sectors;
+> +
+> +	/* Zero-sector (unknown) and one-sector granularities are the same.  */
+> +	granularity = max(q->limits.discard_granularity >> 9, 1U);
+> +
+> +	max_discard_sectors = min(q->limits.max_discard_sectors, UINT_MAX >> 9);
+> +	max_discard_sectors -= max_discard_sectors % granularity;
+> +
+> +	if (unlikely(!max_discard_sectors)) {
+> +		/* XXX: warn */
+> +		return NULL;
+> +	}
+> +
+> +	if (bio_sectors(bio) <= max_discard_sectors)
+> +		return NULL;
+> +
+> +	split_sectors = max_discard_sectors;
+> +
+> +	/*
+> +	 * If the next starting sector would be misaligned, stop the discard at
+> +	 * the previous aligned sector.
+> +	 */
+> +	alignment = (q->limits.discard_alignment >> 9) % granularity;
+> +
+> +	tmp = bio->bi_iter.bi_sector + split_sectors - alignment;
+> +	tmp = sector_div(tmp, granularity);
+> +
+> +	if (split_sectors > tmp)
+> +		split_sectors -= tmp;
+> +
+> +	return bio_split(bio, split_sectors, GFP_NOIO, bs);
+> +}
 
-This is the updated patch for strace.git.
+This code to stop the discard at the previous aligned sector could be
+the reason why I have 2 device-mapper-test-suite tests in the
+'thin-provisioning' testsuite failing due to this patchset:
 
-Mikulas
+  4) Failure:
+test_discard_a_fragmented_device(DiscardQuickTests)
+    [/root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:49:in `block in assert_no_mappings'
+     /root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:43:in `call'
+     /root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:43:in `block in with_dev_md'
+     /root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:40:in `each'
+     /root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:40:in `with_dev_md'
+     /root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:48:in `assert_no_mappings'
+     /root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:263:in `test_discard_a_fragmented_device']:
+<0> expected but was
+<131072>.
 
-Index: strace/configure.ac
-===================================================================
---- strace.orig/configure.ac
-+++ strace/configure.ac
-@@ -222,6 +222,7 @@ AC_CHECK_HEADERS(m4_normalize([
- 	elf.h
- 	inttypes.h
- 	ioctls.h
-+	linux/dm-ioctl.h
- 	linux/falloc.h
- 	linux/hiddev.h
- 	linux/input.h
-Index: strace/dm.c
-===================================================================
---- /dev/null
-+++ strace/dm.c
-@@ -0,0 +1,335 @@
-+#include "defs.h"
-+
-+#ifdef HAVE_LINUX_DM_IOCTL_H
-+
-+#include <sys/ioctl.h>
-+#include <linux/dm-ioctl.h>
-+
-+static void
-+dm_decode_device(const unsigned int code, const struct dm_ioctl *ioc)
-+{
-+	if (code != DM_REMOVE_ALL &&
-+	    code != DM_LIST_DEVICES &&
-+	    code != DM_LIST_VERSIONS) {
-+		if (ioc->dev)
-+			tprintf(", dev=makedev(%u, %u)", major(ioc->dev), minor(ioc->dev));
-+		if (ioc->name[0]) {
-+			tprints(", name=");
-+			print_quoted_string(ioc->name, DM_NAME_LEN, QUOTE_0_TERMINATED);
-+		}
-+		if (ioc->uuid[0]) {
-+			tprints(", uuid=");
-+			print_quoted_string(ioc->uuid, DM_UUID_LEN, QUOTE_0_TERMINATED);
-+		}
-+	}
-+}
-+
-+static void
-+dm_decode_values(struct tcb *tcp, const unsigned int code, const struct dm_ioctl *ioc)
-+{
-+	if (entering(tcp)) {
-+		if (code == DM_TABLE_LOAD)
-+			tprintf(", target_count=%u", (unsigned)ioc->target_count);
-+		if (code == DM_DEV_RENAME ||
-+		    code == DM_DEV_REMOVE ||
-+		    (code == DM_DEV_SUSPEND && !(ioc->flags & DM_SUSPEND_FLAG)) ||
-+		    code == DM_DEV_WAIT)
-+			tprintf(", event_nr=%u", (unsigned)ioc->event_nr);
-+	} else if (!tcp->u_error) {
-+		if (code == DM_DEV_CREATE ||
-+		    code == DM_DEV_RENAME ||
-+		    code == DM_DEV_SUSPEND ||
-+		    code == DM_DEV_STATUS ||
-+		    code == DM_DEV_WAIT ||
-+		    code == DM_TABLE_LOAD ||
-+		    code == DM_TABLE_CLEAR ||
-+		    code == DM_TABLE_DEPS ||
-+		    code == DM_TABLE_STATUS ||
-+		    code == DM_TARGET_MSG) {
-+			tprintf(", target_count=%u", (unsigned)ioc->target_count);
-+			tprintf(", open_count=%u", (unsigned)ioc->open_count);
-+			tprintf(", event_nr=%u", (unsigned)ioc->event_nr);
-+		}
-+	}
-+}
-+
-+static void
-+dm_decode_flags(const struct dm_ioctl *ioc)
-+{
-+	if (ioc->flags) {
-+		static const struct {
-+			uint32_t flag;
-+			const char *string;
-+		} dm_flags[] = {
-+			{ DM_READONLY_FLAG, "DM_READONLY_FLAG" },
-+			{ DM_SUSPEND_FLAG, "DM_SUSPEND_FLAG" },
-+			{ DM_PERSISTENT_DEV_FLAG, "DM_PERSISTENT_DEV_FLAG" },
-+			{ DM_STATUS_TABLE_FLAG, "DM_STATUS_TABLE_FLAG" },
-+			{ DM_ACTIVE_PRESENT_FLAG, "DM_ACTIVE_PRESENT_FLAG" },
-+			{ DM_INACTIVE_PRESENT_FLAG, "DM_INACTIVE_PRESENT_FLAG" },
-+			{ DM_BUFFER_FULL_FLAG, "DM_BUFFER_FULL_FLAG" },
-+			{ DM_SKIP_BDGET_FLAG, "DM_SKIP_BDGET_FLAG" },
-+#ifdef DM_SKIP_LOCKFS_FLAG
-+			{ DM_SKIP_LOCKFS_FLAG, "DM_SKIP_LOCKFS_FLAG" },
-+#endif
-+#ifdef DM_NOFLUSH_FLAG
-+			{ DM_NOFLUSH_FLAG, "DM_NOFLUSH_FLAG" },
-+#endif
-+#ifdef DM_QUERY_INACTIVE_TABLE_FLAG
-+			{ DM_QUERY_INACTIVE_TABLE_FLAG, "DM_QUERY_INACTIVE_TABLE_FLAG" },
-+#endif
-+#ifdef DM_UEVENT_GENERATED_FLAG
-+			{ DM_UEVENT_GENERATED_FLAG, "DM_UEVENT_GENERATED_FLAG" },
-+#endif
-+#ifdef DM_UUID_FLAG
-+			{ DM_UUID_FLAG, "DM_UUID_FLAG" },
-+#endif
-+#ifdef DM_SECURE_DATA_FLAG
-+			{ DM_SECURE_DATA_FLAG, "DM_SECURE_DATA_FLAG" },
-+#endif
-+#ifdef DM_DATA_OUT_FLAG
-+			{ DM_DATA_OUT_FLAG, "DM_DATA_OUT_FLAG" },
-+#endif
-+#ifdef DM_DEFERRED_REMOVE
-+			{ DM_DEFERRED_REMOVE, "DM_DEFERRED_REMOVE" },
-+#endif
-+#ifdef DM_INTERNAL_SUSPEND_FLAG
-+			{ DM_INTERNAL_SUSPEND_FLAG, "DM_INTERNAL_SUSPEND_FLAG" },
-+#endif
-+		};
-+		uint32_t flags = ioc->flags;
-+		bool first = true;
-+		unsigned i;
-+		tprints(", flags=");
-+		for (i = 0; i < sizeof(dm_flags) / sizeof(*dm_flags); i++) {
-+			if (flags & dm_flags[i].flag) {
-+				if (!first)
-+					tprints("|");
-+				else
-+					first = false;
-+				tprints(dm_flags[i].string);
-+				flags &= ~dm_flags[i].flag;
-+			}
-+		}
-+		if (flags) {
-+			if (!first)
-+				tprints("|");
-+			else
-+				first = false;
-+			tprintf("0x%x", (unsigned)flags);
-+		}
-+
-+	}
-+}
-+
-+static void
-+dm_decode_dm_target_spec(struct tcb *tcp, const struct dm_ioctl *ioc, const char *extra, size_t extra_size)
-+{
-+	uint32_t i;
-+	size_t offset = ioc->data_start;
-+	for (i = 0; i < ioc->target_count; i++) {
-+		if (offset + sizeof(struct dm_target_spec) >= offset &&
-+		    offset + sizeof(struct dm_target_spec) < extra_size) {
-+			const struct dm_target_spec *s = (const struct dm_target_spec *)(extra + offset);
-+			tprintf(", {sector_start=%llu, length=%llu", (unsigned long long)s->sector_start, (unsigned long long)s->length);
-+			if (!entering(tcp))
-+				tprintf(", status=%d", (int)s->status);
-+			tprints(", target_type=");
-+			print_quoted_string(s->target_type, DM_MAX_TYPE_NAME, QUOTE_0_TERMINATED);
-+			tprints(", string=");
-+			print_quoted_string((const char *)(s + 1), extra_size - (offset + sizeof(struct dm_target_spec)), QUOTE_0_TERMINATED);
-+			tprintf("}");
-+			if (entering(tcp))
-+				offset = offset + s->next;
-+			else
-+				offset = ioc->data_start + s->next;
-+		} else {
-+			tprints(", misplaced struct dm_target_spec");
-+			break;
-+		}
-+	}
-+}
-+
-+static void
-+dm_decode_dm_target_deps(const struct dm_ioctl *ioc, const char *extra, size_t extra_size)
-+{
-+	size_t offset = ioc->data_start;
-+	if (offset + offsetof(struct dm_target_deps, dev) >= offset &&
-+	    offset + offsetof(struct dm_target_deps, dev) <= extra_size) {
-+		uint32_t i;
-+		size_t space = (extra_size - (offset + offsetof(struct dm_target_deps, dev))) / sizeof(__u64);
-+		const struct dm_target_deps *s = (const struct dm_target_deps *)(extra + offset);
-+		if (s->count > space)
-+			goto misplaced;
-+		tprints(", deps={");
-+		for (i = 0; i < s->count; i++) {
-+			tprintf("%smakedev(%u, %u)", i ? ", " : "", major(s->dev[i]), minor(s->dev[i]));
-+		}
-+		tprints("}");
-+	} else {
-+misplaced:
-+		tprints(", misplaced struct dm_target_deps");
-+	}
-+}
-+
-+static void
-+dm_decode_dm_name_list(const struct dm_ioctl *ioc, const char *extra, size_t extra_size)
-+{
-+	size_t offset = ioc->data_start;
-+	while (1) {
-+		if (offset + offsetof(struct dm_name_list, name) >= offset &&
-+		    offset + offsetof(struct dm_name_list, name) < extra_size) {
-+			const struct dm_name_list *s = (const struct dm_name_list *)(extra + offset);
-+			if (!s->dev)
-+				break;
-+			tprintf(", {dev=makedev(%u, %u), name=", major(s->dev), minor(s->dev));
-+			print_quoted_string(s->name, extra_size - (offset + offsetof(struct dm_name_list, name)), QUOTE_0_TERMINATED);
-+			tprints("}");
-+			if (!s->next)
-+				break;
-+			if (offset + s->next < offset)
-+				goto misplaced;
-+			offset = offset + s->next;
-+		} else {
-+misplaced:
-+			tprints(", misplaced struct dm_name_list");
-+			break;
-+		}
-+	}
-+}
-+
-+static void
-+dm_decode_dm_target_versions(const struct dm_ioctl *ioc, const char *extra, size_t extra_size)
-+{
-+	size_t offset = ioc->data_start;
-+	while (1) {
-+		if (offset + offsetof(struct dm_target_versions, name) >= offset &&
-+		    offset + offsetof(struct dm_target_versions, name) < extra_size) {
-+			const struct dm_target_versions *s = (const struct dm_target_versions *)(extra + offset);
-+			tprints(", {name=");
-+			print_quoted_string(s->name, extra_size - (offset + offsetof(struct dm_target_versions, name)), QUOTE_0_TERMINATED);
-+			tprintf(", version=%u.%u.%u}", (unsigned)s->version[0], (unsigned)s->version[1], (unsigned)s->version[2]);
-+			if (!s->next)
-+				break;
-+			if (offset + s->next < offset)
-+				goto misplaced;
-+			offset = offset + s->next;
-+		} else {
-+misplaced:
-+			tprints(", misplaced struct dm_target_versions");
-+			break;
-+		}
-+	}
-+}
-+
-+static void
-+dm_decode_dm_target_msg(const struct dm_ioctl *ioc, const char *extra, size_t extra_size)
-+{
-+	size_t offset = ioc->data_start;
-+	if (offset + offsetof(struct dm_target_msg, message) >= offset &&
-+	    offset + offsetof(struct dm_target_msg, message) < extra_size) {
-+		const struct dm_target_msg *s = (const struct dm_target_msg *)(extra + offset);
-+		tprintf(", {sector=%llu, message=", (unsigned long long)s->sector);
-+		print_quoted_string(s->message, extra_size - offsetof(struct dm_target_msg, message), QUOTE_0_TERMINATED);
-+		tprints("}");
-+	} else {
-+		tprints(", misplaced struct dm_target_msg");
-+	}
-+}
-+
-+static void
-+dm_decode_string(const struct dm_ioctl *ioc, const char *extra, size_t extra_size)
-+{
-+	size_t offset = ioc->data_start;
-+	if (offset < extra_size) {
-+		tprints(", string=");
-+		print_quoted_string(extra + offset, extra_size - offset, QUOTE_0_TERMINATED);
-+	} else {
-+		tprints(", misplaced string");
-+	}
-+}
-+
-+static int
-+dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
-+{
-+	struct dm_ioctl ioc;
-+	char *extra = NULL;
-+	size_t extra_size = 0;
-+
-+	if (umoven(tcp, arg, sizeof(ioc) - sizeof(ioc.data), (char *)&ioc) < 0)
-+		return 0;
-+	tprintf(", {version=%d.%d.%d", ioc.version[0], ioc.version[1], ioc.version[2]);
-+
-+	/* if we use a different version of ABI, do not attempt to decode ioctl fields */
-+	if (ioc.version[0] != DM_VERSION_MAJOR)
-+		goto skip;
-+
-+	if (ioc.data_size > sizeof(ioc)) {
-+		extra = malloc(ioc.data_size);
-+		if (extra) {
-+			extra_size = ioc.data_size;
-+			if (umoven(tcp, arg, extra_size, extra) < 0) {
-+				free(extra);
-+				extra = NULL;
-+				extra_size = 0;
-+			}
-+		}
-+	}
-+	dm_decode_device(code, &ioc);
-+	dm_decode_values(tcp, code, &ioc);
-+	dm_decode_flags(&ioc);
-+	if (!abbrev(tcp)) {
-+		if ((code == DM_DEV_WAIT && !entering(tcp) && !tcp->u_error) ||
-+		    (code == DM_TABLE_STATUS && !entering(tcp) && !tcp->u_error) ||
-+		    (code == DM_TABLE_LOAD && entering(tcp)))
-+			dm_decode_dm_target_spec(tcp, &ioc, extra, extra_size);
-+		if (code == DM_TABLE_DEPS && !entering(tcp) && !tcp->u_error)
-+			dm_decode_dm_target_deps(&ioc, extra, extra_size);
-+		if (code == DM_LIST_DEVICES && !entering(tcp) && !tcp->u_error)
-+			dm_decode_dm_name_list(&ioc, extra, extra_size);
-+		if (code == DM_LIST_VERSIONS && !entering(tcp) && !tcp->u_error)
-+			dm_decode_dm_target_versions(&ioc, extra, extra_size);
-+		if (code == DM_TARGET_MSG && entering(tcp))
-+			dm_decode_dm_target_msg(&ioc, extra, extra_size);
-+		if (code == DM_TARGET_MSG && !entering(tcp) && !tcp->u_error && ioc.flags & DM_DATA_OUT_FLAG)
-+			dm_decode_string(&ioc, extra, extra_size);
-+		if (code == DM_DEV_RENAME && entering(tcp))
-+			dm_decode_string(&ioc, extra, extra_size);
-+		if (code == DM_DEV_SET_GEOMETRY && entering(tcp))
-+			dm_decode_string(&ioc, extra, extra_size);
-+	}
-+
-+skip:
-+	tprints("}");
-+	if (extra)
-+		free(extra);
-+	return 1;
-+}
-+
-+int
-+dm_ioctl(struct tcb *tcp, const unsigned int code, long arg)
-+{
-+	switch (code) {
-+		case DM_VERSION:
-+		case DM_REMOVE_ALL:
-+		case DM_LIST_DEVICES:
-+		case DM_DEV_CREATE:
-+		case DM_DEV_REMOVE:
-+		case DM_DEV_RENAME:
-+		case DM_DEV_SUSPEND:
-+		case DM_DEV_STATUS:
-+		case DM_DEV_WAIT:
-+		case DM_TABLE_LOAD:
-+		case DM_TABLE_CLEAR:
-+		case DM_TABLE_DEPS:
-+		case DM_TABLE_STATUS:
-+		case DM_LIST_VERSIONS:
-+		case DM_TARGET_MSG:
-+		case DM_DEV_SET_GEOMETRY:
-+			return dm_known_ioctl(tcp, code, arg);
-+		default:
-+			return 0;
-+	}
-+}
-+
-+#endif
-Index: strace/ioctl.c
-===================================================================
---- strace.orig/ioctl.c
-+++ strace/ioctl.c
-@@ -254,6 +254,10 @@ ioctl_decode(struct tcb *tcp, unsigned i
- 		return v4l2_ioctl(tcp, code, arg);
- 	case '=':
- 		return ptp_ioctl(tcp, code, arg);
-+#ifdef HAVE_LINUX_DM_IOCTL_H
-+	case 0xfd:
-+		return dm_ioctl(tcp, code, arg);
-+#endif
- 	default:
- 		break;
- 	}
-Index: strace/Makefile.am
-===================================================================
---- strace.orig/Makefile.am
-+++ strace/Makefile.am
-@@ -39,6 +39,7 @@ strace_SOURCES =	\
- 	count.c		\
- 	desc.c		\
- 	dirent.c	\
-+	dm.c		\
- 	execve.c	\
- 	exit.c		\
- 	fadvise.c	\
-Index: strace/defs.h
-===================================================================
---- strace.orig/defs.h
-+++ strace/defs.h
-@@ -741,6 +741,7 @@ extern void ioctl_print_code(const unsig
- extern int ioctl_decode(struct tcb *, const unsigned int, long);
- extern int ioctl_decode_command_number(const unsigned int);
- extern int block_ioctl(struct tcb *, const unsigned int, long);
-+extern int dm_ioctl(struct tcb *, const unsigned int, long);
- extern int loop_ioctl(struct tcb *, const unsigned int, long);
- extern int mtd_ioctl(struct tcb *, const unsigned int, long);
- extern int ptp_ioctl(struct tcb *, const unsigned int, long);
+  5) Failure:
+test_discard_fully_provisioned_device_benchmark(DiscardQuickTests)
+    [/root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:49:in `block in assert_no_mappings'
+     /root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:43:in `call'
+     /root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:43:in `block in with_dev_md'
+     /root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:40:in `each'
+     /root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:40:in `with_dev_md'
+     /root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:48:in `assert_no_mappings'
+     /root/snitm/git/device-mapper-test-suite/lib/dmtest/tests/thin-provisioning/discard_tests.rb:225:in `test_discard_fully_provisioned_device_benchmark']:
+<0> expected but was
+<262144>.
 
-------------------------------------------------------------------------------
+But I haven't yet figured out where the blk_bio_discard_split code, or
+elsewhere, is going wrong.
+
+Mike
