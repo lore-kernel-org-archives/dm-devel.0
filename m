@@ -1,93 +1,292 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: [PATCH 06/15] drivers: md: Drop unlikely before IS_ERR(_OR_NULL)
-Date: Fri, 31 Jul 2015 14:08:26 +0530
-Message-ID: <93a74cd75c841f6b1ed176fe6fa71367ca64eb69.1438331416.git.viresh.kumar@linaro.org>
-References: <cover.1438331416.git.viresh.kumar@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1438331416.git.viresh.kumar@linaro.org>
-In-Reply-To: <cover.1438331416.git.viresh.kumar@linaro.org>
-References: <cover.1438331416.git.viresh.kumar@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: akpm@linux-foundation.org
-Cc: linaro-kernel@lists.linaro.org, linux-kernel@vger.kernel.org, Viresh Kumar <viresh.kumar@linaro.org>, Alasdair Kergon <agk@redhat.com>, "maintainer:DEVICE-MAPPER LVM" <dm-devel@redhat.com>, "open list:SOFTWARE RAID Multiple Disks
-	SUPPORT" <linux-raid@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: [PATCH 1/1] device-mapper: Do not override error code
+	from dm_get_device()
+Date: Fri, 31 Jul 2015 09:20:36 -0400
+Message-ID: <1438348836-20525-1-git-send-email-vgoyal@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: agk@redhat.com, snitzer@redhat.com, Vivek Goyal <vgoyal@redhat.com>
 List-Id: dm-devel.ids
 
-IS_ERR(_OR_NULL) already contain an 'unlikely' compiler flag and there
-is no need to do that again from its callers. Drop it.
+Some of the device mapper targets right now override return code returned
+by dm_get_device() and return either -EINVAL or -ENXIO. It is not clear
+what do we gain by that. It is better to propagate return code as it is
+to caller.
 
-Signed-off-by: Viresh Kumar <viresh.kumar@linaro.org>
+I specifically ran into one issue where underlying device was busy but
+I kept on getting -EINVAL. After this change we will get -EBUSY instead
+and it will be easier to figure out what's the problem.
+
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- drivers/md/dm-snap-persistent.c               | 2 +-
- drivers/md/dm-verity.c                        | 2 +-
- drivers/md/persistent-data/dm-block-manager.c | 8 ++++----
- 3 files changed, 6 insertions(+), 6 deletions(-)
+ drivers/md/dm-crypt.c      |  4 +++-
+ drivers/md/dm-delay.c      | 16 +++++++++++-----
+ drivers/md/dm-flakey.c     |  6 ++++--
+ drivers/md/dm-linear.c     |  7 +++++--
+ drivers/md/dm-log-writes.c | 11 ++++++++---
+ drivers/md/dm-raid1.c      |  8 +++++---
+ drivers/md/dm-stripe.c     |  8 +++++---
+ 7 files changed, 41 insertions(+), 19 deletions(-)
 
-diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
-index 808b8419bc48..bf71583296f7 100644
---- a/drivers/md/dm-snap-persistent.c
-+++ b/drivers/md/dm-snap-persistent.c
-@@ -533,7 +533,7 @@ static int read_exceptions(struct pstore *ps,
- 		chunk = area_location(ps, ps->current_area);
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 0f48fed..7180f9e 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1811,11 +1811,13 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 	cc->iv_offset = tmpll;
  
- 		area = dm_bufio_read(client, chunk, &bp);
--		if (unlikely(IS_ERR(area))) {
-+		if (IS_ERR(area)) {
- 			r = PTR_ERR(area);
- 			goto ret_destroy_bufio;
- 		}
-diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
-index bb9c6a00e4b0..1d131519ed21 100644
---- a/drivers/md/dm-verity.c
-+++ b/drivers/md/dm-verity.c
-@@ -271,7 +271,7 @@ static int verity_verify_level(struct dm_verity_io *io, sector_t block,
- 	verity_hash_at_level(v, block, level, &hash_block, &offset);
+-	if (dm_get_device(ti, argv[3], dm_table_get_mode(ti->table), &cc->dev)) {
++	ret = dm_get_device(ti, argv[3], dm_table_get_mode(ti->table), &cc->dev);
++	if (ret ) {
+ 		ti->error = "Device lookup failed";
+ 		goto bad;
+ 	}
  
- 	data = dm_bufio_read(v->bufio, hash_block, &buf);
--	if (unlikely(IS_ERR(data)))
-+	if (IS_ERR(data))
- 		return PTR_ERR(data);
++	ret = -EINVAL;
+ 	if (sscanf(argv[4], "%llu%c", &tmpll, &dummy) != 1) {
+ 		ti->error = "Invalid device sector";
+ 		goto bad;
+diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
+index 57b6a19..b34f6e2 100644
+--- a/drivers/md/dm-delay.c
++++ b/drivers/md/dm-delay.c
+@@ -129,6 +129,7 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	struct delay_c *dc;
+ 	unsigned long long tmpll;
+ 	char dummy;
++	int ret;
  
- 	aux = dm_bufio_get_aux_data(buf);
-diff --git a/drivers/md/persistent-data/dm-block-manager.c b/drivers/md/persistent-data/dm-block-manager.c
-index 4d6c9b689eaa..88dbe7b97c2c 100644
---- a/drivers/md/persistent-data/dm-block-manager.c
-+++ b/drivers/md/persistent-data/dm-block-manager.c
-@@ -454,7 +454,7 @@ int dm_bm_read_lock(struct dm_block_manager *bm, dm_block_t b,
- 	int r;
+ 	if (argc != 3 && argc != 6) {
+ 		ti->error = "requires exactly 3 or 6 arguments";
+@@ -143,6 +144,7 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  
- 	p = dm_bufio_read(bm->bufio, b, (struct dm_buffer **) result);
--	if (unlikely(IS_ERR(p)))
-+	if (IS_ERR(p))
- 		return PTR_ERR(p);
+ 	dc->reads = dc->writes = 0;
  
- 	aux = dm_bufio_get_aux_data(to_buffer(*result));
-@@ -490,7 +490,7 @@ int dm_bm_write_lock(struct dm_block_manager *bm,
- 		return -EPERM;
++	ret = -EINVAL;
+ 	if (sscanf(argv[1], "%llu%c", &tmpll, &dummy) != 1) {
+ 		ti->error = "Invalid device sector";
+ 		goto bad;
+@@ -154,12 +156,14 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto bad;
+ 	}
  
- 	p = dm_bufio_read(bm->bufio, b, (struct dm_buffer **) result);
--	if (unlikely(IS_ERR(p)))
-+	if (IS_ERR(p))
- 		return PTR_ERR(p);
+-	if (dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
+-			  &dc->dev_read)) {
++	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
++			    &dc->dev_read);
++	if (ret) {
+ 		ti->error = "Device lookup failed";
+ 		goto bad;
+ 	}
  
- 	aux = dm_bufio_get_aux_data(to_buffer(*result));
-@@ -523,7 +523,7 @@ int dm_bm_read_try_lock(struct dm_block_manager *bm,
- 	int r;
++	ret = -EINVAL;
+ 	dc->dev_write = NULL;
+ 	if (argc == 3)
+ 		goto out;
+@@ -175,13 +179,15 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto bad_dev_read;
+ 	}
  
- 	p = dm_bufio_get(bm->bufio, b, (struct dm_buffer **) result);
--	if (unlikely(IS_ERR(p)))
-+	if (IS_ERR(p))
- 		return PTR_ERR(p);
- 	if (unlikely(!p))
- 		return -EWOULDBLOCK;
-@@ -559,7 +559,7 @@ int dm_bm_write_lock_zero(struct dm_block_manager *bm,
- 		return -EPERM;
+-	if (dm_get_device(ti, argv[3], dm_table_get_mode(ti->table),
+-			  &dc->dev_write)) {
++	ret = dm_get_device(ti, argv[3], dm_table_get_mode(ti->table),
++			    &dc->dev_write);
++	if (ret) {
+ 		ti->error = "Write device lookup failed";
+ 		goto bad_dev_read;
+ 	}
  
- 	p = dm_bufio_new(bm->bufio, b, (struct dm_buffer **) result);
--	if (unlikely(IS_ERR(p)))
-+	if (IS_ERR(p))
- 		return PTR_ERR(p);
+ out:
++	ret = -EINVAL;
+ 	dc->kdelayd_wq = alloc_workqueue("kdelayd", WQ_MEM_RECLAIM, 0);
+ 	if (!dc->kdelayd_wq) {
+ 		DMERR("Couldn't start kdelayd");
+@@ -208,7 +214,7 @@ bad_dev_read:
+ 	dm_put_device(ti, dc->dev_read);
+ bad:
+ 	kfree(dc);
+-	return -EINVAL;
++	return ret;
+ }
  
- 	memset(p, 0, dm_bm_block_size(bm));
+ static void delay_dtr(struct dm_target *ti)
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index b257e46..ffb99452 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -183,6 +183,7 @@ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ 	devname = dm_shift_arg(&as);
+ 
++	r = -EINVAL;
+ 	if (sscanf(dm_shift_arg(&as), "%llu%c", &tmpll, &dummy) != 1) {
+ 		ti->error = "Invalid device sector";
+ 		goto bad;
+@@ -211,7 +212,8 @@ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	if (r)
+ 		goto bad;
+ 
+-	if (dm_get_device(ti, devname, dm_table_get_mode(ti->table), &fc->dev)) {
++	r = dm_get_device(ti, devname, dm_table_get_mode(ti->table), &fc->dev);
++	if (r) {
+ 		ti->error = "Device lookup failed";
+ 		goto bad;
+ 	}
+@@ -224,7 +226,7 @@ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ bad:
+ 	kfree(fc);
+-	return -EINVAL;
++	return r;
+ }
+ 
+ static void flakey_dtr(struct dm_target *ti)
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 53e848c..62c26e4 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -30,6 +30,7 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	struct linear_c *lc;
+ 	unsigned long long tmp;
+ 	char dummy;
++	int ret;
+ 
+ 	if (argc != 2) {
+ 		ti->error = "Invalid argument count";
+@@ -42,13 +43,15 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		return -ENOMEM;
+ 	}
+ 
++	ret = -EINVAL;
+ 	if (sscanf(argv[1], "%llu%c", &tmp, &dummy) != 1) {
+ 		ti->error = "dm-linear: Invalid device sector";
+ 		goto bad;
+ 	}
+ 	lc->start = tmp;
+ 
+-	if (dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &lc->dev)) {
++	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &lc->dev);
++	if (ret) {
+ 		ti->error = "dm-linear: Device lookup failed";
+ 		goto bad;
+ 	}
+@@ -61,7 +64,7 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+       bad:
+ 	kfree(lc);
+-	return -EINVAL;
++	return ret;
+ }
+ 
+ static void linear_dtr(struct dm_target *ti)
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index ad1b049..51d29b6 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -420,6 +420,7 @@ static int log_writes_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	struct log_writes_c *lc;
+ 	struct dm_arg_set as;
+ 	const char *devname, *logdevname;
++	int ret;
+ 
+ 	as.argc = argc;
+ 	as.argv = argv;
+@@ -443,18 +444,22 @@ static int log_writes_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	atomic_set(&lc->pending_blocks, 0);
+ 
+ 	devname = dm_shift_arg(&as);
+-	if (dm_get_device(ti, devname, dm_table_get_mode(ti->table), &lc->dev)) {
++	ret = dm_get_device(ti, devname, dm_table_get_mode(ti->table), &lc->dev);
++	if (ret) {
+ 		ti->error = "Device lookup failed";
+ 		goto bad;
+ 	}
+ 
+ 	logdevname = dm_shift_arg(&as);
+-	if (dm_get_device(ti, logdevname, dm_table_get_mode(ti->table), &lc->logdev)) {
++	ret = dm_get_device(ti, logdevname, dm_table_get_mode(ti->table),
++			    &lc->logdev);
++	if (ret) {
+ 		ti->error = "Log device lookup failed";
+ 		dm_put_device(ti, lc->dev);
+ 		goto bad;
+ 	}
+ 
++	ret = -EINVAL;
+ 	lc->log_kthread = kthread_run(log_writes_kthread, lc, "log-write");
+ 	if (!lc->log_kthread) {
+ 		ti->error = "Couldn't alloc kthread";
+@@ -479,7 +484,7 @@ static int log_writes_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ bad:
+ 	kfree(lc);
+-	return -EINVAL;
++	return ret;
+ }
+ 
+ static int log_mark(struct log_writes_c *lc, char *data)
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index d83696b..933a1fd 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -943,16 +943,18 @@ static int get_mirror(struct mirror_set *ms, struct dm_target *ti,
+ {
+ 	unsigned long long offset;
+ 	char dummy;
++	int ret;
+ 
+ 	if (sscanf(argv[1], "%llu%c", &offset, &dummy) != 1) {
+ 		ti->error = "Invalid offset";
+ 		return -EINVAL;
+ 	}
+ 
+-	if (dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
+-			  &ms->mirror[mirror].dev)) {
++	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
++			    &ms->mirror[mirror].dev);
++	if (ret) {
+ 		ti->error = "Device lookup failure";
+-		return -ENXIO;
++		return ret;
+ 	}
+ 
+ 	ms->mirror[mirror].ms = ms;
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index a672a15..9a814a5 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -75,13 +75,15 @@ static int get_stripe(struct dm_target *ti, struct stripe_c *sc,
+ {
+ 	unsigned long long start;
+ 	char dummy;
++	int ret;
+ 
+ 	if (sscanf(argv[1], "%llu%c", &start, &dummy) != 1)
+ 		return -EINVAL;
+ 
+-	if (dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
+-			  &sc->stripe[stripe].dev))
+-		return -ENXIO;
++	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
++			    &sc->stripe[stripe].dev);
++	if (ret)
++		return ret;
+ 
+ 	sc->stripe[stripe].physical_start = start;
+ 
 -- 
-2.4.0
+2.1.0
