@@ -1,85 +1,64 @@
-From: Andreas Hartmann <andihartmann@freenet.de>
-Subject: Re: [dm-devel] AMD-Vi IO_PAGE_FAULTs and ata3.00: failed command:
- READ FPDMA QUEUED errors since Linux 4.0
-Date: Sat, 1 Aug 2015 16:20:23 +0200
-Message-ID: <55BCD5A7.2080708@maya.org>
-References: <55B7BEA2.30205@01019freenet.de>
- <20150728175054.GB24782@redhat.com> <55B7D054.4070308@maya.org>
- <20150728192908.GA25264@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v5 01/11] block: make generic_make_request handle
+ arbitrarily sized bios
+Date: Sat, 1 Aug 2015 12:33:57 -0400
+Message-ID: <20150801163356.GA21478@redhat.com>
+References: <1436168690-32102-1-git-send-email-mlin@kernel.org>
+ <20150731192337.GA8907@redhat.com>
+ <CAF1ivSZbMDgyo_-wFGusSNSZ1fonSMWmNU9aVavGFaQsmEyYmQ@mail.gmail.com>
+ <20150731213831.GA16464@redhat.com>
+ <1438412290.26596.14.camel@hasee>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-pci-owner@vger.kernel.org>
-In-Reply-To: <20150728192908.GA25264@redhat.com>
-Sender: linux-pci-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, mpatocka@redhat.com, Milan Broz <mbroz@redhat.com>
-Cc: linux-pci <linux-pci@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1438412290.26596.14.camel@hasee>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ming Lin <mlin@kernel.org>
+Cc: lkml <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dpark@posteo.net>, Christoph Hellwig <hch@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Ming Lei <ming.lei@canonical.com>, Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Geoff Levand <geoff@infradead.org>, Jim Paris <jim@jtan.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Oleg Drokin <oleg.drokin@intel.com>, Andreas Dilger <andreas.dilger@intel.com>, Ming Lin <ming.l@ssi.samsung.com>
 List-Id: dm-devel.ids
 
-On 07/28/2015 at 09:29 PM, Mike Snitzer wrote:
-[...]
-> Mikulas was saying to biect what is causing ATA to fail.
+On Sat, Aug 01 2015 at  2:58am -0400,
+Ming Lin <mlin@kernel.org> wrote:
 
-Some good news and some bad news. The good news first:
+> On Fri, 2015-07-31 at 17:38 -0400, Mike Snitzer wrote:
+> > 
+> > OK, once setup, to run the 2 tests in question directly you'd do
+> > something like:
+> > 
+> > dmtest run --suite thin-provisioning -n discard_a_fragmented_device
+> > 
+> > dmtest run --suite thin-provisioning -n discard_fully_provisioned_device_benchmark
+> > 
+> > Again, these tests pass without this patchset.
+> 
+> It's caused by patch 4.
+> When discard size >=4G, the bio->bi_iter.bi_size overflows.
 
-Your patchset
+Thanks for tracking this down!
 
-f3396c58fd8442850e759843457d78b6ec3a9589,
-cf2f1abfbd0dba701f7f16ef619e4d2485de3366,
-7145c241a1bf2841952c3e297c4080b357b3e52d,
-94f5e0243c48aa01441c987743dc468e2d6eaca2,
-dc2676210c425ee8e5cb1bec5bc84d004ddf4179,
-0f5d8e6ee758f7023e4353cca75d785b2d4f6abe,
-b3c5fd3052492f1b8d060799d4f18be5a5438add
+> Below is the new patch.
+> 
+> Christoph,
+> Could you also help to review it?
+> 
+> Now we still do "misaligned" check in blkdev_issue_discard().
+> So the same code in blk_bio_discard_split() was removed.
 
-seems to works fine w/ 3.18.19 !!
+But I don't agree with this approach.  One of the most meaningful
+benefits of late bio splitting is the upper layers shouldn't _need_ to
+depend on the intermediate devices' queue_limits being stacked properly.
+Your solution to mix discard granularity/alignment checks at the upper
+layer(s) but then split based on max_discard_sectors at the lower layer
+defeats that benefit for discards.
 
-Why did I test it with 3.18.x now? Because I suddenly got two ata errors
-(ata1 and ata2) with clean 3.19.8 (w/o the AMD-Vi IO_PAGE_FAULTs) during
-normal operation. This means: 3.19 must already be broken, too.
+This will translate to all intermediate layers that might split
+discards needing to worry about granularity/alignment
+too (e.g. how dm-thinp will have to care because it must generate
+discard mappings with associated bios based on how blocks were mapped to
+thinp).
 
-Therefore, I applied your patchset to 3.18.x and it seems to work like a
-charme - I don't get any AMD-Vi IO_PAGE_FAULTs on boot and no ata errors
-(until now).
+Also, it is unfortunate that IO that doesn't have a payload is being
+artificially split simply because bio->bi_iter.bi_size is 32bits.
 
-
-Next I did: I tried to bisect between 3.18 and 3.19 with your patchset
-applied, because w/ this patchset applied, the problem can be seen
-easily and directly on boot. Unfortunately, this does work only a few
-git bisect rounds until I got stuck because of interferences with your
-extra patches applied:
-
-git bisect start
-# good: [b2776bf7149bddd1f4161f14f79520f17fc1d71d] Linux 3.18
-git bisect good b2776bf7149bddd1f4161f14f79520f17fc1d71d
-# bad: [bfa76d49576599a4b9f9b7a71f23d73d6dcff735] Linux 3.19
-git bisect bad bfa76d49576599a4b9f9b7a71f23d73d6dcff735
-# good: [54850e73e86e3bc092680d1bdb84eb322f982ab1] zram: change
-parameter from vaild_io_request()
-git bisect good 54850e73e86e3bc092680d1bdb84eb322f982ab1
-# bad: [dab363f938a53ddaee60bfecc1aebdbb3d3af5f0] Merge tag
-'staging-3.19-rc1' of
-git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/staging
-git bisect bad dab363f938a53ddaee60bfecc1aebdbb3d3af5f0
-# bad: [26178ec11ef3c6c814bf16a0a2b9c2f7242e3c64] x86: mm: consolidate
-VM_FAULT_RETRY handling
-git bisect bad 26178ec11ef3c6c814bf16a0a2b9c2f7242e3c64
-# bad: [e7cf773d431a63a2417902696fcc9e0ebdc83bbe] Merge tag
-'usb-3.19-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/usb
-git bisect bad e7cf773d431a63a2417902696fcc9e0ebdc83bbe
-# good: [9ea18f8cab5f1c36cdd0f09717e35ceb48c36a87] Merge branch
-'for-3.19/drivers' of git://git.kernel.dk/linux-block
-git bisect good 9ea18f8cab5f1c36cdd0f09717e35ceb48c36a87
-Bisecting: 251 revisions left to test after this (roughly 8 steps)
-error: Your local changes to the following files would be overwritten by
-checkout:
-        drivers/md/dm-crypt.c
-Please, commit your changes or stash them before you can switch branches.
-Aborting
-
-
-Do you have any idea how to proceed at this point?
-
-
-Thanks,
-Andreas
+Mike
