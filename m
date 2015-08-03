@@ -1,99 +1,169 @@
-From: Andreas Hartmann <andihartmann-KuiJ5kEpwI6ELgA04lAiVw@public.gmane.org>
-Subject: Re: [dm-devel] AMD-Vi IO_PAGE_FAULTs and ata3.00: failed command:
-	READ FPDMA QUEUED errors since Linux 4.0
-Date: Sun, 2 Aug 2015 20:48:06 +0200
-Message-ID: <55BE65E6.7060901@maya.org>
-References: <55B7BEA2.30205@01019freenet.de>
-	<20150728175054.GB24782@redhat.com> <55B7D054.4070308@maya.org>
-	<20150728192908.GA25264@redhat.com> <55BCD5A7.2080708@maya.org>
-	<55BE1D5E.6020709@maya.org>
-	<alpine.LRH.2.02.1508021347480.17729@file01.intranet.prod.int.rdu2.redhat.com>
+From: Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v5 01/11] block: make generic_make_request
+ handle arbitrarily sized bios
+Date: Sun, 02 Aug 2015 22:58:22 -0700
+Message-ID: <1438581502.26596.24.camel@hasee>
+References: <1436168690-32102-1-git-send-email-mlin@kernel.org>
+	<20150731192337.GA8907@redhat.com>
+	<CAF1ivSZbMDgyo_-wFGusSNSZ1fonSMWmNU9aVavGFaQsmEyYmQ@mail.gmail.com>
+	<20150731213831.GA16464@redhat.com> <1438412290.26596.14.camel@hasee>
+	<20150801163356.GA21478@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <alpine.LRH.2.02.1508021347480.17729-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Leo Duran <leo.duran-5C7GfCeVMHo@public.gmane.org>
-Cc: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, linux-pci <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <20150801163356.GA21478-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>, Philip Kelleher <pjk1939-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joshua Morris <josh.h.morris-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Nitin Gupta <ngupta-KNmc09w0p+Ednm+yROfE0A@public.gmane.org>, Ming Lin <ming.l-Vzezgt5dB6uUEJcrhfAQsw@public.gmane.org>, Drokin <oleg.drokin-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Oleg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andreas Dilger <andreas.dilger-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Neil-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, Geoff Levand <geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Al-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, Jim Paris <jim-XrPbb/hENzg@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, drbd-user-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-On 08/01/2015 at 19:57, Mikulas Patocka wrote:
->
->
-> On Sun, 2 Aug 2015, Andreas Hartmann wrote:
->
->> On 08/01/2015 at 04:20 PM Andreas Hartmann wrote:
->>> On 07/28/2015 at 09:29 PM, Mike Snitzer wrote:
->>> [...]
->>>> Mikulas was saying to biect what is causing ATA to fail.
->>>
->>> Some good news and some bad news. The good news first:
->>>
->>> Your patchset
->>>
->>> f3396c58fd8442850e759843457d78b6ec3a9589,
->>> cf2f1abfbd0dba701f7f16ef619e4d2485de3366,
->>> 7145c241a1bf2841952c3e297c4080b357b3e52d,
->>> 94f5e0243c48aa01441c987743dc468e2d6eaca2,
->>> dc2676210c425ee8e5cb1bec5bc84d004ddf4179,
->>> 0f5d8e6ee758f7023e4353cca75d785b2d4f6abe,
->>> b3c5fd3052492f1b8d060799d4f18be5a5438add
->>>
->>> seems to work fine w/ 3.18.19 !!
->>>
->>> Why did I test it with 3.18.x now? Because I suddenly got two ata errors
->>> (ata1 and ata2) with clean 3.19.8 (w/o the AMD-Vi IO_PAGE_FAULTs) during
->>> normal operation. This means: 3.19 must already be broken, too.
->>>
->>> Therefore, I applied your patchset to 3.18.x and it seems to work like a
->>> charme - I don't get any AMD-Vi IO_PAGE_FAULTs on boot and no ata errors
->>> (until now).
->>>
->>>
->>> Next I did: I tried to bisect between 3.18 and 3.19 with your patchset
->>> applied, because w/ this patchset applied, the problem can be seen
->>> easily and directly on boot. Unfortunately, this does work only a few
->>> git bisect rounds until I got stuck because of interferences with your
->>> extra patches applied:
->>
->> [Resolved the problems written at the last post.]
->>
->> Bisecting ended here:
->>
->> https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=34b48db66e08ca1c1bc07cf305d672ac940268dc
->>
->> block: remove artifical max_hw_sectors cap
->>
->>
->> Removing this patch on 3.19 and 4.1 make things working again. Didn't
->> test 4.0, but I think it's the same. No more AMD-Vi IO_PAGE_FAULTS  with
->> that patch reverted.
->>
->>
->> Please check why this patch triggers AMD-Vi IO_PAGE_FAULTS.
->>
->>
->> Thanks,
->> kind regards,
->> Andreas Hartmann
->
-> I would submit this bug to maintainers of AMD-Vi. They understand the
-> hardware, so they should tell why do large I/O requests result in
-> IO_PAGE_FAULTs.
+On Sat, 2015-08-01 at 12:33 -0400, Mike Snitzer wrote:
+> On Sat, Aug 01 2015 at  2:58am -0400,
+> Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> 
+> > On Fri, 2015-07-31 at 17:38 -0400, Mike Snitzer wrote:
+> > > 
+> > > OK, once setup, to run the 2 tests in question directly you'd do
+> > > something like:
+> > > 
+> > > dmtest run --suite thin-provisioning -n discard_a_fragmented_device
+> > > 
+> > > dmtest run --suite thin-provisioning -n discard_fully_provisioned_device_benchmark
+> > > 
+> > > Again, these tests pass without this patchset.
+> > 
+> > It's caused by patch 4.
 
-You forgot the ata errors ... . They are gone, too. I got these ata 
-errors on 3.19 w/o your patchset and w/o AMD-Vi IO_PAGES_FAULTs, too.
+Typo. I mean patch 5.
 
+> > When discard size >=4G, the bio->bi_iter.bi_size overflows.
+> 
+> Thanks for tracking this down!
 
+blkdev_issue_write_same() has same problem.
 
-Regards,
-Andreas
+> 
+> > Below is the new patch.
+> > 
+> > Christoph,
+> > Could you also help to review it?
+> > 
+> > Now we still do "misaligned" check in blkdev_issue_discard().
+> > So the same code in blk_bio_discard_split() was removed.
+> 
+> But I don't agree with this approach.  One of the most meaningful
+> benefits of late bio splitting is the upper layers shouldn't _need_ to
+> depend on the intermediate devices' queue_limits being stacked properly.
+> Your solution to mix discard granularity/alignment checks at the upper
+> layer(s) but then split based on max_discard_sectors at the lower layer
+> defeats that benefit for discards.
+> 
+> This will translate to all intermediate layers that might split
+> discards needing to worry about granularity/alignment
+> too (e.g. how dm-thinp will have to care because it must generate
+> discard mappings with associated bios based on how blocks were mapped to
+> thinp).
+
+I think the important thing is the late splitting for regular bio.
+For discard/write_same bio, how about just don't do late splitting?
+
+That is:
+1. remove "PATCH 5: block: remove split code in blkdev_issue_discard"
+2. Add below changes to PATCH 1
+
+diff --git a/block/blk-merge.c b/block/blk-merge.c
+index 1f5dfa0..90b085e 100644
+--- a/block/blk-merge.c
++++ b/block/blk-merge.c
+@@ -9,59 +9,6 @@
+ 
+ #include "blk.h"
+ 
+-static struct bio *blk_bio_discard_split(struct request_queue *q,
+-					 struct bio *bio,
+-					 struct bio_set *bs)
+-{
+-	unsigned int max_discard_sectors, granularity;
+-	int alignment;
+-	sector_t tmp;
+-	unsigned split_sectors;
+-
+-	/* Zero-sector (unknown) and one-sector granularities are the same.  */
+-	granularity = max(q->limits.discard_granularity >> 9, 1U);
+-
+-	max_discard_sectors = min(q->limits.max_discard_sectors, UINT_MAX >> 9);
+-	max_discard_sectors -= max_discard_sectors % granularity;
+-
+-	if (unlikely(!max_discard_sectors)) {
+-		/* XXX: warn */
+-		return NULL;
+-	}
+-
+-	if (bio_sectors(bio) <= max_discard_sectors)
+-		return NULL;
+-
+-	split_sectors = max_discard_sectors;
+-
+-	/*
+-	 * If the next starting sector would be misaligned, stop the discard at
+-	 * the previous aligned sector.
+-	 */
+-	alignment = (q->limits.discard_alignment >> 9) % granularity;
+-
+-	tmp = bio->bi_iter.bi_sector + split_sectors - alignment;
+-	tmp = sector_div(tmp, granularity);
+-
+-	if (split_sectors > tmp)
+-		split_sectors -= tmp;
+-
+-	return bio_split(bio, split_sectors, GFP_NOIO, bs);
+-}
+-
+-static struct bio *blk_bio_write_same_split(struct request_queue *q,
+-					    struct bio *bio,
+-					    struct bio_set *bs)
+-{
+-	if (!q->limits.max_write_same_sectors)
+-		return NULL;
+-
+-	if (bio_sectors(bio) <= q->limits.max_write_same_sectors)
+-		return NULL;
+-
+-	return bio_split(bio, q->limits.max_write_same_sectors, GFP_NOIO, bs);
+-}
+-
+ static struct bio *blk_bio_segment_split(struct request_queue *q,
+ 					 struct bio *bio,
+ 					 struct bio_set *bs)
+@@ -129,10 +76,8 @@ void blk_queue_split(struct request_queue *q, struct bio **bio,
+ {
+ 	struct bio *split;
+ 
+-	if ((*bio)->bi_rw & REQ_DISCARD)
+-		split = blk_bio_discard_split(q, *bio, bs);
+-	else if ((*bio)->bi_rw & REQ_WRITE_SAME)
+-		split = blk_bio_write_same_split(q, *bio, bs);
++	if ((*bio)->bi_rw & REQ_DISCARD || (*bio)->bi_rw & REQ_WRITE_SAME)
++		split = NULL;
+ 	else
+ 		split = blk_bio_segment_split(q, *bio, q->bio_split);
+ 
+
+> 
+> Also, it is unfortunate that IO that doesn't have a payload is being
+> artificially split simply because bio->bi_iter.bi_size is 32bits.
+
+Indeed.
+Will it be possible to make it 64bits? I guess no.
+
+> 
+> Mike
