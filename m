@@ -1,171 +1,27 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 6/6] dm: add support for passing through persistent reservations
-Date: Tue,  4 Aug 2015 09:11:11 +0200
-Message-ID: <1438672271-11309-7-git-send-email-hch@lst.de>
-References: <1438672271-11309-1-git-send-email-hch@lst.de>
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1438672271-11309-1-git-send-email-hch@lst.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Jens Axboe <axboe@fb.com>
-Cc: linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH v5 01/11] block: make generic_make_request handle
+	arbitrarily sized bios
+Date: Tue, 4 Aug 2015 13:36:26 +0200
+Message-ID: <20150804113626.GA12682@lst.de>
+References: <1436168690-32102-1-git-send-email-mlin@kernel.org> <20150731192337.GA8907@redhat.com> <CAF1ivSZbMDgyo_-wFGusSNSZ1fonSMWmNU9aVavGFaQsmEyYmQ@mail.gmail.com> <20150731213831.GA16464@redhat.com> <1438412290.26596.14.camel@hasee> <20150801163356.GA21478@redhat.com> <1438581502.26596.24.camel@hasee>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1438581502.26596.24.camel@hasee>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ming Lin <mlin@kernel.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, lkml <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dpark@posteo.net>, Christoph Hellwig <hch@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Ming Lei <ming.lei@canonical.com>, Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Geoff Levand <geoff@infradead.org>, Jim Paris <jim@jtan.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Oleg Drokin <oleg.drokin@intel.com>, Andreas Dilger <andreas.dilger@intel.com>, Ming Lin <ming.l@ssi.samsung.com>
 List-Id: dm-devel.ids
 
-This adds support to pass through persistent reservation requests
-similar to the existing ioctl handling, and with the same limitations,
-e.g. devices may only have a single target attached.
+On Sun, Aug 02, 2015 at 10:58:22PM -0700, Ming Lin wrote:
+> I think the important thing is the late splitting for regular bio.
+> For discard/write_same bio, how about just don't do late splitting?
 
-This is mostly intended for multipathing.
+I'd hate having to special case them even more.  Especially as the
+discard splitting is nasty and we really don't want to send giant
+discards by default anyway (see Jens' patches to limit discard size
+by default).
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- drivers/md/dm.c | 122 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 122 insertions(+)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 8dfc760..3388fa6 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -24,6 +24,7 @@
- #include <linux/ktime.h>
- #include <linux/elevator.h> /* for rq_end_sector() */
- #include <linux/blk-mq.h>
-+#include <linux/pr.h>
- 
- #include <trace/events/block.h>
- 
-@@ -3670,11 +3671,132 @@ void dm_free_md_mempools(struct dm_md_mempools *pools)
- 	kfree(pools);
- }
- 
-+static int dm_pr_register(struct block_device *bdev, u64 old_key, u64 new_key,
-+		bool ignore)
-+{
-+	struct mapped_device *md = bdev->bd_disk->private_data;
-+	const struct pr_ops *ops;
-+	struct dm_target *tgt;
-+	fmode_t mode;
-+	int srcu_idx, r;
-+
-+	r = dm_get_ioctl_table(md, &tgt, &bdev, &mode, &srcu_idx);
-+	if (r < 0)
-+		return r;
-+
-+	ops = bdev->bd_disk->fops->pr_ops;
-+	if (ops && ops->pr_register)
-+		r = ops->pr_register(bdev, old_key, new_key, ignore);
-+	else
-+		r = -EOPNOTSUPP;
-+
-+	dm_put_live_table(md, srcu_idx);
-+	return r;
-+}
-+
-+static int dm_pr_reserve(struct block_device *bdev, u64 key, enum pr_type type)
-+{
-+	struct mapped_device *md = bdev->bd_disk->private_data;
-+	const struct pr_ops *ops;
-+	struct dm_target *tgt;
-+	fmode_t mode;
-+	int srcu_idx, r;
-+
-+	r = dm_get_ioctl_table(md, &tgt, &bdev, &mode, &srcu_idx);
-+	if (r < 0)
-+		return r;
-+
-+	ops = bdev->bd_disk->fops->pr_ops;
-+	if (ops && ops->pr_reserve)
-+		r = ops->pr_reserve(bdev, key, type);
-+	else
-+		r = -EOPNOTSUPP;
-+
-+	dm_put_live_table(md, srcu_idx);
-+	return r;
-+}
-+
-+static int dm_pr_release(struct block_device *bdev, u64 key, enum pr_type type)
-+{
-+	struct mapped_device *md = bdev->bd_disk->private_data;
-+	const struct pr_ops *ops;
-+	struct dm_target *tgt;
-+	fmode_t mode;
-+	int srcu_idx, r;
-+
-+	r = dm_get_ioctl_table(md, &tgt, &bdev, &mode, &srcu_idx);
-+	if (r < 0)
-+		return r;
-+
-+	ops = bdev->bd_disk->fops->pr_ops;
-+	if (ops && ops->pr_release)
-+		r = ops->pr_release(bdev, key, type);
-+	else
-+		r = -EOPNOTSUPP;
-+
-+	dm_put_live_table(md, srcu_idx);
-+	return r;
-+}
-+
-+static int dm_pr_preempt(struct block_device *bdev, u64 old_key, u64 new_key,
-+		enum pr_type type, bool abort)
-+{
-+	struct mapped_device *md = bdev->bd_disk->private_data;
-+	const struct pr_ops *ops;
-+	struct dm_target *tgt;
-+	fmode_t mode;
-+	int srcu_idx, r;
-+
-+	r = dm_get_ioctl_table(md, &tgt, &bdev, &mode, &srcu_idx);
-+	if (r < 0)
-+		return r;
-+
-+	ops = bdev->bd_disk->fops->pr_ops;
-+	if (ops && ops->pr_preempt)
-+		r = ops->pr_preempt(bdev, old_key, new_key, type, abort);
-+	else
-+		r = -EOPNOTSUPP;
-+
-+	dm_put_live_table(md, srcu_idx);
-+	return r;
-+}
-+
-+static int dm_pr_clear(struct block_device *bdev, u64 key)
-+{
-+	struct mapped_device *md = bdev->bd_disk->private_data;
-+	const struct pr_ops *ops;
-+	struct dm_target *tgt;
-+	fmode_t mode;
-+	int srcu_idx, r;
-+
-+	r = dm_get_ioctl_table(md, &tgt, &bdev, &mode, &srcu_idx);
-+	if (r < 0)
-+		return r;
-+
-+	ops = bdev->bd_disk->fops->pr_ops;
-+	if (ops && ops->pr_clear)
-+		r = ops->pr_clear(bdev, key);
-+	else
-+		r = -EOPNOTSUPP;
-+
-+	dm_put_live_table(md, srcu_idx);
-+	return r;
-+}
-+
-+static const struct pr_ops dm_pr_ops = {
-+	.pr_register	= dm_pr_register,
-+	.pr_reserve	= dm_pr_reserve,
-+	.pr_release	= dm_pr_release,
-+	.pr_preempt	= dm_pr_preempt,
-+	.pr_clear	= dm_pr_clear,
-+};
-+
- static const struct block_device_operations dm_blk_dops = {
- 	.open = dm_blk_open,
- 	.release = dm_blk_close,
- 	.ioctl = dm_blk_ioctl,
- 	.getgeo = dm_blk_getgeo,
-+	.pr_ops = &dm_pr_ops,
- 	.owner = THIS_MODULE
- };
- 
--- 
-1.9.1
-
+So I'd recommend to keep everything as-is, just make sure we don't
+overflow bi_size.
