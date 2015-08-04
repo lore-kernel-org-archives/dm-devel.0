@@ -1,27 +1,47 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v5 01/11] block: make generic_make_request handle
-	arbitrarily sized bios
-Date: Tue, 4 Aug 2015 13:36:26 +0200
-Message-ID: <20150804113626.GA12682@lst.de>
-References: <1436168690-32102-1-git-send-email-mlin@kernel.org> <20150731192337.GA8907@redhat.com> <CAF1ivSZbMDgyo_-wFGusSNSZ1fonSMWmNU9aVavGFaQsmEyYmQ@mail.gmail.com> <20150731213831.GA16464@redhat.com> <1438412290.26596.14.camel@hasee> <20150801163356.GA21478@redhat.com> <1438581502.26596.24.camel@hasee>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: AMD-Vi IO_PAGE_FAULTs and ata3.00: failed command: READ FPDMA
+ QUEUED errors since Linux 4.0
+Date: Tue, 4 Aug 2015 10:47:11 -0400
+Message-ID: <20150804144711.GB24716@redhat.com>
+References: <55B7BEA2.30205@01019freenet.de>
+ <20150728175054.GB24782@redhat.com>
+ <55B7D054.4070308@maya.org>
+ <20150728192908.GA25264@redhat.com>
+ <55BCD5A7.2080708@maya.org>
+ <55BE1D5E.6020709@maya.org>
+ <alpine.LRH.2.02.1508021347480.17729@file01.intranet.prod.int.rdu2.redhat.com>
+ <55BE65E6.7060901@maya.org>
+ <20150803081249.GF14980@8bytes.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-pci-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1438581502.26596.24.camel@hasee>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ming Lin <mlin@kernel.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, lkml <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Dongsu Park <dpark@posteo.net>, Christoph Hellwig <hch@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Ming Lei <ming.lei@canonical.com>, Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Lars Ellenberg <drbd-dev@lists.linbit.com>, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, Geoff Levand <geoff@infradead.org>, Jim Paris <jim@jtan.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Oleg Drokin <oleg.drokin@intel.com>, Andreas Dilger <andreas.dilger@intel.com>, Ming Lin <ming.l@ssi.samsung.com>
+In-Reply-To: <20150803081249.GF14980@8bytes.org>
+Sender: linux-pci-owner@vger.kernel.org
+To: Joerg Roedel <joro@8bytes.org>
+Cc: Andreas Hartmann <andihartmann@freenet.de>, linux-pci <linux-pci@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Jens Axboe <axboe@fb.com>, iommu@lists.linux-foundation.org, Leo Duran <leo.duran@amd.com>, Mikulas Patocka <mpatocka@redhat.com>, Christoph Hellwig <hch@lst.de>, Milan Broz <mbroz@redhat.com>, Jeff Moyer <jmoyer@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, Aug 02, 2015 at 10:58:22PM -0700, Ming Lin wrote:
-> I think the important thing is the late splitting for regular bio.
-> For discard/write_same bio, how about just don't do late splitting?
+On Mon, Aug 03 2015 at  4:12am -0400,
+Joerg Roedel <joro@8bytes.org> wrote:
 
-I'd hate having to special case them even more.  Especially as the
-discard splitting is nasty and we really don't want to send giant
-discards by default anyway (see Jens' patches to limit discard size
-by default).
+> On Sun, Aug 02, 2015 at 08:48:06PM +0200, Andreas Hartmann wrote:
+> > >>https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=34b48db66e08ca1c1bc07cf305d672ac940268dc
+> > >>
+> > >>block: remove artifical max_hw_sectors cap
+> 
+> Looking at the patch, it seems to me that it just uncovered a bug
+> elsewhere. It looks like an underlying driver doesn't expect the
+> big io-requests that the patch enables and does not dma-map the whole
+> target buffer, causing the IO_PAGE_FAULTs later.
 
-So I'd recommend to keep everything as-is, just make sure we don't
-overflow bi_size.
+That patch has caused issues elsewhere too, see this 'Revert "block:
+remove artifical max_hw_sectors cap"' thread (if/when lkml.org
+cooperates): https://lkml.org/lkml/2015/7/20/572
+
+But it could be that there is a need for a horkage fix for this specific
+hardware? something comparable to this?:
+http://git.kernel.org/linus/af34d637637eabaf49406eb35c948cd51ba262a6
+
+We are running out of time to fix these whack-a-mole issues in 4.2
+though.
