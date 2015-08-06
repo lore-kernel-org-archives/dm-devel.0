@@ -1,45 +1,32 @@
-From: "Stewart, Sean" <Sean.Stewart@netapp.com>
-Subject: multipath-tools: symlinks and block devices in
-	/dev/mapper
-Date: Thu, 6 Aug 2015 21:32:35 +0000
-Message-ID: <bfd03f82311649dfa6b878a5cd2e6116@hioexcmbx08-prd.hq.netapp.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [dm-devel] kernel BUG at drivers/scsi/scsi_lib.c:1101! observed
+ during md5sum for one file on (RAID4->RAID0) device
+Date: Fri, 7 Aug 2015 09:15:50 +1000
+Message-ID: <20150807091550.44973f07@noble>
+References: <1710310402.852769.1438246982906.JavaMail.zimbra@redhat.com>
+	<1438262886.2229.1.camel@HansenPartnership.com>
+	<20150731112058.6e97b491@noble>
+	<2095050658.4693864.1438843965011.JavaMail.zimbra@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <2095050658.4693864.1438843965011.JavaMail.zimbra@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Yi Zhang <yizhan@redhat.com>
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, linux-raid@vger.kernel.org, Jes Sorensen <Jes.Sorensen@redhat.com>, xni@redhat.com, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi all,
+On Thu, 6 Aug 2015 02:52:45 -0400 (EDT) Yi Zhang <yizhan@redhat.com>
+wrote:
 
-I've seen a couple of cases on distros that use system (RHEL7 and SLES12) where after the
-system boots, if you go to /dev/mapper, you will see the mpath entries are a mix of symlinks
-to the respective /dev/dm- device, and others are a block device.
+> Hi Neil
+> I test 10 times with below patch on Linux 4.2-rc5, didn't reproduce the issue, thanks.
+> 
+> 
 
-After some investigation, it looks like the symlink is created by udev, and the block device
-file gets created with the call to dm_lib_exit(), from the multipath command. Of course, if
-one has already created its device file, the other can't.
+Thanks for the confirmation.
+I will be submitting it for 4.3 and then it will flow into -stable
+kernels.
 
-So I'm wondering why do we have both mechanism to create /dev/mapper/ links and files? It
-doesn't really hurt anything, but I think it's strange that it's not consistent.
-
-Thoughts?
-
-
-Thanks,
-
-Sean Stewart
-Linux Software Engineer
-Hyperscale Storage Group
-NetApp
+NeilBrown
