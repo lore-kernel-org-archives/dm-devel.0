@@ -1,40 +1,54 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH V1 Resend 04/11] drivers: md: Drop unlikely before
- IS_ERR(_OR_NULL)
-Date: Mon, 10 Aug 2015 22:43:16 -0400
-Message-ID: <20150811024315.GB26351@redhat.com>
-References: <cover.1439187003.git.viresh.kumar@linaro.org>
- <f5979681afc5c1f30a2b5a0b61507580133bad04.1439187003.git.viresh.kumar@linaro.org>
- <20150810200503.GA24638@redhat.com>
- <20150811014203.GF5766@linux>
+From: Kent Overstreet <kent.overstreet@gmail.com>
+Subject: Re: [PATCH v5 01/11] block: make generic_make_request handle
+ arbitrarily sized bios
+Date: Mon, 10 Aug 2015 19:38:51 -0800
+Message-ID: <20150811033851.GA28533@kmo-pixel>
+References: <1439099990.7880.0.camel@hasee>
+ <20150809064128.GB2436@infradead.org>
+ <1439103347.7880.3.camel@hasee>
+ <20150809070128.GA25739@infradead.org>
+ <1439104707.7880.8.camel@hasee>
+ <20150810150216.GA22719@redhat.com>
+ <yq1si7rgllc.fsf@sermon.lab.mkp.net>
+ <1439230696.26458.6.camel@ssi>
+ <yq1bneeh9df.fsf@sermon.lab.mkp.net>
+ <20150811024154.GA26351@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150811014203.GF5766@linux>
+In-Reply-To: <20150811024154.GA26351@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Viresh Kumar <viresh.kumar@linaro.org>
-Cc: akpm@linux-foundation.org, linaro-kernel@lists.linaro.org, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Ming Lin <mlin@kernel.org>, axboe@fb.com, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Ming Lei <ming.lei@canonical.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Lars Ellenberg <drbd-dev@lists.linbit.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Nitin Gupta <ngupta@vflare.org>, Ming Lin <ming.l@ssi.samsung.com>, Oleg Drokin <oleg.drokin@intel.com>, Al Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, Andreas Dilger <andreas.dilger@intel.com>, Geoff Levand <geoff@infradead.org>, Jiri Kosina <jkosina@suse.cz>, lkml <linux-kernel@vger.kernel.org>, Jim Paris <jim@jtan.com>, Minchan Kim <minchan@kernel.org>, Dongsu Park <dpark@posteo.net>, drbd-user@lists.linbit.com, Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Aug 10 2015 at  9:42pm -0400,
-Viresh Kumar <viresh.kumar@linaro.org> wrote:
-
-> On 10-08-15, 16:05, Mike Snitzer wrote:
-> > On Mon, Aug 10 2015 at  2:12am -0400,
-> > Viresh Kumar <viresh.kumar@linaro.org> wrote:
-> > 
-> > > IS_ERR(_OR_NULL) already contain an 'unlikely' compiler flag and there
-> > > is no need to do that again from its callers. Drop it.
-> > > 
-> > > Signed-off-by: Viresh Kumar <viresh.kumar@linaro.org>
-> > 
-> > I picked this up for 4.3, staged in linux-dm.git's 'for-next', see:
-> > https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=e2545d97b6cc0556fbd1099fca9271e3ca1d0b01
+On Mon, Aug 10, 2015 at 10:41:55PM -0400, Mike Snitzer wrote:
+> On Mon, Aug 10 2015 at 10:00pm -0400,
+> Martin K. Petersen <martin.petersen@oracle.com> wrote:
 > 
-> I had no clue about it as I didn't look at individual maintainer's
-> tree. But rebased things over linux-next/master.
+> > >>>>> "Ming" == Ming Lin <mlin@kernel.org> writes:
+> > 
+> > Ming> Did you mean still use (UINT_MAX >> 9) in blkdev_issue_discard()?
+> > 
+> > Ming> But that doesn't work for dm-thinp. See Kent's suggestion to use
+> > Ming> 1<<31.
+> > 
+> > I'm not sure why things are not working for dm-thinp. Presumably Kent's
+> > code would split the discard at a granularity boundary so why would that
+> > cause problems for dm?
 > 
-> Why isn't your branch merged into linux-next ?
+> DM-thinp processes discards internally before it passes them down (if
+> configured to do so).  If a discard is smaller than the granularity of a
+> thinp block (whose size is configurable) or if the start and end of the
+> discard's extent is misaligned (relative to the thinp blocks mapped to
+> the logical extent) then the discard won't actually discard partial
+> thinp blocks.
 
-I just staged it today, so the next linux-next will pick it up.
+This kind of logic really doesn't belong in dm - if it's needed, it really
+belongs in bio_split() (which is supposed to work correctly for discards - so if
+it is needed, then bio_split() needs fixing...)
+
+IMO though it belongs in the driver - if a discard needs to be dropped because
+it's too small and the hardware can't do it, that should be the driver's
+responsibility.
