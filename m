@@ -1,74 +1,498 @@
-From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v5 01/11] block: make generic_make_request
- handle arbitrarily sized bios
-Date: Tue, 11 Aug 2015 10:08:14 -0400
-Message-ID: <20150811140813.GA29369@redhat.com>
-References: <20150809064128.GB2436@infradead.org>
-	<1439103347.7880.3.camel@hasee>
-	<20150809070128.GA25739@infradead.org>
-	<1439104707.7880.8.camel@hasee> <20150810150216.GA22719@redhat.com>
-	<yq1si7rgllc.fsf@sermon.lab.mkp.net> <1439230696.26458.6.camel@ssi>
-	<yq1bneeh9df.fsf@sermon.lab.mkp.net>
-	<20150811024154.GA26351@redhat.com>
-	<20150811033851.GA28533@kmo-pixel>
+From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] device mapper support for strace
+Date: Tue, 11 Aug 2015 13:11:37 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1508111310290.20408@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1507311043370.4689@file01.intranet.prod.int.rdu2.redhat.com>
+	<20150731153520.GA20404@altlinux.org>
+	<alpine.LRH.2.02.1507311202320.29679@file01.intranet.prod.int.rdu2.redhat.com>
+	<20150801175400.GA3943@altlinux.org>
+Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150811033851.GA28533@kmo-pixel>
-List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>, Philip Kelleher <pjk1939-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Nitin Gupta <ngupta-KNmc09w0p+Ednm+yROfE0A@public.gmane.org>, Ming Lin <ming.l-Vzezgt5dB6uUEJcrhfAQsw@public.gmane.org>, Oleg Drokin <oleg.drokin-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, axboe-b10kYP2dOMg@public.gmane.org, Andreas Dilger <andreas.dilger-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Geoff Levand <geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jim Paris <jim-XrPbb/hENzg@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Joe Thornber <ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, drbd-user-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Return-path: <strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+In-Reply-To: <20150801175400.GA3943-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/strace-devel>,
+	<mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=strace-devel>
+List-Post: <mailto:strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/strace-devel>,
+	<mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Errors-To: strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: dm-devel.ids
 
-On Mon, Aug 10 2015 at 11:38pm -0400,
-Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
 
-> On Mon, Aug 10, 2015 at 10:41:55PM -0400, Mike Snitzer wrote:
-> > On Mon, Aug 10 2015 at 10:00pm -0400,
-> > Martin K. Petersen <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+
+On Sat, 1 Aug 2015, Dmitry V. Levin wrote:
+
+> On Fri, Jul 31, 2015 at 12:04:48PM -0400, Mikulas Patocka wrote:
+> > On Fri, 31 Jul 2015, Dmitry V. Levin wrote:
+> > > On Fri, Jul 31, 2015 at 10:49:44AM -0400, Mikulas Patocka wrote:
+> > > > Hi
+> > > > 
+> > > > Here I'm sending a patch that makes it possible to decode device mapper 
+> > > > ioctls in strace.
+> > > > 
+> > > > How to apply the patch:
+> > > > 
+> > > > Download strace 4.10 from 
+> > > > http://downloads.sourceforge.net/project/strace/strace/4.10/strace-4.10.tar.xz
+> > > 
+> > > Please rebase onto strace.git HEAD (v4.10-277-gd9fb450 at this moment).
+> > > Use ./bootstrap to regenerate dev files.
 > > 
-> > > >>>>> "Ming" == Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> writes:
-> > > 
-> > > Ming> Did you mean still use (UINT_MAX >> 9) in blkdev_issue_discard()?
-> > > 
-> > > Ming> But that doesn't work for dm-thinp. See Kent's suggestion to use
-> > > Ming> 1<<31.
-> > > 
-> > > I'm not sure why things are not working for dm-thinp. Presumably Kent's
-> > > code would split the discard at a granularity boundary so why would that
-> > > cause problems for dm?
-> > 
-> > DM-thinp processes discards internally before it passes them down (if
-> > configured to do so).  If a discard is smaller than the granularity of a
-> > thinp block (whose size is configurable) or if the start and end of the
-> > discard's extent is misaligned (relative to the thinp blocks mapped to
-> > the logical extent) then the discard won't actually discard partial
-> > thinp blocks.
+> > This is the updated patch for strace.git.
 > 
-> This kind of logic really doesn't belong in dm - if it's needed, it really
-> belongs in bio_split() (which is supposed to work correctly for discards - so if
-> it is needed, then bio_split() needs fixing...)
+> Thanks.
+> 
+> Unfortunately, this one doesn't apply at all, you must be using a quite
+> outdated strace.git repository.
+> 
+> The up to date strace.git is located at git://git.code.sf.net/p/strace/code.git,
+> and when it is not available because of sf.net issues (which are quite
+> often nowadays), one can use mirrors at https://github.com/ldv-alt/strace.git
+> and git://git.altlinux.org/people/ldv/public/strace.git
+> 
+> Just a few comments after very cursory look at your patch:
 
-DM thinp does advertise discard_granularity that reflects the thinp blocksize.
-blk_queue_split() does look like it'd do the right thing.  But the
-splitting that DM thinp is doing is a long standing implementation (in
-DM core) that will need to be carefully reviewed/rewritten.  We can
-tackle it after all this late splitting code lands.
+Hi
 
-> IMO though it belongs in the driver - if a discard needs to be dropped because
-> it's too small and the hardware can't do it, that should be the driver's
-> responsibility.
+Here I'm sending updated patch with your suggestions:
 
-This isn't about the hardware's limits.  This is about the intermediate
-remapping/stacking driver's own space management hooking off of the
-discard bio too.
+Index: strace/configure.ac
+===================================================================
+--- strace.orig/configure.ac
++++ strace/configure.ac
+@@ -259,6 +259,7 @@ AC_CHECK_HEADERS(m4_normalize([
+ 	ioctls.h
+ 	linux/bsg.h
+ 	linux/falloc.h
++	linux/dm-ioctl.h
+ 	linux/filter.h
+ 	linux/hiddev.h
+ 	linux/mmtimer.h
+Index: strace/dm.c
+===================================================================
+--- /dev/null
++++ strace/dm.c
+@@ -0,0 +1,354 @@
++#include "defs.h"
++
++#ifdef HAVE_LINUX_DM_IOCTL_H
++
++#include <sys/ioctl.h>
++#include <linux/dm-ioctl.h>
++
++static void
++dm_decode_device(const unsigned int code, const struct dm_ioctl *ioc)
++{
++	switch (code) {
++		case DM_REMOVE_ALL:
++		case DM_LIST_DEVICES:
++		case DM_LIST_VERSIONS:
++			break;
++		default:
++			if (ioc->dev)
++				tprintf(", dev=makedev(%u, %u)",
++					major(ioc->dev), minor(ioc->dev));
++			if (ioc->name[0]) {
++				tprints(", name=");
++				print_quoted_string(ioc->name, DM_NAME_LEN,
++						    QUOTE_0_TERMINATED);
++			}
++			if (ioc->uuid[0]) {
++				tprints(", uuid=");
++				print_quoted_string(ioc->uuid, DM_UUID_LEN,
++						    QUOTE_0_TERMINATED);
++			}
++			break;
++	}
++}
++
++static void
++dm_decode_values(struct tcb *tcp, const unsigned int code,
++		 const struct dm_ioctl *ioc)
++{
++	if (entering(tcp)) {
++		switch (code) {
++			case DM_TABLE_LOAD:
++				tprintf(", target_count=%u",
++					(unsigned)ioc->target_count);
++				break;
++			case DM_DEV_SUSPEND:
++				if (ioc->flags & DM_SUSPEND_FLAG)
++					break;
++			case DM_DEV_RENAME:
++			case DM_DEV_REMOVE:
++			case DM_DEV_WAIT:
++				tprintf(", event_nr=%u",
++					(unsigned)ioc->event_nr);
++				break;
++		}
++	} else if (!syserror(tcp)) {
++		switch (code) {
++			case DM_DEV_CREATE:
++			case DM_DEV_RENAME:
++			case DM_DEV_SUSPEND:
++			case DM_DEV_STATUS:
++			case DM_DEV_WAIT:
++			case DM_TABLE_LOAD:
++			case DM_TABLE_CLEAR:
++			case DM_TABLE_DEPS:
++			case DM_TABLE_STATUS:
++			case DM_TARGET_MSG:
++				tprintf(", target_count=%u",
++					(unsigned)ioc->target_count);
++				tprintf(", open_count=%u",
++					(unsigned)ioc->open_count);
++				tprintf(", event_nr=%u",
++					(unsigned)ioc->event_nr);
++				break;
++		}
++	}
++}
++
++#include "xlat/dm_flags.h"
++
++static void
++dm_decode_flags(const struct dm_ioctl *ioc)
++{
++	tprints(", flags=");
++	printflags(dm_flags, ioc->flags, "DM_???");
++}
++
++static void
++dm_decode_dm_target_spec(struct tcb *tcp, const struct dm_ioctl *ioc,
++			 const char *extra, size_t extra_size)
++{
++	uint32_t i;
++	size_t offset = ioc->data_start;
++	for (i = 0; i < ioc->target_count; i++) {
++		if (offset + sizeof(struct dm_target_spec) >= offset &&
++		    offset + sizeof(struct dm_target_spec) < extra_size) {
++			const struct dm_target_spec *s =
++				(const struct dm_target_spec *)(extra + offset);
++			tprintf(", {sector_start=%llu, length=%llu",
++				(unsigned long long)s->sector_start,
++				(unsigned long long)s->length);
++			if (!entering(tcp))
++				tprintf(", status=%d", (int)s->status);
++			tprints(", target_type=");
++			print_quoted_string(s->target_type, DM_MAX_TYPE_NAME,
++					    QUOTE_0_TERMINATED);
++			tprints(", string=");
++			print_quoted_string((const char *)(s + 1), extra_size -
++					    (offset +
++					    sizeof(struct dm_target_spec)),
++					    QUOTE_0_TERMINATED);
++			tprintf("}");
++			if (entering(tcp))
++				offset = offset + s->next;
++			else
++				offset = ioc->data_start + s->next;
++		} else {
++			tprints(", misplaced struct dm_target_spec");
++			break;
++		}
++	}
++}
++
++static void
++dm_decode_dm_target_deps(const struct dm_ioctl *ioc, const char *extra,
++			 size_t extra_size)
++{
++	size_t offset = ioc->data_start;
++	if (offset + offsetof(struct dm_target_deps, dev) >= offset &&
++	    offset + offsetof(struct dm_target_deps, dev) <= extra_size) {
++		uint32_t i;
++		size_t space = (extra_size - (offset +
++			offsetof(struct dm_target_deps, dev))) / sizeof(__u64);
++		const struct dm_target_deps *s =
++			(const struct dm_target_deps *)(extra + offset);
++		if (s->count > space)
++			goto misplaced;
++		tprints(", deps={");
++		for (i = 0; i < s->count; i++) {
++			tprintf("%smakedev(%u, %u)", i ? ", " : "",
++				major(s->dev[i]), minor(s->dev[i]));
++		}
++		tprints("}");
++	} else {
++misplaced:
++		tprints(", misplaced struct dm_target_deps");
++	}
++}
++
++static void
++dm_decode_dm_name_list(const struct dm_ioctl *ioc, const char *extra,
++		       size_t extra_size)
++{
++	size_t offset = ioc->data_start;
++	while (1) {
++		if (offset + offsetof(struct dm_name_list, name) >= offset &&
++		    offset + offsetof(struct dm_name_list, name) < extra_size) {
++			const struct dm_name_list *s =
++				(const struct dm_name_list *)(extra + offset);
++			if (!s->dev)
++				break;
++			tprintf(", {dev=makedev(%u, %u), name=", major(s->dev), minor(s->dev));
++			print_quoted_string(s->name, extra_size - (offset +
++					    offsetof(struct dm_name_list,
++					    name)), QUOTE_0_TERMINATED);
++			tprints("}");
++			if (!s->next)
++				break;
++			if (offset + s->next < offset)
++				goto misplaced;
++			offset = offset + s->next;
++		} else {
++misplaced:
++			tprints(", misplaced struct dm_name_list");
++			break;
++		}
++	}
++}
++
++static void
++dm_decode_dm_target_versions(const struct dm_ioctl *ioc, const char *extra,
++			     size_t extra_size)
++{
++	size_t offset = ioc->data_start;
++	while (1) {
++		if (offset + offsetof(struct dm_target_versions, name) >=
++		    offset &&
++		    offset + offsetof(struct dm_target_versions, name) <
++		    extra_size) {
++			const struct dm_target_versions *s =
++			    (const struct dm_target_versions *)(extra + offset);
++			tprints(", {name=");
++			print_quoted_string(s->name, extra_size - (offset +
++					    offsetof(struct dm_target_versions,
++					    name)), QUOTE_0_TERMINATED);
++			tprintf(", version=%u.%u.%u}", (unsigned)s->version[0],
++				(unsigned)s->version[1],
++				(unsigned)s->version[2]);
++			if (!s->next)
++				break;
++			if (offset + s->next < offset)
++				goto misplaced;
++			offset = offset + s->next;
++		} else {
++misplaced:
++			tprints(", misplaced struct dm_target_versions");
++			break;
++		}
++	}
++}
++
++static void
++dm_decode_dm_target_msg(const struct dm_ioctl *ioc, const char *extra,
++			size_t extra_size)
++{
++	size_t offset = ioc->data_start;
++	if (offset + offsetof(struct dm_target_msg, message) >= offset &&
++	    offset + offsetof(struct dm_target_msg, message) < extra_size) {
++		const struct dm_target_msg *s =
++			(const struct dm_target_msg *)(extra + offset);
++		tprintf(", {sector=%llu, message=",
++			(unsigned long long)s->sector);
++		print_quoted_string(s->message, extra_size -
++				    offsetof(struct dm_target_msg, message),
++				    QUOTE_0_TERMINATED);
++		tprints("}");
++	} else {
++		tprints(", misplaced struct dm_target_msg");
++	}
++}
++
++static void
++dm_decode_string(const struct dm_ioctl *ioc, const char *extra,
++		 size_t extra_size)
++{
++	size_t offset = ioc->data_start;
++	if (offset < extra_size) {
++		tprints(", string=");
++		print_quoted_string(extra + offset, extra_size - offset,
++				    QUOTE_0_TERMINATED);
++	} else {
++		tprints(", misplaced string");
++	}
++}
++
++static int
++dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
++{
++	struct dm_ioctl ioc;
++	char *extra = NULL;
++	size_t extra_size = 0;
++
++	if (umoven(tcp, arg, sizeof(ioc) - sizeof(ioc.data), (char *)&ioc) < 0)
++		return 0;
++	tprintf(", {version=%d.%d.%d", ioc.version[0], ioc.version[1],
++		ioc.version[2]);
++
++	/*
++	 * if we use a different version of ABI, do not attempt to decode
++	 * ioctl fields
++	 */
++	if (ioc.version[0] != DM_VERSION_MAJOR)
++		goto skip;
++
++	if (ioc.data_size > sizeof(ioc)) {
++		extra = malloc(ioc.data_size);
++		if (extra) {
++			extra_size = ioc.data_size;
++			if (umoven(tcp, arg, extra_size, extra) < 0) {
++				free(extra);
++				extra = NULL;
++				extra_size = 0;
++			}
++		}
++	}
++	dm_decode_device(code, &ioc);
++	dm_decode_values(tcp, code, &ioc);
++	dm_decode_flags(&ioc);
++	if (!abbrev(tcp)) switch (code) {
++		case DM_DEV_WAIT:
++		case DM_TABLE_STATUS:
++			if (entering(tcp) || syserror(tcp))
++				break;
++			dm_decode_dm_target_spec(tcp, &ioc, extra, extra_size);
++			break;
++		case DM_TABLE_LOAD:
++			if (!entering(tcp))
++				break;
++			dm_decode_dm_target_spec(tcp, &ioc, extra, extra_size);
++			break;
++		case DM_TABLE_DEPS:
++			if (entering(tcp) || syserror(tcp))
++				break;
++			dm_decode_dm_target_deps(&ioc, extra, extra_size);
++			break;
++		case DM_LIST_DEVICES:
++			if (entering(tcp) || syserror(tcp))
++				break;
++			dm_decode_dm_name_list(&ioc, extra, extra_size);
++			break;
++		case DM_LIST_VERSIONS:
++			if (entering(tcp) || syserror(tcp))
++				break;
++			dm_decode_dm_target_versions(&ioc, extra, extra_size);
++			break;
++		case DM_TARGET_MSG:
++			if (entering(tcp)) {
++				dm_decode_dm_target_msg(&ioc, extra,
++							extra_size);
++			} else if (!syserror(tcp) &&
++				   ioc.flags & DM_DATA_OUT_FLAG) {
++				dm_decode_string(&ioc, extra, extra_size);
++			}
++			break;
++		case DM_DEV_RENAME:
++		case DM_DEV_SET_GEOMETRY:
++			if (!entering(tcp))
++				break;
++			dm_decode_string(&ioc, extra, extra_size);
++			break;
++	}
++
++skip:
++	tprints("}");
++	if (extra)
++		free(extra);
++	return 1;
++}
++
++int
++dm_ioctl(struct tcb *tcp, const unsigned int code, long arg)
++{
++	switch (code) {
++		case DM_VERSION:
++		case DM_REMOVE_ALL:
++		case DM_LIST_DEVICES:
++		case DM_DEV_CREATE:
++		case DM_DEV_REMOVE:
++		case DM_DEV_RENAME:
++		case DM_DEV_SUSPEND:
++		case DM_DEV_STATUS:
++		case DM_DEV_WAIT:
++		case DM_TABLE_LOAD:
++		case DM_TABLE_CLEAR:
++		case DM_TABLE_DEPS:
++		case DM_TABLE_STATUS:
++		case DM_LIST_VERSIONS:
++		case DM_TARGET_MSG:
++		case DM_DEV_SET_GEOMETRY:
++			return dm_known_ioctl(tcp, code, arg);
++		default:
++			return 0;
++	}
++}
++
++#endif
+Index: strace/ioctl.c
+===================================================================
+--- strace.orig/ioctl.c
++++ strace/ioctl.c
+@@ -263,6 +263,10 @@ ioctl_decode(struct tcb *tcp)
+ 	case 'E':
+ 		return evdev_ioctl(tcp, code, arg);
+ #endif
++#ifdef HAVE_LINUX_DM_IOCTL_H
++	case 0xfd:
++		return dm_ioctl(tcp, code, arg);
++#endif
+ 	default:
+ 		break;
+ 	}
+Index: strace/Makefile.am
+===================================================================
+--- strace.orig/Makefile.am
++++ strace/Makefile.am
+@@ -42,6 +42,7 @@ strace_SOURCES =	\
+ 	count.c		\
+ 	desc.c		\
+ 	dirent.c	\
++	dm.c		\
+ 	epoll.c		\
+ 	evdev.c		\
+ 	eventfd.c	\
+Index: strace/defs.h
+===================================================================
+--- strace.orig/defs.h
++++ strace/defs.h
+@@ -587,6 +587,7 @@ extern void print_seccomp_filter(struct
+ 
+ extern int block_ioctl(struct tcb *, const unsigned int, long);
+ extern int evdev_ioctl(struct tcb *, const unsigned int, long);
++extern int dm_ioctl(struct tcb *, const unsigned int, long);
+ extern int loop_ioctl(struct tcb *, const unsigned int, long);
+ extern int mtd_ioctl(struct tcb *, const unsigned int, long);
+ extern int ptp_ioctl(struct tcb *, const unsigned int, long);
+Index: strace/xlat/dm_flags.in
+===================================================================
+--- /dev/null
++++ strace/xlat/dm_flags.in
+@@ -0,0 +1,17 @@
++DM_READONLY_FLAG
++DM_SUSPEND_FLAG
++DM_PERSISTENT_DEV_FLAG
++DM_STATUS_TABLE_FLAG
++DM_ACTIVE_PRESENT_FLAG
++DM_INACTIVE_PRESENT_FLAG
++DM_BUFFER_FULL_FLAG
++DM_SKIP_BDGET_FLAG
++DM_SKIP_LOCKFS_FLAG
++DM_NOFLUSH_FLAG
++DM_QUERY_INACTIVE_TABLE_FLAG
++DM_UEVENT_GENERATED_FLAG
++DM_UUID_FLAG
++DM_SECURE_DATA_FLAG
++DM_DATA_OUT_FLAG
++DM_DEFERRED_REMOVE
++DM_INTERNAL_SUSPEND_FLAG
+
+------------------------------------------------------------------------------
