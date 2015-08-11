@@ -1,192 +1,37 @@
-From: Sasha Levin <sasha.levin@oracle.com>
-Subject: [PATCH] block: don't access bio->bi_error after bio_put()
-Date: Mon, 10 Aug 2015 19:05:18 -0400
-Message-ID: <1439247918-12599-1-git-send-email-sasha.levin@oracle.com>
+From: Viresh Kumar <viresh.kumar@linaro.org>
+Subject: Re: [PATCH V1 Resend 04/11] drivers: md: Drop unlikely before
+ IS_ERR(_OR_NULL)
+Date: Tue, 11 Aug 2015 07:12:04 +0530
+Message-ID: <20150811014203.GF5766@linux>
+References: <cover.1439187003.git.viresh.kumar@linaro.org>
+ <f5979681afc5c1f30a2b5a0b61507580133bad04.1439187003.git.viresh.kumar@linaro.org>
+ <20150810200503.GA24638@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150810200503.GA24638@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: hch@lst.de, axboe@kernel.dk
-Cc: martin.petersen@oracle.com, neilb@suse.de, bo.li.liu@oracle.com, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Sasha Levin <sasha.levin@oracle.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: akpm@linux-foundation.org, linaro-kernel@lists.linaro.org, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Commit 4246a0b6 ("block: add a bi_error field to struct bio") has added a few
-dereferences of 'bio' after a call to bio_put(). This causes use-after-frees
-such as:
+On 10-08-15, 16:05, Mike Snitzer wrote:
+> On Mon, Aug 10 2015 at  2:12am -0400,
+> Viresh Kumar <viresh.kumar@linaro.org> wrote:
+> 
+> > IS_ERR(_OR_NULL) already contain an 'unlikely' compiler flag and there
+> > is no need to do that again from its callers. Drop it.
+> > 
+> > Signed-off-by: Viresh Kumar <viresh.kumar@linaro.org>
+> 
+> I picked this up for 4.3, staged in linux-dm.git's 'for-next', see:
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=e2545d97b6cc0556fbd1099fca9271e3ca1d0b01
 
-[521120.719695] BUG: KASan: use after free in dio_bio_complete+0x2b3/0x320 at addr ffff880f36b38714
-[521120.720638] Read of size 4 by task mount.ocfs2/9644
-[521120.721212] =============================================================================
-[521120.722056] BUG kmalloc-256 (Not tainted): kasan: bad access detected
-[521120.722968] -----------------------------------------------------------------------------
-[521120.722968]
-[521120.723915] Disabling lock debugging due to kernel taint
-[521120.724539] INFO: Slab 0xffffea003cdace00 objects=32 used=25 fp=0xffff880f36b38600 flags=0x46fffff80004080
-[521120.726037] INFO: Object 0xffff880f36b38700 @offset=1792 fp=0xffff880f36b38800
-[521120.726037]
-[521120.726974] Bytes b4 ffff880f36b386f0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-[521120.727898] Object ffff880f36b38700: 00 88 b3 36 0f 88 ff ff 00 00 d8 de 0b 88 ff ff  ...6............
-[521120.728822] Object ffff880f36b38710: 02 00 00 f0 00 00 00 00 00 00 00 00 00 00 00 00  ................
-[521120.729705] Object ffff880f36b38720: 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00  ................
-[521120.730623] Object ffff880f36b38730: 00 00 00 00 00 00 00 00 01 00 00 00 00 02 00 00  ................
-[521120.731621] Object ffff880f36b38740: 00 02 00 00 01 00 00 00 d0 f7 87 ad ff ff ff ff  ................
-[521120.732776] Object ffff880f36b38750: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-[521120.733640] Object ffff880f36b38760: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-[521120.734508] Object ffff880f36b38770: 01 00 03 00 01 00 00 00 88 87 b3 36 0f 88 ff ff  ...........6....
-[521120.735385] Object ffff880f36b38780: 00 73 22 ad 02 88 ff ff 40 13 e0 3c 00 ea ff ff  .s".....@..<....
-[521120.736667] Object ffff880f36b38790: 00 02 00 00 00 04 00 00 00 00 00 00 00 00 00 00  ................
-[521120.737596] Object ffff880f36b387a0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-[521120.738524] Object ffff880f36b387b0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-[521120.739388] Object ffff880f36b387c0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-[521120.740277] Object ffff880f36b387d0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-[521120.741187] Object ffff880f36b387e0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-[521120.742233] Object ffff880f36b387f0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-[521120.743229] CPU: 41 PID: 9644 Comm: mount.ocfs2 Tainted: G    B           4.2.0-rc6-next-20150810-sasha-00039-gf909086 #2420
-[521120.744274]  ffff880f36b38000 ffff880d89c8f638 ffffffffb6e9ba8a ffff880101c0e5c0
-[521120.745025]  ffff880d89c8f668 ffffffffad76a313 ffff880101c0e5c0 ffffea003cdace00
-[521120.745908]  ffff880f36b38700 ffff880f36b38798 ffff880d89c8f690 ffffffffad772854
-[521120.747063] Call Trace:
-[521120.747520] dump_stack (lib/dump_stack.c:52)
-[521120.748053] print_trailer (mm/slub.c:653)
-[521120.748582] object_err (mm/slub.c:660)
-[521120.749079] kasan_report_error (include/linux/kasan.h:20 mm/kasan/report.c:152 mm/kasan/report.c:194)
-[521120.750834] __asan_report_load4_noabort (mm/kasan/report.c:250)
-[521120.753580] dio_bio_complete (fs/direct-io.c:478)
-[521120.755752] do_blockdev_direct_IO (fs/direct-io.c:494 fs/direct-io.c:1291)
-[521120.759765] __blockdev_direct_IO (fs/direct-io.c:1322)
-[521120.761658] blkdev_direct_IO (fs/block_dev.c:162)
-[521120.762993] generic_file_read_iter (mm/filemap.c:1738)
-[521120.767405] blkdev_read_iter (fs/block_dev.c:1649)
-[521120.768556] __vfs_read (fs/read_write.c:423 fs/read_write.c:434)
-[521120.772126] vfs_read (fs/read_write.c:454)
-[521120.773118] SyS_pread64 (fs/read_write.c:607 fs/read_write.c:594)
-[521120.776062] entry_SYSCALL_64_fastpath (arch/x86/entry/entry_64.S:186)
-[521120.777375] Memory state around the buggy address:
-[521120.778118]  ffff880f36b38600: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
-[521120.779211]  ffff880f36b38680: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
-[521120.780315] >ffff880f36b38700: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
-[521120.781465]                          ^
-[521120.782083]  ffff880f36b38780: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
-[521120.783717]  ffff880f36b38800: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
-[521120.784818] ==================================================================
+I had no clue about it as I didn't look at individual maintainer's
+tree. But rebased things over linux-next/master.
 
-This patch fixes a few of those places that I caught while auditing the patch, but the
-original patch should be audited further for more occurences of this issue since I'm
-not too familiar with the code.
+Why isn't your branch merged into linux-next ?
 
-Signed-off-by: Sasha Levin <sasha.levin@oracle.com>
----
- drivers/md/dm-crypt.c |    8 +++++---
- drivers/md/dm-io.c    |    4 +++-
- drivers/md/raid5.c    |    3 ++-
- fs/direct-io.c        |    5 ++++-
- 4 files changed, 14 insertions(+), 6 deletions(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 744b80c..59da573 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1102,6 +1102,7 @@ static void crypt_endio(struct bio *clone)
- 	struct dm_crypt_io *io = clone->bi_private;
- 	struct crypt_config *cc = io->cc;
- 	unsigned rw = bio_data_dir(clone);
-+	int error;
- 
- 	/*
- 	 * free the processed pages
-@@ -1109,15 +1110,16 @@ static void crypt_endio(struct bio *clone)
- 	if (rw == WRITE)
- 		crypt_free_buffer_pages(cc, clone);
- 
-+	error = clone->bi_error;
- 	bio_put(clone);
- 
--	if (rw == READ && !clone->bi_error) {
-+	if (rw == READ && !error) {
- 		kcryptd_queue_crypt(io);
- 		return;
- 	}
- 
--	if (unlikely(clone->bi_error))
--		io->error = clone->bi_error;
-+	if (unlikely(error))
-+		io->error = error;
- 
- 	crypt_dec_pending(io);
- }
-diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-index efc6659..c84714f7 100644
---- a/drivers/md/dm-io.c
-+++ b/drivers/md/dm-io.c
-@@ -138,6 +138,7 @@ static void endio(struct bio *bio)
- {
- 	struct io *io;
- 	unsigned region;
-+	int error;
- 
- 	if (bio->bi_error && bio_data_dir(bio) == READ)
- 		zero_fill_bio(bio);
-@@ -147,9 +148,10 @@ static void endio(struct bio *bio)
- 	 */
- 	retrieve_io_and_region_from_bio(bio, &io, &region);
- 
-+	error = bio->bi_error;
- 	bio_put(bio);
- 
--	dec_count(io, region, bio->bi_error);
-+	dec_count(io, region, error);
- }
- 
- /*-----------------------------------------------------------------
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 358deaf..394f5fc 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -4763,6 +4763,7 @@ static void raid5_align_endio(struct bio *bi)
- 	struct mddev *mddev;
- 	struct r5conf *conf;
- 	struct md_rdev *rdev;
-+	int error = bi->bi_error;
- 
- 	bio_put(bi);
- 
-@@ -4773,7 +4774,7 @@ static void raid5_align_endio(struct bio *bi)
- 
- 	rdev_dec_pending(rdev, conf->mddev);
- 
--	if (!bi->bi_error) {
-+	if (!error) {
- 		trace_block_bio_complete(bdev_get_queue(raid_bi->bi_bdev),
- 					 raid_bi, 0);
- 		bio_endio(raid_bi);
-diff --git a/fs/direct-io.c b/fs/direct-io.c
-index e1639c8..818c647 100644
---- a/fs/direct-io.c
-+++ b/fs/direct-io.c
-@@ -459,12 +459,14 @@ static int dio_bio_complete(struct dio *dio, struct bio *bio)
- {
- 	struct bio_vec *bvec;
- 	unsigned i;
-+	int err;
- 
- 	if (bio->bi_error)
- 		dio->io_error = -EIO;
- 
- 	if (dio->is_async && dio->rw == READ) {
- 		bio_check_pages_dirty(bio);	/* transfers ownership */
-+		err = bio->bi_error;
- 	} else {
- 		bio_for_each_segment_all(bvec, bio, i) {
- 			struct page *page = bvec->bv_page;
-@@ -473,9 +475,10 @@ static int dio_bio_complete(struct dio *dio, struct bio *bio)
- 				set_page_dirty_lock(page);
- 			page_cache_release(page);
- 		}
-+		err = bio->bi_error;
- 		bio_put(bio);
- 	}
--	return bio->bi_error;
-+	return err;
- }
- 
- /*
 -- 
-1.7.10.4
+viresh
