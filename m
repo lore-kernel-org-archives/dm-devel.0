@@ -1,15 +1,16 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH] dm-raid.txt: document discard support
-Date: Wed, 12 Aug 2015 15:25:05 +0200
-Message-ID: <55CB4931.6050306@redhat.com>
-References: <1438872279-30693-1-git-send-email-heinzm@redhat.com>
-	<yq14mk9iw4d.fsf@sermon.lab.mkp.net>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-snap deadlock in pending_complete()
+Date: Wed, 12 Aug 2015 10:16:17 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1508121006370.5295@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20150810135551.64d7dbac@noble>
+	<alpine.LRH.2.02.1508110509420.2623@file01.intranet.prod.int.rdu2.redhat.com>
+	<20150812114631.15268065@noble>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <yq14mk9iw4d.fsf@sermon.lab.mkp.net>
+In-Reply-To: <20150812114631.15268065@noble>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,35 +20,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: NeilBrown <neilb@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
 
-On 08/08/2015 06:27 PM, Martin K. Petersen wrote:
->>>>>> "Heinz" == heinzm  <heinzm@redhat.com> writes:
-> Heinz,
->
->> +Discard Support
->> +---------------
->> +The implementation of discard support amoung hardware vendors varies. When
->> +a block is discarded, some storage devices will return zeros when it is
->> +read.  These devices set the 'discard_zeros_data' attribute.  Other devices
->> +will return random data.  Confusingly, some devices will set
->> +'discard_zeros_data', but will still not always return zeros when
->> +discarded blocks are read!
-> This used to be correct but that's no longer the case. We only set
-> discard_zeroes_data when we have hard guarantees. We no longer
-> exclusively rely on what the device reports.
+On Wed, 12 Aug 2015, NeilBrown wrote:
 
-Martin,
+> Ahh - thanks for the explanation.  That makes sense.
+> Presumably you need to wait for old reads that you don't have a read
+> returning old data after a write has confirmed the new data is written?
+> Is there some other reason?
+> 
+> As soon as the new "proper" exception is installed, no new reads will
+> use the old address, so it should be safe to wait without holding the
+> lock.
+> 
+> So what about this?
 
-so can we rely on discard_zeroes_data if reported 100% now?
+This is wrong too - when you add the exception to the complete hash table 
+and drop the lock, writes to the chunk in the origin target are can modify 
+the origin volume. These writes race with pending reads to the snapshot 
+(__chunk_is_tracked tests for those reads). If the I/O scheduler schedules 
+the write to the origin before the read from the snapshot, the read from 
+the snapshot returns corrupted data.
 
-Heinz
+There can be more problems with snapshot merging - if the chunk is on the 
+complete hash table, the merging code assumes that it can be safely 
+merged.
 
->
-> discard_zeroes_data is only set if the device reports LBPME/LBPRZ and
-> uses WRITE SAME 10 or 16 (SCSI) or if it reports DRAT/RZAT and is
-> explicitly whitelisted (ATA).
->
+Mikulas
+
+> Thanks for your time,
+> NeilBrown
+> 
+> 
+> 
+> diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+> index 7c82d3ccce87..c7a7ed2cfd6d 100644
+> --- a/drivers/md/dm-snap.c
+> +++ b/drivers/md/dm-snap.c
+> @@ -1461,14 +1461,22 @@ static void pending_complete(struct dm_snap_pending_exception *pe, int success)
+>  		goto out;
+>  	}
+>  
+> -	/* Check for conflicting reads */
+> -	__check_for_conflicting_io(s, pe->e.old_chunk);
+> +	/* Add proper exception.  Now all reads will be
+> +	 * redirected, so no new reads can be started on
+> +	 * 'old_chunk'.
+> +	 */
+> +	dm_insert_exception(&s->complete, e);
+> +
+> +	/* Drain conflicting reads */
+> +	if (__chunk_is_tracked(s, pe->e.old_chunk)) {
+> +		up_write(&s->lock);
+> +		__check_for_conflicting_io(s, pe->e.old_chunk);
+> +		down_write(&s->lock);
+> +	}
+>  
+>  	/*
+> -	 * Add a proper exception, and remove the
+> -	 * in-flight exception from the list.
+> +	 * And now we can remove the temporary exception.
+>  	 */
+> -	dm_insert_exception(&s->complete, e);
+>  
+>  out:
+>  	dm_remove_exception(&pe->e);
+> 
