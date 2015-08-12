@@ -1,42 +1,38 @@
-From: Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v5 01/11] block: make generic_make_request
- handle arbitrarily sized bios
-Date: Tue, 11 Aug 2015 21:41:06 -0700
-Message-ID: <1439354466.5775.0.camel@hasee>
-References: <1439099990.7880.0.camel@hasee>
-	<20150809064128.GB2436@infradead.org> <1439103347.7880.3.camel@hasee>
-	<20150809070128.GA25739@infradead.org> <1439104707.7880.8.camel@hasee>
-	<20150810150216.GA22719@redhat.com>
-	<yq1si7rgllc.fsf@sermon.lab.mkp.net>
-	<1439230696.26458.6.camel@ssi> <yq1bneeh9df.fsf@sermon.lab.mkp.net>
-	<20150811024154.GA26351@redhat.com> <20150811033851.GA28533@kmo-pixel>
-	<yq11tf9hg01.fsf@sermon.lab.mkp.net>
-	<yq1si7pg0px.fsf@sermon.lab.mkp.net>
-	<1439326568.19144.11.camel@ssi> <yq137zpfj5j.fsf@sermon.lab.mkp.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-In-Reply-To: <yq137zpfj5j.fsf-+q57XtR/GgMb6DWv4sQWN6xOck334EZe@public.gmane.org>
-List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Andreas-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kelleher <pjk1939-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Philip-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Nitin Gupta <ngupta-KNmc09w0p+Ednm+yROfE0A@public.gmane.org>, Ming Lin <ming.l-Vzezgt5dB6uUEJcrhfAQsw@public.gmane.org>, Oleg Drokin <oleg.drokin-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, axboe-b10kYP2dOMg@public.gmane.org, Dilger <andreas.dilger-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Geoff Levand <geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Al-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, Jim Paris <jim-XrPbb/hENzg@public.gmane.org>, Jiri-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, Joe Thornber <ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, drbd-user-cunTk1MwBs8@public.gmane.org
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: Persistent Reservation API V2
+Date: Wed, 12 Aug 2015 08:23:19 +0200
+Message-ID: <1439360604-16192-1-git-send-email-hch@lst.de>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>
+Cc: linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, 2015-08-11 at 20:24 -0400, Martin K. Petersen wrote:
-> >>>>> "Ming" == Ming Lin <mlin-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> writes:
-> 
-> Ming> Do you still agree we cap discard to 2G as an interim solution?
-> 
-> I can live with the 2G cap for 4.3 but would like to see it fixed
-> properly in 4.4.
+This series adds support for a simplified Persistent Reservation API
+to the block layer.  The intent is that both in-kernel and userspace
+consumers can use the API instead of having to hand craft SCSI or NVMe
+command through the various pass through interfaces.  It also adds
+DM support as getting reservations through dm-multipath is a major
+pain with the current scheme.
 
-Sure. I'd like to work on the fix.
+NVMe support currently isn't included as I don't have a multihost
+NVMe setup to test on, but Keith offered to test it and I'll have
+a patch for it shortly.
+
+The ioctl API is documented in Documentation/block/pr.txt, but to
+fully understand the concept you'll have to read up the SPC spec,
+PRs are too complicated that trying to rephrase them into different
+terminology is just going to create confusion.
+
+Note that Mike wants to include the DM patches so through the DM
+tree, so they are only included for reference.
+
+I also have a set of simple test tools available at:
+
+	git://git.infradead.org/users/hch/pr-tests.git
+
+Changes since V1:
+  - rename DM ->ioctl to ->prepare_ioctl
+  - rename dm_get_ioctl_table to dm_get_live_table_for_ioctl
+  - merge two DM patches into one
+  - various spelling fixes
