@@ -1,130 +1,44 @@
-From: NeilBrown <neilb@suse.com>
-Subject: Re: dm-snap deadlock in pending_complete()
-Date: Thu, 13 Aug 2015 11:23:16 +1000
-Message-ID: <20150813112316.628f0de6@noble>
-References: <20150810135551.64d7dbac@noble>
-	<alpine.LRH.2.02.1508110509420.2623@file01.intranet.prod.int.rdu2.redhat.com>
-	<20150812114631.15268065@noble>
-	<alpine.LRH.2.02.1508121006370.5295@file01.intranet.prod.int.rdu2.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [dm-devel] [PATCH v5 01/11] block: make generic_make_request
+ handle arbitrarily sized bios
+Date: Thu, 13 Aug 2015 08:04:42 +0200
+Message-ID: <55CC337A.1050608@suse.de>
+References: <CAF1ivSZbMDgyo_-wFGusSNSZ1fonSMWmNU9aVavGFaQsmEyYmQ@mail.gmail.com> <20150731213831.GA16464@redhat.com> <1438412290.26596.14.camel@hasee> <20150801163356.GA21478@redhat.com> <1438581502.26596.24.camel@hasee> <20150804113626.GA12682@lst.de> <1438754604.29731.31.camel@hasee> <20150807073001.GA17485@lst.de> <1438990806.24452.8.camel@ssi> <55C5C348.1070307@suse.de> <20150808090205.GA15061@kmo-pixel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1508121006370.5295@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150808090205.GA15061@kmo-pixel>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kent Overstreet <kent.overstreet@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Neil@redhat.com, Mike Snitzer <snitzer@redhat.com>, Ming Lei <ming.lei@canonical.com>, Al@redhat.com, Alasdair Kergon <agk@redhat.com>, Lars Ellenberg <drbd-dev@lists.linbit.com>, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Christoph Hellwig <hch@infradead.org>, Nitin Gupta <ngupta@vflare.org>, Ming Lin <ming.l@ssi.samsung.com>, Oleg Drokin <oleg.drokin@intel.com>, Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, Andreas Dilger <andreas.dilger@intel.com>, Geoff Levand <geoff@infradead.org>, Jiri Kosina <jkosina@suse.cz>, lkml <linux-kernel@vger.kernel.org>, Jim Paris <jim@jtan.com>, Minchan Kim <minchan@kernel.org>, Dongsu Park <dpark@posteo.net>, drbd-user@lists.linbit.com
 List-Id: dm-devel.ids
 
-On Wed, 12 Aug 2015 10:16:17 -0400 (EDT) Mikulas Patocka
-<mpatocka@redhat.com> wrote:
+On 08/08/2015 11:02 AM, Kent Overstreet wrote:
+> On Sat, Aug 08, 2015 at 10:52:24AM +0200, Hannes Reinecke wrote:
+>> Wouldn't it be easier to move both max_write_same_sectors and
+>> max_discard sectors to 64 bit (ie to type sector_t) and be done with=
+ the
+>> overflow?
+>> Seems to me this is far too much coding around self-imposed restrict=
+ions...
+>=20
+> It's bio->bi_iter.bi_size that would have to be increased to 64 bits.=
+ Which I
+> suppose wouldn't actually increase the size of struct bio (when secto=
+r_t is 64
+> bits), since struct bvec_iter has padding right now...
+>=20
+Which I guess we should be doing anyway.
+Devices are getting larger and larger, so in the long run in need to
+be moved to 64 bits.
 
-> 
-> 
-> On Wed, 12 Aug 2015, NeilBrown wrote:
-> 
-> > Ahh - thanks for the explanation.  That makes sense.
-> > Presumably you need to wait for old reads that you don't have a read
-> > returning old data after a write has confirmed the new data is written?
-> > Is there some other reason?
-> > 
-> > As soon as the new "proper" exception is installed, no new reads will
-> > use the old address, so it should be safe to wait without holding the
-> > lock.
-> > 
-> > So what about this?
-> 
-> This is wrong too - when you add the exception to the complete hash table 
-> and drop the lock, writes to the chunk in the origin target are can modify 
-> the origin volume. These writes race with pending reads to the snapshot 
-> (__chunk_is_tracked tests for those reads). If the I/O scheduler schedules 
-> the write to the origin before the read from the snapshot, the read from 
-> the snapshot returns corrupted data.
-> 
-> There can be more problems with snapshot merging - if the chunk is on the 
-> complete hash table, the merging code assumes that it can be safely 
-> merged.
-> 
+Cheers,
 
-Thanks again.
-
-I came up with the following which should address the origin-write
-issue, but I'm not so sure about snapshot merging, and it is becoming a
-lot less simple that I had hoped.
-
-I'll see if I can come up with code for a more general solution that is
-still localised to dm - along the lines of my bio_split suggestion.
-
-Thanks,
-NeilBrown
-
-
-
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 7c82d3ccce87..7f9e1b0429c8 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -1461,14 +1461,22 @@ static void pending_complete(struct dm_snap_pending_exception *pe, int success)
- 		goto out;
- 	}
- 
--	/* Check for conflicting reads */
--	__check_for_conflicting_io(s, pe->e.old_chunk);
-+	/* Add proper exception.  Now all reads will be
-+	 * redirected, so no new reads can be started on
-+	 * 'old_chunk'.
-+	 */
-+	dm_insert_exception(&s->complete, e);
-+
-+	/* Drain conflicting reads */
-+	if (__chunk_is_tracked(s, pe->e.old_chunk)) {
-+		up_write(&s->lock);
-+		__check_for_conflicting_io(s, pe->e.old_chunk);
-+		down_write(&s->lock);
-+	}
- 
- 	/*
--	 * Add a proper exception, and remove the
--	 * in-flight exception from the list.
-+	 * And now we can remove the temporary exception.
- 	 */
--	dm_insert_exception(&s->complete, e);
- 
- out:
- 	dm_remove_exception(&pe->e);
-@@ -2089,17 +2097,17 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
- 		 */
- 		chunk = sector_to_chunk(snap->store, sector);
- 
--		/*
--		 * Check exception table to see if block
--		 * is already remapped in this snapshot
--		 * and trigger an exception if not.
--		 */
--		e = dm_lookup_exception(&snap->complete, chunk);
--		if (e)
--			goto next_snapshot;
--
- 		pe = __lookup_pending_exception(snap, chunk);
- 		if (!pe) {
-+			/*
-+			 * Check exception table to see if block
-+			 * is already remapped in this snapshot
-+			 * and trigger an exception if not.
-+			 */
-+			e = dm_lookup_exception(&snap->complete, chunk);
-+			if (e)
-+				goto next_snapshot;
-+
- 			up_write(&snap->lock);
- 			pe = alloc_pending_exception(snap);
- 			down_write(&snap->lock);
+Hannes
+--=20
+Dr. Hannes Reinecke		               zSeries & Storage
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
+GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=C3=BCrnberg)
