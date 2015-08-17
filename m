@@ -1,11 +1,18 @@
-From: Thiago Padilha <tpadilha84@gmail.com>
-Subject: Any device mapper target that stores data in files?
-Date: Mon, 17 Aug 2015 04:55:59 +0000
-Message-ID: <CAAq2XdoSv34qGewtGKRxUo064dG8mFudxZtw4A_nEUace3KQXQ@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-snap deadlock in pending_complete()
+Date: Mon, 17 Aug 2015 06:55:37 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1508170650460.29294@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20150810135551.64d7dbac@noble>
+	<alpine.LRH.2.02.1508110509420.2623@file01.intranet.prod.int.rdu2.redhat.com>
+	<20150812114631.15268065@noble>
+	<alpine.LRH.2.02.1508121006370.5295@file01.intranet.prod.int.rdu2.redhat.com>
+	<20150813112316.628f0de6@noble>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7521963001293674815=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20150813112316.628f0de6@noble>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,105 +22,120 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: NeilBrown <neilb@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============7521963001293674815==
-Content-Type: multipart/alternative; boundary=001a1133b4a4aaead9051d7a9eda
-
---001a1133b4a4aaead9051d7a9eda
-Content-Type: text/plain; charset=UTF-8
-
-Hi
-
-First of all, I'm very new on the subject(kernel programming/device
-mappers/block devices), so forgive if I say anything stupid.
-
-I need a device mapper target that stores data in files of fixed sizes,
-probably defined when the virtual device is first created. For the sake of
-explanation, lets call this target as "dirdm" and assume there's an
-userspace tool of the same name that can be used to manage such virtual
-devices. Now let's say I have an empty directory "/dirdm" and want to
-create a virtual device with 4k "block size" on top of it:
-
-    dirdm create --size 10G --block-size 4k /dirdm
-
-After this command is executed, there's a new file with 4k size at
-/dirdm/0. This file will be used to store the first block of the device.
-Here are the filenames that represent some blocks of this virtual device:
-
-- block 0: 0
-- block 1: 4096
-- block 2 8192
-- block 3: 12288
-- block 4: 16384
-
-That is, each block is stored in a file named after the first byte on the
-block. Querying a block that has no data written will simply return 0(block
-files are also initialized with 0), so it behaves like a sparse block
-device.
-
-Is there any device mapper implementation that manages data in a similar
-manner? Note that these details about filenames or directory structure are
-not important, all I care about is that the dm target splits data in
-relatively small files on a directory.
-
-The reason for these requirements is to be able to efficiently store
-arbitrary block devices in a cloud storage service such a google
-drive/onedrive without syncing a big loop device on every modification(Only
-files representing affected blocks are modified). One useful application
-would be to create a big device(such as 100g size) and add luks/ext4 on top
-of it, which would be a great way to store private data.
-
-If there are no existing dm targets matching these requirements, what would
-be a recommended reading/documentation to get started on implementing this
-on my own?
-
---001a1133b4a4aaead9051d7a9eda
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><div><div><div><div><div><div>Hi<br><br></div><div>First o=
-f all, I&#39;m very new on the subject(kernel programming/device mappers/bl=
-ock devices), so forgive if I say anything stupid.<br><br></div>I need a de=
-vice mapper target that stores data in files of fixed sizes, probably defin=
-ed when the virtual device is first created. For the sake of explanation, l=
-ets call this target as &quot;dirdm&quot; and assume there&#39;s an userspa=
-ce tool of the same name that can be used to manage such virtual devices. N=
-ow let&#39;s say I have an empty directory &quot;/dirdm&quot; and want to c=
-reate a virtual device with 4k &quot;block size&quot; on top of it:<br><br>=
-</div>=C2=A0=C2=A0=C2=A0 dirdm create --size 10G --block-size 4k /dirdm<br>=
-<br></div>After this command is executed, there&#39;s a new file with 4k si=
-ze at /dirdm/0. This file will be used to store the first block of the devi=
-ce. Here are the filenames that represent some blocks of this virtual devic=
-e:<br><br></div>- block 0: 0<br></div>- block 1: 4096<br></div>- block 2 81=
-92<br><div><div><div><div>- block 3: 12288<br></div><div>- block 4: 16384<b=
-r><br></div><div>That is, each block is stored in a file named after the fi=
-rst byte on the block. Querying a block that has no data written will simpl=
-y return 0(block files are also initialized with 0), so it behaves like a s=
-parse block device.<br><br></div><div>Is there any device mapper implementa=
-tion that manages data in a similar manner? Note that these details about f=
-ilenames or directory structure are not important, all I care about is that=
- the dm target splits data in relatively small files on a directory.<br><br=
-></div><div>The reason for these requirements is to be able to efficiently =
-store arbitrary block devices in a cloud storage service such a google driv=
-e/onedrive without syncing a big loop device on every modification(Only fil=
-es representing affected blocks are modified). One useful application would=
- be to create a big device(such as 100g size) and add luks/ext4 on top of i=
-t, which would be a great way to store private data.<br></div><div><br></di=
-v><div>If there are no existing dm targets matching these requirements, wha=
-t would be a recommended reading/documentation to get started on implementi=
-ng this on my own?<br></div><div></div><div><br></div></div></div></div></d=
-iv>
-
---001a1133b4a4aaead9051d7a9eda--
 
 
---===============7521963001293674815==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+On Thu, 13 Aug 2015, NeilBrown wrote:
 
+> On Wed, 12 Aug 2015 10:16:17 -0400 (EDT) Mikulas Patocka
+> <mpatocka@redhat.com> wrote:
+> 
+> > 
+> > 
+> > On Wed, 12 Aug 2015, NeilBrown wrote:
+> > 
+> > > Ahh - thanks for the explanation.  That makes sense.
+> > > Presumably you need to wait for old reads that you don't have a read
+> > > returning old data after a write has confirmed the new data is written?
+> > > Is there some other reason?
+> > > 
+> > > As soon as the new "proper" exception is installed, no new reads will
+> > > use the old address, so it should be safe to wait without holding the
+> > > lock.
+> > > 
+> > > So what about this?
+> > 
+> > This is wrong too - when you add the exception to the complete hash table 
+> > and drop the lock, writes to the chunk in the origin target are can modify 
+> > the origin volume. These writes race with pending reads to the snapshot 
+> > (__chunk_is_tracked tests for those reads). If the I/O scheduler schedules 
+> > the write to the origin before the read from the snapshot, the read from 
+> > the snapshot returns corrupted data.
+> > 
+> > There can be more problems with snapshot merging - if the chunk is on the 
+> > complete hash table, the merging code assumes that it can be safely 
+> > merged.
+> > 
+> 
+> Thanks again.
+> 
+> I came up with the following which should address the origin-write
+> issue, but I'm not so sure about snapshot merging, and it is becoming a
+> lot less simple that I had hoped.
+> 
+> I'll see if I can come up with code for a more general solution that is
+> still localised to dm - along the lines of my bio_split suggestion.
+> 
+> Thanks,
+> NeilBrown
+> 
+> 
+> 
+> diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+> index 7c82d3ccce87..7f9e1b0429c8 100644
+> --- a/drivers/md/dm-snap.c
+> +++ b/drivers/md/dm-snap.c
+> @@ -1461,14 +1461,22 @@ static void pending_complete(struct dm_snap_pending_exception *pe, int success)
+>  		goto out;
+>  	}
+>  
+> -	/* Check for conflicting reads */
+> -	__check_for_conflicting_io(s, pe->e.old_chunk);
+> +	/* Add proper exception.  Now all reads will be
+> +	 * redirected, so no new reads can be started on
+> +	 * 'old_chunk'.
+> +	 */
+> +	dm_insert_exception(&s->complete, e);
+> +
+> +	/* Drain conflicting reads */
+> +	if (__chunk_is_tracked(s, pe->e.old_chunk)) {
+> +		up_write(&s->lock);
+> +		__check_for_conflicting_io(s, pe->e.old_chunk);
+> +		down_write(&s->lock);
+> +	}
+>  
+>  	/*
+> -	 * Add a proper exception, and remove the
+> -	 * in-flight exception from the list.
+> +	 * And now we can remove the temporary exception.
+>  	 */
+> -	dm_insert_exception(&s->complete, e);
+>  
+>  out:
+>  	dm_remove_exception(&pe->e);
+> @@ -2089,17 +2097,17 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
+>  		 */
+>  		chunk = sector_to_chunk(snap->store, sector);
+>  
+> -		/*
+> -		 * Check exception table to see if block
+> -		 * is already remapped in this snapshot
+> -		 * and trigger an exception if not.
+> -		 */
+> -		e = dm_lookup_exception(&snap->complete, chunk);
+> -		if (e)
+> -			goto next_snapshot;
+> -
+>  		pe = __lookup_pending_exception(snap, chunk);
+>  		if (!pe) {
+> +			/*
+> +			 * Check exception table to see if block
+> +			 * is already remapped in this snapshot
+> +			 * and trigger an exception if not.
+> +			 */
+> +			e = dm_lookup_exception(&snap->complete, chunk);
+> +			if (e)
+> +				goto next_snapshot;
+> +
+>  			up_write(&snap->lock);
+>  			pe = alloc_pending_exception(snap);
+>  			down_write(&snap->lock);
 
---===============7521963001293674815==--
+You forgot about another race after these calls to up_write/down_write - 
+after the lock is taken again, you must call both dm_lookup_exception and 
+__lookup_pending_exception.
+
+Mikulas
