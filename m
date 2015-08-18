@@ -1,23 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v5 01/11] block: make generic_make_request
- handle arbitrarily sized bios
-Date: Tue, 18 Aug 2015 15:59:25 -0400
-Message-ID: <20150818195925.GA17273@redhat.com>
-References: <1439099990.7880.0.camel@hasee>
-	<20150809064128.GB2436@infradead.org>
-	<1439103347.7880.3.camel@hasee>
-	<20150809070128.GA25739@infradead.org>
-	<1439104707.7880.8.camel@hasee> <20150810150216.GA22719@redhat.com>
-	<CAF1ivSZFCVRDQf-N0JOBweX4se3iZZJzUCR_Uqdq1AV3Vd+Srg@mail.gmail.com>
-	<CAF1ivSaAX8sHFyaW69da8arm4fpLD-T656GgV3-KYQxt0H_DYg@mail.gmail.com>
-	<20150818144505.GA15832@redhat.com> <1439919178.28022.3.camel@ssi>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-statistics: report precise timestamps and
+	histogram
+Date: Tue, 18 Aug 2015 16:26:16 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1508181618100.19666@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1439919178.28022.3.camel@ssi>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,79 +17,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ming Lin <mlin@kernel.org>
-Cc: Joe Thornber <ejt@redhat.com>, device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, Kent Overstreet <kent.overstreet@gmail.com>
+To: "Alasdair G. Kergon" <agk@redhat.com>, Bryn Reeves <breeves@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Aug 18 2015 at  1:32pm -0400,
-Ming Lin <mlin@kernel.org> wrote:
+Mike, please submit this patch to the upstream kernel before 4.2 is 
+released, so that the all the kernels that support the options 
+"precise_timestamps" and "histogram" also report these values back.
 
-> On Tue, 2015-08-18 at 10:45 -0400, Mike Snitzer wrote:
-> > On Tue, Aug 18 2015 at  3:04am -0400,
-> > Ming Lin <mlin@kernel.org> wrote:
-> > 
-> > > On Mon, Aug 17, 2015 at 10:09 PM, Ming Lin <mlin@kernel.org> wrote:
-> > > > On Mon, Aug 10, 2015 at 8:02 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> > > >> p.s. I'll be working with Joe Thornber on optimizing DM (particularly
-> > > >> dm-thinp and dm-cache) once this patchset is included upstream.  You'll
-> > > >> see I've already added a couple WIP dm-thinp patches ontop.
-> > > >
-> > > > Hi Mike,
-> > > >
-> > > > Just to avoid duplicated work.
-> > > > Are you going to work on the dm-thinp/dm-cache discard rewritten?
-> > > 
-> > > Seems dm-stripe discard also needs rewrite.
-> > 
-> > Can you elaborate on what you feel needs re-writing in these targets?
-> 
-> dm-stripe also require discard size to be a multiple of chunk size.
-> See output of below debug patch for 4G discard.
-> 
-> root@bee:~# blkdiscard -o 0 -l 4294967296 /dev/striped_vol_group/striped_logical_volume
-> 
-> root@bee:~# dmesg |grep DEBUG
-> [   13.110224] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
-> [   13.113723] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
-> [   13.117098] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
-> [   13.120424] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
-> [   13.123800] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
-> [   13.127027] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
-> [   13.130161] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
-> 
-> diff --git a/block/blk-lib.c b/block/blk-lib.c
-> index bd40292..1cab2ba 100644
-> --- a/block/blk-lib.c
-> +++ b/block/blk-lib.c
-> @@ -82,7 +82,7 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
->  			break;
->  		}
->  
-> -		req_sects = min_t(sector_t, nr_sects, MAX_BIO_SECTORS);
-> +		req_sects = min_t(sector_t, nr_sects, UINT_MAX>>9);
->  		end_sect = sector + req_sects;
->  
->  		bio->bi_iter.bi_sector = sector;
-> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-> index 484029d..a288bc2 100644
-> --- a/drivers/md/dm-stripe.c
-> +++ b/drivers/md/dm-stripe.c
-> @@ -273,6 +273,8 @@ static int stripe_map_range(struct stripe_c *sc, struct bio *bio,
->  		return DM_MAPIO_REMAPPED;
->  	} else {
->  		/* The range doesn't map to the target stripe */
-> +		printk("DEBUG: discard ignored: stripe chunk size %dK bytes, bio size %d bytes\n",
-> +			sc->chunk_size>>1, bio->bi_iter.bi_size);
->  		bio_endio(bio);
->  		return DM_MAPIO_SUBMITTED;
->  	}
 
-This is expected.  If a discard is only 512 bytes and the chunk size is
-128K then every discard will only ever hit one stripe.
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-So each discard will have N - 1 "discard ignored" messages (when N is #
-of stripes in the dm-stripe device).  So in your test device I'd assume
-you have 8 stripes.
+If the user selected precise timestamps or histogram, report it in the
+output of the @stats_list message.
 
-Basically your debugging looks like it is _very_ prone to false
-positives here.  The dm-stripe code is working as expected.
+If the user didn't select these options, no extra tokens are reported,
+thus it is backward compatible with old software that doesn't know about
+precise timestamps and histogram.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+Index: linux-4.1.5/Documentation/device-mapper/statistics.txt
+===================================================================
+--- linux-4.1.5.orig/Documentation/device-mapper/statistics.txt
++++ linux-4.1.5/Documentation/device-mapper/statistics.txt
+@@ -118,6 +118,10 @@ Messages
+ 
+ 	Output format:
+ 	  <region_id>: <start_sector>+<length> <step> <program_id> <aux_data>
++	  	precise_timestamps histogram:n1,n2,n3,...
++
++	The strings "precise_timestamps" and "histogram" are printed only
++	if they were specified when creating the region.
+ 
+     @stats_print <region_id> [<starting_line> <number_of_lines>]
+ 
+Index: linux-4.1.5/drivers/md/dm-stats.c
+===================================================================
+--- linux-4.1.5.orig/drivers/md/dm-stats.c
++++ linux-4.1.5/drivers/md/dm-stats.c
+@@ -453,12 +453,24 @@ static int dm_stats_list(struct dm_stats
+ 	list_for_each_entry(s, &stats->list, list_entry) {
+ 		if (!program || !strcmp(program, s->program_id)) {
+ 			len = s->end - s->start;
+-			DMEMIT("%d: %llu+%llu %llu %s %s\n", s->id,
++			DMEMIT("%d: %llu+%llu %llu %s %s", s->id,
+ 				(unsigned long long)s->start,
+ 				(unsigned long long)len,
+ 				(unsigned long long)s->step,
+ 				s->program_id,
+ 				s->aux_data);
++			if (s->stat_flags & STAT_PRECISE_TIMESTAMPS)
++				DMEMIT(" precise_timestamps");
++			if (s->n_histogram_entries) {
++				unsigned i;
++				DMEMIT(" histogram:");
++				for (i = 0; i < s->n_histogram_entries; i++) {
++					if (i)
++						DMEMIT(",");
++					DMEMIT("%llu", s->histogram_boundaries[i]);
++				}
++			}
++			DMEMIT("\n");
+ 		}
+ 	}
+ 	mutex_unlock(&stats->mutex);
