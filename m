@@ -1,26 +1,105 @@
-From: Jens Axboe <axboe@fb.com>
-Subject: Re: Persistent Reservation API V2
-Date: Tue, 18 Aug 2015 11:58:59 -0600
-Message-ID: <55D37263.5080106@fb.com>
-References: <1439360604-16192-1-git-send-email-hch@lst.de> <20150817191328.GB9383@infradead.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v5 01/11] block: make generic_make_request
+ handle arbitrarily sized bios
+Date: Tue, 18 Aug 2015 15:59:25 -0400
+Message-ID: <20150818195925.GA17273@redhat.com>
+References: <1439099990.7880.0.camel@hasee>
+	<20150809064128.GB2436@infradead.org>
+	<1439103347.7880.3.camel@hasee>
+	<20150809070128.GA25739@infradead.org>
+	<1439104707.7880.8.camel@hasee> <20150810150216.GA22719@redhat.com>
+	<CAF1ivSZFCVRDQf-N0JOBweX4se3iZZJzUCR_Uqdq1AV3Vd+Srg@mail.gmail.com>
+	<CAF1ivSaAX8sHFyaW69da8arm4fpLD-T656GgV3-KYQxt0H_DYg@mail.gmail.com>
+	<20150818144505.GA15832@redhat.com> <1439919178.28022.3.camel@ssi>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150817191328.GB9383@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>, Christoph Hellwig <hch@lst.de>
-Cc: linux-api@vger.kernel.org, dm-devel@redhat.com, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1439919178.28022.3.camel@ssi>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ming Lin <mlin@kernel.org>
+Cc: Joe Thornber <ejt@redhat.com>, device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, Kent Overstreet <kent.overstreet@gmail.com>
 List-Id: dm-devel.ids
 
-On 08/17/2015 01:13 PM, Christoph Hellwig wrote:
-> Does this look fine to you Jens?
->
-> I'd love to get this API into 4.3 so I can submit the NFS SCSI layout
-> patches that depend on it for 4.4.
->
+On Tue, Aug 18 2015 at  1:32pm -0400,
+Ming Lin <mlin@kernel.org> wrote:
 
-I'll take a look at this today.
+> On Tue, 2015-08-18 at 10:45 -0400, Mike Snitzer wrote:
+> > On Tue, Aug 18 2015 at  3:04am -0400,
+> > Ming Lin <mlin@kernel.org> wrote:
+> > 
+> > > On Mon, Aug 17, 2015 at 10:09 PM, Ming Lin <mlin@kernel.org> wrote:
+> > > > On Mon, Aug 10, 2015 at 8:02 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+> > > >> p.s. I'll be working with Joe Thornber on optimizing DM (particularly
+> > > >> dm-thinp and dm-cache) once this patchset is included upstream.  You'll
+> > > >> see I've already added a couple WIP dm-thinp patches ontop.
+> > > >
+> > > > Hi Mike,
+> > > >
+> > > > Just to avoid duplicated work.
+> > > > Are you going to work on the dm-thinp/dm-cache discard rewritten?
+> > > 
+> > > Seems dm-stripe discard also needs rewrite.
+> > 
+> > Can you elaborate on what you feel needs re-writing in these targets?
+> 
+> dm-stripe also require discard size to be a multiple of chunk size.
+> See output of below debug patch for 4G discard.
+> 
+> root@bee:~# blkdiscard -o 0 -l 4294967296 /dev/striped_vol_group/striped_logical_volume
+> 
+> root@bee:~# dmesg |grep DEBUG
+> [   13.110224] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
+> [   13.113723] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
+> [   13.117098] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
+> [   13.120424] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
+> [   13.123800] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
+> [   13.127027] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
+> [   13.130161] DEBUG: discard ignored: stripe chunk size 128K bytes, bio size 512 bytes
+> 
+> diff --git a/block/blk-lib.c b/block/blk-lib.c
+> index bd40292..1cab2ba 100644
+> --- a/block/blk-lib.c
+> +++ b/block/blk-lib.c
+> @@ -82,7 +82,7 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+>  			break;
+>  		}
+>  
+> -		req_sects = min_t(sector_t, nr_sects, MAX_BIO_SECTORS);
+> +		req_sects = min_t(sector_t, nr_sects, UINT_MAX>>9);
+>  		end_sect = sector + req_sects;
+>  
+>  		bio->bi_iter.bi_sector = sector;
+> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+> index 484029d..a288bc2 100644
+> --- a/drivers/md/dm-stripe.c
+> +++ b/drivers/md/dm-stripe.c
+> @@ -273,6 +273,8 @@ static int stripe_map_range(struct stripe_c *sc, struct bio *bio,
+>  		return DM_MAPIO_REMAPPED;
+>  	} else {
+>  		/* The range doesn't map to the target stripe */
+> +		printk("DEBUG: discard ignored: stripe chunk size %dK bytes, bio size %d bytes\n",
+> +			sc->chunk_size>>1, bio->bi_iter.bi_size);
+>  		bio_endio(bio);
+>  		return DM_MAPIO_SUBMITTED;
+>  	}
 
--- 
-Jens Axboe
+This is expected.  If a discard is only 512 bytes and the chunk size is
+128K then every discard will only ever hit one stripe.
+
+So each discard will have N - 1 "discard ignored" messages (when N is #
+of stripes in the dm-stripe device).  So in your test device I'd assume
+you have 8 stripes.
+
+Basically your debugging looks like it is _very_ prone to false
+positives here.  The dm-stripe code is working as expected.
