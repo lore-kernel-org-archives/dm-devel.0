@@ -1,11 +1,12 @@
-From: heinzm@redhat.com
-Subject: [PATCH v2] dm-raid.txt: document discard support
-Date: Tue, 25 Aug 2015 17:15:07 +0200
-Message-ID: <1440515707-16421-1-git-send-email-heinzm@redhat.com>
+From: Richard Sharpe <realrichardsharpe@gmail.com>
+Subject: Possibly weird behavior with mpath_persist on CentOS 6.6
+	(device-mapper-multipath-0.4.9...)
+Date: Tue, 25 Aug 2015 16:45:21 -0700
+Message-ID: <CACyXjPwfw9fTrsuLCK3gripFF47ew6ix7yTt7B3VpsXY++ftgw@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,63 +17,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <heinzm@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
-
-For raid4/5/6 data integrity reasons, 'discard_zeroes_data' needs to work properly.
-
-This version 2 of the patch ducuments the background of this critical requirement.
-
-
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-
----
- Documentation/device-mapper/dm-raid.txt | 30 ++++++++++++++++++++++++++++++
- 1 file changed, 30 insertions(+)
-
-diff --git a/Documentation/device-mapper/dm-raid.txt b/Documentation/device-mapper/dm-raid.txt
-index cb12af3..a2c645b 100644
---- a/Documentation/device-mapper/dm-raid.txt
-+++ b/Documentation/device-mapper/dm-raid.txt
-@@ -209,6 +209,36 @@ include:
- 	"repair" - Initiate a repair of the array.
- 	"reshape"- Currently unsupported (-EINVAL).
- 
-+Discard Support
-+---------------
-+The implementation of discard support amoung hardware vendors varies. When
-+a block is discarded, some storage devices will return zeros when it is
-+read.  These devices set the 'discard_zeros_data' attribute.  Other devices
-+will return random data.  Confusingly, some devices will set
-+'discard_zeros_data', but will still not always return zeros when
-+discarded blocks are read!  Since RAID 4/5/6 uses blocks from a number of
-+devices to calculate parity blocks and (for performance reasons) relies on
-+'discard_zeros_data' returning zeroes doing so, it is important that the
-+devices be consistent.  Blocks may be discarded in the middle of a RAID 4/5/6
-+stripe and if the read results are not consistent, the parity blocks may be
-+calculated differently at any time; making the parity blocks useless for
-+redundancy.  It is important to understand how your hardware behaves with
-+ discards if you are going to use RAID 4/5/6.
-+
-+Since the behavior of storage devices is unreliable in this respect - even
-+when reporting 'discard_zeros_data' - RAID 4/5/6 does not enable discard
-+support by default to ensure data integrity thus loosing some performance.
-+
-+Storage devices reporting 'discard_zeroes_data' which bahave properly are
-+increasingly whitelisted in the kernel and can thus be trusted.
-+
-+The following module parameter can be set to safely use them:
-+
-+       'devices_handle_discards_safely'
-+
-+Once set, RAID 4/5/6 will enable discards.
-+
-+
- Version History
- ---------------
- 1.0.0	Initial version.  Support for RAID 4/5/6
--- 
-2.4.3
+SGkgZm9sa3MsCgpXZSBhcmUgc2VlaW5nIHdoYXQgbG9va3MgbGlrZSB3ZWlyZCBiZWhhdmlvciB3
+aXRoIHRoZSBtcGF0aF9wZXJzaXN0CmNvbW1hbmQgZnJvbSB0aGUgQ2VudE9TIDYuNiBwYWNrYWdl
+CihkZXZpY2UtbWFwcGVyLW11bHRpcGF0aC0wLjQuOS4uLikuCgpGb3IgYmFja2dyb3VuZCB3ZSBo
+YXZlIDI1IGlTQ1NJIHRhcmdldHMsIGVhY2ggd2l0aCBmb3VyIExVTnMgYW5kIGZvdXIgcGF0aHMu
+CgpUaGlzIHJlc3VsdHMgaW4gYSB0b3RhbCBvZiA0MDAgZGV2aWNlcyAoL2Rldi9zZHh4KS4KCldo
+ZW4gd2UgZG8gYW4gbXBhdGhfcGVyc2lzdCB0byByZWdpc3RlciBhIGtleSBvbiBzb21lCi9kZXYv
+bWFwcGVyL21wYXRoTk4gZGV2aWNlLCB3ZSBzZWUgc29tZSA0MjAgcmVhZHMgb2YgOCBzZWN0b3Jz
+ICg0MDk2CmJ5dGVzKSBhdCBMQkEgMCBpbiB0aGUgcGFja2V0IGNhcHR1cmUuIEF0IG90aGVyIHRp
+bWVzIGFsbCB3ZSBzZWUgaXMKc3RyZWFtcyBvZiBOT1AgSU4gb3IgTk9QIE9VVCByZXF1ZXN0cy4K
+Ckl0IHNlZW1zIGxpa2UsIGJ1dCB3ZSBoYXZlIG5vdCB2ZXJpZmllZCBpdCB5ZXQsIHRoYXQgdGhl
+IG1wYXRoX3BlcnNpc3QKaGFzIHRyaWdnZXJlZCBhIHJlYWQgb24gZXZlcnkgZGV2aWNlLCBwZXJo
+YXBzIHRvIGNoZWNrIGlmIHRoZSBwYXRocwphcmUgYWxsIE9LLCBidXQgSSB3b3VsZCBleHBlY3Qg
+aXQgdG8gZG8gc28gb25seSBvbiB0aGUgZm91ciBwYXRocyBmb3IKdGhlIGFjdHVhbCBkZXZpY2Ug
+d2UgYXJlIHRyeWluZyB0byByZWdpc3RlciBhIGtleSBmb3IuCgpDYW4gc29tZW9uZSBzdWdnZXN0
+IGlmIEkgaGF2ZSB0aGUgd3JvbmcgaWRlYSBoZXJlPyBXZSBhcmUgcmVhZGluZyB0aGUKY29kZSBh
+bmQgY2hlY2tpbmcgb3RoZXIgdGhpbmdzIHRvIHNlZSB3aGF0IGlzIGdvaW5nIG9uLCBidXQgSSB0
+aG91Z2h0Ckkgd291bGQgY2hlY2sgdG8gc2VlIGlmIHNvbWVvbmUgZWxzZSBrbm93cyBhYm91dCB0
+aGlzIGJlaGF2aW9yLgoKLS0gClJlZ2FyZHMsClJpY2hhcmQgU2hhcnBlCijkvZXku6Xop6PmhoLv
+vJ/llK/mnInmnZzlurfjgIItLeabueaTjSkKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1k
+ZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
+bS1kZXZlbA==
