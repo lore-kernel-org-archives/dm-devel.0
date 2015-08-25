@@ -1,8 +1,7 @@
-From: Dennis Yang <shinrairis@gmail.com>
-Subject: Possible bug when redistributing entries between
-	dm-btree node
-Date: Tue, 25 Aug 2015 19:12:15 +0800
-Message-ID: <CAKTMprMdHAg4cFUw5NACnCg1zTJx-i=N8w0NRY8zujKQdoOYeA@mail.gmail.com>
+From: heinzm@redhat.com
+Subject: [PATCH v2] dm-raid.txt: document discard support
+Date: Tue, 25 Aug 2015 17:15:07 +0200
+Message-ID: <1440515707-16421-1-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,87 +16,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-A couple of months ago, I had been working on a dm-btree-remove bug
-reported before in this mailing list.
-(https://www.redhat.com/archives/dm-devel/2013-February/msg00063.html)
-We eventually found a bug in dm-btree-remove.c and delivered a patch
-to fix this, and you can find the discussion in this thread.
-(https://www.redhat.com/archives/dm-devel/2015-May/msg00113.html)
+For raid4/5/6 data integrity reasons, 'discard_zeroes_data' needs to work properly.
 
-However, I surprisingly find out that this patch did not solve our
-original issue which triggers the BUG_ON of shift() in
-dm-btree-remove.c when removing entries from btrees. Finally, we have
-discovered another corner case which might be the root cause of this
-issue. When redistributing entries between three nodes L (with #MAX
-entries), C (with #MAX-1 entries), and R (with #MAX entries), the
-redistribute3() will set target to #MAX-1 entries and start to move
-entry in the following steps.
+This version 2 of the patch ducuments the background of this critical requirement.
 
-1. Move 1 entry from node R to node C to make node R meet the target
-(#MAX-1) we set.
-2. Move 1 entry from node L to node C to make node L also meet the
-target (#MAX-1)
 
-After step1, both node L and node C will have #MAX entries while node
-R has #MAX-1 entries.
-When doing step2, moving 1 entry from node L to node C will make node
-C has #MAX+1 entries which is not allowed and triggers the BUG_ON of
-shift().
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 
-To solve this, we could bypass step2 or simply skip redistributing
-entries between nodes when the total entries of all three nodes equals
-(3 * #MAX + 2).
+---
+ Documentation/device-mapper/dm-raid.txt | 30 ++++++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
 
-PATCH 1: skip redistributing entries
-======================================================================================================
-diff --git a/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-b/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-index 6ec6065..592cd63 100644
---- a/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-+++ b/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-@@ -313,7 +313,8 @@ static void redistribute3(struct dm_btree_info
-*info, struct btree_node *parent,
-        unsigned target = (nr_left + nr_center + nr_right) / 3;
-        BUG_ON(target > max_entries);
-
-+       if (nr_left + nr_center + nr_right == max_entries * 3 + 2)
-+               return;
-
-        if (nr_left < nr_right) {
-                s = nr_left - target;
-
-PATCH 2: bypass step 2
-======================================================================================================
-diff --git a/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-b/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-index 6ec6065..2844a71 100644
---- a/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-+++ b/linux-3.12.6/drivers/md/persistent-data/dm-btree-remove.c
-@@ -327,6 +325,9 @@ static void redistribute3(struct dm_btree_info
-*info, struct btree_node *parent,
-                } else
-                        shift(left, center, s);
-
-+               if (nr_left + nr_center + nr_right == max_entries * 3 + 2)
-+                               return;
+diff --git a/Documentation/device-mapper/dm-raid.txt b/Documentation/device-mapper/dm-raid.txt
+index cb12af3..a2c645b 100644
+--- a/Documentation/device-mapper/dm-raid.txt
++++ b/Documentation/device-mapper/dm-raid.txt
+@@ -209,6 +209,36 @@ include:
+ 	"repair" - Initiate a repair of the array.
+ 	"reshape"- Currently unsupported (-EINVAL).
+ 
++Discard Support
++---------------
++The implementation of discard support amoung hardware vendors varies. When
++a block is discarded, some storage devices will return zeros when it is
++read.  These devices set the 'discard_zeros_data' attribute.  Other devices
++will return random data.  Confusingly, some devices will set
++'discard_zeros_data', but will still not always return zeros when
++discarded blocks are read!  Since RAID 4/5/6 uses blocks from a number of
++devices to calculate parity blocks and (for performance reasons) relies on
++'discard_zeros_data' returning zeroes doing so, it is important that the
++devices be consistent.  Blocks may be discarded in the middle of a RAID 4/5/6
++stripe and if the read results are not consistent, the parity blocks may be
++calculated differently at any time; making the parity blocks useless for
++redundancy.  It is important to understand how your hardware behaves with
++ discards if you are going to use RAID 4/5/6.
 +
-                shift(center, right, target - nr_right);
-
-        } else {
-@@ -340,6 +341,9 @@ static void redistribute3(struct dm_btree_info
-*info, struct btree_node *parent,
-                } else
-                        shift(center, right, s);
-
-+               if (nr_left + nr_center + nr_right == max_entries * 3 + 2)
-+                               return;
++Since the behavior of storage devices is unreliable in this respect - even
++when reporting 'discard_zeros_data' - RAID 4/5/6 does not enable discard
++support by default to ensure data integrity thus loosing some performance.
 +
-                shift(left, center, nr_left - target);
-        }
-
-Dennis
++Storage devices reporting 'discard_zeroes_data' which bahave properly are
++increasingly whitelisted in the kernel and can thus be trusted.
++
++The following module parameter can be set to safely use them:
++
++       'devices_handle_discards_safely'
++
++Once set, RAID 4/5/6 will enable discards.
++
++
+ Version History
+ ---------------
+ 1.0.0	Initial version.  Support for RAID 4/5/6
+-- 
+2.4.3
