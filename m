@@ -1,12 +1,14 @@
-From: Sharath Babu <sharath.babu@citrix.com>
-Subject: Issue with DM Multipath reconfigure command
-Date: Fri, 28 Aug 2015 14:04:20 +0000
-Message-ID: <A6CE42142A091443876431D464B0DA9D24B54C@SINPEX01CL03.citrite.net>
+From: Satyajit Deshmukh <satyajit.s.deshmukh@gmail.com>
+Subject: Re: Unnecessary scanning of all SCSI devices in
+ mpath_persistent_reserve_in/out command, sent to a specific mpath device,
+Date: Mon, 31 Aug 2015 01:54:11 -0700
+Message-ID: <CAO6eWMLVS5ZoaJoDiP3T-pyKjuCBH=HGdPPWatJrrCtDYFt6jg@mail.gmail.com>
+References: <CAO6eWML_u5H4jyMxv=mjCDLxPj_jSMz20zk7acFwAC8SeJ315w@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1154122749574097029=="
+Content-Type: multipart/mixed; boundary="===============5620459876579591905=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <CAO6eWML_u5H4jyMxv=mjCDLxPj_jSMz20zk7acFwAC8SeJ315w@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,251 +18,199 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============1154122749574097029==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_A6CE42142A091443876431D464B0DA9D24B54CSINPEX01CL03citri_"
+--===============5620459876579591905==
+Content-Type: multipart/alternative; boundary=089e01536ebac21bd1051e9793bb
 
---_000_A6CE42142A091443876431D464B0DA9D24B54CSINPEX01CL03citri_
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+--089e01536ebac21bd1051e9793bb
+Content-Type: text/plain; charset=UTF-8
 
-Hi,
+Quick update on this issue-
+We spoke to Hannes Reinecke and understood that we were using a sub-optimal
+checker aka 'directio' for testing the paths.
+As recommended to us by Hannes, we tried the 'tur' (Test Unit Ready)
+instead of the 'directio'.
+Result: We saw huge improvements in the times for the PROUT/PRIN commands.
+This was the change needed:
+libmultipath/checkers.h
+- #define DEFAULT_CHECKER DIRECTIO
++ #define DEFAULT_CHECKER TUR
 
-This is regarding an issue associated with multipath module. The reconfigur=
-e of multipathd is dropping faulty paths from the maps. Consider a case as =
-given below where a path is faulty. On doing a reconfigure, these faulty pa=
-ths are dropped from the maps. This behavior prevents the path checkers to =
-detect any changes that occur to these faulty paths asynchronously. Hence o=
-nce the paths are up, an explicit reconfigure is needed to use these faulty=
- paths. These devices are still present in the system and they are added ba=
-ck into the system only if dev_loss_tmo is set to a finite value. Is this h=
-ow reconfigure designed to behave or this is an bug ?
-
-
-[root@dt02 ~]# multipathd -k"show top"
-create: 360a980004334694b50346e714b775277 dm-5 NETAPP,LUN
-size=3D768M features=3D'4 queue_if_no_path pg_init_retries 50 retain_attach=
-ed_hw_handle' hwhandler=3D'0' wp=3Drw
-`-+- policy=3D'round-robin 0' prio=3D2 status=3Dactive
-  |- 19:0:0:0 sdj 8:144 active ready  running
-  `- 20:0:0:0 sdk 8:160 failed faulty offline
-[root@dt02 ~]# multipathd -k"reconf"
-ok
-[root@dt02 ~]# multipathd -k"show top"
-360a980004334694b50346e714b775277 dm-5 NETAPP,LUN
-size=3D768M features=3D'4 queue_if_no_path pg_init_retries 50 retain_attach=
-ed_hw_handle' hwhandler=3D'0' wp=3Drw
-`-+- policy=3D'round-robin 0' prio=3D2 status=3Dactive
-  `- 19:0:0:0 sdj 8:144 active ready running
-
-
-
-
-Please let me know if you need more information. This was tested by setting=
- dev_loss_tmo to "infinity" and DM library (device-mapper-multipath-libs-0.=
-4.9-66.el7.x86_64) with CentOS. It would be really grateful if you can shar=
-e your thoughts on the same.
+However, I still believe that the path_discovery() API should not have the
+DI_CHECKER bit in the flags passed to it.
+By removing this bit, we saw even better times (about 3x faster) for the
+PROUT/PRIN commands.
+Thus, if there are no side-effects/repercussions of removing this bit from
+the place I mentioned, we could remove the bit IMO.
 
 Thanks,
+Satyajit
 
-Sharath Babu  | Software Engineer 2 - XenServer Dev,  India | M:  +91 90031=
-00899
-Citrix Systems, Inc. (NASDAQ: CTXS)  |  http://www.citrix.com<http://www.ci=
-trix.com/>
+On Fri, Aug 28, 2015 at 12:49 AM, Satyajit Deshmukh <
+satyajit.s.deshmukh@gmail.com> wrote:
 
+> Hello,
+>
+> This is related to an issue raised by Richard Sharpe recently.
+> https://www.redhat.com/archives/dm-devel/2015-August/msg00154.html
+>
+> The RPM that was used-
+>
+> http://vault.centos.org/6.6/updates/Source/SPackages/device-mapper-multipath-0.4.9-80.el6_6.3.src.rpm
+>
+> *Problem:*
+> From reading the source code, I understand that 2 APIs defined in
+> libmpathpersist/mpath_persist.c do a system-wide scan of all SCSI devices
+> by sending asynchronous IO (io_submit calls) to test if SCSI device path is
+> good:
+>
+>
+>
+> *extern int mpath_persistent_reserve_in (int fd, int rq_servact, struct
+> prin_resp *resp, int noisy, int verbose);extern int
+> mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
+> unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy,
+> int verbose);*
+>
+> So, to get a persistent reservation on a single /dev/mapper/mpathx device
+> on a system having 400 SCSI devices, current code does 400 reads of 4K
+> each.(512 bytes of 8 sectors), leading to huge delays.
+>
+> *Root cause of the system wide device scan:*
+> The system-wide scan is triggered by setting the DI_CHECKER bit in the
+> flags argument to a path_discovery() API:
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+> * if (path_discovery(pathvec, conf, DI_SYSFS | DI_CHECKER)) {    ret =
+> MPATH_PR_DMMP_ERROR;    goto out1;  }  /* get info of all paths from the dm
+> device */  if (get_mpvec (curmp, pathvec, alias)){    condlog(0, "%s:
+> failed to get device info.", alias);    ret = MPATH_PR_DMMP_ERROR;    goto
+> out1;  }  *
+>
+> I believe the DI_CHECKER bit in path_discovery() API is not needed.
+> This is because the path status checking is already done on the specific
+> mpath device in the get_mpvec API.
+>
+> The get_mpvec() gets the required struct multipath *mpp, and then invokes
+> pathinfo(pp, conf->hwtable, DI_CHECKER) for each path in the multipath dev.
+> And this checks state of each path for the multipath device.
+>
+> * if (mask & DI_CHECKER) {    pp->chkrstate = pp->state = get_state(pp,
+> 0);*
+>
+> *Possible solution:*
+> I have a patch ready that simply removes the DI_CHECKER bit from the
+> path_discovery() calls inside mpath_persistent_reserve_in() and
+> mpath_persistent_reserve_out(). Attached the patch.
+> I have tested out the following PRIN and PROUT commands and don't see any
+> errors.
+> mpathpersist -i -k /dev/mapper/mpathig
+> mpathpersist -i -r /dev/mapper/mpathig
+> mpathpersist --out --register --param-rk=0A041D3d /dev/mapper/mpathig
+> mpathpersist --out --register --param-sark=0A041D3d /dev/mapper/mpathig
+> mpathpersist --out --reserve --param-rk=0A041D3D --prout-type=5
+> --verbose=3 /dev/mapper/mpathig
+>
+> Request someone to review the patch, suggest changes and guide me in
+> fixing this issue.
+>
+> Thanks,
+> Satyajit
+>
 
---_000_A6CE42142A091443876431D464B0DA9D24B54CSINPEX01CL03citri_
-Content-Type: text/html; charset="us-ascii"
+--089e01536ebac21bd1051e9793bb
+Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
-//www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
->
-<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
-<style><!--
-/* Font Definitions */
-@font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri",sans-serif;}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:#0563C1;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:#954F72;
-	text-decoration:underline;}
-p.MsoPlainText, li.MsoPlainText, div.MsoPlainText
-	{mso-style-priority:99;
-	mso-style-link:"Plain Text Char";
-	margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri",sans-serif;}
-pre
-	{mso-style-priority:99;
-	mso-style-link:"HTML Preformatted Char";
-	margin:0in;
-	margin-bottom:.0001pt;
-	font-size:10.0pt;
-	font-family:"Courier New";}
-span.HTMLPreformattedChar
-	{mso-style-name:"HTML Preformatted Char";
-	mso-style-priority:99;
-	mso-style-link:"HTML Preformatted";
-	font-family:"Courier New";}
-span.PlainTextChar
-	{mso-style-name:"Plain Text Char";
-	mso-style-priority:99;
-	mso-style-link:"Plain Text";
-	font-family:"Calibri",sans-serif;}
-span.EmailStyle21
-	{mso-style-type:personal;
-	font-family:"Calibri",sans-serif;
-	color:windowtext;}
-span.EmailStyle22
-	{mso-style-type:personal;
-	font-family:"Calibri",sans-serif;
-	color:#1F497D;}
-span.EmailStyle23
-	{mso-style-type:personal-compose;
-	font-family:"Calibri",sans-serif;
-	color:windowtext;}
-.MsoChpDefault
-	{mso-style-type:export-only;
-	font-size:10.0pt;}
-@page WordSection1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.0in 1.0in 1.0in;}
-div.WordSection1
-	{page:WordSection1;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]-->
-</head>
-<body lang=3D"EN-US" link=3D"#0563C1" vlink=3D"#954F72">
-<div class=3D"WordSection1">
-<p class=3D"MsoNormal">Hi,<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">This is regarding an issue associated with multipath=
- module. The reconfigure of
-<i>multipathd</i> is dropping faulty paths from the maps. Consider a case a=
-s given below where a path is faulty. On doing a reconfigure, these faulty =
-paths are dropped from the maps. This behavior prevents the path checkers t=
-o detect any changes that occur
- to these faulty paths asynchronously. Hence once the paths are up, an expl=
-icit reconfigure is needed to use these faulty paths. These devices are sti=
-ll present in the system and they are added back into the system only if
-<i>dev_loss_tmo</i> is set to a finite value. Is this how reconfigure desig=
-ned to behave or this is an bug ?
-<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal" style=3D"line-height:12.0pt;background:whitesmoke"><=
-span style=3D"font-size:9.0pt;font-family:&quot;Courier New&quot;;color:#33=
-3333">[root@dt02 ~]# multipathd -k&quot;show top&quot;<o:p></o:p></span></p=
->
-<p class=3D"MsoNormal" style=3D"line-height:12.0pt;background:whitesmoke"><=
-span style=3D"font-size:9.0pt;font-family:&quot;Courier New&quot;;color:#33=
-3333">create: 360a980004334694b50346e714b775277 dm-5 NETAPP,LUN<o:p></o:p><=
-/span></p>
-<p class=3D"MsoNormal" style=3D"line-height:12.0pt;background:whitesmoke"><=
-span style=3D"font-size:9.0pt;font-family:&quot;Courier New&quot;;color:#33=
-3333">size=3D768M features=3D'4 queue_if_no_path pg_init_retries 50 retain_=
-attached_hw_handle' hwhandler=3D'0' wp=3Drw<o:p></o:p></span></p>
-<p class=3D"MsoNormal" style=3D"line-height:12.0pt;background:whitesmoke"><=
-span style=3D"font-size:9.0pt;font-family:&quot;Courier New&quot;;color:#33=
-3333">`-&#43;- policy=3D'round-robin 0' prio=3D2 status=3Dactive<o:p></o:p>=
-</span></p>
-<p class=3D"MsoNormal" style=3D"line-height:12.0pt;background:whitesmoke"><=
-span style=3D"font-size:9.0pt;font-family:&quot;Courier New&quot;;color:#33=
-3333">&nbsp; |- 19:0:0:0 sdj 8:144 active ready&nbsp; running<o:p></o:p></s=
-pan></p>
-<p class=3D"MsoNormal" style=3D"line-height:12.0pt;background:whitesmoke"><=
-span style=3D"font-size:9.0pt;font-family:&quot;Courier New&quot;;color:#33=
-3333">&nbsp; `- 20:0:0:0 sdk 8:160 failed faulty offline<o:p></o:p></span><=
-/p>
-<p class=3D"MsoNormal" style=3D"line-height:12.0pt;background:whitesmoke"><=
-span style=3D"font-size:9.0pt;font-family:&quot;Courier New&quot;;color:#33=
-3333">[root@dt02 ~]# multipathd -k&quot;reconf&quot;<o:p></o:p></span></p>
-<p class=3D"MsoNormal" style=3D"line-height:12.0pt;background:whitesmoke"><=
-span style=3D"font-size:9.0pt;font-family:&quot;Courier New&quot;;color:#33=
-3333">ok<o:p></o:p></span></p>
-<p class=3D"MsoNormal" style=3D"line-height:12.0pt;background:whitesmoke"><=
-span style=3D"font-size:9.0pt;font-family:&quot;Courier New&quot;;color:#33=
-3333">[root@dt02 ~]# multipathd -k&quot;show top&quot;<o:p></o:p></span></p=
->
-<p class=3D"MsoNormal" style=3D"line-height:12.0pt;background:whitesmoke"><=
-span style=3D"font-size:9.0pt;font-family:&quot;Courier New&quot;;color:#33=
-3333">360a980004334694b50346e714b775277 dm-5 NETAPP,LUN<o:p></o:p></span></=
-p>
-<p class=3D"MsoNormal" style=3D"line-height:12.0pt;background:whitesmoke"><=
-span style=3D"font-size:9.0pt;font-family:&quot;Courier New&quot;;color:#33=
-3333">size=3D768M features=3D'4 queue_if_no_path pg_init_retries 50 retain_=
-attached_hw_handle' hwhandler=3D'0' wp=3Drw<o:p></o:p></span></p>
-<p class=3D"MsoNormal" style=3D"line-height:12.0pt;background:whitesmoke"><=
-span style=3D"font-size:9.0pt;font-family:&quot;Courier New&quot;;color:#33=
-3333">`-&#43;- policy=3D'round-robin 0' prio=3D2 status=3Dactive<o:p></o:p>=
-</span></p>
-<p class=3D"MsoNormal" style=3D"line-height:12.0pt;background:whitesmoke"><=
-span style=3D"font-size:9.0pt;font-family:&quot;Courier New&quot;;color:#33=
-3333">&nbsp; `- 19:0:0:0 sdj 8:144 active ready running<o:p></o:p></span></=
-p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoPlainText">Please let me know if you need more information. =
-This was tested by setting
-<i>dev_loss_tmo</i> to &#8220;<i>infinity</i>&#8221; and DM library (device=
--mapper-multipath-libs-0.4.9-66.el7.x86_64) with CentOS. It would be really=
- grateful if you can share your thoughts on the same.<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">Thanks,<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal" style=3D"margin-bottom:12.0pt"><b><span lang=3D"EN-I=
-N" style=3D"font-size:10.0pt;color:#133259">Sharath Babu</span></b><span la=
-ng=3D"EN-IN" style=3D"font-size:10.0pt;color:#133259">&nbsp;&nbsp;| Softwar=
-e Engineer 2 &#8211; XenServer Dev,&nbsp; India | M: &nbsp;&#43;91 90031008=
-99<br>
-</span><span lang=3D"EN-IN" style=3D"font-size:10.0pt;color:#5089D0">Citrix=
- Systems, Inc. (NASDAQ: CTXS) &nbsp;| &nbsp;</span><span lang=3D"EN-IN" sty=
-le=3D"color:#1F497D"><a href=3D"http://www.citrix.com/"><span style=3D"font=
--size:10.0pt;color:blue">http://www.citrix.com</span></a></span><span lang=
-=3D"EN-GB" style=3D"color:#1F497D;mso-fareast-language:EN-GB"><o:p></o:p></=
-span></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-</div>
-</body>
-</html>
+<div dir=3D"ltr">Quick update on this issue-<div>We spoke to Hannes Reineck=
+e and understood that we were using a sub-optimal checker aka &#39;directio=
+&#39; for testing the paths.</div><div>As recommended to us by Hannes, we t=
+ried the &#39;tur&#39; (Test Unit Ready) instead of the &#39;directio&#39;.=
+</div><div>Result: We saw huge improvements in the times for the PROUT/PRIN=
+ commands.<br>This was the change needed:</div><div><div style=3D"font-size=
+:12.8000001907349px">libmultipath/checkers.h<br>- <font color=3D"#ff0000">#=
+define DEFAULT_CHECKER=C2=A0DIRECTIO</font></div><div style=3D"font-size:12=
+.8000001907349px">+ <font color=3D"#0000ff">#define DEFAULT_CHECKER=C2=A0TU=
+R</font></div></div><div style=3D"font-size:12.8000001907349px"><font color=
+=3D"#0000ff"><br></font></div><div style=3D"font-size:12.8000001907349px"><=
+font color=3D"#000000">However, I still believe that the path_discovery() A=
+PI should not have the DI_CHECKER bit in the flags passed to it.</font></di=
+v><div style=3D"font-size:12.8000001907349px"><font color=3D"#000000">By re=
+moving this bit, we saw even better times (about 3x faster) for the PROUT/P=
+RIN commands.</font></div><div style=3D"font-size:12.8000001907349px">Thus,=
+ if there are no side-effects/repercussions of removing this bit from the p=
+lace I mentioned, we could remove the bit IMO.</div><div style=3D"font-size=
+:12.8000001907349px"><br></div><div style=3D"font-size:12.8000001907349px">=
+Thanks,</div><div style=3D"font-size:12.8000001907349px">Satyajit</div></di=
+v><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Fri, Aug 28,=
+ 2015 at 12:49 AM, Satyajit Deshmukh <span dir=3D"ltr">&lt;<a href=3D"mailt=
+o:satyajit.s.deshmukh@gmail.com" target=3D"_blank">satyajit.s.deshmukh@gmai=
+l.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"m=
+argin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"l=
+tr">Hello,<br><br>This is related to an issue raised by Richard Sharpe rece=
+ntly.<br><a href=3D"https://www.redhat.com/archives/dm-devel/2015-August/ms=
+g00154.html" target=3D"_blank">https://www.redhat.com/archives/dm-devel/201=
+5-August/msg00154.html</a><br><br>The RPM that was used-<br><a href=3D"http=
+://vault.centos.org/6.6/updates/Source/SPackages/device-mapper-multipath-0.=
+4.9-80.el6_6.3.src.rpm" target=3D"_blank">http://vault.centos.org/6.6/updat=
+es/Source/SPackages/device-mapper-multipath-0.4.9-80.el6_6.3.src.rpm</a><br=
+><br><b>Problem:</b><br>From reading the source code, I understand that 2 A=
+PIs defined in libmpathpersist/mpath_persist.c do a system-wide scan of all=
+ SCSI devices by sending asynchronous IO (io_submit calls) to test if SCSI =
+device path is good:<br><i>extern int mpath_persistent_reserve_in (int fd, =
+int rq_servact, struct prin_resp *resp, int noisy, int verbose);<br>extern =
+int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,<br=
+>=C2=A0 =C2=A0 unsigned int rq_type, struct prout_param_descriptor *paramp,=
+ int noisy,<br>=C2=A0 =C2=A0 int verbose);</i><br><br>So, to get a persiste=
+nt reservation on a single /dev/mapper/mpathx device on a system having 400=
+ SCSI devices, current code does 400 reads of 4K each.(512 bytes of 8 secto=
+rs), leading to huge delays.<br><br><b>Root cause of the system wide device=
+ scan:</b><br>The system-wide scan is triggered by setting the DI_CHECKER b=
+it in the flags argument to a path_discovery() API:<br>=C2=A0<i> if (path_d=
+iscovery(pathvec, conf, DI_SYSFS | DI_CHECKER)) {<br>=C2=A0 =C2=A0 ret =3D =
+MPATH_PR_DMMP_ERROR;<br>=C2=A0 =C2=A0 goto out1;<br>=C2=A0 }<br><br>=C2=A0 =
+/* get info of all paths from the dm device */<br>=C2=A0 if (get_mpvec (cur=
+mp, pathvec, alias)){<br>=C2=A0 =C2=A0 condlog(0, &quot;%s: failed to get d=
+evice info.&quot;, alias);<br>=C2=A0 =C2=A0 ret =3D MPATH_PR_DMMP_ERROR;<br=
+>=C2=A0 =C2=A0 goto out1;<br>=C2=A0 } =C2=A0</i><br><br>I believe the DI_CH=
+ECKER bit in path_discovery() API is not needed.<br>This is because the pat=
+h status checking is already done on the specific mpath device in the get_m=
+pvec API.<br><br>The get_mpvec() gets the required struct multipath *mpp, a=
+nd then invokes<br>pathinfo(pp, conf-&gt;hwtable, DI_CHECKER) for each path=
+ in the multipath dev.<br>And this checks state of each path for the multip=
+ath device.<br>=C2=A0<i> if (mask &amp; DI_CHECKER) {<br>=C2=A0 =C2=A0 pp-&=
+gt;chkrstate =3D pp-&gt;state =3D get_state(pp, 0);</i><br><br><b>Possible =
+solution:</b><br>I have a patch ready that simply removes the DI_CHECKER bi=
+t from the path_discovery() calls inside mpath_persistent_reserve_in() and =
+mpath_persistent_reserve_out(). Attached the patch.<br>I have tested out th=
+e following PRIN and PROUT commands and don&#39;t see any errors.<br>mpathp=
+ersist -i -k /dev/mapper/mpathig<br>mpathpersist -i -r /dev/mapper/mpathig<=
+br>mpathpersist --out --register --param-rk=3D0A041D3d /dev/mapper/mpathig<=
+br>mpathpersist --out --register --param-sark=3D0A041D3d /dev/mapper/mpathi=
+g<br>mpathpersist --out --reserve --param-rk=3D0A041D3D --prout-type=3D5 --=
+verbose=3D3 /dev/mapper/mpathig<br><br>Request someone to review the patch,=
+ suggest changes and guide me in fixing this issue.<br><br>Thanks,<br>Satya=
+jit</div>
+</blockquote></div><br></div>
 
---_000_A6CE42142A091443876431D464B0DA9D24B54CSINPEX01CL03citri_--
+--089e01536ebac21bd1051e9793bb--
 
 
---===============1154122749574097029==
+--===============5620459876579591905==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1154122749574097029==--
+--===============5620459876579591905==--
