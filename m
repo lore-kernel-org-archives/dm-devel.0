@@ -1,66 +1,80 @@
-From: Todd Gill <tgill@redhat.com>
-Subject: D-Bus API for multipath
-Date: Tue, 01 Sep 2015 12:02:34 -0400
-Message-ID: <55E5CC1A.90002@redhat.com>
-Reply-To: tgill@redhat.com, device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH 1/2] mm/slab_common: add SLAB_NO_MERGE flag for use when creating slabs
+Date: Tue,  1 Sep 2015 13:51:29 -0400
+Message-ID: <1441129890-25585-1-git-send-email-snitzer@redhat.com>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-mm@kvack.org, riel@redhat.com, david@fromorbit.com, axboe@kernel.dk, dm-devel@redhat.com, anderson@redhat.com
 List-Id: dm-devel.ids
 
+The slab aliasing/merging by default transition went unnoticed (at least
+to the DM subsystem).  Add a new SLAB_NO_MERGE flag that allows
+individual slabs to be created without slab merging.  This beats forcing
+all slabs to be created in this fashion by specifying sl[au]b_nomerge on
+the kernel commandline.
 
-Currently higher level tools like PostgreSQL, OpenStack/Cinder, Cockpit,
-Gnome Disk Utility, Gluster and Ceph don't have easy access to
-information about multipath devices.  Providing higher level tools the
-ability to visually display/understand multipath setup and health would
-be a big help.
+DM has historically taken care to have separate named slabs that each
+devices' mempool_t are backed by.  These separate slabs are useful --
+even if only to aid inspection of DM's memory use (via /proc/slabinfo)
+on production systems.
 
-Tools currently need to parse the output of the CLI to determine the
-mapping from a /dev/mapper/xx to the corresponding /dev/sdxx.  Parsing
-CLI output is prone to problems and can be brittle over time.  It also
-doesn't deal well with state updates as clients need to poll for changes.
+I stumbled onto slab merging as a side-effect of a leak in dm-cache
+being attributed to 'kmalloc-96' rather than the expected
+'dm_bio_prison_cell' named slab.  Moving forward DM will disable slab
+merging for all of DM's slabs by using SLAB_NO_MERGE.
 
-D-Bus is the most common IPC mechanism for the expected consumers of the
-API.  D-bus also provides fine granularity of API access security, which
-will be more important when configuration change functionality is
-introduced into the API.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ include/linux/slab.h | 2 ++
+ mm/slab.h            | 2 +-
+ mm/slab_common.c     | 2 +-
+ 3 files changed, 4 insertions(+), 2 deletions(-)
 
-Proposed Initial Features of D-Bus API:
+diff --git a/include/linux/slab.h b/include/linux/slab.h
+index a99f0e5..d007407 100644
+--- a/include/linux/slab.h
++++ b/include/linux/slab.h
+@@ -87,6 +87,8 @@
+ # define SLAB_FAILSLAB		0x00000000UL
+ #endif
+ 
++#define SLAB_NO_MERGE		0x04000000UL	/* Do not merge with existing slab */
++
+ /* The following flags affect the page allocator grouping pages by mobility */
+ #define SLAB_RECLAIM_ACCOUNT	0x00020000UL		/* Objects are reclaimable */
+ #define SLAB_TEMPORARY		SLAB_RECLAIM_ACCOUNT	/* Objects are short-lived */
+diff --git a/mm/slab.h b/mm/slab.h
+index 8da63e4..35eb6f4 100644
+--- a/mm/slab.h
++++ b/mm/slab.h
+@@ -115,7 +115,7 @@ static inline unsigned long kmem_cache_flags(unsigned long object_size,
+ 
+ /* Legal flag mask for kmem_cache_create(), for various configurations */
+ #define SLAB_CORE_FLAGS (SLAB_HWCACHE_ALIGN | SLAB_CACHE_DMA | SLAB_PANIC | \
+-			 SLAB_DESTROY_BY_RCU | SLAB_DEBUG_OBJECTS )
++			 SLAB_DESTROY_BY_RCU | SLAB_DEBUG_OBJECTS | SLAB_NO_MERGE)
+ 
+ #if defined(CONFIG_DEBUG_SLAB)
+ #define SLAB_DEBUG_FLAGS (SLAB_RED_ZONE | SLAB_POISON | SLAB_STORE_USER)
+diff --git a/mm/slab_common.c b/mm/slab_common.c
+index 8683110..3a5a8ed 100644
+--- a/mm/slab_common.c
++++ b/mm/slab_common.c
+@@ -35,7 +35,7 @@ struct kmem_cache *kmem_cache;
+  */
+ #define SLAB_NEVER_MERGE (SLAB_RED_ZONE | SLAB_POISON | SLAB_STORE_USER | \
+ 		SLAB_TRACE | SLAB_DESTROY_BY_RCU | SLAB_NOLEAKTRACE | \
+-		SLAB_FAILSLAB)
++		SLAB_FAILSLAB | SLAB_NO_MERGE)
+ 
+ #define SLAB_MERGE_SAME (SLAB_RECLAIM_ACCOUNT | SLAB_CACHE_DMA | SLAB_NOTRACK)
+ 
+-- 
+2.3.2 (Apple Git-55)
 
-- Read only attributes and relationships for map, path group and path
-- Read only attributes of multipath (blacklist, friendly names etc)
-- Signals for path properties (failure, restore)
-- Signals for map properties failure (failure, restore, policy change)
-
-Subsequent phases could include the ability to setup and manage features
-of multipath.
-
-My impression is this should be done as an extension to the multipathd.
- The d-bus interface could be disabled by default and enabled with a
-change to the .conf file setting.
-
-Other approaches may be possible, such the addition of an API to
-libmultipath, and accessing that with a some other daemon, like
-storaged, but that sort of thing would be less direct than doing it in
-multipathd.  An additional API to libmultipath also doesn't solve event
-driven state updates in a language agnostic way.
-
-There is also an existing socket into multipathd and that solves some
-issues, but raises others.  Talking over a socket home-brewed protocol
-requires clients to write code to parsing/marshaling, re-invent
-security etc.
-
-I am looking for feedback on this before I get started on an
-implementation. Do you agree that a D-Bus interface for multipaththd is
-is the most appropriate approach to this problem?
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
