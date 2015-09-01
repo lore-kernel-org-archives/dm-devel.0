@@ -1,16 +1,12 @@
-From: Andy Grover <agrover@redhat.com>
-Subject: Re: dm-delay: Add a message to change delay
-Date: Tue, 1 Sep 2015 07:17:46 -0700
-Message-ID: <55E5B38A.4020101@redhat.com>
-References: <1441056276-14288-1-git-send-email-agrover@redhat.com>
-	<20150901020557.GA31620@redhat.com> <55E53169.1030105@redhat.com>
-	<20150901121427.GA2906@redhat.com> <20150901130934.GA14882@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Todd Gill <tgill@redhat.com>
+Subject: D-Bus API for multipath
+Date: Tue, 01 Sep 2015 12:02:34 -0400
+Message-ID: <55E5CC1A.90002@redhat.com>
+Reply-To: tgill@redhat.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150901130934.GA14882@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,74 +16,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Vivek Goyal <vgoyal@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 09/01/2015 06:09 AM, Mike Snitzer wrote:
-> On Tue, Sep 01 2015 at  8:14am -0400,
-> Vivek Goyal <vgoyal@redhat.com> wrote:
->
->> On Mon, Aug 31, 2015 at 10:02:33PM -0700, Andy Grover wrote:
->>> On 08/31/2015 07:05 PM, Vivek Goyal wrote:
->>>> On Mon, Aug 31, 2015 at 02:24:36PM -0700, Andy Grover wrote:
->>>>> This enables runtime modification of the read and write delay values.
->>>>>
->>>>> Make sure if the delay time is reduced to flush currently-delayed
->>>>> bios first, to maintain ordering.
->>>>>
->>>>> Signed-off-by: Andy Grover <agrover@redhat.com>
->>>>> ---
->>>>>   Documentation/device-mapper/delay.txt |  8 +++++++
->>>>>   drivers/md/dm-delay.c                 | 42 +++++++++++++++++++++++++++++++++++
->>>>>   2 files changed, 50 insertions(+)
->>>>>
->>>>> diff --git a/Documentation/device-mapper/delay.txt b/Documentation/device-mapper/delay.txt
->>>>> index 15adc55..9e80751 100644
->>>>> --- a/Documentation/device-mapper/delay.txt
->>>>> +++ b/Documentation/device-mapper/delay.txt
->>>>> @@ -10,6 +10,14 @@ Parameters:
->>>>>   With separate write parameters, the first set is only used for reads.
->>>>>   Delays are specified in milliseconds.
->>>>>
->>>>> +Message Interface
->>>>> +-----------------
->>>>> +The delay target will accept a message of the following format:
->>>>> +
->>>>> +set_delay <read_delay> [<write_delay>]
->>>>> +
->>>>
->>>> Hi Andy,
->>>>
->>>> So if I want to change only write_delay and keep read_delay same, how do
->>>> I do that. Do I have to keep track of existing delay values in user space
->>>> and pass same value in read_delay to achieve this.
->>>>
->>>> Thanks
->>>> Vivek
->>>
->>> Hi Vivek,
->>>
->>> Yes I suppose userspace would either need to remember read_delay so as to
->>> not change it while setting write_delay, or I guess it could read the
->>> existing values by getting table status before sending the message. Is this
->>> reasonable, or do you think it would be better to, say, have separate
->>> messages for setting the two values, or some other message style?
->>
->> Ideally I think we should have those --key=value type of arguments which
->> we don't have yet. So that option is not feasible I guess.
->>
->> If latest values are readable from status, then I think single message
->> sounds reasoanble to me.
->
-> As Zdenek already effectively said: there is no need for this patch.
-> You don't need to use a message when a table reload would suffice to
-> change the parameter that is already passed on the table ctr.
->
-> Any layer that would be trained to send a message can just as easily be
-> trained to reload the table to achieve the same result.
 
-Ah I see. Thanks for the explanations. Noflush suspend & table reload is 
-better for this.
+Currently higher level tools like PostgreSQL, OpenStack/Cinder, Cockpit,
+Gnome Disk Utility, Gluster and Ceph don't have easy access to
+information about multipath devices.  Providing higher level tools the
+ability to visually display/understand multipath setup and health would
+be a big help.
 
-Regards -- Andy
+Tools currently need to parse the output of the CLI to determine the
+mapping from a /dev/mapper/xx to the corresponding /dev/sdxx.  Parsing
+CLI output is prone to problems and can be brittle over time.  It also
+doesn't deal well with state updates as clients need to poll for changes.
+
+D-Bus is the most common IPC mechanism for the expected consumers of the
+API.  D-bus also provides fine granularity of API access security, which
+will be more important when configuration change functionality is
+introduced into the API.
+
+Proposed Initial Features of D-Bus API:
+
+- Read only attributes and relationships for map, path group and path
+- Read only attributes of multipath (blacklist, friendly names etc)
+- Signals for path properties (failure, restore)
+- Signals for map properties failure (failure, restore, policy change)
+
+Subsequent phases could include the ability to setup and manage features
+of multipath.
+
+My impression is this should be done as an extension to the multipathd.
+ The d-bus interface could be disabled by default and enabled with a
+change to the .conf file setting.
+
+Other approaches may be possible, such the addition of an API to
+libmultipath, and accessing that with a some other daemon, like
+storaged, but that sort of thing would be less direct than doing it in
+multipathd.  An additional API to libmultipath also doesn't solve event
+driven state updates in a language agnostic way.
+
+There is also an existing socket into multipathd and that solves some
+issues, but raises others.  Talking over a socket home-brewed protocol
+requires clients to write code to parsing/marshaling, re-invent
+security etc.
+
+I am looking for feedback on this before I get started on an
+implementation. Do you agree that a D-Bus interface for multipaththd is
+is the most appropriate approach to this problem?
