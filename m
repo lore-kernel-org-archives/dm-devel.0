@@ -1,131 +1,92 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper changes for 4.3
-Date: Wed, 2 Sep 2015 13:39:36 -0400
-Message-ID: <20150902173935.GA2231@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: slab-nomerge (was Re: [git pull] device mapper changes for 4.3)
+Date: Wed, 2 Sep 2015 16:13:44 -0700
+Message-ID: <CA+55aFyepmdpbg9U2Pvp+aHjKmmGCrTK2ywzqfmaOTMXQasYNw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Viresh Kumar <viresh.kumar@linaro.org>, Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Heinz Mauelshagen <heinzm@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: Mike Snitzer <snitzer@redhat.com>, Dave Chinner <dchinner@redhat.com>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Viresh Kumar <viresh.kumar@linaro.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-mm <linux-mm@kvack.org>
 List-Id: dm-devel.ids
 
-Hi Linus,
+On Wed, Sep 2, 2015 at 10:39 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+>
+> - last but not least: add SLAB_NO_MERGE flag to mm/slab_common and
+>   disable slab merging for all of DM's slabs (XFS will also use
+>   SLAB_NO_MERGE once merged).
 
-The following changes since commit 34dd051741572859bc1fef525c5ddbc127158b52:
+So I'm not at all convinced this is the right thing to do. In fact,
+I'm pretty convinced it shouldn't be done this way. Since those
+commits were at the top of your tree, I just didn't pull them, but
+took the rest..
 
-  dm cache policy smq: move 'dm-cache-default' module alias to SMQ (2015-08-12 11:27:29 -0400)
+You are basically making this one-sided decision based on your notion
+of convenience, and just forcing that thing unconditionally on people.
 
-are available in the git repository at:
+Your rationale seems _totally_ bogus: you say that it's to be able to
+observe the sizes of the dm slabs without using slab debugging.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.3-changes
+First off, you don't have to enable slab debugging. You can just
+disable slab merging.  It's called "slab_nomerge". It does exactly
+what you would think it does.
 
-for you to fetch changes up to f6faec30406fdec5bfb388faa4afd9b6bb39c366:
+And what is it that makes dm slabs such a special little princess?
+What makes you think that the fact that _you_ want to look at slab
+statistics means that everybody else suddenly must have separate slabs
+for dm, and dm only? Or xfs?
 
-  dm: disable slab merging for all DM slabs (2015-09-02 08:53:47 -0400)
+The other "rationale" was that not merging slabs limits
+cross-subsystem memory corruption. Again, what the _hell_ is special
+about device mapper that dm - and only dm - would make this a special
+thing? That is just pure and utter garbage. Again, we already have
+that "slab_nomerge" option, exactly so that when odd slab corruption
+issues happen (they are rare, but they do occasionally happen), you
+can try that to see if that pinpoints the problem more. And it is
+*not* limited to some random set of subsystems. Which makes it clearly
+superior to your broken approach, wouldn't you agree?
 
-Please pull, thanks.
-Mike
+The only possible true rationale for why dm is special is "because dm
+is such a buggy piece of sh*t that it's much more likely to have these
+slab corruption bugs than anything else, so I'm just protecting the
+rest of the system".
 
-----------------------------------------------------------------
-- a couple small cleanups in dm-cache, dm-verity, persistent-data's
-  dm-btree, and DM core.
+Is that really your rationale? Somehow I doubt it. But if it is, you
+really should have said so. At least then it would make sense why this
+thing came in through the dm tree, and why dm is so special than it -
+and only it - would disable slab merging.
 
-- a 4.1-stable fix for dm-cache that fixes the leaking of deferred bio
-  prison cells
+So I'm not pulling things like this from the device mapper tree. There
+is just no excuse that I can see for something like SLAB_NO_MERGE to
+go through the dm tree in the first place, but that's doubly true when
+the rationale for these things were bogus and had nothing what-so-ever
+to do with dm.
 
-- a 4.2-stable fix that adds feature reporting for the dm-stats features
-  added in 4.2
+Things like this aren't supposed to come in through random irrelevant
+trees like this, and with no discussion (at least judging by the
+commits) with the maintainers of the other pieces of code.
 
-- improve DM-snapshot to not invalidate the on-disk snapshot if snapshot
-  device write overflow occurs; but a write overflow triggered through
-  the origin device will still invalidate the snapshot.
+If you have issues with slab merging, then those should be discussed
+as such, not as some magical and bogus dm or xfs special case when
+they damn well aren't, and damn well will never be.
 
-- optimize DM-thinp's async discard submission a bit now that late bio
-  splitting has been included in block core.
+Yes, I'm annoyed. This was not done well. I realize that everybody
+thinks that _their_ code is so special and exceptional that
+"obviously" they should be treated specially, but I don't see that
+that is the case at all in this case.
 
-- switch DM-cache's SMQ policy lock from using a mutex to a spinlock;
-  improves performance on very low latency devices (eg. NVMe SSD).
+If you want to argue that slab merging should be disabled by default,
+then that is an argument that I'm willing to believe might be valid
+("the downsides are bigger than the upsides").  Or if you are able to
+explain why dm really _is_ special, that's an option too. But this
+kind of "random subsystems decide unilaterally to not follow the
+normal rules" is not acceptable. Not when the "arguments" for it have
+absolutely nothing in particular to do with that subsystem.
 
-- document DM RAID 4/5/6's discard support
+                    Linus
 
-- last but not least: add SLAB_NO_MERGE flag to mm/slab_common and
-  disable slab merging for all of DM's slabs (XFS will also use
-  SLAB_NO_MERGE once merged).
-
-----------------------------------------------------------------
-Heinz Mauelshagen (1):
-      dm raid: document RAID 4/5/6 discard support
-
-Joe Thornber (4):
-      dm cache policy smq: change the mutex to a spinlock
-      dm cache: move wake_waker() from free_migrations() to where it is needed
-      dm cache: fix leaking of deferred bio prison cells
-      dm cache: fix use after freeing migrations
-
-Mike Snitzer (4):
-      dm thin: optimize async discard submission
-      dm cache: small cleanups related to deferred prison cell cleanup
-      mm/slab_common: add SLAB_NO_MERGE flag for use when creating slabs
-      dm: disable slab merging for all DM slabs
-
-Mikulas Patocka (3):
-      dm: test return value for DM_MAPIO_SUBMITTED
-      dm snapshot: don't invalidate on-disk image on snapshot write overflow
-      dm stats: report precise_timestamps and histogram in @stats_list output
-
-Sami Tolvanen (1):
-      dm verity: remove unused mempool
-
-Vivek Goyal (3):
-      dm btree: remove unused "dm_block_t root" parameter in btree_split_sibling()
-      dm btree remove: remove unused function get_nr_entries()
-      dm: do not override error code returned from dm_get_device()
-
-viresh kumar (1):
-      dm: remove unlikely() before IS_ERR()
-
- Documentation/device-mapper/dm-raid.txt       |  31 ++++++++
- Documentation/device-mapper/statistics.txt    |   4 +
- drivers/md/dm-bio-prison.c                    |   2 +-
- drivers/md/dm-bufio.c                         |   2 +-
- drivers/md/dm-cache-policy-mq.c               |   2 +-
- drivers/md/dm-cache-policy-smq.c              | 110 +++++++++-----------------
- drivers/md/dm-cache-target.c                  |  42 +++++-----
- drivers/md/dm-crypt.c                         |   4 +-
- drivers/md/dm-delay.c                         |  16 ++--
- drivers/md/dm-flakey.c                        |   6 +-
- drivers/md/dm-io.c                            |   3 +-
- drivers/md/dm-kcopyd.c                        |   4 +-
- drivers/md/dm-linear.c                        |   7 +-
- drivers/md/dm-log-userspace-base.c            |   2 +-
- drivers/md/dm-log-writes.c                    |  11 ++-
- drivers/md/dm-mpath.c                         |   3 +-
- drivers/md/dm-raid1.c                         |   8 +-
- drivers/md/dm-snap-persistent.c               |   2 +-
- drivers/md/dm-snap.c                          |  24 ++++--
- drivers/md/dm-stats.c                         |  14 +++-
- drivers/md/dm-stripe.c                        |   8 +-
- drivers/md/dm-thin.c                          |  91 ++++-----------------
- drivers/md/dm-uevent.c                        |   2 +-
- drivers/md/dm-verity.c                        |  17 +---
- drivers/md/dm.c                               |  10 +--
- drivers/md/persistent-data/dm-block-manager.c |   8 +-
- drivers/md/persistent-data/dm-btree-remove.c  |  22 ------
- drivers/md/persistent-data/dm-btree.c         |   6 +-
- include/linux/slab.h                          |   2 +
- include/uapi/linux/dm-ioctl.h                 |   4 +-
- mm/slab.h                                     |   2 +-
- mm/slab_common.c                              |   2 +-
- 32 files changed, 212 insertions(+), 259 deletions(-)
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
