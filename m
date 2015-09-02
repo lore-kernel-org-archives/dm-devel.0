@@ -1,250 +1,69 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/2] dm: disable slab merging for all DM slabs
-Date: Tue,  1 Sep 2015 13:51:30 -0400
-Message-ID: <1441129890-25585-2-git-send-email-snitzer@redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH 1/2] mm/slab_common: add SLAB_NO_MERGE flag for use when
+ creating slabs
+Date: Wed, 2 Sep 2015 11:15:24 +1000
+Message-ID: <20150902011524.GM26895@dastard>
 References: <1441129890-25585-1-git-send-email-snitzer@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
 In-Reply-To: <1441129890-25585-1-git-send-email-snitzer@redhat.com>
 Sender: owner-linux-mm@kvack.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-mm@kvack.org, riel@redhat.com, david@fromorbit.com, axboe@kernel.dk, dm-devel@redhat.com, anderson@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, riel@redhat.com, axboe@kernel.dk, dm-devel@redhat.com, anderson@redhat.com
 List-Id: dm-devel.ids
 
-It is useful to be able to observe DM's slab memory use by looking at
-"dm_" named slabs in /proc/slabinfo without having to enable SLAB_DEBUG
-options on production systems.
+On Tue, Sep 01, 2015 at 01:51:29PM -0400, Mike Snitzer wrote:
+> The slab aliasing/merging by default transition went unnoticed (at least
+> to the DM subsystem).  Add a new SLAB_NO_MERGE flag that allows
+> individual slabs to be created without slab merging.  This beats forcing
+> all slabs to be created in this fashion by specifying sl[au]b_nomerge on
+> the kernel commandline.
 
-before:
-$ cat /proc/slabinfo | grep dm_ | cut -d' ' -f1
-dm_mpath_io
-dm_uevent
-dm_rq_target_io
+I didn't realise that this merging had also been applied to SLAB - I
+thought it was just SLUB that did this.  Indeed, one of the prime
+reasons for using SLAB over SLUB was that it didn't merge caches and
+so still gave excellent visibility of runtime slab memory usage on
+production systems.
 
-after:
-$ cat /proc/slabinfo | grep dm_ | cut -d' ' -f1
-dm_thin_new_mapping
-dm_mpath_io
-dm_mq_policy_cache_entry
-dm_cache_migration
-dm_bio_prison_cell
-dm_snap_pending_exception
-dm_exception
-dm_dirty_log_flush_entry
-dm_kcopyd_job
-dm_io
-dm_uevent
-dm_clone_request
-dm_rq_target_io
-dm_target_io
+I had no idea that commit 12220de ("mm/slab: support slab merge")
+had made SLAB do this as well as it was not cc'd to any of the
+people/subsystems that maintain code that uses slab caches.  IMNSHO
+the commit message gives pretty flimsy justification for such a
+change, especially considering we need to deal with slab caches that
+individually grow to contain hundreds of millions of objects.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-bio-prison.c         | 2 +-
- drivers/md/dm-bufio.c              | 2 +-
- drivers/md/dm-cache-policy-mq.c    | 2 +-
- drivers/md/dm-cache-target.c       | 3 +--
- drivers/md/dm-io.c                 | 3 ++-
- drivers/md/dm-kcopyd.c             | 4 ++--
- drivers/md/dm-log-userspace-base.c | 2 +-
- drivers/md/dm-mpath.c              | 3 +--
- drivers/md/dm-snap.c               | 4 ++--
- drivers/md/dm-thin.c               | 2 +-
- drivers/md/dm-uevent.c             | 2 +-
- drivers/md/dm.c                    | 8 ++++----
- 12 files changed, 18 insertions(+), 19 deletions(-)
+> DM has historically taken care to have separate named slabs that each
+> devices' mempool_t are backed by.  These separate slabs are useful --
+> even if only to aid inspection of DM's memory use (via /proc/slabinfo)
+> on production systems.
 
-diff --git a/drivers/md/dm-bio-prison.c b/drivers/md/dm-bio-prison.c
-index cd6d1d2..d033eee 100644
---- a/drivers/md/dm-bio-prison.c
-+++ b/drivers/md/dm-bio-prison.c
-@@ -398,7 +398,7 @@ EXPORT_SYMBOL_GPL(dm_deferred_set_add_work);
- 
- static int __init dm_bio_prison_init(void)
- {
--	_cell_cache = KMEM_CACHE(dm_bio_prison_cell, 0);
-+	_cell_cache = KMEM_CACHE(dm_bio_prison_cell, SLAB_NO_MERGE);
- 	if (!_cell_cache)
- 		return -ENOMEM;
- 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index 86dbbc7..1187470 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -1636,7 +1636,7 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
- 		if (!DM_BUFIO_CACHE(c)) {
- 			DM_BUFIO_CACHE(c) = kmem_cache_create(DM_BUFIO_CACHE_NAME(c),
- 							      c->block_size,
--							      c->block_size, 0, NULL);
-+							      c->block_size, SLAB_NO_MERGE, NULL);
- 			if (!DM_BUFIO_CACHE(c)) {
- 				r = -ENOMEM;
- 				mutex_unlock(&dm_bufio_clients_lock);
-diff --git a/drivers/md/dm-cache-policy-mq.c b/drivers/md/dm-cache-policy-mq.c
-index aa1b41c..ecc9f7d 100644
---- a/drivers/md/dm-cache-policy-mq.c
-+++ b/drivers/md/dm-cache-policy-mq.c
-@@ -1444,7 +1444,7 @@ static int __init mq_init(void)
- 	mq_entry_cache = kmem_cache_create("dm_mq_policy_cache_entry",
- 					   sizeof(struct entry),
- 					   __alignof__(struct entry),
--					   0, NULL);
-+					   SLAB_NO_MERGE, NULL);
- 	if (!mq_entry_cache)
- 		return -ENOMEM;
- 
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index f9d9cc6..199fa437 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -394,7 +394,6 @@ static void wake_worker(struct cache *cache)
- 
- static struct dm_bio_prison_cell *alloc_prison_cell(struct cache *cache)
- {
--	/* FIXME: change to use a local slab. */
- 	return dm_bio_prison_alloc_cell(cache->prison, GFP_NOWAIT);
- }
- 
-@@ -3854,7 +3853,7 @@ static int __init dm_cache_init(void)
- 		return r;
- 	}
- 
--	migration_cache = KMEM_CACHE(dm_cache_migration, 0);
-+	migration_cache = KMEM_CACHE(dm_cache_migration, SLAB_NO_MERGE);
- 	if (!migration_cache) {
- 		dm_unregister_target(&cache_target);
- 		return -ENOMEM;
-diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-index 74adcd2..f7efeec 100644
---- a/drivers/md/dm-io.c
-+++ b/drivers/md/dm-io.c
-@@ -526,7 +526,8 @@ EXPORT_SYMBOL(dm_io);
- 
- int __init dm_io_init(void)
- {
--	_dm_io_cache = KMEM_CACHE(io, 0);
-+	_dm_io_cache = kmem_cache_create("dm_io", sizeof(struct io),
-+					 __alignof__(struct io), SLAB_NO_MERGE, NULL);
- 	if (!_dm_io_cache)
- 		return -ENOMEM;
- 
-diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
-index 3a7cade..f2a55a8 100644
---- a/drivers/md/dm-kcopyd.c
-+++ b/drivers/md/dm-kcopyd.c
-@@ -364,9 +364,9 @@ static struct kmem_cache *_job_cache;
- 
- int __init dm_kcopyd_init(void)
- {
--	_job_cache = kmem_cache_create("kcopyd_job",
-+	_job_cache = kmem_cache_create("dm_kcopyd_job",
- 				sizeof(struct kcopyd_job) * (SPLIT_COUNT + 1),
--				__alignof__(struct kcopyd_job), 0, NULL);
-+				__alignof__(struct kcopyd_job), SLAB_NO_MERGE, NULL);
- 	if (!_job_cache)
- 		return -ENOMEM;
- 
-diff --git a/drivers/md/dm-log-userspace-base.c b/drivers/md/dm-log-userspace-base.c
-index 058256d..358c4e7 100644
---- a/drivers/md/dm-log-userspace-base.c
-+++ b/drivers/md/dm-log-userspace-base.c
-@@ -893,7 +893,7 @@ static int __init userspace_dirty_log_init(void)
- {
- 	int r = 0;
- 
--	_flush_entry_cache = KMEM_CACHE(dm_dirty_log_flush_entry, 0);
-+	_flush_entry_cache = KMEM_CACHE(dm_dirty_log_flush_entry, SLAB_NO_MERGE);
- 	if (!_flush_entry_cache) {
- 		DMWARN("Unable to create flush_entry_cache: No memory.");
- 		return -ENOMEM;
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index eff7bdd..00c52c0 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1727,8 +1727,7 @@ static int __init dm_multipath_init(void)
- {
- 	int r;
- 
--	/* allocate a slab for the dm_ios */
--	_mpio_cache = KMEM_CACHE(dm_mpath_io, 0);
-+	_mpio_cache = KMEM_CACHE(dm_mpath_io, SLAB_NO_MERGE);
- 	if (!_mpio_cache)
- 		return -ENOMEM;
- 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 3903d7a..99bb6cd 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -2441,14 +2441,14 @@ static int __init dm_snapshot_init(void)
- 		goto bad_origin_hash;
- 	}
- 
--	exception_cache = KMEM_CACHE(dm_exception, 0);
-+	exception_cache = KMEM_CACHE(dm_exception, SLAB_NO_MERGE);
- 	if (!exception_cache) {
- 		DMERR("Couldn't create exception cache.");
- 		r = -ENOMEM;
- 		goto bad_exception_cache;
- 	}
- 
--	pending_cache = KMEM_CACHE(dm_snap_pending_exception, 0);
-+	pending_cache = KMEM_CACHE(dm_snap_pending_exception, SLAB_NO_MERGE);
- 	if (!pending_cache) {
- 		DMERR("Couldn't create pending cache.");
- 		r = -ENOMEM;
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 49e358a..7de7e81 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -4314,7 +4314,7 @@ static int __init dm_thin_init(void)
- 
- 	r = -ENOMEM;
- 
--	_new_mapping_cache = KMEM_CACHE(dm_thin_new_mapping, 0);
-+	_new_mapping_cache = KMEM_CACHE(dm_thin_new_mapping, SLAB_NO_MERGE);
- 	if (!_new_mapping_cache)
- 		goto bad_new_mapping_cache;
- 
-diff --git a/drivers/md/dm-uevent.c b/drivers/md/dm-uevent.c
-index 8efe033..2db0880 100644
---- a/drivers/md/dm-uevent.c
-+++ b/drivers/md/dm-uevent.c
-@@ -204,7 +204,7 @@ EXPORT_SYMBOL_GPL(dm_path_uevent);
- 
- int dm_uevent_init(void)
- {
--	_dm_event_cache = KMEM_CACHE(dm_uevent, 0);
-+	_dm_event_cache = KMEM_CACHE(dm_uevent, SLAB_NO_MERGE);
- 	if (!_dm_event_cache)
- 		return -ENOMEM;
- 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 0907d9e..88b8c16 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -314,17 +314,17 @@ static int __init local_init(void)
- {
- 	int r = -ENOMEM;
- 
--	/* allocate a slab for the dm_ios */
--	_io_cache = KMEM_CACHE(dm_io, 0);
-+	_io_cache = kmem_cache_create("dm_target_io", sizeof(struct dm_io),
-+				      __alignof__(struct dm_io), SLAB_NO_MERGE, NULL);
- 	if (!_io_cache)
- 		return r;
- 
--	_rq_tio_cache = KMEM_CACHE(dm_rq_target_io, 0);
-+	_rq_tio_cache = KMEM_CACHE(dm_rq_target_io, SLAB_NO_MERGE);
- 	if (!_rq_tio_cache)
- 		goto out_free_io_cache;
- 
- 	_rq_cache = kmem_cache_create("dm_clone_request", sizeof(struct request),
--				      __alignof__(struct request), 0, NULL);
-+				      __alignof__(struct request), SLAB_NO_MERGE, NULL);
- 	if (!_rq_cache)
- 		goto out_free_rq_tio_cache;
- 
+Yup, that's one of the reasons XFS has 17 separate slab caches. The
+other main reason is that slab separation also helps keep memory
+corruption and use-after free issues contained; if you have a
+problem with the objects from one slab cache, the isolation of the
+slab makes it less likely that the problem propagates to other
+subsystems. Hence failures also tend to be isolated to the code that
+has the leak/corruption problem, making them easier to triage and
+debug on production systems...
+
+> I stumbled onto slab merging as a side-effect of a leak in dm-cache
+> being attributed to 'kmalloc-96' rather than the expected
+> 'dm_bio_prison_cell' named slab.  Moving forward DM will disable slab
+> merging for all of DM's slabs by using SLAB_NO_MERGE.
+
+Seems like a fine idea to me. I can apply it to various slabs in XFS
+once it's merged....
+
+Acked-by: Dave Chinner <dchinner@redhat.com>
+
+Cheers,
+
+Dave.
 -- 
-2.3.2 (Apple Git-55)
+Dave Chinner
+david@fromorbit.com
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
