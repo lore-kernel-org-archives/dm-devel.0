@@ -1,90 +1,61 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: slab-nomerge (was Re: [git pull] device mapper changes for 4.3)
-Date: Thu, 3 Sep 2015 08:02:40 -0700
-Message-ID: <CA+55aFxftNVWVD7ujseqUDNgbVamrFWf0PVM+hPnrfmmACgE0Q@mail.gmail.com>
-References: <CA+55aFyepmdpbg9U2Pvp+aHjKmmGCrTK2ywzqfmaOTMXQasYNw@mail.gmail.com>
-	<20150903005115.GA27804@redhat.com>
-	<CA+55aFxpH6-XD97dOsuGvwozyV=28eBsxiKS901h8PFZrxaygw@mail.gmail.com>
-	<20150903060247.GV1933@devil.localdomain>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: slab-nomerge (was Re: [git pull] device mapper changes for
+ 4.3)
+Date: Thu, 3 Sep 2015 11:19:53 -0500 (CDT)
+Message-ID: <alpine.DEB.2.11.1509031113450.24411@east.gentwo.org>
+References: <CA+55aFyepmdpbg9U2Pvp+aHjKmmGCrTK2ywzqfmaOTMXQasYNw@mail.gmail.com> <20150903005115.GA27804@redhat.com> <CA+55aFxpH6-XD97dOsuGvwozyV=28eBsxiKS901h8PFZrxaygw@mail.gmail.com> <20150903060247.GV1933@devil.localdomain>
+ <20150903122949.78ee3c94@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150903060247.GV1933@devil.localdomain>
+In-Reply-To: <20150903122949.78ee3c94@redhat.com>
 Sender: owner-linux-mm@kvack.org
-To: Dave Chinner <dchinner@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Viresh Kumar <viresh.kumar@linaro.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-mm <linux-mm@kvack.org>
+To: Jesper Dangaard Brouer <brouer@redhat.com>
+Cc: Dave Chinner <dchinner@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Mike Snitzer <snitzer@redhat.com>, Pekka Enberg <penberg@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Viresh Kumar <viresh.kumar@linaro.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-mm <linux-mm@kvack.org>
 List-Id: dm-devel.ids
 
-On Wed, Sep 2, 2015 at 11:02 PM, Dave Chinner <dchinner@redhat.com> wrote:
-> On Wed, Sep 02, 2015 at 06:21:02PM -0700, Linus Torvalds wrote:
->> On Wed, Sep 2, 2015 at 5:51 PM, Mike Snitzer <snitzer@redhat.com> wrote:
->> >
->> > What I made possible with SLAB_NO_MERGE is for each subsystem to decide
->> > if they would prefer to not allow slab merging.
->>
->> .. and why is that a choice that even makes sense at that level?
->>
->> Seriously.
->>
->> THAT is the fundamental issue here.
+On Thu, 3 Sep 2015, Jesper Dangaard Brouer wrote:
+
+> > IOWs, slab merging prevents us from implementing effective active
+> > fragmentation management algorithms and hence prevents us  from
+> > reducing slab fragmentation via improved shrinker reclaim
+> > algorithms.  Simply put: slab merging reduces the effectiveness of
+> > shrinker based slab reclaim.
 >
-> It makes a lot more sense than you think, Linus.
+> I'm buying into the problem of variable object lifetime sharing the
+> same slub.
 
-Not really. Even your argument isn't at all arguing for doing things
-at a per-subsystem level - it's an argument about the potential sanity
-of marking _individual_ slab caches non-mergable, not an argument for
-something clearly insane like "mark all slabs for subsystem X
-unmergable".
+Well yeah I see the logic of the argument but what I have seen in practice
+is that the access to objects becomes rather random over time. inodes and
+denties are used by multiple underlying volumes/mountpoints etc. They are
+expired individually etc etc. The references to objects become garbled
+over time anyways.
 
-Can you just admit that that was insane? There is *no* sense in that
-kind of behavior.
+What I would be interested in is some means by which locality of objects
+of different caches can be explicitly specified. This would allow the
+placing together of multiple objects in the same page frame. F.e. dentries
+and inodes and other metadata of a filesystem that is related. This would
+enhance the locality of the data and allow better defragmentation. But we
+are talking here about a totally different allocator design.
 
-> Right, it's not xyzzy-specific where 'xyzzy' is a subsystem. The
-> flag application is actually *object specific*. That is, the use of
-> the individual objects that determines whether it should be merged
-> or not.
+> With the SLAB bulk free API I'm introducing, we can speedup slub
+> slowpath, by free several objects with a single cmpxchg_double, BUT
+> these objects need to belong to the same page.
+>  Thus, as Dave describe with merging, other users of the same size
+> objects might end up holding onto objects scattered across several
+> pages, which gives the bulk free less opportunities.
 
-Yes.
+This happens regardless as far as I can tell. On boot up you may end up
+for a time in special situations where that is true.
 
-I do agree that something like SLAB_NO_MERGE can make sense on an
-actual object-specific level, if you have very specific allocation
-pattern knowledge and can show that the merging actually hurts.
+> That would be a technical argument for introducing a SLAB_NO_MERGE flag
+> per slab.  But I want to do some measurement before making any
+> decision. And it might be hard to show for my use-case of SKB free,
+> because SKB allocs will likely be dominating 256 bytes slab anyhow.
 
-But making the subsystem decide that all its slab caches should be
-"no-merge" is just BS. You know that. It makes no sense, just admit
-it.
-
-> e.g. Slab fragmentation levels are affected more than anything by
-> mixing objects with different life times in the same slab.  i.e. if
-> we free all the short lived objects from a page but there is one
-> long lived object on the page then that page is pinned and we free
-> no memory. Do that to enough pages in the slab, and we end up with a
-> badly fragmented slab.
-
-The thing is, *if* you can show that kind of behavior for a particular
-slab, and have numbers for it, then mark that slab as no-merge, and
-document why you did it.
-
-Even then, I'd personally probably prefer to name the bit differently:
-rather than talk about an internal implementation detail within slab
-("don't merge") it would probably be better to try to frame it in the
-semantic different you are looking for (ie in "I want a slab with
-private allocation patterns").
-
-But aside from that kind of naming issue, that's very obviously not
-what the patch series discussed was doing.
-
-And quite frankly, I don't actually think you have the numbers to show
-that theoretical bad behavior.  In contrast, there really *are*
-numbers to show the advantages of merging.
-
-So the fragmentation argument has been shown to generally be in favor
-of merging, _not_ in favor of that "no-merge" behavior. If you have an
-actual real load where that isn't the case, and can show it, then that
-would be interesting, but at no point is that "the subsystem just
-decided to mark all its slabs no-merge".
-
-               Linus
+With the skbs you would want to place the skb data together with the
+packet data and other network related objects right? Maybe we can think
+out an allocator that can store objects related to a specific action in a
+page frame that can then be tossed as a whole.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
