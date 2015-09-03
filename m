@@ -1,57 +1,108 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: slab-nomerge (was Re: [git pull] device mapper changes for 4.3)
-Date: Wed, 2 Sep 2015 20:53:33 -0400
-Message-ID: <20150903005332.GB27804@redhat.com>
+Date: Wed, 2 Sep 2015 18:21:02 -0700
+Message-ID: <CA+55aFxpH6-XD97dOsuGvwozyV=28eBsxiKS901h8PFZrxaygw@mail.gmail.com>
 References: <CA+55aFyepmdpbg9U2Pvp+aHjKmmGCrTK2ywzqfmaOTMXQasYNw@mail.gmail.com>
- <20150902174815.199d51a480a01e9a754367e3@linux-foundation.org>
+	<20150903005115.GA27804@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150902174815.199d51a480a01e9a754367e3@linux-foundation.org>
+In-Reply-To: <20150903005115.GA27804@redhat.com>
 Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Dave Chinner <dchinner@redhat.com>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Viresh Kumar <viresh.kumar@linaro.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-mm <linux-mm@kvack.org>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Dave Chinner <dchinner@redhat.com>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Viresh Kumar <viresh.kumar@linaro.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-mm <linux-mm@kvack.org>
 List-Id: dm-devel.ids
 
-On Wed, Sep 02 2015 at  8:48pm -0400,
-Andrew Morton <akpm@linux-foundation.org> wrote:
+On Wed, Sep 2, 2015 at 5:51 PM, Mike Snitzer <snitzer@redhat.com> wrote:
+>
+> What I made possible with SLAB_NO_MERGE is for each subsystem to decide
+> if they would prefer to not allow slab merging.
 
-> On Wed, 2 Sep 2015 16:13:44 -0700 Linus Torvalds <torvalds@linux-foundation.org> wrote:
-> 
-> > On Wed, Sep 2, 2015 at 10:39 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> > >
-> > > - last but not least: add SLAB_NO_MERGE flag to mm/slab_common and
-> > >   disable slab merging for all of DM's slabs (XFS will also use
-> > >   SLAB_NO_MERGE once merged).
-> > 
-> > So I'm not at all convinced this is the right thing to do. In fact,
-> > I'm pretty convinced it shouldn't be done this way. Since those
-> > commits were at the top of your tree, I just didn't pull them, but
-> > took the rest..
-> 
-> I don't have problems with the patch itself, really.  It only affects
-> callers who use SLAB_NO_MERGE and those developers can make
-> their own decisions.
-> 
-> It is a bit sad to de-optimise dm for all users for all time in order
-> to make life a bit easier for dm's developers, but maybe that's a
-> decent tradeoff.
-> 
-> 
-> What I do have a problem with is that afaict the patch appeared on
-> linux-mm for the first time just yesterday.  Didn't cc slab developers,
-> it isn't in linux-next, didn't cc linux-kernel or linux-mm or slab/mm
-> developers on the pull request.  Bad!
+.. and why is that a choice that even makes sense at that level?
 
-Yeap, noted.  Won't happen again.
+Seriously.
 
-> I'd like the slab developers to have time to understand and review this
-> change, please.  Partly so they have a chance to provide feedback for
-> the usual reasons, but also to help them understand the effect their
-> design choice had on client subystems.
+THAT is the fundamental issue here.
 
-Sure, sorry to force the issue like I did.
+There are absolutely zero reasons this is dm-specific, but it is
+equally true that there are absolutely zero reasons that it is
+xyzzy-specific, for any random value of 'xyzzy'.
+
+And THAT is why I'm fairly convinced that the whole approach is bogus
+and broken.
+
+And note that that bogosity is separate from how this was done. It's a
+broken approach, but it was also done wrong. Two totally separate
+issues, but together it sure is annoying.
+
+> From where I sit it is much more useful to have separate slabs.  Could
+> be if a case was actually made for slab merging I'd change my view.  But
+> as of now these trump the stated benefits of slab merging:
+> 1) useful slab usage stats
+> 2) fault isolation from other subsystems
+
+.. and again, absolutely NEITHER of those have anything to do with
+"subsystem X".
+
+Can you really not see how *illogical* it is to make this a subsystem choice?
+
+So explain to me why you made it so?
+
+> The 3 lines that added SLAB_NO_MERGE were pretty damn clean.
+
+No. It really seriously wasn't.
+
+The code may be simple, but it sure isn't "pretty damn clean", exactly
+because I think the whole concept is fundamentally illogical. See
+above.
+
+As I mentioned in my email: if your point is that "slab_nomerge" has
+the wrong default value, then that is a different discussion, and one
+that may well be valid.
+
+But the whole concept of "random slabs can mark themselves no-merge
+for no obvious reasons" is broken. That was my argument, and you don't
+seem to get it.
+
+And even if it turns out not to be broken (please explain), it still
+should have been discussed.
+
+> SLAB_NO_MERGE gives subsystems a choice they didn't have before and they
+> frankly probably never knew they had to care about it because they didn't
+> know slabs were being merged.  I asked around enough to know I'm not an
+> idiot for having missed the memo on slab merging.
+
+Put another way: things have been merged for years, and you didn't even notice.
+
+Seriously. I'm not exaggerating about "for years". At least for slub,
+it's been that way since it was initially  merged, back in 2007.
+Yeah, it may have taken a while for slub to then become one of the
+major allocators, but it's been the default in at least Fedora for
+years and years too, afaik, so it's not like slub is something odd and
+unusual.
+
+You seem to argue that "not being aware of it" means that it's
+surprising and should be disabled. But quite frankly, wouldn't you say
+that "it hasn't caused any obvious problems" is at _least_ as likely
+an explanation for you not being aware of it?
+
+Because clearly, that lack of statistics and the possible
+cross-subsystem corruption hasn't actually been a pressing concern in
+reality.
+
+But suddenly it became such a big issue that you just _had_ to fix it,
+right? After seven years it's suddenly *so* important that dm
+absolutely has to disable it. And it really had to be dm that did it
+for its caches, rather than just use "slab_nomerge".
+
+Despite there not being anything dm-specific about that choice.
+
+Now tell me, what was the rationale for this all again?
+
+Because really, I'm not seeing it. And I'm _particularly_ not seeing
+why it then had to be sneaked in like this.
+
+                Linus
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
