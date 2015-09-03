@@ -1,119 +1,85 @@
-From: Dave Chinner <dchinner@redhat.com>
+From: Jesper Dangaard Brouer <brouer@redhat.com>
 Subject: Re: slab-nomerge (was Re: [git pull] device mapper changes for 4.3)
-Date: Thu, 3 Sep 2015 18:53:14 +1000
-Message-ID: <20150903085314.GW1933@devil.localdomain>
+Date: Thu, 3 Sep 2015 12:29:49 +0200
+Message-ID: <20150903122949.78ee3c94@redhat.com>
 References: <CA+55aFyepmdpbg9U2Pvp+aHjKmmGCrTK2ywzqfmaOTMXQasYNw@mail.gmail.com>
- <20150903005115.GA27804@redhat.com>
- <CA+55aFxpH6-XD97dOsuGvwozyV=28eBsxiKS901h8PFZrxaygw@mail.gmail.com>
- <20150903023125.GC27804@redhat.com>
- <alpine.DEB.2.11.1509022152470.18064@east.gentwo.org>
- <20150902215512.9d0d62e74fa2f0a460a42af9@linux-foundation.org>
- <CAOJsxLGa9fLWUrdjnm-A-Frxr1bzBvfNZRsmFFcjQSvGX48a4w@mail.gmail.com>
+	<20150903005115.GA27804@redhat.com>
+	<CA+55aFxpH6-XD97dOsuGvwozyV=28eBsxiKS901h8PFZrxaygw@mail.gmail.com>
+	<20150903060247.GV1933@devil.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CAOJsxLGa9fLWUrdjnm-A-Frxr1bzBvfNZRsmFFcjQSvGX48a4w@mail.gmail.com>
+In-Reply-To: <20150903060247.GV1933@devil.localdomain>
 Sender: owner-linux-mm@kvack.org
-To: Pekka Enberg <penberg@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Christoph Lameter <cl@linux.com>, Mike Snitzer <snitzer@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Heinz Mauelshagen <heinzm@redhat.com>, Viresh Kumar <viresh.kumar@linaro.org>, Joe Thornber <ejt@redhat.com>, linux-mm <linux-mm@kvack.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Alasdair G Kergon <agk@redhat.com>
+To: Dave Chinner <dchinner@redhat.com>
+Cc: brouer@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, Mike Snitzer <snitzer@redhat.com>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Viresh Kumar <viresh.kumar@linaro.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-mm <linux-mm@kvack.org>
 List-Id: dm-devel.ids
 
-On Thu, Sep 03, 2015 at 09:09:24AM +0300, Pekka Enberg wrote:
-> Hi Andrew,
+
+On Thu, 3 Sep 2015 16:02:47 +1000 Dave Chinner <dchinner@redhat.com> wrote:
+
+> On Wed, Sep 02, 2015 at 06:21:02PM -0700, Linus Torvalds wrote:
+> > On Wed, Sep 2, 2015 at 5:51 PM, Mike Snitzer <snitzer@redhat.com> wrote:
+> > >
+> > > What I made possible with SLAB_NO_MERGE is for each subsystem to decide
+> > > if they would prefer to not allow slab merging.
+> > 
+> > .. and why is that a choice that even makes sense at that level?
+> > 
+> > Seriously.
+> > 
+> > THAT is the fundamental issue here.
 > 
-> On Wed, 2 Sep 2015 22:10:12 -0500 (CDT) Christoph Lameter <cl@linux.com> wrote:
-> >> > But I'd still like some pointers/help on what makes slab merging so
-> >> > beneficial.  I'm sure Christoph and others have justification.  But if
-> >> > not then yes the default to slab merging probably should be revisited.
-> >>
-> >> ...
-> >>
-> >> Check out the linux-mm archives for these dissussions.
+> It makes a lot more sense than you think, Linus.
 > 
-> On Thu, Sep 3, 2015 at 7:55 AM, Andrew Morton <akpm@linux-foundation.org> wrote:
-> > Somewhat OT, but...  The question Mike asks should be comprehensively
-> > answered right there in the switch-to-merging patch's changelog.
-> >
-> > The fact that it is not answered in the appropriate place and that
-> > we're reduced to vaguely waving at the list archives is a fail.  And a
-> > lesson!
+[...]
 > 
-> Slab merging is a technique to reduce memory footprint and memory
-> fragmentation. Joonsoo reports 3% slab memory reduction after boot
-> when he added the feature to SLAB:
-
-I'm not sure whether you are trying to indicate that it was
-justified inteh commit message or indicate how little justification
-there was...
-
-> commit 12220dea07f1ac6ac717707104773d771c3f3077
-> Author: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-> Date:   Thu Oct 9 15:26:24 2014 -0700
+> On the surface, this looks like a big win but it's not - it's
+> actually a major problem for slab reclaim and it manifests when
+> there are large bursts of allocation activity followed by sudden
+> reclaim activity.  When the slab grows rapidly, we get the majority
+> of objects on a page being of one type, but a couple will be of a
+> different type. Than under memory pressure, the shrinker can then
+> only free the majority of objects on a page, guaranteeing the slab
+> will remain fragmented under memory pressure.  Continuing to run the
+> shrinker won't result in any more memory being freed from the merged
+> slab and so we are stuck with unfixable slab fragmentation.
 > 
->     mm/slab: support slab merge
+> However, if the slab with a shrinker only contains one kind of
+> object, when it becomes fragmented due to variable object lifetime,
+> continued memory pressure will cause it to keep shrinking and hence
+> will eventually correct the fragmentation problem. This is a much
+> more robust configuration - the system will self correct without
+> user intervention being necessary.
 > 
->     Slab merge is good feature to reduce fragmentation.  If new creating slab
->     have similar size and property with exsitent slab, this feature reuse it
->     rather than creating new one.  As a result, objects are packed into fewer
->     slabs so that fragmentation is reduced.
+> IOWs, slab merging prevents us from implementing effective active
+> fragmentation management algorithms and hence prevents us  from
+> reducing slab fragmentation via improved shrinker reclaim
+> algorithms.  Simply put: slab merging reduces the effectiveness of
+> shrinker based slab reclaim.
 
-A partial page or two in a newly allocated slab in not
-"fragmentation". They are simply free objects in the cache that
-haven't been allocated yet. Fragmentation occurs when large numbers
-of objects are freed so the pages end up mostly empty but
-cannot be freed because there is still 1 or 2 objects in use of
-them. As such, if there was fragementation and slab merging fixed
-it, I'd expect to be seeing a much larger reduction in memory
-usage....
+I'm buying into the problem of variable object lifetime sharing the
+same slub.
 
->     Below is result of my testing.
-> 
->     * After boot, sleep 20; cat /proc/meminfo | grep Slab
-> 
->     <Before>
->     Slab: 25136 kB
-> 
->     <After>
->     Slab: 24364 kB
-> 
->     We can save 3% memory used by slab.
+With the SLAB bulk free API I'm introducing, we can speedup slub
+slowpath, by free several objects with a single cmpxchg_double, BUT
+these objects need to belong to the same page.
+ Thus, as Dave describe with merging, other users of the same size
+objects might end up holding onto objects scattered across several
+pages, which gives the bulk free less opportunities.
 
-The numbers don't support the conclusion. Memory used from boot to
-boot always varies by a small amount - a slight difference in the
-number of files accessed by the boot process can account for this.
-Also, you can't 't measure slab fragmentation by measuring the
-amount of memory used. You have to look at object counts in each
-slab and work out the percentage of free vs allocated objects. So
-there's no evidence that this 772kb difference in memory footprint
-can even be attributed to slab merging.
+That would be a technical argument for introducing a SLAB_NO_MERGE flag
+per slab.  But I want to do some measurement before making any
+decision. And it might be hard to show for my use-case of SKB free,
+because SKB allocs will likely be dominating 256 bytes slab anyhow.
 
-What about the rest of the slab fragmentation problem space?  It's
-not even mentioned in the commit, but that's really what is
-important to long running machines.
-
-IOWs, where's description of the problem that needs fixing? What's
-the example workload that demonstrates the problem? What's the
-before and after measurements of the workloads that generate
-significant slab fragmentation?  What's the long term impact of the
-change (e.g.  a busy server with a uptime of several weeks)? is the
-fragmentation level reduced?  increased? not significant?  What
-impact does this have on subsystems with shrinkers that are now
-operating on shared slabs? Do the shrinkers still work as
-effectively as they used to?  Do they now cause slab fragmentation,
-and if they do, does it self correct under continued memory
-pressure?
-
-And with the patch being merged without a single reviewed-by or
-acked-by, I'm sitting here wondering how we managed to fail software
-engineering 101 so badly here?
-
-Cheers,
-
-Dave.
 -- 
-Dave Chinner
-dchinner@redhat.com
+Best regards,
+  Jesper Dangaard Brouer
+  MSc.CS, Sr. Network Kernel Developer at Red Hat
+  Author of http://www.iptv-analyzer.org
+  LinkedIn: http://www.linkedin.com/in/brouer
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
