@@ -1,36 +1,39 @@
-From: Sudip Mukherjee <sudipm.mukherjee@gmail.com>
-Subject: [PATCH] dm: ioctl: prevent double freeing
-Date: Fri,  4 Sep 2015 16:52:39 +0530
-Message-ID: <1441365759-7247-1-git-send-email-sudipm.mukherjee@gmail.com>
-Return-path: <linux-raid-owner@vger.kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.com>
-Cc: linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Sudip Mukherjee <sudipm.mukherjee@gmail.com>
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: slab-nomerge (was Re: [git pull] device mapper changes for
+ 4.3)
+Date: Fri, 4 Sep 2015 08:55:25 -0500 (CDT)
+Message-ID: <alpine.DEB.2.11.1509040849460.30848@east.gentwo.org>
+References: <CA+55aFyepmdpbg9U2Pvp+aHjKmmGCrTK2ywzqfmaOTMXQasYNw@mail.gmail.com> <20150903005115.GA27804@redhat.com> <CA+55aFxpH6-XD97dOsuGvwozyV=28eBsxiKS901h8PFZrxaygw@mail.gmail.com> <20150903060247.GV1933@devil.localdomain>
+ <CA+55aFxftNVWVD7ujseqUDNgbVamrFWf0PVM+hPnrfmmACgE0Q@mail.gmail.com> <20150904032607.GX1933@devil.localdomain>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20150904032607.GX1933@devil.localdomain>
+Sender: owner-linux-mm@kvack.org
+To: Dave Chinner <dchinner@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Mike Snitzer <snitzer@redhat.com>, Pekka Enberg <penberg@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Viresh Kumar <viresh.kumar@linaro.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-mm <linux-mm@kvack.org>
 List-Id: dm-devel.ids
 
-DM_PARAMS_KMALLOC and DM_PARAMS_VMALLOC should never be set together in
-param_flags. We are setting these flags while allocating so we know that
-there is almost no chance of having these two set together but still we
-can have some additional safety.
+On Fri, 4 Sep 2015, Dave Chinner wrote:
 
-Signed-off-by: Sudip Mukherjee <sudip@vectorindia.org>
----
- drivers/md/dm-ioctl.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+> There are generic cases where it hurts, so no justification should
+> be needed for those cases...
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 80a4395..aaad74e 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1680,7 +1680,7 @@ static void free_params(struct dm_ioctl *param, size_t param_size, int param_fla
- 
- 	if (param_flags & DM_PARAMS_KMALLOC)
- 		kfree(param);
--	if (param_flags & DM_PARAMS_VMALLOC)
-+	else if (param_flags & DM_PARAMS_VMALLOC)
- 		vfree(param);
- }
- 
--- 
-1.9.1
+Inodes and dentries have constructors. These slabs are not mergeable and
+will never be because they have cache specific code to be executed on the
+object.
 
+> Really, we don't need some stupidly high bar to jump over here -
+> whether merging should be allowed can easily be answered with a
+> simple question: "Does the slab have a shrinker or does it back a
+> mempool?" If the answer is yes then using SLAB_SHRINKER or
+> SLAB_MEMPOOL to trigger the no-merge case doesn't need any more
+> justification from subsystem maintainers at all.
+
+The slab shrinkers do not use mergeable slab caches.
+
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
