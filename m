@@ -1,77 +1,80 @@
-From: Joe Julian <me@joejulian.name>
-Subject: Re: udev rules do not create partition entries when an
- lvm lv is partitioned
-Date: Fri, 4 Sep 2015 12:34:16 -0700
-Message-ID: <55E9F238.8080004@joejulian.name>
-References: <55E9E072.8080209@joejulian.name>
-	<20150904191209.GA8446@localhost.localdomain>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Dave Chinner <dchinner@redhat.com>
+Subject: Re: slab-nomerge (was Re: [git pull] device mapper changes for 4.3)
+Date: Sat, 5 Sep 2015 08:46:35 +1000
+Message-ID: <20150904224635.GA2562@devil.localdomain>
+References: <CA+55aFyepmdpbg9U2Pvp+aHjKmmGCrTK2ywzqfmaOTMXQasYNw@mail.gmail.com>
+ <20150903005115.GA27804@redhat.com>
+ <CA+55aFxpH6-XD97dOsuGvwozyV=28eBsxiKS901h8PFZrxaygw@mail.gmail.com>
+ <20150903060247.GV1933@devil.localdomain>
+ <CA+55aFxftNVWVD7ujseqUDNgbVamrFWf0PVM+hPnrfmmACgE0Q@mail.gmail.com>
+ <20150904032607.GX1933@devil.localdomain>
+ <alpine.DEB.2.11.1509040849460.30848@east.gentwo.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150904191209.GA8446@localhost.localdomain>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.11.1509040849460.30848@east.gentwo.org>
+Sender: owner-linux-mm@kvack.org
+To: Christoph Lameter <cl@linux.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Mike Snitzer <snitzer@redhat.com>, Pekka Enberg <penberg@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Viresh Kumar <viresh.kumar@linaro.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-mm <linux-mm@kvack.org>
 List-Id: dm-devel.ids
 
-On 09/04/2015 12:12 PM, Bryn M. Reeves wrote:
-> On Fri, Sep 04, 2015 at 11:18:26AM -0700, Joe Julian wrote:
->> Yes, I'm aware of all the arguments against even doing this, but I have my
->> reasons for doing it this way.
->>
->> When you create a partition on an lv:
->>
->>    sgdisk /dev/vg1/lv1 -n 0:0:0
->>
->> there is no udev rule to create the partition entry, '/dev/vg1/lv1p1' (for
->> instance). For my immediate use case, this causes ceph-disk to fail as it
->> cannot find the partition as it's expecting to find the device name with a
->> new "1" at the end. Any suggestions on how I could make this happen?
-> Why not just name the LV lv1p1 if ceph-disk is hard wired to expect that
-> naming?
->
-> There's not a lot of benefits to using partitions on top of logical
-> volumes and if you're not expecting them they can be problematic (e.g.
-> when they are the partitions of a running VM that is also accessing the
-> disk).
->
-> It is possible to create partitions on pretty much any device-mapper
-> device using the normal tools and then create new dm devices to map the
-> partitions using kpartx.
->
-> Multipath-tools supplies udev rules to automate this so that the
-> partition maps are created automatically by udev (since it works with
-> whole disks): you could use that as an example if you really want to try
-> that approach but it's fairly easy to get the rules wrong in subtle ways
-> that may prevent booting.
->
-> If you just want a temporary mapping to set things up run:
->
-> # kpartx -a /dev/vg1/lv1
->
-> And you should find partition maps at /dev/mapper/vg1-lv1p1 etc.
->
-> kpartx -d to remove.
->
-> Regards,
-> Bryn.
->   
-I've looked at the ceph-disk source. It's expecting whatever device path 
-I give it to add r".*1" as it (ceph-disk) creates the partitions so a 
-naming trick isn't going to work. There's no chance during the process 
-to manually add dm mappings or use kpartx.
+On Fri, Sep 04, 2015 at 08:55:25AM -0500, Christoph Lameter wrote:
+> On Fri, 4 Sep 2015, Dave Chinner wrote:
+> 
+> > There are generic cases where it hurts, so no justification should
+> > be needed for those cases...
+> 
+> Inodes and dentries have constructors. These slabs are not mergeable and
+> will never be because they have cache specific code to be executed on the
+> object.
 
-And like I said, I'm aware that there's either not a lot of benefits, or 
-no benefit, to using partitions on top of logical volumes. Ceph has a 
-very complex configuration and installation, so redoing that seems like 
-it would be a much more cumbersome task over just making partition 
-mappings work.
+I know - I said as much early on in this discussion. That's one of
+the generic cases I'm refering to.
+
+I also said that the fact that they are not merged is really by
+chance, not by good management. They are not being merged because of
+the constructor, not because they have a shrinker. hell, I even said
+that if it comes down to it, we don't even need SLAB_NO_MERGE
+because we can create dummy constructors to prevent merging....
+
+> > Really, we don't need some stupidly high bar to jump over here -
+> > whether merging should be allowed can easily be answered with a
+> > simple question: "Does the slab have a shrinker or does it back a
+> > mempool?" If the answer is yes then using SLAB_SHRINKER or
+> > SLAB_MEMPOOL to trigger the no-merge case doesn't need any more
+> > justification from subsystem maintainers at all.
+> 
+> The slab shrinkers do not use mergeable slab caches.
+
+Please, go back and read what i've already said.
+
+*Some* shrinkers act on mergable slabs because they have no
+constructor. e.g. the xfs_dquot and xfs_buf shrinkers.  I want to
+keep them separate just like the inode cache is kept separate
+because they have workload based demand peaks in the millions of
+objects and LRU based shrinker reclaim, just like inode caches do.
+
+That's what I want SLAB_SHRINKER for - to explicitly tell the slab
+cache creation that I have a shrinker on this slab and so it should
+not merge it with others. Every slab that has a shrinker should be
+marked with this flag - we should not be relying on constructors to
+prevent merging of critical slab caches with shrinkers....
+
+I really don't see the issue here - explicitly encoding and
+documenting the behaviour we've implicitly been relying on for years
+is something we do all the time. Code clarity and documented
+behaviour is a *good thing*.
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+dchinner@redhat.com
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
