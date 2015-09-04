@@ -1,34 +1,34 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: slab-nomerge (was Re: [git pull] device mapper changes for
- 4.3)
-Date: Fri, 4 Sep 2015 09:13:26 -0500 (CDT)
-Message-ID: <alpine.DEB.2.11.1509040906280.30848@east.gentwo.org>
-References: <CA+55aFyepmdpbg9U2Pvp+aHjKmmGCrTK2ywzqfmaOTMXQasYNw@mail.gmail.com> <20150903005115.GA27804@redhat.com> <CA+55aFxpH6-XD97dOsuGvwozyV=28eBsxiKS901h8PFZrxaygw@mail.gmail.com> <20150903060247.GV1933@devil.localdomain> <20150903122949.78ee3c94@redhat.com>
- <alpine.DEB.2.11.1509031113450.24411@east.gentwo.org> <20150904111038.4a428b03@redhat.com>
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150904111038.4a428b03@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Jesper Dangaard Brouer <brouer@redhat.com>
-Cc: Dave Chinner <dchinner@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Mike Snitzer <snitzer@redhat.com>, Pekka Enberg <penberg@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Viresh Kumar <viresh.kumar@linaro.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-mm <linux-mm@kvack.org>
+From: Joe Julian <me@joejulian.name>
+Subject: udev rules do not create partition entries when an lvm
+ lv is partitioned
+Date: Fri, 4 Sep 2015 11:18:26 -0700
+Message-ID: <55E9E072.8080209@joejulian.name>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-lvm@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, 4 Sep 2015, Jesper Dangaard Brouer wrote:
+Yes, I'm aware of all the arguments against even doing this, but I have 
+my reasons for doing it this way.
 
-> Thus, I could achieve the same performance results by tuning SLUB as I
-> could with "slab_nomerge".  Maybe the advantage from "slab_nomerge" was
-> just that I got my "own" per CPU structures, and this implicitly larger
-> per CPU memory for myself?
+When you create a partition on an lv:
 
-Well if multiple slabs are merged then there is potential pressure on the
-per node locks if huge amounts of objects are concurrently retrieved from
-the per node partial lists by two different subsystems. So cache merging
-can increase contention and thereby reduce performance. What you did with
-tuning is to reduce that contention by increasing the per cpu pages that
-do not require locks.
+   sgdisk /dev/vg1/lv1 -n 0:0:0
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+there is no udev rule to create the partition entry, '/dev/vg1/lv1p1' 
+(for instance). For my immediate use case, this causes ceph-disk to fail 
+as it cannot find the partition as it's expecting to find the device 
+name with a new "1" at the end. Any suggestions on how I could make this 
+happen?
