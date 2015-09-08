@@ -1,91 +1,95 @@
-From: Jesper Dangaard Brouer <brouer@redhat.com>
+From: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
 Subject: Re: slab-nomerge (was Re: [git pull] device mapper changes for 4.3)
-Date: Mon, 7 Sep 2015 23:17:15 +0200
-Message-ID: <20150907231715.0a375b40@redhat.com>
-References: <CA+55aFyepmdpbg9U2Pvp+aHjKmmGCrTK2ywzqfmaOTMXQasYNw@mail.gmail.com>
-	<20150903005115.GA27804@redhat.com>
-	<CA+55aFxpH6-XD97dOsuGvwozyV=28eBsxiKS901h8PFZrxaygw@mail.gmail.com>
-	<20150903060247.GV1933@devil.localdomain>
-	<CA+55aFxftNVWVD7ujseqUDNgbVamrFWf0PVM+hPnrfmmACgE0Q@mail.gmail.com>
-	<20150904032607.GX1933@devil.localdomain>
-	<CA+55aFzBTL=DnC4zv6yxjk0HxwxWpOhpKDPA8zkTGdgbh08sEg@mail.gmail.com>
-	<20150907113026.5bb28ca3@redhat.com>
-	<CA+55aFym-dM37xtvKjddMheSV9vPUq=tnN9FoFvEgD0QWW22sg@mail.gmail.com>
+Date: Tue, 8 Sep 2015 09:22:20 +0900
+Message-ID: <20150908002220.GC6896@swordfish>
+References: <CA+55aFxpH6-XD97dOsuGvwozyV=28eBsxiKS901h8PFZrxaygw@mail.gmail.com>
+ <20150903060247.GV1933@devil.localdomain>
+ <20150903122949.78ee3c94@redhat.com>
+ <20150904063528.GA29320@swordfish>
+ <CA+55aFxOR06BiyH9nfFXzidFGr77R_BGp_xypjFQJSnv5c+_-g@mail.gmail.com>
+ <20150904075945.GA31503@swordfish>
+ <CA+55aFzs78Y0LS2FJG7Mrh6KBFxVnsBGSAySoi7SpR+EmmGpLg@mail.gmail.com>
+ <20150905020907.GA1431@swordfish>
+ <CA+55aFw609MpnZPdecjxHxLRQsHp2fM+vUj0KtHPC9sTm78FRw@mail.gmail.com>
+ <20150907084437.GA27956@swordfish>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CA+55aFym-dM37xtvKjddMheSV9vPUq=tnN9FoFvEgD0QWW22sg@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20150907084437.GA27956@swordfish>
 Sender: owner-linux-mm@kvack.org
 To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Dave Chinner <dchinner@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Viresh Kumar <viresh.kumar@linaro.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-mm <linux-mm@kvack.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, brouer@redhat.com
+Cc: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Christoph Lameter <cl@linux.com>, Jesper Dangaard Brouer <brouer@redhat.com>, Dave Chinner <dchinner@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Pekka Enberg <penberg@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Viresh Kumar <viresh.kumar@linaro.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-mm <linux-mm@kvack.org>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, 7 Sep 2015 13:22:13 -0700
-Linus Torvalds <torvalds@linux-foundation.org> wrote:
-
-> On Mon, Sep 7, 2015 at 2:30 AM, Jesper Dangaard Brouer
-> <brouer@redhat.com> wrote:
-> >
-> > The slub allocator have a faster "fastpath", if your workload is
-> > fast-reusing within the same per-cpu page-slab, but once the workload
-> > increases you hit the slowpath, and then slab catches up. Slub looks
-> > great in micro-benchmarking.
-> >
-> > And with "slab_nomerge" I get even high performance:
+On (09/07/15 17:44), Sergey Senozhatsky wrote:
+[...]
+> Oh, that's a good idea. I didn't use tools/testing/ktest/, it's a bit too
+> massive for my toy script. I have some modifications to slabinfo and a rather
+> ugly script to parse files and feed them to gnuplot (and yes, I use gnuplot
+> for plotting). slabinfo patches are not entirely dumb and close to being ready
+> (well.. except that I need to clean up all those %6s sprintfs that worked fine
+> for dynamically scalled sizes and do not work so nicely for sizes in bytes). I
+> can send them out later. Less sure about the script (bash) tho. In a nutshell
+> it's just a number of
+>      grep | awk > FOO; gnuplot ... FOO
 > 
-> I think those two are related.
-> 
-> Not merging means that effectively the percpu caches end up being
-> bigger (simply because there are more of them), and so it captures
-> more of the fastpath cases.
+> So I'll finish some plotting improvements first (not ready yet) and then
+> I'll take a look how quickly I can land it (rewrite in perl) in
+> tools/testing/ktest/.
 
-Yes, that was also my theory.  As manually tuning the percpu sizes gave
-me almost the same boost.
+Hi,
 
+uploaded my scripts to
+https://github.com/sergey-senozhatsky/slabinfo
 
-> Obviously the percpu queue size is an easy tunable too, but there are
-> real downsides to that too. 
+A set of very simple bash scripts. The README file contains
+some sort of documentation and a 'tutorial'.
 
-The easy fix is to introduce a subsystem specific percpu cache that is
-large enough for our use-case.  That seems to be a trend. I'm hoping to
-come up with something smarter that every subsystem can benefit from. 
-E.g some heuristic that can dynamic adjust SLUB according to the usage
-pattern. I can imagine something as simple as a counter for every
-slowpath call, that is only valid as long as the jiffies count matches
-(reset to zero, and store new jiffies cnt).  (But I have not thought
-this through...)
+==================================================================
+To start collecting samples, record file name is NOMERGE, note sudo
 
+sudo ./slabinfo-plotter.sh -r NOMERGE
 
-> I suspect your IP forwarding case isn't so
-> different from some of the microbenchmarks, it just has more
-> outstanding work..
+#^C or reboot
 
-Yes, I will admit that my testing is very close to micro benchmarking,
-and it is specifically designed to pressure the system to its limits[1].
-Especially the minimum frame size is evil and unrealistic, but the real
-purpose is preparing the stack for increasing speeds like 100Gbit/s.
+pre-process records file for gnuplot
+
+./slabinfo-plotter.sh -p NOMERGE -b gnuplot
+File gnuplot_slabs-by-loss-NOMERGE
+File gnuplot_slabs-by-size-NOMERGE
+File gnuplot_totals-NOMERGE
+
+generate grphs from 'slabinfo totals'
+
+./gnuplot-totals.sh -f gnuplot_totals-NOMERGE
 
 
-> And yes, the slow path (ie not hitting in the percpu cache) of SLUB
-> could hopefully be optimizable too, although maybe the bulk patches
-> are the way to go (and unrelated to this thread - at least part of
-> your bulk patches actually got merged last Friday - they were part of
-> Andrew's patch-bomb).
+Graph file name -- gnuplot_totals-NOMERGE.png
+...
 
-Cool. Yes, it is only part of the bulk patches. The real performance
-boosters are not in yet (but I need to make them work correctly with
-memory debugging enabled before they can get merged).  At least the
-main API is in, which allows me to implement use-case easier in other
-subsystems :-)
+==================================================================
 
-[1] http://netoptimizer.blogspot.dk/2014/09/packet-per-sec-measurements-for.html
--- 
-Best regards,
-  Jesper Dangaard Brouer
-  MSc.CS, Sr. Network Kernel Developer at Red Hat
-  Author of http://www.iptv-analyzer.org
-  LinkedIn: http://www.linkedin.com/in/brouer
+
+Two things:
+-- it wants a patched version of slabinfo (some sort of patches are in
+   kernel_patches/ dir)
+-- it wants slabinfo to be in PATH
+
+
+For now on it does what it does -- captures numbers and picks only ones
+that are interesting to me and generates plots.
+
+
+I'm doing this in my spare time, but I'm surely accepting improvement
+requests/ideas, pull requests, and everything that follows.
+
+
+Will play around with the scripts for some time to make sure they
+are usable and then we can decide if there is a place for something
+like this in the kernel or it's better be done somehow differently.
+
+	-ss
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
