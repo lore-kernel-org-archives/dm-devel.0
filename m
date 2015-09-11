@@ -1,57 +1,36 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: James Bottomley <jbottomley@odin.com>
 Subject: Re: randconfig build error with next-20150908, in
  drivers/md/dm-mpath.c
-Date: Fri, 11 Sep 2015 14:29:03 -0400
-Message-ID: <20150911182902.GB25678@redhat.com>
+Date: Fri, 11 Sep 2015 18:54:01 +0000
+Message-ID: <1441997640.7836.1.camel@Odin.com>
 References: <CA+r1ZhgR=dO0ezk0Nm0JuAb1D0AU7K2Am=Pyy9aPqCMsLW9Y0w@mail.gmail.com>
- <20150908172356.GA1584@redhat.com>
- <20150909160418.GB28608@lst.de>
+	 <20150908172356.GA1584@redhat.com> <20150909160418.GB28608@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-next-owner@vger.kernel.org>
-Content-Disposition: inline
 In-Reply-To: <20150909160418.GB28608@lst.de>
+Content-Language: en-US
+Content-ID: <4A0CFA1049FE10469B9DFB86E33EE6DF@sw.swsoft.com>
 Sender: linux-next-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Stephen Rothwell <sfr@canb.auug.org.au>, James Bottomley <JBottomley@Odin.com>, linux-kernel <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, linux-next <linux-next@vger.kernel.org>, Jim Davis <jim.epost@gmail.com>, agk@redhat.com
+To: "hch@lst.de" <hch@lst.de>
+Cc: "sfr@canb.auug.org.au" <sfr@canb.auug.org.au>, "jim.epost@gmail.com" <jim.epost@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "agk@redhat.com" <agk@redhat.com>, "linux-next@vger.kernel.org" <linux-next@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Sep 09 2015 at 12:04pm -0400,
-Christoph Hellwig <hch@lst.de> wrote:
-
-> Does this fix the issue for you?  My Kconfig-fu isn't the best,
-> but the idea behind this is that dm-mpath will depend on SCSI
-> if SCSI_DH is set.  If SCSI_DH is not set it will use the stubs
-> and not care about SCSI.
-> 
-> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-> index b597273..e9ea681 100644
-> --- a/drivers/md/Kconfig
-> +++ b/drivers/md/Kconfig
-> @@ -393,7 +393,7 @@ config DM_MULTIPATH
->  	# of SCSI_DH if the latter isn't defined but if
->  	# it is, DM_MULTIPATH must depend on it.  We get a build
->  	# error if SCSI_DH=m and DM_MULTIPATH=y
-> -	depends on SCSI_DH || !SCSI_DH
-> +	depends on !SCSI_DH || SCSI
->  	---help---
->  	  Allow volume managers to support multipath hardware.
->  
-
-I verified (with next-20150911) that without your patch I saw the
-reported problem using the provided randconfig (that had
-CONFIG_SCSI_DH=y and CONFIG_DM_MULTIPATH=y):
-
-drivers/built-in.o: In function `activate_path':
-/root/snitm/git/linux/drivers/md/dm-mpath.c:1225: undefined reference to `scsi_dh_activate'
-drivers/built-in.o: In function `parse_path':
-/root/snitm/git/linux/drivers/md/dm-mpath.c:581: undefined reference to `scsi_dh_attached_handler_name'
-/root/snitm/git/linux/drivers/md/dm-mpath.c:600: undefined reference to `scsi_dh_attach'
-/root/snitm/git/linux/drivers/md/dm-mpath.c:615: undefined reference to `scsi_dh_set_params'
-make: *** [vmlinux] Error 1
-
-But with your patch the build completes successfully.
-
-James, please feel free to pull in Christoph's patch and add my:
-
-Tested-by: Mike Snitzer <snitzer@redhat.com>
+T24gV2VkLCAyMDE1LTA5LTA5IGF0IDE4OjA0ICswMjAwLCBDaHJpc3RvcGggSGVsbHdpZyB3cm90
+ZToNCj4gRG9lcyB0aGlzIGZpeCB0aGUgaXNzdWUgZm9yIHlvdT8gIE15IEtjb25maWctZnUgaXNu
+J3QgdGhlIGJlc3QsDQo+IGJ1dCB0aGUgaWRlYSBiZWhpbmQgdGhpcyBpcyB0aGF0IGRtLW1wYXRo
+IHdpbGwgZGVwZW5kIG9uIFNDU0kNCj4gaWYgU0NTSV9ESCBpcyBzZXQuICBJZiBTQ1NJX0RIIGlz
+IG5vdCBzZXQgaXQgd2lsbCB1c2UgdGhlIHN0dWJzDQo+IGFuZCBub3QgY2FyZSBhYm91dCBTQ1NJ
+Lg0KDQpJIGFzc3VtZSBJJ20gT0sgdG8gYWRkDQoNClNpZ25lZC1vZmYtYnk6IENocmlzdG9waCBI
+ZWxsd2lnIDxoY2hAbHN0LmRlPg0KDQooSSdsbCBhc3N1bWUgc28gaWYgeW91IGRvbid0IHJlcGx5
+KQ0KDQpKYW1lcw0KDQo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL0tjb25maWcgYi9kcml2ZXJz
+L21kL0tjb25maWcNCj4gaW5kZXggYjU5NzI3My4uZTllYTY4MSAxMDA2NDQNCj4gLS0tIGEvZHJp
+dmVycy9tZC9LY29uZmlnDQo+ICsrKyBiL2RyaXZlcnMvbWQvS2NvbmZpZw0KPiBAQCAtMzkzLDcg
+KzM5Myw3IEBAIGNvbmZpZyBETV9NVUxUSVBBVEgNCj4gIAkjIG9mIFNDU0lfREggaWYgdGhlIGxh
+dHRlciBpc24ndCBkZWZpbmVkIGJ1dCBpZg0KPiAgCSMgaXQgaXMsIERNX01VTFRJUEFUSCBtdXN0
+IGRlcGVuZCBvbiBpdC4gIFdlIGdldCBhIGJ1aWxkDQo+ICAJIyBlcnJvciBpZiBTQ1NJX0RIPW0g
+YW5kIERNX01VTFRJUEFUSD15DQo+IC0JZGVwZW5kcyBvbiBTQ1NJX0RIIHx8ICFTQ1NJX0RIDQo+
+ICsJZGVwZW5kcyBvbiAhU0NTSV9ESCB8fCBTQ1NJDQo+ICAJLS0taGVscC0tLQ0KPiAgCSAgQWxs
+b3cgdm9sdW1lIG1hbmFnZXJzIHRvIHN1cHBvcnQgbXVsdGlwYXRoIGhhcmR3YXJlLg0KPiAgDQoN
+Cg0KDQo=
