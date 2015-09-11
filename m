@@ -1,90 +1,57 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Regression: Disk corruption with dm-crypt and kernels >= 4.0
-Date: Fri, 11 Sep 2015 12:11:39 -0400
-Message-ID: <20150911161139.GA25298@redhat.com>
-References: <1430455027.7012.32.camel@memnix.com>
- <20150501211703.GA15030@redhat.com>
- <1430519090.5537.4.camel@memnix.com>
- <1430523735.5352.1.camel@memnix.com>
- <20150515150442.GB35834@hank.reardencode.com>
- <1431959798.19977.4.camel@memnix.com>
- <alpine.LRH.2.02.1506021345310.22804@file01.intranet.prod.int.rdu2.redhat.com>
- <1433298070.5798.1.camel@memnix.com>
+Subject: Re: randconfig build error with next-20150908, in
+ drivers/md/dm-mpath.c
+Date: Fri, 11 Sep 2015 14:29:03 -0400
+Message-ID: <20150911182902.GB25678@redhat.com>
+References: <CA+r1ZhgR=dO0ezk0Nm0JuAb1D0AU7K2Am=Pyy9aPqCMsLW9Y0w@mail.gmail.com>
+ <20150908172356.GA1584@redhat.com>
+ <20150909160418.GB28608@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-next-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1433298070.5798.1.camel@memnix.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Abelardo Ricart III <aricart@memnix.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Brandon Smith <freedom@reardencode.com>, linux-kernel@vger.kernel.org
+In-Reply-To: <20150909160418.GB28608@lst.de>
+Sender: linux-next-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Stephen Rothwell <sfr@canb.auug.org.au>, James Bottomley <JBottomley@Odin.com>, linux-kernel <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, linux-next <linux-next@vger.kernel.org>, Jim Davis <jim.epost@gmail.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+On Wed, Sep 09 2015 at 12:04pm -0400,
+Christoph Hellwig <hch@lst.de> wrote:
 
-Could you please try the following patch (against any of the kernels you
-saw the corruption with.  be it 4.0, 4.1, 4.2) to see if the regression
-you reported goes away?  Thanks, Mike
+> Does this fix the issue for you?  My Kconfig-fu isn't the best,
+> but the idea behind this is that dm-mpath will depend on SCSI
+> if SCSI_DH is set.  If SCSI_DH is not set it will use the stubs
+> and not care about SCSI.
+> 
+> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+> index b597273..e9ea681 100644
+> --- a/drivers/md/Kconfig
+> +++ b/drivers/md/Kconfig
+> @@ -393,7 +393,7 @@ config DM_MULTIPATH
+>  	# of SCSI_DH if the latter isn't defined but if
+>  	# it is, DM_MULTIPATH must depend on it.  We get a build
+>  	# error if SCSI_DH=m and DM_MULTIPATH=y
+> -	depends on SCSI_DH || !SCSI_DH
+> +	depends on !SCSI_DH || SCSI
+>  	---help---
+>  	  Allow volume managers to support multipath hardware.
+>  
 
-From: Mike Snitzer <snitzer@redhat.com>
-Date: Wed, 9 Sep 2015 21:34:51 -0400
-Subject: [PATCH] dm crypt: constrain crypt device's max_segment_size to
- PAGE_SIZE
+I verified (with next-20150911) that without your patch I saw the
+reported problem using the provided randconfig (that had
+CONFIG_SCSI_DH=y and CONFIG_DM_MULTIPATH=y):
 
-Unfortunate constraint that is required to avoid the potential for
-exceeding underlying device's max_segments limits -- due to
-crypt_alloc_buffer() possibly allocating pages for the encryption bio
-that are not as physically contiguous as the original bio.
+drivers/built-in.o: In function `activate_path':
+/root/snitm/git/linux/drivers/md/dm-mpath.c:1225: undefined reference to `scsi_dh_activate'
+drivers/built-in.o: In function `parse_path':
+/root/snitm/git/linux/drivers/md/dm-mpath.c:581: undefined reference to `scsi_dh_attached_handler_name'
+/root/snitm/git/linux/drivers/md/dm-mpath.c:600: undefined reference to `scsi_dh_attach'
+/root/snitm/git/linux/drivers/md/dm-mpath.c:615: undefined reference to `scsi_dh_set_params'
+make: *** [vmlinux] Error 1
 
-Suggested-by: Jeff Moyer <jmoyer@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-crypt.c |   17 +++++++++++++++--
- 1 files changed, 15 insertions(+), 2 deletions(-)
+But with your patch the build completes successfully.
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 76f1d6e..f717762 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -973,7 +973,8 @@ static void crypt_free_buffer_pages(struct crypt_config *cc, struct bio *clone);
- 
- /*
-  * Generate a new unfragmented bio with the given size
-- * This should never violate the device limitations
-+ * This should never violate the device limitations (but only because
-+ * max_segment_size is being constrained to PAGE_SIZE).
-  *
-  * This function may be called concurrently. If we allocate from the mempool
-  * concurrently, there is a possibility of deadlock. For example, if we have
-@@ -2057,9 +2058,20 @@ static int crypt_iterate_devices(struct dm_target *ti,
- 	return fn(ti, cc->dev, cc->start, ti->len, data);
- }
- 
-+static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
-+{
-+	/*
-+	 * Unfortunate constraint that is required to avoid the potential
-+	 * for exceeding underlying device's max_segments limits -- due to
-+	 * crypt_alloc_buffer() possibly allocating pages for the encryption
-+	 * bio that are not as physically contiguous as the original bio.
-+	 */
-+	limits->max_segment_size = PAGE_SIZE;
-+}
-+
- static struct target_type crypt_target = {
- 	.name   = "crypt",
--	.version = {1, 14, 0},
-+	.version = {1, 14, 1},
- 	.module = THIS_MODULE,
- 	.ctr    = crypt_ctr,
- 	.dtr    = crypt_dtr,
-@@ -2071,6 +2083,7 @@ static struct target_type crypt_target = {
- 	.message = crypt_message,
- 	.merge  = crypt_merge,
- 	.iterate_devices = crypt_iterate_devices,
-+	.io_hints = crypt_io_hints,
- };
- 
- static int __init dm_crypt_init(void)
--- 
-1.7.4.4
+James, please feel free to pull in Christoph's patch and add my:
+
+Tested-by: Mike Snitzer <snitzer@redhat.com>
