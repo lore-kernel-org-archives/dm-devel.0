@@ -1,36 +1,154 @@
-From: James Bottomley <jbottomley@odin.com>
-Subject: Re: randconfig build error with next-20150908, in
- drivers/md/dm-mpath.c
-Date: Fri, 11 Sep 2015 18:54:01 +0000
-Message-ID: <1441997640.7836.1.camel@Odin.com>
-References: <CA+r1ZhgR=dO0ezk0Nm0JuAb1D0AU7K2Am=Pyy9aPqCMsLW9Y0w@mail.gmail.com>
-	 <20150908172356.GA1584@redhat.com> <20150909160418.GB28608@lst.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-next-owner@vger.kernel.org>
-In-Reply-To: <20150909160418.GB28608@lst.de>
-Content-Language: en-US
-Content-ID: <4A0CFA1049FE10469B9DFB86E33EE6DF@sw.swsoft.com>
-Sender: linux-next-owner@vger.kernel.org
-To: "hch@lst.de" <hch@lst.de>
-Cc: "sfr@canb.auug.org.au" <sfr@canb.auug.org.au>, "jim.epost@gmail.com" <jim.epost@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "agk@redhat.com" <agk@redhat.com>, "linux-next@vger.kernel.org" <linux-next@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+From: Julia Lawall <Julia.Lawall@lip6.fr>
+Subject: [PATCH 12/39] dm: drop null test before destroy functions
+Date: Sun, 13 Sep 2015 14:15:05 +0200
+Message-ID: <1442146532-9100-13-git-send-email-Julia.Lawall@lip6.fr>
+References: <1442146532-9100-1-git-send-email-Julia.Lawall@lip6.fr>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1442146532-9100-1-git-send-email-Julia.Lawall@lip6.fr>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>
+Cc: sergey.senozhatsky@gmail.com, kernel-janitors@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE1LTA5LTA5IGF0IDE4OjA0ICswMjAwLCBDaHJpc3RvcGggSGVsbHdpZyB3cm90
-ZToNCj4gRG9lcyB0aGlzIGZpeCB0aGUgaXNzdWUgZm9yIHlvdT8gIE15IEtjb25maWctZnUgaXNu
-J3QgdGhlIGJlc3QsDQo+IGJ1dCB0aGUgaWRlYSBiZWhpbmQgdGhpcyBpcyB0aGF0IGRtLW1wYXRo
-IHdpbGwgZGVwZW5kIG9uIFNDU0kNCj4gaWYgU0NTSV9ESCBpcyBzZXQuICBJZiBTQ1NJX0RIIGlz
-IG5vdCBzZXQgaXQgd2lsbCB1c2UgdGhlIHN0dWJzDQo+IGFuZCBub3QgY2FyZSBhYm91dCBTQ1NJ
-Lg0KDQpJIGFzc3VtZSBJJ20gT0sgdG8gYWRkDQoNClNpZ25lZC1vZmYtYnk6IENocmlzdG9waCBI
-ZWxsd2lnIDxoY2hAbHN0LmRlPg0KDQooSSdsbCBhc3N1bWUgc28gaWYgeW91IGRvbid0IHJlcGx5
-KQ0KDQpKYW1lcw0KDQo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL0tjb25maWcgYi9kcml2ZXJz
-L21kL0tjb25maWcNCj4gaW5kZXggYjU5NzI3My4uZTllYTY4MSAxMDA2NDQNCj4gLS0tIGEvZHJp
-dmVycy9tZC9LY29uZmlnDQo+ICsrKyBiL2RyaXZlcnMvbWQvS2NvbmZpZw0KPiBAQCAtMzkzLDcg
-KzM5Myw3IEBAIGNvbmZpZyBETV9NVUxUSVBBVEgNCj4gIAkjIG9mIFNDU0lfREggaWYgdGhlIGxh
-dHRlciBpc24ndCBkZWZpbmVkIGJ1dCBpZg0KPiAgCSMgaXQgaXMsIERNX01VTFRJUEFUSCBtdXN0
-IGRlcGVuZCBvbiBpdC4gIFdlIGdldCBhIGJ1aWxkDQo+ICAJIyBlcnJvciBpZiBTQ1NJX0RIPW0g
-YW5kIERNX01VTFRJUEFUSD15DQo+IC0JZGVwZW5kcyBvbiBTQ1NJX0RIIHx8ICFTQ1NJX0RIDQo+
-ICsJZGVwZW5kcyBvbiAhU0NTSV9ESCB8fCBTQ1NJDQo+ICAJLS0taGVscC0tLQ0KPiAgCSAgQWxs
-b3cgdm9sdW1lIG1hbmFnZXJzIHRvIHN1cHBvcnQgbXVsdGlwYXRoIGhhcmR3YXJlLg0KPiAgDQoN
-Cg0KDQo=
+Remove unneeded NULL test.
+
+The semantic patch that makes this change is as follows:
+(http://coccinelle.lip6.fr/)
+
+// <smpl>
+@@ expression x; @@
+-if (x != NULL)
+  \(kmem_cache_destroy\|mempool_destroy\|dma_pool_destroy\)(x);
+// </smpl>
+
+Signed-off-by: Julia Lawall <Julia.Lawall@lip6.fr>
+
+---
+ drivers/md/dm-bufio.c              |    3 +--
+ drivers/md/dm-cache-target.c       |    3 +--
+ drivers/md/dm-crypt.c              |    6 ++----
+ drivers/md/dm-io.c                 |    3 +--
+ drivers/md/dm-log-userspace-base.c |    3 +--
+ drivers/md/dm-region-hash.c        |    4 +---
+ drivers/md/dm.c                    |   13 ++++---------
+ 7 files changed, 11 insertions(+), 24 deletions(-)
+
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index 83cc52e..8ad39b6 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -1864,8 +1864,7 @@ static void __exit dm_bufio_exit(void)
+ 	for (i = 0; i < ARRAY_SIZE(dm_bufio_caches); i++) {
+ 		struct kmem_cache *kc = dm_bufio_caches[i];
+ 
+-		if (kc)
+-			kmem_cache_destroy(kc);
++		kmem_cache_destroy(kc);
+ 	}
+ 
+ 	for (i = 0; i < ARRAY_SIZE(dm_bufio_cache_names); i++)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 6264781..163de31 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2220,10 +2220,8 @@ static void cleanup_mapped_device(struct mapped_device *md)
+ 		destroy_workqueue(md->wq);
+ 	if (md->kworker_task)
+ 		kthread_stop(md->kworker_task);
+-	if (md->io_pool)
+-		mempool_destroy(md->io_pool);
+-	if (md->rq_pool)
+-		mempool_destroy(md->rq_pool);
++	mempool_destroy(md->io_pool);
++	mempool_destroy(md->rq_pool);
+ 	if (md->bs)
+ 		bioset_free(md->bs);
+ 
+@@ -3508,11 +3506,8 @@ void dm_free_md_mempools(struct dm_md_mempools *pools)
+ 	if (!pools)
+ 		return;
+ 
+-	if (pools->io_pool)
+-		mempool_destroy(pools->io_pool);
+-
+-	if (pools->rq_pool)
+-		mempool_destroy(pools->rq_pool);
++	mempool_destroy(pools->io_pool);
++	mempool_destroy(pools->rq_pool);
+ 
+ 	if (pools->bs)
+ 		bioset_free(pools->bs);
+diff --git a/drivers/md/dm-log-userspace-base.c b/drivers/md/dm-log-userspace-base.c
+index 058256d..53b7b06 100644
+--- a/drivers/md/dm-log-userspace-base.c
++++ b/drivers/md/dm-log-userspace-base.c
+@@ -313,8 +313,7 @@ static int userspace_ctr(struct dm_dirty_log *log, struct dm_target *ti,
+ out:
+ 	kfree(devices_rdata);
+ 	if (r) {
+-		if (lc->flush_entry_pool)
+-			mempool_destroy(lc->flush_entry_pool);
++		mempool_destroy(lc->flush_entry_pool);
+ 		kfree(lc);
+ 		kfree(ctr_str);
+ 	} else {
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index 6f8e83b..81c5e1a 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -65,8 +65,7 @@ struct dm_io_client *dm_io_client_create(void)
+ 	return client;
+ 
+    bad:
+-	if (client->pool)
+-		mempool_destroy(client->pool);
++	mempool_destroy(client->pool);
+ 	kfree(client);
+ 	return ERR_PTR(-ENOMEM);
+ }
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index dd90d12..2fd4c82 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -2309,8 +2309,7 @@ static void destroy(struct cache *cache)
+ {
+ 	unsigned i;
+ 
+-	if (cache->migration_pool)
+-		mempool_destroy(cache->migration_pool);
++	mempool_destroy(cache->migration_pool);
+ 
+ 	if (cache->all_io_ds)
+ 		dm_deferred_set_destroy(cache->all_io_ds);
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index d60c88d..cf91a96 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1543,10 +1543,8 @@ static void crypt_dtr(struct dm_target *ti)
+ 	if (cc->bs)
+ 		bioset_free(cc->bs);
+ 
+-	if (cc->page_pool)
+-		mempool_destroy(cc->page_pool);
+-	if (cc->req_pool)
+-		mempool_destroy(cc->req_pool);
++	mempool_destroy(cc->page_pool);
++	mempool_destroy(cc->req_pool);
+ 
+ 	if (cc->iv_gen_ops && cc->iv_gen_ops->dtr)
+ 		cc->iv_gen_ops->dtr(cc);
+diff --git a/drivers/md/dm-region-hash.c b/drivers/md/dm-region-hash.c
+index b929fd5..f3d608b 100644
+--- a/drivers/md/dm-region-hash.c
++++ b/drivers/md/dm-region-hash.c
+@@ -249,9 +249,7 @@ void dm_region_hash_destroy(struct dm_region_hash *rh)
+ 	if (rh->log)
+ 		dm_dirty_log_destroy(rh->log);
+ 
+-	if (rh->region_pool)
+-		mempool_destroy(rh->region_pool);
+-
++	mempool_destroy(rh->region_pool);
+ 	vfree(rh->buckets);
+ 	kfree(rh);
+ }
