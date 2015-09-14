@@ -1,86 +1,61 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: randconfig build error with next-20150908, in
- drivers/md/dm-mpath.c
-Date: Sun, 13 Sep 2015 16:29:38 +0200
-Message-ID: <55F58852.7070108@suse.de>
-References: <CA+r1ZhgR=dO0ezk0Nm0JuAb1D0AU7K2Am=Pyy9aPqCMsLW9Y0w@mail.gmail.com>
- <20150908172356.GA1584@redhat.com> <1441733672.5932.1.camel@Odin.com>
- <20150908183021.GA3019@redhat.com>
+From: Adam Nielsen <a.nielsen@shikadi.net>
+Subject: How do you force-close a dm device after a disk failure?
+Date: Mon, 14 Sep 2015 10:29:17 +1000
+Message-ID: <20150914102917.3991920c@korath.teln.shikadi.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20150908183021.GA3019@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, James Bottomley <jbottomley@odin.com>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "agk@redhat.com" <agk@redhat.com>, "hch@lst.de" <hch@lst.de>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "sfr@canb.auug.org.au" <sfr@canb.auug.org.au>, "jim.epost@gmail.com" <jim.epost@gmail.com>, "linux-next@vger.kernel.org" <linux-next@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 09/08/2015 08:30 PM, Mike Snitzer wrote:
-> On Tue, Sep 08 2015 at  1:34pm -0400,
-> James Bottomley <jbottomley@odin.com> wrote:
->=20
->> On Tue, 2015-09-08 at 13:23 -0400, Mike Snitzer wrote:
->>> On Tue, Sep 08 2015 at  1:10pm -0400,
->>> Jim Davis <jim.epost@gmail.com> wrote:
->>>
->>>> Building with the attached random configuration file,
->>>>
->>>> drivers/built-in.o: In function `activate_path':
->>>> /home/jim/linux-next/drivers/md/dm-mpath.c:1225: undefined referen=
-ce
->>>> to `scsi_dh_activate'
->>>> drivers/built-in.o: In function `parse_path':
->>>> /home/jim/linux-next/drivers/md/dm-mpath.c:581: undefined referenc=
-e to
->>>> `scsi_dh_attached_handler_name'
->>>> /home/jim/linux-next/drivers/md/dm-mpath.c:600: undefined referenc=
-e to
->>>> `scsi_dh_attach'
->>>> /home/jim/linux-next/drivers/md/dm-mpath.c:615: undefined referenc=
-e to
->>>> `scsi_dh_set_params'
->>>
->>> These DM-mpath changes were staged via linux-scsi.  Cc'ing James an=
-d Christoph.
->>
->> [adding linux-scsi]
->>
->> It must be Hannes' dm changes ... you acked them.  I take it the pro=
-blem
->> is now dm-mpath won't build without CONFIG_SCSI?  How do you want it
->> fixed?  We can either add a Kconfig dependency or try to disentangle
->> them again.
->=20
-> OK (Hannes' changes).  I'm fine with seeing DM_MULTIPATH depend on
-> CONFIG_SCSI.
->=20
-Indeed, with the switch for having scsi_dh being moved into struct
-scsi_device DM_MULTIPATH will now depend on SCSI.
+Hi all,
 
-> The Kconfig for DM_MULTIPATH is clearly stale:
->=20
->         # nasty syntax but means make DM_MULTIPATH independent
->         # of SCSI_DH if the latter isn't defined but if
->         # it is, DM_MULTIPATH must depend on it.  We get a build
->         # error if SCSI_DH=3Dm and DM_MULTIPATH=3Dy
->         depends on SCSI_DH || !SCSI_DH
->=20
-> James, if you have a vision for how to fix this please feel free.
-> Otherwise, Hannes, care to send a patch to fix this?
->=20
-Yep, once I'm back in the office on Monday.
+I'm trying to work out how to force-remove a dm device after the
+underlying disks failed.  Because the kernel is still trying to write
+blocks to the failed devices, I can't unmount the filesystem, so I
+don't seem to be able to just drop the data, get some errors, then have
+everything unmounted and clean, ready to try again.
 
-Cheers,
+  $ dmsetup remove backup
+  device-mapper: remove ioctl on backup failed: Device or resource busy
+  Command failed
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Using --force says it will replace the device with one that returns I/O
+errors which sounds perfect, but that just locks up:
+
+  $ dmsetup remove --force backup
+  ^C^C^\^\
+
+Running it through strace shows it getting stuck in the kernel:
+
+  $ strace dmsetup remove --force backup
+  [...]
+  access("/run/udev/control", F_OK)       = 0
+  open("/dev/urandom", O_RDONLY)          = 4
+  read(4, "\2\325", 2)                    = 2
+  semget(0xd4dd502, 1, IPC_CREAT|IPC_EXCL|0600) = 458754
+  semctl(458754, 0, SETVAL, 0x1)          = 0
+  semctl(458754, 0, GETVAL, 0x7f254875c47a) = 1
+  close(4)                                = 0
+  semop(458754, {{0, 1, 0}}, 1)           = 0
+  semctl(458754, 0, GETVAL, 0x7f254875c417) = 2
+  ioctl(3, DM_DEV_SUSPEND
+
+Is there any way to forcefully remove a dm device, or do you have to
+reboot to remove failed devices?
+
+I'm running kernel 4.1.4.
+
+Many thanks,
+Adam.
