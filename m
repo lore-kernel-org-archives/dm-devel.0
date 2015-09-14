@@ -1,94 +1,190 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: How do you force-close a dm device after a disk
- failure?
-Date: Mon, 14 Sep 2015 12:04:25 +0200
-Message-ID: <55F69BA9.30908@redhat.com>
-References: <20150914102917.3991920c@korath.teln.shikadi.net>
-	<55F66C8B.7070603@redhat.com>
-	<20150914185943.6d963e0c@korath.teln.shikadi.net>
-	<55F6906A.6080404@redhat.com>
-	<20150914194552.213afd64@korath.teln.shikadi.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH 12/39] dm: drop null test before destroy
+ functions
+Date: Mon, 14 Sep 2015 09:46:43 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1509140932400.7970@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1442146532-9100-1-git-send-email-Julia.Lawall@lip6.fr> <1442146532-9100-13-git-send-email-Julia.Lawall@lip6.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150914194552.213afd64@korath.teln.shikadi.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Adam Nielsen <a.nielsen@shikadi.net>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1442146532-9100-13-git-send-email-Julia.Lawall@lip6.fr>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, kernel-janitors@vger.kernel.org, Neil Brown <neilb@suse.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, sergey.senozhatsky@gmail.com
 List-Id: dm-devel.ids
 
-RG5lIDE0LjkuMjAxNSB2IDExOjQ1IEFkYW0gTmllbHNlbiBuYXBzYWwoYSk6Cj4+IFdob2xlIGRt
-ICB0YWJsZSB3aXRoIGFsbCBkZXBzIG5lZWRzIHRvIGJlIGtub3duLgo+Cj4gJCBkbXNldHVwIHRh
-YmxlCj4gYmFja3VwOiAwIDExNzIwNTMxOTY4IGNyeXB0IGFlcy14dHMtcGxhaW42NAo+ICAgIDAw
-MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw
-MDAwMDAgMAo+ICAgIDk6MTAgNDA5Ngo+Cj4gJCBkbXNldHVwIHN0YXR1cwo+IGJhY2t1cDogMCAx
-MTcyMDUzMTk2OCBjcnlwdAo+Cj4gJCBkbXNldHVwIGxzIC0tdHJlZQo+IGJhY2t1cCAoMjUzOjAp
-Cj4gICDilJTilIAgKDk6MTApCj4KPiAkIGRtc2V0dXAgaW5mbyAtZgo+IE5hbWU6ICAgICAgICAg
-ICAgICBiYWNrdXAKPiBTdGF0ZTogICAgICAgICAgICAgQUNUSVZFIChERUZFUlJFRCBSRU1PVkUp
-Cj4gUmVhZCBBaGVhZDogICAgICAgIDQwOTYKPiBUYWJsZXMgcHJlc2VudDogICAgTElWRQo+IE9w
-ZW4gY291bnQ6ICAgICAgICAxCj4gRXZlbnQgbnVtYmVyOiAgICAgIDAKPiBNYWpvciwgbWlub3I6
-ICAgICAgMjUzLCAwCj4gTnVtYmVyIG9mIHRhcmdldHM6IDEKPiBVVUlEOiBDUllQVC1MVUtTMS1k
-MGIzZDM4ZTQyMTU0NTkwODUzN2RjNTBmNTlmYjIxNy1iYWNrdXAKPgo+IEFsbCBJJ20gdXNpbmcg
-aXQgZm9yIGlzIHRvIGVuY3J5cHQgYW4gbWRhZG0tc3R5bGUgUkFJRCBhcnJheSBjb21wb3NlZAo+
-IG9mIHR3byBleHRlcm5hbCBkaXNrcywgY29ubmVjdGVkIHRlbXBvcmFyaWx5IHZpYSBVU0IgdG8g
-ZG8gYSBmdWxsCj4gc3lzdGVtIGJhY2t1cCB3aXRoIHJzeW5jLgo+Cj4+PiBJJ20gbm90IHN1cmUg
-aG93IHRvIGRvIHRoaXMsIGNvdWxkIHlvdSBwbGVhc2UgZWxhYm9yYXRlPyAgSSB0aG91Z2h0Cj4+
-PiAiZG1zZXR1cCByZW1vdmUgLS1mb3JjZSIgd291bGQgZG8gdGhpcyBidXQgYXMgdGhhdCBkb2Vz
-bid0IHdvcmsKPj4KPj4gcmVhbGx5IHN0YXRlIG9mIHdob2xlIHRhYmxlIG5lZWRzIHRvIGJlIGtu
-b3duLgo+Pgo+Pj4+IEFsc28gbm90ZSAtIGRtc2V0dXAgcmVtb3ZlICBzdXBwb3J0cyAtLWRlZmVy
-cmVkIHJlbW92YWwgKHNlZSBtYW4KPj4+PiBwYWdlKS4KPj4+Cj4+PiBPaCBJIGRpZG4ndCBub3Rp
-Y2UgdGhhdC4gIEl0IGRvZXNuJ3Qgc2VlbSB0byBoYXZlIG11Y2ggb2YgYW4gZWZmZWN0Cj4+PiB0
-aG91Z2g6Cj4+Cj4+IFN1cmUgaXQgd2lsbCBub3QgZml4IHlvdXIgcHJvYmxlbSAtIGl0J3MgbGlr
-ZSBsYXp5IHVtb3VudC4uLgo+Cj4gU28gcmVwbGFjaW5nIHRoZSB0YWJsZSB3aXRoIHRoZSAnZXJy
-b3InIHRhcmdldCB3b24ndCByZWxlYXNlIHRoZQo+IHVuZGVybHlpbmcgZGV2aWNlLCBldmVuIHRo
-b3VnaCB0aGF0IGRldmljZSBpcyBub3QgdXNlZCBieSB0aGUgbmV3Cj4gdGFyZ2V0Pwo+Cj4+IFdo
-YXQgaXMgbm90IGNsZWFyIHRvIG1lIGlzIC0gd2hhdCBpcyB5b3VyIGV4cGVjdGF0aW9uIGhlcmUg
-Pwo+PiBPYnZpb3VzbHkgeW91ciBzeXN0ZW0gaXMgZmFyIG1vcmUgYnJva2VuIC0gc28gcGxhY2lu
-ZyAnZXJyb3InIHRhcmdldAo+PiBmb3IgeW91ciBiYWNrdXAgZGV2aWNlIHdpbGwgbm90IGZpeCBp
-dC4KPj4KPj4gWW91IHNob3VsZCBsaWtlbHkgYXR0YWNoIGFsc28gcG9ydGlvbiBvZiAnZG1lc2cn
-IC0gdGhlcmUgc3VyZWx5IHdpbGwKPj4gYmUgd3JpdHRlbiB3aGF0IGlzIGdvaW5nIHdyb25nIHdp
-dGggeW91ciBzeXN0ZW0uCj4KPiBXaGF0IGhhcHBlbmVkIHdhcyBpbiB0aGUgbWlkZGxlIG9mIHRo
-ZSBiYWNrdXAsIHRoZXJlIHdhcyBzb21lIFVTQgo+IGludGVycnVwdGlvbiBhbmQgdGhlIGRpc2tz
-IGRyb3BwZWQgb3V0LCBzbyB0aGUgd3JpdGVzIHN0YXJ0ZWQgZmFpbGluZy4KPiBUaGUga2VybmVs
-IGxvZ3Mgd2VyZSBmdWxsIG9mIHdyaXRlIGVycm9ycyB0byB2YXJpb3VzIHNlY3RvciBudW1iZXJz
-LiAgSQo+IHRoaW5rIHlvdSB3b3VsZCBoYXZlIHRoZSBzYW1lIHJlc3VsdCBpZiB5b3Ugc2V0IHRo
-aW5ncyB1cCB3aXRoIGEgVVNCCj4gc3RpY2sgYW5kIHRoZW4gdW5wbHVnZ2VkIGl0IGR1cmluZyBh
-IGRhdGEgdHJhbnNmZXIuCj4KPiBUaGUgZGV2aWNlcyBhcmUgY29ubmVjdGVkIGxpa2UgdGhpczoK
-Pgo+ICAgIGRtIGRldmljZSAiYmFja3VwIgo+ICAgICB8Cj4gICAgICstLSBtZGFkbSBkZXZpY2Ug
-L2Rldi9tZDEwCj4gICAgICAgICAgfAo+ICAgICAgICAgICstLSBVU0IvU0FUQSBkaXNrIEEgKC9k
-ZXYvc2RkKQo+ICAgICAgICAgIHwKPiAgICAgICAgICArLS0gVVNCL1NBVEEgZGlzayBCICgvZGV2
-L3NkZSkKPgo+IFRoZSBwcm9ibGVtIGlzIHRoYXQgSSBjYW4ndCBqdXN0IHJlY29ubmVjdCB0aGUg
-ZGlza3MgYW5kIHJlcnVuIHRoZQo+IGJhY2t1cC4gIG1kYWRtIHJlZnVzZXMgdG8gc3RvcCB0aGUg
-UkFJRCBhcnJheSBhcyBpdCBpcyBpbiB1c2UgYnkKPiB0aGUgZG0gZGV2aWNlLCBhbmQgaXQgdGhp
-bmtzIHRoZSBhcnJheSBpcyBhY3RpdmUgZGVzcGl0ZSB0aGUgZGlza3MgYmVpbmcKPiB1bnBsdWdn
-ZWQgYW5kIGluIGEgZHJhd2VyLiAgSWYgSSByZWNvbm5lY3QgdGhlIGRpc2tzIHRoZXkgYXBwZWFy
-IGFzCj4gZGlmZmVyZW50IGRldmljZXMgKHNkZiBhbmQgc2RnKSBidXQgSSBzdGlsbCBjYW4ndCBz
-dGFydCB0aGUgIm5ldyIgYXJyYXkKPiBmcm9tIHRoZXNlIG5ldyBkaXNrIGRldmljZXMsIGFzIGl0
-IHRlbGxzIG1lIHRoZSBkaXNrcyBhcmUgYWxyZWFkeSBwYXJ0Cj4gb2YgYW4gYWN0aXZlIGFycmF5
-Lgo+Cj4gU28gdGhlIG9ubHkgd2F5IEkgY2FuIGhhdmUgYW5vdGhlciBnbyBhdCBydW5uaW5nIHRo
-aXMgYmFja3VwIGlzIHRvCj4gY2xvc2UgZG93biAvZGV2L21kMTAsIGFuZCBpdCBzZWVtcyB0aGUg
-b25seSB3YXkgSSBjYW4gZG8gdGhhdCBpcyB0bwo+IHRlbGwgZG0gdG8gcmVsZWFzZSB0aGF0IGRl
-dmljZS4gIEl0IGRvZXNuJ3QgbWF0dGVyIGlmIHRoZSBkbSBkZXZpY2UKPiAiYmFja3VwIiBpcyB1
-bnVzYWJsZSwgSSB3aWxsIGp1c3QgY3JlYXRlICJiYWNrdXAyIiB0byB1c2UgZm9yIHRoZQo+IHNl
-Y29uZCBhdHRlbXB0Lgo+Cj4gQnV0IHVudGlsIEkgY2FuIGZpZ3VyZSBvdXQgaG93IHRvIGdldCBk
-bSB0byByZWxlYXNlIHRoZSB1bmRlcmx5aW5nCj4gZGV2aWNlLCBJJ20gc3R1Y2shCj4KPj4gaS5l
-LiB5b3UgY2Fubm90IGV4cGVjdCAncmVtb3ZlIC0tZm9yY2UnIHdpbGwgd29yayB3aGVuIHlvdXIg
-bWFjaGluZQo+PiBzdGFydCB0byBzaG93IGtlcm5lbCBlcnJvcnMuCj4KPiBUaGVyZSB3ZXJlIG5v
-IGtlcm5lbCBjcmFzaGVzLCBqdXN0IGVycm9ycyByZWxhdGVkIHRvIFVTQiB0cmFuc2ZlcnMuICBJ
-Cj4gd291bGQgYXNzdW1lIHRoaXMgaXMgbm90IG11Y2ggZGlmZmVyZW50IHRvIGhvdyBhIHJlYWwg
-ZmFpbGVkIGRpc2sgbWlnaHQKPiBiZWhhdmUsIHNvIEkgZmlndXJlIGl0IGlzIGEgc2l0dWF0aW9u
-IHRoYXQgc2hvdWxkIGJlIGVuY291bnRlcmVkCj4gcmVsYXRpdmVseSBvZnRlbiEKPgoKCgpkbXNl
-dHVwIHJlbG9hZCBiYWNrdXAgLS10YWJsZSAiMCAxMTcyMDUzMTk2OCBlcnJvciIKZG1zZXR1cCBz
-dXNwZW5kIC0tbm9mbHVzaCBiYWNrdXAKZG1zZXR1cCByZXN1bWUgYmFja3VwCgpJcyB0aGlzIHdv
-cmtpbmcgZm9yIHlvdSA/CgpaZGVuZWsKCgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1k
-ZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
-bS1kZXZlbA==
+
+
+On Sun, 13 Sep 2015, Julia Lawall wrote:
+
+> Remove unneeded NULL test.
+> 
+> The semantic patch that makes this change is as follows:
+> (http://coccinelle.lip6.fr/)
+> 
+> // <smpl>
+> @@ expression x; @@
+> -if (x != NULL)
+>   \(kmem_cache_destroy\|mempool_destroy\|dma_pool_destroy\)(x);
+> // </smpl>
+> 
+> Signed-off-by: Julia Lawall <Julia.Lawall@lip6.fr>
+> 
+> ---
+>  drivers/md/dm-bufio.c              |    3 +--
+>  drivers/md/dm-cache-target.c       |    3 +--
+>  drivers/md/dm-crypt.c              |    6 ++----
+>  drivers/md/dm-io.c                 |    3 +--
+>  drivers/md/dm-log-userspace-base.c |    3 +--
+>  drivers/md/dm-region-hash.c        |    4 +---
+>  drivers/md/dm.c                    |   13 ++++---------
+>  7 files changed, 11 insertions(+), 24 deletions(-)
+> 
+> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+> index 83cc52e..8ad39b6 100644
+> --- a/drivers/md/dm-bufio.c
+> +++ b/drivers/md/dm-bufio.c
+> @@ -1864,8 +1864,7 @@ static void __exit dm_bufio_exit(void)
+>  	for (i = 0; i < ARRAY_SIZE(dm_bufio_caches); i++) {
+>  		struct kmem_cache *kc = dm_bufio_caches[i];
+>  
+> -		if (kc)
+> -			kmem_cache_destroy(kc);
+> +		kmem_cache_destroy(kc);
+>  	}
+
+The variable here can be NULL. I don't know how did you conclude that it 
+cannot. It seems that you didn't test the patch, if you did, you'd hit 
+NULL pointer dereference here.
+
+>  	for (i = 0; i < ARRAY_SIZE(dm_bufio_cache_names); i++)
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 6264781..163de31 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -2220,10 +2220,8 @@ static void cleanup_mapped_device(struct mapped_device *md)
+>  		destroy_workqueue(md->wq);
+>  	if (md->kworker_task)
+>  		kthread_stop(md->kworker_task);
+> -	if (md->io_pool)
+> -		mempool_destroy(md->io_pool);
+> -	if (md->rq_pool)
+> -		mempool_destroy(md->rq_pool);
+> +	mempool_destroy(md->io_pool);
+> +	mempool_destroy(md->rq_pool);
+
+Likewise, these variables can be NULL.
+
+>  	if (md->bs)
+>  		bioset_free(md->bs);
+>  
+> @@ -3508,11 +3506,8 @@ void dm_free_md_mempools(struct dm_md_mempools *pools)
+>  	if (!pools)
+>  		return;
+>  
+> -	if (pools->io_pool)
+> -		mempool_destroy(pools->io_pool);
+> -
+> -	if (pools->rq_pool)
+> -		mempool_destroy(pools->rq_pool);
+> +	mempool_destroy(pools->io_pool);
+> +	mempool_destroy(pools->rq_pool);
+>  
+>  	if (pools->bs)
+>  		bioset_free(pools->bs);
+
+Likewise, it can be NULL, see for example this code path:
+                pools->io_pool = mempool_create_slab_pool(pool_size, cachep);
+                if (!pools->io_pool)
+                        goto out;
+out:
+        dm_free_md_mempools(pools);
+dm_free_md_mempools:
+        if (pools->io_pool)
+                mempool_destroy(pools->io_pool);
+
+It seems that you set up the cocinelle tool incorrectly, so that it 
+produces many bogus suggestions.
+
+Mikulas
+
+> diff --git a/drivers/md/dm-log-userspace-base.c b/drivers/md/dm-log-userspace-base.c
+> index 058256d..53b7b06 100644
+> --- a/drivers/md/dm-log-userspace-base.c
+> +++ b/drivers/md/dm-log-userspace-base.c
+> @@ -313,8 +313,7 @@ static int userspace_ctr(struct dm_dirty_log *log, struct dm_target *ti,
+>  out:
+>  	kfree(devices_rdata);
+>  	if (r) {
+> -		if (lc->flush_entry_pool)
+> -			mempool_destroy(lc->flush_entry_pool);
+> +		mempool_destroy(lc->flush_entry_pool);
+>  		kfree(lc);
+>  		kfree(ctr_str);
+>  	} else {
+> diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+> index 6f8e83b..81c5e1a 100644
+> --- a/drivers/md/dm-io.c
+> +++ b/drivers/md/dm-io.c
+> @@ -65,8 +65,7 @@ struct dm_io_client *dm_io_client_create(void)
+>  	return client;
+>  
+>     bad:
+> -	if (client->pool)
+> -		mempool_destroy(client->pool);
+> +	mempool_destroy(client->pool);
+>  	kfree(client);
+>  	return ERR_PTR(-ENOMEM);
+>  }
+> diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+> index dd90d12..2fd4c82 100644
+> --- a/drivers/md/dm-cache-target.c
+> +++ b/drivers/md/dm-cache-target.c
+> @@ -2309,8 +2309,7 @@ static void destroy(struct cache *cache)
+>  {
+>  	unsigned i;
+>  
+> -	if (cache->migration_pool)
+> -		mempool_destroy(cache->migration_pool);
+> +	mempool_destroy(cache->migration_pool);
+>  
+>  	if (cache->all_io_ds)
+>  		dm_deferred_set_destroy(cache->all_io_ds);
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index d60c88d..cf91a96 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -1543,10 +1543,8 @@ static void crypt_dtr(struct dm_target *ti)
+>  	if (cc->bs)
+>  		bioset_free(cc->bs);
+>  
+> -	if (cc->page_pool)
+> -		mempool_destroy(cc->page_pool);
+> -	if (cc->req_pool)
+> -		mempool_destroy(cc->req_pool);
+> +	mempool_destroy(cc->page_pool);
+> +	mempool_destroy(cc->req_pool);
+>  
+>  	if (cc->iv_gen_ops && cc->iv_gen_ops->dtr)
+>  		cc->iv_gen_ops->dtr(cc);
+> diff --git a/drivers/md/dm-region-hash.c b/drivers/md/dm-region-hash.c
+> index b929fd5..f3d608b 100644
+> --- a/drivers/md/dm-region-hash.c
+> +++ b/drivers/md/dm-region-hash.c
+> @@ -249,9 +249,7 @@ void dm_region_hash_destroy(struct dm_region_hash *rh)
+>  	if (rh->log)
+>  		dm_dirty_log_destroy(rh->log);
+>  
+> -	if (rh->region_pool)
+> -		mempool_destroy(rh->region_pool);
+> -
+> +	mempool_destroy(rh->region_pool);
+>  	vfree(rh->buckets);
+>  	kfree(rh);
+>  }
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
