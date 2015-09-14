@@ -1,17 +1,18 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
+From: Adam Nielsen <a.nielsen@shikadi.net>
 Subject: Re: How do you force-close a dm device after a disk
  failure?
-Date: Mon, 14 Sep 2015 11:16:26 +0200
-Message-ID: <55F6906A.6080404@redhat.com>
+Date: Mon, 14 Sep 2015 19:45:52 +1000
+Message-ID: <20150914194552.213afd64@korath.teln.shikadi.net>
 References: <20150914102917.3991920c@korath.teln.shikadi.net>
 	<55F66C8B.7070603@redhat.com>
 	<20150914185943.6d963e0c@korath.teln.shikadi.net>
+	<55F6906A.6080404@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150914185943.6d963e0c@korath.teln.shikadi.net>
+In-Reply-To: <55F6906A.6080404@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,77 +22,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Adam Nielsen <a.nielsen@shikadi.net>
+To: Zdenek Kabelac <zkabelac@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 14.9.2015 v 10:59 Adam Nielsen napsal(a):
-> Thanks for your response!
->
->> You need to show your 'broken' table first.
->
-> $ dmsetup table
-> backup: 0 11720531968 crypt aes-xts-plain64
->    0000000000000000000000000000000000000000000000000000000000000000 0
->    9:10 4096
-
-It's not really useful to show just 1 device.
-
-Whole dm  table with all deps needs to be known.
-
-'dmsetup table'
-'dmsetup status'
-'dmsetup ls --tree'
-'dmsetup into -f'
-
->> However for the 'standard' linear device - you could always replace
->> opened device with error target with '--force'.
->
-> I'm not sure how to do this, could you please elaborate?  I thought
-> "dmsetup remove --force" would do this but as that doesn't work, I tried
-> this also:
->
-> $ dmsetup reload backup --table "0 11720531968 error"
-> $ dmsetup info backup
-> Name:              backup
-> State:             ACTIVE
-> Read Ahead:        4096
-> Tables present:    LIVE & INACTIVE
-> Open count:        1
-> Event number:      0
-> Major, minor:      253, 0
-> Number of targets: 1
-> UUID: CRYPT-LUKS1-d0b3d38e421545908537dc50f59fb217-backup
-> $ dmsetup resume backup
-> <no response, dmsetup frozen, kill -9 doesn't work>
-
-really state of whole table needs to be known.
-
->> Also note - dmsetup remove  supports --deferred removal (see man
->> page).
->
-> Oh I didn't notice that.  It doesn't seem to have much of an effect
-> though:
-
-Sure it will not fix your problem - it's like lazy umount...
-
->
-> The underlying device is still in use by dm-crypt.  I could not unmount
-> the filesystem stored on the dm device as the kernel said it was still
-> in use (presumably by the pending writes), so I did a lazy unmount of
-> the filesystem.  I think this is what's holding the dm device open and
-> causing dmsetup to stop responding all the time.
->
-> Any suggestions how to proceed?
-
-What is not clear to me is - what is your expectation here ?
-Obviously your system is far more broken - so placing 'error' target
-for your backup device will not fix it.
-
-You should likely attach also portion of 'dmesg' - there surely will be 
-written what is going wrong with your system.
-
-i.e. you cannot expect 'remove --force' will work when your machine start to 
-show kernel errors.
-
-Zdenek
+PiBXaG9sZSBkbSAgdGFibGUgd2l0aCBhbGwgZGVwcyBuZWVkcyB0byBiZSBrbm93bi4KCiQgZG1z
+ZXR1cCB0YWJsZQpiYWNrdXA6IDAgMTE3MjA1MzE5NjggY3J5cHQgYWVzLXh0cy1wbGFpbjY0CiAg
+MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw
+MDAwMDAwMCAwCiAgOToxMCA0MDk2CgokIGRtc2V0dXAgc3RhdHVzCmJhY2t1cDogMCAxMTcyMDUz
+MTk2OCBjcnlwdAoKJCBkbXNldHVwIGxzIC0tdHJlZQpiYWNrdXAgKDI1MzowKQog4pSU4pSAICg5
+OjEwKQoKJCBkbXNldHVwIGluZm8gLWYKTmFtZTogICAgICAgICAgICAgIGJhY2t1cApTdGF0ZTog
+ICAgICAgICAgICAgQUNUSVZFIChERUZFUlJFRCBSRU1PVkUpClJlYWQgQWhlYWQ6ICAgICAgICA0
+MDk2ClRhYmxlcyBwcmVzZW50OiAgICBMSVZFCk9wZW4gY291bnQ6ICAgICAgICAxCkV2ZW50IG51
+bWJlcjogICAgICAwCk1ham9yLCBtaW5vcjogICAgICAyNTMsIDAKTnVtYmVyIG9mIHRhcmdldHM6
+IDEKVVVJRDogQ1JZUFQtTFVLUzEtZDBiM2QzOGU0MjE1NDU5MDg1MzdkYzUwZjU5ZmIyMTctYmFj
+a3VwCgpBbGwgSSdtIHVzaW5nIGl0IGZvciBpcyB0byBlbmNyeXB0IGFuIG1kYWRtLXN0eWxlIFJB
+SUQgYXJyYXkgY29tcG9zZWQKb2YgdHdvIGV4dGVybmFsIGRpc2tzLCBjb25uZWN0ZWQgdGVtcG9y
+YXJpbHkgdmlhIFVTQiB0byBkbyBhIGZ1bGwKc3lzdGVtIGJhY2t1cCB3aXRoIHJzeW5jLgoKPiA+
+IEknbSBub3Qgc3VyZSBob3cgdG8gZG8gdGhpcywgY291bGQgeW91IHBsZWFzZSBlbGFib3JhdGU/
+ICBJIHRob3VnaHQKPiA+ICJkbXNldHVwIHJlbW92ZSAtLWZvcmNlIiB3b3VsZCBkbyB0aGlzIGJ1
+dCBhcyB0aGF0IGRvZXNuJ3Qgd29yawo+IAo+IHJlYWxseSBzdGF0ZSBvZiB3aG9sZSB0YWJsZSBu
+ZWVkcyB0byBiZSBrbm93bi4KPiAKPiA+PiBBbHNvIG5vdGUgLSBkbXNldHVwIHJlbW92ZSAgc3Vw
+cG9ydHMgLS1kZWZlcnJlZCByZW1vdmFsIChzZWUgbWFuCj4gPj4gcGFnZSkuCj4gPgo+ID4gT2gg
+SSBkaWRuJ3Qgbm90aWNlIHRoYXQuICBJdCBkb2Vzbid0IHNlZW0gdG8gaGF2ZSBtdWNoIG9mIGFu
+IGVmZmVjdAo+ID4gdGhvdWdoOgo+IAo+IFN1cmUgaXQgd2lsbCBub3QgZml4IHlvdXIgcHJvYmxl
+bSAtIGl0J3MgbGlrZSBsYXp5IHVtb3VudC4uLgoKU28gcmVwbGFjaW5nIHRoZSB0YWJsZSB3aXRo
+IHRoZSAnZXJyb3InIHRhcmdldCB3b24ndCByZWxlYXNlIHRoZQp1bmRlcmx5aW5nIGRldmljZSwg
+ZXZlbiB0aG91Z2ggdGhhdCBkZXZpY2UgaXMgbm90IHVzZWQgYnkgdGhlIG5ldwp0YXJnZXQ/Cgo+
+IFdoYXQgaXMgbm90IGNsZWFyIHRvIG1lIGlzIC0gd2hhdCBpcyB5b3VyIGV4cGVjdGF0aW9uIGhl
+cmUgPwo+IE9idmlvdXNseSB5b3VyIHN5c3RlbSBpcyBmYXIgbW9yZSBicm9rZW4gLSBzbyBwbGFj
+aW5nICdlcnJvcicgdGFyZ2V0Cj4gZm9yIHlvdXIgYmFja3VwIGRldmljZSB3aWxsIG5vdCBmaXgg
+aXQuCj4gCj4gWW91IHNob3VsZCBsaWtlbHkgYXR0YWNoIGFsc28gcG9ydGlvbiBvZiAnZG1lc2cn
+IC0gdGhlcmUgc3VyZWx5IHdpbGwKPiBiZSB3cml0dGVuIHdoYXQgaXMgZ29pbmcgd3Jvbmcgd2l0
+aCB5b3VyIHN5c3RlbS4KCldoYXQgaGFwcGVuZWQgd2FzIGluIHRoZSBtaWRkbGUgb2YgdGhlIGJh
+Y2t1cCwgdGhlcmUgd2FzIHNvbWUgVVNCCmludGVycnVwdGlvbiBhbmQgdGhlIGRpc2tzIGRyb3Bw
+ZWQgb3V0LCBzbyB0aGUgd3JpdGVzIHN0YXJ0ZWQgZmFpbGluZy4KVGhlIGtlcm5lbCBsb2dzIHdl
+cmUgZnVsbCBvZiB3cml0ZSBlcnJvcnMgdG8gdmFyaW91cyBzZWN0b3IgbnVtYmVycy4gIEkKdGhp
+bmsgeW91IHdvdWxkIGhhdmUgdGhlIHNhbWUgcmVzdWx0IGlmIHlvdSBzZXQgdGhpbmdzIHVwIHdp
+dGggYSBVU0IKc3RpY2sgYW5kIHRoZW4gdW5wbHVnZ2VkIGl0IGR1cmluZyBhIGRhdGEgdHJhbnNm
+ZXIuCgpUaGUgZGV2aWNlcyBhcmUgY29ubmVjdGVkIGxpa2UgdGhpczoKCiAgZG0gZGV2aWNlICJi
+YWNrdXAiCiAgIHwKICAgKy0tIG1kYWRtIGRldmljZSAvZGV2L21kMTAKICAgICAgICB8CiAgICAg
+ICAgKy0tIFVTQi9TQVRBIGRpc2sgQSAoL2Rldi9zZGQpCiAgICAgICAgfAogICAgICAgICstLSBV
+U0IvU0FUQSBkaXNrIEIgKC9kZXYvc2RlKQoKVGhlIHByb2JsZW0gaXMgdGhhdCBJIGNhbid0IGp1
+c3QgcmVjb25uZWN0IHRoZSBkaXNrcyBhbmQgcmVydW4gdGhlCmJhY2t1cC4gIG1kYWRtIHJlZnVz
+ZXMgdG8gc3RvcCB0aGUgUkFJRCBhcnJheSBhcyBpdCBpcyBpbiB1c2UgYnkKdGhlIGRtIGRldmlj
+ZSwgYW5kIGl0IHRoaW5rcyB0aGUgYXJyYXkgaXMgYWN0aXZlIGRlc3BpdGUgdGhlIGRpc2tzIGJl
+aW5nCnVucGx1Z2dlZCBhbmQgaW4gYSBkcmF3ZXIuICBJZiBJIHJlY29ubmVjdCB0aGUgZGlza3Mg
+dGhleSBhcHBlYXIgYXMKZGlmZmVyZW50IGRldmljZXMgKHNkZiBhbmQgc2RnKSBidXQgSSBzdGls
+bCBjYW4ndCBzdGFydCB0aGUgIm5ldyIgYXJyYXkKZnJvbSB0aGVzZSBuZXcgZGlzayBkZXZpY2Vz
+LCBhcyBpdCB0ZWxscyBtZSB0aGUgZGlza3MgYXJlIGFscmVhZHkgcGFydApvZiBhbiBhY3RpdmUg
+YXJyYXkuCgpTbyB0aGUgb25seSB3YXkgSSBjYW4gaGF2ZSBhbm90aGVyIGdvIGF0IHJ1bm5pbmcg
+dGhpcyBiYWNrdXAgaXMgdG8KY2xvc2UgZG93biAvZGV2L21kMTAsIGFuZCBpdCBzZWVtcyB0aGUg
+b25seSB3YXkgSSBjYW4gZG8gdGhhdCBpcyB0bwp0ZWxsIGRtIHRvIHJlbGVhc2UgdGhhdCBkZXZp
+Y2UuICBJdCBkb2Vzbid0IG1hdHRlciBpZiB0aGUgZG0gZGV2aWNlCiJiYWNrdXAiIGlzIHVudXNh
+YmxlLCBJIHdpbGwganVzdCBjcmVhdGUgImJhY2t1cDIiIHRvIHVzZSBmb3IgdGhlCnNlY29uZCBh
+dHRlbXB0LgoKQnV0IHVudGlsIEkgY2FuIGZpZ3VyZSBvdXQgaG93IHRvIGdldCBkbSB0byByZWxl
+YXNlIHRoZSB1bmRlcmx5aW5nCmRldmljZSwgSSdtIHN0dWNrIQoKPiBpLmUuIHlvdSBjYW5ub3Qg
+ZXhwZWN0ICdyZW1vdmUgLS1mb3JjZScgd2lsbCB3b3JrIHdoZW4geW91ciBtYWNoaW5lCj4gc3Rh
+cnQgdG8gc2hvdyBrZXJuZWwgZXJyb3JzLgoKVGhlcmUgd2VyZSBubyBrZXJuZWwgY3Jhc2hlcywg
+anVzdCBlcnJvcnMgcmVsYXRlZCB0byBVU0IgdHJhbnNmZXJzLiAgSQp3b3VsZCBhc3N1bWUgdGhp
+cyBpcyBub3QgbXVjaCBkaWZmZXJlbnQgdG8gaG93IGEgcmVhbCBmYWlsZWQgZGlzayBtaWdodApi
+ZWhhdmUsIHNvIEkgZmlndXJlIGl0IGlzIGEgc2l0dWF0aW9uIHRoYXQgc2hvdWxkIGJlIGVuY291
+bnRlcmVkCnJlbGF0aXZlbHkgb2Z0ZW4hCgpUaGFua3MgYWdhaW4sCkFkYW0uCgotLQpkbS1kZXZl
+bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29t
+L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
