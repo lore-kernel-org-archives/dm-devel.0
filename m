@@ -1,55 +1,70 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: ioctl: prevent double freeing
-Date: Tue, 15 Sep 2015 14:13:33 -0400
-Message-ID: <20150915181333.GB18972@redhat.com>
-References: <1441365759-7247-1-git-send-email-sudipm.mukherjee@gmail.com>
- <20150915161855.GE10399@birch.djwong.org>
+From: Adam Nielsen <a.nielsen@shikadi.net>
+Subject: Re: How do you force-close a dm device after a disk
+ failure?
+Date: Wed, 16 Sep 2015 10:58:57 +1000
+Message-ID: <20150916105857.69e1cb49@korath.teln.shikadi.net>
+References: <20150914102917.3991920c@korath.teln.shikadi.net>
+	<55F66C8B.7070603@redhat.com>
+	<20150914185943.6d963e0c@korath.teln.shikadi.net>
+	<55F6906A.6080404@redhat.com>
+	<20150914194552.213afd64@korath.teln.shikadi.net>
+	<55F69BA9.30908@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150915161855.GE10399@birch.djwong.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Neil Brown <neilb@suse.com>, linux-raid@vger.kernel.org, Sudip Mukherjee <sudipm.mukherjee@gmail.com>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <55F69BA9.30908@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 15 2015 at 12:18pm -0400,
-Darrick J. Wong <darrick.wong@oracle.com> wrote:
+> > dmsetup reload backup --table "0 11720531968 error"
 
-> On Fri, Sep 04, 2015 at 04:52:39PM +0530, Sudip Mukherjee wrote:
-> > DM_PARAMS_KMALLOC and DM_PARAMS_VMALLOC should never be set together in
-> > param_flags. We are setting these flags while allocating so we know that
-> > there is almost no chance of having these two set together but still we
-> > can have some additional safety.
-> > 
-> > Signed-off-by: Sudip Mukherjee <sudip@vectorindia.org>
-> > ---
-> >  drivers/md/dm-ioctl.c | 2 +-
-> >  1 file changed, 1 insertion(+), 1 deletion(-)
-> > 
-> > diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-> > index 80a4395..aaad74e 100644
-> > --- a/drivers/md/dm-ioctl.c
-> > +++ b/drivers/md/dm-ioctl.c
-> > @@ -1680,7 +1680,7 @@ static void free_params(struct dm_ioctl *param, size_t param_size, int param_fla
-> >  
-> >  	if (param_flags & DM_PARAMS_KMALLOC)
-> >  		kfree(param);
-> > -	if (param_flags & DM_PARAMS_VMALLOC)
-> > +	else if (param_flags & DM_PARAMS_VMALLOC)
+This one returns without error.
+
+> > dmsetup suspend --noflush backup
 > 
-> Wouldn't you also want a WARN_ON to complain about both flags being set?
+> or even better use   --noflush  --nolockfs
+> (if there was a mounted filesystem)
 
-No, this is getting rediculous now.  Please stop the insanity.
+This one does not return to the command prompt.  Running it through
+strace shows this:
 
-DM_PARAMS_KMALLOC and DM_PARAMS_VMALLOC are mutually exclussive --
-always will be.  Sprinkling defensive code around isn't high on my list
-of changes I'm interested in.
+$ strace dmsetup suspend --noflush --nolockfs backup
+...
+munmap(0x7f9cdea45000, 4096)            = 0
+ioctl(3, DM_VERSION, 0x5644ae2ca0d0)    = 0
+ioctl(3, DM_DEV_SUSPEND
 
-At some point I'll stage the original change from Sudip for 4.4 but I'm
-re-writing the subject and header to not be so alarmist (this is more to
-do with eliminating a conditional than anything else).  There is _zero_
-potential for a double-free with the current code.
+It always seems to freeze at DM_DEV_SUSPEND.  This ioctl never seems to
+return.
 
-Mike
+> > dmsetup resume backup
+
+Running this anyway also freezes:
+
+$ strace dmsetup resume backup
+...
+close(4)                                = 0
+semop(720903, {{0, 1, 0}}, 1)           = 0
+semctl(720903, 0, GETVAL, 0x7fa5b3c28957) = 2
+ioctl(3, DM_DEV_SUSPEND
+
+> > Is this working for you ?
+
+Looks like it's a kernel problem with DM_DEV_SUSPEND getting stuck
+waiting for something?  There are no messages in dmesg after running
+the above commands, not even any 'hung task' warnings.
+
+Thanks,
+Adam.
