@@ -1,23 +1,20 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
+From: Lars Ellenberg <lars.ellenberg@linbit.com>
 Subject: Re: How do you force-close a dm device after a disk
-	failure?
-Date: Thu, 17 Sep 2015 13:41:37 +0200
-Message-ID: <55FAA6F1.7010601@redhat.com>
+ failure?
+Date: Thu, 17 Sep 2015 16:04:13 +0200
+Message-ID: <20150917140413.GH7519@soda.linbit>
 References: <20150914102917.3991920c@korath.teln.shikadi.net>
 	<55F66C8B.7070603@redhat.com>
 	<20150914185943.6d963e0c@korath.teln.shikadi.net>
 	<55F6906A.6080404@redhat.com>
 	<20150914194552.213afd64@korath.teln.shikadi.net>
-	<55F69BA9.30908@redhat.com>
-	<20150916105857.69e1cb49@korath.teln.shikadi.net>
-	<55F92291.9020808@redhat.com>
-	<20150916223512.40687a03@korath.teln.shikadi.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150916223512.40687a03@korath.teln.shikadi.net>
+Content-Disposition: inline
+In-Reply-To: <20150914194552.213afd64@korath.teln.shikadi.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,86 +24,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Dne 16.9.2015 v 14:35 Adam Nielsen napsal(a):
->>> It always seems to freeze at DM_DEV_SUSPEND.  This ioctl never
->>> seems to return.
->>
->> As with any other kernel frozen task - try to capture kernel stack
->> trace. If you properly configured sysrq trigger - easiest is to use:
->>
->> 'echo t >/proc/sysrq-trigger'
->>
->> (Just make sure you have large enough kernel log buffer so lines are
->> not lost) Attach compressed trace - this should likely reveal where
->> it blocks. (I'll try to reproduce myself)
->
-> Thanks for the advice.  I'm getting a warning that the buffer is
-> overflowing.  Is there anything in particular you need?  Here is
-> something that seems relevant:
->
-> dmsetup         D ffff880394467b98     0 24732  24717 0x00000000
->   ffff880394467b98 ffff88040d7a1e90 ffff88027b738a30 ffff88040ba67458
->   ffff880394468000 ffff8801eaa7b8dc ffff88027b738a30 00000000ffffffff
->   ffff8801eaa7b8e0 ffff880394467bb8 ffffffff81588247 ffff8801eaa7b8d8
-> Call Trace:
->   [<ffffffff81588247>] schedule+0x37/0x90
->   [<ffffffff81588615>] schedule_preempt_disabled+0x15/0x20
->   [<ffffffff81589b55>] __mutex_lock_slowpath+0xd5/0x150
->   [<ffffffff81589beb>] mutex_lock+0x1b/0x30
->   [<ffffffffa0857968>] dm_suspend+0x38/0xf0 [dm_mod]
->   [<ffffffffa085d030>] ? table_load+0x370/0x370 [dm_mod]
->   [<ffffffffa085d1c0>] dev_suspend+0x190/0x260 [dm_mod]
->   [<ffffffffa085d030>] ? table_load+0x370/0x370 [dm_mod]
->   [<ffffffffa085da72>] ctl_ioctl+0x232/0x520 [dm_mod]
->   [<ffffffffa085dd73>] dm_ctl_ioctl+0x13/0x20 [dm_mod]
->   [<ffffffff811f4606>] do_vfs_ioctl+0x2c6/0x4d0
->   [<ffffffff811f4891>] SyS_ioctl+0x81/0xa0
->   [<ffffffff8158beae>] system_call_fastpath+0x12/0x71
->
-> Assuming 24732 is the PID, that's the "dmsetup suspend --noflush
-> --nolockfs" one.  There are heaps like the one above (from all my
-> attempts) with only one like the following, from an unknown command
-> line:
->
-> dmsetup         D ffff88012e2d7a88     0 28744  23911 0x00000004
->   ffff88012e2d7a88 ffff88040d74f010 ffff88040398e5e0 ffff88012e2d7b38
->   ffff88012e2d8000 ffff8800d9df5080 ffff8800d9df5068 ffffffff00000000
->   fffffffe00000001 ffff88012e2d7aa8 ffffffff81588247 0000000000000002
-> Call Trace:
->   [<ffffffff81588247>] schedule+0x37/0x90
->   [<ffffffff8158a885>] rwsem_down_write_failed+0x165/0x370
->   [<ffffffff810b2ad6>] ? enqueue_entity+0x266/0xd60
->   [<ffffffff812d7aa3>] call_rwsem_down_write_failed+0x13/0x20
->   [<ffffffff8158a0d4>] ? down_write+0x24/0x40
->   [<ffffffff811e3aee>] grab_super+0x2e/0xb0
->   [<ffffffff811e4a20>] get_active_super+0x70/0x90
->   [<ffffffff8121ab9d>] freeze_bdev+0x6d/0x100
->   [<ffffffffa0854f3b>] __dm_suspend+0xeb/0x230 [dm_mod]
->   [<ffffffffa08579fa>] dm_suspend+0xca/0xf0 [dm_mod]
->   [<ffffffffa085d1db>] dev_suspend+0x1ab/0x260 [dm_mod]
->   [<ffffffffa085d030>] ? table_load+0x370/0x370 [dm_mod]
->   [<ffffffffa085da72>] ctl_ioctl+0x232/0x520 [dm_mod]
->   [<ffffffffa085dd73>] dm_ctl_ioctl+0x13/0x20 [dm_mod]
->   [<ffffffff811f4606>] do_vfs_ioctl+0x2c6/0x4d0
->   [<ffffffff811f4891>] SyS_ioctl+0x81/0xa0
->   [<ffffffff8158beae>] system_call_fastpath+0x12/0x71
->
-> The kernel is Arch Linux 4.1.4-1-ARCH.  Let me know if you need anything
-> else, sorry I don't have much experience with kernel debugging.  Not
-> sure whether /proc/kcore etc. is useful or not.
->
-> Thanks again for your help!
->
-
-Hi
-
-Could you please try to check use 2 extra options for crypto open:
-
-'cryptosetup --perf-submit_from_crypt_cpus --perf-same_cpu_crypt luksOpen'
-
-to check if you will experience same trouble ?
-
-Zdenek
+T24gTW9uLCBTZXAgMTQsIDIwMTUgYXQgMDc6NDU6NTJQTSArMTAwMCwgQWRhbSBOaWVsc2VuIHdy
+b3RlOgo+ID4gV2hvbGUgZG0gIHRhYmxlIHdpdGggYWxsIGRlcHMgbmVlZHMgdG8gYmUga25vd24u
+Cj4gCj4gJCBkbXNldHVwIHRhYmxlCj4gYmFja3VwOiAwIDExNzIwNTMxOTY4IGNyeXB0IGFlcy14
+dHMtcGxhaW42NAo+ICAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw
+MDAwMDAwMDAwMDAwMDAwMDAwMDAwMCAwCj4gICA5OjEwIDQwOTYKPiAKPiAkIGRtc2V0dXAgc3Rh
+dHVzCj4gYmFja3VwOiAwIDExNzIwNTMxOTY4IGNyeXB0Cj4gCj4gJCBkbXNldHVwIGxzIC0tdHJl
+ZQo+IGJhY2t1cCAoMjUzOjApCj4gIOKUlOKUgCAoOToxMCkKPiAKPiAkIGRtc2V0dXAgaW5mbyAt
+Zgo+IE5hbWU6ICAgICAgICAgICAgICBiYWNrdXAKPiBTdGF0ZTogICAgICAgICAgICAgQUNUSVZF
+IChERUZFUlJFRCBSRU1PVkUpCj4gUmVhZCBBaGVhZDogICAgICAgIDQwOTYKPiBUYWJsZXMgcHJl
+c2VudDogICAgTElWRQo+IE9wZW4gY291bnQ6ICAgICAgICAxCj4gRXZlbnQgbnVtYmVyOiAgICAg
+IDAKPiBNYWpvciwgbWlub3I6ICAgICAgMjUzLCAwCj4gTnVtYmVyIG9mIHRhcmdldHM6IDEKPiBV
+VUlEOiBDUllQVC1MVUtTMS1kMGIzZDM4ZTQyMTU0NTkwODUzN2RjNTBmNTlmYjIxNy1iYWNrdXAK
+PiAKPiBBbGwgSSdtIHVzaW5nIGl0IGZvciBpcyB0byBlbmNyeXB0IGFuIG1kYWRtLXN0eWxlIFJB
+SUQgYXJyYXkgY29tcG9zZWQKPiBvZiB0d28gZXh0ZXJuYWwgZGlza3MsIGNvbm5lY3RlZCB0ZW1w
+b3JhcmlseSB2aWEgVVNCIHRvIGRvIGEgZnVsbAo+IHN5c3RlbSBiYWNrdXAgd2l0aCByc3luYy4K
+PiAKPiA+ID4gSSdtIG5vdCBzdXJlIGhvdyB0byBkbyB0aGlzLCBjb3VsZCB5b3UgcGxlYXNlIGVs
+YWJvcmF0ZT8gIEkgdGhvdWdodAo+ID4gPiAiZG1zZXR1cCByZW1vdmUgLS1mb3JjZSIgd291bGQg
+ZG8gdGhpcyBidXQgYXMgdGhhdCBkb2Vzbid0IHdvcmsKPiA+IAo+ID4gcmVhbGx5IHN0YXRlIG9m
+IHdob2xlIHRhYmxlIG5lZWRzIHRvIGJlIGtub3duLgo+ID4gCj4gPiA+PiBBbHNvIG5vdGUgLSBk
+bXNldHVwIHJlbW92ZSAgc3VwcG9ydHMgLS1kZWZlcnJlZCByZW1vdmFsIChzZWUgbWFuCj4gPiA+
+PiBwYWdlKS4KPiA+ID4KPiA+ID4gT2ggSSBkaWRuJ3Qgbm90aWNlIHRoYXQuICBJdCBkb2Vzbid0
+IHNlZW0gdG8gaGF2ZSBtdWNoIG9mIGFuIGVmZmVjdAo+ID4gPiB0aG91Z2g6Cj4gPiAKPiA+IFN1
+cmUgaXQgd2lsbCBub3QgZml4IHlvdXIgcHJvYmxlbSAtIGl0J3MgbGlrZSBsYXp5IHVtb3VudC4u
+Lgo+IAo+IFNvIHJlcGxhY2luZyB0aGUgdGFibGUgd2l0aCB0aGUgJ2Vycm9yJyB0YXJnZXQgd29u
+J3QgcmVsZWFzZSB0aGUKPiB1bmRlcmx5aW5nIGRldmljZSwgZXZlbiB0aG91Z2ggdGhhdCBkZXZp
+Y2UgaXMgbm90IHVzZWQgYnkgdGhlIG5ldwo+IHRhcmdldD8KPiAKPiA+IFdoYXQgaXMgbm90IGNs
+ZWFyIHRvIG1lIGlzIC0gd2hhdCBpcyB5b3VyIGV4cGVjdGF0aW9uIGhlcmUgPwo+ID4gT2J2aW91
+c2x5IHlvdXIgc3lzdGVtIGlzIGZhciBtb3JlIGJyb2tlbiAtIHNvIHBsYWNpbmcgJ2Vycm9yJyB0
+YXJnZXQKPiA+IGZvciB5b3VyIGJhY2t1cCBkZXZpY2Ugd2lsbCBub3QgZml4IGl0Lgo+ID4gCj4g
+PiBZb3Ugc2hvdWxkIGxpa2VseSBhdHRhY2ggYWxzbyBwb3J0aW9uIG9mICdkbWVzZycgLSB0aGVy
+ZSBzdXJlbHkgd2lsbAo+ID4gYmUgd3JpdHRlbiB3aGF0IGlzIGdvaW5nIHdyb25nIHdpdGggeW91
+ciBzeXN0ZW0uCj4gCj4gV2hhdCBoYXBwZW5lZCB3YXMgaW4gdGhlIG1pZGRsZSBvZiB0aGUgYmFj
+a3VwLCB0aGVyZSB3YXMgc29tZSBVU0IKPiBpbnRlcnJ1cHRpb24gYW5kIHRoZSBkaXNrcyBkcm9w
+cGVkIG91dCwgc28gdGhlIHdyaXRlcyBzdGFydGVkIGZhaWxpbmcuCj4gVGhlIGtlcm5lbCBsb2dz
+IHdlcmUgZnVsbCBvZiB3cml0ZSBlcnJvcnMgdG8gdmFyaW91cyBzZWN0b3IgbnVtYmVycy4gIEkK
+PiB0aGluayB5b3Ugd291bGQgaGF2ZSB0aGUgc2FtZSByZXN1bHQgaWYgeW91IHNldCB0aGluZ3Mg
+dXAgd2l0aCBhIFVTQgo+IHN0aWNrIGFuZCB0aGVuIHVucGx1Z2dlZCBpdCBkdXJpbmcgYSBkYXRh
+IHRyYW5zZmVyLgo+IAo+IFRoZSBkZXZpY2VzIGFyZSBjb25uZWN0ZWQgbGlrZSB0aGlzOgo+IAo+
+ICAgZG0gZGV2aWNlICJiYWNrdXAiCj4gICAgfAo+ICAgICstLSBtZGFkbSBkZXZpY2UgL2Rldi9t
+ZDEwCj4gICAgICAgICB8Cj4gICAgICAgICArLS0gVVNCL1NBVEEgZGlzayBBICgvZGV2L3NkZCkK
+PiAgICAgICAgIHwKPiAgICAgICAgICstLSBVU0IvU0FUQSBkaXNrIEIgKC9kZXYvc2RlKQoKbWRh
+ZG0gL2Rldi9tZDEwIC0tZmFpbCAvZGV2L3NkZCAtLXJlbW92ZSAvZGV2L3NkZAptZGFkbSAvZGV2
+L21kMTAgLS1mYWlsIC9kZXYvc2RlIC0tcmVtb3ZlIC9kZXYvc2RlCihvciBtYXliZSBjb21iaW5l
+IGluIG9uZSBjb21tYW5kIGxpbmUsIGlmIHRoYXQgaXMgc3VwcG9zZWQgdG8gd29yaykKClNob3Vs
+ZCBraWNrIG91dCBib3RoIGRpc2tzIGZyb20gdGhlIE1ELApzaG91bGQgbWFrZSBtZDEwIGZhaWwg
+YWxsIHBlbmRpbmcgKGFuZCBuZXcpIHJlcXVlc3QsCnNob3VsZCBldmVuIGdldCB0aGUgc3R1Y2sg
+ZG0gc3VzcGVuZCB1bnN0dWNrLgoKTm8/CgpDaGVlcnMsCgoJTGFycyBFbGxlbmJlcmcKCj4gVGhl
+IHByb2JsZW0gaXMgdGhhdCBJIGNhbid0IGp1c3QgcmVjb25uZWN0IHRoZSBkaXNrcyBhbmQgcmVy
+dW4gdGhlCj4gYmFja3VwLiAgbWRhZG0gcmVmdXNlcyB0byBzdG9wIHRoZSBSQUlEIGFycmF5IGFz
+IGl0IGlzIGluIHVzZSBieQo+IHRoZSBkbSBkZXZpY2UsIGFuZCBpdCB0aGlua3MgdGhlIGFycmF5
+IGlzIGFjdGl2ZSBkZXNwaXRlIHRoZSBkaXNrcyBiZWluZwo+IHVucGx1Z2dlZCBhbmQgaW4gYSBk
+cmF3ZXIuICBJZiBJIHJlY29ubmVjdCB0aGUgZGlza3MgdGhleSBhcHBlYXIgYXMKPiBkaWZmZXJl
+bnQgZGV2aWNlcyAoc2RmIGFuZCBzZGcpIGJ1dCBJIHN0aWxsIGNhbid0IHN0YXJ0IHRoZSAibmV3
+IiBhcnJheQo+IGZyb20gdGhlc2UgbmV3IGRpc2sgZGV2aWNlcywgYXMgaXQgdGVsbHMgbWUgdGhl
+IGRpc2tzIGFyZSBhbHJlYWR5IHBhcnQKPiBvZiBhbiBhY3RpdmUgYXJyYXkuCj4gCj4gU28gdGhl
+IG9ubHkgd2F5IEkgY2FuIGhhdmUgYW5vdGhlciBnbyBhdCBydW5uaW5nIHRoaXMgYmFja3VwIGlz
+IHRvCj4gY2xvc2UgZG93biAvZGV2L21kMTAsIGFuZCBpdCBzZWVtcyB0aGUgb25seSB3YXkgSSBj
+YW4gZG8gdGhhdCBpcyB0bwo+IHRlbGwgZG0gdG8gcmVsZWFzZSB0aGF0IGRldmljZS4gIEl0IGRv
+ZXNuJ3QgbWF0dGVyIGlmIHRoZSBkbSBkZXZpY2UKPiAiYmFja3VwIiBpcyB1bnVzYWJsZSwgSSB3
+aWxsIGp1c3QgY3JlYXRlICJiYWNrdXAyIiB0byB1c2UgZm9yIHRoZQo+IHNlY29uZCBhdHRlbXB0
+Lgo+IAo+IEJ1dCB1bnRpbCBJIGNhbiBmaWd1cmUgb3V0IGhvdyB0byBnZXQgZG0gdG8gcmVsZWFz
+ZSB0aGUgdW5kZXJseWluZwo+IGRldmljZSwgSSdtIHN0dWNrIQo+IAo+ID4gaS5lLiB5b3UgY2Fu
+bm90IGV4cGVjdCAncmVtb3ZlIC0tZm9yY2UnIHdpbGwgd29yayB3aGVuIHlvdXIgbWFjaGluZQo+
+ID4gc3RhcnQgdG8gc2hvdyBrZXJuZWwgZXJyb3JzLgo+IAo+IFRoZXJlIHdlcmUgbm8ga2VybmVs
+IGNyYXNoZXMsIGp1c3QgZXJyb3JzIHJlbGF0ZWQgdG8gVVNCIHRyYW5zZmVycy4gIEkKPiB3b3Vs
+ZCBhc3N1bWUgdGhpcyBpcyBub3QgbXVjaCBkaWZmZXJlbnQgdG8gaG93IGEgcmVhbCBmYWlsZWQg
+ZGlzayBtaWdodAo+IGJlaGF2ZSwgc28gSSBmaWd1cmUgaXQgaXMgYSBzaXR1YXRpb24gdGhhdCBz
+aG91bGQgYmUgZW5jb3VudGVyZWQKPiByZWxhdGl2ZWx5IG9mdGVuIQo+IAo+IFRoYW5rcyBhZ2Fp
+biwKPiBBZGFtLgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
+aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
