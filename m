@@ -1,20 +1,17 @@
-From: Lars Ellenberg <lars.ellenberg@linbit.com>
-Subject: Re: How do you force-close a dm device after a disk
- failure?
-Date: Thu, 17 Sep 2015 16:04:13 +0200
-Message-ID: <20150917140413.GH7519@soda.linbit>
-References: <20150914102917.3991920c@korath.teln.shikadi.net>
-	<55F66C8B.7070603@redhat.com>
-	<20150914185943.6d963e0c@korath.teln.shikadi.net>
-	<55F6906A.6080404@redhat.com>
-	<20150914194552.213afd64@korath.teln.shikadi.net>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: Severe performance degradation for dm-cache mq since
+	c86c3070
+Date: Fri, 18 Sep 2015 16:30:16 +0100
+Message-ID: <20150918153015.GA5045@rh-vpn>
+References: <CABYiri_eRp7wzhTXCmDm4HUB3ZMsPUZxsS65-29c5o+RoWOX6w@mail.gmail.com>
+	<CABYiri_=f=kh9b_OJz_NBeXC5uUt=y=CTJEkR2Uo5zn-vakVQQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20150914194552.213afd64@korath.teln.shikadi.net>
+In-Reply-To: <CABYiri_=f=kh9b_OJz_NBeXC5uUt=y=CTJEkR2Uo5zn-vakVQQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,76 +21,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Andrey Korolyov <andrey@xdel.ru>
+Cc: heinzm@redhat.com, ejt@redhat.com, dm-devel@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-T24gTW9uLCBTZXAgMTQsIDIwMTUgYXQgMDc6NDU6NTJQTSArMTAwMCwgQWRhbSBOaWVsc2VuIHdy
-b3RlOgo+ID4gV2hvbGUgZG0gIHRhYmxlIHdpdGggYWxsIGRlcHMgbmVlZHMgdG8gYmUga25vd24u
-Cj4gCj4gJCBkbXNldHVwIHRhYmxlCj4gYmFja3VwOiAwIDExNzIwNTMxOTY4IGNyeXB0IGFlcy14
-dHMtcGxhaW42NAo+ICAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw
-MDAwMDAwMDAwMDAwMDAwMDAwMDAwMCAwCj4gICA5OjEwIDQwOTYKPiAKPiAkIGRtc2V0dXAgc3Rh
-dHVzCj4gYmFja3VwOiAwIDExNzIwNTMxOTY4IGNyeXB0Cj4gCj4gJCBkbXNldHVwIGxzIC0tdHJl
-ZQo+IGJhY2t1cCAoMjUzOjApCj4gIOKUlOKUgCAoOToxMCkKPiAKPiAkIGRtc2V0dXAgaW5mbyAt
-Zgo+IE5hbWU6ICAgICAgICAgICAgICBiYWNrdXAKPiBTdGF0ZTogICAgICAgICAgICAgQUNUSVZF
-IChERUZFUlJFRCBSRU1PVkUpCj4gUmVhZCBBaGVhZDogICAgICAgIDQwOTYKPiBUYWJsZXMgcHJl
-c2VudDogICAgTElWRQo+IE9wZW4gY291bnQ6ICAgICAgICAxCj4gRXZlbnQgbnVtYmVyOiAgICAg
-IDAKPiBNYWpvciwgbWlub3I6ICAgICAgMjUzLCAwCj4gTnVtYmVyIG9mIHRhcmdldHM6IDEKPiBV
-VUlEOiBDUllQVC1MVUtTMS1kMGIzZDM4ZTQyMTU0NTkwODUzN2RjNTBmNTlmYjIxNy1iYWNrdXAK
-PiAKPiBBbGwgSSdtIHVzaW5nIGl0IGZvciBpcyB0byBlbmNyeXB0IGFuIG1kYWRtLXN0eWxlIFJB
-SUQgYXJyYXkgY29tcG9zZWQKPiBvZiB0d28gZXh0ZXJuYWwgZGlza3MsIGNvbm5lY3RlZCB0ZW1w
-b3JhcmlseSB2aWEgVVNCIHRvIGRvIGEgZnVsbAo+IHN5c3RlbSBiYWNrdXAgd2l0aCByc3luYy4K
-PiAKPiA+ID4gSSdtIG5vdCBzdXJlIGhvdyB0byBkbyB0aGlzLCBjb3VsZCB5b3UgcGxlYXNlIGVs
-YWJvcmF0ZT8gIEkgdGhvdWdodAo+ID4gPiAiZG1zZXR1cCByZW1vdmUgLS1mb3JjZSIgd291bGQg
-ZG8gdGhpcyBidXQgYXMgdGhhdCBkb2Vzbid0IHdvcmsKPiA+IAo+ID4gcmVhbGx5IHN0YXRlIG9m
-IHdob2xlIHRhYmxlIG5lZWRzIHRvIGJlIGtub3duLgo+ID4gCj4gPiA+PiBBbHNvIG5vdGUgLSBk
-bXNldHVwIHJlbW92ZSAgc3VwcG9ydHMgLS1kZWZlcnJlZCByZW1vdmFsIChzZWUgbWFuCj4gPiA+
-PiBwYWdlKS4KPiA+ID4KPiA+ID4gT2ggSSBkaWRuJ3Qgbm90aWNlIHRoYXQuICBJdCBkb2Vzbid0
-IHNlZW0gdG8gaGF2ZSBtdWNoIG9mIGFuIGVmZmVjdAo+ID4gPiB0aG91Z2g6Cj4gPiAKPiA+IFN1
-cmUgaXQgd2lsbCBub3QgZml4IHlvdXIgcHJvYmxlbSAtIGl0J3MgbGlrZSBsYXp5IHVtb3VudC4u
-Lgo+IAo+IFNvIHJlcGxhY2luZyB0aGUgdGFibGUgd2l0aCB0aGUgJ2Vycm9yJyB0YXJnZXQgd29u
-J3QgcmVsZWFzZSB0aGUKPiB1bmRlcmx5aW5nIGRldmljZSwgZXZlbiB0aG91Z2ggdGhhdCBkZXZp
-Y2UgaXMgbm90IHVzZWQgYnkgdGhlIG5ldwo+IHRhcmdldD8KPiAKPiA+IFdoYXQgaXMgbm90IGNs
-ZWFyIHRvIG1lIGlzIC0gd2hhdCBpcyB5b3VyIGV4cGVjdGF0aW9uIGhlcmUgPwo+ID4gT2J2aW91
-c2x5IHlvdXIgc3lzdGVtIGlzIGZhciBtb3JlIGJyb2tlbiAtIHNvIHBsYWNpbmcgJ2Vycm9yJyB0
-YXJnZXQKPiA+IGZvciB5b3VyIGJhY2t1cCBkZXZpY2Ugd2lsbCBub3QgZml4IGl0Lgo+ID4gCj4g
-PiBZb3Ugc2hvdWxkIGxpa2VseSBhdHRhY2ggYWxzbyBwb3J0aW9uIG9mICdkbWVzZycgLSB0aGVy
-ZSBzdXJlbHkgd2lsbAo+ID4gYmUgd3JpdHRlbiB3aGF0IGlzIGdvaW5nIHdyb25nIHdpdGggeW91
-ciBzeXN0ZW0uCj4gCj4gV2hhdCBoYXBwZW5lZCB3YXMgaW4gdGhlIG1pZGRsZSBvZiB0aGUgYmFj
-a3VwLCB0aGVyZSB3YXMgc29tZSBVU0IKPiBpbnRlcnJ1cHRpb24gYW5kIHRoZSBkaXNrcyBkcm9w
-cGVkIG91dCwgc28gdGhlIHdyaXRlcyBzdGFydGVkIGZhaWxpbmcuCj4gVGhlIGtlcm5lbCBsb2dz
-IHdlcmUgZnVsbCBvZiB3cml0ZSBlcnJvcnMgdG8gdmFyaW91cyBzZWN0b3IgbnVtYmVycy4gIEkK
-PiB0aGluayB5b3Ugd291bGQgaGF2ZSB0aGUgc2FtZSByZXN1bHQgaWYgeW91IHNldCB0aGluZ3Mg
-dXAgd2l0aCBhIFVTQgo+IHN0aWNrIGFuZCB0aGVuIHVucGx1Z2dlZCBpdCBkdXJpbmcgYSBkYXRh
-IHRyYW5zZmVyLgo+IAo+IFRoZSBkZXZpY2VzIGFyZSBjb25uZWN0ZWQgbGlrZSB0aGlzOgo+IAo+
-ICAgZG0gZGV2aWNlICJiYWNrdXAiCj4gICAgfAo+ICAgICstLSBtZGFkbSBkZXZpY2UgL2Rldi9t
-ZDEwCj4gICAgICAgICB8Cj4gICAgICAgICArLS0gVVNCL1NBVEEgZGlzayBBICgvZGV2L3NkZCkK
-PiAgICAgICAgIHwKPiAgICAgICAgICstLSBVU0IvU0FUQSBkaXNrIEIgKC9kZXYvc2RlKQoKbWRh
-ZG0gL2Rldi9tZDEwIC0tZmFpbCAvZGV2L3NkZCAtLXJlbW92ZSAvZGV2L3NkZAptZGFkbSAvZGV2
-L21kMTAgLS1mYWlsIC9kZXYvc2RlIC0tcmVtb3ZlIC9kZXYvc2RlCihvciBtYXliZSBjb21iaW5l
-IGluIG9uZSBjb21tYW5kIGxpbmUsIGlmIHRoYXQgaXMgc3VwcG9zZWQgdG8gd29yaykKClNob3Vs
-ZCBraWNrIG91dCBib3RoIGRpc2tzIGZyb20gdGhlIE1ELApzaG91bGQgbWFrZSBtZDEwIGZhaWwg
-YWxsIHBlbmRpbmcgKGFuZCBuZXcpIHJlcXVlc3QsCnNob3VsZCBldmVuIGdldCB0aGUgc3R1Y2sg
-ZG0gc3VzcGVuZCB1bnN0dWNrLgoKTm8/CgpDaGVlcnMsCgoJTGFycyBFbGxlbmJlcmcKCj4gVGhl
-IHByb2JsZW0gaXMgdGhhdCBJIGNhbid0IGp1c3QgcmVjb25uZWN0IHRoZSBkaXNrcyBhbmQgcmVy
-dW4gdGhlCj4gYmFja3VwLiAgbWRhZG0gcmVmdXNlcyB0byBzdG9wIHRoZSBSQUlEIGFycmF5IGFz
-IGl0IGlzIGluIHVzZSBieQo+IHRoZSBkbSBkZXZpY2UsIGFuZCBpdCB0aGlua3MgdGhlIGFycmF5
-IGlzIGFjdGl2ZSBkZXNwaXRlIHRoZSBkaXNrcyBiZWluZwo+IHVucGx1Z2dlZCBhbmQgaW4gYSBk
-cmF3ZXIuICBJZiBJIHJlY29ubmVjdCB0aGUgZGlza3MgdGhleSBhcHBlYXIgYXMKPiBkaWZmZXJl
-bnQgZGV2aWNlcyAoc2RmIGFuZCBzZGcpIGJ1dCBJIHN0aWxsIGNhbid0IHN0YXJ0IHRoZSAibmV3
-IiBhcnJheQo+IGZyb20gdGhlc2UgbmV3IGRpc2sgZGV2aWNlcywgYXMgaXQgdGVsbHMgbWUgdGhl
-IGRpc2tzIGFyZSBhbHJlYWR5IHBhcnQKPiBvZiBhbiBhY3RpdmUgYXJyYXkuCj4gCj4gU28gdGhl
-IG9ubHkgd2F5IEkgY2FuIGhhdmUgYW5vdGhlciBnbyBhdCBydW5uaW5nIHRoaXMgYmFja3VwIGlz
-IHRvCj4gY2xvc2UgZG93biAvZGV2L21kMTAsIGFuZCBpdCBzZWVtcyB0aGUgb25seSB3YXkgSSBj
-YW4gZG8gdGhhdCBpcyB0bwo+IHRlbGwgZG0gdG8gcmVsZWFzZSB0aGF0IGRldmljZS4gIEl0IGRv
-ZXNuJ3QgbWF0dGVyIGlmIHRoZSBkbSBkZXZpY2UKPiAiYmFja3VwIiBpcyB1bnVzYWJsZSwgSSB3
-aWxsIGp1c3QgY3JlYXRlICJiYWNrdXAyIiB0byB1c2UgZm9yIHRoZQo+IHNlY29uZCBhdHRlbXB0
-Lgo+IAo+IEJ1dCB1bnRpbCBJIGNhbiBmaWd1cmUgb3V0IGhvdyB0byBnZXQgZG0gdG8gcmVsZWFz
-ZSB0aGUgdW5kZXJseWluZwo+IGRldmljZSwgSSdtIHN0dWNrIQo+IAo+ID4gaS5lLiB5b3UgY2Fu
-bm90IGV4cGVjdCAncmVtb3ZlIC0tZm9yY2UnIHdpbGwgd29yayB3aGVuIHlvdXIgbWFjaGluZQo+
-ID4gc3RhcnQgdG8gc2hvdyBrZXJuZWwgZXJyb3JzLgo+IAo+IFRoZXJlIHdlcmUgbm8ga2VybmVs
-IGNyYXNoZXMsIGp1c3QgZXJyb3JzIHJlbGF0ZWQgdG8gVVNCIHRyYW5zZmVycy4gIEkKPiB3b3Vs
-ZCBhc3N1bWUgdGhpcyBpcyBub3QgbXVjaCBkaWZmZXJlbnQgdG8gaG93IGEgcmVhbCBmYWlsZWQg
-ZGlzayBtaWdodAo+IGJlaGF2ZSwgc28gSSBmaWd1cmUgaXQgaXMgYSBzaXR1YXRpb24gdGhhdCBz
-aG91bGQgYmUgZW5jb3VudGVyZWQKPiByZWxhdGl2ZWx5IG9mdGVuIQo+IAo+IFRoYW5rcyBhZ2Fp
-biwKPiBBZGFtLgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
-aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Fri, Sep 11, 2015 at 11:32:38PM +0300, Andrey Korolyov wrote:
+> Please take a look on an
+> attached results - at a given cache size smq outperforms all other
+> algorithms but both new mq and smq performs poorly when cache fills up
+> and issuing demotions.
+
+Having looked at your results again I think there are two issues here:
+
+i) You're expecting dm-cache to be a writeback cache that streams
+_all_ writes to the SSD, and then updates the spindle in the
+background.  It's not, it's a slow moving cache that promotes specific
+regions of the spindle to the SSD.
+
+ii) You're doing random, small, sync IO.  Which evenly hits all areas.
+In this case the cache has a really hard time improving over the
+performance of the spindle.  In your tests I think you have around 6G
+of SSD and 48G of active data.  So only 1 in 8 IOs are going to hit the
+SSD; any benefits will be marginal.  You use the same SSD size when
+running with an 8G work load, so nearly every IO hits the SSD.  Hence
+better performance.
+
+Does this benchmark really reflect your use case?
+
+- Joe
