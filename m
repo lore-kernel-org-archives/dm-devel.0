@@ -1,25 +1,19 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: How do you force-close a dm device after a disk
-	failure?
-Date: Mon, 21 Sep 2015 19:50:57 +0200
-Message-ID: <56004381.20000@redhat.com>
-References: <55F66C8B.7070603@redhat.com>
-	<20150914185943.6d963e0c@korath.teln.shikadi.net>
-	<55F6906A.6080404@redhat.com>
-	<20150914194552.213afd64@korath.teln.shikadi.net>
-	<55F69BA9.30908@redhat.com>
-	<20150916105857.69e1cb49@korath.teln.shikadi.net>
-	<55F92291.9020808@redhat.com>
-	<20150916223512.40687a03@korath.teln.shikadi.net>
-	<55F96893.2010201@redhat.com>
-	<20150919194752.753cdc44@korath.teln.shikadi.net>
-	<20150921113940.GJ7519@soda.linbit>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 5/5] block: Inline blk_integrity in struct
+	gendisk
+Date: Mon, 21 Sep 2015 16:45:07 -0400
+Message-ID: <20150921204506.GA36289@redhat.com>
+References: <20150721120102.GB1654@infradead.org>
+	<1440103314-31610-1-git-send-email-martin.petersen@oracle.com>
+	<1440103314-31610-6-git-send-email-martin.petersen@oracle.com>
+	<20150916010720.GA21398@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20150921113940.GJ7519@soda.linbit>
+Content-Disposition: inline
+In-Reply-To: <20150916010720.GA21398@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,85 +23,178 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Jens Axboe <axboe@fb.com>, linux-nvme@lists.infradead.org, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Matthew Wilcox <willy@linux.intel.com>, Keith Busch <keith.busch@intel.com>, Dan Williams <dan.j.williams@intel.com>
 List-Id: dm-devel.ids
 
-Dne 21.9.2015 v 13:39 Lars Ellenberg napsal(a):
-> On Sat, Sep 19, 2015 at 07:47:52PM +1000, Adam Nielsen wrote:
->>> Was this the 'ONLY' dmsetup in your listing (i.e. you reproduced case
->>> again)?
->>
->> This was the original instance of the problem.  Today I have rebooted
->> and reproduced the problem on a fresh kernel.
->>
->>> I mean - your existing reported situation was already hopeless and
->>> needed reboot - as if  flushing suspend holds some mutexes - no other
->>> suspend call can fix it ->  you usually have just  1 chance to fix it
->>> in right way, if you go wrong way reboot is unavoidable.
->>
->> That sounds like a very unforgiving buggy kernel, if you only have one
->> chance to fix the problem ;-)
->>
->> Here is my attempt on the fresh kernel.  I received some write errors
->> in dmesg, so tried to umount the dm device to confirm I had reproduced
->> the problem, and when umount failed to exit I tried this:
->>
->>    $ dmsetup reload backup --table "0 11720531968 error"
->>    $ dmsetup suspend --noflush --nolockfs backup
->
-> You need to *resume* to activate the new table.
->
->> These two worked fine now.  "dmsetup suspend" was locking up before,
->> this time it worked.
->>
->>    $ umount /mnt/backup
->>    umount: /mnt/backup: not mounted
->>
->> The dm instance is no longer mounted.
->>
->>    $ mdadm --manage --stop /dev/md10
->>    mdadm: Cannot get exclusive access to /dev/md10:Perhaps a running
->>      process, mounted filesystem or active volume group?
->
-> Also, as mentioned before, why don't you
-> mdadm /dev/md10 --fail /dev/sdd --remove /dev/sdd
-> mdadm /dev/md10 --fail /dev/sde --remove /dev/sde
-> (for whatever sdX members it currently has;
-> or maybe combine in one command line, if that is supposed to work)
->
-> Should kick out the disks from the MD,
-> should make md10 fail all pending (and new) requests,
-> should even get the stuck dm suspend going again
-> (the implicit "flush" one, not the --noflush one,
-> as that did not get stuck anyways).
->
->> I can't restart the underlying RAID array though, as the dm instance is
->> still holding onto the devices.
->>
->>    $ dmsetup remove --force backup
->>    device-mapper: remove ioctl on backup failed: Device or resource busy
->>    Command failed
->
-> You need to *resume* the new (error) table.
-> Or the previous table is only suspended, but still holds references.
->
+On Tue, Sep 15 2015 at  9:07P -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
+ 
+> Long story short, DM changes that eliminate the checks/code for
+> allocating the blk_integrity structure should be all that is needed for
+> this patch.
+> 
+> I'll work through this further.  Hope to send an incremental patch that
+> fixes things up in the next day or so.
 
+Here is what I came up with.  Leaves something to be desired given the
+integrity profile is being established on first table load (as opposed
+to during resume like the old DM and block integrity code did).. but we
+can iterate on this as needed.
 
-There is a condition which may prevent replacement dm table.
+Feel free to fold it into your last patch and add my Signed-off-by.
 
-If the 'dm' target has in-progress bio operation and the underlying device is 
-not responding (acking bio completed),  you can't suspend such targeted with 
-bio-in-progress.
+From: Mike Snitzer <snitzer@redhat.com>
+Date: Mon, 21 Sep 2015 14:58:44 -0400
+Subject: [PATCH] dm table: fixup block integrity profile processing
 
-It's not trivial to improve this.
+Not very different from what Martin originally proposed but subtle
+changes include:
 
-So if you happen to 'deadlock' in this state - there is currently no other 
-help then rebooting machine if you want to get rid of such 'frozen' device.
+. only register the integrity profile on first table load; subsequent
+  loads must have a matching integrity profile
+  - if profile is already registered, verify new table's profile matches
 
-On the other hand - from what was said -  'dropping' USB disk out of system 
-should not be causing such state.
+. resume only verifies that the DM device's integrity profile matches
+  all the underlying devices' profiles.
+  - if they don't match the DM device's integrity profile is unregistered
 
-So probably more details from logs need to be know for knowing more about this.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-table.c | 77 +++++++++++++++++++++++++++++++++++++++++----------
+ 1 file changed, 63 insertions(+), 14 deletions(-)
 
-
-Zdenek
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index e2f98fc..061152a 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1014,6 +1014,11 @@ static int dm_table_build_index(struct dm_table *t)
+ 	return r;
+ }
+ 
++static bool integrity_profile_exists(struct gendisk *disk)
++{
++	return !!blk_get_integrity(disk);
++}
++
+ /*
+  * Get a disk whose integrity profile reflects the table's profile.
+  * Returns NULL if integrity support was inconsistent or unavailable.
+@@ -1026,10 +1031,10 @@ static struct gendisk * dm_table_get_integrity_disk(struct dm_table *t)
+ 
+ 	list_for_each_entry(dd, devices, list) {
+ 		template_disk = dd->dm_dev->bdev->bd_disk;
+-		if (!blk_get_integrity(template_disk))
++		if (!integrity_profile_exists(template_disk))
+ 			goto no_integrity;
+-		if (prev_disk &&
+-		    blk_integrity_compare(prev_disk, template_disk) < 0)
++		else if (prev_disk &&
++			 blk_integrity_compare(prev_disk, template_disk) < 0)
+ 			goto no_integrity;
+ 		prev_disk = template_disk;
+ 	}
+@@ -1055,23 +1060,40 @@ no_integrity:
+  * profile validation: First pass during table load, final pass during
+  * resume.
+  */
+-static int dm_table_set_integrity(struct dm_table *t)
++static int dm_table_register_integrity(struct dm_table *t)
+ {
++	struct mapped_device *md = t->md;
+ 	struct gendisk *template_disk = NULL;
+-	bool existing_profile = blk_get_integrity(dm_disk(t->md));
+ 
+ 	template_disk = dm_table_get_integrity_disk(t);
+-	if (template_disk) {
+-		blk_integrity_register(dm_disk(t->md),
+-				       blk_get_integrity(template_disk));
++	if (!template_disk)
++		return 0;
++
++	if (!integrity_profile_exists(dm_disk(md))) {
+ 		t->integrity_supported = 1;
+-	} else if (existing_profile) {
+-		blk_integrity_unregister(dm_disk(t->md));
+-		DMWARN("%s: device no longer has a valid integrity profile",
+-		       dm_device_name(t->md));
++		/*
++		 * Register integrity profile during table load; we can do
++		 * this because the final profile must match during resume.
++		 */
++		blk_integrity_register(dm_disk(md),
++				       blk_get_integrity(template_disk));
++		return 0;
++	}
++
++	/*
++	 * If DM device already has an initialized integrity
++	 * profile the new profile should not conflict.
++	 */
++	if (blk_integrity_compare(dm_disk(md), template_disk) < 0) {
++		DMWARN("%s: conflict with existing integrity profile: "
++		       "%s profile mismatch",
++		       dm_device_name(t->md),
++		       template_disk->disk_name);
+ 		return 1;
+ 	}
+ 
++	/* Preserve existing integrity profile */
++	t->integrity_supported = 1;
+ 	return 0;
+ }
+ 
+@@ -1095,7 +1117,7 @@ int dm_table_complete(struct dm_table *t)
+ 		return r;
+ 	}
+ 
+-	r = dm_table_set_integrity(t);
++	r = dm_table_register_integrity(t);
+ 	if (r) {
+ 		DMERR("could not register integrity profile.");
+ 		return r;
+@@ -1260,6 +1282,33 @@ combine_limits:
+ 	return validate_hardware_logical_block_alignment(table, limits);
+ }
+ 
++/*
++ * Verify that all devices have an integrity profile that matches the
++ * DM device's registered integrity profile.  If the profiles don't
++ * match then unregister the DM device's integrity profile.
++ */
++static void dm_table_verify_integrity(struct dm_table *t)
++{
++	struct gendisk *template_disk = NULL;
++
++	if (t->integrity_supported) {
++		/*
++		 * Verify that the original integrity profile
++		 * matches all the devices in this table.
++		 */
++		template_disk = dm_table_get_integrity_disk(t);
++		if (template_disk &&
++		    blk_integrity_compare(dm_disk(t->md), template_disk) >= 0)
++			return;
++	}
++
++	if (integrity_profile_exists(dm_disk(t->md))) {
++		DMWARN("%s: unable to establish an integrity profile",
++		       dm_device_name(t->md));
++		blk_integrity_unregister(dm_disk(t->md));
++	}
++}
++
+ static int device_flush_capable(struct dm_target *ti, struct dm_dev *dev,
+ 				sector_t start, sector_t len, void *data)
+ {
+@@ -1457,7 +1506,7 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	else
+ 		queue_flag_set_unlocked(QUEUE_FLAG_NO_SG_MERGE, q);
+ 
+-	dm_table_set_integrity(t);
++	dm_table_verify_integrity(t);
+ 
+ 	/*
+ 	 * Determine whether or not this queue's I/O timings contribute
+-- 
+2.3.8 (Apple Git-58)
