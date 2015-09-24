@@ -1,13 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.3-rc3
-Date: Tue, 22 Sep 2015 16:31:53 -0400
-Message-ID: <20150922203153.GA40142@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Schunack, Daniel" <dschunack@web.de>
+Subject: multipath with alias and binding file
+Date: Thu, 24 Sep 2015 14:19:40 +0200
+Message-ID: <5603EA5C.1050105@web.de>
+Reply-To: dschunack@web.de, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,44 +16,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Linus,
+Hello,
 
-The following changes since commit 6ff33f3902c3b1c5d0db6b1e2c70b6d76fba357f:
+we use alias on our OEL and Redhat Server. In RHEL5/OEL5 we use the 
+multipath.conf to set the aliases on the system. With RHEL5/OEL6 we use 
+the /etc/multipath/binding file to set alias.
+It works great, but with the update to OEL6.7 the multipathd doesn't use 
+our alias in /etc/multipath/binding. The multipathd add the WWIDs again 
+at the end of the File.
+The Oracle Support says it's not allowed to set alias with the binding 
+file. It's only supported to do this in the multipath.conf.
+My Question is: Is this correct and it's not allowed to set alias with 
+binding file and the only way to do this is the multipath.conf?
 
-  Linux 4.3-rc1 (2015-09-12 16:35:56 -0700)
+Best regards
 
-are available in the git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.3-fixes
-
-for you to fetch changes up to 586b286b110e94eb31840ac5afc0c24e0881fe34:
-
-  dm crypt: constrain crypt device's max_segment_size to PAGE_SIZE (2015-09-14 12:04:24 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-Two stable@ fixes:
-
-- DM thinp fix to properly advertise discard support as disabled for
-  thin devices backed by a thin-pool with discard support disabled.
-
-- DM crypt fix to prevent the creation of bios that violate the
-  underlying block device's max_segments limits.  This fixes a
-  relatively long-standing NCQ SSD corruption issue reported against
-  dm-crypt ever since the dm-crypt cpu parallelization patches were
-  merged back in 4.0.
-
-----------------------------------------------------------------
-Mike Snitzer (2):
-      dm thin: disable discard support for thin devices if pool's is disabled
-      dm crypt: constrain crypt device's max_segment_size to PAGE_SIZE
-
- drivers/md/dm-crypt.c | 17 +++++++++++++++--
- drivers/md/dm-thin.c  |  4 ++++
- 2 files changed, 19 insertions(+), 2 deletions(-)
+Daniel
