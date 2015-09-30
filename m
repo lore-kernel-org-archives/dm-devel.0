@@ -1,61 +1,54 @@
-From: Andreas Hartmann <andihartmann-KuiJ5kEpwI6ELgA04lAiVw@public.gmane.org>
-Subject: Re: [dm-devel] AMD-Vi IO_PAGE_FAULTs and ata3.00: failed command:
-	READ FPDMA QUEUED errors since Linux 4.0
-Date: Wed, 30 Sep 2015 16:52:47 +0200
-Message-ID: <560BF73F.8000008@maya.org>
-References: <55B7BEA2.30205@01019freenet.de>
-	<20150728175054.GB24782@redhat.com> <55B7D054.4070308@maya.org>
-	<20150728192908.GA25264@redhat.com> <55BCD5A7.2080708@maya.org>
-	<55BE1D5E.6020709@maya.org>
-	<alpine.LRH.2.02.1508021347480.17729@file01.intranet.prod.int.rdu2.redhat.com>
-	<55FE5740.2060701@maya.org> <20150929152100.GL3036@8bytes.org>
-	<alpine.LRH.2.02.1509291143170.24174@file01.intranet.prod.int.rdu2.redhat.com>
-	<20150929162042.GR3036@8bytes.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20150929162042.GR3036-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-pci <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Andreas Hartmann <andihartmann-KuiJ5kEpwI6ELgA04lAiVw@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Seth Forshee <seth.forshee@canonical.com>
+Subject: [PATCH 0/5] User namespace mount updates
+Date: Wed, 30 Sep 2015 15:15:09 -0500
+Message-ID: <1443644116-41366-1-git-send-email-seth.forshee@canonical.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, linux-kernel@vger.kernel.org, Seth Forshee <seth.forshee@canonical.com>
 List-Id: dm-devel.ids
 
-On 09/29/2015 at 06:20 PM, Joerg Roedel wrote:
-> On Tue, Sep 29, 2015 at 11:58:10AM -0400, Mikulas Patocka wrote:
->> On Tue, 29 Sep 2015, Joerg Roedel wrote:
->> There was a patch (34b48db66e08ca1c1bc07cf305d672ac940268dc) that 
->> increased default block request size. That patch triggers AMD-Vi page 
->> faults. The bug may be in ATA driver, in ATA controller on in AMD-Vi 
->> driver or hardware. I didn't see anything in that thread that proves that 
->> the bug in not in AMD-Vi IOMMU.
->>
->> The bug probably existed even before kernel 3.19, but it was masked by the 
->> fact that I/O request size was artifically capped. Bisecting probably 
->> won't find it, as it may have existed since ever.
-> 
-> Okay, I see. But as long as the request-size is not bigger than 128MB
-> (the biggest chunk the AMD IOMMU driver can map at once), I don't see
-> how the IOMMU driver could be at fault.
-> 
-> Which ATA driver is in use when this happens and are there instructions
-> on how to reproduce the issue?
-> 
-> Alternativly someone who can reproduce it should trace the calls to
-> __map_single and __unmap_single in the AMD IOMMU driver to find out
-> whether the addresses which the faults happen on are really mapped, or
-> at least requested from the AMD IOMMU driver.
+Hi Eric,
 
-How can I trace it?
+Here's a batch of updates for the unprivileged user namespace mount
+patches based on your feedback. I think everything you mentioned should
+be addressed here.
 
+These are now based on your for-testing branch.
+
+Updates include:
+ - Fix for incorrect use of flags argument in mount_mtd.
+ - Eliminate lookup_bdev_perm and instead add an access mode argument to
+   lookup_bdev.
+ - Use __inode_permission instead of inode_permission when checking for
+   rights towards a block device inode.
+ - Add a patch replacing in_user_ns with current_in_user_ns.
+ - Add a patch to handle Smack security labels consistently.
 
 Thanks,
-Andreas
+Seth
+
+Andy Lutomirski (1):
+  fs: Treat foreign mounts as nosuid
+
+Seth Forshee (4):
+  fs: Verify access of user towards block device file when mounting
+  selinux: Add support for unprivileged mounts from user namespaces
+  userns: Replace in_userns with current_in_userns
+  Smack: Handle labels consistently in untrusted mounts
+
+ drivers/md/bcache/super.c      |  2 +-
+ drivers/md/dm-table.c          |  2 +-
+ drivers/mtd/mtdsuper.c         |  6 +++++-
+ fs/block_dev.c                 | 18 +++++++++++++++---
+ fs/exec.c                      |  2 +-
+ fs/namespace.c                 | 13 +++++++++++++
+ fs/quota/quota.c               |  2 +-
+ include/linux/fs.h             |  2 +-
+ include/linux/mount.h          |  1 +
+ include/linux/user_namespace.h |  6 ++----
+ kernel/user_namespace.c        |  6 +++---
+ security/commoncap.c           |  4 ++--
+ security/selinux/hooks.c       | 25 ++++++++++++++++++++++++-
+ security/smack/smack_lsm.c     | 28 ++++++++++++++++++----------
+ 14 files changed, 88 insertions(+), 29 deletions(-)
