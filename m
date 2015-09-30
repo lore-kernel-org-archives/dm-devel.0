@@ -1,54 +1,70 @@
 From: Seth Forshee <seth.forshee@canonical.com>
-Subject: [PATCH 0/5] User namespace mount updates
-Date: Wed, 30 Sep 2015 15:15:09 -0500
-Message-ID: <1443644116-41366-1-git-send-email-seth.forshee@canonical.com>
+Subject: [PATCH 3/5] selinux: Add support for unprivileged mounts from user namespaces
+Date: Wed, 30 Sep 2015 15:15:12 -0500
+Message-ID: <1443644116-41366-4-git-send-email-seth.forshee@canonical.com>
+References: <1443644116-41366-1-git-send-email-seth.forshee@canonical.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1443644116-41366-1-git-send-email-seth.forshee@canonical.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, linux-kernel@vger.kernel.org, Seth Forshee <seth.forshee@canonical.com>
+To: "Eric W. Biederman" <ebiederm@xmission.com>, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.nsa.gov>, Eric Paris <eparis@parisplace.org>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Seth Forshee <seth.forshee@canonical.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>
 List-Id: dm-devel.ids
 
-Hi Eric,
+Security labels from unprivileged mounts in user namespaces must
+be ignored. Force superblocks from user namespaces whose labeling
+behavior is to use xattrs to use mountpoint labeling instead.
+For the mountpoint label, default to converting the current task
+context into a form suitable for file objects, but also allow the
+policy writer to specify a different label through policy
+transition rules.
 
-Here's a batch of updates for the unprivileged user namespace mount
-patches based on your feedback. I think everything you mentioned should
-be addressed here.
+Pieced together from code snippets provided by Stephen Smalley.
 
-These are now based on your for-testing branch.
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+---
+ security/selinux/hooks.c | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
 
-Updates include:
- - Fix for incorrect use of flags argument in mount_mtd.
- - Eliminate lookup_bdev_perm and instead add an access mode argument to
-   lookup_bdev.
- - Use __inode_permission instead of inode_permission when checking for
-   rights towards a block device inode.
- - Add a patch replacing in_user_ns with current_in_user_ns.
- - Add a patch to handle Smack security labels consistently.
-
-Thanks,
-Seth
-
-Andy Lutomirski (1):
-  fs: Treat foreign mounts as nosuid
-
-Seth Forshee (4):
-  fs: Verify access of user towards block device file when mounting
-  selinux: Add support for unprivileged mounts from user namespaces
-  userns: Replace in_userns with current_in_userns
-  Smack: Handle labels consistently in untrusted mounts
-
- drivers/md/bcache/super.c      |  2 +-
- drivers/md/dm-table.c          |  2 +-
- drivers/mtd/mtdsuper.c         |  6 +++++-
- fs/block_dev.c                 | 18 +++++++++++++++---
- fs/exec.c                      |  2 +-
- fs/namespace.c                 | 13 +++++++++++++
- fs/quota/quota.c               |  2 +-
- include/linux/fs.h             |  2 +-
- include/linux/mount.h          |  1 +
- include/linux/user_namespace.h |  6 ++----
- kernel/user_namespace.c        |  6 +++---
- security/commoncap.c           |  4 ++--
- security/selinux/hooks.c       | 25 ++++++++++++++++++++++++-
- security/smack/smack_lsm.c     | 28 ++++++++++++++++++----------
- 14 files changed, 88 insertions(+), 29 deletions(-)
+diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
+index de05207eb665..09be1dc21e58 100644
+--- a/security/selinux/hooks.c
++++ b/security/selinux/hooks.c
+@@ -756,6 +756,28 @@ static int selinux_set_mnt_opts(struct super_block *sb,
+ 			goto out;
+ 		}
+ 	}
++
++	/*
++	 * If this is a user namespace mount, no contexts are allowed
++	 * on the command line and security labels must be ignored.
++	 */
++	if (sb->s_user_ns != &init_user_ns) {
++		if (context_sid || fscontext_sid || rootcontext_sid ||
++		    defcontext_sid) {
++			rc = -EACCES;
++			goto out;
++		}
++		if (sbsec->behavior == SECURITY_FS_USE_XATTR) {
++			sbsec->behavior = SECURITY_FS_USE_MNTPOINT;
++			rc = security_transition_sid(current_sid(), current_sid(),
++						     SECCLASS_FILE, NULL,
++						     &sbsec->mntpoint_sid);
++			if (rc)
++				goto out;
++		}
++		goto out_set_opts;
++	}
++
+ 	/* sets the context of the superblock for the fs being mounted. */
+ 	if (fscontext_sid) {
+ 		rc = may_context_mount_sb_relabel(fscontext_sid, sbsec, cred);
+@@ -824,6 +846,7 @@ static int selinux_set_mnt_opts(struct super_block *sb,
+ 		sbsec->def_sid = defcontext_sid;
+ 	}
+ 
++out_set_opts:
+ 	rc = sb_finish_set_opts(sb);
+ out:
+ 	mutex_unlock(&sbsec->lock);
+-- 
+1.9.1
