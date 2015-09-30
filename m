@@ -1,86 +1,61 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: Queuing of dm-raid1 resyncs to the same underlying
- block devices
-Date: Wed, 30 Sep 2015 16:00:52 +0200
-Message-ID: <560BEB14.3060701@redhat.com>
-References: <20150926154902.GA2964@alpha.arachsys.com>
-	<64020C6E-98B1-4139-A88C-0EC65493CCF9@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andreas Hartmann <andihartmann-KuiJ5kEpwI6ELgA04lAiVw@public.gmane.org>
+Subject: Re: [dm-devel] AMD-Vi IO_PAGE_FAULTs and ata3.00: failed command:
+	READ FPDMA QUEUED errors since Linux 4.0
+Date: Wed, 30 Sep 2015 16:52:47 +0200
+Message-ID: <560BF73F.8000008@maya.org>
+References: <55B7BEA2.30205@01019freenet.de>
+	<20150728175054.GB24782@redhat.com> <55B7D054.4070308@maya.org>
+	<20150728192908.GA25264@redhat.com> <55BCD5A7.2080708@maya.org>
+	<55BE1D5E.6020709@maya.org>
+	<alpine.LRH.2.02.1508021347480.17729@file01.intranet.prod.int.rdu2.redhat.com>
+	<55FE5740.2060701@maya.org> <20150929152100.GL3036@8bytes.org>
+	<alpine.LRH.2.02.1509291143170.24174@file01.intranet.prod.int.rdu2.redhat.com>
+	<20150929162042.GR3036@8bytes.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <64020C6E-98B1-4139-A88C-0EC65493CCF9@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Brassow Jonathan <jbrassow@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20150929162042.GR3036-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-pci <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Andreas Hartmann <andihartmann-KuiJ5kEpwI6ELgA04lAiVw@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Ck5vLCBsdm0vZG0tcmFpZCBkb2VzIG5vdCBxdWV1ZSBzeW5jaHJvbmlhdGlvbi4KCklmIG11bHRp
-cGxlIHJhaWQxLzQvNS82LzEwIExWcyBoYXZlIHRoZWlyIGltYWdlIExWcyBzaGFyZSB0aGUgc2Ft
-ZQpQViwgcmVzeW5jcyB3aWxsIGhhcHBlbiBpbiBwYXJhbGxlbCBvbiBhbGwgcmVzcGVjdGl2ZSBS
-QUlEIExWcyBpZiByZXF1ZXN0ZWQuCgpFLmcuIChzZWUgQ3B5JVN5bmMgZmllbGQgb2YgdGhlIGNy
-ZWF0ZWQgMiByYWlkMSBMVnMpOgogICBMViAgICAgICAgICAgIFZHICAgQXR0ciAgICAgICBMU2l6
-ZSAgIFNTaXplIFNSZXMgQ3B5JVN5bmMgVHlwZSAjQ3B5IAojU3RyIFN0cmlwZSBTU2l6ZSBQRSBS
-YW5nZXMKICAgcjEgICAgICAgICAgICByICAgIFJ3aS1hLXItLS0gNTEyLjAwbSAgIDEyOCAgICAg
-IDE4Ljc1IHJhaWQxICAgICAyICAgIAoyICAwLjAzbSAgIDEyOCByMV9yaW1hZ2VfMDowLTEyNyBy
-MV9yaW1hZ2VfMTowLTEyNwogICBbcjFfcmltYWdlXzBdIHIgICAgaXdpLWFvci0tLSA1MTIuMDBt
-ICAgMTI4IGxpbmVhciAgICAgICAgIDEgICAgIDBtICAgCjEyOCAvZGV2L3NkZjoxLTEyOAogICBb
-cjFfcmltYWdlXzFdIHIgICAgaXdpLWFvci0tLSA1MTIuMDBtICAgMTI4IGxpbmVhciAgICAgICAg
-IDEgICAgIDBtICAgCjEyOCAvZGV2L3NkZzoxLTEyOAogICBbcjFfcm1ldGFfMF0gIHIgICAgZXdp
-LWFvci0tLSAgIDQuMDBtICAgICAxIGxpbmVhciAgICAgICAgIDEgICAgIAowbSAgICAgMSAvZGV2
-L3NkZjowLTAKICAgW3IxX3JtZXRhXzFdICByICAgIGV3aS1hb3ItLS0gICA0LjAwbSAgICAgMSBs
-aW5lYXIgICAgICAgICAxICAgICAKMG0gICAgIDEgL2Rldi9zZGc6MC0wCiAgIHIyICAgICAgICAg
-ICAgciAgICBSd2ktYS1yLS0tIDUxMi4wMG0gICAxMjggICAgICAzMS4yNSByYWlkMSAgICAgMiAg
-ICAKMiAgMC4wM20gICAxMjggcjJfcmltYWdlXzA6MC0xMjcgcjJfcmltYWdlXzE6MC0xMjcKICAg
-W3IyX3JpbWFnZV8wXSByICAgIGl3aS1hb3ItLS0gNTEyLjAwbSAgIDEyOCBsaW5lYXIgICAgICAg
-ICAxICAgICAwbSAgIAoxMjggL2Rldi9zZGY6MTMwLTI1NwogICBbcjJfcmltYWdlXzFdIHIgICAg
-aXdpLWFvci0tLSA1MTIuMDBtICAgMTI4IGxpbmVhciAgICAgICAgIDEgICAgIDBtICAgCjEyOCAv
-ZGV2L3NkZzoxMzAtMjU3CiAgIFtyMl9ybWV0YV8wXSAgciAgICBld2ktYW9yLS0tICAgNC4wMG0g
-ICAgIDEgbGluZWFyICAgICAgICAgMSAgICAgCjBtICAgICAxIC9kZXYvc2RmOjEyOS0xMjkKICAg
-W3IyX3JtZXRhXzFdICByICAgIGV3aS1hb3ItLS0gICA0LjAwbSAgICAgMSBsaW5lYXIgICAgICAg
-ICAxICAgICAKMG0gICAgIDEgL2Rldi9zZGc6MTI5LTEyOQoKClRob3VnaCB0aGVyZSdzIG5vIGF1
-dG9tYXRpYyBxdWV1ZWluZyBvZiAoaW5pdGlhbCkgcmVzeW5jaHJvbml6YXRpb25zLAp5b3UgY2Fu
-IGNyZWF0ZSB0aGUgMiBMVnMgc2hhcmluZyB0aGUgc2FtZSBQVnMgd2l0aCB0aGUgIi0tbm9zeW5j
-IiAKb3B0aW9uLCB0aHVzIHByZXZlbnRpbmcKaW1tZWRpYXRlIHJlc3luY2hyb25pemF0aW9uIGFu
-ZCB0aGVuICJsdmNoYW5nZSAtLXN5bmNhY3Rpb24gcmVwYWlyIApyLXIxIiwgd2FpdCBmb3IgaXQg
-dG8KZmluaXNoIGFuZCAibHZjaGFuZ2UgLS1zeW5jYWN0aW9uIHJlcGFpciByLXIyIiAgYWZ0ZXJ3
-YXJkcy4KCk9yIGNyZWF0ZSBhbGwgYnV0IDEgTFYgd2l0aCAiLS1ub3N5bmMiLCB3YWl0IGZvciB0
-aGUgb25lIHRvIGZpbmlzaCAKYmVmb3JlIHVzaW5nIGx2Y2hhbmdlCnRvIHN0YXJ0IHJlc3luY2hy
-b25pemF0aW9uLgoKQlRXOgpXaGVuIHlvdSBjcmVhdGUgYSByYWlkMS80LzUvNi8xMCBMVnMgX2Fu
-ZF8gbmV2ZXIgcmVhZCB3aGF0IHlvdSBoYXZlIG5vdCAKd3JpdHRlbiwKIi0tbm9zeW5jIiBjYW4g
-YmUgdXNlZCBhbnl3YXkgaW4gb3JkZXIgdG8gYXZvaWQgdGhlIGluaXRpYWwgCnJlc3luY2hyb25p
-emF0aW9uIGxvYWQKb24gdGhlIGRldmljZXMuIEFueSBkYXRhIHdyaXR0ZW4gaW4gdGhhdCBjYXNl
-IHdpbGwgdXBkYXRlIGFsbCAKbWlycm9ycy9yYWlkIHJlZHVuZGFuY3kgZGF0YS4KCgpIZWluegoK
-Ck9uIDA5LzMwLzIwMTUgMDM6MjIgUE0sIEJyYXNzb3cgSm9uYXRoYW4gd3JvdGU6Cj4gSSBkb27i
-gJl0IGJlbGlldmUgaXQgZG9lcy4gIGRtLXJhaWQgZG9lcyB1c2UgdGhlIHNhbWUgUkFJRCBrZXJu
-ZWwgcGVyc29uYWxpdGllcyBhcyBNRCB0aG91Z2gsIHNvIEkgd291bGQgdGhpbmsgdGhhdCBpdCBj
-b3VsZCBiZSBhZGRlZC4gIEnigJlsbCBjaGVjayB3aXRoIEhlaW56IGFuZCBzZWUgaWYgaGUga25v
-d3MuCj4KPiAgIGJyYXNzb3cKPgo+PiBPbiBTZXAgMjYsIDIwMTUsIGF0IDEwOjQ5IEFNLCBSaWNo
-YXJkIERhdmllcyA8cmljaGFyZEBhcmFjaHN5cy5jb20+IHdyb3RlOgo+Pgo+PiBIaSwKPj4KPj4g
-RG9lcyBkbS1yYWlkIHF1ZXVlIHJlc3luY3Mgb2YgbXVsdGlwbGUgZG0tcmFpZDEgYXJyYXlzLCBp
-ZiB0aGUgdW5kZXJseWluZwo+PiBibG9jayBkZXZpY2VzIGFyZSB0aGUgc2FtZT8KPj4KPj4gTGlu
-dXggbWQgaGFzIHRoaXMgZmVhdHVyZSwgZS5nLjoKPj4KPj4gIyBjYXQgL3Byb2MvbWRzdGF0Cj4+
-IFBlcnNvbmFsaXRpZXMgOiBbbGluZWFyXSBbcmFpZDBdIFtyYWlkMV0gW3JhaWQxMF0gW3JhaWQ2
-XSBbcmFpZDVdIFtyYWlkNF0gW211bHRpcGF0aF0KPj4gbWQxIDogYWN0aXZlIHJhaWQxIHNkYTJb
-Ml0gc2RiMlsxXQo+PiAgICAgICA5NDMyMDIyNDAgYmxvY2tzIFsyLzFdIFtfVV0KPj4gICAgICAg
-Wz09PT0+Li4uLi4uLi4uLi4uLi4uLl0gIHJlY292ZXJ5ID0gMjEuOSUgKDIwNzE2Nzc0NC85NDMy
-MDIyNDApCj4+ICAgICAgIGZpbmlzaD0yMDI5MC44bWluIHNwZWVkPTYwM0svc2VjCj4+ICAgICAg
-IGJpdG1hcDogMS84IHBhZ2VzIFs0S0JdLCA2NTUzNktCIGNodW5rCj4+Cj4+IG1kMCA6IGFjdGl2
-ZSByYWlkMSBzZGExWzJdIHNkYjFbMV0KPj4gICAgICAgNjcxMDg3MzYgYmxvY2tzIFsyLzFdIFtf
-VV0KPj4gICAgICAgICByZXN5bmM9REVMQVlFRAo+PiAgICAgICBiaXRtYXA6IDEvMSBwYWdlcyBb
-NEtCXSwgNjU1MzZLQiBjaHVuawo+Pgo+Pgo+PiBBZnRlciBzb21lIHRpbWUgaW52ZXN0aWdhdGlu
-ZywgSSBjYW4ndCBmaW5kIGl0IGluIGRtLXJhaWQuCj4+Cj4+IFBsZWFzZSBjYW4gc29tZW9uZSB0
-ZWxsIG1lIGlmIHRoaXMgaXMgaW1wbGVtZW50ZWQgb3Igbm90Pwo+Pgo+PiBJZiBpdCBpcyBpbXBs
-ZW1lbnRlZCwgd2hlcmUgc2hvdWxkIEkgbG9vayB0byBzZWUgaXQgaGFwcGVuaW5nPwo+Pgo+PiBU
-aGFua3MsCj4+Cj4+IFJpY2hhcmQuCj4+Cj4+IC0tCj4+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+
-PiBkbS1kZXZlbEByZWRoYXQuY29tCj4+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
-aXN0aW5mby9kbS1kZXZlbAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
-dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 09/29/2015 at 06:20 PM, Joerg Roedel wrote:
+> On Tue, Sep 29, 2015 at 11:58:10AM -0400, Mikulas Patocka wrote:
+>> On Tue, 29 Sep 2015, Joerg Roedel wrote:
+>> There was a patch (34b48db66e08ca1c1bc07cf305d672ac940268dc) that 
+>> increased default block request size. That patch triggers AMD-Vi page 
+>> faults. The bug may be in ATA driver, in ATA controller on in AMD-Vi 
+>> driver or hardware. I didn't see anything in that thread that proves that 
+>> the bug in not in AMD-Vi IOMMU.
+>>
+>> The bug probably existed even before kernel 3.19, but it was masked by the 
+>> fact that I/O request size was artifically capped. Bisecting probably 
+>> won't find it, as it may have existed since ever.
+> 
+> Okay, I see. But as long as the request-size is not bigger than 128MB
+> (the biggest chunk the AMD IOMMU driver can map at once), I don't see
+> how the IOMMU driver could be at fault.
+> 
+> Which ATA driver is in use when this happens and are there instructions
+> on how to reproduce the issue?
+> 
+> Alternativly someone who can reproduce it should trace the calls to
+> __map_single and __unmap_single in the AMD IOMMU driver to find out
+> whether the addresses which the faults happen on are really mapped, or
+> at least requested from the AMD IOMMU driver.
+
+How can I trace it?
+
+
+Thanks,
+Andreas
