@@ -1,73 +1,76 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: Queuing of dm-raid1 resyncs to the same underlying
- block devices
-Date: Thu, 1 Oct 2015 12:09:44 +0200
-Message-ID: <560D0668.50300@redhat.com>
-References: <20150926154902.GA2964@alpha.arachsys.com>
-	<64020C6E-98B1-4139-A88C-0EC65493CCF9@redhat.com>
-	<560BEB14.3060701@redhat.com> <87si5vk0rz.fsf@notabene.neil.brown.name>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Seth Forshee <seth.forshee@canonical.com>
+Subject: Re: [PATCH 1/5] fs: Verify access of user towards block device file
+ when mounting
+Date: Thu, 1 Oct 2015 07:55:08 -0500
+Message-ID: <20151001125508.GA101875@ubuntu-hedt>
+References: <1443644116-41366-1-git-send-email-seth.forshee@canonical.com>
+ <1443644116-41366-2-git-send-email-seth.forshee@canonical.com>
+ <20150930234215.GA24127@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <87si5vk0rz.fsf@notabene.neil.brown.name>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Neil Brown <neilb@suse.de>, Brassow Jonathan <jbrassow@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150930234215.GA24127@redhat.com>
+Sender: linux-bcache-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.com>, David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.com>, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
+On Wed, Sep 30, 2015 at 07:42:15PM -0400, Mike Snitzer wrote:
+> On Wed, Sep 30 2015 at  4:15pm -0400,
+> Seth Forshee <seth.forshee@canonical.com> wrote:
+> 
+> > When mounting a filesystem on a block device there is currently
+> > no verification that the user has appropriate access to the
+> > device file passed to mount. This has not been an issue so far
+> > since the user in question has always been root, but this must
+> > be changed before allowing unprivileged users to mount in user
+> > namespaces.
+> > 
+> > To fix this, add an argument to lookup_bdev() to specify the
+> > required permissions. If the mask of permissions is zero, or
+> > if the user has CAP_SYS_ADMIN, the permission check is skipped,
+> > otherwise the lookup fails if the user does not have the
+> > specified access rights for the inode at the supplied path.
+> > 
+> > Callers associated with mounting are updated to pass permission
+> > masks to lookup_bdev() so that these mounts will fail for an
+> > unprivileged user who lacks permissions for the block device
+> > inode. All other callers pass 0 to maintain their current
+> > behaviors.
+> > 
+> > Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+> > ---
+> >  drivers/md/bcache/super.c |  2 +-
+> >  drivers/md/dm-table.c     |  2 +-
+> >  drivers/mtd/mtdsuper.c    |  6 +++++-
+> >  fs/block_dev.c            | 18 +++++++++++++++---
+> >  fs/quota/quota.c          |  2 +-
+> >  include/linux/fs.h        |  2 +-
+> >  6 files changed, 24 insertions(+), 8 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> > index e76ed003769e..35bb3ea4cbe2 100644
+> > --- a/drivers/md/dm-table.c
+> > +++ b/drivers/md/dm-table.c
+> > @@ -380,7 +380,7 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+> >  	BUG_ON(!t);
+> >  
+> >  	/* convert the path to a device */
+> > -	bdev = lookup_bdev(path);
+> > +	bdev = lookup_bdev(path, 0);
+> >  	if (IS_ERR(bdev)) {
+> >  		dev = name_to_dev_t(path);
+> >  		if (!dev)
+> 
+> Given dm_get_device() is passed @mode why not have it do something like
+> you did in blkdev_get_by_path()? e.g.:
 
+I only dealt with code related to mounting in this patch since that's
+what I'm working on. I have it on my TODO list to consider converting
+other callers of lookup_bdev. But if you're sure doing so makes sense
+for dm_get_device and that it won't cause regressions then I could add a
+patch for it.
 
-On 10/01/2015 12:20 AM, Neil Brown wrote:
-> Heinz Mauelshagen <heinzm@redhat.com> writes:
->> BTW:
->> When you create a raid1/4/5/6/10 LVs _and_ never read what you have not
->> written,
->> "--nosync" can be used anyway in order to avoid the initial
->> resynchronization load
->> on the devices. Any data written in that case will update all
->> mirrors/raid redundancy data.
->>
-> While this is true for RAID1 and RAID10, and (I think) for the current
-> implementation of RAID6, it is definitely not true for RAID4/5.
-
-Thanks for the clarification.
-
-I find that to be really bad situation.
-
-
->
-> For RAID4/5 a single-block write will be handled by reading
-> old-data/parity, subtracting the old data from the parity and adding the
-> new data, then writing out new data/parity.
-
-Obviously for optimization reasons.
-
-> So if the parity was wrong before, it will be wrong afterwards.
-
-So even overwriting complete stripes in raid4/5/(6)
-would not ensure correct parity, thus always requiring
-initial sync.
-
-We should think about a solution to avoid it in lieu
-of growing disk/array sizes.
-
-
-Heinz
-
-
->
-> If the device that new data was written to then fails, the data on it is
-> lost.
->
-> So do this for RAID1/10 if you like, but not for other levels.
->
-> NeilBrown
+Thanks,
+Seth
