@@ -1,53 +1,60 @@
-From: Seth Forshee <seth.forshee@canonical.com>
-Subject: Re: [PATCH 1/5] fs: Verify access of user towards block device file
- when mounting
-Date: Thu, 1 Oct 2015 10:55:09 -0500
-Message-ID: <20151001155509.GD101875@ubuntu-hedt>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH 1/5] fs: Verify access of user towards block device file when mounting
+Date: Thu, 01 Oct 2015 10:55:50 -0500
+Message-ID: <87wpv6a8hl.fsf@x220.int.ebiederm.org>
 References: <1443644116-41366-1-git-send-email-seth.forshee@canonical.com>
- <1443644116-41366-2-git-send-email-seth.forshee@canonical.com>
- <87mvw2d2cn.fsf@x220.int.ebiederm.org>
+	<1443644116-41366-2-git-send-email-seth.forshee@canonical.com>
+	<20150930234215.GA24127@redhat.com>
+	<20151001125508.GA101875@ubuntu-hedt>
+	<20151001134052.GB27818@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <87mvw2d2cn.fsf@x220.int.ebiederm.org>
+In-Reply-To: <20151001134052.GB27818@redhat.com> (Mike Snitzer's message of
+	"Thu, 1 Oct 2015 09:40:52 -0400")
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.com>, David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.com>, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Seth Forshee <seth.forshee@canonical.com>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.com>, David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.com>, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Oct 01, 2015 at 10:40:08AM -0500, Eric W. Biederman wrote:
-> Seth Forshee <seth.forshee@canonical.com> writes:
-> 
-> > When mounting a filesystem on a block device there is currently
-> > no verification that the user has appropriate access to the
-> > device file passed to mount. This has not been an issue so far
-> > since the user in question has always been root, but this must
-> > be changed before allowing unprivileged users to mount in user
-> > namespaces.
-> >
-> > To fix this, add an argument to lookup_bdev() to specify the
-> > required permissions. If the mask of permissions is zero, or
-> > if the user has CAP_SYS_ADMIN, the permission check is skipped,
-> > otherwise the lookup fails if the user does not have the
-> > specified access rights for the inode at the supplied path.
-> >
-> > Callers associated with mounting are updated to pass permission
-> > masks to lookup_bdev() so that these mounts will fail for an
-> > unprivileged user who lacks permissions for the block device
-> > inode. All other callers pass 0 to maintain their current
-> > behaviors.
-> >
-> 
-> Seth can you split this patch?
-> 
-> One patch to add an argument to lookup_bdev,
-> and then for each kind of callsite a follow-on patch (if we are ready
-> for that).
-> 
-> That will separate the logical changes and make things easier to track
-> via bisect and more importantly easier to review things.
+Mike Snitzer <snitzer@redhat.com> writes:
 
-Sure, I'll do that.
+> What layer establishes access rights to historically root-only
+> priviledged block devices?  Is it user namespaces?
 
-Seth
+Block devices are weird.
+
+Mounts historically have not checked the permissions on the block
+devices because a mounter has CAP_SYS_ADMIN.
+
+Unprivileged users are allowes to read/write block devices if
+someone has given them permissions on the device node in the
+filesystem.
+
+The thinking with this patchset is to start performing the normal
+block device access permission checks when mounting filesystems
+when the mounter does not have the global CAP_SYS_ADMIN permission.
+
+The truth is we are not much past the point of realizing that there were
+no permission checks to use the actual block device passed in to mount,
+so we could still be missing something. There is a lot going on with dm,
+md, and lvm.  I don't know if the model of just look at the block device
+inode and perform the permission checks is good enough.
+
+> I haven't kept up with user namespaces as it relates to stacking block
+> drivers like DM.  But I'm happy to come up to speed and at the same time
+> help you verify all works as expected with DM blocks devices...
+
+We are just getting there.  But if you can help that would be great.
+The primary concern with dm is what happens when unprivileged users get
+ahold of the code, and what happens when evil users corrupt the on-disk
+format.
+
+In principle dm like loop should be safe to use if there are not bugs
+that make it unsafe for unprivileged users to access the code.
+
+The goal if possible is to run things like docker without needed to be
+root or even more fun to run docker in a container, and in general
+enable nested containers.
+
+Eric
