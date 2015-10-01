@@ -1,60 +1,93 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH 1/5] fs: Verify access of user towards block device file when mounting
-Date: Thu, 01 Oct 2015 10:55:50 -0500
-Message-ID: <87wpv6a8hl.fsf@x220.int.ebiederm.org>
-References: <1443644116-41366-1-git-send-email-seth.forshee@canonical.com>
-	<1443644116-41366-2-git-send-email-seth.forshee@canonical.com>
-	<20150930234215.GA24127@redhat.com>
-	<20151001125508.GA101875@ubuntu-hedt>
-	<20151001134052.GB27818@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] crash in md-raid1 and md-raid10 due to incorrect list
+ manipulation
+Date: Thu, 1 Oct 2015 15:17:43 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1510011442260.16076@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151001134052.GB27818@redhat.com> (Mike Snitzer's message of
-	"Thu, 1 Oct 2015 09:40:52 -0400")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Seth Forshee <seth.forshee@canonical.com>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.com>, David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.com>, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org
+To: NeilBrown <neilb@suse.com>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Mike Snitzer <snitzer@redhat.com> writes:
+The commit 55ce74d4bfe1b9444436264c637f39a152d1e5ac (md/raid1: ensure 
+device failure recorded before write request returns) is causing crash in 
+the LVM2 testsuite test shell/lvchange-raid.sh. For me the crash is 100% 
+reproducible.
 
-> What layer establishes access rights to historically root-only
-> priviledged block devices?  Is it user namespaces?
+The reason for the crash is that the newly added code in raid1d moves the 
+list from conf->bio_end_io_list to tmp, then tests if tmp is non-empty and 
+then incorrectly pops the bio from conf->bio_end_io_list (which is empty 
+because the list was alrady moved).
 
-Block devices are weird.
+Raid-10 has a similar bug.
 
-Mounts historically have not checked the permissions on the block
-devices because a mounter has CAP_SYS_ADMIN.
+Kernel Fault: Code=15 regs=000000006ccb8640 (Addr=0000000100000000)
+CPU: 3 PID: 1930 Comm: mdX_raid1 Not tainted 4.2.0-rc5-bisect+ #35
+task: 000000006cc1f258 ti: 000000006ccb8000 task.ti: 000000006ccb8000
 
-Unprivileged users are allowes to read/write block devices if
-someone has given them permissions on the device node in the
-filesystem.
+     YZrvWESTHLNXBCVMcbcbcbcbOGFRQPDI
+PSW: 00001000000001001111111000001111 Not tainted
+r00-03  000000ff0804fe0f 000000001059d000 000000001059f818 000000007f16be38
+r04-07  000000001059d000 000000007f16be08 0000000000200200 0000000000000001
+r08-11  000000006ccb8260 000000007b7934d0 0000000000000001 0000000000000000
+r12-15  000000004056f320 0000000000000000 0000000000013dd0 0000000000000000
+r16-19  00000000f0d00ae0 0000000000000000 0000000000000000 0000000000000001
+r20-23  000000000800000f 0000000042200390 0000000000000000 0000000000000000
+r24-27  0000000000000001 000000000800000f 000000007f16be08 000000001059d000
+r28-31  0000000100000000 000000006ccb8560 000000006ccb8640 0000000000000000
+sr00-03  0000000000249800 0000000000000000 0000000000000000 0000000000249800
+sr04-07  0000000000000000 0000000000000000 0000000000000000 0000000000000000
 
-The thinking with this patchset is to start performing the normal
-block device access permission checks when mounting filesystems
-when the mounter does not have the global CAP_SYS_ADMIN permission.
+IASQ: 0000000000000000 0000000000000000 IAOQ: 000000001059f61c 000000001059f620
+ IIR: 0f8010c6    ISR: 0000000000000000  IOR: 0000000100000000
+ CPU:        3   CR30: 000000006ccb8000 CR31: 0000000000000000
+ ORIG_R28: 000000001059d000
+ IAOQ[0]: call_bio_endio+0x34/0x1a8 [raid1]
+ IAOQ[1]: call_bio_endio+0x38/0x1a8 [raid1]
+ RP(r2): raid_end_bio_io+0x88/0x168 [raid1]
+Backtrace:
+ [<000000001059f818>] raid_end_bio_io+0x88/0x168 [raid1]
+ [<00000000105a4f64>] raid1d+0x144/0x1640 [raid1]
+ [<000000004017fd5c>] kthread+0x144/0x160
 
-The truth is we are not much past the point of realizing that there were
-no permission checks to use the actual block device passed in to mount,
-so we could still be missing something. There is a lot going on with dm,
-md, and lvm.  I don't know if the model of just look at the block device
-inode and perform the permission checks is good enough.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Fixes: 55ce74d4bfe1 ("md/raid1: ensure device failure recorded before write request returns.")
+Fixes: 95af587e95aa ("md/raid10: ensure device failure recorded before write request returns.")
 
-> I haven't kept up with user namespaces as it relates to stacking block
-> drivers like DM.  But I'm happy to come up to speed and at the same time
-> help you verify all works as expected with DM blocks devices...
+---
+ drivers/md/raid1.c  |    4 ++--
+ drivers/md/raid10.c |    4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-We are just getting there.  But if you can help that would be great.
-The primary concern with dm is what happens when unprivileged users get
-ahold of the code, and what happens when evil users corrupt the on-disk
-format.
-
-In principle dm like loop should be safe to use if there are not bugs
-that make it unsafe for unprivileged users to access the code.
-
-The goal if possible is to run things like docker without needed to be
-root or even more fun to run docker in a container, and in general
-enable nested containers.
-
-Eric
+Index: linux-2.6/drivers/md/raid1.c
+===================================================================
+--- linux-2.6.orig/drivers/md/raid1.c	2015-10-01 21:10:05.000000000 +0200
++++ linux-2.6/drivers/md/raid1.c	2015-10-01 21:10:58.000000000 +0200
+@@ -2437,8 +2437,8 @@ static void raid1d(struct md_thread *thr
+ 		}
+ 		spin_unlock_irqrestore(&conf->device_lock, flags);
+ 		while (!list_empty(&tmp)) {
+-			r1_bio = list_first_entry(&conf->bio_end_io_list,
+-						  struct r1bio, retry_list);
++			r1_bio = list_first_entry(&tmp, struct r1bio,
++						  retry_list);
+ 			list_del(&r1_bio->retry_list);
+ 			raid_end_bio_io(r1_bio);
+ 		}
+Index: linux-2.6/drivers/md/raid10.c
+===================================================================
+--- linux-2.6.orig/drivers/md/raid10.c	2015-10-01 21:11:02.000000000 +0200
++++ linux-2.6/drivers/md/raid10.c	2015-10-01 21:11:19.000000000 +0200
+@@ -2804,8 +2804,8 @@ static void raid10d(struct md_thread *th
+ 		}
+ 		spin_unlock_irqrestore(&conf->device_lock, flags);
+ 		while (!list_empty(&tmp)) {
+-			r10_bio = list_first_entry(&conf->bio_end_io_list,
+-						  struct r10bio, retry_list);
++			r10_bio = list_first_entry(&tmp, struct r10bio,
++						   retry_list);
+ 			list_del(&r10_bio->retry_list);
+ 			raid_end_bio_io(r10_bio);
+ 		}
