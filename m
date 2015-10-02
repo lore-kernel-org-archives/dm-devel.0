@@ -1,63 +1,52 @@
-From: Geliang Tang <geliangtang@163.com>
-Subject: [PATCH] dm ioctl: use kvfree() in free_params()
-Date: Fri,  2 Oct 2015 21:32:19 +0800
-Message-ID: <598a723c600e93d40744113d302d902c03d8fd5e.1443792260.git.geliangtang@163.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.com>
-Cc: Geliang Tang <geliangtang@163.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-raid: fix default region size
+Date: Fri, 2 Oct 2015 11:17:37 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1510021114550.7505@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jonathan Brassow <jbrassow@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-There is no need to make a flag to tell that this memory is allocated by
-kmalloc or vmalloc. Just use kvfree to free the memory.
+The commit 3a0f9aaee02857609d79b20c809c02a8b7c39d06 should make sure that
+the default region size is a power of two. However, the logic is incorrect
+and sets the variable region_size to 0 or 1, depending on whether
+min_region_size is a power of two.
 
-Signed-off-by: Geliang Tang <geliangtang@163.com>
+This patch fixes the logic, so that region_size is set to min_region_size
+rounded up to the next power of two.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Fixes: 3a0f9aaee028 ("dm raid: round region_size to power of two")
+Cc: stable@vger.kernel.org	# v3.8+
+
 ---
- drivers/md/dm-ioctl.c | 11 +----------
- 1 file changed, 1 insertion(+), 10 deletions(-)
+ drivers/md/dm-raid.c |    3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 80a4395..dbb5588 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1669,8 +1669,6 @@ static int check_version(unsigned int cmd, struct dm_ioctl __user *user)
- 	return r;
- }
- 
--#define DM_PARAMS_KMALLOC	0x0001	/* Params alloced with kmalloc */
--#define DM_PARAMS_VMALLOC	0x0002	/* Params alloced with vmalloc */
- #define DM_WIPE_BUFFER		0x0010	/* Wipe input buffer before returning from ioctl */
- 
- static void free_params(struct dm_ioctl *param, size_t param_size, int param_flags)
-@@ -1678,10 +1676,7 @@ static void free_params(struct dm_ioctl *param, size_t param_size, int param_fla
- 	if (param_flags & DM_WIPE_BUFFER)
- 		memset(param, 0, param_size);
- 
--	if (param_flags & DM_PARAMS_KMALLOC)
--		kfree(param);
--	if (param_flags & DM_PARAMS_VMALLOC)
--		vfree(param);
-+	kvfree(param);
- }
- 
- static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kernel,
-@@ -1715,8 +1710,6 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kern
- 	dmi = NULL;
- 	if (param_kernel->data_size <= KMALLOC_MAX_SIZE) {
- 		dmi = kmalloc(param_kernel->data_size, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
--		if (dmi)
--			*param_flags |= DM_PARAMS_KMALLOC;
- 	}
- 
- 	if (!dmi) {
-@@ -1724,8 +1717,6 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kern
- 		noio_flag = memalloc_noio_save();
- 		dmi = __vmalloc(param_kernel->data_size, GFP_NOIO | __GFP_REPEAT | __GFP_HIGH | __GFP_HIGHMEM, PAGE_KERNEL);
- 		memalloc_noio_restore(noio_flag);
--		if (dmi)
--			*param_flags |= DM_PARAMS_VMALLOC;
- 	}
- 
- 	if (!dmi) {
--- 
-2.5.0
+Index: linux-4.3-rc3/drivers/md/dm-raid.c
+===================================================================
+--- linux-4.3-rc3.orig/drivers/md/dm-raid.c	2015-10-02 15:20:04.000000000 +0200
++++ linux-4.3-rc3/drivers/md/dm-raid.c	2015-10-02 15:29:34.000000000 +0200
+@@ -329,8 +329,7 @@ static int validate_region_size(struct r
+ 		 */
+ 		if (min_region_size > (1 << 13)) {
+ 			/* If not a power of 2, make it the next power of 2 */
+-			if (min_region_size & (min_region_size - 1))
+-				region_size = 1 << fls(region_size);
++			region_size = roundup_pow_of_two(min_region_size);
+ 			DMINFO("Choosing default region size of %lu sectors",
+ 			       region_size);
+ 		} else {
