@@ -1,10 +1,10 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm: convert ffs to __ffs
-Date: Fri, 2 Oct 2015 11:21:24 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1510021119260.7505@file01.intranet.prod.int.rdu2.redhat.com>
+From: sbp <sbp@extio.de>
+Subject: dm-cache always dirty in writethrough mode
+Date: Sun, 4 Oct 2015 13:52:58 +0200
+Message-ID: <5611131A.6080705@extio.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -16,125 +16,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-ffs counts bit starting with 1 (for the least significant bit), __ffs
-counts bits starting with 0. This patch changes various occurrences of ffs
-to __ffs and removes subtraction of 1 from the result.
+Hi,
 
-Note that __ffs (unlike ffs) is not defined when called with zero
-argument, but it is not called with zero argument in any of these cases.
+I've set up a SSD cache of a data hard drive via dm-cache. The dm-cache 
+is set up in writethrough mode. As far as I understand writethrough mode 
+all writes are sent to the underlying device immediately, so there 
+should be no need to write back the cache later to the device.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+What I encounter is that every time I reboot the machine, the whole 
+cache is marked as dirty and written to the hard drive, even when there 
+were 0 interactions with the cache before.
 
----
- drivers/md/dm-bufio.c                |   10 +++++-----
- drivers/md/dm-cache-policy-cleaner.c |    2 +-
- drivers/md/dm-cache-policy-mq.c      |    2 +-
- drivers/md/dm-cache-policy-smq.c     |    2 +-
- drivers/md/dm-exception-store.c      |    2 +-
- drivers/md/dm-region-hash.c          |    2 +-
- drivers/md/dm-snap-persistent.c      |    2 +-
- 7 files changed, 11 insertions(+), 11 deletions(-)
+Is this behaviour expected? Can it be configured differently, so that 
+not the whole cache is written back in writethrough mode every time it 
+is assembled?
 
-Index: linux-4.3-rc3/drivers/md/dm-bufio.c
-===================================================================
---- linux-4.3-rc3.orig/drivers/md/dm-bufio.c	2015-09-30 15:43:08.000000000 +0200
-+++ linux-4.3-rc3/drivers/md/dm-bufio.c	2015-09-30 15:43:34.000000000 +0200
-@@ -1598,11 +1598,11 @@ struct dm_bufio_client *dm_bufio_client_
- 
- 	c->bdev = bdev;
- 	c->block_size = block_size;
--	c->sectors_per_block_bits = ffs(block_size) - 1 - SECTOR_SHIFT;
--	c->pages_per_block_bits = (ffs(block_size) - 1 >= PAGE_SHIFT) ?
--				  ffs(block_size) - 1 - PAGE_SHIFT : 0;
--	c->blocks_per_page_bits = (ffs(block_size) - 1 < PAGE_SHIFT ?
--				  PAGE_SHIFT - (ffs(block_size) - 1) : 0);
-+	c->sectors_per_block_bits = __ffs(block_size) - SECTOR_SHIFT;
-+	c->pages_per_block_bits = (__ffs(block_size) >= PAGE_SHIFT) ?
-+				  __ffs(block_size) - PAGE_SHIFT : 0;
-+	c->blocks_per_page_bits = (__ffs(block_size) < PAGE_SHIFT ?
-+				  PAGE_SHIFT - __ffs(block_size) : 0);
- 
- 	c->aux_size = aux_size;
- 	c->alloc_callback = alloc_callback;
-Index: linux-4.3-rc3/drivers/md/dm-cache-policy-cleaner.c
-===================================================================
---- linux-4.3-rc3.orig/drivers/md/dm-cache-policy-cleaner.c	2015-09-30 15:43:39.000000000 +0200
-+++ linux-4.3-rc3/drivers/md/dm-cache-policy-cleaner.c	2015-09-30 15:43:50.000000000 +0200
-@@ -83,7 +83,7 @@ static struct list_head *list_pop(struct
- static int alloc_hash(struct hash *hash, unsigned elts)
- {
- 	hash->nr_buckets = next_power(elts >> 4, 16);
--	hash->hash_bits = ffs(hash->nr_buckets) - 1;
-+	hash->hash_bits = __ffs(hash->nr_buckets);
- 	hash->table = vzalloc(sizeof(*hash->table) * hash->nr_buckets);
- 
- 	return hash->table ? 0 : -ENOMEM;
-Index: linux-4.3-rc3/drivers/md/dm-cache-policy-mq.c
-===================================================================
---- linux-4.3-rc3.orig/drivers/md/dm-cache-policy-mq.c	2015-09-30 15:44:05.000000000 +0200
-+++ linux-4.3-rc3/drivers/md/dm-cache-policy-mq.c	2015-09-30 15:44:08.000000000 +0200
-@@ -1410,7 +1410,7 @@ static struct dm_cache_policy *mq_create
- 	mq->generation_period = max((unsigned) from_cblock(cache_size), 1024U);
- 
- 	mq->nr_buckets = next_power(from_cblock(cache_size) / 2, 16);
--	mq->hash_bits = ffs(mq->nr_buckets) - 1;
-+	mq->hash_bits = __ffs(mq->nr_buckets);
- 	mq->table = vzalloc(sizeof(*mq->table) * mq->nr_buckets);
- 	if (!mq->table)
- 		goto bad_alloc_table;
-Index: linux-4.3-rc3/drivers/md/dm-cache-policy-smq.c
-===================================================================
---- linux-4.3-rc3.orig/drivers/md/dm-cache-policy-smq.c	2015-09-30 15:42:27.000000000 +0200
-+++ linux-4.3-rc3/drivers/md/dm-cache-policy-smq.c	2015-09-30 15:42:33.000000000 +0200
-@@ -566,7 +566,7 @@ static int h_init(struct hash_table *ht,
- 
- 	ht->es = es;
- 	nr_buckets = roundup_pow_of_two(max(nr_entries / 4u, 16u));
--	ht->hash_bits = ffs(nr_buckets) - 1;
-+	ht->hash_bits = __ffs(nr_buckets);
- 
- 	ht->buckets = vmalloc(sizeof(*ht->buckets) * nr_buckets);
- 	if (!ht->buckets)
-Index: linux-4.3-rc3/drivers/md/dm-exception-store.c
-===================================================================
---- linux-4.3-rc3.orig/drivers/md/dm-exception-store.c	2015-09-30 15:42:49.000000000 +0200
-+++ linux-4.3-rc3/drivers/md/dm-exception-store.c	2015-09-30 15:42:54.000000000 +0200
-@@ -183,7 +183,7 @@ int dm_exception_store_set_chunk_size(st
- 
- 	store->chunk_size = chunk_size;
- 	store->chunk_mask = chunk_size - 1;
--	store->chunk_shift = ffs(chunk_size) - 1;
-+	store->chunk_shift = __ffs(chunk_size);
- 
- 	return 0;
- }
-Index: linux-4.3-rc3/drivers/md/dm-region-hash.c
-===================================================================
---- linux-4.3-rc3.orig/drivers/md/dm-region-hash.c	2015-09-30 15:42:58.000000000 +0200
-+++ linux-4.3-rc3/drivers/md/dm-region-hash.c	2015-09-30 15:43:03.000000000 +0200
-@@ -193,7 +193,7 @@ struct dm_region_hash *dm_region_hash_cr
- 	rh->max_recovery = max_recovery;
- 	rh->log = log;
- 	rh->region_size = region_size;
--	rh->region_shift = ffs(region_size) - 1;
-+	rh->region_shift = __ffs(region_size);
- 	rwlock_init(&rh->hash_lock);
- 	rh->mask = nr_buckets - 1;
- 	rh->nr_buckets = nr_buckets;
-Index: linux-4.3-rc3/drivers/md/dm-snap-persistent.c
-===================================================================
---- linux-4.3-rc3.orig/drivers/md/dm-snap-persistent.c	2015-09-30 15:43:55.000000000 +0200
-+++ linux-4.3-rc3/drivers/md/dm-snap-persistent.c	2015-09-30 15:44:00.000000000 +0200
-@@ -321,7 +321,7 @@ static int read_header(struct pstore *ps
- 		    bdev_logical_block_size(dm_snap_cow(ps->store->snap)->
- 					    bdev) >> 9);
- 		ps->store->chunk_mask = ps->store->chunk_size - 1;
--		ps->store->chunk_shift = ffs(ps->store->chunk_size) - 1;
-+		ps->store->chunk_shift = __ffs(ps->store->chunk_size);
- 		chunk_size_supplied = 0;
- 	}
- 
+There is one special point about my setup: I don't use extra partitions 
+for cache and meta data devices, but mapped files on the (SSD) root file 
+system as loop devices. But this should not matter?
+
+Information about my setup:
+
+* Kernel version 4.2.1
+
+* Script to set up dm cache on boot:
+
+losetup /dev/loop0 /root/dm-cache
+losetup /dev/loop1 /root/dm-cache-meta
+dmsetup create cache_sdb1 --table "0 3907026944 cache /dev/loop1 
+/dev/loop0 /dev/disk/by-id/ata-ST2000DL003-9VT166_5YD2RBZH-part1 128 1 
+writethrough smq 0"
+
+* Script to tear down cache on shutdown:
+
+dmsetup suspend cache_sdb1
+dmsetup remove cache_sdb1
+losetup -d /dev/loop0
+losetup -d /dev/loop1
+
+Symptoms:
+
+Every time after I booted the machine, dmsetup status tells me that all 
+cache pages are dirty:
+
+cruncher2 ~ # dmsetup status cache_sdb1
+0 3907026944 cache 8 788/5120 128 262144/262144 381147 12035523 263945 
+491215 0 0 218414 1 writethrough 2 migration_threshold 2048 smq 0 rw -
+
+I've entered the command after some pages were already written back, 
+that's why below command show a lot, but not all pages dirty. But pages 
+are really written from SSD cache to the hard disk:
+
+cruncher2 ~ # iostat -dm 0
+Linux 4.2.1-gentoo (cruncher2)  10/04/2015      _x86_64_        (2 CPU)
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read MB_wrtn
+loop0           781.38        48.71         0.00       1731 0
+loop1            15.64         0.07         0.00          2 0
+sda             694.88        58.81         0.22       2090 7
+sdb             729.03         0.02        48.67          0 1730
+dm-0              0.53         0.00         0.00          0 0
+
+Devices:
+loop0: cache
+loop1: cache meta
+sda: SSD holding l0 and l1
+sdb: Hard drive
+
+I'm wondering whether the tear down has to be done differently, but I've 
+already googled a lot and could not find any similar case. So I hope 
+that you can explain me whether this behaviour is expected or not and if 
+there is a way to prevent the cache written back every time.
+
+Thanks in advance!
