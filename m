@@ -1,31 +1,32 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: block: flush queued bios when the process blocks
-Date: Mon, 5 Oct 2015 15:50:07 -0400
-Message-ID: <20151005195007.GA25762@redhat.com>
+Date: Mon, 5 Oct 2015 16:59:44 -0400
+Message-ID: <20151005205943.GB25762@redhat.com>
 References: <alpine.LRH.2.02.1405271059190.27492@file01.intranet.prod.int.rdu2.redhat.com>
  <5384AA79.4010206@kernel.dk>
  <alpine.LRH.2.02.1405271120390.31404@file01.intranet.prod.int.rdu2.redhat.com>
  <5384B26D.1000703@kernel.dk>
  <alpine.LRH.2.02.1405271222150.8745@file01.intranet.prod.int.rdu2.redhat.com>
- <20140527173306.GA12201@redhat.com>
- <20140527195657.GE2276@kmo>
+ <5384CE82.90601@kernel.dk>
+ <alpine.LRH.2.02.1405291944090.22123@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20140527195657.GE2276@kmo>
+In-Reply-To: <alpine.LRH.2.02.1405291944090.22123@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <kmo@daterainc.com>
-Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, "Alasdair G. Kergon" <agk@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kmo@daterainc.com>, "Alasdair G. Kergon" <agk@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, May 27 2014 at  3:56pm -0400,
-Kent Overstreet <kmo@daterainc.com> wrote:
+On Thu, May 29 2014 at  7:52pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> On Tue, May 27, 2014 at 01:33:06PM -0400, Mike Snitzer wrote:
-> > On Tue, May 27 2014 at 12:26pm -0400,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
+> 
+> 
+> On Tue, 27 May 2014, Jens Axboe wrote:
+> 
+> > On 2014-05-27 10:26, Mikulas Patocka wrote:
 > > > On Tue, 27 May 2014, Jens Axboe wrote:
 > > > 
 > > > > On 2014-05-27 09:23, Mikulas Patocka wrote:
@@ -33,43 +34,50 @@ Kent Overstreet <kmo@daterainc.com> wrote:
 > > > > > The patch adds bio list flushing to the scheduler just besides plug
 > > > > > flushsing.
 > > > > 
-> > > > ... which is exactly why I'm commenting. It'd be great to avoid yet one more
+> > > > ... which is exactly why I'm commenting. It'd be great to avoid yet one
+> > > > more
 > > > > scheduler hook for this sort of thing.
 > > > > 
-> > > > -- 
+> > > > --
 > > > > Jens Axboe
 > > > 
-> > > One could create something like schedule notifier chain, but I'm not sure 
-> > > if it is worth the complexity because of just two users. If more users 
+> > > One could create something like schedule notifier chain, but I'm not sure
+> > > if it is worth the complexity because of just two users. If more users
 > > > come in the future, it could be generalized.
 > > 
-> > It could be that Jens is suggesting updating blk_needs_flush_plug() and
-> > blk_schedule_flush_plug() to be bio_list aware too (rather than train
-> > sched_submit_work() from this new bio_list)?
+> > Except such a thing already exists, there are unplug callback chains. All I'm
+> > asking is that you look into how feasible it would be to use something like
+> > that, instead of reinventing the wheel.
 > > 
-> > Somewhat awkward, but _could_ be made to work.
+> > -- 
+> > Jens Axboe
 > 
-> No...
 > 
-> I started on this ages and ages ago, but the patches were nowhere near ready to
-> go out.
-> 
-> What I'd do is rework the existing blk_plug to work in terms of bios, not
-> requests. This is a fair amount of work, and then make_request_fn() needs to be
-> able to take multiple bios at a time, but IIRC there were other simplifications
-> that fell out of this and this also means bio based drivers can take advantage
-> of plugging/batching.
-> 
-> Once this is done, you just... replace the bio list in generic_make_request()
-> with a plug. Boom, done.
-> 
-> (oh, and to avoid blowing the stack the scheduler/plug callback or whatever
-> needs to check the current stack usage and punt off to a per request_queue
-> workqueue, but that's easy enough).
+> You can use this patch as an example that moves current->bio_list to 
+> struct plug, but I don't recommend to put it in the kernel - this patch 
+> still has some issues (some lvm raid tests fail).
 
-Re-reading your response since this bug is still lingering; and Mikulas'
-patch _still_ fixes the deadlock.. you're suggesting all of the above
-just to avoid an extra conditional scheduler callout..
 
-Could be what you're proposing is "the one true way forward" but I'm not
-touching it at this point.
+Mikulas,
+
+Could it be that cond_resched() wasn't unplugging?  As was
+recently raised in this thread: https://lkml.org/lkml/2015/9/18/378
+Chris Mason's patch from that thread fixed this	issue... I _think_ Linus
+has since committed Chris' work but I haven't kept my finger on the
+pulse of that issue.
+
+FYI, I've put rebased versions of your 2 patches in my wip branch, see:
+http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=wip
+
+I tweaked the 2nd patch that adds bio_list to plug so that
+generic_make_request's checks for in_generic_make_request isn't racey
+(your original patch could happen to have current-plug set but
+in_generic_make_request not yet set).
+
+Anyway, I'm just dusting off your earlier work and seeing if I can make
+sense of a way forward that meets Jens' approval.  Jens, if adding a
+bio_list to struct blk_plug isn't what you were after either please be
+more specific on what you would like to see...
+
+Thanks,
+Mike
