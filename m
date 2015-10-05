@@ -1,94 +1,38 @@
-From: sbp <sbp@extio.de>
-Subject: dm-cache always dirty in writethrough mode
-Date: Sun, 4 Oct 2015 13:52:58 +0200
-Message-ID: <5611131A.6080705@extio.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Seth Forshee <seth.forshee@canonical.com>
+Subject: Re: [PATCH 1/5] fs: Verify access of user towards block device file
+ when mounting
+Date: Mon, 5 Oct 2015 09:26:21 -0500
+Message-ID: <20151005142621.GB21639@ubuntu-hedt>
+References: <1443644116-41366-1-git-send-email-seth.forshee@canonical.com>
+ <1443644116-41366-2-git-send-email-seth.forshee@canonical.com>
+ <20150930234215.GA24127@redhat.com>
+ <20151001125508.GA101875@ubuntu-hedt>
+ <20151001134052.GB27818@redhat.com>
+ <87wpv6a8hl.fsf@x220.int.ebiederm.org>
+ <20151001230700.GA10087@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20151001230700.GA10087@quack.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jan Kara <jack@suse.cz>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Mike Snitzer <snitzer@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.com>, David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.com>, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi,
+On Fri, Oct 02, 2015 at 01:07:00AM +0200, Jan Kara wrote:
+> On Thu 01-10-15 10:55:50, Eric W. Biederman wrote:
+> > The goal if possible is to run things like docker without needed to be
+> > root or even more fun to run docker in a container, and in general
+> > enable nested containers.
+> 
+> Frankly at the filesystem side we are rather far from being able to safely
+> mount untrusted device and I don't think we'll ever be robust enough to
+> tolerate e.g. user changing the disk while fs is using it. So would this be
+> FUSE-only thing or is someone still hoping that general purpose filesystems
+> will be robust enough in future?
 
-I've set up a SSD cache of a data hard drive via dm-cache. The dm-cache 
-is set up in writethrough mode. As far as I understand writethrough mode 
-all writes are sent to the underlying device immediately, so there 
-should be no need to write back the cache later to the device.
+FUSE will almost certainly be first. I've also been working with ext4,
+and I would like to see that eventually supported to some degree.
 
-What I encounter is that every time I reboot the machine, the whole 
-cache is marked as dirty and written to the hard drive, even when there 
-were 0 interactions with the cache before.
-
-Is this behaviour expected? Can it be configured differently, so that 
-not the whole cache is written back in writethrough mode every time it 
-is assembled?
-
-There is one special point about my setup: I don't use extra partitions 
-for cache and meta data devices, but mapped files on the (SSD) root file 
-system as loop devices. But this should not matter?
-
-Information about my setup:
-
-* Kernel version 4.2.1
-
-* Script to set up dm cache on boot:
-
-losetup /dev/loop0 /root/dm-cache
-losetup /dev/loop1 /root/dm-cache-meta
-dmsetup create cache_sdb1 --table "0 3907026944 cache /dev/loop1 
-/dev/loop0 /dev/disk/by-id/ata-ST2000DL003-9VT166_5YD2RBZH-part1 128 1 
-writethrough smq 0"
-
-* Script to tear down cache on shutdown:
-
-dmsetup suspend cache_sdb1
-dmsetup remove cache_sdb1
-losetup -d /dev/loop0
-losetup -d /dev/loop1
-
-Symptoms:
-
-Every time after I booted the machine, dmsetup status tells me that all 
-cache pages are dirty:
-
-cruncher2 ~ # dmsetup status cache_sdb1
-0 3907026944 cache 8 788/5120 128 262144/262144 381147 12035523 263945 
-491215 0 0 218414 1 writethrough 2 migration_threshold 2048 smq 0 rw -
-
-I've entered the command after some pages were already written back, 
-that's why below command show a lot, but not all pages dirty. But pages 
-are really written from SSD cache to the hard disk:
-
-cruncher2 ~ # iostat -dm 0
-Linux 4.2.1-gentoo (cruncher2)  10/04/2015      _x86_64_        (2 CPU)
-
-Device:            tps    MB_read/s    MB_wrtn/s    MB_read MB_wrtn
-loop0           781.38        48.71         0.00       1731 0
-loop1            15.64         0.07         0.00          2 0
-sda             694.88        58.81         0.22       2090 7
-sdb             729.03         0.02        48.67          0 1730
-dm-0              0.53         0.00         0.00          0 0
-
-Devices:
-loop0: cache
-loop1: cache meta
-sda: SSD holding l0 and l1
-sdb: Hard drive
-
-I'm wondering whether the tear down has to be done differently, but I've 
-already googled a lot and could not find any similar case. So I hope 
-that you can explain me whether this behaviour is expected or not and if 
-there is a way to prevent the cache written back every time.
-
-Thanks in advance!
+Seth
