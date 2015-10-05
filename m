@@ -1,15 +1,13 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: [PATCH for v4.3-rc] dm: fix request-based dm error
-	reporting
-Date: Tue, 6 Oct 2015 04:19:54 +0000
-Message-ID: <20151006041953.GA7948@xzibit.linux.bs1.fc.nec.co.jp>
+From: Gabriel Krisman Bertazi <krisman@linux.vnet.ibm.com>
+Subject: [PATCH] libmultipath: Fix information not shown when
+	first path is down.
+Date: Mon,  5 Oct 2015 17:19:17 -0300
+Message-ID: <1444076357-18452-1-git-send-email-krisman@linux.vnet.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: ja-JP
-Content-ID: <2B0B6105193E0A45AE1DB47BA5A2EF44@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,54 +17,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
+To: dm-devel@redhat.com
+Cc: mauricfo@linux.vnet.ibm.com, Gabriel Krisman Bertazi <krisman@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
-end_clone_bio() is a endio callback for clone bio and should check
-and save the clone's bi_error for error reporting.  However,
-4246a0b63bd8 ("block: add a bi_error field to struct bio") changed
-the function to check the original bio's bi_error, which is 0.
+vendor_id and product_id information are not shown when displaying
+multipath topology if the first path is down.
 
-Without this fix, clone's error is ignored and reported to the
-original request as success.  Thus data corruption will be observed.
+0QEMU_QEMU_HARDDISK_HELLOWORLD dm-0 ,      <--- Missing vendor and product
+size=10G features='0' hwhandler='0' wp=rw
+|-+- policy='service-time 0' prio=0 status=active
+| `- #:#:#:# -   #:#  active undef running
+`-+- policy='service-time 0' prio=0 status=enabled
+  `- 2:0:1:0 sdd 8:48 active undef running
 
-Fixes: 4246a0b63bd8 ("block: add a bi_error field to struct bio")
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Christoph Hellwig <hch@lst.de>
+This happens because we only look at the first_path when printing the
+topology.  This patch looks at every slot in the path vector until we
+find one with the correct value.
+
+Signed-off-by: Gabriel Krisman Bertazi <krisman@linux.vnet.ibm.com>
 ---
- drivers/md/dm.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ libmultipath/print.c | 19 ++++++++++++++-----
+ 1 file changed, 14 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 7289ece..dd6e667 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1001,7 +1001,9 @@ static void end_clone_bio(struct bio *clone)
- 	struct dm_rq_target_io *tio = info->tio;
- 	struct bio *bio = info->orig;
- 	unsigned int nr_bytes = info->orig->bi_iter.bi_size;
-+	int error;
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 6594fee..fb2551e 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -248,11 +248,20 @@ snprint_multipath_uuid (char * buff, size_t len, struct multipath * mpp)
+ static int
+ snprint_multipath_vpr (char * buff, size_t len, struct multipath * mpp)
+ {
+-	struct path * pp = first_path(mpp);
+-	if (!pp)
+-		return 0;
+-	return snprintf(buff, len, "%s,%s",
+-			pp->vendor_id, pp->product_id);
++	struct pathgroup * pgp;
++	struct path * pp;
++	int i, j;
++
++	vector_foreach_slot(mpp->pg, pgp, i) {
++		if (!pgp)
++			continue;
++		vector_foreach_slot(pgp->paths, pp, j) {
++			if (strlen(pp->vendor_id) && strlen(pp->product_id))
++				return snprintf(buff, len, "%s,%s",
++						pp->vendor_id, pp->product_id);
++		}
++	}
++	return snprintf(buff, len, "##,##");
+ }
  
-+	error = clone->bi_error;
- 	bio_put(clone);
- 
- 	if (tio->error)
-@@ -1011,13 +1013,13 @@ static void end_clone_bio(struct bio *clone)
- 		 * the remainder.
- 		 */
- 		return;
--	else if (bio->bi_error) {
-+	else if (error) {
- 		/*
- 		 * Don't notice the error to the upper layer yet.
- 		 * The error handling decision is made by the target driver,
- 		 * when the request is completed.
- 		 */
--		tio->error = bio->bi_error;
-+		tio->error = error;
- 		return;
- 	}
- 
+ static int
 -- 
 2.1.0
