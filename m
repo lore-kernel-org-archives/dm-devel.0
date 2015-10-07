@@ -1,37 +1,44 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: Next release plans?
-Date: Wed, 7 Oct 2015 16:52:31 +0200
-Message-ID: <561531AF.4080907@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Joerg Roedel <joro@8bytes.org>
+Subject: Re: [dm-devel] AMD-Vi IO_PAGE_FAULTs and ata3.00: failed command:
+ READ FPDMA QUEUED errors since Linux 4.0
+Date: Wed, 7 Oct 2015 17:40:05 +0200
+Message-ID: <20151007154005.GH28811@8bytes.org>
+References: <55BCD5A7.2080708@maya.org>
+ <55BE1D5E.6020709@maya.org>
+ <alpine.LRH.2.02.1508021347480.17729@file01.intranet.prod.int.rdu2.redhat.com>
+ <55FE5740.2060701@maya.org>
+ <20150929152100.GL3036@8bytes.org>
+ <alpine.LRH.2.02.1509291143170.24174@file01.intranet.prod.int.rdu2.redhat.com>
+ <20150929162042.GR3036@8bytes.org>
+ <560BF73F.8000008@maya.org>
+ <20151006101356.GE12506@8bytes.org>
+ <56141507.7040103@maya.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>, mathieu.tl@gmail.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-pci-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <56141507.7040103@maya.org>
+Sender: linux-pci-owner@vger.kernel.org
+To: Andreas Hartmann <andihartmann@freenet.de>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, iommu@lists.linux-foundation.org, Leo Duran <leo.duran@amd.com>, Christoph Hellwig <hch@lst.de>, device-mapper development <dm-devel@redhat.com>, Milan Broz <mbroz@redhat.com>, Jens Axboe <axboe@fb.com>, linux-pci <linux-pci@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: dm-devel.ids
 
-Christophe Varoqui wrote:
+On Tue, Oct 06, 2015 at 08:37:59PM +0200, Andreas Hartmann wrote:
+> But there is another problem w/ 4.3-rc2: Starting a VM w/ PCIe
+> passthrough doesn't work any more. I'm getting the attached null pointer
+> dereference and the machine hangs.
 
-> Mathieu Trudel-Lapierre wrote:
->>
->> I'm curious, are there any plans to cut a new formal release tarball in
->> the near future?
->>
->> The 0.5.0 release was done more than a year ago, and it seems like there
->> are quite a lot of bug fixes which may benefit everyone. In Ubuntu, I've
->> so far been cherry-picking patches as necessary, but it's obvious this
->> can't scale well (and that then important patches may go unnoticed).
+Weird, probably a do_detach call for a device that is already detached.
+Anyway, I can't reproduce this here on my two AMD IOMMU machines.  Can
+you please boot the machine with amd_iommu_dump on the kernel command
+line and send me dmesg after boot?
 
-> yes, you can expect a formal release before summer holidays.
-> I still have to catch up with the patches my inbox before.
+Also, which device are you trying to attach to the guest (pci
+bus/device/function)?
 
-Any progress ? There are a lot of SuSE/Red Hat pending patches.
+Output of lspci might also be helpful.
+
+
+Thanks,
+
+	Joerg
