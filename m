@@ -1,57 +1,47 @@
-From: Andreas Hartmann <andihartmann-KuiJ5kEpwI6ELgA04lAiVw@public.gmane.org>
-Subject: Re: [dm-devel] AMD-Vi IO_PAGE_FAULTs and ata3.00: failed command:
-	READ FPDMA QUEUED errors since Linux 4.0
-Date: Thu, 8 Oct 2015 20:59:00 +0200
-Message-ID: <5616BCF4.10104@maya.org>
-References: <alpine.LRH.2.02.1508021347480.17729@file01.intranet.prod.int.rdu2.redhat.com>
-	<55FE5740.2060701@maya.org> <20150929152100.GL3036@8bytes.org>
-	<alpine.LRH.2.02.1509291143170.24174@file01.intranet.prod.int.rdu2.redhat.com>
-	<20150929162042.GR3036@8bytes.org> <560BF73F.8000008@maya.org>
-	<20151006101356.GE12506@8bytes.org> <56141507.7040103@maya.org>
-	<20151007154005.GH28811@8bytes.org> <56155028.7060906@maya.org>
-	<20151008173007.GL28811@8bytes.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: reduce the number of processes per dm device
+Date: Thu, 8 Oct 2015 15:08:18 -0400
+Message-ID: <20151008190817.GA12788@redhat.com>
+References: <alpine.LRH.2.02.1510081214130.14961@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20151008173007.GL28811-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>
-Cc: linux-pci <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1510081214130.14961@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-On 10/08/2015 at 07:30 PM Joerg Roedel wrote:
-> On Wed, Oct 07, 2015 at 07:02:32PM +0200, Andreas Hartmann wrote:
->> Binding the device to vfio isn't a problem (it's done before the vm is
->> started). The problem occurs during start of qemu-system-x86_64 (2.3.0).
->>
->> The attached dmesg.out doesn't show the trace, but the desired iommu dump.
->>
->>> Also, which device are you trying to attach to the guest (pci
->>> bus/device/function)?
->>
->> See attached ath9k.device.
+On Thu, Oct 08 2015 at 12:15pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
+
+> The patch 54efd50bfd873e2dbf784e0b21a8027ba4299a3e ("block: make
+> generic_make_request handle arbitrarily sized bios") makes it possible for
+> block devices to process large bios. The patch allocates a new bio set
+> queue->bio_split for each device, this bio set is used for allocating bios
+> when the driver needs to split large bios.
 > 
-> Hmm, can you also test this again with the v4.3-rc4 please? The device
-> you are attaching has its own group and no aliases, so I really can't
-> see how the trace could happen, and I can't reproduce it here either.
+> Each bio_set allocates a workqueue process, thus the above patch increases
+> the number of processes allocated per block device.
+> 
+> Device mapper doesn't need the queue->bio_split bio_set, thus we can
+> deallocate it. This reduces the number of allocated processes per
+> dm-device from 3 to 2.
 
-Unchanged - this time hard locked machine and no trace at all because of
-data loss after reboot :-(.
+This header needs more context added, specifically we need to tell the
+reader the answer to: why doesn't DM need queue->bio_split?
 
-Btw: Linux 4.2 doesn't show this problem.
-
-Nevertheless I'll try to get a trace - maybe I'm lucky and the machine
-doesn't lock up completely another time :-).
-
-
-Regards,
-Andreas
+Is this a resource that only the lowest layer's request_queue would
+need?  And given DM's stacking nature it doesn't need it simply because
+it'll never be the lowest layer?
