@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 16/18] Increase host buffer size
-Date: Thu,  8 Oct 2015 14:44:49 -0500
-Message-ID: <1444333491-16265-17-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 14/18] Make use of /run depend on systemd
+Date: Thu,  8 Oct 2015 14:44:47 -0500
+Message-ID: <1444333491-16265-15-git-send-email-bmarzins@redhat.com>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,29 +22,31 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Currently the host buffer only has space for 7 characters, this means
-on systems with many scsi hosts (1000 or more), multipath will overflow
-this buffer. This can happen pretty easily if there are a large number
-of iscsi devices.  This patch increases the host buffer to hold 15
-characters, which can deal with 100000000000000 scsi hosts.
+While there are other ways to decide whether to use /run or /var/run,
+I believe this should be good enough, and it uses a Makefile define
+that already exists.  If it doesn't work for everyone, I'll switch it
+to actually test the directories and add a new define to CFLAGS.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/structs.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/defaults.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 85a8fdc..99b6aae 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -15,7 +15,7 @@
- #define BLK_DEV_SIZE		33
- #define PATH_SIZE		512
- #define NAME_SIZE		512
--#define HOST_NAME_LEN		8
-+#define HOST_NAME_LEN		16
- #define SLOT_NAME_SIZE		40
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index e2d2779..a313d75 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -27,7 +27,11 @@
+ #define MAX_CHECKINT(a)		(a << 2)
  
- #define SCSI_VENDOR_SIZE	9
+ #define MAX_DEV_LOSS_TMO	0x7FFFFFFF
++#ifdef USE_SYSTEMD
+ #define DEFAULT_PIDFILE		"/run/multipathd.pid"
++#else
++#define DEFAULT_PIDFILE         "/var/run/multipathd.pid"
++#endif
+ #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
+ #define DEFAULT_BINDINGS_FILE	"/etc/multipath/bindings"
+ #define DEFAULT_WWIDS_FILE	"/etc/multipath/wwids"
 -- 
 1.8.3.1
