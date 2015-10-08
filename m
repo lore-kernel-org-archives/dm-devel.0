@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 05/18] update multipath rules to deal with
-	partition devices
-Date: Thu,  8 Oct 2015 14:44:38 -0500
-Message-ID: <1444333491-16265-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 03/18] multipathd: use /run instead of /var/run
+Date: Thu,  8 Oct 2015 14:44:36 -0500
+Message-ID: <1444333491-16265-4-git-send-email-bmarzins@redhat.com>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,45 +22,45 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Partition devices should inherit the DM_MULTIPATH_DEVICE_PATH
-state of their parents, and if they are part of multipath path devices,
-they shouldn't have their own ID_FS_TYPE
+/var/run is usually a symlink to /run.  If /var is on a separate
+filesytem, when multipathd starts up, it might end up writing to
+/var/run before the /var filesytem is mounted and thus not have
+its pidfile accessible at /var/run afterwards.  /run is a tmpfs and
+should always be available before multipathd is started, so
+multipath should just write there directly, instead of through the
+symlink.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipath/multipath.rules | 16 ++++++++++++----
- 1 file changed, 12 insertions(+), 4 deletions(-)
+ libmultipath/defaults.h         | 2 +-
+ multipathd/multipathd.init.suse | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/multipath/multipath.rules b/multipath/multipath.rules
-index c76e6b8..c8fb7e6 100644
---- a/multipath/multipath.rules
-+++ b/multipath/multipath.rules
-@@ -1,14 +1,22 @@
- # Set DM_MULTIPATH_DEVICE_PATH if the device should be handled by multipath
- SUBSYSTEM!="block", GOTO="end_mpath"
-+ACTION!="add|change", GOTO="end_mpath"
-+KERNEL!="sd*|dasd*", GOTO="end_mpath"
-+
-+ENV{DEVTYPE}!="partition", GOTO="test_dev"
-+IMPORT{parent}="DM_MULTIPATH_DEVICE_PATH"
-+ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="none", \
-+	ENV{SYSTEMD_READY}="0"
-+GOTO="end_mpath"
-+
-+LABEL="test_dev"
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 8902f40..79d6b91 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -26,7 +26,7 @@
+ #define MAX_CHECKINT(a)		(a << 2)
  
- ENV{MPATH_SBIN_PATH}="/sbin"
- TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
+ #define MAX_DEV_LOSS_TMO	0x7FFFFFFF
+-#define DEFAULT_PIDFILE		"/var/run/multipathd.pid"
++#define DEFAULT_PIDFILE		"/run/multipathd.pid"
+ #define DEFAULT_SOCKET		"/org/kernel/linux/storage/multipathd"
+ #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
+ #define DEFAULT_BINDINGS_FILE	"/etc/multipath/bindings"
+diff --git a/multipathd/multipathd.init.suse b/multipathd/multipathd.init.suse
+index d1319b1..ed699fa 100644
+--- a/multipathd/multipathd.init.suse
++++ b/multipathd/multipathd.init.suse
+@@ -17,7 +17,7 @@
  
--SUBSYSTEM=="block", ACTION=="add|change", KERNEL=="sd*|dasd*", \
--	ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
-+ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
- 	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
--	ENV{DM_MULTIPATH_DEVICE_PATH}="1" \
--	ENV{ID_FS_TYPE}="none" \
-+	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="none", \
- 	ENV{SYSTEMD_READY}="0"
+ PATH=/bin:/usr/bin:/sbin:/usr/sbin
+ DAEMON=/sbin/multipathd
+-PIDFILE=/var/run/multipathd.pid
++PIDFILE=/run/multipathd.pid
+ MPATH_INIT_TIMEOUT=10
+ ARGS=""
  
- LABEL="end_mpath"
 -- 
 1.8.3.1
