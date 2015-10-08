@@ -1,76 +1,155 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] block: flush queued bios when the process blocks
-Date: Thu, 8 Oct 2015 11:08:59 -0400
-Message-ID: <20151008150859.GA11770@redhat.com>
-References: <alpine.LRH.2.02.1405271120390.31404@file01.intranet.prod.int.rdu2.redhat.com>
- <5384B26D.1000703@kernel.dk>
- <alpine.LRH.2.02.1405271222150.8745@file01.intranet.prod.int.rdu2.redhat.com>
- <5384CE82.90601@kernel.dk>
- <alpine.LRH.2.02.1405291944090.22123@file01.intranet.prod.int.rdu2.redhat.com>
- <20151005205943.GB25762@redhat.com>
- <alpine.LRH.2.02.1510061410450.27916@file01.intranet.prod.int.rdu2.redhat.com>
- <20151006185016.GA31955@redhat.com>
- <20151006201637.GA4158@redhat.com>
- <alpine.LRH.2.02.1510081100510.9641@file01.intranet.prod.int.rdu2.redhat.com>
+From: Seth Forshee <seth.forshee@canonical.com>
+Subject: Re: [PATCH 1/5] fs: Verify access of user towards block device file
+ when mounting
+Date: Thu, 8 Oct 2015 10:41:15 -0500
+Message-ID: <20151008154115.GA88001@ubuntu-hedt>
+References: <1443644116-41366-1-git-send-email-seth.forshee@canonical.com>
+ <1443644116-41366-2-git-send-email-seth.forshee@canonical.com>
+ <20150930234215.GA24127@redhat.com>
+ <20151001125508.GA101875@ubuntu-hedt>
+ <20151001134052.GB27818@redhat.com>
+ <20151001144137.GC101875@ubuntu-hedt>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1510081100510.9641@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20151001144137.GC101875@ubuntu-hedt>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, kent.overstreet@gmail.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Alasdair G. Kergon" <agk@redhat.com>
+To: "Eric W. Biederman" <ebiederm@xmission.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.com>, David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.com>, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Oct 08 2015 at 11:04am -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
-
-> 
-> 
-> On Tue, 6 Oct 2015, Mike Snitzer wrote:
-> 
-> > To give others context for why I'm caring about this issue again, this
-> > recent BZ against 4.3-rc served as a reminder that we _need_ a fix:
-> > https://bugzilla.redhat.com/show_bug.cgi?id=1267650
+On Thu, Oct 01, 2015 at 09:41:37AM -0500, Seth Forshee wrote:
+> On Thu, Oct 01, 2015 at 09:40:52AM -0400, Mike Snitzer wrote:
+> > On Thu, Oct 01 2015 at  8:55am -0400,
+> > Seth Forshee <seth.forshee@canonical.com> wrote:
 > > 
-> > FYI, I cleaned up the plug-based approach a bit further, here is the
-> > incremental patch:
-> > http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=wip&id=f73d001ec692125308accbb5ca26f892f949c1b6
+> > > On Wed, Sep 30, 2015 at 07:42:15PM -0400, Mike Snitzer wrote:
+> > > > On Wed, Sep 30 2015 at  4:15pm -0400,
+> > > > Seth Forshee <seth.forshee@canonical.com> wrote:
+> > > > 
+> > > > > When mounting a filesystem on a block device there is currently
+> > > > > no verification that the user has appropriate access to the
+> > > > > device file passed to mount. This has not been an issue so far
+> > > > > since the user in question has always been root, but this must
+> > > > > be changed before allowing unprivileged users to mount in user
+> > > > > namespaces.
+> > > > > 
+> > > > > To fix this, add an argument to lookup_bdev() to specify the
+> > > > > required permissions. If the mask of permissions is zero, or
+> > > > > if the user has CAP_SYS_ADMIN, the permission check is skipped,
+> > > > > otherwise the lookup fails if the user does not have the
+> > > > > specified access rights for the inode at the supplied path.
+> > > > > 
+> > > > > Callers associated with mounting are updated to pass permission
+> > > > > masks to lookup_bdev() so that these mounts will fail for an
+> > > > > unprivileged user who lacks permissions for the block device
+> > > > > inode. All other callers pass 0 to maintain their current
+> > > > > behaviors.
+> > > > > 
+> > > > > Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+> > > > > ---
+> > > > >  drivers/md/bcache/super.c |  2 +-
+> > > > >  drivers/md/dm-table.c     |  2 +-
+> > > > >  drivers/mtd/mtdsuper.c    |  6 +++++-
+> > > > >  fs/block_dev.c            | 18 +++++++++++++++---
+> > > > >  fs/quota/quota.c          |  2 +-
+> > > > >  include/linux/fs.h        |  2 +-
+> > > > >  6 files changed, 24 insertions(+), 8 deletions(-)
+> > > > > 
+> > > > > diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> > > > > index e76ed003769e..35bb3ea4cbe2 100644
+> > > > > --- a/drivers/md/dm-table.c
+> > > > > +++ b/drivers/md/dm-table.c
+> > > > > @@ -380,7 +380,7 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+> > > > >  	BUG_ON(!t);
+> > > > >  
+> > > > >  	/* convert the path to a device */
+> > > > > -	bdev = lookup_bdev(path);
+> > > > > +	bdev = lookup_bdev(path, 0);
+> > > > >  	if (IS_ERR(bdev)) {
+> > > > >  		dev = name_to_dev_t(path);
+> > > > >  		if (!dev)
+> > > > 
+> > > > Given dm_get_device() is passed @mode why not have it do something like
+> > > > you did in blkdev_get_by_path()? e.g.:
+> > > 
+> > > I only dealt with code related to mounting in this patch since that's
+> > > what I'm working on. I have it on my TODO list to consider converting
+> > > other callers of lookup_bdev. But if you're sure doing so makes sense
+> > > for dm_get_device and that it won't cause regressions then I could add a
+> > > patch for it.
 > > 
-> > And here is a new version of the overall combined patch (sharing now
-> > before I transition to looking at alternatives, though my gut is the use
-> > of a plug in generic_make_request really wouldn't hurt us.. famous last
-> > words):
+> > OK, dm_get_device() is called in DM device activation path (by tools
+> > like lvm2).
 > > 
-> >  block/bio.c            | 82 +++++++++++++-------------------------------------
-> >  block/blk-core.c       | 21 ++++++++-----
-> >  drivers/md/dm-bufio.c  |  2 +-
-> >  drivers/md/raid1.c     |  6 ++--
-> >  drivers/md/raid10.c    |  6 ++--
-> >  include/linux/blkdev.h | 11 +++++--
-> >  include/linux/sched.h  |  4 ---
-> >  7 files changed, 51 insertions(+), 81 deletions(-)
+> > After lookup_bdev() it goes on to call blkdev_get_by_dev() with this
+> > call chain: 
+> >   dm_get_device -> dm_get_table_device -> open_table_device -> blkdev_get_by_dev
 > > 
-...
-> > diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-> > index 2dd3308..c2bff16 100644
-> > --- a/drivers/md/dm-bufio.c
-> > +++ b/drivers/md/dm-bufio.c
-> > @@ -168,7 +168,7 @@ static inline int dm_bufio_cache_index(struct dm_bufio_client *c)
-> >  #define DM_BUFIO_CACHE(c)	(dm_bufio_caches[dm_bufio_cache_index(c)])
-> >  #define DM_BUFIO_CACHE_NAME(c)	(dm_bufio_cache_names[dm_bufio_cache_index(c)])
-> >  
-> > -#define dm_bufio_in_request()	(!!current->bio_list)
-> > +#define dm_bufio_in_request()	(current->plug && !!current->plug->bio_list)
+> > Not immediately clear to me why we'd need to augment blkdev_get_by_dev()
+> > to do this checking also.
+> > 
+> > However, thinking further: In a device stack (e.g. dm/lvm2, md, etc)
+> > new virtual block devices are created that layer ontop of the
+> > traditional block devices.  This level of indirection may cause your
+> > lookup_bdev() check to go on to succeed (if access constraints were not
+> > established on the upper level dm or md device?).  I'm just thinking
+> > outloud here: but have you verified your changes work as intended on
+> > devices created with either lvm2 or mdadm?
+> > 
+> > What layer establishes access rights to historically root-only
+> > priviledged block devices?  Is it user namespaces?
 > 
-> This condition is repeated several times throughout the whole patch - so 
-> maybe you should make it a function in block device header file.
+> I'm going to start with this last question and work my way backwards.
+> 
+> Who determines access rights to the block devices varies to some degree.
+> Any normal user could unshare the user/mount namespaces and still see
+> all the block devices in /dev. If we're going to allow that user to then
+> mount block devices in their private namespaces, the kernel must verify
+> that the user has appropriate permissions for the block device inode.
+> That's the point of this patch. In a container context the host process
+> which sets up the container might share some block devices into the
+> container via bind mounts, in which case it would be responsible for
+> setting up access rights (both via inode permissions and potentially via
+> devcgroups). I also have some patches I'm working on for a loop psuedo
+> filesystem which would allow a container to allocate loop devices for
+> its own use (via the loop-control device), in which case the kernel
+> creates a device node in the loopfs filesystem from which the new loop
+> device was allocated, owned by the root user in the user namespace
+> associated with the loopfs superblock.
+> 
+> Obviously a DM block device is more complicated than a traditional block
+> device. This patch should ensure that if an unprivileged user tries to
+> mount a DM blkdev that it fails if the user lacks permissions for the DM
+> blkdev inode. There's also the blkdevs behind the DM blkdev, and I'm not
+> sure whether we need to additionally verify that the user has access to
+> those devices. Maybe it's enough that someone with access to them set up
+> the DM device, and someone with sufficient privileges gave that user
+> access to the DM device. Do you have any thoughts?
+> 
+> As for activating a DM device, I assume only root is permitted to do
+> this. In that case lookup_bdev will skip the inode permission check
+> even if a non-zero permission mask is passed.
 
-Yeah, I thought of that too but forgot to come back to it.  Will do,
-thanks.
+I've been looking into this more and doing some testing.
 
-FYI, I found another bug in my last patch and fixed it up.  I'll get
-some refactoring done (including your suggestion), actually _test_ the
-code (e.g. verify all of lvm testsuite passes) and then send out v3.
+As far as mounting goes, it ends up behaving as I expected. As long as
+the user has permission to access the inode for the DM block device, the
+device can be mounted. Access to the block devices behind the DM block
+device is not required. I think this makes sense - it's consistent with
+how read/write access to the DM block device works already independent
+of user namespaces.
 
-Mike
+One thing I noticed that might be a concern (I'm not sure) are ioctls on
+DM block devices. It looks to me like often these will be passed through
+to the underlying block device.
+
+It appears that all code paths which call dm_get_device originate with
+ioctls on /dev/mapper/control. Doing this requires CAP_SYS_ADMIN, in
+which case the permission check in lookup_bdev is skipped. So there's no
+benefit to having dm_get_device pass a permission mask to
+blkdev_get_by_path, nor is there any harm. It will only matter if at
+some point userns-root is allowed to set up DM devices.
+
+Seth
