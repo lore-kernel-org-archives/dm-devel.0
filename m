@@ -1,64 +1,87 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm: reduce the number of processes per dm device
-Date: Thu, 8 Oct 2015 15:59:31 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1510081553440.17984@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1510081214130.14961@file01.intranet.prod.int.rdu2.redhat.com>
-	<20151008190817.GA12788@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andreas Hartmann <andihartmann-KuiJ5kEpwI6ELgA04lAiVw@public.gmane.org>
+Subject: Re: [dm-devel] AMD-Vi IO_PAGE_FAULTs and ata3.00: failed command:
+	READ FPDMA QUEUED errors since Linux 4.0
+Date: Thu, 8 Oct 2015 21:52:56 +0200
+Message-ID: <5616C998.1010309@maya.org>
+References: <55FE5740.2060701@maya.org> <20150929152100.GL3036@8bytes.org>
+	<alpine.LRH.2.02.1509291143170.24174@file01.intranet.prod.int.rdu2.redhat.com>
+	<20150929162042.GR3036@8bytes.org> <560BF73F.8000008@maya.org>
+	<20151006101356.GE12506@8bytes.org> <56141507.7040103@maya.org>
+	<56148A1B.5060506@maya.org> <20151007161022.GI28811@8bytes.org>
+	<56154DEA.5050901@maya.org> <20151008163957.GK28811@8bytes.org>
+	<5616B436.1000802@maya.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20151008190817.GA12788@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <5616B436.1000802-YKS6W9RDU/w@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>
+Cc: linux-pci <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-
-
-On Thu, 8 Oct 2015, Mike Snitzer wrote:
-
-> On Thu, Oct 08 2015 at 12:15pm -0400,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
+On 10/08/2015 at 08:21 PM, Andreas Hartmann wrote:
+> Am 08.10.2015 um 18:39 schrieb Joerg Roedel:
+>> On Wed, Oct 07, 2015 at 06:52:58PM +0200, Andreas Hartmann wrote:
+>>> To reproduce the error:
+>>> First I mounted /daten2, afterwards /raid/mt, which produces the errors.
+>>> The ssd mounts have been already active (during boot by fstab).
+>>
+>> Okay, I spent the day on that problem, and managed to reproduce it here
+>> on one of my AMD IOMMU boxes. I wasn't an easy journey, as I can only
+>> reproduce it if I setup the crypto partition and everything above that
+>> (like mounting the lvm volumes) _after_ the system has finished booting.
+>> If everything is setup during system boot it works fine and I don't see
+>> any IO_PAGE_FAULTS.
 > 
-> > The patch 54efd50bfd873e2dbf784e0b21a8027ba4299a3e ("block: make
-> > generic_make_request handle arbitrarily sized bios") makes it possible for
-> > block devices to process large bios. The patch allocates a new bio set
-> > queue->bio_split for each device, this bio set is used for allocating bios
-> > when the driver needs to split large bios.
-> > 
-> > Each bio_set allocates a workqueue process, thus the above patch increases
-> > the number of processes allocated per block device.
-> > 
-> > Device mapper doesn't need the queue->bio_split bio_set, thus we can
-> > deallocate it. This reduces the number of allocated processes per
-> > dm-device from 3 to 2.
+> Thank you very much for spending so much of your time to reproduce the
+> problem!
 > 
-> This header needs more context added, specifically we need to tell the
-> reader the answer to: why doesn't DM need queue->bio_split?
+>> I also tried kernel v4.3-rc4 first, to have it tested with a
+>> self-compiled kernel. It didn't show up there, so I built a 4.1.0, where
+>> it showed up again. Something seems to have fixed the issue in the
+>> latest kernels.
+>>
+>> So I looked a little bit around at the commits that were merged into the
+>> respective parts involved here, and found this one:
+>>
+>>     586b286 dm crypt: constrain crypt device's max_segment_size to
+>> PAGE_SIZE
+>>
+>> The problem fixed with this commit looks quite similar to what you have
+>> seen (execpt that there was no IOMMU involved). So I cherry-picked that
+>> commit on 4.1.0 and tested that. The problem was gone.
+> 
+> That's true - I already knew this patch and tested it some weeks ago -
+> unfortunately it doesn't fix the problem here.
+> 
+> To be really sure, I just retested it now again. I couldn't see any
+> IO_PAGE_FAULTS errors today (unfortunately I can't remember anymore if I
+> didn't see them too a few weeks ago) - but the ata errors remain.
+> Therefore, this patch isn't a solution for the problem I encounter here.
+> 
+>> So it looks like it was a dm-crypt issue, the patch went into v4.3-rc3,
+>> either this kernel of rc4 should fix the problem for you too. Can you
+>> please verify this is fixed for you too with v4.3-rc4?
+> 
+> As I already wrote, I even couldn't see the problem with v4.3-rc2 any
+> more (as far as I was able to test because of the other problem). I have
+> to do some more tests now with this kernel to be really sure.
 
-Dm doesn't need queue->bio_split because it has its own bioset md->bs. We 
-can't use queue->bio_split instead of md->bs because md->bs has non-zero 
-front pad depending on targets loaded in the table.
+I now tested w/ v4.3-rc4. I couldn't see any IO_PAGE_FAULTS but the ata
+errors remain. The ata errors can be easily activated by copying a large
+file (> 4 GB) from one partition on the raid to another partition on the
+raid.
 
-> Is this a resource that only the lowest layer's request_queue would 
-> need? And given DM's stacking nature it doesn't need it simply because 
-> it'll never be the lowest layer?
 
-All request-based drivers need queue->bio_split, but some non-dm bio-based 
-drivers need it too.
 
-I thought about removing bio_split for for all bio-based devices, but 
-declined that because it could generate regressions in drivers that we are 
-not able to test.
-
-Mikulas
+Thanks,
+Andreas
