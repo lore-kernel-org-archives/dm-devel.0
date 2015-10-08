@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 18/18] Make multipath ignore devices without
-	mpath prefix
-Date: Thu,  8 Oct 2015 14:44:51 -0500
-Message-ID: <1444333491-16265-19-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 02/18] fix memory leaks on realloc failures
+Date: Thu,  8 Oct 2015 14:44:35 -0500
+Message-ID: <1444333491-16265-3-git-send-email-bmarzins@redhat.com>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,180 +22,205 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Multpathd currently assumes that it controls all devices of "multipath"
-type. In order to allow people to create multipath type devices outside
-of the multipath-tools, this patch makes multipathd only modify devices
-if they have a uuid that starts with "mpath-". This was a suggestion
-from Hannes a couple of months ago.
+When realloc fails, it doesn't free the existing memory.  In many places,
+multipath was just forgetting about that that memory. It needs to free
+up the existing memory, or to reset back to using it.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmpathpersist/mpath_persist.c |  4 +--
- libmultipath/devmapper.c        | 67 ++++++++++++++++++++++++++++++-----------
- libmultipath/devmapper.h        |  1 +
- multipathd/main.c               |  2 +-
- 4 files changed, 53 insertions(+), 21 deletions(-)
+ libmultipath/dmparser.c   |  6 ++++--
+ multipath/main.c          |  9 ++++++---
+ multipathd/cli_handlers.c | 50 +++++++++++++----------------------------------
+ multipathd/uxlsnr.c       | 19 +++++++++++++++++-
+ 4 files changed, 42 insertions(+), 42 deletions(-)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index eba26a2..113cf7f 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -168,7 +168,7 @@ int mpath_persistent_reserve_in (int fd, int rq_servact,
- 
- 	condlog(3, "alias = %s", alias);
- 	map_present = dm_map_present(alias);
--	if (map_present && dm_type(alias, TGT_MPATH) <= 0){
-+	if (map_present && !dm_is_mpath(alias)){
- 		condlog( 0, "%s: not a multipath device.", alias);
- 		ret = MPATH_PR_DMMP_ERROR;
- 		goto out;
-@@ -258,7 +258,7 @@ int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
- 	condlog(3, "alias = %s", alias);
- 	map_present = dm_map_present(alias);
- 
--	if (map_present && dm_type(alias, TGT_MPATH) <= 0){
-+	if (map_present && !dm_is_mpath(alias)){
- 		condlog(3, "%s: not a multipath device.", alias);
- 		ret = MPATH_PR_DMMP_ERROR;
- 		goto out;
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 560d418..cef8522 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -581,6 +581,48 @@ out:
- 	return r;
- }
- 
-+extern int
-+dm_is_mpath(const char * name)
-+{
-+	int r = 0;
-+	struct dm_task *dmt;
-+	struct dm_info info;
-+	uint64_t start, length;
-+	char *target_type = NULL;
-+	char *params;
-+	const char *uuid;
-+
-+	if (!(dmt = dm_task_create(DM_DEVICE_TABLE)))
-+		return 0;
-+
-+	if (!dm_task_set_name(dmt, name))
-+		goto out;
-+
-+	dm_task_no_open_count(dmt);
-+
-+	if (!dm_task_run(dmt))
-+		goto out;
-+
-+	if (!dm_task_get_info(dmt, &info) || !info.exists)
-+		goto out;
-+
-+	uuid = dm_task_get_uuid(dmt);
-+
-+	if (!uuid || strncmp(uuid, UUID_PREFIX, UUID_PREFIX_LEN) != 0)
-+		goto out;
-+
-+	/* Fetch 1st target */
-+	dm_get_next_target(dmt, NULL, &start, &length, &target_type, &params);
-+
-+	if (!target_type || strcmp(target_type, TGT_MPATH) != 0)
-+		goto out;
-+
-+	r = 1;
-+out:
-+	dm_task_destroy(dmt);
-+	return r;
-+}
-+
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 2562ba1..2209b2d 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -20,14 +20,16 @@
  static int
- dm_dev_t (const char * mapname, char * dev_t, int len)
+ merge_words (char ** dst, char * word, int space)
  {
-@@ -698,10 +740,7 @@ _dm_flush_map (const char * mapname, int need_sync, int deferred_remove)
+-	char * p;
++	char * p = *dst;
+ 	int len;
+ 
+ 	len = strlen(*dst) + strlen(word) + space;
+ 	*dst = REALLOC(*dst, len + 1);
+ 
+-	if (!*dst)
++	if (!*dst) {
++		free(p);
+ 		return 1;
++	}
+ 
+ 	p = *dst;
+ 
+diff --git a/multipath/main.c b/multipath/main.c
+index f62dcb1..d761621 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -395,7 +395,7 @@ out:
+ static int
+ dump_config (void)
  {
- 	int r;
+-	char * c;
++	char * c, * tmp = NULL;
+ 	char * reply;
+ 	unsigned int maxlen = 256;
+ 	int again = 1;
+@@ -403,9 +403,12 @@ dump_config (void)
+ 	reply = MALLOC(maxlen);
  
--	if (!dm_map_present(mapname))
--		return 0;
--
--	if (dm_type(mapname, TGT_MPATH) <= 0)
-+	if (!dm_is_mpath(mapname))
- 		return 0; /* nothing to do */
+ 	while (again) {
+-		if (!reply)
++		if (!reply) {
++			if (tmp)
++				free(tmp);
+ 			return 1;
+-		c = reply;
++		}
++		c = tmp = reply;
+ 		c += snprint_defaults(c, reply + maxlen - c);
+ 		again = ((c - reply) == maxlen);
+ 		if (again) {
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index dc96c45..305cd7f 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -26,11 +26,14 @@
+ #define REALLOC_REPLY(r, a, m)					\
+ 	do {							\
+ 		if ((a)) {					\
++			char *tmp = (r);			\
+ 			(r) = REALLOC((r), (m) * 2);		\
+ 			if ((r)) {				\
+ 				memset((r) + (m), 0, (m));	\
+ 				(m) *= 2;			\
+ 			}					\
++			else					\
++				free(tmp);			\
+ 		}						\
+ 	} while (0)
  
- 	if (dm_remove_partmaps(mapname, need_sync, deferred_remove))
-@@ -751,10 +790,7 @@ dm_suspend_and_flush_map (const char * mapname)
- 	unsigned long long mapsize;
- 	char params[PARAMS_SIZE] = {0};
+@@ -173,7 +176,7 @@ show_config (char ** r, int * len)
+ 	unsigned int maxlen = INITIAL_REPLY_LEN;
+ 	int again = 1;
  
--	if (!dm_map_present(mapname))
--		return 0;
--
--	if (dm_type(mapname, TGT_MPATH) <= 0)
-+	if (!dm_is_mpath(mapname))
- 		return 0; /* nothing to do */
+-	reply = MALLOC(maxlen);
++	c = reply = MALLOC(maxlen);
  
- 	if (!dm_get_map(mapname, &mapsize, params)) {
-@@ -915,7 +951,6 @@ dm_get_maps (vector mp)
- {
- 	struct multipath * mpp;
- 	int r = 1;
--	int info;
- 	struct dm_task *dmt;
- 	struct dm_names *names;
- 	unsigned next = 0;
-@@ -940,9 +975,7 @@ dm_get_maps (vector mp)
- 	}
- 
- 	do {
--		info = dm_type(names->name, TGT_MPATH);
--
--		if (info <= 0)
-+		if (!dm_is_mpath(names->name))
- 			goto next;
- 
- 		mpp = alloc_multipath();
-@@ -955,13 +988,11 @@ dm_get_maps (vector mp)
- 		if (!mpp->alias)
- 			goto out1;
- 
--		if (info > 0) {
--			if (dm_get_map(names->name, &mpp->size, NULL))
--				goto out1;
-+		if (dm_get_map(names->name, &mpp->size, NULL))
-+			goto out1;
- 
--			dm_get_uuid(names->name, mpp->wwid);
--			dm_get_info(names->name, &mpp->dmi);
+ 	while (again) {
+ 		if (!reply)
+@@ -181,54 +184,29 @@ show_config (char ** r, int * len)
+ 		c = reply;
+ 		c += snprint_defaults(c, reply + maxlen - c);
+ 		again = ((c - reply) == maxlen);
+-		if (again) {
+-			reply = REALLOC(reply, maxlen * 2);
+-			if (!reply)
+-				return 1;
+-			memset(reply + maxlen, 0, maxlen);
+-			maxlen *= 2;
++		REALLOC_REPLY(reply, again, maxlen);
++		if (again)
+ 			continue;
 -		}
-+		dm_get_uuid(names->name, mpp->wwid);
-+		dm_get_info(names->name, &mpp->dmi);
+ 		c += snprint_blacklist(c, reply + maxlen - c);
+ 		again = ((c - reply) == maxlen);
+-		if (again) {
+-			reply = REALLOC(reply, maxlen * 2);
+-			if (!reply)
+-				return 1;
+-			memset(reply + maxlen, 0, maxlen);
+-			maxlen *= 2;
++		REALLOC_REPLY(reply, again, maxlen);
++		if (again)
+ 			continue;
+-		}
+ 		c += snprint_blacklist_except(c, reply + maxlen - c);
+ 		again = ((c - reply) == maxlen);
+-		if (again) {
+-			reply = REALLOC(reply, maxlen * 2);
+-			if (!reply)
+-				return 1;
+-			memset(reply + maxlen, 0, maxlen);
+-			maxlen *= 2;
++		REALLOC_REPLY(reply, again, maxlen);
++		if (again)
+ 			continue;
+-		}
+ 		c += snprint_hwtable(c, reply + maxlen - c, conf->hwtable);
+ 		again = ((c - reply) == maxlen);
+-		if (again) {
+-			reply = REALLOC(reply, maxlen * 2);
+-			if (!reply)
+-				return 1;
+-			memset(reply + maxlen, 0, maxlen);
+-			maxlen *= 2;
++		REALLOC_REPLY(reply, again, maxlen);
++		if (again)
+ 			continue;
+-		}
+ 		c += snprint_overrides(c, reply + maxlen - c, conf->overrides);
+ 		again = ((c - reply) == maxlen);
+-		if (again) {
+-			reply = REALLOC(reply, maxlen * 2);
+-			if (!reply)
+-				return 1;
+-			memset(reply + maxlen, 0, maxlen);
+-			maxlen *= 2;
++		REALLOC_REPLY(reply, again, maxlen);
++		if (again)
+ 			continue;
+-		}
+ 		if (VECTOR_SIZE(conf->mptable) > 0) {
+ 			c += snprint_mptable(c, reply + maxlen - c,
+ 					     conf->mptable);
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 61ba49a..64bd35c 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -65,6 +65,10 @@ static void new_client(int ux_sock)
+ 		return;
  
- 		if (!vector_alloc_slot(mp))
- 			goto out1;
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index 2613503..1752045 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -23,6 +23,7 @@ int dm_map_present (const char *);
- int dm_get_map(const char *, unsigned long long *, char *);
- int dm_get_status(char *, char *);
- int dm_type(const char *, char *);
-+int dm_is_mpath(const char *);
- int _dm_flush_map (const char *, int, int);
- int dm_flush_map_nopaths(const char * mapname, int deferred_remove);
- #define dm_flush_map(mapname) _dm_flush_map(mapname, 1, 0)
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 6c315ad..14afe0c 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -295,7 +295,7 @@ ev_add_map (char * dev, char * alias, struct vectors * vecs)
+ 	c = (struct client *)MALLOC(sizeof(*c));
++	if (!c) {
++		close(fd);
++		return;
++	}
+ 	memset(c, 0, sizeof(*c));
+ 	INIT_LIST_HEAD(&c->node);
+ 	c->fd = fd;
+@@ -151,6 +155,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 	sigdelset(&mask, SIGHUP);
+ 	sigdelset(&mask, SIGUSR1);
+ 	while (1) {
++		struct pollfd *new;
+ 		struct client *c, *tmp;
+ 		int i, poll_count, num_clients;
  
- 	map_present = dm_map_present(alias);
+@@ -168,7 +173,19 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 		list_for_each_entry(c, &clients, node) {
+ 			num_clients++;
+ 		}
+-		polls = REALLOC(polls, (1+num_clients) * sizeof(*polls));
++		new = REALLOC(polls, (1+num_clients) * sizeof(*polls));
++		/* If we can't allocate poliing space for the new client,
++		 * close it */
++		if (!new) {
++			if (!num_clients) {
++				condlog(1, "can't listen for new clients");
++				return NULL;
++			}
++			dead_client(list_entry(clients.prev,
++					       typeof(struct client), node));
++		}
++		else
++			polls = new;		
+ 		polls[0].fd = ux_sock;
+ 		polls[0].events = POLLIN;
  
--	if (map_present && dm_type(alias, TGT_MPATH) <= 0) {
-+	if (map_present && !dm_is_mpath(alias)) {
- 		condlog(4, "%s: not a multipath map", alias);
- 		return 0;
- 	}
 -- 
 1.8.3.1
