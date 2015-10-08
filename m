@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 17/18] Fix sun partition numbering
-Date: Thu,  8 Oct 2015 14:44:50 -0500
-Message-ID: <1444333491-16265-18-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 15/18] libmpathpersist: uninstall man page
+	correctly
+Date: Thu,  8 Oct 2015 14:44:48 -0500
+Message-ID: <1444333491-16265-16-git-send-email-bmarzins@redhat.com>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,29 +23,28 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Sun labeled devices, the kpartx partition numbers weren't agreeing
-with the underlying device partition numbers.  This is because kpartx
-doesn't count slices with no sectors, when determining the numbering.
-This patch counts these empty slices, so the numbering comes out the
-same.
+the libmpathpersist man pages were being installed to
+/usr/share/man/man3, but uninstalled from /usr/share/man/man8.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/sun.c | 2 --
- 1 file changed, 2 deletions(-)
+ libmpathpersist/Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/kpartx/sun.c b/kpartx/sun.c
-index 3d88b21..b8c023b 100644
---- a/kpartx/sun.c
-+++ b/kpartx/sun.c
-@@ -82,8 +82,6 @@ read_sun_pt(int fd, struct slice all, struct slice *sp, int ns) {
- 	for(i=0, n=0; i<SUN_DISK_MAXPARTITIONS; i++) {
- 		s = &l->partitions[i];
+diff --git a/libmpathpersist/Makefile b/libmpathpersist/Makefile
+index 7dcfd26..e49cdb9 100644
+--- a/libmpathpersist/Makefile
++++ b/libmpathpersist/Makefile
+@@ -40,8 +40,8 @@ install: $(LIBS)
  
--		if (s->num_sectors == 0)
--			continue;
- 		if (n < ns) {
- 			sp[n].start = offset +
- 				be32_to_cpu(s->start_cylinder) * be16_to_cpu(l->nsect) * be16_to_cpu(l->ntrks);
+ uninstall:
+ 	rm -f $(DESTDIR)$(syslibdir)/$(LIBS)
+-	rm $(DESTDIR)$(mandir)/mpath_persistent_reserve_in.3.gz	
+-	rm $(DESTDIR)$(mandir)/mpath_persistent_reserve_out.3.gz	
++	rm $(DESTDIR)$(man3dir)/mpath_persistent_reserve_in.3.gz	
++	rm $(DESTDIR)$(man3dir)/mpath_persistent_reserve_out.3.gz	
+ 
+ clean:
+ 	rm -f core *.a *.o 
 -- 
 1.8.3.1
