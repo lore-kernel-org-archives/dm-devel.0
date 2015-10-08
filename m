@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 03/18] multipathd: use /run instead of /var/run
-Date: Thu,  8 Oct 2015 14:44:36 -0500
-Message-ID: <1444333491-16265-4-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 07/18] make kpartx -d remove all partitions
+Date: Thu,  8 Oct 2015 14:44:40 -0500
+Message-ID: <1444333491-16265-8-git-send-email-bmarzins@redhat.com>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,45 +22,38 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-/var/run is usually a symlink to /run.  If /var is on a separate
-filesytem, when multipathd starts up, it might end up writing to
-/var/run before the /var filesytem is mounted and thus not have
-its pidfile accessible at /var/run afterwards.  /run is a tmpfs and
-should always be available before multipathd is started, so
-multipath should just write there directly, instead of through the
-symlink.
+Currently kpartx -d only removes the partitions that have entries in the
+partition table.  If you remove a partition from the device, and then
+run kpartx -d, it will not delete that partition (kpartx -u will).  I don't
+see any value in leaving partition devices for partitions that don't even
+exist anymore, so this patch makes -d delete all partitions.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/defaults.h         | 2 +-
- multipathd/multipathd.init.suse | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ kpartx/kpartx.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index 8902f40..79d6b91 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -26,7 +26,7 @@
- #define MAX_CHECKINT(a)		(a << 2)
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index d69f9af..a9d4c98 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -426,7 +426,7 @@ main(int argc, char **argv){
+ 			break;
  
- #define MAX_DEV_LOSS_TMO	0x7FFFFFFF
--#define DEFAULT_PIDFILE		"/var/run/multipathd.pid"
-+#define DEFAULT_PIDFILE		"/run/multipathd.pid"
- #define DEFAULT_SOCKET		"/org/kernel/linux/storage/multipathd"
- #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
- #define DEFAULT_BINDINGS_FILE	"/etc/multipath/bindings"
-diff --git a/multipathd/multipathd.init.suse b/multipathd/multipathd.init.suse
-index d1319b1..ed699fa 100644
---- a/multipathd/multipathd.init.suse
-+++ b/multipathd/multipathd.init.suse
-@@ -17,7 +17,7 @@
+ 		case DELETE:
+-			for (j = n-1; j >= 0; j--) {
++			for (j = MAXSLICES-1; j >= 0; j--) {
+ 				if (safe_sprintf(partname, "%s%s%d",
+ 					     mapname, delim, j+1)) {
+ 					fprintf(stderr, "partname too small\n");
+@@ -434,7 +434,7 @@ main(int argc, char **argv){
+ 				}
+ 				strip_slash(partname);
  
- PATH=/bin:/usr/bin:/sbin:/usr/sbin
- DAEMON=/sbin/multipathd
--PIDFILE=/var/run/multipathd.pid
-+PIDFILE=/run/multipathd.pid
- MPATH_INIT_TIMEOUT=10
- ARGS=""
+-				if (!slices[j].size || !dm_map_present(partname))
++				if (!dm_map_present(partname))
+ 					continue;
  
+ 				if (!dm_simplecmd(DM_DEVICE_REMOVE, partname,
 -- 
 1.8.3.1
