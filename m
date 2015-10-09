@@ -1,48 +1,85 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] block: flush queued bios when the process blocks
-Date: Fri, 9 Oct 2015 15:59:07 -0400
-Message-ID: <20151009195907.GB18790@redhat.com>
-References: <alpine.LRH.2.02.1405271222150.8745@file01.intranet.prod.int.rdu2.redhat.com>
- <5384CE82.90601@kernel.dk>
- <alpine.LRH.2.02.1405291944090.22123@file01.intranet.prod.int.rdu2.redhat.com>
- <20151005205943.GB25762@redhat.com>
- <alpine.LRH.2.02.1510061410450.27916@file01.intranet.prod.int.rdu2.redhat.com>
- <20151006185016.GA31955@redhat.com>
- <20151006201637.GA4158@redhat.com>
- <alpine.LRH.2.02.1510081100510.9641@file01.intranet.prod.int.rdu2.redhat.com>
- <20151008150859.GA11770@redhat.com>
- <20151009195203.GA18790@redhat.com>
+Subject: [git pull] device mapper fixes for 4.3-rc5
+Date: Fri, 9 Oct 2015 17:46:53 -0400
+Message-ID: <20151009214653.GA19859@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20151009195203.GA18790@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, kent.overstreet@gmail.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Alasdair G. Kergon" <agk@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Joe Thornber <ejt@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 09 2015 at  3:52pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
- 
-> Turns out that this change:
-> http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=wip&id=2639638c77768a86216be456c2764e32a2bcd841
-> 
-> needed to be reverted with:
-> http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=wip&id=ad3ccd760da7c05b90775372f9b39dc2964086fe
-> 
-> Because nested plugs caused generic_make_request()'s onstack bio_list to
-> go out of scope (blk_finish_plug() wouldn't actually flush the list
-> within generic_make_request because XFS already added an outermost
-> plug).
-> 
-> But even after fixing that I then hit issues with these changes now
-> resulting in imperfect 'in_generic_make_request' accounting that happens
-> lazily once the outermost plug completes blk_finish_plug.  manifested as
-> dm-bufio.c:dm_bufio_prefetch's BUG_ON(dm_bufio_in_request()); hitting.
-> 
-> Basically using the blk-core's onstack plugging isn't workable for
-> fixing this deadlock and we're back to having to seriously consider
-> this (with its additional hook in the scheduler): 
+Hi Linus,
 
-http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=wip&id=a91709cd32b5ca7ca047b68c9299e747f2ae6ca2
+The following changes since commit 9ffecb10283508260936b96022d4ee43a7798b4c:
+
+  Linux 4.3-rc3 (2015-09-27 07:50:08 -0400)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm dm-4.3-fixes-2
+
+for you to fetch changes up to b0d3cc011e532d8c9db76cf717bcafa53c135595:
+
+  dm snapshot: add new persistent store option to support overflow (2015-10-09 16:57:03 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+3 stable@ fixes:
+
+- DM core AB-BA deadlock fix in the device destruction path (vs device
+  creation's DM table swap).
+
+- DM raid fix to properly round up the region_size to the next
+  power-of-2.
+
+- DM cache fix for a NULL pointer seen while switching from the
+  "cleaner" cache policy.
+
+2 fixes for regressions introduced during the 4.3 merge:
+
+- request-based DM error propagation regressed due to incorrect
+  changes introduced when adding the bi_error field to bio.
+
+- DM snapshot fix to only support snapshots that overflow if the client
+  (e.g. lvm2) is prepared to deal with the associated snapshot status
+  interface change.
+
+----------------------------------------------------------------
+Joe Thornber (1):
+      dm cache: fix NULL pointer when switching from cleaner policy
+
+Junichi Nomura (2):
+      dm: fix AB-BA deadlock in __dm_destroy()
+      dm: fix request-based dm error reporting
+
+Mike Snitzer (1):
+      dm snapshot: add new persistent store option to support overflow
+
+Mikulas Patocka (1):
+      dm raid: fix round up of default region size
+
+ Documentation/device-mapper/snapshot.txt | 10 +++++++---
+ drivers/md/dm-cache-policy-cleaner.c     |  2 +-
+ drivers/md/dm-exception-store.c          |  6 +++---
+ drivers/md/dm-exception-store.h          |  5 +++--
+ drivers/md/dm-raid.c                     |  3 +--
+ drivers/md/dm-snap-persistent.c          | 17 ++++++++++++++---
+ drivers/md/dm-snap-transient.c           |  3 +--
+ drivers/md/dm-snap.c                     | 14 +++++++++-----
+ drivers/md/dm.c                          | 11 +++++------
+ 9 files changed, 44 insertions(+), 27 deletions(-)
