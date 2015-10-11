@@ -1,85 +1,57 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.3-rc5
-Date: Fri, 9 Oct 2015 17:46:53 -0400
-Message-ID: <20151009214653.GA19859@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andreas Hartmann <andihartmann-KuiJ5kEpwI6ELgA04lAiVw@public.gmane.org>
+Subject: Re: [dm-devel] AMD-Vi IO_PAGE_FAULTs and ata3.00: failed command:
+	READ FPDMA QUEUED errors since Linux 4.0
+Date: Sun, 11 Oct 2015 14:23:15 +0200
+Message-ID: <561A54B3.5000504@maya.org>
+References: <20151006101356.GE12506@8bytes.org> <56141507.7040103@maya.org>
+	<56148A1B.5060506@maya.org> <20151007161022.GI28811@8bytes.org>
+	<56154DEA.5050901@maya.org> <20151008163957.GK28811@8bytes.org>
+	<5616B436.1000802@maya.org> <5616C998.1010309@maya.org>
+	<56174EA6.7000106@maya.org> <56178599.6010807@maya.org>
+	<20151009145951.GC27420@8bytes.org> <5617FD6E.70802@maya.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Joe Thornber <ejt@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <5617FD6E.70802-YKS6W9RDU/w@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org, Hannes Reinecke <hare-l3A5Bk7waGM@public.gmane.org>
+Cc: linux-pci <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hi Linus,
+On 10/09/2015 at 07:46 PM, Andreas Hartmann wrote:
+> Hello J=F6rg,
+> =
 
-The following changes since commit 9ffecb10283508260936b96022d4ee43a7798b4c:
+> On 10/09/2015 at 04:59 PM, Joerg Roedel wrote:
+>> On Fri, Oct 09, 2015 at 11:15:05AM +0200, Andreas Hartmann wrote:
+>>> v4.3-rc4 isn't usable at all for me as long as is hangs the machine on
+>>> the necessary PCI passthrough for VMs (I need them).
+>>
+>> If the fix I just sent you works, could you please test this again with
+>> a (patched) v4.3-rc4 kernel?
+> =
 
-  Linux 4.3-rc3 (2015-09-27 07:50:08 -0400)
+> Your IOMMU-patch works fine - but the ata-problem can be seen here, too.
+> Same behavior as with 4.1.10.
+> =
 
-are available in the git repository at:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm dm-4.3-fixes-2
+Ok, this patch seems to fix the ata errors (I did a lot of tests until
+now w/ v4.1.10 - but anyway I'm cautious):
 
-for you to fetch changes up to b0d3cc011e532d8c9db76cf717bcafa53c135595:
+http://thread.gmane.org/gmane.linux.scsi/104141/focus=3D104267
 
-  dm snapshot: add new persistent store option to support overflow (2015-10-09 16:57:03 -0400)
+Would be nice to have it in all kernels (as stable patch too in 4.1.x).
 
-Please pull, thanks.
-Mike
 
-----------------------------------------------------------------
-3 stable@ fixes:
-
-- DM core AB-BA deadlock fix in the device destruction path (vs device
-  creation's DM table swap).
-
-- DM raid fix to properly round up the region_size to the next
-  power-of-2.
-
-- DM cache fix for a NULL pointer seen while switching from the
-  "cleaner" cache policy.
-
-2 fixes for regressions introduced during the 4.3 merge:
-
-- request-based DM error propagation regressed due to incorrect
-  changes introduced when adding the bi_error field to bio.
-
-- DM snapshot fix to only support snapshots that overflow if the client
-  (e.g. lvm2) is prepared to deal with the associated snapshot status
-  interface change.
-
-----------------------------------------------------------------
-Joe Thornber (1):
-      dm cache: fix NULL pointer when switching from cleaner policy
-
-Junichi Nomura (2):
-      dm: fix AB-BA deadlock in __dm_destroy()
-      dm: fix request-based dm error reporting
-
-Mike Snitzer (1):
-      dm snapshot: add new persistent store option to support overflow
-
-Mikulas Patocka (1):
-      dm raid: fix round up of default region size
-
- Documentation/device-mapper/snapshot.txt | 10 +++++++---
- drivers/md/dm-cache-policy-cleaner.c     |  2 +-
- drivers/md/dm-exception-store.c          |  6 +++---
- drivers/md/dm-exception-store.h          |  5 +++--
- drivers/md/dm-raid.c                     |  3 +--
- drivers/md/dm-snap-persistent.c          | 17 ++++++++++++++---
- drivers/md/dm-snap-transient.c           |  3 +--
- drivers/md/dm-snap.c                     | 14 +++++++++-----
- drivers/md/dm.c                          | 11 +++++------
- 9 files changed, 44 insertions(+), 27 deletions(-)
+Regards,
+Andreas
