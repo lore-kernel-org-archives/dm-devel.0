@@ -1,16 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 13/18] libmultipath: add ignore_new_boot_devs
- option
-Date: Mon, 12 Oct 2015 09:08:17 +0200
-Message-ID: <561B5C61.6010201@suse.de>
+Subject: Re: [PATCH 14/18] Make use of /run depend on systemd
+Date: Mon, 12 Oct 2015 09:09:36 +0200
+Message-ID: <561B5CB0.7000105@suse.de>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
-	<1444333491-16265-14-git-send-email-bmarzins@redhat.com>
+	<1444333491-16265-15-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1444333491-16265-14-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1444333491-16265-15-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,36 +23,42 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 10/08/2015 09:44 PM, Benjamin Marzinski wrote:
-> When multipath relies on the wwids file to determine whether a device is
-> a multipath path (with "multipath -c"), it will fail the first time a
-> new multipathable device is discovered, since the wwid clearly won't be
-> in the wwids file.  This is usually fine.  Multipath will still set
-> itself up on the device, and add the wwid to the wwids file. However,
-> this causes a race, where multipath won't claim the path immediately,
-> and something else may.  Later multipath will try, and possibly succeed
-> at, setting itself up on that device.
-> =
-
-> I've seen cases where this can cause problems during boot on and
-> immediately after install, where multipath racing with LVM on an already
-> labelled device can get the machine into a state where boot fails. This
-> can be avoided if multipath simply doesn't set itself up on any devices
-> that it didn't claim (with "multipath -c") in the initramfs.  It can
-> still safely attempt to set itself up on these devices later in boot,
-> after the regular filesystem has been set up.
-> =
-
-> To allow this, this patch adds a new option, ignore_new_boot_devs.  When
-> enabled, this patch simply keeps multipath from being set up on devices
-> that aren't already in the wwids file (along with all the other checks
-> that multipath already does). This means that only devices that are
-> claimed by "multipath -c" will be used by multipath.
+> While there are other ways to decide whether to use /run or /var/run,
+> I believe this should be good enough, and it uses a Makefile define
+> that already exists.  If it doesn't work for everyone, I'll switch it
+> to actually test the directories and add a new define to CFLAGS.
 > =
 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
-Well, as SUSE is not relying on /etc/wwids during boot we don't have
-this issue :-)
+>  libmultipath/defaults.h | 4 ++++
+>  1 file changed, 4 insertions(+)
+> =
+
+> diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+> index e2d2779..a313d75 100644
+> --- a/libmultipath/defaults.h
+> +++ b/libmultipath/defaults.h
+> @@ -27,7 +27,11 @@
+>  #define MAX_CHECKINT(a)		(a << 2)
+>  =
+
+>  #define MAX_DEV_LOSS_TMO	0x7FFFFFFF
+> +#ifdef USE_SYSTEMD
+>  #define DEFAULT_PIDFILE		"/run/multipathd.pid"
+> +#else
+> +#define DEFAULT_PIDFILE         "/var/run/multipathd.pid"
+> +#endif
+>  #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
+>  #define DEFAULT_BINDINGS_FILE	"/etc/multipath/bindings"
+>  #define DEFAULT_WWIDS_FILE	"/etc/multipath/wwids"
+> =
+
+Hmpf. Again.
+
+But yeah, I guess it's okay.
+
+If only systemd would stop moving things around ...
 
 Reviewed-by: Hannes Reinecke <hare@suse.de>
 
