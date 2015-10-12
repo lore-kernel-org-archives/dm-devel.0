@@ -1,16 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 09/18] Make multipath deactivate devices
- before iscsi shutdown
-Date: Mon, 12 Oct 2015 09:05:07 +0200
-Message-ID: <561B5BA3.5030501@suse.de>
+Subject: Re: [PATCH 10/18] resize reply buffer for mutipathd help
+ message
+Date: Mon, 12 Oct 2015 09:05:34 +0200
+Message-ID: <561B5BBE.2010201@suse.de>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
-	<1444333491-16265-10-git-send-email-bmarzins@redhat.com>
+	<1444333491-16265-11-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1444333491-16265-10-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1444333491-16265-11-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,35 +24,18 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 10/08/2015 09:44 PM, Benjamin Marzinski wrote:
-> The multipath devices need to be deactivated before iscsi is shutdown,
-> otherwise the multipath devices will generate a lot of error messages
-> when it loses its iscsi path devices.
+> Unlike the other reply messages from multipathd, the generic help
+> message code couldn't resize the buffer, and the reply had grown too big
+> for the initial buffer size. This was causing memory corruption and
+> crashing multipathd instead of printing a help message. This patch
+> increases the size of the initial reply buffer, and makes the help
+> message code able to resize the buffer so this doesn't happen in the
+> future.
 > =
 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  multipathd/multipathd.service | 1 +
->  1 file changed, 1 insertion(+)
-> =
-
-> diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-> index b5b755b..fc2e009 100644
-> --- a/multipathd/multipathd.service
-> +++ b/multipathd/multipathd.service
-> @@ -1,5 +1,6 @@
->  [Unit]
->  Description=3DDevice-Mapper Multipath Device Controller
-> +Requires=3Dblk-availability.service
->  Before=3Discsi.service iscsid.service lvm2-activation-early.service
->  Before=3Dlocal-fs-pre.target
->  After=3Dmultipathd.socket
-> =
-
-
-This will limit multipath to run on root-on-iSCSI scenarios. You
-cannot run multipath on non-iSCSI and have a non-root share on iSCSI
-after this change.
-Is that intended?
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 
 Cheers,
 
