@@ -1,15 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 14/18] Make use of /run depend on systemd
-Date: Mon, 12 Oct 2015 09:09:36 +0200
-Message-ID: <561B5CB0.7000105@suse.de>
+Subject: Re: [PATCH 15/18] libmpathpersist: uninstall man page
+ correctly
+Date: Mon, 12 Oct 2015 09:09:57 +0200
+Message-ID: <561B5CC5.9080403@suse.de>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
-	<1444333491-16265-15-git-send-email-bmarzins@redhat.com>
+	<1444333491-16265-16-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1444333491-16265-15-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1444333491-16265-16-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,42 +24,39 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 10/08/2015 09:44 PM, Benjamin Marzinski wrote:
-> While there are other ways to decide whether to use /run or /var/run,
-> I believe this should be good enough, and it uses a Makefile define
-> that already exists.  If it doesn't work for everyone, I'll switch it
-> to actually test the directories and add a new define to CFLAGS.
+> the libmpathpersist man pages were being installed to
+> /usr/share/man/man3, but uninstalled from /usr/share/man/man8.
 > =
 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/defaults.h | 4 ++++
->  1 file changed, 4 insertions(+)
+>  libmpathpersist/Makefile | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 > =
 
-> diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-> index e2d2779..a313d75 100644
-> --- a/libmultipath/defaults.h
-> +++ b/libmultipath/defaults.h
-> @@ -27,7 +27,11 @@
->  #define MAX_CHECKINT(a)		(a << 2)
+> diff --git a/libmpathpersist/Makefile b/libmpathpersist/Makefile
+> index 7dcfd26..e49cdb9 100644
+> --- a/libmpathpersist/Makefile
+> +++ b/libmpathpersist/Makefile
+> @@ -40,8 +40,8 @@ install: $(LIBS)
 >  =
 
->  #define MAX_DEV_LOSS_TMO	0x7FFFFFFF
-> +#ifdef USE_SYSTEMD
->  #define DEFAULT_PIDFILE		"/run/multipathd.pid"
-> +#else
-> +#define DEFAULT_PIDFILE         "/var/run/multipathd.pid"
-> +#endif
->  #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
->  #define DEFAULT_BINDINGS_FILE	"/etc/multipath/bindings"
->  #define DEFAULT_WWIDS_FILE	"/etc/multipath/wwids"
+>  uninstall:
+>  	rm -f $(DESTDIR)$(syslibdir)/$(LIBS)
+> -	rm $(DESTDIR)$(mandir)/mpath_persistent_reserve_in.3.gz	=
+
+> -	rm $(DESTDIR)$(mandir)/mpath_persistent_reserve_out.3.gz	=
+
+> +	rm $(DESTDIR)$(man3dir)/mpath_persistent_reserve_in.3.gz	=
+
+> +	rm $(DESTDIR)$(man3dir)/mpath_persistent_reserve_out.3.gz	=
+
+>  =
+
+>  clean:
+>  	rm -f core *.a *.o =
+
 > =
-
-Hmpf. Again.
-
-But yeah, I guess it's okay.
-
-If only systemd would stop moving things around ...
 
 Reviewed-by: Hannes Reinecke <hare@suse.de>
 
