@@ -1,16 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 05/18] update multipath rules to deal with
- partition devices
-Date: Mon, 12 Oct 2015 08:42:17 +0200
-Message-ID: <561B5649.5030305@suse.de>
+Subject: Re: [PATCH 06/18] change order of multipath.rules
+Date: Mon, 12 Oct 2015 08:43:57 +0200
+Message-ID: <561B56AD.3050807@suse.de>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
-	<1444333491-16265-6-git-send-email-bmarzins@redhat.com>
+	<1444333491-16265-7-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1444333491-16265-6-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1444333491-16265-7-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,57 +23,51 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 10/08/2015 09:44 PM, Benjamin Marzinski wrote:
-> Partition devices should inherit the DM_MULTIPATH_DEVICE_PATH
-> state of their parents, and if they are part of multipath path devices,
-> they shouldn't have their own ID_FS_TYPE
+> At least for RedHat, the rule that calls scsi_id is
+> 60-persistent-storage.rules, so the multipath rule needs to come
+> after this.
 > =
 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  multipath/multipath.rules | 16 ++++++++++++----
->  1 file changed, 12 insertions(+), 4 deletions(-)
+>  multipath/Makefile | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 > =
 
-> diff --git a/multipath/multipath.rules b/multipath/multipath.rules
-> index c76e6b8..c8fb7e6 100644
-> --- a/multipath/multipath.rules
-> +++ b/multipath/multipath.rules
-> @@ -1,14 +1,22 @@
->  # Set DM_MULTIPATH_DEVICE_PATH if the device should be handled by multip=
-ath
->  SUBSYSTEM!=3D"block", GOTO=3D"end_mpath"
-> +ACTION!=3D"add|change", GOTO=3D"end_mpath"
-> +KERNEL!=3D"sd*|dasd*", GOTO=3D"end_mpath"
-> +
-> +ENV{DEVTYPE}!=3D"partition", GOTO=3D"test_dev"
-> +IMPORT{parent}=3D"DM_MULTIPATH_DEVICE_PATH"
-> +ENV{DM_MULTIPATH_DEVICE_PATH}=3D=3D"1", ENV{ID_FS_TYPE}=3D"none", \
-> +	ENV{SYSTEMD_READY}=3D"0"
-> +GOTO=3D"end_mpath"
-> +
-> +LABEL=3D"test_dev"
+> diff --git a/multipath/Makefile b/multipath/Makefile
+> index 7f18e9a..4b3de81 100644
+> --- a/multipath/Makefile
+> +++ b/multipath/Makefile
+> @@ -23,7 +23,7 @@ install:
+>  	$(INSTALL_PROGRAM) -m 755 $(EXEC) $(DESTDIR)$(bindir)/
+>  	$(INSTALL_PROGRAM) -d $(DESTDIR)$(udevrulesdir)
+>  	$(INSTALL_PROGRAM) -m 644 11-dm-mpath.rules $(DESTDIR)$(udevrulesdir)
+> -	$(INSTALL_PROGRAM) -m 644 $(EXEC).rules $(DESTDIR)$(libudevdir)/rules.d=
+/56-multipath.rules
+> +	$(INSTALL_PROGRAM) -m 644 $(EXEC).rules $(DESTDIR)$(libudevdir)/rules.d=
+/62-multipath.rules
+>  	$(INSTALL_PROGRAM) -d $(DESTDIR)$(mandir)
+>  	$(INSTALL_PROGRAM) -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
+>  	$(INSTALL_PROGRAM) -d $(DESTDIR)$(man5dir)
+> @@ -32,7 +32,7 @@ install:
+>  uninstall:
+>  	rm $(DESTDIR)$(bindir)/$(EXEC)
+>  	rm $(DESTDIR)$(udevrulesdir)/11-dm-mpath.rules
+> -	rm $(DESTDIR)$(libudevdir)/rules.d/56-multipath.rules
+> +	rm $(DESTDIR)$(libudevdir)/rules.d/62-multipath.rules
+>  	rm $(DESTDIR)$(mandir)/$(EXEC).8.gz
+>  	rm $(DESTDIR)$(man5dir)/$(EXEC).conf.5.gz
 >  =
 
->  ENV{MPATH_SBIN_PATH}=3D"/sbin"
->  TEST!=3D"$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}=3D"/usr/=
-sbin"
->  =
-
-> -SUBSYSTEM=3D=3D"block", ACTION=3D=3D"add|change", KERNEL=3D=3D"sd*|dasd*=
-", \
-> -	ENV{DM_MULTIPATH_DEVICE_PATH}!=3D"1", \
-> +ENV{DM_MULTIPATH_DEVICE_PATH}!=3D"1", \
->  	PROGRAM=3D=3D"$env{MPATH_SBIN_PATH}/multipath -u %k", \
-> -	ENV{DM_MULTIPATH_DEVICE_PATH}=3D"1" \
-> -	ENV{ID_FS_TYPE}=3D"none" \
-> +	ENV{DM_MULTIPATH_DEVICE_PATH}=3D"1", ENV{ID_FS_TYPE}=3D"none", \
->  	ENV{SYSTEMD_READY}=3D"0"
->  =
-
->  LABEL=3D"end_mpath"
 > =
 
-Reviewed-by: Hannes Reinecke <hare@suse.de>
+NACK.
+
+56-multipath.rules has been placed bevor persistent storage so that
+it can override settings in 60-persistent-storage.rules.
+
+If you need some additional settings to fixup things after that
+please add a new rules file.
 
 Cheers,
 
