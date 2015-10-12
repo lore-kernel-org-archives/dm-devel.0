@@ -1,16 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 11/18] Add libmpathcmd library and use it
-	internally
-Date: Mon, 12 Oct 2015 09:06:20 +0200
-Message-ID: <561B5BEC.2080909@suse.de>
+Subject: Re: [PATCH 12/18] add raw format multipathd commands
+Date: Mon, 12 Oct 2015 09:06:48 +0200
+Message-ID: <561B5C08.5040507@suse.de>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
-	<1444333491-16265-12-git-send-email-bmarzins@redhat.com>
+	<1444333491-16265-13-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1444333491-16265-12-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1444333491-16265-13-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,18 +23,22 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 10/08/2015 09:44 PM, Benjamin Marzinski wrote:
-> Other programs would like to communicate with multipathd to issue
-> command or check status.  Instead of having them exec multipathd,
-> I've pulled the code that sends commands and receives replies from
-> multipathd into its own library.  I've made the multipath tools use
-> this library internally as well.
+> This patch adds the following multipathd interactive commands
+> =
+
+> show paths raw format $fmt
+> show maps raw format $fmt
+> =
+
+> These commands work just like the regular "show ... format"
+> commands, except that they don't print a header, and don't add
+> any extra padding that isn't in the format string.  This should
+> make it easier for programs wanting to parse the output from
+> these commands.
 > =
 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
-
-Good idea.
-
 Reviewed-by: Hannes Reinecke <hare@suse.de>
 
 Cheers,
