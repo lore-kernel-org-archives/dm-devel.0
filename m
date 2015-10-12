@@ -1,83 +1,52 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 14/18] Make use of /run depend on systemd
-Date: Mon, 12 Oct 2015 10:35:40 +0200
-Message-ID: <561B70DC.8040902@suse.de>
-References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>	<1444333491-16265-15-git-send-email-bmarzins@redhat.com>	<561B5CB0.7000105@suse.de>
-	<561B626E.9080406@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andreas Hartmann <andihartmann@freenet.de>
+Subject: Re: [dm-devel] AMD-Vi IO_PAGE_FAULTs and ata3.00: failed command:
+ READ FPDMA QUEUED errors since Linux 4.0
+Date: Mon, 12 Oct 2015 14:07:20 +0200
+Message-ID: <561BA278.4010702@maya.org>
+References: <20151006101356.GE12506@8bytes.org> <56141507.7040103@maya.org>
+ <56148A1B.5060506@maya.org> <20151007161022.GI28811@8bytes.org>
+ <56154DEA.5050901@maya.org> <20151008163957.GK28811@8bytes.org>
+ <5616B436.1000802@maya.org> <5616C998.1010309@maya.org>
+ <56174EA6.7000106@maya.org> <56178599.6010807@maya.org>
+ <20151009145951.GC27420@8bytes.org> <5617FD6E.70802@maya.org>
+ <561A54B3.5000504@maya.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <561B626E.9080406@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-pci-owner@vger.kernel.org>
+In-Reply-To: <561A54B3.5000504@maya.org>
+Sender: linux-pci-owner@vger.kernel.org
+To: Joerg Roedel <joro@8bytes.org>, James.Bottomley@HansenPartnership.com, Hannes Reinecke <hare@suse.de>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, iommu@lists.linux-foundation.org, Leo Duran <leo.duran@amd.com>, Christoph Hellwig <hch@lst.de>, device-mapper development <dm-devel@redhat.com>, Milan Broz <mbroz@redhat.com>, Jens Axboe <axboe@fb.com>, linux-pci <linux-pci@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: dm-devel.ids
 
-On 10/12/2015 09:34 AM, Zdenek Kabelac wrote:
-> Dne 12.10.2015 v 09:09 Hannes Reinecke napsal(a):
->> On 10/08/2015 09:44 PM, Benjamin Marzinski wrote:
->>> While there are other ways to decide whether to use /run or
->>> /var/run,
->>> I believe this should be good enough, and it uses a Makefile define
->>> that already exists.  If it doesn't work for everyone, I'll
->>> switch it
->>> to actually test the directories and add a new define to CFLAGS.
->>>
->>> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
->>> ---
->>>   libmultipath/defaults.h | 4 ++++
->>>   1 file changed, 4 insertions(+)
->>>
->>> diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
->>> index e2d2779..a313d75 100644
->>> --- a/libmultipath/defaults.h
->>> +++ b/libmultipath/defaults.h
->>> @@ -27,7 +27,11 @@
->>>   #define MAX_CHECKINT(a)        (a << 2)
->>>
->>>   #define MAX_DEV_LOSS_TMO    0x7FFFFFFF
->>> +#ifdef USE_SYSTEMD
->>>   #define DEFAULT_PIDFILE        "/run/multipathd.pid"
->>> +#else
->>> +#define DEFAULT_PIDFILE         "/var/run/multipathd.pid"
->>> +#endif
->>>   #define DEFAULT_CONFIGFILE    "/etc/multipath.conf"
->>>   #define DEFAULT_BINDINGS_FILE    "/etc/multipath/bindings"
->>>   #define DEFAULT_WWIDS_FILE    "/etc/multipath/wwids"
->>>
->> Hmpf. Again.
+On 10/11/2015 at 02:23 PM, Andreas Hartmann wrote:
+> On 10/09/2015 at 07:46 PM, Andreas Hartmann wrote:
+>> Hello J=F6rg,
 >>
->> But yeah, I guess it's okay.
+>> On 10/09/2015 at 04:59 PM, Joerg Roedel wrote:
+>>> On Fri, Oct 09, 2015 at 11:15:05AM +0200, Andreas Hartmann wrote:
+>>>> v4.3-rc4 isn't usable at all for me as long as is hangs the machin=
+e on
+>>>> the necessary PCI passthrough for VMs (I need them).
+>>>
+>>> If the fix I just sent you works, could you please test this again =
+with
+>>> a (patched) v4.3-rc4 kernel?
 >>
->> If only systemd would stop moving things around ...
+>> Your IOMMU-patch works fine - but the ata-problem can be seen here, =
+too.
+>> Same behavior as with 4.1.10.
 >>
-> =
+>=20
+> Ok, this patch seems to fix the ata errors (I did a lot of tests unti=
+l
+> now w/ v4.1.10 - but anyway I'm cautious):
+>=20
+> http://thread.gmane.org/gmane.linux.scsi/104141/focus=3D104267
 
-> I assume things like this should be detected at configure time and
-> used  via  'AC_DEFINE()' m4 macro.
-> (Check i.e. lvm2 configure.in file)
-> (As user may wish to even use completely different directory, to
-> make a parallel usable binary)
-> =
+-> Forget it - doesn't fix it.
 
-Yes, please!
 
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		               zSeries & Storage
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+Regards,
+Andreas
