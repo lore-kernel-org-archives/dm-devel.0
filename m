@@ -1,15 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 07/18] make kpartx -d remove all partitions
-Date: Mon, 12 Oct 2015 08:46:18 +0200
-Message-ID: <561B573A.4020405@suse.de>
+Subject: Re: [PATCH 09/18] Make multipath deactivate devices
+ before iscsi shutdown
+Date: Mon, 12 Oct 2015 09:05:07 +0200
+Message-ID: <561B5BA3.5030501@suse.de>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
-	<1444333491-16265-8-git-send-email-bmarzins@redhat.com>
+	<1444333491-16265-10-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1444333491-16265-8-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1444333491-16265-10-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,48 +24,35 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 10/08/2015 09:44 PM, Benjamin Marzinski wrote:
-> Currently kpartx -d only removes the partitions that have entries in the
-> partition table.  If you remove a partition from the device, and then
-> run kpartx -d, it will not delete that partition (kpartx -u will).  I don=
-'t
-> see any value in leaving partition devices for partitions that don't even
-> exist anymore, so this patch makes -d delete all partitions.
+> The multipath devices need to be deactivated before iscsi is shutdown,
+> otherwise the multipath devices will generate a lot of error messages
+> when it loses its iscsi path devices.
 > =
 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  kpartx/kpartx.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+>  multipathd/multipathd.service | 1 +
+>  1 file changed, 1 insertion(+)
 > =
 
-> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-> index d69f9af..a9d4c98 100644
-> --- a/kpartx/kpartx.c
-> +++ b/kpartx/kpartx.c
-> @@ -426,7 +426,7 @@ main(int argc, char **argv){
->  			break;
->  =
-
->  		case DELETE:
-> -			for (j =3D n-1; j >=3D 0; j--) {
-> +			for (j =3D MAXSLICES-1; j >=3D 0; j--) {
->  				if (safe_sprintf(partname, "%s%s%d",
->  					     mapname, delim, j+1)) {
->  					fprintf(stderr, "partname too small\n");
-> @@ -434,7 +434,7 @@ main(int argc, char **argv){
->  				}
->  				strip_slash(partname);
->  =
-
-> -				if (!slices[j].size || !dm_map_present(partname))
-> +				if (!dm_map_present(partname))
->  					continue;
->  =
-
->  				if (!dm_simplecmd(DM_DEVICE_REMOVE, partname,
+> diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
+> index b5b755b..fc2e009 100644
+> --- a/multipathd/multipathd.service
+> +++ b/multipathd/multipathd.service
+> @@ -1,5 +1,6 @@
+>  [Unit]
+>  Description=3DDevice-Mapper Multipath Device Controller
+> +Requires=3Dblk-availability.service
+>  Before=3Discsi.service iscsid.service lvm2-activation-early.service
+>  Before=3Dlocal-fs-pre.target
+>  After=3Dmultipathd.socket
 > =
 
-Reviewed-by: Hannes Reinecke <hare@suse.de>
+
+This will limit multipath to run on root-on-iSCSI scenarios. You
+cannot run multipath on non-iSCSI and have a non-root share on iSCSI
+after this change.
+Is that intended?
 
 Cheers,
 
