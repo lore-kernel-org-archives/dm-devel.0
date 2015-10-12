@@ -1,15 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 06/18] change order of multipath.rules
-Date: Mon, 12 Oct 2015 08:43:57 +0200
-Message-ID: <561B56AD.3050807@suse.de>
+Subject: Re: [PATCH 07/18] make kpartx -d remove all partitions
+Date: Mon, 12 Oct 2015 08:46:18 +0200
+Message-ID: <561B573A.4020405@suse.de>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
-	<1444333491-16265-7-git-send-email-bmarzins@redhat.com>
+	<1444333491-16265-8-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1444333491-16265-7-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1444333491-16265-8-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,51 +23,48 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 10/08/2015 09:44 PM, Benjamin Marzinski wrote:
-> At least for RedHat, the rule that calls scsi_id is
-> 60-persistent-storage.rules, so the multipath rule needs to come
-> after this.
+> Currently kpartx -d only removes the partitions that have entries in the
+> partition table.  If you remove a partition from the device, and then
+> run kpartx -d, it will not delete that partition (kpartx -u will).  I don=
+'t
+> see any value in leaving partition devices for partitions that don't even
+> exist anymore, so this patch makes -d delete all partitions.
 > =
 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  multipath/Makefile | 4 ++--
+>  kpartx/kpartx.c | 4 ++--
 >  1 file changed, 2 insertions(+), 2 deletions(-)
 > =
 
-> diff --git a/multipath/Makefile b/multipath/Makefile
-> index 7f18e9a..4b3de81 100644
-> --- a/multipath/Makefile
-> +++ b/multipath/Makefile
-> @@ -23,7 +23,7 @@ install:
->  	$(INSTALL_PROGRAM) -m 755 $(EXEC) $(DESTDIR)$(bindir)/
->  	$(INSTALL_PROGRAM) -d $(DESTDIR)$(udevrulesdir)
->  	$(INSTALL_PROGRAM) -m 644 11-dm-mpath.rules $(DESTDIR)$(udevrulesdir)
-> -	$(INSTALL_PROGRAM) -m 644 $(EXEC).rules $(DESTDIR)$(libudevdir)/rules.d=
-/56-multipath.rules
-> +	$(INSTALL_PROGRAM) -m 644 $(EXEC).rules $(DESTDIR)$(libudevdir)/rules.d=
-/62-multipath.rules
->  	$(INSTALL_PROGRAM) -d $(DESTDIR)$(mandir)
->  	$(INSTALL_PROGRAM) -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
->  	$(INSTALL_PROGRAM) -d $(DESTDIR)$(man5dir)
-> @@ -32,7 +32,7 @@ install:
->  uninstall:
->  	rm $(DESTDIR)$(bindir)/$(EXEC)
->  	rm $(DESTDIR)$(udevrulesdir)/11-dm-mpath.rules
-> -	rm $(DESTDIR)$(libudevdir)/rules.d/56-multipath.rules
-> +	rm $(DESTDIR)$(libudevdir)/rules.d/62-multipath.rules
->  	rm $(DESTDIR)$(mandir)/$(EXEC).8.gz
->  	rm $(DESTDIR)$(man5dir)/$(EXEC).conf.5.gz
+> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+> index d69f9af..a9d4c98 100644
+> --- a/kpartx/kpartx.c
+> +++ b/kpartx/kpartx.c
+> @@ -426,7 +426,7 @@ main(int argc, char **argv){
+>  			break;
 >  =
 
+>  		case DELETE:
+> -			for (j =3D n-1; j >=3D 0; j--) {
+> +			for (j =3D MAXSLICES-1; j >=3D 0; j--) {
+>  				if (safe_sprintf(partname, "%s%s%d",
+>  					     mapname, delim, j+1)) {
+>  					fprintf(stderr, "partname too small\n");
+> @@ -434,7 +434,7 @@ main(int argc, char **argv){
+>  				}
+>  				strip_slash(partname);
+>  =
+
+> -				if (!slices[j].size || !dm_map_present(partname))
+> +				if (!dm_map_present(partname))
+>  					continue;
+>  =
+
+>  				if (!dm_simplecmd(DM_DEVICE_REMOVE, partname,
 > =
 
-NACK.
-
-56-multipath.rules has been placed bevor persistent storage so that
-it can override settings in 60-persistent-storage.rules.
-
-If you need some additional settings to fixup things after that
-please add a new rules file.
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 
 Cheers,
 
