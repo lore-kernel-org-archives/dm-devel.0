@@ -1,32 +1,68 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Next-20151009 - crash during boot
-Date: Mon, 12 Oct 2015 18:14:35 -0400
-Message-ID: <20151012221435.GA9456@redhat.com>
-References: <7951.1444686608@turing-police.cc.vt.edu>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Sudip Mukherjee <sudipm.mukherjee@gmail.com>
+Subject: [PATCH] dm snapshot: fix memory leak
+Date: Tue, 13 Oct 2015 13:33:08 +0530
+Message-ID: <1444723388-1570-1-git-send-email-sudipm.mukherjee@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <7951.1444686608@turing-police.cc.vt.edu>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Valdis Kletnieks <Valdis.Kletnieks@vt.edu>
-Cc: Alasdair Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Sudip Mukherjee <sudipm.mukherjee@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, Oct 12 2015 at  5:50pm -0400,
-Valdis Kletnieks <Valdis.Kletnieks@vt.edu> wrote:
+If wrong option is given then we are returning but we missed releasing
+the workqueue and pstore.
+Add an error path and use it to correctly release resources on failure.
 
-> Next-20151009 crashes early in boot (right after I feed cryptsetup
-> the passphrase for my root filesystem).
-> 
-> (Yes, the kernel is 10 commits past linux-next - they're all cleanup patches for
-> drivers/staging that shouldn't enter into it)
-> 
-> It appears to possibly be the same one reported by the "Linux Test Robot",
-> which called this out:
-> 
-> commit e817ef9b89e5bbfdb2a67ca9896909f414b2af91 ("dm ioctl: use kvfree() in free_params()")
+Fixes: b0d3cc011e53 ("dm snapshot: add new persistent store option to support overflow")
+Signed-off-by: Sudip Mukherjee <sudip@vectorindia.org>
+---
+ drivers/md/dm-snap-persistent.c | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
 
-Yes, that commit was dropped last week.  Today's linux-next won't have
-this problem.  Feel free to revert e817ef9b89e5bbfdb2a67ca9896909 from
-your local tree to work-around this.
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index 229be55..5ff7c23 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -847,6 +847,7 @@ static void persistent_drop_snapshot(struct dm_exception_store *store)
+ static int persistent_ctr(struct dm_exception_store *store, char *options)
+ {
+ 	struct pstore *ps;
++	int ret;
+ 
+ 	/* allocate the pstore */
+ 	ps = kzalloc(sizeof(*ps), GFP_KERNEL);
+@@ -868,9 +869,9 @@ static int persistent_ctr(struct dm_exception_store *store, char *options)
+ 
+ 	ps->metadata_wq = alloc_workqueue("ksnaphd", WQ_MEM_RECLAIM, 0);
+ 	if (!ps->metadata_wq) {
+-		kfree(ps);
+ 		DMERR("couldn't start header metadata update thread");
+-		return -ENOMEM;
++		ret = -ENOMEM;
++		goto err_free_ps;
+ 	}
+ 
+ 	if (options) {
+@@ -879,13 +880,20 @@ static int persistent_ctr(struct dm_exception_store *store, char *options)
+ 			store->userspace_supports_overflow = true;
+ 		else {
+ 			DMERR("Unsupported persistent store option: %s", options);
+-			return -EINVAL;
++			ret = -EINVAL;
++			goto err_option;
+ 		}
+ 	}
+ 
+ 	store->context = ps;
+ 
+ 	return 0;
++
++err_option:
++	destroy_workqueue(ps->metadata_wq);
++err_free_ps:
++	kfree(ps);
++	return ret;
+ }
+ 
+ static unsigned persistent_status(struct dm_exception_store *store,
+-- 
+1.9.1
