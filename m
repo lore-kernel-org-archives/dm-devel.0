@@ -1,24 +1,42 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH 3/6] sd: implement the Persistent
-	Reservation API
-Date: Thu, 15 Oct 2015 17:32:27 +0200
-Message-ID: <20151015153227.GA3536@lst.de>
-References: <1444911052-9423-1-git-send-email-hch@lst.de> <1444911052-9423-4-git-send-email-hch@lst.de> <561FC6AA.3080508@sandisk.com>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [PATCH] fs/block_dev.c: Remove WARN_ON() when inode writeback fails
+Date: Thu, 15 Oct 2015 12:23:06 -0400
+Message-ID: <x498u74gkyd.fsf@segfault.boston.devel.redhat.com>
+References: <20150622184118.GA11277@redhat.com>
+	<20150810193725.GC19173@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <561FC6AA.3080508-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Bart Van Assche <bart.vanassche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, axboe-b10kYP2dOMg@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, keith.busch-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150810193725.GC19173@redhat.com> (Vivek Goyal's message of
+	"Mon, 10 Aug 2015 15:37:25 -0400")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-On Thu, Oct 15, 2015 at 08:30:50AM -0700, Bart Van Assche wrote:
-> Can you explain why this functionality has been added to the sd driver 
-> instead of the SCSI core ? Aren't persistent reservations a concept that 
-> applies to all SCSI device types ?
+Vivek Goyal <vgoyal@redhat.com> writes:
 
-In theory it does.  In practice it's only used by disks/arrays and tapes,
-and as tapes don't have a struct block_device this isn't going to be useful
-for them.
+> Hi Jens,
+>
+> Do you have concerns with this patch? If not, can you please include it.
+
+The concept is fine, but:
+
+>> -static void bdev_write_inode(struct inode *inode)
+>> +static void bdev_write_inode(struct block_device *bdev)
+>>  {
+>> +	struct inode *inode = bdev->bd_inode;
+>> +	int ret;
+>> +
+>>  	spin_lock(&inode->i_lock);
+>>  	while (inode->i_state & I_DIRTY) {
+>>  		spin_unlock(&inode->i_lock);
+>> -		WARN_ON_ONCE(write_inode_now(inode, true));
+>> +		ret = write_inode_now(inode, true);
+>> +		if (ret) {
+>> +			char name[BDEVNAME_SIZE] = "";
+
+that initializer isn't necessary.
+
+Cheers,
+Jeff
