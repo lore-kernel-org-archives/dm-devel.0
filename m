@@ -1,193 +1,83 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v4 18/79] dm-log-userspace.h: use __u32, __s32 and __u64 from linux/types.h
-Date: Thu, 15 Oct 2015 07:55:56 +0200
-Message-ID: <1444888618-4506-19-git-send-email-mikko.rapeli@iki.fi>
-References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] block: flush queued bios when the process blocks
+Date: Thu, 15 Oct 2015 04:06:10 -0400
+Message-ID: <20151015080610.GA25536@redhat.com>
+References: <5384CE82.90601@kernel.dk>
+ <alpine.LRH.2.02.1405291944090.22123@file01.intranet.prod.int.rdu2.redhat.com>
+ <20151005205943.GB25762@redhat.com>
+ <alpine.LRH.2.02.1510061410450.27916@file01.intranet.prod.int.rdu2.redhat.com>
+ <20151006185016.GA31955@redhat.com>
+ <20151006201637.GA4158@redhat.com>
+ <alpine.LRH.2.02.1510081100510.9641@file01.intranet.prod.int.rdu2.redhat.com>
+ <20151008150859.GA11770@redhat.com>
+ <20151009195203.GA18790@redhat.com>
+ <CACVXFVPgvKEJo1dPigk303=GGVc3fJnuEk+QP+VEf=xa_Lz+vA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
+Content-Disposition: inline
+In-Reply-To: <CACVXFVPgvKEJo1dPigk303=GGVc3fJnuEk+QP+VEf=xa_Lz+vA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: mikko.rapeli@iki.fi, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-api@vger.kernel.org
+To: Ming Lei <tom.leiming@gmail.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-=46ixes userspace compilation errors like:
+On Wed, Oct 14 2015 at 11:27pm -0400,
+Ming Lei <tom.leiming@gmail.com> wrote:
 
-linux/dm-log-userspace.h:416:2: error: unknown type name =E2=80=98uint6=
-4_t=E2=80=99
+> On Sat, Oct 10, 2015 at 3:52 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+> >
+> > Turns out that this change:
+> > http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=wip&id=2639638c77768a86216be456c2764e32a2bcd841
+> >
+> > needed to be reverted with:
+> > http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=wip&id=ad3ccd760da7c05b90775372f9b39dc2964086fe
+> >
+> > Because nested plugs caused generic_make_request()'s onstack bio_list to
+> > go out of scope (blk_finish_plug() wouldn't actually flush the list
+> > within generic_make_request because XFS already added an outermost
+> > plug).
+> 
+> Looks you should have defined bio_list in plug as
+> 
+>                'struct bio_list bio_list'
+> 
+> instead of one pointer.
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
----
- include/uapi/linux/dm-log-userspace.h | 43 ++++++++++++++++++---------=
---------
- 1 file changed, 22 insertions(+), 21 deletions(-)
+I realized that and fixed it (see commit ad3ccd760da7c05b90 referenced
+above that does exactly that).  That wasn't the problem.
 
-diff --git a/include/uapi/linux/dm-log-userspace.h b/include/uapi/linux=
-/dm-log-userspace.h
-index 0fa0d9e..c5ff216 100644
---- a/include/uapi/linux/dm-log-userspace.h
-+++ b/include/uapi/linux/dm-log-userspace.h
-@@ -7,6 +7,7 @@
- #ifndef __DM_LOG_USERSPACE_H__
- #define __DM_LOG_USERSPACE_H__
-=20
-+#include <linux/types.h>
- #include <linux/dm-ioctl.h> /* For DM_UUID_LEN */
-=20
- /*
-@@ -147,12 +148,12 @@
-=20
- /*
-  * DM_ULOG_GET_REGION_SIZE corresponds to (found in dm-dirty-log.h):
-- * uint32_t (*get_region_size)(struct dm_dirty_log *log);
-+ * __u32 (*get_region_size)(struct dm_dirty_log *log);
-  *
-  * Payload-to-userspace:
-  *	None.
-  * Payload-to-kernel:
-- *	uint64_t - contains the region size
-+ *	__u64 - contains the region size
-  *
-  * The region size is something that was determined at constructor tim=
-e.
-  * It is returned in the payload area and 'data_size' is set to
-@@ -168,11 +169,11 @@
-  * int (*is_clean)(struct dm_dirty_log *log, region_t region);
-  *
-  * Payload-to-userspace:
-- *	uint64_t - the region to get clean status on
-+ *	__u64 - the region to get clean status on
-  * Payload-to-kernel:
-  *	int64_t  - 1 if clean, 0 otherwise
-  *
-- * Payload is sizeof(uint64_t) and contains the region for which the c=
-lean
-+ * Payload is sizeof(__u64) and contains the region for which the clea=
-n
-  * status is being made.
-  *
-  * When the request has been processed, user-space must return the
-@@ -187,7 +188,7 @@
-  *		  int can_block);
-  *
-  * Payload-to-userspace:
-- *	uint64_t - the region to get sync status on
-+ *	__u64 - the region to get sync status on
-  * Payload-to-kernel:
-  *	int64_t - 1 if in-sync, 0 otherwise
-  *
-@@ -203,7 +204,7 @@
-  * Payload-to-userspace:
-  *	If the 'integrated_flush' directive is present in the constructor
-  *	table, the payload is as same as DM_ULOG_MARK_REGION:
-- *		uint64_t [] - region(s) to mark
-+ *		__u64 [] - region(s) to mark
-  *	else
-  *		None
-  * Payload-to-kernel:
-@@ -225,13 +226,13 @@
-  * void (*mark_region)(struct dm_dirty_log *log, region_t region);
-  *
-  * Payload-to-userspace:
-- *	uint64_t [] - region(s) to mark
-+ *	__u64 [] - region(s) to mark
-  * Payload-to-kernel:
-  *	None.
-  *
-  * Incoming payload contains the one or more regions to mark dirty.
-  * The number of regions contained in the payload can be determined fr=
-om
-- * 'data_size/sizeof(uint64_t)'.
-+ * 'data_size/sizeof(__u64)'.
-  *
-  * When the request has been processed, user-space must return the
-  * dm_ulog_request to the kernel - setting the 'error' field and clear=
-ing
-@@ -244,13 +245,13 @@
-  * void (*clear_region)(struct dm_dirty_log *log, region_t region);
-  *
-  * Payload-to-userspace:
-- *	uint64_t [] - region(s) to clear
-+ *	__u64 [] - region(s) to clear
-  * Payload-to-kernel:
-  *	None.
-  *
-  * Incoming payload contains the one or more regions to mark clean.
-  * The number of regions contained in the payload can be determined fr=
-om
-- * 'data_size/sizeof(uint64_t)'.
-+ * 'data_size/sizeof(__u64)'.
-  *
-  * When the request has been processed, user-space must return the
-  * dm_ulog_request to the kernel - setting the 'error' field and clear=
-ing
-@@ -267,7 +268,7 @@
-  * Payload-to-kernel:
-  *	{
-  *		int64_t i; -- 1 if recovery necessary, 0 otherwise
-- *		uint64_t r; -- The region to recover if i=3D1
-+ *		__u64 r; -- The region to recover if i=3D1
-  *	}
-  * 'data_size' should be set appropriately.
-  *
-@@ -283,7 +284,7 @@
-  *
-  * Payload-to-userspace:
-  *	{
-- *		uint64_t - region to set sync state on
-+ *		__u64 - region to set sync state on
-  *		int64_t  - 0 if not-in-sync, 1 if in-sync
-  *	}
-  * Payload-to-kernel:
-@@ -302,7 +303,7 @@
-  * Payload-to-userspace:
-  *	None.
-  * Payload-to-kernel:
-- *	uint64_t - the number of in-sync regions
-+ *	__u64 - the number of in-sync regions
-  *
-  * No incoming payload.  Kernel-bound payload contains the number of
-  * regions that are in-sync (in a size_t).
-@@ -350,11 +351,11 @@
-  * int (*is_remote_recovering)(struct dm_dirty_log *log, region_t regi=
-on);
-  *
-  * Payload-to-userspace:
-- *	uint64_t - region to determine recovery status on
-+ *	__u64 - region to determine recovery status on
-  * Payload-to-kernel:
-  *	{
-  *		int64_t is_recovering;  -- 0 if no, 1 if yes
-- *		uint64_t in_sync_hint;  -- lowest region still needing resync
-+ *		__u64 in_sync_hint;  -- lowest region still needing resync
-  *	}
-  *
-  * When the request has been processed, user-space must return the
-@@ -413,16 +414,16 @@ struct dm_ulog_request {
- 	 * differentiate between logs that are being swapped and have the
- 	 * same 'uuid'.  (Think "live" and "inactive" device-mapper tables.)
- 	 */
--	uint64_t luid;
-+	__u64 luid;
- 	char uuid[DM_UUID_LEN];
- 	char padding[3];        /* Padding because DM_UUID_LEN =3D 129 */
-=20
--	uint32_t version;       /* See DM_ULOG_REQUEST_VERSION */
--	int32_t error;          /* Used to report back processing errors */
-+	__u32 version;       /* See DM_ULOG_REQUEST_VERSION */
-+	__s32 error;          /* Used to report back processing errors */
-=20
--	uint32_t seq;           /* Sequence number for request */
--	uint32_t request_type;  /* DM_ULOG_* defined above */
--	uint32_t data_size;     /* How much data (not including this struct) =
-*/
-+	__u32 seq;           /* Sequence number for request */
-+	__u32 request_type;  /* DM_ULOG_* defined above */
-+	__u32 data_size;     /* How much data (not including this struct) */
-=20
- 	char data[0];
- };
---=20
-2.5.0
+> >
+> > But even after fixing that I then hit issues with these changes now
+> > resulting in imperfect 'in_generic_make_request' accounting that happens
+> > lazily once the outermost plug completes blk_finish_plug.  manifested as
+> > dm-bufio.c:dm_bufio_prefetch's BUG_ON(dm_bufio_in_request()); hitting.
+> 
+> Looks this problem should be related with above 'bio_list' definition too.
+
+No, as I explained it was due to the nested plug:
+
+> >
+> > Basically using the blk-core's onstack plugging isn't workable for
+> > fixing this deadlock and we're back to having to seriously consider
+> > this (with its additional hook in the scheduler)
+
+To elaborate, for the code in DM (and other subsystems like bcache) that
+rely on accurate accounting of whether we're actively _in_
+generic_make_request: using plug to store/manage the bio_list isn't
+workable because nested plugs change the lifetime of when the bio_list
+is processed (as I implemented it -- which was to respect nested plugs).
+I could've forced the issue by making the bio_list get processed
+regardless of nesting but that would've made the onstack plugging much
+more convoluted (duality between nested vs not just for bio_list's
+benefit and for what gain?  Simply to avoid an extra conditional
+immediately in the scheduler?  That conditional was still added anyway
+but just as part of blk_needs_flush_plug so in the end there wasn't any
+benefit!).
+
+Hopefully my middle-of-the-night reply is coherent and helped to clarify
+my position that (ab)using blk_plug for the bio_list management is
+_really_ awkward. ;)
+
+Thanks,
+Mike
