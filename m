@@ -1,228 +1,145 @@
-From: Xieyingtai <xieyingtai@huawei.com>
-Subject: fix unmatched params when mpath prout rollback
-Date: Thu, 15 Oct 2015 11:40:50 +0000
-Message-ID: <AF7C226D2A4F8B4D913D33FF7150AE051D6B0A33@szxeml556-mbs.china.huawei.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8758185408692662370=="
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: zh-CN
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 6/6] NVMe: Add persistent reservation ops
+Date: Thu, 15 Oct 2015 14:10:52 +0200
+Message-ID: <1444911052-9423-7-git-send-email-hch@lst.de>
+References: <1444911052-9423-1-git-send-email-hch@lst.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1444911052-9423-1-git-send-email-hch@lst.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: axboe@fb.com
+Cc: keith.busch@intel.com, linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
---===============8758185408692662370==
-Content-Language: zh-CN
-Content-Type: multipart/alternative;
-	boundary="_000_AF7C226D2A4F8B4D913D33FF7150AE051D6B0A33szxeml556mbschi_"
+From: Keith Busch <keith.busch@intel.com>
 
---_000_AF7C226D2A4F8B4D913D33FF7150AE051D6B0A33szxeml556mbschi_
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-Mpath prout register may rollback, but the params are not matched in
-creating thread for each path.
-
+Signed-off-by: Keith Busch <keith.busch@intel.com>
+[hch: rebased, set PTPL=1]
+Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
-libmpathpersist/mpath_persist.c | 2 +-
-1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/nvme/host/pci.c | 95 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 95 insertions(+)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persis=
-t.c
-index 113cf7f..ac02494 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -519,7 +519,7 @@ int mpath_prout_reg(struct multipath *mpp,int rq_servac=
-t, int rq_scope,
-                                memset(&thread[i].param.paramp->sa_key, 0, =
-8);
-                                thread[i].param.status =3D MPATH_PR_SUCCESS=
-;
-                                rc =3D pthread_create(&thread[i].id, &attr,=
- mpath_prout_pthread_fn,
--                                               (void *)(&thread[count].par=
-am));
-+                                               (void *)(&thread[i].param))=
-;
-                                if (rc){
-                                        condlog (0, "%s: failed to create t=
-hread for rollback. %d",  mpp->wwid, rc);
-                                }
---
-
-dm-devel mailing list
-
-dm-devel@redhat.com<mailto:dm-devel@redhat.com>
-
-https://www.redhat.com/mailman/listinfo/dm-devel
-
---_000_AF7C226D2A4F8B4D913D33FF7150AE051D6B0A33szxeml556mbschi_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
-//www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
->
-<meta name=3D"Generator" content=3D"Microsoft Word 12 (filtered medium)">
-<style><!--
-/* Font Definitions */
-@font-face
-	{font-family:SimSun;
-	panose-1:2 1 6 0 3 1 1 1 1 1;}
-@font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-@font-face
-	{font-family:SimSun;
-	panose-1:2 1 6 0 3 1 1 1 1 1;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0cm;
-	margin-bottom:.0001pt;
-	text-align:justify;
-	text-justify:inter-ideograph;
-	font-size:10.5pt;
-	font-family:"Calibri","sans-serif";}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:purple;
-	text-decoration:underline;}
-p.MsoPlainText, li.MsoPlainText, div.MsoPlainText
-	{mso-style-priority:99;
-	mso-style-link:"\7EAF\6587\672C Char";
-	margin:0cm;
-	margin-bottom:.0001pt;
-	font-size:10.5pt;
-	font-family:"Calibri","sans-serif";}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"Calibri","sans-serif";
-	color:windowtext;}
-span.Char
-	{mso-style-name:"\7EAF\6587\672C Char";
-	mso-style-priority:99;
-	mso-style-link:\7EAF\6587\672C;
-	font-family:"Calibri","sans-serif";}
-.MsoChpDefault
-	{mso-style-type:export-only;}
-/* Page Definitions */
-@page WordSection1
-	{size:612.0pt 792.0pt;
-	margin:72.0pt 90.0pt 72.0pt 90.0pt;}
-div.WordSection1
-	{page:WordSection1;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]-->
-</head>
-<body lang=3D"ZH-CN" link=3D"blue" vlink=3D"purple" style=3D"text-justify-t=
-rim:punctuation">
-<div class=3D"WordSection1">
-<p class=3D"MsoNormal"><span lang=3D"EN-US">Mpath prout register may rollba=
-ck, but the params are not matched in<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">creating thread for each path.<=
-o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">---<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">libmpathpersist/mpath_persist.c=
- | 2 &#43;-<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">1 file changed, 1 insertion(&#4=
-3;), 1 deletion(-)<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">diff --git a/libmpathpersist/mp=
-ath_persist.c b/libmpathpersist/mpath_persist.c<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">index 113cf7f..ac02494 100644<o=
-:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">--- a/libmpathpersist/mpath_per=
-sist.c<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">&#43;&#43;&#43; b/libmpathpersi=
-st/mpath_persist.c<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">@@ -519,7 &#43;519,7 @@ int mpa=
-th_prout_reg(struct multipath *mpp,int rq_servact, int rq_scope,<o:p></o:p>=
-</span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp; memset(&amp;thread[i].param.paramp-&gt;sa_key, 0, 8);<o:p></o:p></spa=
-n></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp; thread[i].param.status =3D MPATH_PR_SUCCESS;<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp; rc =3D pthread_create(&amp;thread[i].id, &amp;attr, mpath_prout_pthre=
-ad_fn,<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">-&nbsp;&nbsp; &nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;(void *)(&amp;thread[count].param));<o:p></o:p></span=
-></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">&#43;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp;&nbsp; (void *)(&amp;thread[i].param));<o:p></o:p></span=
-></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp; if (rc){<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; condlog (0, &quot;%s:=
- failed to create thread for rollback. %d&quot;,&nbsp; mpp-&gt;wwid, rc);<o=
-:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp; }<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">--<o:p></o:p></span></p>
-<p class=3D"MsoPlainText"><span lang=3D"EN-US">dm-devel mailing list<o:p></=
-o:p></span></p>
-<p class=3D"MsoPlainText"><span lang=3D"EN-US"><a href=3D"mailto:dm-devel@r=
-edhat.com">dm-devel@redhat.com</a><o:p></o:p></span></p>
-<p class=3D"MsoPlainText"><span lang=3D"EN-US"><a href=3D"https://www.redha=
-t.com/mailman/listinfo/dm-devel">https://www.redhat.com/mailman/listinfo/dm=
--devel</a><o:p></o:p></span></p>
-</div>
-</body>
-</html>
-
---_000_AF7C226D2A4F8B4D913D33FF7150AE051D6B0A33szxeml556mbschi_--
-
-
---===============8758185408692662370==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============8758185408692662370==--
+diff --git a/drivers/nvme/host/pci.c b/drivers/nvme/host/pci.c
+index ad58ee3..6230608 100644
+--- a/drivers/nvme/host/pci.c
++++ b/drivers/nvme/host/pci.c
+@@ -39,8 +39,10 @@
+ #include <linux/slab.h>
+ #include <linux/t10-pi.h>
+ #include <linux/types.h>
++#include <linux/pr.h>
+ #include <scsi/sg.h>
+ #include <asm-generic/io-64-nonatomic-lo-hi.h>
++#include <asm/unaligned.h>
+ 
+ #include <uapi/linux/nvme_ioctl.h>
+ #include "nvme.h"
+@@ -2058,6 +2060,98 @@ static int nvme_revalidate_disk(struct gendisk *disk)
+ 	return 0;
+ }
+ 
++static char nvme_pr_type(enum pr_type type)
++{
++	switch (type) {
++	case PR_WRITE_EXCLUSIVE:
++		return 1;
++	case PR_EXCLUSIVE_ACCESS:
++		return 2;
++	case PR_WRITE_EXCLUSIVE_REG_ONLY:
++		return 3;
++	case PR_EXCLUSIVE_ACCESS_REG_ONLY:
++		return 4;
++	case PR_WRITE_EXCLUSIVE_ALL_REGS:
++		return 5;
++	case PR_EXCLUSIVE_ACCESS_ALL_REGS:
++		return 6;
++	default:
++		return 0;
++	}
++};
++
++static int nvme_pr_command(struct block_device *bdev, u32 cdw10,
++				u64 key, u64 sa_key, u8 op)
++{
++	struct nvme_ns *ns = bdev->bd_disk->private_data;
++	struct nvme_command c;
++	u8 data[16] = { 0, };
++
++	put_unaligned_le64(key, &data[0]);
++	put_unaligned_le64(sa_key, &data[8]);
++
++	memset(&c, 0, sizeof(c));
++	c.common.opcode = op;
++	c.common.nsid = ns->ns_id;
++	c.common.cdw10[0] = cdw10;
++
++	return nvme_submit_sync_cmd(ns->queue, &c, data, 16);
++}
++
++static int nvme_pr_register(struct block_device *bdev, u64 old,
++		u64 new, unsigned flags)
++{
++	u32 cdw10;
++
++	if (flags & ~PR_FL_IGNORE_KEY)
++		return -EOPNOTSUPP;
++
++	cdw10 = old ? 2 : 0;
++	cdw10 |= (flags & PR_FL_IGNORE_KEY) ? 1 << 3 : 0;
++	cdw10 |= (1 << 30) | (1 << 31); /* PTPL=1 */
++	return nvme_pr_command(bdev, cdw10, old, new, nvme_cmd_resv_register);
++}
++
++static int nvme_pr_reserve(struct block_device *bdev, u64 key,
++		enum pr_type type, unsigned flags)
++{
++	u32 cdw10;
++
++	if (flags & ~PR_FL_IGNORE_KEY)
++		return -EOPNOTSUPP;
++
++	cdw10 = nvme_pr_type(type) << 8;
++	cdw10 |= ((flags & PR_FL_IGNORE_KEY) ? 1 << 3 : 0);
++	return nvme_pr_command(bdev, cdw10, key, 0, nvme_cmd_resv_acquire);
++}
++
++static int nvme_pr_preempt(struct block_device *bdev, u64 old, u64 new,
++		enum pr_type type, bool abort)
++{
++	u32 cdw10 = nvme_pr_type(type) << 8 | abort ? 2 : 1;
++	return nvme_pr_command(bdev, cdw10, old, new, nvme_cmd_resv_acquire);
++}
++
++static int nvme_pr_clear(struct block_device *bdev, u64 key)
++{
++	u32 cdw10 = 1 | key ? 1 << 3 : 0;
++	return nvme_pr_command(bdev, cdw10, key, 0, nvme_cmd_resv_register);
++}
++
++static int nvme_pr_release(struct block_device *bdev, u64 key, enum pr_type type)
++{
++	u32 cdw10 = nvme_pr_type(type) << 8 | key ? 1 << 3 : 0;
++	return nvme_pr_command(bdev, cdw10, key, 0, nvme_cmd_resv_release);
++}
++
++static const struct pr_ops nvme_pr_ops = {
++	.pr_register	= nvme_pr_register,
++	.pr_reserve	= nvme_pr_reserve,
++	.pr_release	= nvme_pr_release,
++	.pr_preempt	= nvme_pr_preempt,
++	.pr_clear	= nvme_pr_clear,
++};
++
+ static const struct block_device_operations nvme_fops = {
+ 	.owner		= THIS_MODULE,
+ 	.ioctl		= nvme_ioctl,
+@@ -2066,6 +2160,7 @@ static const struct block_device_operations nvme_fops = {
+ 	.release	= nvme_release,
+ 	.getgeo		= nvme_getgeo,
+ 	.revalidate_disk= nvme_revalidate_disk,
++	.pr_ops		= &nvme_pr_ops,
+ };
+ 
+ static int nvme_kthread(void *data)
+-- 
+1.9.1
