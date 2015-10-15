@@ -1,89 +1,88 @@
 From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH v2 00/12] blk-integrity lifetime fixes
-Date: Thu, 15 Oct 2015 15:59:39 -0400
-Message-ID: <20151015195939.20721.23101.stgit@dwillia2-desk3.jf.intel.com>
+Subject: [PATCH v2 04/12] block: Export integrity data interval size in sysfs
+Date: Thu, 15 Oct 2015 16:00:02 -0400
+Message-ID: <20151015200002.20721.63395.stgit@dwillia2-desk3.jf.intel.com>
+References: <20151015195939.20721.23101.stgit@dwillia2-desk3.jf.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20151015195939.20721.23101.stgit@dwillia2-desk3.jf.intel.com>
 Sender: linux-raid-owner@vger.kernel.org
 To: martin.petersen@oracle.com
-Cc: Jens Axboe <axboe@kernel.dk>, Keith Busch <keith.busch@intel.com>, linux-raid@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, linux-nvdimm@lists.01.org, axboe@fb.com, Vishal Verma <vishal.l.verma@intel.com>, James Bottomley <JBottomley@Odin.com>, NeilBrown <neilb@suse.com>, linux-nvme@lists.infradead.org, Sagi Grimberg <sagig@mellanox.com>, dm-devel@redhat.com, Matthew Wilcox <willy@linux.intel.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, hch@lst.de
+Cc: axboe@fb.com, linux-raid@vger.kernel.org, linux-nvdimm@lists.01.org, linux-nvme@lists.infradead.org, Sagi Grimberg <sagig@mellanox.com>, dm-devel@redhat.com, Ross Zwisler <ross.zwisler@linux.intel.com>, hch@lst.de
 List-Id: dm-devel.ids
 
-Changes since v1 [1]:
-1/ Added a unification of nop profile definitions (Christoph)
+From: Martin K. Petersen <martin.petersen@oracle.com>
 
-2/ Fixed the CONFIG_BLK_DEV_INTEGRITY=n case (Martin)
+The size of the data interval was not exported in the sysfs integrity
+directory. Export it so that userland apps can tell whether the interval
+is different from the device's logical block size.
 
-3/ Folded a fix into "block: Consolidate static integrity profile
-   properties", and squahsed the blk_integrity_unregister() removal patches
-   into one. (Christoph, Martin)
-
-4/ Collected Acked and Tested -by's from Keith, Neil, Vishal, and Ross
-
-5/ Fixed up Documentation/ABI/testing/sysfs-block to reflect moving
-   "integrity" sysfs attributes from "disk" to "disk/queue".
-
-[1]: https://lists.01.org/pipermail/linux-nvdimm/2015-October/002430.html
-
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Reviewed-by: Sagi Grimberg <sagig@mellanox.com>
+Tested-by: Ross Zwisler <ross.zwisler@linux.intel.com>
+Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 ---
+ Documentation/ABI/testing/sysfs-block |    7 +++++++
+ block/blk-integrity.c                 |   14 ++++++++++++++
+ 2 files changed, 21 insertions(+)
 
-The recent "Block integrity registration update" caused a failing
-signature that had been triggering intermittently in the libnvdimm unit
-tests to start failing reliably every run.  These tests run through
-several blk_integrity configurations and as result exercise the
-block-device setup/teardown path.  This is a re-flow of "Block integrity
-registration update" with incremental fixes.
+diff --git a/Documentation/ABI/testing/sysfs-block b/Documentation/ABI/testing/sysfs-block
+index 8df003963d99..71d184dbb70d 100644
+--- a/Documentation/ABI/testing/sysfs-block
++++ b/Documentation/ABI/testing/sysfs-block
+@@ -60,6 +60,13 @@ Description:
+ 		Indicates whether a storage device is capable of storing
+ 		integrity metadata. Set if the device is T10 PI-capable.
+ 
++What:		/sys/block/<disk>/integrity/protection_interval_bytes
++Date:		July 2015
++Contact:	Martin K. Petersen <martin.petersen@oracle.com>
++Description:
++		Describes the number of data bytes which are protected
++		by one integrity tuple. Typically the device's logical
++		block size.
+ 
+ What:		/sys/block/<disk>/integrity/write_generate
+ Date:		June 2008
+diff --git a/block/blk-integrity.c b/block/blk-integrity.c
+index c7508654faff..7a96f57ed195 100644
+--- a/block/blk-integrity.c
++++ b/block/blk-integrity.c
+@@ -289,6 +289,14 @@ static ssize_t integrity_tag_size_show(struct blk_integrity *bi, char *page)
+ 		return sprintf(page, "0\n");
+ }
+ 
++static ssize_t integrity_interval_show(struct blk_integrity *bi, char *page)
++{
++	if (bi != NULL)
++		return sprintf(page, "%u\n", 1 << bi->interval_exp);
++	else
++		return sprintf(page, "0\n");
++}
++
+ static ssize_t integrity_verify_store(struct blk_integrity *bi,
+ 				      const char *page, size_t count)
+ {
+@@ -343,6 +351,11 @@ static struct integrity_sysfs_entry integrity_tag_size_entry = {
+ 	.show = integrity_tag_size_show,
+ };
+ 
++static struct integrity_sysfs_entry integrity_interval_entry = {
++	.attr = { .name = "protection_interval_bytes", .mode = S_IRUGO },
++	.show = integrity_interval_show,
++};
++
+ static struct integrity_sysfs_entry integrity_verify_entry = {
+ 	.attr = { .name = "read_verify", .mode = S_IRUGO | S_IWUSR },
+ 	.show = integrity_verify_show,
+@@ -363,6 +376,7 @@ static struct integrity_sysfs_entry integrity_device_entry = {
+ static struct attribute *integrity_attrs[] = {
+ 	&integrity_format_entry.attr,
+ 	&integrity_tag_size_entry.attr,
++	&integrity_interval_entry.attr,
+ 	&integrity_verify_entry.attr,
+ 	&integrity_generate_entry.attr,
+ 	&integrity_device_entry.attr,
 
-Patches apply on Jens' block.git for-4.4/drivers, also available here:
-
-   git://git.kernel.org/pub/scm/linux/kernel/git/djbw/nvdimm for-4.4/blk-integrity
-
----
-
-Dan Williams (7):
-      md, dm, scsi, nvme, libnvdimm: drop blk_integrity_unregister() at shutdown
-      md: suspend i/o during runtime blk_integrity_unregister
-      nvme: suspend i/o during runtime blk_integrity_unregister
-      block: generic request_queue reference counting
-      block: move blk_integrity to request_queue
-      block: blk_flush_integrity() for bio-based drivers
-      block, libnvdimm, nvme: provide a built-in blk_integrity nop profile
-
-Martin K. Petersen (5):
-      block: Move integrity kobject to struct gendisk
-      block: Consolidate static integrity profile properties
-      block: Reduce the size of struct blk_integrity
-      block: Export integrity data interval size in sysfs
-      block: Inline blk_integrity in struct gendisk
-
-
- Documentation/ABI/testing/sysfs-block |   17 ++-
- block/bio-integrity.c                 |   17 ++-
- block/blk-core.c                      |   74 +++++++++++-
- block/blk-integrity.c                 |  199 +++++++++++++++------------------
- block/blk-mq-sysfs.c                  |    6 -
- block/blk-mq.c                        |   80 ++++---------
- block/blk-sysfs.c                     |    7 +
- block/blk.h                           |   22 ++++
- block/partition-generic.c             |    1 
- block/t10-pi.c                        |   16 +--
- drivers/md/dm-table.c                 |   88 ++++++++-------
- drivers/md/dm.c                       |    2 
- drivers/md/md.c                       |   13 +-
- drivers/md/multipath.c                |    2 
- drivers/md/raid1.c                    |    2 
- drivers/md/raid10.c                   |    2 
- drivers/nvdimm/btt.c                  |    1 
- drivers/nvdimm/core.c                 |   21 +--
- drivers/nvme/host/pci.c               |   40 ++-----
- drivers/scsi/sd.c                     |    1 
- drivers/scsi/sd_dif.c                 |   29 +++--
- drivers/target/target_core_iblock.c   |   10 +-
- fs/block_dev.c                        |    2 
- include/linux/blk-mq.h                |    1 
- include/linux/blkdev.h                |   54 ++++-----
- include/linux/genhd.h                 |   25 ++++
- include/linux/t10-pi.h                |    8 +
- 27 files changed, 383 insertions(+), 357 deletions(-)
