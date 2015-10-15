@@ -1,120 +1,111 @@
-From: Ming Lei <tom.leiming@gmail.com>
-Subject: Re: [PATCH v2] block: flush queued bios when the process blocks
-Date: Thu, 15 Oct 2015 11:27:57 +0800
-Message-ID: <CACVXFVPgvKEJo1dPigk303=GGVc3fJnuEk+QP+VEf=xa_Lz+vA@mail.gmail.com>
-References: <5384B26D.1000703@kernel.dk>
-	<alpine.LRH.2.02.1405271222150.8745@file01.intranet.prod.int.rdu2.redhat.com>
-	<5384CE82.90601@kernel.dk>
-	<alpine.LRH.2.02.1405291944090.22123@file01.intranet.prod.int.rdu2.redhat.com>
-	<20151005205943.GB25762@redhat.com>
-	<alpine.LRH.2.02.1510061410450.27916@file01.intranet.prod.int.rdu2.redhat.com>
-	<20151006185016.GA31955@redhat.com>
-	<20151006201637.GA4158@redhat.com>
-	<alpine.LRH.2.02.1510081100510.9641@file01.intranet.prod.int.rdu2.redhat.com>
-	<20151008150859.GA11770@redhat.com>
-	<20151009195203.GA18790@redhat.com>
+From: Casey Schaufler <casey@schaufler-ca.com>
+Subject: Re: [PATCH v2 7/7] Smack: Handle labels consistently in untrusted
+ mounts
+Date: Wed, 14 Oct 2015 22:46:47 -0700
+Message-ID: <561F3DC7.4070901@schaufler-ca.com>
+References: <1444755861-54997-1-git-send-email-seth.forshee@canonical.com>
+ <1444755861-54997-8-git-send-email-seth.forshee@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151009195203.GA18790@redhat.com>
+In-Reply-To: <1444755861-54997-8-git-send-email-seth.forshee@canonical.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Alasdair G. Kergon" <agk@redhat.com>
+To: Seth Forshee <seth.forshee@canonical.com>, "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>
 List-Id: dm-devel.ids
 
-On Sat, Oct 10, 2015 at 3:52 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> On Thu, Oct 08 2015 at 11:08am -0400,
-> Mike Snitzer <snitzer@redhat.com> wrote:
+On 10/13/2015 10:04 AM, Seth Forshee wrote:
+> The SMACK64, SMACK64EXEC, and SMACK64MMAP labels are all handled
+> differently in untrusted mounts. This is confusing and
+> potentically problematic. Change this to handle them all the same
+> way that SMACK64 is currently handled; that is, read the label
+> from disk and check it at use time. For SMACK64 and SMACK64MMAP
+> access is denied if the label does not match smk_root. To be
+> consistent with suid, a SMACK64EXEC label which does not match
+> smk_root will still allow execution of the file but will not run
+> with the label supplied in the xattr.
 >
->> On Thu, Oct 08 2015 at 11:04am -0400,
->> Mikulas Patocka <mpatocka@redhat.com> wrote:
->>
->> >
->> >
->> > On Tue, 6 Oct 2015, Mike Snitzer wrote:
->> >
->> > > To give others context for why I'm caring about this issue again, this
->> > > recent BZ against 4.3-rc served as a reminder that we _need_ a fix:
->> > > https://bugzilla.redhat.com/show_bug.cgi?id=1267650
->> > >
->> > > FYI, I cleaned up the plug-based approach a bit further, here is the
->> > > incremental patch:
->> > > http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=wip&id=f73d001ec692125308accbb5ca26f892f949c1b6
->> > >
->> > > And here is a new version of the overall combined patch (sharing now
->> > > before I transition to looking at alternatives, though my gut is the use
->> > > of a plug in generic_make_request really wouldn't hurt us.. famous last
->> > > words):
->> > >
->> > >  block/bio.c            | 82 +++++++++++++-------------------------------------
->> > >  block/blk-core.c       | 21 ++++++++-----
->> > >  drivers/md/dm-bufio.c  |  2 +-
->> > >  drivers/md/raid1.c     |  6 ++--
->> > >  drivers/md/raid10.c    |  6 ++--
->> > >  include/linux/blkdev.h | 11 +++++--
->> > >  include/linux/sched.h  |  4 ---
->> > >  7 files changed, 51 insertions(+), 81 deletions(-)
->> > >
->> ...
->> > > diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
->> > > index 2dd3308..c2bff16 100644
->> > > --- a/drivers/md/dm-bufio.c
->> > > +++ b/drivers/md/dm-bufio.c
->> > > @@ -168,7 +168,7 @@ static inline int dm_bufio_cache_index(struct dm_bufio_client *c)
->> > >  #define DM_BUFIO_CACHE(c)        (dm_bufio_caches[dm_bufio_cache_index(c)])
->> > >  #define DM_BUFIO_CACHE_NAME(c)   (dm_bufio_cache_names[dm_bufio_cache_index(c)])
->> > >
->> > > -#define dm_bufio_in_request()    (!!current->bio_list)
->> > > +#define dm_bufio_in_request()    (current->plug && !!current->plug->bio_list)
->> >
->> > This condition is repeated several times throughout the whole patch - so
->> > maybe you should make it a function in block device header file.
->>
->> Yeah, I thought of that too but forgot to come back to it.  Will do,
->> thanks.
->>
->> FYI, I found another bug in my last patch and fixed it up.  I'll get
->> some refactoring done (including your suggestion), actually _test_ the
->> code (e.g. verify all of lvm testsuite passes) and then send out v3.
+> Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+
+Aside from the one comment below (which I can be talked out of)
+this looks fine.
+
+> ---
+>  security/smack/smack_lsm.c | 28 ++++++++++++++++++----------
+>  1 file changed, 18 insertions(+), 10 deletions(-)
 >
-> Turns out that this change:
-> http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=wip&id=2639638c77768a86216be456c2764e32a2bcd841
->
-> needed to be reverted with:
-> http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=wip&id=ad3ccd760da7c05b90775372f9b39dc2964086fe
->
-> Because nested plugs caused generic_make_request()'s onstack bio_list to
-> go out of scope (blk_finish_plug() wouldn't actually flush the list
-> within generic_make_request because XFS already added an outermost
-> plug).
+> diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
+> index 621200f86b56..bee0b2652bf4 100644
+> --- a/security/smack/smack_lsm.c
+> +++ b/security/smack/smack_lsm.c
+> @@ -891,6 +891,7 @@ static int smack_bprm_set_creds(struct linux_binprm *bprm)
+>  	struct inode *inode = file_inode(bprm->file);
+>  	struct task_smack *bsp = bprm->cred->security;
+>  	struct inode_smack *isp;
+> +	struct superblock_smack *sbsp;
+>  	int rc;
+>  
+>  	if (bprm->cred_prepared)
+> @@ -900,6 +901,10 @@ static int smack_bprm_set_creds(struct linux_binprm *bprm)
+>  	if (isp->smk_task == NULL || isp->smk_task == bsp->smk_task)
+>  		return 0;
+>  
+> +	sbsp = inode->i_sb->s_security;
+> +	if (sbsp->smk_flags & SMK_SB_UNTRUSTED && isp->smk_task != sbsp->smk_root)
 
-Looks you should have defined bio_list in plug as
+Call me old fashioned, but how about
 
-               'struct bio_list bio_list'
+	if ((sbsp->smk_flags & SMK_SB_UNTRUSTED) && isp->smk_task != sbsp->smk_root)
 
-instead of one pointer.
+naked '&'s give me the willies. 
 
->
-> But even after fixing that I then hit issues with these changes now
-> resulting in imperfect 'in_generic_make_request' accounting that happens
-> lazily once the outermost plug completes blk_finish_plug.  manifested as
-> dm-bufio.c:dm_bufio_prefetch's BUG_ON(dm_bufio_in_request()); hitting.
-
-Looks this problem should be related with above 'bio_list' definition too.
-
->
-> Basically using the blk-core's onstack plugging isn't workable for
-> fixing this deadlock and we're back to having to seriously consider
-> this (with its additional hook in the scheduler):
->
-> Mike
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
-
-
-
--- 
-Ming Lei
+> +		return 0;
+> +
+>  	if (bprm->unsafe & (LSM_UNSAFE_PTRACE | LSM_UNSAFE_PTRACE_CAP)) {
+>  		struct task_struct *tracer;
+>  		rc = 0;
+> @@ -1703,6 +1708,7 @@ static int smack_mmap_file(struct file *file,
+>  	struct task_smack *tsp;
+>  	struct smack_known *okp;
+>  	struct inode_smack *isp;
+> +	struct superblock_smack *sbsp;
+>  	int may;
+>  	int mmay;
+>  	int tmay;
+> @@ -1714,6 +1720,10 @@ static int smack_mmap_file(struct file *file,
+>  	isp = file_inode(file)->i_security;
+>  	if (isp->smk_mmap == NULL)
+>  		return 0;
+> +	sbsp = file_inode(file)->i_sb->s_security;
+> +	if (sbsp->smk_flags & SMK_SB_UNTRUSTED &&
+> +	    isp->smk_mmap != sbsp->smk_root)
+> +		return -EACCES;
+>  	mkp = isp->smk_mmap;
+>  
+>  	tsp = current_security();
+> @@ -3492,16 +3502,14 @@ static void smack_d_instantiate(struct dentry *opt_dentry, struct inode *inode)
+>  			if (rc >= 0)
+>  				transflag = SMK_INODE_TRANSMUTE;
+>  		}
+> -		if (!(sbsp->smk_flags & SMK_SB_UNTRUSTED)) {
+> -			/*
+> -			 * Don't let the exec or mmap label be "*" or "@".
+> -			 */
+> -			skp = smk_fetch(XATTR_NAME_SMACKEXEC, inode, dp);
+> -			if (IS_ERR(skp) || skp == &smack_known_star ||
+> -			    skp == &smack_known_web)
+> -				skp = NULL;
+> -			isp->smk_task = skp;
+> -		}
+> +		/*
+> +		 * Don't let the exec or mmap label be "*" or "@".
+> +		 */
+> +		skp = smk_fetch(XATTR_NAME_SMACKEXEC, inode, dp);
+> +		if (IS_ERR(skp) || skp == &smack_known_star ||
+> +		    skp == &smack_known_web)
+> +			skp = NULL;
+> +		isp->smk_task = skp;
+>  
+>  		skp = smk_fetch(XATTR_NAME_SMACKMMAP, inode, dp);
+>  		if (IS_ERR(skp) || skp == &smack_known_star ||
