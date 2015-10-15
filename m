@@ -1,7 +1,8 @@
 From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH v2 09/12] block: generic request_queue reference counting
-Date: Thu, 15 Oct 2015 16:00:29 -0400
-Message-ID: <20151015200029.20721.11155.stgit@dwillia2-desk3.jf.intel.com>
+Subject: [PATCH v2 12/12] block, libnvdimm,
+ nvme: provide a built-in blk_integrity nop profile
+Date: Thu, 15 Oct 2015 16:00:45 -0400
+Message-ID: <20151015200045.20721.42806.stgit@dwillia2-desk3.jf.intel.com>
 References: <20151015195939.20721.23101.stgit@dwillia2-desk3.jf.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -10,419 +11,121 @@ Return-path: <linux-raid-owner@vger.kernel.org>
 In-Reply-To: <20151015195939.20721.23101.stgit@dwillia2-desk3.jf.intel.com>
 Sender: linux-raid-owner@vger.kernel.org
 To: martin.petersen@oracle.com
-Cc: Jens Axboe <axboe@kernel.dk>, axboe@fb.com, linux-raid@vger.kernel.org, linux-nvdimm@lists.01.org, linux-nvme@lists.infradead.org, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, Ross Zwisler <ross.zwisler@linux.intel.com>, hch@lst.de
+Cc: axboe@fb.com, linux-raid@vger.kernel.org, linux-nvdimm@lists.01.org, linux-nvme@lists.infradead.org, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, Matthew Wilcox <willy@linux.intel.com>, hch@lst.de
 List-Id: dm-devel.ids
 
-Allow pmem, and other synchronous/bio-based block drivers, to fallback
-on a per-cpu reference count managed by the core for tracking queue
-live/dead state.
+The libnvidmm-btt and nvme drivers use blk_integrity to reserve space
+for per-sector metadata, but sometimes without protection checksums.
+This property is generically useful, so teach the block core to
+internally specify a nop profile if one is not provided at registration
+time.
 
-The existing per-cpu reference count for the blk_mq case is promoted to
-be used in all block i/o scenarios.  This involves initializing it by
-default, waiting for it to drop to zero at exit, and holding a live
-reference over the invocation of q->make_request_fn() in
-generic_make_request().  The blk_mq code continues to take its own
-reference per blk_mq request and retains the ability to freeze the
-queue, but the check that the queue is frozen is moved to
-generic_make_request().
-
-This fixes crash signatures like the following:
-
- BUG: unable to handle kernel paging request at ffff880140000000
- [..]
- Call Trace:
-  [<ffffffff8145e8bf>] ? copy_user_handle_tail+0x5f/0x70
-  [<ffffffffa004e1e0>] pmem_do_bvec.isra.11+0x70/0xf0 [nd_pmem]
-  [<ffffffffa004e331>] pmem_make_request+0xd1/0x200 [nd_pmem]
-  [<ffffffff811c3162>] ? mempool_alloc+0x72/0x1a0
-  [<ffffffff8141f8b6>] generic_make_request+0xd6/0x110
-  [<ffffffff8141f966>] submit_bio+0x76/0x170
-  [<ffffffff81286dff>] submit_bh_wbc+0x12f/0x160
-  [<ffffffff81286e62>] submit_bh+0x12/0x20
-  [<ffffffff813395bd>] jbd2_write_superblock+0x8d/0x170
-  [<ffffffff8133974d>] jbd2_mark_journal_empty+0x5d/0x90
-  [<ffffffff813399cb>] jbd2_journal_destroy+0x24b/0x270
-  [<ffffffff810bc4ca>] ? put_pwq_unlocked+0x2a/0x30
-  [<ffffffff810bc6f5>] ? destroy_workqueue+0x225/0x250
-  [<ffffffff81303494>] ext4_put_super+0x64/0x360
-  [<ffffffff8124ab1a>] generic_shutdown_super+0x6a/0xf0
-
-Cc: Jens Axboe <axboe@kernel.dk>
 Cc: Keith Busch <keith.busch@intel.com>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
+Cc: Matthew Wilcox <willy@linux.intel.com>
 Suggested-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Tested-by: Ross Zwisler <ross.zwisler@linux.intel.com>
+[hch: kill the local nvme nop profile as well]
 Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 ---
- block/blk-core.c       |   71 +++++++++++++++++++++++++++++++++++++------
- block/blk-mq-sysfs.c   |    6 ----
- block/blk-mq.c         |   80 ++++++++++++++----------------------------------
- block/blk-sysfs.c      |    3 +-
- block/blk.h            |   14 ++++++++
- include/linux/blk-mq.h |    1 -
- include/linux/blkdev.h |    2 +
- 7 files changed, 102 insertions(+), 75 deletions(-)
+ block/blk-integrity.c   |   13 ++++++++++++-
+ drivers/nvdimm/core.c   |   12 +-----------
+ drivers/nvme/host/pci.c |   18 +-----------------
+ 3 files changed, 14 insertions(+), 29 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 2eb722d48773..9b4d735cb5b8 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -554,13 +554,10 @@ void blk_cleanup_queue(struct request_queue *q)
- 	 * Drain all requests queued before DYING marking. Set DEAD flag to
- 	 * prevent that q->request_fn() gets invoked after draining finished.
- 	 */
--	if (q->mq_ops) {
--		blk_mq_freeze_queue(q);
--		spin_lock_irq(lock);
--	} else {
--		spin_lock_irq(lock);
-+	blk_freeze_queue(q);
-+	spin_lock_irq(lock);
-+	if (!q->mq_ops)
- 		__blk_drain_queue(q, true);
--	}
- 	queue_flag_set(QUEUE_FLAG_DEAD, q);
- 	spin_unlock_irq(lock);
+diff --git a/block/blk-integrity.c b/block/blk-integrity.c
+index dc4dea7b8a93..506cc16c1a92 100644
+--- a/block/blk-integrity.c
++++ b/block/blk-integrity.c
+@@ -384,6 +384,17 @@ static struct kobj_type integrity_ktype = {
+ 	.sysfs_ops	= &integrity_ops,
+ };
  
-@@ -570,6 +567,7 @@ void blk_cleanup_queue(struct request_queue *q)
- 
- 	if (q->mq_ops)
- 		blk_mq_free_queue(q);
-+	percpu_ref_exit(&q->q_usage_counter);
- 
- 	spin_lock_irq(lock);
- 	if (q->queue_lock != &q->__queue_lock)
-@@ -629,6 +627,40 @@ struct request_queue *blk_alloc_queue(gfp_t gfp_mask)
- }
- EXPORT_SYMBOL(blk_alloc_queue);
- 
-+int blk_queue_enter(struct request_queue *q, gfp_t gfp)
++static int blk_integrity_nop_fn(struct blk_integrity_iter *iter)
 +{
-+	while (true) {
-+		int ret;
-+
-+		if (percpu_ref_tryget_live(&q->q_usage_counter))
-+			return 0;
-+
-+		if (!(gfp & __GFP_WAIT))
-+			return -EBUSY;
-+
-+		ret = wait_event_interruptible(q->mq_freeze_wq,
-+				!atomic_read(&q->mq_freeze_depth) ||
-+				blk_queue_dying(q));
-+		if (blk_queue_dying(q))
-+			return -ENODEV;
-+		if (ret)
-+			return ret;
-+	}
++	return 0;
 +}
 +
-+void blk_queue_exit(struct request_queue *q)
-+{
-+	percpu_ref_put(&q->q_usage_counter);
-+}
++static struct blk_integrity_profile nop_profile = {
++	.name = "nop",
++	.generate_fn = blk_integrity_nop_fn,
++	.verify_fn = blk_integrity_nop_fn,
++};
 +
-+static void blk_queue_usage_counter_release(struct percpu_ref *ref)
-+{
-+	struct request_queue *q =
-+		container_of(ref, struct request_queue, q_usage_counter);
-+
-+	wake_up_all(&q->mq_freeze_wq);
-+}
-+
- struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
- {
- 	struct request_queue *q;
-@@ -690,11 +722,22 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
+ /**
+  * blk_integrity_register - Register a request_queue as being integrity-capable
+  * @disk:	struct request_queue pointer to make integrity-aware
+@@ -402,7 +413,7 @@ void blk_integrity_register(struct request_queue *q, struct blk_integrity *templ
+ 	bi->flags = BLK_INTEGRITY_VERIFY | BLK_INTEGRITY_GENERATE |
+ 		template->flags;
+ 	bi->interval_exp = ilog2(queue_logical_block_size(q));
+-	bi->profile = template->profile;
++	bi->profile = template->profile ? template->profile : &nop_profile;
+ 	bi->tuple_size = template->tuple_size;
+ 	bi->tag_size = template->tag_size;
  
- 	init_waitqueue_head(&q->mq_freeze_wq);
+diff --git a/drivers/nvdimm/core.c b/drivers/nvdimm/core.c
+index eeedd58bbcad..2ed3c934256f 100644
+--- a/drivers/nvdimm/core.c
++++ b/drivers/nvdimm/core.c
+@@ -392,24 +392,14 @@ void nvdimm_bus_unregister(struct nvdimm_bus *nvdimm_bus)
+ EXPORT_SYMBOL_GPL(nvdimm_bus_unregister);
  
--	if (blkcg_init_queue(q))
-+	/*
-+	 * Init percpu_ref in atomic mode so that it's faster to shutdown.
-+	 * See blk_register_queue() for details.
-+	 */
-+	if (percpu_ref_init(&q->q_usage_counter,
-+				blk_queue_usage_counter_release,
-+				PERCPU_REF_INIT_ATOMIC, GFP_KERNEL))
- 		goto fail_bdi;
- 
-+	if (blkcg_init_queue(q))
-+		goto fail_ref;
-+
- 	return q;
- 
-+fail_ref:
-+	percpu_ref_exit(&q->q_usage_counter);
- fail_bdi:
- 	bdi_destroy(&q->backing_dev_info);
- fail_split:
-@@ -1966,9 +2009,19 @@ void generic_make_request(struct bio *bio)
- 	do {
- 		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
- 
--		q->make_request_fn(q, bio);
-+		if (likely(blk_queue_enter(q, __GFP_WAIT) == 0)) {
-+
-+			q->make_request_fn(q, bio);
-+
-+			blk_queue_exit(q);
- 
--		bio = bio_list_pop(current->bio_list);
-+			bio = bio_list_pop(current->bio_list);
-+		} else {
-+			struct bio *bio_next = bio_list_pop(current->bio_list);
-+
-+			bio_io_error(bio);
-+			bio = bio_next;
-+		}
- 	} while (bio);
- 	current->bio_list = NULL; /* deactivate */
- }
-diff --git a/block/blk-mq-sysfs.c b/block/blk-mq-sysfs.c
-index 788fffd9b409..6f57a110289c 100644
---- a/block/blk-mq-sysfs.c
-+++ b/block/blk-mq-sysfs.c
-@@ -413,12 +413,6 @@ static void blk_mq_sysfs_init(struct request_queue *q)
- 		kobject_init(&ctx->kobj, &blk_mq_ctx_ktype);
- }
- 
--/* see blk_register_queue() */
--void blk_mq_finish_init(struct request_queue *q)
+ #ifdef CONFIG_BLK_DEV_INTEGRITY
+-static int nd_pi_nop_generate_verify(struct blk_integrity_iter *iter)
 -{
--	percpu_ref_switch_to_percpu(&q->mq_usage_counter);
+-	return 0;
 -}
 -
- int blk_mq_register_disk(struct gendisk *disk)
+ int nd_integrity_init(struct gendisk *disk, unsigned long meta_size)
  {
- 	struct device *dev = disk_to_dev(disk);
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index d921cd5177f5..6c240712553a 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -78,47 +78,13 @@ static void blk_mq_hctx_clear_pending(struct blk_mq_hw_ctx *hctx,
- 	clear_bit(CTX_TO_BIT(hctx, ctx), &bm->word);
+ 	struct blk_integrity bi;
+-	static struct blk_integrity_profile profile = {
+-		.name = "ND-PI-NOP",
+-		.generate_fn = nd_pi_nop_generate_verify,
+-		.verify_fn = nd_pi_nop_generate_verify,
+-	};
+ 
+ 	if (meta_size == 0)
+ 		return 0;
+ 
+-	bi.profile = &profile;
++	bi.profile = NULL;
+ 	bi.tuple_size = meta_size;
+ 	bi.tag_size = meta_size;
+ 
+diff --git a/drivers/nvme/host/pci.c b/drivers/nvme/host/pci.c
+index e4a0cc7fb421..532b6a491fca 100644
+--- a/drivers/nvme/host/pci.c
++++ b/drivers/nvme/host/pci.c
+@@ -550,22 +550,6 @@ static void nvme_dif_remap(struct request *req,
+ 	kunmap_atomic(pmap);
  }
  
--static int blk_mq_queue_enter(struct request_queue *q, gfp_t gfp)
+-static int nvme_noop_verify(struct blk_integrity_iter *iter)
 -{
--	while (true) {
--		int ret;
--
--		if (percpu_ref_tryget_live(&q->mq_usage_counter))
--			return 0;
--
--		if (!(gfp & __GFP_WAIT))
--			return -EBUSY;
--
--		ret = wait_event_interruptible(q->mq_freeze_wq,
--				!atomic_read(&q->mq_freeze_depth) ||
--				blk_queue_dying(q));
--		if (blk_queue_dying(q))
--			return -ENODEV;
--		if (ret)
--			return ret;
--	}
+-	return 0;
 -}
 -
--static void blk_mq_queue_exit(struct request_queue *q)
+-static int nvme_noop_generate(struct blk_integrity_iter *iter)
 -{
--	percpu_ref_put(&q->mq_usage_counter);
+-	return 0;
 -}
 -
--static void blk_mq_usage_counter_release(struct percpu_ref *ref)
--{
--	struct request_queue *q =
--		container_of(ref, struct request_queue, mq_usage_counter);
+-struct blk_integrity_profile nvme_meta_noop = {
+-	.name			= "NVME_META_NOOP",
+-	.generate_fn		= nvme_noop_generate,
+-	.verify_fn		= nvme_noop_verify,
+-};
 -
--	wake_up_all(&q->mq_freeze_wq);
--}
--
- void blk_mq_freeze_queue_start(struct request_queue *q)
+ static void nvme_init_integrity(struct nvme_ns *ns)
  {
- 	int freeze_depth;
- 
- 	freeze_depth = atomic_inc_return(&q->mq_freeze_depth);
- 	if (freeze_depth == 1) {
--		percpu_ref_kill(&q->mq_usage_counter);
-+		percpu_ref_kill(&q->q_usage_counter);
- 		blk_mq_run_hw_queues(q, false);
+ 	struct blk_integrity integrity;
+@@ -579,7 +563,7 @@ static void nvme_init_integrity(struct nvme_ns *ns)
+ 		integrity.profile = &t10_pi_type1_crc;
+ 		break;
+ 	default:
+-		integrity.profile = &nvme_meta_noop;
++		integrity.profile = NULL;
+ 		break;
  	}
- }
-@@ -126,18 +92,34 @@ EXPORT_SYMBOL_GPL(blk_mq_freeze_queue_start);
- 
- static void blk_mq_freeze_queue_wait(struct request_queue *q)
- {
--	wait_event(q->mq_freeze_wq, percpu_ref_is_zero(&q->mq_usage_counter));
-+	wait_event(q->mq_freeze_wq, percpu_ref_is_zero(&q->q_usage_counter));
- }
- 
- /*
-  * Guarantee no request is in use, so we can change any data structure of
-  * the queue afterward.
-  */
--void blk_mq_freeze_queue(struct request_queue *q)
-+void blk_freeze_queue(struct request_queue *q)
- {
-+	/*
-+	 * In the !blk_mq case we are only calling this to kill the
-+	 * q_usage_counter, otherwise this increases the freeze depth
-+	 * and waits for it to return to zero.  For this reason there is
-+	 * no blk_unfreeze_queue(), and blk_freeze_queue() is not
-+	 * exported to drivers as the only user for unfreeze is blk_mq.
-+	 */
- 	blk_mq_freeze_queue_start(q);
- 	blk_mq_freeze_queue_wait(q);
- }
-+
-+void blk_mq_freeze_queue(struct request_queue *q)
-+{
-+	/*
-+	 * ...just an alias to keep freeze and unfreeze actions balanced
-+	 * in the blk_mq_* namespace
-+	 */
-+	blk_freeze_queue(q);
-+}
- EXPORT_SYMBOL_GPL(blk_mq_freeze_queue);
- 
- void blk_mq_unfreeze_queue(struct request_queue *q)
-@@ -147,7 +129,7 @@ void blk_mq_unfreeze_queue(struct request_queue *q)
- 	freeze_depth = atomic_dec_return(&q->mq_freeze_depth);
- 	WARN_ON_ONCE(freeze_depth < 0);
- 	if (!freeze_depth) {
--		percpu_ref_reinit(&q->mq_usage_counter);
-+		percpu_ref_reinit(&q->q_usage_counter);
- 		wake_up_all(&q->mq_freeze_wq);
- 	}
- }
-@@ -256,7 +238,7 @@ struct request *blk_mq_alloc_request(struct request_queue *q, int rw, gfp_t gfp,
- 	struct blk_mq_alloc_data alloc_data;
- 	int ret;
- 
--	ret = blk_mq_queue_enter(q, gfp);
-+	ret = blk_queue_enter(q, gfp);
- 	if (ret)
- 		return ERR_PTR(ret);
- 
-@@ -279,7 +261,7 @@ struct request *blk_mq_alloc_request(struct request_queue *q, int rw, gfp_t gfp,
- 	}
- 	blk_mq_put_ctx(ctx);
- 	if (!rq) {
--		blk_mq_queue_exit(q);
-+		blk_queue_exit(q);
- 		return ERR_PTR(-EWOULDBLOCK);
- 	}
- 	return rq;
-@@ -298,7 +280,7 @@ static void __blk_mq_free_request(struct blk_mq_hw_ctx *hctx,
- 
- 	clear_bit(REQ_ATOM_STARTED, &rq->atomic_flags);
- 	blk_mq_put_tag(hctx, tag, &ctx->last_tag);
--	blk_mq_queue_exit(q);
-+	blk_queue_exit(q);
- }
- 
- void blk_mq_free_hctx_request(struct blk_mq_hw_ctx *hctx, struct request *rq)
-@@ -1177,11 +1159,7 @@ static struct request *blk_mq_map_request(struct request_queue *q,
- 	int rw = bio_data_dir(bio);
- 	struct blk_mq_alloc_data alloc_data;
- 
--	if (unlikely(blk_mq_queue_enter(q, GFP_KERNEL))) {
--		bio_io_error(bio);
--		return NULL;
--	}
--
-+	blk_queue_enter_live(q);
- 	ctx = blk_mq_get_ctx(q);
- 	hctx = q->mq_ops->map_queue(q, ctx->cpu);
- 
-@@ -2000,14 +1978,6 @@ struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
- 		hctxs[i]->queue_num = i;
- 	}
- 
--	/*
--	 * Init percpu_ref in atomic mode so that it's faster to shutdown.
--	 * See blk_register_queue() for details.
--	 */
--	if (percpu_ref_init(&q->mq_usage_counter, blk_mq_usage_counter_release,
--			    PERCPU_REF_INIT_ATOMIC, GFP_KERNEL))
--		goto err_hctxs;
--
- 	setup_timer(&q->timeout, blk_mq_rq_timer, (unsigned long) q);
- 	blk_queue_rq_timeout(q, set->timeout ? set->timeout : 30 * HZ);
- 
-@@ -2088,8 +2058,6 @@ void blk_mq_free_queue(struct request_queue *q)
- 
- 	blk_mq_exit_hw_queues(q, set, set->nr_hw_queues);
- 	blk_mq_free_hw_queues(q, set);
--
--	percpu_ref_exit(&q->mq_usage_counter);
- }
- 
- /* Basically redo blk_mq_init_queue with queue frozen */
-diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-index 3e44a9da2a13..61fc2633bbea 100644
---- a/block/blk-sysfs.c
-+++ b/block/blk-sysfs.c
-@@ -599,9 +599,8 @@ int blk_register_queue(struct gendisk *disk)
- 	 */
- 	if (!blk_queue_init_done(q)) {
- 		queue_flag_set_unlocked(QUEUE_FLAG_INIT_DONE, q);
-+		percpu_ref_switch_to_percpu(&q->q_usage_counter);
- 		blk_queue_bypass_end(q);
--		if (q->mq_ops)
--			blk_mq_finish_init(q);
- 	}
- 
- 	ret = blk_trace_init_sysfs(dev);
-diff --git a/block/blk.h b/block/blk.h
-index 98614ad37c81..5b2cd393afbe 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -72,6 +72,20 @@ void blk_dequeue_request(struct request *rq);
- void __blk_queue_free_tags(struct request_queue *q);
- bool __blk_end_bidi_request(struct request *rq, int error,
- 			    unsigned int nr_bytes, unsigned int bidi_bytes);
-+int blk_queue_enter(struct request_queue *q, gfp_t gfp);
-+void blk_queue_exit(struct request_queue *q);
-+void blk_freeze_queue(struct request_queue *q);
-+
-+static inline void blk_queue_enter_live(struct request_queue *q)
-+{
-+	/*
-+	 * Given that running in generic_make_request() context
-+	 * guarantees that a live reference against q_usage_counter has
-+	 * been established, further references under that same context
-+	 * need not check that the queue has been frozen (marked dead).
-+	 */
-+	percpu_ref_get(&q->q_usage_counter);
-+}
- 
- void blk_rq_timed_out_timer(unsigned long data);
- unsigned long blk_rq_timeout(unsigned long timeout);
-diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
-index 5e7d43ab61c0..83cc9d4e5455 100644
---- a/include/linux/blk-mq.h
-+++ b/include/linux/blk-mq.h
-@@ -166,7 +166,6 @@ enum {
- struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *);
- struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
- 						  struct request_queue *q);
--void blk_mq_finish_init(struct request_queue *q);
- int blk_mq_register_disk(struct gendisk *);
- void blk_mq_unregister_disk(struct gendisk *);
- 
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 60669c20190f..3e0465257d68 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -450,7 +450,7 @@ struct request_queue {
- #endif
- 	struct rcu_head		rcu_head;
- 	wait_queue_head_t	mq_freeze_wq;
--	struct percpu_ref	mq_usage_counter;
-+	struct percpu_ref	q_usage_counter;
- 	struct list_head	all_q_node;
- 
- 	struct blk_mq_tag_set	*tag_set;
+ 	integrity.tuple_size = ns->ms;
 
