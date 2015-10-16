@@ -1,164 +1,99 @@
-From: "Williams, Dan J" <dan.j.williams@intel.com>
-Subject: Re: [PATCH v2 10/12] block: move blk_integrity to request_queue
-Date: Fri, 16 Oct 2015 00:42:19 +0000
-Message-ID: <1444956139.2737.7.camel@intel.com>
-References: <20151015195939.20721.23101.stgit@dwillia2-desk3.jf.intel.com>
-	 <20151015200034.20721.23425.stgit@dwillia2-desk3.jf.intel.com>
+From: Ming Lei <tom.leiming@gmail.com>
+Subject: Re: [PATCH v2] block: flush queued bios when the process blocks
+Date: Fri, 16 Oct 2015 11:08:46 +0800
+Message-ID: <CACVXFVP+sACdZObrm2gLZZBzi-b4OErADgva9o9Jk4ibM5Ddsg@mail.gmail.com>
+References: <5384CE82.90601@kernel.dk>
+	<alpine.LRH.2.02.1405291944090.22123@file01.intranet.prod.int.rdu2.redhat.com>
+	<20151005205943.GB25762@redhat.com>
+	<alpine.LRH.2.02.1510061410450.27916@file01.intranet.prod.int.rdu2.redhat.com>
+	<20151006185016.GA31955@redhat.com>
+	<20151006201637.GA4158@redhat.com>
+	<alpine.LRH.2.02.1510081100510.9641@file01.intranet.prod.int.rdu2.redhat.com>
+	<20151008150859.GA11770@redhat.com>
+	<20151009195203.GA18790@redhat.com>
+	<CACVXFVPgvKEJo1dPigk303=GGVc3fJnuEk+QP+VEf=xa_Lz+vA@mail.gmail.com>
+	<20151015080610.GA25536@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20151015200034.20721.23425.stgit@dwillia2-desk3.jf.intel.com>
-Content-Language: en-US
-Content-ID: <24074458BB173143B7F486C77D86846F@intel.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: "martin.petersen@oracle.com" <martin.petersen@oracle.com>
-Cc: "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "axboe@fb.com" <axboe@fb.com>, "hch@lst.de" <hch@lst.de>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20151015080610.GA25536@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE1LTEwLTE1IGF0IDE2OjAwIC0wNDAwLCBEYW4gV2lsbGlhbXMgd3JvdGU6DQo+
-IEEgdHJhY2UgbGlrZSB0aGUgZm9sbG93aW5nIHByb2NlZWRzIGEgY3Jhc2ggaW4gYmlvX2ludGVn
-cml0eV9wcm9jZXNzKCkNCj4gd2hlbiBpdCBnb2VzIHRvIHVzZSBhbiBhbHJlYWR5IGZyZWVkIGJs
-a19pbnRlZ3JpdHkgcHJvZmlsZS4NCj4gDQo+ICBCVUc6IHVuYWJsZSB0byBoYW5kbGUga2VybmVs
-IHBhZ2luZyByZXF1ZXN0IGF0IGZmZmY4ODAwZDMxYjEwZDgNCj4gIElQOiBbPGZmZmY4ODAwZDMx
-YjEwZDg+XSAweGZmZmY4ODAwZDMxYjEwZDgNCj4gIFBHRCAyZjY1MDY3IFBVRCAyMWZmZmQwNjcg
-UE1EIDgwMDAwMDAwZDMwMDAxZTMNCj4gIE9vcHM6IDAwMTEgWyMxXSBTTVANCj4gIER1bXBpbmcg
-ZnRyYWNlIGJ1ZmZlcjoNCj4gIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KPiAg
-ICAgbmRjdGwtMjIyMiAgICAyLi4uLiA0NDUyNjI0NXVzIDogZGlza19yZWxlYXNlOiBwbWVtMXMN
-Cj4gIHN5c3RlbWQtLTIyMjMgICAgNC4uLi4gNDQ1NzM5NDV1cyA6IGJpb19pbnRlZ3JpdHlfZW5k
-aW86IHBtZW0xcw0KPiAgICAgPC4uLj4tNDA5ICAgICA0Li4uLiA0NDU3NDAwNXVzIDogYmlvX2lu
-dGVncml0eV9wcm9jZXNzOiBwbWVtMXMNCj4gIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLQ0KPiBbLi5dDQo+ICAgQ2FsbCBUcmFjZToNCj4gICBbPGZmZmZmZmZmODE0NGUwZjk+XSA/
-IGJpb19pbnRlZ3JpdHlfcHJvY2VzcysweDE1OS8weDJkMA0KPiAgIFs8ZmZmZmZmZmY4MTQ0ZTRm
-Nj5dIGJpb19pbnRlZ3JpdHlfdmVyaWZ5X2ZuKzB4MzYvMHg2MA0KPiAgIFs8ZmZmZmZmZmY4MTBi
-ZDJkYz5dIHByb2Nlc3Nfb25lX3dvcmsrMHgxY2MvMHg0ZTANCj4gDQo+IEdpdmVuIHRoYXQgYSBy
-ZXF1ZXN0X3F1ZXVlIGlzIHBpbm5lZCB3aGlsZSBpL28gaXMgaW4gZmxpZ2h0IGFuZCB0aGF0IGEN
-Cj4gZ2VuZGlzayBpcyBhbGxvd2VkIHRvIGhhdmUgYSBzaG9ydGVyIGxpZmV0aW1lLCBtb3ZlIGJs
-a19pbnRlZ3JpdHkgdG8NCj4gcmVxdWVzdF9xdWV1ZSB0byBzYXRpc2Z5IHJlcXVlc3RzIGFycml2
-aW5nIGFmdGVyIHRoZSBnZW5kaXNrIGhhcyBiZWVuDQo+IHRvcm4gZG93bi4NCj4gDQo+IENjOiBD
-aHJpc3RvcGggSGVsbHdpZyA8aGNoQGxzdC5kZT4NCj4gQ2M6IE1hcnRpbiBLLiBQZXRlcnNlbiA8
-bWFydGluLnBldGVyc2VuQG9yYWNsZS5jb20+DQo+IFttYXJ0aW46IGZpeCB0aGUgQ09ORklHX0JM
-S19ERVZfSU5URUdSSVRZPW4gY2FzZV0NCj4gVGVzdGVkLWJ5OiBSb3NzIFp3aXNsZXIgPHJvc3Mu
-endpc2xlckBsaW51eC5pbnRlbC5jb20+DQo+IFNpZ25lZC1vZmYtYnk6IERhbiBXaWxsaWFtcyA8
-ZGFuLmoud2lsbGlhbXNAaW50ZWwuY29tPg0KPiAtLS0NCj4gIERvY3VtZW50YXRpb24vQUJJL3Rl
-c3Rpbmcvc3lzZnMtYmxvY2sgfCAgIDEyICsrKy0tLQ0KPiAgYmxvY2svYmxrLWludGVncml0eS5j
-ICAgICAgICAgICAgICAgICB8ICAgNjMgKysrKysrKysrKysrKysrKystLS0tLS0tLS0tLS0tLS0t
-DQo+ICBibG9jay9ibGstc3lzZnMuYyAgICAgICAgICAgICAgICAgICAgIHwgICAgNCArKw0KPiAg
-YmxvY2svZ2VuaGQuYyAgICAgICAgICAgICAgICAgICAgICAgICB8ICAgIDIgLQ0KPiAgYmxvY2sv
-cGFydGl0aW9uLWdlbmVyaWMuYyAgICAgICAgICAgICB8ICAgIDIgKw0KPiAgZHJpdmVycy9tZC9k
-bS10YWJsZS5jICAgICAgICAgICAgICAgICB8ICAgIDQgKy0NCj4gIGRyaXZlcnMvbWQvbWQuYyAg
-ICAgICAgICAgICAgICAgICAgICAgfCAgICA0ICstDQo+ICBkcml2ZXJzL252ZGltbS9jb3JlLmMg
-ICAgICAgICAgICAgICAgIHwgICAgMiArDQo+ICBkcml2ZXJzL252bWUvaG9zdC9wY2kuYyAgICAg
-ICAgICAgICAgIHwgICAgOCArKystDQo+ICBkcml2ZXJzL3Njc2kvc2RfZGlmLmMgICAgICAgICAg
-ICAgICAgIHwgICAgMiArDQo+ICBmcy9ibG9ja19kZXYuYyAgICAgICAgICAgICAgICAgICAgICAg
-IHwgICAgMiArDQo+ICBpbmNsdWRlL2xpbnV4L2Jsa2Rldi5oICAgICAgICAgICAgICAgIHwgICAx
-NiArKysrKystLQ0KPiAgaW5jbHVkZS9saW51eC9nZW5oZC5oICAgICAgICAgICAgICAgICB8ICAg
-MTYgKysrLS0tLS0NCj4gIDEzIGZpbGVzIGNoYW5nZWQsIDcyIGluc2VydGlvbnMoKyksIDY1IGRl
-bGV0aW9ucygtKQ0KPiANCg0KTWFydGluIHBvaW50ZWQgb3V0IHRoYXQgSSBicm9rZSBjb21wYXRp
-YmlsaXR5IGJ5IGNoYW5naW5nIHRoZSBzeXNmcw0KbGF5b3V0IG9mIHRoZSBpbnRlZ3JpdHkgYXR0
-cmlidXRlcy4gIFJhdGhlciB0aGFuIGFkZCBhIHN5c2ZzLWxpbmsgd2UgY2FuDQptYWtlIHRoaXMg
-cGF0Y2ggc2ltcGxlciBieSBvbmx5IG1vdmluZyBzdHJ1Y3QgYmxrX2ludGVncml0eSB0bw0KcmVx
-dWVzdF9xdWV1ZSBhbmQgbGVhdmUgaW50ZWdyaXR5X2tvYmogd2hlcmUgaXQgaXMgaW4gZ2VuZGlz
-ay4NCg0KQWxzbyB1bmRvIHRoZSBjb252ZXJzaW9uIG9mIGJsa19pbnRlZ3JpdHkgYXBpcyB0YWtl
-IGEgcmVxdWVzdF9xdWV1ZS4NClRocm91Z2ggdGhpcyBzaW1wbGlmaWNhdGlvbiBJIGFsc28gbm90
-aWNlZCB0aGF0IEkgaGFkIGJyb2tlbg0KYmxrX2ludGVncml0eV9jb21wYXJlKCkNCg0KSGVyZSdz
-IHRoZSBtdWNoIHNtYWxsZXIgdjMsIGFuZCBJIGFsc28gcmVmcmVzaGVkIGZvci00LjQvYmxrLWlu
-dGVncml0eQ0KDQo4PC0tLS0tDQpTdWJqZWN0OiBibG9jazogbW92ZSBibGtfaW50ZWdyaXR5IHRv
-IHJlcXVlc3RfcXVldWUNCg0KRnJvbTogRGFuIFdpbGxpYW1zIDxkYW4uai53aWxsaWFtc0BpbnRl
-bC5jb20+DQoNCkEgdHJhY2UgbGlrZSB0aGUgZm9sbG93aW5nIHByb2NlZWRzIGEgY3Jhc2ggaW4g
-YmlvX2ludGVncml0eV9wcm9jZXNzKCkNCndoZW4gaXQgZ29lcyB0byB1c2UgYW4gYWxyZWFkeSBm
-cmVlZCBibGtfaW50ZWdyaXR5IHByb2ZpbGUuDQoNCiBCVUc6IHVuYWJsZSB0byBoYW5kbGUga2Vy
-bmVsIHBhZ2luZyByZXF1ZXN0IGF0IGZmZmY4ODAwZDMxYjEwZDgNCiBJUDogWzxmZmZmODgwMGQz
-MWIxMGQ4Pl0gMHhmZmZmODgwMGQzMWIxMGQ4DQogUEdEIDJmNjUwNjcgUFVEIDIxZmZmZDA2NyBQ
-TUQgODAwMDAwMDBkMzAwMDFlMw0KIE9vcHM6IDAwMTEgWyMxXSBTTVANCiBEdW1waW5nIGZ0cmFj
-ZSBidWZmZXI6DQogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tDQogICAgbmRjdGwt
-MjIyMiAgICAyLi4uLiA0NDUyNjI0NXVzIDogZGlza19yZWxlYXNlOiBwbWVtMXMNCiBzeXN0ZW1k
-LS0yMjIzICAgIDQuLi4uIDQ0NTczOTQ1dXMgOiBiaW9faW50ZWdyaXR5X2VuZGlvOiBwbWVtMXMN
-CiAgICA8Li4uPi00MDkgICAgIDQuLi4uIDQ0NTc0MDA1dXMgOiBiaW9faW50ZWdyaXR5X3Byb2Nl
-c3M6IHBtZW0xcw0KIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KWy4uXQ0KICBD
-YWxsIFRyYWNlOg0KICBbPGZmZmZmZmZmODE0NGUwZjk+XSA/IGJpb19pbnRlZ3JpdHlfcHJvY2Vz
-cysweDE1OS8weDJkMA0KICBbPGZmZmZmZmZmODE0NGU0ZjY+XSBiaW9faW50ZWdyaXR5X3Zlcmlm
-eV9mbisweDM2LzB4NjANCiAgWzxmZmZmZmZmZjgxMGJkMmRjPl0gcHJvY2Vzc19vbmVfd29yaysw
-eDFjYy8weDRlMA0KDQpHaXZlbiB0aGF0IGEgcmVxdWVzdF9xdWV1ZSBpcyBwaW5uZWQgd2hpbGUg
-aS9vIGlzIGluIGZsaWdodCBhbmQgdGhhdCBhDQpnZW5kaXNrIGlzIGFsbG93ZWQgdG8gaGF2ZSBh
-IHNob3J0ZXIgbGlmZXRpbWUsIG1vdmUgYmxrX2ludGVncml0eSB0bw0KcmVxdWVzdF9xdWV1ZSB0
-byBzYXRpc2Z5IHJlcXVlc3RzIGFycml2aW5nIGFmdGVyIHRoZSBnZW5kaXNrIGhhcyBiZWVuDQp0
-b3JuIGRvd24uDQoNCkNjOiBDaHJpc3RvcGggSGVsbHdpZyA8aGNoQGxzdC5kZT4NCkNjOiBNYXJ0
-aW4gSy4gUGV0ZXJzZW4gPG1hcnRpbi5wZXRlcnNlbkBvcmFjbGUuY29tPg0KW21hcnRpbjogZml4
-IHRoZSBDT05GSUdfQkxLX0RFVl9JTlRFR1JJVFk9biBjYXNlXQ0KVGVzdGVkLWJ5OiBSb3NzIFp3
-aXNsZXIgPHJvc3Muendpc2xlckBsaW51eC5pbnRlbC5jb20+DQpTaWduZWQtb2ZmLWJ5OiBEYW4g
-V2lsbGlhbXMgPGRhbi5qLndpbGxpYW1zQGludGVsLmNvbT4NCi0tLQ0KIGJsb2NrL2Jsay1pbnRl
-Z3JpdHkuYyAgIHwgICAxNCArKysrKysrLS0tLS0tLQ0KIGRyaXZlcnMvbnZtZS9ob3N0L3BjaS5j
-IHwgICAgMiArLQ0KIGluY2x1ZGUvbGludXgvYmxrZGV2LmggIHwgICAgNiArKysrKy0NCiBpbmNs
-dWRlL2xpbnV4L2dlbmhkLmggICB8ICAgIDEgLQ0KIDQgZmlsZXMgY2hhbmdlZCwgMTMgaW5zZXJ0
-aW9ucygrKSwgMTAgZGVsZXRpb25zKC0pDQoNCmRpZmYgLS1naXQgYS9ibG9jay9ibGstaW50ZWdy
-aXR5LmMgYi9ibG9jay9ibGstaW50ZWdyaXR5LmMNCmluZGV4IDQ2MTVhMzM4Njc5OC4uNWQzMzlh
-ZTY0ZDU2IDEwMDY0NA0KLS0tIGEvYmxvY2svYmxrLWludGVncml0eS5jDQorKysgYi9ibG9jay9i
-bGstaW50ZWdyaXR5LmMNCkBAIC0xNDIsOCArMTQyLDggQEAgRVhQT1JUX1NZTUJPTChibGtfcnFf
-bWFwX2ludGVncml0eV9zZyk7DQogICovDQogaW50IGJsa19pbnRlZ3JpdHlfY29tcGFyZShzdHJ1
-Y3QgZ2VuZGlzayAqZ2QxLCBzdHJ1Y3QgZ2VuZGlzayAqZ2QyKQ0KIHsNCi0Jc3RydWN0IGJsa19p
-bnRlZ3JpdHkgKmIxID0gJmdkMS0+aW50ZWdyaXR5Ow0KLQlzdHJ1Y3QgYmxrX2ludGVncml0eSAq
-YjIgPSAmZ2QyLT5pbnRlZ3JpdHk7DQorCXN0cnVjdCBibGtfaW50ZWdyaXR5ICpiMSA9ICZnZDEt
-PnF1ZXVlLT5pbnRlZ3JpdHk7DQorCXN0cnVjdCBibGtfaW50ZWdyaXR5ICpiMiA9ICZnZDItPnF1
-ZXVlLT5pbnRlZ3JpdHk7DQogDQogCWlmICghYjEtPnByb2ZpbGUgJiYgIWIyLT5wcm9maWxlKQ0K
-IAkJcmV0dXJuIDA7DQpAQCAtMjQ2LDcgKzI0Niw3IEBAIHN0YXRpYyBzc2l6ZV90IGludGVncml0
-eV9hdHRyX3Nob3coc3RydWN0IGtvYmplY3QgKmtvYmosIHN0cnVjdCBhdHRyaWJ1dGUgKmF0dHIs
-DQogCQkJCSAgIGNoYXIgKnBhZ2UpDQogew0KIAlzdHJ1Y3QgZ2VuZGlzayAqZGlzayA9IGNvbnRh
-aW5lcl9vZihrb2JqLCBzdHJ1Y3QgZ2VuZGlzaywgaW50ZWdyaXR5X2tvYmopOw0KLQlzdHJ1Y3Qg
-YmxrX2ludGVncml0eSAqYmkgPSAmZGlzay0+aW50ZWdyaXR5Ow0KKwlzdHJ1Y3QgYmxrX2ludGVn
-cml0eSAqYmkgPSAmZGlzay0+cXVldWUtPmludGVncml0eTsNCiAJc3RydWN0IGludGVncml0eV9z
-eXNmc19lbnRyeSAqZW50cnkgPQ0KIAkJY29udGFpbmVyX29mKGF0dHIsIHN0cnVjdCBpbnRlZ3Jp
-dHlfc3lzZnNfZW50cnksIGF0dHIpOw0KIA0KQEAgLTI1OCw3ICsyNTgsNyBAQCBzdGF0aWMgc3Np
-emVfdCBpbnRlZ3JpdHlfYXR0cl9zdG9yZShzdHJ1Y3Qga29iamVjdCAqa29iaiwNCiAJCQkJICAg
-IHNpemVfdCBjb3VudCkNCiB7DQogCXN0cnVjdCBnZW5kaXNrICpkaXNrID0gY29udGFpbmVyX29m
-KGtvYmosIHN0cnVjdCBnZW5kaXNrLCBpbnRlZ3JpdHlfa29iaik7DQotCXN0cnVjdCBibGtfaW50
-ZWdyaXR5ICpiaSA9ICZkaXNrLT5pbnRlZ3JpdHk7DQorCXN0cnVjdCBibGtfaW50ZWdyaXR5ICpi
-aSA9ICZkaXNrLT5xdWV1ZS0+aW50ZWdyaXR5Ow0KIAlzdHJ1Y3QgaW50ZWdyaXR5X3N5c2ZzX2Vu
-dHJ5ICplbnRyeSA9DQogCQljb250YWluZXJfb2YoYXR0ciwgc3RydWN0IGludGVncml0eV9zeXNm
-c19lbnRyeSwgYXR0cik7DQogCXNzaXplX3QgcmV0ID0gMDsNCkBAIC0zOTcsNyArMzk3LDcgQEAg
-c3RhdGljIHN0cnVjdCBrb2JqX3R5cGUgaW50ZWdyaXR5X2t0eXBlID0gew0KICAqLw0KIHZvaWQg
-YmxrX2ludGVncml0eV9yZWdpc3RlcihzdHJ1Y3QgZ2VuZGlzayAqZGlzaywgc3RydWN0IGJsa19p
-bnRlZ3JpdHkgKnRlbXBsYXRlKQ0KIHsNCi0Jc3RydWN0IGJsa19pbnRlZ3JpdHkgKmJpID0gJmRp
-c2stPmludGVncml0eTsNCisJc3RydWN0IGJsa19pbnRlZ3JpdHkgKmJpID0gJmRpc2stPnF1ZXVl
-LT5pbnRlZ3JpdHk7DQogDQogCWJpLT5mbGFncyA9IEJMS19JTlRFR1JJVFlfVkVSSUZZIHwgQkxL
-X0lOVEVHUklUWV9HRU5FUkFURSB8DQogCQl0ZW1wbGF0ZS0+ZmxhZ3M7DQpAQCAtNDIwLDEzICs0
-MjAsMTMgQEAgRVhQT1JUX1NZTUJPTChibGtfaW50ZWdyaXR5X3JlZ2lzdGVyKTsNCiB2b2lkIGJs
-a19pbnRlZ3JpdHlfdW5yZWdpc3RlcihzdHJ1Y3QgZ2VuZGlzayAqZGlzaykNCiB7DQogCWJsa19p
-bnRlZ3JpdHlfcmV2YWxpZGF0ZShkaXNrKTsNCi0JbWVtc2V0KCZkaXNrLT5pbnRlZ3JpdHksIDAs
-IHNpemVvZihzdHJ1Y3QgYmxrX2ludGVncml0eSkpOw0KKwltZW1zZXQoJmRpc2stPnF1ZXVlLT5p
-bnRlZ3JpdHksIDAsIHNpemVvZihzdHJ1Y3QgYmxrX2ludGVncml0eSkpOw0KIH0NCiBFWFBPUlRf
-U1lNQk9MKGJsa19pbnRlZ3JpdHlfdW5yZWdpc3Rlcik7DQogDQogdm9pZCBibGtfaW50ZWdyaXR5
-X3JldmFsaWRhdGUoc3RydWN0IGdlbmRpc2sgKmRpc2spDQogew0KLQlzdHJ1Y3QgYmxrX2ludGVn
-cml0eSAqYmkgPSAmZGlzay0+aW50ZWdyaXR5Ow0KKwlzdHJ1Y3QgYmxrX2ludGVncml0eSAqYmkg
-PSAmZGlzay0+cXVldWUtPmludGVncml0eTsNCiANCiAJaWYgKCEoZGlzay0+ZmxhZ3MgJiBHRU5I
-RF9GTF9VUCkpDQogCQlyZXR1cm47DQpkaWZmIC0tZ2l0IGEvZHJpdmVycy9udm1lL2hvc3QvcGNp
-LmMgYi9kcml2ZXJzL252bWUvaG9zdC9wY2kuYw0KaW5kZXggNTU3OGRlNjdmNDA2Li4yYTM5MzE0
-ZmM2MWEgMTAwNjQ0DQotLS0gYS9kcml2ZXJzL252bWUvaG9zdC9wY2kuYw0KKysrIGIvZHJpdmVy
-cy9udm1lL2hvc3QvcGNpLmMNCkBAIC01MzgsNyArNTM4LDcgQEAgc3RhdGljIHZvaWQgbnZtZV9k
-aWZfcmVtYXAoc3RydWN0IHJlcXVlc3QgKnJlcSwNCiAJdmlydCA9IGJpcF9nZXRfc2VlZChiaXAp
-Ow0KIAlwaHlzID0gbnZtZV9ibG9ja19ucihucywgYmxrX3JxX3BvcyhyZXEpKTsNCiAJbmxiID0g
-KGJsa19ycV9ieXRlcyhyZXEpID4+IG5zLT5sYmFfc2hpZnQpOw0KLQl0cyA9IG5zLT5kaXNrLT5p
-bnRlZ3JpdHkudHVwbGVfc2l6ZTsNCisJdHMgPSBucy0+ZGlzay0+cXVldWUtPmludGVncml0eS50
-dXBsZV9zaXplOw0KIA0KIAlmb3IgKGkgPSAwOyBpIDwgbmxiOyBpKyssIHZpcnQrKywgcGh5cysr
-KSB7DQogCQlwaSA9IChzdHJ1Y3QgdDEwX3BpX3R1cGxlICopcDsNCmRpZmYgLS1naXQgYS9pbmNs
-dWRlL2xpbnV4L2Jsa2Rldi5oIGIvaW5jbHVkZS9saW51eC9ibGtkZXYuaA0KaW5kZXggM2UwNDY1
-MjU3ZDY4Li5jZjU3ODg0ZGI0YjcgMTAwNjQ0DQotLS0gYS9pbmNsdWRlL2xpbnV4L2Jsa2Rldi5o
-DQorKysgYi9pbmNsdWRlL2xpbnV4L2Jsa2Rldi5oDQpAQCAtMzY5LDYgKzM2OSwxMCBAQCBzdHJ1
-Y3QgcmVxdWVzdF9xdWV1ZSB7DQogCSAqLw0KIAlzdHJ1Y3Qga29iamVjdCBtcV9rb2JqOw0KIA0K
-KyNpZmRlZiAgQ09ORklHX0JMS19ERVZfSU5URUdSSVRZDQorCXN0cnVjdCBibGtfaW50ZWdyaXR5
-IGludGVncml0eTsNCisjZW5kaWYJLyogQ09ORklHX0JMS19ERVZfSU5URUdSSVRZICovDQorDQog
-I2lmZGVmIENPTkZJR19QTQ0KIAlzdHJ1Y3QgZGV2aWNlCQkqZGV2Ow0KIAlpbnQJCQlycG1fc3Rh
-dHVzOw0KQEAgLTE0ODEsNyArMTQ4NSw3IEBAIGV4dGVybiBib29sIGJsa19pbnRlZ3JpdHlfbWVy
-Z2VfYmlvKHN0cnVjdCByZXF1ZXN0X3F1ZXVlICosIHN0cnVjdCByZXF1ZXN0ICosDQogDQogc3Rh
-dGljIGlubGluZSBzdHJ1Y3QgYmxrX2ludGVncml0eSAqYmxrX2dldF9pbnRlZ3JpdHkoc3RydWN0
-IGdlbmRpc2sgKmRpc2spDQogew0KLQlzdHJ1Y3QgYmxrX2ludGVncml0eSAqYmkgPSAmZGlzay0+
-aW50ZWdyaXR5Ow0KKwlzdHJ1Y3QgYmxrX2ludGVncml0eSAqYmkgPSAmZGlzay0+cXVldWUtPmlu
-dGVncml0eTsNCiANCiAJaWYgKCFiaS0+cHJvZmlsZSkNCiAJCXJldHVybiBOVUxMOw0KZGlmZiAt
-LWdpdCBhL2luY2x1ZGUvbGludXgvZ2VuaGQuaCBiL2luY2x1ZGUvbGludXgvZ2VuaGQuaA0KaW5k
-ZXggODJmNDkxMWUwYWQ4Li44NDdjYzFkOTE2MzQgMTAwNjQ0DQotLS0gYS9pbmNsdWRlL2xpbnV4
-L2dlbmhkLmgNCisrKyBiL2luY2x1ZGUvbGludXgvZ2VuaGQuaA0KQEAgLTIxMCw3ICsyMTAsNiBA
-QCBzdHJ1Y3QgZ2VuZGlzayB7DQogCWF0b21pY190IHN5bmNfaW87CQkvKiBSQUlEICovDQogCXN0
-cnVjdCBkaXNrX2V2ZW50cyAqZXY7DQogI2lmZGVmICBDT05GSUdfQkxLX0RFVl9JTlRFR1JJVFkN
-Ci0Jc3RydWN0IGJsa19pbnRlZ3JpdHkgaW50ZWdyaXR5Ow0KIAlzdHJ1Y3Qga29iamVjdCBpbnRl
-Z3JpdHlfa29iajsNCiAjZW5kaWYJLyogQ09ORklHX0JMS19ERVZfSU5URUdSSVRZICovDQogCWlu
-dCBub2RlX2lkOw0KDQo=
+On Thu, Oct 15, 2015 at 4:06 PM, Mike Snitzer <snitzer@redhat.com> wrote:
+> On Wed, Oct 14 2015 at 11:27pm -0400,
+> Ming Lei <tom.leiming@gmail.com> wrote:
+>
+>> On Sat, Oct 10, 2015 at 3:52 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+>> >
+>> > Turns out that this change:
+>> > http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=wip&id=2639638c77768a86216be456c2764e32a2bcd841
+>> >
+>> > needed to be reverted with:
+>> > http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=wip&id=ad3ccd760da7c05b90775372f9b39dc2964086fe
+>> >
+>> > Because nested plugs caused generic_make_request()'s onstack bio_list to
+>> > go out of scope (blk_finish_plug() wouldn't actually flush the list
+>> > within generic_make_request because XFS already added an outermost
+>> > plug).
+>>
+>> Looks you should have defined bio_list in plug as
+>>
+>>                'struct bio_list bio_list'
+>>
+>> instead of one pointer.
+>
+> I realized that and fixed it (see commit ad3ccd760da7c05b90 referenced
+> above that does exactly that).  That wasn't the problem.
+
+OK.
+
+>
+>> >
+>> > But even after fixing that I then hit issues with these changes now
+>> > resulting in imperfect 'in_generic_make_request' accounting that happens
+>> > lazily once the outermost plug completes blk_finish_plug.  manifested as
+>> > dm-bufio.c:dm_bufio_prefetch's BUG_ON(dm_bufio_in_request()); hitting.
+>>
+>> Looks this problem should be related with above 'bio_list' definition too.
+>
+> No, as I explained it was due to the nested plug:
+>
+>> >
+>> > Basically using the blk-core's onstack plugging isn't workable for
+>> > fixing this deadlock and we're back to having to seriously consider
+>> > this (with its additional hook in the scheduler)
+>
+> To elaborate, for the code in DM (and other subsystems like bcache) that
+> rely on accurate accounting of whether we're actively _in_
+> generic_make_request: using plug to store/manage the bio_list isn't
+
+That looks an interesting requirement, which means DM just need to know
+if the current callsite is from generic_make_request(), so what you need
+is just one per-task variable.
+
+With the stack variable of 'plug', it should be easier to do that for DM, for
+example, you can introduce one flag in 'struct blk_plug', then set it in
+the entry of generic_make_request(), and clear it in the exit of the
+function.
+
+> workable because nested plugs change the lifetime of when the bio_list
+> is processed (as I implemented it -- which was to respect nested plugs).
+> I could've forced the issue by making the bio_list get processed
+> regardless of nesting but that would've made the onstack plugging much
+> more convoluted (duality between nested vs not just for bio_list's
+> benefit and for what gain?  Simply to avoid an extra conditional
+> immediately in the scheduler?  That conditional was still added anyway
+> but just as part of blk_needs_flush_plug so in the end there wasn't any
+> benefit!).
+>
+> Hopefully my middle-of-the-night reply is coherent and helped to clarify
+> my position that (ab)using blk_plug for the bio_list management is
+> _really_ awkward. ;)
+
+Hope it wan't my reply to cause the break of your sleep, :-)
+
+Thanks,
+Ming Lei
