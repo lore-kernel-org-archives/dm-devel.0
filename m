@@ -1,144 +1,306 @@
 From: Ming Lei <tom.leiming@gmail.com>
-Subject: Re: [PATCH v2] block: flush queued bios when the process blocks
-Date: Sat, 17 Oct 2015 23:54:38 +0800
-Message-ID: <CACVXFVOH0cK8F3+PiC=uPCwEqT5iJKQBMMsrt226_fR1EJptVQ@mail.gmail.com>
-References: <20151005205943.GB25762@redhat.com>
+Subject: Re: [PATCH v3 for-4.4] block: flush queued bios when process blocks
+ to avoid deadlock
+Date: Sun, 18 Oct 2015 00:04:29 +0800
+Message-ID: <CACVXFVP7GwgWUHc4sHZwShwmdzFT5ZrHRcEH4zd5A8HommmCJg@mail.gmail.com>
+References: <5384CE82.90601@kernel.dk>
+	<alpine.LRH.2.02.1405291944090.22123@file01.intranet.prod.int.rdu2.redhat.com>
+	<20151005205943.GB25762@redhat.com>
 	<alpine.LRH.2.02.1510061410450.27916@file01.intranet.prod.int.rdu2.redhat.com>
 	<20151006185016.GA31955@redhat.com>
 	<20151006201637.GA4158@redhat.com>
 	<alpine.LRH.2.02.1510081100510.9641@file01.intranet.prod.int.rdu2.redhat.com>
 	<20151008150859.GA11770@redhat.com>
 	<20151009195203.GA18790@redhat.com>
-	<CACVXFVPgvKEJo1dPigk303=GGVc3fJnuEk+QP+VEf=xa_Lz+vA@mail.gmail.com>
-	<20151015080610.GA25536@redhat.com>
-	<CACVXFVP+sACdZObrm2gLZZBzi-b4OErADgva9o9Jk4ibM5Ddsg@mail.gmail.com>
-	<20151016152903.GA5253@redhat.com>
+	<20151009195907.GB18790@redhat.com>
+	<20151014204739.GA23449@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151016152903.GA5253@redhat.com>
+In-Reply-To: <20151014204739.GA23449@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Alasdair G. Kergon" <agk@redhat.com>, Jeff Moyer <jmoyer@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 16, 2015 at 11:29 PM, Mike Snitzer <snitzer@redhat.com> wrote:
-> On Thu, Oct 15 2015 at 11:08pm -0400,
-> Ming Lei <tom.leiming@gmail.com> wrote:
+On Thu, Oct 15, 2015 at 4:47 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+> From: Mikulas Patocka <mpatocka@redhat.com>
 >
->> On Thu, Oct 15, 2015 at 4:06 PM, Mike Snitzer <snitzer@redhat.com> wrote:
->> > On Wed, Oct 14 2015 at 11:27pm -0400,
->> > Ming Lei <tom.leiming@gmail.com> wrote:
->> >
->> >> On Sat, Oct 10, 2015 at 3:52 AM, Mike Snitzer <snitzer@redhat.com> wrote:
->> >> >
->> >> > Turns out that this change:
->> >> > http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=wip&id=2639638c77768a86216be456c2764e32a2bcd841
->> >> >
->> >> > needed to be reverted with:
->> >> > http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=wip&id=ad3ccd760da7c05b90775372f9b39dc2964086fe
->> >> >
->> >> > Because nested plugs caused generic_make_request()'s onstack bio_list to
->> >> > go out of scope (blk_finish_plug() wouldn't actually flush the list
->> >> > within generic_make_request because XFS already added an outermost
->> >> > plug).
->> >>
->> >> Looks you should have defined bio_list in plug as
->> >>
->> >>                'struct bio_list bio_list'
->> >>
->> >> instead of one pointer.
->> >
->> > I realized that and fixed it (see commit ad3ccd760da7c05b90 referenced
->> > above that does exactly that).  That wasn't the problem.
->>
->> OK.
->>
->> >
->> >> >
->> >> > But even after fixing that I then hit issues with these changes now
->> >> > resulting in imperfect 'in_generic_make_request' accounting that happens
->> >> > lazily once the outermost plug completes blk_finish_plug.  manifested as
->> >> > dm-bufio.c:dm_bufio_prefetch's BUG_ON(dm_bufio_in_request()); hitting.
->> >>
->> >> Looks this problem should be related with above 'bio_list' definition too.
->> >
->> > No, as I explained it was due to the nested plug:
->> >
->> >> >
->> >> > Basically using the blk-core's onstack plugging isn't workable for
->> >> > fixing this deadlock and we're back to having to seriously consider
->> >> > this (with its additional hook in the scheduler)
->> >
->> > To elaborate, for the code in DM (and other subsystems like bcache) that
->> > rely on accurate accounting of whether we're actively _in_
->> > generic_make_request: using plug to store/manage the bio_list isn't
->>
->> That looks an interesting requirement, which means DM just need to know
->> if the current callsite is from generic_make_request(), so what you need
->> is just one per-task variable.
->>
->> With the stack variable of 'plug', it should be easier to do that for DM, for
->> example, you can introduce one flag in 'struct blk_plug', then set it in
->> the entry of generic_make_request(), and clear it in the exit of the
->> function.
+> The block layer uses per-process bio list to avoid recursion in
+> generic_make_request.  When generic_make_request is called recursively,
+> the bio is added to current->bio_list and generic_make_request returns
+> immediately.  The top-level instance of generic_make_request takes bios
+> from current->bio_list and processes them.
 >
-> Yes, I mean we _could_ set/clear the 'in_generic_make_request' flag _in_
-> generic_make_request() but then it just calls into question why the heck
-> we're using the plug to begin with? (especially given plugging is for
-> request-based devices at this point!).
+> Commit df2cb6daa4 ("block: Avoid deadlocks with bio allocation by
+> stacking drivers") created a workqueue for every bio set and code
+> in bio_alloc_bioset() that tries to resolve some low-memory deadlocks by
+> redirecting bios queued on current->bio_list to the workqueue if the
+> system is low on memory.  However another deadlock (see below **) may
+> happen, without any low memory condition, because generic_make_request
+> is queuing bios to current->bio_list (rather than submitting them).
 >
-> It really doesn't make _any_ sense to overload blk_plug by moving the
-> bio_list into there and adding a 'in_generic_make_request'... when you
-> consider the _only_ reason this was suggested is to (ab)use the existing
-> hook in scheduler/core.c.
+> Fix this deadlock by redirecting any bios on current->bio_list to the
+> bio_set's rescue workqueue on every schedule call.  Consequently, when
+> the process blocks on a mutex, the bios queued on current->bio_list are
+> dispatched to independent workqueus and they can complete without
+> waiting for the mutex to be available.
 
-At the first glance, I mean it is doable to use blk_plug for the issue.
+It isn't common to acquire mutex/semaphone inside .make_request()
+or .request_fn(), so I am wondering it is good to reuse the rescuing
+workqueue for this unusual case.
 
-From last year's discussion, looks Jens thought we have plug already which
-should have covered this case, also Kent wanted to implement
-plug for bio too.
+Also sometimes it can hurt performance by converting I/O submission
+from one context into concurrent contexts of workqueue, especially
+in case of sequential I/O, since plug & plug merge can't be used any
+more.
 
 >
-> So I stand by my position that there is really no point in the exercise
-> and that it actually hurts the code to try to make this a blk_plug
-> "feature".
+> Also, now we can remove punt_bios_to_rescuer() and bio_alloc_bioset()'s
+> calls to it because bio_alloc_bioset() will implicitly punt all bios on
+> current->bio_list if it performs a blocking allocation.
 >
-> We already have well established current->bio_list semantics that can be
-> reused as a flag given it is a pointer.  The block callout in the
-> scheduler is going to grow a conditional either way.  What I've proposed
-> _seems_ the cleanest to me and others.  Hopefully you can see that
-> aspect of things.
+> ** Here is the dm-snapshot deadlock that was observed:
 >
-> So if you could review the v3 patch with a critical eye that'd be very
-> much appreciated.
-
-Will do.
-
+> 1) Process A sends one-page read bio to the dm-snapshot target. The bio
+> spans snapshot chunk boundary and so it is split to two bios by device
+> mapper.
 >
-> But I do look forward to Jens also having a look at this and providing
-> his review feedback.
+> 2) Device mapper creates the first sub-bio and sends it to the snapshot
+> driver.
 >
->> > workable because nested plugs change the lifetime of when the bio_list
->> > is processed (as I implemented it -- which was to respect nested plugs).
->> > I could've forced the issue by making the bio_list get processed
->> > regardless of nesting but that would've made the onstack plugging much
->> > more convoluted (duality between nested vs not just for bio_list's
->> > benefit and for what gain?  Simply to avoid an extra conditional
->> > immediately in the scheduler?  That conditional was still added anyway
->> > but just as part of blk_needs_flush_plug so in the end there wasn't any
->> > benefit!).
->> >
->> > Hopefully my middle-of-the-night reply is coherent and helped to clarify
->> > my position that (ab)using blk_plug for the bio_list management is
->> > _really_ awkward. ;)
->>
->> Hope it wan't my reply to cause the break of your sleep, :-)
+> 3) The function snapshot_map calls track_chunk (that allocates a structure
+> dm_snap_tracked_chunk and adds it to tracked_chunk_hash) and then remaps
+> the bio to the underlying device and exits with DM_MAPIO_REMAPPED.
 >
-> No, my dog woke me up to go outside at 4am.. I was up and couldn't
-> resist looking at my phone.. the rest is history ;)
+> 4) The remapped bio is submitted with generic_make_request, but it isn't
+> issued - it is added to current->bio_list instead.
+>
+> 5) Meanwhile, process B (dm's kcopyd) executes pending_complete for the
+> chunk affected be the first remapped bio, it takes down_write(&s->lock)
+> and then loops in __check_for_conflicting_io, waiting for
+> dm_snap_tracked_chunk created in step 3) to be released.
+>
+> 6) Process A continues, it creates a second sub-bio for the rest of the
+> original bio.
+>
+> 7) snapshot_map is called for this new bio, it waits on
+> down_write(&s->lock) that is held by Process B (in step 5).
+>
+> Fixes: https://bugzilla.redhat.com/show_bug.cgi?id=1267650
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> Depends-on: df2cb6daa4 ("block: Avoid deadlocks with bio allocation by stacking drivers")
+> Cc: stable@vger.kernel.org
+> ---
+>  block/bio.c            | 75 +++++++++++++++++++-------------------------------
+>  include/linux/blkdev.h | 19 +++++++++++--
+>  kernel/sched/core.c    |  7 ++---
+>  3 files changed, 48 insertions(+), 53 deletions(-)
+>
+> v3: improved patch header, changed sched/core.c block callout to blk_flush_queued_io(),
+>     io_schedule_timeout() also updated to use blk_flush_queued_io(), blk_flush_bio_list()
+>     now takes a @tsk argument rather than assuming current. v3 is now being submitted with
+>     more feeling now that (ab)using the onstack plugging proved problematic, please see:
+>     https://www.redhat.com/archives/dm-devel/2015-October/msg00087.html
+>
+> diff --git a/block/bio.c b/block/bio.c
+> index ad3f276..99f5a2ad 100644
+> --- a/block/bio.c
+> +++ b/block/bio.c
+> @@ -354,35 +354,35 @@ static void bio_alloc_rescue(struct work_struct *work)
+>         }
+>  }
+>
+> -static void punt_bios_to_rescuer(struct bio_set *bs)
+> +/**
+> + * blk_flush_bio_list
+> + * @tsk: task_struct whose bio_list must be flushed
+> + *
+> + * Pop bios queued on @tsk->bio_list and submit each of them to
+> + * their rescue workqueue.
+> + *
+> + * If the bio doesn't have a bio_set, we leave it on @tsk->bio_list.
+> + * However, stacking drivers should use bio_set, so this shouldn't be
+> + * an issue.
+> + */
+> +void blk_flush_bio_list(struct task_struct *tsk)
+>  {
+> -       struct bio_list punt, nopunt;
+>         struct bio *bio;
+> +       struct bio_list list = *tsk->bio_list;
+> +       bio_list_init(tsk->bio_list);
+>
+> -       /*
+> -        * In order to guarantee forward progress we must punt only bios that
+> -        * were allocated from this bio_set; otherwise, if there was a bio on
+> -        * there for a stacking driver higher up in the stack, processing it
+> -        * could require allocating bios from this bio_set, and doing that from
+> -        * our own rescuer would be bad.
+> -        *
+> -        * Since bio lists are singly linked, pop them all instead of trying to
+> -        * remove from the middle of the list:
+> -        */
+> -
+> -       bio_list_init(&punt);
+> -       bio_list_init(&nopunt);
+> -
+> -       while ((bio = bio_list_pop(current->bio_list)))
+> -               bio_list_add(bio->bi_pool == bs ? &punt : &nopunt, bio);
+> -
+> -       *current->bio_list = nopunt;
+> -
+> -       spin_lock(&bs->rescue_lock);
+> -       bio_list_merge(&bs->rescue_list, &punt);
+> -       spin_unlock(&bs->rescue_lock);
+> +       while ((bio = bio_list_pop(&list))) {
+> +               struct bio_set *bs = bio->bi_pool;
+> +               if (unlikely(!bs)) {
+> +                       bio_list_add(tsk->bio_list, bio);
+> +                       continue;
+> +               }
+>
+> -       queue_work(bs->rescue_workqueue, &bs->rescue_work);
+> +               spin_lock(&bs->rescue_lock);
+> +               bio_list_add(&bs->rescue_list, bio);
+> +               queue_work(bs->rescue_workqueue, &bs->rescue_work);
+> +               spin_unlock(&bs->rescue_lock);
+> +       }
 
+Not like rescuring path, schedule out can be quite frequent, and the
+above change will switch to submit these I/Os from wq concurrently,
+which might hurt performance for sequential I/O.
 
+Also I am wondering why not submit these I/Os in 'current' context
+just like what flush plug does?
 
--- 
-Ming Lei
+>  }
+>
+>  /**
+> @@ -422,7 +422,6 @@ static void punt_bios_to_rescuer(struct bio_set *bs)
+>   */
+>  struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+>  {
+> -       gfp_t saved_gfp = gfp_mask;
+>         unsigned front_pad;
+>         unsigned inline_vecs;
+>         unsigned long idx = BIO_POOL_NONE;
+> @@ -457,23 +456,11 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+>                  * reserve.
+>                  *
+>                  * We solve this, and guarantee forward progress, with a rescuer
+> -                * workqueue per bio_set. If we go to allocate and there are
+> -                * bios on current->bio_list, we first try the allocation
+> -                * without __GFP_WAIT; if that fails, we punt those bios we
+> -                * would be blocking to the rescuer workqueue before we retry
+> -                * with the original gfp_flags.
+> +                * workqueue per bio_set. If an allocation would block (due to
+> +                * __GFP_WAIT) the scheduler will first punt all bios on
+> +                * current->bio_list to the rescuer workqueue.
+>                  */
+> -
+> -               if (current->bio_list && !bio_list_empty(current->bio_list))
+> -                       gfp_mask &= ~__GFP_WAIT;
+> -
+>                 p = mempool_alloc(bs->bio_pool, gfp_mask);
+> -               if (!p && gfp_mask != saved_gfp) {
+> -                       punt_bios_to_rescuer(bs);
+> -                       gfp_mask = saved_gfp;
+> -                       p = mempool_alloc(bs->bio_pool, gfp_mask);
+> -               }
+> -
+>                 front_pad = bs->front_pad;
+>                 inline_vecs = BIO_INLINE_VECS;
+>         }
+> @@ -486,12 +473,6 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+>
+>         if (nr_iovecs > inline_vecs) {
+>                 bvl = bvec_alloc(gfp_mask, nr_iovecs, &idx, bs->bvec_pool);
+> -               if (!bvl && gfp_mask != saved_gfp) {
+> -                       punt_bios_to_rescuer(bs);
+> -                       gfp_mask = saved_gfp;
+> -                       bvl = bvec_alloc(gfp_mask, nr_iovecs, &idx, bs->bvec_pool);
+> -               }
+> -
+
+Looks you touched rescuing path for bio allocation, and better to just
+do one thing in one patch.
+
+>                 if (unlikely(!bvl))
+>                         goto err_free;
+>
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index 19c2e94..5dc7415 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -1084,6 +1084,22 @@ static inline bool blk_needs_flush_plug(struct task_struct *tsk)
+>                  !list_empty(&plug->cb_list));
+>  }
+>
+> +extern void blk_flush_bio_list(struct task_struct *tsk);
+> +
+> +static inline void blk_flush_queued_io(struct task_struct *tsk)
+> +{
+> +       /*
+> +        * Flush any queued bios to corresponding rescue threads.
+> +        */
+> +       if (tsk->bio_list && !bio_list_empty(tsk->bio_list))
+> +               blk_flush_bio_list(tsk);
+> +       /*
+> +        * Flush any plugged IO that is queued.
+> +        */
+> +       if (blk_needs_flush_plug(tsk))
+> +               blk_schedule_flush_plug(tsk);
+> +}
+> +
+>  /*
+>   * tag stuff
+>   */
+> @@ -1671,11 +1687,10 @@ static inline void blk_flush_plug(struct task_struct *task)
+>  {
+>  }
+>
+> -static inline void blk_schedule_flush_plug(struct task_struct *task)
+> +static inline void blk_flush_queued_io(struct task_struct *tsk)
+>  {
+>  }
+>
+> -
+>  static inline bool blk_needs_flush_plug(struct task_struct *tsk)
+>  {
+>         return false;
+> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+> index 10a8faa..eaf9eb3 100644
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -3127,11 +3127,10 @@ static inline void sched_submit_work(struct task_struct *tsk)
+>         if (!tsk->state || tsk_is_pi_blocked(tsk))
+>                 return;
+>         /*
+> -        * If we are going to sleep and we have plugged IO queued,
+> +        * If we are going to sleep and we have queued IO,
+>          * make sure to submit it to avoid deadlocks.
+>          */
+> -       if (blk_needs_flush_plug(tsk))
+> -               blk_schedule_flush_plug(tsk);
+> +       blk_flush_queued_io(tsk);
+>  }
+>
+>  asmlinkage __visible void __sched schedule(void)
+> @@ -4718,7 +4717,7 @@ long __sched io_schedule_timeout(long timeout)
+>         long ret;
+>
+>         current->in_iowait = 1;
+> -       blk_schedule_flush_plug(current);
+> +       blk_flush_queued_io(current);
+>
+>         delayacct_blkio_start();
+>         rq = raw_rq();
+> --
+> 2.3.8 (Apple Git-58)
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
