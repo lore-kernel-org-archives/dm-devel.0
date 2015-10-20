@@ -1,18 +1,13 @@
-From: Nikolay Borisov <n.borisov@siteground.com>
-Subject: Re: kernel BUG at
-	drivers/md/persistent-data/dm-btree-remove.c:182!
-Date: Tue, 20 Oct 2015 10:35:51 +0300
-Message-ID: <CAJFSNy48Cd3Fzb9HO7e7=DnsyaxzL3R3W0pL8yQkw_gBqutW=A@mail.gmail.com>
-References: <5624B4B8.1030404@siteground.com> <5624B505.6000406@siteground.com>
-	<20151019103057.GA14688@rh-vpn> <5624C9CB.7000702@siteground.com>
-	<20151019160230.GA23826@redhat.com>
-	<CAKTMprPVpRH6jktgPQ=f9Ak3XO8wg50oNqr8o-1UXTd=_9u0SA@mail.gmail.com>
+From: Xieyingtai <xieyingtai@huawei.com>
+Subject: libmpathpersist: pthread join counts should be
+ consistent with threads created
+Date: Tue, 20 Oct 2015 12:07:35 +0000
+Message-ID: <AF7C226D2A4F8B4D913D33FF7150AE051D6B21E9@szxeml556-mbs.china.huawei.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============8684496177341265221=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAKTMprPVpRH6jktgPQ=f9Ak3XO8wg50oNqr8o-1UXTd=_9u0SA@mail.gmail.com>
+Content-Language: zh-CN
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,69 +17,165 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dennis Yang <shinrairis@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>, thornber@redhat.com, SiteGround Operations <operations@siteground.com>, snitzer@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-After reading the assembly again with a colleague
-I can confirm that in my case the target is also set
-to #MAX-1 and then I have full nodes so it's very
-likely that I'm hitting the same problem that you
-reported. I've also hit it twice now on the same
-server in a 24 hour period. I will apply your patch
-and see if this helps.
+--===============8684496177341265221==
+Content-Language: zh-CN
+Content-Type: multipart/alternative;
+	boundary="_000_AF7C226D2A4F8B4D913D33FF7150AE051D6B21E9szxeml556mbschi_"
 
-Mike, Joe
+--_000_AF7C226D2A4F8B4D913D33FF7150AE051D6B21E9szxeml556mbschi_
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-Could you take a look at Dennis' patches and
-express some opinions on the issue?
+In mpath_prout_reg, it's perhaps more proper to modify active_pathcount to =
+count which
+is the actual thread counts created, otherwise it may leads to a segmentfau=
+lt error.
 
-On Tue, Oct 20, 2015 at 5:39 AM, Dennis Yang <shinrairis@gmail.com> wrote:
-> Hi,
+---
+libmpathpersist/mpath_persist.c | 2 +-
+1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist
+index 7a2249f..8518a2e 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -503,7 +503,7 @@ int mpath_prout_reg(struct multipath *mpp,
+        count =3D count +1;
+      }
+     }
+-    for( i=3D0; i < active_pathcount ; i++){
++    for( i=3D0; i < count ; i++){
+      rc =3D pthread_join(thread[i].id, NULL);
+      if (rc){
+        condlog (0, "%s: Thread[%d] failed to join thread %d",
+--
+1.8.3.4
+
+
+
+--_000_AF7C226D2A4F8B4D913D33FF7150AE051D6B21E9szxeml556mbschi_
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
+osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
+//www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
 >
-> After I analyzed the metadata of this case couple months ago, I find
-> out that there is another possible bug which might trigger this
-> assertion fail in shift(). I had posted a patch two months ago on the
-> list to explain and fix this issue. Could you help reviewing this?
->
-> https://www.redhat.com/archives/dm-devel/2015-August/msg00155.html
->
-> Thanks,
-> Dennis
->
-> 2015-10-20 0:02 GMT+08:00 Mike Snitzer <snitzer@redhat.com>:
->> On Mon, Oct 19 2015 at  6:45am -0400,
->> Nikolay Borisov <n.borisov@siteground.com> wrote:
->>
->>>
->>>
->>> On 10/19/2015 01:30 PM, Joe Thornber wrote:
->>> > On Mon, Oct 19, 2015 at 12:16:53PM +0300, Nikolay Borisov wrote:
->>> >> [Resending as I had typo in the dm-devel's mailing list the first time]
->>> >>
->>> >> Hello,
->>> >>
->>> >> Using kernel 3.12.47 I've hit the aforementioned issue. I'd also like
->>> >> to say that this kernel does include Dennis Yang's patch which
->>> >> supposedly fixes a similar issue
->>> >> (https://www.redhat.com/archives/dm-devel/2015-May/msg00113.html).
->>> >
->>> >
->>> > Did you apply this patch or my corrected patch?
->>> >
->>> > https://www.redhat.com/archives/dm-devel/2015-May/msg00123.html
->>>
->>> I haven't applied anything per-se, rather this stable kernel does
->>> include your corrected patch. So yes, the correct fix for the issue
->>> reported by Dennis is included, yet apparently the same issue is
->>> manifesting again.
->>
->> Are you using metadata snapshots at all?
->> Do you have this commit applied?
->>
->> b0dc3c8bc15 ("dm btree: add ref counting ops for the leaves of top level btrees")
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
+<meta name=3D"Generator" content=3D"Microsoft Word 12 (filtered medium)">
+<style><!--
+/* Font Definitions */
+@font-face
+	{font-family:SimSun;
+	panose-1:2 1 6 0 3 1 1 1 1 1;}
+@font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+@font-face
+	{font-family:SimSun;
+	panose-1:2 1 6 0 3 1 1 1 1 1;}
+/* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-align:justify;
+	text-justify:inter-ideograph;
+	font-size:10.5pt;
+	font-family:"Calibri","sans-serif";}
+a:link, span.MsoHyperlink
+	{mso-style-priority:99;
+	color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{mso-style-priority:99;
+	color:purple;
+	text-decoration:underline;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:"Calibri","sans-serif";
+	color:windowtext;}
+.MsoChpDefault
+	{mso-style-type:export-only;}
+/* Page Definitions */
+@page WordSection1
+	{size:612.0pt 792.0pt;
+	margin:72.0pt 90.0pt 72.0pt 90.0pt;}
+div.WordSection1
+	{page:WordSection1;}
+--></style><!--[if gte mso 9]><xml>
+<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+<o:shapelayout v:ext=3D"edit">
+<o:idmap v:ext=3D"edit" data=3D"1" />
+</o:shapelayout></xml><![endif]-->
+</head>
+<body lang=3D"ZH-CN" link=3D"blue" vlink=3D"purple" style=3D"text-justify-t=
+rim:punctuation">
+<div class=3D"WordSection1">
+<p class=3D"MsoNormal"><span lang=3D"EN-US">In mpath_prout_reg, it&#8217;s =
+perhaps more proper to modify active_pathcount to count which<o:p></o:p></s=
+pan></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">is the actual thread counts cre=
+ated, otherwise it may leads to a segmentfault error.<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US"><o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">---<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">libmpathpersist/mpath_persist.c=
+ | 2 &#43;-<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">1 file changed, 1 insertion(&#4=
+3;), 1 deletion(-)<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US"><o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">diff --git a/libmpathpersist/mp=
+ath_persist.c b/libmpathpersist<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">index 7a2249f..8518a2e 100644<o=
+:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">--- a/libmpathpersist/mpath_per=
+sist.c<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">&#43;&#43;&#43; b/libmpathpersi=
+st/mpath_persist.c<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">@@ -503,7 &#43;503,7 @@ int mpa=
+th_prout_reg(struct multipath *mpp,<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
+nbsp;&nbsp; count =3D count &#43;1;<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+}<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp;&nbsp;&nbsp; }<o:p>=
+</o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">-&nbsp;&nbsp;&nbsp; for( i=3D0;=
+ i &lt; active_pathcount ; i&#43;&#43;){<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">&#43;&nbsp;&nbsp;&nbsp; for( i=
+=3D0; i &lt; count ; i&#43;&#43;){<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+rc =3D pthread_join(thread[i].id, NULL);<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+if (rc){<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
+nbsp;&nbsp; condlog (0, &quot;%s: Thread[%d] failed to join thread %d&quot;=
+,<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">--<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US">1.8.3.4<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US"><o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span lang=3D"EN-US"><o:p>&nbsp;</o:p></span></p>
+</div>
+</body>
+</html>
+
+--_000_AF7C226D2A4F8B4D913D33FF7150AE051D6B21E9szxeml556mbschi_--
+
+
+--===============8684496177341265221==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============8684496177341265221==--
