@@ -1,20 +1,15 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: kernel BUG at
- drivers/md/persistent-data/dm-btree-remove.c:182!
-Date: Tue, 20 Oct 2015 15:35:52 +0100
-Message-ID: <20151020143551.GC15948@rh-vpn>
-References: <5624B4B8.1030404@siteground.com> <5624B505.6000406@siteground.com>
-	<20151019103057.GA14688@rh-vpn> <5624C9CB.7000702@siteground.com>
-	<20151019160230.GA23826@redhat.com>
-	<CAKTMprPVpRH6jktgPQ=f9Ak3XO8wg50oNqr8o-1UXTd=_9u0SA@mail.gmail.com>
-	<CAJFSNy48Cd3Fzb9HO7e7=DnsyaxzL3R3W0pL8yQkw_gBqutW=A@mail.gmail.com>
+From: sbp <sbp@extio.de>
+Subject: Re: dm-cache: clean cache resyncs to origin on every boot
+Date: Tue, 20 Oct 2015 20:00:25 +0200
+Message-ID: <56268139.9010901@extio.de>
+References: <CAGRJ0wqVAcNkEJsW5o2vYPFY3doL1Nt5oD8M78w3gvL+t2Xnsw@mail.gmail.com>
+	<20151020143304.GA15948@rh-vpn>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAJFSNy48Cd3Fzb9HO7e7=DnsyaxzL3R3W0pL8yQkw_gBqutW=A@mail.gmail.com>
+In-Reply-To: <20151020143304.GA15948@rh-vpn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,14 +19,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Nikolay Borisov <n.borisov@siteground.com>
-Cc: device-mapper development <dm-devel@redhat.com>, SiteGround Operations <operations@siteground.com>, Dennis Yang <shinrairis@gmail.com>, snitzer@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Oct 20, 2015 at 10:35:51AM +0300, Nikolay Borisov wrote:
-> Mike, Joe
-> 
-> Could you take a look at Dennis' patches and
-> express some opinions on the issue?
+On 10/20/2015 04:33 PM, Joe Thornber wrote:
+> On Tue, Oct 20, 2015 at 11:51:07AM +0500, Bogdan Vasiliev wrote:
+>> Hello,
+>>
+>> I have dm-cache configuraion with SSD in writeback mode. On every boot
+>> an entire cache resyncs to an origin device, even if it was clean
+>> before on shutdown. It takes time and full bandwidth of an origin
+>> device.
+>>
+>> Is there reason for this behavior or is it a bug? Why we do not trust
+>> a cache metadata?
+> If the cache is not taken down cleanly then dm-cache has to assume
+> every block is dirty.  Make sure your shutdown scripts are removing
+> the cache device.
 
-Yep, I'm working on it.
+Hi,
+
+I have the same problem, but also in writethrough mode. In principle the 
+behavior is the same in writethrough and writeback modes: Cache is fully 
+written back to disk every time the machine boots and sets the cache up.
+
+I've posted a similar report to this list beginning of this month, but 
+got no answer. There is my exact startup and shutdown script included, 
+also some additional information about the setup. 
+https://www.redhat.com/archives/dm-devel/2015-October/msg00012.html
+
+>
+>> My configuration details, if necessary:
+>> storage-cache_cdata:0 41943040 linear
+>> storage-cache_cmeta: 0 1048576 linear
+>> storage-data: 0 1953513472 cache 8 989/131072 128 173945/327680 610488
+>> 20046 574861 3817439 0 0 0 1 writeback 2 migration_threshold 2048 mq
+>> 10 random_threshold 4 sequential_threshold 512
+>> discard_promote_adjustment 1 read_promote_adjustment 4
+>> write_promote_adjustment 8 rw -
+>> storage-data_corig: 0 1953513472 linear
+>>
+>>
+>> - Bogdan
+>>
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
