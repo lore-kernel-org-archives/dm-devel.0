@@ -1,57 +1,45 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: kernel BUG at
-	drivers/md/persistent-data/dm-btree-remove.c:182!
-Date: Mon, 19 Oct 2015 12:02:31 -0400
-Message-ID: <20151019160230.GA23826@redhat.com>
-References: <5624B4B8.1030404@siteground.com> <5624B505.6000406@siteground.com>
-	<20151019103057.GA14688@rh-vpn> <5624C9CB.7000702@siteground.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH v2 10/12] block: move blk_integrity to request_queue
+Date: Mon, 19 Oct 2015 22:24:27 -0400
+Message-ID: <yq1fv16gtus.fsf@sermon.lab.mkp.net>
+References: <20151015195939.20721.23101.stgit@dwillia2-desk3.jf.intel.com>
+	<20151015200034.20721.23425.stgit@dwillia2-desk3.jf.intel.com>
+	<1444956139.2737.7.camel@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <5624C9CB.7000702@siteground.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Nikolay Borisov <n.borisov@siteground.com>
-Cc: device-mapper development <dm-devel@redhat.com>, thornber@redhat.com, SiteGround Operations <operations@siteground.com>
+Content-Type: text/plain
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <1444956139.2737.7.camel@intel.com> (Dan J. Williams's message of
+	"Fri, 16 Oct 2015 00:42:19 +0000")
+Sender: linux-raid-owner@vger.kernel.org
+To: "Williams, Dan J" <dan.j.williams@intel.com>
+Cc: "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@ml01.01.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "axboe@fb.com" <axboe@fb.com>, "hch@lst.de" <hch@lst.de>
 List-Id: dm-devel.ids
 
-On Mon, Oct 19 2015 at  6:45am -0400,
-Nikolay Borisov <n.borisov@siteground.com> wrote:
+>>>>> "Dan" == Williams, Dan J <dan.j.williams@intel.com> writes:
 
-> 
-> 
-> On 10/19/2015 01:30 PM, Joe Thornber wrote:
-> > On Mon, Oct 19, 2015 at 12:16:53PM +0300, Nikolay Borisov wrote:
-> >> [Resending as I had typo in the dm-devel's mailing list the first time]
-> >>
-> >> Hello, 
-> >>
-> >> Using kernel 3.12.47 I've hit the aforementioned issue. I'd also like 
-> >> to say that this kernel does include Dennis Yang's patch which 
-> >> supposedly fixes a similar issue 
-> >> (https://www.redhat.com/archives/dm-devel/2015-May/msg00113.html). 
-> > 
-> > 
-> > Did you apply this patch or my corrected patch?
-> > 
-> > https://www.redhat.com/archives/dm-devel/2015-May/msg00123.html
-> 
-> I haven't applied anything per-se, rather this stable kernel does
-> include your corrected patch. So yes, the correct fix for the issue
-> reported by Dennis is included, yet apparently the same issue is
-> manifesting again.
+Dan> Martin pointed out that I broke compatibility by changing the sysfs
+Dan> layout of the integrity attributes.  Rather than add a sysfs-link
+Dan> we can make this patch simpler by only moving struct blk_integrity
+Dan> to request_queue and leave integrity_kobj where it is in gendisk.
 
-Are you using metadata snapshots at all?
-Do you have this commit applied?
+Dan> Also undo the conversion of blk_integrity apis take a
+Dan> request_queue.  Through this simplification I also noticed that I
+Dan> had broken blk_integrity_compare()
 
-b0dc3c8bc15 ("dm btree: add ref counting ops for the leaves of top level btrees")
+Dan> Here's the much smaller v3, and I also refreshed
+Dan> for-4.4/blk-integrity
+
+Much better.
+
+I ran some test on our combined trees over the weekend and tripped a bug
+on some SCSI configs. Turned out to be my fault so I'll repost with a
+fixed patch 2.
+
+You can either rebase on top of the new series or maybe Jens will merge
+my patches first. Either way works for me.
+
+In any case I'm OK with your latest changes. Feel free to add my
+Acked-by.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
