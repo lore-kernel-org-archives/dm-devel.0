@@ -1,7 +1,8 @@
 From: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>
 Subject: [PATCH] dm: Use DM_MAPIO_XXX macros instead of 0/1
-Date: Tue, 20 Oct 2015 16:20:04 +0900
-Message-ID: <1445325604-3859-1-git-send-email-kusumi.tomohiro@gmail.com>
+	(resend)
+Date: Tue, 20 Oct 2015 16:30:03 +0900
+Message-ID: <1445326203-4040-1-git-send-email-kusumi.tomohiro@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,6 +23,10 @@ List-Id: dm-devel.ids
 
 .map function of dm-delay returns return value of delay_bio(),
 hence it's supposed to return either of DM_MAPIO_XXX macros.
+
+(resending this as I forgot to Signed-off-by: on git commit)
+
+Signed-off-by: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>
 ---
  drivers/md/dm-delay.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
