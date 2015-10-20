@@ -1,12 +1,12 @@
-From: sbp <sbp@extio.de>
+From: Bogdan Vasiliev <bogdan.vasiliev@gmail.com>
 Subject: Re: dm-cache: clean cache resyncs to origin on every boot
-Date: Tue, 20 Oct 2015 20:00:25 +0200
-Message-ID: <56268139.9010901@extio.de>
+Date: Tue, 20 Oct 2015 23:06:07 +0500
+Message-ID: <CAGRJ0wrPEo9m0kKeGy0U9BErKC=_GGUUgfgJn=NZm2cQpHnb3w@mail.gmail.com>
 References: <CAGRJ0wqVAcNkEJsW5o2vYPFY3doL1Nt5oD8M78w3gvL+t2Xnsw@mail.gmail.com>
 	<20151020143304.GA15948@rh-vpn>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20151020143304.GA15948@rh-vpn>
@@ -22,7 +22,7 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 10/20/2015 04:33 PM, Joe Thornber wrote:
+On 20 October 2015 at 19:33, Joe Thornber <thornber@redhat.com> wrote:
 > On Tue, Oct 20, 2015 at 11:51:07AM +0500, Bogdan Vasiliev wrote:
 >> Hello,
 >>
@@ -33,22 +33,28 @@ On 10/20/2015 04:33 PM, Joe Thornber wrote:
 >>
 >> Is there reason for this behavior or is it a bug? Why we do not trust
 >> a cache metadata?
+>
 > If the cache is not taken down cleanly then dm-cache has to assume
 > every block is dirty.  Make sure your shutdown scripts are removing
 > the cache device.
 
-Hi,
+How I do it:
+# umount /dev/mapper/storage-data
+# lvs  -o lv_name, cache_dirty_blocks
+  LV   CacheDirtyBlocks
+  data                0
+# sync
+# dmsetup remove_all
+# vgchange -ay
+  1 logical volume(s) in volume group "storage" now active
+# lvs  -o lv_name, cache_dirty_blocks
+  LV   CacheDirtyBlocks
+  data           122657
 
-I have the same problem, but also in writethrough mode. In principle the 
-behavior is the same in writethrough and writeback modes: Cache is fully 
-written back to disk every time the machine boots and sets the cache up.
+Volume was clearly removed without dirty cahe blocks, re-initialized
+and began full re-sync to the origin. Is this normal behavior?
 
-I've posted a similar report to this list beginning of this month, but 
-got no answer. There is my exact startup and shutdown script included, 
-also some additional information about the setup. 
-https://www.redhat.com/archives/dm-devel/2015-October/msg00012.html
 
->
 >> My configuration details, if necessary:
 >> storage-cache_cdata:0 41943040 linear
 >> storage-cache_cmeta: 0 1048576 linear
@@ -58,15 +64,3 @@ https://www.redhat.com/archives/dm-devel/2015-October/msg00012.html
 >> discard_promote_adjustment 1 read_promote_adjustment 4
 >> write_promote_adjustment 8 rw -
 >> storage-data_corig: 0 1953513472 linear
->>
->>
->> - Bogdan
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
