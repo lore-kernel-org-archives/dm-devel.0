@@ -1,79 +1,96 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH v2] dm: reduce the number of processes per dm
-	device
-Date: Wed, 21 Oct 2015 16:34:20 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1510211631530.27225@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1510081214130.14961@file01.intranet.prod.int.rdu2.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH v3 for-4.4] block: flush queued bios when process blocks
+ to avoid deadlock
+Date: Wed, 21 Oct 2015 17:49:20 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1510211718310.21723@file01.intranet.prod.int.rdu2.redhat.com>
+References: <5384CE82.90601@kernel.dk> <alpine.LRH.2.02.1405291944090.22123@file01.intranet.prod.int.rdu2.redhat.com> <20151005205943.GB25762@redhat.com> <alpine.LRH.2.02.1510061410450.27916@file01.intranet.prod.int.rdu2.redhat.com> <20151006185016.GA31955@redhat.com>
+ <20151006201637.GA4158@redhat.com> <alpine.LRH.2.02.1510081100510.9641@file01.intranet.prod.int.rdu2.redhat.com> <20151008150859.GA11770@redhat.com> <20151009195203.GA18790@redhat.com> <20151009195907.GB18790@redhat.com> <20151014204739.GA23449@redhat.com>
+ <CACVXFVP7GwgWUHc4sHZwShwmdzFT5ZrHRcEH4zd5A8HommmCJg@mail.gmail.com> <alpine.LRH.2.02.1510201544450.5249@file01.intranet.prod.int.rdu2.redhat.com> <CACVXFVPfaJwKDzh+t0f9uxxTxrXE33bLZew5+FoKjGiYvsKW1Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1510081214130.14961@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CACVXFVPfaJwKDzh+t0f9uxxTxrXE33bLZew5+FoKjGiYvsKW1Q@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ming Lei <tom.leiming@gmail.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Alasdair G. Kergon" <agk@redhat.com>, Jeff Moyer <jmoyer@redhat.com>
 List-Id: dm-devel.ids
 
-This is updated patch to reduce the number of processes. When we free 
-q->bio_split bioset, we must also avoid the call to blk_queue_split that 
-uses it. The call to blk_queue_split is useless because device mapper does 
-its own splitting.
 
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+On Thu, 22 Oct 2015, Ming Lei wrote:
 
-The patch 54efd50bfd873e2dbf784e0b21a8027ba4299a3e ("block: make
-generic_make_request handle arbitrarily sized bios") makes it possible for
-block devices to process large bios. The patch allocates a new bio set
-queue->bio_split for each device, this bio set is used for allocating bios
-when the driver needs to split large bios.
+> > Some drivers (dm-snapshot, dm-thin) do acquire a mutex in .make_requests()
+> > for every bio. It wouldn't be practical to convert them to not acquire the
+> > mutex (and it would also degrade performance of these drivers, if they had
+> > to offload every bio to a worker thread that can acquire the mutex).
+> 
+> Lots of drivers handle I/O in that way, and this way makes AIO not possible
+> basically for dm-snapshot.
 
-Each bio_set allocates a workqueue process, thus the above patch increases
-the number of processes allocated per block device.
+It doesn't have to do anything with asynchronous I/O. Of course you can do 
+asynchronous I/O on dm-snapshot.
 
-Device mapper doesn't need the queue->bio_split bio_set, thus we can
-deallocate it. This reduces the number of allocated processes per
-dm-device from 3 to 2. We remove the call to blk_queue_split, it is not 
-needed because device mapper does its own splitting.
+> >> Also sometimes it can hurt performance by converting I/O submission
+> >> from one context into concurrent contexts of workqueue, especially
+> >> in case of sequential I/O, since plug & plug merge can't be used any
+> >> more.
+> >
+> > You can add blk_start_plug/blk_finish_plug to the function
+> > bio_alloc_rescue. That would be reasonable to make sure that the requests
+> > are merged even when they are offloaded to rescue thread.
+> 
+> The IOs submitted from each wq context becomes not contineous any
+> more, so plug merge isn't doable, not mention the extra context switch
+> cost.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+If the requests are mergeable, blk_start_plug/blk_finish_plug will merge 
+them, if not, it won't.
 
----
- drivers/md/dm.c |    8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+> This kind of cost can be introduced for all bio devices just for handling
+> the unusual case, fair?
 
-Index: linux-4.3-rc6/drivers/md/dm.c
-===================================================================
---- linux-4.3-rc6.orig/drivers/md/dm.c	2015-10-21 19:29:04.000000000 +0200
-+++ linux-4.3-rc6/drivers/md/dm.c	2015-10-21 19:29:58.000000000 +0200
-@@ -1742,8 +1742,6 @@ static void dm_make_request(struct reque
- 
- 	map = dm_get_live_table(md, &srcu_idx);
- 
--	blk_queue_split(q, &bio, q->bio_split);
--
- 	generic_start_io_acct(rw, bio_sectors(bio), &dm_disk(md)->part0);
- 
- 	/* if we're suspended, we have to queue this io for later */
-@@ -2770,6 +2768,12 @@ int dm_setup_md_queue(struct mapped_devi
- 	case DM_TYPE_BIO_BASED:
- 		dm_init_old_md_queue(md);
- 		blk_queue_make_request(md->queue, dm_make_request);
-+		/*
-+		 * We don't need the bioset, so we free it to save one process
-+		 * per device.
-+		 */
-+		bioset_free(md->queue->bio_split);
-+		md->queue->bio_split = NULL;
- 		break;
- 	}
- 
+Offloading bios to a worker thread when the make_request_fn function 
+blocks is required to avoid a deadlock (BTW. the deadlock became more 
+common in the kernel 4.3 due to unrestricted size of bios).
+
+The bio list current->bio_list introduces a false locking dependency - 
+completion of a bio depends on completion of other bios on 
+current->bio_list directed for different devices, thus it could create 
+circular dependency resulting in deadlock.
+
+To avoid the circular dependency, each bio must be offloaded to a specific 
+workqueue, so that completion of bio for device A no longer depends on 
+completion of another bio for device B.
+
+> >> > -       queue_work(bs->rescue_workqueue, &bs->rescue_work);
+> >> > +               spin_lock(&bs->rescue_lock);
+> >> > +               bio_list_add(&bs->rescue_list, bio);
+> >> > +               queue_work(bs->rescue_workqueue, &bs->rescue_work);
+> >> > +               spin_unlock(&bs->rescue_lock);
+> >> > +       }
+> >>
+> >> Not like rescuring path, schedule out can be quite frequent, and the
+> >> above change will switch to submit these I/Os from wq concurrently,
+> >> which might hurt performance for sequential I/O.
+> >>
+> >> Also I am wondering why not submit these I/Os in 'current' context
+> >> just like what flush plug does?
+> >
+> > Processing requests doesn't block (they only take the queue spinlock).
+> >
+> > Processing bios can block (they can take other mutexes or semaphores), so
+> > processing them from the schedule hook is impossible - the bio's
+> > make_request function could attempt to take some lock that is already
+> > held. So - we must offload the bios to a separate workqueue.
+> 
+> Yes, so better to just handle dm-snapshot in this way.
+
+All dm targets and almost all other bio-processing drivers can block in 
+the make_request_fn function (for example, they may block when allocating 
+from a mempool).
+
+Mikulas
+
+> Thanks,
+> Ming Lei
+> 
