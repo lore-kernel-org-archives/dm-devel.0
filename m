@@ -1,18 +1,18 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 04/18] retrigger uevents to try and get the
- uid through udev
-Date: Wed, 21 Oct 2015 17:20:50 -0500
-Message-ID: <20151021222050.GX2872@octiron.msp.redhat.com>
+Subject: Re: [PATCH 09/18] Make multipath deactivate devices
+ before iscsi shutdown
+Date: Wed, 21 Oct 2015 17:29:24 -0500
+Message-ID: <20151021222924.GY2872@octiron.msp.redhat.com>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
-	<1444333491-16265-5-git-send-email-bmarzins@redhat.com>
-	<561B55EA.1090205@suse.de>
+	<1444333491-16265-10-git-send-email-bmarzins@redhat.com>
+	<561B5BA3.5030501@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <561B55EA.1090205@suse.de>
+In-Reply-To: <561B5BA3.5030501@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,57 +25,45 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Oct 12, 2015 at 08:40:42AM +0200, Hannes Reinecke wrote:
+On Mon, Oct 12, 2015 at 09:05:07AM +0200, Hannes Reinecke wrote:
 > On 10/08/2015 09:44 PM, Benjamin Marzinski wrote:
-> > Ideally, udev will be able to grab the wwid when a path device is
-> > discovered, but sometimes this isn't possible. In these cases, the
-> > best thing that could happen would be for udev to actually get the
-> > information, and add it to its database. This patch makes multipath
-> > retrigger uevents a limited number of times before giving up and
-> > trying to get the information itself.
-> > =
-
-> > There are two configurables that control how it does this,
-> > "retrigger_tries" and "retrigger_delay". The first sets the number of
-> > times it will try to retrigger a uevent to get the wwid, the second
-> > sets the amount of time to wait between retriggers.
-> > =
-
-> > This patch currently only tries reinitializing the path on change events
-> > after multipathd has triggered a change event, and it only tries once
-> > per triggered change event.  Now, its possible that other change events
-> > could occur on the device without multipathd tirggering them.  As the
-> > patch stands now, it won't try to initialize the device on those.  It w=
-ill,
-> > however still try in the checkerloop, but only after it has finished
-> > retriggering the uevents. We could be much more aggressive here, and as=
-sume
-> > that devices that simply won't have a WWID should already be taken care=
- of
-> > by the blacklists, so it would be always a good idea to recheck devices=
- on
-> > change events. What would be ideal is if udev would let us know when it=
- had
-> > problems or timed out when processing a uevent, so we would know if
-> > retriggering the uevent would be useful.
+> > The multipath devices need to be deactivated before iscsi is shutdown,
+> > otherwise the multipath devices will generate a lot of error messages
+> > when it loses its iscsi path devices.
 > > =
 
 > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > > ---
-> Hmm. Yes, this 'udev killing worker after a certain time' is a major
-> pain. And we've tried to work around it, too.
-> With various degrees of success.
-> But I'm not sure if retriggering is a good idea here; we simply have
-> no idea if the failure is legit or not.
+> >  multipathd/multipathd.service | 1 +
+> >  1 file changed, 1 insertion(+)
+> > =
+
+> > diff --git a/multipathd/multipathd.service b/multipathd/multipathd.serv=
+ice
+> > index b5b755b..fc2e009 100644
+> > --- a/multipathd/multipathd.service
+> > +++ b/multipathd/multipathd.service
+> > @@ -1,5 +1,6 @@
+> >  [Unit]
+> >  Description=3DDevice-Mapper Multipath Device Controller
+> > +Requires=3Dblk-availability.service
+> >  Before=3Discsi.service iscsid.service lvm2-activation-early.service
+> >  Before=3Dlocal-fs-pre.target
+> >  After=3Dmultipathd.socket
+> > =
+
 > =
 
-> Can't we work with the udev/systemd folks to add a variable telling
-> us that udev killed the worker?
+> This will limit multipath to run on root-on-iSCSI scenarios. You
+> cannot run multipath on non-iSCSI and have a non-root share on iSCSI
+> after this change.
+> Is that intended?
 
-If we can get a variable to know when retriggering is a good idea, I'd
-be happy to use it, like I said above. But as it stands, I don't have a
-better way to solve this right now, and it's causing real issues right
-now. If you have a better idea, please post it.
+Huh? This doesn't stop multipath from being set up on non-root iscsi
+devices. It just means that before systemd shuts down iscsi in the
+shutdown initramfs, it will attempt to disassemble the multipath device,
+if possible.  I'm not sure what your objection here is. Am I missing
+something?
 
 -Ben
 
