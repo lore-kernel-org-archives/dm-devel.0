@@ -1,87 +1,104 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH v3 for-4.4] block: flush queued bios when process blocks
- to avoid deadlock
-Date: Tue, 20 Oct 2015 16:03:21 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1510201544450.5249@file01.intranet.prod.int.rdu2.redhat.com>
-References: <5384CE82.90601@kernel.dk> <alpine.LRH.2.02.1405291944090.22123@file01.intranet.prod.int.rdu2.redhat.com> <20151005205943.GB25762@redhat.com> <alpine.LRH.2.02.1510061410450.27916@file01.intranet.prod.int.rdu2.redhat.com> <20151006185016.GA31955@redhat.com>
- <20151006201637.GA4158@redhat.com> <alpine.LRH.2.02.1510081100510.9641@file01.intranet.prod.int.rdu2.redhat.com> <20151008150859.GA11770@redhat.com> <20151009195203.GA18790@redhat.com> <20151009195907.GB18790@redhat.com> <20151014204739.GA23449@redhat.com>
- <CACVXFVP7GwgWUHc4sHZwShwmdzFT5ZrHRcEH4zd5A8HommmCJg@mail.gmail.com>
+From: Neil Brown <nfbrown@novell.com>
+Subject: Re: Possible bug in DM-RAID.
+Date: Wed, 21 Oct 2015 12:39:32 +1100
+Message-ID: <87y4ex0zl7.fsf@notabene.neil.brown.name>
+References: <562659DD.1000505@gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CACVXFVP7GwgWUHc4sHZwShwmdzFT5ZrHRcEH4zd5A8HommmCJg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ming Lei <tom.leiming@gmail.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Alasdair G. Kergon" <agk@redhat.com>, Jeff Moyer <jmoyer@redhat.com>
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <562659DD.1000505@gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Austin S Hemmelgarn <ahferroin7@gmail.com>, Linux-Kernel mailing list <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+--=-=-=
+Content-Type: text/plain
 
 
-On Sun, 18 Oct 2015, Ming Lei wrote:
+Added dm-devel, which is probably the more appropriate list for dm
+things.
 
-> On Thu, Oct 15, 2015 at 4:47 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> > From: Mikulas Patocka <mpatocka@redhat.com>
-> >
-> > The block layer uses per-process bio list to avoid recursion in
-> > generic_make_request.  When generic_make_request is called recursively,
-> > the bio is added to current->bio_list and generic_make_request returns
-> > immediately.  The top-level instance of generic_make_request takes bios
-> > from current->bio_list and processes them.
-> >
-> > Commit df2cb6daa4 ("block: Avoid deadlocks with bio allocation by
-> > stacking drivers") created a workqueue for every bio set and code
-> > in bio_alloc_bioset() that tries to resolve some low-memory deadlocks by
-> > redirecting bios queued on current->bio_list to the workqueue if the
-> > system is low on memory.  However another deadlock (see below **) may
-> > happen, without any low memory condition, because generic_make_request
-> > is queuing bios to current->bio_list (rather than submitting them).
-> >
-> > Fix this deadlock by redirecting any bios on current->bio_list to the
-> > bio_set's rescue workqueue on every schedule call.  Consequently, when
-> > the process blocks on a mutex, the bios queued on current->bio_list are
-> > dispatched to independent workqueus and they can complete without
-> > waiting for the mutex to be available.
-> 
-> It isn't common to acquire mutex/semaphone inside .make_request()
-> or .request_fn(), so I am wondering it is good to reuse the rescuing
-> workqueue for this unusual case.
+NeilBrown
 
-Some drivers (dm-snapshot, dm-thin) do acquire a mutex in .make_requests() 
-for every bio. It wouldn't be practical to convert them to not acquire the 
-mutex (and it would also degrade performance of these drivers, if they had 
-to offload every bio to a worker thread that can acquire the mutex).
+Austin S Hemmelgarn <ahferroin7@gmail.com> writes:
 
-You can't acquire a mutex in .request_fn() because .request_fn() is called 
-with queue spinlock held.
+> I think I've stumbled upon a bug in DM-RAID.  The primary symptom is that when
+> creating a new DM-RAID based device (using either LVM or dmsetup) in a RAID1
+> configuration, it very quickly claims one by one that all of the disks failed
+> except the first, and goes degraded.  When this happens on a given system, the
+> disks always 'fail' in the reverse of the order of the mirror numbers.  All of
+> the other RAID profiles work just fine.  Curiously, it also only seems to
+> happen for 'big' devices (I haven't been able to determine exactly what the
+> minimum size is, but I see it 100% of the time with 32G devices, never with 16G
+> ones, and only intermittently with 24G).
+>
+> Here's what I got from dmesg when creating a 32G LVM volume that exhibited
+> this issue:
+> [66318.401295] device-mapper: raid: Superblocks created for new array
+> [66318.450452] md/raid1:mdX: active with 2 out of 2 mirrors
+> [66318.450467] Choosing daemon_sleep default (5 sec)
+> [66318.450482] created bitmap (32 pages) for device mdX
+> [66318.450495] attempt to access beyond end of device
+> [66318.450501] dm-91: rw=13329, want=0, limit=8192
+> [66318.450506] md: super_written gets error=-5, uptodate=0
+> [66318.450513] md/raid1:mdX: Disk failure on dm-92, disabling device.
+>                md/raid1:mdX: Operation continuing on 1 devices.
+> [66318.459815] attempt to access beyond end of device
+> [66318.459819] dm-89: rw=13329, want=0, limit=8192
+> [66318.459822] md: super_written gets error=-5, uptodate=0
+> [66318.492852] attempt to access beyond end of device
+> [66318.492862] dm-89: rw=13329, want=0, limit=8192
+> [66318.492868] md: super_written gets error=-5, uptodate=0
+> [66318.627183] mdX: bitmap file is out of date, doing full recovery
+> [66318.714107] mdX: bitmap initialized from disk: read 3 pages, set 65536 of 65536 bits
+> [66318.782045] RAID1 conf printout:
+> [66318.782054]  --- wd:1 rd:2
+> [66318.782061]  disk 0, wo:0, o:1, dev:dm-90
+> [66318.782068]  disk 1, wo:1, o:0, dev:dm-92
+> [66318.836598] RAID1 conf printout:
+> [66318.836607]  --- wd:1 rd:2
+> [66318.836614]  disk 0, wo:0, o:1, dev:dm-90
+>
+> And here's output for a 24G LVM volume that didn't display the issue.
+> [66343.407954] device-mapper: raid: Superblocks created for new array
+> [66343.479065] md/raid1:mdX: active with 2 out of 2 mirrors
+> [66343.479078] Choosing daemon_sleep default (5 sec)
+> [66343.479101] created bitmap (24 pages) for device mdX
+> [66343.629329] mdX: bitmap file is out of date, doing full recovery
+> [66343.677374] mdX: bitmap initialized from disk: read 2 pages, set 49152 of 49152 bits
+>
+> I'm using a lightly patched version of 4.2.3
+> (the source can be found at https://github.com/ferroin/linux)
+> but none of the patches I'm using come anywhere near anything in the block layer,
+> let alone the DM/MD code.
+>
+> I've attempted to bisect this, although it got kind of complicated.  So far I've
+> determined that the first commit that I see this issue on is d3b178a: md: Skip cluster setup for dm-raid
+> Prior to that commit, I can't initialize any dm-raid devices due to the bug it fixes.
+> I have not tested anything prior to d51e4fe (the merge commit that pulled in the md-cluster code),
+> but I do distinctly remember that I did not see this issue in 3.19.
+>
+> I'll be happy to provide more info if needed.
 
-> Also sometimes it can hurt performance by converting I/O submission
-> from one context into concurrent contexts of workqueue, especially
-> in case of sequential I/O, since plug & plug merge can't be used any
-> more.
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
 
-You can add blk_start_plug/blk_finish_plug to the function 
-bio_alloc_rescue. That would be reasonable to make sure that the requests 
-are merged even when they are offloaded to rescue thread.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
 
-> > -       queue_work(bs->rescue_workqueue, &bs->rescue_work);
-> > +               spin_lock(&bs->rescue_lock);
-> > +               bio_list_add(&bs->rescue_list, bio);
-> > +               queue_work(bs->rescue_workqueue, &bs->rescue_work);
-> > +               spin_unlock(&bs->rescue_lock);
-> > +       }
-> 
-> Not like rescuring path, schedule out can be quite frequent, and the
-> above change will switch to submit these I/Os from wq concurrently,
-> which might hurt performance for sequential I/O.
-> 
-> Also I am wondering why not submit these I/Os in 'current' context
-> just like what flush plug does?
-
-Processing requests doesn't block (they only take the queue spinlock).
-
-Processing bios can block (they can take other mutexes or semaphores), so 
-processing them from the schedule hook is impossible - the bio's 
-make_request function could attempt to take some lock that is already 
-held. So - we must offload the bios to a separate workqueue.
-
-Mikulas
+iQIcBAEBCAAGBQJWJuzUAAoJEDnsnt1WYoG5uhYQAIYqGQjxEhvpieEfN++B2mpn
+lDc5dnrH8RKkp7HcBCEJK29XIekNEHtLeosN38FtAH+AZYU51ou1OTg4gZ5Ne1aK
+XQBSsiOrhSocQNvWm3XVO5n72BiFuvv+K76gQG/xQm5wnY5IDKdRdIbIN/deu6GB
+gZSp9KdYDvd9g6SnwGKeEvo0/ZFVXT9TwSJEs5axTwQQp8P19CzKucwpJO8XkyFr
+RsSoOhmDrqF5v6M3TUQJRmI3TI4hBFyMpRLKurnOx6OBE8uH5E5QDvnmigwTGbUR
+XYQqjpStIX5iGRDH0qnBeV7/m5Y2z7n3fPgMVDn78RwEnxjzhoa7cRl6iNtzviIh
+WnePylk8joB5Qf7O6rSGarRnYocV3mWqEh959raTRn1FfFkTa4xmp6MkqYDJIkjU
+4jPJHboZQ5QRJF7aIVaUdDAoIC7bREx81AXvp/7ExR/sO2SJmUvAIMBC1HHLV8wz
+jb3rcOHXO+zb+NVO6kRNf8GozK7okQkrlCZe8Mn2Y1LAq6TYD7ycDVLWzVbab1KD
+kPuimaUNzpFLj4d5qWHKWq27/U28qyVeJE4FFr5D8YuXFzcWTDZzy0Td35qFT0IP
+TzKievJ3k5mak4aP6tcOXUtXs/z9dbBF986B7+y9mllzfOeuI42IyeN7aTTjiozf
+nr94gAtL7LlwJouC3Ty+
+=A6M1
+-----END PGP SIGNATURE-----
+--=-=-=--
