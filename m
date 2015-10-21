@@ -1,18 +1,18 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 09/18] Make multipath deactivate devices
- before iscsi shutdown
-Date: Wed, 21 Oct 2015 17:29:24 -0500
-Message-ID: <20151021222924.GY2872@octiron.msp.redhat.com>
+Subject: Re: [PATCH 08/18] Fix issues with user_friendly_names
+ initramfs bindings
+Date: Wed, 21 Oct 2015 17:43:56 -0500
+Message-ID: <20151021224356.GZ2872@octiron.msp.redhat.com>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
-	<1444333491-16265-10-git-send-email-bmarzins@redhat.com>
-	<561B5BA3.5030501@suse.de>
+	<1444333491-16265-9-git-send-email-bmarzins@redhat.com>
+	<561F694F.3010309@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <561B5BA3.5030501@suse.de>
+In-Reply-To: <561F694F.3010309@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,49 +25,68 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Oct 12, 2015 at 09:05:07AM +0200, Hannes Reinecke wrote:
+On Thu, Oct 15, 2015 at 10:52:31AM +0200, Hannes Reinecke wrote:
 > On 10/08/2015 09:44 PM, Benjamin Marzinski wrote:
-> > The multipath devices need to be deactivated before iscsi is shutdown,
-> > otherwise the multipath devices will generate a lot of error messages
-> > when it loses its iscsi path devices.
+> > Multipath has an issue with user_friendly_names set in the initramfs.
+> > If the bindings are in the initramfs bindings file, it will create them,
+> > and it may use bindings that are different than the ones in the regular
+> > file system.  Once multipathd starts up in the regular file system, it
+> > will try to register the existing bindings, but that may (and in many
+> > cases, is likely to) fail. If it can't reanme it, will pick a new
+> > binding. Since when multipathd starts discovering the existing devices,
+> > it obviously doesn't know all of the existing devices yet, it may very
+> > well pick a binding that's already in use by a device that it hasn't
+> > discovered yet. In this case multipath will be unable to rename the
+> > device to the new binding. Unfortunately, if it fails the rename, it
+> > never resets the alias of the device stored in the mpvec to current
+> > alias of the actual dm device. So multipath will have devices in the
+> > mpvec where the alias and the wwid don't match the actual dm devices
+> > that exist.  This can cause all sorts of problems.
+> > =
+
+> > This patch does two things to deal with this.  First, it makes sure that
+> > if the rename fails, the device will reset its alias to the one that it
+> > currently has.
+> > =
+
+> > Second, it adds a new option to help avoid the problem in the first
+> > place.  There actually already is a solution to this issue. If
+> > multipathd is started with -B, it makes the bindings file read-only. If
+> > multipathd is started this way in the initramfs, it will never make new
+> > bindings for a device. If the device doesn't already have a binding, it
+> > will simply be named with its wwid. The problem with this method is that
+> > AFAICT it causes a maintenance problem with dracut.  At least on RedHat,
+> > dracut is simply copying the regular multipathd.service file into the
+> > initramfs. I don't see a way in multipathd.service to only start
+> > multipathd with the -B option in the initramfs (If there is a way, I'd
+> > be happy to use that). So, the only alternative that lets us use -B is
+> > to have a separate multipathd.service file that dracut uses for the
+> > initramfs.  This seems like more work than it's worth.
+> > =
+
+> > Instead, this patch pulls some code from systemd to detect if multipathd
+> > is running in the initramfs.  If it is, and if new_bindings_in_boot is
+> > not set, multipathd will set the bindings file to read-only, just like
+> > the -B option does.
 > > =
 
 > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> >  multipathd/multipathd.service | 1 +
-> >  1 file changed, 1 insertion(+)
-> > =
-
-> > diff --git a/multipathd/multipathd.service b/multipathd/multipathd.serv=
-ice
-> > index b5b755b..fc2e009 100644
-> > --- a/multipathd/multipathd.service
-> > +++ b/multipathd/multipathd.service
-> > @@ -1,5 +1,6 @@
-> >  [Unit]
-> >  Description=3DDevice-Mapper Multipath Device Controller
-> > +Requires=3Dblk-availability.service
-> >  Before=3Discsi.service iscsid.service lvm2-activation-early.service
-> >  Before=3Dlocal-fs-pre.target
-> >  After=3Dmultipathd.socket
-> > =
-
 > =
 
-> This will limit multipath to run on root-on-iSCSI scenarios. You
-> cannot run multipath on non-iSCSI and have a non-root share on iSCSI
-> after this change.
-> Is that intended?
+> Please split off this patch. The first issue is a real fix, it should
+> really be a separate patch.
+> =
 
-Huh? This doesn't stop multipath from being set up on non-root iscsi
-devices. It just means that before systemd shuts down iscsi in the
-shutdown initramfs, it will attempt to disassemble the multipath device,
-if possible.  I'm not sure what your objection here is. Am I missing
-something?
+> For the second one it actually quite simple to inject a different
+> service file for dracut (I did that actually in our dracut package).
+> So I'd rather see this happening instead of second-guessing by looking
+> at magic files. Which will fail for anyone _not_ using dracut.
+
+Fine. I'd rather only manage one multipathd.service file, but your point
+that my solution is dracut specific is fair.
 
 -Ben
-
-> =
+ =
 
 > Cheers,
 > =
@@ -75,11 +94,10 @@ something?
 > Hannes
 > -- =
 
-> Dr. Hannes Reinecke		               zSeries & Storage
-> hare@suse.de			               +49 911 74053 688
-> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-> HRB 21284 (AG N=FCrnberg)
+> Dr. Hannes Reinecke		      zSeries & Storage
+> hare@suse.de			      +49 911 74053 688
+> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+> GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
 > =
 
 > --
