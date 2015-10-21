@@ -1,18 +1,18 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 01/18] libmultipath: Add prioritizer context
- data
-Date: Wed, 21 Oct 2015 17:16:06 -0500
-Message-ID: <20151021221606.GW2872@octiron.msp.redhat.com>
+Subject: Re: [PATCH 04/18] retrigger uevents to try and get the
+ uid through udev
+Date: Wed, 21 Oct 2015 17:20:50 -0500
+Message-ID: <20151021222050.GX2872@octiron.msp.redhat.com>
 References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
-	<1444333491-16265-2-git-send-email-bmarzins@redhat.com>
-	<561B54AA.2080404@suse.de>
+	<1444333491-16265-5-git-send-email-bmarzins@redhat.com>
+	<561B55EA.1090205@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <561B54AA.2080404@suse.de>
+In-Reply-To: <561B55EA.1090205@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,46 +25,61 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Oct 12, 2015 at 08:35:22AM +0200, Hannes Reinecke wrote:
+On Mon, Oct 12, 2015 at 08:40:42AM +0200, Hannes Reinecke wrote:
 > On 10/08/2015 09:44 PM, Benjamin Marzinski wrote:
-> > Currently, running the alua prioritizer on a path causes 5 ioctls on ma=
-ny
-> > devices.  get_target_port_group_support() returns whether alua is
-> > supported. get_target_port_group() gets the TPG id. This often takes two
-> > ioctls because 128 bytes is not a large enough buffer size on many
-> > devices. Finally, get_asymmetric_access_state() also often takes two
-> > ioctls because of the buffer size. This can get to be problematic when
-> > there are thousands of paths.  The goal of this patch to to cut this do=
-wn
-> > to one call in the usual case.
+> > Ideally, udev will be able to grab the wwid when a path device is
+> > discovered, but sometimes this isn't possible. In these cases, the
+> > best thing that could happen would be for udev to actually get the
+> > information, and add it to its database. This patch makes multipath
+> > retrigger uevents a limited number of times before giving up and
+> > trying to get the information itself.
 > > =
 
-> > In order to do this, I've added a context pointer to the prio structure,
-> > similar to what exists for the checker structure, and initprio() and
-> > freeprio() functions to the prioritizers. The only one that currently u=
-ses
-> > these is the alua prioritizer. It caches the type of alua support, the =
-TPG
-> > id, and the necessary buffer size.  The only thing I'm worried about wi=
-th
-> > this patch is whether the first two values could change.  In order to d=
-eal
-> > with that possibility, whenever a path gets a change event, or becomes
-> > valid again after a failure, it resets the context structure values, wh=
-ich
-> > forces all of them to get checked the next time the prioritizer is call=
-ed.
+> > There are two configurables that control how it does this,
+> > "retrigger_tries" and "retrigger_delay". The first sets the number of
+> > times it will try to retrigger a uevent to get the wwid, the second
+> > sets the amount of time to wait between retriggers.
 > > =
 
-> Hmm. What about reading /sys/block/sdX/device/vpg_pg83 ?
-> That carries the same information, and you would need to call the
-> ioctl only once ...
+> > This patch currently only tries reinitializing the path on change events
+> > after multipathd has triggered a change event, and it only tries once
+> > per triggered change event.  Now, its possible that other change events
+> > could occur on the device without multipathd tirggering them.  As the
+> > patch stands now, it won't try to initialize the device on those.  It w=
+ill,
+> > however still try in the checkerloop, but only after it has finished
+> > retriggering the uevents. We could be much more aggressive here, and as=
+sume
+> > that devices that simply won't have a WWID should already be taken care=
+ of
+> > by the blacklists, so it would be always a good idea to recheck devices=
+ on
+> > change events. What would be ideal is if udev would let us know when it=
+ had
+> > problems or timed out when processing a uevent, so we would know if
+> > retriggering the uevent would be useful.
+> > =
 
-Sure. If you want to write a patch, that would be fine by me. But I
-still think caching the result, so you don't need to rerun this makes
-sense.
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> Hmm. Yes, this 'udev killing worker after a certain time' is a major
+> pain. And we've tried to work around it, too.
+> With various degrees of success.
+> But I'm not sure if retriggering is a good idea here; we simply have
+> no idea if the failure is legit or not.
+> =
+
+> Can't we work with the udev/systemd folks to add a variable telling
+> us that udev killed the worker?
+
+If we can get a variable to know when retriggering is a good idea, I'd
+be happy to use it, like I said above. But as it stands, I don't have a
+better way to solve this right now, and it's causing real issues right
+now. If you have a better idea, please post it.
 
 -Ben
+
+> =
 
 > Cheers,
 > =
