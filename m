@@ -1,106 +1,127 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 08/18] Fix issues with user_friendly_names
- initramfs bindings
-Date: Wed, 21 Oct 2015 17:43:56 -0500
-Message-ID: <20151021224356.GZ2872@octiron.msp.redhat.com>
-References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>
-	<1444333491-16265-9-git-send-email-bmarzins@redhat.com>
-	<561F694F.3010309@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ming Lei <tom.leiming@gmail.com>
+Subject: Re: [PATCH v3 for-4.4] block: flush queued bios when process blocks
+ to avoid deadlock
+Date: Thu, 22 Oct 2015 09:53:11 +0800
+Message-ID: <CACVXFVOsZuwQ=D1rW_aP+WhOZrqfHf3TkJOgzkiXcNMwGWuM2g@mail.gmail.com>
+References: <5384CE82.90601@kernel.dk>
+	<alpine.LRH.2.02.1405291944090.22123@file01.intranet.prod.int.rdu2.redhat.com>
+	<20151005205943.GB25762@redhat.com>
+	<alpine.LRH.2.02.1510061410450.27916@file01.intranet.prod.int.rdu2.redhat.com>
+	<20151006185016.GA31955@redhat.com>
+	<20151006201637.GA4158@redhat.com>
+	<alpine.LRH.2.02.1510081100510.9641@file01.intranet.prod.int.rdu2.redhat.com>
+	<20151008150859.GA11770@redhat.com>
+	<20151009195203.GA18790@redhat.com>
+	<20151009195907.GB18790@redhat.com>
+	<20151014204739.GA23449@redhat.com>
+	<CACVXFVP7GwgWUHc4sHZwShwmdzFT5ZrHRcEH4zd5A8HommmCJg@mail.gmail.com>
+	<alpine.LRH.2.02.1510201544450.5249@file01.intranet.prod.int.rdu2.redhat.com>
+	<CACVXFVPfaJwKDzh+t0f9uxxTxrXE33bLZew5+FoKjGiYvsKW1Q@mail.gmail.com>
+	<alpine.LRH.2.02.1510211718310.21723@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <561F694F.3010309@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.1510211718310.21723@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Alasdair G. Kergon" <agk@redhat.com>, Jeff Moyer <jmoyer@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Oct 15, 2015 at 10:52:31AM +0200, Hannes Reinecke wrote:
-> On 10/08/2015 09:44 PM, Benjamin Marzinski wrote:
-> > Multipath has an issue with user_friendly_names set in the initramfs.
-> > If the bindings are in the initramfs bindings file, it will create them,
-> > and it may use bindings that are different than the ones in the regular
-> > file system.  Once multipathd starts up in the regular file system, it
-> > will try to register the existing bindings, but that may (and in many
-> > cases, is likely to) fail. If it can't reanme it, will pick a new
-> > binding. Since when multipathd starts discovering the existing devices,
-> > it obviously doesn't know all of the existing devices yet, it may very
-> > well pick a binding that's already in use by a device that it hasn't
-> > discovered yet. In this case multipath will be unable to rename the
-> > device to the new binding. Unfortunately, if it fails the rename, it
-> > never resets the alias of the device stored in the mpvec to current
-> > alias of the actual dm device. So multipath will have devices in the
-> > mpvec where the alias and the wwid don't match the actual dm devices
-> > that exist.  This can cause all sorts of problems.
-> > =
+On Thu, Oct 22, 2015 at 5:49 AM, Mikulas Patocka <mpatocka@redhat.com> wrote:
+>
+>
+> On Thu, 22 Oct 2015, Ming Lei wrote:
+>
+>> > Some drivers (dm-snapshot, dm-thin) do acquire a mutex in .make_requests()
+>> > for every bio. It wouldn't be practical to convert them to not acquire the
+>> > mutex (and it would also degrade performance of these drivers, if they had
+>> > to offload every bio to a worker thread that can acquire the mutex).
+>>
+>> Lots of drivers handle I/O in that way, and this way makes AIO not possible
+>> basically for dm-snapshot.
+>
+> It doesn't have to do anything with asynchronous I/O. Of course you can do
+> asynchronous I/O on dm-snapshot.
 
-> > This patch does two things to deal with this.  First, it makes sure that
-> > if the rename fails, the device will reset its alias to the one that it
-> > currently has.
-> > =
+But it is actually sync I/O because submit_bio() will block on the semaphore,
+so this behavious isn't acceptable from AIO view. That should be why there
+are very few drivers to use semaphoe/mutex in I/O path.
 
-> > Second, it adds a new option to help avoid the problem in the first
-> > place.  There actually already is a solution to this issue. If
-> > multipathd is started with -B, it makes the bindings file read-only. If
-> > multipathd is started this way in the initramfs, it will never make new
-> > bindings for a device. If the device doesn't already have a binding, it
-> > will simply be named with its wwid. The problem with this method is that
-> > AFAICT it causes a maintenance problem with dracut.  At least on RedHat,
-> > dracut is simply copying the regular multipathd.service file into the
-> > initramfs. I don't see a way in multipathd.service to only start
-> > multipathd with the -B option in the initramfs (If there is a way, I'd
-> > be happy to use that). So, the only alternative that lets us use -B is
-> > to have a separate multipathd.service file that dracut uses for the
-> > initramfs.  This seems like more work than it's worth.
-> > =
+I have found zram has removed its rwlock from its I/O path in v3.17.
 
-> > Instead, this patch pulls some code from systemd to detect if multipathd
-> > is running in the initramfs.  If it is, and if new_bindings_in_boot is
-> > not set, multipathd will set the bindings file to read-only, just like
-> > the -B option does.
-> > =
+>
+>> >> Also sometimes it can hurt performance by converting I/O submission
+>> >> from one context into concurrent contexts of workqueue, especially
+>> >> in case of sequential I/O, since plug & plug merge can't be used any
+>> >> more.
+>> >
+>> > You can add blk_start_plug/blk_finish_plug to the function
+>> > bio_alloc_rescue. That would be reasonable to make sure that the requests
+>> > are merged even when they are offloaded to rescue thread.
+>>
+>> The IOs submitted from each wq context becomes not contineous any
+>> more, so plug merge isn't doable, not mention the extra context switch
+>> cost.
+>
+> If the requests are mergeable, blk_start_plug/blk_finish_plug will merge
+> them, if not, it won't.
 
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> =
+Plug is per task, and these requests are mergeable previously from one
+same task, but after you submit them from different context via wq, it
+becomes not mergeable any more via plug. Also context switch isn't free.
 
-> Please split off this patch. The first issue is a real fix, it should
-> really be a separate patch.
-> =
+>
+>> This kind of cost can be introduced for all bio devices just for handling
+>> the unusual case, fair?
+>
+> Offloading bios to a worker thread when the make_request_fn function
+> blocks is required to avoid a deadlock (BTW. the deadlock became more
+> common in the kernel 4.3 due to unrestricted size of bios).
+>
+> The bio list current->bio_list introduces a false locking dependency -
+> completion of a bio depends on completion of other bios on
+> current->bio_list directed for different devices, thus it could create
+> circular dependency resulting in deadlock.
+>
+> To avoid the circular dependency, each bio must be offloaded to a specific
+> workqueue, so that completion of bio for device A no longer depends on
+> completion of another bio for device B.
 
-> For the second one it actually quite simple to inject a different
-> service file for dracut (I did that actually in our dracut package).
-> So I'd rather see this happening instead of second-guessing by looking
-> at magic files. Which will fail for anyone _not_ using dracut.
+You can do that for dm-snapshot only by using per-device thread/wq or
+whatever, but it isn't good to make other drivers involved by reusing
+rescure wq.
 
-Fine. I'd rather only manage one multipathd.service file, but your point
-that my solution is dracut specific is fair.
+>
+>> >> > -       queue_work(bs->rescue_workqueue, &bs->rescue_work);
+>> >> > +               spin_lock(&bs->rescue_lock);
+>> >> > +               bio_list_add(&bs->rescue_list, bio);
+>> >> > +               queue_work(bs->rescue_workqueue, &bs->rescue_work);
+>> >> > +               spin_unlock(&bs->rescue_lock);
+>> >> > +       }
+>> >>
+>> >> Not like rescuring path, schedule out can be quite frequent, and the
+>> >> above change will switch to submit these I/Os from wq concurrently,
+>> >> which might hurt performance for sequential I/O.
+>> >>
+>> >> Also I am wondering why not submit these I/Os in 'current' context
+>> >> just like what flush plug does?
+>> >
+>> > Processing requests doesn't block (they only take the queue spinlock).
+>> >
+>> > Processing bios can block (they can take other mutexes or semaphores), so
+>> > processing them from the schedule hook is impossible - the bio's
+>> > make_request function could attempt to take some lock that is already
+>> > held. So - we must offload the bios to a separate workqueue.
+>>
+>> Yes, so better to just handle dm-snapshot in this way.
+>
+> All dm targets and almost all other bio-processing drivers can block in
+> the make_request_fn function (for example, they may block when allocating
+> from a mempool).
 
--Ben
- =
+blk_queue_bio() and its mq pairs can block in get_request() too, and that is
+acceptable, but it isn't friendly/acceptable for AIO to use mutex/semaphoe
+in I/O path which can block quite frequently.
 
-> Cheers,
-> =
-
-> Hannes
-> -- =
-
-> Dr. Hannes Reinecke		      zSeries & Storage
-> hare@suse.de			      +49 911 74053 688
-> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
-> =
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+--
+Ming Lei
