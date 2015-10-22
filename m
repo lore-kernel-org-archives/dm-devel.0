@@ -1,19 +1,17 @@
-From: Nikolay Borisov <n.borisov@siteground.com>
-Subject: Re: kernel BUG at
- drivers/md/persistent-data/dm-btree-remove.c:182!
-Date: Thu, 22 Oct 2015 10:59:32 +0300
-Message-ID: <56289764.4010009@siteground.com>
-References: <5624B4B8.1030404@siteground.com>
-	<5624B505.6000406@siteground.com> <20151019103057.GA14688@rh-vpn>
-	<5624C9CB.7000702@siteground.com> <20151019160230.GA23826@redhat.com>
-	<CAKTMprPVpRH6jktgPQ=f9Ak3XO8wg50oNqr8o-1UXTd=_9u0SA@mail.gmail.com>
-	<20151021174939.GA3144@rh-vpn>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: dm-cache: clean cache resyncs to origin on every boot
+Date: Thu, 22 Oct 2015 18:19:36 +0100
+Message-ID: <20151022171935.GA4296@rh-vpn>
+References: <CAGRJ0wqVAcNkEJsW5o2vYPFY3doL1Nt5oD8M78w3gvL+t2Xnsw@mail.gmail.com>
+	<20151020143304.GA15948@rh-vpn>
+	<CAGRJ0wrPEo9m0kKeGy0U9BErKC=_GGUUgfgJn=NZm2cQpHnb3w@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20151021174939.GA3144@rh-vpn>
+Content-Disposition: inline
+In-Reply-To: <CAGRJ0wrPEo9m0kKeGy0U9BErKC=_GGUUgfgJn=NZm2cQpHnb3w@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,28 +21,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dennis Yang <shinrairis@gmail.com>, device-mapper development <dm-devel@redhat.com>, SiteGround Operations <operations@siteground.com>, thornber@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Tue, Oct 20, 2015 at 11:06:07PM +0500, Bogdan Vasiliev wrote:
+> Volume was clearly removed without dirty cahe blocks, re-initialized
+> and began full re-sync to the origin. Is this normal behavior?
+
+No, there is indeed a bug, fixed with the patch below.
+
+Thanks,
+
+- Joe
 
 
-On 10/21/2015 08:49 PM, Joe Thornber wrote:
-> On Tue, Oct 20, 2015 at 10:39:31AM +0800, Dennis Yang wrote:
->> Hi,
->>
->> After I analyzed the metadata of this case couple months ago, I find
->> out that there is another possible bug which might trigger this
->> assertion fail in shift(). I had posted a patch two months ago on the
->> list to explain and fix this issue. Could you help reviewing this?
->>
->> https://www.redhat.com/archives/dm-devel/2015-August/msg00155.html
-> 
-> Yep, that's a bug.  Sorry I missed it before when you posted.  Here's
-> my fix:
+commit 7e0a9739fd9e72dc51490bdff92796400b12a34f
+Author: Joe Thornber <ejt@redhat.com>
+Date:   Thu Oct 22 18:10:55 2015 +0100
 
-Thanks for that, I will apply this and report back if I experience the
-same issue. But looking at your test case I'm confident this should fix
-the issue. Dennis' patch in contrast still causes the within_one assert
-to fail.
+    [dm-cache] The CLEAN_SHUTDOWN flag was not being set
+    
+    or rather, it was being set on the disk, then immediately cleared again.
+    
+    If the CLEAN_SHUTDOWN flag is not set when a cache is loaded then all cache
+    blocks are marked as dirty and a full writeback occurs.
 
-Are you going to tag this for stable ?
+diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
+index e956c44..2073d30 100644
+--- a/drivers/md/dm-cache-metadata.c
++++ b/drivers/md/dm-cache-metadata.c
+@@ -634,10 +634,11 @@ static int __commit_transaction(struct dm_cache_metadata *cmd,
+ 
+        disk_super = dm_block_data(sblock);
+ 
++       disk_super->flags = cpu_to_le32(cmd->flags);
++
+        if (mutator)
+                update_flags(disk_super, mutator);
+ 
+-       disk_super->flags = cpu_to_le32(cmd->flags);
+        disk_super->mapping_root = cpu_to_le64(cmd->root);
+        disk_super->hint_root = cpu_to_le64(cmd->hint_root);
+        disk_super->discard_root = cpu_to_le64(cmd->discard_root);
