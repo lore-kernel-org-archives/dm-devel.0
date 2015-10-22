@@ -1,16 +1,19 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 01/18] libmultipath: Add prioritizer context
- data
-Date: Thu, 22 Oct 2015 07:47:49 +0200
-Message-ID: <56287885.6070706@suse.de>
-References: <1444333491-16265-1-git-send-email-bmarzins@redhat.com>	<1444333491-16265-2-git-send-email-bmarzins@redhat.com>	<561B54AA.2080404@suse.de>
-	<20151021221606.GW2872@octiron.msp.redhat.com>
+From: Nikolay Borisov <n.borisov@siteground.com>
+Subject: Re: kernel BUG at
+ drivers/md/persistent-data/dm-btree-remove.c:182!
+Date: Thu, 22 Oct 2015 10:59:32 +0300
+Message-ID: <56289764.4010009@siteground.com>
+References: <5624B4B8.1030404@siteground.com>
+	<5624B505.6000406@siteground.com> <20151019103057.GA14688@rh-vpn>
+	<5624C9CB.7000702@siteground.com> <20151019160230.GA23826@redhat.com>
+	<CAKTMprPVpRH6jktgPQ=f9Ak3XO8wg50oNqr8o-1UXTd=_9u0SA@mail.gmail.com>
+	<20151021174939.GA3144@rh-vpn>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20151021221606.GW2872@octiron.msp.redhat.com>
+In-Reply-To: <20151021174939.GA3144@rh-vpn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,59 +23,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Dennis Yang <shinrairis@gmail.com>, device-mapper development <dm-devel@redhat.com>, SiteGround Operations <operations@siteground.com>, thornber@redhat.com
 List-Id: dm-devel.ids
 
-On 10/22/2015 12:16 AM, Benjamin Marzinski wrote:
-> On Mon, Oct 12, 2015 at 08:35:22AM +0200, Hannes Reinecke wrote:
->> On 10/08/2015 09:44 PM, Benjamin Marzinski wrote:
->>> Currently, running the alua prioritizer on a path causes 5 ioctls on ma=
-ny
->>> devices.  get_target_port_group_support() returns whether alua is
->>> supported. get_target_port_group() gets the TPG id. This often takes two
->>> ioctls because 128 bytes is not a large enough buffer size on many
->>> devices. Finally, get_asymmetric_access_state() also often takes two
->>> ioctls because of the buffer size. This can get to be problematic when
->>> there are thousands of paths.  The goal of this patch to to cut this do=
-wn
->>> to one call in the usual case.
->>>
->>> In order to do this, I've added a context pointer to the prio structure,
->>> similar to what exists for the checker structure, and initprio() and
->>> freeprio() functions to the prioritizers. The only one that currently u=
-ses
->>> these is the alua prioritizer. It caches the type of alua support, the =
-TPG
->>> id, and the necessary buffer size.  The only thing I'm worried about wi=
-th
->>> this patch is whether the first two values could change.  In order to d=
-eal
->>> with that possibility, whenever a path gets a change event, or becomes
->>> valid again after a failure, it resets the context structure values, wh=
-ich
->>> forces all of them to get checked the next time the prioritizer is call=
-ed.
->>>
->> Hmm. What about reading /sys/block/sdX/device/vpg_pg83 ?
->> That carries the same information, and you would need to call the
->> ioctl only once ...
-> =
 
-> Sure. If you want to write a patch, that would be fine by me. But I
-> still think caching the result, so you don't need to rerun this makes
-> sense.
-> =
 
-Well ... the information is already cached in sysfs; I doubt read()
-is that much of an overhead.
+On 10/21/2015 08:49 PM, Joe Thornber wrote:
+> On Tue, Oct 20, 2015 at 10:39:31AM +0800, Dennis Yang wrote:
+>> Hi,
+>>
+>> After I analyzed the metadata of this case couple months ago, I find
+>> out that there is another possible bug which might trigger this
+>> assertion fail in shift(). I had posted a patch two months ago on the
+>> list to explain and fix this issue. Could you help reviewing this?
+>>
+>> https://www.redhat.com/archives/dm-devel/2015-August/msg00155.html
+> 
+> Yep, that's a bug.  Sorry I missed it before when you posted.  Here's
+> my fix:
 
-Cheers,
+Thanks for that, I will apply this and report back if I experience the
+same issue. But looking at your test case I'm confident this should fix
+the issue. Dennis' patch in contrast still causes the within_one assert
+to fail.
 
-Hannes
--- =
-
-Dr. Hannes Reinecke		               zSeries & Storage
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+Are you going to tag this for stable ?
