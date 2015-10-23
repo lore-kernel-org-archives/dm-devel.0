@@ -1,56 +1,136 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.3 final
-Date: Fri, 23 Oct 2015 14:16:40 -0400
-Message-ID: <20151023181640.GA90969@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [PATCH v2 01/12] block: Move integrity kobject to struct gendisk
+Date: Fri, 23 Oct 2015 16:21:16 -0400
+Message-ID: <x49vb9xcp4z.fsf@segfault.boston.devel.redhat.com>
+References: <20151015195939.20721.23101.stgit@dwillia2-desk3.jf.intel.com>
+	<20151015195945.20721.41097.stgit@dwillia2-desk3.jf.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Joe Thornber <ejt@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20151015195945.20721.41097.stgit@dwillia2-desk3.jf.intel.com>
+	(Dan Williams's message of "Thu, 15 Oct 2015 15:59:45 -0400")
+Sender: linux-raid-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: martin.petersen@oracle.com, linux-raid@vger.kernel.org, linux-nvdimm@ml01.01.org, Sagi Grimberg <sagig@mellanox.com>, axboe@fb.com, dm-devel@redhat.com, linux-nvme@lists.infradead.org, hch@lst.de
 List-Id: dm-devel.ids
 
-Hi Linus,
+Dan Williams <dan.j.williams@intel.com> writes:
 
-The following changes since commit ba30670f4d5292c4e7f7980bbd5071f7c4794cdd:
+> From: Martin K. Petersen <martin.petersen@oracle.com>
+>
+> The integrity kobject purely exists to support the integrity
+> subdirectory in sysfs and doesn't really have anything to do with the
+> blk_integrity data structure. Move the kobject to struct gendisk where
+> it belongs.
+>
+> Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+> Reported-by: Christoph Hellwig <hch@lst.de>
+> Reviewed-by: Sagi Grimberg <sagig@mellanox.com>
+> Tested-by: Ross Zwisler <ross.zwisler@linux.intel.com>
+> Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 
-  dm thin: fix missing pool reference count decrement in pool_ctr error path (2015-10-13 12:20:55 -0400)
+Reviewed-by: Jeff Moyer <jmoyer@redhat.com>
 
-are available in the git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.3-fixes-4
-
-for you to fetch changes up to 3201ac452e84a8a368197d648c9b7011e061804a:
-
-  dm cache: the CLEAN_SHUTDOWN flag was not being set (2015-10-23 14:02:56 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-Three stable fixes (two in btree code used by DM thinp and one to
-properly store flags in DM cache metadata's superblock).
-
-----------------------------------------------------------------
-Joe Thornber (2):
-      dm btree remove: fix a bug when rebalancing nodes after removal
-      dm cache: the CLEAN_SHUTDOWN flag was not being set
-
-Mike Snitzer (1):
-      dm btree: fix leak of bufio-backed block in btree_split_beneath error path
-
- drivers/md/dm-cache-metadata.c               |  2 +-
- drivers/md/persistent-data/dm-btree-remove.c | 17 +++++++++++------
- drivers/md/persistent-data/dm-btree.c        |  2 +-
- 3 files changed, 13 insertions(+), 8 deletions(-)
+> ---
+>  block/blk-integrity.c  |   22 +++++++++++-----------
+>  include/linux/blkdev.h |    2 --
+>  include/linux/genhd.h  |    1 +
+>  3 files changed, 12 insertions(+), 13 deletions(-)
+>
+> diff --git a/block/blk-integrity.c b/block/blk-integrity.c
+> index 75f29cf70188..182bfd2383ea 100644
+> --- a/block/blk-integrity.c
+> +++ b/block/blk-integrity.c
+> @@ -249,8 +249,8 @@ struct integrity_sysfs_entry {
+>  static ssize_t integrity_attr_show(struct kobject *kobj, struct attribute *attr,
+>  				   char *page)
+>  {
+> -	struct blk_integrity *bi =
+> -		container_of(kobj, struct blk_integrity, kobj);
+> +	struct gendisk *disk = container_of(kobj, struct gendisk, integrity_kobj);
+> +	struct blk_integrity *bi = blk_get_integrity(disk);
+>  	struct integrity_sysfs_entry *entry =
+>  		container_of(attr, struct integrity_sysfs_entry, attr);
+>  
+> @@ -261,8 +261,8 @@ static ssize_t integrity_attr_store(struct kobject *kobj,
+>  				    struct attribute *attr, const char *page,
+>  				    size_t count)
+>  {
+> -	struct blk_integrity *bi =
+> -		container_of(kobj, struct blk_integrity, kobj);
+> +	struct gendisk *disk = container_of(kobj, struct gendisk, integrity_kobj);
+> +	struct blk_integrity *bi = blk_get_integrity(disk);
+>  	struct integrity_sysfs_entry *entry =
+>  		container_of(attr, struct integrity_sysfs_entry, attr);
+>  	ssize_t ret = 0;
+> @@ -385,8 +385,8 @@ subsys_initcall(blk_dev_integrity_init);
+>  
+>  static void blk_integrity_release(struct kobject *kobj)
+>  {
+> -	struct blk_integrity *bi =
+> -		container_of(kobj, struct blk_integrity, kobj);
+> +	struct gendisk *disk = container_of(kobj, struct gendisk, integrity_kobj);
+> +	struct blk_integrity *bi = blk_get_integrity(disk);
+>  
+>  	kmem_cache_free(integrity_cachep, bi);
+>  }
+> @@ -429,14 +429,14 @@ int blk_integrity_register(struct gendisk *disk, struct blk_integrity *template)
+>  		if (!bi)
+>  			return -1;
+>  
+> -		if (kobject_init_and_add(&bi->kobj, &integrity_ktype,
+> +		if (kobject_init_and_add(&disk->integrity_kobj, &integrity_ktype,
+>  					 &disk_to_dev(disk)->kobj,
+>  					 "%s", "integrity")) {
+>  			kmem_cache_free(integrity_cachep, bi);
+>  			return -1;
+>  		}
+>  
+> -		kobject_uevent(&bi->kobj, KOBJ_ADD);
+> +		kobject_uevent(&disk->integrity_kobj, KOBJ_ADD);
+>  
+>  		bi->flags |= BLK_INTEGRITY_VERIFY | BLK_INTEGRITY_GENERATE;
+>  		bi->interval = queue_logical_block_size(disk->queue);
+> @@ -479,9 +479,9 @@ void blk_integrity_unregister(struct gendisk *disk)
+>  
+>  	bi = disk->integrity;
+>  
+> -	kobject_uevent(&bi->kobj, KOBJ_REMOVE);
+> -	kobject_del(&bi->kobj);
+> -	kobject_put(&bi->kobj);
+> +	kobject_uevent(&disk->integrity_kobj, KOBJ_REMOVE);
+> +	kobject_del(&disk->integrity_kobj);
+> +	kobject_put(&disk->integrity_kobj);
+>  	disk->integrity = NULL;
+>  }
+>  EXPORT_SYMBOL(blk_integrity_unregister);
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index 19c2e947d4d1..830f9c07d4bb 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -1472,8 +1472,6 @@ struct blk_integrity {
+>  	unsigned short		tag_size;
+>  
+>  	const char		*name;
+> -
+> -	struct kobject		kobj;
+>  };
+>  
+>  extern bool blk_integrity_is_initialized(struct gendisk *);
+> diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+> index 2adbfa6d02bc..9e6e0dfa97ad 100644
+> --- a/include/linux/genhd.h
+> +++ b/include/linux/genhd.h
+> @@ -199,6 +199,7 @@ struct gendisk {
+>  	struct disk_events *ev;
+>  #ifdef  CONFIG_BLK_DEV_INTEGRITY
+>  	struct blk_integrity *integrity;
+> +	struct kobject integrity_kobj;
+>  #endif
+>  	int node_id;
+>  };
+>
+> _______________________________________________
+> Linux-nvdimm mailing list
+> Linux-nvdimm@lists.01.org
+> https://lists.01.org/mailman/listinfo/linux-nvdimm
