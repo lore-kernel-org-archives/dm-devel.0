@@ -1,14 +1,12 @@
 From: Andy Grover <agrover@redhat.com>
-Subject: [PATCH 2/2] dm-raid: Fix minimal_devs for raid6
-Date: Wed, 28 Oct 2015 11:50:01 -0700
-Message-ID: <1446058201-12628-2-git-send-email-agrover@redhat.com>
-References: <1446058201-12628-1-git-send-email-agrover@redhat.com>
+Subject: [PATCH 1/2] dm-raid: Fix minimal device check
+Date: Wed, 28 Oct 2015 11:50:00 -0700
+Message-ID: <1446058201-12628-1-git-send-email-agrover@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1446058201-12628-1-git-send-email-agrover@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,30 +19,27 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-A raid6 device can be created from 3 devs. This previously didn't cause
-an error because minimal_devs was not being checked.
+Check raid_type->minimal_devs instead of parity_devs. minimal_devs is used
+nowhere else (and makes sense to use here) so I think this is what was
+intended.
 
 Signed-off-by: Andy Grover <agrover@redhat.com>
 ---
- drivers/md/dm-raid.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/md/dm-raid.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 5941cfd..1ded052 100644
+index a090121..5941cfd 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -90,9 +90,9 @@ static struct raid_type {
- 	{"raid5_ra", "RAID5 (right asymmetric)",	1, 2, 5, ALGORITHM_RIGHT_ASYMMETRIC},
- 	{"raid5_ls", "RAID5 (left symmetric)",		1, 2, 5, ALGORITHM_LEFT_SYMMETRIC},
- 	{"raid5_rs", "RAID5 (right symmetric)",		1, 2, 5, ALGORITHM_RIGHT_SYMMETRIC},
--	{"raid6_zr", "RAID6 (zero restart)",		2, 4, 6, ALGORITHM_ROTATING_ZERO_RESTART},
--	{"raid6_nr", "RAID6 (N restart)",		2, 4, 6, ALGORITHM_ROTATING_N_RESTART},
--	{"raid6_nc", "RAID6 (N continue)",		2, 4, 6, ALGORITHM_ROTATING_N_CONTINUE}
-+	{"raid6_zr", "RAID6 (zero restart)",		2, 3, 6, ALGORITHM_ROTATING_ZERO_RESTART},
-+	{"raid6_nr", "RAID6 (N restart)",		2, 3, 6, ALGORITHM_ROTATING_N_RESTART},
-+	{"raid6_nc", "RAID6 (N continue)",		2, 3, 6, ALGORITHM_ROTATING_N_CONTINUE}
- };
+@@ -151,7 +151,7 @@ static struct raid_set *context_alloc(struct dm_target *ti, struct raid_type *ra
+ 	unsigned i;
+ 	struct raid_set *rs;
  
- static char *raid10_md_layout_to_format(int layout)
+-	if (raid_devs <= raid_type->parity_devs) {
++	if (raid_devs < raid_type->minimal_devs) {
+ 		ti->error = "Insufficient number of devices";
+ 		return ERR_PTR(-EINVAL);
+ 	}
 -- 
 2.4.3
