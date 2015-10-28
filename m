@@ -1,83 +1,35 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm: initialize queuedata and congested_data early
-Date: Tue, 27 Oct 2015 19:06:55 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1510271904430.4649@file01.intranet.prod.int.rdu2.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: Persistent Reservation API V4
+Date: Wed, 28 Oct 2015 14:43:56 -0400
+Message-ID: <20151028184356.GA21933@redhat.com>
+References: <1444911052-9423-1-git-send-email-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1444911052-9423-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: axboe-b10kYP2dOMg@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, keith.busch-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-This fixes a possible race when md->queue->backing_dev_info.congested_fn 
-is changed.
+On Thu, Oct 15 2015 at  8:10am -0400,
+Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
 
-Note that Zdenek is seeing some other memory corruption where 
-dm_any_congested is called with invalid argument, but it is unlikely to be 
-fixed by this patch.
+> This series adds support for a simplified Persistent Reservation API
+> to the block layer.  The intent is that both in-kernel and userspace
+> consumers can use the API instead of having to hand craft SCSI or NVMe
+> command through the various pass through interfaces.  It also adds
+> DM support as getting reservations through dm-multipath is a major
+> pain with the current scheme.
+> 
+> The ioctl API is documented in Documentation/block/pr.txt, but to
+> fully understand the concept you'll have to read up the SPC spec,
+> PRs are too complicated that trying to rephrase them into different
+> terminology is just going to create confusion.
+> 
+> Note that Mike wants to include the DM patches so through the DM
+> tree, so they are only included for reference.
 
-Mikulas
-
--
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-The patch bfebd1cdb497a57757c83f5fbf1a29931591e2a4 ("dm: add full blk-mq
-support to request-based DM") moves the initialization of fields
-queuedata, backing_dev_info.congested_fn and
-backing_dev_info.congested_data from the function dm_init_md_queue (that
-is called when the device is created) to dm_init_old_md_queue (that is
-called when type of device is determined).
-
-There is no locking when accessing these variables, thus it is possible
-that other part of the kernel sees queue->backing_dev_info.congested_fn
-initialized and md->queue->backing_dev_info.congested_data uninitialized,
-passing incorrect parameter to the function dm_any_congested.
-
-This patch fixes this race condition by moving initialization of queuedata
-and backing_dev_info.congested_data to the function dm_init_md_queue, so
-that these values are initialized when the device is created.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Fixes: bfebd1cdb497 ("dm: add full blk-mq support to request-based DM")
-Cc: stable@vger.kernel.org	# v4.1+
-
----
- drivers/md/dm.c |    5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
-
-Index: linux-4.3-rc7/drivers/md/dm.c
-===================================================================
---- linux-4.3-rc7.orig/drivers/md/dm.c	2015-10-27 23:25:41.000000000 +0100
-+++ linux-4.3-rc7/drivers/md/dm.c	2015-10-27 23:26:45.000000000 +0100
-@@ -2198,6 +2198,9 @@ static void dm_init_md_queue(struct mapp
- 	 * This queue is new, so no concurrency on the queue_flags.
- 	 */
- 	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
-+
-+	md->queue->queuedata = md;
-+	md->queue->backing_dev_info.congested_data = md;
- }
- 
- static void dm_init_old_md_queue(struct mapped_device *md)
-@@ -2208,9 +2211,7 @@ static void dm_init_old_md_queue(struct 
- 	/*
- 	 * Initialize aspects of queue that aren't relevant for blk-mq
- 	 */
--	md->queue->queuedata = md;
- 	md->queue->backing_dev_info.congested_fn = dm_any_congested;
--	md->queue->backing_dev_info.congested_data = md;
- 
- 	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
- }
+I looked at these again and the DM changes look good.  Any update on
+if/when the block changes will land?
