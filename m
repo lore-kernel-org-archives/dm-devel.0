@@ -1,35 +1,68 @@
-From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: Persistent Reservation API V4
-Date: Wed, 28 Oct 2015 14:43:56 -0400
-Message-ID: <20151028184356.GA21933@redhat.com>
-References: <1444911052-9423-1-git-send-email-hch@lst.de>
+From: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>
+Subject: [PATCH v2] dm-switch: Remove unnecessary condition in
+	conditional
+Date: Thu, 29 Oct 2015 03:54:21 +0900
+Message-ID: <1446058461-26298-1-git-send-email-kusumi.tomohiro@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1444911052-9423-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: axboe-b10kYP2dOMg@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, keith.busch-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: snitzer@redhat.com, mpatocka@redhat.com
+Cc: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Oct 15 2015 at  8:10am -0400,
-Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
+> 2015-10-28 8:03 GMT+09:00 Mikulas Patocka:
+> On Wed, 28 Oct 2015, Tomohiro Kusumi wrote:
+>
+> > It's always (sctx->nr_regions == nr_regions) considering
+> > the assignment right before this conditional, and this
+> > function is only used by .ctr.
+>
+> The variable sctx->nr_regions has type unsigned long and the variable
+> nr_regions has type sector_t.
+>
+> Thus the variables may be different when overflow happens.
+>
+> It could be changed to "if (nr_regions >= ULONG_MAX)".
 
-> This series adds support for a simplified Persistent Reservation API
-> to the block layer.  The intent is that both in-kernel and userspace
-> consumers can use the API instead of having to hand craft SCSI or NVMe
-> command through the various pass through interfaces.  It also adds
-> DM support as getting reservations through dm-multipath is a major
-> pain with the current scheme.
-> 
-> The ioctl API is documented in Documentation/block/pr.txt, but to
-> fully understand the concept you'll have to read up the SPC spec,
-> PRs are too complicated that trying to rephrase them into different
-> terminology is just going to create confusion.
-> 
-> Note that Mike wants to include the DM patches so through the DM
-> tree, so they are only included for reference.
+Sorry about that.
+Changed the conditional to "if (nr_regions >= ULONG_MAX)",
+and brought the assignment of nr_regions after sector_div()
+and the sanity check which looks more sane.
 
-I looked at these again and the DM changes look good.  Any update on
-if/when the block changes will land?
+Signed-off-by: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>
+Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
+---
+ drivers/md/dm-switch.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-switch.c b/drivers/md/dm-switch.c
+index 50fca46..e1b6722 100644
+--- a/drivers/md/dm-switch.c
++++ b/drivers/md/dm-switch.c
+@@ -99,11 +99,11 @@ static int alloc_region_table(struct dm_target *ti, unsigned nr_paths)
+ 	if (sector_div(nr_regions, sctx->region_size))
+ 		nr_regions++;
+ 
+-	sctx->nr_regions = nr_regions;
+-	if (sctx->nr_regions != nr_regions || sctx->nr_regions >= ULONG_MAX) {
++	if (nr_regions >= ULONG_MAX) {
+ 		ti->error = "Region table too large";
+ 		return -EINVAL;
+ 	}
++	sctx->nr_regions = nr_regions;
+ 
+ 	nr_slots = nr_regions;
+ 	if (sector_div(nr_slots, sctx->region_entries_per_slot))
+-- 
+1.7.1
