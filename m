@@ -1,44 +1,50 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Persistent Reservation API V4
-Date: Wed, 28 Oct 2015 14:48:33 -0400
-Message-ID: <20151028184833.GA21955@redhat.com>
-References: <1444911052-9423-1-git-send-email-hch@lst.de>
- <20151028184356.GA21933@redhat.com>
+From: Andy Grover <agrover@redhat.com>
+Subject: [PATCH 2/2] dm-raid: Fix minimal_devs for raid6
+Date: Wed, 28 Oct 2015 11:50:01 -0700
+Message-ID: <1446058201-12628-2-git-send-email-agrover@redhat.com>
+References: <1446058201-12628-1-git-send-email-agrover@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20151028184356.GA21933@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: axboe@fb.com, linux-scsi@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, keith.busch@intel.com, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1446058201-12628-1-git-send-email-agrover@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Oct 28 2015 at  2:43pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+A raid6 device can be created from 3 devs. This previously didn't cause
+an error because minimal_devs was not being checked.
 
-> On Thu, Oct 15 2015 at  8:10am -0400,
-> Christoph Hellwig <hch@lst.de> wrote:
-> 
-> > This series adds support for a simplified Persistent Reservation API
-> > to the block layer.  The intent is that both in-kernel and userspace
-> > consumers can use the API instead of having to hand craft SCSI or NVMe
-> > command through the various pass through interfaces.  It also adds
-> > DM support as getting reservations through dm-multipath is a major
-> > pain with the current scheme.
-> > 
-> > The ioctl API is documented in Documentation/block/pr.txt, but to
-> > fully understand the concept you'll have to read up the SPC spec,
-> > PRs are too complicated that trying to rephrase them into different
-> > terminology is just going to create confusion.
-> > 
-> > Note that Mike wants to include the DM patches so through the DM
-> > tree, so they are only included for reference.
-> 
-> I looked at these again and the DM changes look good.  Any update on
-> if/when the block changes will land?
+Signed-off-by: Andy Grover <agrover@redhat.com>
+---
+ drivers/md/dm-raid.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-I should've looked at Jens' tree before asking.. I now see Jens has
-for-4.4/reservations
-
-I'll rebase accordingly and pick up the DM changes.
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 5941cfd..1ded052 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -90,9 +90,9 @@ static struct raid_type {
+ 	{"raid5_ra", "RAID5 (right asymmetric)",	1, 2, 5, ALGORITHM_RIGHT_ASYMMETRIC},
+ 	{"raid5_ls", "RAID5 (left symmetric)",		1, 2, 5, ALGORITHM_LEFT_SYMMETRIC},
+ 	{"raid5_rs", "RAID5 (right symmetric)",		1, 2, 5, ALGORITHM_RIGHT_SYMMETRIC},
+-	{"raid6_zr", "RAID6 (zero restart)",		2, 4, 6, ALGORITHM_ROTATING_ZERO_RESTART},
+-	{"raid6_nr", "RAID6 (N restart)",		2, 4, 6, ALGORITHM_ROTATING_N_RESTART},
+-	{"raid6_nc", "RAID6 (N continue)",		2, 4, 6, ALGORITHM_ROTATING_N_CONTINUE}
++	{"raid6_zr", "RAID6 (zero restart)",		2, 3, 6, ALGORITHM_ROTATING_ZERO_RESTART},
++	{"raid6_nr", "RAID6 (N restart)",		2, 3, 6, ALGORITHM_ROTATING_N_RESTART},
++	{"raid6_nc", "RAID6 (N continue)",		2, 3, 6, ALGORITHM_ROTATING_N_CONTINUE}
+ };
+ 
+ static char *raid10_md_layout_to_format(int layout)
+-- 
+2.4.3
