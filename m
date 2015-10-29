@@ -1,17 +1,13 @@
-From: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>
-Subject: Re: [PATCH 6/6] dm-stripe: Fix error message
-Date: Thu, 29 Oct 2015 20:36:52 +0900
-Message-ID: <CAHndrBnufL0Z79yx0gdoEaLbBrZX1QF5ZBFzGJddgGGXTC8Dmg@mail.gmail.com>
-References: <1445974740-8362-1-git-send-email-kusumi.tomohiro@gmail.com>
-	<1445974740-8362-6-git-send-email-kusumi.tomohiro@gmail.com>
-	<20151028195128.GA22241@redhat.com>
-	<CAHndrBn06ih=6atGBcC7TjoFEWd0y=9WPu6GBygFE06y6Q=j7w@mail.gmail.com>
-	<20151028220055.GA22827@redhat.com>
+From: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+Subject: [PATCH] Revert "dm mpath: fix stalls when handling
+	invalid ioctls"
+Date: Thu, 29 Oct 2015 10:24:23 -0200
+Message-ID: <1446121463-17828-1-git-send-email-mauricfo@linux.vnet.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6498330370390563162=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20151028220055.GA22827@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,85 +17,172 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, mpatocka@redhat.com
+To: dm-devel@redhat.com
+Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
---===============6498330370390563162==
-Content-Type: multipart/alternative; boundary=001a1143907e31648c05233cba4d
+This reverts commit a1989b330093578ea5470bea0a00f940c444c466.
 
---001a1143907e31648c05233cba4d
-Content-Type: text/plain; charset=UTF-8
+That commit introduced a regression at least for the case of the SG_IO ioctl()
+running without CAP_SYS_RAWIO capability (e.g., unprivileged users) when there
+are no active paths: the ioctl() fails with the ENOTTY errno immediately rather
+than blocking due to queue_if_no_path until a path becomes active, for example.
 
-i respect what you say.
-anyhow thanks for applying the rest of the patches :)
+That case happens to be exercised by QEMU KVM guests with 'scsi-block' devices
+(qemu "-device scsi-block" [1], libvirt "<disk type='block' device='lun'>" [2])
+from multipath devices; which leads to SCSI/filesystem errors in such a guest.
 
-2015-10-29 7:00 GMT+09:00 Mike Snitzer <snitzer@redhat.com>:
+More general scenarios can hit that regression too. The following demonstration
+employs a SG_IO ioctl() with a standard SCSI INQUIRY command for this objective
+(some output & user changes omitted for brevity and comments added for clarity).
 
-> On Wed, Oct 28 2015 at  4:40pm -0400,
-> Tomohiro Kusumi <kusumi.tomohiro@gmail.com> wrote:
->
-> > hi, thanks for your reply.
-> >
-> > I understand what you mean, but that's the reason.
-> > I happened to use something like below via dmsetup
-> >
-> > --table '0 100 striped 2 4 /dev/xxx 0 /dev/yyy 0'
-> >
-> > and hit this message which is not obvious as long as it says "Target
-> > length".
-> > Users have no idea 50/4 was what was really done in kernel space.
->
-> You're allowing a very literal look at the code to cloud your perception
-> of the error and concluding that it is misleading/incorrect.
->
-> Just because the code does math in a certain order doesn't change the
-> fact that the error message is still correct (if/when it is reported).
->
+Reverting that commit restores normal operation (queueing) in failing scenarios;
+tested on linux-next (next-20151022).
 
---001a1143907e31648c05233cba4d
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+1) Test-case is based on sg_simple0 [3] (just SG_IO; remove SG_GET_VERSION_NUM)
 
-<div dir=3D"ltr"><div>i respect what you say.</div><div>anyhow thanks for a=
-pplying the rest of the patches :)</div></div><div class=3D"gmail_extra"><b=
-r><div class=3D"gmail_quote">2015-10-29 7:00 GMT+09:00 Mike Snitzer <span d=
-ir=3D"ltr">&lt;<a href=3D"mailto:snitzer@redhat.com" target=3D"_blank">snit=
-zer@redhat.com</a>&gt;</span>:<br><blockquote class=3D"gmail_quote" style=
-=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span cl=
-ass=3D"">On Wed, Oct 28 2015 at=C2=A0 4:40pm -0400,<br>
-Tomohiro Kusumi &lt;<a href=3D"mailto:kusumi.tomohiro@gmail.com">kusumi.tom=
-ohiro@gmail.com</a>&gt; wrote:<br>
-<br>
-&gt; hi, thanks for your reply.<br>
-&gt;<br>
-&gt; I understand what you mean, but that&#39;s the reason.<br>
-&gt; I happened to use something like below via dmsetup<br>
-&gt;<br>
-&gt; --table &#39;0 100 striped 2 4 /dev/xxx 0 /dev/yyy 0&#39;<br>
-&gt;<br>
-&gt; and hit this message which is not obvious as long as it says &quot;Tar=
-get<br>
-&gt; length&quot;.<br>
-&gt; Users have no idea 50/4 was what was really done in kernel space.<br>
-<br>
-</span>You&#39;re allowing a very literal look at the code to cloud your pe=
-rception<br>
-of the error and concluding that it is misleading/incorrect.<br>
-<br>
-Just because the code does math in a certain order doesn&#39;t change the<b=
-r>
-fact that the error message is still correct (if/when it is reported).<br>
-</blockquote></div><br></div>
+    $ cat sg_simple0.c
+    ... see [3] ...
+    $ sed '/SG_GET_VERSION_NUM/,/}/d' sg_simple0.c > sgio_inquiry.c
+    $ gcc sgio_inquiry.c -o sgio_inquiry
 
---001a1143907e31648c05233cba4d--
+2) The ioctl() works fine with active paths present.
 
+    # multipath -l 85ag56
+    85ag56 (...) dm-19 IBM     ,2145
+    size=60G features='1 queue_if_no_path' hwhandler='0' wp=rw
+    |-+- policy='service-time 0' prio=0 status=active
+    | |- 8:0:11:0  sdz  65:144  active undef running
+    | `- 9:0:9:0   sdbf 67:144  active undef running
+    `-+- policy='service-time 0' prio=0 status=enabled
+      |- 8:0:12:0  sdae 65:224  active undef running
+      `- 9:0:12:0  sdbo 68:32   active undef running
 
---===============6498330370390563162==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+    $ ./sgio_inquiry /dev/mapper/85ag56
+    Some of the INQUIRY command's response:
+        IBM       2145              0000
+    INQUIRY duration=0 millisecs, resid=0
 
+3) The ioctl() fails with ENOTTY errno with _no_ active paths present,
+   for unprivileged users (rather than blocking due to queue_if_no_path).
 
---===============6498330370390563162==--
+    # for path in $(multipath -l 85ag56 | grep -o 'sd[a-z]\+'); \
+          do multipathd -k"fail path $path"; done
+
+    # multipath -l 85ag56
+    85ag56 (...) dm-19 IBM     ,2145
+    size=60G features='1 queue_if_no_path' hwhandler='0' wp=rw
+    |-+- policy='service-time 0' prio=0 status=enabled
+    | |- 8:0:11:0  sdz  65:144  failed undef running
+    | `- 9:0:9:0   sdbf 67:144  failed undef running
+    `-+- policy='service-time 0' prio=0 status=enabled
+      |- 8:0:12:0  sdae 65:224  failed undef running
+      `- 9:0:12:0  sdbo 68:32   failed undef running
+
+    $ ./sgio_inquiry /dev/mapper/85ag56
+    sg_simple0: Inquiry SG_IO ioctl error: Inappropriate ioctl for device
+
+4) dmesg shows that scsi_verify_blk_ioctl() failed for SG_IO (0x2285);
+   it returns -ENOIOCTLCMD, later replaced with -ENOTTY in vfs_ioctl().
+
+    $ dmesg
+    <...>
+    [] device-mapper: multipath: Failing path 65:144.
+    [] device-mapper: multipath: Failing path 67:144.
+    [] device-mapper: multipath: Failing path 65:224.
+    [] device-mapper: multipath: Failing path 68:32.
+    [] sgio_inquiry: sending ioctl 2285 to a partition!
+
+5) The ioctl() only works if the SYS_CAP_RAWIO capability is present
+   (then queueing happens -- in this example, queue_if_no_path is set);
+   this is due to a conditional check in scsi_verify_blk_ioctl().
+
+    # capsh --drop=cap_sys_rawio -- -c './sgio_inquiry /dev/mapper/85ag56'
+    sg_simple0: Inquiry SG_IO ioctl error: Inappropriate ioctl for device
+
+    # ./sgio_inquiry /dev/mapper/85ag56 &
+    [1] 72830
+
+    # cat /proc/72830/stack
+    [<c00000171c0df700>] 0xc00000171c0df700
+    [<c000000000015934>] __switch_to+0x204/0x350
+    [<c000000000152d4c>] msleep+0x5c/0x80
+    [<c00000000077dfb0>] dm_blk_ioctl+0x70/0x170
+    [<c000000000487c40>] blkdev_ioctl+0x2b0/0x9b0
+    [<c0000000003128e4>] block_ioctl+0x64/0xd0
+    [<c0000000002dd3b0>] do_vfs_ioctl+0x490/0x780
+    [<c0000000002dd774>] SyS_ioctl+0xd4/0xf0
+    [<c000000000009358>] system_call+0x38/0xd0
+
+6) This is the function call chain exercised in this analysis:
+
+SYSCALL_DEFINE3(ioctl, <...>) @ fs/ioctl.c
+    -> do_vfs_ioctl()
+        -> vfs_ioctl()
+            ...
+            error = filp->f_op->unlocked_ioctl(filp, cmd, arg);
+            ...
+                -> dm_blk_ioctl() @ drivers/md/dm.c
+                    -> multipath_ioctl() @ drivers/md/dm-mpath.c
+                        ...
+                        (bdev = NULL, due to no active paths)
+                        ...
+                        if (!bdev || <...>) {
+                            int err = scsi_verify_blk_ioctl(NULL, cmd);
+                            if (err)
+                                r = err;
+                        }
+                        ...
+                            -> scsi_verify_blk_ioctl() @ block/scsi_ioctl.c
+                                ...
+                                if (bd && bd == bd->bd_contains) // not taken (bd = NULL)
+                                    return 0;
+                                ...
+                                if (capable(CAP_SYS_RAWIO)) // not taken (unprivileged user)
+                                    return 0;
+                                ...
+                                printk_ratelimited(KERN_WARNING
+                                           "%s: sending ioctl %x to a partition!\n" <...>);
+
+                                return -ENOIOCTLCMD;
+                            <-
+                        ...
+                        return r ? : <...>
+                    <-
+            ...
+            if (error == -ENOIOCTLCMD)
+                error = -ENOTTY;
+             out:
+                return error;
+            ...
+
+Links:
+[1] http://git.qemu.org/?p=qemu.git;a=commit;h=336a6915bc7089fb20fea4ba99972ad9a97c5f52
+[2] https://libvirt.org/formatdomain.html#elementsDisks (see 'disk' -> 'device')
+[3] http://tldp.org/HOWTO/SCSI-Generic-HOWTO/pexample.html (Revision 1.2, 2002-05-03)
+
+Signed-off-by: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+---
+ drivers/md/dm-mpath.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 5a67671..bdc96cd 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1569,11 +1569,8 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
+ 	/*
+ 	 * Only pass ioctls through if the device sizes match exactly.
+ 	 */
+-	if (!bdev || ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT) {
+-		int err = scsi_verify_blk_ioctl(NULL, cmd);
+-		if (err)
+-			r = err;
+-	}
++	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
+ 
+ 	if (r == -ENOTCONN && !fatal_signal_pending(current)) {
+ 		spin_lock_irqsave(&m->lock, flags);
+-- 
+1.9.1
