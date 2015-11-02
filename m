@@ -1,25 +1,40 @@
-From: Paolo Bonzini <pbonzini@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: IBM request to allow unprivledged ioctls [Was: Revert "dm mpath:
  fix stalls when handling invalid ioctls"]
-Date: Mon, 2 Nov 2015 10:57:05 +0100
-Message-ID: <56373371.8040104@redhat.com>
+Date: Mon, 2 Nov 2015 08:31:20 -0500
+Message-ID: <20151102133119.GA23234@redhat.com>
 References: <1446121463-17828-1-git-send-email-mauricfo@linux.vnet.ibm.com>
- <20151029131810.GA26841@redhat.com> <5634DF67.7060302@redhat.com>
- <20151031181312.GA11587@redhat.com> <5635115B.7080805@redhat.com>
- <20151031224707.GA12805@redhat.com> <56371095.6020400@suse.de>
+ <20151029131810.GA26841@redhat.com>
+ <5634DF67.7060302@redhat.com>
+ <20151031181312.GA11587@redhat.com>
+ <5635115B.7080805@redhat.com>
+ <20151031224707.GA12805@redhat.com>
+ <56371095.6020400@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <56371095.6020400@suse.de>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
-Cc: hch@lst.de, Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>
+Cc: Paolo Bonzini <pbonzini@redhat.com>, hch@lst.de, Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
+On Mon, Nov 02 2015 at  2:28am -0500,
+Hannes Reinecke <hare@suse.de> wrote:
 
+> On 10/31/2015 11:47 PM, Mike Snitzer wrote:
+> > 
+> > For Hannes, and in my head, it didn't matter if a future bdev satisfies
+> > the length condition.  I don't think Hannes was trying to guard against
+> > dangerous partition ioctls being issued by udev... but now I _do_
+> > question what exactly _is_ the point of his commit 21a2807bc3f.  Which
+> > invalid ioctls, from udev, did Hannes' change actually disallow?
+> > 
 
-On 02/11/2015 08:28, Hannes Reinecke wrote:
+FYI, I meant s/21a2807bc3f/a1989b33/
+
+> The reasoning is thus:
 > 
 > With the original code we would need to wait for path activation
 > before we would be able to figure out if the ioctl is valid.
@@ -30,10 +45,14 @@ On 02/11/2015 08:28, Hannes Reinecke wrote:
 > Then we wouldn't need to wait for path activation and return
 > immediately.
 
-That in principle makes sense.  Unfortunately, before path activation
-you can only find out if a ioctl is valid.  You cannot find out which
-ioctls are _in_valid, because path activation sets the bdev and that
-might make all ioctls valid.
+Right, I understood that to be your intent.  And it seemed reasonible.
+Unfortuntely, as we now know, scsi_verify_blk_ioctl() only really cares
+to filter out ioctls that are invalid for partitions.
+
+I'm still curious: which ioctls were being issued by udev that your
+commit a1989b33 "fixed" (so udev workers didn't hang)?  Is the right fix
+to modify udev to not issue such ioctls?  What was invalid about the
+udev issued ioctls?
 
 > Incidentally, in the 'r == -ENOTCONN' case, we're waiting
 > for path activation, but then just bail out with -ENOTCONN.
@@ -41,7 +60,5 @@ might make all ioctls valid.
 > paths here?
 > Shouldn't we retry to figure out if -ENOTCONN is still true?
 
-That makes sense too.  You've done the work, might as well reap the
-benefits...
-
-Paolo
+We do, in DM core, see _your_ commit that added this ;)
+6c182cd88d ("dm mpath: fix ioctl deadlock when no paths")
