@@ -1,53 +1,41 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: IBM request to allow unprivledged ioctls [Was: Revert "dm mpath:
- fix stalls when handling invalid ioctls"]
-Date: Mon, 2 Nov 2015 10:49:43 -0500
-Message-ID: <20151102154942.GA23816@redhat.com>
-References: <5634DF67.7060302@redhat.com>
- <20151031181312.GA11587@redhat.com>
- <5635115B.7080805@redhat.com>
- <20151031224707.GA12805@redhat.com>
- <56371095.6020400@suse.de>
- <20151102133119.GA23234@redhat.com>
- <56376B8C.5010001@suse.de>
- <563778B9.7060900@redhat.com>
- <20151102150527.GA23665@redhat.com>
- <56378505.6080601@redhat.com>
+From: Andy Grover <agrover@redhat.com>
+Subject: How big should raid metadata device be?
+Date: Mon, 2 Nov 2015 11:55:43 -0800
+Message-ID: <5637BFBF.3010603@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <56378505.6080601@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Paolo Bonzini <pbonzini@redhat.com>
-Cc: Hannes Reinecke <hare@suse.de>, hch@lst.de, Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org, Peter Rajnoha <prajnoha@redhat.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Nov 02 2015 at 10:45am -0500,
-Paolo Bonzini <pbonzini@redhat.com> wrote:
+Hi all,
 
-> 
-> 
-> On 02/11/2015 16:05, Mike Snitzer wrote:
-> > > In any case, if we don't start path activation we should return
-> > > ENOTCONN, not ENOTTY.
-> > 
-> > Currently, if we don't start path activation we're returning EIO.
-> > ENOTCONN is used for when we do start path activation (and ENOTCONN is
-> > the means for DM core to retry)
-> > 
-> > We _could_ change the ENOTCONN to be EAGAIN and EIO to ENOTCONN...
-> 
-> This makes sense... though of course testing the impact of this on
-> userspace is going to be hard. :(  Chances are that userspace is not
-> expecting EAGAIN either.
-> 
-> Even if they did, how would someone know that they can now retry the
-> ioctl after getting EAGAIN?  Should they just do it in a loop?
+In looking at md-raid one question I had was exactly how large does the 
+metadata device need to be in comparison to the data device? It contains 
+a padded-to-4Kbyte sized raid metadata struct, and then also a write 
+intent bitmap that is sized based upon the number of stripes, with 16 
+bits per stripe.
 
-Turns out multipath (userspace) has a udev rule for this now (prajnoha
-pointed this out):
-http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=multipath/11-dm-mpath.rules
+Is it correct to say the minimum size of the metadata device should be:
 
-So now I'm wondering if we _need_ to do any retries in kernel (aside
-from while activation is active)?
+4096 + (2 * stripe_count)
+
+bytes?
+
+Thanks -- Andy
+
+p.s. LVM2 allocates 1 extent (default 4MiB) for the raid meta device. 
+But it's not clear if given a large enough raid dev, and configured with 
+a much smaller extent size than the default, if one extent might not be 
+enough.
