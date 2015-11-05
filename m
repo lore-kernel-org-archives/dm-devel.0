@@ -1,74 +1,67 @@
-From: Sami Tolvanen <samitolvanen@google.com>
-Subject: Re: [PATCH 0/4] dm verity: add support for error correction
-Date: Thu, 5 Nov 2015 17:33:06 +0000
-Message-ID: <20151105173306.GA22302@google.com>
-References: <1446688954-29589-1-git-send-email-samitolvanen@google.com>
- <563B066C.6050202@redhat.com>
+From: Mike Christie <mchristi@redhat.com>
+Subject: Re: [dm-devel] [PATCH 19/32] block: add helper to get data dir from
+ op
+Date: Thu, 5 Nov 2015 11:34:07 -0600
+Message-ID: <563B930F.7040705@redhat.com>
+References: <1446674909-5371-1-git-send-email-mchristi@redhat.com>
+ <1446674909-5371-20-git-send-email-mchristi@redhat.com>
+ <563A8A33.3000002@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <563B066C.6050202@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Mandeep Baines <msb@chromium.org>, Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mark Salyzyn <salyzyn@google.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <563A8A33.3000002@sandisk.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, drbd-dev@lists.linbit.com
 List-Id: dm-devel.ids
 
-On Thu, Nov 05, 2015 at 08:34:04AM +0100, Milan Broz wrote:
-> could you please elaborate why is all this needed? To extend support
-> of some faulty flash chips?
+On 11/04/2015 04:44 PM, Bart Van Assche wrote:
+> On 11/04/2015 02:08 PM, mchristi@redhat.com wrote:
+>> From: Mike Christie <mchristi@redhat.com>
+>>
+>> In later patches the op will no longer be a bitmap, so we will
+>> not have REQ_WRITE set for all non reads like discard, flush,
+>> and write same. Drivers will still want to treat them as writes
+>> for accounting reasons, so this patch adds a helper to translate
+>> a op to a data direction.
+>>
+>> Signed-off-by: Mike Christie <mchristi@redhat.com>
+>> ---
+>>   include/linux/blkdev.h | 12 ++++++++++++
+>>   1 file changed, 12 insertions(+)
+>>
+>> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+>> index 19c2e94..cf5f518 100644
+>> --- a/include/linux/blkdev.h
+>> +++ b/include/linux/blkdev.h
+>> @@ -586,6 +586,18 @@ static inline void queue_flag_clear(unsigned int
+>> flag, struct request_queue *q)
+>>
+>>   #define list_entry_rq(ptr)    list_entry((ptr), struct request,
+>> queuelist)
+>>
+>> +/*
+>> + * Non REQ_OP_WRITE requests like discard, write same, etc, are
+>> + * considered WRITEs.
+>> + */
+>> +static inline int op_to_data_dir(int op)
+>> +{
+>> +    if (op == REQ_OP_READ)
+>> +        return READ;
+>> +    else
+>> +        return WRITE;
+>> +}
+>> +
+>>   #define rq_data_dir(rq)        ((int)((rq)->cmd_flags & 1))
+>>
+>>   /*
+>>
+> 
+> How about introducing two functions - op_is_write() and op_is_read() ? I
+> think that approach will result in shorter and easier to read code in
+> the contexts where these functions are used.
+> 
 
-This makes dm-verity more robust against corruption caused by either
-hardware or software bugs, both of which we have seen in the past on
-actual devices.
+I can do that. You are right in how they are used. I just did the above,
+to follow the other *_data_dir calls.
 
-Note that unlike the error correction sometimes included in flash
-storage devices, this doesn't merely protect against random bit flips,
-it makes it possible to recover from several megabytes of corrupted
-or lost data.
-
-> Do you have some statistics that there are really such correctable errors
-> in real devices?
-
-Sorry, I don't have statistics to share at the moment.
-
-> Anyway, I really do not understand layer separation here.
-
-I should have elaborated more on this. Implementing this without
-integrity checking would not be feasible for a few reasons:
-
-  1. Being able to detect which blocks are corrupted allows us to
-     avoid correcting valid blocks. Correcting errors is slow and
-     this is the only way to keep performance acceptable.
-
-  2. Due to a property of erasure codes, we can correct twice as
-     many errors if we know where the errors are. Using the hash
-     tree to detect corrupted blocks lets us locate erasures.
-
-  3. Error correction algorithms may not produce valid output and
-     without integrity checking, there's no reliable way to detect
-     when we actually succeeded in correcting a block.
-
-> Are we sure this combination does not create some unintended
-> gap in integrity checking?
-
-Yes, I'm sure. Corrupted blocks are integrity checked again after they
-are corrected to make sure only valid data is allowed to pass.
-
-> Why the integrity check should even try to do some
-> error correction if there is an intentional integrity attack?
-
-Most corruption is not malicious and being able to recover from it
-makes the system more reliable. This doesn't make it any easier for an
-attacker to break dm-verity. That would still require finding a hash
-collision (or being able to modify the hash tree).
-
-> The second question - why are you writing another separate tool
-> for maintenance for dm-verity when there is veritysetup?
-
-Our tool for generating error correction metadata is independent from
-dm-verity. This data is also used by other software to correct errors
-during software updates, for example. If there's interest, I can help
-in adding this functionality to veritysetup.
-
-Sami
