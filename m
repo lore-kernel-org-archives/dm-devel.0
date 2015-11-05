@@ -1,19 +1,19 @@
 From: kbuild test robot <lkp@intel.com>
-Subject: Re: [PATCH 3/4] dm verity: add support for forward error correction
-Date: Fri, 6 Nov 2015 06:06:17 +0800
-Message-ID: <201511060627.6n5B3CI9%fengguang.wu@intel.com>
-References: <1446688954-29589-4-git-send-email-samitolvanen@google.com>
+Subject: Re: [PATCH 4/4] dm verity: ignore zero blocks
+Date: Fri, 6 Nov 2015 06:13:50 +0800
+Message-ID: <201511060602.SLYE3vUB%fengguang.wu@intel.com>
+References: <1446688954-29589-5-git-send-email-samitolvanen@google.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="qMm9M+Fa2AknHoGS"
+Content-Type: multipart/mixed; boundary="RnlQjJ0d97Da+TV1"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1446688954-29589-4-git-send-email-samitolvanen@google.com>
+In-Reply-To: <1446688954-29589-5-git-send-email-samitolvanen@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 Cc: kbuild-all@01.org, Mikulas Patocka <mpatocka@redhat.com>, Mandeep Baines <msb@chromium.org>, Will Drewry <wad@chromium.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Kees Cook <keescook@chromium.org>, Mark Salyzyn <salyzyn@google.com>, Sami Tolvanen <samitolvanen@google.com>
 List-Id: dm-devel.ids
 
 
---qMm9M+Fa2AknHoGS
+--RnlQjJ0d97Da+TV1
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
@@ -33,49 +33,53 @@ reproduce:
 
 All warnings (new ones prefixed by >>):
 
+   drivers/md/dm-verity.c: In function 'verity_alloc_zero_digest':
+>> drivers/md/dm-verity.c:1226:1: warning: 'verity_alloc_zero_digest' uses dynamic stack allocation
+    }
+    ^
    drivers/md/dm-verity.c: In function 'verity_fec_decode_rsb':
->> drivers/md/dm-verity.c:812:1: warning: 'verity_fec_decode_rsb' uses dynamic stack allocation
+   drivers/md/dm-verity.c:846:1: warning: 'verity_fec_decode_rsb' uses dynamic stack allocation
     }
     ^
 
-vim +/verity_fec_decode_rsb +812 drivers/md/dm-verity.c
+vim +/verity_alloc_zero_digest +1226 drivers/md/dm-verity.c
 
-   796		if (r < 0)
-   797			return r;
-   798	
-   799		r = verity_hash(v, io_hash_desc(v, io), io->fec_buf,
-   800				1 << v->data_dev_block_bits, io_real_digest(v, io));
-   801		if (unlikely(r < 0))
-   802			return r;
-   803	
-   804		if (memcmp(io_real_digest(v, io), io_want_digest(v, io),
-   805				v->digest_size)) {
-   806			DMERR_LIMIT("%s: FEC %llu: failed to correct (%d erasures)",
-   807				    v->data_dev->name, (unsigned long long)rsb, neras);
-   808			return -1;
-   809		}
-   810	
-   811		return 0;
- > 812	}
-   813	
-   814	static int verity_fec_bv_copy(struct dm_verity *v, struct dm_verity_io *io,
-   815				      u8 *data, size_t len)
-   816	{
-   817		BUG_ON(io->fec_pos + len > 1 << v->data_dev_block_bits);
-   818		memcpy(data, &io->fec_buf[io->fec_pos], len);
-   819		io->fec_pos += len;
-   820		return 0;
+  1210	
+  1211		v->zero_digest = kmalloc(v->digest_size, GFP_KERNEL);
+  1212	
+  1213		if (!v->zero_digest)
+  1214			return -ENOMEM;
+  1215	
+  1216		zero_data = kzalloc(1 << v->data_dev_block_bits, GFP_KERNEL);
+  1217	
+  1218		if (!zero_data)
+  1219			return -ENOMEM; /* verity_dtr will free zero_digest */
+  1220	
+  1221		r = verity_hash(v, (struct shash_desc *)desc, zero_data,
+  1222				1 << v->data_dev_block_bits, v->zero_digest);
+  1223	
+  1224		kfree(zero_data);
+  1225		return r;
+> 1226	}
+  1227	
+  1228	static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
+  1229					 const char *opt_string)
+  1230	{
+  1231		int r;
+  1232		unsigned long long num_ll;
+  1233		unsigned char num_c;
+  1234		char dummy;
 
 ---
 0-DAY kernel test infrastructure                Open Source Technology Center
 https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
---qMm9M+Fa2AknHoGS
+--RnlQjJ0d97Da+TV1
 Content-Type: application/octet-stream
 Content-Disposition: attachment; filename=".config.gz"
 Content-Transfer-Encoding: base64
 
-H4sICMbRO1YAAy5jb25maWcAlFxLd9y2kt7nV/SxZzGzuLH1SN945mgBkmA3bpMETYCtx4ZH
+H4sICLjTO1YAAy5jb25maWcAlFxLd9y2kt7nV/SxZzGzuLH1SN945mgBkmA3bpMETYCtx4ZH
 ltuOTiS1r9TKTf79VIGvwoNsJYtYrK8AAoWqQlUB7Pc/vV+w18P+8fZwf3f78PDX4vvuafd8
 e9h9XXy7f9j93yKRi0LqBU+E/hmYs/un1z8/vJx9+rg4//ns54//eL47X2x2z0+7h0W8f/p2
 //0VWt/vn356/1Msi1SsmjyvL/7qH25kwZskZyMlk/Em4WWj6rKUlR4BpVm80RWLuY+t2ZY3
@@ -792,4 +796,4 @@ uNofXl5vv+7/58nZlW/14jnb4EefdzGvTVNVRWJa00fCA9GBZQW1EcrD2RyQSkt1/iXpcuuH
 kNNxfsHNzSMkTAfJMZnv1jPA+3oNh7vIyDFiyRuBP4fAwcCa6VCvcJtritZyWmC1L9w6eFE1
 UV3ldduZIr/xgoJFL7EVGpIutvkVvZFaDC5k/wfQqAAMn2cCAA==
 
---qMm9M+Fa2AknHoGS--
+--RnlQjJ0d97Da+TV1--
