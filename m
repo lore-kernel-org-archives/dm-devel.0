@@ -1,40 +1,40 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH 0/4] dm verity: add support for error
- correction
-Date: Sat, 7 Nov 2015 10:29:05 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1511071021100.18330@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1446688954-29589-1-git-send-email-samitolvanen@google.com> <563B066C.6050202@redhat.com> <alpine.LRH.2.02.1511061201520.5619@file01.intranet.prod.int.rdu2.redhat.com> <20151106190634.GA2813@google.com> <563CFD6F.4040009@redhat.com>
- <20151106202750.GA11849@google.com> <563D1614.5010501@redhat.com> <20151106212338.GA19557@google.com>
+From: Bob Liu <bob.liu@oracle.com>
+Subject: Re: [PATCH 06/32] xen blkback: prepare for bi_rw split
+Date: Mon, 09 Nov 2015 12:00:48 +0800
+Message-ID: <56401A70.7090504@oracle.com>
+References: <1446674909-5371-1-git-send-email-mchristi@redhat.com>
+	<1446674909-5371-7-git-send-email-mchristi@redhat.com>
+	<20151107101713.GB12117@infradead.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151106212338.GA19557@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Sami Tolvanen <samitolvanen@google.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, Mike Snitzer <snitzer@redhat.com>, Mandeep Baines <msb@chromium.org>, linux-kernel@vger.kernel.org, Mark Salyzyn <salyzyn@google.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xen-devel-bounces@lists.xen.org>
+In-Reply-To: <20151107101713.GB12117@infradead.org>
+List-Unsubscribe: <http://lists.xen.org/cgi-bin/mailman/options/xen-devel>,
+	<mailto:xen-devel-request@lists.xen.org?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xen.org>
+List-Help: <mailto:xen-devel-request@lists.xen.org?subject=help>
+List-Subscribe: <http://lists.xen.org/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xen.org?subject=subscribe>
+Sender: xen-devel-bounces@lists.xen.org
+Errors-To: xen-devel-bounces@lists.xen.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, mchristi@redhat.com, linux-fsdevel@vger.kernel.org, xen-devel@lists.xenproject.org, drbd-dev@lists.linbit.com
 List-Id: dm-devel.ids
 
 
-
-On Fri, 6 Nov 2015, Sami Tolvanen wrote:
-
-> On Fri, Nov 06, 2015 at 10:05:24PM +0100, Zdenek Kabelac wrote:
-> > So how do you want to correctly 'restore'  missing full sectors
-> > with just 0.8% data overhead ??
+On 11/07/2015 06:17 PM, Christoph Hellwig wrote:
+> A little offtopic for this patch, but can some explain this whole
+> mess about bios in Xen blkfront?  We can happily do partial completions
+> at the request later.
 > 
-> We use interleaving. Each byte in a 4k block is part of a different
-> Reed-Solomon block, which means an entire lost 4k data block looks like a
-> single error. When we also spread the bytes that form a single Reed-Solomon
-> block across the partition, we end up being able to correct several
-> megabytes of consecutive corrupted blocks with very small space overhead.
-> 
-> Sami
+> Also since the blk-mq conversion the call to blk_end_request_all is
 
-But the patch doesn't do any correction in case of I/O error - it just 
-returns the bio with I/O error.
+This will be fixed after my next blk-mq patch series which also modified the recover path.
 
-BTW. the function verity_fec_alloc_buffers does vzalloc and GFP_KERNEL 
-kmalloc inside I/O handling code - that shouldn't be done - you should 
-preallocate the data structures when the device is loaded.
+> completely broken, so it doesn't look like this code path is exactly
+> well tested.
+>
 
-Mikulas
+Thanks,
+-Bob
