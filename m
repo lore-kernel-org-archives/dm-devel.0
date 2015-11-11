@@ -1,69 +1,44 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Linux >= 4.2 dm_any_congested bug due to bad data from vfs/mm? [was:
- Bug in dm_any_congested?]
-Date: Tue, 10 Nov 2015 12:27:41 -0500
-Message-ID: <20151110172740.GA5450@redhat.com>
-References: <CAEp_DRAcgXsjEPttRnVoDYo97ZeeQ6heiBZhGMkppOUxTnOxjA@mail.gmail.com>
- <56420188.7030406@redhat.com>
- <CAEp_DRC652rPdLzmBbn_H9L5RhK1mMbtuXB=CcJhNxsvshQm3A@mail.gmail.com>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: [dm-devel] [RFC PATCH 00/32] separate operations from flags in
+ the bio/request structs
+Date: Wed, 11 Nov 2015 01:53:24 -0600
+Message-ID: <5642F3F4.2060007@cs.wisc.edu>
+References: <1446654807-6935-1-git-send-email-mchristi@redhat.com>
+ <563A36FC.6010001@sandisk.com> <563A3813.5010604@cs.wisc.edu>
+ <20151107102309.GE12117@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAEp_DRC652rPdLzmBbn_H9L5RhK1mMbtuXB=CcJhNxsvshQm3A@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: =?utf-8?B?Qm/FoXRqYW4gxaBrdWZjYSBAIFRlb24uc2k=?= <bostjan@teon.si>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20151107102309.GE12117@infradead.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, Bart Van Assche <bart.vanassche@sandisk.com>, drbd-dev@lists.linbit.com
 List-Id: dm-devel.ids
 
-[Cc'ing LKML and linux-fsdevel to cast a wider net and raise awareness]
+On 11/07/2015 04:23 AM, Christoph Hellwig wrote:
+> On Wed, Nov 04, 2015 at 10:53:39AM -0600, Mike Christie wrote:
+>>> If you have to touch submit_bio() and submit_bio_wait(), how about
+>>> requiring the callers of these functions to set the cmd and flags
+>>> arguments in the bio structure and to leave out the cmd and flags
+>>> arguments from the submit_bio() and submit_bio_wait() functions ? A
+>>> (compile tested only) patch that implements this idea is available at
+>>> https://lkml.org/lkml/2014/6/2/173.
+>>>
+>>
+>> Yeah, I can do that.
+> 
+> I think this would be useful to do at the beginning of the series.
 
-On Tue, Nov 10 2015 at 10:02am -0500,
-Bo=C5=A1tjan =C5=A0kufca @ Teon.si <bostjan@teon.si> wrote:
+I just wanted to double check that we wanted to do this.
 
-> On 10 November 2015 at 15:39, Zdenek Kabelac <zkabelac@redhat.com> wr=
-ote:
-> > Dne 10.11.2015 v 14:14 Bo=C5=A1tjan =C5=A0kufca @ Teon.si napsal(a)=
-:
-> >>
-> >> Hi all,
-> >>
-> >> HW is a bit dated, but had no problems with it up to now, and SW r=
-aid
-> >> is used here. Kernel was 4.2.4.
-> >>
-> >> Is this the right mlist for such bug?
-> >
-> >
-> > Hi
-> >
-> > Yes the issue is known - but source is not fully known.
-> > I've opened public BZ: https://bugzilla.redhat.com/1279941
-> > There is some potential fix - but unclear what it solves:
-> > http://git.kernel.org/linus/ad5f498f610
->=20
-> So 4.1.13 is ok in this respect, or is this unknown ATM?
->=20
-> Does it depend on underlying storage at all, or not? MD does not seem
-> to be listed in stack trace.
+We no longer have the bvec merge functions so the original reason given
+in the thread/patch Bart referenced is no longer valid.
 
-We don't yet have a reliable reproducer.  So if your test proves to
-reliably reproduce the issue for you then we may be able to make much
-quicker progress.
+Offlist it was suggested that dropping the argument from submit_bio
+might still improve performance, but I modified xfs and dm and did some
+testing and did not see anything.
 
-While the bug manifests as a crash in dm_any_congested (either NULL
-pointer or GPF) it _seems_ that the problem is further up the stack in
-the vfs and/or mm (by passing garbage into dm_any_congested via call to
-queue->backing_dev_info.congested_fn).  But all possibilities are still
-on the table... again not much to go on yet.
+So the change is not needed, and it would only be done because people
+feel it would improve the interface.
 
-Please feel free to test using the 4.4 stable@ commit Zdenek referenced
-(but I'm skeptical it'll fix this issue if you aren't reactivating
-volumes or anything): http://git.kernel.org/linus/ad5f498f610
-
-Also, you're welcome to update this BZ as you collect additional info:
-https://bugzilla.redhat.com/1279941
-
-Thanks,
-Mike
