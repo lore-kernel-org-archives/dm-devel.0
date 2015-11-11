@@ -1,44 +1,44 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: [dm-devel] [RFC PATCH 00/32] separate operations from flags in
- the bio/request structs
-Date: Wed, 11 Nov 2015 01:53:24 -0600
-Message-ID: <5642F3F4.2060007@cs.wisc.edu>
-References: <1446654807-6935-1-git-send-email-mchristi@redhat.com>
- <563A36FC.6010001@sandisk.com> <563A3813.5010604@cs.wisc.edu>
- <20151107102309.GE12117@infradead.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+From: Baolin Wang <baolin.wang@linaro.org>
+Subject: [PATCH 0/2] Introduce the request handling for dm-crypt
+Date: Wed, 11 Nov 2015 17:31:43 +0800
+Message-ID: <cover.1447233227.git.baolin.wang@linaro.org>
 Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20151107102309.GE12117@infradead.org>
 Sender: linux-raid-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, Bart Van Assche <bart.vanassche@sandisk.com>, drbd-dev@lists.linbit.com
+To: axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, neilb@suse.com
+Cc: jack@suse.cz, tj@kernel.org, jmoyer@redhat.com, keith.busch@intel.com, bart.vanassche@sandisk.com, linux-raid@vger.kernel.org, broonie@kernel.org, arnd@arndb.de, dineshg@quicinc.com, linux-kernel@vger.kernel.org, baolin.wang@linaro.org
 List-Id: dm-devel.ids
 
-On 11/07/2015 04:23 AM, Christoph Hellwig wrote:
-> On Wed, Nov 04, 2015 at 10:53:39AM -0600, Mike Christie wrote:
->>> If you have to touch submit_bio() and submit_bio_wait(), how about
->>> requiring the callers of these functions to set the cmd and flags
->>> arguments in the bio structure and to leave out the cmd and flags
->>> arguments from the submit_bio() and submit_bio_wait() functions ? A
->>> (compile tested only) patch that implements this idea is available at
->>> https://lkml.org/lkml/2014/6/2/173.
->>>
->>
->> Yeah, I can do that.
-> 
-> I think this would be useful to do at the beginning of the series.
+Now the dm-crypt code only implemented the 'based-bio' method to encrypt/
+decrypt block data, which can only hanle one bio at one time. As we know,
+one bio must use the sequential physical address and it also has a limitation
+of length. Thus it may limit the big block encyrtion/decryption when some
+hardware support the big block data encryption.
 
-I just wanted to double check that we wanted to do this.
+This patch series introduc the 'based-request' method to handle the data
+encryption/decryption. One request can contain multiple bios, so it can
+handle big block data to improve the efficiency.
 
-We no longer have the bvec merge functions so the original reason given
-in the thread/patch Bart referenced is no longer valid.
+Also this patch refers to the Dinesh K Garg <dineshg@codeaurora.org> and
+franciscofranco <franciscofranco.1990@gmail.com> submission of 'Request
+based dm-crypt', and the original link is:
+https://github.com/major91/Zeta-Chromium-N5/commit/621d4821da04cfde383329ebdf4ce8711ec3329c
 
-Offlist it was suggested that dropping the argument from submit_bio
-might still improve performance, but I modified xfs and dm and did some
-testing and did not see anything.
+Now it can encrypt/decrypt successfully with read/write testing, and it shows
+some efficiency improvements with hardware acceleration. But I really hope to
+need more comments about the structure and conception. Thanks for your review.
 
-So the change is not needed, and it would only be done because people
-feel it would improve the interface.
+Baolin Wang (2):
+  block: Introduce BIO_ENDIO_FREE for bio flags
+  md: dm-crypt: Introduce the request handling for dm-crypt
+
+ block/blk-core.c              |    6 +-
+ drivers/md/Kconfig            |    6 +
+ drivers/md/dm-crypt.c         |  831 ++++++++++++++++++++++++++++++++++++++++-
+ drivers/md/dm.c               |   13 +-
+ include/linux/blk_types.h     |    6 +
+ include/linux/device-mapper.h |    5 +
+ 6 files changed, 861 insertions(+), 6 deletions(-)
+
+-- 
+1.7.9.5
 
