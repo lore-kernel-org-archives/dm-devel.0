@@ -1,29 +1,42 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 0/2] Introduce the request handling for dm-crypt
-Date: Wed, 11 Nov 2015 01:48:11 -0800
-Message-ID: <20151111094811.GA3641@infradead.org>
-References: <cover.1447233227.git.baolin.wang@linaro.org>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [dm-devel] [RFC PATCH 00/32] separate operations
+ from flags in the bio/request structs
+Date: Wed, 11 Nov 2015 03:28:46 -0800
+Message-ID: <20151111112846.GA358@infradead.org>
+References: <1446654807-6935-1-git-send-email-mchristi@redhat.com>
+	<563A36FC.6010001@sandisk.com> <563A3813.5010604@cs.wisc.edu>
+	<20151107102309.GE12117@infradead.org>
+	<5642F3F4.2060007@cs.wisc.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <cover.1447233227.git.baolin.wang@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Baolin Wang <baolin.wang@linaro.org>
-Cc: axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, neilb@suse.com, jack@suse.cz, tj@kernel.org, jmoyer@redhat.com, keith.busch@intel.com, bart.vanassche@sandisk.com, linux-raid@vger.kernel.org, broonie@kernel.org, arnd@arndb.de, dineshg@quicinc.com, linux-kernel@vger.kernel.org
+In-Reply-To: <5642F3F4.2060007-hcNo3dDEHLuVc3sceRu5cw@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Mike Christie <michaelc-hcNo3dDEHLuVc3sceRu5cw@public.gmane.org>
+Cc: linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-On Wed, Nov 11, 2015 at 05:31:43PM +0800, Baolin Wang wrote:
-> Now the dm-crypt code only implemented the 'based-bio' method to encrypt/
-> decrypt block data, which can only hanle one bio at one time. As we know,
-> one bio must use the sequential physical address and it also has a limitation
-> of length. Thus it may limit the big block encyrtion/decryption when some
-> hardware support the big block data encryption.
+On Wed, Nov 11, 2015 at 01:53:24AM -0600, Mike Christie wrote:
+> We no longer have the bvec merge functions so the original reason given
+> in the thread/patch Bart referenced is no longer valid.
 > 
-> This patch series introduc the 'based-request' method to handle the data
-> encryption/decryption. One request can contain multiple bios, so it can
-> handle big block data to improve the efficiency.
+> Offlist it was suggested that dropping the argument from submit_bio
+> might still improve performance, but I modified xfs and dm and did some
+> testing and did not see anything.
+> 
+> So the change is not needed, and it would only be done because people
+> feel it would improve the interface.
 
-NAK for more request based stacking or DM drivers.  They are a major
-pain to deal with, and adding more with different requirements then
-dm-multipath is not helping in actually making that one work properly.
+I would defintively prefer the changed interface, and to me it also
+looks like it would make your overall patch simpler.  If you disagree
+feel free to keep it as-is for now and I'll do another pass later.
