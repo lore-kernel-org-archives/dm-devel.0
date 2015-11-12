@@ -1,22 +1,64 @@
-From: Arnd Bergmann <arnd@arndb.de>
+From: Jan Kara <jack@suse.cz>
 Subject: Re: [PATCH 0/2] Introduce the request handling for dm-crypt
-Date: Thu, 12 Nov 2015 13:57:27 +0100
-Message-ID: <4436790.rotQ3a7v5c@wuerfel>
-References: <cover.1447233227.git.baolin.wang@linaro.org> <20151112122400.GB27454@quack.suse.cz> <CAMz4kuLmGfyae=PXb8keuCpkEFDdXZzvuBtUiJHRAz0P55mxXg@mail.gmail.com>
+Date: Thu, 12 Nov 2015 13:59:01 +0100
+Message-ID: <20151112125901.GD27454@quack.suse.cz>
+References: <cover.1447233227.git.baolin.wang@linaro.org>
+ <20151111094811.GA3641@infradead.org>
+ <CAMz4ku+VF7-kLyE1fK45_MZ=-Tw3PqpySq3Cu86q+rZX4wRemw@mail.gmail.com>
+ <20151112091732.GA23780@quack.suse.cz>
+ <CAMz4kuKBhWcednSauyVhGsSQoNPoLnr4-1RkvJkQvvUR3UpQKg@mail.gmail.com>
+ <20151112110617.GA26662@quack.suse.cz>
+ <CAMz4kuKmU8E3O6pvE0VXGzJ53uobFzGkNYien0_OXXBssafo3Q@mail.gmail.com>
+ <20151112122400.GB27454@quack.suse.cz>
+ <CAMz4kuLmGfyae=PXb8keuCpkEFDdXZzvuBtUiJHRAz0P55mxXg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <CAMz4kuLmGfyae=PXb8keuCpkEFDdXZzvuBtUiJHRAz0P55mxXg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Baolin Wang <baolin.wang@linaro.org>
-Cc: Jan Kara <jack@suse.cz>, Christoph Hellwig <hch@infradead.org>, axboe@kernel.dk, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, neilb@suse.com, tj@kernel.org, jmoyer@redhat.com, keith.busch@intel.com, bart.vanassche@sandisk.com, linux-raid@vger.kernel.org, Mark Brown <broonie@kernel.org>, "Garg, Dinesh" <dineshg@quicinc.com>, LKML <linux-kernel@vger.kernel.org>
+Cc: Jan Kara <jack@suse.cz>, Christoph Hellwig <hch@infradead.org>, axboe@kernel.dk, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, neilb@suse.com, tj@kernel.org, jmoyer@redhat.com, keith.busch@intel.com, bart.vanassche@sandisk.com, linux-raid@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Garg, Dinesh" <dineshg@quicinc.com>, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Thursday 12 November 2015 20:51:10 Baolin Wang wrote:
+On Thu 12-11-15 20:51:10, Baolin Wang wrote:
 > On 12 November 2015 at 20:24, Jan Kara <jack@suse.cz> wrote:
 > > On Thu 12-11-15 19:46:26, Baolin Wang wrote:
 > >> On 12 November 2015 at 19:06, Jan Kara <jack@suse.cz> wrote:
+> >> > On Thu 12-11-15 17:40:59, Baolin Wang wrote:
+> >> >> On 12 November 2015 at 17:17, Jan Kara <jack@suse.cz> wrote:
+> >> >> > On Thu 12-11-15 10:15:32, Baolin Wang wrote:
+> >> >> >> On 11 November 2015 at 17:48, Christoph Hellwig <hch@infradead.org> wrote:
+> >> >> >> > On Wed, Nov 11, 2015 at 05:31:43PM +0800, Baolin Wang wrote:
+> >> >> >> >> Now the dm-crypt code only implemented the 'based-bio' method to encrypt/
+> >> >> >> >> decrypt block data, which can only hanle one bio at one time. As we know,
+> >> >> >> >> one bio must use the sequential physical address and it also has a limitation
+> >> >> >> >> of length. Thus it may limit the big block encyrtion/decryption when some
+> >> >> >> >> hardware support the big block data encryption.
+> >> >> >> >>
+> >> >> >> >> This patch series introduc the 'based-request' method to handle the data
+> >> >> >> >> encryption/decryption. One request can contain multiple bios, so it can
+> >> >> >> >> handle big block data to improve the efficiency.
+> >> >> >> >
+> >> >> >> > NAK for more request based stacking or DM drivers.  They are a major
+> >> >> >> > pain to deal with, and adding more with different requirements then
+> >> >> >> > dm-multipath is not helping in actually making that one work properly.
+> >> >> >>
+> >> >> >> But now many vendors supply the hardware engine to handle the
+> >> >> >> encyrtion/decryption. The hardware really need a big block to indicate
+> >> >> >> its performance with request based things. Another thing is now the
+> >> >> >> request based things is used by many vendors (Qualcomm, Spreadtrum and
+> >> >> >> so on) to improve their performance and there's a real performance
+> >> >> >> requirement here (I can show the performance result later).
+> >> >> >
+> >> >> > So you've mentioned several times that hardware needs big blocks. How big
+> >> >> > those blocks need to be? Ideally, can you give some numbers on how the
+> >> >> > throughput of the encryption hw grows with the block size?
+> >> >>
+> >> >> It depends on the hardware design. My beaglebone black board's AES
+> >> >> engine can handle 1M at one time which is not big. As I know some
+> >> >> other AES engine can handle 16M data at one time or more.
+> >> >
 > >> > Well, one question is "can handle" and other question is how big gain in
 > >> > throughput it will bring compared to say 1M chunks. I suppose there's some
 > >> > constant overhead to issue a request to the crypto hw and by the time it is
@@ -40,11 +82,10 @@ On Thursday 12 November 2015 20:51:10 Baolin Wang wrote:
 > But if it encrypts 16M with 1M one by one, it will be much more than
 > 16.05ms (should be consider the SW submits bio one by one).
 
-The example that Jan gave was meant to illustrate the case where it's not
-much more than 16.05ms, just slightly more.
-
-The point is that we need real numbers to show at what size we stop
-getting significant returns from increased block sizes.
+Really? In my example, it would take 16.8 ms if we encrypted 16M in 1M
+chunks and 16.05 ms if done in one chunk. That is a difference for which I
+would not be willing to bend over backwards. Now these numbers are
+completely made up and that's why I wanted to see the real numbers...
 
 > >> >> > You mentioned that you use requests because of size limitations on bios - I
 > >> >> > had a look and current struct bio can easily describe 1MB requests (that's
@@ -67,8 +108,11 @@ getting significant returns from increased block sizes.
 > But it maybe not enough for HW engine which can handle maybe 10M/20M
 > at one time.
 
-Given that you have already done measurements, can you find out how much
-you lose in overall performance with your existing patch if you artificially
-limit the maximum size to sizes like 256kb, 1MB, 4MB, ...?
+Currently, you would not be able to create larger than 512K / 1M chunks
+even with request based dm-crypt since requests have limits on number of
+data they can carry as well... So this is kind of abstract discussion.
 
-	Arnd
+								Honza
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
