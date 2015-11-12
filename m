@@ -1,51 +1,43 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 0/2] Introduce the request handling for dm-crypt
-Date: Thu, 12 Nov 2015 08:26:26 -0700
-Message-ID: <5644AFA2.6040201@kernel.dk>
-References: <cover.1447233227.git.baolin.wang@linaro.org>
- <20151111181813.GD12236@redhat.com>
- <CAMz4kuKNAkFG4-f6TU1HRxgkAn+YX-D_tTQAWio-A_np3brr+A@mail.gmail.com>
- <20151112100422.GM12392@sirena.org.uk>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 0/4] dm verity: add support for error correction
+Date: Thu, 12 Nov 2015 13:50:04 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1511121318110.15026@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1446688954-29589-1-git-send-email-samitolvanen@google.com> <563B066C.6050202@redhat.com> <20151105173306.GA22302@google.com> <20151109163735.GA28884@redhat.com> <20151109191925.GA29185@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151112100422.GM12392@sirena.org.uk>
+In-Reply-To: <20151109191925.GA29185@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mark Brown <broonie@kernel.org>, Baolin Wang <baolin.wang@linaro.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, neilb@suse.com, linux-raid@vger.kernel.org, jack@suse.cz, Arnd Bergmann <arnd@arndb.de>, LKML <linux-kernel@vger.kernel.org>, keith.busch@intel.com, jmoyer@redhat.com, tj@kernel.org, bart.vanassche@sandisk.com, "Garg, Dinesh" <dineshg@quicinc.com>
+To: Sami Tolvanen <samitolvanen@google.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, device-mapper development <dm-devel@redhat.com>, Mandeep Baines <msb@chromium.org>, Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mark Salyzyn <salyzyn@google.com>
 List-Id: dm-devel.ids
 
-On 11/12/2015 03:04 AM, Mark Brown wrote:
-> On Thu, Nov 12, 2015 at 04:20:41PM +0800, Baolin Wang wrote:
->
->> 3. perforamence data
->> It is just a simple dd test result, and will provide the formal report
->> in future. But from the simple test, we can see the improvement.
->
-> It's probably also worth pointing out that Qualcomm have been shipping
-> an out of tree implementation of this as a separate module in their BSP
-> (originally written by Danesh Garg who's on this thread):
->
->     https://android.googlesource.com/kernel/msm/+/android-msm-dory-3.10-kitkat-wear/drivers/md/dm-req-crypt.c
->
-> Android now wants to encrypt phones and tablets by default and have been
-> seeing substantial performance hits as a result, we can try to get
-> people to share performance data from productionish systems but it might
-> be difficult.
 
-Well, shame on them for developing out-of-tree, looks like they are 
-reaping all the benefits of that.
 
-Guys, we need some numbers, enough with the hand waving. There's no 
-point discussing this further until we know how much of a difference it 
-makes to handle X MB chunks instead of Y MB chunks. As was previously 
-stated, unless there's a _substantial_ performance benefit, this 
-patchset isn't going anywhere.
+On Mon, 9 Nov 2015, Sami Tolvanen wrote:
 
-If there is a huge benefit, we can look into ways of making it actually 
-work. That may not even be a request interface, it could just be proper 
-utilization of plugging for in-dm bio merging.
+> > Also, the 2 other big questions from Mikulas need answering:
+> > 1) why aren't you actually adjustng error codes, returning success, if
+> >    dm-verity was able to trap/correct the corruption?
+> 
+> We don't see actual I/O errors very often. Most corruption we've seen
+> is caused by flaky hardware that doesn't return errors. However, I can
+> certainly change to code to attempt recovery in this case too.
 
--- 
-Jens Axboe
+What flash controller and chips do you use? What is the probability of I/O 
+error and what is the probability of silent data corruption? Is the silent 
+data corruption permanent or transient? What is causing the silent data 
+corruption (decay in flash chips?, errors on the bus?) Why can't you ask 
+the hardware engineers to use a controler with proper error correction?
+
+Without these data - it looks like you first wrote the patch and then 
+tried to make some excuses why it should be accepted.
+
+I'm also a little bit concerned that the patch will increase prevalence of 
+crapware on the market - when accepted, this kind of reasoning will 
+follow: "now we have error correction in the kernel, so we cut down flash 
+overprovisioning, save a dollar or two per device, and produce a crap that 
+randomly corrupts user's data on the read-write partition (because that 
+partition not protected by the error correction)".
+
+Mikulas
