@@ -1,56 +1,51 @@
-From: Mark Brown <broonie@kernel.org>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: [PATCH 0/2] Introduce the request handling for dm-crypt
-Date: Thu, 12 Nov 2015 15:02:38 +0000
-Message-ID: <20151112150238.GO12392@sirena.org.uk>
+Date: Thu, 12 Nov 2015 08:26:26 -0700
+Message-ID: <5644AFA2.6040201@kernel.dk>
 References: <cover.1447233227.git.baolin.wang@linaro.org>
- <20151112122400.GB27454@quack.suse.cz>
- <CAMz4kuLmGfyae=PXb8keuCpkEFDdXZzvuBtUiJHRAz0P55mxXg@mail.gmail.com>
- <4436790.rotQ3a7v5c@wuerfel>
+ <20151111181813.GD12236@redhat.com>
+ <CAMz4kuKNAkFG4-f6TU1HRxgkAn+YX-D_tTQAWio-A_np3brr+A@mail.gmail.com>
+ <20151112100422.GM12392@sirena.org.uk>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="fjEAjMKpll6GDq3U"
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4436790.rotQ3a7v5c@wuerfel>
-Sender: linux-raid-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Baolin Wang <baolin.wang@linaro.org>, Jan Kara <jack@suse.cz>, Christoph Hellwig <hch@infradead.org>, axboe@kernel.dk, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, neilb@suse.com, tj@kernel.org, jmoyer@redhat.com, keith.busch@intel.com, bart.vanassche@sandisk.com, linux-raid@vger.kernel.org, "Garg, Dinesh" <dineshg@quicinc.com>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20151112100422.GM12392@sirena.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mark Brown <broonie@kernel.org>, Baolin Wang <baolin.wang@linaro.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, neilb@suse.com, linux-raid@vger.kernel.org, jack@suse.cz, Arnd Bergmann <arnd@arndb.de>, LKML <linux-kernel@vger.kernel.org>, keith.busch@intel.com, jmoyer@redhat.com, tj@kernel.org, bart.vanassche@sandisk.com, "Garg, Dinesh" <dineshg@quicinc.com>
 List-Id: dm-devel.ids
 
+On 11/12/2015 03:04 AM, Mark Brown wrote:
+> On Thu, Nov 12, 2015 at 04:20:41PM +0800, Baolin Wang wrote:
+>
+>> 3. perforamence data
+>> It is just a simple dd test result, and will provide the formal report
+>> in future. But from the simple test, we can see the improvement.
+>
+> It's probably also worth pointing out that Qualcomm have been shipping
+> an out of tree implementation of this as a separate module in their BSP
+> (originally written by Danesh Garg who's on this thread):
+>
+>     https://android.googlesource.com/kernel/msm/+/android-msm-dory-3.10-kitkat-wear/drivers/md/dm-req-crypt.c
+>
+> Android now wants to encrypt phones and tablets by default and have been
+> seeing substantial performance hits as a result, we can try to get
+> people to share performance data from productionish systems but it might
+> be difficult.
 
---fjEAjMKpll6GDq3U
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Well, shame on them for developing out-of-tree, looks like they are 
+reaping all the benefits of that.
 
-On Thu, Nov 12, 2015 at 01:57:27PM +0100, Arnd Bergmann wrote:
-> On Thursday 12 November 2015 20:51:10 Baolin Wang wrote:
+Guys, we need some numbers, enough with the hand waving. There's no 
+point discussing this further until we know how much of a difference it 
+makes to handle X MB chunks instead of Y MB chunks. As was previously 
+stated, unless there's a _substantial_ performance benefit, this 
+patchset isn't going anywhere.
 
-> > But it maybe not enough for HW engine which can handle maybe 10M/20M
-> > at one time.
+If there is a huge benefit, we can look into ways of making it actually 
+work. That may not even be a request interface, it could just be proper 
+utilization of plugging for in-dm bio merging.
 
-> Given that you have already done measurements, can you find out how much
-> you lose in overall performance with your existing patch if you artificially
-> limit the maximum size to sizes like 256kb, 1MB, 4MB, ...?
-
-It's probably also worth looking at the impact on CPU utilisation as
-well as throughput in your benchmarking since the system will often not
-be idle when it's doing a lot of I/O - I know you've done some
-measurements in that area before, including them when looking at block
-sizes might be interesting.
-
---fjEAjMKpll6GDq3U
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQEcBAEBCAAGBQJWRKoNAAoJECTWi3JdVIfQkDUH/1ejU/OKvam0bizZOlfRzzUj
-sUyIiR+fv0kNMvIc38Us12nb4XwI1mz3TPIGJhJ1iozHU8xI7YaZaKmq0+uyCDwS
-FB8baE5gNASI+nTJ+K7g0YzEA3HkSoZi9JbRohO/IzBL7m/X+WhJoDFSunX9FKx8
-2k65EGXkA5Ggpz6DqlamMpuYjS8zTr6uYhTVvhasb6m07Yxi0HYQKjHz7USR/7K7
-EQMRVk/6Htc2OiH9Y87jo1n3Y3YNIF3UFr8dw5XCFIdDXuNJ1Pb6R7d5LN+AR+LG
-9T0ppoj08J8zmJWC3n0BJu3RDUFPj7qqPp34uhKMur+OFpWAh0oXAgJmXRWc4iQ=
-=Uc/H
------END PGP SIGNATURE-----
-
---fjEAjMKpll6GDq3U--
+-- 
+Jens Axboe
