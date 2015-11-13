@@ -1,67 +1,87 @@
 From: Baolin Wang <baolin.wang@linaro.org>
 Subject: Re: [PATCH 0/2] Introduce the request handling for dm-crypt
-Date: Fri, 13 Nov 2015 10:07:25 +0800
-Message-ID: <CAMz4kuL0r=wJuxyQvftuY_p=5k3_bYaksfgha6O2idNgqiBNZw@mail.gmail.com>
+Date: Fri, 13 Nov 2015 11:25:37 +0800
+Message-ID: <CAMz4kuJ6x=Ygmr2JBL=PAxoQCCFggFFLa57Aw3Q3EDkKCu5Bvg@mail.gmail.com>
 References: <cover.1447233227.git.baolin.wang@linaro.org>
-	<20151111181813.GD12236@redhat.com>
-	<CAMz4kuKNAkFG4-f6TU1HRxgkAn+YX-D_tTQAWio-A_np3brr+A@mail.gmail.com>
-	<20151112100422.GM12392@sirena.org.uk>
-	<5644AFA2.6040201@kernel.dk>
+	<20151112122400.GB27454@quack.suse.cz>
+	<CAMz4kuLmGfyae=PXb8keuCpkEFDdXZzvuBtUiJHRAz0P55mxXg@mail.gmail.com>
+	<4436790.rotQ3a7v5c@wuerfel>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5644AFA2.6040201@kernel.dk>
+In-Reply-To: <4436790.rotQ3a7v5c@wuerfel>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mark Brown <broonie@kernel.org>, Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, neilb@suse.com, linux-raid@vger.kernel.org, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, LKML <linux-kernel@vger.kernel.org>, keith.busch@intel.com, jmoyer@redhat.com, tj@kernel.org, bart.vanassche@sandisk.com, "Garg, Dinesh" <dineshg@quicinc.com>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Jan Kara <jack@suse.cz>, Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, neilb@suse.com, tj@kernel.org, jmoyer@redhat.com, keith.busch@intel.com, bart.vanassche@sandisk.com, linux-raid@vger.kernel.org, Mark Brown <broonie@kernel.org>, "Garg, Dinesh" <dineshg@quicinc.com>, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 12 November 2015 at 23:26, Jens Axboe <axboe@kernel.dk> wrote:
-> On 11/12/2015 03:04 AM, Mark Brown wrote:
+On 12 November 2015 at 20:57, Arnd Bergmann <arnd@arndb.de> wrote:
+> On Thursday 12 November 2015 20:51:10 Baolin Wang wrote:
+>> On 12 November 2015 at 20:24, Jan Kara <jack@suse.cz> wrote:
+>> > On Thu 12-11-15 19:46:26, Baolin Wang wrote:
+>> >> On 12 November 2015 at 19:06, Jan Kara <jack@suse.cz> wrote:
+>> >> > Well, one question is "can handle" and other question is how big gain in
+>> >> > throughput it will bring compared to say 1M chunks. I suppose there's some
+>> >> > constant overhead to issue a request to the crypto hw and by the time it is
+>> >> > encrypting 1M it may be that this overhead is well amortized by the cost of
+>> >> > the encryption itself which is in principle linear in the size of the
+>> >> > block. That's why I'd like to get idea of the real numbers...
+>> >>
+>> >> Please correct me if I misunderstood your point. Let's suppose the AES
+>> >> engine can handle 16M at one time. If we give the size of data is less
+>> >> than 16M, the engine can handle it at one time. But if the data size
+>> >> is 20M (more than 16M), the engine driver will split the data with 16M
+>> >> and 4M to deal with. I can not say how many numbers, but I think the
+>> >> engine is like to big chunks than small chunks which is the hardware
+>> >> engine's advantage.
+>> >
+>> > No, I meant something different. I meant that if HW can encrypt 1M in say
+>> > 1.05 ms and it can encrypt 16M in 16.05 ms, then although using 16 M blocks
+>> > gives you some advantage it becomes diminishingly small.
+>> >
 >>
->> On Thu, Nov 12, 2015 at 04:20:41PM +0800, Baolin Wang wrote:
->>
->>> 3. perforamence data
->>> It is just a simple dd test result, and will provide the formal report
->>> in future. But from the simple test, we can see the improvement.
->>
->>
->> It's probably also worth pointing out that Qualcomm have been shipping
->> an out of tree implementation of this as a separate module in their BSP
->> (originally written by Danesh Garg who's on this thread):
->>
->>
->> https://android.googlesource.com/kernel/msm/+/android-msm-dory-3.10-kitkat-wear/drivers/md/dm-req-crypt.c
->>
->> Android now wants to encrypt phones and tablets by default and have been
->> seeing substantial performance hits as a result, we can try to get
->> people to share performance data from productionish systems but it might
->> be difficult.
+>> But if it encrypts 16M with 1M one by one, it will be much more than
+>> 16.05ms (should be consider the SW submits bio one by one).
 >
+> The example that Jan gave was meant to illustrate the case where it's not
+> much more than 16.05ms, just slightly more.
 >
-> Well, shame on them for developing out-of-tree, looks like they are reaping
-> all the benefits of that.
+> The point is that we need real numbers to show at what size we stop
+> getting significant returns from increased block sizes.
 >
-> Guys, we need some numbers, enough with the hand waving. There's no point
-> discussing this further until we know how much of a difference it makes to
-> handle X MB chunks instead of Y MB chunks. As was previously stated, unless
-> there's a _substantial_ performance benefit, this patchset isn't going
-> anywhere.
 
-That's fair enough and we will provide the performance data to measure
-the patchset.
+Got it. Thanks.
 
+>> >> >> > You mentioned that you use requests because of size limitations on bios - I
+>> >> >> > had a look and current struct bio can easily describe 1MB requests (that's
+>> >> >> > assuming 64-bit architecture, 4KB pages) when we have 1 page worth of
+>> >> >> > struct bio_vec. Is that not enough?
+>> >> >>
+>> >> >> Usually one bio does not always use the full 1M, maybe some 1k/2k/8k
+>> >> >> or some other small chunks. But request can combine some sequential
+>> >> >> small bios to be a big block and it is better than bio at least.
+>> >> >
+>> >> > As Christoph mentions 4.3 should be better in submitting larger bios. Did
+>> >> > you check it?
+>> >>
+>> >> I'm sorry I didn't check it. What's the limitation of one bio on 4.3?
+>> >
+>> > On 4.3 it is 1 MB (which should be enough because requests are limited to
+>> > 512 KB by default anyway). Previously the maximum bio size depended on the
+>> > queue parameters such as max number of segments etc.
+>>
+>> But it maybe not enough for HW engine which can handle maybe 10M/20M
+>> at one time.
 >
-> If there is a huge benefit, we can look into ways of making it actually
-> work. That may not even be a request interface, it could just be proper
-> utilization of plugging for in-dm bio merging.
+> Given that you have already done measurements, can you find out how much
+> you lose in overall performance with your existing patch if you artificially
+> limit the maximum size to sizes like 256kb, 1MB, 4MB, ...?
+>
 
-Make sense. Thanks.
+Cause my board AES engine throughput is 1M, I just did a simple dd
+test with small chunks. Results are in last email.
 
->
-> --
-> Jens Axboe
->
+>         Arnd
 
 
 
