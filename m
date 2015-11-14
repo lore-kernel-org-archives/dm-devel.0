@@ -1,67 +1,48 @@
-From: Mark Brown <broonie@kernel.org>
-Subject: Re: [PATCH 0/2] Introduce the request handling for dm-crypt
-Date: Fri, 13 Nov 2015 11:51:44 +0000
-Message-ID: <20151113115144.GR12392@sirena.org.uk>
-References: <cover.1447233227.git.baolin.wang@linaro.org>
- <20151111181813.GD12236@redhat.com>
- <CAMz4kuKNAkFG4-f6TU1HRxgkAn+YX-D_tTQAWio-A_np3brr+A@mail.gmail.com>
- <20151112100422.GM12392@sirena.org.uk>
- <5644AFA2.6040201@kernel.dk>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-multipath test scripts
+Date: Sat, 14 Nov 2015 11:26:33 -0500
+Message-ID: <20151114162633.GA2252@redhat.com>
+References: <20151007053923.GA10749@xzibit.linux.bs1.fc.nec.co.jp>
+ <1447412106.2616.13.camel@suse.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="562f9N4fbIs+fPrJ"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <5644AFA2.6040201@kernel.dk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Baolin Wang <baolin.wang@linaro.org>, Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, neilb@suse.com, linux-raid@vger.kernel.org, jack@suse.cz, Arnd Bergmann <arnd@arndb.de>, LKML <linux-kernel@vger.kernel.org>, keith.busch@intel.com, jmoyer@redhat.com, tj@kernel.org, bart.vanassche@sandisk.com, "Garg, Dinesh" <dineshg@quicinc.com>
+In-Reply-To: <1447412106.2616.13.camel@suse.de>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Johannes Thumshirn <jthumshirn@suse.de>
+Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
+On Fri, Nov 13 2015 at  5:55am -0500,
+Johannes Thumshirn <jthumshirn@suse.de> wrote:
 
---562f9N4fbIs+fPrJ
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+> On Wed, 2015-10-07 at 05:39 +0000, Junichi Nomura wrote:
+> > This is a set of scripts for kernel-side dm-multipath testing.
+> > Current
+> > set of scripts are stress testing of extreme situation and its
+> > coverage
+> > is limited. But recently found dm-mpath regressions should be
+> > detectable
+> > with this. I hope this helps people working on dm-multipath related
+> > code
+> > as a regression test set.
+> > 
+> > Though this is created as a patch for linux kernel source, it's just
+> > for
+> > convenience of kernel developers (I don't have a place to host this
+> > kind
+> > of scripts). If there are better place to contribute this, please let
+> > me know.
+> > 
+> > Please check README for how-to-run and possible improvements you
+> > could
+> > contribute in future.
+> 
+> Can you please resend the patch so it can be picked up? I'd really like
+> to have a in-tree test suite for dm-multipath.
 
-On Thu, Nov 12, 2015 at 08:26:26AM -0700, Jens Axboe wrote:
-> On 11/12/2015 03:04 AM, Mark Brown wrote:
+There is no need for a resend.  I just overlooked it for the 4.4 merge
+window.  But I'll review/test/merge for the 4.5 merge window.
 
-> >Android now wants to encrypt phones and tablets by default and have been
-> >seeing substantial performance hits as a result, we can try to get
-> >people to share performance data from productionish systems but it might
-> >be difficult.
-
-> Well, shame on them for developing out-of-tree, looks like they are reapi=
-ng
-> all the benefits of that.
-
-> Guys, we need some numbers, enough with the hand waving. There's no point
-> discussing this further until we know how much of a difference it makes to
-> handle X MB chunks instead of Y MB chunks. As was previously stated, unle=
-ss
-> there's a _substantial_ performance benefit, this patchset isn't going
-> anywhere.
-
-Yeah, what I'm saying here is that there will issues getting the numbers
-=66rom relevant production systems - we are most likely to be looking at
-proxies which are hopefully reasonably representative but there's likely
-to be more divergence than you'd see just running benchmark workloads on
-similar systems to those used in production.
-
---562f9N4fbIs+fPrJ
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQEcBAEBCAAGBQJWRc7PAAoJECTWi3JdVIfQVssH/3H4CZgV1sXNGbagnlJMH4PF
-wfNmBCGuN6mRIeqEoBFJEmj7ol+bw099rQyVGNh1gTLIJScGRgaqM68cQwvhoNAY
-vQdUXl5GBtx2gzn6esBcNaH0FCj39PXFl4476JmsoMeegdqM+w+Lf2ftZzC1asKQ
-0Ee5tv7Brn/VNCLYhmLPtwLkLfiA15/yWtV3JADa1cak+gYoszPMYqt3DYCjyqn6
-RdUYZN1NaOnoVVKD8ef/MAK6SS6S40I4/ud8VGWXNc0OKAZ9CD5rzVnNwEY7cwfY
-cQ07/wCwC4GIKKoAJIDIaR6kIzenE0XlR8kycpW32hWdy3US/mdtsmChzCG359A=
-=WM5U
------END PGP SIGNATURE-----
-
---562f9N4fbIs+fPrJ--
+Mike
