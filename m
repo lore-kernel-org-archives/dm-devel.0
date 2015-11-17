@@ -1,113 +1,147 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: [PATCH 1/2] dm mpath: fix infinite recursion in ioctl
- when no paths and queue_if_no_path is not set
-Date: Tue, 17 Nov 2015 09:36:56 +0000
-Message-ID: <20151117093654.GA13022@xzibit.linux.bs1.fc.nec.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: ja-JP
-Content-ID: <32F8DB39CB929E4591470863A0F4BBC6@gisp.nec.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
+From: Seth Forshee <seth.forshee@canonical.com>
+Subject: [PATCH v3 1/7] block_dev: Support checking inode permissions in lookup_bdev()
+Date: Tue, 17 Nov 2015 10:39:04 -0600
+Message-ID: <1447778351-118699-2-git-send-email-seth.forshee@canonical.com>
+References: <1447778351-118699-1-git-send-email-seth.forshee@canonical.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1447778351-118699-1-git-send-email-seth.forshee@canonical.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.com>, David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.com>, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>
+Cc: Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, Seth Forshee <seth.forshee@canonical.com>
 List-Id: dm-devel.ids
 
-In multipath_prepare_ioctl(),
-  - pgpath is a path selected from available paths
-  - m->queue_io is true if we cannot send a request immediately to
-    paths, either because:
-      * there is no available path
-      * the path group needs activation (pg_init)
-          - pg_init is not started
-          - pg_init is still running
-  - m->queue_if_no_path is true if the device is configured to queue
-    I/O if there is no available path
+When looking up a block device by path no permission check is
+done to verify that the user has access to the block device inode
+at the specified path. In some cases it may be necessary to
+check permissions towards the inode, such as allowing
+unprivileged users to mount block devices in user namespaces.
 
-If !pgpath && !m->queue_if_no_path, the handler should return -EIO.
-However in the course of refactoring the condition check has broken
-and returns success in that case.  Since bdev points to the dm device
-itself, dm_blk_ioctl() calls __blk_dev_driver_ioctl() for itself and
-recurses until crash.
+Add an argument to lookup_bdev() to optionally perform this
+permission check. A value of 0 skips the permission check and
+behaves the same as before. A non-zero value specifies the mask
+of access rights required towards the inode at the specified
+path. The check is always skipped if the user has CAP_SYS_ADMIN.
 
-You could reproduce the problem like this:
+All callers of lookup_bdev() currently pass a mask of 0, so this
+patch results in no functional change. Subsequent patches will
+add permission checks where appropriate.
 
-  # dmsetup create mp --table '0 1024 multipath 0 0 0 0'
-  # sg_inq /dev/mapper/mp
-  <crash>
-  [  172.648615] BUG: unable to handle kernel paging request at fffffffc81b10268
-  [  172.662843] PGD 19dd067 PUD 0
-  [  172.666269] Thread overran stack, or stack corrupted
-  [  172.671808] Oops: 0000 [#1] SMP
-  ...
-
-This patch fixes the condition check with some clarifications.
-
-Fixes: e56f81e0b01e ("dm: refactor ioctl handling")
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
 ---
- drivers/md/dm-mpath.c | 28 +++++++++++++++-------------
- 1 file changed, 15 insertions(+), 13 deletions(-)
+ drivers/md/bcache/super.c |  2 +-
+ drivers/md/dm-table.c     |  2 +-
+ drivers/mtd/mtdsuper.c    |  2 +-
+ fs/block_dev.c            | 13 ++++++++++---
+ fs/quota/quota.c          |  2 +-
+ include/linux/fs.h        |  2 +-
+ 6 files changed, 15 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index aaa6caa..0ad50ff 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1537,29 +1537,31 @@ static int multipath_prepare_ioctl(struct dm_target *ti,
- 		struct block_device **bdev, fmode_t *mode)
+diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+index 679a093a3bf6..e8287b0d1dac 100644
+--- a/drivers/md/bcache/super.c
++++ b/drivers/md/bcache/super.c
+@@ -1926,7 +1926,7 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
+ 				  sb);
+ 	if (IS_ERR(bdev)) {
+ 		if (bdev == ERR_PTR(-EBUSY)) {
+-			bdev = lookup_bdev(strim(path));
++			bdev = lookup_bdev(strim(path), 0);
+ 			mutex_lock(&bch_register_lock);
+ 			if (!IS_ERR(bdev) && bch_is_open(bdev))
+ 				err = "device already registered";
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index e76ed003769e..35bb3ea4cbe2 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -380,7 +380,7 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 	BUG_ON(!t);
+ 
+ 	/* convert the path to a device */
+-	bdev = lookup_bdev(path);
++	bdev = lookup_bdev(path, 0);
+ 	if (IS_ERR(bdev)) {
+ 		dev = name_to_dev_t(path);
+ 		if (!dev)
+diff --git a/drivers/mtd/mtdsuper.c b/drivers/mtd/mtdsuper.c
+index 20c02a3b7417..b5b60e1af31c 100644
+--- a/drivers/mtd/mtdsuper.c
++++ b/drivers/mtd/mtdsuper.c
+@@ -176,7 +176,7 @@ struct dentry *mount_mtd(struct file_system_type *fs_type, int flags,
+ 	/* try the old way - the hack where we allowed users to mount
+ 	 * /dev/mtdblock$(n) but didn't actually _use_ the blockdev
+ 	 */
+-	bdev = lookup_bdev(dev_name);
++	bdev = lookup_bdev(dev_name, 0);
+ 	if (IS_ERR(bdev)) {
+ 		ret = PTR_ERR(bdev);
+ 		pr_debug("MTDSB: lookup_bdev() returned %d\n", ret);
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 26cee058dc02..f1f0aa7214a3 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -1396,7 +1396,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode,
+ 	struct block_device *bdev;
+ 	int err;
+ 
+-	bdev = lookup_bdev(path);
++	bdev = lookup_bdev(path, 0);
+ 	if (IS_ERR(bdev))
+ 		return bdev;
+ 
+@@ -1706,12 +1706,14 @@ EXPORT_SYMBOL(ioctl_by_bdev);
+ /**
+  * lookup_bdev  - lookup a struct block_device by name
+  * @pathname:	special file representing the block device
++ * @mask:	rights to check for (%MAY_READ, %MAY_WRITE, %MAY_EXEC)
+  *
+  * Get a reference to the blockdevice at @pathname in the current
+  * namespace if possible and return it.  Return ERR_PTR(error)
+- * otherwise.
++ * otherwise.  If @mask is non-zero, check for access rights to the
++ * inode at @pathname.
+  */
+-struct block_device *lookup_bdev(const char *pathname)
++struct block_device *lookup_bdev(const char *pathname, int mask)
  {
- 	struct multipath *m = ti->private;
--	struct pgpath *pgpath;
- 	unsigned long flags;
- 	int r;
+ 	struct block_device *bdev;
+ 	struct inode *inode;
+@@ -1726,6 +1728,11 @@ struct block_device *lookup_bdev(const char *pathname)
+ 		return ERR_PTR(error);
  
--	r = 0;
--
- 	spin_lock_irqsave(&m->lock, flags);
+ 	inode = d_backing_inode(path.dentry);
++	if (mask != 0 && !capable(CAP_SYS_ADMIN)) {
++		error = __inode_permission(inode, mask);
++		if (error)
++			goto fail;
++	}
+ 	error = -ENOTBLK;
+ 	if (!S_ISBLK(inode->i_mode))
+ 		goto fail;
+diff --git a/fs/quota/quota.c b/fs/quota/quota.c
+index 3746367098fd..a40eaecbd5cc 100644
+--- a/fs/quota/quota.c
++++ b/fs/quota/quota.c
+@@ -733,7 +733,7 @@ static struct super_block *quotactl_block(const char __user *special, int cmd)
  
- 	if (!m->current_pgpath)
- 		__choose_pgpath(m, 0);
+ 	if (IS_ERR(tmp))
+ 		return ERR_CAST(tmp);
+-	bdev = lookup_bdev(tmp->name);
++	bdev = lookup_bdev(tmp->name, 0);
+ 	putname(tmp);
+ 	if (IS_ERR(bdev))
+ 		return ERR_CAST(bdev);
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 458ee7b213be..cc18dfb0b98e 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2388,7 +2388,7 @@ static inline void unregister_chrdev(unsigned int major, const char *name)
+ #define BLKDEV_MAJOR_HASH_SIZE	255
+ extern const char *__bdevname(dev_t, char *buffer);
+ extern const char *bdevname(struct block_device *bdev, char *buffer);
+-extern struct block_device *lookup_bdev(const char *);
++extern struct block_device *lookup_bdev(const char *, int mask);
+ extern void blkdev_show(struct seq_file *,off_t);
  
--	pgpath = m->current_pgpath;
--
--	if (pgpath) {
--		*bdev = pgpath->path.dev->bdev;
--		*mode = pgpath->path.dev->mode;
-+	if (m->current_pgpath) {
-+		if (!m->queue_io) {
-+			*bdev = m->current_pgpath->path.dev->bdev;
-+			*mode = m->current_pgpath->path.dev->mode;
-+			r = 0;
-+		} else {
-+			/* pg_init has not started or completed */
-+			r = -ENOTCONN;
-+		}
-+	} else {
-+		/* No path is available */
-+		if (m->queue_if_no_path)
-+			r = -ENOTCONN;
-+		else
-+			r = -EIO;
- 	}
- 
--	if ((pgpath && m->queue_io) || (!pgpath && m->queue_if_no_path))
--		r = -ENOTCONN;
--	else if (!*bdev)
--		r = -EIO;
--
- 	spin_unlock_irqrestore(&m->lock, flags);
- 
- 	if (r == -ENOTCONN && !fatal_signal_pending(current)) {
+ #else
 -- 
-2.4.3
+1.9.1
