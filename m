@@ -1,54 +1,62 @@
-From: Al Viro <viro@ZenIV.linux.org.uk>
+From: Richard Weinberger <richard@nod.at>
 Subject: Re: [PATCH v3 0/7] User namespace mount updates
-Date: Tue, 17 Nov 2015 19:30:12 +0000
-Message-ID: <20151117193012.GX22011@ZenIV.linux.org.uk>
+Date: Tue, 17 Nov 2015 21:12:16 +0100
+Message-ID: <564B8A20.9090607@nod.at>
 References: <1447778351-118699-1-git-send-email-seth.forshee@canonical.com>
  <20151117170556.GV22011@ZenIV.linux.org.uk>
  <20151117172551.GA108807@ubuntu-hedt>
  <20151117175506.GW22011@ZenIV.linux.org.uk>
- <564B79B1.3040207@gmail.com>
+ <20151117183444.GB108807@ubuntu-hedt>
+ <CAFLxGvx1UqJOhM3wqAGqT+TrkapeP1zkmg0a1K=DjySePx4mEA@mail.gmail.com>
+ <20151117192141.GD108807@ubuntu-hedt>
+ <CAE1zotLNq1v_ZegT9LyFsTiHWQnOAow+KKQFFvOYKUyRWPjfGA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <564B79B1.3040207@gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Austin S Hemmelgarn <ahferroin7@gmail.com>
-Cc: Seth Forshee <seth.forshee@canonical.com>, "Eric W. Biederman" <ebiederm@xmission.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, linux-kernel@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <CAE1zotLNq1v_ZegT9LyFsTiHWQnOAow+KKQFFvOYKUyRWPjfGA@mail.gmail.com>
+Sender: linux-bcache-owner@vger.kernel.org
+To: Octavian Purdila <octavian.purdila@intel.com>, Seth Forshee <seth.forshee@canonical.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, linux-bcache@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-mtd@lists.infradead.org" <linux-mtd@lists.infradead.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, LSM <linux-security-module@vger.kernel.org>, selinux@tycho.nsa.gov, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, LKML <linux-kernel@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>
 List-Id: dm-devel.ids
 
-On Tue, Nov 17, 2015 at 02:02:09PM -0500, Austin S Hemmelgarn wrote:
-
-> >_Static_ attacks, or change-image-under-mounted-fs attacks?
-> To properly protect against attacks on mounted filesystems, we'd
-> need some new concept of a userspace immutable file (that is, one
-> where nobody can write to it except the kernel, and only the kernel
-> can change it between regular access and this new state), and then
-> have the kernel set an image (or block device) to this state when a
-> filesystem is mounted from it (this introduces all kinds of other
-> issues too however, for example stuff that allows an online fsck on
-> the device will stop working, as will many un-deletion tools).
+Am 17.11.2015 um 20:25 schrieb Octavian Purdila:
+> On Tue, Nov 17, 2015 at 9:21 PM, Seth Forshee
+> <seth.forshee@canonical.com> wrote:
+>>
+>> On Tue, Nov 17, 2015 at 08:12:31PM +0100, Richard Weinberger wrote:
+>>> On Tue, Nov 17, 2015 at 7:34 PM, Seth Forshee
+>>> <seth.forshee@canonical.com> wrote:
+>>>> On Tue, Nov 17, 2015 at 05:55:06PM +0000, Al Viro wrote:
+>>>>> On Tue, Nov 17, 2015 at 11:25:51AM -0600, Seth Forshee wrote:
+>>>>>
+>>>>>> Shortly after that I plan to follow with support for ext4. I've been
+>>>>>> fuzzing ext4 for a while now and it has held up well, and I'm currently
+>>>>>> working on hand-crafted attacks. Ted has commented privately (to others,
+>>>>>> not to me personally) that he will fix bugs for such attacks, though I
+>>>>>> haven't seen any public comments to that effect.
+>>>>>
+>>>>> _Static_ attacks, or change-image-under-mounted-fs attacks?
+>>>>
+>>>> Right now only static attacks, change-image-under-mounted-fs attacks
+>>>> will be next.
+>>>
+>>> Do we *really* need to enable unprivileged mounting of kernel filesystems?
+>>> What about just enabling fuse and implement ext4 and friends as fuse
+>>> filesystems?
+>>> Using the approaching Linux Kernel Libary[1] this is easy.
+>>
+>> I haven't looked at this project, but I'm guessing that programs must be
+>> written specifically to make use of it? I.e. you can't just use the
+>> mount syscall, and thus all existing software still doesn't work?
+>>
 > 
-> The only other option would be to force the FS to cache all metadata
-> in memory, and validate between the cache and what's on disk on
-> every access, which is not realistic for any real world system.
+> The projects includes a lklfuse program that uses fuse to mount a
+> fileystem image.
 
-Doctor, it hurt when I do it...
+Cool. I gave it a try.
+It seems to work fine, but only if I run it in foreground (using -d)
+otherwise fuse blocks every filesystem request.
 
-IOW, the other option is to refuse attempting this insanity.  Fuse probably
-can be handled, but being able to mount (with kernel-space drivera) an
-arbitrary ext4 image is equivalent to being able to do anything and it's
-going to stay that way for the forseeable future.  You are talking about
-a large pile of code that deals with rather convoluted data structure,
-had not been written with validation in mind *and* keeps being developed.
-What's more, that code runs with maximal priveleges there are.
-
-This is absolutely insane, no matter how much LSM snake oil you slatter on
-the whole thing.  All of a sudden you are exposing a huge attack surface
-in the place where it would hurt most and as the consolation we are offered
-basically "Ted is willing to fix holes when they are found".
-
-I know that security community tends to be less than sane, but this really
-takes the damn cake.
-
-Al, still not quite able to believe this is not a badly mistimed AFD posting...
+Thanks,
+//richard
