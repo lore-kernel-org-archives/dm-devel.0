@@ -1,13 +1,15 @@
-From: Richard Sharpe <realrichardsharpe@gmail.com>
-Subject: Can anyone help me understand what is going wrong with a
- dm-multipah config I have?
-Date: Wed, 18 Nov 2015 08:55:35 -0800
-Message-ID: <CACyXjPzV32k3oP2m2M4HaOcXtEAvcLA0jDDB=r+D=9AJ9y2Frg@mail.gmail.com>
+From: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>
+Subject: [PATCH 2/2] dm flakey: document that default I/O error
+	is only for write
+Date: Thu, 19 Nov 2015 03:13:08 +0900
+Message-ID: <1447870388-14437-2-git-send-email-kusumi.tomohiro@gmail.com>
+References: <1447870388-14437-1-git-send-email-kusumi.tomohiro@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1447870388-14437-1-git-send-email-kusumi.tomohiro@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,84 +19,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: snitzer@redhat.com, mpatocka@redhat.com
+Cc: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SGkgZm9sa3MsCgpJIGhhdmUgYSBkbS1tdWx0aXBhdGggY29uZmlnIHdpdGggbXVsdGlwYXRoZCBy
-dW5uaW5nLAoKSGVyZSBpcyB0aGUgZGVmYXVsdHMgc2VjdGlvbiBvZiAvZXRjL211bHRpcGF0aC5j
-b25mOgoKICAgIGRlZmF1bHRzIHsKICAgICAgICB1c2VyX2ZyaWVuZGx5X25hbWVzIHllcwogICAg
-ICAgIHBhdGhfY2hlY2tlciAgdHVyCiAgICAgICAgcGF0aF9ncm91cGluZ19wb2xpY3kgIGZhaWxv
-dmVyCiAgICAgICAgZmFpbGJhY2sgICAgICAgICAgICAgIGltbWVkaWF0ZQogICAgICAgIGZpbmRf
-bXVsdGlwYXRocyB5ZXMKICAgfQoKSGVyZSBpcyB3aGF0IHRoZSBwYXJ0aWN1bGFyIG1wYXRoIGRl
-dmljZSBJIGFtIGludGVyZXN0ZWQgaW4gbG9va3MgbGlrZToKCi0tLS0tLS0tLS0tLS0tLS0tLQoj
-IG11bHRpcGF0aCAtbCB8IGhlYWQgLTEwCm1wYXRoZSAoMU5VVEFOSVgKTkZTXzM0ODYwMzkxNTA2
-Mjc2MzA4NTQxMTU5MzM4MTUwODBfNDNlOTAzOWZfMTFhZV80MjIwKSBkbS0zCk5VVEFOSVgsVkRJ
-U0sKc2l6ZT0xLjBQIGZlYXR1cmVzPScwJyBod2hhbmRsZXI9JzAnIHdwPXJ3CnwtKy0gcG9saWN5
-PSdyb3VuZC1yb2JpbiAwJyBwcmlvPTAgc3RhdHVzPWFjdGl2ZQp8IGAtIDk6MDowOjIgIHNkYWwg
-NjY6ODAgIGFjdGl2ZSB1bmRlZiBydW5uaW5nCnwtKy0gcG9saWN5PSdyb3VuZC1yb2JpbiAwJyBw
-cmlvPTAgc3RhdHVzPWVuYWJsZWQKfCBgLSAxMDowOjA6MiBzZGFvIDY2OjEyOCBhY3RpdmUgdW5k
-ZWYgcnVubmluZwp8LSstIHBvbGljeT0ncm91bmQtcm9iaW4gMCcgcHJpbz0wIHN0YXR1cz1lbmFi
-bGVkCnwgYC0gMTI6MDowOjIgc2RhdiA2NjoyNDAgYWN0aXZlIHVuZGVmIHJ1bm5pbmcKYC0rLSBw
-b2xpY3k9J3JvdW5kLXJvYmluIDAnIHByaW89MCBzdGF0dXM9ZW5hYmxlZAogIGAtIDExOjA6MDoy
-IHNkYXcgNjc6MCAgIGFjdGl2ZSB1bmRlZiBydW5uaW5nCi0tLS0tLS0tLS0tLS0tLS0tLS0KCkhl
-cmUgYXJlIHRoZSBpU0NTSSBjb25uZWN0aW9uIGRldGFpbHMgKHRhcmdldCBJUCBhZGRyZXNzZXMp
-OgoKLS0tLS0tLS0tLS0tLS0tLS0tLS0KIyBmb3IgZiBpbiAvc3lzL2NsYXNzL2lzY3NpX3Nlc3Np
-b24vc2Vzc2lvbio7ICBkbyBlY2hvIGBscyAkZi9kZXZpY2UgfAp0ciBcXFxcbiAiICIgfCBjdXQg
-LWRcICAtZjRgIGBjYXQKJGYvZGV2aWNlL2Nvbm5lY3Rpb24qL2lzY3NpX2Nvbm5lY3Rpb24vY29u
-bmVjdGlvbiovYWRkcmVzc2AgOyBkb25lCnRhcmdldDEyOjA6MCAxMC40LjgwLjM5CnRhcmdldDY6
-MDowIDEwLjQuODAuNDAKdGFyZ2V0NzowOjAgMTAuNC44MC40MQp0YXJnZXQ4OjA6MCAxMC40Ljgw
-LjQyCnRhcmdldDk6MDowIDEwLjQuODAuNDAKdGFyZ2V0MTA6MDowIDEwLjQuODAuNDIKdGFyZ2V0
-MTE6MDowIDEwLjQuODAuNDEKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KClRoZW4gSSB0b29rIGRv
-d24gdGhlIHRhcmdldCBhdCB0YXJnZXQgOTowOjAgKDEwLjQuODAuNDApIGFuZCBJIHNlZSB0aGUK
-ZXhwZWN0ZWQgYmVoYXZpb3Igd2l0aCBpU0NTSS4gSWUsIHRoZSBkZXZpY2VzIHNob3cgdGhlaXIg
-c3RhdGUgYXMKYmVpbmcgdHJhbnNwb3J0LW9mZmxpbmUuCgpIb3dldmVyLCB0aGVyZSBzaG91bGQg
-YmUgdGhyZWUgYWRkaXRpb25hbCBwYXRocyB0byB0aGUgZGV2aWNlLCBzbyBJCmRpZCBhbiBzZ19p
-bnEgb24gdGhlIG1wYXRoZSBkZXZpY2U6CgotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQojIHNn
-X2lucSAvZGV2L21hcHBlci9tcGF0aGUKQm90aCBTQ1NJIElOUVVJUlkgYW5kIGZldGNoaW5nIEFU
-QSBpbmZvcm1hdGlvbiBmYWlsZWQgb24gL2Rldi9tYXBwZXIvbXBhdGhlCi0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tCgpDYW4ndCByZWFjaCB0aGUgTFVOLgoKU28sIHRoZW4gSSBsb29rZWQgYXQg
-ZWFjaCBvZiB0aGUgZGV2aWNlcyB1bmRlciB0aGF0IG1wYXRoZSBkZXZpY2U6CgotLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tCiMgc2dfaW5xIC9kZXYvc2RhbApzZ19pbnE6IGVycm9yIG9wZW5p
-bmcgZmlsZTogL2Rldi9zZGFsOiBObyBzdWNoIGRldmljZSBvciBhZGRyZXNzCgojIHNnX2lucSAv
-ZGV2L3NkYW8Kc3RhbmRhcmQgSU5RVUlSWToKICBQUXVhbD0wICBEZXZpY2VfdHlwZT0wICBSTUI9
-MCAgTFVfQ09ORz0wICB2ZXJzaW9uPTB4MDUgIFtTUEMtM10KICBbQUVSQz0wXSAgW1RybVRzaz0w
-XSAgTm9ybUFDQT0wICBIaVNVUD0xICBSZXNwX2RhdGFfZm9ybWF0PTIKICBTQ0NTPTAgIEFDQz0w
-ICBUUEdTPTEgIDNQQz0wICBQcm90ZWN0PTAgIFtCUXVlPTBdCiAgRW5jU2Vydj0wICBNdWx0aVA9
-MCAgW01DaG5ncj0wXSAgW0FDS1JFUVE9MF0gIEFkZHIxNj0wCiAgW1JlbEFkcj0wXSAgV0J1czE2
-PTAgIFN5bmM9MCAgW0xpbmtlZD0wXSAgW1RyYW5EaXM9MF0gIENtZFF1ZT0xCiAgW1NQSTogQ2xv
-Y2tpbmc9MHgwICBRQVM9MCAgSVVTPTBdCiAgICBsZW5ndGg9NjQgKDB4NDApICAgUGVyaXBoZXJh
-bCBkZXZpY2UgdHlwZTogZGlzawogVmVuZG9yIGlkZW50aWZpY2F0aW9uOiBOVVRBTklYCiBQcm9k
-dWN0IGlkZW50aWZpY2F0aW9uOiBWRElTSwogUHJvZHVjdCByZXZpc2lvbiBsZXZlbDogMAogVW5p
-dCBzZXJpYWwgbnVtYmVyOgpORlNfMzQ4NjAzOTE1MDYyNzYzMDg1NDExNTkzMzgxNTA4MF80M2U5
-MDM5Zl8xMWFlXzQyMjBfOTE1ZF8yN2NkOGFiMThiM2MKCiMgc2dfaW5xIC9kZXYvc2RhdgpzdGFu
-ZGFyZCBJTlFVSVJZOgogIFBRdWFsPTAgIERldmljZV90eXBlPTAgIFJNQj0wICBMVV9DT05HPTAg
-IHZlcnNpb249MHgwNSAgW1NQQy0zXQogIFtBRVJDPTBdICBbVHJtVHNrPTBdICBOb3JtQUNBPTAg
-IEhpU1VQPTEgIFJlc3BfZGF0YV9mb3JtYXQ9MgogIFNDQ1M9MCAgQUNDPTAgIFRQR1M9MSAgM1BD
-PTAgIFByb3RlY3Q9MCAgW0JRdWU9MF0KICBFbmNTZXJ2PTAgIE11bHRpUD0wICBbTUNobmdyPTBd
-ICBbQUNLUkVRUT0wXSAgQWRkcjE2PTAKICBbUmVsQWRyPTBdICBXQnVzMTY9MCAgU3luYz0wICBb
-TGlua2VkPTBdICBbVHJhbkRpcz0wXSAgQ21kUXVlPTEKICBbU1BJOiBDbG9ja2luZz0weDAgIFFB
-Uz0wICBJVVM9MF0KICAgIGxlbmd0aD02NCAoMHg0MCkgICBQZXJpcGhlcmFsIGRldmljZSB0eXBl
-OiBkaXNrCiBWZW5kb3IgaWRlbnRpZmljYXRpb246IE5VVEFOSVgKIFByb2R1Y3QgaWRlbnRpZmlj
-YXRpb246IFZESVNLCiBQcm9kdWN0IHJldmlzaW9uIGxldmVsOiAwCiBVbml0IHNlcmlhbCBudW1i
-ZXI6Ck5GU18zNDg2MDM5MTUwNjI3NjMwODU0MTE1OTMzODE1MDgwXzQzZTkwMzlmXzExYWVfNDIy
-MF85MTVkXzI3Y2Q4YWIxOGIzYwoKIyBzZ19pbnEgL2Rldi9zZGF3CnN0YW5kYXJkIElOUVVJUlk6
-CiAgUFF1YWw9MCAgRGV2aWNlX3R5cGU9MCAgUk1CPTAgIExVX0NPTkc9MCAgdmVyc2lvbj0weDA1
-ICBbU1BDLTNdCiAgW0FFUkM9MF0gIFtUcm1Uc2s9MF0gIE5vcm1BQ0E9MCAgSGlTVVA9MSAgUmVz
-cF9kYXRhX2Zvcm1hdD0yCiAgU0NDUz0wICBBQ0M9MCAgVFBHUz0xICAzUEM9MCAgUHJvdGVjdD0w
-ICBbQlF1ZT0wXQogIEVuY1NlcnY9MCAgTXVsdGlQPTAgIFtNQ2huZ3I9MF0gIFtBQ0tSRVFRPTBd
-ICBBZGRyMTY9MAogIFtSZWxBZHI9MF0gIFdCdXMxNj0wICBTeW5jPTAgIFtMaW5rZWQ9MF0gIFtU
-cmFuRGlzPTBdICBDbWRRdWU9MQogIFtTUEk6IENsb2NraW5nPTB4MCAgUUFTPTAgIElVUz0wXQog
-ICAgbGVuZ3RoPTY0ICgweDQwKSAgIFBlcmlwaGVyYWwgZGV2aWNlIHR5cGU6IGRpc2sKIFZlbmRv
-ciBpZGVudGlmaWNhdGlvbjogTlVUQU5JWAogUHJvZHVjdCBpZGVudGlmaWNhdGlvbjogVkRJU0sK
-IFByb2R1Y3QgcmV2aXNpb24gbGV2ZWw6IDAKIFVuaXQgc2VyaWFsIG51bWJlcjoKTkZTXzM0ODYw
-MzkxNTA2Mjc2MzA4NTQxMTU5MzM4MTUwODBfNDNlOTAzOWZfMTFhZV80MjIwXzkxNWRfMjdjZDhh
-YjE4YjNjCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQoKQXMgZXhwZWN0ZWQs
-IHRoZSBmaXJzdCBkZXZpY2UgY2Fubm90IGJlIHJlYWNoZWQgYnV0IHRoZSBvdGhlcnMgY2FuLgoK
-U28sIG15IHF1ZXN0aW9uIGlzOgoKV2h5IGRvZXMgZG0tbXVsdGlwYXRoIG5vdCBzd2l0Y2ggdG8g
-dXNpbmcgdGhlIGFsdGVybmF0ZSBwYXRocz8KCkRvIEkgaGF2ZSBhIGNvbmZpZ3VyYXRpb24gcHJv
-YmxlbT8gSGF2ZSBvdGhlcnMgc2VlbiB0aGlzIGlzc3VlPwoKRG8gSSBuZWVkIHRvIHByb3ZpZGUg
-c3BlY2lhbCBjb25maWd1cmF0aW9uIGZvciB0aGVzZSB3ZWlyZCBTQ1NJCmRldmljZXMgd2UgYXJl
-IHVzaW5nPwoKLS0gClJlZ2FyZHMsClJpY2hhcmQgU2hhcnBlCijkvZXku6Xop6PmhoLvvJ/llK/m
-nInmnZzlurfjgIItLeabueaTjSkKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
-ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
-bA==
+.map of dm-flakey with no optional feature parameters specified
+results in -EIO only for writes during down time. Read bios are
+submitted as usual whether it's in up or down time.
+
+Signed-off-by: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>
+---
+ Documentation/device-mapper/dm-flakey.txt |    2 +-
+ drivers/md/dm-flakey.c                    |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Documentation/device-mapper/dm-flakey.txt b/Documentation/device-mapper/dm-flakey.txt
+index 6ff5c23..c171706 100644
+--- a/Documentation/device-mapper/dm-flakey.txt
++++ b/Documentation/device-mapper/dm-flakey.txt
+@@ -27,7 +27,7 @@ Mandatory parameters:
+ 
+ Optional feature parameters:
+   If no feature parameters are present, during the periods of
+-  unreliability, all I/O returns errors.
++  unreliability, all write I/O returns errors.
+ 
+   drop_writes:
+ 	All write I/O is silently ignored.
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index 09e2afc..8da73ac 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -312,7 +312,7 @@ static int flakey_map(struct dm_target *ti, struct bio *bio)
+ 		}
+ 
+ 		/*
+-		 * By default, error all I/O.
++		 * By default, error all write I/O.
+ 		 */
+ 		return -EIO;
+ 	}
+-- 
+1.7.1
