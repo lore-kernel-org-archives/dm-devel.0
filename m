@@ -1,82 +1,92 @@
 From: Seth Forshee <seth.forshee@canonical.com>
 Subject: Re: [PATCH v3 0/7] User namespace mount updates
-Date: Wed, 18 Nov 2015 08:22:38 -0600
-Message-ID: <20151118142238.GB134139@ubuntu-hedt>
+Date: Wed, 18 Nov 2015 08:30:22 -0600
+Message-ID: <20151118143022.GC134139@ubuntu-hedt>
 References: <1447778351-118699-1-git-send-email-seth.forshee@canonical.com>
  <20151117170556.GV22011@ZenIV.linux.org.uk>
  <20151117172551.GA108807@ubuntu-hedt>
  <20151117175506.GW22011@ZenIV.linux.org.uk>
  <564B79B1.3040207@gmail.com>
- <20151117191606.GC108807@ubuntu-hedt>
- <564B941A.2070601@gmail.com>
- <20151117213255.GE108807@ubuntu-hedt>
- <564C6DD4.6090308@gmail.com>
+ <20151117193012.GX22011@ZenIV.linux.org.uk>
+ <564B9074.5030305@gmail.com>
+ <20151117210542.GY22011@ZenIV.linux.org.uk>
+ <20151117220125.GF108807@ubuntu-hedt>
+ <564C733D.7010601@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <564C6DD4.6090308@gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
+In-Reply-To: <564C733D.7010601@gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: Austin S Hemmelgarn <ahferroin7@gmail.com>
 Cc: Al Viro <viro@ZenIV.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, linux-kernel@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>
 List-Id: dm-devel.ids
 
-On Wed, Nov 18, 2015 at 07:23:48AM -0500, Austin S Hemmelgarn wrote:
-> On 2015-11-17 16:32, Seth Forshee wrote:
-> >On Tue, Nov 17, 2015 at 03:54:50PM -0500, Austin S Hemmelgarn wrote:
-> >>On 2015-11-17 14:16, Seth Forshee wrote:
-> >>>On Tue, Nov 17, 2015 at 02:02:09PM -0500, Austin S Hemmelgarn wrote:
-> >>>>On 2015-11-17 12:55, Al Viro wrote:
-> >>>>>On Tue, Nov 17, 2015 at 11:25:51AM -0600, Seth Forshee wrote:
-> >>>>>
-> >>>>>>Shortly after that I plan to follow with support for ext4. I've been
-> >>>>>>fuzzing ext4 for a while now and it has held up well, and I'm currently
-> >>>>>>working on hand-crafted attacks. Ted has commented privately (to others,
-> >>>>>>not to me personally) that he will fix bugs for such attacks, though I
-> >>>>>>haven't seen any public comments to that effect.
-> >>>>>
-> >>>>>_Static_ attacks, or change-image-under-mounted-fs attacks?
-> >>>>To properly protect against attacks on mounted filesystems, we'd
-> >>>>need some new concept of a userspace immutable file (that is, one
-> >>>>where nobody can write to it except the kernel, and only the kernel
-> >>>>can change it between regular access and this new state), and then
-> >>>>have the kernel set an image (or block device) to this state when a
-> >>>>filesystem is mounted from it (this introduces all kinds of other
-> >>>>issues too however, for example stuff that allows an online fsck on
-> >>>>the device will stop working, as will many un-deletion tools).
-> >>>
-> >>>Yeah, Serge and I were just tossing that idea around on irc. If we can
-> >>>make that work then it's probably the best solution.
-> >>>
-> >>> From a naive perspective it seems like all we really have to do is make
-> >>>the block device inode immutable to userspace when it is mounted. And
-> >>>the parent block device if it's a partition, which might be a bit
-> >>>troublesome. We'd have to ensure that writes couldn't happen via any fds
-> >>>already open when the device was mounted too.
-> >>>
-> >>>We'd need some cooperation from the loop driver too I suppose, to make
-> >>>sure the file backing the loop device is also immutable.
-> >>>
-> >> From a completeness perspective, you'd also need to hook into DM,
-> >>MD, and bcache to handle their backing devices.  There's not much we
-> >>could do about iSCSI/ATAoE/NBD devices, and I think being able to
+On Wed, Nov 18, 2015 at 07:46:53AM -0500, Austin S Hemmelgarn wrote:
+> On 2015-11-17 17:01, Seth Forshee wrote:
+> >On Tue, Nov 17, 2015 at 09:05:42PM +0000, Al Viro wrote:
+> >>On Tue, Nov 17, 2015 at 03:39:16PM -0500, Austin S Hemmelgarn wrote:
+> >>
+> >>>>This is absolutely insane, no matter how much LSM snake oil you slatter on
+> >>>>the whole thing.  All of a sudden you are exposing a huge attack surface
+> >>>>in the place where it would hurt most and as the consolation we are offered
+> >>>>basically "Ted is willing to fix holes when they are found".
 > >
-> >But really no one would be able to mount any of those without
-> >intervention from a privileged user anyway. The same is true today of
-> >loop devices, but I have some patches to change that.
-> Um, no, depending on how your system is configured, it's fully
-> possible to mount those as a regular user with no administrative
-> interaction required.  All that needs done is some udev rules (or
-> something equivalent) to add ACL's to the device nodes allowing
-> regular users to access them (and there are systems I've seen that
-> are naive enough to do this).  And I can almost assure you that
-> there will be someone out there who decides to directly expose such
-> block devices to a user namespace.
+> >None of the LSM changes are intended to protect against attacks from
+> >these sorts of attacks at all, so that's irrelevant.
+> >
+> >As I said before, I'm also working to find holes up front. That plus a
+> >commitment from the maintainer seems like a good start at least. What
+> >bar would you set for a given filesystem to be considered "safe enough"?
+> >
+> >>>For the context of static image attacks, anything that's foun
+> >>>_needs_ to be fixed regardless, and unless you can find some way to
+> >>>actually prevent attacks on mounted filesystems that doesn't involve
+> >>>a complete re-write of the filesystem drivers, then there's not much
+> >>>we can do about it.  Yes, unprivileged mounts expose an attack
+> >>>surface, but so does userspace access to the network stack, and so
+> >>>do a lot of other features that are considered essential in a modern
+> >>>general purpose operating system.
+> >>
+> >>"X is exposes an attack surface.  Y exposes a diferent attack surface.
+> >>Y is considered important.  Therefore X is important enough to implement it"
+> >>
+> >>Right...
+> >
+> >That isn't the argument he made. I would summarize the argument as,
+> >"Saying that X exposes an attack surface isn't by itself enough to
+> >reject X, otherwise we wouldn't expose anything (such as example Y)."
+> It's good to see someone understood my meaning...
+> >
+> >You believe that the attack surface is too large, and that's
+> >understandable. Is it your opinion that this is a fundamental problem
+> >for an in-kernel filesystem driver, i.e. that we can never be confident
+> >enough in an in-kernel filesystem parser to allow untrusted data? If
+> >not, what would it take to establish a level of confidence that you
+> >would be comfortable with?
+> While I can't speak for Al's opinion on this, I would like to point
+> out my earlier comment:
+> > It's unfeasible from a practical standpoint to expect filesystems
+> to > assume that stuff they write might change under them due to
+> malicious > intent of a third party.
 
-But it still requires the admin set it up that way, no? And aren't
-privileges required to set up those devices in the first place?
+So maybe the first requirement is that the user cannot modify the
+backing store directly while the device is mounted.
 
-I'm not saying that it wouldn't be a good idea to lock down the backing
-stores for those types of devices too, just that it isn't something that
-a regular user could exploit without an admin doing something to
-facilitate it.
+> We can't protect against everything, not without making the system
+> completely unusable for general purpose computing.  There is always
+> some degree of trust involved in usage of a computer, the OS has to
+> trust that the hardware works correctly, the administrator has to
+> trust the OS to behave correctly, and the users have to trust the
+> administrator.  The administrator also needs to have at least some
+> trust in the users, otherwise he shouldn't be allowing them to use
+> the system.
+> 
+> Perhaps we should have an option that can only be enabled on
+> creation of the userns that would allow it to use regular kernel
+> mounts, and without that option we default to only allowing FUSE and
+> a couple of virtual filesystems (like /proc and devtmpfs).
+
+I've considered the idea of something more global like a sysctl, or a
+per-filesystem knob in sysfs. I guess a per-container knob is another
+option, I'm not sure what interface we use to expose it though.
