@@ -1,102 +1,58 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH 2/4] dm verity: separate function for parsing opt args
-Date: Tue, 17 Nov 2015 14:33:24 -0800
-Message-ID: <CAGXu5jLkyOH7dKLDGX-7fxo-=fbXey4MPRt07SHhtwamPwZwCQ@mail.gmail.com>
-References: <1446688954-29589-1-git-send-email-samitolvanen@google.com>
-	<1446688954-29589-3-git-send-email-samitolvanen@google.com>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [PATCH v3 4/7] fs: Treat foreign mounts as nosuid
+Date: Wed, 18 Nov 2015 11:00:53 +1100 (AEDT)
+Message-ID: <alpine.LRH.2.20.1511181100380.1460@namei.org>
+References: <1447778351-118699-1-git-send-email-seth.forshee@canonical.com> <1447778351-118699-5-git-send-email-seth.forshee@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1446688954-29589-3-git-send-email-samitolvanen@google.com>
+In-Reply-To: <1447778351-118699-5-git-send-email-seth.forshee@canonical.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Sami Tolvanen <samitolvanen@google.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Mandeep Baines <msb@chromium.org>, Will Drewry <wad@chromium.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, LKML <linux-kernel@vger.kernel.org>, Mark Salyzyn <salyzyn@google.com>
+To: Seth Forshee <seth.forshee@canonical.com>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.nsa.gov>, Eric Paris <eparis@parisplace.org>, Andy Lutomirski <luto@amacapital.net>, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
 List-Id: dm-devel.ids
 
-On Wed, Nov 4, 2015 at 6:02 PM, Sami Tolvanen <samitolvanen@google.com> wrote:
-> Move optional argument parsing into a separate function to make it
-> easier to add more of them without making verity_ctr even longer.
->
-> Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+On Tue, 17 Nov 2015, Seth Forshee wrote:
 
-Reviewed-by: Kees Cook <keescook@chromium.org>
-
--Kees
-
-> ---
->  drivers/md/dm-verity.c | 31 ++++++++++++++++++++++---------
->  1 file changed, 22 insertions(+), 9 deletions(-)
->
-> diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
-> index 487cb66..da76f77 100644
-> --- a/drivers/md/dm-verity.c
-> +++ b/drivers/md/dm-verity.c
-> @@ -34,6 +34,8 @@
->  #define DM_VERITY_OPT_LOGGING          "ignore_corruption"
->  #define DM_VERITY_OPT_RESTART          "restart_on_corruption"
->
-> +#define DM_VERITY_OPTS_MAX             1
-> +
->  static unsigned dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE;
->
->  module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, S_IRUGO | S_IWUSR);
-> @@ -725,6 +727,21 @@ static void verity_dtr(struct dm_target *ti)
->         kfree(v);
->  }
->
-> +static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
-> +                                const char *opt_string)
-> +{
-> +       if (!strcasecmp(opt_string, DM_VERITY_OPT_LOGGING)) {
-> +               v->mode = DM_VERITY_MODE_LOGGING;
-> +               return 0;
-> +       } else if (!strcasecmp(opt_string, DM_VERITY_OPT_RESTART)) {
-> +               v->mode = DM_VERITY_MODE_RESTART;
-> +               return 0;
-> +       }
-> +
-> +       v->ti->error = "Invalid feature arguments";
-> +       return -EINVAL;
-> +}
-> +
->  /*
->   * Target parameters:
->   *     <version>       The current format is version 1.
-> @@ -752,7 +769,7 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
->         char dummy;
->
->         static struct dm_arg _args[] = {
-> -               {0, 1, "Invalid number of feature args"},
-> +               {0, DM_VERITY_OPTS_MAX, "Invalid number of feature args"},
->         };
->
->         v = kzalloc(sizeof(struct dm_verity), GFP_KERNEL);
-> @@ -912,15 +929,11 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
->                                 goto bad;
->                         }
->
-> -                       if (!strcasecmp(opt_string, DM_VERITY_OPT_LOGGING))
-> -                               v->mode = DM_VERITY_MODE_LOGGING;
-> -                       else if (!strcasecmp(opt_string, DM_VERITY_OPT_RESTART))
-> -                               v->mode = DM_VERITY_MODE_RESTART;
-> -                       else {
-> -                               ti->error = "Invalid feature arguments";
-> -                               r = -EINVAL;
-> +                       r = verity_parse_opt_args(&as, v, opt_string);
-> +                       if (r < 0)
->                                 goto bad;
-> -                       }
-> +
-> +                       opt_params -= r;
->                 }
->         }
->
-> --
-> 2.6.0.rc2.230.g3dd15c0
->
+> From: Andy Lutomirski <luto@amacapital.net>
+> 
+> If a process gets access to a mount from a different user
+> namespace, that process should not be able to take advantage of
+> setuid files or selinux entrypoints from that filesystem.  Prevent
+> this by treating mounts from other mount namespaces and those not
+> owned by current_user_ns() or an ancestor as nosuid.
+> 
+> This will make it safer to allow more complex filesystems to be
+> mounted in non-root user namespaces.
+> 
+> This does not remove the need for MNT_LOCK_NOSUID.  The setuid,
+> setgid, and file capability bits can no longer be abused if code in
+> a user namespace were to clear nosuid on an untrusted filesystem,
+> but this patch, by itself, is insufficient to protect the system
+> from abuse of files that, when execed, would increase MAC privilege.
+> 
+> As a more concrete explanation, any task that can manipulate a
+> vfsmount associated with a given user namespace already has
+> capabilities in that namespace and all of its descendents.  If they
+> can cause a malicious setuid, setgid, or file-caps executable to
+> appear in that mount, then that executable will only allow them to
+> elevate privileges in exactly the set of namespaces in which they
+> are already privileges.
+> 
+> On the other hand, if they can cause a malicious executable to
+> appear with a dangerous MAC label, running it could change the
+> caller's security context in a way that should not have been
+> possible, even inside the namespace in which the task is confined.
+> 
+> As a hardening measure, this would have made CVE-2014-5207 much
+> more difficult to exploit.
+> 
+> Signed-off-by: Andy Lutomirski <luto@amacapital.net>
+> Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
 
 
+Acked-by: James Morris <james.l.morris@oracle.com>
 
 -- 
-Kees Cook
-Chrome OS Security
+James Morris
+<jmorris@namei.org>
