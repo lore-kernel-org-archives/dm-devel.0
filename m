@@ -1,12 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-crypt: fix a possible race condition on exit
-Date: Wed, 18 Nov 2015 16:40:29 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1511181637540.24040@file01.intranet.prod.int.rdu2.redhat.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: [PATCH 1/2] dm mpath: fix infinite recursion in
+ ioctl when no paths and queue_if_no_path is not set
+Date: Wed, 18 Nov 2015 14:52:52 -0800
+Message-ID: <564D0144.4000202@sandisk.com>
+References: <20151117093654.GA13022@xzibit.linux.bs1.fc.nec.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20151117093654.GA13022@xzibit.linux.bs1.fc.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,101 +19,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-I found a possible race condition on exit in dm-crypt. The kernel thread
-executes __set_current_state(TASK_INTERRUPTIBLE), __add_wait_queue,
-spin_unlock_irq and then tests kthread_should_stop(). It is possible that
-the processor reorders memory accesses so that kthread_should_stop() is
-executed before __set_current_state(TASK_INTERRUPTIBLE). If such
-reordering happens, there is a possible race on thread termination:
+On 11/17/2015 01:36 AM, Junichi Nomura wrote:
+> In multipath_prepare_ioctl(),
+>    - pgpath is a path selected from available paths
+>    - m->queue_io is true if we cannot send a request immediately to
+>      paths, either because:
+>        * there is no available path
+>        * the path group needs activation (pg_init)
+>            - pg_init is not started
+>            - pg_init is still running
+>    - m->queue_if_no_path is true if the device is configured to queue
+>      I/O if there is no available path
+>
+> If !pgpath && !m->queue_if_no_path, the handler should return -EIO.
+> However in the course of refactoring the condition check has broken
+> and returns success in that case.  Since bdev points to the dm device
+> itself, dm_blk_ioctl() calls __blk_dev_driver_ioctl() for itself and
+> recurses until crash.
+>
+> You could reproduce the problem like this:
+>
+>    # dmsetup create mp --table '0 1024 multipath 0 0 0 0'
+>    # sg_inq /dev/mapper/mp
+>    <crash>
+>    [  172.648615] BUG: unable to handle kernel paging request at fffffffc81b10268
+>    [  172.662843] PGD 19dd067 PUD 0
+>    [  172.666269] Thread overran stack, or stack corrupted
+>    [  172.671808] Oops: 0000 [#1] SMP
+>    ...
+>
+> This patch fixes the condition check with some clarifications.
+>
+> Fixes: e56f81e0b01e ("dm: refactor ioctl handling")
+> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: Mike Snitzer <snitzer@redhat.com>
 
-CPU 0:
-calls kthread_should_stop()
-	it tests KTHREAD_SHOULD_STOP bit, returns false
-CPU 1:
-calls kthread_stop(cc->write_thread)
-	sets the KTHREAD_SHOULD_STOP bit
-	calls wake_up_process on the kernel thread, that sets the thread
-		state to TASK_RUNNING
-CPU 0:
-sets __set_current_state(TASK_INTERRUPTIBLE)
-spin_unlock_irq(&cc->write_thread_wait.lock)
-schedule() - and the process is stuck and never terminates, because the
-	state is TASK_INTERRUPTIBLE and wake_up_process on CPU 1 already
-	terminated
+Since I was able to reproduce this crash and since I haven't seen that 
+crash anymore after I had applied this patch,
 
-Fix this race condition by using a new flag DM_CRYPT_EXIT_THREAD to signal
-that the kernel thread should exit. The flag is set and tested while
-holding cc->write_thread_wait.lock, so there is no possibility of racy
-access to the flag.
-
-We also remove set_task_state(current, TASK_RUNNING) following the
-schedule(), it is not needed. When the process was woken up, its state was
-already set to TASK_RUNNING. Other kernel code also doesn't set the state
-to TASK_RUNNING following schedule() (for example, do_wait_for_common in
-completion.c doesn't do it).
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org	# v4.0+
-Fixes: dc2676210c42 ("dm crypt: offload writes to thread")
-
----
- drivers/md/dm-crypt.c |   20 +++++++++++---------
- 1 file changed, 11 insertions(+), 9 deletions(-)
-
-Index: linux-4.4-rc1/drivers/md/dm-crypt.c
-===================================================================
---- linux-4.4-rc1.orig/drivers/md/dm-crypt.c	2015-11-18 21:58:50.000000000 +0100
-+++ linux-4.4-rc1/drivers/md/dm-crypt.c	2015-11-18 22:28:16.000000000 +0100
-@@ -112,7 +112,8 @@ struct iv_tcw_private {
-  * and encrypts / decrypts at the same time.
-  */
- enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,
--	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD };
-+	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD,
-+	     DM_CRYPT_EXIT_THREAD};
- 
- /*
-  * The fields in here must be read only after initialization.
-@@ -1203,20 +1204,16 @@ continue_locked:
- 		if (!RB_EMPTY_ROOT(&cc->write_tree))
- 			goto pop_from_list;
- 
-+		if (unlikely(test_bit(DM_CRYPT_EXIT_THREAD, &cc->flags)))
-+			break;
-+
- 		__set_current_state(TASK_INTERRUPTIBLE);
- 		__add_wait_queue(&cc->write_thread_wait, &wait);
- 
- 		spin_unlock_irq(&cc->write_thread_wait.lock);
- 
--		if (unlikely(kthread_should_stop())) {
--			set_task_state(current, TASK_RUNNING);
--			remove_wait_queue(&cc->write_thread_wait, &wait);
--			break;
--		}
--
- 		schedule();
- 
--		set_task_state(current, TASK_RUNNING);
- 		spin_lock_irq(&cc->write_thread_wait.lock);
- 		__remove_wait_queue(&cc->write_thread_wait, &wait);
- 		goto continue_locked;
-@@ -1531,8 +1528,13 @@ static void crypt_dtr(struct dm_target *
- 	if (!cc)
- 		return;
- 
--	if (cc->write_thread)
-+	if (cc->write_thread) {
-+		spin_lock_irq(&cc->write_thread_wait.lock);
-+		set_bit(DM_CRYPT_EXIT_THREAD, &cc->flags);
-+		wake_up_locked(&cc->write_thread_wait);
-+		spin_unlock_irq(&cc->write_thread_wait.lock);
- 		kthread_stop(cc->write_thread);
-+	}
- 
- 	if (cc->io_queue)
- 		destroy_workqueue(cc->io_queue);
+Tested-by: Bart Van Assche <bart.vanassche@sandisk.com>
