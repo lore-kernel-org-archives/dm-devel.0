@@ -1,64 +1,37 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH 1/2] dm mpath: fix infinite recursion in
- ioctl when no paths and queue_if_no_path is not set
-Date: Wed, 18 Nov 2015 14:52:52 -0800
-Message-ID: <564D0144.4000202@sandisk.com>
-References: <20151117093654.GA13022@xzibit.linux.bs1.fc.nec.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [PATCH v3 0/7] User namespace mount updates
+Date: Thu, 19 Nov 2015 18:47:00 +1100 (AEDT)
+Message-ID: <alpine.LRH.2.20.1511191845510.10804@namei.org>
+References: <20151117172551.GA108807@ubuntu-hedt> <20151117175506.GW22011@ZenIV.linux.org.uk> <564B79B1.3040207@gmail.com> <20151117191606.GC108807@ubuntu-hedt> <564B941A.2070601@gmail.com> <20151117213255.GE108807@ubuntu-hedt> <564C6DD4.6090308@gmail.com>
+ <20151118142238.GB134139@ubuntu-hedt> <20151118145818.GC22011@ZenIV.linux.org.uk> <20151118150512.GE134139@ubuntu-hedt> <20151118151335.GD22011@ZenIV.linux.org.uk> <CAFLxGvwwhXqVM71m1kEDTZk_YTKGtbJ3gWoXw3wRgcwDiC38Bg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20151117093654.GA13022@xzibit.linux.bs1.fc.nec.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <CAFLxGvwwhXqVM71m1kEDTZk_YTKGtbJ3gWoXw3wRgcwDiC38Bg@mail.gmail.com>
+Sender: linux-bcache-owner@vger.kernel.org
+To: Richard Weinberger <richard.weinberger@gmail.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Seth Forshee <seth.forshee@canonical.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, linux-bcache@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-mtd@lists.infradead.org" <linux-mtd@lists.infradead.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, LSM <linux-security-module@vger.kernel.org>, selinux@tycho.nsa.gov, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, LKML <linux-kernel@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>
 List-Id: dm-devel.ids
 
-On 11/17/2015 01:36 AM, Junichi Nomura wrote:
-> In multipath_prepare_ioctl(),
->    - pgpath is a path selected from available paths
->    - m->queue_io is true if we cannot send a request immediately to
->      paths, either because:
->        * there is no available path
->        * the path group needs activation (pg_init)
->            - pg_init is not started
->            - pg_init is still running
->    - m->queue_if_no_path is true if the device is configured to queue
->      I/O if there is no available path
->
-> If !pgpath && !m->queue_if_no_path, the handler should return -EIO.
-> However in the course of refactoring the condition check has broken
-> and returns success in that case.  Since bdev points to the dm device
-> itself, dm_blk_ioctl() calls __blk_dev_driver_ioctl() for itself and
-> recurses until crash.
->
-> You could reproduce the problem like this:
->
->    # dmsetup create mp --table '0 1024 multipath 0 0 0 0'
->    # sg_inq /dev/mapper/mp
->    <crash>
->    [  172.648615] BUG: unable to handle kernel paging request at fffffffc81b10268
->    [  172.662843] PGD 19dd067 PUD 0
->    [  172.666269] Thread overran stack, or stack corrupted
->    [  172.671808] Oops: 0000 [#1] SMP
->    ...
->
-> This patch fixes the condition check with some clarifications.
->
-> Fixes: e56f81e0b01e ("dm: refactor ioctl handling")
-> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> Cc: Christoph Hellwig <hch@lst.de>
-> Cc: Mike Snitzer <snitzer@redhat.com>
+On Wed, 18 Nov 2015, Richard Weinberger wrote:
 
-Since I was able to reproduce this crash and since I haven't seen that 
-crash anymore after I had applied this patch,
+> On Wed, Nov 18, 2015 at 4:13 PM, Al Viro <viro@zeniv.linux.org.uk> wrote:
+> > On Wed, Nov 18, 2015 at 09:05:12AM -0600, Seth Forshee wrote:
+> >
+> >> Yes, the host admin. I'm not talking about trusting the admin inside the
+> >> container at all.
+> >
+> > Then why not have the same host admin just plain mount it when setting the
+> > container up and be done with that?  From the host namespace, before spawning
+> > the docker instance or whatever framework you are using.  IDGI...
+> 
+> Because hosting companies sell containers as "full virtual machines"
+> and customers expect to be able mount stuff like disk images they upload.
 
-Tested-by: Bart Van Assche <bart.vanassche@sandisk.com>
+I don't think this is a valid reason for merging functionality into the 
+kernel.
+
+
+-- 
+James Morris
+<jmorris@namei.org>
