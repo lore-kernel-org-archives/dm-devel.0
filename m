@@ -1,10 +1,10 @@
-From: Shehbaz Jaffer <shehbazjaffer007@gmail.com>
-Subject: Adding new resiliency type to LVM
-Date: Thu, 19 Nov 2015 16:25:44 -0500
-Message-ID: <CAPLK-i8-Agg+LOjw5w5G9epu1yGyUaGeY1Jv1rGV9Zp3rpXjDw@mail.gmail.com>
+From: vaLentin chernoZemski <valentin@siteground.com>
+Subject: lvremove kernel BUG at drivers/md/dm-bufio.c:1494!
+Date: Thu, 19 Nov 2015 17:14:08 +0200
+Message-ID: <564DE740.3040104@siteground.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -17,59 +17,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: SiteGround Operations <operations@siteground.com>
 List-Id: dm-devel.ids
 
-Hi,
+Hi folks,
 
-I am trying to add a new resiliency type to LVM, which I call dyre -
-dynamic reliability. As a first step, I plan to create a simple
-striped volume, similar to what we can get using the below command:
+It seems that there is a bug in the linux kernel in any release from
 
-lvcreate -i 2 -I 8 -L 30M -n root vol_vg
+  - 2.6.32-573.3.1.el6.x86_64 - crash
+  - 3.12.49 + msg00123 patch - crash / D state
+  - 4.1.6 - lv* operations in D state after bug is hit
+  - 4.1.12 + f11a82caf / b0dc3c8bc15 - lv* operations in D state after 
+bug is hit
+  - 4.2.5 - lv* operations in D state after bug is hit
+  - 4.3.0-rc7-vanilla1
 
-this will create a volume "root' in volume group "vol_vg" of size 30MB
-with 2 stripes and stripesize of 8KB.
+The bug is described in details and stack traces in RedHat's bugzilla 
+under id 1219634:
 
-I have added relevant code in lvm so that the command gives the same
-results as above:
+https://bugzilla.redhat.com/show_bug.cgi?id=1219634
 
-lvcreate --type dyre --stripes  --stripesize 8 -L 30M -n root vol_vg
+For some reason it is marked as private but I guess you have access to 
+this one.
 
-However, I notice that in first case, when lvm creates the volume
-named root, it creates a soft link to /dev/dm-0 :
+Issue is present in current latest RHEL version and all vanilla kernels 
+I tested with multiple patches specified in the bug.
 
-$ ls -alrt /dev/vol_vg/root
-lrwxrwxrwx 1 root root 23 Nov 19 15:35 /dev/vol_vg/root ->
-/dev/mapper/vol_vg-root
-$ ls -alrt /dev/mapper/vol_vg-root
-lrwxrwxrwx 1 root root 9 Nov 19 15:36 /dev/mapper/vol_vg-root -> /dev/dm-0
+Even I can not provide you with exact reproducer it happens often enough 
+on a fleet of machines we have that perform certain tasks and we can 
+easily test new patches or provide you with specific information upon 
+request from all crash dumps we reliably collected and still collecting 
+from all kernel versions tested.
 
-If I run my command (the second command with my new defined resiliency
-type) using gdb, place a breakpoint before the function -
-dev_cache_get() and in a new terminal check for file /dev/vol_vg/root
-file, it exists but only as an archive file (i.e., there is no link
-between /dev/mapper/vol_vg-root and /dev/dm-0).
-Since there is no actual device linked to the file, functions like
-stat() that are used in dev_cache_get() code return error - no such
-file or directory which results in unsuccessful volume creation. I
-also noticed that the temporary file is deleted by lvm.
+I got advised by Mike Snitzer to dm-devel so here it is.
 
-I think the part of code that does this linking is in device mapper
-code, but I am not sure where this is being done.
+Let us know if there is anything we can do to assist you further.
 
-Furthermore, when I create a link artifically by using the command
+Regards,
 
-ln -s /dev/dm-0 /dev/mapper/vol_vg-root
-
-and resume from breakpoint, my volume gets created.
-
-I need some help regarding which code in lvm does this linking of
-archive (temporary?) file to /dev/dm-0.
-
-Thanks,
-
--- 
-Shehbaz Jaffer
-First Year Graduate Student
-Sir Edward S Rogers Sr Department of Electrical and Computer Engineering
-University of Toronto
+vaLenitn
