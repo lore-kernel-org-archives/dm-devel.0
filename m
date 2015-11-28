@@ -1,83 +1,122 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm: don't save and restore bi_private
-Date: Thu, 26 Nov 2015 08:59:42 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1511260855470.22070@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1511251602270.17072@file01.intranet.prod.int.rdu2.redhat.com>
-	<20151125213251.GA20052@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Minfei Huang <mnfhuang@gmail.com>
+Subject: Re: [dm-devel] [PATCH] dm-ioctl: fix 4-characters indentations
+Date: Sat, 28 Nov 2015 16:38:01 +0800
+Message-ID: <20151128083801.GA16777@dhcp-129-10.nay.redhat.com>
+References: <1f27d82f27c62841bcb9858f90ad27fd0dce78e3.1448455317.git.geliangtang@163.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20151125213251.GA20052@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1f27d82f27c62841bcb9858f90ad27fd0dce78e3.1448455317.git.geliangtang@163.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.com>, linux-raid@vger.kernel.org, Geliang Tang <geliangtang@163.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
+Hi.
 
+IMHO, this sort of defect shouldn't be fixed like this. It should be
+fixed with other bugs, if necessary.
 
-On Wed, 25 Nov 2015, Mike Snitzer wrote:
+Once this patch is applied, it will break up the 'git blame'.
 
-> On Wed, Nov 25 2015 at  4:03pm -0500,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
+Thanks
+Minfei
+
+On 11/25/15 at 08:45pm, Geliang Tang wrote:
+> Change 4-characters indentations to 8-characters.
 > 
-> > Device mapper used the field bi_private to point to dm_target_io. However,
-> > since kernel 3.15, the bi_private field is unused, and so the targets do
-> > not need to save and restore this field.
-> > 
-> > This patch removes code that saves and restores bi_private from dm-cache,
-> > dm-snapshot and dm-verity.
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > 
-> > ---
-> >  drivers/md/dm-cache-target.c |    3 ---
-> >  drivers/md/dm-snap.c         |    6 +-----
-> >  drivers/md/dm-verity.c       |    3 ---
-> >  3 files changed, 1 insertion(+), 11 deletions(-)
-> > 
-> > Index: linux-4.4-rc2/drivers/md/dm-cache-target.c
-> > ===================================================================
-> > --- linux-4.4-rc2.orig/drivers/md/dm-cache-target.c	2015-11-24 15:33:56.000000000 +0100
-> > +++ linux-4.4-rc2/drivers/md/dm-cache-target.c	2015-11-24 15:34:35.000000000 +0100
-> > @@ -118,14 +118,12 @@ static void iot_io_end(struct io_tracker
-> >   */
-> >  struct dm_hook_info {
-> >  	bio_end_io_t *bi_end_io;
-> > -	void *bi_private;
-> >  };
-> >  
-> >  static void dm_hook_bio(struct dm_hook_info *h, struct bio *bio,
-> >  			bio_end_io_t *bi_end_io, void *bi_private)
-> >  {
-> >  	h->bi_end_io = bio->bi_end_io;
-> > -	h->bi_private = bio->bi_private;
-> >  
-> >  	bio->bi_end_io = bi_end_io;
-> >  	bio->bi_private = bi_private;
+> Signed-off-by: Geliang Tang <geliangtang@163.com>
+> ---
+>  drivers/md/dm-ioctl.c | 58 +++++++++++++++++++++++++--------------------------
+>  1 file changed, 29 insertions(+), 29 deletions(-)
 > 
-> As you can see dm_hook_bio() goes on to modify bi_private.
-> dm-cache uses it to get the migration object associated with a bio for
-> the overwrite_endio() case.
+> diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+> index 80a4395..39aae6b 100644
+> --- a/drivers/md/dm-ioctl.c
+> +++ b/drivers/md/dm-ioctl.c
+> @@ -45,10 +45,10 @@ struct dm_table {
+>  };
+>  
+>  struct vers_iter {
+> -    size_t param_size;
+> -    struct dm_target_versions *vers, *old_vers;
+> -    char *end;
+> -    uint32_t flags;
+> +	size_t param_size;
+> +	struct dm_target_versions *vers, *old_vers;
+> +	char *end;
+> +	uint32_t flags;
+>  };
+>  
+>  
+> @@ -557,36 +557,36 @@ static int list_devices(struct dm_ioctl *param, size_t param_size)
+>  
+>  static void list_version_get_needed(struct target_type *tt, void *needed_param)
+>  {
+> -    size_t *needed = needed_param;
+> +	size_t *needed = needed_param;
+>  
+> -    *needed += sizeof(struct dm_target_versions);
+> -    *needed += strlen(tt->name);
+> -    *needed += ALIGN_MASK;
+> +	*needed += sizeof(struct dm_target_versions);
+> +	*needed += strlen(tt->name);
+> +	*needed += ALIGN_MASK;
+>  }
+>  
+>  static void list_version_get_info(struct target_type *tt, void *param)
+>  {
+> -    struct vers_iter *info = param;
+> -
+> -    /* Check space - it might have changed since the first iteration */
+> -    if ((char *)info->vers + sizeof(tt->version) + strlen(tt->name) + 1 >
+> -	info->end) {
+> -
+> -	info->flags = DM_BUFFER_FULL_FLAG;
+> -	return;
+> -    }
+> -
+> -    if (info->old_vers)
+> -	info->old_vers->next = (uint32_t) ((void *)info->vers -
+> -					   (void *)info->old_vers);
+> -    info->vers->version[0] = tt->version[0];
+> -    info->vers->version[1] = tt->version[1];
+> -    info->vers->version[2] = tt->version[2];
+> -    info->vers->next = 0;
+> -    strcpy(info->vers->name, tt->name);
+> -
+> -    info->old_vers = info->vers;
+> -    info->vers = align_ptr(((void *) ++info->vers) + strlen(tt->name) + 1);
+> +	struct vers_iter *info = param;
+> +
+> +	/* Check space - it might have changed since the first iteration */
+> +	if ((char *)info->vers + sizeof(tt->version) + strlen(tt->name) + 1 >
+> +		info->end) {
+> +
+> +		info->flags = DM_BUFFER_FULL_FLAG;
+> +		return;
+> +	}
+> +
+> +	if (info->old_vers)
+> +		info->old_vers->next = (uint32_t) ((void *)info->vers -
+> +						   (void *)info->old_vers);
+> +	info->vers->version[0] = tt->version[0];
+> +	info->vers->version[1] = tt->version[1];
+> +	info->vers->version[2] = tt->version[2];
+> +	info->vers->next = 0;
+> +	strcpy(info->vers->name, tt->name);
+> +
+> +	info->old_vers = info->vers;
+> +	info->vers = align_ptr(((void *) ++info->vers) + strlen(tt->name) + 1);
+>  }
+>  
+>  static int list_versions(struct dm_ioctl *param, size_t param_size)
+> -- 
+> 2.5.0
 > 
-> So NAK on the dm-cache change.
-
-dm-cache can modify bi_private (I think I didn't break anything with 
-that). I only removed the code that saves and restores bi_private. The dm 
-layer doesn't use bi_private, so we don't have to save and restore it.
-
-> How closely have you reviewed your change for snapshot and verity?
-
-I tested dm-snapshot (with LVM testsuite) and dm-verity (by manually 
-creating and verifying a block device).
-
-Mikulas
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
