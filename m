@@ -1,84 +1,43 @@
-From: Julia Lawall <Julia.Lawall@lip6.fr>
-Subject: [PATCH] dm: constify crypt_iv_operations structures
-Date: Sun, 29 Nov 2015 14:09:19 +0100
-Message-ID: <1448802559-2671-1-git-send-email-Julia.Lawall@lip6.fr>
-Return-path: <linux-raid-owner@vger.kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>
-Cc: kernel-janitors@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Alexey Ishchuk <aishchuk@linux.vnet.ibm.com>
+Subject: [RFC] Modern device mapper module makes problems for
+	dump analysis
+Date: Tue, 1 Dec 2015 16:34:53 +0300
+Message-ID: <565DA1FD.3010804@linux.vnet.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Steffen Maier <maier@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
-The crypt_iv_operations are never modified, so declare them
-as const.
+Hi,
 
-Done with the help of Coccinelle.
+in the modern device mapper Linux kernel module the data structure 
+struct dm_table is declared more than once. One of those declarations is 
+the real structure definition and the other are dummy definitions. This 
+coding manner makes serious problems for the Linux kernel dump analysis 
+with crash utility using custom EPPIC language scripts and even the 
+dminfo built-in crash extension does not work with the dumps. The 
+problem occurs because the crash utility tries to expose to the EPPIC 
+language scripts a dummy structure definition that contains no required 
+fields.
 
-Signed-off-by: Julia Lawall <Julia.Lawall@lip6.fr>
+I would like to get to know, why do we need more than one struct 
+dm_table declarations in the kernel module? Is it possible to improve 
+the device mapper kernel module code to have the only one struct 
+dm_table declaration to allow kernel dumps to be analyzed using custom 
+scripts?
 
----
- drivers/md/dm-crypt.c |   16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 3147c8d..c7058fc 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -141,7 +141,7 @@ struct crypt_config {
- 	char *cipher;
- 	char *cipher_string;
- 
--	struct crypt_iv_operations *iv_gen_ops;
-+	const struct crypt_iv_operations *iv_gen_ops;
- 	union {
- 		struct iv_essiv_private essiv;
- 		struct iv_benbi_private benbi;
-@@ -756,15 +756,15 @@ static int crypt_iv_tcw_post(struct crypt_config *cc, u8 *iv,
- 	return r;
- }
- 
--static struct crypt_iv_operations crypt_iv_plain_ops = {
-+static const struct crypt_iv_operations crypt_iv_plain_ops = {
- 	.generator = crypt_iv_plain_gen
- };
- 
--static struct crypt_iv_operations crypt_iv_plain64_ops = {
-+static const struct crypt_iv_operations crypt_iv_plain64_ops = {
- 	.generator = crypt_iv_plain64_gen
- };
- 
--static struct crypt_iv_operations crypt_iv_essiv_ops = {
-+static const struct crypt_iv_operations crypt_iv_essiv_ops = {
- 	.ctr       = crypt_iv_essiv_ctr,
- 	.dtr       = crypt_iv_essiv_dtr,
- 	.init      = crypt_iv_essiv_init,
-@@ -772,17 +772,17 @@ static struct crypt_iv_operations crypt_iv_essiv_ops = {
- 	.generator = crypt_iv_essiv_gen
- };
- 
--static struct crypt_iv_operations crypt_iv_benbi_ops = {
-+static const struct crypt_iv_operations crypt_iv_benbi_ops = {
- 	.ctr	   = crypt_iv_benbi_ctr,
- 	.dtr	   = crypt_iv_benbi_dtr,
- 	.generator = crypt_iv_benbi_gen
- };
- 
--static struct crypt_iv_operations crypt_iv_null_ops = {
-+static const struct crypt_iv_operations crypt_iv_null_ops = {
- 	.generator = crypt_iv_null_gen
- };
- 
--static struct crypt_iv_operations crypt_iv_lmk_ops = {
-+static const struct crypt_iv_operations crypt_iv_lmk_ops = {
- 	.ctr	   = crypt_iv_lmk_ctr,
- 	.dtr	   = crypt_iv_lmk_dtr,
- 	.init	   = crypt_iv_lmk_init,
-@@ -791,7 +791,7 @@ static struct crypt_iv_operations crypt_iv_lmk_ops = {
- 	.post	   = crypt_iv_lmk_post
- };
- 
--static struct crypt_iv_operations crypt_iv_tcw_ops = {
-+static const struct crypt_iv_operations crypt_iv_tcw_ops = {
- 	.ctr	   = crypt_iv_tcw_ctr,
- 	.dtr	   = crypt_iv_tcw_dtr,
- 	.init	   = crypt_iv_tcw_init,
-
+Best regards,
+Alexey Ishchuk
