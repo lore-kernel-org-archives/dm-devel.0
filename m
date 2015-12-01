@@ -1,43 +1,77 @@
-From: Alexey Ishchuk <aishchuk@linux.vnet.ibm.com>
-Subject: [RFC] Modern device mapper module makes problems for
-	dump analysis
-Date: Tue, 1 Dec 2015 16:34:53 +0300
-Message-ID: <565DA1FD.3010804@linux.vnet.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Scotty <sbauer@eng.utah.edu>
+Subject: [PATCH] dm ioctl: Access user-land memory through safe functions.
+Date: Tue, 1 Dec 2015 11:11:04 -0700
+Message-ID: <565DE2B8.7040709@eng.utah.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Steffen Maier <maier@linux.vnet.ibm.com>
+Content-Type: multipart/mixed;
+ boundary="------------080605030004010507040202"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+This is a multi-part message in MIME format.
+--------------080605030004010507040202
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 
-in the modern device mapper Linux kernel module the data structure 
-struct dm_table is declared more than once. One of those declarations is 
-the real structure definition and the other are dummy definitions. This 
-coding manner makes serious problems for the Linux kernel dump analysis 
-with crash utility using custom EPPIC language scripts and even the 
-dminfo built-in crash extension does not work with the dumps. The 
-problem occurs because the crash utility tries to expose to the EPPIC 
-language scripts a dummy structure definition that contains no required 
-fields.
 
-I would like to get to know, why do we need more than one struct 
-dm_table declarations in the kernel module? Is it possible to improve 
-the device mapper kernel module code to have the only one struct 
-dm_table declaration to allow kernel dumps to be analyzed using custom 
-scripts?
+--------------080605030004010507040202
+Content-Type: text/x-patch;
+ name="0001-dm-ioctl-Access-user-land-memory-through-safe-functi.patch"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: attachment;
+ filename*0="0001-dm-ioctl-Access-user-land-memory-through-safe-functi.pa";
+ filename*1="tch"
 
-Best regards,
-Alexey Ishchuk
+=46rom b26adf880eba03ac6f2b1dd87426bb96fd2a0282 Mon Sep 17 00:00:00 2001
+From: Scotty Bauer <sbauer@eng.utah.edu>
+Date: Tue, 1 Dec 2015 10:52:46 -0700
+Subject: [PATCH] dm ioctl: Access user-land memory through safe functions=
+=2E
+
+This patch fixes a user-land dereference. Now we use
+the safe copy_from_user to access the memory.
+
+Signed-off-by: Scotty Bauer <sbauer@eng.utah.edu>
+---
+ drivers/md/dm-ioctl.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index 80a4395..39a9d1a 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1642,9 +1642,13 @@ static ioctl_fn lookup_ioctl(unsigned int cmd, int=
+ *ioctl_flags)
+ static int check_version(unsigned int cmd, struct dm_ioctl __user *user)=
+
+ {
+ 	uint32_t version[3];
++	uint32_t __user *version_ptr;
+ 	int r =3D 0;
+=20
+-	if (copy_from_user(version, user->version, sizeof(version)))
++	if (copy_from_user(&version_ptr, &user->version, sizeof(version_ptr)))
++		return -EFAULT;
++
++	if (copy_from_user(version, version_ptr, sizeof(version)))
+ 		return -EFAULT;
+=20
+ 	if ((DM_VERSION_MAJOR !=3D version[0]) ||
+@@ -1663,7 +1667,7 @@ static int check_version(unsigned int cmd, struct d=
+m_ioctl __user *user)
+ 	version[0] =3D DM_VERSION_MAJOR;
+ 	version[1] =3D DM_VERSION_MINOR;
+ 	version[2] =3D DM_VERSION_PATCHLEVEL;
+-	if (copy_to_user(user->version, version, sizeof(version)))
++	if (copy_to_user(version_ptr, version, sizeof(version)))
+ 		return -EFAULT;
+=20
+ 	return r;
+--=20
+1.9.1
+
+
+--------------080605030004010507040202--
