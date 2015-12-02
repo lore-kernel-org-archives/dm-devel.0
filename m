@@ -1,53 +1,39 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm snapshot: improve documentation
-Date: Wed, 2 Dec 2015 12:32:49 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1512021230450.15019@file01.intranet.prod.int.rdu2.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH 0/2] Introduce the request handling for
+	dm-crypt
+Date: Wed, 2 Dec 2015 19:56:57 +0000
+Message-ID: <20151202195657.GB11127@agk-dp.fab.redhat.com>
+References: <cover.1447233227.git.baolin.wang@linaro.org> <20151111181813.GD12236@redhat.com> <CAMz4kuKNAkFG4-f6TU1HRxgkAn+YX-D_tTQAWio-A_np3brr+A@mail.gmail.com> <20151112100422.GM12392@sirena.org.uk> <5644AFA2.6040201@kernel.dk> <20151113115144.GR12392@sirena.org.uk> <CAMz4kuLTuY5CpTfW4Gijesy1Pp9PxbWj076XeoV24Hj3EydifQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAMz4kuLTuY5CpTfW4Gijesy1Pp9PxbWj076XeoV24Hj3EydifQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Baolin Wang <baolin.wang@linaro.org>
+Cc: Mark Brown <broonie@kernel.org>, Jens Axboe <axboe@kernel.dk>, keith.busch@intel.com, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Mike Snitzer <snitzer@redhat.com>, neilb@suse.com, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, "Garg, Dinesh" <dineshg@quicinc.com>, tj@kernel.org, bart.vanassche@sandisk.com, jmoyer@redhat.com, Alasdair G Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Regarding bug 1286898 - the documentation doesn't specify the requirement 
-that the origin target must be suspended, so we should add this paragraph 
-to the file snapshot.txt.
-
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-Add a node to snapshot.txt that the origin target must be suspended when
-loading or unloading the snapshot target.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- Documentation/device-mapper/snapshot.txt |    4 ++++
- 1 file changed, 4 insertions(+)
-
-Index: linux-4.4-rc3/Documentation/device-mapper/snapshot.txt
-===================================================================
---- linux-4.4-rc3.orig/Documentation/device-mapper/snapshot.txt	2015-12-02 18:26:34.000000000 +0100
-+++ linux-4.4-rc3/Documentation/device-mapper/snapshot.txt	2015-12-02 18:29:10.000000000 +0100
-@@ -49,6 +49,10 @@ The difference between persistent and tr
- snapshots less metadata must be saved on disk - they can be kept in
- memory by the kernel.
+On Wed, Dec 02, 2015 at 08:46:54PM +0800, Baolin Wang wrote:
+> These are the benchmarks for request based dm-crypt. Please check it.
  
-+When loading or unloading the snapshot target, the corresponding
-+snapshot-origin or snapshot-merge target must be suspended. A failure to
-+suspend the origin target could result in data corruption.
-+
- 
- * snapshot-merge <origin> <COW device> <persistent> <chunksize>
- 
+Now please put request-based dm-crypt completely to one side and focus
+just on the existing bio-based code.  Why is it slower and what can be
+adjusted to improve this?
+
+People aren't going to take a request-based solution seriously until
+you can explain in full detail *why* bio-based is slower AND why it's
+impossible to improve its performance.
+
+> For request based things, some sequential bios/requests can merged
+> into one request to expand the IO size to be a big block handled by
+> hardware engine at one time. 
+
+Bio-based also merges I/O so that does not provide justification.
+Investigate in much more detail the actual merging and scheduling
+involved in the cases you need to optimise.  See if blktrace gives you
+any clues, or add your own instrumentation.  You could even look at some
+of the patches we've had in the list archives for optimising bio-based
+crypt in different situations.
+
+Alasdair
