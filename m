@@ -1,8 +1,8 @@
 From: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: [PATCH 07/19] fs: Check for invalid i_uid in
-	may_follow_link()
-Date: Wed,  2 Dec 2015 09:40:07 -0600
-Message-ID: <1449070821-73820-8-git-send-email-seth.forshee@canonical.com>
+Subject: [PATCH 06/19] Smack: Handle labels consistently in
+	untrusted mounts
+Date: Wed,  2 Dec 2015 09:40:06 -0600
+Message-ID: <1449070821-73820-7-git-send-email-seth.forshee@canonical.com>
 References: <1449070821-73820-1-git-send-email-seth.forshee@canonical.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,62 +17,94 @@ List-Help: <mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gm
 List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
 	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
 Errors-To: fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, selinux-+05T5uksL2qpZYMLLGbcSA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, selinux-+05T5uksL2qpZYMLLGbcSA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Filesystem uids which don't map into a user namespace may result
-in inode->i_uid being INVALID_UID. A symlink and its parent
-could have different owners in the filesystem can both get
-mapped to INVALID_UID, which may result in following a symlink
-when this would not have otherwise been permitted when protected
-symlinks are enabled.
-
-Add a new helper function, uid_valid_eq(), and use this to
-validate that the ids in may_follow_link() are both equal and
-valid. Also add an equivalent helper for gids, which is
-currently unused.
+The SMACK64, SMACK64EXEC, and SMACK64MMAP labels are all handled
+differently in untrusted mounts. This is confusing and
+potentically problematic. Change this to handle them all the same
+way that SMACK64 is currently handled; that is, read the label
+from disk and check it at use time. For SMACK64 and SMACK64MMAP
+access is denied if the label does not match smk_root. To be
+consistent with suid, a SMACK64EXEC label which does not match
+smk_root will still allow execution of the file but will not run
+with the label supplied in the xattr.
 
 Signed-off-by: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Acked-by: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
 ---
- fs/namei.c             |  2 +-
- include/linux/uidgid.h | 10 ++++++++++
- 2 files changed, 11 insertions(+), 1 deletion(-)
+ security/smack/smack_lsm.c | 29 +++++++++++++++++++----------
+ 1 file changed, 19 insertions(+), 10 deletions(-)
 
-diff --git a/fs/namei.c b/fs/namei.c
-index 288e8a74bf88..4ccafd391697 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -902,7 +902,7 @@ static inline int may_follow_link(struct nameidata *nd)
+diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
+index 16cac04214e2..0e555f64ded0 100644
+--- a/security/smack/smack_lsm.c
++++ b/security/smack/smack_lsm.c
+@@ -921,6 +921,7 @@ static int smack_bprm_set_creds(struct linux_binprm *bprm)
+ 	struct inode *inode = file_inode(bprm->file);
+ 	struct task_smack *bsp = bprm->cred->security;
+ 	struct inode_smack *isp;
++	struct superblock_smack *sbsp;
+ 	int rc;
+ 
+ 	if (bprm->cred_prepared)
+@@ -930,6 +931,11 @@ static int smack_bprm_set_creds(struct linux_binprm *bprm)
+ 	if (isp->smk_task == NULL || isp->smk_task == bsp->smk_task)
  		return 0;
  
- 	/* Allowed if parent directory and link owner match. */
--	if (uid_eq(parent->i_uid, inode->i_uid))
-+	if (uid_valid_eq(parent->i_uid, inode->i_uid))
++	sbsp = inode->i_sb->s_security;
++	if ((sbsp->smk_flags & SMK_SB_UNTRUSTED) &&
++	    isp->smk_task != sbsp->smk_root)
++		return 0;
++
+ 	if (bprm->unsafe & (LSM_UNSAFE_PTRACE | LSM_UNSAFE_PTRACE_CAP)) {
+ 		struct task_struct *tracer;
+ 		rc = 0;
+@@ -1733,6 +1739,7 @@ static int smack_mmap_file(struct file *file,
+ 	struct task_smack *tsp;
+ 	struct smack_known *okp;
+ 	struct inode_smack *isp;
++	struct superblock_smack *sbsp;
+ 	int may;
+ 	int mmay;
+ 	int tmay;
+@@ -1744,6 +1751,10 @@ static int smack_mmap_file(struct file *file,
+ 	isp = file_inode(file)->i_security;
+ 	if (isp->smk_mmap == NULL)
  		return 0;
++	sbsp = file_inode(file)->i_sb->s_security;
++	if (sbsp->smk_flags & SMK_SB_UNTRUSTED &&
++	    isp->smk_mmap != sbsp->smk_root)
++		return -EACCES;
+ 	mkp = isp->smk_mmap;
  
- 	if (nd->flags & LOOKUP_RCU)
-diff --git a/include/linux/uidgid.h b/include/linux/uidgid.h
-index 03835522dfcb..e09529fe2668 100644
---- a/include/linux/uidgid.h
-+++ b/include/linux/uidgid.h
-@@ -117,6 +117,16 @@ static inline bool gid_valid(kgid_t gid)
- 	return __kgid_val(gid) != (gid_t) -1;
- }
+ 	tsp = current_security();
+@@ -3532,16 +3543,14 @@ static void smack_d_instantiate(struct dentry *opt_dentry, struct inode *inode)
+ 			if (rc >= 0)
+ 				transflag = SMK_INODE_TRANSMUTE;
+ 		}
+-		if (!(sbsp->smk_flags & SMK_SB_UNTRUSTED)) {
+-			/*
+-			 * Don't let the exec or mmap label be "*" or "@".
+-			 */
+-			skp = smk_fetch(XATTR_NAME_SMACKEXEC, inode, dp);
+-			if (IS_ERR(skp) || skp == &smack_known_star ||
+-			    skp == &smack_known_web)
+-				skp = NULL;
+-			isp->smk_task = skp;
+-		}
++		/*
++		 * Don't let the exec or mmap label be "*" or "@".
++		 */
++		skp = smk_fetch(XATTR_NAME_SMACKEXEC, inode, dp);
++		if (IS_ERR(skp) || skp == &smack_known_star ||
++		    skp == &smack_known_web)
++			skp = NULL;
++		isp->smk_task = skp;
  
-+static inline bool uid_valid_eq(kuid_t left, kuid_t right)
-+{
-+	return uid_eq(left, right) && uid_valid(left);
-+}
-+
-+static inline bool gid_valid_eq(kgid_t left, kgid_t right)
-+{
-+	return gid_eq(left, right) && gid_valid(left);
-+}
-+
- #ifdef CONFIG_USER_NS
- 
- extern kuid_t make_kuid(struct user_namespace *from, uid_t uid);
+ 		skp = smk_fetch(XATTR_NAME_SMACKMMAP, inode, dp);
+ 		if (IS_ERR(skp) || skp == &smack_known_star ||
 -- 
 1.9.1
 
