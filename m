@@ -1,39 +1,134 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH 0/2] Introduce the request handling for
-	dm-crypt
-Date: Wed, 2 Dec 2015 19:56:57 +0000
-Message-ID: <20151202195657.GB11127@agk-dp.fab.redhat.com>
-References: <cover.1447233227.git.baolin.wang@linaro.org> <20151111181813.GD12236@redhat.com> <CAMz4kuKNAkFG4-f6TU1HRxgkAn+YX-D_tTQAWio-A_np3brr+A@mail.gmail.com> <20151112100422.GM12392@sirena.org.uk> <5644AFA2.6040201@kernel.dk> <20151113115144.GR12392@sirena.org.uk> <CAMz4kuLTuY5CpTfW4Gijesy1Pp9PxbWj076XeoV24Hj3EydifQ@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 2/4] dm verity: separate function for parsing opt args
+Date: Wed, 2 Dec 2015 15:16:06 -0500
+Message-ID: <20151202201606.GA51353@redhat.com>
+References: <1446688954-29589-1-git-send-email-samitolvanen@google.com>
+ <1446688954-29589-3-git-send-email-samitolvanen@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAMz4kuLTuY5CpTfW4Gijesy1Pp9PxbWj076XeoV24Hj3EydifQ@mail.gmail.com>
+In-Reply-To: <1446688954-29589-3-git-send-email-samitolvanen@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Baolin Wang <baolin.wang@linaro.org>
-Cc: Mark Brown <broonie@kernel.org>, Jens Axboe <axboe@kernel.dk>, keith.busch@intel.com, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Mike Snitzer <snitzer@redhat.com>, neilb@suse.com, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, "Garg, Dinesh" <dineshg@quicinc.com>, tj@kernel.org, bart.vanassche@sandisk.com, jmoyer@redhat.com, Alasdair G Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+To: Sami Tolvanen <samitolvanen@google.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Mandeep Baines <msb@chromium.org>, Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mark Salyzyn <salyzyn@google.com>
 List-Id: dm-devel.ids
 
-On Wed, Dec 02, 2015 at 08:46:54PM +0800, Baolin Wang wrote:
-> These are the benchmarks for request based dm-crypt. Please check it.
+On Wed, Nov 04 2015 at  9:02P -0500,
+Sami Tolvanen <samitolvanen@google.com> wrote:
+
+> Move optional argument parsing into a separate function to make it
+> easier to add more of them without making verity_ctr even longer.
+> 
+> Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+
+I've taken this patch, for Linux 4.5, but I've applied the following
+incremental patch ontop to make verity's optional argument parsing
+follow establish DM patterns (the code is very similar to
+dm-mpath.c:parse_features).  Your follow-on patches will obviously need
+to be rebased on this, but the code will be much cleaner.
+
+diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+index 3b09e50..2b0008f 100644
+--- a/drivers/md/dm-verity.c
++++ b/drivers/md/dm-verity.c
+@@ -723,19 +723,42 @@ static void verity_dtr(struct dm_target *ti)
+ 	kfree(v);
+ }
  
-Now please put request-based dm-crypt completely to one side and focus
-just on the existing bio-based code.  Why is it slower and what can be
-adjusted to improve this?
-
-People aren't going to take a request-based solution seriously until
-you can explain in full detail *why* bio-based is slower AND why it's
-impossible to improve its performance.
-
-> For request based things, some sequential bios/requests can merged
-> into one request to expand the IO size to be a big block handled by
-> hardware engine at one time. 
-
-Bio-based also merges I/O so that does not provide justification.
-Investigate in much more detail the actual merging and scheduling
-involved in the cases you need to optimise.  See if blktrace gives you
-any clues, or add your own instrumentation.  You could even look at some
-of the patches we've had in the list archives for optimising bio-based
-crypt in different situations.
-
-Alasdair
+-static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
+-				 const char *opt_string)
++static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v)
+ {
+-	if (!strcasecmp(opt_string, DM_VERITY_OPT_LOGGING)) {
+-		v->mode = DM_VERITY_MODE_LOGGING;
+-		return 0;
+-	} else if (!strcasecmp(opt_string, DM_VERITY_OPT_RESTART)) {
+-		v->mode = DM_VERITY_MODE_RESTART;
++	int r;
++	unsigned argc;
++	struct dm_target *ti = v->ti;
++	const char *arg_name;
++
++	static struct dm_arg _args[] = {
++		{0, DM_VERITY_OPTS_MAX, "Invalid number of feature args"},
++	};
++
++	r = dm_read_arg_group(_args, &as, &argc, &ti->error);
++	if (r)
++		return -EINVAL;
++
++	if (!argc)
+ 		return 0;
+-	}
+ 
+-	v->ti->error = "Invalid feature arguments";
+-	return -EINVAL;
++	do {
++		arg_name = dm_shift_arg(&as);
++		argc--;
++
++		if (!strcasecmp(arg_name, DM_VERITY_OPT_LOGGING)) {
++			v->mode = DM_VERITY_MODE_LOGGING;
++			continue;
++
++		} else if (!strcasecmp(arg_name, DM_VERITY_OPT_RESTART)) {
++			v->mode = DM_VERITY_MODE_RESTART;
++			continue;
++		}
++
++		ti->error = "Unrecognized verity feature request";
++		return -EINVAL;
++	} while (argc && !r);
++
++	return r;
+ }
+ 
+ /*
+@@ -757,17 +780,13 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	struct dm_verity *v;
+ 	struct dm_arg_set as;
+ 	const char *opt_string;
+-	unsigned int num, opt_params;
++	unsigned int num;
+ 	unsigned long long num_ll;
+ 	int r;
+ 	int i;
+ 	sector_t hash_position;
+ 	char dummy;
+ 
+-	static struct dm_arg _args[] = {
+-		{0, DM_VERITY_OPTS_MAX, "Invalid number of feature args"},
+-	};
+-
+ 	v = kzalloc(sizeof(struct dm_verity), GFP_KERNEL);
+ 	if (!v) {
+ 		ti->error = "Cannot allocate verity structure";
+@@ -912,25 +931,9 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		as.argc = argc;
+ 		as.argv = argv;
+ 
+-		r = dm_read_arg_group(_args, &as, &opt_params, &ti->error);
+-		if (r)
++		r = verity_parse_opt_args(&as, v);
++		if (r < 0)
+ 			goto bad;
+-
+-		while (opt_params) {
+-			opt_params--;
+-			opt_string = dm_shift_arg(&as);
+-			if (!opt_string) {
+-				ti->error = "Not enough feature arguments";
+-				r = -EINVAL;
+-				goto bad;
+-			}
+-
+-			r = verity_parse_opt_args(&as, v, opt_string);
+-			if (r < 0)
+-				goto bad;
+-
+-			opt_params -= r;
+-		}
+ 	}
+ 
+ 	v->hash_per_block_bits =
