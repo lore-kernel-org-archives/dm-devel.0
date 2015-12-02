@@ -1,86 +1,63 @@
-From: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: [PATCH 11/19] fs: Ensure the mounter of a filesystem
-	is privileged towards its inodes
-Date: Wed,  2 Dec 2015 09:40:11 -0600
-Message-ID: <1449070821-73820-12-git-send-email-seth.forshee@canonical.com>
+From: Seth Forshee <seth.forshee@canonical.com>
+Subject: [PATCH 02/19] block_dev: Check permissions towards block device inode
+ when mounting
+Date: Wed,  2 Dec 2015 09:40:02 -0600
+Message-ID: <1449070821-73820-3-git-send-email-seth.forshee@canonical.com>
 References: <1449070821-73820-1-git-send-email-seth.forshee@canonical.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-In-Reply-To: <1449070821-73820-1-git-send-email-seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
-	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=fuse-devel>
-List-Post: <mailto:fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Help: <mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
-	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
-Errors-To: fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, selinux-+05T5uksL2qpZYMLLGbcSA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
+In-Reply-To: <1449070821-73820-1-git-send-email-seth.forshee@canonical.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: Serge Hallyn <serge.hallyn@canonical.com>, Seth Forshee <seth.forshee@canonical.com>, dm-devel@redhat.com, Miklos Szeredi <miklos@szeredi.hu>, Richard Weinberger <richard.weinberger@gmail.com>, linux-security-module@vger.kernel.org, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, fuse-devel@lists.sourceforge.net, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-mtd@lists.infradead.org, selinux@tycho.nsa.gov, linux-fsdevel@vger.kernel.org
 List-Id: dm-devel.ids
 
-The mounter of a filesystem should be privileged towards the
-inodes of that filesystem. Extend the checks in
-inode_owner_or_capable() and capable_wrt_inode_uidgid() to
-permit access by users priviliged in the user namespace of the
-inode's superblock.
+Unprivileged users should not be able to mount block devices when
+they lack sufficient privileges towards the block device inode.
+Update blkdev_get_by_path() to validate that the user has the
+required access to the inode at the specified path. The check
+will be skipped for CAP_SYS_ADMIN, so privileged mounts will
+continue working as before.
 
-Signed-off-by: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
 ---
- fs/inode.c          |  3 +++
- kernel/capability.c | 13 +++++++++----
- 2 files changed, 12 insertions(+), 4 deletions(-)
+ fs/block_dev.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/fs/inode.c b/fs/inode.c
-index 1be5f9003eb3..01c036fe1950 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -1962,6 +1962,9 @@ bool inode_owner_or_capable(const struct inode *inode)
- 	ns = current_user_ns();
- 	if (ns_capable(ns, CAP_FOWNER) && kuid_has_mapping(ns, inode->i_uid))
- 		return true;
-+
-+	if (ns_capable(inode->i_sb->s_user_ns, CAP_FOWNER))
-+		return true;
- 	return false;
- }
- EXPORT_SYMBOL(inode_owner_or_capable);
-diff --git a/kernel/capability.c b/kernel/capability.c
-index 45432b54d5c6..5137a38a5670 100644
---- a/kernel/capability.c
-+++ b/kernel/capability.c
-@@ -437,13 +437,18 @@ EXPORT_SYMBOL(file_ns_capable);
-  *
-  * Return true if the current task has the given capability targeted at
-  * its own user namespace and that the given inode's uid and gid are
-- * mapped into the current user namespace.
-+ * mapped into the current user namespace, or if the current task has
-+ * the capability towards the user namespace of the inode's superblock.
-  */
- bool capable_wrt_inode_uidgid(const struct inode *inode, int cap)
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 3ebbde85d898..4fdb6ab59816 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -1424,9 +1424,14 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode,
+ 					void *holder)
  {
--	struct user_namespace *ns = current_user_ns();
-+	struct user_namespace *ns;
+ 	struct block_device *bdev;
++	int perm = 0;
+ 	int err;
  
--	return ns_capable(ns, cap) && kuid_has_mapping(ns, inode->i_uid) &&
--		kgid_has_mapping(ns, inode->i_gid);
-+	ns = current_user_ns();
-+	if (ns_capable(ns, cap) && kuid_has_mapping(ns, inode->i_uid) &&
-+	    kgid_has_mapping(ns, inode->i_gid))
-+		return true;
-+
-+	return ns_capable(inode->i_sb->s_user_ns, cap);
- }
- EXPORT_SYMBOL(capable_wrt_inode_uidgid);
+-	bdev = lookup_bdev(path, 0);
++	if (mode & FMODE_READ)
++		perm |= MAY_READ;
++	if (mode & FMODE_WRITE)
++		perm |= MAY_WRITE;
++	bdev = lookup_bdev(path, perm);
+ 	if (IS_ERR(bdev))
+ 		return bdev;
+ 
 -- 
 1.9.1
 
 
-------------------------------------------------------------------------------
-Go from Idea to Many App Stores Faster with Intel(R) XDK
-Give your users amazing mobile app experiences with Intel(R) XDK.
-Use one codebase in this all-in-one HTML5 development environment.
-Design, debug & build mobile apps & 2D/3D high-impact games for multiple OSs.
-http://pubads.g.doubleclick.net/gampad/clk?id=254741911&iu=/4140
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
