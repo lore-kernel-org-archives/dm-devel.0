@@ -1,265 +1,72 @@
-From: Sami Tolvanen <samitolvanen@google.com>
-Subject: [PATCH v2 2/2] dm verity: ignore zero blocks
-Date: Thu,  3 Dec 2015 14:26:31 +0000
-Message-ID: <1449152791-33586-3-git-send-email-samitolvanen@google.com>
-References: <1446688954-29589-1-git-send-email-samitolvanen@google.com>
- <1449152791-33586-1-git-send-email-samitolvanen@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1449152791-33586-1-git-send-email-samitolvanen@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Mandeep Baines <msb@chromium.org>, Will Drewry <wad@chromium.org>
-Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Kees Cook <keescook@chromium.org>, Mark Salyzyn <salyzyn@google.com>, Sami Tolvanen <samitolvanen@google.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH 0/2] Introduce the request handling for
+ dm-crypt
+Date: Thu, 3 Dec 2015 10:47:14 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1512031039001.15134@file01.intranet.prod.int.rdu2.redhat.com>
+References: <cover.1447233227.git.baolin.wang@linaro.org> <20151111181813.GD12236@redhat.com> <CAMz4kuKNAkFG4-f6TU1HRxgkAn+YX-D_tTQAWio-A_np3brr+A@mail.gmail.com> <20151112100422.GM12392@sirena.org.uk> <5644AFA2.6040201@kernel.dk> <20151113115144.GR12392@sirena.org.uk>
+ <CAMz4kuLTuY5CpTfW4Gijesy1Pp9PxbWj076XeoV24Hj3EydifQ@mail.gmail.com> <20151202195657.GB11127@agk-dp.fab.redhat.com> <CAMz4kuL3qE-jE14F6ovAMRv6D-UFCdtiyUyi4ZDo+Lkr7_nA0Q@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <CAMz4kuL3qE-jE14F6ovAMRv6D-UFCdtiyUyi4ZDo+Lkr7_nA0Q@mail.gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Baolin Wang <baolin.wang@linaro.org>
+Cc: Mark Brown <broonie@kernel.org>, Jens Axboe <axboe@kernel.dk>, keith.busch@intel.com, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Mike Snitzer <snitzer@redhat.com>, neilb@suse.com, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, "Garg, Dinesh" <dineshg@quicinc.com>, tj@kernel.org, bart.vanassche@sandisk.com, jmoyer@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Add ignore_zero_blocks option, which returns zeros for blocks matching a
-zero hash without validating the content.
 
-Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
----
- Documentation/device-mapper/verity.txt |  5 ++
- drivers/md/dm-verity-fec.c             |  8 +++-
- drivers/md/dm-verity-target.c          | 84 ++++++++++++++++++++++++++++++----
- drivers/md/dm-verity.h                 |  3 +-
- 4 files changed, 90 insertions(+), 10 deletions(-)
 
-diff --git a/Documentation/device-mapper/verity.txt b/Documentation/device-mapper/verity.txt
-index 1058f36..4d3bbda 100644
---- a/Documentation/device-mapper/verity.txt
-+++ b/Documentation/device-mapper/verity.txt
-@@ -79,6 +79,11 @@ restart_on_corruption
-     not compatible with ignore_corruption and requires user space support to
-     avoid restart loops.
- 
-+ignore_zero_blocks
-+    Do not verify blocks that are expected to contain zeros and always return
-+    zeros instead. This may be useful if the partition contains unused blocks
-+    that are not guaranteed to contain zeros.
-+
- use_fec_from_device
-     Use forward error correction (FEC) to recover from corruption if hash
-     verification fails. Use encoding data from the specified device. This
-diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-index c3a2531..599334f 100644
---- a/drivers/md/dm-verity-fec.c
-+++ b/drivers/md/dm-verity-fec.c
-@@ -210,6 +210,7 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
- 			 u64 rsb, u64 target, unsigned block_offset,
- 			 int *neras)
- {
-+	bool is_zero;
- 	int i, j, target_index = -1;
- 	struct dm_buffer *buf;
- 	struct dm_bufio_client *bufio;
-@@ -270,7 +271,12 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
- 
- 		/* locate erasures if the block is on the data device */
- 		if (bufio == v->fec->data_bufio &&
--		    verity_hash_for_block(v, io, block, want_digest) == 0) {
-+		    verity_hash_for_block(v, io, block, want_digest,
-+					  &is_zero) == 0) {
-+			/* skip known zero blocks entirely */
-+			if (is_zero)
-+				continue;
-+
- 			/*
- 			 * skip if we have already found the theoretical
- 			 * maximum number (i.e. fec->roots) of erasures
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index ca5857b..a2bb3bc 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -31,8 +31,9 @@
- 
- #define DM_VERITY_OPT_LOGGING		"ignore_corruption"
- #define DM_VERITY_OPT_RESTART		"restart_on_corruption"
-+#define DM_VERITY_OPT_IGN_ZEROS		"ignore_zero_blocks"
- 
--#define DM_VERITY_OPTS_MAX		(1 + DM_VERITY_OPTS_FEC)
-+#define DM_VERITY_OPTS_MAX		(2 + DM_VERITY_OPTS_FEC)
- 
- static unsigned dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE;
- 
-@@ -309,10 +310,9 @@ release_ret_r:
-  * of the hash tree if necessary.
-  */
- int verity_hash_for_block(struct dm_verity *v, struct dm_verity_io *io,
--			  sector_t block, u8 *digest)
-+			  sector_t block, u8 *digest, bool *is_zero)
- {
--	int i;
--	int r;
-+	int r = 0, i;
- 
- 	if (likely(v->levels)) {
- 		/*
-@@ -324,7 +324,7 @@ int verity_hash_for_block(struct dm_verity *v, struct dm_verity_io *io,
- 		 */
- 		r = verity_verify_level(v, io, block, 0, true, digest);
- 		if (likely(r <= 0))
--			return r;
-+			goto out;
- 	}
- 
- 	memcpy(digest, v->root_digest, v->digest_size);
-@@ -332,10 +332,16 @@ int verity_hash_for_block(struct dm_verity *v, struct dm_verity_io *io,
- 	for (i = v->levels - 1; i >= 0; i--) {
- 		r = verity_verify_level(v, io, block, i, false, digest);
- 		if (unlikely(r))
--			return r;
-+			goto out;
- 	}
- 
--	return 0;
-+out:
-+	if (!r && v->zero_digest)
-+		*is_zero = !memcmp(v->zero_digest, digest, v->digest_size);
-+	else
-+		*is_zero = false;
-+
-+	return r;
- }
- 
- /*
-@@ -383,11 +389,19 @@ static int verity_bv_hash_update(struct dm_verity *v, struct dm_verity_io *io,
- 	return verity_hash_update(v, verity_io_hash_desc(v, io), data, len);
- }
- 
-+static int verity_bv_zero(struct dm_verity *v, struct dm_verity_io *io,
-+			  u8 *data, size_t len)
-+{
-+	memset(data, 0, len);
-+	return 0;
-+}
-+
- /*
-  * Verify one "dm_verity_io" structure.
-  */
- static int verity_verify_io(struct dm_verity_io *io)
- {
-+	bool is_zero;
- 	struct dm_verity *v = io->v;
- 	struct bvec_iter start;
- 	unsigned b;
-@@ -397,10 +411,24 @@ static int verity_verify_io(struct dm_verity_io *io)
- 		struct shash_desc *desc = verity_io_hash_desc(v, io);
- 
- 		r = verity_hash_for_block(v, io, io->block + b,
--					  verity_io_want_digest(v, io));
-+					  verity_io_want_digest(v, io),
-+					  &is_zero);
- 		if (unlikely(r < 0))
- 			return r;
- 
-+		if (is_zero) {
-+			/*
-+			 * If we expect a zero block, don't validate, just
-+			 * return zeros.
-+			 */
-+			r = verity_for_bv_block(v, io, &io->iter,
-+						verity_bv_zero);
-+			if (unlikely(r < 0))
-+				return r;
-+
-+			continue;
-+		}
-+
- 		r = verity_hash_init(v, desc);
- 		if (unlikely(r < 0))
- 			return r;
-@@ -607,6 +635,8 @@ static void verity_status(struct dm_target *ti, status_type_t type,
- 			args++;
- 		if (verity_fec_is_enabled(v))
- 			args += DM_VERITY_OPTS_FEC;
-+		if (v->zero_digest)
-+			args++;
- 		if (!args)
- 			return;
- 		DMEMIT(" %u", args);
-@@ -623,6 +653,8 @@ static void verity_status(struct dm_target *ti, status_type_t type,
- 				BUG();
- 			}
- 		}
-+		if (v->zero_digest)
-+			DMEMIT(" " DM_VERITY_OPT_IGN_ZEROS);
- 		sz = verity_fec_status_table(v, sz, result, maxlen);
- 		break;
- 	}
-@@ -674,6 +706,7 @@ static void verity_dtr(struct dm_target *ti)
- 
- 	kfree(v->salt);
- 	kfree(v->root_digest);
-+	kfree(v->zero_digest);
- 
- 	if (v->tfm)
- 		crypto_free_shash(v->tfm);
-@@ -691,6 +724,37 @@ static void verity_dtr(struct dm_target *ti)
- 	kfree(v);
- }
- 
-+static int verity_alloc_zero_digest(struct dm_verity *v)
-+{
-+	int r = -ENOMEM;
-+	struct shash_desc *desc;
-+	u8 *zero_data;
-+
-+	v->zero_digest = kmalloc(v->digest_size, GFP_KERNEL);
-+
-+	if (!v->zero_digest)
-+		return r;
-+
-+	desc = kmalloc(v->shash_descsize, GFP_KERNEL);
-+
-+	if (!desc)
-+		return r; /* verity_dtr will free zero_digest */
-+
-+	zero_data = kzalloc(1 << v->data_dev_block_bits, GFP_KERNEL);
-+
-+	if (!zero_data)
-+		goto out;
-+
-+	r = verity_hash(v, desc, zero_data, 1 << v->data_dev_block_bits,
-+			v->zero_digest);
-+
-+out:
-+	kfree(desc);
-+	kfree(zero_data);
-+
-+	return r;
-+}
-+
- static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v)
- {
- 	int r;
-@@ -720,6 +784,10 @@ static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v)
- 		} else if (!strcasecmp(arg_name, DM_VERITY_OPT_RESTART)) {
- 			v->mode = DM_VERITY_MODE_RESTART;
- 			continue;
-+		} else if (!strcasecmp(arg_name, DM_VERITY_OPT_IGN_ZEROS)) {
-+			r = verity_alloc_zero_digest(v);
-+			if (r)
-+				ti->error = "Cannot allocate zero digest";
- 		} else {
- 			r = verity_fec_parse_opt_args(as, v, &argc, arg_name);
- 		}
-diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-index 8e85372..fb419f4 100644
---- a/drivers/md/dm-verity.h
-+++ b/drivers/md/dm-verity.h
-@@ -40,6 +40,7 @@ struct dm_verity {
- 	struct crypto_shash *tfm;
- 	u8 *root_digest;	/* digest of the root block */
- 	u8 *salt;		/* salt: its size is salt_size */
-+	u8 *zero_digest;	/* digest for a zero block */
- 	unsigned salt_size;
- 	sector_t data_start;	/* data offset in 512-byte sectors */
- 	sector_t hash_start;	/* hash start in blocks */
-@@ -123,6 +124,6 @@ extern int verity_hash(struct dm_verity *v, struct shash_desc *desc,
- 		       const u8 *data, size_t len, u8 *digest);
- 
- extern int verity_hash_for_block(struct dm_verity *v, struct dm_verity_io *io,
--				 sector_t block, u8 *digest);
-+				 sector_t block, u8 *digest, bool *is_zero);
- 
- #endif /* DM_VERITY_H */
--- 
-2.6.0.rc2.230.g3dd15c0
+On Thu, 3 Dec 2015, Baolin Wang wrote:
+
+> On 3 December 2015 at 03:56, Alasdair G Kergon <agk@redhat.com> wrote:
+> > On Wed, Dec 02, 2015 at 08:46:54PM +0800, Baolin Wang wrote:
+> >> These are the benchmarks for request based dm-crypt. Please check it.
+> >
+> > Now please put request-based dm-crypt completely to one side and focus
+> > just on the existing bio-based code.  Why is it slower and what can be
+> > adjusted to improve this?
+> >
+> 
+> OK. I think I find something need to be point out.
+> 1. From the IO block size test in the performance report, for the
+> request based, we can find it can not get the corresponding
+> performance if we just expand the IO size. Because In dm crypt, it
+> will map the data buffer of one request with scatterlists, and send
+> all scatterlists of one request to the encryption engine to encrypt or
+> decrypt.  I found if the scatterlist list number is small and each
+> scatterlist length is bigger, it will improve the encryption speed,
+
+This optimization is only applicable to XTS mode. XTS has its weaknesses 
+and it is not recommended for encryption of more than 1TB of data 
+( http://grouper.ieee.org/groups/1619/email/msg02357.html )
+
+You can optimize bio-based dm-crypt as well (use larger encryption chunk 
+than 512 bytes when the mode is XTS).
+
+The most commonly used mode aes-cbc-essiv:sha256 can't be optimized that 
+way. You have to do encryption and decryption sector by sector because 
+every sector has different IV.
+
+Mikulas
+
+
+> that helps the engine palys best performance. But a big IO size does
+> not mean bigger scatterlists (maybe many scatterlists with small
+> length), that's why we can not get the corresponding performance if we
+> just expand the IO size I think.
+> 
+> 2. Why bio based is slower?
+> If you understand 1, you can obviously understand the crypto engine
+> likes bigger scatterlists to improve the performance. But for bio
+> based, it only send one scatterlist (the scatterlist's length is
+> always '1 << SECTOR_SHIFT' = 512) to the crypto engine at one time. It
+> means if the bio size is 1M, the bio based will send 2048 times (evey
+> time the only one scatterlist length is 512 bytes) to crypto engine to
+> handle, which is more time-consuming and ineffective for the crypto
+> engine. But for request based, it can map the whole request with many
+> scatterlists (not just one scatterlist), and send all the scatterlists
+> to the crypto engine which can improve the performance, is it right?
+> 
+> Another optimization solution I think is we can expand the scatterlist
+> entry number for bio based.
+
