@@ -1,102 +1,51 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Modern device mapper module makes problems for dump
-	analysis
-Date: Thu, 3 Dec 2015 14:31:30 -0500
-Message-ID: <20151203193129.GA5264@redhat.com>
-References: <565DA1FD.3010804@linux.vnet.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH v2 0/2] dm verity: add support for error correction
+Date: Thu, 3 Dec 2015 14:54:01 -0500
+Message-ID: <20151203195401.GA5444@redhat.com>
+References: <1446688954-29589-1-git-send-email-samitolvanen@google.com>
+ <1449152791-33586-1-git-send-email-samitolvanen@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <565DA1FD.3010804@linux.vnet.ibm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alexey Ishchuk <aishchuk@linux.vnet.ibm.com>
-Cc: Steffen Maier <maier@linux.vnet.ibm.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
+In-Reply-To: <1449152791-33586-1-git-send-email-samitolvanen@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Sami Tolvanen <samitolvanen@google.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Mandeep Baines <msb@chromium.org>, Will Drewry <wad@chromium.org>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Kees Cook <keescook@chromium.org>, Mark Salyzyn <salyzyn@google.com>
 List-Id: dm-devel.ids
 
-On Tue, Dec 01 2015 at  8:34am -0500,
-Alexey Ishchuk <aishchuk@linux.vnet.ibm.com> wrote:
+On Thu, Dec 03 2015 at  9:26am -0500,
+Sami Tolvanen <samitolvanen@google.com> wrote:
 
-> Hi,
+> Changes since v1:
 > 
-> in the modern device mapper Linux kernel module the data structure
-> struct dm_table is declared more than once. One of those
-> declarations is the real structure definition and the other are
-> dummy definitions. This coding manner makes serious problems for the
-> Linux kernel dump analysis with crash utility using custom EPPIC
-> language scripts and even the dminfo built-in crash extension does
-> not work with the dumps. The problem occurs because the crash
-> utility tries to expose to the EPPIC language scripts a dummy
-> structure definition that contains no required fields.
+>   - Added CONFIG_DM_VERITY_FEC and split error correction into
+>     dm-verity-fec.[ch] to further separate the functionality from the
+>     rest of dm-verity. Follows the same pattern as dm-uevent.
 > 
-> I would like to get to know, why do we need more than one struct
-> dm_table declarations in the kernel module? Is it possible to
-> improve the device mapper kernel module code to have the only one
-> struct dm_table declaration to allow kernel dumps to be analyzed
-> using custom scripts?
+>   - Added missing dependencies for REED_SOLOMON to Kconfig.
+> 
+>   - Renamed dm-verity.c to dm-verity-target.c to allow an optional
+>     object to be added. Follows the naming convention of dm-cache and
+>     dm-era.
+> 
+>   - Changed the algorithm to work with one or more small buffers (~4k)
+>     instead of a single large one. The more buffers we can allocate,
+>     the faster it will work, but we don't have to preallocate a large
+>     amount of memory anymore.
+> 
+>   - Changed memory allocation to use mempools. v2 preallocates all the
+>     memory required for each worker thread to guarantee forward
+>     progress in case of memory pressure. The code attempts to allocate
+>     more buffers (using GFP_NOIO) and uses them if available.
+> 
+>   - Added graceful handling of IO errors, which are now treated as any
+>     other corruption.
+> 
+>   - Rebased against linux-dm/for-next.
 
-The dm.c definition is:
+Thanks a lot for these advances, at a high-level it sounds like you've
+handled the issues raised as part of v1 review very well.
 
-/*
- * A dummy definition to make RCU happy.
- * struct dm_table should never be dereferenced in this file.
- */
-struct dm_table {
-        int undefined__;
-};
-
-As you can see in the block comment above this dummy definition is
-purely to "make RCU happy"...
-
-We'll need to research how/if we can avoid such hacks (and still have
-RCU function as needed).
-
-But short of eliminating the dummy definition, have you tried using the
-crash utility's 'set scope <text_address>' capability to force the use
-of the dm-table.c definition? e.g.:
-
-crash> mod -s dm_mod
-     MODULE       NAME                     SIZE  OBJECT FILE
-ffffffffa0013640  dm_mod                 110592  /lib/modules/4.4.0-rc1.snitm+/kernel/drivers/md/dm-mod.ko
-
-crash> struct dm_table
-struct dm_table {
-    int undefined__;
-}
-SIZE: 4
-
-crash> set scope dm_table_create
-scope: ffffffffa0005b30 (dm_table_create)
-
-crash> struct dm_table
-struct dm_table {
-    struct mapped_device *md;
-    unsigned int type;
-    unsigned int depth;
-    unsigned int counts[16];
-    sector_t *index[16];
-    unsigned int num_targets;
-    unsigned int num_allocated;
-    sector_t *highs;
-    struct dm_target *targets;
-    struct target_type *immutable_target_type;
-    unsigned int integrity_supported : 1;
-    unsigned int singleton : 1;
-    fmode_t mode;
-    struct list_head devices;
-    void (*event_fn)(void *);
-    void *event_context;
-    struct dm_md_mempools *mempools;
-    struct list_head target_callbacks;
-}
-SIZE: 304
+I'll review closer now.  Goal is to get these changes staged in
+linux-next for upstream inclusion during the 4.5 merge window.
