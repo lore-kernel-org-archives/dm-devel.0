@@ -1,28 +1,99 @@
-From: Sami Tolvanen <samitolvanen@google.com>
-Subject: Re: [PATCH 0/4] dm verity: add support for error correction
-Date: Thu, 3 Dec 2015 09:36:05 +0000
-Message-ID: <20151203093605.GC23048@google.com>
-References: <1446688954-29589-1-git-send-email-samitolvanen@google.com>
- <563B066C.6050202@redhat.com>
- <20151105173306.GA22302@google.com>
- <20151109163735.GA28884@redhat.com>
- <20151109191925.GA29185@google.com>
- <56446A28.1030507@redhat.com>
+From: Baolin Wang <baolin.wang@linaro.org>
+Subject: Re: [dm-devel] [PATCH 0/2] Introduce the request handling for dm-crypt
+Date: Thu, 3 Dec 2015 18:36:41 +0800
+Message-ID: <CAMz4ku+5HpOJfqTd0C0i0_SMODFZw38dKqwK15Db4U37VNDVeg@mail.gmail.com>
+References: <cover.1447233227.git.baolin.wang@linaro.org>
+	<20151111181813.GD12236@redhat.com>
+	<CAMz4kuKNAkFG4-f6TU1HRxgkAn+YX-D_tTQAWio-A_np3brr+A@mail.gmail.com>
+	<20151112100422.GM12392@sirena.org.uk>
+	<5644AFA2.6040201@kernel.dk>
+	<20151113115144.GR12392@sirena.org.uk>
+	<CAMz4kuLTuY5CpTfW4Gijesy1Pp9PxbWj076XeoV24Hj3EydifQ@mail.gmail.com>
+	<20151202195657.GB11127@agk-dp.fab.redhat.com>
+	<CAMz4kuL3qE-jE14F6ovAMRv6D-UFCdtiyUyi4ZDo+Lkr7_nA0Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <56446A28.1030507@redhat.com>
+In-Reply-To: <CAMz4kuL3qE-jE14F6ovAMRv6D-UFCdtiyUyi4ZDo+Lkr7_nA0Q@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Mandeep Baines <msb@chromium.org>, Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mark Salyzyn <salyzyn@google.com>
+To: Baolin Wang <baolin.wang@linaro.org>, Mark Brown <broonie@kernel.org>, Jens Axboe <axboe@kernel.dk>, keith.busch@intel.com, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Mike Snitzer <snitzer@redhat.com>, neilb@suse.com, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, "Garg, Dinesh" <dineshg@quicinc.com>, tj@kernel.org, bart.vanassche@sandisk.com, jmoyer@redhat.com, Alasdair G Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Nov 12, 2015 at 11:30:00AM +0100, Milan Broz wrote:
-> Yes, please, patches do not to be production ready (I can integrate
-> it to veritysetup upstream myself)
+On 3 December 2015 at 10:56, Baolin Wang <baolin.wang@linaro.org> wrote:
+> On 3 December 2015 at 03:56, Alasdair G Kergon <agk@redhat.com> wrote:
+>> On Wed, Dec 02, 2015 at 08:46:54PM +0800, Baolin Wang wrote:
+>>> These are the benchmarks for request based dm-crypt. Please check it.
+>>
+>> Now please put request-based dm-crypt completely to one side and focus
+>> just on the existing bio-based code.  Why is it slower and what can be
+>> adjusted to improve this?
+>>
+>
+> OK. I think I find something need to be point out.
+> 1. From the IO block size test in the performance report, for the
+> request based, we can find it can not get the corresponding
+> performance if we just expand the IO size. Because In dm crypt, it
+> will map the data buffer of one request with scatterlists, and send
+> all scatterlists of one request to the encryption engine to encrypt or
+> decrypt.  I found if the scatterlist list number is small and each
+> scatterlist length is bigger, it will improve the encryption speed,
+> that helps the engine palys best performance. But a big IO size does
+> not mean bigger scatterlists (maybe many scatterlists with small
+> length), that's why we can not get the corresponding performance if we
+> just expand the IO size I think.
+>
+> 2. Why bio based is slower?
+> If you understand 1, you can obviously understand the crypto engine
+> likes bigger scatterlists to improve the performance. But for bio
+> based, it only send one scatterlist (the scatterlist's length is
+> always '1 << SECTOR_SHIFT' = 512) to the crypto engine at one time. It
+> means if the bio size is 1M, the bio based will send 2048 times (evey
+> time the only one scatterlist length is 512 bytes) to crypto engine to
+> handle, which is more time-consuming and ineffective for the crypto
+> engine. But for request based, it can map the whole request with many
+> scatterlists (not just one scatterlist), and send all the scatterlists
+> to the crypto engine which can improve the performance, is it right?
+>
+> Another optimization solution I think is we can expand the scatterlist
+> entry number for bio based.
+>
 
-I'm working on this and should have a patch for veritysetup for you next
-week.
+I did some testing about my assumption of expanding the scatterlist
+entry number for bio based. I did some modification for the bio based
+to support multiple scatterlists, then it will get the same
+performance as the request based things.
 
-Sami
+1. bio based with expanding the scatterlist entry
+time dd if=/dev/dm-0 of=/dev/null bs=64K count=16384 iflag=direct
+1073741824 bytes (1.1 GB) copied, 94.5458 s, 11.4 MB/s
+real    1m34.562s
+user    0m0.030s
+sys     0m3.850s
+
+2. Sequential read 1G with requset based:
+time dd if=/dev/dm-0 of=/dev/null bs=64K count=16384 iflag=direct
+1073741824 bytes (1.1 GB) copied, 94.8922 s, 11.3 MB/s
+real    1m34.908s
+user    0m0.030s
+sys     0m4.000s
+
+From the data, we can find the bio based also can get the same
+performance as the request based. So if someone still don't like the
+request based things, I think we can optimize the bio based by
+expanding the scatterlists number. Thanks.
+
+>>
+>> Alasdair
+>>
+>
+>
+>
+> --
+> Baolin.wang
+> Best Regards
+
+
+
+-- 
+Baolin.wang
+Best Regards
