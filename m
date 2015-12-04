@@ -1,120 +1,115 @@
 From: Seth Forshee <seth.forshee@canonical.com>
-Subject: Re: [PATCH 15/19] capabilities: Allow privileged user in s_user_ns
- to set file caps
-Date: Fri, 4 Dec 2015 14:36:27 -0600
-Message-ID: <20151204203627.GD147214@ubuntu-hedt>
+Subject: Re: [PATCH 17/19] fuse: Support fuse filesystems outside of
+ init_user_ns
+Date: Fri, 4 Dec 2015 14:41:22 -0600
+Message-ID: <20151204204122.GE147214@ubuntu-hedt>
 References: <1449070821-73820-1-git-send-email-seth.forshee@canonical.com>
- <1449070821-73820-16-git-send-email-seth.forshee@canonical.com>
- <20151204194206.GF3624@mail.hallyn.com>
+ <1449070821-73820-18-git-send-email-seth.forshee@canonical.com>
+ <20151204200355.GH3624@mail.hallyn.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20151204194206.GF3624@mail.hallyn.com>
-Sender: linux-raid-owner@vger.kernel.org
+In-Reply-To: <20151204200355.GH3624@mail.hallyn.com>
+Sender: linux-bcache-owner@vger.kernel.org
 To: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Serge Hallyn <serge.hallyn@canonical.com>, James Morris <james.l.morris@oracle.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Miklos Szeredi <miklos@szeredi.hu>, Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
 List-Id: dm-devel.ids
 
-On Fri, Dec 04, 2015 at 01:42:06PM -0600, Serge E. Hallyn wrote:
+On Fri, Dec 04, 2015 at 02:03:55PM -0600, Serge E. Hallyn wrote:
 > Quoting Seth Forshee (seth.forshee@canonical.com):
-> > A privileged user in a super block's s_user_ns is privileged
-> > towards that file system and thus should be allowed to set file
-> > capabilities. The file capabilities will not be trusted outside
-> > of s_user_ns, so an unprivileged user cannot use this to gain
-> > privileges in a user namespace where they are not already
-> > privileged.
+> > Update fuse to translate uids and gids to/from the user namspace
+> > of the process servicing requests on /dev/fuse. Any ids which do
+> > not map into the namespace will result in errors. inodes will
+> > also be marked bad when unmappable ids are received from the
+> > userspace fuse process.
+> > 
+> > Currently no use cases are known for letting the userspace fuse
+> > daemon switch namespaces after opening /dev/fuse. Given this
+> > fact, and in order to keep the implementation as simple as
+> > possible and ease security auditing, the user namespace from
+> > which /dev/fuse is opened is used for all id translations. This
+> > is required to be the same namespace as s_user_ns to maintain
+> > behavior consistent with other filesystems which can be mounted
+> > in user namespaces.
+> > 
+> > For cuse the namespace used for the connection is also simply
+> > current_user_ns() at the time /dev/cuse is opened.
 > > 
 > > Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
 > > ---
-> >  security/commoncap.c | 12 ++++++++----
-> >  1 file changed, 8 insertions(+), 4 deletions(-)
+> >  fs/fuse/cuse.c   |  3 +-
+> >  fs/fuse/dev.c    | 13 +++++----
+> >  fs/fuse/dir.c    | 81 ++++++++++++++++++++++++++++++++++-------------------
+> >  fs/fuse/fuse_i.h | 14 ++++++----
+> >  fs/fuse/inode.c  | 85 ++++++++++++++++++++++++++++++++++++++++++--------------
+> >  5 files changed, 136 insertions(+), 60 deletions(-)
 > > 
-> > diff --git a/security/commoncap.c b/security/commoncap.c
-> > index 2119421613f6..d6c80c19c449 100644
-> > --- a/security/commoncap.c
-> > +++ b/security/commoncap.c
-> > @@ -653,15 +653,17 @@ int cap_bprm_secureexec(struct linux_binprm *bprm)
-> >  int cap_inode_setxattr(struct dentry *dentry, const char *name,
-> >  		       const void *value, size_t size, int flags)
-> >  {
-> > +	struct user_namespace *user_ns = dentry->d_sb->s_user_ns;
-> > +
-> >  	if (!strcmp(name, XATTR_NAME_CAPS)) {
-> > -		if (!capable(CAP_SETFCAP))
-> > +		if (!ns_capable(user_ns, CAP_SETFCAP))
-> >  			return -EPERM;
-> 
-> This, for file capabilities, is fine,
-> 
-> >  		return 0;
-> >  	}
+> > diff --git a/fs/fuse/cuse.c b/fs/fuse/cuse.c
+> > index eae2c11268bc..a10aca57bfe4 100644
+> > --- a/fs/fuse/cuse.c
+> > +++ b/fs/fuse/cuse.c
+> > @@ -48,6 +48,7 @@
+> >  #include <linux/stat.h>
+> >  #include <linux/module.h>
+> >  #include <linux/uio.h>
+> > +#include <linux/user_namespace.h>
 > >  
-> >  	if (!strncmp(name, XATTR_SECURITY_PREFIX,
-> >  		     sizeof(XATTR_SECURITY_PREFIX) - 1) &&
-> > -	    !capable(CAP_SYS_ADMIN))
-> > +	    !ns_capable(user_ns, CAP_SYS_ADMIN))
+> >  #include "fuse_i.h"
+> >  
+> > @@ -498,7 +499,7 @@ static int cuse_channel_open(struct inode *inode, struct file *file)
+> >  	if (!cc)
+> >  		return -ENOMEM;
+> >  
+> > -	fuse_conn_init(&cc->fc);
+> > +	fuse_conn_init(&cc->fc, current_user_ns());
+> >  
+> >  	fud = fuse_dev_alloc(&cc->fc);
+> >  	if (!fud) {
+> > diff --git a/fs/fuse/dev.c b/fs/fuse/dev.c
+> > index a4f6f30d6d86..11b4cb0a0e2f 100644
+> > --- a/fs/fuse/dev.c
+> > +++ b/fs/fuse/dev.c
+> > @@ -127,8 +127,8 @@ static void __fuse_put_request(struct fuse_req *req)
+> >  
+> >  static void fuse_req_init_context(struct fuse_conn *fc, struct fuse_req *req)
+> >  {
+> > -	req->in.h.uid = from_kuid_munged(&init_user_ns, current_fsuid());
+> > -	req->in.h.gid = from_kgid_munged(&init_user_ns, current_fsgid());
+> > +	req->in.h.uid = from_kuid(fc->user_ns, current_fsuid());
+> > +	req->in.h.gid = from_kgid(fc->user_ns, current_fsgid());
+> >  	req->in.h.pid = pid_nr_ns(task_pid(current), fc->pid_ns);
+> >  }
+> >  
+> > @@ -186,7 +186,8 @@ static struct fuse_req *__fuse_get_req(struct fuse_conn *fc, unsigned npages,
+> >  	__set_bit(FR_WAITING, &req->flags);
+> >  	if (for_background)
+> >  		__set_bit(FR_BACKGROUND, &req->flags);
+> > -	if (req->in.h.pid == 0) {
+> > +	if (req->in.h.pid == 0 || req->in.h.uid == (uid_t)-1 ||
+> > +	    req->in.h.gid == (gid_t)-1) {
+> >  		fuse_put_request(fc, req);
+> >  		return ERR_PTR(-EOVERFLOW);
+> >  	}
+> > @@ -1248,7 +1249,8 @@ static ssize_t fuse_dev_do_read(struct fuse_dev *fud, struct file *file,
+> >  	struct fuse_in *in;
+> >  	unsigned reqsize;
+> >  
+> > -	if (task_active_pid_ns(current) != fc->pid_ns)
+> > +	if (task_active_pid_ns(current) != fc->pid_ns ||
+> > +	    current_user_ns() != fc->user_ns)
 > 
-> but this is for all other security.*.
+> Do you think this should be using current_in_user_ns(fc->user_ns) ?
 > 
-> It's probably still ok, but let's think about it a sec.  MAC like
-> selinux or smack should be orthogonal to DAC.  Capabilities are the
-> same in essence, but the reason they can be treated differently here
-> is because capabilties are in fact targated at a user namespace.
-> Apparmor namespaces, for instance, are completely orthogonal to user
-> namespaces, as are contexts in selinux.
+> Opening a file, forking (maybe unsharing) then acting on the file is
+> pretty standard fare which this would break.
 > 
-> Now, if smack or selinux xattrs are being set then those modules
-> should be gating these writes.  Booting a kernel without those
-> modules should be a challenge for an untrusted user.  But such a
-> situation could be exploited opportunistically if it were to happen.
-> 
-> The problem with simply not changing this here is that if selinux
-> or smack authorizes the xattr write, then commoncap shouldn't be
-> denying it.
+> (same for pidns, i guess, as well as for write below)
 
-This is partly the logic behind the change, the other part being that
-the user could already insert the xattrs directly into the backing store
-so the LSMs must be prepared not to trust them in any case. But the
-commit message doesn't explain that, my mistake. And it's a question
-worth revisiting.
+I'd rather leave it as is. It might be okay, but even if current_user_ns
+is a child of fc->user_ns it could end up seeing ids that aren't valid
+for it's namespaces, and that might cause issues for filesystems which
+aren't expecting it.
 
-> I get the feeling we need cooperation among the modules (i.e. "if
-> the write is to 'security.$lsm' and $lsm is not loaded, then require
-> capable(CAP_SYS_ADMIN), else just allow)  But that's not how things are
-> structured right now.
-> 
-> Maybe security.ko could grow central logic to 'assign' security.*
-> capabilities to specific lsms and gate writes to those if $lsm is not
-> loaded.
-
-I don't see any meaningful difference between this case and the case of
-inserting them into the backing store before mounting. We can't do
-anything to prevent the latter, so LSMs just have to be aware of
-unprivileged mounts and handle them with care. Previous patches do this
-for SELinux and Smack by adopting a policy that doesn't respect security
-labels on disk for these mounts. So I don't think that refusing to set
-security.* xattrs for an LSM that isn't loaded really accomplishes
-anything.
-
-Then there's the case of setting xattrs for an LSM that is currently
-loaded. I think that SELinux and Smack are both going to refuse these
-writes, Smack rather directly by seeing that the user lacks global
-CAP_MAC_ADMIN and SELinux by virtue of the fact that the previous patch
-in this series applies mountpoint labeling to these mounts. As far as I
-can tell the other LSMs don't take security policy from xattrs.
-
-So, as far as I can tell, removing the check doesn't create any
-vulnerabilities.
-
-But that's not to say it's the right thing to do. After reconsidering
-it, I'm inclined to be more conservative and to keep requiring
-capable(CAP_SYS_ADMIN) until such time as there's a use case for
-allowing a user privileged only in s_user_ns to write these xattrs.
-
-> Does anything break if the second hunk in each fn in this patch is
-> not applied?
-
-Not that I'm aware of, no.
-
-Seth
+But if you have a use case for a process in a child namespace servicing
+requests for a mount, I'd be willing to reconsider.
