@@ -1,58 +1,42 @@
 From: "Serge E. Hallyn" <serge@hallyn.com>
-Subject: Re: [PATCH 13/19] fs: Allow superblock owner to access
- do_remount_sb()
-Date: Fri, 4 Dec 2015 13:02:57 -0600
-Message-ID: <20151204190257.GD3624@mail.hallyn.com>
+Subject: Re: [PATCH 14/19] fs: Permit FIBMAP for users with CAP_SYS_RAWIO in
+ s_user_ns
+Date: Fri, 4 Dec 2015 13:11:43 -0600
+Message-ID: <20151204191143.GE3624@mail.hallyn.com>
 References: <1449070821-73820-1-git-send-email-seth.forshee@canonical.com>
- <1449070821-73820-14-git-send-email-seth.forshee@canonical.com>
+ <1449070821-73820-15-git-send-email-seth.forshee@canonical.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner@vger.kernel.org>
+Return-path: <linux-security-module-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1449070821-73820-14-git-send-email-seth.forshee@canonical.com>
-Sender: linux-bcache-owner@vger.kernel.org
+In-Reply-To: <1449070821-73820-15-git-send-email-seth.forshee@canonical.com>
+Sender: owner-linux-security-module@vger.kernel.org
 To: Seth Forshee <seth.forshee@canonical.com>
 Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
 List-Id: dm-devel.ids
 
 Quoting Seth Forshee (seth.forshee@canonical.com):
-> Superblock level remounts are currently restricted to global
-> CAP_SYS_ADMIN, as is the path for changing the root mount to
-> read only on umount. Loosen both of these permission checks to
-> also allow CAP_SYS_ADMIN in any namespace which is privileged
-> towards the userns which originally mounted the filesystem.
-> 
 > Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
-> Acked-by: "Eric W. Biederman" <ebiederm@xmission.com>
-> ---
 
 Acked-by: Serge Hallyn <serge.hallyn@canonical.com>
 
->  fs/namespace.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+> ---
+>  fs/ioctl.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> diff --git a/fs/namespace.c b/fs/namespace.c
-> index 18fc58760aec..b00a765895e7 100644
-> --- a/fs/namespace.c
-> +++ b/fs/namespace.c
-> @@ -1510,7 +1510,7 @@ static int do_umount(struct mount *mnt, int flags)
->  		 * Special case for "unmounting" root ...
->  		 * we just try to remount it readonly.
->  		 */
-> -		if (!capable(CAP_SYS_ADMIN))
-> +		if (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN))
->  			return -EPERM;
->  		down_write(&sb->s_umount);
->  		if (!(sb->s_flags & MS_RDONLY))
-> @@ -2199,7 +2199,7 @@ static int do_remount(struct path *path, int flags, int mnt_flags,
->  	down_write(&sb->s_umount);
->  	if (flags & MS_BIND)
->  		err = change_mount_flags(path->mnt, flags);
-> -	else if (!capable(CAP_SYS_ADMIN))
-> +	else if (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN))
->  		err = -EPERM;
->  	else
->  		err = do_remount_sb(sb, flags, data, 0);
+> diff --git a/fs/ioctl.c b/fs/ioctl.c
+> index 5d01d2638ca5..45c371bed7ee 100644
+> --- a/fs/ioctl.c
+> +++ b/fs/ioctl.c
+> @@ -55,7 +55,7 @@ static int ioctl_fibmap(struct file *filp, int __user *p)
+>  	/* do we support this mess? */
+>  	if (!mapping->a_ops->bmap)
+>  		return -EINVAL;
+> -	if (!capable(CAP_SYS_RAWIO))
+> +	if (!ns_capable(filp->f_inode->i_sb->s_user_ns, CAP_SYS_RAWIO))
+>  		return -EPERM;
+>  	res = get_user(block, p);
+>  	if (res)
 > -- 
 > 1.9.1
 > 
