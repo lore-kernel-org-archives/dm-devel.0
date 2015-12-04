@@ -1,117 +1,69 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Modern device mapper module makes problems for dump
-	analysis
-Date: Thu, 3 Dec 2015 20:36:46 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1512032033060.23305@file01.intranet.prod.int.rdu2.redhat.com>
-References: <565DA1FD.3010804@linux.vnet.ibm.com>
-	<20151203193129.GA5264@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Baolin Wang <baolin.wang@linaro.org>
+Subject: Re: [dm-devel] [PATCH 0/2] Introduce the request handling for dm-crypt
+Date: Fri, 4 Dec 2015 12:57:19 +0800
+Message-ID: <CAMz4kuKj7+YhELFnjUqJm=MtX0UrS1oPLqWr+riAKXKng55+Ow@mail.gmail.com>
+References: <cover.1447233227.git.baolin.wang@linaro.org>
+	<20151111181813.GD12236@redhat.com>
+	<CAMz4kuKNAkFG4-f6TU1HRxgkAn+YX-D_tTQAWio-A_np3brr+A@mail.gmail.com>
+	<20151112100422.GM12392@sirena.org.uk>
+	<5644AFA2.6040201@kernel.dk>
+	<20151113115144.GR12392@sirena.org.uk>
+	<CAMz4kuLTuY5CpTfW4Gijesy1Pp9PxbWj076XeoV24Hj3EydifQ@mail.gmail.com>
+	<20151202195657.GB11127@agk-dp.fab.redhat.com>
+	<CAMz4kuL3qE-jE14F6ovAMRv6D-UFCdtiyUyi4ZDo+Lkr7_nA0Q@mail.gmail.com>
+	<alpine.LRH.2.02.1512031039001.15134@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20151203193129.GA5264@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Steffen Maier <maier@linux.vnet.ibm.com>, dm-devel@redhat.com, Alexey Ishchuk <aishchuk@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.1512031039001.15134@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mark Brown <broonie@kernel.org>, Jens Axboe <axboe@kernel.dk>, keith.busch@intel.com, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Mike Snitzer <snitzer@redhat.com>, neilb@suse.com, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, "Garg, Dinesh" <dineshg@quicinc.com>, tj@kernel.org, bart.vanassche@sandisk.com, jmoyer@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+On 3 December 2015 at 23:47, Mikulas Patocka <mpatocka@redhat.com> wrote:
+>
+>
+> On Thu, 3 Dec 2015, Baolin Wang wrote:
+>
+>> On 3 December 2015 at 03:56, Alasdair G Kergon <agk@redhat.com> wrote:
+>> > On Wed, Dec 02, 2015 at 08:46:54PM +0800, Baolin Wang wrote:
+>> >> These are the benchmarks for request based dm-crypt. Please check it.
+>> >
+>> > Now please put request-based dm-crypt completely to one side and focus
+>> > just on the existing bio-based code.  Why is it slower and what can be
+>> > adjusted to improve this?
+>> >
+>>
+>> OK. I think I find something need to be point out.
+>> 1. From the IO block size test in the performance report, for the
+>> request based, we can find it can not get the corresponding
+>> performance if we just expand the IO size. Because In dm crypt, it
+>> will map the data buffer of one request with scatterlists, and send
+>> all scatterlists of one request to the encryption engine to encrypt or
+>> decrypt.  I found if the scatterlist list number is small and each
+>> scatterlist length is bigger, it will improve the encryption speed,
+>
+> This optimization is only applicable to XTS mode. XTS has its weaknesses
+> and it is not recommended for encryption of more than 1TB of data
+> ( http://grouper.ieee.org/groups/1619/email/msg02357.html )
+>
+> You can optimize bio-based dm-crypt as well (use larger encryption chunk
+> than 512 bytes when the mode is XTS).
+>
+> The most commonly used mode aes-cbc-essiv:sha256 can't be optimized that
+> way. You have to do encryption and decryption sector by sector because
+> every sector has different IV.
+
+Make sense. We'll optimize bio-based dm-crypt for XTS mode, and do
+some investigations for none XTS mode.
+
+>
+> Mikulas
+>
 
 
-On Thu, 3 Dec 2015, Mike Snitzer wrote:
 
-> On Tue, Dec 01 2015 at  8:34am -0500,
-> Alexey Ishchuk <aishchuk@linux.vnet.ibm.com> wrote:
-> 
-> > Hi,
-> > 
-> > in the modern device mapper Linux kernel module the data structure
-> > struct dm_table is declared more than once. One of those
-> > declarations is the real structure definition and the other are
-> > dummy definitions. This coding manner makes serious problems for the
-> > Linux kernel dump analysis with crash utility using custom EPPIC
-> > language scripts and even the dminfo built-in crash extension does
-> > not work with the dumps. The problem occurs because the crash
-> > utility tries to expose to the EPPIC language scripts a dummy
-> > structure definition that contains no required fields.
-> > 
-> > I would like to get to know, why do we need more than one struct
-> > dm_table declarations in the kernel module? Is it possible to
-> > improve the device mapper kernel module code to have the only one
-> > struct dm_table declaration to allow kernel dumps to be analyzed
-> > using custom scripts?
-> 
-> The dm.c definition is:
-> 
-> /*
->  * A dummy definition to make RCU happy.
->  * struct dm_table should never be dereferenced in this file.
->  */
-> struct dm_table {
->         int undefined__;
-> };
-> 
-> As you can see in the block comment above this dummy definition is
-> purely to "make RCU happy"...
-> 
-> We'll need to research how/if we can avoid such hacks (and still have
-> RCU function as needed).
-
-The function __rcu_dereference_check does:
-((typeof(*p) __force __kernel *)(________p1));
-
---- and that typeof(*p) will not compile if the structure pointerd to by p 
-isn't defined. You could change "typeof(*p) *" to "typeof(p)" and it will 
-compile, but I don't know what to do with the __force and __kernel flags.
-
-Mikulas
-
-
-> But short of eliminating the dummy definition, have you tried using the
-> crash utility's 'set scope <text_address>' capability to force the use
-> of the dm-table.c definition? e.g.:
-> 
-> crash> mod -s dm_mod
->      MODULE       NAME                     SIZE  OBJECT FILE
-> ffffffffa0013640  dm_mod                 110592  /lib/modules/4.4.0-rc1.snitm+/kernel/drivers/md/dm-mod.ko
-> 
-> crash> struct dm_table
-> struct dm_table {
->     int undefined__;
-> }
-> SIZE: 4
-> 
-> crash> set scope dm_table_create
-> scope: ffffffffa0005b30 (dm_table_create)
-> 
-> crash> struct dm_table
-> struct dm_table {
->     struct mapped_device *md;
->     unsigned int type;
->     unsigned int depth;
->     unsigned int counts[16];
->     sector_t *index[16];
->     unsigned int num_targets;
->     unsigned int num_allocated;
->     sector_t *highs;
->     struct dm_target *targets;
->     struct target_type *immutable_target_type;
->     unsigned int integrity_supported : 1;
->     unsigned int singleton : 1;
->     fmode_t mode;
->     struct list_head devices;
->     void (*event_fn)(void *);
->     void *event_context;
->     struct dm_md_mempools *mempools;
->     struct list_head target_callbacks;
-> }
-> SIZE: 304
-> 
+-- 
+Baolin.wang
+Best Regards
