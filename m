@@ -1,55 +1,109 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2 0/2] dm verity: add support for error correction
-Date: Mon, 7 Dec 2015 14:07:43 -0500
-Message-ID: <20151207190743.GA30593@redhat.com>
-References: <1446688954-29589-1-git-send-email-samitolvanen@google.com>
- <1449152791-33586-1-git-send-email-samitolvanen@google.com>
- <20151203195401.GA5444@redhat.com>
- <20151203230538.GB5444@redhat.com>
- <20151204100305.GA37949@google.com>
- <20151204210935.GA63877@redhat.com>
- <20151207132149.GA7583@google.com>
- <20151207145814.GB29457@redhat.com>
- <20151207163108.GA21472@google.com>
- <5665CAD5.9000704@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5665CAD5.9000704@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: Sami Tolvanen <samitolvanen@google.com>, Mikulas Patocka <mpatocka@redhat.com>, Mandeep Baines <msb@chromium.org>, Will Drewry <wad@chromium.org>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Kees Cook <keescook@chromium.org>, Mark Salyzyn <salyzyn@google.com>
+From: Seth Forshee <seth.forshee@canonical.com>
+Subject: [PATCH v2 00/19] Support fuse mounts in user namespaces
+Date: Mon,  7 Dec 2015 15:21:09 -0600
+Message-ID: <1449523289-144238-1-git-send-email-seth.forshee@canonical.com>
+Return-path: <linux-bcache-owner@vger.kernel.org>
+Sender: linux-bcache-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-kernel@vger.kernel.org, Seth Forshee <seth.forshee@canonical.com>
 List-Id: dm-devel.ids
 
-On Mon, Dec 07 2015 at  1:07pm -0500,
-Milan Broz <mbroz@redhat.com> wrote:
+These patches implement support for mounting filesystems in user
+namespaces using fuse. They are based on the patches in the for-testing
+branch of
+git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git,
+but I've rebased them onto 4.4-rc3. I've pushed all of this to:
 
-> On 12/07/2015 05:31 PM, Sami Tolvanen wrote:
-> > On Mon, Dec 07, 2015 at 09:58:14AM -0500, Mike Snitzer wrote:
-> >> Great.  Moving forward it'd be awesome if you could work to get your
-> >> verity FEC support regression tests into cryptsetup's tests.
-> > 
-> > Sure. These tests would basically involve generating a valid disk
-> > image, corrupting it up to the theoretical maximum, and verifying that
-> > dm-verity can correct it.
-> 
-> Does the code handle/report even the same type of data corruption
-> for RS blocks? Or this is just silently ignored until
-> data area corruption happens?
-> Sorry, I did not study the code here, I am just curious :)
-> 
-> (IOW I mean if data are ok but recovery metadata is corrupted.)
+ git://git.kernel.org/pub/scm/linux/kernel/git/sforshee/linux.git fuse-userns
 
-There is no preemptive accessing/checking of the RS blocks.  Once a
-parity is needed for a given block, due to some corruption, the RS block
-will be accessed with:
+The patches are organized into three high-level groups.
 
-fec_decode_bufs -> fec_read_parity() -> fec_decode_rs8() -> decode_rs8()
+Patches 1-6 are related to security, adding restrictions for
+unprivileged mounts and updating the LSMs as needed. Patches 1-2
+(checking inode permissions for block device mounts) may not be strictly
+necessary for fuseblk mounts since fuse doesn't do any IO on the block
+device in the kernel, but it still seems like a good idea to fail the
+mount if the user doesn't have the required permissions for the inode
+(though this is a bit misleading with fuse since the mounts are done via
+a suid-root helper).
 
-I'm not seeing any verification of the metadata in fec_read_parity() --
-so it would seem that corrupt RS blocks would result in -EBADMSG being
-returned from decode_rs8() (by virtue of incorrect parity being passed
-to decode_rs8).
+Patches 7-14 update most of the vfs to translate ids correctly and deal
+with inodes which may have invalid user/group ids. I've omitted patches
+for anything not used by fuse - quota, fs freezing, some helper
+functions, etc. - but if these are wanted for the sake of completeness I
+can include them.
 
-Sami (or others) am I right?
+Patches 15-18 update fuse to deal with mounts from non-init pid and user
+namespaces and enable mounting from user namespaces.
+
+Changes since v1:
+ - Drop patch for FIBMAP.
+ - Use current_in_userns in fuse_allow_current_process.
+ - Remove checks for uid/gid validity in fuse. Intead, ids from the
+   backing store which do not map into s_user_ns will result in invalid
+   ids in the vfs inode. Checks in the vfs will prevent unmappable ids
+   from being passed in from above.
+ - Update a couple of commit messages to provide more detail about
+   changes.
+
+Thanks,
+Seth
+
+Andy Lutomirski (1):
+  fs: Treat foreign mounts as nosuid
+
+Seth Forshee (17):
+  block_dev: Support checking inode permissions in lookup_bdev()
+  block_dev: Check permissions towards block device inode when mounting
+  selinux: Add support for unprivileged mounts from user namespaces
+  userns: Replace in_userns with current_in_userns
+  Smack: Handle labels consistently in untrusted mounts
+  fs: Check for invalid i_uid in may_follow_link()
+  cred: Reject inodes with invalid ids in set_create_file_as()
+  fs: Refuse uid/gid changes which don't map into s_user_ns
+  fs: Update posix_acl support to handle user namespace mounts
+  fs: Ensure the mounter of a filesystem is privileged towards its
+    inodes
+  fs: Don't remove suid for CAP_FSETID in s_user_ns
+  fs: Allow superblock owner to access do_remount_sb()
+  capabilities: Allow privileged user in s_user_ns to set security.*
+    xattrs
+  fuse: Add support for pid namespaces
+  fuse: Support fuse filesystems outside of init_user_ns
+  fuse: Restrict allow_other to the superblock's namespace or a
+    descendant
+  fuse: Allow user namespace mounts
+
+ drivers/md/bcache/super.c       |  2 +-
+ drivers/md/dm-table.c           |  2 +-
+ drivers/mtd/mtdsuper.c          |  2 +-
+ fs/attr.c                       | 11 +++++++
+ fs/block_dev.c                  | 18 +++++++++--
+ fs/exec.c                       |  2 +-
+ fs/fuse/cuse.c                  |  3 +-
+ fs/fuse/dev.c                   | 26 ++++++++++++----
+ fs/fuse/dir.c                   | 16 +++++-----
+ fs/fuse/file.c                  | 22 +++++++++++---
+ fs/fuse/fuse_i.h                | 10 +++++-
+ fs/fuse/inode.c                 | 42 +++++++++++++++++---------
+ fs/inode.c                      |  6 +++-
+ fs/namei.c                      |  2 +-
+ fs/namespace.c                  | 17 +++++++++--
+ fs/posix_acl.c                  | 67 ++++++++++++++++++++++++++---------------
+ fs/quota/quota.c                |  2 +-
+ fs/xattr.c                      | 19 +++++++++---
+ include/linux/fs.h              |  2 +-
+ include/linux/mount.h           |  1 +
+ include/linux/posix_acl_xattr.h | 17 ++++++++---
+ include/linux/uidgid.h          | 10 ++++++
+ include/linux/user_namespace.h  |  6 ++--
+ kernel/capability.c             | 13 +++++---
+ kernel/cred.c                   |  2 ++
+ kernel/user_namespace.c         |  6 ++--
+ security/commoncap.c            | 16 ++++++----
+ security/selinux/hooks.c        | 25 ++++++++++++++-
+ security/smack/smack_lsm.c      | 29 ++++++++++++------
+ 29 files changed, 287 insertions(+), 109 deletions(-)
+
+-- 
+1.9.1
