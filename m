@@ -1,8 +1,8 @@
 From: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: [PATCH v2 02/18] block_dev: Check permissions towards
-	block device inode when mounting
-Date: Mon,  7 Dec 2015 15:21:11 -0600
-Message-ID: <1449523289-144238-3-git-send-email-seth.forshee@canonical.com>
+Subject: [PATCH v2 12/18] fs: Don't remove suid for CAP_FSETID
+	in s_user_ns
+Date: Mon,  7 Dec 2015 15:21:21 -0600
+Message-ID: <1449523289-144238-13-git-send-email-seth.forshee@canonical.com>
 References: <1449523289-144238-1-git-send-email-seth.forshee@canonical.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,39 +21,29 @@ To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Alex
 Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, selinux-+05T5uksL2qpZYMLLGbcSA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-Unprivileged users should not be able to mount block devices when
-they lack sufficient privileges towards the block device inode.
-Update blkdev_get_by_path() to validate that the user has the
-required access to the inode at the specified path. The check
-will be skipped for CAP_SYS_ADMIN, so privileged mounts will
-continue working as before.
+Expand the check in should_remove_suid() to keep privileges for
+CAP_FSETID in s_user_ns rather than init_user_ns.
 
 Signed-off-by: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 Acked-by: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 ---
- fs/block_dev.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+ fs/inode.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 3ebbde85d898..4fdb6ab59816 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -1424,9 +1424,14 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode,
- 					void *holder)
- {
- 	struct block_device *bdev;
-+	int perm = 0;
- 	int err;
+diff --git a/fs/inode.c b/fs/inode.c
+index 01c036fe1950..3e7c74da9304 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -1684,7 +1684,8 @@ int should_remove_suid(struct dentry *dentry)
+ 	if (unlikely((mode & S_ISGID) && (mode & S_IXGRP)))
+ 		kill |= ATTR_KILL_SGID;
  
--	bdev = lookup_bdev(path, 0);
-+	if (mode & FMODE_READ)
-+		perm |= MAY_READ;
-+	if (mode & FMODE_WRITE)
-+		perm |= MAY_WRITE;
-+	bdev = lookup_bdev(path, perm);
- 	if (IS_ERR(bdev))
- 		return bdev;
+-	if (unlikely(kill && !capable(CAP_FSETID) && S_ISREG(mode)))
++	if (unlikely(kill && !ns_capable(dentry->d_sb->s_user_ns, CAP_FSETID) &&
++		     S_ISREG(mode)))
+ 		return kill;
  
+ 	return 0;
 -- 
 1.9.1
 
