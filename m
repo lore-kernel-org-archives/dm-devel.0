@@ -1,65 +1,81 @@
-From: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: [PATCH v2 09/18] fs: Refuse uid/gid changes which
-	don't map into s_user_ns
-Date: Mon,  7 Dec 2015 15:21:18 -0600
-Message-ID: <1449523289-144238-10-git-send-email-seth.forshee@canonical.com>
+From: Seth Forshee <seth.forshee@canonical.com>
+Subject: [PATCH v2 14/18] capabilities: Allow privileged user in s_user_ns to set security.* xattrs
+Date: Mon,  7 Dec 2015 15:21:23 -0600
+Message-ID: <1449523289-144238-15-git-send-email-seth.forshee@canonical.com>
 References: <1449523289-144238-1-git-send-email-seth.forshee@canonical.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-In-Reply-To: <1449523289-144238-1-git-send-email-seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
-	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=fuse-devel>
-List-Post: <mailto:fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Help: <mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
-	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
-Errors-To: fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, selinux-+05T5uksL2qpZYMLLGbcSA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <1449523289-144238-1-git-send-email-seth.forshee@canonical.com>
+Sender: linux-bcache-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>, Serge Hallyn <serge.hallyn@canonical.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, Seth Forshee <seth.forshee@canonical.com>
 List-Id: dm-devel.ids
 
-Add checks to inode_change_ok to verify that uid and gid changes
-will map into the superblock's user namespace. If they do not
-fail with -EOVERFLOW. This cannot be overriden with ATTR_FORCE.
+A privileged user in s_user_ns will generally have the ability to
+manipulate the backing store and insert security.* xattrs into
+the filesystem directly. Therefore the kernel must be prepared to
+handle these xattrs from unprivileged mounts, and it makes little
+sense for commoncap to prevent writing these xattrs to the
+filesystem. The capability and LSM code have already been updated
+to appropriately handle xattrs from unprivileged mounts, so it
+is safe to loosen this restriction on setting xattrs.
 
-Signed-off-by: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Acked-by: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+The exception to this logic is that writing xattrs to a mounted
+filesystem may also cause the LSM inode_post_setxattr or
+inode_setsecurity callbacks to be invoked. SELinux will deny the
+xattr update by virtue of applying mountpoint labeling to
+unprivileged userns mounts, and Smack will deny the writes for
+any user without global CAP_MAC_ADMIN, so loosening the
+capability check in commoncap is safe in this respect as well.
+
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+Acked-by: Serge Hallyn <serge.hallyn@canonical.com>
 ---
- fs/attr.c | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+ security/commoncap.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/fs/attr.c b/fs/attr.c
-index 6530ced19697..55b46e3aa888 100644
---- a/fs/attr.c
-+++ b/fs/attr.c
-@@ -42,6 +42,17 @@ int inode_change_ok(const struct inode *inode, struct iattr *attr)
- 			return error;
+diff --git a/security/commoncap.c b/security/commoncap.c
+index 2119421613f6..d6c80c19c449 100644
+--- a/security/commoncap.c
++++ b/security/commoncap.c
+@@ -653,15 +653,17 @@ int cap_bprm_secureexec(struct linux_binprm *bprm)
+ int cap_inode_setxattr(struct dentry *dentry, const char *name,
+ 		       const void *value, size_t size, int flags)
+ {
++	struct user_namespace *user_ns = dentry->d_sb->s_user_ns;
++
+ 	if (!strcmp(name, XATTR_NAME_CAPS)) {
+-		if (!capable(CAP_SETFCAP))
++		if (!ns_capable(user_ns, CAP_SETFCAP))
+ 			return -EPERM;
+ 		return 0;
  	}
  
-+	/*
-+	 * Verify that uid/gid changes are valid in the target namespace
-+	 * of the superblock. This cannot be overriden using ATTR_FORCE.
-+	 */
-+	if (ia_valid & ATTR_UID &&
-+	    from_kuid(inode->i_sb->s_user_ns, attr->ia_uid) == (uid_t)-1)
-+		return -EOVERFLOW;
-+	if (ia_valid & ATTR_GID &&
-+	    from_kgid(inode->i_sb->s_user_ns, attr->ia_gid) == (gid_t)-1)
-+		return -EOVERFLOW;
+ 	if (!strncmp(name, XATTR_SECURITY_PREFIX,
+ 		     sizeof(XATTR_SECURITY_PREFIX) - 1) &&
+-	    !capable(CAP_SYS_ADMIN))
++	    !ns_capable(user_ns, CAP_SYS_ADMIN))
+ 		return -EPERM;
+ 	return 0;
+ }
+@@ -679,15 +681,17 @@ int cap_inode_setxattr(struct dentry *dentry, const char *name,
+  */
+ int cap_inode_removexattr(struct dentry *dentry, const char *name)
+ {
++	struct user_namespace *user_ns = dentry->d_sb->s_user_ns;
 +
- 	/* If force is set do it anyway. */
- 	if (ia_valid & ATTR_FORCE)
+ 	if (!strcmp(name, XATTR_NAME_CAPS)) {
+-		if (!capable(CAP_SETFCAP))
++		if (!ns_capable(user_ns, CAP_SETFCAP))
+ 			return -EPERM;
  		return 0;
+ 	}
+ 
+ 	if (!strncmp(name, XATTR_SECURITY_PREFIX,
+ 		     sizeof(XATTR_SECURITY_PREFIX) - 1) &&
+-	    !capable(CAP_SYS_ADMIN))
++	    !ns_capable(user_ns, CAP_SYS_ADMIN))
+ 		return -EPERM;
+ 	return 0;
+ }
 -- 
 1.9.1
-
-
-------------------------------------------------------------------------------
-Go from Idea to Many App Stores Faster with Intel(R) XDK
-Give your users amazing mobile app experiences with Intel(R) XDK.
-Use one codebase in this all-in-one HTML5 development environment.
-Design, debug & build mobile apps & 2D/3D high-impact games for multiple OSs.
-http://pubads.g.doubleclick.net/gampad/clk?id=254741911&iu=/4140
