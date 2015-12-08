@@ -1,34 +1,66 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm verity: use sector_div for division
-Date: Tue, 8 Dec 2015 12:10:13 -0500
-Message-ID: <20151208171013.GA4263@redhat.com>
-References: <2666833.eM84rj4CYY@wuerfel>
+From: Scotty Bauer <sbauer@eng.utah.edu>
+Subject: Re: [PATCH] dm ioctl: Access user-land memory through safe functions.
+Date: Tue, 8 Dec 2015 11:26:24 -0700
+Message-ID: <566720D0.8080509@eng.utah.edu>
+References: <565DE2B8.7040709@eng.utah.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <2666833.eM84rj4CYY@wuerfel>
+In-Reply-To: <565DE2B8.7040709@eng.utah.edu>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: dm-devel@redhat.com, Neil Brown <neilb@suse.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, linux-arm-kernel@lists.infradead.org
+To: agk@redhat.com, snitzer@redhat.com
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Dec 08 2015 at 10:42am -0500,
-Arnd Bergmann <arnd@arndb.de> wrote:
 
-> The dm verity sec implementation uses do_div for dividing a sector_t,
-> which is slower than necessary when sector_t is a 32-bit type, and
-> we now get a warning for this case:
+On 12/01/2015 11:11 AM, Scotty wrote:
 > 
-> include/asm-generic/div64.h:224:22: warning: passing argument 1 of '__div64_32' from incompatible pointer type [-Wincompatible-pointer-types]
-> drivers/md/dm-verity-fec.c:725:6: note: in expansion of macro 'do_div'
->   if (do_div(f->rounds, f->rsn))
+> 0001-dm-ioctl-Access-user-land-memory-through-safe-functi.patch
 > 
-> This changes the code to use sector_div instead, which does the
-> right thing and avoids the warning.
+> 
+> From b26adf880eba03ac6f2b1dd87426bb96fd2a0282 Mon Sep 17 00:00:00 2001
+> From: Scotty Bauer <sbauer@eng.utah.edu>
+> Date: Tue, 1 Dec 2015 10:52:46 -0700
+> Subject: [PATCH] dm ioctl: Access user-land memory through safe functions.
+> 
+> This patch fixes a user-land dereference. Now we use
+> the safe copy_from_user to access the memory.
+> 
+> Signed-off-by: Scotty Bauer <sbauer@eng.utah.edu>
+> ---
+>  drivers/md/dm-ioctl.c | 8 ++++++--
+>  1 file changed, 6 insertions(+), 2 deletions(-)
+> 
+> diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+> index 80a4395..39a9d1a 100644
+> --- a/drivers/md/dm-ioctl.c
+> +++ b/drivers/md/dm-ioctl.c
+> @@ -1642,9 +1642,13 @@ static ioctl_fn lookup_ioctl(unsigned int cmd, int *ioctl_flags)
+>  static int check_version(unsigned int cmd, struct dm_ioctl __user *user)
+>  {
+>  	uint32_t version[3];
+> +	uint32_t __user *version_ptr;
+>  	int r = 0;
+>  
+> -	if (copy_from_user(version, user->version, sizeof(version)))
+> +	if (copy_from_user(&version_ptr, &user->version, sizeof(version_ptr)))
+> +		return -EFAULT;
+> +
+> +	if (copy_from_user(version, version_ptr, sizeof(version)))
+>  		return -EFAULT;
+>  
+>  	if ((DM_VERSION_MAJOR != version[0]) ||
+> @@ -1663,7 +1667,7 @@ static int check_version(unsigned int cmd, struct dm_ioctl __user *user)
+>  	version[0] = DM_VERSION_MAJOR;
+>  	version[1] = DM_VERSION_MINOR;
+>  	version[2] = DM_VERSION_PATCHLEVEL;
+> -	if (copy_to_user(user->version, version, sizeof(version)))
+> +	if (copy_to_user(version_ptr, version, sizeof(version)))
+>  		return -EFAULT;
+>  
+>  	return r;
+> -- 
 
-Thanks, I'll fold this in.
 
-(Btw, I did review this use of do_div(): but only to answer whether there
-was potential for a 64bit divide.  I concluded do_div() was fine but didn't
-look to see the data type for f->rounds was actually sector_t.)
+Friendly ping, is anyone interested in this?
