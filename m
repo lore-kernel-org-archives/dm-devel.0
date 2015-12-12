@@ -1,112 +1,69 @@
 From: Nikolay Borisov <n.borisov@siteground.com>
-Subject: Re: lvremove kernel BUG at drivers/md/dm-bufio.c:1494!
-Date: Sat, 12 Dec 2015 11:21:46 +0200
-Message-ID: <566BE72A.80606@siteground.com>
-References: <564DE740.3040104@siteground.com>
-	<20151120194616.GA19332@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: corruption causing crash in __queue_work
+Date: Sat, 12 Dec 2015 13:49:50 +0200
+Message-ID: <566C09DE.9020802@siteground.com>
+References: <566819D8.5090804@kyup.com>
+ <20151209160803.GK30240@mtj.duckdns.org> <56685573.1020805@kyup.com>
+ <20151209162744.GN30240@mtj.duckdns.org> <566945A2.1050208@kyup.com>
+ <20151210152901.GR30240@mtj.duckdns.org> <566AF262.8050009@kyup.com>
+ <20151211170805.GT30240@mtj.duckdns.org>
+ <CAJFSNy6XgnQJrZCJd-+V9j510P+AWF76btQq3wEg4-VpjAZjFw@mail.gmail.com>
+ <20151211191400.GA24229@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20151120194616.GA19332@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, vaLentin chernoZemski <valentin@siteground.com>
-Cc: dm-devel@redhat.com, SiteGround Operations <operations@siteground.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20151211191400.GA24229@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Tejun Heo <tj@kernel.org>, Nikolay Borisov <kernel@kyup.com>, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, SiteGround Operations <operations@siteground.com>, Alasdair Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 
 
-On 11/20/2015 09:46 PM, Mike Snitzer wrote:
-> On Thu, Nov 19 2015 at 10:14am -0500,
-> vaLentin chernoZemski <valentin@siteground.com> wrote:
+On 12/11/2015 09:14 PM, Mike Snitzer wrote:
+> On Fri, Dec 11 2015 at  1:00pm -0500,
+> Nikolay Borisov <n.borisov@siteground.com> wrote:
 > 
->> Hi folks,
->>
->> It seems that there is a bug in the linux kernel in any release from
->>
->>  - 2.6.32-573.3.1.el6.x86_64 - crash
->>  - 3.12.49 + msg00123 patch - crash / D state
->>  - 4.1.6 - lv* operations in D state after bug is hit
->>  - 4.1.12 + f11a82caf / b0dc3c8bc15 - lv* operations in D state
->> after bug is hit
->>  - 4.2.5 - lv* operations in D state after bug is hit
->>  - 4.3.0-rc7-vanilla1
->>
->> The bug is described in details and stack traces in RedHat's
->> bugzilla under id 1219634:
->>
->> https://bugzilla.redhat.com/show_bug.cgi?id=1219634
->>
->> For some reason it is marked as private but I guess you have access
->> to this one.
->>
->> Issue is present in current latest RHEL version and all vanilla
->> kernels I tested with multiple patches specified in the bug.
->>
->> Even I can not provide you with exact reproducer it happens often
->> enough on a fleet of machines we have that perform certain tasks and
->> we can easily test new patches or provide you with specific
->> information upon request from all crash dumps we reliably collected
->> and still collecting from all kernel versions tested.
->>
->> I got advised by Mike Snitzer to dm-devel so here it is.
->>
->> Let us know if there is anything we can do to assist you further.
+>> On Fri, Dec 11, 2015 at 7:08 PM, Tejun Heo <tj@kernel.org> wrote:
+>>>
+>>> Hmmm... No idea why it didn't show up in the debug log but the only
+>>> way a workqueue could be in the above state is either it got
+>>> explicitly destroyed or somehow pwq refcnting is messed up, in both
+>>> cases it should have shown up in the log.
+>>>
+>>> cc'ing dm people.  Is there any chance dm-thinp could be using
+>>> workqueue after destroying it?
 > 
-> As you know we've already had further exchanges off-list (started prior
-> to you having sent this mail to dm-devel).
+> Not that I'm aware of.  But never say never?
 > 
-> But for the benefit of others; here are some additional details not
-> covered above:
-> - you have a pretty extensive multi-system setup that is seeing these
->   thinp metadata corruptions manifest as a BUG_ON in bufio.c
-> - my theory is that even though we've fixed bugs in persistent-data that
->   will likely prevent future corruption on-disk you could easily have
->   on-disk corruption that even the new code cannot cope with.
-> - it isn't productive for the persistent-data code to immediately BUG_ON
->   in the face of this corruption
-> - because the kernel code just does BUG_ON you're having a hard time
->   identifying which thin-pool is hitting problems across your cluster
+> Plus I'd think we'd see other dm-thinp specific use-after-free issues
+> aside from the thin-pool's workqueue.
 > 
-> So in summary, we need 2 improvements moving forward:
-> 1) the kernel code should bubble errors out to the edges; the error
->    should cause the pool to transition to read-only mode (w/ needs_check
->    flag set) -- a side-effect of this is we'll get logging of which
->    thin-pool metadata device(s) saw the corruption
+>> In __pool_destroy in dm-thin.c I don't see a call to
+>> cancel_delayed_work before destroying the workqueue. Is it possible
+>> that this is the causeI
 > 
-> 2) we need lvm2 to simplify direct access to the pool's metadata volume
->    to assist with more advanced troubleshooting (e.g. creating a
->    compressed copy of the thin-pool metadata device that we can analyze)
+> Cannot see how, __pool_destroy()'s destroy_workqueue() would spew a
+> bunch of WARN_ONs (and the wq wouldn't be destroyed) if the workqueue
+> had outstanding work.
+> 
+> __pool_destroy() is called once the thin-pool's ref count drops to 0
+> (see __pool_dec which is called when the thin-pool is removed --
+> e.g. with 'dmsetup remove').  This code is only reachable when nothing
+> else is using the thin-pool.
+> 
+> And the thin-pool is only able to be removed if all thin devices that
+> depend on it have first been removed.  And each individual thin device
+> waits for all outstanding IO before they can be removed.
 
-Hello Mike,
-
-Sorry for taking so long to get back you. I have tested our in-house
-reproducer with
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.4&id=ed8b45a3679eb49069b094c0711b30833f27c734
-
-
-applied and can confirm that with this patch the kernel no longer
-crashes whereas without it - it does. So indeed the aforementioned patch
-fixes the issue. You can add
-
-Tested-by: Nikolay Borisov <kernel@kyup.com>
-
-On a different note, are you still interested in acquiring the image we
-used to reproduce the issue? If so maybe we should liaise off-list to
-get it to you?
+Ok, I had a look at the code closer now and it indeed seems that when
+the pool is suspended in its postsuspend callback the delay work is
+indeed canceled and the workqueue is being flushed. But given that I see
+those failures on at least 2-3 servers perday I doubt it it is a
+hardware/machine-specific issue. Furthermore, the fact that it is always
+a dm-thin queue that's being referenced points to the direction of
+dm-thin, even though the code looks solid in that regard.
 
 Regards,
 Nikolay
-
-> 
-> Mike
-> 
