@@ -1,15 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: 4.4-rc4 multipath not working?
-Date: Fri, 11 Dec 2015 16:00:11 -0500
-Message-ID: <20151211210010.GA28142@redhat.com>
-References: <CAJtFHURrhfUqpqo8RLFRwJV55eAV68q62r71aHpvNH_J_Q=hLA@mail.gmail.com>
+From: Nikolay Borisov <n.borisov@siteground.com>
+Subject: Re: lvremove kernel BUG at drivers/md/dm-bufio.c:1494!
+Date: Sat, 12 Dec 2015 11:21:46 +0200
+Message-ID: <566BE72A.80606@siteground.com>
+References: <564DE740.3040104@siteground.com>
+	<20151120194616.GA19332@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAJtFHURrhfUqpqo8RLFRwJV55eAV68q62r71aHpvNH_J_Q=hLA@mail.gmail.com>
+In-Reply-To: <20151120194616.GA19332@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,27 +19,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: E V <eliventer@gmail.com>
-Cc: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, vaLentin chernoZemski <valentin@siteground.com>
+Cc: dm-devel@redhat.com, SiteGround Operations <operations@siteground.com>
 List-Id: dm-devel.ids
 
-On Fri, Dec 11 2015 at 12:23pm -0500,
-E V <eliventer@gmail.com> wrote:
 
-> Just tried booting 4.4-rc4 on a system with using the mptsas driver:
-> LSISAS3008: FWVersion(03.00.08.00), ChipRevision(0x02), BiosVersion(05.07.02.00)
+
+On 11/20/2015 09:46 PM, Mike Snitzer wrote:
+> On Thu, Nov 19 2015 at 10:14am -0500,
+> vaLentin chernoZemski <valentin@siteground.com> wrote:
 > 
-> And multipath doesn't seem to be working, dmesg has lots of these:
+>> Hi folks,
+>>
+>> It seems that there is a bug in the linux kernel in any release from
+>>
+>>  - 2.6.32-573.3.1.el6.x86_64 - crash
+>>  - 3.12.49 + msg00123 patch - crash / D state
+>>  - 4.1.6 - lv* operations in D state after bug is hit
+>>  - 4.1.12 + f11a82caf / b0dc3c8bc15 - lv* operations in D state
+>> after bug is hit
+>>  - 4.2.5 - lv* operations in D state after bug is hit
+>>  - 4.3.0-rc7-vanilla1
+>>
+>> The bug is described in details and stack traces in RedHat's
+>> bugzilla under id 1219634:
+>>
+>> https://bugzilla.redhat.com/show_bug.cgi?id=1219634
+>>
+>> For some reason it is marked as private but I guess you have access
+>> to this one.
+>>
+>> Issue is present in current latest RHEL version and all vanilla
+>> kernels I tested with multiple patches specified in the bug.
+>>
+>> Even I can not provide you with exact reproducer it happens often
+>> enough on a fleet of machines we have that perform certain tasks and
+>> we can easily test new patches or provide you with specific
+>> information upon request from all crash dumps we reliably collected
+>> and still collecting from all kernel versions tested.
+>>
+>> I got advised by Mike Snitzer to dm-devel so here it is.
+>>
+>> Let us know if there is anything we can do to assist you further.
 > 
-> device-mapper: table: 254:2: multipath: unknown path selector type
-> device-mapper: ioctl: error adding target to table
+> As you know we've already had further exchanges off-list (started prior
+> to you having sent this mail to dm-devel).
+> 
+> But for the benefit of others; here are some additional details not
+> covered above:
+> - you have a pretty extensive multi-system setup that is seeing these
+>   thinp metadata corruptions manifest as a BUG_ON in bufio.c
+> - my theory is that even though we've fixed bugs in persistent-data that
+>   will likely prevent future corruption on-disk you could easily have
+>   on-disk corruption that even the new code cannot cope with.
+> - it isn't productive for the persistent-data code to immediately BUG_ON
+>   in the face of this corruption
+> - because the kernel code just does BUG_ON you're having a hard time
+>   identifying which thin-pool is hitting problems across your cluster
+> 
+> So in summary, we need 2 improvements moving forward:
+> 1) the kernel code should bubble errors out to the edges; the error
+>    should cause the pool to transition to read-only mode (w/ needs_check
+>    flag set) -- a side-effect of this is we'll get logging of which
+>    thin-pool metadata device(s) saw the corruption
+> 
+> 2) we need lvm2 to simplify direct access to the pool's metadata volume
+>    to assist with more advanced troubleshooting (e.g. creating a
+>    compressed copy of the thin-pool metadata device that we can analyze)
 
-You compile the path selector module you're attempting to use?
- 
-> Is it expected to work? and any suggestions on getting it to work,
+Hello Mike,
 
-Yes, no reason dm-multipath shouldn't work (other than user error).
+Sorry for taking so long to get back you. I have tested our in-house
+reproducer with
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.4&id=ed8b45a3679eb49069b094c0711b30833f27c734
 
-Figure out what the multipath table load line that failed to load
-(verbose logging with multipathd?) and make sure you have the
-corresponding path selector modules enabled in your .config
+
+applied and can confirm that with this patch the kernel no longer
+crashes whereas without it - it does. So indeed the aforementioned patch
+fixes the issue. You can add
+
+Tested-by: Nikolay Borisov <kernel@kyup.com>
+
+On a different note, are you still interested in acquiring the image we
+used to reproduce the issue? If so maybe we should liaise off-list to
+get it to you?
+
+Regards,
+Nikolay
+
+> 
+> Mike
+> 
