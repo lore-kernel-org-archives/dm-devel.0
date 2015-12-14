@@ -1,65 +1,144 @@
-From: Baolin Wang <baolin.wang@linaro.org>
-Subject: [PATCH 1/2] block: Export the __blk_bios_map_sg() to map one bio
-Date: Mon, 14 Dec 2015 16:23:39 +0800
-Message-ID: <224caa7e50b4a4e6ed6292e3fd70cc0bf290588b.1450080755.git.baolin.wang@linaro.org>
-References: <cover.1450080755.git.baolin.wang@linaro.org>
+From: Nikolay Borisov <kernel@kyup.com>
+Subject: Re: corruption causing crash in __queue_work
+Date: Mon, 14 Dec 2015 10:41:18 +0200
+Message-ID: <566E80AE.7020502@kyup.com>
+References: <566819D8.5090804@kyup.com>
+ <20151209160803.GK30240@mtj.duckdns.org> <56685573.1020805@kyup.com>
+ <20151209162744.GN30240@mtj.duckdns.org> <566945A2.1050208@kyup.com>
+ <20151210152901.GR30240@mtj.duckdns.org> <566AF262.8050009@kyup.com>
+ <20151211170805.GT30240@mtj.duckdns.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1450080755.git.baolin.wang@linaro.org>
-In-Reply-To: <cover.1450080755.git.baolin.wang@linaro.org>
-References: <cover.1450080755.git.baolin.wang@linaro.org>
+In-Reply-To: <20151211170805.GT30240@mtj.duckdns.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
-Cc: neilb@suse.com, dan.j.williams@intel.com, martin.petersen@oracle.com, sagig@mellanox.com, kent.overstreet@gmail.com, keith.busch@intel.com, tj@kernel.org, broonie@kernel.org, arnd@arndb.de, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, baolin.wang@linaro.org
+To: Tejun Heo <tj@kernel.org>
+Cc: "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, SiteGround Operations <operations@siteground.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-In dm-crypt, it need to map one bio to scatterlist for improving the
-encryption efficiency. Thus this patch exports the __blk_bios_map_sg()
-function to map one bio with scatterlists.
 
-Signed-off-by: Baolin Wang <baolin.wang@linaro.org>
----
- block/blk-merge.c      |    7 ++++---
- include/linux/blkdev.h |    3 +++
- 2 files changed, 7 insertions(+), 3 deletions(-)
 
-diff --git a/block/blk-merge.c b/block/blk-merge.c
-index de5716d8..09cc7c4 100644
---- a/block/blk-merge.c
-+++ b/block/blk-merge.c
-@@ -331,9 +331,9 @@ new_segment:
- 	*bvprv = *bvec;
- }
- 
--static int __blk_bios_map_sg(struct request_queue *q, struct bio *bio,
--			     struct scatterlist *sglist,
--			     struct scatterlist **sg)
-+int __blk_bios_map_sg(struct request_queue *q, struct bio *bio,
-+		      struct scatterlist *sglist,
-+		      struct scatterlist **sg)
- {
- 	struct bio_vec bvec, bvprv = { NULL };
- 	struct bvec_iter iter;
-@@ -372,6 +372,7 @@ single_segment:
- 
- 	return nsegs;
- }
-+EXPORT_SYMBOL(__blk_bios_map_sg);
- 
- /*
-  * map a request to scatterlist, return number of sg entries setup. Caller
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 3fe27f8..dd8d10f 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1004,6 +1004,9 @@ extern void blk_queue_flush_queueable(struct request_queue *q, bool queueable);
- extern struct backing_dev_info *blk_get_backing_dev_info(struct block_device *bdev);
- 
- extern int blk_rq_map_sg(struct request_queue *, struct request *, struct scatterlist *);
-+extern int __blk_bios_map_sg(struct request_queue *q, struct bio *bio,
-+			     struct scatterlist *sglist,
-+			     struct scatterlist **sg);
- extern void blk_dump_rq_flags(struct request *, char *);
- extern long nr_blockdev_pages(void);
- 
--- 
-1.7.9.5
+On 12/11/2015 07:08 PM, Tejun Heo wrote:
+> Hello, Nikolay.
+> 
+> On Fri, Dec 11, 2015 at 05:57:22PM +0200, Nikolay Borisov wrote:
+>> So I had a server with the patch just crash on me:
+>>
+>> Here is how the queue looks like:
+>>  crash> struct workqueue_struct 0xffff8802420a4a00
+>> struct workqueue_struct {
+>>   pwqs = {
+>>     next = 0xffff8802420a4c00,
+>>     prev = 0xffff8802420a4a00
+> 
+> Hmmm... pwq list is already corrupt.  ->prev is terminated but ->next
+> isn't.
+> 
+>>   },
+>>   list = {
+>>     next = 0xffff880351f9b210,
+>>     prev = 0xdead000000200200
+> 
+> Followed by by 0xdead000000200200 which is likely from
+> CONFIG_ILLEGAL_POINTER_VALUE.
+> 
+> ...
+>>   name =
+>> "dm-thin\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
+>>   rcu = {
+>>     next = 0xffff8802531c4c20,
+>>     func = 0xffffffff810692e0 <rcu_free_wq>
+> 
+> and call_rcu_sched() already called.  The workqueue has already been
+> destroyed.
+> 
+>>   },
+>>   flags = 131082,
+>>   cpu_pwqs = 0x0,
+>>   numa_pwq_tbl = 0xffff8802420a4b10
+>> }
+>>
+>> crash> rd 0xffff8802420a4b10 2 (the machine has 2 NUMA nodes hence the
+>> '2' argument)
+>> ffff8802420a4b10:  0000000000000000 0000000000000000   ................
+>>
+>> At the same time searching for 0xffff8802420a4a00 in the debug output
+>> shows nothing IOW it seems that the numa_pwq_tbl is never installed for
+>> this workqueue apparently:
+>>
+>> [root@smallvault8 ~]# grep 0xffff8802420a4a00 /var/log/messages
+>>
+>> Also dumping all the logs from the dmesg contained in the vmcore image I
+>> find nothing and when I do the following correlation:
+>> [root@smallvault8 ~]# grep \(null\) wq.log | wc -l
+>> 1940
+>> [root@smallvault8 ~]# wc -l wq.log
+>> 1940 wq.log
+>>
+>> It seems what's happening is really just changing the numa_pwq_tbl on
+>> workqueue creation i.e. it is never re-assigned. So at this point I
+>> think it seems that there is a situation where the wqattr are not being
+>> applied at all.
+> 
+> Hmmm... No idea why it didn't show up in the debug log but the only
+> way a workqueue could be in the above state is either it got
+> explicitly destroyed or somehow pwq refcnting is messed up, in both
+> cases it should have shown up in the log.
+
+Had another poke at the backtrace that is produced and here what the
+delayed_work looks like:
+
+crash> struct delayed_work ffff88036772c8c0
+struct delayed_work {
+  work = {
+    data = {
+      counter = 1537
+    },
+    entry = {
+      next = 0xffff88036772c8c8,
+      prev = 0xffff88036772c8c8
+    },
+    func = 0xffffffffa0211a30 <do_waker>
+  },
+  timer = {
+    entry = {
+      next = 0x0,
+      prev = 0xdead000000200200
+    },
+    expires = 4349463655,
+    base = 0xffff88047fd2d602,
+    function = 0xffffffff8106da40 <delayed_work_timer_fn>,
+    data = 18446612146934696128,
+    slack = -1,
+    start_pid = -1,
+    start_site = 0x0,
+    start_comm =
+"\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+  },
+  wq = 0xffff88030cf65400,
+  cpu = 21
+}
+
+From this it seems that the timer is also cancelled/expired judging by
+the values in timer -> entry. But then again in dm-thin the pool is
+first suspended, which implies the following functions were called:
+
+cancel_delayed_work(&pool->waker);
+cancel_delayed_work(&pool->no_space_timeout);
+flush_workqueue(pool->wq);
+
+so at that point dm-thin's workqueue should be empty and it shouldn't be
+possible to queue any more delayed work. But the crashdump clearly shows
+that the opposite is happening. So far all of this points to a race
+condition and inserting some sleeps after umount and after vgchange -Kan
+(command to disable volume group and suspend, so the cancel_delayed_work
+is invoked) seems to reduce the frequency of crashes, though it doesn't
+eliminate them.
+
+> 
+> cc'ing dm people.  Is there any chance dm-think could be using
+> workqueue after destroying it?
+> 
+> Thanks.
+> 
