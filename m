@@ -1,68 +1,95 @@
-From: Douglas Gilbert <dgilbert@interlog.com>
-Subject: Re: [PATCH 0/15] copy offload patches
-Date: Mon, 14 Dec 2015 22:43:04 -0500
-Message-ID: <566F8C48.6060903@interlog.com>
-References: <alpine.LRH.2.02.1512101145430.25927@file01.intranet.prod.int.rdu2.redhat.com>
- <yq1r3iuylwd.fsf@sermon.lab.mkp.net>
- <alpine.LRH.2.02.1512142018030.8189@file01.intranet.prod.int.rdu2.redhat.com>
-Reply-To: dgilbert@interlog.com
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [PATCH 2/2] md: dm-crypt: Optimize the dm-crypt for XTS mode
+Date: Tue, 15 Dec 2015 09:20:39 +0100
+Message-ID: <566FCD57.3000507@gmail.com>
+References: <cover.1450080755.git.baolin.wang@linaro.org>
+ <02be0f42bf2d3c3d27b43bc050a783582b7af733.1450080755.git.baolin.wang@linaro.org>
+ <566F5168.7010905@gmail.com>
+ <CAMz4kuJn=2xE7XW79=fCa9qKRT5df9q6H0xNBnhYQveAZrF4ww@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1512142018030.8189@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <CAMz4kuJn=2xE7XW79=fCa9qKRT5df9q6H0xNBnhYQveAZrF4ww@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: "James E.J. Bottomley" <JBottomley@odin.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <msnitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, Mike Christie <michaelc@cs.wisc.edu>
+To: Baolin Wang <baolin.wang@linaro.org>
+Cc: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, neilb@suse.com, dan.j.williams@intel.com, martin.petersen@oracle.com, sagig@mellanox.com, kent.overstreet@gmail.com, keith.busch@intel.com, tj@kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 15-12-14 08:22 PM, Mikulas Patocka wrote:
->
->
-> On Thu, 10 Dec 2015, Martin K. Petersen wrote:
->
->>>>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
+On 12/15/2015 03:56 AM, Baolin Wang wrote:
+>>> +     /*
+>>> +      * Here we need to check if it can be encrypted or decrypted with
+>>> +      * bulk block, which means these encryption modes don't need IV or
+>>> +      * just need one initial IV. For bulk mode, we can expand the
+>>> +      * scatterlist entries to map the bio, then send all the scatterlists
+>>> +      * to the hardware engine at one time to improve the crypto engine
+>>> +      * efficiency. But it does not fit for other encryption modes, it has
+>>> +      * to do encryption and decryption sector by sector because every
+>>> +      * sector has different IV.
+>>> +      */
+>>> +     if (!strcmp(chainmode, "ecb") || !strcmp(chainmode, "xts"))
+>>> +             cc->bulk_crypto = 1;
+>>> +     else
+>>> +             cc->bulk_crypto = 0;n
 >>
->> Mikulas,
+>> It is perfectly fine to use another IV even for XTS mode (despite it is not needed).
+>> You can use ESSIV for example, or benbi (big-endian variant of plain IV).
+>> (And it is really used for some LUKS devices.)
 >>
->> Mikulas> This patch series adds copy offload (the XCOPY command) to the
->> Mikulas> block layer, SCSI subsystems and device mapper.
->>
->> Now that the VFS stuff appears to stabilize I agree it's a good time to
->> revisit all this. I just merged the required VPD patches from Hannes so
->> those will be in 4.5.
->>
->> I have a bunch of changes to the SCSI code that I worked on over the
->> spring/summer based on a feedback from the array vendors after
->> discussions we started at LSF/MM. Generally speaking, their comments
->> didn't make things easier, nor prettier :( But your two bio approach is
->> a requirement to accommodate those needs (token-based copy) so I'll work
->> on consolidating your changes with mine.
->
-> Let me know when you make some progress with that.
->
-> Is there some software iSCSI implementation that supports token-based
-> copy? So that I could try to make support for it.
+>> How it is supposed to work in this case?
+>> If I read this patch correctly, it will completely corrupt data in this case because
+>> it expects plain (consecutive) IV...
+> 
+> The XTS mode can limit maximum size of each encrypted data unit
+> (typically a sector or disk block) to 2^20 AES blocks, so we can use
+> one bio as one encrypted data unit (we don't do it sector by sector).
+> It can generate one IV for each separate encrypted data unit. Please
+> correct me if I misunderstand something. Thanks.
 
-FreeNAS. See:
-    http://www.freenas.org/
+How this will help XTS-ESSIV, if you have to recalculate IV on every fixed
+encrypted block?
 
-It has the best ODX implementation (thanks to Alexander Motin) that
-I have come across for testing my ddpt based ODX client. It also
-supports large parts of the more general xcopy LID1 and LID4.
+TBH I think the whole patch here is doing something more than optimization
+and seriously touches cryptography part.
 
+Isn't in de-facto reinventing how the full disk encryption works today?
 
-BTW In SPC-5 xcopy LID1 has been dropped and "xcopy" now means
-xcopy LID4 (as found in SPC-4).
+All currently used systems use always disk encrypted block size (usually fixed
+to 512 bytes sectors like in dmcrypt) and these are encrypted independently with own IV.
+(We can talk about supporting larger disk encrypted block sizes but the principle
+it is still the same.
+And we played with it before already  http://www.saout.de/pipermail/dm-crypt/2013-January/003125.html)
 
-Doug Gilbert
+Every encrypted disk block here has independent initialization vector - IV (or tweak).
+For some modes (like XTS, LRW) this vector can produce just predictable linear offset,
+usually just block number (it must not repeat though; exceptions are legacy/compatible IVs).
+But it can be also something else - pseudorandom sequence like in ESSIV or so.
 
->> That said, we still need Mike Christie's patches to go in first.
->>
->> Mike: What's your status? I'm afraid I didn't get a chance to dig very
->> deep in your series since it coincided with me scrambling to sort out
->> SCSI for 4.4. Do you think there's a chance we could get your patches in
->> shape for 4.5? Is there an up-to-date tree I can look at?
->>
->> --
->> Martin K. Petersen	Oracle Linux Engineering
+If I understand your patch correctly, you are trying to use the XTS mode for
+the whole bulk request (there is only one IV for the bulk request and this bulk request
+is larger than currently fixed disk block size).
+
+Isn't it even incompatible with the current XTS (aes-xts-plain64) encrypted disk
+per-sector where for every sectors new IV initialization is used?
+In fact I think that your approach would need to implement some different
+IV name (aes-xts-bulk) or something like that so userspace (cryptsetup)
+can be backward compatible.
+
+BTW the 2^20 block limit requirement (the XTS block size) is strict limit in some specifications.
+For example, NIST SP800-38E (XTS-AES) says:
+"The length of the data unit for any instance of an implementation of XTS-AES shall not exceed
+2^20 AES blocks."
+
+There are a lot of badly implemented hw crypto accelerators where initialization cost
+is quite big and that performs better if it encrypts large blocks of data
+(it applies even for CBC mode). These are simply not designed for FDE use case...
+
+But IMHO this is not correct reason to patch it in kernel, moreover on dmcrypt layer
+with side effect of hardcoding another kind of crypto logic into dmcrypt.
+
+DMcrypt should be completely independent of used symmetric block encryption mode
+(that's the crypto API job). There will be new modes in future, there can be requests
+to switch to different IVs (similar to preventing CBC watermarking attack with
+predictable IV) etc.
+
+Milan
