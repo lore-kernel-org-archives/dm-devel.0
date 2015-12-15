@@ -1,50 +1,54 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH 2/2] md: dm-crypt: Optimize the dm-crypt for XTS mode
-Date: Tue, 15 Dec 2015 00:31:52 +0100
-Message-ID: <566F5168.7010905@gmail.com>
-References: <cover.1450080755.git.baolin.wang@linaro.org>
- <02be0f42bf2d3c3d27b43bc050a783582b7af733.1450080755.git.baolin.wang@linaro.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 0/15] copy offload patches
+Date: Mon, 14 Dec 2015 20:22:42 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1512142018030.8189@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1512101145430.25927@file01.intranet.prod.int.rdu2.redhat.com> <yq1r3iuylwd.fsf@sermon.lab.mkp.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <02be0f42bf2d3c3d27b43bc050a783582b7af733.1450080755.git.baolin.wang@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Baolin Wang <baolin.wang@linaro.org>, axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
-Cc: neilb@suse.com, dan.j.williams@intel.com, martin.petersen@oracle.com, sagig@mellanox.com, kent.overstreet@gmail.com, keith.busch@intel.com, tj@kernel.org, broonie@kernel.org, arnd@arndb.de, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <yq1r3iuylwd.fsf@sermon.lab.mkp.net>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: "James E.J. Bottomley" <JBottomley@odin.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <msnitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, Mike Christie <michaelc@cs.wisc.edu>
 List-Id: dm-devel.ids
 
-On 12/14/2015 09:23 AM, Baolin Wang wrote:
-> In now dm-crypt code, it is ineffective to map one bio with just only
-> one scatterlist at one time for XTS mode. We can use multiple scatterlists
-> to map the whole bio and send all scatterlists of one bio to crypto engine
-> to encrypt or decrypt, which can improve the hardware engine's efficiency.
 
-...
 
-> +	/*
-> +	 * Here we need to check if it can be encrypted or decrypted with
-> +	 * bulk block, which means these encryption modes don't need IV or
-> +	 * just need one initial IV. For bulk mode, we can expand the
-> +	 * scatterlist entries to map the bio, then send all the scatterlists
-> +	 * to the hardware engine at one time to improve the crypto engine
-> +	 * efficiency. But it does not fit for other encryption modes, it has
-> +	 * to do encryption and decryption sector by sector because every
-> +	 * sector has different IV.
-> +	 */
-> +	if (!strcmp(chainmode, "ecb") || !strcmp(chainmode, "xts"))
-> +		cc->bulk_crypto = 1;
-> +	else
-> +		cc->bulk_crypto = 0;n
+On Thu, 10 Dec 2015, Martin K. Petersen wrote:
 
-It is perfectly fine to use another IV even for XTS mode (despite it is not needed).
-You can use ESSIV for example, or benbi (big-endian variant of plain IV).
-(And it is really used for some LUKS devices.)
+> >>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
+> 
+> Mikulas,
+> 
+> Mikulas> This patch series adds copy offload (the XCOPY command) to the
+> Mikulas> block layer, SCSI subsystems and device mapper.
+> 
+> Now that the VFS stuff appears to stabilize I agree it's a good time to
+> revisit all this. I just merged the required VPD patches from Hannes so
+> those will be in 4.5.
+> 
+> I have a bunch of changes to the SCSI code that I worked on over the
+> spring/summer based on a feedback from the array vendors after
+> discussions we started at LSF/MM. Generally speaking, their comments
+> didn't make things easier, nor prettier :( But your two bio approach is
+> a requirement to accommodate those needs (token-based copy) so I'll work
+> on consolidating your changes with mine.
 
-How it is supposed to work in this case?
-If I read this patch correctly, it will completely corrupt data in this case because
-it expects plain (consecutive) IV...
+Let me know when you make some progress with that.
 
-Also how it handles 32bit plain IV (that restart after 2TB)? (IOW plain IV, not plain64).
+Is there some software iSCSI implementation that supports token-based 
+copy? So that I could try to make support for it.
 
-Milan
+Mikulas
+
+> That said, we still need Mike Christie's patches to go in first.
+> 
+> Mike: What's your status? I'm afraid I didn't get a chance to dig very
+> deep in your series since it coincided with me scrambling to sort out
+> SCSI for 4.4. Do you think there's a chance we could get your patches in
+> shape for 4.5? Is there an up-to-date tree I can look at?
+> 
+> -- 
+> Martin K. Petersen	Oracle Linux Engineering
+
+Mikulas
