@@ -1,15 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] md: fix bug due to nested suspend
-Date: Wed, 16 Dec 2015 09:00:51 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1512160900160.754@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1511251216100.17579@file01.intranet.prod.int.rdu2.redhat.com>
-	<87vb7z9hbm.fsf@notabene.neil.brown.name>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH 0/2] Fix blkdev_issue_discard()
+Date: Wed, 16 Dec 2015 17:48:41 -0500
+Message-ID: <yq1poy6t3g6.fsf@sermon.lab.mkp.net>
+References: <567034B3.90104@sandisk.com> <20151215154929.GA10785@lst.de>
+	<5670499E.9050501@sandisk.com> <yq1k2ofunha.fsf@sermon.lab.mkp.net>
+	<20151216051223.GA11688@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <87vb7z9hbm.fsf@notabene.neil.brown.name>
+In-Reply-To: <20151216051223.GA11688@redhat.com> (Mike Snitzer's message of
+	"Wed, 16 Dec 2015 00:12:23 -0500")
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,48 +21,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: NeilBrown <neilb@suse.com>
-Cc: Jens Axboe <axboe@fb.com>, Heinz Mauelshagen <heinzm@redhat.com>, Dan Williams <dan.j.williams@intel.com>, Marian Csontos <mcsontos@redhat.com>, dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Jan Kara <jack@suse.cz>, "Martin K. Petersen" <martin.petersen@oracle.com>, Jens Axboe <axboe@fb.com>, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
+Mike,
 
-On Wed, 16 Dec 2015, NeilBrown wrote:
+Mike> DM thinp doesn't support partial thinp block discards -- so
+Mike> misaligned/partial discards are dropped by DM thinp.  There isn't
+Mike> a compelling case for fixing this (by adding a bitset for each
+Mike> thinp block to support finer grained discards) -- at least not
+Mike> that I'm aware of.
 
-> On Thu, Nov 26 2015, Mikulas Patocka wrote:
-> 
-> > The patch c7bfced9a6716ff66c9d61f934bb60af08d4688c committed to 4.4-rc 
-> > causes crash in LVM test shell/lvchange-raid.sh. The kernel crashes with 
-> > this BUG, the reason is that we attempt to suspend a device that is 
-> > already suspended. See also 
-> > https://bugzilla.redhat.com/show_bug.cgi?id=1283491
-> >
-> > This patch fixes the bug by introducing functions mddev_nested_suspend and
-> > mddev_nested_resume that can be called when the device is already
-> > suspended. The number of calls to mddev_nested_suspend is kept in the
-> > variable mddev->suspended.
-> 
-> Hi,
->  thanks for the report and patch.
-> 
-> I think I would rather just make mddev_suspend() always nest.
-> It is always called under ->reconfig_mutex or some similar guarentee of
-> being single-threaded in dm-raid, so we don't need an atomic_t.
-> 
-> Just
->   mddev_suspend()
-> 	if (mddev->suspended++)
->         	return;
->         ...do the suspend.
-> 
-> and
->   mddev_resume()
->        if (--mddev->suspended)
->        		return;
->        ... to the resume
-> 
-> Does that seem reasonable to you?
+Mike> But I'm missing exactly what it is your helper function would
+Mike> do... and yet you're asking me what my requirements are.. sorry ;)
 
-Yes, it seems OK.
+This came up because the SCSI target would like to support
+discard_zeroes_data on top of a backing store that has a discard
+granularity bigger than a logical block.
 
-Mikulas
+This means that the target code will have to be able to explicitly zero
+out head and tail ends of a request. Since you have the same "problem"
+in thinp I was wondering if it would make sense to have a common
+block layer function for this?
+
+Because the discard granularity is a hint I don't like the idea of
+blkdev_issue_zeroout() having to slice and dice. I really think the
+decision about what to zero and what to unmap belongs in the entity
+managing the allocation units. I.e. target or thinp. But that doesn't
+mean that some of the required logic could not be shared in blk-lib.c.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
