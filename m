@@ -1,17 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 0/2] Fix blkdev_issue_discard()
-Date: Wed, 16 Dec 2015 10:02:33 +0100
-Message-ID: <567128A9.4050500@suse.de>
-References: <567034B3.90104@sandisk.com> <20151215154929.GA10785@lst.de>
-	<5670499E.9050501@sandisk.com> <yq1k2ofunha.fsf@sermon.lab.mkp.net>
-	<20151216051223.GA11688@redhat.com>
-	<20151216084419.GA8968@quack.suse.cz>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] md: fix bug due to nested suspend
+Date: Wed, 16 Dec 2015 09:00:51 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1512160900160.754@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1511251216100.17579@file01.intranet.prod.int.rdu2.redhat.com>
+	<87vb7z9hbm.fsf@notabene.neil.brown.name>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20151216084419.GA8968@quack.suse.cz>
+In-Reply-To: <87vb7z9hbm.fsf@notabene.neil.brown.name>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,63 +19,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Jens Axboe <axboe@fb.com>, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>, Christoph Hellwig <hch@lst.de>
+To: NeilBrown <neilb@suse.com>
+Cc: Jens Axboe <axboe@fb.com>, Heinz Mauelshagen <heinzm@redhat.com>, Dan Williams <dan.j.williams@intel.com>, Marian Csontos <mcsontos@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 12/16/2015 09:44 AM, Jan Kara wrote:
-> On Wed 16-12-15 00:12:23, Mike Snitzer wrote:
->> On Tue, Dec 15 2015 at  9:38pm -0500,
->> Martin K. Petersen <martin.petersen@oracle.com> wrote:
->>
->>>>>>>> "Bart" =3D=3D Bart Van Assche <bart.vanassche@sandisk.com> writes:
->>>
->>> Bart> Should the caller of blkdev_issue_discard() implement this or
->>> Bart> should this functionality be added in blkdev_issue_discard()
->>> Bart> itself ?
->>>
->>> I'm very much against dropping information in the ioctl/filesystem
->>> submission path. But I am not against having a helper function of some
->>> sort that DM and target could use to handle heads and tails.
->>>
->>> Right now DM does not handle this and I think it would be worthwhile to
->>> have. Mike, what are your requirements?
->>
->> If the discard doesn't conform to the device's stacked discard limits
->> then yes the head and/or tail will get dropped on the floor.
->>
->> Not sure why DM is being made the focal point on this.  Are you thinking
->> specifically about DM-thinp and its discard_granularity?  DM thinp
->> doesn't support partial thinp block discards -- so misaligned/partial
->> discards are dropped by DM thinp.  There isn't a compelling case for
->> fixing this (by adding a bitset for each thinp block to support finer
->> grained discards) -- at least not that I'm aware of.
->>
->> But I'm missing exactly what it is your helper function would do... and
->> yet you're asking me what my requirements are.. sorry ;)
->
-> I agree that just dropping head & tail from misaligned discard request
-> looks reasonable. However I think the original motivation for this thread
-> was actually blkdev_issue_zeroout(). That ends up being implemented using
-> blkdev_issue_discard() and in that case silently dropping head and tail is
-> not an option. Supporting non-aligned blkdev_issue_zeroout() via submitti=
-ng
-> properly aligned blkdev_issue_discard() and then just submitting writes
-> with zeros for head & tail would look useful to me.
->
-And we need a similar thing for SMR drives, too.
-SMR drives might end up supporting discard only for a certain range =
 
-of blocks, _and_ set 'discard_zeroes_data', too, for those ranges.
-So for those we'd need a similar thing.
 
-Cheers,
+On Wed, 16 Dec 2015, NeilBrown wrote:
 
-Hannes
--- =
+> On Thu, Nov 26 2015, Mikulas Patocka wrote:
+> 
+> > The patch c7bfced9a6716ff66c9d61f934bb60af08d4688c committed to 4.4-rc 
+> > causes crash in LVM test shell/lvchange-raid.sh. The kernel crashes with 
+> > this BUG, the reason is that we attempt to suspend a device that is 
+> > already suspended. See also 
+> > https://bugzilla.redhat.com/show_bug.cgi?id=1283491
+> >
+> > This patch fixes the bug by introducing functions mddev_nested_suspend and
+> > mddev_nested_resume that can be called when the device is already
+> > suspended. The number of calls to mddev_nested_suspend is kept in the
+> > variable mddev->suspended.
+> 
+> Hi,
+>  thanks for the report and patch.
+> 
+> I think I would rather just make mddev_suspend() always nest.
+> It is always called under ->reconfig_mutex or some similar guarentee of
+> being single-threaded in dm-raid, so we don't need an atomic_t.
+> 
+> Just
+>   mddev_suspend()
+> 	if (mddev->suspended++)
+>         	return;
+>         ...do the suspend.
+> 
+> and
+>   mddev_resume()
+>        if (--mddev->suspended)
+>        		return;
+>        ... to the resume
+> 
+> Does that seem reasonable to you?
 
-Dr. Hannes Reinecke		               zSeries & Storage
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+Yes, it seems OK.
+
+Mikulas
