@@ -1,44 +1,66 @@
-From: Nikolay Borisov <kernel@kyup.com>
-Subject: [PATCH] dm-thin: Fix race condition when destroying thin pool
-Date: Thu, 17 Dec 2015 18:03:35 +0200
-Message-ID: <1450368215-3351-1-git-send-email-kernel@kyup.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: corruption causing crash in __queue_work
+Date: Thu, 17 Dec 2015 12:15:37 -0500
+Message-ID: <20151217171537.GA24921@redhat.com>
+References: <566AF262.8050009@kyup.com>
+ <20151211170805.GT30240@mtj.duckdns.org>
+ <566E80AE.7020502@kyup.com>
+ <20151214153147.GA14957@redhat.com>
+ <CAJFSNy6qc-m_=FNuzrFJnvKJR2zSE12m8sQ3CCBRaBtyf=6AFg@mail.gmail.com>
+ <20151214203138.GA2871@redhat.com>
+ <56729272.2010803@kyup.com>
+ <20151217153327.GI4026@mtj.duckdns.org>
+ <5672D810.2010404@kyup.com>
+ <20151217155032.GJ4026@mtj.duckdns.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20151217155032.GJ4026@mtj.duckdns.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: snitzer@redhat.com
-Cc: agk@redhat.com, dm-devel@redhat.com, operations@siteground.com, linux-kernel@vger.kernel.org, ejt@redhat.com, tj@kernel.org, stable@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Nikolay Borisov <kernel@kyup.com>, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, SiteGround Operations <operations@siteground.com>, Alasdair Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-When a thin pool is being destroyed delayed work items are
-canceled using cancel_delayed_work item, which doesn't
-guarantee that on return the delayed item wasn't running. This
-can cause the workitem to requeue itself on an already destroyed
-workqueue. Fix this by using cancel_delayed_work item which
-guarantees that on return the workitem is not running anymore.
+On Thu, Dec 17 2015 at 10:50am -0500,
+Tejun Heo <tj@kernel.org> wrote:
 
-Fixes: 905e51b39a555 ("dm thin: commit outstanding data every second")
-Fixes: 85ad643b7e7e52 ("dm thin: add timeout to stop out-of-data-space 
-mode holding IO forever")
-Signed-off-by: Nikolay Borisov <kernel@kyup.com>
-Cc: <stable@vger.kernel.org>
+> Hello, Nikolay.
+> 
+> On Thu, Dec 17, 2015 at 05:43:12PM +0200, Nikolay Borisov wrote:
+> > Right, but my initial understanding was that when canceling the delayed
+> > work and then issuing flush_workqueue would act the same way as if
+> > cancel_delayed_work_sync is called wrt to this particular delayed item, no?
+> 
+> Not necessarily.  cancel_delayed_work() cancels whatever is currently
+> pending.  flush_workqueue() flushes whatever is pending and in flight
+> at the time of invocation.  Imagine the following scenario.
+> 
+> 1. Work item is running but hasn't requeued itself yet.
+> 
+> 2. cancel_delayed_work_sync() doesn't do anything as it's not pending.
 
----
- drivers/md/dm-thin.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+Did you mean cancel_delayed_work()?
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 63903a5a5d9e..a1cc797fe88f 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -3453,8 +3453,8 @@ static void pool_postsuspend(struct dm_target *ti)
- 	struct pool_c *pt = ti->private;
- 	struct pool *pool = pt->pool;
- 
--	cancel_delayed_work(&pool->waker);
--	cancel_delayed_work(&pool->no_space_timeout);
-+	cancel_delayed_work_sync(&pool->waker);
-+	cancel_delayed_work_sync(&pool->no_space_timeout);
- 	flush_workqueue(pool->wq);
- 	(void) commit(pool);
- }
--- 
-2.5.0
+> 3. flush_workqueue() starts and waits for the running instance.
+> 
+> 4. The running instance requeues itself but this isn't included in the
+>    scope of the above flush_workqueue().
+> 
+> 5. flush_workqueue() returns when the work item is finished (but it's
+>    still queued).
+
+Hmm, the comment above cancel_delayed_work() is pretty misleading then:
+
+ * Note:
+ * The work callback function may still be running on return, unless
+ * it returns %true and the work doesn't re-arm itself.  Explicitly flush or
+ * use cancel_delayed_work_sync() to wait on it.
+
+Given dm-thin.c:pool_postsuspend() does:
+
+        cancel_delayed_work(&pool->waker);
+        cancel_delayed_work(&pool->no_space_timeout);
+        flush_workqueue(pool->wq);
+
+I wouldn't have thought cancel_delayed_work_sync() was needed.
