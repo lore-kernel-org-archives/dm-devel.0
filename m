@@ -1,115 +1,42 @@
-From: NeilBrown <neilb@suse.com>
-Subject: Re: [PATCH] md: fix bug due to nested suspend
-Date: Thu, 17 Dec 2015 15:09:51 +1100
-Message-ID: <87vb7x90mo.fsf@notabene.neil.brown.name>
-References: <alpine.LRH.2.02.1511251216100.17579@file01.intranet.prod.int.rdu2.redhat.com>
-	<87vb7z9hbm.fsf@notabene.neil.brown.name>
-	<alpine.LRH.2.02.1512160900160.754@file01.intranet.prod.int.rdu2.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7199843204192676308=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1512160900160.754@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@fb.com>, Heinz Mauelshagen <heinzm@redhat.com>, Dan Williams <dan.j.williams@intel.com>, Marian Csontos <mcsontos@redhat.com>, dm-devel@redhat.com
+From: Baolin Wang <baolin.wang@linaro.org>
+Subject: [PATCH v3 0/2] Introduce the bulk IV mode for improving the crypto engine efficiency
+Date: Thu, 17 Dec 2015 15:32:47 +0800
+Message-ID: <cover.1450336551.git.baolin.wang@linaro.org>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
+Cc: neilb@suse.com, dan.j.williams@intel.com, martin.petersen@oracle.com, sagig@mellanox.com, kent.overstreet@gmail.com, keith.busch@intel.com, tj@kernel.org, broonie@kernel.org, arnd@arndb.de, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, baolin.wang@linaro.org
 List-Id: dm-devel.ids
 
---===============7199843204192676308==
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha256; protocol="application/pgp-signature"
+From the dm-crypt performance report, we found it shows low efficiency
+with crypto engine for some mode (like ecb or xts mode). Because in dm
+crypt, it will map the IO data buffer with scatterlist, and send the
+scatterlist of one bio to the encryption engine, if send more scatterlists
+with bigger size at one time, that helps the engine palys best performance,
+which means a high encryption speed.
 
---=-=-=
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+But now the dm-crypt only map one segment (always one sector) of one bio
+with one scatterlist to the crypto engine at one time. which is more
+time-consuming and ineffective for the crypto engine. Especially for some
+modes which don't need different IV for each sector, we can map the whole
+bio with multiple scatterlists to improve the engine performance.
 
-On Thu, Dec 17 2015, Mikulas Patocka wrote:
+But this optimization is not support some ciphers and IV modes which should
+do sector by sector and need different IV for each sector.
 
-> On Wed, 16 Dec 2015, NeilBrown wrote:
->
->> On Thu, Nov 26 2015, Mikulas Patocka wrote:
->>=20
->> > The patch c7bfced9a6716ff66c9d61f934bb60af08d4688c committed to 4.4-rc=
-=20
->> > causes crash in LVM test shell/lvchange-raid.sh. The kernel crashes wi=
-th=20
->> > this BUG, the reason is that we attempt to suspend a device that is=20
->> > already suspended. See also=20
->> > https://bugzilla.redhat.com/show_bug.cgi?id=3D1283491
->> >
->> > This patch fixes the bug by introducing functions mddev_nested_suspend=
- and
->> > mddev_nested_resume that can be called when the device is already
->> > suspended. The number of calls to mddev_nested_suspend is kept in the
->> > variable mddev->suspended.
->>=20
->> Hi,
->>  thanks for the report and patch.
->>=20
->> I think I would rather just make mddev_suspend() always nest.
->> It is always called under ->reconfig_mutex or some similar guarentee of
->> being single-threaded in dm-raid, so we don't need an atomic_t.
->>=20
->> Just
->>   mddev_suspend()
->> 	if (mddev->suspended++)
->>         	return;
->>         ...do the suspend.
->>=20
->> and
->>   mddev_resume()
->>        if (--mddev->suspended)
->>        		return;
->>        ... to the resume
->>=20
->> Does that seem reasonable to you?
->
-> Yes, it seems OK.
->
-> Mikulas
+Change since v2:
+ - Introduce blk_bio_map_sg() function to map one bio.
+ - Do some modifications for checking sg entry. 
 
-Thanks.  I've revised your original patch to behave as above and will
-send to Linus today or tomorrow.
+Baolin Wang (2):
+  block: Introduce blk_bio_map_sg() to map one bio
+  md: dm-crypt: Introduce the bulk IV mode for bulk crypto
 
-Thanks,
-NeilBrown
+ block/blk-merge.c      |   45 +++++++
+ drivers/md/dm-crypt.c  |  333 +++++++++++++++++++++++++++++++++++++++++++++++-
+ include/linux/blkdev.h |    3 +
+ 3 files changed, 375 insertions(+), 6 deletions(-)
 
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
+-- 
+1.7.9.5
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJWcjWPAAoJEDnsnt1WYoG56+gP/3L+KB9ge9/fy0icGZJQc9iY
-iOIlmzhXxdO+7F3oONRdumDMvd1QfTvBt+1IV3GmagUyPoX4tuxdGs1rIaR9AqN+
-g0+v2mqo6zbZYLEsgYuKl4yphauV4oPUbOJ3w8qHRYERzoBTTf+Y/0R9R4IoX/bl
-Vu0weVJgmtmHvLpegjvUcHQZQNsyBhEoG0MKWzu71T6UMoa1YHCr4LXeT33kdU7q
-NZ3RHEgbdiWuxHLKROEJOHH0l/GXqslFJcdtx8HTpnWopMOiSzE9j7wojmL71mlF
-xn6thlXDr9RW+yOCLozE/6C2ZXQS1GYGNF+6W50Qqq7bBLFbnruBiYdfulI1ZbuE
-5ZRKUeaZxQGWIDFWHxw6cElMLCSo8MO9IVOp42IQTdKKTX2XlaOoMvspMCZTnhUY
-YviTEwTgQRqgJnergAMytgSMs84Yj0TryNxmNj9MygFEOmDFBS8kEYUnSwIdiNQV
-SJtNa6qNKleD88nf/ye4CeBfkFHLkjeF9qZn7iWw+aaqvcSye370JmypfeflDNF8
-nIchpS8ajMwcnIJn/mzXwVdBg3xw/5B3bY9TPkH0IPcyd2pUxt6Sc9ikSMKFESh6
-qQT8zE9B7rq1pnxaI6hKHyp9ODw1EjvaHpIQkQCXBTcy4hFyZ1mdmWS5v1GwB8wu
-GC0k/ljNxIG5b845NeWS
-=0S/x
------END PGP SIGNATURE-----
---=-=-=--
-
-
---===============7199843204192676308==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7199843204192676308==--
