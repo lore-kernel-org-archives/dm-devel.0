@@ -1,7 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 2/6] block: Introduce bio_add_zero_pages()
-Date: Thu, 17 Dec 2015 12:40:15 +0100
-Message-ID: <56729F1F.1020701@sandisk.com>
+Subject: [PATCH 3/6] block: Optimize __blkdev_issue_zeroout()
+Date: Thu, 17 Dec 2015 12:41:01 +0100
+Message-ID: <56729F4D.5060105@sandisk.com>
 References: <56729ECF.50906@sandisk.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,7 +22,8 @@ To: Jens Axboe <axboe@fb.com>
 Cc: Jan Kara <jack@suse.cz>, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Dmitry Monakhov <dmonakhov@openvz.org>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-Move the code for adding one or more zero pages into a new function.
+Avoid to confuse SCSI target software by ensuring that the WRITE SAME
+data buffer length matches the block size.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: Jan Kara <jack@suse.cz>
@@ -31,61 +32,44 @@ Cc: Mike Snitzer <snitzer@redhat.com>
 Cc: Martin K. Petersen <martin.petersen@oracle.com>
 Cc: Dmitry Monakhov <dmonakhov@openvz.org>
 ---
- block/blk-lib.c | 30 +++++++++++++++++++-----------
- 1 file changed, 19 insertions(+), 11 deletions(-)
+ block/blk-lib.c | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
 
 diff --git a/block/blk-lib.c b/block/blk-lib.c
-index 2f4c6b2..f44ec95 100644
+index f44ec95..1a60b3f 100644
 --- a/block/blk-lib.c
 +++ b/block/blk-lib.c
-@@ -219,6 +219,22 @@ int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
- }
- EXPORT_SYMBOL(blkdev_issue_write_same);
- 
-+static void bio_add_zero_pages(struct bio *bio, sector_t nr_sects)
-+{
-+	unsigned sz;
-+	int ret;
-+
-+	/* Avoid that bi_size overflows */
-+	nr_sects = min_t(sector_t, nr_sects, UINT_MAX >> 9);
-+
-+	for (; nr_sects != 0; nr_sects -= ret >> 9) {
-+		sz = min_t(unsigned, PAGE_SIZE >> 9, nr_sects) << 9;
-+		ret = bio_add_page(bio, ZERO_PAGE(0), sz, 0);
-+		if (ret < sz)
-+			break;
-+	}
-+}
-+
- /**
-  * blkdev_issue_zeroout - generate number of zero filed write bios
-  * @bdev:	blockdev to issue
-@@ -236,7 +252,6 @@ static int __blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
- 	int ret;
+@@ -249,7 +249,9 @@ static void bio_add_zero_pages(struct bio *bio, sector_t nr_sects)
+ static int __blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
+ 				  sector_t nr_sects, gfp_t gfp_mask)
+ {
+-	int ret;
++	int ret = 0;
++	struct request_queue *q = bdev_get_queue(bdev);
++	unsigned req_sects;
  	struct bio *bio;
  	struct bio_batch bb;
--	unsigned int sz;
  	DECLARE_COMPLETION_ONSTACK(wait);
+@@ -258,7 +260,6 @@ static int __blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
+ 	bb.error = 0;
+ 	bb.wait = &wait;
  
- 	atomic_set(&bb.done, 1);
-@@ -256,16 +271,9 @@ static int __blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
+-	ret = 0;
+ 	while (nr_sects != 0) {
+ 		bio = bio_alloc(gfp_mask,
+ 				min(nr_sects, (sector_t)BIO_MAX_PAGES));
+@@ -271,9 +272,11 @@ static int __blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
  		bio->bi_bdev   = bdev;
  		bio->bi_end_io = bio_batch_end_io;
  		bio->bi_private = &bb;
--
--		while (nr_sects != 0) {
--			sz = min((sector_t) PAGE_SIZE >> 9 , nr_sects);
--			ret = bio_add_page(bio, ZERO_PAGE(0), sz << 9, 0);
--			nr_sects -= ret >> 9;
--			sector += ret >> 9;
--			if (ret < (sz << 9))
--				break;
--		}
--		ret = 0;
-+		bio_add_zero_pages(bio, nr_sects);
-+		nr_sects -= bio->bi_iter.bi_size >> 9;
-+		sector += bio->bi_iter.bi_size >> 9;
+-		bio_add_zero_pages(bio, nr_sects);
+-		nr_sects -= bio->bi_iter.bi_size >> 9;
+-		sector += bio->bi_iter.bi_size >> 9;
++		bio_add_zero_pages(bio, q->limits.logical_block_size);
++		req_sects = min_t(sector_t, nr_sects, UINT_MAX >> 9);
++		bio->bi_iter.bi_size = req_sects << 9;
++		nr_sects -= req_sects;
++		sector += req_sects;
  		atomic_inc(&bb.done);
  		submit_bio(WRITE, bio);
  	}
