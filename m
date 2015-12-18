@@ -1,15 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-cache selective promotion of block
-Date: Thu, 17 Dec 2015 16:18:06 -0500
-Message-ID: <20151217211805.GD25386@redhat.com>
-References: <567308D6.8030306@nasa.gov>
+From: Ian Pilcher <arequipeno@gmail.com>
+Subject: [RFC] zodcache - auto-start dm-cache devices
+Date: Fri, 18 Dec 2015 00:16:32 -0600
+Message-ID: <n508c1$8dl$1@ger.gmane.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <567308D6.8030306@nasa.gov>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,37 +16,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mahmoud Hanafi <mahmoud.hanafi@nasa.gov>
-Cc: dm-devel@redhat.com, ejt@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Dec 17 2015 at  2:11pm -0500,
-Mahmoud Hanafi <mahmoud.hanafi@nasa.gov> wrote:
+https://github.com/ipilcher/zodcache
 
-> We are experimenting with dm-cache and would like to be able to
-> promote a range of block and pin them in the cache device.
-> 
-> Are there any tool that can be used for this?
+I've been looking for a "simple" way to manage dm-cache devices for a
+while now -- something that operates a bit more like bcache than LVM
+cache does, while still using the dm-cache infrastructure.  Having not
+found anything, I finally created "zodcache".  (The name is mostly due
+to wanting something that could be used as a magic number -- 20DCAC8E.)
 
-There isn't an interface to do that right now.  But it _should_ be
-possible to add a DM message to easily promote an origin block range.
-Pinning isn't something we really do at this point so that'd require
-more work.
+Hopefully the README does a decent job of explaining how it works, so I
+won't belabor it here:
 
-But it could look something like this:
-dmsetup message <cache_dev> 0 promote_oblocks <start> <end>
-dmsetup message <cache_dev> 0 pin_oblocks <start> <end>
+   https://github.com/ipilcher/zodcache/blob/master/readme.pdf
 
-and:
-dmsetup message <cache_dev> 0 demote_oblocks <start> <end>
-dmsetup message <cache_dev> 0 unpin_oblocks <start> <end>
+I'm very interested in any feedback on this.
 
-(where <start> and <end> are in either cache_block_size units or 512b
-sectors... not sure which would be best, sectors is a bit more
-approachable)
+  * Is this approach useful?
+  * Is there a better way of doing this?
+  * Is the libdevmapper stuff in zcstart.c correct/optimal?
 
-I could see this getting a bit cumbersome, not to mention the smq cache
-policy really _should_ promote if it makes sense to cache a block, but
-we'll certainly need Joe's thoughts on this.
+And now to sleep ...
 
-Mike
+Thanks!
+
+-- 
+========================================================================
+Ian Pilcher                                         arequipeno@gmail.com
+-------- "I grew up before Mark Zuckerberg invented friendship" --------
+========================================================================
