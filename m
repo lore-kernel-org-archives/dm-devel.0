@@ -1,15 +1,16 @@
 From: Ian Pilcher <arequipeno@gmail.com>
 Subject: Re: [RFC] zodcache - auto-start dm-cache devices
-Date: Fri, 18 Dec 2015 10:55:32 -0600
-Message-ID: <n51dq4$dit$1@ger.gmane.org>
+Date: Fri, 18 Dec 2015 11:39:13 -0600
+Message-ID: <n51gc2$oh4$1@ger.gmane.org>
 References: <n508c1$8dl$1@ger.gmane.org>
 	<22132.12088.729694.12882@quad.stoffel.home>
+	<n51dq4$dit$1@ger.gmane.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <22132.12088.729694.12882@quad.stoffel.home>
+In-Reply-To: <n51dq4$dit$1@ger.gmane.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,35 +23,44 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 12/18/2015 10:07 AM, John Stoffel wrote:
->>From my reading of the docs, it's clear that zodcache is lower down
-> the stack than LVMcache, but higher than bcache.
+On 12/18/2015 10:55 AM, Ian Pilcher wrote:
+> Currently you'll need multiple zodcache devices to create multiple VGs.
+> It should be possible to make these devices partitionable with a udev
+> rule that calls kpartx as appropriate.
 
-I would actually say that zodcache is at about the same level as
-bcache.  The main conceptual difference is that zodcache does device
-probing/recognition and setup are done in userspace, where bcache does
-it in kernel space.  (I.e. echo the device name to
-/sys/fs/bcache/register and the kernel looks a the device, decides
-what it is, etc.)
+This seems to work:
 
-> So describinng how your setup can provide a central cache pool across
-> multiple VGs would be awesome, but it's not quite clear to me that you
-> can do this in reality without doing multiple layers of block devices.
+SUBSYSTEM!="block", GOTO="zodcache_end" 
 
-Currently you'll need multiple zodcache devices to create multiple VGs.
-It should be possible to make these devices partitionable with a udev
-rule that calls kpartx as appropriate.
+ACTION=="remove", GOTO="zodcache_end" 
 
-> And since I'm paranoid (to a degree!) about resiliency, mirroring the
-> cache devices is a critical part for me.
+ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}=="1", GOTO="zodcache_end" 
 
-I haven't yet tested zodcache on top of MD RAID, but I fully expect it
-to work.
+KERNEL=="fd*|sr*", GOTO="zodcache_end" 
 
-> Also, I'm on debian, so that's another piece of documentation that's
-> kinda sorta missing.
+ 
 
-What do you need beyond what's in section III-B of the README?
+# Look for a zodcache superblock on the device and start it if found 
+
+RUN+="/usr/sbin/zcstart --udev $tempnode" 
+
+ 
+
+# Process partition tables on zodcache devices (but not components) 
+
+ENV{DM_NAME}!="zodcache-*", GOTO="zodcache_end" 
+
+ENV{DM_NAME}=="*-origin", GOTO="zodcache_end" 
+
+ENV{DM_NAME}=="*-cache", GOTO="zodcache_end" 
+
+ENV{DM_NAME}=="*-metadata", GOTO="zodcache_end" 
+
+ENV{ID_PART_TABLE_TYPE}=="dos", RUN+="/usr/sbin/kpartx -a $tempnode" 
+
+ 
+
+LABEL="zodcache_end"
 
 -- 
 ========================================================================
