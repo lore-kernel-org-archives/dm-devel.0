@@ -1,15 +1,15 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: dm-cache selective promotion of block
-Date: Fri, 18 Dec 2015 09:46:53 +0000
-Message-ID: <20151218094652.GB21956@rh-vpn>
-References: <567308D6.8030306@nasa.gov>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 2/6] block: Introduce bio_add_zero_pages()
+Date: Fri, 18 Dec 2015 13:30:49 +0100
+Message-ID: <20151218123049.GB30432@lst.de>
+References: <56729ECF.50906@sandisk.com> <56729F1F.1020701@sandisk.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <567308D6.8030306@nasa.gov>
+In-Reply-To: <56729F1F.1020701@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,22 +19,10 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Jan Kara <jack@suse.cz>, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@fb.com>, device-mapper development <dm-devel@redhat.com>, Dmitry Monakhov <dmonakhov@openvz.org>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-On Thu, Dec 17, 2015 at 11:11:18AM -0800, Mahmoud Hanafi wrote:
-> We are experimenting with dm-cache and would like to be able to
-> promote a range of block and pin them in the cache device.
-> 
-> Are there any tool that can be used for this?
+Looks good,
 
-Not at the moment.
-
-Could expand more on why you feel the need for this?  Is this
-something you want just for experimentation or would you want to use
-it in production?  How do you know which blocks you want to pin?  If
-the pinned blocks are in large regions do you actually just want to
-build a device that is composed of linear mappings to a mixture of
-spindle and ssd devices?
-
-- Joe
+Reviewed-by: Christoph Hellwig <hch@lst.de>
