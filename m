@@ -1,162 +1,126 @@
-From: Nikolay Borisov <n.borisov@siteground.com>
-Subject: Re: corruption causing crash in __queue_work
-Date: Sat, 19 Dec 2015 15:34:45 +0200
-Message-ID: <CAJFSNy5Lqv_xy7Lf1GEDPczHpZU8+a2CYCM-3ZR=VkDPJptmcg@mail.gmail.com>
-References: <566AF262.8050009@kyup.com>
-	<20151211170805.GT30240@mtj.duckdns.org>
-	<566E80AE.7020502@kyup.com> <20151214153147.GA14957@redhat.com>
-	<CAJFSNy6qc-m_=FNuzrFJnvKJR2zSE12m8sQ3CCBRaBtyf=6AFg@mail.gmail.com>
-	<20151214203138.GA2871@redhat.com> <56729272.2010803@kyup.com>
-	<20151217153327.GI4026@mtj.duckdns.org> <5672D810.2010404@kyup.com>
-	<20151217155032.GJ4026@mtj.duckdns.org>
-	<20151217171537.GA24921@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: NeilBrown <neilb@suse.com>
+Subject: WANTED new maintainer for Linux/md (and mdadm)
+Date: Mon, 21 Dec 2015 17:10:06 +1100
+Message-ID: <87k2o849j5.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7163174969632635222=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20151217171537.GA24921@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Tejun Heo <tj@kernel.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, SiteGround Operations <operations@siteground.com>, Nikolay Borisov <kernel@kyup.com>, Alasdair Kergon <agk@redhat.com>
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-raid@vger.kernel.org, dm-devel@redhat.com, LKML <linux-kernel@vger.kernel.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, "J. Bruce Fields" <bfields@fieldses.org>, Phil Turmel <philip@turmel.org>
 List-Id: dm-devel.ids
 
---===============7163174969632635222==
-Content-Type: multipart/alternative; boundary=089e01176f27b36c3c05274051d5
-
---089e01176f27b36c3c05274051d5
-Content-Type: text/plain; charset=UTF-8
-
-On Thursday, December 17, 2015, Mike Snitzer <snitzer@redhat.com> wrote:
-
-> On Thu, Dec 17 2015 at 10:50am -0500,
-> Tejun Heo <tj@kernel.org <javascript:;>> wrote:
->
-> > Hello, Nikolay.
-> >
-> > On Thu, Dec 17, 2015 at 05:43:12PM +0200, Nikolay Borisov wrote:
-> > > Right, but my initial understanding was that when canceling the delayed
-> > > work and then issuing flush_workqueue would act the same way as if
-> > > cancel_delayed_work_sync is called wrt to this particular delayed
-> item, no?
-> >
-> > Not necessarily.  cancel_delayed_work() cancels whatever is currently
-> > pending.  flush_workqueue() flushes whatever is pending and in flight
-> > at the time of invocation.  Imagine the following scenario.
-> >
-> > 1. Work item is running but hasn't requeued itself yet.
-> >
-> > 2. cancel_delayed_work_sync() doesn't do anything as it's not pending.
->
-> Did you mean cancel_delayed_work()?
->
-> > 3. flush_workqueue() starts and waits for the running instance.
-> >
-> > 4. The running instance requeues itself but this isn't included in the
-> >    scope of the above flush_workqueue().
-> >
-> > 5. flush_workqueue() returns when the work item is finished (but it's
-> >    still queued).
->
-> Hmm, the comment above cancel_delayed_work() is pretty misleading then:
->
->  * Note:
->  * The work callback function may still be running on return, unless
->  * it returns %true and the work doesn't re-arm itself.  Explicitly flush
-> or
->  * use cancel_delayed_work_sync() to wait on it.
->
-> Given dm-thin.c:pool_postsuspend() does:
->
->         cancel_delayed_work(&pool->waker);
->         cancel_delayed_work(&pool->no_space_timeout);
->         flush_workqueue(pool->wq);
->
-> I wouldn't have thought cancel_delayed_work_sync() was needed.
->
-
-Ping as Tejun might have missed this email. I'm also interested in knowing
-the logic behind the comment.
-
---089e01176f27b36c3c05274051d5
-Content-Type: text/html; charset=UTF-8
+--=-=-=
+Content-Type: text/plain
 Content-Transfer-Encoding: quoted-printable
 
-<br><br>On Thursday, December 17, 2015, Mike Snitzer &lt;<a href=3D"mailto:=
-snitzer@redhat.com">snitzer@redhat.com</a>&gt; wrote:<br><blockquote class=
-=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
-ing-left:1ex">On Thu, Dec 17 2015 at 10:50am -0500,<br>
-Tejun Heo &lt;<a href=3D"javascript:;" onclick=3D"_e(event, &#39;cvml&#39;,=
- &#39;tj@kernel.org&#39;)">tj@kernel.org</a>&gt; wrote:<br>
-<br>
-&gt; Hello, Nikolay.<br>
-&gt;<br>
-&gt; On Thu, Dec 17, 2015 at 05:43:12PM +0200, Nikolay Borisov wrote:<br>
-&gt; &gt; Right, but my initial understanding was that when canceling the d=
-elayed<br>
-&gt; &gt; work and then issuing flush_workqueue would act the same way as i=
-f<br>
-&gt; &gt; cancel_delayed_work_sync is called wrt to this particular delayed=
- item, no?<br>
-&gt;<br>
-&gt; Not necessarily.=C2=A0 cancel_delayed_work() cancels whatever is curre=
-ntly<br>
-&gt; pending.=C2=A0 flush_workqueue() flushes whatever is pending and in fl=
-ight<br>
-&gt; at the time of invocation.=C2=A0 Imagine the following scenario.<br>
-&gt;<br>
-&gt; 1. Work item is running but hasn&#39;t requeued itself yet.<br>
-&gt;<br>
-&gt; 2. cancel_delayed_work_sync() doesn&#39;t do anything as it&#39;s not =
-pending.<br>
-<br>
-Did you mean cancel_delayed_work()?<br>
-<br>
-&gt; 3. flush_workqueue() starts and waits for the running instance.<br>
-&gt;<br>
-&gt; 4. The running instance requeues itself but this isn&#39;t included in=
- the<br>
-&gt;=C2=A0 =C2=A0 scope of the above flush_workqueue().<br>
-&gt;<br>
-&gt; 5. flush_workqueue() returns when the work item is finished (but it&#3=
-9;s<br>
-&gt;=C2=A0 =C2=A0 still queued).<br>
-<br>
-Hmm, the comment above cancel_delayed_work() is pretty misleading then:<br>
-<br>
-=C2=A0* Note:<br>
-=C2=A0* The work callback function may still be running on return, unless<b=
-r>
-=C2=A0* it returns %true and the work doesn&#39;t re-arm itself.=C2=A0 Expl=
-icitly flush or<br>
-=C2=A0* use cancel_delayed_work_sync() to wait on it.<br>
-<br>
-Given dm-thin.c:pool_postsuspend() does:<br>
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 cancel_delayed_work(&amp;pool-&gt;waker);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 cancel_delayed_work(&amp;pool-&gt;no_space_time=
-out);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 flush_workqueue(pool-&gt;wq);<br>
-<br>
-I wouldn&#39;t have thought cancel_delayed_work_sync() was needed.<br>
-</blockquote><div><br></div><div>Ping as Tejun might have missed this email=
-. I&#39;m also interested in knowing the logic behind the comment.</div>
 
---089e01176f27b36c3c05274051d5--
+hi,
+ I became maintainer for md (Linux Software RAID) in late 2001 and on
+ the whole it has been fun and a valuable experience.  But I have been
+ losing interest in recent years (https://lwn.net/Articles/511073/) and
+ as was mentioned at the kernel summit, I would like to resign.  Some
+ years ago I managed to hand over nfsd to the excellent Bruce Fields,
+ but I do not seem to have the gift that Linus has of attracting
+ maintainers.  While there are a number of people who know quite a bit
+ about md and/or have contributed to development, there is no obvious
+ candidate for replacement maintainer - no one who has already been
+ doing significant parts of the maintainer role.
 
+ So I have decided to fall back on the mechanism by which I ended up
+ being maintainer in the first place.  I will create a vacuum and hope
+ someone fills it (yes: I was sucked-in....).  So as of 1st February
+ 2016 I will be resigning.
 
---===============7163174969632635222==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+ At the kernel summit in October Linus talked about the value of
+ maintainership teams (https://lwn.net/Articles/662979/).  I think it
+ would be great if a (small) team formed to continue to oversee md
+ rather than just a single individual (or maybe the dm team could extend
+ to include md??).  If I had managed to be part of a team rather than
+ "going it alone" for so long, I might feel less tired of the whole
+ thing now.
 
+ I don't see it as my place to appoint that team or any individuals, or
+ even to nominate any candidates.  A very important attribute of a
+ maintainer is that they need to care about the code and the subsystem
+ and I cannot tell other people to care (or even know if they do).  It
+ is really up to individuals to volunteer.  A few people have been
+ mentioned to me in earlier less-public conversations.  Any of them may
+ well be suitable, but I would rather they named themselves if
+ interested.
 
---===============7163174969632635222==--
+ So I'm hoping to get one or more volunteers to be maintainer:
+   - to gather and manage patches and outstanding issues,
+   - to review patches or get them reviewed
+   - to follow up bug reports and get them resolved
+   - to feed patches upstream, maybe directly to Linus,
+     maybe through some other maintainer, depending on what
+     relationships already exist or can be formed,
+   - to guide the longer term direction (saying "no" is important
+     sometimes),
+   - to care,
+ but also to be aware that maintainership takes real effort and time, as
+ does anything that is really worthwhile.
+
+ This all applies to mdadm as well as md (except you would ultimately
+ *be* upstream for mdadm, not needing to send it anywhere).  Even if a
+ clear team doesn't form it would be great if different people
+ maintained mdadm and md.
+
+ One part of the job that I have put a lot of time in to is following
+ the linux-raid@vger.kernel.org list and providing support.  This makes
+ people feel good about md and so more adventurous in using it.
+ Consequently I tend to hear about bugs and usability issues nice and
+ early (well before paying customers hit them in most cases) and that is
+ a big win.
+ In recent times I've been doing less of this and have been absolutely
+ thrilled that the gap has been more than filled by other very competent
+ community members.  Not developers particular but a number of md users
+ have been providing excellent support.  I'd particularly like to
+ high-light Phil Turmel who is very forthcoming with excellent advice,
+ but he is certainly not the only one who deserves a lot of thanks.
+ So "Thank you" to everyone who answers questions on linux-raid.
+
+ This would be a good place for any future maintainer to hang out to
+ receive wisdom as well as to provide support.
+
+ I will still be around.  I can certainly help out in some sort of
+ mentor role, and can probably be convinced to review patches and
+ comment on designs.  But I really want to head towards spending less
+ time on md (there are so many other interesting things to learn about).
+
+ So: if anyone is interested - please announce yourself, ask questions
+ and start doing things.  I have no clear idea about how a transition
+ will happen.  That is really up to you (plural). Take the bull by the
+ horns and start *being* a maintainer(team).  I won't get in your way
+ and I'll help where I can.
+
+Thanks,
+NeilBrown
+
+P.S. I'm committed to continue to work with the raid5-journal effort
+From=20Facebook and the raid1-cluster effort from SUSE and the
+line-in-the-sand of 1st February won't affect my support for those.
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBCAAGBQJWd5e+AAoJEDnsnt1WYoG5rQwQAL8gu5I/PrEXqtHtItSiPaKN
+1d8mZ+4bG22fJVmJXY1Xqb3aB4oGT15AMwaBgfdS2PXfl5o/NyhUb4teEW4KWwga
+k0oFrZ682pQ/RkZd60aGlCojIm1bs6eUgmlh6cbEigKZHoiCivDOaOPtxzELBW2c
+7NrcPD6797KX4f40+NN5qemSa1Tq5YtlWoTlXHrJe9Grd0dpD/JO5Eu+q5OpMHXp
+WvEmDHxZyPis0G+0x1WY1JJxz0R5hERkatmjhvtFfwjs/0aepEXw8f/whSn29/24
+TCF/EVYbUTtcU3NnODcxVKQds0b6ZU+nxfAAPvQAZ4hLPdt613BkbHPwvc0pbBku
+hrQZ301VdWnay2QE45Sj37w1hPyn2oMqu3TvGBbzsvJQeyb8TA/8h9F0SHY7CA7b
+E5kQwet24+9o7Jc7MEdAIN9txnyXGdm6x53TVxg7lZtRZFx7DtYDFQALYejgBPzg
+Trskt+JJJsPsVo5f8BFPQ89zxf5patCN9ZdZ7ku6/U+vPNMc4jFBLP4/axIXasFI
+S+dOedTtc/ENTroWUu7K0xdMrwNA98gVHHFeQPU/nx+IJOskf7UqllX9w9XzCqNN
++X375AkNhYPbVx0v2343wpMk9lePn+OT1CN89eDNDKJWyVb6uYJ03lmv8gdC5mBo
+w9oCYVxWWx3j9KUB9yqS
+=aePQ
+-----END PGP SIGNATURE-----
+--=-=-=--
