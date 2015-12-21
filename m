@@ -1,30 +1,34 @@
-From: Phil Turmel <philip@turmel.org>
-Subject: Re: WANTED new maintainer for Linux/md (and mdadm)
-Date: Mon, 21 Dec 2015 07:28:20 -0500
-Message-ID: <5677F064.80007@turmel.org>
-References: <87k2o849j5.fsf@notabene.neil.brown.name>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: corruption causing crash in __queue_work
+Date: Mon, 21 Dec 2015 16:44:37 -0500
+Message-ID: <20151221214437.GR4026@mtj.duckdns.org>
+References: <566E80AE.7020502@kyup.com>
+ <20151214153147.GA14957@redhat.com>
+ <CAJFSNy6qc-m_=FNuzrFJnvKJR2zSE12m8sQ3CCBRaBtyf=6AFg@mail.gmail.com>
+ <20151214203138.GA2871@redhat.com>
+ <56729272.2010803@kyup.com>
+ <20151217153327.GI4026@mtj.duckdns.org>
+ <5672D810.2010404@kyup.com>
+ <20151217155032.GJ4026@mtj.duckdns.org>
+ <20151217171537.GA24921@redhat.com>
+ <CAJFSNy5Lqv_xy7Lf1GEDPczHpZU8+a2CYCM-3ZR=VkDPJptmcg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <87k2o849j5.fsf@notabene.neil.brown.name>
-Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com, LKML <linux-kernel@vger.kernel.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, "J. Bruce Fields" <bfields@fieldses.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAJFSNy5Lqv_xy7Lf1GEDPczHpZU8+a2CYCM-3ZR=VkDPJptmcg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Nikolay Borisov <n.borisov@siteground.com>
+Cc: Nikolay Borisov <kernel@kyup.com>, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, SiteGround Operations <operations@siteground.com>, Alasdair Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 12/21/2015 01:10 AM, NeilBrown wrote:
+On Sat, Dec 19, 2015 at 03:34:45PM +0200, Nikolay Borisov wrote:
+> Ping as Tejun might have missed this email. I'm also interested in knowing
+> the logic behind the comment.
 
->  In recent times I've been doing less of this and have been absolutely
->  thrilled that the gap has been more than filled by other very competent
->  community members.  Not developers particular but a number of md users
->  have been providing excellent support.  I'd particularly like to
->  high-light Phil Turmel who is very forthcoming with excellent advice,
->  but he is certainly not the only one who deserves a lot of thanks.
->  So "Thank you" to everyone who answers questions on linux-raid.
+Didn't I already reply to that?
 
-You are very welcome.  I may just have to polish my kernel coding skills
-to earn a place in a maintainership team.
+http://thread.gmane.org/gmane.linux.kernel/2104051
 
-Phil Turmel
-
+-- 
+tejun
