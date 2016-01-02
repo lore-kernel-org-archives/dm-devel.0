@@ -1,121 +1,110 @@
-From: Alex Sudakar <alex.sudakar@gmail.com>
-Subject: dm-cache: Can I change policy without suspending the
-	cache?
-Date: Wed, 30 Dec 2015 09:41:10 +1000
-Message-ID: <CALq2s-H258akmqsdFatfR4mK6nOOC0+2sPmNa0PogpnpnAWHCw@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [PATCH v2 0/2] Introduce the bulk IV mode for improving the
+ crypto engine efficiency
+Date: Sat, 2 Jan 2016 23:46:08 +0100
+Message-ID: <56885330.9080801@gmail.com>
+References: <cover.1450233399.git.baolin.wang@linaro.org>
+ <56711C0F.8030105@gmail.com>
+ <CAMz4kuL2b5Qad5iD3odNVh9VO6ctu_M=QE=8fbdC_+ea+5wJ5w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <CAMz4kuL2b5Qad5iD3odNVh9VO6ctu_M=QE=8fbdC_+ea+5wJ5w@mail.gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Baolin Wang <baolin.wang@linaro.org>
+Cc: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, neilb@suse.com, dan.j.williams@intel.com, martin.petersen@oracle.com, sagig@mellanox.com, Kent Overstreet <kent.overstreet@gmail.com>, keith.busch@intel.com, tj@kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi.  I've set up my system - using a Linux 4.3.3 kernel - to use a
-dm-cache as the 'physical volume' for most of the LVM logical volumes
-in the system, including the root filesystem.  This seems to be
-working fine in daily operation.
+On 12/17/2015 08:37 AM, Baolin Wang wrote:
+> Hi Milan,
+> 
+> On 16 December 2015 at 16:08, Milan Broz <gmazyland@gmail.com> wrote:
+>> On 12/16/2015 04:18 AM, Baolin Wang wrote:
+>>> From the dm-crypt performance report, we found it shows low efficiency
+>>> with crypto engine for some mode (like ecb or xts mode). Because in dm
+>>> crypt, it will map the IO data buffer with scatterlist, and send the
+>>> scatterlist of one bio to the encryption engine, if send more scatterlists
+>>> with bigger size at one time, that helps the engine palys best performance,
+>>> which means a high encryption speed.
+>>>
+>>> But now the dm-crypt only map one segment (always one sector) of one bio
+>>> with one scatterlist to the crypto engine at one time. which is more
+>>> time-consuming and ineffective for the crypto engine. Especially for some
+>>> modes which don't need different IV for each sector, we can map the whole
+>>> bio with multiple scatterlists to improve the engine performance.
+>>>
+>>> But this optimization is not support some ciphers and IV modes which should
+>>> do sector by sector and need different IV for each sector.
+>>>
+>>> Change since v1:
+>>>  - Introduce one different IV mode.
+>>>  - Change the conditions for bulk mode.
+>>
+>> I tried the patchset on 32bit Intel VM and kernel immediately OOPsed (just tried aes-ecb)...
+>>
+> 
+> I've checked the code and I guess some macros I used with different
+> definitions on different arch. Could you please try the new patchset
+> with some optimization on your platform? It can work well on my arm
+> board. Thanks.
 
-During the night I run a couple of jobs which do reads of many of the
-files in the system (for example, I run 'tripwire', which computes
-checksums of files to see if any unauthorized changes have been made).
-Ideally I don't want these night 'batch jobs' to affect the cache's
-'daytime performance profile'.  I'd like the cache to be primed for
-typical day use and have the night-time scans run without promoting
-blocks into the cache which never see the light of day.  I've got a
-couple of questions related to how I might do this which I'd like to
-ask.  I've googled but haven't been able to find any answers
-elsewhere; I hope it's okay to ask here.
+Sorry for delay, I tried to compile it.
+It doesn't crash now, but it also does not work.
 
-My cache is running in writeback mode with the default smq policy.  To
-my delight it seems that the 'cleaner' policy does *exactly* what I
-want; not only does it immediately flush dirty blocks, as per the
-documentation; it also appears to 'turn off' the promotion/demotion of
-blocks in the cache.  In my tests of a stand-alone cache I dumped the
-metadevice using 'cache_dump'; created the cache in writeback mode
-using the cleaner policy; read and wrote blocks through the cache;
-removed the cache and did another dump of the metadevice; finding that
-the mapped blocks hadn't changed at all.  Which is brilliant!
+You usage of IV in XTS mode is not correct - it cannot just work this way,
+you have to initialize IV after each block. And just one write not aligned
+to your large XTS block will corrupt it.
 
-So my plan is to have my writeback dm-cache running through the day
-with the default 'smq' policy and then switch to the 'cleaner' policy
-between midnight and 6am, say, allowing my batch jobs to run without
-impacting the daytime cache mappings in the slightest.
+Did you tried to _read_ data you write to the device?
 
-My first question is to confirm that the cleaner policy does do what
-I've observed it to do - deliberately stop all promotions/demotions,
-leaving the block map static, as well as immediately flush dirty
-blocks to the origin device.  In all my reading I've seen the latter
-characteristic mentioned as the prime purpose of the policy - to flush
-all dirty blocks - but nothing about the former.  But it's that
-'freezing' of block migration into the cache which is exactly what I
-want.
+See this test :
 
-If there's documentation on that aspect of the cleaner policy's
-operation I'd very much appreciate a reference, or otherwise any other
-information about it.  Is the cleaner policy guaranteed to continue
-this behavior?  :)
+# create  device with your patch
+$ echo "test"|cryptsetup create -s 512 -c aes-xts-bulk tst /dev/sdg
 
-My second question is how I can do this; switching policies for a
-dm-cache on a live system where the cache is the backing device for
-the root filesystem.  With my test cache I was easily able to perform
-the sequence of steps that all of the documentation says must be
-performed to change policies:
+# prepare random test file
+$ dd if=/dev/urandom of=/src.img bs=1M count=16
 
-  -  'dmsetup suspend' the cache
-  -  'dmsetup reload' a new table with a change to the cleaner policy
-  -  'dmsetup resume' the cache
-  -  'dmsetup wait'
+# now copy the file to the plaintext device and drop caches
+$ dd if=/src.img of=/dev/mapper/tst bs=1M count=16
 
-This worked fine for my test cache, because only my test scripts had
-the cache open.
+$ echo 3 > /proc/sys/vm/drop_caches
 
-But when I had a simple shell script execute the steps above, in
-sequence, on my real cache ... the entire system hung after the
-'suspend'.  Because my cache is the backing device acting as the LVM
-physical device for most of my system's LVM volumes, including the
-root filesystem volume.  And I/O to the cache would block while the
-cache is suspended, I guess, which hung the script between separate
-'dmsetup' commands.  :(
+# and verify that we are (not) reading the same data ...
 
-So my second question is - how can I switch policies on a live
-dm-cache device when the running script/program doing the switch is
-itself using I/O through the device?
+$ dd if=/dev/mapper/tst of=/dst1.img bs=1M count=16
 
-It would be great if the dmsetup command could take multiple commands,
-so I could execute the suspend/reload/resume all in one invocation.
-Or if it could read a series of commands from standard input, say.
-Anything to allow the dmsetup to do all three steps in the one
-process.  But I can't see anything that allows this.
+$ sha256sum /src.img /dst1.img 
+5401119fa9975bbeebac58e0b2598bc87247a29e62417f9f58fe200b531602ad  /src.img
+e9bf5efa95031fdb5adf618db141f48ed23f71b12c017b8a0cbe0a694f18b979  /dst1.img
 
-The kernel cache.txt documentation talks about using 'dmsetup message'
-to send messages to the device mapper driver, but only in the context
-of altering policy tuning variables; I didn't see anything about how
-one could change the policy itself using a message.  Otherwise I could
-have a single process fire off a string of policy-switch commands.
+(I think only first page-sized block is correct, because without direct-io
+it writes in page-sized IOs.)
 
-The only way I can currently see to switch policies on a live dm-cache
-which is a backing store for the root filesystem is to run the
-'switch' script from a chrooted filesystem that isn't connected to the
-cache device.  I may very well end up using the same initrd image that
-I use to shut down the system; adding a 'switch' script and then
-unpacking the initrd image into a tmpfs filesystem and chrooting to
-that to switch between smq and cleaner policies at midnight and 6am.
 
-But it would be nice if there was an easier, more elegant way to do it.
+... or just try to mkfs and mount it
+$ mkfs -t ext4  /dev/mapper/tst 
 
-Any (1) confirmation on the cleaner policy's behavior in 'freezing'
-the cache block map and (2) advice on how to change policies on a live
-cache which is backing the live root filesystem would be most
-gratefully received.
+mke2fs 1.42.13 (17-May-2015)
+Creating filesystem with 262144 4k blocks and 65536 inodes
+...
 
-Thanks!
+$ mount /dev/mapper/tst /mnt/tst
+mount: wrong fs type, bad option, bad superblock on /dev/mapper/tst,
+       missing codepage or helper program, or other error
+
+
+You approach simply does not work. (It will probably work for ECB mode but it is
+unusable in real world.)
+
+
+Anyway, I think that you should optimize driver, not add strange hw-dependent
+crypto modes to dmcrypt. This is not the first crypto accelerator that is just not
+suited for this kind of use.
+
+(If it can process batch of chunks of data each with own IV, then it can work
+with dmcrypt, but I think such optimized code should be inside crypto API,
+not in dmcrypt.)
+
+Milan
