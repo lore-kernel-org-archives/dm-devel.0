@@ -1,95 +1,113 @@
-From: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: [PATCH RESEND v2 14/18] capabilities: Allow privileged
-	user in s_user_ns to set security.* xattrs
-Date: Mon,  4 Jan 2016 12:03:53 -0600
-Message-ID: <1451930639-94331-15-git-send-email-seth.forshee@canonical.com>
-References: <1451930639-94331-1-git-send-email-seth.forshee@canonical.com>
+From: Shaohua Li <shli@kernel.org>
+Subject: Re: WANTED new maintainer for Linux/md (and mdadm)
+Date: Mon, 4 Jan 2016 10:24:02 -0800
+Message-ID: <20160104182402.GA1541@kernel.org>
+References: <87k2o849j5.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-In-Reply-To: <1451930639-94331-1-git-send-email-seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
-	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=fuse-devel>
-List-Post: <mailto:fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Help: <mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
-	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
-Errors-To: fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, selinux-+05T5uksL2qpZYMLLGbcSA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <87k2o849j5.fsf@notabene.neil.brown.name>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, LKML <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, "J. Bruce Fields" <bfields@fieldses.org>, Phil Turmel <philip@turmel.org>
 List-Id: dm-devel.ids
 
-A privileged user in s_user_ns will generally have the ability to
-manipulate the backing store and insert security.* xattrs into
-the filesystem directly. Therefore the kernel must be prepared to
-handle these xattrs from unprivileged mounts, and it makes little
-sense for commoncap to prevent writing these xattrs to the
-filesystem. The capability and LSM code have already been updated
-to appropriately handle xattrs from unprivileged mounts, so it
-is safe to loosen this restriction on setting xattrs.
+On Mon, Dec 21, 2015 at 05:10:06PM +1100, NeilBrown wrote:
+> 
+> hi,
+>  I became maintainer for md (Linux Software RAID) in late 2001 and on
+>  the whole it has been fun and a valuable experience.  But I have been
+>  losing interest in recent years (https://lwn.net/Articles/511073/) and
+>  as was mentioned at the kernel summit, I would like to resign.  Some
+>  years ago I managed to hand over nfsd to the excellent Bruce Fields,
+>  but I do not seem to have the gift that Linus has of attracting
+>  maintainers.  While there are a number of people who know quite a bit
+>  about md and/or have contributed to development, there is no obvious
+>  candidate for replacement maintainer - no one who has already been
+>  doing significant parts of the maintainer role.
+> 
+>  So I have decided to fall back on the mechanism by which I ended up
+>  being maintainer in the first place.  I will create a vacuum and hope
+>  someone fills it (yes: I was sucked-in....).  So as of 1st February
+>  2016 I will be resigning.
+> 
+>  At the kernel summit in October Linus talked about the value of
+>  maintainership teams (https://lwn.net/Articles/662979/).  I think it
+>  would be great if a (small) team formed to continue to oversee md
+>  rather than just a single individual (or maybe the dm team could extend
+>  to include md??).  If I had managed to be part of a team rather than
+>  "going it alone" for so long, I might feel less tired of the whole
+>  thing now.
+> 
+>  I don't see it as my place to appoint that team or any individuals, or
+>  even to nominate any candidates.  A very important attribute of a
+>  maintainer is that they need to care about the code and the subsystem
+>  and I cannot tell other people to care (or even know if they do).  It
+>  is really up to individuals to volunteer.  A few people have been
+>  mentioned to me in earlier less-public conversations.  Any of them may
+>  well be suitable, but I would rather they named themselves if
+>  interested.
+> 
+>  So I'm hoping to get one or more volunteers to be maintainer:
+>    - to gather and manage patches and outstanding issues,
+>    - to review patches or get them reviewed
+>    - to follow up bug reports and get them resolved
+>    - to feed patches upstream, maybe directly to Linus,
+>      maybe through some other maintainer, depending on what
+>      relationships already exist or can be formed,
+>    - to guide the longer term direction (saying "no" is important
+>      sometimes),
+>    - to care,
+>  but also to be aware that maintainership takes real effort and time, as
+>  does anything that is really worthwhile.
+> 
+>  This all applies to mdadm as well as md (except you would ultimately
+>  *be* upstream for mdadm, not needing to send it anywhere).  Even if a
+>  clear team doesn't form it would be great if different people
+>  maintained mdadm and md.
+> 
+>  One part of the job that I have put a lot of time in to is following
+>  the linux-raid@vger.kernel.org list and providing support.  This makes
+>  people feel good about md and so more adventurous in using it.
+>  Consequently I tend to hear about bugs and usability issues nice and
+>  early (well before paying customers hit them in most cases) and that is
+>  a big win.
+>  In recent times I've been doing less of this and have been absolutely
+>  thrilled that the gap has been more than filled by other very competent
+>  community members.  Not developers particular but a number of md users
+>  have been providing excellent support.  I'd particularly like to
+>  high-light Phil Turmel who is very forthcoming with excellent advice,
+>  but he is certainly not the only one who deserves a lot of thanks.
+>  So "Thank you" to everyone who answers questions on linux-raid.
+> 
+>  This would be a good place for any future maintainer to hang out to
+>  receive wisdom as well as to provide support.
+> 
+>  I will still be around.  I can certainly help out in some sort of
+>  mentor role, and can probably be convinced to review patches and
+>  comment on designs.  But I really want to head towards spending less
+>  time on md (there are so many other interesting things to learn about).
+> 
+>  So: if anyone is interested - please announce yourself, ask questions
+>  and start doing things.  I have no clear idea about how a transition
+>  will happen.  That is really up to you (plural). Take the bull by the
+>  horns and start *being* a maintainer(team).  I won't get in your way
+>  and I'll help where I can.
+> 
+> Thanks,
+> NeilBrown
+> 
+> P.S. I'm committed to continue to work with the raid5-journal effort
+> From Facebook and the raid1-cluster effort from SUSE and the
+> line-in-the-sand of 1st February won't affect my support for those.
 
-The exception to this logic is that writing xattrs to a mounted
-filesystem may also cause the LSM inode_post_setxattr or
-inode_setsecurity callbacks to be invoked. SELinux will deny the
-xattr update by virtue of applying mountpoint labeling to
-unprivileged userns mounts, and Smack will deny the writes for
-any user without global CAP_MAC_ADMIN, so loosening the
-capability check in commoncap is safe in this respect as well.
+Hi Neil,
 
-Signed-off-by: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Acked-by: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
----
- security/commoncap.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
+Thanks for all the efforts! We will definitely miss you and fortunately you
+won't completely quit from MD :). I'm very interested in helping maintain MD. I
+have been working on MD for several years. My employer (facebook) supports me,
+so I have time being a maintainer too.
 
-diff --git a/security/commoncap.c b/security/commoncap.c
-index 2119421613f6..d6c80c19c449 100644
---- a/security/commoncap.c
-+++ b/security/commoncap.c
-@@ -653,15 +653,17 @@ int cap_bprm_secureexec(struct linux_binprm *bprm)
- int cap_inode_setxattr(struct dentry *dentry, const char *name,
- 		       const void *value, size_t size, int flags)
- {
-+	struct user_namespace *user_ns = dentry->d_sb->s_user_ns;
-+
- 	if (!strcmp(name, XATTR_NAME_CAPS)) {
--		if (!capable(CAP_SETFCAP))
-+		if (!ns_capable(user_ns, CAP_SETFCAP))
- 			return -EPERM;
- 		return 0;
- 	}
- 
- 	if (!strncmp(name, XATTR_SECURITY_PREFIX,
- 		     sizeof(XATTR_SECURITY_PREFIX) - 1) &&
--	    !capable(CAP_SYS_ADMIN))
-+	    !ns_capable(user_ns, CAP_SYS_ADMIN))
- 		return -EPERM;
- 	return 0;
- }
-@@ -679,15 +681,17 @@ int cap_inode_setxattr(struct dentry *dentry, const char *name,
-  */
- int cap_inode_removexattr(struct dentry *dentry, const char *name)
- {
-+	struct user_namespace *user_ns = dentry->d_sb->s_user_ns;
-+
- 	if (!strcmp(name, XATTR_NAME_CAPS)) {
--		if (!capable(CAP_SETFCAP))
-+		if (!ns_capable(user_ns, CAP_SETFCAP))
- 			return -EPERM;
- 		return 0;
- 	}
- 
- 	if (!strncmp(name, XATTR_SECURITY_PREFIX,
- 		     sizeof(XATTR_SECURITY_PREFIX) - 1) &&
--	    !capable(CAP_SYS_ADMIN))
-+	    !ns_capable(user_ns, CAP_SYS_ADMIN))
- 		return -EPERM;
- 	return 0;
- }
--- 
-1.9.1
-
-
-------------------------------------------------------------------------------
+Thanks,
+Shaohua
