@@ -1,125 +1,143 @@
-From: Sebastian Parschauer <sebastian.riemer@profitbricks.com>
-Subject: Re: [dm-devel] WANTED new maintainer for Linux/md (and mdadm)
-Date: Mon, 4 Jan 2016 11:16:42 +0100
-Message-ID: <568A468A.1050406@profitbricks.com>
-References: <87k2o849j5.fsf@notabene.neil.brown.name>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: dm-cache: Can I change policy without suspending the
+ cache?
+Date: Mon, 4 Jan 2016 15:50:10 +0000
+Message-ID: <20160104155009.GA3007@rh-vpn>
+References: <CALq2s-H258akmqsdFatfR4mK6nOOC0+2sPmNa0PogpnpnAWHCw@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87k2o849j5.fsf@notabene.neil.brown.name>
-Sender: linux-kernel-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-raid@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CALq2s-H258akmqsdFatfR4mK6nOOC0+2sPmNa0PogpnpnAWHCw@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 21.12.2015 07:10, NeilBrown wrote:
+On Wed, Dec 30, 2015 at 09:41:10AM +1000, Alex Sudakar wrote:
+> Hi.  I've set up my system - using a Linux 4.3.3 kernel - to use a
+> dm-cache as the 'physical volume' for most of the LVM logical volumes
+> in the system, including the root filesystem.  This seems to be
+> working fine in daily operation.
 > 
-> hi,
->  I became maintainer for md (Linux Software RAID) in late 2001 and on
->  the whole it has been fun and a valuable experience.  But I have been
->  losing interest in recent years (https://lwn.net/Articles/511073/) and
->  as was mentioned at the kernel summit, I would like to resign.  Some
->  years ago I managed to hand over nfsd to the excellent Bruce Fields,
->  but I do not seem to have the gift that Linus has of attracting
->  maintainers.  While there are a number of people who know quite a bit
->  about md and/or have contributed to development, there is no obvious
->  candidate for replacement maintainer - no one who has already been
->  doing significant parts of the maintainer role.
+> During the night I run a couple of jobs which do reads of many of the
+> files in the system (for example, I run 'tripwire', which computes
+> checksums of files to see if any unauthorized changes have been made).
+> Ideally I don't want these night 'batch jobs' to affect the cache's
+> 'daytime performance profile'.  I'd like the cache to be primed for
+> typical day use and have the night-time scans run without promoting
+> blocks into the cache which never see the light of day.  I've got a
+> couple of questions related to how I might do this which I'd like to
+> ask.  I've googled but haven't been able to find any answers
+> elsewhere; I hope it's okay to ask here.
 > 
->  So I have decided to fall back on the mechanism by which I ended up
->  being maintainer in the first place.  I will create a vacuum and hope
->  someone fills it (yes: I was sucked-in....).  So as of 1st February
->  2016 I will be resigning.
-> 
->  At the kernel summit in October Linus talked about the value of
->  maintainership teams (https://lwn.net/Articles/662979/).  I think it
->  would be great if a (small) team formed to continue to oversee md
->  rather than just a single individual (or maybe the dm team could extend
->  to include md??).  If I had managed to be part of a team rather than
->  "going it alone" for so long, I might feel less tired of the whole
->  thing now.
-> 
->  I don't see it as my place to appoint that team or any individuals, or
->  even to nominate any candidates.  A very important attribute of a
->  maintainer is that they need to care about the code and the subsystem
->  and I cannot tell other people to care (or even know if they do).  It
->  is really up to individuals to volunteer.  A few people have been
->  mentioned to me in earlier less-public conversations.  Any of them may
->  well be suitable, but I would rather they named themselves if
->  interested.
-> 
->  So I'm hoping to get one or more volunteers to be maintainer:
->    - to gather and manage patches and outstanding issues,
->    - to review patches or get them reviewed
->    - to follow up bug reports and get them resolved
->    - to feed patches upstream, maybe directly to Linus,
->      maybe through some other maintainer, depending on what
->      relationships already exist or can be formed,
->    - to guide the longer term direction (saying "no" is important
->      sometimes),
->    - to care,
->  but also to be aware that maintainership takes real effort and time, as
->  does anything that is really worthwhile.
-> 
->  This all applies to mdadm as well as md (except you would ultimately
->  *be* upstream for mdadm, not needing to send it anywhere).  Even if a
->  clear team doesn't form it would be great if different people
->  maintained mdadm and md.
-> 
->  One part of the job that I have put a lot of time in to is following
->  the linux-raid@vger.kernel.org list and providing support.  This makes
->  people feel good about md and so more adventurous in using it.
->  Consequently I tend to hear about bugs and usability issues nice and
->  early (well before paying customers hit them in most cases) and that is
->  a big win.
->  In recent times I've been doing less of this and have been absolutely
->  thrilled that the gap has been more than filled by other very competent
->  community members.  Not developers particular but a number of md users
->  have been providing excellent support.  I'd particularly like to
->  high-light Phil Turmel who is very forthcoming with excellent advice,
->  but he is certainly not the only one who deserves a lot of thanks.
->  So "Thank you" to everyone who answers questions on linux-raid.
-> 
->  This would be a good place for any future maintainer to hang out to
->  receive wisdom as well as to provide support.
-> 
->  I will still be around.  I can certainly help out in some sort of
->  mentor role, and can probably be convinced to review patches and
->  comment on designs.  But I really want to head towards spending less
->  time on md (there are so many other interesting things to learn about).
-> 
->  So: if anyone is interested - please announce yourself, ask questions
->  and start doing things.  I have no clear idea about how a transition
->  will happen.  That is really up to you (plural). Take the bull by the
->  horns and start *being* a maintainer(team).  I won't get in your way
->  and I'll help where I can.
-> 
-> Thanks,
-> NeilBrown
-> 
-> P.S. I'm committed to continue to work with the raid5-journal effort
-> From Facebook and the raid1-cluster effort from SUSE and the
-> line-in-the-sand of 1st February won't affect my support for those.
-> 
+> My cache is running in writeback mode with the default smq policy.  To
+> my delight it seems that the 'cleaner' policy does *exactly* what I
+> want; not only does it immediately flush dirty blocks, as per the
+> documentation; it also appears to 'turn off' the promotion/demotion of
+> blocks in the cache.
 
+The smq policy is pretty reticent about promoting blocks to the fast
+device unless there's evidence that those blocks are being hit more
+frequently than those in the cache.  I suggest you do some experiments
+to double check your batch jobs really are causing churn in the cache.
 
-Hi Neil,
+> So my plan is to have my writeback dm-cache running through the day
+> with the default 'smq' policy and then switch to the 'cleaner' policy
+> between midnight and 6am, say, allowing my batch jobs to run without
+> impacting the daytime cache mappings in the slightest.
 
-I've been maintaining the custom Linux kernels, custom MD and custom
-mdadm since more than 4 years at ProfitBricks now. I've learned a lot
-from you. Thank you very much for all the efforts! I will definitely
-miss you in the MD/mdadm maintainer role. I especially like that you
-care for all Linux distributions/kernel versions. That's what a real
-upstream is about. I wish you all the best for the future!
+There is another option, which is to just turn the
+'migration_threshold' tunable for smq down to zero.  Which will
+practically stop any migrations.
 
-Unfortunately my public activity has been very limited as company
-interests always have priority. I would really like to help maintaining
-MD/mdadm upstream but I would need an employer who pays me for that and
-provides access to the required hardware.
+> My first question is to confirm that the cleaner policy does do what
+> I've observed it to do - deliberately stop all promotions/demotions,
+> leaving the block map static, as well as immediately flush dirty
+> blocks to the origin device.
 
-In my leisure time I already maintain the upstream Linux memory scanner
-project scanmem/GameConqueror.
+Yes.  But it's pretty agressive about writing the dirty data back,
+which may impact performance.
 
-Cheers,
-Sebastian
+> My second question is how I can do this; switching policies for a
+> dm-cache on a live system where the cache is the backing device for
+> the root filesystem.  With my test cache I was easily able to perform
+> the sequence of steps that all of the documentation says must be
+> performed to change policies:
+> 
+>   -  'dmsetup suspend' the cache
+>   -  'dmsetup reload' a new table with a change to the cleaner policy
+>   -  'dmsetup resume' the cache
+>   -  'dmsetup wait'
+> 
+> This worked fine for my test cache, because only my test scripts had
+> the cache open.
+> 
+> But when I had a simple shell script execute the steps above, in
+> sequence, on my real cache ... the entire system hung after the
+> 'suspend'.  Because my cache is the backing device acting as the LVM
+> physical device for most of my system's LVM volumes, including the
+> root filesystem volume.  And I/O to the cache would block while the
+> cache is suspended, I guess, which hung the script between separate
+> 'dmsetup' commands.  :(
+
+Yes, this is always going to be a problem.  If dmsetup is paged out,
+you better hope it's not on one of the suspended devices.  LVM2
+memlocks itself to avoid being paged out.  I think you have a few
+options, in order of complexity:
+
+- You don't have to suspend before you load the new table.  I think
+  the sequence ...
+
+  dmsetup load
+  dmsetup resume  # implicit suspend, swap table, resume
+
+  ... will do what you want, and may well avoid the hang.
+
+- Put dmsetup and associated libraries somewhere where the IO is
+  guaranteed to complete even though the root dev etc are
+  suspended. (eg, a little ram disk).
+
+- Switch from using dmsetup to use the new zodcache tool that was
+  posted here last month.  If zodcache doesn't memlock, we'll patch to
+  make sure it does.
+
+> It would be great if the dmsetup command could take multiple commands,
+> so I could execute the suspend/reload/resume all in one invocation.
+
+See zodcache.
+
+> Or if it could read a series of commands from standard input, say.
+> Anything to allow the dmsetup to do all three steps in the one
+> process.  But I can't see anything that allows this.
+
+Yes, this has been talked about before.  I spent a bit of time
+experimenting with a tool I called dmexec.  This implemented a little
+stack based language that you could use to build your own sequence of
+device mapper operations.  For example:
+
+https://github.com/jthornber/dmexec/blob/master/language-tests/table-tests.dm
+
+I really think something like this is the way forward, though possibly
+with a less opaque language.  Volume managers would then be
+implemented as a mix of low level dmexec libraries, and high level
+calls into dmexec.
+
+> The kernel cache.txt documentation talks about using 'dmsetup message'
+> to send messages to the device mapper driver, but only in the context
+> of altering policy tuning variables; I didn't see anything about how
+> one could change the policy itself using a message.  Otherwise I could
+> have a single process fire off a string of policy-switch commands.
+
+You have to load the new table.
+
+- Joe
