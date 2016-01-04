@@ -1,49 +1,110 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: Never mind (was [RFC] zodcache - auto-start
-	dm-cache	devices)
-Date: Mon, 4 Jan 2016 15:52:52 +0000
-Message-ID: <20160104155251.GB3007@rh-vpn>
-References: <n508c1$8dl$1@ger.gmane.org> <n529r6$4si$1@ger.gmane.org>
-	<22132.47234.331074.708465@quad.stoffel.home>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <22132.47234.331074.708465@quad.stoffel.home>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: Seth Forshee <seth.forshee@canonical.com>
+Subject: [PATCH RESEND v2 00/19] Support fuse mounts in user namespaces
+Date: Mon,  4 Jan 2016 12:03:39 -0600
+Message-ID: <1451930639-94331-1-git-send-email-seth.forshee@canonical.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-kernel@vger.kernel.org, Seth Forshee <seth.forshee@canonical.com>
 List-Id: dm-devel.ids
 
-On Fri, Dec 18, 2015 at 08:53:06PM -0500, John Stoffel wrote:
-> >>>>> "Ian" == Ian Pilcher <arequipeno@gmail.com> writes:
-> 
-> Ian> repo deleted due to feedback.
-> 
-> Umm... why?  Just because people we're asking questions and poking at
-> what you've written?  Hopefully not.  I like the ideas you were
-> pushing here, anything to make dmsetup easier to use.
-> 
-> If the tool could complement lvmcache/bcache, why not keep it around?
-> Esp since YOU find it useful.
-> 
-> I haven't even had a chance to play with it, should have cloned the
-> repo before I guess.
+These patches implement support for mounting filesystems in user
+namespaces using fuse. They are based on the patches in the for-testing
+branch of
+git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git,
+but I've rebased them onto 4.4-rc3. I've pushed all of this to:
 
-I cloned the repo here:
+ git://git.kernel.org/pub/scm/linux/kernel/git/sforshee/linux.git fuse-userns
 
-https://github.com/jthornber/zodcache
+The patches are organized into three high-level groups.
 
-I looked through the code and thought this was a good tool that does
-something that LVM currently doesn't support very well.
+Patches 1-6 are related to security, adding restrictions for
+unprivileged mounts and updating the LSMs as needed. Patches 1-2
+(checking inode permissions for block device mounts) may not be strictly
+necessary for fuseblk mounts since fuse doesn't do any IO on the block
+device in the kernel, but it still seems like a good idea to fail the
+mount if the user doesn't have the required permissions for the inode
+(though this is a bit misleading with fuse since the mounts are done via
+a suid-root helper).
 
-- Joe
+Patches 7-14 update most of the vfs to translate ids correctly and deal
+with inodes which may have invalid user/group ids. I've omitted patches
+for anything not used by fuse - quota, fs freezing, some helper
+functions, etc. - but if these are wanted for the sake of completeness I
+can include them.
+
+Patches 15-18 update fuse to deal with mounts from non-init pid and user
+namespaces and enable mounting from user namespaces.
+
+Changes since v1:
+ - Drop patch for FIBMAP.
+ - Use current_in_userns in fuse_allow_current_process.
+ - Remove checks for uid/gid validity in fuse. Intead, ids from the
+   backing store which do not map into s_user_ns will result in invalid
+   ids in the vfs inode. Checks in the vfs will prevent unmappable ids
+   from being passed in from above.
+ - Update a couple of commit messages to provide more detail about
+   changes.
+
+Thanks,
+Seth
+
+Andy Lutomirski (1):
+  fs: Treat foreign mounts as nosuid
+
+Seth Forshee (17):
+  block_dev: Support checking inode permissions in lookup_bdev()
+  block_dev: Check permissions towards block device inode when mounting
+  selinux: Add support for unprivileged mounts from user namespaces
+  userns: Replace in_userns with current_in_userns
+  Smack: Handle labels consistently in untrusted mounts
+  fs: Check for invalid i_uid in may_follow_link()
+  cred: Reject inodes with invalid ids in set_create_file_as()
+  fs: Refuse uid/gid changes which don't map into s_user_ns
+  fs: Update posix_acl support to handle user namespace mounts
+  fs: Ensure the mounter of a filesystem is privileged towards its
+    inodes
+  fs: Don't remove suid for CAP_FSETID in s_user_ns
+  fs: Allow superblock owner to access do_remount_sb()
+  capabilities: Allow privileged user in s_user_ns to set security.*
+    xattrs
+  fuse: Add support for pid namespaces
+  fuse: Support fuse filesystems outside of init_user_ns
+  fuse: Restrict allow_other to the superblock's namespace or a
+    descendant
+  fuse: Allow user namespace mounts
+
+ drivers/md/bcache/super.c       |  2 +-
+ drivers/md/dm-table.c           |  2 +-
+ drivers/mtd/mtdsuper.c          |  2 +-
+ fs/attr.c                       | 11 +++++++
+ fs/block_dev.c                  | 18 +++++++++--
+ fs/exec.c                       |  2 +-
+ fs/fuse/cuse.c                  |  3 +-
+ fs/fuse/dev.c                   | 26 ++++++++++++----
+ fs/fuse/dir.c                   | 16 +++++-----
+ fs/fuse/file.c                  | 22 +++++++++++---
+ fs/fuse/fuse_i.h                | 10 +++++-
+ fs/fuse/inode.c                 | 42 +++++++++++++++++---------
+ fs/inode.c                      |  6 +++-
+ fs/namei.c                      |  2 +-
+ fs/namespace.c                  | 17 +++++++++--
+ fs/posix_acl.c                  | 67 ++++++++++++++++++++++++++---------------
+ fs/quota/quota.c                |  2 +-
+ fs/xattr.c                      | 19 +++++++++---
+ include/linux/fs.h              |  2 +-
+ include/linux/mount.h           |  1 +
+ include/linux/posix_acl_xattr.h | 17 ++++++++---
+ include/linux/uidgid.h          | 10 ++++++
+ include/linux/user_namespace.h  |  6 ++--
+ kernel/capability.c             | 13 +++++---
+ kernel/cred.c                   |  2 ++
+ kernel/user_namespace.c         |  6 ++--
+ security/commoncap.c            | 16 ++++++----
+ security/selinux/hooks.c        | 25 ++++++++++++++-
+ security/smack/smack_lsm.c      | 29 ++++++++++++------
+ 29 files changed, 287 insertions(+), 109 deletions(-)
+
+-- 
+1.9.1
+
