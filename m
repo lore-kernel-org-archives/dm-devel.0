@@ -1,155 +1,191 @@
-From: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
-Subject: [PATCH] kpartx: support device names with spaces
-Date: Thu,  7 Jan 2016 16:31:55 -0200
-Message-ID: <1452191515-4027-1-git-send-email-mauricfo@linux.vnet.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: NeilBrown <neilb@suse.de>
+Subject: Re: [dm-devel] WANTED new maintainer for Linux/md (and mdadm)
+Date: Fri, 08 Jan 2016 13:17:45 +1100
+Message-ID: <878u40ak6u.fsf@notabene.neil.brown.name>
+References: <87k2o849j5.fsf@notabene.neil.brown.name> <0AAF8A3C-BE70-4510-A8EA-F64B2F4A0B4D@redhat.com> <wrfja8oimyyk.fsf@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: christophe.varoqui@gmail.com
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <wrfja8oimyyk.fsf@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jes Sorensen <Jes.Sorensen@redhat.com>, Brassow Jonathan <jbrassow@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-raid@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Phil Turmel <philip@turmel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Doug Ledford <dledford@redhat.com>, Xiao Ni <xni@redhat.com>
 List-Id: dm-devel.ids
 
-Device names with spaces fail to be added to device-mapper tables
-because spaces are field separators.  In order to support it, use
-device major:minor numbers, instead.  While still there, make the
-verbose output of container- and contained-slices consistent.
+--=-=-=
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-This is useful on some scenarios with arbitrary loop device names,
-and non-user_friendly_names multipath WWIDs with spaces (eg, QEMU
-emulated hard drives, and some IBM devices) on some distros.
+On Thu, Jan 07 2016, Jes Sorensen wrote:
 
-Test-case:
+> Brassow Jonathan <jbrassow@redhat.com> writes:
+>> Many thanks Neil for all the work you=E2=80=99ve done and the help you g=
+ave me
+>> while working on the DM/MD interactions bits.  I=E2=80=99m happy you are
+>> sticking around for the raid1-cluster and raid5-journal bits and I=E2=80=
+=99m
+>> interested to see what comes out of those.
+>>
+>> I know there are a number of folks around Red Hat who are capable and
+>> possibly interested to share the load.  They should be back from PTO
+>> soon and we=E2=80=99ll make sure they know about the opportunity.
+>
+> Thanks Neil!
+>
+> I mentioned to Neil last year that I could probably be convinced,
+> bribed, shamed, into maintaining mdadm.
 
-	# img="/tmp/my.img"
-	# spacename="/dev/my space name"
+I realise that is somewhat tongue-in-cheek, but I am certainly not
+looking for someone who needs to be convinced, bribed, or shamed.
+I'm hoping for someone who will weigh the pros and cons, decide this is
+a contribution they are willing (and maybe even eager) to make, and will
+step up and do so.
+And I suspect that behind that facade of reluctance, that is what you
+are really offering.  Thanks.
 
-	# truncate --size=1G "$img"
-	# lodev=$(sudo losetup --find --show "$img")
-	# ln -sf "$lodev" "$spacename"
+I propose to make one last release of mdadm either next week or the last
+week of January.  I plan to call it "3.4" in acknowledgment of the new
+cluster and raid5-journal functionality.
+If you were to take it from there, I would be grateful.
 
-	# ls -l $lodev "$spacename"
-	brw-rw---- 1 root disk 7, 0 Jan  7 10:36 /dev/loop0
-	lrwxrwxrwx 1 root root   10 Jan  7 10:36 /dev/my space name -> /dev/loop0
+Thanks,
+NeilBrown
 
-	# fdisk $lodev
-	<...>
+>
+> The kernel MD stack I think really needs a team to run it. There is just
+> too much internal knowledge sitting in Neil's head and I personally am a
+> little scared of taking on that. Shaohua Li would be a good candidate
+> for that team IMHO.
+>
+> Cheers,
+> Jes
+>
+>
+>> thanks,
+>>  brassow
+>>
+>>> On Dec 21, 2015, at 12:10 AM, NeilBrown <neilb@suse.com> wrote:
+>>>=20
+>>>=20
+>>> hi,
+>>> I became maintainer for md (Linux Software RAID) in late 2001 and on
+>>> the whole it has been fun and a valuable experience.  But I have been
+>>> losing interest in recent years (https://lwn.net/Articles/511073/) and
+>>> as was mentioned at the kernel summit, I would like to resign.  Some
+>>> years ago I managed to hand over nfsd to the excellent Bruce Fields,
+>>> but I do not seem to have the gift that Linus has of attracting
+>>> maintainers.  While there are a number of people who know quite a bit
+>>> about md and/or have contributed to development, there is no obvious
+>>> candidate for replacement maintainer - no one who has already been
+>>> doing significant parts of the maintainer role.
+>>>=20
+>>> So I have decided to fall back on the mechanism by which I ended up
+>>> being maintainer in the first place.  I will create a vacuum and hope
+>>> someone fills it (yes: I was sucked-in....).  So as of 1st February
+>>> 2016 I will be resigning.
+>>>=20
+>>> At the kernel summit in October Linus talked about the value of
+>>> maintainership teams (https://lwn.net/Articles/662979/).  I think it
+>>> would be great if a (small) team formed to continue to oversee md
+>>> rather than just a single individual (or maybe the dm team could extend
+>>> to include md??).  If I had managed to be part of a team rather than
+>>> "going it alone" for so long, I might feel less tired of the whole
+>>> thing now.
+>>>=20
+>>> I don't see it as my place to appoint that team or any individuals, or
+>>> even to nominate any candidates.  A very important attribute of a
+>>> maintainer is that they need to care about the code and the subsystem
+>>> and I cannot tell other people to care (or even know if they do).  It
+>>> is really up to individuals to volunteer.  A few people have been
+>>> mentioned to me in earlier less-public conversations.  Any of them may
+>>> well be suitable, but I would rather they named themselves if
+>>> interested.
+>>>=20
+>>> So I'm hoping to get one or more volunteers to be maintainer:
+>>>   - to gather and manage patches and outstanding issues,
+>>>   - to review patches or get them reviewed
+>>>   - to follow up bug reports and get them resolved
+>>>   - to feed patches upstream, maybe directly to Linus,
+>>>     maybe through some other maintainer, depending on what
+>>>     relationships already exist or can be formed,
+>>>   - to guide the longer term direction (saying "no" is important
+>>>     sometimes),
+>>>   - to care,
+>>> but also to be aware that maintainership takes real effort and time, as
+>>> does anything that is really worthwhile.
+>>>=20
+>>> This all applies to mdadm as well as md (except you would ultimately
+>>> *be* upstream for mdadm, not needing to send it anywhere).  Even if a
+>>> clear team doesn't form it would be great if different people
+>>> maintained mdadm and md.
+>>>=20
+>>> One part of the job that I have put a lot of time in to is following
+>>> the linux-raid@vger.kernel.org list and providing support.  This makes
+>>> people feel good about md and so more adventurous in using it.
+>>> Consequently I tend to hear about bugs and usability issues nice and
+>>> early (well before paying customers hit them in most cases) and that is
+>>> a big win.
+>>> In recent times I've been doing less of this and have been absolutely
+>>> thrilled that the gap has been more than filled by other very competent
+>>> community members.  Not developers particular but a number of md users
+>>> have been providing excellent support.  I'd particularly like to
+>>> high-light Phil Turmel who is very forthcoming with excellent advice,
+>>> but he is certainly not the only one who deserves a lot of thanks.
+>>> So "Thank you" to everyone who answers questions on linux-raid.
+>>>=20
+>>> This would be a good place for any future maintainer to hang out to
+>>> receive wisdom as well as to provide support.
+>>>=20
+>>> I will still be around.  I can certainly help out in some sort of
+>>> mentor role, and can probably be convinced to review patches and
+>>> comment on designs.  But I really want to head towards spending less
+>>> time on md (there are so many other interesting things to learn about).
+>>>=20
+>>> So: if anyone is interested - please announce yourself, ask questions
+>>> and start doing things.  I have no clear idea about how a transition
+>>> will happen.  That is really up to you (plural). Take the bull by the
+>>> horns and start *being* a maintainer(team).  I won't get in your way
+>>> and I'll help where I can.
+>>>=20
+>>> Thanks,
+>>> NeilBrown
+>>>=20
+>>> P.S. I'm committed to continue to work with the raid5-journal effort
+>>> From Facebook and the raid1-cluster effort from SUSE and the
+>>> line-in-the-sand of 1st February won't affect my support for those.
+>>> --
+>>> dm-devel mailing list
+>>> dm-devel@redhat.com
+>>> https://www.redhat.com/mailman/listinfo/dm-devel
+>>
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-raid" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-raid" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-	# fdisk -l $lodev
-	<...>
-	      Device Boot      Start         End      Blocks   Id  System
-	/dev/loop0p1            2048      264191      131072   83  Linux
-	/dev/loop0p2          264192      788479      262144   83  Linux
-	/dev/loop0p3          788480     2097151      654336    5  Extended
-	/dev/loop0p5          790528      856063       32768   83  Linux
-	/dev/loop0p6          858112      989183       65536   83  Linux
-	/dev/loop0p7          991232     1515519      262144   83  Linux
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
 
-Without patch:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
 
-	# kpartx -av "$spacename"
-	device-mapper: reload ioctl on my\x20space\x20name1 failed: Invalid argument
-	create/reload failed on my space name1
-	add map my space name1 (0:0): 0 262144 linear /dev/my space name 2048
-
-	device-mapper: reload ioctl on my\x20space\x20name2 failed: Invalid argument
-	create/reload failed on my space name2
-	add map my space name2 (0:0): 0 524288 linear /dev/my space name 264192
-
-	device-mapper: reload ioctl on my\x20space\x20name3 failed: Invalid argument
-	create/reload failed on my space name3
-	add map my space name3 (0:0): 0 2 linear /dev/my space name 788480
-
-	device-mapper: reload ioctl on my\x20space\x20name5 failed: Invalid argument
-	add map my space name5 : 0 65536 linear /dev/my space name 790528
-
-	device-mapper: reload ioctl on my\x20space\x20name6 failed: Invalid argument
-	add map my space name6 : 0 131072 linear /dev/my space name 858112
-
-	device-mapper: reload ioctl on my\x20space\x20name7 failed: Invalid argument
-	add map my space name7 : 0 524288 linear /dev/my space name 991232
-
-With patch:
-
-	# kpartx -av "$spacename"
-	add map my space name1 (252:6): 0 262144 linear 7:0 2048
-	add map my space name2 (252:7): 0 524288 linear 7:0 264192
-	add map my space name3 (252:8): 0 2 linear 7:0 788480
-	add map my space name5 (252:9): 0 65536 linear 7:0 790528
-	add map my space name6 (252:10): 0 131072 linear 7:0 858112
-	add map my space name7 (252:11): 0 524288 linear 7:0 991232
-
-	# dmsetup table | sort
-	my space name1: 0 262144 linear 7:0 2048
-	my space name2: 0 524288 linear 7:0 264192
-	my space name3: 0 2 linear 7:0 788480
-	my space name5: 0 65536 linear 7:0 790528
-	my space name6: 0 131072 linear 7:0 858112
-	my space name7: 0 524288 linear 7:0 991232
-
-	# ls -l /dev/mapper/
-	total 0
-	crw------- 1 root root  10, 236 Jan  7 12:00 control
-	brw-rw---- 1 root disk 252,   6 Jan  7 15:50 my\x20space\x20name1
-	brw-rw---- 1 root disk 252,   7 Jan  7 15:50 my\x20space\x20name2
-	brw-rw---- 1 root disk 252,   8 Jan  7 15:50 my\x20space\x20name3
-	brw-rw---- 1 root disk 252,   9 Jan  7 15:50 my\x20space\x20name5
-	brw-rw---- 1 root disk 252,  10 Jan  7 15:50 my\x20space\x20name6
-	brw-rw---- 1 root disk 252,  11 Jan  7 15:50 my\x20space\x20name7
-
-Thanks: Scott Moser (pointers to the error and test-case).
-
-Signed-off-by: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
----
- kpartx/kpartx.c | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
-
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index a9d4c98..d5eeea9 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -477,8 +477,8 @@ main(int argc, char **argv){
- 				}
- 				strip_slash(partname);
- 
--				if (safe_sprintf(params, "%s %" PRIu64 ,
--						 device, slices[j].start)) {
-+				if (safe_sprintf(params, "%d:%d %" PRIu64 ,
-+						 MAJOR(buf.st_rdev), MINOR(buf.st_rdev), slices[j].start)) {
- 					fprintf(stderr, "params too small\n");
- 					exit(1);
- 				}
-@@ -540,8 +540,8 @@ main(int argc, char **argv){
- 					}
- 					strip_slash(partname);
- 
--					if (safe_sprintf(params, "%s %" PRIu64,
--							 device,
-+					if (safe_sprintf(params, "%d:%d %" PRIu64,
-+							 MAJOR(buf.st_rdev), MINOR(buf.st_rdev),
- 							 slices[j].start)) {
- 						fprintf(stderr, "params too small\n");
- 						exit(1);
-@@ -563,8 +563,8 @@ main(int argc, char **argv){
- 						&slices[j].minor);
- 
- 					if (verbose)
--						printf("add map %s : 0 %" PRIu64 " %s %s\n",
--						       partname, slices[j].size,
-+						printf("add map %s (%d:%d): 0 %" PRIu64 " %s %s\n",
-+						       partname, slices[j].major, slices[j].minor, slices[j].size,
- 						       DM_TARGET, params);
- 					c--;
- 				}
--- 
-1.8.3.1
+iQIcBAEBCAAGBQJWjxxJAAoJEDnsnt1WYoG53EwP/A5LX9kqaQ9M/YXcnPg8pVbU
+0OOdhXVI/NlpqWsCpgapLXTz+JcoCPLly27ugTD/JyboXq8fXfwQ0GI0EzwdR/tu
+PDWbPgOJuNQXDUCYeHYVXyMyhbAisfLRWb1fONJ9aR//k8bRDEItmf0hYGbB7mwq
+ODmNAmuDF+73yaN4lneoiZqsBXpXUeVi0L9EsL4XnttpJ5lIhCNuHmI3+D+xHJQ1
+sY1pGQQoBUSqO1jW98GPXAfcs8ET0qMnlVKypqDy39sV2DPsClcnt6s8+ahuOewL
+ZJTBsbcmChaswP3vZHXAEh2AGwtgI2VC1OGlZ9m9iQyHareVat5cmP3JMwc09+Xe
+tFxnhxu0r7p2yce6RqK3AZWYWYTh8d9H94OLmyXY7ulENDYyxSBY3csCVoZaFfLM
+xmO9Aq6+6smbx2H/bZk3bnjbLiLk37ybcd5B+DvMbr1uJfogJFuBXzWRTui9hsyA
+V7O/qmRLfuxgtINk270W5tfD6VdUHeIc214rdBd3ghsJgVWVl9cB7m/+Gd0SdRkK
+1jiVE7e+LGXbdK0mHmbaGiEFOeE4+4aEgxmA+PJFLkgVeqJoMERpQ41zG3qPMqKX
+u1rhkfY+Asw8CfswIcrppqzAKQiZhjStzyWSac7rQQ7VqrjKKFXgjA2UsoNTatAA
+iQVkKn/i7BM8MC1kRGzh
+=BC7F
+-----END PGP SIGNATURE-----
+--=-=-=--
