@@ -1,135 +1,46 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 1/2] dm-snapshot: fix hung bios when copy error
-	happens
-Date: Fri, 8 Jan 2016 19:07:55 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1601081906170.693@file01.intranet.prod.int.rdu2.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH 34/35] block: add QUEUE_FLAGs for flush and
+	fua
+Date: Sat, 9 Jan 2016 00:04:26 -0800
+Message-ID: <20160109080426.GA6207@infradead.org>
+References: <1452027218-32303-1-git-send-email-mchristi@redhat.com>
+	<1452027218-32303-35-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>
-Cc: dm-devel@redhat.com
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1452027218-32303-35-git-send-email-mchristi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: mchristi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, konrad.wilk-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, osd-dev-yNzVSZO3znNg9hUCZPvPmw@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-When there is error copying chunk, dm-snapshot may errorneously keep some
-bios forever, never finishing them. The bug is reported here:
-https://bugzilla.redhat.com/show_bug.cgi?id=889368
+On Tue, Jan 05, 2016 at 02:53:37PM -0600, mchristi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org wrote:
+> From: Mike Christie <mchristi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> 
+> The last patch added a REQ_OP_FLUSH for request_fn drivers
+> and the next patch renames REQ_FLUSH to REQ_PREFLUSH which
+> will be used by file systems and make_request_fn drivers.
+> 
+> This leaves REQ_FLUSH/REQ_FUA defined for drivers to tell
+> the block layer if flush/fua is supported. The names are
+> confusing and I bet will will accidentally be used by
+> people to request flushes. To avoid that, this patch adds
+> QUEUE_FLAGs for flush and fua which drivers will use to
+> indicate what they support.
+> 
+> Signed-off-by: Mike Christie <mchristi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
-The function copy_callback sets pe->error if there was error copying the
-chunk, and then calls complete exception. complete_exception calls
-pending_complete on error, otherwise it calls commit_exception with
-commit_callback (and commit_callback calls complete_exception).
+Yes, this was rather confusing before.  Looks great fix the fix for th
+kbuild complaint:
 
-The persistent exception store (dm-snap-persistent.c) assumes that calls
-to prepare_exception and commit_exception are paired.
-persistent_prepare_exception increases ps->pending_count and
-persistent_commit_exception decreases.
-
-If there is copy error, persistent_prepare_exception is called, but
-persistent_commit_exception is not. This causes that the variable
-ps->pending_count does not return to zero and that causes that some
-pending exceptions are held forever and never finished (and bios
-associated to them are held too).
-
-This patch fixes the bug - commit_exception is called unconditionally
-regardless of whether the copy was successful. I added a new parameter
-"valid" to commit_exception - when the copy was unsuccessful, this
-parameter is set to zero, so that the unsuccessful chunk (and all
-following chunks) is not recorded in the snapshot store.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-
----
- drivers/md/dm-exception-store.h |    2 +-
- drivers/md/dm-snap-persistent.c |    5 ++++-
- drivers/md/dm-snap-transient.c  |    4 ++--
- drivers/md/dm-snap.c            |   10 +++-------
- 4 files changed, 10 insertions(+), 11 deletions(-)
-
-Index: linux-4.4-rc8/drivers/md/dm-exception-store.h
-===================================================================
---- linux-4.4-rc8.orig/drivers/md/dm-exception-store.h	2016-01-08 20:58:59.000000000 +0100
-+++ linux-4.4-rc8/drivers/md/dm-exception-store.h	2016-01-08 20:59:06.000000000 +0100
-@@ -69,7 +69,7 @@ struct dm_exception_store_type {
- 	 * Update the metadata with this exception.
- 	 */
- 	void (*commit_exception) (struct dm_exception_store *store,
--				  struct dm_exception *e,
-+				  struct dm_exception *e, int valid,
- 				  void (*callback) (void *, int success),
- 				  void *callback_context);
- 
-Index: linux-4.4-rc8/drivers/md/dm-snap-persistent.c
-===================================================================
---- linux-4.4-rc8.orig/drivers/md/dm-snap-persistent.c	2016-01-08 20:56:59.000000000 +0100
-+++ linux-4.4-rc8/drivers/md/dm-snap-persistent.c	2016-01-08 20:58:27.000000000 +0100
-@@ -695,7 +695,7 @@ static int persistent_prepare_exception(
- }
- 
- static void persistent_commit_exception(struct dm_exception_store *store,
--					struct dm_exception *e,
-+					struct dm_exception *e, int valid,
- 					void (*callback) (void *, int success),
- 					void *callback_context)
- {
-@@ -704,6 +704,9 @@ static void persistent_commit_exception(
- 	struct core_exception ce;
- 	struct commit_callback *cb;
- 
-+	if (!valid)
-+		ps->valid = 0;
-+
- 	ce.old_chunk = e->old_chunk;
- 	ce.new_chunk = e->new_chunk;
- 	write_exception(ps, ps->current_committed++, &ce);
-Index: linux-4.4-rc8/drivers/md/dm-snap-transient.c
-===================================================================
---- linux-4.4-rc8.orig/drivers/md/dm-snap-transient.c	2016-01-08 20:58:34.000000000 +0100
-+++ linux-4.4-rc8/drivers/md/dm-snap-transient.c	2016-01-08 20:58:44.000000000 +0100
-@@ -52,12 +52,12 @@ static int transient_prepare_exception(s
- }
- 
- static void transient_commit_exception(struct dm_exception_store *store,
--				       struct dm_exception *e,
-+				       struct dm_exception *e, int valid,
- 				       void (*callback) (void *, int success),
- 				       void *callback_context)
- {
- 	/* Just succeed */
--	callback(callback_context, 1);
-+	callback(callback_context, valid);
- }
- 
- static void transient_usage(struct dm_exception_store *store,
-Index: linux-4.4-rc8/drivers/md/dm-snap.c
-===================================================================
---- linux-4.4-rc8.orig/drivers/md/dm-snap.c	2016-01-08 20:59:10.000000000 +0100
-+++ linux-4.4-rc8/drivers/md/dm-snap.c	2016-01-08 20:59:38.000000000 +0100
-@@ -1517,13 +1517,9 @@ static void complete_exception(struct dm
- {
- 	struct dm_snapshot *s = pe->snap;
- 
--	if (unlikely(pe->copy_error))
--		pending_complete(pe, 0);
--
--	else
--		/* Update the metadata if we are persistent */
--		s->store->type->commit_exception(s->store, &pe->e,
--						 commit_callback, pe);
-+	/* Update the metadata if we are persistent */
-+	s->store->type->commit_exception(s->store, &pe->e, !pe->copy_error,
-+					 commit_callback, pe);
- }
- 
- /*
+Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
