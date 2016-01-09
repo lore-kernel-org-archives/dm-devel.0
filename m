@@ -1,37 +1,96 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [dm-devel] [PATCH 02/35] block: add REQ_OP definitions and
- bi_op/op fields
-Date: Sat, 9 Jan 2016 23:15:58 -0800
-Message-ID: <20160110071558.GB12831@infradead.org>
-References: <1452027218-32303-1-git-send-email-mchristi@redhat.com>
- <1452027218-32303-3-git-send-email-mchristi@redhat.com>
- <20160109133716.GB26660@infradead.org>
- <5691AC2E.2050403@cs.wisc.edu>
- <5691B208.9060001@cs.wisc.edu>
+From: Alan Jenkins <alan.christopher.jenkins@gmail.com>
+Subject: Re: [RFC] disk doesn't spin down with thin pool +
+	dmeventd
+Date: Sat, 9 Jan 2016 10:07:45 +0000
+Message-ID: <5690DBF1.6020409@gmail.com>
+References: <568EBD08.70800@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5691B208.9060001@cs.wisc.edu>
-Sender: linux-bcache-owner@vger.kernel.org
-To: Mike Christie <michaelc@cs.wisc.edu>
-Cc: device-mapper development <dm-devel@redhat.com>, mchristi@redhat.com, linux-bcache@vger.kernel.org, linux-block@vger.kernel.org, xfs@oss.sgi.com, linux-scsi@vger.kernel.org, konrad.wilk@oracle.com, linux-kernel@vger.kernel.org, philipp.reisner@linbit.com, linux-f2fs-devel@lists.sourceforge.net, linux-raid@vger.kernel.org, ocfs2-devel@oss.oracle.com, target-devel@vger.kernel.org, linux-mtd@lists.infradead.org, osd-dev@open-osd.org, linux-fsdevel@vger.kernel.org, lars.ellenberg@linbit.com, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org, drbd-dev@lists.linbit.com
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <568EBD08.70800@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, Jan 09, 2016 at 07:21:12PM -0600, Mike Christie wrote:
-> Oh yeah, to answer the second part of your question, REQ_OP_FLUSH is
-> only a flush operation like what request_fn drivers wanted.
+On 08/01/16 08:17, Zdenek Kabelac wrote:
+ > Dne 7.1.2016 v 20:31 Alan Jenkins napsal(a):
+ >> Hi
+ >>
+ >> I tried using Docker on my Fedora NAS box.  It created a thin pool LV,
+ >> which
+ >> caused hard drive activity every ~10 seconds.
+ >>
+ >> dmeventd queries the thin pool every 10 seconds, and it causes a
+ >> transaction
+ >> commit in order to make sure the statistics are up to date. But
+ >> transactions
+ >> are already supposed to be committed after 1 second. (See
+ >> Documentation/device-mapper/thin-provisioning.txt, "Updating on-disk
+ >> metadata").
+ >>
+ >> It seems like a simple case of "don't do that".  The kernel already
+ >> lets us
+ >> avoid the commit.  How about it (patch below)?  If it seems
+ >> reasonable, I can
+ >> whip up a commit message for it.
+ >>
+ >
+ > Hi
+ >
+ > I believe it's already solved upstream in version 2.02.133
+ > of lvm2 package with this commit:
+ >
+ > 81e9ab3156badecc6a64447708c4ae4886e3c244
+ > Date: Thu Oct 22 12:36:25 2015 +0200
+ >
+ > Which version of lvm2 are you using ?
+ >
+ > Regards
+ >
+ > Zdenek
 
-And that's the odd part that trips me up.
+Thanks! That explains a question I had.
 
-> 
-> REQ_PREFLUSH can be set with a REQ_OP_WRITE bio when filesystems want to
-> do both.
-> 
-> There is then the case where filesystems and blkdev_issue_flush could
-> just want to request a flush. I left them as a REQ_PREFLUSH with
-> REQ_OP_WRITE set, so there would be a single code path.
+My patch was based on lvm2 master. The upstream commit applies to the 
+_status_ task, but I applied dm_task_no_flush() to the _wait_ task: 
+DM_DEVICE_WAITEVENT / DM_DEV_WAIT_CMD.
 
-But the pure flush without data transfer case is pretty different,
-so it seems rather odd to handle it like that.  But I suspec we could
-just fix that up later.
+I need to test this again, and I shall. (I started testing with version 
+lvm2-2.02.132-2.fc23.x86_64).
+
+But from the code, it looks like we need *both* patches to fix the 
+problem. See:
+
+
+1. dm-ioctl.c: dev_wait() seems to include the exact same code as 
+dev_table_status, specifically the call to __dev_status():
+
+1192 /*
+1193 * The userland program is going to want to know what
+1194 * changed to trigger the event, so we may as well tell
+1195 * him and save an ioctl.
+1196 */
+1197 __dev_status(md, param);
+1198
+1199 table = dm_get_live_or_inactive_table(md, param, &srcu_idx);
+1200 if (table)
+1201 retrieve_status(table, param, param_size);
+1202 dm_put_live_table(md, srcu_idx);
+
+
+2. Consequently, `dmsetup wait` accepts `--noflush` just like `dmsetup 
+status` does. (`dmsetup table` could as well, I don't know why it 
+doesn't, at least not in the documentation).
+
+Thanks again
+Alan
