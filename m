@@ -1,101 +1,69 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 00/35 v2] separate operations from flags in the
- bio/request structs
-Date: Fri, 8 Jan 2016 18:07:10 -0500
-Message-ID: <20160108230709.GA15655@redhat.com>
-References: <1452027218-32303-1-git-send-email-mchristi@redhat.com>
- <20160108133237.GA7663@infradead.org>
- <56902132.8080008@cs.wisc.edu>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 2/2] dm-snapshot: merge functions commit_callback
+ and pending_complete
+Date: Fri, 8 Jan 2016 19:08:30 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1601081907570.693@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <56902132.8080008@cs.wisc.edu>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Christie <michaelc@cs.wisc.edu>
-Cc: Christoph Hellwig <hch@infradead.org>, mchristi@redhat.com, linux-bcache@vger.kernel.org, linux-block@vger.kernel.org, xfs@oss.sgi.com, linux-scsi@vger.kernel.org, konrad.wilk@oracle.com, linux-kernel@vger.kernel.org, philipp.reisner@linbit.com, linux-f2fs-devel@lists.sourceforge.net, linux-raid@vger.kernel.org, ocfs2-devel@oss.oracle.com, dm-devel@redhat.com, target-devel@vger.kernel.org, linux-mtd@lists.infradead.org, osd-dev@open-osd.org, linux-fsdevel@vger.kernel.org, lars.ellenberg@linbit.com, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org, drbd-dev@lists.linbit.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jan 08 2016 at  3:50P -0500,
-Mike Christie <michaelc@cs.wisc.edu> wrote:
+This patch merges the functions commit_callback and pending_complete
+because it is no longer needed to distinguish between them.
 
-> On 01/08/2016 07:32 AM, Christoph Hellwig wrote:
-> > This looks good to me from a highlevel point of view.
-> > Do you also have a git tree to take a look at all the changes in a
-> > single big diff?
-> 
-> I uploaded a git tree here:
-> 
-> https://github.com/mikechristie/linux-kernel.git
-> 
-> based off of linux-next today. The patches are just in the master branch.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Hi Mike,
+---
+ drivers/md/dm-snap.c |   12 +++---------
+ 1 file changed, 3 insertions(+), 9 deletions(-)
 
-I had a look at your DM changes.  That sucked (but things looked good).
-So much so that I want to thank you for tackling this task (and taking
-one for the team).
-
-I'll get this kernel built and tested (using the various DM testsuites:
-lvm2, cryptsetup, device-mapper-test-suite for dm-thinp and dm-cache).
-
-But I did make some changes during my review that I'd appreciate if
-you'd fold in to wherever you think it appropriate in your series:
-
-diff --git a/drivers/md/dm-stats.c b/drivers/md/dm-stats.c
-index 96b5c1b..9e29dba 100644
---- a/drivers/md/dm-stats.c
-+++ b/drivers/md/dm-stats.c
-@@ -514,11 +514,10 @@ static void dm_stat_round(struct dm_stat *s, struct dm_stat_shared *shared,
+Index: linux-4.4-rc8/drivers/md/dm-snap.c
+===================================================================
+--- linux-4.4-rc8.orig/drivers/md/dm-snap.c	2016-01-08 23:38:54.000000000 +0100
++++ linux-4.4-rc8/drivers/md/dm-snap.c	2016-01-08 23:39:30.000000000 +0100
+@@ -1437,8 +1437,9 @@ static void __invalidate_snapshot(struct
+ 	dm_table_event(s->ti->table);
  }
  
- static void dm_stat_for_entry(struct dm_stat *s, size_t entry,
--			      unsigned long bi_rw, sector_t len,
-+			      int idx, sector_t len,
- 			      struct dm_stats_aux *stats_aux, bool end,
- 			      unsigned long duration_jiffies)
+-static void pending_complete(struct dm_snap_pending_exception *pe, int success)
++static void pending_complete(void *context, int success)
  {
--	unsigned long idx = bi_rw;
- 	struct dm_stat_shared *shared = &s->stat_shared[entry];
- 	struct dm_stat_percpu *p;
- 
-@@ -584,7 +583,7 @@ static void dm_stat_for_entry(struct dm_stat *s, size_t entry,
- #endif
++	struct dm_snap_pending_exception *pe = context;
+ 	struct dm_exception *e;
+ 	struct dm_snapshot *s = pe->snap;
+ 	struct bio *origin_bios = NULL;
+@@ -1506,20 +1507,13 @@ out:
+ 	free_pending_exception(pe);
  }
  
--static void __dm_stat_bio(struct dm_stat *s, unsigned long bi_rw,
-+static void __dm_stat_bio(struct dm_stat *s, int bi_rw,
- 			  sector_t bi_sector, sector_t end_sector,
- 			  bool end, unsigned long duration_jiffies,
- 			  struct dm_stats_aux *stats_aux)
-@@ -622,7 +621,7 @@ static void __dm_stat_bio(struct dm_stat *s, unsigned long bi_rw,
- 	} while (unlikely(todo != 0));
- }
- 
--void dm_stats_account_io(struct dm_stats *stats, unsigned long bi_rw,
-+void dm_stats_account_io(struct dm_stats *stats, int bi_rw,
- 			 sector_t bi_sector, unsigned bi_sectors, bool end,
- 			 unsigned long duration_jiffies,
- 			 struct dm_stats_aux *stats_aux)
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 5e940f7..9a4b3cb 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1326,7 +1326,7 @@ static int device_fua_capable(struct dm_target *ti, struct dm_dev *dev,
- }
- 
- static bool dm_table_supports_flush(struct dm_table *t,
--				    iterate_devices_callout_fn support_test)
-+				    iterate_devices_callout_fn callout_fn)
+-static void commit_callback(void *context, int success)
+-{
+-	struct dm_snap_pending_exception *pe = context;
+-
+-	pending_complete(pe, success);
+-}
+-
+ static void complete_exception(struct dm_snap_pending_exception *pe)
  {
- 	struct dm_target *ti;
- 	unsigned i = 0;
-@@ -1347,7 +1347,7 @@ static bool dm_table_supports_flush(struct dm_table *t,
- 			return true;
+ 	struct dm_snapshot *s = pe->snap;
  
- 		if (ti->type->iterate_devices &&
--		    ti->type->iterate_devices(ti, support_test, NULL))
-+		    ti->type->iterate_devices(ti, callout_fn, NULL))
- 			return true;
- 	}
+ 	/* Update the metadata if we are persistent */
+ 	s->store->type->commit_exception(s->store, &pe->e, !pe->copy_error,
+-					 commit_callback, pe);
++					 pending_complete, pe);
+ }
  
+ /*
