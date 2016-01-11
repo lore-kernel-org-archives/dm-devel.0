@@ -1,16 +1,13 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: [RFC] disk doesn't spin down with thin pool +
-	dmeventd
-Date: Mon, 11 Jan 2016 10:21:29 +0100
-Message-ID: <56937419.3030501@redhat.com>
-References: <568EBD08.70800@gmail.com> <5690DBF1.6020409@gmail.com>
-	<5690F444.1010108@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper changes for 4.5
+Date: Mon, 11 Jan 2016 15:01:11 -0500
+Message-ID: <20160111200111.GA98674@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5690F444.1010108@gmail.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,88 +17,100 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, Anup Limbu <anuplimbu14@gmail.com>, Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Nikolay Borisov <kernel@kyup.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 9.1.2016 v 12:51 Alan Jenkins napsal(a):
-> On 09/01/16 10:07, Alan Jenkins wrote:
->> On 08/01/16 08:17, Zdenek Kabelac wrote:
->> > Dne 7.1.2016 v 20:31 Alan Jenkins napsal(a):
->> >> Hi
->> >>
->> >> I tried using Docker on my Fedora NAS box.  It created a thin pool LV,
->> >> which
->> >> caused hard drive activity every ~10 seconds.
->> >>
->> >> dmeventd queries the thin pool every 10 seconds, and it causes a
->> >> transaction
->> >> commit in order to make sure the statistics are up to date. But
->> >> transactions
->> >> are already supposed to be committed after 1 second. (See
->> >> Documentation/device-mapper/thin-provisioning.txt, "Updating on-disk
->> >> metadata").
->> >>
->> >> It seems like a simple case of "don't do that".  The kernel already
->> >> lets us
->> >> avoid the commit.  How about it (patch below)?  If it seems
->> >> reasonable, I can
->> >> whip up a commit message for it.
->> >>
->> >
->> > Hi
->> >
->> > I believe it's already solved upstream in version 2.02.133
->> > of lvm2 package with this commit:
->> >
->> > 81e9ab3156badecc6a64447708c4ae4886e3c244
->> > Date: Thu Oct 22 12:36:25 2015 +0200
->> >
->> > Which version of lvm2 are you using ?
->> >
->> > Regards
->> >
->> > Zdenek
->>
->> Thanks! That explains a question I had.
->>
->> My patch was based on lvm2 master. The upstream commit applies to the
->> _status_ task, but I applied dm_task_no_flush() to the _wait_ task:
->> DM_DEVICE_WAITEVENT / DM_DEV_WAIT_CMD.
->>
->> I need to test this again, and I shall. (I started testing with version
->> lvm2-2.02.132-2.fc23.x86_64).
->>
->> But from the code, it looks like we need *both* patches to fix the problem.
->> See:
->>
->>
->> 1. dm-ioctl.c: dev_wait() seems to include the exact same code as
->> dev_table_status, specifically the call to __dev_status():
->
-> Nevermind.  For me, the upstream commit fixes the problem on its own.
->
-> The wait task does get run every 10 seconds.  But the 10 second timeout
-> interrupts it before __dev_status() is called.  So setting noflush on the
-> status task, had already fixed the problem.
->
+Hi Linus,
 
-Status with flush on thin-pool is supposed to give you 'accurate' value, while 
-status without flush is giving you some 'possibly out-of-date' value since not 
-all IO are on disk (possibly the one which may cause provisioning).
+The following changes since commit ed8b45a3679eb49069b094c0711b30833f27c734:
 
-However for dmeventd we should be quite happy with no-flush variant.
+  dm btree: fix bufio buffer leaks in dm_btree_del() error path (2015-12-10 10:30:18 -0500)
 
-AFAIK I guess even the kernel has been slightly improved here, so if there
-is nothing to write, it should also skip disk sync in this case (even
-if 'flush' would have remained to be set).
+are available in the git repository at:
 
-And while 'disk' sleeping was one of the reasons to add this flag, the 'core' 
-reason why 'no-flush' basically has to be ATM used with every lvm2/dmeventd 
-status call is the blocking nature of this flushing when thin-pool gets 
-overfilled (suspend/status needs to be able to return with some appropriate 
-return code for this). We need to think about some better ways here - but so 
-far this is 'reasonably' good workaround.
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.5-changes
 
-Regard
+for you to fetch changes up to 385277bfb57faac44e92497104ba542cdd82d5fe:
 
-Zdenek
+  dm snapshot: fix hung bios when copy error occurs (2016-01-08 20:03:05 -0500)
+
+Please pull, thanks!
+Mike
+
+----------------------------------------------------------------
+- The most significant set of changes this cycle is the Forward Error
+  Correction (FEC) support that has been added to the DM verity target.
+  Google uses DM verity on all Android devices and it is believed that
+  this FEC support will enable DM verity to recover from storage
+  failures seen since DM verity was first deployed as part of Android.
+
+- A stable fix for a race in the destruction of DM thin pool's workqueue
+
+- A stable fix for hung IO if a DM snapshot copy hit an error
+
+- A few small cleanups in DM core and DM persistent data.
+
+- A couple DM thinp range discard improvements (address atomicity of
+  finding a range and the efficiency of discarding a partially mapped
+  thin device)
+
+- Add ability to debug DM bufio leaks by recording stack trace when a
+  buffer is allocated.  Upon detected leak the recorded stack is dumped.
+
+----------------------------------------------------------------
+Anup Limbu (1):
+      dm bufio: use BUG_ON instead of conditional call to BUG
+
+Joe Thornber (2):
+      dm thin metadata: speed up discard of partially mapped volumes
+      dm thin metadata: make dm_thin_find_mapped_range() atomic
+
+Mike Snitzer (3):
+      dm btree: factor out need_insert() helper
+      dm space map metadata: remove unused variable in brb_pop()
+      dm thin: bump thin and thin-pool target versions
+
+Mikulas Patocka (5):
+      dm: don't save and restore bi_private
+      dm block manager: cleanup code that prints stacktrace
+      dm bufio: return NULL to improve code clarity
+      dm bufio: store stacktrace in buffers to help find buffer leaks
+      dm snapshot: fix hung bios when copy error occurs
+
+Nikolay Borisov (1):
+      dm thin: fix race condition when destroying thin pool workqueue
+
+Sami Tolvanen (7):
+      dm verity: clean up duplicate hashing code
+      dm verity: separate function for parsing opt args
+      dm verity: move dm-verity.c to dm-verity-target.c
+      dm verity: factor out structures and functions useful to separate object
+      dm verity: factor out verity_for_bv_block()
+      dm verity: add support for forward error correction
+      dm verity: add ignore_zero_blocks feature
+
+ Documentation/device-mapper/verity.txt             |  40 +-
+ drivers/md/Kconfig                                 |  21 +
+ drivers/md/Makefile                                |   5 +
+ drivers/md/dm-bufio.c                              |  44 +-
+ drivers/md/dm-cache-target.c                       |   3 -
+ drivers/md/dm-exception-store.h                    |   2 +-
+ drivers/md/dm-snap-persistent.c                    |   5 +-
+ drivers/md/dm-snap-transient.c                     |   4 +-
+ drivers/md/dm-snap.c                               |  26 +-
+ drivers/md/dm-thin-metadata.c                      | 114 ++-
+ drivers/md/dm-thin.c                               |   8 +-
+ drivers/md/dm-verity-fec.c                         | 818 +++++++++++++++++++++
+ drivers/md/dm-verity-fec.h                         | 152 ++++
+ drivers/md/{dm-verity.c => dm-verity-target.c}     | 602 ++++++++-------
+ drivers/md/dm-verity.h                             | 129 ++++
+ drivers/md/persistent-data/Kconfig                 |   9 -
+ drivers/md/persistent-data/dm-block-manager.c      |  11 +-
+ drivers/md/persistent-data/dm-btree.c              |  17 +-
+ drivers/md/persistent-data/dm-space-map-metadata.c |   3 -
+ 19 files changed, 1657 insertions(+), 356 deletions(-)
+ create mode 100644 drivers/md/dm-verity-fec.c
+ create mode 100644 drivers/md/dm-verity-fec.h
+ rename drivers/md/{dm-verity.c => dm-verity-target.c} (69%)
+ create mode 100644 drivers/md/dm-verity.h
