@@ -1,15 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 1/2] dm stripe: document that chunk size is
- specified in sectors (resend)
-Date: Tue, 12 Jan 2016 12:59:24 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1601121258060.5769@file01.intranet.prod.int.rdu2.redhat.com>
-References: <56952c84.020d620a.94f42.2f06@mx.google.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [LSF/MM ATTEND] plan to deprecate old .request_fn
+ request-based code path?
+Date: Tue, 12 Jan 2016 13:59:47 -0500
+Message-ID: <20160112185947.GA29176@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <56952c84.020d620a.94f42.2f06@mx.google.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,43 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>
-Cc: dm-devel@redhat.com, snitzer@redhat.com
+To: lsf-pc@lists.linux-foundation.org
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hi,
 
+I'd like to attend LSF/MM and as the subject covers I'd like to at least
+participate in a discussion about plans (realistic or not) for
+removing/deprecating the old .request_fn path in block core and block
+drivers.
 
-On Wed, 13 Jan 2016, kusumi.tomohiro@gmail.com wrote:
+The request-based DM code (only used for multipath) has gotten more
+complex to support both old .request_fn and blk-mq (and stacking
+combinations: .request_fn ontop of blk-mq paths, blk-mq ontop of
+.request_fn paths).  Simplifying DM core in this area would be nice.
 
-> From: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>
-> 
-> Mention it's in sector similar to f49e869.
-> It sounds like one specifies it in a number like 4096.
-> 
-> Signed-off-by: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>
-> ---
->  Documentation/device-mapper/striped.txt |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/Documentation/device-mapper/striped.txt b/Documentation/device-mapper/striped.txt
-> index 45f3b91..f109b54 100644
-> --- a/Documentation/device-mapper/striped.txt
-> +++ b/Documentation/device-mapper/striped.txt
-> @@ -9,8 +9,8 @@ devices in parallel.
->  
->  Parameters: <num devs> <chunk size> [<dev path> <offset>]+
->      <num devs>: Number of underlying devices.
-> -    <chunk size>: Size of each chunk of data. Must be at least as
-> -                  large as the system's PAGE_SIZE.
-> +    <chunk size>: Size of each chunk of data in sectors. Must be
-> +                  at least as large as the system's PAGE_SIZE.
->      <dev path>: Full pathname to the underlying block-device, or a
->                  "major:minor" device-number.
->      <offset>: Starting sector within the device.
-> -- 
-> 1.7.1
+One of the hurdles has been blk-mq doesn't yet have a scheduler.  I know
+Jens had/has something in the works.  But there is also the question of
+whether DM's top-level blk-mq request_queue should be trained to
+leverage/stack underlying blk-mq request_queue capabilities (Keith Busch
+was going to look at this aspect in the context of multipath on NVMe but
+I never heard anything from Keith on that).  As of now DM multipath's
+blk-mq request_queue only supports a single (virtual) hw queue.
 
-It is not required that the chunk size must be at least as larget as the 
-page size, so that sentence should be dropped too.
+In addition to the above topic, I'd be open to discussing Linux MD
+maintainership options with others if for some reason that is still an
+unresolved situation come mid April.
 
-Mikulas
+Thanks,
+Mike
