@@ -1,71 +1,58 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH v2 0/2] Introduce the bulk IV mode for improving
- the crypto engine efficiency
-Date: Wed, 13 Jan 2016 10:00:21 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1601130816560.11671@file01.intranet.prod.int.rdu2.redhat.com>
-References: <cover.1450233399.git.baolin.wang@linaro.org> <5514385.nEhTK7fEcU@wuerfel> <alpine.LRH.2.02.1601122113240.24452@file01.intranet.prod.int.rdu2.redhat.com> <49336038.lhIkHu2mkF@wuerfel>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [LSF/MM ATTEND][LSF/MM TOPIC] Multipath redesign
+Date: Wed, 13 Jan 2016 10:42:43 -0500
+Message-ID: <20160113154243.GA2563@redhat.com>
+References: <56961493.5010901@suse.de>
+ <56962BDB.4080509@dev.mellanox.co.il>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <49336038.lhIkHu2mkF@wuerfel>
-Sender: linux-raid-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Mark Brown <broonie@kernel.org>, Milan Broz <gmazyland@gmail.com>, Jens Axboe <axboe@kernel.dk>, keith.busch@intel.com, linux-raid@vger.kernel.org, martin.petersen@oracle.com, Mike Snitzer <snitzer@redhat.com>, Baolin Wang <baolin.wang@linaro.org>, linux-block@vger.kernel.org, neilb@suse.com, LKML <linux-kernel@vger.kernel.org>, sagig@mellanox.com, tj@kernel.org, dan.j.williams@intel.com, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <56962BDB.4080509@dev.mellanox.co.il>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Sagi Grimberg <sagig@dev.mellanox.co.il>
+Cc: Hannes Reinecke <hare@suse.de>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, device-mapper development <dm-devel@redhat.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "linux-scsi@vger.kernel.org" <Linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-
-
-On Wed, 13 Jan 2016, Arnd Bergmann wrote:
-
-> On Tuesday 12 January 2016 21:18:12 Mikulas Patocka wrote:
-> > On Wed, 13 Jan 2016, Arnd Bergmann wrote:
-> > 
-> > > On Tuesday 12 January 2016 18:31:19 Mikulas Patocka wrote:
-> > > > 
-> > > > Another possibility is to use dm-crypt block size 4k and use a filesystem 
-> > > > with 4k blocksize on it (it will never send requests not aligned on 4k 
-> > > > boundary, so we could reject such requests with an error).
-> > > 
-> > > Is there ever a reason to use something other than 4K block size on
-> > > dm-crypt?
-> > > 
-> > >       Arnd
-> > 
-> > You can't use 4k block on CBC (and most other encryption modes). If only a 
-> > part of 4k block is written (and then system crash happens), CBC would 
-> > corrupt the block completely.
-> > 
-> > For example, suppose that EXT2 directory block is updated, the first 
-> > 512-byte sector is written and the rest of the sectors is not written 
-> > because of a crash. CBC would corrupt all sectors except the first one in 
-> > this case.
-> > 
-> > You could use 4k block on XTS and ECB.
+On Wed, Jan 13 2016 at  5:50am -0500,
+Sagi Grimberg <sagig@dev.mellanox.co.il> wrote:
+ 
+> Another (adjacent) topic is multipath performance with blk-mq.
 > 
-> Ah, I did not know that ext2 was doing sub-block writes. This may be
-
-Ext2 is not doing sub-block writes.
-
-Generally, disks and SSDs do not guarantee 4k write atomicity (only disks 
-with hardware 4k sector guarantee it).
-
-For example, ext2 writes a full 4k block, only part of the block is 
-written to the disk and then power failure happens. On the next reboot CBC 
-will corrupt the unwritten part of the 4k block.
-
-Mikulas
-
-> something to address in the ext4 code (and other file systems), as
-> a lot of flash storage devices (SD cards and eMMC) get really slow
-> when you do writes smaller than 4K because of the internal
-> read-modify-write cycle. Ideally you want to always drive those
-> using 64K writes (for reads, it doesn't matter much).
+> As I said, I've been looking at nvme multipathing support and
+> initial measurements show huge contention on the multipath lock
+> which really defeats the entire point of blk-mq...
 > 
-> For hard drives, there are still a couple of older models that have
-> native 512 byte sectors, but the majority of new drivers also
-> prefers 4K writes. SSDs are typically optimized for 4K writes because
-> that is what they expect software to do, but they use larger writes
-> internally.
+> I have yet to report this as my work is still in progress. I'm not sure
+> if it's a topic on it's own but I'd love to talk about that as well...
+
+This sounds like you aren't actually using blk-mq for the top-level DM
+multipath queue.  And your findings contradicts what I heard from Keith
+Busch when I developed request-based DM's blk-mq support, from commit 
+bfebd1cdb497 ("dm: add full blk-mq support to request-based DM"):
+
+     "Just providing a performance update. All my fio tests are getting
+      roughly equal performance whether accessed through the raw block
+      device or the multipath device mapper (~470k IOPS). I could only push
+      ~20% of the raw iops through dm before this conversion, so this latest
+      tree is looking really solid from a performance standpoint."
+
+> >But in the end we should be able to do strip down the current (rather
+> >complex) multipath-tools to just handle topology changes; everything
+> >else will be done internally.
 > 
-> 	Arnd
-> 
+> I'd love to see that happening.
+
+Honestly, this needs to be a hardened plan that is hashed out _before_
+LSF and then findings presented.  It is a complete waste of time to
+debate nuance with Hannes in a one hour session.
+
+Until I implemented the above DM core changes hch and Hannes were very
+enthusiastic to throw away the existing DM multipath and multipath-tools
+code (the old .request_fn queue lock bottleneck being the straw that
+broke the camel's back).  Seems Hannes' enthusiasm hasn't tempered but
+his hand-waving is still in full form.
+
+Details matter.  I have no doubts aspects of what we have could be
+improved but I really fail to see how moving multipathing to blk-mq is a
+constructive way forward.
