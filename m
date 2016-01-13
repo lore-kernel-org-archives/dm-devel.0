@@ -1,42 +1,30 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [LSF/MM ATTEND] plan to deprecate old
-	.request_fn	request-based code path?
-Date: Wed, 13 Jan 2016 11:02:40 +0000
-Message-ID: <20160113110240.GB452@agk-dp.fab.redhat.com>
-References: <20160112185947.GA29176@redhat.com>
-	<alpine.LRH.2.02.1601121835590.29321@file01.intranet.prod.int.rdu2.redhat.com>
-	<56960904.5060006@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [LSF/MM ATTEND][LSF/MM TOPIC] Multipath redesign
+Date: Wed, 13 Jan 2016 11:08:22 +0000
+Message-ID: <20160113110822.GC452@agk-dp.fab.redhat.com>
+References: <56961493.5010901@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <56960904.5060006@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+In-Reply-To: <56961493.5010901@suse.de>
+Sender: linux-scsi-owner@vger.kernel.org
 To: Hannes Reinecke <hare@suse.de>
-Cc: linux-block@vger.kernel.org, Junichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, lsf-pc@lists.linux-foundation.org, Mike Snitzer <snitzer@redhat.com>
+Cc: "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <Linux-scsi@vger.kernel.org>, Junichi Nomura <j-nomura@ce.jp.nec.com>
 List-Id: dm-devel.ids
 
-On Wed, Jan 13, 2016 at 09:21:24AM +0100, Hannes Reinecke wrote:
-> We have been down that road already. It doesn't work.
-> There is a reason why we switched to request-based multipathing.
+On Wed, Jan 13, 2016 at 10:10:43AM +0100, Hannes Reinecke wrote:
+> The overall idea is to break up the centralized multipath handling in 
+> device-mapper (and multipath-tools) and delegate to the appropriate 
+> sub-systems.
+>
+> Individually the plan is:
 
-It's worth reminding people of the original write-up explaining this
-switch:
-
-  https://www.kernel.org/doc/ols/2007/ols2007v2-pages-235-244.pdf
-
-(and that since that was written, there have been plenty of changes,
-both to the request-based code itself and the bio-based path which Kent
-streamlined).
+Could we start to drill down into each of these and categorise them in
+terms of which parts of the stack are involved in the proposed change
+and prioritise them in terms of likely amount of work and
+cost/benefit/risk?  Some of them probably need some prototyping and
+experimentation.
 
 Alasdair
+
