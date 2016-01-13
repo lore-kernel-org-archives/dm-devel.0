@@ -1,54 +1,82 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [dm-devel] [PATCH v2 0/2] Introduce the bulk IV mode for improving the crypto engine efficiency
-Date: Wed, 13 Jan 2016 11:17:04 +0100
-Message-ID: <49336038.lhIkHu2mkF@wuerfel>
-References: <cover.1450233399.git.baolin.wang@linaro.org> <5514385.nEhTK7fEcU@wuerfel> <alpine.LRH.2.02.1601122113240.24452@file01.intranet.prod.int.rdu2.redhat.com>
+From: Sagi Grimberg <sagig@dev.mellanox.co.il>
+Subject: Re: [LSF/MM ATTEND][LSF/MM TOPIC] Multipath redesign
+Date: Wed, 13 Jan 2016 12:50:03 +0200
+Message-ID: <56962BDB.4080509@dev.mellanox.co.il>
+References: <56961493.5010901@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1601122113240.24452@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mark Brown <broonie@kernel.org>, Milan Broz <gmazyland@gmail.com>, Jens Axboe <axboe@kernel.dk>, keith.busch@intel.com, linux-raid@vger.kernel.org, martin.petersen@oracle.com, Mike Snitzer <snitzer@redhat.com>, Baolin Wang <baolin.wang@linaro.org>, linux-block@vger.kernel.org, neilb@suse.com, LKML <linux-kernel@vger.kernel.org>, sagig@mellanox.com, tj@kernel.org, dan.j.williams@intel.com, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <56961493.5010901@suse.de>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <Linux-scsi@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>
 List-Id: dm-devel.ids
 
-On Tuesday 12 January 2016 21:18:12 Mikulas Patocka wrote:
-> On Wed, 13 Jan 2016, Arnd Bergmann wrote:
-> 
-> > On Tuesday 12 January 2016 18:31:19 Mikulas Patocka wrote:
-> > > 
-> > > Another possibility is to use dm-crypt block size 4k and use a filesystem 
-> > > with 4k blocksize on it (it will never send requests not aligned on 4k 
-> > > boundary, so we could reject such requests with an error).
-> > 
-> > Is there ever a reason to use something other than 4K block size on
-> > dm-crypt?
-> > 
-> >       Arnd
-> 
-> You can't use 4k block on CBC (and most other encryption modes). If only a 
-> part of 4k block is written (and then system crash happens), CBC would 
-> corrupt the block completely.
-> 
-> For example, suppose that EXT2 directory block is updated, the first 
-> 512-byte sector is written and the rest of the sectors is not written 
-> because of a crash. CBC would corrupt all sectors except the first one in 
-> this case.
-> 
-> You could use 4k block on XTS and ECB.
 
-Ah, I did not know that ext2 was doing sub-block writes. This may be
-something to address in the ext4 code (and other file systems), as
-a lot of flash storage devices (SD cards and eMMC) get really slow
-when you do writes smaller than 4K because of the internal
-read-modify-write cycle. Ideally you want to always drive those
-using 64K writes (for reads, it doesn't matter much).
+> Hi all,
+>
+> I'd like to attend LSF/MM and would like to present my ideas for a
+> multipath redesign.
+>
+> The overall idea is to break up the centralized multipath handling in
+> device-mapper (and multipath-tools) and delegate to the appropriate
+> sub-systems.
 
-For hard drives, there are still a couple of older models that have
-native 512 byte sectors, but the majority of new drivers also
-prefers 4K writes. SSDs are typically optimized for 4K writes because
-that is what they expect software to do, but they use larger writes
-internally.
+I agree that would be very useful. Great topic. I'd like to attend
+this talk as well.
 
-	Arnd
+>
+> Individually the plan is:
+> a) use the 'wwid' sysfs attribute to detect multipath devices;
+>     this removes the need of the current 'path_id' functionality
+>     in multipath-tools
+
+CC'ing Linux-nvme,
+
+I've recently looked at multipathing support for nvme (and nvme over
+fabrics) as well. For nvme the wwid equivalent is the nsid (namespace
+identifier). I'm wandering if we can have better abstraction for
+user-space so it won't need to change its behavior for scsi/nvme.
+The same applies for the the timeout attribute for example which
+assumes scsi device sysfs structure.
+
+> b) leverage topology information from scsi_dh_alua (which we will
+>     have once my ALUA handler update is in) to detect the multipath
+>     topology. This removes the need of a 'prio' infrastructure
+>     in multipath-tools
+
+This would require further attention for nvme.
+
+> c) implement block or scsi events whenever a remote port becomes
+>     unavailable. This removes the need of the 'path_checker'
+>     functionality in multipath-tools.
+
+I'd prefer if we'd have it in the block layer so we can have it for all
+block drivers. Also, this assumes that port events are independent of
+I/O. This assumption is incorrect in SRP for example which detects port
+failures only by I/O errors (which makes path sensing a must).
+
+> d) leverage these events to handle path-up/path-down events
+>     in-kernel
+> e) move the I/O redirection logic out of device-mapper proper
+>     and use blk-mq to redirect I/O. This is still a bit of
+>     hand-waving, and definitely would need discussion to figure
+>     out if and how it can be achieved.
+>     This is basically the same topic Mike Snitzer proposed, but
+>     coming from a different angle.
+
+Another (adjacent) topic is multipath performance with blk-mq.
+
+As I said, I've been looking at nvme multipathing support and
+initial measurements show huge contention on the multipath lock
+which really defeats the entire point of blk-mq...
+
+I have yet to report this as my work is still in progress. I'm not sure
+if it's a topic on it's own but I'd love to talk about that as well...
+
+> But in the end we should be able to do strip down the current (rather
+> complex) multipath-tools to just handle topology changes; everything
+> else will be done internally.
+
+I'd love to see that happening.
