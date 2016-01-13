@@ -1,72 +1,53 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [dm-devel] [LSF/MM ATTEND][LSF/MM TOPIC] Multipath redesign
-Date: Wed, 13 Jan 2016 11:52:39 -0600
-Message-ID: <20160113175239.GE24960@octiron.msp.redhat.com>
-References: <56961493.5010901@suse.de>
+From: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>
+Subject: [PATCH v2] dm stripe: document that chunk size is
+	specified in sectors (resend)
+Date: Thu, 14 Jan 2016 04:47:35 +0900
+Message-ID: <1452714455-8510-1-git-send-email-kusumi.tomohiro@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <56961493.5010901@suse.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, "linux-scsi@vger.kernel.org" <Linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: snitzer@redhat.com, mpatocka@redhat.com
+Cc: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jan 13, 2016 at 10:10:43AM +0100, Hannes Reinecke wrote:
-> Hi all,
-> 
-> I'd like to attend LSF/MM and would like to present my ideas for a multipath
-> redesign.
-> 
-> The overall idea is to break up the centralized multipath handling in
-> device-mapper (and multipath-tools) and delegate to the appropriate
-> sub-systems.
-> 
-> Individually the plan is:
-> a) use the 'wwid' sysfs attribute to detect multipath devices;
->    this removes the need of the current 'path_id' functionality
->    in multipath-tools
+Mention it's in sector similar to f49e869.
 
-If all the devices that we support advertise their WWID through sysfs,
-I'm all for this. Not needing to worry about callouts or udev sounds
-great.
+> It is not required that the chunk size must be at least as
+> large as the page size, so that sentence should be dropped too.
 
-> b) leverage topology information from scsi_dh_alua (which we will
->    have once my ALUA handler update is in) to detect the multipath
->    topology. This removes the need of a 'prio' infrastructure
->    in multipath-tools
+Also get rid of an obsolete sentence which mentions
+chunk size must be >=PAGE_SIZE.
 
-What about devices that don't use alua? Or users who want to be able to
-pick a specific path to prefer? While I definitely prefer simple, we
-can't drop real funtionality to get there. Have you posted your
-scsi_dh_alua update somewhere?
+Signed-off-by: Tomohiro Kusumi <kusumi.tomohiro@gmail.com>
+Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
+---
+ Documentation/device-mapper/striped.txt |    3 +--
+ 1 files changed, 1 insertions(+), 2 deletions(-)
 
-I've recently had requests from users to
-1. make a path with the TPGS pref bit set be in its own path group with
-the highest priority
-2. make the weighted prioritizer use persistent information to make its
-choice, so its actually useful. This is to deal with the need to prefer a
-specific path in a non-alua setup.
-
-Some of the complexity with priorities is there out of necessity.
-
-> c) implement block or scsi events whenever a remote port becomes
->    unavailable. This removes the need of the 'path_checker'
->    functionality in multipath-tools.
-
-I'm not convinced that we will be able to find out when paths come back
-online in all cases without some sort of actual polling. Again, I'd love
-this to be simpler, but asking all the types of storage we plan to
-support to notify us when they are up and down may not be realistic.
-
-> d) leverage these events to handle path-up/path-down events
->    in-kernel
-
-If polling is necessary, I'd rather it be done in userspace. Personally,
-I think the checker code is probably the least obectionable part of the
-multipath-tools (It's getting all the device information to set up the
-devices in the first place and coordinating with uevents that's really
-ugly, IMHO).
-
--Ben
+diff --git a/Documentation/device-mapper/striped.txt b/Documentation/device-mapper/striped.txt
+index 45f3b91..36695ad 100644
+--- a/Documentation/device-mapper/striped.txt
++++ b/Documentation/device-mapper/striped.txt
+@@ -9,8 +9,7 @@ devices in parallel.
+ 
+ Parameters: <num devs> <chunk size> [<dev path> <offset>]+
+     <num devs>: Number of underlying devices.
+-    <chunk size>: Size of each chunk of data. Must be at least as
+-                  large as the system's PAGE_SIZE.
++    <chunk size>: Size of each chunk of data in sectors.
+     <dev path>: Full pathname to the underlying block-device, or a
+                 "major:minor" device-number.
+     <offset>: Starting sector within the device.
+-- 
+1.7.1
