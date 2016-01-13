@@ -1,37 +1,74 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [dm-devel] [PATCH v2 0/2] Introduce the bulk IV mode for
- improving the crypto engine efficiency
-Date: Wed, 13 Jan 2016 08:01:01 +0100
-Message-ID: <5695F62D.3050705@gmail.com>
-References: <cover.1450233399.git.baolin.wang@linaro.org>
- <20160104201343.GQ16023@sirena.org.uk>
- <alpine.LRH.2.02.1601121744400.18228@file01.intranet.prod.int.rdu2.redhat.com>
- <5514385.nEhTK7fEcU@wuerfel>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [LSF/MM ATTEND] plan to deprecate old .request_fn
+ request-based code path?
+Date: Wed, 13 Jan 2016 09:21:24 +0100
+Message-ID: <56960904.5060006@suse.de>
+References: <20160112185947.GA29176@redhat.com>
+	<alpine.LRH.2.02.1601121835590.29321@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5514385.nEhTK7fEcU@wuerfel>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mark Brown <broonie@kernel.org>, Milan Broz <gmazyland@gmail.com>, Jens Axboe <axboe@kernel.dk>, keith.busch@intel.com, linux-raid@vger.kernel.org, martin.petersen@oracle.com, Mike Snitzer <snitzer@redhat.com>, Baolin Wang <baolin.wang@linaro.org>, linux-block@vger.kernel.org, neilb@suse.com, LKML <linux-kernel@vger.kernel.org>, sagig@mellanox.com, tj@kernel.org, dan.j.williams@intel.com, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="windows-1252"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1601121835590.29321@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: linux-block@vger.kernel.org, lsf-pc@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-On 01/13/2016 12:38 AM, Arnd Bergmann wrote:
-> On Tuesday 12 January 2016 18:31:19 Mikulas Patocka wrote:
+On 01/13/2016 12:39 AM, Mikulas Patocka wrote:
+>
+>
+> On Tue, 12 Jan 2016, Mike Snitzer wrote:
+>
+>> Hi,
 >>
->> Another possibility is to use dm-crypt block size 4k and use a filesystem 
->> with 4k blocksize on it (it will never send requests not aligned on 4k 
->> boundary, so we could reject such requests with an error).
-> 
-> Is there ever a reason to use something other than 4K block size on
-> dm-crypt?
+>> I'd like to attend LSF/MM and as the subject covers I'd like to at least
+>> participate in a discussion about plans (realistic or not) for
+>> removing/deprecating the old .request_fn path in block core and block
+>> drivers.
+>>
+>> The request-based DM code (only used for multipath) has gotten more
+>> complex to support both old .request_fn and blk-mq (and stacking
+>> combinations: .request_fn ontop of blk-mq paths, blk-mq ontop of
+>> .request_fn paths).  Simplifying DM core in this area would be nice.
+>>
+>> One of the hurdles has been blk-mq doesn't yet have a scheduler.  I know
+>> Jens had/has something in the works.  But there is also the question of
+>> whether DM's top-level blk-mq request_queue should be trained to
+>> leverage/stack underlying blk-mq request_queue capabilities (Keith Busch
+>> was going to look at this aspect in the context of multipath on NVMe but
+>> I never heard anything from Keith on that).  As of now DM multipath's
+>> blk-mq request_queue only supports a single (virtual) hw queue.
+>>
+>> In addition to the above topic, I'd be open to discussing Linux MD
+>> maintainership options with others if for some reason that is still an
+>> unresolved situation come mid April.
+>>
+>> Thanks,
+>> Mike
+>
+> Convert multipath from request-based to bio-based and these problems in
+> device mapper core will disappear :-)
+>
+We have been down that road already. It doesn't work.
+There is a reason why we switched to request-based multipathing.
 
-Most existing sw FDE systems use 512bytes blocks. I would like to see
-configurable block size (at least up to 4k) but as Mikulas pointed out
-it opens several new problems. 
+Cheers,
 
-Anyway, I do not see reason why crypto accelerators should not process
-these small sectors better - just hw must be designed for it.
+Hannes
+-- =
 
-Milan
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=FCrnberg)
