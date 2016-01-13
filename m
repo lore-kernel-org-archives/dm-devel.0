@@ -1,74 +1,61 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [LSF/MM ATTEND] plan to deprecate old .request_fn
- request-based code path?
-Date: Wed, 13 Jan 2016 09:21:24 +0100
-Message-ID: <56960904.5060006@suse.de>
-References: <20160112185947.GA29176@redhat.com>
-	<alpine.LRH.2.02.1601121835590.29321@file01.intranet.prod.int.rdu2.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: [LSF/MM ATTEND][LSF/MM TOPIC] Multipath redesign
+Date: Wed, 13 Jan 2016 10:10:43 +0100
+Message-ID: <56961493.5010901@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1601121835590.29321@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: linux-block@vger.kernel.org, lsf-pc@lists.linux-foundation.org
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <Linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 01/13/2016 12:39 AM, Mikulas Patocka wrote:
->
->
-> On Tue, 12 Jan 2016, Mike Snitzer wrote:
->
->> Hi,
->>
->> I'd like to attend LSF/MM and as the subject covers I'd like to at least
->> participate in a discussion about plans (realistic or not) for
->> removing/deprecating the old .request_fn path in block core and block
->> drivers.
->>
->> The request-based DM code (only used for multipath) has gotten more
->> complex to support both old .request_fn and blk-mq (and stacking
->> combinations: .request_fn ontop of blk-mq paths, blk-mq ontop of
->> .request_fn paths).  Simplifying DM core in this area would be nice.
->>
->> One of the hurdles has been blk-mq doesn't yet have a scheduler.  I know
->> Jens had/has something in the works.  But there is also the question of
->> whether DM's top-level blk-mq request_queue should be trained to
->> leverage/stack underlying blk-mq request_queue capabilities (Keith Busch
->> was going to look at this aspect in the context of multipath on NVMe but
->> I never heard anything from Keith on that).  As of now DM multipath's
->> blk-mq request_queue only supports a single (virtual) hw queue.
->>
->> In addition to the above topic, I'd be open to discussing Linux MD
->> maintainership options with others if for some reason that is still an
->> unresolved situation come mid April.
->>
->> Thanks,
->> Mike
->
-> Convert multipath from request-based to bio-based and these problems in
-> device mapper core will disappear :-)
->
-We have been down that road already. It doesn't work.
-There is a reason why we switched to request-based multipathing.
+Hi all,
+
+I'd like to attend LSF/MM and would like to present my ideas for a=20
+multipath redesign.
+
+The overall idea is to break up the centralized multipath handling=20
+in device-mapper (and multipath-tools) and delegate to the=20
+appropriate sub-systems.
+
+Individually the plan is:
+a) use the 'wwid' sysfs attribute to detect multipath devices;
+    this removes the need of the current 'path_id' functionality
+    in multipath-tools
+b) leverage topology information from scsi_dh_alua (which we will
+    have once my ALUA handler update is in) to detect the multipath
+    topology. This removes the need of a 'prio' infrastructure
+    in multipath-tools
+c) implement block or scsi events whenever a remote port becomes
+    unavailable. This removes the need of the 'path_checker'
+    functionality in multipath-tools.
+d) leverage these events to handle path-up/path-down events
+    in-kernel
+e) move the I/O redirection logic out of device-mapper proper
+    and use blk-mq to redirect I/O. This is still a bit of
+    hand-waving, and definitely would need discussion to figure
+    out if and how it can be achieved.
+    This is basically the same topic Mike Snitzer proposed, but
+    coming from a different angle.
+
+But in the end we should be able to do strip down the current=20
+(rather complex) multipath-tools to just handle topology changes;=20
+everything else will be done internally.
 
 Cheers,
 
 Hannes
--- =
-
+--=20
 Dr. Hannes Reinecke		   Teamlead Storage & Networking
 hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
+GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=C3=BCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
