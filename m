@@ -1,67 +1,76 @@
-From: Mark Brown <broonie@kernel.org>
-Subject: Re: [dm-devel] [PATCH v2 0/2] Introduce the bulk IV mode for
- improving the crypto engine efficiency
-Date: Thu, 14 Jan 2016 11:35:27 +0000
-Message-ID: <20160114113527.GR6588@sirena.org.uk>
-References: <cover.1450233399.git.baolin.wang@linaro.org>
- <56711C0F.8030105@gmail.com>
- <CAMz4kuL2b5Qad5iD3odNVh9VO6ctu_M=QE=8fbdC_+ea+5wJ5w@mail.gmail.com>
- <56885330.9080801@gmail.com>
- <20160104201343.GQ16023@sirena.org.uk>
- <alpine.LRH.2.02.1601121744400.18228@file01.intranet.prod.int.rdu2.redhat.com>
- <20160112234025.GF6588@sirena.org.uk>
- <alpine.LRH.2.02.1601122111040.24452@file01.intranet.prod.int.rdu2.redhat.com>
+From: Thanos Makatos <thanos.makatos@onapp.com>
+Subject: device mapper increased latency on RAID array
+Date: Thu, 14 Jan 2016 16:21:41 +0000
+Message-ID: <CAM2wQBvNvm+0i1fkstDvez7yskd7RT_g+cCMfUavw20ksDzYXg@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="aO2SyuDEANnesPMC"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1601122111040.24452@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, Jens Axboe <axboe@kernel.dk>, keith.busch@intel.com, linux-raid@vger.kernel.org, martin.petersen@oracle.com, Mike Snitzer <snitzer@redhat.com>, Baolin Wang <baolin.wang@linaro.org>, linux-block@vger.kernel.org, neilb@suse.com, LKML <linux-kernel@vger.kernel.org>, sagig@mellanox.com, Arnd Bergmann <arnd@arndb.de>, tj@kernel.org, dan.j.williams@intel.com, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+I noticed that when a linear device mapper target is used on top of a
+RAID array (made of SSDs), latency is 3 times higher than accessing
+the RAID array itself. Strangely, when I do the same test to an SSD on
+the controller that is passed through (not configured in an array),
+latency is unaffected.
 
---aO2SyuDEANnesPMC
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+/dev/sda is the SSD passed through from the RAID controller.
+/dev/sdc is the block device in the RAID array.
 
-On Tue, Jan 12, 2016 at 09:13:19PM -0500, Mikulas Patocka wrote:
-> On Tue, 12 Jan 2016, Mark Brown wrote:
+[ ~]# dmsetup create sda --table "0 $((2**30/512)) linear /dev/sda 0
+[ ~]# dmsetup create sdc --table "0 $((2**30/512)) linear /dev/sdc 0
+[ ~]# echo noop > /sys/block/sda/queue/scheduler
+[ ~]# echo noop > /sys/block/sdc/queue/scheduler
 
-> > This isn't targeted at a specific driver or system, it's trying to make
-> > dm-crypt better able to make use of hardware acceleration in general.
+[ ~]# ./ioping -c 10000 -s 4k -i 0 -q -D /dev/sda
 
-> If the hardware acceleration doesn't allow to set arbitrary XTS tweak,=20
-> then this "large block" optimization on XTS can't be done at all.
+--- /dev/sda (block device 186.3 GiB) ioping statistics ---
+10 k requests completed in 377.9 ms, 39.1 MiB read, 26.5 k iops, 103.4 MiB/s
+min/avg/max/mdev = 31 us / 37 us / 140 us / 20 us
 
-> So, we need to know which driver(s) you want to optimize for and how do=
-=20
-> those driver(s) handle tweak generation.
+[ ~]# ./ioping -c 10000 -s 4k -i 0 -q -D /dev/mapper/sda
 
-Unfortunately the reality is just as I described it - we're looking for
-general improvements, not at specific devices (well, Linaro is mainly
-interested in ARM based SoCs but the range of ARM SoCs is such that that
-that doesn't really narrow things down).  It's probably better to ask if
-there exists any hardware which could use this usefully, software only
-implementations (or hardware that only does AES) at least give us
-control over supplying the tweak.
+--- /dev/mapper/sda (block device 1 GiB) ioping statistics ---
+10 k requests completed in 387.5 ms, 39.1 MiB read, 25.8 k iops, 100.8 MiB/s
+min/avg/max/mdev = 36 us / 38 us / 134 us / 5 us
 
---aO2SyuDEANnesPMC
-Content-Type: application/pgp-signature; name="signature.asc"
+[root@192.168.1.130 ~]# ./ioping -c 10000 -s 4k -i 0 -q -D /dev/mapper/sdc
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
+--- /dev/mapper/sdc (block device 1 GiB) ioping statistics ---
+10 k requests completed in 1.33 s, 39.1 MiB read, 7.50 k iops, 29.3 MiB/s
+min/avg/max/mdev = 112 us / 133 us / 226 us / 11 us
+[ ~]# ./ioping -c 10000 -s 4k -i 0 -q -D /dev/sdc
 
-iQEcBAEBCAAGBQJWl4f/AAoJECTWi3JdVIfQo5wH/AoKG6I1KT5tbYm+WK2ddlYP
-WWXZO2LNFy8l2WES7I7ZGeC9AT9/VBY8ldDZZhOIStlJe66GzRbyQDQqgf+dhD6O
-xXK8dYrr2AoFy6mOXL+E+9yGVB1A/8spyVpwfm9+FObf/D2Irft1GRP0KDYagYKS
-d2GM8cro/6J4UB75eeI2P11iNn9Kf3/hKNNl17q7b+j2Vk8tSCuPYB94CpoEeylf
-1crHv3Dtu8tOZmpDcHnRQ12OdTcXVy3r+oy/WqbETbYbaKYdlo9xMOt3CYDhl3it
-pnEEKKBobGKJjGnKQmRAyhSQqneQAqMD48R2/Fa4FYhIRc+nPGjIWRWTbaR/28o=
-=6L9f
------END PGP SIGNATURE-----
+--- /dev/sdc (block device 1.45 TiB) ioping statistics ---
+10 k requests completed in 477.8 ms, 39.1 MiB read, 20.9 k iops, 81.7 MiB/s
+min/avg/max/mdev = 36 us / 47 us / 158 us / 18 us
 
---aO2SyuDEANnesPMC--
+[ ~]# ./ioping -c 10000 -s 4k -i 0 -q -D /dev/mapper/sdc
+
+--- /dev/mapper/sdc (block device 1 GiB) ioping statistics ---
+10 k requests completed in 1.33 s, 39.1 MiB read, 7.50 k iops, 29.3 MiB/s
+min/avg/max/mdev = 111 us / 133 us / 181 us / 11 us
+
+These results are reproduced consistently. I've tried this on kernels
+2.6.32-431.29.2.el6.x86_64, 3.10.68-11.el6.centos.alt.x86_64 (CentOS
+6), and 4.3 (Debian testing).
+
+I really doubt that there is something with the device mapper here,
+but I'd like to understand this weird interaction between the device
+mapper (or maybe the block I/O layer?) and the RAID controller. Any
+ideas how to investigate this?
+
+
+-- 
+Thanos Makatos
