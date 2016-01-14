@@ -1,50 +1,67 @@
-From: Sagi Grimberg <sagig@dev.mellanox.co.il>
-Subject: Re: [LSF/MM ATTEND] plan to deprecate old .request_fn
- request-based code path?
-Date: Wed, 13 Jan 2016 13:16:03 +0200
-Message-ID: <569631F3.1060106@dev.mellanox.co.il>
-References: <20160112185947.GA29176@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mark Brown <broonie@kernel.org>
+Subject: Re: [dm-devel] [PATCH v2 0/2] Introduce the bulk IV mode for
+ improving the crypto engine efficiency
+Date: Thu, 14 Jan 2016 11:35:27 +0000
+Message-ID: <20160114113527.GR6588@sirena.org.uk>
+References: <cover.1450233399.git.baolin.wang@linaro.org>
+ <56711C0F.8030105@gmail.com>
+ <CAMz4kuL2b5Qad5iD3odNVh9VO6ctu_M=QE=8fbdC_+ea+5wJ5w@mail.gmail.com>
+ <56885330.9080801@gmail.com>
+ <20160104201343.GQ16023@sirena.org.uk>
+ <alpine.LRH.2.02.1601121744400.18228@file01.intranet.prod.int.rdu2.redhat.com>
+ <20160112234025.GF6588@sirena.org.uk>
+ <alpine.LRH.2.02.1601122111040.24452@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160112185947.GA29176@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, lsf-pc@lists.linux-foundation.org
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="aO2SyuDEANnesPMC"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1601122111040.24452@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, Jens Axboe <axboe@kernel.dk>, keith.busch@intel.com, linux-raid@vger.kernel.org, martin.petersen@oracle.com, Mike Snitzer <snitzer@redhat.com>, Baolin Wang <baolin.wang@linaro.org>, linux-block@vger.kernel.org, neilb@suse.com, LKML <linux-kernel@vger.kernel.org>, sagig@mellanox.com, Arnd Bergmann <arnd@arndb.de>, tj@kernel.org, dan.j.williams@intel.com, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
 
-> Hi,
->
-> I'd like to attend LSF/MM and as the subject covers I'd like to at least
-> participate in a discussion about plans (realistic or not) for
-> removing/deprecating the old .request_fn path in block core and block
-> drivers.
->
-> The request-based DM code (only used for multipath) has gotten more
-> complex to support both old .request_fn and blk-mq (and stacking
-> combinations: .request_fn ontop of blk-mq paths, blk-mq ontop of
-> .request_fn paths).  Simplifying DM core in this area would be nice.
->
-> One of the hurdles has been blk-mq doesn't yet have a scheduler.  I know
-> Jens had/has something in the works.  But there is also the question of
-> whether DM's top-level blk-mq request_queue should be trained to
-> leverage/stack underlying blk-mq request_queue capabilities (Keith Busch
-> was going to look at this aspect in the context of multipath on NVMe but
-> I never heard anything from Keith on that).  As of now DM multipath's
-> blk-mq request_queue only supports a single (virtual) hw queue.
+--aO2SyuDEANnesPMC
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-I strongly agree we can do better here. Initial measurements of
-request-based DM multipath over the (soon to come) nvme-loop driver
-shows improvement from the bio-based code, but instrumentation reveals
-we have plenty of room for improvement.
+On Tue, Jan 12, 2016 at 09:13:19PM -0500, Mikulas Patocka wrote:
+> On Tue, 12 Jan 2016, Mark Brown wrote:
+
+> > This isn't targeted at a specific driver or system, it's trying to make
+> > dm-crypt better able to make use of hardware acceleration in general.
+
+> If the hardware acceleration doesn't allow to set arbitrary XTS tweak,=20
+> then this "large block" optimization on XTS can't be done at all.
+
+> So, we need to know which driver(s) you want to optimize for and how do=
+=20
+> those driver(s) handle tweak generation.
+
+Unfortunately the reality is just as I described it - we're looking for
+general improvements, not at specific devices (well, Linaro is mainly
+interested in ARM based SoCs but the range of ARM SoCs is such that that
+that doesn't really narrow things down).  It's probably better to ask if
+there exists any hardware which could use this usefully, software only
+implementations (or hardware that only does AES) at least give us
+control over supplying the tweak.
+
+--aO2SyuDEANnesPMC
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQEcBAEBCAAGBQJWl4f/AAoJECTWi3JdVIfQo5wH/AoKG6I1KT5tbYm+WK2ddlYP
+WWXZO2LNFy8l2WES7I7ZGeC9AT9/VBY8ldDZZhOIStlJe66GzRbyQDQqgf+dhD6O
+xXK8dYrr2AoFy6mOXL+E+9yGVB1A/8spyVpwfm9+FObf/D2Irft1GRP0KDYagYKS
+d2GM8cro/6J4UB75eeI2P11iNn9Kf3/hKNNl17q7b+j2Vk8tSCuPYB94CpoEeylf
+1crHv3Dtu8tOZmpDcHnRQ12OdTcXVy3r+oy/WqbETbYbaKYdlo9xMOt3CYDhl3it
+pnEEKKBobGKJjGnKQmRAyhSQqneQAqMD48R2/Fa4FYhIRc+nPGjIWRWTbaR/28o=
+=6L9f
+-----END PGP SIGNATURE-----
+
+--aO2SyuDEANnesPMC--
