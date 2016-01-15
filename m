@@ -1,11 +1,16 @@
-From: Brian Bunker <brian@purestorage.com>
-Subject: getting support for PURE FlashArray into multipath-tools
-Date: Thu, 14 Jan 2016 18:53:02 -0800
-Message-ID: <CAHZQxyKZzbHLi4xqaqgfvfKqEpxn4HymGy2O4aSFsQ7U4nKDFQ@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [LSF/MM ATTEND][LSF/MM TOPIC] Multipath redesign
+Date: Fri, 15 Jan 2016 08:12:02 +0100
+Message-ID: <56989BC2.8030008@suse.de>
+References: <56961493.5010901@suse.de>
+	<20160113175239.GE24960@octiron.msp.redhat.com>
+	<56974D80.2020803@suse.de> <5697F270.3070205@sandisk.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============9178255110898507225=="
+Content-Type: text/plain; charset="windows-1252"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <5697F270.3070205@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,158 +20,83 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>
 List-Id: dm-devel.ids
 
---===============9178255110898507225==
-Content-Type: multipart/alternative; boundary=001a1147f5c06d919d05295680b1
+On 01/14/2016 08:09 PM, Bart Van Assche wrote:
+> On 01/13/2016 11:25 PM, Hannes Reinecke wrote:
+>> On 01/13/2016 06:52 PM, Benjamin Marzinski wrote:
+>>> On Wed, Jan 13, 2016 at 10:10:43AM +0100, Hannes Reinecke wrote:
+>>>> c) implement block or scsi events whenever a remote port becomes
+>>>>     unavailable. This removes the need of the 'path_checker'
+>>>>     functionality in multipath-tools.
+>>>
+>>> I'm not convinced that we will be able to find out when paths
+>>> come back
+>>> online in all cases without some sort of actual polling. Again,
+>>> I'd love
+>>> this to be simpler, but asking all the types of storage we plan to
+>>> support to notify us when they are up and down may not be realistic.
+>>
+>> Currently we have three main transports: FC, iSCSI, and SAS.
+>
+> Hello Hannes,
+>
+> Since several years the Linux SRP initiator driver also has reliable
+> and efficient H.A. support. The IB spec supports port state change
+> notifications. But whether or not port state information affects the
+> path state should be configurable. Several IB users wouldn't like it
+> if port state information would affect the path state because the
+> time during which a port is down can be shorter than the time during
+> which an IB HCA keeps retrying to send a packet.
+>
+Oooh, but of course I've forgotten SRP. Sorry, Bart; it's just not =
 
---001a1147f5c06d919d05295680b1
-Content-Type: text/plain; charset=UTF-8
+on my radar (what with me having no Infiniband equipment to speak of =
 
-Hello dm-devel,
+...)
 
-How do I go about getting PURE into the list of supported arrays in
-multipath? The patch would something like this:
+But the above really sounds similar to the dev_loss_tmo mechanism we =
 
-diff -uNr 3/multipath-tools/libmultipath/hwtable.c
-4/multipath-tools/libmultipath/hwtable.c
---- 3/multipath-tools/libmultipath/hwtable.c    2016-01-14
-17:47:06.000000000 -0800
-+++ 4/multipath-tools/libmultipath/hwtable.c    2016-01-14
-18:33:45.000000000 -0800
-@@ -1166,6 +1166,22 @@
-                .prio_name     = PRIO_ALUA,
-                .prio_args     = NULL,
-        },
-+        {
-+               .vendor        = "PURE",
-+               .product       = "FlashArray",
-+               .features      = DEFAULT_FEATURES,
-+               .hwhandler     = DEFAULT_HWHANDLER,
-+               .selector      = "queue-length 0",
-+               .pgpolicy      = MULTIBUS,
-+               .pgfailback    = -FAILBACK_IMMEDIATE,
-+               .checker_name  = TUR,
-+               .fast_io_fail  = 10,
-+                .user_friendly_names = USER_FRIENDLY_NAMES_OFF,
-+               .prio_name     = DEFAULT_PRIO,
-+                .no_path_retry = 0,
-+                .dev_loss      = 60,
-+               .prio_args     = NULL,
-+       },
-        /*
-         * EOL
-         */
-diff -uNr 3/multipath-tools/multipath.conf.defaults
-4/multipath-tools/multipath.conf.defaults
---- 3/multipath-tools/multipath.conf.defaults   2016-01-14
-17:47:06.000000000 -0800
-+++ 4/multipath-tools/multipath.conf.defaults   2016-01-14
-18:35:50.000000000 -0800
-@@ -940,6 +940,17 @@
- #              rr_weight "uniform"
- #              no_path_retry "queue"
- #      }
-+#       device {
-+#               vendor "PURE"
-+#               path_selector "queue-length 0"
-+#               path_grouping_policy "multibus"
-+#               path_checker "tur"
-+#               fast_io_fail_tmo 10
-+#               user_friendly_names "no"
-+#               no_path_retry 0
-+#               features 0
-+#               dev_loss_tmo 60
-+#       }
- #}
- #multipaths {
- #}
+have on FC. Maybe it's worth looking into if we could have a similar =
 
-Let me know what is needed to move forward from here.
+mechanism on SRP.
 
-Thanks,
-Brian
+The point here is that (on FC) we have the following flow of events:
 
--- 
-Brian Bunker
-PURE Storage, Inc. <http://www.purestorage.com>
-brian@purestorage.com
+Path loss
+-> start dev_loss_tmo
+-> rport set to 'blocked'
+-> RSCN received
+-> move to final rport state (online or gone)
+-> unblock rport
+-> stop dev_loss_tmo (if rport is online) or
+-> dev_loss_tmo fires and removes rport
 
---001a1147f5c06d919d05295680b1
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+atm we're being notified once the port is moved to the final state, =
 
-<div dir=3D"ltr">Hello dm-devel,<div><br></div><div>How do I go about getti=
-ng PURE into the list of supported arrays in multipath? The patch would som=
-ething like this:</div><div><br></div><div><div>diff -uNr 3/multipath-tools=
-/libmultipath/hwtable.c 4/multipath-tools/libmultipath/hwtable.c</div><div>=
---- 3/multipath-tools/libmultipath/hwtable.c =C2=A0 =C2=A02016-01-14 17:47:=
-06.000000000 -0800</div><div>+++ 4/multipath-tools/libmultipath/hwtable.c =
-=C2=A0 =C2=A02016-01-14 18:33:45.000000000 -0800</div><div>@@ -1166,6 +1166=
-,22 @@</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .p=
-rio_name =C2=A0 =C2=A0 =3D PRIO_ALUA,</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 .prio_args =C2=A0 =C2=A0 =3D NULL,</div><div>=
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 },</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0{</di=
-v><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .vendor =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0=3D &quot;PURE&quot;,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 .product =C2=A0 =C2=A0 =C2=A0 =3D &quot;FlashAr=
-ray&quot;,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .fe=
-atures =C2=A0 =C2=A0 =C2=A0=3D DEFAULT_FEATURES,</div><div>+ =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .hwhandler =C2=A0 =C2=A0 =3D DEFAULT_HWH=
-ANDLER,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .selec=
-tor =C2=A0 =C2=A0 =C2=A0=3D &quot;queue-length 0&quot;,</div><div>+ =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .pgpolicy =C2=A0 =C2=A0 =C2=A0=3D=
- MULTIBUS,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .pg=
-failback =C2=A0 =C2=A0=3D -FAILBACK_IMMEDIATE,</div><div>+ =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .checker_name =C2=A0=3D TUR,</div><div>+=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .fast_io_fail =C2=A0=3D 1=
-0,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.user=
-_friendly_names =3D USER_FRIENDLY_NAMES_OFF,</div><div>+ =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .prio_name =C2=A0 =C2=A0 =3D DEFAULT_PRIO,<=
-/div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.no_path=
-_retry =3D 0,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0.dev_loss =C2=A0 =C2=A0 =C2=A0=3D 60,</div><div>+ =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .prio_args =C2=A0 =C2=A0 =3D NULL,</div><di=
-v>+ =C2=A0 =C2=A0 =C2=A0 }, =C2=A0 =C2=A0 =C2=A0 =C2=A0</div><div>=C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 /*</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* EOL</=
-div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/</div><div>diff -uNr 3/multipa=
-th-tools/multipath.conf.defaults 4/multipath-tools/multipath.conf.defaults<=
-/div><div>--- 3/multipath-tools/multipath.conf.defaults =C2=A0 2016-01-14 1=
-7:47:06.000000000 -0800</div><div>+++ 4/multipath-tools/multipath.conf.defa=
-ults =C2=A0 2016-01-14 18:35:50.000000000 -0800</div><div>@@ -940,6 +940,17=
- @@</div><div>=C2=A0# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0rr_we=
-ight &quot;uniform&quot;</div><div>=C2=A0# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0no_path_retry &quot;queue&quot;</div><div>=C2=A0# =C2=A0 =
-=C2=A0 =C2=A0}</div><div>+# =C2=A0 =C2=A0 =C2=A0 device {</div><div>+# =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 vendor &quot;PURE&quot;</div>=
-<div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 path_selector &quo=
-t;queue-length 0&quot;</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 path_grouping_policy &quot;multibus&quot;</div><div>+# =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 path_checker &quot;tur&quot;</div=
-><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 fast_io_fail_tmo =
-10</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 user_frien=
-dly_names &quot;no&quot;</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 no_path_retry 0</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 features 0</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 dev_loss_tmo 60</div><div>+# =C2=A0 =C2=A0 =C2=A0 }</div>=
-<div>=C2=A0#}</div><div>=C2=A0#multipaths {</div><div>=C2=A0#}</div></div><=
-div><br></div><div>Let me know what is needed to move forward from here.</d=
-iv><div><br></div><div>Thanks,<br>Brian</div><div><div><br></div>-- <br><di=
-v class=3D"gmail_signature"><div>Brian Bunker</div><div><a href=3D"http://w=
-ww.purestorage.com" target=3D"_blank">PURE Storage, Inc.</a><br></div><div>=
-<a href=3D"mailto:brian@purestorage.com" target=3D"_blank">brian@purestorag=
-e.com</a></div></div>
-</div></div>
+as that's when I/O continues or is being aborted and we're getting =
 
---001a1147f5c06d919d05295680b1--
+the I/O completion back.
+With path events we could react to the actual path loss, and =
 
+redirect I/O to another path directly when the path loss occurs.
+But this really is a matter of policy; it might be that the path =
 
---===============9178255110898507225==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+switch is taking long then the path interruption.
+So this needs to be evaluated properly.
+But at least we'll be notified allowing us to _do_ these kind of test.
+ATM we don't really have a chance to do that.
 
+I'm very willing to look at SRP to see if we can improve things there.
 
---===============9178255110898507225==--
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=FCrnberg)
