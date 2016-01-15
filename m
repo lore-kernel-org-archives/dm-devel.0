@@ -1,147 +1,69 @@
-From: Tejas Rao <raot@bnl.gov>
-Subject: Add. Sense: Data synchronization mark error
-Date: Thu, 14 Jan 2016 15:43:49 -0500
-Message-ID: <56980885.2040506@bnl.gov>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christian Borntraeger <borntraeger@de.ibm.com>
+Subject: Re: 4.4 regression/bisected: error message due to "block/sd: Fix
+ device-imposed transfer length limits"
+Date: Fri, 15 Jan 2016 15:48:21 +0100
+Message-ID: <569906B5.3040103@de.ibm.com>
+References: <56964DE0.60407@de.ibm.com> <yq1ziw9vck7.fsf@sermon.lab.mkp.net>
+ <5696560D.2010105@de.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset=iso-8859-15
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Rao Tejas <raot@bnl.gov>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <5696560D.2010105@de.ibm.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com, Steffen Maier <maier@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
-We are using linux raid on top of multipath devices (each jbod disk has 
-two paths).
+On 01/13/2016 02:50 PM, Christian Borntraeger wrote:
+> On 01/13/2016 02:22 PM, Martin K. Petersen wrote:
+>>>>>>> "Christian" == Christian Borntraeger <borntraeger@de.ibm.com> writes:
 
-Usually medium erros are handled as below. See this bug for a similar 
-problem but fixed in RHEL6.
+Martin,
 
-https://bugzilla.redhat.com/show_bug.cgi?id=516170
+does the data make any sense to you?
 
-Jan 12 02:15:59  kernel: sd 8:0:21:0: [sdcf] Unhandled sense code
-Jan 12 02:15:59  kernel: sd 8:0:21:0: [sdcf] Result: hostbyte=DID_OK 
-driverbyte=DRIVER_SENSE
-Jan 12 02:15:59  kernel: sd 8:0:21:0: [sdcf] Sense Key : Medium Error 
-[current] [descriptor]
-Jan 12 02:15:59  kernel: Descriptor sense data with sense descriptors 
-(in hex):
-Jan 12 02:15:59  kernel:        72 03 11 00 00 00 00 34 00 0a 80 00 00 
-00 00 01
-Jan 12 02:15:59  kernel:        cd e3 86 90 01 0a 00 00 00 00 00 00 81 
-03 01 00
-Jan 12 02:15:59  kernel:        02 06 00 00 80 00 ff 00 03 02 00 86 80 
-0e 00 00
-Jan 12 02:15:59  kernel:        00 00 00 00 00 00 00 00 00 00 00 00
-Jan 12 02:15:59  kernel: sd 8:0:21:0: [sdcf] Add. Sense: Unrecovered 
-read error
-Jan 12 02:15:59  kernel: sd 8:0:21:0: [sdcf] CDB: Read(16): 88 00 00 00 
-00 01 cd e3 86 00 00 00 01 00 00 00
-Jan 12 02:16:02  kernel: sd 7:0:21:0: [sdx] Unhandled sense code
-Jan 12 02:16:02  kernel: sd 7:0:21:0: [sdx] Result: hostbyte=DID_OK 
-driverbyte=DRIVER_SENSE
-Jan 12 02:16:02  kernel: sd 7:0:21:0: [sdx] Sense Key : Medium Error 
-[current] [descriptor]
-Jan 12 02:16:02  kernel: Descriptor sense data with sense descriptors 
-(in hex):
-Jan 12 02:16:02  kernel:        72 03 11 00 00 00 00 34 00 0a 80 00 00 
-00 00 01
-Jan 12 02:16:02  kernel:        cd e3 86 90 01 0a 00 00 00 00 00 00 81 
-03 01 00
-Jan 12 02:16:02  kernel:        02 06 00 00 80 00 ff 00 03 02 00 86 80 
-0e 00 00
-Jan 12 02:16:02  kernel:        00 00 00 00 00 00 00 00 00 00 00 00
-Jan 12 02:16:02  kernel: sd 7:0:21:0: [sdx] Add. Sense: Unrecovered read 
-error
-Jan 12 02:16:02  kernel: sd 7:0:21:0: [sdx] CDB: Read(16): 88 00 00 00 
-00 01 cd e3 86 90 00 00 00 70 00 00
-Jan 12 02:16:03  kernel: md/raid:md3: read error corrected (8 sectors at 
-7749205728 on dm-22)
-Jan 12 02:16:03  kernel: md/raid:md3: read error corrected (8 sectors at 
-7749205736 on dm-22)
-Jan 12 02:16:03  kernel: md/raid:md3: read error corrected (8 sectors at 
-7749205744 on dm-22)
-Jan 12 02:16:03  kernel: md/raid:md3: read error corrected (8 sectors at 
-7749205752 on dm-22)
+>>
+>> Christian> device-mapper: table: 253:4: adding target device sdq caused
+>> Christian> an alignment inconsistency: physical_block_size=4096,
+>> Christian> logical_block_size=512, alignment_offset=0, start=0
+>>
+>> Odd.
+>>
+>> Please provide the output of:
+>>
+>> # sg_readcap -l /dev/sdN
+>> # sg_vpd -p bl /dev/sdN
+>>
+> 
+> From a different system with a different disk, but the same storage server and the same error.
+> 
+> sg_vpd -p bl /dev/sdu
+> Block limits VPD page (SBC):
+>   Write same no zero (WSNZ): 1
+>   Maximum compare and write length: 0 blocks
+>   Optimal transfer length granularity: 128 blocks
+>   Maximum transfer length: 0 blocks
+>   Optimal transfer length: 1024 blocks
+>   Maximum prefetch length: 0 blocks
+>   Maximum unmap LBA count: 0
+>   Maximum unmap block descriptor count: 0
+>   Optimal unmap granularity: 0
+>   Unmap granularity alignment valid: 0
+>   Unmap granularity alignment: 0
+>   Maximum write same length: 0x0 blocks
+> sg_readcap -l /dev/sdu
+> Read Capacity results:
+>    Protection: prot_en=0, p_type=0, p_i_exponent=0
+>    Logical block provisioning: lbpme=0, lbprz=0
+>    Last logical block address=4294967295 (0xffffffff), Number of logical blocks=4294967296
+>    Logical block length=512 bytes
+>    Logical blocks per physical block exponent=3
+>    Lowest aligned logical block address=0
+> Hence:
+>    Device size: 2199023255552 bytes, 2097152.0 MiB, 2199.02 GB
+> 
+> This is part of a big multipath setup, if that makes a difference.
+> 
+> 
 
-This is all fine and dandy.
-
-We had a case as below and this continued repeatedly for 4 hours until I 
-logged in and manually failed both paths sdx and sdcf. - (sdx and sdcf 
-are the same drive). The filesystem running on  md3 was hung.
-
-Jan 12 02:38:48 kernel: sd 7:0:21:0: [sdx] Unhandled sense code
-Jan 12 02:38:48 kernel: sd 7:0:21:0: [sdx] Result: hostbyte=DID_OK 
-driverbyte=DRIVER_SENSE
-Jan 12 02:38:48 kernel: sd 7:0:21:0: [sdx] Sense Key : Medium Error 
-[current] [descriptor]
-Jan 12 02:38:48 kernel: Descriptor sense data with sense descriptors (in 
-hex):
-Jan 12 02:38:48 kernel:        72 03 16 00 00 00 00 34 00 0a 80 00 00 00 
-00 01
-Jan 12 02:38:48 kernel:        d1 53 bd 98 01 0a 00 00 00 00 00 00 86 01 
-00 00
-Jan 12 02:38:48 kernel:        02 06 00 00 80 00 ff 00 03 02 00 80 80 0e 
-00 00
-Jan 12 02:38:48 kernel:        00 00 00 00 00 00 00 00 00 00 00 00
-Jan 12 02:38:48 kernel: sd 7:0:21:0: [sdx] Add. Sense: Data 
-synchronization mark error
-Jan 12 02:38:48 kernel: sd 7:0:21:0: [sdx] CDB: Read(16): 88 00 00 00 00 
-01 d1 53 bd 98 00 00 00 68 00 00
-Jan 12 02:38:48 kernel: device-mapper: multipath: Failing path 65:112.
-Jan 12 02:38:48 multipathd: 65:112: mark as failed
-Jan 12 02:38:48 multipathd: mpathab: remaining active paths: 1
-Jan 12 02:38:52 multipathd: mpathab: sdx - directio checker reports path 
-is up
-Jan 12 02:38:52 multipathd: 65:112: reinstated
-Jan 12 02:38:52 multipathd: mpathab: remaining active paths: 2
-Jan 12 02:39:04 multipathd: 69:48: mark as failed
-Jan 12 02:39:04 multipathd: mpathab: remaining active paths: 1
-Jan 12 02:39:04 kernel: sd 8:0:21:0: [sdcf] Unhandled sense code
-Jan 12 02:39:04 kernel: sd 8:0:21:0: [sdcf] Result: hostbyte=DID_OK 
-driverbyte=DRIVER_SENSE
-Jan 12 02:39:04 kernel: sd 8:0:21:0: [sdcf] Sense Key : Medium Error 
-[current] [descriptor]
-Jan 12 02:39:04 kernel: Descriptor sense data with sense descriptors (in 
-hex):
-Jan 12 02:39:04 kernel:        72 03 16 00 00 00 00 34 00 0a 80 00 00 00 
-00 01
-Jan 12 02:39:04 kernel:        d1 53 bd 98 01 0a 00 00 00 00 00 00 86 01 
-00 00
-Jan 12 02:39:04 kernel:        02 06 00 00 80 00 ff 00 03 02 00 80 80 0e 
-00 00
-Jan 12 02:39:04 kernel:        00 00 00 00 00 00 00 00 00 00 00 00
-Jan 12 02:39:04 kernel: sd 8:0:21:0: [sdcf] Add. Sense: Data 
-synchronization mark error
-Jan 12 02:39:04 kernel: sd 8:0:21:0: [sdcf] CDB: Read(16): 88 00 00 00 
-00 01 d1 53 bd 98 00 00 00 68 00 00
-Jan 12 02:39:04 kernel: device-mapper: multipath: Failing path 69:48.
-Jan 12 02:39:05 multipathd: mpathab: sdcf - directio checker reports 
-path is up
-Jan 12 02:39:05 multipathd: 69:48: reinstated
-Jan 12 02:39:05 multipathd: mpathab: remaining active paths: 2
-
-
-[root@ ~]# rpm -qa | grep multi
-device-mapper-multipath-libs-0.4.9-72.el6_5.3.x86_64
-device-mapper-multipath-0.4.9-72.el6_5.3.x86_64
-[root@ ~]# uname -a
-Linux  2.6.32-431.23.3.el6.x86_64 #1 SMP Wed Jul 16 06:12:23 EDT 2014 
-x86_64 x86_64 x86_64 GNU/Linux
-
-
-Anyone know if there is a workaround or patch for this? What does "Add. 
-Sense: Data synchronization mark error" mean?
-
-
-
-Thanks
