@@ -1,11 +1,10 @@
-From: Dennis Yang <shinrairis@gmail.com>
-Subject: I/O block when removing thin device on the same pool
-Date: Wed, 20 Jan 2016 18:05:40 +0800
-Message-ID: <CAKTMprME2=oCyjxNxLPsXcgSsAzcBW2-dLjjN1CNPAPe0w-bow@mail.gmail.com>
+From: "mlody3k ." <mlody3k@gmail.com>
+Subject: dm-cache + storage client experiment
+Date: Tue, 19 Jan 2016 17:01:24 +0100
+Message-ID: <CALU38fe9yDR7=P2eNez0fvgsrBmcY=Q=BvTnC5cPzu-o=MgbzA@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============2107460980055405939=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,31 +15,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+--===============2107460980055405939==
+Content-Type: multipart/alternative; boundary=089e01537a5442a1ce0529b1fb2a
 
-I had noticed that I/O requests to one thin device will be blocked
-when the other thin device is being deleting. The root cause of this
-is that to delete a thin device will eventually call dm_btree_del()
-which is a slow function and can block. This means that the device
-deleting process will need to hold the pool lock for a very long time
-to wait for this function to delete the whole data mapping subtree.
-Since I/O to the devices on the same pool needs to held the same pool
-lock to lookup/insert/delete data mapping, all I/O will be blocked
-until the delete process finish.
+--089e01537a5442a1ce0529b1fb2a
+Content-Type: text/plain; charset=UTF-8
 
-For now, I have to discard all the mappings of a thin device before
-deleting it to prevent I/O from being blocked. Since these discard
-requests not only take lots of time to finish but hurt the pool I/O
-throughput, I am still looking for other better solutions to fix this
-issue.
+Hi dm developers!
 
-I think the main problem is still the big pool lock in dm-thin which
-hurts both the scalability and performance of. I am wondering if there
-is any plan on improving this or any better fix for the I/O block
-problem.
+I'm during the experiment with dm-cache and storage client and I would be
+very grateful if some of You will help me with some of my questions :).
 
-Any help would be grateful.
-Dennis
+Simply, I would like to implement the write-through caching in the client
+where:
+ - dm-cache is only responsible to check whether requested data is in the
+cache device (return requested data if hit, ENODATA if miss - do not read
+from origin) - in case of miss, my client will read data from the origin.
+ - dm-cache will write only to the cache device - client will write data to
+the origin.
+
+Easily, I need to start dm-cache in writethrough mode without determining
+the origin device. More specifically, I need to make two changes in dm code:
+ - Bypass the origin device while writing data
+ - Do not remap the result to the origin device in case of read miss.
+
+So here's my questions:
+ - Do the similar solution exists?
+ - Do I have to change the policy code or maybe all of this things are
+contained in the target code?
+ - Could someone reproduce the IO path in dm-cache code?
+
+Thanks for your help!
+Regards,
+JJ
+
+--089e01537a5442a1ce0529b1fb2a
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi dm developers!<div><br></div><div>I&#39;m during the ex=
+periment with dm-cache and storage client and I would be very grateful if s=
+ome of You will help me with some of my questions :).=C2=A0</div><div><br><=
+/div><div>Simply, I would like to implement the write-through caching in th=
+e client where:</div><div>=C2=A0- dm-cache is only responsible to check whe=
+ther requested data is in the cache device (return requested data if hit, E=
+NODATA if miss - do not read from origin) - in case of miss, my client will=
+ read data from the origin.</div><div>=C2=A0- dm-cache will write only to t=
+he cache device - client will write data to the origin.</div><div><br></div=
+><div>Easily, I need to start dm-cache in writethrough mode without determi=
+ning the origin device. More specifically, I need to make two changes in dm=
+ code:</div><div>=C2=A0- Bypass the origin device while writing data</div><=
+div>=C2=A0- Do not remap the result to the origin device in case of read mi=
+ss.</div><div><br></div><div>So here&#39;s my questions:</div><div>=C2=A0- =
+Do the similar solution exists?<br></div><div>=C2=A0- Do I have to change t=
+he policy code or maybe all of this things are contained in the target code=
+?<br></div><div>=C2=A0- Could someone reproduce the IO path in dm-cache cod=
+e?=C2=A0</div><div><br></div><div>Thanks for your help!</div><div>Regards,<=
+/div><div>JJ</div></div>
+
+--089e01537a5442a1ce0529b1fb2a--
+
+
+--===============2107460980055405939==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2107460980055405939==--
