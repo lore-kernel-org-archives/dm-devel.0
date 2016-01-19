@@ -1,14 +1,14 @@
-From: Sagi Grimberg <sagig@dev.mellanox.co.il>
-Subject: Re: dm-multipath low performance with blk-mq
-Date: Tue, 19 Jan 2016 12:37:30 +0200
-Message-ID: <569E11EA.8000305@dev.mellanox.co.il>
-References: <569CD4D6.2040908@dev.mellanox.co.il>
+From: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+Subject: Re: Question about multipath device compiled defaults
+Date: Tue, 19 Jan 2016 14:35:32 -0200
+Message-ID: <569E65D4.4020002@linux.vnet.ibm.com>
+References: <201511050700.tA570XNA029270@d06av02.portsmouth.uk.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <569CD4D6.2040908@dev.mellanox.co.il>
+In-Reply-To: <201511050700.tA570XNA029270@d06av02.portsmouth.uk.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,73 +18,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, "keith.busch@intel.com" <keith.busch@intel.com>, Mike Snitzer <snitzer@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
+To: DORONTAL@il.ibm.com
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This time with the correct dm-devel...
+On 11/05/2015 04:59 AM, Doron Tal1 wrote:
+> I would like to know how and what procedure i should follow if i want to
+> modify or add new settings to the device mapper defaults.
 
-> Hi All,
->
-> I've recently tried out dm-multipath over a "super-fast" nvme device
-> and noticed a serious lock contention in dm-multipath that requires some
-> extra attention. The nvme device is a simple loopback device emulation
-> backed by null_blk device.
->
-> With this I've seen dm-multipath pushing around ~470K IOPs while
-> the native (loopback) nvme performance can easily push up to 1500K+ IOPs.
->
-> perf output [1] reveals a huge lock contention on the multipath lock
-> which is a per-dm_target contention point which seem to defeat the
-> purpose of blk-mq i/O path.
->
-> The two current bottlenecks seem to come from multipath_busy and
-> __multipath_map. Would it make better sense to move to a percpu_ref
-> model with freeze/unfreeze logic for updates similar to what blk-mq
-> is doing?
->
-> Thoughts?
->
->
-> [1]:
-> -  23.67%              fio  [kernel.kallsyms]    [k]
-> queued_spin_lock_slowpath
->     - queued_spin_lock_slowpath
->        - 51.40% _raw_spin_lock_irqsave
->           - 99.98% multipath_busy
->                dm_mq_queue_rq
->                __blk_mq_run_hw_queue
->                blk_mq_run_hw_queue
->                blk_mq_insert_requests
->                blk_mq_flush_plug_list
->                blk_flush_plug_list
->                blk_finish_plug
->                do_io_submit
->                SyS_io_submit
->                entry_SYSCALL_64_fastpath
->              + io_submit
->        - 48.05% _raw_spin_lock_irq
->           - 100.00% __multipath_map
->                multipath_clone_and_map
->                target_message
->                dispatch_io
->                __blk_mq_run_hw_queue
->                blk_mq_run_hw_queue
->                blk_mq_insert_requests
->                blk_mq_flush_plug_list
->                blk_flush_plug_list
->                blk_finish_plug
->                do_io_submit
->                SyS_io_submit
->                entry_SYSCALL_64_fastpath
->              + io_submit
-> +   1.70%              fio  [kernel.kallsyms]    [k] __blk_mq_run_hw_queue
-> +   1.56%              fio  fio                  [.] get_io_u
-> +   1.06%              fio  [kernel.kallsyms]    [k] blk_account_io_start
-> +   0.92%              fio  fio                  [.] do_io
-> +   0.82%              fio  [kernel.kallsyms]    [k] do_blockdev_direct_IO
-> +   0.81%              fio  [kernel.kallsyms]    [k]
-> blk_mq_hctx_mark_pending
-> +   0.75%              fio  [kernel.kallsyms]    [k] __blk_mq_alloc_request
-> +   0.75%              fio  [kernel.kallsyms]    [k] __bt_get
-> +   0.69%              fio  [kernel.kallsyms]    [k] do_direct_IO
+The defaults are in hwtable.c [1].
+
+> So for example how can i modify existing compiled settings for the
+> 2810XIV device? in case i want to add a new device and it settings, how
+> can it be done?
+
+To modify the compiled settings, you have to modify it and recompile.
+
+To modify the runtime settings (based on the defaults), you can modify
+/etc/multipath.conf (see its manpage [2] with 'man multipath.conf').
+
+You can verify the the setting values used during multipath discovery
+with 'multipath -v3' for example, or "multipathd -k'show config'".
+
+Hope this might still help at this time,
+
+[1] 
+http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=libmultipath/hwtable.c
+[2] 
+http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=multipath/multipath.conf.5
+
+-- 
+Mauricio Faria de Oliveira
+IBM Linux Technology Center
