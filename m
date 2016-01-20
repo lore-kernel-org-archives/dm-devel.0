@@ -1,15 +1,14 @@
-From: Dennis Yang <shinrairis@gmail.com>
-Subject: Re: I/O block when removing thin device on the same pool
-Date: Thu, 21 Jan 2016 00:17:52 +0800
-Message-ID: <CAKTMprP+VvLdR8oWQU4EY+HwJ=HuUjeVwaKGy2_KZ_tK-42jxg@mail.gmail.com>
-References: <CAKTMprME2=oCyjxNxLPsXcgSsAzcBW2-dLjjN1CNPAPe0w-bow@mail.gmail.com>
-	<569F6F08.1040503@redhat.com>
+From: "John Stoffel" <john@stoffel.org>
+Subject: Re: dm-cache + storage client experiment
+Date: Wed, 20 Jan 2016 11:14:48 -0500
+Message-ID: <22175.45688.957297.958159@quad.stoffel.home>
+References: <CALU38fe9yDR7=P2eNez0fvgsrBmcY=Q=BvTnC5cPzu-o=MgbzA@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <569F6F08.1040503@redhat.com>
+In-Reply-To: <CALU38fe9yDR7=P2eNez0fvgsrBmcY=Q=BvTnC5cPzu-o=MgbzA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,65 +21,31 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+>>>>> "mlody3k" =3D=3D mlody3k  <mlody3k@gmail.com> writes:
 
-Thanks for replying.
+mlody3k> Hi dm developers!
+mlody3k> I'm during the experiment with dm-cache and storage client and I w=
+ould be very grateful if some of
+mlody3k> You will help me with some of my questions :).=A0
 
-In my use case, I will have couples of 50TB thin devices (less than
-20) with different services running on them. Also, I will take hourly
-read-only snapshot on some of these thin devices and prevent one
-single thin device from having over 1024 snapshots by deleting the
-oldest snapshot when it has to. During the deletion of a snapshot or a
-thin device, I/O gets blocked and some of the latency-sensitive
-services stop and return error code.
+mlody3k> Simply, I would like to implement the write-through caching in the=
+ client where:
+mlody3k> =A0- dm-cache is only responsible to check whether requested data =
+is in the cache device (return
+mlody3k> requested data if hit, ENODATA if miss - do not read from origin) =
+- in case of miss, my client
+mlody3k> will read data from the origin.
+mlody3k> =A0- dm-cache will write only to the cache device - client will wr=
+ite data to the origin.
 
-I am aware of that the current design is not suitable for me to put
-all the thin devices on the same pool. However, It seems that this I/O
-blocking problem will still exist even when I have only one thin
-device and couple of read-only snapshots of it on the same pool.
+So instead, why don't you just have two different mount points, one
+being /cache, the other being /slow, and have your app look for data
+in /cache first, then pull from /slow.  If you write data, then you
+just write it yourself where you want.
 
-Dennis
+dm-cache is more of a block level tool, and you're looking for more of
+a file level tool from what I can see.
 
-2016-01-20 19:27 GMT+08:00 Zdenek Kabelac <zkabelac@redhat.com>:
-> Dne 20.1.2016 v 11:05 Dennis Yang napsal(a):
->>
->> Hi,
->>
->> I had noticed that I/O requests to one thin device will be blocked
->> when the other thin device is being deleting. The root cause of this
->> is that to delete a thin device will eventually call dm_btree_del()
->> which is a slow function and can block. This means that the device
->> deleting process will need to hold the pool lock for a very long time
->> to wait for this function to delete the whole data mapping subtree.
->> Since I/O to the devices on the same pool needs to held the same pool
->> lock to lookup/insert/delete data mapping, all I/O will be blocked
->> until the delete process finish.
->>
->> For now, I have to discard all the mappings of a thin device before
->> deleting it to prevent I/O from being blocked. Since these discard
->> requests not only take lots of time to finish but hurt the pool I/O
->> throughput, I am still looking for other better solutions to fix this
->> issue.
->>
->> I think the main problem is still the big pool lock in dm-thin which
->> hurts both the scalability and performance of. I am wondering if there
->> is any plan on improving this or any better fix for the I/O block
->> problem.
->
->
-> Hi
->
-> What is your use case.
->
-> You may possibly split the load between several thin-pools ?
->
-> Current design is not targeted to simultaneously maintain very large number
-> of active thin-volumes within a single thin-pool.
->
->
-> Zdenek
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Probably what you really want is to be able to tune and tweak the
+algorithm inside dm-cache to do what you want.  In that case, I don't
+have a clue how this would happen unfortunately.
