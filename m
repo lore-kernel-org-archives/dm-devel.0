@@ -1,15 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-multipath low performance with blk-mq
-Date: Tue, 19 Jan 2016 17:45:12 -0500
-Message-ID: <20160119224512.GA10515@redhat.com>
-References: <569E11EA.8000305@dev.mellanox.co.il>
+From: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Subject: Re: How can dm use limits.max_hw_sectors from the bdev?
+Date: Tue, 19 Jan 2016 19:00:24 -0800 (PST)
+Message-ID: <alpine.LRH.2.11.1601191859170.22808@mail.ewheeler.net>
+References: <alpine.LRH.2.11.1601162216380.22808@mail.ewheeler.net>
+	<20160118155652.GA2483@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <569E11EA.8000305@dev.mellanox.co.il>
+In-Reply-To: <20160118155652.GA2483@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,66 +19,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Sagi Grimberg <sagig@dev.mellanox.co.il>
-Cc: Christoph Hellwig <hch@infradead.org>, "keith.busch@intel.com" <keith.busch@intel.com>, dm-devel@redhat.com, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jan 18 2016 at  7:04am -0500,
-Sagi Grimberg <sagig@dev.mellanox.co.il> wrote:
+On Mon, 18 Jan 2016, Mike Snitzer wrote:
 
-> Hi All,
+> On Sun, Jan 17 2016 at  1:34am -0500,
+> Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
 > 
-> I've recently tried out dm-multipath over a "super-fast" nvme device
-> and noticed a serious lock contention in dm-multipath that requires some
-> extra attention. The nvme device is a simple loopback device emulation
-> backed by null_blk device.
+> > Hello all,
+> > 
+> > I'm writing a trivial dm target and hitting errors like this:
+> >    io too big device loop0 (2048 > 255)
+> > 
+> > which looks like the problem described here:
+> > 	https://bugzilla.kernel.org/show_bug.cgi?id=9401#c3
+> > 
+> > and is consistent:
+> > 	cat /sys/block/loop0/queue/max_hw_sectors_kb 
+> > 	127
+> > 	# cat /sys/block/dm-4/queue/max_hw_sectors_kb 
+> > 	2147483647
+> > 
+> > By tracing from sysfs it looks like I need to do something like this when 
+> > called from the target constructor (dm_ctr_fn target_type.ctr) function:
+> > 
+> >     target->table->md->queue->limits.max_hw_sectors =
+> >         priv->dm_dev_bdev->bdev->bd_queue->limits.max_hw_sectors;
+> > 
+> > but I cannot because `struct md` and `struct mapped_device` are opaque
+> > which makes me think there is a better (correct) way to do this.  Is there a way
+> > to change my target device's max_hw_sectors value to 127?
+> > 
+> > Is there some other generic solution?
 > 
-> With this I've seen dm-multipath pushing around ~470K IOPs while
-> the native (loopback) nvme performance can easily push up to 1500K+ IOPs.
-> 
-> perf output [1] reveals a huge lock contention on the multipath lock
-> which is a per-dm_target contention point which seem to defeat the
-> purpose of blk-mq i/O path.
-> 
-> The two current bottlenecks seem to come from multipath_busy and
-> __multipath_map. Would it make better sense to move to a percpu_ref
-> model with freeze/unfreeze logic for updates similar to what blk-mq
-> is doing?
+> You'll first want to implement the .iterate_devices hook.  This alone
+> should enable DM core to leverage the block layer's blk_stack_limits()
+> infrastructure to stack up your top-level device's queue_limits.
 >
-> Thoughts?
+> And if you'd like to override your device's queue_limits beyond what is
+> stacked up from the underlying device(s) you can implement the .io_hints
+> hook in your target.
 
-Your perf output clearly does identify the 'struct multipath' spinlock
-as a bottleneck.
+That did it.  Thank you! 
 
-Is it fair to assume that implied in your test is that you increased
-md->tag_set.nr_hw_queues to > 1 in dm_init_request_based_blk_mq_queue()?
+-Eric
 
-I'd like to start by replicating your testbed.  So I'll see about
-setting up the nvme loop driver you referenced in earlier mail.
-Can you share your fio job file and fio commandline for your test?
-
-Unrolling the dm-mpath.c implementation of .request_fn vs blk-mq and
-identifiying a locking strategy for the 'struct multipath' member
-accesses will take time to investigate.  If others can spare their
-expertise to help speed up the discovery of the proper way forward I'd
-very much appreciate it.
-
-I'll consult with people like Mikulas (who did work to improve DM core's
-scalability with changes like commit 83d5e5b0af9 "dm: optimize use SRCU
-and RCU").
-
-But I'll need to do further research on what fix is appropriate for
-increasing the parallelism of the locking across blk-mq queues.  Part of
-the challenge associated with that is that while blk-mq will know there
-are multiple queues: the DM multipath target is currently oblivious.
-Pushing that understanding down to the multipath target is likely needed
-so that resources can be initialized and managed accordingly.  Certainly
-made more complex when you consider we do still have support for the old
-.request_fn code path (via dm-mpath.c:multipath_map).  But it could
-easily be that this new locking strategy will work if number of queues
-is 1 or >1.
-
-This discovery will take time but I'll make it a priority and do my
-best.
-
-Mike
+> > Would late bio splitting solve this?
+> 
+> Maybe, if by solve this you mean: the block core won't error any more.
+> But you're better off stacking underlying devices' queue_limits like I
+> detailed above.
+> 
+> Mike
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
