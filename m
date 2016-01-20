@@ -1,16 +1,13 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: Question about multipath device compiled defaults
-Date: Wed, 20 Jan 2016 07:58:20 +0100
-Message-ID: <CABr-Gndqm+7cgExV4eMfHiXkerj87X30BVi=OP_7Oo-16Od8-Q@mail.gmail.com>
-References: <201511050700.tA570XNA029270@d06av02.portsmouth.uk.ibm.com>
-	<569E65D4.4020002@linux.vnet.ibm.com>
-	<CABr-GneOyHJNiQRywzdKq5rr5S7Ljz4up3W=V_HgHoUtfY=C3g@mail.gmail.com>
-	<CAHZQxyLmSQq89=P4b+rehQhWtU8eC4KO4rxaPzmDv5uZ0p7B2A@mail.gmail.com>
+Subject: Re: [PATCH] kpartx: support device names with spaces
+Date: Wed, 20 Jan 2016 08:15:05 +0100
+Message-ID: <CABr-GncCqpkdNcw4ShHxigHKqB+feesNDoUHHfkR_1vkJQ5BmA@mail.gmail.com>
+References: <1452191515-4027-1-git-send-email-mauricfo@linux.vnet.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8351660329513751609=="
+Content-Type: multipart/mixed; boundary="===============3009493185717095273=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAHZQxyLmSQq89=P4b+rehQhWtU8eC4KO4rxaPzmDv5uZ0p7B2A@mail.gmail.com>
+In-Reply-To: <1452191515-4027-1-git-send-email-mauricfo@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,306 +17,389 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============8351660329513751609==
-Content-Type: multipart/alternative; boundary=001a11c33e96e70cf50529be82b2
+--===============3009493185717095273==
+Content-Type: multipart/alternative; boundary=089e01177191d79fa70529bebe5d
 
---001a11c33e96e70cf50529be82b2
+--089e01177191d79fa70529bebe5d
 Content-Type: text/plain; charset=UTF-8
-
-Ok, merged.
-
-On Tue, Jan 19, 2016 at 11:17 PM, Brian Bunker <brian@purestorage.com>
-wrote:
-
-> There are just two files I touch, so the patch is simple:
->
-> diff -Naur 3/multipath-tools/libmultipath/hwtable.c
-> 4/multipath-tools/libmultipath/hwtable.c
-> --- 3/multipath-tools/libmultipath/hwtable.c    2016-01-14
-> 17:47:06.000000000 -0800
-> +++ 4/multipath-tools/libmultipath/hwtable.c    2016-01-14
-> 18:33:45.000000000 -0800
-> @@ -1166,6 +1166,22 @@
->                 .prio_name     = PRIO_ALUA,
->                 .prio_args     = NULL,
->         },
-> +        {
-> +               .vendor        = "PURE",
-> +               .product       = "FlashArray",
-> +               .features      = DEFAULT_FEATURES,
-> +               .hwhandler     = DEFAULT_HWHANDLER,
-> +               .selector      = "queue-length 0",
-> +               .pgpolicy      = MULTIBUS,
-> +               .pgfailback    = -FAILBACK_IMMEDIATE,
-> +               .checker_name  = TUR,
-> +               .fast_io_fail  = 10,
-> +                .user_friendly_names = USER_FRIENDLY_NAMES_OFF,
-> +               .prio_name     = DEFAULT_PRIO,
-> +                .no_path_retry = 0,
-> +                .dev_loss      = 60,
-> +               .prio_args     = NULL,
-> +       },
->         /*
->          * EOL
->          */
-> diff -Naur 3/multipath-tools/multipath.conf.defaults
-> 4/multipath-tools/multipath.conf.defaults
-> --- 3/multipath-tools/multipath.conf.defaults   2016-01-14
-> 17:47:06.000000000 -0800
-> +++ 4/multipath-tools/multipath.conf.defaults   2016-01-14
-> 18:35:50.000000000 -0800
-> @@ -940,6 +940,17 @@
->  #              rr_weight "uniform"
->  #              no_path_retry "queue"
->  #      }
-> +#       device {
-> +#               vendor "PURE"
-> +#               path_selector "queue-length 0"
-> +#               path_grouping_policy "multibus"
-> +#               path_checker "tur"
-> +#               fast_io_fail_tmo 10
-> +#               user_friendly_names "no"
-> +#               no_path_retry 0
-> +#               features 0
-> +#               dev_loss_tmo 60
-> +#       }
->  #}
->  #multipaths {
->  #}
->
->
-> Thanks,
-> Brian
->
-> On Tue, Jan 19, 2016 at 8:48 AM, Christophe Varoqui <
-> christophe.varoqui@opensvc.com> wrote:
->
->> Hi,
->>
->> and when you are ready, you can post the patch here so I can merge it
->> upstream.
->>
->> Thanks,
->> Christophe Varoqui
->> OpenSVC
->>
->> On Tue, Jan 19, 2016 at 5:35 PM, Mauricio Faria de Oliveira <
->> mauricfo@linux.vnet.ibm.com> wrote:
->>
->>> On 11/05/2015 04:59 AM, Doron Tal1 wrote:
->>>
->>>> I would like to know how and what procedure i should follow if i want to
->>>> modify or add new settings to the device mapper defaults.
->>>>
->>>
->>> The defaults are in hwtable.c [1].
->>>
->>> So for example how can i modify existing compiled settings for the
->>>> 2810XIV device? in case i want to add a new device and it settings, how
->>>> can it be done?
->>>>
->>>
->>> To modify the compiled settings, you have to modify it and recompile.
->>>
->>> To modify the runtime settings (based on the defaults), you can modify
->>> /etc/multipath.conf (see its manpage [2] with 'man multipath.conf').
->>>
->>> You can verify the the setting values used during multipath discovery
->>> with 'multipath -v3' for example, or "multipathd -k'show config'".
->>>
->>> Hope this might still help at this time,
->>>
->>> [1]
->>> http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=libmultipath/hwtable.c
->>> [2]
->>> http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=multipath/multipath.conf.5
->>>
->>> --
->>> Mauricio Faria de Oliveira
->>> IBM Linux Technology Center
->>>
->>> --
->>> dm-devel mailing list
->>> dm-devel@redhat.com
->>> https://www.redhat.com/mailman/listinfo/dm-devel
->>>
->>
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
->>
->
->
->
-> --
-> Brian Bunker
-> PURE Storage, Inc. <http://www.purestorage.com>
-> brian@purestorage.com
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
-
---001a11c33e96e70cf50529be82b2
-Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Ok, merged.</div><div class=3D"gmail_extra"><br><div class=
-=3D"gmail_quote">On Tue, Jan 19, 2016 at 11:17 PM, Brian Bunker <span dir=
-=3D"ltr">&lt;<a href=3D"mailto:brian@purestorage.com" target=3D"_blank">bri=
-an@purestorage.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quot=
-e" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">=
-<div dir=3D"ltr">There are just two files I touch, so the patch is simple:<=
-div><br></div><div><div>diff -Naur 3/multipath-tools/libmultipath/hwtable.c=
- 4/multipath-tools/libmultipath/hwtable.c</div><div>--- 3/multipath-tools/l=
-ibmultipath/hwtable.c =C2=A0 =C2=A02016-01-14 17:47:06.000000000 -0800</div=
-><div>+++ 4/multipath-tools/libmultipath/hwtable.c =C2=A0 =C2=A02016-01-14 =
-18:33:45.000000000 -0800</div><div>@@ -1166,6 +1166,22 @@</div><div>=C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .prio_name =C2=A0 =C2=A0 =
-=3D PRIO_ALUA,</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 .prio_args =C2=A0 =C2=A0 =3D NULL,</div><div>=C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 },</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0{</div><div>+ =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .vendor =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-=3D &quot;PURE&quot;,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 .product =C2=A0 =C2=A0 =C2=A0 =3D &quot;FlashArray&quot;,</div><div=
->+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .features =C2=A0 =C2=A0=
- =C2=A0=3D DEFAULT_FEATURES,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 .hwhandler =C2=A0 =C2=A0 =3D DEFAULT_HWHANDLER,</div><div>+ =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .selector =C2=A0 =C2=A0 =
-=C2=A0=3D &quot;queue-length 0&quot;,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 .pgpolicy =C2=A0 =C2=A0 =C2=A0=3D MULTIBUS,</div><=
-div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .pgfailback =C2=A0 =
-=C2=A0=3D -FAILBACK_IMMEDIATE,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 .checker_name =C2=A0=3D TUR,</div><div>+ =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .fast_io_fail =C2=A0=3D 10,</div><div>+ =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.user_friendly_names=
- =3D USER_FRIENDLY_NAMES_OFF,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 .prio_name =C2=A0 =C2=A0 =3D DEFAULT_PRIO,</div><div>+ =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.no_path_retry =3D 0=
-,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.dev_l=
-oss =C2=A0 =C2=A0 =C2=A0=3D 60,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 .prio_args =C2=A0 =C2=A0 =3D NULL,</div><div>+ =C2=A0 =C2=
-=A0 =C2=A0 }, =C2=A0 =C2=A0 =C2=A0 =C2=A0</div><div>=C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 /*</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* EOL</div><div>=C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/</div><div>diff -Naur 3/multipath-tools/mu=
-ltipath.conf.defaults 4/multipath-tools/multipath.conf.defaults</div><div>-=
--- 3/multipath-tools/multipath.conf.defaults =C2=A0 2016-01-14 17:47:06.000=
-000000 -0800</div><div>+++ 4/multipath-tools/multipath.conf.defaults =C2=A0=
- 2016-01-14 18:35:50.000000000 -0800</div><div>@@ -940,6 +940,17 @@</div><d=
-iv>=C2=A0# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0rr_weight &quot;=
-uniform&quot;</div><div>=C2=A0# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0no_path_retry &quot;queue&quot;</div><div>=C2=A0# =C2=A0 =C2=A0 =C2=
-=A0}</div><div>+# =C2=A0 =C2=A0 =C2=A0 device {</div><div>+# =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 vendor &quot;PURE&quot;</div><div>+# =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 path_selector &quot;queue-len=
-gth 0&quot;</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 p=
-ath_grouping_policy &quot;multibus&quot;</div><div>+# =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 path_checker &quot;tur&quot;</div><div>+# =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 fast_io_fail_tmo 10</div><div=
->+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 user_friendly_names &q=
-uot;no&quot;</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-no_path_retry 0</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 features 0</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 dev_loss_tmo 60</div><div>+# =C2=A0 =C2=A0 =C2=A0 }</div><div>=C2=A0#}<=
-/div><div>=C2=A0#multipaths {</div><div>=C2=A0#}</div></div><div><br></div>=
-<div><br></div><div>Thanks,<br>Brian</div></div><div class=3D"gmail_extra">=
-<div><div class=3D"h5"><br><div class=3D"gmail_quote">On Tue, Jan 19, 2016 =
-at 8:48 AM, Christophe Varoqui <span dir=3D"ltr">&lt;<a href=3D"mailto:chri=
-stophe.varoqui@opensvc.com" target=3D"_blank">christophe.varoqui@opensvc.co=
-m</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margi=
-n:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">=
-<div>Hi,</div><div><br></div>and when you are ready, you can post the patch=
- here so I can merge it upstream.<div><br></div><div>Thanks,</div><div>Chri=
-stophe Varoqui</div><div>OpenSVC</div></div><div><div><div class=3D"gmail_e=
-xtra"><br><div class=3D"gmail_quote">On Tue, Jan 19, 2016 at 5:35 PM, Mauri=
-cio Faria de Oliveira <span dir=3D"ltr">&lt;<a href=3D"mailto:mauricfo@linu=
-x.vnet.ibm.com" target=3D"_blank">mauricfo@linux.vnet.ibm.com</a>&gt;</span=
-> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;bo=
-rder-left:1px #ccc solid;padding-left:1ex"><span>On 11/05/2015 04:59 AM, Do=
-ron Tal1 wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex">
-I would like to know how and what procedure i should follow if i want to<br=
+Hello,
+
+shouldn't you either define the MAJOR and MINOR macros, or include the
+appropriate kernel header ? As is the build emits :
+
+kpartx.c:481:8: warning: implicit declaration of function =E2=80=98MAJOR=E2=
+=80=99
+[-Wimplicit-function-declaration]
+        MAJOR(buf.st_rdev), MINOR(buf.st_rdev), slices[j].start)) {
+...
+
+And the linking emits :
+
+kpartx.o: In function `main':
+/home/cvaroqui/multipath-tools/kpartx/kpartx.c:480: undefined reference to
+`MINOR'
+/home/cvaroqui/multipath-tools/kpartx/kpartx.c:480: undefined reference to
+`MAJOR'
+...
+
+Regards,
+Christophe Varoqui
+OpenSVC
+
+On Thu, Jan 7, 2016 at 7:31 PM, Mauricio Faria de Oliveira <
+mauricfo@linux.vnet.ibm.com> wrote:
+
+> Device names with spaces fail to be added to device-mapper tables
+> because spaces are field separators.  In order to support it, use
+> device major:minor numbers, instead.  While still there, make the
+> verbose output of container- and contained-slices consistent.
 >
-modify or add new settings to the device mapper defaults.<br>
-</blockquote>
-<br></span>
-The defaults are in hwtable.c [1].<span><br>
-<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex">
-So for example how can i modify existing compiled settings for the<br>
-2810XIV device? in case i want to add a new device and it settings, how<br>
-can it be done?<br>
-</blockquote>
-<br></span>
-To modify the compiled settings, you have to modify it and recompile.<br>
-<br>
-To modify the runtime settings (based on the defaults), you can modify<br>
-/etc/multipath.conf (see its manpage [2] with &#39;man multipath.conf&#39;)=
-.<br>
-<br>
-You can verify the the setting values used during multipath discovery<br>
-with &#39;multipath -v3&#39; for example, or &quot;multipathd -k&#39;show c=
-onfig&#39;&quot;.<br>
-<br>
-Hope this might still help at this time,<br>
-<br>
-[1] <a href=3D"http://git.opensvc.com/gitweb.cgi?p=3Dmultipath-tools/.git;a=
-=3Dblob;f=3Dlibmultipath/hwtable.c" rel=3D"noreferrer" target=3D"_blank">ht=
-tp://git.opensvc.com/gitweb.cgi?p=3Dmultipath-tools/.git;a=3Dblob;f=3Dlibmu=
-ltipath/hwtable.c</a><br>
-[2] <a href=3D"http://git.opensvc.com/gitweb.cgi?p=3Dmultipath-tools/.git;a=
-=3Dblob;f=3Dmultipath/multipath.conf.5" rel=3D"noreferrer" target=3D"_blank=
-">http://git.opensvc.com/gitweb.cgi?p=3Dmultipath-tools/.git;a=3Dblob;f=3Dm=
-ultipath/multipath.conf.5</a><span><font color=3D"#888888"><br>
-<br>
--- <br>
-Mauricio Faria de Oliveira<br>
-IBM Linux Technology Center<br>
-<br>
---<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
-m</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
-<br>
-</font></span></blockquote></div><br></div>
-</div></div><br>--<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
-m</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
-<br></blockquote></div><br><br clear=3D"all"><div><br></div></div></div><sp=
-an class=3D"HOEnZb"><font color=3D"#888888">-- <br><div><div>Brian Bunker</=
-div><div><a href=3D"http://www.purestorage.com" target=3D"_blank">PURE Stor=
-age, Inc.</a><br></div><div><a href=3D"mailto:brian@purestorage.com" target=
-=3D"_blank">brian@purestorage.com</a></div></div>
-</font></span></div>
-<br>--<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
-<br></blockquote></div><br></div>
+> This is useful on some scenarios with arbitrary loop device names,
+> and non-user_friendly_names multipath WWIDs with spaces (eg, QEMU
+> emulated hard drives, and some IBM devices) on some distros.
+>
+> Test-case:
+>
+>         # img=3D"/tmp/my.img"
+>         # spacename=3D"/dev/my space name"
+>
+>         # truncate --size=3D1G "$img"
+>         # lodev=3D$(sudo losetup --find --show "$img")
+>         # ln -sf "$lodev" "$spacename"
+>
+>         # ls -l $lodev "$spacename"
+>         brw-rw---- 1 root disk 7, 0 Jan  7 10:36 /dev/loop0
+>         lrwxrwxrwx 1 root root   10 Jan  7 10:36 /dev/my space name ->
+> /dev/loop0
+>
+>         # fdisk $lodev
+>         <...>
+>
+>         # fdisk -l $lodev
+>         <...>
+>               Device Boot      Start         End      Blocks   Id  System
+>         /dev/loop0p1            2048      264191      131072   83  Linux
+>         /dev/loop0p2          264192      788479      262144   83  Linux
+>         /dev/loop0p3          788480     2097151      654336    5  Extend=
+ed
+>         /dev/loop0p5          790528      856063       32768   83  Linux
+>         /dev/loop0p6          858112      989183       65536   83  Linux
+>         /dev/loop0p7          991232     1515519      262144   83  Linux
+>
+> Without patch:
+>
+>         # kpartx -av "$spacename"
+>         device-mapper: reload ioctl on my\x20space\x20name1 failed:
+> Invalid argument
+>         create/reload failed on my space name1
+>         add map my space name1 (0:0): 0 262144 linear /dev/my space name
+> 2048
+>
+>         device-mapper: reload ioctl on my\x20space\x20name2 failed:
+> Invalid argument
+>         create/reload failed on my space name2
+>         add map my space name2 (0:0): 0 524288 linear /dev/my space name
+> 264192
+>
+>         device-mapper: reload ioctl on my\x20space\x20name3 failed:
+> Invalid argument
+>         create/reload failed on my space name3
+>         add map my space name3 (0:0): 0 2 linear /dev/my space name 78848=
+0
+>
+>         device-mapper: reload ioctl on my\x20space\x20name5 failed:
+> Invalid argument
+>         add map my space name5 : 0 65536 linear /dev/my space name 790528
+>
+>         device-mapper: reload ioctl on my\x20space\x20name6 failed:
+> Invalid argument
+>         add map my space name6 : 0 131072 linear /dev/my space name 85811=
+2
+>
+>         device-mapper: reload ioctl on my\x20space\x20name7 failed:
+> Invalid argument
+>         add map my space name7 : 0 524288 linear /dev/my space name 99123=
+2
+>
+> With patch:
+>
+>         # kpartx -av "$spacename"
+>         add map my space name1 (252:6): 0 262144 linear 7:0 2048
+>         add map my space name2 (252:7): 0 524288 linear 7:0 264192
+>         add map my space name3 (252:8): 0 2 linear 7:0 788480
+>         add map my space name5 (252:9): 0 65536 linear 7:0 790528
+>         add map my space name6 (252:10): 0 131072 linear 7:0 858112
+>         add map my space name7 (252:11): 0 524288 linear 7:0 991232
+>
+>         # dmsetup table | sort
+>         my space name1: 0 262144 linear 7:0 2048
+>         my space name2: 0 524288 linear 7:0 264192
+>         my space name3: 0 2 linear 7:0 788480
+>         my space name5: 0 65536 linear 7:0 790528
+>         my space name6: 0 131072 linear 7:0 858112
+>         my space name7: 0 524288 linear 7:0 991232
+>
+>         # ls -l /dev/mapper/
+>         total 0
+>         crw------- 1 root root  10, 236 Jan  7 12:00 control
+>         brw-rw---- 1 root disk 252,   6 Jan  7 15:50 my\x20space\x20name1
+>         brw-rw---- 1 root disk 252,   7 Jan  7 15:50 my\x20space\x20name2
+>         brw-rw---- 1 root disk 252,   8 Jan  7 15:50 my\x20space\x20name3
+>         brw-rw---- 1 root disk 252,   9 Jan  7 15:50 my\x20space\x20name5
+>         brw-rw---- 1 root disk 252,  10 Jan  7 15:50 my\x20space\x20name6
+>         brw-rw---- 1 root disk 252,  11 Jan  7 15:50 my\x20space\x20name7
+>
+> Thanks: Scott Moser (pointers to the error and test-case).
+>
+> Signed-off-by: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+> ---
+>  kpartx/kpartx.c | 12 ++++++------
+>  1 file changed, 6 insertions(+), 6 deletions(-)
+>
+> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+> index a9d4c98..d5eeea9 100644
+> --- a/kpartx/kpartx.c
+> +++ b/kpartx/kpartx.c
+> @@ -477,8 +477,8 @@ main(int argc, char **argv){
+>                                 }
+>                                 strip_slash(partname);
+>
+> -                               if (safe_sprintf(params, "%s %" PRIu64 ,
+> -                                                device, slices[j].start)=
+)
+> {
+> +                               if (safe_sprintf(params, "%d:%d %" PRIu64=
+ ,
+> +                                                MAJOR(buf.st_rdev),
+> MINOR(buf.st_rdev), slices[j].start)) {
+>                                         fprintf(stderr, "params too
+> small\n");
+>                                         exit(1);
+>                                 }
+> @@ -540,8 +540,8 @@ main(int argc, char **argv){
+>                                         }
+>                                         strip_slash(partname);
+>
+> -                                       if (safe_sprintf(params, "%s %"
+> PRIu64,
+> -                                                        device,
+> +                                       if (safe_sprintf(params, "%d:%d %=
+"
+> PRIu64,
+> +
+> MAJOR(buf.st_rdev), MINOR(buf.st_rdev),
+>                                                          slices[j].start)=
+)
+> {
+>                                                 fprintf(stderr, "params
+> too small\n");
+>                                                 exit(1);
+> @@ -563,8 +563,8 @@ main(int argc, char **argv){
+>                                                 &slices[j].minor);
+>
+>                                         if (verbose)
+> -                                               printf("add map %s : 0 %"
+> PRIu64 " %s %s\n",
+> -                                                      partname,
+> slices[j].size,
+> +                                               printf("add map %s
+> (%d:%d): 0 %" PRIu64 " %s %s\n",
+> +                                                      partname,
+> slices[j].major, slices[j].minor, slices[j].size,
+>                                                        DM_TARGET, params)=
+;
+>                                         c--;
+>                                 }
+> --
+> 1.8.3.1
+>
+>
 
---001a11c33e96e70cf50529be82b2--
+--089e01177191d79fa70529bebe5d
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: base64
+
+PGRpdiBkaXI9Imx0ciI+SGVsbG8sPGRpdj48YnI+PC9kaXY+PGRpdj5zaG91bGRuJiMzOTt0IHlv
+dSBlaXRoZXIgZGVmaW5lIHRoZSBNQUpPUiBhbmQgTUlOT1IgbWFjcm9zLCBvciBpbmNsdWRlIHRo
+ZSBhcHByb3ByaWF0ZSBrZXJuZWwgaGVhZGVyID8gQXMgaXMgdGhlIGJ1aWxkIGVtaXRzIDo8L2Rp
+dj48ZGl2Pjxicj48L2Rpdj48ZGl2PjxkaXY+a3BhcnR4LmM6NDgxOjg6IHdhcm5pbmc6IGltcGxp
+Y2l0IGRlY2xhcmF0aW9uIG9mIGZ1bmN0aW9uIOKAmE1BSk9S4oCZIFstV2ltcGxpY2l0LWZ1bmN0
+aW9uLWRlY2xhcmF0aW9uXTwvZGl2PjxkaXY+wqAgwqAgwqAgwqAgTUFKT1IoYnVmLnN0X3JkZXYp
+LCBNSU5PUihidWYuc3RfcmRldiksIHNsaWNlc1tqXS5zdGFydCkpIHs8L2Rpdj48L2Rpdj48ZGl2
+Pi4uLjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+QW5kIHRoZSBsaW5raW5nIGVtaXRzIDo8L2Rp
+dj48ZGl2Pjxicj48L2Rpdj48ZGl2PjxkaXY+a3BhcnR4Lm86IEluIGZ1bmN0aW9uIGBtYWluJiMz
+OTs6PC9kaXY+PGRpdj4vaG9tZS9jdmFyb3F1aS9tdWx0aXBhdGgtdG9vbHMva3BhcnR4L2twYXJ0
+eC5jOjQ4MDogdW5kZWZpbmVkIHJlZmVyZW5jZSB0byBgTUlOT1ImIzM5OzwvZGl2PjxkaXY+L2hv
+bWUvY3Zhcm9xdWkvbXVsdGlwYXRoLXRvb2xzL2twYXJ0eC9rcGFydHguYzo0ODA6IHVuZGVmaW5l
+ZCByZWZlcmVuY2UgdG8gYE1BSk9SJiMzOTs8L2Rpdj48L2Rpdj48ZGl2Pi4uLjwvZGl2PjxkaXY+
+PGJyPjwvZGl2PjxkaXY+UmVnYXJkcyw8L2Rpdj48ZGl2PkNocmlzdG9waGUgVmFyb3F1aTwvZGl2
+PjxkaXY+T3BlblNWQzwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+PGRp
+diBjbGFzcz0iZ21haWxfcXVvdGUiPk9uIFRodSwgSmFuIDcsIDIwMTYgYXQgNzozMSBQTSwgTWF1
+cmljaW8gRmFyaWEgZGUgT2xpdmVpcmEgPHNwYW4gZGlyPSJsdHIiPiZsdDs8YSBocmVmPSJtYWls
+dG86bWF1cmljZm9AbGludXgudm5ldC5pYm0uY29tIiB0YXJnZXQ9Il9ibGFuayI+bWF1cmljZm9A
+bGludXgudm5ldC5pYm0uY29tPC9hPiZndDs8L3NwYW4+IHdyb3RlOjxicj48YmxvY2txdW90ZSBj
+bGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhleDtib3JkZXItbGVmdDox
+cHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij5EZXZpY2UgbmFtZXMgd2l0aCBzcGFjZXMg
+ZmFpbCB0byBiZSBhZGRlZCB0byBkZXZpY2UtbWFwcGVyIHRhYmxlczxicj4NCmJlY2F1c2Ugc3Bh
+Y2VzIGFyZSBmaWVsZCBzZXBhcmF0b3JzLsKgIEluIG9yZGVyIHRvIHN1cHBvcnQgaXQsIHVzZTxi
+cj4NCmRldmljZSBtYWpvcjptaW5vciBudW1iZXJzLCBpbnN0ZWFkLsKgIFdoaWxlIHN0aWxsIHRo
+ZXJlLCBtYWtlIHRoZTxicj4NCnZlcmJvc2Ugb3V0cHV0IG9mIGNvbnRhaW5lci0gYW5kIGNvbnRh
+aW5lZC1zbGljZXMgY29uc2lzdGVudC48YnI+DQo8YnI+DQpUaGlzIGlzIHVzZWZ1bCBvbiBzb21l
+IHNjZW5hcmlvcyB3aXRoIGFyYml0cmFyeSBsb29wIGRldmljZSBuYW1lcyw8YnI+DQphbmQgbm9u
+LXVzZXJfZnJpZW5kbHlfbmFtZXMgbXVsdGlwYXRoIFdXSURzIHdpdGggc3BhY2VzIChlZywgUUVN
+VTxicj4NCmVtdWxhdGVkIGhhcmQgZHJpdmVzLCBhbmQgc29tZSBJQk0gZGV2aWNlcykgb24gc29t
+ZSBkaXN0cm9zLjxicj4NCjxicj4NClRlc3QtY2FzZTo8YnI+DQo8YnI+DQrCoCDCoCDCoCDCoCAj
+IGltZz0mcXVvdDsvdG1wL215LmltZyZxdW90Ozxicj4NCsKgIMKgIMKgIMKgICMgc3BhY2VuYW1l
+PSZxdW90Oy9kZXYvbXkgc3BhY2UgbmFtZSZxdW90Ozxicj4NCjxicj4NCsKgIMKgIMKgIMKgICMg
+dHJ1bmNhdGUgLS1zaXplPTFHICZxdW90OyRpbWcmcXVvdDs8YnI+DQrCoCDCoCDCoCDCoCAjIGxv
+ZGV2PSQoc3VkbyBsb3NldHVwIC0tZmluZCAtLXNob3cgJnF1b3Q7JGltZyZxdW90Oyk8YnI+DQrC
+oCDCoCDCoCDCoCAjIGxuIC1zZiAmcXVvdDskbG9kZXYmcXVvdDsgJnF1b3Q7JHNwYWNlbmFtZSZx
+dW90Ozxicj4NCjxicj4NCsKgIMKgIMKgIMKgICMgbHMgLWwgJGxvZGV2ICZxdW90OyRzcGFjZW5h
+bWUmcXVvdDs8YnI+DQrCoCDCoCDCoCDCoCBicnctcnctLS0tIDEgcm9vdCBkaXNrIDcsIDAgSmFu
+wqAgNyAxMDozNiAvZGV2L2xvb3AwPGJyPg0KwqAgwqAgwqAgwqAgbHJ3eHJ3eHJ3eCAxIHJvb3Qg
+cm9vdMKgIMKgMTAgSmFuwqAgNyAxMDozNiAvZGV2L215IHNwYWNlIG5hbWUgLSZndDsgL2Rldi9s
+b29wMDxicj4NCjxicj4NCsKgIMKgIMKgIMKgICMgZmRpc2sgJGxvZGV2PGJyPg0KwqAgwqAgwqAg
+wqAgJmx0Oy4uLiZndDs8YnI+DQo8YnI+DQrCoCDCoCDCoCDCoCAjIGZkaXNrIC1sICRsb2Rldjxi
+cj4NCsKgIMKgIMKgIMKgICZsdDsuLi4mZ3Q7PGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgRGV2
+aWNlIEJvb3TCoCDCoCDCoCBTdGFydMKgIMKgIMKgIMKgIMKgRW5kwqAgwqAgwqAgQmxvY2tzwqAg
+wqBJZMKgIFN5c3RlbTxicj4NCsKgIMKgIMKgIMKgIC9kZXYvbG9vcDBwMcKgIMKgIMKgIMKgIMKg
+IMKgIDIwNDjCoCDCoCDCoCAyNjQxOTHCoCDCoCDCoCAxMzEwNzLCoCDCoDgzwqAgTGludXg8YnI+
+DQrCoCDCoCDCoCDCoCAvZGV2L2xvb3AwcDLCoCDCoCDCoCDCoCDCoCAyNjQxOTLCoCDCoCDCoCA3
+ODg0NznCoCDCoCDCoCAyNjIxNDTCoCDCoDgzwqAgTGludXg8YnI+DQrCoCDCoCDCoCDCoCAvZGV2
+L2xvb3AwcDPCoCDCoCDCoCDCoCDCoCA3ODg0ODDCoCDCoCDCoDIwOTcxNTHCoCDCoCDCoCA2NTQz
+MzbCoCDCoCA1wqAgRXh0ZW5kZWQ8YnI+DQrCoCDCoCDCoCDCoCAvZGV2L2xvb3AwcDXCoCDCoCDC
+oCDCoCDCoCA3OTA1MjjCoCDCoCDCoCA4NTYwNjPCoCDCoCDCoCDCoDMyNzY4wqAgwqA4M8KgIExp
+bnV4PGJyPg0KwqAgwqAgwqAgwqAgL2Rldi9sb29wMHA2wqAgwqAgwqAgwqAgwqAgODU4MTEywqAg
+wqAgwqAgOTg5MTgzwqAgwqAgwqAgwqA2NTUzNsKgIMKgODPCoCBMaW51eDxicj4NCsKgIMKgIMKg
+IMKgIC9kZXYvbG9vcDBwN8KgIMKgIMKgIMKgIMKgIDk5MTIzMsKgIMKgIMKgMTUxNTUxOcKgIMKg
+IMKgIDI2MjE0NMKgIMKgODPCoCBMaW51eDxicj4NCjxicj4NCldpdGhvdXQgcGF0Y2g6PGJyPg0K
+PGJyPg0KwqAgwqAgwqAgwqAgIyBrcGFydHggLWF2ICZxdW90OyRzcGFjZW5hbWUmcXVvdDs8YnI+
+DQrCoCDCoCDCoCDCoCBkZXZpY2UtbWFwcGVyOiByZWxvYWQgaW9jdGwgb24gbXlceDIwc3BhY2Vc
+eDIwbmFtZTEgZmFpbGVkOiBJbnZhbGlkIGFyZ3VtZW50PGJyPg0KwqAgwqAgwqAgwqAgY3JlYXRl
+L3JlbG9hZCBmYWlsZWQgb24gbXkgc3BhY2UgbmFtZTE8YnI+DQrCoCDCoCDCoCDCoCBhZGQgbWFw
+IG15IHNwYWNlIG5hbWUxICgwOjApOiAwIDI2MjE0NCBsaW5lYXIgL2Rldi9teSBzcGFjZSBuYW1l
+IDIwNDg8YnI+DQo8YnI+DQrCoCDCoCDCoCDCoCBkZXZpY2UtbWFwcGVyOiByZWxvYWQgaW9jdGwg
+b24gbXlceDIwc3BhY2VceDIwbmFtZTIgZmFpbGVkOiBJbnZhbGlkIGFyZ3VtZW50PGJyPg0KwqAg
+wqAgwqAgwqAgY3JlYXRlL3JlbG9hZCBmYWlsZWQgb24gbXkgc3BhY2UgbmFtZTI8YnI+DQrCoCDC
+oCDCoCDCoCBhZGQgbWFwIG15IHNwYWNlIG5hbWUyICgwOjApOiAwIDUyNDI4OCBsaW5lYXIgL2Rl
+di9teSBzcGFjZSBuYW1lIDI2NDE5Mjxicj4NCjxicj4NCsKgIMKgIMKgIMKgIGRldmljZS1tYXBw
+ZXI6IHJlbG9hZCBpb2N0bCBvbiBteVx4MjBzcGFjZVx4MjBuYW1lMyBmYWlsZWQ6IEludmFsaWQg
+YXJndW1lbnQ8YnI+DQrCoCDCoCDCoCDCoCBjcmVhdGUvcmVsb2FkIGZhaWxlZCBvbiBteSBzcGFj
+ZSBuYW1lMzxicj4NCsKgIMKgIMKgIMKgIGFkZCBtYXAgbXkgc3BhY2UgbmFtZTMgKDA6MCk6IDAg
+MiBsaW5lYXIgL2Rldi9teSBzcGFjZSBuYW1lIDc4ODQ4MDxicj4NCjxicj4NCsKgIMKgIMKgIMKg
+IGRldmljZS1tYXBwZXI6IHJlbG9hZCBpb2N0bCBvbiBteVx4MjBzcGFjZVx4MjBuYW1lNSBmYWls
+ZWQ6IEludmFsaWQgYXJndW1lbnQ8YnI+DQrCoCDCoCDCoCDCoCBhZGQgbWFwIG15IHNwYWNlIG5h
+bWU1IDogMCA2NTUzNiBsaW5lYXIgL2Rldi9teSBzcGFjZSBuYW1lIDc5MDUyODxicj4NCjxicj4N
+CsKgIMKgIMKgIMKgIGRldmljZS1tYXBwZXI6IHJlbG9hZCBpb2N0bCBvbiBteVx4MjBzcGFjZVx4
+MjBuYW1lNiBmYWlsZWQ6IEludmFsaWQgYXJndW1lbnQ8YnI+DQrCoCDCoCDCoCDCoCBhZGQgbWFw
+IG15IHNwYWNlIG5hbWU2IDogMCAxMzEwNzIgbGluZWFyIC9kZXYvbXkgc3BhY2UgbmFtZSA4NTgx
+MTI8YnI+DQo8YnI+DQrCoCDCoCDCoCDCoCBkZXZpY2UtbWFwcGVyOiByZWxvYWQgaW9jdGwgb24g
+bXlceDIwc3BhY2VceDIwbmFtZTcgZmFpbGVkOiBJbnZhbGlkIGFyZ3VtZW50PGJyPg0KwqAgwqAg
+wqAgwqAgYWRkIG1hcCBteSBzcGFjZSBuYW1lNyA6IDAgNTI0Mjg4IGxpbmVhciAvZGV2L215IHNw
+YWNlIG5hbWUgOTkxMjMyPGJyPg0KPGJyPg0KV2l0aCBwYXRjaDo8YnI+DQo8YnI+DQrCoCDCoCDC
+oCDCoCAjIGtwYXJ0eCAtYXYgJnF1b3Q7JHNwYWNlbmFtZSZxdW90Ozxicj4NCsKgIMKgIMKgIMKg
+IGFkZCBtYXAgbXkgc3BhY2UgbmFtZTEgKDI1Mjo2KTogMCAyNjIxNDQgbGluZWFyIDc6MCAyMDQ4
+PGJyPg0KwqAgwqAgwqAgwqAgYWRkIG1hcCBteSBzcGFjZSBuYW1lMiAoMjUyOjcpOiAwIDUyNDI4
+OCBsaW5lYXIgNzowIDI2NDE5Mjxicj4NCsKgIMKgIMKgIMKgIGFkZCBtYXAgbXkgc3BhY2UgbmFt
+ZTMgKDI1Mjo4KTogMCAyIGxpbmVhciA3OjAgNzg4NDgwPGJyPg0KwqAgwqAgwqAgwqAgYWRkIG1h
+cCBteSBzcGFjZSBuYW1lNSAoMjUyOjkpOiAwIDY1NTM2IGxpbmVhciA3OjAgNzkwNTI4PGJyPg0K
+wqAgwqAgwqAgwqAgYWRkIG1hcCBteSBzcGFjZSBuYW1lNiAoMjUyOjEwKTogMCAxMzEwNzIgbGlu
+ZWFyIDc6MCA4NTgxMTI8YnI+DQrCoCDCoCDCoCDCoCBhZGQgbWFwIG15IHNwYWNlIG5hbWU3ICgy
+NTI6MTEpOiAwIDUyNDI4OCBsaW5lYXIgNzowIDk5MTIzMjxicj4NCjxicj4NCsKgIMKgIMKgIMKg
+ICMgZG1zZXR1cCB0YWJsZSB8IHNvcnQ8YnI+DQrCoCDCoCDCoCDCoCBteSBzcGFjZSBuYW1lMTog
+MCAyNjIxNDQgbGluZWFyIDc6MCAyMDQ4PGJyPg0KwqAgwqAgwqAgwqAgbXkgc3BhY2UgbmFtZTI6
+IDAgNTI0Mjg4IGxpbmVhciA3OjAgMjY0MTkyPGJyPg0KwqAgwqAgwqAgwqAgbXkgc3BhY2UgbmFt
+ZTM6IDAgMiBsaW5lYXIgNzowIDc4ODQ4MDxicj4NCsKgIMKgIMKgIMKgIG15IHNwYWNlIG5hbWU1
+OiAwIDY1NTM2IGxpbmVhciA3OjAgNzkwNTI4PGJyPg0KwqAgwqAgwqAgwqAgbXkgc3BhY2UgbmFt
+ZTY6IDAgMTMxMDcyIGxpbmVhciA3OjAgODU4MTEyPGJyPg0KwqAgwqAgwqAgwqAgbXkgc3BhY2Ug
+bmFtZTc6IDAgNTI0Mjg4IGxpbmVhciA3OjAgOTkxMjMyPGJyPg0KPGJyPg0KwqAgwqAgwqAgwqAg
+IyBscyAtbCAvZGV2L21hcHBlci88YnI+DQrCoCDCoCDCoCDCoCB0b3RhbCAwPGJyPg0KwqAgwqAg
+wqAgwqAgY3J3LS0tLS0tLSAxIHJvb3Qgcm9vdMKgIDEwLCAyMzYgSmFuwqAgNyAxMjowMCBjb250
+cm9sPGJyPg0KwqAgwqAgwqAgwqAgYnJ3LXJ3LS0tLSAxIHJvb3QgZGlzayAyNTIswqAgwqA2IEph
+bsKgIDcgMTU6NTAgbXlceDIwc3BhY2VceDIwbmFtZTE8YnI+DQrCoCDCoCDCoCDCoCBicnctcnct
+LS0tIDEgcm9vdCBkaXNrIDI1MizCoCDCoDcgSmFuwqAgNyAxNTo1MCBteVx4MjBzcGFjZVx4MjBu
+YW1lMjxicj4NCsKgIMKgIMKgIMKgIGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUyLMKgIMKgOCBK
+YW7CoCA3IDE1OjUwIG15XHgyMHNwYWNlXHgyMG5hbWUzPGJyPg0KwqAgwqAgwqAgwqAgYnJ3LXJ3
+LS0tLSAxIHJvb3QgZGlzayAyNTIswqAgwqA5IEphbsKgIDcgMTU6NTAgbXlceDIwc3BhY2VceDIw
+bmFtZTU8YnI+DQrCoCDCoCDCoCDCoCBicnctcnctLS0tIDEgcm9vdCBkaXNrIDI1MizCoCAxMCBK
+YW7CoCA3IDE1OjUwIG15XHgyMHNwYWNlXHgyMG5hbWU2PGJyPg0KwqAgwqAgwqAgwqAgYnJ3LXJ3
+LS0tLSAxIHJvb3QgZGlzayAyNTIswqAgMTEgSmFuwqAgNyAxNTo1MCBteVx4MjBzcGFjZVx4MjBu
+YW1lNzxicj4NCjxicj4NClRoYW5rczogU2NvdHQgTW9zZXIgKHBvaW50ZXJzIHRvIHRoZSBlcnJv
+ciBhbmQgdGVzdC1jYXNlKS48YnI+DQo8YnI+DQpTaWduZWQtb2ZmLWJ5OiBNYXVyaWNpbyBGYXJp
+YSBkZSBPbGl2ZWlyYSAmbHQ7PGEgaHJlZj0ibWFpbHRvOm1hdXJpY2ZvQGxpbnV4LnZuZXQuaWJt
+LmNvbSI+bWF1cmljZm9AbGludXgudm5ldC5pYm0uY29tPC9hPiZndDs8YnI+DQotLS08YnI+DQrC
+oGtwYXJ0eC9rcGFydHguYyB8IDEyICsrKysrKy0tLS0tLTxicj4NCsKgMSBmaWxlIGNoYW5nZWQs
+IDYgaW5zZXJ0aW9ucygrKSwgNiBkZWxldGlvbnMoLSk8YnI+DQo8YnI+DQpkaWZmIC0tZ2l0IGEv
+a3BhcnR4L2twYXJ0eC5jIGIva3BhcnR4L2twYXJ0eC5jPGJyPg0KaW5kZXggYTlkNGM5OC4uZDVl
+ZWVhOSAxMDA2NDQ8YnI+DQotLS0gYS9rcGFydHgva3BhcnR4LmM8YnI+DQorKysgYi9rcGFydHgv
+a3BhcnR4LmM8YnI+DQpAQCAtNDc3LDggKzQ3Nyw4IEBAIG1haW4oaW50IGFyZ2MsIGNoYXIgKiph
+cmd2KXs8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oCB9PGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+c3RyaXBfc2xhc2gocGFydG5hbWUpOzxicj4NCjxicj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoGlmIChzYWZlX3NwcmludGYocGFyYW1zLCAmcXVvdDsl
+cyAlJnF1b3Q7IFBSSXU2NCAsPGJyPg0KLcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGRldmljZSwgc2xpY2VzW2pd
+LnN0YXJ0KSkgezxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oCDCoCDCoGlmIChzYWZlX3NwcmludGYocGFyYW1zLCAmcXVvdDslZDolZCAlJnF1b3Q7IFBSSXU2
+NCAsPGJyPg0KK8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIE1BSk9SKGJ1Zi5zdF9yZGV2KSwgTUlOT1IoYnVmLnN0
+X3JkZXYpLCBzbGljZXNbal0uc3RhcnQpKSB7PGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgZnByaW50ZihzdGRlcnIsICZxdW90
+O3BhcmFtcyB0b28gc21hbGxcbiZxdW90Oyk7PGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgZXhpdCgxKTs8YnI+DQrCoCDCoCDC
+oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCB9PGJyPg0KQEAgLTU0MCw4
+ICs1NDAsOCBAQCBtYWluKGludCBhcmdjLCBjaGFyICoqYXJndil7PGJyPg0KwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgfTxicj4NCsKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IHN0cmlwX3NsYXNoKHBhcnRuYW1lKTs8YnI+DQo8YnI+DQotwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBpZiAoc2FmZV9zcHJpbnRmKHBh
+cmFtcywgJnF1b3Q7JXMgJSZxdW90OyBQUkl1NjQsPGJyPg0KLcKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIGRldmljZSw8YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBpZiAoc2FmZV9zcHJpbnRmKHBhcmFtcywgJnF1b3Q7JWQ6
+JWQgJSZxdW90OyBQUkl1NjQsPGJyPg0KK8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIE1BSk9S
+KGJ1Zi5zdF9yZGV2KSwgTUlOT1IoYnVmLnN0X3JkZXYpLDxicj4NCsKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgc2xpY2VzW2pdLnN0YXJ0KSkgezxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGZwcmlu
+dGYoc3RkZXJyLCAmcXVvdDtwYXJhbXMgdG9vIHNtYWxsXG4mcXVvdDspOzxicj4NCsKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIGV4aXQoMSk7PGJyPg0KQEAgLTU2Myw4ICs1NjMsOCBAQCBtYWluKGludCBhcmdjLCBj
+aGFyICoqYXJndil7PGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgJmFtcDtzbGljZXNbal0ubWlub3IpOzxi
+cj4NCjxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIGlmICh2ZXJib3NlKTxicj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoHByaW50ZigmcXVv
+dDthZGQgbWFwICVzIDogMCAlJnF1b3Q7IFBSSXU2NCAmcXVvdDsgJXMgJXNcbiZxdW90Oyw8YnI+
+DQotwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgcGFydG5hbWUsIHNsaWNlc1tqXS5zaXplLDxicj4N
+CivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoCDCoCDCoHByaW50ZigmcXVvdDthZGQgbWFwICVzICglZDolZCk6IDAgJSZxdW90
+OyBQUkl1NjQgJnF1b3Q7ICVzICVzXG4mcXVvdDssPGJyPg0KK8KgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIHBhcnRuYW1lLCBzbGljZXNbal0ubWFqb3IsIHNsaWNlc1tqXS5taW5vciwgc2xpY2VzW2pd
+LnNpemUsPGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBETV9UQVJHRVQsIHBhcmFtcyk7
+PGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgYy0tOzxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIH08YnI+DQo8c3BhbiBjbGFzcz0iSE9FblpiIj48Zm9udCBjb2xvcj0iIzg4ODg4
+OCI+LS08YnI+DQoxLjguMy4xPGJyPg0KPGJyPg0KPC9mb250Pjwvc3Bhbj48L2Jsb2NrcXVvdGU+
+PC9kaXY+PGJyPjwvZGl2Pg0K
+--089e01177191d79fa70529bebe5d--
 
 
---===============8351660329513751609==
+--===============3009493185717095273==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============8351660329513751609==--
+--===============3009493185717095273==--
