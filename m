@@ -1,17 +1,15 @@
-From: Brian Bunker <brian@purestorage.com>
-Subject: Re: Question about multipath device compiled defaults
-Date: Wed, 20 Jan 2016 08:15:22 -0800
-Message-ID: <CAHZQxyLc3Sn5ycm3YCyVQEA10+rqer1_bmcRrODLrxTh+R1GwQ@mail.gmail.com>
-References: <201511050700.tA570XNA029270@d06av02.portsmouth.uk.ibm.com>
-	<569E65D4.4020002@linux.vnet.ibm.com>
-	<CABr-GneOyHJNiQRywzdKq5rr5S7Ljz4up3W=V_HgHoUtfY=C3g@mail.gmail.com>
-	<CAHZQxyLmSQq89=P4b+rehQhWtU8eC4KO4rxaPzmDv5uZ0p7B2A@mail.gmail.com>
-	<CABr-Gndqm+7cgExV4eMfHiXkerj87X30BVi=OP_7Oo-16Od8-Q@mail.gmail.com>
+From: Dennis Yang <shinrairis@gmail.com>
+Subject: Re: I/O block when removing thin device on the same pool
+Date: Thu, 21 Jan 2016 00:17:52 +0800
+Message-ID: <CAKTMprP+VvLdR8oWQU4EY+HwJ=HuUjeVwaKGy2_KZ_tK-42jxg@mail.gmail.com>
+References: <CAKTMprME2=oCyjxNxLPsXcgSsAzcBW2-dLjjN1CNPAPe0w-bow@mail.gmail.com>
+	<569F6F08.1040503@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7144725582639848357=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-Gndqm+7cgExV4eMfHiXkerj87X30BVi=OP_7Oo-16Od8-Q@mail.gmail.com>
+In-Reply-To: <569F6F08.1040503@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,347 +22,65 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============7144725582639848357==
-Content-Type: multipart/alternative; boundary=001a113b8fea0642020529c64b05
+Hi,
 
---001a113b8fea0642020529c64b05
-Content-Type: text/plain; charset=UTF-8
+Thanks for replying.
 
-Thank you. Any ideas how long it typically takes the distros like RHEL,
-etc. to pull these changes down, or do they need to be pinged explicitly
-that there are changes available that we want them to consider?
+In my use case, I will have couples of 50TB thin devices (less than
+20) with different services running on them. Also, I will take hourly
+read-only snapshot on some of these thin devices and prevent one
+single thin device from having over 1024 snapshots by deleting the
+oldest snapshot when it has to. During the deletion of a snapshot or a
+thin device, I/O gets blocked and some of the latency-sensitive
+services stop and return error code.
 
-Brian
+I am aware of that the current design is not suitable for me to put
+all the thin devices on the same pool. However, It seems that this I/O
+blocking problem will still exist even when I have only one thin
+device and couple of read-only snapshots of it on the same pool.
 
-On Tue, Jan 19, 2016 at 10:58 PM, Christophe Varoqui <
-christophe.varoqui@opensvc.com> wrote:
+Dennis
 
-> Ok, merged.
+2016-01-20 19:27 GMT+08:00 Zdenek Kabelac <zkabelac@redhat.com>:
+> Dne 20.1.2016 v 11:05 Dennis Yang napsal(a):
+>>
+>> Hi,
+>>
+>> I had noticed that I/O requests to one thin device will be blocked
+>> when the other thin device is being deleting. The root cause of this
+>> is that to delete a thin device will eventually call dm_btree_del()
+>> which is a slow function and can block. This means that the device
+>> deleting process will need to hold the pool lock for a very long time
+>> to wait for this function to delete the whole data mapping subtree.
+>> Since I/O to the devices on the same pool needs to held the same pool
+>> lock to lookup/insert/delete data mapping, all I/O will be blocked
+>> until the delete process finish.
+>>
+>> For now, I have to discard all the mappings of a thin device before
+>> deleting it to prevent I/O from being blocked. Since these discard
+>> requests not only take lots of time to finish but hurt the pool I/O
+>> throughput, I am still looking for other better solutions to fix this
+>> issue.
+>>
+>> I think the main problem is still the big pool lock in dm-thin which
+>> hurts both the scalability and performance of. I am wondering if there
+>> is any plan on improving this or any better fix for the I/O block
+>> problem.
 >
-> On Tue, Jan 19, 2016 at 11:17 PM, Brian Bunker <brian@purestorage.com>
-> wrote:
 >
->> There are just two files I touch, so the patch is simple:
->>
->> diff -Naur 3/multipath-tools/libmultipath/hwtable.c
->> 4/multipath-tools/libmultipath/hwtable.c
->> --- 3/multipath-tools/libmultipath/hwtable.c    2016-01-14
->> 17:47:06.000000000 -0800
->> +++ 4/multipath-tools/libmultipath/hwtable.c    2016-01-14
->> 18:33:45.000000000 -0800
->> @@ -1166,6 +1166,22 @@
->>                 .prio_name     = PRIO_ALUA,
->>                 .prio_args     = NULL,
->>         },
->> +        {
->> +               .vendor        = "PURE",
->> +               .product       = "FlashArray",
->> +               .features      = DEFAULT_FEATURES,
->> +               .hwhandler     = DEFAULT_HWHANDLER,
->> +               .selector      = "queue-length 0",
->> +               .pgpolicy      = MULTIBUS,
->> +               .pgfailback    = -FAILBACK_IMMEDIATE,
->> +               .checker_name  = TUR,
->> +               .fast_io_fail  = 10,
->> +                .user_friendly_names = USER_FRIENDLY_NAMES_OFF,
->> +               .prio_name     = DEFAULT_PRIO,
->> +                .no_path_retry = 0,
->> +                .dev_loss      = 60,
->> +               .prio_args     = NULL,
->> +       },
->>         /*
->>          * EOL
->>          */
->> diff -Naur 3/multipath-tools/multipath.conf.defaults
->> 4/multipath-tools/multipath.conf.defaults
->> --- 3/multipath-tools/multipath.conf.defaults   2016-01-14
->> 17:47:06.000000000 -0800
->> +++ 4/multipath-tools/multipath.conf.defaults   2016-01-14
->> 18:35:50.000000000 -0800
->> @@ -940,6 +940,17 @@
->>  #              rr_weight "uniform"
->>  #              no_path_retry "queue"
->>  #      }
->> +#       device {
->> +#               vendor "PURE"
->> +#               path_selector "queue-length 0"
->> +#               path_grouping_policy "multibus"
->> +#               path_checker "tur"
->> +#               fast_io_fail_tmo 10
->> +#               user_friendly_names "no"
->> +#               no_path_retry 0
->> +#               features 0
->> +#               dev_loss_tmo 60
->> +#       }
->>  #}
->>  #multipaths {
->>  #}
->>
->>
->> Thanks,
->> Brian
->>
->> On Tue, Jan 19, 2016 at 8:48 AM, Christophe Varoqui <
->> christophe.varoqui@opensvc.com> wrote:
->>
->>> Hi,
->>>
->>> and when you are ready, you can post the patch here so I can merge it
->>> upstream.
->>>
->>> Thanks,
->>> Christophe Varoqui
->>> OpenSVC
->>>
->>> On Tue, Jan 19, 2016 at 5:35 PM, Mauricio Faria de Oliveira <
->>> mauricfo@linux.vnet.ibm.com> wrote:
->>>
->>>> On 11/05/2015 04:59 AM, Doron Tal1 wrote:
->>>>
->>>>> I would like to know how and what procedure i should follow if i want
->>>>> to
->>>>> modify or add new settings to the device mapper defaults.
->>>>>
->>>>
->>>> The defaults are in hwtable.c [1].
->>>>
->>>> So for example how can i modify existing compiled settings for the
->>>>> 2810XIV device? in case i want to add a new device and it settings, how
->>>>> can it be done?
->>>>>
->>>>
->>>> To modify the compiled settings, you have to modify it and recompile.
->>>>
->>>> To modify the runtime settings (based on the defaults), you can modify
->>>> /etc/multipath.conf (see its manpage [2] with 'man multipath.conf').
->>>>
->>>> You can verify the the setting values used during multipath discovery
->>>> with 'multipath -v3' for example, or "multipathd -k'show config'".
->>>>
->>>> Hope this might still help at this time,
->>>>
->>>> [1]
->>>> http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=libmultipath/hwtable.c
->>>> [2]
->>>> http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=multipath/multipath.conf.5
->>>>
->>>> --
->>>> Mauricio Faria de Oliveira
->>>> IBM Linux Technology Center
->>>>
->>>> --
->>>> dm-devel mailing list
->>>> dm-devel@redhat.com
->>>> https://www.redhat.com/mailman/listinfo/dm-devel
->>>>
->>>
->>>
->>> --
->>> dm-devel mailing list
->>> dm-devel@redhat.com
->>> https://www.redhat.com/mailman/listinfo/dm-devel
->>>
->>
->>
->>
->> --
->> Brian Bunker
->> PURE Storage, Inc. <http://www.purestorage.com>
->> brian@purestorage.com
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
->>
+> Hi
 >
+> What is your use case.
+>
+> You may possibly split the load between several thin-pools ?
+>
+> Current design is not targeted to simultaneously maintain very large number
+> of active thin-volumes within a single thin-pool.
+>
+>
+> Zdenek
 >
 > --
 > dm-devel mailing list
 > dm-devel@redhat.com
 > https://www.redhat.com/mailman/listinfo/dm-devel
->
-
-
-
--- 
-Brian Bunker
-PURE Storage, Inc. <http://www.purestorage.com>
-brian@purestorage.com
-
---001a113b8fea0642020529c64b05
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Thank you. Any ideas how long it typically takes the distr=
-os like RHEL, etc. to pull these changes down, or do they need to be pinged=
- explicitly that there are changes available that we want them to consider?=
-<div><br></div><div>Brian</div></div><div class=3D"gmail_extra"><br><div cl=
-ass=3D"gmail_quote">On Tue, Jan 19, 2016 at 10:58 PM, Christophe Varoqui <s=
-pan dir=3D"ltr">&lt;<a href=3D"mailto:christophe.varoqui@opensvc.com" targe=
-t=3D"_blank">christophe.varoqui@opensvc.com</a>&gt;</span> wrote:<br><block=
-quote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc=
- solid;padding-left:1ex"><div dir=3D"ltr">Ok, merged.</div><div class=3D"HO=
-EnZb"><div class=3D"h5"><div class=3D"gmail_extra"><br><div class=3D"gmail_=
-quote">On Tue, Jan 19, 2016 at 11:17 PM, Brian Bunker <span dir=3D"ltr">&lt=
-;<a href=3D"mailto:brian@purestorage.com" target=3D"_blank">brian@purestora=
-ge.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"=
-margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"=
-ltr">There are just two files I touch, so the patch is simple:<div><br></di=
-v><div><div>diff -Naur 3/multipath-tools/libmultipath/hwtable.c 4/multipath=
--tools/libmultipath/hwtable.c</div><div>--- 3/multipath-tools/libmultipath/=
-hwtable.c =C2=A0 =C2=A02016-01-14 17:47:06.000000000 -0800</div><div>+++ 4/=
-multipath-tools/libmultipath/hwtable.c =C2=A0 =C2=A02016-01-14 18:33:45.000=
-000000 -0800</div><div>@@ -1166,6 +1166,22 @@</div><div>=C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .prio_name =C2=A0 =C2=A0 =3D PRIO_AL=
-UA,</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .prio=
-_args =C2=A0 =C2=A0 =3D NULL,</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 },</div=
-><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0{</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 .vendor =C2=A0 =C2=A0 =C2=A0 =C2=A0=3D &quot;PURE&=
-quot;,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .produc=
-t =C2=A0 =C2=A0 =C2=A0 =3D &quot;FlashArray&quot;,</div><div>+ =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .features =C2=A0 =C2=A0 =C2=A0=3D DE=
-FAULT_FEATURES,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 .hwhandler =C2=A0 =C2=A0 =3D DEFAULT_HWHANDLER,</div><div>+ =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .selector =C2=A0 =C2=A0 =C2=A0=3D &q=
-uot;queue-length 0&quot;,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 .pgpolicy =C2=A0 =C2=A0 =C2=A0=3D MULTIBUS,</div><div>+ =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .pgfailback =C2=A0 =C2=A0=3D =
--FAILBACK_IMMEDIATE,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 .checker_name =C2=A0=3D TUR,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 .fast_io_fail =C2=A0=3D 10,</div><div>+ =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.user_friendly_names =3D USER_FRI=
-ENDLY_NAMES_OFF,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 .prio_name =C2=A0 =C2=A0 =3D DEFAULT_PRIO,</div><div>+ =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.no_path_retry =3D 0,</div><div>+ =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.dev_loss =C2=A0 =C2=
-=A0 =C2=A0=3D 60,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 .prio_args =C2=A0 =C2=A0 =3D NULL,</div><div>+ =C2=A0 =C2=A0 =C2=A0 }, =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 /*</div><=
-div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* EOL</div><div>=C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0*/</div><div>diff -Naur 3/multipath-tools/multipath.conf.defau=
-lts 4/multipath-tools/multipath.conf.defaults</div><div>--- 3/multipath-too=
-ls/multipath.conf.defaults =C2=A0 2016-01-14 17:47:06.000000000 -0800</div>=
-<div>+++ 4/multipath-tools/multipath.conf.defaults =C2=A0 2016-01-14 18:35:=
-50.000000000 -0800</div><div>@@ -940,6 +940,17 @@</div><div>=C2=A0# =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0rr_weight &quot;uniform&quot;</div=
-><div>=C2=A0# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0no_path_retry=
- &quot;queue&quot;</div><div>=C2=A0# =C2=A0 =C2=A0 =C2=A0}</div><div>+# =C2=
-=A0 =C2=A0 =C2=A0 device {</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 vendor &quot;PURE&quot;</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 path_selector &quot;queue-length 0&quot;</div><div=
->+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 path_grouping_policy &=
-quot;multibus&quot;</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 path_checker &quot;tur&quot;</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 fast_io_fail_tmo 10</div><div>+# =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 user_friendly_names &quot;no&quot;</div><di=
-v>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 no_path_retry 0</div>=
-<div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 features 0</div><d=
-iv>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 dev_loss_tmo 60</div=
-><div>+# =C2=A0 =C2=A0 =C2=A0 }</div><div>=C2=A0#}</div><div>=C2=A0#multipa=
-ths {</div><div>=C2=A0#}</div></div><div><br></div><div><br></div><div>Than=
-ks,<br>Brian</div></div><div class=3D"gmail_extra"><div><div><br><div class=
-=3D"gmail_quote">On Tue, Jan 19, 2016 at 8:48 AM, Christophe Varoqui <span =
-dir=3D"ltr">&lt;<a href=3D"mailto:christophe.varoqui@opensvc.com" target=3D=
-"_blank">christophe.varoqui@opensvc.com</a>&gt;</span> wrote:<br><blockquot=
-e class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc sol=
-id;padding-left:1ex"><div dir=3D"ltr"><div>Hi,</div><div><br></div>and when=
- you are ready, you can post the patch here so I can merge it upstream.<div=
-><br></div><div>Thanks,</div><div>Christophe Varoqui</div><div>OpenSVC</div=
-></div><div><div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">=
-On Tue, Jan 19, 2016 at 5:35 PM, Mauricio Faria de Oliveira <span dir=3D"lt=
-r">&lt;<a href=3D"mailto:mauricfo@linux.vnet.ibm.com" target=3D"_blank">mau=
-ricfo@linux.vnet.ibm.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmai=
-l_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left=
-:1ex"><span>On 11/05/2015 04:59 AM, Doron Tal1 wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex">
-I would like to know how and what procedure i should follow if i want to<br=
->
-modify or add new settings to the device mapper defaults.<br>
-</blockquote>
-<br></span>
-The defaults are in hwtable.c [1].<span><br>
-<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex">
-So for example how can i modify existing compiled settings for the<br>
-2810XIV device? in case i want to add a new device and it settings, how<br>
-can it be done?<br>
-</blockquote>
-<br></span>
-To modify the compiled settings, you have to modify it and recompile.<br>
-<br>
-To modify the runtime settings (based on the defaults), you can modify<br>
-/etc/multipath.conf (see its manpage [2] with &#39;man multipath.conf&#39;)=
-.<br>
-<br>
-You can verify the the setting values used during multipath discovery<br>
-with &#39;multipath -v3&#39; for example, or &quot;multipathd -k&#39;show c=
-onfig&#39;&quot;.<br>
-<br>
-Hope this might still help at this time,<br>
-<br>
-[1] <a href=3D"http://git.opensvc.com/gitweb.cgi?p=3Dmultipath-tools/.git;a=
-=3Dblob;f=3Dlibmultipath/hwtable.c" rel=3D"noreferrer" target=3D"_blank">ht=
-tp://git.opensvc.com/gitweb.cgi?p=3Dmultipath-tools/.git;a=3Dblob;f=3Dlibmu=
-ltipath/hwtable.c</a><br>
-[2] <a href=3D"http://git.opensvc.com/gitweb.cgi?p=3Dmultipath-tools/.git;a=
-=3Dblob;f=3Dmultipath/multipath.conf.5" rel=3D"noreferrer" target=3D"_blank=
-">http://git.opensvc.com/gitweb.cgi?p=3Dmultipath-tools/.git;a=3Dblob;f=3Dm=
-ultipath/multipath.conf.5</a><span><font color=3D"#888888"><br>
-<br>
--- <br>
-Mauricio Faria de Oliveira<br>
-IBM Linux Technology Center<br>
-<br>
---<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
-m</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
-<br>
-</font></span></blockquote></div><br></div>
-</div></div><br>--<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
-m</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
-<br></blockquote></div><br><br clear=3D"all"><div><br></div></div></div><sp=
-an><font color=3D"#888888">-- <br><div><div>Brian Bunker</div><div><a href=
-=3D"http://www.purestorage.com" target=3D"_blank">PURE Storage, Inc.</a><br=
-></div><div><a href=3D"mailto:brian@purestorage.com" target=3D"_blank">bria=
-n@purestorage.com</a></div></div>
-</font></span></div>
-<br>--<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
-m</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
-<br></blockquote></div><br></div>
-</div></div><br>--<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
-<br></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br><div cla=
-ss=3D"gmail_signature"><div>Brian Bunker</div><div><a href=3D"http://www.pu=
-restorage.com" target=3D"_blank">PURE Storage, Inc.</a><br></div><div><a hr=
-ef=3D"mailto:brian@purestorage.com" target=3D"_blank">brian@purestorage.com=
-</a></div></div>
-</div>
-
---001a113b8fea0642020529c64b05--
-
-
---===============7144725582639848357==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7144725582639848357==--
