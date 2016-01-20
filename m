@@ -1,19 +1,16 @@
-From: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
-Subject: Re: Question about multipath device compiled defaults
-Date: Wed, 20 Jan 2016 15:47:57 -0200
-Message-ID: <569FC84D.4070301@linux.vnet.ibm.com>
-References: <201511050700.tA570XNA029270@d06av02.portsmouth.uk.ibm.com>
-	<569E65D4.4020002@linux.vnet.ibm.com>
-	<CABr-GneOyHJNiQRywzdKq5rr5S7Ljz4up3W=V_HgHoUtfY=C3g@mail.gmail.com>
-	<CAHZQxyLmSQq89=P4b+rehQhWtU8eC4KO4rxaPzmDv5uZ0p7B2A@mail.gmail.com>
-	<CABr-Gndqm+7cgExV4eMfHiXkerj87X30BVi=OP_7Oo-16Od8-Q@mail.gmail.com>
-	<CAHZQxyLc3Sn5ycm3YCyVQEA10+rqer1_bmcRrODLrxTh+R1GwQ@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: How can I get my sector size (via queue_limits?)
+ from a dm_target?
+Date: Wed, 20 Jan 2016 12:52:23 -0500
+Message-ID: <20160120175222.GA15897@redhat.com>
+References: <alpine.LRH.2.11.1601191922570.22808@mail.ewheeler.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAHZQxyLc3Sn5ycm3YCyVQEA10+rqer1_bmcRrODLrxTh+R1GwQ@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.11.1601191922570.22808@mail.ewheeler.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,27 +20,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: brian@purestorage.com
+To: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Brian,
+On Tue, Jan 19 2016 at 10:32pm -0500,
+Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
 
-On 01/20/2016 02:15 PM, Brian Bunker wrote:
-> Any ideas how long it typically takes the distros like RHEL, etc. to
-> pull these changes down, or do they need to be pinged explicitly that
-> there are changes available that we want them to consider?
+> Hello all,
+> 
+> dm_target->len gives me sector count, but I need to know the default 
+> sector size discovered by the blk stacking code without assuming 512b.
+> 
+> Now that I have the dm .iterate_devices callback defined and my 
+> queue_limits are sane by default, how can I get a pointer to the 
+> queue_limits structure for my device given a dm_target structure?
+> 
+> It looks like I should call dm_get_md_queue() after getting the md from 
+> dm_table_get_md(target->table), but dm_get_md_queue is not an exported 
+> symbol.
+> 
+> Also, is that value correct within the .ctr, or only after the .ctr 
+> returns?  If after, how can I hook in after limits are assigned but before 
+> .map gets called?  Otherwise stated, I would like to know the stacked 
+> queue_limits corrected for lower layers within the .ctr function.
 
-It's a good idea to let them know (e.g., bug/feature report).
-I've worked a bit w/ Ubuntu, RHEL, and SLES.
+You cannot know it from .ctr because the device is actively being
+constructed.  The .io_hints hook allows you access to stacked
+queue_limits -- see dm_calculate_queue_limits() which calls ->io_hints
+_after_ combining all underlying queue_limits.
 
-Even though the changes might eventually make downstream, some distros
-won't pull everything (reasonably), but only the pieces they find/know
-to be required or desired by users/customers -- specially on released/
-stable distro versions.
+See dm-thin.c's pool_io_hints() and thin_io_hints() for examples of how
+the .io_hints hook is used for DM-thinp.
 
-So, letting them know / ask for consideration usually helps.
-
--- 
-Mauricio Faria de Oliveira
-IBM Linux Technology Center
+Mike
