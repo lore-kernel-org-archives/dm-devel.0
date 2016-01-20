@@ -1,13 +1,17 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH V2] kpartx: support device names with spaces
-Date: Wed, 20 Jan 2016 15:53:42 +0100
-Message-ID: <CABr-GnfeNpQPcuoRSLHTA5q8E3OF8as1zOTY7SP=bwMwtC=MFQ@mail.gmail.com>
-References: <1453297965-32278-1-git-send-email-mauricfo@linux.vnet.ibm.com>
+From: Brian Bunker <brian@purestorage.com>
+Subject: Re: Question about multipath device compiled defaults
+Date: Wed, 20 Jan 2016 08:15:22 -0800
+Message-ID: <CAHZQxyLc3Sn5ycm3YCyVQEA10+rqer1_bmcRrODLrxTh+R1GwQ@mail.gmail.com>
+References: <201511050700.tA570XNA029270@d06av02.portsmouth.uk.ibm.com>
+	<569E65D4.4020002@linux.vnet.ibm.com>
+	<CABr-GneOyHJNiQRywzdKq5rr5S7Ljz4up3W=V_HgHoUtfY=C3g@mail.gmail.com>
+	<CAHZQxyLmSQq89=P4b+rehQhWtU8eC4KO4rxaPzmDv5uZ0p7B2A@mail.gmail.com>
+	<CABr-Gndqm+7cgExV4eMfHiXkerj87X30BVi=OP_7Oo-16Od8-Q@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4652234551246862716=="
+Content-Type: multipart/mixed; boundary="===============7144725582639848357=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1453297965-32278-1-git-send-email-mauricfo@linux.vnet.ibm.com>
+In-Reply-To: <CABr-Gndqm+7cgExV4eMfHiXkerj87X30BVi=OP_7Oo-16Od8-Q@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,363 +21,350 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============4652234551246862716==
-Content-Type: multipart/alternative; boundary=001a114035acf325bd0529c526d0
+--===============7144725582639848357==
+Content-Type: multipart/alternative; boundary=001a113b8fea0642020529c64b05
 
---001a114035acf325bd0529c526d0
+--001a113b8fea0642020529c64b05
 Content-Type: text/plain; charset=UTF-8
 
-Applied,
-thanks.
+Thank you. Any ideas how long it typically takes the distros like RHEL,
+etc. to pull these changes down, or do they need to be pinged explicitly
+that there are changes available that we want them to consider?
 
-On Wed, Jan 20, 2016 at 2:52 PM, Mauricio Faria de Oliveira <
-mauricfo@linux.vnet.ibm.com> wrote:
+Brian
 
-> Device names with spaces fail to be added to device-mapper tables
-> because spaces are field separators.  In order to support it, use
-> device major:minor numbers, instead.  While still there, make the
-> verbose output of container- and contained-slices consistent.
+On Tue, Jan 19, 2016 at 10:58 PM, Christophe Varoqui <
+christophe.varoqui@opensvc.com> wrote:
+
+> Ok, merged.
 >
-> This is useful on some scenarios with arbitrary loop device names,
-> and non-user_friendly_names multipath WWIDs with spaces (eg, QEMU
-> emulated hard drives, and some IBM devices) on some distros.
+> On Tue, Jan 19, 2016 at 11:17 PM, Brian Bunker <brian@purestorage.com>
+> wrote:
 >
-> Changelog:
-> - V2: Use major()/minor() instead of MAJOR()/MINOR() (build errors).
->       Update test-case verification output.
->       Thanks: Christophe Varoqui
+>> There are just two files I touch, so the patch is simple:
+>>
+>> diff -Naur 3/multipath-tools/libmultipath/hwtable.c
+>> 4/multipath-tools/libmultipath/hwtable.c
+>> --- 3/multipath-tools/libmultipath/hwtable.c    2016-01-14
+>> 17:47:06.000000000 -0800
+>> +++ 4/multipath-tools/libmultipath/hwtable.c    2016-01-14
+>> 18:33:45.000000000 -0800
+>> @@ -1166,6 +1166,22 @@
+>>                 .prio_name     = PRIO_ALUA,
+>>                 .prio_args     = NULL,
+>>         },
+>> +        {
+>> +               .vendor        = "PURE",
+>> +               .product       = "FlashArray",
+>> +               .features      = DEFAULT_FEATURES,
+>> +               .hwhandler     = DEFAULT_HWHANDLER,
+>> +               .selector      = "queue-length 0",
+>> +               .pgpolicy      = MULTIBUS,
+>> +               .pgfailback    = -FAILBACK_IMMEDIATE,
+>> +               .checker_name  = TUR,
+>> +               .fast_io_fail  = 10,
+>> +                .user_friendly_names = USER_FRIENDLY_NAMES_OFF,
+>> +               .prio_name     = DEFAULT_PRIO,
+>> +                .no_path_retry = 0,
+>> +                .dev_loss      = 60,
+>> +               .prio_args     = NULL,
+>> +       },
+>>         /*
+>>          * EOL
+>>          */
+>> diff -Naur 3/multipath-tools/multipath.conf.defaults
+>> 4/multipath-tools/multipath.conf.defaults
+>> --- 3/multipath-tools/multipath.conf.defaults   2016-01-14
+>> 17:47:06.000000000 -0800
+>> +++ 4/multipath-tools/multipath.conf.defaults   2016-01-14
+>> 18:35:50.000000000 -0800
+>> @@ -940,6 +940,17 @@
+>>  #              rr_weight "uniform"
+>>  #              no_path_retry "queue"
+>>  #      }
+>> +#       device {
+>> +#               vendor "PURE"
+>> +#               path_selector "queue-length 0"
+>> +#               path_grouping_policy "multibus"
+>> +#               path_checker "tur"
+>> +#               fast_io_fail_tmo 10
+>> +#               user_friendly_names "no"
+>> +#               no_path_retry 0
+>> +#               features 0
+>> +#               dev_loss_tmo 60
+>> +#       }
+>>  #}
+>>  #multipaths {
+>>  #}
+>>
+>>
+>> Thanks,
+>> Brian
+>>
+>> On Tue, Jan 19, 2016 at 8:48 AM, Christophe Varoqui <
+>> christophe.varoqui@opensvc.com> wrote:
+>>
+>>> Hi,
+>>>
+>>> and when you are ready, you can post the patch here so I can merge it
+>>> upstream.
+>>>
+>>> Thanks,
+>>> Christophe Varoqui
+>>> OpenSVC
+>>>
+>>> On Tue, Jan 19, 2016 at 5:35 PM, Mauricio Faria de Oliveira <
+>>> mauricfo@linux.vnet.ibm.com> wrote:
+>>>
+>>>> On 11/05/2015 04:59 AM, Doron Tal1 wrote:
+>>>>
+>>>>> I would like to know how and what procedure i should follow if i want
+>>>>> to
+>>>>> modify or add new settings to the device mapper defaults.
+>>>>>
+>>>>
+>>>> The defaults are in hwtable.c [1].
+>>>>
+>>>> So for example how can i modify existing compiled settings for the
+>>>>> 2810XIV device? in case i want to add a new device and it settings, how
+>>>>> can it be done?
+>>>>>
+>>>>
+>>>> To modify the compiled settings, you have to modify it and recompile.
+>>>>
+>>>> To modify the runtime settings (based on the defaults), you can modify
+>>>> /etc/multipath.conf (see its manpage [2] with 'man multipath.conf').
+>>>>
+>>>> You can verify the the setting values used during multipath discovery
+>>>> with 'multipath -v3' for example, or "multipathd -k'show config'".
+>>>>
+>>>> Hope this might still help at this time,
+>>>>
+>>>> [1]
+>>>> http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=libmultipath/hwtable.c
+>>>> [2]
+>>>> http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=multipath/multipath.conf.5
+>>>>
+>>>> --
+>>>> Mauricio Faria de Oliveira
+>>>> IBM Linux Technology Center
+>>>>
+>>>> --
+>>>> dm-devel mailing list
+>>>> dm-devel@redhat.com
+>>>> https://www.redhat.com/mailman/listinfo/dm-devel
+>>>>
+>>>
+>>>
+>>> --
+>>> dm-devel mailing list
+>>> dm-devel@redhat.com
+>>> https://www.redhat.com/mailman/listinfo/dm-devel
+>>>
+>>
+>>
+>>
+>> --
+>> Brian Bunker
+>> PURE Storage, Inc. <http://www.purestorage.com>
+>> brian@purestorage.com
+>>
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+>>
 >
-> Test-case:
 >
->         # img="/tmp/my.img"
->         # spacename="/dev/my space name"
->
->         # truncate --size=1G "$img"
->         # lodev=$(sudo losetup --find --show "$img")
->         # ln -sf "$lodev" "$spacename"
->
->         # ls -l $lodev "$spacename"
->         brw-rw----. 1 root disk 7, 0 Jan 20 11:15 /dev/loop0
->         lrwxrwxrwx. 1 root root   10 Jan 20 11:16 /dev/my space name ->
-> /dev/loop0
->
->         # fdisk $lodev
->         <...>
->
->         # fdisk -l $lodev
->         <...>
->               Device Boot      Start         End      Blocks   Id  System
->         /dev/loop0p1            2048      264191      131072   83  Linux
->         /dev/loop0p2          264192      788479      262144   83  Linux
->         /dev/loop0p3          788480     2097151      654336    5  Extended
->         /dev/loop0p5          790528      856063       32768   83  Linux
->         /dev/loop0p6          858112      989183       65536   83  Linux
->         /dev/loop0p7          991232     1515519      262144   83  Linux
->
-> Without patch:
->
->         # ./kpartx/kpartx -av "$spacename"
->         device-mapper: reload ioctl on my\x20space\x20name1 failed:
-> Invalid argument
->         create/reload failed on my space name1
->         add map my space name1 (0:0): 0 262144 linear /dev/my space name
-> 2048
->
->         device-mapper: reload ioctl on my\x20space\x20name2 failed:
-> Invalid argument
->         create/reload failed on my space name2
->         add map my space name2 (0:0): 0 524288 linear /dev/my space name
-> 264192
->
->         device-mapper: reload ioctl on my\x20space\x20name3 failed:
-> Invalid argument
->         create/reload failed on my space name3
->         add map my space name3 (0:0): 0 2 linear /dev/my space name 788480
->
->         device-mapper: reload ioctl on my\x20space\x20name5 failed:
-> Invalid argument
->         add map my space name5 : 0 65536 linear /dev/my space name 790528
->
->         device-mapper: reload ioctl on my\x20space\x20name6 failed:
-> Invalid argument
->         add map my space name6 : 0 131072 linear /dev/my space name 858112
->
->         device-mapper: reload ioctl on my\x20space\x20name7 failed:
-> Invalid argument
->         add map my space name7 : 0 524288 linear /dev/my space name 991232
->
->         (note: line breaks added for clarity)
->
-> With patch:
->
->         # ./kpartx/kpartx -av "$spacename"
->         add map my space name1 (253:3): 0 262144 linear 7:0 2048
->         add map my space name2 (253:4): 0 524288 linear 7:0 264192
->         add map my space name3 (253:5): 0 2 linear 7:0 788480
->         add map my space name5 (253:6): 0 65536 linear 7:0 790528
->         add map my space name6 (253:7): 0 131072 linear 7:0 858112
->         add map my space name7 (253:8): 0 524288 linear 7:0 991232
->
->         # dmsetup table | sort
->         my space name1: 0 262144 linear 7:0 2048
->         my space name2: 0 524288 linear 7:0 264192
->         my space name3: 0 2 linear 7:0 788480
->         my space name5: 0 65536 linear 7:0 790528
->         my space name6: 0 131072 linear 7:0 858112
->         my space name7: 0 524288 linear 7:0 991232
->
->         # ls -l /dev/mapper/
->         total 0
->         crw-------. 1 root root 10, 236 Jan 11 16:29 control
->         lrwxrwxrwx. 1 root root       7 Jan 20 11:19 my\x20space\x20name1
-> -> ../dm-3
->         lrwxrwxrwx. 1 root root       7 Jan 20 11:19 my\x20space\x20name2
-> -> ../dm-4
->         lrwxrwxrwx. 1 root root       7 Jan 20 11:19 my\x20space\x20name3
-> -> ../dm-5
->         lrwxrwxrwx. 1 root root       7 Jan 20 11:19 my\x20space\x20name5
-> -> ../dm-6
->         lrwxrwxrwx. 1 root root       7 Jan 20 11:19 my\x20space\x20name6
-> -> ../dm-7
->         lrwxrwxrwx. 1 root root       7 Jan 20 11:19 my\x20space\x20name7
-> -> ../dm-8
->
-> Thanks: Scott Moser (pointers to the error and test-case).
->
-> Signed-off-by: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
-> ---
->  kpartx/kpartx.c | 12 ++++++------
->  1 file changed, 6 insertions(+), 6 deletions(-)
->
-> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-> index a9d4c98..ee7c38a 100644
-> --- a/kpartx/kpartx.c
-> +++ b/kpartx/kpartx.c
-> @@ -477,8 +477,8 @@ main(int argc, char **argv){
->                                 }
->                                 strip_slash(partname);
->
-> -                               if (safe_sprintf(params, "%s %" PRIu64 ,
-> -                                                device, slices[j].start))
-> {
-> +                               if (safe_sprintf(params, "%d:%d %" PRIu64 ,
-> +                                                major(buf.st_rdev),
-> minor(buf.st_rdev), slices[j].start)) {
->                                         fprintf(stderr, "params too
-> small\n");
->                                         exit(1);
->                                 }
-> @@ -540,8 +540,8 @@ main(int argc, char **argv){
->                                         }
->                                         strip_slash(partname);
->
-> -                                       if (safe_sprintf(params, "%s %"
-> PRIu64,
-> -                                                        device,
-> +                                       if (safe_sprintf(params, "%d:%d %"
-> PRIu64,
-> +
-> major(buf.st_rdev), minor(buf.st_rdev),
->                                                          slices[j].start))
-> {
->                                                 fprintf(stderr, "params
-> too small\n");
->                                                 exit(1);
-> @@ -563,8 +563,8 @@ main(int argc, char **argv){
->                                                 &slices[j].minor);
->
->                                         if (verbose)
-> -                                               printf("add map %s : 0 %"
-> PRIu64 " %s %s\n",
-> -                                                      partname,
-> slices[j].size,
-> +                                               printf("add map %s
-> (%d:%d): 0 %" PRIu64 " %s %s\n",
-> +                                                      partname,
-> slices[j].major, slices[j].minor, slices[j].size,
->                                                        DM_TARGET, params);
->                                         c--;
->                                 }
 > --
-> 1.8.3.1
->
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 >
 
---001a114035acf325bd0529c526d0
+
+
+-- 
+Brian Bunker
+PURE Storage, Inc. <http://www.purestorage.com>
+brian@purestorage.com
+
+--001a113b8fea0642020529c64b05
 Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: quoted-printable
 
-PGRpdiBkaXI9Imx0ciI+QXBwbGllZCw8ZGl2PnRoYW5rcy48L2Rpdj48L2Rpdj48ZGl2IGNsYXNz
-PSJnbWFpbF9leHRyYSI+PGJyPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj5PbiBXZWQsIEphbiAy
-MCwgMjAxNiBhdCAyOjUyIFBNLCBNYXVyaWNpbyBGYXJpYSBkZSBPbGl2ZWlyYSA8c3BhbiBkaXI9
-Imx0ciI+Jmx0OzxhIGhyZWY9Im1haWx0bzptYXVyaWNmb0BsaW51eC52bmV0LmlibS5jb20iIHRh
-cmdldD0iX2JsYW5rIj5tYXVyaWNmb0BsaW51eC52bmV0LmlibS5jb208L2E+Jmd0Ozwvc3Bhbj4g
-d3JvdGU6PGJyPjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjow
-IDAgMCAuOGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPkRl
-dmljZSBuYW1lcyB3aXRoIHNwYWNlcyBmYWlsIHRvIGJlIGFkZGVkIHRvIGRldmljZS1tYXBwZXIg
-dGFibGVzPGJyPg0KYmVjYXVzZSBzcGFjZXMgYXJlIGZpZWxkIHNlcGFyYXRvcnMuwqAgSW4gb3Jk
-ZXIgdG8gc3VwcG9ydCBpdCwgdXNlPGJyPg0KZGV2aWNlIG1ham9yOm1pbm9yIG51bWJlcnMsIGlu
-c3RlYWQuwqAgV2hpbGUgc3RpbGwgdGhlcmUsIG1ha2UgdGhlPGJyPg0KdmVyYm9zZSBvdXRwdXQg
-b2YgY29udGFpbmVyLSBhbmQgY29udGFpbmVkLXNsaWNlcyBjb25zaXN0ZW50Ljxicj4NCjxicj4N
-ClRoaXMgaXMgdXNlZnVsIG9uIHNvbWUgc2NlbmFyaW9zIHdpdGggYXJiaXRyYXJ5IGxvb3AgZGV2
-aWNlIG5hbWVzLDxicj4NCmFuZCBub24tdXNlcl9mcmllbmRseV9uYW1lcyBtdWx0aXBhdGggV1dJ
-RHMgd2l0aCBzcGFjZXMgKGVnLCBRRU1VPGJyPg0KZW11bGF0ZWQgaGFyZCBkcml2ZXMsIGFuZCBz
-b21lIElCTSBkZXZpY2VzKSBvbiBzb21lIGRpc3Ryb3MuPGJyPg0KPGJyPg0KQ2hhbmdlbG9nOjxi
-cj4NCi0gVjI6IFVzZSBtYWpvcigpL21pbm9yKCkgaW5zdGVhZCBvZiBNQUpPUigpL01JTk9SKCkg
-KGJ1aWxkIGVycm9ycykuPGJyPg0KwqAgwqAgwqAgVXBkYXRlIHRlc3QtY2FzZSB2ZXJpZmljYXRp
-b24gb3V0cHV0Ljxicj4NCsKgIMKgIMKgIFRoYW5rczogQ2hyaXN0b3BoZSBWYXJvcXVpPGJyPg0K
-PGJyPg0KVGVzdC1jYXNlOjxicj4NCjxicj4NCsKgIMKgIMKgIMKgICMgaW1nPSZxdW90Oy90bXAv
-bXkuaW1nJnF1b3Q7PGJyPg0KwqAgwqAgwqAgwqAgIyBzcGFjZW5hbWU9JnF1b3Q7L2Rldi9teSBz
-cGFjZSBuYW1lJnF1b3Q7PGJyPg0KPGJyPg0KwqAgwqAgwqAgwqAgIyB0cnVuY2F0ZSAtLXNpemU9
-MUcgJnF1b3Q7JGltZyZxdW90Ozxicj4NCsKgIMKgIMKgIMKgICMgbG9kZXY9JChzdWRvIGxvc2V0
-dXAgLS1maW5kIC0tc2hvdyAmcXVvdDskaW1nJnF1b3Q7KTxicj4NCsKgIMKgIMKgIMKgICMgbG4g
-LXNmICZxdW90OyRsb2RldiZxdW90OyAmcXVvdDskc3BhY2VuYW1lJnF1b3Q7PGJyPg0KPGJyPg0K
-wqAgwqAgwqAgwqAgIyBscyAtbCAkbG9kZXYgJnF1b3Q7JHNwYWNlbmFtZSZxdW90Ozxicj4NCsKg
-IMKgIMKgIMKgIGJydy1ydy0tLS0uIDEgcm9vdCBkaXNrIDcsIDAgSmFuIDIwIDExOjE1IC9kZXYv
-bG9vcDA8YnI+DQrCoCDCoCDCoCDCoCBscnd4cnd4cnd4LiAxIHJvb3Qgcm9vdMKgIMKgMTAgSmFu
-IDIwIDExOjE2IC9kZXYvbXkgc3BhY2UgbmFtZSAtJmd0OyAvZGV2L2xvb3AwPGJyPg0KPGJyPg0K
-wqAgwqAgwqAgwqAgIyBmZGlzayAkbG9kZXY8YnI+DQrCoCDCoCDCoCDCoCAmbHQ7Li4uJmd0Ozxi
-cj4NCjxicj4NCsKgIMKgIMKgIMKgICMgZmRpc2sgLWwgJGxvZGV2PGJyPg0KwqAgwqAgwqAgwqAg
-Jmx0Oy4uLiZndDs8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCBEZXZpY2UgQm9vdMKgIMKgIMKg
-IFN0YXJ0wqAgwqAgwqAgwqAgwqBFbmTCoCDCoCDCoCBCbG9ja3PCoCDCoElkwqAgU3lzdGVtPGJy
-Pg0KwqAgwqAgwqAgwqAgL2Rldi9sb29wMHAxwqAgwqAgwqAgwqAgwqAgwqAgMjA0OMKgIMKgIMKg
-IDI2NDE5McKgIMKgIMKgIDEzMTA3MsKgIMKgODPCoCBMaW51eDxicj4NCsKgIMKgIMKgIMKgIC9k
-ZXYvbG9vcDBwMsKgIMKgIMKgIMKgIMKgIDI2NDE5MsKgIMKgIMKgIDc4ODQ3OcKgIMKgIMKgIDI2
-MjE0NMKgIMKgODPCoCBMaW51eDxicj4NCsKgIMKgIMKgIMKgIC9kZXYvbG9vcDBwM8KgIMKgIMKg
-IMKgIMKgIDc4ODQ4MMKgIMKgIMKgMjA5NzE1McKgIMKgIMKgIDY1NDMzNsKgIMKgIDXCoCBFeHRl
-bmRlZDxicj4NCsKgIMKgIMKgIMKgIC9kZXYvbG9vcDBwNcKgIMKgIMKgIMKgIMKgIDc5MDUyOMKg
-IMKgIMKgIDg1NjA2M8KgIMKgIMKgIMKgMzI3NjjCoCDCoDgzwqAgTGludXg8YnI+DQrCoCDCoCDC
-oCDCoCAvZGV2L2xvb3AwcDbCoCDCoCDCoCDCoCDCoCA4NTgxMTLCoCDCoCDCoCA5ODkxODPCoCDC
-oCDCoCDCoDY1NTM2wqAgwqA4M8KgIExpbnV4PGJyPg0KwqAgwqAgwqAgwqAgL2Rldi9sb29wMHA3
-wqAgwqAgwqAgwqAgwqAgOTkxMjMywqAgwqAgwqAxNTE1NTE5wqAgwqAgwqAgMjYyMTQ0wqAgwqA4
-M8KgIExpbnV4PGJyPg0KPGJyPg0KV2l0aG91dCBwYXRjaDo8YnI+DQo8YnI+DQrCoCDCoCDCoCDC
-oCAjIC4va3BhcnR4L2twYXJ0eCAtYXYgJnF1b3Q7JHNwYWNlbmFtZSZxdW90Ozxicj4NCsKgIMKg
-IMKgIMKgIGRldmljZS1tYXBwZXI6IHJlbG9hZCBpb2N0bCBvbiBteVx4MjBzcGFjZVx4MjBuYW1l
-MSBmYWlsZWQ6IEludmFsaWQgYXJndW1lbnQ8YnI+DQrCoCDCoCDCoCDCoCBjcmVhdGUvcmVsb2Fk
-IGZhaWxlZCBvbiBteSBzcGFjZSBuYW1lMTxicj4NCsKgIMKgIMKgIMKgIGFkZCBtYXAgbXkgc3Bh
-Y2UgbmFtZTEgKDA6MCk6IDAgMjYyMTQ0IGxpbmVhciAvZGV2L215IHNwYWNlIG5hbWUgMjA0ODxi
-cj4NCjxicj4NCsKgIMKgIMKgIMKgIGRldmljZS1tYXBwZXI6IHJlbG9hZCBpb2N0bCBvbiBteVx4
-MjBzcGFjZVx4MjBuYW1lMiBmYWlsZWQ6IEludmFsaWQgYXJndW1lbnQ8YnI+DQrCoCDCoCDCoCDC
-oCBjcmVhdGUvcmVsb2FkIGZhaWxlZCBvbiBteSBzcGFjZSBuYW1lMjxicj4NCsKgIMKgIMKgIMKg
-IGFkZCBtYXAgbXkgc3BhY2UgbmFtZTIgKDA6MCk6IDAgNTI0Mjg4IGxpbmVhciAvZGV2L215IHNw
-YWNlIG5hbWUgMjY0MTkyPGJyPg0KPGJyPg0KwqAgwqAgwqAgwqAgZGV2aWNlLW1hcHBlcjogcmVs
-b2FkIGlvY3RsIG9uIG15XHgyMHNwYWNlXHgyMG5hbWUzIGZhaWxlZDogSW52YWxpZCBhcmd1bWVu
-dDxicj4NCsKgIMKgIMKgIMKgIGNyZWF0ZS9yZWxvYWQgZmFpbGVkIG9uIG15IHNwYWNlIG5hbWUz
-PGJyPg0KwqAgwqAgwqAgwqAgYWRkIG1hcCBteSBzcGFjZSBuYW1lMyAoMDowKTogMCAyIGxpbmVh
-ciAvZGV2L215IHNwYWNlIG5hbWUgNzg4NDgwPGJyPg0KPGJyPg0KwqAgwqAgwqAgwqAgZGV2aWNl
-LW1hcHBlcjogcmVsb2FkIGlvY3RsIG9uIG15XHgyMHNwYWNlXHgyMG5hbWU1IGZhaWxlZDogSW52
-YWxpZCBhcmd1bWVudDxicj4NCsKgIMKgIMKgIMKgIGFkZCBtYXAgbXkgc3BhY2UgbmFtZTUgOiAw
-IDY1NTM2IGxpbmVhciAvZGV2L215IHNwYWNlIG5hbWUgNzkwNTI4PGJyPg0KPGJyPg0KwqAgwqAg
-wqAgwqAgZGV2aWNlLW1hcHBlcjogcmVsb2FkIGlvY3RsIG9uIG15XHgyMHNwYWNlXHgyMG5hbWU2
-IGZhaWxlZDogSW52YWxpZCBhcmd1bWVudDxicj4NCsKgIMKgIMKgIMKgIGFkZCBtYXAgbXkgc3Bh
-Y2UgbmFtZTYgOiAwIDEzMTA3MiBsaW5lYXIgL2Rldi9teSBzcGFjZSBuYW1lIDg1ODExMjxicj4N
-Cjxicj4NCsKgIMKgIMKgIMKgIGRldmljZS1tYXBwZXI6IHJlbG9hZCBpb2N0bCBvbiBteVx4MjBz
-cGFjZVx4MjBuYW1lNyBmYWlsZWQ6IEludmFsaWQgYXJndW1lbnQ8YnI+DQrCoCDCoCDCoCDCoCBh
-ZGQgbWFwIG15IHNwYWNlIG5hbWU3IDogMCA1MjQyODggbGluZWFyIC9kZXYvbXkgc3BhY2UgbmFt
-ZSA5OTEyMzI8YnI+DQo8YnI+DQrCoCDCoCDCoCDCoCAobm90ZTogbGluZSBicmVha3MgYWRkZWQg
-Zm9yIGNsYXJpdHkpPGJyPg0KPGJyPg0KV2l0aCBwYXRjaDo8YnI+DQo8YnI+DQrCoCDCoCDCoCDC
-oCAjIC4va3BhcnR4L2twYXJ0eCAtYXYgJnF1b3Q7JHNwYWNlbmFtZSZxdW90Ozxicj4NCsKgIMKg
-IMKgIMKgIGFkZCBtYXAgbXkgc3BhY2UgbmFtZTEgKDI1MzozKTogMCAyNjIxNDQgbGluZWFyIDc6
-MCAyMDQ4PGJyPg0KwqAgwqAgwqAgwqAgYWRkIG1hcCBteSBzcGFjZSBuYW1lMiAoMjUzOjQpOiAw
-IDUyNDI4OCBsaW5lYXIgNzowIDI2NDE5Mjxicj4NCsKgIMKgIMKgIMKgIGFkZCBtYXAgbXkgc3Bh
-Y2UgbmFtZTMgKDI1Mzo1KTogMCAyIGxpbmVhciA3OjAgNzg4NDgwPGJyPg0KwqAgwqAgwqAgwqAg
-YWRkIG1hcCBteSBzcGFjZSBuYW1lNSAoMjUzOjYpOiAwIDY1NTM2IGxpbmVhciA3OjAgNzkwNTI4
-PGJyPg0KwqAgwqAgwqAgwqAgYWRkIG1hcCBteSBzcGFjZSBuYW1lNiAoMjUzOjcpOiAwIDEzMTA3
-MiBsaW5lYXIgNzowIDg1ODExMjxicj4NCsKgIMKgIMKgIMKgIGFkZCBtYXAgbXkgc3BhY2UgbmFt
-ZTcgKDI1Mzo4KTogMCA1MjQyODggbGluZWFyIDc6MCA5OTEyMzI8YnI+DQo8YnI+DQrCoCDCoCDC
-oCDCoCAjIGRtc2V0dXAgdGFibGUgfCBzb3J0PGJyPg0KwqAgwqAgwqAgwqAgbXkgc3BhY2UgbmFt
-ZTE6IDAgMjYyMTQ0IGxpbmVhciA3OjAgMjA0ODxicj4NCsKgIMKgIMKgIMKgIG15IHNwYWNlIG5h
-bWUyOiAwIDUyNDI4OCBsaW5lYXIgNzowIDI2NDE5Mjxicj4NCsKgIMKgIMKgIMKgIG15IHNwYWNl
-IG5hbWUzOiAwIDIgbGluZWFyIDc6MCA3ODg0ODA8YnI+DQrCoCDCoCDCoCDCoCBteSBzcGFjZSBu
-YW1lNTogMCA2NTUzNiBsaW5lYXIgNzowIDc5MDUyODxicj4NCsKgIMKgIMKgIMKgIG15IHNwYWNl
-IG5hbWU2OiAwIDEzMTA3MiBsaW5lYXIgNzowIDg1ODExMjxicj4NCsKgIMKgIMKgIMKgIG15IHNw
-YWNlIG5hbWU3OiAwIDUyNDI4OCBsaW5lYXIgNzowIDk5MTIzMjxicj4NCjxicj4NCsKgIMKgIMKg
-IMKgICMgbHMgLWwgL2Rldi9tYXBwZXIvPGJyPg0KwqAgwqAgwqAgwqAgdG90YWwgMDxicj4NCsKg
-IMKgIMKgIMKgIGNydy0tLS0tLS0uIDEgcm9vdCByb290IDEwLCAyMzYgSmFuIDExIDE2OjI5IGNv
-bnRyb2w8YnI+DQrCoCDCoCDCoCDCoCBscnd4cnd4cnd4LiAxIHJvb3Qgcm9vdMKgIMKgIMKgIMKg
-NyBKYW4gMjAgMTE6MTkgbXlceDIwc3BhY2VceDIwbmFtZTEgLSZndDsgLi4vZG0tMzxicj4NCsKg
-IMKgIMKgIMKgIGxyd3hyd3hyd3guIDEgcm9vdCByb290wqAgwqAgwqAgwqA3IEphbiAyMCAxMTox
-OSBteVx4MjBzcGFjZVx4MjBuYW1lMiAtJmd0OyAuLi9kbS00PGJyPg0KwqAgwqAgwqAgwqAgbHJ3
-eHJ3eHJ3eC4gMSByb290IHJvb3TCoCDCoCDCoCDCoDcgSmFuIDIwIDExOjE5IG15XHgyMHNwYWNl
-XHgyMG5hbWUzIC0mZ3Q7IC4uL2RtLTU8YnI+DQrCoCDCoCDCoCDCoCBscnd4cnd4cnd4LiAxIHJv
-b3Qgcm9vdMKgIMKgIMKgIMKgNyBKYW4gMjAgMTE6MTkgbXlceDIwc3BhY2VceDIwbmFtZTUgLSZn
-dDsgLi4vZG0tNjxicj4NCsKgIMKgIMKgIMKgIGxyd3hyd3hyd3guIDEgcm9vdCByb290wqAgwqAg
-wqAgwqA3IEphbiAyMCAxMToxOSBteVx4MjBzcGFjZVx4MjBuYW1lNiAtJmd0OyAuLi9kbS03PGJy
-Pg0KwqAgwqAgwqAgwqAgbHJ3eHJ3eHJ3eC4gMSByb290IHJvb3TCoCDCoCDCoCDCoDcgSmFuIDIw
-IDExOjE5IG15XHgyMHNwYWNlXHgyMG5hbWU3IC0mZ3Q7IC4uL2RtLTg8YnI+DQo8YnI+DQpUaGFu
-a3M6IFNjb3R0IE1vc2VyIChwb2ludGVycyB0byB0aGUgZXJyb3IgYW5kIHRlc3QtY2FzZSkuPGJy
-Pg0KPGJyPg0KU2lnbmVkLW9mZi1ieTogTWF1cmljaW8gRmFyaWEgZGUgT2xpdmVpcmEgJmx0Ozxh
-IGhyZWY9Im1haWx0bzptYXVyaWNmb0BsaW51eC52bmV0LmlibS5jb20iPm1hdXJpY2ZvQGxpbnV4
-LnZuZXQuaWJtLmNvbTwvYT4mZ3Q7PGJyPg0KLS0tPGJyPg0KwqBrcGFydHgva3BhcnR4LmMgfCAx
-MiArKysrKystLS0tLS08YnI+DQrCoDEgZmlsZSBjaGFuZ2VkLCA2IGluc2VydGlvbnMoKyksIDYg
-ZGVsZXRpb25zKC0pPGJyPg0KPGJyPg0KZGlmZiAtLWdpdCBhL2twYXJ0eC9rcGFydHguYyBiL2tw
-YXJ0eC9rcGFydHguYzxicj4NCmluZGV4IGE5ZDRjOTguLmVlN2MzOGEgMTAwNjQ0PGJyPg0KLS0t
-IGEva3BhcnR4L2twYXJ0eC5jPGJyPg0KKysrIGIva3BhcnR4L2twYXJ0eC5jPGJyPg0KQEAgLTQ3
-Nyw4ICs0NzcsOCBAQCBtYWluKGludCBhcmdjLCBjaGFyICoqYXJndil7PGJyPg0KwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgfTxicj4NCsKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHN0cmlwX3NsYXNoKHBhcnRuYW1l
-KTs8YnI+DQo8YnI+DQotwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqBpZiAoc2FmZV9zcHJpbnRmKHBhcmFtcywgJnF1b3Q7JXMgJSZxdW90OyBQUkl1NjQgLDxi
-cj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCBkZXZpY2UsIHNsaWNlc1tqXS5zdGFydCkpIHs8YnI+DQorwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBpZiAoc2FmZV9zcHJp
-bnRmKHBhcmFtcywgJnF1b3Q7JWQ6JWQgJSZxdW90OyBQUkl1NjQgLDxicj4NCivCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCBtYWpvcihidWYuc3RfcmRldiksIG1pbm9yKGJ1Zi5zdF9yZGV2KSwgc2xpY2VzW2pdLnN0
-YXJ0KSkgezxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIGZwcmludGYoc3RkZXJyLCAmcXVvdDtwYXJhbXMgdG9vIHNtYWxsXG4m
-cXVvdDspOzxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIGV4aXQoMSk7PGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgfTxicj4NCkBAIC01NDAsOCArNTQwLDggQEAgbWFpbihpbnQg
-YXJnYywgY2hhciAqKmFyZ3Ypezxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIH08YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBzdHJpcF9zbGFzaChwYXJ0bmFt
-ZSk7PGJyPg0KPGJyPg0KLcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgaWYgKHNhZmVfc3ByaW50ZihwYXJhbXMsICZxdW90OyVzICUmcXVv
-dDsgUFJJdTY0LDxicj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBkZXZpY2UsPGJyPg0K
-K8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgaWYgKHNhZmVfc3ByaW50ZihwYXJhbXMsICZxdW90OyVkOiVkICUmcXVvdDsgUFJJdTY0LDxi
-cj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBtYWpvcihidWYuc3RfcmRldiksIG1pbm9y
-KGJ1Zi5zdF9yZGV2KSw8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoHNsaWNlc1tq
-XS5zdGFydCkpIHs8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBmcHJpbnRmKHN0ZGVyciwgJnF1b3Q7cGFy
-YW1zIHRvbyBzbWFsbFxuJnF1b3Q7KTs8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBleGl0KDEpOzxicj4N
-CkBAIC01NjMsOCArNTYzLDggQEAgbWFpbihpbnQgYXJnYywgY2hhciAqKmFyZ3Ypezxicj4NCsKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgICZhbXA7c2xpY2VzW2pdLm1pbm9yKTs8YnI+DQo8YnI+DQrCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBpZiAodmVy
-Ym9zZSk8YnI+DQotwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBwcmludGYoJnF1b3Q7YWRkIG1hcCAlcyA6IDAgJSZx
-dW90OyBQUkl1NjQgJnF1b3Q7ICVzICVzXG4mcXVvdDssPGJyPg0KLcKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIHBhcnRuYW1lLCBzbGljZXNbal0uc2l6ZSw8YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBwcmlu
-dGYoJnF1b3Q7YWRkIG1hcCAlcyAoJWQ6JWQpOiAwICUmcXVvdDsgUFJJdTY0ICZxdW90OyAlcyAl
-c1xuJnF1b3Q7LDxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBwYXJ0bmFtZSwgc2xpY2Vz
-W2pdLm1ham9yLCBzbGljZXNbal0ubWlub3IsIHNsaWNlc1tqXS5zaXplLDxicj4NCsKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgRE1fVEFSR0VULCBwYXJhbXMpOzxicj4NCsKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGMtLTs8YnI+DQrC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCB9PGJyPg0KPHNw
-YW4gY2xhc3M9IkhPRW5aYiI+PGZvbnQgY29sb3I9IiM4ODg4ODgiPi0tPGJyPg0KMS44LjMuMTxi
-cj4NCjxicj4NCjwvZm9udD48L3NwYW4+PC9ibG9ja3F1b3RlPjwvZGl2Pjxicj48L2Rpdj4NCg==
---001a114035acf325bd0529c526d0--
+<div dir=3D"ltr">Thank you. Any ideas how long it typically takes the distr=
+os like RHEL, etc. to pull these changes down, or do they need to be pinged=
+ explicitly that there are changes available that we want them to consider?=
+<div><br></div><div>Brian</div></div><div class=3D"gmail_extra"><br><div cl=
+ass=3D"gmail_quote">On Tue, Jan 19, 2016 at 10:58 PM, Christophe Varoqui <s=
+pan dir=3D"ltr">&lt;<a href=3D"mailto:christophe.varoqui@opensvc.com" targe=
+t=3D"_blank">christophe.varoqui@opensvc.com</a>&gt;</span> wrote:<br><block=
+quote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc=
+ solid;padding-left:1ex"><div dir=3D"ltr">Ok, merged.</div><div class=3D"HO=
+EnZb"><div class=3D"h5"><div class=3D"gmail_extra"><br><div class=3D"gmail_=
+quote">On Tue, Jan 19, 2016 at 11:17 PM, Brian Bunker <span dir=3D"ltr">&lt=
+;<a href=3D"mailto:brian@purestorage.com" target=3D"_blank">brian@purestora=
+ge.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"=
+margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"=
+ltr">There are just two files I touch, so the patch is simple:<div><br></di=
+v><div><div>diff -Naur 3/multipath-tools/libmultipath/hwtable.c 4/multipath=
+-tools/libmultipath/hwtable.c</div><div>--- 3/multipath-tools/libmultipath/=
+hwtable.c =C2=A0 =C2=A02016-01-14 17:47:06.000000000 -0800</div><div>+++ 4/=
+multipath-tools/libmultipath/hwtable.c =C2=A0 =C2=A02016-01-14 18:33:45.000=
+000000 -0800</div><div>@@ -1166,6 +1166,22 @@</div><div>=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .prio_name =C2=A0 =C2=A0 =3D PRIO_AL=
+UA,</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .prio=
+_args =C2=A0 =C2=A0 =3D NULL,</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 },</div=
+><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0{</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 .vendor =C2=A0 =C2=A0 =C2=A0 =C2=A0=3D &quot;PURE&=
+quot;,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .produc=
+t =C2=A0 =C2=A0 =C2=A0 =3D &quot;FlashArray&quot;,</div><div>+ =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .features =C2=A0 =C2=A0 =C2=A0=3D DE=
+FAULT_FEATURES,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 .hwhandler =C2=A0 =C2=A0 =3D DEFAULT_HWHANDLER,</div><div>+ =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .selector =C2=A0 =C2=A0 =C2=A0=3D &q=
+uot;queue-length 0&quot;,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 .pgpolicy =C2=A0 =C2=A0 =C2=A0=3D MULTIBUS,</div><div>+ =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .pgfailback =C2=A0 =C2=A0=3D =
+-FAILBACK_IMMEDIATE,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 .checker_name =C2=A0=3D TUR,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 .fast_io_fail =C2=A0=3D 10,</div><div>+ =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.user_friendly_names =3D USER_FRI=
+ENDLY_NAMES_OFF,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 .prio_name =C2=A0 =C2=A0 =3D DEFAULT_PRIO,</div><div>+ =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.no_path_retry =3D 0,</div><div>+ =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.dev_loss =C2=A0 =C2=
+=A0 =C2=A0=3D 60,</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 .prio_args =C2=A0 =C2=A0 =3D NULL,</div><div>+ =C2=A0 =C2=A0 =C2=A0 }, =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 /*</div><=
+div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* EOL</div><div>=C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0*/</div><div>diff -Naur 3/multipath-tools/multipath.conf.defau=
+lts 4/multipath-tools/multipath.conf.defaults</div><div>--- 3/multipath-too=
+ls/multipath.conf.defaults =C2=A0 2016-01-14 17:47:06.000000000 -0800</div>=
+<div>+++ 4/multipath-tools/multipath.conf.defaults =C2=A0 2016-01-14 18:35:=
+50.000000000 -0800</div><div>@@ -940,6 +940,17 @@</div><div>=C2=A0# =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0rr_weight &quot;uniform&quot;</div=
+><div>=C2=A0# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0no_path_retry=
+ &quot;queue&quot;</div><div>=C2=A0# =C2=A0 =C2=A0 =C2=A0}</div><div>+# =C2=
+=A0 =C2=A0 =C2=A0 device {</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 vendor &quot;PURE&quot;</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 path_selector &quot;queue-length 0&quot;</div><div=
+>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 path_grouping_policy &=
+quot;multibus&quot;</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 path_checker &quot;tur&quot;</div><div>+# =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 fast_io_fail_tmo 10</div><div>+# =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 user_friendly_names &quot;no&quot;</div><di=
+v>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 no_path_retry 0</div>=
+<div>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 features 0</div><d=
+iv>+# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 dev_loss_tmo 60</div=
+><div>+# =C2=A0 =C2=A0 =C2=A0 }</div><div>=C2=A0#}</div><div>=C2=A0#multipa=
+ths {</div><div>=C2=A0#}</div></div><div><br></div><div><br></div><div>Than=
+ks,<br>Brian</div></div><div class=3D"gmail_extra"><div><div><br><div class=
+=3D"gmail_quote">On Tue, Jan 19, 2016 at 8:48 AM, Christophe Varoqui <span =
+dir=3D"ltr">&lt;<a href=3D"mailto:christophe.varoqui@opensvc.com" target=3D=
+"_blank">christophe.varoqui@opensvc.com</a>&gt;</span> wrote:<br><blockquot=
+e class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc sol=
+id;padding-left:1ex"><div dir=3D"ltr"><div>Hi,</div><div><br></div>and when=
+ you are ready, you can post the patch here so I can merge it upstream.<div=
+><br></div><div>Thanks,</div><div>Christophe Varoqui</div><div>OpenSVC</div=
+></div><div><div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">=
+On Tue, Jan 19, 2016 at 5:35 PM, Mauricio Faria de Oliveira <span dir=3D"lt=
+r">&lt;<a href=3D"mailto:mauricfo@linux.vnet.ibm.com" target=3D"_blank">mau=
+ricfo@linux.vnet.ibm.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmai=
+l_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left=
+:1ex"><span>On 11/05/2015 04:59 AM, Doron Tal1 wrote:<br>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
+x #ccc solid;padding-left:1ex">
+I would like to know how and what procedure i should follow if i want to<br=
+>
+modify or add new settings to the device mapper defaults.<br>
+</blockquote>
+<br></span>
+The defaults are in hwtable.c [1].<span><br>
+<br>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
+x #ccc solid;padding-left:1ex">
+So for example how can i modify existing compiled settings for the<br>
+2810XIV device? in case i want to add a new device and it settings, how<br>
+can it be done?<br>
+</blockquote>
+<br></span>
+To modify the compiled settings, you have to modify it and recompile.<br>
+<br>
+To modify the runtime settings (based on the defaults), you can modify<br>
+/etc/multipath.conf (see its manpage [2] with &#39;man multipath.conf&#39;)=
+.<br>
+<br>
+You can verify the the setting values used during multipath discovery<br>
+with &#39;multipath -v3&#39; for example, or &quot;multipathd -k&#39;show c=
+onfig&#39;&quot;.<br>
+<br>
+Hope this might still help at this time,<br>
+<br>
+[1] <a href=3D"http://git.opensvc.com/gitweb.cgi?p=3Dmultipath-tools/.git;a=
+=3Dblob;f=3Dlibmultipath/hwtable.c" rel=3D"noreferrer" target=3D"_blank">ht=
+tp://git.opensvc.com/gitweb.cgi?p=3Dmultipath-tools/.git;a=3Dblob;f=3Dlibmu=
+ltipath/hwtable.c</a><br>
+[2] <a href=3D"http://git.opensvc.com/gitweb.cgi?p=3Dmultipath-tools/.git;a=
+=3Dblob;f=3Dmultipath/multipath.conf.5" rel=3D"noreferrer" target=3D"_blank=
+">http://git.opensvc.com/gitweb.cgi?p=3Dmultipath-tools/.git;a=3Dblob;f=3Dm=
+ultipath/multipath.conf.5</a><span><font color=3D"#888888"><br>
+<br>
+-- <br>
+Mauricio Faria de Oliveira<br>
+IBM Linux Technology Center<br>
+<br>
+--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
+m</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
+rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
+<br>
+</font></span></blockquote></div><br></div>
+</div></div><br>--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
+m</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
+rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
+<br></blockquote></div><br><br clear=3D"all"><div><br></div></div></div><sp=
+an><font color=3D"#888888">-- <br><div><div>Brian Bunker</div><div><a href=
+=3D"http://www.purestorage.com" target=3D"_blank">PURE Storage, Inc.</a><br=
+></div><div><a href=3D"mailto:brian@purestorage.com" target=3D"_blank">bria=
+n@purestorage.com</a></div></div>
+</font></span></div>
+<br>--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
+m</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
+rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
+<br></blockquote></div><br></div>
+</div></div><br>--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
+rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
+<br></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br><div cla=
+ss=3D"gmail_signature"><div>Brian Bunker</div><div><a href=3D"http://www.pu=
+restorage.com" target=3D"_blank">PURE Storage, Inc.</a><br></div><div><a hr=
+ef=3D"mailto:brian@purestorage.com" target=3D"_blank">brian@purestorage.com=
+</a></div></div>
+</div>
+
+--001a113b8fea0642020529c64b05--
 
 
---===============4652234551246862716==
+--===============7144725582639848357==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============4652234551246862716==--
+--===============7144725582639848357==--
