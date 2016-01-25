@@ -1,44 +1,79 @@
-From: Mike Christie <michaelc-hcNo3dDEHLuVc3sceRu5cw@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH 22/26] iscsi_tcp: Use ahash
-Date: Mon, 25 Jan 2016 13:50:06 -0600
-Message-ID: <56A67C6E.1090903@cs.wisc.edu>
-References: <20160124131021.GA31153@gondor.apana.org.au> <E1aNKZy-0008Fl-01@gondolin.me.apana.org.au>
-Reply-To: open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH RESEND v2 00/19] Support fuse mounts in user namespaces
+Date: Mon, 25 Jan 2016 14:01:22 -0600
+Message-ID: <87mvrtqvhp.fsf@x220.int.ebiederm.org>
+References: <1451930639-94331-1-git-send-email-seth.forshee@canonical.com>
+	<20160125194722.GA10638@ubuntu-hedt>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <open-iscsi+bncBCZ4TFNN2YMRB57YTG2QKGQEKPU7ICY-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-In-Reply-To: <E1aNKZy-0008Fl-01-XQvu0L+U/CjiRBuR/1fSEKKkPtS2pBon@public.gmane.org>
-List-Post: <https://groups.google.com/group/open-iscsi/post>, <mailto:open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-List-Help: <https://groups.google.com/support/>, <mailto:open-iscsi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-List-Archive: <https://groups.google.com/group/open-iscsi
-Sender: open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
-List-Subscribe: <https://groups.google.com/group/open-iscsi/subscribe>, <mailto:open-iscsi+subscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-List-Unsubscribe: <mailto:googlegroups-manage+856124926423+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>,
- <https://groups.google.com/group/open-iscsi/subscribe>
-To: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Crypto Mailing List <linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ecryptfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bluetooth-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-wpan-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-afs-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+Content-Type: text/plain
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <20160125194722.GA10638@ubuntu-hedt> (Seth Forshee's message of
+	"Mon, 25 Jan 2016 13:47:22 -0600")
+Sender: owner-linux-security-module@vger.kernel.org
+To: Seth Forshee <seth.forshee@canonical.com>
+Cc: linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 01/24/2016 07:19 AM, Herbert Xu wrote:
-> This patch replaces uses of the long obsolete hash interface with
-> ahash.
-> 
-> Signed-off-by: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-> ---
-> 
->  drivers/scsi/iscsi_tcp.c    |   54 ++++++++++++++++++++++++++------------------
->  drivers/scsi/iscsi_tcp.h    |    4 +--
->  drivers/scsi/libiscsi_tcp.c |   29 +++++++++++++----------
->  include/scsi/libiscsi_tcp.h |   13 +++++-----
->  4 files changed, 58 insertions(+), 42 deletions(-)
-> 
+Seth Forshee <seth.forshee@canonical.com> writes:
 
-iSCSI parts look ok.
+> On Mon, Jan 04, 2016 at 12:03:39PM -0600, Seth Forshee wrote:
+>> These patches implement support for mounting filesystems in user
+>> namespaces using fuse. They are based on the patches in the for-testing
+>> branch of
+>> git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git,
+>> but I've rebased them onto 4.4-rc3. I've pushed all of this to:
+>> 
+>>  git://git.kernel.org/pub/scm/linux/kernel/git/sforshee/linux.git fuse-userns
+>> 
+>> The patches are organized into three high-level groups.
+>> 
+>> Patches 1-6 are related to security, adding restrictions for
+>> unprivileged mounts and updating the LSMs as needed. Patches 1-2
+>> (checking inode permissions for block device mounts) may not be strictly
+>> necessary for fuseblk mounts since fuse doesn't do any IO on the block
+>> device in the kernel, but it still seems like a good idea to fail the
+>> mount if the user doesn't have the required permissions for the inode
+>> (though this is a bit misleading with fuse since the mounts are done via
+>> a suid-root helper).
+>> 
+>> Patches 7-14 update most of the vfs to translate ids correctly and deal
+>> with inodes which may have invalid user/group ids. I've omitted patches
+>> for anything not used by fuse - quota, fs freezing, some helper
+>> functions, etc. - but if these are wanted for the sake of completeness I
+>> can include them.
+>> 
+>> Patches 15-18 update fuse to deal with mounts from non-init pid and user
+>> namespaces and enable mounting from user namespaces.
+>> 
+>> Changes since v1:
+>>  - Drop patch for FIBMAP.
+>>  - Use current_in_userns in fuse_allow_current_process.
+>>  - Remove checks for uid/gid validity in fuse. Intead, ids from the
+>>    backing store which do not map into s_user_ns will result in invalid
+>>    ids in the vfs inode. Checks in the vfs will prevent unmappable ids
+>>    from being passed in from above.
+>>  - Update a couple of commit messages to provide more detail about
+>>    changes.
+>
+> Now that the merge window is over, I'm wondering whether it might be
+> possible to get some feedback on these patches this cycle?
 
-Reviewed-by: Mike Christie <michaelc-hcNo3dDEHLuVc3sceRu5cw@public.gmane.org>
+Definitely.  Apologies for not giving you much feedback earlier.
 
--- 
-You received this message because you are subscribed to the Google Groups "open-iscsi" group.
-To unsubscribe from this group and stop receiving emails from it, send an email to open-iscsi+unsubscribe-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
-To post to this group, send email to open-iscsi-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
-Visit this group at https://groups.google.com/group/open-iscsi.
-For more options, visit https://groups.google.com/d/optout.
+I had been hoping this was the kind of thing I could just double check
+to be certain you weren't doing anything silly and just apply.  After my
+last round of looking at this I realized that for me to be comfortable
+with these patches I will have to give them very close scrutiny, and
+check every detail.
+
+Unfortunatly last cycle I had failed to budget enough time to give these
+patches the close scrutiny they need.
+
+From a high level I am still very much in favor of this approach and
+at least getting as far as safe unprivileged fuse mounts.
+
+I have one or two little things to look at and then I hope to be going
+through your patches one by one in detail.
+
+Eric
+
