@@ -1,21 +1,18 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: I/O block when removing thin device on the same pool
-Date: Tue, 26 Jan 2016 16:19:19 +0000
-Message-ID: <20160126161919.GA19606@rh-vpn>
-References: <CAKTMprME2=oCyjxNxLPsXcgSsAzcBW2-dLjjN1CNPAPe0w-bow@mail.gmail.com>
-	<569F6F08.1040503@redhat.com>
-	<CAJFSNy4yT_8j8Jqm7qggzNgeHLOE0db6dwUxrn1auH_W=sMscA@mail.gmail.com>
-	<20160121194405.GA22766@redhat.com>
-	<20160122133828.GN26774@soda.linbit>
-	<20160122164345.GA15295@rh-vpn>
-	<CAAR726+yoWG+_2sZ=Wd9Wi4rQmYxRhXFJCJVQ0UH8kJwH0ZPJQ@mail.gmail.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: dm-multipath low performance with blk-mq
+Date: Tue, 26 Jan 2016 08:44:37 -0800
+Message-ID: <20160126164437.GB15979@infradead.org>
+References: <569E11EA.8000305@dev.mellanox.co.il>
+	<20160119224512.GA10515@redhat.com>
+	<20160125214016.GA10060@redhat.com>
+	<20160126160324.GA24665@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CAAR726+yoWG+_2sZ=Wd9Wi4rQmYxRhXFJCJVQ0UH8kJwH0ZPJQ@mail.gmail.com>
+In-Reply-To: <20160126160324.GA24665@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,14 +22,11 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "keith.busch@intel.com" <keith.busch@intel.com>, Sagi Grimberg <sagig@dev.mellanox.co.il>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-Hi Dennis,
+On Tue, Jan 26, 2016 at 11:03:24AM -0500, Mike Snitzer wrote:
+> Christoph, any chance you could rebase your 'nvme-loop.2' on v4.5-rc1?
 
-This is indeed useful.  Is there any chance you could re-run your test
-with this patch applied please?
-
-https://github.com/jthornber/linux-2.6/commit/64197a3802320c7a7359ff4a3e592e2bc5bb73dc
-
-- Joe
+Don't think I have time at the moment, sorry..
