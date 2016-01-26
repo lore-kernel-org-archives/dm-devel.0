@@ -1,15 +1,18 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: LVM thin provisioning actual status
-Date: Tue, 26 Jan 2016 08:33:22 -0500
-Message-ID: <20160126133322.GB23967@redhat.com>
-References: <56A626F3.7070606@ideco.ru>
+Subject: Re: dm-multipath low performance with blk-mq
+Date: Tue, 26 Jan 2016 08:29:39 -0500
+Message-ID: <20160126132939.GA23967@redhat.com>
+References: <569E11EA.8000305@dev.mellanox.co.il>
+	<20160119224512.GA10515@redhat.com>
+	<20160125214016.GA10060@redhat.com>
+	<20160125233717.GQ24960@octiron.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <56A626F3.7070606@ideco.ru>
+In-Reply-To: <20160125233717.GQ24960@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,25 +22,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: =?utf-8?B?0J3QuNC60LjRhNC+0YDQvtCyINCg0YPRgdC70LDQvQ==?= <nikiforovr@ideco.ru>
-Cc: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: "keith.busch@intel.com" <keith.busch@intel.com>, Sagi Grimberg <sagig@dev.mellanox.co.il>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCBKYW4gMjUgMjAxNiBhdCAgODo0NWFtIC0wNTAwLArQndC40LrQuNGE0L7RgNC+0LIg
-0KDRg9GB0LvQsNC9IDxuaWtpZm9yb3ZyQGlkZWNvLnJ1PiB3cm90ZToKCj4gSGVsbG8gdGhlcmUs
-Cj4gCj4gSSB3b3VsZCBsaWtlIHRvIGtub3cgYWN0dWFsIHN0YXR1cyBvZiBMVk0gdGhpbiBwcm92
-aXNpb25pbmcuCj4gSSBjYW4gc2VlIHdhcm5pbmcgYWJvdXQgZXhwZXJpbWVudGFsIHN0YXR1cyBp
-biBkb2N1bWVudGF0aW9uIChodHRwczovL3d3dy5rZXJuZWwub3JnL2RvYy9Eb2N1bWVudGF0aW9u
-L2RldmljZS1tYXBwZXIvdGhpbi1wcm92aXNpb25pbmcudHh0KQoKVGhlIGRvY3VtZW50YXRpb24g
-aXMgc3RhbGUuICBJJ2xsIGdldCBpdCBjbGVhbmVkIHVwIHRvIHJlZmxlY3QgdGhlIGZhY3QKdGhh
-dCB0aGlucCBpcyBub3cgYmVsaWV2ZWQgdG8gYmUgc3RhYmxlLiAgSXQgaGFzIHNlZW4gaW5jcmVh
-c2VkCmRlcGxveW1lbnQgaW4gcHJvZHVjdGlvbiB3aXRoIGZhdm9yYWJsZSByZXN1bHRzLgogCj4g
-YW5kIHdoYXQgaSdtIHRyeWluZyB0byB1bmRlcnN0YW5kIG5vdyBpcyB3aGF0IHByb2JsZW1zIGkg
-bWF5IGZhY2UKPiB1c2luZyB0aGluIHByb3Zpc2lvbmluZy4KPiBBcmUgdGhlcmUgYW55IHN0YWJp
-bGl0eSBvciBkYXRhIGNvcnJ1cHRpb24gcHJvYmxlbXM/CgpOby4KCj4gSXMgaXQgc3RhYmxlIGFu
-ZCByZWxpYWJsZSBub3dhZGF5cz8KClllcy4KCj4gTWF5IGJlIGl0cyB1bnN0YWJsZSBpbiBzb21l
-IHNwZWNpZmljIHNpdHVhdGlvbnM/CgpOb3QgdGhhdCB3ZSdyZSBhd2FyZSBvZi4gIFRoZXJlIGlz
-IGFsd2F5cyByb29tIGZvciBwZXJmb3JtYW5jZQpvcHRpbWl6YXRpb25zIGJ1dCB0aGVyZSBhcmVu
-J3QgYW55IGtub3duIGJ1Z3MgYXQgdGhpcyB0aW1lLgoKTWlrZQoKLS0KZG0tZGV2ZWwgbWFpbGlu
-ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
-L2xpc3RpbmZvL2RtLWRldmVs
+On Mon, Jan 25 2016 at  6:37pm -0500,
+Benjamin Marzinski <bmarzins@redhat.com> wrote:
+
+> On Mon, Jan 25, 2016 at 04:40:16PM -0500, Mike Snitzer wrote:
+> > On Tue, Jan 19 2016 at  5:45P -0500,
+> > Mike Snitzer <snitzer@redhat.com> wrote:
+> 
+> I don't think this is going to help __multipath_map() without some
+> configuration changes.  Now that we're running on already merged
+> requests instead of bios, the m->repeat_count is almost always set to 1,
+> so we call the path_selector every time, which means that we'll always
+> need the write lock. Bumping up the number of IOs we send before calling
+> the path selector again will give this patch a change to do some good
+> here.
+> 
+> To do that you need to set:
+> 
+> 	rr_min_io_rq <something_bigger_than_one>
+> 
+> in the defaults section of /etc/multipath.conf and then reload the
+> multipathd service.
+> 
+> The patch should hopefully help in multipath_busy() regardless of the
+> the rr_min_io_rq setting.
+
+This patch, while generic, is meant to help the blk-mq case.  A blk-mq
+request_queue doesn't have an elevator so the requests will not have
+seen merging.
+
+But yes, implied in the patch is the requirement to increase
+m->repeat_count via multipathd's rr_min_io_rq (I'll backfill a proper
+header once it is tested).
+
+Thanks,
+Mike
