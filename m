@@ -1,22 +1,20 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: dm-multipath low performance with blk-mq
-Date: Wed, 27 Jan 2016 14:14:43 -0500
-Message-ID: <20160127191443.GD31802@redhat.com>
+Date: Wed, 27 Jan 2016 12:49:48 -0700
+Message-ID: <56A91F5C.3030407@kernel.dk>
 References: <569E11EA.8000305@dev.mellanox.co.il>
-	<20160119224512.GA10515@redhat.com>
-	<20160125214016.GA10060@redhat.com>
+	<20160119224512.GA10515@redhat.com> <20160125214016.GA10060@redhat.com>
 	<20160125233717.GQ24960@octiron.msp.redhat.com>
 	<20160126132939.GA23967@redhat.com>
 	<56A8A6A8.9090003@dev.mellanox.co.il>
-	<20160127174828.GA31802@redhat.com> <56A90388.1030105@kernel.dk>
-	<20160127181655.GB31802@redhat.com> <56A90BBF.3050407@kernel.dk>
+	<20160127174828.GA31802@redhat.com> <56A904B6.50407@dev.mellanox.co.il>
+	<20160127184245.GC31802@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <56A90BBF.3050407@kernel.dk>
+In-Reply-To: <20160127184245.GC31802@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,64 +24,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: "keith.busch@intel.com" <keith.busch@intel.com>, Sagi Grimberg <sagig@dev.mellanox.co.il>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
+To: Mike Snitzer <snitzer@redhat.com>, Sagi Grimberg <sagig@dev.mellanox.co.il>
+Cc: "keith.busch@intel.com" <keith.busch@intel.com>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-On Wed, Jan 27 2016 at  1:26pm -0500,
-Jens Axboe <axboe@kernel.dk> wrote:
+On 01/27/2016 11:42 AM, Mike Snitzer wrote:
+> On Wed, Jan 27 2016 at 12:56pm -0500,
+> Sagi Grimberg <sagig@dev.mellanox.co.il> wrote:
+>
+>>
+>>
+>> On 27/01/2016 19:48, Mike Snitzer wrote:
+>>>
+>>> BTW, I _cannot_ get null_blk to come even close to your reported 1500K+
+>>> IOPs on 2 "fast" systems I have access to.  Which arguments are you
+>>> loading the null_blk module with?
+>>>
+>>> I've been using:
+>>> modprobe null_blk gb=4 bs=4096 nr_devices=1 queue_mode=2 submit_queues=12
+>>
+>> $ for f in /sys/module/null_blk/parameters/*; do echo $f; cat $f; done
+>> /sys/module/null_blk/parameters/bs
+>> 512
+>> /sys/module/null_blk/parameters/completion_nsec
+>> 10000
+>> /sys/module/null_blk/parameters/gb
+>> 250
+>> /sys/module/null_blk/parameters/home_node
+>> -1
+>> /sys/module/null_blk/parameters/hw_queue_depth
+>> 64
+>> /sys/module/null_blk/parameters/irqmode
+>> 1
+>> /sys/module/null_blk/parameters/nr_devices
+>> 2
+>> /sys/module/null_blk/parameters/queue_mode
+>> 2
+>> /sys/module/null_blk/parameters/submit_queues
+>> 24
+>> /sys/module/null_blk/parameters/use_lightnvm
+>> N
+>> /sys/module/null_blk/parameters/use_per_node_hctx
+>> N
+>>
+>> $ fio --group_reporting --rw=randread --bs=4k --numjobs=24
+>> --iodepth=32 --runtime=99999999 --time_based --loops=1
+>> --ioengine=libaio --direct=1 --invalidate=1 --randrepeat=1
+>> --norandommap --exitall --name task_nullb0 --filename=/dev/nullb0
+>> task_nullb0: (g=0): rw=randread, bs=4K-4K/4K-4K/4K-4K,
+>> ioengine=libaio, iodepth=32
+>> ...
+>> fio-2.1.10
+>> Starting 24 processes
+>> Jobs: 24 (f=24): [rrrrrrrrrrrrrrrrrrrrrrrr] [0.0% done]
+>> [7234MB/0KB/0KB /s] [1852K/0/0 iops] [eta 1157d:09h:46m:22s]
+>
+> Thanks, the number of fio threads was pretty important.  I'm still
+> seeing better IOPs with queue_mode=0 (bio-based).
+>
+> Jobs: 24 (f=24): [r(24)] [11.7% done] [11073MB/0KB/0KB /s] [2835K/0/0 iops] [eta 14m:42s]
+>
+> (with queue_mode=2 I get ~1930K IOPs.. which I need to use to stack
+> request-based DM multipath ontop)
+>
+> Now I can focus on why dm-multipath is slow...
 
-> On 01/27/2016 11:16 AM, Mike Snitzer wrote:
-> >On Wed, Jan 27 2016 at 12:51pm -0500,
-> >Jens Axboe <axboe@kernel.dk> wrote:
-> >
-> >>On 01/27/2016 10:48 AM, Mike Snitzer wrote:
-> >>>
-> >>>BTW, I _cannot_ get null_blk to come even close to your reported 1500K+
-> >>>IOPs on 2 "fast" systems I have access to.  Which arguments are you
-> >>>loading the null_blk module with?
-> >>>
-> >>>I've been using:
-> >>>modprobe null_blk gb=4 bs=4096 nr_devices=1 queue_mode=2 submit_queues=12
-> >>>
-> >>>On my 1 system is a 12 core single socket, single NUMA node with 12G of
-> >>>memory, I can only get ~500K read IOPs and ~85K write IOPs.
-> >>>
-> >>>On another much larger system with 72 cores and 4 NUMA nodes with 128G
-> >>>of memory, I can only get ~310K read IOPs and ~175K write IOPs.
-> >>
-> >>Look at the completion method (irqmode) and completion time
-> >>(completion_nsec).
-> >
-> >OK, I found that queue_mode=0 (bio-based) is _much_ faster than blk-mq
-> >(2, the default).  Improving to ~950K read IOPs and ~675K write IOPs (on
-> >the single numa node system).
-> >
-> >Default for irqmode is 1 (softirq).  2 (timer) yields poor results.  0
-> >(none) seems slightly slower than 1.
-> >
-> >And if I use completion_nsec=1 I can bump up to ~990K read IOPs.
-> >
-> >Seems the best, for IOPs, so far on this system is with:
-> >modprobe null_blk gb=4 bs=4096 nr_devices=1 queue_mode=0 irqmode=1 completion_nsec=1 submit_queues=4
-> 
-> That sounds a bit odd. queue_mode=0 will always be a bit faster,
-> depending on how many threads, etc. But from 310K to 950K, that
-> sounds very suspicious.
+queue_mode=0 doesn't do a whole lot, once you add the required bits for 
+a normal driver, that will eat up a bit of overhead. The point was to 
+retain scaling, and to avoid drivers having to built support for the 
+required functionality from scratch. If we do that once and 
+fast/correct, then all mq drivers get it.
 
-I definitely see much better results with bio-based over blk-mq.
-For the multithreaded fio job Sagi shared I'm seeing bio-based ~2835K vs
-blk-mq ~1950K (read IOPs).
+That said, your jump is a big one. Some of that is support 
+functionality, and some of it (I bet) is just doing io stats. If you 
+disable io stats with queue_mode=2, the performance will most likely 
+increase. Other things we just can't disable or don't want to disable, 
+if we are going to keep this as an indication of what a real driver 
+could do through the mq stack.
 
-> And 500K/85K read/write is very low. Just did a quickie on a 2 node
-> box I have here, single thread performance with queue_mode=2 is
-> around 500K/500K read/write.
+Now, if queue_mode=1 is faster, then there's certainly an issue!
 
-Yeah, I was using some crap ioping test to get those 500K/85K results.
-I've now switched to the fio test Sagi shared and am seeing:
-
-~1950K IOPs with blk-mq nullb0, only ~310K with .request_fn dm-mpath
-ontop, and ~955K with blk-mq dm-mpath ontop -- all read IOPs.
-
-So at least now I can get my eye back on the prize of improving blk-mq
-dm-multipath!
+-- 
+Jens Axboe
