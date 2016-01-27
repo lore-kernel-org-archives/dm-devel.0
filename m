@@ -1,19 +1,21 @@
-From: Sagi Grimberg <sagig@dev.mellanox.co.il>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: dm-multipath low performance with blk-mq
-Date: Wed, 27 Jan 2016 19:56:06 +0200
-Message-ID: <56A904B6.50407@dev.mellanox.co.il>
+Date: Wed, 27 Jan 2016 13:16:56 -0500
+Message-ID: <20160127181655.GB31802@redhat.com>
 References: <569E11EA.8000305@dev.mellanox.co.il>
-	<20160119224512.GA10515@redhat.com> <20160125214016.GA10060@redhat.com>
+	<20160119224512.GA10515@redhat.com>
+	<20160125214016.GA10060@redhat.com>
 	<20160125233717.GQ24960@octiron.msp.redhat.com>
 	<20160126132939.GA23967@redhat.com>
 	<56A8A6A8.9090003@dev.mellanox.co.il>
-	<20160127174828.GA31802@redhat.com>
+	<20160127174828.GA31802@redhat.com> <56A90388.1030105@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160127174828.GA31802@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <56A90388.1030105@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,86 +25,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: axboe@kernel.dk, "keith.busch@intel.com" <keith.busch@intel.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Christoph Hellwig <hch@infradead.org>, Sagi Grimberg <sagig@dev.mellanox.co.il>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "keith.busch@intel.com" <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
+On Wed, Jan 27 2016 at 12:51pm -0500,
+Jens Axboe <axboe@kernel.dk> wrote:
 
+> On 01/27/2016 10:48 AM, Mike Snitzer wrote:
+> >
+> >BTW, I _cannot_ get null_blk to come even close to your reported 1500K+
+> >IOPs on 2 "fast" systems I have access to.  Which arguments are you
+> >loading the null_blk module with?
+> >
+> >I've been using:
+> >modprobe null_blk gb=4 bs=4096 nr_devices=1 queue_mode=2 submit_queues=12
+> >
+> >On my 1 system is a 12 core single socket, single NUMA node with 12G of
+> >memory, I can only get ~500K read IOPs and ~85K write IOPs.
+> >
+> >On another much larger system with 72 cores and 4 NUMA nodes with 128G
+> >of memory, I can only get ~310K read IOPs and ~175K write IOPs.
+> 
+> Look at the completion method (irqmode) and completion time
+> (completion_nsec).
 
-On 27/01/2016 19:48, Mike Snitzer wrote:
-> On Wed, Jan 27 2016 at  6:14am -0500,
-> Sagi Grimberg <sagig@dev.mellanox.co.il> wrote:
->
->>
->>>> I don't think this is going to help __multipath_map() without some
->>>> configuration changes.  Now that we're running on already merged
->>>> requests instead of bios, the m->repeat_count is almost always set to 1,
->>>> so we call the path_selector every time, which means that we'll always
->>>> need the write lock. Bumping up the number of IOs we send before calling
->>>> the path selector again will give this patch a change to do some good
->>>> here.
->>>>
->>>> To do that you need to set:
->>>>
->>>> 	rr_min_io_rq <something_bigger_than_one>
->>>>
->>>> in the defaults section of /etc/multipath.conf and then reload the
->>>> multipathd service.
->>>>
->>>> The patch should hopefully help in multipath_busy() regardless of the
->>>> the rr_min_io_rq setting.
->>>
->>> This patch, while generic, is meant to help the blk-mq case.  A blk-mq
->>> request_queue doesn't have an elevator so the requests will not have
->>> seen merging.
->>>
->>> But yes, implied in the patch is the requirement to increase
->>> m->repeat_count via multipathd's rr_min_io_rq (I'll backfill a proper
->>> header once it is tested).
->>
->> I'll test it once I get some spare time (hopefully soon...)
->
-> OK thanks.
->
-> BTW, I _cannot_ get null_blk to come even close to your reported 1500K+
-> IOPs on 2 "fast" systems I have access to.  Which arguments are you
-> loading the null_blk module with?
->
-> I've been using:
-> modprobe null_blk gb=4 bs=4096 nr_devices=1 queue_mode=2 submit_queues=12
+OK, I found that queue_mode=0 (bio-based) is _much_ faster than blk-mq
+(2, the default).  Improving to ~950K read IOPs and ~675K write IOPs (on
+the single numa node system).
 
-$ for f in /sys/module/null_blk/parameters/*; do echo $f; cat $f; done
-/sys/module/null_blk/parameters/bs
-512
-/sys/module/null_blk/parameters/completion_nsec
-10000
-/sys/module/null_blk/parameters/gb
-250
-/sys/module/null_blk/parameters/home_node
--1
-/sys/module/null_blk/parameters/hw_queue_depth
-64
-/sys/module/null_blk/parameters/irqmode
-1
-/sys/module/null_blk/parameters/nr_devices
-2
-/sys/module/null_blk/parameters/queue_mode
-2
-/sys/module/null_blk/parameters/submit_queues
-24
-/sys/module/null_blk/parameters/use_lightnvm
-N
-/sys/module/null_blk/parameters/use_per_node_hctx
-N
+Default for irqmode is 1 (softirq).  2 (timer) yields poor results.  0
+(none) seems slightly slower than 1.
 
-$ fio --group_reporting --rw=randread --bs=4k --numjobs=24 --iodepth=32 
---runtime=99999999 --time_based --loops=1 --ioengine=libaio --direct=1 
---invalidate=1 --randrepeat=1 --norandommap --exitall --name task_nullb0 
---filename=/dev/nullb0
-task_nullb0: (g=0): rw=randread, bs=4K-4K/4K-4K/4K-4K, ioengine=libaio, 
-iodepth=32
-...
-fio-2.1.10
-Starting 24 processes
-Jobs: 24 (f=24): [rrrrrrrrrrrrrrrrrrrrrrrr] [0.0% done] [7234MB/0KB/0KB 
-/s] [1852K/0/0 iops] [eta 1157d:09h:46m:22s]
+And if I use completion_nsec=1 I can bump up to ~990K read IOPs.
+
+Seems the best, for IOPs, so far on this system is with:
+modprobe null_blk gb=4 bs=4096 nr_devices=1 queue_mode=0 irqmode=1 completion_nsec=1 submit_queues=4
