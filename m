@@ -1,7 +1,7 @@
-From: Jens Axboe <axboe@kernel.dk>
+From: Sagi Grimberg <sagig@dev.mellanox.co.il>
 Subject: Re: dm-multipath low performance with blk-mq
-Date: Wed, 27 Jan 2016 10:51:04 -0700
-Message-ID: <56A90388.1030105@kernel.dk>
+Date: Wed, 27 Jan 2016 19:56:06 +0200
+Message-ID: <56A904B6.50407@dev.mellanox.co.il>
 References: <569E11EA.8000305@dev.mellanox.co.il>
 	<20160119224512.GA10515@redhat.com> <20160125214016.GA10060@redhat.com>
 	<20160125233717.GQ24960@octiron.msp.redhat.com>
@@ -23,11 +23,13 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Sagi Grimberg <sagig@dev.mellanox.co.il>
-Cc: "keith.busch@intel.com" <keith.busch@intel.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: axboe@kernel.dk, "keith.busch@intel.com" <keith.busch@intel.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-On 01/27/2016 10:48 AM, Mike Snitzer wrote:
+
+
+On 27/01/2016 19:48, Mike Snitzer wrote:
 > On Wed, Jan 27 2016 at  6:14am -0500,
 > Sagi Grimberg <sagig@dev.mellanox.co.il> wrote:
 >
@@ -68,15 +70,39 @@ On 01/27/2016 10:48 AM, Mike Snitzer wrote:
 >
 > I've been using:
 > modprobe null_blk gb=4 bs=4096 nr_devices=1 queue_mode=2 submit_queues=12
->
-> On my 1 system is a 12 core single socket, single NUMA node with 12G of
-> memory, I can only get ~500K read IOPs and ~85K write IOPs.
->
-> On another much larger system with 72 cores and 4 NUMA nodes with 128G
-> of memory, I can only get ~310K read IOPs and ~175K write IOPs.
 
-Look at the completion method (irqmode) and completion time 
-(completion_nsec).
+$ for f in /sys/module/null_blk/parameters/*; do echo $f; cat $f; done
+/sys/module/null_blk/parameters/bs
+512
+/sys/module/null_blk/parameters/completion_nsec
+10000
+/sys/module/null_blk/parameters/gb
+250
+/sys/module/null_blk/parameters/home_node
+-1
+/sys/module/null_blk/parameters/hw_queue_depth
+64
+/sys/module/null_blk/parameters/irqmode
+1
+/sys/module/null_blk/parameters/nr_devices
+2
+/sys/module/null_blk/parameters/queue_mode
+2
+/sys/module/null_blk/parameters/submit_queues
+24
+/sys/module/null_blk/parameters/use_lightnvm
+N
+/sys/module/null_blk/parameters/use_per_node_hctx
+N
 
--- 
-Jens Axboe
+$ fio --group_reporting --rw=randread --bs=4k --numjobs=24 --iodepth=32 
+--runtime=99999999 --time_based --loops=1 --ioengine=libaio --direct=1 
+--invalidate=1 --randrepeat=1 --norandommap --exitall --name task_nullb0 
+--filename=/dev/nullb0
+task_nullb0: (g=0): rw=randread, bs=4K-4K/4K-4K/4K-4K, ioengine=libaio, 
+iodepth=32
+...
+fio-2.1.10
+Starting 24 processes
+Jobs: 24 (f=24): [rrrrrrrrrrrrrrrrrrrrrrrr] [0.0% done] [7234MB/0KB/0KB 
+/s] [1852K/0/0 iops] [eta 1157d:09h:46m:22s]
