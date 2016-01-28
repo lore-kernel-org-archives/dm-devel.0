@@ -1,103 +1,95 @@
-From: Nikolay Borisov <kernel@kyup.com>
-Subject: Re: [dm-devel] Target and deduplication?
-Date: Thu, 28 Jan 2016 13:39:17 +0200
-Message-ID: <56A9FDE5.8080803@kyup.com>
-References: <CAKdSmgsZe_dfhN_7R6P7tLfkciv-9dUJKKNj16xeWYXG8aTVVA@mail.gmail.com>
- <20160128085013.GA18023@infradead.org> <20160128112300.GA21820@rh-vpn>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <target-devel-owner@vger.kernel.org>
-In-Reply-To: <20160128112300.GA21820@rh-vpn>
-Sender: target-devel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, Henrik Goldman <hg@x-formation.com>, target-devel@vger.kernel.org
+From: Andy Whitcroft <apw@canonical.com>
+Subject: reinstate dm target local ioctl support
+Date: Thu, 28 Jan 2016 13:50:19 +0000
+Message-ID: <1453989019-24300-1-git-send-email-apw@canonical.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>
+Cc: mohan_srinivasan@yahoo.com, dm-devel@redhat.com, Neil Brown <neilb@suse.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Andy Whitcroft <apw@canonical.com>, Tim Gardner <tim.gardner@canonical.com>
 List-Id: dm-devel.ids
 
+With the commit below the dm ioctl support was reordered so that the
+target only had to identify the underlying device, the dm_blk_ioctl()
+itself then applied those ioctls to the appropriate device:
 
+  commit e56f81e0b01ef4e45292d8c1e19edd4d09724e14
+  Author: Christoph Hellwig <hch@lst.de>
+  Date:   Thu Oct 15 14:10:50 2015 +0200
 
-On 01/28/2016 01:23 PM, Joe Thornber wrote:
-> On Thu, Jan 28, 2016 at 12:50:13AM -0800, Christoph Hellwig wrote:
->> On Thu, Jan 28, 2016 at 12:44:25AM +0100, Henrik Goldman wrote:
->>> Hello,
->>>
->>> Has anyone (possibly except purestorage) managed to make target work
->>> with deduplication?
->>
->> The iblock drivers works perfectly fine on top of the dm-dedup driver,
->> which unfortunately still hasn't made it to mainline despite looking
->> rather solid.
-> 
-> I'm working on a userland dedup tool at the moment (thin_archive), and
-> I think there are serious issues with dm-dedup:
-> 
-> - To do dedup properly you need to use a variable, small chunk size.
->   This chunk size depends on the contents of the data (google 'content
->   based chunking algorithms).  I did some experiments comparing fixed
->   to variable chunk sizes and the difference was huge.  It also varied
->   significantly depending on which file system was used.  I don't
->   think a fixed sized chunk is going to identify nearly as many
->   duplicates as people are expecting.
-> 
-> - Performance depends on being able to take a hash of a data block
->   (eg, SHA1) and quickly look it up to see if that chunk has been seen
->   before.  There are two plug-ins to dm-dedup that provide this look up:
-> 
->   i) a ram based one.
-> 
->   This will be fine on small systems, but as the number of chunks
->   stored in the system increases ram consumption will go up
->   significantly.  eg, a 4T disk, split into 64k chunks (too big IMO)
->   will lead to 2^26 chunks (let's ignore duplicates for the moment).
->   Each entry in the hash table needs to store the hash let's say 20
->   bytes for SHA1, plus the physical chunk address 8bytes, plus some
->   overhead for the hash table itself 4bytes.  Which gives us 32bytes
->   per entry.  So our 4T disk is going to eat 2G of RAM, and I'm still
->   sceptical that it will identify many duplicates.
-> 
->   (I'm not sure how the ram based one recovers if there a crash)
+    dm: refactor ioctl handling
 
-I did some email exchanges with the people who implemented this and they
-essentially said the RAM-based dedup wouldn't work in case of a crash
-since data is not serialised on-disk. As far as I understood it it was
-done solely so that they can have a baseline when comparing the other
-hashing backends (the btree one and a hdd one, more on that later)
+However this also removed the possibility of a dm target having target
+specific ioctls.  Currently this is not used by any in-tree targets but
+was utilised by the flashcache out-of-tree module.
 
+How would we feel about carrying something like the patch below in
+mainline to allow for such target local ioctls.
 
-> 
->   ii) one that uses the btrees from my persistent data library.
-> 
->   On the face of it this should be better than the ram version since
->   it'll just page in the metadata as it needs it.  But we're keying off
->   hashes like SHA1, which are designed to be pseudo random, and will
->   hit every page of metadata evenly.  So we'll be constantly trying to
->   page in the whole tree.
+-apw
 
-I did some performance tests and this was veery slow, dunno if it was
-due to the specific implementation or because of the increased
-complexity in getting data to/from disk, essentially amplifying I/O.
+From 3fa0480193b944dd97565364efe4df89414c250b Mon Sep 17 00:00:00 2001
+From: Andy Whitcroft <apw@canonical.com>
+Date: Wed, 27 Jan 2016 16:05:32 +0000
+Subject: dm: introduce a target_ioctl op to allow target specific ioctls
 
-They also had a 3rd backend which was based on RAM but was saving data
-to disk and were also using the dm-bufio to do caching before actually
-writing to disk. The idea was to strike a balance between durability and
-speed. The bad thing there was that in case of a crash one could
-potentially suffer some loss of block data if stuff hasn't been
-committed from the dm-bufio.
+In e56f81e0b01e "dm: refactor ioctl handling" the target specific ioctl
+operation was removed in favour of providing a mapping to the underlying
+device, to which ioctls are all assumed to apply.  This prevents targets
+from having target specific ioctls.
 
-> 
-> Commercial systems use a couple of tricks to get round these problems:
-> 
->    i) Use a bloom filter to quickly determine if a chunk is _not_ already
->       present, this the common case, and so determining it quickly is very
->       important.
-> 
->    ii) Store the hashes on disk in stream order and page in big blocks of
->        these hashes as required.  The reasoning being that similar
->        sequences of chunks are likely to be hit again.
-> 
-> - Joe
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+Introduce a new target_ioctl callback which (if present) is offered the
+command and arguments for processing.  This callback can return -ENOTTY
+to indicate the ioctl should be passed on to the underlying device as
+normal.
+
+BugLink: http://bugs.launchpad.net/bugs/1538618
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+---
+ drivers/md/dm.c               | 9 +++++++++
+ include/linux/device-mapper.h | 3 +++
+ 2 files changed, 12 insertions(+)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 5df4048..9014d46 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -610,6 +610,15 @@ static int dm_blk_ioctl(struct block_device *bdev, fmode_t mode,
+ 	if (r < 0)
+ 		return r;
+ 
++	if (tgt->type->target_ioctl) {
++		int res = tgt->type->target_ioctl(tgt, cmd, arg);
++
++		if (res != -ENOTTY) {
++			r = res;
++			goto out;
++		}
++	}
++
+ 	if (r > 0) {
+ 		/*
+ 		 * Target determined this ioctl is being issued against
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index ec1c61c..d770bf0 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -81,6 +81,8 @@ typedef int (*dm_message_fn) (struct dm_target *ti, unsigned argc, char **argv);
+ 
+ typedef int (*dm_prepare_ioctl_fn) (struct dm_target *ti,
+ 			    struct block_device **bdev, fmode_t *mode);
++typedef int (*dm_target_ioctl_fn) (struct dm_target *ti, unsigned int cmd,
++				   unsigned long arg);
+ 
+ /*
+  * These iteration functions are typically used to check (and combine)
+@@ -157,6 +159,7 @@ struct target_type {
+ 	dm_status_fn status;
+ 	dm_message_fn message;
+ 	dm_prepare_ioctl_fn prepare_ioctl;
++	dm_target_ioctl_fn target_ioctl;
+ 	dm_busy_fn busy;
+ 	dm_iterate_devices_fn iterate_devices;
+ 	dm_io_hints_fn io_hints;
+-- 
+2.7.0.rc3
+
