@@ -1,35 +1,44 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: reinstate dm target local ioctl support
-Date: Thu, 28 Jan 2016 15:00:22 +0100
-Message-ID: <20160128140022.GA15941@lst.de>
-References: <1453989019-24300-1-git-send-email-apw@canonical.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [LSF/MM ATTEND] multipath redesign and dm blk-mq issues
+Date: Thu, 28 Jan 2016 15:23:15 -0600
+Message-ID: <20160128212315.GX24960@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1453989019-24300-1-git-send-email-apw@canonical.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Andy Whitcroft <apw@canonical.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, mohan_srinivasan@yahoo.com, dm-devel@redhat.com, Neil Brown <neilb@suse.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Tim Gardner <tim.gardner@canonical.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: lsf-pc@lists.linux-foundation.org
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Jan 28, 2016 at 01:50:19PM +0000, Andy Whitcroft wrote:
-> However this also removed the possibility of a dm target having targe=
-t
-> specific ioctls.  Currently this is not used by any in-tree targets b=
-ut
-> was utilised by the flashcache out-of-tree module.
->=20
-> How would we feel about carrying something like the patch below in
-> mainline to allow for such target local ioctls.
+I'd like to attend LSF/MM 2016 to participate in any discussions about 
+redesigning how device-mapper multipath operates. I spend a significant
+chunk of time dealing with issues around multipath and I'd like to
+be part of any discussion about redesigning it.
 
-Bad.  Because a) targets shouldn't have their own ioctls and b) your ou=
-t
-of tree modules are your problem, don't burden us w=D1=96th upstream
-workarounds for it.
---
-To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+In addition, I'd be interesting in disucssions that deal with how
+device-mapper targets are dealing with blk-mq in general.  For instance,
+it looks like the current dm-multipath blk-mq implementation is running
+into performance bottlenecks, and changing how path selection works into
+something that allows for more parallelism is a worthy discussion.  But
+it would also be worth looking into changes about how the dm blk-mq
+impementation deals with the mapping between it's swqueues and
+hwqueue(s). Right now all the dm mapping is done in .queue_rq, instead
+of in .map_queue, but I'm not convinced it belongs there. There's also
+the issue that the bio targets may scale better on blk-mq devices than
+the blk-mq targets.
+
+If there happen to be any GFS2 related discussions, I'd be interested in
+those as well.
+
+Thanks
+-Ben
