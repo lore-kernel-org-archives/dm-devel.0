@@ -1,103 +1,75 @@
 From: Joe Thornber <thornber@redhat.com>
-Subject: Re: I/O block when removing thin device on the same pool
-Date: Thu, 28 Jan 2016 10:44:06 +0000
-Message-ID: <20160128104405.GA21697@rh-vpn>
-References: <CAKTMprME2=oCyjxNxLPsXcgSsAzcBW2-dLjjN1CNPAPe0w-bow@mail.gmail.com>
-	<569F6F08.1040503@redhat.com>
-	<CAJFSNy4yT_8j8Jqm7qggzNgeHLOE0db6dwUxrn1auH_W=sMscA@mail.gmail.com>
-	<20160121194405.GA22766@redhat.com>
-	<20160122133828.GN26774@soda.linbit>
-	<20160122164345.GA15295@rh-vpn>
-	<CAAR726+yoWG+_2sZ=Wd9Wi4rQmYxRhXFJCJVQ0UH8kJwH0ZPJQ@mail.gmail.com>
-	<20160126161919.GA19606@rh-vpn>
-	<CAAR726+9=j+LJjRY+LMKfzajHdWeUYOinR6YWJF+KRVdF-0HDg@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [dm-devel] Target and deduplication?
+Date: Thu, 28 Jan 2016 11:23:01 +0000
+Message-ID: <20160128112300.GA21820@rh-vpn>
+References: <CAKdSmgsZe_dfhN_7R6P7tLfkciv-9dUJKKNj16xeWYXG8aTVVA@mail.gmail.com>
+ <20160128085013.GA18023@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <target-devel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAAR726+9=j+LJjRY+LMKfzajHdWeUYOinR6YWJF+KRVdF-0HDg@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+In-Reply-To: <20160128085013.GA18023@infradead.org>
+Sender: target-devel-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Henrik Goldman <hg@x-formation.com>, target-devel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, Jan 27, 2016 at 12:51:09PM +0800, Dennis Yang wrote:
-> Hi Joe,
+On Thu, Jan 28, 2016 at 12:50:13AM -0800, Christoph Hellwig wrote:
+> On Thu, Jan 28, 2016 at 12:44:25AM +0100, Henrik Goldman wrote:
+> > Hello,
+> > 
+> > Has anyone (possibly except purestorage) managed to make target work
+> > with deduplication?
 > 
-> I have applied this patch to kernel 4.4 and get the following result.
+> The iblock drivers works perfectly fine on top of the dm-dedup driver,
+> which unfortunately still hasn't made it to mainline despite looking
+> rather solid.
 
-Thanks for taking the time to do this.
+I'm working on a userland dedup tool at the moment (thin_archive), and
+I think there are serious issues with dm-dedup:
 
-> To delete a fully-mapped 10TB thin devices,
-> with this patch takes 48 sec.
-> without this patch takes 48 sec.
-> 
-> To read an empty thin device while deleting a fully-mapped 10TB thin
-> devices,
-> with this patch I/O throughput drops from 4.6TB/s to 4.3TB/s
-> without this patch, I/O blocks.
-> 
-> To write an empty thin device while deleting a fully-mapped 10TB thin
-> devices,
-> with this patch I/O throughput drops from 3.2TB/s to below 4MB/s
-> without this patch, I/O blocks
-> 
-> Since it looks like the write performance still suffer from the lock
-> contention, I make it to sleep 100 msec between lock release and reacquire
-> in commit_decs().
+- To do dedup properly you need to use a variable, small chunk size.
+  This chunk size depends on the contents of the data (google 'content
+  based chunking algorithms).  I did some experiments comparing fixed
+  to variable chunk sizes and the difference was huge.  It also varied
+  significantly depending on which file system was used.  I don't
+  think a fixed sized chunk is going to identify nearly as many
+  duplicates as people are expecting.
 
-Well it's really provisioning or breaking of sharing that's slow, not
-writes in general.  Rather than adding a sleep it would be worth
-playing with the MAX_DECS #define.  eg, try 16 and 8192 and see how
-that effects the throughput.
+- Performance depends on being able to take a hash of a data block
+  (eg, SHA1) and quickly look it up to see if that chunk has been seen
+  before.  There are two plug-ins to dm-dedup that provide this look up:
 
-> The one thing I am curious about is what data structures are dm-thin tries
-> to protect by holding the pool lock during all those btree operations. At
-> first, I think the lock is held to protect the btree itself. But based on
-> the comments in the source code, I believe that it has already been
-> protected by the read/writes lock in transaction manager
-> (dm_tm_read/write_lock). Does this mean that the pool lock is held only to
-> protect the reference count bitmap/btree?
+  i) a ram based one.
 
-You're correct.  I wrote all of persistent data using a rolling lock
-scheme that allows updates to the btrees to occur in parallel.  But I
-didn't extend this to cover the superblock or in core version of the
-superblock.  So the top level rw semaphore is protecting this in core
-sb.  I've spent a couple of days this week experimenting with
-switching over to using the rolling lock scheme properly.  The changes
-are extensive:
+  This will be fine on small systems, but as the number of chunks
+  stored in the system increases ram consumption will go up
+  significantly.  eg, a 4T disk, split into 64k chunks (too big IMO)
+  will lead to 2^26 chunks (let's ignore duplicates for the moment).
+  Each entry in the hash table needs to store the hash let's say 20
+  bytes for SHA1, plus the physical chunk address 8bytes, plus some
+  overhead for the hash table itself 4bytes.  Which gives us 32bytes
+  per entry.  So our 4T disk is going to eat 2G of RAM, and I'm still
+  sceptical that it will identify many duplicates.
 
-    - Strip out the root_lock rw_sem.
+  (I'm not sure how the ram based one recovers if there a crash)
 
-    - Introduce a transaction_lock.
+  ii) one that uses the btrees from my persistent data library.
 
-      Every metadata op needs to hold a rw sem in 'read' mode (even if
-      it's doing an update), except commit which would hold in write
-      mode, this forces all the threads to synchronise whenever we
-      commit.
+  On the face of it this should be better than the ram version since
+  it'll just page in the metadata as it needs it.  But we're keying off
+  hashes like SHA1, which are designed to be pseudo random, and will
+  hit every page of metadata evenly.  So we'll be constantly trying to
+  page in the whole tree.
 
-    - Change the block manager to allow us to 'lock' abstract things,
-      like the in core sb.  This is really just introducing another
-      namespace to the bm.  Pretty easy.
+Commercial systems use a couple of tricks to get round these problems:
 
-    - Change the interfaces to persistent data structures like btree,
-      array etc. to take one of these locks representing the
-      superblock.  Audit to make sure this lock is released early to
-      support the rolling lock scheme.
+   i) Use a bloom filter to quickly determine if a chunk is _not_ already
+      present, this the common case, and so determining it quickly is very
+      important.
 
-    - Add locking/protection to the space maps (which have some in
-      core data structs).
-
-Given this long list of changes I don't think it's worth the risk.  So
-I'd rather use the patch I posted earlier.
+   ii) Store the hashes on disk in stream order and page in big blocks of
+       these hashes as required.  The reasoning being that similar
+       sequences of chunks are likely to be hit again.
 
 - Joe
