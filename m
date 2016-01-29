@@ -1,33 +1,66 @@
-From: Andy Whitcroft <apw@canonical.com>
-Subject: Re: reinstate dm target local ioctl support
-Date: Fri, 29 Jan 2016 14:35:58 +0000
-Message-ID: <20160129143558.GR9864@bark>
-References: <1453989019-24300-1-git-send-email-apw@canonical.com>
- <20160129135712.GA7201@agk-dp.fab.redhat.com>
+From: Lars Ellenberg <lars.ellenberg@linbit.com>
+Subject: Re: I/O block when removing thin device on the same pool
+Date: Fri, 29 Jan 2016 15:50:31 +0100
+Message-ID: <20160129145031.GD32614@soda.linbit>
+References: <CAKTMprME2=oCyjxNxLPsXcgSsAzcBW2-dLjjN1CNPAPe0w-bow@mail.gmail.com>
+	<569F6F08.1040503@redhat.com>
+	<CAJFSNy4yT_8j8Jqm7qggzNgeHLOE0db6dwUxrn1auH_W=sMscA@mail.gmail.com>
+	<20160121194405.GA22766@redhat.com>
+	<20160122133828.GN26774@soda.linbit>
+	<20160122164345.GA15295@rh-vpn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20160129135712.GA7201@agk-dp.fab.redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, mohan_srinivasan@yahoo.com, dm-devel@redhat.com, Neil Brown <neilb@suse.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Tim Gardner <tim.gardner@canonical.com>
+In-Reply-To: <20160122164345.GA15295@rh-vpn>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 29, 2016 at 01:57:12PM +0000, Alasdair G Kergon wrote:
-> On Thu, Jan 28, 2016 at 01:50:19PM +0000, Andy Whitcroft wrote:
-> > However this also removed the possibility of a dm target having target
-> > specific ioctls.  Currently this is not used by any in-tree targets but
-> > was utilised by the flashcache out-of-tree module.
->  
-> What data is being passed in and out?
+On Fri, Jan 22, 2016 at 04:43:46PM +0000, Joe Thornber wrote:
+> On Fri, Jan 22, 2016 at 02:38:28PM +0100, Lars Ellenberg wrote:
+> > We have seen lvremove of thin snapshots sometimes minutes,
+> > even ~20 minutes before.
 > 
-> The method we support is passing it through DM_TARGET_MSG (as text).
-> For examples look at dm-switch.c and dm-stats.c, which handled
-> pretty large quantities of data.
+> I did some work on speeding up thin removal in autumn '14, in
+> particular agressively prefetching metadata pages sped up the tree
+> traversal hugely.  Could you confirm you're seeing pauses of this
+> duration with currently kernels please?
+
+There is 
+https://bugzilla.redhat.com/show_bug.cgi?id=990583
+Bug 990583 - lvremove of thin snapshots takes 5 to 20 minutes (single
+core cpu bound?) 
+
+From August 2013, closed by you in October 2015,
+as "not a bug", also pointing to meta data prefetch.
+
+Now, you tell me, how prefetching meta data (doing disk IO
+more efficiently) helps with something that is clearly CPU bound
+(eating 100% single core CPU traversing whatever)...
+
+Reason I mention this bug again here is:
+there should be a lvm thin meta data dump in there,
+which you could use for benchmarking improvements yourself.
+
+> Obviously any pause, even a few seconds is unacceptable.  Having a
+> background kernel worker thread doing the delete, as you describe, is
+> the way to go.  But there are complications to do with
+> transactionality and crash protection that have prevented me
+> implementing it.  I'll think on it some more now I know it's such a
+> problem for you.
 > 
-> Would that work?
+> - Joe
 
-That sounds like it has all the bits one would need indeed.  I will
-investigate that.  Thanks for the info.
+Thanks,
 
--apw
+    Lars
