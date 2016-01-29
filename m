@@ -1,19 +1,16 @@
-From: Lars Ellenberg <lars.ellenberg@linbit.com>
-Subject: Re: I/O block when removing thin device on the same pool
-Date: Fri, 29 Jan 2016 15:50:31 +0100
-Message-ID: <20160129145031.GD32614@soda.linbit>
-References: <CAKTMprME2=oCyjxNxLPsXcgSsAzcBW2-dLjjN1CNPAPe0w-bow@mail.gmail.com>
-	<569F6F08.1040503@redhat.com>
-	<CAJFSNy4yT_8j8Jqm7qggzNgeHLOE0db6dwUxrn1auH_W=sMscA@mail.gmail.com>
-	<20160121194405.GA22766@redhat.com>
-	<20160122133828.GN26774@soda.linbit>
-	<20160122164345.GA15295@rh-vpn>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [LSF/MM ATTEND] multipath redesign and dm blk-mq
+	issues
+Date: Fri, 29 Jan 2016 09:34:34 -0600
+Message-ID: <20160129153434.GA24960@octiron.msp.redhat.com>
+References: <20160128212315.GX24960@octiron.msp.redhat.com>
+	<56AB0DBD.6000605@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20160122164345.GA15295@rh-vpn>
+In-Reply-To: <56AB0DBD.6000605@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,44 +20,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, lsf-pc@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-On Fri, Jan 22, 2016 at 04:43:46PM +0000, Joe Thornber wrote:
-> On Fri, Jan 22, 2016 at 02:38:28PM +0100, Lars Ellenberg wrote:
-> > We have seen lvremove of thin snapshots sometimes minutes,
-> > even ~20 minutes before.
-> 
-> I did some work on speeding up thin removal in autumn '14, in
-> particular agressively prefetching metadata pages sped up the tree
-> traversal hugely.  Could you confirm you're seeing pauses of this
-> duration with currently kernels please?
+On Fri, Jan 29, 2016 at 07:59:09AM +0100, Hannes Reinecke wrote:
+> On 01/28/2016 10:23 PM, Benjamin Marzinski wrote:
+> > I'd like to attend LSF/MM 2016 to participate in any discussions about =
 
-There is 
-https://bugzilla.redhat.com/show_bug.cgi?id=990583
-Bug 990583 - lvremove of thin snapshots takes 5 to 20 minutes (single
-core cpu bound?) 
+> > redesigning how device-mapper multipath operates. I spend a significant
+> > chunk of time dealing with issues around multipath and I'd like to
+> > be part of any discussion about redesigning it.
+> > =
 
-From August 2013, closed by you in October 2015,
-as "not a bug", also pointing to meta data prefetch.
+> And while you're there, we should be discussing systemd / udev
+> /dracut integration. I have sunk far too many man-hours into this,
+> and it's still nowhere near mainline.
+> And I guess the same goes for any other distro :-)
 
-Now, you tell me, how prefetching meta data (doing disk IO
-more efficiently) helps with something that is clearly CPU bound
-(eating 100% single core CPU traversing whatever)...
+Sure. It would be great to avoid so much duplicated work and get some
+more consistency in this area.
 
-Reason I mention this bug again here is:
-there should be a lvm thin meta data dump in there,
-which you could use for benchmarking improvements yourself.
+-Ben
 
-> Obviously any pause, even a few seconds is unacceptable.  Having a
-> background kernel worker thread doing the delete, as you describe, is
-> the way to go.  But there are complications to do with
-> transactionality and crash protection that have prevented me
-> implementing it.  I'll think on it some more now I know it's such a
-> problem for you.
-> 
-> - Joe
+> =
 
-Thanks,
+> That doesn't warrant a full LSF session, though, the important bit
+> is the discussion itself :-)
+> =
 
-    Lars
+> Cheers,
+> =
+
+> Hannes
+> -- =
+
+> Dr. Hannes Reinecke		   Teamlead Storage & Networking
+> hare@suse.de			               +49 911 74053 688
+> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+> GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+> HRB 21284 (AG N=FCrnberg)
