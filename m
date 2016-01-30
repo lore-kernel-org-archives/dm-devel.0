@@ -1,19 +1,22 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: dm-multipath low performance with blk-mq
-Date: Sat, 30 Jan 2016 09:52:32 +0100
-Message-ID: <56AC79D0.5060104@suse.de>
+Date: Sat, 30 Jan 2016 14:12:38 -0500
+Message-ID: <20160130191238.GA18686@redhat.com>
 References: <569E11EA.8000305@dev.mellanox.co.il>
-	<20160119224512.GA10515@redhat.com> <20160125214016.GA10060@redhat.com>
+	<20160119224512.GA10515@redhat.com>
+	<20160125214016.GA10060@redhat.com>
 	<20160125233717.GQ24960@octiron.msp.redhat.com>
 	<20160126132939.GA23967@redhat.com>
 	<56A8A6A8.9090003@dev.mellanox.co.il>
-	<20160127174828.GA31802@redhat.com> <56A904B6.50407@dev.mellanox.co.il>
-	<20160129233504.GA13661@redhat.com>
+	<20160127174828.GA31802@redhat.com>
+	<56A904B6.50407@dev.mellanox.co.il>
+	<20160129233504.GA13661@redhat.com> <56AC79D0.5060104@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160129233504.GA13661@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <56AC79D0.5060104@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,142 +26,118 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Sagi Grimberg <sagig@dev.mellanox.co.il>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "keith.busch@intel.com" <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: axboe@kernel.dk, Christoph Hellwig <hch@infradead.org>, Sagi Grimberg <sagig@dev.mellanox.co.il>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "keith.busch@intel.com" <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, linux-block@vger.kernel.org, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-On 01/30/2016 12:35 AM, Mike Snitzer wrote:
-> On Wed, Jan 27 2016 at 12:56pm -0500,
-> Sagi Grimberg <sagig@dev.mellanox.co.il> wrote:
->
->>
->>
->> On 27/01/2016 19:48, Mike Snitzer wrote:
->>> On Wed, Jan 27 2016 at  6:14am -0500,
->>> Sagi Grimberg <sagig@dev.mellanox.co.il> wrote:
->>>
->>>>
->>>>>> I don't think this is going to help __multipath_map() without some
->>>>>> configuration changes.  Now that we're running on already merged
->>>>>> requests instead of bios, the m->repeat_count is almost always set t=
-o 1,
->>>>>> so we call the path_selector every time, which means that we'll alwa=
-ys
->>>>>> need the write lock. Bumping up the number of IOs we send before cal=
-ling
->>>>>> the path selector again will give this patch a change to do some good
->>>>>> here.
->>>>>>
->>>>>> To do that you need to set:
->>>>>>
->>>>>> 	rr_min_io_rq <something_bigger_than_one>
->>>>>>
->>>>>> in the defaults section of /etc/multipath.conf and then reload the
->>>>>> multipathd service.
->>>>>>
->>>>>> The patch should hopefully help in multipath_busy() regardless of the
->>>>>> the rr_min_io_rq setting.
->>>>>
->>>>> This patch, while generic, is meant to help the blk-mq case.  A blk-mq
->>>>> request_queue doesn't have an elevator so the requests will not have
->>>>> seen merging.
->>>>>
->>>>> But yes, implied in the patch is the requirement to increase
->>>>> m->repeat_count via multipathd's rr_min_io_rq (I'll backfill a proper
->>>>> header once it is tested).
->>>>
->>>> I'll test it once I get some spare time (hopefully soon...)
->>>
->>> OK thanks.
->>>
->>> BTW, I _cannot_ get null_blk to come even close to your reported 1500K+
->>> IOPs on 2 "fast" systems I have access to.  Which arguments are you
->>> loading the null_blk module with?
->>>
->>> I've been using:
->>> modprobe null_blk gb=3D4 bs=3D4096 nr_devices=3D1 queue_mode=3D2 submit=
-_queues=3D12
->>
->> $ for f in /sys/module/null_blk/parameters/*; do echo $f; cat $f; done
->> /sys/module/null_blk/parameters/bs
->> 512
->> /sys/module/null_blk/parameters/completion_nsec
->> 10000
->> /sys/module/null_blk/parameters/gb
->> 250
->> /sys/module/null_blk/parameters/home_node
->> -1
->> /sys/module/null_blk/parameters/hw_queue_depth
->> 64
->> /sys/module/null_blk/parameters/irqmode
->> 1
->> /sys/module/null_blk/parameters/nr_devices
->> 2
->> /sys/module/null_blk/parameters/queue_mode
->> 2
->> /sys/module/null_blk/parameters/submit_queues
->> 24
->> /sys/module/null_blk/parameters/use_lightnvm
->> N
->> /sys/module/null_blk/parameters/use_per_node_hctx
->> N
->>
->> $ fio --group_reporting --rw=3Drandread --bs=3D4k --numjobs=3D24
->> --iodepth=3D32 --runtime=3D99999999 --time_based --loops=3D1
->> --ioengine=3Dlibaio --direct=3D1 --invalidate=3D1 --randrepeat=3D1
->> --norandommap --exitall --name task_nullb0 --filename=3D/dev/nullb0
->> task_nullb0: (g=3D0): rw=3Drandread, bs=3D4K-4K/4K-4K/4K-4K,
->> ioengine=3Dlibaio, iodepth=3D32
->> ...
->> fio-2.1.10
->> Starting 24 processes
->> Jobs: 24 (f=3D24): [rrrrrrrrrrrrrrrrrrrrrrrr] [0.0% done]
->> [7234MB/0KB/0KB /s] [1852K/0/0 iops] [eta 1157d:09h:46m:22s]
->
-> Your test above is prone to exhaust the dm-mpath blk-mq tags (128)
-> because 24 threads * 32 easily exceeds 128 (by a factor of 6).
->
-> I found that we were context switching (via bt_get's io_schedule)
-> waiting for tags to become available.
->
-> This is embarassing but, until Jens told me today, I was oblivious to
-> the fact that the number of blk-mq's tags per hw_queue was defined by
-> tag_set.queue_depth.
->
-> Previously request-based DM's blk-mq support had:
-> md->tag_set.queue_depth =3D BLKDEV_MAX_RQ; (again: 128)
->
-> Now I have a patch that allows tuning queue_depth via dm_mod module
-> parameter.  And I'll likely bump the default to 4096 or something (doing
-> so eliminated blocking in bt_get).
->
-> But eliminating the tags bottleneck only raised my read IOPs from ~600K
-> to ~800K (using 1 hw_queue for both null_blk and dm-mpath).
->
-> When I raise nr_hw_queues to 4 for null_blk (keeping dm-mq at 1) I see a
-> whole lot more context switching due to request-based DM's use of
-> ksoftirqd (and kworkers) for request completion.
->
-> So I'm moving on to optimizing the completion path.  But at least some
-> progress was made, more to come...
->
-Would you mind sharing your patches?
-We're currently doing tests with a high-performance FC setup
-(16G FC with all-flash storage), and are still 20% short of the =
+On Sat, Jan 30 2016 at  3:52am -0500,
+Hannes Reinecke <hare@suse.de> wrote:
 
-announced backend performance.
+> On 01/30/2016 12:35 AM, Mike Snitzer wrote:
+> >
+> >Your test above is prone to exhaust the dm-mpath blk-mq tags (128)
+> >because 24 threads * 32 easily exceeds 128 (by a factor of 6).
+> >
+> >I found that we were context switching (via bt_get's io_schedule)
+> >waiting for tags to become available.
+> >
+> >This is embarassing but, until Jens told me today, I was oblivious to
+> >the fact that the number of blk-mq's tags per hw_queue was defined by
+> >tag_set.queue_depth.
+> >
+> >Previously request-based DM's blk-mq support had:
+> >md->tag_set.queue_depth = BLKDEV_MAX_RQ; (again: 128)
+> >
+> >Now I have a patch that allows tuning queue_depth via dm_mod module
+> >parameter.  And I'll likely bump the default to 4096 or something (doing
+> >so eliminated blocking in bt_get).
+> >
+> >But eliminating the tags bottleneck only raised my read IOPs from ~600K
+> >to ~800K (using 1 hw_queue for both null_blk and dm-mpath).
+> >
+> >When I raise nr_hw_queues to 4 for null_blk (keeping dm-mq at 1) I see a
+> >whole lot more context switching due to request-based DM's use of
+> >ksoftirqd (and kworkers) for request completion.
+> >
+> >So I'm moving on to optimizing the completion path.  But at least some
+> >progress was made, more to come...
+> >
+>
+> Would you mind sharing your patches?
 
-Just as a side note: we're currently getting 550k IOPs.
-With unpatched dm-mpath.
-So nearly on par with your null-blk setup. but with real hardware.
-(Which in itself is pretty cool. You should get faster RAM :-)
+I'm still working through this.  I'll hopefully have a handful of
+RFC-level changes by end of day Monday.  But could take longer.
 
-Cheers,
+One change that I already shared in a previous mail is:
+http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=devel2&id=99ebcaf36d9d1fa3acec98492c36664d57ba8fbd
 
-Hannes
--- =
+> We're currently doing tests with a high-performance FC setup
+> (16G FC with all-flash storage), and are still 20% short of the
+> announced backend performance.
+>
+> Just as a side note: we're currently getting 550k IOPs.
+> With unpatched dm-mpath.
 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+What is your test workload?  If you can share I'll be sure to factor it
+into my testing.
+
+> So nearly on par with your null-blk setup. but with real hardware.
+> (Which in itself is pretty cool. You should get faster RAM :-)
+
+You've misunderstood what I said my null_blk (RAM) performance is.
+
+My null_blk test gets ~1900K read IOPs.  But dm-mpath ontop only gets
+between 600K and 1000K IOPs depending on $FIO_QUEUE_DEPTH and if I
+use multiple $NULL_BLK_HW_QUEUES.
+
+Here is the script I've been using to test:
+
+#!/bin/sh
+
+set -xv
+
+NULL_BLK_HW_QUEUES=1
+NULL_BLK_QUEUE_DEPTH=4096
+
+DM_MQ_HW_QUEUES=1
+DM_MQ_QUEUE_DEPTH=4096
+
+FIO=/root/snitm/git/fio/fio
+FIO_QUEUE_DEPTH=32
+FIO_RUNTIME=10
+FIO_NUMJOBS=12
+
+PERF=perf
+#PERF=/root/snitm/git/linux/tools/perf/perf
+
+run_fio() {
+    DEVICE=$1
+    TASK_NAME=$(basename ${DEVICE})
+    PERF_RECORD=$2
+    RUN_CMD="${FIO} --cpus_allowed_policy=split --group_reporting --rw=randread --bs=4k --numjobs=${FIO_NUMJOBS} \
+              --iodepth=${FIO_QUEUE_DEPTH} --runtime=${FIO_RUNTIME} --time_based --loops=1 --ioengine=libaio \
+              --direct=1 --invalidate=1 --randrepeat=1 --norandommap --exitall --name task_${TASK_NAME} --filename=${DEVICE}"
+
+    if [ ! -z "${PERF_RECORD}" ]; then
+	${PERF_RECORD} ${RUN_CMD}
+	mv perf.data perf.data.${TASK_NAME}
+    else
+	${RUN_CMD}
+    fi
+}
+
+dmsetup remove dm_mq
+modprobe -r null_blk
+
+modprobe null_blk gb=4 bs=512 hw_queue_depth=${NULL_BLK_QUEUE_DEPTH} nr_devices=1 queue_mode=2 irqmode=1 completion_nsec=1 submit_queues=${NULL_BLK_HW_QUEUES}
+
+run_fio /dev/nullb0
+run_fio /dev/nullb0 "${PERF} record -ag -e cs"
+
+echo Y > /sys/module/dm_mod/parameters/use_blk_mq
+echo ${DM_MQ_QUEUE_DEPTH} > /sys/module/dm_mod/parameters/blk_mq_queue_depth
+echo ${DM_MQ_HW_QUEUES} > /sys/module/dm_mod/parameters/blk_mq_hw_queues
+echo "0 8388608 multipath 0 0 1 1 service-time 0 1 2 /dev/nullb0 1000 1" | dmsetup create dm_mq
+
+run_fio /dev/mapper/dm_mq
+run_fio /dev/mapper/dm_mq "${PERF} record -ag -e cs"
