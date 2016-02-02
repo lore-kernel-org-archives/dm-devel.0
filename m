@@ -1,14 +1,13 @@
-From: jiangyiwen <jiangyiwen@huawei.com>
-Subject: Re: Why don't return -EOPNOTSUPP?
-Date: Wed, 3 Feb 2016 12:03:04 +0800
-Message-ID: <56B17BF8.2030404@huawei.com>
-References: <56B099B1.2060304@huawei.com>
-	<alpine.LFD.2.00.1602021443260.17054@localhost.localdomain>
+From: Mathieu Trudel-Lapierre <mathieu.trudel-lapierre@canonical.com>
+Subject: [PATCH] Fix loopback file with kpartx -av
+Date: Tue, 2 Feb 2016 16:37:51 -0500
+Message-ID: <56B121AF.6090100@canonical.com>
+References: <1453297965-32278-1-git-send-email-mauricfo@linux.vnet.ibm.com>
+	<CABr-GnfeNpQPcuoRSLHTA5q8E3OF8as1zOTY7SP=bwMwtC=MFQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============0889591000587934189=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LFD.2.00.1602021443260.17054@localhost.localdomain>
+In-Reply-To: <CABr-GnfeNpQPcuoRSLHTA5q8E3OF8as1zOTY7SP=bwMwtC=MFQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,99 +17,96 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: =?UTF-8?B?THVrw6HFoSBDemVybmVy?= <lczerner@redhat.com>, martin.petersen@oracle.com
-Cc: dm-devel@redhat.com, "Qijiang (Joseph, Euler)" <joseph.qi@huawei.com>, xuejiufei@huawei.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2016/2/2 21:58, Luk=E1=9A Czerner wrote:
-> On Tue, 2 Feb 2016, jiangyiwen wrote:
-> =
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--===============0889591000587934189==
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature";
+	boundary="pFvhU98KgkPGKFretRFFR37uIE6NefcR7"
 
->> Date: Tue, 2 Feb 2016 19:57:37 +0800
->> From: jiangyiwen <jiangyiwen@huawei.com>
->> To: lczerner@redhat.com
->> Cc: dm-devel@redhat.com, "Qijiang (Joseph, Euler)" <joseph.qi@huawei.com=
->,
->>     xuejiufei@huawei.com
->> Subject: [dm-devel] Why don't return -EOPNOTSUPP?
->>
->> Hi Lukas,
->> I have a question about commit 8af1954d172a("blkdev: Do not return
->> -EOPNOTSUPP if discard is supported"). That is we issue a
->> WRITE SAME request to device and return failed with EOPNOTSUPP,
->> but blkdev_issue_write_same ignore this error and return
->> success to caller. In this way, this will cause an inconsistent state
->> between upper layer and bottom layer.
->>
->> I don't know why don't return EOPNOTSUPP if part of devices support
->> discard, because I think that blkdev_issue_discard should return
->> EOPNOTSUPP to caller even if some of devices support discard.
->>
->> Thanks,
->> Yiwen Jiang.
-> =
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--pFvhU98KgkPGKFretRFFR37uIE6NefcR7
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-> Hi,
-> =
+Le 2016-01-20 09:53, Christophe Varoqui a =C3=A9crit :
+> Applied,
+> thanks.
+>=20
 
-> I think that the reasoning is very well explained in the commit
-> description. Simply put, if the device does not support the discard
-> at all then there is:
-> =
+This patch apparently breaks the use of loopback-mounted files if you
+try to use them directly with kpartx -av.
 
-> if (!blk_queue_discard(q))
-> 	return -EOPNOTSUPP;
-> =
+For instance:
+qemu-img create foo.img 20M
+sgdisk -n 1 foo.img
+kpartx -av foo.img
 
-> however if the device itself (possibly because it's dm device)
-> advertise that it indeed does support discard and only parts of it
-> does not (again possibly because it's a dm device) then there is no
-> reason to return EOPNOTSUPP because that would only confuse the
-> upper layers.
-> =
 
-> Now the question is, why is this a problem ? It's very much a
-> advisory interface so if we send a discard request and it's not
-> supported on the part of the device, what harm will be done by
-> returning success ?
-> =
+Fails with the following error:
+device-mapper: reload ioctl on loop0p1 failed: No such device
+create/reload failed on loop0p1
+add map loop0p1 (0:0): 0 4192256 linear 0:0 2048
 
-> On the other hand if we did return EOPNOTSUPP, upper layer may stop
-> issuing discard whatsoever which will be harmful for the parts of
-> the device where discard is actually supported. Moreover it might
-> also be a problem of alignment or granularity, not just that it's
-> not supported.
-> =
 
-> However it's possible that situation changed since this commit and
-> the lower layers, mainly probably dm, is doing the right thing, or
-> is configurable in some way...I do not know.
-> =
+This can be fixed by stat()'ing the loop device again after picking it:
 
-> -Lukas
-> =
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -322,6 +322,11 @@ main(int argc, char **argv){
+                        loopcreated =3D 1;
+                }
+                device =3D loopdev;
++
++               if (stat(device, &buf)) {
++                       printf("failed to stat() %s\n", device);
++                       exit (1);
++               }
+        }
 
-> .
-> =
+        off =3D find_devname_offset(device);
 
-Hi Lukas,
-Sorry, it is my fault, I previously misunderstand the actual meaning
-of discard, because once applications issue a discard request to device,
-they can't expect deterministic behavior. However, WRITE SAME should
-not use this function bio_batch_end_io() which will ignore error with
-EOPNOTSUPP, because if applications issue WRITE SAME requests to device,
-it will return deterministic results to applications, or else it will
-cause an inconsistent state between upper layer and bottom layer.
 
-The detailed explanation is as follows:
 
-Document 14-163r1 includes text intended to make it
-clear that applications can't expect deterministic behavior from UNMAP.  Use
-WRITE SAME if the LBAs need to return all zeros after the command completes.
-WRITE SAME will probably be slower than UNMAP but will return deterministic
-results.
 
-So I will send a patch which solve this problem about WRITE SAME later.
+--=20
+Mathieu Trudel-Lapierre <mathieu.trudel-lapierre@canonical.com>
+Freenode: cyphermox, Jabber: mathieu.tl@gmail.com
+4096R/65B58DA1 818A D123 0992 275B 23C2  CF89 C67B B4D6 65B5 8DA1
 
-Thanks,
-Yiwen Jiang.
+
+--pFvhU98KgkPGKFretRFFR37uIE6NefcR7
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBCgAGBQJWsSGxAAoJEABpWkBMnr2n1y8P/1DaHpXl20RNGkDOqnF+sPfF
+3F0hU2h0a1zXoSd5wGi9Qi/mGlYGieQk0BCGIQdCKJHi/N/45SFTTNPJNeA6Lcjt
+fi8vzo+mFKP/+CSPhJ3KIpWDGnhf+VsazVDUQxJCh80C/eQGJkbvdIEZN4rwpCdn
+mM7h7xMPl92NUKRcgDDhwElaYnfR4i//ymaGzdyiXcRTMTSUQGBC0w0ZN9v9m3C+
+4AalmVMmwkTrQg8A07RYIc+OnqYu3+JDzvn8bbubGzLx/c9SzY2V0qpgMgwDSmCA
+Zzl458IOjXL/dLAskvlKOpnKGmFAHLaRBXPWqoMCkEoT3BYR596XxeT+OVOf1ajb
+pnLbty6ayFj64ah1p7mfE8xu0Czr1/aC2TG0GH8P3AJSm07KSre2G3wpGCks0cVL
+BBiyNXp7gD1YDBhC+SS0Rbo6BuA5MDX5FCKFYMBl4a0r2qjMDNw7ulGb/RLuWlDh
+aoBvI2n3vyzF/QHN2XZLIdI0d/WREdXtcMXaVzxfCLas4hHa10ohuiL012Zq6hgb
+FZ4dxV94z6PaZX8y8nroU5Lvem9aqJ8zb08U+h038FhBVAa2uLgC/LjmoK6jBJ43
+Qu64tiQgpr9jzAHfXkWOhwZAroC7m7T1Vycp63xZHLyeYDJyr33Ed73mHIh4vweu
+CXOtWF+G7Xa/FzcofLMO
+=2/70
+-----END PGP SIGNATURE-----
+
+--pFvhU98KgkPGKFretRFFR37uIE6NefcR7--
+
+
+--===============0889591000587934189==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0889591000587934189==--
