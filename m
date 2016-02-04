@@ -1,39 +1,78 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [dm-devel] [PATCH] block: do not return -EOPNOTSUPP only when issue a discard request
-Date: Wed, 03 Feb 2016 17:00:56 -0500
-Message-ID: <yq1egctlahz.fsf@sermon.lab.mkp.net>
-References: <56B1CE5C.10201@huawei.com>
+From: jiangyiwen <jiangyiwen@huawei.com>
+Subject: [dm-devel] [PATCH] dm-mpath: fix a tiny case which can cause an
+ infinite loop
+Date: Thu, 4 Feb 2016 10:08:02 +0800
+Message-ID: <56B2B282.60400@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <56B1CE5C.10201@huawei.com> (jiangyiwen@huawei.com's message of
-	"Wed, 3 Feb 2016 17:54:36 +0800")
-Sender: linux-kernel-owner@vger.kernel.org
-To: jiangyiwen <jiangyiwen@huawei.com>
-Cc: axboe@kernel.dk, linux-kernel@vger.kernel.org, dm-devel@redhat.com, martin.petersen@oracle.com, =?utf-8?B?THVr?= =?utf-8?B?w6HFoQ==?= Czerner <lczerner@redhat.com>, xuejiufei@huawei.com, "Qijiang (Joseph, Euler)" <joseph.qi@huawei.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: snitzer@redhat.com
+Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, Christoph Hellwig <hch@lst.de>, James Bottomley <james.bottomley@hansenpartnership.com>, xuejiufei@huawei.com, "Qijiang (Joseph, Euler)" <joseph.qi@huawei.com>, martin.petersen@oracle.com
 List-Id: dm-devel.ids
 
->>>>> "Yiwen" == jiangyiwen  <jiangyiwen@huawei.com> writes:
+When two processes submit WRTIE SAME bio simultaneously and
+first IO return failed because of INVALID FIELD IN CDB, and
+then second IO can enter into an infinite loop.
+The problem can be described as follows:
 
-Yiwen> commit 8af1954d172a("blkdev: Do not return -EOPNOTSUPP if discard
-Yiwen> is supported") only solve the situation of discard, because When
-Yiwen> applications issue a discard request to device, they can't expect
-Yiwen> deterministic behaviour. However, WRITE SAME should not ignore
-Yiwen> error with EOPNOTSUPP, because if applications issue WRITE SAME
-Yiwen> requests to device, it should return deterministic results to
-Yiwen> applications according to the T10 standard, or else it will cause
-Yiwen> an inconsistent state between upper layer and bottom layer.
+process 1                              process 2
+submit_bio(REQ_WRITE_SAME) and
+wait io completion
+                                       begin submit_bio(REQ_WRITE_SAME)
+                                       -> blk_queue_bio()
+                                         -> dm_request_fn()
+                                           -> map_request()
+                                             -> scsi_request_fn()
+                                               -> blk_peek_request()
+                                                 -> scsi_prep_fn()
+In the moment, IO return and
+sense_key with illegal_request,
+sense_code with 0x24(INVALID FIELD IN CDB).
+In this way it will set no_write_same = 1
+in sd_done() and disable write same
+                                       In sd_setup_write_same_cmnd()
+                                       when find (no_write_same == 1)
+                                       will return BLKPREP_KILL,
+                                       and then in blk_peek_request()
+                                       set error to EIO.
+                                       However, in multipath_end_io()
+                                       when find error is EIO it will
+                                       fail path and retry even if
+                                       device doesn't support WRITE SAME.
 
-Yiwen> So ignoring error with EOPNOTSUPP only in discard situation.
+In this situation, when process of multipathd reinstate
+path by using test_unit_ready periodically, it will cause
+second WRITE SAME IO enters into an infinite loop and
+loop never terminates.
 
-If an underlying device fails a WRITE SAME request, SCSI will not return
-EOPNOTSUPP. Instead we will mark 0 bytes of the request as complete and
-disable WRITE SAME support on the device. So any EOPNOTSUPP error in
-this case would be coming from MD/DM.
+In do_end_io(), when finding device doesn't support WRITE SAME and
+request is WRITE SAME, return EOPNOTSUPP to applications.
 
-That said, I agree with the patch.
+Signed-off-by: Yiwen Jiang <jiangyiwen@huawei.com>
+Reviewed-by: Joseph Qi <joseph.qi@huawei.com>
+Reviewed-by: xuejiufei <xuejiufei@huawei.com>
+---
+ drivers/md/dm-mpath.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index cfa29f5..ad1602a 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1269,6 +1269,11 @@ static int do_end_io(struct multipath *m, struct request *clone,
+ 	if (noretry_error(error))
+ 		return error;
+
++	/* do not retry in case of WRITE SAME not supporting */
++	if ((clone->cmd_flags & REQ_WRITE_SAME) &&
++			!clone->q->limits.max_write_same_sectors)
++		return -EOPNOTSUPP;
++
+ 	if (mpio->pgpath)
+ 		fail_path(mpio->pgpath);
 
 -- 
-Martin K. Petersen	Oracle Linux Engineering
+1.8.4.3
+
