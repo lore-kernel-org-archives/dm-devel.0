@@ -1,17 +1,18 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: dm-multipath low performance with blk-mq
-Date: Thu, 4 Feb 2016 15:32:03 +0100
-Message-ID: <56B360E3.2020806@suse.de>
-References: <56A904B6.50407@dev.mellanox.co.il>
-	<20160129233504.GA13661@redhat.com> <56AC79D0.5060104@suse.de>
-	<20160130191238.GA18686@redhat.com> <56AEFF63.7050606@suse.de>
-	<20160203180406.GA11591@redhat.com> <20160203182423.GA12913@redhat.com>
-	<56B2F5BC.1010700@suse.de> <20160204135420.GA18227@redhat.com>
-	<56B358EE.6000007@suse.de> <20160204140959.GA18328@redhat.com>
+Date: Thu, 4 Feb 2016 09:44:12 -0500
+Message-ID: <20160204144412.GA18529@redhat.com>
+References: <56AC79D0.5060104@suse.de> <20160130191238.GA18686@redhat.com>
+	<56AEFF63.7050606@suse.de> <20160203180406.GA11591@redhat.com>
+	<20160203182423.GA12913@redhat.com> <56B2F5BC.1010700@suse.de>
+	<20160204135420.GA18227@redhat.com> <56B358EE.6000007@suse.de>
+	<20160204140959.GA18328@redhat.com> <56B360E3.2020806@suse.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------080301010206000504030405"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160204140959.GA18328@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <56B360E3.2020806@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,280 +22,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
 Cc: axboe@kernel.dk, Christoph Hellwig <hch@infradead.org>, Sagi Grimberg <sagig@dev.mellanox.co.il>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "keith.busch@intel.com" <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, linux-block@vger.kernel.org, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------080301010206000504030405
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
-X-MIME-Autoconverted: from 8bit to quoted-printable by mx6-phx2.redhat.com id u14EW82E019147
+On Thu, Feb 04 2016 at  9:32am -0500,
+Hannes Reinecke <hare@suse.de> wrote:
 
-On 02/04/2016 03:09 PM, Mike Snitzer wrote:
-> On Thu, Feb 04 2016 at  8:58am -0500,
-> Hannes Reinecke <hare@suse.de> wrote:
->=20
->> On 02/04/2016 02:54 PM, Mike Snitzer wrote:
->>> On Thu, Feb 04 2016 at  1:54am -0500,
->>> Hannes Reinecke <hare@suse.de> wrote:
->>>
->> [ .. ]
->>>> But anyway, I'll be looking at your patches.
->>>
->>> Thanks, sadly none of the patches are going to fix the performance
->>> problems but I do think they are a step forward.
->>>
->> Hmm. I've got a slew of patches converting dm-mpath to use atomic_t
->> and bitops; with that we should be able to move to rcu for path
->> lookup and do away with most of the locking.
->> Quite raw, though; drop me a mail if you're interested.
->=20
-> Hmm, ok I just switched m->lock from spinlock_t to rwlock_t, see:
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git=
-/commit/?h=3Ddm-4.6&id=3Da5226e23a6958ac9b7ade13a983604c43d232c7d
->=20
-> So any patch you'd have in this area would need rebasing.  I'll gladly
-> look at what you have (even if it isn't rebased).  So yes please share.
->=20
-> (it could be that there isn't a big enough win associated with switchin=
-g
-> to rwlock_t -- that we could get away without doing that particular
-> churn.. open to that if you think rwlock_t pointless given we'll take
-> the write lock after repeat_count drops to 0)
->=20
-personally, I don't think the switching to a rwlock_t will buy us
-anything; for a decent performance you have to set rq_min_io to 1
-anyway, thereby defeating the purpose of the rwlock.
+> On 02/04/2016 03:09 PM, Mike Snitzer wrote:
+> > On Thu, Feb 04 2016 at  8:58am -0500,
+> > Hannes Reinecke <hare@suse.de> wrote:
+> > 
+> >> On 02/04/2016 02:54 PM, Mike Snitzer wrote:
+> >>> On Thu, Feb 04 2016 at  1:54am -0500,
+> >>> Hannes Reinecke <hare@suse.de> wrote:
+> >>>
+> >> [ .. ]
+> >>>> But anyway, I'll be looking at your patches.
+> >>>
+> >>> Thanks, sadly none of the patches are going to fix the performance
+> >>> problems but I do think they are a step forward.
+> >>>
+> >> Hmm. I've got a slew of patches converting dm-mpath to use atomic_t
+> >> and bitops; with that we should be able to move to rcu for path
+> >> lookup and do away with most of the locking.
+> >> Quite raw, though; drop me a mail if you're interested.
+> > 
+> > Hmm, ok I just switched m->lock from spinlock_t to rwlock_t, see:
+> > https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.6&id=a5226e23a6958ac9b7ade13a983604c43d232c7d
+> > 
+> > So any patch you'd have in this area would need rebasing.  I'll gladly
+> > look at what you have (even if it isn't rebased).  So yes please share.
+> > 
+> > (it could be that there isn't a big enough win associated with switching
+> > to rwlock_t -- that we could get away without doing that particular
+> > churn.. open to that if you think rwlock_t pointless given we'll take
+> > the write lock after repeat_count drops to 0)
+> > 
+> personally, I don't think the switching to a rwlock_t will buy us
+> anything; for a decent performance you have to set rq_min_io to 1
+> anyway, thereby defeating the purpose of the rwlock.
 
-My thinking was rather a different direction:
-Move the crucial bits of the multipath structure to atomics, and
-split off the path selection code into one bit for selecting the
-path within a path group, and another which switches the path groups.
-When we do that we could use rcus for the paths themselves, and
-would only need to take the spinlock if we need to switch path
-groups. Which should be okay as switching path groups is
-(potentially) a rather slow operation anyway.
+OK, I'll drop the rwlock_t commit.
+ 
+> My thinking was rather a different direction:
+> Move the crucial bits of the multipath structure to atomics, and
+> split off the path selection code into one bit for selecting the
+> path within a path group, and another which switches the path groups.
+> When we do that we could use rcus for the paths themselves, and
+> would only need to take the spinlock if we need to switch path
+> groups. Which should be okay as switching path groups is
+> (potentially) a rather slow operation anyway.
 
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
-
---------------080301010206000504030405
-Content-Type: application/x-gzip;
- name="dm-atomic.tar.gz"
-Content-Disposition: attachment;
- filename="dm-atomic.tar.gz"
-Content-Transfer-Encoding: base64
-
-H4sIAL5gs1YAA+w9a3Pbtpb9Kv0KJDubK1uiwjdF+yatb+003iZOGju3c2dnh0ORkM2NRCok
-ldS7zX/fgwffIE3ZcpLOmtPaDgEcAAfnhXMOwOnTt+4fL7Hr4ziZ6oZuGU9lWVYkfyWt1m56
-JW0SLM2DNFonUhAmKdSUogV5swjw0p9CHe/qh+4HAMqmrtPf8NR/y4qm/KCopqGbsqqoxg/w
-0zKtH9AfN8DdybNJUjeGoXyNvr7DR5PRKg1W+JkCi29YqqnaU02bWbJqm/pQtZFbKdX0qWHN
-Zraiq0No6rU3/dYTe3h6PTtndnEfnP81SzUMxvemyvlf1YksqPK/KuvmD+ir8GTG/1dujLvq
-JYCbrvK6cPuLPC/iaIVmhuZiS1aUuW+pOrZcV9ddy9BMrOAFVjRXtW3bMG30OgrROV4jxUKy
-fED/QypQ0JCAOUAv3TDECXqHgxB7HzD6O0HqTwRzUx8/Hx67KT5Av2N/Ao3Qf7gh/FJMpCgH
-unmgmmgsK7I8PN/M/xt76QH6z7dHFz+/RMpT+79QRqEHCIAhRqKIkyiKFigj0eHwfVG+iOK8
-AH1ylxsYWxoh91MU+Ch1PwThJXJRsg7CZeR9mA6H58FliAnJA81fd07Hi1bPh5IkDZEfB59A
-dz5d+U+zQU499CdSZBuN2x9J/AyRghbBEiPvyg0vCaaMGZknjtMgCpPReA/eKMjHS8xeSHvD
-oR8sFkiSLoMUuU/F45mL3w+D0Md/INd1Tc91p9PFwtIN1YXBE4YlE2yDOIQ5tEL96SckzfSJ
-oqAx+aUheJGk8cZL0WqzTANSDf3vEA34y3UcRHGQXjuXcbRZo/0Q/5E668vDwdN9dP45AKFD
-1i29ChL09hcULFCCU7T/FABswoSuGYrxGrup40WbMD0ckIanT98kaIkXKZpjoARAqbtckiV/
-e47cSzcIKYShVMD4uMEb7ATRgcIgvAbZgD5j9h5BawLzR9Ks2WjhhJFDKVShw/6NtoH6ZLhL
-FwDRSS/cYJnUQSTuJ+w7AkCIzJ8UAvaAd5C/ickEgALXGBpHYQ1QjFOYl+OmqetdAcirzw6Q
-kb/EMQd2ugAs4hj/LYHpxMA718AARS1YCJzgMJ0gPwr/lnIiREE6rXW0vnSCMEgdP0jc+RL7
-fNL8NYJ1CiNovoljgLa8JriLPkM7gDIuoCwjmMxi6V4mh8Pxv/l4AXyGXgPXv3R+e3/y/sQ5
-fTMYDBTUuRTihi+cszcOeTEYqKjPctTAnB/98+S4CUzrtSI1WO9OLo5Oz5yji4ujn18C1Je/
-Oy+Pzo5fnbxDeo9FAYyRB8Gz371AtX7f/uKcnp1eOMen50f/eHVyPBgYqOcioTJrZYsN1BUH
-OKErfbZZzYFeQPISC5CKVVJ8nUOvcmcGosSedQhZQ8KlbBBEiiiqOgHFoKhUmlAxAgaph5gI
-j4PLSxw7+BNMYMRlyeco/uDwv/fJP/YOh5VWLhitn2DtKJP1aRWEKXJAHJH6znyTXGeN2Cu0
-z36TFsUSnJ7nNDxa7aEUJ6kDumhUJe8JegKl0nPKBHui1jnttUPJq3RAE9OzAKa4YgfkduoW
-QG+v3NFDnY4FcOtVatCAnJ/ut2jctmdI2O0IWMJziaZFoJlSGFDCyNKWJxaQpW3Br4IqGzpu
-n/CU5+QvMsrxVw5YnZdEi6UBjG8AUolMi+jEAZ3Jq9PzC+flydHx6MlKel5VkAkhtcGAGC4O
-sVwo49B65F9QKA0G8I9MnaFnSDkkUgS0ppgGVxmmKFzSXybf8dK9dlYJ9hKAcvy6QPTJq6N/
-wc8XR+9fXRzmo/79zbtf6UAqrDmpcirrhcL/7AYpG+YVyD02Vd41KYKaBNuqoRFsq6ZcwXbG
-l6w+YJpydDJqrsJqr2RrVJj2sCylqD6qTB0mLR9SI4EuUDE6wPw6ji5BGifozz9RGWVcJQIN
-39BITNpkqAOQpZs4ZH2j8oJQAToec7wQ40oGxNgK+V2Tjo6TUNMJMCRCyQSJpRj0V9K3pNPA
-XQZgVIOOItbXIogTWFHQTVwZE6WaBqCRgxQ0GNVfPzLxz6dfqDIndFeYU3lpUjH+uAliWABK
-qHci3i8IL2GsHT3Igh5k2oO3xG7cpw/hojAwZFk0xSTkqqlahVz5onhXUZRgrk5aFib4H+yk
-KITBXIOg2yvT6Px67SZJhivEsfwIRgPVYY8T+IwLCJbvOM/BZQRqnZhI2M/mTednziYzmJ9l
-wC94wWocEIH5tKY0V0BGznqTgN50vQ8tnEkGygl+VIw3t4OBVchMhEWPnhHWE9vP6MkTmG0G
-uEWjAmzASFspgO/UndADoIlI8zBaLMk0mSHog01IxguyfY+gMsccMCqhDHsmEGQ5VpyVuxYq
-ipxlCTmDAkT7HogsPKFkAEx7HBGWDTFQByxcAntEqOvCi8+cyUt8SSiGm36cFhmeiZlJC3Oy
-efKELkt5g0XeSVL95TMgMJgvIJQBqZlAW8MB1NbZBZgj5wpG/XzslA6q82HMqMtUU+uytWOU
-DxgaGzTOJfgghjFJJ6dvqLn8grIIwz5jK7AmnA31OxB5xMUWF5g56quaJRNihLXH5SY1RLe3
-ohhtKsxVid3L4yIsT3Fo2hMV9vK6ZU5Usy7SCiTGQHEuLBZF0UiIuD1iiVHTCnY9QKzxJiRd
-km3AhupNui9LAO1X0WbpF1s+omWiGOE4hp9B+iOTNlJpOev8L5atrfv2CREylHIr+3InWvoO
-9R0BYW/d2zyKloKexrwnWlzvhcpD4R5ZgoKS0Rd/JE1zu2+CMtEtcXulDpnpgxZpSTmo/vaQ
-GzE1SJQAB1XSKwvGPTrDqsZu3ViUdA60IkRNW9e1VL/2uf7n46tP6BuOjKNSOCKhcdMCCrGR
-3LCYzZWUBiINKq5JqYyJAUJnYLGmUSwitXZzom30nDYfifAgxg+IJiqTQTo4IC+cVTZhN7kO
-PaZn4X9SzpVCYT4T8WVYGjWTjZlRNZPrBrAbJ1WvAHQLmsCh3kY3KSxmIuyYegVhtL9Ocuk5
-d3NLKd8ytDvluKSu28ccETfurVtaw1g+wrLOffzJAS3GcDVag0Ygzll4Kz0nZXuH/QbJmL3P
-gKiGYYAOyCgKYKXxwcgSLwkc/8oRlo8+TtAvL946v568Ozt5xbeK0LmwMumRrLA1o3aVZWsN
-Jc8WdQHWxQao+IaFrW8ZuanPCBbqeKDdvNV6RNqS/ifocTviHu9xG3zQTQTZBqcmBDpdJVU7
-feBFYRqEG3yYjZkgxVb0iQpkb6vmRNHbtTbZaDuLKHaK7cxqzcILLQZ71Z/GDN8SvCjusvTv
-ptkqzgm+0862jVsIrSqqBd6jisRCAzZHMjPGTR9opCNbQp8uQz+MMlurCS9r7NfKm94Uzrh3
-QZe8JbrqIv4GhH2pk0iBGj+NW3xg1K2mqBb1qymagJP5PJbBipq1lJG282wQL1APtAn8PWxn
-8vdnVcua+sPJJuZRPwfQTVA6PEKt7hJuDkCVCmJYIXOhywZFqqooTYdEPmpistM3+76buhOK
-cmptU/8DnYl478C2O9nmgak/SeR46Ol3oHtZ+AF7hN/dDxht1sgNr1F6RVxLiPAWibiQDS7b
-a0/5LC2dzXLW9BL6kQMVYSid5CLaVfcil24XTFbYMGwKK/VRixnNtmw3bDSLnSaV/pkBTJGi
-aTMahVU0XRRAKfhyHSUpx2ebj7ptz5dsVritTSnGW0Y5DFiwEnuI2HHrmEZnDttUxVayT7zL
-ERvNW8pEbhG1Ooe2tuvH+Q5jS4v6C4tv8BWHPbpikxWfqeSP1hUnbzdJq9ODFDrp9Zo4Ismv
-3Mn0gptShSuJFBOnzfnF0cX784t/vYWxnr14Q/ebx69PXp9ejB6r6N835L/Hk9I2M5qgunBk
-WwpBq6qPQ9iQSULGdBmEepcFJYzLHdX7qHj5xpTNEH1GAsn9HMl7IKzU1orlKMqj9jBKBkTK
-gXQb5oeZdBEJl9zHgG4M0jGcd+3mybQyVDUQ+bgw0pvIqbatYy5fnXorEcS+WBT2WG7c6LVU
-WEFqB+5LGOvGbWU0HbuAx3logbKxYTCdbZgKc7KXtFlJascY9jeEk7x0KWZl0v/+KvLJxovZ
-QeWNICmoblhH3GgCc6TEqHSzOXokKitILjN4SiCqXMvd7cw7LKpUoToWCKO67ezNxc9vzs5y
-FqcKcZ/uYotKRAFS3JmqTXFnambDEihwVw7k19UWk3R5okSI8rAd7PfDiPkokfvJDZbUZ1mO
-domDfWXPetVKaMUmNQ86GrWhjRkNZHqZgVg3ziQ0VKazqTE1h8OpMP9bLVJCWRBRSiPJTaNV
-4Dnp1mmgN+d/q9X8T8UyZfMh//trPML8b2tmybou0xTvav63YU412zYtU7E0cQJ43vZbz+zh
-6fPsnNnFfXTkfyu6rlp1/reAIR/yv7/CQ/O/fXOhez5e6DZeYG/um7Lne7KhewvV0BcLTfHs
-2cyYufeU/60eyNqBqrXkf6vV/O8kzwfOSJTlfGf/olnfAiW84/RuXRVld/fO6oadWS2rG+a/
-46xunsw9nVqqb9uWuousbksnqR/U1dKS0w0mBvV/FmldTuG7IyU0IP47/FFeKVS4SBtp2XW/
-VyXVmGQ7JFlqdz2xWkAGtPGbcHmNohDnULLUVzeF1x5meco5Rd0FjCAJlm03aLosBXNMM80y
-GPT9j40k3Kr9R9tdRKm7RGGeR1sOoGf5syzhxJbb12u3ucqob64y2lmustSW9/zu5Lf3p+8I
-LBN1Usx3kOvcSiZ0V1obBtvG8lMNFbop0qZtljYtSjTqlcl8b7nD6N5zh9FOc4dFmcgZZXVA
-y6rcfybyjK50LaXs9pnIO0g/Rv2yNceDTMRC7Urub0nQTpD8vWYlmzL1raumUnWtf0d5yW0B
-pTGPqVPsx/VJloDs3TlRWWrPw20PLJa4pxEaQj9fgbmGiBZiophE8RsdtCQ6sjijatkTG1Zu
-Jk/s2y9cLe5eJK/QJcI+i9/WQsUwo8wNVzmIMmGqk3lsq4u9t5dlEQgWiKCYuHr5Wgah17qU
-WWiOr5m41mGRM9uHPETR3tsmntOVAVPlHlLav0pSu9QRpW3Egm6g9K3z3Vs7F+d839j9Nsnw
-LM/WYnm2u05tvq88295Jszek2orNgjtk29qyRiN4tqxX83aq/muvJZOilOJKGsB7b9IWvN0+
-9YfM6vjk51dH706c349OLygyRgTOJLPO9zpCt2jg+r5T7A8buhXIi6tYupG8IpvmkcKxSVgi
-E+X0+OXo4uj8V+f92enZxcm7d+/fXpyCbuIJHD2DxLmOECo/lr+1TTYkBddHcjLqnUMdSplU
-MvfviaWlRU5C4kibJR7tFQSkyDTRYwzb/WbSe4zJqfn68cfmGaABybRkspBHEao56jX5l2X3
-F5qWRITzgNNlxhCFktxGOU7picydqkGCQOAb2v2GHSAFQ/L9yT9Pzi4cvt84PSMhbSIcaY7p
-hOcoaTrPUWommuwgR6lnhlIj3nTb3KKdaq2OVCQe2FRsm0g1QJ9tCNIS+6YjDZrHV56hs/ev
-Xh02S8slX6pK4JFI5lcl/qMWAU+grS+l56UDWSWTnJ5qEVFf1fT2MZESxNrqlhOg2o4YQxD3
-IPEBRMQNkwUiwRJOqLUCu8PLiKRHVTWgcKtQ1XFcubWrssb+izkcnqGyO2u7TDEW6bZ4pNtS
-OqK1PSPdBFFvCTGwBJbC3wrzzE5EZS7GgfB4Ed9tfimlAYgIpAtfHHSr5u8v5LdKfGexb83g
-se8ubHbFvnvLn20j5DfsVbfbk5L8wB2Hxith8W8dlvlqjzj+rxUhwZX7AUtVFPPgYO/Q4Nbx
-f/JTe4j/f41HFP/XlZklGzNdacb/zdlUVWWwMFXLEsb/i7bfemYPT59n58wu7qMj/i9blt7g
-f023HuL/X+Oh8X9Pxq6hYVPV9YWr4bmlecZcs2zfnykKnsvuwlTmlqHcW/xfMQ4MoyX+r1Xj
-/4REa9FQ7qncbYAfhFt3cF8Q1DfqQX14s+OgPo/lT6e2pvm2vNhJUJ+67iyrPUj8HcTCpTvF
-wkvR/Fu0bgRp6jcNtN5kV1TsqNT3ujsW72ORXdveVbzvznE81D+O1wz5VVfj+432sdtcxpqq
-N89Q3fZSlxZyYLTSeuOL1HHcaCz2P9Yq8n3Q7e+Bofc7WvSWm5nV9DHe1kk9qJ6i5lnpg+YW
-b0xci/Qtw3hSpizX90fVUjahGhIOmZ8qSUkDGFqwHD0hzcgr1kAY9QbSyEOb3AMEr0B00Px6
-nvTB/PiGTa6+HNskTqzVUESweYMHNvOEBolDnaGYe5jyAgqjGAyLtNaMN+mwEH0+9kTUUHgT
-M0ea4DKV7Axim8/tRm/qi6PTVyVPqpSFOptnEtjBatE4x6X4qLjVTYTPRpo5zbsO2DJHuqxy
-R3rzOGpPR3rLQnZy8nhc8HLh0C47CuucD0umFH66dsfoPTj1qxEHRb11xOGWPvm/BiWR06kK
-PZ5qGeSPnZxPZQ61dRCRxci5tBAtlaJtTk7uSMHccLR1POgXpNvqCOx4m3hd+bxs1gu7YegZ
-gfePo+OTUge0JFNM1EO8VbiOZ1XENGWCH1SasVgIObHUUBF93bX90oe2PT176yNQfR24nQei
-Ohy4UtmBK5UduNlpqRuI8wb44zypiQnIITko2o9MAWG/bAiKPl8FYMPX7LrPJEAzx+QCc7or
-IlY/7GbXa3qcPViVcAgkFXzAy2vRLW3suBjfMmRhKHauOdtHbOPKFvt/9ZpLqBJk3NojdAv/
-r6LKD/7fr/EI/b+6asmmJetN/69tTBVdkU1bNxSx/zdv+61n9vD0eXbO7OI+uvy/JvB+I/4j
-P/h/v8pD/b+yq3qKPNdNFy8WOnYVW1ZM31Dmmmrq2DN81ZxrsjW7N/+vSo6Atfh/dYH/t5r0
-ch/uX3WGug52CZy/asP5a+7a+ct9vtOp5fmq5+q7cP7adItrq31PCN3lqwLf/pyO4HDYVud0
-BKfCvtU5H1QY/+WvF1Q2oPykgiwTn7EqyzvzGe/WLdysKnILt58XoUvw/fqOQbWx++ub91Fs
-cdzgHk5sSMITG+O2LMriop17PbfBzgHQOzy0Gsne8WL7rbLam8jJsul7UGH5UARb5yxEQDb0
-ZLluGHsjJpBln6oavYtZoZ9EMWrkxGIFDvNIizvwQBvRw5jk5tJLqDIptSTJbdkFzef5DcxV
-KRqsVtgPQJUvrwW3MN89Aza7ZZlejryDhNr2SycHZMD1VFV5+3uWd5CF2538xhivFSz3fLQB
-L5Ln+zKslF8xLEjklbZxfBXelIULINlFyKg4hFSBXzp7BGuJRWeLeuUH84vQ2C1AGj2y/v1d
-g9bjQrNeN6GVfNnd5FO+IQ3t/uqz/5/pk3/5R+z/M2ougfL3Gbb3CGzv/5Mt48H/91Uekf/P
-sGaWohi22fD/WfJsqhmaoeumMhP6/4q233pmD0+fZ+fMLu6j6/4nWTW1uv9P1vQH/9/XeKj/
-b2F6Cp7ZoARcd6bPZM+cWa65gJea6Vm2L8/kuWov1Hvz/xnqgaK2+P8Mgf+v8r2g3bv/sudP
-pCPi+6vXo7ySfQBiekXchWjcqEUdA9ISh5cMaBs02OGFPvycByHtu61eguNPgYclInKr8Azq
-iywdd2rcLmXvPA+VeSCnU9NzrZkh7+STwTSJZKZ05KF+F3mY0p0/O1xyI976w8VtEf7bfkiX
-neJX2Cn+5umx7+sDZXf9tlj7N8pKJzODBbkXPSApW3Q/VYZEd+PyLr5S1sGKdTlTZ55aOWdN
-bPnKwp1Np4Zsm9g2u1izDkHEovU69Js6NPnTMCusyjbUvCLdNVOehQ0iuWaDYoB+cHlKX5bS
-qnnSF9of7bPm/IL8kQgw+eAO+1jXoOCA/fLaTPgnk3Meq5WyS8rqCbn5pwc6FqQm0uuYqhbz
-5dBsHZYDT6e6tvCMmdK1HDUAotWoVWGJRPzCY7vBtR+XTkv+XQOlqL4Y3H9GXIEZp9KCK/cT
-TVmBNV0FYbDarEqp80EoLZbB5VVKxVj1m5D1DmBwpeW+abGZSm5Z8WZ69bho00IHgpTskoop
-RkBCB+sEGDcKU9AQZQXCnLmLCIYZ8DzLCdqfE9GXZV2ypH2WR2qrogDM9vjgEpL0U/bpZ7m4
-0mC/KvQQqVmVXzU/dhUxzerVHDZWzlXuly6Gqdo2dVqulHJ2Md25AoiaTr2ZPtdnmt3FL1UA
-Inap1uBnpPkR6WaqanwHbtmruivr5QD7r0Lso8bbvS0YgJO8xTKCa6f6b40VTvI0YR+v1un1
-6AmMSJB0SsfBqoVpfD2q1poSG6/6ITcy/AltUToTsIo+4exQQJAfCqj1SPMP66xGqtcZrZ3T
-6rVLt5NwXoP5/EirUYT9X3tX29u2kYQ/K7+CNpBWtiSDr3pxkAsMW02Nqx3D9rV3nwRaomJf
-LMuw7Mu1xf3325mdJXe5y1dTaQtw0caJSS7J5c7uvDzzzCENcY7IpcyEtECohwWwYLEcL4c3
-uEf54TJXZUh1YBK61Cm8hjdqDG6gx0A3nHcI6B3u1+Gia5pbjv7N4NduP1/oWNd/FaF73Q5D
-1Y/ckZ8rbqXH40+2w7TBhW01s/9/mLgE2Zxkkv08UCEVGBIGnvibu+f14ybfP1js/7dT/j8v
-cN3W//8tmjvR/f9Dxx857niiu/89JoCuG7iBZ0/esEs193986R/9Xm0r1xoXdvM9cvz/fmA7
-mvxj/ZfW/7/9hv7/sR3Mb8Ibf75cuONg6EaRE8695WjuBOOlv7Qngc+Oetuq/+Ad2k42/neo
-+v9pipoYBMCpyKdow1hgOzAVe8gp+GCGCE+GGkTYbtwxT/74gwNIxmRqfROOeY/nvnsCSCP7
-4CWFFi0nAELi397JCFVDjjuyRnx9QMf2x5RbPU6VfadRuqH33Oj5jpnaLz6i6/v0anZ0fH36
-89RyZGd5kjbNOz9+Wb3ch5iXC4dewOGOSq2KsRU6NNdJkTYj6EPQCgouOpkBiyZqYTREv2HA
-Ppel3xjIz1CDQGNQFLgZlAncZJ5UNnCDqXzKg8xmT/MX/XF6GXfSTi88teyjWduLCFEdkKHV
-m+SF1r554Y7XpgNklP3g0O7L6fXlvzojK49TpomyH3+adAC57IeBmbZ62Y+/QnEOU2/1i3OY
-Sn1Isynv8ZKztl7ww+PBHt/oWBVflGdyUDwSIK+ZqeLWe+vLb3h6F7xV62VXTIe+9fGHi9nf
-p5fn0580lhBKxc7gtpCIg9ObscTxTCDhJP0Ch5HNHp6GYa6TYCn/VDjooSIH5LkMXT1pgCP/
-V+EjONPMAPKXBxhsdgo53ODPPQ3HXzZf4/einUGFItSp/sEdfzakAfSYbd5nunTt7JKtZnQM
-DBF98J9i4jobDPZaT9GS/c80FZVwJC61vQNXaOkrxhLBuCQKSH2mKFPmvDqsuMTOntezfzM1
-nG0ENeoPWx9oL+1klBi2DvVrz66mx1cYT0AdGij5ARJPIQw+KfgXSIZGMHtsKHiBMy73cuM1
-nF366svdI1E8yVqbGPqUkMcMyDvxelgo5t+4YgrKxhiXSneiR/rKS0YztU1wtUyzkidMOpj5
-wOQg3IDQzx7X7BmjJ1UU+jLzTiyCW65pgtaf4yJ3jecMdeqaJhKbKNhAIxXL+GB6/k+gdLHS
-Q0fbFt6RySrtcrQdZA0kKeJ9jGHknKfepm+8y56y+kjfdAc+qlh68hc2cS7ih5JJteobyLc4
-H4u09Blq7tSioPs926YqYdsUENVZpbmCuI/BwY3M8wI1r+1VFHv/E3LyC2xSKCf8UoKgcYvs
-4uMHhaFcsKsIHSdNr8I56fg/4zBc9nYmuhN7Ge85qWyjS9AKhF1CkVGpG5wA7+TXOpEtNCb0
-zPa4AwG3bkOwvJiUr5h5CKaitKrr8xZS0zKeI7UGSY9Uaf/Ov4n+svG7ckwWzhB/0oe0fC/w
-+m5jJIzWvskbYm0QqrhYo/l6G65WzAaDzetpzWy3JwnCxk75nWfKmXZeI5OgvGGbrgPpKr5W
-EFapRSjey5mcnfSOW2HGCZ8AjwPHfXLcXWYxCK77d7LSDWU7iU7spHLG5WnOmbY43ZZFxYDE
-owwGfBPkSsthxh7BRVPfeoXIltsDSm8Z8al8haZMWq4mf72NsGbHzd16YwGRGZBB4c4MJJi4
-ay8ihE0AKRRON7ZkPYVwEXbzzKScK9t0OgfeHsDBNwN2AmVfxp3fRvcLKAmCk+oATsF+Tpdw
-Jle87pazhzV3bIKiwH4Pua6izoR09HbN+mI3xR42QA7IFvEXVDYeQFKgBgmIyk30/DViv1JK
-d2xeNo/Rw6LL0YR4o/gwHF1F3T30imzwIOvulj0FrF8CKzyHIeSrwGSEpGm+baDVfGWpMTpw
-g3mt/GNY+zfsL5Klxvri+ukdMxGBYc9AqiaT6A5o2sD+hyd0BVdYOTS0yXbCLxKXzNjJXYG5
-sS5VzPgmkOdBLuS5lxwtfnZJlUhcD7ll4RDJ7gZQqdp3R33dKn4lkh1mhKy+h4I6kqaKniCt
-Tgj+NthhYoF9ul+Imw1uwg1nxo2eluE8OkSv6TwEpQWvArcqLfh3opgNHmBiDVgc9hgz9iJU
-Yw3+SUwUvocOQt/TkcJNVOljU2t6edndZ7MDX05sIuz1puefzqZnfX7lSyQq8KhuGVA3wscZ
-waB4BnQiPHw4u7RNSHSKtE0k92Vfgknneyv1G8DzKagpP+DVJv3AWML1dQOSWGvs/80BwOHZ
-6squfQaiz+/UwwKUzo3Z7+SppR6SpKxnHhoamJOz2dnRxeknttuynxfTE5SjpODgYf4sNXf+
-xkBjOR5jdHA8Dhokgi5HsyxWgcGAVGw4Iy4Tlyjo3JbpFFmG3K4m5ZqrVoRv23lPNLJpTmgy
-Xib+qO+yTWkCKqqbzTawyBiGPRUoX44hOpPYIt6rZOVX8TcM/raqwgU6yPEDIfUBeIHYzj0r
-7fTFTUQuT2Z1Ts5+Obo87+5CDU9hsFhvNwe7fcNKi/4JObcmJWfJ6KUFTRUu9LlVZtq2SlBq
-D4optQd5bM0GraGX6rJ470RHXQ0d1yD3lei9rQb4lVGuRi7s4vAjvYuXYFAvw84M88+wFGYz
-mhg8MfikbBUENMBk7PCa0thvDR5s2DHxdJiEbL+UGLvt7Mqq25H4YoFPwgZ1RF5ZVRT5VQcr
-4Rm3XXQSTcAIGKezN0oSjaNvTnsa8zLgZCrw1cnZC8S9mpzqZO6DBsjcB01UaC1Vg7WX/7Tk
-HIGDRX5U/S16ncLXkMH7Ba/U65R/J2IGr7mIGtjtm1pIHdsZE0P/UFtKywrOVtZTkkcxl1Eu
-K1S9FJUaAu49dmx/rKvyIVb9BIs+NzbBbguW3T77I1UyO+ZVqxHboA+YIlnLZiUrvUYbl6VU
-SVrxV80HVso/VpHqa1vOtExxKjEhRUlsSkezh742/ePgSwXSPDWTp6CCz+Nn1nHO3o39Ll5W
-q1+VbZF1DlyO3c1mHj4su0TWt/v25e18F9dh1iv7iRdiOMlB7scdPAAeH/7mY5tXnrBHrh6+
-q/nuUozu9Pzno58SzsQyU9c4cWv5z801mDtUghkHQos75+/D6YOpA5pNWXHOV5n0pc3VykJa
-T5QktZdTUfo2KOeO4xnwNiULeWdBkuDcHKYOLXyerQCj4pvJABn/Wg1jIM0nElCqvycSQwq+
-kYd4/UTIcaiRwXallagZx4OLXXpbocM6Q74TO8Gk9rB1btgn/IJrR8h0qKvjq9PZyY88sHJI
-DkWEFRNaEJ+fGdUHBOswBW3U3xEBo9r/6dlZco/Una9m19Ozi9k/zo9+ZrbgoZBCM4HnStj0
-5K11nLGP5pPjcFR1zWFJjMLEefzahSkuCrORNOQ8uz5RXSuZ6uQrPTkDF+ruMZKvQkQF3mkN
-s4tPtwNrihVq3i7AM0IP9k74vLJXtcwQWPU1rEIYTATvYlV/J6dour6U87nBuYDZT/TW1pwa
-uuWZXe5+ULbcPX3nFO6sTPRTgdOxS5BwtdfRKYoLLyZBMxec57uf9O5Uvc9xqWKXawe1V6Gv
-4Zdo9vJoor2uYQiYtyYN6aLYaEJjkQnQ99FuE2/Jp47rePpblu0pc5fCsAtTLMK7B7ZPrpdd
-OD8FAUvhVblRmfYPZnlYyvtVNvPN3WxxOxM366ZiQOZY1Z7A0MkfPF6aBV8sDWVAQxl4mgZd
-t36ZtU/xLIyJQwoMZK48QCBs83KzgvyBZ+uevc5TgrcQvjFmO0/PTzC+geHMbP1aaNS8sheg
-UChWJq0OsWpD6RYiBydKoPWgPtswAMOgn3Y91RyAChCp4nJqg22UU4s73Vo5NY5pH3rcfPcC
-X43qv5quWbh54rlBZ+FD98mugfl2/ywFo1bhf++jB8kdu/mtlgPWMB/2LPBfMI0W5DRXxzXh
-w1OG5QwtSzIh0YdTxcubhUyoQG5tleKopsSFMZcgbzwybOSv5ORW+azN0ToFtilQeRziR7HF
-5Pci4CjY0IWjUkawp65Usdn84kwoaFLBrSf1knOi3Gf8QPm+0cK+pXOT7mnVt6RLu8bxtD5Y
-jnXICx7wT+w7nOgqTSDYgBTX9Q9oGDlaglBY2Kt9f/I9T328w5xFylfoJEPMHeVa7oJ2RtGn
-UO96xO96HCfGHfGQA+EixBeQrpjyK6YP8WPyIfe4Iue7duM89xmjnpNKIPHKbyz4D6XxUXNb
-y4Q7cDiJuXywdo922aza/WFX9dLnakRCGbI+KNdIXVnqDZOQroAdinkiYzXYqNCH67ANgMpO
-p07gZaMBwsG/B1Z5Yd8jxXTUgAjERr9k0TajWatgjVW02YSfoyLABoI1aAPdZ//4DyndgYfB
-uZ4TuCO9RIkCDETSp7v1/PnefDPFy5raWjN20VQiVeZ+jXokQVpEQlVFPIQhpG+M2lcCu/Xk
-qGgW1s4uAbITODMFNLdfhF1jp6zWi8h4ChwghS0Yklc58Ee6V7niN05W0h18Pq6RxzpoA3Nd
-RJm4Inr+6fr40/k5mgJLZtfez2CGsB8AUr17+NyloRRqdbmiyaYcN6onq0+JEsBNGT13ESYE
-CDGdxFO0ELBRQRXQyZ4tBJLLcXzQ5SY3wrt4GMoWfTGC9qrE9eKsTmfoEmGjY2uWZ7UiyeVW
-kFJ6eMHy8mbb5ZOJydLhXtOhM6pdQDpV7vhVvtIGKiAPKldANqfoxGsKdZRWx6SrVDoH9fYl
-sNVYgImrFnl6PinjxSlC6ScvWCVy+1UycRLFHhITOuB++SUikocvD+uv4qt9Lv5SBzQBAxJN
-X2ccKDn9+NRPSnpnRQK5M82geKouedmVljjiK3jTaNG9DVUUkCX7Tfgl/L0k9z0fEoo0D4Nx
-3SERo2E36EdNwnfQ+buWVLFt2Mz8j6NUSZg46apWOZga9Z/skd/yP36LZqr/NBy6I2bHOiOd
-AHLoH0zGo2DseGPfWP8pufaPfrO2lWmNC7v5Hnn13wPH1uSf2ZUt/+O3aJz/MRjeDF07GgXz
-UTBaLGw/GkWRs5jbc39pL+YhU2acidtM/ffr25e+5ToJ/6M9OXT9Q8/J4H8cGeo/xSiBbZR+
-Z4+U5nc0cDmmqRxHTRM5En/jwcGNF3j2TdgEkWOALOGBr9DApaw0GdcYysTgj2TYpsNP6KG4
-FFaHYAFUCQdjHCqefB2tHtdP4dPd/a90RDDifUhVR6p0nfJwEK7gdkKajI3b3swm57STBvpK
-cSH5uiYIc2M/lKBVhruAmLeU3woGLsTnGgm3dLItgQ8QgICYNAL9Nj+dXl3PfpwenXRli0gv
-ki4HPkQVdbW8wOcYJOvx2eGZHNf12RVijgRzDKcc18GgkOtAYP4V/4kS9tk+NwLH2/ocJwGI
-dG0Yt4Ejt3RHzCAbBt7LmR5xt++o0wrZKBUgYQbzlDDaPh+5kaFGRD2csmlwakKNByZ8WqG0
-FWGRCfzIvSjOuD4WazugvJovrfoygVdASo8yeTT3CLN6xOFLsInCSr1GwgzylT5FbFzAL8V0
-kM9rcESJEKhHAMHmo84Cwgv/5lLPUa8qCuKwdnzatK6VWctKxLBFFHkbEerWc9S2trWtbW1r
-W9va1ra2ta1tbWtb29rWtra1rW1ta1vb2ta2trWtbW1rW9va1ra2ta1tf3j7P5om5c8AGAEA
-
---------------080301010206000504030405
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Disposition: inline
-Content-Transfer-Encoding: 7bit
-
-
---------------080301010206000504030405--
+If you were to put focus to dusting your work off and helping me get
+switched over to RCU I'd be very thankful.
