@@ -1,110 +1,147 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: dm-multipath low performance with blk-mq
-Date: Thu, 4 Feb 2016 07:54:52 +0100
-Message-ID: <56B2F5BC.1010700@suse.de>
-References: <20160125233717.GQ24960@octiron.msp.redhat.com>
-	<20160126132939.GA23967@redhat.com>
-	<56A8A6A8.9090003@dev.mellanox.co.il>
-	<20160127174828.GA31802@redhat.com> <56A904B6.50407@dev.mellanox.co.il>
-	<20160129233504.GA13661@redhat.com> <56AC79D0.5060104@suse.de>
-	<20160130191238.GA18686@redhat.com> <56AEFF63.7050606@suse.de>
-	<20160203180406.GA11591@redhat.com> <20160203182423.GA12913@redhat.com>
+From: jiangyiwen <jiangyiwen@huawei.com>
+Subject: Re: dm-mpath: fix a tiny case which can cause an infinite loop
+Date: Thu, 4 Feb 2016 16:25:46 +0800
+Message-ID: <56B30B0A.5080600@huawei.com>
+References: <56B2B282.60400@huawei.com> <20160204032452.GA15344@redhat.com>
+ <56B2CA48.9010802@huawei.com> <20160204042528.GA15599@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160203182423.GA12913@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20160204042528.GA15599@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: axboe@kernel.dk, Christoph Hellwig <hch@infradead.org>, Sagi Grimberg <sagig@dev.mellanox.co.il>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "keith.busch@intel.com" <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, linux-block@vger.kernel.org, Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, Christoph Hellwig <hch@lst.de>, James Bottomley <james.bottomley@hansenpartnership.com>, xuejiufei@huawei.com, "Qijiang (Joseph, Euler)" <joseph.qi@huawei.com>, martin.petersen@oracle.com
 List-Id: dm-devel.ids
 
-On 02/03/2016 07:24 PM, Mike Snitzer wrote:
-> On Wed, Feb 03 2016 at  1:04pm -0500,
-> Mike Snitzer <snitzer@redhat.com> wrote:
->  =
-
->> I'm still not clear on where the considerable performance loss is coming
->> from (on null_blk device I see ~1900K read IOPs but I'm still only
->> seeing ~1000K read IOPs when blk-mq DM-multipath is layered ontop).
->> What is very much apparent is: layering dm-mq multipath ontop of null_blk
->> results in a HUGE amount of additional context switches.  I can only
->> infer that the request completion for this stacked device (blk-mq queue
->> ontop of blk-mq queue, with 2 completions: 1 for clone completing on
->> underlying device and 1 for original request completing) is the reason
->> for all the extra context switches.
-> =
-
-> Starts to explain, certainly not the "reason"; that is still very much
-> TBD...
-> =
-
->> Here are pictures of 'perf report' for perf datat collected using
->> 'perf record -ag -e cs'.
+On 2016/2/4 12:25, Mike Snitzer wrote:
+> On Wed, Feb 03 2016 at 10:49pm -0500,
+> jiangyiwen <jiangyiwen@huawei.com> wrote:
+> 
+>> On 2016/2/4 11:24, Mike Snitzer wrote:
+>>> On Wed, Feb 03 2016 at  9:08pm -0500,
+>>> jiangyiwen <jiangyiwen@huawei.com> wrote:
+>>>
+>>>> When two processes submit WRTIE SAME bio simultaneously and
+>>>> first IO return failed because of INVALID FIELD IN CDB, and
+>>>> then second IO can enter into an infinite loop.
+>>>> The problem can be described as follows:
+>>>>
+>>>> process 1                              process 2
+>>>> submit_bio(REQ_WRITE_SAME) and
+>>>> wait io completion
+>>>>                                        begin submit_bio(REQ_WRITE_SAME)
+>>>>                                        -> blk_queue_bio()
+>>>>                                          -> dm_request_fn()
+>>>>                                            -> map_request()
+>>>>                                              -> scsi_request_fn()
+>>>>                                                -> blk_peek_request()
+>>>>                                                  -> scsi_prep_fn()
+>>>> In the moment, IO return and
+>>>> sense_key with illegal_request,
+>>>> sense_code with 0x24(INVALID FIELD IN CDB).
+>>>> In this way it will set no_write_same = 1
+>>>> in sd_done() and disable write same
+>>>>                                        In sd_setup_write_same_cmnd()
+>>>>                                        when find (no_write_same == 1)
+>>>>                                        will return BLKPREP_KILL,
+>>>>                                        and then in blk_peek_request()
+>>>>                                        set error to EIO.
+>>>>                                        However, in multipath_end_io()
+>>>>                                        when find error is EIO it will
+>>>>                                        fail path and retry even if
+>>>>                                        device doesn't support WRITE SAME.
+>>>>
+>>>> In this situation, when process of multipathd reinstate
+>>>> path by using test_unit_ready periodically, it will cause
+>>>> second WRITE SAME IO enters into an infinite loop and
+>>>> loop never terminates.
+>>>>
+>>>> In do_end_io(), when finding device doesn't support WRITE SAME and
+>>>> request is WRITE SAME, return EOPNOTSUPP to applications.
+>>>>
+>>>> Signed-off-by: Yiwen Jiang <jiangyiwen@huawei.com>
+>>>> Reviewed-by: Joseph Qi <joseph.qi@huawei.com>
+>>>> Reviewed-by: xuejiufei <xuejiufei@huawei.com>
+>>>> ---
+>>>>  drivers/md/dm-mpath.c | 5 +++++
+>>>>  1 file changed, 5 insertions(+)
+>>>>
+>>>> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+>>>> index cfa29f5..ad1602a 100644
+>>>> --- a/drivers/md/dm-mpath.c
+>>>> +++ b/drivers/md/dm-mpath.c
+>>>> @@ -1269,6 +1269,11 @@ static int do_end_io(struct multipath *m, struct request *clone,
+>>>>  	if (noretry_error(error))
+>>>>  		return error;
+>>>>
+>>>> +	/* do not retry in case of WRITE SAME not supporting */
+>>>> +	if ((clone->cmd_flags & REQ_WRITE_SAME) &&
+>>>> +			!clone->q->limits.max_write_same_sectors)
+>>>> +		return -EOPNOTSUPP;
+>>>> +
+>>>>  	if (mpio->pgpath)
+>>>>  		fail_path(mpio->pgpath);
+>>>>
+>>>
+>>> Did you test this patch?  Looks like it isn't going to make a
+>>> difference.  'error' will be -EREMOTEIO, which will be caught by
+>>> noretry_error().  So we'll never go on to run your new code.
+>>>
+>>> Please see commit 7eee4ae2db ("dm: disable WRITE SAME if it fails").
+>>>
+>>> I think DM already handles this case properly.  The only thing is it'll
+>>> return -EREMOTEIO (rather than -EOPNOTSUPP) further up the stack.
+>>>
+>>> .
+>>>
+>> Hi Mike,
+>> Yes, I have already test in version linux-3.8, and I also have already
+>> carefully checked latest kernel code, and find that it also exists this
+>> problem. I know about this commit 7eee4ae2db ("dm: disable WRITE SAME
+>> if it fails"), it only can solve first IO situation which I mentioned
+>> above, in other words, when WRITE SAME IO truly send to device, it
+>> actually return -EREMOTEIO if device doesn't support WRITE SAME.
+>> But in above situation which issues two WRITE SAME IO simultaneously,
+>> second IO will not truly send to device instead of returning
+>> BLKPREP_KILL in sd_setup_write_same_cmnd() because find
+>> (no_write_same == 1) which no_write_same is set when first IO returned,
+>> and then in blk_peek_request() will return EIO to MD/DM which caused
+>> the problem above mentioned.
 >>
->> Against null_blk:
->> http://people.redhat.com/msnitzer/perf-report-cs-null_blk.png
-> =
+>> I have described detailed process of problem, you will find actually
+>> it is a problem when reviewed carefully.
+> 
+> OK, so -EIO is getting returned.  That shouldn't happen.  -EIO is the
+> generic catch-all error that we're going to retry.  We have
+> differentiated IO errors in SCSI that get returned up the IO stack
+> (e.g. -EREMOTEIO, etc).
+> 
+> The SCSI, or block layer, should return a non-retryable error for this
+> case.  But we only have the differentiated IO errors for SCSI cmds that
+> are issued, so it seems we still need to train SCSI (and block by
+> association/dependency) to return permanent errors that are identified
+> during request preparation.
+> 
+> But it may be that we need to widen the WRITE_SAME error handling code
+> in DM to check for -EREMOTEIO or -EOPNOTSUPP.  But I'm really not in
+> favor of special-casing -EIO for WRITE_SAME, we need to be sprinkling
+> less special-case code to make up for lack of information for lower
+> layers.
+> 
+> .
+> 
+I totally agree with you. SCSI or block layer should not return EIO
+to MD/DM, but the return code associated with many other process,
+it will influence more if I modify blk_peek_request. So I use this
+method to avoid it, and I also expect martin can get a better idea.
 
-> if dm-mq nr_hw_queues=3D1 and null_blk nr_hw_queues=3D1
->   cpu          : usr=3D25.53%, sys=3D74.40%, ctx=3D1970, majf=3D0, minf=
-=3D474
-> if dm-mq nr_hw_queues=3D1 and null_blk nr_hw_queues=3D4
->   cpu          : usr=3D26.79%, sys=3D73.15%, ctx=3D2067, majf=3D0, minf=
-=3D479
-> =
+In addition, with increasing number of various storage, I worried
+whether multipath still can occur an infinite loop as I mentioned
+above someday. Thus I think whether multipath should have a
+timeout mechanism to solve this type of problem which will cause a
+ping-pong effect, for instance, return error to applications when
+try a certain counts or time in multipath. This is my idea, I hope
+it will have more people to discuss it.
 
->> Against dm-mpath ontop of the same null_blk:
->> http://people.redhat.com/msnitzer/perf-report-cs-dm_mq.png
-> =
 
-> if dm-mq nr_hw_queues=3D1 and null_blk nr_hw_queues=3D1
->   cpu          : usr=3D11.07%, sys=3D33.90%, ctx=3D667784, majf=3D0, minf=
-=3D466
-> if dm-mq nr_hw_queues=3D1 and null_blk nr_hw_queues=3D4
->   cpu          : usr=3D15.22%, sys=3D48.44%, ctx=3D2314901, majf=3D0, min=
-f=3D466
-> =
-
-> So yeah, the percentages reflected in these respective images didn't do
-> the huge increase in context switches justice... we _must_ figure out
-> why we're seeing so many context switches with dm-mq.
-> =
-
-Well, the most obvious one being that you're using 1 dm-mq queue vs
-4 null_blk queues.
-So you will have have to do an additional context switch for 75% of
-the total I/Os submitted.
-
-Have you tested with 4 dm-mq hw queues?
-
-To avoid context switches we would have to align the dm-mq queues to
-the underlying blk-mq layout for the paths.
-
-And we need to look at making the main submission path lockless;
-I was wondering if we really need to take the lock if we don't
-switch priority groups; maybe we can establish a similar algorithm
-blk-mq does; if we were to have a queue per valid path in any given
-priority group we should be able to run lockless and only take the
-lock if we need to switch priority groups.
-
-But anyway, I'll be looking at your patches.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
