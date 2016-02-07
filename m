@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [dm-4.6 PATCH v2 04/15] dm: set DM_TARGET_WILDCARD
-	feature on "error" target
-Date: Sun,  7 Feb 2016 10:53:26 -0500
-Message-ID: <1454860417-3203-5-git-send-email-snitzer@redhat.com>
+Subject: [dm-4.6 PATCH v2 05/15] dm: optimize dm_mq_queue_rq()
+Date: Sun,  7 Feb 2016 10:53:27 -0500
+Message-ID: <1454860417-3203-6-git-send-email-snitzer@redhat.com>
 References: <1454860417-3203-1-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,106 +21,154 @@ To: dm-devel@redhat.com
 Cc: Mike Snitzer <snitzer@redhat.com>, Sagi Grimberg <sagig@dev.mellanox.co.il>
 List-Id: dm-devel.ids
 
-The DM_TARGET_WILDCARD feature indicates that the "error" target may
-replace any target; even immutable targets.  This feature will be useful
-to preserve the ability to replace the "multipath" target even once it
-is formally converted over to having the DM_TARGET_IMMUTABLE feature.
+DM multipath is the only dm-mq target.  But that aside, request-based DM
+only supports tables with a single target that is immutable.  Leverage
+this fact in dm_mq_queue_rq() by using the 'immutable_target' stored in
+the mapped_device when the table was made active.  This saves the need
+to even take the read-side of the SRCU via dm_{get,put}_live_table.
 
-Also, implicit in the DM_TARGET_WILDCARD feature flag being set is that
-.map, .map_rq, .clone_and_map_rq and .release_clone_rq are all defined
-in the target_type.
+If the active DM table does not have an immutable target (e.g. "error"
+target was swapped in) then fallback to the slow-path where the target
+is looked up from the live table.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-ioctl.c         |  3 ++-
- drivers/md/dm-table.c         | 14 ++++++++++++++
- drivers/md/dm-target.c        |  3 ++-
- drivers/md/dm.h               |  1 +
- include/linux/device-mapper.h |  7 +++++++
- 5 files changed, 26 insertions(+), 2 deletions(-)
+ drivers/md/dm-mpath.c |  3 ++-
+ drivers/md/dm-table.c | 10 ++++++++++
+ drivers/md/dm.c       | 40 ++++++++++++++++++----------------------
+ drivers/md/dm.h       |  1 +
+ 4 files changed, 31 insertions(+), 23 deletions(-)
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 80a4395..4763c4a 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1291,7 +1291,8 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
- 
- 	immutable_target_type = dm_get_immutable_target_type(md);
- 	if (immutable_target_type &&
--	    (immutable_target_type != dm_table_get_immutable_target_type(t))) {
-+	    (immutable_target_type != dm_table_get_immutable_target_type(t)) &&
-+	    !dm_table_get_wildcard_target(t)) {
- 		DMWARN("can't replace immutable target type %s",
- 		       immutable_target_type->name);
- 		r = -EINVAL;
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index cfa29f5..3ddaa11 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1684,7 +1684,8 @@ out:
+  *---------------------------------------------------------------*/
+ static struct target_type multipath_target = {
+ 	.name = "multipath",
+-	.version = {1, 10, 0},
++	.version = {1, 11, 0},
++	.features = DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE,
+ 	.module = THIS_MODULE,
+ 	.ctr = multipath_ctr,
+ 	.dtr = multipath_dtr,
 diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 061152a..a49e62b 100644
+index a49e62b..89180fd 100644
 --- a/drivers/md/dm-table.c
 +++ b/drivers/md/dm-table.c
-@@ -920,6 +920,20 @@ struct target_type *dm_table_get_immutable_target_type(struct dm_table *t)
+@@ -920,6 +920,16 @@ struct target_type *dm_table_get_immutable_target_type(struct dm_table *t)
  	return t->immutable_target_type;
  }
  
-+struct dm_target *dm_table_get_wildcard_target(struct dm_table *t)
++struct dm_target *dm_table_get_immutable_target(struct dm_table *t)
 +{
-+	struct dm_target *uninitialized_var(ti);
-+	unsigned i = 0;
++	/* Immutable target is implicitly a singleton */
++	if (t->num_targets > 1 ||
++	    !dm_target_is_immutable(t->targets[0].type))
++		return NULL;
 +
-+	while (i < dm_table_get_num_targets(t)) {
-+		ti = dm_table_get_target(t, i++);
-+		if (dm_target_is_wildcard(ti->type))
-+			return ti;
-+	}
-+
-+	return NULL;
++	return t->targets;
 +}
 +
- bool dm_table_request_based(struct dm_table *t)
+ struct dm_target *dm_table_get_wildcard_target(struct dm_table *t)
  {
- 	return __table_type_request_based(dm_table_get_type(t));
-diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
-index 925ec1b..a317dd8 100644
---- a/drivers/md/dm-target.c
-+++ b/drivers/md/dm-target.c
-@@ -150,7 +150,8 @@ static void io_err_release_clone_rq(struct request *clone)
+ 	struct dm_target *uninitialized_var(ti);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index c92e356..312cc77 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -154,6 +154,7 @@ struct mapped_device {
+ 	/* Protect queue and type against concurrent access. */
+ 	struct mutex type_lock;
  
- static struct target_type error_target = {
- 	.name = "error",
--	.version = {1, 3, 0},
-+	.version = {1, 4, 0},
-+	.features = DM_TARGET_WILDCARD,
- 	.ctr  = io_err_ctr,
- 	.dtr  = io_err_dtr,
- 	.map  = io_err_map,
++	struct dm_target *immutable_target;
+ 	struct target_type *immutable_target_type;
+ 
+ 	struct gendisk *disk;
+@@ -2490,8 +2491,15 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+ 	 * This must be done before setting the queue restrictions,
+ 	 * because request-based dm may be run just after the setting.
+ 	 */
+-	if (dm_table_request_based(t))
++	if (dm_table_request_based(t)) {
+ 		stop_queue(q);
++		/*
++		 * Leverage the fact that request-based DM targets are
++		 * immutable singletons and establish md->immutable_target
++		 * - used to optimize both dm_request_fn and dm_mq_queue_rq
++		 */
++		md->immutable_target = dm_table_get_immutable_target(t);
++	}
+ 
+ 	__bind_mempools(md, t);
+ 
+@@ -2562,7 +2570,6 @@ void dm_set_md_type(struct mapped_device *md, unsigned type)
+ 
+ unsigned dm_get_md_type(struct mapped_device *md)
+ {
+-	BUG_ON(!mutex_is_locked(&md->type_lock));
+ 	return md->type;
+ }
+ 
+@@ -2639,28 +2646,15 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 	struct request *rq = bd->rq;
+ 	struct dm_rq_target_io *tio = blk_mq_rq_to_pdu(rq);
+ 	struct mapped_device *md = tio->md;
+-	int srcu_idx;
+-	struct dm_table *map = dm_get_live_table(md, &srcu_idx);
+-	struct dm_target *ti;
+-	sector_t pos;
++	struct dm_target *ti = md->immutable_target;
+ 
+-	/* always use block 0 to find the target for flushes for now */
+-	pos = 0;
+-	if (!(rq->cmd_flags & REQ_FLUSH))
+-		pos = blk_rq_pos(rq);
++	if (unlikely(!ti)) {
++		int srcu_idx;
++		struct dm_table *map = dm_get_live_table(md, &srcu_idx);
+ 
+-	ti = dm_table_find_target(map, pos);
+-	if (!dm_target_is_valid(ti)) {
++		ti = dm_table_find_target(map, 0);
+ 		dm_put_live_table(md, srcu_idx);
+-		DMERR_LIMIT("request attempted access beyond the end of device");
+-		/*
+-		 * Must perform setup, that rq_completed() requires,
+-		 * before returning BLK_MQ_RQ_QUEUE_ERROR
+-		 */
+-		dm_start_request(md, rq);
+-		return BLK_MQ_RQ_QUEUE_ERROR;
+ 	}
+-	dm_put_live_table(md, srcu_idx);
+ 
+ 	if (ti->type->busy && ti->type->busy(ti))
+ 		return BLK_MQ_RQ_QUEUE_BUSY;
+@@ -2676,8 +2670,10 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 	 */
+ 	tio->ti = ti;
+ 
+-	/* Clone the request if underlying devices aren't blk-mq */
+-	if (dm_table_get_type(map) == DM_TYPE_REQUEST_BASED) {
++	/*
++	 * Both the table and md type cannot change after initial table load
++	 */
++	if (dm_get_md_type(md) == DM_TYPE_REQUEST_BASED) {
+ 		/* clone request is allocated at the end of the pdu */
+ 		tio->clone = (void *)blk_mq_rq_to_pdu(rq) + sizeof(struct dm_rq_target_io);
+ 		(void) clone_rq(rq, md, tio, GFP_ATOMIC);
 diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 7edcf97..53df258 100644
+index 53df258..4305a51 100644
 --- a/drivers/md/dm.h
 +++ b/drivers/md/dm.h
 @@ -73,6 +73,7 @@ int dm_table_resume_targets(struct dm_table *t);
  int dm_table_any_congested(struct dm_table *t, int bdi_bits);
  unsigned dm_table_get_type(struct dm_table *t);
  struct target_type *dm_table_get_immutable_target_type(struct dm_table *t);
-+struct dm_target *dm_table_get_wildcard_target(struct dm_table *t);
++struct dm_target *dm_table_get_immutable_target(struct dm_table *t);
+ struct dm_target *dm_table_get_wildcard_target(struct dm_table *t);
  bool dm_table_request_based(struct dm_table *t);
  bool dm_table_mq_request_based(struct dm_table *t);
- void dm_table_free_md_mempools(struct dm_table *t);
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index ec1c61c..87d50ec 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -190,6 +190,13 @@ struct target_type {
- #define dm_target_is_immutable(type)	((type)->features & DM_TARGET_IMMUTABLE)
- 
- /*
-+ * Indicates that a target may replace any target; even immutable targets.
-+ * .map, .map_rq, .clone_and_map_rq and .release_clone_rq are all defined.
-+ */
-+#define DM_TARGET_WILDCARD		0x00000008
-+#define dm_target_is_wildcard(type)	((type)->features & DM_TARGET_WILDCARD)
-+
-+/*
-  * Some targets need to be sent the same WRITE bio severals times so
-  * that they can send copies of it to different devices.  This function
-  * examines any supplied bio and returns the number of copies of it the
 -- 
 2.5.4 (Apple Git-61)
