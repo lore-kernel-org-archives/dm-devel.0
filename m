@@ -1,18 +1,14 @@
-From: Sagi Grimberg <sagig@dev.mellanox.co.il>
-Subject: Re: [RFC PATCH] dm: fix excessive dm-mq context switching
-Date: Sun, 7 Feb 2016 17:41:16 +0200
-Message-ID: <56B7659C.8040601@dev.mellanox.co.il>
-References: <20160129233504.GA13661@redhat.com> <56AC79D0.5060104@suse.de>
-	<20160130191238.GA18686@redhat.com> <56AEFF63.7050606@suse.de>
-	<20160203180406.GA11591@redhat.com> <20160203182423.GA12913@redhat.com>
-	<56B2F5BC.1010700@suse.de> <20160204135420.GA18227@redhat.com>
-	<20160205151334.GA82754@redhat.com> <20160205180515.GA25808@redhat.com>
-	<20160205191909.GA25982@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [dm-4.6 PATCH v2 13/15] dm mpath: use
+	blk_mq_alloc_request() and blk_mq_free_request() directly
+Date: Sun,  7 Feb 2016 10:53:35 -0500
+Message-ID: <1454860417-3203-14-git-send-email-snitzer@redhat.com>
+References: <1454860417-3203-1-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160205191909.GA25982@redhat.com>
+In-Reply-To: <1454860417-3203-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,25 +18,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, axboe@kernel.dk, Hannes Reinecke <hare@suse.de>, Christoph Hellwig <hch@infradead.org>
-Cc: "keith.busch@intel.com" <keith.busch@intel.com>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>
+To: dm-devel@redhat.com
+Cc: Mike Snitzer <snitzer@redhat.com>, Sagi Grimberg <sagig@dev.mellanox.co.il>
 List-Id: dm-devel.ids
 
+There isn't any need to support both old .request_fn and blk-mq paths
+in the blk-mq specific portion of __multipath_map().  Call
+blk_mq_alloc_request() directly rather than use blk_get_request().
 
-> FYI, here is the latest revised patch:
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.6&id=a5b835282422ec41991c1dbdb88daa4af7d166d2
->
-> (revised patch header and fixed a thinko in the dm.c:rq_completed()
-> change from the RFC patch I posted earlier)
+Similarly, call blk_mq_free_request(), rather than blk_put_request(), in
+multipath_release_clone().
 
-Hi Mike,
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-mpath.c | 19 ++++++++++++++-----
+ 1 file changed, 14 insertions(+), 5 deletions(-)
 
-So I gave your patches a go (dm-4.6) but I still don't see the
-improvement you reported (while I do see a minor improvement).
-
-null_blk queue_mode=2 submit_queues=24
-dm_mod blk_mq_nr_hw_queues=24 blk_mq_queue_depth=4096 use_blk_mq=Y
-
-I see 620K IOPs on dm_mq vs. 1750K IOPs on raw nullb0.
-
-Is there something I'm missing?
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 612ec57..7986446 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -23,6 +23,7 @@
+ #include <linux/delay.h>
+ #include <scsi/scsi_dh.h>
+ #include <linux/atomic.h>
++#include <linux/blk-mq.h>
+ 
+ #define DM_MSG_PREFIX "multipath"
+ #define DM_PG_INIT_DELAY_MSECS 2000
+@@ -439,14 +440,22 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
+ 	spin_unlock_irq(&m->lock);
+ 
+ 	if (clone) {
+-		/* Old request-based interface: allocated clone is passed in */
++		/*
++		 * Old request-based interface: allocated clone is passed in.
++		 * Used by both: .request_fn stacked on .request_fn path(s) and
++		 * blk-mq stacked on .request_fn path(s).
++		 */
+ 		clone->q = bdev_get_queue(bdev);
+ 		clone->rq_disk = bdev->bd_disk;
+ 		clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
+ 	} else {
+-		/* blk-mq request-based interface */
+-		*__clone = blk_get_request(bdev_get_queue(bdev),
+-					   rq_data_dir(rq), GFP_ATOMIC);
++		/*
++		 * blk-mq request-based interface; used by both:
++		 * .request_fn stacked on blk-mq path(s) and
++		 * blk-mq stacked on blk-mq path(s).
++		 */
++		*__clone = blk_mq_alloc_request(bdev_get_queue(bdev),
++						rq_data_dir(rq), BLK_MQ_REQ_NOWAIT);
+ 		if (IS_ERR(*__clone)) {
+ 			/* ENOMEM, requeue */
+ 			return r;
+@@ -483,7 +492,7 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
+ 
+ static void multipath_release_clone(struct request *clone)
+ {
+-	blk_put_request(clone);
++	blk_mq_free_request(clone);
+ }
+ 
+ /*
+-- 
+2.5.4 (Apple Git-61)
