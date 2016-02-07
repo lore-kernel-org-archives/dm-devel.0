@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [dm-4.6 PATCH v2 08/15] dm: allocate blk_mq_tag_set
-	rather than embed in mapped_device
-Date: Sun,  7 Feb 2016 10:53:30 -0500
-Message-ID: <1454860417-3203-9-git-send-email-snitzer@redhat.com>
+Subject: [dm-4.6 PATCH v2 06/15] dm: optimize dm_request_fn()
+Date: Sun,  7 Feb 2016 10:53:28 -0500
+Message-ID: <1454860417-3203-7-git-send-email-snitzer@redhat.com>
 References: <1454860417-3203-1-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,91 +21,96 @@ To: dm-devel@redhat.com
 Cc: Mike Snitzer <snitzer@redhat.com>, Sagi Grimberg <sagig@dev.mellanox.co.il>
 List-Id: dm-devel.ids
 
-The blk_mq_tag_set is only needed for dm-mq support.  There is point
-wasting space in 'struct mapped_device' for non-dm-mq devices.
+DM multipath is the only request-based DM target -- which only supports
+tables with a single target that is immutable.  Leverage this fact in
+dm_request_fn().
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm.c | 42 ++++++++++++++++++++++++------------------
- 1 file changed, 24 insertions(+), 18 deletions(-)
+ drivers/md/dm.c | 47 +++++++++++++++++------------------------------
+ 1 file changed, 17 insertions(+), 30 deletions(-)
 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index ec505e5..1fab790 100644
+index 312cc77..3dfcb5a 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -223,7 +223,7 @@ struct mapped_device {
- 	ktime_t last_rq_start_time;
- 
- 	/* for blk-mq request-based DM support */
--	struct blk_mq_tag_set tag_set;
-+	struct blk_mq_tag_set *tag_set;
- 	bool use_blk_mq;
- };
- 
-@@ -2386,8 +2386,10 @@ static void free_dev(struct mapped_device *md)
- 	unlock_fs(md);
- 
- 	cleanup_mapped_device(md);
--	if (md->use_blk_mq)
--		blk_mq_free_tag_set(&md->tag_set);
-+	if (md->tag_set) {
-+		blk_mq_free_tag_set(md->tag_set);
-+		kfree(md->tag_set);
+@@ -2069,12 +2069,18 @@ static bool dm_request_peeked_before_merge_deadline(struct mapped_device *md)
+ static void dm_request_fn(struct request_queue *q)
+ {
+ 	struct mapped_device *md = q->queuedata;
+-	int srcu_idx;
+-	struct dm_table *map = dm_get_live_table(md, &srcu_idx);
+-	struct dm_target *ti;
++	struct dm_target *ti = md->immutable_target;
+ 	struct request *rq;
+ 	struct dm_rq_target_io *tio;
+-	sector_t pos;
++	sector_t pos = 0;
++
++	if (unlikely(!ti)) {
++		int srcu_idx;
++		struct dm_table *map = dm_get_live_table(md, &srcu_idx);
++
++		ti = dm_table_find_target(map, pos);
++		dm_put_live_table(md, srcu_idx);
 +	}
  
- 	free_table_devices(&md->table_devices);
- 	dm_stats_cleanup(&md->stats);
-@@ -2708,24 +2710,25 @@ static int dm_init_request_based_blk_mq_queue(struct mapped_device *md)
- 	struct request_queue *q;
- 	int err;
+ 	/*
+ 	 * For suspend, check blk_queue_stopped() and increment
+@@ -2085,33 +2091,21 @@ static void dm_request_fn(struct request_queue *q)
+ 	while (!blk_queue_stopped(q)) {
+ 		rq = blk_peek_request(q);
+ 		if (!rq)
+-			goto out;
++			return;
  
--	memset(&md->tag_set, 0, sizeof(md->tag_set));
--	md->tag_set.ops = &dm_mq_ops;
--	md->tag_set.queue_depth = dm_get_blk_mq_queue_depth();
--	md->tag_set.numa_node = NUMA_NO_NODE;
--	md->tag_set.flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_SG_MERGE;
--	md->tag_set.nr_hw_queues = dm_get_blk_mq_nr_hw_queues();
-+	md->tag_set = kzalloc(sizeof(struct blk_mq_tag_set), GFP_KERNEL);
-+	md->tag_set->ops = &dm_mq_ops;
-+	md->tag_set->queue_depth = dm_get_blk_mq_queue_depth();
-+	md->tag_set->numa_node = NUMA_NO_NODE;
-+	md->tag_set->flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_SG_MERGE;
-+	md->tag_set->nr_hw_queues = dm_get_blk_mq_nr_hw_queues();
-+	md->tag_set->driver_data = md;
-+
-+	md->tag_set->cmd_size = sizeof(struct dm_rq_target_io);
- 	if (md_type == DM_TYPE_REQUEST_BASED) {
--		/* make the memory for non-blk-mq clone part of the pdu */
--		md->tag_set.cmd_size = sizeof(struct dm_rq_target_io) + sizeof(struct request);
--	} else
--		md->tag_set.cmd_size = sizeof(struct dm_rq_target_io);
--	md->tag_set.driver_data = md;
-+		/* put the memory for non-blk-mq clone at the end of the pdu */
-+		md->tag_set->cmd_size += sizeof(struct request);
-+	}
+ 		/* always use block 0 to find the target for flushes for now */
+ 		pos = 0;
+ 		if (!(rq->cmd_flags & REQ_FLUSH))
+ 			pos = blk_rq_pos(rq);
  
--	err = blk_mq_alloc_tag_set(&md->tag_set);
-+	err = blk_mq_alloc_tag_set(md->tag_set);
- 	if (err)
--		return err;
-+		goto out_kfree_tag_set;
+-		ti = dm_table_find_target(map, pos);
+-		if (!dm_target_is_valid(ti)) {
+-			/*
+-			 * Must perform setup, that rq_completed() requires,
+-			 * before calling dm_kill_unmapped_request
+-			 */
+-			DMERR_LIMIT("request attempted access beyond the end of device");
+-			dm_start_request(md, rq);
+-			dm_kill_unmapped_request(rq, -EIO);
+-			continue;
++		if ((dm_request_peeked_before_merge_deadline(md) &&
++		     md_in_flight(md) && rq->bio && rq->bio->bi_vcnt == 1 &&
++		     md->last_rq_pos == pos && md->last_rq_rw == rq_data_dir(rq)) ||
++		    (ti->type->busy && ti->type->busy(ti))) {
++			blk_delay_queue(q, HZ / 100);
++			return;
+ 		}
  
--	q = blk_mq_init_allocated_queue(&md->tag_set, md->queue);
-+	q = blk_mq_init_allocated_queue(md->tag_set, md->queue);
- 	if (IS_ERR(q)) {
- 		err = PTR_ERR(q);
- 		goto out_tag_set;
-@@ -2742,7 +2745,10 @@ static int dm_init_request_based_blk_mq_queue(struct mapped_device *md)
- 	return 0;
+-		if (dm_request_peeked_before_merge_deadline(md) &&
+-		    md_in_flight(md) && rq->bio && rq->bio->bi_vcnt == 1 &&
+-		    md->last_rq_pos == pos && md->last_rq_rw == rq_data_dir(rq))
+-			goto delay_and_out;
+-
+-		if (ti->type->busy && ti->type->busy(ti))
+-			goto delay_and_out;
+-
+ 		dm_start_request(md, rq);
  
- out_tag_set:
--	blk_mq_free_tag_set(&md->tag_set);
-+	blk_mq_free_tag_set(md->tag_set);
-+out_kfree_tag_set:
-+	kfree(md->tag_set);
-+
- 	return err;
+ 		tio = tio_from_request(rq);
+@@ -2120,13 +2114,6 @@ static void dm_request_fn(struct request_queue *q)
+ 		queue_kthread_work(&md->kworker, &tio->work);
+ 		BUG_ON(!irqs_disabled());
+ 	}
+-
+-	goto out;
+-
+-delay_and_out:
+-	blk_delay_queue(q, HZ / 100);
+-out:
+-	dm_put_live_table(md, srcu_idx);
  }
  
+ static int dm_any_congested(void *congested_data, int bdi_bits)
 -- 
 2.5.4 (Apple Git-61)
