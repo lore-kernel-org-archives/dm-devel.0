@@ -1,14 +1,14 @@
 From: Todd Gill <tgill@redhat.com>
-Subject: [PATCH v2 1/3] Add %g format specifier to 'multipathd
-	show paths format' command
-Date: Tue,  9 Feb 2016 14:49:16 -0500
-Message-ID: <1455047358-18242-1-git-send-email-tgill@redhat.com>
+Subject: [PATCH v2 3/3] Add options to the show groups command
+Date: Tue,  9 Feb 2016 14:49:18 -0500
+Message-ID: <1455047358-18242-3-git-send-email-tgill@redhat.com>
 References: <1454331207-380-1-git-send-email-tgill@redhat.com>
+	<1455047358-18242-1-git-send-email-tgill@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1454331207-380-1-git-send-email-tgill@redhat.com>
+In-Reply-To: <1455047358-18242-1-git-send-email-tgill@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,38 +22,152 @@ To: dm-devel@redhat.com
 Cc: Todd Gill <tgill@redhat.com>, Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
-The %g specifier will print the group number of the path when used with
-multipathd show paths format.
+Options:
+
+format - allow the user to specify output format via wildcards
+raw    - don't display headers for formatted output
+%w     - display the WWN for the map that contains the group
+%g     - display the group number
+
+These options allow a user to parse the output to connect a pathgroup
+to the multipath map.  It also allows a user to determine the member
+paths of a pathgroup.
 
 Signed-off-by: Todd Gill <tgill@redhat.com>
 Signed-off-by: Gris Ge <fge@redhat.com>
 ---
- libmultipath/print.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ libmultipath/print.c      | 21 +++++++++++++++++++++
+ libmultipath/print.h      |  2 +-
+ multipathd/cli.c          |  2 ++
+ multipathd/cli_handlers.c | 22 ++++++++++++++++++++++
+ multipathd/cli_handlers.h |  2 ++
+ multipathd/main.c         |  2 ++
+ 6 files changed, 50 insertions(+), 1 deletion(-)
 
 diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 6215d0b..c313e3e 100644
+index e89c736..b4a6fc5 100644
 --- a/libmultipath/print.c
 +++ b/libmultipath/print.c
-@@ -293,6 +293,11 @@ snprint_path_uuid (char * buff, size_t len, struct path * pp)
- 	return snprint_str(buff, len, pp->wwid);
+@@ -411,6 +411,25 @@ snprint_pg_selector (char * buff, size_t len, struct pathgroup * pgp, int group)
  }
  
-+static int snprint_path_groupnumber(char * buff, size_t len, struct path * pp)
+ static int
++snprint_pg_uuid (char * buff, size_t len, struct pathgroup * pgp, int group_num)
 +{
-+	return snprint_int(buff, len, pp->pgindex);
++	struct path * pp;
++
++	pp = VECTOR_LAST_SLOT(pgp->paths);
++	if (pp != NULL)
++		return snprint_str(buff, len, pp->wwid);
++	else
++		return snprint_str(buff, len, "");
 +}
 +
- static int
- snprint_hcil (char * buff, size_t len, struct path * pp)
++static int
++snprint_pg_group (char * buff, size_t len, struct pathgroup * pgp,
++		int group_num)
++{
++	return snprint_int(buff, len, group_num);
++}
++
++static int
+ snprint_pg_pri (char * buff, size_t len, struct pathgroup * pgp, int group)
  {
-@@ -576,6 +581,7 @@ struct path_data pd[] = {
- 	{'i', "hcil",          0, snprint_hcil},
- 	{'d', "dev",           0, snprint_dev},
- 	{'D', "dev_t",         0, snprint_dev_t},
-+	{'g', "group",         0, snprint_path_groupnumber},
- 	{'t', "dm_st",         0, snprint_dm_path_state},
- 	{'o', "dev_st",        0, snprint_offline},
- 	{'T', "chk_st",        0, snprint_chk_state},
+ 	/*
+@@ -601,7 +620,9 @@ struct path_data pd[] = {
+ };
+ 
+ struct pathgroup_data pgd[] = {
++	{'w', "uuid",          0, snprint_pg_uuid},
+ 	{'s', "selector",      0, snprint_pg_selector},
++	{'g', "group",         0, snprint_pg_group},
+ 	{'p', "pri",           0, snprint_pg_pri},
+ 	{'t', "dm_st",         0, snprint_pg_state},
+ 	{0, NULL, 0 , NULL}
+diff --git a/libmultipath/print.h b/libmultipath/print.h
+index fb53e8c..a8ffdbb 100644
+--- a/libmultipath/print.h
++++ b/libmultipath/print.h
+@@ -1,7 +1,7 @@
+ #define PRINT_PATH_LONG      "%w %i %d %D %p %t %T %s %o"
+ #define PRINT_PATH_INDENT    "%i %d %D %t %T %o"
+ #define PRINT_PATH_CHECKER   "%i %d %D %p %t %T %o %C"
+-#define PRINT_GROUP_CHECKER  "%s %p %t"
++#define PRINT_GROUP_CHECKER  "%w %g %s %p %t"
+ #define PRINT_MAP_STATUS     "%n %F %Q %N %t %r"
+ #define PRINT_MAP_STATS      "%n %0 %1 %2 %3 %4"
+ #define PRINT_MAP_NAMES      "%n %d %w"
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index 284741a..8bb15ab 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -476,6 +476,8 @@ cli_init (void) {
+ 	add_handler(LIST+MAPS+RAW+FMT, NULL);
+ 	add_handler(LIST+MAPS+TOPOLOGY, NULL);
+ 	add_handler(LIST+GROUPS, NULL);
++	add_handler(LIST+GROUPS+FMT, NULL);
++	add_handler(LIST+GROUPS+RAW+FMT, NULL);
+ 	add_handler(LIST+TOPOLOGY, NULL);
+ 	add_handler(LIST+MAP+TOPOLOGY, NULL);
+ 	add_handler(LIST+CONFIG, NULL);
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 012ee76..2d4fe32 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -439,6 +439,28 @@ cli_list_groups (void * v, char ** reply, int * len, void * data)
+ }
+ 
+ int
++cli_list_groups_fmt (void * v, char ** reply, int * len, void * data)
++{
++	struct vectors * vecs = (struct vectors *)data;
++	char * fmt = get_keyparam(v, FMT);
++
++	condlog(3, "list groups (operator)");
++
++	return show_groups(reply, len, vecs, fmt, 1);
++}
++
++int
++cli_list_groups_raw (void * v, char ** reply, int * len, void * data)
++{
++	struct vectors * vecs = (struct vectors *)data;
++	char * fmt = get_keyparam(v, FMT);
++
++	condlog(3, "list groups (operator)");
++
++	return show_groups(reply, len, vecs, fmt, 0);
++}
++
++int
+ cli_list_maps_fmt (void * v, char ** reply, int * len, void * data)
+ {
+ 	struct vectors * vecs = (struct vectors *)data;
+diff --git a/multipathd/cli_handlers.h b/multipathd/cli_handlers.h
+index 844c553..85e8b58 100644
+--- a/multipathd/cli_handlers.h
++++ b/multipathd/cli_handlers.h
+@@ -5,6 +5,8 @@ int cli_list_path (void * v, char ** reply, int * len, void * data);
+ int cli_list_status (void * v, char ** reply, int * len, void * data);
+ int cli_list_daemon (void * v, char ** reply, int * len, void * data);
+ int cli_list_groups (void * v, char ** reply, int * len, void * data);
++int cli_list_groups_fmt (void * v, char ** reply, int * len, void * data);
++int cli_list_groups_raw (void * v, char ** reply, int * len, void * data);
+ int cli_list_maps (void * v, char ** reply, int * len, void * data);
+ int cli_list_maps_fmt (void * v, char ** reply, int * len, void * data);
+ int cli_list_maps_raw (void * v, char ** reply, int * len, void * data);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index f1a297c..a6027d8 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -905,6 +905,8 @@ uxlsnrloop (void * ap)
+ 	set_handler_callback(LIST+PATH, cli_list_path);
+ 	set_handler_callback(LIST+MAPS, cli_list_maps);
+ 	set_handler_callback(LIST+GROUPS, cli_list_groups);
++	set_handler_callback(LIST+GROUPS+FMT, cli_list_groups_fmt);
++	set_handler_callback(LIST+GROUPS+RAW+FMT, cli_list_groups_raw);
+ 	set_handler_callback(LIST+STATUS, cli_list_status);
+ 	set_handler_callback(LIST+DAEMON, cli_list_daemon);
+ 	set_handler_callback(LIST+MAPS+STATUS, cli_list_maps_status);
 -- 
 2.5.0
