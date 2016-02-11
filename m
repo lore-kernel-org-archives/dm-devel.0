@@ -1,21 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: RCU-ified dm-mpath for testing/review
-Date: Thu, 11 Feb 2016 10:34:53 -0500
-Message-ID: <20160211153452.GA7827@redhat.com>
-References: <56B7659C.8040601@dev.mellanox.co.il>
-	<56B772D6.2090403@sandisk.com>
-	<56B77444.3030106@dev.mellanox.co.il>
-	<56B776DE.30101@dev.mellanox.co.il>
-	<20160207172055.GA6477@redhat.com> <56B99A49.5050400@suse.de>
-	<20160209145547.GA21623@redhat.com> <56BA0689.9030007@suse.de>
-	<20160210004518.GA23646@redhat.com>
-	<20160211015030.GA4481@redhat.com>
+From: Germano Percossi <germano.percossi@citrix.com>
+Subject: [PATCH 1/1] multipath: fix memory leak and segfault in
+	reconfigure
+Date: Thu, 11 Feb 2016 19:30:54 +0000
+Message-ID: <1455219054-13122-1-git-send-email-germano.percossi@citrix.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20160211015030.GA4481@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,39 +16,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Sagi Grimberg <sagig@dev.mellanox.co.il>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "keith.busch@intel.com" <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
+To: christophe.varoqui@opensvc.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Feb 10 2016 at  8:50pm -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Within the reconfigure function, the global pointer conf is
+stored in a local variable and then assigned NULL.
+If load_config should fail, for any reason, we end up with
+a memory leak, as soon as we leave the function, and with
+the global pointer conf set to NULL, leading to a segfault
+as soon as it is dereferenced.
 
-> On Tue, Feb 09 2016 at  7:45pm -0500,
-> Mike Snitzer <snitzer@redhat.com> wrote:
-> 
-> > 
-> > OK, I took a crack at embracing RCU.  Only slightly better performance
-> > on my single NUMA node testbed.  (But I'll have to track down a system
-> > with multiple NUMA nodes to do any justice to the next wave of this
-> > optimization effort)
-> > 
-> > This RCU work is very heavy-handed and way too fiddley (there could
-> > easily be bugs).  Anyway, please see:
-> > http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=devel2&id=d80a7e4f8b5be9c81e4d452137623b003fa64745
-> > 
-> > But this might give you something to build on to arrive at something
-> > more scalable?
-> 
-> I've a bit more polished version of this work (broken up into multiple
-> commits, with some fixes, etc) here:
-> http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=devel3
-> 
-> Hannes and/or Sagi, if you get a chance to try this on your NUMA system
-> please let me know how it goes.
+I tested it by calling a reconfigure and making the first
+allocation in load_config fail but any failure in load_config
+would do.
+From a user perspective the CLI reports "fail".
 
-Initial review has uncovered some locking problems with the current code
-(nothing that caused crashes or hangs in my testing but...) so please
-hold off on testing until you hear from me (hopefully tomorrow).
+If something like this should happen there are at least 2 possible
+scenarios:
 
-Thanks,
-Mike
+1) If a second immediate reconfigure succeeds, the conf now is fine but
+   the leak stays
+2) If the previous point does not happen, any command trying to access
+   "conf" would fail. On my test box a "show conf" segfaulted.
+
+The fix is simple but in case of failure at least the previous
+conf is kept in memory without leaks or segfaluts
+
+Signed-off-by: Germano Percossi <germano.percossi@citrix.com>
+---
+ multipathd/main.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 04f6d02..f83c849 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1551,6 +1551,8 @@ reconfigure (struct vectors * vecs)
+ 		configure(vecs, 1);
+ 		free_config(old);
+ 		retval = 0;
++	} else {
++		conf = old;
+ 	}
+ 
+ 	running_state = DAEMON_RUNNING;
+-- 
+1.9.1
