@@ -1,13 +1,13 @@
-From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
-Subject: Re: Occasional dmsetup resume lockups
-Date: Thu, 11 Feb 2016 22:26:40 +0100
-Message-ID: <56BCFC90.5030508@gmail.com>
-References: <20160211204736.GA18164@alpha.arachsys.com>
+From: Gris Ge <fge@redhat.com>
+Subject: [PATCH V2] Introducing multipath C API.
+Date: Fri, 12 Feb 2016 16:10:22 +0800
+Message-ID: <1455264623-16199-1-git-send-email-fge@redhat.com>
+References: <56AF5F58.6030302@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160211204736.GA18164@alpha.arachsys.com>
+In-Reply-To: <56AF5F58.6030302@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,31 +18,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 11.2.2016 v 21:47 Richard Davies napsal(a):
-> Hi,
->
-> We have been seeing occasional "dmsetup resume" lockups on a variety of
-> kernels when swapping tables.
->
-> I am wondering if we are making a simple scripting mistake
-> (e.g. we do not run "dmsetup suspend", but my impression is that the need
-> for this was replaced by INACTIVE tables?)
->
-> Alternatively, what can we do to help debug this further, please?
->
->
+Based on these posted patches:
+    * [PATCH v2 1/3] Add %g format specifier to 'multipathd show paths format'
+      command
+    * [PATCH v2 2/3] Add 'show groups' command to multipathd
+    * [PATCH v2 3/3] Add options to the show groups command
 
-There could be number of reasons - but since you mention you operate
-with life device -  aren't you actually running your 'dmsetup
-from a device you manipulate with - aka your root volume ?
+Changes since V1:
+    * Use multipathd IPC instead of libmultipath.
+    * Removed DMMP_ERR_INVALID_ARGUMENT error, application will be terminated
+      by assert if illegal argument provided.
 
-lvm2 locks itself into memory to avoid any page swapping issues.
+Gris Ge (1):
+  Introducing multipath C API <libdmmp/libdmmp.h>
 
-You could also try debugging kernel on serial console with sysrq+t
-to see what's get blocked on disk access.
+ .gitignore                        |    4 +
+ Makefile                          |    1 +
+ Makefile.inc                      |    5 +-
+ libdmmp/DEV_NOTES                 |   40 +
+ libdmmp/Makefile                  |   74 +
+ libdmmp/docs/kernel-doc           | 2703 +++++++++++++++++++++++++++++++++++++
+ libdmmp/docs/libdmmp.h.3          |  113 ++
+ libdmmp/docs/split-man.pl         |   41 +
+ libdmmp/libdmmp.c                 |  515 +++++++
+ libdmmp/libdmmp.pc.in             |    9 +
+ libdmmp/libdmmp/libdmmp.h         |  617 +++++++++
+ libdmmp/libdmmp_misc.c            |  239 ++++
+ libdmmp/libdmmp_mp.c              |  242 ++++
+ libdmmp/libdmmp_path.c            |  156 +++
+ libdmmp/libdmmp_pg.c              |  247 ++++
+ libdmmp/libdmmp_private.h         |  292 ++++
+ libdmmp/test/Makefile             |   29 +
+ libdmmp/test/libdmmp_speed_test.c |   49 +
+ libdmmp/test/libdmmp_test.c       |  141 ++
+ 19 files changed, 5516 insertions(+), 1 deletion(-)
+ create mode 100644 libdmmp/DEV_NOTES
+ create mode 100644 libdmmp/Makefile
+ create mode 100755 libdmmp/docs/kernel-doc
+ create mode 100644 libdmmp/docs/libdmmp.h.3
+ create mode 100755 libdmmp/docs/split-man.pl
+ create mode 100644 libdmmp/libdmmp.c
+ create mode 100644 libdmmp/libdmmp.pc.in
+ create mode 100644 libdmmp/libdmmp/libdmmp.h
+ create mode 100644 libdmmp/libdmmp_misc.c
+ create mode 100644 libdmmp/libdmmp_mp.c
+ create mode 100644 libdmmp/libdmmp_path.c
+ create mode 100644 libdmmp/libdmmp_pg.c
+ create mode 100644 libdmmp/libdmmp_private.h
+ create mode 100644 libdmmp/test/Makefile
+ create mode 100644 libdmmp/test/libdmmp_speed_test.c
+ create mode 100644 libdmmp/test/libdmmp_test.c
 
-Regards
-
-Zdenek
+-- 
+2.7.1
