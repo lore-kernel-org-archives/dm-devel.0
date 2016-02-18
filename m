@@ -1,95 +1,60 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: RCU-ified dm-mpath for testing/review
-Date: Mon, 15 Feb 2016 07:47:35 +0100
-Message-ID: <56C17487.7050301@suse.de>
-References: <20160207172055.GA6477@redhat.com> <56B99A49.5050400@suse.de>
-	<20160209145547.GA21623@redhat.com> <56BA0689.9030007@suse.de>
-	<20160210004518.GA23646@redhat.com> <20160211015030.GA4481@redhat.com>
-	<20160211153452.GA7827@redhat.com> <56BDF7D7.8040106@suse.de>
-	<20160212152651.GB11104@redhat.com> <56BE0295.4090809@suse.de>
-	<20160212180032.GA14013@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-multipath test scripts
+Date: Thu, 18 Feb 2016 12:17:45 -0500
+Message-ID: <20160218171745.GA15071@redhat.com>
+References: <20151007053923.GA10749@xzibit.linux.bs1.fc.nec.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160212180032.GA14013@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "keith.busch@intel.com" <keith.busch@intel.com>, Christoph Hellwig <hch@infradead.org>, Sagi Grimberg <sagig@dev.mellanox.co.il>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20151007053923.GA10749@xzibit.linux.bs1.fc.nec.co.jp>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 02/12/2016 07:00 PM, Mike Snitzer wrote:
-> On Fri, Feb 12 2016 at 11:04am -0500,
-> Hannes Reinecke <hare@suse.de> wrote:
-> =
+On Wed, Oct 07 2015 at  1:39am -0400,
+Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
 
->> On 02/12/2016 04:26 PM, Mike Snitzer wrote:
->>> On Fri, Feb 12 2016 at 10:18am -0500,
->>> Hannes Reinecke <hare@suse.de> wrote:
->>>>>
->>>> Good news is that I've managed to hit the roof for my array with the
->>>> devel2 version of those patches. (And a _heavily_ patched-up lpfc
->>>> driver :-)
->>>> So from that perspective everything's fine now; we've reached the
->>>> hardware limit for my setup.
->>>> Which in itself is quite impressive; beating Intel P3700 with 16FC
->>>> is not bad methinks :-)
->>>>
->>>> So thanks for all your work here.
->>>
->>> Ah, that's really good news!  But devel2 is definitely _not_ destined
->>> for upstream.  'devel3' is much closer to "ready".  But your testing and
->>> review would really push it forward.
->>>
->>> Please see/test:
->>> http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=3D=
-devel3
->>>
->>> Also, please read this header:
->>> http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=
-=3Ddevel3&id=3D65a01b76502dd68e8ca298ee6614c0151b677f4a
->>>
->>> Even with devel2 I hacked it such that repeat_count > 1 is effectively
->>> broken.  I'm now _seriously_ considering deprecating repeat_count
->>> completely (adding a DMWARN that will inform the user. e.g.:
->>> "repeat_count > 1 is no longer supported").  I see no point going to
->>> great lengths to maintain a dm-mpath feature that was only a hack for
->>> when dm-mpath was bio-based.  What do you think?
->>
->> Drop it, and make setting of which a no-op.
->> Never liked it anyway, and these decisions should really be
->> delegated to the path selector.
-> =
+> This is a set of scripts for kernel-side dm-multipath testing. Current
+> set of scripts are stress testing of extreme situation and its coverage
+> is limited. But recently found dm-mpath regressions should be detectable
+> with this. I hope this helps people working on dm-multipath related code
+> as a regression test set.
+> 
+> Though this is created as a patch for linux kernel source, it's just for
+> convenience of kernel developers (I don't have a place to host this kind
+> of scripts). If there are better place to contribute this, please let me know.
+> 
+> Please check README for how-to-run and possible improvements you could
+> contribute in future.
 
-> Sure, but my point is DM-mpath will no longer be able to provide the
-> ability to properly handle repeat_count > 1 (because updating the
-> ->current_pgpath crushes the write-side of the RCU).
-> =
+I finally got around to trying these scripts.  Thanks for making them
+available.
 
-Fully understood. But as I said, the _need_ for repeat_count has
-essentially vanished with the move to request-based multipath.
+But unfortunately I cannot get either the scsidebug or tcmloop mode to
+run against v4.5-rc4
 
-> As such I've rebased 'devel3' to impose repeat_count =3D 1 (both in
-> dm-mpath.c and the defaults in each path selector).
+For tcmloop, targetcli fails with:
+"Could not create ISCSIFabricModule in configFS."
+(fixed by enabling CONFIG_ISCSI_TARGET under TARGET_CORE)
 
-Kewl.
-I'll give it a go.
+I'm seeing all tests fail due to fio verification failure.  I'll need to
+inspect this further..
 
-Cheers,
+But the most problematic test is ./tests/test_03_dm_failpath -- it seems
+to actively break _any_ v4.5-rc kernel I try (with a never-ending flood
+of messages like "device-mapper: multipath: Failing path 8:192."); I
+haven't tried older kernels.
 
-Hannes
--- =
+What is the last kernel version that your scripts have worked on?
 
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+Taking a step back:
+These scripts don't belong in Documentation/device-mapper/mptest/ (or
+anywhere in the kernel tree for that matter).
+
+I'd really prefer it if we could port your scripts over to the
+device-mapper-test-suite, see:
+https://github.com/jthornber/device-mapper-test-suite
+
+Mike
