@@ -1,78 +1,174 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: dm-multipath test scripts
-Date: Fri, 19 Feb 2016 00:33:54 +0000
-Message-ID: <56C662F1.8070407@ce.jp.nec.com>
-References: <20151007053923.GA10749@xzibit.linux.bs1.fc.nec.co.jp>
- <20160218171745.GA15071@redhat.com>
+From: Shiva Krishna <Shiva.Krishna@nimblestorage.com>
+Subject: [PATCH]multipath-tools: select reservation_key parameter
+ before PR handler for first path addition to new map
+Date: Fri, 19 Feb 2016 01:49:40 +0000
+Message-ID: <D2EBB4B4.75AF%Shiva.Krishna@nimblestorage.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-2022-jp"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20160218171745.GA15071@redhat.com>
-Content-Language: ja-JP
-Content-ID: <4FBB0F237767E446B758976CFCFCB7D2@gisp.nec.co.jp>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="===============2994094700930614074=="
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Mike,
+--===============2994094700930614074==
+Content-Language: en-US
+Content-Type: multipart/alternative;
+	boundary="_000_D2EBB4B475AFShivaKrishnanimblestoragecom_"
 
-On 02/19/16 02:17, Mike Snitzer wrote:
-> But unfortunately I cannot get either the scsidebug or tcmloop mode to
-> run against v4.5-rc4
-> 
-> For tcmloop, targetcli fails with:
-> "Could not create ISCSIFabricModule in configFS."
+--_000_D2EBB4B475AFShivaKrishnanimblestoragecom_
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-Hmm, it sounds like there's unnecessary dependency in targetcli.
+On addition of first path, reservation_key parameter is not selected before
+handling persistent reservations. This leads multipathd to not perform
+registration on the path even when registrations exist on the LUN.
 
-> (fixed by enabling CONFIG_ISCSI_TARGET under TARGET_CORE)
+Added code to select "reservation_key" parameter value before calling
+PR handler during addition of new path to a new map.
 
-OK.
+Signed-off-by: ShivaKrishna Merla <shiva.krishna@nimblestorage.com>
+---
+ libmultipath/configure.c |    5 ++++-
+ multipathd/main.c        |    2 ++
+ 2 files changed, 6 insertions(+), 1 deletions(-)
 
-> I'm seeing all tests fail due to fio verification failure.  I'll need to
-> inspect this further..
-> 
-> But the most problematic test is ./tests/test_03_dm_failpath -- it seems
-> to actively break _any_ v4.5-rc kernel I try (with a never-ending flood
-> of messages like "device-mapper: multipath: Failing path 8:192."); I
-> haven't tried older kernels.
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 24ad948..2071aa4 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -287,7 +287,10 @@ setup_map (struct multipath * mpp, char * params, int =
+params_size)
+  select_gid(mpp);
+  select_fast_io_fail(mpp);
+  select_dev_loss(mpp);
+- select_reservation_key(mpp);
++
++ if (!mpp->reservation_key)
++ select_reservation_key(mpp);
++
+  select_retain_hwhandler(mpp);
+  select_deferred_remove(mpp);
+  select_delay_watch_checks(mpp);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 04f6d02..bf3423f 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -539,6 +539,8 @@ rescan:
+  goto fail; /* leave path added to pathvec */
+  }
 
-It seems fail/recover cycle runs too fast for I/O to make any progress.
-I hit similar case and had to slow down the stress with attached patch.
-Please try this. Sorry for the inconvenience.
++ /* select configured reservation key */
++ select_reservation_key(mpp);
+  /* persistent reseravtion check*/
+  mpath_pr_event_handle(pp);
+--
 
-> What is the last kernel version that your scripts have worked on?
 
-v4.4 worked fine. I'll check with v4.5-rc4 when I get a machine.
+--_000_D2EBB4B475AFShivaKrishnanimblestoragecom_
+Content-Type: text/html; charset="us-ascii"
+Content-ID: <9E0B1475CBE05042B0B0433A9A66964C@nimblestorage.com>
+Content-Transfer-Encoding: quoted-printable
 
-> Taking a step back:
-> These scripts don't belong in Documentation/device-mapper/mptest/ (or
-> anywhere in the kernel tree for that matter).
-> 
-> I'd really prefer it if we could port your scripts over to the
-> device-mapper-test-suite, see:
-> https://github.com/jthornber/device-mapper-test-suite
+<html>
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
+>
+</head>
+<body style=3D"word-wrap: break-word; -webkit-nbsp-mode: space; -webkit-lin=
+e-break: after-white-space; color: rgb(0, 0, 0); font-size: 14px; font-fami=
+ly: Calibri, sans-serif;">
+<div>
+<div>On addition of first path, reservation_key parameter is not selected b=
+efore</div>
+<div>handling persistent reservations. This leads multipathd to not perform=
+</div>
+<div>registration on the path even when registrations exist on the LUN.</di=
+v>
+<div><br>
+</div>
+<div>Added code to select &quot;reservation_key&quot; parameter value befor=
+e calling</div>
+<div>PR handler during addition of new path to a new map.</div>
+<div><br>
+</div>
+<div>Signed-off-by: ShivaKrishna Merla &lt;shiva.krishna@nimblestorage.com&=
+gt;</div>
+<div>---</div>
+<div>&nbsp;libmultipath/configure.c | &nbsp; &nbsp;5 &#43;&#43;&#43;&#43;-<=
+/div>
+<div>&nbsp;multipathd/main.c &nbsp; &nbsp; &nbsp; &nbsp;| &nbsp; &nbsp;2 &#=
+43;&#43;</div>
+<div>&nbsp;2 files changed, 6 insertions(&#43;), 1 deletions(-)</div>
+<div><br>
+</div>
+<div>diff --git a/libmultipath/configure.c b/libmultipath/configure.c</div>
+<div>index 24ad948..2071aa4 100644</div>
+<div>--- a/libmultipath/configure.c</div>
+<div>&#43;&#43;&#43; b/libmultipath/configure.c</div>
+<div>@@ -287,7 &#43;287,10 @@ setup_map (struct multipath * mpp, char * par=
+ams, int params_size)</div>
+<div>&nbsp;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span=
+>select_gid(mpp);</div>
+<div>&nbsp;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span=
+>select_fast_io_fail(mpp);</div>
+<div>&nbsp;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span=
+>select_dev_loss(mpp);</div>
+<div>-<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span>sele=
+ct_reservation_key(mpp);</div>
+<div>&#43;</div>
+<div>&#43;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span>=
+if (!mpp-&gt;reservation_key)</div>
+<div>&#43;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span>=
+select_reservation_key(mpp);</div>
+<div>&#43;</div>
+<div>&nbsp;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span=
+>select_retain_hwhandler(mpp);</div>
+<div>&nbsp;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span=
+>select_deferred_remove(mpp);</div>
+<div>&nbsp;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span=
+>select_delay_watch_checks(mpp);</div>
+<div>diff --git a/multipathd/main.c b/multipathd/main.c</div>
+<div>index 04f6d02..bf3423f 100644</div>
+<div>--- a/multipathd/main.c</div>
+<div>&#43;&#43;&#43; b/multipathd/main.c</div>
+<div>@@ -539,6 &#43;539,8 @@ rescan:</div>
+<div>&nbsp;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span=
+>goto fail; /* leave path added to pathvec */</div>
+<div>&nbsp;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span=
+>}</div>
+<div>&nbsp;</div>
+<div>&#43;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span>=
+/* select configured reservation key */</div>
+<div>&#43;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span>=
+select_reservation_key(mpp);</div>
+<div>&nbsp;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span=
+>/* persistent reseravtion check*/</div>
+<div>&nbsp;<span class=3D"Apple-tab-span" style=3D"white-space:pre"> </span=
+>mpath_pr_event_handle(pp);</div>
+<div>--</div>
+</div>
+<div><br>
+</div>
+</body>
+</html>
 
-Yes, I agree such a project is better place for this to live.
+--_000_D2EBB4B475AFShivaKrishnanimblestoragecom_--
 
--- 
-Jun'ichi Nomura, NEC Corporation
 
-diff --git a/lib/failpath_dm_message b/lib/failpath_dm_message
-index 1a3bcf8..5b8f28a 100755
---- a/lib/failpath_dm_message
-+++ b/lib/failpath_dm_message
-@@ -30,9 +30,11 @@ start_failpath_dm_message () {
- 		for m in $majs; do
- 			dmsetup message $MPNAME 0 "fail_path $m"
- 		done
-+		sleep 1
- 		for m in $majs; do
- 			dmsetup message $MPNAME 0 "reinstate_path $m"
- 		done
-+		sleep 1
- 	done &
- }
- 
+--===============2994094700930614074==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2994094700930614074==--
