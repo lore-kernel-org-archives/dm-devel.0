@@ -1,60 +1,78 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
 Subject: Re: dm-multipath test scripts
-Date: Thu, 18 Feb 2016 12:17:45 -0500
-Message-ID: <20160218171745.GA15071@redhat.com>
+Date: Fri, 19 Feb 2016 00:33:54 +0000
+Message-ID: <56C662F1.8070407@ce.jp.nec.com>
 References: <20151007053923.GA10749@xzibit.linux.bs1.fc.nec.co.jp>
+ <20160218171745.GA15071@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="iso-2022-jp"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20151007053923.GA10749@xzibit.linux.bs1.fc.nec.co.jp>
+In-Reply-To: <20160218171745.GA15071@redhat.com>
+Content-Language: ja-JP
+Content-ID: <4FBB0F237767E446B758976CFCFCB7D2@gisp.nec.co.jp>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Wed, Oct 07 2015 at  1:39am -0400,
-Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
+Hi Mike,
 
-> This is a set of scripts for kernel-side dm-multipath testing. Current
-> set of scripts are stress testing of extreme situation and its coverage
-> is limited. But recently found dm-mpath regressions should be detectable
-> with this. I hope this helps people working on dm-multipath related code
-> as a regression test set.
+On 02/19/16 02:17, Mike Snitzer wrote:
+> But unfortunately I cannot get either the scsidebug or tcmloop mode to
+> run against v4.5-rc4
 > 
-> Though this is created as a patch for linux kernel source, it's just for
-> convenience of kernel developers (I don't have a place to host this kind
-> of scripts). If there are better place to contribute this, please let me know.
+> For tcmloop, targetcli fails with:
+> "Could not create ISCSIFabricModule in configFS."
+
+Hmm, it sounds like there's unnecessary dependency in targetcli.
+
+> (fixed by enabling CONFIG_ISCSI_TARGET under TARGET_CORE)
+
+OK.
+
+> I'm seeing all tests fail due to fio verification failure.  I'll need to
+> inspect this further..
 > 
-> Please check README for how-to-run and possible improvements you could
-> contribute in future.
+> But the most problematic test is ./tests/test_03_dm_failpath -- it seems
+> to actively break _any_ v4.5-rc kernel I try (with a never-ending flood
+> of messages like "device-mapper: multipath: Failing path 8:192."); I
+> haven't tried older kernels.
 
-I finally got around to trying these scripts.  Thanks for making them
-available.
+It seems fail/recover cycle runs too fast for I/O to make any progress.
+I hit similar case and had to slow down the stress with attached patch.
+Please try this. Sorry for the inconvenience.
 
-But unfortunately I cannot get either the scsidebug or tcmloop mode to
-run against v4.5-rc4
+> What is the last kernel version that your scripts have worked on?
 
-For tcmloop, targetcli fails with:
-"Could not create ISCSIFabricModule in configFS."
-(fixed by enabling CONFIG_ISCSI_TARGET under TARGET_CORE)
+v4.4 worked fine. I'll check with v4.5-rc4 when I get a machine.
 
-I'm seeing all tests fail due to fio verification failure.  I'll need to
-inspect this further..
+> Taking a step back:
+> These scripts don't belong in Documentation/device-mapper/mptest/ (or
+> anywhere in the kernel tree for that matter).
+> 
+> I'd really prefer it if we could port your scripts over to the
+> device-mapper-test-suite, see:
+> https://github.com/jthornber/device-mapper-test-suite
 
-But the most problematic test is ./tests/test_03_dm_failpath -- it seems
-to actively break _any_ v4.5-rc kernel I try (with a never-ending flood
-of messages like "device-mapper: multipath: Failing path 8:192."); I
-haven't tried older kernels.
+Yes, I agree such a project is better place for this to live.
 
-What is the last kernel version that your scripts have worked on?
+-- 
+Jun'ichi Nomura, NEC Corporation
 
-Taking a step back:
-These scripts don't belong in Documentation/device-mapper/mptest/ (or
-anywhere in the kernel tree for that matter).
-
-I'd really prefer it if we could port your scripts over to the
-device-mapper-test-suite, see:
-https://github.com/jthornber/device-mapper-test-suite
-
-Mike
+diff --git a/lib/failpath_dm_message b/lib/failpath_dm_message
+index 1a3bcf8..5b8f28a 100755
+--- a/lib/failpath_dm_message
++++ b/lib/failpath_dm_message
+@@ -30,9 +30,11 @@ start_failpath_dm_message () {
+ 		for m in $majs; do
+ 			dmsetup message $MPNAME 0 "fail_path $m"
+ 		done
++		sleep 1
+ 		for m in $majs; do
+ 			dmsetup message $MPNAME 0 "reinstate_path $m"
+ 		done
++		sleep 1
+ 	done &
+ }
+ 
