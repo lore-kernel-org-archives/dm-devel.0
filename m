@@ -1,23 +1,73 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v5 0/3] init: add support to directly boot to a mapped device
-Date: Sat, 20 Feb 2016 10:13:49 -0800
-Message-ID: <1455992032-14594-1-git-send-email-keescook@chromium.org>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: 4.4-final: 28 bioset threads on small notebook
+Date: Sat, 20 Feb 2016 21:04:32 +0100
+Message-ID: <20160220200432.GB22120@amd>
+References: <20151211104937.GA23165@amd>
+ <20151211140841.GA22873@redhat.com>
+ <20160220174035.GA16459@amd>
+ <20160220184258.GA3753@amd>
+ <20160220195136.GA27149@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160220195136.GA27149@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>
-Cc: Kees Cook <keescook@chromium.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Jonathan Corbet <corbet@lwn.net>, Shaohua Li <shli@kernel.org>, Dan Ehrenberg <dehrenberg@chromium.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Chen Yu <yu.c.chen@intel.com>, Vishnu Pratap Singh <vishnu.ps@samsung.com>, Andrew Morton <akpm@linux-foundation.org>, Yaowei Bai <baiyaowei@cmss.chinamobile.com>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Will Drewry <wad@chromium.org>, David Zeuthen <zeuthen@google.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: kernel list <linux-kernel@vger.kernel.org>, axboe@fb.com, hch@lst.de, kent.overstreet@gmail.com, neilb@suse.de, martin.petersen@oracle.com, dpark@posteo.net, ming.l@ssi.samsung.com, dm-devel@redhat.com, ming.lei@canonical.com, agk@redhat.com, jkosina@suse.cz, geoff@infradead.org, jim@jtan.com, pjk1939@linux.vnet.ibm.com, minchan@kernel.org, ngupta@vflare.org, oleg.drokin@intel.com, andreas.dilger@intel.com
 List-Id: dm-devel.ids
 
-This is a resurrection of a patch series from a few years back, first
-brought to the dm maintainers in 2010. It creates a way to define dm
-devices on the kernel command line for systems that do not use an
-initramfs, or otherwise need a dm running before init starts.
+Hi!
 
-This has been used by Chrome OS for several years, and now by Brillo
-(and likely Android soon).
+> > > > > I know it is normal to spawn 8 threads for every single function,
+> > > > ...
+> > > > > but 28 threads?
+> > > > > 
+> > > > > root       974  0.0  0.0      0     0 ?        S<   Dec08   0:00 [bioset]
+> > > > ...
+> > > > 
+> > > > How many physical block devices do you have?
+> > > > 
+> > > > DM is doing its part to not contribute to this:
+> > > > dbba42d8a ("dm: eliminate unused "bioset" process for each bio-based DM device")
+> > > > 
+> > > > (but yeah, all these extra 'bioset' threads aren't ideal)
+> > > 
+> > > Still there in 4.4-final.
+> > 
+> > ...and still there in 4.5-rc4 :-(.
+> 
+> You're directing this concern to the wrong person.
+> 
+> I already told you DM is _not_ contributing any extra "bioset" threads
+> (ever since commit dbba42d8a).
 
-The last version was v4:
-https://patchwork.kernel.org/patch/104860/
-https://patchwork.kernel.org/patch/104861/
+Well, sorry about that. Note that l-k is on the cc list, so hopefully
+the right person sees it too.
 
--Kees
+Ok, let me check... it seems that 
+54efd50bfd873e2dbf784e0b21a8027ba4299a3e is responsible, thus Kent
+Overstreet <kent.overstreet@gmail.com> is to blame.
+
+Um, and you acked the patch, so you are partly responsible.
+
+> But in general, these "bioset" threads are a side-effect of the
+> late-bio-splitting support.  So is your position on it: "I don't like
+> that feature if it comes at the expense of adding resources I can _see_
+> for something I (naively?) view as useless"?
+
+> Just seems... naive... but you could be trying to say something else
+> entirely.
+
+> Anyway, if you don't like something: understand why it is there and then
+> try to fix it to your liking (without compromising why it was there to
+> begin with).
+
+Well, 28 kernel threads on a notebook is a bug, plain and simple. Do
+you argue it is not?
+
+Best regards,
+									Pavel
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
