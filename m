@@ -1,97 +1,98 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-multipath test scripts
-Date: Sat, 20 Feb 2016 11:34:49 -0500
-Message-ID: <20160220163449.GA26384@redhat.com>
-References: <20151007053923.GA10749@xzibit.linux.bs1.fc.nec.co.jp>
- <20160218171745.GA15071@redhat.com>
- <56C662F1.8070407@ce.jp.nec.com>
- <56C6D45A.6060407@ce.jp.nec.com>
- <20160219194216.GB21133@redhat.com>
- <20160220061247.GA23333@redhat.com>
- <56C834F8.8050604@suse.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <56C834F8.8050604@suse.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>
+From: Kees Cook <keescook@chromium.org>
+Subject: [PATCH v5 1/3] dm: export a table+mapped device to the ioctl interface
+Date: Sat, 20 Feb 2016 10:13:50 -0800
+Message-ID: <1455992032-14594-2-git-send-email-keescook@chromium.org>
+References: <1455992032-14594-1-git-send-email-keescook@chromium.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1455992032-14594-1-git-send-email-keescook@chromium.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>
+Cc: Kees Cook <keescook@chromium.org>, Will Drewry <wad@chromium.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Jonathan Corbet <corbet@lwn.net>, Shaohua Li <shli@kernel.org>, Dan Ehrenberg <dehrenberg@chromium.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Chen Yu <yu.c.chen@intel.com>, Vishnu Pratap Singh <vishnu.ps@samsung.com>, Andrew Morton <akpm@linux-foundation.org>, Yaowei Bai <baiyaowei@cmss.chinamobile.com>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, David Zeuthen <zeuthen@google.com>
 List-Id: dm-devel.ids
 
-On Sat, Feb 20 2016 at  4:42am -0500,
-Hannes Reinecke <hare@suse.de> wrote:
+From: Will Drewry <wad@chromium.org>
 
-> On 02/20/2016 07:12 AM, Mike Snitzer wrote:
-> >On Fri, Feb 19 2016 at  2:42pm -0500,
-> >Mike Snitzer <snitzer@redhat.com> wrote:
-> >
-> >>On Fri, Feb 19 2016 at  3:37am -0500,
-> >>Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
-> >>
-> >>>On 02/19/16 09:33, Nomura Junichi wrote:
-> >>>>On 02/19/16 02:17, Mike Snitzer wrote:
-> >>>>>What is the last kernel version that your scripts have worked on?
-> >>>>
-> >>>>v4.4 worked fine. I'll check with v4.5-rc4 when I get a machine.
-> >>>
-> >>>v4.5-rc4 works fine, too.
-> >>
-> >>Have you been running with blk-mq?
-> >>Either by setting CONFIG_DM_MQ_DEFAULT or:
-> >>echo Y > /sys/module/dm_mod/parameters/use_blk_mq
-> >>
-> >>I'm seeing test_02_sdev_delete fail with blk-mq enabled.
-> >
-> >I only see failure if I stack dm-mq ontop of old non-mq scsi devices with:
-> >
-> >echo N > /sys/module/scsi_mod/parameters/use_blk_mq
-> >echo Y > /sys/module/dm_mod/parameters/use_blk_mq
-> >
-> >If I use scsi-mq for the underlying devices all works fine (been testing
-> >the latest dm-4.6 branch though, I'll go back and try stock 4.5-rc4 just
-> >to double check).
-> >
-> >But this makes me think the novelty of having dm-mq support stacking on
-> >non-blk-mq devices was misplaced.  It is a senseless config.  I'll
-> >probably remove support for such stacking soon (next week).
-> 
-> Hmm. I must admit I really, really don't like these 'once-and-for-all'
-> parameter.
-> 
-> ATM the only SCSI driver to support SCSI-mq properly are lpfc,
-> virtio, and fnic. None of the other driver have been modified, and I
-> suspect the performance might be less than stellar.
-> 
-> So there will be configurations where one might want to run scsi-mq
-> alongside non-mq HBAs.
+If a mapped device and table is configured without traversing the dm-ioctl
+interface (dm-fs-style), then it will not be bound to a name or uuid. This
+means that it will be inaccessible for userspace management and udev
+will be unhappy with the lack of a name or uuid.
 
-dm-mq already disallows such a mix though.  From dm_table_set_type():
+The function added in this change performs the required association to
+transition to being managed by the ioctl interface.
 
-        if (use_blk_mq) {
-                /* verify _all_ devices in the table are blk-mq devices */
-                list_for_each_entry(dd, devices, list)
-                        if (!bdev_get_queue(dd->dm_dev->bdev)->mq_ops) {
-                                DMERR("table load rejected: not all devices"
-                                      " are blk-mq request-stackable");
-                                return -EINVAL;
-                        }
-                t->type = DM_TYPE_MQ_REQUEST_BASED;
+Signed-off-by: Will Drewry <wad@chromium.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+v5: resurrection
+v4: https://patchwork.kernel.org/patch/104860/
+---
+ drivers/md/dm-ioctl.c         | 35 +++++++++++++++++++++++++++++++++++
+ include/linux/device-mapper.h |  6 ++++++
+ 2 files changed, 41 insertions(+)
 
-        }
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index 80a439543259..e0efc6844b3a 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1923,6 +1923,41 @@ void dm_interface_exit(void)
+ 	dm_hash_exit();
+ }
+ 
++
++/**
++ * dm_ioctl_export - Permanently export a mapped device via the ioctl interface
++ * @md: Pointer to mapped_device
++ * @name: Buffer (size DM_NAME_LEN) for name
++ * @uuid: Buffer (size DM_UUID_LEN) for uuid or NULL if not desired
++ */
++int dm_ioctl_export(struct mapped_device *md, const char *name,
++		    const char *uuid)
++{
++	int r = 0;
++	struct hash_cell *hc;
++
++	if (!md)
++		return -ENXIO;
++
++	/* The name and uuid can only be set once. */
++	mutex_lock(&dm_hash_cells_mutex);
++	hc = dm_get_mdptr(md);
++	mutex_unlock(&dm_hash_cells_mutex);
++	if (hc) {
++		DMERR("%s: already exported", dm_device_name(md));
++		return -ENXIO;
++	}
++
++	r = dm_hash_insert(name, uuid, md);
++	if (r) {
++		DMERR("%s: could not bind to '%s'", dm_device_name(md), name);
++		return r;
++	}
++
++	/* Let udev know we've changed. */
++	dm_kobject_uevent(md, KOBJ_CHANGE, dm_get_event_nr(md));
++	return r;
++}
+ /**
+  * dm_copy_name_and_uuid - Copy mapped device name & uuid into supplied buffers
+  * @md: Pointer to mapped_device
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index ec1c61c87d89..87afa0552398 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -381,6 +381,12 @@ void dm_set_mdptr(struct mapped_device *md, void *ptr);
+ void *dm_get_mdptr(struct mapped_device *md);
+ 
+ /*
++ * Export the device via the ioctl interface (uses mdptr).
++ */
++int dm_ioctl_export(struct mapped_device *md, const char *name,
++		    const char *uuid);
++
++/*
+  * A device can still be used while suspended, but I/O is deferred.
+  */
+ int dm_suspend(struct mapped_device *md, unsigned suspend_flags);
+-- 
+2.6.3
 
-But I was talking about removing support for dm-mq stacked on _all_ old
-.request_fn devices.
-
-> I would really love to see to make that more granular so that these
-> configurations can run efficiently.
-> I know Christoph is violently against it, but I don't really see any
-> solution presenting itself at the moment.
-
-I'm with Christoph on this.  Supporting such elaborate mixing is too
-fragile.  Time would be much better spent converting drivers to properly
-support scsi-mq and/or fixing scsi-mq to perform better.
-
-> Maybe a good topic for LSF ...
-
-Unlikely.. but don't let me stop you! ;)
