@@ -1,41 +1,34 @@
-From: Ming Lei <ming.lei@canonical.com>
-Subject: Re: 4.4-final: 28 bioset threads on small notebook
-Date: Sun, 21 Feb 2016 17:40:59 +0800
-Message-ID: <CACVXFVPav3D2MzNFR-b4YadFMM6_KcyEYQ7dx4t1r9fMOLDaFw@mail.gmail.com>
-References: <20151211104937.GA23165@amd>
-	<20151211140841.GA22873@redhat.com>
-	<20160220174035.GA16459@amd>
-	<20160220184258.GA3753@amd>
-	<20160220195136.GA27149@redhat.com>
-	<20160220200432.GB22120@amd>
-	<20160220203856.GB27149@redhat.com>
-	<20160220205519.GA14108@amd>
-	<20160221041540.GA24735@kmo-pixel>
-	<3A47B4705F6BE24CBB43C61AA73286211B3AA6A9@SSIEXCH-MB3.ssi.samsung.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH v5 0/3] init: add support to directly boot to a mapped
+	device
+Date: Sun, 21 Feb 2016 22:08:40 +0000
+Message-ID: <20160221220839.GD16166@agk-dp.fab.redhat.com>
+References: <1455992032-14594-1-git-send-email-keescook@chromium.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <3A47B4705F6BE24CBB43C61AA73286211B3AA6A9@SSIEXCH-MB3.ssi.samsung.com>
+Content-Disposition: inline
+In-Reply-To: <1455992032-14594-1-git-send-email-keescook@chromium.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ming Lin-SSI <ming.l@ssi.samsung.com>
-Cc: Kent Overstreet <kent.overstreet@gmail.com>, Pavel Machek <pavel@ucw.cz>, Mike Snitzer <snitzer@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "hch@lst.de" <hch@lst.de>, "neilb@suse.de" <neilb@suse.de>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "dpark@posteo.net" <dpark@posteo.net>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>, "jkosina@suse.cz" <jkosina@suse.cz>, "geoff@infradead.org" <geoff@infradead.org>, "jim@jtan.com" <jim@jtan.com>, "pjk1939@linux.vnet.ibm.com" <pjk1939@linux.vnet.ibm.com>, "minchan@kernel.org" <minchan@kernel.org>, "ngupta@vflare.org" <ngupta@vflare.org>, "oleg.drokin@intel.com" <oleg.drokin@intel.com>, "andreas.dilger@intel.com" <andreas.dilger@intel.com>
+To: Kees Cook <keescook@chromium.org>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Jonathan Corbet <corbet@lwn.net>, Shaohua Li <shli@kernel.org>, Dan Ehrenberg <dehrenberg@chromium.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Chen Yu <yu.c.chen@intel.com>, Vishnu Pratap Singh <vishnu.ps@samsung.com>, Andrew Morton <akpm@linux-foundation.org>, Yaowei Bai <baiyaowei@cmss.chinamobile.com>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Will Drewry <wad@chromium.org>, David Zeuthen <zeuthen@google.com>
 List-Id: dm-devel.ids
 
-On Sun, Feb 21, 2016 at 2:43 PM, Ming Lin-SSI <ming.l@ssi.samsung.com> wrote:
->>-----Original Message-----
->
-> So it's almost already "per request_queue"
+On Sat, Feb 20, 2016 at 10:13:49AM -0800, Kees Cook wrote:
+> This is a resurrection of a patch series from a few years back, first
+> brought to the dm maintainers in 2010. It creates a way to define dm
+> devices on the kernel command line for systems that do not use an
+> initramfs, or otherwise need a dm running before init starts.
+> 
+> This has been used by Chrome OS for several years, and now by Brillo
+> (and likely Android soon).
+> 
+> The last version was v4:
+> https://patchwork.kernel.org/patch/104860/
+> https://patchwork.kernel.org/patch/104861/
+ 
+Inconsistencies in the terminology here can be sorted out during review,
+and I see that you've taken on board some of my review comments from
+2010, but what are your responses to the rest of them?
 
-Yes, that is because of the following line:
-
-q->bio_split = bioset_create(BIO_POOL_SIZE, 0);
-
-in blk_alloc_queue_node().
-
-Looks like this bio_set doesn't need to be per-request_queue, and
-now it is only used for fast-cloning bio for splitting, and one global
-split bio_set should be enough.
-
-
-thanks,
-Ming
+Alasdair
