@@ -1,186 +1,45 @@
-From: Shiva Krishna <Shiva.Krishna@nimblestorage.com>
-Subject: [PATCH]multipath-tools: prevent unnecessary reinstate of
- stand-by paths with implicit tpgs mode and no active array paths.
-Date: Mon, 22 Feb 2016 16:46:40 +0000
-Message-ID: <D2F07B42.84D5%Shiva.Krishna@nimblestorage.com>
-References: <065E3B7B-8F7D-48D9-BCB9-DFE13F8F3923@nimblestorage.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v5 0/3] init: add support to directly boot to a mapped device
+Date: Mon, 22 Feb 2016 10:55:11 -0800
+Message-ID: <CAGXu5jJ9nUdE8u8a3EYR5uS_zOLEkmQn3M0Nsm9bkxBmMxpC9Q@mail.gmail.com>
+References: <1455992032-14594-1-git-send-email-keescook@chromium.org>
+	<20160221220839.GD16166@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <065E3B7B-8F7D-48D9-BCB9-DFE13F8F3923@nimblestorage.com>
-Content-Language: en-US
-Content-ID: <40922D3994F59143875186B8CBFD9585@nimblestorage.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20160221220839.GD16166@agk-dp.fab.redhat.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Jonathan Corbet <corbet@lwn.net>, Shaohua Li <shli@kernel.org>, Dan Ehrenberg <dehrenberg@chromium.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Chen Yu <yu.c.chen@intel.com>, Vishnu Pratap Singh <vishnu.ps@samsung.com>, Andrew Morton <akpm@linux-foundation.org>, Yaowei Bai <baiyaowei@cmss.chinamobile.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, Will Drewry <wad@chromium.org>, David Zeuthen <zeuthen@google.com>
 List-Id: dm-devel.ids
 
-multipathd treats "stand-by" path as active(ghost) and reinstate path.This
-causes I/O hang issues and lots of "change" udev events in cases where only
-stand-by paths are present in multipath map and target supports only
-implicit
-tpgs mode(active/passive arrays)
+On Sun, Feb 21, 2016 at 2:08 PM, Alasdair G Kergon <agk@redhat.com> wrote:
+> On Sat, Feb 20, 2016 at 10:13:49AM -0800, Kees Cook wrote:
+>> This is a resurrection of a patch series from a few years back, first
+>> brought to the dm maintainers in 2010. It creates a way to define dm
+>> devices on the kernel command line for systems that do not use an
+>> initramfs, or otherwise need a dm running before init starts.
+>>
+>> This has been used by Chrome OS for several years, and now by Brillo
+>> (and likely Android soon).
+>>
+>> The last version was v4:
+>> https://patchwork.kernel.org/patch/104860/
+>> https://patchwork.kernel.org/patch/104861/
+>
+> Inconsistencies in the terminology here can be sorted out during review,
+> and I see that you've taken on board some of my review comments from
+> 2010, but what are your responses to the rest of them?
 
-This can happen during system boot where only stand-by paths are discovered
-first and continuous retry of I/O's by dm-multipath and change(failed)
-events
-are hogging multipathd and slowing down the entire boot process with large
-number of volumes mapped (~100s).
+Ah, sorry, the threads I could find were incomplete, so I wasn't able
+to find those comments that were made to Will's 2010 submission. In
+some of the cleanups I did I was very confused about "target" vs
+"table", and tried to fix that. Regardless, I'm open to fixing
+whatever is needed. :)
 
-Selecting path checkers other than tur is not a solution as well, as they
-will
-continuously throw messages saying paths are failed for stand-by state.
+Thanks for looking at this again!
 
-This patch will prevent re-instate of stand-by paths in this situation and
-thus prevent unnecessary i/o with failed events during boot or when active
-array goes down temporarily.
+-Kees
 
-Detailed steps to hit the I/O hang issue even with no_path_retry:
-devices {
-    device {
-        vendor               "Nimble"
-        product              "Server"
-        path_grouping_policy group_by_prio
-        detect_prio          yes
-        hardware_handler     "1 alua"
-        path_checker         tur
-        failback             immediate
-        fast_io_fail_tmo     10
-        no_path_retry        30
-        path_selector        "round-robin 0"
-    }
-}
-
-1. Delete all active paths.
-
-mpathal (2e0176ad6309077166c9ce90033bfa248_1) dm-2 Nimble,Server
-size=20G features='1 queue_if_no_path' hwhandler='1 alua' wp=rw
-`-+- policy='round-robin 0' prio=1 status=active
-  |- 8:0:5:1 sdg 8:96  active ghost running
-  `- 8:0:6:1 sdh 8:112 active ghost running
-
-2. Issue I/O on mpath with zero active paths.
-
-dd if=/dev/mapper/mpathal of=/dev/null bs=512 count=1 iflag=direct &
-
-Nov 23 15:10:36 hitdev-rhel67 multipathd: mpathal: sdg - tur checker
-reports path is in standby state
-Nov 23 15:10:36 hitdev-rhel67 multipathd: 8:96: reinstated
-Nov 23 15:10:36 hitdev-rhel67 multipathd: mpathal: queue_if_no_path enabled
-Nov 23 15:10:36 hitdev-rhel67 multipathd: mpathal: Recovered to normal mode
-Nov 23 15:10:36 hitdev-rhel67 multipathd: mpathal: remaining active paths:
-1
-Nov 23 15:10:36 hitdev-rhel67 kernel: sd 8:0:5:1: alua: port group 02
-state S non-preferred supports tolusna
-Nov 23 15:10:36 hitdev-rhel67 kernel: device-mapper: multipath: Failing
-path 8:96.
-Nov 23 15:10:36 hitdev-rhel67 multipathd: 8:96: mark as failed
-Nov 23 15:10:36 hitdev-rhel67 multipathd: mpathal: Entering recovery mode:
-max_retries=20
-Nov 23 15:10:36 hitdev-rhel67 multipathd: mpathal: remaining active paths:
-0
-
-3. Monitor udev events every 5 seconds.
-
-# udevadm monitor
-monitor will print the received events for:
-UDEV - the event which udev sends out after rule processing
-KERNEL - the kernel uevent
-
-KERNEL[1448320131.061837] change   /devices/virtual/block/dm-2 (block)
-KERNEL[1448320131.064802] change   /devices/virtual/block/dm-2 (block)
-UDEV  [1448320131.082838] change   /devices/virtual/block/dm-2 (block)
-UDEV  [1448320131.102134] change   /devices/virtual/block/dm-2 (block)
-KERNEL[1448320135.551737] change   /devices/virtual/block/dm-2 (block)
-KERNEL[1448320135.552701] change   /devices/virtual/block/dm-2 (block)
-UDEV  [1448320135.571634] change   /devices/virtual/block/dm-2 (block)
-UDEV  [1448320135.591017] change   /devices/virtual/block/dm-2 (block)
-KERNEL[1448320136.553368] change   /devices/virtual/block/dm-2 (block)
-KERNEL[1448320136.554298] change   /devices/virtual/block/dm-2 (block)
-UDEV  [1448320136.572733] change   /devices/virtual/block/dm-2 (block)
-UDEV  [1448320136.592089] change   /devices/virtual/block/dm-2 (block)
-KERNEL[1448320140.555389] change   /devices/virtual/block/dm-2 (block)
-KERNEL[1448320140.556369] change   /devices/virtual/block/dm-2 (block)
-UDEV  [1448320140.574944] change   /devices/virtual/block/dm-2 (block)
-UDEV  [1448320140.594076] change   /devices/virtual/block/dm-2 (block)
-
-Signed-off-by: ShivaKrishna Merla <shiva.krishna@nimblestorage.com>
----
- libmultipath/propsel.c |    2 +-
- libmultipath/structs.h |    1 +
- multipathd/main.c      |   21 ++++++++++++++++-----
- 3 files changed, 18 insertions(+), 6 deletions(-)
-
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index f64d5e4..b9e389f 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -374,7 +374,7 @@ detect_prio(struct path * pp)
- 	int ret;
- 	struct prio *p = &pp->prio;
- 
--	if (get_target_port_group_support(pp->fd) <= 0)
-+	if ((pp->tpgs = get_target_port_group_support(pp->fd)) <= 0)
- 		return;
- 	ret = get_target_port_group(pp->fd);
- 	if (ret < 0)
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 5f68a8e..ef5fb7e 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -193,6 +193,7 @@ struct path {
- 	int detect_prio;
- 	int watch_checks;
- 	int wait_checks;
-+	int tpgs;
- 	char * uid_attribute;
- 	char * getuid;
- 	struct prio prio;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index bf3423f..7faa4bd 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -62,6 +62,7 @@ static int use_watchdog;
- #include <pgpolicies.h>
- #include <uevent.h>
- #include <log.h>
-+#include "prioritizers/alua_rtpg.h"
- 
- #include "main.h"
- #include "pidfile.h"
-@@ -1299,11 +1300,21 @@ check_path (struct vectors * vecs, struct path *
-pp)
- 				pp->watch_checks--;
- 			add_active = 0;
- 		}
--		if (reinstate_path(pp, add_active)) {
--			condlog(3, "%s: reload map", pp->dev);
--			ev_add_path(pp, vecs);
--			pp->tick = 1;
--			return 0;
-+
-+		/*
-+		 * don't reinstate failed path, if its in stand-by
-+		 * and if target supports only implicit tpgs mode.
-+		 * this will prevent unnecessary i/o by dm on stand-by
-+		 * paths if there are no other active paths in map.
-+		 */
-+		if (newstate != PATH_GHOST || pp->mpp->nr_active > 0 ||
-+		    pp->tpgs != TPGS_IMPLICIT) {
-+			if (reinstate_path(pp, add_active)) {
-+				condlog(3, "%s: reload map", pp->dev);
-+				ev_add_path(pp, vecs);
-+				pp->tick = 1;
-+				return 0;
-+			}
- 		}
- 		new_path_up = 1;
---
+-- 
+Kees Cook
+Chrome OS & Brillo Security
