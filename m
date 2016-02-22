@@ -1,118 +1,186 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: why is blk-mq requeue foricbly kicking stopped queues? [was: Re:
- dm-multipath test scripts]
-Date: Mon, 22 Feb 2016 10:09:01 -0500
-Message-ID: <20160222150901.GA5043@redhat.com>
-References: <20151007053923.GA10749@xzibit.linux.bs1.fc.nec.co.jp>
- <20160218171745.GA15071@redhat.com>
- <56C662F1.8070407@ce.jp.nec.com>
- <56C6D45A.6060407@ce.jp.nec.com>
- <20160219194216.GB21133@redhat.com>
- <20160220061247.GA23333@redhat.com>
- <56CADA20.7050209@ce.jp.nec.com>
+From: Shiva Krishna <Shiva.Krishna@nimblestorage.com>
+Subject: [PATCH]multipath-tools: prevent unnecessary reinstate of
+ stand-by paths with implicit tpgs mode and no active array paths.
+Date: Mon, 22 Feb 2016 16:46:40 +0000
+Message-ID: <D2F07B42.84D5%Shiva.Krishna@nimblestorage.com>
+References: <065E3B7B-8F7D-48D9-BCB9-DFE13F8F3923@nimblestorage.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <56CADA20.7050209@ce.jp.nec.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>, axboe@kernel.dk
-Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, linux-block@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <065E3B7B-8F7D-48D9-BCB9-DFE13F8F3923@nimblestorage.com>
+Content-Language: en-US
+Content-ID: <40922D3994F59143875186B8CBFD9585@nimblestorage.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Feb 22 2016 at  4:51am -0500,
-Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
+multipathd treats "stand-by" path as active(ghost) and reinstate path.This
+causes I/O hang issues and lots of "change" udev events in cases where only
+stand-by paths are present in multipath map and target supports only
+implicit
+tpgs mode(active/passive arrays)
 
-> On 02/20/16 15:12, Mike Snitzer wrote:
-> > On Fri, Feb 19 2016 at  2:42pm -0500, Mike Snitzer <snitzer@redhat.com> wrote:
-> >> Have you been running with blk-mq?
-> >> Either by setting CONFIG_DM_MQ_DEFAULT or:
-> >> echo Y > /sys/module/dm_mod/parameters/use_blk_mq
-> >>
-> >> I'm seeing test_02_sdev_delete fail with blk-mq enabled.
-> > 
-> > I only see failure if I stack dm-mq ontop of old non-mq scsi devices with:
-> > 
-> > echo N > /sys/module/scsi_mod/parameters/use_blk_mq
-> > echo Y > /sys/module/dm_mod/parameters/use_blk_mq
-> 
-> Ah, I didn't test that combination. I can see the failure, too.
-> 
-> > But this makes me think the novelty of having dm-mq support stacking on
-> > non-blk-mq devices was misplaced.  It is a senseless config.  I'll
-> > probably remove support for such stacking soon (next week). 
-> 
-> Looking at the failure, I suspect it could be a common issue of dm-mq
-> regardless of underlying device type.
+This can happen during system boot where only stand-by paths are discovered
+first and continuous retry of I/O's by dm-multipath and change(failed)
+events
+are hogging multipathd and slowing down the entire boot process with large
+number of volumes mapped (~100s).
 
-In practice I'm not seeing any issues with dm-mq on scsi-mq.
+Selecting path checkers other than tur is not a solution as well, as they
+will
+continuously throw messages saying paths are failed for stand-by state.
 
-> When requeueing, following calls happen in dm-mq:
->   dm_requeue_original_request() {
->     ..
->     blk_mq_requeue_request(rq);
->     blk_mq_kick_requeue_list(rq->q);
-> 
-> then from block workqueue:
->   blk_mq_requeue_work() {
->     ..
->     blk_mq_start_hw_queue(q);
-> 
-> and blk_mq_start_hw_queue() re-starts the queue even if DM has
-> stopped it for suspending. As a result, dm-mq ends up repeating
-> submit-error-requeue forever and suspend never completes. Or,
-> suspend somehow proceeds to clear DMF_NOFLUSH_SUSPENDING and
-> I/O error may directly be returned to submitter.
+This patch will prevent re-instate of stand-by paths in this situation and
+thus prevent unnecessary i/o with failed events during boot or when active
+array goes down temporarily.
 
-I should note that I applied this patch for 4.6:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.6&id=7db905b3d4294e5db4c2938fb7d0e5ba4bd798d6
+Detailed steps to hit the I/O hang issue even with no_path_retry:
+devices {
+    device {
+        vendor               "Nimble"
+        product              "Server"
+        path_grouping_policy group_by_prio
+        detect_prio          yes
+        hardware_handler     "1 alua"
+        path_checker         tur
+        failback             immediate
+        fast_io_fail_tmo     10
+        no_path_retry        30
+        path_selector        "round-robin 0"
+    }
+}
 
-(but it was purely a fallout of code-review, and looking at the nvme's
-use of blk_mq_requeue_request, I did't consider it to be a critical fix
-or anything)
+1. Delete all active paths.
 
-> Attached patch fixes the problem for DM. But given the code comment,
-> there should be call sites which depend on 'start-if-stopped' behavior
-> of blk_mq_requeue_work and we may need other solution.
+mpathal (2e0176ad6309077166c9ce90033bfa248_1) dm-2 Nimble,Server
+size=20G features='1 queue_if_no_path' hwhandler='1 alua' wp=rw
+`-+- policy='round-robin 0' prio=1 status=active
+  |- 8:0:5:1 sdg 8:96  active ghost running
+  `- 8:0:6:1 sdh 8:112 active ghost running
 
-Nice catch, it certainly does seem like the blk-mq requeue code is
-undo-ing steps DM took to protect dm-mpath during suspend.  It likely
-doesn't bite dm-mq on scsi-mq because in general blk-mq takes the
-rq->q->queue_lock much less frequently.  But when stacking blk-mq on
-.request_fn queues it causes live-lock you detailed above.
+2. Issue I/O on mpath with zero active paths.
 
-I'm not sure what the right fix is, but it would seem we need
-something.  I cannot speak to why blk_mq_start_hw_queues() was used to
-begin with (or why it is important for blk-mq to forcibly kicked stopped
-queues on requeue).  Jens?
+dd if=/dev/mapper/mpathal of=/dev/null bs=512 count=1 iflag=direct &
 
-I see commit 8b95741569ea ("blk-mq: use blk_mq_start_hw_queues() when
-running requeue work") but I'm still missing why the upper-layer driver
-of the blk-mq queue (dm-mq in this case) isn't free to keep the queue
-stopped.  This is pretty important for DM's suspend functionality.
+Nov 23 15:10:36 hitdev-rhel67 multipathd: mpathal: sdg - tur checker
+reports path is in standby state
+Nov 23 15:10:36 hitdev-rhel67 multipathd: 8:96: reinstated
+Nov 23 15:10:36 hitdev-rhel67 multipathd: mpathal: queue_if_no_path enabled
+Nov 23 15:10:36 hitdev-rhel67 multipathd: mpathal: Recovered to normal mode
+Nov 23 15:10:36 hitdev-rhel67 multipathd: mpathal: remaining active paths:
+1
+Nov 23 15:10:36 hitdev-rhel67 kernel: sd 8:0:5:1: alua: port group 02
+state S non-preferred supports tolusna
+Nov 23 15:10:36 hitdev-rhel67 kernel: device-mapper: multipath: Failing
+path 8:96.
+Nov 23 15:10:36 hitdev-rhel67 multipathd: 8:96: mark as failed
+Nov 23 15:10:36 hitdev-rhel67 multipathd: mpathal: Entering recovery mode:
+max_retries=20
+Nov 23 15:10:36 hitdev-rhel67 multipathd: mpathal: remaining active paths:
+0
 
-> -- 
-> Jun'ichi Nomura, NEC Corporation
-> 
-> diff --git a/block/blk-mq.c b/block/blk-mq.c
-> index 56c0a72..bbfe936 100644
-> --- a/block/blk-mq.c
-> +++ b/block/blk-mq.c
-> @@ -481,11 +481,7 @@ static void blk_mq_requeue_work(struct work_struct *work)
->  		blk_mq_insert_request(rq, false, false, false);
->  	}
->  
-> -	/*
-> -	 * Use the start variant of queue running here, so that running
-> -	 * the requeue work will kick stopped queues.
-> -	 */
-> -	blk_mq_start_hw_queues(q);
-> +	blk_mq_run_hw_queues(q, false);
->  }
->  
->  void blk_mq_add_to_requeue_list(struct request *rq, bool at_head)
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+3. Monitor udev events every 5 seconds.
+
+# udevadm monitor
+monitor will print the received events for:
+UDEV - the event which udev sends out after rule processing
+KERNEL - the kernel uevent
+
+KERNEL[1448320131.061837] change   /devices/virtual/block/dm-2 (block)
+KERNEL[1448320131.064802] change   /devices/virtual/block/dm-2 (block)
+UDEV  [1448320131.082838] change   /devices/virtual/block/dm-2 (block)
+UDEV  [1448320131.102134] change   /devices/virtual/block/dm-2 (block)
+KERNEL[1448320135.551737] change   /devices/virtual/block/dm-2 (block)
+KERNEL[1448320135.552701] change   /devices/virtual/block/dm-2 (block)
+UDEV  [1448320135.571634] change   /devices/virtual/block/dm-2 (block)
+UDEV  [1448320135.591017] change   /devices/virtual/block/dm-2 (block)
+KERNEL[1448320136.553368] change   /devices/virtual/block/dm-2 (block)
+KERNEL[1448320136.554298] change   /devices/virtual/block/dm-2 (block)
+UDEV  [1448320136.572733] change   /devices/virtual/block/dm-2 (block)
+UDEV  [1448320136.592089] change   /devices/virtual/block/dm-2 (block)
+KERNEL[1448320140.555389] change   /devices/virtual/block/dm-2 (block)
+KERNEL[1448320140.556369] change   /devices/virtual/block/dm-2 (block)
+UDEV  [1448320140.574944] change   /devices/virtual/block/dm-2 (block)
+UDEV  [1448320140.594076] change   /devices/virtual/block/dm-2 (block)
+
+Signed-off-by: ShivaKrishna Merla <shiva.krishna@nimblestorage.com>
+---
+ libmultipath/propsel.c |    2 +-
+ libmultipath/structs.h |    1 +
+ multipathd/main.c      |   21 ++++++++++++++++-----
+ 3 files changed, 18 insertions(+), 6 deletions(-)
+
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index f64d5e4..b9e389f 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -374,7 +374,7 @@ detect_prio(struct path * pp)
+ 	int ret;
+ 	struct prio *p = &pp->prio;
+ 
+-	if (get_target_port_group_support(pp->fd) <= 0)
++	if ((pp->tpgs = get_target_port_group_support(pp->fd)) <= 0)
+ 		return;
+ 	ret = get_target_port_group(pp->fd);
+ 	if (ret < 0)
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 5f68a8e..ef5fb7e 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -193,6 +193,7 @@ struct path {
+ 	int detect_prio;
+ 	int watch_checks;
+ 	int wait_checks;
++	int tpgs;
+ 	char * uid_attribute;
+ 	char * getuid;
+ 	struct prio prio;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index bf3423f..7faa4bd 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -62,6 +62,7 @@ static int use_watchdog;
+ #include <pgpolicies.h>
+ #include <uevent.h>
+ #include <log.h>
++#include "prioritizers/alua_rtpg.h"
+ 
+ #include "main.h"
+ #include "pidfile.h"
+@@ -1299,11 +1300,21 @@ check_path (struct vectors * vecs, struct path *
+pp)
+ 				pp->watch_checks--;
+ 			add_active = 0;
+ 		}
+-		if (reinstate_path(pp, add_active)) {
+-			condlog(3, "%s: reload map", pp->dev);
+-			ev_add_path(pp, vecs);
+-			pp->tick = 1;
+-			return 0;
++
++		/*
++		 * don't reinstate failed path, if its in stand-by
++		 * and if target supports only implicit tpgs mode.
++		 * this will prevent unnecessary i/o by dm on stand-by
++		 * paths if there are no other active paths in map.
++		 */
++		if (newstate != PATH_GHOST || pp->mpp->nr_active > 0 ||
++		    pp->tpgs != TPGS_IMPLICIT) {
++			if (reinstate_path(pp, add_active)) {
++				condlog(3, "%s: reload map", pp->dev);
++				ev_add_path(pp, vecs);
++				pp->tick = 1;
++				return 0;
++			}
+ 		}
+ 		new_path_up = 1;
+--
