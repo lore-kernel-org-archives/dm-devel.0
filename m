@@ -1,34 +1,83 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH v5 0/3] init: add support to directly boot to a mapped
-	device
-Date: Sun, 21 Feb 2016 22:08:40 +0000
-Message-ID: <20160221220839.GD16166@agk-dp.fab.redhat.com>
-References: <1455992032-14594-1-git-send-email-keescook@chromium.org>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: dm-multipath test scripts
+Date: Mon, 22 Feb 2016 09:51:28 +0000
+Message-ID: <56CADA20.7050209@ce.jp.nec.com>
+References: <20151007053923.GA10749@xzibit.linux.bs1.fc.nec.co.jp>
+ <20160218171745.GA15071@redhat.com> <56C662F1.8070407@ce.jp.nec.com>
+ <56C6D45A.6060407@ce.jp.nec.com> <20160219194216.GB21133@redhat.com>
+ <20160220061247.GA23333@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1455992032-14594-1-git-send-email-keescook@chromium.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Jonathan Corbet <corbet@lwn.net>, Shaohua Li <shli@kernel.org>, Dan Ehrenberg <dehrenberg@chromium.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Chen Yu <yu.c.chen@intel.com>, Vishnu Pratap Singh <vishnu.ps@samsung.com>, Andrew Morton <akpm@linux-foundation.org>, Yaowei Bai <baiyaowei@cmss.chinamobile.com>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Will Drewry <wad@chromium.org>, David Zeuthen <zeuthen@google.com>
+Content-Type: text/plain; charset="iso-2022-jp"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20160220061247.GA23333@redhat.com>
+Content-Language: ja-JP
+Content-ID: <E6053B34216AF94181D53C47BCA874BE@gisp.nec.co.jp>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, Hannes Reinecke <hare@suse.de>
 List-Id: dm-devel.ids
 
-On Sat, Feb 20, 2016 at 10:13:49AM -0800, Kees Cook wrote:
-> This is a resurrection of a patch series from a few years back, first
-> brought to the dm maintainers in 2010. It creates a way to define dm
-> devices on the kernel command line for systems that do not use an
-> initramfs, or otherwise need a dm running before init starts.
+On 02/20/16 15:12, Mike Snitzer wrote:
+> On Fri, Feb 19 2016 at  2:42pm -0500, Mike Snitzer <snitzer@redhat.com> wrote:
+>> Have you been running with blk-mq?
+>> Either by setting CONFIG_DM_MQ_DEFAULT or:
+>> echo Y > /sys/module/dm_mod/parameters/use_blk_mq
+>>
+>> I'm seeing test_02_sdev_delete fail with blk-mq enabled.
 > 
-> This has been used by Chrome OS for several years, and now by Brillo
-> (and likely Android soon).
+> I only see failure if I stack dm-mq ontop of old non-mq scsi devices with:
 > 
-> The last version was v4:
-> https://patchwork.kernel.org/patch/104860/
-> https://patchwork.kernel.org/patch/104861/
- 
-Inconsistencies in the terminology here can be sorted out during review,
-and I see that you've taken on board some of my review comments from
-2010, but what are your responses to the rest of them?
+> echo N > /sys/module/scsi_mod/parameters/use_blk_mq
+> echo Y > /sys/module/dm_mod/parameters/use_blk_mq
 
-Alasdair
+Ah, I didn't test that combination. I can see the failure, too.
+
+> But this makes me think the novelty of having dm-mq support stacking on
+> non-blk-mq devices was misplaced.  It is a senseless config.  I'll
+> probably remove support for such stacking soon (next week). 
+
+Looking at the failure, I suspect it could be a common issue of dm-mq
+regardless of underlying device type.
+
+When requeueing, following calls happen in dm-mq:
+  dm_requeue_original_request() {
+    ..
+    blk_mq_requeue_request(rq);
+    blk_mq_kick_requeue_list(rq->q);
+
+then from block workqueue:
+  blk_mq_requeue_work() {
+    ..
+    blk_mq_start_hw_queue(q);
+
+and blk_mq_start_hw_queue() re-starts the queue even if DM has
+stopped it for suspending. As a result, dm-mq ends up repeating
+submit-error-requeue forever and suspend never completes. Or,
+suspend somehow proceeds to clear DMF_NOFLUSH_SUSPENDING and
+I/O error may directly be returned to submitter.
+
+Attached patch fixes the problem for DM. But given the code comment,
+there should be call sites which depend on 'start-if-stopped' behavior
+of blk_mq_requeue_work and we may need other solution.
+
+-- 
+Jun'ichi Nomura, NEC Corporation
+
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index 56c0a72..bbfe936 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -481,11 +481,7 @@ static void blk_mq_requeue_work(struct work_struct *work)
+ 		blk_mq_insert_request(rq, false, false, false);
+ 	}
+ 
+-	/*
+-	 * Use the start variant of queue running here, so that running
+-	 * the requeue work will kick stopped queues.
+-	 */
+-	blk_mq_start_hw_queues(q);
++	blk_mq_run_hw_queues(q, false);
+ }
+ 
+ void blk_mq_add_to_requeue_list(struct request *rq, bool at_head)
