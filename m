@@ -1,42 +1,50 @@
-From: Kent Overstreet <kent.overstreet@gmail.com>
-Subject: Re: 4.4-final: 28 bioset threads on small notebook
-Date: Mon, 22 Feb 2016 13:58:18 -0900
-Message-ID: <20160222225818.GA2675@kmo-pixel>
-References: <20151211140841.GA22873@redhat.com>
- <20160220174035.GA16459@amd>
- <20160220184258.GA3753@amd>
- <20160220195136.GA27149@redhat.com>
- <20160220200432.GB22120@amd>
- <20160220203856.GB27149@redhat.com>
- <20160220205519.GA14108@amd>
- <20160221041540.GA24735@kmo-pixel>
- <3A47B4705F6BE24CBB43C61AA73286211B3AA6A9@SSIEXCH-MB3.ssi.samsung.com>
- <CACVXFVPav3D2MzNFR-b4YadFMM6_KcyEYQ7dx4t1r9fMOLDaFw@mail.gmail.com>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: why is blk-mq requeue foricbly kicking stopped queues? [was:
+ Re: dm-multipath test scripts]
+Date: Tue, 23 Feb 2016 01:34:37 +0000
+Message-ID: <56CBB72C.20309@ce.jp.nec.com>
+References: <20151007053923.GA10749@xzibit.linux.bs1.fc.nec.co.jp>
+ <20160218171745.GA15071@redhat.com> <56C662F1.8070407@ce.jp.nec.com>
+ <56C6D45A.6060407@ce.jp.nec.com> <20160219194216.GB21133@redhat.com>
+ <20160220061247.GA23333@redhat.com> <56CADA20.7050209@ce.jp.nec.com>
+ <20160222150901.GA5043@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CACVXFVPav3D2MzNFR-b4YadFMM6_KcyEYQ7dx4t1r9fMOLDaFw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ming Lei <ming.lei@canonical.com>
-Cc: Ming Lin-SSI <ming.l@ssi.samsung.com>, Pavel Machek <pavel@ucw.cz>, Mike Snitzer <snitzer@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "hch@lst.de" <hch@lst.de>, "neilb@suse.de" <neilb@suse.de>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "dpark@posteo.net" <dpark@posteo.net>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>, "jkosina@suse.cz" <jkosina@suse.cz>, "geoff@infradead.org" <geoff@infradead.org>, "jim@jtan.com" <jim@jtan.com>, "pjk1939@linux.vnet.ibm.com" <pjk1939@linux.vnet.ibm.com>, "minchan@kernel.org" <minchan@kernel.org>, "ngupta@vflare.org" <ngupta@vflare.org>, "oleg.drokin@intel.com" <oleg.drokin@intel.com>, "andreas.dilger@intel.com" <andreas.dilger@intel.com>
+Content-Type: text/plain; charset="iso-2022-jp"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20160222150901.GA5043@redhat.com>
+Content-Language: ja-JP
+Content-ID: <8B2DC5F4CBC8834494EE62AFBE142630@gisp.nec.co.jp>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Sun, Feb 21, 2016 at 05:40:59PM +0800, Ming Lei wrote:
-> On Sun, Feb 21, 2016 at 2:43 PM, Ming Lin-SSI <ming.l@ssi.samsung.com> wrote:
-> >>-----Original Message-----
-> >
-> > So it's almost already "per request_queue"
+On 02/23/16 00:09, Mike Snitzer wrote:
+> I should note that I applied this patch for 4.6:
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.6&id=7db905b3d4294e5db4c2938fb7d0e5ba4bd798d6
 > 
-> Yes, that is because of the following line:
-> 
-> q->bio_split = bioset_create(BIO_POOL_SIZE, 0);
-> 
-> in blk_alloc_queue_node().
-> 
-> Looks like this bio_set doesn't need to be per-request_queue, and
-> now it is only used for fast-cloning bio for splitting, and one global
-> split bio_set should be enough.
+> (but it was purely a fallout of code-review, and looking at the nvme's
+> use of blk_mq_requeue_request, I did't consider it to be a critical fix
+> or anything)
 
-It does have to be per request queue for stacking block devices (which includes
-loopback).
+The patch above contains following change:
+
+> +static void dm_mq_requeue_request(struct request *rq)
+> +{
+> +	struct request_queue *q = rq->q;
+> +	unsigned long flags;
+> +
+> +	blk_mq_requeue_request(rq);
+> +	spin_lock_irqsave(q->queue_lock, flags);
+> +	if (!blk_queue_stopped(q))
+> +		blk_mq_kick_requeue_list(q);
+> +	spin_unlock_irqrestore(q->queue_lock, flags);
+> +}
+
+If you make it conditional to call blk_mq_kick_requeue_list() here,
+I think we have to call the function from start_queue(), too,
+otherwise requeued requests might stay forever in q->requeue_list.
+
+-- 
+Jun'ichi Nomura, NEC Corporation
