@@ -1,14 +1,12 @@
-From: Germano Percossi <germano.percossi@citrix.com>
-Subject: Re: [PATCH 1/1] multipath: fix memory leak and segfault
- in reconfigure
-Date: Tue, 23 Feb 2016 15:17:09 +0000
-Message-ID: <56CC77F5.2020004@citrix.com>
-References: <1455219054-13122-1-git-send-email-germano.percossi@citrix.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fix for 4.5-rc6
+Date: Tue, 23 Feb 2016 15:30:00 -0500
+Message-ID: <20160223203000.GA24231@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1455219054-13122-1-git-send-email-germano.percossi@citrix.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,51 +16,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Ping
+Hi Linus,
 
-On 02/11/2016 07:30 PM, Germano Percossi wrote:
-> Within the reconfigure function, the global pointer conf is
-> stored in a local variable and then assigned NULL.
-> If load_config should fail, for any reason, we end up with
-> a memory leak, as soon as we leave the function, and with
-> the global pointer conf set to NULL, leading to a segfault
-> as soon as it is dereferenced.
->
-> I tested it by calling a reconfigure and making the first
-> allocation in load_config fail but any failure in load_config
-> would do.
->>From a user perspective the CLI reports "fail".
->
-> If something like this should happen there are at least 2 possible
-> scenarios:
->
-> 1) If a second immediate reconfigure succeeds, the conf now is fine but
->     the leak stays
-> 2) If the previous point does not happen, any command trying to access
->     "conf" would fail. On my test box a "show conf" segfaulted.
->
-> The fix is simple but in case of failure at least the previous
-> conf is kept in memory without leaks or segfaluts
->
-> Signed-off-by: Germano Percossi <germano.percossi@citrix.com>
-> ---
->   multipathd/main.c | 2 ++
->   1 file changed, 2 insertions(+)
->
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 04f6d02..f83c849 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -1551,6 +1551,8 @@ reconfigure (struct vectors * vecs)
->   		configure(vecs, 1);
->   		free_config(old);
->   		retval = 0;
-> +	} else {
-> +		conf = old;
->   	}
->
->   	running_state = DAEMON_RUNNING;
->
+The following changes since commit 81f70ba233d5f660e1ea5fe23260ee323af5d53a:
+
+  Linux 4.5-rc5 (2016-02-20 13:39:35 -0800)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.5-fix
+
+for you to fetch changes up to 4328daa2e79ed904a42ce00a9f38b9c36b44b21a:
+
+  dm: fix dm_rq_target_io leak on faults with .request_fn DM w/ blk-mq paths (2016-02-21 20:27:50 -0500)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+Fix a 112 byte leak for each IO request that is requeued while DM
+multipath is handling faults due to path failures.  This leak does not
+happen if blk-mq DM multipath is used.  It only occurs if .request_fn DM
+multipath is stacked ontop of blk-mq paths (e.g. scsi-mq devices).
+
+----------------------------------------------------------------
+Mike Snitzer (1):
+      dm: fix dm_rq_target_io leak on faults with .request_fn DM w/ blk-mq paths
+
+ drivers/md/dm.c | 2 ++
+ 1 file changed, 2 insertions(+)
