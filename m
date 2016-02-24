@@ -1,55 +1,33 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Getting device-mapper failure notifications
-Date: Wed, 24 Feb 2016 12:25:50 -0500
-Message-ID: <20160224172550.GB15480@redhat.com>
-References: <CAHph7JrC0pU+Wy7DsHeCAhz7FWuJa29qGsdv+jD3OQq4aJ1bTA@mail.gmail.com>
-	<56CD38FD.9010209@redhat.com> <56CD8527.5000702@suse.de>
+From: Chris Friesen <chris.friesen-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>
+Subject: blkio cgroups controller doesn't work with LVM?
+Date: Wed, 24 Feb 2016 12:12:19 -0600
+Message-ID: <56CDF283.9010802@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <56CD8527.5000702@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Wed, Feb 24 2016 at  5:25am -0500,
-Hannes Reinecke <hare@suse.de> wrote:
 
-> On 02/24/2016 01:00 PM, Andy Grover wrote:
-> > On 02/01/2016 11:07 PM, Avishay Traeger wrote:
-> >> Hi all,
-> >> I have a system where various configurations are possible - iSCSI/FC,
-> >> single paths and multiple.  For multiple I of course use device-mapper.
-> >> I was wondering if it was possible to:
-> >> 1. use it for cases where I have a single path.
-> >> 2. create a monitoring process that can take some action (e.g., send a
-> >> notification via message queue) in the case of some failure that would
-> >> normally cause failover.
-> > 
-> > Does dm-multipath support a single path? I don't know...
-> > 
-> Pshaw.
-> Of course it does.
-> 
-> (Might be that RH has some magic disallowing that, but certainly there's
-> nothing in the source which forbids it. In fact I recommend it when
-> using iSCSI)
+Hi,
 
-No, RH provided dm-multipath doesn't disallow single path multipath.
-Not sure why you engage in raising such doubt -- red hat follows
-upstream.  period.
+Are there known limitations with the blkio cgroup controller when used with LVM?
 
-multipathd can be configured to look for multiple paths
-('find_multipaths yes' in multipath.conf) but there is nothing in the
-kernel disallowing the use of dm-multipath with a single path.
+I'm using Ubuntu 15.10 with the 4.2 kernel.  I got the same results with CentOS 7.
+
+I set up two groups, /sys/fs/cgroup/blkio/test1 and /sys/fs/cgroup/blkio/test2. 
+  I set the weight for test1 to 500, and the weight for test2 to 1000.
+
+If I then read/write to a file on /dev/sda1 from a process in each group, then 
+everything works as expected and test1 gets half the bandwidth of test2.
+
+If I do the same but accessing an LVM logical volume, where the underlying 
+physical volume is /dev/sda4, then both groups get the same bandwidth.
+
+It appears that the group weight doesn't get propagated down through all the 
+layers.  Am I missing something?  If not, is this documented anywhere?
+
+Thanks,
+Chris
