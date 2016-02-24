@@ -1,33 +1,46 @@
-From: Chris Friesen <chris.friesen-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>
-Subject: blkio cgroups controller doesn't work with LVM?
-Date: Wed, 24 Feb 2016 12:12:19 -0600
-Message-ID: <56CDF283.9010802@windriver.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-multipath test scripts
+Date: Wed, 24 Feb 2016 14:37:08 -0500
+Message-ID: <20160224193707.GA16062@redhat.com>
+References: <20151007053923.GA10749@xzibit.linux.bs1.fc.nec.co.jp>
+ <20160218171745.GA15071@redhat.com>
+ <56C662F1.8070407@ce.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <56C662F1.8070407@ce.jp.nec.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
+On Thu, Feb 18 2016 at  7:33pm -0500,
+Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
 
-Hi,
+> Hi Mike,
+> 
+> On 02/19/16 02:17, Mike Snitzer wrote:
+> 
+> > Taking a step back:
+> > These scripts don't belong in Documentation/device-mapper/mptest/ (or
+> > anywhere in the kernel tree for that matter).
+> > 
+> > I'd really prefer it if we could port your scripts over to the
+> > device-mapper-test-suite, see:
+> > https://github.com/jthornber/device-mapper-test-suite
+> 
+> Yes, I agree such a project is better place for this to live.
 
-Are there known limitations with the blkio cgroup controller when used with LVM?
+I was going to attempt porting your scripts to device-mapper-test-suite
+but I'll have to come back to that (I have more important tasks at this
+time).
 
-I'm using Ubuntu 15.10 with the 4.2 kernel.  I got the same results with CentOS 7.
+So I've created a guthub repo for your scripts:
+https://github.com/snitm/mptest
 
-I set up two groups, /sys/fs/cgroup/blkio/test1 and /sys/fs/cgroup/blkio/test2. 
-  I set the weight for test1 to 500, and the weight for test2 to 1000.
-
-If I then read/write to a file on /dev/sda1 from a process in each group, then 
-everything works as expected and test1 gets half the bandwidth of test2.
-
-If I do the same but accessing an LVM logical volume, where the underlying 
-physical volume is /dev/sda4, then both groups get the same bandwidth.
-
-It appears that the group weight doesn't get propagated down through all the 
-layers.  Am I missing something?  If not, is this documented anywhere?
+I'll let you know once I've ported to device-mapper-test-suite.  But in
+the meantime I'll take any changes you or others have to 'mptest'.
 
 Thanks,
-Chris
+Mike
