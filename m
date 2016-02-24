@@ -1,57 +1,110 @@
-From: Pavel Machek <pavel@ucw.cz>
+From: Ming Lei <ming.lei@canonical.com>
 Subject: Re: 4.4-final: 28 bioset threads on small notebook
-Date: Tue, 23 Feb 2016 21:45:32 +0100
-Message-ID: <20160223204532.GD16961@amd>
-References: <20160220174035.GA16459@amd>
- <20160220184258.GA3753@amd>
- <20160220195136.GA27149@redhat.com>
- <20160220200432.GB22120@amd>
- <20160220203856.GB27149@redhat.com>
- <20160220205519.GA14108@amd>
- <20160221041540.GA24735@kmo-pixel>
- <3A47B4705F6BE24CBB43C61AA73286211B3AA6A9@SSIEXCH-MB3.ssi.samsung.com>
- <CACVXFVPav3D2MzNFR-b4YadFMM6_KcyEYQ7dx4t1r9fMOLDaFw@mail.gmail.com>
- <20160222225818.GA2675@kmo-pixel>
+Date: Wed, 24 Feb 2016 10:48:10 +0800
+Message-ID: <CACVXFVN+xV5_4zktCGpQUrnOtJ1EVOLPt5v4niuj9VUGL8uUEA@mail.gmail.com>
+References: <20160220184258.GA3753@amd>
+	<20160220195136.GA27149@redhat.com>
+	<20160220200432.GB22120@amd>
+	<20160220203856.GB27149@redhat.com>
+	<20160220205519.GA14108@amd>
+	<20160221041540.GA24735@kmo-pixel>
+	<3A47B4705F6BE24CBB43C61AA73286211B3AA6A9@SSIEXCH-MB3.ssi.samsung.com>
+	<CACVXFVPav3D2MzNFR-b4YadFMM6_KcyEYQ7dx4t1r9fMOLDaFw@mail.gmail.com>
+	<20160222225818.GA2675@kmo-pixel>
+	<CACVXFVNMMhR-uOSYvV+VLrSFtmQZUmoQBSAwKFcXcSvB_HUO-A@mail.gmail.com>
+	<20160223145442.GB8047@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160222225818.GA2675@kmo-pixel>
+In-Reply-To: <20160223145442.GB8047@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <kent.overstreet@gmail.com>
-Cc: Ming Lei <ming.lei@canonical.com>, Ming Lin-SSI <ming.l@ssi.samsung.com>, Mike Snitzer <snitzer@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "hch@lst.de" <hch@lst.de>, "neilb@suse.de" <neilb@suse.de>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "dpark@posteo.net" <dpark@posteo.net>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>, "jkosina@suse.cz" <jkosina@suse.cz>, "geoff@infradead.org" <geoff@infradead.org>, "jim@jtan.com" <jim@jtan.com>, "pjk1939@linux.vnet.ibm.com" <pjk1939@linux.vnet.ibm.com>, "minchan@kernel.org" <minchan@kernel.org>, "ngupta@vflare.org" <ngupta@vflare.org>, "oleg.drokin@intel.com" <oleg.drokin@intel.com>, "andreas.dilger@intel.com" <andreas.dilger@intel.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Kent Overstreet <kent.overstreet@gmail.com>, "oleg.drokin@intel.com" <oleg.drokin@intel.com>, Ming Lin-SSI <ming.l@ssi.samsung.com>, "andreas.dilger@intel.com" <andreas.dilger@intel.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "minchan@kernel.org" <minchan@kernel.org>, "jkosina@suse.cz" <jkosina@suse.cz>, kernel list <linux-kernel@vger.kernel.org>, "jim@jtan.com" <jim@jtan.com>, "pjk1939@linux.vnet.ibm.com" <pjk1939@linux.vnet.ibm.com>, "axboe@fb.com" <axboe@fb.com>, "geoff@infradead.org" <geoff@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "dpark@posteo.net" <dpark@posteo.net>, Pavel Machek <pavel@ucw.cz>, "ngupta@vflare.org" <ngupta@vflare.org>, "hch@lst.de" <hch@lst.de>, "agk@redhat.com" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon 2016-02-22 13:58:18, Kent Overstreet wrote:
-> On Sun, Feb 21, 2016 at 05:40:59PM +0800, Ming Lei wrote:
-> > On Sun, Feb 21, 2016 at 2:43 PM, Ming Lin-SSI <ming.l@ssi.samsung.com> wrote:
-> > >>-----Original Message-----
-> > >
-> > > So it's almost already "per request_queue"
-> > 
-> > Yes, that is because of the following line:
-> > 
-> > q->bio_split = bioset_create(BIO_POOL_SIZE, 0);
-> > 
-> > in blk_alloc_queue_node().
-> > 
-> > Looks like this bio_set doesn't need to be per-request_queue, and
-> > now it is only used for fast-cloning bio for splitting, and one global
-> > split bio_set should be enough.
-> 
-> It does have to be per request queue for stacking block devices (which includes
-> loopback).
+On Tue, Feb 23, 2016 at 10:54 PM, Mike Snitzer <snitzer@redhat.com> wrote:
+> On Mon, Feb 22 2016 at  9:55pm -0500,
+> Ming Lei <ming.lei@canonical.com> wrote:
+>
+>> On Tue, Feb 23, 2016 at 6:58 AM, Kent Overstreet
+>> <kent.overstreet@gmail.com> wrote:
+>> > On Sun, Feb 21, 2016 at 05:40:59PM +0800, Ming Lei wrote:
+>> >> On Sun, Feb 21, 2016 at 2:43 PM, Ming Lin-SSI <ming.l@ssi.samsung.com> wrote:
+>> >> >>-----Original Message-----
+>> >> >
+>> >> > So it's almost already "per request_queue"
+>> >>
+>> >> Yes, that is because of the following line:
+>> >>
+>> >> q->bio_split = bioset_create(BIO_POOL_SIZE, 0);
+>> >>
+>> >> in blk_alloc_queue_node().
+>> >>
+>> >> Looks like this bio_set doesn't need to be per-request_queue, and
+>> >> now it is only used for fast-cloning bio for splitting, and one global
+>> >> split bio_set should be enough.
+>> >
+>> > It does have to be per request queue for stacking block devices (which includes
+>> > loopback).
+>>
+>> In commit df2cb6daa4(block: Avoid deadlocks with bio allocation by
+>> stacking drivers), deadlock in this situation has been avoided already.
+>> Or are there other issues with global bio_set? I appreciate if you may
+>> explain it a bit if there are.
+>
+> Even with commit df2cb6daa4 there is still risk of deadlocks (even
+> without low memory condition), see:
+> https://patchwork.kernel.org/patch/7398411/
 
-Could we only allocate request queues for devices that are not even
-opened? I have these in my system:
+That is definitely another problem which isn't related with low memory,
+and I guess Kent means there might be deadlock risk in case of shared
+bio_set.
 
-loop0  loop2  loop4  loop6  md0   nbd1	 nbd11	nbd13  nbd15  nbd3 nbd5  nbd7    nbd9  sda1  sda3
-loop1  loop3  loop5  loop7  nbd0  nbd10  nbd12	nbd14  nbd2   nbd4 nbd6  nbd8    sda   sda2  sda4
+>
+> (you may recall you blocked this patch with concerns about performance,
+> context switches, plug merging being compromised, etc.. to which I never
+> circled back to verify your concerns)
 
-...but nbd is never used, loop1+ is never used, and loop0 is only used
-once in a blue moon. Each process takes 8K+...
+I still remember that problem:
 
-								Pavel
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+1) Process A
+     - two bio(a, b) are splitted in dm's make_request funtion
+     - bio(a) is submitted via generic_make_request(), so it is staged
+       in current->bio_list
+     - time t1
+     - before bio(b) is submitted, down_write(&s->lock) is run and
+      never return
+
+2) Process B:
+     - just during time t1, wait completion of bio(a) by down_write(&s->lock)
+
+Then Process A waits the lock which is acquired by B first, and the
+two bio(a, b)
+can't reach to driver/device at all.
+
+Looks that current->bio_list is fragile to locks from make_request function,
+and moving the lock into workqueue context should be helpful.
+
+And I am happy to continue to discuss this issue further.
+
+>
+> But it illustrates the type of problems that can occur when your rescue
+> infrastructure is shared across devices (in the context of df2cb6daa4,
+> current->bio_list contains bios from multiple devices).
+>
+> If a single splitting bio_set were shared across devices there would be
+> no guarantee of forward progress with complex stacked devices (one or
+> more devices could exhaust the reserve and starve out other devices in
+> the stack).  So keeping the bio_set per request_queue isn't prone to
+> failure like a shared bio_set might be.
+
+Not consider the dm lock problem, from Kent's commit(df2cb6daa4) log and
+the patch, looks forward progress can be guaranteed for stacked devices
+with same bio_set, but better to get Kent's clarification.
+
+If forward progress can be guaranteed, percpu mempool might avoid
+easy exhausting, because it is reasonable to assume that one CPU can only
+provide a certain amount of bandwidth wrt. block transfer.
+
+Thanks
+Ming
