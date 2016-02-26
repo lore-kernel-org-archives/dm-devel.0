@@ -1,87 +1,73 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v5 0/3] init: add support to directly boot to a mapped device
-Date: Fri, 26 Feb 2016 10:52:38 -0800
-Message-ID: <CAGXu5j+JGPZ2sH3uAHwpJ3im_TBUL19U43EZw-Z2dZ6fQiC2zA@mail.gmail.com>
-References: <1455992032-14594-1-git-send-email-keescook@chromium.org>
-	<20160221220839.GD16166@agk-dp.fab.redhat.com>
-	<CAGXu5jJ9nUdE8u8a3EYR5uS_zOLEkmQn3M0Nsm9bkxBmMxpC9Q@mail.gmail.com>
-	<20160226165358.GA26728@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH]multipath-tools: prevent unnecessary
+ reinstate of stand-by paths with implicit tpgs mode and no active array
+ paths.
+Date: Fri, 26 Feb 2016 12:55:35 -0600
+Message-ID: <20160226185535.GD2915@octiron.msp.redhat.com>
+References: <065E3B7B-8F7D-48D9-BCB9-DFE13F8F3923@nimblestorage.com>
+	<20160225204953.GA2915@octiron.msp.redhat.com>
+	<D2F4DA4B.879E%Shiva.Krishna@nimblestorage.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20160226165358.GA26728@redhat.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Jonathan Corbet <corbet@lwn.net>, Shaohua Li <shli@kernel.org>, Dan Ehrenberg <dehrenberg@chromium.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Chen Yu <yu.c.chen@intel.com>, Vishnu Pratap Singh <vishnu.ps@samsung.com>, Andrew Morton <akpm@linux-foundation.org>, Yaowei Bai <baiyaowei@cmss.chinamobile.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, Will Drewry <wad@chromium.org>, David Zeuthen <zeuthen@google.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <D2F4DA4B.879E%Shiva.Krishna@nimblestorage.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Shiva Krishna <Shiva.Krishna@nimblestorage.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Feb 26, 2016 at 8:53 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> On Mon, Feb 22 2016 at  1:55pm -0500,
-> Kees Cook <keescook@chromium.org> wrote:
->
->> On Sun, Feb 21, 2016 at 2:08 PM, Alasdair G Kergon <agk@redhat.com> wrote:
->> > On Sat, Feb 20, 2016 at 10:13:49AM -0800, Kees Cook wrote:
->> >> This is a resurrection of a patch series from a few years back, first
->> >> brought to the dm maintainers in 2010. It creates a way to define dm
->> >> devices on the kernel command line for systems that do not use an
->> >> initramfs, or otherwise need a dm running before init starts.
->> >>
->> >> This has been used by Chrome OS for several years, and now by Brillo
->> >> (and likely Android soon).
->> >>
->> >> The last version was v4:
->> >> https://patchwork.kernel.org/patch/104860/
->> >> https://patchwork.kernel.org/patch/104861/
->> >
->> > Inconsistencies in the terminology here can be sorted out during review,
->> > and I see that you've taken on board some of my review comments from
->> > 2010, but what are your responses to the rest of them?
->>
->> Ah, sorry, the threads I could find were incomplete, so I wasn't able
->> to find those comments that were made to Will's 2010 submission. In
->> some of the cleanups I did I was very confused about "target" vs
->> "table", and tried to fix that. Regardless, I'm open to fixing
->> whatever is needed. :)
->>
->> Thanks for looking at this again!
->
-> This work isn't going to fly as is.  I appreciate the effort and the
-> goal (without understanding _why_) but: you're open-coding, duplicating
-> and/or reinventing way too much in do_mounts_dm.c
->
-> 1) You first need to answer: _why_ is using a proper initramfs not
-> viable?  A very simple initramfs that issues dmsetup commands, etc,
-> isn't so daunting is it?  Why is it so important for the kernel to
-> natively provide a dmsetup interface?  Chrome, Android, etc cannot use
-> initramfs?
+On Fri, Feb 26, 2016 at 12:32:51AM +0000, Shiva Krishna wrote:
+> 
+> 
+> On 2/25/16, 12:49 PM, "Benjamin Marzinski" <bmarzins@redhat.com> wrote:
+> 
+> >On Sat, Feb 20, 2016 at 08:23:29PM +0000, Shiva Krishna wrote:
+> >
+> >I understand your problem, but this isn't the right patch to fix it. For
+> >one this check
+> >
+> >+		if (newstate != PATH_GHOST || pp->mpp->nr_active > 0 ||
+> >+		    pp->tpgs != TPGS_IMPLICIT) {
+> >
+> >is pretty problematic.  Every path that isn't alua or doesn't enable
+> >detect_prio will have pp->tpgs != TPGS_IMPLICIT (because this will be
+> >zeroed out on path creation for all paths, and TPGS_IMPLICIT == 0x1). If
+> >you need special handling for PATH_GHOST, and you don't want to copy and
+> >modify an existing checker, then you should probably go with a config
+> >option to enable this on your device, perhaps ghost_is_standby.  Then
+> >you (and anyone else who needs this) can set that in your builtin device
+> >config, and you don't need to try to craft a complicated check to get
+> >this right.
+> That was exactly my intention. To allow reinstate in all those cases and
+> prevent this only if pp->tpgs == TPGS_IMPLICIT. Even if we add a new config
+> parameter to avoid this, I think a check like this is still needed, because
+> Even if ghost is stand-by we want reinstate when there are other active
+> paths
+> present in the map. That is to get them out of the failed state. My
+> intention
+> was to keep them failed as long as there are no active paths
+> present/discovered.
 
-That is correct: Chrome OS does not (and won't) use an initramfs. This
-is mainly for reasons of boot speed, verified boot block size, and
-maybe some other things I don't remember.
+I have no objection to the (pp->mpp->nr_active > 0) check.  My point is
+that with your code (pp->tpgs != TPGS_IMPLICT) does not correctly weed
+out the implicit alua paths.  Since you set pp->tpgs in detect_prio, all
+implict alua devices that don't use detect_prio (and this is most of
+them), will not have pp->tpgs set to TPGS_IMPLICIT. I also wonder if
+this way of dealing with PATH_GHOST paths would be useful to other
+device setups, not just ones where you have standby paths with implicit
+alua. In this case, making it a seperate config option would make it
+available to any device. If this is really only useful for this specific
+case, then I'm not against doing some alua specific checks in
+select_prio.
 
-> 2) If you are able to adequately justify the need for dm=:
-> I'd much rather the dm= kernel commandline be a simple series of
-> comma-delimited dmsetup-like commands.
->
-> You'd handle each command with extremely basic parsing:
->  <dm_ioctl_cmd> <args> [, <dm_ioctl_cmd> <args>]
-> (inventing a special token to denote <newline>, to support tables with
-> multiple entries, rather than relying on commas and counts, etc)
-
-Sure, changing the syntax is fine by me. We'd need to plumb access to
-the ioctl interface, though.
-
-> and you'd then have do_mounts_dm.c open /dev/mapper/control directly and
-> issue proper DM ioctls rather than adding all your shim code.  This last
-> bit of opening /dev/mapper/control from init needs more research -- not
-> sure if doing such a thing from kernel is viable/safe/acceptable.
-
-Well, there's no /dev and no init since our dm is the root device
-(dm-verity). We need everything up and running before we mount the
-root filesystem, very similar to do_mount_md.c's purpose.
-
--Kees
-
--- 
-Kees Cook
-Chrome OS & Brillo Security
+-Ben
