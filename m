@@ -1,194 +1,98 @@
-From: Werner Koch <wk@gnupg.org>
-Subject: [PATCH] dmsetup: improve message command
-Date: Fri, 26 Feb 2016 12:42:33 +0100
-Message-ID: <87y4a7wvdi.fsf@wheatstone.g10code.de>
+From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [dm-devel] blkio cgroups controller doesn't work with LVM?
+Date: Fri, 26 Feb 2016 11:42:28 -0500
+Message-ID: <20160226164228.GA24711@redhat.com>
+References: <56CDF283.9010802@windriver.com>
+ <56CEB1BC.4000005@kyup.com>
+ <20160225145314.GA20699@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="=Syria-cypherpunk-Elvis-Hugo-Chavez-AMEMB-Majic-Geraldton-CDMA-COSCO="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160225145314.GA20699-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Nikolay Borisov <kernel-6AxghH7DbtA@public.gmane.org>, Chris Friesen <chris.friesen-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tejun-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
---=Syria-cypherpunk-Elvis-Hugo-Chavez-AMEMB-Majic-Geraldton-CDMA-COSCO=
+On Thu, Feb 25, 2016 at 09:53:14AM -0500, Mike Snitzer wrote:
+> On Thu, Feb 25 2016 at  2:48am -0500,
+> Nikolay Borisov <kernel-6AxghH7DbtA@public.gmane.org> wrote:
+> 
+> > 
+> > 
+> > On 02/24/2016 08:12 PM, Chris Friesen wrote:
+> > > 
+> > > Hi,
+> > > 
+> > > Are there known limitations with the blkio cgroup controller when used
+> > > with LVM?
+> > > 
+> > > I'm using Ubuntu 15.10 with the 4.2 kernel.  I got the same results with
+> > > CentOS 7.
+> > > 
+> > > I set up two groups, /sys/fs/cgroup/blkio/test1 and
+> > > /sys/fs/cgroup/blkio/test2.  I set the weight for test1 to 500, and the
+> > > weight for test2 to 1000.
+> > 
+> > The weighed mode of blkio works only with CFQ scheduler. And as far as I
+> > have seen you cannot set CFQ to be the scheduler of DM devices. In this
+> > case you can use the BLK io throttling mechanism. That's what I've
+> > encountered in my practice. Though I'd be happy to be proven wrong by
+> > someone. I believe the following sentence in the blkio controller states
+> > that:
+> > "
+> > First one is proportional weight time based division of disk policy. It
+> > is implemented in CFQ. Hence this policy takes effect only on leaf nodes
+> > when CFQ is being used.
+> > "
+> 
+> Right, LVM created devices are bio-based DM devices in the kernel.
+> bio-based block devices do _not_ have an IO scheduler.  Their underlying
+> request-based device does.
+> 
+> I'm not well-versed on the top-level cgroup interface and how it maps to
+> associated resources that are established in the kernel.  But it could
+> be that the configuration of blkio cgroup against a bio-based LVM device
+> needs to be passed through to the underlying request-based device
+> (e.g. /dev/sda4 in Chris's case)?
+> 
+> I'm also wondering whether the latest cgroup work that Tejun has just
+> finished (afaik to support buffered IO in the IO controller) will afford
+> us a more meaningful reason to work to make cgroups' blkio controller
+> actually work with bio-based devices like LVM's DM devices?
+> 
+> I'm very much open to advice on how to proceed with investigating this
+> integration work.  Tejun, Vivek, anyone else: if you have advice on next
+> steps for DM on this front _please_ yell, thanks!
 
-Hi!
+Ok, here is my understanding. Tejun, please correct me if that's not the
+case anymore. I have not been able to keep pace with all the recent work.
 
-I am playing with a new crypto container format and propose to enhance
-"dmsetup message" to accept the actual message from stdin instead of
-taking it only from the command line.  This is useful to set a key and
-similar to how "dmsetup create" is reading the table from stdin.
+IO throttling policies should be applied on top level dm devices and these
+should work for reads and direct writes.
 
-Patch attached.
+For IO throttling buffered writes, I think it might not work on dm devices
+as it because we might not be copying cgroup information when cloning
+happens in dm layer.
 
+IIRC, one concern with cloning cgroup info from parent bio was that how
+would one take care of any priority inversion issues. For example, we are
+waiting for a clone to finish IO which is in severely throttled IO cgroup
+and rest of the IO can't proceed till that IO finishes).
 
-Shalom-Salam,
+IIUC, there might not be a straight forward answer to that question. We
+probably will have to look at all the dm code closely and if that
+serialization is possible in any of the paths, then reset the cgroup info.
 
-   Werner
+For CFQ's proportional policy, it might not work well when a dm device
+is sitting on top. And reason being that for all reads and direct writes
+we inherit cgroup from submitter and dm might be submitting IO from an
+internal thread, hence losing the cgroup of submitter hence IO gets
+misclassified at dm level.
 
--- 
-Die Gedanken sind frei.  Ausnahmen regelt ein Bundesgesetz.
+To solve this, we will have to carry submitter's cgroup info in bio and
+clones and again think of priority inversion issues.
 
---=Syria-cypherpunk-Elvis-Hugo-Chavez-AMEMB-Majic-Geraldton-CDMA-COSCO=
-Content-Type: text/x-diff
-Content-Disposition: inline;
-	filename=0001-dmsetup-command-message-may-now-read-the-message-fro.patch
-
-From ae2b5739007b0829c3a142d0d5e782b3b7fe3028 Mon Sep 17 00:00:00 2001
-From: Werner Koch <wk@gnupg.org>
-Date: Fri, 19 Feb 2016 21:47:45 +0100
-Subject: [PATCH] dmsetup: command message may now read the message from stdin.
-
-When "dmsetup messsage" is used to set an encryption key it is better
-to read that from stdin so that the key does not show up in ps or the
-shell history.  Thus instead of an error message when the third arg is
-missing, it is now taken from stdin.  stdin is also switched to
-unbuffered mode so that sensitive data should not end up in stdio
-buffers.  A new wipememory macro (taken from GnuPG) is used to
-securely erase the message from memory.
-
-Signed-off-by: Werner Koch <wk@gnupg.org>
----
- man/dmsetup.8.in |  5 +++--
- tools/dmsetup.c  | 68 ++++++++++++++++++++++++++++++++++++++++++--------------
- 2 files changed, 54 insertions(+), 19 deletions(-)
-
-diff --git a/man/dmsetup.8.in b/man/dmsetup.8.in
-index f92dbe5..c9c886a 100644
---- a/man/dmsetup.8.in
-+++ b/man/dmsetup.8.in
-@@ -127,7 +127,7 @@ dmsetup \(em low level logical volume management
- .  BR message
- .  IR device_name
- .  IR sector
--.  IR message
-+.  RI [ message ]
- ..
- .CMD_MESSAGE
- .
-@@ -714,7 +714,8 @@ reactivating it with proper mangling mode used (see also \fB\-\-manglename\fP).
- .HP
- .CMD_MESSAGE
- .br
--Send message to target. If sector not needed use 0.
-+Send message to target. If sector not needed use 0.  If the message
-+argument is not given, the first line read from stdin is used.
- .
- .HP
- .CMD_MKNODES
-diff --git a/tools/dmsetup.c b/tools/dmsetup.c
-index 4db6004..8e988f0 100644
---- a/tools/dmsetup.c
-+++ b/tools/dmsetup.c
-@@ -105,6 +105,15 @@ extern char *optarg;
- 
- #define err(msg, x...) fprintf(stderr, msg "\n", ##x)
- 
-+/* To avoid that a compiler optimizes memset calls away, this macro
-+ * should be used securely clear memory. */
-+#define wipememory(_ptr,_len) do { \
-+              volatile char *_vptr=(volatile char *)(_ptr); \
-+              size_t _vlen=(_len); \
-+              while(_vlen) { *_vptr=0; _vptr++; _vlen--; } \
-+                  } while(0)
-+
-+
- /* program_id used for dmstats-managed statistics regions */
- #define DM_STATS_PROGRAM_ID "dmstats"
- 
-@@ -1234,25 +1243,50 @@ static int _message(CMD_ARGS)
- 	argc--;
- 	argv++;
- 
--	if (argc <= 0)
--		err("No message supplied.\n");
--
--	for (i = 0; i < argc; i++)
--		sz += strlen(argv[i]) + 1;
--
--	if (!(str = dm_zalloc(sz))) {
--		err("message string allocation failed");
--		goto out;
--	}
--
--	for (i = 0; i < argc; i++) {
--		if (i)
--			strcat(str, " ");
--		strcat(str, argv[i]);
--	}
-+	if (argc <= 0) {
-+		/* Read messsage from stdin (one line).  */
-+                size_t len = LINE_SIZE;
-+
-+                /* Try avoiding storing potential sensitive data in a
-+                 * stdio buffer.  */
-+                if (setvbuf (stdin, NULL, _IONBF, BUFSIZ)) {
-+                        err("Failed to switch stdin to unbuffered mode.");
-+                        goto out;
-+                }
-+
-+                if (!(str = dm_malloc(len))) {
-+                        err("Failed to malloc line buffer.");
-+                        goto out;
-+                }
-+
-+                if (!fgets(str, (int) len, stdin)) {
-+                        err("Error reading line from stdin.");
-+                        dm_free(str);
-+                        goto out;
-+                }
-+                len = strlen (str);
-+                if (len && str[len-1]=='\n')
-+                        str[--len] = 0;
-+
-+        } else {
-+                for (i = 0; i < argc; i++)
-+                        sz += strlen(argv[i]) + 1;
-+
-+                if (!(str = dm_zalloc(sz))) {
-+                        err("message string allocation failed");
-+                        goto out;
-+                }
-+
-+                for (i = 0; i < argc; i++) {
-+                        if (i)
-+                                strcat(str, " ");
-+                        strcat(str, argv[i]);
-+                }
-+        }
- 
- 	i = dm_task_set_message(dmt, str);
- 
-+        wipememory (str, strlen(str));
- 	dm_free(str);
- 
- 	if (!i)
-@@ -5132,7 +5166,7 @@ static struct command _dmsetup_commands[] = {
- 	{"reload", "<device> [<table>|<table_file>]", 0, 2, 0, 0, _load},
- 	{"wipe_table", "[-f|--force] [--noflush] [--nolockfs] <device>", 1, -1, 1, 0, _error_device},
- 	{"rename", "<device> [--setuuid] <new_name_or_uuid>", 1, 2, 0, 0, _rename},
--	{"message", "<device> <sector> <message>", 2, -1, 0, 0, _message},
-+	{"message", "<device> <sector> [<message>]", 2, -1, 0, 0, _message},
- 	{"ls", "[--target <target_type>] [--exec <command>] [-o <options>] [--tree]", 0, 0, 0, 0, _ls},
- 	{"info", "[<device>]", 0, -1, 1, 0, _info},
- 	{"deps", "[-o <options>] [<device>]", 0, -1, 1, 0, _deps},
--- 
-2.1.4
-
-
---=Syria-cypherpunk-Elvis-Hugo-Chavez-AMEMB-Majic-Geraldton-CDMA-COSCO=
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---=Syria-cypherpunk-Elvis-Hugo-Chavez-AMEMB-Majic-Geraldton-CDMA-COSCO=--
+Thanks
+Vivek
