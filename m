@@ -1,106 +1,72 @@
-From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] blkio cgroups controller doesn't work with LVM?
-Date: Fri, 26 Feb 2016 11:45:10 -0500
-Message-ID: <20160226164510.GB24711@redhat.com>
-References: <56CDF283.9010802@windriver.com>
- <56CEB1BC.4000005@kyup.com>
- <20160225145314.GA20699@redhat.com>
- <20160226164228.GA24711@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v5 0/3] init: add support to directly boot to a mapped
+ device
+Date: Fri, 26 Feb 2016 11:53:58 -0500
+Message-ID: <20160226165358.GA26728@redhat.com>
+References: <1455992032-14594-1-git-send-email-keescook@chromium.org>
+ <20160221220839.GD16166@agk-dp.fab.redhat.com>
+ <CAGXu5jJ9nUdE8u8a3EYR5uS_zOLEkmQn3M0Nsm9bkxBmMxpC9Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20160226164228.GA24711-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Nikolay Borisov <kernel-6AxghH7DbtA@public.gmane.org>, Chris Friesen <chris.friesen-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+In-Reply-To: <CAGXu5jJ9nUdE8u8a3EYR5uS_zOLEkmQn3M0Nsm9bkxBmMxpC9Q@mail.gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Jonathan Corbet <corbet@lwn.net>, Shaohua Li <shli@kernel.org>, Dan Ehrenberg <dehrenberg@chromium.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Chen Yu <yu.c.chen@intel.com>, Vishnu Pratap Singh <vishnu.ps@samsung.com>, Andrew Morton <akpm@linux-foundation.org>, Yaowei Bai <baiyaowei@cmss.chinamobile.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, Will Drewry <wad@chromium.org>, David Zeuthen <zeuthen@google.com>
 List-Id: dm-devel.ids
 
-Looks like Tejun's email id in original email is wrong. It should be
-tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org and not tejun-DgEjT+Ai2yi4UlQgPVntAg@public.gmane.org Fixing it.
+On Mon, Feb 22 2016 at  1:55pm -0500,
+Kees Cook <keescook@chromium.org> wrote:
 
-Thanks
-Vivek
+> On Sun, Feb 21, 2016 at 2:08 PM, Alasdair G Kergon <agk@redhat.com> wrote:
+> > On Sat, Feb 20, 2016 at 10:13:49AM -0800, Kees Cook wrote:
+> >> This is a resurrection of a patch series from a few years back, first
+> >> brought to the dm maintainers in 2010. It creates a way to define dm
+> >> devices on the kernel command line for systems that do not use an
+> >> initramfs, or otherwise need a dm running before init starts.
+> >>
+> >> This has been used by Chrome OS for several years, and now by Brillo
+> >> (and likely Android soon).
+> >>
+> >> The last version was v4:
+> >> https://patchwork.kernel.org/patch/104860/
+> >> https://patchwork.kernel.org/patch/104861/
+> >
+> > Inconsistencies in the terminology here can be sorted out during review,
+> > and I see that you've taken on board some of my review comments from
+> > 2010, but what are your responses to the rest of them?
+> 
+> Ah, sorry, the threads I could find were incomplete, so I wasn't able
+> to find those comments that were made to Will's 2010 submission. In
+> some of the cleanups I did I was very confused about "target" vs
+> "table", and tried to fix that. Regardless, I'm open to fixing
+> whatever is needed. :)
+> 
+> Thanks for looking at this again!
 
-On Fri, Feb 26, 2016 at 11:42:28AM -0500, Vivek Goyal wrote:
-> On Thu, Feb 25, 2016 at 09:53:14AM -0500, Mike Snitzer wrote:
-> > On Thu, Feb 25 2016 at  2:48am -0500,
-> > Nikolay Borisov <kernel-6AxghH7DbtA@public.gmane.org> wrote:
-> > 
-> > > 
-> > > 
-> > > On 02/24/2016 08:12 PM, Chris Friesen wrote:
-> > > > 
-> > > > Hi,
-> > > > 
-> > > > Are there known limitations with the blkio cgroup controller when used
-> > > > with LVM?
-> > > > 
-> > > > I'm using Ubuntu 15.10 with the 4.2 kernel.  I got the same results with
-> > > > CentOS 7.
-> > > > 
-> > > > I set up two groups, /sys/fs/cgroup/blkio/test1 and
-> > > > /sys/fs/cgroup/blkio/test2.  I set the weight for test1 to 500, and the
-> > > > weight for test2 to 1000.
-> > > 
-> > > The weighed mode of blkio works only with CFQ scheduler. And as far as I
-> > > have seen you cannot set CFQ to be the scheduler of DM devices. In this
-> > > case you can use the BLK io throttling mechanism. That's what I've
-> > > encountered in my practice. Though I'd be happy to be proven wrong by
-> > > someone. I believe the following sentence in the blkio controller states
-> > > that:
-> > > "
-> > > First one is proportional weight time based division of disk policy. It
-> > > is implemented in CFQ. Hence this policy takes effect only on leaf nodes
-> > > when CFQ is being used.
-> > > "
-> > 
-> > Right, LVM created devices are bio-based DM devices in the kernel.
-> > bio-based block devices do _not_ have an IO scheduler.  Their underlying
-> > request-based device does.
-> > 
-> > I'm not well-versed on the top-level cgroup interface and how it maps to
-> > associated resources that are established in the kernel.  But it could
-> > be that the configuration of blkio cgroup against a bio-based LVM device
-> > needs to be passed through to the underlying request-based device
-> > (e.g. /dev/sda4 in Chris's case)?
-> > 
-> > I'm also wondering whether the latest cgroup work that Tejun has just
-> > finished (afaik to support buffered IO in the IO controller) will afford
-> > us a more meaningful reason to work to make cgroups' blkio controller
-> > actually work with bio-based devices like LVM's DM devices?
-> > 
-> > I'm very much open to advice on how to proceed with investigating this
-> > integration work.  Tejun, Vivek, anyone else: if you have advice on next
-> > steps for DM on this front _please_ yell, thanks!
-> 
-> Ok, here is my understanding. Tejun, please correct me if that's not the
-> case anymore. I have not been able to keep pace with all the recent work.
-> 
-> IO throttling policies should be applied on top level dm devices and these
-> should work for reads and direct writes.
-> 
-> For IO throttling buffered writes, I think it might not work on dm devices
-> as it because we might not be copying cgroup information when cloning
-> happens in dm layer.
-> 
-> IIRC, one concern with cloning cgroup info from parent bio was that how
-> would one take care of any priority inversion issues. For example, we are
-> waiting for a clone to finish IO which is in severely throttled IO cgroup
-> and rest of the IO can't proceed till that IO finishes).
-> 
-> IIUC, there might not be a straight forward answer to that question. We
-> probably will have to look at all the dm code closely and if that
-> serialization is possible in any of the paths, then reset the cgroup info.
-> 
-> For CFQ's proportional policy, it might not work well when a dm device
-> is sitting on top. And reason being that for all reads and direct writes
-> we inherit cgroup from submitter and dm might be submitting IO from an
-> internal thread, hence losing the cgroup of submitter hence IO gets
-> misclassified at dm level.
-> 
-> To solve this, we will have to carry submitter's cgroup info in bio and
-> clones and again think of priority inversion issues.
-> 
-> Thanks
-> Vivek
+This work isn't going to fly as is.  I appreciate the effort and the
+goal (without understanding _why_) but: you're open-coding, duplicating
+and/or reinventing way too much in do_mounts_dm.c
+
+1) You first need to answer: _why_ is using a proper initramfs not
+viable?  A very simple initramfs that issues dmsetup commands, etc,
+isn't so daunting is it?  Why is it so important for the kernel to
+natively provide a dmsetup interface?  Chrome, Android, etc cannot use
+initramfs?
+
+2) If you are able to adequately justify the need for dm=:
+I'd much rather the dm= kernel commandline be a simple series of
+comma-delimited dmsetup-like commands.
+
+You'd handle each command with extremely basic parsing:
+ <dm_ioctl_cmd> <args> [, <dm_ioctl_cmd> <args>]
+(inventing a special token to denote <newline>, to support tables with
+multiple entries, rather than relying on commas and counts, etc)
+
+and you'd then have do_mounts_dm.c open /dev/mapper/control directly and
+issue proper DM ioctls rather than adding all your shim code.  This last
+bit of opening /dev/mapper/control from init needs more research -- not
+sure if doing such a thing from kernel is viable/safe/acceptable.
+
+Mike
