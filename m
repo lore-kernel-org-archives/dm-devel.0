@@ -1,121 +1,142 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v5 0/3] init: add support to directly boot to a mapped
- device
-Date: Fri, 26 Feb 2016 15:47:49 -0500
-Message-ID: <20160226204749.GA27783@redhat.com>
-References: <1455992032-14594-1-git-send-email-keescook@chromium.org>
- <20160221220839.GD16166@agk-dp.fab.redhat.com>
- <CAGXu5jJ9nUdE8u8a3EYR5uS_zOLEkmQn3M0Nsm9bkxBmMxpC9Q@mail.gmail.com>
- <20160226165358.GA26728@redhat.com>
- <CAGXu5j+JGPZ2sH3uAHwpJ3im_TBUL19U43EZw-Z2dZ6fQiC2zA@mail.gmail.com>
- <20160226192145.GA27326@redhat.com>
- <CAGXu5jJNgwdRZ0c0qG-gDqjcAvSn1ZyLsHBhqgfbM6iE2u1uow@mail.gmail.com>
+From: Shiva Krishna <Shiva.Krishna@nimblestorage.com>
+Subject: Re: [PATCH V2]multipath-tools: prevent unnecessary
+ reinstate of stand-by paths with implicit tpgs mode and no active array
+ paths
+Date: Fri, 26 Feb 2016 21:11:28 +0000
+Message-ID: <D2F5FEC5.8847%Shiva.Krishna@nimblestorage.com>
+References: <D2F4F783.87D0%Shiva.Krishna@nimblestorage.com>
+	<20160226190050.GE2915@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAGXu5jJNgwdRZ0c0qG-gDqjcAvSn1ZyLsHBhqgfbM6iE2u1uow@mail.gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Will Drewry <wad@chromium.org>, Chen Yu <yu.c.chen@intel.com>, Jonathan Corbet <corbet@lwn.net>, David Zeuthen <zeuthen@google.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, LKML <linux-kernel@vger.kernel.org>, Dan Ehrenberg <dehrenberg@chromium.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, Vishnu Pratap Singh <vishnu.ps@samsung.com>, Yaowei Bai <baiyaowei@cmss.chinamobile.com>, Andrew Morton <akpm@linux-foundation.org>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20160226190050.GE2915@octiron.msp.redhat.com>
+Content-Language: en-US
+Content-ID: <7BF235C835E65B48974D29AB05E13880@nimblestorage.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Feb 26 2016 at  2:59pm -0500,
-Kees Cook <keescook@chromium.org> wrote:
 
-> On Fri, Feb 26, 2016 at 11:21 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> > On Fri, Feb 26 2016 at  1:52pm -0500,
-> > Kees Cook <keescook@chromium.org> wrote:
-> >
-> >> On Fri, Feb 26, 2016 at 8:53 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> >> > On Mon, Feb 22 2016 at  1:55pm -0500,
-> >> > Kees Cook <keescook@chromium.org> wrote:
-> >> >
-> >> >> On Sun, Feb 21, 2016 at 2:08 PM, Alasdair G Kergon <agk@redhat.com> wrote:
-> >> >> > On Sat, Feb 20, 2016 at 10:13:49AM -0800, Kees Cook wrote:
-> >> >> >> This is a resurrection of a patch series from a few years back, first
-> >> >> >> brought to the dm maintainers in 2010. It creates a way to define dm
-> >> >> >> devices on the kernel command line for systems that do not use an
-> >> >> >> initramfs, or otherwise need a dm running before init starts.
-> >> >> >>
-> >> >> >> This has been used by Chrome OS for several years, and now by Brillo
-> >> >> >> (and likely Android soon).
-> >> >> >>
-> >> >> >> The last version was v4:
-> >> >> >> https://patchwork.kernel.org/patch/104860/
-> >> >> >> https://patchwork.kernel.org/patch/104861/
-> >> >> >
-> >> >> > Inconsistencies in the terminology here can be sorted out during review,
-> >> >> > and I see that you've taken on board some of my review comments from
-> >> >> > 2010, but what are your responses to the rest of them?
-> >> >>
-> >> >> Ah, sorry, the threads I could find were incomplete, so I wasn't able
-> >> >> to find those comments that were made to Will's 2010 submission. In
-> >> >> some of the cleanups I did I was very confused about "target" vs
-> >> >> "table", and tried to fix that. Regardless, I'm open to fixing
-> >> >> whatever is needed. :)
-> >> >>
-> >> >> Thanks for looking at this again!
-> >> >
-> >> > This work isn't going to fly as is.  I appreciate the effort and the
-> >> > goal (without understanding _why_) but: you're open-coding, duplicating
-> >> > and/or reinventing way too much in do_mounts_dm.c
-> >> >
-> >> > 1) You first need to answer: _why_ is using a proper initramfs not
-> >> > viable?  A very simple initramfs that issues dmsetup commands, etc,
-> >> > isn't so daunting is it?  Why is it so important for the kernel to
-> >> > natively provide a dmsetup interface?  Chrome, Android, etc cannot use
-> >> > initramfs?
-> >>
-> >> That is correct: Chrome OS does not (and won't) use an initramfs. This
-> >> is mainly for reasons of boot speed, verified boot block size, and
-> >> maybe some other things I don't remember.
-> >
-> > Not sure what "verified boot block size" means but...
-> 
-> Chrome OS uses coreboot as its boot firmware and a coreboot module
-> known as "depthcharge" for doing the crypto-verification and booting
-> of the Chrome OS system. This is the static root of trust Chrome OS
-> extends from its read-only boot firmware through to the kernel it
-> loads and the dm-verity partition it mounts as the read-only root
-> filesystem. To keep the boot speed fast and the kernel size small,
-> there is no initramfs.
-> 
-> > Sorry I really don't buy that using a custom initramfs would be the
-> > source of slow boot.  initramfs is _not_ this hugely inefficient
-> > mechanism you'd have us believe.
-> 
-> I didn't say it was hugely inefficient, but for Chrome OS it's not
-> needed, and was a measurable source of boot time. We just got rid of
-> it since it was redundant. I can't change that design decision; I'm
-> just here to help bring the dm= boot support upstream. :)
-> 
-> > And if that is the justification for this early boot dm= support then
-> > the Chrome OS project/team will have to continue to carry the hack
-> > locally.  It has no place upstream.  But I'm open to revisiting this if
-> > it can be implemented in a very cheap way.
-> 
-> Yeah, I'm open to whatever suggestions you have.
-> 
-> >> > 2) If you are able to adequately justify the need for dm=:
-> >> > I'd much rather the dm= kernel commandline be a simple series of
-> >> > comma-delimited dmsetup-like commands.
-> >> >
-> >> > You'd handle each command with extremely basic parsing:
-> >> >  <dm_ioctl_cmd> <args> [, <dm_ioctl_cmd> <args>]
-> >> > (inventing a special token to denote <newline>, to support tables with
-> >> > multiple entries, rather than relying on commas and counts, etc)
-> >>
-> >> Sure, changing the syntax is fine by me. We'd need to plumb access to
-> >> the ioctl interface, though.
-> >
-> > I was hoping to avoid any extra hacks but yes... seems you'd need a new
-> > API to issue the equivalent of a DM ioctl programatically.  Hopefully
-> > it'd be quite a small wrapper.
-> 
-> Seems like it shouldn't be too bad.
 
-OK, I'm waiting on you to give it a shot.  I'll do my best to help.
+On 2/26/16, 11:00 AM, "Benjamin Marzinski" <bmarzins@redhat.com> wrote:
 
-Thanks,
-Mike
+>On Fri, Feb 26, 2016 at 02:25:08AM +0000, Shiva Krishna wrote:
+>> --- 
+>>  libmultipath/propsel.c |    2 +-
+>>  libmultipath/structs.h |    1 +
+>>  multipathd/main.c      |   19 ++++++++++++++++---
+>>  3 files changed, 18 insertions(+), 4 deletions(-)
+>> 
+>> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+>> index f64d5e4..b9e389f 100644
+>> --- a/libmultipath/propsel.c
+>> +++ b/libmultipath/propsel.c
+>> @@ -374,7 +374,7 @@ detect_prio(struct path * pp)
+>>  	int ret;
+>>  	struct prio *p = &pp->prio;
+>>  
+>> -	if (get_target_port_group_support(pp->fd) <= 0)
+>> +	if ((pp->tpgs = get_target_port_group_support(pp->fd)) <= 0)
+>>  		return;
+>>  	ret = get_target_port_group(pp->fd);
+>>  	if (ret < 0)
+>
+>Again, setting this in detect_prio will make this useless for all
+>devices that don't use detect_prio. After the "out:" label in
+>select_prio, you can check if the alua prioritizer is being used,
+>and set this there.
+Thanks Ben, Hannes for the comments. I hesitated to put alua specific
+checks in select_prio. Also, this condition is specific to targets
+which support alua and implicit tpgs mode. Hence creating a config
+option might not be necessary. I will post an updated patch with the
+suggested change.
+> 
+>
+>-Ben
+>
+>> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+>> index 5f68a8e..ef5fb7e 100644
+>> --- a/libmultipath/structs.h
+>> +++ b/libmultipath/structs.h
+>> @@ -193,6 +193,7 @@ struct path {
+>>  	int detect_prio;
+>>  	int watch_checks;
+>>  	int wait_checks;
+>> +	int tpgs;
+>>  	char * uid_attribute;
+>>  	char * getuid;
+>>  	struct prio prio;
+>> diff --git a/multipathd/main.c b/multipathd/main.c
+>> index 04f6d02..b6b0053 100644
+>> --- a/multipathd/main.c
+>> +++ b/multipathd/main.c
+>> @@ -62,6 +62,7 @@ static int use_watchdog;
+>>  #include <pgpolicies.h>
+>>  #include <uevent.h>
+>>  #include <log.h>
+>> +#include "prioritizers/alua_rtpg.h"
+>>  
+>>  #include "main.h"
+>>  #include "pidfile.h"
+>> @@ -1161,6 +1162,7 @@ check_path (struct vectors * vecs, struct path *
+>>pp)
+>>  	int new_path_up = 0;
+>>  	int chkr_new_path_up = 0;
+>>  	int add_active;
+>> +	int ignore_reinstate = 0;
+>>  	int oldchkrstate = pp->chkrstate;
+>>  
+>>  	if (pp->initialized && !pp->mpp)
+>> @@ -1235,6 +1237,16 @@ check_path (struct vectors * vecs, struct path *
+>>pp)
+>>  			pp->wait_checks = 0;
+>>  	}
+>>  
+>> +	/*
+>> +	 * don't reinstate failed path, if its in stand-by
+>> +	 * and if target supports only implicit tpgs mode.
+>> +	 * this will prevent unnecessary i/o by dm on stand-by
+>> +	 * paths if there are no other active paths in map.
+>> +	 */
+>> +	ignore_reinstate = (newstate == PATH_GHOST &&
+>> +			    pp->mpp->nr_active == 0 &&
+>> +			    pp->tpgs == TPGS_IMPLICIT) ? 1 : 0;
+>> +
+>>  	pp->chkrstate = newstate;
+>>  	if (newstate != pp->state) {
+>>  		int oldstate = pp->state;
+>> @@ -1297,7 +1309,7 @@ check_path (struct vectors * vecs, struct path *
+>>pp)
+>>  				pp->watch_checks--;
+>>  			add_active = 0;
+>>  		}
+>> -		if (reinstate_path(pp, add_active)) {
+>> +		if (!ignore_reinstate && reinstate_path(pp, add_active)) {
+>>  			condlog(3, "%s: reload map", pp->dev);
+>>  			ev_add_path(pp, vecs);
+>>  			pp->tick = 1;
+>> @@ -1316,8 +1328,9 @@ check_path (struct vectors * vecs, struct path *
+>>pp)
+>>  			enable_group(pp);
+>>  	}
+>>  	else if (newstate == PATH_UP || newstate == PATH_GHOST) {
+>> -		if (pp->dmstate == PSTATE_FAILED ||
+>> -		    pp->dmstate == PSTATE_UNDEF) {
+>> +		if ((pp->dmstate == PSTATE_FAILED ||
+>> +		    pp->dmstate == PSTATE_UNDEF) &&
+>> +		    !ignore_reinstate) {
+>>  			/* Clear IO errors */
+>>  			if (reinstate_path(pp, 0)) {
+>>  				condlog(3, "%s: reload map", pp->dev);
+>> --
+>> 
