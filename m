@@ -1,53 +1,93 @@
-From: Seth Forshee <seth.forshee@canonical.com>
-Subject: Re: [PATCH RESEND v2 11/18] fs: Ensure the mounter of a filesystem
- is privileged towards its inodes
-Date: Thu, 3 Mar 2016 11:02:01 -0600
-Message-ID: <20160303170201.GA30224@ubuntu-hedt>
-References: <1451930639-94331-1-git-send-email-seth.forshee@canonical.com>
- <1451930639-94331-12-git-send-email-seth.forshee@canonical.com>
+From: Robert Jarzmik <robert.jarzmik@free.fr>
+Subject: Re: [PATCH 1/4] scatterlist: Introduce some helper functions
+Date: Thu, 03 Mar 2016 20:15:42 +0100
+Message-ID: <87povbpe3l.fsf@belgarion.home>
+References: <cover.1456981314.git.baolin.wang@linaro.org>
+	<cover.1456981314.git.baolin.wang@linaro.org>
+	<3bff3e286d3ee01ebb7e26d7233075054c42a7a9.1456981314.git.baolin.wang@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1451930639-94331-12-git-send-email-seth.forshee@canonical.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
+Content-Type: text/plain
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <3bff3e286d3ee01ebb7e26d7233075054c42a7a9.1456981314.git.baolin.wang@linaro.org>
+	(Baolin Wang's message of "Thu, 3 Mar 2016 13:19:36 +0800")
+Sender: linux-crypto-owner@vger.kernel.org
+To: Baolin Wang <baolin.wang@linaro.org>
+Cc: herbert@gondor.apana.org.au, davem@davemloft.net, agk@redhat.com, snitzer@redhat.com, axboe@fb.com, dm-devel@redhat.com, akpm@linux-foundation.org, david.s.gordon@intel.com, thomas.lendacky@amd.com, yamada.masahiro@socionext.com, smueller@chronox.de, tadeusz.struk@intel.com, standby24x7@gmail.com, shli@kernel.org, broonie@kernel.org, linus.walleij@linaro.org, arnd@arndb.de, linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Jan 04, 2016 at 12:03:50PM -0600, Seth Forshee wrote:
-> The mounter of a filesystem should be privileged towards the
-> inodes of that filesystem. Extend the checks in
-> inode_owner_or_capable() and capable_wrt_inode_uidgid() to
-> permit access by users priviliged in the user namespace of the
-> inode's superblock.
+Baolin Wang <baolin.wang@linaro.org> writes:
 
-Eric - I've discovered a problem related to this patch. The patches
-you've already applied to your testing branch make it so that s_user_ns
-can be an unprivileged user for proc and kernfs-based mounts. In some
-cases DAC is the only thing protecting files in these mounts (ignoring
-MAC), and with this patch an unprivileged user could bypass DAC.
+> @@ -212,6 +212,37 @@ static inline void sg_unmark_end(struct scatterlist *sg)
+>  }
+>  
+>  /**
+> + * sg_is_contiguous - Check if the scatterlists are contiguous
+> + * @sga: SG entry
+> + * @sgb: SG entry
+> + *
+> + * Description:
+> + *   If the sga scatterlist is contiguous with the sgb scatterlist,
+> + *   that means they can be merged together.
+> + *
+> + **/
+> +static inline bool sg_is_contiguous(struct scatterlist *sga,
+> +				    struct scatterlist *sgb)
+> +{
+> +	return ((sga->page_link & ~0x3UL) + sga->offset + sga->length ==
+> +		(sgb->page_link & ~0x3UL));
+> +}
+I don't understand that one.
+sga->page_link is a pointer to a "struct page *". How can it be added to an
+offset within a page ???
 
-There's a simple solution - always set s_user_ns to &init_user_ns for
-those filesystems. I think this is the right thing to do, since the
-backing store behind these filesystems are really kernel objects.  But
-this would break the assumption behind your patch "userns: Simpilify
-MNT_NODEV handling" and cause a regression in mounting behavior.
+> @@ -370,6 +370,65 @@ int sg_alloc_table(struct sg_table *table, unsigned int
+> nents, gfp_t gfp_mask)
+...
+>  /**
+> + * sg_add_sg_to_table - Add one scatterlist into sg table
+> + * @sgt:	The sg table header to use
+> + * @src:	The sg need to be added into sg table
+> + *
+> + * Description:
+> + *   The 'nents' member indicates how many scatterlists added in the sg table.
+> + *   Copy the @src@ scatterlist into sg table and increase 'nents' member.
+> + *
+> + **/
+> +int sg_add_sg_to_table(struct sg_table *sgt, struct scatterlist *src)
+> +{
+> +	unsigned int i = 0, orig_nents = sgt->orig_nents;
+> +	struct scatterlist *sgl = sgt->sgl;
+> +	struct scatterlist *sg;
+> +
+> +	/* Check if there are enough space for the new sg to be added */
+> +	if (sgt->nents >= sgt->orig_nents)
+> +		return -EINVAL;
+I must admit I don't understand that one either : how do comparing the number of
+"mapped" entries against the number of "allocated" entries determines if there
+is enough room ?
 
-I've come up with several possible solutions for this conflict.
+> +/**
+> + * sg_alloc_empty_table - Allocate one empty sg table
+> + * @sgt:	The sg table header to use
+> + * @nents:	Number of entries in sg list
+> + * @gfp_mask:	GFP allocation mask
+> + *
+> + *  Description:
+> + *    Allocate and initialize an sg table. The 'nents' member of sg_table
+> + *    indicates how many scatterlists added in the sg table. It should set
+> + *    0 which means there are no scatterlists added in this sg table now.
+> + *
+> + **/
+> +int sg_alloc_empty_table(struct sg_table *sgt, unsigned int nents,
+> +			 gfp_t gfp_mask)
+As for this one, there has to be a purpose for it I fail to see. From far away
+it looks exactly like sg_alloc_table(), excepting it "works around" the nents >
+0 protection of __sg_alloc_table().
+What is exactly the need for this one, and if it's usefull why not simply
+changing the __sg_alloc_table() "nents > 0" test and see what the outcome of the
+review will be ?
 
- 1. Drop this patch and keep on setting s_user_ns to unprivilged users.
-    This would be unfortunate because I think this patch does make sense
-    for most filesystems.
- 2. Restrict this patch so that a user privileged towards s_user_ns is
-    only privileged towards the super blocks inodes if s_user_ns has a
-    mapping for both i_uid and i_gid. This is better than (1) but still
-    not ideal in my mind.
- 3. Drop your patch and maintain the current MNT_NODEV behavior.
- 4. Add a new s_iflags flag to indicate a super block is from an
-    unprivileged mount, and use this in your patch instead of s_user_ns.
+Cheers.
 
-Any preference, or any other ideas?
-
-Thanks,
-Seth
+-- 
+Robert
