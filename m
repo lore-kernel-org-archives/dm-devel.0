@@ -1,96 +1,5817 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH RESEND v2 11/18] fs: Ensure the mounter of a filesystem is privileged towards its inodes
-Date: Sun, 06 Mar 2016 16:07:49 -0600
-Message-ID: <8737s32rbe.fsf@x220.int.ebiederm.org>
-References: <1451930639-94331-1-git-send-email-seth.forshee@canonical.com>
-	<1451930639-94331-12-git-send-email-seth.forshee@canonical.com>
-	<20160303170201.GA30224@ubuntu-hedt>
-	<87twkl50g5.fsf@x220.int.ebiederm.org>
-	<20160306154832.GA13631@ubuntu-xps13>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH V2] Introducing multipath C API
+ <libdmmp/libdmmp.h>
+Date: Fri, 4 Mar 2016 10:06:24 -0600
+Message-ID: <20160304160624.GN2915@octiron.msp.redhat.com>
+References: <56AF5F58.6030302@suse.de>
+	<1455264623-16199-1-git-send-email-fge@redhat.com>
+	<1455264623-16199-2-git-send-email-fge@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20160306154832.GA13631@ubuntu-xps13> (Seth Forshee's message of
-	"Sun, 6 Mar 2016 09:48:33 -0600")
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Seth Forshee <seth.forshee@canonical.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1455264623-16199-2-git-send-email-fge@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Gris Ge <fge@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Seth Forshee <seth.forshee@canonical.com> writes:
+On Fri, Feb 12, 2016 at 04:10:23PM +0800, Gris Ge wrote:
 
-> On Fri, Mar 04, 2016 at 04:43:06PM -0600, Eric W. Biederman wrote:
->> Seth Forshee <seth.forshee@canonical.com> writes:
->> 
->> > On Mon, Jan 04, 2016 at 12:03:50PM -0600, Seth Forshee wrote:
->> >> The mounter of a filesystem should be privileged towards the
->> >> inodes of that filesystem. Extend the checks in
->> >> inode_owner_or_capable() and capable_wrt_inode_uidgid() to
->> >> permit access by users priviliged in the user namespace of the
->> >> inode's superblock.
->> >
->> > Eric - I've discovered a problem related to this patch. The patches
->> > you've already applied to your testing branch make it so that s_user_ns
->> > can be an unprivileged user for proc and kernfs-based mounts. In some
->> > cases DAC is the only thing protecting files in these mounts (ignoring
->> > MAC), and with this patch an unprivileged user could bypass DAC.
->> >
->> > There's a simple solution - always set s_user_ns to &init_user_ns for
->> > those filesystems. I think this is the right thing to do, since the
->> > backing store behind these filesystems are really kernel objects.  But
->> > this would break the assumption behind your patch "userns: Simpilify
->> > MNT_NODEV handling" and cause a regression in mounting behavior.
->> >
->> > I've come up with several possible solutions for this conflict.
->> >
->> >  1. Drop this patch and keep on setting s_user_ns to unprivilged users.
->> >     This would be unfortunate because I think this patch does make sense
->> >     for most filesystems.
->> >  2. Restrict this patch so that a user privileged towards s_user_ns is
->> >     only privileged towards the super blocks inodes if s_user_ns has a
->> >     mapping for both i_uid and i_gid. This is better than (1) but still
->> >     not ideal in my mind.
->> >  3. Drop your patch and maintain the current MNT_NODEV behavior.
->> >  4. Add a new s_iflags flag to indicate a super block is from an
->> >     unprivileged mount, and use this in your patch instead of s_user_ns.
->> >
->> > Any preference, or any other ideas?
->> 
->> In general this is only an issue if uids and gids on the filesystem
->> do not map into the user namespace.
->
-> Yes, both capable_wrt_inode_uidgid and inode_owner_or_capable will
-> return true for a privileged user in the current namespace if the ids
-> map into that namespace.
->
->> Therefore the general fix is to limit the logic of checking for
->> capabilities in s_user_ns if we are dealing with INVALID_UID and
->> INVALID_GID.  For proc and kernfs that should never be the case
->> so the problem becomes a non-issue.
->> 
->> Further I would look at limiting that relaxation to just
->> inode_change_ok.  So that we can easily wrap that check per filesystem
->> and deny the relaxation for proc and kernfs.  proc and kernfs already
->> have wrappers for .setattr so denying changes when !uid_vaid and
->> !gid_valid would be a trivial addition, and ensure calamity does
->> not ensure.
->> 
->> Furthmore by limiting any additional to inode_change_ok we keep
->> the work of the additional tests off of the fast paths.
->
-> So then the inode would need to be chowned before a privileged user in a
-> non-init namespace would be capable towards it. That seems workable. It
-> looks like INVALID_UID and INVALID_GID do map into init_user_ns (which
-> seems a bit odd) so real root remains capable towards those indoes.
->
-> That seems okay to me then.
+This looks good to me. Personally, I would have loved to see multipathd
+actually passing structured data across the IPC connection, and have the
+multipath client code responsible for making it pretty, but making that
+happen is a lot more invasive.
 
-If I was not clear I was suggesting that we allow a sufficiently
-privileged user in the filesysteme's s_user_ns to allow chowning files
-with INVALID_UID and INVALID_GID.
+A couple of thoughts:
 
-The global root user would always be able to do that because unless
-capabilities are dropped it is sufficiently privileged in ever user
-namespace.
+I'm wrote a library interface for the multipath IPC code that wasn't
+included the upstream code, although nobody ever voiced a disagreement
+with it, and Hannes sounded supportive of it the last time I posted it.
 
-Eric
+https://www.redhat.com/archives/dm-devel/2015-June/msg00033.html
+https://www.redhat.com/archives/dm-devel/2015-October/msg00062.html
+
+I plan on resending it with my next batch of patches, unless someone
+wants to tell me why it hasn't been accepted before.  It doesn't effect
+your code at all, but assuming that it does get in this time, we may
+want to make some of your IPC functions wrappers around it (possibly
+modifying my library code to work with it better), so that we aren't
+duplicating work.
+
+Also, why use the assert, instead of returning an error? I know some
+library's don't protect you from passing in NULL pointers, and just let
+you segfault.  I didn't find any cases where you would return junk if
+the asserts were disabled, but I didn't follow through all of the logic
+to verify that you wouldn't ever return junk if you passed in junk and
+the asserts were disabled.
+
+Lastly, and this is even more nit-picky, in _dmmp_all_get_func_gen, why
+to you need to pass in a specific name for the array and the item_count?
+
+But regardless of these nit-picks, ACK.
+
+-Ben
+
+> Features:
+> 
+>  * Use these multipathd IPC commands:
+>     * 'show maps raw format <fmt>'
+>     * 'show groups raw format <fmt>'
+>     * 'show paths raw format <fmt>'
+>     # We might have inconsistent data when something changes during these
+>     # commands. If so, DMMP_ERR_INCONSISTENT_DATA will be raised and
+>     # suggest user to try again.
+>  * Library user guide will be 'man 3 libdmmp.h'.
+>  * Every public function has its own manpage in section 3 which is
+>    generated by linux 'kernel-doc' tool.
+> 
+> Usage:
+> 
+>     make -j5
+>     sudo make install \
+>             bindir=/usr/sbin/ \
+>             syslibdir=/usr/lib64/ \
+>             libdir=/usr/lib64/multipath \
+>             rcdir=/etc/rc.d/init.d \
+>             unitdir=/usr/lib/systemd/system \
+>             includedir=/usr/include
+>     make -C libdmmp check
+> 
+>     man libdmmp.h
+>     man dmmp_mpath_array_get
+>     man <dmmp function name>
+> 
+> Performance:
+> 
+>   * 4k scsi_debug sdX with 2 disks per mpath (i7-3520M 4GiB RAM RHEL 7.2):
+>         $ make -C libdmmp speed_test
+>         Got 2000 mpath
+>         real 0.20
+>         user 0.03
+>         sys 0.01
+>   * 10k scsi_debug sdX with 2 disks per mpath (E5-2697 32GiB RAM RHEL 7.2):
+>         $ make -C libdmmp speed_test
+>         Got 5000 mpath
+>         real 1.51
+>         user 0.45
+>         sys 0.00
+> 
+> User case:
+> 
+>     Storaged multipath plugin:
+>         https://github.com/storaged-project/storaged/pull/40
+> 
+> Misc:
+>  * Developer note is libdmmp/DEV_NOTES.
+> 
+> Signed-off-by: Gris Ge <fge@redhat.com>
+> ---
+>  .gitignore                        |    4 +
+>  Makefile                          |    1 +
+>  Makefile.inc                      |    5 +-
+>  libdmmp/DEV_NOTES                 |   40 +
+>  libdmmp/Makefile                  |   74 +
+>  libdmmp/docs/kernel-doc           | 2703 +++++++++++++++++++++++++++++++++++++
+>  libdmmp/docs/libdmmp.h.3          |  113 ++
+>  libdmmp/docs/split-man.pl         |   41 +
+>  libdmmp/libdmmp.c                 |  515 +++++++
+>  libdmmp/libdmmp.pc.in             |    9 +
+>  libdmmp/libdmmp/libdmmp.h         |  617 +++++++++
+>  libdmmp/libdmmp_misc.c            |  239 ++++
+>  libdmmp/libdmmp_mp.c              |  242 ++++
+>  libdmmp/libdmmp_path.c            |  156 +++
+>  libdmmp/libdmmp_pg.c              |  247 ++++
+>  libdmmp/libdmmp_private.h         |  292 ++++
+>  libdmmp/test/Makefile             |   29 +
+>  libdmmp/test/libdmmp_speed_test.c |   49 +
+>  libdmmp/test/libdmmp_test.c       |  141 ++
+>  19 files changed, 5516 insertions(+), 1 deletion(-)
+>  create mode 100644 libdmmp/DEV_NOTES
+>  create mode 100644 libdmmp/Makefile
+>  create mode 100755 libdmmp/docs/kernel-doc
+>  create mode 100644 libdmmp/docs/libdmmp.h.3
+>  create mode 100755 libdmmp/docs/split-man.pl
+>  create mode 100644 libdmmp/libdmmp.c
+>  create mode 100644 libdmmp/libdmmp.pc.in
+>  create mode 100644 libdmmp/libdmmp/libdmmp.h
+>  create mode 100644 libdmmp/libdmmp_misc.c
+>  create mode 100644 libdmmp/libdmmp_mp.c
+>  create mode 100644 libdmmp/libdmmp_path.c
+>  create mode 100644 libdmmp/libdmmp_pg.c
+>  create mode 100644 libdmmp/libdmmp_private.h
+>  create mode 100644 libdmmp/test/Makefile
+>  create mode 100644 libdmmp/test/libdmmp_speed_test.c
+>  create mode 100644 libdmmp/test/libdmmp_test.c
+> 
+> diff --git a/.gitignore b/.gitignore
+> index 7f25d0e..0f76300 100644
+> --- a/.gitignore
+> +++ b/.gitignore
+> @@ -10,3 +10,7 @@ multipath/multipath
+>  multipathd/multipathd
+>  mpathpersist/mpathpersist
+>  .nfs*
+> +libdmmp/docs/man/*.3
+> +libdmmp/*.so.*
+> +libdmmp/test/libdmmp_test
+> +libdmmp/test/libdmmp_speed_test
+> diff --git a/Makefile b/Makefile
+> index baf7753..617c908 100644
+> --- a/Makefile
+> +++ b/Makefile
+> @@ -24,6 +24,7 @@ BUILDDIRS = \
+>  	libmultipath/prioritizers \
+>  	libmultipath/checkers \
+>  	libmpathpersist \
+> +	libdmmp \
+>  	multipath \
+>  	multipathd \
+>  	mpathpersist \
+> diff --git a/Makefile.inc b/Makefile.inc
+> index c3ed73f..fbc6851 100644
+> --- a/Makefile.inc
+> +++ b/Makefile.inc
+> @@ -31,12 +31,13 @@ ifndef SYSTEMDPATH
+>  	SYSTEMDPATH=usr/lib
+>  endif
+>  
+> -prefix      = 
+> +prefix      =
+>  exec_prefix = $(prefix)
+>  bindir      = $(exec_prefix)/sbin
+>  libudevdir  = $(prefix)/$(SYSTEMDPATH)/udev
+>  udevrulesdir = $(libudevdir)/rules.d
+>  multipathdir = $(TOPDIR)/libmultipath
+> +libdmmpdir  = $(TOPDIR)/libdmmp
+>  mandir      = $(prefix)/usr/share/man/man8
+>  man5dir     = $(prefix)/usr/share/man/man5
+>  man3dir      = $(prefix)/usr/share/man/man3
+> @@ -45,6 +46,8 @@ syslibdir   = $(prefix)/$(LIB)
+>  libdir	    = $(prefix)/$(LIB)/multipath
+>  unitdir     = $(prefix)/$(SYSTEMDPATH)/systemd/system
+>  mpathpersistdir = $(TOPDIR)/libmpathpersist
+> +includedir  = $(prefix)/usr/include
+> +pkgconfdir  = $(prefix)/usr/share/pkgconfig
+>  
+>  GZIP        = gzip -9 -c
+>  INSTALL_PROGRAM = install
+> diff --git a/libdmmp/DEV_NOTES b/libdmmp/DEV_NOTES
+> new file mode 100644
+> index 0000000..e95f547
+> --- /dev/null
+> +++ b/libdmmp/DEV_NOTES
+> @@ -0,0 +1,40 @@
+> +== Planed features ==
+> + * Fix DMMP_ERR_INCONSISTENT_DATA by using single query command.
+> + * Expose all properties used by /usr/bin/multipath
+> +
+> +== Code style ==
+> + * Keep things as simple as possible.
+> + * Linux Kernel code style.
+> + * Don't use typedef.
+> + * Don't use enum unless it's for user input argument.
+> + * We are not smarter than API user, so don't create wrapping function like:
+> +
+> +    ```
+> +    dmmp_mpath_search_by_id(struct dmmp_context *ctx,
+> +                            struct dmmp_mpath **dmmp_mp,
+> +                            uint32_t dmmp_mp_count, const char *id)
+> +
+> +    dmmp_path_group_id_search(struct dmmp_mpath *dmmp_mp,
+> +                              const char *blk_name)
+> +    ```
+> + * The performance is the same for query single mpath and query all mpaths,
+> +   so no `dmmp_mpath_of_wwid(struct dmmp_context *ctx, const char *wwid)` yet.
+> +
+> +== Naming scheme ==
+> + * Public constants should be named as `DMMP_XXX_YYY`.
+> + * Public functions should be named as `dmmp_<noun>_<verb>`.
+> + * Private constants should be named as `_DMMP_XXX_YYY`.
+> + * Private functions should be named as `_dmmp_<noun>_<verb>`.
+> +
+> +== Code Layout ==
+> + * libdmmp_private.h
+> +    Internal functions or macros.
+> + * libdmmp.c
+> +    For `struct dmmp_context` or multipathd IPC functions.
+> + * libdmmp_mp.c
+> +    For `struct dmmp_mpath`
+> + * libdmmp_pg.c
+> +    For `struct dmmp_path_group`
+> + * libdmmp_path.c
+> +    For `struct dmmp_path`
+> + * libdmmp_misc.c
+> diff --git a/libdmmp/Makefile b/libdmmp/Makefile
+> new file mode 100644
+> index 0000000..e3eb88b
+> --- /dev/null
+> +++ b/libdmmp/Makefile
+> @@ -0,0 +1,74 @@
+> +# Makefile
+> +#
+> +# Copyright (C) 2015 - 2016 Red Hat, Inc.
+> +# Gris Ge <fge@redhat.com>
+> +#
+> +include ../Makefile.inc
+> +
+> +LIBDMMP_VERSION=0.1.0
+> +SONAME=$(LIBDMMP_VERSION)
+> +DEVLIB = libdmmp.so
+> +LIBS = $(DEVLIB).$(SONAME)
+> +LIBDEPS = -pthread
+> +PKGFILE = libdmmp.pc
+> +EXTRA_MAN_FILES = libdmmp.h.3
+> +HEADERS = libdmmp/libdmmp.h
+> +OBJS = libdmmp.o libdmmp_mp.o libdmmp_pg.o libdmmp_path.o libdmmp_misc.o
+> +
+> +CFLAGS += -fvisibility=hidden -I$(libdmmpdir)
+> +
+> +all: $(LIBS) doc
+> +
+> +$(LIBS): $(OBJS)
+> +	$(CC) $(LDFLAGS) $(SHARED_FLAGS) \
+> +	-Wl,-soname=$@ $(CFLAGS) -o $@ $(OBJS) $(LIBDEPS)
+> +	ln -sf $@ $(DEVLIB)
+> +
+> +install:
+> +	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
+> +	$(INSTALL_PROGRAM) -m 644 -D \
+> +		$(HEADERS) $(DESTDIR)/$(includedir)/$(HEADERS)
+> +	ln -sf $(LIBS) $(DESTDIR)/$(syslibdir)/$(DEVLIB)
+> +	$(INSTALL_PROGRAM) -m 644 -D \
+> +		$(PKGFILE).in $(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
+> +	perl -i -pe 's|__VERSION__|$(LIBDMMP_VERSION)|g' \
+> +		$(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
+> +	perl -i -pe 's|__LIBDIR__|$(syslibdir)|g' \
+> +		$(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
+> +	perl -i -pe 's|__INCLUDEDIR__|$(includedir)|g' \
+> +		$(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
+> +	@for file in docs/man/*.3.gz; do \
+> +		$(INSTALL_PROGRAM) -m 644 -D \
+> +			$$file \
+> +			$(DESTDIR)/$(man3dir)/ || exit $?; \
+> +	done
+> +
+> +uninstall:
+> +	rm -f $(DESTDIR)$(syslibdir)/$(LIBS)
+> +	rm -f $(DESTDIR)$(includedir)/$(HEADERS)
+> +	rm -f $(DESTDIR)/$(syslibdir)/$(DEVLIB)
+> +	@for file in $(DESTDIR)/$(man3dir)/dmmp_*; do \
+> +		rm $$file; \
+> +	done
+> +	rm -f $(DESTDIR)$(man3dir)/libdmmp.h*
+> +
+> +clean:
+> +	rm -f core *.a *.o *.gz *.so *.so.*
+> +	rm -f docs/man/*.3.gz
+> +	$(MAKE) -C test clean
+> +
+> +check: all
+> +	$(MAKE) -C test check
+> +
+> +speed_test: all
+> +	$(MAKE) -C test speed_test
+> +
+> +doc:
+> +	@for file in $(EXTRA_MAN_FILES); do \
+> +		$(INSTALL_PROGRAM) -m 644 -D docs/$$file docs/man/$$file; \
+> +	done
+> +	perl docs/kernel-doc -man $(HEADERS) | perl docs/split-man.pl docs/man
+> +	@for file in docs/man/*.3; do \
+> +		gzip -f $$file; \
+> +	done
+> +	find docs/man -type f -name \*[0-9].gz
+> diff --git a/libdmmp/docs/kernel-doc b/libdmmp/docs/kernel-doc
+> new file mode 100755
+> index 0000000..9a08fb5
+> --- /dev/null
+> +++ b/libdmmp/docs/kernel-doc
+> @@ -0,0 +1,2703 @@
+> +#!/usr/bin/perl -w
+> +
+> +use strict;
+> +
+> +## Copyright (c) 1998 Michael Zucchi, All Rights Reserved        ##
+> +## Copyright (C) 2000, 1  Tim Waugh <twaugh@redhat.com>          ##
+> +## Copyright (C) 2001  Simon Huggins                             ##
+> +## Copyright (C) 2005-2012  Randy Dunlap                         ##
+> +## Copyright (C) 2012  Dan Luedtke                               ##
+> +## 								 ##
+> +## #define enhancements by Armin Kuster <akuster@mvista.com>	 ##
+> +## Copyright (c) 2000 MontaVista Software, Inc.			 ##
+> +## 								 ##
+> +## This software falls under the GNU General Public License.     ##
+> +## Please read the COPYING file for more information             ##
+> +
+> +# 18/01/2001 - 	Cleanups
+> +# 		Functions prototyped as foo(void) same as foo()
+> +# 		Stop eval'ing where we don't need to.
+> +# -- huggie@earth.li
+> +
+> +# 27/06/2001 -  Allowed whitespace after initial "/**" and
+> +#               allowed comments before function declarations.
+> +# -- Christian Kreibich <ck@whoop.org>
+> +
+> +# Still to do:
+> +# 	- add perldoc documentation
+> +# 	- Look more closely at some of the scarier bits :)
+> +
+> +# 26/05/2001 - 	Support for separate source and object trees.
+> +#		Return error code.
+> +# 		Keith Owens <kaos@ocs.com.au>
+> +
+> +# 23/09/2001 - Added support for typedefs, structs, enums and unions
+> +#              Support for Context section; can be terminated using empty line
+> +#              Small fixes (like spaces vs. \s in regex)
+> +# -- Tim Jansen <tim@tjansen.de>
+> +
+> +# 25/07/2012 - Added support for HTML5
+> +# -- Dan Luedtke <mail@danrl.de>
+> +
+> +#
+> +# This will read a 'c' file and scan for embedded comments in the
+> +# style of gnome comments (+minor extensions - see below).
+> +#
+> +
+> +# Note: This only supports 'c'.
+> +
+> +# usage:
+> +# kernel-doc [ -docbook | -html | -html5 | -text | -man | -list ]
+> +#            [ -no-doc-sections ]
+> +#            [ -function funcname [ -function funcname ...] ]
+> +#            c file(s)s > outputfile
+> +# or
+> +#            [ -nofunction funcname [ -function funcname ...] ]
+> +#            c file(s)s > outputfile
+> +#
+> +#  Set output format using one of -docbook -html -html5 -text or -man.
+> +#  Default is man.
+> +#  The -list format is for internal use by docproc.
+> +#
+> +#  -no-doc-sections
+> +#	Do not output DOC: sections
+> +#
+> +#  -function funcname
+> +#	If set, then only generate documentation for the given function(s) or
+> +#	DOC: section titles.  All other functions and DOC: sections are ignored.
+> +#
+> +#  -nofunction funcname
+> +#	If set, then only generate documentation for the other function(s)/DOC:
+> +#	sections. Cannot be used together with -function (yes, that's a bug --
+> +#	perl hackers can fix it 8))
+> +#
+> +#  c files - list of 'c' files to process
+> +#
+> +#  All output goes to stdout, with errors to stderr.
+> +
+> +#
+> +# format of comments.
+> +# In the following table, (...)? signifies optional structure.
+> +#                         (...)* signifies 0 or more structure elements
+> +# /**
+> +#  * function_name(:)? (- short description)?
+> +# (* @parameterx: (description of parameter x)?)*
+> +# (* a blank line)?
+> +#  * (Description:)? (Description of function)?
+> +#  * (section header: (section description)? )*
+> +#  (*)?*/
+> +#
+> +# So .. the trivial example would be:
+> +#
+> +# /**
+> +#  * my_function
+> +#  */
+> +#
+> +# If the Description: header tag is omitted, then there must be a blank line
+> +# after the last parameter specification.
+> +# e.g.
+> +# /**
+> +#  * my_function - does my stuff
+> +#  * @my_arg: its mine damnit
+> +#  *
+> +#  * Does my stuff explained.
+> +#  */
+> +#
+> +#  or, could also use:
+> +# /**
+> +#  * my_function - does my stuff
+> +#  * @my_arg: its mine damnit
+> +#  * Description: Does my stuff explained.
+> +#  */
+> +# etc.
+> +#
+> +# Besides functions you can also write documentation for structs, unions,
+> +# enums and typedefs. Instead of the function name you must write the name
+> +# of the declaration;  the struct/union/enum/typedef must always precede
+> +# the name. Nesting of declarations is not supported.
+> +# Use the argument mechanism to document members or constants.
+> +# e.g.
+> +# /**
+> +#  * struct my_struct - short description
+> +#  * @a: first member
+> +#  * @b: second member
+> +#  *
+> +#  * Longer description
+> +#  */
+> +# struct my_struct {
+> +#     int a;
+> +#     int b;
+> +# /* private: */
+> +#     int c;
+> +# };
+> +#
+> +# All descriptions can be multiline, except the short function description.
+> +#
+> +# For really longs structs, you can also describe arguments inside the
+> +# body of the struct.
+> +# eg.
+> +# /**
+> +#  * struct my_struct - short description
+> +#  * @a: first member
+> +#  * @b: second member
+> +#  *
+> +#  * Longer description
+> +#  */
+> +# struct my_struct {
+> +#     int a;
+> +#     int b;
+> +#     /**
+> +#      * @c: This is longer description of C
+> +#      *
+> +#      * You can use paragraphs to describe arguments
+> +#      * using this method.
+> +#      */
+> +#     int c;
+> +# };
+> +#
+> +# This should be use only for struct/enum members.
+> +#
+> +# You can also add additional sections. When documenting kernel functions you
+> +# should document the "Context:" of the function, e.g. whether the functions
+> +# can be called form interrupts. Unlike other sections you can end it with an
+> +# empty line.
+> +# A non-void function should have a "Return:" section describing the return
+> +# value(s).
+> +# Example-sections should contain the string EXAMPLE so that they are marked
+> +# appropriately in DocBook.
+> +#
+> +# Example:
+> +# /**
+> +#  * user_function - function that can only be called in user context
+> +#  * @a: some argument
+> +#  * Context: !in_interrupt()
+> +#  *
+> +#  * Some description
+> +#  * Example:
+> +#  *    user_function(22);
+> +#  */
+> +# ...
+> +#
+> +#
+> +# All descriptive text is further processed, scanning for the following special
+> +# patterns, which are highlighted appropriately.
+> +#
+> +# 'funcname()' - function
+> +# '$ENVVAR' - environmental variable
+> +# '&struct_name' - name of a structure (up to two words including 'struct')
+> +# '@parameter' - name of a parameter
+> +# '%CONST' - name of a constant.
+> +
+> +## init lots of data
+> +
+> +my $errors = 0;
+> +my $warnings = 0;
+> +my $anon_struct_union = 0;
+> +
+> +# match expressions used to find embedded type information
+> +my $type_constant = '\%([-_\w]+)';
+> +my $type_func = '(\w+)\(\)';
+> +my $type_param = '\@(\w+)';
+> +my $type_struct = '\&((struct\s*)*[_\w]+)';
+> +my $type_struct_xml = '\\&amp;((struct\s*)*[_\w]+)';
+> +my $type_env = '(\$\w+)';
+> +
+> +# Output conversion substitutions.
+> +#  One for each output format
+> +
+> +# these work fairly well
+> +my %highlights_html = ( $type_constant, "<i>\$1</i>",
+> +			$type_func, "<b>\$1</b>",
+> +			$type_struct_xml, "<i>\$1</i>",
+> +			$type_env, "<b><i>\$1</i></b>",
+> +			$type_param, "<tt><b>\$1</b></tt>" );
+> +my $local_lt = "\\\\\\\\lt:";
+> +my $local_gt = "\\\\\\\\gt:";
+> +my $blankline_html = $local_lt . "p" . $local_gt;	# was "<p>"
+> +
+> +# html version 5
+> +my %highlights_html5 = ( $type_constant, "<span class=\"const\">\$1</span>",
+> +			$type_func, "<span class=\"func\">\$1</span>",
+> +			$type_struct_xml, "<span class=\"struct\">\$1</span>",
+> +			$type_env, "<span class=\"env\">\$1</span>",
+> +			$type_param, "<span class=\"param\">\$1</span>" );
+> +my $blankline_html5 = $local_lt . "br /" . $local_gt;
+> +
+> +# XML, docbook format
+> +my %highlights_xml = ( "([^=])\\\"([^\\\"<]+)\\\"", "\$1<quote>\$2</quote>",
+> +			$type_constant, "<constant>\$1</constant>",
+> +			$type_func, "<function>\$1</function>",
+> +			$type_struct_xml, "<structname>\$1</structname>",
+> +			$type_env, "<envar>\$1</envar>",
+> +			$type_param, "<parameter>\$1</parameter>" );
+> +my $blankline_xml = $local_lt . "/para" . $local_gt . $local_lt . "para" . $local_gt . "\n";
+> +
+> +# gnome, docbook format
+> +my %highlights_gnome = ( $type_constant, "<replaceable class=\"option\">\$1</replaceable>",
+> +			 $type_func, "<function>\$1</function>",
+> +			 $type_struct, "<structname>\$1</structname>",
+> +			 $type_env, "<envar>\$1</envar>",
+> +			 $type_param, "<parameter>\$1</parameter>" );
+> +my $blankline_gnome = "</para><para>\n";
+> +
+> +# these are pretty rough
+> +my %highlights_man = ( $type_constant, "\$1",
+> +		       $type_func, "\\\\fB\$1\\\\fP",
+> +		       $type_struct, "\\\\fI\$1\\\\fP",
+> +		       $type_param, "\\\\fI\$1\\\\fP" );
+> +my $blankline_man = "";
+> +
+> +# text-mode
+> +my %highlights_text = ( $type_constant, "\$1",
+> +			$type_func, "\$1",
+> +			$type_struct, "\$1",
+> +			$type_param, "\$1" );
+> +my $blankline_text = "";
+> +
+> +# list mode
+> +my %highlights_list = ( $type_constant, "\$1",
+> +			$type_func, "\$1",
+> +			$type_struct, "\$1",
+> +			$type_param, "\$1" );
+> +my $blankline_list = "";
+> +
+> +# read arguments
+> +if ($#ARGV == -1) {
+> +    usage();
+> +}
+> +
+> +my $kernelversion;
+> +my $dohighlight = "";
+> +
+> +my $verbose = 0;
+> +my $output_mode = "man";
+> +my $output_preformatted = 0;
+> +my $no_doc_sections = 0;
+> +my %highlights = %highlights_man;
+> +my $blankline = $blankline_man;
+> +my $modulename = "Kernel API";
+> +my $function_only = 0;
+> +my $show_not_found = 0;
+> +
+> +my @build_time;
+> +if (defined($ENV{'KBUILD_BUILD_TIMESTAMP'}) &&
+> +    (my $seconds = `date -d"${ENV{'KBUILD_BUILD_TIMESTAMP'}}" +%s`) ne '') {
+> +    @build_time = gmtime($seconds);
+> +} else {
+> +    @build_time = localtime;
+> +}
+> +
+> +my $man_date = ('January', 'February', 'March', 'April', 'May', 'June',
+> +		'July', 'August', 'September', 'October',
+> +		'November', 'December')[$build_time[4]] .
+> +  " " . ($build_time[5]+1900);
+> +
+> +# Essentially these are globals.
+> +# They probably want to be tidied up, made more localised or something.
+> +# CAVEAT EMPTOR!  Some of the others I localised may not want to be, which
+> +# could cause "use of undefined value" or other bugs.
+> +my ($function, %function_table, %parametertypes, $declaration_purpose);
+> +my ($type, $declaration_name, $return_type);
+> +my ($newsection, $newcontents, $prototype, $brcount, %source_map);
+> +
+> +if (defined($ENV{'KBUILD_VERBOSE'})) {
+> +	$verbose = "$ENV{'KBUILD_VERBOSE'}";
+> +}
+> +
+> +# Generated docbook code is inserted in a template at a point where
+> +# docbook v3.1 requires a non-zero sequence of RefEntry's; see:
+> +# http://www.oasis-open.org/docbook/documentation/reference/html/refentry.html
+> +# We keep track of number of generated entries and generate a dummy
+> +# if needs be to ensure the expanded template can be postprocessed
+> +# into html.
+> +my $section_counter = 0;
+> +
+> +my $lineprefix="";
+> +
+> +# states
+> +# 0 - normal code
+> +# 1 - looking for function name
+> +# 2 - scanning field start.
+> +# 3 - scanning prototype.
+> +# 4 - documentation block
+> +# 5 - gathering documentation outside main block
+> +my $state;
+> +my $in_doc_sect;
+> +
+> +# Split Doc State
+> +# 0 - Invalid (Before start or after finish)
+> +# 1 - Is started (the /** was found inside a struct)
+> +# 2 - The @parameter header was found, start accepting multi paragraph text.
+> +# 3 - Finished (the */ was found)
+> +# 4 - Error - Comment without header was found. Spit a warning as it's not
+> +#     proper kernel-doc and ignore the rest.
+> +my $split_doc_state;
+> +
+> +#declaration types: can be
+> +# 'function', 'struct', 'union', 'enum', 'typedef'
+> +my $decl_type;
+> +
+> +my $doc_special = "\@\%\$\&";
+> +
+> +my $doc_start = '^/\*\*\s*$'; # Allow whitespace at end of comment start.
+> +my $doc_end = '\*/';
+> +my $doc_com = '\s*\*\s*';
+> +my $doc_com_body = '\s*\* ?';
+> +my $doc_decl = $doc_com . '(\w+)';
+> +my $doc_sect = $doc_com . '([' . $doc_special . ']?[\w\s]+):(.*)';
+> +my $doc_content = $doc_com_body . '(.*)';
+> +my $doc_block = $doc_com . 'DOC:\s*(.*)?';
+> +my $doc_split_start = '^\s*/\*\*\s*$';
+> +my $doc_split_sect = '\s*\*\s*(@[\w\s]+):(.*)';
+> +my $doc_split_end = '^\s*\*/\s*$';
+> +
+> +my %constants;
+> +my %parameterdescs;
+> +my @parameterlist;
+> +my %sections;
+> +my @sectionlist;
+> +my $sectcheck;
+> +my $struct_actual;
+> +
+> +my $contents = "";
+> +my $section_default = "Description";	# default section
+> +my $section_intro = "Introduction";
+> +my $section = $section_default;
+> +my $section_context = "Context";
+> +my $section_return = "Return";
+> +
+> +my $undescribed = "-- undescribed --";
+> +
+> +reset_state();
+> +
+> +while ($ARGV[0] =~ m/^-(.*)/) {
+> +    my $cmd = shift @ARGV;
+> +    if ($cmd eq "-html") {
+> +	$output_mode = "html";
+> +	%highlights = %highlights_html;
+> +	$blankline = $blankline_html;
+> +    } elsif ($cmd eq "-html5") {
+> +	$output_mode = "html5";
+> +	%highlights = %highlights_html5;
+> +	$blankline = $blankline_html5;
+> +    } elsif ($cmd eq "-man") {
+> +	$output_mode = "man";
+> +	%highlights = %highlights_man;
+> +	$blankline = $blankline_man;
+> +    } elsif ($cmd eq "-text") {
+> +	$output_mode = "text";
+> +	%highlights = %highlights_text;
+> +	$blankline = $blankline_text;
+> +    } elsif ($cmd eq "-docbook") {
+> +	$output_mode = "xml";
+> +	%highlights = %highlights_xml;
+> +	$blankline = $blankline_xml;
+> +    } elsif ($cmd eq "-list") {
+> +	$output_mode = "list";
+> +	%highlights = %highlights_list;
+> +	$blankline = $blankline_list;
+> +    } elsif ($cmd eq "-gnome") {
+> +	$output_mode = "gnome";
+> +	%highlights = %highlights_gnome;
+> +	$blankline = $blankline_gnome;
+> +    } elsif ($cmd eq "-module") { # not needed for XML, inherits from calling document
+> +	$modulename = shift @ARGV;
+> +    } elsif ($cmd eq "-function") { # to only output specific functions
+> +	$function_only = 1;
+> +	$function = shift @ARGV;
+> +	$function_table{$function} = 1;
+> +    } elsif ($cmd eq "-nofunction") { # to only output specific functions
+> +	$function_only = 2;
+> +	$function = shift @ARGV;
+> +	$function_table{$function} = 1;
+> +    } elsif ($cmd eq "-v") {
+> +	$verbose = 1;
+> +    } elsif (($cmd eq "-h") || ($cmd eq "--help")) {
+> +	usage();
+> +    } elsif ($cmd eq '-no-doc-sections') {
+> +	    $no_doc_sections = 1;
+> +    } elsif ($cmd eq '-show-not-found') {
+> +	$show_not_found = 1;
+> +    }
+> +}
+> +
+> +# continue execution near EOF;
+> +
+> +sub usage {
+> +    print "Usage: $0 [ -docbook | -html | -html5 | -text | -man | -list ]\n";
+> +    print "         [ -no-doc-sections ]\n";
+> +    print "         [ -function funcname [ -function funcname ...] ]\n";
+> +    print "         [ -nofunction funcname [ -nofunction funcname ...] ]\n";
+> +    print "         [ -v ]\n";
+> +    print "         c source file(s) > outputfile\n";
+> +    print "         -v : verbose output, more warnings & other info listed\n";
+> +    exit 1;
+> +}
+> +
+> +# get kernel version from env
+> +sub get_kernel_version() {
+> +    my $version = 'unknown kernel version';
+> +
+> +    if (defined($ENV{'KERNELVERSION'})) {
+> +	$version = $ENV{'KERNELVERSION'};
+> +    }
+> +    return $version;
+> +}
+> +
+> +##
+> +# dumps section contents to arrays/hashes intended for that purpose.
+> +#
+> +sub dump_section {
+> +    my $file = shift;
+> +    my $name = shift;
+> +    my $contents = join "\n", @_;
+> +
+> +    if ($name =~ m/$type_constant/) {
+> +	$name = $1;
+> +#	print STDERR "constant section '$1' = '$contents'\n";
+> +	$constants{$name} = $contents;
+> +    } elsif ($name =~ m/$type_param/) {
+> +#	print STDERR "parameter def '$1' = '$contents'\n";
+> +	$name = $1;
+> +	$parameterdescs{$name} = $contents;
+> +	$sectcheck = $sectcheck . $name . " ";
+> +    } elsif ($name eq "@\.\.\.") {
+> +#	print STDERR "parameter def '...' = '$contents'\n";
+> +	$name = "...";
+> +	$parameterdescs{$name} = $contents;
+> +	$sectcheck = $sectcheck . $name . " ";
+> +    } else {
+> +#	print STDERR "other section '$name' = '$contents'\n";
+> +	if (defined($sections{$name}) && ($sections{$name} ne "")) {
+> +		print STDERR "${file}:$.: error: duplicate section name '$name'\n";
+> +		++$errors;
+> +	}
+> +	$sections{$name} = $contents;
+> +	push @sectionlist, $name;
+> +    }
+> +}
+> +
+> +##
+> +# dump DOC: section after checking that it should go out
+> +#
+> +sub dump_doc_section {
+> +    my $file = shift;
+> +    my $name = shift;
+> +    my $contents = join "\n", @_;
+> +
+> +    if ($no_doc_sections) {
+> +        return;
+> +    }
+> +
+> +    if (($function_only == 0) ||
+> +	( $function_only == 1 && defined($function_table{$name})) ||
+> +	( $function_only == 2 && !defined($function_table{$name})))
+> +    {
+> +	dump_section($file, $name, $contents);
+> +	output_blockhead({'sectionlist' => \@sectionlist,
+> +			  'sections' => \%sections,
+> +			  'module' => $modulename,
+> +			  'content-only' => ($function_only != 0), });
+> +    }
+> +}
+> +
+> +##
+> +# output function
+> +#
+> +# parameterdescs, a hash.
+> +#  function => "function name"
+> +#  parameterlist => @list of parameters
+> +#  parameterdescs => %parameter descriptions
+> +#  sectionlist => @list of sections
+> +#  sections => %section descriptions
+> +#
+> +
+> +sub output_highlight {
+> +    my $contents = join "\n",@_;
+> +    my $line;
+> +
+> +#   DEBUG
+> +#   if (!defined $contents) {
+> +#	use Carp;
+> +#	confess "output_highlight got called with no args?\n";
+> +#   }
+> +
+> +    if ($output_mode eq "html" || $output_mode eq "html5" ||
+> +	$output_mode eq "xml") {
+> +	$contents = local_unescape($contents);
+> +	# convert data read & converted thru xml_escape() into &xyz; format:
+> +	$contents =~ s/\\\\\\/\&/g;
+> +    }
+> +#   print STDERR "contents b4:$contents\n";
+> +    eval $dohighlight;
+> +    die $@ if $@;
+> +#   print STDERR "contents af:$contents\n";
+> +
+> +#   strip whitespaces when generating html5
+> +    if ($output_mode eq "html5") {
+> +	$contents =~ s/^\s+//;
+> +	$contents =~ s/\s+$//;
+> +    }
+> +    foreach $line (split "\n", $contents) {
+> +	if (! $output_preformatted) {
+> +	    $line =~ s/^\s*//;
+> +	}
+> +	if ($line eq ""){
+> +	    if (! $output_preformatted) {
+> +		print $lineprefix, local_unescape($blankline);
+> +	    }
+> +	} else {
+> +	    $line =~ s/\\\\\\/\&/g;
+> +	    if ($output_mode eq "man" && substr($line, 0, 1) eq ".") {
+> +		print "\\&$line";
+> +	    } else {
+> +		print $lineprefix, $line;
+> +	    }
+> +	}
+> +	print "\n";
+> +    }
+> +}
+> +
+> +# output sections in html
+> +sub output_section_html(%) {
+> +    my %args = %{$_[0]};
+> +    my $section;
+> +
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	print "<h3>$section</h3>\n";
+> +	print "<blockquote>\n";
+> +	output_highlight($args{'sections'}{$section});
+> +	print "</blockquote>\n";
+> +    }
+> +}
+> +
+> +# output enum in html
+> +sub output_enum_html(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter);
+> +    my $count;
+> +    print "<h2>enum " . $args{'enum'} . "</h2>\n";
+> +
+> +    print "<b>enum " . $args{'enum'} . "</b> {<br>\n";
+> +    $count = 0;
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	print " <b>" . $parameter . "</b>";
+> +	if ($count != $#{$args{'parameterlist'}}) {
+> +	    $count++;
+> +	    print ",\n";
+> +	}
+> +	print "<br>";
+> +    }
+> +    print "};<br>\n";
+> +
+> +    print "<h3>Constants</h3>\n";
+> +    print "<dl>\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	print "<dt><b>" . $parameter . "</b>\n";
+> +	print "<dd>";
+> +	output_highlight($args{'parameterdescs'}{$parameter});
+> +    }
+> +    print "</dl>\n";
+> +    output_section_html(@_);
+> +    print "<hr>\n";
+> +}
+> +
+> +# output typedef in html
+> +sub output_typedef_html(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter);
+> +    my $count;
+> +    print "<h2>typedef " . $args{'typedef'} . "</h2>\n";
+> +
+> +    print "<b>typedef " . $args{'typedef'} . "</b>\n";
+> +    output_section_html(@_);
+> +    print "<hr>\n";
+> +}
+> +
+> +# output struct in html
+> +sub output_struct_html(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter);
+> +
+> +    print "<h2>" . $args{'type'} . " " . $args{'struct'} . " - " . $args{'purpose'} . "</h2>\n";
+> +    print "<b>" . $args{'type'} . " " . $args{'struct'} . "</b> {<br>\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	if ($parameter =~ /^#/) {
+> +		print "$parameter<br>\n";
+> +		next;
+> +	}
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	($args{'parameterdescs'}{$parameter_name} ne $undescribed) || next;
+> +	$type = $args{'parametertypes'}{$parameter};
+> +	if ($type =~ m/([^\(]*\(\*)\s*\)\s*\(([^\)]*)\)/) {
+> +	    # pointer-to-function
+> +	    print "&nbsp; &nbsp; <i>$1</i><b>$parameter</b>) <i>($2)</i>;<br>\n";
+> +	} elsif ($type =~ m/^(.*?)\s*(:.*)/) {
+> +	    # bitfield
+> +	    print "&nbsp; &nbsp; <i>$1</i> <b>$parameter</b>$2;<br>\n";
+> +	} else {
+> +	    print "&nbsp; &nbsp; <i>$type</i> <b>$parameter</b>;<br>\n";
+> +	}
+> +    }
+> +    print "};<br>\n";
+> +
+> +    print "<h3>Members</h3>\n";
+> +    print "<dl>\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	($parameter =~ /^#/) && next;
+> +
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	($args{'parameterdescs'}{$parameter_name} ne $undescribed) || next;
+> +	print "<dt><b>" . $parameter . "</b>\n";
+> +	print "<dd>";
+> +	output_highlight($args{'parameterdescs'}{$parameter_name});
+> +    }
+> +    print "</dl>\n";
+> +    output_section_html(@_);
+> +    print "<hr>\n";
+> +}
+> +
+> +# output function in html
+> +sub output_function_html(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $count;
+> +
+> +    print "<h2>" . $args{'function'} . " - " . $args{'purpose'} . "</h2>\n";
+> +    print "<i>" . $args{'functiontype'} . "</i>\n";
+> +    print "<b>" . $args{'function'} . "</b>\n";
+> +    print "(";
+> +    $count = 0;
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	$type = $args{'parametertypes'}{$parameter};
+> +	if ($type =~ m/([^\(]*\(\*)\s*\)\s*\(([^\)]*)\)/) {
+> +	    # pointer-to-function
+> +	    print "<i>$1</i><b>$parameter</b>) <i>($2)</i>";
+> +	} else {
+> +	    print "<i>" . $type . "</i> <b>" . $parameter . "</b>";
+> +	}
+> +	if ($count != $#{$args{'parameterlist'}}) {
+> +	    $count++;
+> +	    print ",\n";
+> +	}
+> +    }
+> +    print ")\n";
+> +
+> +    print "<h3>Arguments</h3>\n";
+> +    print "<dl>\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	($args{'parameterdescs'}{$parameter_name} ne $undescribed) || next;
+> +	print "<dt><b>" . $parameter . "</b>\n";
+> +	print "<dd>";
+> +	output_highlight($args{'parameterdescs'}{$parameter_name});
+> +    }
+> +    print "</dl>\n";
+> +    output_section_html(@_);
+> +    print "<hr>\n";
+> +}
+> +
+> +# output DOC: block header in html
+> +sub output_blockhead_html(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $count;
+> +
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	print "<h3>$section</h3>\n";
+> +	print "<ul>\n";
+> +	output_highlight($args{'sections'}{$section});
+> +	print "</ul>\n";
+> +    }
+> +    print "<hr>\n";
+> +}
+> +
+> +# output sections in html5
+> +sub output_section_html5(%) {
+> +    my %args = %{$_[0]};
+> +    my $section;
+> +
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	print "<section>\n";
+> +	print "<h1>$section</h1>\n";
+> +	print "<p>\n";
+> +	output_highlight($args{'sections'}{$section});
+> +	print "</p>\n";
+> +	print "</section>\n";
+> +    }
+> +}
+> +
+> +# output enum in html5
+> +sub output_enum_html5(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter);
+> +    my $count;
+> +    my $html5id;
+> +
+> +    $html5id = $args{'enum'};
+> +    $html5id =~ s/[^a-zA-Z0-9\-]+/_/g;
+> +    print "<article class=\"enum\" id=\"enum:". $html5id . "\">";
+> +    print "<h1>enum " . $args{'enum'} . "</h1>\n";
+> +    print "<ol class=\"code\">\n";
+> +    print "<li>";
+> +    print "<span class=\"keyword\">enum</span> ";
+> +    print "<span class=\"identifier\">" . $args{'enum'} . "</span> {";
+> +    print "</li>\n";
+> +    $count = 0;
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	print "<li class=\"indent\">";
+> +	print "<span class=\"param\">" . $parameter . "</span>";
+> +	if ($count != $#{$args{'parameterlist'}}) {
+> +	    $count++;
+> +	    print ",";
+> +	}
+> +	print "</li>\n";
+> +    }
+> +    print "<li>};</li>\n";
+> +    print "</ol>\n";
+> +
+> +    print "<section>\n";
+> +    print "<h1>Constants</h1>\n";
+> +    print "<dl>\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	print "<dt>" . $parameter . "</dt>\n";
+> +	print "<dd>";
+> +	output_highlight($args{'parameterdescs'}{$parameter});
+> +	print "</dd>\n";
+> +    }
+> +    print "</dl>\n";
+> +    print "</section>\n";
+> +    output_section_html5(@_);
+> +    print "</article>\n";
+> +}
+> +
+> +# output typedef in html5
+> +sub output_typedef_html5(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter);
+> +    my $count;
+> +    my $html5id;
+> +
+> +    $html5id = $args{'typedef'};
+> +    $html5id =~ s/[^a-zA-Z0-9\-]+/_/g;
+> +    print "<article class=\"typedef\" id=\"typedef:" . $html5id . "\">\n";
+> +    print "<h1>typedef " . $args{'typedef'} . "</h1>\n";
+> +
+> +    print "<ol class=\"code\">\n";
+> +    print "<li>";
+> +    print "<span class=\"keyword\">typedef</span> ";
+> +    print "<span class=\"identifier\">" . $args{'typedef'} . "</span>";
+> +    print "</li>\n";
+> +    print "</ol>\n";
+> +    output_section_html5(@_);
+> +    print "</article>\n";
+> +}
+> +
+> +# output struct in html5
+> +sub output_struct_html5(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter);
+> +    my $html5id;
+> +
+> +    $html5id = $args{'struct'};
+> +    $html5id =~ s/[^a-zA-Z0-9\-]+/_/g;
+> +    print "<article class=\"struct\" id=\"struct:" . $html5id . "\">\n";
+> +    print "<hgroup>\n";
+> +    print "<h1>" . $args{'type'} . " " . $args{'struct'} . "</h1>";
+> +    print "<h2>". $args{'purpose'} . "</h2>\n";
+> +    print "</hgroup>\n";
+> +    print "<ol class=\"code\">\n";
+> +    print "<li>";
+> +    print "<span class=\"type\">" . $args{'type'} . "</span> ";
+> +    print "<span class=\"identifier\">" . $args{'struct'} . "</span> {";
+> +    print "</li>\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	print "<li class=\"indent\">";
+> +	if ($parameter =~ /^#/) {
+> +		print "<span class=\"param\">" . $parameter ."</span>\n";
+> +		print "</li>\n";
+> +		next;
+> +	}
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	($args{'parameterdescs'}{$parameter_name} ne $undescribed) || next;
+> +	$type = $args{'parametertypes'}{$parameter};
+> +	if ($type =~ m/([^\(]*\(\*)\s*\)\s*\(([^\)]*)\)/) {
+> +	    # pointer-to-function
+> +	    print "<span class=\"type\">$1</span> ";
+> +	    print "<span class=\"param\">$parameter</span>";
+> +	    print "<span class=\"type\">)</span> ";
+> +	    print "(<span class=\"args\">$2</span>);";
+> +	} elsif ($type =~ m/^(.*?)\s*(:.*)/) {
+> +	    # bitfield
+> +	    print "<span class=\"type\">$1</span> ";
+> +	    print "<span class=\"param\">$parameter</span>";
+> +	    print "<span class=\"bits\">$2</span>;";
+> +	} else {
+> +	    print "<span class=\"type\">$type</span> ";
+> +	    print "<span class=\"param\">$parameter</span>;";
+> +	}
+> +	print "</li>\n";
+> +    }
+> +    print "<li>};</li>\n";
+> +    print "</ol>\n";
+> +
+> +    print "<section>\n";
+> +    print "<h1>Members</h1>\n";
+> +    print "<dl>\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	($parameter =~ /^#/) && next;
+> +
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	($args{'parameterdescs'}{$parameter_name} ne $undescribed) || next;
+> +	print "<dt>" . $parameter . "</dt>\n";
+> +	print "<dd>";
+> +	output_highlight($args{'parameterdescs'}{$parameter_name});
+> +	print "</dd>\n";
+> +    }
+> +    print "</dl>\n";
+> +    print "</section>\n";
+> +    output_section_html5(@_);
+> +    print "</article>\n";
+> +}
+> +
+> +# output function in html5
+> +sub output_function_html5(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $count;
+> +    my $html5id;
+> +
+> +    $html5id = $args{'function'};
+> +    $html5id =~ s/[^a-zA-Z0-9\-]+/_/g;
+> +    print "<article class=\"function\" id=\"func:". $html5id . "\">\n";
+> +    print "<hgroup>\n";
+> +    print "<h1>" . $args{'function'} . "</h1>";
+> +    print "<h2>" . $args{'purpose'} . "</h2>\n";
+> +    print "</hgroup>\n";
+> +    print "<ol class=\"code\">\n";
+> +    print "<li>";
+> +    print "<span class=\"type\">" . $args{'functiontype'} . "</span> ";
+> +    print "<span class=\"identifier\">" . $args{'function'} . "</span> (";
+> +    print "</li>";
+> +    $count = 0;
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	print "<li class=\"indent\">";
+> +	$type = $args{'parametertypes'}{$parameter};
+> +	if ($type =~ m/([^\(]*\(\*)\s*\)\s*\(([^\)]*)\)/) {
+> +	    # pointer-to-function
+> +	    print "<span class=\"type\">$1</span> ";
+> +	    print "<span class=\"param\">$parameter</span>";
+> +	    print "<span class=\"type\">)</span> ";
+> +	    print "(<span class=\"args\">$2</span>)";
+> +	} else {
+> +	    print "<span class=\"type\">$type</span> ";
+> +	    print "<span class=\"param\">$parameter</span>";
+> +	}
+> +	if ($count != $#{$args{'parameterlist'}}) {
+> +	    $count++;
+> +	    print ",";
+> +	}
+> +	print "</li>\n";
+> +    }
+> +    print "<li>)</li>\n";
+> +    print "</ol>\n";
+> +
+> +    print "<section>\n";
+> +    print "<h1>Arguments</h1>\n";
+> +    print "<p>\n";
+> +    print "<dl>\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	($args{'parameterdescs'}{$parameter_name} ne $undescribed) || next;
+> +	print "<dt>" . $parameter . "</dt>\n";
+> +	print "<dd>";
+> +	output_highlight($args{'parameterdescs'}{$parameter_name});
+> +	print "</dd>\n";
+> +    }
+> +    print "</dl>\n";
+> +    print "</section>\n";
+> +    output_section_html5(@_);
+> +    print "</article>\n";
+> +}
+> +
+> +# output DOC: block header in html5
+> +sub output_blockhead_html5(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $count;
+> +    my $html5id;
+> +
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	$html5id = $section;
+> +	$html5id =~ s/[^a-zA-Z0-9\-]+/_/g;
+> +	print "<article class=\"doc\" id=\"doc:". $html5id . "\">\n";
+> +	print "<h1>$section</h1>\n";
+> +	print "<p>\n";
+> +	output_highlight($args{'sections'}{$section});
+> +	print "</p>\n";
+> +    }
+> +    print "</article>\n";
+> +}
+> +
+> +sub output_section_xml(%) {
+> +    my %args = %{$_[0]};
+> +    my $section;
+> +    # print out each section
+> +    $lineprefix="   ";
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	print "<refsect1>\n";
+> +	print "<title>$section</title>\n";
+> +	if ($section =~ m/EXAMPLE/i) {
+> +	    print "<informalexample><programlisting>\n";
+> +	    $output_preformatted = 1;
+> +	} else {
+> +	    print "<para>\n";
+> +	}
+> +	output_highlight($args{'sections'}{$section});
+> +	$output_preformatted = 0;
+> +	if ($section =~ m/EXAMPLE/i) {
+> +	    print "</programlisting></informalexample>\n";
+> +	} else {
+> +	    print "</para>\n";
+> +	}
+> +	print "</refsect1>\n";
+> +    }
+> +}
+> +
+> +# output function in XML DocBook
+> +sub output_function_xml(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $count;
+> +    my $id;
+> +
+> +    $id = "API-" . $args{'function'};
+> +    $id =~ s/[^A-Za-z0-9]/-/g;
+> +
+> +    print "<refentry id=\"$id\">\n";
+> +    print "<refentryinfo>\n";
+> +    print " <title>LINUX</title>\n";
+> +    print " <productname>Kernel Hackers Manual</productname>\n";
+> +    print " <date>$man_date</date>\n";
+> +    print "</refentryinfo>\n";
+> +    print "<refmeta>\n";
+> +    print " <refentrytitle><phrase>" . $args{'function'} . "</phrase></refentrytitle>\n";
+> +    print " <manvolnum>9</manvolnum>\n";
+> +    print " <refmiscinfo class=\"version\">" . $kernelversion . "</refmiscinfo>\n";
+> +    print "</refmeta>\n";
+> +    print "<refnamediv>\n";
+> +    print " <refname>" . $args{'function'} . "</refname>\n";
+> +    print " <refpurpose>\n";
+> +    print "  ";
+> +    output_highlight ($args{'purpose'});
+> +    print " </refpurpose>\n";
+> +    print "</refnamediv>\n";
+> +
+> +    print "<refsynopsisdiv>\n";
+> +    print " <title>Synopsis</title>\n";
+> +    print "  <funcsynopsis><funcprototype>\n";
+> +    print "   <funcdef>" . $args{'functiontype'} . " ";
+> +    print "<function>" . $args{'function'} . " </function></funcdef>\n";
+> +
+> +    $count = 0;
+> +    if ($#{$args{'parameterlist'}} >= 0) {
+> +	foreach $parameter (@{$args{'parameterlist'}}) {
+> +	    $type = $args{'parametertypes'}{$parameter};
+> +	    if ($type =~ m/([^\(]*\(\*)\s*\)\s*\(([^\)]*)\)/) {
+> +		# pointer-to-function
+> +		print "   <paramdef>$1<parameter>$parameter</parameter>)\n";
+> +		print "     <funcparams>$2</funcparams></paramdef>\n";
+> +	    } else {
+> +		print "   <paramdef>" . $type;
+> +		print " <parameter>$parameter</parameter></paramdef>\n";
+> +	    }
+> +	}
+> +    } else {
+> +	print "  <void/>\n";
+> +    }
+> +    print "  </funcprototype></funcsynopsis>\n";
+> +    print "</refsynopsisdiv>\n";
+> +
+> +    # print parameters
+> +    print "<refsect1>\n <title>Arguments</title>\n";
+> +    if ($#{$args{'parameterlist'}} >= 0) {
+> +	print " <variablelist>\n";
+> +	foreach $parameter (@{$args{'parameterlist'}}) {
+> +	    my $parameter_name = $parameter;
+> +	    $parameter_name =~ s/\[.*//;
+> +
+> +	    print "  <varlistentry>\n   <term><parameter>$parameter</parameter></term>\n";
+> +	    print "   <listitem>\n    <para>\n";
+> +	    $lineprefix="     ";
+> +	    output_highlight($args{'parameterdescs'}{$parameter_name});
+> +	    print "    </para>\n   </listitem>\n  </varlistentry>\n";
+> +	}
+> +	print " </variablelist>\n";
+> +    } else {
+> +	print " <para>\n  None\n </para>\n";
+> +    }
+> +    print "</refsect1>\n";
+> +
+> +    output_section_xml(@_);
+> +    print "</refentry>\n\n";
+> +}
+> +
+> +# output struct in XML DocBook
+> +sub output_struct_xml(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $id;
+> +
+> +    $id = "API-struct-" . $args{'struct'};
+> +    $id =~ s/[^A-Za-z0-9]/-/g;
+> +
+> +    print "<refentry id=\"$id\">\n";
+> +    print "<refentryinfo>\n";
+> +    print " <title>LINUX</title>\n";
+> +    print " <productname>Kernel Hackers Manual</productname>\n";
+> +    print " <date>$man_date</date>\n";
+> +    print "</refentryinfo>\n";
+> +    print "<refmeta>\n";
+> +    print " <refentrytitle><phrase>" . $args{'type'} . " " . $args{'struct'} . "</phrase></refentrytitle>\n";
+> +    print " <manvolnum>9</manvolnum>\n";
+> +    print " <refmiscinfo class=\"version\">" . $kernelversion . "</refmiscinfo>\n";
+> +    print "</refmeta>\n";
+> +    print "<refnamediv>\n";
+> +    print " <refname>" . $args{'type'} . " " . $args{'struct'} . "</refname>\n";
+> +    print " <refpurpose>\n";
+> +    print "  ";
+> +    output_highlight ($args{'purpose'});
+> +    print " </refpurpose>\n";
+> +    print "</refnamediv>\n";
+> +
+> +    print "<refsynopsisdiv>\n";
+> +    print " <title>Synopsis</title>\n";
+> +    print "  <programlisting>\n";
+> +    print $args{'type'} . " " . $args{'struct'} . " {\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	if ($parameter =~ /^#/) {
+> +	    my $prm = $parameter;
+> +	    # convert data read & converted thru xml_escape() into &xyz; format:
+> +	    # This allows us to have #define macros interspersed in a struct.
+> +	    $prm =~ s/\\\\\\/\&/g;
+> +	    print "$prm\n";
+> +	    next;
+> +	}
+> +
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	defined($args{'parameterdescs'}{$parameter_name}) || next;
+> +	($args{'parameterdescs'}{$parameter_name} ne $undescribed) || next;
+> +	$type = $args{'parametertypes'}{$parameter};
+> +	if ($type =~ m/([^\(]*\(\*)\s*\)\s*\(([^\)]*)\)/) {
+> +	    # pointer-to-function
+> +	    print "  $1 $parameter) ($2);\n";
+> +	} elsif ($type =~ m/^(.*?)\s*(:.*)/) {
+> +	    # bitfield
+> +	    print "  $1 $parameter$2;\n";
+> +	} else {
+> +	    print "  " . $type . " " . $parameter . ";\n";
+> +	}
+> +    }
+> +    print "};";
+> +    print "  </programlisting>\n";
+> +    print "</refsynopsisdiv>\n";
+> +
+> +    print " <refsect1>\n";
+> +    print "  <title>Members</title>\n";
+> +
+> +    if ($#{$args{'parameterlist'}} >= 0) {
+> +    print "  <variablelist>\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +      ($parameter =~ /^#/) && next;
+> +
+> +      my $parameter_name = $parameter;
+> +      $parameter_name =~ s/\[.*//;
+> +
+> +      defined($args{'parameterdescs'}{$parameter_name}) || next;
+> +      ($args{'parameterdescs'}{$parameter_name} ne $undescribed) || next;
+> +      print "    <varlistentry>";
+> +      print "      <term>$parameter</term>\n";
+> +      print "      <listitem><para>\n";
+> +      output_highlight($args{'parameterdescs'}{$parameter_name});
+> +      print "      </para></listitem>\n";
+> +      print "    </varlistentry>\n";
+> +    }
+> +    print "  </variablelist>\n";
+> +    } else {
+> +	print " <para>\n  None\n </para>\n";
+> +    }
+> +    print " </refsect1>\n";
+> +
+> +    output_section_xml(@_);
+> +
+> +    print "</refentry>\n\n";
+> +}
+> +
+> +# output enum in XML DocBook
+> +sub output_enum_xml(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $count;
+> +    my $id;
+> +
+> +    $id = "API-enum-" . $args{'enum'};
+> +    $id =~ s/[^A-Za-z0-9]/-/g;
+> +
+> +    print "<refentry id=\"$id\">\n";
+> +    print "<refentryinfo>\n";
+> +    print " <title>LINUX</title>\n";
+> +    print " <productname>Kernel Hackers Manual</productname>\n";
+> +    print " <date>$man_date</date>\n";
+> +    print "</refentryinfo>\n";
+> +    print "<refmeta>\n";
+> +    print " <refentrytitle><phrase>enum " . $args{'enum'} . "</phrase></refentrytitle>\n";
+> +    print " <manvolnum>9</manvolnum>\n";
+> +    print " <refmiscinfo class=\"version\">" . $kernelversion . "</refmiscinfo>\n";
+> +    print "</refmeta>\n";
+> +    print "<refnamediv>\n";
+> +    print " <refname>enum " . $args{'enum'} . "</refname>\n";
+> +    print " <refpurpose>\n";
+> +    print "  ";
+> +    output_highlight ($args{'purpose'});
+> +    print " </refpurpose>\n";
+> +    print "</refnamediv>\n";
+> +
+> +    print "<refsynopsisdiv>\n";
+> +    print " <title>Synopsis</title>\n";
+> +    print "  <programlisting>\n";
+> +    print "enum " . $args{'enum'} . " {\n";
+> +    $count = 0;
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	print "  $parameter";
+> +	if ($count != $#{$args{'parameterlist'}}) {
+> +	    $count++;
+> +	    print ",";
+> +	}
+> +	print "\n";
+> +    }
+> +    print "};";
+> +    print "  </programlisting>\n";
+> +    print "</refsynopsisdiv>\n";
+> +
+> +    print "<refsect1>\n";
+> +    print " <title>Constants</title>\n";
+> +    print "  <variablelist>\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +      my $parameter_name = $parameter;
+> +      $parameter_name =~ s/\[.*//;
+> +
+> +      print "    <varlistentry>";
+> +      print "      <term>$parameter</term>\n";
+> +      print "      <listitem><para>\n";
+> +      output_highlight($args{'parameterdescs'}{$parameter_name});
+> +      print "      </para></listitem>\n";
+> +      print "    </varlistentry>\n";
+> +    }
+> +    print "  </variablelist>\n";
+> +    print "</refsect1>\n";
+> +
+> +    output_section_xml(@_);
+> +
+> +    print "</refentry>\n\n";
+> +}
+> +
+> +# output typedef in XML DocBook
+> +sub output_typedef_xml(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $id;
+> +
+> +    $id = "API-typedef-" . $args{'typedef'};
+> +    $id =~ s/[^A-Za-z0-9]/-/g;
+> +
+> +    print "<refentry id=\"$id\">\n";
+> +    print "<refentryinfo>\n";
+> +    print " <title>LINUX</title>\n";
+> +    print " <productname>Kernel Hackers Manual</productname>\n";
+> +    print " <date>$man_date</date>\n";
+> +    print "</refentryinfo>\n";
+> +    print "<refmeta>\n";
+> +    print " <refentrytitle><phrase>typedef " . $args{'typedef'} . "</phrase></refentrytitle>\n";
+> +    print " <manvolnum>9</manvolnum>\n";
+> +    print "</refmeta>\n";
+> +    print "<refnamediv>\n";
+> +    print " <refname>typedef " . $args{'typedef'} . "</refname>\n";
+> +    print " <refpurpose>\n";
+> +    print "  ";
+> +    output_highlight ($args{'purpose'});
+> +    print " </refpurpose>\n";
+> +    print "</refnamediv>\n";
+> +
+> +    print "<refsynopsisdiv>\n";
+> +    print " <title>Synopsis</title>\n";
+> +    print "  <synopsis>typedef " . $args{'typedef'} . ";</synopsis>\n";
+> +    print "</refsynopsisdiv>\n";
+> +
+> +    output_section_xml(@_);
+> +
+> +    print "</refentry>\n\n";
+> +}
+> +
+> +# output in XML DocBook
+> +sub output_blockhead_xml(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $count;
+> +
+> +    my $id = $args{'module'};
+> +    $id =~ s/[^A-Za-z0-9]/-/g;
+> +
+> +    # print out each section
+> +    $lineprefix="   ";
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	if (!$args{'content-only'}) {
+> +		print "<refsect1>\n <title>$section</title>\n";
+> +	}
+> +	if ($section =~ m/EXAMPLE/i) {
+> +	    print "<example><para>\n";
+> +	    $output_preformatted = 1;
+> +	} else {
+> +	    print "<para>\n";
+> +	}
+> +	output_highlight($args{'sections'}{$section});
+> +	$output_preformatted = 0;
+> +	if ($section =~ m/EXAMPLE/i) {
+> +	    print "</para></example>\n";
+> +	} else {
+> +	    print "</para>";
+> +	}
+> +	if (!$args{'content-only'}) {
+> +		print "\n</refsect1>\n";
+> +	}
+> +    }
+> +
+> +    print "\n\n";
+> +}
+> +
+> +# output in XML DocBook
+> +sub output_function_gnome {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $count;
+> +    my $id;
+> +
+> +    $id = $args{'module'} . "-" . $args{'function'};
+> +    $id =~ s/[^A-Za-z0-9]/-/g;
+> +
+> +    print "<sect2>\n";
+> +    print " <title id=\"$id\">" . $args{'function'} . "</title>\n";
+> +
+> +    print "  <funcsynopsis>\n";
+> +    print "   <funcdef>" . $args{'functiontype'} . " ";
+> +    print "<function>" . $args{'function'} . " ";
+> +    print "</function></funcdef>\n";
+> +
+> +    $count = 0;
+> +    if ($#{$args{'parameterlist'}} >= 0) {
+> +	foreach $parameter (@{$args{'parameterlist'}}) {
+> +	    $type = $args{'parametertypes'}{$parameter};
+> +	    if ($type =~ m/([^\(]*\(\*)\s*\)\s*\(([^\)]*)\)/) {
+> +		# pointer-to-function
+> +		print "   <paramdef>$1 <parameter>$parameter</parameter>)\n";
+> +		print "     <funcparams>$2</funcparams></paramdef>\n";
+> +	    } else {
+> +		print "   <paramdef>" . $type;
+> +		print " <parameter>$parameter</parameter></paramdef>\n";
+> +	    }
+> +	}
+> +    } else {
+> +	print "  <void>\n";
+> +    }
+> +    print "  </funcsynopsis>\n";
+> +    if ($#{$args{'parameterlist'}} >= 0) {
+> +	print " <informaltable pgwide=\"1\" frame=\"none\" role=\"params\">\n";
+> +	print "<tgroup cols=\"2\">\n";
+> +	print "<colspec colwidth=\"2*\">\n";
+> +	print "<colspec colwidth=\"8*\">\n";
+> +	print "<tbody>\n";
+> +	foreach $parameter (@{$args{'parameterlist'}}) {
+> +	    my $parameter_name = $parameter;
+> +	    $parameter_name =~ s/\[.*//;
+> +
+> +	    print "  <row><entry align=\"right\"><parameter>$parameter</parameter></entry>\n";
+> +	    print "   <entry>\n";
+> +	    $lineprefix="     ";
+> +	    output_highlight($args{'parameterdescs'}{$parameter_name});
+> +	    print "    </entry></row>\n";
+> +	}
+> +	print " </tbody></tgroup></informaltable>\n";
+> +    } else {
+> +	print " <para>\n  None\n </para>\n";
+> +    }
+> +
+> +    # print out each section
+> +    $lineprefix="   ";
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	print "<simplesect>\n <title>$section</title>\n";
+> +	if ($section =~ m/EXAMPLE/i) {
+> +	    print "<example><programlisting>\n";
+> +	    $output_preformatted = 1;
+> +	} else {
+> +	}
+> +	print "<para>\n";
+> +	output_highlight($args{'sections'}{$section});
+> +	$output_preformatted = 0;
+> +	print "</para>\n";
+> +	if ($section =~ m/EXAMPLE/i) {
+> +	    print "</programlisting></example>\n";
+> +	} else {
+> +	}
+> +	print " </simplesect>\n";
+> +    }
+> +
+> +    print "</sect2>\n\n";
+> +}
+> +
+> +##
+> +# output function in man
+> +sub output_function_man(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $count;
+> +
+> +    print ".TH \"$args{'function'}\" 9 \"$args{'function'}\" \"$man_date\" \"Kernel Hacker's Manual\" LINUX\n";
+> +
+> +    print ".SH NAME\n";
+> +    print $args{'function'} . " \\- " . $args{'purpose'} . "\n";
+> +
+> +    print ".SH SYNOPSIS\n";
+> +    if ($args{'functiontype'} ne "") {
+> +	print ".B \"" . $args{'functiontype'} . "\" " . $args{'function'} . "\n";
+> +    } else {
+> +	print ".B \"" . $args{'function'} . "\n";
+> +    }
+> +    $count = 0;
+> +    my $parenth = "(";
+> +    my $post = ",";
+> +    foreach my $parameter (@{$args{'parameterlist'}}) {
+> +	if ($count == $#{$args{'parameterlist'}}) {
+> +	    $post = ");";
+> +	}
+> +	$type = $args{'parametertypes'}{$parameter};
+> +	if ($type =~ m/([^\(]*\(\*)\s*\)\s*\(([^\)]*)\)/) {
+> +	    # pointer-to-function
+> +	    print ".BI \"" . $parenth . $1 . "\" " . $parameter . " \") (" . $2 . ")" . $post . "\"\n";
+> +	} else {
+> +	    $type =~ s/([^\*])$/$1 /;
+> +	    print ".BI \"" . $parenth . $type . "\" " . $parameter . " \"" . $post . "\"\n";
+> +	}
+> +	$count++;
+> +	$parenth = "";
+> +    }
+> +
+> +    print ".SH ARGUMENTS\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	print ".IP \"" . $parameter . "\" 12\n";
+> +	output_highlight($args{'parameterdescs'}{$parameter_name});
+> +    }
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	print ".SH \"", uc $section, "\"\n";
+> +	output_highlight($args{'sections'}{$section});
+> +    }
+> +}
+> +
+> +##
+> +# output enum in man
+> +sub output_enum_man(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $count;
+> +
+> +    print ".TH \"$args{'module'}\" 9 \"enum $args{'enum'}\" \"$man_date\" \"API Manual\" LINUX\n";
+> +
+> +    print ".SH NAME\n";
+> +    print "enum " . $args{'enum'} . " \\- " . $args{'purpose'} . "\n";
+> +
+> +    print ".SH SYNOPSIS\n";
+> +    print "enum " . $args{'enum'} . " {\n";
+> +    $count = 0;
+> +    foreach my $parameter (@{$args{'parameterlist'}}) {
+> +	print ".br\n.BI \"    $parameter\"\n";
+> +	if ($count == $#{$args{'parameterlist'}}) {
+> +	    print "\n};\n";
+> +	    last;
+> +	}
+> +	else {
+> +	    print ", \n.br\n";
+> +	}
+> +	$count++;
+> +    }
+> +
+> +    print ".SH Constants\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	print ".IP \"" . $parameter . "\" 12\n";
+> +	output_highlight($args{'parameterdescs'}{$parameter_name});
+> +    }
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	print ".SH \"$section\"\n";
+> +	output_highlight($args{'sections'}{$section});
+> +    }
+> +}
+> +
+> +##
+> +# output struct in man
+> +sub output_struct_man(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +
+> +    print ".TH \"$args{'module'}\" 9 \"" . $args{'type'} . " " . $args{'struct'} . "\" \"$man_date\" \"API Manual\" LINUX\n";
+> +
+> +    print ".SH NAME\n";
+> +    print $args{'type'} . " " . $args{'struct'} . " \\- " . $args{'purpose'} . "\n";
+> +
+> +    print ".SH SYNOPSIS\n";
+> +    print $args{'type'} . " " . $args{'struct'} . " {\n.br\n";
+> +
+> +    foreach my $parameter (@{$args{'parameterlist'}}) {
+> +	if ($parameter =~ /^#/) {
+> +	    print ".BI \"$parameter\"\n.br\n";
+> +	    next;
+> +	}
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	($args{'parameterdescs'}{$parameter_name} ne $undescribed) || next;
+> +	$type = $args{'parametertypes'}{$parameter};
+> +	if ($type =~ m/([^\(]*\(\*)\s*\)\s*\(([^\)]*)\)/) {
+> +	    # pointer-to-function
+> +	    print ".BI \"    " . $1 . "\" " . $parameter . " \") (" . $2 . ")" . "\"\n;\n";
+> +	} elsif ($type =~ m/^(.*?)\s*(:.*)/) {
+> +	    # bitfield
+> +	    print ".BI \"    " . $1 . "\ \" " . $parameter . $2 . " \"" . "\"\n;\n";
+> +	} else {
+> +	    $type =~ s/([^\*])$/$1 /;
+> +	    print ".BI \"    " . $type . "\" " . $parameter . " \"" . "\"\n;\n";
+> +	}
+> +	print "\n.br\n";
+> +    }
+> +    print "};\n.br\n";
+> +
+> +    print ".SH Members\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	($parameter =~ /^#/) && next;
+> +
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	($args{'parameterdescs'}{$parameter_name} ne $undescribed) || next;
+> +	print ".IP \"" . $parameter . "\" 12\n";
+> +	output_highlight($args{'parameterdescs'}{$parameter_name});
+> +    }
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	print ".SH \"$section\"\n";
+> +	output_highlight($args{'sections'}{$section});
+> +    }
+> +}
+> +
+> +##
+> +# output typedef in man
+> +sub output_typedef_man(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +
+> +    print ".TH \"$args{'module'}\" 9 \"$args{'typedef'}\" \"$man_date\" \"API Manual\" LINUX\n";
+> +
+> +    print ".SH NAME\n";
+> +    print "typedef " . $args{'typedef'} . " \\- " . $args{'purpose'} . "\n";
+> +
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	print ".SH \"$section\"\n";
+> +	output_highlight($args{'sections'}{$section});
+> +    }
+> +}
+> +
+> +sub output_blockhead_man(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $count;
+> +
+> +    print ".TH \"$args{'module'}\" 9 \"$args{'module'}\" \"$man_date\" \"API Manual\" LINUX\n";
+> +
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	print ".SH \"$section\"\n";
+> +	output_highlight($args{'sections'}{$section});
+> +    }
+> +}
+> +
+> +##
+> +# output in text
+> +sub output_function_text(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +    my $start;
+> +
+> +    print "Name:\n\n";
+> +    print $args{'function'} . " - " . $args{'purpose'} . "\n";
+> +
+> +    print "\nSynopsis:\n\n";
+> +    if ($args{'functiontype'} ne "") {
+> +	$start = $args{'functiontype'} . " " . $args{'function'} . " (";
+> +    } else {
+> +	$start = $args{'function'} . " (";
+> +    }
+> +    print $start;
+> +
+> +    my $count = 0;
+> +    foreach my $parameter (@{$args{'parameterlist'}}) {
+> +	$type = $args{'parametertypes'}{$parameter};
+> +	if ($type =~ m/([^\(]*\(\*)\s*\)\s*\(([^\)]*)\)/) {
+> +	    # pointer-to-function
+> +	    print $1 . $parameter . ") (" . $2;
+> +	} else {
+> +	    print $type . " " . $parameter;
+> +	}
+> +	if ($count != $#{$args{'parameterlist'}}) {
+> +	    $count++;
+> +	    print ",\n";
+> +	    print " " x length($start);
+> +	} else {
+> +	    print ");\n\n";
+> +	}
+> +    }
+> +
+> +    print "Arguments:\n\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	print $parameter . "\n\t" . $args{'parameterdescs'}{$parameter_name} . "\n";
+> +    }
+> +    output_section_text(@_);
+> +}
+> +
+> +#output sections in text
+> +sub output_section_text(%) {
+> +    my %args = %{$_[0]};
+> +    my $section;
+> +
+> +    print "\n";
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	print "$section:\n\n";
+> +	output_highlight($args{'sections'}{$section});
+> +    }
+> +    print "\n\n";
+> +}
+> +
+> +# output enum in text
+> +sub output_enum_text(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter);
+> +    my $count;
+> +    print "Enum:\n\n";
+> +
+> +    print "enum " . $args{'enum'} . " - " . $args{'purpose'} . "\n\n";
+> +    print "enum " . $args{'enum'} . " {\n";
+> +    $count = 0;
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	print "\t$parameter";
+> +	if ($count != $#{$args{'parameterlist'}}) {
+> +	    $count++;
+> +	    print ",";
+> +	}
+> +	print "\n";
+> +    }
+> +    print "};\n\n";
+> +
+> +    print "Constants:\n\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	print "$parameter\n\t";
+> +	print $args{'parameterdescs'}{$parameter} . "\n";
+> +    }
+> +
+> +    output_section_text(@_);
+> +}
+> +
+> +# output typedef in text
+> +sub output_typedef_text(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter);
+> +    my $count;
+> +    print "Typedef:\n\n";
+> +
+> +    print "typedef " . $args{'typedef'} . " - " . $args{'purpose'} . "\n";
+> +    output_section_text(@_);
+> +}
+> +
+> +# output struct as text
+> +sub output_struct_text(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter);
+> +
+> +    print $args{'type'} . " " . $args{'struct'} . " - " . $args{'purpose'} . "\n\n";
+> +    print $args{'type'} . " " . $args{'struct'} . " {\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	if ($parameter =~ /^#/) {
+> +	    print "$parameter\n";
+> +	    next;
+> +	}
+> +
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	($args{'parameterdescs'}{$parameter_name} ne $undescribed) || next;
+> +	$type = $args{'parametertypes'}{$parameter};
+> +	if ($type =~ m/([^\(]*\(\*)\s*\)\s*\(([^\)]*)\)/) {
+> +	    # pointer-to-function
+> +	    print "\t$1 $parameter) ($2);\n";
+> +	} elsif ($type =~ m/^(.*?)\s*(:.*)/) {
+> +	    # bitfield
+> +	    print "\t$1 $parameter$2;\n";
+> +	} else {
+> +	    print "\t" . $type . " " . $parameter . ";\n";
+> +	}
+> +    }
+> +    print "};\n\n";
+> +
+> +    print "Members:\n\n";
+> +    foreach $parameter (@{$args{'parameterlist'}}) {
+> +	($parameter =~ /^#/) && next;
+> +
+> +	my $parameter_name = $parameter;
+> +	$parameter_name =~ s/\[.*//;
+> +
+> +	($args{'parameterdescs'}{$parameter_name} ne $undescribed) || next;
+> +	print "$parameter\n\t";
+> +	print $args{'parameterdescs'}{$parameter_name} . "\n";
+> +    }
+> +    print "\n";
+> +    output_section_text(@_);
+> +}
+> +
+> +sub output_blockhead_text(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	print " $section:\n";
+> +	print "    -> ";
+> +	output_highlight($args{'sections'}{$section});
+> +    }
+> +}
+> +
+> +## list mode output functions
+> +
+> +sub output_function_list(%) {
+> +    my %args = %{$_[0]};
+> +
+> +    print $args{'function'} . "\n";
+> +}
+> +
+> +# output enum in list
+> +sub output_enum_list(%) {
+> +    my %args = %{$_[0]};
+> +    print $args{'enum'} . "\n";
+> +}
+> +
+> +# output typedef in list
+> +sub output_typedef_list(%) {
+> +    my %args = %{$_[0]};
+> +    print $args{'typedef'} . "\n";
+> +}
+> +
+> +# output struct as list
+> +sub output_struct_list(%) {
+> +    my %args = %{$_[0]};
+> +
+> +    print $args{'struct'} . "\n";
+> +}
+> +
+> +sub output_blockhead_list(%) {
+> +    my %args = %{$_[0]};
+> +    my ($parameter, $section);
+> +
+> +    foreach $section (@{$args{'sectionlist'}}) {
+> +	print "DOC: $section\n";
+> +    }
+> +}
+> +
+> +##
+> +# generic output function for all types (function, struct/union, typedef, enum);
+> +# calls the generated, variable output_ function name based on
+> +# functype and output_mode
+> +sub output_declaration {
+> +    no strict 'refs';
+> +    my $name = shift;
+> +    my $functype = shift;
+> +    my $func = "output_${functype}_$output_mode";
+> +    if (($function_only==0) ||
+> +	( $function_only == 1 && defined($function_table{$name})) ||
+> +	( $function_only == 2 && !defined($function_table{$name})))
+> +    {
+> +	&$func(@_);
+> +	$section_counter++;
+> +    }
+> +}
+> +
+> +##
+> +# generic output function - calls the right one based on current output mode.
+> +sub output_blockhead {
+> +    no strict 'refs';
+> +    my $func = "output_blockhead_" . $output_mode;
+> +    &$func(@_);
+> +    $section_counter++;
+> +}
+> +
+> +##
+> +# takes a declaration (struct, union, enum, typedef) and
+> +# invokes the right handler. NOT called for functions.
+> +sub dump_declaration($$) {
+> +    no strict 'refs';
+> +    my ($prototype, $file) = @_;
+> +    my $func = "dump_" . $decl_type;
+> +    &$func(@_);
+> +}
+> +
+> +sub dump_union($$) {
+> +    dump_struct(@_);
+> +}
+> +
+> +sub dump_struct($$) {
+> +    my $x = shift;
+> +    my $file = shift;
+> +    my $nested;
+> +
+> +    if ($x =~ /(struct|union)\s+(\w+)\s*{(.*)}/) {
+> +	#my $decl_type = $1;
+> +	$declaration_name = $2;
+> +	my $members = $3;
+> +
+> +	# ignore embedded structs or unions
+> +	$members =~ s/({.*})//g;
+> +	$nested = $1;
+> +
+> +	# ignore members marked private:
+> +	$members =~ s/\/\*\s*private:.*?\/\*\s*public:.*?\*\///gos;
+> +	$members =~ s/\/\*\s*private:.*//gos;
+> +	# strip comments:
+> +	$members =~ s/\/\*.*?\*\///gos;
+> +	$nested =~ s/\/\*.*?\*\///gos;
+> +	# strip kmemcheck_bitfield_{begin,end}.*;
+> +	$members =~ s/kmemcheck_bitfield_.*?;//gos;
+> +	# strip attributes
+> +	$members =~ s/__attribute__\s*\(\([a-z,_\*\s\(\)]*\)\)//i;
+> +	$members =~ s/__aligned\s*\([^;]*\)//gos;
+> +	$members =~ s/\s*CRYPTO_MINALIGN_ATTR//gos;
+> +
+> +	create_parameterlist($members, ';', $file);
+> +	check_sections($file, $declaration_name, "struct", $sectcheck, $struct_actual, $nested);
+> +
+> +	output_declaration($declaration_name,
+> +			   'struct',
+> +			   {'struct' => $declaration_name,
+> +			    'module' => $modulename,
+> +			    'parameterlist' => \@parameterlist,
+> +			    'parameterdescs' => \%parameterdescs,
+> +			    'parametertypes' => \%parametertypes,
+> +			    'sectionlist' => \@sectionlist,
+> +			    'sections' => \%sections,
+> +			    'purpose' => $declaration_purpose,
+> +			    'type' => $decl_type
+> +			   });
+> +    }
+> +    else {
+> +	print STDERR "${file}:$.: error: Cannot parse struct or union!\n";
+> +	++$errors;
+> +    }
+> +}
+> +
+> +sub dump_enum($$) {
+> +    my $x = shift;
+> +    my $file = shift;
+> +
+> +    $x =~ s@/\*.*?\*/@@gos;	# strip comments.
+> +    $x =~ s/^#\s*define\s+.*$//; # strip #define macros inside enums
+> +
+> +    if ($x =~ /enum\s+(\w+)\s*{(.*)}/) {
+> +	$declaration_name = $1;
+> +	my $members = $2;
+> +
+> +	foreach my $arg (split ',', $members) {
+> +	    $arg =~ s/^\s*(\w+).*/$1/;
+> +	    push @parameterlist, $arg;
+> +	    if (!$parameterdescs{$arg}) {
+> +		$parameterdescs{$arg} = $undescribed;
+> +		print STDERR "${file}:$.: warning: Enum value '$arg' ".
+> +		    "not described in enum '$declaration_name'\n";
+> +	    }
+> +
+> +	}
+> +
+> +	output_declaration($declaration_name,
+> +			   'enum',
+> +			   {'enum' => $declaration_name,
+> +			    'module' => $modulename,
+> +			    'parameterlist' => \@parameterlist,
+> +			    'parameterdescs' => \%parameterdescs,
+> +			    'sectionlist' => \@sectionlist,
+> +			    'sections' => \%sections,
+> +			    'purpose' => $declaration_purpose
+> +			   });
+> +    }
+> +    else {
+> +	print STDERR "${file}:$.: error: Cannot parse enum!\n";
+> +	++$errors;
+> +    }
+> +}
+> +
+> +sub dump_typedef($$) {
+> +    my $x = shift;
+> +    my $file = shift;
+> +
+> +    $x =~ s@/\*.*?\*/@@gos;	# strip comments.
+> +    while (($x =~ /\(*.\)\s*;$/) || ($x =~ /\[*.\]\s*;$/)) {
+> +	$x =~ s/\(*.\)\s*;$/;/;
+> +	$x =~ s/\[*.\]\s*;$/;/;
+> +    }
+> +
+> +    if ($x =~ /typedef.*\s+(\w+)\s*;/) {
+> +	$declaration_name = $1;
+> +
+> +	output_declaration($declaration_name,
+> +			   'typedef',
+> +			   {'typedef' => $declaration_name,
+> +			    'module' => $modulename,
+> +			    'sectionlist' => \@sectionlist,
+> +			    'sections' => \%sections,
+> +			    'purpose' => $declaration_purpose
+> +			   });
+> +    }
+> +    else {
+> +	print STDERR "${file}:$.: error: Cannot parse typedef!\n";
+> +	++$errors;
+> +    }
+> +}
+> +
+> +sub save_struct_actual($) {
+> +    my $actual = shift;
+> +
+> +    # strip all spaces from the actual param so that it looks like one string item
+> +    $actual =~ s/\s*//g;
+> +    $struct_actual = $struct_actual . $actual . " ";
+> +}
+> +
+> +sub create_parameterlist($$$) {
+> +    my $args = shift;
+> +    my $splitter = shift;
+> +    my $file = shift;
+> +    my $type;
+> +    my $param;
+> +
+> +    # temporarily replace commas inside function pointer definition
+> +    while ($args =~ /(\([^\),]+),/) {
+> +	$args =~ s/(\([^\),]+),/$1#/g;
+> +    }
+> +
+> +    foreach my $arg (split($splitter, $args)) {
+> +	# strip comments
+> +	$arg =~ s/\/\*.*\*\///;
+> +	# strip leading/trailing spaces
+> +	$arg =~ s/^\s*//;
+> +	$arg =~ s/\s*$//;
+> +	$arg =~ s/\s+/ /;
+> +
+> +	if ($arg =~ /^#/) {
+> +	    # Treat preprocessor directive as a typeless variable just to fill
+> +	    # corresponding data structures "correctly". Catch it later in
+> +	    # output_* subs.
+> +	    push_parameter($arg, "", $file);
+> +	} elsif ($arg =~ m/\(.+\)\s*\(/) {
+> +	    # pointer-to-function
+> +	    $arg =~ tr/#/,/;
+> +	    $arg =~ m/[^\(]+\(\*?\s*(\w*)\s*\)/;
+> +	    $param = $1;
+> +	    $type = $arg;
+> +	    $type =~ s/([^\(]+\(\*?)\s*$param/$1/;
+> +	    save_struct_actual($param);
+> +	    push_parameter($param, $type, $file);
+> +	} elsif ($arg) {
+> +	    $arg =~ s/\s*:\s*/:/g;
+> +	    $arg =~ s/\s*\[/\[/g;
+> +
+> +	    my @args = split('\s*,\s*', $arg);
+> +	    if ($args[0] =~ m/\*/) {
+> +		$args[0] =~ s/(\*+)\s*/ $1/;
+> +	    }
+> +
+> +	    my @first_arg;
+> +	    if ($args[0] =~ /^(.*\s+)(.*?\[.*\].*)$/) {
+> +		    shift @args;
+> +		    push(@first_arg, split('\s+', $1));
+> +		    push(@first_arg, $2);
+> +	    } else {
+> +		    @first_arg = split('\s+', shift @args);
+> +	    }
+> +
+> +	    unshift(@args, pop @first_arg);
+> +	    $type = join " ", @first_arg;
+> +
+> +	    foreach $param (@args) {
+> +		if ($param =~ m/^(\*+)\s*(.*)/) {
+> +		    save_struct_actual($2);
+> +		    push_parameter($2, "$type $1", $file);
+> +		}
+> +		elsif ($param =~ m/(.*?):(\d+)/) {
+> +		    if ($type ne "") { # skip unnamed bit-fields
+> +			save_struct_actual($1);
+> +			push_parameter($1, "$type:$2", $file)
+> +		    }
+> +		}
+> +		else {
+> +		    save_struct_actual($param);
+> +		    push_parameter($param, $type, $file);
+> +		}
+> +	    }
+> +	}
+> +    }
+> +}
+> +
+> +sub push_parameter($$$) {
+> +	my $param = shift;
+> +	my $type = shift;
+> +	my $file = shift;
+> +
+> +	if (($anon_struct_union == 1) && ($type eq "") &&
+> +	    ($param eq "}")) {
+> +		return;		# ignore the ending }; from anon. struct/union
+> +	}
+> +
+> +	$anon_struct_union = 0;
+> +	my $param_name = $param;
+> +	$param_name =~ s/\[.*//;
+> +
+> +	if ($type eq "" && $param =~ /\.\.\.$/)
+> +	{
+> +	    if (!defined $parameterdescs{$param} || $parameterdescs{$param} eq "") {
+> +		$parameterdescs{$param} = "variable arguments";
+> +	    }
+> +	}
+> +	elsif ($type eq "" && ($param eq "" or $param eq "void"))
+> +	{
+> +	    $param="void";
+> +	    $parameterdescs{void} = "no arguments";
+> +	}
+> +	elsif ($type eq "" && ($param eq "struct" or $param eq "union"))
+> +	# handle unnamed (anonymous) union or struct:
+> +	{
+> +		$type = $param;
+> +		$param = "{unnamed_" . $param . "}";
+> +		$parameterdescs{$param} = "anonymous\n";
+> +		$anon_struct_union = 1;
+> +	}
+> +
+> +	# warn if parameter has no description
+> +	# (but ignore ones starting with # as these are not parameters
+> +	# but inline preprocessor statements);
+> +	# also ignore unnamed structs/unions;
+> +	if (!$anon_struct_union) {
+> +	if (!defined $parameterdescs{$param_name} && $param_name !~ /^#/) {
+> +
+> +	    $parameterdescs{$param_name} = $undescribed;
+> +
+> +	    if (($type eq 'function') || ($type eq 'enum')) {
+> +		print STDERR "${file}:$.: warning: Function parameter ".
+> +		    "or member '$param' not " .
+> +		    "described in '$declaration_name'\n";
+> +	    }
+> +	    print STDERR "${file}:$.: warning:" .
+> +			 " No description found for parameter '$param'\n";
+> +	    ++$warnings;
+> +	}
+> +	}
+> +
+> +	$param = xml_escape($param);
+> +
+> +	# strip spaces from $param so that it is one continuous string
+> +	# on @parameterlist;
+> +	# this fixes a problem where check_sections() cannot find
+> +	# a parameter like "addr[6 + 2]" because it actually appears
+> +	# as "addr[6", "+", "2]" on the parameter list;
+> +	# but it's better to maintain the param string unchanged for output,
+> +	# so just weaken the string compare in check_sections() to ignore
+> +	# "[blah" in a parameter string;
+> +	###$param =~ s/\s*//g;
+> +	push @parameterlist, $param;
+> +	$parametertypes{$param} = $type;
+> +}
+> +
+> +sub check_sections($$$$$$) {
+> +	my ($file, $decl_name, $decl_type, $sectcheck, $prmscheck, $nested) = @_;
+> +	my @sects = split ' ', $sectcheck;
+> +	my @prms = split ' ', $prmscheck;
+> +	my $err;
+> +	my ($px, $sx);
+> +	my $prm_clean;		# strip trailing "[array size]" and/or beginning "*"
+> +
+> +	foreach $sx (0 .. $#sects) {
+> +		$err = 1;
+> +		foreach $px (0 .. $#prms) {
+> +			$prm_clean = $prms[$px];
+> +			$prm_clean =~ s/\[.*\]//;
+> +			$prm_clean =~ s/__attribute__\s*\(\([a-z,_\*\s\(\)]*\)\)//i;
+> +			# ignore array size in a parameter string;
+> +			# however, the original param string may contain
+> +			# spaces, e.g.:  addr[6 + 2]
+> +			# and this appears in @prms as "addr[6" since the
+> +			# parameter list is split at spaces;
+> +			# hence just ignore "[..." for the sections check;
+> +			$prm_clean =~ s/\[.*//;
+> +
+> +			##$prm_clean =~ s/^\**//;
+> +			if ($prm_clean eq $sects[$sx]) {
+> +				$err = 0;
+> +				last;
+> +			}
+> +		}
+> +		if ($err) {
+> +			if ($decl_type eq "function") {
+> +				print STDERR "${file}:$.: warning: " .
+> +					"Excess function parameter " .
+> +					"'$sects[$sx]' " .
+> +					"description in '$decl_name'\n";
+> +				++$warnings;
+> +			} else {
+> +				if ($nested !~ m/\Q$sects[$sx]\E/) {
+> +				    print STDERR "${file}:$.: warning: " .
+> +					"Excess struct/union/enum/typedef member " .
+> +					"'$sects[$sx]' " .
+> +					"description in '$decl_name'\n";
+> +				    ++$warnings;
+> +				}
+> +			}
+> +		}
+> +	}
+> +}
+> +
+> +##
+> +# Checks the section describing the return value of a function.
+> +sub check_return_section {
+> +        my $file = shift;
+> +        my $declaration_name = shift;
+> +        my $return_type = shift;
+> +
+> +        # Ignore an empty return type (It's a macro)
+> +        # Ignore functions with a "void" return type. (But don't ignore "void *")
+> +        if (($return_type eq "") || ($return_type =~ /void\s*\w*\s*$/)) {
+> +                return;
+> +        }
+> +
+> +        if (!defined($sections{$section_return}) ||
+> +            $sections{$section_return} eq "") {
+> +                print STDERR "${file}:$.: warning: " .
+> +                        "No description found for return value of " .
+> +                        "'$declaration_name'\n";
+> +                ++$warnings;
+> +        }
+> +}
+> +
+> +##
+> +# takes a function prototype and the name of the current file being
+> +# processed and spits out all the details stored in the global
+> +# arrays/hashes.
+> +sub dump_function($$) {
+> +    my $prototype = shift;
+> +    my $file = shift;
+> +    my $noret = 0;
+> +
+> +    $prototype =~ s/^static +//;
+> +    $prototype =~ s/^extern +//;
+> +    $prototype =~ s/^asmlinkage +//;
+> +    $prototype =~ s/^inline +//;
+> +    $prototype =~ s/^__inline__ +//;
+> +    $prototype =~ s/^__inline +//;
+> +    $prototype =~ s/^__always_inline +//;
+> +    $prototype =~ s/^noinline +//;
+> +    $prototype =~ s/__init +//;
+> +    $prototype =~ s/__init_or_module +//;
+> +    $prototype =~ s/__meminit +//;
+> +    $prototype =~ s/__must_check +//;
+> +    $prototype =~ s/__weak +//;
+> +    my $define = $prototype =~ s/^#\s*define\s+//; #ak added
+> +    $prototype =~ s/__attribute__\s*\(\([a-z,]*\)\)//;
+> +
+> +    # Yes, this truly is vile.  We are looking for:
+> +    # 1. Return type (may be nothing if we're looking at a macro)
+> +    # 2. Function name
+> +    # 3. Function parameters.
+> +    #
+> +    # All the while we have to watch out for function pointer parameters
+> +    # (which IIRC is what the two sections are for), C types (these
+> +    # regexps don't even start to express all the possibilities), and
+> +    # so on.
+> +    #
+> +    # If you mess with these regexps, it's a good idea to check that
+> +    # the following functions' documentation still comes out right:
+> +    # - parport_register_device (function pointer parameters)
+> +    # - atomic_set (macro)
+> +    # - pci_match_device, __copy_to_user (long return type)
+> +
+> +    if ($define && $prototype =~ m/^()([a-zA-Z0-9_~:]+)\s+/) {
+> +        # This is an object-like macro, it has no return type and no parameter
+> +        # list.
+> +        # Function-like macros are not allowed to have spaces between
+> +        # declaration_name and opening parenthesis (notice the \s+).
+> +        $return_type = $1;
+> +        $declaration_name = $2;
+> +        $noret = 1;
+> +    } elsif ($prototype =~ m/^()([a-zA-Z0-9_~:]+)\s*\(([^\(]*)\)/ ||
+> +	$prototype =~ m/^(\w+)\s+([a-zA-Z0-9_~:]+)\s*\(([^\(]*)\)/ ||
+> +	$prototype =~ m/^(\w+\s*\*)\s*([a-zA-Z0-9_~:]+)\s*\(([^\(]*)\)/ ||
+> +	$prototype =~ m/^(\w+\s+\w+)\s+([a-zA-Z0-9_~:]+)\s*\(([^\(]*)\)/ ||
+> +	$prototype =~ m/^(\w+\s+\w+\s*\*+)\s*([a-zA-Z0-9_~:]+)\s*\(([^\(]*)\)/ ||
+> +	$prototype =~ m/^(\w+\s+\w+\s+\w+)\s+([a-zA-Z0-9_~:]+)\s*\(([^\(]*)\)/ ||
+> +	$prototype =~ m/^(\w+\s+\w+\s+\w+\s*\*)\s*([a-zA-Z0-9_~:]+)\s*\(([^\(]*)\)/ ||
+> +	$prototype =~ m/^()([a-zA-Z0-9_~:]+)\s*\(([^\{]*)\)/ ||
+> +	$prototype =~ m/^(\w+)\s+([a-zA-Z0-9_~:]+)\s*\(([^\{]*)\)/ ||
+> +	$prototype =~ m/^(\w+\s*\*)\s*([a-zA-Z0-9_~:]+)\s*\(([^\{]*)\)/ ||
+> +	$prototype =~ m/^(\w+\s+\w+)\s+([a-zA-Z0-9_~:]+)\s*\(([^\{]*)\)/ ||
+> +	$prototype =~ m/^(\w+\s+\w+\s*\*)\s*([a-zA-Z0-9_~:]+)\s*\(([^\{]*)\)/ ||
+> +	$prototype =~ m/^(\w+\s+\w+\s+\w+)\s+([a-zA-Z0-9_~:]+)\s*\(([^\{]*)\)/ ||
+> +	$prototype =~ m/^(\w+\s+\w+\s+\w+\s*\*)\s*([a-zA-Z0-9_~:]+)\s*\(([^\{]*)\)/ ||
+> +	$prototype =~ m/^(\w+\s+\w+\s+\w+\s+\w+)\s+([a-zA-Z0-9_~:]+)\s*\(([^\{]*)\)/ ||
+> +	$prototype =~ m/^(\w+\s+\w+\s+\w+\s+\w+\s*\*)\s*([a-zA-Z0-9_~:]+)\s*\(([^\{]*)\)/ ||
+> +	$prototype =~ m/^(\w+\s+\w+\s*\*\s*\w+\s*\*\s*)\s*([a-zA-Z0-9_~:]+)\s*\(([^\{]*)\)/)  {
+> +	$return_type = $1;
+> +	$declaration_name = $2;
+> +	my $args = $3;
+> +
+> +	create_parameterlist($args, ',', $file);
+> +    } else {
+> +	print STDERR "${file}:$.: warning: cannot understand function prototype: '$prototype'\n";
+> +	return;
+> +    }
+> +
+> +	my $prms = join " ", @parameterlist;
+> +	check_sections($file, $declaration_name, "function", $sectcheck, $prms, "");
+> +
+> +        # This check emits a lot of warnings at the moment, because many
+> +        # functions don't have a 'Return' doc section. So until the number
+> +        # of warnings goes sufficiently down, the check is only performed in
+> +        # verbose mode.
+> +        # TODO: always perform the check.
+> +        if ($verbose && !$noret) {
+> +                check_return_section($file, $declaration_name, $return_type);
+> +        }
+> +
+> +    output_declaration($declaration_name,
+> +		       'function',
+> +		       {'function' => $declaration_name,
+> +			'module' => $modulename,
+> +			'functiontype' => $return_type,
+> +			'parameterlist' => \@parameterlist,
+> +			'parameterdescs' => \%parameterdescs,
+> +			'parametertypes' => \%parametertypes,
+> +			'sectionlist' => \@sectionlist,
+> +			'sections' => \%sections,
+> +			'purpose' => $declaration_purpose
+> +		       });
+> +}
+> +
+> +sub reset_state {
+> +    $function = "";
+> +    %constants = ();
+> +    %parameterdescs = ();
+> +    %parametertypes = ();
+> +    @parameterlist = ();
+> +    %sections = ();
+> +    @sectionlist = ();
+> +    $sectcheck = "";
+> +    $struct_actual = "";
+> +    $prototype = "";
+> +
+> +    $state = 0;
+> +    $split_doc_state = 0;
+> +}
+> +
+> +sub tracepoint_munge($) {
+> +	my $file = shift;
+> +	my $tracepointname = 0;
+> +	my $tracepointargs = 0;
+> +
+> +	if ($prototype =~ m/TRACE_EVENT\((.*?),/) {
+> +		$tracepointname = $1;
+> +	}
+> +	if ($prototype =~ m/DEFINE_SINGLE_EVENT\((.*?),/) {
+> +		$tracepointname = $1;
+> +	}
+> +	if ($prototype =~ m/DEFINE_EVENT\((.*?),(.*?),/) {
+> +		$tracepointname = $2;
+> +	}
+> +	$tracepointname =~ s/^\s+//; #strip leading whitespace
+> +	if ($prototype =~ m/TP_PROTO\((.*?)\)/) {
+> +		$tracepointargs = $1;
+> +	}
+> +	if (($tracepointname eq 0) || ($tracepointargs eq 0)) {
+> +		print STDERR "${file}:$.: warning: Unrecognized tracepoint format: \n".
+> +			     "$prototype\n";
+> +	} else {
+> +		$prototype = "static inline void trace_$tracepointname($tracepointargs)";
+> +	}
+> +}
+> +
+> +sub syscall_munge() {
+> +	my $void = 0;
+> +
+> +	$prototype =~ s@[\r\n\t]+@ @gos; # strip newlines/CR's/tabs
+> +##	if ($prototype =~ m/SYSCALL_DEFINE0\s*\(\s*(a-zA-Z0-9_)*\s*\)/) {
+> +	if ($prototype =~ m/SYSCALL_DEFINE0/) {
+> +		$void = 1;
+> +##		$prototype = "long sys_$1(void)";
+> +	}
+> +
+> +	$prototype =~ s/SYSCALL_DEFINE.*\(/long sys_/; # fix return type & func name
+> +	if ($prototype =~ m/long (sys_.*?),/) {
+> +		$prototype =~ s/,/\(/;
+> +	} elsif ($void) {
+> +		$prototype =~ s/\)/\(void\)/;
+> +	}
+> +
+> +	# now delete all of the odd-number commas in $prototype
+> +	# so that arg types & arg names don't have a comma between them
+> +	my $count = 0;
+> +	my $len = length($prototype);
+> +	if ($void) {
+> +		$len = 0;	# skip the for-loop
+> +	}
+> +	for (my $ix = 0; $ix < $len; $ix++) {
+> +		if (substr($prototype, $ix, 1) eq ',') {
+> +			$count++;
+> +			if ($count % 2 == 1) {
+> +				substr($prototype, $ix, 1) = ' ';
+> +			}
+> +		}
+> +	}
+> +}
+> +
+> +sub process_state3_function($$) {
+> +    my $x = shift;
+> +    my $file = shift;
+> +
+> +    $x =~ s@\/\/.*$@@gos; # strip C99-style comments to end of line
+> +
+> +    if ($x =~ m#\s*/\*\s+MACDOC\s*#io || ($x =~ /^#/ && $x !~ /^#\s*define/)) {
+> +	# do nothing
+> +    }
+> +    elsif ($x =~ /([^\{]*)/) {
+> +	$prototype .= $1;
+> +    }
+> +
+> +    if (($x =~ /\{/) || ($x =~ /\#\s*define/) || ($x =~ /;/)) {
+> +	$prototype =~ s@/\*.*?\*/@@gos;	# strip comments.
+> +	$prototype =~ s@[\r\n]+@ @gos; # strip newlines/cr's.
+> +	$prototype =~ s@^\s+@@gos; # strip leading spaces
+> +	if ($prototype =~ /SYSCALL_DEFINE/) {
+> +		syscall_munge();
+> +	}
+> +	if ($prototype =~ /TRACE_EVENT/ || $prototype =~ /DEFINE_EVENT/ ||
+> +	    $prototype =~ /DEFINE_SINGLE_EVENT/)
+> +	{
+> +		tracepoint_munge($file);
+> +	}
+> +	dump_function($prototype, $file);
+> +	reset_state();
+> +    }
+> +}
+> +
+> +sub process_state3_type($$) {
+> +    my $x = shift;
+> +    my $file = shift;
+> +
+> +    $x =~ s@[\r\n]+@ @gos; # strip newlines/cr's.
+> +    $x =~ s@^\s+@@gos; # strip leading spaces
+> +    $x =~ s@\s+$@@gos; # strip trailing spaces
+> +    $x =~ s@\/\/.*$@@gos; # strip C99-style comments to end of line
+> +
+> +    if ($x =~ /^#/) {
+> +	# To distinguish preprocessor directive from regular declaration later.
+> +	$x .= ";";
+> +    }
+> +
+> +    while (1) {
+> +	if ( $x =~ /([^{};]*)([{};])(.*)/ ) {
+> +	    $prototype .= $1 . $2;
+> +	    ($2 eq '{') && $brcount++;
+> +	    ($2 eq '}') && $brcount--;
+> +	    if (($2 eq ';') && ($brcount == 0)) {
+> +		dump_declaration($prototype, $file);
+> +		reset_state();
+> +		last;
+> +	    }
+> +	    $x = $3;
+> +	} else {
+> +	    $prototype .= $x;
+> +	    last;
+> +	}
+> +    }
+> +}
+> +
+> +# xml_escape: replace <, >, and & in the text stream;
+> +#
+> +# however, formatting controls that are generated internally/locally in the
+> +# kernel-doc script are not escaped here; instead, they begin life like
+> +# $blankline_html (4 of '\' followed by a mnemonic + ':'), then these strings
+> +# are converted to their mnemonic-expected output, without the 4 * '\' & ':',
+> +# just before actual output; (this is done by local_unescape())
+> +sub xml_escape($) {
+> +	my $text = shift;
+> +	if (($output_mode eq "text") || ($output_mode eq "man")) {
+> +		return $text;
+> +	}
+> +	$text =~ s/\&/\\\\\\amp;/g;
+> +	$text =~ s/\</\\\\\\lt;/g;
+> +	$text =~ s/\>/\\\\\\gt;/g;
+> +	return $text;
+> +}
+> +
+> +# convert local escape strings to html
+> +# local escape strings look like:  '\\\\menmonic:' (that's 4 backslashes)
+> +sub local_unescape($) {
+> +	my $text = shift;
+> +	if (($output_mode eq "text") || ($output_mode eq "man")) {
+> +		return $text;
+> +	}
+> +	$text =~ s/\\\\\\\\lt:/</g;
+> +	$text =~ s/\\\\\\\\gt:/>/g;
+> +	return $text;
+> +}
+> +
+> +sub process_file($) {
+> +    my $file;
+> +    my $identifier;
+> +    my $func;
+> +    my $descr;
+> +    my $in_purpose = 0;
+> +    my $initial_section_counter = $section_counter;
+> +
+> +    if (defined($ENV{'SRCTREE'})) {
+> +	$file = "$ENV{'SRCTREE'}" . "/" . "@_";
+> +    }
+> +    else {
+> +	$file = "@_";
+> +    }
+> +    if (defined($source_map{$file})) {
+> +	$file = $source_map{$file};
+> +    }
+> +
+> +    if (!open(IN,"<$file")) {
+> +	print STDERR "Error: Cannot open file $file\n";
+> +	++$errors;
+> +	return;
+> +    }
+> +
+> +    $. = 1;
+> +
+> +    $section_counter = 0;
+> +    while (<IN>) {
+> +	while (s/\\\s*$//) {
+> +	    $_ .= <IN>;
+> +	}
+> +	if ($state == 0) {
+> +	    if (/$doc_start/o) {
+> +		$state = 1;		# next line is always the function name
+> +		$in_doc_sect = 0;
+> +	    }
+> +	} elsif ($state == 1) {	# this line is the function name (always)
+> +	    if (/$doc_block/o) {
+> +		$state = 4;
+> +		$contents = "";
+> +		if ( $1 eq "" ) {
+> +			$section = $section_intro;
+> +		} else {
+> +			$section = $1;
+> +		}
+> +	    }
+> +	    elsif (/$doc_decl/o) {
+> +		$identifier = $1;
+> +		if (/\s*([\w\s]+?)\s*-/) {
+> +		    $identifier = $1;
+> +		}
+> +
+> +		$state = 2;
+> +		if (/-(.*)/) {
+> +		    # strip leading/trailing/multiple spaces
+> +		    $descr= $1;
+> +		    $descr =~ s/^\s*//;
+> +		    $descr =~ s/\s*$//;
+> +		    $descr =~ s/\s+/ /g;
+> +		    $declaration_purpose = xml_escape($descr);
+> +		    $in_purpose = 1;
+> +		} else {
+> +		    $declaration_purpose = "";
+> +		}
+> +
+> +		if (($declaration_purpose eq "") && $verbose) {
+> +			print STDERR "${file}:$.: warning: missing initial short description on line:\n";
+> +			print STDERR $_;
+> +			++$warnings;
+> +		}
+> +
+> +		if ($identifier =~ m/^struct/) {
+> +		    $decl_type = 'struct';
+> +		} elsif ($identifier =~ m/^union/) {
+> +		    $decl_type = 'union';
+> +		} elsif ($identifier =~ m/^enum/) {
+> +		    $decl_type = 'enum';
+> +		} elsif ($identifier =~ m/^typedef/) {
+> +		    $decl_type = 'typedef';
+> +		} else {
+> +		    $decl_type = 'function';
+> +		}
+> +
+> +		if ($verbose) {
+> +		    print STDERR "${file}:$.: info: Scanning doc for $identifier\n";
+> +		}
+> +	    } else {
+> +		print STDERR "${file}:$.: warning: Cannot understand $_ on line $.",
+> +		" - I thought it was a doc line\n";
+> +		++$warnings;
+> +		$state = 0;
+> +	    }
+> +	} elsif ($state == 2) {	# look for head: lines, and include content
+> +	    if (/$doc_sect/o) {
+> +		$newsection = $1;
+> +		$newcontents = $2;
+> +
+> +		if (($contents ne "") && ($contents ne "\n")) {
+> +		    if (!$in_doc_sect && $verbose) {
+> +			print STDERR "${file}:$.: warning: contents before sections\n";
+> +			++$warnings;
+> +		    }
+> +		    dump_section($file, $section, xml_escape($contents));
+> +		    $section = $section_default;
+> +		}
+> +
+> +		$in_doc_sect = 1;
+> +		$in_purpose = 0;
+> +		$contents = $newcontents;
+> +		if ($contents ne "") {
+> +		    while ((substr($contents, 0, 1) eq " ") ||
+> +			substr($contents, 0, 1) eq "\t") {
+> +			    $contents = substr($contents, 1);
+> +		    }
+> +		    $contents .= "\n";
+> +		}
+> +		$section = $newsection;
+> +	    } elsif (/$doc_end/) {
+> +		if (($contents ne "") && ($contents ne "\n")) {
+> +		    dump_section($file, $section, xml_escape($contents));
+> +		    $section = $section_default;
+> +		    $contents = "";
+> +		}
+> +		# look for doc_com + <text> + doc_end:
+> +		if ($_ =~ m'\s*\*\s*[a-zA-Z_0-9:\.]+\*/') {
+> +		    print STDERR "${file}:$.: warning: suspicious ending line: $_";
+> +		    ++$warnings;
+> +		}
+> +
+> +		$prototype = "";
+> +		$state = 3;
+> +		$brcount = 0;
+> +#		print STDERR "end of doc comment, looking for prototype\n";
+> +	    } elsif (/$doc_content/) {
+> +		# miguel-style comment kludge, look for blank lines after
+> +		# @parameter line to signify start of description
+> +		if ($1 eq "") {
+> +		    if ($section =~ m/^@/ || $section eq $section_context) {
+> +			dump_section($file, $section, xml_escape($contents));
+> +			$section = $section_default;
+> +			$contents = "";
+> +		    } else {
+> +			$contents .= "\n";
+> +		    }
+> +		    $in_purpose = 0;
+> +		} elsif ($in_purpose == 1) {
+> +		    # Continued declaration purpose
+> +		    chomp($declaration_purpose);
+> +		    $declaration_purpose .= " " . xml_escape($1);
+> +		    $declaration_purpose =~ s/\s+/ /g;
+> +		} else {
+> +		    $contents .= $1 . "\n";
+> +		}
+> +	    } else {
+> +		# i dont know - bad line?  ignore.
+> +		print STDERR "${file}:$.: warning: bad line: $_";
+> +		++$warnings;
+> +	    }
+> +	} elsif ($state == 5) { # scanning for split parameters
+> +	    # First line (state 1) needs to be a @parameter
+> +	    if ($split_doc_state == 1 && /$doc_split_sect/o) {
+> +		$section = $1;
+> +		$contents = $2;
+> +		if ($contents ne "") {
+> +		    while ((substr($contents, 0, 1) eq " ") ||
+> +		           substr($contents, 0, 1) eq "\t") {
+> +			$contents = substr($contents, 1);
+> +		    }
+> +		$contents .= "\n";
+> +		}
+> +		$split_doc_state = 2;
+> +	    # Documentation block end */
+> +	    } elsif (/$doc_split_end/) {
+> +		if (($contents ne "") && ($contents ne "\n")) {
+> +		    dump_section($file, $section, xml_escape($contents));
+> +		    $section = $section_default;
+> +		    $contents = "";
+> +		}
+> +		$state = 3;
+> +		$split_doc_state = 0;
+> +	    # Regular text
+> +	    } elsif (/$doc_content/) {
+> +		if ($split_doc_state == 2) {
+> +		    $contents .= $1 . "\n";
+> +		} elsif ($split_doc_state == 1) {
+> +		    $split_doc_state = 4;
+> +		    print STDERR "Warning(${file}:$.): ";
+> +		    print STDERR "Incorrect use of kernel-doc format: $_";
+> +		    ++$warnings;
+> +		}
+> +	    }
+> +	} elsif ($state == 3) {	# scanning for function '{' (end of prototype)
+> +	    if (/$doc_split_start/) {
+> +		$state = 5;
+> +		$split_doc_state = 1;
+> +	    } elsif ($decl_type eq 'function') {
+> +		process_state3_function($_, $file);
+> +	    } else {
+> +		process_state3_type($_, $file);
+> +	    }
+> +	} elsif ($state == 4) {
+> +		# Documentation block
+> +		if (/$doc_block/) {
+> +			dump_doc_section($file, $section, xml_escape($contents));
+> +			$contents = "";
+> +			$function = "";
+> +			%constants = ();
+> +			%parameterdescs = ();
+> +			%parametertypes = ();
+> +			@parameterlist = ();
+> +			%sections = ();
+> +			@sectionlist = ();
+> +			$prototype = "";
+> +			if ( $1 eq "" ) {
+> +				$section = $section_intro;
+> +			} else {
+> +				$section = $1;
+> +			}
+> +		}
+> +		elsif (/$doc_end/)
+> +		{
+> +			dump_doc_section($file, $section, xml_escape($contents));
+> +			$contents = "";
+> +			$function = "";
+> +			%constants = ();
+> +			%parameterdescs = ();
+> +			%parametertypes = ();
+> +			@parameterlist = ();
+> +			%sections = ();
+> +			@sectionlist = ();
+> +			$prototype = "";
+> +			$state = 0;
+> +		}
+> +		elsif (/$doc_content/)
+> +		{
+> +			if ( $1 eq "" )
+> +			{
+> +				$contents .= $blankline;
+> +			}
+> +			else
+> +			{
+> +				$contents .= $1 . "\n";
+> +			}
+> +		}
+> +	}
+> +    }
+> +    if ($initial_section_counter == $section_counter) {
+> +	print STDERR "${file}:1: warning: no structured comments found\n";
+> +	if (($function_only == 1) && ($show_not_found == 1)) {
+> +	    print STDERR "    Was looking for '$_'.\n" for keys %function_table;
+> +	}
+> +	if ($output_mode eq "xml") {
+> +	    # The template wants at least one RefEntry here; make one.
+> +	    print "<refentry>\n";
+> +	    print " <refnamediv>\n";
+> +	    print "  <refname>\n";
+> +	    print "   ${file}\n";
+> +	    print "  </refname>\n";
+> +	    print "  <refpurpose>\n";
+> +	    print "   Document generation inconsistency\n";
+> +	    print "  </refpurpose>\n";
+> +	    print " </refnamediv>\n";
+> +	    print " <refsect1>\n";
+> +	    print "  <title>\n";
+> +	    print "   Oops\n";
+> +	    print "  </title>\n";
+> +	    print "  <warning>\n";
+> +	    print "   <para>\n";
+> +	    print "    The template for this document tried to insert\n";
+> +	    print "    the structured comment from the file\n";
+> +	    print "    <filename>${file}</filename> at this point,\n";
+> +	    print "    but none was found.\n";
+> +	    print "    This dummy section is inserted to allow\n";
+> +	    print "    generation to continue.\n";
+> +	    print "   </para>\n";
+> +	    print "  </warning>\n";
+> +	    print " </refsect1>\n";
+> +	    print "</refentry>\n";
+> +	}
+> +    }
+> +}
+> +
+> +
+> +$kernelversion = get_kernel_version();
+> +
+> +# generate a sequence of code that will splice in highlighting information
+> +# using the s// operator.
+> +foreach my $pattern (sort keys %highlights) {
+> +#   print STDERR "scanning pattern:$pattern, highlight:($highlights{$pattern})\n";
+> +    $dohighlight .=  "\$contents =~ s:$pattern:$highlights{$pattern}:gs;\n";
+> +}
+> +
+> +# Read the file that maps relative names to absolute names for
+> +# separate source and object directories and for shadow trees.
+> +if (open(SOURCE_MAP, "<.tmp_filelist.txt")) {
+> +	my ($relname, $absname);
+> +	while(<SOURCE_MAP>) {
+> +		chop();
+> +		($relname, $absname) = (split())[0..1];
+> +		$relname =~ s:^/+::;
+> +		$source_map{$relname} = $absname;
+> +	}
+> +	close(SOURCE_MAP);
+> +}
+> +
+> +foreach (@ARGV) {
+> +    chomp;
+> +    process_file($_);
+> +}
+> +if ($verbose && $errors) {
+> +  print STDERR "$errors errors\n";
+> +}
+> +if ($verbose && $warnings) {
+> +  print STDERR "$warnings warnings\n";
+> +}
+> +
+> +exit($errors);
+> diff --git a/libdmmp/docs/libdmmp.h.3 b/libdmmp/docs/libdmmp.h.3
+> new file mode 100644
+> index 0000000..45d5be3
+> --- /dev/null
+> +++ b/libdmmp/docs/libdmmp.h.3
+> @@ -0,0 +1,113 @@
+> +.TH "libdmmp.h" 3 "January 2016" "Device Mapper Multipath API - libdmmp Manual"
+> +
+> +.SH NAME
+> +libdmmp.h \- Device Mapper Multipath API.
+> +
+> +.SH SYNOPSIS
+> +#include <libdmmp/libdmmp.h>
+> +
+> +.SH "DESCRIPTION"
+> +
+> +All the libdmmp public functions ships its own man pages.
+> +Use 'man 3 <function_name>' to check the detail usage.
+> +
+> +.SH "USAGE"
+> +
+> +To use libdmmp in your project, we suggest to use the 'pkg-config' way:
+> +
+> + * Add this line into your configure.ac:
+> +
+> +    PKG_CHECK_MODULES([LIBDMMP], [libdmmp])
+> +
+> + * Add these lines into your Makefile.am:
+> +
+> +    foo_LDFLAGS += $(LIBDMMP_LIBS)
+> +    foo_CFLAGS += $(LIBDMMP_CFLAGS)
+> +
+> +.SH LOG HANDLING
+> +
+> +The log handler function could be set via 'dmmp_context_log_func_set()'.
+> +The log priority could be set via 'dmmp_context_log_priority_set()'.
+> +
+> +By default, the log priorities is 'DMMP_LOG_PRIORITY_WARNING'.
+> +By default, the log handler is print log to STDERR, and its code is listed
+> +below in case you want to create your own log handler.
+> +
+> +        static int _DMMP_LOG_STRERR_ALIGN_WIDTH = 80;
+> +
+> +        static void _log_stderr(struct dmmp_context *ctx,
+> +                                enum dmmp_log_priority priority,
+> +                                const char *file, int line,
+> +                                const char *func_name,
+> +                                const char *format, va_list args)
+> +        {
+> +            int printed_bytes = 0;
+> +
+> +            printed_bytes += fprintf(stderr, "libdmmp %s: ",
+> +                                     dmmp_log_priority_str(priority));
+> +            printed_bytes += vfprintf(stderr, format, args);
+> +            userdata = dmmp_context_userdata_get(ctx);
+> +            if (userdata != NULL)
+> +                fprintf(stderr, "(with user data at memory address %p)",
+> +                        userdata);
+> +
+> +            if (printed_bytes < _DMMP_LOG_STRERR_ALIGN_WIDTH) {
+> +                fprintf(stderr, "%*s # %s:%s():%d\n",
+> +                        _DMMP_LOG_STRERR_ALIGN_WIDTH - printed_bytes, "", file,
+> +                        func_name, line);
+> +            } else {
+> +                fprintf(stderr, " # %s:%s():%d\n", file, func_name, line);
+> +            }
+> +        }
+> +
+> +
+> +.SH "SAMPLE CODE"
+> +
+> +    #include <libdmmp/libdmmp.h>
+> +
+> +    int main(int argc, char *argv[]) {
+> +        struct dmmp_context *ctx = NULL;
+> +        struct dmmp_mpath **dmmp_mps = NULL;
+> +        struct dmmp_path_group **dmmp_pgs = NULL;
+> +        struct dmmp_path **dmmp_ps = NULL;
+> +        uint32_t dmmp_mp_count = 0;
+> +        uint32_t dmmp_pg_count = 0;
+> +        uint32_t dmmp_p_count = 0;
+> +        const char *name = NULL;
+> +        const char *wwid = NULL;
+> +        uint32_t i = 0;
+> +        int rc = DMMP_OK;
+> +
+> +        ctx = dmmp_context_new();
+> +        dmmp_context_log_priority_set(ctx, DMMP_LOG_PRIORITY_DEBUG);
+> +        // By default, log will be printed to STDERR, you could
+> +        // change that via dmmp_context_log_func_set()
+> +        rc = dmmp_mpath_array_get(ctx, &dmmp_mps, &dmmp_mp_count);
+> +        if (rc != DMMP_OK) {
+> +            printf("dmmp_mpath_array_get() failed with %d: %s", rc,
+> +                   dmmp_strerror(rc));
+> +            goto out;
+> +        }
+> +        for (i = 0; i < dmmp_mp_count; ++i) {
+> +                name = dmmp_mpath_name_get(dmmp_mps[i]);
+> +                wwid = dmmp_mpath_wwid_get(dmmp_mps[i]);
+> +                printf("dmmp_mpath_array_get(): Got mpath: %s %s\n", name,
+> +                       wwid);
+> +                // You could use dmmp_path_group_array_get() to retrieve
+> +                // path group information and then invoke dmmp_path_array_get()
+> +                // for path information.
+> +        }
+> +
+> +     out:
+> +        dmmp_context_free(ctx);
+> +        dmmp_mpath_array_free(dmmp_mps, dmmp_mp_count);
+> +        if (rc != DMMP_OK)
+> +            exit(1);
+> +        exit(0);
+> +    }
+> +
+> +.SH "LICENSE"
+> +GPLv2+
+> +
+> +.SH "BUG"
+> +Please report bug to <dm-devel@redhat.com>
+> diff --git a/libdmmp/docs/split-man.pl b/libdmmp/docs/split-man.pl
+> new file mode 100755
+> index 0000000..452fd8a
+> --- /dev/null
+> +++ b/libdmmp/docs/split-man.pl
+> @@ -0,0 +1,41 @@
+> +#!/usr/bin/perl
+> +# Originally From:
+> +# https://www.kernel.org/doc/Documentation/kernel-doc-nano-HOWTO.txt
+> +#
+> +# Changes:
+> +#   * Create manpage section 3 instead of 9.
+> +#   * Replace 'Kernel Hackers Manual' to
+> +#       'Device Mapper Multipath API - libdmmp Manual'
+> +#   * Remove LINUX from header.
+> +#   * Remove DMMP_DLL_EXPORT.
+> +$man_sec_num = 3;
+> +$title = 'Device Mapper Multipath API - libdmmp Manual';
+> +
+> +if ( $#ARGV < 0 ) {
+> +    die "where do I put the results?\n";
+> +}
+> +
+> +mkdir $ARGV[0], 0777;
+> +$state = 0;
+> +while (<STDIN>) {
+> +    s/DMMP_DLL_EXPORT//g;
+> +    if (/^\.TH \"[^\"]*\" 9 \"([^\"]*)\"/) {
+> +        if ( $state == 1 ) { close OUT }
+> +        $state = 1;
+> +        $fn    = "$ARGV[0]/$1.$man_sec_num";
+> +        print STDERR "Creating $fn\n";
+> +        open OUT, ">$fn" or die "can't open $fn: $!\n";
+> +
+> +        # Change man page code from 9 to $man_sec_num;
+> +        s/^\.TH (\"[^\"]*\") 9 \"([^\"]*)\"/\.TH $1 $man_sec_num \"$2\"/;
+> +        s/Kernel Hacker's Manual/$title/g;
+> +        s/LINUX//g;
+> +
+> +        print OUT $_;
+> +    }
+> +    elsif ( $state != 0 ) {
+> +        print OUT $_;
+> +    }
+> +}
+> +
+> +close OUT;
+> diff --git a/libdmmp/libdmmp.c b/libdmmp/libdmmp.c
+> new file mode 100644
+> index 0000000..75fc32d
+> --- /dev/null
+> +++ b/libdmmp/libdmmp.c
+> @@ -0,0 +1,515 @@
+> +/*
+> + * Copyright (C) 2015 - 2016 Red Hat, Inc.
+> + *
+> + * This program is free software: you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License as published by
+> + * the Free Software Foundation, either version 3 of the License, or
+> + * (at your option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + *
+> + * You should have received a copy of the GNU General Public License
+> + * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+> + *
+> + * Author: Gris Ge <fge@redhat.com>
+> + *         Todd Gill <tgill@redhat.com>
+> + */
+> +
+> +#include <stdint.h>
+> +#include <string.h>
+> +#include <sys/time.h>
+> +#include <sys/resource.h>
+> +#include <libudev.h>
+> +#include <errno.h>
+> +#include <libdevmapper.h>
+> +#include <stdbool.h>
+> +#include <sys/socket.h>
+> +#include <sys/un.h>
+> +#include <unistd.h>
+> +#include <poll.h>
+> +#include <signal.h>
+> +#include <assert.h>
+> +
+> +#include "libdmmp/libdmmp.h"
+> +#include "libdmmp_private.h"
+> +
+> +#define _DEFAULT_UXSOCK_TIMEOUT		60000
+> +/* ^ 60 seconds. On system with 10k sdX, dmmp_mpath_array_get()
+> + *   only take 1.5 seconds, so this value should works for a while.
+> + */
+> +#define _DMMP_LOG_STRERR_ALIGN_WIDTH	80
+> +/* ^ Only used in _log_stderr() for pretty log output.
+> + *   When provided log message is less than 80 bytes, fill it with space, then
+> + *   print code file name, function name, line after the 80th bytes.
+> + */
+> +
+> +static int _ipc_init(struct dmmp_context *ctx);
+> +static int _ipc_send_all(struct dmmp_context *ctx, void *buff, size_t len);
+> +static int _ipc_recv_all(struct dmmp_context *ctx, void *buff, size_t len);
+> +static void _ipc_close(struct dmmp_context *ctx);
+> +static int _dmmp_ipc_send(struct dmmp_context *ctx, const char *input_str);
+> +static int _dmmp_ipc_recv(struct dmmp_context *ctx, char **output_str);
+> +
+> +static const struct _num_str_conv _DMMP_RC_MSG_CONV[] = {
+> +	{DMMP_OK, "OK"},
+> +	{DMMP_ERR_NO_MEMORY, "Out of memory"},
+> +	{DMMP_ERR_BUG, "BUG of libdmmp library"},
+> +	{DMMP_ERR_IPC_TIMEOUT, "Timeout when communicate with multipathd, "
+> +			       "try to increase 'uxsock_timeout' in config "
+> +			       "file"},
+> +	{DMMP_ERR_IPC_ERROR, "Error when communicate with multipathd daemon"},
+> +	{DMMP_ERR_NO_DAEMON, "The multipathd daemon not started"},
+> +	{DMMP_ERR_INCONSISTENT_DATA, "Inconsistent data, try again"},
+> +};
+> +
+> +_dmmp_str_func_gen(dmmp_strerror, int, rc, _DMMP_RC_MSG_CONV);
+> +
+> +static const struct _num_str_conv _DMMP_PRI_CONV[] = {
+> +	{DMMP_LOG_PRIORITY_DEBUG, "debug"},
+> +	{DMMP_LOG_PRIORITY_INFO, "info"},
+> +	{DMMP_LOG_PRIORITY_WARNING, "warning"},
+> +	{DMMP_LOG_PRIORITY_ERROR, "error"},
+> +};
+> +_dmmp_str_func_gen(dmmp_log_priority_str, enum dmmp_log_priority, priority,
+> +		   _DMMP_PRI_CONV);
+> +
+> +struct dmmp_context {
+> +	void (*log_func)(struct dmmp_context *ctx,
+> +			 enum dmmp_log_priority priority,
+> +			 const char *file, int line, const char *func_name,
+> +			 const char *format, va_list args);
+> +	int _socket_fd;
+> +	int log_priority;
+> +	void *userdata;
+> +};
+> +
+> +_dmmp_getter_func_gen(dmmp_context_log_priority_get,
+> +		      struct dmmp_context, ctx, log_priority,
+> +		      enum dmmp_log_priority);
+> +
+> +_dmmp_getter_func_gen(dmmp_context_userdata_get, struct dmmp_context, ctx,
+> +		      userdata, void *);
+> +
+> +_dmmp_array_free_func_gen(dmmp_mpath_array_free, struct dmmp_mpath,
+> +			  _dmmp_mpath_free);
+> +
+> +static void _log_stderr(struct dmmp_context *ctx,
+> +			enum dmmp_log_priority priority,
+> +			const char *file, int line, const char *func_name,
+> +			const char *format, va_list args);
+> +
+> +static void _log_stderr(struct dmmp_context *ctx,
+> +			enum dmmp_log_priority priority,
+> +			const char *file, int line, const char *func_name,
+> +			const char *format, va_list args)
+> +{
+> +	int printed_bytes = 0;
+> +	void *userdata = NULL;
+> +
+> +	printed_bytes += fprintf(stderr, "libdmmp %s: ",
+> +				 dmmp_log_priority_str(priority));
+> +	printed_bytes += vfprintf(stderr, format, args);
+> +
+> +	userdata = dmmp_context_userdata_get(ctx);
+> +	if (userdata != NULL)
+> +		fprintf(stderr, "(userdata address: %p)",
+> +			userdata);
+> +	/* ^ Just demonstrate how userdata could be used and
+> +	 *   bypass clang static analyzer about unused ctx argument warning
+> +	 */
+> +
+> +	if (printed_bytes < _DMMP_LOG_STRERR_ALIGN_WIDTH) {
+> +		fprintf(stderr, "%*s # %s:%s():%d\n",
+> +			_DMMP_LOG_STRERR_ALIGN_WIDTH - printed_bytes, "", file,
+> +			func_name, line);
+> +	} else {
+> +		fprintf(stderr, " # %s:%s():%d\n", file, func_name, line);
+> +	}
+> +}
+> +
+> +static int _ipc_init(struct dmmp_context *ctx)
+> +{
+> +	int socket_fd = -1;
+> +	struct sockaddr_un so;
+> +	int rc = DMMP_OK;
+> +	socklen_t len = strlen(_DMMP_SOCKET_PATH) + 1 + sizeof(sa_family_t);
+> +
+> +	socket_fd = socket(AF_UNIX, SOCK_STREAM, 0 /* default protocol */);
+> +	if (socket_fd < 0) {
+> +		rc = DMMP_ERR_BUG;
+> +		_error(ctx, "BUG: Failed to create AF_UNIX/SOCK_STREAM socket "
+> +		       "error %d: %s", errno, strerror(errno));
+> +		return rc;
+> +	}
+> +
+> +	memset(&so, 0, sizeof(struct sockaddr_un));
+> +	so.sun_family = AF_UNIX;
+> +	so.sun_path[0] = '\0';
+> +	strcpy(&so.sun_path[1], _DMMP_SOCKET_PATH);
+> +
+> +	if (connect(socket_fd, (struct sockaddr *) &so, len) == -1) {
+> +		if (errno == ECONNREFUSED) {
+> +			rc = DMMP_ERR_NO_DAEMON;
+> +			_error(ctx, dmmp_strerror(rc));
+> +			return rc;
+> +		}
+> +
+> +		rc = DMMP_ERR_IPC_ERROR;
+> +		_error(ctx, "%s, error(%d): %s",
+> +		       dmmp_strerror(rc), errno, strerror(errno));
+> +		return rc;
+> +	}
+> +	ctx->_socket_fd = socket_fd;
+> +	return rc;
+> +}
+> +
+> +static void _ipc_close(struct dmmp_context *ctx)
+> +{
+> +	if (ctx->_socket_fd >= 0)
+> +		close(ctx->_socket_fd);
+> +	ctx->_socket_fd = -1;
+> +}
+> +
+> +/*
+> + * Copy from libmultipath/uxsock.c write_all()
+> + */
+> +static int _ipc_send_all(struct dmmp_context *ctx, void *buff, size_t len)
+> +{
+> +	int fd = ctx->_socket_fd;
+> +	int rc = DMMP_OK;
+> +	ssize_t writen_len = 0;
+> +
+> +	while (len > 0) {
+> +		writen_len = write(fd, buff, len);
+> +		if (writen_len < 0) {
+> +			if ((errno == EINTR) || (errno == EAGAIN))
+> +				continue;
+> +			else {
+> +				rc = DMMP_ERR_BUG;
+> +				_error(ctx, "BUG: Got unexpected error when "
+> +				       "sending message to multipathd "
+> +				       "via socket, %d: %s",
+> +				       errno, strerror(errno));
+> +				goto out;
+> +			}
+> +		}
+> +		if (writen_len == 0) {
+> +			/* Connection closed premature, indicate a timeout */
+> +			rc = DMMP_ERR_IPC_TIMEOUT;
+> +			_error(ctx, dmmp_strerror(rc));
+> +			goto out;
+> +		}
+> +		len -= writen_len;
+> +		buff = writen_len + (char *)buff;
+> +	}
+> +
+> +out:
+> +	return rc;
+> +}
+> +
+> +/*
+> + * Copy from libmultipath/uxsock.c read_all()
+> + */
+> +static int _ipc_recv_all(struct dmmp_context *ctx, void *buff, size_t len)
+> +{
+> +	int fd = ctx->_socket_fd;
+> +	int rc = DMMP_OK;
+> +	ssize_t got_size = 0;
+> +	int poll_rc = 0;
+> +	struct pollfd pfd;
+> +
+> +	while (len > 0) {
+> +		pfd.fd = fd;
+> +		pfd.events = POLLIN;
+> +		poll_rc = poll(&pfd, 1, _DEFAULT_UXSOCK_TIMEOUT);
+> +		if (poll_rc == 0) {
+> +			rc = DMMP_ERR_IPC_ERROR;
+> +			_error(ctx, "Connecting to multipathd socket "
+> +			       "got timeout");
+> +			goto out;
+> +		} else if (poll_rc < 0) {
+> +			if (errno == EINTR)
+> +				continue;
+> +			else {
+> +				rc = DMMP_ERR_BUG;
+> +				_error(ctx, "BUG: Got unexpected error when "
+> +				       "receiving data from multipathd via "
+> +				       "socket, %d: %s", errno,
+> +				       strerror(errno));
+> +				goto out;
+> +			}
+> +		} else if (!pfd.revents & POLLIN)
+> +			continue;
+> +
+> +		got_size = read(fd, buff, len);
+> +		if (got_size < 0) {
+> +			if ((errno == EINTR) || (errno == EAGAIN))
+> +				continue;
+> +			return -errno;
+> +		}
+> +		if (got_size == 0) {
+> +			/* Connection closed premature, indicate a timeout */
+> +			rc = DMMP_ERR_IPC_TIMEOUT;
+> +			_error(ctx, dmmp_strerror(rc));
+> +			goto out;
+> +		}
+> +		buff = got_size + (char *)buff;
+> +		len -= got_size;
+> +	}
+> +
+> +out:
+> +	return rc;
+> +}
+> +
+> +/*
+> + * Copied from libmultipath/uxsock.c send_packet().
+> + */
+> +static int _dmmp_ipc_send(struct dmmp_context *ctx, const char *input_str)
+> +{
+> +	int rc = DMMP_OK;
+> +	sigset_t set, old;
+> +	size_t len = strlen(input_str) + 1;
+> +
+> +	/* Block SIGPIPE */
+> +	sigemptyset(&set);
+> +	sigaddset(&set, SIGPIPE);
+> +	pthread_sigmask(SIG_BLOCK, &set, &old);
+> +
+> +	_debug(ctx, "IPC: Sending data size '%zu'", len);
+> +	_good(_ipc_send_all(ctx, &len, sizeof(len)), rc, out);
+> +	_debug(ctx, "IPC: Sending command '%s'", input_str);
+> +	_good(_ipc_send_all(ctx, (void *) input_str, len), rc, out);
+> +
+> +	/* And unblock it again */
+> +	pthread_sigmask(SIG_SETMASK, &old, NULL);
+> +
+> +out:
+> +	return rc;
+> +}
+> +
+> +static int _dmmp_ipc_recv(struct dmmp_context *ctx, char **output_str)
+> +{
+> +	int rc = DMMP_OK;
+> +	size_t len = 0;
+> +
+> +	_good(_ipc_recv_all(ctx, &len, sizeof(len)), rc, out);
+> +
+> +	if (len <= 0) {
+> +		rc = DMMP_ERR_BUG;
+> +		_error(ctx, "BUG: Got zero length message\n");
+> +		goto out;
+> +	}
+> +	_debug(ctx, "IPC: Received data size: %zu",  len);
+> +
+> +	*output_str = malloc(sizeof(char) * (len + 1));
+> +	_dmmp_alloc_null_check(ctx, *output_str, rc, out);
+> +	_good(_ipc_recv_all(ctx, *output_str, len), rc, out);
+> +	(*output_str)[len] = 0;
+> +
+> +out:
+> +	if (rc != DMMP_OK) {
+> +		free(*output_str);
+> +		*output_str = NULL;
+> +	}
+> +
+> +	return rc;
+> +}
+> +
+> +int _dmmp_ipc_exec(struct dmmp_context *ctx, const char *cmd, char **output)
+> +{
+> +	int rc = DMMP_OK;
+> +	_good(_dmmp_ipc_send(ctx, cmd), rc, out);
+> +	_good(_dmmp_ipc_recv(ctx, output), rc, out);
+> +
+> +out:
+> +
+> +	if (rc != DMMP_OK) {
+> +		free(*output);
+> +		*output = NULL;
+> +	}
+> +	return rc;
+> +}
+> +
+> +void _dmmp_log(struct dmmp_context *ctx, enum dmmp_log_priority priority,
+> +	       const char *file, int line, const char *func_name,
+> +	       const char *format, ...)
+> +{
+> +	va_list args;
+> +
+> +	va_start(args, format);
+> +	ctx->log_func(ctx, priority, file, line, func_name, format, args);
+> +	va_end(args);
+> +}
+> +
+> +struct dmmp_context *dmmp_context_new(void)
+> +{
+> +	struct dmmp_context *ctx = NULL;
+> +
+> +	ctx = (struct dmmp_context *) malloc(sizeof(struct dmmp_context));
+> +
+> +	if (ctx == NULL)
+> +		return NULL;
+> +
+> +	ctx->log_func = _log_stderr;
+> +	ctx->log_priority = DMMP_LOG_PRIORITY_DEFAULT;
+> +	ctx->_socket_fd = -1;
+> +	ctx->userdata = NULL;
+> +
+> +	return ctx;
+> +}
+> +
+> +void dmmp_context_free(struct dmmp_context *ctx)
+> +{
+> +	free(ctx);
+> +}
+> +
+> +void dmmp_context_log_priority_set(struct dmmp_context *ctx,
+> +				   enum dmmp_log_priority priority)
+> +{
+> +	assert(ctx != NULL);
+> +	ctx->log_priority = priority;
+> +}
+> +
+> +void dmmp_context_log_func_set
+> +	(struct dmmp_context *ctx,
+> +	 void (*log_func)(struct dmmp_context *ctx,
+> +			  enum dmmp_log_priority priority,
+> +			  const char *file, int line, const char *func_name,
+> +			  const char *format, va_list args))
+> +{
+> +	assert(ctx != NULL);
+> +	ctx->log_func = log_func;
+> +}
+> +
+> +void dmmp_context_userdata_set(struct dmmp_context *ctx, void *userdata)
+> +{
+> +	assert(ctx != NULL);
+> +	ctx->userdata = userdata;
+> +}
+> +
+> +int dmmp_mpath_array_get(struct dmmp_context *ctx,
+> +			 struct dmmp_mpath ***dmmp_mps, uint32_t *dmmp_mp_count)
+> +{
+> +	struct dmmp_path_group **dmmp_pgs = NULL;
+> +	uint32_t dmmp_pg_count = 0;
+> +	struct dmmp_path **dmmp_ps = NULL;
+> +	uint32_t dmmp_p_count = 0;
+> +	struct dmmp_mpath *dmmp_mp = NULL;
+> +	struct dmmp_path_group *dmmp_pg = NULL;
+> +	struct dmmp_path *dmmp_p = NULL;
+> +	uint32_t i = 0;
+> +	int rc = DMMP_OK;
+> +	const char *wwid = NULL;
+> +	uint32_t pg_id = 0;
+> +
+> +	assert(ctx != NULL);
+> +	assert(dmmp_mps != NULL);
+> +	assert(dmmp_mp_count != NULL);
+> +
+> +	*dmmp_mps = NULL;
+> +	*dmmp_mp_count = 0;
+> +
+> +	rc = _ipc_init(ctx);
+> +
+> +	if (rc != 0) {
+> +		_debug(ctx, "IPC initialization failed: %d, %s", rc,
+> +		       dmmp_strerror(rc));
+> +		goto out;
+> +	}
+> +
+> +	_good(_dmmp_mpath_all_get(ctx, dmmp_mps, dmmp_mp_count), rc, out);
+> +	_good(_dmmp_path_group_all_get(ctx, &dmmp_pgs, &dmmp_pg_count),
+> +	      rc, out);
+> +	_good(_dmmp_path_all_get(ctx, &dmmp_ps, &dmmp_p_count), rc, out);
+> +	_ipc_close(ctx);
+> +
+> +	_debug(ctx, "Saving path_group into mpath");
+> +	for (i = 0; i < dmmp_pg_count; ++i) {
+> +		dmmp_pg = dmmp_pgs[i];
+> +		if (dmmp_pg == NULL)
+> +			continue;
+> +		wwid = dmmp_path_group_wwid_get(dmmp_pg);
+> +		if ((wwid == NULL) || (strlen(wwid) == 0)) {
+> +			rc = DMMP_ERR_BUG;
+> +			_error(ctx, "BUG: Got a path group with empty wwid");
+> +			goto out;
+> +		}
+> +
+> +		dmmp_mp = _dmmp_mpath_search(*dmmp_mps, *dmmp_mp_count, wwid);
+> +		if (dmmp_mp == NULL) {
+> +			rc = DMMP_ERR_INCONSISTENT_DATA;
+> +			_error(ctx, "%s. Failed to find mpath for wwid %s",
+> +			       dmmp_strerror(rc),
+> +			       dmmp_path_group_wwid_get(dmmp_pg));
+> +			goto out;
+> +		}
+> +		_good(_dmmp_mpath_add_pg(ctx, dmmp_mp, dmmp_pg), rc, out);
+> +		/* dmmp_mpath take over the memory, remove from pg_list */
+> +		dmmp_pgs[i] = NULL;
+> +	}
+> +
+> +	_debug(ctx, "Saving path into path_group");
+> +	for (i = 0; i < dmmp_p_count; ++i) {
+> +		dmmp_p = dmmp_ps[i];
+> +		if (dmmp_p == NULL)
+> +			continue;
+> +		wwid = dmmp_path_wwid_get(dmmp_p);
+> +		/* For faulty path, the wwid information will be empty */
+> +		if ((wwid == NULL) || (strlen(wwid) == 0)) {
+> +			_warn(ctx, "Got a path(%s) with empty wwid ID and "
+> +			       "status: %s(%" PRIu32 ")",
+> +			       dmmp_path_blk_name_get(dmmp_p),
+> +			       dmmp_path_status_str
+> +			       (dmmp_path_status_get(dmmp_p)),
+> +			       dmmp_path_status_get(dmmp_p));
+> +			_dmmp_path_free(dmmp_p);
+> +			dmmp_ps[i] = NULL;
+> +			continue;
+> +		}
+> +		pg_id = dmmp_path_pg_id_get(dmmp_p);
+> +
+> +		dmmp_pg = _dmmp_mpath_pg_search(*dmmp_mps, *dmmp_mp_count,
+> +						wwid, pg_id);
+> +		if (dmmp_pg == NULL) {
+> +			rc = DMMP_ERR_INCONSISTENT_DATA;
+> +			_error(ctx, "%s. Failed to find path "
+> +			       "group for wwid %s pg_id %" PRIu32 "",
+> +			       dmmp_strerror(rc),
+> +			       dmmp_path_wwid_get(dmmp_p),
+> +			       dmmp_path_pg_id_get(dmmp_p));
+> +			goto out;
+> +		}
+> +		_good(_dmmp_path_group_add_path(ctx, dmmp_pg, dmmp_p), rc, out);
+> +		/* dmmp_path_group take over the memory, remove from p_list */
+> +		dmmp_ps[i] = NULL;
+> +	}
+> +
+> +	for (i = 0; i < *dmmp_mp_count; ++i) {
+> +		_good(_dmmp_mpath_finalize(ctx, (*dmmp_mps)[i]), rc, out);
+> +	}
+> +
+> +out:
+> +	if (rc != DMMP_OK) {
+> +		dmmp_mpath_array_free(*dmmp_mps, *dmmp_mp_count);
+> +		*dmmp_mps = NULL;
+> +		*dmmp_mp_count = 0;
+> +	}
+> +
+> +	for (i = 0; i < dmmp_pg_count; ++i) {
+> +		if (dmmp_pgs[i] != NULL)
+> +			_dmmp_path_group_free(dmmp_pgs[i]);
+> +	}
+> +	free(dmmp_pgs);
+> +
+> +	for (i = 0; i < dmmp_p_count; ++i) {
+> +		if (dmmp_ps[i] != NULL)
+> +			_dmmp_path_free(dmmp_ps[i]);
+> +	}
+> +	free(dmmp_ps);
+> +
+> +	_ipc_close(ctx);
+> +	return rc;
+> +}
+> diff --git a/libdmmp/libdmmp.pc.in b/libdmmp/libdmmp.pc.in
+> new file mode 100644
+> index 0000000..ebb8cad
+> --- /dev/null
+> +++ b/libdmmp/libdmmp.pc.in
+> @@ -0,0 +1,9 @@
+> +includedir=__INCLUDEDIR__
+> +libdir=__LIBDIR__
+> +
+> +Name: libdmmp
+> +Version: __VERSION__
+> +Description: Device mapper multipath management library
+> +Requires:
+> +Libs: -L${libdir} -ldmmp
+> +Cflags: -I${includedir}
+> diff --git a/libdmmp/libdmmp/libdmmp.h b/libdmmp/libdmmp/libdmmp.h
+> new file mode 100644
+> index 0000000..8aa04a9
+> --- /dev/null
+> +++ b/libdmmp/libdmmp/libdmmp.h
+> @@ -0,0 +1,617 @@
+> +/*
+> + * Copyright (C) 2015 - 2016 Red Hat, Inc.
+> + *
+> + * This program is free software: you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License as published by
+> + * the Free Software Foundation, either version 3 of the License, or
+> + * (at your option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + *
+> + * You should have received a copy of the GNU General Public License
+> + * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+> + *
+> + * Author: Gris Ge <fge@redhat.com>
+> + *         Todd Gill <tgill@redhat.com>
+> + */
+> +
+> +
+> +#ifndef _LIB_DMMP_H_
+> +#define _LIB_DMMP_H_
+> +
+> +#include <stdint.h>
+> +#include <stdarg.h>
+> +
+> +#ifdef __cplusplus
+> +extern "C" {
+> +#endif
+> +
+> +#define DMMP_DLL_EXPORT		__attribute__ ((visibility ("default")))
+> +#define DMMP_DLL_LOCAL		__attribute__ ((visibility ("hidden")))
+> +
+> +// TODO(Gris Ge): Create better comment/document for each function and constants.
+> +//
+> +
+> +#define DMMP_OK				0
+> +#define DMMP_ERR_BUG			1
+> +#define DMMP_ERR_NO_MEMORY		2
+> +#define DMMP_ERR_IPC_TIMEOUT		3
+> +#define DMMP_ERR_IPC_ERROR		4
+> +#define DMMP_ERR_NO_DAEMON		5
+> +#define DMMP_ERR_INCONSISTENT_DATA	6
+> +
+> +/*
+> + * Use the syslog severity level as log priority
+> + */
+> +DMMP_DLL_EXPORT enum dmmp_log_priority {
+> +	DMMP_LOG_PRIORITY_ERROR		= 3,
+> +	DMMP_LOG_PRIORITY_WARNING	= 4,
+> +	DMMP_LOG_PRIORITY_INFO		= 6,
+> +	DMMP_LOG_PRIORITY_DEBUG		= 7,
+> +};
+> +
+> +#define DMMP_LOG_PRIORITY_DEFAULT	DMMP_LOG_PRIORITY_WARNING
+> +
+> +/**
+> + * dmmp_log_priority_str() - Convert log priority to string.
+> + *
+> + * Convert log priority (enum dmmp_log_priority) to string (const char *).
+> + *
+> + * @priority:
+> + *	enum dmmp_log_priority. Log priority.
+> + * Return:
+> + *	const char *. Valid string are\::
+> + *
+> + *	* "ERROR",
+> + *
+> + *	* "WARN ",
+> + *
+> + *	* "INFO ",
+> + *
+> + *	* "DEBUG",
+> + */
+> +DMMP_DLL_EXPORT const char *dmmp_log_priority_str
+> +	(enum dmmp_log_priority priority);
+> +
+> +DMMP_DLL_EXPORT struct dmmp_context;
+> +
+> +DMMP_DLL_EXPORT struct dmmp_mpath;
+> +
+> +DMMP_DLL_EXPORT struct dmmp_path_group;
+> +
+> +#define DMMP_PATH_GROUP_STATUS_UNKNOWN	0
+> +#define DMMP_PATH_GROUP_STATUS_ENABLED	1
+> +#define DMMP_PATH_GROUP_STATUS_DISABLED	2
+> +#define DMMP_PATH_GROUP_STATUS_ACTIVE	3
+> +
+> +DMMP_DLL_EXPORT struct dmmp_path;
+> +
+> +#define DMMP_PATH_STATUS_UNKNOWN	0
+> +//#define DMMP_PATH_STATUS_UNCHECKED	1
+> +// ^ print.h does not expose this.
+> +#define DMMP_PATH_STATUS_DOWN		2
+> +#define DMMP_PATH_STATUS_UP		3
+> +#define DMMP_PATH_STATUS_SHAKY		4
+> +#define DMMP_PATH_STATUS_GHOST		5
+> +#define DMMP_PATH_STATUS_PENDING	6
+> +#define DMMP_PATH_STATUS_TIMEOUT	7
+> +//#define DMMP_PATH_STATUS_REMOVED	8
+> +// ^ print.h does not expose this.
+> +#define DMMP_PATH_STATUS_DELAYED	9
+> +
+> +/**
+> + * dmmp_strerror() - Convert error code to string.
+> + *
+> + * Convert error code (int) to string (const char *):
+> + *	* DMMP_OK -- "OK"
+> + *
+> + *	* DMMP_ERR_BUG -- "BUG of libdmmp library"
+> + *
+> + *	* DMMP_ERR_NO_MEMORY -- "Out of memory"
+> + *
+> + *	* DMMP_ERR_IPC_ERROR -- "Error when communicate with multipathd daemon"
+> + *
+> + *	* DMMP_ERR_NO_DAEMON -- "The multipathd daemon not started"
+> + *
+> + *	* DMMP_ERR_INCONSISTENT_DATA -- "Inconsistent data, try again"
+> + *
+> + *	* DMMP_ERR_IPC_TIMEOUT -- "Timeout when communicate with multipathd,
+> + *	  try to increase 'uxsock_timeout' in config file"
+> + *
+> + * @rc:
+> + *	int. Return code by libdmmp functions. When provided error code is not a
+> + *	valid error code, return "Invalid argument".
+> + * Return:
+> + *	const char *. The meaning of provided error code.
+> + *
+> + */
+> +DMMP_DLL_EXPORT const char *dmmp_strerror(int rc);
+> +
+> +/**
+> + * dmmp_context_new() - Create struct dmmp_context.
+> + *
+> + * The default logging level is
+> + * DMMP_LOG_PRIORITY_WARNING/DMMP_LOG_PRIORITY_DEFAULT which means
+> + * only warning and error message will be forward to log handler function.
+> + * The default log handler function will print log message to STDERR,
+> + * to change so, please use dmmp_context_log_func_set() to set your own log
+> + * handler, check manpage libdmmp.h(3) for detail.
+> + *
+> + * Return:
+> + *	Pointer of 'struct dmmp_context'. Should be freed by
+> + *	dmmp_context_free().
+> + */
+> +DMMP_DLL_EXPORT struct dmmp_context *dmmp_context_new(void);
+> +
+> +/**
+> + * dmmp_context_free() - Release the memory of struct dmmp_context.
+> + *
+> + * Release the memory of struct dmmp_context, but the userdata memory defined
+> + * via dmmp_context_userdata_set() will not be touched.
+> + *
+> + * @ctx:
+> + *	Pointer of 'struct dmmp_context'.
+> + * Return:
+> + *	void
+> + */
+> +DMMP_DLL_EXPORT void dmmp_context_free(struct dmmp_context *ctx);
+> +
+> +/**
+> + * dmmp_context_log_priority_set() - Set log priority.
+> + *
+> + * When library generates log message, only equal or more important(less value)
+> + * message will be forwarded to log handler function.
+> + * Valid 'enum dmmp_log_priority' values are\::
+> + *
+> + *	* DMMP_LOG_PRIORITY_ERROR -- 3
+> + *
+> + *	* DMMP_LOG_PRIORITY_WARNING -- 4
+> + *
+> + *	* DMMP_LOG_PRIORITY_INFO -- 5
+> + *
+> + *	* DMMP_LOG_PRIORITY_DEBUG -- 7
+> + *
+> + * @ctx:
+> + *	Pointer of 'struct dmmp_context'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + *
+> + * @priority:
+> + *	enum dmmp_log_priority.
+> + *
+> + * Return:
+> + *	void
+> + */
+> +DMMP_DLL_EXPORT void dmmp_context_log_priority_set
+> +	(struct dmmp_context *ctx, enum dmmp_log_priority priority);
+> +
+> +/**
+> + * dmmp_context_log_priority_get() - Get log priority.
+> + *
+> + * Retrieve current log priority. Valid 'enum dmmp_log_priority' values are\::
+> + *
+> + *	* DMMP_LOG_PRIORITY_ERROR -- 3
+> + *
+> + *	* DMMP_LOG_PRIORITY_WARNING -- 4
+> + *
+> + *	* DMMP_LOG_PRIORITY_INFO -- 5
+> + *
+> + *	* DMMP_LOG_PRIORITY_DEBUG -- 7
+> + *
+> + * @ctx:
+> + *	Pointer of 'struct dmmp_context'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	enum dmmp_log_priority
+> + */
+> +DMMP_DLL_EXPORT enum dmmp_log_priority dmmp_context_log_priority_get
+> +	(struct dmmp_context *ctx);
+> +
+> +/**
+> + * dmmp_context_log_func_set() - Set log handler function.
+> + *
+> + * Set custom log handler. The log handler will be invoked when log message
+> + * is equal or more important(less value) than log priority setting.
+> + * Please check manpage libdmmp.h(3) for detail usage.
+> + *
+> + * @ctx:
+> + *	Pointer of 'struct dmmp_context'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * @log_func:
+> + *	Pointer of log handler function.
+> + * Return:
+> + *	void
+> + */
+> +DMMP_DLL_EXPORT void dmmp_context_log_func_set
+> +	(struct dmmp_context *ctx,
+> +	 void (*log_func)
+> +	 (struct dmmp_context *ctx, enum dmmp_log_priority priority,
+> +	  const char *file, int line, const char *func_name,
+> +	  const char *format, va_list args));
+> +
+> +/**
+> + * dmmp_context_userdata_set() - Set user data pointer.
+> + *
+> + * Store user data pointer into 'struct dmmp_context'.
+> + *
+> + * @ctx:
+> + *	Pointer of 'struct dmmp_context'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * @userdata:
+> + *	Pointer of user defined data.
+> + * Return:
+> + *	void
+> + */
+> +DMMP_DLL_EXPORT void dmmp_context_userdata_set(struct dmmp_context *ctx,
+> +					       void *userdata);
+> +
+> +/**
+> + * dmmp_context_userdata_get() - Get user data pointer.
+> + *
+> + * Retrieve user data pointer from 'struct dmmp_context'.
+> + *
+> + * @ctx:
+> + *	Pointer of 'struct dmmp_context'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	void *. Pointer of user defined data.
+> + */
+> +DMMP_DLL_EXPORT void *dmmp_context_userdata_get(struct dmmp_context *ctx);
+> +
+> +/**
+> + * dmmp_mpath_array_get() - Query all existing multipath devices.
+> + *
+> + * Query all existing multipath devices and store them into a pointer array.
+> + * The memory of 'dmmp_mps' should be freed via dmmp_mpath_array_free().
+> + *
+> + * @ctx:
+> + *	Pointer of 'struct dmmp_context'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * @dmmp_mps:
+> + *	Output pointer array of 'struct dmmp_mpath'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * @dmmp_mp_count:
+> + *	Output pointer of uint32_t. Hold the size of 'dmmp_mps' pointer array.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + *
+> + * Return:
+> + *	int. Valid error codes are\::
+> + *
+> + *	* DMMP_OK
+> + *
+> + *	* DMMP_ERR_BUG
+> + *
+> + *	* DMMP_ERR_NO_MEMORY
+> + *
+> + *	* DMMP_ERR_NO_DAEMON
+> + *
+> + *	* DMMP_ERR_INCONSISTENT_DATA
+> + *
+> + *	Error number could be converted to string by dmmp_strerror().
+> + */
+> +DMMP_DLL_EXPORT int dmmp_mpath_array_get(struct dmmp_context *ctx,
+> +					 struct dmmp_mpath ***dmmp_mps,
+> +					 uint32_t *dmmp_mp_count);
+> +
+> +/**
+> + * dmmp_mpath_array_free() - Free 'struct dmmp_mpath' pointer array.
+> + *
+> + * Free the 'dmmp_mps' pointer array generated by dmmp_mpath_array_get().
+> + * If provided 'dmmp_mps' pointer is NULL or dmmp_mp_count == 0, do nothing.
+> + *
+> + * @dmmp_mps:
+> + *	Pointer of 'struct dmmp_mpath' array.
+> + * @dmmp_mp_count:
+> + *	uint32_t, the size of 'dmmp_mps' pointer array.
+> + * Return:
+> + *	void
+> + */
+> +DMMP_DLL_EXPORT void dmmp_mpath_array_free(struct dmmp_mpath **dmmp_mps,
+> +					   uint32_t dmmp_mp_count);
+> +
+> +/**
+> + * dmmp_mpath_wwid_get() - Retrieve WWID of certain mpath.
+> + *
+> + * @dmmp_mp:
+> + *	Pointer of 'struct dmmp_mpath'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	const char *. No need to free this memory, the resources will get
+> + *	freed when dmmp_mpath_array_free().
+> + */
+> +DMMP_DLL_EXPORT const char *dmmp_mpath_wwid_get(struct dmmp_mpath *dmmp_mp);
+> +
+> +/**
+> + * dmmp_mpath_name_get() - Retrieve name(alias) of certain mpath.
+> + *
+> + * Retrieve the name (also known as alias) of certain mpath.
+> + * When the config 'user_friendly_names' been set 'no', the name will be
+> + * identical to WWID retrieved by dmmp_mpath_wwid_get().
+> + *
+> + * @dmmp_mp:
+> + *	Pointer of 'struct dmmp_mpath'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	const char *. No need to free this memory, the resources will get
+> + *	freed when dmmp_mpath_array_free().
+> + */
+> +DMMP_DLL_EXPORT const char *dmmp_mpath_name_get(struct dmmp_mpath *dmmp_mp);
+> +
+> +/**
+> + * dmmp_path_group_array_get() - Retrieve path groups pointer array.
+> + *
+> + * Retrieve the path groups of certain mpath.
+> + *
+> + * The memory of output pointer array is hold by 'struct dmmp_mpath', no
+> + * need to free this memory, the resources will got freed when
+> + * dmmp_mpath_array_free().
+> + *
+> + * @dmmp_mp:
+> + *	Pointer of 'struct dmmp_mpath'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * @dmmp_pgs:
+> + *	Output pointer of 'struct dmmp_path_group' pointer array.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * @dmmp_pg_count:
+> + *	Output pointer of uint32_t. Hold the size of 'dmmp_pgs' pointer array.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	void
+> + */
+> +DMMP_DLL_EXPORT void dmmp_path_group_array_get
+> +	(struct dmmp_mpath *dmmp_mp, struct dmmp_path_group ***dmmp_pgs,
+> +	 uint32_t *dmmp_pg_count);
+> +
+> +/**
+> + * dmmp_path_group_wwid_get() - Retrieve WWID of given path group's mpath.
+> + *
+> + * Retrieve the WWID of mpath which current path group belong to.
+> + *
+> + * @dmmp_pg:
+> + *	Pointer of 'struct dmmp_path_group'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	const char *. No need to free this memory, the resources will get
+> + *	freed when dmmp_mpath_array_free().
+> + */
+> +DMMP_DLL_EXPORT const char *dmmp_path_group_wwid_get
+> +	(struct dmmp_path_group *dmmp_pg);
+> +
+> +/**
+> + * dmmp_path_group_id_get() - Retrieve path group ID.
+> + *
+> + * Retrieve the path group ID which could be used to switch active path group
+> + * via command\::
+> + *
+> + *	multipathd -k'switch multipath mpathb group $id'
+> + *
+> + * @dmmp_pg:
+> + *	Pointer of 'struct dmmp_path_group'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	uint32_t.
+> + */
+> +DMMP_DLL_EXPORT uint32_t dmmp_path_group_id_get
+> +	(struct dmmp_path_group *dmmp_pg);
+> +
+> +/**
+> + * dmmp_path_group_priority_get() - Retrieve path group priority.
+> + *
+> + * The enabled path group with highest priority will be next active path group
+> + * if active path group down.
+> + *
+> + * @dmmp_pg:
+> + *	Pointer of 'struct dmmp_path_group'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	uint32_t.
+> + */
+> +DMMP_DLL_EXPORT uint32_t dmmp_path_group_priority_get
+> +	(struct dmmp_path_group *dmmp_pg);
+> +
+> +/**
+> + * dmmp_path_group_status_get() - Retrieve path group status.
+> + *
+> + * The valid path group statuses are\::
+> + *
+> + *	* DMMP_PATH_GROUP_STATUS_UNKNOWN
+> + *
+> + *	* DMMP_PATH_GROUP_STATUS_ENABLED  -- standby to be active
+> + *
+> + *	* DMMP_PATH_GROUP_STATUS_DISABLED -- disabled due to all path down
+> + *
+> + *	* DMMP_PATH_GROUP_STATUS_ACTIVE -- selected to handle I/O
+> + *
+> + * @dmmp_pg:
+> + *	Pointer of 'struct dmmp_path_group'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	uint32_t.
+> + */
+> +DMMP_DLL_EXPORT uint32_t dmmp_path_group_status_get
+> +	(struct dmmp_path_group *dmmp_pg);
+> +
+> +/**
+> + * dmmp_path_group_status_str() - Convert path group status to string.
+> + *
+> + * Convert path group status uint32_t to string (const char *).
+> + *
+> + * @pg_status:
+> + *	uint32_t. Path group status.
+> + *	When provided value is not a valid path group status, return "Invalid
+> + *	argument".
+> + * Return:
+> + *	const char *. Valid string are\::
+> + *
+> + *	* "Invalid argument"
+> + *
+> + *	* "undef"
+> + *
+> + *	* "enabled"
+> + *
+> + *	* "disabled"
+> + *
+> + *	* "active"
+> + */
+> +DMMP_DLL_EXPORT const char *dmmp_path_group_status_str(uint32_t pg_status);
+> +
+> +/**
+> + * dmmp_path_group_selector_get() - Retrieve path group selector.
+> + *
+> + * Path group selector determine which path in active path group will be
+> + * use to next I/O.
+> + *
+> + * @dmmp_pg:
+> + *	Pointer of 'struct dmmp_path_group'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	const char *.
+> + */
+> +DMMP_DLL_EXPORT const char *dmmp_path_group_selector_get
+> +	(struct dmmp_path_group *dmmp_pg);
+> +
+> +/**
+> + * dmmp_path_array_get() - Retrieve path pointer array.
+> + *
+> + * The memory of output pointer array is hold by 'struct dmmp_mpath', no
+> + * need to free this memory, the resources will got freed when
+> + * dmmp_mpath_array_free().
+> + *
+> + * @dmmp_pg:
+> + *	Pointer of 'struct dmmp_path_group'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * @dmmp_ps:
+> + *	Output pointer of 'struct dmmp_path' pointer array.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * @dmmp_p_count:
+> + *	Output pointer of uint32_t. Hold the size of 'dmmp_ps' pointer array.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	void
+> + */
+> +DMMP_DLL_EXPORT void dmmp_path_array_get(struct dmmp_path_group *dmmp_pg,
+> +					 struct dmmp_path ***dmmp_ps,
+> +					 uint32_t *dmmp_p_count);
+> +
+> +/**
+> + * dmmp_path_wwid_get() - Retrieve WWID of given path's mpath.
+> + *
+> + * Retrieve the WWID of mpath which current path belong to.
+> + *
+> + * @dmmp_p:
+> + *	Pointer of 'struct dmmp_path'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	const char *. No need to free this memory, the resources will get
+> + *	freed when dmmp_mpath_array_free().
+> + */
+> +DMMP_DLL_EXPORT const char *dmmp_path_wwid_get(struct dmmp_path *dmmp_p);
+> +
+> +/**
+> + * dmmp_path_blk_name_get() - Retrieve block name.
+> + *
+> + * Retrieve block name of certain path. The example of block names are 'sda',
+> + * 'nvme0n1'.
+> + *
+> + * @dmmp_p:
+> + *	Pointer of 'struct dmmp_path'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	const char *. No need to free this memory, the resources will get
+> + *	freed when dmmp_mpath_array_free().
+> + */
+> +DMMP_DLL_EXPORT const char *dmmp_path_blk_name_get(struct dmmp_path *dmmp_p);
+> +
+> +/**
+> + * dmmp_path_pg_id_get() - Retrieve the path group id of given path.
+> + *
+> + * @dmmp_p:
+> + *	Pointer of 'struct dmmp_path'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	uint32_t.
+> + */
+> +DMMP_DLL_EXPORT uint32_t dmmp_path_pg_id_get(struct dmmp_path *dmmp_p);
+> +
+> +/**
+> + * dmmp_path_status_get() - Retrieve the path status.
+> + *
+> + * The valid path statuses are\::
+> + *
+> + *	* DMMP_PATH_STATUS_UNKNOWN
+> + *
+> + *	* DMMP_PATH_STATUS_DOWN
+> + *
+> + *	Path is down and you shouldn't try to send commands to it.
+> + *
+> + *	* DMMP_PATH_STATUS_UP
+> + *
+> + *	Path is up and I/O can be sent to it.
+> + *
+> + *	* DMMP_PATH_STATUS_SHAKY
+> + *
+> + *	Only emc_clariion checker when path not available for "normal"
+> + *	operations.
+> + *
+> + *	* DMMP_PATH_STATUS_GHOST
+> + *
+> + *	Only hp_sw and rdac checkers.
+> + *	Indicates a "passive/standby" path on active/passive
+> + *	HP arrays. These paths will return valid answers to certain SCSI
+> + *	commands (tur, read_capacity, inquiry, start_stop), but will fail I/O
+> + *	commands.
+> + *	The path needs an initialization command to be sent to it in order for
+> + *	I/Os to succeed.
+> + *
+> + *	* DMMP_PATH_STATUS_PENDING
+> + *	Available for all async checkers when a check IO is in flight.
+> + *
+> + *	* DMMP_PATH_STATUS_TIMEOUT
+> + *
+> + *	Only tur checker when command timed out.
+> + *
+> + *	* DMMP_PATH_STATUS_DELAYED
+> + *	If a path fails after being up for less than delay_watch_checks checks,
+> + *	when it comes back up again, it will not be marked as up until it has
+> + *	been up for delay_wait_checks checks. During this time, it is marked as
+> + *	"delayed".
+> + *
+> + * @dmmp_p:
+> + *	Pointer of 'struct dmmp_path'.
+> + *	If this pointer is NULL, your program will be terminated by assert.
+> + * Return:
+> + *	uint32_t.
+> + */
+> +DMMP_DLL_EXPORT uint32_t dmmp_path_status_get(struct dmmp_path *dmmp_p);
+> +
+> +/**
+> + * dmmp_path_status_str() - Convert path status to string.
+> + *
+> + * Convert path status uint32_t to string (const char *):
+> + *
+> + *	* DMMP_PATH_STATUS_UNKNOWN -- "undef"
+> + *	* DMMP_PATH_STATUS_DOWN -- "faulty"
+> + *	* DMMP_PATH_STATUS_UP -- "ready"
+> + *	* DMMP_PATH_STATUS_SHAKY -- "shaky"
+> + *	* DMMP_PATH_STATUS_GHOST -- "ghost"
+> + *	* DMMP_PATH_STATUS_PENDING -- "pending"
+> + *	* DMMP_PATH_STATUS_TIMEOUT -- "timeout"
+> + *	* DMMP_PATH_STATUS_REMOVED -- "removed"
+> + *	* DMMP_PATH_STATUS_DELAYED -- "delayed"
+> + *
+> + * @path_status:
+> + *	uint32_t. Path status.
+> + *	When provided value is not a valid path status, return
+> + *	"Invalid argument".
+> + * Return:
+> + *	const char *. The meaning of status value.
+> + */
+> +DMMP_DLL_EXPORT const char *dmmp_path_status_str(uint32_t path_status);
+> +
+> +#ifdef __cplusplus
+> +} /* End of extern "C" */
+> +#endif
+> +
+> +#endif /* End of _LIB_DMMP_H_ */
+> diff --git a/libdmmp/libdmmp_misc.c b/libdmmp/libdmmp_misc.c
+> new file mode 100644
+> index 0000000..42c1ef8
+> --- /dev/null
+> +++ b/libdmmp/libdmmp_misc.c
+> @@ -0,0 +1,239 @@
+> +/*
+> + * Copyright (C) 2015 - 2016 Red Hat, Inc.
+> + *
+> + * This program is free software: you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License as published by
+> + * the Free Software Foundation, either version 3 of the License, or
+> + * (at your option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + *
+> + * You should have received a copy of the GNU General Public License
+> + * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+> + *
+> + * Author: Gris Ge <fge@redhat.com>
+> + *         Todd Gill <tgill@redhat.com>
+> + */
+> +
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <string.h>
+> +#include <stdarg.h>
+> +#include <errno.h>
+> +#include <limits.h>
+> +#include <assert.h>
+> +
+> +#include "libdmmp/libdmmp.h"
+> +#include "libdmmp_private.h"
+> +
+> +struct _list_node {
+> +    void *data;
+> +    void *next;
+> +};
+> +
+> +struct _ptr_list {
+> +    struct _list_node *first_node;
+> +    uint32_t len;
+> +    struct _list_node *last_node;
+> +};
+> +
+> +struct _ptr_list *_ptr_list_new(void)
+> +{
+> +	struct _ptr_list *ptr_list = NULL;
+> +
+> +	ptr_list = (struct _ptr_list *) malloc(sizeof(struct _ptr_list));
+> +	if (ptr_list == NULL)
+> +		return NULL;
+> +
+> +	ptr_list->len = 0;
+> +	ptr_list->first_node = NULL;
+> +	ptr_list->last_node = NULL;
+> +	return ptr_list;
+> +}
+> +
+> +int _ptr_list_add(struct _ptr_list *ptr_list, void *data)
+> +{
+> +	struct _list_node *node = NULL;
+> +
+> +	assert(ptr_list != NULL);
+> +
+> +	node = (struct _list_node *) malloc(sizeof(struct _list_node));
+> +	if (node == NULL)
+> +		return DMMP_ERR_NO_MEMORY;
+> +
+> +	node->data = data;
+> +	node->next = NULL;
+> +
+> +	if (ptr_list->first_node == NULL)
+> +		ptr_list->first_node = node;
+> +	else
+> +		ptr_list->last_node->next = node;
+> +
+> +	ptr_list->last_node = node;
+> +	++(ptr_list->len);
+> +	return DMMP_OK;
+> +}
+> +
+> +uint32_t _ptr_list_len(struct _ptr_list *ptr_list)
+> +{
+> +	assert(ptr_list != NULL);
+> +	return ptr_list->len;
+> +}
+> +
+> +void *_ptr_list_index(struct _ptr_list *ptr_list, uint32_t index)
+> +{
+> +	uint32_t i = 0;
+> +	struct _list_node *node;
+> +
+> +	assert(ptr_list != NULL);
+> +	assert(ptr_list->len != 0);
+> +	assert(ptr_list->len > index);
+> +
+> +	if (index == ptr_list->len - 1)
+> +		return ptr_list->last_node->data;
+> +
+> +	node = ptr_list->first_node;
+> +	while((i < index) && (node != NULL)) {
+> +		node = (struct _list_node *) node->next;
+> +		++i;
+> +	}
+> +	if (i == index)
+> +		return node->data;
+> +	return NULL;
+> +}
+> +
+> +int _ptr_list_set(struct _ptr_list *ptr_list, uint32_t index, void *data)
+> +{
+> +	uint32_t i = 0;
+> +	struct _list_node *node;
+> +
+> +	assert(ptr_list != NULL);
+> +	assert(ptr_list->len != 0);
+> +	assert(ptr_list->len > index);
+> +
+> +	if (index == ptr_list->len - 1) {
+> +		ptr_list->last_node->data = data;
+> +		return DMMP_OK;
+> +	}
+> +
+> +	node = ptr_list->first_node;
+> +	while((i < index) && (node != NULL)) {
+> +		node = (struct _list_node *) node->next;
+> +		++i;
+> +	}
+> +	if (i == index) {
+> +		node->data = data;
+> +		return DMMP_OK;
+> +	}
+> +	return DMMP_ERR_BUG;
+> +}
+> +
+> +void _ptr_list_free(struct _ptr_list *ptr_list)
+> +{
+> +	struct _list_node *node = NULL;
+> +	struct _list_node *tmp_node = NULL;
+> +
+> +	if (ptr_list == NULL)
+> +		return;
+> +
+> +	node = ptr_list->first_node;
+> +
+> +	while(node != NULL) {
+> +		tmp_node = node;
+> +		node = (struct _list_node *) node->next;
+> +		free(tmp_node);
+> +	}
+> +
+> +	free(ptr_list);
+> +}
+> +
+> +int _ptr_list_to_array(struct _ptr_list *ptr_list, void ***array,
+> +		       uint32_t *count)
+> +{
+> +	uint32_t i = 0;
+> +	void *data = NULL;
+> +
+> +	assert(ptr_list != NULL);
+> +	assert(array != NULL);
+> +	assert(count != NULL);
+> +
+> +	*array = NULL;
+> +	*count = _ptr_list_len(ptr_list);
+> +	if (*count == 0)
+> +		return DMMP_OK;
+> +
+> +	*array = (void **) malloc(sizeof(void *) * (*count));
+> +	if (*array == NULL)
+> +		return DMMP_ERR_NO_MEMORY;
+> +
+> +	_ptr_list_for_each(ptr_list, i, data) {
+> +		(*array)[i] = data;
+> +	}
+> +	return DMMP_OK;
+> +}
+> +
+> +int _split_string(struct dmmp_context *ctx, char *str, const char *delim,
+> +		  struct _ptr_list **ptr_list, int skip_empty)
+> +{
+> +	char *item = NULL;
+> +	int rc = DMMP_OK;
+> +
+> +	assert(ctx != NULL);
+> +	assert(str != NULL);
+> +	assert(strlen(str) != 0);
+> +	assert(delim != NULL);
+> +	assert(strlen(delim) != 0);
+> +	assert(ptr_list != NULL);
+> +
+> +	*ptr_list = _ptr_list_new();
+> +	if (*ptr_list == NULL) {
+> +		_error(ctx, dmmp_strerror(DMMP_ERR_NO_MEMORY));
+> +		return DMMP_ERR_NO_MEMORY;
+> +	}
+> +
+> +	item = strsep(&str, delim);
+> +
+> +	while(item != NULL) {
+> +		if ((skip_empty == _DMMP_SPLIT_STRING_SKIP_EMPTY) &&
+> +		    (strlen(item) == 0)) {
+> +			item = strsep(&str, delim);
+> +			continue;
+> +		}
+> +		_debug(ctx, "Got item: '%s'", item);
+> +		rc = _ptr_list_add(*ptr_list, item);
+> +		if (rc != DMMP_OK) {
+> +			_error(ctx, dmmp_strerror(rc));
+> +			goto out;
+> +		}
+> +		item = strsep(&str, delim);
+> +	}
+> +
+> +out:
+> +	if (rc != DMMP_OK) {
+> +		_ptr_list_free(*ptr_list);
+> +		*ptr_list = NULL;
+> +	}
+> +	return rc;
+> +}
+> +
+> +int _str_to_uint32(struct dmmp_context *ctx, const char *str, uint32_t *val)
+> +{
+> +	int rc = DMMP_OK;
+> +	long int tmp_val = 0;
+> +
+> +	assert(ctx != NULL);
+> +	assert(str != NULL);
+> +	assert(val != NULL);
+> +
+> +	tmp_val = strtol(str, NULL, 10/*base*/);
+> +	if ((tmp_val == LONG_MAX) || (tmp_val < 0) || (tmp_val > UINT32_MAX)) {
+> +		rc= DMMP_ERR_BUG;
+> +		_error(ctx, "BUG: Got invalid string for uint32_t: '%s', "
+> +		       "strtol result is %ld", str, tmp_val);
+> +	}
+> +	*val = tmp_val;
+> +	return rc;
+> +}
+> diff --git a/libdmmp/libdmmp_mp.c b/libdmmp/libdmmp_mp.c
+> new file mode 100644
+> index 0000000..8da6039
+> --- /dev/null
+> +++ b/libdmmp/libdmmp_mp.c
+> @@ -0,0 +1,242 @@
+> +/*
+> + * Copyright (C) 2015 - 2016 Red Hat, Inc.
+> + *
+> + * This program is free software: you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License as published by
+> + * the Free Software Foundation, either version 3 of the License, or
+> + * (at your option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + *
+> + * You should have received a copy of the GNU General Public License
+> + * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+> + *
+> + * Author: Gris Ge <fge@redhat.com>
+> + *         Todd Gill <tgill@redhat.com>
+> + */
+> +
+> +#include <stdlib.h>
+> +#include <stdio.h>
+> +#include <inttypes.h>
+> +#include <string.h>
+> +#include <errno.h>
+> +#include <assert.h>
+> +
+> +#include "libdmmp/libdmmp.h"
+> +#include "libdmmp_private.h"
+> +
+> +#define _DMMP_SHOW_MPS_CMD "show maps raw format %w|%n"
+> +#define _DMMP_SHOW_MPS_INDEX_WWID	0
+> +#define _DMMP_SHOW_MPS_INDEX_ALIAS	1
+> +
+> +struct dmmp_mpath {
+> +	char *wwid;
+> +	char *alias;
+> +	struct _ptr_list *pg_list;
+> +	uint32_t dmmp_pg_count;
+> +	struct dmmp_path_group **dmmp_pgs;
+> +};
+> +
+> +_dmmp_getter_func_gen(dmmp_mpath_name_get, struct dmmp_mpath, dmmp_mp,
+> +		      alias, const char *);
+> +_dmmp_getter_func_gen(dmmp_mpath_wwid_get, struct dmmp_mpath, dmmp_mp,
+> +		      wwid, const char *);
+> +_dmmp_all_get_func_gen(_dmmp_mpath_all_get, all_mps_array, all_mps_count,
+> +		       dmmp_mpath, _DMMP_SHOW_MPS_CMD);
+> +
+> +struct dmmp_mpath *_dmmp_mpath_new(void)
+> +{
+> +	struct dmmp_mpath *dmmp_mp = NULL;
+> +
+> +	dmmp_mp = (struct dmmp_mpath *) malloc(sizeof(struct dmmp_mpath));
+> +
+> +	if (dmmp_mp != NULL) {
+> +		dmmp_mp->wwid = NULL;
+> +		dmmp_mp->alias = NULL;
+> +		dmmp_mp->dmmp_pg_count = 0;
+> +		dmmp_mp->dmmp_pgs = NULL;
+> +		dmmp_mp->pg_list = _ptr_list_new();
+> +		if (dmmp_mp->pg_list == NULL) {
+> +			free(dmmp_mp);
+> +			dmmp_mp = NULL;
+> +		}
+> +	}
+> +	return dmmp_mp;
+> +}
+> +
+> +int _dmmp_mpath_update(struct dmmp_context *ctx, struct dmmp_mpath *dmmp_mp,
+> +		       char *show_mp_str)
+> +{
+> +	int rc = DMMP_OK;
+> +	const char *wwid = NULL;
+> +	const char *alias = NULL;
+> +	struct _ptr_list *items = NULL;
+> +
+> +	assert(ctx != NULL);
+> +	assert(dmmp_mp != NULL);
+> +	assert(show_mp_str != NULL);
+> +	assert(strlen(show_mp_str) != 0);
+> +
+> +	_debug(ctx, "parsing line: '%s'", show_mp_str);
+> +
+> +	_good(_split_string(ctx, show_mp_str, _DMMP_SHOW_RAW_DELIM, &items,
+> +			    _DMMP_SPLIT_STRING_KEEP_EMPTY),
+> +	      rc, out);
+> +
+> +	wwid = _ptr_list_index(items, _DMMP_SHOW_MPS_INDEX_WWID);
+> +	alias = _ptr_list_index(items, _DMMP_SHOW_MPS_INDEX_ALIAS);
+> +
+> +	_dmmp_null_or_empty_str_check(ctx, wwid, rc, out);
+> +	_dmmp_null_or_empty_str_check(ctx, alias, rc, out);
+> +
+> +	dmmp_mp->wwid = strdup(wwid);
+> +	_dmmp_alloc_null_check(ctx, dmmp_mp->wwid, rc, out);
+> +	dmmp_mp->alias = strdup(alias);
+> +	_dmmp_alloc_null_check(ctx, dmmp_mp->alias, rc, out);
+> +
+> +	_debug(ctx, "Got mpath wwid: '%s', alias: '%s'", dmmp_mp->wwid,
+> +	       dmmp_mp->alias);
+> +
+> +out:
+> +	if (rc != DMMP_OK) {
+> +		free(dmmp_mp->wwid);
+> +		free(dmmp_mp->alias);
+> +	}
+> +	if (items != NULL)
+> +		_ptr_list_free(items);
+> +	return rc;
+> +}
+> +
+> +/*
+> + * Remove ptr_list and save them into a pointer array which will be used by
+> + * dmmp_path_group_array_get()
+> + */
+> +int _dmmp_mpath_finalize(struct dmmp_context *ctx, struct dmmp_mpath *dmmp_mp)
+> +{
+> +	int rc = DMMP_OK;
+> +	uint32_t i = 0;
+> +	struct dmmp_path_group *dmmp_pg = NULL;
+> +
+> +	assert(ctx != NULL);
+> +	assert(dmmp_mp != NULL);
+> +
+> +	if (dmmp_mp->pg_list == NULL)
+> +		return rc;
+> +
+> +	_ptr_list_for_each(dmmp_mp->pg_list, i, dmmp_pg) {
+> +		_good(_dmmp_path_group_finalize(ctx, dmmp_pg), rc, out);
+> +	}
+> +
+> +	rc = _ptr_list_to_array(dmmp_mp->pg_list, (void ***) &dmmp_mp->dmmp_pgs,
+> +				&dmmp_mp->dmmp_pg_count);
+> +	if (rc != DMMP_OK) {
+> +		_error(ctx, dmmp_strerror(rc));
+> +		return rc;
+> +	}
+> +	_ptr_list_free(dmmp_mp->pg_list);
+> +	dmmp_mp->pg_list = NULL;
+> +
+> +out:
+> +	return rc;
+> +}
+> +
+> +void _dmmp_mpath_free(struct dmmp_mpath *dmmp_mp)
+> +{
+> +	struct dmmp_path_group *dmmp_pg = NULL;
+> +	uint32_t i = 0;
+> +
+> +	if (dmmp_mp == NULL)
+> +		return ;
+> +
+> +	free((char *) dmmp_mp->alias);
+> +	free((char *) dmmp_mp->wwid);
+> +	if (dmmp_mp->pg_list != NULL) {
+> +		/* In case not finalized yet */
+> +		_ptr_list_for_each(dmmp_mp->pg_list, i, dmmp_pg)
+> +			_dmmp_path_group_free(dmmp_pg);
+> +		_ptr_list_free(dmmp_mp->pg_list);
+> +	}
+> +
+> +	if (dmmp_mp->dmmp_pgs != NULL)
+> +		_dmmp_path_group_array_free(dmmp_mp->dmmp_pgs,
+> +					    dmmp_mp->dmmp_pg_count);
+> +
+> +	free(dmmp_mp);
+> +}
+> +
+> +void dmmp_path_group_array_get(struct dmmp_mpath *dmmp_mp,
+> +			       struct dmmp_path_group ***dmmp_pgs,
+> +			       uint32_t *dmmp_pg_count)
+> +{
+> +	assert(dmmp_mp != NULL);
+> +	assert(dmmp_pgs != NULL);
+> +	assert(dmmp_pg_count != NULL);
+> +
+> +	*dmmp_pgs = dmmp_mp->dmmp_pgs;
+> +	*dmmp_pg_count = dmmp_mp->dmmp_pg_count;
+> +}
+> +
+> +struct dmmp_mpath *_dmmp_mpath_search(struct dmmp_mpath **dmmp_mps,
+> +				      uint32_t dmmp_mp_count, const char *wwid)
+> +{
+> +	uint32_t i = 0;
+> +
+> +	assert(dmmp_mps != NULL);
+> +	assert(wwid != NULL);
+> +	assert(strlen(wwid) != 0);
+> +
+> +	for (; i < dmmp_mp_count; ++i) {
+> +		if (dmmp_mps[i] == NULL)
+> +			continue;
+> +		if (dmmp_mps[i]->wwid == NULL)
+> +			continue;
+> +		if (strcmp(dmmp_mps[i]->wwid, wwid) == 0)
+> +			return dmmp_mps[i];
+> +	}
+> +	return NULL;
+> +}
+> +
+> +struct dmmp_path_group *_dmmp_mpath_pg_search(struct dmmp_mpath **dmmp_mps,
+> +					      uint32_t dmmp_mp_count,
+> +					      const char *wwid, uint32_t pg_id)
+> +{
+> +	struct dmmp_mpath *dmmp_mp;
+> +	struct dmmp_path_group *dmmp_pg;
+> +	uint32_t i = 0;
+> +
+> +	assert(dmmp_mps != NULL);
+> +	assert(wwid != NULL);
+> +	assert(strlen(wwid) != 0);
+> +	assert(pg_id != _DMMP_PATH_GROUP_ID_UNKNOWN);
+> +
+> +	dmmp_mp = _dmmp_mpath_search(dmmp_mps, dmmp_mp_count, wwid);
+> +	if (dmmp_mp == NULL)
+> +		return NULL;
+> +	if (dmmp_mp->pg_list == NULL)
+> +		return NULL;
+> +
+> +	_ptr_list_for_each(dmmp_mp->pg_list, i, dmmp_pg) {
+> +		if (dmmp_path_group_id_get(dmmp_pg) == pg_id)
+> +			return dmmp_pg;
+> +	}
+> +	return NULL;
+> +}
+> +
+> +
+> +int _dmmp_mpath_add_pg(struct dmmp_context *ctx, struct dmmp_mpath *dmmp_mp,
+> +		       struct dmmp_path_group *dmmp_pg)
+> +{
+> +	int rc = DMMP_OK;
+> +
+> +	assert(ctx != NULL);
+> +	assert(dmmp_mp != NULL);
+> +	assert(dmmp_pg != NULL);
+> +
+> +	rc = _ptr_list_add(dmmp_mp->pg_list, dmmp_pg);
+> +	if (rc != DMMP_OK)
+> +		_error(ctx, dmmp_strerror(rc));
+> +	return rc;
+> +}
+> diff --git a/libdmmp/libdmmp_path.c b/libdmmp/libdmmp_path.c
+> new file mode 100644
+> index 0000000..eb63ec4
+> --- /dev/null
+> +++ b/libdmmp/libdmmp_path.c
+> @@ -0,0 +1,156 @@
+> +/*
+> + * Copyright (C) 2015 - 2016 Red Hat, Inc.
+> + *
+> + * This program is free software: you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License as published by
+> + * the Free Software Foundation, either version 3 of the License, or
+> + * (at your option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + *
+> + * You should have received a copy of the GNU General Public License
+> + * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+> + *
+> + * Author: Gris Ge <fge@redhat.com>
+> + *         Todd Gill <tgill@redhat.com>
+> + */
+> +
+> +#include <stdlib.h>
+> +#include <inttypes.h>
+> +#include <string.h>
+> +#include <assert.h>
+> +
+> +#include "libdmmp/libdmmp.h"
+> +#include "libdmmp_private.h"
+> +
+> +#define _DMMP_SHOW_PS_CMD "show paths raw format %d|%T|%w|%g"
+> +#define _DMMP_SHOW_PS_INDEX_BLK_NAME	0
+> +#define _DMMP_SHOW_PS_INDEX_SATAUS	1
+> +#define _DMMP_SHOW_PS_INDEX_WWID	2
+> +#define _DMMP_SHOW_PS_INDEX_PGID	3
+> +
+> +_dmmp_all_get_func_gen(_dmmp_path_all_get, all_ps_array, all_ps_count,
+> +		       dmmp_path, _DMMP_SHOW_PS_CMD);
+> +
+> +struct dmmp_path {
+> +	char *wwid;
+> +	uint32_t pg_id;
+> +	char *blk_name;
+> +	uint32_t status;
+> +};
+> +
+> +static const struct _num_str_conv _DMMP_PATH_STATUS_CONV[] = {
+> +	{DMMP_PATH_STATUS_UNKNOWN, "undef"},
+> +	{DMMP_PATH_STATUS_UP, "ready"},
+> +	{DMMP_PATH_STATUS_DOWN, "faulty"},
+> +	{DMMP_PATH_STATUS_SHAKY, "shaky"},
+> +	{DMMP_PATH_STATUS_GHOST, "ghost"},
+> +	{DMMP_PATH_STATUS_PENDING, "i/o pending"},
+> +	{DMMP_PATH_STATUS_TIMEOUT, "i/o timeout"},
+> +	{DMMP_PATH_STATUS_DELAYED, "delayed"},
+> +};
+> +
+> +_dmmp_str_func_gen(dmmp_path_status_str, uint32_t, path_status,
+> +		   _DMMP_PATH_STATUS_CONV);
+> +_dmmp_str_conv_func_gen(_dmmp_path_status_str_conv, ctx, path_status_str,
+> +			uint32_t, DMMP_PATH_STATUS_UNKNOWN,
+> +			_DMMP_PATH_STATUS_CONV);
+> +
+> +_dmmp_getter_func_gen(dmmp_path_pg_id_get, struct dmmp_path, dmmp_p, pg_id,
+> +		      uint32_t);
+> +_dmmp_getter_func_gen(dmmp_path_blk_name_get, struct dmmp_path, dmmp_p,
+> +		      blk_name, const char *);
+> +_dmmp_getter_func_gen(dmmp_path_wwid_get, struct dmmp_path, dmmp_p,
+> +		      wwid, const char *);
+> +_dmmp_getter_func_gen(dmmp_path_status_get, struct dmmp_path, dmmp_p,
+> +		      status, uint32_t);
+> +
+> +struct dmmp_path *_dmmp_path_new(void)
+> +{
+> +	struct dmmp_path *dmmp_p = NULL;
+> +
+> +	dmmp_p = (struct dmmp_path *) malloc(sizeof(struct dmmp_path));
+> +
+> +	if (dmmp_p != NULL) {
+> +		dmmp_p->pg_id = _DMMP_PATH_GROUP_ID_UNKNOWN;
+> +		dmmp_p->blk_name = NULL;
+> +		dmmp_p->status = DMMP_PATH_STATUS_UNKNOWN;
+> +	}
+> +	return dmmp_p;
+> +}
+> +
+> +int _dmmp_path_update(struct dmmp_context *ctx, struct dmmp_path *dmmp_p,
+> +		      char *show_p_str)
+> +{
+> +	int rc = DMMP_OK;
+> +	char *blk_name = NULL;
+> +	char *wwid = NULL;
+> +	const char *status_str = NULL;
+> +	const char *pg_id_str = NULL;
+> +	struct _ptr_list *items = NULL;
+> +
+> +	assert(ctx != NULL);
+> +	assert(dmmp_p != NULL);
+> +	assert(show_p_str != NULL);
+> +	assert(strlen(show_p_str) != 0);
+> +
+> +	_debug(ctx, "parsing line: '%s'", show_p_str);
+> +
+> +	_good(_split_string(ctx, show_p_str, _DMMP_SHOW_RAW_DELIM, &items,
+> +			    _DMMP_SPLIT_STRING_KEEP_EMPTY),
+> +	      rc, out);
+> +
+> +	wwid = _ptr_list_index(items, _DMMP_SHOW_PS_INDEX_WWID);
+> +	blk_name = _ptr_list_index(items, _DMMP_SHOW_PS_INDEX_BLK_NAME);
+> +	status_str = _ptr_list_index(items, _DMMP_SHOW_PS_INDEX_SATAUS);
+> +	pg_id_str = _ptr_list_index(items, _DMMP_SHOW_PS_INDEX_PGID);
+> +
+> +	_dmmp_null_or_empty_str_check(ctx, wwid, rc, out);
+> +	_dmmp_null_or_empty_str_check(ctx, blk_name, rc, out);
+> +	_dmmp_null_or_empty_str_check(ctx, status_str, rc, out);
+> +	_dmmp_null_or_empty_str_check(ctx, pg_id_str, rc, out);
+> +
+> +	dmmp_p->blk_name = strdup(blk_name);
+> +	_dmmp_alloc_null_check(ctx, dmmp_p->blk_name, rc, out);
+> +
+> +	dmmp_p->wwid = strdup(wwid);
+> +	_dmmp_alloc_null_check(ctx, dmmp_p->wwid, rc, out);
+> +
+> +	_good(_str_to_uint32(ctx, pg_id_str, &dmmp_p->pg_id), rc, out);
+> +
+> +	if (dmmp_p->pg_id == _DMMP_PATH_GROUP_ID_UNKNOWN) {
+> +		rc = DMMP_ERR_BUG;
+> +		_error(ctx, "BUG: Got unknown(%d) path group ID from path '%s'",
+> +		       _DMMP_PATH_GROUP_ID_UNKNOWN, dmmp_p->blk_name);
+> +		goto out;
+> +	}
+> +
+> +	dmmp_p->status = _dmmp_path_status_str_conv(ctx, status_str);
+> +
+> +	_debug(ctx, "Got path blk_name: '%s'", dmmp_p->blk_name);
+> +	_debug(ctx, "Got path wwid: '%s'", dmmp_p->wwid);
+> +	_debug(ctx, "Got path status: %s(%" PRIu32 ")",
+> +	       dmmp_path_status_str(dmmp_p->status), dmmp_p->status);
+> +	_debug(ctx, "Got path pg_id: %" PRIu32 "", dmmp_p->pg_id);
+> +
+> +out:
+> +	if (rc != DMMP_OK) {
+> +		free(dmmp_p->wwid);
+> +		free(dmmp_p->blk_name);
+> +	}
+> +	if (items != NULL)
+> +		_ptr_list_free(items);
+> +	return rc;
+> +}
+> +
+> +void _dmmp_path_free(struct dmmp_path *dmmp_p)
+> +{
+> +	if (dmmp_p == NULL)
+> +		return;
+> +	free(dmmp_p->blk_name);
+> +	free(dmmp_p->wwid);
+> +	free(dmmp_p);
+> +}
+> diff --git a/libdmmp/libdmmp_pg.c b/libdmmp/libdmmp_pg.c
+> new file mode 100644
+> index 0000000..4d16b03
+> --- /dev/null
+> +++ b/libdmmp/libdmmp_pg.c
+> @@ -0,0 +1,247 @@
+> +/*
+> + * Copyright (C) 2015 - 2016 Red Hat, Inc.
+> + *
+> + * This program is free software: you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License as published by
+> + * the Free Software Foundation, either version 3 of the License, or
+> + * (at your option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + *
+> + * You should have received a copy of the GNU General Public License
+> + * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+> + *
+> + * Author: Gris Ge <fge@redhat.com>
+> + *         Todd Gill <tgill@redhat.com>
+> + */
+> +
+> +#include <stdio.h> // only for printf
+> +#include <stdlib.h>
+> +#include <stdint.h>
+> +#include <inttypes.h>
+> +#include <string.h>
+> +#include <assert.h>
+> +
+> +#include "libdmmp/libdmmp.h"
+> +#include "libdmmp_private.h"
+> +
+> +#define _DMMP_SHOW_PGS_CMD "show groups raw format %w|%g|%p|%t|%s"
+> +#define _DMMP_SHOW_PG_INDEX_WWID	0
+> +#define _DMMP_SHOW_PG_INDEX_PG_ID	1
+> +#define _DMMP_SHOW_PG_INDEX_PRI		2
+> +#define _DMMP_SHOW_PG_INDEX_STATUS	3
+> +#define _DMMP_SHOW_PG_INDEX_SELECTOR	4
+> +
+> +_dmmp_all_get_func_gen(_dmmp_path_group_all_get, all_pgs_array, all_pgs_count,
+> +		       dmmp_path_group, _DMMP_SHOW_PGS_CMD);
+> +
+> +struct dmmp_path_group {
+> +	char *wwid;
+> +	uint32_t id;
+> +	/* ^ pgindex of struct path, will be used for path group switch */
+> +	uint32_t status;
+> +	uint32_t priority;
+> +	char *selector;
+> +	uint32_t dmmp_p_count;
+> +	struct dmmp_path **dmmp_ps;
+> +	struct _ptr_list *p_list;
+> +};
+> +
+> +static const struct _num_str_conv _DMMP_PATH_GROUP_STATUS_CONV[] = {
+> +	{DMMP_PATH_GROUP_STATUS_UNKNOWN, "undef"},
+> +	{DMMP_PATH_GROUP_STATUS_ACTIVE, "active"},
+> +	{DMMP_PATH_GROUP_STATUS_DISABLED, "disabled"},
+> +	{DMMP_PATH_GROUP_STATUS_ENABLED, "enabled"},
+> +};
+> +
+> +_dmmp_str_func_gen(dmmp_path_group_status_str, uint32_t, pg_status,
+> +		   _DMMP_PATH_GROUP_STATUS_CONV);
+> +_dmmp_str_conv_func_gen(_dmmp_path_group_status_str_conv, ctx, pg_status_str,
+> +			uint32_t, DMMP_PATH_GROUP_STATUS_UNKNOWN,
+> +			_DMMP_PATH_GROUP_STATUS_CONV);
+> +
+> +_dmmp_getter_func_gen(dmmp_path_group_id_get, struct dmmp_path_group, dmmp_pg,
+> +		      id, uint32_t);
+> +_dmmp_getter_func_gen(dmmp_path_group_status_get, struct dmmp_path_group,
+> +		      dmmp_pg, status, uint32_t);
+> +_dmmp_getter_func_gen(dmmp_path_group_priority_get, struct dmmp_path_group,
+> +		      dmmp_pg, priority, uint32_t);
+> +_dmmp_getter_func_gen(dmmp_path_group_selector_get, struct dmmp_path_group,
+> +		      dmmp_pg, selector, const char *);
+> +_dmmp_getter_func_gen(dmmp_path_group_wwid_get, struct dmmp_path_group,
+> +		      dmmp_pg, wwid, const char *);
+> +_dmmp_array_free_func_gen(_dmmp_path_group_array_free, struct dmmp_path_group,
+> +			  _dmmp_path_group_free);
+> +
+> +
+> +struct dmmp_path_group *_dmmp_path_group_new(void)
+> +{
+> +	struct dmmp_path_group *dmmp_pg = NULL;
+> +
+> +	dmmp_pg = (struct dmmp_path_group *)
+> +		malloc(sizeof(struct dmmp_path_group));
+> +
+> +	if (dmmp_pg != NULL) {
+> +		dmmp_pg->id = _DMMP_PATH_GROUP_ID_UNKNOWN;
+> +		dmmp_pg->status = DMMP_PATH_GROUP_STATUS_UNKNOWN;
+> +		dmmp_pg->wwid = NULL;
+> +		dmmp_pg->priority = 0;
+> +		dmmp_pg->selector = NULL;
+> +		dmmp_pg->dmmp_p_count = 0;
+> +		dmmp_pg->dmmp_ps = NULL;
+> +		dmmp_pg->p_list = _ptr_list_new();
+> +		if (dmmp_pg->p_list == NULL) {
+> +			free(dmmp_pg);
+> +			dmmp_pg = NULL;
+> +		}
+> +	}
+> +	return dmmp_pg;
+> +}
+> +int _dmmp_path_group_update(struct dmmp_context *ctx,
+> +			    struct dmmp_path_group *dmmp_pg,
+> +			    char *show_pg_str)
+> +{
+> +	int rc = DMMP_OK;
+> +	struct _ptr_list *items = NULL;
+> +	const char *wwid = NULL;
+> +	const char *pg_id_str = NULL;
+> +	const char *pri_str = NULL;
+> +	const char *status_str = NULL;
+> +	const char *selector = NULL;
+> +
+> +	assert(ctx != NULL);
+> +	assert(dmmp_pg != NULL);
+> +	assert(show_pg_str != NULL);
+> +	assert(strlen(show_pg_str) != 0);
+> +
+> +	_debug(ctx, "parsing line: '%s'", show_pg_str);
+> +	_good(_split_string(ctx, show_pg_str, _DMMP_SHOW_RAW_DELIM, &items,
+> +			    _DMMP_SPLIT_STRING_KEEP_EMPTY),
+> +	      rc, out);
+> +
+> +	wwid = _ptr_list_index(items, _DMMP_SHOW_PG_INDEX_WWID);
+> +	pg_id_str = _ptr_list_index(items, _DMMP_SHOW_PG_INDEX_PG_ID);
+> +	pri_str = _ptr_list_index(items, _DMMP_SHOW_PG_INDEX_PRI);
+> +	status_str = _ptr_list_index(items, _DMMP_SHOW_PG_INDEX_STATUS);
+> +	selector = _ptr_list_index(items, _DMMP_SHOW_PG_INDEX_SELECTOR);
+> +
+> +	_dmmp_null_or_empty_str_check(ctx, wwid, rc, out);
+> +	_dmmp_null_or_empty_str_check(ctx, pg_id_str, rc, out);
+> +	_dmmp_null_or_empty_str_check(ctx, pri_str, rc, out);
+> +	_dmmp_null_or_empty_str_check(ctx, status_str, rc, out);
+> +	_dmmp_null_or_empty_str_check(ctx, selector, rc, out);
+> +
+> +	dmmp_pg->wwid = strdup(wwid);
+> +	_dmmp_alloc_null_check(ctx, dmmp_pg->wwid, rc, out);
+> +	dmmp_pg->selector = strdup(selector);
+> +	_dmmp_alloc_null_check(ctx, dmmp_pg->selector, rc, out);
+> +	_good(_str_to_uint32(ctx, pg_id_str, &dmmp_pg->id), rc, out);
+> +
+> +	if (dmmp_pg->id == _DMMP_PATH_GROUP_ID_UNKNOWN) {
+> +		rc = DMMP_ERR_BUG;
+> +		_error(ctx, "BUG: Got unknown(%d) path group ID",
+> +		       _DMMP_PATH_GROUP_ID_UNKNOWN);
+> +		goto out;
+> +	}
+> +
+> +	_good(_str_to_uint32(ctx, pri_str, &dmmp_pg->priority), rc, out);
+> +
+> +	dmmp_pg->status = _dmmp_path_group_status_str_conv(ctx, status_str);
+> +
+> +	_debug(ctx, "Got path group wwid: '%s'", dmmp_pg->wwid);
+> +	_debug(ctx, "Got path group id: %" PRIu32 "", dmmp_pg->id);
+> +	_debug(ctx, "Got path group priority: %" PRIu32 "", dmmp_pg->priority);
+> +	_debug(ctx, "Got path group status: %s(%" PRIu32 ")",
+> +	       dmmp_path_group_status_str(dmmp_pg->status), dmmp_pg->status);
+> +	_debug(ctx, "Got path group selector: '%s'", dmmp_pg->selector);
+> +
+> +out:
+> +	if (rc != DMMP_OK) {
+> +		free(dmmp_pg->wwid);
+> +		free(dmmp_pg->selector);
+> +	}
+> +	if (items != NULL)
+> +		_ptr_list_free(items);
+> +	return rc;
+> +}
+> +
+> +/*
+> + * Remove ptr_list and save them into a pointer array which will be used by
+> + * dmmp_path_array_get()
+> + */
+> +int _dmmp_path_group_finalize(struct dmmp_context *ctx,
+> +			      struct dmmp_path_group *dmmp_pg)
+> +{
+> +	int rc = DMMP_OK;
+> +
+> +	assert(ctx != NULL);
+> +	assert(dmmp_pg != NULL);
+> +
+> +	rc = _ptr_list_to_array(dmmp_pg->p_list, (void ***) &dmmp_pg->dmmp_ps,
+> +				&dmmp_pg->dmmp_p_count);
+> +	if (rc != DMMP_OK) {
+> +		_error(ctx, dmmp_strerror(rc));
+> +		return rc;
+> +	}
+> +	_ptr_list_free(dmmp_pg->p_list);
+> +	dmmp_pg->p_list = NULL;
+> +	return rc;
+> +}
+> +
+> +void _dmmp_path_group_free(struct dmmp_path_group *dmmp_pg)
+> +{
+> +	struct dmmp_path *dmmp_p = NULL;
+> +	uint32_t i = 0;
+> +
+> +	if (dmmp_pg == NULL)
+> +		return;
+> +
+> +	free((char *) dmmp_pg->selector);
+> +	free((char *) dmmp_pg->wwid);
+> +
+> +	if (dmmp_pg->p_list != NULL) {
+> +		/* In case not finalized yet */
+> +		_ptr_list_for_each(dmmp_pg->p_list, i, dmmp_p)
+> +			_dmmp_path_free(dmmp_p);
+> +		_ptr_list_free(dmmp_pg->p_list);
+> +	}
+> +
+> +	if (dmmp_pg->dmmp_ps != NULL) {
+> +		for (i = 0; i < dmmp_pg->dmmp_p_count; ++i) {
+> +			_dmmp_path_free(dmmp_pg->dmmp_ps[i]);
+> +		}
+> +		free(dmmp_pg->dmmp_ps);
+> +	}
+> +	free(dmmp_pg);
+> +}
+> +
+> +void dmmp_path_array_get(struct dmmp_path_group *mp_pg,
+> +			 struct dmmp_path ***mp_paths,
+> +			 uint32_t *dmmp_p_count)
+> +{
+> +	assert(mp_pg != NULL);
+> +	assert(mp_paths != NULL);
+> +	assert(dmmp_p_count != NULL);
+> +
+> +	*mp_paths = mp_pg->dmmp_ps;
+> +	*dmmp_p_count = mp_pg->dmmp_p_count;
+> +}
+> +
+> +int _dmmp_path_group_add_path(struct dmmp_context *ctx,
+> +			      struct dmmp_path_group *dmmp_pg,
+> +			      struct dmmp_path *dmmp_p)
+> +{
+> +	int rc = DMMP_OK;
+> +
+> +	assert(ctx != NULL);
+> +	assert(dmmp_pg != NULL);
+> +	assert(dmmp_p != NULL);
+> +
+> +	rc = _ptr_list_add(dmmp_pg->p_list, dmmp_p);
+> +	if (rc != DMMP_OK)
+> +		_error(ctx, dmmp_strerror(rc));
+> +	return rc;
+> +}
+> diff --git a/libdmmp/libdmmp_private.h b/libdmmp/libdmmp_private.h
+> new file mode 100644
+> index 0000000..d389869
+> --- /dev/null
+> +++ b/libdmmp/libdmmp_private.h
+> @@ -0,0 +1,292 @@
+> +/*
+> + * Copyright (C) 2015 - 2016 Red Hat, Inc.
+> + *
+> + * This program is free software: you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License as published by
+> + * the Free Software Foundation, either version 3 of the License, or
+> + * (at your option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + *
+> + * You should have received a copy of the GNU General Public License
+> + * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+> + *
+> + * Author: Gris Ge <fge@redhat.com>
+> + *         Todd Gill <tgill@redhat.com>
+> + */
+> +
+> +#ifndef _LIB_DMMP_PRIVATE_H_
+> +#define _LIB_DMMP_PRIVATE_H_
+> +
+> +/*
+> + * Notes:
+> + *	Internal/Private functions does not check input argument, it
+> + *	should be done by caller and log error via dmmp_context.
+> + */
+> +
+> +#include <stdint.h>
+> +#include <string.h>
+> +#include <assert.h>
+> +
+> +#include "libdmmp/libdmmp.h"
+> +
+> +#ifdef __cplusplus
+> +extern "C" {
+> +#endif
+> +
+> +#define _good(rc, rc_val, out) \
+> +	do { \
+> +		rc_val = rc; \
+> +		if (rc_val != DMMP_OK) \
+> +			goto out; \
+> +	} while(0)
+> +
+> +#define _DMMP_SOCKET_PATH "/org/kernel/linux/storage/multipathd"
+> +#define _DMMP_SHOW_RAW_DELIM "|"
+> +#define _DMMP_SPLIT_STRING_SKIP_EMPTY	1
+> +#define _DMMP_SPLIT_STRING_KEEP_EMPTY	1
+> +#define _DMMP_PATH_GROUP_ID_UNKNOWN	0
+> +
+> +DMMP_DLL_LOCAL struct _num_str_conv {
+> +	const uint32_t value;
+> +	const char *str;
+> +};
+> +
+> +#define _dmmp_str_func_gen(func_name, var_type, var, conv_array) \
+> +const char *func_name(var_type var) { \
+> +	size_t i = 0; \
+> +	uint32_t tmp_var = var & UINT32_MAX; \
+> +	/* In the whole libdmmp, we don't have negative value */ \
+> +	for (; i < sizeof(conv_array)/sizeof(conv_array[0]); ++i) { \
+> +		if ((conv_array[i].value) == tmp_var) \
+> +			return conv_array[i].str; \
+> +	} \
+> +	return "Invalid argument"; \
+> +}
+> +
+> +#define _dmmp_str_conv_func_gen(func_name, ctx, var_name, out_type, \
+> +				unknown_value, conv_array) \
+> +static out_type func_name(struct dmmp_context *ctx, const char *var_name) { \
+> +	size_t i = 0; \
+> +	for (; i < sizeof(conv_array)/sizeof(conv_array[0]); ++i) { \
+> +		if (strcmp(conv_array[i].str, var_name) == 0) \
+> +			return conv_array[i].value; \
+> +	} \
+> +	_warn(ctx, "Got unknown " #var_name ": '%s'", var_name); \
+> +	return unknown_value; \
+> +}
+> +
+> +#define _dmmp_all_get_func_gen(func_name, array, item_count, struct_name, cmd)\
+> +int func_name(struct dmmp_context *ctx, struct struct_name ***array, \
+> +	      uint32_t *item_count) \
+> +{ \
+> +	int rc = DMMP_OK; \
+> +	char *show_all_str = NULL; \
+> +	struct _ptr_list *line_list = NULL; \
+> +	uint32_t i = 0; \
+> +	char *line = NULL; \
+> +	struct struct_name *data = NULL; \
+> +	*array = NULL; \
+> +	*item_count = 0; \
+> +	_good(_dmmp_ipc_exec(ctx, cmd, &show_all_str), rc, out); \
+> +	_debug(ctx, "Got multipathd output for " #struct_name " query:\n%s\n", \
+> +	       show_all_str); \
+> +	_good(_split_string(ctx, show_all_str, "\n", &line_list, \
+> +			    _DMMP_SPLIT_STRING_SKIP_EMPTY), \
+> +	      rc, out); \
+> +	*item_count = _ptr_list_len(line_list); \
+> +	if (*item_count == 0) { \
+> +		goto out; \
+> +	} \
+> +	*array = (struct struct_name **) \
+> +		malloc(sizeof(struct struct_name *) * (*item_count)); \
+> +	_dmmp_alloc_null_check(ctx, *array, rc, out); \
+> +	/* Initialize *array */ \
+> +	for (i = 0; i < *item_count; ++i) { \
+> +		(*array)[i] = NULL; \
+> +	} \
+> +	_ptr_list_for_each(line_list, i, line) { \
+> +		data = _## struct_name ## _new(); \
+> +		_dmmp_alloc_null_check(ctx, data, rc, out); \
+> +		(*array)[i] = data; \
+> +		_good(_## struct_name ## _update(ctx, data, line), rc, out); \
+> +	} \
+> +out: \
+> +	if (rc != DMMP_OK) { \
+> +		if (*array != NULL) { \
+> +			for (i = 0; i < *item_count; ++i) { \
+> +				_## struct_name ## _free((*array)[i]); \
+> +			} \
+> +			free(*array); \
+> +		} \
+> +		*array = NULL; \
+> +		*item_count = 0; \
+> +	} \
+> +	free(show_all_str); \
+> +	if (line_list != NULL) \
+> +		_ptr_list_free(line_list); \
+> +	return rc; \
+> +}
+> +
+> +DMMP_DLL_LOCAL struct _ptr_list;
+> +DMMP_DLL_LOCAL struct _ptr_list *_ptr_list_new(void);
+> +
+> +DMMP_DLL_LOCAL int _ptr_list_add(struct _ptr_list *ptr_list, void *data);
+> +DMMP_DLL_LOCAL uint32_t _ptr_list_len(struct _ptr_list *ptr_list);
+> +DMMP_DLL_LOCAL void *_ptr_list_index(struct _ptr_list *ptr_list,
+> +				     uint32_t index);
+> +DMMP_DLL_LOCAL int _ptr_list_set(struct _ptr_list *ptr_list, uint32_t index,
+> +				   void *data);
+> +DMMP_DLL_LOCAL void _ptr_list_free(struct _ptr_list *ptr_list);
+> +DMMP_DLL_LOCAL int _ptr_list_to_array(struct _ptr_list *ptr_list, void ***array,
+> +				      uint32_t *count);
+> +
+> +#define _ptr_list_for_each(l, i, d) \
+> +     for (i = 0; l && (i < _ptr_list_len(l)) && (d = _ptr_list_index(l, i)); \
+> +	  ++i)
+> +
+> +DMMP_DLL_LOCAL int _dmmp_ipc_exec(struct dmmp_context *ctx, const char *cmd,
+> +				  char **output);
+> +
+> +DMMP_DLL_LOCAL struct dmmp_mpath *_dmmp_mpath_new(void);
+> +DMMP_DLL_LOCAL struct dmmp_path_group *_dmmp_path_group_new(void);
+> +DMMP_DLL_LOCAL struct dmmp_path *_dmmp_path_new(void);
+> +
+> +DMMP_DLL_LOCAL int _dmmp_mpath_update(struct dmmp_context *ctx,
+> +				      struct dmmp_mpath *dmmp_mp,
+> +				      char *show_mp_str);
+> +DMMP_DLL_LOCAL int _dmmp_path_group_update(struct dmmp_context *ctx,
+> +					   struct dmmp_path_group *dmmp_pg,
+> +					   char *show_pg_str);
+> +DMMP_DLL_LOCAL int _dmmp_path_update(struct dmmp_context *ctx,
+> +				     struct dmmp_path *dmmp_p,
+> +				     char *show_p_str);
+> +
+> +DMMP_DLL_LOCAL int _dmmp_mpath_all_get(struct dmmp_context *ctx,
+> +				       struct dmmp_mpath ***dmmp_mps,
+> +				       uint32_t *dmmp_mp_count);
+> +DMMP_DLL_LOCAL int _dmmp_path_group_all_get
+> +	(struct dmmp_context *ctx, struct dmmp_path_group ***dmmp_pgs,
+> +	 uint32_t *dmmp_pg_count);
+> +DMMP_DLL_LOCAL int _dmmp_path_all_get(struct dmmp_context *ctx,
+> +				      struct dmmp_path ***dmmp_ps,
+> +				      uint32_t *dmmp_p_count);
+> +
+> +DMMP_DLL_LOCAL int _dmmp_mpath_add_pg(struct dmmp_context *ctx,
+> +				      struct dmmp_mpath *dmmp_mp,
+> +				      struct dmmp_path_group *dmmp_pg);
+> +
+> +DMMP_DLL_LOCAL int _dmmp_path_group_add_path(struct dmmp_context *ctx,
+> +					     struct dmmp_path_group *dmmp_pg,
+> +					     struct dmmp_path *dmmp_p);
+> +
+> +/*
+> + * Expand dmmp_path ptr_list to pointer array and remove ptr_list.
+> + */
+> +DMMP_DLL_LOCAL int _dmmp_mpath_finalize(struct dmmp_context *ctx,
+> +					struct dmmp_mpath *dmmp_mpth);
+> +DMMP_DLL_LOCAL int _dmmp_path_group_finalize(struct dmmp_context *ctx,
+> +					     struct dmmp_path_group *dmmp_pg);
+> +
+> +DMMP_DLL_LOCAL struct dmmp_mpath *_dmmp_mpath_search
+> +	(struct dmmp_mpath **dmmp_mps, uint32_t dmmp_mp_count,
+> +	 const char *wwid);
+> +
+> +DMMP_DLL_LOCAL struct dmmp_path_group *_dmmp_mpath_pg_search
+> +	(struct dmmp_mpath **dmmp_mps, uint32_t dmmp_mp_count,
+> +	 const char *wwid, uint32_t pg_id);
+> +
+> +DMMP_DLL_LOCAL void _dmmp_mpath_free(struct dmmp_mpath *dmmp_mp);
+> +DMMP_DLL_LOCAL void _dmmp_path_group_free(struct dmmp_path_group *dmmp_pg);
+> +DMMP_DLL_LOCAL void _dmmp_path_group_array_free
+> +	(struct dmmp_path_group **dmmp_pgs, uint32_t dmmp_pg_count);
+> +DMMP_DLL_LOCAL void _dmmp_path_free(struct dmmp_path *dmmp_p);
+> +DMMP_DLL_LOCAL void _dmmp_log(struct dmmp_context *ctx,
+> +			      enum dmmp_log_priority priority,
+> +			      const char *file, int line,
+> +			      const char *func_name,
+> +			      const char *format, ...);
+> +DMMP_DLL_LOCAL void _dmmp_log_err_str(struct dmmp_context *ctx, int rc);
+> +
+> +/*
+> + * Given string 'str' will be edit.
+> + *
+> + */
+> +DMMP_DLL_LOCAL int _split_string(struct dmmp_context *ctx, char *str,
+> +				 const char *delim,
+> +				 struct _ptr_list **line_ptr_list,
+> +				 int skip_empty);
+> +
+> +DMMP_DLL_LOCAL int _str_to_uint32(struct dmmp_context *ctx, const char *str,
+> +				  uint32_t *val);
+> +
+> +#define _dmmp_log_cond(ctx, prio, arg...) \
+> +	do { \
+> +		if (dmmp_context_log_priority_get(ctx) >= prio) \
+> +			_dmmp_log(ctx, prio, __FILE__, __LINE__, __FUNCTION__, \
+> +				  ## arg); \
+> +	} while (0)
+> +
+> +#define _debug(ctx, arg...) \
+> +	_dmmp_log_cond(ctx, DMMP_LOG_PRIORITY_DEBUG, ## arg)
+> +#define _info(ctx, arg...) \
+> +	_dmmp_log_cond(ctx, DMMP_LOG_PRIORITY_INFO, ## arg)
+> +#define _warn(ctx, arg...) \
+> +	_dmmp_log_cond(ctx, DMMP_LOG_PRIORITY_WARNING, ## arg)
+> +#define _error(ctx, arg...) \
+> +	_dmmp_log_cond(ctx, DMMP_LOG_PRIORITY_ERROR, ## arg)
+> +
+> +/*
+> + * Check pointer returned by malloc() or strdup(), if NULL, set
+> + * rc as DMMP_ERR_NO_MEMORY, report error and goto goto_out.
+> + */
+> +#define _dmmp_alloc_null_check(ctx, ptr, rc, goto_out) \
+> +	do { \
+> +		if (ptr == NULL) { \
+> +			rc = DMMP_ERR_NO_MEMORY; \
+> +			_error(ctx, dmmp_strerror(rc)); \
+> +			goto goto_out; \
+> +		} \
+> +	} while(0)
+> +
+> +#define _dmmp_null_or_empty_str_check(ctx, var, rc, goto_out) \
+> +	do { \
+> +		if (var == NULL) { \
+> +			rc = DMMP_ERR_BUG; \
+> +			_error(ctx, "BUG: Got NULL " #var); \
+> +			goto goto_out; \
+> +		} \
+> +		if (strlen(var) == 0) { \
+> +			rc = DMMP_ERR_BUG; \
+> +			_error(ctx, "BUG: Got empty " #var); \
+> +			goto goto_out; \
+> +		} \
+> +	} while(0)
+> +
+> +#define _dmmp_getter_func_gen(func_name, struct_name, struct_data, \
+> +			      prop_name, prop_type) \
+> +	prop_type func_name(struct_name *struct_data) \
+> +	{ \
+> +		assert(struct_data != NULL); \
+> +		return struct_data->prop_name; \
+> +	}
+> +
+> +#define _dmmp_array_free_func_gen(func_name, struct_name, struct_free_func) \
+> +	void func_name(struct_name **ptr_array, uint32_t ptr_count) \
+> +	{ \
+> +		uint32_t i = 0; \
+> +		if (ptr_array == NULL) \
+> +			return; \
+> +		for (; i < ptr_count; ++i) \
+> +			struct_free_func(ptr_array[i]); \
+> +		free(ptr_array); \
+> +	}
+> +
+> +#ifdef __cplusplus
+> +} /* End of extern "C" */
+> +#endif
+> +
+> +#endif /* End of _LIB_DMMP_PRIVATE_H_ */
+> diff --git a/libdmmp/test/Makefile b/libdmmp/test/Makefile
+> new file mode 100644
+> index 0000000..98ffb1f
+> --- /dev/null
+> +++ b/libdmmp/test/Makefile
+> @@ -0,0 +1,29 @@
+> +# Makefile
+> +#
+> +# Copyright (C) 2015-2016 Gris Ge <fge@redhat.com>
+> +#
+> +include ../../Makefile.inc
+> +
+> +_libdmmpdir=../$(libdmmpdir)
+> +
+> +TEST_EXEC = libdmmp_test
+> +SPD_TEST_EXEC = libdmmp_speed_test
+> +CFLAGS += -I$(_libdmmpdir)
+> +LDFLAGS += -L$(_libdmmpdir) -ldmmp
+> +
+> +all: $(TEST_EXEC) $(SPD_TEST_EXEC)
+> +
+> +check: $(TEST_EXEC) $(SPD_TEST_EXEC)
+> +	sudo env LD_LIBRARY_PATH=$(_libdmmpdir) \
+> +		valgrind --quiet --leak-check=full \
+> +		--show-reachable=no --show-possibly-lost=no \
+> +		--trace-children=yes --error-exitcode=1 \
+> +		./$(TEST_EXEC)
+> +	$(MAKE) speed_test
+> +
+> +speed_test: $(SPD_TEST_EXEC)
+> +	sudo env LD_LIBRARY_PATH=$(_libdmmpdir) \
+> +		time -p ./$(SPD_TEST_EXEC)
+> +
+> +clean:
+> +	rm -f $(TEST_EXEC)
+> diff --git a/libdmmp/test/libdmmp_speed_test.c b/libdmmp/test/libdmmp_speed_test.c
+> new file mode 100644
+> index 0000000..372cd39
+> --- /dev/null
+> +++ b/libdmmp/test/libdmmp_speed_test.c
+> @@ -0,0 +1,49 @@
+> +/*
+> + * Copyright (C) 2015-2016 Red Hat, Inc.
+> + *
+> + * This program is free software: you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License as published by
+> + * the Free Software Foundation, either version 3 of the License, or
+> + * (at your option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + *
+> + * You should have received a copy of the GNU General Public License
+> + * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+> + *
+> + * Author: Gris Ge <fge@redhat.com>
+> + */
+> +
+> +#include <stdint.h>
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <inttypes.h>
+> +#include <string.h>
+> +#include <pthread.h>
+> +#include <unistd.h>
+> +
+> +#include <libdmmp/libdmmp.h>
+> +
+> +int main(int argc, char *argv[])
+> +{
+> +	struct dmmp_context *ctx = NULL;
+> +	struct dmmp_mpath **dmmp_mps = NULL;
+> +	uint32_t dmmp_mp_count = 0;
+> +	int rc = EXIT_SUCCESS;
+> +
+> +	ctx = dmmp_context_new();
+> +	dmmp_context_log_priority_set(ctx, DMMP_LOG_PRIORITY_WARNING);
+> +
+> +	if (dmmp_mpath_array_get(ctx, &dmmp_mps, &dmmp_mp_count) != 0) {
+> +		printf("FAILED\n");
+> +		rc = EXIT_FAILURE;
+> +	} else {
+> +		printf("Got %" PRIu32 " mpath\n", dmmp_mp_count);
+> +		dmmp_mpath_array_free(dmmp_mps, dmmp_mp_count);
+> +	}
+> +	dmmp_context_free(ctx);
+> +	exit(rc);
+> +}
+> diff --git a/libdmmp/test/libdmmp_test.c b/libdmmp/test/libdmmp_test.c
+> new file mode 100644
+> index 0000000..cf8fe69
+> --- /dev/null
+> +++ b/libdmmp/test/libdmmp_test.c
+> @@ -0,0 +1,141 @@
+> +/*
+> + * Copyright (C) 2015-2016 Red Hat, Inc.
+> + *
+> + * This program is free software: you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License as published by
+> + * the Free Software Foundation, either version 3 of the License, or
+> + * (at your option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + *
+> + * You should have received a copy of the GNU General Public License
+> + * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+> + *
+> + * Author: Gris Ge <fge@redhat.com>
+> + */
+> +
+> +#include <stdint.h>
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <inttypes.h>
+> +#include <string.h>
+> +#include <pthread.h>
+> +#include <unistd.h>
+> +
+> +#include <libdmmp/libdmmp.h>
+> +
+> +#define FAIL(rc, out, ...) \
+> +	do { \
+> +		rc = EXIT_FAILURE; \
+> +		fprintf(stderr, "FAIL: "__VA_ARGS__ ); \
+> +		goto out; \
+> +	} while(0)
+> +#define PASS(...) fprintf(stdout, "PASS: "__VA_ARGS__ );
+> +#define FILE_NAME_SIZE 256
+> +
+> +int test_paths(struct dmmp_path_group *mp_pg)
+> +{
+> +	struct dmmp_path **mp_ps = NULL;
+> +	uint32_t mp_p_count = 0;
+> +	uint32_t i = 0;
+> +	const char *blk_name = NULL;
+> +	int rc = EXIT_SUCCESS;
+> +
+> +	dmmp_path_array_get(mp_pg, &mp_ps, &mp_p_count);
+> +	if (mp_p_count == 0)
+> +		FAIL(rc, out, "dmmp_path_array_get(): Got no path\n");
+> +	for (i = 0; i < mp_p_count; ++i) {
+> +		blk_name = dmmp_path_blk_name_get(mp_ps[i]);
+> +		if (blk_name == NULL)
+> +			FAIL(rc, out, "dmmp_path_blk_name_get(): Got NULL\n");
+> +		PASS("dmmp_path_blk_name_get(): %s\n", blk_name);
+> +		PASS("dmmp_path_status_get(): %" PRIu32 " -- %s\n",
+> +		     dmmp_path_status_get(mp_ps[i]),
+> +		     dmmp_path_status_str(dmmp_path_status_get(mp_ps[i])));
+> +		PASS("dmmp_path_pg_id_get(): %" PRIu32 "\n",
+> +		     dmmp_path_pg_id_get(mp_ps[i]));
+> +	}
+> +out:
+> +	return rc;
+> +}
+> +
+> +int test_path_groups(struct dmmp_mpath *dmmp_mp)
+> +{
+> +	struct dmmp_path_group **dmmp_pgs = NULL;
+> +	uint32_t dmmp_pg_count = 0;
+> +	uint32_t i = 0;
+> +	int rc = EXIT_SUCCESS;
+> +
+> +	dmmp_path_group_array_get(dmmp_mp, &dmmp_pgs, &dmmp_pg_count);
+> +	if ((dmmp_pg_count == 0) && (dmmp_pgs != NULL))
+> +		FAIL(rc, out, "dmmp_path_group_array_get(): mp_pgs is not NULL "
+> +		     "but mp_pg_count is 0\n");
+> +	if ((dmmp_pg_count != 0) && (dmmp_pgs == NULL))
+> +		FAIL(rc, out, "dmmp_path_group_array_get(): mp_pgs is NULL "
+> +		     "but mp_pg_count is not 0\n");
+> +	if (dmmp_pg_count == 0)
+> +		FAIL(rc, out, "dmmp_path_group_array_get(): "
+> +		     "Got 0 path group\n");
+> +
+> +	PASS("dmmp_path_group_array_get(): Got %" PRIu32 " path groups\n",
+> +	     dmmp_pg_count);
+> +
+> +	for (i = 0; i < dmmp_pg_count; ++i) {
+> +		PASS("dmmp_path_group_id_get(): %" PRIu32 "\n",
+> +		     dmmp_path_group_id_get(dmmp_pgs[i]));
+> +		PASS("dmmp_path_group_priority_get(): %" PRIu32 "\n",
+> +		     dmmp_path_group_priority_get(dmmp_pgs[i]));
+> +		PASS("dmmp_path_group_status_get(): %" PRIu32 " -- %s\n",
+> +		     dmmp_path_group_status_get(dmmp_pgs[i]),
+> +		     dmmp_path_group_status_str
+> +			(dmmp_path_group_status_get(dmmp_pgs[i])));
+> +		PASS("dmmp_path_group_selector_get(): %s\n",
+> +		     dmmp_path_group_selector_get(dmmp_pgs[i]));
+> +		rc = test_paths(dmmp_pgs[i]);
+> +		if (rc != 0)
+> +			goto out;
+> +	}
+> +out:
+> +	return rc;
+> +}
+> +
+> +int main(int argc, char *argv[])
+> +{
+> +	struct dmmp_context *ctx = NULL;
+> +	struct dmmp_mpath **dmmp_mps = NULL;
+> +	uint32_t dmmp_mp_count = 0;
+> +	const char *name = NULL;
+> +	const char *wwid = NULL;
+> +	uint32_t i = 0;
+> +	int rc = EXIT_SUCCESS;
+> +
+> +	ctx = dmmp_context_new();
+> +	dmmp_context_log_priority_set(ctx, DMMP_LOG_PRIORITY_DEBUG);
+> +	dmmp_context_userdata_set(ctx, ctx);
+> +	dmmp_context_userdata_set(ctx, NULL);
+> +
+> +	if (dmmp_mpath_array_get(ctx, &dmmp_mps, &dmmp_mp_count) != 0)
+> +		FAIL(rc, out, "dmmp_mpath_array_get(): rc != 0\n");
+> +	if (dmmp_mp_count == 0)
+> +		FAIL(rc, out, "dmmp_mpath_array_get(): "
+> +		     "Got no multipath devices\n");
+> +	PASS("dmmp_mpath_array_get(): Got %" PRIu32 " mpath\n", dmmp_mp_count);
+> +	for (i = 0; i < dmmp_mp_count; ++i) {
+> +		name = dmmp_mpath_name_get(dmmp_mps[i]);
+> +		wwid = dmmp_mpath_wwid_get(dmmp_mps[i]);
+> +		if ((name == NULL) ||(wwid == NULL))
+> +			FAIL(rc, out,
+> +			     "dmmp_mpath_array_get(): Got NULL name or wwid");
+> +		PASS("dmmp_mpath_array_get(): Got mpath: %s %s\n", name, wwid);
+> +		rc = test_path_groups(dmmp_mps[i]);
+> +		if (rc != 0)
+> +			goto out;
+> +	}
+> +	dmmp_mpath_array_free(dmmp_mps, dmmp_mp_count);
+> +out:
+> +	dmmp_context_free(ctx);
+> +	exit(rc);
+> +}
+> -- 
+> 2.7.1
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
