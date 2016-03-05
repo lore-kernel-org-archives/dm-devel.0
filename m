@@ -1,12 +1,10 @@
 From: Steven Wilton <swilton@fluentit.com.au>
-Subject: Re: [PATCH 2/2] - writeback delay
-Date: Sat, 5 Mar 2016 23:29:31 +0800
-Message-ID: <56DAFB5B.4090307@fluentit.com.au>
-References: <56D84963.7000301@fluentit.com.au>
+Subject: [PATCH 1/1] dm-cache writeback watermarks
+Date: Sun, 6 Mar 2016 00:11:08 +0800
+Message-ID: <56DB051C.2040100@fluentit.com.au>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------010604090708000905050000"
+Content-Type: multipart/mixed; boundary="------------030001020300050706040200"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <56D84963.7000301@fluentit.com.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,189 +18,147 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------010604090708000905050000
-Content-Type: multipart/alternative;
-	boundary="------------020502020605090408050102"
-
-
---------------020502020605090408050102
-Content-Type: text/plain; charset=windows-1252; format=flowed
+--------------030001020300050706040200
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-I just realised that I had also made a change to dm-cache-target.c 
-(attached) to make sure the policy set_dirty function is called every 
-time we write to a cache block to ensure that the writeback time us 
-updated for a hot block.
+Hi,
 
-Steve
+Further to my previoulsy posted patch, I have developed a patch that 
+adds a high and low watermark as a percent of the cache disk, where 
+dm-cache will attempt to keep a percentage of the cache in a dirty state 
+to avoid writing so much data back to the slow disks.
 
-On 03/03/16 22:25, Steven Wilton wrote:
-> Hi,
->
-> Please find attached a patch for the dm-cache mq policy that adds 
-> another config option of writeback_delay which adds a fixed delay for 
-> any write hits before a writeback will be performed.  I have tested 
-> the patch on a development system, and confirmed that the writeback 
-> occurs after the configured time, and does not appear to cause any 
-> issues.  I also confirmed that overwriting the same block delays the 
-> writeback indefinitely, while also avoiding the copy operation from 
-> SSD to HDD (which is my reason for creating the patch).
->
-> I am interested to get confirmation that this patch does not have any 
-> glaring errors, and getting it merged if it is considered useful.  The 
-> DEFAULT_WRITEBACK_DELAY option can be set to 0 if you want to merge 
-> the code without affecting the behaviour of existing deployments.
->
-> The patch is available as a git commit here:
-> https://github.com/eskyuu/linux/commit/565a6e57fa5a55bdd6656ae89a28543a9d871f52 
->
->
->
-> The dm-cache policy could be improved further to defer writebacks 
-> until the cache is getting full (high/low watermarks), or trying to 
-> keep sequential dirty blocks together so we write them back 
-> sequentially.  I am happy to develop and test along these lines if 
-> needed.
->
->
-> I can confirm that this patch does make removing the cache more 
-> difficult, since the cache removal code waits for all writeback to 
-> complete before removing the cache.  I had a look at the lvm2 code, 
-> and I'm not sure if the cleaner policy is meant to be applied before 
-> waiting for the writebacks to complete.  At the worst case, the 
-> user-space program could be modified to set the writeback delay to 0, 
-> which would mirror the existing behaviour.
->
-> regards
->
-> Steven
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+It co-operates nicely with the other patch (although it may make it 
+redundant in some ways), and I have tested that it compiles and works, 
+and flushes all data when the watermarks are set to 0 using the 
+following commands:
+dmsetup message <vgname>-<lvname> 0 "writeback_low_watermark 0"
+dmsetup message <vgname>-<lvname> 0 "writeback_high_watermark 0"
 
+regards
 
---------------020502020605090408050102
-Content-Type: text/html; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
-X-MIME-Autoconverted: from 8bit to quoted-printable by mx5-phx2.redhat.com id u25FdY4M041179
+Steven
 
-<html>
-  <head>
-    <meta content=3D"text/html; charset=3Dwindows-1252"
-      http-equiv=3D"Content-Type">
-  </head>
-  <body text=3D"#000000" bgcolor=3D"#FFFFFF">
-    I just realised that I had also made a change to dm-cache-target.c
-    (attached) to make sure the policy set_dirty function is called
-    every time we write to a cache block to ensure that the writeback
-    time us updated for a hot block.<br>
-    <br>
-    Steve<br>
-    <br>
-    <div class=3D"moz-cite-prefix">On 03/03/16 22:25, Steven Wilton wrote=
-:<br>
-    </div>
-    <blockquote cite=3D"mid:56D84963.7000301@fluentit.com.au" type=3D"cit=
-e">Hi,
-      <br>
-      <br>
-      Please find attached a patch for the dm-cache mq policy that adds
-      another config option of writeback_delay which adds a fixed delay
-      for any write hits before a writeback will be performed.=A0 I have
-      tested the patch on a development system, and confirmed that the
-      writeback occurs after the configured time, and does not appear to
-      cause any issues.=A0 I also confirmed that overwriting the same
-      block delays the writeback indefinitely, while also avoiding the
-      copy operation from SSD to HDD (which is my reason for creating
-      the patch).
-      <br>
-      <br>
-      I am interested to get confirmation that this patch does not have
-      any glaring errors, and getting it merged if it is considered
-      useful.=A0 The DEFAULT_WRITEBACK_DELAY option can be set to 0 if yo=
-u
-      want to merge the code without affecting the behaviour of existing
-      deployments.
-      <br>
-      <br>
-      The patch is available as a git commit here:
-      <br>
-<a class=3D"moz-txt-link-freetext" href=3D"https://github.com/eskyuu/linu=
-x/commit/565a6e57fa5a55bdd6656ae89a28543a9d871f52">https://github.com/esk=
-yuu/linux/commit/565a6e57fa5a55bdd6656ae89a28543a9d871f52</a>
-      <br>
-      <br>
-      <br>
-      The dm-cache policy could be improved further to defer writebacks
-      until the cache is getting full (high/low watermarks), or trying
-      to keep sequential dirty blocks together so we write them back
-      sequentially.=A0 I am happy to develop and test along these lines i=
-f
-      needed.
-      <br>
-      <br>
-      <br>
-      I can confirm that this patch does make removing the cache more
-      difficult, since the cache removal code waits for all writeback to
-      complete before removing the cache.=A0 I had a look at the lvm2
-      code, and I'm not sure if the cleaner policy is meant to be
-      applied before waiting for the writebacks to complete.=A0 At the
-      worst case, the user-space program could be modified to set the
-      writeback delay to 0, which would mirror the existing behaviour.
-      <br>
-      <br>
-      regards
-      <br>
-      <br>
-      Steven
-      <br>
-      <br>
-      <fieldset class=3D"mimeAttachmentHeader"></fieldset>
-      <br>
-      <pre wrap=3D"">--
-dm-devel mailing list
-<a class=3D"moz-txt-link-abbreviated" href=3D"mailto:dm-devel@redhat.com"=
->dm-devel@redhat.com</a>
-<a class=3D"moz-txt-link-freetext" href=3D"https://www.redhat.com/mailman=
-/listinfo/dm-devel">https://www.redhat.com/mailman/listinfo/dm-devel</a><=
-/pre>
-    </blockquote>
-    <br>
-  </body>
-</html>
-
---------------020502020605090408050102--
-
---------------010604090708000905050000
+--------------030001020300050706040200
 Content-Type: text/x-patch;
- name="dm-cache-target.patch"
-Content-Disposition: attachment;
- filename="dm-cache-target.patch"
+ name="dm-cache-writeback-watermarks.patch"
 Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="dm-cache-writeback-watermarks.patch"
 
 diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 7755af3..7dab682 100644
+index 7dab682..2ab826e 100644
 --- a/drivers/md/dm-cache-target.c
 +++ b/drivers/md/dm-cache-target.c
-@@ -532,8 +532,8 @@ static void set_dirty(struct cache *cache, dm_oblock_t oblock, dm_cblock_t cbloc
- {
- 	if (!test_and_set_bit(from_cblock(cblock), cache->dirty_bitset)) {
- 		atomic_inc(&cache->nr_dirty);
--		policy_set_dirty(cache->policy, oblock);
- 	}
-+	policy_set_dirty(cache->policy, oblock);
+@@ -221,6 +221,8 @@ struct cache {
+ 	struct list_head completed_migrations;
+ 	struct list_head need_commit_migrations;
+ 	sector_t migration_threshold;
++	unsigned long writeback_high_watermark;
++	unsigned long writeback_low_watermark;
+ 	wait_queue_head_t migration_wait;
+ 	atomic_t nr_allocated_migrations;
+ 
+@@ -275,6 +277,7 @@ struct cache {
+ 	bool commit_requested:1;
+ 	bool loaded_mappings:1;
+ 	bool loaded_discards:1;
++	bool writeback_flushing_to_low:1;
+ 
+ 	/*
+ 	 * Cache features such as write-through.
+@@ -1426,6 +1429,26 @@ static void process_discard_bio(struct cache *cache, struct prealloc *structs,
+ 	discard(cache, structs, new_ocell);
  }
  
- static void clear_dirty(struct cache *cache, dm_oblock_t oblock, dm_cblock_t cblock)
++static bool writeback_wanted(struct cache *cache)
++{
++	unsigned long dirty_pct = (atomic_read(&cache->nr_dirty) * 100) / from_cblock(cache->cache_size);
++
++	if (cache->writeback_flushing_to_low) {
++		if (dirty_pct < cache->writeback_low_watermark) {
++			cache->writeback_flushing_to_low = false;
++			return false;
++		}
++
++		return true;
++
++	} else if (dirty_pct >= cache->writeback_high_watermark) {
++		cache->writeback_flushing_to_low = true;
++		return true;
++	}
++
++	return false;
++}
++
+ static bool spare_migration_bandwidth(struct cache *cache)
+ {
+ 	sector_t current_volume = (atomic_read(&cache->nr_io_migrations) + 1) *
+@@ -1673,7 +1696,7 @@ static void writeback_some_dirty_blocks(struct cache *cache)
+ 
+ 	memset(&structs, 0, sizeof(structs));
+ 
+-	while (spare_migration_bandwidth(cache)) {
++	while (writeback_wanted(cache)) {
+ 		if (prealloc_data_structs(cache, &structs))
+ 			break;
+ 
+@@ -2239,6 +2262,22 @@ static int process_config_option(struct cache *cache, const char *key, const cha
+ 		return 0;
+ 	}
+ 
++	if (!strcasecmp(key, "writeback_high_watermark")) {
++		if (kstrtoul(value, 10, &tmp))
++			return -EINVAL;
++
++		cache->writeback_high_watermark = tmp;
++		return 0;
++	}
++
++	if (!strcasecmp(key, "writeback_low_watermark")) {
++		if (kstrtoul(value, 10, &tmp))
++			return -EINVAL;
++
++		cache->writeback_low_watermark = tmp;
++		return 0;
++	}
++
+ 	return NOT_CORE_OPTION;
+ }
+ 
+@@ -2332,6 +2371,8 @@ static void set_cache_size(struct cache *cache, dm_cblock_t size)
+ }
+ 
+ #define DEFAULT_MIGRATION_THRESHOLD 2048
++#define DEFAULT_WRITEBACK_HIGH_WATERMARK 40
++#define DEFAULT_WRITEBACK_LOW_WATERMARK 30
+ 
+ static int cache_create(struct cache_args *ca, struct cache **result)
+ {
+@@ -2397,6 +2438,8 @@ static int cache_create(struct cache_args *ca, struct cache **result)
+ 
+ 	cache->policy_nr_args = ca->policy_argc;
+ 	cache->migration_threshold = DEFAULT_MIGRATION_THRESHOLD;
++	cache->writeback_high_watermark = DEFAULT_WRITEBACK_HIGH_WATERMARK;
++	cache->writeback_low_watermark = DEFAULT_WRITEBACK_LOW_WATERMARK;
+ 
+ 	r = set_config_values(cache, ca->policy_argc, ca->policy_argv);
+ 	if (r) {
+@@ -3103,7 +3146,7 @@ static void cache_status(struct dm_target *ti, status_type_t type,
+ 			goto err;
+ 		}
+ 
+-		DMEMIT("2 migration_threshold %llu ", (unsigned long long) cache->migration_threshold);
++		DMEMIT("6 migration_threshold %llu writeback_high_watermark %llu writeback_low_watermark %llu ", (unsigned long long) cache->migration_threshold, (unsigned long long) cache->writeback_high_watermark, (unsigned long long) cache->writeback_low_watermark);
+ 
+ 		DMEMIT("%s ", dm_cache_policy_get_name(cache->policy));
+ 		if (sz < maxlen) {
 
---------------010604090708000905050000
+--------------030001020300050706040200
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
-Content-Disposition: inline
 Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
---------------010604090708000905050000--
+--------------030001020300050706040200--
