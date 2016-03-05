@@ -1,16 +1,12 @@
-From: Gris Ge <fge@redhat.com>
-Subject: Re: [PATCH V2] Introducing multipath C API
- <libdmmp/libdmmp.h>
-Date: Sat, 5 Mar 2016 17:46:49 +0800
-Message-ID: <20160305094649.GA948@redhat.com>
-References: <56AF5F58.6030302@suse.de>
-	<1455264623-16199-1-git-send-email-fge@redhat.com>
-	<1455264623-16199-2-git-send-email-fge@redhat.com>
-	<20160304160624.GN2915@octiron.msp.redhat.com>
+From: Steven Wilton <swilton@fluentit.com.au>
+Subject: Re: [PATCH 2/2] - writeback delay
+Date: Sat, 5 Mar 2016 23:29:31 +0800
+Message-ID: <56DAFB5B.4090307@fluentit.com.au>
+References: <56D84963.7000301@fluentit.com.au>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5296191410522493116=="
+Content-Type: multipart/mixed; boundary="------------010604090708000905050000"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160304160624.GN2915@octiron.msp.redhat.com>
+In-Reply-To: <56D84963.7000301@fluentit.com.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,128 +16,193 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+This is a multi-part message in MIME format.
+--------------010604090708000905050000
+Content-Type: multipart/alternative;
+	boundary="------------020502020605090408050102"
 
---===============5296191410522493116==
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="bp/iNruPH9dso1Pn"
-Content-Disposition: inline
+
+--------------020502020605090408050102
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+
+I just realised that I had also made a change to dm-cache-target.c 
+(attached) to make sure the policy set_dirty function is called every 
+time we write to a cache block to ensure that the writeback time us 
+updated for a hot block.
+
+Steve
+
+On 03/03/16 22:25, Steven Wilton wrote:
+> Hi,
+>
+> Please find attached a patch for the dm-cache mq policy that adds 
+> another config option of writeback_delay which adds a fixed delay for 
+> any write hits before a writeback will be performed.  I have tested 
+> the patch on a development system, and confirmed that the writeback 
+> occurs after the configured time, and does not appear to cause any 
+> issues.  I also confirmed that overwriting the same block delays the 
+> writeback indefinitely, while also avoiding the copy operation from 
+> SSD to HDD (which is my reason for creating the patch).
+>
+> I am interested to get confirmation that this patch does not have any 
+> glaring errors, and getting it merged if it is considered useful.  The 
+> DEFAULT_WRITEBACK_DELAY option can be set to 0 if you want to merge 
+> the code without affecting the behaviour of existing deployments.
+>
+> The patch is available as a git commit here:
+> https://github.com/eskyuu/linux/commit/565a6e57fa5a55bdd6656ae89a28543a9d871f52 
+>
+>
+>
+> The dm-cache policy could be improved further to defer writebacks 
+> until the cache is getting full (high/low watermarks), or trying to 
+> keep sequential dirty blocks together so we write them back 
+> sequentially.  I am happy to develop and test along these lines if 
+> needed.
+>
+>
+> I can confirm that this patch does make removing the cache more 
+> difficult, since the cache removal code waits for all writeback to 
+> complete before removing the cache.  I had a look at the lvm2 code, 
+> and I'm not sure if the cleaner policy is meant to be applied before 
+> waiting for the writebacks to complete.  At the worst case, the 
+> user-space program could be modified to set the writeback delay to 0, 
+> which would mirror the existing behaviour.
+>
+> regards
+>
+> Steven
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 
 
---bp/iNruPH9dso1Pn
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+--------------020502020605090408050102
+Content-Type: text/html; charset=windows-1252
 Content-Transfer-Encoding: quoted-printable
+X-MIME-Autoconverted: from 8bit to quoted-printable by mx5-phx2.redhat.com id u25FdY4M041179
 
-On Fri, Mar 04, 2016 at 10:06:24AM -0600, Benjamin Marzinski wrote:
-> On Fri, Feb 12, 2016 at 04:10:23PM +0800, Gris Ge wrote:
->
-> This looks good to me. Personally, I would have loved to see
-> multipathd actually passing structured data across the IPC
-> connection, and have the multipath client code responsible for
-> making it pretty, but making that happen is a lot more invasive.
-Hi Benjamin,
+<html>
+  <head>
+    <meta content=3D"text/html; charset=3Dwindows-1252"
+      http-equiv=3D"Content-Type">
+  </head>
+  <body text=3D"#000000" bgcolor=3D"#FFFFFF">
+    I just realised that I had also made a change to dm-cache-target.c
+    (attached) to make sure the policy set_dirty function is called
+    every time we write to a cache block to ensure that the writeback
+    time us updated for a hot block.<br>
+    <br>
+    Steve<br>
+    <br>
+    <div class=3D"moz-cite-prefix">On 03/03/16 22:25, Steven Wilton wrote=
+:<br>
+    </div>
+    <blockquote cite=3D"mid:56D84963.7000301@fluentit.com.au" type=3D"cit=
+e">Hi,
+      <br>
+      <br>
+      Please find attached a patch for the dm-cache mq policy that adds
+      another config option of writeback_delay which adds a fixed delay
+      for any write hits before a writeback will be performed.=A0 I have
+      tested the patch on a development system, and confirmed that the
+      writeback occurs after the configured time, and does not appear to
+      cause any issues.=A0 I also confirmed that overwriting the same
+      block delays the writeback indefinitely, while also avoiding the
+      copy operation from SSD to HDD (which is my reason for creating
+      the patch).
+      <br>
+      <br>
+      I am interested to get confirmation that this patch does not have
+      any glaring errors, and getting it merged if it is considered
+      useful.=A0 The DEFAULT_WRITEBACK_DELAY option can be set to 0 if yo=
+u
+      want to merge the code without affecting the behaviour of existing
+      deployments.
+      <br>
+      <br>
+      The patch is available as a git commit here:
+      <br>
+<a class=3D"moz-txt-link-freetext" href=3D"https://github.com/eskyuu/linu=
+x/commit/565a6e57fa5a55bdd6656ae89a28543a9d871f52">https://github.com/esk=
+yuu/linux/commit/565a6e57fa5a55bdd6656ae89a28543a9d871f52</a>
+      <br>
+      <br>
+      <br>
+      The dm-cache policy could be improved further to defer writebacks
+      until the cache is getting full (high/low watermarks), or trying
+      to keep sequential dirty blocks together so we write them back
+      sequentially.=A0 I am happy to develop and test along these lines i=
+f
+      needed.
+      <br>
+      <br>
+      <br>
+      I can confirm that this patch does make removing the cache more
+      difficult, since the cache removal code waits for all writeback to
+      complete before removing the cache.=A0 I had a look at the lvm2
+      code, and I'm not sure if the cleaner policy is meant to be
+      applied before waiting for the writebacks to complete.=A0 At the
+      worst case, the user-space program could be modified to set the
+      writeback delay to 0, which would mirror the existing behaviour.
+      <br>
+      <br>
+      regards
+      <br>
+      <br>
+      Steven
+      <br>
+      <br>
+      <fieldset class=3D"mimeAttachmentHeader"></fieldset>
+      <br>
+      <pre wrap=3D"">--
+dm-devel mailing list
+<a class=3D"moz-txt-link-abbreviated" href=3D"mailto:dm-devel@redhat.com"=
+>dm-devel@redhat.com</a>
+<a class=3D"moz-txt-link-freetext" href=3D"https://www.redhat.com/mailman=
+/listinfo/dm-devel">https://www.redhat.com/mailman/listinfo/dm-devel</a><=
+/pre>
+    </blockquote>
+    <br>
+  </body>
+</html>
 
-Thanks for the review.
+--------------020502020605090408050102--
 
-I believe Todd is trying to patch multipathd IPC to provide JSON
-output like:
-    multipathd -k'show topology json'
->
-> A couple of thoughts:
->
-> I'm wrote a library interface for the multipath IPC code that wasn't
-> included the upstream code, although nobody ever voiced a
-> disagreement with it, and Hannes sounded supportive of it the last
-> time I posted it.
->
-> https://www.redhat.com/archives/dm-devel/2015-June/msg00033.html
-> https://www.redhat.com/archives/dm-devel/2015-October/msg00062.html
->
-> I plan on resending it with my next batch of patches, unless someone
-> wants to tell me why it hasn't been accepted before.  It doesn't
-> effect your code at all, but assuming that it does get in this time,
-> we may want to make some of your IPC functions wrappers around it
-> (possibly modifying my library code to work with it better), so that
-> we aren't duplicating work.
-It's good to remove duplicate code between daemon and client on the
-IPC communication.
-I will update my patch to unitize libmpath_cmd once it has been
-committed.
->
-> Also, why use the assert, instead of returning an error? I know some
-> library's don't protect you from passing in NULL pointers, and just let
-> you segfault.  I didn't find any cases where you would return junk if
-> the asserts were disabled, but I didn't follow through all of the logic
-> to verify that you wouldn't ever return junk if you passed in junk and
-> the asserts were disabled.
-Without assert, I have to provide a return code
-(for example: DMMP_ERR_INVALID_ARGUMENT) and clean up all possible
-messes.
+--------------010604090708000905050000
+Content-Type: text/x-patch;
+ name="dm-cache-target.patch"
+Content-Disposition: attachment;
+ filename="dm-cache-target.patch"
+Content-Transfer-Encoding: 7bit
 
-Example:
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 7755af3..7dab682 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -532,8 +532,8 @@ static void set_dirty(struct cache *cache, dm_oblock_t oblock, dm_cblock_t cbloc
+ {
+ 	if (!test_and_set_bit(from_cblock(cblock), cache->dirty_bitset)) {
+ 		atomic_inc(&cache->nr_dirty);
+-		policy_set_dirty(cache->policy, oblock);
+ 	}
++	policy_set_dirty(cache->policy, oblock);
+ }
+ 
+ static void clear_dirty(struct cache *cache, dm_oblock_t oblock, dm_cblock_t cblock)
 
-    int dmmp_mpath_array_get(struct dmmp_context *ctx,
-                             struct dmmp_mpath ***dmmp_mps,
-                             uint32_t *dmmp_mp_count);
-
-If any of three argument is NULL, I have to set output pointer as
-NULL(if not NULL) just in case user use them without checking return
-code.
-
-Meanwhile, I have to set error message to indicate so when ctx is not
-NULL.
-
-IMHO, using error handling on this simple programmer fault is waste of
-time. It seems assert is enough for this.
->
-> Lastly, and this is even more nit-picky, in _dmmp_all_get_func_gen,
-> why to you need to pass in a specific name for the array and the
-> item_count?
-It's my bad habit of keeping function prototype identical(including
-argument name) to implementation.
-I will purge them in V3 patch.
->
-> But regardless of these nit-picks, ACK.
->
-> -Ben
-Best regards.
-
---=20
-Gris Ge
-
---bp/iNruPH9dso1Pn
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJW2qsFAAoJEGzN5Y/kHij/eNwP/2SGcdu10QgFlxMvIIO9U7q/
-LhRLhvR+ybDCosw0iIdoi3i2/ASuKp+kG4rKHFGsCvvHP41pFag9ehCouS26S7Xj
-MWoXGKIoosTYiAZu+WhWBHynsRuBNXdT/k5+hah46fwlkzHsLnx+s+lLAIh0Vemi
-6jhl/hXPkpkqR6ojjiXYedem9oDwyKAjVELxfX6Xq5KYapbG3eL7d1JuzH9Sti93
-H1sHdsuYdavvUXCVr7BQjTEI5ZoIyNUJuF/p+H+GKiaoK53oQH9mBvDAvB9iTSxR
-gYBKORzPQWEZBhdvzVmZQTSi7jVdr1eVagWXk924g6Z3WT9S8rxpOwQtzFYAMXmb
-U77l2L4IOAot/swpALhaAbMzqidtIoq/u6dq3O6KJ/V/t5abDzcoUE9L2xcX+RVs
-4/BVGixzsV3nBBVLSu3CTi3w/iwTqJ+dIXs5J7aanDMuRL3CCVZaX3Lsz7kHhMQ/
-lckEoBHcV3b6aR/29yi4CDHIvtsKDYzoHIX9AY1wPQ8uH93tlh0P+KJf5eKH0wav
-cJA6lEMRNZP2qSD2j84jgguJffAVFFIUET70K1K59qTAY4qrxauIYwDB0/iOsQwe
-wUDGZqrYqzOJTUbBqcBUtlzdqsx8xwSZDcROIxgZGDGqF8PjieCIA4dHS+rrBqI6
-wUT5gDsd3R0srxmEjjD+
-=MeyJ
------END PGP SIGNATURE-----
-
---bp/iNruPH9dso1Pn--
-
-
---===============5296191410522493116==
+--------------010604090708000905050000
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
+Content-Transfer-Encoding: 7bit
 
 
---===============5296191410522493116==--
+--------------010604090708000905050000--
