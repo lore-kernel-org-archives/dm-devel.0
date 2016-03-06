@@ -1,9 +1,9 @@
 From: Steven Wilton <swilton@fluentit.com.au>
-Subject: [PATCH v2] dm-cache watermarks
-Date: Sun, 6 Mar 2016 08:36:21 +0800
-Message-ID: <56DB7B85.4020000@fluentit.com.au>
+Subject: [PATCH v3] dm-cache watermarks
+Date: Sun, 6 Mar 2016 17:39:55 +0800
+Message-ID: <56DBFAEB.2050801@fluentit.com.au>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------040903020909080509090301"
+Content-Type: multipart/mixed; boundary="------------040205070809020607050405"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,26 +18,30 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------040903020909080509090301
+--------------040205070809020607050405
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-I just realised that the original patch did not stick to the migration 
-bandwidth target.  I have attached another version of the patch that 
-throttles to the migration bandwidth when above the low watermark.
+I realised that I over-thought the original logic.  The attached patch 
+is much simpler - write back dirty cache entries at the migration 
+threshold rate when we are over the low watermark, and we write back as 
+fast as possible when we go over the high watermark.
+
+The current behaviour can be replicated by setting the high watermark to 
+100, and the low watermark to 0.
 
 regards
 
-Steve
+Steven
 
---------------040903020909080509090301
+--------------040205070809020607050405
 Content-Type: text/x-patch;
  name="dm-cache-writeback-watermarks.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment; filename="dm-cache-writeback-watermarks.patch"
 
 diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 7dab682..2aa97cd 100644
+index 7dab682..7b8b4a3 100644
 --- a/drivers/md/dm-cache-target.c
 +++ b/drivers/md/dm-cache-target.c
 @@ -221,6 +221,8 @@ struct cache {
@@ -49,15 +53,7 @@ index 7dab682..2aa97cd 100644
  	wait_queue_head_t migration_wait;
  	atomic_t nr_allocated_migrations;
  
-@@ -275,6 +277,7 @@ struct cache {
- 	bool commit_requested:1;
- 	bool loaded_mappings:1;
- 	bool loaded_discards:1;
-+	bool writeback_flushing_to_low:1;
- 
- 	/*
- 	 * Cache features such as write-through.
-@@ -1433,6 +1436,29 @@ static bool spare_migration_bandwidth(struct cache *cache)
+@@ -1433,6 +1435,20 @@ static bool spare_migration_bandwidth(struct cache *cache)
  	return current_volume < cache->migration_threshold;
  }
  
@@ -65,16 +61,7 @@ index 7dab682..2aa97cd 100644
 +{
 +	unsigned long dirty_pct = (atomic_read(&cache->nr_dirty) * 100) / from_cblock(cache->cache_size);
 +
-+	if (cache->writeback_flushing_to_low) {
-+		if (dirty_pct < cache->writeback_low_watermark) {
-+			cache->writeback_flushing_to_low = false;
-+			return false;
-+		}
-+
-+		return true;
-+
-+	} else if (dirty_pct >= cache->writeback_high_watermark) {
-+		cache->writeback_flushing_to_low = true;
++	if (dirty_pct >= cache->writeback_high_watermark) {
 +		return true;
 +
 +	} else if (dirty_pct >= cache->writeback_low_watermark && spare_migration_bandwidth(cache)) {
@@ -87,7 +74,7 @@ index 7dab682..2aa97cd 100644
  static void inc_hit_counter(struct cache *cache, struct bio *bio)
  {
  	atomic_inc(bio_data_dir(bio) == READ ?
-@@ -1673,7 +1699,7 @@ static void writeback_some_dirty_blocks(struct cache *cache)
+@@ -1673,7 +1689,7 @@ static void writeback_some_dirty_blocks(struct cache *cache)
  
  	memset(&structs, 0, sizeof(structs));
  
@@ -96,7 +83,7 @@ index 7dab682..2aa97cd 100644
  		if (prealloc_data_structs(cache, &structs))
  			break;
  
-@@ -2239,6 +2265,22 @@ static int process_config_option(struct cache *cache, const char *key, const cha
+@@ -2239,6 +2255,22 @@ static int process_config_option(struct cache *cache, const char *key, const cha
  		return 0;
  	}
  
@@ -119,7 +106,7 @@ index 7dab682..2aa97cd 100644
  	return NOT_CORE_OPTION;
  }
  
-@@ -2332,6 +2374,8 @@ static void set_cache_size(struct cache *cache, dm_cblock_t size)
+@@ -2332,6 +2364,8 @@ static void set_cache_size(struct cache *cache, dm_cblock_t size)
  }
  
  #define DEFAULT_MIGRATION_THRESHOLD 2048
@@ -128,7 +115,7 @@ index 7dab682..2aa97cd 100644
  
  static int cache_create(struct cache_args *ca, struct cache **result)
  {
-@@ -2397,6 +2441,8 @@ static int cache_create(struct cache_args *ca, struct cache **result)
+@@ -2397,6 +2431,8 @@ static int cache_create(struct cache_args *ca, struct cache **result)
  
  	cache->policy_nr_args = ca->policy_argc;
  	cache->migration_threshold = DEFAULT_MIGRATION_THRESHOLD;
@@ -137,7 +124,7 @@ index 7dab682..2aa97cd 100644
  
  	r = set_config_values(cache, ca->policy_argc, ca->policy_argv);
  	if (r) {
-@@ -3103,7 +3149,7 @@ static void cache_status(struct dm_target *ti, status_type_t type,
+@@ -3103,7 +3139,7 @@ static void cache_status(struct dm_target *ti, status_type_t type,
  			goto err;
  		}
  
@@ -147,11 +134,11 @@ index 7dab682..2aa97cd 100644
  		DMEMIT("%s ", dm_cache_policy_get_name(cache->policy));
  		if (sz < maxlen) {
 
---------------040903020909080509090301
+--------------040205070809020607050405
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------040903020909080509090301--
+--------------040205070809020607050405--
