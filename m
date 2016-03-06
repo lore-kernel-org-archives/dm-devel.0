@@ -1,31 +1,157 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: scsi-debug regression with 4.5-rc?
-Date: Sat, 05 Mar 2016 17:44:37 -0500
-Message-ID: <yq1mvqc35pm.fsf@sermon.lab.mkp.net>
-References: <1453303051.22112.110.camel@localhost.localdomain>
-	<yq1powwp7l4.fsf@sermon.lab.mkp.net>
-	<20160304152409.GA31358@redhat.com>
+From: Steven Wilton <swilton@fluentit.com.au>
+Subject: [PATCH v2] dm-cache watermarks
+Date: Sun, 6 Mar 2016 08:36:21 +0800
+Message-ID: <56DB7B85.4020000@fluentit.com.au>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20160304152409.GA31358@redhat.com> (Mike Snitzer's message of
-	"Fri, 4 Mar 2016 10:24:09 -0500")
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Ewan Milne <emilne@redhat.com>, linux-scsi@vger.kernel.org, Zdenek Kabelac <zkabelac@redhat.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
+Content-Type: multipart/mixed; boundary="------------040903020909080509090301"
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
->>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+This is a multi-part message in MIME format.
+--------------040903020909080509090301
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Mike> Seems not, I think that BZ may be due to the LBPRZ clause in
-Mike> commit 397737223 ("sd: Make discard granularity match logical
-Mike> block size when LBPRZ=1") ?
+I just realised that the original patch did not stick to the migration 
+bandwidth target.  I have attached another version of the patch that 
+throttles to the migration bandwidth when above the low watermark.
 
-Mike> should be: q->limits.discard_granularity = 1 * logical_block_size;
+regards
 
-*blush*
+Steve
 
-Will fix.
+--------------040903020909080509090301
+Content-Type: text/x-patch;
+ name="dm-cache-writeback-watermarks.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="dm-cache-writeback-watermarks.patch"
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 7dab682..2aa97cd 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -221,6 +221,8 @@ struct cache {
+ 	struct list_head completed_migrations;
+ 	struct list_head need_commit_migrations;
+ 	sector_t migration_threshold;
++	unsigned long writeback_high_watermark;
++	unsigned long writeback_low_watermark;
+ 	wait_queue_head_t migration_wait;
+ 	atomic_t nr_allocated_migrations;
+ 
+@@ -275,6 +277,7 @@ struct cache {
+ 	bool commit_requested:1;
+ 	bool loaded_mappings:1;
+ 	bool loaded_discards:1;
++	bool writeback_flushing_to_low:1;
+ 
+ 	/*
+ 	 * Cache features such as write-through.
+@@ -1433,6 +1436,29 @@ static bool spare_migration_bandwidth(struct cache *cache)
+ 	return current_volume < cache->migration_threshold;
+ }
+ 
++static bool writeback_wanted(struct cache *cache)
++{
++	unsigned long dirty_pct = (atomic_read(&cache->nr_dirty) * 100) / from_cblock(cache->cache_size);
++
++	if (cache->writeback_flushing_to_low) {
++		if (dirty_pct < cache->writeback_low_watermark) {
++			cache->writeback_flushing_to_low = false;
++			return false;
++		}
++
++		return true;
++
++	} else if (dirty_pct >= cache->writeback_high_watermark) {
++		cache->writeback_flushing_to_low = true;
++		return true;
++
++	} else if (dirty_pct >= cache->writeback_low_watermark && spare_migration_bandwidth(cache)) {
++		return true;
++	}
++
++	return false;
++}
++
+ static void inc_hit_counter(struct cache *cache, struct bio *bio)
+ {
+ 	atomic_inc(bio_data_dir(bio) == READ ?
+@@ -1673,7 +1699,7 @@ static void writeback_some_dirty_blocks(struct cache *cache)
+ 
+ 	memset(&structs, 0, sizeof(structs));
+ 
+-	while (spare_migration_bandwidth(cache)) {
++	while (writeback_wanted(cache)) {
+ 		if (prealloc_data_structs(cache, &structs))
+ 			break;
+ 
+@@ -2239,6 +2265,22 @@ static int process_config_option(struct cache *cache, const char *key, const cha
+ 		return 0;
+ 	}
+ 
++	if (!strcasecmp(key, "writeback_high_watermark")) {
++		if (kstrtoul(value, 10, &tmp))
++			return -EINVAL;
++
++		cache->writeback_high_watermark = tmp;
++		return 0;
++	}
++
++	if (!strcasecmp(key, "writeback_low_watermark")) {
++		if (kstrtoul(value, 10, &tmp))
++			return -EINVAL;
++
++		cache->writeback_low_watermark = tmp;
++		return 0;
++	}
++
+ 	return NOT_CORE_OPTION;
+ }
+ 
+@@ -2332,6 +2374,8 @@ static void set_cache_size(struct cache *cache, dm_cblock_t size)
+ }
+ 
+ #define DEFAULT_MIGRATION_THRESHOLD 2048
++#define DEFAULT_WRITEBACK_HIGH_WATERMARK 40
++#define DEFAULT_WRITEBACK_LOW_WATERMARK 30
+ 
+ static int cache_create(struct cache_args *ca, struct cache **result)
+ {
+@@ -2397,6 +2441,8 @@ static int cache_create(struct cache_args *ca, struct cache **result)
+ 
+ 	cache->policy_nr_args = ca->policy_argc;
+ 	cache->migration_threshold = DEFAULT_MIGRATION_THRESHOLD;
++	cache->writeback_high_watermark = DEFAULT_WRITEBACK_HIGH_WATERMARK;
++	cache->writeback_low_watermark = DEFAULT_WRITEBACK_LOW_WATERMARK;
+ 
+ 	r = set_config_values(cache, ca->policy_argc, ca->policy_argv);
+ 	if (r) {
+@@ -3103,7 +3149,7 @@ static void cache_status(struct dm_target *ti, status_type_t type,
+ 			goto err;
+ 		}
+ 
+-		DMEMIT("2 migration_threshold %llu ", (unsigned long long) cache->migration_threshold);
++		DMEMIT("6 migration_threshold %llu writeback_high_watermark %llu writeback_low_watermark %llu ", (unsigned long long) cache->migration_threshold, (unsigned long long) cache->writeback_high_watermark, (unsigned long long) cache->writeback_low_watermark);
+ 
+ 		DMEMIT("%s ", dm_cache_policy_get_name(cache->policy));
+ 		if (sz < maxlen) {
+
+--------------040903020909080509090301
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------040903020909080509090301--
