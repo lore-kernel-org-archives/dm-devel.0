@@ -1,14 +1,14 @@
-From: Steven Wilton <swilton@fluentit.com.au>
-Subject: Re: [PATCH v3] dm-cache watermarks
-Date: Tue, 8 Mar 2016 23:16:51 +0800
-Message-ID: <56DEECE3.6070301@fluentit.com.au>
-References: <56DBFAEB.2050801@fluentit.com.au>
-	<20160307141713.GA19967@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [PATCH] dm cache: add writeback watermarks
+Date: Tue, 8 Mar 2016 15:23:36 +0000
+Message-ID: <20160308152335.GA4126@rh-vpn>
+References: <1457448762-6784-1-git-send-email-swilton@fluentit.com.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160307141713.GA19967@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1457448762-6784-1-git-send-email-swilton@fluentit.com.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,68 +18,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
+To: Steven Wilton <swilton@fluentit.com.au>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On Tue, Mar 08, 2016 at 10:52:42PM +0800, Steven Wilton wrote:
+> Add 2 new options to the dm-cache code, writeback_low_watermark to
+> keep a section of the cache dirty in order to reduce the amount
+> of data being migrated from the cache to the origin, and
+> writeback_high_watermark to allow a threshold to be set where the
+> dirty cache entries are flushed as quick as possible.
 
+Right. mq is being removed, or rather becoming an alias for smq (patch
+posted a couple of weeks ago to dm-devel).
 
-On 07/03/16 22:17, Mike Snitzer wrote:
-> On Sun, Mar 06 2016 at  4:39am -0500,
-> Steven Wilton <swilton@fluentit.com.au> wrote:
->
->> I realised that I over-thought the original logic.  The attached
->> patch is much simpler - write back dirty cache entries at the
->> migration threshold rate when we are over the low watermark, and we
->> write back as fast as possible when we go over the high watermark.
->>
->> The current behaviour can be replicated by setting the high
->> watermark to 100, and the low watermark to 0.
->>
->> regards
->>
->> Steven
-> These should default to current behavior (100 and 0 respectively, like
-> you mentioned above).
->
-> This change needs an accompanying Documentation update.  It also needs a
-> proper path header to accurately convey the scope of the change.
->
-> Please post v4 with these changes and then I'll take a closer look (as
-> I'm sure Joe will).  But please be aware that in general we want less
-> knobs, not more.
->
-> Thanks,
-> Mike
->
->
-Thanks for getting back to me on this.  I have just submitted the patch 
-from git (after reading up on how).  Can you please confirm that the new 
-patch is in the correct format?
+smq already has a writeback delay to prevent writeback of frequently
+changing data:
 
-If you want less knobs, then the high watermark may not be much use, and 
-I can remove it from the patch.  The initial request was mainly for a 
-review to make sure I have not done anything obviously wrong that will 
-lead to data corruption.
+https://github.com/jthornber/linux-2.6/blob/thin-dev/drivers/md/dm-cache-policy-smq.c#L338
+https://github.com/jthornber/linux-2.6/blob/thin-dev/drivers/md/dm-cache-policy-smq.c#L850
+https://github.com/jthornber/linux-2.6/blob/thin-dev/drivers/md/dm-cache-policy-smq.c#L876
 
-I am happy to run some benchmarks on before and after to quantify any 
-performance gains.
+and has a threshold/watermark that triggers more aggressive writeback:
 
-I started looking into this because I noticed an increase in both disk 
-busy time and data being written to the origin device after I enabled 
-dm-cache on a production system.  The overall performance feels better 
-even though the origin device is busier, but I am most interested to see 
-what effect the low watermark has on this system.
+https://github.com/jthornber/linux-2.6/blob/thin-dev/drivers/md/dm-cache-policy-smq.c#L1463
 
-I have also had a thought on the stats emitted by dm-cache, and think 
-that it would be useful to export the number of write hits on already 
-dirty blocks so we can see how efficient the writeback has been at 
-avoiding writes to the origin. What is your view on changing the output 
-format here?  If the output format cannot be changed, would you consider 
-re-defining a write hit in writeback mode as a hit on an already dirty 
-block, since this is the only scenario where I/O is avoided on the 
-origin device?
+I think this decision belongs in the policy, you've moved it to the
+core.
 
-regards
+Also I'm trying to avoid introducing tunables to the interface.  It's
+not enough to document what the tunables do, but we also have to
+explain how people should arrive at the correct values for their work
+loads.
 
-Steve
+Have you tried smq?  What work load are you running?  Does your patch
+improve things?
+
+- Joe
