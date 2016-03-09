@@ -1,67 +1,244 @@
-From: Eric Wheeler <dm-devel@lists.ewheeler.net>
-Subject: Array-driven persistent-data structure
-Date: Wed, 9 Mar 2016 06:52:28 +0000 (UTC)
-Message-ID: <alpine.LRH.2.11.1603090444590.15354@mail.ewheeler.net>
+From: Miklos Szeredi <miklos@szeredi.hu>
+Subject: Re: [PATCH RESEND v2 15/18] fuse: Add support for pid namespaces
+Date: Wed, 9 Mar 2016 11:53:17 +0100
+Message-ID: <20160309105317.GE8655@tucsk>
+References: <1451930639-94331-1-git-send-email-seth.forshee@canonical.com>
+ <1451930639-94331-16-git-send-email-seth.forshee@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1451930639-94331-16-git-send-email-seth.forshee@canonical.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Seth Forshee <seth.forshee@canonical.com>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, Miklos Szeredi <mszeredi@suse.cz>
 List-Id: dm-devel.ids
 
-Hello all,
+On Mon, Jan 04, 2016 at 12:03:54PM -0600, Seth Forshee wrote:
+> If the userspace process servicing fuse requests is running in
+> a pid namespace then pids passed via the fuse fd need to be
+> translated relative to that namespace. Capture the pid namespace
+> in use when the filesystem is mounted and use this for pid
+> translation.
+> 
+> Since no use case currently exists for changing namespaces all
+> translations are done relative to the pid namespace in use when
+> /dev/fuse is opened.
 
-I'm considering writing an array-driven persistent-data structure for 
-arbitrary metadata.  The implementation is intended to be trivial but 
-reusable:
+The above doesn't match what the patch does.
 
-The metadata would be an on-disk array mapping an opaque metadata chunk 
-which is accessible by index.  The opaque metadata would be conducive to 
-holding anything of fixed size that can be indexed by an integer.
+ - FUSE captures namespace at mount time
 
-Nothing is written yet and I'm soliciting feedback on the subject since 
-persistent-data.txt indicates that "[...] something with an array-like 
-interface would see a lot of use."
-
-For example:
-
-a = dm_array_client_create(
-	bdev,      // metadata device
-	chunksize  // metadata chunk size in bytes, eg: sizeof(mystruct)
-	)
-
-Then one might be able to do something like this:
-
-	dm_array_read(a, index_number, &mystruct);
-	mystruct.something++;
-	dm_array_write(a, index_number, &mystruct);
-	dm_array_write_dirty(a);
-	
-I'm guessing that dm-bufio would be the way to go in terms of handling 
-backend io but I'm open to suggestions if dm-io (or something else) would 
-have a place here. I seem to recall that dm-io can deadlock inside of .map 
-function calls (is this true about dm-io?  Does dm-bufio solve that?).
-
-Thinking from the perspective of a devicemapper target writer, what would 
-be the preferred way to implement dm_array_write_dirty? 
-	dm_bufio_write_dirty_buffers?
-	dm_bufio_write_dirty_buffers_async?  or both?  
-Are these safe to call within the .map function?
-
-What else should I consider here before starting an implementation?
-
--Eric
+ - CUSE captures namespace at /dev/cuse open
 
 
+>  Mounting or /dev/fuse IO from another
+> namespace will return errors.
+> 
+> Requests from processes whose pid cannot be translated into the
+> target namespace are not permitted, except for requests
+> allocated via fuse_get_req_nofail_nopages. For no-fail requests
+> in.h.pid will be 0 if the pid translation fails.
+> 
+> File locking changes based on previous work done by Eric
+> Biederman.
+> 
+> Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+> Signed-off-by: Miklos Szeredi <mszeredi@suse.cz>
 
---
-Eric Wheeler
+Not sure how my SOB got on this patch, use this instead:
+
+Acked-by: Miklos Szeredi <mszeredi@redhat.com>
+
+> ---
+>  fs/fuse/dev.c    | 19 +++++++++++++++----
+>  fs/fuse/file.c   | 22 +++++++++++++++++-----
+>  fs/fuse/fuse_i.h |  4 ++++
+>  fs/fuse/inode.c  |  3 +++
+>  4 files changed, 39 insertions(+), 9 deletions(-)
+> 
+> diff --git a/fs/fuse/dev.c b/fs/fuse/dev.c
+> index ebb5e37455a0..a4f6f30d6d86 100644
+> --- a/fs/fuse/dev.c
+> +++ b/fs/fuse/dev.c
+> @@ -19,6 +19,7 @@
+>  #include <linux/pipe_fs_i.h>
+>  #include <linux/swap.h>
+>  #include <linux/splice.h>
+> +#include <linux/sched.h>
+>  
+>  MODULE_ALIAS_MISCDEV(FUSE_MINOR);
+>  MODULE_ALIAS("devname:fuse");
+> @@ -124,11 +125,11 @@ static void __fuse_put_request(struct fuse_req *req)
+>  	atomic_dec(&req->count);
+>  }
+>  
+> -static void fuse_req_init_context(struct fuse_req *req)
+> +static void fuse_req_init_context(struct fuse_conn *fc, struct fuse_req *req)
+>  {
+>  	req->in.h.uid = from_kuid_munged(&init_user_ns, current_fsuid());
+>  	req->in.h.gid = from_kgid_munged(&init_user_ns, current_fsgid());
+> -	req->in.h.pid = current->pid;
+> +	req->in.h.pid = pid_nr_ns(task_pid(current), fc->pid_ns);
+>  }
+>  
+>  void fuse_set_initialized(struct fuse_conn *fc)
+> @@ -181,10 +182,14 @@ static struct fuse_req *__fuse_get_req(struct fuse_conn *fc, unsigned npages,
+>  		goto out;
+>  	}
+>  
+> -	fuse_req_init_context(req);
+> +	fuse_req_init_context(fc, req);
+>  	__set_bit(FR_WAITING, &req->flags);
+>  	if (for_background)
+>  		__set_bit(FR_BACKGROUND, &req->flags);
+> +	if (req->in.h.pid == 0) {
+> +		fuse_put_request(fc, req);
+> +		return ERR_PTR(-EOVERFLOW);
+> +	}
+>  
+>  	return req;
+>  
+> @@ -274,7 +279,7 @@ struct fuse_req *fuse_get_req_nofail_nopages(struct fuse_conn *fc,
+>  	if (!req)
+>  		req = get_reserved_req(fc, file);
+>  
+> -	fuse_req_init_context(req);
+> +	fuse_req_init_context(fc, req);
+>  	__set_bit(FR_WAITING, &req->flags);
+>  	__clear_bit(FR_BACKGROUND, &req->flags);
+>  	return req;
+> @@ -1243,6 +1248,9 @@ static ssize_t fuse_dev_do_read(struct fuse_dev *fud, struct file *file,
+>  	struct fuse_in *in;
+>  	unsigned reqsize;
+>  
+> +	if (task_active_pid_ns(current) != fc->pid_ns)
+> +		return -EIO;
+> +
+>   restart:
+>  	spin_lock(&fiq->waitq.lock);
+>  	err = -EAGAIN;
+> @@ -1872,6 +1880,9 @@ static ssize_t fuse_dev_do_write(struct fuse_dev *fud,
+>  	struct fuse_req *req;
+>  	struct fuse_out_header oh;
+>  
+> +	if (task_active_pid_ns(current) != fc->pid_ns)
+> +		return -EIO;
+> +
+>  	if (nbytes < sizeof(struct fuse_out_header))
+>  		return -EINVAL;
+>  
+> diff --git a/fs/fuse/file.c b/fs/fuse/file.c
+> index e0faf8f2c868..a6c7484c94ee 100644
+> --- a/fs/fuse/file.c
+> +++ b/fs/fuse/file.c
+> @@ -2061,7 +2061,8 @@ static int fuse_direct_mmap(struct file *file, struct vm_area_struct *vma)
+>  	return generic_file_mmap(file, vma);
+>  }
+>  
+> -static int convert_fuse_file_lock(const struct fuse_file_lock *ffl,
+> +static int convert_fuse_file_lock(struct fuse_conn *fc,
+> +				  const struct fuse_file_lock *ffl,
+>  				  struct file_lock *fl)
+>  {
+>  	switch (ffl->type) {
+> @@ -2076,7 +2077,14 @@ static int convert_fuse_file_lock(const struct fuse_file_lock *ffl,
+>  
+>  		fl->fl_start = ffl->start;
+>  		fl->fl_end = ffl->end;
+> -		fl->fl_pid = ffl->pid;
+> +
+> +		/*
+> +		 * Convert pid into the caller's pid namespace. If the pid
+> +		 * does not map into the namespace fl_pid will get set to 0.
+> +		 */
+> +		rcu_read_lock();
+> +		fl->fl_pid = pid_vnr(find_pid_ns(ffl->pid, fc->pid_ns));
+> +		rcu_read_unlock();
+>  		break;
+>  
+>  	default:
+> @@ -2125,7 +2133,7 @@ static int fuse_getlk(struct file *file, struct file_lock *fl)
+>  	args.out.args[0].value = &outarg;
+>  	err = fuse_simple_request(fc, &args);
+>  	if (!err)
+> -		err = convert_fuse_file_lock(&outarg.lk, fl);
+> +		err = convert_fuse_file_lock(fc, &outarg.lk, fl);
+>  
+>  	return err;
+>  }
+> @@ -2137,7 +2145,8 @@ static int fuse_setlk(struct file *file, struct file_lock *fl, int flock)
+>  	FUSE_ARGS(args);
+>  	struct fuse_lk_in inarg;
+>  	int opcode = (fl->fl_flags & FL_SLEEP) ? FUSE_SETLKW : FUSE_SETLK;
+> -	pid_t pid = fl->fl_type != F_UNLCK ? current->tgid : 0;
+> +	struct pid *pid = fl->fl_type != F_UNLCK ? task_tgid(current) : NULL;
+> +	pid_t pid_nr = pid_nr_ns(pid, fc->pid_ns);
+>  	int err;
+>  
+>  	if (fl->fl_lmops && fl->fl_lmops->lm_grant) {
+> @@ -2149,7 +2158,10 @@ static int fuse_setlk(struct file *file, struct file_lock *fl, int flock)
+>  	if (fl->fl_flags & FL_CLOSE)
+>  		return 0;
+>  
+> -	fuse_lk_fill(&args, file, fl, opcode, pid, flock, &inarg);
+> +	if (pid && pid_nr == 0)
+> +		return -EOVERFLOW;
+> +
+> +	fuse_lk_fill(&args, file, fl, opcode, pid_nr, flock, &inarg);
+>  	err = fuse_simple_request(fc, &args);
+>  
+>  	/* locking is restartable */
+> diff --git a/fs/fuse/fuse_i.h b/fs/fuse/fuse_i.h
+> index 405113101db8..143b595197b6 100644
+> --- a/fs/fuse/fuse_i.h
+> +++ b/fs/fuse/fuse_i.h
+> @@ -22,6 +22,7 @@
+>  #include <linux/rbtree.h>
+>  #include <linux/poll.h>
+>  #include <linux/workqueue.h>
+> +#include <linux/pid_namespace.h>
+>  
+>  /** Max number of pages that can be used in a single read request */
+>  #define FUSE_MAX_PAGES_PER_REQ 32
+> @@ -456,6 +457,9 @@ struct fuse_conn {
+>  	/** The group id for this mount */
+>  	kgid_t group_id;
+>  
+> +	/** The pid namespace for this mount */
+> +	struct pid_namespace *pid_ns;
+> +
+>  	/** The fuse mount flags for this mount */
+>  	unsigned flags;
+>  
+> diff --git a/fs/fuse/inode.c b/fs/fuse/inode.c
+> index 2913db2a5b99..2f31874ea9db 100644
+> --- a/fs/fuse/inode.c
+> +++ b/fs/fuse/inode.c
+> @@ -20,6 +20,7 @@
+>  #include <linux/random.h>
+>  #include <linux/sched.h>
+>  #include <linux/exportfs.h>
+> +#include <linux/pid_namespace.h>
+>  
+>  MODULE_AUTHOR("Miklos Szeredi <miklos@szeredi.hu>");
+>  MODULE_DESCRIPTION("Filesystem in Userspace");
+> @@ -609,6 +610,7 @@ void fuse_conn_init(struct fuse_conn *fc)
+>  	fc->connected = 1;
+>  	fc->attr_version = 1;
+>  	get_random_bytes(&fc->scramble_key, sizeof(fc->scramble_key));
+> +	fc->pid_ns = get_pid_ns(task_active_pid_ns(current));
+>  }
+>  EXPORT_SYMBOL_GPL(fuse_conn_init);
+>  
+> @@ -617,6 +619,7 @@ void fuse_conn_put(struct fuse_conn *fc)
+>  	if (atomic_dec_and_test(&fc->count)) {
+>  		if (fc->destroy_req)
+>  			fuse_request_free(fc->destroy_req);
+> +		put_pid_ns(fc->pid_ns);
+>  		fc->release(fc);
+>  	}
+>  }
+> -- 
+> 1.9.1
+> 
