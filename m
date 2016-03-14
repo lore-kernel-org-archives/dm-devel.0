@@ -1,66 +1,31 @@
-From: Miklos Szeredi <miklos@szeredi.hu>
-Subject: Re: [PATCH RESEND v2 16/18] fuse: Support fuse filesystems outside of init_user_ns
-Date: Mon, 14 Mar 2016 21:58:43 +0100
-Message-ID: <CAJfpegvTuR-LZAVxeJAmojs=gcrM-t5dd-QyZM-bOYMYLRL6Dg@mail.gmail.com>
-References: <1451930639-94331-1-git-send-email-seth.forshee@canonical.com>
-	<1451930639-94331-17-git-send-email-seth.forshee@canonical.com>
-	<20160309112923.GF8655@tucsk>
-	<20160309141840.GC23399@ubuntu-xps13>
-	<CAJfpegv5JmB15yHpjYxVeOYdWWkoLMftr9-e_iS93Y_7m=t4Zw@mail.gmail.com>
-	<20160309152505.GA28779@ubuntu-hedt>
-	<CAJfpegv5KR_Hi-79a8oyb+R+tv9W3RYqy5pngUKSyauVNk2ScQ@mail.gmail.com>
-	<20160309170726.GB28779@ubuntu-hedt>
+From: Nikolay Borisov <n.borisov-/eCPMmvKun9pLGFMi4vTTA@public.gmane.org>
+Subject: Re: block: transfer source bio's cgroup tags to clone via bio_associate_blkcg()
+Date: Tue, 15 Mar 2016 00:08:27 +0200
+Message-ID: <CAJFSNy7i-Kp_bPYajdSzDAt9F6_HQJ=_TFgjWzhk16_W66at7A@mail.gmail.com>
+References: <56CDF283.9010802@windriver.com>
+	<56CEB1BC.4000005@kyup.com>
+	<20160225145314.GA20699@redhat.com>
+	<20160302160649.GB29826@mtj.duckdns.org>
+	<20160302175656.GA59991@redhat.com>
+	<56E6D3D3.4070104@kyup.com>
+	<56E6D95B.3030904@siteground.com>
+	<20160314194912.GA6975@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-bcache-owner@vger.kernel.org>
-In-Reply-To: <20160309170726.GB28779@ubuntu-hedt>
-Sender: linux-bcache-owner@vger.kernel.org
-To: Seth Forshee <seth.forshee@canonical.com>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>, fuse-devel <fuse-devel@lists.sourceforge.net>, LSM <linux-security-module@vger.kernel.org>, selinux@tycho.nsa.gov
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160314194912.GA6975-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Friesen <chris.friesen-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Wed, Mar 9, 2016 at 6:07 PM, Seth Forshee <seth.forshee@canonical.com> wrote:
-> On Wed, Mar 09, 2016 at 04:51:42PM +0100, Miklos Szeredi wrote:
->> On Wed, Mar 9, 2016 at 4:25 PM, Seth Forshee <seth.forshee@canonical.com> wrote:
->> > On Wed, Mar 09, 2016 at 03:48:22PM +0100, Miklos Szeredi wrote:
->>
->> >> Can't we use current_cred()->uid/gid? Or fsuid/fsgid maybe?
->> >
->> > That would be a departure from the current behavior in the !allow_other
->> > case for unprivileged users. Since those mounts are done by an suid
->> > helper all of those ids would be root in the userns, wouldn't they?
->>
->> Well, actually this is what the helper does:
->>
->>     sprintf(d, "fd=%i,rootmode=%o,user_id=%u,group_id=%u",
->>         fd, rootmode, getuid(), getgid());
 >
-> Sorry, I was thinking of euid. So this may not be a problem.
+> Great.
 >
->> So it just uses the current uid/gid.  Apparently no reason to do this
->> in userland, we could just as well set these in the kernel.  Except
->> for possible backward compatibility problems for things not using the
->> helper.
->>
->> BUT if the mount is unprivileged or it's a userns mount, or anything
->> previously not possible, then we are not constrained by the backward
->> compatibility issues, and can go with the saner solution.
->>
->> Does that not make sense?
->
-> But we generally do want backwards compatibility, and we want userspace
-> software to be able to expect the same behavior whether or not it's
-> running in a user namespaced container. Obviously we can't always have
-> things 100% identical, but we shouldn't break things unless we really
-> need to.
->
-> However it may be that this isn't actually going to break assumptions of
-> existing software like I had feared. My preference is still to not
-> change any userspace-visible behaviors since we never know what software
-> might have made assumptions based on those behaviors. But if you're
-> confident that it won't break anything I'm willing to give it a try.
+> Jens, can you pick up the patch in question ("[PATCH] block: transfer
+> source bio's cgroup tags to clone via bio_associate_blkcg()") that I
+> posted in this thread?
 
-I'm quite confident it won't make a difference.
-
-Thanks,
-Miklos
+And what about Vivek's patch of associating the source bio with the io
+context of the process issuing the io?
+Would that help in the DIO case?
