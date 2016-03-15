@@ -1,38 +1,43 @@
-From: Baolin Wang <baolin.wang@linaro.org>
-Subject: [PATCH v2 4/4] md: dm-crypt: Initialize the sector number for one request
-Date: Tue, 15 Mar 2016 15:48:02 +0800
-Message-ID: <db3291f8338ef47059c64b10d4510d506acaac3d.1458023699.git.baolin.wang@linaro.org>
-References: <cover.1458023695.git.baolin.wang@linaro.org>
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <cover.1458023695.git.baolin.wang@linaro.org>
-In-Reply-To: <cover.1458023695.git.baolin.wang@linaro.org>
-References: <cover.1458023695.git.baolin.wang@linaro.org>
-Sender: linux-crypto-owner@vger.kernel.org
-To: herbert@gondor.apana.org.au, davem@davemloft.net, agk@redhat.com, snitzer@redhat.com, axboe@fb.com, dm-devel@redhat.com
-Cc: akpm@linux-foundation.org, david.s.gordon@intel.com, thomas.lendacky@amd.com, robert.jarzmik@free.fr, yamada.masahiro@socionext.com, smueller@chronox.de, tadeusz.struk@intel.com, standby24x7@gmail.com, shli@kernel.org, broonie@kernel.org, linus.walleij@linaro.org, arnd@arndb.de, baolin.wang@linaro.org, linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org, linux-raid@vger.kernel.org
+From: Thanos Makatos <thanos.makatos@onapp.com>
+Subject: Re: [PATCH] thin_dump: added --device-id, --skip-mappings,
+ and new output --format's
+Date: Tue, 15 Mar 2016 10:59:15 +0000
+Message-ID: <CAM2wQBvGUs=Co=b89Nw_TYN_qBfCZj-6S7sHdinDNHPm_ZS1PA@mail.gmail.com>
+References: <alpine.LRH.2.11.1603150104370.19675@mail.ewheeler.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.11.1603150104370.19675@mail.ewheeler.net>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Cc: device-mapper development <dm-devel@redhat.com>, Joe Thornber <thornber@redhat.com>
 List-Id: dm-devel.ids
 
-If the crypto engine can support the bulk mode, that means the contiguous
-requests from one block can be merged into one request to be handled by
-crypto engine. If so, the crypto engine need the sector number of one request
-to do merging action.
+On 15 March 2016 at 01:45, Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
+> Hi Joe,
+>
+> Please review the patch below when you have a moment.  I am interested in
+> your feedback, and also interested in having this functionality merged
+> upstream.  This was written against thin-provisioning-tools.git tag
+> v0.5.6.
+>
+> We use thin_dump on live dm-thin metadata snapshots all the time.  In our
+> case, we want to dump the XML for new (snapshot) volumes instead of
+> dumping the entire 16gb metadata device (37.8% used) which takes ~20-30
+> minutes instead of ~5 seconds for a single volume with --device-id.
 
-Signed-off-by: Baolin Wang <baolin.wang@linaro.org>
----
- drivers/md/dm-crypt.c |    1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 3147c8d..9e2dbfd 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -866,6 +866,7 @@ static int crypt_convert_block(struct crypt_config *cc,
- 			return r;
- 	}
- 
-+	req->sector = ctx->cc_sector;
- 	ablkcipher_request_set_crypt(req, &dmreq->sg_in, &dmreq->sg_out,
- 				     1 << SECTOR_SHIFT, iv);
- 
--- 
-1.7.9.5
+I'm interested in extracting the mappings of a particular device, too.
+In fact, I've implemented this (along with extracting the mappings in
+binary format) and have only recently opened a PR:
+https://github.com/jthornber/thin-provisioning-tools/pull/49. It seems
+that we've replicated some work here, I'm not sure whether we're
+supposed to send patches to this list or open PR on github.
