@@ -1,13 +1,11 @@
 From: Andy Grover <agrover@redhat.com>
-Subject: [PATCH 1/5] dm: Do not export dm_send_uevents
-Date: Wed, 16 Mar 2016 16:27:43 -0700
-Message-ID: <1458170867-429-2-git-send-email-agrover@redhat.com>
-References: <1458170867-429-1-git-send-email-agrover@redhat.com>
+Subject: [PATCH 0/5] Use uevent for thin pool events
+Date: Wed, 16 Mar 2016 16:27:42 -0700
+Message-ID: <1458170867-429-1-git-send-email-agrover@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1458170867-429-1-git-send-email-agrover@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,25 +18,30 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Since dm-uevent.c (if CONFIG_DM_UEVENT) is part of the same module as where
-dm_sent_uevents is called, it does not need to be exported.
+uevents both let us attach additional info to the event, and also
+allow interested user processes to receive them without having to
+create and manage threads to sit in DEV_WAIT ioctls for each target
+we're interested in.
 
-Signed-off-by: Andy Grover <agrover@redhat.com>
----
- drivers/md/dm-uevent.c | 1 -
- 1 file changed, 1 deletion(-)
+dm-mpath already supports generating uevents. This patchset
+generalizes this code a little to allow another target to also
+generate uevents, dm-thin, as a first step for what we might like to
+do for all targets' events. DEV_WAIT ioctl support is unchanged.
 
-diff --git a/drivers/md/dm-uevent.c b/drivers/md/dm-uevent.c
-index 8efe033..2d5f858 100644
---- a/drivers/md/dm-uevent.c
-+++ b/drivers/md/dm-uevent.c
-@@ -169,7 +169,6 @@ uevent_free:
- 		dm_uevent_free(event);
- 	}
- }
--EXPORT_SYMBOL_GPL(dm_send_uevents);
- 
- /**
-  * dm_path_uevent - called to create a new path event and queue it
+Andy Grover (5):
+  dm: Do not export dm_send_uevents
+  dm: Move multipath-specific stuff out of dm-uevent.c
+  dm: Inline dm_build_path_uevent into dm_path_uevent
+  dm: Add uevent support for dm-thin
+  dm: Update dm-uevent.txt
+
+ Documentation/device-mapper/dm-uevent.txt | 48 ++++++++++++++++---
+ drivers/md/dm-mpath.c                     | 56 +++++++++++++++++++++++
+ drivers/md/dm-thin.c                      | 18 ++++++++
+ drivers/md/dm-uevent.c                    | 76 +++----------------------------
+ drivers/md/dm-uevent.h                    | 30 +++++++++---
+ drivers/md/dm.c                           |  1 +
+ 6 files changed, 147 insertions(+), 82 deletions(-)
+
 -- 
 2.5.0
