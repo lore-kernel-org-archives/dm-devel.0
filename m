@@ -1,8 +1,7 @@
 From: Andy Grover <agrover@redhat.com>
-Subject: [PATCH 3/5] dm: Inline dm_build_path_uevent into
-	dm_path_uevent
-Date: Wed, 16 Mar 2016 16:27:45 -0700
-Message-ID: <1458170867-429-4-git-send-email-agrover@redhat.com>
+Subject: [PATCH 5/5] dm: Update dm-uevent.txt
+Date: Wed, 16 Mar 2016 16:27:47 -0700
+Message-ID: <1458170867-429-6-git-send-email-agrover@redhat.com>
 References: <1458170867-429-1-git-send-email-agrover@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,93 +20,76 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Since it's no longer an API boundary we can consolidate these two
-functions.
+Document the current dm uevent API, as modified by this patchset.
 
 Signed-off-by: Andy Grover <agrover@redhat.com>
 ---
- drivers/md/dm-mpath.c | 59 +++++++++++++++++++--------------------------------
- 1 file changed, 22 insertions(+), 37 deletions(-)
+ Documentation/device-mapper/dm-uevent.txt | 48 ++++++++++++++++++++++++++-----
+ 1 file changed, 41 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index a47b5e0..98c90d3 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -977,38 +977,6 @@ static void multipath_dtr(struct dm_target *ti)
- 	free_multipath(m);
- }
+diff --git a/Documentation/device-mapper/dm-uevent.txt b/Documentation/device-mapper/dm-uevent.txt
+index 07edbd85..ee6610e 100644
+--- a/Documentation/device-mapper/dm-uevent.txt
++++ b/Documentation/device-mapper/dm-uevent.txt
+@@ -1,18 +1,52 @@
+ The device-mapper uevent code adds the capability to device-mapper to create
+ and send kobject uevents (uevents).  Previously device-mapper events were only
+-available through the ioctl interface.  The advantage of the uevents interface
+-is the event contains environment attributes providing increased context for
++available through the ioctl interface.  The advantages of the uevents interface
++are the event contains environment attributes providing increased context for
+ the event avoiding the need to query the state of the device-mapper device after
+-the event is received.
++the event is received, and uevents are poll()-able in userspace, whereas the
++ioctl event interface is not.
  
--static struct dm_uevent *dm_build_path_uevent(struct mapped_device *md,
--					      struct dm_target *ti,
--					      enum kobject_action action,
--					      const char *dm_action,
--					      const char *path,
--					      unsigned nr_valid_paths)
--{
--	struct dm_uevent *event;
--
--	event = dm_build_uevent(md, ti, action, dm_action);
--	if (IS_ERR(event))
--		return event;
--
--	if (add_uevent_var(&event->ku_env, "DM_PATH=%s", path)) {
--		DMERR("%s: add_uevent_var() for DM_PATH failed", __func__);
--		goto err_add;
--	}
--
--	if (add_uevent_var(&event->ku_env, "DM_NR_VALID_PATHS=%d",
--			   nr_valid_paths)) {
--		DMERR("%s: add_uevent_var() for DM_NR_VALID_PATHS failed",
--		      __func__);
--		goto err_add;
--	}
--
--	return event;
--
--err_add:
--	dm_uevent_free(event);
--	return ERR_PTR(-ENOMEM);
--}
--
- /**
-  * dm_path_uevent - called to create a new path event and queue it
-  *
-@@ -1029,14 +997,31 @@ static void dm_path_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
- 		return;
- 	}
+-There are two functions currently for device-mapper events.  The first function
+-listed creates the event and the second function sends the event(s).
++There are five functions DM targets should use.
  
--	event = dm_build_path_uevent(md, ti,
--				     _dm_mpath_uevent_type_names[event_type].action,
--				     _dm_mpath_uevent_type_names[event_type].name,
--				     path, nr_valid_paths);
--	if (IS_ERR(event))
-+	event = dm_build_uevent(md,
-+				ti,
-+				_dm_mpath_uevent_type_names[event_type].action,
-+				_dm_mpath_uevent_type_names[event_type].name);
-+	if (IS_ERR(event)) {
-+		DMERR("%s: dm_build_uevent() failed", __func__);
- 		return;
-+	}
+-void dm_path_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
+-                    const char *path, unsigned nr_valid_paths)
++struct dm_uevent *dm_build_uevent(struct mapped_device *md,
++					 struct dm_target *ti,
++					 enum kobject_action action,
++					 const char *dm_action)
 +
-+	if (add_uevent_var(&event->ku_env, "DM_PATH=%s", path)) {
-+		DMERR("%s: add_uevent_var() for DM_PATH failed", __func__);
-+		goto err;
-+	}
++Construct a dm uevent.
 +
-+	if (add_uevent_var(&event->ku_env, "DM_NR_VALID_PATHS=%d",
-+			   nr_valid_paths)) {
-+		DMERR("%s: add_uevent_var() for DM_NR_VALID_PATHS failed",
-+		      __func__);
-+		goto err;
-+	}
++int add_uevent_var(struct kobj_uevent_env *env, const char *format, ...)
++
++Optionally add event-specific data to the generated uevent. e.g. dm-mpath's
++PATH_FAILED and PATH_REINSTATED uevents add path and number-of-remaining-paths
++vars.
++
++void dm_uevent_add(struct mapped_device *md, struct list_head *elist)
++
++Hand off the uevent to the device's list of pending events.
++
++void dm_uevent_free(struct dm_uevent *event)
++
++Something went wrong, free the uevent instead of queueing it.
++
++void dm_table_event(struct dm_table *t)
++
++Triggers sending of queued uevents as well as waking up processes waiting on
++the ioctl.
++
++
++The device-mapper uevent code also supplies three functions for device-mapper core
++to call:
++
++int dm_uevent_init(void)
++void dm_uevent_exit(void)
++
++Setup and teardown.
  
- 	dm_uevent_add(md, &event->elist);
-+	return;
-+err:
-+	dm_uevent_free(event);
- }
+ void dm_send_uevents(struct list_head *events, struct kobject *kobj)
  
- /*
++Actually send the uevents (called indirectly from dm_table_event, above).
++
+ 
+ The variables added to the uevent environment are:
+ 
 -- 
 2.5.0
