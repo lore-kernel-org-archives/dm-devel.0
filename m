@@ -1,7 +1,8 @@
 From: Andy Grover <agrover@redhat.com>
-Subject: [PATCH 4/5] dm: Add uevent support for dm-thin
-Date: Wed, 16 Mar 2016 16:27:46 -0700
-Message-ID: <1458170867-429-5-git-send-email-agrover@redhat.com>
+Subject: [PATCH 2/5] dm: Move multipath-specific stuff out of
+	dm-uevent.c
+Date: Wed, 16 Mar 2016 16:27:44 -0700
+Message-ID: <1458170867-429-3-git-send-email-agrover@redhat.com>
 References: <1458170867-429-1-git-send-email-agrover@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,70 +21,296 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Create a uevent before calling dm_table_event() when either data or
-metadata low water are hit, as well as when pool mode changes.
+There's a little bit of mpath-specific stuff that is in dm-uevent.c,
+because all current uevents want to attach DM_PATH and DM_NR_VALID_PATHS
+variables to the uevent. Makes sense since all currently defined DM
+uevents are for dm-mpath, but is not true for future uevents. Move the
+addition of these to dm-mpath.c and expose a few lower-level functions,
+dm_build_uevent, dm_uevent_add and dm_uevent_free, for other dm targets to
+build their own uevents.
 
 Signed-off-by: Andy Grover <agrover@redhat.com>
 ---
- drivers/md/dm-thin.c | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
+ drivers/md/dm-mpath.c  | 71 +++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-uevent.c | 75 +++++---------------------------------------------
+ drivers/md/dm-uevent.h | 30 ++++++++++++++++----
+ drivers/md/dm.c        |  1 +
+ 4 files changed, 103 insertions(+), 74 deletions(-)
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 92237b6..b9fa18f 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -7,6 +7,7 @@
- #include "dm-thin-metadata.h"
- #include "dm-bio-prison.h"
- #include "dm.h"
-+#include "dm-uevent.h"
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 677ba22..a47b5e0 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -29,6 +29,15 @@
+ #define DM_PG_INIT_DELAY_MSECS 2000
+ #define DM_PG_INIT_DELAY_DEFAULT ((unsigned) -1)
  
- #include <linux/device-mapper.h>
- #include <linux/dm-io.h>
-@@ -1345,6 +1346,20 @@ static int commit(struct pool *pool)
- 	return r;
++static const struct {
++	enum dm_uevent_type type;
++	enum kobject_action action;
++	char *name;
++} _dm_mpath_uevent_type_names[] = {
++	{DM_UEVENT_PATH_FAILED, KOBJ_CHANGE, "PATH_FAILED"},
++	{DM_UEVENT_PATH_REINSTATED, KOBJ_CHANGE, "PATH_REINSTATED"},
++};
++
+ /* Path properties */
+ struct pgpath {
+ 	struct list_head list;
+@@ -968,6 +977,68 @@ static void multipath_dtr(struct dm_target *ti)
+ 	free_multipath(m);
  }
  
-+static void add_thin_uevent(struct dm_target *ti, char *name)
++static struct dm_uevent *dm_build_path_uevent(struct mapped_device *md,
++					      struct dm_target *ti,
++					      enum kobject_action action,
++					      const char *dm_action,
++					      const char *path,
++					      unsigned nr_valid_paths)
++{
++	struct dm_uevent *event;
++
++	event = dm_build_uevent(md, ti, action, dm_action);
++	if (IS_ERR(event))
++		return event;
++
++	if (add_uevent_var(&event->ku_env, "DM_PATH=%s", path)) {
++		DMERR("%s: add_uevent_var() for DM_PATH failed", __func__);
++		goto err_add;
++	}
++
++	if (add_uevent_var(&event->ku_env, "DM_NR_VALID_PATHS=%d",
++			   nr_valid_paths)) {
++		DMERR("%s: add_uevent_var() for DM_NR_VALID_PATHS failed",
++		      __func__);
++		goto err_add;
++	}
++
++	return event;
++
++err_add:
++	dm_uevent_free(event);
++	return ERR_PTR(-ENOMEM);
++}
++
++/**
++ * dm_path_uevent - called to create a new path event and queue it
++ *
++ * @event_type:	path event type enum
++ * @ti:			pointer to a dm_target
++ * @path:		string containing pathname
++ * @nr_valid_paths:	number of valid paths remaining
++ *
++ */
++static void dm_path_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
++		   const char *path, unsigned nr_valid_paths)
 +{
 +	struct mapped_device *md = dm_table_get_md(ti->table);
 +	struct dm_uevent *event;
 +
-+	event = dm_build_uevent(md, ti, KOBJ_CHANGE, name);
-+	if (IS_ERR(event)) {
-+		DMERR("%s: dm_build_uevent() failed", __func__);
++	if (event_type >= ARRAY_SIZE(_dm_mpath_uevent_type_names)) {
++		DMERR("%s: Invalid event_type %d", __func__, event_type);
 +		return;
 +	}
++
++	event = dm_build_path_uevent(md, ti,
++				     _dm_mpath_uevent_type_names[event_type].action,
++				     _dm_mpath_uevent_type_names[event_type].name,
++				     path, nr_valid_paths);
++	if (IS_ERR(event))
++		return;
 +
 +	dm_uevent_add(md, &event->elist);
 +}
 +
- static void check_low_water_mark(struct pool *pool, dm_block_t free_blocks)
+ /*
+  * Take a path out of use.
+  */
+diff --git a/drivers/md/dm-uevent.c b/drivers/md/dm-uevent.c
+index 2d5f858..f7089dd 100644
+--- a/drivers/md/dm-uevent.c
++++ b/drivers/md/dm-uevent.c
+@@ -29,30 +29,13 @@
+ 
+ #define DM_MSG_PREFIX "uevent"
+ 
+-static const struct {
+-	enum dm_uevent_type type;
+-	enum kobject_action action;
+-	char *name;
+-} _dm_uevent_type_names[] = {
+-	{DM_UEVENT_PATH_FAILED, KOBJ_CHANGE, "PATH_FAILED"},
+-	{DM_UEVENT_PATH_REINSTATED, KOBJ_CHANGE, "PATH_REINSTATED"},
+-};
+-
+ static struct kmem_cache *_dm_event_cache;
+ 
+-struct dm_uevent {
+-	struct mapped_device *md;
+-	enum kobject_action action;
+-	struct kobj_uevent_env ku_env;
+-	struct list_head elist;
+-	char name[DM_NAME_LEN];
+-	char uuid[DM_UUID_LEN];
+-};
+-
+-static void dm_uevent_free(struct dm_uevent *event)
++void dm_uevent_free(struct dm_uevent *event)
  {
- 	unsigned long flags;
-@@ -1355,6 +1370,7 @@ static void check_low_water_mark(struct pool *pool, dm_block_t free_blocks)
- 		spin_lock_irqsave(&pool->lock, flags);
- 		pool->low_water_triggered = true;
- 		spin_unlock_irqrestore(&pool->lock, flags);
-+		add_thin_uevent(pool->ti, "THIN_LOW_WATER_DATA");
- 		dm_table_event(pool->ti->table);
+ 	kmem_cache_free(_dm_event_cache, event);
+ }
++EXPORT_SYMBOL_GPL(dm_uevent_free);
+ 
+ static struct dm_uevent *dm_uevent_alloc(struct mapped_device *md)
+ {
+@@ -68,12 +51,10 @@ static struct dm_uevent *dm_uevent_alloc(struct mapped_device *md)
+ 	return event;
+ }
+ 
+-static struct dm_uevent *dm_build_path_uevent(struct mapped_device *md,
+-					      struct dm_target *ti,
+-					      enum kobject_action action,
+-					      const char *dm_action,
+-					      const char *path,
+-					      unsigned nr_valid_paths)
++struct dm_uevent *dm_build_uevent(struct mapped_device *md,
++					 struct dm_target *ti,
++					 enum kobject_action action,
++					 const char *dm_action)
+ {
+ 	struct dm_uevent *event;
+ 
+@@ -104,18 +85,6 @@ static struct dm_uevent *dm_build_path_uevent(struct mapped_device *md,
+ 		goto err_add;
+ 	}
+ 
+-	if (add_uevent_var(&event->ku_env, "DM_PATH=%s", path)) {
+-		DMERR("%s: add_uevent_var() for DM_PATH failed", __func__);
+-		goto err_add;
+-	}
+-
+-	if (add_uevent_var(&event->ku_env, "DM_NR_VALID_PATHS=%d",
+-			   nr_valid_paths)) {
+-		DMERR("%s: add_uevent_var() for DM_NR_VALID_PATHS failed",
+-		      __func__);
+-		goto err_add;
+-	}
+-
+ 	return event;
+ 
+ err_add:
+@@ -123,6 +92,7 @@ err_add:
+ err_nomem:
+ 	return ERR_PTR(-ENOMEM);
+ }
++EXPORT_SYMBOL_GPL(dm_build_uevent);
+ 
+ /**
+  * dm_send_uevents - send uevents for given list
+@@ -170,37 +140,6 @@ uevent_free:
  	}
  }
-@@ -2331,6 +2347,7 @@ static enum pool_mode get_pool_mode(struct pool *pool)
  
- static void notify_of_pool_mode_change(struct pool *pool, const char *new_mode)
+-/**
+- * dm_path_uevent - called to create a new path event and queue it
+- *
+- * @event_type:	path event type enum
+- * @ti:			pointer to a dm_target
+- * @path:		string containing pathname
+- * @nr_valid_paths:	number of valid paths remaining
+- *
+- */
+-void dm_path_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
+-		   const char *path, unsigned nr_valid_paths)
+-{
+-	struct mapped_device *md = dm_table_get_md(ti->table);
+-	struct dm_uevent *event;
+-
+-	if (event_type >= ARRAY_SIZE(_dm_uevent_type_names)) {
+-		DMERR("%s: Invalid event_type %d", __func__, event_type);
+-		return;
+-	}
+-
+-	event = dm_build_path_uevent(md, ti,
+-				     _dm_uevent_type_names[event_type].action,
+-				     _dm_uevent_type_names[event_type].name,
+-				     path, nr_valid_paths);
+-	if (IS_ERR(event))
+-		return;
+-
+-	dm_uevent_add(md, &event->elist);
+-}
+-EXPORT_SYMBOL_GPL(dm_path_uevent);
+-
+ int dm_uevent_init(void)
  {
-+	add_thin_uevent(pool->ti, "THIN_POOL_MODE");
- 	dm_table_event(pool->ti->table);
- 	DMINFO("%s: switching pool to %s mode",
- 	       dm_device_name(pool->pool_md), new_mode);
-@@ -3026,6 +3043,7 @@ static void metadata_low_callback(void *context)
- 	DMWARN("%s: reached low water mark for metadata device: sending event.",
- 	       dm_device_name(pool->pool_md));
+ 	_dm_event_cache = KMEM_CACHE(dm_uevent, 0);
+diff --git a/drivers/md/dm-uevent.h b/drivers/md/dm-uevent.h
+index 2eccc8b..4ff2ad1 100644
+--- a/drivers/md/dm-uevent.h
++++ b/drivers/md/dm-uevent.h
+@@ -21,6 +21,17 @@
+ #ifndef DM_UEVENT_H
+ #define DM_UEVENT_H
  
-+	add_thin_uevent(pool->ti, "THIN_LOW_WATER_METADATA");
- 	dm_table_event(pool->ti->table);
++#include <linux/dm-ioctl.h> // for DM_*_LEN
++
++struct dm_uevent {
++	struct mapped_device *md;
++	enum kobject_action action;
++	struct kobj_uevent_env ku_env;
++	struct list_head elist;
++	char name[DM_NAME_LEN];
++	char uuid[DM_UUID_LEN];
++};
++
+ enum dm_uevent_type {
+ 	DM_UEVENT_PATH_FAILED,
+ 	DM_UEVENT_PATH_REINSTATED,
+@@ -31,9 +42,11 @@ enum dm_uevent_type {
+ extern int dm_uevent_init(void);
+ extern void dm_uevent_exit(void);
+ extern void dm_send_uevents(struct list_head *events, struct kobject *kobj);
+-extern void dm_path_uevent(enum dm_uevent_type event_type,
+-			   struct dm_target *ti, const char *path,
+-			   unsigned nr_valid_paths);
++struct dm_uevent *dm_build_uevent(struct mapped_device *md,
++					 struct dm_target *ti,
++					 enum kobject_action action,
++					 const char *dm_action);
++void dm_uevent_free(struct dm_uevent *event);
+ 
+ #else
+ 
+@@ -48,9 +61,14 @@ static inline void dm_send_uevents(struct list_head *events,
+ 				   struct kobject *kobj)
+ {
+ }
+-static inline void dm_path_uevent(enum dm_uevent_type event_type,
+-				  struct dm_target *ti, const char *path,
+-				  unsigned nr_valid_paths)
++static inline struct dm_uevent *dm_build_uevent(struct mapped_device *md,
++						struct dm_target *ti,
++						enum kobject_action action,
++						const char *dm_action)
++{
++	return ERR_PTR(-ENOMEM);
++}
++static void dm_uevent_free(struct dm_uevent *event)
+ {
  }
  
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index be49057..4c7f2c5 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -3473,6 +3473,7 @@ void dm_uevent_add(struct mapped_device *md, struct list_head *elist)
+ 	list_add(elist, &md->uevent_list);
+ 	spin_unlock_irqrestore(&md->uevent_lock, flags);
+ }
++EXPORT_SYMBOL_GPL(dm_uevent_add);
+ 
+ /*
+  * The gendisk is only valid as long as you have a reference
 -- 
 2.5.0
