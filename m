@@ -1,266 +1,149 @@
 From: Brian Foster <bfoster@redhat.com>
-Subject: [RFC PATCH 3/9] dm thin: add methods to set and get reserved space
-Date: Thu, 17 Mar 2016 10:30:31 -0400
-Message-ID: <1458225037-24155-4-git-send-email-bfoster@redhat.com>
-References: <1458225037-24155-1-git-send-email-bfoster@redhat.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1458225037-24155-1-git-send-email-bfoster@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Subject: [RFC PATCH 0/9] dm-thin/xfs: prototype a block reservation allocation
+	model
+Date: Thu, 17 Mar 2016 10:30:28 -0400
+Message-ID: <1458225037-24155-1-git-send-email-bfoster@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
 To: xfs@oss.sgi.com
-Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Joe Thornber <ejt@redhat.com>
+Hi all,
 
-Experimental reserve interface for XFS guys to play with.
+This is a proof-of-concept of a block reservation allocation model
+between XFS and dm-thin. The purpose is to create a mechanism by which
+the filesystem can determine an underlying thin volume is out of space
+and opt to return -ENOSPC to userspace rather than waiting until the
+volume is driven out of space (and deactivated or transitioned
+read-only). The idea, in principle, is to use a similar reservation
+model for thin pool blocks as the filesystem does today for delayed
+allocation blocks and to prevent similar risk of overprovisioning of fs
+blocks.
 
-I have big reservations (no pun intended) about this patch.
+This idea was concocted a while back during some discussions around how
+to provide a more user friendly out of space condition to users of
+filesystems on top of thin devices. At the moment, we (XFS) write to the
+underlying volume until it runs out of space and transitions to
+read-only. The administrator is responsible to prevent or recover from
+this condition via auto provisioning and/or monitoring for low watermark
+notifications. With a reservation model, the filesytem returns -ENOSPC
+at write time when the underlying pool is out of space and operation
+otherwise continues (e.g., space can be freed from the fs) as if the fs
+itself were out of space.
 
-Not-Signed-off-by: Joe Thornber <ejt@redhat.com>
-Not-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-thin.c | 142 +++++++++++++++++++++++++++++++++++++++++++++++----
- 1 file changed, 132 insertions(+), 10 deletions(-)
+Joe and Mike were kind enough to hack together a dm block reservation
+mechanism to help us experiment further. I slightly modified and hacked
+in an additional provision call based on their code, and then hacked up
+an integration with the existing XFS resource reservation mechanism. I
+think the results are slightly encouraging, at least in that the basic
+buffered write mechanism works as expected without too much inefficiency
+due to the over-reservation.
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 92237b6..31d36da 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -271,6 +271,8 @@ struct pool {
- 	process_mapping_fn process_prepared_discard;
- 
- 	struct dm_bio_prison_cell **cell_sort_array;
-+
-+	dm_block_t reserve_count;
- };
- 
- static enum pool_mode get_pool_mode(struct pool *pool);
-@@ -318,6 +320,8 @@ struct thin_c {
- 	 */
- 	atomic_t refcount;
- 	struct completion can_destroy;
-+
-+	dm_block_t reserve_count;
- };
- 
- /*----------------------------------------------------------------*/
-@@ -1359,24 +1363,19 @@ static void check_low_water_mark(struct pool *pool, dm_block_t free_blocks)
- 	}
- }
- 
--static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
-+static int get_free_blocks(struct pool *pool, dm_block_t *free_blocks)
- {
- 	int r;
--	dm_block_t free_blocks;
--	struct pool *pool = tc->pool;
--
--	if (WARN_ON(get_pool_mode(pool) != PM_WRITE))
--		return -EINVAL;
- 
--	r = dm_pool_get_free_block_count(pool->pmd, &free_blocks);
-+	r = dm_pool_get_free_block_count(pool->pmd, free_blocks);
- 	if (r) {
- 		metadata_operation_failed(pool, "dm_pool_get_free_block_count", r);
- 		return r;
- 	}
- 
--	check_low_water_mark(pool, free_blocks);
-+	check_low_water_mark(pool, *free_blocks);
- 
--	if (!free_blocks) {
-+	if (!*free_blocks) {
- 		/*
- 		 * Try to commit to see if that will free up some
- 		 * more space.
-@@ -1385,7 +1384,7 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
- 		if (r)
- 			return r;
- 
--		r = dm_pool_get_free_block_count(pool->pmd, &free_blocks);
-+		r = dm_pool_get_free_block_count(pool->pmd, free_blocks);
- 		if (r) {
- 			metadata_operation_failed(pool, "dm_pool_get_free_block_count", r);
- 			return r;
-@@ -1397,6 +1396,78 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
- 		}
- 	}
- 
-+	return r;
-+}
-+
-+/*
-+ * Returns true iff either:
-+ * i) decrement succeeded (ie. there was reserve left)
-+ * ii) there is extra space in the pool
-+ */
-+static bool dec_reserve_count(struct thin_c *tc, dm_block_t free_blocks)
-+{
-+	bool r = false;
-+	unsigned long flags;
-+
-+	if (!free_blocks)
-+		return false;
-+
-+	spin_lock_irqsave(&tc->pool->lock, flags);
-+	if (tc->reserve_count > 0) {
-+		tc->reserve_count--;
-+		tc->pool->reserve_count--;
-+		r = true;
-+	} else {
-+		if (free_blocks > tc->pool->reserve_count)
-+			r = true;
-+	}
-+	spin_unlock_irqrestore(&tc->pool->lock, flags);
-+
-+	return r;
-+}
-+
-+static int set_reserve_count(struct thin_c *tc, dm_block_t count)
-+{
-+	int r;
-+	dm_block_t free_blocks, delta;
-+	unsigned long flags;
-+
-+	r = get_free_blocks(tc->pool, &free_blocks);
-+	if (r)
-+		return r;
-+
-+	spin_lock_irqsave(&tc->pool->lock, flags);
-+	if (count <= tc->reserve_count)
-+		goto out_unlock; /* nothing to do */
-+	delta = count - tc->reserve_count;
-+	if (tc->pool->reserve_count + delta > free_blocks)
-+		r = -ENOSPC;
-+	else {
-+		tc->reserve_count = count;
-+		tc->pool->reserve_count += delta;
-+	}
-+out_unlock:
-+	spin_unlock_irqrestore(&tc->pool->lock, flags);
-+
-+	return r;
-+}
-+
-+static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
-+{
-+	int r;
-+	dm_block_t free_blocks;
-+	struct pool *pool = tc->pool;
-+
-+	if (WARN_ON(get_pool_mode(pool) != PM_WRITE))
-+		return -EINVAL;
-+
-+	r = get_free_blocks(tc->pool, &free_blocks);
-+	if (r)
-+		return r;
-+
-+	if (!dec_reserve_count(tc, free_blocks))
-+		return -ENOSPC;
-+
- 	r = dm_pool_alloc_data_block(pool->pmd, result);
- 	if (r) {
- 		metadata_operation_failed(pool, "dm_pool_alloc_data_block", r);
-@@ -2880,6 +2951,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
- 	pool->last_commit_jiffies = jiffies;
- 	pool->pool_md = pool_md;
- 	pool->md_dev = metadata_dev;
-+	pool->reserve_count = 0;
- 	__pool_table_insert(pool);
- 
- 	return pool;
-@@ -3895,6 +3967,19 @@ static void pool_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 	 */
- }
- 
-+static int pool_get_reserved_space(struct dm_target *ti, sector_t *nr_sects)
-+{
-+	unsigned long flags;
-+	struct pool_c *pt = ti->private;
-+	struct pool *pool = pt->pool;
-+
-+	spin_lock_irqsave(&pool->lock, flags);
-+	*nr_sects = pool->reserve_count * pool->sectors_per_block;
-+	spin_unlock_irqrestore(&pool->lock, flags);
-+
-+	return 0;
-+}
-+
- static struct target_type pool_target = {
- 	.name = "thin-pool",
- 	.features = DM_TARGET_SINGLETON | DM_TARGET_ALWAYS_WRITEABLE |
-@@ -3913,6 +3998,7 @@ static struct target_type pool_target = {
- 	.status = pool_status,
- 	.iterate_devices = pool_iterate_devices,
- 	.io_hints = pool_io_hints,
-+	.get_reserved_space = pool_get_reserved_space,
- };
- 
- /*----------------------------------------------------------------
-@@ -3936,6 +4022,7 @@ static void thin_dtr(struct dm_target *ti)
- 
- 	spin_lock_irqsave(&tc->pool->lock, flags);
- 	list_del_rcu(&tc->list);
-+	tc->pool->reserve_count -= tc->reserve_count;
- 	spin_unlock_irqrestore(&tc->pool->lock, flags);
- 	synchronize_rcu();
- 
-@@ -4074,6 +4161,7 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	init_completion(&tc->can_destroy);
- 	list_add_tail_rcu(&tc->list, &tc->pool->active_thins);
- 	spin_unlock_irqrestore(&tc->pool->lock, flags);
-+	tc->reserve_count = 0;
- 	/*
- 	 * This synchronize_rcu() call is needed here otherwise we risk a
- 	 * wake_worker() call finding no bios to process (because the newly
-@@ -4271,6 +4359,38 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 	limits->max_discard_sectors = 2048 * 1024 * 16; /* 16G */
- }
- 
-+static int thin_reserve_space(struct dm_target *ti, sector_t nr_sects)
-+{
-+	struct thin_c *tc = ti->private;
-+	struct pool *pool = tc->pool;
-+	sector_t blocks;
-+
-+	/*
-+	 * @nr_sects must always be a factor of the pool's blocksize;
-+	 * upper layers can rely on the bdev's minimum_io_size for this.
-+	 */
-+	if (!nr_sects || !is_factor(nr_sects, pool->sectors_per_block))
-+		return -EINVAL;
-+
-+	blocks = nr_sects;
-+	(void) sector_div(blocks, pool->sectors_per_block);
-+
-+	return set_reserve_count(tc, blocks);
-+}
-+
-+static int thin_get_reserved_space(struct dm_target *ti, sector_t *nr_sects)
-+{
-+	unsigned long flags;
-+	struct thin_c *tc = ti->private;
-+	struct pool *pool = tc->pool;
-+
-+	spin_lock_irqsave(&tc->pool->lock, flags);
-+	*nr_sects = tc->reserve_count * pool->sectors_per_block;
-+	spin_unlock_irqrestore(&tc->pool->lock, flags);
-+
-+	return 0;
-+}
-+
- static struct target_type thin_target = {
- 	.name = "thin",
- 	.version = {1, 18, 0},
-@@ -4285,6 +4405,8 @@ static struct target_type thin_target = {
- 	.status = thin_status,
- 	.iterate_devices = thin_iterate_devices,
- 	.io_hints = thin_io_hints,
-+	.reserve_space = thin_reserve_space,
-+	.get_reserved_space = thin_get_reserved_space,
- };
- 
- /*----------------------------------------------------------------*/
+There are still flaws and tradeoffs to this approach, of course. The
+current implementation uses a worst case reservation model that assumes
+every unallocated filesystem block requires a new dm-thin block
+allocation. With dm-thin block sizes on the order of 256k-1MB for larger
+volumes, this is a significant over-reservation for 4k (or smaller)
+filesystem blocks. XFS has algorithms in some areas (buffered writes)
+that deal with this problem already, but at the very least, further
+optimization might be in order to improve performance. This also doesn't
+consider other operations (fallocate) or filesystems that might not be
+immediately suited to handle this limitation. Also, the interface to the
+block device is clearly crude, incomplete and hacked together
+(particularly the provision bits added by me). It remains to be seen
+whether we can define a sane interface to fully support this
+functionality.
+
+As far as the implementation goes, this is a toy/experiment with various
+other known issues (mostly documented in the code, see the comments in
+xfs_thin.c) and should not be used for anything outside of
+experimentation. I haven't done much testing beyond simple buffered
+write runs to ENOSPC, so problems in other areas can be expected.
+Apologies for whatever general shoddiness might be discovered, but I
+wanted to get something posted to generate discussion before putting too
+much effort into testing and exploring all of the dark corners where
+more issues certainly lurk.
+
+In summary, the primary purpose of this series is to close the loop on
+some of the early XFS/dm-thin discussion around whether something like
+this is feasible, worthwhile, and to otherwise gather initial thoughts
+from fs and dm folks on the general topic. If worth pursuing further,
+discussion around things like an appropriate interface to the block
+device is certainly warranted.
+
+Thanks again to Joe and Mike for entertaining the idea and hacking
+something together to play around with. Thoughts, reviews, flames
+appreciated. (BTW, I'm also planning to be at LSF if anybody is
+interested in discussing this further).
+
+Brian
+
+P.S., With these patches applied, use the following to create an
+over-provisioned thin volume and mount XFS in "reservation mode:"
+
+# lvcreate --thinpool test/pool -L1G
+# lvcreate -T test/pool -n thin -V 10G
+# mkfs.xfs -f /dev/test/thin
+# mount /dev/test/thin /mnt -o discard
+# dmesg | tail
+...
+XFS (dm-8): Mounting V5 Filesystem
+XFS (dm-8): Ending clean mount
+XFS (dm-8): Thin pool reservation enabled
+XFS (dm-8): Thin reserve blocksize: 512 sectors
+# dd if=/dev/zero of=/mnt/file bs=4k
+dd: error writing '/mnt/file': No space left on device
+...
+
+Brian Foster (6):
+  dm thin: update reserve space func to allow reduction
+  block: add a block_device_operations method to provision space
+  dm: add method to provision space
+  dm thin: add method to provision space
+  xfs: thin block device reservation mechanism
+  xfs: adopt a reserved allocation model on dm-thin devices
+
+Joe Thornber (1):
+  dm thin: add methods to set and get reserved space
+
+Mike Snitzer (2):
+  block: add block_device_operations methods to set and get reserved
+    space
+  dm: add methods to set and get reserved space
+
+ drivers/md/dm-thin.c          | 187 +++++++++++++++++++++++++++--
+ drivers/md/dm.c               | 110 +++++++++++++++++
+ fs/block_dev.c                |  30 +++++
+ fs/xfs/Makefile               |   1 +
+ fs/xfs/libxfs/xfs_alloc.c     |   6 +
+ fs/xfs/xfs_mount.c            |  81 +++++++++++--
+ fs/xfs/xfs_mount.h            |   7 ++
+ fs/xfs/xfs_thin.c             | 273 ++++++++++++++++++++++++++++++++++++++++++
+ fs/xfs/xfs_thin.h             |   9 ++
+ fs/xfs/xfs_trace.h            |  27 +++++
+ fs/xfs/xfs_trans.c            |  26 +++-
+ include/linux/blkdev.h        |   7 ++
+ include/linux/device-mapper.h |   7 ++
+ 13 files changed, 749 insertions(+), 22 deletions(-)
+ create mode 100644 fs/xfs/xfs_thin.c
+ create mode 100644 fs/xfs/xfs_thin.h
+
 -- 
 2.4.3
 
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
