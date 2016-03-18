@@ -1,8 +1,8 @@
 From: Ming-Hung Tsai <mingnus@gmail.com>
 Subject: Re: [PATCH] thin_dump: added --device-id, --skip-mappings,
  and new output --format's
-Date: Fri, 18 Mar 2016 10:04:37 +0800
-Message-ID: <CAAYit8RgumGtcx7qRLKtiW=F++e76SKeKPSyB_=joL+Rjr8C_Q@mail.gmail.com>
+Date: Fri, 18 Mar 2016 14:45:23 +0800
+Message-ID: <CAAYit8TWY2LoherwpAU84YeTfQ1mynGAoGDcAG1b+3O662Znvw@mail.gmail.com>
 References: <alpine.LRH.2.11.1603150104370.19675@mail.ewheeler.net>
 	<20160317154553.GC4033@rh-vpn>
 	<alpine.LRH.2.11.1603172245520.21357@mail.ewheeler.net>
@@ -36,31 +36,39 @@ List-Id: dm-devel.ids
 > seconds instead of 40 minutes since we only dump the dev_id's that we
 > need.
 >
-> As for thin_ls, we're still in the 0.5.x branch, I couldn't get 0.6.x to
-> build on el7:
->
-> # git checkout v0.6.2-rc6
-> Previous HEAD position was e46bdfd... v0.6.1
-> HEAD is now at afb71d8... bump version
->
-> # ./configure
-> [...]
->
-> # make
->     [CXX] base/application.cc
-> g++: error: @LFS_FLAGS@: No such file or directory
-> make: *** [base/application.o] Error 1
->
->
-> Am I missing something trivial here?
 
-Did you run autoconf to regenerate the configure script ? v0.6.x has
-some changes in the configure script.
+I have similar requirement. I did this by my own compact_emitter,
+which is a simplified version of "human_readable_emitter", without showing
+the arrows and parentheses:
 
-# make distclean
-# autoconf
-# ./configure
-# make
+output format:
+
+begin superblock=>uuid:"",time:<time>,transaction:<tid>,flags:<flags>,version:<version>,data_block_size:<bs>,nr_data_blocks:<nr_blocks>
+device=>dev_id:<dev_id>,mapped_blocks:<mapped_blocks>,transaction:<tid>,creation_time:<creation_time>,snap_time:<snap_time>
+<origin_begin>,<data_begin>,<len>,<time>
+<origin_begin>,<data_begin>,1,<time>
+...
+end superblock
+
+e.g.,
+
+begin superblock=>uuid:"",time:0,transaction:1,flags:0,version:1,data_block_size:2048,nr_data_blocks:5657156
+device=>dev_id:10000,mapped_blocks:3864041,transaction:0,creation_time:0,snap_time:0
+1000,2000,100,0
+1100,3000,200,0
+...
+end superblock
+
+The <time> field is preserved for snapshot comparison.
+
+Maybe we could discuss on creating a flexible emitter that could
+customize the output format:
+- Mapping units: sectors or blocks
+- Emit the superblock and device tags or not. I think that an end mark
+might be better for network transmission,
+  to determine whether the dump was ended or not.
+- Other consideration: should the customized output compatible to thin_restore ?
+
 
 
 Ming-Hung Tsai
