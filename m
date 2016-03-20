@@ -1,14 +1,16 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: [PATCH] dmsetup: improve message command
-Date: Fri, 18 Mar 2016 12:52:27 +0100
-Message-ID: <56EBEBFB.6070107@redhat.com>
-References: <87y4a7wvdi.fsf@wheatstone.g10code.de>
-	<8737rogi4v.fsf@wheatstone.g10code.de>
+From: Ming-Hung Tsai <mingnus@gmail.com>
+Subject: Re: [PATCH] thin_dump: added --device-id, --skip-mappings,
+ and new output --format's
+Date: Sun, 20 Mar 2016 23:59:09 +0800
+Message-ID: <CAAYit8RG-xgY=jxcmVG3tGdUSN93GGJ=KCKkGQsxL_SwAjjY0Q@mail.gmail.com>
+References: <alpine.LRH.2.11.1603150104370.19675@mail.ewheeler.net>
+	<20160317154553.GC4033@rh-vpn>
+	<alpine.LRH.2.11.1603172245520.21357@mail.ewheeler.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8737rogi4v.fsf@wheatstone.g10code.de>
+In-Reply-To: <alpine.LRH.2.11.1603172245520.21357@mail.ewheeler.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,33 +20,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Werner Koch <wk@gnupg.org>, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 18.3.2016 v 12:06 Werner Koch napsal(a):
-> On Fri, 26 Feb 2016 12:42, wk@gnupg.org said:
+2016-03-18 6:45 GMT+08:00 Eric Wheeler <dm-devel@lists.ewheeler.net>:
 >
->> I am playing with a new crypto container format and propose to enhance
->> "dmsetup message" to accept the actual message from stdin instead of
->> taking it only from the command line.  This is useful to set a key and
+> On Thu, 17 Mar 2016, Joe Thornber wrote:
 >
-> Is there anything I can do to help you evaluate the patch?
+>> If you're skipping the mappings does the new thin_ls provide enough
+>> information for you?
 >
+> Our primary need is the ability to specify --device-id in the o:L:d output
+> format (old_format.cc) with mappings.  Our nightly dumps now take 50
+> seconds instead of 40 minutes since we only dump the dev_id's that we
+> need.
+
+I think that the --device-id option is required for thin_dump, but the
+necessity of --skip-mappings could be discussed. If thin_ls supports
+--device-id, then thin_dump might not require --skip-mappings.
+
+I put my code here for reference (based on v0.7-devel)
+https://github.com/mingnus/thin-provisioning-tools/commits/v0.7-thin_dump-enhancement
+I borrow the option name "--skip-mappings" and function name
+"set_skip_mappings" from Eric, since that they sounds more clear.
+
+Build method:
+# autoconf; ./configure --enable-dev-tools; make
+
+My use cases:
+# thin_dump --device-id=<dev_id> --format=<f> [--skip-mappings]
 
 
-Hi
-
-It looked usable - thought could you trim down the zeroing of
-dm-malloced area (wipememory)  macro.
-
-It's useless for heap allocation.
-
-Unless you show example and compiler which would optimize 'library' call away.
-a) such compiler would be horrible broken (since I could always LD_PRELOAD
-my free() implementation),
-b) we would need to do same for dm_task_struct - since your 'dmsetup mem
-is duplicated for dm_task.
-
-Regards
-
-Zdenek
+Ming-Hung Tsai
