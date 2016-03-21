@@ -1,16 +1,15 @@
-From: Ming-Hung Tsai <mingnus@gmail.com>
-Subject: Re: [PATCH] thin_dump: added --device-id, --skip-mappings,
- and new output --format's
-Date: Sun, 20 Mar 2016 23:59:09 +0800
-Message-ID: <CAAYit8RG-xgY=jxcmVG3tGdUSN93GGJ=KCKkGQsxL_SwAjjY0Q@mail.gmail.com>
-References: <alpine.LRH.2.11.1603150104370.19675@mail.ewheeler.net>
-	<20160317154553.GC4033@rh-vpn>
-	<alpine.LRH.2.11.1603172245520.21357@mail.ewheeler.net>
+From: Werner Koch <wk@gnupg.org>
+Subject: Re: [PATCH] dmsetup: improve message command
+Date: Mon, 21 Mar 2016 11:55:58 +0100
+Message-ID: <87egb45cch.fsf@wheatstone.g10code.de>
+References: <87y4a7wvdi.fsf@wheatstone.g10code.de>
+	<8737rogi4v.fsf@wheatstone.g10code.de> <56EBEBFB.6070107@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.11.1603172245520.21357@mail.ewheeler.net>
+In-Reply-To: <56EBEBFB.6070107@redhat.com> (Zdenek Kabelac's message of "Fri,
+	18 Mar 2016 12:52:27 +0100")
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,35 +19,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-2016-03-18 6:45 GMT+08:00 Eric Wheeler <dm-devel@lists.ewheeler.net>:
->
-> On Thu, 17 Mar 2016, Joe Thornber wrote:
->
->> If you're skipping the mappings does the new thin_ls provide enough
->> information for you?
->
-> Our primary need is the ability to specify --device-id in the o:L:d output
-> format (old_format.cc) with mappings.  Our nightly dumps now take 50
-> seconds instead of 40 minutes since we only dump the dev_id's that we
-> need.
+On Fri, 18 Mar 2016 12:52, zkabelac@redhat.com said:
 
-I think that the --device-id option is required for thin_dump, but the
-necessity of --skip-mappings could be discussed. If thin_ls supports
---device-id, then thin_dump might not require --skip-mappings.
+> It looked usable - thought could you trim down the zeroing of
+> dm-malloced area (wipememory)  macro.
 
-I put my code here for reference (based on v0.7-devel)
-https://github.com/mingnus/thin-provisioning-tools/commits/v0.7-thin_dump-enhancement
-I borrow the option name "--skip-mappings" and function name
-"set_skip_mappings" from Eric, since that they sounds more clear.
+Actually the patch zeroes the given string (from command line or stdin).
+That is in general pretty short and given that this is a command line
+tool there won't be any noticable speed penality.
 
-Build method:
-# autoconf; ./configure --enable-dev-tools; make
+> It's useless for heap allocation.
 
-My use cases:
-# thin_dump --device-id=<dev_id> --format=<f> [--skip-mappings]
+Sorry, I have to dissent: If dmsetup is swapped out the key would end up
+in the swap (which is still not encrypted by default on Linux).  free()
+does not zero out the memory and thus another malloc may reveal the key.
+Thus it is important to zeroise all sensitive data before a free.
+
+> Unless you show example and compiler which would optimize 'library' call away.
+> a) such compiler would be horrible broken (since I could always LD_PRELOAD
+> my free() implementation),
+
+It is not about removing a library call but about optimizing compilers
+which may remove a plain memset if they can deduce that the memory is
+not used after that memset call.  Can you exclude that it will never
+happen that a somehow attributed free() will be detected by a future
+gcc/clang version to elimination - what they call - dead code?
+
+The current discussion is to provide a memset_s function which other
+platforms already have, for example see:
+
+  http://www.openwall.com/lists/musl/2015/09/09/5
+
+The wipememory macro we use in GnuPG is currently the most portable
+solution.  There are way faster implementations, for example what we use
+in Libgcrypt, but that is overkill and frankly for Linux we should wait
+for a memset_s.
+
+> b) we would need to do same for dm_task_struct - since your 'dmsetup mem
+> is duplicated for dm_task.
+
+Right.  However a full audit of sensitive code paths in dmsetup was out
+of my scope.  I merely did what can be expected for new code.
 
 
-Ming-Hung Tsai
+Shalom-Salam,
+
+   Werner
+
+-- 
+Die Gedanken sind frei.  Ausnahmen regelt ein Bundesgesetz.
