@@ -1,43 +1,105 @@
-From: Coly Li <i@coly.li>
-Subject: Re: pvmove/mirror target mirroring data between two
- devices with different sector size
-Date: Mon, 28 Mar 2016 21:06:28 +0800
-Message-ID: <56F92C54.8050206@coly.li>
-References: <56F94727020000A000058AA7@prv-mh.provo.novell.com>
+From: Seth Forshee <seth.forshee@canonical.com>
+Subject: Re: [PATCH RESEND v2 11/18] fs: Ensure the mounter of a filesystem
+ is privileged towards its inodes
+Date: Mon, 28 Mar 2016 11:59:36 -0500
+Message-ID: <20160328165936.GC137406@ubuntu-hedt>
+References: <1451930639-94331-1-git-send-email-seth.forshee@canonical.com>
+ <1451930639-94331-12-git-send-email-seth.forshee@canonical.com>
+ <20160303170201.GA30224@ubuntu-hedt>
+ <87twkl50g5.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="gbk"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <56F94727020000A000058AA7@prv-mh.provo.novell.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: lwang@suse.com
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <87twkl50g5.fsf@x220.int.ebiederm.org>
+Sender: linux-bcache-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
 List-Id: dm-devel.ids
 
-1NogMTYvMy8yOCDPws7nMTI6MDAsIExpdWh1YSBXYW5nINC0tcA6Cj4gSGkgTGlzdCwKPiAKPiBJ
-IGhhdmUgYSBxdWVzdGlvbiB0aGF0IEkgdGhpbmsgbWF5YmUgeW91IGNhbiBnaXZlIG1lIHNvbWUg
-aWRlYS4KPiAKPiBJIGhhdmUgdHdvIGRldmljZXMgd2l0aCBkaWZmZXJlbnQgc2VjdG9yIHNpemU6
-IDUxMkIgYW5kIDQwOTZCLgo+IAo+IC0gU09VUkNFIERFVklDRSAobWRvcyBsdm0gcGFydGl0b24p
-Cj4gI3BhcnRlZCAvZGV2L3NkYgo+IE1vZGVsOiBBVEEgU0FUQURPTS1TTCAzTUUgKHNjc2kpCj4g
-RGlzayAvZGV2L3NkYjogMzIuMEdCCj4gU2VjdG9yIHNpemUgKGxvZ2ljYWwvcGh5c2ljYWwpOiA1
-MTJCLzUxMkIKPiBQYXJ0aXRpb24gVGFibGU6IG1zZG9zCj4gKEluIGBwYXJ0ZWRgIFNlY3RvciBz
-aXplIGFyZSBib3RoIGdvdCBmcm9tIElPQ1RMKEJMS1NTWkdFVCkpCj4gCj4gLSBUQVJHRVQgREVW
-SUNFIChXSE9MRSBESVNLKQo+ICNwYXJ0ZWQgL2Rldi9zZGMKPiBFcnJvcjogL2Rldi9zZGQ6IHVu
-cmVjb2duaXNlZCBkaXNrIGxhYmVsCj4gTW9kZWw6IEFUQSBIVUg3MjgwODBBTE42MDAgKHNjc2kp
-Cj4gRGlzayAvZGV2L3NkZDogODAwMkdCCj4gU2VjdG9yIHNpemUgKGxvZ2ljYWwvcGh5c2ljYWwp
-OiA0MDk2Qi80MDk2Qgo+IFBhcnRpdGlvbiBUYWJsZTogdW5rbm93bgo+IAo+IEkgd2FudCB0byBt
-b3ZlIGRhdGEgZnJvbSBvbmUgZGV2aWNlIHRvIHRoZSBvdGhlciB1c2luZyBsdm0gY29tbWFuZAo+
-IGBwdm1vdmVgLCBidXQgYWZ0ZXIgcHZtb3ZlLCBmaWxlIHN5c3RlbSBjYW5ub3QgbW91bnQuCj4g
-CgpJcyB0aGUgbG9naWNhbCB2b2x1bWUgb24gdGFyZ2V0IGRldmljZSByZWNvZ25pemVkIGJ5IGx2
-bSA/IElmIG9ubHkgZmlsZQpzeXN0ZW0gZmFpbGVkIHRvIG1vdW50LCB3aGF0IGlzIHRoZSBlcnJv
-ciBtZXNzYWdlIGZyb20ga2VybmVsIHNpZGUgPwoKVGhhbmtzLgoKLS0gCkNvbHkgTGkKCi0tCmRt
-LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
-dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Fri, Mar 04, 2016 at 04:43:06PM -0600, Eric W. Biederman wrote:
+> In general this is only an issue if uids and gids on the filesystem
+> do not map into the user namespace.
+> 
+> Therefore the general fix is to limit the logic of checking for
+> capabilities in s_user_ns if we are dealing with INVALID_UID and
+> INVALID_GID.  For proc and kernfs that should never be the case
+> so the problem becomes a non-issue.
+> 
+> Further I would look at limiting that relaxation to just
+> inode_change_ok. 
+
+Finally got around to implementing this today; is the patch below what
+you had in mind?
+
+> So that we can easily wrap that check per filesystem
+> and deny the relaxation for proc and kernfs.  proc and kernfs already
+> have wrappers for .setattr so denying changes when !uid_vaid and
+> !gid_valid would be a trivial addition, and ensure calamity does
+> not ensure.
+
+I'm confused about this part though. As you say above, proc and kernfs
+will never have inodes with invalid ids, so it's not an issue. Do you
+just mean this to be extra insurance against problems?
+
+Thanks,
+Seth
+
+---
+
+diff --git a/fs/attr.c b/fs/attr.c
+index 3cfaaac4a18e..f2bcd3f7dfbb 100644
+--- a/fs/attr.c
++++ b/fs/attr.c
+@@ -16,6 +16,31 @@
+ #include <linux/evm.h>
+ #include <linux/ima.h>
+ 
++static bool chown_ok(const struct inode *inode, kuid_t uid)
++{
++	if (uid_eq(current_fsuid(), inode->i_uid) && uid_eq(uid, inode->i_uid))
++		return true;
++	if (capable_wrt_inode_uidgid(inode, CAP_CHOWN))
++		return true;
++	if (!uid_valid(inode->i_uid) &&
++	    ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
++		return true;
++	return false;
++}
++
++static bool chgrp_ok(const struct inode *inode, kgid_t gid)
++{
++	if (uid_eq(current_fsuid(), inode->i_uid) &&
++	    (in_group_p(gid) || gid_eq(gid, inode->i_gid)))
++		return true;
++	if (capable_wrt_inode_uidgid(inode, CAP_CHOWN))
++		return true;
++	if (!gid_valid(inode->i_gid) &&
++	    ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
++		return true;
++	return false;
++}
++
+ /**
+  * inode_change_ok - check if attribute changes to an inode are allowed
+  * @inode:	inode to check
+@@ -58,17 +83,11 @@ int inode_change_ok(const struct inode *inode, struct iattr *attr)
+ 		return 0;
+ 
+ 	/* Make sure a caller can chown. */
+-	if ((ia_valid & ATTR_UID) &&
+-	    (!uid_eq(current_fsuid(), inode->i_uid) ||
+-	     !uid_eq(attr->ia_uid, inode->i_uid)) &&
+-	    !capable_wrt_inode_uidgid(inode, CAP_CHOWN))
++	if ((ia_valid & ATTR_UID) && !chown_ok(inode, attr->ia_uid))
+ 		return -EPERM;
+ 
+ 	/* Make sure caller can chgrp. */
+-	if ((ia_valid & ATTR_GID) &&
+-	    (!uid_eq(current_fsuid(), inode->i_uid) ||
+-	    (!in_group_p(attr->ia_gid) && !gid_eq(attr->ia_gid, inode->i_gid))) &&
+-	    !capable_wrt_inode_uidgid(inode, CAP_CHOWN))
++	if ((ia_valid & ATTR_GID) && !chgrp_ok(inode, attr->ia_gid))
+ 		return -EPERM;
+ 
+ 	/* Make sure a caller can chmod. */
