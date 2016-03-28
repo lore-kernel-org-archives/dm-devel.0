@@ -1,13 +1,14 @@
-From: "Liuhua Wang" <lwang@suse.com>
-Subject: pvmove/mirror target mirroring data between two devices
- with different sector size
-Date: Sun, 27 Mar 2016 22:00:55 -0600
-Message-ID: <56F94727020000A000058AA7@prv-mh.provo.novell.com>
+From: Coly Li <i@coly.li>
+Subject: Re: pvmove/mirror target mirroring data between two
+ devices with different sector size
+Date: Mon, 28 Mar 2016 21:06:28 +0800
+Message-ID: <56F92C54.8050206@coly.li>
+References: <56F94727020000A000058AA7@prv-mh.provo.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="gbk"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <56F94727020000A000058AA7@prv-mh.provo.novell.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,39 +18,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Neil F Brown <neilb@suse.com>
+To: lwang@suse.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi List,
-
-I have a question that I think maybe you can give me some idea.
-
-I have two devices with different sector size: 512B and 4096B.
-
-- SOURCE DEVICE (mdos lvm partiton)
-#parted /dev/sdb
-Model: ATA SATADOM-SL 3ME (scsi)
-Disk /dev/sdb: 32.0GB
-Sector size (logical/physical): 512B/512B
-Partition Table: msdos
-(In `parted` Sector size are both got from IOCTL(BLKSSZGET))
-
-- TARGET DEVICE (WHOLE DISK)
-#parted /dev/sdc
-Error: /dev/sdd: unrecognised disk label
-Model: ATA HUH728080ALN600 (scsi)
-Disk /dev/sdd: 8002GB
-Sector size (logical/physical): 4096B/4096B
-Partition Table: unknown
-
-I want to move data from one device to the other using lvm command
-`pvmove`, but after pvmove, file system cannot mount.
-
-So my question is whether pvmove support moving date between devices with different sector size
-or same question: mirror target support mirroring data between two devices with different sector size?
-
-Thank you in advance.
-
-Best regards,
-Liuhua
+1NogMTYvMy8yOCDPws7nMTI6MDAsIExpdWh1YSBXYW5nINC0tcA6Cj4gSGkgTGlzdCwKPiAKPiBJ
+IGhhdmUgYSBxdWVzdGlvbiB0aGF0IEkgdGhpbmsgbWF5YmUgeW91IGNhbiBnaXZlIG1lIHNvbWUg
+aWRlYS4KPiAKPiBJIGhhdmUgdHdvIGRldmljZXMgd2l0aCBkaWZmZXJlbnQgc2VjdG9yIHNpemU6
+IDUxMkIgYW5kIDQwOTZCLgo+IAo+IC0gU09VUkNFIERFVklDRSAobWRvcyBsdm0gcGFydGl0b24p
+Cj4gI3BhcnRlZCAvZGV2L3NkYgo+IE1vZGVsOiBBVEEgU0FUQURPTS1TTCAzTUUgKHNjc2kpCj4g
+RGlzayAvZGV2L3NkYjogMzIuMEdCCj4gU2VjdG9yIHNpemUgKGxvZ2ljYWwvcGh5c2ljYWwpOiA1
+MTJCLzUxMkIKPiBQYXJ0aXRpb24gVGFibGU6IG1zZG9zCj4gKEluIGBwYXJ0ZWRgIFNlY3RvciBz
+aXplIGFyZSBib3RoIGdvdCBmcm9tIElPQ1RMKEJMS1NTWkdFVCkpCj4gCj4gLSBUQVJHRVQgREVW
+SUNFIChXSE9MRSBESVNLKQo+ICNwYXJ0ZWQgL2Rldi9zZGMKPiBFcnJvcjogL2Rldi9zZGQ6IHVu
+cmVjb2duaXNlZCBkaXNrIGxhYmVsCj4gTW9kZWw6IEFUQSBIVUg3MjgwODBBTE42MDAgKHNjc2kp
+Cj4gRGlzayAvZGV2L3NkZDogODAwMkdCCj4gU2VjdG9yIHNpemUgKGxvZ2ljYWwvcGh5c2ljYWwp
+OiA0MDk2Qi80MDk2Qgo+IFBhcnRpdGlvbiBUYWJsZTogdW5rbm93bgo+IAo+IEkgd2FudCB0byBt
+b3ZlIGRhdGEgZnJvbSBvbmUgZGV2aWNlIHRvIHRoZSBvdGhlciB1c2luZyBsdm0gY29tbWFuZAo+
+IGBwdm1vdmVgLCBidXQgYWZ0ZXIgcHZtb3ZlLCBmaWxlIHN5c3RlbSBjYW5ub3QgbW91bnQuCj4g
+CgpJcyB0aGUgbG9naWNhbCB2b2x1bWUgb24gdGFyZ2V0IGRldmljZSByZWNvZ25pemVkIGJ5IGx2
+bSA/IElmIG9ubHkgZmlsZQpzeXN0ZW0gZmFpbGVkIHRvIG1vdW50LCB3aGF0IGlzIHRoZSBlcnJv
+ciBtZXNzYWdlIGZyb20ga2VybmVsIHNpZGUgPwoKVGhhbmtzLgoKLS0gCkNvbHkgTGkKCi0tCmRt
+LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
+dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
