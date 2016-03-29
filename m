@@ -1,14 +1,11 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 03/17] Fix issues with user_friendly_names
-	initramfs bindings
-Date: Mon, 28 Mar 2016 22:13:00 -0500
-Message-ID: <1459221194-23222-4-git-send-email-bmarzins@redhat.com>
-References: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 00/17] Multipath patch sync
+Date: Mon, 28 Mar 2016 22:12:57 -0500
+Message-ID: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,71 +19,113 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Multipath has an issue with user_friendly_names set in the initramfs.
-If the bindings are in the initramfs bindings file, it will create them,
-and it may use bindings that are different than the ones in the regular
-file system.  Once multipathd starts up in the regular file system, it
-will try to register the existing bindings, but that may (and in many
-cases, is likely to) fail. If it can't reanme it, will pick a new
-binding. Since when multipathd starts discovering the existing devices,
-it obviously doesn't know all of the existing devices yet, it may very
-well pick a binding that's already in use by a device that it hasn't
-discovered yet. In this case multipath will be unable to rename the
-device to the new binding. Unfortunately, if it fails the rename, it
-never resets the alias of the device stored in the mpvec to current
-alias of the actual dm device. So multipath will have devices in the
-mpvec where the alias and the wwid don't match the actual dm devices
-that exist.  This can cause all sorts of problems.
+Here's a bunch of miscellaneous multipath patches. The first couple are
+resends, with the following changes:
 
-This patch does two things to deal with this.  First, it makes sure that
-if the rename fails, the device will reset its alias to the one that it
-currently has. Second, it fixes the -B option to actually work
-correctly, so that it can be started that way in the initramfs.
+multipathd: use /run instead of /var/run
+-----------------------------------------
+Added Makefile code to verify that /var/run is actually a symlink 
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/config.c    | 1 -
- libmultipath/configure.c | 3 +++
- multipathd/main.c        | 1 +
- 3 files changed, 4 insertions(+), 1 deletion(-)
+retrigger uevents to try and get the uid through udev
+-----------------------------------------------------
+This is the same as before. There is no good udev hint to use here. If
+the whole udev worker thread is killed, udev sends an empty uevent, which
+we could check for, but if a killable callout takes too long, udev with
+just not run any later callouts, and not flag this in any way. So if we're
+just missing the id information, there's no way to know why.
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index cfcc685..005252b 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -601,7 +601,6 @@ load_config (char * file, struct udev *udev)
- 	get_sys_max_fds(&conf->max_fds);
- 	conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
- 	conf->wwids_file = set_default(DEFAULT_WWIDS_FILE);
--	conf->bindings_read_only = 0;
- 	conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
- 	conf->features = set_default(DEFAULT_FEATURES);
- 	conf->flush_on_last_del = 0;
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 24ad948..3559c01 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -421,6 +421,9 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 		condlog(2, "%s: unable to rename %s to %s (%s is used by %s)",
- 			mpp->wwid, cmpp->alias, mpp->alias,
- 			mpp->alias, cmpp_by_name->wwid);
-+		/* reset alias to existing alias */
-+		FREE(mpp->alias);
-+		mpp->alias = STRDUP(cmpp->alias);
- 		mpp->action = ACT_NOTHING;
- 		return;
- 	}
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 38a2b42..687c697 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1570,6 +1570,7 @@ reconfigure (struct vectors * vecs)
- 	if (!load_config(DEFAULT_CONFIGFILE, udev)) {
- 		dm_drv_version(conf->version, TGT_MPATH);
- 		conf->verbosity = old->verbosity;
-+		conf->bindings_read_only = old->bindings_read_only;
- 		conf->daemon = 1;
- 		configure(vecs, 1);
- 		free_config(old);
+Fix issues with user_friendly_names initramfs bindings
+------------------------------------------------------
+This no longer has the initramfs checking code. Instead it just fixes
+the -B option to make it actually work with multipathd.
+
+Add libmpathcmd library and use it internally
+---------------------------------------------
+This is the same as before. As far as I know, there were no objections
+to it last time.
+
+libmultipath: add ignore_new_boot_devs option
+---------------------------------------------
+This also no longer uses the initramfs checking code. It is simply a
+commandline option.
+
+libmultipath: Cut down on alua prioritizer ioctls
+-------------------------------------------------
+This now uses the sysfs files, as Hannes suggested.
+
+
+The rest of the patches are new. Please apply.
+Thanks.
+
+Benjamin Marzinski (17):
+  multipathd: use /run instead of /var/run
+  retrigger uevents to try and get the uid through udev
+  Fix issues with user_friendly_names initramfs bindings
+  Add libmpathcmd library and use it internally
+  libmultipath: add ignore_new_boot_devs option
+  libmultipath: fix PAD and PRINT macros
+  libmultipath: Cut down on alua prioritizer ioctls
+  multipathd: fail if pidfile can't be created
+  libmultipath: check correct function for define
+  multipathd: delay reloads during creation
+  multipath: Fix minor text issues
+  kpartx: verify partition devices
+  multipath: add exclusive_pref_bit for alua prio
+  multipathd: print "fail" when remove fails
+  multipath: check partitions unused before removing
+  multipathd.service: remove blk-availability Requires
+  multipathd: use 64-bit int for command key
+
+ Makefile                              |   1 +
+ Makefile.inc                          |  12 ++-
+ kpartx/devmapper.c                    |  17 ++-
+ kpartx/devmapper.h                    |   2 +-
+ kpartx/kpartx.c                       |  70 ++++++++++++-
+ libmpathcmd/Makefile                  |  30 ++++++
+ libmpathcmd/mpath_cmd.c               | 178 +++++++++++++++++++++++++++++++
+ libmpathcmd/mpath_cmd.h               | 125 ++++++++++++++++++++++
+ libmpathpersist/Makefile              |   9 +-
+ libmpathpersist/mpath_persist.c       |   2 +-
+ libmpathpersist/mpath_updatepr.c      |  14 +--
+ libmultipath/Makefile                 |   5 +-
+ libmultipath/config.c                 |   7 +-
+ libmultipath/config.h                 |   5 +
+ libmultipath/configure.c              |  20 ++--
+ libmultipath/defaults.h               |   6 +-
+ libmultipath/devmapper.c              |  46 ++++++--
+ libmultipath/devmapper.h              |   2 +-
+ libmultipath/dict.c                   |  20 +++-
+ libmultipath/discovery.c              |  28 ++---
+ libmultipath/discovery.h              |   2 +
+ libmultipath/print.c                  |  17 ++-
+ libmultipath/prioritizers/alua.c      |  44 +++++---
+ libmultipath/prioritizers/alua_rtpg.c |  69 ++++++++----
+ libmultipath/prioritizers/alua_rtpg.h |   2 +-
+ libmultipath/propsel.c                |   2 +-
+ libmultipath/structs.h                |  10 ++
+ libmultipath/uxsock.c                 |  73 +++----------
+ libmultipath/uxsock.h                 |   5 +-
+ libmultipath/wwids.c                  |  19 ++--
+ mpathpersist/Makefile                 |   2 +-
+ multipath.conf.defaults               |   1 +
+ multipath/Makefile                    |   5 +-
+ multipath/main.c                      |   6 +-
+ multipath/multipath.conf.5            |  29 ++++-
+ multipathd/Makefile                   |   5 +-
+ multipathd/cli.c                      |  22 ++--
+ multipathd/cli.h                      |  20 ++--
+ multipathd/cli_handlers.c             |  73 ++++++++++---
+ multipathd/main.c                     | 192 ++++++++++++++++++++++++++++------
+ multipathd/main.h                     |   1 +
+ multipathd/multipathd.8               |   4 +
+ multipathd/multipathd.init.suse       |   2 +-
+ multipathd/multipathd.service         |   3 +-
+ multipathd/uxclnt.c                   |  13 ++-
+ multipathd/uxlsnr.c                   |  11 +-
+ 46 files changed, 966 insertions(+), 265 deletions(-)
+ create mode 100644 libmpathcmd/Makefile
+ create mode 100644 libmpathcmd/mpath_cmd.c
+ create mode 100644 libmpathcmd/mpath_cmd.h
+
 -- 
 1.8.3.1
