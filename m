@@ -1,11 +1,13 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 00/17] Multipath patch sync
-Date: Mon, 28 Mar 2016 22:12:57 -0500
-Message-ID: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 01/17] multipathd: use /run instead of /var/run
+Date: Mon, 28 Mar 2016 22:12:58 -0500
+Message-ID: <1459221194-23222-2-git-send-email-bmarzins@redhat.com>
+References: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,113 +21,76 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Here's a bunch of miscellaneous multipath patches. The first couple are
-resends, with the following changes:
+/var/run is now usually a symlink to /run.  If /var is on a separate
+filesytem, when multipathd starts up, it might end up writing to
+/var/run before the /var filesytem is mounted and thus not have its
+pidfile accessible at /var/run afterwards.  On most distrubutions /run
+is now a tmpfs and should always be available before multipathd is
+started, so multipath should just write there directly, instead of
+through the symlink.
 
-multipathd: use /run instead of /var/run
------------------------------------------
-Added Makefile code to verify that /var/run is actually a symlink 
+If /var/run is not a symlink, continue using it.
 
-retrigger uevents to try and get the uid through udev
------------------------------------------------------
-This is the same as before. There is no good udev hint to use here. If
-the whole udev worker thread is killed, udev sends an empty uevent, which
-we could check for, but if a killable callout takes too long, udev with
-just not run any later callouts, and not flag this in any way. So if we're
-just missing the id information, there's no way to know why.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ Makefile.inc                    | 10 +++++++++-
+ libmultipath/defaults.h         |  2 +-
+ multipathd/multipathd.init.suse |  2 +-
+ 3 files changed, 11 insertions(+), 3 deletions(-)
 
-Fix issues with user_friendly_names initramfs bindings
-------------------------------------------------------
-This no longer has the initramfs checking code. Instead it just fixes
-the -B option to make it actually work with multipathd.
-
-Add libmpathcmd library and use it internally
----------------------------------------------
-This is the same as before. As far as I know, there were no objections
-to it last time.
-
-libmultipath: add ignore_new_boot_devs option
----------------------------------------------
-This also no longer uses the initramfs checking code. It is simply a
-commandline option.
-
-libmultipath: Cut down on alua prioritizer ioctls
--------------------------------------------------
-This now uses the sysfs files, as Hannes suggested.
-
-
-The rest of the patches are new. Please apply.
-Thanks.
-
-Benjamin Marzinski (17):
-  multipathd: use /run instead of /var/run
-  retrigger uevents to try and get the uid through udev
-  Fix issues with user_friendly_names initramfs bindings
-  Add libmpathcmd library and use it internally
-  libmultipath: add ignore_new_boot_devs option
-  libmultipath: fix PAD and PRINT macros
-  libmultipath: Cut down on alua prioritizer ioctls
-  multipathd: fail if pidfile can't be created
-  libmultipath: check correct function for define
-  multipathd: delay reloads during creation
-  multipath: Fix minor text issues
-  kpartx: verify partition devices
-  multipath: add exclusive_pref_bit for alua prio
-  multipathd: print "fail" when remove fails
-  multipath: check partitions unused before removing
-  multipathd.service: remove blk-availability Requires
-  multipathd: use 64-bit int for command key
-
- Makefile                              |   1 +
- Makefile.inc                          |  12 ++-
- kpartx/devmapper.c                    |  17 ++-
- kpartx/devmapper.h                    |   2 +-
- kpartx/kpartx.c                       |  70 ++++++++++++-
- libmpathcmd/Makefile                  |  30 ++++++
- libmpathcmd/mpath_cmd.c               | 178 +++++++++++++++++++++++++++++++
- libmpathcmd/mpath_cmd.h               | 125 ++++++++++++++++++++++
- libmpathpersist/Makefile              |   9 +-
- libmpathpersist/mpath_persist.c       |   2 +-
- libmpathpersist/mpath_updatepr.c      |  14 +--
- libmultipath/Makefile                 |   5 +-
- libmultipath/config.c                 |   7 +-
- libmultipath/config.h                 |   5 +
- libmultipath/configure.c              |  20 ++--
- libmultipath/defaults.h               |   6 +-
- libmultipath/devmapper.c              |  46 ++++++--
- libmultipath/devmapper.h              |   2 +-
- libmultipath/dict.c                   |  20 +++-
- libmultipath/discovery.c              |  28 ++---
- libmultipath/discovery.h              |   2 +
- libmultipath/print.c                  |  17 ++-
- libmultipath/prioritizers/alua.c      |  44 +++++---
- libmultipath/prioritizers/alua_rtpg.c |  69 ++++++++----
- libmultipath/prioritizers/alua_rtpg.h |   2 +-
- libmultipath/propsel.c                |   2 +-
- libmultipath/structs.h                |  10 ++
- libmultipath/uxsock.c                 |  73 +++----------
- libmultipath/uxsock.h                 |   5 +-
- libmultipath/wwids.c                  |  19 ++--
- mpathpersist/Makefile                 |   2 +-
- multipath.conf.defaults               |   1 +
- multipath/Makefile                    |   5 +-
- multipath/main.c                      |   6 +-
- multipath/multipath.conf.5            |  29 ++++-
- multipathd/Makefile                   |   5 +-
- multipathd/cli.c                      |  22 ++--
- multipathd/cli.h                      |  20 ++--
- multipathd/cli_handlers.c             |  73 ++++++++++---
- multipathd/main.c                     | 192 ++++++++++++++++++++++++++++------
- multipathd/main.h                     |   1 +
- multipathd/multipathd.8               |   4 +
- multipathd/multipathd.init.suse       |   2 +-
- multipathd/multipathd.service         |   3 +-
- multipathd/uxclnt.c                   |  13 ++-
- multipathd/uxlsnr.c                   |  11 +-
- 46 files changed, 966 insertions(+), 265 deletions(-)
- create mode 100644 libmpathcmd/Makefile
- create mode 100644 libmpathcmd/mpath_cmd.c
- create mode 100644 libmpathcmd/mpath_cmd.h
-
+diff --git a/Makefile.inc b/Makefile.inc
+index c3ed73f..357dd33 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -21,6 +21,14 @@ ifndef LIB
+ 	endif
+ endif
+ 
++ifndef RUN
++	ifeq ($(shell test -L /var/run -o ! -d /var/run && echo 1),1)
++		RUN=run
++	else
++		RUN=var/run
++	endif
++endif
++
+ ifndef SYSTEMD
+ 	ifeq ($(shell systemctl --version > /dev/null 2>&1 && echo 1), 1)
+ 		SYSTEMD = $(shell systemctl --version 2> /dev/null |  sed -n 's/systemd \([0-9]*\)/\1/p')
+@@ -54,7 +62,7 @@ ifndef RPM_OPT_FLAGS
+ endif
+ 
+ OPTFLAGS     = $(RPM_OPT_FLAGS) -Wunused -Wstrict-prototypes
+-CFLAGS	     = $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\"
++CFLAGS	     = $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
+ SHARED_FLAGS = -shared
+ 
+ %.o:	%.c
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 8902f40..cf1d5be 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -26,7 +26,7 @@
+ #define MAX_CHECKINT(a)		(a << 2)
+ 
+ #define MAX_DEV_LOSS_TMO	0x7FFFFFFF
+-#define DEFAULT_PIDFILE		"/var/run/multipathd.pid"
++#define DEFAULT_PIDFILE		"/" RUN_DIR "/multipathd.pid"
+ #define DEFAULT_SOCKET		"/org/kernel/linux/storage/multipathd"
+ #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
+ #define DEFAULT_BINDINGS_FILE	"/etc/multipath/bindings"
+diff --git a/multipathd/multipathd.init.suse b/multipathd/multipathd.init.suse
+index d1319b1..ed699fa 100644
+--- a/multipathd/multipathd.init.suse
++++ b/multipathd/multipathd.init.suse
+@@ -17,7 +17,7 @@
+ 
+ PATH=/bin:/usr/bin:/sbin:/usr/sbin
+ DAEMON=/sbin/multipathd
+-PIDFILE=/var/run/multipathd.pid
++PIDFILE=/run/multipathd.pid
+ MPATH_INIT_TIMEOUT=10
+ ARGS=""
+ 
 -- 
 1.8.3.1
