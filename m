@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 08/17] multipathd: fail if pidfile can't be
-	created
-Date: Mon, 28 Mar 2016 22:13:05 -0500
-Message-ID: <1459221194-23222-9-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 09/17] libmultipath: check correct function for
+	define
+Date: Mon, 28 Mar 2016 22:13:06 -0500
+Message-ID: <1459221194-23222-10-git-send-email-bmarzins@redhat.com>
 References: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,70 +22,30 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Right now, multipathd ignores failures from pidfile_create.  This means
-that multiple multipathd processes can be running at the same time. If
-someone runs "multipathd" and doesn't add a command after it, a new
-process will be created, even if one is already running. To avoid this,
-multipathd needs to actually fail if the pidfile can't be created or
-locked. Since we only really need the pidfile to keep from launching
-multiple processes, we can create in earlier in startup. This patch
-moves pidfile_create to as soon as we can be sure that we can log an
-error message, and fails multipathd if the create fails.
+multipath was setting LIBUDEV_API_RECVBUF in the makefile if
+udev_monitor_set_resolve_buffer_size existed. However the correct
+fuction name (and the one used in the code) is
+udev_monitor_set_receive_buffer_size. As a result, multipath was never
+setting the receive buffer size. This patch simply fixes the Makefile
+define.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
+ libmultipath/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 8f4fb58..06876b9 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1768,7 +1768,7 @@ child (void * param)
- #ifdef USE_SYSTEMD
- 	unsigned long checkint;
- #endif
--	int rc, pid_rc;
-+	int rc;
- 	char *envp;
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index 11750c2..1ee968e 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -37,7 +37,7 @@ ifneq ($(strip $(LIBDM_API_COOKIE)),0)
+ 	CFLAGS += -DLIBDM_API_COOKIE
+ endif
  
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
-@@ -1786,6 +1786,12 @@ child (void * param)
- 		log_thread_start(&log_attr);
- 		pthread_attr_destroy(&log_attr);
- 	}
-+	if (pidfile_create(DEFAULT_PIDFILE, daemon_pid)) {
-+		condlog(1, "failed to create pidfile");
-+		if (logsink == 1)
-+			log_thread_stop();
-+		exit(1);
-+	}
+-LIBUDEV_API_RECVBUF = $(shell grep -Ecs '^[a-z]*[[:space:]]+udev_monitor_set_resolve_buffer_size' /usr/include/libudev.h)
++LIBUDEV_API_RECVBUF = $(shell grep -Ecs '^[a-z]*[[:space:]]+udev_monitor_set_receive_buffer_size' /usr/include/libudev.h)
  
- 	running_state = DAEMON_START;
- 
-@@ -1905,10 +1911,6 @@ child (void * param)
- 	}
- 	pthread_attr_destroy(&misc_attr);
- 
--	/* Startup complete, create logfile */
--	pid_rc = pidfile_create(DEFAULT_PIDFILE, daemon_pid);
--	/* Ignore errors, we can live without */
--
- 	running_state = DAEMON_RUNNING;
- #ifdef USE_SYSTEMD
- 	sd_notify(0, "READY=1\nSTATUS=running");
-@@ -1959,10 +1961,8 @@ child (void * param)
- 	dm_lib_exit();
- 
- 	/* We're done here */
--	if (!pid_rc) {
--		condlog(3, "unlink pidfile");
--		unlink(DEFAULT_PIDFILE);
--	}
-+	condlog(3, "unlink pidfile");
-+	unlink(DEFAULT_PIDFILE);
- 
- 	condlog(2, "--------shut down-------");
- 
+ ifneq ($(strip $(LIBUDEV_API_RECVBUF)),0)
+ 	CFLAGS += -DLIBUDEV_API_RECVBUF
 -- 
 1.8.3.1
