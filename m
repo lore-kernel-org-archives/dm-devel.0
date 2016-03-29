@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 11/17] multipath: Fix minor text issues
-Date: Mon, 28 Mar 2016 22:13:08 -0500
-Message-ID: <1459221194-23222-12-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 06/17] libmultipath: fix PAD and PRINT macros
+Date: Mon, 28 Mar 2016 22:13:03 -0500
+Message-ID: <1459221194-23222-7-git-send-email-bmarzins@redhat.com>
 References: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,55 +21,46 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-The multipath.conf man page gave the incorrect default for
-queue_without_daemon. The multipath usage output listed the -p option
-twice. And multipath was misspelled in an mpathpersist error message.
-This patch fixes these issues.
+The PAD and PRINT macros are multi-line macros that aren't enclosed in
+braces. This means that if they are used as single line code blocks
+with no braces, they won't work correctly. This is currently happening
+with the PAD macro, but should be fixed in both.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmpathpersist/mpath_persist.c | 2 +-
- multipath/main.c                | 1 -
- multipath/multipath.conf.5      | 2 +-
- 3 files changed, 2 insertions(+), 3 deletions(-)
+ libmultipath/print.c | 17 ++++++++++++-----
+ 1 file changed, 12 insertions(+), 5 deletions(-)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 7a2249f..b23e116 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -852,7 +852,7 @@ int update_map_pr(struct multipath *mpp)
- 	if (!mpp->reservation_key)
- 	{
- 		/* Nothing to do. Assuming pr mgmt feature is disabled*/
--		condlog(3, "%s: reservation_key not set in multiapth.conf", mpp->alias);
-+		condlog(3, "%s: reservation_key not set in multipath.conf", mpp->alias);
- 		return MPATH_PR_SUCCESS;
- 	}
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 6215d0b..13d076a 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -32,14 +32,21 @@
+ #define MAX(x,y) (x > y) ? x : y
+ #define TAIL     (line + len - 1 - c)
+ #define NOPAD    s = c
+-#define PAD(x)   while ((int)(c - s) < (x) && (c < (line + len - 1))) \
+-			*c++ = ' '; s = c
++#define PAD(x) \
++do { \
++	while ((int)(c - s) < (x) && (c < (line + len - 1))) \
++		*c++ = ' '; \
++	s = c; \
++} while (0)
++
+ #define ENDLINE \
+ 		if (c > line) \
+ 			line[c - line - 1] = '\n'
+-#define PRINT(var, size, format, args...)      \
+-		fwd = snprintf(var, size, format, ##args); \
+-		 c += (fwd >= size) ? size : fwd;
++#define PRINT(var, size, format, args...) \
++do { \
++	fwd = snprintf(var, size, format, ##args); \
++	c += (fwd >= size) ? size : fwd; \
++} while (0)
  
-diff --git a/multipath/main.c b/multipath/main.c
-index decb590..d14a913 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -107,7 +107,6 @@ usage (char * progname)
- 		"  -r      force devmap reload\n" \
- 		"  -i      ignore wwids file\n" \
- 		"  -B      treat the bindings file as read only\n" \
--		"  -p      policy failover|multibus|group_by_serial|group_by_prio\n" \
- 		"  -b fil  bindings file location\n" \
- 		"  -w      remove a device from the wwids file\n" \
- 		"  -W      reset the wwids file include only the current devices\n" \
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index aac95fd..01adf4a 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -389,7 +389,7 @@ multipathd running, access to the paths cannot be restored, and the kernel
- cannot be told to stop queueing IO. Setting queue_without_daemon to
- .I no
- , avoids this problem. Default is
--.I yes
-+.I no
- .TP
- .B bindings_file
- The full pathname of the binding file to be used when the user_friendly_names option is set. Defaults to
+ /*
+  * information printing helpers
 -- 
 1.8.3.1
