@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 07/17] libmultipath: Cut down on alua prioritizer
-	ioctls
-Date: Mon, 28 Mar 2016 22:13:04 -0500
-Message-ID: <1459221194-23222-8-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 12/17] kpartx: verify partition devices
+Date: Mon, 28 Mar 2016 22:13:09 -0500
+Message-ID: <1459221194-23222-13-git-send-email-bmarzins@redhat.com>
 References: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,249 +21,233 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Currently, running the alua prioritizer on a path causes 5 ioctls on
-many devices.  get_target_port_group_support() returns whether alua is
-supported. get_target_port_group() gets the TPG id. This often takes two
-ioctls because 128 bytes is not a large enough buffer size on many
-devices. Finally, get_asymmetric_access_state() also often takes two
-ioctls because of the buffer size. This can get to be problematic when
-there are thousands of paths.  The goal of this patch to to cut this
-down to one call in the usual case.
+When kpartx is modifies devices (either by removing them, or
+reloading them), it doesn't first verify that the device really
+is a partition of the expected device.  If a dm device just happens
+to have the same name as a kpartx created device would, kpartx can
+either delete that device or remap it, causing all sorts of problems.
 
-In order to do this, get_target_port_group_support() is now only called
-when get_target_port_group() fails, to provide a more useful error
-message. Also, before doing an SGIO ioctl to get the vpd83 data,
-multipath first tries to read it from sysfs.
+This patch makes kpartx check the uuid to verify that the device it is
+modifying really is a partition device for the correct dm device.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.h              |  2 +
- libmultipath/prioritizers/alua.c      | 24 ++++++------
- libmultipath/prioritizers/alua_rtpg.c | 69 ++++++++++++++++++++++++-----------
- libmultipath/prioritizers/alua_rtpg.h |  2 +-
- libmultipath/propsel.c                |  2 +-
- 5 files changed, 63 insertions(+), 36 deletions(-)
+ kpartx/devmapper.c | 17 ++++++++++---
+ kpartx/devmapper.h |  2 +-
+ kpartx/kpartx.c    | 70 ++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 3 files changed, 81 insertions(+), 8 deletions(-)
 
-diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index da7652c..5931bc6 100644
---- a/libmultipath/discovery.h
-+++ b/libmultipath/discovery.h
-@@ -45,6 +45,8 @@ int sysfs_set_scsi_tmo (struct multipath *mpp);
- int sysfs_get_timeout(struct path *pp, unsigned int *timeout);
- int sysfs_get_host_pci_name(struct path *pp, char *pci_name);
- int sysfs_get_iscsi_ip_address(struct path *pp, char *ip_address);
-+ssize_t sysfs_get_vpd (struct udev_device * udev, int pg, unsigned char * buff,
-+		       size_t len);
- 
- /*
-  * discovery bitmask
-diff --git a/libmultipath/prioritizers/alua.c b/libmultipath/prioritizers/alua.c
-index 39ed1c8..0bd374f 100644
---- a/libmultipath/prioritizers/alua.c
-+++ b/libmultipath/prioritizers/alua.c
-@@ -51,24 +51,22 @@ static const char *aas_print_string(int rc)
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+index 82be990..e006bc3 100644
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -167,12 +167,16 @@ addout:
  }
  
- int
--get_alua_info(int fd)
-+get_alua_info(struct path * pp)
+ extern int
+-dm_map_present (char * str)
++dm_map_present (char * str, char **uuid)
  {
- 	int	rc;
- 	int	tpg;
+ 	int r = 0;
+ 	struct dm_task *dmt;
++	const char *uuidtmp;
+ 	struct dm_info info;
  
--	rc = get_target_port_group_support(fd);
--	if (rc < 0)
--		return -ALUA_PRIO_TPGS_FAILED;
--
--	if (rc == TPGS_NONE)
--		return -ALUA_PRIO_NOT_SUPPORTED;
--
--	tpg = get_target_port_group(fd);
--	if (tpg < 0)
-+	tpg = get_target_port_group(pp);
-+	if (tpg < 0) {
-+		rc = get_target_port_group_support(pp->fd);
-+		if (rc < 0)
-+			return -ALUA_PRIO_TPGS_FAILED;
-+		if (rc == TPGS_NONE)
-+			return -ALUA_PRIO_NOT_SUPPORTED;
- 		return -ALUA_PRIO_RTPG_FAILED;
--
++	if (uuid)
++		*uuid = NULL;
++
+ 	if (!(dmt = dm_task_create(DM_DEVICE_INFO)))
+ 		return 0;
+ 
+@@ -187,8 +191,15 @@ dm_map_present (char * str)
+ 	if (!dm_task_get_info(dmt, &info))
+ 		goto out;
+ 
+-	if (info.exists)
+-		r = 1;
++	if (!info.exists)
++		goto out;
++
++	r = 1;
++	if (uuid) {
++		uuidtmp = dm_task_get_uuid(dmt);
++		if (uuidtmp && strlen(uuidtmp))
++			*uuid = strdup(uuidtmp);
 +	}
- 	condlog(3, "reported target port group is %i", tpg);
--	rc = get_asymmetric_access_state(fd, tpg);
-+	rc = get_asymmetric_access_state(pp->fd, tpg);
- 	if (rc < 0)
- 		return -ALUA_PRIO_GETAAS_FAILED;
- 
-@@ -86,7 +84,7 @@ int getprio (struct path * pp, char * args)
- 	if (pp->fd < 0)
- 		return -ALUA_PRIO_NO_INFORMATION;
- 
--	rc = get_alua_info(pp->fd);
-+	rc = get_alua_info(pp);
- 	if (rc >= 0) {
- 		aas = (rc & 0x0f);
- 		priopath = (rc & 0x80);
-diff --git a/libmultipath/prioritizers/alua_rtpg.c b/libmultipath/prioritizers/alua_rtpg.c
-index 6d04fc1..636aae5 100644
---- a/libmultipath/prioritizers/alua_rtpg.c
-+++ b/libmultipath/prioritizers/alua_rtpg.c
-@@ -17,15 +17,18 @@
- #include <string.h>
- #include <sys/ioctl.h>
- #include <inttypes.h>
-+#include <libudev.h>
- 
- #define __user
- #include <scsi/sg.h>
- 
-+#include "../structs.h"
- #include "../prio.h"
-+#include "../discovery.h"
- #include "alua_rtpg.h"
- 
- #define SENSE_BUFF_LEN  32
--#define DEF_TIMEOUT     60000
-+#define SGIO_TIMEOUT     60000
- 
- /*
-  * Macro used to print debug messaged.
-@@ -135,7 +138,7 @@ do_inquiry(int fd, int evpd, unsigned int codepage, void *resp, int resplen)
- 	hdr.dxfer_len		= resplen;
- 	hdr.sbp			= sense;
- 	hdr.mx_sb_len		= sizeof(sense);
--	hdr.timeout		= get_prio_timeout(DEF_TIMEOUT);
-+	hdr.timeout		= get_prio_timeout(SGIO_TIMEOUT);
- 
- 	if (ioctl(fd, SG_IO, &hdr) < 0) {
- 		PRINT_DEBUG("do_inquiry: IOCTL failed!\n");
-@@ -170,8 +173,27 @@ get_target_port_group_support(int fd)
- 	return rc;
+ out:
+ 	dm_task_destroy(dmt);
+ 	return r;
+diff --git a/kpartx/devmapper.h b/kpartx/devmapper.h
+index ac1d5d9..436efe1 100644
+--- a/kpartx/devmapper.h
++++ b/kpartx/devmapper.h
+@@ -13,7 +13,7 @@ int dm_prereq (char *, int, int, int);
+ int dm_simplecmd (int, const char *, int, uint16_t);
+ int dm_addmap (int, const char *, const char *, const char *, uint64_t,
+ 	       int, const char *, int, mode_t, uid_t, gid_t);
+-int dm_map_present (char *);
++int dm_map_present (char *, char **);
+ char * dm_mapname(int major, int minor);
+ dev_t dm_get_first_dep(char *devname);
+ char * dm_mapuuid(int major, int minor);
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 8047698..e8c35d4 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -191,6 +191,21 @@ get_hotplug_device(void)
+ 	return device;
  }
  
 +static int
-+get_sysfs_pg83(struct path *pp, unsigned char *buff, int buflen)
-+{
-+	struct udev_device *parent = pp->udev;
-+
-+	while (parent) {
-+		const char *subsys = udev_device_get_subsystem(parent);
-+		if (subsys && !strncmp(subsys, "scsi", 4))
-+			break;
-+		parent = udev_device_get_parent(parent);
++check_uuid(char *uuid, char *part_uuid, char **err_msg) {
++	char *map_uuid = strchr(part_uuid, '-');
++	if (!map_uuid || strncmp(part_uuid, "part", 4) != 0) {
++		*err_msg = "not a kpartx partition";
++		return -1;
 +	}
-+
-+	if (!parent || sysfs_get_vpd(parent, 0x83, buff, buflen) <= 0) {
-+		PRINT_DEBUG("failed to read sysfs vpd pg83\n");
++	map_uuid++;
++	if (strcmp(uuid, map_uuid) != 0) {
++		*err_msg = "a partition of a different device";
 +		return -1;
 +	}
 +	return 0;
 +}
 +
  int
--get_target_port_group(int fd)
-+get_target_port_group(struct path * pp)
- {
- 	unsigned char		*buf;
- 	struct vpd83_data *	vpd83;
-@@ -179,7 +201,7 @@ get_target_port_group(int fd)
- 	int			rc;
- 	int			buflen, scsi_buflen;
+ main(int argc, char **argv){
+ 	int i, j, m, n, op, off, arg, c, d, ro=0;
+@@ -432,6 +447,8 @@ main(int argc, char **argv){
  
--	buflen = 128; /* Lets start from 128 */
-+	buflen = 4096;
- 	buf = (unsigned char *)malloc(buflen);
- 	if (!buf) {
- 		PRINT_DEBUG("malloc failed: could not allocate"
-@@ -188,24 +210,29 @@ get_target_port_group(int fd)
- 	}
- 
- 	memset(buf, 0, buflen);
--	rc = do_inquiry(fd, 1, 0x83, buf, buflen);
--	if (rc < 0)
--		goto out;
- 
--	scsi_buflen = (buf[2] << 8 | buf[3]) + 4;
--	if (buflen < scsi_buflen) {
--		free(buf);
--		buf = (unsigned char *)malloc(scsi_buflen);
--		if (!buf) {
--			PRINT_DEBUG("malloc failed: could not allocate"
--				     "%u bytes\n", scsi_buflen);
--			return -RTPG_RTPG_FAILED;
--		}
--		buflen = scsi_buflen;
--		memset(buf, 0, buflen);
--		rc = do_inquiry(fd, 1, 0x83, buf, buflen);
-+	rc = get_sysfs_pg83(pp, buf, buflen);
+ 		case DELETE:
+ 			for (j = MAXSLICES-1; j >= 0; j--) {
++				char *part_uuid, *reason;
 +
-+	if (rc < 0) {
-+		rc = do_inquiry(pp->fd, 1, 0x83, buf, buflen);
- 		if (rc < 0)
- 			goto out;
+ 				if (safe_sprintf(partname, "%s%s%d",
+ 					     mapname, delim, j+1)) {
+ 					fprintf(stderr, "partname too small\n");
+@@ -439,9 +456,18 @@ main(int argc, char **argv){
+ 				}
+ 				strip_slash(partname);
+ 
+-				if (!dm_map_present(partname))
++				if (!dm_map_present(partname, &part_uuid))
+ 					continue;
+ 
++				if (part_uuid && uuid) {
++					if (check_uuid(uuid, part_uuid, &reason) != 0) {
++						fprintf(stderr, "%s is %s. Not removing\n", partname, reason);
++						free(part_uuid);
++						continue;
++					}
++					free(part_uuid);
++				}
 +
-+		scsi_buflen = (buf[2] << 8 | buf[3]) + 4;
-+		if (buflen < scsi_buflen) {
-+			free(buf);
-+			buf = (unsigned char *)malloc(scsi_buflen);
-+			if (!buf) {
-+				PRINT_DEBUG("malloc failed: could not allocate"
-+					    "%u bytes\n", scsi_buflen);
-+				return -RTPG_RTPG_FAILED;
-+			}
-+			buflen = scsi_buflen;
-+			memset(buf, 0, buflen);
-+			rc = do_inquiry(pp->fd, 1, 0x83, buf, buflen);
-+			if (rc < 0)
-+				goto out;
-+		}
- 	}
+ 				if (!dm_simplecmd(DM_DEVICE_REMOVE, partname,
+ 						  0, 0)) {
+ 					r++;
+@@ -466,6 +492,8 @@ main(int argc, char **argv){
+ 		case UPDATE:
+ 			/* ADD and UPDATE share the same code that adds new partitions. */
+ 			for (j = 0, c = 0; j < n; j++) {
++				char *part_uuid, *reason;
++
+ 				if (slices[j].size == 0)
+ 					continue;
  
- 	vpd83 = (struct vpd83_data *) buf;
-@@ -254,7 +281,7 @@ do_rtpg(int fd, void* resp, long resplen)
- 	hdr.dxfer_len		= resplen;
- 	hdr.mx_sb_len		= sizeof(sense);
- 	hdr.sbp			= sense;
--	hdr.timeout		= get_prio_timeout(DEF_TIMEOUT);
-+	hdr.timeout		= get_prio_timeout(SGIO_TIMEOUT);
+@@ -488,9 +516,19 @@ main(int argc, char **argv){
+ 					exit(1);
+ 				}
  
- 	if (ioctl(fd, SG_IO, &hdr) < 0)
- 		return -RTPG_RTPG_FAILED;
-@@ -278,7 +305,7 @@ get_asymmetric_access_state(int fd, unsigned int tpg)
- 	int			buflen;
- 	uint32_t		scsi_buflen;
+-				op = (dm_map_present(partname) ?
++				op = (dm_map_present(partname, &part_uuid) ?
+ 					DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
  
--	buflen = 128; /* Initial value from old code */
-+	buflen = 4096;
- 	buf = (unsigned char *)malloc(buflen);
- 	if (!buf) {
- 		PRINT_DEBUG ("malloc failed: could not allocate"
-diff --git a/libmultipath/prioritizers/alua_rtpg.h b/libmultipath/prioritizers/alua_rtpg.h
-index c43e0a9..91a15a4 100644
---- a/libmultipath/prioritizers/alua_rtpg.h
-+++ b/libmultipath/prioritizers/alua_rtpg.h
-@@ -23,7 +23,7 @@
- #define RTPG_TPG_NOT_FOUND			4
++				if (part_uuid && uuid) {
++					if (check_uuid(uuid, part_uuid, &reason) != 0) {
++						fprintf(stderr, "%s is already in use, and %s\n", partname, reason);
++						r++;
++						free(part_uuid);
++						continue;
++					}
++					free(part_uuid);
++				}
++
+ 				if (!dm_addmap(op, partname, DM_TARGET, params,
+ 					       slices[j].size, ro, uuid, j+1,
+ 					       buf.st_mode & 0777, buf.st_uid,
+@@ -498,6 +536,7 @@ main(int argc, char **argv){
+ 					fprintf(stderr, "create/reload failed on %s\n",
+ 						partname);
+ 					r++;
++					continue;
+ 				}
+ 				if (op == DM_DEVICE_RELOAD &&
+ 				    !dm_simplecmd(DM_DEVICE_RESUME, partname,
+@@ -505,6 +544,7 @@ main(int argc, char **argv){
+ 					fprintf(stderr, "resume failed on %s\n",
+ 						partname);
+ 					r++;
++					continue;
+ 				}
  
- int get_target_port_group_support(int fd);
--int get_target_port_group(int fd);
-+int get_target_port_group(struct path * pp);
- int get_asymmetric_access_state(int fd, unsigned int tpg);
+ 				dm_devn(partname, &slices[j].major,
+@@ -520,6 +560,7 @@ main(int argc, char **argv){
+ 			d = c;
+ 			while (c) {
+ 				for (j = 0; j < n; j++) {
++					char *part_uuid, *reason;
+ 					int k = slices[j].container - 1;
  
- #endif /* __RTPG_H__ */
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 890d4b1..8abe360 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -378,7 +378,7 @@ detect_prio(struct path * pp)
- 	if ((tpgs = get_target_port_group_support(pp->fd)) <= 0)
- 		return;
- 	pp->tpgs = tpgs;
--	ret = get_target_port_group(pp->fd);
-+	ret = get_target_port_group(pp);
- 	if (ret < 0)
- 		return;
- 	if (get_asymmetric_access_state(pp->fd, ret) < 0)
+ 					if (slices[j].size == 0)
+@@ -552,9 +593,19 @@ main(int argc, char **argv){
+ 						exit(1);
+ 					}
+ 
+-					op = (dm_map_present(partname) ?
++					op = (dm_map_present(partname,
++							     &part_uuid) ?
+ 					      DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
+ 
++					if (part_uuid && uuid) {
++						if (check_uuid(uuid, part_uuid, &reason) != 0) {
++							fprintf(stderr, "%s is already in use, and %s\n", partname, reason);
++							free(part_uuid);
++							continue;
++						}
++						free(part_uuid);
++					}
++
+ 					dm_addmap(op, partname, DM_TARGET, params,
+ 						  slices[j].size, ro, uuid, j+1,
+ 						  buf.st_mode & 0777,
+@@ -584,6 +635,7 @@ main(int argc, char **argv){
+ 			}
+ 
+ 			for (j = MAXSLICES-1; j >= 0; j--) {
++				char *part_uuid, *reason;
+ 				if (safe_sprintf(partname, "%s%s%d",
+ 					     mapname, delim, j+1)) {
+ 					fprintf(stderr, "partname too small\n");
+@@ -591,9 +643,19 @@ main(int argc, char **argv){
+ 				}
+ 				strip_slash(partname);
+ 
+-				if (slices[j].size || !dm_map_present(partname))
++				if (slices[j].size ||
++				    !dm_map_present(partname, &part_uuid))
+ 					continue;
+ 
++				if (part_uuid && uuid) {
++					if (check_uuid(uuid, part_uuid, &reason) != 0) {
++						fprintf(stderr, "%s is %s. Not removing\n", partname, reason);
++						free(part_uuid);
++						continue;
++					}
++					free(part_uuid);
++				}
++
+ 				if (!dm_simplecmd(DM_DEVICE_REMOVE,
+ 						  partname, 1, 0)) {
+ 					r++;
 -- 
 1.8.3.1
