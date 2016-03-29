@@ -1,143 +1,92 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH RESEND v2 11/18] fs: Ensure the mounter of a filesystem is privileged towards its inodes
-Date: Tue, 29 Mar 2016 20:36:09 -0500
-Message-ID: <87twjoiw6u.fsf@x220.int.ebiederm.org>
-References: <1451930639-94331-1-git-send-email-seth.forshee@canonical.com>
-	<1451930639-94331-12-git-send-email-seth.forshee@canonical.com>
-	<20160303170201.GA30224@ubuntu-hedt>
-	<87twkl50g5.fsf@x220.int.ebiederm.org>
-	<20160328165936.GC137406@ubuntu-hedt>
+From: Nick Fisk <nick@fisk.me.uk>
+Subject: Re: [ceph-users] Local SSD cache for ceph on each
+	compute node.
+Date: Tue, 29 Mar 2016 14:53:11 +0100
+Message-ID: <e2c12cad.9Ro.9Gf.hp.1e3JYGxgKj@mailjet.com>
+References: <VI1PR05MB16772049FF17DD2D4DE93EDEE08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
+	<1003879409.38672781.1458091493153.JavaMail.zimbra@redhat.com>
+	<VI1PR05MB1677B32D621D52ECFBD8C889E08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
+	<1517351774.38675790.1458092531934.JavaMail.zimbra@redhat.com>
+	<8C4FE234-AC6A-4F80-84DA-DCB69C58E874@ebay.com>
+	<VI1PR05MB1677291EA89E9C02BEE437C2E08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
+	<054DE45B-30E4-44B6-88CE-23FC207FE41E@ebay.com>
+	<56F792F6.9050400@redhat.com>
+	<DC9C5DB4-43C1-49DB-A37E-F7C6A9D3D172@ebay.com>
+	<56FA46C9.6090500@redhat.com>
+	<E5E25BC0-A526-4EB8-9EC0-80F6A7734B23@ebay.com>
+	<56FA6792.1050005@redhat.com>
+	<alpine.DEB.2.11.1603290827510.6473@cpach.fuggernut.com>
+	<56FA7DEA.9010005@redhat.com>
+	<ce98776b.9Ro.9Gf.cS.1kvo9AAN6V@mailjet.com>
+	<56FA859B.5050608@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20160328165936.GC137406@ubuntu-hedt> (Seth Forshee's message of
-	"Mon, 28 Mar 2016 11:59:36 -0500")
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Seth Forshee <seth.forshee@canonical.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <56FA859B.5050608@redhat.com>
+Content-Language: en-gb
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: 'Ric Wheeler' <rwheeler@redhat.com>, 'Sage Weil' <sage@newdream.net>
+Cc: ceph-users@lists.ceph.com, 'device-mapper development' <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Seth Forshee <seth.forshee@canonical.com> writes:
+> -----Original Message-----
+> From: ceph-users [mailto:ceph-users-bounces@lists.ceph.com] On Behalf Of
+> Ric Wheeler
+> Sent: 29 March 2016 14:40
+> To: Nick Fisk <nick@fisk.me.uk>; 'Sage Weil' <sage@newdream.net>
+> Cc: ceph-users@lists.ceph.com; device-mapper development <dm-
+> devel@redhat.com>
+> Subject: Re: [ceph-users] Local SSD cache for ceph on each compute node.
+> 
+> On 03/29/2016 04:35 PM, Nick Fisk wrote:
+> > One thing I picked up on when looking at dm-cache for doing caching
+> > with RBD's is that it wasn't really designed to be used as a writeback
+> > cache for new writes, as in how you would expect a traditional
+> > writeback cache to work. It seems all the policies are designed around
+> > the idea that writes go to cache only if the block is already in the
+> > cache (through reads) or its hot enough to promote. Although there did
+> > seem to be some tunables to alter this behaviour, posts on the mailing
+> > list seemed to suggest this wasn't how it was designed to be used. I'm
+> > not sure if this has been addressed since I last looked at it though.
+> >
+> > Depending on if you are trying to accelerate all writes, or just your
+"hot"
+> > blocks, this may or may not matter. Even <1GB local caches can make a
+> > huge difference to sync writes.
+> 
+> Hi Nick,
+> 
+> Some of the caching policies have changed recently as the team has looked
+> at different workloads.
+> 
+> Happy to introduce you to them if you want to discuss offline or post
+> comments over on their list: device-mapper development <dm-
+> devel@redhat.com>
+> 
+> thanks!
+> 
+> Ric
 
-> On Fri, Mar 04, 2016 at 04:43:06PM -0600, Eric W. Biederman wrote:
->> In general this is only an issue if uids and gids on the filesystem
->> do not map into the user namespace.
->> 
->> Therefore the general fix is to limit the logic of checking for
->> capabilities in s_user_ns if we are dealing with INVALID_UID and
->> INVALID_GID.  For proc and kernfs that should never be the case
->> so the problem becomes a non-issue.
->> 
->> Further I would look at limiting that relaxation to just
->> inode_change_ok. 
->
-> Finally got around to implementing this today; is the patch below what
-> you had in mind?
+Hi Ric,
 
-Pretty much.
+Thanks for the heads up, just from a quick flick through I can see there are
+now separate read and write promotion thresholds, so I can see just from
+that it would be a lot more suitable for what I intended. I might try and
+find some time to give it another test.
 
-For the same reason that capble_wrt_inode_uidgid(inode) had to look
-at both inode->i_uid and inode->i_gid I think we need to look at
-both inode->i_uid and inode->i_gid in those case.
+Nick
 
-I am worried about chgrp_ok in cases such as inode->i_uid is valid
-but unmapped.  I have a similiar worry about chown_ok where
-inode->i_gid is valid but unmapped (although that worry is less
-serious).
-
->> So that we can easily wrap that check per filesystem
->> and deny the relaxation for proc and kernfs.  proc and kernfs already
->> have wrappers for .setattr so denying changes when !uid_vaid and
->> !gid_valid would be a trivial addition, and ensure calamity does
->> not ensure.
->
-> I'm confused about this part though. As you say above, proc and kernfs
-> will never have inodes with invalid ids, so it's not an issue. Do you
-> just mean this to be extra insurance against problems?
-
-I meant two things.
-1) As filesystems explicitly have to call inode_change_ok they can
-   over ride the default if it is possible.
-
-2) Because being paranoid about backward compatibility matters, it
-   almost certainly workth add adding a check:
-   "if (!uid_valid(inode->i_uid) ||!gid_valid(inode->i_gid)) return -EPERM"
-   To proc and sysfs just before they call inode_change_ok just so we
-   don't need to analyze them and confirm that they don't use
-   INVALID_UID.
-
-   That just makes the patch more robust.
-
-   The we could leave removing that code for a follow on patch where
-   someone takes the time to read through and audit all of the proc and
-   sysfs code to ensure that the case does not arise, instead of just
-   implicitily assuming it.
-
-   That is the usual pattern when pushing down changes.  Do something
-   that is easily guaranteed to work, and leave the careful looking for
-   a patch all of it's own.
-
-Eric
-
-
-> Thanks,
-> Seth
->
-> ---
->
-> diff --git a/fs/attr.c b/fs/attr.c
-> index 3cfaaac4a18e..f2bcd3f7dfbb 100644
-> --- a/fs/attr.c
-> +++ b/fs/attr.c
-> @@ -16,6 +16,31 @@
->  #include <linux/evm.h>
->  #include <linux/ima.h>
->  
-> +static bool chown_ok(const struct inode *inode, kuid_t uid)
-> +{
-> +	if (uid_eq(current_fsuid(), inode->i_uid) && uid_eq(uid, inode->i_uid))
-> +		return true;
-> +	if (capable_wrt_inode_uidgid(inode, CAP_CHOWN))
-> +		return true;
-> +	if (!uid_valid(inode->i_uid) &&
-> +	    ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
-> +		return true;
-> +	return false;
-> +}
-> +
-> +static bool chgrp_ok(const struct inode *inode, kgid_t gid)
-> +{
-> +	if (uid_eq(current_fsuid(), inode->i_uid) &&
-> +	    (in_group_p(gid) || gid_eq(gid, inode->i_gid)))
-> +		return true;
-> +	if (capable_wrt_inode_uidgid(inode, CAP_CHOWN))
-> +		return true;
-> +	if (!gid_valid(inode->i_gid) &&
-> +	    ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
-> +		return true;
-> +	return false;
-> +}
-> +
->  /**
->   * inode_change_ok - check if attribute changes to an inode are allowed
->   * @inode:	inode to check
-> @@ -58,17 +83,11 @@ int inode_change_ok(const struct inode *inode, struct iattr *attr)
->  		return 0;
->  
->  	/* Make sure a caller can chown. */
-> -	if ((ia_valid & ATTR_UID) &&
-> -	    (!uid_eq(current_fsuid(), inode->i_uid) ||
-> -	     !uid_eq(attr->ia_uid, inode->i_uid)) &&
-> -	    !capable_wrt_inode_uidgid(inode, CAP_CHOWN))
-> +	if ((ia_valid & ATTR_UID) && !chown_ok(inode, attr->ia_uid))
->  		return -EPERM;
->  
->  	/* Make sure caller can chgrp. */
-> -	if ((ia_valid & ATTR_GID) &&
-> -	    (!uid_eq(current_fsuid(), inode->i_uid) ||
-> -	    (!in_group_p(attr->ia_gid) && !gid_eq(attr->ia_gid, inode->i_gid))) &&
-> -	    !capable_wrt_inode_uidgid(inode, CAP_CHOWN))
-> +	if ((ia_valid & ATTR_GID) && !chgrp_ok(inode, attr->ia_gid))
->  		return -EPERM;
->  
->  	/* Make sure a caller can chmod. */
+> 
+> _______________________________________________
+> ceph-users mailing list
+> ceph-users@lists.ceph.com
+> http://lists.ceph.com/listinfo.cgi/ceph-users-ceph.com
