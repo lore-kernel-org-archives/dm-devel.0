@@ -1,15 +1,14 @@
-From: Eric Wheeler <dm-devel@lists.ewheeler.net>
-Subject: Re: [PATCH] thin_dump: added --device-id, --skip-mappings,
- and new output --format's
-Date: Mon, 28 Mar 2016 22:05:22 +0000 (UTC)
-Message-ID: <alpine.LRH.2.11.1603282124000.13440@mail.ewheeler.net>
-References: <alpine.LRH.2.11.1603150104370.19675@mail.ewheeler.net>
-	<20160324153509.GA3101@rh-vpn>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 02/17] retrigger uevents to try and get the uid
+	through udev
+Date: Mon, 28 Mar 2016 22:12:59 -0500
+Message-ID: <1459221194-23222-3-git-send-email-bmarzins@redhat.com>
+References: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160324153509.GA3101@rh-vpn>
+In-Reply-To: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,97 +18,285 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <thornber@redhat.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Thu, 24 Mar 2016, Joe Thornber wrote:
+Ideally, udev will be able to grab the wwid when a path device is
+discovered, but sometimes this isn't possible. In these cases, the
+best thing that could happen would be for udev to actually get the
+information, and add it to its database. This patch makes multipath
+retrigger uevents a limited number of times before giving up and
+trying to get the information itself.
 
-> On Tue, Mar 15, 2016 at 01:45:15AM +0000, Eric Wheeler wrote:
-> > Hi Joe,
-> > 
-> > Please review the patch below when you have a moment.  I am interested in 
-> > your feedback, and also interested in having this functionality merged 
-> > upstream.  This was written against thin-provisioning-tools.git tag 
-> > v0.5.6.
-> 
-> These changes are now on the v0.7-devel branch:
-> 
-> i) --dev-id to filter thin_dump output on device id, multiple selections allowed.
-> ii) --skip-mappings
-> iii) thin_dump now takes a format called 'custom' that let's you use a plugin emitter of your own.
-> 
->      eg, 
-> 
->      thin_dump --format custom=contrib/ewheeler_emitter.so /dev/sda
-> 
-> 
-> The contrib/ directory is for third party contributions.  Use 'make
-> contrib' to build it.  I've put your emitter and tmakatos' emitter in
-> there already.
+There are two configurables that control how it does this,
+"retrigger_tries" and "retrigger_delay". The first sets the number of
+times it will try to retrigger a uevent to get the wwid, the second
+sets the amount of time to wait between retriggers.
 
+This patch currently only tries reinitializing the path on change events
+after multipathd has triggered a change event, and it only tries once
+per triggered change event.  Now, its possible that other change events
+could occur on the device without multipathd tirggering them.  As the
+patch stands now, it won't try to initialize the device on those.  It will,
+however still try in the checkerloop, but only after it has finished
+retriggering the uevents. We could be much more aggressive here, and assume
+that devices that simply won't have a WWID should already be taken care of
+by the blacklists, so it would be always a good idea to recheck devices on
+change events. What would be ideal is if udev would let us know when it had
+problems or timed out when processing a uevent, so we would know if
+retiggering the uevent would be useful.
 
-It took me a bit to figure out that I needed --enable-testing to get 
-contrib/ to build.  You might remove the --enable-testing requirement 
-within the Makefile if contrib will remain as an optional Makefile target 
-that doesn't usually build with `make`.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/config.c    |  2 ++
+ libmultipath/config.h    |  2 ++
+ libmultipath/defaults.h  |  2 ++
+ libmultipath/dict.c      |  8 ++++++++
+ libmultipath/discovery.c | 28 ++++++++++++++++------------
+ libmultipath/structs.h   |  8 ++++++++
+ multipathd/main.c        | 40 +++++++++++++++++++++++++---------------
+ 7 files changed, 63 insertions(+), 27 deletions(-)
 
-Also FYI: I noticed that `-ldl' needed added to to the g++ linking 
-line:
-
-/usr/src/thin-provisioning-tools/thin-provisioning/shared_library_emitter.cc:15: undefined reference to `dlopen' 
-/usr/src/thin-provisioning-tools/thin-provisioning/shared_library_emitter.cc:19: undefined reference to `dlerror' 
-/usr/src/thin-provisioning-tools/thin-provisioning/shared_library_emitter.cc:20: undefined reference to `dlsym' 
-/usr/src/thin-provisioning-tools/thin-provisioning/shared_library_emitter.cc:22: undefined reference to `dlerror' 
-/usr/src/thin-provisioning-tools/thin-provisioning/shared_library_emitter.cc:17: undefined reference to `dlerror'
-
-So I added the -ldl as below:
-
-g++ -g -Wall -fPIC -fno-strict-aliasing -std=c++11 -O8  
--DSTRERROR_R_CHAR_P   -o bin/pdata_tools base/application.o base/base64.o 
-base/disk_units.o base/endian_utils.o base/error_state.o 
-base/error_string.o base/grid_layout.o base/progress_monitor.o 
-base/rolling_hash.o base/xml_utils.o block-cache/block_cache.o 
-caching/cache_check.o caching/cache_dump.o caching/cache_metadata_size.o 
-caching/cache_repair.o caching/cache_restore.o caching/commands.o 
-caching/hint_array.o caching/mapping_array.o caching/metadata.o 
-caching/metadata_dump.o caching/restore_emitter.o caching/superblock.o 
-caching/xml_format.o era/commands.o era/era_array.o era/era_check.o 
-era/era_detail.o era/era_dump.o era/era_invalidate.o era/era_restore.o 
-era/metadata.o era/metadata_dump.o era/restore_emitter.o era/superblock.o 
-era/writeset_tree.o era/xml_format.o main.o persistent-data/checksum.o 
-persistent-data/data-structures/bitset.o 
-persistent-data/data-structures/bloom_filter.o 
-persistent-data/data-structures/btree.o persistent-data/error_set.o 
-persistent-data/file_utils.o persistent-data/hex_dump.o 
-persistent-data/space-maps/careful_alloc.o 
-persistent-data/space-maps/disk.o persistent-data/space-maps/recursive.o 
-persistent-data/space_map.o persistent-data/transaction_manager.o 
-persistent-data/validators.o thin-provisioning/commands.o 
-thin-provisioning/cache_stream.o thin-provisioning/chunk_stream.o 
-thin-provisioning/device_tree.o thin-provisioning/fixed_chunk_stream.o 
-thin-provisioning/human_readable_format.o thin-provisioning/mapping_tree.o 
-thin-provisioning/metadata.o thin-provisioning/metadata_checker.o 
-thin-provisioning/metadata_counter.o thin-provisioning/metadata_dumper.o 
-thin-provisioning/pool_stream.o thin-provisioning/restore_emitter.o 
-thin-provisioning/rmap_visitor.o thin-provisioning/superblock.o 
-thin-provisioning/shared_library_emitter.o thin-provisioning/thin_check.o 
-thin-provisioning/thin_delta.o thin-provisioning/thin_dump.o 
-thin-provisioning/thin_ls.o thin-provisioning/thin_metadata_size.o 
-thin-provisioning/thin_pool.o thin-provisioning/thin_repair.o 
-thin-provisioning/thin_restore.o thin-provisioning/thin_rmap.o 
-thin-provisioning/thin_trim.o thin-provisioning/xml_format.o -laio -lexpat 
--lstdc++ -ldl
-         ^^^^  ADDED
-
-
-> 
-> I hope that covers everything you need.
-> 
-> - Joe
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index c788cf6..cfcc685 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -619,6 +619,8 @@ load_config (char * file, struct udev *udev)
+ 	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
+ 	conf->uxsock_timeout = DEFAULT_UXSOCK_TIMEOUT;
+ 	conf->uid_attribute = set_default(DEFAULT_UID_ATTRIBUTE);
++	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
++	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
+ 
+ 	/*
+ 	 * preload default hwtable
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 0183969..372eace 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -135,6 +135,8 @@ struct config {
+ 	int delay_watch_checks;
+ 	int delay_wait_checks;
+ 	int uxsock_timeout;
++	int retrigger_tries;
++	int retrigger_delay;
+ 	unsigned int version[3];
+ 
+ 	char * dev;
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index cf1d5be..7ef5adf 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -21,6 +21,8 @@
+ #define DEFAULT_DELAY_CHECKS DELAY_CHECKS_OFF
+ #define DEFAULT_UEVENT_STACKSIZE 256
+ #define DEFAULT_UXSOCK_TIMEOUT  1000
++#define DEFAULT_RETRIGGER_DELAY 10
++#define DEFAULT_RETRIGGER_TRIES 3
+ 
+ #define DEFAULT_CHECKINT	5
+ #define MAX_CHECKINT(a)		(a << 2)
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 5c2da43..e3bc67e 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -389,6 +389,12 @@ declare_hw_snprint(deferred_remove, print_yes_no_undef)
+ declare_mp_handler(deferred_remove, set_yes_no_undef)
+ declare_mp_snprint(deferred_remove, print_yes_no_undef)
+ 
++declare_def_handler(retrigger_tries, set_int)
++declare_def_snprint(retrigger_tries, print_int)
++
++declare_def_handler(retrigger_delay, set_int)
++declare_def_snprint(retrigger_delay, print_int)
++
+ static int
+ def_config_dir_handler(vector strvec)
+ {
+@@ -1365,6 +1371,8 @@ init_keywords(void)
+ 	install_keyword("delay_wait_checks", &def_delay_wait_checks_handler, &snprint_def_delay_wait_checks);
+ 	install_keyword("find_multipaths", &def_find_multipaths_handler, &snprint_def_find_multipaths);
+ 	install_keyword("uxsock_timeout", &def_uxsock_timeout_handler, &snprint_def_uxsock_timeout);
++	install_keyword("retrigger_tries", &def_retrigger_tries_handler, &snprint_def_retrigger_tries);
++	install_keyword("retrigger_delay", &def_retrigger_delay_handler, &snprint_def_retrigger_delay);
+ 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
+ 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
+ 	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 4582a20..bd65354 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1547,7 +1547,7 @@ get_uid (struct path * pp)
+ 					pp->dev, strerror(-len));
+ 
+ 		}
+-		if (len <= 0 &&
++		if (len <= 0 && pp->retriggers >= conf->retrigger_tries &&
+ 		    !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) {
+ 			len = get_vpd_uid(pp);
+ 			origin = "sysfs";
+@@ -1651,11 +1651,19 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ 		}
+ 	}
+ 
+-	if ((mask & DI_WWID) && !strlen(pp->wwid))
++	if ((mask & DI_WWID) && !strlen(pp->wwid)) {
+ 		get_uid(pp);
++		if (!strlen(pp->wwid)) {
++			pp->initialized = INIT_MISSING_UDEV;
++			pp->tick = conf->retrigger_delay;
++			return PATHINFO_OK;
++		}
++		else
++			pp->tick = 1;
++	}
++
+ 	if (mask & DI_BLACKLIST && mask & DI_WWID) {
+-		if (!strlen(pp->wwid) ||
+-		    filter_wwid(conf->blist_wwid, conf->elist_wwid,
++		if (filter_wwid(conf->blist_wwid, conf->elist_wwid,
+ 				pp->wwid, pp->dev) > 0) {
+ 			return PATHINFO_SKIPPED;
+ 		}
+@@ -1665,17 +1673,13 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ 	  * Retrieve path priority, even for PATH_DOWN paths if it has never
+ 	  * been successfully obtained before.
+ 	  */
+-	if ((mask & DI_PRIO) && path_state == PATH_UP) {
++	if ((mask & DI_PRIO) && path_state == PATH_UP && strlen(pp->wwid)) {
+ 		if (pp->state != PATH_DOWN || pp->priority == PRIO_UNDEF) {
+-			if (!strlen(pp->wwid))
+-				get_uid(pp);
+-			if (!strlen(pp->wwid))
+-				return PATHINFO_SKIPPED;
+ 			get_prio(pp);
+ 		}
+ 	}
+ 
+-	pp->initialized = 1;
++	pp->initialized = INIT_OK;
+ 	return PATHINFO_OK;
+ 
+ blank:
+@@ -1684,7 +1688,7 @@ blank:
+ 	 */
+ 	memset(pp->wwid, 0, WWID_SIZE);
+ 	pp->chkrstate = pp->state = PATH_DOWN;
+-	pp->initialized = 0;
++	pp->initialized = INIT_FAILED;
+ 
+-	return 0;
++	return PATHINFO_OK;
+ }
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index ef5fb7e..c56221b 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -145,6 +145,13 @@ enum delay_checks_states {
+ 	DELAY_CHECKS_UNDEF = 0,
+ };
+ 
++enum initialized_states {
++	INIT_FAILED,
++	INIT_MISSING_UDEV,
++	INIT_REQUESTED_UDEV,
++	INIT_OK,
++};
++
+ struct sg_id {
+ 	int host_no;
+ 	int channel;
+@@ -202,6 +209,7 @@ struct path {
+ 	struct multipath * mpp;
+ 	int fd;
+ 	int initialized;
++	int retriggers;
+ 
+ 	/* configlet pointers */
+ 	struct hwentry * hwe;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 60c6365..38a2b42 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -458,11 +458,6 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
+ 		condlog(3, "%s: failed to get path info", uev->kernel);
+ 		return 1;
+ 	}
+-	if (!strlen(pp->wwid)) {
+-		condlog(3, "%s: Failed to get path wwid", uev->kernel);
+-		free_path(pp);
+-		return 1;
+-	}
+ 	ret = store_path(vecs->pathvec, pp);
+ 	if (!ret) {
+ 		pp->checkint = conf->checkint;
+@@ -722,20 +717,23 @@ static int
+ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ {
+ 	int ro, retval = 0;
++	struct path * pp;
++
++	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
++	if (!pp) {
++		condlog(0, "%s: spurious uevent, path not found",
++			uev->kernel);
++		return 1;
++	}
++
++	if (pp->initialized == INIT_REQUESTED_UDEV)
++		return uev_add_path(uev, vecs);
+ 
+ 	ro = uevent_get_disk_ro(uev);
+ 
+ 	if (ro >= 0) {
+-		struct path * pp;
+-
+ 		condlog(2, "%s: update path write_protect to '%d' (uevent)",
+ 			uev->kernel, ro);
+-		pp = find_path_by_dev(vecs->pathvec, uev->kernel);
+-		if (!pp) {
+-			condlog(0, "%s: spurious uevent, path not found",
+-				uev->kernel);
+-			return 1;
+-		}
+ 		if (pp->mpp) {
+ 			retval = reload_map(vecs, pp->mpp, 0);
+ 
+@@ -1165,12 +1163,24 @@ check_path (struct vectors * vecs, struct path * pp)
+ 	int disable_reinstate = 0;
+ 	int oldchkrstate = pp->chkrstate;
+ 
+-	if (pp->initialized && !pp->mpp)
++	if ((pp->initialized == INIT_OK ||
++	     pp->initialized == INIT_REQUESTED_UDEV) && !pp->mpp)
+ 		return 0;
+ 
+ 	if (pp->tick && --pp->tick)
+ 		return 0; /* don't check this path yet */
+ 
++	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV &&
++	    pp->retriggers < conf->retrigger_tries) {
++		condlog(2, "%s: triggering change event to reinitialize",
++			pp->dev);
++		pp->initialized = INIT_REQUESTED_UDEV;
++		pp->retriggers++;
++		sysfs_attr_set_value(pp->udev, "uevent", "change",
++				     strlen("change"));
++		return 0;
++	} 
++
+ 	/*
+ 	 * provision a next check soonest,
+ 	 * in case we exit abnormaly from here
+@@ -1197,7 +1207,7 @@ check_path (struct vectors * vecs, struct path * pp)
+ 		return 1;
+ 	}
+ 	if (!pp->mpp) {
+-		if (!strlen(pp->wwid) &&
++		if (!strlen(pp->wwid) && pp->initialized != INIT_MISSING_UDEV &&
+ 		    (newstate == PATH_UP || newstate == PATH_GHOST)) {
+ 			condlog(2, "%s: add missing path", pp->dev);
+ 			if (pathinfo(pp, conf->hwtable, DI_ALL) == 0) {
+-- 
+1.8.3.1
