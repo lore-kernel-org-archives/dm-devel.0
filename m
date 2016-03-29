@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 10/17] multipathd: delay reloads during creation
-Date: Mon, 28 Mar 2016 22:13:07 -0500
-Message-ID: <1459221194-23222-11-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 05/17] libmultipath: add ignore_new_boot_devs
+	option
+Date: Mon, 28 Mar 2016 22:13:02 -0500
+Message-ID: <1459221194-23222-6-git-send-email-bmarzins@redhat.com>
 References: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,503 +22,149 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-lvm needs PV devices to not be suspended while the udev rules are
-running, for them to be correctly identified as PVs. However, multipathd
-will often be in a situation where it will create a multipath device
-upon seeing a path, and then immediately reload the device upon seeing
-another path.  If multipath is reloading a device while processing the
-udev event from its creation, lvm can fail to identify it as a PV. This
-can cause systems to fail to boot. Unfortunately, using udev
-synchronization cookies to solve this issue would cause a host of other
-issues that could only be avoided by a pretty substantial change in how
-multipathd does locking and event processing. The good news is that
-multipathd is already listening to udev events itself, and can make sure
-that it isn't reloading when it shouldn't be.
+When multipath relies on the wwids file to determine whether a device is
+a multipath path (with "multipath -c"), it will fail the first time a
+new multipathable device is discovered, since the wwid clearly won't be
+in the wwids file.  This is usually fine.  Multipath will still set
+itself up on the device, and add the wwid to the wwids file. However,
+this causes a race, where multipath won't claim the path immediately,
+and something else may.  Later multipath will try, and possibly succeed
+at, setting itself up on that device.
 
-This patch makes multipathd delay or refuse any reloads that would
-happen between the time when it creates a device, and when it receives
-the change uevent from the device creation. The only reloads that it
-refuses are from the multipathd interactive commands that make no sense
-on a not fully started device.  Otherwise, it processes the event or
-command, and sets a flag to either mark that device for an update, or
-to signal that multipathd needs a reconfigure. When the udev event for
-the creation arrives, multipath will reload the device if necessary. If
-a reconfigure has been requested, and no devices are currently being
-created, multipathd will also do the reconfigure then.
+I've seen cases where this can cause problems during boot on and
+immediately after install, where multipath racing with LVM on an already
+labelled device can get the machine into a state where boot fails. This
+can be avoided if multipath simply doesn't set itself up on any devices
+that it didn't claim (with "multipath -c") in the initramfs.  It can
+still safely attempt to set itself up on these devices later in boot,
+after the regular filesystem has been set up.
 
-Also this patch adds a configurable timer "missing_uev_msg_delay"
-defaulting to 30 seconds. If the udev creation event has not arrived
-after this timeout has triggered, multipathd will start printing
-messages alerting the user of this every "missing_uev_msg_delay"
-seconds.
+To allow this, this patch adds a new multipahtd commandline option, -n. When
+multipathd is run with this set, it will not create multipath devices if
+their wwid isn't already in the wwids file. This means that only devices
+that are claimed by "multipath -c" will be used by multipathd.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/config.c      |   1 +
- libmultipath/config.h      |   2 +
- libmultipath/configure.c   |   4 ++
- libmultipath/defaults.h    |   1 +
- libmultipath/dict.c        |   4 ++
- libmultipath/structs.h     |   2 +
- multipath.conf.defaults    |   1 +
- multipath/multipath.conf.5 |   8 +++
- multipathd/cli_handlers.c  |  65 +++++++++++++++++++++----
- multipathd/main.c          | 119 +++++++++++++++++++++++++++++++++++++++++++--
- multipathd/main.h          |   1 +
- 11 files changed, 195 insertions(+), 13 deletions(-)
+ libmultipath/config.h    |  1 +
+ libmultipath/configure.c |  3 +--
+ libmultipath/wwids.c     | 19 ++++++++++++-------
+ multipathd/main.c        |  9 ++++++---
+ multipathd/multipathd.8  |  4 ++++
+ 5 files changed, 24 insertions(+), 12 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index b038b47..b06d1eb 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -621,6 +621,7 @@ load_config (char * file, struct udev *udev)
- 	conf->uid_attribute = set_default(DEFAULT_UID_ATTRIBUTE);
- 	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
- 	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
-+	conf->uev_msg_delay = DEFAULT_UEV_MSG_DELAY;
- 
- 	/*
- 	 * preload default hwtable
 diff --git a/libmultipath/config.h b/libmultipath/config.h
-index d6a1d4f..93acfa4 100644
+index 372eace..d6a1d4f 100644
 --- a/libmultipath/config.h
 +++ b/libmultipath/config.h
-@@ -138,6 +138,8 @@ struct config {
+@@ -137,6 +137,7 @@ struct config {
+ 	int uxsock_timeout;
  	int retrigger_tries;
  	int retrigger_delay;
- 	int ignore_new_devs;
-+	int delayed_reconfig;
-+	int uev_msg_delay;
++	int ignore_new_devs;
  	unsigned int version[3];
  
  	char * dev;
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 1ab3324..8d5ed2f 100644
+index 3c9badd..1ab3324 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
-@@ -676,6 +676,10 @@ domap (struct multipath * mpp, char * params)
- 			 */
- 			if (mpp->action != ACT_CREATE)
- 				mpp->action = ACT_NOTHING;
-+			else {
-+				mpp->wait_for_udev = 1;
-+				mpp->uev_msg_tick = conf->uev_msg_delay;
+@@ -778,8 +778,7 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+ 			continue;
+ 
+ 		/* If find_multipaths was selected check if the path is valid */
+-		if (conf->find_multipaths && !refwwid &&
+-		    !should_multipath(pp1, pathvec)) {
++		if (!refwwid && !should_multipath(pp1, pathvec)) {
+ 			orphan_path(pp1, "only one path");
+ 			continue;
+ 		}
+diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+index f6f8ea8..567c93d 100644
+--- a/libmultipath/wwids.c
++++ b/libmultipath/wwids.c
+@@ -266,14 +266,19 @@ should_multipath(struct path *pp1, vector pathvec)
+ 	int i;
+ 	struct path *pp2;
+ 
++	if (!conf->find_multipaths && !conf->ignore_new_devs)
++		return 1;
++
+ 	condlog(4, "checking if %s should be multipathed", pp1->dev);
+-	vector_foreach_slot(pathvec, pp2, i) {
+-		if (pp1->dev == pp2->dev)
+-			continue;
+-		if (strncmp(pp1->wwid, pp2->wwid, WWID_SIZE) == 0) {
+-			condlog(3, "found multiple paths with wwid %s, "
+-				"multipathing %s", pp1->wwid, pp1->dev);
+-			return 1;
++	if (!conf->ignore_new_devs) {
++		vector_foreach_slot(pathvec, pp2, i) {
++			if (pp1->dev == pp2->dev)
++				continue;
++			if (strncmp(pp1->wwid, pp2->wwid, WWID_SIZE) == 0) {
++				condlog(3, "found multiple paths with wwid %s, "
++					"multipathing %s", pp1->wwid, pp1->dev);
++				return 1;
 +			}
  		}
- 		dm_setgeometry(mpp);
- 		return DOMAP_OK;
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index 7e847ae..24a0495 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -22,6 +22,7 @@
- #define DEFAULT_UEVENT_STACKSIZE 256
- #define DEFAULT_RETRIGGER_DELAY 10
- #define DEFAULT_RETRIGGER_TRIES 3
-+#define DEFAULT_UEV_MSG_DELAY 30
- 
- #define DEFAULT_CHECKINT	5
- #define MAX_CHECKINT(a)		(a << 2)
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 661456f..192495c 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -396,6 +396,9 @@ declare_def_snprint(retrigger_tries, print_int)
- declare_def_handler(retrigger_delay, set_int)
- declare_def_snprint(retrigger_delay, print_int)
- 
-+declare_def_handler(uev_msg_delay, set_int)
-+declare_def_snprint(uev_msg_delay, print_int)
-+
- static int
- def_config_dir_handler(vector strvec)
- {
-@@ -1371,6 +1374,7 @@ init_keywords(void)
- 	install_keyword("uxsock_timeout", &def_uxsock_timeout_handler, &snprint_def_uxsock_timeout);
- 	install_keyword("retrigger_tries", &def_retrigger_tries_handler, &snprint_def_retrigger_tries);
- 	install_keyword("retrigger_delay", &def_retrigger_delay_handler, &snprint_def_retrigger_delay);
-+	install_keyword("missing_uev_msg_delay", &def_uev_msg_delay_handler, &snprint_def_uev_msg_delay);
- 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
- 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
- 	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index c56221b..b313fca 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -226,6 +226,8 @@ struct multipath {
- 	int bestpg;
- 	int queuedio;
- 	int action;
-+	int wait_for_udev;
-+	int uev_msg_tick;
- 	int pgfailback;
- 	int failback_tick;
- 	int rr_weight;
-diff --git a/multipath.conf.defaults b/multipath.conf.defaults
-index 6adff28..1ab58e4 100644
---- a/multipath.conf.defaults
-+++ b/multipath.conf.defaults
-@@ -29,6 +29,7 @@
- #	config_dir "/etc/multipath/conf.d"
- #	delay_watch_checks no
- #	delay_wait_checks no
-+#	missing_uev_msg_delay 30
- #}
- #blacklist {
- #	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 6980010..aac95fd 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -488,6 +488,14 @@ can be processed. This will result in errors like
- In these cases it is recommended to increase the CLI timeout to avoid
- those issues. The default is
- .I 1000
-+.TP
-+.B missing_uev_msg_delay
-+Controls how long multipathd will wait, after a new multipath device is created,
-+to receive a change event from udev for the device, before printing a warning
-+message. This warning message will print every
-+.I missing_uev_msg_delay
-+seconds until the uevent is received. the default is
-+.I 30
- .
- .SH "blacklist section"
- The
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index a44281f..21fe00e 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -623,6 +623,11 @@ cli_reload(void *v, char **reply, int *len, void *data)
- 		condlog(0, "%s: invalid map name. cannot reload", mapname);
- 		return 1;
  	}
-+	if (mpp->wait_for_udev) {
-+		condlog(2, "%s: device not fully created, failing reload",
-+			mpp->alias);
-+		return 1;
-+	}
- 
- 	return reload_map(vecs, mpp, 0);
- }
-@@ -669,6 +674,12 @@ cli_resize(void *v, char **reply, int *len, void *data)
- 		return 1;
- 	}
- 
-+	if (mpp->wait_for_udev) {
-+		condlog(2, "%s: device not fully created, failing resize",
-+			mpp->alias);
-+		return 1;
-+	}
-+
- 	pgp = VECTOR_SLOT(mpp->pg, 0);
- 
- 	if (!pgp){
-@@ -833,6 +844,12 @@ cli_reconfigure(void * v, char ** reply, int * len, void * data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 
-+	if (need_to_delay_reconfig(vecs)) {
-+		conf->delayed_reconfig = 1;
-+		condlog(2, "delaying reconfigure (operator)");
-+		return 0;
-+	}
-+
- 	condlog(2, "reconfigure (operator)");
- 
- 	return reconfigure(vecs);
-@@ -843,17 +860,25 @@ cli_suspend(void * v, char ** reply, int * len, void * data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, MAP);
--	int r = dm_simplecmd_noflush(DM_DEVICE_SUSPEND, param, 0, 0);
-+	int r;
-+	struct multipath * mpp;
- 
- 	param = convert_dev(param, 0);
--	condlog(2, "%s: suspend (operator)", param);
-+	mpp = find_mp_by_alias(vecs->mpvec, param);
-+	if (!mpp)
-+		return 1;
- 
--	if (!r) /* error */
-+	if (mpp->wait_for_udev) {
-+		condlog(2, "%s: device not fully created, failing suspend",
-+			mpp->alias);
- 		return 1;
-+	}
- 
--	struct multipath * mpp = find_mp_by_alias(vecs->mpvec, param);
-+	r = dm_simplecmd_noflush(DM_DEVICE_SUSPEND, param, 0, 0);
- 
--	if (!mpp)
-+	condlog(2, "%s: suspend (operator)", param);
-+
-+	if (!r) /* error */
- 		return 1;
- 
- 	dm_get_info(param, &mpp->dmi);
-@@ -865,17 +890,25 @@ cli_resume(void * v, char ** reply, int * len, void * data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, MAP);
--	int r = dm_simplecmd_noflush(DM_DEVICE_RESUME, param, 0, 0);
-+	int r;
-+	struct multipath * mpp;
- 
- 	param = convert_dev(param, 0);
--	condlog(2, "%s: resume (operator)", param);
-+	mpp = find_mp_by_alias(vecs->mpvec, param);
-+	if (!mpp)
-+		return 1;
- 
--	if (!r) /* error */
-+	if (mpp->wait_for_udev) {
-+		condlog(2, "%s: device not fully created, failing resume",
-+			mpp->alias);
- 		return 1;
-+	}
- 
--	struct multipath * mpp = find_mp_by_alias(vecs->mpvec, param);
-+	r = dm_simplecmd_noflush(DM_DEVICE_RESUME, param, 0, 0);
- 
--	if (!mpp)
-+	condlog(2, "%s: resume (operator)", param);
-+
-+	if (!r) /* error */
- 		return 1;
- 
- 	dm_get_info(param, &mpp->dmi);
-@@ -908,9 +941,21 @@ cli_reinstate(void * v, char ** reply, int * len, void * data)
- int
- cli_reassign (void * v, char ** reply, int * len, void * data)
- {
-+	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, MAP);
-+	struct multipath *mpp;
- 
- 	param = convert_dev(param, 0);
-+	mpp = find_mp_by_alias(vecs->mpvec, param);
-+	if (!mpp)
-+		return 1;
-+
-+	if (mpp->wait_for_udev) {
-+		condlog(2, "%s: device not fully created, failing reassign",
-+			mpp->alias);
-+		return 1;
-+	}
-+
- 	condlog(3, "%s: reset devices (operator)", param);
- 
- 	dm_reassign(param);
+ 	if (check_wwids_file(pp1->wwid, 0) < 0) {
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 06876b9..ea14e03 100644
+index 21df7be..8f4fb58 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -262,6 +262,47 @@ flush_map(struct multipath * mpp, struct vectors * vecs, int nopaths)
- 	return 0;
- }
- 
-+int
-+update_map (struct multipath *mpp, struct vectors *vecs)
-+{
-+	int retries = 3;
-+	char params[PARAMS_SIZE] = {0};
-+
-+retry:
-+	condlog(4, "%s: updating new map", mpp->alias);
-+	if (adopt_paths(vecs->pathvec, mpp, 1)) {
-+		condlog(0, "%s: failed to adopt paths for new map update",
-+			mpp->alias);
-+		retries = -1;
-+		goto fail;
-+	}
-+	verify_paths(mpp, vecs);
-+	mpp->flush_on_last_del = FLUSH_UNDEF;
-+	mpp->action = ACT_RELOAD;
-+
-+	if (setup_map(mpp, params, PARAMS_SIZE)) {
-+		condlog(0, "%s: failed to setup new map in update", mpp->alias);
-+		retries = -1;
-+		goto fail;
-+	}
-+	if (domap(mpp, params) <= 0 && retries-- > 0) {
-+		condlog(0, "%s: map_udate sleep", mpp->alias);
-+		sleep(1);
-+		goto retry;
-+	}
-+	dm_lib_release();
-+
-+fail:
-+	if (setup_multipath(vecs, mpp))
-+		return 1;
-+
-+	sync_map_state(mpp);
-+
-+	if (retries < 0)
-+		condlog(0, "%s: failed reload in new map update", mpp->alias);
-+	return 0;
-+}
-+
- static int
- uev_add_map (struct uevent * uev, struct vectors * vecs)
- {
-@@ -304,6 +345,20 @@ ev_add_map (char * dev, char * alias, struct vectors * vecs)
- 	mpp = find_mp_by_alias(vecs->mpvec, alias);
- 
- 	if (mpp) {
-+		if (mpp->wait_for_udev > 1) {
-+			if (update_map(mpp, vecs))
-+			/* setup multipathd removed the map */
-+				return 1;
-+		}
-+		if (mpp->wait_for_udev) {
-+			mpp->wait_for_udev = 0;
-+			if (conf->delayed_reconfig &&
-+			    !need_to_delay_reconfig(vecs)) {
-+				condlog(2, "reconfigure (delayed)");
-+				reconfigure(vecs);
-+				return 0;
-+			}
-+		}
- 		/*
- 		 * Not really an error -- we generate our own uevent
- 		 * if we create a multipath mapped device as a result
-@@ -495,7 +550,14 @@ ev_add_path (struct path * pp, struct vectors * vecs)
- 		condlog(0, "%s: failed to get path uid", pp->dev);
- 		goto fail; /* leave path added to pathvec */
- 	}
--	mpp = pp->mpp = find_mp_by_wwid(vecs->mpvec, pp->wwid);
-+	mpp = find_mp_by_wwid(vecs->mpvec, pp->wwid);
-+	if (mpp && mpp->wait_for_udev) {
-+		mpp->wait_for_udev = 2;
-+		orphan_path(pp, "waiting for create to complete");
-+		return 0;
-+	}
-+
-+	pp->mpp = mpp;
- rescan:
- 	if (mpp) {
- 		if (mpp->size != pp->size) {
-@@ -678,6 +740,12 @@ ev_remove_path (struct path *pp, struct vectors * vecs)
- 				" removal of path %s", mpp->alias, pp->dev);
- 			goto fail;
+@@ -518,8 +518,7 @@ rescan:
+ 		mpp->flush_on_last_del = FLUSH_UNDEF;
+ 		mpp->action = ACT_RELOAD;
+ 	} else {
+-		if (conf->find_multipaths &&
+-		    !should_multipath(pp, vecs->pathvec)) {
++		if (!should_multipath(pp, vecs->pathvec)) {
+ 			orphan_path(pp, "only one path");
+ 			return 0;
  		}
-+
-+		if (mpp->wait_for_udev) {
-+			mpp->wait_for_udev = 2;
-+			goto out;
-+		}
-+
- 		/*
- 		 * reload the map
- 		 */
-@@ -735,6 +803,11 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 		condlog(2, "%s: update path write_protect to '%d' (uevent)",
- 			uev->kernel, ro);
- 		if (pp->mpp) {
-+			if (pp->mpp->wait_for_udev) {
-+				pp->mpp->wait_for_udev = 2;
-+				return 0;
-+			}
-+
- 			retval = reload_map(vecs, pp->mpp, 0);
+@@ -1572,6 +1571,7 @@ reconfigure (struct vectors * vecs)
+ 		dm_drv_version(conf->version, TGT_MPATH);
+ 		conf->verbosity = old->verbosity;
+ 		conf->bindings_read_only = old->bindings_read_only;
++		conf->ignore_new_devs = old->ignore_new_devs;
+ 		conf->daemon = 1;
+ 		configure(vecs, 1);
+ 		free_config(old);
+@@ -2076,7 +2076,7 @@ main (int argc, char *argv[])
+ 	if (!conf)
+ 		exit(1);
  
- 			condlog(2, "%s: map %s reloaded (retval %d)",
-@@ -1075,6 +1148,20 @@ followover_should_failback(struct path * pp)
- }
- 
- static void
-+missing_uev_message_tick(vector mpvec)
-+{
-+	struct multipath * mpp;
-+	unsigned int i;
-+
-+	vector_foreach_slot (mpvec, mpp, i) {
-+		if (mpp->wait_for_udev && --mpp->uev_msg_tick <= 0) {
-+			condlog(0, "%s: startup incomplete. Still waiting on udev", mpp->alias);
-+			mpp->uev_msg_tick = conf->uev_msg_delay;
-+		}
-+	}
-+}
-+
-+static void
- defered_failback_tick (vector mpvec)
- {
- 	struct multipath * mpp;
-@@ -1378,6 +1465,9 @@ check_path (struct vectors * vecs, struct path * pp)
- 
- 	pp->state = newstate;
- 
-+
-+	if (pp->mpp->wait_for_udev)
-+		return 1;
- 	/*
- 	 * path prio refreshing
- 	 */
-@@ -1440,6 +1530,7 @@ checkerloop (void *ap)
- 		if (vecs->mpvec) {
- 			defered_failback_tick(vecs->mpvec);
- 			retry_count_tick(vecs->mpvec);
-+			missing_uev_message_tick(vecs->mpvec);
+-	while ((arg = getopt(argc, argv, ":dsv:k::B")) != EOF ) {
++	while ((arg = getopt(argc, argv, ":dsv:k::Bn")) != EOF ) {
+ 	switch(arg) {
+ 		case 'd':
+ 			foreground = 1;
+@@ -2102,6 +2102,9 @@ main (int argc, char *argv[])
+ 		case 'B':
+ 			conf->bindings_read_only = 1;
+ 			break;
++		case 'n':
++			conf->ignore_new_devs = 1;
++			break;
+ 		default:
+ 			;
  		}
- 		if (count)
- 			count--;
-@@ -1545,6 +1636,22 @@ configure (struct vectors * vecs, int start_waiters)
- }
+diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
+index 7fe6597..77f6e72 100644
+--- a/multipathd/multipathd.8
++++ b/multipathd/multipathd.8
+@@ -35,6 +35,10 @@ will use its WWID as its alias.
+ .TP
+ .B -k 
+ multipathd will enter interactive mode. From this mode, the available commands can be viewed by entering "help". When you are finished entering commands, press CTRL-D to quit.
++.TP
++.B -n
++ignore new devices. Multipathd will not create a multipath device unless the
++wwid for the device is already listed in the wwids file.
  
- int
-+need_to_delay_reconfig(struct vectors * vecs)
-+{
-+	struct multipath *mpp;
-+	int i;
-+
-+	if (!VECTOR_SIZE(vecs->mpvec))
-+		return 0;
-+
-+	vector_foreach_slot(vecs->mpvec, mpp, i) {
-+		if (mpp->wait_for_udev)
-+			return 1;
-+	}
-+	return 0;
-+}
-+
-+int
- reconfigure (struct vectors * vecs)
- {
- 	struct config * old = conf;
-@@ -1633,12 +1740,18 @@ void
- handle_signals(void)
- {
- 	if (reconfig_sig && running_state == DAEMON_RUNNING) {
--		condlog(2, "reconfigure (signal)");
- 		pthread_cleanup_push(cleanup_lock,
- 				&gvecs->lock);
- 		lock(gvecs->lock);
- 		pthread_testcancel();
--		reconfigure(gvecs);
-+		if (need_to_delay_reconfig(gvecs)) {
-+			conf->delayed_reconfig = 1;
-+			condlog(2, "delaying reconfigure (signal)");
-+		}
-+		else {
-+			condlog(2, "reconfigure (signal)");
-+			reconfigure(gvecs);
-+		}
- 		lock_cleanup_pop(gvecs->lock);
- 	}
- 	if (log_reset_sig) {
-diff --git a/multipathd/main.h b/multipathd/main.h
-index 10378ef..2f706d2 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -18,6 +18,7 @@ extern pid_t daemon_pid;
- 
- void exit_daemon(void);
- const char * daemon_status(void);
-+int need_to_delay_reconfig (struct vectors *);
- int reconfigure (struct vectors *);
- int ev_add_path (struct path *, struct vectors *);
- int ev_remove_path (struct path *, struct vectors *);
+ .SH COMMANDS
+ .TP
 -- 
 1.8.3.1
