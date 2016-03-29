@@ -1,72 +1,89 @@
-From: "John Stoffel" <john@stoffel.org>
-Subject: Re: [PATCH 10/17] multipathd: delay reloads during
-	creation
-Date: Tue, 29 Mar 2016 10:02:41 -0400
-Message-ID: <22266.35585.347696.835499@quad.stoffel.home>
-References: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
-	<1459221194-23222-11-git-send-email-bmarzins@redhat.com>
+From: Ric Wheeler <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: Local SSD cache for ceph on each compute node.
+Date: Tue, 29 Mar 2016 18:35:03 +0300
+Message-ID: <56FAA0A7.6050009@redhat.com>
+References: <VI1PR05MB16772049FF17DD2D4DE93EDEE08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
+	<1003879409.38672781.1458091493153.JavaMail.zimbra@redhat.com>
+	<VI1PR05MB1677B32D621D52ECFBD8C889E08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
+	<1517351774.38675790.1458092531934.JavaMail.zimbra@redhat.com>
+	<8C4FE234-AC6A-4F80-84DA-DCB69C58E874@ebay.com>
+	<VI1PR05MB1677291EA89E9C02BEE437C2E08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
+	<054DE45B-30E4-44B6-88CE-23FC207FE41E@ebay.com>
+	<56F792F6.9050400@redhat.com>
+	<DC9C5DB4-43C1-49DB-A37E-F7C6A9D3D172@ebay.com>
+	<56FA46C9.6090500@redhat.com>
+	<E5E25BC0-A526-4EB8-9EC0-80F6A7734B23@ebay.com>
+	<56FA6792.1050005@redhat.com>
+	<alpine.DEB.2.11.1603290827510.6473@cpach.fuggernut.com>
+	<56FA7DEA.9010005@redhat.com>
+	<ce98776b.9Ro.9Gf.cS.1kvo9AAN6V@mailjet.com>
+	<56FA859B.5050608@redhat.com>
+	<9be96412.9Ro.9Gf.hp.1e3JYGxgKk@mailjet.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1459221194-23222-11-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+Return-path: <ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
+In-Reply-To: <9be96412.9Ro.9Gf.hp.1e3JYGxgKk-ImYt9qTNe79BDgjK7y7TUQ@public.gmane.org>
+List-Unsubscribe: <http://lists.ceph.com/options.cgi/ceph-users-ceph.com>,
+	<mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.ceph.com/pipermail/ceph-users-ceph.com/>
+List-Post: <mailto:ceph-users-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
+List-Help: <mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.ceph.com/listinfo.cgi/ceph-users-ceph.com>,
+	<mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=subscribe>
+Errors-To: ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org
+Sender: "ceph-users" <ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
+To: Nick Fisk <nick-ksME7r3P/wO1Qrn1Bg8BZw@public.gmane.org>, 'Sage Weil' <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>
+Cc: ceph-users-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org, 'device-mapper development' <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
->>>>> "Benjamin" == Benjamin Marzinski <bmarzins@redhat.com> writes:
+On 03/29/2016 04:53 PM, Nick Fisk wrote:
+>> -----Original Message-----
+>> From: ceph-users [mailto:ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org] On Behalf Of
+>> Ric Wheeler
+>> Sent: 29 March 2016 14:40
+>> To: Nick Fisk <nick-ksME7r3P/wO1Qrn1Bg8BZw@public.gmane.org>; 'Sage Weil' <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>
+>> Cc: ceph-users-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org; device-mapper development <dm-
+>> devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> Subject: Re: [ceph-users] Local SSD cache for ceph on each compute node.
+>>
+>> On 03/29/2016 04:35 PM, Nick Fisk wrote:
+>>> One thing I picked up on when looking at dm-cache for doing caching
+>>> with RBD's is that it wasn't really designed to be used as a writeback
+>>> cache for new writes, as in how you would expect a traditional
+>>> writeback cache to work. It seems all the policies are designed around
+>>> the idea that writes go to cache only if the block is already in the
+>>> cache (through reads) or its hot enough to promote. Although there did
+>>> seem to be some tunables to alter this behaviour, posts on the mailing
+>>> list seemed to suggest this wasn't how it was designed to be used. I'm
+>>> not sure if this has been addressed since I last looked at it though.
+>>>
+>>> Depending on if you are trying to accelerate all writes, or just your
+> "hot"
+>>> blocks, this may or may not matter. Even <1GB local caches can make a
+>>> huge difference to sync writes.
+>> Hi Nick,
+>>
+>> Some of the caching policies have changed recently as the team has looked
+>> at different workloads.
+>>
+>> Happy to introduce you to them if you want to discuss offline or post
+>> comments over on their list: device-mapper development <dm-
+>> devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>>
+>> thanks!
+>>
+>> Ric
+> Hi Ric,
+>
+> Thanks for the heads up, just from a quick flick through I can see there are
+> now separate read and write promotion thresholds, so I can see just from
+> that it would be a lot more suitable for what I intended. I might try and
+> find some time to give it another test.
+>
+> Nick
 
-Benjamin> lvm needs PV devices to not be suspended while the udev
-Benjamin> rules are running, for them to be correctly identified as
-Benjamin> PVs. However, multipathd will often be in a situation where
-Benjamin> it will create a multipath device upon seeing a path, and
-Benjamin> then immediately reload the device upon seeing another path.
-Benjamin> If multipath is reloading a device while processing the udev
-Benjamin> event from its creation, lvm can fail to identify it as a
-Benjamin> PV. This can cause systems to fail to boot. Unfortunately,
-Benjamin> using udev synchronization cookies to solve this issue would
-Benjamin> cause a host of other issues that could only be avoided by a
-Benjamin> pretty substantial change in how multipathd does locking and
-Benjamin> event processing. The good news is that multipathd is
-Benjamin> already listening to udev events itself, and can make sure
-Benjamin> that it isn't reloading when it shouldn't be.
+Let us know how it works out for you, I know that they are very interested in 
+making sure things are useful :)
 
-Benjamin> This patch makes multipathd delay or refuse any reloads that
-Benjamin> would happen between the time when it creates a device, and
-Benjamin> when it receives the change uevent from the device
-Benjamin> creation. The only reloads that it refuses are from the
-Benjamin> multipathd interactive commands that make no sense on a not
-Benjamin> fully started device.  Otherwise, it processes the event or
-Benjamin> command, and sets a flag to either mark that device for an
-Benjamin> update, or to signal that multipathd needs a
-Benjamin> reconfigure. When the udev event for the creation arrives,
-Benjamin> multipath will reload the device if necessary. If a
-Benjamin> reconfigure has been requested, and no devices are currently
-Benjamin> being created, multipathd will also do the reconfigure then.
-
-Benjamin> Also this patch adds a configurable timer
-Benjamin> "missing_uev_msg_delay" defaulting to 30 seconds. If the
-Benjamin> udev creation event has not arrived after this timeout has
-Benjamin> triggered, multipathd will start printing messages alerting
-Benjamin> the user of this every "missing_uev_msg_delay" seconds.
-
-Should this really keep printing this message every 30 seconds for
-eternity?  I would think that having it give up after 30 * N seconds
-would be better instead.  I'm worried that this might block or slow
-down system boots forever, instead of at least failing and falling
-through so that maybe something can be recovered here.
-
-Basically, what can the user do if they start getting these messages?
-We should prompt them with a possible cause/solution if at all
-possible.
-
-John
+ric
