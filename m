@@ -1,7 +1,7 @@
-From: Ric Wheeler <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Nick Fisk <nick-ksME7r3P/wO1Qrn1Bg8BZw@public.gmane.org>
 Subject: Re: Local SSD cache for ceph on each compute node.
-Date: Tue, 29 Mar 2016 16:39:39 +0300
-Message-ID: <56FA859B.5050608@redhat.com>
+Date: Tue, 29 Mar 2016 14:53:11 +0100
+Message-ID: <3526ebc7.9Ro.9Gf.hp.1e3JYGxgKi@mailjet.com>
 References: <VI1PR05MB16772049FF17DD2D4DE93EDEE08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
 	<1003879409.38672781.1458091493153.JavaMail.zimbra@redhat.com>
 	<VI1PR05MB1677B32D621D52ECFBD8C889E08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
@@ -17,11 +17,13 @@ References: <VI1PR05MB16772049FF17DD2D4DE93EDEE08A0@VI1PR05MB1677.eurprd05.prod.
 	<alpine.DEB.2.11.1603290827510.6473@cpach.fuggernut.com>
 	<56FA7DEA.9010005@redhat.com>
 	<ce98776b.9Ro.9Gf.cS.1kvo9AAN6V@mailjet.com>
+	<56FA859B.5050608@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
-In-Reply-To: <ce98776b.9Ro.9Gf.cS.1kvo9AAN6V-ImYt9qTNe79BDgjK7y7TUQ@public.gmane.org>
+In-Reply-To: <56FA859B.5050608-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Language: en-gb
 List-Unsubscribe: <http://lists.ceph.com/options.cgi/ceph-users-ceph.com>,
 	<mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.ceph.com/pipermail/ceph-users-ceph.com/>
@@ -31,33 +33,59 @@ List-Subscribe: <http://lists.ceph.com/listinfo.cgi/ceph-users-ceph.com>,
 	<mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=subscribe>
 Errors-To: ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org
 Sender: "ceph-users" <ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
-To: Nick Fisk <nick-ksME7r3P/wO1Qrn1Bg8BZw@public.gmane.org>, 'Sage Weil' <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>
-Cc: ceph-users-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: 'Ric Wheeler' <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Sage Weil' <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>
+Cc: ceph-users-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org, 'device-mapper development' <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On 03/29/2016 04:35 PM, Nick Fisk wrote:
-> One thing I picked up on when looking at dm-cache for doing caching with
-> RBD's is that it wasn't really designed to be used as a writeback cache for
-> new writes, as in how you would expect a traditional writeback cache to
-> work. It seems all the policies are designed around the idea that writes go
-> to cache only if the block is already in the cache (through reads) or its
-> hot enough to promote. Although there did seem to be some tunables to alter
-> this behaviour, posts on the mailing list seemed to suggest this wasn't how
-> it was designed to be used. I'm not sure if this has been addressed since I
-> last looked at it though.
->
-> Depending on if you are trying to accelerate all writes, or just your "hot"
-> blocks, this may or may not matter. Even <1GB local caches can make a huge
-> difference to sync writes.
+> -----Original Message-----
+> From: ceph-users [mailto:ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org] On Behalf Of
+> Ric Wheeler
+> Sent: 29 March 2016 14:40
+> To: Nick Fisk <nick-ksME7r3P/wO1Qrn1Bg8BZw@public.gmane.org>; 'Sage Weil' <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>
+> Cc: ceph-users-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org; device-mapper development <dm-
+> devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Subject: Re: [ceph-users] Local SSD cache for ceph on each compute node.
+> 
+> On 03/29/2016 04:35 PM, Nick Fisk wrote:
+> > One thing I picked up on when looking at dm-cache for doing caching
+> > with RBD's is that it wasn't really designed to be used as a writeback
+> > cache for new writes, as in how you would expect a traditional
+> > writeback cache to work. It seems all the policies are designed around
+> > the idea that writes go to cache only if the block is already in the
+> > cache (through reads) or its hot enough to promote. Although there did
+> > seem to be some tunables to alter this behaviour, posts on the mailing
+> > list seemed to suggest this wasn't how it was designed to be used. I'm
+> > not sure if this has been addressed since I last looked at it though.
+> >
+> > Depending on if you are trying to accelerate all writes, or just your
+"hot"
+> > blocks, this may or may not matter. Even <1GB local caches can make a
+> > huge difference to sync writes.
+> 
+> Hi Nick,
+> 
+> Some of the caching policies have changed recently as the team has looked
+> at different workloads.
+> 
+> Happy to introduce you to them if you want to discuss offline or post
+> comments over on their list: device-mapper development <dm-
+> devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> 
+> thanks!
+> 
+> Ric
 
-Hi Nick,
+Hi Ric,
 
-Some of the caching policies have changed recently as the team has looked at 
-different workloads.
+Thanks for the heads up, just from a quick flick through I can see there are
+now separate read and write promotion thresholds, so I can see just from
+that it would be a lot more suitable for what I intended. I might try and
+find some time to give it another test.
 
-Happy to introduce you to them if you want to discuss offline or post comments 
-over on their list: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Nick
 
-thanks!
-
-Ric
+> 
+> _______________________________________________
+> ceph-users mailing list
+> ceph-users-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org
+> http://lists.ceph.com/listinfo.cgi/ceph-users-ceph.com
