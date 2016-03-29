@@ -1,189 +1,63 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 17/17] multipathd: use 64-bit int for command key
-Date: Mon, 28 Mar 2016 22:13:14 -0500
-Message-ID: <1459221194-23222-18-git-send-email-bmarzins@redhat.com>
-References: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
+From: Ric Wheeler <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: Local SSD cache for ceph on each compute node.
+Date: Tue, 29 Mar 2016 16:39:39 +0300
+Message-ID: <56FA859B.5050608@redhat.com>
+References: <VI1PR05MB16772049FF17DD2D4DE93EDEE08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
+	<1003879409.38672781.1458091493153.JavaMail.zimbra@redhat.com>
+	<VI1PR05MB1677B32D621D52ECFBD8C889E08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
+	<1517351774.38675790.1458092531934.JavaMail.zimbra@redhat.com>
+	<8C4FE234-AC6A-4F80-84DA-DCB69C58E874@ebay.com>
+	<VI1PR05MB1677291EA89E9C02BEE437C2E08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
+	<054DE45B-30E4-44B6-88CE-23FC207FE41E@ebay.com>
+	<56F792F6.9050400@redhat.com>
+	<DC9C5DB4-43C1-49DB-A37E-F7C6A9D3D172@ebay.com>
+	<56FA46C9.6090500@redhat.com>
+	<E5E25BC0-A526-4EB8-9EC0-80F6A7734B23@ebay.com>
+	<56FA6792.1050005@redhat.com>
+	<alpine.DEB.2.11.1603290827510.6473@cpach.fuggernut.com>
+	<56FA7DEA.9010005@redhat.com>
+	<ce98776b.9Ro.9Gf.cS.1kvo9AAN6V@mailjet.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+Return-path: <ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
+In-Reply-To: <ce98776b.9Ro.9Gf.cS.1kvo9AAN6V-ImYt9qTNe79BDgjK7y7TUQ@public.gmane.org>
+List-Unsubscribe: <http://lists.ceph.com/options.cgi/ceph-users-ceph.com>,
+	<mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.ceph.com/pipermail/ceph-users-ceph.com/>
+List-Post: <mailto:ceph-users-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
+List-Help: <mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.ceph.com/listinfo.cgi/ceph-users-ceph.com>,
+	<mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=subscribe>
+Errors-To: ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org
+Sender: "ceph-users" <ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
+To: Nick Fisk <nick-ksME7r3P/wO1Qrn1Bg8BZw@public.gmane.org>, 'Sage Weil' <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>
+Cc: ceph-users-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-There are now more than 32 keywords for the multipathd client commands.
-Since these are represented by a bit flags, multipathd needs more than
-32 bits for the client command keycodes. However, multipath is currently
-using unsigned long for these. This makes some client commands work
-incorrectly on 32-bit systems. This patch switches all the keys to use
-uint64_t instead.
+On 03/29/2016 04:35 PM, Nick Fisk wrote:
+> One thing I picked up on when looking at dm-cache for doing caching with
+> RBD's is that it wasn't really designed to be used as a writeback cache for
+> new writes, as in how you would expect a traditional writeback cache to
+> work. It seems all the policies are designed around the idea that writes go
+> to cache only if the block is already in the cache (through reads) or its
+> hot enough to promote. Although there did seem to be some tunables to alter
+> this behaviour, posts on the mailing list seemed to suggest this wasn't how
+> it was designed to be used. I'm not sure if this has been addressed since I
+> last looked at it though.
+>
+> Depending on if you are trying to accelerate all writes, or just your "hot"
+> blocks, this may or may not matter. Even <1GB local caches can make a huge
+> difference to sync writes.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/cli.c | 22 +++++++++++-----------
- multipathd/cli.h | 20 +++++++++++---------
- 2 files changed, 22 insertions(+), 20 deletions(-)
+Hi Nick,
 
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index e0a6bec..6a5c6db 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -26,7 +26,7 @@ alloc_handler (void)
- }
- 
- static int
--add_key (vector vec, char * str, unsigned long code, int has_param)
-+add_key (vector vec, char * str, uint64_t code, int has_param)
- {
- 	struct key * kw;
- 
-@@ -57,7 +57,7 @@ out:
- }
- 
- int
--add_handler (unsigned long fp, int (*fn)(void *, char **, int *, void *))
-+add_handler (uint64_t fp, int (*fn)(void *, char **, int *, void *))
- {
- 	struct handler * h;
- 
-@@ -79,7 +79,7 @@ add_handler (unsigned long fp, int (*fn)(void *, char **, int *, void *))
- }
- 
- static struct handler *
--find_handler (unsigned long fp)
-+find_handler (uint64_t fp)
- {
- 	int i;
- 	struct handler *h;
-@@ -92,7 +92,7 @@ find_handler (unsigned long fp)
- }
- 
- int
--set_handler_callback (unsigned long fp, int (*fn)(void *, char **, int *, void *))
-+set_handler_callback (uint64_t fp, int (*fn)(void *, char **, int *, void *))
- {
- 	struct handler * h = find_handler(fp);
- 
-@@ -293,11 +293,11 @@ out:
- 	return r;
- }
- 
--static unsigned long 
-+static uint64_t
- fingerprint(vector vec)
- {
- 	int i;
--	unsigned long fp = 0;
-+	uint64_t fp = 0;
- 	struct key * kw;
- 
- 	if (!vec)
-@@ -343,7 +343,7 @@ static int
- do_genhelp(char *reply, int maxlen) {
- 	int len = 0;
- 	int i, j;
--	unsigned long fp;
-+	uint64_t fp;
- 	struct handler * h;
- 	struct key * kw;
- 
-@@ -442,7 +442,7 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data)
- }
- 
- char *
--get_keyparam (vector v, unsigned long code)
-+get_keyparam (vector v, uint64_t code)
- {
- 	struct key * kw;
- 	int i;
-@@ -516,7 +516,7 @@ void cli_exit(void)
- }
- 
- static int
--key_match_fingerprint (struct key * kw, unsigned long fp)
-+key_match_fingerprint (struct key * kw, uint64_t fp)
- {
- 	if (!fp)
- 		return 0;
-@@ -531,7 +531,7 @@ char *
- key_generator (const char * str, int state)
- {
- 	static int index, len, has_param;
--	static unsigned long rlfp;	
-+	static uint64_t rlfp;
- 	struct key * kw;
- 	int i;
- 	struct handler *h;
-@@ -601,7 +601,7 @@ key_generator (const char * str, int state)
- 			 * nfp is the candidate fingerprint we try to
- 			 * validate against all known command fingerprints.
- 			 */
--			unsigned long nfp = rlfp | kw->code;
-+			uint64_t nfp = rlfp | kw->code;
- 			vector_foreach_slot(handlers, h, i) {
- 				if (!rlfp || ((h->fingerprint & nfp) == nfp)) {
- 					/*
-diff --git a/multipathd/cli.h b/multipathd/cli.h
-index f6d2726..2aa19d5 100644
---- a/multipathd/cli.h
-+++ b/multipathd/cli.h
-@@ -1,3 +1,5 @@
-+#include <stdint.h>
-+
- enum {
- 	__LIST,
- 	__ADD,
-@@ -68,10 +70,10 @@ enum {
- #define WILDCARDS	(1 << __WILDCARDS)
- #define QUIT		(1 << __QUIT)
- #define SHUTDOWN	(1 << __SHUTDOWN)
--#define GETPRSTATUS	(1UL << __GETPRSTATUS)
--#define SETPRSTATUS	(1UL << __SETPRSTATUS)
--#define UNSETPRSTATUS	(1UL << __UNSETPRSTATUS)
--#define FMT		(1UL << __FMT)
-+#define GETPRSTATUS	(1ULL << __GETPRSTATUS)
-+#define SETPRSTATUS	(1ULL << __SETPRSTATUS)
-+#define UNSETPRSTATUS	(1ULL << __UNSETPRSTATUS)
-+#define FMT		(1ULL << __FMT)
- 
- #define INITIAL_REPLY_LEN	1200
- 
-@@ -92,21 +94,21 @@ enum {
- struct key {
- 	char * str;
- 	char * param;
--	unsigned long code;
-+	uint64_t code;
- 	int has_param;
- };
- 
- struct handler {
--	unsigned long fingerprint;
-+	uint64_t fingerprint;
- 	int (*fn)(void *, char **, int *, void *);
- };
- 
- int alloc_handlers (void);
--int add_handler (unsigned long fp, int (*fn)(void *, char **, int *, void *));
--int set_handler_callback (unsigned long fp, int (*fn)(void *, char **, int *, void *));
-+int add_handler (uint64_t fp, int (*fn)(void *, char **, int *, void *));
-+int set_handler_callback (uint64_t fp, int (*fn)(void *, char **, int *, void *));
- int parse_cmd (char * cmd, char ** reply, int * len, void *);
- int load_keys (void);
--char * get_keyparam (vector v, unsigned long code);
-+char * get_keyparam (vector v, uint64_t code);
- void free_keys (vector vec);
- void free_handlers (void);
- int cli_init (void);
--- 
-1.8.3.1
+Some of the caching policies have changed recently as the team has looked at 
+different workloads.
+
+Happy to introduce you to them if you want to discuss offline or post comments 
+over on their list: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+
+thanks!
+
+Ric
