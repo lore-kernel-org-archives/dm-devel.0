@@ -1,107 +1,99 @@
-From: Nick Fisk <nick@fisk.me.uk>
-Subject: Re: [ceph-users] Local SSD cache for ceph on each
-	compute node.
-Date: Wed, 30 Mar 2016 14:02:14 +0100
-Message-ID: <3111ae2c.9Ro.9Gf.gr.1lNjNp0nYT@mailjet.com>
-References: <VI1PR05MB16772049FF17DD2D4DE93EDEE08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
-	<1003879409.38672781.1458091493153.JavaMail.zimbra@redhat.com>
-	<VI1PR05MB1677B32D621D52ECFBD8C889E08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
-	<1517351774.38675790.1458092531934.JavaMail.zimbra@redhat.com>
-	<8C4FE234-AC6A-4F80-84DA-DCB69C58E874@ebay.com>
-	<VI1PR05MB1677291EA89E9C02BEE437C2E08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
-	<054DE45B-30E4-44B6-88CE-23FC207FE41E@ebay.com>
-	<56F792F6.9050400@redhat.com>
-	<DC9C5DB4-43C1-49DB-A37E-F7C6A9D3D172@ebay.com>
-	<56FA46C9.6090500@redhat.com>
-	<E5E25BC0-A526-4EB8-9EC0-80F6A7734B23@ebay.com>
-	<56FA6792.1050005@redhat.com>
-	<alpine.DEB.2.11.1603290827510.6473@cpach.fuggernut.com>
-	<56FA7DEA.9010005@redhat.com>
-	<ce98776b.9Ro.9Gf.cS.1kvo9AAN6V@mailjet.com>
-	<56FA859B.5050608@redhat.com>
-	<9be96412.9Ro.9Gf.hp.1e3JYGxgKk@mailjet.com>
-	<56FAA0A7.6050009@redhat.com>
+From: Seth Forshee <seth.forshee@canonical.com>
+Subject: Re: [PATCH RESEND v2 11/18] fs: Ensure the mounter of a filesystem
+ is privileged towards its inodes
+Date: Wed, 30 Mar 2016 09:58:20 -0500
+Message-ID: <20160330145820.GA41461@ubuntu-hedt>
+References: <1451930639-94331-1-git-send-email-seth.forshee@canonical.com>
+ <1451930639-94331-12-git-send-email-seth.forshee@canonical.com>
+ <20160303170201.GA30224@ubuntu-hedt>
+ <87twkl50g5.fsf@x220.int.ebiederm.org>
+ <20160328165936.GC137406@ubuntu-hedt>
+ <87twjoiw6u.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <56FAA0A7.6050009@redhat.com>
-Content-Language: en-gb
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: 'Ric Wheeler' <rwheeler@redhat.com>
-Cc: ceph-users@lists.ceph.com, 'device-mapper development' <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-security-module-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <87twjoiw6u.fsf@x220.int.ebiederm.org>
+Sender: owner-linux-security-module@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
 List-Id: dm-devel.ids
 
-PiA+Pgo+ID4+IE9uIDAzLzI5LzIwMTYgMDQ6MzUgUE0sIE5pY2sgRmlzayB3cm90ZToKPiA+Pj4g
-T25lIHRoaW5nIEkgcGlja2VkIHVwIG9uIHdoZW4gbG9va2luZyBhdCBkbS1jYWNoZSBmb3IgZG9p
-bmcgY2FjaGluZwo+ID4+PiB3aXRoIFJCRCdzIGlzIHRoYXQgaXQgd2Fzbid0IHJlYWxseSBkZXNp
-Z25lZCB0byBiZSB1c2VkIGFzIGEKPiA+Pj4gd3JpdGViYWNrIGNhY2hlIGZvciBuZXcgd3JpdGVz
-LCBhcyBpbiBob3cgeW91IHdvdWxkIGV4cGVjdCBhCj4gPj4+IHRyYWRpdGlvbmFsIHdyaXRlYmFj
-ayBjYWNoZSB0byB3b3JrLiBJdCBzZWVtcyBhbGwgdGhlIHBvbGljaWVzIGFyZQo+ID4+PiBkZXNp
-Z25lZCBhcm91bmQgdGhlIGlkZWEgdGhhdCB3cml0ZXMgZ28gdG8gY2FjaGUgb25seSBpZiB0aGUg
-YmxvY2sKPiA+Pj4gaXMgYWxyZWFkeSBpbiB0aGUgY2FjaGUgKHRocm91Z2ggcmVhZHMpIG9yIGl0
-cyBob3QgZW5vdWdoIHRvCj4gPj4+IHByb21vdGUuIEFsdGhvdWdoIHRoZXJlIGRpZCBzZWVtIHRv
-IGJlIHNvbWUgdHVuYWJsZXMgdG8gYWx0ZXIgdGhpcwo+ID4+PiBiZWhhdmlvdXIsIHBvc3RzIG9u
-IHRoZSBtYWlsaW5nIGxpc3Qgc2VlbWVkIHRvIHN1Z2dlc3QgdGhpcyB3YXNuJ3QKPiA+Pj4gaG93
-IGl0IHdhcyBkZXNpZ25lZCB0byBiZSB1c2VkLiBJJ20gbm90IHN1cmUgaWYgdGhpcyBoYXMgYmVl
-biBhZGRyZXNzZWQKPiBzaW5jZSBJIGxhc3QgbG9va2VkIGF0IGl0IHRob3VnaC4KPiA+Pj4KPiA+
-Pj4gRGVwZW5kaW5nIG9uIGlmIHlvdSBhcmUgdHJ5aW5nIHRvIGFjY2VsZXJhdGUgYWxsIHdyaXRl
-cywgb3IganVzdAo+ID4+PiB5b3VyCj4gPiAiaG90Igo+ID4+PiBibG9ja3MsIHRoaXMgbWF5IG9y
-IG1heSBub3QgbWF0dGVyLiBFdmVuIDwxR0IgbG9jYWwgY2FjaGVzIGNhbiBtYWtlCj4gPj4+IGEg
-aHVnZSBkaWZmZXJlbmNlIHRvIHN5bmMgd3JpdGVzLgo+ID4+IEhpIE5pY2ssCj4gPj4KPiA+PiBT
-b21lIG9mIHRoZSBjYWNoaW5nIHBvbGljaWVzIGhhdmUgY2hhbmdlZCByZWNlbnRseSBhcyB0aGUg
-dGVhbSBoYXMKPiA+PiBsb29rZWQgYXQgZGlmZmVyZW50IHdvcmtsb2Fkcy4KPiA+Pgo+ID4+IEhh
-cHB5IHRvIGludHJvZHVjZSB5b3UgdG8gdGhlbSBpZiB5b3Ugd2FudCB0byBkaXNjdXNzIG9mZmxp
-bmUgb3IgcG9zdAo+ID4+IGNvbW1lbnRzIG92ZXIgb24gdGhlaXIgbGlzdDogZGV2aWNlLW1hcHBl
-ciBkZXZlbG9wbWVudCA8ZG0tCj4gPj4gZGV2ZWxAcmVkaGF0LmNvbT4KPiA+Pgo+ID4+IHRoYW5r
-cyEKPiA+Pgo+ID4+IFJpYwo+ID4gSGkgUmljLAo+ID4KPiA+IFRoYW5rcyBmb3IgdGhlIGhlYWRz
-IHVwLCBqdXN0IGZyb20gYSBxdWljayBmbGljayB0aHJvdWdoIEkgY2FuIHNlZQo+ID4gdGhlcmUg
-YXJlIG5vdyBzZXBhcmF0ZSByZWFkIGFuZCB3cml0ZSBwcm9tb3Rpb24gdGhyZXNob2xkcywgc28g
-SSBjYW4KPiA+IHNlZSBqdXN0IGZyb20gdGhhdCBpdCB3b3VsZCBiZSBhIGxvdCBtb3JlIHN1aXRh
-YmxlIGZvciB3aGF0IEkKPiA+IGludGVuZGVkLiBJIG1pZ2h0IHRyeSBhbmQgZmluZCBzb21lIHRp
-bWUgdG8gZ2l2ZSBpdCBhbm90aGVyIHRlc3QuCj4gPgo+ID4gTmljawo+IAo+IExldCB1cyBrbm93
-IGhvdyBpdCB3b3JrcyBvdXQgZm9yIHlvdSwgSSBrbm93IHRoYXQgdGhleSBhcmUgdmVyeSBpbnRl
-cmVzdGVkIGluCj4gbWFraW5nIHN1cmUgdGhpbmdzIGFyZSB1c2VmdWwgOikKCkhpIFJpYywKCkkg
-aGF2ZSBnaXZlbiBpdCBhbm90aGVyIHRlc3QgYW5kIHVuZm9ydHVuYXRlbHkgaXQgc2VlbXMgaXQn
-cyBzdGlsbCBub3QgZ2l2aW5nIHRoZSBpbXByb3ZlbWVudHMgdGhhdCBJIHdhcyBleHBlY3Rpbmcu
-CgpIZXJlIGlzIGEgcm91Z2ggZGVzY3JpcHRpb24gb2YgbXkgdGVzdAoKMTBHQiBSQkQKMUdCIFpS
-QU0ga2VybmVsIGRldmljZSBmb3IgY2FjaGUgKFRlc3Rpbmcgb25seSkKCjAgMjA5NzE1MjAgY2Fj
-aGUgOCAxMDYvNDA5NiA2NCAzMjc2OC8zMjc2OCAyNDkyIDEyMzkgMzQ5OTkzIDExMzE5NCA0NzE1
-NyA0NzE1NyAwIDEgd3JpdGViYWNrIDIgbWlncmF0aW9uX3RocmVzaG9sZCA4MTkyIG1xIDEwIHJh
-Cm5kb21fdGhyZXNob2xkIDAgc2VxdWVudGlhbF90aHJlc2hvbGQgMCBkaXNjYXJkX3Byb21vdGVf
-YWRqdXN0bWVudCAxIHJlYWRfcHJvbW90ZV9hZGp1c3RtZW50IDQgd3JpdGVfcHJvbW90ZV9hZGp1
-c3RtZW50IDAgcncgLQoKSSdtIHRoZW4gcnVubmluZyBhIGRpcmVjdGlvIDY0a2Igc2VxIHdyaXRl
-IFFEPTEgYmVuY2ggd2l0aCBmaW8gdG8gdGhlIERNIGRldmljZS4KCldoYXQgSSBleHBlY3QgdG8g
-aGFwcGVuIHdvdWxkIGJlIGZvciB0aGlzIHNlcXVlbnRpYWwgc3RyZWFtIG9mIDY0a2IgSU8ncyB0
-byBiZSBjb2FsZXNjZWQgaW50byA0TUIgSU8ncyBhbmQgd3JpdHRlbiBvdXQgdG8gdGhlIFJCRCBh
-dCBhIGhpZ2ggcXVldWUgZGVwdGggYXMgcG9zc2libGUvcmVxdWlyZWQuIEVmZmVjdGl2ZWx5IG1l
-YW5pbmcgbXkgNjRrYiBzZXF1ZW50aWFsIGJhbmR3aWR0aCBzaG91bGQgbWF0Y2ggdGhlIGxpbWl0
-IG9mIDRNQiBzZXF1ZW50aWFsIGJhbmR3aWR0aCBvZiBteSBjbHVzdGVyLiBJJ20gbW9yZSBpbnRl
-cmVzdGVkIGluIHJlcGxpY2F0aW5nIHRoZSBiZWhhdmlvdXIgb2YgYSB3cml0ZSBjYWNoZSBvbiBh
-IGJhdHRlcnkgYmFja2VkIHJhaWQgY2FyZCwgdGhhbiBhIFJXIFNTRCBjYWNoZSwgaWYgdGhhdCBt
-YWtlcyBzZW5zZT8KCkFuIGV4YW1wbGUgcmVhbCBsaWZlIHNjZW5hcmlvIHdvdWxkIGJlIGZvciBz
-aXR0aW5nIHVuZGVybmVhdGggYSBpU0NTSSB0YXJnZXQsIHNvbWV0aGluZyBsaWtlIEVTWGkgZ2Vu
-ZXJhdGVzIHRoYXQgSU8gcGF0dGVybiB3aGVuIG1vdmluZyBWTSdzIGJldHdlZW4gZGF0YXN0b3Jl
-cy4KCldoYXQgSSB3YXMgc2VlaW5nIGlzIHRoYXQgSSBnZXQgYSBzdWRkZW4gYnVyc3Qgb2Ygc3Bl
-ZWQgYXQgdGhlIHN0YXJ0IG9mIHRoZSBmaW8gdGVzdCwgYnV0IHRoZW4gaXQgcXVpY2tseSBkcm9w
-cyBkb3duIHRvIHRoZSBzcGVlZCBvZiB0aGUgdW5kZXJseWluZyBSQkQgZGV2aWNlLiBUaGUgZGly
-dHkgYmxvY2tzIGNvdW50ZXIgbmV2ZXIgc2VlbXMgdG8gZ28gdG9vIGhpZ2gsIHNvIEkgZG9uJ3Qg
-dGhpbmsgdGhhdCBpdOKAmXMgYSBjYWNoZSBmdWxsIHByb2JsZW0uIFRoZSBjb3VudGVyIGlzIHBy
-b2JhYmx5IG5vIG1vcmUgdGhhbiBhYm91dCA0MCUgd2hlbiB0aGUgc2xvd2Rvd24gc3RhcnRzIGFu
-ZCB0aGVuIGl0IGRyb3BzIHRvIGxlc3MgdGhhbiAxMCUgZm9yIHRoZSByZW1haW5kZXIgb2YgdGhl
-IHRlc3QgYXMgaXQgY3Jhd2xzIGFsb25nLiBJdCBmZWVscyBsaWtlIGl0IGhpdHMgc29tZSBzb3J0
-IG9mIHRocm90dGxlIGFuZCBpdCBuZXZlciByZWNvdmVycy4gCgpJJ3ZlIGRvbmUgc2ltaWxhciB0
-ZXN0cyB3aXRoIGZsYXNoY2FjaGUgYW5kIGl0IGdldHMgbW9yZSBzdGFibGUgcGVyZm9ybWFuY2Ug
-b3ZlciBhIGxvbmdlciBwZXJpb2Qgb2YgdGltZSwgYnV0IHRoZSBhc3NvY2lhdGl2ZSBoaXQgc2V0
-IGJlaGF2aW91ciBzZWVtcyB0byBjYXVzZSB3cml0ZSBtaXNzZXMgZHVlIHRvIHRoZSBzZXF1ZW50
-aWFsIElPIHBhdHRlcm4sIHdoaWNoIGxpbWl0cyBvdmVyYWxsIHRvcCBwZXJmb3JtYW5jZS4gCgoK
-TmljawoKPiAKPiByaWMKPiAKCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
-ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Tue, Mar 29, 2016 at 08:36:09PM -0500, Eric W. Biederman wrote:
+> Seth Forshee <seth.forshee@canonical.com> writes:
+> 
+> > On Fri, Mar 04, 2016 at 04:43:06PM -0600, Eric W. Biederman wrote:
+> >> In general this is only an issue if uids and gids on the filesystem
+> >> do not map into the user namespace.
+> >> 
+> >> Therefore the general fix is to limit the logic of checking for
+> >> capabilities in s_user_ns if we are dealing with INVALID_UID and
+> >> INVALID_GID.  For proc and kernfs that should never be the case
+> >> so the problem becomes a non-issue.
+> >> 
+> >> Further I would look at limiting that relaxation to just
+> >> inode_change_ok. 
+> >
+> > Finally got around to implementing this today; is the patch below what
+> > you had in mind?
+> 
+> Pretty much.
+> 
+> For the same reason that capble_wrt_inode_uidgid(inode) had to look
+> at both inode->i_uid and inode->i_gid I think we need to look at
+> both inode->i_uid and inode->i_gid in those case.
+> 
+> I am worried about chgrp_ok in cases such as inode->i_uid is valid
+> but unmapped.  I have a similiar worry about chown_ok where
+> inode->i_gid is valid but unmapped (although that worry is less
+> serious).
+
+That makes sense.
+
+So then what is wanted is to check that the other id is either invalid,
+or else it maps into s_user_ns. So for chown_ok() something like this:
+
+    if (!uid_valid(inode->i_uid) &&
+        (!gid_valid(inode->i_gid) || kgid_has_mapping(inode->i_sb->s_user_ns, inode->i_gid)) &&
+        ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
+            return true;
+
+and likewise for chgrp_ok(). Does that satisfy your concerns?
+
+> >> So that we can easily wrap that check per filesystem
+> >> and deny the relaxation for proc and kernfs.  proc and kernfs already
+> >> have wrappers for .setattr so denying changes when !uid_vaid and
+> >> !gid_valid would be a trivial addition, and ensure calamity does
+> >> not ensure.
+> >
+> > I'm confused about this part though. As you say above, proc and kernfs
+> > will never have inodes with invalid ids, so it's not an issue. Do you
+> > just mean this to be extra insurance against problems?
+> 
+> I meant two things.
+> 1) As filesystems explicitly have to call inode_change_ok they can
+>    over ride the default if it is possible.
+> 
+> 2) Because being paranoid about backward compatibility matters, it
+>    almost certainly workth add adding a check:
+>    "if (!uid_valid(inode->i_uid) ||!gid_valid(inode->i_gid)) return -EPERM"
+>    To proc and sysfs just before they call inode_change_ok just so we
+>    don't need to analyze them and confirm that they don't use
+>    INVALID_UID.
+> 
+>    That just makes the patch more robust.
+> 
+>    The we could leave removing that code for a follow on patch where
+>    someone takes the time to read through and audit all of the proc and
+>    sysfs code to ensure that the case does not arise, instead of just
+>    implicitily assuming it.
+> 
+>    That is the usual pattern when pushing down changes.  Do something
+>    that is easily guaranteed to work, and leave the careful looking for
+>    a patch all of it's own.
+
+Okay, I'll add checks.
+
+Thanks,
+Seth
+
