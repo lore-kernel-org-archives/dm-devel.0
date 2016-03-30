@@ -1,7 +1,8 @@
-From: Nick Fisk <nick-ksME7r3P/wO1Qrn1Bg8BZw@public.gmane.org>
-Subject: Re: Local SSD cache for ceph on each compute node.
+From: Nick Fisk <nick@fisk.me.uk>
+Subject: Re: [ceph-users] Local SSD cache for ceph on each
+	compute node.
 Date: Wed, 30 Mar 2016 14:02:14 +0100
-Message-ID: <e6f66946.9Ro.9Gf.gr.1lNjNp0nYS@mailjet.com>
+Message-ID: <3111ae2c.9Ro.9Gf.gr.1lNjNp0nYT@mailjet.com>
 References: <VI1PR05MB16772049FF17DD2D4DE93EDEE08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
 	<1003879409.38672781.1458091493153.JavaMail.zimbra@redhat.com>
 	<VI1PR05MB1677B32D621D52ECFBD8C889E08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
@@ -23,20 +24,20 @@ References: <VI1PR05MB16772049FF17DD2D4DE93EDEE08A0@VI1PR05MB1677.eurprd05.prod.
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
-Return-path: <ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
-In-Reply-To: <56FAA0A7.6050009-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <56FAA0A7.6050009@redhat.com>
 Content-Language: en-gb
-List-Unsubscribe: <http://lists.ceph.com/options.cgi/ceph-users-ceph.com>,
-	<mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.ceph.com/pipermail/ceph-users-ceph.com/>
-List-Post: <mailto:ceph-users-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
-List-Help: <mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.ceph.com/listinfo.cgi/ceph-users-ceph.com>,
-	<mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=subscribe>
-Errors-To: ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org
-Sender: "ceph-users" <ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
-To: 'Ric Wheeler' <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: ceph-users-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org, 'device-mapper development' <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: 'Ric Wheeler' <rwheeler@redhat.com>
+Cc: ceph-users@lists.ceph.com, 'device-mapper development' <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 PiA+Pgo+ID4+IE9uIDAzLzI5LzIwMTYgMDQ6MzUgUE0sIE5pY2sgRmlzayB3cm90ZToKPiA+Pj4g
@@ -102,7 +103,5 @@ ZXN0cyB3aXRoIGZsYXNoY2FjaGUgYW5kIGl0IGdldHMgbW9yZSBzdGFibGUgcGVyZm9ybWFuY2Ug
 b3ZlciBhIGxvbmdlciBwZXJpb2Qgb2YgdGltZSwgYnV0IHRoZSBhc3NvY2lhdGl2ZSBoaXQgc2V0
 IGJlaGF2aW91ciBzZWVtcyB0byBjYXVzZSB3cml0ZSBtaXNzZXMgZHVlIHRvIHRoZSBzZXF1ZW50
 aWFsIElPIHBhdHRlcm4sIHdoaWNoIGxpbWl0cyBvdmVyYWxsIHRvcCBwZXJmb3JtYW5jZS4gCgoK
-TmljawoKPiAKPiByaWMKPiAKCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fXwpjZXBoLXVzZXJzIG1haWxpbmcgbGlzdApjZXBoLXVzZXJzQGxpc3RzLmNlcGgu
-Y29tCmh0dHA6Ly9saXN0cy5jZXBoLmNvbS9saXN0aW5mby5jZ2kvY2VwaC11c2Vycy1jZXBoLmNv
-bQo=
+TmljawoKPiAKPiByaWMKPiAKCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
+ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
