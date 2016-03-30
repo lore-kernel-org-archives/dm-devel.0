@@ -1,8 +1,7 @@
-From: Nick Fisk <nick@fisk.me.uk>
-Subject: Re: [ceph-users] Local SSD cache for ceph on each
-	compute node.
-Date: Tue, 29 Mar 2016 14:53:11 +0100
-Message-ID: <e2c12cad.9Ro.9Gf.hp.1e3JYGxgKj@mailjet.com>
+From: Nick Fisk <nick-ksME7r3P/wO1Qrn1Bg8BZw@public.gmane.org>
+Subject: Re: Local SSD cache for ceph on each compute node.
+Date: Wed, 30 Mar 2016 14:02:14 +0100
+Message-ID: <e6f66946.9Ro.9Gf.gr.1lNjNp0nYS@mailjet.com>
 References: <VI1PR05MB16772049FF17DD2D4DE93EDEE08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
 	<1003879409.38672781.1458091493153.JavaMail.zimbra@redhat.com>
 	<VI1PR05MB1677B32D621D52ECFBD8C889E08A0@VI1PR05MB1677.eurprd05.prod.outlook.com>
@@ -19,74 +18,91 @@ References: <VI1PR05MB16772049FF17DD2D4DE93EDEE08A0@VI1PR05MB1677.eurprd05.prod.
 	<56FA7DEA.9010005@redhat.com>
 	<ce98776b.9Ro.9Gf.cS.1kvo9AAN6V@mailjet.com>
 	<56FA859B.5050608@redhat.com>
+	<9be96412.9Ro.9Gf.hp.1e3JYGxgKk@mailjet.com>
+	<56FAA0A7.6050009@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <56FA859B.5050608@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
+In-Reply-To: <56FAA0A7.6050009-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Content-Language: en-gb
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: 'Ric Wheeler' <rwheeler@redhat.com>, 'Sage Weil' <sage@newdream.net>
-Cc: ceph-users@lists.ceph.com, 'device-mapper development' <dm-devel@redhat.com>
+List-Unsubscribe: <http://lists.ceph.com/options.cgi/ceph-users-ceph.com>,
+	<mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.ceph.com/pipermail/ceph-users-ceph.com/>
+List-Post: <mailto:ceph-users-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
+List-Help: <mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.ceph.com/listinfo.cgi/ceph-users-ceph.com>,
+	<mailto:ceph-users-request-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org?subject=subscribe>
+Errors-To: ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org
+Sender: "ceph-users" <ceph-users-bounces-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org>
+To: 'Ric Wheeler' <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: ceph-users-idqoXFIVOFJgJs9I8MT0rw@public.gmane.org, 'device-mapper development' <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-> -----Original Message-----
-> From: ceph-users [mailto:ceph-users-bounces@lists.ceph.com] On Behalf Of
-> Ric Wheeler
-> Sent: 29 March 2016 14:40
-> To: Nick Fisk <nick@fisk.me.uk>; 'Sage Weil' <sage@newdream.net>
-> Cc: ceph-users@lists.ceph.com; device-mapper development <dm-
-> devel@redhat.com>
-> Subject: Re: [ceph-users] Local SSD cache for ceph on each compute node.
-> 
-> On 03/29/2016 04:35 PM, Nick Fisk wrote:
-> > One thing I picked up on when looking at dm-cache for doing caching
-> > with RBD's is that it wasn't really designed to be used as a writeback
-> > cache for new writes, as in how you would expect a traditional
-> > writeback cache to work. It seems all the policies are designed around
-> > the idea that writes go to cache only if the block is already in the
-> > cache (through reads) or its hot enough to promote. Although there did
-> > seem to be some tunables to alter this behaviour, posts on the mailing
-> > list seemed to suggest this wasn't how it was designed to be used. I'm
-> > not sure if this has been addressed since I last looked at it though.
-> >
-> > Depending on if you are trying to accelerate all writes, or just your
-"hot"
-> > blocks, this may or may not matter. Even <1GB local caches can make a
-> > huge difference to sync writes.
-> 
-> Hi Nick,
-> 
-> Some of the caching policies have changed recently as the team has looked
-> at different workloads.
-> 
-> Happy to introduce you to them if you want to discuss offline or post
-> comments over on their list: device-mapper development <dm-
-> devel@redhat.com>
-> 
-> thanks!
-> 
-> Ric
-
-Hi Ric,
-
-Thanks for the heads up, just from a quick flick through I can see there are
-now separate read and write promotion thresholds, so I can see just from
-that it would be a lot more suitable for what I intended. I might try and
-find some time to give it another test.
-
-Nick
-
-> 
-> _______________________________________________
-> ceph-users mailing list
-> ceph-users@lists.ceph.com
-> http://lists.ceph.com/listinfo.cgi/ceph-users-ceph.com
+PiA+Pgo+ID4+IE9uIDAzLzI5LzIwMTYgMDQ6MzUgUE0sIE5pY2sgRmlzayB3cm90ZToKPiA+Pj4g
+T25lIHRoaW5nIEkgcGlja2VkIHVwIG9uIHdoZW4gbG9va2luZyBhdCBkbS1jYWNoZSBmb3IgZG9p
+bmcgY2FjaGluZwo+ID4+PiB3aXRoIFJCRCdzIGlzIHRoYXQgaXQgd2Fzbid0IHJlYWxseSBkZXNp
+Z25lZCB0byBiZSB1c2VkIGFzIGEKPiA+Pj4gd3JpdGViYWNrIGNhY2hlIGZvciBuZXcgd3JpdGVz
+LCBhcyBpbiBob3cgeW91IHdvdWxkIGV4cGVjdCBhCj4gPj4+IHRyYWRpdGlvbmFsIHdyaXRlYmFj
+ayBjYWNoZSB0byB3b3JrLiBJdCBzZWVtcyBhbGwgdGhlIHBvbGljaWVzIGFyZQo+ID4+PiBkZXNp
+Z25lZCBhcm91bmQgdGhlIGlkZWEgdGhhdCB3cml0ZXMgZ28gdG8gY2FjaGUgb25seSBpZiB0aGUg
+YmxvY2sKPiA+Pj4gaXMgYWxyZWFkeSBpbiB0aGUgY2FjaGUgKHRocm91Z2ggcmVhZHMpIG9yIGl0
+cyBob3QgZW5vdWdoIHRvCj4gPj4+IHByb21vdGUuIEFsdGhvdWdoIHRoZXJlIGRpZCBzZWVtIHRv
+IGJlIHNvbWUgdHVuYWJsZXMgdG8gYWx0ZXIgdGhpcwo+ID4+PiBiZWhhdmlvdXIsIHBvc3RzIG9u
+IHRoZSBtYWlsaW5nIGxpc3Qgc2VlbWVkIHRvIHN1Z2dlc3QgdGhpcyB3YXNuJ3QKPiA+Pj4gaG93
+IGl0IHdhcyBkZXNpZ25lZCB0byBiZSB1c2VkLiBJJ20gbm90IHN1cmUgaWYgdGhpcyBoYXMgYmVl
+biBhZGRyZXNzZWQKPiBzaW5jZSBJIGxhc3QgbG9va2VkIGF0IGl0IHRob3VnaC4KPiA+Pj4KPiA+
+Pj4gRGVwZW5kaW5nIG9uIGlmIHlvdSBhcmUgdHJ5aW5nIHRvIGFjY2VsZXJhdGUgYWxsIHdyaXRl
+cywgb3IganVzdAo+ID4+PiB5b3VyCj4gPiAiaG90Igo+ID4+PiBibG9ja3MsIHRoaXMgbWF5IG9y
+IG1heSBub3QgbWF0dGVyLiBFdmVuIDwxR0IgbG9jYWwgY2FjaGVzIGNhbiBtYWtlCj4gPj4+IGEg
+aHVnZSBkaWZmZXJlbmNlIHRvIHN5bmMgd3JpdGVzLgo+ID4+IEhpIE5pY2ssCj4gPj4KPiA+PiBT
+b21lIG9mIHRoZSBjYWNoaW5nIHBvbGljaWVzIGhhdmUgY2hhbmdlZCByZWNlbnRseSBhcyB0aGUg
+dGVhbSBoYXMKPiA+PiBsb29rZWQgYXQgZGlmZmVyZW50IHdvcmtsb2Fkcy4KPiA+Pgo+ID4+IEhh
+cHB5IHRvIGludHJvZHVjZSB5b3UgdG8gdGhlbSBpZiB5b3Ugd2FudCB0byBkaXNjdXNzIG9mZmxp
+bmUgb3IgcG9zdAo+ID4+IGNvbW1lbnRzIG92ZXIgb24gdGhlaXIgbGlzdDogZGV2aWNlLW1hcHBl
+ciBkZXZlbG9wbWVudCA8ZG0tCj4gPj4gZGV2ZWxAcmVkaGF0LmNvbT4KPiA+Pgo+ID4+IHRoYW5r
+cyEKPiA+Pgo+ID4+IFJpYwo+ID4gSGkgUmljLAo+ID4KPiA+IFRoYW5rcyBmb3IgdGhlIGhlYWRz
+IHVwLCBqdXN0IGZyb20gYSBxdWljayBmbGljayB0aHJvdWdoIEkgY2FuIHNlZQo+ID4gdGhlcmUg
+YXJlIG5vdyBzZXBhcmF0ZSByZWFkIGFuZCB3cml0ZSBwcm9tb3Rpb24gdGhyZXNob2xkcywgc28g
+SSBjYW4KPiA+IHNlZSBqdXN0IGZyb20gdGhhdCBpdCB3b3VsZCBiZSBhIGxvdCBtb3JlIHN1aXRh
+YmxlIGZvciB3aGF0IEkKPiA+IGludGVuZGVkLiBJIG1pZ2h0IHRyeSBhbmQgZmluZCBzb21lIHRp
+bWUgdG8gZ2l2ZSBpdCBhbm90aGVyIHRlc3QuCj4gPgo+ID4gTmljawo+IAo+IExldCB1cyBrbm93
+IGhvdyBpdCB3b3JrcyBvdXQgZm9yIHlvdSwgSSBrbm93IHRoYXQgdGhleSBhcmUgdmVyeSBpbnRl
+cmVzdGVkIGluCj4gbWFraW5nIHN1cmUgdGhpbmdzIGFyZSB1c2VmdWwgOikKCkhpIFJpYywKCkkg
+aGF2ZSBnaXZlbiBpdCBhbm90aGVyIHRlc3QgYW5kIHVuZm9ydHVuYXRlbHkgaXQgc2VlbXMgaXQn
+cyBzdGlsbCBub3QgZ2l2aW5nIHRoZSBpbXByb3ZlbWVudHMgdGhhdCBJIHdhcyBleHBlY3Rpbmcu
+CgpIZXJlIGlzIGEgcm91Z2ggZGVzY3JpcHRpb24gb2YgbXkgdGVzdAoKMTBHQiBSQkQKMUdCIFpS
+QU0ga2VybmVsIGRldmljZSBmb3IgY2FjaGUgKFRlc3Rpbmcgb25seSkKCjAgMjA5NzE1MjAgY2Fj
+aGUgOCAxMDYvNDA5NiA2NCAzMjc2OC8zMjc2OCAyNDkyIDEyMzkgMzQ5OTkzIDExMzE5NCA0NzE1
+NyA0NzE1NyAwIDEgd3JpdGViYWNrIDIgbWlncmF0aW9uX3RocmVzaG9sZCA4MTkyIG1xIDEwIHJh
+Cm5kb21fdGhyZXNob2xkIDAgc2VxdWVudGlhbF90aHJlc2hvbGQgMCBkaXNjYXJkX3Byb21vdGVf
+YWRqdXN0bWVudCAxIHJlYWRfcHJvbW90ZV9hZGp1c3RtZW50IDQgd3JpdGVfcHJvbW90ZV9hZGp1
+c3RtZW50IDAgcncgLQoKSSdtIHRoZW4gcnVubmluZyBhIGRpcmVjdGlvIDY0a2Igc2VxIHdyaXRl
+IFFEPTEgYmVuY2ggd2l0aCBmaW8gdG8gdGhlIERNIGRldmljZS4KCldoYXQgSSBleHBlY3QgdG8g
+aGFwcGVuIHdvdWxkIGJlIGZvciB0aGlzIHNlcXVlbnRpYWwgc3RyZWFtIG9mIDY0a2IgSU8ncyB0
+byBiZSBjb2FsZXNjZWQgaW50byA0TUIgSU8ncyBhbmQgd3JpdHRlbiBvdXQgdG8gdGhlIFJCRCBh
+dCBhIGhpZ2ggcXVldWUgZGVwdGggYXMgcG9zc2libGUvcmVxdWlyZWQuIEVmZmVjdGl2ZWx5IG1l
+YW5pbmcgbXkgNjRrYiBzZXF1ZW50aWFsIGJhbmR3aWR0aCBzaG91bGQgbWF0Y2ggdGhlIGxpbWl0
+IG9mIDRNQiBzZXF1ZW50aWFsIGJhbmR3aWR0aCBvZiBteSBjbHVzdGVyLiBJJ20gbW9yZSBpbnRl
+cmVzdGVkIGluIHJlcGxpY2F0aW5nIHRoZSBiZWhhdmlvdXIgb2YgYSB3cml0ZSBjYWNoZSBvbiBh
+IGJhdHRlcnkgYmFja2VkIHJhaWQgY2FyZCwgdGhhbiBhIFJXIFNTRCBjYWNoZSwgaWYgdGhhdCBt
+YWtlcyBzZW5zZT8KCkFuIGV4YW1wbGUgcmVhbCBsaWZlIHNjZW5hcmlvIHdvdWxkIGJlIGZvciBz
+aXR0aW5nIHVuZGVybmVhdGggYSBpU0NTSSB0YXJnZXQsIHNvbWV0aGluZyBsaWtlIEVTWGkgZ2Vu
+ZXJhdGVzIHRoYXQgSU8gcGF0dGVybiB3aGVuIG1vdmluZyBWTSdzIGJldHdlZW4gZGF0YXN0b3Jl
+cy4KCldoYXQgSSB3YXMgc2VlaW5nIGlzIHRoYXQgSSBnZXQgYSBzdWRkZW4gYnVyc3Qgb2Ygc3Bl
+ZWQgYXQgdGhlIHN0YXJ0IG9mIHRoZSBmaW8gdGVzdCwgYnV0IHRoZW4gaXQgcXVpY2tseSBkcm9w
+cyBkb3duIHRvIHRoZSBzcGVlZCBvZiB0aGUgdW5kZXJseWluZyBSQkQgZGV2aWNlLiBUaGUgZGly
+dHkgYmxvY2tzIGNvdW50ZXIgbmV2ZXIgc2VlbXMgdG8gZ28gdG9vIGhpZ2gsIHNvIEkgZG9uJ3Qg
+dGhpbmsgdGhhdCBpdOKAmXMgYSBjYWNoZSBmdWxsIHByb2JsZW0uIFRoZSBjb3VudGVyIGlzIHBy
+b2JhYmx5IG5vIG1vcmUgdGhhbiBhYm91dCA0MCUgd2hlbiB0aGUgc2xvd2Rvd24gc3RhcnRzIGFu
+ZCB0aGVuIGl0IGRyb3BzIHRvIGxlc3MgdGhhbiAxMCUgZm9yIHRoZSByZW1haW5kZXIgb2YgdGhl
+IHRlc3QgYXMgaXQgY3Jhd2xzIGFsb25nLiBJdCBmZWVscyBsaWtlIGl0IGhpdHMgc29tZSBzb3J0
+IG9mIHRocm90dGxlIGFuZCBpdCBuZXZlciByZWNvdmVycy4gCgpJJ3ZlIGRvbmUgc2ltaWxhciB0
+ZXN0cyB3aXRoIGZsYXNoY2FjaGUgYW5kIGl0IGdldHMgbW9yZSBzdGFibGUgcGVyZm9ybWFuY2Ug
+b3ZlciBhIGxvbmdlciBwZXJpb2Qgb2YgdGltZSwgYnV0IHRoZSBhc3NvY2lhdGl2ZSBoaXQgc2V0
+IGJlaGF2aW91ciBzZWVtcyB0byBjYXVzZSB3cml0ZSBtaXNzZXMgZHVlIHRvIHRoZSBzZXF1ZW50
+aWFsIElPIHBhdHRlcm4sIHdoaWNoIGxpbWl0cyBvdmVyYWxsIHRvcCBwZXJmb3JtYW5jZS4gCgoK
+TmljawoKPiAKPiByaWMKPiAKCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fXwpjZXBoLXVzZXJzIG1haWxpbmcgbGlzdApjZXBoLXVzZXJzQGxpc3RzLmNlcGgu
+Y29tCmh0dHA6Ly9saXN0cy5jZXBoLmNvbS9saXN0aW5mby5jZ2kvY2VwaC11c2Vycy1jZXBoLmNv
+bQo=
