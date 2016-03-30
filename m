@@ -1,91 +1,143 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 10/17] multipathd: delay reloads during
- creation
-Date: Tue, 29 Mar 2016 19:57:31 -0500
-Message-ID: <20160330005731.GH2915@octiron.msp.redhat.com>
-References: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>
-	<1459221194-23222-11-git-send-email-bmarzins@redhat.com>
-	<22266.35585.347696.835499@quad.stoffel.home>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH RESEND v2 11/18] fs: Ensure the mounter of a filesystem is privileged towards its inodes
+Date: Tue, 29 Mar 2016 20:36:09 -0500
+Message-ID: <87twjoiw6u.fsf@x220.int.ebiederm.org>
+References: <1451930639-94331-1-git-send-email-seth.forshee@canonical.com>
+	<1451930639-94331-12-git-send-email-seth.forshee@canonical.com>
+	<20160303170201.GA30224@ubuntu-hedt>
+	<87twkl50g5.fsf@x220.int.ebiederm.org>
+	<20160328165936.GC137406@ubuntu-hedt>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <22266.35585.347696.835499@quad.stoffel.home>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: John Stoffel <john@stoffel.org>
-Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+Content-Type: text/plain
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20160328165936.GC137406@ubuntu-hedt> (Seth Forshee's message of
+	"Mon, 28 Mar 2016 11:59:36 -0500")
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Seth Forshee <seth.forshee@canonical.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
 List-Id: dm-devel.ids
 
-On Tue, Mar 29, 2016 at 10:02:41AM -0400, John Stoffel wrote:
-> >>>>> "Benjamin" == Benjamin Marzinski <bmarzins@redhat.com> writes:
-> 
-> Benjamin> lvm needs PV devices to not be suspended while the udev
-> Benjamin> rules are running, for them to be correctly identified as
-> Benjamin> PVs. However, multipathd will often be in a situation where
-> Benjamin> it will create a multipath device upon seeing a path, and
-> Benjamin> then immediately reload the device upon seeing another path.
-> Benjamin> If multipath is reloading a device while processing the udev
-> Benjamin> event from its creation, lvm can fail to identify it as a
-> Benjamin> PV. This can cause systems to fail to boot. Unfortunately,
-> Benjamin> using udev synchronization cookies to solve this issue would
-> Benjamin> cause a host of other issues that could only be avoided by a
-> Benjamin> pretty substantial change in how multipathd does locking and
-> Benjamin> event processing. The good news is that multipathd is
-> Benjamin> already listening to udev events itself, and can make sure
-> Benjamin> that it isn't reloading when it shouldn't be.
-> 
-> Benjamin> This patch makes multipathd delay or refuse any reloads that
-> Benjamin> would happen between the time when it creates a device, and
-> Benjamin> when it receives the change uevent from the device
-> Benjamin> creation. The only reloads that it refuses are from the
-> Benjamin> multipathd interactive commands that make no sense on a not
-> Benjamin> fully started device.  Otherwise, it processes the event or
-> Benjamin> command, and sets a flag to either mark that device for an
-> Benjamin> update, or to signal that multipathd needs a
-> Benjamin> reconfigure. When the udev event for the creation arrives,
-> Benjamin> multipath will reload the device if necessary. If a
-> Benjamin> reconfigure has been requested, and no devices are currently
-> Benjamin> being created, multipathd will also do the reconfigure then.
-> 
-> Benjamin> Also this patch adds a configurable timer
-> Benjamin> "missing_uev_msg_delay" defaulting to 30 seconds. If the
-> Benjamin> udev creation event has not arrived after this timeout has
-> Benjamin> triggered, multipathd will start printing messages alerting
-> Benjamin> the user of this every "missing_uev_msg_delay" seconds.
-> 
-> Should this really keep printing this message every 30 seconds for
-> eternity?  I would think that having it give up after 30 * N seconds
-> would be better instead.  I'm worried that this might block or slow
-> down system boots forever, instead of at least failing and falling
-> through so that maybe something can be recovered here.
+Seth Forshee <seth.forshee@canonical.com> writes:
 
-Fair enough. I should probably lower that timer, and after (timer *
-some_max_retries) seconds have passed, just stop waiting, and let the
-reloads go ahead.  However, as this is, it isn't too likely to interfere
-with bootup. It won't do anything to stop the multipath devices from
-being created, just reloaded.
+> On Fri, Mar 04, 2016 at 04:43:06PM -0600, Eric W. Biederman wrote:
+>> In general this is only an issue if uids and gids on the filesystem
+>> do not map into the user namespace.
+>> 
+>> Therefore the general fix is to limit the logic of checking for
+>> capabilities in s_user_ns if we are dealing with INVALID_UID and
+>> INVALID_GID.  For proc and kernfs that should never be the case
+>> so the problem becomes a non-issue.
+>> 
+>> Further I would look at limiting that relaxation to just
+>> inode_change_ok. 
+>
+> Finally got around to implementing this today; is the patch below what
+> you had in mind?
 
-> Basically, what can the user do if they start getting these messages?
-> We should prompt them with a possible cause/solution if at all
-> possible.
+Pretty much.
 
-All that the user could do would be to override the waiting, which is
-just what multipathd could do automatically. If we've already waited a
-while for the event and haven't received it, we're unlikely to have it
-come through while we are reloading.  Also, the risk is the same for a
-person manually fixing it and for multipathd automatically doing it, so
-it seems like multipath should just automatically just stop waiting in
-this case.
+For the same reason that capble_wrt_inode_uidgid(inode) had to look
+at both inode->i_uid and inode->i_gid I think we need to look at
+both inode->i_uid and inode->i_gid in those case.
 
--Ben
+I am worried about chgrp_ok in cases such as inode->i_uid is valid
+but unmapped.  I have a similiar worry about chown_ok where
+inode->i_gid is valid but unmapped (although that worry is less
+serious).
 
-> John
+>> So that we can easily wrap that check per filesystem
+>> and deny the relaxation for proc and kernfs.  proc and kernfs already
+>> have wrappers for .setattr so denying changes when !uid_vaid and
+>> !gid_valid would be a trivial addition, and ensure calamity does
+>> not ensure.
+>
+> I'm confused about this part though. As you say above, proc and kernfs
+> will never have inodes with invalid ids, so it's not an issue. Do you
+> just mean this to be extra insurance against problems?
+
+I meant two things.
+1) As filesystems explicitly have to call inode_change_ok they can
+   over ride the default if it is possible.
+
+2) Because being paranoid about backward compatibility matters, it
+   almost certainly workth add adding a check:
+   "if (!uid_valid(inode->i_uid) ||!gid_valid(inode->i_gid)) return -EPERM"
+   To proc and sysfs just before they call inode_change_ok just so we
+   don't need to analyze them and confirm that they don't use
+   INVALID_UID.
+
+   That just makes the patch more robust.
+
+   The we could leave removing that code for a follow on patch where
+   someone takes the time to read through and audit all of the proc and
+   sysfs code to ensure that the case does not arise, instead of just
+   implicitily assuming it.
+
+   That is the usual pattern when pushing down changes.  Do something
+   that is easily guaranteed to work, and leave the careful looking for
+   a patch all of it's own.
+
+Eric
+
+
+> Thanks,
+> Seth
+>
+> ---
+>
+> diff --git a/fs/attr.c b/fs/attr.c
+> index 3cfaaac4a18e..f2bcd3f7dfbb 100644
+> --- a/fs/attr.c
+> +++ b/fs/attr.c
+> @@ -16,6 +16,31 @@
+>  #include <linux/evm.h>
+>  #include <linux/ima.h>
+>  
+> +static bool chown_ok(const struct inode *inode, kuid_t uid)
+> +{
+> +	if (uid_eq(current_fsuid(), inode->i_uid) && uid_eq(uid, inode->i_uid))
+> +		return true;
+> +	if (capable_wrt_inode_uidgid(inode, CAP_CHOWN))
+> +		return true;
+> +	if (!uid_valid(inode->i_uid) &&
+> +	    ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
+> +		return true;
+> +	return false;
+> +}
+> +
+> +static bool chgrp_ok(const struct inode *inode, kgid_t gid)
+> +{
+> +	if (uid_eq(current_fsuid(), inode->i_uid) &&
+> +	    (in_group_p(gid) || gid_eq(gid, inode->i_gid)))
+> +		return true;
+> +	if (capable_wrt_inode_uidgid(inode, CAP_CHOWN))
+> +		return true;
+> +	if (!gid_valid(inode->i_gid) &&
+> +	    ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
+> +		return true;
+> +	return false;
+> +}
+> +
+>  /**
+>   * inode_change_ok - check if attribute changes to an inode are allowed
+>   * @inode:	inode to check
+> @@ -58,17 +83,11 @@ int inode_change_ok(const struct inode *inode, struct iattr *attr)
+>  		return 0;
+>  
+>  	/* Make sure a caller can chown. */
+> -	if ((ia_valid & ATTR_UID) &&
+> -	    (!uid_eq(current_fsuid(), inode->i_uid) ||
+> -	     !uid_eq(attr->ia_uid, inode->i_uid)) &&
+> -	    !capable_wrt_inode_uidgid(inode, CAP_CHOWN))
+> +	if ((ia_valid & ATTR_UID) && !chown_ok(inode, attr->ia_uid))
+>  		return -EPERM;
+>  
+>  	/* Make sure caller can chgrp. */
+> -	if ((ia_valid & ATTR_GID) &&
+> -	    (!uid_eq(current_fsuid(), inode->i_uid) ||
+> -	    (!in_group_p(attr->ia_gid) && !gid_eq(attr->ia_gid, inode->i_gid))) &&
+> -	    !capable_wrt_inode_uidgid(inode, CAP_CHOWN))
+> +	if ((ia_valid & ATTR_GID) && !chgrp_ok(inode, attr->ia_gid))
+>  		return -EPERM;
+>  
+>  	/* Make sure a caller can chmod. */
