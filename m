@@ -1,107 +1,167 @@
-From: NeilBrown <neilb@suse.com>
-Subject: Re: pvmove/mirror target mirroring data between two
-	devices with different sector size
-Date: Thu, 31 Mar 2016 13:09:34 +1100
-Message-ID: <8737r7tn35.fsf@notabene.neil.brown.name>
-References: <56F94727020000A000058AA7@prv3-mh.provo.novell.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4174366731112937890=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <56F94727020000A000058AA7@prv3-mh.provo.novell.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Liuhua Wang <lwang@suse.com>, dm-devel@redhat.com
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [RFC PATCH 0/4] dm mpath: vastly improve blk-mq IO performance
+Date: Thu, 31 Mar 2016 16:04:22 -0400
+Message-ID: <1459454666-76428-1-git-send-email-snitzer@redhat.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: jmoyer@redhat.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, j-nomura@ce.jp.nec.com, hare@suse.de, sagig@dev.mellanox.co.il, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
---===============4174366731112937890==
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha256; protocol="application/pgp-signature"
+I developed these changes some weeks ago but have since focused on
+regression and performance testing on larger NUMA systems.
 
---=-=-=
-Content-Type: text/plain
+For regression testing I've been using mptest:
+https://github.com/snitm/mptest
 
-On Mon, Mar 28 2016, Liuhua Wang wrote:
+For performance testing I've been using a null_blk device (with
+various configuration permutations, e.g. pinning memory to a
+particular NUMA node, and varied number of submit_queues).
 
-> Hi List,
->
-> I have a question that I think maybe you can give me some idea.
->
-> I have two devices with different sector size: 512B and 4096B.
->
-> - SOURCE DEVICE (mdos lvm partiton)
-> #parted /dev/sdb
-> Model: ATA SATADOM-SL 3ME (scsi)
-> Disk /dev/sdb: 32.0GB
-> Sector size (logical/physical): 512B/512B
-> Partition Table: msdos
-> (In `parted` Sector size are both got from IOCTL(BLKSSZGET))
->
-> - TARGET DEVICE (WHOLE DISK)
-> #parted /dev/sdc
-> Error: /dev/sdd: unrecognised disk label
-> Model: ATA HUH728080ALN600 (scsi)
-> Disk /dev/sdd: 8002GB
-> Sector size (logical/physical): 4096B/4096B
-> Partition Table: unknown
->
-> I want to move data from one device to the other using lvm command
-> `pvmove`, but after pvmove, file system cannot mount.
+By eliminating multipath's heavy use of the m->lock spinlock in the
+fast IO paths serious performance improvements are realized.
 
-This seems to raise questions that you could easily answer:
-1/ what filesystem.  What error when mounting?
-2/ Is the data exactly the same after the move. e.g does
-  sh1sum of the old and new device report the same content?
-  If not, what about sha1sum of the first 10Gig? The first Gig?
-  100K? 16K? 1K? ...
-  i.e. if there is a difference, where is the first difference?
+Overview of performance test setup:
+===================================
 
-NeilBrown
+NULL_BLK_HW_QUEUES=12
+NULL_BLK_QUEUE_DEPTH=4096
 
+DM_MQ_HW_QUEUES=12
+DM_MQ_QUEUE_DEPTH=2048
 
->
-> So my question is whether pvmove support moving date between devices with different sector size
-> or same question: mirror target support mirroring data between two devices with different sector size?
->
-> Thank you in advance.
->
-> Best regards,
-> Liuhua
+FIO_QUEUE_DEPTH=32
+FIO_RUNTIME=10
+FIO_NUMJOBS=12
 
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
+NID=0
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
+run_fio() {
+    DEVICE=$1
+    TASK_NAME=$(basename ${DEVICE})
+    PERF_RECORD=$2
+    RUN_CMD="${FIO} --numa_cpu_nodes=${NID} --numa_mem_policy=bind:${NID} --cpus_allowed_policy=split --group_reporting --rw=randread --bs=4k --numjobs=${FIO_NUMJOBS} \
+              --iodepth=${FIO_QUEUE_DEPTH} --runtime=${FIO_RUNTIME} --time_based --loops=1 --ioengine=libaio \
+              --direct=1 --invalidate=1 --randrepeat=1 --norandommap --exitall --name task_${TASK_NAME} --filename=${DEVICE}"
+    ${RUN_CMD}
+}
 
-iQIcBAEBCAAGBQJW/IbeAAoJEDnsnt1WYoG5m/gP/1wUJWaTe1C2KVwl/y7v+Kny
-5Ieynk15IaEsi/GWFeV54IM2XvIcPQ8LiFWVX6iFVpY6occEMFGUWrEx6hpDiquf
-uNG3IDC04u8eoPXYrphmzHlg60wS5dHE9zVY4Etg2TAdCaLPp0zeuJaUmNy/HpTP
-wVIYHBrvQYCq7HYAxEoNlKVeLtgDk9EGiLDYAcBI/f2HVb98pYLCkWvBUGyzkiBO
-SThjwedfAyAlsoPtyFx39mSBTOl/EhaBV3/nh5IjnqBW8Rray1zrG7HB/1rD6Gqv
-N/rPQtse8EOtHA2S+XTk9xV66+Oi0hU1d6RAYXRuFtkt20cCZvxSUSpuYxmf/qYW
-f3gHQdz8PqDtpvNXQS/Qqbmx1vW0/fy+My9zLFrnn39r1ioWbMe4HI9Ge/i8QNP1
-ieY8EyNxWri9DOr66x27UNktfb36LZ4RSm6aJFdNBgimluNq4/1qlo5CPuEsMx+h
-CtOYeMk1QoTo3fX9AA6h7V0T8wtyNy2UEkpSoISmzybfHnltnGYIC1/m0KalqIm7
-J0MTYtvuT4XM2S1zu2ickK59CUmUeep15lnqLnJifUg9lgrREkmSmBTr69jZo1EO
-t9SkGi0XQF/NBT9I3J1x49rzHEVPQyrEZJwjQ2U3p+rcNEOsH/kP2GJ6lC2IW2mz
-PVV3kqfUvHZU5QclTouu
-=2kmB
------END PGP SIGNATURE-----
---=-=-=--
+modprobe null_blk gb=4 bs=512 hw_queue_depth=${NULL_BLK_QUEUE_DEPTH} nr_devices=1 queue_mode=2 irqmode=1 completion_nsec=1 submit_queues=${NULL_BLK_HW_QUEUES}
+run_fio /dev/nullb0
 
+echo ${NID} > /sys/module/dm_mod/parameters/dm_numa_node
+echo Y > /sys/module/dm_mod/parameters/use_blk_mq
+echo ${DM_MQ_QUEUE_DEPTH} > /sys/module/dm_mod/parameters/dm_mq_queue_depth
+echo ${DM_MQ_HW_QUEUES} > /sys/module/dm_mod/parameters/dm_mq_nr_hw_queues
+echo "0 8388608 multipath 0 0 1 1 service-time 0 1 2 /dev/nullb0 1 1" | dmsetup create dm_mq
+run_fio /dev/mapper/dm_mq
+dmsetup remove dm_mq
 
---===============4174366731112937890==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+echo "0 8388608 multipath 0 0 1 1 queue-length 0 1 1 /dev/nullb0 1" | dmsetup create dm_mq
+run_fio /dev/mapper/dm_mq
+dmsetup remove dm_mq
 
+echo "0 8388608 multipath 0 0 1 1 round-robin 0 1 1 /dev/nullb0 1" | dmsetup create dm_mq
+run_fio /dev/mapper/dm_mq
+dmsetup remove dm_mq
 
---===============4174366731112937890==--
+Test results on 4 NUMA node 192-way x86_64 system with 524G of memory:
+======================================================================
+
+Big picture is the move to lockless really helps.
+
+round-robin's repeat_count and percpu current_path code (went upstream
+during 4.6 merge) seems to _really_ help (even if repeat_count is 1, as
+is the case in all these results).
+
+Below, each set of 4 results in the named file (e.g. "result.lockless_pinned") are:
+raw null_blk
+service-time
+queue-length
+round-robin
+
+The files with the trailing "_12" means:
+NULL_BLK_HW_QUEUES=12
+DM_MQ_HW_QUEUES=12
+FIO_NUMJOBS=12
+
+And the file without "_12" means:
+NULL_BLK_HW_QUEUES=32
+DM_MQ_HW_QUEUES=32
+FIO_NUMJOBS=32
+
+lockless: (this patchset applied)
+*********
+result.lockless_pinned:  read : io=236580MB, bw=23656MB/s, iops=6055.9K, runt= 10001msec
+result.lockless_pinned:  read : io=108536MB, bw=10853MB/s, iops=2778.3K, runt= 10001msec
+result.lockless_pinned:  read : io=106649MB, bw=10664MB/s, iops=2729.1K, runt= 10001msec
+result.lockless_pinned:  read : io=162906MB, bw=16289MB/s, iops=4169.1K, runt= 10001msec
+
+result.lockless_pinned_12:  read : io=165233MB, bw=16522MB/s, iops=4229.6K, runt= 10001msec
+result.lockless_pinned_12:  read : io=96686MB, bw=9667.7MB/s, iops=2474.1K, runt= 10001msec
+result.lockless_pinned_12:  read : io=97197MB, bw=9718.8MB/s, iops=2488.3K, runt= 10001msec
+result.lockless_pinned_12:  read : io=104509MB, bw=10450MB/s, iops=2675.2K, runt= 10001msec
+
+result.lockless_unpinned:  read : io=101525MB, bw=10151MB/s, iops=2598.8K, runt= 10001msec
+result.lockless_unpinned:  read : io=61313MB, bw=6130.8MB/s, iops=1569.5K, runt= 10001msec
+result.lockless_unpinned:  read : io=64892MB, bw=6488.6MB/s, iops=1661.8K, runt= 10001msec
+result.lockless_unpinned:  read : io=78557MB, bw=7854.1MB/s, iops=2010.9K, runt= 10001msec
+
+result.lockless_unpinned_12:  read : io=83455MB, bw=8344.7MB/s, iops=2136.3K, runt= 10001msec
+result.lockless_unpinned_12:  read : io=50638MB, bw=5063.4MB/s, iops=1296.3K, runt= 10001msec
+result.lockless_unpinned_12:  read : io=56103MB, bw=5609.8MB/s, iops=1436.1K, runt= 10001msec
+result.lockless_unpinned_12:  read : io=56421MB, bw=5641.6MB/s, iops=1444.3K, runt= 10001msec
+
+spinlock:
+*********
+result.spinlock_pinned:  read : io=236048MB, bw=23602MB/s, iops=6042.3K, runt= 10001msec
+result.spinlock_pinned:  read : io=64657MB, bw=6465.4MB/s, iops=1655.5K, runt= 10001msec
+result.spinlock_pinned:  read : io=67519MB, bw=6751.2MB/s, iops=1728.4K, runt= 10001msec
+result.spinlock_pinned:  read : io=81409MB, bw=8140.4MB/s, iops=2083.9K, runt= 10001msec
+
+result.spinlock_pinned_12:  read : io=159782MB, bw=15977MB/s, iops=4090.3K, runt= 10001msec
+result.spinlock_pinned_12:  read : io=64368MB, bw=6436.2MB/s, iops=1647.7K, runt= 10001msec
+result.spinlock_pinned_12:  read : io=67337MB, bw=6733.5MB/s, iops=1723.7K, runt= 10001msec
+result.spinlock_pinned_12:  read : io=75453MB, bw=7544.6MB/s, iops=1931.5K, runt= 10001msec
+
+result.spinlock_unpinned:  read : io=103267MB, bw=10326MB/s, iops=2643.4K, runt= 10001msec
+result.spinlock_unpinned:  read : io=34751MB, bw=3474.8MB/s, iops=889526, runt= 10001msec
+result.spinlock_unpinned:  read : io=34475MB, bw=3447.2MB/s, iops=882477, runt= 10001msec
+result.spinlock_unpinned:  read : io=43793MB, bw=4378.1MB/s, iops=1121.0K, runt= 10001msec
+
+result.spinlock_unpinned_12:  read : io=83573MB, bw=8356.5MB/s, iops=2139.3K, runt= 10001msec
+result.spinlock_unpinned_12:  read : io=32715MB, bw=3271.2MB/s, iops=837414, runt= 10001msec
+result.spinlock_unpinned_12:  read : io=34249MB, bw=3424.6MB/s, iops=876675, runt= 10001msec
+result.spinlock_unpinned_12:  read : io=41486MB, bw=4148.3MB/s, iops=1061.1K, runt= 10001msec
+
+Summary:
+========
+Pinning this test to a particular NUMA node helps.  As does using more
+queues/threads -- which is a nice advance because before DM mpath
+really hit a wall.
+
+What makes these favorable results possible is switching over to
+bitops, atomic counters and lockless_deference.
+
+Comparing result.lockless_pinned vs result.spinlock_pinned you can see
+that this patchset delivers between 40 and 50% IOPs and bandwidth
+performance improvement.
+
+Jeff Moyer has been helping review these changes (and has graciously
+labored over _really_ understanding all the concurrency at play in DM
+mpath) -- his review isn't yet complete but I wanted to get this
+patchset out now to raise awareness about how I think DM multipath
+will be changing (for inclussion during the Linux 4.7 merge window).
+
+Mike Snitzer (4):
+  dm mpath: switch to using bitops for state flags
+  dm mpath: use atomic_t for counting members of 'struct multipath'
+  dm mpath: move trigger_event member to the end of 'struct multipath'
+  dm mpath: eliminate use of spinlock in IO fast-paths
+
+ drivers/md/dm-mpath.c | 351 ++++++++++++++++++++++++++++----------------------
+ 1 file changed, 195 insertions(+), 156 deletions(-)
+
+-- 
+2.6.4 (Apple Git-63)
+
