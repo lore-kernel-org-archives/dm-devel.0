@@ -1,67 +1,107 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH RESEND v2 11/18] fs: Ensure the mounter of a filesystem is privileged towards its inodes
-Date: Wed, 30 Mar 2016 15:18:28 -0500
-Message-ID: <87oa9viusr.fsf@x220.int.ebiederm.org>
-References: <1451930639-94331-1-git-send-email-seth.forshee@canonical.com>
-	<1451930639-94331-12-git-send-email-seth.forshee@canonical.com>
-	<20160303170201.GA30224@ubuntu-hedt>
-	<87twkl50g5.fsf@x220.int.ebiederm.org>
-	<20160328165936.GC137406@ubuntu-hedt>
-	<87twjoiw6u.fsf@x220.int.ebiederm.org>
-	<20160330145820.GA41461@ubuntu-hedt>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: pvmove/mirror target mirroring data between two
+	devices with different sector size
+Date: Thu, 31 Mar 2016 13:09:34 +1100
+Message-ID: <8737r7tn35.fsf@notabene.neil.brown.name>
+References: <56F94727020000A000058AA7@prv3-mh.provo.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-bcache-owner@vger.kernel.org>
-In-Reply-To: <20160330145820.GA41461@ubuntu-hedt> (Seth Forshee's message of
-	"Wed, 30 Mar 2016 09:58:20 -0500")
-Sender: linux-bcache-owner@vger.kernel.org
-To: Seth Forshee <seth.forshee@canonical.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
+Content-Type: multipart/mixed; boundary="===============4174366731112937890=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <56F94727020000A000058AA7@prv3-mh.provo.novell.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Liuhua Wang <lwang@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Seth Forshee <seth.forshee@canonical.com> writes:
+--===============4174366731112937890==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha256; protocol="application/pgp-signature"
 
-> On Tue, Mar 29, 2016 at 08:36:09PM -0500, Eric W. Biederman wrote:
->> Seth Forshee <seth.forshee@canonical.com> writes:
->> 
->> > On Fri, Mar 04, 2016 at 04:43:06PM -0600, Eric W. Biederman wrote:
->> >> In general this is only an issue if uids and gids on the filesystem
->> >> do not map into the user namespace.
->> >> 
->> >> Therefore the general fix is to limit the logic of checking for
->> >> capabilities in s_user_ns if we are dealing with INVALID_UID and
->> >> INVALID_GID.  For proc and kernfs that should never be the case
->> >> so the problem becomes a non-issue.
->> >> 
->> >> Further I would look at limiting that relaxation to just
->> >> inode_change_ok. 
->> >
->> > Finally got around to implementing this today; is the patch below what
->> > you had in mind?
->> 
->> Pretty much.
->> 
->> For the same reason that capble_wrt_inode_uidgid(inode) had to look
->> at both inode->i_uid and inode->i_gid I think we need to look at
->> both inode->i_uid and inode->i_gid in those case.
->> 
->> I am worried about chgrp_ok in cases such as inode->i_uid is valid
->> but unmapped.  I have a similiar worry about chown_ok where
->> inode->i_gid is valid but unmapped (although that worry is less
->> serious).
->
-> That makes sense.
->
-> So then what is wanted is to check that the other id is either invalid,
-> or else it maps into s_user_ns. So for chown_ok() something like this:
->
->     if (!uid_valid(inode->i_uid) &&
->         (!gid_valid(inode->i_gid) || kgid_has_mapping(inode->i_sb->s_user_ns, inode->i_gid)) &&
->         ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
->             return true;
->
-> and likewise for chgrp_ok(). Does that satisfy your concerns?
+--=-=-=
+Content-Type: text/plain
 
-Yes it does.
+On Mon, Mar 28 2016, Liuhua Wang wrote:
 
-Eric
+> Hi List,
+>
+> I have a question that I think maybe you can give me some idea.
+>
+> I have two devices with different sector size: 512B and 4096B.
+>
+> - SOURCE DEVICE (mdos lvm partiton)
+> #parted /dev/sdb
+> Model: ATA SATADOM-SL 3ME (scsi)
+> Disk /dev/sdb: 32.0GB
+> Sector size (logical/physical): 512B/512B
+> Partition Table: msdos
+> (In `parted` Sector size are both got from IOCTL(BLKSSZGET))
+>
+> - TARGET DEVICE (WHOLE DISK)
+> #parted /dev/sdc
+> Error: /dev/sdd: unrecognised disk label
+> Model: ATA HUH728080ALN600 (scsi)
+> Disk /dev/sdd: 8002GB
+> Sector size (logical/physical): 4096B/4096B
+> Partition Table: unknown
+>
+> I want to move data from one device to the other using lvm command
+> `pvmove`, but after pvmove, file system cannot mount.
+
+This seems to raise questions that you could easily answer:
+1/ what filesystem.  What error when mounting?
+2/ Is the data exactly the same after the move. e.g does
+  sh1sum of the old and new device report the same content?
+  If not, what about sha1sum of the first 10Gig? The first Gig?
+  100K? 16K? 1K? ...
+  i.e. if there is a difference, where is the first difference?
+
+NeilBrown
+
+
+>
+> So my question is whether pvmove support moving date between devices with different sector size
+> or same question: mirror target support mirroring data between two devices with different sector size?
+>
+> Thank you in advance.
+>
+> Best regards,
+> Liuhua
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBCAAGBQJW/IbeAAoJEDnsnt1WYoG5m/gP/1wUJWaTe1C2KVwl/y7v+Kny
+5Ieynk15IaEsi/GWFeV54IM2XvIcPQ8LiFWVX6iFVpY6occEMFGUWrEx6hpDiquf
+uNG3IDC04u8eoPXYrphmzHlg60wS5dHE9zVY4Etg2TAdCaLPp0zeuJaUmNy/HpTP
+wVIYHBrvQYCq7HYAxEoNlKVeLtgDk9EGiLDYAcBI/f2HVb98pYLCkWvBUGyzkiBO
+SThjwedfAyAlsoPtyFx39mSBTOl/EhaBV3/nh5IjnqBW8Rray1zrG7HB/1rD6Gqv
+N/rPQtse8EOtHA2S+XTk9xV66+Oi0hU1d6RAYXRuFtkt20cCZvxSUSpuYxmf/qYW
+f3gHQdz8PqDtpvNXQS/Qqbmx1vW0/fy+My9zLFrnn39r1ioWbMe4HI9Ge/i8QNP1
+ieY8EyNxWri9DOr66x27UNktfb36LZ4RSm6aJFdNBgimluNq4/1qlo5CPuEsMx+h
+CtOYeMk1QoTo3fX9AA6h7V0T8wtyNy2UEkpSoISmzybfHnltnGYIC1/m0KalqIm7
+J0MTYtvuT4XM2S1zu2ickK59CUmUeep15lnqLnJifUg9lgrREkmSmBTr69jZo1EO
+t9SkGi0XQF/NBT9I3J1x49rzHEVPQyrEZJwjQ2U3p+rcNEOsH/kP2GJ6lC2IW2mz
+PVV3kqfUvHZU5QclTouu
+=2kmB
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============4174366731112937890==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============4174366731112937890==--
