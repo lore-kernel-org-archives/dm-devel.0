@@ -1,27 +1,26 @@
 From: Johannes Thumshirn <jthumshirn@suse.de>
-Subject: Re: [dm-devel] [RFC PATCH 2/4] dm mpath: use atomic_t for counting
- members of 'struct multipath'
-Date: Fri, 01 Apr 2016 10:48:54 +0200
-Message-ID: <b5f43b9cf4e518f962f3a15c8b0ed926@suse.de>
+Subject: Re: [dm-devel] [RFC PATCH 3/4] dm mpath: move trigger_event member to
+ the end of 'struct multipath'
+Date: Fri, 01 Apr 2016 10:50:13 +0200
+Message-ID: <7d99d3cb7e0394cb77751162c5c9d89d@suse.de>
 References: <1459454666-76428-1-git-send-email-snitzer@redhat.com>
- <1459454666-76428-3-git-send-email-snitzer@redhat.com>
+ <1459454666-76428-4-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII;
  format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1459454666-76428-3-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1459454666-76428-4-git-send-email-snitzer@redhat.com>
 Sender: linux-scsi-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>
 Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, sagig@dev.mellanox.co.il, linux-block@vger.kernel.org, jmoyer@redhat.com, j-nomura@ce.jp.nec.com
 List-Id: dm-devel.ids
 
 On 2016-03-31 22:04, Mike Snitzer wrote:
-> The use of atomic_t for nr_valid_paths, pg_init_in_progress and
-> pg_init_count will allow relaxing the use of the m->lock spinlock.
+> Allows the 'work_mutex' member to no longer cross a cacheline.
 > 
-> Suggested-by: Hannes Reinecke <hare@suse.de>
 > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
 
 Looks good,
 Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
