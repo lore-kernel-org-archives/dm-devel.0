@@ -1,106 +1,97 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH 0/4] dm mpath: vastly improve blk-mq IO performance
-Date: Fri, 1 Apr 2016 10:14:56 -0400
-Message-ID: <20160401141456.GB24355@redhat.com>
-References: <1459454666-76428-1-git-send-email-snitzer@redhat.com>
- <6c6623e7f92e31daf1586d266fa03e1d@suse.de>
- <20160401132219.GA24355@redhat.com>
- <cddb09e2c2af7f7ea0337cf76657c896@suse.de>
+From: Robert Jarzmik <robert.jarzmik@free.fr>
+Subject: Re: [PATCH v2 1/4] scatterlist: Introduce some helper functions
+Date: Sat, 02 Apr 2016 17:00:58 +0200
+Message-ID: <87r3eoukb9.fsf@belgarion.home>
+References: <cover.1458023695.git.baolin.wang@linaro.org>
+	<cover.1458023695.git.baolin.wang@linaro.org>
+	<9442060edaca12f520bcbb76545ad33a52346e58.1458023698.git.baolin.wang@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <cddb09e2c2af7f7ea0337cf76657c896@suse.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Johannes Thumshirn <jthumshirn@suse.de>
-Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, sagig@dev.mellanox.co.il, linux-block@vger.kernel.org, jmoyer@redhat.com, j-nomura@ce.jp.nec.com, hare@suse.de
+Content-Type: text/plain
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <9442060edaca12f520bcbb76545ad33a52346e58.1458023698.git.baolin.wang@linaro.org>
+	(Baolin Wang's message of "Tue, 15 Mar 2016 15:47:59 +0800")
+Sender: linux-crypto-owner@vger.kernel.org
+To: Baolin Wang <baolin.wang@linaro.org>
+Cc: herbert@gondor.apana.org.au, davem@davemloft.net, agk@redhat.com, snitzer@redhat.com, axboe@fb.com, dm-devel@redhat.com, akpm@linux-foundation.org, david.s.gordon@intel.com, thomas.lendacky@amd.com, yamada.masahiro@socionext.com, smueller@chronox.de, tadeusz.struk@intel.com, standby24x7@gmail.com, shli@kernel.org, broonie@kernel.org, linus.walleij@linaro.org, arnd@arndb.de, linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Apr 01 2016 at  9:37am -0400,
-Johannes Thumshirn <jthumshirn@suse.de> wrote:
+Baolin Wang <baolin.wang@linaro.org> writes:
 
-> [ +Cc Hannes ]
-> 
-> On 2016-04-01 15:22, Mike Snitzer wrote:
-> >On Fri, Apr 01 2016 at  4:12am -0400,
-> >Johannes Thumshirn <jthumshirn@suse.de> wrote:
-> >
-> >>On 2016-03-31 22:04, Mike Snitzer wrote:
-> >>>I developed these changes some weeks ago but have since focused on
-> >>>regression and performance testing on larger NUMA systems.
-> >>>
-> >>>For regression testing I've been using mptest:
-> >>>https://github.com/snitm/mptest
-> >>>
-> >>>For performance testing I've been using a null_blk device (with
-> >>>various configuration permutations, e.g. pinning memory to a
-> >>>particular NUMA node, and varied number of submit_queues).
-> >>>
-> >>>By eliminating multipath's heavy use of the m->lock spinlock in the
-> >>>fast IO paths serious performance improvements are realized.
-> >>
-> >>Hi Mike,
-> >>
-> >>Are this the patches you pointed Hannes to?
-> >>
-> >>If yes, please add my Tested-by: Johannes Thumshirn
-> >><jthumshirn@suse.de>
-> >
-> >No they are not.
-> >
-> >Hannes seems to have last pulled in my DM mpath changes that
-> >(ab)used RCU.
-> >I ended up dropping those changes and this patchset is the replacement.
-> 
-> Now that you're saying it I can remember some inspiring RCU usage in
-> the patches.
-> 
-> >So please retest with this patchset (I know you guys have a large setup
-> >that these changes are very relevant for).  If you could actually share
-> >_how_ yo've tested that'd help me understand how these changes are
-> >holding up.  So far all looks good for me...
-> 
-> The test itself is actually quite simple, we're testing with fio
-> against a fiber channel array (all SSDs but I was very careful to
-> only write into the cache)
-> 
-> Here's my fio job file:
-> [mq-test]
-> iodepth=128
-> numjobs=40
-> group_reporting
-> direct=1
-> ioengine=libaio
-> size=3G
-> filename=/dev/dm-0
-> filename=/dev/dm-1
-> filename=/dev/dm-2
-> filename=/dev/dm-3
-> filename=/dev/dm-4
-> filename=/dev/dm-5
-> filename=/dev/dm-6
-> filename=/dev/dm-7
-> name="MQ Test"
-> 
-> and the test runner:
-> #!/bin/sh
-> 
-> for rw in 'randread' 'randwrite' 'read' 'write'; do
->         for bs in '4k' '8k' '16k' '32k' '64k'; do
->                 fio mq-test.fio --bs="${bs}" --rw="${rw}"
-> --output="fio-${bs}-${rw}.txt"
->         done
-> done
-> 
-> The initiator has 40 CPUs on 4 NUMA nodes (no HT) and 64GB RAM. I'm
-> not sure how much in term of numbers I can share from the old
-> patchset (will ask Hannes on Monday), but I'm aware I'll have to
-> when I retested with your new patches and we want to compare the
-> results.
+> +/**
+> + * sg_is_contiguous - Check if the scatterlists are contiguous
+> + * @sga: SG entry
+> + * @sgb: SG entry
+> + *
+> + * Description:
+> + *   If the sga scatterlist is contiguous with the sgb scatterlist,
+> + *   that means they can be merged together.
+> + *
+> + **/
+> +static inline bool sg_is_contiguous(struct scatterlist *sga,
+> +				    struct scatterlist *sgb)
+> +{
+> +	return *(unsigned long *)sg_virt(sga) + sga->length ==
+> +		*(unsigned long *)sg_virt(sgb);
+As I already said, I don't like casts.
 
-OK, yes please share as much as you can.  Having shared code that seems
-to perform well it'd be nice to see some results from your testbed.
-It'll help build my confidence in the code actually landing upstream.
+But let's take some height : you're needing this function to decide to merge
+scatterlists. That means that you think the probability of having 2 scatterlist
+mergeable is not meaningless, ie. 50% or more.
 
-Thanks,
-Mike
+I suppose your scatterlists are allocated through kmalloc(). I'd like to know,
+through your testing, what is the success rate of sg_is_contiguous(), ie. I'd
+like to know how many times sg_is_contiguous() was called, and amongst these
+calls how many times it returned true.
+
+That will tell me how "worth" is this optimization.
+
+> + * sg_add_sg_to_table - Add one scatterlist into sg table
+> + * @sgt:	The sg table header to use
+> + * @src:	The sg need to be added into sg table
+> + *
+> + * Description:
+> + *   The 'nents' member indicates how many mapped scatterlists has been added
+> + *   in the dynamic sg table. The 'orig_nents' member indicates the size of the
+> + *   dynamic sg table.
+> + *
+> + *   Copy one mapped @src@ scatterlist into the dynamic sg table and increase
+> + *   'nents' member.
+> + *
+> + **/
+Okay, I still believe this one is wrong, because we don't understand each other.
+So let's take an example :
+sg_table = {
+         .sgl = {
+		{
+                	.page_link = PAGE_48,
+                        .offset = 0,
+                        .length = 2048,
+                        .dma_address = 0x30000,
+                        .dma_length = 4096,
+                },
+		{
+                	.page_link = PAGE_48 | 0x02,
+                        .offset = 2048,
+                        .length = 2048,
+                        .dma_address = 0,
+                        .dma_length = 0,
+                },
+	},
+         .nents = 1,
+         .orig_nents = 2,
+};
+
+In this example, by sheer luck the 2 scatterlist entries were physically
+contiguous, and the mapping function coallesced the 2 entries into only one
+(dma_address, dma_length) entry. That could also happen with an IOMMU by the
+way.  Therefore, sg_table.nents = 1.
+
+If I understand your function correctly, it will erase sg_table.sgl[1], and that
+looks incorrect to me. This is why I can't understand how your code can be
+correct, and why I say you add a new "meaning" to sg_table->nents, which is not
+consistent with the meaning I understand.
+
+Cheers.
+
+-- 
+Robert
