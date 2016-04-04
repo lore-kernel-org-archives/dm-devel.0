@@ -1,190 +1,98 @@
-From: Willem Verbruggen <willem.verbruggen@anagky.be>
-Subject: Multipath 0.5.0 sets all path priorities to 50 with SCST
- 3.1.0 ALUA for group_by_prio
-Date: Sat, 2 Apr 2016 13:19:58 +0200
-Message-ID: <56FFAADE.3080405@anagky.be>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 00/12] Block support for zoned drives
+Date: Mon, 4 Apr 2016 09:32:07 +0200
+Message-ID: <57021877.1070609@suse.de>
+References: <1459746376-27983-1-git-send-email-shaun@tancheff.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com, dm-devel@redhat.com
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-ide-owner@vger.kernel.org>
+In-Reply-To: <1459746376-27983-1-git-send-email-shaun@tancheff.com>
+Sender: linux-ide-owner@vger.kernel.org
+To: Shaun Tancheff <shaun@tancheff.com>, linux-ide@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org
+Cc: Jens Axboe <axboe@fb.com>
 List-Id: dm-devel.ids
 
-Dear,
+On 04/04/2016 07:06 AM, Shaun Tancheff wrote:
+> As Host Aware drives are becoming available we would like to be able=20
+> to make use of such drives. This series is also intended to be suitab=
+le
+> for use by Host Managed drives.
+>=20
+> The following series is hopefully a reasonable start at adding such=20
+> support.
+>=20
+> ZAC/ZBC drives add new commands. Some of this support is already in
+> progress by Hannes Reinecke <hare@suse.de>. This patch finishes up a
+> couple of scsi <-> ata translations. These patches will be re-worked=20
+> or dropped in favor of Hannes' next release.
+>=20
+> With the ZAC support in place adding some additional flags to struct =
+bio=20
+> to identify the new drive requests (Report zones, Open/Close/Reset zo=
+nes).
+>=20
+> With the bio support in place there are two new users added. The firs=
+t=20
+> user is an ioctl the second user is a device mapper target.
+> The user space tools for the ioctl is intended to be acceptable for
+> inclusion by util-linux. Initial patches for 2.20.1 and 2.21.1
+> can be found here:
+> https://github.com/Seagate/ZDM-Device-Mapper/tree/master/patches/util=
+-linux
+>=20
+> Please consider the new device mapper target, as an RFC.
+>=20
+> Patch "Limit bio_endio recursion" is based on an older patch that was=
+=20
+> not picked up. It is not strictly necessary but it does reduce stack=20
+> usage, especially for badly behaved DM targets that return
+> DM_MAPIO_REQUEUE too frequently.
+>=20
+> Patch "Use PID to seed Stream Id" depends on:
+> https://lkml.kernel.org/r/1457107853-8689-1-git-send-email-axboe@fb.c=
+om
+>=20
+> Patch "Block Zoned Control for Userspace" is a hold over for user spa=
+ce
+> tools that have not been updated to use the new block ioctl. The patc=
+h
+> will be dropped when zdm-tools is updated and sd-tools is replaced
+> with util-linux.
+>=20
+> This series is based on Linus v4.5 kernel.
+>=20
+> Code is also available on github here:
+> https://github.com/Seagate/ZDM-Device-Mapper
+>=20
+> And a fork of Linus kernel with ZDM branches is available here:
+> https://github.com/stancheff/linux
+>=20
+> Shaun Tancheff (12):
+>   Add ZBC <-> ZAC xlat support for report, open, close, reset, finish
+>   ata-scsi: Translate ReportZones result to big endian
+>   BUG: Losing bits on request.cmd_flags
+>   Add bio/request flags for using ZBC/ZAC commands
+>   Add ioctl to issue ZBC/ZAC commands via block layer
+>   Add ata pass-through path for ZAC commands.
+>   ZDM: New DM target 'zoned'
+>   RAID 4/5/6: Indicate parity blocks as 'META'
+>   RAID 4/5/6: Fine-grained TRIM enable for ZDM
+>   Limit bio_endio recursion
+>   Stream Id: Use PID to seed Stream Id construction.
+>   Block Zoned Control for Userspace
+>=20
+Please hold off with this series for the moment.
+I've just finished up porting my ZAC/ZBC patchset and will be posting a=
+n
+update shortly.
+I'm happy to integrate any of your fixes.
 
-We were upgrading multipath-tools 0.4.9 to 0.5.0 on a dual node DRBD 
-cluster with SCST 3.1.0 ISCSI exports and three XEN VM nodes.  All 5 
-servers running:
-root@cenbersto002:/usr/src# uname -a
-Linux cenbersto002 4.1.18 #1 SMP Sun Mar 27 10:16:46 CEST 2016 x86_64 
-GNU/Linux
+Cheers,
 
-For multipath 0.5.0 we cannot get the path priorities to work. Multipath 
-gives all of them the priority 50 no matter what and puts all paths in 
-one active group.
-Is it a bug in 0.5.0 or did we still make a mistake in our upgraded 
-configuration file (we checked all documentation we could find and did 
-multiple tests)?
-For 0.4.9 it still works fine on this upgraded platform. Then we get an 
-active group with prio 130 and an enabled failover group with prio 50.
-
-Config 0.5.0:
-root@cenbernod001:~# cat multipath.conf
-devices {
-           device {
-                   vendor                  "SCST_BIO"
-#                  product                 "*"
-#                  hardware_handler        "1 alua"
-#                  features                "3 queue_if_no_path 
-pg_init_retries 50"
-#                  path_selector           "queue-length 0"
-           }
-}
-
-defaults {
-         polling_interval        10
-         path_selector           "round-robin 0"
-         path_grouping_policy    group_by_prio
-         uid_attribute           "ID_SERIAL"
-         getuid_callout          "/lib/udev/scsi_id --whitelisted 
---device=/dev/%n"
-         prio                    alua
-         path_checker            directio
-         no_path_retry           queue
-         rr_min_io               100
-         rr_min_io_rq            100
-         flush_on_last_del       no
-         max_fds                 8192
-         rr_weight               priorities
-         failback                immediate
-         queue_without_daemon    no
-         user_friendly_names     no
-         mode                    644
-         uid                     0
-         gid                     disk
-#       hardware_handler        "1 alua"
-}
-
-blacklist {
-         devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-         devnode "^hd[a-z]"
-         devnode "^sda$"
-         devnode "^sdb$"
-#       wwid 350014ee1aed0e771
-#       wwid 350014ee158048877
-}
-
-blacklist_exceptions {
-#        device {
-#                vendor SCST_BIO
-#        }
-         property "(ID_SCSI_VPD|ID_WWN|ID_SERIAL)"
-         devnode "^sd[c-z]+"
-         devnode "^sda[a-z]+"
-         devnode "^sdb[a-z]+"
-}
-
-multipaths {
-         multipath {
-                 wwid                    26534376437633839
-                 alias                   cenbererpprd007
-         }
-...
-
-For multipath 0.4.9 we get the desired result:
-
-cenbererbprd402 (26434373934373262) dm-44 SCST_BIO,cenbererbprd402
-size=20G features='1 queue_if_no_path' hwhandler='0' wp=rw
-|-+- policy='round-robin 0' prio=130 status=active
-| |- 92:0:0:0  sdce 69:32   active ready running
-| |- 93:0:0:0  sdcf 69:48   active ready running
-| |- 150:0:0:0 sdek 128:192 active ready running
-| `- 198:0:0:0 sdgg 131:192 active ready running
-`-+- policy='round-robin 0' prio=50 status=enabled
-   |- 106:0:0:0 sdcs 70:0    active ready running
-   |- 107:0:0:0 sdct 70:16   active ready running
-   |- 157:0:0:0 sder 129:48  active ready running
-   `- 251:0:0:0 sdig 135:0   active ready running
-
-Config 0.4.9:
-root@cenbernod003:~# cat /etc/multipath.conf
-devices {
-        device {
-                vendor "SCST_BIO"
-#               product "VIRTUAL-DISK"
-        }
-}
-
-
-##
-## This is a template multipath-tools configuration file
-## Uncomment the lines relevent to your environment
-##
-defaults {
-         udev_dir                /dev
-         polling_interval        10
-         selector                "round-robin 0"
-         path_grouping_policy    group_by_prio
-         getuid_callout          "/lib/udev/scsi_id --whitelisted 
---device=/dev/%n"
-         prio                    alua
-         path_checker            directio
-         rr_min_io               100
-         flush_on_last_del       no
-         max_fds                 8192
-         rr_weight               priorities
-         failback                immediate
-         no_path_retry           queue
-         queue_without_daemon    no
-         user_friendly_names     no
-         mode                    644
-         uid                     0
-         gid                     disk
-}
-blacklist {
-         devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-         devnode "^hd[a-z]"
-         devnode "^sda$"
-         devnode "^sdb$"
-}
-multipaths {
-         multipath {
-                 wwid                    26534376437633839
-                 alias                   cenbererpprd007
-         }
-...
-
-In SCST we have ALUA groups with preference to one of the two DRBD nodes 
-for each target:
-DEVICE_GROUP cenbererbprd402 {
-         DEVICE cenbererbprd402
-
-         TARGET_GROUP cenbererbprd402 {
-                 group_id 13
-                 preferred 1
-                 state active
-
-                 TARGET cenbersto001:cenbererbprd402
-         }
-}
-
-Thanks a lot in advance.
-
-Kind Regards,
-
-Willem
-
--- 
-Willem Verbruggen                           ANAGKY BVBA
-Zaakvoerder                                 Thaliastraat 71
-+32 (0)497 54 96 36                         2600 Antwerpen
-willem.verbruggen@anagky.be                 BE 0894.681.775
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
