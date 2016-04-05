@@ -1,269 +1,94 @@
-From: Baolin Wang <baolin.wang@linaro.org>
-Subject: Re: [PATCH v2 1/4] scatterlist: Introduce some helper functions
-Date: Tue, 5 Apr 2016 15:10:19 +0800
-Message-ID: <CAMz4kuKcJKHKoX8JTs5zSrre5y+cVo+hcHS6BZi1M=WOAHyu-g@mail.gmail.com>
-References: <cover.1458023695.git.baolin.wang@linaro.org>
-	<9442060edaca12f520bcbb76545ad33a52346e58.1458023698.git.baolin.wang@linaro.org>
-	<87r3eoukb9.fsf@belgarion.home>
+From: Andreas Herrmann <aherrmann@suse.com>
+Subject: dm-cache performance behaviour
+Date: Tue, 5 Apr 2016 09:12:53 +0200
+Message-ID: <20160405071253.GB27444@suselix.suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <87r3eoukb9.fsf@belgarion.home>
-Sender: linux-raid-owner@vger.kernel.org
-To: Robert Jarzmik <robert.jarzmik@free.fr>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, David Miller <davem@davemloft.net>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@fb.com>, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>, david.s.gordon@intel.com, Tom Lendacky <thomas.lendacky@amd.com>, Masahiro Yamada <yamada.masahiro@socionext.com>, smueller@chronox.de, tadeusz.struk@intel.com, Masanari Iida <standby24x7@gmail.com>, shli@kernel.org, Mark Brown <broonie@kernel.org>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, LKML <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, linux-raid@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-bcache-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-bcache-owner@vger.kernel.org
+To: Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>
+Cc: dm-devel@redhat.com, linux-bcache@vger.kernel.org, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Robert,
+Hi,
 
-Sorry for the late reply.
+I've recently looked at performance behaviour of dm-cache and bcache.
+I've repeatedly observed very low performance with dm-cache in
+different tests. (Similar tests with bcache showed no such oddities.)
 
-On 2 April 2016 at 23:00, Robert Jarzmik <robert.jarzmik@free.fr> wrote:
-> Baolin Wang <baolin.wang@linaro.org> writes:
->
->> +/**
->> + * sg_is_contiguous - Check if the scatterlists are contiguous
->> + * @sga: SG entry
->> + * @sgb: SG entry
->> + *
->> + * Description:
->> + *   If the sga scatterlist is contiguous with the sgb scatterlist,
->> + *   that means they can be merged together.
->> + *
->> + **/
->> +static inline bool sg_is_contiguous(struct scatterlist *sga,
->> +                                 struct scatterlist *sgb)
->> +{
->> +     return *(unsigned long *)sg_virt(sga) + sga->length ==
->> +             *(unsigned long *)sg_virt(sgb);
-> As I already said, I don't like casts.
+To rule out user errors that might have caused this, I shortly describe
+what I've done and observed.
 
-OK. Could you give me a good example. Thanks.
+- tested kernel version: 4.5.0
 
->
-> But let's take some height : you're needing this function to decide to merge
-> scatterlists. That means that you think the probability of having 2 scatterlist
-> mergeable is not meaningless, ie. 50% or more.
->
-> I suppose your scatterlists are allocated through kmalloc(). I'd like to know,
-> through your testing, what is the success rate of sg_is_contiguous(), ie. I'd
-> like to know how many times sg_is_contiguous() was called, and amongst these
-> calls how many times it returned true.
->
-> That will tell me how "worth" is this optimization.
+- backing device: 1.5 TB spinning drive
 
-I think this is just one useful API for users, If the rate is only 1%,
-we also need to check if they are contiguous to decide if they can be
-coalesced.
+- caching device: 128 GB SSD (used for metadata and cache and size
+  of metadata part calculated based on
+  https://www.redhat.com/archives/dm-devel/2012-December/msg00046.html)
 
->
->> + * sg_add_sg_to_table - Add one scatterlist into sg table
->> + * @sgt:     The sg table header to use
->> + * @src:     The sg need to be added into sg table
->> + *
->> + * Description:
->> + *   The 'nents' member indicates how many mapped scatterlists has been added
->> + *   in the dynamic sg table. The 'orig_nents' member indicates the size of the
->> + *   dynamic sg table.
->> + *
->> + *   Copy one mapped @src@ scatterlist into the dynamic sg table and increase
->> + *   'nents' member.
->> + *
->> + **/
-> Okay, I still believe this one is wrong, because we don't understand each other.
-> So let's take an example :
-> sg_table = {
->          .sgl = {
->                 {
->                         .page_link = PAGE_48,
->                         .offset = 0,
->                         .length = 2048,
->                         .dma_address = 0x30000,
->                         .dma_length = 4096,
->                 },
->                 {
->                         .page_link = PAGE_48 | 0x02,
->                         .offset = 2048,
->                         .length = 2048,
->                         .dma_address = 0,
->                         .dma_length = 0,
->                 },
->         },
->          .nents = 1,
->          .orig_nents = 2,
-> };
->
-> In this example, by sheer luck the 2 scatterlist entries were physically
-> contiguous, and the mapping function coallesced the 2 entries into only one
-> (dma_address, dma_length) entry. That could also happen with an IOMMU by the
-> way.  Therefore, sg_table.nents = 1.
->
-> If I understand your function correctly, it will erase sg_table.sgl[1], and that
-> looks incorrect to me. This is why I can't understand how your code can be
-> correct, and why I say you add a new "meaning" to sg_table->nents, which is not
-> consistent with the meaning I understand.
+- my test procedure consisted of a sequence of tests performing fio
+  runs with different data sets, fio randread performance (bandwidth
+  and IOPS) were compared, fio was invoked using something like
 
-I think you misunderstood my point. The 'sg_add_sg_to_table()'
-function is used to add one mapped scatterlist into the dynamic sg
-table. For example:
-1. How to add one mapped sg into dynamic sg table
-(1) If we allocate one dynamic sg table with 3 (small size can be
-showed easily) empty scatterlists.:
-sg_table = {
-          .sgl = {
-                 {
-                         .page_link = 0,
-                         .offset = 0,
-                         .length = 0,
-                 },
-                 {
-                         .page_link = 0,
-                         .offset = 0,
-                         .length = 0,
-                 },
-                 {
-                         .page_link = 0 | 0x02,
-                         .offset = 0,
-                         .length = 0,
-                 },
-         },
-          .nents = 0,
-          .orig_nents = 3,
- };
+  fio --directory=/cached-device --rw=randread --name=fio-1 \
+    --size=50G --group_reporting --ioengine=libaio \
+    --direct=1 --iodepth=1 --runtime=40 --numjobs=1
 
-(2) If some module (like dm-crypt module) always sends one mapped
-scatterlist (size is always 512bytes) to another module (crypto
-driver) to handle the mapped scatterlist at one time. But we want to
-collect the mapped scatterlist into one dynamic sg table to manage
-them together, means we can send multiple mapped scatterlists (from
-sg_table->sgl) to the crypto driver to handle them together to improve
-its efficiency. So we add one mapped scatterlists into the dynamic sg
-table.
-mapped sg = {
-          .page_link = PAGE_20,
-          .offset = 0,
-          .length = 512,
-},
+  I've iterated over 10 runs for each of numjobs=1,2,3 and varied the
+  name parameter to operate with different data sets.
 
-Add into synamic sg table ------->
-sg_table = {
-          .sgl = {
-                 {
-                         .page_link = PAGE_20 | 0x02,
-                         .offset = 0,
-                         .length = 512,
-                 },
-                 {
-                         .page_link = 0,
-                         .offset = 0,
-                         .length = 0,
-                 },
-                 {
-                         .page_link = 0,
-                         .offset = 0,
-                         .length = 0,
-                 },
-         },
-          .nents = 1,
-          .orig_nents = 3,
- };
+  This procedure implied that with 3 jobs the underlying data set for
+  the test consisted of 3 files with 50G each which exceeds the size
+  of the caching device.
 
-Another two mapped scatterlists are added into synamic sg table ------->
-sg_table = {
-          .sgl = {
-                 {
-                         .page_link = PAGE_20,
-                         .offset = 0,
-                         .length = 512,
-                 },
-                 {
-                         .page_link = PAGE_25,
-                         .offset = 0,
-                         .length = 512,
-                 },
-                 {
-                         .page_link = PAGE_28 | 0x20,
-                         .offset = 0,
-                         .length = 512,
-                 },
-         },
-          .nents = 3,
-          .orig_nents = 3,
- };
+- Between some tests I've tried to empty the cache. For dm-cache I did
+  this by unmounting the "compound" cache device, switching to cleaner
+  target, zeroing metadata part of the caching device, recreating
+  caching device and finally recreating the compound cache device
+  (during this procedure I kept the backing device unmodified).
 
-Then we can send the dynamic sg table to the crypto engine driver to
-handle them together at one time. (If the dynamic sg table size is
-512, then the crypto engine driver can handle 512 scatterlists at one
-time, which can improve much efficiency). That's the reason why we
-want to introduce the dynamic sg table.
+  I used dmsetup status to check for success of this operation
+  (checking for #used_cache_blocks).
+  If there is an easier way to do this please let me know -- If it's
+  documented I've missed it.
 
-2. How to coalesce
-(1) If one mapped scatterlsit already has been added into dynamic sg table:
-sg_table = {
-          .sgl = {
-                 {
-                         .page_link = PAGE_20 | 0x02,
-                         .offset = 0,
-                         .length = 512,
-                 },
-                 {
-                         .page_link = 0,
-                         .offset = 0,
-                         .length = 0,
-                 },
-                 {
-                         .page_link = 0,
-                         .offset = 0,
-                         .length = 0,
-                 },
-         },
-          .nents = 1,
-          .orig_nents = 3,
- };
+- dm-cache parameters:
+  * cache_mode: writeback
+  * block size: 512 sectors
+  * migration_threshold 2048 (default)
 
-(2) Another mapped scatterlist comes.
-mapped sg = {
-          .page_link = PAGE_20,
-          .offset = 512,
-          .length = 512,
-},
+I've observed two oddities:
 
-So we check the new mapped scatterlist can be coalesced into previous
-one in dynamic sg table like this:
-sg_table = {
-          .sgl = {
-                 {
-                         .page_link = PAGE_20 | 0x02,
-                         .offset = 0,
-                         .length = 1024,
-                 },
-                 {
-                         .page_link = 0,
-                         .offset = 0,
-                         .length = 0,
-                 },
-                 {
-                         .page_link = 0,
-                         .offset = 0,
-                         .length = 0,
-                 },
-         },
-          .nents = 1,
-          .orig_nents = 3,
- };
+  (1) Only fio tests with the first data set created (and thus
+  initially occupying the cache) showed decent performance
+  results. Subsequent fio tests with another data set showed poor
+  performance. I think this indicates that SMQ policy does not
+  properly promote/demote data to/from caching device in my tests.
 
-It's done. We coalesced one scatterlist into antoher one to expand the
-scatterlist's length.
-Thanks for your comments.
+  (2) I've seen results where performance was actually below "native"
+  (w/o caching) performance of the backing device. I think that this
+  should not happen. If a data access falls back to the backing device
+  due to a cache miss I would have expected to see almost the
+  performance of the backing device. Maybe this points to a
+  performance issue in SMQ -- spending too much time in policy code
+  before falling back to the backing device.
 
->
-> Cheers.
->
-> --
-> Robert
+I've tried to figure out what actually happened in SMQ code in these
+cases - but eventually dismissed this. Next I want to check whether
+there might be a flaw in my test setup/dm-cache configuration.
+
+My understanding is that there are just two tunables for SMQ. Cache
+block size (in sectors) and migration_threshold. So far I've sticked
+to the defaults or to what I've found documented elsewhere. Are there
+any recommendations for these values depending on the caching/backing
+device sizes etc.?
 
 
+Thanks,
 
--- 
-Baolin.wang
-Best Regards
+Andreas
+
+PS: Too keep this email short I'll put more details of my test
+    procedure and a list of results in a follow-up mail to this one.
