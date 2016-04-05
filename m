@@ -1,47 +1,39 @@
-From: Shaun Tancheff <shaun.tancheff@seagate.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
 Subject: Re: [PATCH 03/12] BUG: Losing bits on request.cmd_flags
-Date: Mon, 4 Apr 2016 23:06:03 +0700
-Message-ID: <CAJVOszAK5w4qsrKcUot8rm9nZ65hXeUm5YomQU3fT-fARCGXjA@mail.gmail.com>
+Date: Mon, 04 Apr 2016 22:08:50 -0400
+Message-ID: <yq1zit8bydp.fsf@sermon.lab.mkp.net>
 References: <1459746376-27983-1-git-send-email-shaun@tancheff.com>
- <1459746376-27983-4-git-send-email-shaun@tancheff.com> <x49pou5s6yg.fsf@segfault.boston.devel.redhat.com>
+	<1459746376-27983-4-git-send-email-shaun@tancheff.com>
+	<x49pou5s6yg.fsf@segfault.boston.devel.redhat.com>
+	<CAJVOszAK5w4qsrKcUot8rm9nZ65hXeUm5YomQU3fT-fARCGXjA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-ide-owner@vger.kernel.org>
-In-Reply-To: <x49pou5s6yg.fsf@segfault.boston.devel.redhat.com>
-Sender: linux-ide-owner@vger.kernel.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: Shaun Tancheff <shaun@tancheff.com>, linux-ide@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, Jens Axboe <axboe@fb.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAJVOszAK5w4qsrKcUot8rm9nZ65hXeUm5YomQU3fT-fARCGXjA@mail.gmail.com>
+	(Shaun Tancheff's message of "Mon, 4 Apr 2016 23:06:03 +0700")
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Shaun Tancheff <shaun.tancheff@seagate.com>
+Cc: Jens Axboe <axboe@fb.com>, linux-scsi@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-ide@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Shaun Tancheff <shaun@tancheff.com>
 List-Id: dm-devel.ids
 
-On Mon, Apr 4, 2016 at 10:56 PM, Jeff Moyer <jmoyer@redhat.com> wrote:
-> Shaun Tancheff <shaun@tancheff.com> writes:
->
->> In a few places a temporary value smaller than a cmd_flags
->> is used to test for bits and or build up a new cmd_flags.
->>
->> Change to use explicit u64 values where appropriate.
->
-> This is not a bug fix, so please fix your subject.
+>>>>> "Shaun" == Shaun Tancheff <shaun.tancheff@seagate.com> writes:
 
-Oh, okay. It became an issue in the next patch where some internal cmd_flags
-temporaries where stored in 32 bit values.
+Shaun> Oh, okay. It became an issue in the next patch where some
+Shaun> internal cmd_flags temporaries where stored in 32 bit values.
 
-I will fix patch/subject.
+Shaun> I will fix patch/subject.
 
-Thanks!
-
-> I'm not against cleaning up the mixing of 32 vs 64 bit variables, but if
-> you're going to go down that path, then you might as well fix the mixing
-> of signed vs unsigned use as well.  And now that I look at it,
-> bio->bi_rw is unsigned long whereas req->cmd_flags is u64.  That could
-> make for fun bugs in the future.  We should at least add a comment in
-> the rq_flag_bits enum to the effect of bio flags need to stay in the
-> bottom 32 bits.
->
-> Cheers,
-> Jeff
-
-
+There's a pending patch set from Mike Christie that cleans all this
+up. Please use that as baseline.
 
 -- 
-Shaun Tancheff
+Martin K. Petersen	Oracle Linux Engineering
