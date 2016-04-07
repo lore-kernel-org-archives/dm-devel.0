@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 12/18] kpartx: verify partition devices
-Date: Thu,  7 Apr 2016 18:20:06 -0500
-Message-ID: <1460071212-21018-13-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 15/18] multipath: check partitions unused
+	before removing
+Date: Thu,  7 Apr 2016 18:20:09 -0500
+Message-ID: <1460071212-21018-16-git-send-email-bmarzins@redhat.com>
 References: <1460071212-21018-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,233 +22,154 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-When kpartx is modifies devices (either by removing them, or
-reloading them), it doesn't first verify that the device really
-is a partition of the expected device.  If a dm device just happens
-to have the same name as a kpartx created device would, kpartx can
-either delete that device or remap it, causing all sorts of problems.
-
-This patch makes kpartx check the uuid to verify that the device it is
-modifying really is a partition device for the correct dm device.
+If kpartx partition devices are in-use, multipath will not be able to
+perform a non-deferred remove of the multipath device.  So, before
+starting the remove, multipath should verify that none of the partition
+devices are currently in-use.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/devmapper.c | 17 ++++++++++---
- kpartx/devmapper.h |  2 +-
- kpartx/kpartx.c    | 70 ++++++++++++++++++++++++++++++++++++++++++++++++++----
- 3 files changed, 81 insertions(+), 8 deletions(-)
+ libmultipath/devmapper.c | 46 ++++++++++++++++++++++++++++++++++++++--------
+ libmultipath/devmapper.h |  2 +-
+ 2 files changed, 39 insertions(+), 9 deletions(-)
 
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index 82be990..e006bc3 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -167,12 +167,16 @@ addout:
- }
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index cef8522..36c1a20 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -36,6 +36,10 @@
+ static int dm_cancel_remove_partmaps(const char * mapname);
+ #endif
  
- extern int
--dm_map_present (char * str)
-+dm_map_present (char * str, char **uuid)
++static int do_foreach_partmaps(const char * mapname,
++			       int (*partmap_func)(const char *, void *),
++			       void *data);
++
+ #ifndef LIBDM_API_COOKIE
+ static inline int dm_task_set_cookie(struct dm_task *dmt, uint32_t *c, int a)
  {
- 	int r = 0;
- 	struct dm_task *dmt;
-+	const char *uuidtmp;
- 	struct dm_info info;
- 
-+	if (uuid)
-+		*uuid = NULL;
-+
- 	if (!(dmt = dm_task_create(DM_DEVICE_INFO)))
- 		return 0;
- 
-@@ -187,8 +191,15 @@ dm_map_present (char * str)
- 	if (!dm_task_get_info(dmt, &info))
- 		goto out;
- 
--	if (info.exists)
--		r = 1;
-+	if (!info.exists)
-+		goto out;
-+
-+	r = 1;
-+	if (uuid) {
-+		uuidtmp = dm_task_get_uuid(dmt);
-+		if (uuidtmp && strlen(uuidtmp))
-+			*uuid = strdup(uuidtmp);
-+	}
- out:
- 	dm_task_destroy(dmt);
+@@ -735,6 +739,26 @@ out:
  	return r;
-diff --git a/kpartx/devmapper.h b/kpartx/devmapper.h
-index ac1d5d9..436efe1 100644
---- a/kpartx/devmapper.h
-+++ b/kpartx/devmapper.h
-@@ -13,7 +13,7 @@ int dm_prereq (char *, int, int, int);
- int dm_simplecmd (int, const char *, int, uint16_t);
- int dm_addmap (int, const char *, const char *, const char *, uint64_t,
- 	       int, const char *, int, mode_t, uid_t, gid_t);
--int dm_map_present (char *);
-+int dm_map_present (char *, char **);
- char * dm_mapname(int major, int minor);
- dev_t dm_get_first_dep(char *devname);
- char * dm_mapuuid(int major, int minor);
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index 8047698..e8c35d4 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -191,6 +191,21 @@ get_hotplug_device(void)
- 	return device;
  }
  
 +static int
-+check_uuid(char *uuid, char *part_uuid, char **err_msg) {
-+	char *map_uuid = strchr(part_uuid, '-');
-+	if (!map_uuid || strncmp(part_uuid, "part", 4) != 0) {
-+		*err_msg = "not a kpartx partition";
-+		return -1;
-+	}
-+	map_uuid++;
-+	if (strcmp(uuid, map_uuid) != 0) {
-+		*err_msg = "a partition of a different device";
-+		return -1;
++partmap_in_use(const char *name, void *data)
++{
++	int part_count, *ret_count = (int *)data;
++	int open_count = dm_get_opencount(name);
++
++	if (ret_count)
++		(*ret_count)++;
++	part_count = 0;
++	if (open_count) {
++		if (do_foreach_partmaps(name, partmap_in_use, &part_count))
++			return 1;
++		if (open_count != part_count) {
++			condlog(2, "%s: map in use", name);
++			return 1;
++		}
 +	}
 +	return 0;
 +}
 +
+ extern int
+ _dm_flush_map (const char * mapname, int need_sync, int deferred_remove)
+ {
+@@ -743,6 +767,11 @@ _dm_flush_map (const char * mapname, int need_sync, int deferred_remove)
+ 	if (!dm_is_mpath(mapname))
+ 		return 0; /* nothing to do */
+ 
++	/* If you aren't doing a deferred remove, make sure that no
++	 * devices are in use */
++	if (!do_deferred(deferred_remove) && partmap_in_use(mapname, NULL))
++			return 1;
++
+ 	if (dm_remove_partmaps(mapname, need_sync, deferred_remove))
+ 		return 1;
+ 
+@@ -851,7 +880,7 @@ dm_flush_maps (void)
+ }
+ 
  int
- main(int argc, char **argv){
- 	int i, j, m, n, op, off, arg, c, d, ro=0;
-@@ -432,6 +447,8 @@ main(int argc, char **argv){
+-dm_message(char * mapname, char * message)
++dm_message(const char * mapname, char * message)
+ {
+ 	int r = 1;
+ 	struct dm_task *dmt;
+@@ -1092,7 +1121,8 @@ bad:
+ }
  
- 		case DELETE:
- 			for (j = MAXSLICES-1; j >= 0; j--) {
-+				char *part_uuid, *reason;
-+
- 				if (safe_sprintf(partname, "%s%s%d",
- 					     mapname, delim, j+1)) {
- 					fprintf(stderr, "partname too small\n");
-@@ -439,9 +456,18 @@ main(int argc, char **argv){
- 				}
- 				strip_slash(partname);
+ static int
+-do_foreach_partmaps (const char * mapname, int (*partmap_func)(char *, void *),
++do_foreach_partmaps (const char * mapname,
++		     int (*partmap_func)(const char *, void *),
+ 		     void *data)
+ {
+ 	struct dm_task *dmt;
+@@ -1165,7 +1195,7 @@ struct remove_data {
+ };
  
--				if (!dm_map_present(partname))
-+				if (!dm_map_present(partname, &part_uuid))
- 					continue;
+ static int
+-remove_partmap(char *name, void *data)
++remove_partmap(const char *name, void *data)
+ {
+ 	struct remove_data *rd = (struct remove_data *)data;
  
-+				if (part_uuid && uuid) {
-+					if (check_uuid(uuid, part_uuid, &reason) != 0) {
-+						fprintf(stderr, "%s is %s. Not removing\n", partname, reason);
-+						free(part_uuid);
-+						continue;
-+					}
-+					free(part_uuid);
-+				}
-+
- 				if (!dm_simplecmd(DM_DEVICE_REMOVE, partname,
- 						  0, 0)) {
- 					r++;
-@@ -466,6 +492,8 @@ main(int argc, char **argv){
- 		case UPDATE:
- 			/* ADD and UPDATE share the same code that adds new partitions. */
- 			for (j = 0, c = 0; j < n; j++) {
-+				char *part_uuid, *reason;
-+
- 				if (slices[j].size == 0)
- 					continue;
+@@ -1192,7 +1222,7 @@ dm_remove_partmaps (const char * mapname, int need_sync, int deferred_remove)
+ #ifdef LIBDM_API_DEFERRED
  
-@@ -488,9 +516,19 @@ main(int argc, char **argv){
- 					exit(1);
- 				}
+ static int
+-cancel_remove_partmap (char *name, void *unused)
++cancel_remove_partmap (const char *name, void *unused)
+ {
+ 	if (dm_get_opencount(name))
+ 		dm_cancel_remove_partmaps(name);
+@@ -1312,13 +1342,13 @@ out:
+ }
  
--				op = (dm_map_present(partname) ?
-+				op = (dm_map_present(partname, &part_uuid) ?
- 					DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
+ struct rename_data {
+-	char *old;
++	const char *old;
+ 	char *new;
+ 	char *delim;
+ };
  
-+				if (part_uuid && uuid) {
-+					if (check_uuid(uuid, part_uuid, &reason) != 0) {
-+						fprintf(stderr, "%s is already in use, and %s\n", partname, reason);
-+						r++;
-+						free(part_uuid);
-+						continue;
-+					}
-+					free(part_uuid);
-+				}
-+
- 				if (!dm_addmap(op, partname, DM_TARGET, params,
- 					       slices[j].size, ro, uuid, j+1,
- 					       buf.st_mode & 0777, buf.st_uid,
-@@ -498,6 +536,7 @@ main(int argc, char **argv){
- 					fprintf(stderr, "create/reload failed on %s\n",
- 						partname);
- 					r++;
-+					continue;
- 				}
- 				if (op == DM_DEVICE_RELOAD &&
- 				    !dm_simplecmd(DM_DEVICE_RESUME, partname,
-@@ -505,6 +544,7 @@ main(int argc, char **argv){
- 					fprintf(stderr, "resume failed on %s\n",
- 						partname);
- 					r++;
-+					continue;
- 				}
+ static int
+-rename_partmap (char *name, void *data)
++rename_partmap (const char *name, void *data)
+ {
+ 	char buff[PARAMS_SIZE];
+ 	int offset;
+@@ -1335,7 +1365,7 @@ rename_partmap (char *name, void *data)
+ }
  
- 				dm_devn(partname, &slices[j].major,
-@@ -520,6 +560,7 @@ main(int argc, char **argv){
- 			d = c;
- 			while (c) {
- 				for (j = 0; j < n; j++) {
-+					char *part_uuid, *reason;
- 					int k = slices[j].container - 1;
+ int
+-dm_rename_partmaps (char * old, char * new)
++dm_rename_partmaps (const char * old, char * new)
+ {
+ 	struct rename_data rd;
  
- 					if (slices[j].size == 0)
-@@ -552,9 +593,19 @@ main(int argc, char **argv){
- 						exit(1);
- 					}
+@@ -1352,7 +1382,7 @@ dm_rename_partmaps (char * old, char * new)
+ }
  
--					op = (dm_map_present(partname) ?
-+					op = (dm_map_present(partname,
-+							     &part_uuid) ?
- 					      DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
- 
-+					if (part_uuid && uuid) {
-+						if (check_uuid(uuid, part_uuid, &reason) != 0) {
-+							fprintf(stderr, "%s is already in use, and %s\n", partname, reason);
-+							free(part_uuid);
-+							continue;
-+						}
-+						free(part_uuid);
-+					}
-+
- 					dm_addmap(op, partname, DM_TARGET, params,
- 						  slices[j].size, ro, uuid, j+1,
- 						  buf.st_mode & 0777,
-@@ -584,6 +635,7 @@ main(int argc, char **argv){
- 			}
- 
- 			for (j = MAXSLICES-1; j >= 0; j--) {
-+				char *part_uuid, *reason;
- 				if (safe_sprintf(partname, "%s%s%d",
- 					     mapname, delim, j+1)) {
- 					fprintf(stderr, "partname too small\n");
-@@ -591,9 +643,19 @@ main(int argc, char **argv){
- 				}
- 				strip_slash(partname);
- 
--				if (slices[j].size || !dm_map_present(partname))
-+				if (slices[j].size ||
-+				    !dm_map_present(partname, &part_uuid))
- 					continue;
- 
-+				if (part_uuid && uuid) {
-+					if (check_uuid(uuid, part_uuid, &reason) != 0) {
-+						fprintf(stderr, "%s is %s. Not removing\n", partname, reason);
-+						free(part_uuid);
-+						continue;
-+					}
-+					free(part_uuid);
-+				}
-+
- 				if (!dm_simplecmd(DM_DEVICE_REMOVE,
- 						  partname, 1, 0)) {
- 					r++;
+ int
+-dm_rename (char * old, char * new)
++dm_rename (const char * old, char * new)
+ {
+ 	int r = 0;
+ 	struct dm_task *dmt;
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index 1752045..0d27723 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -46,7 +46,7 @@ int dm_remove_partmaps (const char * mapname, int need_sync,
+ 			int deferred_remove);
+ int dm_get_uuid(char *name, char *uuid);
+ int dm_get_info (char * mapname, struct dm_info ** dmi);
+-int dm_rename (char * old, char * new);
++int dm_rename (const char * old, char * new);
+ int dm_reassign(const char * mapname);
+ int dm_reassign_table(const char *name, char *old, char *new);
+ int dm_setgeometry(struct multipath *mpp);
 -- 
 1.8.3.1
