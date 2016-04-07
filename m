@@ -1,69 +1,49 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [RFC PATCH 4/4] dm mpath: eliminate use of spinlock in IO
- fast-paths
-Date: Thu, 7 Apr 2016 17:03:50 +0200
-Message-ID: <570676D6.6090401@suse.de>
-References: <1459454666-76428-1-git-send-email-snitzer@redhat.com>
- <1459454666-76428-5-git-send-email-snitzer@redhat.com>
+From: Vasiliy Tolstov <v.tolstov@selfip.ru>
+Subject: Re: dm-cache performance behaviour
+Date: Thu, 7 Apr 2016 18:10:16 +0300
+Message-ID: <CACaajQu6H96ZGpXSWtBOzaDaE3zDPOacJjcQw7GFrfMw96-Tiw@mail.gmail.com>
+References: <20160405071253.GB27444@suselix.suse.de> <20160405133109.GF27444@suselix.suse.de>
+ <alpine.LRH.2.11.1604070115070.12121@mail.ewheeler.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1459454666-76428-5-git-send-email-snitzer@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: jmoyer@redhat.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, j-nomura@ce.jp.nec.com, sagig@dev.mellanox.co.il
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.11.1604070115070.12121@mail.ewheeler.net>
+Sender: linux-bcache-owner@vger.kernel.org
+To: Eric Wheeler <bcache@lists.ewheeler.net>
+Cc: Andreas Herrmann <aherrmann@suse.com>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, linux-bcache@vger.kernel.org, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 03/31/2016 10:04 PM, Mike Snitzer wrote:
-> The primary motivation of this commit is to improve the scalability o=
-f
-> DM multipath on large NUMA systems where m->lock spinlock contention =
-has
-> been proven to be a serious bottleneck on really fast storage.
->=20
-> The ability to atomically read a pointer, using lockless_dereference(=
-),
-> is leveraged in this commit.  But all pointer writes are still protec=
-ted
-> by the m->lock spinlock (which is fine since these all now occur in t=
-he
-> slow-path).
->=20
-> The following functions no longer require the m->lock spinlock in the=
-ir
-> fast-path: multipath_busy(), __multipath_map(), and do_end_io()
->=20
-> And choose_pgpath() is modified to _not_ update m->current_pgpath unl=
-ess
-> it also switches the path-group.  This is done to avoid needing to ta=
-ke
-> the m->lock everytime __multipath_map() calls choose_pgpath().
-> But m->current_pgpath will be reset if it is failed via fail_path().
->=20
-> Suggested-by: Jeff Moyer <jmoyer@redhat.com>
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  drivers/md/dm-mpath.c | 170 +++++++++++++++++++++++++++-------------=
-----------
->  1 file changed, 93 insertions(+), 77 deletions(-)
->=20
-I really like this :-)
+2016-04-07 4:24 GMT+03:00 Eric Wheeler <bcache@lists.ewheeler.net>:
+> You might consider tweaking {read,write}_promote_adjustment with
+>         dmsetup message /dev/mapper/foo 0 read_promote_adjustment X
+> or at initial table creation time to shorten cache heat time.
+>
+> You could use this with LVM tools:
+>   lvchange --cachesettings 'read_promote_adjustment = 1' vg/cachedvol
+>
+> See descriptions here:
+>
+> https://www.kernel.org/doc/Documentation/device-mapper/cache-policies.txt
+>
+> When we used dm-cache I would set the promote values to 1 (or 0?) to heat
+> up the cache and then increment them after the cache filled.
+>
+>> bcache:
+>> - writeback cache mode
+>> - LRU cache policy
+>
+> bcache defaults to 512k bucket size iirc, you'll want to specify -b 256k
+> on your make-bcache call for an apples-to-apples comparison.  FWIW, I like
+> the 64k size best for our workload.
+>
+> --
+> Eric Wheeler
 
-Reviewed-by: Hannes Reinecke <hare@suse.com>
-Tested-by: Hannes Reinecke <hare@suse.com>
 
-Cheers,
+Does somebody can test bcache vs dm-writeboost vs dm-cache on latest
+stable kernels ?
 
-Hannes
---=20
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+-- 
+Vasiliy Tolstov,
+e-mail: v.tolstov@selfip.ru
