@@ -1,48 +1,68 @@
-From: Ming Lei <tom.leiming@gmail.com>
-Subject: Re: [PATCH 10/12] Limit bio_endio recursion
-Date: Thu, 7 Apr 2016 14:03:23 +0800
-Message-ID: <CACVXFVNVo-ya9T3rzSiiWtO1r87D-yW1DmZBt2Ryv1U4TPOi8g@mail.gmail.com>
-References: <1459746376-27983-1-git-send-email-shaun@tancheff.com>
-	<1459746376-27983-11-git-send-email-shaun@tancheff.com>
-	<CACVXFVNo6+F_OPyiTE882UrECz7BG_wKGj=teukibuiMdxmLHw@mail.gmail.com>
-	<20160407134443.552c2556@tom-T450>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [RFC PATCH 0/4] dm mpath: vastly improve blk-mq IO performance
+Date: Thu, 7 Apr 2016 16:58:31 +0200
+Message-ID: <57067597.4080103@suse.de>
+References: <1459454666-76428-1-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-ide-owner@vger.kernel.org>
-In-Reply-To: <20160407134443.552c2556@tom-T450>
-Sender: linux-ide-owner@vger.kernel.org
-To: Ming Lei <tom.leiming@gmail.com>
-Cc: Shaun Tancheff <shaun@tancheff.com>, "linux-ide@vger.kernel.org" <linux-ide@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, linux-block@vger.kernel.org, Linux SCSI List <linux-scsi@vger.kernel.org>, Jens Axboe <axboe@fb.com>, Shaun Tancheff <shaun.tancheff@seagate.com>, Christoph Hellwig <hch@infradead.org>, Mikulas Patocka <mpatocka@redhat.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1459454666-76428-1-git-send-email-snitzer@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: jmoyer@redhat.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, j-nomura@ce.jp.nec.com, sagig@dev.mellanox.co.il
 List-Id: dm-devel.ids
 
-On Thu, Apr 7, 2016 at 1:44 PM, Ming Lei <tom.leiming@gmail.com> wrote:
-> On Thu, 7 Apr 2016 11:54:49 +0800
-> Ming Lei <tom.leiming@gmail.com> wrote:
->
+On 03/31/2016 10:04 PM, Mike Snitzer wrote:
+> I developed these changes some weeks ago but have since focused on
+> regression and performance testing on larger NUMA systems.
+>=20
+> For regression testing I've been using mptest:
+> https://github.com/snitm/mptest
+>=20
+> For performance testing I've been using a null_blk device (with
+> various configuration permutations, e.g. pinning memory to a
+> particular NUMA node, and varied number of submit_queues).
+>=20
+> By eliminating multipath's heavy use of the m->lock spinlock in the
+> fast IO paths serious performance improvements are realized.
+>=20
+[ .. ]
+> Jeff Moyer has been helping review these changes (and has graciously
+> labored over _really_ understanding all the concurrency at play in DM
+> mpath) -- his review isn't yet complete but I wanted to get this
+> patchset out now to raise awareness about how I think DM multipath
+> will be changing (for inclussion during the Linux 4.7 merge window).
+>=20
+> Mike Snitzer (4):
+>   dm mpath: switch to using bitops for state flags
+>   dm mpath: use atomic_t for counting members of 'struct multipath'
+>   dm mpath: move trigger_event member to the end of 'struct multipath=
+'
+>   dm mpath: eliminate use of spinlock in IO fast-paths
+>=20
+>  drivers/md/dm-mpath.c | 351 ++++++++++++++++++++++++++++------------=
+----------
+>  1 file changed, 195 insertions(+), 156 deletions(-)
+>=20
+=46inally got around to test this.
+The performance is comparable to the previous (RCU-ified) patchset,
+however, this one is the far superious approach.
+In fact, the first two are pretty much identical to what I've
+already had, but I've shirked at modifying the path selectors.
+So well done here.
 
-> @@ -1737,6 +1739,46 @@ static inline bool bio_remaining_done(struct bio *bio)
->         return false;
->  }
->
-> +/* disable local irq when manipulating the percpu bio_list */
-> +static void unwind_bio_endio(struct bio *bio)
-> +{
-> +       struct bio_list bl_in_stack;
-> +       struct bio_list *bl;
-> +       unsigned long flags;
-> +       bool clear_list = false;
-> +
-> +       local_irq_save(flags);
-> +
-> +       bl = this_cpu_read(bio_end_list);
-> +       if (!bl) {
-> +               bl = &bl_in_stack;
-> +               bio_list_init(bl);
-> +               clear_list = true;
+Cheers,
 
-oops, forget to write the pointer into the percpu bio_list pointer.
-But it is still working after I fix that by the following line:
-
-             this_cpu_write(bio_end_list, bl);
-
-thanks,
+Hannes
+--=20
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
