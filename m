@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 08/18] multipathd: fail if pidfile can't be
-	created
-Date: Thu,  7 Apr 2016 18:20:02 -0500
-Message-ID: <1460071212-21018-9-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 03/18] Fix issues with user_friendly_names
+	initramfs bindings
+Date: Thu,  7 Apr 2016 18:19:57 -0500
+Message-ID: <1460071212-21018-4-git-send-email-bmarzins@redhat.com>
 References: <1460071212-21018-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,70 +22,71 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Right now, multipathd ignores failures from pidfile_create.  This means
-that multiple multipathd processes can be running at the same time. If
-someone runs "multipathd" and doesn't add a command after it, a new
-process will be created, even if one is already running. To avoid this,
-multipathd needs to actually fail if the pidfile can't be created or
-locked. Since we only really need the pidfile to keep from launching
-multiple processes, we can create in earlier in startup. This patch
-moves pidfile_create to as soon as we can be sure that we can log an
-error message, and fails multipathd if the create fails.
+Multipath has an issue with user_friendly_names set in the initramfs.
+If the bindings are in the initramfs bindings file, it will create them,
+and it may use bindings that are different than the ones in the regular
+file system.  Once multipathd starts up in the regular file system, it
+will try to register the existing bindings, but that may (and in many
+cases, is likely to) fail. If it can't reanme it, will pick a new
+binding. Since when multipathd starts discovering the existing devices,
+it obviously doesn't know all of the existing devices yet, it may very
+well pick a binding that's already in use by a device that it hasn't
+discovered yet. In this case multipath will be unable to rename the
+device to the new binding. Unfortunately, if it fails the rename, it
+never resets the alias of the device stored in the mpvec to current
+alias of the actual dm device. So multipath will have devices in the
+mpvec where the alias and the wwid don't match the actual dm devices
+that exist.  This can cause all sorts of problems.
+
+This patch does two things to deal with this.  First, it makes sure that
+if the rename fails, the device will reset its alias to the one that it
+currently has. Second, it fixes the -B option to actually work
+correctly, so that it can be started that way in the initramfs.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
+ libmultipath/config.c    | 1 -
+ libmultipath/configure.c | 3 +++
+ multipathd/main.c        | 1 +
+ 3 files changed, 4 insertions(+), 1 deletion(-)
 
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index cfcc685..005252b 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -601,7 +601,6 @@ load_config (char * file, struct udev *udev)
+ 	get_sys_max_fds(&conf->max_fds);
+ 	conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
+ 	conf->wwids_file = set_default(DEFAULT_WWIDS_FILE);
+-	conf->bindings_read_only = 0;
+ 	conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
+ 	conf->features = set_default(DEFAULT_FEATURES);
+ 	conf->flush_on_last_del = 0;
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 24ad948..3559c01 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -421,6 +421,9 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
+ 		condlog(2, "%s: unable to rename %s to %s (%s is used by %s)",
+ 			mpp->wwid, cmpp->alias, mpp->alias,
+ 			mpp->alias, cmpp_by_name->wwid);
++		/* reset alias to existing alias */
++		FREE(mpp->alias);
++		mpp->alias = STRDUP(cmpp->alias);
+ 		mpp->action = ACT_NOTHING;
+ 		return;
+ 	}
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 8f4fb58..06876b9 100644
+index 38a2b42..687c697 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -1768,7 +1768,7 @@ child (void * param)
- #ifdef USE_SYSTEMD
- 	unsigned long checkint;
- #endif
--	int rc, pid_rc;
-+	int rc;
- 	char *envp;
- 
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
-@@ -1786,6 +1786,12 @@ child (void * param)
- 		log_thread_start(&log_attr);
- 		pthread_attr_destroy(&log_attr);
- 	}
-+	if (pidfile_create(DEFAULT_PIDFILE, daemon_pid)) {
-+		condlog(1, "failed to create pidfile");
-+		if (logsink == 1)
-+			log_thread_stop();
-+		exit(1);
-+	}
- 
- 	running_state = DAEMON_START;
- 
-@@ -1905,10 +1911,6 @@ child (void * param)
- 	}
- 	pthread_attr_destroy(&misc_attr);
- 
--	/* Startup complete, create logfile */
--	pid_rc = pidfile_create(DEFAULT_PIDFILE, daemon_pid);
--	/* Ignore errors, we can live without */
--
- 	running_state = DAEMON_RUNNING;
- #ifdef USE_SYSTEMD
- 	sd_notify(0, "READY=1\nSTATUS=running");
-@@ -1959,10 +1961,8 @@ child (void * param)
- 	dm_lib_exit();
- 
- 	/* We're done here */
--	if (!pid_rc) {
--		condlog(3, "unlink pidfile");
--		unlink(DEFAULT_PIDFILE);
--	}
-+	condlog(3, "unlink pidfile");
-+	unlink(DEFAULT_PIDFILE);
- 
- 	condlog(2, "--------shut down-------");
- 
+@@ -1570,6 +1570,7 @@ reconfigure (struct vectors * vecs)
+ 	if (!load_config(DEFAULT_CONFIGFILE, udev)) {
+ 		dm_drv_version(conf->version, TGT_MPATH);
+ 		conf->verbosity = old->verbosity;
++		conf->bindings_read_only = old->bindings_read_only;
+ 		conf->daemon = 1;
+ 		configure(vecs, 1);
+ 		free_config(old);
 -- 
 1.8.3.1
