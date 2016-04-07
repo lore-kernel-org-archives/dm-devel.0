@@ -1,59 +1,106 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH 0/4] dm mpath: vastly improve blk-mq IO performance
-Date: Thu, 7 Apr 2016 11:34:48 -0400
-Message-ID: <20160407153448.GA30510@redhat.com>
-References: <1459454666-76428-1-git-send-email-snitzer@redhat.com>
- <57067597.4080103@suse.de>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH v2 00/18] Multipath patch sync
+Date: Thu,  7 Apr 2016 18:19:54 -0500
+Message-ID: <1460071212-21018-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <57067597.4080103@suse.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, jmoyer@redhat.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, j-nomura@ce.jp.nec.com, sagig@dev.mellanox.co.il
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 07 2016 at 10:58am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
+This is a resend of my previous batch of patches.  The only one that has
+changed (besides in offsets) is patch 10 "multipathd: delay reloads during
+creation". I renamed the config option "missing_uev_wait_timeout". When
+it triggers, multipath will simply print a warning message and re-enable
+reloads as if it had received the uevent.
 
-> On 03/31/2016 10:04 PM, Mike Snitzer wrote:
-> > I developed these changes some weeks ago but have since focused on
-> > regression and performance testing on larger NUMA systems.
-> > 
-> > For regression testing I've been using mptest:
-> > https://github.com/snitm/mptest
-> > 
-> > For performance testing I've been using a null_blk device (with
-> > various configuration permutations, e.g. pinning memory to a
-> > particular NUMA node, and varied number of submit_queues).
-> > 
-> > By eliminating multipath's heavy use of the m->lock spinlock in the
-> > fast IO paths serious performance improvements are realized.
-> > 
-> [ .. ]
-> > Jeff Moyer has been helping review these changes (and has graciously
-> > labored over _really_ understanding all the concurrency at play in DM
-> > mpath) -- his review isn't yet complete but I wanted to get this
-> > patchset out now to raise awareness about how I think DM multipath
-> > will be changing (for inclussion during the Linux 4.7 merge window).
-> > 
-> > Mike Snitzer (4):
-> >   dm mpath: switch to using bitops for state flags
-> >   dm mpath: use atomic_t for counting members of 'struct multipath'
-> >   dm mpath: move trigger_event member to the end of 'struct multipath'
-> >   dm mpath: eliminate use of spinlock in IO fast-paths
-> > 
-> >  drivers/md/dm-mpath.c | 351 ++++++++++++++++++++++++++++----------------------
-> >  1 file changed, 195 insertions(+), 156 deletions(-)
-> > 
-> Finally got around to test this.
-> The performance is comparable to the previous (RCU-ified) patchset,
-> however, this one is the far superious approach.
-> In fact, the first two are pretty much identical to what I've
-> already had, but I've shirked at modifying the path selectors.
-> So well done here.
+I also added a new patch that adds a new keyword to the weightedpath
+prioritizer, so that you can refer to paths in a persistent way.
 
-Awesome, thanks for reviewing and testing, very much appreciated.
+Benjamin Marzinski (18):
+  multipathd: use /run instead of /var/run
+  retrigger uevents to try and get the uid through udev
+  Fix issues with user_friendly_names initramfs bindings
+  Add libmpathcmd library and use it internally
+  libmultipath: add ignore_new_boot_devs option
+  libmultipath: fix PAD and PRINT macros
+  libmultipath: Cut down on alua prioritizer ioctls
+  multipathd: fail if pidfile can't be created
+  libmultipath: check correct function for define
+  multipathd: delay reloads during creation
+  multipath: Fix minor text issues
+  kpartx: verify partition devices
+  multipath: add exclusive_pref_bit for alua prio
+  multipathd: print "fail" when remove fails
+  multipath: check partitions unused before removing
+  multipathd.service: remove blk-availability Requires
+  multipathd: use 64-bit int for command key
+  multipath: add wwn keyword to weightedpath prio
 
-I'll get this set staged in linux-next for 4.7 shortly.
+ Makefile                                 |   1 +
+ Makefile.inc                             |  12 +-
+ kpartx/devmapper.c                       |  17 ++-
+ kpartx/devmapper.h                       |   2 +-
+ kpartx/kpartx.c                          |  70 ++++++++++-
+ libmpathcmd/Makefile                     |  30 +++++
+ libmpathcmd/mpath_cmd.c                  | 178 +++++++++++++++++++++++++++
+ libmpathcmd/mpath_cmd.h                  | 125 +++++++++++++++++++
+ libmpathpersist/Makefile                 |   9 +-
+ libmpathpersist/mpath_persist.c          |   2 +-
+ libmpathpersist/mpath_updatepr.c         |  14 +--
+ libmultipath/Makefile                    |   5 +-
+ libmultipath/config.c                    |   7 +-
+ libmultipath/config.h                    |   5 +
+ libmultipath/configure.c                 |  20 +--
+ libmultipath/defaults.h                  |   6 +-
+ libmultipath/devmapper.c                 |  46 +++++--
+ libmultipath/devmapper.h                 |   2 +-
+ libmultipath/dict.c                      |  20 ++-
+ libmultipath/discovery.c                 |  28 +++--
+ libmultipath/discovery.h                 |   2 +
+ libmultipath/print.c                     |  25 ++--
+ libmultipath/print.h                     |   4 +
+ libmultipath/prioritizers/alua.c         |  44 ++++---
+ libmultipath/prioritizers/alua_rtpg.c    |  69 +++++++----
+ libmultipath/prioritizers/alua_rtpg.h    |   2 +-
+ libmultipath/prioritizers/weightedpath.c |  37 ++++++
+ libmultipath/prioritizers/weightedpath.h |   1 +
+ libmultipath/propsel.c                   |   2 +-
+ libmultipath/structs.h                   |  10 ++
+ libmultipath/uxsock.c                    |  73 +++--------
+ libmultipath/uxsock.h                    |   5 +-
+ libmultipath/wwids.c                     |  19 +--
+ mpathpersist/Makefile                    |   2 +-
+ multipath.conf.defaults                  |   1 +
+ multipath/Makefile                       |   5 +-
+ multipath/main.c                         |   6 +-
+ multipath/multipath.conf.5               |  36 +++++-
+ multipathd/Makefile                      |   5 +-
+ multipathd/cli.c                         |  22 ++--
+ multipathd/cli.h                         |  20 +--
+ multipathd/cli_handlers.c                |  73 ++++++++---
+ multipathd/main.c                        | 205 ++++++++++++++++++++++++++-----
+ multipathd/main.h                        |   1 +
+ multipathd/multipathd.8                  |   4 +
+ multipathd/multipathd.init.suse          |   2 +-
+ multipathd/multipathd.service            |   3 +-
+ multipathd/uxclnt.c                      |  13 +-
+ multipathd/uxlsnr.c                      |  11 +-
+ 49 files changed, 1031 insertions(+), 270 deletions(-)
+ create mode 100644 libmpathcmd/Makefile
+ create mode 100644 libmpathcmd/mpath_cmd.c
+ create mode 100644 libmpathcmd/mpath_cmd.h
+
+-- 
+1.8.3.1
