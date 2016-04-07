@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 03/18] Fix issues with user_friendly_names
-	initramfs bindings
-Date: Thu,  7 Apr 2016 18:19:57 -0500
-Message-ID: <1460071212-21018-4-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 01/18] multipathd: use /run instead of /var/run
+Date: Thu,  7 Apr 2016 18:19:55 -0500
+Message-ID: <1460071212-21018-2-git-send-email-bmarzins@redhat.com>
 References: <1460071212-21018-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,71 +21,76 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Multipath has an issue with user_friendly_names set in the initramfs.
-If the bindings are in the initramfs bindings file, it will create them,
-and it may use bindings that are different than the ones in the regular
-file system.  Once multipathd starts up in the regular file system, it
-will try to register the existing bindings, but that may (and in many
-cases, is likely to) fail. If it can't reanme it, will pick a new
-binding. Since when multipathd starts discovering the existing devices,
-it obviously doesn't know all of the existing devices yet, it may very
-well pick a binding that's already in use by a device that it hasn't
-discovered yet. In this case multipath will be unable to rename the
-device to the new binding. Unfortunately, if it fails the rename, it
-never resets the alias of the device stored in the mpvec to current
-alias of the actual dm device. So multipath will have devices in the
-mpvec where the alias and the wwid don't match the actual dm devices
-that exist.  This can cause all sorts of problems.
+/var/run is now usually a symlink to /run.  If /var is on a separate
+filesytem, when multipathd starts up, it might end up writing to
+/var/run before the /var filesytem is mounted and thus not have its
+pidfile accessible at /var/run afterwards.  On most distrubutions /run
+is now a tmpfs and should always be available before multipathd is
+started, so multipath should just write there directly, instead of
+through the symlink.
 
-This patch does two things to deal with this.  First, it makes sure that
-if the rename fails, the device will reset its alias to the one that it
-currently has. Second, it fixes the -B option to actually work
-correctly, so that it can be started that way in the initramfs.
+If /var/run is not a symlink, continue using it.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/config.c    | 1 -
- libmultipath/configure.c | 3 +++
- multipathd/main.c        | 1 +
- 3 files changed, 4 insertions(+), 1 deletion(-)
+ Makefile.inc                    | 10 +++++++++-
+ libmultipath/defaults.h         |  2 +-
+ multipathd/multipathd.init.suse |  2 +-
+ 3 files changed, 11 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index cfcc685..005252b 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -601,7 +601,6 @@ load_config (char * file, struct udev *udev)
- 	get_sys_max_fds(&conf->max_fds);
- 	conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
- 	conf->wwids_file = set_default(DEFAULT_WWIDS_FILE);
--	conf->bindings_read_only = 0;
- 	conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
- 	conf->features = set_default(DEFAULT_FEATURES);
- 	conf->flush_on_last_del = 0;
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 24ad948..3559c01 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -421,6 +421,9 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 		condlog(2, "%s: unable to rename %s to %s (%s is used by %s)",
- 			mpp->wwid, cmpp->alias, mpp->alias,
- 			mpp->alias, cmpp_by_name->wwid);
-+		/* reset alias to existing alias */
-+		FREE(mpp->alias);
-+		mpp->alias = STRDUP(cmpp->alias);
- 		mpp->action = ACT_NOTHING;
- 		return;
- 	}
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 38a2b42..687c697 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1570,6 +1570,7 @@ reconfigure (struct vectors * vecs)
- 	if (!load_config(DEFAULT_CONFIGFILE, udev)) {
- 		dm_drv_version(conf->version, TGT_MPATH);
- 		conf->verbosity = old->verbosity;
-+		conf->bindings_read_only = old->bindings_read_only;
- 		conf->daemon = 1;
- 		configure(vecs, 1);
- 		free_config(old);
+diff --git a/Makefile.inc b/Makefile.inc
+index c3ed73f..357dd33 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -21,6 +21,14 @@ ifndef LIB
+ 	endif
+ endif
+ 
++ifndef RUN
++	ifeq ($(shell test -L /var/run -o ! -d /var/run && echo 1),1)
++		RUN=run
++	else
++		RUN=var/run
++	endif
++endif
++
+ ifndef SYSTEMD
+ 	ifeq ($(shell systemctl --version > /dev/null 2>&1 && echo 1), 1)
+ 		SYSTEMD = $(shell systemctl --version 2> /dev/null |  sed -n 's/systemd \([0-9]*\)/\1/p')
+@@ -54,7 +62,7 @@ ifndef RPM_OPT_FLAGS
+ endif
+ 
+ OPTFLAGS     = $(RPM_OPT_FLAGS) -Wunused -Wstrict-prototypes
+-CFLAGS	     = $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\"
++CFLAGS	     = $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
+ SHARED_FLAGS = -shared
+ 
+ %.o:	%.c
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 8902f40..cf1d5be 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -26,7 +26,7 @@
+ #define MAX_CHECKINT(a)		(a << 2)
+ 
+ #define MAX_DEV_LOSS_TMO	0x7FFFFFFF
+-#define DEFAULT_PIDFILE		"/var/run/multipathd.pid"
++#define DEFAULT_PIDFILE		"/" RUN_DIR "/multipathd.pid"
+ #define DEFAULT_SOCKET		"/org/kernel/linux/storage/multipathd"
+ #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
+ #define DEFAULT_BINDINGS_FILE	"/etc/multipath/bindings"
+diff --git a/multipathd/multipathd.init.suse b/multipathd/multipathd.init.suse
+index d1319b1..ed699fa 100644
+--- a/multipathd/multipathd.init.suse
++++ b/multipathd/multipathd.init.suse
+@@ -17,7 +17,7 @@
+ 
+ PATH=/bin:/usr/bin:/sbin:/usr/sbin
+ DAEMON=/sbin/multipathd
+-PIDFILE=/var/run/multipathd.pid
++PIDFILE=/run/multipathd.pid
+ MPATH_INIT_TIMEOUT=10
+ ARGS=""
+ 
 -- 
 1.8.3.1
