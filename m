@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 11/18] multipath: Fix minor text issues
-Date: Thu,  7 Apr 2016 18:20:05 -0500
-Message-ID: <1460071212-21018-12-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 05/18] libmultipath: add ignore_new_boot_devs
+	option
+Date: Thu,  7 Apr 2016 18:19:59 -0500
+Message-ID: <1460071212-21018-6-git-send-email-bmarzins@redhat.com>
 References: <1460071212-21018-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,55 +22,149 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-The multipath.conf man page gave the incorrect default for
-queue_without_daemon. The multipath usage output listed the -p option
-twice. And multipath was misspelled in an mpathpersist error message.
-This patch fixes these issues.
+When multipath relies on the wwids file to determine whether a device is
+a multipath path (with "multipath -c"), it will fail the first time a
+new multipathable device is discovered, since the wwid clearly won't be
+in the wwids file.  This is usually fine.  Multipath will still set
+itself up on the device, and add the wwid to the wwids file. However,
+this causes a race, where multipath won't claim the path immediately,
+and something else may.  Later multipath will try, and possibly succeed
+at, setting itself up on that device.
+
+I've seen cases where this can cause problems during boot on and
+immediately after install, where multipath racing with LVM on an already
+labelled device can get the machine into a state where boot fails. This
+can be avoided if multipath simply doesn't set itself up on any devices
+that it didn't claim (with "multipath -c") in the initramfs.  It can
+still safely attempt to set itself up on these devices later in boot,
+after the regular filesystem has been set up.
+
+To allow this, this patch adds a new multipahtd commandline option, -n. When
+multipathd is run with this set, it will not create multipath devices if
+their wwid isn't already in the wwids file. This means that only devices
+that are claimed by "multipath -c" will be used by multipathd.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmpathpersist/mpath_persist.c | 2 +-
- multipath/main.c                | 1 -
- multipath/multipath.conf.5      | 2 +-
- 3 files changed, 2 insertions(+), 3 deletions(-)
+ libmultipath/config.h    |  1 +
+ libmultipath/configure.c |  3 +--
+ libmultipath/wwids.c     | 19 ++++++++++++-------
+ multipathd/main.c        |  9 ++++++---
+ multipathd/multipathd.8  |  4 ++++
+ 5 files changed, 24 insertions(+), 12 deletions(-)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 7a2249f..b23e116 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -852,7 +852,7 @@ int update_map_pr(struct multipath *mpp)
- 	if (!mpp->reservation_key)
- 	{
- 		/* Nothing to do. Assuming pr mgmt feature is disabled*/
--		condlog(3, "%s: reservation_key not set in multiapth.conf", mpp->alias);
-+		condlog(3, "%s: reservation_key not set in multipath.conf", mpp->alias);
- 		return MPATH_PR_SUCCESS;
- 	}
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 372eace..d6a1d4f 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -137,6 +137,7 @@ struct config {
+ 	int uxsock_timeout;
+ 	int retrigger_tries;
+ 	int retrigger_delay;
++	int ignore_new_devs;
+ 	unsigned int version[3];
  
-diff --git a/multipath/main.c b/multipath/main.c
-index decb590..d14a913 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -107,7 +107,6 @@ usage (char * progname)
- 		"  -r      force devmap reload\n" \
- 		"  -i      ignore wwids file\n" \
- 		"  -B      treat the bindings file as read only\n" \
--		"  -p      policy failover|multibus|group_by_serial|group_by_prio\n" \
- 		"  -b fil  bindings file location\n" \
- 		"  -w      remove a device from the wwids file\n" \
- 		"  -W      reset the wwids file include only the current devices\n" \
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 9752c67..31c0eb8 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -389,7 +389,7 @@ multipathd running, access to the paths cannot be restored, and the kernel
- cannot be told to stop queueing IO. Setting queue_without_daemon to
- .I no
- , avoids this problem. Default is
--.I yes
-+.I no
+ 	char * dev;
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 3c9badd..1ab3324 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -778,8 +778,7 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+ 			continue;
+ 
+ 		/* If find_multipaths was selected check if the path is valid */
+-		if (conf->find_multipaths && !refwwid &&
+-		    !should_multipath(pp1, pathvec)) {
++		if (!refwwid && !should_multipath(pp1, pathvec)) {
+ 			orphan_path(pp1, "only one path");
+ 			continue;
+ 		}
+diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+index f6f8ea8..567c93d 100644
+--- a/libmultipath/wwids.c
++++ b/libmultipath/wwids.c
+@@ -266,14 +266,19 @@ should_multipath(struct path *pp1, vector pathvec)
+ 	int i;
+ 	struct path *pp2;
+ 
++	if (!conf->find_multipaths && !conf->ignore_new_devs)
++		return 1;
++
+ 	condlog(4, "checking if %s should be multipathed", pp1->dev);
+-	vector_foreach_slot(pathvec, pp2, i) {
+-		if (pp1->dev == pp2->dev)
+-			continue;
+-		if (strncmp(pp1->wwid, pp2->wwid, WWID_SIZE) == 0) {
+-			condlog(3, "found multiple paths with wwid %s, "
+-				"multipathing %s", pp1->wwid, pp1->dev);
+-			return 1;
++	if (!conf->ignore_new_devs) {
++		vector_foreach_slot(pathvec, pp2, i) {
++			if (pp1->dev == pp2->dev)
++				continue;
++			if (strncmp(pp1->wwid, pp2->wwid, WWID_SIZE) == 0) {
++				condlog(3, "found multiple paths with wwid %s, "
++					"multipathing %s", pp1->wwid, pp1->dev);
++				return 1;
++			}
+ 		}
+ 	}
+ 	if (check_wwids_file(pp1->wwid, 0) < 0) {
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 21df7be..8f4fb58 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -518,8 +518,7 @@ rescan:
+ 		mpp->flush_on_last_del = FLUSH_UNDEF;
+ 		mpp->action = ACT_RELOAD;
+ 	} else {
+-		if (conf->find_multipaths &&
+-		    !should_multipath(pp, vecs->pathvec)) {
++		if (!should_multipath(pp, vecs->pathvec)) {
+ 			orphan_path(pp, "only one path");
+ 			return 0;
+ 		}
+@@ -1572,6 +1571,7 @@ reconfigure (struct vectors * vecs)
+ 		dm_drv_version(conf->version, TGT_MPATH);
+ 		conf->verbosity = old->verbosity;
+ 		conf->bindings_read_only = old->bindings_read_only;
++		conf->ignore_new_devs = old->ignore_new_devs;
+ 		conf->daemon = 1;
+ 		configure(vecs, 1);
+ 		free_config(old);
+@@ -2076,7 +2076,7 @@ main (int argc, char *argv[])
+ 	if (!conf)
+ 		exit(1);
+ 
+-	while ((arg = getopt(argc, argv, ":dsv:k::B")) != EOF ) {
++	while ((arg = getopt(argc, argv, ":dsv:k::Bn")) != EOF ) {
+ 	switch(arg) {
+ 		case 'd':
+ 			foreground = 1;
+@@ -2102,6 +2102,9 @@ main (int argc, char *argv[])
+ 		case 'B':
+ 			conf->bindings_read_only = 1;
+ 			break;
++		case 'n':
++			conf->ignore_new_devs = 1;
++			break;
+ 		default:
+ 			;
+ 		}
+diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
+index 7fe6597..77f6e72 100644
+--- a/multipathd/multipathd.8
++++ b/multipathd/multipathd.8
+@@ -35,6 +35,10 @@ will use its WWID as its alias.
  .TP
- .B bindings_file
- The full pathname of the binding file to be used when the user_friendly_names option is set. Defaults to
+ .B -k 
+ multipathd will enter interactive mode. From this mode, the available commands can be viewed by entering "help". When you are finished entering commands, press CTRL-D to quit.
++.TP
++.B -n
++ignore new devices. Multipathd will not create a multipath device unless the
++wwid for the device is already listed in the wwids file.
+ 
+ .SH COMMANDS
+ .TP
 -- 
 1.8.3.1
