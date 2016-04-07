@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 01/18] multipathd: use /run instead of /var/run
-Date: Thu,  7 Apr 2016 18:19:55 -0500
-Message-ID: <1460071212-21018-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 09/18] libmultipath: check correct function
+	for define
+Date: Thu,  7 Apr 2016 18:20:03 -0500
+Message-ID: <1460071212-21018-10-git-send-email-bmarzins@redhat.com>
 References: <1460071212-21018-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,76 +22,30 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-/var/run is now usually a symlink to /run.  If /var is on a separate
-filesytem, when multipathd starts up, it might end up writing to
-/var/run before the /var filesytem is mounted and thus not have its
-pidfile accessible at /var/run afterwards.  On most distrubutions /run
-is now a tmpfs and should always be available before multipathd is
-started, so multipath should just write there directly, instead of
-through the symlink.
-
-If /var/run is not a symlink, continue using it.
+multipath was setting LIBUDEV_API_RECVBUF in the makefile if
+udev_monitor_set_resolve_buffer_size existed. However the correct
+fuction name (and the one used in the code) is
+udev_monitor_set_receive_buffer_size. As a result, multipath was never
+setting the receive buffer size. This patch simply fixes the Makefile
+define.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- Makefile.inc                    | 10 +++++++++-
- libmultipath/defaults.h         |  2 +-
- multipathd/multipathd.init.suse |  2 +-
- 3 files changed, 11 insertions(+), 3 deletions(-)
+ libmultipath/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index c3ed73f..357dd33 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -21,6 +21,14 @@ ifndef LIB
- 	endif
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index 11750c2..1ee968e 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -37,7 +37,7 @@ ifneq ($(strip $(LIBDM_API_COOKIE)),0)
+ 	CFLAGS += -DLIBDM_API_COOKIE
  endif
  
-+ifndef RUN
-+	ifeq ($(shell test -L /var/run -o ! -d /var/run && echo 1),1)
-+		RUN=run
-+	else
-+		RUN=var/run
-+	endif
-+endif
-+
- ifndef SYSTEMD
- 	ifeq ($(shell systemctl --version > /dev/null 2>&1 && echo 1), 1)
- 		SYSTEMD = $(shell systemctl --version 2> /dev/null |  sed -n 's/systemd \([0-9]*\)/\1/p')
-@@ -54,7 +62,7 @@ ifndef RPM_OPT_FLAGS
- endif
+-LIBUDEV_API_RECVBUF = $(shell grep -Ecs '^[a-z]*[[:space:]]+udev_monitor_set_resolve_buffer_size' /usr/include/libudev.h)
++LIBUDEV_API_RECVBUF = $(shell grep -Ecs '^[a-z]*[[:space:]]+udev_monitor_set_receive_buffer_size' /usr/include/libudev.h)
  
- OPTFLAGS     = $(RPM_OPT_FLAGS) -Wunused -Wstrict-prototypes
--CFLAGS	     = $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\"
-+CFLAGS	     = $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
- SHARED_FLAGS = -shared
- 
- %.o:	%.c
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index 8902f40..cf1d5be 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -26,7 +26,7 @@
- #define MAX_CHECKINT(a)		(a << 2)
- 
- #define MAX_DEV_LOSS_TMO	0x7FFFFFFF
--#define DEFAULT_PIDFILE		"/var/run/multipathd.pid"
-+#define DEFAULT_PIDFILE		"/" RUN_DIR "/multipathd.pid"
- #define DEFAULT_SOCKET		"/org/kernel/linux/storage/multipathd"
- #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
- #define DEFAULT_BINDINGS_FILE	"/etc/multipath/bindings"
-diff --git a/multipathd/multipathd.init.suse b/multipathd/multipathd.init.suse
-index d1319b1..ed699fa 100644
---- a/multipathd/multipathd.init.suse
-+++ b/multipathd/multipathd.init.suse
-@@ -17,7 +17,7 @@
- 
- PATH=/bin:/usr/bin:/sbin:/usr/sbin
- DAEMON=/sbin/multipathd
--PIDFILE=/var/run/multipathd.pid
-+PIDFILE=/run/multipathd.pid
- MPATH_INIT_TIMEOUT=10
- ARGS=""
- 
+ ifneq ($(strip $(LIBUDEV_API_RECVBUF)),0)
+ 	CFLAGS += -DLIBUDEV_API_RECVBUF
 -- 
 1.8.3.1
