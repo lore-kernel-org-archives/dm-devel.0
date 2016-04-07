@@ -1,139 +1,178 @@
-From: Zhangguanghui <zhang.guanghui@h3c.com>
-Subject: multipathd: segfault in multipathd cli_add_map()
-Date: Thu, 7 Apr 2016 02:10:55 +0000
-Message-ID: <E3535A62B291B54FBD1D003696CCB5375E190B04@H3CMLB14-EX.srv.huawei-3com.com>
-References: <1459221194-23222-1-git-send-email-bmarzins@redhat.com>,
-	<1459221194-23222-18-git-send-email-bmarzins@redhat.com>
+From: Ming Lei <tom.leiming@gmail.com>
+Subject: Re: [PATCH 10/12] Limit bio_endio recursion
+Date: Thu, 7 Apr 2016 11:54:49 +0800
+Message-ID: <CACVXFVNo6+F_OPyiTE882UrECz7BG_wKGj=teukibuiMdxmLHw@mail.gmail.com>
+References: <1459746376-27983-1-git-send-email-shaun@tancheff.com>
+	<1459746376-27983-11-git-send-email-shaun@tancheff.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5210115477236113970=="
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel-bounces@redhat.com" <dm-devel-bounces@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1459746376-27983-11-git-send-email-shaun@tancheff.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Shaun Tancheff <shaun@tancheff.com>
+Cc: "linux-ide@vger.kernel.org" <linux-ide@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, linux-block@vger.kernel.org, Linux SCSI List <linux-scsi@vger.kernel.org>, Jens Axboe <axboe@fb.com>, Shaun Tancheff <shaun.tancheff@seagate.com>
 List-Id: dm-devel.ids
 
---===============5210115477236113970==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_E3535A62B291B54FBD1D003696CCB5375E190B04H3CMLB14EXsrvhu_"
+On Mon, Apr 4, 2016 at 1:06 PM, Shaun Tancheff <shaun@tancheff.com> wrote:
+> Recursive endio calls can exceed 16k stack. Tested with
+> 32k stack and observed:
+>
+>             Depth    Size   Location    (293 entries)
+>             -----    ----   --------
+>       0)    21520      16   __module_text_address+0x12/0x60
+>       1)    21504       8   __module_address+0x5/0x140
+>       2)    21496      24   __module_text_address+0x12/0x60
+>       3)    21472      16   is_module_text_address+0xe/0x20
+>       4)    21456       8   __kernel_text_address+0x50/0x80
+>       5)    21448     136   print_context_stack+0x5a/0xf0
+>       6)    21312     144   dump_trace+0x14c/0x300
+>       7)    21168       8   save_stack_trace+0x2f/0x50
+>       8)    21160      88   set_track+0x64/0x130
+>       9)    21072      96   free_debug_processing+0x200/0x290
+>      10)    20976     176   __slab_free+0x164/0x290
+>      11)    20800      48   kmem_cache_free+0x1b0/0x1e0
+>      12)    20752      16   mempool_free_slab+0x17/0x20
+>      13)    20736      48   mempool_free+0x2f/0x90
+>      14)    20688      16   bvec_free+0x36/0x40
+>      15)    20672      32   bio_free+0x3b/0x60
+>      16)    20640      16   bio_put+0x23/0x30
+>      17)    20624      64   end_bio_extent_writepage+0xcf/0xe0
+>      18)    20560      48   bio_endio+0x57/0x90
+>      19)    20512      48   btrfs_end_bio+0xa8/0x160
+>      20)    20464      48   bio_endio+0x57/0x90
+>      21)    20416     112   dec_pending+0x121/0x270
+>      22)    20304      64   clone_endio+0x7a/0x100
+>      23)    20240      48   bio_endio+0x57/0x90
+>     ...
+>     277)     1264      64   clone_endio+0x7a/0x100
+>     278)     1200      48   bio_endio+0x57/0x90
+>     279)     1152     112   dec_pending+0x121/0x270
+>     280)     1040      64   clone_endio+0x7a/0x100
+>     281)      976      48   bio_endio+0x57/0x90
+>     282)      928      80   blk_update_request+0x8f/0x340
+>     283)      848      80   scsi_end_request+0x33/0x1c0
+>     284)      768     112   scsi_io_completion+0xb5/0x620
+>     285)      656      48   scsi_finish_command+0xcf/0x120
+>     286)      608      48   scsi_softirq_done+0x126/0x150
+>     287)      560      24   blk_done_softirq+0x78/0x90
+>     288)      536     136   __do_softirq+0xfd/0x280
+>     289)      400      16   run_ksoftirqd+0x28/0x50
+>     290)      384      64   smpboot_thread_fn+0x105/0x160
+>     291)      320     144   kthread+0xc9/0xe0
+>     292)      176     176   ret_from_fork+0x3f/0x70
+>
+> Based on earlier patch by Mikulas Patocka <mpatocka@redhat.com>.
+> https://lkml.org/lkml/2008/6/24/18
 
---_000_E3535A62B291B54FBD1D003696CCB5375E190B04H3CMLB14EXsrvhu_
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Looks a empty link, and the following had the discussion too:
 
-LS0tIG11bHRpcGF0aC10b29scy1lY2Y4NGE4L211bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmMgMjAx
-Ni0wNC0wNyAwOToyODo0Ni42OTM2MjI5NDEgKzA4MDANCisrKyBwYXRjaC9jbGlfaGFuZGxlcnMu
-YyAyMDE2LTA0LTA3IDA5OjQzOjM2LjIzNzYyMjgzNSArMDgwMA0KQEAgLTUyMyw3ICs1MjMsOCBA
-QA0KY2hhciAqIHBhcmFtID0gZ2V0X2tleXBhcmFtKHYsIE1BUCk7DQppbnQgbWFqb3IsIG1pbm9y
-Ow0KY2hhciBkZXZfcGF0aFtQQVRIX1NJWkVdOw0KLSBjaGFyICphbGlhcywgKnJlZnd3aWQ7DQor
-IGNoYXIgKmFsaWFzID0gTlVMTDsNCisgY2hhciAqcmVmd3dpZCA9IE5VTEw7DQppbnQgcmMsIGNv
-dW50ID0gMDsNCg0KcGFyYW0gPSBjb252ZXJ0X2RldihwYXJhbSwgMCk7DQpAQCAtNTY1LDggKzU2
-NiwxMCBAQA0KcmV0dXJuIDE7DQp9DQpyYyA9IGV2X2FkZF9tYXAoZGV2X3BhdGgsIGFsaWFzLCB2
-ZWNzKTsNCi0gRlJFRShhbGlhcyk7DQotIEZSRUUocmVmd3dpZCk7DQorIGlmIChhbGlhcykNCisg
-RlJFRShhbGlhcyk7DQorIGlmIChyZWZ3d2lkKQ0KKyBGUkVFKHJlZnd3aWQpOw0KcmV0dXJuIHJj
-Ow0KfQ0KDQpAQCAtNTc3LDcgKzU4MCw3IEBADQpjaGFyICogcGFyYW0gPSBnZXRfa2V5cGFyYW0o
-diwgTUFQKTsNCmludCBtYWpvciwgbWlub3I7DQpjaGFyIGRldl9wYXRoW1BBVEhfU0laRV07DQot
-IGNoYXIgKmFsaWFzOw0KKyBjaGFyICphbGlhcyA9IE5VTEw7DQppbnQgcmM7DQoNCnBhcmFtID0g
-Y29udmVydF9kZXYocGFyYW0sIDApOw0KQEAgLTYwMCw3ICs2MDMsOCBAQA0KcmV0dXJuIDA7DQp9
-DQpyYyA9IGV2X3JlbW92ZV9tYXAocGFyYW0sIGFsaWFzLCBtaW5vciwgdmVjcyk7DQotIEZSRUUo
-YWxpYXMpOw0KKyBpZiAoYWxpYXMpDQorIEZSRUUoYWxpYXMpOw0KcmV0dXJuIHJjOw0KfQ0KDQoN
-Ci0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0NCuacrOmCruS7tuWPiuWFtumZhOS7tuWQq+acieadreW3nuWN
-juS4iemAmuS/oeaKgOacr+aciemZkOWFrOWPuOeahOS/neWvhuS/oeaBr++8jOS7hemZkOS6juWP
-kemAgee7meS4iumdouWcsOWdgOS4reWIl+WHug0K55qE5Liq5Lq65oiW576k57uE44CC56aB5q2i
-5Lu75L2V5YW25LuW5Lq65Lul5Lu75L2V5b2i5byP5L2/55So77yI5YyF5ous5L2G5LiN6ZmQ5LqO
-5YWo6YOo5oiW6YOo5YiG5Zyw5rOE6Zyy44CB5aSN5Yi244CBDQrmiJbmlaPlj5HvvInmnKzpgq7k
-u7bkuK3nmoTkv6Hmga/jgILlpoLmnpzmgqjplJnmlLbkuobmnKzpgq7ku7bvvIzor7fmgqjnq4vl
-jbPnlLXor53miJbpgq7ku7bpgJrnn6Xlj5Hku7bkurrlubbliKDpmaTmnKwNCumCruS7tu+8gQ0K
-VGhpcyBlLW1haWwgYW5kIGl0cyBhdHRhY2htZW50cyBjb250YWluIGNvbmZpZGVudGlhbCBpbmZv
-cm1hdGlvbiBmcm9tIEgzQywgd2hpY2ggaXMNCmludGVuZGVkIG9ubHkgZm9yIHRoZSBwZXJzb24g
-b3IgZW50aXR5IHdob3NlIGFkZHJlc3MgaXMgbGlzdGVkIGFib3ZlLiBBbnkgdXNlIG9mIHRoZQ0K
-aW5mb3JtYXRpb24gY29udGFpbmVkIGhlcmVpbiBpbiBhbnkgd2F5IChpbmNsdWRpbmcsIGJ1dCBu
-b3QgbGltaXRlZCB0bywgdG90YWwgb3IgcGFydGlhbA0KZGlzY2xvc3VyZSwgcmVwcm9kdWN0aW9u
-LCBvciBkaXNzZW1pbmF0aW9uKSBieSBwZXJzb25zIG90aGVyIHRoYW4gdGhlIGludGVuZGVkDQpy
-ZWNpcGllbnQocykgaXMgcHJvaGliaXRlZC4gSWYgeW91IHJlY2VpdmUgdGhpcyBlLW1haWwgaW4g
-ZXJyb3IsIHBsZWFzZSBub3RpZnkgdGhlIHNlbmRlcg0KYnkgcGhvbmUgb3IgZW1haWwgaW1tZWRp
-YXRlbHkgYW5kIGRlbGV0ZSBpdCENCg==
+http://linux-kernel.2935.n7.nabble.com/PATCH-1-2-Avoid-bio-endio-recursion-td306043.html
 
---_000_E3535A62B291B54FBD1D003696CCB5375E190B04H3CMLB14EXsrvhu_
-Content-Type: text/html; charset="utf-8"
-Content-Transfer-Encoding: base64
+>
+> Signed-off-by: Shaun Tancheff <shaun.tancheff@seagate.com>
+> ---
+>  block/bio.c | 57 ++++++++++++++++++++++++++++++++++++++++++++++++++++++---
+>  1 file changed, 54 insertions(+), 3 deletions(-)
+>
+> diff --git a/block/bio.c b/block/bio.c
+> index d42e69c..4ac19f6 100644
+> --- a/block/bio.c
+> +++ b/block/bio.c
+> @@ -1733,6 +1733,59 @@ static inline bool bio_remaining_done(struct bio *bio)
+>         return false;
+>  }
+>
+> +static DEFINE_PER_CPU(struct bio **, bio_end_queue) = { NULL };
 
-PGh0bWw+DQo8aGVhZD4NCjxtZXRhIGh0dHAtZXF1aXY9IkNvbnRlbnQtVHlwZSIgY29udGVudD0i
-dGV4dC9odG1sOyBjaGFyc2V0PXV0Zi04Ij4NCjxzdHlsZT5ib2R5IHsgbGluZS1oZWlnaHQ6IDEu
-NTsgfWJsb2NrcXVvdGUgeyBtYXJnaW4tdG9wOiAwcHg7IG1hcmdpbi1ib3R0b206IDBweDsgbWFy
-Z2luLWxlZnQ6IDAuNWVtOyB9cCB7IG1hcmdpbi10b3A6IDBweDsgbWFyZ2luLWJvdHRvbTogMHB4
-OyB9ZGl2LmZveGRpdjIwMTYwNDA3MTAwMzEwNTI1NzIxIHsgfWJvZHkgeyBmb250LXNpemU6IDE2
-cHQ7IGZvbnQtZmFtaWx5OiA/Pz8/OyBjb2xvcjogcmdiKDAsIDAsIDApOyBsaW5lLWhlaWdodDog
-MS41OyB9PC9zdHlsZT4NCjwvaGVhZD4NCjxib2R5Pg0KPGRpdj48c3Bhbj48L3NwYW4+PC9kaXY+
-DQo8YmxvY2txdW90ZSBzdHlsZT0ibWFyZ2luLXRvcDogMHB4OyBtYXJnaW4tYm90dG9tOiAwcHg7
-IG1hcmdpbi1sZWZ0OiAwLjVlbTsiPg0KPGRpdj4NCjxkaXYgY2xhc3M9IkZveERpdjIwMTYwNDA3
-MTAwMzEwNTI1NzIxIj4NCjxwPjxzcGFuIHN0eWxlPSJmb250LXNpemU6IDEzcHg7IGJhY2tncm91
-bmQtY29sb3I6IHJnYmEoMCwgMCwgMCwgMCk7Ij4tLS0gbXVsdGlwYXRoLXRvb2xzLWVjZjg0YTgv
-bXVsdGlwYXRoZC9jbGlfaGFuZGxlcnMuYyAyMDE2LTA0LTA3IDA5OjI4OjQ2LjY5MzYyMjk0MSAm
-IzQzOzA4MDA8YnI+DQomIzQzOyYjNDM7JiM0MzsgcGF0Y2gvY2xpX2hhbmRsZXJzLmMgMjAxNi0w
-NC0wNyAwOTo0MzozNi4yMzc2MjI4MzUgJiM0MzswODAwPGJyPg0KQEAgLTUyMyw3ICYjNDM7NTIz
-LDggQEA8YnI+DQpjaGFyICogcGFyYW0gPSBnZXRfa2V5cGFyYW0odiwgTUFQKTs8YnI+DQppbnQg
-bWFqb3IsIG1pbm9yOzxicj4NCmNoYXIgZGV2X3BhdGhbUEFUSF9TSVpFXTs8YnI+DQotIGNoYXIg
-KmFsaWFzLCAqcmVmd3dpZDs8YnI+DQomIzQzOyBjaGFyICphbGlhcyA9IE5VTEw7PGJyPg0KJiM0
-MzsgY2hhciAqcmVmd3dpZCA9IE5VTEw7PGJyPg0KaW50IHJjLCBjb3VudCA9IDA7PGJyPg0KPGJy
-Pg0KcGFyYW0gPSBjb252ZXJ0X2RldihwYXJhbSwgMCk7PGJyPg0KQEAgLTU2NSw4ICYjNDM7NTY2
-LDEwIEBAPGJyPg0KcmV0dXJuIDE7PGJyPg0KfTxicj4NCnJjID0gZXZfYWRkX21hcChkZXZfcGF0
-aCwgYWxpYXMsIHZlY3MpOzxicj4NCi0gRlJFRShhbGlhcyk7PGJyPg0KLSBGUkVFKHJlZnd3aWQp
-Ozxicj4NCiYjNDM7IGlmIChhbGlhcyk8YnI+DQomIzQzOyBGUkVFKGFsaWFzKTs8YnI+DQomIzQz
-OyBpZiAocmVmd3dpZCk8YnI+DQomIzQzOyBGUkVFKHJlZnd3aWQpOzxicj4NCnJldHVybiByYzs8
-YnI+DQp9PGJyPg0KPGJyPg0KQEAgLTU3Nyw3ICYjNDM7NTgwLDcgQEA8YnI+DQpjaGFyICogcGFy
-YW0gPSBnZXRfa2V5cGFyYW0odiwgTUFQKTs8YnI+DQppbnQgbWFqb3IsIG1pbm9yOzxicj4NCmNo
-YXIgZGV2X3BhdGhbUEFUSF9TSVpFXTs8YnI+DQotIGNoYXIgKmFsaWFzOzxicj4NCiYjNDM7IGNo
-YXIgKmFsaWFzID0gTlVMTDs8YnI+DQppbnQgcmM7PGJyPg0KPGJyPg0KcGFyYW0gPSBjb252ZXJ0
-X2RldihwYXJhbSwgMCk7PGJyPg0KQEAgLTYwMCw3ICYjNDM7NjAzLDggQEA8YnI+DQpyZXR1cm4g
-MDs8YnI+DQp9PGJyPg0KcmMgPSBldl9yZW1vdmVfbWFwKHBhcmFtLCBhbGlhcywgbWlub3IsIHZl
-Y3MpOzxicj4NCi0gRlJFRShhbGlhcyk7PGJyPg0KJiM0MzsgaWYgKGFsaWFzKTxicj4NCiYjNDM7
-IEZSRUUoYWxpYXMpOzxicj4NCnJldHVybiByYzs8YnI+DQp9PGJyPg0KPGJyPg0KPC9zcGFuPjwv
-cD4NCjwvZGl2Pg0KPC9kaXY+DQo8L2Jsb2NrcXVvdGU+DQo8c3BhbiBzdHlsZT0iZm9udC1zaXpl
-OjcuNXB0O2ZvbnQtZmFtaWx5OuWNjuaWh+e7hum7kTtjb2xvcjpncmF5Ij48c3BhbiBsYW5nPSJF
-Ti1VUyI+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLTxicj4NCjwvc3Bhbj7mnKzpgq7ku7blj4rlhbbpmYTk
-u7blkKvmnInmna3lt57ljY7kuInpgJrkv6HmioDmnK/mnInpmZDlhazlj7jnmoTkv53lr4bkv6Hm
-ga/vvIzku4XpmZDkuo7lj5HpgIHnu5nkuIrpnaLlnLDlnYDkuK3liJflh7o8c3BhbiBsYW5nPSJF
-Ti1VUyI+PGJyPg0KPC9zcGFuPueahOS4quS6uuaIlue+pOe7hOOAguemgeatouS7u+S9leWFtuS7
-luS6uuS7peS7u+S9leW9ouW8j+S9v+eUqO+8iOWMheaLrOS9huS4jemZkOS6juWFqOmDqOaIlumD
-qOWIhuWcsOazhOmcsuOAgeWkjeWItuOAgTxzcGFuIGxhbmc9IkVOLVVTIj48YnI+DQo8L3NwYW4+
-5oiW5pWj5Y+R77yJ5pys6YKu5Lu25Lit55qE5L+h5oGv44CC5aaC5p6c5oKo6ZSZ5pS25LqG5pys
-6YKu5Lu277yM6K+35oKo56uL5Y2z55S16K+d5oiW6YKu5Lu26YCa55+l5Y+R5Lu25Lq65bm25Yig
-6Zmk5pysPHNwYW4gbGFuZz0iRU4tVVMiPjxicj4NCjwvc3Bhbj7pgq7ku7bvvIE8c3BhbiBsYW5n
-PSJFTi1VUyI+PGJyPg0KPC9zcGFuPjwvc3Bhbj48c3BhbiBsYW5nPSJFTi1VUyIgc3R5bGU9ImZv
-bnQtc2l6ZTo3LjVwdDtmb250LWZhbWlseTomcXVvdDtBcmlhbCZxdW90OywmcXVvdDtzYW5zLXNl
-cmlmJnF1b3Q7O2NvbG9yOmdyYXkiPlRoaXMgZS1tYWlsIGFuZCBpdHMgYXR0YWNobWVudHMgY29u
-dGFpbiBjb25maWRlbnRpYWwgaW5mb3JtYXRpb24gZnJvbSBIM0MsIHdoaWNoIGlzDQo8YnI+DQpp
-bnRlbmRlZCBvbmx5IGZvciB0aGUgcGVyc29uIG9yIGVudGl0eSB3aG9zZSBhZGRyZXNzIGlzIGxp
-c3RlZCBhYm92ZS4gQW55IHVzZSBvZiB0aGUNCjxicj4NCmluZm9ybWF0aW9uIGNvbnRhaW5lZCBo
-ZXJlaW4gaW4gYW55IHdheSAoaW5jbHVkaW5nLCBidXQgbm90IGxpbWl0ZWQgdG8sIHRvdGFsIG9y
-IHBhcnRpYWwNCjxicj4NCmRpc2Nsb3N1cmUsIHJlcHJvZHVjdGlvbiwgb3IgZGlzc2VtaW5hdGlv
-bikgYnkgcGVyc29ucyBvdGhlciB0aGFuIHRoZSBpbnRlbmRlZCA8YnI+DQpyZWNpcGllbnQocykg
-aXMgcHJvaGliaXRlZC4gSWYgeW91IHJlY2VpdmUgdGhpcyBlLW1haWwgaW4gZXJyb3IsIHBsZWFz
-ZSBub3RpZnkgdGhlIHNlbmRlcg0KPGJyPg0KYnkgcGhvbmUgb3IgZW1haWwgaW1tZWRpYXRlbHkg
-YW5kIGRlbGV0ZSBpdCE8L3NwYW4+DQo8L2JvZHk+DQo8L2h0bWw+DQo=
+The idea looks very nice, but this patch can't be applid to current block-next
+branch.
 
---_000_E3535A62B291B54FBD1D003696CCB5375E190B04H3CMLB14EXsrvhu_--
+Looks it might be simpler to implement the approach by using percpu bio_list.
+
+> +
+> +static struct bio *unwind_bio_endio(struct bio *bio)
+> +{
+> +       struct bio ***bio_end_queue_ptr;
+> +       struct bio *bio_queue;
+> +       struct bio *chain_bio = NULL;
+> +       int error = bio->bi_error;
+> +       unsigned long flags;
+> +
+> +       local_irq_save(flags);
+
+If we may resue current->bio_list for this purpose, disabling irq should have
+been avoided, but looks it is difficult to do in that way, maybe impossible.
+Also not realistic to introduce a new per-task variable.
+
+> +       bio_end_queue_ptr = this_cpu_ptr(&bio_end_queue);
+> +
+> +       if (*bio_end_queue_ptr) {
+> +               **bio_end_queue_ptr = bio;
+> +               *bio_end_queue_ptr = &bio->bi_next;
+> +               bio->bi_next = NULL;
+> +       } else {
+> +               bio_queue = NULL;
+> +               *bio_end_queue_ptr = &bio_queue;
+
+Suggest to comment that bio_queue is the bottom-most stack variable,
+otherwise looks a bit tricky to understand.
+
+> +
+> +next_bio:
+> +               if (bio->bi_end_io == bio_chain_endio) {
+> +                       struct bio *parent = bio->bi_private;
+> +
+> +                       bio_put(bio);
+> +                       chain_bio = parent;
+> +                       goto out;
+> +               }
+> +
+> +               if (bio->bi_end_io) {
+> +                       if (!bio->bi_error)
+> +                               bio->bi_error = error;
+> +                       bio->bi_end_io(bio);
+> +               }
+> +
+> +               if (bio_queue) {
+> +                       bio = bio_queue;
+> +                       bio_queue = bio->bi_next;
+> +                       if (!bio_queue)
+> +                               *bio_end_queue_ptr = &bio_queue;
+> +                       goto next_bio;
+> +               }
+> +               *bio_end_queue_ptr = NULL;
+> +       }
+> +
+> +out:
+> +
+> +       local_irq_restore(flags);
+> +
+> +       return chain_bio;
+> +}
+> +
+>  /**
+>   * bio_endio - end I/O on a bio
+>   * @bio:       bio
+> @@ -1762,9 +1815,7 @@ void bio_endio(struct bio *bio)
+>                         bio_put(bio);
+>                         bio = parent;
+>                 } else {
+> -                       if (bio->bi_end_io)
+> -                               bio->bi_end_io(bio);
+> -                       bio = NULL;
+> +                       bio = unwind_bio_endio(bio);
+>                 }
+>         }
+>  }
+> --
+> 1.9.1
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-block" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
 
---===============5210115477236113970==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
 
-
---===============5210115477236113970==--
+-- 
+Ming Lei
