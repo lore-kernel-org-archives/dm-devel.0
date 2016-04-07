@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 17/18] multipathd: use 64-bit int for command
-	key
-Date: Thu,  7 Apr 2016 18:20:11 -0500
-Message-ID: <1460071212-21018-18-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 07/18] libmultipath: Cut down on alua
+	prioritizer ioctls
+Date: Thu,  7 Apr 2016 18:20:01 -0500
+Message-ID: <1460071212-21018-8-git-send-email-bmarzins@redhat.com>
 References: <1460071212-21018-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,169 +22,249 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-There are now more than 32 keywords for the multipathd client commands.
-Since these are represented by a bit flags, multipathd needs more than
-32 bits for the client command keycodes. However, multipath is currently
-using unsigned long for these. This makes some client commands work
-incorrectly on 32-bit systems. This patch switches all the keys to use
-uint64_t instead.
+Currently, running the alua prioritizer on a path causes 5 ioctls on
+many devices.  get_target_port_group_support() returns whether alua is
+supported. get_target_port_group() gets the TPG id. This often takes two
+ioctls because 128 bytes is not a large enough buffer size on many
+devices. Finally, get_asymmetric_access_state() also often takes two
+ioctls because of the buffer size. This can get to be problematic when
+there are thousands of paths.  The goal of this patch to to cut this
+down to one call in the usual case.
+
+In order to do this, get_target_port_group_support() is now only called
+when get_target_port_group() fails, to provide a more useful error
+message. Also, before doing an SGIO ioctl to get the vpd83 data,
+multipath first tries to read it from sysfs.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/cli.c | 22 +++++++++++-----------
- multipathd/cli.h | 20 +++++++++++---------
- 2 files changed, 22 insertions(+), 20 deletions(-)
+ libmultipath/discovery.h              |  2 +
+ libmultipath/prioritizers/alua.c      | 24 ++++++------
+ libmultipath/prioritizers/alua_rtpg.c | 69 ++++++++++++++++++++++++-----------
+ libmultipath/prioritizers/alua_rtpg.h |  2 +-
+ libmultipath/propsel.c                |  2 +-
+ 5 files changed, 63 insertions(+), 36 deletions(-)
 
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index e0a6bec..6a5c6db 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -26,7 +26,7 @@ alloc_handler (void)
- }
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index da7652c..5931bc6 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -45,6 +45,8 @@ int sysfs_set_scsi_tmo (struct multipath *mpp);
+ int sysfs_get_timeout(struct path *pp, unsigned int *timeout);
+ int sysfs_get_host_pci_name(struct path *pp, char *pci_name);
+ int sysfs_get_iscsi_ip_address(struct path *pp, char *ip_address);
++ssize_t sysfs_get_vpd (struct udev_device * udev, int pg, unsigned char * buff,
++		       size_t len);
  
- static int
--add_key (vector vec, char * str, unsigned long code, int has_param)
-+add_key (vector vec, char * str, uint64_t code, int has_param)
- {
- 	struct key * kw;
- 
-@@ -57,7 +57,7 @@ out:
- }
- 
- int
--add_handler (unsigned long fp, int (*fn)(void *, char **, int *, void *))
-+add_handler (uint64_t fp, int (*fn)(void *, char **, int *, void *))
- {
- 	struct handler * h;
- 
-@@ -79,7 +79,7 @@ add_handler (unsigned long fp, int (*fn)(void *, char **, int *, void *))
- }
- 
- static struct handler *
--find_handler (unsigned long fp)
-+find_handler (uint64_t fp)
- {
- 	int i;
- 	struct handler *h;
-@@ -92,7 +92,7 @@ find_handler (unsigned long fp)
+ /*
+  * discovery bitmask
+diff --git a/libmultipath/prioritizers/alua.c b/libmultipath/prioritizers/alua.c
+index 39ed1c8..0bd374f 100644
+--- a/libmultipath/prioritizers/alua.c
++++ b/libmultipath/prioritizers/alua.c
+@@ -51,24 +51,22 @@ static const char *aas_print_string(int rc)
  }
  
  int
--set_handler_callback (unsigned long fp, int (*fn)(void *, char **, int *, void *))
-+set_handler_callback (uint64_t fp, int (*fn)(void *, char **, int *, void *))
+-get_alua_info(int fd)
++get_alua_info(struct path * pp)
  {
- 	struct handler * h = find_handler(fp);
+ 	int	rc;
+ 	int	tpg;
  
-@@ -293,11 +293,11 @@ out:
- 	return r;
+-	rc = get_target_port_group_support(fd);
+-	if (rc < 0)
+-		return -ALUA_PRIO_TPGS_FAILED;
+-
+-	if (rc == TPGS_NONE)
+-		return -ALUA_PRIO_NOT_SUPPORTED;
+-
+-	tpg = get_target_port_group(fd);
+-	if (tpg < 0)
++	tpg = get_target_port_group(pp);
++	if (tpg < 0) {
++		rc = get_target_port_group_support(pp->fd);
++		if (rc < 0)
++			return -ALUA_PRIO_TPGS_FAILED;
++		if (rc == TPGS_NONE)
++			return -ALUA_PRIO_NOT_SUPPORTED;
+ 		return -ALUA_PRIO_RTPG_FAILED;
+-
++	}
+ 	condlog(3, "reported target port group is %i", tpg);
+-	rc = get_asymmetric_access_state(fd, tpg);
++	rc = get_asymmetric_access_state(pp->fd, tpg);
+ 	if (rc < 0)
+ 		return -ALUA_PRIO_GETAAS_FAILED;
+ 
+@@ -86,7 +84,7 @@ int getprio (struct path * pp, char * args)
+ 	if (pp->fd < 0)
+ 		return -ALUA_PRIO_NO_INFORMATION;
+ 
+-	rc = get_alua_info(pp->fd);
++	rc = get_alua_info(pp);
+ 	if (rc >= 0) {
+ 		aas = (rc & 0x0f);
+ 		priopath = (rc & 0x80);
+diff --git a/libmultipath/prioritizers/alua_rtpg.c b/libmultipath/prioritizers/alua_rtpg.c
+index 6d04fc1..636aae5 100644
+--- a/libmultipath/prioritizers/alua_rtpg.c
++++ b/libmultipath/prioritizers/alua_rtpg.c
+@@ -17,15 +17,18 @@
+ #include <string.h>
+ #include <sys/ioctl.h>
+ #include <inttypes.h>
++#include <libudev.h>
+ 
+ #define __user
+ #include <scsi/sg.h>
+ 
++#include "../structs.h"
+ #include "../prio.h"
++#include "../discovery.h"
+ #include "alua_rtpg.h"
+ 
+ #define SENSE_BUFF_LEN  32
+-#define DEF_TIMEOUT     60000
++#define SGIO_TIMEOUT     60000
+ 
+ /*
+  * Macro used to print debug messaged.
+@@ -135,7 +138,7 @@ do_inquiry(int fd, int evpd, unsigned int codepage, void *resp, int resplen)
+ 	hdr.dxfer_len		= resplen;
+ 	hdr.sbp			= sense;
+ 	hdr.mx_sb_len		= sizeof(sense);
+-	hdr.timeout		= get_prio_timeout(DEF_TIMEOUT);
++	hdr.timeout		= get_prio_timeout(SGIO_TIMEOUT);
+ 
+ 	if (ioctl(fd, SG_IO, &hdr) < 0) {
+ 		PRINT_DEBUG("do_inquiry: IOCTL failed!\n");
+@@ -170,8 +173,27 @@ get_target_port_group_support(int fd)
+ 	return rc;
  }
  
--static unsigned long 
-+static uint64_t
- fingerprint(vector vec)
- {
- 	int i;
--	unsigned long fp = 0;
-+	uint64_t fp = 0;
- 	struct key * kw;
- 
- 	if (!vec)
-@@ -343,7 +343,7 @@ static int
- do_genhelp(char *reply, int maxlen) {
- 	int len = 0;
- 	int i, j;
--	unsigned long fp;
-+	uint64_t fp;
- 	struct handler * h;
- 	struct key * kw;
- 
-@@ -442,7 +442,7 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data)
- }
- 
- char *
--get_keyparam (vector v, unsigned long code)
-+get_keyparam (vector v, uint64_t code)
- {
- 	struct key * kw;
- 	int i;
-@@ -516,7 +516,7 @@ void cli_exit(void)
- }
- 
- static int
--key_match_fingerprint (struct key * kw, unsigned long fp)
-+key_match_fingerprint (struct key * kw, uint64_t fp)
- {
- 	if (!fp)
- 		return 0;
-@@ -531,7 +531,7 @@ char *
- key_generator (const char * str, int state)
- {
- 	static int index, len, has_param;
--	static unsigned long rlfp;	
-+	static uint64_t rlfp;
- 	struct key * kw;
- 	int i;
- 	struct handler *h;
-@@ -601,7 +601,7 @@ key_generator (const char * str, int state)
- 			 * nfp is the candidate fingerprint we try to
- 			 * validate against all known command fingerprints.
- 			 */
--			unsigned long nfp = rlfp | kw->code;
-+			uint64_t nfp = rlfp | kw->code;
- 			vector_foreach_slot(handlers, h, i) {
- 				if (!rlfp || ((h->fingerprint & nfp) == nfp)) {
- 					/*
-diff --git a/multipathd/cli.h b/multipathd/cli.h
-index f6d2726..2aa19d5 100644
---- a/multipathd/cli.h
-+++ b/multipathd/cli.h
-@@ -1,3 +1,5 @@
-+#include <stdint.h>
++static int
++get_sysfs_pg83(struct path *pp, unsigned char *buff, int buflen)
++{
++	struct udev_device *parent = pp->udev;
 +
- enum {
- 	__LIST,
- 	__ADD,
-@@ -68,10 +70,10 @@ enum {
- #define WILDCARDS	(1 << __WILDCARDS)
- #define QUIT		(1 << __QUIT)
- #define SHUTDOWN	(1 << __SHUTDOWN)
--#define GETPRSTATUS	(1UL << __GETPRSTATUS)
--#define SETPRSTATUS	(1UL << __SETPRSTATUS)
--#define UNSETPRSTATUS	(1UL << __UNSETPRSTATUS)
--#define FMT		(1UL << __FMT)
-+#define GETPRSTATUS	(1ULL << __GETPRSTATUS)
-+#define SETPRSTATUS	(1ULL << __SETPRSTATUS)
-+#define UNSETPRSTATUS	(1ULL << __UNSETPRSTATUS)
-+#define FMT		(1ULL << __FMT)
++	while (parent) {
++		const char *subsys = udev_device_get_subsystem(parent);
++		if (subsys && !strncmp(subsys, "scsi", 4))
++			break;
++		parent = udev_device_get_parent(parent);
++	}
++
++	if (!parent || sysfs_get_vpd(parent, 0x83, buff, buflen) <= 0) {
++		PRINT_DEBUG("failed to read sysfs vpd pg83\n");
++		return -1;
++	}
++	return 0;
++}
++
+ int
+-get_target_port_group(int fd)
++get_target_port_group(struct path * pp)
+ {
+ 	unsigned char		*buf;
+ 	struct vpd83_data *	vpd83;
+@@ -179,7 +201,7 @@ get_target_port_group(int fd)
+ 	int			rc;
+ 	int			buflen, scsi_buflen;
  
- #define INITIAL_REPLY_LEN	1200
+-	buflen = 128; /* Lets start from 128 */
++	buflen = 4096;
+ 	buf = (unsigned char *)malloc(buflen);
+ 	if (!buf) {
+ 		PRINT_DEBUG("malloc failed: could not allocate"
+@@ -188,24 +210,29 @@ get_target_port_group(int fd)
+ 	}
  
-@@ -92,21 +94,21 @@ enum {
- struct key {
- 	char * str;
- 	char * param;
--	unsigned long code;
-+	uint64_t code;
- 	int has_param;
- };
+ 	memset(buf, 0, buflen);
+-	rc = do_inquiry(fd, 1, 0x83, buf, buflen);
+-	if (rc < 0)
+-		goto out;
  
- struct handler {
--	unsigned long fingerprint;
-+	uint64_t fingerprint;
- 	int (*fn)(void *, char **, int *, void *);
- };
+-	scsi_buflen = (buf[2] << 8 | buf[3]) + 4;
+-	if (buflen < scsi_buflen) {
+-		free(buf);
+-		buf = (unsigned char *)malloc(scsi_buflen);
+-		if (!buf) {
+-			PRINT_DEBUG("malloc failed: could not allocate"
+-				     "%u bytes\n", scsi_buflen);
+-			return -RTPG_RTPG_FAILED;
+-		}
+-		buflen = scsi_buflen;
+-		memset(buf, 0, buflen);
+-		rc = do_inquiry(fd, 1, 0x83, buf, buflen);
++	rc = get_sysfs_pg83(pp, buf, buflen);
++
++	if (rc < 0) {
++		rc = do_inquiry(pp->fd, 1, 0x83, buf, buflen);
+ 		if (rc < 0)
+ 			goto out;
++
++		scsi_buflen = (buf[2] << 8 | buf[3]) + 4;
++		if (buflen < scsi_buflen) {
++			free(buf);
++			buf = (unsigned char *)malloc(scsi_buflen);
++			if (!buf) {
++				PRINT_DEBUG("malloc failed: could not allocate"
++					    "%u bytes\n", scsi_buflen);
++				return -RTPG_RTPG_FAILED;
++			}
++			buflen = scsi_buflen;
++			memset(buf, 0, buflen);
++			rc = do_inquiry(pp->fd, 1, 0x83, buf, buflen);
++			if (rc < 0)
++				goto out;
++		}
+ 	}
  
- int alloc_handlers (void);
--int add_handler (unsigned long fp, int (*fn)(void *, char **, int *, void *));
--int set_handler_callback (unsigned long fp, int (*fn)(void *, char **, int *, void *));
-+int add_handler (uint64_t fp, int (*fn)(void *, char **, int *, void *));
-+int set_handler_callback (uint64_t fp, int (*fn)(void *, char **, int *, void *));
- int parse_cmd (char * cmd, char ** reply, int * len, void *);
- int load_keys (void);
--char * get_keyparam (vector v, unsigned long code);
-+char * get_keyparam (vector v, uint64_t code);
- void free_keys (vector vec);
- void free_handlers (void);
- int cli_init (void);
+ 	vpd83 = (struct vpd83_data *) buf;
+@@ -254,7 +281,7 @@ do_rtpg(int fd, void* resp, long resplen)
+ 	hdr.dxfer_len		= resplen;
+ 	hdr.mx_sb_len		= sizeof(sense);
+ 	hdr.sbp			= sense;
+-	hdr.timeout		= get_prio_timeout(DEF_TIMEOUT);
++	hdr.timeout		= get_prio_timeout(SGIO_TIMEOUT);
+ 
+ 	if (ioctl(fd, SG_IO, &hdr) < 0)
+ 		return -RTPG_RTPG_FAILED;
+@@ -278,7 +305,7 @@ get_asymmetric_access_state(int fd, unsigned int tpg)
+ 	int			buflen;
+ 	uint32_t		scsi_buflen;
+ 
+-	buflen = 128; /* Initial value from old code */
++	buflen = 4096;
+ 	buf = (unsigned char *)malloc(buflen);
+ 	if (!buf) {
+ 		PRINT_DEBUG ("malloc failed: could not allocate"
+diff --git a/libmultipath/prioritizers/alua_rtpg.h b/libmultipath/prioritizers/alua_rtpg.h
+index c43e0a9..91a15a4 100644
+--- a/libmultipath/prioritizers/alua_rtpg.h
++++ b/libmultipath/prioritizers/alua_rtpg.h
+@@ -23,7 +23,7 @@
+ #define RTPG_TPG_NOT_FOUND			4
+ 
+ int get_target_port_group_support(int fd);
+-int get_target_port_group(int fd);
++int get_target_port_group(struct path * pp);
+ int get_asymmetric_access_state(int fd, unsigned int tpg);
+ 
+ #endif /* __RTPG_H__ */
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 890d4b1..8abe360 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -378,7 +378,7 @@ detect_prio(struct path * pp)
+ 	if ((tpgs = get_target_port_group_support(pp->fd)) <= 0)
+ 		return;
+ 	pp->tpgs = tpgs;
+-	ret = get_target_port_group(pp->fd);
++	ret = get_target_port_group(pp);
+ 	if (ret < 0)
+ 		return;
+ 	if (get_asymmetric_access_state(pp->fd, ret) < 0)
 -- 
 1.8.3.1
