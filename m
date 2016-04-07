@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 05/18] libmultipath: add ignore_new_boot_devs
-	option
-Date: Thu,  7 Apr 2016 18:19:59 -0500
-Message-ID: <1460071212-21018-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 12/18] kpartx: verify partition devices
+Date: Thu,  7 Apr 2016 18:20:06 -0500
+Message-ID: <1460071212-21018-13-git-send-email-bmarzins@redhat.com>
 References: <1460071212-21018-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,149 +21,233 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-When multipath relies on the wwids file to determine whether a device is
-a multipath path (with "multipath -c"), it will fail the first time a
-new multipathable device is discovered, since the wwid clearly won't be
-in the wwids file.  This is usually fine.  Multipath will still set
-itself up on the device, and add the wwid to the wwids file. However,
-this causes a race, where multipath won't claim the path immediately,
-and something else may.  Later multipath will try, and possibly succeed
-at, setting itself up on that device.
+When kpartx is modifies devices (either by removing them, or
+reloading them), it doesn't first verify that the device really
+is a partition of the expected device.  If a dm device just happens
+to have the same name as a kpartx created device would, kpartx can
+either delete that device or remap it, causing all sorts of problems.
 
-I've seen cases where this can cause problems during boot on and
-immediately after install, where multipath racing with LVM on an already
-labelled device can get the machine into a state where boot fails. This
-can be avoided if multipath simply doesn't set itself up on any devices
-that it didn't claim (with "multipath -c") in the initramfs.  It can
-still safely attempt to set itself up on these devices later in boot,
-after the regular filesystem has been set up.
-
-To allow this, this patch adds a new multipahtd commandline option, -n. When
-multipathd is run with this set, it will not create multipath devices if
-their wwid isn't already in the wwids file. This means that only devices
-that are claimed by "multipath -c" will be used by multipathd.
+This patch makes kpartx check the uuid to verify that the device it is
+modifying really is a partition device for the correct dm device.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/config.h    |  1 +
- libmultipath/configure.c |  3 +--
- libmultipath/wwids.c     | 19 ++++++++++++-------
- multipathd/main.c        |  9 ++++++---
- multipathd/multipathd.8  |  4 ++++
- 5 files changed, 24 insertions(+), 12 deletions(-)
+ kpartx/devmapper.c | 17 ++++++++++---
+ kpartx/devmapper.h |  2 +-
+ kpartx/kpartx.c    | 70 ++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 3 files changed, 81 insertions(+), 8 deletions(-)
 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 372eace..d6a1d4f 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -137,6 +137,7 @@ struct config {
- 	int uxsock_timeout;
- 	int retrigger_tries;
- 	int retrigger_delay;
-+	int ignore_new_devs;
- 	unsigned int version[3];
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+index 82be990..e006bc3 100644
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -167,12 +167,16 @@ addout:
+ }
  
- 	char * dev;
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 3c9badd..1ab3324 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -778,8 +778,7 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
- 			continue;
+ extern int
+-dm_map_present (char * str)
++dm_map_present (char * str, char **uuid)
+ {
+ 	int r = 0;
+ 	struct dm_task *dmt;
++	const char *uuidtmp;
+ 	struct dm_info info;
  
- 		/* If find_multipaths was selected check if the path is valid */
--		if (conf->find_multipaths && !refwwid &&
--		    !should_multipath(pp1, pathvec)) {
-+		if (!refwwid && !should_multipath(pp1, pathvec)) {
- 			orphan_path(pp1, "only one path");
- 			continue;
- 		}
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index f6f8ea8..567c93d 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -266,14 +266,19 @@ should_multipath(struct path *pp1, vector pathvec)
- 	int i;
- 	struct path *pp2;
- 
-+	if (!conf->find_multipaths && !conf->ignore_new_devs)
-+		return 1;
++	if (uuid)
++		*uuid = NULL;
 +
- 	condlog(4, "checking if %s should be multipathed", pp1->dev);
--	vector_foreach_slot(pathvec, pp2, i) {
--		if (pp1->dev == pp2->dev)
--			continue;
--		if (strncmp(pp1->wwid, pp2->wwid, WWID_SIZE) == 0) {
--			condlog(3, "found multiple paths with wwid %s, "
--				"multipathing %s", pp1->wwid, pp1->dev);
--			return 1;
-+	if (!conf->ignore_new_devs) {
-+		vector_foreach_slot(pathvec, pp2, i) {
-+			if (pp1->dev == pp2->dev)
-+				continue;
-+			if (strncmp(pp1->wwid, pp2->wwid, WWID_SIZE) == 0) {
-+				condlog(3, "found multiple paths with wwid %s, "
-+					"multipathing %s", pp1->wwid, pp1->dev);
-+				return 1;
-+			}
- 		}
- 	}
- 	if (check_wwids_file(pp1->wwid, 0) < 0) {
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 21df7be..8f4fb58 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -518,8 +518,7 @@ rescan:
- 		mpp->flush_on_last_del = FLUSH_UNDEF;
- 		mpp->action = ACT_RELOAD;
- 	} else {
--		if (conf->find_multipaths &&
--		    !should_multipath(pp, vecs->pathvec)) {
-+		if (!should_multipath(pp, vecs->pathvec)) {
- 			orphan_path(pp, "only one path");
- 			return 0;
- 		}
-@@ -1572,6 +1571,7 @@ reconfigure (struct vectors * vecs)
- 		dm_drv_version(conf->version, TGT_MPATH);
- 		conf->verbosity = old->verbosity;
- 		conf->bindings_read_only = old->bindings_read_only;
-+		conf->ignore_new_devs = old->ignore_new_devs;
- 		conf->daemon = 1;
- 		configure(vecs, 1);
- 		free_config(old);
-@@ -2076,7 +2076,7 @@ main (int argc, char *argv[])
- 	if (!conf)
- 		exit(1);
+ 	if (!(dmt = dm_task_create(DM_DEVICE_INFO)))
+ 		return 0;
  
--	while ((arg = getopt(argc, argv, ":dsv:k::B")) != EOF ) {
-+	while ((arg = getopt(argc, argv, ":dsv:k::Bn")) != EOF ) {
- 	switch(arg) {
- 		case 'd':
- 			foreground = 1;
-@@ -2102,6 +2102,9 @@ main (int argc, char *argv[])
- 		case 'B':
- 			conf->bindings_read_only = 1;
- 			break;
-+		case 'n':
-+			conf->ignore_new_devs = 1;
-+			break;
- 		default:
- 			;
- 		}
-diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
-index 7fe6597..77f6e72 100644
---- a/multipathd/multipathd.8
-+++ b/multipathd/multipathd.8
-@@ -35,6 +35,10 @@ will use its WWID as its alias.
- .TP
- .B -k 
- multipathd will enter interactive mode. From this mode, the available commands can be viewed by entering "help". When you are finished entering commands, press CTRL-D to quit.
-+.TP
-+.B -n
-+ignore new devices. Multipathd will not create a multipath device unless the
-+wwid for the device is already listed in the wwids file.
+@@ -187,8 +191,15 @@ dm_map_present (char * str)
+ 	if (!dm_task_get_info(dmt, &info))
+ 		goto out;
  
- .SH COMMANDS
- .TP
+-	if (info.exists)
+-		r = 1;
++	if (!info.exists)
++		goto out;
++
++	r = 1;
++	if (uuid) {
++		uuidtmp = dm_task_get_uuid(dmt);
++		if (uuidtmp && strlen(uuidtmp))
++			*uuid = strdup(uuidtmp);
++	}
+ out:
+ 	dm_task_destroy(dmt);
+ 	return r;
+diff --git a/kpartx/devmapper.h b/kpartx/devmapper.h
+index ac1d5d9..436efe1 100644
+--- a/kpartx/devmapper.h
++++ b/kpartx/devmapper.h
+@@ -13,7 +13,7 @@ int dm_prereq (char *, int, int, int);
+ int dm_simplecmd (int, const char *, int, uint16_t);
+ int dm_addmap (int, const char *, const char *, const char *, uint64_t,
+ 	       int, const char *, int, mode_t, uid_t, gid_t);
+-int dm_map_present (char *);
++int dm_map_present (char *, char **);
+ char * dm_mapname(int major, int minor);
+ dev_t dm_get_first_dep(char *devname);
+ char * dm_mapuuid(int major, int minor);
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 8047698..e8c35d4 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -191,6 +191,21 @@ get_hotplug_device(void)
+ 	return device;
+ }
+ 
++static int
++check_uuid(char *uuid, char *part_uuid, char **err_msg) {
++	char *map_uuid = strchr(part_uuid, '-');
++	if (!map_uuid || strncmp(part_uuid, "part", 4) != 0) {
++		*err_msg = "not a kpartx partition";
++		return -1;
++	}
++	map_uuid++;
++	if (strcmp(uuid, map_uuid) != 0) {
++		*err_msg = "a partition of a different device";
++		return -1;
++	}
++	return 0;
++}
++
+ int
+ main(int argc, char **argv){
+ 	int i, j, m, n, op, off, arg, c, d, ro=0;
+@@ -432,6 +447,8 @@ main(int argc, char **argv){
+ 
+ 		case DELETE:
+ 			for (j = MAXSLICES-1; j >= 0; j--) {
++				char *part_uuid, *reason;
++
+ 				if (safe_sprintf(partname, "%s%s%d",
+ 					     mapname, delim, j+1)) {
+ 					fprintf(stderr, "partname too small\n");
+@@ -439,9 +456,18 @@ main(int argc, char **argv){
+ 				}
+ 				strip_slash(partname);
+ 
+-				if (!dm_map_present(partname))
++				if (!dm_map_present(partname, &part_uuid))
+ 					continue;
+ 
++				if (part_uuid && uuid) {
++					if (check_uuid(uuid, part_uuid, &reason) != 0) {
++						fprintf(stderr, "%s is %s. Not removing\n", partname, reason);
++						free(part_uuid);
++						continue;
++					}
++					free(part_uuid);
++				}
++
+ 				if (!dm_simplecmd(DM_DEVICE_REMOVE, partname,
+ 						  0, 0)) {
+ 					r++;
+@@ -466,6 +492,8 @@ main(int argc, char **argv){
+ 		case UPDATE:
+ 			/* ADD and UPDATE share the same code that adds new partitions. */
+ 			for (j = 0, c = 0; j < n; j++) {
++				char *part_uuid, *reason;
++
+ 				if (slices[j].size == 0)
+ 					continue;
+ 
+@@ -488,9 +516,19 @@ main(int argc, char **argv){
+ 					exit(1);
+ 				}
+ 
+-				op = (dm_map_present(partname) ?
++				op = (dm_map_present(partname, &part_uuid) ?
+ 					DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
+ 
++				if (part_uuid && uuid) {
++					if (check_uuid(uuid, part_uuid, &reason) != 0) {
++						fprintf(stderr, "%s is already in use, and %s\n", partname, reason);
++						r++;
++						free(part_uuid);
++						continue;
++					}
++					free(part_uuid);
++				}
++
+ 				if (!dm_addmap(op, partname, DM_TARGET, params,
+ 					       slices[j].size, ro, uuid, j+1,
+ 					       buf.st_mode & 0777, buf.st_uid,
+@@ -498,6 +536,7 @@ main(int argc, char **argv){
+ 					fprintf(stderr, "create/reload failed on %s\n",
+ 						partname);
+ 					r++;
++					continue;
+ 				}
+ 				if (op == DM_DEVICE_RELOAD &&
+ 				    !dm_simplecmd(DM_DEVICE_RESUME, partname,
+@@ -505,6 +544,7 @@ main(int argc, char **argv){
+ 					fprintf(stderr, "resume failed on %s\n",
+ 						partname);
+ 					r++;
++					continue;
+ 				}
+ 
+ 				dm_devn(partname, &slices[j].major,
+@@ -520,6 +560,7 @@ main(int argc, char **argv){
+ 			d = c;
+ 			while (c) {
+ 				for (j = 0; j < n; j++) {
++					char *part_uuid, *reason;
+ 					int k = slices[j].container - 1;
+ 
+ 					if (slices[j].size == 0)
+@@ -552,9 +593,19 @@ main(int argc, char **argv){
+ 						exit(1);
+ 					}
+ 
+-					op = (dm_map_present(partname) ?
++					op = (dm_map_present(partname,
++							     &part_uuid) ?
+ 					      DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
+ 
++					if (part_uuid && uuid) {
++						if (check_uuid(uuid, part_uuid, &reason) != 0) {
++							fprintf(stderr, "%s is already in use, and %s\n", partname, reason);
++							free(part_uuid);
++							continue;
++						}
++						free(part_uuid);
++					}
++
+ 					dm_addmap(op, partname, DM_TARGET, params,
+ 						  slices[j].size, ro, uuid, j+1,
+ 						  buf.st_mode & 0777,
+@@ -584,6 +635,7 @@ main(int argc, char **argv){
+ 			}
+ 
+ 			for (j = MAXSLICES-1; j >= 0; j--) {
++				char *part_uuid, *reason;
+ 				if (safe_sprintf(partname, "%s%s%d",
+ 					     mapname, delim, j+1)) {
+ 					fprintf(stderr, "partname too small\n");
+@@ -591,9 +643,19 @@ main(int argc, char **argv){
+ 				}
+ 				strip_slash(partname);
+ 
+-				if (slices[j].size || !dm_map_present(partname))
++				if (slices[j].size ||
++				    !dm_map_present(partname, &part_uuid))
+ 					continue;
+ 
++				if (part_uuid && uuid) {
++					if (check_uuid(uuid, part_uuid, &reason) != 0) {
++						fprintf(stderr, "%s is %s. Not removing\n", partname, reason);
++						free(part_uuid);
++						continue;
++					}
++					free(part_uuid);
++				}
++
+ 				if (!dm_simplecmd(DM_DEVICE_REMOVE,
+ 						  partname, 1, 0)) {
+ 					r++;
 -- 
 1.8.3.1
