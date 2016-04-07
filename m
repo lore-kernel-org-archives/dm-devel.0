@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 09/18] libmultipath: check correct function
-	for define
-Date: Thu,  7 Apr 2016 18:20:03 -0500
-Message-ID: <1460071212-21018-10-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 11/18] multipath: Fix minor text issues
+Date: Thu,  7 Apr 2016 18:20:05 -0500
+Message-ID: <1460071212-21018-12-git-send-email-bmarzins@redhat.com>
 References: <1460071212-21018-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,30 +21,55 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-multipath was setting LIBUDEV_API_RECVBUF in the makefile if
-udev_monitor_set_resolve_buffer_size existed. However the correct
-fuction name (and the one used in the code) is
-udev_monitor_set_receive_buffer_size. As a result, multipath was never
-setting the receive buffer size. This patch simply fixes the Makefile
-define.
+The multipath.conf man page gave the incorrect default for
+queue_without_daemon. The multipath usage output listed the -p option
+twice. And multipath was misspelled in an mpathpersist error message.
+This patch fixes these issues.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/Makefile | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmpathpersist/mpath_persist.c | 2 +-
+ multipath/main.c                | 1 -
+ multipath/multipath.conf.5      | 2 +-
+ 3 files changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index 11750c2..1ee968e 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -37,7 +37,7 @@ ifneq ($(strip $(LIBDM_API_COOKIE)),0)
- 	CFLAGS += -DLIBDM_API_COOKIE
- endif
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 7a2249f..b23e116 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -852,7 +852,7 @@ int update_map_pr(struct multipath *mpp)
+ 	if (!mpp->reservation_key)
+ 	{
+ 		/* Nothing to do. Assuming pr mgmt feature is disabled*/
+-		condlog(3, "%s: reservation_key not set in multiapth.conf", mpp->alias);
++		condlog(3, "%s: reservation_key not set in multipath.conf", mpp->alias);
+ 		return MPATH_PR_SUCCESS;
+ 	}
  
--LIBUDEV_API_RECVBUF = $(shell grep -Ecs '^[a-z]*[[:space:]]+udev_monitor_set_resolve_buffer_size' /usr/include/libudev.h)
-+LIBUDEV_API_RECVBUF = $(shell grep -Ecs '^[a-z]*[[:space:]]+udev_monitor_set_receive_buffer_size' /usr/include/libudev.h)
- 
- ifneq ($(strip $(LIBUDEV_API_RECVBUF)),0)
- 	CFLAGS += -DLIBUDEV_API_RECVBUF
+diff --git a/multipath/main.c b/multipath/main.c
+index decb590..d14a913 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -107,7 +107,6 @@ usage (char * progname)
+ 		"  -r      force devmap reload\n" \
+ 		"  -i      ignore wwids file\n" \
+ 		"  -B      treat the bindings file as read only\n" \
+-		"  -p      policy failover|multibus|group_by_serial|group_by_prio\n" \
+ 		"  -b fil  bindings file location\n" \
+ 		"  -w      remove a device from the wwids file\n" \
+ 		"  -W      reset the wwids file include only the current devices\n" \
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 9752c67..31c0eb8 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -389,7 +389,7 @@ multipathd running, access to the paths cannot be restored, and the kernel
+ cannot be told to stop queueing IO. Setting queue_without_daemon to
+ .I no
+ , avoids this problem. Default is
+-.I yes
++.I no
+ .TP
+ .B bindings_file
+ The full pathname of the binding file to be used when the user_friendly_names option is set. Defaults to
 -- 
 1.8.3.1
