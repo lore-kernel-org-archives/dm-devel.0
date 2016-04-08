@@ -1,16 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH] dm service time: measure service time
- rather than approximate it
-Date: Fri, 8 Apr 2016 15:53:14 -0400
-Message-ID: <20160408195314.GA8678@redhat.com>
-References: <1460141919-12177-1-git-send-email-snitzer@redhat.com>
-	<20160408190349.GA8453@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v2 10/18] multipathd: delay reloads during
+	creation
+Date: Fri, 8 Apr 2016 16:53:35 -0500
+Message-ID: <20160408215335.GL2915@octiron.msp.redhat.com>
+References: <1460071212-21018-1-git-send-email-bmarzins@redhat.com>
+	<1460071212-21018-11-git-send-email-bmarzins@redhat.com>
+	<57076D77.6020208@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20160408190349.GA8453@redhat.com>
+In-Reply-To: <57076D77.6020208@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,54 +21,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: j-nomura@ce.jp.nec.com, tgill@redhat.com
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Apr 08 2016 at  3:03pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Fri, Apr 08, 2016 at 10:36:07AM +0200, Zdenek Kabelac wrote:
+> However now the multipathd *kills* this assumption - since the current udev
+> rules implementation for multipath devices targets only for the initial scan
+> and all subsequent RESUMES are supposed to be ignored as it's believed the
+> device remained in the same state and only some paths have been added/lost.
+> Scanning such a device thus shall not change any remembered info in udev
+> database. As 'extra' bonus multipath may SUSPEND devices (and that's somehow
+> solved by this patch) right after the initial activation of the device so
+> the lvm2 check for skipping of suspended devices may have skipped the whole
+> discovery operation and since further RESUMES were meant to be ignore,
+> device remained invisible forever.
 
-> On Fri, Apr 08 2016 at  2:58pm -0400,
-> Mike Snitzer <snitzer@redhat.com> wrote:
+Yep, that's the general idea of the patch, to avoid the case where the
+initial activation uevent isn't getting processed while the device is
+suspended.
+ 
+> Now we get to the best technical solution for multipath here with other
+> surrounding software (i.e. udev) - before multipath starts to mark RESUMES
+> as 'ignorable' it should check/validate if udevdb already does contain a
+> valid information about the device (i.e. it's been scanned...)  and only in
+> this case it would mark this device to be ignored.
+
+This makes sense, and has the benefit of not forcing multipathd to wait
+before doing reloads, or having to deal with what happens if the initial
+change uevent gets backed up. The only thing I'm not sure we have is a
+variable to check in the udev database that will get set (and then
+retained over subsequent uevents) when the device is scanned, regardless
+of whether any lvm metadata is found or not. Peter, does anything like
+this exist? I didn't see anything that looked like what we'd need. If
+nothing currently exists, could we add a variable that gets added to the
+udev database for a device whenever pvscan is run, and also gets
+imported from the database on all change events?
+
+-Ben
+
+> Regards
 > 
-> > The DM multipath service-time path-selector has historically tracked the
-> > amount of outstanding IO per path and used that to approximate the
-> > service-time of each path.  In practice this has shown itself to work
-> > fairly well but we can do better by measuring the actual service-time
-> > during IO completion and using it as the basis for path selection.
-> > 
-> > Measuring the actual service-time is still prone to inaccuracies given
-> > that service-times vary with IO size.  But to counter any potential for
-> > drawing incorrect conclusions about the service-times of a given path
-> > the measured service-times are reset periodically.
-> > 
-> > This approach has provided a 10% increase in the selection of a path
-> > that was forcibly made to be less loaded than the alternative path.
-> > 
-> > Reported-by: Todd Gill <tgill@redhat.com>
-> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> 
-> It should be noted that I have not looked at the implications on actual
-> throughput or system load.  But I wanted to get this RFC out to see what
-> others thought about making dm-service-time more intuitive in its
-> implementation.
-
-I have notice fio's total and completion latency ('lat' and 'clat') go
-up on this simple SAS testbed:
-
-before:
-
- write: io=345920KB, bw=34379KB/s, iops=537, runt= 10062msec
-    slat (usec): min=10, max=47, avg=22.51, stdev= 3.71
-    clat (msec): min=1, max=146, avg=59.50, stdev=11.84
-     lat (msec): min=1, max=146, avg=59.52, stdev=11.84
-
-after:
-
-  write: io=347456KB, bw=34545KB/s, iops=539, runt= 10058msec
-    slat (usec): min=6, max=46, avg=20.50, stdev= 3.68
-    clat (usec): min=385, max=146556, avg=59219.94, stdev=11580.00
-     lat (usec): min=403, max=146573, avg=59240.87, stdev=11580.57
-
-Which obviously isn't what we want (might speak to why Junichi decided
-to approximate service-time)...
+> Zdenek
