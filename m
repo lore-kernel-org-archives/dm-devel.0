@@ -1,88 +1,247 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: [PATCH v2 10/18] multipathd: delay reloads during
-	creation
-Date: Fri, 8 Apr 2016 10:36:07 +0200
-Message-ID: <57076D77.6020208@redhat.com>
-References: <1460071212-21018-1-git-send-email-bmarzins@redhat.com>
-	<1460071212-21018-11-git-send-email-bmarzins@redhat.com>
+From: Johannes Thumshirn <jthumshirn@suse.de>
+Subject: Re: [dm-devel] [RFC PATCH 0/4] dm mpath: vastly improve blk-mq IO performance
+Date: Fri, 08 Apr 2016 13:42:16 +0200
+Message-ID: <2760420.6GyDefUaH5@c203>
+References: <1459454666-76428-1-git-send-email-snitzer@redhat.com> <57067597.4080103@suse.de> <20160407153448.GA30510@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1460071212-21018-11-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20160407153448.GA30510@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.de>, linux-scsi@vger.kernel.org, sagig@dev.mellanox.co.il, jmoyer@redhat.com, linux-block@vger.kernel.org, j-nomura@ce.jp.nec.com
 List-Id: dm-devel.ids
 
-Dne 8.4.2016 v 01:20 Benjamin Marzinski napsal(a):
-> lvm needs PV devices to not be suspended while the udev rules are
-> running, for them to be correctly identified as PVs. However, multipathd
-> will often be in a situation where it will create a multipath device
-> upon seeing a path, and then immediately reload the device upon seeing
-> another path.  If multipath is reloading a device while processing the
-> udev event from its creation, lvm can fail to identify it as a PV. This
-> can cause systems to fail to boot. Unfortunately, using udev
-> synchronization cookies to solve this issue would cause a host of other
-> issues that could only be avoided by a pretty substantial change in how
-> multipathd does locking and event processing.
+Ladies and Gentlemen,
+To show off some numbers from our testing:
+
+All tests are performed against the cache of the Array, not the disks a=
+s we=20
+wanted to test the Linux stack not the Disk Array.
+
+All single queue tests have been performed with the deadline I/O Schedu=
+ler.
+
+Comments welcome, have fun reading :-)
+
+QLogic 32GBit FC HBA NetApp EF560 Array w/ DM MQ this patchset:
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D
+Random Read:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 785136 | 3066.1MB/s |
+8k   | 734983 | 5742.6MB/s |
+16k | 398516 | 6226.9MB/s |
+32k | 200589 | 6268.5MB/s |
+64k | 100417 | 6276.2MB/s |
+
+Sequential Read:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 788620 | 3080.6MB/s |
+8k   | 736359 | 5752.9MB/s |
+16k | 398597 | 6228.8MB/s |
+32k |  200487| 6265.3MB/s |
+64k | 100402 | 6275.2MB/s |
+
+Random Write:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 242105 | 968423KB/s |
+8k   | 222290 | 1736.7MB/s |
+16k | 178191 | 2784.3MB/s |
+32k | 133619 | 4175.7MB/s |
+64k |   97693 | 6105.9MB/s |
+
+Sequential Write:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 134788 | 539155KB/s |
+8k   | 132361 | 1034.8MB/s |
+16k | 129941 | 2030.4MB/s |
+32k | 128288 | 4009.4MB/s |
+64k |   97776 | 6111.0MB/s |
+
+QLogic 32GBit FC HBA NetApp EF560 Array w/ DM SQ this patchset:
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D
+Random Read:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 112402 | 449608KB/s |
+8k   | 112818 | 902551KB/s |
+16k | 111885 | 1748.3MB/s |
+32k | 188015 | 5875.6MB/s |
+64k |   99021 |  6188.9MB/s |
+
+Sequential Read:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 115046 | 460186KB/s |
+8k   | 113974 | 911799KB/s |
+16k | 113374 | 1771.5MB/s |
+32k | 192932 | 6029.2MB/s |
+64k | 100474 | 6279.7MB/s |
+
+Random Write:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 114284 | 457138KB/s |
+8k   | 113992 | 911944KB/s |
+16k | 113715 | 1776.9MB/s |
+32k | 130402 | 4075.9MB/s |
+64k |   92243 | 5765.3MB/s |
+
+Sequential Write:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 115540 | 462162KB/s |
+8k   | 114243 | 913951KB/s |
+16k | 300153 | 4689.1MB/s |
+32k | 141069 | 4408.5MB/s |
+64k |   97620 | 6101.3MB/s |
 
 
-This is somewhat misunderstanding of the core problem it's not about 'lvm2 
-needs to be not suspended'. So let me elaborate here with more details.
-(And Peter please fix me in case of mistakes ;)
+QLogic 32GBit FC HBA NetApp EF560 Array w/ DM MQ previous patchset:
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+Random Read:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 782733 | 3057.6MB/s |
+8k   | 732143 | 5719.9MB/s |
+16k | 398314 | 6223.7MB/s |
+32k | 200538 | 6266.9MB/s |
+64k | 100422 | 6276.5MB/s |
 
+Sequential Read:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 786707 | 3073.8MB/s |
+8k   | 730579 | 5707.7MB/s |
+16k | 398799 | 6231.3MB/s |
+32k | 200518 | 6266.2MB/s |
+64k | 100397 | 6274.9MB/s |
 
-Lvm2 command has lvm.conf settings allowing a user to select if he wants to 
-scan devices that are suspended or not - there is already a 'race' - since 
-checking device is not suspended and then opening it has lots of room for the 
-race, but it's not a major issue in this case.
+Random Write:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 242426 | 969707KB/s |
+8k   | 223079 | 1742.9MB/s |
+16k | 177889 | 2779.6MB/s |
+32k | 133637 | 4176.2MB/s |
+64k |   97727 | 6107.1MB/s |
 
+Sequential Write:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 134360 | 537442KB/s |
+8k   | 129738 | 1013.6MB/s |
+16k | 129746 | 2027.3MB/s |
+32k | 127875 | 3996.1MB/s |
+64k |   97683 | 6105.3MB/s |
 
-The reasons to skip reading suspended devices are primarily to avoid holding 
-VG lock for potentially a very long time and also avoiding udev with its 
-'built-in' 30sec timeout to kills its worker process blocked in blkid scan
-with a danger of marking device as GONE and having further consequences like 
-an automated umount by systemd....
+Emulex 16GBit FC HBA NetApp EF560 Array w/ DM MQ this patchset :
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D
+[Beware, this is with Hannes' lockless lpfc patches, which are not upst=
+ream as=20
+they're quite experimental, but are good at showing the capability of t=
+he new=20
+dm-mpath]
 
+Random Read:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 939752 | 3670.1MB/s |
+8k   | 741462 | 5792.7MB/s |
+16k | 399285 | 6238.9MB/s |
+32k | 196490 | 6140.4MB/s |
+64k | 100325 | 6270.4MB/s |
 
-Thus lvm2/dm udev rules implemented a (racy) check for skipping a read of 
-suspended device and this check may also skip the call of pvscan with the 
-generic assumption  RESUME goes afterwards with a CHANGE event and device will 
-be properly scanned anyway - so there would be no info lost - only gets into 
-udev database later.
+Sequential Read:
+BS   | IOPS     | BW
+------+------------+-------------------+
+4k   | 926222 | 3618.6MB/s |
+8k   | 750125 | 5860.4MB/s |
+16k | 397770 | 6215.2MB/s |
+32k | 200130 | 6254.8MB/s |=20
+64k | 100397 | 6274.9MB/s |
 
+Random Write:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 251938 | 984.14MB/s |
+8k   | 226712 | 1771.2MB/s |
+16k | 180739 | 2824.5MB/s |
+32k | 133316 | 4166.2MB/s |
+64k |  98738  | 6171.2MB/s |
 
-However now the multipathd *kills* this assumption - since the current udev 
-rules implementation for multipath devices targets only for the initial scan 
-and all subsequent RESUMES are supposed to be ignored as it's believed the 
-device remained in the same state and only some paths have been added/lost. 
-Scanning such a device thus shall not change any remembered info in udev 
-database. As 'extra' bonus multipath may SUSPEND devices (and that's somehow 
-solved by this patch) right after the initial activation of the device so the 
-lvm2 check for skipping of suspended devices may have skipped the whole 
-discovery operation and since further RESUMES were meant to be ignore, device 
-remained invisible forever.
+Sequential Write:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 134660 | 538643KB/s |
+8k   | 131585 | 1028.9MB/s |
+16k | 131030 | 2047.4MB/s |
+32k | 126987 | 3968.4MB/s |
+64k |  98882  | 6180.2MB/s |
 
-Now we get to the best technical solution for multipath here with other 
-surrounding software (i.e. udev) - before multipath starts to mark RESUMES as 
-'ignorable' it should check/validate if udevdb already does contain a valid 
-information about the device (i.e. it's been scanned...)  and only in this 
-case it would mark this device to be ignored.
+Emulex 16GBit FC HBA NetApp EF560 Array w/ DM SQ this patchset:
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D
+Random Read:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 101860 | 407443KB/s |
+8k   | 100242 | 801940KB/s |
+16k |   99774 | 1558.1MB/s |
+32k | 134304 | 4197.8MB/s |
+64k | 100126 | 6257.1MB/s |
 
-This may of course mean there will be few more extra initial repeated scans - 
-but it's the only 'safest' way to proceed (i.e. you can't resolve the problem 
-with cookie waiting on loaded system - since the udev 30sec timeout is 
-unpredictable....)
+Sequential Read:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 285585 | 1115.6MB/s |=20
+8k   | 313619 | 2450.2MB/s |
+16k | 190696 | 2979.7MB/s |
+32k | 200569 | 6267.9MB/s |
+64k | 100366 | 6272.1MB/s |
 
-Regards
+Random Write:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   |  98434  | 393738KB/s |
+8k   |  97286  | 778294KB/s |=20
+16k |  97623  | 1525.4MB/s |
+32k | 126999 | 3968.8MB/s |
+64k |  94309  | 5894.4MB/s |
 
-Zdenek
+Sequential Write:
+BS   | IOPS     | BW                |
+------+------------+-------------------+
+4k   | 330066 | 1289.4MB/s |
+8k   | 452792 | 3537.5MB/s |
+16k | 334481 | 5226.3MB/s |
+32k | 186916 | 5841.2MB/s |
+64k |  88698  | 5543.7MB/s |
+
+--=20
+Johannes Thumshirn                                          Storage
+jthumshirn@suse.de                                +49 911 74053 689
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+HRB 21284 (AG N=FCrnberg)
+Key fingerprint =3D EC38 9CAB C2C4 F25D 8600 D0D0 0393 969D 2D76 0850
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
