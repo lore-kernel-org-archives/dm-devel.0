@@ -1,47 +1,45 @@
-From: Sudip Mukherjee <sudipm.mukherjee@gmail.com>
-Subject: Re: [PATCH] MAINTAINERS: correct entry for LVM
-Date: Mon, 11 Apr 2016 22:09:48 +0530
-Message-ID: <570BD354.2000100@gmail.com>
-References: <1460388039-20282-1-git-send-email-sudipm.mukherjee@gmail.com> <20160411155147.GB9288@agk-dp.fab.redhat.com> <570BCD85.6090807@gmail.com> <20160411162306.GC9288@agk-dp.fab.redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: Next release plans?
+Date: Mon, 11 Apr 2016 19:09:43 +0200
+Message-ID: <570BDA57.7040606@gmail.com>
+References: <561531AF.4080907@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160411162306.GC9288@agk-dp.fab.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Joe Perches <joe@perches.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <561531AF.4080907@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>, mathieu.tl@gmail.com
 List-Id: dm-devel.ids
 
-On Monday 11 April 2016 09:53 PM, Alasdair G Kergon wrote:
-> On Mon, Apr 11, 2016 at 09:45:01PM +0530, Sudip Mukherjee wrote:
->> L stands for "Mailing list that is relevant to this area", and this is a
->> mailing list. :)
->
-> Your proposed patch isn't changing the L entry, so this is of no relevance.
+On 10/07/2015 04:52 PM, Xose Vazquez Perez wrote:
 
-Sorry, I am not understanding.
+> Christophe Varoqui wrote:
+> 
+>> Mathieu Trudel-Lapierre wrote:
+>>>
+>>> I'm curious, are there any plans to cut a new formal release tarball in
+>>> the near future?
+>>>
+>>> The 0.5.0 release was done more than a year ago, and it seems like there
+>>> are quite a lot of bug fixes which may benefit everyone. In Ubuntu, I've
+>>> so far been cherry-picking patches as necessary, but it's obvious this
+>>> can't scale well (and that then important patches may go unnoticed).
+> 
+>> yes, you can expect a formal release before summer holidays.
+>> I still have to catch up with the patches my inbox before.
+> 
+> Any progress ? There are a lot of SuSE/Red Hat pending patches.
 
-The current entry in MAINTAINERS is:
-DEVICE-MAPPER  (LVM)
-M:      Alasdair Kergon <agk@redhat.com>
-M:      Mike Snitzer <snitzer@redhat.com>
-M:      dm-devel@redhat.com
-L:      dm-devel@redhat.com
-...
+Christophe, how's it going?
+Hannes, is there new SuSE patches for upstream?
 
-So my patch just removed the line : "M:      dm-devel@redhat.com"
-
-So now the entry becomes :
-DEVICE-MAPPER  (LVM)
-M:      Alasdair Kergon <agk@redhat.com>
-M:      Mike Snitzer <snitzer@redhat.com>
-L:      dm-devel@redhat.com
-...
-
-So, now it correctly shows dm-devel@redhat.com as a mailing list which 
-should have cc to all the patches related to LVM.
-
-Or am I understanding this wrong?
-
-regards
-sudip
+-thanks-
