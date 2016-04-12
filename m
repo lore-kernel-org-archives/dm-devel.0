@@ -1,153 +1,167 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 4.5 052/238] dm cache: make sure every
- metadata function checks fail_io
-Date: Tue, 12 Apr 2016 13:18:52 -0400
-Message-ID: <20160412171851.GA688@redhat.com>
-References: <20160410183456.398741366@linuxfoundation.org>
-	<20160410183459.304585887@linuxfoundation.org>
-	<1460424423.25201.87.camel@decadent.org.uk>
+Subject: [RFC PATCH] block: wire blkdev_fallocate() to
+ block_device_operations' reserve_space
+Date: Tue, 12 Apr 2016 16:04:59 -0400
+Message-ID: <20160412200459.GA10730@redhat.com>
+References: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1460424423.25201.87.camel@decadent.org.uk>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ben Hutchings <ben@decadent.org.uk>
-Cc: Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com
+In-Reply-To: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Brian Foster <bfoster@redhat.com>
+Cc: xfs@oss.sgi.com, linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, "Darrick J. Wong" <darrick.wong@oracle.com>
 List-Id: dm-devel.ids
 
-On Mon, Apr 11 2016 at  9:27pm -0400,
-Ben Hutchings <ben@decadent.org.uk> wrote:
+On Tue, Apr 12 2016 at 12:42P -0400,
+Brian Foster <bfoster@redhat.com> wrote:
 
-> On Sun, 2016-04-10 at 11:33 -0700, Greg Kroah-Hartman wrote:
-> > 4.5-stable review patch.=A0=A0If anyone has any objections, please let =
-me know.
-> =
+> Hi all,
+> 
+> This is v2 of the XFS and block device reservation experiment. The
+> significant changes in v2 are that the bdev interface has been condensed
+> to a single callback function, the XFS transaction reservation
+> management has been reworked to make transactions responsible for
+> tracking and releasing excess reservation (for non-delalloc cases) and a
+> workaround for the fallocate over-reservation issue is included. Beyond
+> that, this version adds a bunch of miscellaneous cleanups and fixes some
+> of the nastier locking/leak issues present in the first rfc.
+> 
+> Patches 1-2 refactor some XFS reserve pool and block accounting code in
+> preparation for subsequent patches. Patches 3-5 add block/device-mapper
+> reservation support. Patches 6-10 add the core reservation
+> infrastructure and management bits to XFS. See the link to the original
+> rfc below for instructions and further details around the purpose of
+> this series.
+> 
+> Finally, note that this is still highly experimental/theoretical and
+> should not be used on production systems. Thoughts, reviews, flames
+> appreciated.
 
-> I've dropped stable because this isn't actually broken, but...
-> =
+Thanks for carrying on with this work Brian.
 
-> > ------------------
-> > =
+I've started to review your patchset and Darrick's fallocate patchset.
+I've pushed a branch to linux-dm.git that combines the 2, see:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-fallocate
 
-> > From: Joe Thornber <ejt@redhat.com>
-> > =
+and then added this RFC patch, at the end, which relies on both of your
+patchsets -- you'll see blkdev_ensure_space_exists() has a FIXME which
+implies it isn't much more than simply stubbed out at this point
+(completely untested):
 
-> > commit d14fcf3dd79c0b8a8d0ba469c44a6b04f3a1403b upstream.
-> > =
+From: Mike Snitzer <snitzer@redhat.com>
+Date: Tue, 12 Apr 2016 15:54:31 -0400
+Subject: [RFC PATCH] block: wire blkdev_fallocate() to block_device_operations' reserve_space
 
-> > Otherwise operations may be attempted that will only ever go on to crash
-> > (since the metadata device is either missing or unreliable if 'fail_io'
-> > is set).
-> > =
+This effectively exposes the primitive for "ensure space exists".  It
+relies on block_device_operations' reserve_space method.
 
-> > Signed-off-by: Joe Thornber <ejt@redhat.com>
-> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> > Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-> > =
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ block/blk-lib.c        | 26 ++++++++++++++++++++++++++
+ fs/block_dev.c         | 20 +++++++++++---------
+ include/linux/blkdev.h |  2 ++
+ 3 files changed, 39 insertions(+), 9 deletions(-)
 
-> > ---
-> > =A0drivers/md/dm-cache-metadata.c |=A0=A0=A098 ++++++++++++++++++++++++=
------------------
-> > =A0drivers/md/dm-cache-metadata.h |=A0=A0=A0=A04 -
-> > =A0drivers/md/dm-cache-target.c=A0=A0=A0|=A0=A0=A012 ++++-
-> > =A03 files changed, 71 insertions(+), 43 deletions(-)
-> > =
+diff --git a/block/blk-lib.c b/block/blk-lib.c
+index 9dca6bb..5042a84 100644
+--- a/block/blk-lib.c
++++ b/block/blk-lib.c
+@@ -314,3 +314,29 @@ int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
+ 	return __blkdev_issue_zeroout(bdev, sector, nr_sects, gfp_mask);
+ }
+ EXPORT_SYMBOL(blkdev_issue_zeroout);
++
++/**
++ * blkdev_ensure_space_exists - preallocate a block range
++ * @bdev:	blockdev to preallocate space for
++ * @sector:	start sector
++ * @nr_sects:	number of sectors to preallocate
++ * @gfp_mask:	memory allocation flags (for bio_alloc)
++ * @flags:	FALLOC_FL_* to control behaviour
++ *
++ * Description:
++ *    Ensure space exists, or is preallocated, for the sectors in question.
++ */
++int blkdev_ensure_space_exists(struct block_device *bdev, sector_t sector,
++		sector_t nr_sects, unsigned long flags)
++{
++	sector_t res;
++	const struct block_device_operations *ops = bdev->bd_disk->fops;
++
++	if (!ops->reserve_space)
++		return -EOPNOTSUPP;
++
++	// FIXME: check with Brian Foster on whether it makes sense to
++	// use BDEV_RES_GET/BDEV_RES_MOD instead of BDEV_RES_PROVISION?
++	return ops->reserve_space(bdev, BDEV_RES_PROVISION, sector, nr_sects, &res);
++}
++EXPORT_SYMBOL(blkdev_ensure_space_exists);
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 5a2c3ab..b34c07b 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -1801,17 +1801,13 @@ long blkdev_fallocate(struct file *file, int mode, loff_t start, loff_t len)
+ 	struct request_queue *q = bdev_get_queue(bdev);
+ 	struct address_space *mapping;
+ 	loff_t end = start + len - 1;
+-	loff_t bs_mask, isize;
++	loff_t isize;
+ 	int error;
+ 
+ 	/* We only support zero range and punch hole. */
+ 	if (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
+ 		return -EOPNOTSUPP;
+ 
+-	/* We haven't a primitive for "ensure space exists" right now. */
+-	if (!(mode & ~FALLOC_FL_KEEP_SIZE))
+-		return -EOPNOTSUPP;
+-
+ 	/* Only punch if the device can do zeroing discard. */
+ 	if ((mode & FALLOC_FL_PUNCH_HOLE) &&
+ 	    (!blk_queue_discard(q) || !q->limits.discard_zeroes_data))
+@@ -1829,9 +1825,12 @@ long blkdev_fallocate(struct file *file, int mode, loff_t start, loff_t len)
+ 			return -EINVAL;
+ 	}
+ 
+-	/* Don't allow IO that isn't aligned to logical block size */
+-	bs_mask = bdev_logical_block_size(bdev) - 1;
+-	if ((start | len) & bs_mask)
++	/*
++	 * Don't allow IO that isn't aligned to minimum IO size (io_min)
++	 * - for normal device's io_min is usually logical block size
++	 * - but for more exotic devices (e.g. DM thinp) it may be larger
++	 */
++	if ((start | len) % bdev_io_min(bdev))
+ 		return -EINVAL;
+ 
+ 	/* Invalidate the page cache, including dirty pages. */
+@@ -1839,7 +1838,10 @@ long blkdev_fallocate(struct file *file, int mode, loff_t start, loff_t len)
+ 	truncate_inode_pages_range(mapping, start, end);
+ 
+ 	error = -EINVAL;
+-	if (mode & FALLOC_FL_ZERO_RANGE)
++	if (!(mode & ~FALLOC_FL_KEEP_SIZE))
++		error = blkdev_ensure_space_exists(bdev, start >> 9, len >> 9,
++						   mode);
++	else if (mode & FALLOC_FL_ZERO_RANGE)
+ 		error = blkdev_issue_zeroout(bdev, start >> 9, len >> 9,
+ 					    GFP_KERNEL, false);
+ 	else if (mode & FALLOC_FL_PUNCH_HOLE)
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 6c6ea96..4147af2 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1132,6 +1132,8 @@ extern int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
+ 		sector_t nr_sects, gfp_t gfp_mask, struct page *page);
+ extern int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
+ 		sector_t nr_sects, gfp_t gfp_mask, bool discard);
++extern int blkdev_ensure_space_exists(struct block_device *bdev, sector_t sector,
++		sector_t nr_sects, unsigned long flags);
+ static inline int sb_issue_discard(struct super_block *sb, sector_t block,
+ 		sector_t nr_blocks, gfp_t gfp_mask, unsigned long flags)
+ {
+-- 
+2.6.4 (Apple Git-63)
 
-> > --- a/drivers/md/dm-cache-metadata.c
-> > +++ b/drivers/md/dm-cache-metadata.c
-> > @@ -867,19 +867,40 @@ static int blocks_are_unmapped_or_clean(
-> > =A0	return 0;
-> > =A0}
-> > =A0
-> > -#define WRITE_LOCK(cmd) \
-> > -	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) \
-> > +#define WRITE_LOCK(cmd)	\
-> > +	down_write(&cmd->root_lock); \
-> > +	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) { \
-> > +		up_write(&cmd->root_lock); \
-> > =A0		return -EINVAL; \
-> > -	down_write(&cmd->root_lock)
-> > +	}
-> > =A0
-> > =A0#define WRITE_LOCK_VOID(cmd) \
-> > -	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) \
-> > +	down_write(&cmd->root_lock); \
-> > +	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) { \
-> > +		up_write(&cmd->root_lock); \
-> > =A0		return; \
-> > -	down_write(&cmd->root_lock)
-> > +	}
-> =
-
-> Whenever a macro expands to multiple statements they should be wrapped
-> up in do { ... } while (0) so the macro is safe to use in other
-> compound statements.
-> =
-
-> That's not a regression for these existing macros, but:
-> =
-
-> > =A0#define WRITE_UNLOCK(cmd) \
-> > =A0	up_write(&cmd->root_lock)
-> > =A0
-> > +#define READ_LOCK(cmd) \
-> > +	down_read(&cmd->root_lock); \
-> > +	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) { \
-> > +		up_read(&cmd->root_lock); \
-> > +		return -EINVAL; \
-> > +	}
-> > +
-> > +#define READ_LOCK_VOID(cmd)	\
-> > +	down_read(&cmd->root_lock); \
-> > +	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) { \
-> > +		up_read(&cmd->root_lock); \
-> > +		return; \
-> > +	}
-> [...]
-> =
-
-> here you're repeating the same broken pattern in new macros. =A0Which
-> checkpatch.pl would have complained about, if you'd thought to run it.
-> =
-
-> Hiding return statements in macros is another bad idea (who expects
-> exceptions in C?). =A0And once we reject that bad idea, all these macros
-> can be inline functions, like:
-> =
-
-> static inline bool dm_cm_read_lock(struct dm_cache_metadata *cmd)
-> {
-> 	down_read(&cmd->root_lock);
-> 	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) {
-> 		up_read(&cmd->root_lock);
-> 		return false;
-> 	}
-> 	return true;
-> }
-> =
-
-> /* ... */
-> =
-
-> 	if (!dm_cm_read_lock(cmd))
-> 		return -EINVAL;
-> =
-
-> Actually... I said this wasn't broken, but should the READ_LOCK macros
-> really fail in case dm_bm_is_read_only(), or only if cmd->fail_io?
-
-Thanks for the report!
-
-I've staged this to go to Linus by the end of the week:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/com=
-mit/?h=3Ddm-4.6&id=3Da64204672859248c89c8df796421442fb41e59ec
