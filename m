@@ -1,122 +1,101 @@
 From: Brian Foster <bfoster@redhat.com>
-Subject: [RFC v2 PATCH 04/10] dm: add methods to set and get reserved space
-Date: Tue, 12 Apr 2016 12:42:47 -0400
-Message-ID: <1460479373-63317-5-git-send-email-bfoster@redhat.com>
+Subject: [RFC v2 PATCH 08/10] xfs: handle bdev reservation ENOSPC correctly from XFS reserved pool
+Date: Tue, 12 Apr 2016 12:42:51 -0400
+Message-ID: <1460479373-63317-9-git-send-email-bfoster@redhat.com>
 References: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: xfs@oss.sgi.com
-Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Mike Snitzer <snitzer@redhat.com>
+The XFS reserved block pool holds blocks from general allocation for
+internal purposes. When enabled, these blocks shall also carry a
+reservation from the block device to guarantee they are usable.
 
-[BF: Condensed to single function.]
+The reserved pool allocation code currently uses a retry algorithm based
+on the available space estimation. It assumes that an inability to
+allocate blocks based on the estimation is a transient problem. Now that
+block allocation attempts bdev reservation, however, an ENOSPC could
+originate from the block device and might not be transient.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Because the retry algorithm cannot distinguish between fs block
+allocation and bdev reservation, separate the two operations in this
+particular case. If the bdev reservation fails, back off the reservation
+delta until something can be reserved or return ENOSPC to the caller.
+Once a bdev reservation is made, attempt to allocate blocks from the fs
+and return to the original retry algorithm based on the free space
+estimation. This prevents infinite retries in the event of a reserved
+pool allocation request that cannot be satisfied from a bdev that
+supports reservation.
+
+Signed-off-by: Brian Foster <bfoster@redhat.com>
 ---
- drivers/md/dm.c               | 41 +++++++++++++++++++++++++++++++++++++++++
- include/linux/device-mapper.h |  5 +++++
- 2 files changed, 46 insertions(+)
+ fs/xfs/xfs_fsops.c | 29 +++++++++++++++++++++++++++--
+ 1 file changed, 27 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index be49057..8f95e78 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -664,6 +664,46 @@ out:
- 	return r;
- }
+diff --git a/fs/xfs/xfs_fsops.c b/fs/xfs/xfs_fsops.c
+index 87d4b1b..79ae408 100644
+--- a/fs/xfs/xfs_fsops.c
++++ b/fs/xfs/xfs_fsops.c
+@@ -40,6 +40,7 @@
+ #include "xfs_trace.h"
+ #include "xfs_log.h"
+ #include "xfs_filestream.h"
++#include "xfs_thin.h"
  
-+/*
-+ * FIXME: factor out common helper that can be used by
-+ * multiple block_device_operations -> target methods
-+ * (including dm_blk_ioctl above)
-+ */
-+
-+static int dm_blk_reserve_space(struct block_device *bdev, int mode,
-+				sector_t offset, sector_t len, sector_t *res)
-+{
-+	struct mapped_device *md = bdev->bd_disk->private_data;
-+	int srcu_idx;
-+	struct dm_table *map;
-+	struct dm_target *tgt;
-+	int r = -EINVAL;
-+
-+	map = dm_get_live_table(md, &srcu_idx);
-+
-+	if (!map || !dm_table_get_size(map))
-+		goto out;
-+
-+	/* We only support devices that have a single target */
-+	if (dm_table_get_num_targets(map) != 1)
-+		goto out;
-+
-+	tgt = dm_table_get_target(map, 0);
-+	if (!tgt->type->reserve_space)
-+		goto out;
-+
-+	if (dm_suspended_md(md)) {
-+		r = -EAGAIN;
-+		goto out;
-+	}
-+
-+	r = tgt->type->reserve_space(tgt, mode, offset, len, res);
-+out:
-+	dm_put_live_table(md, srcu_idx);
-+
-+	return r;
-+}
-+
- static struct dm_io *alloc_io(struct mapped_device *md)
- {
- 	return mempool_alloc(md->io_pool, GFP_NOIO);
-@@ -3723,6 +3763,7 @@ static const struct block_device_operations dm_blk_dops = {
- 	.ioctl = dm_blk_ioctl,
- 	.getgeo = dm_blk_getgeo,
- 	.pr_ops = &dm_pr_ops,
-+	.reserve_space = dm_blk_reserve_space,
- 	.owner = THIS_MODULE
- };
+ /*
+  * File system operations
+@@ -676,6 +677,7 @@ xfs_reserve_blocks(
+ 	__uint64_t		request;
+ 	__int64_t		free;
+ 	int			error = 0;
++	sector_t		res = 0;
  
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 0830c9e..b4825db 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -116,6 +116,10 @@ typedef void (*dm_io_hints_fn) (struct dm_target *ti,
-  */
- typedef int (*dm_busy_fn) (struct dm_target *ti);
+ 	/* If inval is null, report current values and return */
+ 	if (inval == (__uint64_t *)NULL) {
+@@ -743,6 +745,28 @@ xfs_reserve_blocks(
+ 			fdblks_delta = delta;
  
-+typedef int (*dm_reserve_space_fn) (struct dm_target *ti, int mode,
-+				    sector_t offset, sector_t len,
-+				    sector_t *res);
+ 		/*
++		 * Reserve pool blocks must carry a block device reservation (if
++		 * enabled). The block device could be much closer to ENOSPC
++		 * than the fs (i.e., a thin or snap device), so try to reserve
++		 * the bdev space first.
++		 */
++		spin_unlock(&mp->m_sb_lock);
++		if (mp->m_thin_reserve) {
++			while (fdblks_delta) {
++				res = xfs_fsb_res(mp, fdblks_delta, false);
++				error = xfs_thin_reserve(mp, res);
++				if (error != -ENOSPC)
++					break;
 +
- void dm_error(const char *message);
++				fdblks_delta >>= 1;
++			}
++			if (!fdblks_delta || error) {
++				spin_lock(&mp->m_sb_lock);
++				break;
++			}
++		}
++
++		/*
+ 		 * We'll either succeed in getting space from the free block
+ 		 * count or we'll get an ENOSPC. If we get a ENOSPC, it means
+ 		 * things changed while we were calculating fdblks_delta and so
+@@ -752,8 +776,9 @@ xfs_reserve_blocks(
+ 		 * Don't set the reserved flag here - we don't want to reserve
+ 		 * the extra reserve blocks from the reserve.....
+ 		 */
+-		spin_unlock(&mp->m_sb_lock);
+-		error = xfs_mod_fdblocks(mp, -fdblks_delta, 0);
++		error = __xfs_mod_fdblocks(mp, -fdblks_delta, 0);
++		if (error && mp->m_thin_reserve)
++			xfs_thin_unreserve(mp, res);
+ 		spin_lock(&mp->m_sb_lock);
+ 	}
  
- struct dm_dev {
-@@ -162,6 +166,7 @@ struct target_type {
- 	dm_busy_fn busy;
- 	dm_iterate_devices_fn iterate_devices;
- 	dm_io_hints_fn io_hints;
-+	dm_reserve_space_fn reserve_space;
- 
- 	/* For internal device-mapper use. */
- 	struct list_head list;
 -- 
 2.4.11
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
