@@ -1,71 +1,203 @@
-From: Sudip Mukherjee <sudipm.mukherjee@gmail.com>
-Subject: Re: [PATCH] MAINTAINERS: correct entry for LVM
-Date: Tue, 12 Apr 2016 11:01:26 +0530
-Message-ID: <570C882E.1060109@gmail.com>
-References: <1460388039-20282-1-git-send-email-sudipm.mukherjee@gmail.com> <20160411155147.GB9288@agk-dp.fab.redhat.com> <570BCD85.6090807@gmail.com> <20160411162306.GC9288@agk-dp.fab.redhat.com> <570BD354.2000100@gmail.com> <570BF1DB.1040700@youngman.org.uk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <570BF1DB.1040700@youngman.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Wols Lists <antlists@youngman.org.uk>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Joe Perches <joe@perches.com>
+From: Brian Foster <bfoster@redhat.com>
+Subject: [RFC v2 PATCH 01/10] xfs: refactor xfs_reserve_blocks() to handle ENOSPC correctly
+Date: Tue, 12 Apr 2016 12:42:44 -0400
+Message-ID: <1460479373-63317-2-git-send-email-bfoster@redhat.com>
+References: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: xfs@oss.sgi.com
+Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tuesday 12 April 2016 12:20 AM, Wols Lists wrote:
-> On 11/04/16 17:39, Sudip Mukherjee wrote:
->> On Monday 11 April 2016 09:53 PM, Alasdair G Kergon wrote:
->>> On Mon, Apr 11, 2016 at 09:45:01PM +0530, Sudip Mukherjee wrote:
->>>> L stands for "Mailing list that is relevant to this area", and this is a
->>>> mailing list. :)
->>>
->>> Your proposed patch isn't changing the L entry, so this is of no
->>> relevance.
->>
->> Sorry, I am not understanding.
->>
->> The current entry in MAINTAINERS is:
->> DEVICE-MAPPER  (LVM)
->> M:      Alasdair Kergon <agk@redhat.com>
->> M:      Mike Snitzer <snitzer@redhat.com>
->> M:      dm-devel@redhat.com
->> L:      dm-devel@redhat.com
->> ...
->>
->> So my patch just removed the line : "M:      dm-devel@redhat.com"
->>
->> So now the entry becomes :
->> DEVICE-MAPPER  (LVM)
->> M:      Alasdair Kergon <agk@redhat.com>
->> M:      Mike Snitzer <snitzer@redhat.com>
->> L:      dm-devel@redhat.com
->> ...
->>
->> So, now it correctly shows dm-devel@redhat.com as a mailing list which
->> should have cc to all the patches related to LVM.
->>
->> Or am I understanding this wrong?
->
-> Yes. Because (I guess M stands for maintainer) this list has maintainer
-> status. As all patches should be sent to the maintainers therefore all
-> patches should be sent to this list.
->
-> The same person can appear twice in a phone book, once under their name
-> and once under their job title. This is exactly the same situation -
-> this list should appear once as a list to tell people that it's a list,
-> AND ALSO as a maintainer to tell people that patches must be sent to the
-> list.
->
-> I guess English is not your first language, but the important point is
-> that M and L are not mutually exclusive.
+xfs_reserve_blocks() is responsible to update the XFS reserved block
+pool count at mount time or based on user request. When the caller
+requests to increase the reserve pool, blocks must be allocated from the
+global counters such that they are no longer available for general
+purpose use. If the requested reserve pool size is too large, XFS
+reserves what blocks are available. The implementation requires looking
+at the percpu counters and making an educated guess as to how many
+blocks to try and allocate from xfs_mod_fdblocks(), which can return
+-ENOSPC if the guess was not accurate due to counters being modified in
+parallel.
 
-Don't worry, English is my first language. Have you tried with 
-getmaintainer.pl and seen the result? It only shows dm-devel@redhat.com 
-as a Maintainer and not as a list. (I noticed because I was sending a 
-patch, and hence this patch again). But I believe a mailing list can not 
-be a Maintainer ( have you seen any patch with a Signed-off-by: from a 
-mailing list? ).
-Anyway, I think this thread has become too long for an unimportant patch.
+xfs_reserve_blocks() retries the guess in this scenario until the
+allocation succeeds or it is determined that there is no space available
+in the fs. While not easily reproducible in the current form, the retry
+code doesn't actually work correctly if xfs_mod_fdblocks() actually
+fails. The problem is that the percpu calculations use the m_resblks
+counter to determine how many blocks to allocate, but unconditionally
+update m_resblks before the block allocation has actually succeeded.
+Therefore, if xfs_mod_fdblocks() fails, the code jumps to the retry
+label and uses the already updated m_resblks value to determine how many
+blocks to try and allocate. If the percpu counters previously suggested
+that the entire request was available, fdblocks_delta could end up set
+to 0. In that case, m_resblks is updated to the requested value, yet no
+blocks have been reserved at all.
 
-regards
-sudip
+Refactor xfs_reserve_blocks() to use an explicit loop and make the code
+easier to follow. Since we have to drop the spinlock across the
+xfs_mod_fdblocks() call, use a delta value for m_resblks as well and
+only apply the delta once allocation succeeds.
+
+Signed-off-by: Brian Foster <bfoster@redhat.com>
+---
+ fs/xfs/xfs_fsops.c | 105 ++++++++++++++++++++++++++++++-----------------------
+ 1 file changed, 60 insertions(+), 45 deletions(-)
+
+diff --git a/fs/xfs/xfs_fsops.c b/fs/xfs/xfs_fsops.c
+index ee3aaa0a..87d4b1b 100644
+--- a/fs/xfs/xfs_fsops.c
++++ b/fs/xfs/xfs_fsops.c
+@@ -671,8 +671,11 @@ xfs_reserve_blocks(
+ 	__uint64_t              *inval,
+ 	xfs_fsop_resblks_t      *outval)
+ {
+-	__int64_t		lcounter, delta, fdblks_delta;
++	__int64_t		lcounter, delta;
++	__int64_t		fdblks_delta = 0;
+ 	__uint64_t		request;
++	__int64_t		free;
++	int			error = 0;
+ 
+ 	/* If inval is null, report current values and return */
+ 	if (inval == (__uint64_t *)NULL) {
+@@ -686,24 +689,23 @@ xfs_reserve_blocks(
+ 	request = *inval;
+ 
+ 	/*
+-	 * With per-cpu counters, this becomes an interesting
+-	 * problem. we needto work out if we are freeing or allocation
+-	 * blocks first, then we can do the modification as necessary.
++	 * With per-cpu counters, this becomes an interesting problem. we need
++	 * to work out if we are freeing or allocation blocks first, then we can
++	 * do the modification as necessary.
+ 	 *
+-	 * We do this under the m_sb_lock so that if we are near
+-	 * ENOSPC, we will hold out any changes while we work out
+-	 * what to do. This means that the amount of free space can
+-	 * change while we do this, so we need to retry if we end up
+-	 * trying to reserve more space than is available.
++	 * We do this under the m_sb_lock so that if we are near ENOSPC, we will
++	 * hold out any changes while we work out what to do. This means that
++	 * the amount of free space can change while we do this, so we need to
++	 * retry if we end up trying to reserve more space than is available.
+ 	 */
+-retry:
+ 	spin_lock(&mp->m_sb_lock);
+ 
+ 	/*
+ 	 * If our previous reservation was larger than the current value,
+-	 * then move any unused blocks back to the free pool.
++	 * then move any unused blocks back to the free pool. Modify the resblks
++	 * counters directly since we shouldn't have any problems unreserving
++	 * space.
+ 	 */
+-	fdblks_delta = 0;
+ 	if (mp->m_resblks > request) {
+ 		lcounter = mp->m_resblks_avail - request;
+ 		if (lcounter  > 0) {		/* release unused blocks */
+@@ -711,54 +713,67 @@ retry:
+ 			mp->m_resblks_avail -= lcounter;
+ 		}
+ 		mp->m_resblks = request;
+-	} else {
+-		__int64_t	free;
++		if (fdblks_delta) {
++			spin_unlock(&mp->m_sb_lock);
++			error = xfs_mod_fdblocks(mp, fdblks_delta, 0);
++			spin_lock(&mp->m_sb_lock);
++		}
++
++		goto out;
++	}
+ 
++	/*
++	 * If the request is larger than the current reservation, reserve the
++	 * blocks before we update the reserve counters. Sample m_fdblocks and
++	 * perform a partial reservation if the request exceeds free space.
++	 */
++	error = -ENOSPC;
++	while (error == -ENOSPC) {
+ 		free = percpu_counter_sum(&mp->m_fdblocks) -
+ 							XFS_ALLOC_SET_ASIDE(mp);
+ 		if (!free)
+-			goto out; /* ENOSPC and fdblks_delta = 0 */
++			break;
+ 
+ 		delta = request - mp->m_resblks;
+ 		lcounter = free - delta;
+-		if (lcounter < 0) {
++		if (lcounter < 0)
+ 			/* We can't satisfy the request, just get what we can */
+-			mp->m_resblks += free;
+-			mp->m_resblks_avail += free;
+-			fdblks_delta = -free;
+-		} else {
+-			fdblks_delta = -delta;
+-			mp->m_resblks = request;
+-			mp->m_resblks_avail += delta;
+-		}
+-	}
+-out:
+-	if (outval) {
+-		outval->resblks = mp->m_resblks;
+-		outval->resblks_avail = mp->m_resblks_avail;
+-	}
+-	spin_unlock(&mp->m_sb_lock);
++			fdblks_delta = free;
++		else
++			fdblks_delta = delta;
+ 
+-	if (fdblks_delta) {
+ 		/*
+-		 * If we are putting blocks back here, m_resblks_avail is
+-		 * already at its max so this will put it in the free pool.
+-		 *
+-		 * If we need space, we'll either succeed in getting it
+-		 * from the free block count or we'll get an enospc. If
+-		 * we get a ENOSPC, it means things changed while we were
+-		 * calculating fdblks_delta and so we should try again to
+-		 * see if there is anything left to reserve.
++		 * We'll either succeed in getting space from the free block
++		 * count or we'll get an ENOSPC. If we get a ENOSPC, it means
++		 * things changed while we were calculating fdblks_delta and so
++		 * we should try again to see if there is anything left to
++		 * reserve.
+ 		 *
+ 		 * Don't set the reserved flag here - we don't want to reserve
+ 		 * the extra reserve blocks from the reserve.....
+ 		 */
+-		int error;
+-		error = xfs_mod_fdblocks(mp, fdblks_delta, 0);
+-		if (error == -ENOSPC)
+-			goto retry;
++		spin_unlock(&mp->m_sb_lock);
++		error = xfs_mod_fdblocks(mp, -fdblks_delta, 0);
++		spin_lock(&mp->m_sb_lock);
+ 	}
+-	return 0;
++
++	/*
++	 * Update the reserve counters if blocks have been successfully
++	 * allocated.
++	 */
++	if (!error && fdblks_delta) {
++		mp->m_resblks += fdblks_delta;
++		mp->m_resblks_avail += fdblks_delta;
++	}
++
++out:
++	if (outval) {
++		outval->resblks = mp->m_resblks;
++		outval->resblks_avail = mp->m_resblks_avail;
++	}
++
++	spin_unlock(&mp->m_sb_lock);
++	return error;
+ }
+ 
+ int
+-- 
+2.4.11
+
