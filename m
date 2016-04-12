@@ -1,7 +1,7 @@
 From: Brian Foster <bfoster@redhat.com>
-Subject: [RFC v2 PATCH 01/10] xfs: refactor xfs_reserve_blocks() to handle ENOSPC correctly
-Date: Tue, 12 Apr 2016 12:42:44 -0400
-Message-ID: <1460479373-63317-2-git-send-email-bfoster@redhat.com>
+Subject: [RFC v2 PATCH 02/10] xfs: replace xfs_mod_fdblocks() bool param with flags
+Date: Tue, 12 Apr 2016 12:42:45 -0400
+Message-ID: <1460479373-63317-3-git-send-email-bfoster@redhat.com>
 References: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
@@ -10,194 +10,204 @@ To: xfs@oss.sgi.com
 Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-xfs_reserve_blocks() is responsible to update the XFS reserved block
-pool count at mount time or based on user request. When the caller
-requests to increase the reserve pool, blocks must be allocated from the
-global counters such that they are no longer available for general
-purpose use. If the requested reserve pool size is too large, XFS
-reserves what blocks are available. The implementation requires looking
-at the percpu counters and making an educated guess as to how many
-blocks to try and allocate from xfs_mod_fdblocks(), which can return
--ENOSPC if the guess was not accurate due to counters being modified in
-parallel.
+xfs_mod_fdblocks() takes a boolean parameter to indicate whether the
+requested allocation can dip into the XFS reserve block pool, if
+necessary, to satisfy the allocation.
 
-xfs_reserve_blocks() retries the guess in this scenario until the
-allocation succeeds or it is determined that there is no space available
-in the fs. While not easily reproducible in the current form, the retry
-code doesn't actually work correctly if xfs_mod_fdblocks() actually
-fails. The problem is that the percpu calculations use the m_resblks
-counter to determine how many blocks to allocate, but unconditionally
-update m_resblks before the block allocation has actually succeeded.
-Therefore, if xfs_mod_fdblocks() fails, the code jumps to the retry
-label and uses the already updated m_resblks value to determine how many
-blocks to try and allocate. If the percpu counters previously suggested
-that the entire request was available, fdblocks_delta could end up set
-to 0. In that case, m_resblks is updated to the requested value, yet no
-blocks have been reserved at all.
-
-Refactor xfs_reserve_blocks() to use an explicit loop and make the code
-easier to follow. Since we have to drop the spinlock across the
-xfs_mod_fdblocks() call, use a delta value for m_resblks as well and
-only apply the delta once allocation succeeds.
+This function will also require caller control over block device
+reservation. In preparation, convert the bool parameter to a flags
+parameter and update all callers to use the appropriate reserved pool
+flag as appropriate.
 
 Signed-off-by: Brian Foster <bfoster@redhat.com>
 ---
- fs/xfs/xfs_fsops.c | 105 ++++++++++++++++++++++++++++++-----------------------
- 1 file changed, 60 insertions(+), 45 deletions(-)
+ fs/xfs/libxfs/xfs_bmap.c | 17 ++++++++---------
+ fs/xfs/xfs_mount.c       |  3 ++-
+ fs/xfs/xfs_mount.h       |  4 +++-
+ fs/xfs/xfs_trans.c       | 21 ++++++++++++++-------
+ 4 files changed, 27 insertions(+), 18 deletions(-)
 
-diff --git a/fs/xfs/xfs_fsops.c b/fs/xfs/xfs_fsops.c
-index ee3aaa0a..87d4b1b 100644
---- a/fs/xfs/xfs_fsops.c
-+++ b/fs/xfs/xfs_fsops.c
-@@ -671,8 +671,11 @@ xfs_reserve_blocks(
- 	__uint64_t              *inval,
- 	xfs_fsop_resblks_t      *outval)
- {
--	__int64_t		lcounter, delta, fdblks_delta;
-+	__int64_t		lcounter, delta;
-+	__int64_t		fdblks_delta = 0;
- 	__uint64_t		request;
-+	__int64_t		free;
-+	int			error = 0;
- 
- 	/* If inval is null, report current values and return */
- 	if (inval == (__uint64_t *)NULL) {
-@@ -686,24 +689,23 @@ xfs_reserve_blocks(
- 	request = *inval;
- 
- 	/*
--	 * With per-cpu counters, this becomes an interesting
--	 * problem. we needto work out if we are freeing or allocation
--	 * blocks first, then we can do the modification as necessary.
-+	 * With per-cpu counters, this becomes an interesting problem. we need
-+	 * to work out if we are freeing or allocation blocks first, then we can
-+	 * do the modification as necessary.
- 	 *
--	 * We do this under the m_sb_lock so that if we are near
--	 * ENOSPC, we will hold out any changes while we work out
--	 * what to do. This means that the amount of free space can
--	 * change while we do this, so we need to retry if we end up
--	 * trying to reserve more space than is available.
-+	 * We do this under the m_sb_lock so that if we are near ENOSPC, we will
-+	 * hold out any changes while we work out what to do. This means that
-+	 * the amount of free space can change while we do this, so we need to
-+	 * retry if we end up trying to reserve more space than is available.
- 	 */
--retry:
- 	spin_lock(&mp->m_sb_lock);
- 
- 	/*
- 	 * If our previous reservation was larger than the current value,
--	 * then move any unused blocks back to the free pool.
-+	 * then move any unused blocks back to the free pool. Modify the resblks
-+	 * counters directly since we shouldn't have any problems unreserving
-+	 * space.
- 	 */
--	fdblks_delta = 0;
- 	if (mp->m_resblks > request) {
- 		lcounter = mp->m_resblks_avail - request;
- 		if (lcounter  > 0) {		/* release unused blocks */
-@@ -711,54 +713,67 @@ retry:
- 			mp->m_resblks_avail -= lcounter;
- 		}
- 		mp->m_resblks = request;
--	} else {
--		__int64_t	free;
-+		if (fdblks_delta) {
-+			spin_unlock(&mp->m_sb_lock);
-+			error = xfs_mod_fdblocks(mp, fdblks_delta, 0);
-+			spin_lock(&mp->m_sb_lock);
-+		}
-+
-+		goto out;
-+	}
- 
-+	/*
-+	 * If the request is larger than the current reservation, reserve the
-+	 * blocks before we update the reserve counters. Sample m_fdblocks and
-+	 * perform a partial reservation if the request exceeds free space.
-+	 */
-+	error = -ENOSPC;
-+	while (error == -ENOSPC) {
- 		free = percpu_counter_sum(&mp->m_fdblocks) -
- 							XFS_ALLOC_SET_ASIDE(mp);
- 		if (!free)
--			goto out; /* ENOSPC and fdblks_delta = 0 */
-+			break;
- 
- 		delta = request - mp->m_resblks;
- 		lcounter = free - delta;
--		if (lcounter < 0) {
-+		if (lcounter < 0)
- 			/* We can't satisfy the request, just get what we can */
--			mp->m_resblks += free;
--			mp->m_resblks_avail += free;
--			fdblks_delta = -free;
--		} else {
--			fdblks_delta = -delta;
--			mp->m_resblks = request;
--			mp->m_resblks_avail += delta;
--		}
--	}
--out:
--	if (outval) {
--		outval->resblks = mp->m_resblks;
--		outval->resblks_avail = mp->m_resblks_avail;
--	}
--	spin_unlock(&mp->m_sb_lock);
-+			fdblks_delta = free;
-+		else
-+			fdblks_delta = delta;
- 
--	if (fdblks_delta) {
- 		/*
--		 * If we are putting blocks back here, m_resblks_avail is
--		 * already at its max so this will put it in the free pool.
--		 *
--		 * If we need space, we'll either succeed in getting it
--		 * from the free block count or we'll get an enospc. If
--		 * we get a ENOSPC, it means things changed while we were
--		 * calculating fdblks_delta and so we should try again to
--		 * see if there is anything left to reserve.
-+		 * We'll either succeed in getting space from the free block
-+		 * count or we'll get an ENOSPC. If we get a ENOSPC, it means
-+		 * things changed while we were calculating fdblks_delta and so
-+		 * we should try again to see if there is anything left to
-+		 * reserve.
- 		 *
- 		 * Don't set the reserved flag here - we don't want to reserve
- 		 * the extra reserve blocks from the reserve.....
- 		 */
--		int error;
--		error = xfs_mod_fdblocks(mp, fdblks_delta, 0);
--		if (error == -ENOSPC)
--			goto retry;
-+		spin_unlock(&mp->m_sb_lock);
-+		error = xfs_mod_fdblocks(mp, -fdblks_delta, 0);
-+		spin_lock(&mp->m_sb_lock);
+diff --git a/fs/xfs/libxfs/xfs_bmap.c b/fs/xfs/libxfs/xfs_bmap.c
+index ce41d7f..1a805b0 100644
+--- a/fs/xfs/libxfs/xfs_bmap.c
++++ b/fs/xfs/libxfs/xfs_bmap.c
+@@ -2186,7 +2186,7 @@ xfs_bmap_add_extent_delay_real(
+ 			(bma->cur ? bma->cur->bc_private.b.allocated : 0));
+ 		if (diff > 0) {
+ 			error = xfs_mod_fdblocks(bma->ip->i_mount,
+-						 -((int64_t)diff), false);
++						 -((int64_t)diff), 0);
+ 			ASSERT(!error);
+ 			if (error)
+ 				goto done;
+@@ -2238,7 +2238,7 @@ xfs_bmap_add_extent_delay_real(
+ 		ASSERT(temp <= da_old);
+ 		if (temp < da_old)
+ 			xfs_mod_fdblocks(bma->ip->i_mount,
+-					(int64_t)(da_old - temp), false);
++					(int64_t)(da_old - temp), 0);
  	}
--	return 0;
-+
-+	/*
-+	 * Update the reserve counters if blocks have been successfully
-+	 * allocated.
-+	 */
-+	if (!error && fdblks_delta) {
-+		mp->m_resblks += fdblks_delta;
-+		mp->m_resblks_avail += fdblks_delta;
-+	}
-+
-+out:
-+	if (outval) {
-+		outval->resblks = mp->m_resblks;
-+		outval->resblks_avail = mp->m_resblks_avail;
-+	}
-+
-+	spin_unlock(&mp->m_sb_lock);
-+	return error;
- }
  
- int
+ 	/* clear out the allocated field, done with it now in any case. */
+@@ -2916,8 +2916,7 @@ xfs_bmap_add_extent_hole_delay(
+ 	}
+ 	if (oldlen != newlen) {
+ 		ASSERT(oldlen > newlen);
+-		xfs_mod_fdblocks(ip->i_mount, (int64_t)(oldlen - newlen),
+-				 false);
++		xfs_mod_fdblocks(ip->i_mount, (int64_t)(oldlen - newlen), 0);
+ 		/*
+ 		 * Nothing to do for disk quota accounting here.
+ 		 */
+@@ -4149,13 +4148,13 @@ xfs_bmapi_reserve_delalloc(
+ 	if (rt) {
+ 		error = xfs_mod_frextents(mp, -((int64_t)extsz));
+ 	} else {
+-		error = xfs_mod_fdblocks(mp, -((int64_t)alen), false);
++		error = xfs_mod_fdblocks(mp, -((int64_t)alen), 0);
+ 	}
+ 
+ 	if (error)
+ 		goto out_unreserve_quota;
+ 
+-	error = xfs_mod_fdblocks(mp, -((int64_t)indlen), false);
++	error = xfs_mod_fdblocks(mp, -((int64_t)indlen), 0);
+ 	if (error)
+ 		goto out_unreserve_blocks;
+ 
+@@ -4184,7 +4183,7 @@ out_unreserve_blocks:
+ 	if (rt)
+ 		xfs_mod_frextents(mp, extsz);
+ 	else
+-		xfs_mod_fdblocks(mp, alen, false);
++		xfs_mod_fdblocks(mp, alen, 0);
+ out_unreserve_quota:
+ 	if (XFS_IS_QUOTA_ON(mp))
+ 		xfs_trans_unreserve_quota_nblks(NULL, ip, (long)alen, 0, rt ?
+@@ -5093,7 +5092,7 @@ xfs_bmap_del_extent(
+ 	 */
+ 	ASSERT(da_old >= da_new);
+ 	if (da_old > da_new)
+-		xfs_mod_fdblocks(mp, (int64_t)(da_old - da_new), false);
++		xfs_mod_fdblocks(mp, (int64_t)(da_old - da_new), 0);
+ done:
+ 	*logflagsp = flags;
+ 	return error;
+@@ -5413,7 +5412,7 @@ xfs_bunmapi(
+ 			goto error0;
+ 
+ 		if (!isrt && wasdel)
+-			xfs_mod_fdblocks(mp, (int64_t)del.br_blockcount, false);
++			xfs_mod_fdblocks(mp, (int64_t)del.br_blockcount, 0);
+ 
+ 		bno = del.br_startoff - 1;
+ nodelete:
+diff --git a/fs/xfs/xfs_mount.c b/fs/xfs/xfs_mount.c
+index cfd4210..50a6ccc 100644
+--- a/fs/xfs/xfs_mount.c
++++ b/fs/xfs/xfs_mount.c
+@@ -1150,11 +1150,12 @@ int
+ xfs_mod_fdblocks(
+ 	struct xfs_mount	*mp,
+ 	int64_t			delta,
+-	bool			rsvd)
++	uint32_t		flags)
+ {
+ 	int64_t			lcounter;
+ 	long long		res_used;
+ 	s32			batch;
++	bool			rsvd = (flags & XFS_FDBLOCKS_RSVD);
+ 
+ 	if (delta > 0) {
+ 		/*
+diff --git a/fs/xfs/xfs_mount.h b/fs/xfs/xfs_mount.h
+index eafe257..bd1043f 100644
+--- a/fs/xfs/xfs_mount.h
++++ b/fs/xfs/xfs_mount.h
+@@ -347,8 +347,10 @@ extern void	xfs_unmountfs(xfs_mount_t *);
+ 
+ extern int	xfs_mod_icount(struct xfs_mount *mp, int64_t delta);
+ extern int	xfs_mod_ifree(struct xfs_mount *mp, int64_t delta);
++
++#define	XFS_FDBLOCKS_RSVD	(1 << 0)
+ extern int	xfs_mod_fdblocks(struct xfs_mount *mp, int64_t delta,
+-				 bool reserved);
++				 uint32_t flags);
+ extern int	xfs_mod_frextents(struct xfs_mount *mp, int64_t delta);
+ 
+ extern struct xfs_buf *xfs_getsb(xfs_mount_t *, int);
+diff --git a/fs/xfs/xfs_trans.c b/fs/xfs/xfs_trans.c
+index 20c5366..8aa9d9a 100644
+--- a/fs/xfs/xfs_trans.c
++++ b/fs/xfs/xfs_trans.c
+@@ -172,8 +172,11 @@ xfs_trans_reserve(
+ 	uint			blocks,
+ 	uint			rtextents)
+ {
+-	int		error = 0;
+-	bool		rsvd = (tp->t_flags & XFS_TRANS_RESERVE) != 0;
++	int			error = 0;
++	int			flags = 0;
++
++	if (tp->t_flags & XFS_TRANS_RESERVE)
++		flags |= XFS_FDBLOCKS_RSVD;
+ 
+ 	/* Mark this thread as being in a transaction */
+ 	current_set_flags_nested(&tp->t_pflags, PF_FSTRANS);
+@@ -184,7 +187,8 @@ xfs_trans_reserve(
+ 	 * fail if the count would go below zero.
+ 	 */
+ 	if (blocks > 0) {
+-		error = xfs_mod_fdblocks(tp->t_mountp, -((int64_t)blocks), rsvd);
++		error = xfs_mod_fdblocks(tp->t_mountp, -((int64_t)blocks),
++					 flags);
+ 		if (error != 0) {
+ 			current_restore_flags_nested(&tp->t_pflags, PF_FSTRANS);
+ 			return -ENOSPC;
+@@ -259,7 +263,7 @@ undo_log:
+ 
+ undo_blocks:
+ 	if (blocks > 0) {
+-		xfs_mod_fdblocks(tp->t_mountp, -((int64_t)blocks), rsvd);
++		xfs_mod_fdblocks(tp->t_mountp, -((int64_t)blocks), flags);
+ 		tp->t_blk_res = 0;
+ 	}
+ 
+@@ -543,12 +547,15 @@ xfs_trans_unreserve_and_mod_sb(
+ 	struct xfs_trans	*tp)
+ {
+ 	struct xfs_mount	*mp = tp->t_mountp;
+-	bool			rsvd = (tp->t_flags & XFS_TRANS_RESERVE) != 0;
+ 	int64_t			blkdelta = 0;
+ 	int64_t			rtxdelta = 0;
+ 	int64_t			idelta = 0;
+ 	int64_t			ifreedelta = 0;
+ 	int			error;
++	int			flags = 0;
++
++	if (tp->t_flags & XFS_TRANS_RESERVE)
++		flags |= XFS_FDBLOCKS_RSVD;
+ 
+ 	/* calculate deltas */
+ 	if (tp->t_blk_res > 0)
+@@ -572,7 +579,7 @@ xfs_trans_unreserve_and_mod_sb(
+ 
+ 	/* apply the per-cpu counters */
+ 	if (blkdelta) {
+-		error = xfs_mod_fdblocks(mp, blkdelta, rsvd);
++		error = xfs_mod_fdblocks(mp, blkdelta, flags);
+ 		if (error)
+ 			goto out;
+ 	}
+@@ -680,7 +687,7 @@ out_undo_icount:
+ 		xfs_mod_icount(mp, -idelta);
+ out_undo_fdblocks:
+ 	if (blkdelta)
+-		xfs_mod_fdblocks(mp, -blkdelta, rsvd);
++		xfs_mod_fdblocks(mp, -blkdelta, flags);
+ out:
+ 	ASSERT(error == 0);
+ 	return;
 -- 
 2.4.11
 
