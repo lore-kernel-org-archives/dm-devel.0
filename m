@@ -1,10 +1,10 @@
 From: kbuild test robot <fengguang.wu@intel.com>
-Subject: [dm:dm-fallocate 9/22] block/ioctl.c:266:20: error:
+Subject: [dm:dm-fallocate 11/22] fs/block_dev.c:1856:20: error:
  'PAGE_CACHE_SHIFT' undeclared
-Date: Wed, 13 Apr 2016 04:16:08 +0800
-Message-ID: <201604130406.XzfA172y%fengguang.wu@intel.com>
+Date: Wed, 13 Apr 2016 04:24:00 +0800
+Message-ID: <201604130458.inVhE07w%fengguang.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="rwEMma7ioTxnRzrJ"
+Content-Type: multipart/mixed; boundary="n8g4imXOkfNTN/H1"
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -17,59 +17,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: dm-devel@redhat.com, kbuild-all@01.org, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>
+Cc: dm-devel@redhat.com, kbuild-all@01.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
 
---rwEMma7ioTxnRzrJ
+--n8g4imXOkfNTN/H1
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
 tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git dm-fallocate
 head:   c79eaa33c66f54e2e41c12bc7de505365b43401d
-commit: e46671c1150b9ef7ba22d79ac14ff881fb611759 [9/22] block: invalidate the page cache when issuing BLKZEROOUT.
+commit: 3443026307e452c76f32d913c2c335b864c34a0d [11/22] block: implement (some of) fallocate for block devices
 config: x86_64-randconfig-x010-201615 (attached as .config)
 reproduce:
-        git checkout e46671c1150b9ef7ba22d79ac14ff881fb611759
+        git checkout 3443026307e452c76f32d913c2c335b864c34a0d
         # save the attached .config to linux build tree
         make ARCH=x86_64 
 
 All error/warnings (new ones prefixed by >>):
 
-   block/ioctl.c: In function 'blk_ioctl_zeroout':
->> block/ioctl.c:266:20: error: 'PAGE_CACHE_SHIFT' undeclared (first use in this function)
+   fs/block_dev.c: In function 'blkdev_fallocate':
+>> fs/block_dev.c:1856:20: error: 'PAGE_CACHE_SHIFT' undeclared (first use in this function)
               start >> PAGE_CACHE_SHIFT,
                        ^
-   block/ioctl.c:266:20: note: each undeclared identifier is reported only once for each function it appears in
->> block/ioctl.c:268:1: warning: control reaches end of non-void function [-Wreturn-type]
+   fs/block_dev.c:1856:20: note: each undeclared identifier is reported only once for each function it appears in
+>> fs/block_dev.c:1858:1: warning: control reaches end of non-void function [-Wreturn-type]
     }
     ^
 
-vim +/PAGE_CACHE_SHIFT +266 block/ioctl.c
+vim +/PAGE_CACHE_SHIFT +1856 fs/block_dev.c
 
-   260	
-   261		/*
-   262		 * Invalidate again; if someone wandered in and dirtied a page,
-   263		 * the caller will be given -EBUSY.
-   264		 */
-   265		return invalidate_inode_pages2_range(mapping,
- > 266						     start >> PAGE_CACHE_SHIFT,
-   267						     end >> PAGE_CACHE_SHIFT);
- > 268	}
-   269	
-   270	static int put_ushort(unsigned long arg, unsigned short val)
-   271	{
+  1850	
+  1851		/*
+  1852		 * Invalidate again; if someone wandered in and dirtied a page,
+  1853		 * the caller will be given -EBUSY;
+  1854		 */
+  1855		return invalidate_inode_pages2_range(mapping,
+> 1856						     start >> PAGE_CACHE_SHIFT,
+  1857						     end >> PAGE_CACHE_SHIFT);
+> 1858	}
+  1859	EXPORT_SYMBOL_GPL(blkdev_fallocate);
+  1860	
+  1861	const struct file_operations def_blk_fops = {
 
 ---
 0-DAY kernel test infrastructure                Open Source Technology Center
 https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
---rwEMma7ioTxnRzrJ
+--n8g4imXOkfNTN/H1
 Content-Type: application/octet-stream
 Content-Disposition: attachment; filename=".config.gz"
 Content-Transfer-Encoding: base64
 
-H4sICBpWDVcAAy5jb25maWcAlFxLd+M2st7nV+h07mJm0Wnb7Tg99x4vQBKUEPEVgJQlb3DU
+H4sICLZYDVcAAy5jb25maWcAlFxLd+M2st7nV+h07mJm0Wnb7Tg99x4vQBKUEPEVgJQlb3DU
 tjrxGdvqkeRM97+fqgIfAAgqc7PomFUFEI96fFUA9eMPP87Y22n/sj09PWyfn7/Pft+97g7b
 0+5x9uXpefd/s6ScFWU944mofwLh7On17duHb59u9M317Pqnm58u3h8ePs6Wu8Pr7nkW71+/
 PP3+Bu2f9q8//PhDXBapmINoJOrb793jmlo7z8ODKFQtm7gWZaETHpcJlwOz4jLVfMWLWoFg
@@ -543,11 +543,11 @@ JMVR1z/x1pxU6YMvPk1VfO7iy7WPu1MfPcVUCg4ZgnrFShZFfO7iy7WPu1MfUSk4ZFhWUECy
 GyIqBYcMJaSoWAZ1ow67IXqKqRQcMqwzrKsCmvjcxZdrH3enPqJScMiQKJpjTmqsM6Q5AbEb
 IioFhwyJojnmpMaqZCWSCnZDRKXgkCFRNMec1FiWIJEXbZ3vhug//jcvuMt/AQA=
 
---rwEMma7ioTxnRzrJ
+--n8g4imXOkfNTN/H1
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---rwEMma7ioTxnRzrJ--
+--n8g4imXOkfNTN/H1--
