@@ -1,7 +1,7 @@
 From: Brian Foster <bfoster@redhat.com>
-Subject: [RFC v2 PATCH 02/10] xfs: replace xfs_mod_fdblocks() bool param with flags
-Date: Tue, 12 Apr 2016 12:42:45 -0400
-Message-ID: <1460479373-63317-3-git-send-email-bfoster@redhat.com>
+Subject: [RFC v2 PATCH 10/10] xfs: use contiguous bdev reservation for file preallocation
+Date: Tue, 12 Apr 2016 12:42:53 -0400
+Message-ID: <1460479373-63317-11-git-send-email-bfoster@redhat.com>
 References: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
@@ -10,204 +10,90 @@ To: xfs@oss.sgi.com
 Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-xfs_mod_fdblocks() takes a boolean parameter to indicate whether the
-requested allocation can dip into the XFS reserve block pool, if
-necessary, to satisfy the allocation.
+The block device reservation that occurs as part of transaction
+reservation uses a worst case algorithm to determine the amount of
+reservation required to satisfy the transaction. This means that one
+bdev (i.e., device-mapper) block is reserved per required filesystem
+block, even though the former block size is likely much larger than the
+latter.
 
-This function will also require caller control over block device
-reservation. In preparation, convert the bool parameter to a flags
-parameter and update all callers to use the appropriate reserved pool
-flag as appropriate.
+Worst case reservation is required in most cases because, from the
+perspective of the transaction, block allocation can occur throughout
+the block address space. This is unnecessary for some operations where
+more context is available, however. xfs_alloc_file_space() is one such
+case. It calls xfs_bmapi_write() in a loop and once per transaction.
+Since it also passes nmap == 1, each call maps a single extent and thus
+allocates contiguous blocks. Based on that, the bdev reservation can be
+reduced from the worst case 1-1 mapping to a more optimal 1-N mapping of
+dm blocks to fs blocks (e.g., one dm block can cover many fs blocks).
+
+Update xfs_alloc_file_space() to bypass transaction based bdev
+reservation. Instead, open-code the bdev reservation using the more
+optimal contiguous reservation value. This allows fallocate requests to
+consume just about all of the available space in a thin volume without
+premature ENOSPC errors.
 
 Signed-off-by: Brian Foster <bfoster@redhat.com>
 ---
- fs/xfs/libxfs/xfs_bmap.c | 17 ++++++++---------
- fs/xfs/xfs_mount.c       |  3 ++-
- fs/xfs/xfs_mount.h       |  4 +++-
- fs/xfs/xfs_trans.c       | 21 ++++++++++++++-------
- 4 files changed, 27 insertions(+), 18 deletions(-)
+ fs/xfs/xfs_bmap_util.c | 29 ++++++++++++++++++++++++++++-
+ 1 file changed, 28 insertions(+), 1 deletion(-)
 
-diff --git a/fs/xfs/libxfs/xfs_bmap.c b/fs/xfs/libxfs/xfs_bmap.c
-index ce41d7f..1a805b0 100644
---- a/fs/xfs/libxfs/xfs_bmap.c
-+++ b/fs/xfs/libxfs/xfs_bmap.c
-@@ -2186,7 +2186,7 @@ xfs_bmap_add_extent_delay_real(
- 			(bma->cur ? bma->cur->bc_private.b.allocated : 0));
- 		if (diff > 0) {
- 			error = xfs_mod_fdblocks(bma->ip->i_mount,
--						 -((int64_t)diff), false);
-+						 -((int64_t)diff), 0);
- 			ASSERT(!error);
- 			if (error)
- 				goto done;
-@@ -2238,7 +2238,7 @@ xfs_bmap_add_extent_delay_real(
- 		ASSERT(temp <= da_old);
- 		if (temp < da_old)
- 			xfs_mod_fdblocks(bma->ip->i_mount,
--					(int64_t)(da_old - temp), false);
-+					(int64_t)(da_old - temp), 0);
- 	}
+diff --git a/fs/xfs/xfs_bmap_util.c b/fs/xfs/xfs_bmap_util.c
+index 3b63098..c2e1215 100644
+--- a/fs/xfs/xfs_bmap_util.c
++++ b/fs/xfs/xfs_bmap_util.c
+@@ -40,6 +40,7 @@
+ #include "xfs_trace.h"
+ #include "xfs_icache.h"
+ #include "xfs_log.h"
++#include "xfs_thin.h"
  
- 	/* clear out the allocated field, done with it now in any case. */
-@@ -2916,8 +2916,7 @@ xfs_bmap_add_extent_hole_delay(
- 	}
- 	if (oldlen != newlen) {
- 		ASSERT(oldlen > newlen);
--		xfs_mod_fdblocks(ip->i_mount, (int64_t)(oldlen - newlen),
--				 false);
-+		xfs_mod_fdblocks(ip->i_mount, (int64_t)(oldlen - newlen), 0);
+ /* Kernel only BMAP related definitions and functions */
+ 
+@@ -1035,9 +1036,11 @@ xfs_alloc_file_space(
+ 		}
+ 
  		/*
- 		 * Nothing to do for disk quota accounting here.
+-		 * Allocate and setup the transaction.
++		 * Allocate and setup the transaction. The noblkres flags tells
++		 * the reservation infrastructure to skip bdev reservation.
  		 */
-@@ -4149,13 +4148,13 @@ xfs_bmapi_reserve_delalloc(
- 	if (rt) {
- 		error = xfs_mod_frextents(mp, -((int64_t)extsz));
- 	} else {
--		error = xfs_mod_fdblocks(mp, -((int64_t)alen), false);
-+		error = xfs_mod_fdblocks(mp, -((int64_t)alen), 0);
- 	}
- 
- 	if (error)
- 		goto out_unreserve_quota;
- 
--	error = xfs_mod_fdblocks(mp, -((int64_t)indlen), false);
-+	error = xfs_mod_fdblocks(mp, -((int64_t)indlen), 0);
- 	if (error)
- 		goto out_unreserve_blocks;
- 
-@@ -4184,7 +4183,7 @@ out_unreserve_blocks:
- 	if (rt)
- 		xfs_mod_frextents(mp, extsz);
- 	else
--		xfs_mod_fdblocks(mp, alen, false);
-+		xfs_mod_fdblocks(mp, alen, 0);
- out_unreserve_quota:
- 	if (XFS_IS_QUOTA_ON(mp))
- 		xfs_trans_unreserve_quota_nblks(NULL, ip, (long)alen, 0, rt ?
-@@ -5093,7 +5092,7 @@ xfs_bmap_del_extent(
- 	 */
- 	ASSERT(da_old >= da_new);
- 	if (da_old > da_new)
--		xfs_mod_fdblocks(mp, (int64_t)(da_old - da_new), false);
-+		xfs_mod_fdblocks(mp, (int64_t)(da_old - da_new), 0);
- done:
- 	*logflagsp = flags;
- 	return error;
-@@ -5413,7 +5412,7 @@ xfs_bunmapi(
- 			goto error0;
- 
- 		if (!isrt && wasdel)
--			xfs_mod_fdblocks(mp, (int64_t)del.br_blockcount, false);
-+			xfs_mod_fdblocks(mp, (int64_t)del.br_blockcount, 0);
- 
- 		bno = del.br_startoff - 1;
- nodelete:
-diff --git a/fs/xfs/xfs_mount.c b/fs/xfs/xfs_mount.c
-index cfd4210..50a6ccc 100644
---- a/fs/xfs/xfs_mount.c
-+++ b/fs/xfs/xfs_mount.c
-@@ -1150,11 +1150,12 @@ int
- xfs_mod_fdblocks(
- 	struct xfs_mount	*mp,
- 	int64_t			delta,
--	bool			rsvd)
-+	uint32_t		flags)
- {
- 	int64_t			lcounter;
- 	long long		res_used;
- 	s32			batch;
-+	bool			rsvd = (flags & XFS_FDBLOCKS_RSVD);
- 
- 	if (delta > 0) {
+ 		tp = xfs_trans_alloc(mp, XFS_TRANS_DIOSTRAT);
++		tp->t_flags |= XFS_TRANS_NOBLKRES;
+ 		error = xfs_trans_reserve(tp, &M_RES(mp)->tr_write,
+ 					  resblks, resrtextents);
  		/*
-diff --git a/fs/xfs/xfs_mount.h b/fs/xfs/xfs_mount.h
-index eafe257..bd1043f 100644
---- a/fs/xfs/xfs_mount.h
-+++ b/fs/xfs/xfs_mount.h
-@@ -347,8 +347,10 @@ extern void	xfs_unmountfs(xfs_mount_t *);
- 
- extern int	xfs_mod_icount(struct xfs_mount *mp, int64_t delta);
- extern int	xfs_mod_ifree(struct xfs_mount *mp, int64_t delta);
+@@ -1051,6 +1054,30 @@ xfs_alloc_file_space(
+ 			xfs_trans_cancel(tp);
+ 			break;
+ 		}
 +
-+#define	XFS_FDBLOCKS_RSVD	(1 << 0)
- extern int	xfs_mod_fdblocks(struct xfs_mount *mp, int64_t delta,
--				 bool reserved);
-+				 uint32_t flags);
- extern int	xfs_mod_frextents(struct xfs_mount *mp, int64_t delta);
- 
- extern struct xfs_buf *xfs_getsb(xfs_mount_t *, int);
-diff --git a/fs/xfs/xfs_trans.c b/fs/xfs/xfs_trans.c
-index 20c5366..8aa9d9a 100644
---- a/fs/xfs/xfs_trans.c
-+++ b/fs/xfs/xfs_trans.c
-@@ -172,8 +172,11 @@ xfs_trans_reserve(
- 	uint			blocks,
- 	uint			rtextents)
- {
--	int		error = 0;
--	bool		rsvd = (tp->t_flags & XFS_TRANS_RESERVE) != 0;
-+	int			error = 0;
-+	int			flags = 0;
++		/*
++		 * We disabled the transaction bdev reservation because the
++		 * trans infrastructure uses a worst case reservation. Since we
++		 * call xfs_bmapi_write() one mapping at a time, we can assume
++		 * the allocated blocks will be contiguous and thus can use a
++		 * more optimal reservation value. Acquire the reservation here
++		 * and attach it to the transaction.
++		 *
++		 * XXX: Need to take apart data and metadata block parts of res
++		 * (see XFS_DIOSTRAT_SPACE_RES()). The latter still needs
++		 * worst-case.
++		 */
++		if (mp->m_thin_res) {
++			sector_t	res = xfs_fsb_res(mp, resblks, true);
 +
-+	if (tp->t_flags & XFS_TRANS_RESERVE)
-+		flags |= XFS_FDBLOCKS_RSVD;
- 
- 	/* Mark this thread as being in a transaction */
- 	current_set_flags_nested(&tp->t_pflags, PF_FSTRANS);
-@@ -184,7 +187,8 @@ xfs_trans_reserve(
- 	 * fail if the count would go below zero.
- 	 */
- 	if (blocks > 0) {
--		error = xfs_mod_fdblocks(tp->t_mountp, -((int64_t)blocks), rsvd);
-+		error = xfs_mod_fdblocks(tp->t_mountp, -((int64_t)blocks),
-+					 flags);
- 		if (error != 0) {
- 			current_restore_flags_nested(&tp->t_pflags, PF_FSTRANS);
- 			return -ENOSPC;
-@@ -259,7 +263,7 @@ undo_log:
- 
- undo_blocks:
- 	if (blocks > 0) {
--		xfs_mod_fdblocks(tp->t_mountp, -((int64_t)blocks), rsvd);
-+		xfs_mod_fdblocks(tp->t_mountp, -((int64_t)blocks), flags);
- 		tp->t_blk_res = 0;
- 	}
- 
-@@ -543,12 +547,15 @@ xfs_trans_unreserve_and_mod_sb(
- 	struct xfs_trans	*tp)
- {
- 	struct xfs_mount	*mp = tp->t_mountp;
--	bool			rsvd = (tp->t_flags & XFS_TRANS_RESERVE) != 0;
- 	int64_t			blkdelta = 0;
- 	int64_t			rtxdelta = 0;
- 	int64_t			idelta = 0;
- 	int64_t			ifreedelta = 0;
- 	int			error;
-+	int			flags = 0;
++			error = xfs_thin_reserve(mp, res);
++			if (error) {
++				xfs_trans_cancel(tp);
++				break;
++			}
++			tp->t_blk_thin_res = res;
++		}
 +
-+	if (tp->t_flags & XFS_TRANS_RESERVE)
-+		flags |= XFS_FDBLOCKS_RSVD;
- 
- 	/* calculate deltas */
- 	if (tp->t_blk_res > 0)
-@@ -572,7 +579,7 @@ xfs_trans_unreserve_and_mod_sb(
- 
- 	/* apply the per-cpu counters */
- 	if (blkdelta) {
--		error = xfs_mod_fdblocks(mp, blkdelta, rsvd);
-+		error = xfs_mod_fdblocks(mp, blkdelta, flags);
- 		if (error)
- 			goto out;
- 	}
-@@ -680,7 +687,7 @@ out_undo_icount:
- 		xfs_mod_icount(mp, -idelta);
- out_undo_fdblocks:
- 	if (blkdelta)
--		xfs_mod_fdblocks(mp, -blkdelta, rsvd);
-+		xfs_mod_fdblocks(mp, -blkdelta, flags);
- out:
- 	ASSERT(error == 0);
- 	return;
+ 		xfs_ilock(ip, XFS_ILOCK_EXCL);
+ 		error = xfs_trans_reserve_quota_nblks(tp, ip, qblocks,
+ 						      0, quota_flag);
 -- 
 2.4.11
 
