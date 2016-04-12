@@ -1,99 +1,122 @@
 From: Brian Foster <bfoster@redhat.com>
-Subject: [RFC v2 PATCH 10/10] xfs: use contiguous bdev reservation for file preallocation
-Date: Tue, 12 Apr 2016 12:42:53 -0400
-Message-ID: <1460479373-63317-11-git-send-email-bfoster@redhat.com>
+Subject: [RFC v2 PATCH 04/10] dm: add methods to set and get reserved space
+Date: Tue, 12 Apr 2016 12:42:47 -0400
+Message-ID: <1460479373-63317-5-git-send-email-bfoster@redhat.com>
 References: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
 In-Reply-To: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
 To: xfs@oss.sgi.com
-Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com
+Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-The block device reservation that occurs as part of transaction
-reservation uses a worst case algorithm to determine the amount of
-reservation required to satisfy the transaction. This means that one
-bdev (i.e., device-mapper) block is reserved per required filesystem
-block, even though the former block size is likely much larger than the
-latter.
+From: Mike Snitzer <snitzer@redhat.com>
 
-Worst case reservation is required in most cases because, from the
-perspective of the transaction, block allocation can occur throughout
-the block address space. This is unnecessary for some operations where
-more context is available, however. xfs_alloc_file_space() is one such
-case. It calls xfs_bmapi_write() in a loop and once per transaction.
-Since it also passes nmap == 1, each call maps a single extent and thus
-allocates contiguous blocks. Based on that, the bdev reservation can be
-reduced from the worst case 1-1 mapping to a more optimal 1-N mapping of
-dm blocks to fs blocks (e.g., one dm block can cover many fs blocks).
+[BF: Condensed to single function.]
 
-Update xfs_alloc_file_space() to bypass transaction based bdev
-reservation. Instead, open-code the bdev reservation using the more
-optimal contiguous reservation value. This allows fallocate requests to
-consume just about all of the available space in a thin volume without
-premature ENOSPC errors.
-
-Signed-off-by: Brian Foster <bfoster@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- fs/xfs/xfs_bmap_util.c | 29 ++++++++++++++++++++++++++++-
- 1 file changed, 28 insertions(+), 1 deletion(-)
+ drivers/md/dm.c               | 41 +++++++++++++++++++++++++++++++++++++++++
+ include/linux/device-mapper.h |  5 +++++
+ 2 files changed, 46 insertions(+)
 
-diff --git a/fs/xfs/xfs_bmap_util.c b/fs/xfs/xfs_bmap_util.c
-index 3b63098..c2e1215 100644
---- a/fs/xfs/xfs_bmap_util.c
-+++ b/fs/xfs/xfs_bmap_util.c
-@@ -40,6 +40,7 @@
- #include "xfs_trace.h"
- #include "xfs_icache.h"
- #include "xfs_log.h"
-+#include "xfs_thin.h"
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index be49057..8f95e78 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -664,6 +664,46 @@ out:
+ 	return r;
+ }
  
- /* Kernel only BMAP related definitions and functions */
++/*
++ * FIXME: factor out common helper that can be used by
++ * multiple block_device_operations -> target methods
++ * (including dm_blk_ioctl above)
++ */
++
++static int dm_blk_reserve_space(struct block_device *bdev, int mode,
++				sector_t offset, sector_t len, sector_t *res)
++{
++	struct mapped_device *md = bdev->bd_disk->private_data;
++	int srcu_idx;
++	struct dm_table *map;
++	struct dm_target *tgt;
++	int r = -EINVAL;
++
++	map = dm_get_live_table(md, &srcu_idx);
++
++	if (!map || !dm_table_get_size(map))
++		goto out;
++
++	/* We only support devices that have a single target */
++	if (dm_table_get_num_targets(map) != 1)
++		goto out;
++
++	tgt = dm_table_get_target(map, 0);
++	if (!tgt->type->reserve_space)
++		goto out;
++
++	if (dm_suspended_md(md)) {
++		r = -EAGAIN;
++		goto out;
++	}
++
++	r = tgt->type->reserve_space(tgt, mode, offset, len, res);
++out:
++	dm_put_live_table(md, srcu_idx);
++
++	return r;
++}
++
+ static struct dm_io *alloc_io(struct mapped_device *md)
+ {
+ 	return mempool_alloc(md->io_pool, GFP_NOIO);
+@@ -3723,6 +3763,7 @@ static const struct block_device_operations dm_blk_dops = {
+ 	.ioctl = dm_blk_ioctl,
+ 	.getgeo = dm_blk_getgeo,
+ 	.pr_ops = &dm_pr_ops,
++	.reserve_space = dm_blk_reserve_space,
+ 	.owner = THIS_MODULE
+ };
  
-@@ -1035,9 +1036,11 @@ xfs_alloc_file_space(
- 		}
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 0830c9e..b4825db 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -116,6 +116,10 @@ typedef void (*dm_io_hints_fn) (struct dm_target *ti,
+  */
+ typedef int (*dm_busy_fn) (struct dm_target *ti);
  
- 		/*
--		 * Allocate and setup the transaction.
-+		 * Allocate and setup the transaction. The noblkres flags tells
-+		 * the reservation infrastructure to skip bdev reservation.
- 		 */
- 		tp = xfs_trans_alloc(mp, XFS_TRANS_DIOSTRAT);
-+		tp->t_flags |= XFS_TRANS_NOBLKRES;
- 		error = xfs_trans_reserve(tp, &M_RES(mp)->tr_write,
- 					  resblks, resrtextents);
- 		/*
-@@ -1051,6 +1054,30 @@ xfs_alloc_file_space(
- 			xfs_trans_cancel(tp);
- 			break;
- 		}
++typedef int (*dm_reserve_space_fn) (struct dm_target *ti, int mode,
++				    sector_t offset, sector_t len,
++				    sector_t *res);
 +
-+		/*
-+		 * We disabled the transaction bdev reservation because the
-+		 * trans infrastructure uses a worst case reservation. Since we
-+		 * call xfs_bmapi_write() one mapping at a time, we can assume
-+		 * the allocated blocks will be contiguous and thus can use a
-+		 * more optimal reservation value. Acquire the reservation here
-+		 * and attach it to the transaction.
-+		 *
-+		 * XXX: Need to take apart data and metadata block parts of res
-+		 * (see XFS_DIOSTRAT_SPACE_RES()). The latter still needs
-+		 * worst-case.
-+		 */
-+		if (mp->m_thin_res) {
-+			sector_t	res = xfs_fsb_res(mp, resblks, true);
-+
-+			error = xfs_thin_reserve(mp, res);
-+			if (error) {
-+				xfs_trans_cancel(tp);
-+				break;
-+			}
-+			tp->t_blk_thin_res = res;
-+		}
-+
- 		xfs_ilock(ip, XFS_ILOCK_EXCL);
- 		error = xfs_trans_reserve_quota_nblks(tp, ip, qblocks,
- 						      0, quota_flag);
+ void dm_error(const char *message);
+ 
+ struct dm_dev {
+@@ -162,6 +166,7 @@ struct target_type {
+ 	dm_busy_fn busy;
+ 	dm_iterate_devices_fn iterate_devices;
+ 	dm_io_hints_fn io_hints;
++	dm_reserve_space_fn reserve_space;
+ 
+ 	/* For internal device-mapper use. */
+ 	struct list_head list;
 -- 
 2.4.11
 
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
