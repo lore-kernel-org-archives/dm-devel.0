@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [RFC PATCH] block: wire blkdev_fallocate() to
  block_device_operations' reserve_space
-Date: Tue, 12 Apr 2016 16:46:58 -0400
-Message-ID: <20160412204658.GA1759@redhat.com>
+Date: Tue, 12 Apr 2016 17:04:27 -0400
+Message-ID: <20160412210426.GA1845@redhat.com>
 References: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
  <20160412200459.GA10730@redhat.com>
  <20160412203904.GD5812@birch.djwong.org>
@@ -20,109 +20,6 @@ On Tue, Apr 12 2016 at  4:39pm -0400,
 Darrick J. Wong <darrick.wong@oracle.com> wrote:
 
 > On Tue, Apr 12, 2016 at 04:04:59PM -0400, Mike Snitzer wrote:
-> > On Tue, Apr 12 2016 at 12:42P -0400,
-> > Brian Foster <bfoster@redhat.com> wrote:
-> > 
-> > > Hi all,
-> > > 
-> > > This is v2 of the XFS and block device reservation experiment. The
-> > > significant changes in v2 are that the bdev interface has been condensed
-> > > to a single callback function, the XFS transaction reservation
-> > > management has been reworked to make transactions responsible for
-> > > tracking and releasing excess reservation (for non-delalloc cases) and a
-> > > workaround for the fallocate over-reservation issue is included. Beyond
-> > > that, this version adds a bunch of miscellaneous cleanups and fixes some
-> > > of the nastier locking/leak issues present in the first rfc.
-> > > 
-> > > Patches 1-2 refactor some XFS reserve pool and block accounting code in
-> > > preparation for subsequent patches. Patches 3-5 add block/device-mapper
-> > > reservation support. Patches 6-10 add the core reservation
-> > > infrastructure and management bits to XFS. See the link to the original
-> > > rfc below for instructions and further details around the purpose of
-> > > this series.
-> > > 
-> > > Finally, note that this is still highly experimental/theoretical and
-> > > should not be used on production systems. Thoughts, reviews, flames
-> > > appreciated.
-> > 
-> > Thanks for carrying on with this work Brian.
-> > 
-> > I've started to review your patchset and Darrick's fallocate patchset.
-> > I've pushed a branch to linux-dm.git that combines the 2, see:
-> > https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-fallocate
-> > 
-> > and then added this RFC patch, at the end, which relies on both of your
-> > patchsets -- you'll see blkdev_ensure_space_exists() has a FIXME which
-> > implies it isn't much more than simply stubbed out at this point
-> > (completely untested):
-> 
-> Hmm, ok, but -rc3 broke a bunch of stuff.  Guess I should repost with all
-> the PAGE_CACHE_ -> PAGE_ stuff fixed. :)
-
-Yeah, the kernel.org kbuild robots just spammed us about that same exact
-breakage.
-
-> > From: Mike Snitzer <snitzer@redhat.com>
-> > Date: Tue, 12 Apr 2016 15:54:31 -0400
-> > Subject: [RFC PATCH] block: wire blkdev_fallocate() to block_device_operations' reserve_space
-> > 
-> > This effectively exposes the primitive for "ensure space exists".  It
-> > relies on block_device_operations' reserve_space method.
-> > 
-> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> > ---
-> >  block/blk-lib.c        | 26 ++++++++++++++++++++++++++
-> >  fs/block_dev.c         | 20 +++++++++++---------
-> >  include/linux/blkdev.h |  2 ++
-> >  3 files changed, 39 insertions(+), 9 deletions(-)
-> > 
-> > diff --git a/block/blk-lib.c b/block/blk-lib.c
-> > index 9dca6bb..5042a84 100644
-> > --- a/block/blk-lib.c
-> > +++ b/block/blk-lib.c
-> > @@ -314,3 +314,29 @@ int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
-> >  	return __blkdev_issue_zeroout(bdev, sector, nr_sects, gfp_mask);
-> >  }
-> >  EXPORT_SYMBOL(blkdev_issue_zeroout);
-> > +
-> > +/**
-> > + * blkdev_ensure_space_exists - preallocate a block range
-> > + * @bdev:	blockdev to preallocate space for
-> > + * @sector:	start sector
-> > + * @nr_sects:	number of sectors to preallocate
-> > + * @gfp_mask:	memory allocation flags (for bio_alloc)
-> > + * @flags:	FALLOC_FL_* to control behaviour
-> > + *
-> > + * Description:
-> > + *    Ensure space exists, or is preallocated, for the sectors in question.
-> > + */
-> > +int blkdev_ensure_space_exists(struct block_device *bdev, sector_t sector,
-> > +		sector_t nr_sects, unsigned long flags)
-> > +{
-> > +	sector_t res;
-> > +	const struct block_device_operations *ops = bdev->bd_disk->fops;
-> > +
-> > +	if (!ops->reserve_space)
-> > +		return -EOPNOTSUPP;
-> > +
-> > +	// FIXME: check with Brian Foster on whether it makes sense to
-> > +	// use BDEV_RES_GET/BDEV_RES_MOD instead of BDEV_RES_PROVISION?
-> > +	return ops->reserve_space(bdev, BDEV_RES_PROVISION, sector, nr_sects, &res);
-> 
-> /me thinks BDEV_RES_PROVISION is correct here, because regular-mode file
-> fallocate (for ext4/xfs anyway) allocates blocks and maps them to specific file
-> offsets as unwritten extents.  afaict RES_PROVISION -> thin_provision_space()
-> and thin_provision_space() seems to allocate blocks and map them to the
-> device's LBAs.
-> 
-> If I'm reading the patches correctly, RES_GET/RES_MOD seem to reserve N blocks
-> but doesn't map them to any specific LBA.
-
-Right that is how I read it too.  I just put that FIXME in to cover my
-ass incase I was being an idiot ;)
-
-> > +}
-> > +EXPORT_SYMBOL(blkdev_ensure_space_exists);
 > > diff --git a/fs/block_dev.c b/fs/block_dev.c
 > > index 5a2c3ab..b34c07b 100644
 > > --- a/fs/block_dev.c
@@ -163,34 +60,12 @@ ass incase I was being an idiot ;)
 > 
 > Noted.  Will update the original patch.
 
-OK, thanks.
+BTW, I just noticed your "block: require write_same and discard requests
+align to logical block size" -- doesn't look right.
 
-Once your new patchset is available I'll rebase my 'dm-fallocate' test
-branch accordingly.
- 
-> >  	/* Invalidate the page cache, including dirty pages. */
-> > @@ -1839,7 +1838,10 @@ long blkdev_fallocate(struct file *file, int mode, loff_t start, loff_t len)
-> >  	truncate_inode_pages_range(mapping, start, end);
-> >  
-> >  	error = -EINVAL;
-> > -	if (mode & FALLOC_FL_ZERO_RANGE)
-> > +	if (!(mode & ~FALLOC_FL_KEEP_SIZE))
-> > +		error = blkdev_ensure_space_exists(bdev, start >> 9, len >> 9,
-> > +						   mode);
-> > +	else if (mode & FALLOC_FL_ZERO_RANGE)
-> 
-> This whole thing got converted to a switch statement due to some feedback
-> from hch.
-> 
-> Anyway, will try to have a new blockdev fallocate patchset done by the end
-> of the day.
-> 
-> (Is there a test case for this?)
+But maybe I'm just too hyper-focused on DM thinp's needs (which would
+much prefer these checks be done in terms of minimum_io_size, rather
+than logical_block_size, and _not_ assuming power-of-2 math will work).
 
-No, but once my patch is in place to join your patchset with Brian's
-then any basic fallocate tests against a DM thinp volume _should_ work.
-
-/me assumes xfstests has such tests?  Only missing bit would be to layer
-the filesystem ontop of DM thinp?  Or extend the tests your added to
-test DM thinp devices directly.  I think Eric Sandeen (now cc'd) made
-xfstests capable or creating DM thinp volumes for certain tests.
+But at least for discard: your lbs-based check is fine; since we have
+discard_granularity to cover thinp's more specific requirements.
