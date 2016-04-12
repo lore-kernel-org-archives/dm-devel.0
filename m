@@ -1,296 +1,153 @@
-From: Brian Foster <bfoster@redhat.com>
-Subject: [RFC v2 PATCH 05/10] dm thin: add methods to set and get reserved space
-Date: Tue, 12 Apr 2016 12:42:48 -0400
-Message-ID: <1460479373-63317-6-git-send-email-bfoster@redhat.com>
-References: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: xfs@oss.sgi.com
-Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 4.5 052/238] dm cache: make sure every
+ metadata function checks fail_io
+Date: Tue, 12 Apr 2016 13:18:52 -0400
+Message-ID: <20160412171851.GA688@redhat.com>
+References: <20160410183456.398741366@linuxfoundation.org>
+	<20160410183459.304585887@linuxfoundation.org>
+	<1460424423.25201.87.camel@decadent.org.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1460424423.25201.87.camel@decadent.org.uk>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ben Hutchings <ben@decadent.org.uk>
+Cc: Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Joe Thornber <ejt@redhat.com>
+On Mon, Apr 11 2016 at  9:27pm -0400,
+Ben Hutchings <ben@decadent.org.uk> wrote:
 
-Experimental reserve interface for XFS guys to play with.
+> On Sun, 2016-04-10 at 11:33 -0700, Greg Kroah-Hartman wrote:
+> > 4.5-stable review patch.=A0=A0If anyone has any objections, please let =
+me know.
+> =
 
-I have big reservations (no pun intended) about this patch.
+> I've dropped stable because this isn't actually broken, but...
+> =
 
-[BF:
- - Support for reservation reduction.
- - Support for space provisioning.
- - Condensed to a single function.]
+> > ------------------
+> > =
 
-Not-Signed-off-by: Joe Thornber <ejt@redhat.com>
-Not-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-thin.c | 181 ++++++++++++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 171 insertions(+), 10 deletions(-)
+> > From: Joe Thornber <ejt@redhat.com>
+> > =
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 92237b6..32bc5bd 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -271,6 +271,8 @@ struct pool {
- 	process_mapping_fn process_prepared_discard;
- 
- 	struct dm_bio_prison_cell **cell_sort_array;
-+
-+	dm_block_t reserve_count;
- };
- 
- static enum pool_mode get_pool_mode(struct pool *pool);
-@@ -318,6 +320,8 @@ struct thin_c {
- 	 */
- 	atomic_t refcount;
- 	struct completion can_destroy;
-+
-+	dm_block_t reserve_count;
- };
- 
- /*----------------------------------------------------------------*/
-@@ -1359,24 +1363,19 @@ static void check_low_water_mark(struct pool *pool, dm_block_t free_blocks)
- 	}
- }
- 
--static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
-+static int get_free_blocks(struct pool *pool, dm_block_t *free_blocks)
- {
- 	int r;
--	dm_block_t free_blocks;
--	struct pool *pool = tc->pool;
--
--	if (WARN_ON(get_pool_mode(pool) != PM_WRITE))
--		return -EINVAL;
- 
--	r = dm_pool_get_free_block_count(pool->pmd, &free_blocks);
-+	r = dm_pool_get_free_block_count(pool->pmd, free_blocks);
- 	if (r) {
- 		metadata_operation_failed(pool, "dm_pool_get_free_block_count", r);
- 		return r;
- 	}
- 
--	check_low_water_mark(pool, free_blocks);
-+	check_low_water_mark(pool, *free_blocks);
- 
--	if (!free_blocks) {
-+	if (!*free_blocks) {
- 		/*
- 		 * Try to commit to see if that will free up some
- 		 * more space.
-@@ -1385,7 +1384,7 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
- 		if (r)
- 			return r;
- 
--		r = dm_pool_get_free_block_count(pool->pmd, &free_blocks);
-+		r = dm_pool_get_free_block_count(pool->pmd, free_blocks);
- 		if (r) {
- 			metadata_operation_failed(pool, "dm_pool_get_free_block_count", r);
- 			return r;
-@@ -1397,6 +1396,76 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
- 		}
- 	}
- 
-+	return r;
-+}
-+
-+/*
-+ * Returns true iff either:
-+ * i) decrement succeeded (ie. there was reserve left)
-+ * ii) there is extra space in the pool
-+ */
-+static bool dec_reserve_count(struct thin_c *tc, dm_block_t free_blocks)
-+{
-+	bool r = false;
-+	unsigned long flags;
-+
-+	if (!free_blocks)
-+		return false;
-+
-+	spin_lock_irqsave(&tc->pool->lock, flags);
-+	if (tc->reserve_count > 0) {
-+		tc->reserve_count--;
-+		tc->pool->reserve_count--;
-+		r = true;
-+	} else {
-+		if (free_blocks > tc->pool->reserve_count)
-+			r = true;
-+	}
-+	spin_unlock_irqrestore(&tc->pool->lock, flags);
-+
-+	return r;
-+}
-+
-+static int set_reserve_count(struct thin_c *tc, dm_block_t count)
-+{
-+	int r;
-+	dm_block_t free_blocks;
-+	int64_t delta;
-+	unsigned long flags;
-+
-+	r = get_free_blocks(tc->pool, &free_blocks);
-+	if (r)
-+		return r;
-+
-+	spin_lock_irqsave(&tc->pool->lock, flags);
-+	delta = count - tc->reserve_count;
-+	if (tc->pool->reserve_count + delta > free_blocks)
-+		r = -ENOSPC;
-+	else {
-+		tc->reserve_count = count;
-+		tc->pool->reserve_count += delta;
-+	}
-+	spin_unlock_irqrestore(&tc->pool->lock, flags);
-+
-+	return r;
-+}
-+
-+static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
-+{
-+	int r;
-+	dm_block_t free_blocks;
-+	struct pool *pool = tc->pool;
-+
-+	if (WARN_ON(get_pool_mode(pool) != PM_WRITE))
-+		return -EINVAL;
-+
-+	r = get_free_blocks(tc->pool, &free_blocks);
-+	if (r)
-+		return r;
-+
-+	if (!dec_reserve_count(tc, free_blocks))
-+		return -ENOSPC;
-+
- 	r = dm_pool_alloc_data_block(pool->pmd, result);
- 	if (r) {
- 		metadata_operation_failed(pool, "dm_pool_alloc_data_block", r);
-@@ -2880,6 +2949,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
- 	pool->last_commit_jiffies = jiffies;
- 	pool->pool_md = pool_md;
- 	pool->md_dev = metadata_dev;
-+	pool->reserve_count = 0;
- 	__pool_table_insert(pool);
- 
- 	return pool;
-@@ -3936,6 +4006,7 @@ static void thin_dtr(struct dm_target *ti)
- 
- 	spin_lock_irqsave(&tc->pool->lock, flags);
- 	list_del_rcu(&tc->list);
-+	tc->pool->reserve_count -= tc->reserve_count;
- 	spin_unlock_irqrestore(&tc->pool->lock, flags);
- 	synchronize_rcu();
- 
-@@ -4074,6 +4145,7 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	init_completion(&tc->can_destroy);
- 	list_add_tail_rcu(&tc->list, &tc->pool->active_thins);
- 	spin_unlock_irqrestore(&tc->pool->lock, flags);
-+	tc->reserve_count = 0;
- 	/*
- 	 * This synchronize_rcu() call is needed here otherwise we risk a
- 	 * wake_worker() call finding no bios to process (because the newly
-@@ -4271,6 +4343,94 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 	limits->max_discard_sectors = 2048 * 1024 * 16; /* 16G */
- }
- 
-+static int thin_provision_space(struct dm_target *ti, sector_t offset,
-+				sector_t len, sector_t *res)
-+{
-+	struct thin_c *tc = ti->private;
-+	struct pool *pool = tc->pool;
-+	sector_t end;
-+	dm_block_t pblock;
-+	dm_block_t vblock;
-+	int error;
-+	struct dm_thin_lookup_result lookup;
-+
-+	if (!is_factor(offset, pool->sectors_per_block))
-+		return -EINVAL;
-+
-+	if (!len || !is_factor(len, pool->sectors_per_block))
-+		return -EINVAL;
-+
-+	if (res && !is_factor(*res, pool->sectors_per_block))
-+		return -EINVAL;
-+
-+	end = offset + len;
-+
-+	while (offset < end) {
-+		vblock = offset;
-+		do_div(vblock, pool->sectors_per_block);
-+
-+		error = dm_thin_find_block(tc->td, vblock, true, &lookup);
-+		if (error == 0)
-+			goto next;
-+		if (error != -ENODATA)
-+			return error;
-+
-+		error = alloc_data_block(tc, &pblock);
-+		if (error)
-+			return error;
-+
-+		error = dm_thin_insert_block(tc->td, vblock, pblock);
-+		if (error)
-+			return error;
-+
-+		if (res && *res)
-+			*res -= pool->sectors_per_block;
-+next:
-+		offset += pool->sectors_per_block;
-+	}
-+
-+	return 0;
-+}
-+
-+static int thin_reserve_space(struct dm_target *ti, int mode, sector_t offset,
-+			      sector_t len, sector_t *res)
-+{
-+	struct thin_c *tc = ti->private;
-+	struct pool *pool = tc->pool;
-+	sector_t blocks;
-+	unsigned long flags;
-+	int error;
-+
-+	if (mode == BDEV_RES_PROVISION)
-+		return thin_provision_space(ti, offset, len, res);
-+
-+	/* res required for get/set */
-+	error = -EINVAL;
-+	if (!res)
-+		return error;
-+
-+	if (mode == BDEV_RES_GET) {
-+		spin_lock_irqsave(&tc->pool->lock, flags);
-+		*res = tc->reserve_count * pool->sectors_per_block;
-+		spin_unlock_irqrestore(&tc->pool->lock, flags);
-+		error = 0;
-+	} else if (mode == BDEV_RES_MOD) {
-+		/*
-+		* @res must always be a factor of the pool's blocksize; upper
-+		* layers can rely on the bdev's minimum_io_size for this.
-+		*/
-+		if (!is_factor(*res, pool->sectors_per_block))
-+			return error;
-+
-+		blocks = *res;
-+		(void) sector_div(blocks, pool->sectors_per_block);
-+
-+		error = set_reserve_count(tc, blocks);
-+	}
-+
-+	return error;
-+}
-+
- static struct target_type thin_target = {
- 	.name = "thin",
- 	.version = {1, 18, 0},
-@@ -4285,6 +4445,7 @@ static struct target_type thin_target = {
- 	.status = thin_status,
- 	.iterate_devices = thin_iterate_devices,
- 	.io_hints = thin_io_hints,
-+	.reserve_space = thin_reserve_space,
- };
- 
- /*----------------------------------------------------------------*/
--- 
-2.4.11
+> > commit d14fcf3dd79c0b8a8d0ba469c44a6b04f3a1403b upstream.
+> > =
 
+> > Otherwise operations may be attempted that will only ever go on to crash
+> > (since the metadata device is either missing or unreliable if 'fail_io'
+> > is set).
+> > =
+
+> > Signed-off-by: Joe Thornber <ejt@redhat.com>
+> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+> > =
+
+> > ---
+> > =A0drivers/md/dm-cache-metadata.c |=A0=A0=A098 ++++++++++++++++++++++++=
+-----------------
+> > =A0drivers/md/dm-cache-metadata.h |=A0=A0=A0=A04 -
+> > =A0drivers/md/dm-cache-target.c=A0=A0=A0|=A0=A0=A012 ++++-
+> > =A03 files changed, 71 insertions(+), 43 deletions(-)
+> > =
+
+> > --- a/drivers/md/dm-cache-metadata.c
+> > +++ b/drivers/md/dm-cache-metadata.c
+> > @@ -867,19 +867,40 @@ static int blocks_are_unmapped_or_clean(
+> > =A0	return 0;
+> > =A0}
+> > =A0
+> > -#define WRITE_LOCK(cmd) \
+> > -	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) \
+> > +#define WRITE_LOCK(cmd)	\
+> > +	down_write(&cmd->root_lock); \
+> > +	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) { \
+> > +		up_write(&cmd->root_lock); \
+> > =A0		return -EINVAL; \
+> > -	down_write(&cmd->root_lock)
+> > +	}
+> > =A0
+> > =A0#define WRITE_LOCK_VOID(cmd) \
+> > -	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) \
+> > +	down_write(&cmd->root_lock); \
+> > +	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) { \
+> > +		up_write(&cmd->root_lock); \
+> > =A0		return; \
+> > -	down_write(&cmd->root_lock)
+> > +	}
+> =
+
+> Whenever a macro expands to multiple statements they should be wrapped
+> up in do { ... } while (0) so the macro is safe to use in other
+> compound statements.
+> =
+
+> That's not a regression for these existing macros, but:
+> =
+
+> > =A0#define WRITE_UNLOCK(cmd) \
+> > =A0	up_write(&cmd->root_lock)
+> > =A0
+> > +#define READ_LOCK(cmd) \
+> > +	down_read(&cmd->root_lock); \
+> > +	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) { \
+> > +		up_read(&cmd->root_lock); \
+> > +		return -EINVAL; \
+> > +	}
+> > +
+> > +#define READ_LOCK_VOID(cmd)	\
+> > +	down_read(&cmd->root_lock); \
+> > +	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) { \
+> > +		up_read(&cmd->root_lock); \
+> > +		return; \
+> > +	}
+> [...]
+> =
+
+> here you're repeating the same broken pattern in new macros. =A0Which
+> checkpatch.pl would have complained about, if you'd thought to run it.
+> =
+
+> Hiding return statements in macros is another bad idea (who expects
+> exceptions in C?). =A0And once we reject that bad idea, all these macros
+> can be inline functions, like:
+> =
+
+> static inline bool dm_cm_read_lock(struct dm_cache_metadata *cmd)
+> {
+> 	down_read(&cmd->root_lock);
+> 	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) {
+> 		up_read(&cmd->root_lock);
+> 		return false;
+> 	}
+> 	return true;
+> }
+> =
+
+> /* ... */
+> =
+
+> 	if (!dm_cm_read_lock(cmd))
+> 		return -EINVAL;
+> =
+
+> Actually... I said this wasn't broken, but should the READ_LOCK macros
+> really fail in case dm_bm_is_read_only(), or only if cmd->fail_io?
+
+Thanks for the report!
+
+I've staged this to go to Linus by the end of the week:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/com=
+mit/?h=3Ddm-4.6&id=3Da64204672859248c89c8df796421442fb41e59ec
