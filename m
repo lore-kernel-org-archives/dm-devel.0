@@ -1,78 +1,26 @@
-From: Johannes Thumshirn <jthumshirn@suse.de>
-Subject: Re: [dm-devel] [RFC PATCH 0/4] dm mpath: vastly improve blk-mq IO performance
-Date: Wed, 13 Apr 2016 09:03:06 +0200
-Message-ID: <1894861.yMOs7f7bAi@c203>
-References: <1459454666-76428-1-git-send-email-snitzer@redhat.com> <2760420.6GyDefUaH5@c203> <20160408192938.GC8453@redhat.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 2/3] block: require write_same and discard requests align
+ to logical block size
+Date: Wed, 13 Apr 2016 07:23:08 -0700
+Message-ID: <20160413142308.GA8429@infradead.org>
+References: <20160413040121.10562.98998.stgit@birch.djwong.org>
+ <20160413040135.10562.74550.stgit@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20160408192938.GC8453@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, sagig@dev.mellanox.co.il, jmoyer@redhat.com, linux-block@vger.kernel.org, j-nomura@ce.jp.nec.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160413040135.10562.74550.stgit@birch.djwong.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: axboe@kernel.dk, hch@infradead.org, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, xfs@oss.sgi.com, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-On Freitag, 8. April 2016 15:29:39 CEST Mike Snitzer wrote:
-> On Fri, Apr 08 2016 at  7:42am -0400,
-> Johannes Thumshirn <jthumshirn@suse.de> wrote:
->=20
-> > Ladies and Gentlemen,
-> > To show off some numbers from our testing:
-> >=20
-> > All tests are performed against the cache of the Array, not the dis=
-ks as we=20
-> > wanted to test the Linux stack not the Disk Array.
-> >=20
-> > All single queue tests have been performed with the deadline I/O Sc=
-heduler.
-> >=20
-> > Comments welcome, have fun reading :-)
->=20
-> Any chance you collected performance results from DM MQ on this same
-> testbed without any variant of my lockless patches?  The DM SQ result=
-s
-> aren't too interesting a reference point.  Seeing how much better
-> lockless DM MQ (multipath) is than the old m->lock heacy code (still =
-in
-> 4.6) would be more interesting.
->=20
-> Not a big deal if you don't have it.. but figured I'd check to see.
+On Tue, Apr 12, 2016 at 09:01:35PM -0700, Darrick J. Wong wrote:
+> Make sure that the offset and length arguments that we're using to
+> construct WRITE SAME and DISCARD requests are actually aligned to the
+> logical block size.  Failure to do this causes other errors in other
+> parts of the block layer or the SCSI layer because disks don't support
+> partial logical block writes.
 
-I'll have to look if there are some of the old logfiles still available=
-, but we
-can't re-test, as the array was just temporarily allocated to us and we=
-'ve
-now lost access to it. But IIRC it's been somewhere around 300K IOPS, b=
-ut=20
-don't quote me on that.
-
-Byte,
-	Joahnnes
-
-=20
-> And thanks for the numbers you've provided.
-> Mike
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->=20
-
-
---=20
-Johannes Thumshirn                                                     =
-                           Storage
-jthumshirn@suse.de                                                     =
-        +49 911 74053 689
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-HRB 21284 (AG N=FCrnberg)
-Key fingerprint =3D EC38 9CAB C2C4 F25D 8600 D0D0 0393 969D 2D76 0850
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+FYI, Bart has just been posting a patchset in that includes this, but
+goes further.  Can you take a look at it?
