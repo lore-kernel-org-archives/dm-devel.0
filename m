@@ -1,337 +1,196 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
+From: Brian Foster <bfoster@redhat.com>
 Subject: Re: [RFC v2 PATCH 05/10] dm thin: add methods to set and get
-	reserved space
-Date: Wed, 13 Apr 2016 10:44:42 -0700
-Message-ID: <20160413174442.GD18517@birch.djwong.org>
+ reserved space
+Date: Wed, 13 Apr 2016 14:33:52 -0400
+Message-ID: <20160413183352.GB2775@bfoster.bfoster>
 References: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
-	<1460479373-63317-6-git-send-email-bfoster@redhat.com>
+ <1460479373-63317-6-git-send-email-bfoster@redhat.com>
+ <20160413174442.GD18517@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1460479373-63317-6-git-send-email-bfoster@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Brian Foster <bfoster@redhat.com>
-Cc: snitzer@redhat.com, Joe Thornber <ejt@redhat.com>, xfs@oss.sgi.com, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
+In-Reply-To: <20160413174442.GD18517@birch.djwong.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: xfs@oss.sgi.com, linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Apr 12, 2016 at 12:42:48PM -0400, Brian Foster wrote:
-> From: Joe Thornber <ejt@redhat.com>
+On Wed, Apr 13, 2016 at 10:44:42AM -0700, Darrick J. Wong wrote:
+> On Tue, Apr 12, 2016 at 12:42:48PM -0400, Brian Foster wrote:
+> > From: Joe Thornber <ejt@redhat.com>
+> > 
+> > Experimental reserve interface for XFS guys to play with.
+> > 
+> > I have big reservations (no pun intended) about this patch.
+> > 
+> > [BF:
+> >  - Support for reservation reduction.
+> >  - Support for space provisioning.
+> >  - Condensed to a single function.]
+> > 
+> > Not-Signed-off-by: Joe Thornber <ejt@redhat.com>
+> > Not-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > ---
+> >  drivers/md/dm-thin.c | 181 ++++++++++++++++++++++++++++++++++++++++++++++++---
+> >  1 file changed, 171 insertions(+), 10 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> > index 92237b6..32bc5bd 100644
+> > --- a/drivers/md/dm-thin.c
+> > +++ b/drivers/md/dm-thin.c
+...
+> > @@ -4271,6 +4343,94 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
+> >  	limits->max_discard_sectors = 2048 * 1024 * 16; /* 16G */
+> >  }
+> >  
+> > +static int thin_provision_space(struct dm_target *ti, sector_t offset,
+> > +				sector_t len, sector_t *res)
+> > +{
+> > +	struct thin_c *tc = ti->private;
+> > +	struct pool *pool = tc->pool;
+> > +	sector_t end;
+> > +	dm_block_t pblock;
+> > +	dm_block_t vblock;
+> > +	int error;
+> > +	struct dm_thin_lookup_result lookup;
+> > +
+> > +	if (!is_factor(offset, pool->sectors_per_block))
+> > +		return -EINVAL;
+> > +
+> > +	if (!len || !is_factor(len, pool->sectors_per_block))
+> > +		return -EINVAL;
+> > +
+> > +	if (res && !is_factor(*res, pool->sectors_per_block))
+> > +		return -EINVAL;
+> > +
+> > +	end = offset + len;
+> > +
+> > +	while (offset < end) {
+> > +		vblock = offset;
+> > +		do_div(vblock, pool->sectors_per_block);
+> > +
+> > +		error = dm_thin_find_block(tc->td, vblock, true, &lookup);
+> > +		if (error == 0)
+> > +			goto next;
+> > +		if (error != -ENODATA)
+> > +			return error;
+> > +
+> > +		error = alloc_data_block(tc, &pblock);
 > 
-> Experimental reserve interface for XFS guys to play with.
+> So this means that if fallocate wants to BDEV_RES_PROVISION N blocks, it must
+> first increase the reservation (BDEV_RES_MOD) by N blocks to avoid using up
+> space that was previously reserved by some other caller.  I think?
 > 
-> I have big reservations (no pun intended) about this patch.
+
+Yes, assuming this is being called from a filesystem using the
+reservation mechanism.
+
+> > +		if (error)
+> > +			return error;
+> > +
+> > +		error = dm_thin_insert_block(tc->td, vblock, pblock);
 > 
-> [BF:
->  - Support for reservation reduction.
->  - Support for space provisioning.
->  - Condensed to a single function.]
+> Having reserved and mapped blocks, what happens when we try to read them?
+> Do we actually get zeroes, or does the read go straight through to whatever
+> happens to be in the disk blocks?  I don't think it's correct that we could
+> BDEV_RES_PROVISION and end up with stale credit card numbers from some other
+> thin device.
 > 
-> Not-Signed-off-by: Joe Thornber <ejt@redhat.com>
-> Not-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  drivers/md/dm-thin.c | 181 ++++++++++++++++++++++++++++++++++++++++++++++++---
->  1 file changed, 171 insertions(+), 10 deletions(-)
+
+Agree, but I'm not really sure how this works in thinp tbh. fallocate
+wasn't really on my mind when doing this. I was simply trying to cobble
+together what I could to facilitate making progress on the fs parts
+(e.g., I just needed a call that allocated blocks and consumed
+reservation in the process).
+
+Skimming through the dm-thin code, it looks like a (configurable) block
+zeroing mechanism can be triggered from somewhere around
+provision_block()->schedule_zero(), depending on whether the incoming
+write overwrites the newly allocated block. If that's the case, then I
+suspect that means reads would just fall through to the block and return
+whatever was on disk. This code would probably need to tie into that
+zeroing mechanism one way or another to deal with that issue. (Though
+somebody who actually knows something about dm-thin should verify that.
+:)
+
+Brian
+
+> (PS: I don't know enough about thinp to know if this has already been taken
+> care of.  I didn't see anything, but who knows what I missed. :))
 > 
-> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index 92237b6..32bc5bd 100644
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-> @@ -271,6 +271,8 @@ struct pool {
->  	process_mapping_fn process_prepared_discard;
->  
->  	struct dm_bio_prison_cell **cell_sort_array;
-> +
-> +	dm_block_t reserve_count;
->  };
->  
->  static enum pool_mode get_pool_mode(struct pool *pool);
-> @@ -318,6 +320,8 @@ struct thin_c {
->  	 */
->  	atomic_t refcount;
->  	struct completion can_destroy;
-> +
-> +	dm_block_t reserve_count;
->  };
->  
->  /*----------------------------------------------------------------*/
-> @@ -1359,24 +1363,19 @@ static void check_low_water_mark(struct pool *pool, dm_block_t free_blocks)
->  	}
->  }
->  
-> -static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
-> +static int get_free_blocks(struct pool *pool, dm_block_t *free_blocks)
->  {
->  	int r;
-> -	dm_block_t free_blocks;
-> -	struct pool *pool = tc->pool;
-> -
-> -	if (WARN_ON(get_pool_mode(pool) != PM_WRITE))
-> -		return -EINVAL;
->  
-> -	r = dm_pool_get_free_block_count(pool->pmd, &free_blocks);
-> +	r = dm_pool_get_free_block_count(pool->pmd, free_blocks);
->  	if (r) {
->  		metadata_operation_failed(pool, "dm_pool_get_free_block_count", r);
->  		return r;
->  	}
->  
-> -	check_low_water_mark(pool, free_blocks);
-> +	check_low_water_mark(pool, *free_blocks);
->  
-> -	if (!free_blocks) {
-> +	if (!*free_blocks) {
->  		/*
->  		 * Try to commit to see if that will free up some
->  		 * more space.
-> @@ -1385,7 +1384,7 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
->  		if (r)
->  			return r;
->  
-> -		r = dm_pool_get_free_block_count(pool->pmd, &free_blocks);
-> +		r = dm_pool_get_free_block_count(pool->pmd, free_blocks);
->  		if (r) {
->  			metadata_operation_failed(pool, "dm_pool_get_free_block_count", r);
->  			return r;
-> @@ -1397,6 +1396,76 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
->  		}
->  	}
->  
-> +	return r;
-> +}
-> +
-> +/*
-> + * Returns true iff either:
-> + * i) decrement succeeded (ie. there was reserve left)
-> + * ii) there is extra space in the pool
-> + */
-> +static bool dec_reserve_count(struct thin_c *tc, dm_block_t free_blocks)
-> +{
-> +	bool r = false;
-> +	unsigned long flags;
-> +
-> +	if (!free_blocks)
-> +		return false;
-> +
-> +	spin_lock_irqsave(&tc->pool->lock, flags);
-> +	if (tc->reserve_count > 0) {
-> +		tc->reserve_count--;
-> +		tc->pool->reserve_count--;
-> +		r = true;
-> +	} else {
-> +		if (free_blocks > tc->pool->reserve_count)
-> +			r = true;
-> +	}
-> +	spin_unlock_irqrestore(&tc->pool->lock, flags);
-> +
-> +	return r;
-> +}
-> +
-> +static int set_reserve_count(struct thin_c *tc, dm_block_t count)
-> +{
-> +	int r;
-> +	dm_block_t free_blocks;
-> +	int64_t delta;
-> +	unsigned long flags;
-> +
-> +	r = get_free_blocks(tc->pool, &free_blocks);
-> +	if (r)
-> +		return r;
-> +
-> +	spin_lock_irqsave(&tc->pool->lock, flags);
-> +	delta = count - tc->reserve_count;
-> +	if (tc->pool->reserve_count + delta > free_blocks)
-> +		r = -ENOSPC;
-> +	else {
-> +		tc->reserve_count = count;
-> +		tc->pool->reserve_count += delta;
-> +	}
-> +	spin_unlock_irqrestore(&tc->pool->lock, flags);
-> +
-> +	return r;
-> +}
-> +
-> +static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
-> +{
-> +	int r;
-> +	dm_block_t free_blocks;
-> +	struct pool *pool = tc->pool;
-> +
-> +	if (WARN_ON(get_pool_mode(pool) != PM_WRITE))
-> +		return -EINVAL;
-> +
-> +	r = get_free_blocks(tc->pool, &free_blocks);
-> +	if (r)
-> +		return r;
-> +
-> +	if (!dec_reserve_count(tc, free_blocks))
-> +		return -ENOSPC;
-> +
->  	r = dm_pool_alloc_data_block(pool->pmd, result);
->  	if (r) {
->  		metadata_operation_failed(pool, "dm_pool_alloc_data_block", r);
-> @@ -2880,6 +2949,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
->  	pool->last_commit_jiffies = jiffies;
->  	pool->pool_md = pool_md;
->  	pool->md_dev = metadata_dev;
-> +	pool->reserve_count = 0;
->  	__pool_table_insert(pool);
->  
->  	return pool;
-> @@ -3936,6 +4006,7 @@ static void thin_dtr(struct dm_target *ti)
->  
->  	spin_lock_irqsave(&tc->pool->lock, flags);
->  	list_del_rcu(&tc->list);
-> +	tc->pool->reserve_count -= tc->reserve_count;
->  	spin_unlock_irqrestore(&tc->pool->lock, flags);
->  	synchronize_rcu();
->  
-> @@ -4074,6 +4145,7 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
->  	init_completion(&tc->can_destroy);
->  	list_add_tail_rcu(&tc->list, &tc->pool->active_thins);
->  	spin_unlock_irqrestore(&tc->pool->lock, flags);
-> +	tc->reserve_count = 0;
->  	/*
->  	 * This synchronize_rcu() call is needed here otherwise we risk a
->  	 * wake_worker() call finding no bios to process (because the newly
-> @@ -4271,6 +4343,94 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
->  	limits->max_discard_sectors = 2048 * 1024 * 16; /* 16G */
->  }
->  
-> +static int thin_provision_space(struct dm_target *ti, sector_t offset,
-> +				sector_t len, sector_t *res)
-> +{
-> +	struct thin_c *tc = ti->private;
-> +	struct pool *pool = tc->pool;
-> +	sector_t end;
-> +	dm_block_t pblock;
-> +	dm_block_t vblock;
-> +	int error;
-> +	struct dm_thin_lookup_result lookup;
-> +
-> +	if (!is_factor(offset, pool->sectors_per_block))
-> +		return -EINVAL;
-> +
-> +	if (!len || !is_factor(len, pool->sectors_per_block))
-> +		return -EINVAL;
-> +
-> +	if (res && !is_factor(*res, pool->sectors_per_block))
-> +		return -EINVAL;
-> +
-> +	end = offset + len;
-> +
-> +	while (offset < end) {
-> +		vblock = offset;
-> +		do_div(vblock, pool->sectors_per_block);
-> +
-> +		error = dm_thin_find_block(tc->td, vblock, true, &lookup);
-> +		if (error == 0)
-> +			goto next;
-> +		if (error != -ENODATA)
-> +			return error;
-> +
-> +		error = alloc_data_block(tc, &pblock);
-
-So this means that if fallocate wants to BDEV_RES_PROVISION N blocks, it must
-first increase the reservation (BDEV_RES_MOD) by N blocks to avoid using up
-space that was previously reserved by some other caller.  I think?
-
-> +		if (error)
-> +			return error;
-> +
-> +		error = dm_thin_insert_block(tc->td, vblock, pblock);
-
-Having reserved and mapped blocks, what happens when we try to read them?
-Do we actually get zeroes, or does the read go straight through to whatever
-happens to be in the disk blocks?  I don't think it's correct that we could
-BDEV_RES_PROVISION and end up with stale credit card numbers from some other
-thin device.
-
-(PS: I don't know enough about thinp to know if this has already been taken
-care of.  I didn't see anything, but who knows what I missed. :))
-
---D
-
-> +		if (error)
-> +			return error;
-> +
-> +		if (res && *res)
-> +			*res -= pool->sectors_per_block;
-> +next:
-> +		offset += pool->sectors_per_block;
-> +	}
-> +
-> +	return 0;
-> +}
-> +
-> +static int thin_reserve_space(struct dm_target *ti, int mode, sector_t offset,
-> +			      sector_t len, sector_t *res)
-> +{
-> +	struct thin_c *tc = ti->private;
-> +	struct pool *pool = tc->pool;
-> +	sector_t blocks;
-> +	unsigned long flags;
-> +	int error;
-> +
-> +	if (mode == BDEV_RES_PROVISION)
-> +		return thin_provision_space(ti, offset, len, res);
-> +
-> +	/* res required for get/set */
-> +	error = -EINVAL;
-> +	if (!res)
-> +		return error;
-> +
-> +	if (mode == BDEV_RES_GET) {
-> +		spin_lock_irqsave(&tc->pool->lock, flags);
-> +		*res = tc->reserve_count * pool->sectors_per_block;
-> +		spin_unlock_irqrestore(&tc->pool->lock, flags);
-> +		error = 0;
-> +	} else if (mode == BDEV_RES_MOD) {
-> +		/*
-> +		* @res must always be a factor of the pool's blocksize; upper
-> +		* layers can rely on the bdev's minimum_io_size for this.
-> +		*/
-> +		if (!is_factor(*res, pool->sectors_per_block))
-> +			return error;
-> +
-> +		blocks = *res;
-> +		(void) sector_div(blocks, pool->sectors_per_block);
-> +
-> +		error = set_reserve_count(tc, blocks);
-> +	}
-> +
-> +	return error;
-> +}
-> +
->  static struct target_type thin_target = {
->  	.name = "thin",
->  	.version = {1, 18, 0},
-> @@ -4285,6 +4445,7 @@ static struct target_type thin_target = {
->  	.status = thin_status,
->  	.iterate_devices = thin_iterate_devices,
->  	.io_hints = thin_io_hints,
-> +	.reserve_space = thin_reserve_space,
->  };
->  
->  /*----------------------------------------------------------------*/
-> -- 
-> 2.4.11
+> --D
 > 
-> _______________________________________________
-> xfs mailing list
-> xfs@oss.sgi.com
-> http://oss.sgi.com/mailman/listinfo/xfs
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+> > +		if (error)
+> > +			return error;
+> > +
+> > +		if (res && *res)
+> > +			*res -= pool->sectors_per_block;
+> > +next:
+> > +		offset += pool->sectors_per_block;
+> > +	}
+> > +
+> > +	return 0;
+> > +}
+> > +
+> > +static int thin_reserve_space(struct dm_target *ti, int mode, sector_t offset,
+> > +			      sector_t len, sector_t *res)
+> > +{
+> > +	struct thin_c *tc = ti->private;
+> > +	struct pool *pool = tc->pool;
+> > +	sector_t blocks;
+> > +	unsigned long flags;
+> > +	int error;
+> > +
+> > +	if (mode == BDEV_RES_PROVISION)
+> > +		return thin_provision_space(ti, offset, len, res);
+> > +
+> > +	/* res required for get/set */
+> > +	error = -EINVAL;
+> > +	if (!res)
+> > +		return error;
+> > +
+> > +	if (mode == BDEV_RES_GET) {
+> > +		spin_lock_irqsave(&tc->pool->lock, flags);
+> > +		*res = tc->reserve_count * pool->sectors_per_block;
+> > +		spin_unlock_irqrestore(&tc->pool->lock, flags);
+> > +		error = 0;
+> > +	} else if (mode == BDEV_RES_MOD) {
+> > +		/*
+> > +		* @res must always be a factor of the pool's blocksize; upper
+> > +		* layers can rely on the bdev's minimum_io_size for this.
+> > +		*/
+> > +		if (!is_factor(*res, pool->sectors_per_block))
+> > +			return error;
+> > +
+> > +		blocks = *res;
+> > +		(void) sector_div(blocks, pool->sectors_per_block);
+> > +
+> > +		error = set_reserve_count(tc, blocks);
+> > +	}
+> > +
+> > +	return error;
+> > +}
+> > +
+> >  static struct target_type thin_target = {
+> >  	.name = "thin",
+> >  	.version = {1, 18, 0},
+> > @@ -4285,6 +4445,7 @@ static struct target_type thin_target = {
+> >  	.status = thin_status,
+> >  	.iterate_devices = thin_iterate_devices,
+> >  	.io_hints = thin_io_hints,
+> > +	.reserve_space = thin_reserve_space,
+> >  };
+> >  
+> >  /*----------------------------------------------------------------*/
+> > -- 
+> > 2.4.11
+> > 
+> > _______________________________________________
+> > xfs mailing list
+> > xfs@oss.sgi.com
+> > http://oss.sgi.com/mailman/listinfo/xfs
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-block" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
