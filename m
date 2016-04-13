@@ -1,18 +1,14 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [RFC PATCH] block: wire blkdev_fallocate() to
-	block_device_operations' reserve_space
-Date: Tue, 12 Apr 2016 17:12:43 -0700
-Message-ID: <20160413001243.GA25280@birch.djwong.org>
-References: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
-	<20160412200459.GA10730@redhat.com>
-	<20160412203904.GD5812@birch.djwong.org>
-	<20160412210426.GA1845@redhat.com>
+Subject: [PATCH 2/3] block: require write_same and discard requests align to
+	logical block size
+Date: Tue, 12 Apr 2016 21:01:35 -0700
+Message-ID: <20160413040135.10562.74550.stgit@birch.djwong.org>
+References: <20160413040121.10562.98998.stgit@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <xfs-bounces@oss.sgi.com>
-Content-Disposition: inline
-In-Reply-To: <20160412210426.GA1845@redhat.com>
+In-Reply-To: <20160413040121.10562.98998.stgit@birch.djwong.org>
 List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
 	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
 List-Archive: <http://oss.sgi.com/pipermail/xfs>
@@ -22,85 +18,80 @@ List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
 	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
 Errors-To: xfs-bounces@oss.sgi.com
 Sender: xfs-bounces@oss.sgi.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, Brian Foster <bfoster@redhat.com>, dm-devel@redhat.com, xfs@oss.sgi.com
+To: darrick.wong@oracle.com
+Cc: axboe@kernel.dk, linux-block@vger.kernel.org, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, xfs@oss.sgi.com, hch@infradead.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-On Tue, Apr 12, 2016 at 05:04:27PM -0400, Mike Snitzer wrote:
-> On Tue, Apr 12 2016 at  4:39pm -0400,
-> Darrick J. Wong <darrick.wong@oracle.com> wrote:
-> 
-> > On Tue, Apr 12, 2016 at 04:04:59PM -0400, Mike Snitzer wrote:
-> > > diff --git a/fs/block_dev.c b/fs/block_dev.c
-> > > index 5a2c3ab..b34c07b 100644
-> > > --- a/fs/block_dev.c
-> > > +++ b/fs/block_dev.c
-> > > @@ -1801,17 +1801,13 @@ long blkdev_fallocate(struct file *file, int mode, loff_t start, loff_t len)
-> > >  	struct request_queue *q = bdev_get_queue(bdev);
-> > >  	struct address_space *mapping;
-> > >  	loff_t end = start + len - 1;
-> > > -	loff_t bs_mask, isize;
-> > > +	loff_t isize;
-> > >  	int error;
-> > >  
-> > >  	/* We only support zero range and punch hole. */
-> > >  	if (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
-> > >  		return -EOPNOTSUPP;
-> > >  
-> > > -	/* We haven't a primitive for "ensure space exists" right now. */
-> > > -	if (!(mode & ~FALLOC_FL_KEEP_SIZE))
-> > > -		return -EOPNOTSUPP;
-> > > -
-> > >  	/* Only punch if the device can do zeroing discard. */
-> > >  	if ((mode & FALLOC_FL_PUNCH_HOLE) &&
-> > >  	    (!blk_queue_discard(q) || !q->limits.discard_zeroes_data))
-> > > @@ -1829,9 +1825,12 @@ long blkdev_fallocate(struct file *file, int mode, loff_t start, loff_t len)
-> > >  			return -EINVAL;
-> > >  	}
-> > >  
-> > > -	/* Don't allow IO that isn't aligned to logical block size */
-> > > -	bs_mask = bdev_logical_block_size(bdev) - 1;
-> > > -	if ((start | len) & bs_mask)
-> > > +	/*
-> > > +	 * Don't allow IO that isn't aligned to minimum IO size (io_min)
-> > > +	 * - for normal device's io_min is usually logical block size
-> > > +	 * - but for more exotic devices (e.g. DM thinp) it may be larger
-> > > +	 */
-> > > +	if ((start | len) % bdev_io_min(bdev))
+Make sure that the offset and length arguments that we're using to
+construct WRITE SAME and DISCARD requests are actually aligned to the
+logical block size.  Failure to do this causes other errors in other
+parts of the block layer or the SCSI layer because disks don't support
+partial logical block writes.
 
-I started by noticing the 64-bit division.  However, in researching alignment
-requirements for fallocate, I noticed that nothing says that we can return
--EINVAL for unaligned offset/len for allocate or punch.  For file allocations
-ext4 and xfs simply enlarge the range so that the ends are aligned to the
-logical block size; for punch they both shrink the range to deallocate until
-the ends are aligned, and write zeroes to the partial blocks.
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+---
+ block/blk-lib.c |   15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
 
-At least for user-visible fallocate we should do likewise, but for the internal
-blkdev_ helpers I think it makes more sense to check lbs alignment and let the
-lower level driver reject the IO if min_io alignment is a hard requirement.
-Documentation/block/queue-sysfs.txt says that the min_io is the smallest
-/preferred/ size.
 
-But, before that, I'll push out some new fallocate patches for -rc3.
-
-> > >  		return -EINVAL;
-> > 
-> > Noted.  Will update the original patch.
-> 
-> BTW, I just noticed your "block: require write_same and discard requests
-> align to logical block size" -- doesn't look right.
-
-What happens if we pass a request to thinp that isn't aligned to
-minimum_io_size?  Does it reject the command?
-
-> But maybe I'm just too hyper-focused on DM thinp's needs (which would
-> much prefer these checks be done in terms of minimum_io_size, rather
-> than logical_block_size, and _not_ assuming power-of-2 math will work).
-> 
-> But at least for discard: your lbs-based check is fine; since we have
-> discard_granularity to cover thinp's more specific requirements.
-
---D
+diff --git a/block/blk-lib.c b/block/blk-lib.c
+index 9ebf653..9dca6bb 100644
+--- a/block/blk-lib.c
++++ b/block/blk-lib.c
+@@ -49,6 +49,7 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+ 	struct bio *bio;
+ 	int ret = 0;
+ 	struct blk_plug plug;
++	sector_t bs_mask;
+ 
+ 	if (!q)
+ 		return -ENXIO;
+@@ -56,6 +57,10 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+ 	if (!blk_queue_discard(q))
+ 		return -EOPNOTSUPP;
+ 
++	bs_mask = (bdev_logical_block_size(bdev) >> 9) - 1;
++	if ((sector | nr_sects) & bs_mask)
++		return -EINVAL;
++
+ 	/* Zero-sector (unknown) and one-sector granularities are the same.  */
+ 	granularity = max(q->limits.discard_granularity >> 9, 1U);
+ 	alignment = (bdev_discard_alignment(bdev) >> 9) % granularity;
+@@ -148,6 +153,7 @@ int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
+ 	DECLARE_COMPLETION_ONSTACK(wait);
+ 	struct request_queue *q = bdev_get_queue(bdev);
+ 	unsigned int max_write_same_sectors;
++	sector_t bs_mask;
+ 	struct bio_batch bb;
+ 	struct bio *bio;
+ 	int ret = 0;
+@@ -155,6 +161,10 @@ int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
+ 	if (!q)
+ 		return -ENXIO;
+ 
++	bs_mask = (bdev_logical_block_size(bdev) >> 9) - 1;
++	if ((sector | nr_sects) & bs_mask)
++		return -EINVAL;
++
+ 	/* Ensure that max_write_same_sectors doesn't overflow bi_size */
+ 	max_write_same_sectors = UINT_MAX >> 9;
+ 
+@@ -218,9 +228,14 @@ static int __blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
+ 	int ret;
+ 	struct bio *bio;
+ 	struct bio_batch bb;
++	sector_t bs_mask;
+ 	unsigned int sz;
+ 	DECLARE_COMPLETION_ONSTACK(wait);
+ 
++	bs_mask = (bdev_logical_block_size(bdev) >> 9) - 1;
++	if ((sector | nr_sects) & bs_mask)
++		return -EINVAL;
++
+ 	atomic_set(&bb.done, 1);
+ 	bb.error = 0;
+ 	bb.wait = &wait;
 
 _______________________________________________
 xfs mailing list
