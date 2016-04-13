@@ -1,162 +1,209 @@
-From: mchristi@redhat.com
-Subject: [PATCH 38/42] block, fs: remove old REQ definitions.
-Date: Wed, 13 Apr 2016 14:36:24 -0500
-Message-ID: <1460576188-5751-39-git-send-email-mchristi@redhat.com>
-References: <1460576188-5751-1-git-send-email-mchristi@redhat.com>
+From: Brian Foster <bfoster@redhat.com>
+Subject: Re: [RFC v2 PATCH 05/10] dm thin: add methods to set and get
+ reserved space
+Date: Wed, 13 Apr 2016 16:41:18 -0400
+Message-ID: <20160413204117.GA6870@bfoster.bfoster>
+References: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
+ <1460479373-63317-6-git-send-email-bfoster@redhat.com>
+ <20160413174442.GD18517@birch.djwong.org>
+ <20160413183352.GB2775@bfoster.bfoster>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <ocfs2-devel-bounces@oss.oracle.com>
-In-Reply-To: <1460576188-5751-1-git-send-email-mchristi@redhat.com>
-List-Unsubscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
-	<mailto:ocfs2-devel-request@oss.oracle.com?subject=unsubscribe>
-List-Archive: <http://oss.oracle.com/pipermail/ocfs2-devel>
-List-Post: <mailto:ocfs2-devel@oss.oracle.com>
-List-Help: <mailto:ocfs2-devel-request@oss.oracle.com?subject=help>
-List-Subscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
-	<mailto:ocfs2-devel-request@oss.oracle.com?subject=subscribe>
-Sender: ocfs2-devel-bounces@oss.oracle.com
-Errors-To: ocfs2-devel-bounces@oss.oracle.com
-To: linux-f2fs-devel@lists.sourceforge.net, linux-ext4@vger.kernel.org, konrad.wilk@oracle.com, drbd-dev@lists.linbit.com, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-bcache@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-mtd@lists.infradead.org, target-devel@vger.kernel.org, linux-btrfs@vger.kernel.org, osd-dev@open-osd.org, xfs@oss.sgi.com, ocfs2-devel@oss.oracle.com
-Cc: Mike Christie <mchristi@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160413183352.GB2775@bfoster.bfoster>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: xfs@oss.sgi.com, linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-From: Mike Christie <mchristi@redhat.com>
+On Wed, Apr 13, 2016 at 02:33:52PM -0400, Brian Foster wrote:
+> On Wed, Apr 13, 2016 at 10:44:42AM -0700, Darrick J. Wong wrote:
+> > On Tue, Apr 12, 2016 at 12:42:48PM -0400, Brian Foster wrote:
+> > > From: Joe Thornber <ejt@redhat.com>
+> > > 
+> > > Experimental reserve interface for XFS guys to play with.
+> > > 
+> > > I have big reservations (no pun intended) about this patch.
+> > > 
+> > > [BF:
+> > >  - Support for reservation reduction.
+> > >  - Support for space provisioning.
+> > >  - Condensed to a single function.]
+> > > 
+> > > Not-Signed-off-by: Joe Thornber <ejt@redhat.com>
+> > > Not-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > > ---
+> > >  drivers/md/dm-thin.c | 181 ++++++++++++++++++++++++++++++++++++++++++++++++---
+> > >  1 file changed, 171 insertions(+), 10 deletions(-)
+> > > 
+> > > diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> > > index 92237b6..32bc5bd 100644
+> > > --- a/drivers/md/dm-thin.c
+> > > +++ b/drivers/md/dm-thin.c
+> ...
+> > > @@ -4271,6 +4343,94 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
+> > >  	limits->max_discard_sectors = 2048 * 1024 * 16; /* 16G */
+> > >  }
+> > >  
+> > > +static int thin_provision_space(struct dm_target *ti, sector_t offset,
+> > > +				sector_t len, sector_t *res)
+> > > +{
+> > > +	struct thin_c *tc = ti->private;
+> > > +	struct pool *pool = tc->pool;
+> > > +	sector_t end;
+> > > +	dm_block_t pblock;
+> > > +	dm_block_t vblock;
+> > > +	int error;
+> > > +	struct dm_thin_lookup_result lookup;
+> > > +
+> > > +	if (!is_factor(offset, pool->sectors_per_block))
+> > > +		return -EINVAL;
+> > > +
+> > > +	if (!len || !is_factor(len, pool->sectors_per_block))
+> > > +		return -EINVAL;
+> > > +
+> > > +	if (res && !is_factor(*res, pool->sectors_per_block))
+> > > +		return -EINVAL;
+> > > +
+> > > +	end = offset + len;
+> > > +
+> > > +	while (offset < end) {
+> > > +		vblock = offset;
+> > > +		do_div(vblock, pool->sectors_per_block);
+> > > +
+> > > +		error = dm_thin_find_block(tc->td, vblock, true, &lookup);
+> > > +		if (error == 0)
+> > > +			goto next;
+> > > +		if (error != -ENODATA)
+> > > +			return error;
+> > > +
+> > > +		error = alloc_data_block(tc, &pblock);
+> > 
+> > So this means that if fallocate wants to BDEV_RES_PROVISION N blocks, it must
+> > first increase the reservation (BDEV_RES_MOD) by N blocks to avoid using up
+> > space that was previously reserved by some other caller.  I think?
+> > 
+> 
+> Yes, assuming this is being called from a filesystem using the
+> reservation mechanism.
+> 
+> > > +		if (error)
+> > > +			return error;
+> > > +
+> > > +		error = dm_thin_insert_block(tc->td, vblock, pblock);
+> > 
+> > Having reserved and mapped blocks, what happens when we try to read them?
+> > Do we actually get zeroes, or does the read go straight through to whatever
+> > happens to be in the disk blocks?  I don't think it's correct that we could
+> > BDEV_RES_PROVISION and end up with stale credit card numbers from some other
+> > thin device.
+> > 
+> 
+> Agree, but I'm not really sure how this works in thinp tbh. fallocate
+> wasn't really on my mind when doing this. I was simply trying to cobble
+> together what I could to facilitate making progress on the fs parts
+> (e.g., I just needed a call that allocated blocks and consumed
+> reservation in the process).
+> 
+> Skimming through the dm-thin code, it looks like a (configurable) block
+> zeroing mechanism can be triggered from somewhere around
+> provision_block()->schedule_zero(), depending on whether the incoming
+> write overwrites the newly allocated block. If that's the case, then I
+> suspect that means reads would just fall through to the block and return
+> whatever was on disk. This code would probably need to tie into that
+> zeroing mechanism one way or another to deal with that issue. (Though
+> somebody who actually knows something about dm-thin should verify that.
+> :)
+> 
 
-We no longer use REQ_WRITE. REQ_WRITE_SAME and REQ_DISCARD,
-so this patch removes them.
+BTW, if that mechanism is in fact doing I/O, that might not be the
+appropriate solution for fallocate. Perhaps we'd have to consider an
+unwritten flag or some such in dm-thin, if possible.
 
-Signed-off-by: Mike Christie <mchristi@redhat.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
----
- include/linux/blk_types.h   | 21 ++++++---------------
- include/linux/fs.h          | 21 +++++++++++----------
- include/trace/events/f2fs.h |  1 -
- 3 files changed, 17 insertions(+), 26 deletions(-)
+Brian
 
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 6e49c91..b4251ed 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -151,7 +151,6 @@ struct bio {
-  */
- enum rq_flag_bits {
- 	/* common flags */
--	__REQ_WRITE,		/* not set, read. set, write */
- 	__REQ_FAILFAST_DEV,	/* no driver retries of device errors */
- 	__REQ_FAILFAST_TRANSPORT, /* no driver retries of transport errors */
- 	__REQ_FAILFAST_DRIVER,	/* no driver retries of driver errors */
-@@ -159,9 +158,7 @@ enum rq_flag_bits {
- 	__REQ_SYNC,		/* request is sync (sync write or read) */
- 	__REQ_META,		/* metadata io request */
- 	__REQ_PRIO,		/* boost priority in cfq */
--	__REQ_DISCARD,		/* request to discard sectors */
--	__REQ_SECURE,		/* secure discard (used with __REQ_DISCARD) */
--	__REQ_WRITE_SAME,	/* write same block many times */
-+	__REQ_SECURE,		/* secure discard (used with REQ_OP_DISCARD) */
- 
- 	__REQ_NOIDLE,		/* don't anticipate more IO after this one */
- 	__REQ_INTEGRITY,	/* I/O includes block integrity payload */
-@@ -197,28 +194,22 @@ enum rq_flag_bits {
- 	__REQ_NR_BITS,		/* stops here */
- };
- 
--#define REQ_WRITE		(1ULL << __REQ_WRITE)
- #define REQ_FAILFAST_DEV	(1ULL << __REQ_FAILFAST_DEV)
- #define REQ_FAILFAST_TRANSPORT	(1ULL << __REQ_FAILFAST_TRANSPORT)
- #define REQ_FAILFAST_DRIVER	(1ULL << __REQ_FAILFAST_DRIVER)
- #define REQ_SYNC		(1ULL << __REQ_SYNC)
- #define REQ_META		(1ULL << __REQ_META)
- #define REQ_PRIO		(1ULL << __REQ_PRIO)
--#define REQ_DISCARD		(1ULL << __REQ_DISCARD)
--#define REQ_WRITE_SAME		(1ULL << __REQ_WRITE_SAME)
- #define REQ_NOIDLE		(1ULL << __REQ_NOIDLE)
- #define REQ_INTEGRITY		(1ULL << __REQ_INTEGRITY)
- 
- #define REQ_FAILFAST_MASK \
- 	(REQ_FAILFAST_DEV | REQ_FAILFAST_TRANSPORT | REQ_FAILFAST_DRIVER)
- #define REQ_COMMON_MASK \
--	(REQ_WRITE | REQ_FAILFAST_MASK | REQ_SYNC | REQ_META | REQ_PRIO | \
--	 REQ_DISCARD | REQ_WRITE_SAME | REQ_NOIDLE | REQ_FLUSH | REQ_FUA | \
--	 REQ_SECURE | REQ_INTEGRITY)
-+	(REQ_FAILFAST_MASK | REQ_SYNC | REQ_META | REQ_PRIO | REQ_NOIDLE | \
-+	 REQ_FLUSH | REQ_FUA | REQ_SECURE | REQ_INTEGRITY)
- #define REQ_CLONE_MASK		REQ_COMMON_MASK
- 
--#define BIO_NO_ADVANCE_ITER_MASK	(REQ_DISCARD|REQ_WRITE_SAME)
--
- /* This mask is used for both bio and request merge checking */
- #define REQ_NOMERGE_FLAGS \
- 	(REQ_NOMERGE | REQ_STARTED | REQ_SOFTBARRIER | REQ_FLUSH | REQ_FUA | REQ_FLUSH_SEQ)
-@@ -250,9 +241,9 @@ enum rq_flag_bits {
- 
- enum req_op {
- 	REQ_OP_READ,
--	REQ_OP_WRITE		= REQ_WRITE,
--	REQ_OP_DISCARD		= REQ_DISCARD,
--	REQ_OP_WRITE_SAME	= REQ_WRITE_SAME,
-+	REQ_OP_WRITE,
-+	REQ_OP_DISCARD,		/* request to discard sectors */
-+	REQ_OP_WRITE_SAME,	/* write same block many times */
- };
- 
- typedef unsigned int blk_qc_t;
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 9becf20..509e21f 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -153,9 +153,10 @@ typedef void (dax_iodone_t)(struct buffer_head *bh_map, int uptodate);
- #define CHECK_IOVEC_ONLY -1
- 
- /*
-- * The below are the various read and write types that we support. Some of
-+ * The below are the various read and write flags that we support. Some of
-  * them include behavioral modifiers that send information down to the
-- * block layer and IO scheduler. Terminology:
-+ * block layer and IO scheduler. They should be used along with a req_op.
-+ * Terminology:
-  *
-  *	The block layer uses device plugging to defer IO a little bit, in
-  *	the hope that we will see more IO very shortly. This increases
-@@ -194,19 +195,19 @@ typedef void (dax_iodone_t)(struct buffer_head *bh_map, int uptodate);
-  *			non-volatile media on completion.
-  *
-  */
--#define RW_MASK			REQ_WRITE
-+#define RW_MASK			REQ_OP_WRITE
- #define RWA_MASK		REQ_RAHEAD
- 
--#define READ			0
-+#define READ			REQ_OP_READ
- #define WRITE			RW_MASK
- #define READA			RWA_MASK
- 
--#define READ_SYNC		(READ | REQ_SYNC)
--#define WRITE_SYNC		(WRITE | REQ_SYNC | REQ_NOIDLE)
--#define WRITE_ODIRECT		(WRITE | REQ_SYNC)
--#define WRITE_FLUSH		(WRITE | REQ_SYNC | REQ_NOIDLE | REQ_FLUSH)
--#define WRITE_FUA		(WRITE | REQ_SYNC | REQ_NOIDLE | REQ_FUA)
--#define WRITE_FLUSH_FUA		(WRITE | REQ_SYNC | REQ_NOIDLE | REQ_FLUSH | REQ_FUA)
-+#define READ_SYNC		REQ_SYNC
-+#define WRITE_SYNC		(REQ_SYNC | REQ_NOIDLE)
-+#define WRITE_ODIRECT		REQ_SYNC
-+#define WRITE_FLUSH		(REQ_SYNC | REQ_NOIDLE | REQ_FLUSH)
-+#define WRITE_FUA		(REQ_SYNC | REQ_NOIDLE | REQ_FUA)
-+#define WRITE_FLUSH_FUA		(REQ_SYNC | REQ_NOIDLE | REQ_FLUSH | REQ_FUA)
- 
- /*
-  * Attribute flags.  These should be or-ed together to figure out what
-diff --git a/include/trace/events/f2fs.h b/include/trace/events/f2fs.h
-index db75d69..20f708e 100644
---- a/include/trace/events/f2fs.h
-+++ b/include/trace/events/f2fs.h
-@@ -31,7 +31,6 @@ TRACE_DEFINE_ENUM(BG_GC);
- TRACE_DEFINE_ENUM(LFS);
- TRACE_DEFINE_ENUM(SSR);
- TRACE_DEFINE_ENUM(__REQ_RAHEAD);
--TRACE_DEFINE_ENUM(__REQ_WRITE);
- TRACE_DEFINE_ENUM(__REQ_SYNC);
- TRACE_DEFINE_ENUM(__REQ_NOIDLE);
- TRACE_DEFINE_ENUM(__REQ_FLUSH);
--- 
-2.7.2
+> Brian
+> 
+> > (PS: I don't know enough about thinp to know if this has already been taken
+> > care of.  I didn't see anything, but who knows what I missed. :))
+> > 
+> > --D
+> > 
+> > > +		if (error)
+> > > +			return error;
+> > > +
+> > > +		if (res && *res)
+> > > +			*res -= pool->sectors_per_block;
+> > > +next:
+> > > +		offset += pool->sectors_per_block;
+> > > +	}
+> > > +
+> > > +	return 0;
+> > > +}
+> > > +
+> > > +static int thin_reserve_space(struct dm_target *ti, int mode, sector_t offset,
+> > > +			      sector_t len, sector_t *res)
+> > > +{
+> > > +	struct thin_c *tc = ti->private;
+> > > +	struct pool *pool = tc->pool;
+> > > +	sector_t blocks;
+> > > +	unsigned long flags;
+> > > +	int error;
+> > > +
+> > > +	if (mode == BDEV_RES_PROVISION)
+> > > +		return thin_provision_space(ti, offset, len, res);
+> > > +
+> > > +	/* res required for get/set */
+> > > +	error = -EINVAL;
+> > > +	if (!res)
+> > > +		return error;
+> > > +
+> > > +	if (mode == BDEV_RES_GET) {
+> > > +		spin_lock_irqsave(&tc->pool->lock, flags);
+> > > +		*res = tc->reserve_count * pool->sectors_per_block;
+> > > +		spin_unlock_irqrestore(&tc->pool->lock, flags);
+> > > +		error = 0;
+> > > +	} else if (mode == BDEV_RES_MOD) {
+> > > +		/*
+> > > +		* @res must always be a factor of the pool's blocksize; upper
+> > > +		* layers can rely on the bdev's minimum_io_size for this.
+> > > +		*/
+> > > +		if (!is_factor(*res, pool->sectors_per_block))
+> > > +			return error;
+> > > +
+> > > +		blocks = *res;
+> > > +		(void) sector_div(blocks, pool->sectors_per_block);
+> > > +
+> > > +		error = set_reserve_count(tc, blocks);
+> > > +	}
+> > > +
+> > > +	return error;
+> > > +}
+> > > +
+> > >  static struct target_type thin_target = {
+> > >  	.name = "thin",
+> > >  	.version = {1, 18, 0},
+> > > @@ -4285,6 +4445,7 @@ static struct target_type thin_target = {
+> > >  	.status = thin_status,
+> > >  	.iterate_devices = thin_iterate_devices,
+> > >  	.io_hints = thin_io_hints,
+> > > +	.reserve_space = thin_reserve_space,
+> > >  };
+> > >  
+> > >  /*----------------------------------------------------------------*/
+> > > -- 
+> > > 2.4.11
+> > > 
+> > > _______________________________________________
+> > > xfs mailing list
+> > > xfs@oss.sgi.com
+> > > http://oss.sgi.com/mailman/listinfo/xfs
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-block" in
+> > the body of a message to majordomo@vger.kernel.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-block" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
