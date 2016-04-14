@@ -1,7 +1,7 @@
 From: Ming Lei <tom.leiming@gmail.com>
-Subject: [PATCH v1 20/27] dm: dm-bufio.c: use bio_set_vec_table()
-Date: Thu, 14 Apr 2016 20:02:38 +0800
-Message-ID: <1460635375-28282-21-git-send-email-tom.leiming@gmail.com>
+Subject: [PATCH v1 18/27] dm: dm-io.c: use bio_get_base_vec()
+Date: Thu, 14 Apr 2016 20:02:36 +0800
+Message-ID: <1460635375-28282-19-git-send-email-tom.leiming@gmail.com>
 References: <1460635375-28282-1-git-send-email-tom.leiming@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1460635375-28282-1-git-send-email-tom.leiming@gmail.com>
@@ -13,22 +13,26 @@ List-Id: dm-devel.ids
 
 Signed-off-by: Ming Lei <tom.leiming@gmail.com>
 ---
- drivers/md/dm-bufio.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ drivers/md/dm-io.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index cd77216..0e48ad7 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -624,8 +624,7 @@ static void use_inline_bio(struct dm_buffer *b, int rw, sector_t block,
- 	int len;
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index 06d426e..6b0e466 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -221,7 +221,12 @@ static void bio_dp_init(struct dpages *dp, struct bio *bio)
+ {
+ 	dp->get_page = bio_get_page;
+ 	dp->next_page = bio_next_page;
+-	dp->context_ptr = __bvec_iter_bvec(bio->bi_io_vec, bio->bi_iter);
++
++	/*
++	 * need to fix both bio_get_page() and bio_next_page()
++	 * before multipage bvecs
++	 */
++	dp->context_ptr = bio_get_base_vec(bio);
+ 	dp->context_u = bio->bi_iter.bi_bvec_done;
+ }
  
- 	bio_init(&b->bio);
--	b->bio.bi_io_vec = b->bio_vec;
--	b->bio.bi_max_vecs = DM_BUFIO_INLINE_VECS;
-+	bio_set_vec_table(&b->bio, b->bio_vec, DM_BUFIO_INLINE_VECS);
- 	b->bio.bi_iter.bi_sector = block << b->c->sectors_per_block_bits;
- 	b->bio.bi_bdev = b->c->bdev;
- 	b->bio.bi_end_io = inline_endio;
 -- 
 1.9.1
