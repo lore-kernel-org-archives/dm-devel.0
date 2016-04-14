@@ -1,7 +1,7 @@
 From: Ming Lei <tom.leiming@gmail.com>
-Subject: [PATCH v1 18/27] dm: dm-io.c: use bio_get_base_vec()
-Date: Thu, 14 Apr 2016 20:02:36 +0800
-Message-ID: <1460635375-28282-19-git-send-email-tom.leiming@gmail.com>
+Subject: [PATCH v1 17/27] dm: crypt: use bio_add_page()
+Date: Thu, 14 Apr 2016 20:02:35 +0800
+Message-ID: <1460635375-28282-18-git-send-email-tom.leiming@gmail.com>
 References: <1460635375-28282-1-git-send-email-tom.leiming@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1460635375-28282-1-git-send-email-tom.leiming@gmail.com>
@@ -11,28 +11,37 @@ Cc: linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Ming Lei
 	SUPPORT" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Ming Lei <tom.leiming@gmail.com>
 ---
- drivers/md/dm-io.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+ drivers/md/dm-crypt.c | 8 +-------
+ 1 file changed, 1 insertion(+), 7 deletions(-)
 
-diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-index 06d426e..6b0e466 100644
---- a/drivers/md/dm-io.c
-+++ b/drivers/md/dm-io.c
-@@ -221,7 +221,12 @@ static void bio_dp_init(struct dpages *dp, struct bio *bio)
- {
- 	dp->get_page = bio_get_page;
- 	dp->next_page = bio_next_page;
--	dp->context_ptr = __bvec_iter_bvec(bio->bi_io_vec, bio->bi_iter);
-+
-+	/*
-+	 * need to fix both bio_get_page() and bio_next_page()
-+	 * before multipage bvecs
-+	 */
-+	dp->context_ptr = bio_get_base_vec(bio);
- 	dp->context_u = bio->bi_iter.bi_bvec_done;
- }
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 4f3cb35..a2805c1 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -995,7 +995,6 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
+ 	gfp_t gfp_mask = GFP_NOWAIT | __GFP_HIGHMEM;
+ 	unsigned i, len, remaining_size;
+ 	struct page *page;
+-	struct bio_vec *bvec;
  
+ retry:
+ 	if (unlikely(gfp_mask & __GFP_DIRECT_RECLAIM))
+@@ -1020,12 +1019,7 @@ retry:
+ 
+ 		len = (remaining_size > PAGE_SIZE) ? PAGE_SIZE : remaining_size;
+ 
+-		bvec = &clone->bi_io_vec[clone->bi_vcnt++];
+-		bvec->bv_page = page;
+-		bvec->bv_len = len;
+-		bvec->bv_offset = 0;
+-
+-		clone->bi_iter.bi_size += len;
++		bio_add_page(clone, page, len, 0);
+ 
+ 		remaining_size -= len;
+ 	}
 -- 
 1.9.1
