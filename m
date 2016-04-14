@@ -1,63 +1,49 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [RFC v2 PATCH 03/10] block: add block_device_operations methods
- to set and get reserved space
-Date: Thu, 14 Apr 2016 10:32:42 +1000
-Message-ID: <20160414003242.GU567@dastard>
-References: <1460479373-63317-1-git-send-email-bfoster@redhat.com>
- <1460479373-63317-4-git-send-email-bfoster@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 00/42] v5: separate operations from flags in the
+ bio/request structs
+Date: Thu, 14 Apr 2016 08:09:30 +0200
+Message-ID: <570F341A.2040108@suse.de>
+References: <1460576188-5751-1-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1460479373-63317-4-git-send-email-bfoster@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Brian Foster <bfoster@redhat.com>
-Cc: xfs@oss.sgi.com, linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <1460576188-5751-1-git-send-email-mchristi@redhat.com>
+Sender: linux-bcache-owner@vger.kernel.org
+To: mchristi@redhat.com, linux-f2fs-devel@lists.sourceforge.net, linux-ext4@vger.kernel.org, konrad.wilk@oracle.com, drbd-dev@lists.linbit.com, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-bcache@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-mtd@lists.infradead.org, target-devel@vger.kernel.org, linux-btrfs@vger.kernel.org, osd-dev@open-osd.org, xfs@oss.sgi.com, ocfs2-devel@oss.oracle.com
 List-Id: dm-devel.ids
 
-On Tue, Apr 12, 2016 at 12:42:46PM -0400, Brian Foster wrote:
-> From: Mike Snitzer <snitzer@redhat.com>
-> 
-> [BF:
->  - Killed wrapper functions.
->  - Condensed to single bdev op.]
-> 
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  include/linux/blkdev.h | 6 ++++++
->  1 file changed, 6 insertions(+)
-> 
-> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> index 669e419..6c6ea96 100644
-> --- a/include/linux/blkdev.h
-> +++ b/include/linux/blkdev.h
-> @@ -1650,6 +1650,10 @@ struct blk_dax_ctl {
->  	pfn_t pfn;
->  };
->  
-> +#define BDEV_RES_GET		0
-> +#define BDEV_RES_MOD		(1 << 0)
-> +#define BDEV_RES_PROVISION	(1 << 1)
-> +
->  struct block_device_operations {
->  	int (*open) (struct block_device *, fmode_t);
->  	void (*release) (struct gendisk *, fmode_t);
-> @@ -1667,6 +1671,8 @@ struct block_device_operations {
->  	int (*getgeo)(struct block_device *, struct hd_geometry *);
->  	/* this callback is with swap_lock and sometimes page table lock held */
->  	void (*swap_slot_free_notify) (struct block_device *, unsigned long);
-> +	int (*reserve_space) (struct block_device *, int, sector_t, sector_t,
-> +			      sector_t *);
->  	struct module *owner;
->  	const struct pr_ops *pr_ops;
+On 04/13/2016 09:35 PM, mchristi@redhat.com wrote:
+> The following patches begin to cleanup the request->cmd_flags and
+> bio->bi_rw mess. We currently use cmd_flags to specify the operation,
+> attributes and state of the request. For bi_rw we use it for similar
+> info and also the priority but then also have another bi_flags field
+> for state. At some point, we abused them so much we just made cmd_fla=
+gs
+> 64 bits, so we could add more.
+>=20
+> The following patches seperate the operation (read, write discard,
+> flush, etc) from cmd_flags/bi_rw.
+>=20
+> This patchset was made against linux-next from today April 13
+> (git tag next-20160413).
+>=20
+> I put a git tree here:
+> https://github.com/mikechristie/linux-kernel.git
+> The patches are in the op branch.
+>=20
+A round of applause for you.
 
-You know, I'm now wondering how much of this has overlap with the
-iomap interface we are adding for the VFS IO paths to map and
-allocate extents....
+=46or the entire series:
+
+Reviewed-by: Hannes Reinecke <hare@suse.com>
 
 Cheers,
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+Hannes
+--=20
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=FCrnberg)
