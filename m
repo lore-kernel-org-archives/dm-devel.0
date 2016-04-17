@@ -1,39 +1,42 @@
-From: Ahmed Samy <f.fallen45@gmail.com>
-Subject: [PATCH] dm cache metadata: fix cmd_read_lock acquiring write lock
-Date: Sun, 17 Apr 2016 05:37:09 +0000
-Message-ID: <1460871429-22523-1-git-send-email-f.fallen45@gmail.com>
-Return-path: <stable-owner@vger.kernel.org>
-Sender: stable-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: Ahmed Samy <f.fallen45@gmail.com>, Mike Snitzer <snitzer@redhat.com>, stable@vger.kernel.org
+From: Juergen Gross <kernel@pfupf.net>
+Subject: Re: [PATCH 41/42] block: do not use REQ_FLUSH for tracking flush
+ support
+Date: Sun, 17 Apr 2016 10:46:59 +0200
+Message-ID: <57134D83.8020309@pfupf.net>
+References: <1460747777-8479-1-git-send-email-mchristi@redhat.com>
+ <1460747777-8479-42-git-send-email-mchristi@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <1460747777-8479-42-git-send-email-mchristi@redhat.com>
+Sender: linux-bcache-owner@vger.kernel.org
+To: mchristi@redhat.com, linux-f2fs-devel@lists.sourceforge.net, linux-ext4@vger.kernel.org, konrad.wilk@oracle.com, drbd-dev@lists.linbit.com, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-bcache@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-mtd@lists.infradead.org, target-devel@vger.kernel.org, linux-btrfs@vger.kernel.org, osd-dev@open-osd.org, xfs@oss.sgi.com, ocfs2-devel@oss.oracle.com
 List-Id: dm-devel.ids
 
-commit 9567366fefdd ("dm cache metadata: fix READ_LOCK macros and cleanup WRITE_LOCK macros")
-seemed to use down_write instead of down_read in cmd_read_lock(), yet
-releasing it with up_read() in READ_UNLOCK.  Fix it.
+On 15/04/16 21:16, mchristi@redhat.com wrote:
+> From: Mike Christie <mchristi@redhat.com>
+> 
+> The last patch added a REQ_OP_FLUSH for request_fn drivers
+> and the next patch renames REQ_FLUSH to REQ_PREFLUSH which
+> will be used by file systems and make_request_fn drivers so
+> they can send a write/flush combo.
+> 
+> This patch drops xen's use of REQ_FLUSH to track if it supports
+> REQ_OP_FLUSH requests, so REQ_FLUSH can be deleted.
+> 
+> v7:
+> - Fix feature_flush/fua use.
+> 
+> v6:
+> - Dropped parts of patch handled by Jens's QUEUE_FLAG_WC/FUA
+> patches and modified patch to check feature_flush/fua bits.
+> 
+> Signed-off-by: Mike Christie <mchristi@redhat.com>
+> Reviewed-by: Hannes Reinecke <hare@suse.com>
+> Cc: Juergen Gross <kernel@pfupf.net>
 
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: stable@vger.kernel.org
-Signed-off-by: Ahmed Samy <f.fallen45@gmail.com>
----
- drivers/md/dm-cache-metadata.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+Acked-by: Juergen Gross <jgross@suse.com>
 
-diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
-index 65ce698..3970cda 100644
---- a/drivers/md/dm-cache-metadata.c
-+++ b/drivers/md/dm-cache-metadata.c
-@@ -894,9 +894,9 @@ static bool cmd_write_lock(struct dm_cache_metadata *cmd)
- 
- static bool cmd_read_lock(struct dm_cache_metadata *cmd)
- {
--	down_write(&cmd->root_lock);
-+	down_read(&cmd->root_lock);
- 	if (cmd->fail_io) {
--		up_write(&cmd->root_lock);
-+		up_read(&cmd->root_lock);
- 		return false;
- 	}
- 	return true;
--- 
-2.8.1.210.gb8b4d93
+
+Juergen
