@@ -1,33 +1,51 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm cache metadata: fix cmd_read_lock acquiring write lock
-Date: Sun, 17 Apr 2016 11:23:43 -0400
-Message-ID: <20160417152343.GA26731@redhat.com>
-References: <1460871429-22523-1-git-send-email-f.fallen45@gmail.com>
+Subject: [git pull] another device mapper fix for 4.6-rc4 (or
+ 4.6-rc5 if too late)
+Date: Sun, 17 Apr 2016 11:38:49 -0400
+Message-ID: <20160417153849.GA27814@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <stable-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1460871429-22523-1-git-send-email-f.fallen45@gmail.com>
-Sender: stable-owner@vger.kernel.org
-To: Ahmed Samy <f.fallen45@gmail.com>
-Cc: dm-devel@redhat.com, stable@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, Ahmed Samy <f.fallen45@gmail.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, Apr 17 2016 at  1:37P -0400,
-Ahmed Samy <f.fallen45@gmail.com> wrote:
+Hi Linus,
 
-> commit 9567366fefdd ("dm cache metadata: fix READ_LOCK macros and cleanup WRITE_LOCK macros")
-> seemed to use down_write instead of down_read in cmd_read_lock(), yet
-> releasing it with up_read() in READ_UNLOCK.  Fix it.
-> 
-> Cc: Mike Snitzer <snitzer@redhat.com>
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Ahmed Samy <f.fallen45@gmail.com>
+The following changes since commit 9567366fefddeaea4ed1d713270535d93a3b3c76:
 
-Ugh, very frustrating -- I must've looked at this code 3 different times
-to try to make sure I didn't have a thinko.  And strangely sparse didn't
-catch this locking bug (from cut-n-paste).
+  dm cache metadata: fix READ_LOCK macros and cleanup WRITE_LOCK macros (2016-04-14 17:34:49 -0400)
 
-Anyway, thanks... I'll see if I can get this to Linus ASAP.
+are available in the git repository at:
 
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.6-fix-2
+
+for you to fetch changes up to 6545b60baaf880b0cd29a5e89dbe745a06027e89:
+
+  dm cache metadata: fix cmd_read_lock() acquiring write lock (2016-04-17 11:24:46 -0400)
+
+Sorry for this oversight, please pull, thanks.
 Mike
+
+----------------------------------------------------------------
+- Fix for earlier 4.6-rc4 stable@ commit that introduced improper use of
+  write lock in cmd_read_lock() -- due to cut-n-paste gone awry (and
+  sparse didn't catch it).
+
+----------------------------------------------------------------
+Ahmed Samy (1):
+      dm cache metadata: fix cmd_read_lock() acquiring write lock
+
+ drivers/md/dm-cache-metadata.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
