@@ -1,7 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Subject: Re: Next release plans?
-Date: Mon, 18 Apr 2016 23:57:44 +0200
-Message-ID: <4905714a-e54e-abd5-1fa2-e6de3b24d681@gmail.com>
+Date: Tue, 19 Apr 2016 00:22:24 +0200
+Message-ID: <7daddb85-3de7-9015-35fd-2e535f707f7a@gmail.com>
 References: <561531AF.4080907@gmail.com> <570BDA57.7040606@gmail.com>
 	<CABr-Gnfgz=upeMOUuMSPTXMqLojqOxEfub7GEd0rAjDZ1F3Z6w@mail.gmail.com>
 Mime-Version: 1.0
@@ -19,20 +19,13 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, mathieu.tl@gmail.com
+Cc: Ritesh Raj Sarraf <rrs@debian.org>, device-mapper development <dm-devel@redhat.com>, mathieu.tl@gmail.com
 List-Id: dm-devel.ids
 
 On 04/18/2016 11:42 AM, Christophe Varoqui wrote:
 
-> the version has been bumped to 0.6.0 after merging the Red Hat patchset.
+> Hannes has not submitted the SuSE patchset for inclusion yet, but I'll bump the version to 0.6.1 if he does.
 
-There is no tag for 0.6.0 at the git repository.
-And tar file is missing at web page.
+CCed: Ritesh, Debian maintainer.
 
-> In the future I will update the version after each significant resync with the distributor branches.
-
-It would be good two major releases per year, aside from
-sporadic _critical_ bugs free releases.
-
-
-Thank you.
+Maybe there is some pending patches for upstream at Debian.
