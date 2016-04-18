@@ -1,49 +1,111 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2 0/4] Introduce bulk mode for crypto engine framework
-Date: Mon, 18 Apr 2016 09:36:12 -0400
-Message-ID: <20160418133612.GA16853@redhat.com>
-References: <cover.1458023695.git.baolin.wang@linaro.org>
- <20160415134849.GA32694@gondor.apana.org.au>
- <CAMz4ku+hXbgx1+YcdJWbCBW7KoeFisk5qcquAAg0fD5Qw5XDFQ@mail.gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH 16/42] nilfs: set bi_op to REQ_OP
+Date: Tue, 19 Apr 2016 01:04:15 +0900 (JST)
+Message-ID: <20160419.010415.105960685033839882.konishi.ryusuke@lab.ntt.co.jp>
+References: <1460747777-8479-1-git-send-email-mchristi@redhat.com>
+	<1460747777-8479-17-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAMz4ku+hXbgx1+YcdJWbCBW7KoeFisk5qcquAAg0fD5Qw5XDFQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Baolin Wang <baolin.wang@linaro.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, David Miller <davem@davemloft.net>, Alasdair G Kergon <agk@redhat.com>, Jens Axboe <axboe@fb.com>, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>, david.s.gordon@intel.com, Tom Lendacky <thomas.lendacky@amd.com>, Robert Jarzmik <robert.jarzmik@free.fr>, Masahiro Yamada <yamada.masahiro@socionext.com>, smueller@chronox.de, tadeusz.struk@intel.com, Masanari Iida <standby24x7@gmail.com>, shli@kernel.org, Mark Brown <broonie@kernel.org>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, LKML <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, linux-raid@vger.kernel.org, Milan Broz <mbroz@redhat.com>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <1460747777-8479-17-git-send-email-mchristi@redhat.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Mike Christie <mchristi@redhat.com>
+Cc: linux-f2fs-devel@lists.sourceforge.net, linux-ext4@vger.kernel.org, konrad.wilk@oracle.com, drbd-dev@lists.linbit.com, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-bcache@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-mtd@lists.infradead.org, target-devel@vger.kernel.org, linux-btrfs@vger.kernel.org, osd-dev@open-osd.org, xfs@oss.sgi.com, ocfs2-devel@oss.oracle.com
 List-Id: dm-devel.ids
 
-On Mon, Apr 18 2016 at  1:31am -0400,
-Baolin Wang <baolin.wang@linaro.org> wrote:
-
-> Hi Herbert,
+On Fri, 15 Apr 2016 14:15:51 -0500, mchristi@redhat.com wrote:
+> From: Mike Christie <mchristi@redhat.com>
 > 
-> On 15 April 2016 at 21:48, Herbert Xu <herbert@gondor.apana.org.au> wrote:
-> > On Tue, Mar 15, 2016 at 03:47:58PM +0800, Baolin Wang wrote:
-> >> Now some cipher hardware engines prefer to handle bulk block by merging requests
-> >> to increase the block size and thus increase the hardware engine processing speed.
-> >>
-> >> This patchset introduces request bulk mode to help the crypto hardware drivers
-> >> improve in efficiency.
-> >
-> > Could you please explain why this merging can't be done in dm-crypt
-> > instead?
+> This patch has nilfs use bio->bi_op for REQ_OPs and rq_flag_bits
+> to bio->bi_rw.
 > 
-> We've tried to do this in dm-crypt, but it failed.
-> The dm-crypt maintainer explained to me that I should optimize the
-> driver, not add strange hw-dependent crypto modes to dm-crypt, this is
-> not the first crypto accelerator that is just not suited for this kind
-> of use.
+> Signed-off-by: Mike Christie <mchristi@redhat.com>
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> Reviewed-by: Hannes Reinecke <hare@suse.com>
+> ---
+>  fs/nilfs2/segbuf.c | 18 ++++++++++--------
+>  1 file changed, 10 insertions(+), 8 deletions(-)
 
-As a DM mainatiner my only contribution to this line of discussion was
-relative to your proposal to train the dm-crypt target (which is
-bio-based) to also provide request-based support, see:
-https://www.redhat.com/archives/dm-devel/2015-November/msg00112.html
+Looks good to me.
 
-But follow-up discussion occured, primarily with Milan Broz, which led
-to this bulk mode support in the crypto layer.  Pretty strange Milan
-wasn't cc'd on your patchset posting (I've now cc'd him).
+Acked-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-Mike
+Thanks,
+Ryuske Konishi
+
+> 
+> diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+> index 7666f1d..7b13e14 100644
+> --- a/fs/nilfs2/segbuf.c
+> +++ b/fs/nilfs2/segbuf.c
+> @@ -350,7 +350,8 @@ static void nilfs_end_bio_write(struct bio *bio)
+>  }
+>  
+>  static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
+> -				   struct nilfs_write_info *wi, int mode)
+> +				   struct nilfs_write_info *wi, int mode,
+> +				   int mode_flags)
+>  {
+>  	struct bio *bio = wi->bio;
+>  	int err;
+> @@ -368,7 +369,8 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
+>  
+>  	bio->bi_end_io = nilfs_end_bio_write;
+>  	bio->bi_private = segbuf;
+> -	bio->bi_rw = mode;
+> +	bio->bi_op = mode;
+> +	bio->bi_rw = mode_flags;
+>  	submit_bio(bio);
+>  	segbuf->sb_nbio++;
+>  
+> @@ -442,7 +444,7 @@ static int nilfs_segbuf_submit_bh(struct nilfs_segment_buffer *segbuf,
+>  		return 0;
+>  	}
+>  	/* bio is FULL */
+> -	err = nilfs_segbuf_submit_bio(segbuf, wi, mode);
+> +	err = nilfs_segbuf_submit_bio(segbuf, wi, mode, 0);
+>  	/* never submit current bh */
+>  	if (likely(!err))
+>  		goto repeat;
+> @@ -466,19 +468,19 @@ static int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
+>  {
+>  	struct nilfs_write_info wi;
+>  	struct buffer_head *bh;
+> -	int res = 0, rw = WRITE;
+> +	int res = 0;
+>  
+>  	wi.nilfs = nilfs;
+>  	nilfs_segbuf_prepare_write(segbuf, &wi);
+>  
+>  	list_for_each_entry(bh, &segbuf->sb_segsum_buffers, b_assoc_buffers) {
+> -		res = nilfs_segbuf_submit_bh(segbuf, &wi, bh, rw);
+> +		res = nilfs_segbuf_submit_bh(segbuf, &wi, bh, REQ_OP_WRITE);
+>  		if (unlikely(res))
+>  			goto failed_bio;
+>  	}
+>  
+>  	list_for_each_entry(bh, &segbuf->sb_payload_buffers, b_assoc_buffers) {
+> -		res = nilfs_segbuf_submit_bh(segbuf, &wi, bh, rw);
+> +		res = nilfs_segbuf_submit_bh(segbuf, &wi, bh, REQ_OP_WRITE);
+>  		if (unlikely(res))
+>  			goto failed_bio;
+>  	}
+> @@ -488,8 +490,8 @@ static int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
+>  		 * Last BIO is always sent through the following
+>  		 * submission.
+>  		 */
+> -		rw |= REQ_SYNC;
+> -		res = nilfs_segbuf_submit_bio(segbuf, &wi, rw);
+> +		res = nilfs_segbuf_submit_bio(segbuf, &wi, REQ_OP_WRITE,
+> +					      REQ_SYNC);
+>  	}
+>  
+>   failed_bio:
+> -- 
+> 2.7.2
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
