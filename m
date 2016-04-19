@@ -1,12 +1,11 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: update docs
-Date: Tue, 19 Apr 2016 18:36:33 +0200
-Message-ID: <CABr-Gnc90eityDsiZgnRy999wthaLQVx9HoU5VtZvzGB-NnWpg@mail.gmail.com>
-References: <1461080106-18818-1-git-send-email-xose.vazquez@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH 2/2] Merge Dell MD3XXX hardware table entries
+Date: Tue, 19 Apr 2016 19:33:44 +0200
+Message-ID: <1ba788a5-c251-354c-60e5-2121dc98373e@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5575638705443741723=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1461080106-18818-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,180 +15,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
---===============5575638705443741723==
-Content-Type: multipart/alternative; boundary=001a1136c8c8872fbd0530d91462
+Hannes Reinecke wrote(2015-03-30 6:23:23):
 
---001a1136c8c8872fbd0530d91462
-Content-Type: text/plain; charset=UTF-8
-
-Merged.
-Thanks.
-
-On Tue, Apr 19, 2016 at 5:35 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
-
-> removes TODO, adds meaningful information to README
-> and replaces dead urls in ChangeLog.
->
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> Remove duplicate entries and merge MD36xxi/MD36xxf into a single
+> one.
+> 
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
 > ---
->  ChangeLog |  4 ++--
->  README    | 15 ++++++++++++++-
->  TODO      |  1 -
->  3 files changed, 16 insertions(+), 4 deletions(-)
->  delete mode 100644 TODO
->
-> diff --git a/ChangeLog b/ChangeLog
-> index 73026b3..4b547bb 100644
-> --- a/ChangeLog
-> +++ b/ChangeLog
-> @@ -1,6 +1,6 @@
->  Change logs are at :
->
->  - pre-0.4.5
-> -  http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=ChangeLog
-> +
-> http://web.archive.org/web/20070309224034/http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=ChangeLog
->  - post-0.4.5
-> -
-> http://www.kernel.org/git/gitweb.cgi?p=linux/storage/multipath-tools/.git;a=log
-> +  http://git.opensvc.com/?p=multipath-tools/.git;a=log
-> diff --git a/README b/README
-> index b0b9dfa..1914e38 100644
-> --- a/README
-> +++ b/README
-> @@ -1 +1,14 @@
-> -Things to read
-> +multipath-tools for Linux <http://christophe.varoqui.free.fr/>
-> +
-> +This package provides the following binaries to drive the
-> +Device Mapper multipathing driver:
-> +
-> +multipath - Device mapper target autoconfig.
-> +multipathd - Multipath daemon.
-> +mpathpersist - Manages SCSI persistent reservations on dm multipath
-> devices.
-> +kpartxrtx - Create device maps from partition tables.
-> +
-> +To get latest code: git clone http://git.opensvc.com/multipath-tools/.git
-> +
-> +Mailing list: http://www.redhat.com/mailman/listinfo/dm-devel
-> +Gitweb: http://git.opensvc.com/?p=multipath-tools/.git
-> diff --git a/TODO b/TODO
-> deleted file mode 100644
-> index 690ea03..0000000
-> --- a/TODO
-> +++ /dev/null
-> @@ -1 +0,0 @@
-> -Things to do
-> --
-> 2.5.5
->
->
+>  libmultipath/hwtable.c | 53 ++++----------------------------------------------
+>  1 file changed, 4 insertions(+), 49 deletions(-)
+> 
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index fa4b20f..f83f3e7 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -728,7 +728,7 @@ static struct hwentry default_hw[] = {
+>  		.prio_args     = NULL,
+>  	},
+>  	{
+> -		/* DELL MD3000 */
+> +		/* DELL MD3000/MD3000i */
+>  		.vendor        = "DELL",
+>  		.product       = "MD3000",
+>  		.bl_product    = "Universal Xport",
+> @@ -743,22 +743,7 @@ static struct hwentry default_hw[] = {
+>  		.prio_args     = NULL,
+>  	},
+>  	{
+> -		/* DELL MD3000i */
+> -		.vendor        = "DELL",
+> -		.product       = "MD3000i",
+> -		.bl_product    = "Universal Xport",
+> -		.features      = "2 pg_init_retries 50",
+> -		.hwhandler     = "1 rdac",
+> -		.pgpolicy      = GROUP_BY_PRIO,
+> -		.pgfailback    = -FAILBACK_IMMEDIATE,
+> -		.rr_weight     = RR_WEIGHT_NONE,
+> -		.no_path_retry = 15,
+> -		.checker_name  = RDAC,
+> -		.prio_name     = PRIO_RDAC,
+> -		.prio_args     = NULL,
+> -	},
+> -	{
+> -		/* DELL MD32xx */
+> +		/* DELL MD32xx/MD32xxi */
+>  		.vendor        = "DELL",
+>  		.product       = "MD32xx",
+>  		.bl_product    = "Universal Xport",
+> @@ -773,39 +758,9 @@ static struct hwentry default_hw[] = {
+>  		.prio_args     = NULL,
+>  	},
+>  	{
+> -		/* DELL MD32xxi */
+> -		.vendor        = "DELL",
+> -		.product       = "MD32xxi",
+> -		.bl_product    = "Universal Xport",
+> -		.features      = "2 pg_init_retries 50",
+> -		.hwhandler     = "1 rdac",
+> -		.pgpolicy      = GROUP_BY_PRIO,
+> -		.pgfailback    = -FAILBACK_IMMEDIATE,
+> -		.rr_weight     = RR_WEIGHT_NONE,
+> -		.no_path_retry = 15,
+> -		.checker_name  = RDAC,
+> -		.prio_name     = PRIO_RDAC,
+> -		.prio_args     = NULL,
+> -	},
+> -	{
+> -		/* DELL MD36xxi */
+> -		.vendor        = "DELL",
+> -		.product       = "MD36xxi",
+> -		.bl_product    = "Universal Xport",
+> -		.features      = "2 pg_init_retries 50",
+> -		.hwhandler     = "1 rdac",
+> -		.pgpolicy      = GROUP_BY_PRIO,
+> -		.pgfailback    = -FAILBACK_IMMEDIATE,
+> -		.rr_weight     = RR_WEIGHT_NONE,
+> -		.no_path_retry = 15,
+> -		.checker_name  = RDAC,
+> -		.prio_name     = PRIO_RDAC,
+> -		.prio_args     = NULL,
+> -	},
+> -	{
+> -		/* DELL MD36xxf */
+> +		/* DELL MD36xxi/MD36xxf */
+>  		.vendor        = "DELL",
+> -		.product       = "MD36xxf",
+> +		.product       = "MD36xx(i|f)",
+>  		.bl_product    = "Universal Xport",
+>  		.features      = "2 pg_init_retries 50",
+>  		.hwhandler     = "1 rdac",
+> -- 
+> 1.8.4.5
 
---001a1136c8c8872fbd0530d91462
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
-<br><div class=3D"gmail_quote">On Tue, Apr 19, 2016 at 5:35 PM, Xose Vazque=
-z Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" tar=
-get=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote =
-class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid=
-;padding-left:1ex">removes TODO, adds meaningful information to README<br>
-and replaces dead urls in ChangeLog.<br>
-<br>
-Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com=
-">christophe.varoqui@opensvc.com</a>&gt;<br>
-Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
--devel@redhat.com</a>&gt;<br>
-Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
-com">xose.vazquez@gmail.com</a>&gt;<br>
----<br>
-=C2=A0ChangeLog |=C2=A0 4 ++--<br>
-=C2=A0README=C2=A0 =C2=A0 | 15 ++++++++++++++-<br>
-=C2=A0TODO=C2=A0 =C2=A0 =C2=A0 |=C2=A0 1 -<br>
-=C2=A03 files changed, 16 insertions(+), 4 deletions(-)<br>
-=C2=A0delete mode 100644 TODO<br>
-<br>
-diff --git a/ChangeLog b/ChangeLog<br>
-index 73026b3..4b547bb 100644<br>
---- a/ChangeLog<br>
-+++ b/ChangeLog<br>
-@@ -1,6 +1,6 @@<br>
-=C2=A0Change logs are at :<br>
-<br>
-=C2=A0- pre-0.4.5<br>
--=C2=A0 <a href=3D"http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=3D=
-ChangeLog" rel=3D"noreferrer" target=3D"_blank">http://christophe.varoqui.f=
-ree.fr/wiki/wakka.php?wiki=3DChangeLog</a><br>
-+=C2=A0 <a href=3D"http://web.archive.org/web/20070309224034/http://christo=
-phe.varoqui.free.fr/wiki/wakka.php?wiki=3DChangeLog" rel=3D"noreferrer" tar=
-get=3D"_blank">http://web.archive.org/web/20070309224034/http://christophe.=
-varoqui.free.fr/wiki/wakka.php?wiki=3DChangeLog</a><br>
-=C2=A0- post-0.4.5<br>
--=C2=A0 <a href=3D"http://www.kernel.org/git/gitweb.cgi?p=3Dlinux/storage/m=
-ultipath-tools/.git;a=3Dlog" rel=3D"noreferrer" target=3D"_blank">http://ww=
-w.kernel.org/git/gitweb.cgi?p=3Dlinux/storage/multipath-tools/.git;a=3Dlog<=
-/a><br>
-+=C2=A0 <a href=3D"http://git.opensvc.com/?p=3Dmultipath-tools/.git;a=3Dlog=
-" rel=3D"noreferrer" target=3D"_blank">http://git.opensvc.com/?p=3Dmultipat=
-h-tools/.git;a=3Dlog</a><br>
-diff --git a/README b/README<br>
-index b0b9dfa..1914e38 100644<br>
---- a/README<br>
-+++ b/README<br>
-@@ -1 +1,14 @@<br>
--Things to read<br>
-+multipath-tools for Linux &lt;<a href=3D"http://christophe.varoqui.free.fr=
-/" rel=3D"noreferrer" target=3D"_blank">http://christophe.varoqui.free.fr/<=
-/a>&gt;<br>
-+<br>
-+This package provides the following binaries to drive the<br>
-+Device Mapper multipathing driver:<br>
-+<br>
-+multipath - Device mapper target autoconfig.<br>
-+multipathd - Multipath daemon.<br>
-+mpathpersist - Manages SCSI persistent reservations on dm multipath device=
-s.<br>
-+kpartxrtx - Create device maps from partition tables.<br>
-+<br>
-+To get latest code: git clone <a href=3D"http://git.opensvc.com/multipath-=
-tools/.git" rel=3D"noreferrer" target=3D"_blank">http://git.opensvc.com/mul=
-tipath-tools/.git</a><br>
-+<br>
-+Mailing list: <a href=3D"http://www.redhat.com/mailman/listinfo/dm-devel" =
-rel=3D"noreferrer" target=3D"_blank">http://www.redhat.com/mailman/listinfo=
-/dm-devel</a><br>
-+Gitweb: <a href=3D"http://git.opensvc.com/?p=3Dmultipath-tools/.git" rel=
-=3D"noreferrer" target=3D"_blank">http://git.opensvc.com/?p=3Dmultipath-too=
-ls/.git</a><br>
-diff --git a/TODO b/TODO<br>
-deleted file mode 100644<br>
-index 690ea03..0000000<br>
---- a/TODO<br>
-+++ /dev/null<br>
-@@ -1 +0,0 @@<br>
--Things to do<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.5.5<br>
-<br>
-</font></span></blockquote></div><br></div>
-
---001a1136c8c8872fbd0530d91462--
-
-
---===============5575638705443741723==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5575638705443741723==--
+This patch was lost :-??
