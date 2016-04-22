@@ -1,55 +1,107 @@
-From: Eric Engestrom <eric@engestrom.ch>
-Subject: [PATCH 06/41] Documentation: device-mapper: fix spelling mistakes
-Date: Mon, 25 Apr 2016 01:24:03 +0100
-Message-ID: <1461543878-3639-7-git-send-email-eric@engestrom.ch>
-References: <1461543878-3639-1-git-send-email-eric@engestrom.ch>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1461543878-3639-1-git-send-email-eric@engestrom.ch>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Eric Engestrom <eric@engestrom.ch>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Jonathan Corbet <corbet@lwn.net>, linux-doc@vger.kernel.org
+From: Oliver Mangold <Oliver.Mangold@EMEA.NEC.COM>
+Subject: Upcall prioritizer for multipath
+Date: Fri, 22 Apr 2016 12:48:31 +0000
+Message-ID: <571A1D9E.1000805@emea.nec.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="_002_571A1D9E1000805emeaneccom_"
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Signed-off-by: Eric Engestrom <eric@engestrom.ch>
----
- Documentation/device-mapper/cache-policies.txt | 4 ++--
- Documentation/device-mapper/statistics.txt     | 2 +-
- 2 files changed, 3 insertions(+), 3 deletions(-)
+--_002_571A1D9E1000805emeaneccom_
+Content-Type: text/plain; charset="utf-8"
+Content-ID: <F80F42F9502C7B4A8F5B2BBC43793111@EMEA.NEC.COM>
+Content-Transfer-Encoding: base64
 
-diff --git a/Documentation/device-mapper/cache-policies.txt b/Documentation/device-mapper/cache-policies.txt
-index e5062ad..e3a2063 100644
---- a/Documentation/device-mapper/cache-policies.txt
-+++ b/Documentation/device-mapper/cache-policies.txt
-@@ -11,7 +11,7 @@ Every bio that is mapped by the target is referred to the policy.
- The policy can return a simple HIT or MISS or issue a migration.
- 
- Currently there's no way for the policy to issue background work,
--e.g. to start writing back dirty blocks that are going to be evicte
-+e.g. to start writing back dirty blocks that are going to be evicted
- soon.
- 
- Because we map bios, rather than requests it's easy for the policy
-@@ -67,7 +67,7 @@ the entries (each hotspot block covers a larger area than a single
- cache block).
- 
- All these mean smq uses ~25bytes per cache block.  Still a lot of
--memory, but a substantial improvement nontheless.
-+memory, but a substantial improvement nonetheless.
- 
- Level balancing:
- MQ places entries in different levels of the multiqueue structures
-diff --git a/Documentation/device-mapper/statistics.txt b/Documentation/device-mapper/statistics.txt
-index 6f5ef94..170ac02 100644
---- a/Documentation/device-mapper/statistics.txt
-+++ b/Documentation/device-mapper/statistics.txt
-@@ -205,7 +205,7 @@ statistics on them:
- 
-   dmsetup message vol 0 @stats_create - /100
- 
--Set the auxillary data string to "foo bar baz" (the escape for each
-+Set the auxiliary data string to "foo bar baz" (the escape for each
- space must also be escaped, otherwise the shell will consume them):
- 
-   dmsetup message vol 0 @stats_set_aux 0 foo\\ bar\\ baz
--- 
-2.8.0
+SSdtIHdvcmtpbmcgd2l0aCBKQk9EcyBhbmQgd291bGQgbGlrZSB0byBhY2Nlc3MgdGhlIGRpc2tz
+IGluc2lkZSB0aHJvdWdoIA0KZG0tbXVsdGlwYXRoLiBGb3IgcGVyZm9ybWFuY2UgcmVhc29ucyBJ
+IHdvdWxkIGxpa2UgdG8gdXNlIHRvIHByaW9yaXRpemVyIA0KdG8gcGluIGluZGl2aWR1YWwgZGlz
+a3MgdG8gZGlmZmVyZW50IHBhdGhzLiBGb3IgdGVzdGluZyBwdXJwb3NlcyB0aGlzIA0KY2FuIGJl
+IGRvbmUgd2l0aCB0aGUgd2VpZ2h0ZWRfcGF0aCBwcmlvcml0aXplciwgYnV0IGZvciBwcm9kdWN0
+aW9uIHVzZSANCnRoaXMgaXMgdW5zYXRpc2ZhY3RvcnksIGFzIG5laXRoZXIgdGhlIGRldmljZSBu
+YW1lIG5vciB0aGUgU0NTSSBhZGRyZXNzIA0KYXJlIHBlcnNpc3RlbnQgb3ZlciByZWJvb3RzLiBU
+aHVzIEkgd3JvdGUgYSBuZXcsIHNpbXBsZSBwcmlvcml0aXplciB0byANCmNhbGwgYW4gZXh0ZXJu
+YWwgcHJvZ3JhbSB0byBkZXRlcm1pbmUgd2hhdCB0aGUgcHJpbyBzaG91bGQgYmUuIEkgd291bGQg
+DQpsaWtlIHRvIGFzayBpZiB0aGVyZSBpcyBpbnRlcmVzdCB0byBpbmNsdWRlIHRoaXMgKG9yIHNv
+bWV0aGluZyBzaW1pbGFyKSANCnVwc3RyZWFtIChzZWUgYXR0YWNoZWQgcGF0Y2gpLg0KDQpSZW1h
+cms6IEFmdGVyIEkgZGlkIHRoaXMsIEkndmUgc2VlbiB0aGUgd3duIHJlZ2V4IG1vZGUgaW4gdGhl
+IHVwY29taW5nIA0KMC42IHZlcnNpb24sIHdoaWNoIHdvdWxkIGFsc28gcHJvdmlkZSBhIHNvbHV0
+aW9uIHRvIHRoZSBwcm9ibGVtIEkgDQpzdGFydGVkIG91dCB3aXRoLiBCdXQgdXNpbmcgdGhpcyB3
+b3VsZCBzdGlsbCBtZWFucyBvbmUgaGFkIHRvIHJlY3JlYXRlIA0KbXVsdGlwYXRoLmNvbmYgZWFj
+aCB0aW1lIG9uZSByZXBsYWNlcyBhIGZhaWxlZCBkaXNrLCBzbyBJIHN0aWxsIGJlbGlldmUgDQpo
+YXZpbmcgYW4gZXh0ZXJuYWwgdXBjYWxsIG1ha2VzIHNlbnNlIGluIHNvbWUgc2l0dWF0aW9ucy4N
+Cg0KQW55IHRob3VnaHRzPw0KDQo=
+
+--_002_571A1D9E1000805emeaneccom_
+Content-Type: text/x-patch;
+	name="0001-libmultipath-adding-new-prioritizer-upcall-to-call-e.patch"
+Content-Description: 0001-libmultipath-adding-new-prioritizer-upcall-to-call-e.patch
+Content-Disposition: attachment;
+	filename="0001-libmultipath-adding-new-prioritizer-upcall-to-call-e.patch";
+	size=2431; creation-date="Fri, 22 Apr 2016 12:48:31 GMT";
+	modification-date="Fri, 22 Apr 2016 12:48:31 GMT"
+Content-ID: <1D15B47AB8229A4E85EC3369DDD0768C@EMEA.NEC.COM>
+Content-Transfer-Encoding: base64
+
+RnJvbSAxMjRiNTQ1MzFkZDE4NTk3NTUxNzVjYTVlOWU0ODgyZDE1Y2RkODdkIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQ0KRnJvbTogT2xpdmVyIE1hbmdvbGQgPG9saXZlci5tYW5nb2xkQGVtZWEu
+bmVjLmNvbT4NCkRhdGU6IEZyaSwgMjIgQXByIDIwMTYgMTI6NTM6NTUgKzAyMDANClN1YmplY3Q6
+IFtQQVRDSF0gbGlibXVsdGlwYXRoOiBhZGRpbmcgbmV3IHByaW9yaXRpemVyICd1cGNhbGwnIHRv
+IGNhbGwNCiBleHRlcm5hbCBwcm9ncmFtDQoNCi0tLQ0KIGxpYm11bHRpcGF0aC9wcmlvcml0aXpl
+cnMvTWFrZWZpbGUgfCAgMSArDQogbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy91cGNhbGwuYyB8
+IDI1ICsrKysrKysrKysrKysrKysrKysrKysrKysNCiBtdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYu
+NSAgICAgICAgIHwgIDYgKysrKysrDQogMyBmaWxlcyBjaGFuZ2VkLCAzMiBpbnNlcnRpb25zKCsp
+DQogY3JlYXRlIG1vZGUgMTAwNjQ0IGxpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvdXBjYWxsLmMN
+Cg0KZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvTWFrZWZpbGUgYi9saWJt
+dWx0aXBhdGgvcHJpb3JpdGl6ZXJzL01ha2VmaWxlDQppbmRleCA2Y2ZhYzg4Li4xYjMyZDAwIDEw
+MDY0NA0KLS0tIGEvbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9NYWtlZmlsZQ0KKysrIGIvbGli
+bXVsdGlwYXRoL3ByaW9yaXRpemVycy9NYWtlZmlsZQ0KQEAgLTE1LDYgKzE1LDcgQEAgTElCUyA9
+IFwNCiAJbGlicHJpb2RhdGFjb3JlLnNvIFwNCiAJbGlicHJpb2hkcy5zbyBcDQogCWxpYnByaW93
+ZWlnaHRlZHBhdGguc28gXA0KKwlsaWJwcmlvdXBjYWxsLnNvIFwNCiAJbGlicHJpb2lldC5zbw0K
+IA0KIENGTEFHUyArPSAtSS4uDQpkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL3ByaW9yaXRpemVy
+cy91cGNhbGwuYyBiL2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvdXBjYWxsLmMNCm5ldyBmaWxl
+IG1vZGUgMTAwNjQ0DQppbmRleCAwMDAwMDAwLi4xNzViOGZlDQotLS0gL2Rldi9udWxsDQorKysg
+Yi9saWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL3VwY2FsbC5jDQpAQCAtMCwwICsxLDI1IEBADQor
+I2RlZmluZSBfR05VX1NPVVJDRQ0KKyNpbmNsdWRlIDxzdGRpby5oPg0KKyNpbmNsdWRlIDxzdGRs
+aWIuaD4NCisjaW5jbHVkZSA8dGltZS5oPg0KKw0KKyNpbmNsdWRlIDxwcmlvLmg+DQorI2luY2x1
+ZGUgPHN0cnVjdHMuaD4NCisNCitpbnQgZ2V0cHJpbyAoc3RydWN0IHBhdGggKiBwcCwgY2hhciAq
+IGFyZ3MpDQorew0KKyAgICBjaGFyKiBjbWQ7DQorICAgIGludCByZXQgPSBhc3ByaW50ZigmY21k
+LCAiJXMgJXMiLCBhcmdzLCBwcC0+ZGV2KTsNCisgICAgaWYgKHJldCA9PSAtMSkNCisgICAgICBy
+ZXR1cm4gLTE7DQorICAgIEZJTEUqIHBpcGUgPSBwb3BlbiggY21kLCAiciIgKTsNCisgICAgZnJl
+ZShjbWQpOw0KKyAgICBpbnQgcHJpbzsNCisgICAgaW50IGNvdW50ID0gZnNjYW5mKHBpcGUsICIl
+aSIsICZwcmlvKTsNCisgICAgcmV0ID0gcGNsb3NlKHBpcGUpOw0KKyAgICBpZiAocmV0ICE9IDAp
+DQorICAgICAgcmV0dXJuIC0xOw0KKyAgICBpZiAoY291bnQgIT0gMSkNCisgICAgICAgIHJldHVy
+biAtMTsNCisgICAgcmV0dXJuIHByaW87DQorfQ0KZGlmZiAtLWdpdCBhL211bHRpcGF0aC9tdWx0
+aXBhdGguY29uZi41IGIvbXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUNCmluZGV4IDBkNGRmMGYu
+LmQ4ZDZhZDYgMTAwNjQ0DQotLS0gYS9tdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYuNQ0KKysrIGIv
+bXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUNCkBAIC0yMTcsNiArMjE3LDkgQEAgR2VuZXJhdGUg
+YSByYW5kb20gcHJpb3JpdHkgYmV0d2VlbiAxIGFuZCAxMC4NCiBHZW5lcmF0ZSB0aGUgcGF0aCBw
+cmlvcml0eSBiYXNlZCBvbiB0aGUgcmVndWxhciBleHByZXNzaW9uIGFuZCB0aGUgDQogcHJpb3Jp
+dHkgcHJvdmlkZWQgYXMgYXJndW1lbnQuIHJlcXVpcmVzIHByaW9fYXJncyBrZXl3b3JkLg0KIC5U
+UA0KKy5CIHVwY2FsbA0KK0NhbGwgYW4gZXh0ZXJuYWwgcHJvZ3JhbSB0byBjYWxjdWxhdGUgdGhl
+IHByaW9yaXR5Lg0KKy5UUA0KIERlZmF1bHQgdmFsdWUgaXMgXGZCbm9uZVxmUi4NCiAuUkUNCiAu
+VFANCkBAIC0yNDMsNiArMjQ2LDkgQEAgSWYNCiAuSSBleGNsdXNpdmVfcHJlZl9iaXQNCiBpcyBz
+ZXQsIHBhdGhzIHdpdGggdGhlIFRQR1MgcHJlZiBiaXQgc2V0IHdpbGwgYWx3YXlzIGJlIGluIHRo
+ZWlyIG93biBwYXRoDQogZ3JvdXAuDQorLlRQDQorLkIgdXBjYWxsDQorQ21kbGluZSB0byBleGVj
+dXRlIHRvIGRldGVybWluZSBkZXZpY2UgcHJpb3JpdHkuIFRoZSBuYW1lIG9mIHRoZSBjb21wb25l
+bnQgZGV2aWNlIG9mIGludGVyZXN0IGlzIGFkZGVkIGFzIHRoZSBsYXN0IGFyZ3VtZW50Lg0KIC5S
+RQ0KIC5UUA0KIC5CIGZlYXR1cmVzDQotLSANCjIuOC4wDQoNCg==
+
+--_002_571A1D9E1000805emeaneccom_
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--_002_571A1D9E1000805emeaneccom_--
