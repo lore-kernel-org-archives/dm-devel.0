@@ -1,107 +1,138 @@
-From: Oliver Mangold <Oliver.Mangold@EMEA.NEC.COM>
-Subject: Upcall prioritizer for multipath
-Date: Fri, 22 Apr 2016 12:52:01 +0000
-Message-ID: <571A1E70.30900@emea.nec.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="_002_571A1E7030900emeaneccom_"
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+From: Seth Forshee <seth.forshee@canonical.com>
+Subject: [PATCH v3 00/21] Support fuse mounts in user namespaces
+Date: Fri, 22 Apr 2016 10:38:17 -0500
+Message-ID: <1461339521-123191-1-git-send-email-seth.forshee@canonical.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, cgroups@vger.kernel.org, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <mszeredi@redhat.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, linux-kernel@vger.kernel.org, Seth Forshee <seth.forshee@canonical.com>
 List-Id: dm-devel.ids
 
---_002_571A1E7030900emeaneccom_
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <B79BBA87AF3FE244BE92D1FC71AD067E@EMEA.NEC.COM>
-Content-Transfer-Encoding: base64
+Hi Eric,
 
-SSdtIHdvcmtpbmcgd2l0aCBKQk9EcyBhbmQgd291bGQgbGlrZSB0byBhY2Nlc3MgdGhlIGRpc2tz
-IGluc2lkZSB0aHJvdWdoIA0KZG0tbXVsdGlwYXRoLiBGb3IgcGVyZm9ybWFuY2UgcmVhc29ucyBJ
-IHdvdWxkIGxpa2UgdG8gdXNlIHRvIHByaW9yaXRpemVyIA0KdG8gcGluIGluZGl2aWR1YWwgZGlz
-a3MgdG8gZGlmZmVyZW50IHBhdGhzLiBGb3IgdGVzdGluZyBwdXJwb3NlcyB0aGlzIA0KY2FuIGJl
-IGRvbmUgd2l0aCB0aGUgd2VpZ2h0ZWRfcGF0aCBwcmlvcml0aXplciwgYnV0IGZvciBwcm9kdWN0
-aW9uIHVzZSANCnRoaXMgaXMgdW5zYXRpc2ZhY3RvcnksIGFzIG5laXRoZXIgdGhlIGRldmljZSBu
-YW1lIG5vciB0aGUgU0NTSSBhZGRyZXNzIA0KYXJlIHBlcnNpc3RlbnQgb3ZlciByZWJvb3RzLiBU
-aHVzIEkgd3JvdGUgYSBuZXcsIHNpbXBsZSBwcmlvcml0aXplciB0byANCmNhbGwgYW4gZXh0ZXJu
-YWwgcHJvZ3JhbSB0byBkZXRlcm1pbmUgd2hhdCB0aGUgcHJpbyBzaG91bGQgYmUuIEkgd291bGQg
-DQpsaWtlIHRvIGFzayBpZiB0aGVyZSBpcyBpbnRlcmVzdCB0byBpbmNsdWRlIHRoaXMgKG9yIHNv
-bWV0aGluZyBzaW1pbGFyKSANCnVwc3RyZWFtIChzZWUgYXR0YWNoZWQgcGF0Y2gpLg0KDQpSZW1h
-cms6IEFmdGVyIEkgZGlkIHRoaXMsIEkndmUgc2VlbiB0aGUgd3duIHJlZ2V4IG1vZGUgaW4gdGhl
-IHVwY29taW5nIA0KMC42IHZlcnNpb24sIHdoaWNoIHdvdWxkIGFsc28gcHJvdmlkZSBhIHNvbHV0
-aW9uIHRvIHRoZSBwcm9ibGVtIEkgDQpzdGFydGVkIG91dCB3aXRoLiBCdXQgdXNpbmcgdGhpcyB3
-b3VsZCBzdGlsbCBtZWFucyBvbmUgaGFkIHRvIHJlY3JlYXRlIA0KbXVsdGlwYXRoLmNvbmYgZWFj
-aCB0aW1lIG9uZSByZXBsYWNlcyBhIGZhaWxlZCBkaXNrLCBzbyBJIHN0aWxsIGJlbGlldmUgDQpo
-YXZpbmcgYW4gZXh0ZXJuYWwgdXBjYWxsIG1ha2VzIHNlbnNlIGluIHNvbWUgc2l0dWF0aW9ucy4N
-Cg0KQW55IHRob3VnaHRzPw0KDQo=
+Sorry that it's taken a while to get this update sent out. In part
+that's because of a few problems I found, which resulted in some new
+patches.
 
---_002_571A1E7030900emeaneccom_
-Content-Type: text/x-patch;
-	name="0001-libmultipath-adding-new-prioritizer-upcall-to-call-e.patch"
-Content-Description: 0001-libmultipath-adding-new-prioritizer-upcall-to-call-e.patch
-Content-Disposition: attachment;
-	filename="0001-libmultipath-adding-new-prioritizer-upcall-to-call-e.patch";
-	size=2433; creation-date="Fri, 22 Apr 2016 12:52:01 GMT";
-	modification-date="Fri, 22 Apr 2016 12:52:01 GMT"
-Content-ID: <883C79DC8A347D47AB4F122C8A014A8F@EMEA.NEC.COM>
-Content-Transfer-Encoding: base64
+I wanted to point out one problem in particular because I'm not fully
+settled on the solution. It turns out that for the sysfs and cgroup
+filesystems we already have use cases where a super block is mounted
+from multiple user namespaces. With sysfs this is done when criu is used
+to snapshot a container; it will mount sysfs in the container's network
+namespace but the host's user namespace. cgroup fs uses the same super
+block for all mounts of a given hierarchy, and the addition of cgroup
+namespaces makes this possible from within non-init user namepsaces. So
+the check in sget_userns() which forbids mounting an existing super
+block in a different user namespace causes regressions, and really it's
+not necessary for these filesystems since ids in the inodes aren't
+subect to translation relative to s_user_ns.
 
-RnJvbSAxMjRiNTQ1MzFkZDE4NTk3NTUxNzVjYTVlOWU0ODgyZDE1Y2RkODdkIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQ0KRnJvbTogT2xpdmVyIE1hbmdvbGQgPG9saXZlci5tYW5nb2xkQGVtZWEu
-bmVjLmNvbT4NCkRhdGU6IEZyaSwgMjIgQXByIDIwMTYgMTI6NTM6NTUgKzAyMDANClN1YmplY3Q6
-IFtQQVRDSF0gbGlibXVsdGlwYXRoOiBhZGRpbmcgbmV3IHByaW9yaXRpemVyICd1cGNhbGwnIHRv
-IGNhbGwNCiBleHRlcm5hbCBwcm9ncmFtDQoNCi0tLQ0KIGxpYm11bHRpcGF0aC9wcmlvcml0aXpl
-cnMvTWFrZWZpbGUgfCAgMSArDQogbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy91cGNhbGwuYyB8
-IDI1ICsrKysrKysrKysrKysrKysrKysrKysrKysNCiBtdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYu
-NSAgICAgICAgIHwgIDYgKysrKysrDQogMyBmaWxlcyBjaGFuZ2VkLCAzMiBpbnNlcnRpb25zKCsp
-DQogY3JlYXRlIG1vZGUgMTAwNjQ0IGxpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvdXBjYWxsLmMN
-Cg0KZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvTWFrZWZpbGUgYi9saWJt
-dWx0aXBhdGgvcHJpb3JpdGl6ZXJzL01ha2VmaWxlDQppbmRleCA2Y2ZhYzg4Li4xYjMyZDAwIDEw
-MDY0NA0KLS0tIGEvbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9NYWtlZmlsZQ0KKysrIGIvbGli
-bXVsdGlwYXRoL3ByaW9yaXRpemVycy9NYWtlZmlsZQ0KQEAgLTE1LDYgKzE1LDcgQEAgTElCUyA9
-IFwNCiAJbGlicHJpb2RhdGFjb3JlLnNvIFwNCiAJbGlicHJpb2hkcy5zbyBcDQogCWxpYnByaW93
-ZWlnaHRlZHBhdGguc28gXA0KKwlsaWJwcmlvdXBjYWxsLnNvIFwNCiAJbGlicHJpb2lldC5zbw0K
-IA0KIENGTEFHUyArPSAtSS4uDQpkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL3ByaW9yaXRpemVy
-cy91cGNhbGwuYyBiL2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvdXBjYWxsLmMNCm5ldyBmaWxl
-IG1vZGUgMTAwNjQ0DQppbmRleCAwMDAwMDAwLi4xNzViOGZlDQotLS0gL2Rldi9udWxsDQorKysg
-Yi9saWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL3VwY2FsbC5jDQpAQCAtMCwwICsxLDI1IEBADQor
-I2RlZmluZSBfR05VX1NPVVJDRQ0KKyNpbmNsdWRlIDxzdGRpby5oPg0KKyNpbmNsdWRlIDxzdGRs
-aWIuaD4NCisjaW5jbHVkZSA8dGltZS5oPg0KKw0KKyNpbmNsdWRlIDxwcmlvLmg+DQorI2luY2x1
-ZGUgPHN0cnVjdHMuaD4NCisNCitpbnQgZ2V0cHJpbyAoc3RydWN0IHBhdGggKiBwcCwgY2hhciAq
-IGFyZ3MpDQorew0KKyAgICBjaGFyKiBjbWQ7DQorICAgIGludCByZXQgPSBhc3ByaW50ZigmY21k
-LCAiJXMgJXMiLCBhcmdzLCBwcC0+ZGV2KTsNCisgICAgaWYgKHJldCA9PSAtMSkNCisgICAgICBy
-ZXR1cm4gLTE7DQorICAgIEZJTEUqIHBpcGUgPSBwb3BlbiggY21kLCAiciIgKTsNCisgICAgZnJl
-ZShjbWQpOw0KKyAgICBpbnQgcHJpbzsNCisgICAgaW50IGNvdW50ID0gZnNjYW5mKHBpcGUsICIl
-aSIsICZwcmlvKTsNCisgICAgcmV0ID0gcGNsb3NlKHBpcGUpOw0KKyAgICBpZiAocmV0ICE9IDAp
-DQorICAgICAgcmV0dXJuIC0xOw0KKyAgICBpZiAoY291bnQgIT0gMSkNCisgICAgICAgIHJldHVy
-biAtMTsNCisgICAgcmV0dXJuIHByaW87DQorfQ0KZGlmZiAtLWdpdCBhL211bHRpcGF0aC9tdWx0
-aXBhdGguY29uZi41IGIvbXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUNCmluZGV4IDBkNGRmMGYu
-LmQ4ZDZhZDYgMTAwNjQ0DQotLS0gYS9tdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYuNQ0KKysrIGIv
-bXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUNCkBAIC0yMTcsNiArMjE3LDkgQEAgR2VuZXJhdGUg
-YSByYW5kb20gcHJpb3JpdHkgYmV0d2VlbiAxIGFuZCAxMC4NCiBHZW5lcmF0ZSB0aGUgcGF0aCBw
-cmlvcml0eSBiYXNlZCBvbiB0aGUgcmVndWxhciBleHByZXNzaW9uIGFuZCB0aGUgDQogcHJpb3Jp
-dHkgcHJvdmlkZWQgYXMgYXJndW1lbnQuIHJlcXVpcmVzIHByaW9fYXJncyBrZXl3b3JkLg0KIC5U
-UA0KKy5CIHVwY2FsbA0KK0NhbGwgYW4gZXh0ZXJuYWwgcHJvZ3JhbSB0byBjYWxjdWxhdGUgdGhl
-IHByaW9yaXR5Lg0KKy5UUA0KIERlZmF1bHQgdmFsdWUgaXMgXGZCbm9uZVxmUi4NCiAuUkUNCiAu
-VFANCkBAIC0yNDMsNiArMjQ2LDkgQEAgSWYNCiAuSSBleGNsdXNpdmVfcHJlZl9iaXQNCiBpcyBz
-ZXQsIHBhdGhzIHdpdGggdGhlIFRQR1MgcHJlZiBiaXQgc2V0IHdpbGwgYWx3YXlzIGJlIGluIHRo
-ZWlyIG93biBwYXRoDQogZ3JvdXAuDQorLlRQDQorLkIgdXBjYWxsDQorQ21kbGluZSB0byBleGVj
-dXRlIHRvIGRldGVybWluZSBkZXZpY2UgcHJpb3JpdHkuIFRoZSBuYW1lIG9mIHRoZSBjb21wb25l
-bnQgZGV2aWNlIG9mIGludGVyZXN0IGlzIGFkZGVkIGFzIHRoZSBsYXN0IGFyZ3VtZW50Lg0KIC5S
-RQ0KIC5UUA0KIC5CIGZlYXR1cmVzDQotLSANCjIuOC4wDQoNCg0K
+I've tried several ways to fix this. The one I'm sending here is to
+exempt these filesystems from this requirement, which is the simplest
+solution. The down side is that I couldn't find any existing property of
+these file systems to use for excluding them, so I'm using a new file
+system flag. My second-best option was to change kernfs_test_super() to
+return false if the existing super block is in a different user
+namespace. This is also pretty simple and works fine for sysfs, but
+cgroups require some updating in order to get its internal reference
+counting to work out.
 
---_002_571A1E7030900emeaneccom_
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+These patches are based on the for-testing branch of
+git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git
+with everything rebased onto 4.6-rc4. I've also pushed everything to:
 
+ git://git.kernel.org/pub/scm/linux/kernel/git/sforshee/linux.git fuse-userns
 
---_002_571A1E7030900emeaneccom_--
+Changes since v2:
+
+ - Add patch from Pavel Tikhomirov to fix a potential memory leak in
+   sget_userns().
+ - Add a patch to fix a bug in the fs_fully_visible() MNT_LOCK_NODEV
+   handling which was introduced by "userns: Simpilify MNT_NODEV
+   handling."
+ - Drop patch to make root in s_user_ns capable towards that superblock
+   and replace it with a patch to allow root in s_user_ns to change
+   ownership of inodes with invalid ids.
+ - Use make_k[ug]id() in fuse_fillattr() instead of copying ids from
+   inode.
+ - Remove unnecessary initialization of user_id and group_id in fuse
+   mount options.
+ - Add a comment to get_file_caps() to indicate that the duplicate
+   in_userns() check is intentional.
+ - Fix incorrect statements in commit message of "fuse: Add support for
+   pid namespaces"
+ - Added acks.
+
+Thanks,
+Seth
+
+---
+
+Andy Lutomirski (1):
+  fs: Treat foreign mounts as nosuid
+
+Pavel Tikhomirov (1):
+  fs: fix a posible leak of allocated superblock
+
+Seth Forshee (19):
+  fs: Remove check of s_user_ns for existing mounts in
+    fs_fully_visible()
+  fs: Allow sysfs and cgroupfs to share super blocks between user
+    namespaces
+  block_dev: Support checking inode permissions in lookup_bdev()
+  block_dev: Check permissions towards block device inode when mounting
+  selinux: Add support for unprivileged mounts from user namespaces
+  userns: Replace in_userns with current_in_userns
+  Smack: Handle labels consistently in untrusted mounts
+  fs: Check for invalid i_uid in may_follow_link()
+  cred: Reject inodes with invalid ids in set_create_file_as()
+  fs: Refuse uid/gid changes which don't map into s_user_ns
+  fs: Update posix_acl support to handle user namespace mounts
+  fs: Allow superblock owner to change ownership of inodes with
+    unmappable ids
+  fs: Don't remove suid for CAP_FSETID in s_user_ns
+  fs: Allow superblock owner to access do_remount_sb()
+  capabilities: Allow privileged user in s_user_ns to set security.*
+    xattrs
+  fuse: Add support for pid namespaces
+  fuse: Support fuse filesystems outside of init_user_ns
+  fuse: Restrict allow_other to the superblock's namespace or a
+    descendant
+  fuse: Allow user namespace mounts
+
+ drivers/md/bcache/super.c       |  2 +-
+ drivers/md/dm-table.c           |  2 +-
+ drivers/mtd/mtdsuper.c          |  2 +-
+ fs/attr.c                       | 58 ++++++++++++++++++++++++++++++-----
+ fs/block_dev.c                  | 18 +++++++++--
+ fs/exec.c                       |  2 +-
+ fs/fuse/cuse.c                  |  3 +-
+ fs/fuse/dev.c                   | 26 ++++++++++++----
+ fs/fuse/dir.c                   | 16 +++++-----
+ fs/fuse/file.c                  | 22 +++++++++++---
+ fs/fuse/fuse_i.h                | 10 +++++-
+ fs/fuse/inode.c                 | 40 +++++++++++++++---------
+ fs/inode.c                      |  3 +-
+ fs/kernfs/inode.c               |  2 ++
+ fs/namei.c                      |  2 +-
+ fs/namespace.c                  | 20 +++++++++---
+ fs/posix_acl.c                  | 67 ++++++++++++++++++++++++++---------------
+ fs/proc/base.c                  |  2 ++
+ fs/proc/generic.c               |  3 ++
+ fs/proc/proc_sysctl.c           |  2 ++
+ fs/quota/quota.c                |  2 +-
+ fs/super.c                      |  7 ++++-
+ fs/sysfs/mount.c                |  3 +-
+ fs/xattr.c                      | 19 +++++++++---
+ include/linux/fs.h              |  3 +-
+ include/linux/mount.h           |  1 +
+ include/linux/posix_acl_xattr.h | 17 ++++++++---
+ include/linux/uidgid.h          | 10 ++++++
+ include/linux/user_namespace.h  |  6 ++--
+ kernel/cgroup.c                 |  4 +--
+ kernel/cred.c                   |  2 ++
+ kernel/user_namespace.c         |  6 ++--
+ security/commoncap.c            | 22 ++++++++++----
+ security/selinux/hooks.c        | 25 ++++++++++++++-
+ security/smack/smack_lsm.c      | 29 ++++++++++++------
+ 35 files changed, 339 insertions(+), 119 deletions(-)
