@@ -1,11 +1,13 @@
-From: Oliver Mangold <Oliver.Mangold@EMEA.NEC.COM>
-Subject: Upcall prioritizer for multipath
-Date: Fri, 22 Apr 2016 12:48:31 +0000
-Message-ID: <571A1D9E.1000805@emea.nec.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: Upcall prioritizer for multipath
+Date: Mon, 25 Apr 2016 09:49:50 +0200
+Message-ID: <571DCC1E.5000908@suse.de>
+References: <571A1D9E.1000805@emea.nec.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="_002_571A1D9E1000805emeaneccom_"
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <571A1D9E.1000805@emea.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,93 +17,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---_002_571A1D9E1000805emeaneccom_
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <F80F42F9502C7B4A8F5B2BBC43793111@EMEA.NEC.COM>
-Content-Transfer-Encoding: base64
+On 04/22/2016 02:48 PM, Oliver Mangold wrote:
+> I'm working with JBODs and would like to access the disks inside through =
 
-SSdtIHdvcmtpbmcgd2l0aCBKQk9EcyBhbmQgd291bGQgbGlrZSB0byBhY2Nlc3MgdGhlIGRpc2tz
-IGluc2lkZSB0aHJvdWdoIA0KZG0tbXVsdGlwYXRoLiBGb3IgcGVyZm9ybWFuY2UgcmVhc29ucyBJ
-IHdvdWxkIGxpa2UgdG8gdXNlIHRvIHByaW9yaXRpemVyIA0KdG8gcGluIGluZGl2aWR1YWwgZGlz
-a3MgdG8gZGlmZmVyZW50IHBhdGhzLiBGb3IgdGVzdGluZyBwdXJwb3NlcyB0aGlzIA0KY2FuIGJl
-IGRvbmUgd2l0aCB0aGUgd2VpZ2h0ZWRfcGF0aCBwcmlvcml0aXplciwgYnV0IGZvciBwcm9kdWN0
-aW9uIHVzZSANCnRoaXMgaXMgdW5zYXRpc2ZhY3RvcnksIGFzIG5laXRoZXIgdGhlIGRldmljZSBu
-YW1lIG5vciB0aGUgU0NTSSBhZGRyZXNzIA0KYXJlIHBlcnNpc3RlbnQgb3ZlciByZWJvb3RzLiBU
-aHVzIEkgd3JvdGUgYSBuZXcsIHNpbXBsZSBwcmlvcml0aXplciB0byANCmNhbGwgYW4gZXh0ZXJu
-YWwgcHJvZ3JhbSB0byBkZXRlcm1pbmUgd2hhdCB0aGUgcHJpbyBzaG91bGQgYmUuIEkgd291bGQg
-DQpsaWtlIHRvIGFzayBpZiB0aGVyZSBpcyBpbnRlcmVzdCB0byBpbmNsdWRlIHRoaXMgKG9yIHNv
-bWV0aGluZyBzaW1pbGFyKSANCnVwc3RyZWFtIChzZWUgYXR0YWNoZWQgcGF0Y2gpLg0KDQpSZW1h
-cms6IEFmdGVyIEkgZGlkIHRoaXMsIEkndmUgc2VlbiB0aGUgd3duIHJlZ2V4IG1vZGUgaW4gdGhl
-IHVwY29taW5nIA0KMC42IHZlcnNpb24sIHdoaWNoIHdvdWxkIGFsc28gcHJvdmlkZSBhIHNvbHV0
-aW9uIHRvIHRoZSBwcm9ibGVtIEkgDQpzdGFydGVkIG91dCB3aXRoLiBCdXQgdXNpbmcgdGhpcyB3
-b3VsZCBzdGlsbCBtZWFucyBvbmUgaGFkIHRvIHJlY3JlYXRlIA0KbXVsdGlwYXRoLmNvbmYgZWFj
-aCB0aW1lIG9uZSByZXBsYWNlcyBhIGZhaWxlZCBkaXNrLCBzbyBJIHN0aWxsIGJlbGlldmUgDQpo
-YXZpbmcgYW4gZXh0ZXJuYWwgdXBjYWxsIG1ha2VzIHNlbnNlIGluIHNvbWUgc2l0dWF0aW9ucy4N
-Cg0KQW55IHRob3VnaHRzPw0KDQo=
+> dm-multipath. For performance reasons I would like to use to prioritizer =
 
---_002_571A1D9E1000805emeaneccom_
-Content-Type: text/x-patch;
-	name="0001-libmultipath-adding-new-prioritizer-upcall-to-call-e.patch"
-Content-Description: 0001-libmultipath-adding-new-prioritizer-upcall-to-call-e.patch
-Content-Disposition: attachment;
-	filename="0001-libmultipath-adding-new-prioritizer-upcall-to-call-e.patch";
-	size=2431; creation-date="Fri, 22 Apr 2016 12:48:31 GMT";
-	modification-date="Fri, 22 Apr 2016 12:48:31 GMT"
-Content-ID: <1D15B47AB8229A4E85EC3369DDD0768C@EMEA.NEC.COM>
-Content-Transfer-Encoding: base64
+> to pin individual disks to different paths. For testing purposes this =
 
-RnJvbSAxMjRiNTQ1MzFkZDE4NTk3NTUxNzVjYTVlOWU0ODgyZDE1Y2RkODdkIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQ0KRnJvbTogT2xpdmVyIE1hbmdvbGQgPG9saXZlci5tYW5nb2xkQGVtZWEu
-bmVjLmNvbT4NCkRhdGU6IEZyaSwgMjIgQXByIDIwMTYgMTI6NTM6NTUgKzAyMDANClN1YmplY3Q6
-IFtQQVRDSF0gbGlibXVsdGlwYXRoOiBhZGRpbmcgbmV3IHByaW9yaXRpemVyICd1cGNhbGwnIHRv
-IGNhbGwNCiBleHRlcm5hbCBwcm9ncmFtDQoNCi0tLQ0KIGxpYm11bHRpcGF0aC9wcmlvcml0aXpl
-cnMvTWFrZWZpbGUgfCAgMSArDQogbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy91cGNhbGwuYyB8
-IDI1ICsrKysrKysrKysrKysrKysrKysrKysrKysNCiBtdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYu
-NSAgICAgICAgIHwgIDYgKysrKysrDQogMyBmaWxlcyBjaGFuZ2VkLCAzMiBpbnNlcnRpb25zKCsp
-DQogY3JlYXRlIG1vZGUgMTAwNjQ0IGxpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvdXBjYWxsLmMN
-Cg0KZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvTWFrZWZpbGUgYi9saWJt
-dWx0aXBhdGgvcHJpb3JpdGl6ZXJzL01ha2VmaWxlDQppbmRleCA2Y2ZhYzg4Li4xYjMyZDAwIDEw
-MDY0NA0KLS0tIGEvbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9NYWtlZmlsZQ0KKysrIGIvbGli
-bXVsdGlwYXRoL3ByaW9yaXRpemVycy9NYWtlZmlsZQ0KQEAgLTE1LDYgKzE1LDcgQEAgTElCUyA9
-IFwNCiAJbGlicHJpb2RhdGFjb3JlLnNvIFwNCiAJbGlicHJpb2hkcy5zbyBcDQogCWxpYnByaW93
-ZWlnaHRlZHBhdGguc28gXA0KKwlsaWJwcmlvdXBjYWxsLnNvIFwNCiAJbGlicHJpb2lldC5zbw0K
-IA0KIENGTEFHUyArPSAtSS4uDQpkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL3ByaW9yaXRpemVy
-cy91cGNhbGwuYyBiL2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvdXBjYWxsLmMNCm5ldyBmaWxl
-IG1vZGUgMTAwNjQ0DQppbmRleCAwMDAwMDAwLi4xNzViOGZlDQotLS0gL2Rldi9udWxsDQorKysg
-Yi9saWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL3VwY2FsbC5jDQpAQCAtMCwwICsxLDI1IEBADQor
-I2RlZmluZSBfR05VX1NPVVJDRQ0KKyNpbmNsdWRlIDxzdGRpby5oPg0KKyNpbmNsdWRlIDxzdGRs
-aWIuaD4NCisjaW5jbHVkZSA8dGltZS5oPg0KKw0KKyNpbmNsdWRlIDxwcmlvLmg+DQorI2luY2x1
-ZGUgPHN0cnVjdHMuaD4NCisNCitpbnQgZ2V0cHJpbyAoc3RydWN0IHBhdGggKiBwcCwgY2hhciAq
-IGFyZ3MpDQorew0KKyAgICBjaGFyKiBjbWQ7DQorICAgIGludCByZXQgPSBhc3ByaW50ZigmY21k
-LCAiJXMgJXMiLCBhcmdzLCBwcC0+ZGV2KTsNCisgICAgaWYgKHJldCA9PSAtMSkNCisgICAgICBy
-ZXR1cm4gLTE7DQorICAgIEZJTEUqIHBpcGUgPSBwb3BlbiggY21kLCAiciIgKTsNCisgICAgZnJl
-ZShjbWQpOw0KKyAgICBpbnQgcHJpbzsNCisgICAgaW50IGNvdW50ID0gZnNjYW5mKHBpcGUsICIl
-aSIsICZwcmlvKTsNCisgICAgcmV0ID0gcGNsb3NlKHBpcGUpOw0KKyAgICBpZiAocmV0ICE9IDAp
-DQorICAgICAgcmV0dXJuIC0xOw0KKyAgICBpZiAoY291bnQgIT0gMSkNCisgICAgICAgIHJldHVy
-biAtMTsNCisgICAgcmV0dXJuIHByaW87DQorfQ0KZGlmZiAtLWdpdCBhL211bHRpcGF0aC9tdWx0
-aXBhdGguY29uZi41IGIvbXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUNCmluZGV4IDBkNGRmMGYu
-LmQ4ZDZhZDYgMTAwNjQ0DQotLS0gYS9tdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYuNQ0KKysrIGIv
-bXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUNCkBAIC0yMTcsNiArMjE3LDkgQEAgR2VuZXJhdGUg
-YSByYW5kb20gcHJpb3JpdHkgYmV0d2VlbiAxIGFuZCAxMC4NCiBHZW5lcmF0ZSB0aGUgcGF0aCBw
-cmlvcml0eSBiYXNlZCBvbiB0aGUgcmVndWxhciBleHByZXNzaW9uIGFuZCB0aGUgDQogcHJpb3Jp
-dHkgcHJvdmlkZWQgYXMgYXJndW1lbnQuIHJlcXVpcmVzIHByaW9fYXJncyBrZXl3b3JkLg0KIC5U
-UA0KKy5CIHVwY2FsbA0KK0NhbGwgYW4gZXh0ZXJuYWwgcHJvZ3JhbSB0byBjYWxjdWxhdGUgdGhl
-IHByaW9yaXR5Lg0KKy5UUA0KIERlZmF1bHQgdmFsdWUgaXMgXGZCbm9uZVxmUi4NCiAuUkUNCiAu
-VFANCkBAIC0yNDMsNiArMjQ2LDkgQEAgSWYNCiAuSSBleGNsdXNpdmVfcHJlZl9iaXQNCiBpcyBz
-ZXQsIHBhdGhzIHdpdGggdGhlIFRQR1MgcHJlZiBiaXQgc2V0IHdpbGwgYWx3YXlzIGJlIGluIHRo
-ZWlyIG93biBwYXRoDQogZ3JvdXAuDQorLlRQDQorLkIgdXBjYWxsDQorQ21kbGluZSB0byBleGVj
-dXRlIHRvIGRldGVybWluZSBkZXZpY2UgcHJpb3JpdHkuIFRoZSBuYW1lIG9mIHRoZSBjb21wb25l
-bnQgZGV2aWNlIG9mIGludGVyZXN0IGlzIGFkZGVkIGFzIHRoZSBsYXN0IGFyZ3VtZW50Lg0KIC5S
-RQ0KIC5UUA0KIC5CIGZlYXR1cmVzDQotLSANCjIuOC4wDQoNCg==
+> can be done with the weighted_path prioritizer, but for production use =
 
---_002_571A1D9E1000805emeaneccom_
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+> this is unsatisfactory, as neither the device name nor the SCSI address =
 
+> are persistent over reboots. Thus I wrote a new, simple prioritizer to =
 
---_002_571A1D9E1000805emeaneccom_--
+> call an external program to determine what the prio should be. I would =
+
+> like to ask if there is interest to include this (or something similar) =
+
+> upstream (see attached patch).
+> =
+
+> Remark: After I did this, I've seen the wwn regex mode in the upcoming =
+
+> 0.6 version, which would also provide a solution to the problem I =
+
+> started out with. But using this would still means one had to recreate =
+
+> multipath.conf each time one replaces a failed disk, so I still believe =
+
+> having an external upcall makes sense in some situations.
+> =
+
+> Any thoughts?
+> =
+
+Ah, the good old days.
+You do remember (of course, as you as a diligent developer would
+have had a look through the archives, right?) that we original did
+precisely that, namely using 'prio' as an external callout.
+
+The reason why we moved away from this is a deadlock:
+When all paths are down (ie the _one_ situation where you absolutely
+_need_ multipath to work) you cannot reinstate any paths, as for
+reinstating you would need to call the prio program.
+Which happens to be an external program, which would need to be
+loaded from disk.
+Which is not available.
+Say goodbye to your machine :-(
+
+So we've moved to using a shared library mechanism, which can be
+mlock()ed at boot to avoid these situations.
+
+Hence I would really _not_ use this approach.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=FCrnberg)
