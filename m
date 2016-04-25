@@ -1,13 +1,10 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: Upcall prioritizer for multipath
-Date: Mon, 25 Apr 2016 09:49:50 +0200
-Message-ID: <571DCC1E.5000908@suse.de>
-References: <571A1D9E.1000805@emea.nec.com>
+From: Peter Volkov <peter.volkov@gmail.com>
+Subject: multipath-0.5.0 still provides broken udev rules
+Date: Mon, 25 Apr 2016 13:52:10 +0300
+Message-ID: <CAE+k_g+Eh3H1EAiJ0jm7P-efGbOOwpWRtYmvXyR9qhhHtefV7g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============0150588585187805466=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <571A1D9E.1000805@emea.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,66 +17,68 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 04/22/2016 02:48 PM, Oliver Mangold wrote:
-> I'm working with JBODs and would like to access the disks inside through =
+--===============0150588585187805466==
+Content-Type: multipart/alternative; boundary=047d7b45099813834605314cf982
 
-> dm-multipath. For performance reasons I would like to use to prioritizer =
+--047d7b45099813834605314cf982
+Content-Type: text/plain; charset=UTF-8
 
-> to pin individual disks to different paths. For testing purposes this =
+Hi, guys.
 
-> can be done with the weighted_path prioritizer, but for production use =
+There is a problem: udev does not create partitions for multipath devices
+in case I use kpartx.rules provided with multipath sources. I found that
+udev always go to kpartx_end after following line of rules:
+ENV{DM_TABLE_STATE}!="LIVE", GOTO="kpartx_end"
 
-> this is unsatisfactory, as neither the device name nor the SCSI address =
+There is 8 (!!!) years old thread that discusses this problem:
+https://www.redhat.com/archives/dm-devel/2007-July/msg00095.html
 
-> are persistent over reboots. Thus I wrote a new, simple prioritizer to =
+So what is the current state? Should we fix udev rules for multipath or
+should we create better patch for dmsetup.c? Meanwhile I've copied
+multipath.rules from redhat and partitions are created as they should.
 
-> call an external program to determine what the prio should be. I would =
 
-> like to ask if there is interest to include this (or something similar) =
+With best regards,
+--
+Peter.
 
-> upstream (see attached patch).
-> =
+--047d7b45099813834605314cf982
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-> Remark: After I did this, I've seen the wwn regex mode in the upcoming =
+<div dir=3D"ltr"><div><font color=3D"#000000" face=3D"Times New Roman" size=
+=3D"3">Hi, guys.</font></div><div><font color=3D"#000000" face=3D"Times New=
+ Roman" size=3D"3"><br></font></div><div><font color=3D"#000000" face=3D"Ti=
+mes New Roman" size=3D"3">There is a problem: udev does not create partitio=
+ns for multipath devices in case I use kpartx.rules provided with multipath=
+ sources. I found that udev always go to=C2=A0</font><span style=3D"color:r=
+gb(0,0,0);font-family:&#39;Times New Roman&#39;;font-size:medium">kpartx_en=
+d after following line of rules</span><span style=3D"color:rgb(0,0,0);font-=
+family:&#39;Times New Roman&#39;;font-size:medium">:</span></div><div><font=
+ color=3D"#000000" face=3D"Times New Roman" size=3D"3"><div>ENV{DM_TABLE_ST=
+ATE}!=3D&quot;LIVE&quot;, GOTO=3D&quot;kpartx_end&quot;</div><div><br></div=
+><div>There is 8 (!!!) years old thread that discusses this problem:</div><=
+/font></div><div><font color=3D"#000000" face=3D"Times New Roman" size=3D"3=
+"><a href=3D"https://www.redhat.com/archives/dm-devel/2007-July/msg00095.ht=
+ml">https://www.redhat.com/archives/dm-devel/2007-July/msg00095.html</a><br=
+></font></div><div><font color=3D"#000000" face=3D"Times New Roman" size=3D=
+"3"><br></font></div><div><font color=3D"#000000" face=3D"Times New Roman" =
+size=3D"3">So what is the current state? Should we fix udev rules for multi=
+path or should we create better patch for dmsetup.c? Meanwhile I&#39;ve cop=
+ied multipath.rules from redhat and partitions are created as they should.<=
+/font></div><div><div class=3D"gmail_signature"><br></div><div class=3D"gma=
+il_signature"><br></div><div class=3D"gmail_signature">With best regards,<b=
+r>--<br>Peter.</div></div>
+</div>
 
-> 0.6 version, which would also provide a solution to the problem I =
+--047d7b45099813834605314cf982--
 
-> started out with. But using this would still means one had to recreate =
 
-> multipath.conf each time one replaces a failed disk, so I still believe =
+--===============0150588585187805466==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> having an external upcall makes sense in some situations.
-> =
 
-> Any thoughts?
-> =
-
-Ah, the good old days.
-You do remember (of course, as you as a diligent developer would
-have had a look through the archives, right?) that we original did
-precisely that, namely using 'prio' as an external callout.
-
-The reason why we moved away from this is a deadlock:
-When all paths are down (ie the _one_ situation where you absolutely
-_need_ multipath to work) you cannot reinstate any paths, as for
-reinstating you would need to call the prio program.
-Which happens to be an external program, which would need to be
-loaded from disk.
-Which is not available.
-Say goodbye to your machine :-(
-
-So we've moved to using a shared library mechanism, which can be
-mlock()ed at boot to avoid these situations.
-
-Hence I would really _not_ use this approach.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+--===============0150588585187805466==--
