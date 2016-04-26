@@ -1,20 +1,15 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: multipath-0.5.0 still provides broken udev rules
-Date: Tue, 26 Apr 2016 11:19:33 +0200
-Message-ID: <571F32A5.7090405@redhat.com>
-References: <CAE+k_g+Eh3H1EAiJ0jm7P-efGbOOwpWRtYmvXyR9qhhHtefV7g@mail.gmail.com>
-	<571DF852.6030604@redhat.com>
-	<CAE+k_gKQcx+QR9bfEp1Wy8BawD14L2G5O0Yw-d0=CffBHqYbrA@mail.gmail.com>
-	<571E0E7A.4050703@redhat.com>
-	<CABr-GnfxOKz8gxDju20Hx3T9Tn74Zz9FhjF1dBk8weEBJMOmLg@mail.gmail.com>
-	<20160425173838.GE26117@octiron.msp.redhat.com>
-	<571F0009.3080903@suse.de>
-	<571F295A.6060607@redhat.com> <571F2B3C.5040306@suse.de>
+From: Oliver Mangold <Oliver.Mangold@EMEA.NEC.COM>
+Subject: Re: dm-devel Digest, Vol 146, Issue 24
+Date: Tue, 26 Apr 2016 09:27:40 +0000
+Message-ID: <571F348B.4030301@emea.nec.com>
+References: <mailman.47.1461600008.1006.dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <571F2B3C.5040306@suse.de>
+In-Reply-To: <mailman.47.1461600008.1006.dm-devel@redhat.com>
+Content-Language: en-US
+Content-ID: <66E3410817AFEF4EAAB35FF3CCF21C8D@EMEA.NEC.COM>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,74 +19,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Hannes Reinecke <hare@suse.de>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 26.4.2016 10:47, Hannes Reinecke wrote:
-> On 04/26/2016 10:39 AM, Zdenek Kabelac wrote:
->> On 26.4.2016 07:43, Hannes Reinecke wrote:
->>> On 04/25/2016 07:38 PM, Benjamin Marzinski wrote:
->>>> On Mon, Apr 25, 2016 at 02:56:35PM +0200, Christophe Varoqui wrote:
->>>>>      Hi,
->>>>>      Those example udev rules are indeed unmaintained and should
->>>>> be removed not
->>>>>      to confuse distributors.
->>>>>      Distributors can't be asked to agree on a common udev
->>>>> ruleset. Ben,
->>>>>      Hannes, Xos=E9, Peter are you ok with my deleting the udev
->>>>> rules example ?
->>>>
->>>> I am personally fine with kpartx.rules being deleted. Red Hat
->>>> doesn't
->>>> package it.
->>>>
->>> Well, we do. We use kpartx to generate partitions for multipath and
->>> dmraid, so we do need this rule.
->>> Please do not delete it; if so I will only have to re-add it again
->>> in a SUSE-specific patch.
->>
->> Hi
->>
->> Can you please elaborate what is the 'specific' need of SUSE for patch?
->>
->> AFAIK there should be no need for it - all identifiers are not
->> tracked by
->> 10-dm.rules
->>
->> It has whole logic about device state built-in.
->>
->> So what exactly would you need to trace in kpartx.rules ?
->>
-> We use kpartx.rules to call 'kpartx' itself for creating the
-> partition devices on top of any multipath or dmraid devices.
->
-> If that logic has been moved into other, generic, device-mapper
-> rules please let me know.
-> But until then we need the kpartx.rules. file.
+On 25.04.2016 18:00, dm-devel-request@redhat.com wrote:
+> Date: Mon, 25 Apr 2016 09:49:50 +0200 From: Hannes Reinecke 
+> <hare@suse.de> To: dm-devel@redhat.com Subject: Re: [dm-devel] Upcall 
+> prioritizer for multipath Message-ID: <571DCC1E.5000908@suse.de> 
+> Content-Type: text/plain; charset=windows-1252
+> Ah, the good old days. You do remember (of course, as you as a 
+> diligent developer would have had a look through the archives, right?) 
+> that we original did precisely that, namely using 'prio' as an 
+> external callout. The reason why we moved away from this is a 
+> deadlock: When all paths are down (ie the _one_ situation where you 
+> absolutely _need_ multipath to work) you cannot reinstate any paths, 
+> as for reinstating you would need to call the prio program. Which 
+> happens to be an external program, which would need to be loaded from 
+> disk. Which is not available. Say goodbye to your machine :-( So we've 
+> moved to using a shared library mechanism, which can be mlock()ed at 
+> boot to avoid these situations. Hence I would really _not_ use this 
+> approach.
+Thanks for your explanation. In fact I missed that discussion from 2007 
+when searching the archive. Of course your point is valid, but it 
+doesn't apply to my use case of a storage server, where multipath isn't 
+used at all for the system disk.
 
-Ok, so it seems it is completely chaotic -
+Can't say I know the perfect solution, but as a user I still would like 
+to point out, that handling JBODs (where you don't have stable WWIDs) is 
+awkward with multipathd (as is), where everything is so static.
 
-As in RHEL/Fedora there is largely hacked  mpath udev rule file,
-which is then responsible for using partx?
-
-While in SUSE this seems to be handled by broken old unmaintained  kpartx u=
-dev =
-
-rules file (as the file is useless - wondering how could do anything useful=
- on =
-
-SUSE)
-
-AFAIK seems we miss communication between Ben with Hannes here :)
-
-As logically it seem  calling  kpartx rule calls belong to  kpartx package.
-However  kpartx upstream rule file is for  systems  from 2007 year.
-
-So I'd have assumed lots of current mpath  RHEL rule patches should be
-relocated to kpartx rules.
-
-Leaving this to you guys...
-
-Regards
-
-Zdenek
+An alternative that should be safe from the mentioned deadlock (as I 
+understand it) would be to create a prioritizer that reads the prio from 
+an udev attribute. Then the callout can be done from an udev rule. This 
+would fix my problem fine, but the disadvantage is of course, that it 
+could not be used for dynamically changing path priorities, as udev 
+won't reevaluate the rule periodically.
