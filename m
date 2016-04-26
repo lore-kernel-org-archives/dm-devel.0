@@ -1,7 +1,7 @@
 From: Seth Forshee <seth.forshee@canonical.com>
-Subject: [PATCH v4 21/21] fuse: Allow user namespace mounts
-Date: Tue, 26 Apr 2016 14:36:34 -0500
-Message-ID: <1461699396-33000-22-git-send-email-seth.forshee@canonical.com>
+Subject: [PATCH v4 20/21] fuse: Restrict allow_other to the superblock's namespace or a descendant
+Date: Tue, 26 Apr 2016 14:36:33 -0500
+Message-ID: <1461699396-33000-21-git-send-email-seth.forshee@canonical.com>
 References: <1461699396-33000-1-git-send-email-seth.forshee@canonical.com>
 Return-path: <linux-raid-owner@vger.kernel.org>
 In-Reply-To: <1461699396-33000-1-git-send-email-seth.forshee@canonical.com>
@@ -10,34 +10,50 @@ To: "Eric W. Biederman" <ebiederm@xmission.com>, Miklos Szeredi <miklos@szeredi.
 Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <mszeredi@redhat.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, cgroups@vger.kernel.org, Seth Forshee <seth.forshee@canonical.com>
 List-Id: dm-devel.ids
 
+Unprivileged users are normally restricted from mounting with the
+allow_other option by system policy, but this could be bypassed
+for a mount done with user namespace root permissions. In such
+cases allow_other should not allow users outside the userns
+to access the mount as doing so would give the unprivileged user
+the ability to manipulate processes it would otherwise be unable
+to manipulate. Restrict allow_other to apply to users in the same
+userns used at mount or a descendant of that namespace. Also
+export current_in_userns() for use by fuse when built as a
+module.
+
 Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+Acked-by: Serge Hallyn <serge.hallyn@canonical.com>
 Acked-by: Miklos Szeredi <mszeredi@redhat.com>
 ---
- fs/fuse/inode.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ fs/fuse/dir.c           | 2 +-
+ kernel/user_namespace.c | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/fs/fuse/inode.c b/fs/fuse/inode.c
-index 0a771145d853..254f1944ee98 100644
---- a/fs/fuse/inode.c
-+++ b/fs/fuse/inode.c
-@@ -1199,7 +1199,7 @@ static void fuse_kill_sb_anon(struct super_block *sb)
- static struct file_system_type fuse_fs_type = {
- 	.owner		= THIS_MODULE,
- 	.name		= "fuse",
--	.fs_flags	= FS_HAS_SUBTYPE,
-+	.fs_flags	= FS_HAS_SUBTYPE | FS_USERNS_MOUNT,
- 	.mount		= fuse_mount,
- 	.kill_sb	= fuse_kill_sb_anon,
- };
-@@ -1231,7 +1231,7 @@ static struct file_system_type fuseblk_fs_type = {
- 	.name		= "fuseblk",
- 	.mount		= fuse_mount_blk,
- 	.kill_sb	= fuse_kill_sb_blk,
--	.fs_flags	= FS_REQUIRES_DEV | FS_HAS_SUBTYPE,
-+	.fs_flags	= FS_REQUIRES_DEV | FS_HAS_SUBTYPE | FS_USERNS_MOUNT,
- };
- MODULE_ALIAS_FS("fuseblk");
+diff --git a/fs/fuse/dir.c b/fs/fuse/dir.c
+index ecba75bf6640..1a6c5af49608 100644
+--- a/fs/fuse/dir.c
++++ b/fs/fuse/dir.c
+@@ -1015,7 +1015,7 @@ int fuse_allow_current_process(struct fuse_conn *fc)
+ 	const struct cred *cred;
  
+ 	if (fc->flags & FUSE_ALLOW_OTHER)
+-		return 1;
++		return current_in_userns(fc->user_ns);
+ 
+ 	cred = current_cred();
+ 	if (uid_eq(cred->euid, fc->user_id) &&
+diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+index 68f594212759..fa2294e14b77 100644
+--- a/kernel/user_namespace.c
++++ b/kernel/user_namespace.c
+@@ -951,6 +951,7 @@ bool current_in_userns(const struct user_namespace *target_ns)
+ 	}
+ 	return false;
+ }
++EXPORT_SYMBOL(current_in_userns);
+ 
+ static inline struct user_namespace *to_user_ns(struct ns_common *ns)
+ {
 -- 
 2.7.4
 
