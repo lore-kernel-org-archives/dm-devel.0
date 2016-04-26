@@ -1,18 +1,18 @@
 From: Hannes Reinecke <hare@suse.de>
 Subject: Re: multipath-0.5.0 still provides broken udev rules
-Date: Tue, 26 Apr 2016 07:43:37 +0200
-Message-ID: <571F0009.3080903@suse.de>
+Date: Tue, 26 Apr 2016 07:53:48 +0200
+Message-ID: <571F026C.5040102@suse.de>
 References: <CAE+k_g+Eh3H1EAiJ0jm7P-efGbOOwpWRtYmvXyR9qhhHtefV7g@mail.gmail.com>
 	<571DF852.6030604@redhat.com>
 	<CAE+k_gKQcx+QR9bfEp1Wy8BawD14L2G5O0Yw-d0=CffBHqYbrA@mail.gmail.com>
 	<571E0E7A.4050703@redhat.com>
 	<CABr-GnfxOKz8gxDju20Hx3T9Tn74Zz9FhjF1dBk8weEBJMOmLg@mail.gmail.com>
-	<20160425173838.GE26117@octiron.msp.redhat.com>
+	<1986ca6b-d281-4faf-2b50-11c3dc132463@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160425173838.GE26117@octiron.msp.redhat.com>
+In-Reply-To: <1986ca6b-d281-4faf-2b50-11c3dc132463@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,36 +22,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Peter Volkov <peter.volkov@gmail.com>
 List-Id: dm-devel.ids
 
-On 04/25/2016 07:38 PM, Benjamin Marzinski wrote:
-> On Mon, Apr 25, 2016 at 02:56:35PM +0200, Christophe Varoqui wrote:
->>    Hi,
->>    Those example udev rules are indeed unmaintained and should be remove=
-d not
->>    to confuse distributors.
->>    Distributors can't be asked to agree on a common udev ruleset. Ben,
->>    Hannes, Xos=E9, Peter are you ok with my deleting the udev rules exam=
-ple ?
-> =
-
-> I am personally fine with kpartx.rules being deleted. Red Hat doesn't
-> package it.
-> =
-
-Well, we do. We use kpartx to generate partitions for multipath and
-dmraid, so we do need this rule.
-Please do not delete it; if so I will only have to re-add it again
-in a SUSE-specific patch.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+T24gMDQvMjUvMjAxNiAxMDoxNCBQTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+IE9uIDA0
+LzI1LzIwMTYgMDI6NTYgUE0sIENocmlzdG9waGUgVmFyb3F1aSB3cm90ZToKPiAKPj4gVGhvc2Ug
+ZXhhbXBsZSB1ZGV2IHJ1bGVzIGFyZSBpbmRlZWQgdW5tYWludGFpbmVkIGFuZCBzaG91bGQgYmUK
+Pj4gcmVtb3ZlZCBub3QgdG8gY29uZnVzZSBkaXN0cmlidXRvcnMuCj4+Cj4+IERpc3RyaWJ1dG9y
+cyBjYW4ndCBiZSBhc2tlZCB0byBhZ3JlZSBvbiBhIGNvbW1vbiB1ZGV2IHJ1bGVzZXQuCj4+IEJl
+biwgSGFubmVzLCBYb3PDqSwgUGV0ZXIgYXJlIHlvdSBvayB3aXRoIG15IGRlbGV0aW5nIHRoZSB1
+ZGV2IHJ1bGVzIGV4YW1wbGUgPwo+IAo+IEZpbmUgd2l0aCBtZS4KPiAKPiBCdHcsIGFyZSB0aGVz
+ZSByZWxldmFudCA/Cj4gCj4gZ2V0dWlkL3VzYl9pZApIdWg/IFdoYXQgaXMgdGhhdCBkb2luZyB0
+aGVyZT8KSXQgc2hvdWxkIHJlYWxseSBoYXZlIGJlZW4gbW92ZWQgdG8gdGhlIHVkZXYgcGFja2Fn
+ZSAuLi4KCj4ga3BhcnR4L2twYXJ0eF9pZAo+IGtwYXJ0eC9rcGFydHgucnVsZXMKU2VlIGFib3Zl
+LiBZZXMsIHRoZXkgYXJlIHJlbGV2YW50IChhdCBsZWFzdCBmb3IgdXMpCgo+IG11bHRpcGF0aC8w
+MV91ZGV2Cj4gbXVsdGlwYXRoLzAyX211bHRpcGF0aApOb3QgdXNlZCBhbnltb3JlIHdpdGggc3lz
+dGVtZC9kcmFjdXQKCj4gbXVsdGlwYXRoLzExLWRtLW1wYXRoLnJ1bGVzClllcC4gQWJzb2x1dGVs
+eSByZXF1aXJlZC4KCj4gbXVsdGlwYXRoLmNvbmYuYW5ub3RhdGVkCj4gbXVsdGlwYXRoLmNvbmYu
+ZGVmYXVsdHMKPiBtdWx0aXBhdGguY29uZi5zeW50aGV0aWMKQWN0dWFsbHksIEkgbmV2ZXIgc2F3
+IHRoZSBuZWVkIGZvciB0aG9zZS4KQ2FuIHdlIGF0IGxlYXN0IGhhdmUgdGhlbSBtZXJnZWQ/Cgo+
+IG11bHRpcGF0aGQvbXVsdGlwYXRoZC5pbml0LmRlYmlhbgo+IG11bHRpcGF0aGQvbXVsdGlwYXRo
+ZC5pbml0LnJlZGhhdAo+IG11bHRpcGF0aGQvbXVsdGlwYXRoZC5pbml0LnN1c2UKT2xkIGluaXQg
+c2NyaXB0czsgZG91YnRmdWwgdmFsdWUuCgo+IG11bHRpcGF0aGQvbXVsdGlwYXRoZC5zZXJ2aWNl
+Cj4gbXVsdGlwYXRoZC9tdWx0aXBhdGhkLnNvY2tldApzeXN0ZW1kIHNlcnZpY2UgZGVmaW5pdGlv
+bnMuIFllcywgcmVxdWlyZWQuCgo+IG11bHRpcGF0aC9tdWx0aXBhdGguaW5pdC5zdXNlCk9sZCBp
+bml0IHNjcmlwdDsgbm90IHVzZWQgYW55bW9yZS4KCj4gbXVsdGlwYXRoL211bHRpcGF0aC5ydWxl
+cwpZZXAuIHVzZWQgZm9yIHVkZXYuCgo+IG11bHRpcGF0aC10b29scy5zcGVjLmluCj4gCldlbGw7
+IGR1ZSB0byBvdXIgYnVpbGRzZXJ2aWNlIHdlIGhhdmUgdG8ga2VlcCBhIHNlcGFyYXRlIHNwZWMg
+ZmlsZQphbnl3YXkuIFNvIEFUTSB3ZSBkb24ndCB1c2UgaXQuCgpDaGVlcnMsCgpIYW5uZXMKLS0g
+CkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhh
+cmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVgg
+R21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIs
+IEouIFNtaXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAo
+QUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
+b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
