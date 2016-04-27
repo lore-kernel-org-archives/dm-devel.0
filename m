@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 28/57] libmultipath: use a shared lock to
-	co-operate with udev
-Date: Wed, 27 Apr 2016 13:10:29 +0200
-Message-ID: <1461755458-29225-29-git-send-email-hare@suse.de>
+Subject: [PATCH 52/57] libmultipath: make 'dm_addmap' static
+Date: Wed, 27 Apr 2016 13:10:53 +0200
+Message-ID: <1461755458-29225-53-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,40 +21,26 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-udev since v214 is placing a shared lock on the device node
-whenever it's processing the event. This introduces a race
-condition with multipathd, as multipathd is processing the
-event for the block device at the same time as udev is
-processing the events for the partitions.
-And a lock on the partitions will also be visible on the
-block device itself, hence multipathd won't be able to
-lock the device.
-When multipath manages to take a lock on the device,
-udev will fail, and consequently ignore this entire event.
-Which in turn might cause the system to malfunction as it
-might have been a crucial event like 'remove' or 'link down'.
-
-So we should better use LOCK_SH here; with that the flock
-call in multipathd _and_ udev will succeed and the events
-can be processed.
+dm_addmap() is only used within devmapper.c, so it can be made
+static.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/configure.c | 2 +-
+ libmultipath/devmapper.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 30c7259..ca20ba5 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -546,7 +546,7 @@ lock_multipath (struct multipath * mpp, int lock)
- 		if (!pgp->paths)
- 			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
--			if (lock && flock(pp->fd, LOCK_EX | LOCK_NB) &&
-+			if (lock && flock(pp->fd, LOCK_SH | LOCK_NB) &&
- 			    errno == EWOULDBLOCK)
- 				goto fail;
- 			else if (!lock)
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index b10f9e6..4a87bf7 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -275,7 +275,7 @@ dm_device_remove (const char *name, int needsync, int deferred_remove) {
+ 			    deferred_remove, needsync ? &cookie : NULL);
+ }
+ 
+-extern int
++static int
+ dm_addmap (int task, const char *target, struct multipath *mpp,
+ 	   char * params, int ro, uint32_t *cookie) {
+ 	int r = 0;
 -- 
 2.6.6
