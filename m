@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 30/57] multipathd: skip uninitialized devices
-	during reconfiguration
-Date: Wed, 27 Apr 2016 13:10:31 +0200
-Message-ID: <1461755458-29225-31-git-send-email-hare@suse.de>
+Subject: [PATCH 42/57] Use multipath wwid if path wwid is empty
+Date: Wed, 27 Apr 2016 13:10:43 +0200
+Message-ID: <1461755458-29225-43-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,25 +21,40 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-libudev has a separate filter setting to skip uninitialized
-devices during enumeration.
+During booting udev might not be fully initialized, causing
+it to not return any information for a path.
+The multipath map, however, would still be present.
+In these cases we should use the multipath map as the
+path wwid to avoid spurious path failures during boot.
+The situation will be corrected anyway as udev will
+be sending out the 'real' events very soon after.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/dmparser.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 2fa0907..2cf2566 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -148,6 +148,7 @@ path_discovery (vector pathvec, struct config * conf, int flag)
- 		return -ENOMEM;
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 2209b2d..c19c5d2 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -336,10 +336,16 @@ disassemble_map (vector pathvec, char * params, struct multipath * mpp)
+ 					goto out1;
  
- 	udev_enumerate_add_match_subsystem(udev_iter, "block");
-+	udev_enumerate_add_match_is_initialized(udev_iter);
- 	udev_enumerate_scan_devices(udev_iter);
+ 				strncpy(pp->dev_t, word, BLK_DEV_SIZE);
+-
++				if (strlen(mpp->wwid)) {
++					strncpy(pp->wwid, mpp->wwid, WWID_SIZE);
++				}
+ 				/* Only call this in multipath client mode */
+ 				if (!conf->daemon && store_path(pathvec, pp))
+ 					goto out1;
++			} else {
++				if (!strlen(pp->wwid) &&
++				    strlen(mpp->wwid))
++					strncpy(pp->wwid, mpp->wwid, WWID_SIZE);
+ 			}
+ 			FREE(word);
  
- 	udev_list_entry_foreach(entry,
 -- 
 2.6.6
