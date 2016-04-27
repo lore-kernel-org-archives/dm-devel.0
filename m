@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 22/57] multipath: use option '-i' when called
-	from udev
-Date: Wed, 27 Apr 2016 13:10:23 +0200
-Message-ID: <1461755458-29225-23-git-send-email-hare@suse.de>
+Subject: [PATCH 07/57] Add LIO-ORG/SUSE RBD backend hardware
+	defaults
+Date: Wed, 27 Apr 2016 13:10:08 +0200
+Message-ID: <1461755458-29225-8-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +22,38 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-multipath should be using the option '-i' to ignore the wwids
-file when called from udev. Otherwise we might run into a race
-condition with systemd and the system might not boot up correctly.
+The LIO-ORG RBD backend always supports ALUA, and should be assigned
+the correct values for multipathing.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipath/multipath.rules | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/hwtable.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
 
-diff --git a/multipath/multipath.rules b/multipath/multipath.rules
-index c8fb7e6..6b0d1cd 100644
---- a/multipath/multipath.rules
-+++ b/multipath/multipath.rules
-@@ -15,7 +15,7 @@ ENV{MPATH_SBIN_PATH}="/sbin"
- TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
- 
- ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
--	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
-+	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -i -u %k", \
- 	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="none", \
- 	ENV{SYSTEMD_READY}="0"
- 
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 4549268..e57a69a 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -1156,6 +1156,20 @@ static struct hwentry default_hw[] = {
+ 		.prio_args     = NULL,
+ 	},
+ 	{
++		.vendor	       = "(LIO-ORG|SUSE)",
++		.product       = "RBD",
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = "1 alua",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 12,
++		.checker_name  = TUR,
++		.minio         = 100,
++		.prio_name     = PRIO_ALUA,
++		.prio_args     = NULL,
++	},
++	{
+ 		.vendor	       = "DataCore",
+ 		.product       = "SANmelody",
+ 		.features      = DEFAULT_FEATURES,
 -- 
 2.6.6
