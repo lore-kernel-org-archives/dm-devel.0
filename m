@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 11/57] multipathd: fixup queueing mode in 'show
-	maps status'
-Date: Wed, 27 Apr 2016 13:10:12 +0200
-Message-ID: <1461755458-29225-12-git-send-email-hare@suse.de>
+Subject: [PATCH 37/57] Remove 'udev_sync' argument from
+	dm_simplecmd()
+Date: Wed, 27 Apr 2016 13:10:38 +0200
+Message-ID: <1461755458-29225-38-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,74 +19,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-When manually disabling queueing via 'disablequeueing map $map'
-the queueing status in 'show maps status' is not updated.
+The 'udev_sync' attribute is pointless without a cookie, so we
+can as well use the existence of the 'cookie' argument for
+the same function.
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
+Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/print.c      | 6 ++++--
- multipathd/cli_handlers.c | 4 ++--
- multipathd/main.c         | 2 +-
- 3 files changed, 7 insertions(+), 5 deletions(-)
+ libmultipath/devmapper.c | 21 ++++++++++++---------
+ 1 file changed, 12 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 76bda93..96a1680 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -174,12 +174,14 @@ snprint_queueing (char * buff, size_t len, struct multipath * mpp)
- 	else if (mpp->no_path_retry == NO_PATH_RETRY_UNDEF)
- 		return snprintf(buff, len, "-");
- 	else if (mpp->no_path_retry > 0) {
--		if (mpp->retry_tick)
-+		if (mpp->retry_tick > 0)
- 			return snprintf(buff, len, "%i sec",
- 					mpp->retry_tick);
--		else
-+		else if (mpp->retry_tick == 0)
- 			return snprintf(buff, len, "%i chk",
- 					mpp->no_path_retry);
-+		else
-+			return snprintf(buff, len, "off");
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index a96cc0e..12ccf1a 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -207,12 +207,10 @@ dm_prereq (void)
+ #define do_deferred(x) ((x) == DEFERRED_REMOVE_ON || (x) == DEFERRED_REMOVE_IN_PROGRESS)
+ 
+ static int
+-dm_simplecmd (int task, const char *name, int no_flush, int need_sync,
++dm_simplecmd (int task, const char *name, int no_flush,
+ 	      uint16_t udev_flags, int deferred_remove, uint32_t *cookie)
+ {
+ 	int r = 0;
+-	int udev_wait_flag = (need_sync && (task == DM_DEVICE_RESUME ||
+-					    task == DM_DEVICE_REMOVE));
+ 	struct dm_task *dmt;
+ 
+ 	if (!(dmt = dm_task_create (task)))
+@@ -231,7 +229,7 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync,
+ 	if (do_deferred(deferred_remove))
+ 		dm_task_deferred_remove(dmt);
+ #endif
+-	if (udev_wait_flag &&
++	if (cookie &&
+ 	    !dm_task_set_cookie(dmt, cookie,
+ 				DM_UDEV_DISABLE_LIBRARY_FALLBACK | udev_flags)) {
+ 		dm_udev_complete(*cookie);
+@@ -239,7 +237,7 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync,
  	}
- 	return 0;
+ 	r = dm_task_run (dmt);
+ 
+-	if (udev_wait_flag) {
++	if (cookie) {
+ 		if (!r)
+ 			dm_udev_complete(*cookie);
+ 		else
+@@ -254,22 +252,27 @@ extern int
+ dm_simplecmd_flush (int task, const char *name, uint16_t udev_flags) {
+ 	uint32_t cookie = 0;
+ 
+-	return dm_simplecmd(task, name, 0, 1, udev_flags, 0, &cookie);
++	if (task == DM_DEVICE_RESUME ||
++	    task == DM_DEVICE_REMOVE)
++		return dm_simplecmd(task, name, 0, udev_flags, 0, &cookie);
++	else
++		return dm_simplecmd(task, name, 0, udev_flags, 0, NULL);
  }
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 168b872..886a5fd 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -807,7 +807,7 @@ cli_disable_queueing(void *v, char **reply, int *len, void *data)
- 		return 1;
- 	}
  
--	mpp->retry_tick = 0;
-+	mpp->retry_tick = -1;
- 	dm_queue_if_no_path(mpp->alias, 0);
- 	return 0;
+ extern int
+ dm_simplecmd_noflush (int task, const char *name, int needsync, uint16_t udev_flags) {
+ 	uint32_t cookie = 0;
+ 
+-	return dm_simplecmd(task, name, 1, needsync, udev_flags, 0, &cookie);
++	return dm_simplecmd(task, name, 1, udev_flags, 0,
++			    needsync ? &cookie : NULL);
  }
-@@ -821,7 +821,7 @@ cli_disable_all_queueing(void *v, char **reply, int *len, void *data)
  
- 	condlog(2, "disable queueing (operator)");
- 	vector_foreach_slot(vecs->mpvec, mpp, i) {
--		mpp->retry_tick = 0;
-+		mpp->retry_tick = -1;
- 		dm_queue_if_no_path(mpp->alias, 0);
- 	}
- 	return 0;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 626f703..d9c0b8b 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1200,7 +1200,7 @@ retry_count_tick(vector mpvec)
- 	unsigned int i;
+ static int
+ dm_device_remove (const char *name, int needsync, int deferred_remove) {
+ 	uint32_t cookie = 0;
  
- 	vector_foreach_slot (mpvec, mpp, i) {
--		if (mpp->retry_tick) {
-+		if (mpp->retry_tick > 0) {
- 			mpp->stat_total_queueing_time++;
- 			condlog(4, "%s: Retrying.. No active path", mpp->alias);
- 			if(--mpp->retry_tick == 0) {
+-	return dm_simplecmd(DM_DEVICE_REMOVE, name, 0, needsync, 0,
+-			    deferred_remove, &cookie);
++	return dm_simplecmd(DM_DEVICE_REMOVE, name, 0, 0,
++			    deferred_remove, needsync ? &cookie : NULL);
+ }
+ 
+ extern int
 -- 
 2.6.6
