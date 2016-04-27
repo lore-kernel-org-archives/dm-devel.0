@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 06/57] Use ALUA for HP 3PAR
-Date: Wed, 27 Apr 2016 13:10:07 +0200
-Message-ID: <1461755458-29225-7-git-send-email-hare@suse.de>
+Subject: [PATCH 21/57] libmultipath: avoid double semicolon in
+	lock.h
+Date: Wed, 27 Apr 2016 13:10:22 +0200
+Message-ID: <1461755458-29225-22-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,34 +22,32 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
+The definitions for lock() already have a semicolon, resulting
+in a double semicolon when using the definitions like a normal
+statement.
+
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/hwtable.c | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
+ libmultipath/lock.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 28ee595..4549268 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -65,13 +65,13 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "3PARdata",
- 		.product       = "VV",
- 		.features      = DEFAULT_FEATURES,
--		.hwhandler     = DEFAULT_HWHANDLER,
--		.pgpolicy      = MULTIBUS,
--		.pgfailback    = FAILBACK_UNDEF,
-+		.hwhandler     = "1 alua",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.rr_weight     = RR_WEIGHT_NONE,
--		.no_path_retry = NO_PATH_RETRY_UNDEF,
--		.checker_name  = DEFAULT_CHECKER,
--		.prio_name     = DEFAULT_PRIO,
-+		.no_path_retry = 18,
-+		.checker_name  = TUR,
-+		.prio_name     = PRIO_ALUA,
- 		.prio_args     = NULL,
- 	},
- 	{
+diff --git a/libmultipath/lock.h b/libmultipath/lock.h
+index 04ef78d..97af0f4 100644
+--- a/libmultipath/lock.h
++++ b/libmultipath/lock.h
+@@ -21,11 +21,11 @@ struct mutex_lock {
+ 	a.depth--; pthread_mutex_unlock(a.mutex)
+ #define lock_cleanup_pop(a) \
+ 		fprintf(stderr, "%s:%s(%i) unlock %p depth: %d (%ld)\n", __FILE__, __FUNCTION__, __LINE__, a.mutex, a.depth, pthread_self()); \
+-	pthread_cleanup_pop(1);
++	pthread_cleanup_pop(1)
+ #else
+ #define lock(a) a.depth++; pthread_mutex_lock(a.mutex)
+ #define unlock(a) a.depth--; pthread_mutex_unlock(a.mutex)
+-#define lock_cleanup_pop(a) pthread_cleanup_pop(1);
++#define lock_cleanup_pop(a) pthread_cleanup_pop(1)
+ #endif
+ 
+ void cleanup_lock (void * data);
 -- 
 2.6.6
