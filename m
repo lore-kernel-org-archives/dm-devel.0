@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 21/57] libmultipath: avoid double semicolon in
-	lock.h
-Date: Wed, 27 Apr 2016 13:10:22 +0200
-Message-ID: <1461755458-29225-22-git-send-email-hare@suse.de>
+Subject: [PATCH 32/57] libmultipath: remove 'needsync' argument
+	from dm_simplecmd_noflush
+Date: Wed, 27 Apr 2016 13:10:33 +0200
+Message-ID: <1461755458-29225-33-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,35 +19,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-The definitions for lock() already have a semicolon, resulting
-in a double semicolon when using the definitions like a normal
-statement.
+Argument is always '1'.
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
+Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/lock.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/configure.c | 2 +-
+ libmultipath/devmapper.c | 6 +++---
+ libmultipath/devmapper.h | 2 +-
+ 3 files changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/lock.h b/libmultipath/lock.h
-index 04ef78d..97af0f4 100644
---- a/libmultipath/lock.h
-+++ b/libmultipath/lock.h
-@@ -21,11 +21,11 @@ struct mutex_lock {
- 	a.depth--; pthread_mutex_unlock(a.mutex)
- #define lock_cleanup_pop(a) \
- 		fprintf(stderr, "%s:%s(%i) unlock %p depth: %d (%ld)\n", __FILE__, __FUNCTION__, __LINE__, a.mutex, a.depth, pthread_self()); \
--	pthread_cleanup_pop(1);
-+	pthread_cleanup_pop(1)
- #else
- #define lock(a) a.depth++; pthread_mutex_lock(a.mutex)
- #define unlock(a) a.depth--; pthread_mutex_unlock(a.mutex)
--#define lock_cleanup_pop(a) pthread_cleanup_pop(1);
-+#define lock_cleanup_pop(a) pthread_cleanup_pop(1)
- #endif
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 0076485..d093cfd 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -634,7 +634,7 @@ domap (struct multipath * mpp, char * params)
+ 	case ACT_RESIZE:
+ 		r = dm_addmap_reload(mpp, params);
+ 		if (r)
+-			r = dm_simplecmd_flush(DM_DEVICE_RESUME, mpp->alias, 1, 0);
++			r = dm_simplecmd_flush(DM_DEVICE_RESUME, mpp->alias, 0);
+ 		break;
  
- void cleanup_lock (void * data);
+ 	case ACT_RENAME:
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 36c1a20..1115216 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -248,8 +248,8 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync, uint16_t
+ }
+ 
+ extern int
+-dm_simplecmd_flush (int task, const char *name, int needsync, uint16_t udev_flags) {
+-	return dm_simplecmd(task, name, 0, needsync, udev_flags, 0);
++dm_simplecmd_flush (int task, const char *name, uint16_t udev_flags) {
++	return dm_simplecmd(task, name, 0, 1, udev_flags, 0);
+ }
+ 
+ extern int
+@@ -833,7 +833,7 @@ dm_suspend_and_flush_map (const char * mapname)
+ 	if (s)
+ 		queue_if_no_path = 0;
+ 	else
+-		s = dm_simplecmd_flush(DM_DEVICE_SUSPEND, mapname, 1, 0);
++		s = dm_simplecmd_flush(DM_DEVICE_SUSPEND, mapname, 0);
+ 
+ 	if (!dm_flush_map(mapname)) {
+ 		condlog(4, "multipath map %s removed", mapname);
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index 0d27723..8dd0963 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -15,7 +15,7 @@
+ void dm_init(void);
+ int dm_prereq (void);
+ int dm_drv_version (unsigned int * version, char * str);
+-int dm_simplecmd_flush (int, const char *, int, uint16_t);
++int dm_simplecmd_flush (int, const char *, uint16_t);
+ int dm_simplecmd_noflush (int, const char *, int, uint16_t);
+ int dm_addmap_create (struct multipath *mpp, char *params);
+ int dm_addmap_reload (struct multipath *mpp, char *params);
 -- 
 2.6.6
