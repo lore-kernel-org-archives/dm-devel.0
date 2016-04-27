@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 31/57] multipathd: improve uxlsnr
-Date: Wed, 27 Apr 2016 13:10:32 +0200
-Message-ID: <1461755458-29225-32-git-send-email-hare@suse.de>
+Subject: [PATCH 36/57] libmultipath: pass in 'cookie' as argument
+	for dm_addmap()
+Date: Wed, 27 Apr 2016 13:10:37 +0200
+Message-ID: <1461755458-29225-37-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,193 +19,89 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Improve uxlsnr by adding a lock around the poll structure and
-not reallocating memory for every poll, thereby significantly
-speedup processing.
+Instead of generating the cookie internally we should be
+passing in the cookie to dm_addmap().
 
-Signed-off-by: Hannes Reinecke <hare@suse.com>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipathd/main.c   |  6 ++--
- multipathd/uxlsnr.c | 84 +++++++++++++++++++++++++++++++----------------------
- 2 files changed, 53 insertions(+), 37 deletions(-)
+ libmultipath/devmapper.c | 23 ++++++++++++++---------
+ 1 file changed, 14 insertions(+), 9 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 61b82f6..c1b94bd 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -966,8 +966,10 @@ uevqloop (void * ap)
- static void *
- uxlsnrloop (void * ap)
- {
--	if (cli_init())
-+	if (cli_init()) {
-+		condlog(1, "Failed to init uxsock listener");
- 		return NULL;
-+	}
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index e6156f7..a96cc0e 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -274,11 +274,10 @@ dm_device_remove (const char *name, int needsync, int deferred_remove) {
  
- 	set_handler_callback(LIST+PATHS, cli_list_paths);
- 	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
-@@ -1278,7 +1280,7 @@ check_path (struct vectors * vecs, struct path * pp)
- 		sysfs_attr_set_value(pp->udev, "uevent", "change",
- 				     strlen("change"));
+ extern int
+ dm_addmap (int task, const char *target, struct multipath *mpp,
+-	   char * params, int ro) {
++	   char * params, int ro, uint32_t *cookie) {
+ 	int r = 0;
+ 	struct dm_task *dmt;
+ 	char *prefixed_uuid = NULL;
+-	uint32_t cookie = 0;
+ 
+ 	if (!(dmt = dm_task_create (task)))
  		return 0;
--	} 
-+	}
+@@ -319,18 +318,18 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
+ 	dm_task_no_open_count(dmt);
  
- 	/*
- 	 * provision a next check soonest,
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index e5c5d90..77efa8a 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -44,6 +44,8 @@ struct client {
- 	int fd;
- };
+ 	if (task == DM_DEVICE_CREATE &&
+-	    !dm_task_set_cookie(dmt, &cookie,
++	    !dm_task_set_cookie(dmt, cookie,
+ 				DM_UDEV_DISABLE_LIBRARY_FALLBACK)) {
+-		dm_udev_complete(cookie);
++		dm_udev_complete(*cookie);
+ 		goto freeout;
+ 	}
+ 	r = dm_task_run (dmt);
  
-+#define MIN_POLLS 1023
+ 	if (task == DM_DEVICE_CREATE) {
+ 		if (!r)
+-			dm_udev_complete(cookie);
++			dm_udev_complete(*cookie);
+ 		else
+-			dm_udev_wait(cookie);
++			dm_udev_wait(*cookie);
+ 	}
+ 	freeout:
+ 	if (prefixed_uuid)
+@@ -345,11 +344,13 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
+ extern int
+ dm_addmap_create (struct multipath *mpp, char * params) {
+ 	int ro;
++	uint32_t cookie = 0;
+ 
+ 	for (ro = 0; ro <= 1; ro++) {
+ 		int err;
+ 
+-		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, ro))
++		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH,
++			      mpp, params, ro, &cookie))
+ 			return 1;
+ 		/*
+ 		 * DM_DEVICE_CREATE is actually DM_DEV_CREATE + DM_TABLE_LOAD.
+@@ -374,11 +375,15 @@ dm_addmap_create (struct multipath *mpp, char * params) {
+ 
+ extern int
+ dm_addmap_reload (struct multipath *mpp, char *params) {
+-	if (dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params, ADDMAP_RW))
++	uint32_t cookie = 0;
 +
- LIST_HEAD(clients);
- pthread_mutex_t client_lock = PTHREAD_MUTEX_INITIALIZER;
- struct pollfd *polls;
-@@ -133,6 +135,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 	char *inbuf;
- 	char *reply;
- 	sigset_t mask;
-+	int old_clients = MIN_POLLS;
++	if (dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params,
++		      ADDMAP_RW, &cookie))
+ 		return 1;
+ 	if (errno != EROFS)
+ 		return 0;
+-	return dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params, ADDMAP_RO);
++	return dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params,
++			 ADDMAP_RO, &cookie);
+ }
  
- 	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
- 
-@@ -142,20 +145,22 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 	}
- 
- 	if (!conf) {
--		condlog(1, "configuration changed");
-+		condlog(1, "uxsock: configuration changed");
- 		return NULL;
- 	}
- 
--	timeout = conf->uxsock_timeout;
--
- 	pthread_cleanup_push(uxsock_cleanup, NULL);
- 
--	polls = (struct pollfd *)MALLOC(0);
-+	condlog(3, "uxsock: startup listener");
-+	polls = (struct pollfd *)MALLOC(MIN_POLLS + 1);
-+	if (!polls) {
-+		condlog(0, "uxsock: failed to allocate poll fds");
-+		return NULL;
-+	}
- 	pthread_sigmask(SIG_SETMASK, NULL, &mask);
- 	sigdelset(&mask, SIGHUP);
- 	sigdelset(&mask, SIGUSR1);
- 	while (1) {
--		struct pollfd *new;
- 		struct client *c, *tmp;
- 		int i, poll_count, num_clients;
- 
-@@ -173,19 +178,25 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 		list_for_each_entry(c, &clients, node) {
- 			num_clients++;
- 		}
--		new = REALLOC(polls, (1+num_clients) * sizeof(*polls));
--		/* If we can't allocate poliing space for the new client,
--		 * close it */
--		if (!new) {
--			if (!num_clients) {
--				condlog(1, "can't listen for new clients");
--				return NULL;
-+		if (num_clients != old_clients) {
-+			struct pollfd *new;
-+			if (num_clients < MIN_POLLS) {
-+				new = REALLOC(polls, (1 + MIN_POLLS) *
-+						sizeof(struct pollfd));
-+			} else {
-+				new = REALLOC(polls, (1+num_clients) *
-+						sizeof(struct pollfd));
- 			}
--			dead_client(list_entry(clients.prev,
--					       typeof(struct client), node));
--		}
--		else
-+			if (!new) {
-+				pthread_mutex_unlock(&client_lock);
-+				condlog(0, "%s: failed to realloc %d poll fds",
-+					"uxsock", 1 + num_clients);
-+				pthread_yield();
-+				continue;
-+			}
-+			num_clients = old_clients;
- 			polls = new;
-+		}
- 		polls[0].fd = ux_sock;
- 		polls[0].events = POLLIN;
- 
-@@ -208,8 +219,8 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 			}
- 
- 			/* something went badly wrong! */
--			condlog(0, "poll");
--			pthread_exit(NULL);
-+			condlog(0, "uxsock: poll failed with %d", errno);
-+			break;
- 		}
- 
- 		if (poll_count == 0)
-@@ -230,7 +241,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 				}
- 				pthread_mutex_unlock(&client_lock);
- 				if (!c) {
--					condlog(3, "cli%d: invalid fd %d",
-+					condlog(4, "cli%d: new fd %d",
- 						i, polls[i].fd);
- 					continue;
- 				}
-@@ -238,24 +249,27 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 					start_time.tv_sec = 0;
- 				if (recv_packet(c->fd, &inbuf, timeout) != 0) {
- 					dead_client(c);
--				} else {
--					condlog(4, "Got request [%s]", inbuf);
--					uxsock_trigger(inbuf, &reply, &rlen,
--						       trigger_data);
--					if (reply) {
--						if (send_packet(c->fd,
--								reply) != 0) {
--							dead_client(c);
--						}
--						condlog(4, "Reply [%d bytes]",
--							rlen);
--						FREE(reply);
--						reply = NULL;
-+					continue;
-+				}
-+				condlog(4, "cli[%d]: Got request [%s]",
-+					i, inbuf);
-+				uxsock_trigger(inbuf, &reply, &rlen,
-+					       trigger_data);
-+				if (reply) {
-+					if (send_packet(c->fd,
-+							reply) != 0) {
-+						dead_client(c);
-+					} else {
-+						condlog(4, "cli[%d]: "
-+							"Reply [%d bytes]",
-+							i, rlen);
- 					}
--					check_timeout(start_time, inbuf,
--						      timeout);
--					FREE(inbuf);
-+					FREE(reply);
-+					reply = NULL;
- 				}
-+				check_timeout(start_time, inbuf,
-+					      timeout);
-+				FREE(inbuf);
- 			}
- 		}
- 
+ extern int
 -- 
 2.6.6
