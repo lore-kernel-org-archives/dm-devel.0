@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 47/57] libmultipath: sanity check on store_path()
-Date: Wed, 27 Apr 2016 13:10:48 +0200
-Message-ID: <1461755458-29225-48-git-send-email-hare@suse.de>
+Subject: [PATCH 19/57] multipathd: Do not print misleading
+	message 'not found in pathvec'
+Date: Wed, 27 Apr 2016 13:10:20 +0200
+Message-ID: <1461755458-29225-20-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,39 +22,35 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-If a path has neither pp->dev nor pp->dev_t set we cannot
-identify the path at all.
-So reject any path where this is not the case.
+When looking up a path in the existing configuration it is perfectly
+possible for the path not to be present.
+This should not generate a message as it might be errorneously
+interpreted as an error.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/structs.c | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
+ libmultipath/structs.c | 2 --
+ 1 file changed, 2 deletions(-)
 
 diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 39b2e05..937e4a2 100644
+index b773d1c..39b2e05 100644
 --- a/libmultipath/structs.c
 +++ b/libmultipath/structs.c
-@@ -283,6 +283,20 @@ free_multipathvec (vector mpvec, enum free_path_mode free_paths)
- int
- store_path (vector pathvec, struct path * pp)
- {
-+	int err = 0;
-+
-+	if (!strlen(pp->dev_t)) {
-+		condlog(2, "%s: Empty device number", pp->dev);
-+		err++;
-+	}
-+	if (!strlen(pp->dev)) {
-+		condlog(2, "%s: Empty device name", pp->dev_t);
-+		err++;
-+	}
-+
-+	if (err > 1)
-+		return 1;
-+
- 	if (!vector_alloc_slot(pathvec))
- 		return 1;
+@@ -404,7 +404,6 @@ find_path_by_dev (vector pathvec, char * dev)
+ 		if (!strcmp(pp->dev, dev))
+ 			return pp;
+ 
+-	condlog(3, "%s: not found in pathvec", dev);
+ 	return NULL;
+ }
+ 
+@@ -421,7 +420,6 @@ find_path_by_devt (vector pathvec, char * dev_t)
+ 		if (!strcmp(pp->dev_t, dev_t))
+ 			return pp;
+ 
+-	condlog(3, "%s: not found in pathvec", dev_t);
+ 	return NULL;
+ }
  
 -- 
 2.6.6
