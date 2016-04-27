@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 39/57] devmapper: do not flush I/O for
-	DM_DEVICE_CREATE
-Date: Wed, 27 Apr 2016 13:10:40 +0200
-Message-ID: <1461755458-29225-40-git-send-email-hare@suse.de>
+Subject: [PATCH 44/57] multipathd: Do not switch paths on empty
+	multipath tables
+Date: Wed, 27 Apr 2016 13:10:45 +0200
+Message-ID: <1461755458-29225-45-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,43 +19,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-DM_DEVICE_CREATE loads a new table, so there cannot be any
-I/O pending. Hence we should be setting the 'no flush'
-and 'skip lockfs' flag to avoid delays during creation.
+If all paths are removed from a multipath table there is no
+point in trying to switch path groups as we don't have any.
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
+Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/devmapper.c | 15 ++++++++++-----
- 1 file changed, 10 insertions(+), 5 deletions(-)
+ multipathd/main.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 15c91c9..c2ae83b 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -321,11 +321,16 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
+diff --git a/multipathd/main.c b/multipathd/main.c
+index ebb9a50..a86530f 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -126,6 +126,9 @@ need_switch_pathgroup (struct multipath * mpp, int refresh)
+ 			vector_foreach_slot (pgp->paths, pp, j)
+ 				pathinfo(pp, conf->hwtable, DI_PRIO);
  
- 	dm_task_no_open_count(dmt);
++	if (!mpp->pg || VECTOR_SIZE(mpp->paths) == 0)
++		return 0;
++
+ 	mpp->bestpg = select_path_group(mpp);
  
--	if (cookie &&
--	    !dm_task_set_cookie(dmt, cookie,
--				DM_UDEV_DISABLE_LIBRARY_FALLBACK)) {
--		dm_udev_complete(*cookie);
--		goto freeout;
-+	if (cookie) {
-+		if (!dm_task_set_cookie(dmt, cookie,
-+					DM_UDEV_DISABLE_LIBRARY_FALLBACK)) {
-+			dm_udev_complete(*cookie);
-+			goto freeout;
-+		}
-+		dm_task_skip_lockfs(dmt);
-+#ifdef LIBDM_API_FLUSH
-+		dm_task_no_flush(dmt);
-+#endif
- 	}
- 	r = dm_task_run (dmt);
- 
+ 	if (mpp->bestpg != mpp->nextpg)
 -- 
 2.6.6
