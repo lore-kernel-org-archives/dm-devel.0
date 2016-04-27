@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 50/57] multipathd: strict loop timings
-Date: Wed, 27 Apr 2016 13:10:51 +0200
-Message-ID: <1461755458-29225-51-git-send-email-hare@suse.de>
+Subject: [PATCH 56/57] multipathd: push down lock in checkerloop()
+Date: Wed, 27 Apr 2016 13:10:57 +0200
+Message-ID: <1461755458-29225-57-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,220 +21,312 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-This patch implements a new configuration value 'strict_timing',
-which causes each path checker loop to start at exactly one second
-after the last one. Longer path checker loops will be properly
-accounted, so that each path is guaranteed to be checked within
-'polling_interval' seconds.
+Instead of grabbing the lock at the start of the checkerloop
+and releasing it at the end we should be holding it only
+during the time when we actually need it.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/config.h      |  1 +
- libmultipath/dict.c        |  4 +++
- multipath/multipath.conf.5 | 14 ++++++++
- multipathd/main.c          | 79 +++++++++++++++++++++++++++++++++++++++-------
- 4 files changed, 87 insertions(+), 11 deletions(-)
+ multipathd/main.c | 136 ++++++++++++++++++++++++++++++++++--------------------
+ 1 file changed, 87 insertions(+), 49 deletions(-)
 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index e9828ea..466e31e 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -135,6 +135,7 @@ struct config {
- 	int delay_watch_checks;
- 	int delay_wait_checks;
- 	int uxsock_timeout;
-+	int strict_timing;
- 	int retrigger_tries;
- 	int retrigger_delay;
- 	int ignore_new_devs;
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 89d42a1..7f912ec 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -399,6 +399,9 @@ declare_def_snprint(retrigger_delay, print_int)
- declare_def_handler(uev_wait_timeout, set_int)
- declare_def_snprint(uev_wait_timeout, print_int)
- 
-+declare_def_handler(strict_timing, set_yes_no)
-+declare_def_snprint(strict_timing, print_yes_no)
-+
- static int
- def_config_dir_handler(vector strvec)
- {
-@@ -1365,6 +1368,7 @@ init_keywords(void)
- 	install_keyword("retain_attached_hw_handler", &def_retain_hwhandler_handler, &snprint_def_retain_hwhandler);
- 	install_keyword("detect_prio", &def_detect_prio_handler, &snprint_def_detect_prio);
- 	install_keyword("force_sync", &def_force_sync_handler, &snprint_def_force_sync);
-+	install_keyword("strict_timing", &def_strict_timing_handler, &snprint_def_strict_timing);
- 	install_keyword("deferred_remove", &def_deferred_remove_handler, &snprint_def_deferred_remove);
- 	install_keyword("partition_delimiter", &def_partition_delim_handler, &snprint_def_partition_delim);
- 	install_keyword("config_dir", &def_config_dir_handler, &snprint_def_config_dir);
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index b21279e..2ff88c4 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -498,6 +498,20 @@ used until it has passed
- checks. Default is
- .I no
- .TP
-+.B strict_timinig
-+If set to
-+.I yes
-+, multipathd will start a new path checker loop after exactly one second,
-+so that each path check will occur at exactly
-+.I polling_interval
-+seconds. On busy systems path checks might take longer than one second;
-+here the missing ticks will be accounted for on the next round.
-+A warning will be printed if path checks take longer than
-+.I polling_interval
-+seconds.
-+Default is
-+.I no
-+.TP
- .B uxsock_timeout
- CLI receive timeout in milliseconds. For larger systems CLI commands
- might timeout before the multipathd lock is released and the CLI command
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 33a3503..d8fa88f 100644
+index 41b5a49..132101f 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -1260,7 +1260,7 @@ int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
-  * Returns '1' if the path has been checked, '0' otherwise
-  */
- int
--check_path (struct vectors * vecs, struct path * pp)
-+check_path (struct vectors * vecs, struct path * pp, int ticks)
- {
- 	int newstate;
- 	int new_path_up = 0;
-@@ -1273,7 +1273,9 @@ check_path (struct vectors * vecs, struct path * pp)
- 	     pp->initialized == INIT_REQUESTED_UDEV) && !pp->mpp)
+@@ -416,7 +416,11 @@ uev_add_map (struct uevent * uev, struct vectors * vecs)
+ 			return 1;
+ 		}
+ 	}
++	pthread_cleanup_push(cleanup_lock, &vecs->lock);
++	lock(vecs->lock);
++	pthread_testcancel();
+ 	rc = ev_add_map(uev->kernel, alias, vecs);
++	lock_cleanup_pop(vecs->lock);
+ 	FREE(alias);
+ 	return rc;
+ }
+@@ -512,6 +516,10 @@ uev_remove_map (struct uevent * uev, struct vectors * vecs)
  		return 0;
+ 	}
+ 	minor = uevent_get_minor(uev);
++
++	pthread_cleanup_push(cleanup_lock, &vecs->lock);
++	lock(vecs->lock);
++	pthread_testcancel();
+ 	mpp = find_mp_by_minor(vecs->mpvec, minor);
  
--	if (pp->tick && --pp->tick)
-+	if (pp->tick)
-+		pp->tick -= (pp->tick > ticks) ? ticks : pp->tick;
-+	if (pp->tick)
- 		return 0; /* don't check this path yet */
+ 	if (!mpp) {
+@@ -528,10 +536,12 @@ uev_remove_map (struct uevent * uev, struct vectors * vecs)
+ 	orphan_paths(vecs->pathvec, mpp);
+ 	remove_map_and_stop_waiter(mpp, vecs, 1);
+ out:
++	lock_cleanup_pop(vecs->lock);
+ 	FREE(alias);
+ 	return 0;
+ }
  
- 	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV &&
-@@ -1515,6 +1517,8 @@ checkerloop (void *ap)
- 	struct path *pp;
- 	int count = 0;
- 	unsigned int i;
-+	struct itimerval timer_tick_it;
-+	struct timeval last_time;
- 
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 	vecs = (struct vectors *)ap;
-@@ -1527,23 +1531,41 @@ checkerloop (void *ap)
- 		pp->checkint = conf->checkint;
++/* Called from CLI handler */
+ int
+ ev_remove_map (char * devname, char * alias, int minor, struct vectors * vecs)
+ {
+@@ -567,6 +577,9 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
+ 		return 1;
  	}
  
-+	/* Tweak start time for initial path check */
-+	if (gettimeofday(&last_time, NULL) != 0)
-+		last_time.tv_sec = 0;
-+	else
-+		last_time.tv_sec -= 1;
++	pthread_cleanup_push(cleanup_lock, &vecs->lock);
++	lock(vecs->lock);
++	pthread_testcancel();
+ 	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
+ 	if (pp) {
+ 		int r;
+@@ -594,8 +607,10 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
+ 				ret = 1;
+ 			}
+ 		}
+-		return ret;
+ 	}
++	lock_cleanup_pop(vecs->lock);
++	if (pp)
++		return ret;
+ 
+ 	/*
+ 	 * get path vital state
+@@ -608,6 +623,9 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
+ 		condlog(3, "%s: failed to get path info", uev->kernel);
+ 		return 1;
+ 	}
++	pthread_cleanup_push(cleanup_lock, &vecs->lock);
++	lock(vecs->lock);
++	pthread_testcancel();
+ 	ret = store_path(vecs->pathvec, pp);
+ 	if (!ret) {
+ 		pp->checkint = conf->checkint;
+@@ -619,7 +637,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
+ 		free_path(pp);
+ 		ret = 1;
+ 	}
+-
++	lock_cleanup_pop(vecs->lock);
+ 	return ret;
+ }
+ 
+@@ -687,12 +705,12 @@ rescan:
+ 			 */
+ 			start_waiter = 1;
+ 		}
+-		else
++		if (!start_waiter)
+ 			goto fail; /* leave path added to pathvec */
+ 	}
+ 
+-	/* persistent reseravtion check*/
+-	mpath_pr_event_handle(pp);	
++	/* persistent reservation check*/
++	mpath_pr_event_handle(pp);
+ 
+ 	/*
+ 	 * push the map to the device-mapper
+@@ -720,7 +738,7 @@ retry:
+ 		 * deal with asynchronous uevents :((
+ 		 */
+ 		if (mpp->action == ACT_RELOAD && retries-- > 0) {
+-			condlog(0, "%s: uev_add_path sleep", mpp->alias);
++			condlog(0, "%s: ev_add_path sleep", mpp->alias);
+ 			sleep(1);
+ 			update_mpp_paths(mpp, vecs->pathvec);
+ 			goto rescan;
+@@ -749,8 +767,7 @@ retry:
+ 		condlog(2, "%s [%s]: path added to devmap %s",
+ 			pp->dev, pp->dev_t, mpp->alias);
+ 		return 0;
+-	}
+-	else
++	} else
+ 		goto fail;
+ 
+ fail_map:
+@@ -764,17 +781,22 @@ static int
+ uev_remove_path (struct uevent *uev, struct vectors * vecs)
+ {
+ 	struct path *pp;
++	int ret;
+ 
+ 	condlog(2, "%s: remove path (uevent)", uev->kernel);
++	pthread_cleanup_push(cleanup_lock, &vecs->lock);
++	lock(vecs->lock);
++	pthread_testcancel();
+ 	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
+-
++	if (pp)
++		ret = ev_remove_path(pp, vecs);
++	lock_cleanup_pop(vecs->lock);
+ 	if (!pp) {
+ 		/* Not an error; path might have been purged earlier */
+ 		condlog(0, "%s: path already removed", uev->kernel);
+ 		return 0;
+ 	}
+-
+-	return ev_remove_path(pp, vecs);
++	return ret;
+ }
+ 
+ int
+@@ -877,35 +899,50 @@ static int
+ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ {
+ 	int ro, retval = 0;
+-	struct path * pp;
+-
+-	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
+-	if (!pp) {
+-		condlog(0, "%s: spurious uevent, path not found",
+-			uev->kernel);
+-		return 1;
+-	}
+-
+-	if (pp->initialized == INIT_REQUESTED_UDEV)
+-		return uev_add_path(uev, vecs);
+ 
+ 	ro = uevent_get_disk_ro(uev);
+ 
+ 	if (ro >= 0) {
++		struct path * pp;
++		struct multipath *mpp = NULL;
 +
- 	while (1) {
- 		struct timeval diff_time, start_time, end_time;
--		int num_paths = 0;
-+		int num_paths = 0, ticks = 0, signo, strict_timing;
-+		sigset_t mask;
+ 		condlog(2, "%s: update path write_protect to '%d' (uevent)",
+ 			uev->kernel, ro);
+-		if (pp->mpp) {
+-			if (pp->mpp->wait_for_udev) {
+-				pp->mpp->wait_for_udev = 2;
+-				return 0;
++		pthread_cleanup_push(cleanup_lock, &vecs->lock);
++		lock(vecs->lock);
++		pthread_testcancel();
++		/*
++		 * pthread_mutex_lock() and pthread_mutex_unlock()
++		 * need to be at the same indentation level, hence
++		 * this slightly convoluted codepath.
++		 */
++		pp = find_path_by_dev(vecs->pathvec, uev->kernel);
++		if (pp) {
++			if (pp->initialized == INIT_REQUESTED_UDEV) {
++				retval = 2;
++			} else {
++				mpp = pp->mpp;
++				if (mpp && mpp->wait_for_udev) {
++					mpp->wait_for_udev = 2;
++					mpp = NULL;
++					retval = 0;
++				}
+ 			}
++			if (mpp) {
++				retval = reload_map(vecs, mpp, 0);
+ 
+-			retval = reload_map(vecs, pp->mpp, 0);
+-
+-			condlog(2, "%s: map %s reloaded (retval %d)",
+-				uev->kernel, pp->mpp->alias, retval);
++				condlog(2, "%s: map %s reloaded (retval %d)",
++					uev->kernel, mpp->alias, retval);
++			}
+ 		}
+-
++		lock_cleanup_pop(vecs->lock);
++		if (!pp) {
++			condlog(0, "%s: spurious uevent, path not found",
++				uev->kernel);
++			return 1;
++		}
++		if (retval == 2)
++			return uev_add_path(uev, vecs);
+ 	}
+ 
+ 	return retval;
+@@ -1002,10 +1039,6 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 	if (running_state == DAEMON_SHUTDOWN)
+ 		return 0;
+ 
+-	pthread_cleanup_push(cleanup_lock, &vecs->lock);
+-	lock(vecs->lock);
+-	pthread_testcancel();
+-
+ 	/*
+ 	 * device map event
+ 	 * Add events are ignored here as the tables
+@@ -1044,7 +1077,6 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 	}
+ 
+ out:
+-	lock_cleanup_pop(vecs->lock);
+ 	return r;
+ }
+ 
+@@ -1627,17 +1659,6 @@ checkerloop (void *ap)
  
  		if (gettimeofday(&start_time, NULL) != 0)
  			start_time.tv_sec = 0;
- 		pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 		lock(vecs->lock);
- 		pthread_testcancel();
--		condlog(4, "tick");
-+		strict_timing = conf->strict_timing;
-+		if (start_time.tv_sec && last_time.tv_sec) {
-+			timersub(&start_time, &last_time, &diff_time);
-+			condlog(4, "tick (%lu.%06lu secs)",
-+				diff_time.tv_sec, diff_time.tv_usec);
-+			last_time.tv_sec = start_time.tv_sec;
-+			last_time.tv_usec = start_time.tv_usec;
-+			ticks = diff_time.tv_sec;
-+		} else {
-+			ticks = 1;
-+			condlog(4, "tick (%d ticks)", ticks);
-+		}
- #ifdef USE_SYSTEMD
+-
+-		rc = set_config_state(DAEMON_RUNNING);
+-		if (rc == ETIMEDOUT) {
+-			condlog(4, "timeout waiting for DAEMON_IDLE");
+-			continue;
+-		}
+-
+-		pthread_cleanup_push(cleanup_lock, &vecs->lock);
+-		lock(vecs->lock);
+-		pthread_testcancel();
+-		strict_timing = conf->strict_timing;
+ 		if (start_time.tv_sec && last_time.tv_sec) {
+ 			timersub(&start_time, &last_time, &diff_time);
+ 			condlog(4, "tick (%lu.%06lu secs)",
+@@ -1653,28 +1674,45 @@ checkerloop (void *ap)
  		if (use_watchdog)
  			sd_notify(0, "WATCHDOG=1");
  #endif
++		rc = set_config_state(DAEMON_RUNNING);
++		if (rc == ETIMEDOUT) {
++			condlog(4, "timeout waiting for DAEMON_IDLE");
++			continue;
++		}
++		strict_timing = conf->strict_timing;
  		if (vecs->pathvec) {
++			pthread_cleanup_push(cleanup_lock, &vecs->lock);
++			lock(vecs->lock);
++			pthread_testcancel();
  			vector_foreach_slot (vecs->pathvec, pp, i) {
--				num_paths += check_path(vecs, pp);
-+				num_paths += check_path(vecs, pp, ticks);
+ 				num_paths += check_path(vecs, pp, ticks);
  			}
++			lock_cleanup_pop(vecs->lock);
  		}
  		if (vecs->mpvec) {
-@@ -1560,15 +1582,49 @@ checkerloop (void *ap)
++			pthread_cleanup_push(cleanup_lock, &vecs->lock);
++			lock(vecs->lock);
++			pthread_testcancel();
+ 			defered_failback_tick(vecs->mpvec);
+ 			retry_count_tick(vecs->mpvec);
+ 			missing_uev_wait_tick(vecs);
++			lock_cleanup_pop(vecs->lock);
+ 		}
+ 		if (count)
+ 			count--;
+ 		else {
++			pthread_cleanup_push(cleanup_lock, &vecs->lock);
++			lock(vecs->lock);
++			pthread_testcancel();
+ 			condlog(4, "map garbage collection");
+ 			mpvec_garbage_collector(vecs);
+ 			count = MAPGCINT;
++			lock_cleanup_pop(vecs->lock);
  		}
  
- 		lock_cleanup_pop(vecs->lock);
-+		diff_time.tv_usec = 0;
+-		lock_cleanup_pop(vecs->lock);
+ 		diff_time.tv_usec = 0;
  		if (start_time.tv_sec &&
--		    gettimeofday(&end_time, NULL) == 0 &&
--		    num_paths) {
-+		    gettimeofday(&end_time, NULL)) {
+-		    gettimeofday(&end_time, NULL)) {
++		    gettimeofday(&end_time, NULL) == 0) {
  			timersub(&end_time, &start_time, &diff_time);
--			condlog(3, "checked %d path%s in %lu.%06lu secs",
--				num_paths, num_paths > 1 ? "s" : "",
--				diff_time.tv_sec, diff_time.tv_usec);
-+			if (num_paths) {
-+				condlog(3, "checked %d path%s in %lu.%06lu secs",
-+					num_paths, num_paths > 1 ? "s" : "",
-+					diff_time.tv_sec, diff_time.tv_usec);
-+				if (diff_time.tv_sec > conf->max_checkint)
-+					condlog(1, "path checkers took longer "
-+						"than %lu seconds, consider "
-+						"increasing max_polling_interval",
-+						diff_time.tv_sec);
-+			}
-+		}
-+
-+		if (!strict_timing)
-+			sleep(1);
-+		else {
-+			timer_tick_it.it_interval.tv_sec = 0;
-+			timer_tick_it.it_interval.tv_usec = 0;
-+			if (diff_time.tv_usec) {
-+				timer_tick_it.it_value.tv_sec = 0;
-+				timer_tick_it.it_value.tv_usec =
-+					(unsigned long)1000000 - diff_time.tv_usec;
-+			} else {
-+				timer_tick_it.it_value.tv_sec = 1;
-+				timer_tick_it.it_value.tv_usec = 0;
-+			}
-+			setitimer(ITIMER_REAL, &timer_tick_it, NULL);
-+
-+			sigemptyset(&mask);
-+			sigaddset(&mask, SIGALRM);
-+			condlog(3, "waiting for %lu.%06lu secs",
-+				timer_tick_it.it_value.tv_sec,
-+				timer_tick_it.it_value.tv_usec);
-+			if (sigwait(&mask, &signo) != 0) {
-+				condlog(3, "sigwait failed with error %d",
-+					errno);
-+				conf->strict_timing = 0;
-+				break;
-+			}
- 		}
--		sleep(1);
- 	}
- 	return NULL;
- }
-@@ -1819,6 +1875,7 @@ signal_init(void)
- 	sigaddset(&set, SIGHUP);
- 	sigaddset(&set, SIGUSR1);
- 	sigaddset(&set, SIGUSR2);
-+	sigaddset(&set, SIGALRM);
- 	pthread_sigmask(SIG_BLOCK, &set, NULL);
- 
- 	signal_set(SIGHUP, sighup);
+ 			if (num_paths) {
+ 				condlog(3, "checked %d path%s in %lu.%06lu secs",
 -- 
 2.6.6
