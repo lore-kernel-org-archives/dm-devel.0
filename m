@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 13/57] multipathd: print error message for
-	invalid arguments
-Date: Wed, 27 Apr 2016 13:10:14 +0200
-Message-ID: <1461755458-29225-14-git-send-email-hare@suse.de>
+Subject: [PATCH 46/57] libmultipath: ensure 'dev_t' is set when
+	store paths
+Date: Wed, 27 Apr 2016 13:10:47 +0200
+Message-ID: <1461755458-29225-47-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,28 +19,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- multipathd/main.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+We need both, 'pp->dev' and 'pp->dev_t' for correct lookup to
+work. So ensure dev_t is always being updated when storing a new path.
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 18b225a..59f0c68 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2234,7 +2234,9 @@ main (int argc, char *argv[])
- 			conf->ignore_new_devs = 1;
- 			break;
- 		default:
--			;
-+			fprintf(stderr, "Invalid argument '-%c'\n",
-+				optopt);
-+			exit(1);
- 		}
- 	}
- 	if (optind < argc) {
+Signed-off-by: Hannes Reinecke <hare@suse.com>
+---
+ libmultipath/discovery.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 2cf2566..db82b00 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1599,6 +1599,16 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ 	condlog(3, "%s: mask = 0x%x", pp->dev, mask);
+ 
+ 	/*
++	 * Sanity check: we need the device number to
++	 * avoid inconsistent information in
++	 * find_path_by_dev()/find_path_by_devt()
++	 */
++	if (!strlen(pp->dev_t) && !(mask & DI_SYSFS)) {
++		condlog(1, "%s: empty device number", pp->dev);
++		mask |= DI_SYSFS;
++	}
++
++	/*
+ 	 * fetch info available in sysfs
+ 	 */
+ 	if (mask & DI_SYSFS && sysfs_pathinfo(pp))
 -- 
 2.6.6
