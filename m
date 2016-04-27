@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 09/57] libmultipath: Do not use 'sscanf' for
-	parsing integers
-Date: Wed, 27 Apr 2016 13:10:10 +0200
-Message-ID: <1461755458-29225-10-git-send-email-hare@suse.de>
+Subject: [PATCH 04/57] kpartx: Install rules file with correct
+	prefix
+Date: Wed, 27 Apr 2016 13:10:05 +0200
+Message-ID: <1461755458-29225-5-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,77 +22,37 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-'sscanf' doesn't really have a way of signalling errors,
-so strtoul(l) should be used instead.
+We don't need to swizzle names in the spec file, the Makefile
+should be doing it on itself.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c | 21 +++++++++++++--------
- 1 file changed, 13 insertions(+), 8 deletions(-)
+ kpartx/Makefile | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 446c91e..324e217 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -6,6 +6,7 @@
- #include <stdio.h>
- #include <ctype.h>
- #include <unistd.h>
-+#include <limits.h>
- #include <fcntl.h>
- #include <sys/ioctl.h>
- #include <sys/stat.h>
-@@ -237,8 +238,8 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
- 	const char *attr = NULL;
- 	const char *subsys;
- 	struct udev_device *parent;
--	int r;
--	unsigned int t;
-+	char *eptr;
-+	unsigned long t;
+diff --git a/kpartx/Makefile b/kpartx/Makefile
+index 4ba38ba..501b277 100644
+--- a/kpartx/Makefile
++++ b/kpartx/Makefile
+@@ -28,8 +28,8 @@ install: $(EXEC) $(EXEC).8
+ 	$(INSTALL_PROGRAM) -m 755 $(EXEC) $(DESTDIR)$(bindir)
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(libudevdir)
+ 	$(INSTALL_PROGRAM) -m 755 kpartx_id $(DESTDIR)$(libudevdir)
+-	$(INSTALL_PROGRAM) -d $(DESTDIR)/etc/udev/rules.d
+-	$(INSTALL_PROGRAM) -m 644 kpartx.rules $(DESTDIR)/etc/udev/rules.d/
++	$(INSTALL_PROGRAM) -d $(DESTDIR)$(libudevdir)/rules.d
++	$(INSTALL_PROGRAM) -m 644 kpartx.rules $(DESTDIR)$(libudevdir)/rules.d/66-kpartx.rules
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(mandir)
+ 	$(INSTALL_PROGRAM) -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
  
- 	if (!pp->udev || pp->bus != SYSFS_BUS_SCSI)
- 		return -ENOSYS;
-@@ -256,14 +257,17 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
- 		return -ENXIO;
- 	}
+@@ -37,6 +37,8 @@ uninstall:
+ 	rm -f $(DESTDIR)$(bindir)/$(EXEC)
+ 	rm -f $(DESTDIR)$(mandir)/$(EXEC).8.gz
+ 	rm -f $(DESTDIR)$(libudevdir)/kpartx_id
++	rm -f $(DESTDIR)$(libudevdir)/rules.d/66-kpartx.rules
++	rm -f $(DESTDIR)$(libudevdir)/rules.d/67-kpartx-compat.rules
  
--	r = sscanf(attr, "%u\n", &t);
--
--	if (r != 1) {
-+	t = strtoul(attr, &eptr, 0);
-+	if (attr == eptr || t == ULONG_MAX) {
- 		condlog(3, "%s: Cannot parse timeout attribute '%s'",
- 			pp->dev, attr);
- 		return -EINVAL;
- 	}
--
-+	if (t > UINT_MAX) {
-+		condlog(3, "%s: Overflow in timeout value '%s'",
-+			pp->dev, attr);
-+		return -ERANGE;
-+	}
- 	*timeout = t;
- 
- 	return 0;
-@@ -482,7 +486,7 @@ static void
- sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- {
- 	struct udev_device *rport_dev = NULL;
--	char value[16];
-+	char value[16], *eptr;
- 	char rport_id[32];
- 	unsigned long long tmo = 0;
- 	int ret;
-@@ -522,7 +526,8 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 				"error %d", rport_id, -ret);
- 			goto out;
- 		}
--		if (sscanf(value, "%llu\n", &tmo) != 1) {
-+		tmo = strtoull(value, &eptr, 0);
-+		if (value == eptr || tmo == ULLONG_MAX) {
- 			condlog(0, "%s: Cannot parse dev_loss_tmo "
- 				"attribute '%s'", rport_id, value);
- 			goto out;
+ clean:
+ 	rm -f core *.o $(EXEC) *.gz
 -- 
 2.6.6
