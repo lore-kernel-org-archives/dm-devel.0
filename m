@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 04/57] kpartx: Install rules file with correct
-	prefix
-Date: Wed, 27 Apr 2016 13:10:05 +0200
-Message-ID: <1461755458-29225-5-git-send-email-hare@suse.de>
+Subject: [PATCH 16/57] libmultipath: call get_uid() for all paths
+Date: Wed, 27 Apr 2016 13:10:17 +0200
+Message-ID: <1461755458-29225-17-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,37 +21,64 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-We don't need to swizzle names in the spec file, the Makefile
-should be doing it on itself.
+When we're reading the device UID off uevents we don't have to
+check the path state as we're not actually doing I/O.
+So pass in the path_state to get_uid() and evaluate it only
+if ->getuid is selected.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- kpartx/Makefile | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ libmultipath/discovery.c | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
 
-diff --git a/kpartx/Makefile b/kpartx/Makefile
-index 4ba38ba..501b277 100644
---- a/kpartx/Makefile
-+++ b/kpartx/Makefile
-@@ -28,8 +28,8 @@ install: $(EXEC) $(EXEC).8
- 	$(INSTALL_PROGRAM) -m 755 $(EXEC) $(DESTDIR)$(bindir)
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(libudevdir)
- 	$(INSTALL_PROGRAM) -m 755 kpartx_id $(DESTDIR)$(libudevdir)
--	$(INSTALL_PROGRAM) -d $(DESTDIR)/etc/udev/rules.d
--	$(INSTALL_PROGRAM) -m 644 kpartx.rules $(DESTDIR)/etc/udev/rules.d/
-+	$(INSTALL_PROGRAM) -d $(DESTDIR)$(libudevdir)/rules.d
-+	$(INSTALL_PROGRAM) -m 644 kpartx.rules $(DESTDIR)$(libudevdir)/rules.d/66-kpartx.rules
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(mandir)
- 	$(INSTALL_PROGRAM) -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 83cc4f7..2fa0907 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1513,7 +1513,7 @@ get_vpd_uid(struct path * pp)
+ }
  
-@@ -37,6 +37,8 @@ uninstall:
- 	rm -f $(DESTDIR)$(bindir)/$(EXEC)
- 	rm -f $(DESTDIR)$(mandir)/$(EXEC).8.gz
- 	rm -f $(DESTDIR)$(libudevdir)/kpartx_id
-+	rm -f $(DESTDIR)$(libudevdir)/rules.d/66-kpartx.rules
-+	rm -f $(DESTDIR)$(libudevdir)/rules.d/67-kpartx-compat.rules
+ static int
+-get_uid (struct path * pp)
++get_uid (struct path * pp, int path_state)
+ {
+ 	char *c;
+ 	const char *origin = "unknown";
+@@ -1533,13 +1533,14 @@ get_uid (struct path * pp)
  
- clean:
- 	rm -f core *.o $(EXEC) *.gz
+ 		/* Use 'getuid' callout, deprecated */
+ 		condlog(1, "%s: using deprecated getuid callout", pp->dev);
+-		if (apply_format(pp->getuid, &buff[0], pp)) {
++		if (path_state != PATH_UP) {
++			condlog(3, "%s: path inaccessible", pp->dev);
++			len = -EWOULDBLOCK;
++		} else if (apply_format(pp->getuid, &buff[0], pp)) {
+ 			condlog(0, "error formatting uid callout command");
+-			memset(pp->wwid, 0, WWID_SIZE);
+ 			len = -EINVAL;
+ 		} else if (execute_program(buff, pp->wwid, WWID_SIZE)) {
+ 			condlog(3, "error calling out %s", buff);
+-			memset(pp->wwid, 0, WWID_SIZE);
+ 			len = -EIO;
+ 		} else
+ 			len = strlen(pp->wwid);
+@@ -1559,7 +1560,7 @@ get_uid (struct path * pp)
+ 			len = get_vpd_uid(pp);
+ 			origin = "sysfs";
+ 			pp->uid_attribute = NULL;
+-			if (len < 0) {
++			if (len < 0 && path_state == PATH_UP) {
+ 				condlog(1, "%s: failed to get sysfs uid: %s",
+ 					pp->dev, strerror(-len));
+ 				len = get_vpd_sgio(pp->fd, 0x83, pp->wwid,
+@@ -1659,7 +1660,7 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ 	}
+ 
+ 	if ((mask & DI_WWID) && !strlen(pp->wwid)) {
+-		get_uid(pp);
++		get_uid(pp, path_state);
+ 		if (!strlen(pp->wwid)) {
+ 			pp->initialized = INIT_MISSING_UDEV;
+ 			pp->tick = conf->retrigger_delay;
 -- 
 2.6.6
