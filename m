@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 32/57] libmultipath: remove 'needsync' argument
-	from dm_simplecmd_noflush
-Date: Wed, 27 Apr 2016 13:10:33 +0200
-Message-ID: <1461755458-29225-33-git-send-email-hare@suse.de>
+Subject: [PATCH 43/57] multipathd: set uxsock_timeout after
+	reconfiguration
+Date: Wed, 27 Apr 2016 13:10:44 +0200
+Message-ID: <1461755458-29225-44-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,64 +22,104 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Argument is always '1'.
+We should be setting the global variable 'uxsock_timeout' after
+reconfiguration, not from within the uxsock_listen() function.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/configure.c | 2 +-
- libmultipath/devmapper.c | 6 +++---
- libmultipath/devmapper.h | 2 +-
- 3 files changed, 5 insertions(+), 5 deletions(-)
+ multipathd/main.c   |  5 +++++
+ multipathd/main.h   |  1 +
+ multipathd/uxlsnr.c | 15 ++++-----------
+ 3 files changed, 10 insertions(+), 11 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 0076485..d093cfd 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -634,7 +634,7 @@ domap (struct multipath * mpp, char * params)
- 	case ACT_RESIZE:
- 		r = dm_addmap_reload(mpp, params);
- 		if (r)
--			r = dm_simplecmd_flush(DM_DEVICE_RESUME, mpp->alias, 1, 0);
-+			r = dm_simplecmd_flush(DM_DEVICE_RESUME, mpp->alias, 0);
- 		break;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index c56672a..ebb9a50 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -34,6 +34,8 @@
+ static int use_watchdog;
+ #endif
  
- 	case ACT_RENAME:
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 36c1a20..1115216 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -248,8 +248,8 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync, uint16_t
- }
++int uxsock_timeout;
++
+ /*
+  * libmultipath
+  */
+@@ -1700,6 +1702,7 @@ reconfigure (struct vectors * vecs)
+ 	} else {
+ 		conf = old;
+ 	}
++	uxsock_timeout = conf->uxsock_timeout;
  
- extern int
--dm_simplecmd_flush (int task, const char *name, int needsync, uint16_t udev_flags) {
--	return dm_simplecmd(task, name, 0, needsync, udev_flags, 0);
-+dm_simplecmd_flush (int task, const char *name, uint16_t udev_flags) {
-+	return dm_simplecmd(task, name, 0, 1, udev_flags, 0);
- }
+ 	running_state = DAEMON_RUNNING;
  
- extern int
-@@ -833,7 +833,7 @@ dm_suspend_and_flush_map (const char * mapname)
- 	if (s)
- 		queue_if_no_path = 0;
- 	else
--		s = dm_simplecmd_flush(DM_DEVICE_SUSPEND, mapname, 1, 0);
-+		s = dm_simplecmd_flush(DM_DEVICE_SUSPEND, mapname, 0);
+@@ -1933,6 +1936,8 @@ child (void * param)
+ 	if (load_config(DEFAULT_CONFIGFILE, udev))
+ 		goto failed;
  
- 	if (!dm_flush_map(mapname)) {
- 		condlog(4, "multipath map %s removed", mapname);
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index 0d27723..8dd0963 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -15,7 +15,7 @@
- void dm_init(void);
- int dm_prereq (void);
- int dm_drv_version (unsigned int * version, char * str);
--int dm_simplecmd_flush (int, const char *, int, uint16_t);
-+int dm_simplecmd_flush (int, const char *, uint16_t);
- int dm_simplecmd_noflush (int, const char *, int, uint16_t);
- int dm_addmap_create (struct multipath *mpp, char *params);
- int dm_addmap_reload (struct multipath *mpp, char *params);
++	uxsock_timeout = conf->uxsock_timeout;
++
+ 	dm_drv_version(conf->version, TGT_MPATH);
+ 	if (init_checkers()) {
+ 		condlog(0, "failed to initialize checkers");
+diff --git a/multipathd/main.h b/multipathd/main.h
+index 2f706d2..d1a6d71 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -15,6 +15,7 @@ struct prout_param_descriptor;
+ struct prin_resp;
+ 
+ extern pid_t daemon_pid;
++extern int uxsock_timeout;
+ 
+ void exit_daemon(void);
+ const char * daemon_status(void);
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 77efa8a..9912e00 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -131,7 +131,7 @@ void uxsock_cleanup(void *arg)
+ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ {
+ 	int ux_sock;
+-	int rlen, timeout;
++	int rlen;
+ 	char *inbuf;
+ 	char *reply;
+ 	sigset_t mask;
+@@ -164,14 +164,6 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 		struct client *c, *tmp;
+ 		int i, poll_count, num_clients;
+ 
+-		/*
+-		 * Store configuration timeout;
+-		 * configuration might change during
+-		 * the call to 'reconfigure'.
+-		 */
+-		if (conf)
+-			timeout = conf->uxsock_timeout;
+-
+ 		/* setup for a poll */
+ 		pthread_mutex_lock(&client_lock);
+ 		num_clients = 0;
+@@ -247,7 +239,8 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 				}
+ 				if (gettimeofday(&start_time, NULL) != 0)
+ 					start_time.tv_sec = 0;
+-				if (recv_packet(c->fd, &inbuf, timeout) != 0) {
++				if (recv_packet(c->fd, &inbuf,
++						uxsock_timeout) != 0) {
+ 					dead_client(c);
+ 					continue;
+ 				}
+@@ -268,7 +261,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 					reply = NULL;
+ 				}
+ 				check_timeout(start_time, inbuf,
+-					      timeout);
++					      uxsock_timeout);
+ 				FREE(inbuf);
+ 			}
+ 		}
 -- 
 2.6.6
