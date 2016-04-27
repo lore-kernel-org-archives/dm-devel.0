@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 27/57] Ensure multipathd is started before
-	systemd-udev-trigger.service
-Date: Wed, 27 Apr 2016 13:10:28 +0200
-Message-ID: <1461755458-29225-28-git-send-email-hare@suse.de>
+Subject: [PATCH 22/57] multipath: use option '-i' when called
+	from udev
+Date: Wed, 27 Apr 2016 13:10:23 +0200
+Message-ID: <1461755458-29225-23-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,26 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-We should be starting multipathd before systemd-udev-trigger
-is started to reduce the load on udev during startup.
+multipath should be using the option '-i' to ignore the wwids
+file when called from udev. Otherwise we might run into a race
+condition with systemd and the system might not boot up correctly.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipathd/multipathd.service | 2 +-
+ multipath/multipath.rules | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-index b2afd90..e3d6f91 100644
---- a/multipathd/multipathd.service
-+++ b/multipathd/multipathd.service
-@@ -1,7 +1,7 @@
- [Unit]
- Description=Device-Mapper Multipath Device Controller
- Before=iscsi.service iscsid.service lvm2-activation-early.service
--Before=local-fs-pre.target
-+Before=local-fs-pre.target systemd-udev-trigger.service
- After=multipathd.socket systemd-udevd.service
- DefaultDependencies=no
- Wants=local-fs-pre.target multipathd.socket blk-availability.service
+diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+index c8fb7e6..6b0d1cd 100644
+--- a/multipath/multipath.rules
++++ b/multipath/multipath.rules
+@@ -15,7 +15,7 @@ ENV{MPATH_SBIN_PATH}="/sbin"
+ TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
+ 
+ ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
+-	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
++	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -i -u %k", \
+ 	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="none", \
+ 	ENV{SYSTEMD_READY}="0"
+ 
 -- 
 2.6.6
