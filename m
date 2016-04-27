@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 41/57] multipathd: accept zero-size paths in
-	ev_add_path()
-Date: Wed, 27 Apr 2016 13:10:42 +0200
-Message-ID: <1461755458-29225-42-git-send-email-hare@suse.de>
+Subject: [PATCH 12/57] multipathd: fixup a crash when invoking
+	CLI commands
+Date: Wed, 27 Apr 2016 13:10:13 +0200
+Message-ID: <1461755458-29225-13-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,28 +22,24 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Paths in ALUA 'standby' state are not required to support
-READ CAPACITY, and hence might report a size of '0'. However,
-they are valid devices and should be added to the existing
-topology.
+The command buffer wasn't cleared, so the CLI might crash on startup.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipathd/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/main.c | 1 +
+ 1 file changed, 1 insertion(+)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index c1b94bd..c56672a 100644
+index d9c0b8b..18b225a 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -560,7 +560,7 @@ ev_add_path (struct path * pp, struct vectors * vecs)
- 	pp->mpp = mpp;
- rescan:
- 	if (mpp) {
--		if (mpp->size != pp->size) {
-+		if (pp->size && mpp->size != pp->size) {
- 			condlog(0, "%s: failed to add new path %s, "
- 				"device size mismatch",
- 				mpp->alias, pp->dev);
+@@ -2244,6 +2244,7 @@ main (int argc, char *argv[])
+ 
+ 		if (load_config(DEFAULT_CONFIGFILE, udev_new()))
+ 			exit(1);
++		memset(cmd, 0x0, CMDSIZE);
+ 		while (optind < argc) {
+ 			if (strchr(argv[optind], ' '))
+ 				c += snprintf(c, s + CMDSIZE - c, "\"%s\" ", argv[optind]);
 -- 
 2.6.6
