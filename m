@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 29/57] Only filter for udev property if
-	uid_attribute is present
-Date: Wed, 27 Apr 2016 13:10:30 +0200
-Message-ID: <1461755458-29225-30-git-send-email-hare@suse.de>
+Subject: [PATCH 34/57] Always set DM_UDEV_DISABLE_LIBRARY_FALLBACK
+Date: Wed, 27 Apr 2016 13:10:35 +0200
+Message-ID: <1461755458-29225-35-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,48 +21,49 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-It only makes sense to filter for an existing udev property if the
-'uid_attribute' variable is set. Otherwise multipath did not
-get the uid from udev and so we might not even have udev information.
+The 'DM_UDEV_DISABLE_LIBRARY_FALLBACK' should be set always,
+as with modern installations udev is responsible for maintaining
+the '/dev/mapper' directory.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/configure.c | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+ libmultipath/devmapper.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index ca20ba5..0076485 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -967,7 +967,8 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
- 				return ret;
- 			}
- 		}
--		if (pp->udev && filter_property(conf, pp->udev) > 0)
-+		if (pp->udev && pp->uid_attribute &&
-+		    filter_property(conf, pp->udev) > 0)
- 			return 2;
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index c7d4b49..2fedf51 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -230,7 +230,9 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync, uint16_t
+ 	if (do_deferred(deferred_remove))
+ 		dm_task_deferred_remove(dmt);
+ #endif
+-	if (udev_wait_flag && !dm_task_set_cookie(dmt, &cookie, ((conf->daemon)? DM_UDEV_DISABLE_LIBRARY_FALLBACK : 0) | udev_flags)) {
++	if (udev_wait_flag &&
++	    !dm_task_set_cookie(dmt, &cookie,
++				DM_UDEV_DISABLE_LIBRARY_FALLBACK | udev_flags)) {
+ 		dm_udev_complete(cookie);
+ 		goto out;
+ 	}
+@@ -310,7 +312,8 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
+ 	dm_task_no_open_count(dmt);
  
- 		refwwid = pp->wwid;
-@@ -994,7 +995,8 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
- 				return ret;
- 			}
- 		}
--		if (pp->udev && filter_property(conf, pp->udev) > 0)
-+		if (pp->udev && pp->uid_attribute &&
-+		    filter_property(conf, pp->udev) > 0)
- 			return 2;
+ 	if (task == DM_DEVICE_CREATE &&
+-	    !dm_task_set_cookie(dmt, &cookie, (conf->daemon)? DM_UDEV_DISABLE_LIBRARY_FALLBACK : 0)) {
++	    !dm_task_set_cookie(dmt, &cookie,
++				DM_UDEV_DISABLE_LIBRARY_FALLBACK)) {
+ 		dm_udev_complete(cookie);
+ 		goto freeout;
+ 	}
+@@ -1401,7 +1404,8 @@ dm_rename (const char * old, char * new)
  
- 		refwwid = pp->wwid;
-@@ -1017,7 +1019,8 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
- 					dev);
- 			return ret;
- 		}
--		if (pp->udev && filter_property(conf, pp->udev) > 0)
-+		if (pp->udev && pp->uid_attribute &&
-+		    filter_property(conf, pp->udev) > 0)
- 			return 2;
+ 	dm_task_no_open_count(dmt);
  
- 		refwwid = pp->wwid;
+-	if (!dm_task_set_cookie(dmt, &cookie, (conf->daemon)? DM_UDEV_DISABLE_LIBRARY_FALLBACK : 0))
++	if (!dm_task_set_cookie(dmt, &cookie,
++				DM_UDEV_DISABLE_LIBRARY_FALLBACK))
+ 		goto out;
+ 	r = dm_task_run(dmt);
+ 
 -- 
 2.6.6
