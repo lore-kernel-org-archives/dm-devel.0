@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 49/57] multipathd: do not flush maps on startup
-Date: Wed, 27 Apr 2016 13:10:50 +0200
-Message-ID: <1461755458-29225-50-git-send-email-hare@suse.de>
+Subject: [PATCH 23/57] multipath: remove warning 'failed to get
+	wwid'
+Date: Wed, 27 Apr 2016 13:10:24 +0200
+Message-ID: <1461755458-29225-24-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,31 +22,22 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-When the daemon is started prior to udev the paths are not present
-(yet). However, the maps themselves will be read from device-mapper.
-This causes existing maps to be dropped in coalesce_maps(), only
-to be reinstated later when all paths are discovered.
-To avoid this we should be checking for a valid hardware entry
-per multipath map; if there is none we're in startup and shouldn't
-drop any maps.
-
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- multipathd/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipath/main.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 1141fb6..33a3503 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -155,7 +155,7 @@ coalesce_maps(struct vectors *vecs, vector nmpv)
- 
- 	vector_foreach_slot (ompv, ompp, i) {
- 		condlog(3, "%s: coalesce map", ompp->alias);
--		if (!find_mp_by_wwid(nmpv, ompp->wwid)) {
-+		if (ompp->hwe && !find_mp_by_wwid(nmpv, ompp->wwid)) {
- 			/*
- 			 * remove all current maps not allowed by the
- 			 * current configuration
+diff --git a/multipath/main.c b/multipath/main.c
+index d14a913..da8fa23 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -284,7 +284,6 @@ configure (void)
+ 		int failed = get_refwwid(conf->dev, conf->dev_type, pathvec,
+ 					 &refwwid);
+ 		if (!refwwid) {
+-			condlog(3, "%s: failed to get wwid", conf->dev);
+ 			if (failed == 2 && conf->cmd == CMD_VALID_PATH)
+ 				printf("%s is not a valid multipath device path\n", conf->dev);
+ 			else
 -- 
 2.6.6
