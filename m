@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 53/57] multipathd: implement 'show map $map
-	format $fmt'
-Date: Wed, 27 Apr 2016 13:10:54 +0200
-Message-ID: <1461755458-29225-54-git-send-email-hare@suse.de>
+Subject: [PATCH 40/57] libmultipath: fixup dm_rename to complete
+	cookie on failure
+Date: Wed, 27 Apr 2016 13:10:41 +0200
+Message-ID: <1461755458-29225-41-git-send-email-hare@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,143 +19,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Similar to the existing 'show map $map topology', but allowing
-formatted content.
+From my understanding we should be calling udev_complete() on
+a cookie if dm_task_set_cookie() failed.
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
+Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- multipathd/cli.c          |  2 ++
- multipathd/cli_handlers.c | 67 +++++++++++++++++++++++++++++++++++++++++++++++
- multipathd/cli_handlers.h |  2 ++
- multipathd/main.c         |  2 ++
- 4 files changed, 73 insertions(+)
+ libmultipath/devmapper.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index ab1365b..3c9cdbf 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -497,6 +497,8 @@ cli_init (void) {
- 	add_handler(LIST+MAPS+TOPOLOGY, NULL);
- 	add_handler(LIST+TOPOLOGY, NULL);
- 	add_handler(LIST+MAP+TOPOLOGY, NULL);
-+	add_handler(LIST+MAP+FMT, NULL);
-+	add_handler(LIST+MAP+RAW+FMT, NULL);
- 	add_handler(LIST+CONFIG, NULL);
- 	add_handler(LIST+BLACKLIST, NULL);
- 	add_handler(LIST+DEVICES, NULL);
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 886a5fd..dbdcbc2 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -349,6 +349,33 @@ show_daemon (char ** r, int *len)
- }
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index c2ae83b..b10f9e6 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -1440,8 +1440,10 @@ dm_rename (const char * old, char * new)
+ 	dm_task_no_open_count(dmt);
  
- int
-+show_map (char ** r, int *len, struct multipath * mpp, char * style,
-+	  int pretty)
-+{
-+	char * c;
-+	char * reply;
-+	unsigned int maxlen = INITIAL_REPLY_LEN;
-+	int again = 1;
-+
-+	reply = MALLOC(maxlen);
-+	while (again) {
-+		if (!reply)
-+			return 1;
-+
-+		c = reply;
-+		c += snprint_multipath(c, reply + maxlen - c, style,
-+				       mpp, pretty);
-+
-+		again = ((c - reply) == (maxlen - 1));
-+
-+		REALLOC_REPLY(reply, again, maxlen);
+ 	if (!dm_task_set_cookie(dmt, &cookie,
+-				DM_UDEV_DISABLE_LIBRARY_FALLBACK))
++				DM_UDEV_DISABLE_LIBRARY_FALLBACK)) {
++		dm_udev_complete(cookie);
+ 		goto out;
 +	}
-+	*r = reply;
-+	*len = (int)(c - reply + 1);
-+	return 0;
-+}
-+
-+int
- show_maps (char ** r, int *len, struct vectors * vecs, char * style,
- 	   int pretty)
- {
-@@ -407,6 +434,46 @@ cli_list_maps_raw (void * v, char ** reply, int * len, void * data)
- }
+ 	r = dm_task_run(dmt);
  
- int
-+cli_list_map_fmt (void * v, char ** reply, int * len, void * data)
-+{
-+	struct multipath * mpp;
-+	struct vectors * vecs = (struct vectors *)data;
-+	char * param = get_keyparam(v, MAP);
-+	char * fmt = get_keyparam(v, FMT);
-+
-+	param = convert_dev(param, 0);
-+	get_path_layout(vecs->pathvec, 0);
-+	get_multipath_layout(vecs->mpvec, 1);
-+	mpp = find_mp_by_str(vecs->mpvec, param);
-+	if (!mpp)
-+		return 1;
-+
-+	condlog(3, "list map %s fmt %s (operator)", param, fmt);
-+
-+	return show_map(reply, len, mpp, fmt, 1);
-+}
-+
-+int
-+cli_list_map_raw (void * v, char ** reply, int * len, void * data)
-+{
-+	struct multipath * mpp;
-+	struct vectors * vecs = (struct vectors *)data;
-+	char * param = get_keyparam(v, MAP);
-+	char * fmt = get_keyparam(v, FMT);
-+
-+	param = convert_dev(param, 0);
-+	get_path_layout(vecs->pathvec, 0);
-+	get_multipath_layout(vecs->mpvec, 1);
-+	mpp = find_mp_by_str(vecs->mpvec, param);
-+	if (!mpp)
-+		return 1;
-+
-+	condlog(3, "list map %s fmt %s (operator)", param, fmt);
-+
-+	return show_map(reply, len, mpp, fmt, 0);
-+}
-+
-+int
- cli_list_maps (void * v, char ** reply, int * len, void * data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
-diff --git a/multipathd/cli_handlers.h b/multipathd/cli_handlers.h
-index 799f8da..5d51018 100644
---- a/multipathd/cli_handlers.h
-+++ b/multipathd/cli_handlers.h
-@@ -7,6 +7,8 @@ int cli_list_daemon (void * v, char ** reply, int * len, void * data);
- int cli_list_maps (void * v, char ** reply, int * len, void * data);
- int cli_list_maps_fmt (void * v, char ** reply, int * len, void * data);
- int cli_list_maps_raw (void * v, char ** reply, int * len, void * data);
-+int cli_list_map_fmt (void * v, char ** reply, int * len, void * data);
-+int cli_list_map_raw (void * v, char ** reply, int * len, void * data);
- int cli_list_maps_status (void * v, char ** reply, int * len, void * data);
- int cli_list_maps_stats (void * v, char ** reply, int * len, void * data);
- int cli_list_map_topology (void * v, char ** reply, int * len, void * data);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d8fa88f..a58dae5 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -990,6 +990,8 @@ uxlsnrloop (void * ap)
- 	set_handler_callback(LIST+MAPS+TOPOLOGY, cli_list_maps_topology);
- 	set_handler_callback(LIST+TOPOLOGY, cli_list_maps_topology);
- 	set_handler_callback(LIST+MAP+TOPOLOGY, cli_list_map_topology);
-+	set_handler_callback(LIST+MAP+FMT, cli_list_map_fmt);
-+	set_handler_callback(LIST+MAP+RAW+FMT, cli_list_map_fmt);
- 	set_handler_callback(LIST+CONFIG, cli_list_config);
- 	set_handler_callback(LIST+BLACKLIST, cli_list_blacklist);
- 	set_handler_callback(LIST+DEVICES, cli_list_devices);
+ 	if (!r)
 -- 
 2.6.6
