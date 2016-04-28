@@ -1,88 +1,63 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-Subject: Re: [Lsf] Notes from the four separate IO track sessions at LSF/MM
-Date: Thu, 28 Apr 2016 10:33:42 -0700
-Message-ID: <1461864822.2307.28.camel@HansenPartnership.com>
-References: <1461800389.2311.70.camel@HansenPartnership.com>
-	 <20160428121108.GA9903@redhat.com>
-	 <1461858038.2307.16.camel@HansenPartnership.com>
-	 <5722320E.5080202@sandisk.com>
-	 <d8e572ba7c9a46aaa3af4c5703ec07e3@hioexcmbx07-prd.hq.netapp.com>
+From: Sebastian Herbszt <herbszt@gmx.de>
+Subject: Re: [PATCH 05/57] Add HP MSA 2040 to the hardware table
+Date: Fri, 29 Apr 2016 00:06:05 +0200
+Message-ID: <20160429000605.00006561@localhost>
+References: <1461755458-29225-1-git-send-email-hare@suse.de>
+	<1461755458-29225-6-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <d8e572ba7c9a46aaa3af4c5703ec07e3@hioexcmbx07-prd.hq.netapp.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Knight, Frederick" <Frederick.Knight@netapp.com>, Bart Van Assche <bart.vanassche@sandisk.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "lsf@lists.linux-foundation.org" <lsf@lists.linux-foundation.org>, device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1461755458-29225-6-git-send-email-hare@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, Sebastian Herbszt <herbszt@gmx.de>, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Thu, 2016-04-28 at 16:19 +0000, Knight, Frederick wrote:
-> There are multiple possible situations being intermixed in this
-> discussion.  First, I assume you're talking only about random access
-> devices (if you try transport level error recover on a sequential
-> access device - tape or SMR disk - there are lots of additional
-> complexities).
+Hannes Reinecke wrote:
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> ---
+>  libmultipath/hwtable.c | 15 +++++++++++++++
+>  1 file changed, 15 insertions(+)
 
-Tape figured prominently in the reset discussion.  Resetting beyond the
-LUN has the possibility to cause grave impact to long running jobs
-(mostly on tapes).
+You missed adding it to multipath.conf.defaults.
 
-> Failures can occur at multiple places:
-> a) Transport layer failures that the transport layer is able to
-> detect quickly;
-> b) SCSI device layer failures that the transport layer never even
-> knows about.
-> 
-> For (a) there are two competing goals.  If a port drops off the
-> fabric and comes back again, should you be able to just recover and
-> continue.  But how long do you wait during that drop?  Some devices
-> use this technique to "move" a WWPN from one place to another.  The
-> port drops from the fabric, and a short time later, shows up again
-> (the WWPN moves from one physical port to a different physical port).
-> There are FC driver layer timers that define the length of time
-> allowed for this operation.  The goal is fast failover, but not too
-> fast - because too fast will break this kind of "transparent
-> failover".  This timer also allows for the "OH crap, I pulled the
-> wrong cable - put it back in; quick" kind of stupid user bug.
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index a4ae053..28ee595 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -175,6 +175,21 @@ static struct hwentry default_hw[] = {
+>  		.prio_name     = PRIO_ALUA,
+>  		.prio_args     = NULL,
+>  	},
+> +	{
+> +		/* HP MSA 1040/2040 product family */
+> +		.vendor        = "HP",
+> +		.product       = "MSA (1|2)040 SA(N|S)",
+> +		.features      = DEFAULT_FEATURES,
+> +		.hwhandler     = DEFAULT_HWHANDLER,
+> +		.pgpolicy      = GROUP_BY_PRIO,
+> +		.pgfailback    = -FAILBACK_IMMEDIATE,
+> +		.rr_weight     = RR_WEIGHT_NONE,
+> +		.no_path_retry = 18,
+> +		.minio         = 100,
+> +		.checker_name  = TUR,
+> +		.prio_name     = PRIO_ALUA,
+> +		.prio_args     = NULL,
+> +	},
+>  
+>  	{
+>  		/* HP SVSP */
 
-I think we already have this sorted out with the dev loss timeout which
-is implemented in the transport.  It's the grace period you have before
-we act on a path loss.
+Any reason for a separate entry and not merging it with
+"HP MSA2000 product family with new firmware" ?
 
-> For (b) the transport never has a failure.  A LUN (or a group of
-> LUNs) have an ALUA transition from one set of ports to a different
-> set of ports.  Some of the LUNs on the port continue to work just
-> fine, but others enter ALUA TRANSITION state so they can "move" to a
-> different part of the hardware.  After the move completes, you now
-> have different sets of optimized and non-optimized paths (or possible
-> standby, or unavailable).  The transport will never even know this
-> happened.  This kind of "failure" is handled by the SCSI layer
-> drivers.
-
-OK, so ALUA did come up as well, I just forgot.  Perhaps I should back
-off a bit and give the historical reasons why dm became our primary
-path failover system.  It's because for the first ~15 years of Linux we
-had no separate transport infrastructure in SCSI (and, to be fair, T10
-didn't either).  In fact, all scsi drivers implemented their own
-variants of transport stuff.  This meant there was intial pressure to
-make the transport failover stuff driver specific and the answer to
-that was a resounding "hell no!" so dm (and md) became the de-facto
-path failover standard because there was nowhere else to put it.  The
-transport infrastructure didn't really become mature until 2006-2007,
-well after this decision was made.  However, now we have transport
-infrastructure the question of whether we can use it for path failover
-isn't unreasonable.  If we abstract it correctly, it could become a
-library usable by all our current transports, so we might only need a
-single implementation.
-
-For ALUA specifically (and other weird ALUA like implementations), the
-handling code actually sits in drivers/scsi/device-handler, so it could
-also be used by the transport code to make path decisions.  The point
-here is that even if we implement path failover at the transport level,
-we do have more than the information available that the transport
-should strictly know to make the failover decision.
-
-James
-
-
+Sebastian
