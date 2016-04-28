@@ -1,105 +1,127 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-Subject: Notes from the four separate IO track sessions at LSF/MM
-Date: Wed, 27 Apr 2016 16:39:49 -0700
-Message-ID: <1461800389.2311.70.camel@HansenPartnership.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: multipath-0.5.0 still provides broken udev rules
+Date: Thu, 28 Apr 2016 08:23:44 +0200
+Message-ID: <5721AC70.3070606@suse.de>
+References: <CAE+k_g+Eh3H1EAiJ0jm7P-efGbOOwpWRtYmvXyR9qhhHtefV7g@mail.gmail.com>
+	<571DF852.6030604@redhat.com>
+	<CAE+k_gKQcx+QR9bfEp1Wy8BawD14L2G5O0Yw-d0=CffBHqYbrA@mail.gmail.com>
+	<571E0E7A.4050703@redhat.com>
+	<CABr-GnfxOKz8gxDju20Hx3T9Tn74Zz9FhjF1dBk8weEBJMOmLg@mail.gmail.com>
+	<1986ca6b-d281-4faf-2b50-11c3dc132463@gmail.com>
+	<571F026C.5040102@suse.de>
+	<20160427224601.GG26117@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: linux-scsi <linux-scsi@vger.kernel.org>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
-Cc: lsf@lists.linux-foundation.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20160427224601.GG26117@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Peter Volkov <peter.volkov@gmail.com>, device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-This year, we only had two scribes from LWN.net, not three, so there
-won't be any coverage of the IO track when we split into three tracks. 
- To cover for that, here are my notes of the four separated sessions
-
-===
-
-Multiqueue Interrupt and Queue Assignment; Hannes Reinecke
-----------------------------------------------------------
-
-All multiqueue devices need an interrupt allocation policy and an
-affinity but who should set it?  Christoph Hellwig suggested making
-what NVMe currently does the default (and has patches).
-
-There then followed a discussion about interrupt allocation which
-concluded that realistically, we do want the block layer doing it
-because having a single policy for the whole system is by far the
-simplest mechanism.  We should wait for evidence that this can't be
-made to work at all (which we don't have) before we try to tamper with
-it.
-
-
-Blk-mq Implementor Feedback; Hannes Reinecke, Matthew Wilcox, Keith Busch
--------------------------------------------------------------------------
-
-This began with a discussion of tag allocation policy: blkmq only
-allows for a host wide tag space which is partitioned amongst the
-number of hardware queues.  Potentially this leads to a tag starvation
-issue where the number of host tags is small and the number of hardware
-queues is large.  Consensus was that the problem is currently
-theoretical but that driver writers should take care to make sure they
-don't allocate too many hardware queues if they have a limited number
-of tags.
-
-The next problem was abort because of a potential tag re-use issue. 
- After discussion it was agreed there should be no problem because the
-tag is held until the abort completes (and the command killed) or error
-handling is escalated (in which case the whole host is quiesced). 
- There was a lot of complaining about the host quiesce part because it
-takes a while to do on a fully loaded host and also path switchover
-cannot occur until it has been completed, so multipath recovery takes
-much longer than it should.  The general agreement was that this could
-be alleviated somewhat if we could quiesce a single LUN first and issue
-a LUN reset rather than doing the whole host after the abort.  Mike
-Christie will send patches for LUN quiescing.
-
-
-IO Cost Estimation; Tejun Heo
------------------------------
-
-This session began with a description of how the block cgroup currently
-works: it has two modes: bandwidth limiting which works regardless of
-I/O scheduler and proportional allocation, which only works with the
-CFQ I/O scheduler.  Obviously, because blk-mq currently has no
-scheduler, it's not possible to do proportional allocation with it. 
- The generic discussion then opened with how do we do correct I/O cost
-estimation even with blk-mq so we can do some sort of proportional
-allocation.  This is actually a very hard problem to solve,
-particularly now that we have to consider SSDs because a large set of
-sequential writes are much less likely to excite the write
-amplification caused by garbage collection than a set of scattered
-writes.  In an ideal world, we'd like to penalise the process doing the
-scattered writes for all of the write amplification as well.  However,
-after much discussion, it was agreed that the heuristics to try to do
-this would end up being very complex and would likely fail in corner
-cases anyway, so the best we could do was assess proportions based on
-request latency, even though that would not be completely fair to some
-workloads.
-
-Multipath - Mike Snitzer
-------------------------
-
-Mike began with a request for feedback, which quickly lead to the
-complaint that recovery time (and how you recover) was one of the
-biggest issues in device mapper multipath (dmmp) for those in the room.
-  This is primarily caused by having to wait for the pending I/O to be
-released by the failing path. Christoph Hellwig said that NVMe would
-soon do path failover internally (without any need for dmmp) and asked
-if people would be interested in a more general implementation of this.
- Martin Petersen said he would look at implementing this in SCSI as
-well.  The discussion noted that internal path failover only works in
-the case where the transport is the same across all the paths and
-supports some type of path down notification.  In any cases where this
-isn't true (such as failover from fibre channel to iSCSI) you still
-have to use dmmp.  Other benefits of internal path failover are that
-the transport level code is much better qualified to recognise when the
-same device appears over multiple paths, so it should make a lot of the
-configuration seamless.  The consequence for end users would be that
-now SCSI devices would become handles for end devices rather than
-handles for paths to end devices.
-
-James
-
+T24gMDQvMjgvMjAxNiAxMjo0NiBBTSwgQmVuamFtaW4gTWFyemluc2tpIHdyb3RlOgo+IE9uIFR1
+ZSwgQXByIDI2LCAyMDE2IGF0IDA3OjUzOjQ4QU0gKzAyMDAsIEhhbm5lcyBSZWluZWNrZSB3cm90
+ZToKPj4gT24gMDQvMjUvMjAxNiAxMDoxNCBQTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+
+Pj4gT24gMDQvMjUvMjAxNiAwMjo1NiBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+Pj4K
+Pj4+PiBUaG9zZSBleGFtcGxlIHVkZXYgcnVsZXMgYXJlIGluZGVlZCB1bm1haW50YWluZWQgYW5k
+IHNob3VsZCBiZQo+Pj4+IHJlbW92ZWQgbm90IHRvIGNvbmZ1c2UgZGlzdHJpYnV0b3JzLgo+Pj4+
+Cj4+Pj4gRGlzdHJpYnV0b3JzIGNhbid0IGJlIGFza2VkIHRvIGFncmVlIG9uIGEgY29tbW9uIHVk
+ZXYgcnVsZXNldC4KPj4+PiBCZW4sIEhhbm5lcywgWG9zw6ksIFBldGVyIGFyZSB5b3Ugb2sgd2l0
+aCBteSBkZWxldGluZyB0aGUgdWRldiBydWxlcyBleGFtcGxlID8KPj4+Cj4+PiBGaW5lIHdpdGgg
+bWUuCj4+Pgo+Pj4gQnR3LCBhcmUgdGhlc2UgcmVsZXZhbnQgPwo+IAo+IEZvciBhbGwgdGhhdCBJ
+IGRpZG4ndCBjb21tZW50IG9uLCBJIGZlZWwgdGhlIHNhbWUgd2F5IGFzIEhhbm5lcy4KPiAKPj4+
+IGdldHVpZC91c2JfaWQKPj4gSHVoPyBXaGF0IGlzIHRoYXQgZG9pbmcgdGhlcmU/Cj4+IEl0IHNo
+b3VsZCByZWFsbHkgaGF2ZSBiZWVuIG1vdmVkIHRvIHRoZSB1ZGV2IHBhY2thZ2UgLi4uCj4+Cj4+
+PiBrcGFydHgva3BhcnR4X2lkCj4+PiBrcGFydHgva3BhcnR4LnJ1bGVzCj4+IFNlZSBhYm92ZS4g
+WWVzLCB0aGV5IGFyZSByZWxldmFudCAoYXQgbGVhc3QgZm9yIHVzKQo+IAo+IExpa2UgSSBzYWlk
+LCBSZWQgSGF0IGRvZXNuJ3QgdXNlIHRoZW0uIEknbGwgcG9zdCBvdXIgbXVsdGlwYXRoLnJ1bGVz
+Cj4gc2hvcnRseS4KPiAKV2hpY2ggd291bGQgYmUgY29vbC4KSSB3YXMgYWN0dWFsbHkgaG9waW5n
+IHRvIG1lZXQgeW91IGluIFJhbGVpZ2ggbGFzdCB3ZWVrLCBidXQgdGhlbiBpdApkaWRuJ3Qgd29y
+ayBvdXQuCgo+Pj4gbXVsdGlwYXRoLzAxX3VkZXYKPj4+IG11bHRpcGF0aC8wMl9tdWx0aXBhdGgK
+Pj4gTm90IHVzZWQgYW55bW9yZSB3aXRoIHN5c3RlbWQvZHJhY3V0Cj4+Cj4+PiBtdWx0aXBhdGgv
+MTEtZG0tbXBhdGgucnVsZXMKPj4gWWVwLiBBYnNvbHV0ZWx5IHJlcXVpcmVkLgo+Pgo+Pj4gbXVs
+dGlwYXRoLmNvbmYuYW5ub3RhdGVkCj4+PiBtdWx0aXBhdGguY29uZi5kZWZhdWx0cwo+Pj4gbXVs
+dGlwYXRoLmNvbmYuc3ludGhldGljCj4+IEFjdHVhbGx5LCBJIG5ldmVyIHNhdyB0aGUgbmVlZCBm
+b3IgdGhvc2UuCj4+IENhbiB3ZSBhdCBsZWFzdCBoYXZlIHRoZW0gbWVyZ2VkPwo+IAo+IEkgZG9u
+J3QgdGhpbmsgdGhleSBhcmUgYmVpbmcga2VwdCB1cCB0byBkYXRlIGFueW1vcmUuICBUaGUgJ2Rl
+ZmF1bHRzJwo+IGluZm9ybWF0aW9uIGNhbiBiZSBnb3R0ZW4gZnJvbSBhIHJ1bm5pbmcgc3lzdGVt
+LCBhbmQgaXQgaW5jbHVkZXMgdGhlCj4gY2hhbmdlcyBmcm9tIHRoZSBjb25maWcgZmlsZXMsIHNv
+IGl0J3MgbXVjaCBtb3JlIHVzZWZ1bC4gSSBoYXZlIG5vIGlkZWEKPiB3aGF0IHBlb3BsZSB3b3Vs
+ZCB1c2UgJ3N5bnRoZXRpYycgZm9yIGJlc2lkZXMgYW4gZXhhbXBsZSBvZiB3aGF0IGEKPiBjb25m
+aWcgd291bGQgbG9vayBsaWtlLiBBbmQgdGhlICdhbm5vdGF0ZWQnIGluZm9ybWF0aW9uIGlzIGFs
+bCBpbiB0aGUKPiBtdWx0aXBhdGguY29uZiBtYW5wYWdlLiBSZWQgSGF0IGRvZXNuJ3Qgc2hpcCB0
+aGVzZSBmaWxlcyBhbnltb3JlLiBJJ2QgYmUKPiBoYXBweSB0byBzZWUgdGhlbSBnby4KPiAgCkNv
+dWxkbid0IGFncmVlIG1vcmUuCkxldCdzIGRyb3AgdGhlbS4KCj4+PiBtdWx0aXBhdGhkL211bHRp
+cGF0aGQuaW5pdC5kZWJpYW4KPj4+IG11bHRpcGF0aGQvbXVsdGlwYXRoZC5pbml0LnJlZGhhdAo+
+Pj4gbXVsdGlwYXRoZC9tdWx0aXBhdGhkLmluaXQuc3VzZQo+PiBPbGQgaW5pdCBzY3JpcHRzOyBk
+b3VidGZ1bCB2YWx1ZS4KPj4KPj4+IG11bHRpcGF0aGQvbXVsdGlwYXRoZC5zZXJ2aWNlCj4+PiBt
+dWx0aXBhdGhkL211bHRpcGF0aGQuc29ja2V0Cj4+IHN5c3RlbWQgc2VydmljZSBkZWZpbml0aW9u
+cy4gWWVzLCByZXF1aXJlZC4KPiAKPiBSZWQgSGF0IGhhcyBhIHNsaWdodGx5IGRpZmZlcmVudCBt
+dWx0aXBhdGhkLnNlcnZpY2UgZmlsZSwgYW5kIHdlIGRvbid0Cj4gc2hpcCB0aGUgc29ja2V0IGZp
+bGUuICBTaW5jZSBtdWx0aXBhdGhkIHNob3VsZCBhbHdheXMgYmUgcnVubmluZywgSQo+IGRvbid0
+IHJlYWxseSBzZWUgdGhlIG5lZWQuIEFsc28sIGlmIHlvdSBzdGFydCBtdWx0aXBhdGhkIG1hbnVh
+bGx5Cj4gKGluc3RlYWQgb2YgdGhyb3VnaCB1ZGV2KSB0aGlzIGNhdXNlcyBwcm9ibGVtcyB3aXRo
+IG11bHRpcGF0aGQgbm90Cj4gZ2V0dGluZyBtZXNzYWdlcy4KPiAKSG1tLiBBY3R1YWxseSwgSSBx
+dWl0ZSBsaWtlIHRoZSBzeXN0ZW1kIGludGVncmF0aW9uOyBpdCBhbGxvd3MgbWUgdG8Kc2lnbmFs
+IHRoZSBpbnRlcm5hbCBtdWx0aXBhdGhkIHN0YXRlIGJhY2sgdG8gc3lzdGVtZDoKCiMgc3lzdGVt
+Y3RsIHN0YXR1cyBtdWx0aXBhdGhkCm11bHRpcGF0aGQuc2VydmljZSAtIERldmljZS1NYXBwZXIg
+TXVsdGlwYXRoIERldmljZSBDb250cm9sbGVyCiAgIExvYWRlZDogbG9hZGVkICgvdXNyL2xpYi9z
+eXN0ZW1kL3N5c3RlbS9tdWx0aXBhdGhkLnNlcnZpY2U7IGVuYWJsZWQpCiAgIEFjdGl2ZTogYWN0
+aXZlIChydW5uaW5nKSBzaW5jZSBXZWQgMjAxNi0wNC0yNyAxMjozOTo1OSBDRVNUOyAxOWggYWdv
+CiBNYWluIFBJRDogNjkxMyAobXVsdGlwYXRoZCkKICAgU3RhdHVzOiAiaWRsZSIKICAgQ0dyb3Vw
+OiAvc3lzdGVtLnNsaWNlL211bHRpcGF0aGQuc2VydmljZQogICAgICAgICAgIOKUlOKUgDY5MTMg
+L3NiaW4vbXVsdGlwYXRoZCAtZCAtcwoKV2hpY2ggSSBmaW5kIHF1aXRlIG5lYXQuIEFuZCBJIGd1
+ZXNzIHdlIHNob3VsZCBiZSBhYmxlIHRvIG92ZXJjb21lCnRoZSBtYW51YWxseSBzdGFydGVkIGlz
+c3VlIGJ5IGNoZWNraW5nIGlmIHRoZSBzb2NrZXQgaXMgcHJlc2VudCwgYW5kCmp1c3QgZXhlY3V0
+ZSBhICdyZWNvbmZpZ3VyZScgY29tbWFuZCBpZiBzby4KTGV0IG1lIHNlZSAuLi4KCj4gRm9yIHRo
+b3NlIGludGVyZXN0ZWQsIGhlcmUncyBhIGRpZmYgb2Ygb3VyIG11bHRpcGF0aC5zZXJ2aWNlCj4g
+Cj4gZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvbXVsdGlwYXRoZC5zZXJ2aWNlCj4gYi9tdWx0aXBh
+dGhkL211bHRpcGF0aGQuc2VydmljZQo+IGluZGV4IGQ1Zjg2MDYuLjFlNWRmYWIgMTAwNjQ0Cj4g
+LS0tIGEvbXVsdGlwYXRoZC9tdWx0aXBhdGhkLnNlcnZpY2UKPiArKysgYi9tdWx0aXBhdGhkL211
+bHRpcGF0aGQuc2VydmljZQo+IEBAIC0yLDkgKzIsMTAgQEAKPiAgRGVzY3JpcHRpb249RGV2aWNl
+LU1hcHBlciBNdWx0aXBhdGggRGV2aWNlIENvbnRyb2xsZXIKPiAgQmVmb3JlPWlzY3NpLnNlcnZp
+Y2UgaXNjc2lkLnNlcnZpY2UgbHZtMi1hY3RpdmF0aW9uLWVhcmx5LnNlcnZpY2UKPiAgQmVmb3Jl
+PWxvY2FsLWZzLXByZS50YXJnZXQKPiAtQWZ0ZXI9bXVsdGlwYXRoZC5zb2NrZXQKPiArQ29uZGl0
+aW9uUGF0aEV4aXN0cz0vZXRjL211bHRpcGF0aC5jb25mCj4gK0NvbmRpdGlvbktlcm5lbENvbW1h
+bmRMaW5lPSFub21wYXRoCj4gIERlZmF1bHREZXBlbmRlbmNpZXM9bm8KPiAtV2FudHM9bG9jYWwt
+ZnMtcHJlLnRhcmdldCBtdWx0aXBhdGhkLnNvY2tldCBibGstYXZhaWxhYmlsaXR5LnNlcnZpY2UK
+PiArV2FudHM9bG9jYWwtZnMtcHJlLnRhcmdldCBibGstYXZhaWxhYmlsaXR5LnNlcnZpY2UKPiAg
+Q29uZmxpY3RzPXNodXRkb3duLnRhcmdldAo+ICAKPiAgW1NlcnZpY2VdCj4gQEAgLTEyLDkgKzEz
+LDkgQEAgVHlwZT1ub3RpZnkKPiAgTm90aWZ5QWNjZXNzPW1haW4KPiAgTGltaXRDT1JFPWluZmlu
+aXR5Cj4gIEV4ZWNTdGFydFByZT0vc2Jpbi9tb2Rwcm9iZSBkbS1tdWx0aXBhdGgKPiArRXhlY1N0
+YXJ0UHJlPS0vc2Jpbi9tdWx0aXBhdGggLUEKPiAgRXhlY1N0YXJ0PS9zYmluL211bHRpcGF0aGQg
+LWQgLXMKPiAgRXhlY1JlbG9hZD0vc2Jpbi9tdWx0aXBhdGhkIHJlY29uZmlndXJlCj4gIAo+ICBb
+SW5zdGFsbF0KPiAgV2FudGVkQnk9c3lzaW5pdC50YXJnZXQKPiAtQWxzbz1tdWx0aXBhdGhkLnNv
+Y2tldAo+IAo+IAo+IEFzaWRlIGZyb20gZHJvcHBpbmcgdGhlIHNvY2tldCwgaXQgY2hlY2tzIHRo
+YXQgL2V0Yy9tdWx0aXBhdGguY29uZgo+IGV4aXN0cywgYW5kIHRoYXQgdGhlIGtlcm5lbCB3YXNu
+J3Qgc3RhcnRlZCB3aXRoICJub21wYXRoIi4gQWxzbyBpdCBydW5zCj4gIm11bHRpcGF0aCAtQSIg
+dGhpcyByZWFkcyB0aGUga2VybmVsIGNvbW1hbmRsaW5lIGZyb20gL3Byb2MvY21kbGluZSwgYW5k
+Cj4gYWRkcyBhbnkgd3dpZHMgbGlzdGVkIGFzIHBhcnQgb2YgYW55IG1wYXRoLnd3aWQ9PHd3aWQ+
+IHBhcmFtZXRlcnMuCj4gSGFubmVzIE5BQ0tlZCB0aGlzIHBhdGNoLCBzbyB0aGUgb3B0aW9uIGlz
+bid0IHByZXNlbnQgdXBzdGVhbS4KPiAKPiAgCkhtbS4gQWN0dWFsbHksIEkgZG8gbGlrZSB0aGUg
+J25vbXBhdGgnIGNoZWNraW5nOyB3ZSBkbyBsYWNrIHRoZQpjYXBhYmlsaXR5IG9mIHN3aXRjaGlu
+ZyBvZmYgbXVsdGlwYXRoIGZyb20gdGhlIGtlcm5lbCBjb21tYW5kbGluZQpBVE0uIFNvIHllcywg
+d2Ugc2hvdWxkIGJlIGluY2x1ZGluZyB0aGF0IGJpdC4KCkFzIGZvciAvZXRjL211bHRpcGF0aC5j
+b25mIC4uLiBUaGUgb3JpZ2luYWwgc2V0dXAgaGFzIGJlZW4gc2hpcHBpbmcKd2l0aG91dCBhbnkg
+bXVsdGlwYXRoLmNvbmYgZmlsZS4gU28gSSB3b3VsZCBiZSBva2F5IHdpdGggdGhpcyBjaGFuZ2UK
+aWYgd2UgY2FuIGd1YXJhbnRlZSB0aGF0IC9ldGMvbXVsdGlwYXRoLmNvbmYgd2lsbCBhbHdheXMg
+YmUgZXhpc3RpbmcuClNlZWluZyB0aGF0IHlvdSdyZSBydW5uaW5nICdtdWx0aXBhdGggLUEnIHRv
+IGFkZCBhbnkgd3dpZHMsIHdvdWxkbid0CnRoYXQgYmUgc3VmZmljaWVudD8KSUUgd2h5IGRvIHdl
+IG5lZWQgdGhlIGNoZWNrIGZvciAvZXRjL211bHRpcGF0aC5jb25mIGhlcmU7IGNvdWxkbid0Cndl
+IG1ha2UgJ211bHRpcGF0aCAtQScgcmV0dXJuIG5vbi16ZXJvIHRvIGF2b2lkIG11bHRpcGF0aGQg
+dG8gYmUKc3RhcnRlZD8KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJ
+ICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAgICAg
+ICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5
+MDQwOSBOw7xybmJlcmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxk
+LCBELiBVcG1hbnl1LCBHLiBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1k
+ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
+Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
