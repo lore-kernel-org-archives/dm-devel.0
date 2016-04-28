@@ -1,67 +1,88 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH] md: simplify free_params for kmalloc vs vmalloc fallback
-Date: Thu, 28 Apr 2016 18:59:34 +0200
-Message-ID: <20160428165934.GQ31489@dhcp22.suse.cz>
-References: <1461849846-27209-20-git-send-email-mhocko@kernel.org>
- <1461855076-1682-1-git-send-email-mhocko@kernel.org>
- <alpine.LRH.2.02.1604281059290.14065@file01.intranet.prod.int.rdu2.redhat.com>
- <20160428152812.GM31489@dhcp22.suse.cz>
- <alpine.LRH.2.02.1604281129360.14065@file01.intranet.prod.int.rdu2.redhat.com>
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
+Subject: Re: [Lsf] Notes from the four separate IO track sessions at LSF/MM
+Date: Thu, 28 Apr 2016 10:33:42 -0700
+Message-ID: <1461864822.2307.28.camel@HansenPartnership.com>
+References: <1461800389.2311.70.camel@HansenPartnership.com>
+	 <20160428121108.GA9903@redhat.com>
+	 <1461858038.2307.16.camel@HansenPartnership.com>
+	 <5722320E.5080202@sandisk.com>
+	 <d8e572ba7c9a46aaa3af4c5703ec07e3@hioexcmbx07-prd.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1604281129360.14065@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Shaohua Li <shli@kernel.org>, dm-devel@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <d8e572ba7c9a46aaa3af4c5703ec07e3@hioexcmbx07-prd.hq.netapp.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Knight, Frederick" <Frederick.Knight@netapp.com>, Bart Van Assche <bart.vanassche@sandisk.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "lsf@lists.linux-foundation.org" <lsf@lists.linux-foundation.org>, device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Thu 28-04-16 11:40:59, Mikulas Patocka wrote:
-[...]
-> There are many users that use one of these patterns:
-> 
-> 	if (size <= some_threshold)
-> 		p = kmalloc(size);
-> 	else
-> 		p = vmalloc(size);
-> 
-> or
-> 
-> 	p = kmalloc(size);
-> 	if (!p)
-> 		p = vmalloc(size);
-> 
-> 
-> For example: alloc_fdmem, seq_buf_alloc, setxattr, getxattr, ipc_alloc, 
-> pidlist_allocate, get_pages_array, alloc_bucket_locks, 
-> frame_vector_create. If you grep the kernel for vmalloc, you'll find this 
-> pattern over and over again.
+On Thu, 2016-04-28 at 16:19 +0000, Knight, Frederick wrote:
+> There are multiple possible situations being intermixed in this
+> discussion.  First, I assume you're talking only about random access
+> devices (if you try transport level error recover on a sequential
+> access device - tape or SMR disk - there are lots of additional
+> complexities).
 
-It is certainly good to address a common pattern by a helper if it makes
-to code easier to follo IMHO.
+Tape figured prominently in the reset discussion.  Resetting beyond the
+LUN has the possibility to cause grave impact to long running jobs
+(mostly on tapes).
 
+> Failures can occur at multiple places:
+> a) Transport layer failures that the transport layer is able to
+> detect quickly;
+> b) SCSI device layer failures that the transport layer never even
+> knows about.
 > 
-> In alloc_large_system_hash, there is
-> 	table = __vmalloc(size, GFP_ATOMIC, PAGE_KERNEL);
-> - that is clearly wrong because __vmalloc doesn't respect GFP_ATOMIC
+> For (a) there are two competing goals.  If a port drops off the
+> fabric and comes back again, should you be able to just recover and
+> continue.  But how long do you wait during that drop?  Some devices
+> use this technique to "move" a WWPN from one place to another.  The
+> port drops from the fabric, and a short time later, shows up again
+> (the WWPN moves from one physical port to a different physical port).
+> There are FC driver layer timers that define the length of time
+> allowed for this operation.  The goal is fast failover, but not too
+> fast - because too fast will break this kind of "transparent
+> failover".  This timer also allows for the "OH crap, I pulled the
+> wrong cable - put it back in; quick" kind of stupid user bug.
 
-I have seen this code some time already. I guess it was Al complaining
-about it but then I just forgot about it. I have no idea why GFP_ATOMIC
-was used there. This predates git times but it should be
-https://www.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10/2.6.10-mm1/broken-out/alloc_large_system_hash-numa-interleaving.patch
-The changelog is quite verbose but no mention about this ugliness.
+I think we already have this sorted out with the dev loss timeout which
+is implemented in the transport.  It's the grace period you have before
+we act on a path loss.
 
-So I do agree that the above should be fixed and a common helper might
-be interesting but I am afraid we are getting off topic here.
+> For (b) the transport never has a failure.  A LUN (or a group of
+> LUNs) have an ALUA transition from one set of ports to a different
+> set of ports.  Some of the LUNs on the port continue to work just
+> fine, but others enter ALUA TRANSITION state so they can "move" to a
+> different part of the hardware.  After the move completes, you now
+> have different sets of optimized and non-optimized paths (or possible
+> standby, or unavailable).  The transport will never even know this
+> happened.  This kind of "failure" is handled by the SCSI layer
+> drivers.
 
-Thanks!
--- 
-Michal Hocko
-SUSE Labs
+OK, so ALUA did come up as well, I just forgot.  Perhaps I should back
+off a bit and give the historical reasons why dm became our primary
+path failover system.  It's because for the first ~15 years of Linux we
+had no separate transport infrastructure in SCSI (and, to be fair, T10
+didn't either).  In fact, all scsi drivers implemented their own
+variants of transport stuff.  This meant there was intial pressure to
+make the transport failover stuff driver specific and the answer to
+that was a resounding "hell no!" so dm (and md) became the de-facto
+path failover standard because there was nowhere else to put it.  The
+transport infrastructure didn't really become mature until 2006-2007,
+well after this decision was made.  However, now we have transport
+infrastructure the question of whether we can use it for path failover
+isn't unreasonable.  If we abstract it correctly, it could become a
+library usable by all our current transports, so we might only need a
+single implementation.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+For ALUA specifically (and other weird ALUA like implementations), the
+handling code actually sits in drivers/scsi/device-handler, so it could
+also be used by the transport code to make path decisions.  The point
+here is that even if we implement path failover at the transport level,
+we do have more than the information available that the transport
+should strictly know to make the failover decision.
+
+James
+
+
