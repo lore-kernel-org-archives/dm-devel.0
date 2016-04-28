@@ -1,82 +1,67 @@
-From: Laurence Oberman <loberman@redhat.com>
-Subject: Re: [dm-devel] [Lsf] Notes from the four separate IO track sessions
- at LSF/MM
-Date: Thu, 28 Apr 2016 12:47:24 -0400 (EDT)
-Message-ID: <74308856.32308210.1461862044976.JavaMail.zimbra@redhat.com>
-References: <1461800389.2311.70.camel@HansenPartnership.com> <20160428121108.GA9903@redhat.com> <1461858038.2307.16.camel@HansenPartnership.com> <5722320E.5080202@sandisk.com> <610090691.32303585.1461860624844.JavaMail.zimbra@redhat.com> <57223D36.60304@sandisk.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] md: simplify free_params for kmalloc vs vmalloc fallback
+Date: Thu, 28 Apr 2016 18:59:34 +0200
+Message-ID: <20160428165934.GQ31489@dhcp22.suse.cz>
+References: <1461849846-27209-20-git-send-email-mhocko@kernel.org>
+ <1461855076-1682-1-git-send-email-mhocko@kernel.org>
+ <alpine.LRH.2.02.1604281059290.14065@file01.intranet.prod.int.rdu2.redhat.com>
+ <20160428152812.GM31489@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1604281129360.14065@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <57223D36.60304@sandisk.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: linux-block@vger.kernel.org, linux-scsi <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, device-mapper development <dm-devel@redhat.com>, lsf@lists.linux-foundation.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1604281129360.14065@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Shaohua Li <shli@kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello Bart, This is when we have a subset of the paths fails.
-As you know the remaining path wont be used until the eh_handler is either done or is short circuited.
+On Thu 28-04-16 11:40:59, Mikulas Patocka wrote:
+[...]
+> There are many users that use one of these patterns:
+> 
+> 	if (size <= some_threshold)
+> 		p = kmalloc(size);
+> 	else
+> 		p = vmalloc(size);
+> 
+> or
+> 
+> 	p = kmalloc(size);
+> 	if (!p)
+> 		p = vmalloc(size);
+> 
+> 
+> For example: alloc_fdmem, seq_buf_alloc, setxattr, getxattr, ipc_alloc, 
+> pidlist_allocate, get_pages_array, alloc_bucket_locks, 
+> frame_vector_create. If you grep the kernel for vmalloc, you'll find this 
+> pattern over and over again.
 
-What I will do is set this up via my jammer and capture a test using latest upstream.
+It is certainly good to address a common pattern by a helper if it makes
+to code easier to follo IMHO.
 
-Of course my customer pain points are all in the RHEL kernels so I need to capture a recovery trace
-on the latest upstream kernel.
+> 
+> In alloc_large_system_hash, there is
+> 	table = __vmalloc(size, GFP_ATOMIC, PAGE_KERNEL);
+> - that is clearly wrong because __vmalloc doesn't respect GFP_ATOMIC
 
-When the SCSI commands for a path are black-holed and remain that way, even with eh_deadline and the short circuited adapter resets 
-we simply try again and get back in the wait loop until we finally declare the device offline.
+I have seen this code some time already. I guess it was Al complaining
+about it but then I just forgot about it. I have no idea why GFP_ATOMIC
+was used there. This predates git times but it should be
+https://www.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10/2.6.10-mm1/broken-out/alloc_large_system_hash-numa-interleaving.patch
+The changelog is quite verbose but no mention about this ugliness.
 
-This can take a while and differs depending on Qlogic, Emulex or fnic etc.
+So I do agree that the above should be fixed and a common helper might
+be interesting but I am afraid we are getting off topic here.
 
-First thing tomorrow will set this up and show you what I mean.
+Thanks!
+-- 
+Michal Hocko
+SUSE Labs
 
-Thanks!!
-
-Laurence Oberman
-Principal Software Maintenance Engineer
-Red Hat Global Support Services
-
------ Original Message -----
-From: "Bart Van Assche" <bart.vanassche@sandisk.com>
-To: "Laurence Oberman" <loberman@redhat.com>
-Cc: linux-block@vger.kernel.org, "linux-scsi" <linux-scsi@vger.kernel.org>, "Mike Snitzer" <snitzer@redhat.com>, "James Bottomley" <James.Bottomley@HansenPartnership.com>, "device-mapper development" <dm-devel@redhat.com>, lsf@lists.linux-foundation.org
-Sent: Thursday, April 28, 2016 12:41:26 PM
-Subject: Re: [dm-devel] [Lsf] Notes from the four separate IO track sessions at LSF/MM
-
-On 04/28/2016 09:23 AM, Laurence Oberman wrote:
-> We still suffer from periodic complaints in our large customer base
- > regarding the long recovery times for dm-multipath.
-> Most of the time this is when we have something like a switch
- > back-plane issue or an issue where RSCN'S are blocked coming back up
- > the fabric. Corner cases still bite us often.
->
-> Most of the complaints originate from customers for example seeing
- > Oracle cluster evictions where during the waiting on the mid-layer
- > all mpath I/O is blocked until recovery.
->
-> We have to tune eh_deadline, eh_timeout and fast_io_fail_tmo but
- > even tuning those we have to wait on serial recovery even if we
- > set the timeouts low.
->
-> Lately we have been living with
-> eh_deadline=10
-> eh_timeout=5
-> fast_fail_io_tmo=10
-> leaving default sd timeout at 30s
->
-> So this continues to be an issue and I have specific examples using
- > the jammer I can provide showing the serial recovery times here.
-
-Hello Laurence,
-
-The long recovery times you refer to, is that for a scenario where all 
-paths failed or for a scenario where some paths failed and other paths 
-are still working? In the latter case, how long does it take before 
-dm-multipath fails over to another path?
-
-Thanks,
-
-Bart.
 --
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
