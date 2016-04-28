@@ -1,74 +1,72 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Notes from the four separate IO track sessions at LSF/MM
-Date: Thu, 28 Apr 2016 08:11:08 -0400
-Message-ID: <20160428121108.GA9903@redhat.com>
-References: <1461800389.2311.70.camel@HansenPartnership.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1461800389.2311.70.camel@HansenPartnership.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: linux-scsi <linux-scsi@vger.kernel.org>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, lsf@lists.linux-foundation.org
+From: Michal Hocko <mhocko@kernel.org>
+Subject: [PATCH 19/20] md: simplify free_params for kmalloc vs vmalloc fallback
+Date: Thu, 28 Apr 2016 15:24:05 +0200
+Message-ID: <1461849846-27209-20-git-send-email-mhocko@kernel.org>
+References: <1461849846-27209-1-git-send-email-mhocko@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1461849846-27209-1-git-send-email-mhocko@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Shaohua Li <shli@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Apr 27 2016 at  7:39pm -0400,
-James Bottomley <James.Bottomley@HansenPartnership.com> wrote:
+From: Michal Hocko <mhocko@suse.com>
+
+Use kvfree rather than DM_PARAMS_[KV]MALLOC specific param flags.
+
+Cc: Shaohua Li <shli@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com
+Signed-off-by: Michal Hocko <mhocko@suse.com>
+---
+ drivers/md/dm-ioctl.c | 19 ++++---------------
+ 1 file changed, 4 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index fe0b57d7573c..2b48c49774bc 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1670,19 +1670,14 @@ static int check_version(unsigned int cmd, struct dm_ioctl __user *user)
+ 	return r;
+ }
  
-> Multipath - Mike Snitzer
-> ------------------------
-> 
-> Mike began with a request for feedback, which quickly lead to the
-> complaint that recovery time (and how you recover) was one of the
-> biggest issues in device mapper multipath (dmmp) for those in the room.
->   This is primarily caused by having to wait for the pending I/O to be
-> released by the failing path. Christoph Hellwig said that NVMe would
-> soon do path failover internally (without any need for dmmp) and asked
-> if people would be interested in a more general implementation of this.
->  Martin Petersen said he would look at implementing this in SCSI as
-> well.  The discussion noted that internal path failover only works in
-> the case where the transport is the same across all the paths and
-> supports some type of path down notification.  In any cases where this
-> isn't true (such as failover from fibre channel to iSCSI) you still
-> have to use dmmp.  Other benefits of internal path failover are that
-> the transport level code is much better qualified to recognise when the
-> same device appears over multiple paths, so it should make a lot of the
-> configuration seamless.  The consequence for end users would be that
-> now SCSI devices would become handles for end devices rather than
-> handles for paths to end devices.
-
-I must've been so distracted by the relatively baseless nature of
-Christoph's desire to absorb multipath functionality into NVMe (at least
-as Christoph presented/defended) that I completely missed the existing
-SCSI error recovery woes as something that is DM multipath's fault.
-There was a session earlier in LSF that dealt with the inefficiencies of
-SCSI error recovery and the associated issues have _nothing_ to do with
-DM multipath.  So please clarify how pushing multipath (failover) down
-into the drivers will fix the much more problematic SCSI error recovery.
-
-Also, there was a lot of cross-talk during this session so I never heard
-that Martin is talking about following Christoph's approach to push
-multipath (failover) down to SCSI.  In fact Christoph advocated that DM
-multipath carry on being used for SCSI and that only NVMe adopt his
-approach.  So this comes as a surprise.
-
-What wasn't captured in your summary is the complete lack of substance
-to justify these changes.  The verdict is still very much out on the
-need for NVMe to grow multipath functionality (let alone SCSI drivers).
-Any work that i done in this area really needs to be justified with
-_real_ data.
-
-The other _major_ gripe expressed during the session was how the
-userspace multipath-tools are too difficult and complex for users.
-IIRC these complaints really weren't expressed in ways that could be
-used to actually _fix_ the perceived shortcomings but nevertheless...
-
-Full disclosure: I'll be looking at reinstating bio-based DM multipath to
-regain efficiencies that now really matter when issuing IO to extremely
-fast devices (e.g. NVMe).  bio cloning is now very cheap (due to
-immutable biovecs), coupled with the emerging multipage biovec work that
-will help construct larger bios, so I think it is worth pursuing to at
-least keep our options open.
-
-Mike
+-#define DM_PARAMS_KMALLOC	0x0001	/* Params alloced with kmalloc */
+-#define DM_PARAMS_VMALLOC	0x0002	/* Params alloced with vmalloc */
+-#define DM_WIPE_BUFFER		0x0010	/* Wipe input buffer before returning from ioctl */
++#define DM_WIPE_BUFFER		0x0001	/* Wipe input buffer before returning from ioctl */
+ 
+ static void free_params(struct dm_ioctl *param, size_t param_size, int param_flags)
+ {
+ 	if (param_flags & DM_WIPE_BUFFER)
+ 		memset(param, 0, param_size);
+ 
+-	if (param_flags & DM_PARAMS_KMALLOC)
+-		kfree(param);
+-	if (param_flags & DM_PARAMS_VMALLOC)
+-		vfree(param);
++	kvfree(param);
+ }
+ 
+ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kernel,
+@@ -1714,17 +1709,11 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kern
+ 	 * Use kmalloc() rather than vmalloc() when we can.
+ 	 */
+ 	dmi = NULL;
+-	if (param_kernel->data_size <= KMALLOC_MAX_SIZE) {
++	if (param_kernel->data_size <= KMALLOC_MAX_SIZE)
+ 		dmi = kmalloc(param_kernel->data_size, GFP_KERNEL | __GFP_NORETRY | __GFP_NOWARN);
+-		if (dmi)
+-			*param_flags |= DM_PARAMS_KMALLOC;
+-	}
+ 
+-	if (!dmi) {
++	if (!dmi)
+ 		dmi = __vmalloc(param_kernel->data_size, GFP_KERNEL | __GFP_HIGH | __GFP_HIGHMEM, PAGE_KERNEL);
+-		if (dmi)
+-			*param_flags |= DM_PARAMS_VMALLOC;
+-	}
+ 
+ 	if (!dmi) {
+ 		if (secure_data && clear_user(user, param_kernel->data_size))
+-- 
+2.8.0.rc3
