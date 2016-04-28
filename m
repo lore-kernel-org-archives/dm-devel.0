@@ -1,20 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: multipath-0.5.0 still provides broken udev rules
-Date: Thu, 28 Apr 2016 08:23:44 +0200
-Message-ID: <5721AC70.3070606@suse.de>
-References: <CAE+k_g+Eh3H1EAiJ0jm7P-efGbOOwpWRtYmvXyR9qhhHtefV7g@mail.gmail.com>
-	<571DF852.6030604@redhat.com>
-	<CAE+k_gKQcx+QR9bfEp1Wy8BawD14L2G5O0Yw-d0=CffBHqYbrA@mail.gmail.com>
-	<571E0E7A.4050703@redhat.com>
-	<CABr-GnfxOKz8gxDju20Hx3T9Tn74Zz9FhjF1dBk8weEBJMOmLg@mail.gmail.com>
-	<1986ca6b-d281-4faf-2b50-11c3dc132463@gmail.com>
-	<571F026C.5040102@suse.de>
-	<20160427224601.GG26117@octiron.msp.redhat.com>
+From: Matthias Dahl <ml_linux-dm-devel@binary-island.eu>
+Subject: Re: [4.4, 4.5,
+ 4.6] Regression: encrypted swap (dm-crypt) freezes system while
+ under memory pressure and swapping
+Date: Thu, 28 Apr 2016 11:04:02 +0200
+Message-ID: <281fb825-8c01-ec00-2442-b91be891507f@binary-island.eu>
+References: <26e0640c-40b0-5121-5d85-727d4fef82c5@binary-island.eu>
+	<f42fde0f-fb4c-89a5-6199-bf7dd42c97d0@binary-island.eu>
+	<5720D714.9010504@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="------------79430686CA0B7B28BA02655B"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160427224601.GG26117@octiron.msp.redhat.com>
+In-Reply-To: <5720D714.9010504@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,104 +20,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Peter Volkov <peter.volkov@gmail.com>, device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Zdenek Kabelac <zkabelac@redhat.com>
+To: dm-devel@redhat.com
+Cc: Ondrej Kozina <okozina@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDQvMjgvMjAxNiAxMjo0NiBBTSwgQmVuamFtaW4gTWFyemluc2tpIHdyb3RlOgo+IE9uIFR1
-ZSwgQXByIDI2LCAyMDE2IGF0IDA3OjUzOjQ4QU0gKzAyMDAsIEhhbm5lcyBSZWluZWNrZSB3cm90
-ZToKPj4gT24gMDQvMjUvMjAxNiAxMDoxNCBQTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+
-Pj4gT24gMDQvMjUvMjAxNiAwMjo1NiBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+Pj4K
-Pj4+PiBUaG9zZSBleGFtcGxlIHVkZXYgcnVsZXMgYXJlIGluZGVlZCB1bm1haW50YWluZWQgYW5k
-IHNob3VsZCBiZQo+Pj4+IHJlbW92ZWQgbm90IHRvIGNvbmZ1c2UgZGlzdHJpYnV0b3JzLgo+Pj4+
-Cj4+Pj4gRGlzdHJpYnV0b3JzIGNhbid0IGJlIGFza2VkIHRvIGFncmVlIG9uIGEgY29tbW9uIHVk
-ZXYgcnVsZXNldC4KPj4+PiBCZW4sIEhhbm5lcywgWG9zw6ksIFBldGVyIGFyZSB5b3Ugb2sgd2l0
-aCBteSBkZWxldGluZyB0aGUgdWRldiBydWxlcyBleGFtcGxlID8KPj4+Cj4+PiBGaW5lIHdpdGgg
-bWUuCj4+Pgo+Pj4gQnR3LCBhcmUgdGhlc2UgcmVsZXZhbnQgPwo+IAo+IEZvciBhbGwgdGhhdCBJ
-IGRpZG4ndCBjb21tZW50IG9uLCBJIGZlZWwgdGhlIHNhbWUgd2F5IGFzIEhhbm5lcy4KPiAKPj4+
-IGdldHVpZC91c2JfaWQKPj4gSHVoPyBXaGF0IGlzIHRoYXQgZG9pbmcgdGhlcmU/Cj4+IEl0IHNo
-b3VsZCByZWFsbHkgaGF2ZSBiZWVuIG1vdmVkIHRvIHRoZSB1ZGV2IHBhY2thZ2UgLi4uCj4+Cj4+
-PiBrcGFydHgva3BhcnR4X2lkCj4+PiBrcGFydHgva3BhcnR4LnJ1bGVzCj4+IFNlZSBhYm92ZS4g
-WWVzLCB0aGV5IGFyZSByZWxldmFudCAoYXQgbGVhc3QgZm9yIHVzKQo+IAo+IExpa2UgSSBzYWlk
-LCBSZWQgSGF0IGRvZXNuJ3QgdXNlIHRoZW0uIEknbGwgcG9zdCBvdXIgbXVsdGlwYXRoLnJ1bGVz
-Cj4gc2hvcnRseS4KPiAKV2hpY2ggd291bGQgYmUgY29vbC4KSSB3YXMgYWN0dWFsbHkgaG9waW5n
-IHRvIG1lZXQgeW91IGluIFJhbGVpZ2ggbGFzdCB3ZWVrLCBidXQgdGhlbiBpdApkaWRuJ3Qgd29y
-ayBvdXQuCgo+Pj4gbXVsdGlwYXRoLzAxX3VkZXYKPj4+IG11bHRpcGF0aC8wMl9tdWx0aXBhdGgK
-Pj4gTm90IHVzZWQgYW55bW9yZSB3aXRoIHN5c3RlbWQvZHJhY3V0Cj4+Cj4+PiBtdWx0aXBhdGgv
-MTEtZG0tbXBhdGgucnVsZXMKPj4gWWVwLiBBYnNvbHV0ZWx5IHJlcXVpcmVkLgo+Pgo+Pj4gbXVs
-dGlwYXRoLmNvbmYuYW5ub3RhdGVkCj4+PiBtdWx0aXBhdGguY29uZi5kZWZhdWx0cwo+Pj4gbXVs
-dGlwYXRoLmNvbmYuc3ludGhldGljCj4+IEFjdHVhbGx5LCBJIG5ldmVyIHNhdyB0aGUgbmVlZCBm
-b3IgdGhvc2UuCj4+IENhbiB3ZSBhdCBsZWFzdCBoYXZlIHRoZW0gbWVyZ2VkPwo+IAo+IEkgZG9u
-J3QgdGhpbmsgdGhleSBhcmUgYmVpbmcga2VwdCB1cCB0byBkYXRlIGFueW1vcmUuICBUaGUgJ2Rl
-ZmF1bHRzJwo+IGluZm9ybWF0aW9uIGNhbiBiZSBnb3R0ZW4gZnJvbSBhIHJ1bm5pbmcgc3lzdGVt
-LCBhbmQgaXQgaW5jbHVkZXMgdGhlCj4gY2hhbmdlcyBmcm9tIHRoZSBjb25maWcgZmlsZXMsIHNv
-IGl0J3MgbXVjaCBtb3JlIHVzZWZ1bC4gSSBoYXZlIG5vIGlkZWEKPiB3aGF0IHBlb3BsZSB3b3Vs
-ZCB1c2UgJ3N5bnRoZXRpYycgZm9yIGJlc2lkZXMgYW4gZXhhbXBsZSBvZiB3aGF0IGEKPiBjb25m
-aWcgd291bGQgbG9vayBsaWtlLiBBbmQgdGhlICdhbm5vdGF0ZWQnIGluZm9ybWF0aW9uIGlzIGFs
-bCBpbiB0aGUKPiBtdWx0aXBhdGguY29uZiBtYW5wYWdlLiBSZWQgSGF0IGRvZXNuJ3Qgc2hpcCB0
-aGVzZSBmaWxlcyBhbnltb3JlLiBJJ2QgYmUKPiBoYXBweSB0byBzZWUgdGhlbSBnby4KPiAgCkNv
-dWxkbid0IGFncmVlIG1vcmUuCkxldCdzIGRyb3AgdGhlbS4KCj4+PiBtdWx0aXBhdGhkL211bHRp
-cGF0aGQuaW5pdC5kZWJpYW4KPj4+IG11bHRpcGF0aGQvbXVsdGlwYXRoZC5pbml0LnJlZGhhdAo+
-Pj4gbXVsdGlwYXRoZC9tdWx0aXBhdGhkLmluaXQuc3VzZQo+PiBPbGQgaW5pdCBzY3JpcHRzOyBk
-b3VidGZ1bCB2YWx1ZS4KPj4KPj4+IG11bHRpcGF0aGQvbXVsdGlwYXRoZC5zZXJ2aWNlCj4+PiBt
-dWx0aXBhdGhkL211bHRpcGF0aGQuc29ja2V0Cj4+IHN5c3RlbWQgc2VydmljZSBkZWZpbml0aW9u
-cy4gWWVzLCByZXF1aXJlZC4KPiAKPiBSZWQgSGF0IGhhcyBhIHNsaWdodGx5IGRpZmZlcmVudCBt
-dWx0aXBhdGhkLnNlcnZpY2UgZmlsZSwgYW5kIHdlIGRvbid0Cj4gc2hpcCB0aGUgc29ja2V0IGZp
-bGUuICBTaW5jZSBtdWx0aXBhdGhkIHNob3VsZCBhbHdheXMgYmUgcnVubmluZywgSQo+IGRvbid0
-IHJlYWxseSBzZWUgdGhlIG5lZWQuIEFsc28sIGlmIHlvdSBzdGFydCBtdWx0aXBhdGhkIG1hbnVh
-bGx5Cj4gKGluc3RlYWQgb2YgdGhyb3VnaCB1ZGV2KSB0aGlzIGNhdXNlcyBwcm9ibGVtcyB3aXRo
-IG11bHRpcGF0aGQgbm90Cj4gZ2V0dGluZyBtZXNzYWdlcy4KPiAKSG1tLiBBY3R1YWxseSwgSSBx
-dWl0ZSBsaWtlIHRoZSBzeXN0ZW1kIGludGVncmF0aW9uOyBpdCBhbGxvd3MgbWUgdG8Kc2lnbmFs
-IHRoZSBpbnRlcm5hbCBtdWx0aXBhdGhkIHN0YXRlIGJhY2sgdG8gc3lzdGVtZDoKCiMgc3lzdGVt
-Y3RsIHN0YXR1cyBtdWx0aXBhdGhkCm11bHRpcGF0aGQuc2VydmljZSAtIERldmljZS1NYXBwZXIg
-TXVsdGlwYXRoIERldmljZSBDb250cm9sbGVyCiAgIExvYWRlZDogbG9hZGVkICgvdXNyL2xpYi9z
-eXN0ZW1kL3N5c3RlbS9tdWx0aXBhdGhkLnNlcnZpY2U7IGVuYWJsZWQpCiAgIEFjdGl2ZTogYWN0
-aXZlIChydW5uaW5nKSBzaW5jZSBXZWQgMjAxNi0wNC0yNyAxMjozOTo1OSBDRVNUOyAxOWggYWdv
-CiBNYWluIFBJRDogNjkxMyAobXVsdGlwYXRoZCkKICAgU3RhdHVzOiAiaWRsZSIKICAgQ0dyb3Vw
-OiAvc3lzdGVtLnNsaWNlL211bHRpcGF0aGQuc2VydmljZQogICAgICAgICAgIOKUlOKUgDY5MTMg
-L3NiaW4vbXVsdGlwYXRoZCAtZCAtcwoKV2hpY2ggSSBmaW5kIHF1aXRlIG5lYXQuIEFuZCBJIGd1
-ZXNzIHdlIHNob3VsZCBiZSBhYmxlIHRvIG92ZXJjb21lCnRoZSBtYW51YWxseSBzdGFydGVkIGlz
-c3VlIGJ5IGNoZWNraW5nIGlmIHRoZSBzb2NrZXQgaXMgcHJlc2VudCwgYW5kCmp1c3QgZXhlY3V0
-ZSBhICdyZWNvbmZpZ3VyZScgY29tbWFuZCBpZiBzby4KTGV0IG1lIHNlZSAuLi4KCj4gRm9yIHRo
-b3NlIGludGVyZXN0ZWQsIGhlcmUncyBhIGRpZmYgb2Ygb3VyIG11bHRpcGF0aC5zZXJ2aWNlCj4g
-Cj4gZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvbXVsdGlwYXRoZC5zZXJ2aWNlCj4gYi9tdWx0aXBh
-dGhkL211bHRpcGF0aGQuc2VydmljZQo+IGluZGV4IGQ1Zjg2MDYuLjFlNWRmYWIgMTAwNjQ0Cj4g
-LS0tIGEvbXVsdGlwYXRoZC9tdWx0aXBhdGhkLnNlcnZpY2UKPiArKysgYi9tdWx0aXBhdGhkL211
-bHRpcGF0aGQuc2VydmljZQo+IEBAIC0yLDkgKzIsMTAgQEAKPiAgRGVzY3JpcHRpb249RGV2aWNl
-LU1hcHBlciBNdWx0aXBhdGggRGV2aWNlIENvbnRyb2xsZXIKPiAgQmVmb3JlPWlzY3NpLnNlcnZp
-Y2UgaXNjc2lkLnNlcnZpY2UgbHZtMi1hY3RpdmF0aW9uLWVhcmx5LnNlcnZpY2UKPiAgQmVmb3Jl
-PWxvY2FsLWZzLXByZS50YXJnZXQKPiAtQWZ0ZXI9bXVsdGlwYXRoZC5zb2NrZXQKPiArQ29uZGl0
-aW9uUGF0aEV4aXN0cz0vZXRjL211bHRpcGF0aC5jb25mCj4gK0NvbmRpdGlvbktlcm5lbENvbW1h
-bmRMaW5lPSFub21wYXRoCj4gIERlZmF1bHREZXBlbmRlbmNpZXM9bm8KPiAtV2FudHM9bG9jYWwt
-ZnMtcHJlLnRhcmdldCBtdWx0aXBhdGhkLnNvY2tldCBibGstYXZhaWxhYmlsaXR5LnNlcnZpY2UK
-PiArV2FudHM9bG9jYWwtZnMtcHJlLnRhcmdldCBibGstYXZhaWxhYmlsaXR5LnNlcnZpY2UKPiAg
-Q29uZmxpY3RzPXNodXRkb3duLnRhcmdldAo+ICAKPiAgW1NlcnZpY2VdCj4gQEAgLTEyLDkgKzEz
-LDkgQEAgVHlwZT1ub3RpZnkKPiAgTm90aWZ5QWNjZXNzPW1haW4KPiAgTGltaXRDT1JFPWluZmlu
-aXR5Cj4gIEV4ZWNTdGFydFByZT0vc2Jpbi9tb2Rwcm9iZSBkbS1tdWx0aXBhdGgKPiArRXhlY1N0
-YXJ0UHJlPS0vc2Jpbi9tdWx0aXBhdGggLUEKPiAgRXhlY1N0YXJ0PS9zYmluL211bHRpcGF0aGQg
-LWQgLXMKPiAgRXhlY1JlbG9hZD0vc2Jpbi9tdWx0aXBhdGhkIHJlY29uZmlndXJlCj4gIAo+ICBb
-SW5zdGFsbF0KPiAgV2FudGVkQnk9c3lzaW5pdC50YXJnZXQKPiAtQWxzbz1tdWx0aXBhdGhkLnNv
-Y2tldAo+IAo+IAo+IEFzaWRlIGZyb20gZHJvcHBpbmcgdGhlIHNvY2tldCwgaXQgY2hlY2tzIHRo
-YXQgL2V0Yy9tdWx0aXBhdGguY29uZgo+IGV4aXN0cywgYW5kIHRoYXQgdGhlIGtlcm5lbCB3YXNu
-J3Qgc3RhcnRlZCB3aXRoICJub21wYXRoIi4gQWxzbyBpdCBydW5zCj4gIm11bHRpcGF0aCAtQSIg
-dGhpcyByZWFkcyB0aGUga2VybmVsIGNvbW1hbmRsaW5lIGZyb20gL3Byb2MvY21kbGluZSwgYW5k
-Cj4gYWRkcyBhbnkgd3dpZHMgbGlzdGVkIGFzIHBhcnQgb2YgYW55IG1wYXRoLnd3aWQ9PHd3aWQ+
-IHBhcmFtZXRlcnMuCj4gSGFubmVzIE5BQ0tlZCB0aGlzIHBhdGNoLCBzbyB0aGUgb3B0aW9uIGlz
-bid0IHByZXNlbnQgdXBzdGVhbS4KPiAKPiAgCkhtbS4gQWN0dWFsbHksIEkgZG8gbGlrZSB0aGUg
-J25vbXBhdGgnIGNoZWNraW5nOyB3ZSBkbyBsYWNrIHRoZQpjYXBhYmlsaXR5IG9mIHN3aXRjaGlu
-ZyBvZmYgbXVsdGlwYXRoIGZyb20gdGhlIGtlcm5lbCBjb21tYW5kbGluZQpBVE0uIFNvIHllcywg
-d2Ugc2hvdWxkIGJlIGluY2x1ZGluZyB0aGF0IGJpdC4KCkFzIGZvciAvZXRjL211bHRpcGF0aC5j
-b25mIC4uLiBUaGUgb3JpZ2luYWwgc2V0dXAgaGFzIGJlZW4gc2hpcHBpbmcKd2l0aG91dCBhbnkg
-bXVsdGlwYXRoLmNvbmYgZmlsZS4gU28gSSB3b3VsZCBiZSBva2F5IHdpdGggdGhpcyBjaGFuZ2UK
-aWYgd2UgY2FuIGd1YXJhbnRlZSB0aGF0IC9ldGMvbXVsdGlwYXRoLmNvbmYgd2lsbCBhbHdheXMg
-YmUgZXhpc3RpbmcuClNlZWluZyB0aGF0IHlvdSdyZSBydW5uaW5nICdtdWx0aXBhdGggLUEnIHRv
-IGFkZCBhbnkgd3dpZHMsIHdvdWxkbid0CnRoYXQgYmUgc3VmZmljaWVudD8KSUUgd2h5IGRvIHdl
-IG5lZWQgdGhlIGNoZWNrIGZvciAvZXRjL211bHRpcGF0aC5jb25mIGhlcmU7IGNvdWxkbid0Cndl
-IG1ha2UgJ211bHRpcGF0aCAtQScgcmV0dXJuIG5vbi16ZXJvIHRvIGF2b2lkIG11bHRpcGF0aGQg
-dG8gYmUKc3RhcnRlZD8KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJ
-ICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAgICAg
-ICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5
-MDQwOSBOw7xybmJlcmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxk
-LCBELiBVcG1hbnl1LCBHLiBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1k
-ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
-Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+This is a multi-part message in MIME format.
+--------------79430686CA0B7B28BA02655B
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+
+Hello Ondrej...
+
+Thanks for taking the time.
+
+On 27/04/16 17:13, Ondrej Kozina wrote:
+
+> I observe that putting swap on top of dm-crypt (tested in current 4.6-rc
+> kernel) have some unexpected side effects. Most notably it seems to me
+> that oom killer joins the party quite prematurely even when there
+> remains plenty of free swap space (almost all). But I didn't experience
+> any permanent system freeze or crash. Just, let us dig deeper for a
+> while...
+
+Yes, 4.6-rc* behaves different from 4.4.x and >= 4.5-rc3 but it still
+does not work correctly at all. You may want to try the little test
+program I created and attached. I used it quite a lot to stress the system.
+
+With that, you should have no problem seeing the described behavior on
+the affected kernels. You may have to adjust the sleep a bit, depending
+on your machine, though.
+
+If there is anything else I can do to help, please let me know.
+
+Have a nice day,
+Matthias
+
+-- 
+Dipl.-Inf. (FH) Matthias Dahl | Software Engineer | binary-island.eu
+ services: custom software [desktop, mobile, web], server administration
+
+--------------79430686CA0B7B28BA02655B
+Content-Type: text/x-c++src;
+ name="main.cpp"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+ filename="main.cpp"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+    unsigned long chunkSize = 1 << 20;       // 1 MiB per \ total mem alloc
+    unsigned long maxRuns   = 8 * (1 << 10); // 2^10 runs / of 8 GiB
+    void* buffer  = NULL;
+
+    if(argc == 3)
+    {
+        chunkSize = atol(argv[1]);
+        maxRuns   = atol(argv[2]);
+    }
+
+    unsigned long maxMemAllocInMB    = (chunkSize * maxRuns) / (1 << 20);
+    unsigned long curMemAllocInBytes = 0;
+
+    for(unsigned int i = 0; i < maxRuns; ++i)
+    {
+        buffer = malloc(chunkSize);
+        memset(buffer, 0, chunkSize);
+
+        curMemAllocInBytes += chunkSize;
+        printf("%lu MB / %lu MiB allocated (%lu bytes).\n", (curMemAllocInBytes / (1 << 20)), maxMemAllocInMB, curMemAllocInBytes);
+
+        usleep(500);
+    }
+
+    return 0;
+}
+
+--------------79430686CA0B7B28BA02655B
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------79430686CA0B7B28BA02655B--
