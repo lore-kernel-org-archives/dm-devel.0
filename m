@@ -1,7 +1,7 @@
 From: Michal Hocko <mhocko@kernel.org>
-Subject: [PATCH 19/20] md: simplify free_params for kmalloc vs vmalloc fallback
-Date: Thu, 28 Apr 2016 15:24:05 +0200
-Message-ID: <1461849846-27209-20-git-send-email-mhocko@kernel.org>
+Subject: [PATCH 18/20] dm: clean up GFP_NIO usage
+Date: Thu, 28 Apr 2016 15:24:04 +0200
+Message-ID: <1461849846-27209-19-git-send-email-mhocko@kernel.org>
 References: <1461849846-27209-1-git-send-email-mhocko@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1461849846-27209-1-git-send-email-mhocko@kernel.org>
@@ -12,61 +12,78 @@ List-Id: dm-devel.ids
 
 From: Michal Hocko <mhocko@suse.com>
 
-Use kvfree rather than DM_PARAMS_[KV]MALLOC specific param flags.
+copy_params uses GFP_NOIO for explicit allocation requests because this
+might be called from the suspend path. To quote Mikulas:
+: The LVM tool calls suspend and resume ioctls on device mapper block
+: devices.
+:
+: When a device is suspended, any bio sent to the device is held. If the
+: resume ioctl did GFP_KERNEL allocation, the allocation could get stuck
+: trying to write some dirty cached pages to the suspended device.
+:
+: The LVM tool and the dmeventd daemon use mlock to lock its address space,
+: so the copy_from_user/copy_to_user call cannot trigger a page fault.
+
+Relying on the mlock is quite fragile and we have a better way in kernel
+to enfore NOIO which is already used for the vmalloc fallback. Just use
+memalloc_noio_{save,restore} around the whole copy_params function which
+will force the same also to the page fult paths via copy_{from,to}_user.
+
+While we are there we can also remove __GFP_NOMEMALLOC because copy_params
+is never called from MEMALLOC context (e.g. during the reclaim).
 
 Cc: Shaohua Li <shli@kernel.org>
 Cc: Mikulas Patocka <mpatocka@redhat.com>
 Cc: dm-devel@redhat.com
 Signed-off-by: Michal Hocko <mhocko@suse.com>
 ---
- drivers/md/dm-ioctl.c | 19 ++++---------------
- 1 file changed, 4 insertions(+), 15 deletions(-)
+ drivers/md/dm-ioctl.c | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index fe0b57d7573c..2b48c49774bc 100644
+index 2c7ca258c4e4..fe0b57d7573c 100644
 --- a/drivers/md/dm-ioctl.c
 +++ b/drivers/md/dm-ioctl.c
-@@ -1670,19 +1670,14 @@ static int check_version(unsigned int cmd, struct dm_ioctl __user *user)
- 	return r;
- }
- 
--#define DM_PARAMS_KMALLOC	0x0001	/* Params alloced with kmalloc */
--#define DM_PARAMS_VMALLOC	0x0002	/* Params alloced with vmalloc */
--#define DM_WIPE_BUFFER		0x0010	/* Wipe input buffer before returning from ioctl */
-+#define DM_WIPE_BUFFER		0x0001	/* Wipe input buffer before returning from ioctl */
- 
- static void free_params(struct dm_ioctl *param, size_t param_size, int param_flags)
- {
- 	if (param_flags & DM_WIPE_BUFFER)
- 		memset(param, 0, param_size);
- 
--	if (param_flags & DM_PARAMS_KMALLOC)
--		kfree(param);
--	if (param_flags & DM_PARAMS_VMALLOC)
--		vfree(param);
-+	kvfree(param);
- }
- 
- static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kernel,
-@@ -1714,17 +1709,11 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kern
- 	 * Use kmalloc() rather than vmalloc() when we can.
+@@ -1715,16 +1715,13 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kern
  	 */
  	dmi = NULL;
--	if (param_kernel->data_size <= KMALLOC_MAX_SIZE) {
-+	if (param_kernel->data_size <= KMALLOC_MAX_SIZE)
- 		dmi = kmalloc(param_kernel->data_size, GFP_KERNEL | __GFP_NORETRY | __GFP_NOWARN);
--		if (dmi)
--			*param_flags |= DM_PARAMS_KMALLOC;
--	}
- 
--	if (!dmi) {
-+	if (!dmi)
- 		dmi = __vmalloc(param_kernel->data_size, GFP_KERNEL | __GFP_HIGH | __GFP_HIGHMEM, PAGE_KERNEL);
--		if (dmi)
--			*param_flags |= DM_PARAMS_VMALLOC;
--	}
+ 	if (param_kernel->data_size <= KMALLOC_MAX_SIZE) {
+-		dmi = kmalloc(param_kernel->data_size, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
++		dmi = kmalloc(param_kernel->data_size, GFP_KERNEL | __GFP_NORETRY | __GFP_NOWARN);
+ 		if (dmi)
+ 			*param_flags |= DM_PARAMS_KMALLOC;
+ 	}
  
  	if (!dmi) {
- 		if (secure_data && clear_user(user, param_kernel->data_size))
+-		unsigned noio_flag;
+-		noio_flag = memalloc_noio_save();
+-		dmi = __vmalloc(param_kernel->data_size, GFP_NOIO | __GFP_HIGH | __GFP_HIGHMEM, PAGE_KERNEL);
+-		memalloc_noio_restore(noio_flag);
++		dmi = __vmalloc(param_kernel->data_size, GFP_KERNEL | __GFP_HIGH | __GFP_HIGHMEM, PAGE_KERNEL);
+ 		if (dmi)
+ 			*param_flags |= DM_PARAMS_VMALLOC;
+ 	}
+@@ -1801,6 +1798,7 @@ static int ctl_ioctl(uint command, struct dm_ioctl __user *user)
+ 	ioctl_fn fn = NULL;
+ 	size_t input_param_size;
+ 	struct dm_ioctl param_kernel;
++	unsigned noio_flag;
+ 
+ 	/* only root can play with this */
+ 	if (!capable(CAP_SYS_ADMIN))
+@@ -1832,9 +1830,12 @@ static int ctl_ioctl(uint command, struct dm_ioctl __user *user)
+ 	}
+ 
+ 	/*
+-	 * Copy the parameters into kernel space.
++	 * Copy the parameters into kernel space. Make sure that no IO is triggered
++	 * from the allocation paths because this might be called during the suspend.
+ 	 */
++	noio_flag = memalloc_noio_save();
+ 	r = copy_params(user, &param_kernel, ioctl_flags, &param, &param_flags);
++	memalloc_noio_restore(noio_flag);
+ 
+ 	if (r)
+ 		return r;
 -- 
 2.8.0.rc3
