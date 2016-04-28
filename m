@@ -1,7 +1,7 @@
 From: Michal Hocko <mhocko@kernel.org>
-Subject: [PATCH 18/20] dm: clean up GFP_NIO usage
-Date: Thu, 28 Apr 2016 15:24:04 +0200
-Message-ID: <1461849846-27209-19-git-send-email-mhocko@kernel.org>
+Subject: [PATCH 17/20] dm: get rid of superfluous gfp flags
+Date: Thu, 28 Apr 2016 15:24:03 +0200
+Message-ID: <1461849846-27209-18-git-send-email-mhocko@kernel.org>
 References: <1461849846-27209-1-git-send-email-mhocko@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1461849846-27209-1-git-send-email-mhocko@kernel.org>
@@ -12,78 +12,35 @@ List-Id: dm-devel.ids
 
 From: Michal Hocko <mhocko@suse.com>
 
-copy_params uses GFP_NOIO for explicit allocation requests because this
-might be called from the suspend path. To quote Mikulas:
-: The LVM tool calls suspend and resume ioctls on device mapper block
-: devices.
-:
-: When a device is suspended, any bio sent to the device is held. If the
-: resume ioctl did GFP_KERNEL allocation, the allocation could get stuck
-: trying to write some dirty cached pages to the suspended device.
-:
-: The LVM tool and the dmeventd daemon use mlock to lock its address space,
-: so the copy_from_user/copy_to_user call cannot trigger a page fault.
-
-Relying on the mlock is quite fragile and we have a better way in kernel
-to enfore NOIO which is already used for the vmalloc fallback. Just use
-memalloc_noio_{save,restore} around the whole copy_params function which
-will force the same also to the page fult paths via copy_{from,to}_user.
-
-While we are there we can also remove __GFP_NOMEMALLOC because copy_params
-is never called from MEMALLOC context (e.g. during the reclaim).
+copy_params seems to be little bit confused about which allocation flags
+to use. It enforces GFP_NOIO even though it uses
+memalloc_noio_{save,restore} which enforces GFP_NOIO at the page
+allocator level automatically (via memalloc_noio_flags). It also
+uses __GFP_REPEAT for the __vmalloc request which doesn't make much
+sense either because vmalloc doesn't rely on costly high order
+allocations. Let's just drop the __GFP_REPEAT and leave the further
+cleanup to later changes.
 
 Cc: Shaohua Li <shli@kernel.org>
 Cc: Mikulas Patocka <mpatocka@redhat.com>
 Cc: dm-devel@redhat.com
 Signed-off-by: Michal Hocko <mhocko@suse.com>
 ---
- drivers/md/dm-ioctl.c | 13 +++++++------
- 1 file changed, 7 insertions(+), 6 deletions(-)
+ drivers/md/dm-ioctl.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 2c7ca258c4e4..fe0b57d7573c 100644
+index 2adf81d81fca..2c7ca258c4e4 100644
 --- a/drivers/md/dm-ioctl.c
 +++ b/drivers/md/dm-ioctl.c
-@@ -1715,16 +1715,13 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kern
- 	 */
- 	dmi = NULL;
- 	if (param_kernel->data_size <= KMALLOC_MAX_SIZE) {
--		dmi = kmalloc(param_kernel->data_size, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-+		dmi = kmalloc(param_kernel->data_size, GFP_KERNEL | __GFP_NORETRY | __GFP_NOWARN);
- 		if (dmi)
- 			*param_flags |= DM_PARAMS_KMALLOC;
- 	}
- 
+@@ -1723,7 +1723,7 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kern
  	if (!dmi) {
--		unsigned noio_flag;
--		noio_flag = memalloc_noio_save();
--		dmi = __vmalloc(param_kernel->data_size, GFP_NOIO | __GFP_HIGH | __GFP_HIGHMEM, PAGE_KERNEL);
--		memalloc_noio_restore(noio_flag);
-+		dmi = __vmalloc(param_kernel->data_size, GFP_KERNEL | __GFP_HIGH | __GFP_HIGHMEM, PAGE_KERNEL);
+ 		unsigned noio_flag;
+ 		noio_flag = memalloc_noio_save();
+-		dmi = __vmalloc(param_kernel->data_size, GFP_NOIO | __GFP_REPEAT | __GFP_HIGH | __GFP_HIGHMEM, PAGE_KERNEL);
++		dmi = __vmalloc(param_kernel->data_size, GFP_NOIO | __GFP_HIGH | __GFP_HIGHMEM, PAGE_KERNEL);
+ 		memalloc_noio_restore(noio_flag);
  		if (dmi)
  			*param_flags |= DM_PARAMS_VMALLOC;
- 	}
-@@ -1801,6 +1798,7 @@ static int ctl_ioctl(uint command, struct dm_ioctl __user *user)
- 	ioctl_fn fn = NULL;
- 	size_t input_param_size;
- 	struct dm_ioctl param_kernel;
-+	unsigned noio_flag;
- 
- 	/* only root can play with this */
- 	if (!capable(CAP_SYS_ADMIN))
-@@ -1832,9 +1830,12 @@ static int ctl_ioctl(uint command, struct dm_ioctl __user *user)
- 	}
- 
- 	/*
--	 * Copy the parameters into kernel space.
-+	 * Copy the parameters into kernel space. Make sure that no IO is triggered
-+	 * from the allocation paths because this might be called during the suspend.
- 	 */
-+	noio_flag = memalloc_noio_save();
- 	r = copy_params(user, &param_kernel, ioctl_flags, &param, &param_flags);
-+	memalloc_noio_restore(noio_flag);
- 
- 	if (r)
- 		return r;
 -- 
 2.8.0.rc3
