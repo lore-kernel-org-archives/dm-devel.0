@@ -1,97 +1,74 @@
-From: Matthias Dahl <ml_linux-dm-devel@binary-island.eu>
-Subject: Re: [4.4, 4.5,
- 4.6] Regression: encrypted swap (dm-crypt) freezes system while
- under memory pressure and swapping
-Date: Thu, 28 Apr 2016 11:24:58 +0200
-Message-ID: <ac588d84-2610-cc50-1ec9-5e6097ce5f99@binary-island.eu>
-References: <26e0640c-40b0-5121-5d85-727d4fef82c5@binary-island.eu>
-	<f42fde0f-fb4c-89a5-6199-bf7dd42c97d0@binary-island.eu>
-	<5720D714.9010504@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Notes from the four separate IO track sessions at LSF/MM
+Date: Thu, 28 Apr 2016 08:11:08 -0400
+Message-ID: <20160428121108.GA9903@redhat.com>
+References: <1461800389.2311.70.camel@HansenPartnership.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------101A1D3317C87831FD1FBE57"
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5720D714.9010504@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Ondrej Kozina <okozina@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1461800389.2311.70.camel@HansenPartnership.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: linux-scsi <linux-scsi@vger.kernel.org>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, lsf@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------101A1D3317C87831FD1FBE57
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+On Wed, Apr 27 2016 at  7:39pm -0400,
+James Bottomley <James.Bottomley@HansenPartnership.com> wrote:
+ 
+> Multipath - Mike Snitzer
+> ------------------------
+> 
+> Mike began with a request for feedback, which quickly lead to the
+> complaint that recovery time (and how you recover) was one of the
+> biggest issues in device mapper multipath (dmmp) for those in the room.
+>   This is primarily caused by having to wait for the pending I/O to be
+> released by the failing path. Christoph Hellwig said that NVMe would
+> soon do path failover internally (without any need for dmmp) and asked
+> if people would be interested in a more general implementation of this.
+>  Martin Petersen said he would look at implementing this in SCSI as
+> well.  The discussion noted that internal path failover only works in
+> the case where the transport is the same across all the paths and
+> supports some type of path down notification.  In any cases where this
+> isn't true (such as failover from fibre channel to iSCSI) you still
+> have to use dmmp.  Other benefits of internal path failover are that
+> the transport level code is much better qualified to recognise when the
+> same device appears over multiple paths, so it should make a lot of the
+> configuration seamless.  The consequence for end users would be that
+> now SCSI devices would become handles for end devices rather than
+> handles for paths to end devices.
 
-Hello Ondrej...
+I must've been so distracted by the relatively baseless nature of
+Christoph's desire to absorb multipath functionality into NVMe (at least
+as Christoph presented/defended) that I completely missed the existing
+SCSI error recovery woes as something that is DM multipath's fault.
+There was a session earlier in LSF that dealt with the inefficiencies of
+SCSI error recovery and the associated issues have _nothing_ to do with
+DM multipath.  So please clarify how pushing multipath (failover) down
+into the drivers will fix the much more problematic SCSI error recovery.
 
-Sorry, I somehow managed to sent you the wrong version of the little C
-program. I wanted to clean it up before sending it and you got a nice
-in-between version between the old and new one. :-)
+Also, there was a lot of cross-talk during this session so I never heard
+that Martin is talking about following Christoph's approach to push
+multipath (failover) down to SCSI.  In fact Christoph advocated that DM
+multipath carry on being used for SCSI and that only NVMe adopt his
+approach.  So this comes as a surprise.
 
-Double-checked now, that's the right one. Sorry.
+What wasn't captured in your summary is the complete lack of substance
+to justify these changes.  The verdict is still very much out on the
+need for NVMe to grow multipath functionality (let alone SCSI drivers).
+Any work that i done in this area really needs to be justified with
+_real_ data.
 
-Have a nice day,
-Matthias
+The other _major_ gripe expressed during the session was how the
+userspace multipath-tools are too difficult and complex for users.
+IIRC these complaints really weren't expressed in ways that could be
+used to actually _fix_ the perceived shortcomings but nevertheless...
 
--- 
-Dipl.-Inf. (FH) Matthias Dahl | Software Engineer | binary-island.eu
- services: custom software [desktop, mobile, web], server administration
+Full disclosure: I'll be looking at reinstating bio-based DM multipath to
+regain efficiencies that now really matter when issuing IO to extremely
+fast devices (e.g. NVMe).  bio cloning is now very cheap (due to
+immutable biovecs), coupled with the emerging multipage biovec work that
+will help construct larger bios, so I think it is worth pursuing to at
+least keep our options open.
 
-
---------------101A1D3317C87831FD1FBE57
-Content-Type: text/x-c++src;
- name="main.cpp"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
- filename="main.cpp"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-int main(int argc, char** argv)
-{
-    unsigned long chunkSize = 1 << 20;       // 1 MiB per \ total mem alloc
-    unsigned long maxRuns   = 8 * (1 << 10); // 2^10 runs / of 8 GiB
-    void* buffer  = NULL;
-
-    if(argc == 3)
-    {
-        chunkSize = strtoul(argv[1], NULL, 10);
-        maxRuns   = strtoul(argv[2], NULL, 10);
-    }
-
-    unsigned long maxMemAllocInBytes = chunkSize * maxRuns;
-    unsigned long maxMemAllocInMB    = maxMemAllocInBytes / (1 << 20);
-    unsigned long curMemAllocInBytes = 0;
-
-    while(curMemAllocInBytes < maxMemAllocInBytes)
-    {
-        buffer = malloc(chunkSize);
-        memset(buffer, 0, chunkSize);
-
-        curMemAllocInBytes += chunkSize;
-        printf("%lu MB / %lu MiB allocated (%lu bytes).\n", (curMemAllocInBytes / (1 << 20)), maxMemAllocInMB, curMemAllocInBytes);
-
-        usleep(500);
-    }
-
-    return 0;
-}
-
---------------101A1D3317C87831FD1FBE57
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------101A1D3317C87831FD1FBE57--
+Mike
