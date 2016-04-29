@@ -1,86 +1,75 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 06/57] Use ALUA for HP 3PAR
-Date: Fri, 29 Apr 2016 07:58:04 +0200
-Message-ID: <5722F7EC.2030601@suse.de>
-References: <1461755458-29225-1-git-send-email-hare@suse.de>
-	<1461755458-29225-7-git-send-email-hare@suse.de>
-	<20160429002524.00006f73@localhost>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [dm-devel] Notes from the four separate IO track sessions at
+ LSF/MM
+Date: Fri, 29 Apr 2016 11:45:27 -0500
+Message-ID: <20160429164527.GL26117@octiron.msp.redhat.com>
+References: <1461800389.2311.70.camel@HansenPartnership.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160429002524.00006f73@localhost>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Sebastian Herbszt <herbszt@gmx.de>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1461800389.2311.70.camel@HansenPartnership.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@hansenpartnership.com>
+Cc: linux-scsi <linux-scsi@vger.kernel.org>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, lsf@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-On 04/29/2016 12:25 AM, Sebastian Herbszt wrote:
-> Hannes Reinecke wrote:
->> Signed-off-by: Hannes Reinecke <hare@suse.de>
->> ---
->>  libmultipath/hwtable.c | 12 ++++++------
->>  1 file changed, 6 insertions(+), 6 deletions(-)
-> =
+On Wed, Apr 27, 2016 at 04:39:49PM -0700, James Bottomley wrote:
+> Multipath - Mike Snitzer
+> ------------------------
+> 
+> Mike began with a request for feedback, which quickly lead to the
+> complaint that recovery time (and how you recover) was one of the
+> biggest issues in device mapper multipath (dmmp) for those in the room.
+>   This is primarily caused by having to wait for the pending I/O to be
+> released by the failing path. Christoph Hellwig said that NVMe would
+> soon do path failover internally (without any need for dmmp) and asked
+> if people would be interested in a more general implementation of this.
+>  Martin Petersen said he would look at implementing this in SCSI as
+> well.  The discussion noted that internal path failover only works in
+> the case where the transport is the same across all the paths and
+> supports some type of path down notification.  In any cases where this
+> isn't true (such as failover from fibre channel to iSCSI) you still
+> have to use dmmp.  Other benefits of internal path failover are that
+> the transport level code is much better qualified to recognise when the
+> same device appears over multiple paths, so it should make a lot of the
+> configuration seamless.
 
-> You missed to also change multipath.conf.defaults.
->  =
+Given the variety of sensible configurations that I've seen for people's
+multipath setups, there will definitely be a chunk of configuration that
+will never be seemless. Just in the past few weeks, we've added code to
+make it easier to allow people to manually configure devices for
+situations where none of our automated heuristics do what the user
+needs. Even for the easy cases, like ALUA, we've been adding options to
+allow users to do things like specify what they want to happen when they
+set the TPGS Pref bit.
 
->> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
->> index 28ee595..4549268 100644
->> --- a/libmultipath/hwtable.c
->> +++ b/libmultipath/hwtable.c
->> @@ -65,13 +65,13 @@ static struct hwentry default_hw[] =3D {
->>  		.vendor        =3D "3PARdata",
->>  		.product       =3D "VV",
->>  		.features      =3D DEFAULT_FEATURES,
->> -		.hwhandler     =3D DEFAULT_HWHANDLER,
->> -		.pgpolicy      =3D MULTIBUS,
->> -		.pgfailback    =3D FAILBACK_UNDEF,
->> +		.hwhandler     =3D "1 alua",
->> +		.pgpolicy      =3D GROUP_BY_PRIO,
->> +		.pgfailback    =3D -FAILBACK_IMMEDIATE,
->>  		.rr_weight     =3D RR_WEIGHT_NONE,
->> -		.no_path_retry =3D NO_PATH_RETRY_UNDEF,
->> -		.checker_name  =3D DEFAULT_CHECKER,
->> -		.prio_name     =3D DEFAULT_PRIO,
->> +		.no_path_retry =3D 18,
->> +		.checker_name  =3D TUR,
->> +		.prio_name     =3D PRIO_ALUA,
->>  		.prio_args     =3D NULL,
->>  	},
->>  	{
-> =
+Recognizing which paths go together is simple. That part has always been
+seemless from the users point of view. Configuring how IO is blanced and
+failed over between the paths is where the complexity is.
 
-> Can you please elaborate on this?
-> I think the correct setting depends on the configured
-> "host persona". Currently the expected value would be
-> "Generic / 1". The patch changes it to "Generic-ALUA / 2".
-> Does the above change still work if the "host persona" is
-> not modified and still set to "Generic / 1"?
-> =
+> The consequence for end users would be that
+> now SCSI devices would become handles for end devices rather than
+> handles for paths to end devices.
 
-I have never ever _seen_ an 3Par array, so I wasn't aware that you
-could switch host 'persona'. So I have to rely on our partners (ie
-HPE) for correct configuration here.
-But given that fact we should better switch back to use the default
-hw_handler and use the 'retain_attached_hw_handler' option.
+This will have a lot of repercussions with applications that uses scsi
+devices.  A significant number of tools expect that a scsi device maps
+to a connection between an initiator port and a target port. Listing the
+topology of these new scsi devices, and getting the IO stats down the
+various paths to them will involve writing new tools, or rewriting
+existing one. Things like persistent reservations will work differently
+(albeit, probably more intuitively).
 
-Cheers,
+I'm not saying that this can't be made to work nicely for a significant
+subset of cases (like has been pointed out with the muliple transport
+case, this won't work for all cases). I just think that it's not a small
+amount of work, and not necessarily the only way to speed up failover.
 
-Hannes
--- =
+-Ben
 
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+> James
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
