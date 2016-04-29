@@ -1,56 +1,43 @@
-From: heinzm@redhat.com
-Subject: [PATCH] dm-raid: check for zero feature flags in metadata
-Date: Fri, 29 Apr 2016 18:59:56 +0200
-Message-ID: <1461949196-17999-1-git-send-email-heinzm@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 17/20] dm: get rid of superfluous gfp flags
+Date: Fri, 29 Apr 2016 14:54:52 -0400
+Message-ID: <20160429185451.GA21865@redhat.com>
+References: <1461849846-27209-1-git-send-email-mhocko@kernel.org>
+ <1461849846-27209-18-git-send-email-mhocko@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <heinzm@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1461849846-27209-18-git-send-email-mhocko@kernel.org>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.com>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Shaohua Li <shli@kernel.org>
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
+On Thu, Apr 28 2016 at  9:24am -0400,
+Michal Hocko <mhocko@kernel.org> wrote:
 
-Because we don't support any feature flags in the dm-raid ondisk
-metadata yet (see struct dm_raid_superblock, 'features' member), 
-this patch adds a check to ensure no flags are actually set or
-reject the activation of the RAID mapping.
+> From: Michal Hocko <mhocko@suse.com>
+> 
+> copy_params seems to be little bit confused about which allocation flags
+> to use. It enforces GFP_NOIO even though it uses
+> memalloc_noio_{save,restore} which enforces GFP_NOIO at the page
+> allocator level automatically (via memalloc_noio_flags). It also
+> uses __GFP_REPEAT for the __vmalloc request which doesn't make much
+> sense either because vmalloc doesn't rely on costly high order
+> allocations. Let's just drop the __GFP_REPEAT and leave the further
+> cleanup to later changes.
+> 
+> Cc: Shaohua Li <shli@kernel.org>
+> Cc: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: dm-devel@redhat.com
+> Signed-off-by: Michal Hocko <mhocko@suse.com>
 
-This is to prevent possible data corruption in case of a
-kernel downgrade when there'll potentially be feature flags
-set by a future dm-raid target.
+I've taken this patch for 4.7 but editted the header, see:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.7&id=0222c76e96163355620224625c1cd80991086dc7
 
-
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-
----
- drivers/md/dm-raid.c | 4 ++++
- 1 file changed, 4 insertions(+)
-
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index a090121..5f05ba0 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -1037,6 +1037,10 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
- 	if (!mddev->events && super_init_validation(mddev, rdev))
- 		return -EINVAL;
- 
-+	rs->ti->error = "Unable to assemble array: No feature flags supported yet";
-+	if (le32_to_cpu(sb->features)) /* No features supported yet */
-+		return -EINVAL;
-+
- 	/* Enable bitmap creation for RAID levels != 0 */
- 	mddev->bitmap_info.offset = (rs->raid_type->level) ? to_sector(4096) : 0;
- 	rdev->mddev->bitmap_info.default_offset = mddev->bitmap_info.offset;
--- 
-2.5.5
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
