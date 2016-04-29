@@ -1,43 +1,43 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 17/20] dm: get rid of superfluous gfp flags
-Date: Fri, 29 Apr 2016 14:54:52 -0400
-Message-ID: <20160429185451.GA21865@redhat.com>
-References: <1461849846-27209-1-git-send-email-mhocko@kernel.org>
- <1461849846-27209-18-git-send-email-mhocko@kernel.org>
+Subject: Re: dm-raid: check for zero feature flags in metadata
+Date: Fri, 29 Apr 2016 15:18:36 -0400
+Message-ID: <20160429191835.GA22007@redhat.com>
+References: <1461949196-17999-1-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1461849846-27209-18-git-send-email-mhocko@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.com>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Shaohua Li <shli@kernel.org>
+In-Reply-To: <1461949196-17999-1-git-send-email-heinzm@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: heinzm@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Apr 28 2016 at  9:24am -0400,
-Michal Hocko <mhocko@kernel.org> wrote:
+On Fri, Apr 29 2016 at 12:59pm -0400,
+heinzm@redhat.com <heinzm@redhat.com> wrote:
 
-> From: Michal Hocko <mhocko@suse.com>
+> From: Heinz Mauelshagen <heinzm@redhat.com>
 > 
-> copy_params seems to be little bit confused about which allocation flags
-> to use. It enforces GFP_NOIO even though it uses
-> memalloc_noio_{save,restore} which enforces GFP_NOIO at the page
-> allocator level automatically (via memalloc_noio_flags). It also
-> uses __GFP_REPEAT for the __vmalloc request which doesn't make much
-> sense either because vmalloc doesn't rely on costly high order
-> allocations. Let's just drop the __GFP_REPEAT and leave the further
-> cleanup to later changes.
+> Because we don't support any feature flags in the dm-raid ondisk
+> metadata yet (see struct dm_raid_superblock, 'features' member), 
+> this patch adds a check to ensure no flags are actually set or
+> reject the activation of the RAID mapping.
 > 
-> Cc: Shaohua Li <shli@kernel.org>
-> Cc: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: dm-devel@redhat.com
-> Signed-off-by: Michal Hocko <mhocko@suse.com>
+> This is to prevent possible data corruption in case of a
+> kernel downgrade when there'll potentially be feature flags
+> set by a future dm-raid target.
+> 
+> 
+> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 
-I've taken this patch for 4.7 but editted the header, see:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.7&id=0222c76e96163355620224625c1cd80991086dc7
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+merged for 4.7, see:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.7&id=480375cd7ea3eed60381539dbfa96851b6174820
