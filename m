@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 23/57] multipath: remove warning 'failed to
-	get wwid'
-Date: Mon, 2 May 2016 10:43:00 -0500
-Message-ID: <20160502154300.GR26117@octiron.msp.redhat.com>
+Subject: Re: [PATCH 28/57] libmultipath: use a shared lock to
+ co-operate with udev
+Date: Mon, 2 May 2016 11:26:18 -0500
+Message-ID: <20160502162617.GS26117@octiron.msp.redhat.com>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
-	<1461755458-29225-24-git-send-email-hare@suse.de>
+	<1461755458-29225-29-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1461755458-29225-24-git-send-email-hare@suse.de>
+In-Reply-To: <1461755458-29225-29-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,32 +21,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 27, 2016 at 01:10:24PM +0200, Hannes Reinecke wrote:
+On Wed, Apr 27, 2016 at 01:10:29PM +0200, Hannes Reinecke wrote:
+> udev since v214 is placing a shared lock on the device node
+> whenever it's processing the event. This introduces a race
+> condition with multipathd, as multipathd is processing the
+> event for the block device at the same time as udev is
+> processing the events for the partitions.
+> And a lock on the partitions will also be visible on the
+> block device itself, hence multipathd won't be able to
+> lock the device.
+> When multipath manages to take a lock on the device,
+> udev will fail, and consequently ignore this entire event.
+> Which in turn might cause the system to malfunction as it
+> might have been a crucial event like 'remove' or 'link down'.
+> 
+> So we should better use LOCK_SH here; with that the flock
+> call in multipathd _and_ udev will succeed and the events
+> can be processed.
 
-Again. I'd prefer leaving the messages in either at a higher log level
-or with less alarming text.
+If we switch this to a shared lock, then what's the point in having it
+at all? The whole point of lock_multipath is to keep multipath and
+multipathd (or two concurrent calls to multipath) from trying to create
+a device at the same time, and both failing. Without an exclusive lock,
+this won't stop that. We can either decide that this is an unlikely
+scenario, and drop it entirely, or we can have multipath create its own
+lockfiles to prevent this issue without interfering with udev. But
+unless I'm missing something, this won't actually do anything.
 
 -Ben
-
-> Signed-off-by: Hannes Reinecke <hare@suse.com>
+ 
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
 > ---
->  multipath/main.c | 1 -
->  1 file changed, 1 deletion(-)
+>  libmultipath/configure.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> diff --git a/multipath/main.c b/multipath/main.c
-> index d14a913..da8fa23 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -284,7 +284,6 @@ configure (void)
->  		int failed = get_refwwid(conf->dev, conf->dev_type, pathvec,
->  					 &refwwid);
->  		if (!refwwid) {
-> -			condlog(3, "%s: failed to get wwid", conf->dev);
->  			if (failed == 2 && conf->cmd == CMD_VALID_PATH)
->  				printf("%s is not a valid multipath device path\n", conf->dev);
->  			else
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index 30c7259..ca20ba5 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -546,7 +546,7 @@ lock_multipath (struct multipath * mpp, int lock)
+>  		if (!pgp->paths)
+>  			continue;
+>  		vector_foreach_slot(pgp->paths, pp, j) {
+> -			if (lock && flock(pp->fd, LOCK_EX | LOCK_NB) &&
+> +			if (lock && flock(pp->fd, LOCK_SH | LOCK_NB) &&
+>  			    errno == EWOULDBLOCK)
+>  				goto fail;
+>  			else if (!lock)
 > -- 
 > 2.6.6
