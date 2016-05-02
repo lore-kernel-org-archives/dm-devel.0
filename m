@@ -1,41 +1,115 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [dm-devel] [Lsf] Notes from the four separate IO track sessions
- at LSF/MM
-Date: Mon, 2 May 2016 15:28:16 -0700
-Message-ID: <5727D480.30706@sandisk.com>
-References: <1461800389.2311.70.camel@HansenPartnership.com>
- <610090691.32303585.1461860624844.JavaMail.zimbra@redhat.com>
- <57223D36.60304@sandisk.com>
- <74308856.32308210.1461862044976.JavaMail.zimbra@redhat.com>
- <850484819.32589649.1461966427528.JavaMail.zimbra@redhat.com>
- <5723FE06.70501@sandisk.com>
- <1184712515.32596182.1461977223746.JavaMail.zimbra@redhat.com>
- <5727A152.70109@sandisk.com>
- <766510830.33459561.1462217284242.JavaMail.zimbra@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 37/57] Remove 'udev_sync' argument from
+	dm_simplecmd()
+Date: Mon, 2 May 2016 18:33:42 -0500
+Message-ID: <20160502233342.GV26117@octiron.msp.redhat.com>
+References: <1461755458-29225-1-git-send-email-hare@suse.de>
+	<1461755458-29225-38-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <766510830.33459561.1462217284242.JavaMail.zimbra@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Laurence Oberman <loberman@redhat.com>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, linux-scsi <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, lsf@lists.linux-foundation.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1461755458-29225-38-git-send-email-hare@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On 05/02/2016 12:28 PM, Laurence Oberman wrote:
-> Even in the case of the ib_srp, don't we also have to still run the
-> eh_timeout for each of the devices that has inflight requiring error
-> handling serially. This means we will still have to wait to get a
-> path failover until all are through the timeout.
+On Wed, Apr 27, 2016 at 01:10:38PM +0200, Hannes Reinecke wrote:
+> The 'udev_sync' attribute is pointless without a cookie, so we
+> can as well use the existence of the 'cookie' argument for
+> the same function.
 
-Hello Laurence,
+ACK. But I do worry that dm_simplecmd is still going to confuse someone
+later. Right now, we have a udev_flags variable that gets set seperate
+from the cookie, but if there is no cookie pointer, we never set these
+flags (because they are tacked on to the cookie in dm_task_set_cookie).
+Right now, we never set udev_flags and not cookie.  But it's not obvious
+that you shouldn't. 
 
-It depends. If a transport layer error (e.g. a cable pull) has been 
-observed by the ib_srp driver then fast_io_fail_tmo seconds later the 
-ib_srp driver will terminate all outstanding SCSI commands without 
-waiting for the error handler to finish. If no transport layer error has 
-been observed then at most (SCSI timeout) + (number of pending commands 
-+ 1) * 5 seconds later srp_reset_device() will have finished terminating 
-all pending SCSI commands.
-
-Bart.
+-Ben
+> 
+> Signed-off-by: Hannes Reinecke <hare@suse.com>
+> ---
+>  libmultipath/devmapper.c | 21 ++++++++++++---------
+>  1 file changed, 12 insertions(+), 9 deletions(-)
+> 
+> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+> index a96cc0e..12ccf1a 100644
+> --- a/libmultipath/devmapper.c
+> +++ b/libmultipath/devmapper.c
+> @@ -207,12 +207,10 @@ dm_prereq (void)
+>  #define do_deferred(x) ((x) == DEFERRED_REMOVE_ON || (x) == DEFERRED_REMOVE_IN_PROGRESS)
+>  
+>  static int
+> -dm_simplecmd (int task, const char *name, int no_flush, int need_sync,
+> +dm_simplecmd (int task, const char *name, int no_flush,
+>  	      uint16_t udev_flags, int deferred_remove, uint32_t *cookie)
+>  {
+>  	int r = 0;
+> -	int udev_wait_flag = (need_sync && (task == DM_DEVICE_RESUME ||
+> -					    task == DM_DEVICE_REMOVE));
+>  	struct dm_task *dmt;
+>  
+>  	if (!(dmt = dm_task_create (task)))
+> @@ -231,7 +229,7 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync,
+>  	if (do_deferred(deferred_remove))
+>  		dm_task_deferred_remove(dmt);
+>  #endif
+> -	if (udev_wait_flag &&
+> +	if (cookie &&
+>  	    !dm_task_set_cookie(dmt, cookie,
+>  				DM_UDEV_DISABLE_LIBRARY_FALLBACK | udev_flags)) {
+>  		dm_udev_complete(*cookie);
+> @@ -239,7 +237,7 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync,
+>  	}
+>  	r = dm_task_run (dmt);
+>  
+> -	if (udev_wait_flag) {
+> +	if (cookie) {
+>  		if (!r)
+>  			dm_udev_complete(*cookie);
+>  		else
+> @@ -254,22 +252,27 @@ extern int
+>  dm_simplecmd_flush (int task, const char *name, uint16_t udev_flags) {
+>  	uint32_t cookie = 0;
+>  
+> -	return dm_simplecmd(task, name, 0, 1, udev_flags, 0, &cookie);
+> +	if (task == DM_DEVICE_RESUME ||
+> +	    task == DM_DEVICE_REMOVE)
+> +		return dm_simplecmd(task, name, 0, udev_flags, 0, &cookie);
+> +	else
+> +		return dm_simplecmd(task, name, 0, udev_flags, 0, NULL);
+>  }
+>  
+>  extern int
+>  dm_simplecmd_noflush (int task, const char *name, int needsync, uint16_t udev_flags) {
+>  	uint32_t cookie = 0;
+>  
+> -	return dm_simplecmd(task, name, 1, needsync, udev_flags, 0, &cookie);
+> +	return dm_simplecmd(task, name, 1, udev_flags, 0,
+> +			    needsync ? &cookie : NULL);
+>  }
+>  
+>  static int
+>  dm_device_remove (const char *name, int needsync, int deferred_remove) {
+>  	uint32_t cookie = 0;
+>  
+> -	return dm_simplecmd(DM_DEVICE_REMOVE, name, 0, needsync, 0,
+> -			    deferred_remove, &cookie);
+> +	return dm_simplecmd(DM_DEVICE_REMOVE, name, 0, 0,
+> +			    deferred_remove, needsync ? &cookie : NULL);
+>  }
+>  
+>  extern int
+> -- 
+> 2.6.6
