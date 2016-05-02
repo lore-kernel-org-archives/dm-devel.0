@@ -1,15 +1,16 @@
-From: Sebastian Herbszt <herbszt@gmx.de>
-Subject: Re: [PATCH 06/57] Use ALUA for HP 3PAR
-Date: Sun, 1 May 2016 23:46:49 +0200
-Message-ID: <20160501234649.00006611@localhost>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 20/57] multipathd: Do not update the paths
+ vec when removing paths
+Date: Mon, 2 May 2016 07:48:50 +0200
+Message-ID: <5726EA42.3020307@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
-	<1461755458-29225-7-git-send-email-hare@suse.de>
-	<20160429002524.00006f73@localhost> <5722F7EC.2030601@suse.de>
+	<1461755458-29225-21-git-send-email-hare@suse.de>
+	<20160429223916.GN26117@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5722F7EC.2030601@suse.de>
+In-Reply-To: <20160429223916.GN26117@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,63 +20,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Sebastian Herbszt <herbszt@gmx.de>, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Hannes Reinecke wrote:
-> On 04/29/2016 12:25 AM, Sebastian Herbszt wrote:
-> > Hannes Reinecke wrote:
-> >> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> >> ---
-> >>  libmultipath/hwtable.c | 12 ++++++------
-> >>  1 file changed, 6 insertions(+), 6 deletions(-)
-> > 
-> > You missed to also change multipath.conf.defaults.
-> >  
-> >> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> >> index 28ee595..4549268 100644
-> >> --- a/libmultipath/hwtable.c
-> >> +++ b/libmultipath/hwtable.c
-> >> @@ -65,13 +65,13 @@ static struct hwentry default_hw[] = {
-> >>  		.vendor        = "3PARdata",
-> >>  		.product       = "VV",
-> >>  		.features      = DEFAULT_FEATURES,
-> >> -		.hwhandler     = DEFAULT_HWHANDLER,
-> >> -		.pgpolicy      = MULTIBUS,
-> >> -		.pgfailback    = FAILBACK_UNDEF,
-> >> +		.hwhandler     = "1 alua",
-> >> +		.pgpolicy      = GROUP_BY_PRIO,
-> >> +		.pgfailback    = -FAILBACK_IMMEDIATE,
-> >>  		.rr_weight     = RR_WEIGHT_NONE,
-> >> -		.no_path_retry = NO_PATH_RETRY_UNDEF,
-> >> -		.checker_name  = DEFAULT_CHECKER,
-> >> -		.prio_name     = DEFAULT_PRIO,
-> >> +		.no_path_retry = 18,
-> >> +		.checker_name  = TUR,
-> >> +		.prio_name     = PRIO_ALUA,
-> >>  		.prio_args     = NULL,
-> >>  	},
-> >>  	{
-> > 
-> > Can you please elaborate on this?
-> > I think the correct setting depends on the configured
-> > "host persona". Currently the expected value would be
-> > "Generic / 1". The patch changes it to "Generic-ALUA / 2".
-> > Does the above change still work if the "host persona" is
-> > not modified and still set to "Generic / 1"?
-> > 
-> I have never ever _seen_ an 3Par array, so I wasn't aware that you
-> could switch host 'persona'. So I have to rely on our partners (ie
-> HPE) for correct configuration here.
+On 04/30/2016 12:39 AM, Benjamin Marzinski wrote:
+> On Wed, Apr 27, 2016 at 01:10:21PM +0200, Hannes Reinecke wrote:
+>> When we remove a path it's totally pointless to add it to
+>> the path list first; it'll be removed on the next step anyway.
+>> And we should be cleaning up the comments while we're at it.
+> =
 
-HPE published at least two guides:
+> This one causes problems. The easiest way to see that is to run
+> something like
+> =
 
-"HPE 3PAR SUSE Linux Enterprise Implementation Guide" [1] pp. 36-38
-"HPE 3PAR Red Hat Enterprise Linux and Oracle Linux Implementation Guide" [2]
-pp. 104-110
+> # multipathd reload map <map> ; multipathd del path <path-in-that-map>
+> =
 
-[1] http://h20565.www2.hpe.com/hpsc/doc/public/display?sp4ts.oid=5383451&docId=emr_na-c02663748&docLocale=en_US
-[2] http://h20628.www2.hp.com/km-ext/kmcsdirect/emr_na-c04448818-9.pdf
+> This really messes things up. The reason is that at the start of
+> ev_remove_path, there is no guarantee that any of the paths will be in
+> mpp->paths.  This is because when multipath runs the pgpolicyfn in
+> setup_map(), all of policy functions free mpp->paths once they have set
+> up the path groups.  I assume that this was done so that there is no
+> chance that the list of paths in mpp->paths will get out of sync with
+> the list of paths in the pathgroups.
+> =
 
-Sebastian
+> I can see why it someone might want to only keep mpp->pg as the
+> definitive list of paths, and to use update_mpp_paths() to regenerate
+> mpp->paths when necessary. But that's not what multipathd does. Instead,
+> mpp->paths is almost always regenerated by calling setup_multipath()
+> later in the same function that called setup_map(). However not every
+> function will always do this.  ev_remove_path doesn't do this if domap()
+> fails, and reload_map() never calls setup_multipath(). coalesce_paths()
+> doesn't call setup_multipath() itself, but some if it's callers do. Even
+> if mpp->paths isn't restored right away, it will be when check_path
+> calls update_multipath_strings().
+> =
+
+> So, if you call "cli reload map" and then call "cli del path" before the
+> checker function restores mpp->paths, and multipath doesn't call
+> update_mpp_pths() in ev_remove_path, you get into problems.
+> =
+
+> The question is, what's the right thing to do?
+> =
+
+> Option 1 is to never delete mpp->paths in the first place. Then we can
+> probably do away with some more of the update_mpp_paths() calls. We just
+> need to make certain that whenever we update mpp->pg, we are always
+> either getting the paths from mpp->paths, or we call update_mpp_paths()
+> afterwards to sync them.
+> =
+
+> Option 2 is to say that we will alway regenerate mpp->paths whenever we
+> need it. In that case, we should probably be freeing it after we're done
+> with it.
+> =
+
+> I don't really care either way, as long as we're consistent. Otherwise
+> we'll get into bizzare situations like the one above.
+> =
+
+Personally, I would opt for 1).
+Regenerating mpp->paths has the very big risk of running into even
+more race conditions, and I'd rather have it stable as far as possible.
+
+Thanks for the clarification here.
+
+I'll see to come up with a replacement patch.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=FCrnberg)
