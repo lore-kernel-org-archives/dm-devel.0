@@ -1,70 +1,62 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [dm-devel] [Lsf] Notes from the four separate IO track sessions
- at LSF/MM
-Date: Mon, 2 May 2016 11:49:54 -0700
-Message-ID: <5727A152.70109@sandisk.com>
-References: <1461800389.2311.70.camel@HansenPartnership.com>
- <1461858038.2307.16.camel@HansenPartnership.com>
- <5722320E.5080202@sandisk.com>
- <610090691.32303585.1461860624844.JavaMail.zimbra@redhat.com>
- <57223D36.60304@sandisk.com>
- <74308856.32308210.1461862044976.JavaMail.zimbra@redhat.com>
- <850484819.32589649.1461966427528.JavaMail.zimbra@redhat.com>
- <5723FE06.70501@sandisk.com>
- <1184712515.32596182.1461977223746.JavaMail.zimbra@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 30/57] multipathd: skip uninitialized devices
+ during reconfiguration
+Date: Mon, 2 May 2016 14:14:07 -0500
+Message-ID: <20160502191407.GT26117@octiron.msp.redhat.com>
+References: <1461755458-29225-1-git-send-email-hare@suse.de>
+	<1461755458-29225-31-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1184712515.32596182.1461977223746.JavaMail.zimbra@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Laurence Oberman <loberman@redhat.com>
-Cc: linux-block@vger.kernel.org, linux-scsi <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, device-mapper development <dm-devel@redhat.com>, lsf@lists.linux-foundation.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1461755458-29225-31-git-send-email-hare@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On 04/29/2016 05:47 PM, Laurence Oberman wrote:
-> From: "Bart Van Assche" <bart.vanassche@sandisk.com>
-> To: "Laurence Oberman" <loberman@redhat.com>
-> Cc: "James Bottomley" <James.Bottomley@HansenPartnership.com>, "linux-scsi" <linux-scsi@vger.kernel.org>, "Mike Snitzer" <snitzer@redhat.com>, linux-block@vger.kernel.org, "device-mapper development" <dm-devel@redhat.com>, lsf@lists.linux-foundation.org
-> Sent: Friday, April 29, 2016 8:36:22 PM
-> Subject: Re: [dm-devel] [Lsf] Notes from the four separate IO track sessions at LSF/MM
->
->> On 04/29/2016 02:47 PM, Laurence Oberman wrote:
->>> Recovery with 21 LUNS is 300s that have in-flights to abort.
->>> [ ... ]
->>> eh_deadline is set to 10 on the 2 qlogic ports, eh_timeout is set
->>> to 10 for all devices. In multipath fast_io_fail_tmo=5
->>>
->>> I jam one of the target array ports and discard the commands
->>> effectively black-holing the commands and leave it that way until
->>> we recover and I watch the I/O. The recovery takes around 300s even
->>> with all the tuning and this effectively lands up in Oracle cluster
->>> evictions.
->>
->> This discussion started as a discussion about the time needed to fail
->> over from one path to another. How long did it take in your test before
->> I/O failed over from the jammed port to another port?
- >
- > Around 300s before the paths were declared hard failed and the
- > devices offlined. This is when I/O restarts.
- > The remaining paths on the second Qlogic port (that are not jammed)
- > will not be used until the error handler activity completes.
- >
- > Until we get these for example, and device-mapper starts declaring
- > paths down we are blocked.
- > Apr 29 17:20:51 localhost kernel: sd 1:0:1:0: Device offlined - not
- > ready after error recovery
- > Apr 29 17:20:51 localhost kernel: sd 1:0:1:13: Device offlined - not
- > ready after error recovery
+On Wed, Apr 27, 2016 at 01:10:31PM +0200, Hannes Reinecke wrote:
+> libudev has a separate filter setting to skip uninitialized
+> devices during enumeration.
 
-Hello Laurence,
+So, I assume if udev filters out a device here, it's because a uevent
+should be coming when the device is fully initialized. correct?
 
-Everyone else on all mailing lists to which this message has been posted 
-replies below the message. Please follow this convention.
+The only thing I worry about with taking out all of the backup stuff is
+what happens if udev simply times out processing an event, and doesn't
+grab the UUID.  In this case we still won't get a UUID unless we force
+another event, or grab the information ourselves.
 
-Regarding the fail-over time: the ib_srp driver guarantees that 
-scsi_done() is invoked from inside its terminate_rport_io() function. 
-Apparently the lpfc and the qla2xxx drivers behave differently. Please 
-work with the maintainers of these drivers to reduce fail-over time.
+But ACK on the patch itself.
 
-Bart.
+-Ben
+
+> 
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> ---
+>  libmultipath/discovery.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index 2fa0907..2cf2566 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -148,6 +148,7 @@ path_discovery (vector pathvec, struct config * conf, int flag)
+>  		return -ENOMEM;
+>  
+>  	udev_enumerate_add_match_subsystem(udev_iter, "block");
+> +	udev_enumerate_add_match_is_initialized(udev_iter);
+>  	udev_enumerate_scan_devices(udev_iter);
+>  
+>  	udev_list_entry_foreach(entry,
+> -- 
+> 2.6.6
