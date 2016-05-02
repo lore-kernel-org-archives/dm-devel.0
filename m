@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 19/57] multipathd: Do not print misleading
- message 'not found in pathvec'
-Date: Mon, 2 May 2016 10:40:29 -0500
-Message-ID: <20160502154029.GQ26117@octiron.msp.redhat.com>
+Subject: Re: [PATCH 23/57] multipath: remove warning 'failed to
+	get wwid'
+Date: Mon, 2 May 2016 10:43:00 -0500
+Message-ID: <20160502154300.GR26117@octiron.msp.redhat.com>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
-	<1461755458-29225-20-git-send-email-hare@suse.de>
+	<1461755458-29225-24-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1461755458-29225-20-git-send-email-hare@suse.de>
+In-Reply-To: <1461755458-29225-24-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,52 +21,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 27, 2016 at 01:10:20PM +0200, Hannes Reinecke wrote:
-> When looking up a path in the existing configuration it is perfectly
-> possible for the path not to be present.
-> This should not generate a message as it might be errorneously
-> interpreted as an error.
-> 
+On Wed, Apr 27, 2016 at 01:10:24PM +0200, Hannes Reinecke wrote:
 
-Do you feel really strongly that these messages should go? I don't think
-that they are essential, but they can be useful when debugging an issue
-to see the route the code took. We could move them to level 4, but
-personally, I find the amount of messages generated at log level 4 to be
-so high that it's a pain to use to track bugs that don't occur right
-away. Another possibility would be to change the message to something
-more innocuous.
-
-Thoughts?
+Again. I'd prefer leaving the messages in either at a higher log level
+or with less alarming text.
 
 -Ben
 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> Signed-off-by: Hannes Reinecke <hare@suse.com>
 > ---
->  libmultipath/structs.c | 2 --
->  1 file changed, 2 deletions(-)
+>  multipath/main.c | 1 -
+>  1 file changed, 1 deletion(-)
 > 
-> diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-> index b773d1c..39b2e05 100644
-> --- a/libmultipath/structs.c
-> +++ b/libmultipath/structs.c
-> @@ -404,7 +404,6 @@ find_path_by_dev (vector pathvec, char * dev)
->  		if (!strcmp(pp->dev, dev))
->  			return pp;
->  
-> -	condlog(3, "%s: not found in pathvec", dev);
->  	return NULL;
->  }
->  
-> @@ -421,7 +420,6 @@ find_path_by_devt (vector pathvec, char * dev_t)
->  		if (!strcmp(pp->dev_t, dev_t))
->  			return pp;
->  
-> -	condlog(3, "%s: not found in pathvec", dev_t);
->  	return NULL;
->  }
->  
+> diff --git a/multipath/main.c b/multipath/main.c
+> index d14a913..da8fa23 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -284,7 +284,6 @@ configure (void)
+>  		int failed = get_refwwid(conf->dev, conf->dev_type, pathvec,
+>  					 &refwwid);
+>  		if (!refwwid) {
+> -			condlog(3, "%s: failed to get wwid", conf->dev);
+>  			if (failed == 2 && conf->cmd == CMD_VALID_PATH)
+>  				printf("%s is not a valid multipath device path\n", conf->dev);
+>  			else
 > -- 
 > 2.6.6
