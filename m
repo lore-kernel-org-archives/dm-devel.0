@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
 Subject: Re: [PATCH 55/57] multipathd: asynchronous configuration
-Date: Tue, 3 May 2016 13:23:05 -0500
-Message-ID: <20160503182305.GG26117@octiron.msp.redhat.com>
+Date: Tue, 3 May 2016 13:25:34 -0500
+Message-ID: <20160503182534.GH26117@octiron.msp.redhat.com>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
 	<1461755458-29225-56-git-send-email-hare@suse.de>
 Mime-Version: 1.0
@@ -24,6 +24,14 @@ Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <
 List-Id: dm-devel.ids
 
 On Wed, Apr 27, 2016 at 01:10:56PM +0200, Hannes Reinecke wrote:
+
+Oh, I did have one other thought.
+
+If you're not changing the signal mask in uevent_listen, can't you just
+use poll?  Otherwise people are going to try and figure out what's going
+on with the signals that they're missing (at least that's what I did).
+
+
 > For initial configuration multipathd waits until it has synchronized
 > with the existing setup. On larger systems this takes up quite
 > some time (I've measured 80 seconds on a system with 1024 paths)
@@ -31,17 +39,6 @@ On Wed, Apr 27, 2016 at 01:10:56PM +0200, Hannes Reinecke wrote:
 > This patch makes the initial configuration asynchronous, and
 > using the same codepath as the existing 'reconfigure' CLI
 > command.
-
-After you call reconfigure, you need to clear conf->delayed_reconfig,
-otherwise ev_add_map will keep triggering reconfigures whenever a new
-map is added.  This isn't actually your bug.  I forgot to do that when I
-added the delayed_reconfig code in the first place. And since the patch
-is already accepted, there's no reason to mess with it.
-
-I'll send a fix.
-
--Ben
-
 > 
 > Signed-off-by: Hannes Reinecke <hare@suse.de>
 > ---
