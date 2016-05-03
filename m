@@ -1,16 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 49/57] multipathd: do not flush maps on
-	startup
-Date: Mon, 2 May 2016 21:30:19 -0500
-Message-ID: <20160503023019.GY26117@octiron.msp.redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 22/57] multipath: use option '-i' when called
+	from udev
+Date: Tue, 3 May 2016 07:44:31 +0200
+Message-ID: <57283ABF.4080304@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
-	<1461755458-29225-50-git-send-email-hare@suse.de>
+	<1461755458-29225-23-git-send-email-hare@suse.de>
+	<20160502153124.GP26117@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1461755458-29225-50-git-send-email-hare@suse.de>
+In-Reply-To: <20160502153124.GP26117@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,51 +20,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 27, 2016 at 01:10:50PM +0200, Hannes Reinecke wrote:
-> When the daemon is started prior to udev the paths are not present
-> (yet). However, the maps themselves will be read from device-mapper.
-> This causes existing maps to be dropped in coalesce_maps(), only
-> to be reinstated later when all paths are discovered.
-> To avoid this we should be checking for a valid hardware entry
-> per multipath map; if there is none we're in startup and shouldn't
-> drop any maps.
+On 05/02/2016 05:31 PM, Benjamin Marzinski wrote:
+> On Wed, Apr 27, 2016 at 01:10:23PM +0200, Hannes Reinecke wrote:
+>> multipath should be using the option '-i' to ignore the wwids
+>> file when called from udev. Otherwise we might run into a race
+>> condition with systemd and the system might not boot up correctly.
+> =
 
-This doesn't just skip maps when udev hasn't started yet.  It skips any
-blacklisted maps.  For instance, if you create some multipath devices,
-add the lines
+> The race condition being? Are you talking about the udev rules not
+> claiming a path for multipath, but then having multipathd create a
+> multipath device using that path? I agree that this can be an issue.
+> Another way to solve it is to run mutipathd with the -n option in the
+> initramfs (see commit a8efa5838cf215febd853f282c26af62c0daa862). That
+> commit solves the race by making mutipathd ignore devices that aren't
+> already in the wwids file.  This also keeps the initramfs from picking a
+> different user_friendly_name than will be picked in late boot (but
+> hopefully that issue has been sorted out by other patches already).
+> =
 
-blacklist {
-	devnode ".*"
-}
+This is in fact SUSE-specific, as we do _not_ require any a-priory
+configuration. So we will start out with a system without any wwid file,
+_but_ expect multipath to start up properly.
+As the wwid file will only be created by multipathd the udev check will
+always being false, and none of the multipath devices will be created.
 
-to /etc/multipath.conf, and restart or reload multipathd, all the
-blacklisted devices are still there.
+> I'm not NAKing this. The question of what to do about the differnces in
+> the distribution's systemd and udev configurations can be hashed out
+> outside of patch reviewing. I just want to make sure I understand the
+> race this is solving.
+> =
 
-NAK
+This is in fact a good question.
+We should be coming up with a common approach which would suit both needs.
 
--Ben
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.com>
-> ---
->  multipathd/main.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 1141fb6..33a3503 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -155,7 +155,7 @@ coalesce_maps(struct vectors *vecs, vector nmpv)
->  
->  	vector_foreach_slot (ompv, ompp, i) {
->  		condlog(3, "%s: coalesce map", ompp->alias);
-> -		if (!find_mp_by_wwid(nmpv, ompp->wwid)) {
-> +		if (ompp->hwe && !find_mp_by_wwid(nmpv, ompp->wwid)) {
->  			/*
->  			 * remove all current maps not allowed by the
->  			 * current configuration
-> -- 
-> 2.6.6
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
