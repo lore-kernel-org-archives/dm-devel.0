@@ -1,19 +1,20 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 28/57] libmultipath: use a shared lock to
- co-operate with udev
-Date: Tue, 3 May 2016 09:47:22 -0500
-Message-ID: <20160503144722.GD26117@octiron.msp.redhat.com>
+Subject: Re: [PATCH 36/57] libmultipath: pass in 'cookie' as
+ argument for dm_addmap()
+Date: Tue, 3 May 2016 09:57:50 -0500
+Message-ID: <20160503145750.GE26117@octiron.msp.redhat.com>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
-	<1461755458-29225-29-git-send-email-hare@suse.de>
-	<20160502162617.GS26117@octiron.msp.redhat.com>
-	<57283DAD.9040009@suse.de>
-	<20160503142732.GB26117@octiron.msp.redhat.com>
+	<1461755458-29225-37-git-send-email-hare@suse.de>
+	<20160502222313.GU26117@octiron.msp.redhat.com>
+	<57286FE7.7000402@suse.de>
+	<20160503143940.GC26117@octiron.msp.redhat.com>
+	<5728B8F5.9050508@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20160503142732.GB26117@octiron.msp.redhat.com>
+In-Reply-To: <5728B8F5.9050508@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,110 +28,188 @@ To: Hannes Reinecke <hare@suse.de>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Tue, May 03, 2016 at 09:27:32AM -0500, Benjamin Marzinski wrote:
-> On Tue, May 03, 2016 at 07:57:01AM +0200, Hannes Reinecke wrote:
-> > On 05/02/2016 06:26 PM, Benjamin Marzinski wrote:
-> > > On Wed, Apr 27, 2016 at 01:10:29PM +0200, Hannes Reinecke wrote:
-> > >> udev since v214 is placing a shared lock on the device node
-> > >> whenever it's processing the event. This introduces a race
-> > >> condition with multipathd, as multipathd is processing the
-> > >> event for the block device at the same time as udev is
-> > >> processing the events for the partitions.
-> > >> And a lock on the partitions will also be visible on the
-> > >> block device itself, hence multipathd won't be able to
-> > >> lock the device.
-> > >> When multipath manages to take a lock on the device,
-> > >> udev will fail, and consequently ignore this entire event.
-> > >> Which in turn might cause the system to malfunction as it
-> > >> might have been a crucial event like 'remove' or 'link down'.
-> > >>
-> > >> So we should better use LOCK_SH here; with that the flock
-> > >> call in multipathd _and_ udev will succeed and the events
-> > >> can be processed.
-> > > =
+On Tue, May 03, 2016 at 04:43:01PM +0200, Hannes Reinecke wrote:
+> On 05/03/2016 04:39 PM, Benjamin Marzinski wrote:
+> > On Tue, May 03, 2016 at 11:31:19AM +0200, Hannes Reinecke wrote:
+> >> On 05/03/2016 12:23 AM, Benjamin Marzinski wrote:
+> >>> On Wed, Apr 27, 2016 at 01:10:37PM +0200, Hannes Reinecke wrote:
+> >>>> Instead of generating the cookie internally we should be
+> >>>> passing in the cookie to dm_addmap().
+> >>>
+> >>> These look like they could actually cause problems. With
+> >>> dm_addmap_create and dm_addmap_reload, you could be in a situation wh=
+ere
+> >>> you get a cookie back on your first call to dm_task_set_cookie, wait =
+on
+> >>> it, so that cookie is no longer in use, and then use that same cookie
+> >>> id again. It's possible that after you first waited on the cookie,
+> >>> someone else could have been given that cookie id (without looking in=
+to
+> >>> the dm cookie code more, I'm not sure how likely this is). If that is
+> >>> so, the second call to dm_addmap would be adding its command to the l=
+ist
+> >>> of other commands for that cookie (since you are allowed to use a coo=
+kie
+> >>> for multiple dm commands). Calling dm_udev_wait would make it wait of
+> >>> all the commands.
+> >>>
+> >>> We can use a cookie multiple times and then wait on it once. But we
+> >>> can't keep reusing the cookie after we've waited on it, because someo=
+ne
+> >>> else could be using the same cookie.
+> >>>
+> >>> -Ben
+> >>>
+> >>>>
+> >>>> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> >>>> ---
+> >>>>  libmultipath/devmapper.c | 23 ++++++++++++++---------
+> >>>>  1 file changed, 14 insertions(+), 9 deletions(-)
+> >>>>
+> >>>> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+> >>>> index e6156f7..a96cc0e 100644
+> >>>> --- a/libmultipath/devmapper.c
+> >>>> +++ b/libmultipath/devmapper.c
+> >>>> @@ -274,11 +274,10 @@ dm_device_remove (const char *name, int needsy=
+nc, int deferred_remove) {
+> >>>>  =
 
-> > > If we switch this to a shared lock, then what's the point in having it
-> > > at all? The whole point of lock_multipath is to keep multipath and
-> > > multipathd (or two concurrent calls to multipath) from trying to crea=
-te
-> > > a device at the same time, and both failing. Without an exclusive loc=
-k,
-> > > this won't stop that. We can either decide that this is an unlikely
-> > > scenario, and drop it entirely, or we can have multipath create its o=
-wn
-> > > lockfiles to prevent this issue without interfering with udev. But
-> > > unless I'm missing something, this won't actually do anything.
-> > > =
+> >>>>  extern int
+> >>>>  dm_addmap (int task, const char *target, struct multipath *mpp,
+> >>>> -	   char * params, int ro) {
+> >>>> +	   char * params, int ro, uint32_t *cookie) {
+> >>>>  	int r =3D 0;
+> >>>>  	struct dm_task *dmt;
+> >>>>  	char *prefixed_uuid =3D NULL;
+> >>>> -	uint32_t cookie =3D 0;
+> >>>>  =
 
-> > This is primarily for co-operation with udev.
-> > As we typically do _not_ use multipath for creating device-mapper tables
-> > the synchronisation problem between multipath and multipathd
-> > doesn't typically occur.
-> > At least not for us :-)
-> =
+> >>>>  	if (!(dmt =3D dm_task_create (task)))
+> >>>>  		return 0;
+> >>>> @@ -319,18 +318,18 @@ dm_addmap (int task, const char *target, struc=
+t multipath *mpp,
+> >>>>  	dm_task_no_open_count(dmt);
+> >>>>  =
 
-> Well, it doesn't occur for us either, unless someone runs multipath at
-> EXACTLY the wrong time, at which case, I'm pretty sure the same thing
-> can happen in any distro. The question is, do we protect against that
-> very unlikely occurance.  The only time I see this actually having any
-> real chance to occur would be if some multipath user writes a script
-> that listens for new devices to be discovered, and then *helpfully* runs
-> multipath to update the system. I have seen this. Multiple times, in
-> fact. I'm not sure how much work we need to expend saving these people
-> from themselves, however.
-> =
+> >>>>  	if (task =3D=3D DM_DEVICE_CREATE &&
+> >>>> -	    !dm_task_set_cookie(dmt, &cookie,
+> >>>> +	    !dm_task_set_cookie(dmt, cookie,
+> >>>>  				DM_UDEV_DISABLE_LIBRARY_FALLBACK)) {
+> >>>> -		dm_udev_complete(cookie);
+> >>>> +		dm_udev_complete(*cookie);
+> >>>>  		goto freeout;
+> >>>>  	}
+> >>>>  	r =3D dm_task_run (dmt);
+> >>>>  =
 
+> >>>>  	if (task =3D=3D DM_DEVICE_CREATE) {
+> >>>>  		if (!r)
+> >>>> -			dm_udev_complete(cookie);
+> >>>> +			dm_udev_complete(*cookie);
+> >>>>  		else
+> >>>> -			dm_udev_wait(cookie);
+> >>>> +			dm_udev_wait(*cookie);
+> >>>>  	}
+> >>>>  	freeout:
+> >>>>  	if (prefixed_uuid)
+> >>>> @@ -345,11 +344,13 @@ dm_addmap (int task, const char *target, struc=
+t multipath *mpp,
+> >>>>  extern int
+> >>>>  dm_addmap_create (struct multipath *mpp, char * params) {
+> >>>>  	int ro;
+> >>>> +	uint32_t cookie =3D 0;
+> >>>>  =
+
+> >>>>  	for (ro =3D 0; ro <=3D 1; ro++) {
+> >>>>  		int err;
+> >>>>  =
+
+> >>>> -		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, ro))
+> >>>> +		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH,
+> >>>> +			      mpp, params, ro, &cookie))
+> >>>>  			return 1;
+> >>>>  		/*
+> >>>>  		 * DM_DEVICE_CREATE is actually DM_DEV_CREATE + DM_TABLE_LOAD.
+> >>>> @@ -374,11 +375,15 @@ dm_addmap_create (struct multipath *mpp, char =
+* params) {
+> >>>>  =
+
+> >>>>  extern int
+> >>>>  dm_addmap_reload (struct multipath *mpp, char *params) {
+> >>>> -	if (dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params, ADDMAP_RW))
+> >>>> +	uint32_t cookie =3D 0;
+> >>>> +
+> >>>> +	if (dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params,
+> >>>> +		      ADDMAP_RW, &cookie))
+> >>>>  		return 1;
+> >>>>  	if (errno !=3D EROFS)
+> >>>>  		return 0;
+> >>>> -	return dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params, ADDMAP_=
+RO);
+> >>>> +	return dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params,
+> >>>> +			 ADDMAP_RO, &cookie);
+> >>>>  }
+> >>>>  =
+
+> >>>>  extern int
+> >>>> -- =
+
+> >>>> 2.6.6
+> >> Looking closer, this entire section looks fishy.
+> >> >From the lvm source code I couldn't figure out _how_ we could get
+> >> into a situation where dm_task_run() would return 0 (ie no error
+> >> occurred), but errno would be set to EROFS.
 > > =
 
-> > And as described above, we need this patch to co-operate with udev.
-> > Kay was pretty adamant about _not_ changing udev here.
+> > dm_task_run returns a 0 on error, not success.
+> > =
+
+> Yeah, after several hours of debugging I've finally fixed things up.
+> Main reason why it worked was that multipathd disabled udev sync, so
+> all cookies were disabled and it doesn't really matter if and how
+> you called udevcomplete and stuff.
 > =
 
-> I'm not suggesting we ask udev to chage. If we want to keep the locking,
-> we need to use our own private lockfiles.
+> So, question:
 > =
 
-> > That said, I'm happy with dropping the lock functionality completely;
-> > one possibility would be to use the CLI functionality to route calls
-> > from multipath to multipathd.
+> Should be enable udev sync via
 > =
 
-> I don't see why this same issue can't happen for anyone creating any
-> type of dm device build out of multiple physical devices, and AFAIK, lvm
-> doesn't bother to protect users against this, even though it can now
-> autoassemble. So I'm not against dropping this either.
+> 	dm_udev_set_sync_support(1);
+> =
 
-Actually, after some more thought... There must be something that udev
-is protecting itself against by taking the shared lock. Do you know what
-that is? Assuming that multipath wants to protect against the same
-thing, we probably do want to keep locking here.
+> in multipathd or not?
 
-So, assuming that we do want to protect ourselves against whatever udev
-is protecting itself against, I remove my NAK of the original patch, and
-apologize for the confusion. If we don't need to worry about udev's
-issue, then we can try just removing the locks.  At worst, we'll find
-out quickly what they are important for.
+Not unless you want to block every multipathd thread that grabs the vecs
+lock after every sync-able dm command, until udev processes that event.
+In short, No.
+
+I looked at multiple ideas to deal with syncing, including a seperate
+waiting thread.  All of them had to potential to cause crippling
+slowdowns. Then I realized that we don't need them. Multipathd itself
+already listens to the udev events.  If we want to know when udev has
+finished processing the uevent, we just wait for multipathd to receive
+it.
+
+That's the crux of my solution to keeping multipath from reloading a
+device before udev has finished initializing it (see commit
+b833425029b59106e4e6de26470990ee39d614f5, multipathd: delay reloads
+during creation). We know when udev has finished setting up the device,
+because it sends us a uevent afterwards.
 
 -Ben
 
 > =
 
-> -Ben
+> Cheers,
 > =
 
-> > Cheers,
-> > =
+> Hannes
+> -- =
 
-> > Hannes
-> > -- =
-
-> > Dr. Hannes Reinecke		      zSeries & Storage
-> > hare@suse.de			      +49 911 74053 688
-> > SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> > GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
-> =
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> Dr. Hannes Reinecke		   Teamlead Storage & Networking
+> hare@suse.de			               +49 911 74053 688
+> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+> GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+> HRB 21284 (AG N=FCrnberg)
