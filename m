@@ -1,82 +1,65 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 28/57] libmultipath: use a shared lock to
- co-operate with udev
-Date: Tue, 3 May 2016 15:23:33 -0500
-Message-ID: <20160503202333.GI26117@octiron.msp.redhat.com>
-References: <1461755458-29225-1-git-send-email-hare@suse.de>
-	<1461755458-29225-29-git-send-email-hare@suse.de>
-	<20160502162617.GS26117@octiron.msp.redhat.com>
-	<57283DAD.9040009@suse.de>
-	<20160503142732.GB26117@octiron.msp.redhat.com>
-	<5728C447.9050307@citrix.com>
+From: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 00/42] v7: separate operations from flags in
+	the bio/request structs
+Date: Tue, 03 May 2016 16:44:02 -0400
+Message-ID: <x49d1p2c1nx.fsf@segfault.boston.devel.redhat.com>
+References: <1460747777-8479-1-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <5728C447.9050307@citrix.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Germano Percossi <germano.percossi@citrix.com>
-Cc: dm-devel@redhat.com
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <1460747777-8479-1-git-send-email-mchristi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+	(mchristi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org's message of "Fri, 15 Apr 2016 14:15:35 -0500")
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: mchristi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, konrad.wilk-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, osd-dev-yNzVSZO3znNg9hUCZPvPmw@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, May 03, 2016 at 04:31:19PM +0100, Germano Percossi wrote:
-> Hi,
-> 
-> Sorry for jumping in the middle of patch review
-> 
-> On 05/03/2016 03:27 PM, Benjamin Marzinski wrote:
-> >On Tue, May 03, 2016 at 07:57:01AM +0200, Hannes Reinecke wrote:
-> >>On 05/02/2016 06:26 PM, Benjamin Marzinski wrote:
-> >>>On Wed, Apr 27, 2016 at 01:10:29PM +0200, Hannes Reinecke wrote:
-> >>This is primarily for co-operation with udev.
-> >>As we typically do _not_ use multipath for creating device-mapper tables
-> >>the synchronisation problem between multipath and multipathd
-> >>doesn't typically occur.
-> >>At least not for us :-)
-> >
-> >Well, it doesn't occur for us either, unless someone runs multipath at
-> >EXACTLY the wrong time, at which case, I'm pretty sure the same thing
-> >can happen in any distro. The question is, do we protect against that
-> >very unlikely occurance.  The only time I see this actually having any
-> >real chance to occur would be if some multipath user writes a script
-> >that listens for new devices to be discovered, and then *helpfully* runs
-> >multipath to update the system. I have seen this. Multiple times, in
-> >fact. I'm not sure how much work we need to expend saving these people
-> >from themselves, however.
-> >
-> 
-> I just want to make sure XenServer is not among those that need to
-> be saved from themselves.
-> We do mix multipathd and multipath commands but in a way that we think
-> is safe: we add devices with "multipath -r" and remove with "multipath -f".
-> This is because we slightly bend the wwids file usage to be used
-> as a blacklisting mechanism (in our own way).
+mchristi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org writes:
 
-The only way you would be likely to run into problems is if you would be
-running "multipath -r" at the same time as the udev add event for the
-first path device was happening.  We only lock the devices on the
-initial create.
+> The following patches begin to cleanup the request->cmd_flags and
+> bio->bi_rw mess. We currently use cmd_flags to specify the operation,
+> attributes and state of the request. For bi_rw we use it for similar
+> info and also the priority but then also have another bi_flags field
+> for state. At some point, we abused them so much we just made cmd_flags
+> 64 bits, so we could add more.
+>
+> The following patches seperate the operation (read, write discard,
+> flush, etc) from cmd_flags/bi_rw.
+>
+> This patchset was made against linux-next from today April 15
+> (git tag next-20160415).
+>
+> I put a git tree here:
+> https://github.com/mikechristie/linux-kernel.git
+> The patches are in the op branch.
 
-But doesn't multipathd try to add these devices too?
+Hi, Mike,
 
--Ben
- 
-> I am wondering if removing cooperation between multipath and multipathd
-> is going to cause us troubles in the future.
-> 
-> Regards,
-> Germano
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+That git tree doesn't seem to exist.  I did manage to apply your patch
+set on top of next-20160415, though.
+
+So... what testing did you do? ;-) I ran into the following problems:
+- git clone fails
+- yum segfaults
+- many blktrace/blkparse issues, including incorrect cpu recorded in
+  traces, null task names, and blkparse outputting nothing for a trace
+  file several gigabytes in size.
+
+After that, I decided to back out your patches and test the base
+linux-next kernel.  That kernel has none of those issues.
+
+So, either I'm missing some dependencies, or I think we've got some
+issues to iron out before this thing goes in.  Before I dig any further,
+am I missing something?
+
+Cheers,
+Jeff
