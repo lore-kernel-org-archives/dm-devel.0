@@ -1,16 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 28/57] libmultipath: use a shared lock to
- co-operate with udev
-Date: Tue, 3 May 2016 07:57:01 +0200
-Message-ID: <57283DAD.9040009@suse.de>
+Subject: Re: [PATCH 30/57] multipathd: skip uninitialized devices
+ during reconfiguration
+Date: Tue, 3 May 2016 08:04:32 +0200
+Message-ID: <57283F70.3060709@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
-	<1461755458-29225-29-git-send-email-hare@suse.de>
-	<20160502162617.GS26117@octiron.msp.redhat.com>
+	<1461755458-29225-31-git-send-email-hare@suse.de>
+	<20160502191407.GT26117@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160502162617.GS26117@octiron.msp.redhat.com>
+In-Reply-To: <20160502191407.GT26117@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,48 +24,38 @@ To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On 05/02/2016 06:26 PM, Benjamin Marzinski wrote:
-> On Wed, Apr 27, 2016 at 01:10:29PM +0200, Hannes Reinecke wrote:
->> udev since v214 is placing a shared lock on the device node
->> whenever it's processing the event. This introduces a race
->> condition with multipathd, as multipathd is processing the
->> event for the block device at the same time as udev is
->> processing the events for the partitions.
->> And a lock on the partitions will also be visible on the
->> block device itself, hence multipathd won't be able to
->> lock the device.
->> When multipath manages to take a lock on the device,
->> udev will fail, and consequently ignore this entire event.
->> Which in turn might cause the system to malfunction as it
->> might have been a crucial event like 'remove' or 'link down'.
->>
->> So we should better use LOCK_SH here; with that the flock
->> call in multipathd _and_ udev will succeed and the events
->> can be processed.
+On 05/02/2016 09:14 PM, Benjamin Marzinski wrote:
+> On Wed, Apr 27, 2016 at 01:10:31PM +0200, Hannes Reinecke wrote:
+>> libudev has a separate filter setting to skip uninitialized
+>> devices during enumeration.
 > =
 
-> If we switch this to a shared lock, then what's the point in having it
-> at all? The whole point of lock_multipath is to keep multipath and
-> multipathd (or two concurrent calls to multipath) from trying to create
-> a device at the same time, and both failing. Without an exclusive lock,
-> this won't stop that. We can either decide that this is an unlikely
-> scenario, and drop it entirely, or we can have multipath create its own
-> lockfiles to prevent this issue without interfering with udev. But
-> unless I'm missing something, this won't actually do anything.
+> So, I assume if udev filters out a device here, it's because a uevent
+> should be coming when the device is fully initialized. correct?
 > =
 
-This is primarily for co-operation with udev.
-As we typically do _not_ use multipath for creating device-mapper tables
-the synchronisation problem between multipath and multipathd
-doesn't typically occur.
-At least not for us :-)
+Correct.
 
-And as described above, we need this patch to co-operate with udev.
-Kay was pretty adamant about _not_ changing udev here.
+> The only thing I worry about with taking out all of the backup stuff is
+> what happens if udev simply times out processing an event, and doesn't
+> grab the UUID.  In this case we still won't get a UUID unless we force
+> another event, or grab the information ourselves.
+> =
 
-That said, I'm happy with dropping the lock functionality completely;
-one possibility would be to use the CLI functionality to route calls
-from multipath to multipathd.
+Well, but we won't be seeing the event, either.
+(If udev has timed out an event it won't be processed further, so it
+will never show up on the udev event queue.)
+
+However, there is a reason why I posted all work-arounds we've queued
+together with this patch.
+
+In the end, the udev integration stuff has fanned out across several
+patches, where it's now really hard to figure out which bits are really
+required.
+So I'd prefer to leave them in; we can always remove them later.
+
+> But ACK on the patch itself.
+> =
 
 Cheers,
 
