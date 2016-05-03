@@ -1,16 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 22/57] multipath: use option '-i' when called
-	from udev
-Date: Tue, 3 May 2016 07:44:31 +0200
-Message-ID: <57283ABF.4080304@suse.de>
+Subject: Re: [PATCH 19/57] multipathd: Do not print misleading
+ message 'not found in pathvec'
+Date: Tue, 3 May 2016 07:47:36 +0200
+Message-ID: <57283B78.6010003@suse.de>
 References: <1461755458-29225-1-git-send-email-hare@suse.de>
-	<1461755458-29225-23-git-send-email-hare@suse.de>
-	<20160502153124.GP26117@octiron.msp.redhat.com>
+	<1461755458-29225-20-git-send-email-hare@suse.de>
+	<20160502154029.GQ26117@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160502153124.GP26117@octiron.msp.redhat.com>
+In-Reply-To: <20160502154029.GQ26117@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,38 +24,30 @@ To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On 05/02/2016 05:31 PM, Benjamin Marzinski wrote:
-> On Wed, Apr 27, 2016 at 01:10:23PM +0200, Hannes Reinecke wrote:
->> multipath should be using the option '-i' to ignore the wwids
->> file when called from udev. Otherwise we might run into a race
->> condition with systemd and the system might not boot up correctly.
+On 05/02/2016 05:40 PM, Benjamin Marzinski wrote:
+> On Wed, Apr 27, 2016 at 01:10:20PM +0200, Hannes Reinecke wrote:
+>> When looking up a path in the existing configuration it is perfectly
+>> possible for the path not to be present.
+>> This should not generate a message as it might be errorneously
+>> interpreted as an error.
+>>
 > =
 
-> The race condition being? Are you talking about the udev rules not
-> claiming a path for multipath, but then having multipathd create a
-> multipath device using that path? I agree that this can be an issue.
-> Another way to solve it is to run mutipathd with the -n option in the
-> initramfs (see commit a8efa5838cf215febd853f282c26af62c0daa862). That
-> commit solves the race by making mutipathd ignore devices that aren't
-> already in the wwids file.  This also keeps the initramfs from picking a
-> different user_friendly_name than will be picked in late boot (but
-> hopefully that issue has been sorted out by other patches already).
+> Do you feel really strongly that these messages should go? I don't think
+> that they are essential, but they can be useful when debugging an issue
+> to see the route the code took. We could move them to level 4, but
+> personally, I find the amount of messages generated at log level 4 to be
+> so high that it's a pain to use to track bugs that don't occur right
+> away. Another possibility would be to change the message to something
+> more innocuous.
 > =
 
-This is in fact SUSE-specific, as we do _not_ require any a-priory
-configuration. So we will start out with a system without any wwid file,
-_but_ expect multipath to start up properly.
-As the wwid file will only be created by multipathd the udev check will
-always being false, and none of the multipath devices will be created.
+I'm not particulary attached to this patch.
+The main issues I have is that we're generating two identical messages
+at two different locations (ie making it hard to debug), and that the
+message don't indicate whether it's an error or not.
 
-> I'm not NAKing this. The question of what to do about the differnces in
-> the distribution's systemd and udev configurations can be hashed out
-> outside of patch reviewing. I just want to make sure I understand the
-> race this is solving.
-> =
-
-This is in fact a good question.
-We should be coming up with a common approach which would suit both needs.
+But sure, I can easily drop this patch.
 
 Cheers,
 
