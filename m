@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 2/6] libmultipath: pass in 'cookie' as argument
-	for dm_addmap()
-Date: Wed,  4 May 2016 07:57:26 +0200
-Message-ID: <1462341450-5507-3-git-send-email-hare@suse.de>
+Subject: [PATCH 5/6] devmapper: do not flush I/O for
+	DM_DEVICE_CREATE
+Date: Wed,  4 May 2016 07:57:29 +0200
+Message-ID: <1462341450-5507-6-git-send-email-hare@suse.de>
 References: <1462341450-5507-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,86 +22,51 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Instead of generating the cookie internally we should be
-passing in the cookie to dm_addmap().
+DM_DEVICE_CREATE loads a new table, so there cannot be any
+I/O pending. Hence we should be setting the 'no flush'
+and 'skip lockfs' flag to avoid delays during creation.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/devmapper.c | 23 ++++++++++++++---------
- 1 file changed, 14 insertions(+), 9 deletions(-)
+ libmultipath/devmapper.c | 25 ++++++++++++++++---------
+ 1 file changed, 16 insertions(+), 9 deletions(-)
 
 diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 48e7d50..ab71fda 100644
+index 04dcb72..0ae72fc 100644
 --- a/libmultipath/devmapper.c
 +++ b/libmultipath/devmapper.c
-@@ -274,11 +274,10 @@ dm_device_remove (const char *name, int needsync, int deferred_remove) {
+@@ -294,16 +294,23 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
+ 	if (ro)
+ 		dm_task_set_ro(dmt);
  
- static int
- dm_addmap (int task, const char *target, struct multipath *mpp,
--	   char * params, int ro) {
-+	   char * params, int ro, uint32_t *cookie) {
- 	int r = 0;
- 	struct dm_task *dmt;
- 	char *prefixed_uuid = NULL;
--	uint32_t cookie = 0;
- 
- 	if (!(dmt = dm_task_create (task)))
- 		return 0;
-@@ -319,18 +318,18 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
- 	dm_task_no_open_count(dmt);
- 
- 	if (task == DM_DEVICE_CREATE &&
--	    !dm_task_set_cookie(dmt, &cookie,
-+	    !dm_task_set_cookie(dmt, cookie,
- 				DM_UDEV_DISABLE_LIBRARY_FALLBACK)) {
--		dm_udev_complete(cookie);
-+		dm_udev_complete(*cookie);
- 		goto freeout;
+-	if ((task == DM_DEVICE_CREATE) && strlen(mpp->wwid) > 0){
+-		prefixed_uuid = MALLOC(UUID_PREFIX_LEN + strlen(mpp->wwid) + 1);
+-		if (!prefixed_uuid) {
+-			condlog(0, "cannot create prefixed uuid : %s",
+-				strerror(errno));
+-			goto addout;
++	if (task == DM_DEVICE_CREATE) {
++		if (strlen(mpp->wwid) > 0) {
++			prefixed_uuid = MALLOC(UUID_PREFIX_LEN +
++					       strlen(mpp->wwid) + 1);
++			if (!prefixed_uuid) {
++				condlog(0, "cannot create prefixed uuid : %s",
++					strerror(errno));
++				goto addout;
++			}
++			sprintf(prefixed_uuid, UUID_PREFIX "%s", mpp->wwid);
++			if (!dm_task_set_uuid(dmt, prefixed_uuid))
++				goto freeout;
+ 		}
+-		sprintf(prefixed_uuid, UUID_PREFIX "%s", mpp->wwid);
+-		if (!dm_task_set_uuid(dmt, prefixed_uuid))
+-			goto freeout;
++		dm_task_skip_lockfs(dmt);
++#ifdef LIBDM_API_FLUSH
++		dm_task_no_flush(dmt);
++#endif
  	}
- 	r = dm_task_run (dmt);
  
- 	if (task == DM_DEVICE_CREATE) {
- 		if (!r)
--			dm_udev_complete(cookie);
-+			dm_udev_complete(*cookie);
- 		else
--			dm_udev_wait(cookie);
-+			dm_udev_wait(*cookie);
- 	}
- 	freeout:
- 	if (prefixed_uuid)
-@@ -345,11 +344,13 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
- extern int
- dm_addmap_create (struct multipath *mpp, char * params) {
- 	int ro;
-+	uint32_t cookie = 0;
- 
- 	for (ro = 0; ro <= 1; ro++) {
- 		int err;
- 
--		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, ro))
-+		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH,
-+			      mpp, params, ro, &cookie))
- 			return 1;
- 		/*
- 		 * DM_DEVICE_CREATE is actually DM_DEV_CREATE + DM_TABLE_LOAD.
-@@ -374,11 +375,15 @@ dm_addmap_create (struct multipath *mpp, char * params) {
- 
- extern int
- dm_addmap_reload (struct multipath *mpp, char *params) {
--	if (dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params, ADDMAP_RW))
-+	uint32_t cookie = 0;
-+
-+	if (dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params,
-+		      ADDMAP_RW, &cookie))
- 		return 1;
- 	if (errno != EROFS)
- 		return 0;
--	return dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params, ADDMAP_RO);
-+	return dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params,
-+			 ADDMAP_RO, &cookie);
- }
- 
- extern int
+ 	if (mpp->attribute_flags & (1 << ATTR_MODE) &&
 -- 
 2.6.6
