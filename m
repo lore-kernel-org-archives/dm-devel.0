@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 1/6] libmultipath: pass in cookie as argument for
-	dm_simplecmd()
-Date: Wed,  4 May 2016 07:57:25 +0200
-Message-ID: <1462341450-5507-2-git-send-email-hare@suse.de>
+Subject: [PATCH 2/6] libmultipath: pass in 'cookie' as argument
+	for dm_addmap()
+Date: Wed,  4 May 2016 07:57:26 +0200
+Message-ID: <1462341450-5507-3-git-send-email-hare@suse.de>
 References: <1462341450-5507-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,47 +22,45 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Instead of generating the cookie internally we should be passing
-it in as an argument; that will allow for cookie reuse.
+Instead of generating the cookie internally we should be
+passing in the cookie to dm_addmap().
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/devmapper.c | 25 ++++++++++++++++---------
- 1 file changed, 16 insertions(+), 9 deletions(-)
+ libmultipath/devmapper.c | 23 ++++++++++++++---------
+ 1 file changed, 14 insertions(+), 9 deletions(-)
 
 diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index fb202e8..48e7d50 100644
+index 48e7d50..ab71fda 100644
 --- a/libmultipath/devmapper.c
 +++ b/libmultipath/devmapper.c
-@@ -207,11 +207,12 @@ dm_prereq (void)
- #define do_deferred(x) ((x) == DEFERRED_REMOVE_ON || (x) == DEFERRED_REMOVE_IN_PROGRESS)
+@@ -274,11 +274,10 @@ dm_device_remove (const char *name, int needsync, int deferred_remove) {
  
  static int
--dm_simplecmd (int task, const char *name, int no_flush, int need_sync, uint16_t udev_flags, int deferred_remove) {
-+dm_simplecmd (int task, const char *name, int no_flush, int need_sync,
-+	      uint16_t udev_flags, int deferred_remove, uint32_t *cookie)
-+{
+ dm_addmap (int task, const char *target, struct multipath *mpp,
+-	   char * params, int ro) {
++	   char * params, int ro, uint32_t *cookie) {
  	int r = 0;
- 	int udev_wait_flag = (need_sync && (task == DM_DEVICE_RESUME ||
- 					    task == DM_DEVICE_REMOVE));
--	uint32_t cookie = 0;
  	struct dm_task *dmt;
+ 	char *prefixed_uuid = NULL;
+-	uint32_t cookie = 0;
  
  	if (!(dmt = dm_task_create (task)))
-@@ -231,18 +232,18 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync, uint16_t
- 		dm_task_deferred_remove(dmt);
- #endif
- 	if (udev_wait_flag &&
+ 		return 0;
+@@ -319,18 +318,18 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
+ 	dm_task_no_open_count(dmt);
+ 
+ 	if (task == DM_DEVICE_CREATE &&
 -	    !dm_task_set_cookie(dmt, &cookie,
 +	    !dm_task_set_cookie(dmt, cookie,
- 				DM_UDEV_DISABLE_LIBRARY_FALLBACK | udev_flags)) {
+ 				DM_UDEV_DISABLE_LIBRARY_FALLBACK)) {
 -		dm_udev_complete(cookie);
 +		dm_udev_complete(*cookie);
- 		goto out;
+ 		goto freeout;
  	}
  	r = dm_task_run (dmt);
  
- 	if (udev_wait_flag) {
+ 	if (task == DM_DEVICE_CREATE) {
  		if (!r)
 -			dm_udev_complete(cookie);
 +			dm_udev_complete(*cookie);
@@ -70,35 +68,40 @@ index fb202e8..48e7d50 100644
 -			dm_udev_wait(cookie);
 +			dm_udev_wait(*cookie);
  	}
- 	out:
- 	dm_task_destroy (dmt);
-@@ -251,18 +252,24 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync, uint16_t
+ 	freeout:
+ 	if (prefixed_uuid)
+@@ -345,11 +344,13 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
+ extern int
+ dm_addmap_create (struct multipath *mpp, char * params) {
+ 	int ro;
++	uint32_t cookie = 0;
+ 
+ 	for (ro = 0; ro <= 1; ro++) {
+ 		int err;
+ 
+-		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, ro))
++		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH,
++			      mpp, params, ro, &cookie))
+ 			return 1;
+ 		/*
+ 		 * DM_DEVICE_CREATE is actually DM_DEV_CREATE + DM_TABLE_LOAD.
+@@ -374,11 +375,15 @@ dm_addmap_create (struct multipath *mpp, char * params) {
  
  extern int
- dm_simplecmd_flush (int task, const char *name, uint16_t udev_flags) {
--	return dm_simplecmd(task, name, 0, 1, udev_flags, 0);
+ dm_addmap_reload (struct multipath *mpp, char *params) {
+-	if (dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params, ADDMAP_RW))
 +	uint32_t cookie = 0;
 +
-+	return dm_simplecmd(task, name, 0, 1, udev_flags, 0, &cookie);
++	if (dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params,
++		      ADDMAP_RW, &cookie))
+ 		return 1;
+ 	if (errno != EROFS)
+ 		return 0;
+-	return dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params, ADDMAP_RO);
++	return dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params,
++			 ADDMAP_RO, &cookie);
  }
  
  extern int
- dm_simplecmd_noflush (int task, const char *name, int needsync, uint16_t udev_flags) {
--	return dm_simplecmd(task, name, 1, needsync, udev_flags, 0);
-+	uint32_t cookie = 0;
-+
-+	return dm_simplecmd(task, name, 1, needsync, udev_flags, 0, &cookie);
- }
- 
- static int
- dm_device_remove (const char *name, int needsync, int deferred_remove) {
-+	uint32_t cookie = 0;
-+
- 	return dm_simplecmd(DM_DEVICE_REMOVE, name, 0, needsync, 0,
--			    deferred_remove);
-+			    deferred_remove, &cookie);
- }
- 
- static int
 -- 
 2.6.6
