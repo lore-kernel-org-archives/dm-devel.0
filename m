@@ -1,70 +1,61 @@
-From: Germano Percossi <germano.percossi@citrix.com>
-Subject: Re: [PATCH 28/57] libmultipath: use a shared lock to
- co-operate with udev
-Date: Wed, 4 May 2016 12:25:34 +0100
-Message-ID: <5729DC2E.3050002@citrix.com>
-References: <1461755458-29225-1-git-send-email-hare@suse.de>
-	<1461755458-29225-29-git-send-email-hare@suse.de>
-	<20160502162617.GS26117@octiron.msp.redhat.com>
-	<57283DAD.9040009@suse.de>
-	<20160503142732.GB26117@octiron.msp.redhat.com>
-	<5728C447.9050307@citrix.com>
-	<20160503202333.GI26117@octiron.msp.redhat.com>
+From: Mike Christie <mchristi@redhat.com>
+Subject: Re: [PATCH 00/42] v7: separate operations from flags in the
+ bio/request structs
+Date: Wed, 4 May 2016 12:51:59 -0500
+Message-ID: <572A36BF.3070208@redhat.com>
+References: <1460747777-8479-1-git-send-email-mchristi@redhat.com>
+ <x49d1p2c1nx.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160503202333.GI26117@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <x49d1p2c1nx.fsf@segfault.boston.devel.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jeff Moyer <jmoyer@redhat.com>
+Cc: linux-f2fs-devel@lists.sourceforge.net, linux-ext4@vger.kernel.org, konrad.wilk@oracle.com, drbd-dev@lists.linbit.com, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-bcache@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-mtd@lists.infradead.org, target-devel@vger.kernel.org, linux-btrfs@vger.kernel.org, osd-dev@open-osd.org, xfs@oss.sgi.com, ocfs2-devel@oss.oracle.com
 List-Id: dm-devel.ids
 
-Hi Ben,
-
-On 05/03/2016 09:23 PM, Benjamin Marzinski wrote:
-> On Tue, May 03, 2016 at 04:31:19PM +0100, Germano Percossi wrote:
+On 05/03/2016 03:44 PM, Jeff Moyer wrote:
+> mchristi@redhat.com writes:
+> 
+>> The following patches begin to cleanup the request->cmd_flags and
+>> bio->bi_rw mess. We currently use cmd_flags to specify the operation,
+>> attributes and state of the request. For bi_rw we use it for similar
+>> info and also the priority but then also have another bi_flags field
+>> for state. At some point, we abused them so much we just made cmd_flags
+>> 64 bits, so we could add more.
 >>
->> I just want to make sure XenServer is not among those that need to
->> be saved from themselves.
->> We do mix multipathd and multipath commands but in a way that we think
->> is safe: we add devices with "multipath -r" and remove with "multipath -f".
->> This is because we slightly bend the wwids file usage to be used
->> as a blacklisting mechanism (in our own way).
->
-> The only way you would be likely to run into problems is if you would be
-> running "multipath -r" at the same time as the udev add event for the
-> first path device was happening.  We only lock the devices on the
-> initial create.
->
-> But doesn't multipathd try to add these devices too?
+>> The following patches seperate the operation (read, write discard,
+>> flush, etc) from cmd_flags/bi_rw.
+>>
+>> This patchset was made against linux-next from today April 15
+>> (git tag next-20160415).
+>>
+>> I put a git tree here:
+>> https://github.com/mikechristie/linux-kernel.git
+>> The patches are in the op branch.
+> 
+> Hi, Mike,
+> 
+> That git tree doesn't seem to exist.  I did manage to apply your patch
+> set on top of next-20160415, though.
+> 
+> So... what testing did you do? ;-) I ran into the following problems
 
-In our case, no.
-What we did is to remove condition 1 for "find_multipaths yes".
-So, unless someone (or something) else adds the wwid to the
-wwids file, the path is ignored.
-Doing this way, it is our storage manager that decides when it is time 
-for a path to be used by multipath and, to this end, it invokes
-multipath -r.
+I normally run xfstests and run it on my daily workstation and laptop. I
+did not do this for every FS this time and hit a regression.
 
-So, from our point of view, there should not be interactions with
-multipathd but I could be wrong.
+What FS were you using?
 
-For what concerns udev, I am not sure what are your intentions about
-the lock.
-If it is just to protect udev and multipathd, then we could have 
-problems with multipath.
+> - git clone fails
+> - yum segfaults
 
-Germano
 
->
-> -Ben
->
+In v7/v6, I missed a new submit_bio call, so I hit issues like the two
+above. I have this fixed in the next version.
+
+> - many blktrace/blkparse issues, including incorrect cpu recorded in
+>   traces, null task names, and blkparse outputting nothing for a trace
+>   file several gigabytes in size.
+
+I will double check for these issues.
