@@ -1,14 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 5/6] devmapper: do not flush I/O for
-	DM_DEVICE_CREATE
-Date: Wed,  4 May 2016 07:57:29 +0200
-Message-ID: <1462341450-5507-6-git-send-email-hare@suse.de>
-References: <1462341450-5507-1-git-send-email-hare@suse.de>
+Subject: Re: [PATCH 56/57] multipathd: push down lock in
+	checkerloop()
+Date: Wed, 4 May 2016 08:39:28 +0200
+Message-ID: <57299920.7070101@suse.de>
+References: <1461755458-29225-1-git-send-email-hare@suse.de>
+	<1461755458-29225-57-git-send-email-hare@suse.de>
+	<20160503221734.GJ26117@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1462341450-5507-1-git-send-email-hare@suse.de>
+In-Reply-To: <20160503221734.GJ26117@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,55 +20,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-DM_DEVICE_CREATE loads a new table, so there cannot be any
-I/O pending. Hence we should be setting the 'no flush'
-and 'skip lockfs' flag to avoid delays during creation.
+On 05/04/2016 12:17 AM, Benjamin Marzinski wrote:
+> On Wed, Apr 27, 2016 at 01:10:57PM +0200, Hannes Reinecke wrote:
+>> Instead of grabbing the lock at the start of the checkerloop
+>> and releasing it at the end we should be holding it only
+>> during the time when we actually need it.
+> =
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- libmultipath/devmapper.c | 25 ++++++++++++++++---------
- 1 file changed, 16 insertions(+), 9 deletions(-)
+> I'm pretty sure that this can cause crashes if multipathd reconfigures
+> when it's just started servicing a uevent. It goes like this. The
+> uevq_thr thread calls uev_trigger(), which checks the running_state and
+> sees that it's DAEMON_IDLE.  The uxlsnr_thr thread gets a
+> reconfiguration request, which eventually calls set_config_state().
+> set_config_state() sees the state is DAEMON_IDLE, sets it to
+> DAEMON_CONFIGURE, and returns without waiting.  This wakes up the child
+> thread, which runs reconfigure().  reconfigure() sets conf to NULL. Then
+> the uevq_thr thread in uev_trigger() calls filter_devnode()
+> dereferencing conf->blist_devnode and conf->elist_devnode. conf is NULL,
+> and thus it crashes.
+> =
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 04dcb72..0ae72fc 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -294,16 +294,23 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
- 	if (ro)
- 		dm_task_set_ro(dmt);
- 
--	if ((task == DM_DEVICE_CREATE) && strlen(mpp->wwid) > 0){
--		prefixed_uuid = MALLOC(UUID_PREFIX_LEN + strlen(mpp->wwid) + 1);
--		if (!prefixed_uuid) {
--			condlog(0, "cannot create prefixed uuid : %s",
--				strerror(errno));
--			goto addout;
-+	if (task == DM_DEVICE_CREATE) {
-+		if (strlen(mpp->wwid) > 0) {
-+			prefixed_uuid = MALLOC(UUID_PREFIX_LEN +
-+					       strlen(mpp->wwid) + 1);
-+			if (!prefixed_uuid) {
-+				condlog(0, "cannot create prefixed uuid : %s",
-+					strerror(errno));
-+				goto addout;
-+			}
-+			sprintf(prefixed_uuid, UUID_PREFIX "%s", mpp->wwid);
-+			if (!dm_task_set_uuid(dmt, prefixed_uuid))
-+				goto freeout;
- 		}
--		sprintf(prefixed_uuid, UUID_PREFIX "%s", mpp->wwid);
--		if (!dm_task_set_uuid(dmt, prefixed_uuid))
--			goto freeout;
-+		dm_task_skip_lockfs(dmt);
-+#ifdef LIBDM_API_FLUSH
-+		dm_task_no_flush(dmt);
-+#endif
- 	}
- 
- 	if (mpp->attribute_flags & (1 << ATTR_MODE) &&
--- 
-2.6.6
+> The short version is that multipathd has been using the vecs lock to
+> protect conf.  With your change to uev_trigger, you access conf outside
+> of the vecs lock. This isn't a problem in checkerloop(), since you can't
+> reconfigure while multipathd is in the DAEMON_RUNNING state, so that is
+> protecting conf. You need to do the same
+> set_config_state(DAEMON_RUNNING) in uev_trigger to make this safe.
+> =
+
+I have now moved the call to 'filter_devnode' into the individual
+functions, so that it will be called with the vector lock held.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=FCrnberg)
