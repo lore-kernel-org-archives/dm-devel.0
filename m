@@ -1,14 +1,14 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 00/57] SLES resync
-Date: Tue, 3 May 2016 22:06:09 -0500
-Message-ID: <20160504030609.GM26117@octiron.msp.redhat.com>
-References: <1461755458-29225-1-git-send-email-hare@suse.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH 3/6] Remove 'udev_sync' argument from
+	dm_simplecmd()
+Date: Wed,  4 May 2016 07:57:27 +0200
+Message-ID: <1462341450-5507-4-git-send-email-hare@suse.de>
+References: <1462341450-5507-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1461755458-29225-1-git-send-email-hare@suse.de>
+In-Reply-To: <1462341450-5507-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,154 +18,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Apr 27, 2016 at 01:10:01PM +0200, Hannes Reinecke wrote:
-> Hi all,
-> 
-> as promised several times, here's now a patchset with all the patches
-> queued up in my SLES repository.
+The 'udev_sync' attribute is pointless without a cookie, so we
+can as well use the existence of the 'cookie' argument for
+the same function.
 
-ACK on all the patches I haven't commented on.
+Signed-off-by: Hannes Reinecke <hare@suse.com>
+---
+ libmultipath/devmapper.c | 21 ++++++++++++---------
+ 1 file changed, 12 insertions(+), 9 deletions(-)
 
--Ben
-
-> 
-> The first bits are pretty much uncontroversial (I hope), mainly fixes
-> etc. Next there are some systemd updates, setting dependencies and such.
-> 
-> The _really_ important patch is
-> 
-> multipathd: skip uninitialized devices during reconfiguration
-> 
-> which basically is the cause for all the missing wwid issues we've seen.
-> So I wonder if we shouldn't just do away with all the tweaks we've
-> accumlated so far and see if that patch isn't sufficient.
-> According to Kay Sievers it should...
-> 
-> Next is a general overhaul of the 'cookie' mechanism; Ben, Mike,
-> mind to have a look here? It _seems_ reasonable enough, but it would
-> be nice to have additional confirmation for that.
-> 
-> Finally there are patches which probably require some more discussion:
-> - Asynchronous configuration: Do not call 'reconfigure' directly, but
->   rather set the daemon_status to 'configuration' and defer the actual
->   work to the main thread. This allows us to decouple it from the CLI
->   call, and we won't run into any udev/systemd timeout issues when
->   booting on large installations
-> - Lock pushdown: I remember to have sent this patch already at one
->   point, but it got rejected. So I try again :-)
->   With this patch the big vector lock is pushed down to the areas
->   where we actually need it, making the entire system running far
->   smoother during booting or failover in large instances.
->   We have been using this patch since SLE12 GA, ie for over two
->   years now. And seem to have ironed out all issues with it.
-> 
-> The entire patchset can be found at:
-> 
-> github.com:/hreinecke/multipath-tools.git
-> branch sles-resync
-> 
-> As usual, comments and reviews are welcome.
-> Patches are based upon the latest git, including Bens patchset.
-> 
-> Hannes Reinecke (57):
->   kpartx: Fixup persistent name generation
->   kpartx: handle more than 256 loop devices
->   kpartx: parse emulated DASD devices
->   kpartx: Install rules file with correct prefix
->   Add HP MSA 2040 to the hardware table
->   Use ALUA for HP 3PAR
->   Add LIO-ORG/SUSE RBD backend hardware defaults
->   Allow for empty SCSI revision
->   libmultipath: Do not use 'sscanf' for parsing integers
->   libmultipath: finally fix dev_loss_tmo setting
->   multipathd: fixup queueing mode in 'show maps status'
->   multipathd: fixup a crash when invoking CLI commands
->   multipathd: print error message for invalid arguments
->   libmultipath: correctly initialize pp->sg_id
->   libmultipath: correctly display checker status
->   libmultipath: call get_uid() for all paths
->   libmultipath: additional logging messages when formatting callout
->   libmpathpersist: Fixup whitespaces in Makefile
->   multipathd: Do not print misleading message 'not found in pathvec'
->   multipathd: Do not update the paths vec when removing paths
->   libmultipath: avoid double semicolon in lock.h
->   multipath: use option '-i' when called from udev
->   multipath: remove warning 'failed to get wwid'
->   Add dependency on systemd-udevd.service
->   Load all device handler modules on startup
->   11-dm-mpath.rules: Only import ID_FS_XXX variables if not set
->   Ensure multipathd is started before systemd-udev-trigger.service
->   libmultipath: use a shared lock to co-operate with udev
->   Only filter for udev property if uid_attribute is present
->   multipathd: skip uninitialized devices during reconfiguration
->   multipathd: improve uxlsnr
->   libmultipath: remove 'needsync' argument from dm_simplecmd_noflush
->   libmultipath: remove 'use_uuid' argument from dm_addmap()
->   Always set DM_UDEV_DISABLE_LIBRARY_FALLBACK
->   libmultipath: pass in cookie as argument for dm_simplecmd()
->   libmultipath: pass in 'cookie' as argument for dm_addmap()
->   Remove 'udev_sync' argument from dm_simplecmd()
->   libmultipath: Fixup 'DM_DEVICE_RELOAD' handling
->   devmapper: do not flush I/O for DM_DEVICE_CREATE
->   libmultipath: fixup dm_rename to complete cookie on failure
->   multipathd: accept zero-size paths in ev_add_path()
->   Use multipath wwid if path wwid is empty
->   multipathd: set uxsock_timeout after reconfiguration
->   multipathd: Do not switch paths on empty multipath tables
->   libmultipath: remove 'get_info' argument for adopt_paths()
->   libmultipath: ensure 'dev_t' is set when store paths
->   libmultipath: sanity check on store_path()
->   dmparser: Use find_path_by_dev()
->   multipathd: do not flush maps on startup
->   multipathd: strict loop timings
->   multipathd: Provide standard error description on cli failure
->   libmultipath: make 'dm_addmap' static
->   multipathd: implement 'show map $map format $fmt'
->   multipathd: Increase uxclnt timeout
->   multipathd: asynchronous configuration
->   multipathd: push down lock in checkerloop()
->   Allow specific CLI commands to run unlocked
-> 
->  kpartx/Makefile               |   6 +-
->  kpartx/dasd.c                 |  39 +++-
->  kpartx/dasd.h                 |   1 +
->  kpartx/kpartx.rules           |  11 +-
->  kpartx/kpartx_id              |  11 +-
->  kpartx/lopart.c               | 106 +++++----
->  libmpathpersist/Makefile      |   4 +-
->  libmultipath/callout.c        |   6 +-
->  libmultipath/config.h         |   1 +
->  libmultipath/configure.c      |  33 ++-
->  libmultipath/defaults.h       |   1 +
->  libmultipath/devmapper.c      | 114 ++++++----
->  libmultipath/devmapper.h      |   4 +-
->  libmultipath/dict.c           |   4 +
->  libmultipath/discovery.c      | 115 +++++-----
->  libmultipath/dmparser.c       |  20 +-
->  libmultipath/hwtable.c        |  41 +++-
->  libmultipath/lock.h           |   4 +-
->  libmultipath/print.c          |   6 +-
->  libmultipath/structs.c        |  17 +-
->  libmultipath/structs_vec.c    |  10 +-
->  libmultipath/structs_vec.h    |   2 +-
->  libmultipath/uevent.c         |  10 +-
->  multipath/11-dm-mpath.rules   |  10 +-
->  multipath/main.c              |   1 -
->  multipath/multipath.conf.5    |  16 +-
->  multipath/multipath.rules     |   2 +-
->  multipathd/cli.c              | 101 +++++++--
->  multipathd/cli.h              |   4 +-
->  multipathd/cli_handlers.c     |  85 +++++++-
->  multipathd/cli_handlers.h     |   2 +
->  multipathd/main.c             | 486 +++++++++++++++++++++++++++++-------------
->  multipathd/main.h             |   3 +
->  multipathd/multipathd.service |   6 +-
->  multipathd/uxlsnr.c           |  97 +++++----
->  35 files changed, 923 insertions(+), 456 deletions(-)
-> 
-> -- 
-> 2.6.6
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index ab71fda..9facbb9 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -207,12 +207,10 @@ dm_prereq (void)
+ #define do_deferred(x) ((x) == DEFERRED_REMOVE_ON || (x) == DEFERRED_REMOVE_IN_PROGRESS)
+ 
+ static int
+-dm_simplecmd (int task, const char *name, int no_flush, int need_sync,
++dm_simplecmd (int task, const char *name, int no_flush,
+ 	      uint16_t udev_flags, int deferred_remove, uint32_t *cookie)
+ {
+ 	int r = 0;
+-	int udev_wait_flag = (need_sync && (task == DM_DEVICE_RESUME ||
+-					    task == DM_DEVICE_REMOVE));
+ 	struct dm_task *dmt;
+ 
+ 	if (!(dmt = dm_task_create (task)))
+@@ -231,7 +229,7 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync,
+ 	if (do_deferred(deferred_remove))
+ 		dm_task_deferred_remove(dmt);
+ #endif
+-	if (udev_wait_flag &&
++	if (cookie &&
+ 	    !dm_task_set_cookie(dmt, cookie,
+ 				DM_UDEV_DISABLE_LIBRARY_FALLBACK | udev_flags)) {
+ 		dm_udev_complete(*cookie);
+@@ -239,7 +237,7 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync,
+ 	}
+ 	r = dm_task_run (dmt);
+ 
+-	if (udev_wait_flag) {
++	if (cookie) {
+ 		if (!r)
+ 			dm_udev_complete(*cookie);
+ 		else
+@@ -254,22 +252,27 @@ extern int
+ dm_simplecmd_flush (int task, const char *name, uint16_t udev_flags) {
+ 	uint32_t cookie = 0;
+ 
+-	return dm_simplecmd(task, name, 0, 1, udev_flags, 0, &cookie);
++	if (task == DM_DEVICE_RESUME ||
++	    task == DM_DEVICE_REMOVE)
++		return dm_simplecmd(task, name, 0, udev_flags, 0, &cookie);
++	else
++		return dm_simplecmd(task, name, 0, udev_flags, 0, NULL);
+ }
+ 
+ extern int
+ dm_simplecmd_noflush (int task, const char *name, int needsync, uint16_t udev_flags) {
+ 	uint32_t cookie = 0;
+ 
+-	return dm_simplecmd(task, name, 1, needsync, udev_flags, 0, &cookie);
++	return dm_simplecmd(task, name, 1, udev_flags, 0,
++			    needsync ? &cookie : NULL);
+ }
+ 
+ static int
+ dm_device_remove (const char *name, int needsync, int deferred_remove) {
+ 	uint32_t cookie = 0;
+ 
+-	return dm_simplecmd(DM_DEVICE_REMOVE, name, 0, needsync, 0,
+-			    deferred_remove, &cookie);
++	return dm_simplecmd(DM_DEVICE_REMOVE, name, 0, 0,
++			    deferred_remove, needsync ? &cookie : NULL);
+ }
+ 
+ static int
+-- 
+2.6.6
