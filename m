@@ -1,152 +1,136 @@
-From: Ondrej Kozina <okozina@redhat.com>
-Subject: Re: [dm-devel] [4.4, 4.5, 4.6] Regression: encrypted swap (dm-crypt)
- freezes system while under memory pressure and swapping
-Date: Thu, 5 May 2016 17:54:27 +0200
-Message-ID: <572B6CB3.10802@redhat.com>
-References: <8125260b-30b0-e80d-c451-8194e6866227@binary-island.eu>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH 4/5] dm thin: use __blkdev_issue_discard for
+	async discard support
+Date: Thu,  5 May 2016 11:54:24 -0400
+Message-ID: <1462463665-85312-5-git-send-email-snitzer@redhat.com>
+References: <1462463665-85312-1-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <8125260b-30b0-e80d-c451-8194e6866227@binary-island.eu>
-Sender: owner-linux-mm@kvack.org
-To: dm-devel@redhat.com, linux-mm@kvack.org, linux-kernel@vger.kernel.org
-Cc: Matthias Dahl <ml_linux-dm-devel@binary-island.eu>, rientjes@google.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1462463665-85312-1-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 04/21/2016 09:48 AM, Matthias Dahl wrote:
-> Hello @all,
->
-> first of all, I sent this exact msg also to the lkml a few days ago but
-> since I received no reaction, I thought this list might be a better
-> place for this problem -- or I might at least reach the right persons to
-> get this fixed/debugged/... . :-)
->
-> Recently I started seeing freezes while compiling bigger packages that
-> do require lots of memory (I use Gentoo).
->
-> The freezes where in the form that while in Xorg, the system would just
-> completely hang -- no magic sysrq keys, no mouse movement, nothing.
-> While in a terminal, one could still issue a magic sysrq command but it
-> would only echo the command itself but not execute it -- except for the
-> reboot command. So there was no way to get a backtrace or states or
-> anything alike.
->
-> After debugging this further, it became clear that the system always
-> froze when it started hitting the encrypted swap. It worked absolutely
-> fine as soon as you took the encryption out of the picture.
->
-> My setup then was: A 8 GiB swap on S/W-RAID5 for my 8 GiB physical ram
-> that was encrypted with dm-crypt and AES256-CBC-ESSIV.
->
-> I debugged this further and changed my setup to several swap partitions
-> on the physical disks w/o a RAID in-between to isolate the culprit. This
-> made no difference -- neither did switching ciphers and so forth.
->
-> Since this setup had worked for ages, I started looking into what had
-> changed the weeks before and noticed I had done several kernel upgrades.
->
-> To make a long story short, here my findings:
->
-> 4.3.0, 4.4.0-final, 4.5-rc1 to 4.5-rc2:
-> No problems, except for the usual sluggishness with encrypted swap that
-> has been there since forever (it is like the encryption has the highest
-> priority and takes over the system, e.g. no terminal input is accepted
-> on a different terminal while high memory pressure is going on which is
-> in contrast with the encrypted swap, where this still works fine).
->
-> 4.4.x, >= 4.5-rc3 (incl. 4.6-rcX and master):
-> The system freezes under memory pressure as soon as it starts swapping
-> out. 4.6 master is an exception here, it still responds to magic sysrq
-> commands properly but after some time though completely freezes hard.
->
-> I hadn't had the time to test all 4.3.x and 4.4.x releases, I am afraid.
-> What I can say though is that 4.4.6 is affected as well.
->
-> A git bisect between 4.5-rc2 and 4.5-rc3, lead me to the following commit:
->
-> 564e81a57f9788b1475127012e0fd44e9049e342 is the first bad commit
-> commit 564e81a57f9788b1475127012e0fd44e9049e342
-> Author: Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>
-> Date:   Fri Feb 5 15:36:30 2016 -0800
->
->      mm, vmstat: fix wrong WQ sleep when memory reclaim doesn't make any
-> progress
->
-> This is obviously not the real culprit in my opinion but a trigger.
-> Reverting that commit on 4.5.1 for example, makes the encrypted swap
-> work flawlessly again (except for the usual system sluggishness).
->
-> Reverting it on 4.6 master@c3b46c73264b03000d1e18b22f5caf63332547c9,
-> does show a different picture though: The system freezes while the sysrq
-> keys do still work and usually recovers after some while if the
-> corresponding task that triggered the swapping in the first place, gets
-> killed. It sometimes does a bit of swapping, and sometimes don't while
-> it hangs there -- while usually with the other kernels in the "frozen"
-> state, the swapping stops completely.
->
-> I managed to get a bit more information out of 4.6 master though since
-> it sometimes recovers after quite some time and I can copy backtraces
-> and such to the disk, which I have attached.
->
-> I hope this helps in finding the real issue behind this. I am sorry I
-> could not provide more information but this has been a rather time
-> consuming task thus far. :-)
->
-> If there is anything else I can do to help or test, please let me know
-> and I will gladly do so.
->
-> Thanks in advance.
->
-> So long,
-> Matthias
->
+With commit 38f25255330 ("block: add __blkdev_issue_discard") DM thinp
+no longer needs to carry its own async discard method.
 
-Hello,
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Acked-by: Joe Thornber <ejt@redhat.com>
+---
+ drivers/md/dm-thin.c | 70 ++++++++++++----------------------------------------
+ 1 file changed, 16 insertions(+), 54 deletions(-)
 
-I second the observation that something is wrong and it doesn't seem to 
-be related to dm-crypt target. My test setup is as follows:
-
-2 CPUs
-system ram: 1 GB
-swap on top of dm-crypt: 2 GB
-
-Whenever I start workload that consumes more memory than system ram but 
-much less than total memory including the swap I end with following OOM 
-message that I found to be premature and unexpected:
-- 
-https://okozina.fedorapeople.org/bugs/swap_on_dmcrypt/vmlog-1462458369-00000/sample-00011/dmesg
-
-the important snippet in-before the oom:
-
-active_anon:4096kB inactive_anon:4636kB, writeback:4636kB
-
-and also:
-
-Free swap  = 2039832kB
-Total swap = 2097148kB
-
-you can find more details in sample-* directories located in:
-https://okozina.fedorapeople.org/bugs/swap_on_dmcrypt/vmlog-1462458369-00000/
-
-each sample directory contains stats collection taken approximately each 
-second after I started the workload (it's a script from 
-http://linux-mm.org/OOM site).
-
-For me OOM killer message can be observed starting with this commit:
-commit f9054c70d28bc214b2857cf8db8269f4f45a5e23
-Author: David Rientjes <rientjes@google.com>
-Date:   Thu Mar 17 14:19:19 2016 -0700
-
-     mm, mempool: only set __GFP_NOMEMALLOC if there are free elements
-
-(...)
-
-Kind regards
-Ondrej
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index da42c49..598a78b 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -322,56 +322,6 @@ struct thin_c {
+ 
+ /*----------------------------------------------------------------*/
+ 
+-/**
+- * __blkdev_issue_discard_async - queue a discard with async completion
+- * @bdev:	blockdev to issue discard for
+- * @sector:	start sector
+- * @nr_sects:	number of sectors to discard
+- * @gfp_mask:	memory allocation flags (for bio_alloc)
+- * @flags:	BLKDEV_IFL_* flags to control behaviour
+- * @parent_bio: parent discard bio that all sub discards get chained to
+- *
+- * Description:
+- *    Asynchronously issue a discard request for the sectors in question.
+- */
+-static int __blkdev_issue_discard_async(struct block_device *bdev, sector_t sector,
+-					sector_t nr_sects, gfp_t gfp_mask, unsigned long flags,
+-					struct bio *parent_bio)
+-{
+-	struct request_queue *q = bdev_get_queue(bdev);
+-	int type = REQ_WRITE | REQ_DISCARD;
+-	struct bio *bio;
+-
+-	if (!q || !nr_sects)
+-		return -ENXIO;
+-
+-	if (!blk_queue_discard(q))
+-		return -EOPNOTSUPP;
+-
+-	if (flags & BLKDEV_DISCARD_SECURE) {
+-		if (!blk_queue_secdiscard(q))
+-			return -EOPNOTSUPP;
+-		type |= REQ_SECURE;
+-	}
+-
+-	/*
+-	 * Required bio_put occurs in bio_endio thanks to bio_chain below
+-	 */
+-	bio = bio_alloc(gfp_mask, 1);
+-	if (!bio)
+-		return -ENOMEM;
+-
+-	bio_chain(bio, parent_bio);
+-
+-	bio->bi_iter.bi_sector = sector;
+-	bio->bi_bdev = bdev;
+-	bio->bi_iter.bi_size = nr_sects << 9;
+-
+-	submit_bio(type, bio);
+-
+-	return 0;
+-}
+-
+ static bool block_size_is_power_of_two(struct pool *pool)
+ {
+ 	return pool->sectors_per_block_shift >= 0;
+@@ -387,11 +337,23 @@ static sector_t block_to_sectors(struct pool *pool, dm_block_t b)
+ static int issue_discard(struct thin_c *tc, dm_block_t data_b, dm_block_t data_e,
+ 			 struct bio *parent_bio)
+ {
++	int type = REQ_WRITE | REQ_DISCARD;
+ 	sector_t s = block_to_sectors(tc->pool, data_b);
+ 	sector_t len = block_to_sectors(tc->pool, data_e - data_b);
++	struct bio *bio = NULL;
++	struct blk_plug plug;
++	int ret;
++
++	blk_start_plug(&plug);
++	ret = __blkdev_issue_discard(tc->pool_dev->bdev, s, len,
++				     GFP_NOWAIT, type, &bio);
++	if (!ret && bio) {
++		bio_chain(bio, parent_bio);
++		submit_bio(type, bio);
++	}
++	blk_finish_plug(&plug);
+ 
+-	return __blkdev_issue_discard_async(tc->pool_dev->bdev, s, len,
+-					    GFP_NOWAIT, 0, parent_bio);
++	return ret;
+ }
+ 
+ /*----------------------------------------------------------------*/
+@@ -1543,11 +1505,11 @@ static void break_up_discard_bio(struct thin_c *tc, dm_block_t begin, dm_block_t
+ 
+ 		/*
+ 		 * The parent bio must not complete before sub discard bios are
+-		 * chained to it (see __blkdev_issue_discard_async's bio_chain)!
++		 * chained to it (see issue_discard's bio_chain)!
+ 		 *
+ 		 * This per-mapping bi_remaining increment is paired with
+ 		 * the implicit decrement that occurs via bio_endio() in
+-		 * process_prepared_discard_{passdown,no_passdown}.
++		 * process_prepared_discard_passdown().
+ 		 */
+ 		bio_inc_remaining(bio);
+ 		if (!dm_deferred_set_add_work(pool->all_io_ds, &m->list))
+-- 
+2.6.4 (Apple Git-63)
