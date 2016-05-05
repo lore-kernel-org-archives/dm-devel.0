@@ -1,154 +1,152 @@
-From: Gris Ge <fge@redhat.com>
-Subject: Re: [PATCH 1/1] add display of map information in JSON
- format
-Date: Thu, 5 May 2016 21:16:28 +0800
-Message-ID: <20160505131628.GA3938@redhat.com>
-References: <1462393428-13929-1-git-send-email-tgill@redhat.com>
-	<1462393428-13929-2-git-send-email-tgill@redhat.com>
+From: Ondrej Kozina <okozina@redhat.com>
+Subject: Re: [dm-devel] [4.4, 4.5, 4.6] Regression: encrypted swap (dm-crypt)
+ freezes system while under memory pressure and swapping
+Date: Thu, 5 May 2016 17:54:27 +0200
+Message-ID: <572B6CB3.10802@redhat.com>
+References: <8125260b-30b0-e80d-c451-8194e6866227@binary-island.eu>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5468446794910914869=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1462393428-13929-2-git-send-email-tgill@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Todd Gill <tgill@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <8125260b-30b0-e80d-c451-8194e6866227@binary-island.eu>
+Sender: owner-linux-mm@kvack.org
+To: dm-devel@redhat.com, linux-mm@kvack.org, linux-kernel@vger.kernel.org
+Cc: Matthias Dahl <ml_linux-dm-devel@binary-island.eu>, rientjes@google.com
 List-Id: dm-devel.ids
 
-
---===============5468446794910914869==
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="17pEHd4RhPHOinZp"
-Content-Disposition: inline
-
-
---17pEHd4RhPHOinZp
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On Wed, May 04, 2016 at 04:23:48PM -0400, Todd Gill wrote:
-> The patch adds these commands:
+On 04/21/2016 09:48 AM, Matthias Dahl wrote:
+> Hello @all,
 >
-> multipathd show maps json
-> multipathd show map $map json
+> first of all, I sent this exact msg also to the lkml a few days ago but
+> since I received no reaction, I thought this list might be a better
+> place for this problem -- or I might at least reach the right persons to
+> get this fixed/debugged/... . :-)
 >
-> Each command will output the requested map(s) in JSON.
+> Recently I started seeing freezes while compiling bigger packages that
+> do require lots of memory (I use Gentoo).
 >
-> For the "show maps json" command, the patch pre-allocates
-> INITIAL_REPLY_LEN * 5.  The JSON text is about 5x the size of
-> the "show maps topology" text.
-Hi Todd,
-
-How about define a constant with this line as comment, instead of
-using magic number directly?
+> The freezes where in the form that while in Xorg, the system would just
+> completely hang -- no magic sysrq keys, no mouse movement, nothing.
+> While in a terminal, one could still issue a magic sysrq command but it
+> would only echo the command itself but not execute it -- except for the
+> reboot command. So there was no way to get a backtrace or states or
+> anything alike.
 >
-> Signed-off-by: Todd Gill <tgill@redhat.com>
-> ---
-> +int
-> +snprint_multipath_json (char * buff, int len, struct multipath * mpp, in=
-t last)
-> +{
-> +	int i, fwd =3D 0;
-> +	struct path *pp;
-> +
-> +	fwd +=3D  snprint_json(buff + fwd,
-> +			len - fwd, 1, PRINT_JSON_START_ELEM);
-> +	if (fwd > len)
-> +		return len;
-> +
-> +	fwd +=3D snprint_multipath(buff + fwd, len - fwd,
-> +			PRINT_JSON_MAP, mpp, 0);
-If we are using snprint_multipath() there, basally this is just a
-daemon version of 'show maps raw format <fancy_json_format>'.
+> After debugging this further, it became clear that the system always
+> froze when it started hitting the encrypted swap. It worked absolutely
+> fine as soon as you took the encryption out of the picture.
+>
+> My setup then was: A 8 GiB swap on S/W-RAID5 for my 8 GiB physical ram
+> that was encrypted with dm-crypt and AES256-CBC-ESSIV.
+>
+> I debugged this further and changed my setup to several swap partitions
+> on the physical disks w/o a RAID in-between to isolate the culprit. This
+> made no difference -- neither did switching ciphers and so forth.
+>
+> Since this setup had worked for ages, I started looking into what had
+> changed the weeks before and noticed I had done several kernel upgrades.
+>
+> To make a long story short, here my findings:
+>
+> 4.3.0, 4.4.0-final, 4.5-rc1 to 4.5-rc2:
+> No problems, except for the usual sluggishness with encrypted swap that
+> has been there since forever (it is like the encryption has the highest
+> priority and takes over the system, e.g. no terminal input is accepted
+> on a different terminal while high memory pressure is going on which is
+> in contrast with the encrypted swap, where this still works fine).
+>
+> 4.4.x, >= 4.5-rc3 (incl. 4.6-rcX and master):
+> The system freezes under memory pressure as soon as it starts swapping
+> out. 4.6 master is an exception here, it still responds to magic sysrq
+> commands properly but after some time though completely freezes hard.
+>
+> I hadn't had the time to test all 4.3.x and 4.4.x releases, I am afraid.
+> What I can say though is that 4.4.6 is affected as well.
+>
+> A git bisect between 4.5-rc2 and 4.5-rc3, lead me to the following commit:
+>
+> 564e81a57f9788b1475127012e0fd44e9049e342 is the first bad commit
+> commit 564e81a57f9788b1475127012e0fd44e9049e342
+> Author: Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>
+> Date:   Fri Feb 5 15:36:30 2016 -0800
+>
+>      mm, vmstat: fix wrong WQ sleep when memory reclaim doesn't make any
+> progress
+>
+> This is obviously not the real culprit in my opinion but a trigger.
+> Reverting that commit on 4.5.1 for example, makes the encrypted swap
+> work flawlessly again (except for the usual system sluggishness).
+>
+> Reverting it on 4.6 master@c3b46c73264b03000d1e18b22f5caf63332547c9,
+> does show a different picture though: The system freezes while the sysrq
+> keys do still work and usually recovers after some while if the
+> corresponding task that triggered the swapping in the first place, gets
+> killed. It sometimes does a bit of swapping, and sometimes don't while
+> it hangs there -- while usually with the other kernels in the "frozen"
+> state, the swapping stops completely.
+>
+> I managed to get a bit more information out of 4.6 master though since
+> it sometimes recovers after quite some time and I can copy backtraces
+> and such to the disk, which I have attached.
+>
+> I hope this helps in finding the real issue behind this. I am sorry I
+> could not provide more information but this has been a rather time
+> consuming task thus far. :-)
+>
+> If there is anything else I can do to help or test, please let me know
+> and I will gladly do so.
+>
+> Thanks in advance.
+>
+> So long,
+> Matthias
+>
 
-So if I may sum up, we have three options to provide a user-friendly
-library.
+Hello,
 
- A) Expand 'show maps raw format' to include all formation where
-    user/client could selectively print needed properties out in their
-    favored format. And create a wrapper library(check my previous
-    post on libdmmp).
+I second the observation that something is wrong and it doesn't seem to 
+be related to dm-crypt target. My test setup is as follows:
 
-        Pros:
-            * Minimum changes to daemon.
-            * Client only have to parse properties they are
-              interested which saves the CPU time and IPC
-              communication.
+2 CPUs
+system ram: 1 GB
+swap on top of dm-crypt: 2 GB
 
-        Cons:
-            * We have to document every formatters,
-              example: the meanings and possible values of "%N".
+Whenever I start workload that consumes more memory than system ram but 
+much less than total memory including the swap I end with following OOM 
+message that I found to be premature and unexpected:
+- 
+https://okozina.fedorapeople.org/bugs/swap_on_dmcrypt/vmlog-1462458369-00000/sample-00011/dmesg
 
- B) Provide 'show maps json' and do the string
-    formatting(JSON/XML/etc) at the daemon side.
+the important snippet in-before the oom:
 
-        Pros:
-            * Easy for client to parse IPC output.
+active_anon:4096kB inactive_anon:4636kB, writeback:4636kB
 
-        Cons:
-            * More IPC communication, like Todd said, about 5 times.
-              And client will waste their CPU and memory on parsing
-              un-needed properties if only interested on few.
-              For example, you have 1000 maps, and just want to know
-              which maps has failed path, then you have to parse
-              about 108,000 lines of json string.
+and also:
 
-            * People (we already have) might suggest XML or whatever
-              format is better than JSON, why not use that.
+Free swap  = 2039832kB
+Total swap = 2097148kB
 
- C) Provide both expanded 'show maps raw format' and 'show maps json'
-        Pros:
-            * All pros above.
+you can find more details in sample-* directories located in:
+https://okozina.fedorapeople.org/bugs/swap_on_dmcrypt/vmlog-1462458369-00000/
 
-        Cons:
-            * Do we have to maintain these two ways?
+each sample directory contains stats collection taken approximately each 
+second after I started the workload (it's a script from 
+http://linux-mm.org/OOM site).
 
-My negligible vote to option B), ideally the wrapper library should be
-user's first choice instead messing with 'raw format'.
+For me OOM killer message can be observed starting with this commit:
+commit f9054c70d28bc214b2857cf8db8269f4f45a5e23
+Author: David Rientjes <rientjes@google.com>
+Date:   Thu Mar 17 14:19:19 2016 -0700
 
-Thanks for the patch.
-Best regards.
+     mm, mempool: only set __GFP_NOMEMALLOC if there are free elements
 
---=20
-Gris Ge
+(...)
 
---17pEHd4RhPHOinZp
-Content-Type: application/pgp-signature; name="signature.asc"
+Kind regards
+Ondrej
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJXK0esAAoJEGzN5Y/kHij/J24P/iG9at/CosWiOiGV67HQRHsD
-boIczb77/znGmGMPeIpI4qPuQt29fzNXPkfQFyzk0NLiYhs1+KMUgj+h8hrr8ojU
-rZUCCXapr+2ckoSmjhgGhRC2wXYFqA8Bb2OmqITPlYoA97LZ7VaMFwvF8tPhRoBT
-HLNPs9cTi3DNqw87cGGgdlyD+Sz38UgRGzZUKsdG72GCEdUVbi9tNq2nCT0LCxhD
-4sG1lHpVe2PGx8UAL4Ae/GLu686gqGIzvTKIwaLvdfriHs64l63kaA082l3Z/K9/
-MG98C0FDpmlGO1tl8Q2ip6y/wYvM/PXJwUjQIokJ7TOwvzpw21e8B1Dcn3UDnV8N
-68tainb54QMGX9xvv6GP//oubm+9nsCroc83y842nqo7yoHIxuc2if0o5VBCzYh8
-G/QX68LYCx8WIQKnGr3q7iEgExmU2Gr/yZkZ+b6CjhD2ftPO5LOfwSPiXctHChj6
-tgQKAdgMVmJwbPRiWqoEDM3180BdEjl2MsEKZpFYZxoPsZcMfLnhiz0PNx9XQ27k
-lgs6KB1XMMI+ZIy/eZuhj6KYHQj4TVoTHcGPGcWVmsUeN2CnKiHVZmIWarbtEDPf
-FmDZgtp7d1ob+snk9Lnq5KBUtESBDC5oJr9M/anVaJVRh4krV3/kZsWjVXDJvRBc
-fdnViZKzaDphhtsNrZQu
-=24h4
------END PGP SIGNATURE-----
-
---17pEHd4RhPHOinZp--
-
-
---===============5468446794910914869==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5468446794910914869==--
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
