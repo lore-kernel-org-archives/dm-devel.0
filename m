@@ -1,16 +1,16 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 4/5] dm thin: use __blkdev_issue_discard for
-	async	discard support
-Date: Fri, 6 May 2016 18:05:26 +0200
-Message-ID: <20160506160526.GB7397@lst.de>
+Subject: Re: [PATCH v2 1/5] block: reinstate early return of
+	-EOPNOTSUPP	from blkdev_issue_discard
+Date: Fri, 6 May 2016 18:04:07 +0200
+Message-ID: <20160506160407.GA7397@lst.de>
 References: <1462463665-85312-1-git-send-email-snitzer@redhat.com>
-	<1462463665-85312-5-git-send-email-snitzer@redhat.com>
+	<1462463665-85312-2-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1462463665-85312-5-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1462463665-85312-2-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,6 +24,12 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-Looks fine,
+I don't really agree with the rationale, but I'm fine with reverting
+to it this late in the cycle, so:
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Christoph Hellwig <hch@lst.de>
+
+But looking at your slightly convoluted handling of the errors in
+dm-think, what do you think about splitting out these early checks
+into a separate helper, at which point __blkdev_issue_discard
+doesn't need a return value any more?
