@@ -1,8 +1,8 @@
-From: Christoph Hellwig <hch@lst.de>
+From: Joe Thornber <thornber@redhat.com>
 Subject: Re: [PATCH 2/5] block: make bio_inc_remaining()
-	interface	accessible again
-Date: Fri, 6 May 2016 18:27:05 +0200
-Message-ID: <20160506162705.GA7999@lst.de>
+ interface accessible again
+Date: Fri, 6 May 2016 17:30:15 +0100
+Message-ID: <20160506163015.GA19578@rh-vpn>
 References: <1462463665-85312-1-git-send-email-snitzer@redhat.com>
 	<1462463665-85312-3-git-send-email-snitzer@redhat.com>
 	<20160506152535.GA6738@lst.de> <20160506155633.GA7318@lst.de>
@@ -27,10 +27,17 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, dm-devel@redhat.c
 List-Id: dm-devel.ids
 
 On Fri, May 06, 2016 at 12:19:16PM -0400, Mike Snitzer wrote:
-> (this is a direct result of completing the discard bio before all
-> mappings, and associated sub-discards, have):
+> As you know not all code is simple.  I've looked at this for quite a bit
+> this week and unfortunately I don't see a way forward (yet) that doesn't
+> require the use of bio_inc_remaining() to take extra bi_remaining
+> references.
 
-The completion order really should not matter, we rely on it not
-mattering for almost every usage of the bio_chain API.  So there
-is something else fishy going on here.  What's your test case?
-I'd like to dig a bit deeper into this.
+Well there is a way around it;  we just maintain our own reference
+counter and use that to determine when to complete the original bio.
+
+It just seems a shame when there's a ref count in the bio already.
+But if Jens and Christophe are adamant that bio_chain is going to be
+the one and only way to access that ref count then I'll allocate
+another object to hold the ref count.
+
+- Joe
