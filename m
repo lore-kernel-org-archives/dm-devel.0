@@ -1,8 +1,8 @@
-From: Christoph Hellwig <hch@lst.de>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [PATCH 2/5] block: make bio_inc_remaining()
-	interface	accessible again
-Date: Fri, 6 May 2016 17:56:33 +0200
-Message-ID: <20160506155633.GA7318@lst.de>
+ interface accessible again
+Date: Fri, 6 May 2016 11:57:15 -0400
+Message-ID: <20160506155715.GB672@redhat.com>
 References: <1462463665-85312-1-git-send-email-snitzer@redhat.com>
 	<1462463665-85312-3-git-send-email-snitzer@redhat.com>
 	<20160506152535.GA6738@lst.de>
@@ -21,94 +21,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, May 06, 2016 at 05:25:35PM +0200, Christoph Hellwig wrote:
+On Fri, May 06 2016 at 11:25am -0400,
+Christoph Hellwig <hch@lst.de> wrote:
+
+> On Thu, May 05, 2016 at 11:54:22AM -0400, Mike Snitzer wrote:
+> > Commit 326e1dbb57 ("block: remove management of bi_remaining when
+> > restoring original bi_end_io") made bio_inc_remaining() private to bio.c
+> > because the only use-case that made sense was confined to the
+> > bio_chain() interface.
+> > 
+> > Since that time DM thinp went on to use bio_chain() in its relatively
+> > complex implementation of async discard support.  That implementation,
+> > even when converted over to use the new async __blkdev_issue_discard()
+> > interface, depends on deferred completion of the original discard bio --
+> > which is most appropriately implemented using bio_inc_remaining().
+> 
 > Can you explain that code flow to me?  I still fail to why exactly
 > dm-thinp (and only dm-thinp) needs this.  Maybe start by pointing me
 > to the additional bio_endio that pairs with the bio_inc_remaining
 > call.
-> 
+
+If you look at the latest code here:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.7
+
+dm-thin.c:break_up_discard_bio()'s bio_inc_remaining() is paired with
+dm-thin.c:end_discard()'s bio_endio()
+
+But the flow is:
+
+-> process_discard_cell_passdown
+   -> break_up_discard_bio (per-mapping reference taken on original discard bio)
+   -> bio_endio(original discard bio) -- cleanest place to complete
+      it.. but doing so here requires extra references on that discard
+      bio because we must wait for the N mappings and associated
+      sub-discard bios to be chained, issued, and completed
+
+... wait for associated sub-discard mappings to quiesce and become "prepared"...
+
+-> process_prepared_discard_passdown (bio-chains aren't constructed until here)
+   -> passdown_double_checking_shared_status (iterates over each mappings' subset of the original discard)
+      -> __blkdev_issue_discard
+      -> bio_endio (per-mapping reference, taken in break_up_discard_bio, is dropped)
+
 > > All said, bio_inc_remaining() should really only be used in conjunction
 > > with bio_chain().  It isn't intended for generic bio reference counting.
 > 
 > It's obviously used outside bio_chain in dm-thinp, so this sentence
 > doesn't make too much sense to me.
 
-FYI, this untested patch should fix the abuse in dm-think.  Not abusing
-bio_inc_remaining actually makes the code a lot simpler and more obvious.
-I'm not a 100% sure, but it seems the current pattern can also lead
-to a leak of the bi_remaining references when set_pool_mode managed
-to set a new process_prepared_discard function pointer after the
-references have been grabbed already.
-
-Jens, I noticed you've already applied this patch - I'd really prefer
-to see it reverted as using bio_inc_remaining outside bio_chain leads
-to this sort of convoluted code.
-
----
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index e4bb9da..5875749 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -382,7 +382,6 @@ static void end_discard(struct discard_op *op, int r)
- 	 */
- 	if (r && !op->parent_bio->bi_error)
- 		op->parent_bio->bi_error = r;
--	bio_endio(op->parent_bio);
- }
- 
- /*----------------------------------------------------------------*/
-@@ -1056,11 +1055,9 @@ static void process_prepared_discard_passdown(struct dm_thin_new_mapping *m)
- 	r = dm_thin_remove_range(tc->td, m->virt_begin, m->virt_end);
- 	if (r) {
- 		metadata_operation_failed(pool, "dm_thin_remove_range", r);
--		bio_io_error(m->bio);
--
-+		m->bio->bi_error = -EIO;
- 	} else if (m->maybe_shared) {
- 		passdown_double_checking_shared_status(m);
--
- 	} else {
- 		struct discard_op op;
- 		begin_discard(&op, tc, m->bio);
-@@ -1069,6 +1066,7 @@ static void process_prepared_discard_passdown(struct dm_thin_new_mapping *m)
- 		end_discard(&op, r);
- 	}
- 
-+	bio_endio(m->bio);
- 	cell_defer_no_holder(tc, m->cell);
- 	mempool_free(m, pool->mapping_pool);
- }
-@@ -1537,15 +1535,6 @@ static void break_up_discard_bio(struct thin_c *tc, dm_block_t begin, dm_block_t
- 		m->cell = data_cell;
- 		m->bio = bio;
- 
--		/*
--		 * The parent bio must not complete before sub discard bios are
--		 * chained to it (see end_discard's bio_chain)!
--		 *
--		 * This per-mapping bi_remaining increment is paired with
--		 * the implicit decrement that occurs via bio_endio() in
--		 * end_discard().
--		 */
--		bio_inc_remaining(bio);
- 		if (!dm_deferred_set_add_work(pool->all_io_ds, &m->list))
- 			pool->process_prepared_discard(m);
- 
-@@ -1565,13 +1554,6 @@ static void process_discard_cell_passdown(struct thin_c *tc, struct dm_bio_priso
- 	 */
- 	h->cell = virt_cell;
- 	break_up_discard_bio(tc, virt_cell->key.block_begin, virt_cell->key.block_end, bio);
--
--	/*
--	 * We complete the bio now, knowing that the bi_remaining field
--	 * will prevent completion until the sub range discards have
--	 * completed.
--	 */
--	bio_endio(bio);
- }
- 
- static void process_discard_bio(struct thin_c *tc, struct bio *bio)
+It is used in conjunction with supporting thinp's use of bio_chain(),
+via __blkdev_issue_discard, but yeah I can see why you think they aren't
+related.
