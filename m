@@ -1,18 +1,17 @@
 From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH 2/5] block: make bio_inc_remaining()
- interface accessible again
-Date: Fri, 6 May 2016 17:30:15 +0100
-Message-ID: <20160506163015.GA19578@rh-vpn>
+Subject: Re: [PATCH 5/5] dm thin: unroll issue_discard() to
+ create longer discard bio chains
+Date: Fri, 6 May 2016 17:36:58 +0100
+Message-ID: <20160506163657.GA19687@rh-vpn>
 References: <1462463665-85312-1-git-send-email-snitzer@redhat.com>
-	<1462463665-85312-3-git-send-email-snitzer@redhat.com>
-	<20160506152535.GA6738@lst.de> <20160506155633.GA7318@lst.de>
-	<20160506161915.GA905@redhat.com>
+	<1462463665-85312-6-git-send-email-snitzer@redhat.com>
+	<20160506161216.GC7397@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20160506161915.GA905@redhat.com>
+In-Reply-To: <20160506161216.GC7397@lst.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,22 +21,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, May 06, 2016 at 12:19:16PM -0400, Mike Snitzer wrote:
-> As you know not all code is simple.  I've looked at this for quite a bit
-> this week and unfortunately I don't see a way forward (yet) that doesn't
-> require the use of bio_inc_remaining() to take extra bi_remaining
-> references.
+On Fri, May 06, 2016 at 06:12:16PM +0200, Christoph Hellwig wrote:
+> On Thu, May 05, 2016 at 11:54:25AM -0400, Mike Snitzer wrote:
+> > From: Joe Thornber <ejt@redhat.com>
+> > 
+> > There is little benefit to doing this but it does structure DM thinp's
+> > code to more cleanly use the __blkdev_issue_discard() interface --
+> > particularly in passdown_double_checking_shared_status().
+> 
+> As-is I think it makes the code a whole lot more convoluted, and especially
+> the structure that's just used to communicated 4 parameters between
+> functions which don't even use all of them isn't very helpful.
 
-Well there is a way around it;  we just maintain our own reference
-counter and use that to determine when to complete the original bio.
+I started coding it inline, and then factored it out because I thought
+it was cleaner.  I'm also likely to lift it into a separate file for
+use in dm-cache too.
 
-It just seems a shame when there's a ref count in the bio already.
-But if Jens and Christophe are adamant that bio_chain is going to be
-the one and only way to access that ref count then I'll allocate
-another object to hold the ref count.
+> This is a useful helper I think, but passing tc and bio directly would
+> make it even more obvious.
+
+y, this is exactly what I had.
+
+> Both the plugging and the bi_error handling would benefit from being
+> moved into process_prepared_discard_passdown and handled in the common
+> path.
+
+But the plugging and error handling are called from two places.
+process_prepared_discard_passdown() and
+passdown_double_checking_shared_status().
 
 - Joe
+
+(I agree about the confusing comment, we'll remove)
