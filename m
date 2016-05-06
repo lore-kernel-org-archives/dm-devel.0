@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 2/6] libmultipath: pass in 'cookie' as
- argument for dm_addmap()
-Date: Fri, 6 May 2016 14:27:26 -0500
-Message-ID: <20160506192726.GS26117@octiron.msp.redhat.com>
+Subject: Re: [PATCH 3/6] Remove 'udev_sync' argument from
+	dm_simplecmd()
+Date: Fri, 6 May 2016 14:50:03 -0500
+Message-ID: <20160506195003.GT26117@octiron.msp.redhat.com>
 References: <1462341450-5507-1-git-send-email-hare@suse.de>
-	<1462341450-5507-3-git-send-email-hare@suse.de>
+	<1462341450-5507-4-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1462341450-5507-3-git-send-email-hare@suse.de>
+In-Reply-To: <1462341450-5507-4-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,136 +21,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, May 04, 2016 at 07:57:26AM +0200, Hannes Reinecke wrote:
-> Instead of generating the cookie internally we should be
-> passing in the cookie to dm_addmap().
+On Wed, May 04, 2016 at 07:57:27AM +0200, Hannes Reinecke wrote:
+> The 'udev_sync' attribute is pointless without a cookie, so we
+> can as well use the existence of the 'cookie' argument for
+> the same function.
 
-Like I said in my comment to the last patch, you should never reuse a
-cookie value once you've waited for it.  The only reason that this one
-doesn't break is that multipath's cookie handling was already broken.
-It got broken in this commit 4a2431aa944eb2e5b6f3ccd2d4fe1df67f9e5679
-"Fixup device-mapper 'cookie' handling".
+Well, I've already said that we should leave the cookies inside
+dm_simplecmd, and if we do that, we need the udev_sync code.
 
-The thing that broke it was calling dm_udev_complete() instead of
-dm_udev_wait() when dm_task_run() fails.  If dm_task_run() fails,
-device-mapper will call dm_udev_complete() internally. However that
-doesn't clean up the cookie.  The cookie won't be cleaned up until the
-someone calls dm_udev_wait().  This won't actually wait for anything
-since the cookie count has already been decremented, but it is necessary
-for cleanup.
+One reason to do this is that cookies aren't just used for
+synchronization.  They are the mechanism by which udev flags are sent to
+device-mapper.  Now it just so happens that we currently aren't sending
+any udev_flags when we are not asking for synchronization, but that
+doesn't mean it will always be the case.  So there could be a use
+knowing whether or not we need synchronization, even in cases where we
+know that we defintely need a cookie to pass flags to udev.
 
-confusingly
+While again, we could do this by checking udev_flags as well and then
+passing in a cookie and it wouldn't break anything, I just don't see the
+point of passing in a pointer to a value that must be zero when we pass
+it, and we're not allowed to use the result when we get it back.
 
-# dmsetup udevcomplete_all
-
-also cleans up the cookies, while
-
-# dmsetup udevcomplete
-
-doesn't.
-
-You can easily see that multipath's udev cookie handling is currently
-broken.  Just mount a path device, so that multipath will fail in
-creating a multipath device with it, and then run
-
-# multipath
-# dmsetup udevcookies
-
-and you will see a cooke with a value of 0, that is still sitting
-around, because nobody has waited on it.  Because of that bug, this
-patch doesn't break anything. The cookie you reuse is still around
-because it hasn't been waited on, and you are able to increment it.
-Once we replace the dm_udev_complete() calls with dm_udev_waits(), this
-patch will start breaking things.
-
-And again, while we could just reset the cookie to zero, and it wouldn't
-break anything, we've just added a parameter that must always be set to
-zero, and needlessly extended the cookie code outside of dm_addmap,
-where it can all be contained.
-
--Ben
+-Ben 
 
 > 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> Signed-off-by: Hannes Reinecke <hare@suse.com>
 > ---
->  libmultipath/devmapper.c | 23 ++++++++++++++---------
->  1 file changed, 14 insertions(+), 9 deletions(-)
+>  libmultipath/devmapper.c | 21 ++++++++++++---------
+>  1 file changed, 12 insertions(+), 9 deletions(-)
 > 
 > diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> index 48e7d50..ab71fda 100644
+> index ab71fda..9facbb9 100644
 > --- a/libmultipath/devmapper.c
 > +++ b/libmultipath/devmapper.c
-> @@ -274,11 +274,10 @@ dm_device_remove (const char *name, int needsync, int deferred_remove) {
+> @@ -207,12 +207,10 @@ dm_prereq (void)
+>  #define do_deferred(x) ((x) == DEFERRED_REMOVE_ON || (x) == DEFERRED_REMOVE_IN_PROGRESS)
 >  
 >  static int
->  dm_addmap (int task, const char *target, struct multipath *mpp,
-> -	   char * params, int ro) {
-> +	   char * params, int ro, uint32_t *cookie) {
+> -dm_simplecmd (int task, const char *name, int no_flush, int need_sync,
+> +dm_simplecmd (int task, const char *name, int no_flush,
+>  	      uint16_t udev_flags, int deferred_remove, uint32_t *cookie)
+>  {
 >  	int r = 0;
+> -	int udev_wait_flag = (need_sync && (task == DM_DEVICE_RESUME ||
+> -					    task == DM_DEVICE_REMOVE));
 >  	struct dm_task *dmt;
->  	char *prefixed_uuid = NULL;
-> -	uint32_t cookie = 0;
 >  
 >  	if (!(dmt = dm_task_create (task)))
->  		return 0;
-> @@ -319,18 +318,18 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
->  	dm_task_no_open_count(dmt);
->  
->  	if (task == DM_DEVICE_CREATE &&
-> -	    !dm_task_set_cookie(dmt, &cookie,
-> +	    !dm_task_set_cookie(dmt, cookie,
->  				DM_UDEV_DISABLE_LIBRARY_FALLBACK)) {
-> -		dm_udev_complete(cookie);
-> +		dm_udev_complete(*cookie);
->  		goto freeout;
+> @@ -231,7 +229,7 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync,
+>  	if (do_deferred(deferred_remove))
+>  		dm_task_deferred_remove(dmt);
+>  #endif
+> -	if (udev_wait_flag &&
+> +	if (cookie &&
+>  	    !dm_task_set_cookie(dmt, cookie,
+>  				DM_UDEV_DISABLE_LIBRARY_FALLBACK | udev_flags)) {
+>  		dm_udev_complete(*cookie);
+> @@ -239,7 +237,7 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync,
 >  	}
 >  	r = dm_task_run (dmt);
 >  
->  	if (task == DM_DEVICE_CREATE) {
+> -	if (udev_wait_flag) {
+> +	if (cookie) {
 >  		if (!r)
-> -			dm_udev_complete(cookie);
-> +			dm_udev_complete(*cookie);
+>  			dm_udev_complete(*cookie);
 >  		else
-> -			dm_udev_wait(cookie);
-> +			dm_udev_wait(*cookie);
->  	}
->  	freeout:
->  	if (prefixed_uuid)
-> @@ -345,11 +344,13 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
->  extern int
->  dm_addmap_create (struct multipath *mpp, char * params) {
->  	int ro;
-> +	uint32_t cookie = 0;
+> @@ -254,22 +252,27 @@ extern int
+>  dm_simplecmd_flush (int task, const char *name, uint16_t udev_flags) {
+>  	uint32_t cookie = 0;
 >  
->  	for (ro = 0; ro <= 1; ro++) {
->  		int err;
->  
-> -		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, ro))
-> +		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH,
-> +			      mpp, params, ro, &cookie))
->  			return 1;
->  		/*
->  		 * DM_DEVICE_CREATE is actually DM_DEV_CREATE + DM_TABLE_LOAD.
-> @@ -374,11 +375,15 @@ dm_addmap_create (struct multipath *mpp, char * params) {
->  
->  extern int
->  dm_addmap_reload (struct multipath *mpp, char *params) {
-> -	if (dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params, ADDMAP_RW))
-> +	uint32_t cookie = 0;
-> +
-> +	if (dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params,
-> +		      ADDMAP_RW, &cookie))
->  		return 1;
->  	if (errno != EROFS)
->  		return 0;
-> -	return dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params, ADDMAP_RO);
-> +	return dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params,
-> +			 ADDMAP_RO, &cookie);
+> -	return dm_simplecmd(task, name, 0, 1, udev_flags, 0, &cookie);
+> +	if (task == DM_DEVICE_RESUME ||
+> +	    task == DM_DEVICE_REMOVE)
+> +		return dm_simplecmd(task, name, 0, udev_flags, 0, &cookie);
+> +	else
+> +		return dm_simplecmd(task, name, 0, udev_flags, 0, NULL);
 >  }
 >  
 >  extern int
+>  dm_simplecmd_noflush (int task, const char *name, int needsync, uint16_t udev_flags) {
+>  	uint32_t cookie = 0;
+>  
+> -	return dm_simplecmd(task, name, 1, needsync, udev_flags, 0, &cookie);
+> +	return dm_simplecmd(task, name, 1, udev_flags, 0,
+> +			    needsync ? &cookie : NULL);
+>  }
+>  
+>  static int
+>  dm_device_remove (const char *name, int needsync, int deferred_remove) {
+>  	uint32_t cookie = 0;
+>  
+> -	return dm_simplecmd(DM_DEVICE_REMOVE, name, 0, needsync, 0,
+> -			    deferred_remove, &cookie);
+> +	return dm_simplecmd(DM_DEVICE_REMOVE, name, 0, 0,
+> +			    deferred_remove, needsync ? &cookie : NULL);
+>  }
+>  
+>  static int
 > -- 
 > 2.6.6
