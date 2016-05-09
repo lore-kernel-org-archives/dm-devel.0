@@ -1,62 +1,75 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: md: md.c: fix oops in mddev_suspend for raid0
-Date: Mon, 9 May 2016 12:08:49 -0400
-Message-ID: <20160509160849.GB22736@redhat.com>
-References: <1462809042-2974-1-git-send-email-heinzm@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 4/7] devmapper: wait for udev in
+	dm_simplecmd_noflush()
+Date: Mon, 9 May 2016 12:57:17 -0500
+Message-ID: <20160509175717.GZ26117@octiron.msp.redhat.com>
+References: <1462791185-2903-1-git-send-email-hare@suse.de>
+	<1462791185-2903-5-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1462809042-2974-1-git-send-email-heinzm@redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: heinzm@redhat.com
-Cc: dm-devel@redhat.com, shli@kernel.org, linux-raid@vger.kernel.org
+In-Reply-To: <1462791185-2903-5-git-send-email-hare@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, May 09 2016 at 11:50am -0400,
-heinzm@redhat.com <heinzm@redhat.com> wrote:
+On Mon, May 09, 2016 at 12:53:02PM +0200, Hannes Reinecke wrote:
+> When calling dm_simplecmd_noflush() with udev_flags set we
+> need to set the 'need_sync' flag otherwise the udev flags
+> will never be set.
 
-> From: Heinz Mauelshagen <heinzm@redhat.com>
-> 
-> Introduced by upstream commit 70d9798b95562abac005d4ba71d28820f9a201eb
-> 
-> The raid0 personality does not create mddev->thread as oposed to
-> other personalities leading to its unconditional access in
-> mddev_suspend() causing an oops.
-> 
-> Patch checks for mddev->thread in order to keep the
-> intention of aforementioned commit.
-> 
-> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+The other possibility here would be to temporarily disable udev sync
+support, and then restore it afterwards. That way we could still pass
+the flags, but we wouldn't need to wait on these table reloads.  Either
+that or to get libdevmapper to give us a cookie flag that says, "while,
+I do have sync support enabled, for this one command, I'd like to skip
+it".  But neither of those options has any significant benefit over this
+solution.
 
-Seems this should be marked with:
+ACK.
 
-Fixes: 70d9798b9556 ("MD: warn for potential deadlock")
-Cc: stable@vger.kernel.org # 4.5+
+-Ben
 
 > 
-> 
+> Signed-off-by: Hannes Reinecke <hare@suse.com>
 > ---
->  drivers/md/md.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  libmultipath/configure.c | 6 ++++--
+>  1 file changed, 4 insertions(+), 2 deletions(-)
 > 
-> diff --git a/drivers/md/md.c b/drivers/md/md.c
-> index 194580f..d91920d 100644
-> --- a/drivers/md/md.c
-> +++ b/drivers/md/md.c
-> @@ -305,7 +305,7 @@ static blk_qc_t md_make_request(struct request_queue *q, struct bio *bio)
->   */
->  void mddev_suspend(struct mddev *mddev)
->  {
-> -	WARN_ON_ONCE(current == mddev->thread->tsk);
-> +	WARN_ON_ONCE(mddev->thread && current == mddev->thread->tsk);
->  	if (mddev->suspended++)
->  		return;
->  	synchronize_rcu();
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index b976da7..9c6904a 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -628,7 +628,7 @@ domap (struct multipath * mpp, char * params)
+>  		r = dm_addmap_reload(mpp, params);
+>  		if (r)
+>  			r = dm_simplecmd_noflush(DM_DEVICE_RESUME, mpp->alias,
+> -						 0, MPATH_UDEV_RELOAD_FLAG);
+> +						 1, MPATH_UDEV_RELOAD_FLAG);
+>  		break;
+>  
+>  	case ACT_RESIZE:
+> @@ -646,7 +646,9 @@ domap (struct multipath * mpp, char * params)
+>  		if (r) {
+>  			r = dm_addmap_reload(mpp, params);
+>  			if (r)
+> -				r = dm_simplecmd_noflush(DM_DEVICE_RESUME, mpp->alias, 0, MPATH_UDEV_RELOAD_FLAG);
+> +				r = dm_simplecmd_noflush(DM_DEVICE_RESUME,
+> +							 mpp->alias, 1,
+> +							 MPATH_UDEV_RELOAD_FLAG);
+>  		}
+>  		break;
+>  
 > -- 
-> 2.5.5
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> 2.6.6
