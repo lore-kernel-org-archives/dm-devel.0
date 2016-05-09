@@ -1,16 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 4/6] libmultipath: Fixup 'DM_DEVICE_RELOAD'
-	handling
-Date: Mon, 9 May 2016 12:26:36 +0200
-Message-ID: <573065DC.8060909@suse.de>
-References: <1462341450-5507-1-git-send-email-hare@suse.de>
-	<1462341450-5507-5-git-send-email-hare@suse.de>
-	<20160506201240.GU26117@octiron.msp.redhat.com>
+Subject: [PATCH 6/7] devmapper: remove 'udev_sync' argument from
+	dm_simplecmd_noflush()
+Date: Mon,  9 May 2016 12:53:04 +0200
+Message-ID: <1462791185-2903-7-git-send-email-hare@suse.de>
+References: <1462791185-2903-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160506201240.GU26117@octiron.msp.redhat.com>
+In-Reply-To: <1462791185-2903-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,57 +18,110 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 05/06/2016 10:12 PM, Benjamin Marzinski wrote:
-> On Wed, May 04, 2016 at 07:57:28AM +0200, Hannes Reinecke wrote:
->> libdevmapper has the 'quirk' that DM_DEVICE_CREATE is translated
->> internally into a create/load/resume sequence, and the associated
->> cookie will wait for the last 'resume' to complete.
->> However, DM_DEVICE_RELOAD has no such translation, so if there
->> is a cookie assigned to it the caller _cannot_ wait for it,
->> as the cookie will only ever be completed upon the next
->> DM_DEVICE_RESUME.
->> multipathd already has some provisions for that (but even there
->> the cookie handling is dodgy), but 'multipath -r' doesn't know
->> about this.
->> So to avoid any future irritations this patch updates the
->> dm_addmad_reload() call to handle the cookie correctly,
->> and removes the special handling from multipathd.
-> =
+The 'udev_sync' argument is always '1', so we can remove it.
 
-> I don't see what's multipathd specific about any of the handling here.
-> The real answer is that device-mapper does nothing with cookies on
-> table reload. We should never be calling dm_task_set_cookie() for =
+Signed-off-by: Hannes Reinecke <hare@suse.com>
+---
+ libmultipath/configure.c  | 4 ++--
+ libmultipath/devmapper.c  | 9 +++++----
+ libmultipath/devmapper.h  | 2 +-
+ multipathd/cli_handlers.c | 4 ++--
+ 4 files changed, 10 insertions(+), 9 deletions(-)
 
-> dm_addmap(DM_DEVICE_RELOAD, ...) calls in the first place. We end up
-> creating a cookie, decrementing the cookie, incrementing the cookie, and
-> finally waiting on it, when we could just be creating a cookie and then
-> waiting on it.
-> =
-
-> It's kind of hard to find an easy to show example of this breaking. You
-> would need to have the dm_addmap() command fail with some other error than
-> EROFS.  If that happens, the dm_simplecmd() call will never happen, and
-> there will be a cookie sitting around on the system.  If we never added
-> a cookie to the task in dm_addmap(DM_DEVICE_RELOAD, ...), then there
-> wouldn't be this cookie sitting around.
-> =
-
-But then ... how is this supposed to work?
-Are we supposed to call DM_DEVICE_RESUME even after DM_DEVICE_RELOAD
-failed?
-None of the other callers do that ...
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 9c6904a..708dae8 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -628,7 +628,7 @@ domap (struct multipath * mpp, char * params)
+ 		r = dm_addmap_reload(mpp, params);
+ 		if (r)
+ 			r = dm_simplecmd_noflush(DM_DEVICE_RESUME, mpp->alias,
+-						 1, MPATH_UDEV_RELOAD_FLAG);
++						 MPATH_UDEV_RELOAD_FLAG);
+ 		break;
+ 
+ 	case ACT_RESIZE:
+@@ -647,7 +647,7 @@ domap (struct multipath * mpp, char * params)
+ 			r = dm_addmap_reload(mpp, params);
+ 			if (r)
+ 				r = dm_simplecmd_noflush(DM_DEVICE_RESUME,
+-							 mpp->alias, 1,
++							 mpp->alias,
+ 							 MPATH_UDEV_RELOAD_FLAG);
+ 		}
+ 		break;
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 8a89f46..6983ab6 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -254,8 +254,8 @@ dm_simplecmd_flush (int task, const char *name, uint16_t udev_flags) {
+ }
+ 
+ extern int
+-dm_simplecmd_noflush (int task, const char *name, int needsync, uint16_t udev_flags) {
+-	return dm_simplecmd(task, name, 1, needsync, udev_flags, 0);
++dm_simplecmd_noflush (int task, const char *name, uint16_t udev_flags) {
++	return dm_simplecmd(task, name, 1, 1, udev_flags, 0);
+ }
+ 
+ static int
+@@ -847,7 +847,7 @@ dm_suspend_and_flush_map (const char * mapname)
+ 		return 0;
+ 	}
+ 	condlog(2, "failed to remove multipath map %s", mapname);
+-	dm_simplecmd_noflush(DM_DEVICE_RESUME, mapname, 1, 0);
++	dm_simplecmd_noflush(DM_DEVICE_RESUME, mapname, 0);
+ 	if (queue_if_no_path)
+ 		s = dm_queue_if_no_path((char *)mapname, 1);
+ 	return 1;
+@@ -1486,7 +1486,8 @@ int dm_reassign_table(const char *name, char *old, char *new)
+ 			condlog(3, "%s: failed to reassign targets", name);
+ 			goto out_reload;
+ 		}
+-		dm_simplecmd_noflush(DM_DEVICE_RESUME, name, 1, MPATH_UDEV_RELOAD_FLAG);
++		dm_simplecmd_noflush(DM_DEVICE_RESUME, name,
++				     MPATH_UDEV_RELOAD_FLAG);
+ 	}
+ 	r = 1;
+ 
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index 8dd0963..bc13b07 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -16,7 +16,7 @@ void dm_init(void);
+ int dm_prereq (void);
+ int dm_drv_version (unsigned int * version, char * str);
+ int dm_simplecmd_flush (int, const char *, uint16_t);
+-int dm_simplecmd_noflush (int, const char *, int, uint16_t);
++int dm_simplecmd_noflush (int, const char *, uint16_t);
+ int dm_addmap_create (struct multipath *mpp, char *params);
+ int dm_addmap_reload (struct multipath *mpp, char *params);
+ int dm_map_present (const char *);
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 5112786..8b3cb9d 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -937,7 +937,7 @@ cli_suspend(void * v, char ** reply, int * len, void * data)
+ 		return 1;
+ 	}
+ 
+-	r = dm_simplecmd_noflush(DM_DEVICE_SUSPEND, param, 0, 0);
++	r = dm_simplecmd_noflush(DM_DEVICE_SUSPEND, param, 0);
+ 
+ 	condlog(2, "%s: suspend (operator)", param);
+ 
+@@ -967,7 +967,7 @@ cli_resume(void * v, char ** reply, int * len, void * data)
+ 		return 1;
+ 	}
+ 
+-	r = dm_simplecmd_noflush(DM_DEVICE_RESUME, param, 1, 0);
++	r = dm_simplecmd_noflush(DM_DEVICE_RESUME, param, 0);
+ 
+ 	condlog(2, "%s: resume (operator)", param);
+ 
+-- 
+2.6.6
