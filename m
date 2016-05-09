@@ -1,16 +1,15 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 4/7] devmapper: wait for udev in
-	dm_simplecmd_noflush()
-Date: Mon, 9 May 2016 12:57:17 -0500
-Message-ID: <20160509175717.GZ26117@octiron.msp.redhat.com>
+Subject: Re: [PATCH 5/7] multipathd: wait for udev in cli_resume()
+Date: Mon, 9 May 2016 13:01:44 -0500
+Message-ID: <20160509180144.GA26117@octiron.msp.redhat.com>
 References: <1462791185-2903-1-git-send-email-hare@suse.de>
-	<1462791185-2903-5-git-send-email-hare@suse.de>
+	<1462791185-2903-6-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1462791185-2903-5-git-send-email-hare@suse.de>
+In-Reply-To: <1462791185-2903-6-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,52 +23,37 @@ To: Hannes Reinecke <hare@suse.de>
 Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, May 09, 2016 at 12:53:02PM +0200, Hannes Reinecke wrote:
-> When calling dm_simplecmd_noflush() with udev_flags set we
-> need to set the 'need_sync' flag otherwise the udev flags
-> will never be set.
+On Mon, May 09, 2016 at 12:53:03PM +0200, Hannes Reinecke wrote:
+> When calling 'cli_resume()' we should be waiting for udev to
+> ensure the device really has been resumed.
 
-The other possibility here would be to temporarily disable udev sync
-support, and then restore it afterwards. That way we could still pass
-the flags, but we wouldn't need to wait on these table reloads.  Either
-that or to get libdevmapper to give us a cookie flag that says, "while,
-I do have sync support enabled, for this one command, I'd like to skip
-it".  But neither of those options has any significant benefit over this
-solution.
+Since multipathd has udev sync support disabled, this change doesn't do
+anything (which is fine, since I don't see any need to wait for udev
+here). It does allow your next patch to remove the need_sync option,
+which is (I assume) the bigger point.
 
-ACK.
+ACK
 
 -Ben
 
 > 
 > Signed-off-by: Hannes Reinecke <hare@suse.com>
 > ---
->  libmultipath/configure.c | 6 ++++--
->  1 file changed, 4 insertions(+), 2 deletions(-)
+>  multipathd/cli_handlers.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> index b976da7..9c6904a 100644
-> --- a/libmultipath/configure.c
-> +++ b/libmultipath/configure.c
-> @@ -628,7 +628,7 @@ domap (struct multipath * mpp, char * params)
->  		r = dm_addmap_reload(mpp, params);
->  		if (r)
->  			r = dm_simplecmd_noflush(DM_DEVICE_RESUME, mpp->alias,
-> -						 0, MPATH_UDEV_RELOAD_FLAG);
-> +						 1, MPATH_UDEV_RELOAD_FLAG);
->  		break;
+> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+> index 0397353..5112786 100644
+> --- a/multipathd/cli_handlers.c
+> +++ b/multipathd/cli_handlers.c
+> @@ -967,7 +967,7 @@ cli_resume(void * v, char ** reply, int * len, void * data)
+>  		return 1;
+>  	}
 >  
->  	case ACT_RESIZE:
-> @@ -646,7 +646,9 @@ domap (struct multipath * mpp, char * params)
->  		if (r) {
->  			r = dm_addmap_reload(mpp, params);
->  			if (r)
-> -				r = dm_simplecmd_noflush(DM_DEVICE_RESUME, mpp->alias, 0, MPATH_UDEV_RELOAD_FLAG);
-> +				r = dm_simplecmd_noflush(DM_DEVICE_RESUME,
-> +							 mpp->alias, 1,
-> +							 MPATH_UDEV_RELOAD_FLAG);
->  		}
->  		break;
+> -	r = dm_simplecmd_noflush(DM_DEVICE_RESUME, param, 0, 0);
+> +	r = dm_simplecmd_noflush(DM_DEVICE_RESUME, param, 1, 0);
+>  
+>  	condlog(2, "%s: resume (operator)", param);
 >  
 > -- 
 > 2.6.6
