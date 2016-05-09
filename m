@@ -1,8 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH] md: raid10: add prerequisite to run underneath
+Subject: [PATCH] md: raid5: add prerequisite to run underneath
 	dm-raid
-Date: Mon,  9 May 2016 17:50:45 +0200
-Message-ID: <1462809045-3097-1-git-send-email-heinzm@redhat.com>
+Date: Mon,  9 May 2016 17:50:44 +0200
+Message-ID: <1462809044-3031-1-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -23,46 +23,34 @@ List-Id: dm-devel.ids
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
 In case md runs underneath the dm-raid target, the mddev does not have
-a request queue or gendisk, thus avoid accesses to it.
+a request queue or gendisk, thus avoid accesses.
 
-This patch adds two missing conditionals to the raid10 personality.
+This patch adds a missing conditional to the raid5 personality.
 
 
 Signed-of-by: Heinz Mauelshagen <heinzm@redhat.com>
 
----
- drivers/md/raid10.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index e3fd725..84e24e6 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -3782,8 +3782,10 @@ static int raid10_resize(struct mddev *mddev, sector_t sectors)
- 			return ret;
- 	}
- 	md_set_array_sectors(mddev, size);
--	set_capacity(mddev->gendisk, mddev->array_sectors);
--	revalidate_disk(mddev->gendisk);
-+	if (mddev->queue) {
-+		set_capacity(mddev->gendisk, mddev->array_sectors);
-+		revalidate_disk(mddev->gendisk);
-+	}
- 	if (sectors > mddev->dev_sectors &&
- 	    mddev->recovery_cp > oldsize) {
- 		mddev->recovery_cp = oldsize;
-@@ -4593,8 +4595,10 @@ static void raid10_finish_reshape(struct mddev *mddev)
- 			set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
- 		}
- 		mddev->resync_max_sectors = size;
--		set_capacity(mddev->gendisk, mddev->array_sectors);
--		revalidate_disk(mddev->gendisk);
-+		if (mddev->queue) {
-+			set_capacity(mddev->gendisk, mddev->array_sectors);
-+			revalidate_disk(mddev->gendisk);
-+		}
- 	} else {
- 		int d;
- 		for (d = conf->geo.raid_disks ;
+---
+ drivers/md/raid5.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 8ab8b65..ce79ce6 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -7574,8 +7574,10 @@ static void raid5_finish_reshape(struct mddev *mddev)
+ 
+ 		if (mddev->delta_disks > 0) {
+ 			md_set_array_sectors(mddev, raid5_size(mddev, 0, 0));
+-			set_capacity(mddev->gendisk, mddev->array_sectors);
+-			revalidate_disk(mddev->gendisk);
++			if (mddev->queue) {
++				set_capacity(mddev->gendisk, mddev->array_sectors);
++				revalidate_disk(mddev->gendisk);
++			}
+ 		} else {
+ 			int d;
+ 			spin_lock_irq(&conf->device_lock);
 -- 
 2.5.5
