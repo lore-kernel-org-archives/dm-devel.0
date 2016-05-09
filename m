@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 3/7] configure: Rename ACT_RENAME2 to
-	ACT_FORCERENAME
-Date: Mon,  9 May 2016 12:53:01 +0200
-Message-ID: <1462791185-2903-4-git-send-email-hare@suse.de>
+Subject: [PATCH 5/7] multipathd: wait for udev in cli_resume()
+Date: Mon,  9 May 2016 12:53:03 +0200
+Message-ID: <1462791185-2903-6-git-send-email-hare@suse.de>
 References: <1462791185-2903-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,48 +21,26 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Use a more descriptive name instead of 'ACT_RENAME2'.
+When calling 'cli_resume()' we should be waiting for udev to
+ensure the device really has been resumed.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/configure.c | 4 ++--
- libmultipath/configure.h | 2 +-
- 2 files changed, 3 insertions(+), 3 deletions(-)
+ multipathd/cli_handlers.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index affd1d5..b976da7 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -398,7 +398,7 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 			strncpy(mpp->alias_old, cmpp->alias, WWID_SIZE);
- 			mpp->action = ACT_RENAME;
- 			if (force_reload)
--				mpp->action = ACT_RENAME2;
-+				mpp->action = ACT_FORCERENAME;
- 			return;
- 		}
- 		mpp->action = ACT_CREATE;
-@@ -641,7 +641,7 @@ domap (struct multipath * mpp, char * params)
- 		r = dm_rename(mpp->alias_old, mpp->alias);
- 		break;
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 0397353..5112786 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -967,7 +967,7 @@ cli_resume(void * v, char ** reply, int * len, void * data)
+ 		return 1;
+ 	}
  
--	case ACT_RENAME2:
-+	case ACT_FORCERENAME:
- 		r = dm_rename(mpp->alias_old, mpp->alias);
- 		if (r) {
- 			r = dm_addmap_reload(mpp, params);
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index c014b55..f357d9a 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -18,7 +18,7 @@ enum actions {
- 	ACT_RENAME,
- 	ACT_CREATE,
- 	ACT_RESIZE,
--	ACT_RENAME2,
-+	ACT_FORCERENAME,
- };
+-	r = dm_simplecmd_noflush(DM_DEVICE_RESUME, param, 0, 0);
++	r = dm_simplecmd_noflush(DM_DEVICE_RESUME, param, 1, 0);
  
- #define FLUSH_ONE 1
+ 	condlog(2, "%s: resume (operator)", param);
+ 
 -- 
 2.6.6
