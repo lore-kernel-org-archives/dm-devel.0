@@ -1,11 +1,17 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH 2/2] Merge Dell MD3XXX hardware table entries
-Date: Tue, 10 May 2016 18:31:19 +0200
-Message-ID: <cc3da002-69be-5b0e-f140-5b29f67fde7a@gmail.com>
+Subject: [PATCH Debian] kpartx: increase retries was Re: Next
+	release plans?
+Date: Tue, 10 May 2016 18:39:54 +0200
+Message-ID: <05bfcd42-5a72-35c6-d4a7-8b44b130b63b@gmail.com>
+References: <561531AF.4080907@gmail.com> <570BDA57.7040606@gmail.com>
+	<CABr-Gnfgz=upeMOUuMSPTXMqLojqOxEfub7GEd0rAjDZ1F3Z6w@mail.gmail.com>
+	<7daddb85-3de7-9015-35fd-2e535f707f7a@gmail.com>
+	<1461066476.4833.40.camel@debian.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1461066476.4833.40.camel@debian.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,99 +21,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: rrs@debian.org, device-mapper development <dm-devel@redhat.com>, mathieu.tl@gmail.com
 List-Id: dm-devel.ids
 
-Hannes Reinecke wrote(2015-03-30 6:23:23):
+On 04/19/2016 01:47 PM, Ritesh Raj Sarraf wrote:
 
-> Remove duplicate entries and merge MD36xxi/MD36xxf into a single
-> one.
+> In Debian, we don't have much delta. The only minor (1 liner) patch I see
+> carrying is:
 > 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> ---
->  libmultipath/hwtable.c | 53 ++++----------------------------------------------
->  1 file changed, 4 insertions(+), 49 deletions(-)
+> rrs@learner:~/.rrs-home/Community/Packaging/multipath-tools (master)$ cat
+> debian/patches/increase-kpartx-retries.patch 
+> https://www.redhat.com/archives/dm-devel/2015-May/msg00087.html
 > 
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index fa4b20f..f83f3e7 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -728,7 +728,7 @@ static struct hwentry default_hw[] = {
->  		.prio_args     = NULL,
->  	},
->  	{
-> -		/* DELL MD3000 */
-> +		/* DELL MD3000/MD3000i */
->  		.vendor        = "DELL",
->  		.product       = "MD3000",
->  		.bl_product    = "Universal Xport",
-> @@ -743,22 +743,7 @@ static struct hwentry default_hw[] = {
->  		.prio_args     = NULL,
->  	},
->  	{
-> -		/* DELL MD3000i */
-> -		.vendor        = "DELL",
-> -		.product       = "MD3000i",
-> -		.bl_product    = "Universal Xport",
-> -		.features      = "2 pg_init_retries 50",
-> -		.hwhandler     = "1 rdac",
-> -		.pgpolicy      = GROUP_BY_PRIO,
-> -		.pgfailback    = -FAILBACK_IMMEDIATE,
-> -		.rr_weight     = RR_WEIGHT_NONE,
-> -		.no_path_retry = 15,
-> -		.checker_name  = RDAC,
-> -		.prio_name     = PRIO_RDAC,
-> -		.prio_args     = NULL,
-> -	},
-> -	{
-> -		/* DELL MD32xx */
-> +		/* DELL MD32xx/MD32xxi */
->  		.vendor        = "DELL",
->  		.product       = "MD32xx",
->  		.bl_product    = "Universal Xport",
-> @@ -773,39 +758,9 @@ static struct hwentry default_hw[] = {
->  		.prio_args     = NULL,
->  	},
->  	{
-> -		/* DELL MD32xxi */
-> -		.vendor        = "DELL",
-> -		.product       = "MD32xxi",
-> -		.bl_product    = "Universal Xport",
-> -		.features      = "2 pg_init_retries 50",
-> -		.hwhandler     = "1 rdac",
-> -		.pgpolicy      = GROUP_BY_PRIO,
-> -		.pgfailback    = -FAILBACK_IMMEDIATE,
-> -		.rr_weight     = RR_WEIGHT_NONE,
-> -		.no_path_retry = 15,
-> -		.checker_name  = RDAC,
-> -		.prio_name     = PRIO_RDAC,
-> -		.prio_args     = NULL,
-> -	},
-> -	{
-> -		/* DELL MD36xxi */
-> -		.vendor        = "DELL",
-> -		.product       = "MD36xxi",
-> -		.bl_product    = "Universal Xport",
-> -		.features      = "2 pg_init_retries 50",
-> -		.hwhandler     = "1 rdac",
-> -		.pgpolicy      = GROUP_BY_PRIO,
-> -		.pgfailback    = -FAILBACK_IMMEDIATE,
-> -		.rr_weight     = RR_WEIGHT_NONE,
-> -		.no_path_retry = 15,
-> -		.checker_name  = RDAC,
-> -		.prio_name     = PRIO_RDAC,
-> -		.prio_args     = NULL,
-> -	},
-> -	{
-> -		/* DELL MD36xxf */
-> +		/* DELL MD36xxi/MD36xxf */
->  		.vendor        = "DELL",
-> -		.product       = "MD36xxf",
-> +		.product       = "MD36xx(i|f)",
->  		.bl_product    = "Universal Xport",
->  		.features      = "2 pg_init_retries 50",
->  		.hwhandler     = "1 rdac",
-> -- 
-> 1.8.4.5
+> Many users have reported that increasing the retries solves the problem
+> 
+> https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=785251
+> https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=734794
+> https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=608737
+> Index: multipath-tools/kpartx/lopart.c
+> ===================================================================
+> --- multipath-tools.orig/kpartx/lopart.c	2015-10-16 21:33:27.235438304
+> +0530
+> +++ multipath-tools/kpartx/lopart.c	2015-10-16 21:33:27.231438251 +0530
+> @@ -296,7 +296,7 @@
+>  extern int 
+>  del_loop (const char *device)
+>  {
+> -	int retries = 3;
+> +	int retries = 5;
+>  	int fd;
+>  
+>  	if ((fd = open (device, O_RDONLY)) < 0) {
+> 
 
-This patch is missing in upstream git.
+This patch also was lost.
