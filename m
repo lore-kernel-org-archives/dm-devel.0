@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: multipathd: move 'filter_devnode' under vector lock
-Date: Wed, 11 May 2016 12:35:41 +0200
-Message-ID: <1462962941-9429-1-git-send-email-hare@suse.de>
+Subject: libmultipath: use poll() in uevent_listen()
+Date: Wed, 11 May 2016 12:35:53 +0200
+Message-ID: <1462962953-9492-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,123 +19,51 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Ben Marzinski pointed out that filter_devnode() is used
-without any lock or configuration settings in uev_trigger(),
-and hence might be invalid when processing events during
-reconfiguration.
-So move it into the individual functions and handle it
-with the vector lock held.
+As we're not modifying the signal mask anymore we can switch
+back to normal 'poll' instead of 'ppoll'.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- multipathd/main.c | 45 +++++++++++++++++++++++++++------------------
- 1 file changed, 27 insertions(+), 18 deletions(-)
+ libmultipath/uevent.c | 9 +++------
+ 1 file changed, 3 insertions(+), 6 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 58e8854..2c7486d 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -580,6 +580,11 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
- 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 	lock(vecs->lock);
- 	pthread_testcancel();
-+	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
-+			   uev->kernel) > 0) {
-+		ret = 0;
-+		goto out_unlock;
-+	}
- 	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
- 	if (pp) {
- 		int r;
-@@ -637,6 +642,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
- 		free_path(pp);
- 		ret = 1;
- 	}
-+out_unlock:
- 	lock_cleanup_pop(vecs->lock);
- 	return ret;
- }
-@@ -780,22 +786,23 @@ fail:
- static int
- uev_remove_path (struct uevent *uev, struct vectors * vecs)
- {
--	struct path *pp;
--	int ret;
-+	struct path *pp = NULL;
-+	int ret = 0;
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index fbe9c44..454b819 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -477,7 +477,6 @@ int uevent_listen(struct udev *udev)
+ 	int fd, fd_ep = -1, socket_flags, events;
+ 	int need_failback = 1;
+ 	int timeout = 30;
+-	sigset_t mask;
+ 	LIST_HEAD(uevlisten_tmp);
  
- 	condlog(2, "%s: remove path (uevent)", uev->kernel);
- 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 	lock(vecs->lock);
- 	pthread_testcancel();
--	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
--	if (pp)
--		ret = ev_remove_path(pp, vecs);
--	lock_cleanup_pop(vecs->lock);
--	if (!pp) {
--		/* Not an error; path might have been purged earlier */
--		condlog(0, "%s: path already removed", uev->kernel);
--		return 0;
-+	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
-+			   uev->kernel) == 0) {
-+		pp = find_path_by_dev(vecs->pathvec, uev->kernel);
-+		if (pp)
-+			ret = ev_remove_path(pp, vecs);
-+		else
-+			/* Not an error; path might have been purged earlier */
-+			condlog(0, "%s: path already removed", uev->kernel);
- 	}
-+	lock_cleanup_pop(vecs->lock);
- 	return ret;
- }
- 
-@@ -905,7 +912,7 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 	ro = uevent_get_disk_ro(uev);
- 
- 	if (ro >= 0) {
--		struct path * pp;
-+		struct path * pp = NULL;
- 		struct multipath *mpp = NULL;
- 
- 		condlog(2, "%s: update path write_protect to '%d' (uevent)",
-@@ -918,6 +925,10 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 		 * need to be at the same indentation level, hence
- 		 * this slightly convoluted codepath.
- 		 */
-+		if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
-+				   uev->kernel) > 0) {
-+			goto out_unlock;
-+		}
- 		pp = find_path_by_dev(vecs->pathvec, uev->kernel);
- 		if (pp) {
- 			if (pp->initialized == INIT_REQUESTED_UDEV) {
-@@ -937,11 +948,13 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 					uev->kernel, mpp->alias, retval);
- 			}
- 		}
-+	out_unlock:
- 		lock_cleanup_pop(vecs->lock);
- 		if (!pp) {
--			condlog(0, "%s: spurious uevent, path not found",
--				uev->kernel);
--			return 1;
-+			if (retval)
-+				condlog(0, "%s: spurious uevent, path not found",
-+					uev->kernel);
-+			return retval;
- 		}
- 		if (retval == 2)
- 			return uev_add_path(uev, vecs);
-@@ -1059,10 +1072,6 @@ uev_trigger (struct uevent * uev, void * trigger_data)
  	/*
- 	 * path add/remove event
- 	 */
--	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
--			   uev->kernel) > 0)
--		goto out;
--
- 	if (!strncmp(uev->action, "add", 3)) {
- 		r = uev_add_path(uev, vecs);
+@@ -528,22 +527,20 @@ int uevent_listen(struct udev *udev)
  		goto out;
+ 	}
+ 
+-	pthread_sigmask(SIG_SETMASK, NULL, &mask);
+ 	events = 0;
+ 	while (1) {
+ 		struct uevent *uev;
+ 		struct udev_device *dev;
+ 		struct pollfd ev_poll;
+-		struct timespec poll_timeout;
++		int poll_timeout;
+ 		int fdcount;
+ 
+ 		memset(&ev_poll, 0, sizeof(struct pollfd));
+ 		ev_poll.fd = fd;
+ 		ev_poll.events = POLLIN;
+-		memset(&poll_timeout, 0, sizeof(struct timespec));
+-		poll_timeout.tv_sec = timeout;
++		poll_timeout = timeout * 1000;
+ 		errno = 0;
+-		fdcount = ppoll(&ev_poll, 1, &poll_timeout, &mask);
++		fdcount = poll(&ev_poll, 1, poll_timeout);
+ 		if (fdcount && ev_poll.revents & POLLIN) {
+ 			timeout = 0;
+ 			dev = udev_monitor_receive_device(monitor);
 -- 
 2.6.6
