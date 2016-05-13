@@ -1,18 +1,12 @@
 From: Todd Gill <tgill@redhat.com>
-Subject: Re: [PATCH v2 1/1] add display of map information in
- JSON format
-Date: Thu, 12 May 2016 15:07:30 -0400
-Message-ID: <5734D472.1000300@redhat.com>
-References: <1462907128-28792-1-git-send-email-tgill@redhat.com>
-	<1462907128-28792-2-git-send-email-tgill@redhat.com>
-	<CABr-Gnd1+P8No_7E-ThXwPTUiS-cq0jqTQfh3M3ThOcXbkAd5w@mail.gmail.com>
-	<573492F6.5060202@citrix.com>
-Reply-To: tgill@redhat.com
+Subject: [PATCH v3 0/1] add option to output JSON for multipathd
+	command
+Date: Fri, 13 May 2016 10:38:59 -0400
+Message-ID: <1463150340-27174-1-git-send-email-tgill@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <573492F6.5060202@citrix.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,32 +17,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Todd Gill <tgill@redhat.com>
 List-Id: dm-devel.ids
-
-On 05/12/2016 10:28 AM, Germano Percossi wrote:
-> Hi,
-> 
-> If there are not specific reasons to have them
-> merged, I would rather have vendor and product split.
->
 
 Hi,
 
-I changed the code to split them up, I'll send a v3 patch as soon as I'm
-done testing.
+I had earlier sent an email to dm-devel proposing we add a feature
+in multipathd to output multipath map topology in JSON format. This
+patch contains to the code for that feature.
 
-To split the fields up, I added new "wildcards" to the map.
+Having an option for the  CLI to output in JSON would allow higher
+level applications to more easily monitor/manage multipath.
 
-      {'v', "vend",          0, snprint_multipath_vend},
-      {'p', "prod",          0, snprint_multipath_prod},
-      {'e', "rev",           0, snprint_multipath_rev},
+I thought it was best to take advantage of some of the existing
+snprintf_xxx functions rather than adding a library dependency
+to multipathd.
 
-Hopefully that is acceptable.
+Any feedback welcome.
 
-I also removed the vend/prod/rev field from the path level of the JSON.
- It isn't needed since the path is contained in the map.
+v2:
+- added major/minor version fields
+- updates from feedback
+- added path groups
+- changed indent levels to make it easier to read
+- removed quotes from integer fields
+- fixed bug when the JSON string length exceeded the allocated memory
+- removed multipath field from path object - it isn't needed since
+  the path is inside the map
 
-Here is an example of the updated JSON for a single map:
+v3:
+- split out vend/prod/rev into seperate fields
+- added new format specifiers for map:
+  %v - vend
+  %p - prod
+  %e - rev
+- removed vend/prod/rev from the path level since it is in the map
+
+Example of v3 JSON:
 
 # multipathd show map mpathi json
 {
@@ -88,7 +93,7 @@ Here is an example of the updated JSON for a single map:
             "dev_st" : "running",
             "chk_st" : "ready",
             "checker" : "directio",
-            "next_check" : "X......... 3/20",
+            "next_check" : "X......... 2/20",
             "pri" : 1,
             "size" : "279G",
             "serial" : "S0K41A7W0000M535KGGG",
@@ -111,7 +116,7 @@ Here is an example of the updated JSON for a single map:
             "dev_st" : "running",
             "chk_st" : "ready",
             "checker" : "directio",
-            "next_check" : "X......... 3/20",
+            "next_check" : "X......... 2/20",
             "pri" : 1,
             "size" : "279G",
             "serial" : "S0K41A7W0000M535KGGG",
@@ -125,12 +130,17 @@ Here is an example of the updated JSON for a single map:
    }
 }
 
-Also, I noticed that the vend/prod/rev doesn't include rev.  Is that
-intentional?   snprint_multipath_vpr() returns:
+Todd Gill (1):
+  add display of map information in JSON format
 
-      snprintf(buff, len, "%s,%s", pp->vendor_id, pp->product_id);
+ libmultipath/print.c      | 220 ++++++++++++++++++++++++++++++++++++++++++++++
+ libmultipath/print.h      |  65 ++++++++++++++
+ multipathd/cli.c          |   3 +
+ multipathd/cli.h          |   2 +
+ multipathd/cli_handlers.c |  93 ++++++++++++++++++++
+ multipathd/cli_handlers.h |   2 +
+ multipathd/main.c         |   2 +
+ 7 files changed, 387 insertions(+)
 
-Note that no pp->rev is included in the string.
-
-Thanks,
-Todd
+-- 
+2.5.5
