@@ -1,8 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH 01/11] dm-raid: rename variable 'ret' to 'r' to
-	conform to other dm code
-Date: Thu, 19 May 2016 18:49:24 +0200
-Message-ID: <1463676574-12596-2-git-send-email-heinzm@redhat.com>
+Subject: [PATCH 09/11] dm-raid: enhance super_sync() to support
+	new superblock members introduced
+Date: Thu, 19 May 2016 18:49:32 +0200
+Message-ID: <1463676574-12596-10-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -22,205 +22,172 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-Change return variable name for conformance reasons.
+Add transfering the new takeover/reshape related superblock
+members introduced to the super_sync() function:
+
+ - add/move supporting functions
+
+ - add failed devices bitfield transfer functions to
+   retrieve the bitfield from superblock format or
+   update it in the superblock
+
+ - add code to transfer all new members
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 68 +++++++++++++++++++++++++++-------------------------
- 1 file changed, 36 insertions(+), 32 deletions(-)
+ drivers/md/dm-raid.c | 104 +++++++++++++++++++++++++++++++++++++++------------
+ 1 file changed, 80 insertions(+), 24 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index a090121..91af447 100644
+index dac8dfa..8e419a6 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -225,7 +225,7 @@ static int dev_parms(struct raid_set *rs, char **argv)
- 	int i;
- 	int rebuild = 0;
- 	int metadata_available = 0;
--	int ret = 0;
-+	int r = 0;
+@@ -214,6 +214,12 @@ static bool _test_flags(uint32_t flags, uint32_t all_flags)
+ 	return (flags & all_flags) ? true : false;
+ }
  
- 	for (i = 0; i < rs->md.raid_disks; i++, argv += 2) {
- 		rs->dev[i].rdev.raid_disk = i;
-@@ -241,12 +241,12 @@ static int dev_parms(struct raid_set *rs, char **argv)
- 		rs->dev[i].rdev.mddev = &rs->md;
- 
- 		if (strcmp(argv[0], "-")) {
--			ret = dm_get_device(rs->ti, argv[0],
-+			r = dm_get_device(rs->ti, argv[0],
- 					    dm_table_get_mode(rs->ti->table),
- 					    &rs->dev[i].meta_dev);
- 			rs->ti->error = "RAID metadata device lookup failure";
--			if (ret)
--				return ret;
-+			if (r)
-+				return r;
- 
- 			rs->dev[i].rdev.sb_page = alloc_page(GFP_KERNEL);
- 			if (!rs->dev[i].rdev.sb_page)
-@@ -267,12 +267,12 @@ static int dev_parms(struct raid_set *rs, char **argv)
- 			continue;
- 		}
- 
--		ret = dm_get_device(rs->ti, argv[1],
-+		r = dm_get_device(rs->ti, argv[1],
- 				    dm_table_get_mode(rs->ti->table),
- 				    &rs->dev[i].data_dev);
--		if (ret) {
-+		if (r) {
- 			rs->ti->error = "RAID device lookup failure";
--			return ret;
-+			return r;
- 		}
- 
- 		if (rs->dev[i].meta_dev) {
-@@ -848,7 +848,7 @@ static void super_sync(struct mddev *mddev, struct md_rdev *rdev)
-  */
- static int super_load(struct md_rdev *rdev, struct md_rdev *refdev)
++/* Clear (multiple) @flags in @all_flags */
++static void _clear_flags(uint32_t flags, uint32_t *all_flags)
++{
++	*all_flags &= ~flags;
++}
++
+ /* Return true if single @flag is set in @*flags, else set it and return false */
+ static bool _test_and_set_flag(uint32_t flag, uint32_t *flags)
  {
--	int ret;
-+	int r;
+@@ -1278,31 +1284,69 @@ static int read_disk_sb(struct md_rdev *rdev, int size)
+ 	return 0;
+ }
+ 
++/* Helper to retrieve all failed devices bits from @sb */
++static void sb_retrieve_failed_devices(struct dm_raid_superblock *sb, uint64_t *failed_devices)
++{
++	failed_devices[0] = le64_to_cpu(sb->failed_devices);
++	memset(failed_devices + 1, 0, sizeof(sb->extended_failed_devices));
++
++	if (_test_flag(FEATURE_FLAG_SUPPORTS_RESHAPE, le32_to_cpu(sb->compat_features))) {
++		int i = ARRAY_SIZE(sb->extended_failed_devices);
++
++		while (i--)
++			failed_devices[i+1] = le64_to_cpu(sb->extended_failed_devices[i]);
++	}
++}
++
++/* Helper to update all failed devices bits in @sb */
++static void sb_update_failed_devices(struct dm_raid_superblock *sb, uint64_t *failed_devices)
++{
++	int i = ARRAY_SIZE(sb->extended_failed_devices);
++
++	sb->failed_devices = cpu_to_le64(failed_devices[0]);
++	while (i--)
++		sb->extended_failed_devices[i] = cpu_to_le64(failed_devices[i+1]);
++}
++
++/*
++ * Synchronize the superblock members with the raid set properties
++ *
++ * All superblock data is little endian.
++ */
+ static void super_sync(struct mddev *mddev, struct md_rdev *rdev)
+ {
+-	int i;
+-	uint64_t failed_devices;
++	bool update_failed_devices = false;
++	unsigned int i;
++	uint64_t failed_devices[DISKS_ARRAY_ELEMS];
  	struct dm_raid_superblock *sb;
- 	struct dm_raid_superblock *refsb;
- 	uint64_t events_sb, events_refsb;
-@@ -860,9 +860,9 @@ static int super_load(struct md_rdev *rdev, struct md_rdev *refdev)
- 		return -EINVAL;
- 	}
+ 	struct raid_set *rs = container_of(mddev, struct raid_set, md);
  
--	ret = read_disk_sb(rdev, rdev->sb_size);
--	if (ret)
--		return ret;
-+	r = read_disk_sb(rdev, rdev->sb_size);
-+	if (r)
-+		return r;
- 
++	/* No metadata device, no superblock */
++	if (!rdev->meta_bdev)
++		return;
++
++	BUG_ON(!rdev->sb_page);
++
  	sb = page_address(rdev->sb_page);
+-	failed_devices = le64_to_cpu(sb->failed_devices);
  
-@@ -1067,7 +1067,7 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
-  */
- static int analyse_superblocks(struct dm_target *ti, struct raid_set *rs)
- {
--	int ret;
-+	int r;
- 	struct raid_dev *dev;
- 	struct md_rdev *rdev, *tmp, *freshest;
- 	struct mddev *mddev = &rs->md;
-@@ -1092,9 +1092,9 @@ static int analyse_superblocks(struct dm_target *ti, struct raid_set *rs)
- 		if (!rdev->meta_bdev)
- 			continue;
+-	for (i = 0; i < mddev->raid_disks; i++)
+-		if (!rs->dev[i].data_dev ||
+-		    test_bit(Faulty, &(rs->dev[i].rdev.flags)))
+-			failed_devices |= (1ULL << i);
++	sb_retrieve_failed_devices(sb, failed_devices);
  
--		ret = super_load(rdev, freshest);
-+		r = super_load(rdev, freshest);
+-	memset(sb + 1, 0, rdev->sb_size - sizeof(*sb));
++	for (i = 0; i < rs->raid_disks; i++)
++		if (!rs->dev[i].data_dev || test_bit(Faulty, &rs->dev[i].rdev.flags)) {
++			update_failed_devices = true;
++			set_bit(i, (void *) failed_devices);
++		}
++
++	if (update_failed_devices)
++		sb_update_failed_devices(sb, failed_devices);
  
--		switch (ret) {
-+		switch (r) {
- 		case 1:
- 			freshest = rdev;
- 			break;
-@@ -1202,17 +1202,21 @@ static void configure_discard_support(struct dm_target *ti, struct raid_set *rs)
+ 	sb->magic = cpu_to_le32(DM_RAID_MAGIC);
+-	sb->compat_features = cpu_to_le32(0);	/* No features yet */
++	sb->compat_features = cpu_to_le32(0); /* Don't set reshape flag yet */
+ 
+ 	sb->num_devices = cpu_to_le32(mddev->raid_disks);
+ 	sb->array_position = cpu_to_le32(rdev->raid_disk);
+ 
+ 	sb->events = cpu_to_le64(mddev->events);
+-	sb->failed_devices = cpu_to_le64(failed_devices);
+ 
+ 	sb->disk_recovery_offset = cpu_to_le64(rdev->recovery_offset);
+ 	sb->array_resync_offset = cpu_to_le64(mddev->recovery_cp);
+@@ -1310,6 +1354,32 @@ static void super_sync(struct mddev *mddev, struct md_rdev *rdev)
+ 	sb->level = cpu_to_le32(mddev->level);
+ 	sb->layout = cpu_to_le32(mddev->layout);
+ 	sb->stripe_sectors = cpu_to_le32(mddev->chunk_sectors);
++
++	sb->new_level = cpu_to_le32(mddev->new_level);
++	sb->new_layout = cpu_to_le32(mddev->new_layout);
++	sb->new_stripe_sectors = cpu_to_le32(mddev->new_chunk_sectors);
++
++	sb->delta_disks = cpu_to_le32(mddev->delta_disks);
++
++	smp_rmb(); /* Make sure we access most recent reshape position */
++	sb->reshape_position = cpu_to_le64(mddev->reshape_position);
++	if (le64_to_cpu(sb->reshape_position) != MaxSector) {
++		/* Flag ongoing reshape */
++		sb->flags |= cpu_to_le32(SB_FLAG_RESHAPE_ACTIVE);
++
++		if (mddev->delta_disks < 0 || mddev->reshape_backwards)
++			sb->flags |= cpu_to_le32(SB_FLAG_RESHAPE_BACKWARDS);
++	} else
++		/* Flag no reshape */
++		_clear_flags(cpu_to_le32(SB_FLAG_RESHAPE_ACTIVE|SB_FLAG_RESHAPE_BACKWARDS), &sb->flags);
++
++	sb->array_sectors = cpu_to_le64(mddev->array_sectors);
++	sb->data_offset = cpu_to_le64(rdev->data_offset);
++	sb->new_data_offset = cpu_to_le64(rdev->new_data_offset);
++	sb->sectors = cpu_to_le64(rdev->sectors);
++
++	/* Zero out the rest of the payload after the size of the superblock */
++	memset(sb + 1, 0, rdev->sb_size - sizeof(*sb));
  }
  
  /*
-- * Construct a RAID4/5/6 mapping:
-+ * Construct a RAID0/1/10/4/5/6 mapping:
-  * Args:
-- *	<raid_type> <#raid_params> <raid_params>		\
-- *	<#raid_devs> { <meta_dev1> <dev1> .. <meta_devN> <devN> }
-+ *      <raid_type> <#raid_params> <raid_params>{0,}    \
-+ *      <#raid_devs> [<meta_dev1> <dev1>]{1,}
-  *
-  * <raid_params> varies by <raid_type>.  See 'parse_raid_params' for
-  * details on possible <raid_params>.
-+ *
-+ * Userspace is free to initialize the metadata devices, hence the superblocks to
-+ * enforce recreation based on the passed in table parameters.
-+ *
-  */
- static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- {
--	int ret;
-+	int r;
- 	struct raid_type *rt;
- 	unsigned long num_raid_params, num_raid_devs;
- 	struct raid_set *rs = NULL;
-@@ -1262,19 +1266,19 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	if (IS_ERR(rs))
- 		return PTR_ERR(rs);
- 
--	ret = parse_raid_params(rs, argv, (unsigned)num_raid_params);
--	if (ret)
-+	r = parse_raid_params(rs, argv, (unsigned)num_raid_params);
-+	if (r)
- 		goto bad;
- 
- 	argv += num_raid_params + 1;
- 
--	ret = dev_parms(rs, argv);
--	if (ret)
-+	r = dev_parms(rs, argv);
-+	if (r)
- 		goto bad;
- 
- 	rs->md.sync_super = super_sync;
--	ret = analyse_superblocks(ti, rs);
--	if (ret)
-+	r = analyse_superblocks(ti, rs);
-+	if (r)
- 		goto bad;
- 
- 	INIT_WORK(&rs->md.event_work, do_table_event);
-@@ -1288,18 +1292,18 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 
- 	/* Has to be held on running the array */
- 	mddev_lock_nointr(&rs->md);
--	ret = md_run(&rs->md);
-+	r = md_run(&rs->md);
- 	rs->md.in_sync = 0; /* Assume already marked dirty */
- 	mddev_unlock(&rs->md);
- 
--	if (ret) {
-+	if (r) {
- 		ti->error = "Fail to run raid array";
- 		goto bad;
- 	}
- 
- 	if (ti->len != rs->md.array_sectors) {
- 		ti->error = "Array size does not match requested target length";
--		ret = -EINVAL;
-+		r = -EINVAL;
- 		goto size_mismatch;
- 	}
- 	rs->callbacks.congested_fn = raid_is_congested;
-@@ -1313,7 +1317,7 @@ size_mismatch:
- bad:
- 	context_free(rs);
- 
--	return ret;
-+	return r;
+@@ -1369,20 +1439,6 @@ static int super_load(struct md_rdev *rdev, struct md_rdev *refdev)
+ 	return (events_sb > events_refsb) ? 1 : 0;
  }
  
- static void raid_dtr(struct dm_target *ti)
-@@ -1598,17 +1602,17 @@ static int raid_iterate_devices(struct dm_target *ti,
+-/* Helper to retrieve all failed devices bits from @sb */
+-static void sb_retrieve_failed_devices(struct dm_raid_superblock *sb, uint64_t *failed_devices)
+-{
+-	failed_devices[0] = le64_to_cpu(sb->failed_devices);
+-	memset(failed_devices + 1, 0, sizeof(sb->extended_failed_devices));
+-
+-	if (_test_flag(FEATURE_FLAG_SUPPORTS_RESHAPE, le32_to_cpu(sb->compat_features))) {
+-		int i = ARRAY_SIZE(sb->extended_failed_devices);
+-
+-		while (i--)
+-			failed_devices[i+1] = le64_to_cpu(sb->extended_failed_devices[i]);
+-	}
+-}
+-
+ static int super_init_validation(struct raid_set *rs, struct md_rdev *rdev)
  {
- 	struct raid_set *rs = ti->private;
- 	unsigned i;
--	int ret = 0;
-+	int r = 0;
- 
--	for (i = 0; !ret && i < rs->md.raid_disks; i++)
-+	for (i = 0; !r && i < rs->md.raid_disks; i++)
- 		if (rs->dev[i].data_dev)
--			ret = fn(ti,
-+			r = fn(ti,
- 				 rs->dev[i].data_dev,
- 				 0, /* No offset on data devs */
- 				 rs->md.dev_sectors,
- 				 data);
- 
--	return ret;
-+	return r;
- }
- 
- static void raid_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 	int role;
 -- 
 2.5.5
