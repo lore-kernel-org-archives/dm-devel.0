@@ -1,20 +1,12 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: multipath-tools: irrelevant files
-Date: Thu, 19 May 2016 17:24:18 +0200
-Message-ID: <d0c31716-4350-4b97-90e3-caf238cc687b@gmail.com>
-References: <CAE+k_g+Eh3H1EAiJ0jm7P-efGbOOwpWRtYmvXyR9qhhHtefV7g@mail.gmail.com>
-	<571DF852.6030604@redhat.com>
-	<CAE+k_gKQcx+QR9bfEp1Wy8BawD14L2G5O0Yw-d0=CffBHqYbrA@mail.gmail.com>
-	<571E0E7A.4050703@redhat.com>
-	<CABr-GnfxOKz8gxDju20Hx3T9Tn74Zz9FhjF1dBk8weEBJMOmLg@mail.gmail.com>
-	<1986ca6b-d281-4faf-2b50-11c3dc132463@gmail.com>
-	<571F026C.5040102@suse.de>
-	<20160427224601.GG26117@octiron.msp.redhat.com>
+From: heinzm@redhat.com
+Subject: [PATCH 01/11] dm-raid: rename variable 'ret' to 'r' to
+	conform to other dm code
+Date: Thu, 19 May 2016 18:49:24 +0200
+Message-ID: <1463676574-12596-2-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160427224601.GG26117@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,123 +16,211 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-On 04/28/2016 12:46 AM, Benjamin Marzinski wrote:
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-> On Tue, Apr 26, 2016 at 07:53:48AM +0200, Hannes Reinecke wrote:
->> On 04/25/2016 10:14 PM, Xose Vazquez Perez wrote:
->>> Btw, are these relevant ?
-> 
-> For all that I didn't comment on, I feel the same way as Hannes.
-> 
->>> getuid/usb_id
->> Huh? What is that doing there?
->> It should really have been moved to the udev package ...
->>
->>> kpartx/kpartx_id
->>> kpartx/kpartx.rules
->> See above. Yes, they are relevant (at least for us)
-> 
-> Like I said, Red Hat doesn't use them. I'll post our multipath.rules
-> shortly.
-> 
->>> multipath/01_udev
->>> multipath/02_multipath
->> Not used anymore with systemd/dracut
->>
->>> multipath/11-dm-mpath.rules
->> Yep. Absolutely required.
->>
->>> multipath.conf.annotated
->>> multipath.conf.defaults
->>> multipath.conf.synthetic
->> Actually, I never saw the need for those.
->> Can we at least have them merged?
-> 
-> I don't think they are being kept up to date anymore.  The 'defaults'
-> information can be gotten from a running system, and it includes the
-> changes from the config files, so it's much more useful. I have no idea
-> what people would use 'synthetic' for besides an example of what a
-> config would look like. And the 'annotated' information is all in the
-> multipath.conf manpage. Red Hat doesn't ship these files anymore. I'd be
-> happy to see them go.
->  
->>> multipathd/multipathd.init.debian
->>> multipathd/multipathd.init.redhat
->>> multipathd/multipathd.init.suse
->> Old init scripts; doubtful value.
->>
->>> multipathd/multipathd.service
->>> multipathd/multipathd.socket
->> systemd service definitions. Yes, required.
-> 
-> Red Hat has a slightly different multipathd.service file, and we don't
-> ship the socket file.  Since multipathd should always be running, I
-> don't really see the need. Also, if you start multipathd manually
-> (instead of through udev) this causes problems with multipathd not
-> getting messages.
-> 
-> For those interested, here's a diff of our multipath.service
-> 
-> diff --git a/multipathd/multipathd.service
-> b/multipathd/multipathd.service
-> index d5f8606..1e5dfab 100644
-> --- a/multipathd/multipathd.service
-> +++ b/multipathd/multipathd.service
-> @@ -2,9 +2,10 @@
->  Description=Device-Mapper Multipath Device Controller
->  Before=iscsi.service iscsid.service lvm2-activation-early.service
->  Before=local-fs-pre.target
-> -After=multipathd.socket
-> +ConditionPathExists=/etc/multipath.conf
-> +ConditionKernelCommandLine=!nompath
->  DefaultDependencies=no
-> -Wants=local-fs-pre.target multipathd.socket blk-availability.service
-> +Wants=local-fs-pre.target blk-availability.service
->  Conflicts=shutdown.target
->  
->  [Service]
-> @@ -12,9 +13,9 @@ Type=notify
->  NotifyAccess=main
->  LimitCORE=infinity
->  ExecStartPre=/sbin/modprobe dm-multipath
-> +ExecStartPre=-/sbin/multipath -A
->  ExecStart=/sbin/multipathd -d -s
->  ExecReload=/sbin/multipathd reconfigure
->  
->  [Install]
->  WantedBy=sysinit.target
-> -Also=multipathd.socket
-> 
-> 
-> Aside from dropping the socket, it checks that /etc/multipath.conf
-> exists, and that the kernel wasn't started with "nompath". Also it runs
-> "multipath -A" this reads the kernel commandline from /proc/cmdline, and
-> adds any wwids listed as part of any mpath.wwid=<wwid> parameters.
-> Hannes NACKed this patch, so the option isn't present upsteam.
-> 
->  
->>> multipath/multipath.init.suse
->> Old init script; not used anymore.
->>
->>> multipath/multipath.rules
->> Yep. used for udev.
->>
->>> multipath-tools.spec.in
->>>
->> Well; due to our buildservice we have to keep a separate spec file
->> anyway. So ATM we don't use it.
+Change return variable name for conformance reasons.
 
-Hi Christophe, more files could be deleted as Benjamin and
-Hannes have suggested in this thread.
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/dm-raid.c | 68 +++++++++++++++++++++++++++-------------------------
+ 1 file changed, 36 insertions(+), 32 deletions(-)
 
-I sent also four patches last month, and they're still pending:
-https://www.redhat.com/archives/dm-devel/2016-April/thread.html#00453
-
-
-BTW, there are not new tar files at http://christophe.varoqui.free.fr/ ,
-latest is 0.5.0
-
--thanks-
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index a090121..91af447 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -225,7 +225,7 @@ static int dev_parms(struct raid_set *rs, char **argv)
+ 	int i;
+ 	int rebuild = 0;
+ 	int metadata_available = 0;
+-	int ret = 0;
++	int r = 0;
+ 
+ 	for (i = 0; i < rs->md.raid_disks; i++, argv += 2) {
+ 		rs->dev[i].rdev.raid_disk = i;
+@@ -241,12 +241,12 @@ static int dev_parms(struct raid_set *rs, char **argv)
+ 		rs->dev[i].rdev.mddev = &rs->md;
+ 
+ 		if (strcmp(argv[0], "-")) {
+-			ret = dm_get_device(rs->ti, argv[0],
++			r = dm_get_device(rs->ti, argv[0],
+ 					    dm_table_get_mode(rs->ti->table),
+ 					    &rs->dev[i].meta_dev);
+ 			rs->ti->error = "RAID metadata device lookup failure";
+-			if (ret)
+-				return ret;
++			if (r)
++				return r;
+ 
+ 			rs->dev[i].rdev.sb_page = alloc_page(GFP_KERNEL);
+ 			if (!rs->dev[i].rdev.sb_page)
+@@ -267,12 +267,12 @@ static int dev_parms(struct raid_set *rs, char **argv)
+ 			continue;
+ 		}
+ 
+-		ret = dm_get_device(rs->ti, argv[1],
++		r = dm_get_device(rs->ti, argv[1],
+ 				    dm_table_get_mode(rs->ti->table),
+ 				    &rs->dev[i].data_dev);
+-		if (ret) {
++		if (r) {
+ 			rs->ti->error = "RAID device lookup failure";
+-			return ret;
++			return r;
+ 		}
+ 
+ 		if (rs->dev[i].meta_dev) {
+@@ -848,7 +848,7 @@ static void super_sync(struct mddev *mddev, struct md_rdev *rdev)
+  */
+ static int super_load(struct md_rdev *rdev, struct md_rdev *refdev)
+ {
+-	int ret;
++	int r;
+ 	struct dm_raid_superblock *sb;
+ 	struct dm_raid_superblock *refsb;
+ 	uint64_t events_sb, events_refsb;
+@@ -860,9 +860,9 @@ static int super_load(struct md_rdev *rdev, struct md_rdev *refdev)
+ 		return -EINVAL;
+ 	}
+ 
+-	ret = read_disk_sb(rdev, rdev->sb_size);
+-	if (ret)
+-		return ret;
++	r = read_disk_sb(rdev, rdev->sb_size);
++	if (r)
++		return r;
+ 
+ 	sb = page_address(rdev->sb_page);
+ 
+@@ -1067,7 +1067,7 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
+  */
+ static int analyse_superblocks(struct dm_target *ti, struct raid_set *rs)
+ {
+-	int ret;
++	int r;
+ 	struct raid_dev *dev;
+ 	struct md_rdev *rdev, *tmp, *freshest;
+ 	struct mddev *mddev = &rs->md;
+@@ -1092,9 +1092,9 @@ static int analyse_superblocks(struct dm_target *ti, struct raid_set *rs)
+ 		if (!rdev->meta_bdev)
+ 			continue;
+ 
+-		ret = super_load(rdev, freshest);
++		r = super_load(rdev, freshest);
+ 
+-		switch (ret) {
++		switch (r) {
+ 		case 1:
+ 			freshest = rdev;
+ 			break;
+@@ -1202,17 +1202,21 @@ static void configure_discard_support(struct dm_target *ti, struct raid_set *rs)
+ }
+ 
+ /*
+- * Construct a RAID4/5/6 mapping:
++ * Construct a RAID0/1/10/4/5/6 mapping:
+  * Args:
+- *	<raid_type> <#raid_params> <raid_params>		\
+- *	<#raid_devs> { <meta_dev1> <dev1> .. <meta_devN> <devN> }
++ *      <raid_type> <#raid_params> <raid_params>{0,}    \
++ *      <#raid_devs> [<meta_dev1> <dev1>]{1,}
+  *
+  * <raid_params> varies by <raid_type>.  See 'parse_raid_params' for
+  * details on possible <raid_params>.
++ *
++ * Userspace is free to initialize the metadata devices, hence the superblocks to
++ * enforce recreation based on the passed in table parameters.
++ *
+  */
+ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ {
+-	int ret;
++	int r;
+ 	struct raid_type *rt;
+ 	unsigned long num_raid_params, num_raid_devs;
+ 	struct raid_set *rs = NULL;
+@@ -1262,19 +1266,19 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	if (IS_ERR(rs))
+ 		return PTR_ERR(rs);
+ 
+-	ret = parse_raid_params(rs, argv, (unsigned)num_raid_params);
+-	if (ret)
++	r = parse_raid_params(rs, argv, (unsigned)num_raid_params);
++	if (r)
+ 		goto bad;
+ 
+ 	argv += num_raid_params + 1;
+ 
+-	ret = dev_parms(rs, argv);
+-	if (ret)
++	r = dev_parms(rs, argv);
++	if (r)
+ 		goto bad;
+ 
+ 	rs->md.sync_super = super_sync;
+-	ret = analyse_superblocks(ti, rs);
+-	if (ret)
++	r = analyse_superblocks(ti, rs);
++	if (r)
+ 		goto bad;
+ 
+ 	INIT_WORK(&rs->md.event_work, do_table_event);
+@@ -1288,18 +1292,18 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 
+ 	/* Has to be held on running the array */
+ 	mddev_lock_nointr(&rs->md);
+-	ret = md_run(&rs->md);
++	r = md_run(&rs->md);
+ 	rs->md.in_sync = 0; /* Assume already marked dirty */
+ 	mddev_unlock(&rs->md);
+ 
+-	if (ret) {
++	if (r) {
+ 		ti->error = "Fail to run raid array";
+ 		goto bad;
+ 	}
+ 
+ 	if (ti->len != rs->md.array_sectors) {
+ 		ti->error = "Array size does not match requested target length";
+-		ret = -EINVAL;
++		r = -EINVAL;
+ 		goto size_mismatch;
+ 	}
+ 	rs->callbacks.congested_fn = raid_is_congested;
+@@ -1313,7 +1317,7 @@ size_mismatch:
+ bad:
+ 	context_free(rs);
+ 
+-	return ret;
++	return r;
+ }
+ 
+ static void raid_dtr(struct dm_target *ti)
+@@ -1598,17 +1602,17 @@ static int raid_iterate_devices(struct dm_target *ti,
+ {
+ 	struct raid_set *rs = ti->private;
+ 	unsigned i;
+-	int ret = 0;
++	int r = 0;
+ 
+-	for (i = 0; !ret && i < rs->md.raid_disks; i++)
++	for (i = 0; !r && i < rs->md.raid_disks; i++)
+ 		if (rs->dev[i].data_dev)
+-			ret = fn(ti,
++			r = fn(ti,
+ 				 rs->dev[i].data_dev,
+ 				 0, /* No offset on data devs */
+ 				 rs->md.dev_sectors,
+ 				 data);
+ 
+-	return ret;
++	return r;
+ }
+ 
+ static void raid_io_hints(struct dm_target *ti, struct queue_limits *limits)
+-- 
+2.5.5
