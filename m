@@ -1,8 +1,7 @@
 From: heinzm@redhat.com
-Subject: [PATCH 00/11] dm-raid: add RAID level takeover
-	cababilities
-Date: Thu, 19 May 2016 18:49:23 +0200
-Message-ID: <1463676574-12596-1-git-send-email-heinzm@redhat.com>
+Subject: [PATCH 05/11] dm-raid: cleanup / provide infrastructure
+Date: Thu, 19 May 2016 18:49:28 +0200
+Message-ID: <1463676574-12596-6-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -22,73 +21,148 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-This series of patches for the device-mapper dm-raid target
-(which utilizes the md kernel raid runtime) provides superblock
-enhancements and additional infrastructure for full
-takover/reshape and raid set shrink support.
+More flag testing infrastracture and usage of it for simplification/consistency:
 
-It includes full raid level takeover functionality,
-reshape and shrink will follow later based on the hereby
-provided infrastructure.
+ - add _test_flags() function
 
-Raid level takeover is any change of the raid level
-(e.g. raid <-> raid 6; see more below).
+ - use it to simplify rs_check_for_invalid_flags()
 
-Raid reshaping is any change in layout on a particular raid level
-(e.g. raid5_ls -> raid5_ra) and is subject to followup patches
-to this series (same applies to raid set shrink support).
+ - use _test_flag() throughout
 
-Reshaping is possible with the md personalities raid4/5/6/10,
-allowing to change the stripe size, the mapping algorithm,
-the number of devices or the region size in a raid set
-conforming to md personality specific restrictions
-(e.g. minimum of devices to ensure resilience or
-raid10 not capable to remove devices from a raid set).
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/dm-raid.c | 48 +++++++++++++++++++++++-------------------------
+ 1 file changed, 23 insertions(+), 25 deletions(-)
 
-New raid types such as raid5_n, raid6_n_6 etc. are
-introduced to support additonal md-raid layouts, which
-are mandatory to enable takeover/reshape:
-
-This series includes full takover
-('<->' meaning either way) support for:
-
-raid0 w/ <-> raid0 w/o metadata
-raid0 <-> raid4
-raid0 <-> raid5
-raid0 <-> raid6
-raid0 <-> raid10
-raid4 <-> raid5
-raid4 <-> raid6
-raid5 <-> raid6
-
-
-A raid level takeover has to be prepared by providing any needed
-metadata devices and data devices;
-e.g. 3-way striped raid0 -> raid6 requires 5 new metadata devices
-and 2 new data devices for parity and Q-syndrome.
-
-
-This added dm-raid target functionality will be made accessible
-to the user via lvm2 enhancements.
-
-It can be used immediately using the 'dmsetup' test tool.
-
-
-Heinz Mauelshagen (11):
-  dm-raid: rename variable 'ret' to 'r' to conform to other dm code
-  dm-raid: use dm_arg_set API in ctr
-  dm-raid: cleanup / provide infrastructure
-  dm-raid: check constructor arguments for invalid raid level/argument combinations
-  dm-raid: provide more infrastructure
-  dm-raid: use rt_is_raid*() in all appropriate checks
-  dm-raid: introduce v1.8.0 extended superblock to support takeover/reshaping    
-  dm-raid: add new reshaping/raid10 format table line options to parameter parser
-  dm-raid: enhance super_sync() to cope with new members inroduced 
-  dm-raid: add raid level takeover support
-  dm-raid: enhance status interface and fixup takeover/raid0
-
- drivers/md/dm-raid.c | 2234 +++++++++++++++++++++++++++++++++++++-------------
- 1 file changed, 1666 insertions(+), 568 deletions(-)
-
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index ba04db4..7f85243 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -175,6 +175,12 @@ static bool _test_flag(uint32_t flag, uint32_t flags)
+ 	return (flag & flags) ? true : false;
+ }
+ 
++/* Test multiple @flags in @all_flags */
++static bool _test_flags(uint32_t flags, uint32_t all_flags)
++{
++	return (flags & all_flags) ? true : false;
++}
++
+ /* Return true if single @flag is set in @*flags, else set it and return false */
+ static bool _test_and_set_flag(uint32_t flag, uint32_t *flags)
+ {
+@@ -298,16 +304,8 @@ static uint32_t _invalid_flags(struct raid_set *rs)
+  */
+ static int rs_check_for_invalid_flags(struct raid_set *rs)
+ {
+-	unsigned int ctr_flags = rs->ctr_flags, flag = 0;
+-	const uint32_t invalid_flags = _invalid_flags(rs);
+-
+-	while ((ctr_flags &= ~flag)) {
+-		flag = 1 << __ffs(ctr_flags);
+-
+-		if (_test_flag(flag, rs->ctr_flags) &&
+-		    _test_flag(flag, invalid_flags))
+-			return ti_error_einval(rs->ti, "Invalid flag combined");
+-	}
++	if (_test_flags(rs->ctr_flags, _invalid_flags(rs)))
++		return ti_error_einval(rs->ti, "Invalid flag combined");
+ 
+ 	return 0;
+ }
+@@ -1152,7 +1150,7 @@ static int super_init_validation(struct mddev *mddev, struct md_rdev *rdev)
+ 		return -EINVAL;
+ 	}
+ 
+-	if (!(rs->ctr_flags & (CTR_FLAG_SYNC | CTR_FLAG_NOSYNC)))
++	if (!(_test_flags(CTR_FLAGS_ANY_SYNC, rs->ctr_flags)))
+ 		mddev->recovery_cp = le64_to_cpu(sb->array_resync_offset);
+ 
+ 	/*
+@@ -1290,7 +1288,7 @@ static int analyse_superblocks(struct dm_target *ti, struct raid_set *rs)
+ 		 */
+ 		rdev->sectors = to_sector(i_size_read(rdev->bdev->bd_inode));
+ 
+-		if (rs->ctr_flags & CTR_FLAG_SYNC)
++		if (_test_flag(CTR_FLAG_SYNC, rs->ctr_flags))
+ 			continue;
+ 
+ 		if (!rdev->meta_bdev)
+@@ -1647,7 +1645,7 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 	case STATUSTYPE_TABLE:
+ 		/* The string you would use to construct this array */
+ 		for (i = 0; i < rs->md.raid_disks; i++) {
+-			if ((rs->ctr_flags & CTR_FLAG_REBUILD) &&
++			if (_test_flag(CTR_FLAG_REBUILD, rs->ctr_flags) &&
+ 			    rs->dev[i].data_dev &&
+ 			    !test_bit(In_sync, &rs->dev[i].rdev.flags))
+ 				raid_param_cnt += 2; /* for rebuilds */
+@@ -1663,26 +1661,26 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 		DMEMIT("%s %u %u", rs->raid_type->name,
+ 		       raid_param_cnt, rs->md.chunk_sectors);
+ 
+-		if ((rs->ctr_flags & CTR_FLAG_SYNC) &&
+-		    (rs->md.recovery_cp == MaxSector))
++		if (_test_flag(CTR_FLAG_SYNC, rs->ctr_flags) &&
++		    rs->md.recovery_cp == MaxSector)
+ 			DMEMIT(" sync");
+-		if (rs->ctr_flags & CTR_FLAG_NOSYNC)
++		if (_test_flag(CTR_FLAG_NOSYNC, rs->ctr_flags))
+ 			DMEMIT(" nosync");
+ 
+ 		for (i = 0; i < rs->md.raid_disks; i++)
+-			if ((rs->ctr_flags & CTR_FLAG_REBUILD) &&
++			if (_test_flag(CTR_FLAG_REBUILD, rs->ctr_flags) &&
+ 			    rs->dev[i].data_dev &&
+ 			    !test_bit(In_sync, &rs->dev[i].rdev.flags))
+ 				DMEMIT(" rebuild %u", i);
+ 
+-		if (rs->ctr_flags & CTR_FLAG_DAEMON_SLEEP)
++		if (_test_flag(CTR_FLAG_DAEMON_SLEEP, rs->ctr_flags))
+ 			DMEMIT(" daemon_sleep %lu",
+ 			       rs->md.bitmap_info.daemon_sleep);
+ 
+-		if (rs->ctr_flags & CTR_FLAG_MIN_RECOVERY_RATE)
++		if (_test_flag(CTR_FLAG_MIN_RECOVERY_RATE, rs->ctr_flags))
+ 			DMEMIT(" min_recovery_rate %d", rs->md.sync_speed_min);
+ 
+-		if (rs->ctr_flags & CTR_FLAG_MAX_RECOVERY_RATE)
++		if (_test_flag(CTR_FLAG_MAX_RECOVERY_RATE, rs->ctr_flags))
+ 			DMEMIT(" max_recovery_rate %d", rs->md.sync_speed_max);
+ 
+ 		for (i = 0; i < rs->md.raid_disks; i++)
+@@ -1690,11 +1688,11 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 			    test_bit(WriteMostly, &rs->dev[i].rdev.flags))
+ 				DMEMIT(" write_mostly %u", i);
+ 
+-		if (rs->ctr_flags & CTR_FLAG_MAX_WRITE_BEHIND)
++		if (_test_flag(CTR_FLAG_MAX_WRITE_BEHIND, rs->ctr_flags))
+ 			DMEMIT(" max_write_behind %lu",
+ 			       rs->md.bitmap_info.max_write_behind);
+ 
+-		if (rs->ctr_flags & CTR_FLAG_STRIPE_CACHE) {
++		if (_test_flag(CTR_FLAG_STRIPE_CACHE, rs->ctr_flags)) {
+ 			struct r5conf *conf = rs->md.private;
+ 
+ 			/* convert from kiB to sectors */
+@@ -1702,15 +1700,15 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 			       conf ? conf->max_nr_stripes * 2 : 0);
+ 		}
+ 
+-		if (rs->ctr_flags & CTR_FLAG_REGION_SIZE)
++		if (_test_flag(CTR_FLAG_REGION_SIZE, rs->ctr_flags))
+ 			DMEMIT(" region_size %lu",
+ 			       rs->md.bitmap_info.chunksize >> 9);
+ 
+-		if (rs->ctr_flags & CTR_FLAG_RAID10_COPIES)
++		if (_test_flag(CTR_FLAG_RAID10_COPIES, rs->ctr_flags))
+ 			DMEMIT(" raid10_copies %u",
+ 			       raid10_md_layout_to_copies(rs->md.layout));
+ 
+-		if (rs->ctr_flags & CTR_FLAG_RAID10_FORMAT)
++		if (_test_flag(CTR_FLAG_RAID10_FORMAT, rs->ctr_flags))
+ 			DMEMIT(" raid10_format %s",
+ 			       raid10_md_layout_to_format(rs->md.layout));
+ 
 -- 
 2.5.5
