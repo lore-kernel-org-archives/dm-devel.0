@@ -1,14 +1,20 @@
-From: Gris Ge <fge@redhat.com>
-Subject: Re: [PATCH v4 1/1] add display of map information in
- JSON format
-Date: Thu, 19 May 2016 21:50:32 +0800
-Message-ID: <20160519135032.GA969@redhat.com>
-References: <1463592394-18974-1-git-send-email-tgill@redhat.com>
-	<1463592394-18974-2-git-send-email-tgill@redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: multipath-tools: irrelevant files
+Date: Thu, 19 May 2016 17:24:18 +0200
+Message-ID: <d0c31716-4350-4b97-90e3-caf238cc687b@gmail.com>
+References: <CAE+k_g+Eh3H1EAiJ0jm7P-efGbOOwpWRtYmvXyR9qhhHtefV7g@mail.gmail.com>
+	<571DF852.6030604@redhat.com>
+	<CAE+k_gKQcx+QR9bfEp1Wy8BawD14L2G5O0Yw-d0=CffBHqYbrA@mail.gmail.com>
+	<571E0E7A.4050703@redhat.com>
+	<CABr-GnfxOKz8gxDju20Hx3T9Tn74Zz9FhjF1dBk8weEBJMOmLg@mail.gmail.com>
+	<1986ca6b-d281-4faf-2b50-11c3dc132463@gmail.com>
+	<571F026C.5040102@suse.de>
+	<20160427224601.GG26117@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6817012856808095143=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1463592394-18974-2-git-send-email-tgill@redhat.com>
+In-Reply-To: <20160427224601.GG26117@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,79 +24,123 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Todd Gill <tgill@redhat.com>
-Cc: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On 04/28/2016 12:46 AM, Benjamin Marzinski wrote:
 
---===============6817012856808095143==
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="ibTvN161/egqYuK8"
-Content-Disposition: inline
+> On Tue, Apr 26, 2016 at 07:53:48AM +0200, Hannes Reinecke wrote:
+>> On 04/25/2016 10:14 PM, Xose Vazquez Perez wrote:
+>>> Btw, are these relevant ?
+> 
+> For all that I didn't comment on, I feel the same way as Hannes.
+> 
+>>> getuid/usb_id
+>> Huh? What is that doing there?
+>> It should really have been moved to the udev package ...
+>>
+>>> kpartx/kpartx_id
+>>> kpartx/kpartx.rules
+>> See above. Yes, they are relevant (at least for us)
+> 
+> Like I said, Red Hat doesn't use them. I'll post our multipath.rules
+> shortly.
+> 
+>>> multipath/01_udev
+>>> multipath/02_multipath
+>> Not used anymore with systemd/dracut
+>>
+>>> multipath/11-dm-mpath.rules
+>> Yep. Absolutely required.
+>>
+>>> multipath.conf.annotated
+>>> multipath.conf.defaults
+>>> multipath.conf.synthetic
+>> Actually, I never saw the need for those.
+>> Can we at least have them merged?
+> 
+> I don't think they are being kept up to date anymore.  The 'defaults'
+> information can be gotten from a running system, and it includes the
+> changes from the config files, so it's much more useful. I have no idea
+> what people would use 'synthetic' for besides an example of what a
+> config would look like. And the 'annotated' information is all in the
+> multipath.conf manpage. Red Hat doesn't ship these files anymore. I'd be
+> happy to see them go.
+>  
+>>> multipathd/multipathd.init.debian
+>>> multipathd/multipathd.init.redhat
+>>> multipathd/multipathd.init.suse
+>> Old init scripts; doubtful value.
+>>
+>>> multipathd/multipathd.service
+>>> multipathd/multipathd.socket
+>> systemd service definitions. Yes, required.
+> 
+> Red Hat has a slightly different multipathd.service file, and we don't
+> ship the socket file.  Since multipathd should always be running, I
+> don't really see the need. Also, if you start multipathd manually
+> (instead of through udev) this causes problems with multipathd not
+> getting messages.
+> 
+> For those interested, here's a diff of our multipath.service
+> 
+> diff --git a/multipathd/multipathd.service
+> b/multipathd/multipathd.service
+> index d5f8606..1e5dfab 100644
+> --- a/multipathd/multipathd.service
+> +++ b/multipathd/multipathd.service
+> @@ -2,9 +2,10 @@
+>  Description=Device-Mapper Multipath Device Controller
+>  Before=iscsi.service iscsid.service lvm2-activation-early.service
+>  Before=local-fs-pre.target
+> -After=multipathd.socket
+> +ConditionPathExists=/etc/multipath.conf
+> +ConditionKernelCommandLine=!nompath
+>  DefaultDependencies=no
+> -Wants=local-fs-pre.target multipathd.socket blk-availability.service
+> +Wants=local-fs-pre.target blk-availability.service
+>  Conflicts=shutdown.target
+>  
+>  [Service]
+> @@ -12,9 +13,9 @@ Type=notify
+>  NotifyAccess=main
+>  LimitCORE=infinity
+>  ExecStartPre=/sbin/modprobe dm-multipath
+> +ExecStartPre=-/sbin/multipath -A
+>  ExecStart=/sbin/multipathd -d -s
+>  ExecReload=/sbin/multipathd reconfigure
+>  
+>  [Install]
+>  WantedBy=sysinit.target
+> -Also=multipathd.socket
+> 
+> 
+> Aside from dropping the socket, it checks that /etc/multipath.conf
+> exists, and that the kernel wasn't started with "nompath". Also it runs
+> "multipath -A" this reads the kernel commandline from /proc/cmdline, and
+> adds any wwids listed as part of any mpath.wwid=<wwid> parameters.
+> Hannes NACKed this patch, so the option isn't present upsteam.
+> 
+>  
+>>> multipath/multipath.init.suse
+>> Old init script; not used anymore.
+>>
+>>> multipath/multipath.rules
+>> Yep. used for udev.
+>>
+>>> multipath-tools.spec.in
+>>>
+>> Well; due to our buildservice we have to keep a separate spec file
+>> anyway. So ATM we don't use it.
+
+Hi Christophe, more files could be deleted as Benjamin and
+Hannes have suggested in this thread.
+
+I sent also four patches last month, and they're still pending:
+https://www.redhat.com/archives/dm-devel/2016-April/thread.html#00453
 
 
---ibTvN161/egqYuK8
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+BTW, there are not new tar files at http://christophe.varoqui.free.fr/ ,
+latest is 0.5.0
 
-On Wed, May 18, 2016 at 01:26:34PM -0400, Todd Gill wrote:
->=20
-> v4:
->=20
-> removed space in major_version and minor_version keys.
-Hi Todd,
-
-Few things:
-    * Please provide path group id from 'pgindex' of struct path.
-
-    * Replace key name 'host adapter' with 'host_adapter'.
-
-    * Remove output properties as many as you can, only expose
-      those with clear user case and good definition.
-      For API, it's easy to add but hard to remove or change.
-      For example: IMHO, we don't need to expose
-      hcil, next_check, size, serial right now,
-
-    * Performance concern. I am getting bad performance(25 seconds
-      while previous 'raw format' way only take 1.5 seconds) on 10k
-      disks. I am still investigating which part slow things down.
-
-Thank you.
-Best regards.
-
---=20
-Gris Ge
-
---ibTvN161/egqYuK8
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJXPcSoAAoJEGzN5Y/kHij/atkP/3qC6/BJEu2Z//xdbbcpVKGZ
-bt4RKvb+9TQSeYq/MtkDA7Id02MQSraEdVB+vsYqWzqiLRBQeWScd18kEf5ncX5J
-4GDfo9qxjVI7aPuoxOiPWQcA4+smhiCTWl/oALb1V172TQaVO2xgcrVfeGNn72za
-zcSLpcXeeePGLCX2S06m4+77z/2tOj6WC2luugfBAOYVIRbBamXELlp+gwjQOoej
-199HYU/W1MSHQ5VAqnWw4w8I+rSPlSpZBDIctSm2ErLNyqWkLJD9Fx66iUIUXPWq
-Elxq0uJbc6/ae36A9L74A0EzCcJ6jsj/m9Ig9X+gO6F3dhXFFG2mCnWJH+RN5Zoz
-7Uy/OvGEJl0q0vENf7KXy6jxvDWaPFreVQjanbcDxaTReTa/6Qz8zOBTWdaSbVcc
-GaxTAUkiHEHGgefxguu5KYIcH6y/3yhfwS1rI1u07GB80fHMf1vDaXoxLWK0ISHp
-BLC1Xmjvi72qVMUeWcQK95b9Zh8fLqoW/ebfhJcoG6mBMMIDRPnoxCJCK/EUB+0/
-/dmPFN++jILcAibDRFz+JmpcZ0zVcSrB+NUX5sqXbwZ7zNpKkP6gTUW7Svlvogu6
-qpA2ZCY1s02ZJZj+T0Ea8gu5MorkkrVC0ErwyBJedkkS9Fp32nTWShgGl/WxcbHM
-n5JvDSTof0fDJB1lWx4H
-=kvpX
------END PGP SIGNATURE-----
-
---ibTvN161/egqYuK8--
-
-
---===============6817012856808095143==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============6817012856808095143==--
+-thanks-
