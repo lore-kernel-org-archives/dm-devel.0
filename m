@@ -1,209 +1,214 @@
-From: "James Johnston" <johnstonj.public@codenest.com>
-Subject: RE: bcache gets stuck flushing writeback cache when used in combination with LUKS/dm-crypt and non-default bucket size
-Date: Sun, 22 May 2016 04:26:29 -0000
-Message-ID: <034e01d1b3e2$1de2f910$59a8eb30$@codenest.com>
-References: <044401d1a958$ea7ef4e0$bf7cdea0$@codenest.com> <5739F07A.5090608@buttersideup.com> <alpine.LRH.2.11.1605191618560.22436@mx.ewheeler.net> <02b101d1b265$2bc46fb0$834d4f10$@codenest.com> <alpine.LRH.2.11.1605201322530.26328@mx.ewheeler.net>
+From: Gechangwei <ge.changwei@h3c.com>
+Subject: multipath-tools : A way needless to restart multipathd
+ damon while attaching new device to host which met a path failure
+Date: Mon, 23 May 2016 03:38:35 +0000
+Message-ID: <63ADC13FD55D6546B7DECE290D39E373CB5D9A@H3CMLB12-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-bcache-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.11.1605201322530.26328@mx.ewheeler.net>
-Content-Language: en-us
-Sender: linux-bcache-owner@vger.kernel.org
-To: 'Eric Wheeler' <bcache@lists.ewheeler.net>
-Cc: 'Tim Small' <tim@buttersideup.com>, 'Kent Overstreet' <kent.overstreet@gmail.com>, 'Alasdair Kergon' <agk@redhat.com>, 'Mike Snitzer' <snitzer@redhat.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, dm-crypt@saout.de, 'Neil Brown' <neilb@suse.com>, linux-raid@vger.kernel.org, 'Mikulas Patocka' <mpatocka@redhat.com>
+Content-Type: multipart/mixed; boundary="===============0210970015141667656=="
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: zh-CN
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "christophe.varoqui@gmail.com" <christophe.varoqui@gmail.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, Zhongjinming <zhongjinming@h3c.com>, Zhangguanghui <zhang.guanghui@h3c.com>, Shichangkuo <shi.changkuo@h3c.com>
 List-Id: dm-devel.ids
 
-> On Fri, 20 May 2016, James Johnston wrote:
-> 
-> > > On Mon, 16 May 2016, Tim Small wrote:
-> > >
-> > > > On 08/05/16 19:39, James Johnston wrote:
-> > > > > I've run into a problem where the bcache writeback cache can't be flushed to
-> > > > > disk when the backing device is a LUKS / dm-crypt device and the cache set has
-> > > > > a non-default bucket size.  Basically, only a few megabytes will be flushed to
-> > > > > disk, and then it gets stuck.  Stuck means that the bcache writeback task
-> > > > > thrashes the disk by constantly reading hundreds of MB/second from the cache set
-> > > > > in an infinite loop, while not actually progressing (dirty_data never decreases
-> > > > > beyond a certain point).
-> > > >
-> > > > > [...]
-> > > >
-> > > > > The situation is basically unrecoverable as far as I can tell: if you attempt
-> > > > > to detach the cache set then the cache set disk gets thrashed extra-hard
-> > > > > forever, and it's impossible to actually get the cache set detached.  The only
-> > > > > solution seems to be to back up the data and destroy the volume...
-> > > >
-> > > > You can boot an older kernel to flush the device without destroying it
-> > > > (I'm guessing that's because older kernels split down the big requests
-> > > > which are failing on the 4.4 kernel).  Once flushed you could put the
-> > > > cache into writethrough mode, or use a smaller bucket size.
-> > >
-> > > Indeed, can someone test 4.1.y and see if the problem persists with a 2M
-> > > bucket size?  (If someone has already tested 4.1, then appologies as I've
-> > > not yet seen that report.)
-> > >
-> > > If 4.1 works, then I think a bisect is in order.  Such a bisect would at
-> > > least highlight the problem and might indicate a (hopefully trivial) fix.
-> >
-> > To help narrow this down, I tested the following generic pre-compiled mainline kernels
-> > on Ubuntu 15.10:
-> >
-> >  * WORKS:  http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.3.6-wily/
-> >  * DOES NOT WORK:  http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.4-rc1+cod1-wily/
-> >
-> > I also tried the default & latest distribution-provided 4.2 kernel.  It worked.
-> > This one also worked:
-> >
-> >  * WORKS:  http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.2.8-wily/
-> >
-> > So it seems to me that it is a regression from 4.3.6 kernel to any 4.4 kernel.  That
-> > should help save time with bisection...
-> 
-> Below is the patchlist for md and block that might help with a place to
-> start.  Are there any other places in the Linux tree where we should watch
-> for changes?
-> 
-> I'm wondering if it might be in dm-4.4-changes since this is dm-crypt
-> related, but it could be ac322de which was quite large.
-> 
-> James or Tim,
-> 
-> Can you try building ac322de?  If that produces the problem, then there
-> are only 3 more to try (unless this was actually a problem in 4.3 which
-> was fixed in 4.3.y, but hopefully that isn't so).
-> 
-> ccf21b6 is probably the next to test to rule out neil's big md patch,
-> which Linus abreviated in the commit log so it must be quite long.  OTOH,
-> if dm-4.4-changes works, then I'm not sure what commit might produce the
-> problem because the rest are not obviously relevant to the issue that are
-> more recent. 
+--===============0210970015141667656==
+Content-Language: zh-CN
+Content-Type: multipart/alternative;
+	boundary="_000_63ADC13FD55D6546B7DECE290D39E373CB5D9AH3CMLB12EXsrvhuaw_"
 
-So I decided to go ahead and bisect it today.  Looks like the bad commit is
-this one.  The commit prior flushed the bcache writeback cache without
-incident; this one does not and I guess caused this bcache regression.
-(FWIW ac322de came up during bisection, and tested good.)
+--_000_63ADC13FD55D6546B7DECE290D39E373CB5D9AH3CMLB12EXsrvhuaw_
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-johnstonj@kernel-build:~/linux$ git bisect bad
-dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7 is the first bad commit
-commit dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7
-Author: Mikulas Patocka <mpatocka@redhat.com>
-Date:   Wed Oct 21 16:34:20 2015 -0400
+SGksDQoNCkkgZW5jb3VudGVyZWQgYW4gaXNzdWUgdGhhdCBkZXZtYXBwZXIgZGlzYXBwZWFyZWQg
+d2hpbGUgdGhlIG11bHRpcGF0aGQgZGFtZW9uIHdhcyByZXN0YXJ0ZWQuDQoNCkRpZ2dpbmcgaW50
+byB0aGUgcm9vdCBjYXVzZSBvZiBwcmVjZWRpbmcgaXNzdWUsIEkgZm91bmQgc3RvcmFnZSBwYXRo
+IGZhaWx1cmUgd2hpbGUgcmVzdGFydGluZyB0aGUgbXVsdGlwYXRoZCBkYWVtb24uIEl0IHNlZW1z
+IHVucmVhc29uYWJsZSwgYmVjYXVzZSB0aGUgc3RvcmFnZSBwYXRoIG1heSByZWNvdmVyIGluIHRo
+ZSBmdXR1cmUuDQoNCldoZW4gdXNpbmcgbXVsdGlwYXRoLXRvb2xzIHRvIGNyZWF0ZSBkZXZpY2Ug
+bWFwcGVyLCBJIGNvbmZpZ3VyZWQg4oCcYmxhY2tsaXN0IHNlY3Rpb27igJ0gYW5kIOKAnGJsYWNr
+bGlzdCBleGNlcHRpb24gc2VjdGlvbuKAnSwgd2hpY2ggbWVldHMgbXkgcmVxdWlyZW1lbnQgdGhh
+dCBvbmx5IGEgc21hbGwgcGFydCBvZiBTQ1NJIGRpc2sgY2FuIGJlIHVzZWQgdW5kZXJuZWF0aCBh
+IGRldmljZSBtYXBwZXIuDQoNCkFmdGVyIHJlc3RhcnRpbmcgdGhlIG11bHRpcGF0aGQgZGFlbW9u
+LCB0aGUgZGV2aWNlIG1hcHBlciBvZiBwYXRoIGZhaWx1cmUgZGlzYXBwZWFycyBhbmQgaXQgd29u
+4oCZdCBjb21lYmFjayBldmVuIHRoZSBzdG9yYWdlIHBhdGhzIHJlY292ZXIuIFNvIHRoZSBmaWxl
+IHN5c3RlbSBvbiB0aGF0IGRldm1hcHBlciBjYW7igJl0IGJlIGF2YWlsYWJsZS4NCg0KSSB3b25k
+ZXIgdGhhdCBpZiB0aGVyZSBpcyBhIHNvbHV0aW9uIHRoYXQgYSBkZXZpY2UgbWFwcGVyIG9mIHBh
+dGggZmFpbHVyZSBjYW4gY29tZSBiYWNrIHRvIGFjdGl2ZSBldmVuIEkgcmVzdGFydCB0aGUgbXVs
+dGlwYXRoZCBkYWVtb24/DQoNCklmIHN1Y2ggYSBzb2x1dGlvbiBleGlzdHMsIGl0IHdpbGwgYmUg
+bWFydmVsb3VzDQoNCklmIG5vdCwgSSBwcm9wb3NlIGEgdXNlcmxhbmQgaW50ZXJmYWNlIHRvIGFk
+ZCBibGFja2xpc3QgZXhjZXB0aW9uIGR5bmFtaWNhbGx5LiBBZnRlciB0aGUgYmxhY2tsaXN0IGV4
+Y2VwdGlvbiBpcyBhZGRlZCB0byDigJxjb25m4oCdLCDigJxtdWx0aXBhdGhkIGFkZCBtYXAgJG1h
+cOKAnSBhbmQg4oCcbXVsdGlwYXRoZCBhZGQgcGF0aOKAnSBjYW4gYmUgdXNlZCB0byBhZGQgbmV3
+IG1hcCBhbmQgcGF0aC4NCg0KSW4gYSBudXRzaGVsbCwgd2UgY2FuIGR5bmFtaWNhbGx5IGFkZCBl
+bGlzdCwgbWFwIGFuZCBwYXRocyByZXNwZWN0aXZlbHkuIEFuZCBtdWx0aXBhdGhkIGRhbW9uIGlz
+IG5vdCBuZWNlc3NhcnkgdG8gcmVzdGFydCBkdWUgdG8gcHJlY2VkaW5nIHNvbHV0aW9uLg0KDQpB
+bnkgZXhwZXJ0cyBvZiBETSBoYXZlIGFueSBjb21tZW50cyBvbiBteSBzb2x1dGlvbiBhbmQgdGhl
+IGlzc3VlIEkgZmFjZWQgd2l0aD8NCg0KDQpZb3VyIHJlcGx5IGlzIHZlcnkgaW1wb3J0YW50IHRv
+IG1lLg0KDQpUaGFua3MuDQoNCkJSLg0KDQpDaGF1bmNleSBHZQ0KLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LQ0K5pys6YKu5Lu25Y+K5YW26ZmE5Lu25ZCr5pyJ5p2t5bee5Y2O5LiJ6YCa5L+h5oqA5pyv5pyJ
+6ZmQ5YWs5Y+455qE5L+d5a+G5L+h5oGv77yM5LuF6ZmQ5LqO5Y+R6YCB57uZ5LiK6Z2i5Zyw5Z2A
+5Lit5YiX5Ye6DQrnmoTkuKrkurrmiJbnvqTnu4TjgILnpoHmraLku7vkvZXlhbbku5bkurrku6Xk
+u7vkvZXlvaLlvI/kvb/nlKjvvIjljIXmi6zkvYbkuI3pmZDkuo7lhajpg6jmiJbpg6jliIblnLDm
+s4TpnLLjgIHlpI3liLbjgIENCuaIluaVo+WPke+8ieacrOmCruS7tuS4reeahOS/oeaBr+OAguWm
+guaenOaCqOmUmeaUtuS6huacrOmCruS7tu+8jOivt+aCqOeri+WNs+eUteivneaIlumCruS7tumA
+muefpeWPkeS7tuS6uuW5tuWIoOmZpOacrA0K6YKu5Lu277yBDQpUaGlzIGUtbWFpbCBhbmQgaXRz
+IGF0dGFjaG1lbnRzIGNvbnRhaW4gY29uZmlkZW50aWFsIGluZm9ybWF0aW9uIGZyb20gSDNDLCB3
+aGljaCBpcw0KaW50ZW5kZWQgb25seSBmb3IgdGhlIHBlcnNvbiBvciBlbnRpdHkgd2hvc2UgYWRk
+cmVzcyBpcyBsaXN0ZWQgYWJvdmUuIEFueSB1c2Ugb2YgdGhlDQppbmZvcm1hdGlvbiBjb250YWlu
+ZWQgaGVyZWluIGluIGFueSB3YXkgKGluY2x1ZGluZywgYnV0IG5vdCBsaW1pdGVkIHRvLCB0b3Rh
+bCBvciBwYXJ0aWFsDQpkaXNjbG9zdXJlLCByZXByb2R1Y3Rpb24sIG9yIGRpc3NlbWluYXRpb24p
+IGJ5IHBlcnNvbnMgb3RoZXIgdGhhbiB0aGUgaW50ZW5kZWQNCnJlY2lwaWVudChzKSBpcyBwcm9o
+aWJpdGVkLiBJZiB5b3UgcmVjZWl2ZSB0aGlzIGUtbWFpbCBpbiBlcnJvciwgcGxlYXNlIG5vdGlm
+eSB0aGUgc2VuZGVyDQpieSBwaG9uZSBvciBlbWFpbCBpbW1lZGlhdGVseSBhbmQgZGVsZXRlIGl0
+IQ0K
 
-    dm: eliminate unused "bioset" process for each bio-based DM device
+--_000_63ADC13FD55D6546B7DECE290D39E373CB5D9AH3CMLB12EXsrvhuaw_
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-    Commit 54efd50bfd873e2dbf784e0b21a8027ba4299a3e ("block: make
-    generic_make_request handle arbitrarily sized bios") makes it possible
-    for block devices to process large bios.  In doing so that commit
-    allocates a new queue->bio_split bioset for each block device, this
-    bioset is used for allocating bios when the driver needs to split large
-    bios.
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+DQo8aGVhZD4NCjxtZXRhIGh0dHAtZXF1aXY9IkNvbnRlbnQtVHlwZSIg
+Y29udGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXV0Zi04Ij4NCjxtZXRhIG5hbWU9IkdlbmVyYXRv
+ciIgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPg0KPHN0eWxl
+PjwhLS0NCi8qIEZvbnQgRGVmaW5pdGlvbnMgKi8NCkBmb250LWZhY2UNCgl7Zm9udC1mYW1pbHk6
+U2ltU3VuOw0KCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQ0KQGZvbnQtZmFjZQ0KCXtm
+b250LWZhbWlseTpTaW1TdW47DQoJcGFub3NlLTE6MiAxIDYgMCAzIDEgMSAxIDEgMTt9DQpAZm9u
+dC1mYWNlDQoJe2ZvbnQtZmFtaWx5OkNhbGlicmk7DQoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQg
+MyAyIDQ7fQ0KQGZvbnQtZmFjZQ0KCXtmb250LWZhbWlseTpTaW1TdW47DQoJcGFub3NlLTE6MiAx
+IDYgMCAzIDEgMSAxIDEgMTt9DQovKiBTdHlsZSBEZWZpbml0aW9ucyAqLw0KcC5Nc29Ob3JtYWws
+IGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbA0KCXttYXJnaW46MGNtOw0KCW1hcmdpbi1ib3R0
+b206LjAwMDFwdDsNCgl0ZXh0LWFsaWduOmp1c3RpZnk7DQoJdGV4dC1qdXN0aWZ5OmludGVyLWlk
+ZW9ncmFwaDsNCglmb250LXNpemU6MTAuNXB0Ow0KCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fu
+cy1zZXJpZiI7fQ0KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluaw0KCXttc28tc3R5bGUtcHJpb3Jp
+dHk6OTk7DQoJY29sb3I6Ymx1ZTsNCgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30NCmE6dmlz
+aXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZA0KCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7
+DQoJY29sb3I6cHVycGxlOw0KCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQ0KcC5Nc29BY2V0
+YXRlLCBsaS5Nc29BY2V0YXRlLCBkaXYuTXNvQWNldGF0ZQ0KCXttc28tc3R5bGUtcHJpb3JpdHk6
+OTk7DQoJbXNvLXN0eWxlLWxpbms6Ilw2Mjc5XDZDRThcNjg0Nlw2NTg3XDY3MkMgQ2hhciI7DQoJ
+bWFyZ2luOjBjbTsNCgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7DQoJdGV4dC1hbGlnbjpqdXN0aWZ5
+Ow0KCXRleHQtanVzdGlmeTppbnRlci1pZGVvZ3JhcGg7DQoJZm9udC1zaXplOjkuMHB0Ow0KCWZv
+bnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7fQ0Kc3Bhbi5FbWFpbFN0eWxlMTcNCgl7
+bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsNCglmb250LWZhbWlseToiQ2FsaWJyaSIs
+InNhbnMtc2VyaWYiOw0KCWNvbG9yOndpbmRvd3RleHQ7fQ0Kc3Bhbi5DaGFyDQoJe21zby1zdHls
+ZS1uYW1lOiJcNjI3OVw2Q0U4XDY4NDZcNjU4N1w2NzJDIENoYXIiOw0KCW1zby1zdHlsZS1wcmlv
+cml0eTo5OTsNCgltc28tc3R5bGUtbGluazpcNjI3OVw2Q0U4XDY4NDZcNjU4N1w2NzJDO30NCi5N
+c29DaHBEZWZhdWx0DQoJe21zby1zdHlsZS10eXBlOmV4cG9ydC1vbmx5Ow0KCWZvbnQtZmFtaWx5
+OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7fQ0KLyogUGFnZSBEZWZpbml0aW9ucyAqLw0KQHBhZ2Ug
+V29yZFNlY3Rpb24xDQoJe3NpemU6NjEyLjBwdCA3OTIuMHB0Ow0KCW1hcmdpbjo3Mi4wcHQgOTAu
+MHB0IDcyLjBwdCA5MC4wcHQ7fQ0KZGl2LldvcmRTZWN0aW9uMQ0KCXtwYWdlOldvcmRTZWN0aW9u
+MTt9DQotLT48L3N0eWxlPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPg0KPG86c2hhcGVkZWZhdWx0
+cyB2OmV4dD0iZWRpdCIgc3BpZG1heD0iMTAyNiIgLz4NCjwveG1sPjwhW2VuZGlmXS0tPjwhLS1b
+aWYgZ3RlIG1zbyA5XT48eG1sPg0KPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPg0KPG86aWRt
+YXAgdjpleHQ9ImVkaXQiIGRhdGE9IjEiIC8+DQo8L286c2hhcGVsYXlvdXQ+PC94bWw+PCFbZW5k
+aWZdLS0+DQo8L2hlYWQ+DQo8Ym9keSBsYW5nPSJaSC1DTiIgbGluaz0iYmx1ZSIgdmxpbms9InB1
+cnBsZSIgc3R5bGU9InRleHQtanVzdGlmeS10cmltOnB1bmN0dWF0aW9uIj4NCjxkaXYgY2xhc3M9
+IldvcmRTZWN0aW9uMSI+DQo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJFTi1VUyI+
+SGksPG86cD48L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFu
+Zz0iRU4tVVMiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29Ob3Jt
+YWwiPjxzcGFuIGxhbmc9IkVOLVVTIj5JIGVuY291bnRlcmVkIGFuIGlzc3VlIHRoYXQgZGV2bWFw
+cGVyIGRpc2FwcGVhcmVkIHdoaWxlIHRoZSBtdWx0aXBhdGhkIGRhbWVvbiB3YXMgcmVzdGFydGVk
+LjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9
+IkVOLVVTIj48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+DQo8cCBjbGFzcz0iTXNvTm9ybWFs
+Ij48c3BhbiBsYW5nPSJFTi1VUyI+RGlnZ2luZyBpbnRvIHRoZSByb290IGNhdXNlIG9mIHByZWNl
+ZGluZyBpc3N1ZSwgSSBmb3VuZCBzdG9yYWdlIHBhdGggZmFpbHVyZSB3aGlsZSByZXN0YXJ0aW5n
+IHRoZSBtdWx0aXBhdGhkIGRhZW1vbi4gSXQgc2VlbXMgdW5yZWFzb25hYmxlLCBiZWNhdXNlIHRo
+ZSBzdG9yYWdlIHBhdGggbWF5IHJlY292ZXIgaW4gdGhlIGZ1dHVyZS48bzpwPjwvbzpwPjwvc3Bh
+bj48L3A+DQo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJFTi1VUyI+PG86cD4mbmJz
+cDs8L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iRU4t
+VVMiPldoZW4gdXNpbmcgbXVsdGlwYXRoLXRvb2xzIHRvIGNyZWF0ZSBkZXZpY2UgbWFwcGVyLCBJ
+IGNvbmZpZ3VyZWQg4oCcYmxhY2tsaXN0IHNlY3Rpb27igJ0gYW5kIOKAnGJsYWNrbGlzdCBleGNl
+cHRpb24gc2VjdGlvbuKAnSwgd2hpY2ggbWVldHMgbXkgcmVxdWlyZW1lbnQgdGhhdCBvbmx5IGEg
+c21hbGwgcGFydCBvZiBTQ1NJIGRpc2sgY2FuIGJlIHVzZWQgdW5kZXJuZWF0aCBhIGRldmljZSBt
+YXBwZXIuPG86cD48L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4g
+bGFuZz0iRU4tVVMiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29O
+b3JtYWwiPjxzcGFuIGxhbmc9IkVOLVVTIj5BZnRlciByZXN0YXJ0aW5nIHRoZSBtdWx0aXBhdGhk
+IGRhZW1vbiwgdGhlIGRldmljZSBtYXBwZXIgb2YgcGF0aCBmYWlsdXJlIGRpc2FwcGVhcnMgYW5k
+IGl0IHdvbuKAmXQgY29tZWJhY2sgZXZlbiB0aGUgc3RvcmFnZSBwYXRocyByZWNvdmVyLiBTbyB0
+aGUgZmlsZSBzeXN0ZW0gb24gdGhhdCBkZXZtYXBwZXIgY2Fu4oCZdCBiZSBhdmFpbGFibGUuPG86
+cD48L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iRU4t
+VVMiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxz
+cGFuIGxhbmc9IkVOLVVTIj5JIHdvbmRlciB0aGF0IGlmIHRoZXJlIGlzIGEgc29sdXRpb24gdGhh
+dCBhIGRldmljZSBtYXBwZXIgb2YgcGF0aCBmYWlsdXJlIGNhbiBjb21lIGJhY2sgdG8gYWN0aXZl
+IGV2ZW4gSSByZXN0YXJ0IHRoZSBtdWx0aXBhdGhkIGRhZW1vbj88bzpwPjwvbzpwPjwvc3Bhbj48
+L3A+DQo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJFTi1VUyI+PG86cD4mbmJzcDs8
+L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iRU4tVVMi
+PklmIHN1Y2ggYSBzb2x1dGlvbiBleGlzdHMsIGl0IHdpbGwgYmUgbWFydmVsb3VzPG86cD48L286
+cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iRU4tVVMiPjxv
+OnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxh
+bmc9IkVOLVVTIj5JZiBub3QsIEkgcHJvcG9zZSBhIHVzZXJsYW5kIGludGVyZmFjZSB0byBhZGQg
+YmxhY2tsaXN0IGV4Y2VwdGlvbiBkeW5hbWljYWxseS4gQWZ0ZXIgdGhlIGJsYWNrbGlzdCBleGNl
+cHRpb24gaXMgYWRkZWQgdG8g4oCcY29uZuKAnSwg4oCcbXVsdGlwYXRoZCBhZGQgbWFwICRtYXDi
+gJ0gYW5kIOKAnG11bHRpcGF0aGQgYWRkIHBhdGjigJ0gY2FuIGJlIHVzZWQgdG8gYWRkIG5ldyBt
+YXAgYW5kIHBhdGguPG86cD48L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05vcm1hbCI+
+PHNwYW4gbGFuZz0iRU4tVVMiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNz
+PSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9IkVOLVVTIj5JbiBhIG51dHNoZWxsLCB3ZSBjYW4gZHlu
+YW1pY2FsbHkgYWRkIGVsaXN0LCBtYXAgYW5kIHBhdGhzIHJlc3BlY3RpdmVseS4gQW5kIG11bHRp
+cGF0aGQgZGFtb24gaXMgbm90IG5lY2Vzc2FyeSB0byByZXN0YXJ0IGR1ZSB0byBwcmVjZWRpbmcg
+c29sdXRpb24uDQo8bzpwPjwvbzpwPjwvc3Bhbj48L3A+DQo8cCBjbGFzcz0iTXNvTm9ybWFsIj48
+c3BhbiBsYW5nPSJFTi1VUyI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9
+Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iRU4tVVMiPkFueSBleHBlcnRzIG9mIERNIGhhdmUgYW55
+IGNvbW1lbnRzIG9uIG15IHNvbHV0aW9uIGFuZCB0aGUgaXNzdWUgSSBmYWNlZCB3aXRoPzxvOnA+
+PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9IkVOLVVT
+Ij48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+DQo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3Bh
+biBsYW5nPSJFTi1VUyI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1z
+b05vcm1hbCI+PHNwYW4gbGFuZz0iRU4tVVMiPllvdXIgcmVwbHkgaXMgdmVyeSBpbXBvcnRhbnQg
+dG8gbWUuPG86cD48L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4g
+bGFuZz0iRU4tVVMiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29O
+b3JtYWwiPjxzcGFuIGxhbmc9IkVOLVVTIj5UaGFua3MuPG86cD48L286cD48L3NwYW4+PC9wPg0K
+PHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iRU4tVVMiPjxvOnA+Jm5ic3A7PC9vOnA+
+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9IkVOLVVTIj5CUi48
+bzpwPjwvbzpwPjwvc3Bhbj48L3A+DQo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJF
+Ti1VUyI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05vcm1hbCI+
+PHNwYW4gbGFuZz0iRU4tVVMiPkNoYXVuY2V5IEdlPG86cD48L286cD48L3NwYW4+PC9wPg0KPC9k
+aXY+DQo8c3BhbiBzdHlsZT0iZm9udC1zaXplOjcuNXB0O2ZvbnQtZmFtaWx5OuWNjuaWh+e7hum7
+kTtjb2xvcjpncmF5Ij48c3BhbiBsYW5nPSJFTi1VUyI+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLTxicj4N
+Cjwvc3Bhbj7mnKzpgq7ku7blj4rlhbbpmYTku7blkKvmnInmna3lt57ljY7kuInpgJrkv6HmioDm
+nK/mnInpmZDlhazlj7jnmoTkv53lr4bkv6Hmga/vvIzku4XpmZDkuo7lj5HpgIHnu5nkuIrpnaLl
+nLDlnYDkuK3liJflh7o8c3BhbiBsYW5nPSJFTi1VUyI+PGJyPg0KPC9zcGFuPueahOS4quS6uuaI
+lue+pOe7hOOAguemgeatouS7u+S9leWFtuS7luS6uuS7peS7u+S9leW9ouW8j+S9v+eUqO+8iOWM
+heaLrOS9huS4jemZkOS6juWFqOmDqOaIlumDqOWIhuWcsOazhOmcsuOAgeWkjeWItuOAgTxzcGFu
+IGxhbmc9IkVOLVVTIj48YnI+DQo8L3NwYW4+5oiW5pWj5Y+R77yJ5pys6YKu5Lu25Lit55qE5L+h
+5oGv44CC5aaC5p6c5oKo6ZSZ5pS25LqG5pys6YKu5Lu277yM6K+35oKo56uL5Y2z55S16K+d5oiW
+6YKu5Lu26YCa55+l5Y+R5Lu25Lq65bm25Yig6Zmk5pysPHNwYW4gbGFuZz0iRU4tVVMiPjxicj4N
+Cjwvc3Bhbj7pgq7ku7bvvIE8c3BhbiBsYW5nPSJFTi1VUyI+PGJyPg0KPC9zcGFuPjwvc3Bhbj48
+c3BhbiBsYW5nPSJFTi1VUyIgc3R5bGU9ImZvbnQtc2l6ZTo3LjVwdDtmb250LWZhbWlseTomcXVv
+dDtBcmlhbCZxdW90OywmcXVvdDtzYW5zLXNlcmlmJnF1b3Q7O2NvbG9yOmdyYXkiPlRoaXMgZS1t
+YWlsIGFuZCBpdHMgYXR0YWNobWVudHMgY29udGFpbiBjb25maWRlbnRpYWwgaW5mb3JtYXRpb24g
+ZnJvbSBIM0MsIHdoaWNoIGlzDQo8YnI+DQppbnRlbmRlZCBvbmx5IGZvciB0aGUgcGVyc29uIG9y
+IGVudGl0eSB3aG9zZSBhZGRyZXNzIGlzIGxpc3RlZCBhYm92ZS4gQW55IHVzZSBvZiB0aGUNCjxi
+cj4NCmluZm9ybWF0aW9uIGNvbnRhaW5lZCBoZXJlaW4gaW4gYW55IHdheSAoaW5jbHVkaW5nLCBi
+dXQgbm90IGxpbWl0ZWQgdG8sIHRvdGFsIG9yIHBhcnRpYWwNCjxicj4NCmRpc2Nsb3N1cmUsIHJl
+cHJvZHVjdGlvbiwgb3IgZGlzc2VtaW5hdGlvbikgYnkgcGVyc29ucyBvdGhlciB0aGFuIHRoZSBp
+bnRlbmRlZCA8YnI+DQpyZWNpcGllbnQocykgaXMgcHJvaGliaXRlZC4gSWYgeW91IHJlY2VpdmUg
+dGhpcyBlLW1haWwgaW4gZXJyb3IsIHBsZWFzZSBub3RpZnkgdGhlIHNlbmRlcg0KPGJyPg0KYnkg
+cGhvbmUgb3IgZW1haWwgaW1tZWRpYXRlbHkgYW5kIGRlbGV0ZSBpdCE8L3NwYW4+DQo8L2JvZHk+
+DQo8L2h0bWw+DQo=
 
-    Each bioset allocates a workqueue process, thus the above commit
-    increases the number of processes allocated per block device.
+--_000_63ADC13FD55D6546B7DECE290D39E373CB5D9AH3CMLB12EXsrvhuaw_--
 
-    DM doesn't need the queue->bio_split bioset, thus we can deallocate it.
-    This reduces the number of allocated processes per bio-based DM device
-    from 3 to 2.  Also remove the call to blk_queue_split(), it is not
-    needed because DM does its own splitting.
 
-    Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-    Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+--===============0210970015141667656==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-The patch for this commit is very brief; reproduced here:
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 9555843..64b50b7 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1763,8 +1763,6 @@ static void dm_make_request(struct request_queue *q, struct bio *bio)
-
-        map = dm_get_live_table(md, &srcu_idx);
-
--       blk_queue_split(q, &bio, q->bio_split);
--
-        generic_start_io_acct(rw, bio_sectors(bio), &dm_disk(md)->part0);
-
-        /* if we're suspended, we have to queue this io for later */
-@@ -2792,6 +2790,12 @@ int dm_setup_md_queue(struct mapped_device *md)
-        case DM_TYPE_BIO_BASED:
-                dm_init_old_md_queue(md);
-                blk_queue_make_request(md->queue, dm_make_request);
-+               /*
-+                * DM handles splitting bios as needed.  Free the bio_split bioset
-+                * since it won't be used (saves 1 process per bio-based DM device).
-+                */
-+               bioset_free(md->queue->bio_split);
-+               md->queue->bio_split = NULL;
-                break;
-        }
-
-Here is the bisect log:
-
-johnstonj@kernel-build:~/linux$ git bisect log
-git bisect start
-# good: [6a13feb9c82803e2b815eca72fa7a9f5561d7861] Linux 4.3
-git bisect good 6a13feb9c82803e2b815eca72fa7a9f5561d7861
-# bad: [8005c49d9aea74d382f474ce11afbbc7d7130bec] Linux 4.4-rc1
-git bisect bad 8005c49d9aea74d382f474ce11afbbc7d7130bec
-# bad: [118c216e16c5ccb028cd03a0dcd56d17a07ff8d7] Merge tag 'staging-4.4-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/staging
-git bisect bad 118c216e16c5ccb028cd03a0dcd56d17a07ff8d7
-# good: [e627078a0cbdc0c391efeb5a2c4eb287328fd633] Merge branch 'for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/s390/linux
-git bisect good e627078a0cbdc0c391efeb5a2c4eb287328fd633
-# good: [c17c6da659571a115c7b4983da6c6ac464317c34] staging: wilc1000: rename pfScanResult of struct scan_attr
-git bisect good c17c6da659571a115c7b4983da6c6ac464317c34
-# good: [7bdb7d554e0e433b92b63f3472523cc3067f8ab4] Staging: rtl8192u: ieee80211: corrected indent
-git bisect good 7bdb7d554e0e433b92b63f3472523cc3067f8ab4
-# good: [ac322de6bf5416cb145b58599297b8be73cd86ac] Merge tag 'md/4.4' of git://neil.brown.name/md
-git bisect good ac322de6bf5416cb145b58599297b8be73cd86ac
-# good: [a4d8e93c3182a54d8d21a4d1cec6538ae1be9e16] Merge tag 'usb-for-v4.4' of git://git.kernel.org/pub/scm/linux/kernel/git/balbi/usb into usb-next
-git bisect good a4d8e93c3182a54d8d21a4d1cec6538ae1be9e16
-# good: [4f56f3fdca43c9a18339b6e0c3b1aa2f57f6d0b0] serial: 8250: Tolerate clock variance for max baud rate
-git bisect good 4f56f3fdca43c9a18339b6e0c3b1aa2f57f6d0b0
-# good: [e052c6d15c61cc4caff2f06cbca72b183da9f15e] tty: Use unbound workqueue for all input workers
-git bisect good e052c6d15c61cc4caff2f06cbca72b183da9f15e
-# good: [b9ca0c948c921e960006aaf319a29c004917cdf6] uwb: neh: Use setup_timer
-git bisect good b9ca0c948c921e960006aaf319a29c004917cdf6
-# bad: [aad9ae4550755edc020b5c511a8b54f0104b2f47] dm switch: simplify conditional in alloc_region_table()
-git bisect bad aad9ae4550755edc020b5c511a8b54f0104b2f47
-# good: [a3d939ae7b5f82688a6d3450f95286eaea338328] dm: convert ffs to __ffs
-git bisect good a3d939ae7b5f82688a6d3450f95286eaea338328
-# bad: [00272c854ee17b804ce81ef706f611dac17f4f89] dm linear: remove redundant target name from error messages
-git bisect bad 00272c854ee17b804ce81ef706f611dac17f4f89
-# bad: [4c7da06f5a780bbf44ebd7547789e48536d0a823] dm persistent data: eliminate unnecessary return values
-git bisect bad 4c7da06f5a780bbf44ebd7547789e48536d0a823
-# bad: [dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7] dm: eliminate unused "bioset" process for each bio-based DM device
-git bisect bad dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7
-# first bad commit: [dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7] dm: eliminate unused "bioset" process for each bio-based DM device
-
-Commands used for testing:
-
-# Make cache set
-make-bcache --bucket 2M -C /dev/sdb
-# Set up backing device crypto
-cryptsetup luksFormat /dev/sdc
-cryptsetup open --type luks /dev/sdc backCrypt
-# Make backing device & enable writeback
-make-bcache -B /dev/mapper/backCrypt
-bcache-super-show /dev/sdb | grep cset.uuid | cut -f 3 > /sys/block/bcache0/bcache/attach
-echo writeback > /sys/block/bcache0/bcache/cache_mode
-
-# KILL SEQUENCE
-
-cd /sys/block/bcache0/bcache
-echo 0 > sequential_cutoff
-# Verify that the cache is attached (i.e. does not say "no cache")
-cat state
-dd if=/dev/urandom of=/dev/bcache0 bs=1M count=250
-cat dirty_data
-cat state
-# Next line causes severe disk thrashing and failure to flush writeback cache
-# on bad commits.
-echo 1 > detach
-cat dirty_data
-cat state
-
-Hope this provides some insight into the problem...
-
-James
+--===============0210970015141667656==--
