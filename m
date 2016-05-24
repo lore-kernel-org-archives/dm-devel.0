@@ -1,560 +1,225 @@
-From: Todd Gill <tgill@redhat.com>
-Subject: [PATCH v5 1/1] add display of map information in JSON
-	format
-Date: Tue, 24 May 2016 14:03:07 -0400
-Message-ID: <1464112987-11577-2-git-send-email-tgill@redhat.com>
-References: <1464112987-11577-1-git-send-email-tgill@redhat.com>
+From: Eric Wheeler <bcache@lists.ewheeler.net>
+Subject: [BISECT dbba42d8] dm: regression: large bio splits fail with dm-crypt
+ under bcache in dm_make_request()
+Date: Tue, 24 May 2016 12:35:10 -0700 (PDT)
+Message-ID: <alpine.LRH.2.11.1605241224220.24690@mx.ewheeler.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1464112987-11577-1-git-send-email-tgill@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Todd Gill <tgill@redhat.com>, Gris Ge <fge@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-bcache-owner@vger.kernel.org>
+Sender: linux-bcache-owner@vger.kernel.org
+To: James Johnston <johnstonj.public@codenest.com>
+Cc: 'Tim Small' <tim@buttersideup.com>, 'Kent Overstreet' <kent.overstreet@gmail.com>, 'Alasdair Kergon' <agk@redhat.com>, 'Mike Snitzer' <snitzer@redhat.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, dm-crypt@saout.de, 'Neil Brown' <neilb@suse.com>, linux-raid@vger.kernel.org, 'Mikulas Patocka' <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-The changes add these commands:
+[ New subject after bisect:
+  Was: bcache gets stuck flushing writeback cache when used in 
+       combination with LUKS/dm-crypt and non-default bucket size ]
 
-multipathd show maps json
-multipathd show map $map json
 
-Each command will output the requested map(s) in JSON.
+Mikulas, Mike, please see below when you have a minute.  This bisect found 
+a commit with your signoffs.  This affects all kernels >= v4.4.
 
-For the "show maps json" command, the change pre-allocates
-INITIAL_REPLY_LEN * PRINT_JSON_MULTIPLIER(5) * map count.
-The JSON text is about 5x the size of the "show maps topology"
-text.  Multiplying by the map count helps decrease the number
-of realloc calls.
+Should the commit be reverted, or is there a better fix?  
 
-Signed-off-by: Todd Gill <tgill@redhat.com>
-Signed-off-by: Gris Ge <fge@redhat.com>
----
- libmultipath/print.c      | 222 ++++++++++++++++++++++++++++++++++++++++++++++
- libmultipath/print.h      |  61 +++++++++++++
- multipathd/cli.c          |   3 +
- multipathd/cli.h          |   2 +
- multipathd/cli_handlers.c |  93 +++++++++++++++++++
- multipathd/cli_handlers.h |   2 +
- multipathd/main.c         |   2 +
- 7 files changed, 385 insertions(+)
+Intentional top post, more below:
 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 7fec6e9..2d159ed 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -274,6 +274,61 @@ snprint_multipath_vpr (char * buff, size_t len, struct multipath * mpp)
- 	return snprintf(buff, len, "##,##");
- }
- 
-+
-+static int
-+snprint_multipath_vend (char * buff, size_t len, struct multipath * mpp)
-+{
-+	struct pathgroup * pgp;
-+	struct path * pp;
-+	int i, j;
-+
-+	vector_foreach_slot(mpp->pg, pgp, i) {
-+		if (!pgp)
-+			continue;
-+		vector_foreach_slot(pgp->paths, pp, j) {
-+			if (strlen(pp->vendor_id))
-+				return snprintf(buff, len, "%s", pp->vendor_id);
-+		}
-+	}
-+	return snprintf(buff, len, "##");
-+}
-+
-+static int
-+snprint_multipath_prod (char * buff, size_t len, struct multipath * mpp)
-+{
-+	struct pathgroup * pgp;
-+	struct path * pp;
-+	int i, j;
-+
-+	vector_foreach_slot(mpp->pg, pgp, i) {
-+		if (!pgp)
-+			continue;
-+		vector_foreach_slot(pgp->paths, pp, j) {
-+			if (strlen(pp->product_id))
-+				return snprintf(buff, len, "%s", pp->product_id);
-+		}
-+	}
-+	return snprintf(buff, len, "##");
-+}
-+
-+static int
-+snprint_multipath_rev (char * buff, size_t len, struct multipath * mpp)
-+{
-+	struct pathgroup * pgp;
-+	struct path * pp;
-+	int i, j;
-+
-+	vector_foreach_slot(mpp->pg, pgp, i) {
-+		if (!pgp)
-+			continue;
-+		vector_foreach_slot(pgp->paths, pp, j) {
-+			if (strlen(pp->rev))
-+				return snprintf(buff, len, "%s", pp->rev);
-+		}
-+	}
-+	return snprintf(buff, len, "##");
-+}
-+
- static int
- snprint_action (char * buff, size_t len, struct multipath * mpp)
- {
-@@ -577,6 +632,9 @@ struct multipath_data mpd[] = {
- 	{'3', "total_q_time",  0, snprint_total_q_time},
- 	{'4', "q_timeouts",    0, snprint_q_timeouts},
- 	{'s', "vend/prod/rev", 0, snprint_multipath_vpr},
-+	{'v', "vend",          0, snprint_multipath_vend},
-+	{'p', "prod",          0, snprint_multipath_prod},
-+	{'e', "rev",           0, snprint_multipath_rev},
- 	{0, NULL, 0 , NULL}
- };
- 
-@@ -1000,6 +1058,170 @@ snprint_multipath_topology (char * buff, int len, struct multipath * mpp,
- }
- 
- static int
-+snprint_json (char * buff, int len, int indent, char *json_str)
-+{
-+	int fwd = 0, i;
-+
-+	for (i = 0; i < indent; i++) {
-+		fwd += snprintf(buff + fwd, len - fwd, PRINT_JSON_INDENT);
-+		if (fwd > len)
-+			return fwd;
-+	}
-+
-+	fwd += snprintf(buff + fwd, len - fwd, "%s", json_str);
-+	return fwd;
-+}
-+
-+static int
-+snprint_json_header (char * buff, int len)
-+{
-+	int fwd = 0;
-+
-+	fwd +=  snprint_json(buff, len, 0, PRINT_JSON_START_ELEM);
-+	if (fwd > len)
-+		return fwd;
-+
-+	fwd +=  snprintf(buff + fwd, len  - fwd, PRINT_JSON_START_VERSION,
-+			PRINT_JSON_MAJOR_VERSION, PRINT_JSON_MINOR_VERSION);
-+	return fwd;
-+}
-+
-+static int
-+snprint_json_elem_footer (char * buff, int len, int indent, int last)
-+{
-+	int fwd = 0, i;
-+
-+	for (i = 0; i < indent; i++) {
-+		fwd += snprintf(buff + fwd, len - fwd, PRINT_JSON_INDENT);
-+		if (fwd > len)
-+			return fwd;
-+	}
-+
-+	if (last == 1)
-+		fwd += snprintf(buff + fwd, len - fwd, "%s", PRINT_JSON_END_LAST_ELEM);
-+	else
-+		fwd += snprintf(buff + fwd, len - fwd, "%s", PRINT_JSON_END_ELEM);
-+	return fwd;
-+}
-+
-+static int
-+snprint_multipath_fields_json (char * buff, int len,
-+		struct multipath * mpp, int last)
-+{
-+	int i, j, fwd = 0;
-+	struct path *pp;
-+	struct pathgroup *pgp;
-+
-+	fwd += snprint_multipath(buff, len, PRINT_JSON_MAP, mpp, 0);
-+	if (fwd > len)
-+		return fwd;
-+
-+	fwd += snprint_json(buff + fwd, len - fwd, 2, PRINT_JSON_START_GROUPS);
-+	if (fwd > len)
-+		return fwd;
-+
-+	vector_foreach_slot (mpp->pg, pgp, i) {
-+
-+		pgp->selector = mpp->selector;
-+		fwd += snprint_pathgroup(buff + fwd, len - fwd, PRINT_JSON_GROUP, pgp);
-+		if (fwd > len)
-+			return fwd;
-+
-+		fwd += snprintf(buff + fwd, len - fwd, PRINT_JSON_GROUP_NUM, i + 1);
-+		if (fwd > len)
-+			return fwd;
-+
-+		fwd += snprint_json(buff + fwd, len - fwd, 3, PRINT_JSON_START_PATHS);
-+		if (fwd > len)
-+			return fwd;
-+
-+		vector_foreach_slot (pgp->paths, pp, j) {
-+			fwd += snprint_path(buff + fwd, len - fwd, PRINT_JSON_PATH, pp, 0);
-+			if (fwd > len)
-+				return fwd;
-+
-+			fwd += snprint_json_elem_footer(buff + fwd,
-+					len - fwd, 3, j + 1 == VECTOR_SIZE(pgp->paths));
-+			if (fwd > len)
-+				return fwd;
-+		}
-+		fwd += snprint_json(buff + fwd, len - fwd, 0, PRINT_JSON_END_ARRAY);
-+		if (fwd > len)
-+			return fwd;
-+
-+		fwd +=  snprint_json_elem_footer(buff + fwd,
-+				len - fwd, 2, i + 1 == VECTOR_SIZE(mpp->pg));
-+		if (fwd > len)
-+			return fwd;
-+	}
-+
-+	fwd += snprint_json(buff + fwd, len - fwd, 0, PRINT_JSON_END_ARRAY);
-+	if (fwd > len)
-+		return fwd;
-+
-+	fwd += snprint_json_elem_footer(buff + fwd, len - fwd, 1, last);
-+	return fwd;
-+}
-+
-+int
-+snprint_multipath_map_json (char * buff, int len,
-+		struct multipath * mpp, int last){
-+	int fwd = 0;
-+
-+	fwd +=  snprint_json_header(buff, len);
-+	if (fwd > len)
-+		return len;
-+
-+	fwd +=  snprint_json(buff + fwd, len - fwd, 0, PRINT_JSON_START_MAP);
-+	if (fwd > len)
-+		return len;
-+
-+	fwd += snprint_multipath_fields_json(buff + fwd, len - fwd, mpp, 1);
-+	if (fwd > len)
-+		return len;
-+
-+	fwd +=  snprint_json(buff + fwd, len - fwd, 0, "\n");
-+	if (fwd > len)
-+		return len;
-+
-+	fwd +=  snprint_json(buff + fwd, len - fwd, 0, PRINT_JSON_END_LAST);
-+	if (fwd > len)
-+		return len;
-+	return fwd;
-+}
-+
-+int
-+snprint_multipath_topology_json (char * buff, int len, struct vectors * vecs)
-+{
-+	int i, fwd = 0;
-+	struct multipath * mpp;
-+
-+	fwd +=  snprint_json_header(buff, len);
-+	if (fwd > len)
-+		return len;
-+
-+	fwd +=  snprint_json(buff + fwd, len  - fwd, 1, PRINT_JSON_START_MAPS);
-+	if (fwd > len)
-+		return len;
-+
-+	vector_foreach_slot(vecs->mpvec, mpp, i) {
-+		fwd += snprint_multipath_fields_json(buff + fwd, len - fwd,
-+				mpp, i + 1 == VECTOR_SIZE(vecs->mpvec));
-+		if (fwd > len)
-+			return len;
-+	}
-+
-+	fwd +=  snprint_json(buff + fwd, len - fwd, 0, PRINT_JSON_END_ARRAY);
-+	if (fwd > len)
-+		return len;
-+
-+	fwd +=  snprint_json(buff + fwd, len - fwd, 0, PRINT_JSON_END_LAST);
-+	if (fwd > len)
-+		return len;
-+	return fwd;
-+}
-+
-+static int
- snprint_hwentry (char * buff, int len, struct hwentry * hwe)
- {
- 	int i;
-diff --git a/libmultipath/print.h b/libmultipath/print.h
-index 8bd0bbc..72758ad 100644
---- a/libmultipath/print.h
-+++ b/libmultipath/print.h
-@@ -7,6 +7,63 @@
- #define PRINT_MAP_PROPS      "size=%S features='%f' hwhandler='%h' wp=%r"
- #define PRINT_PG_INDENT      "policy='%s' prio=%p status=%t"
- 
-+#define PRINT_JSON_MULTIPLIER     5
-+#define PRINT_JSON_MAJOR_VERSION  0
-+#define PRINT_JSON_MINOR_VERSION  1
-+#define PRINT_JSON_START_VERSION  "   \"major_version\": %d,\n" \
-+                                  "   \"minor_version\": %d,\n"
-+#define PRINT_JSON_START_ELEM     "{\n"
-+#define PRINT_JSON_START_MAP      "   \"map\":"
-+#define PRINT_JSON_START_MAPS     "\"maps\": ["
-+#define PRINT_JSON_START_PATHS    "\"paths\": ["
-+#define PRINT_JSON_START_GROUPS   "\"path_groups\": ["
-+#define PRINT_JSON_END_ELEM       "},"
-+#define PRINT_JSON_END_LAST_ELEM  "}"
-+#define PRINT_JSON_END_LAST       "}\n"
-+#define PRINT_JSON_END_ARRAY      "]\n"
-+#define PRINT_JSON_INDENT    "   "
-+#define PRINT_JSON_MAP       "{\n" \
-+                             "      \"name\" : \"%n\",\n" \
-+                             "      \"uuid\" : \"%w\",\n" \
-+                             "      \"sysfs\" : \"%d\",\n" \
-+                             "      \"failback\" : \"%F\",\n" \
-+                             "      \"queueing\" : \"%Q\",\n" \
-+                             "      \"paths\" : %N,\n" \
-+                             "      \"write_prot\" : \"%r\",\n" \
-+                             "      \"dm_st\" : \"%t\",\n" \
-+                             "      \"features\" : \"%f\",\n" \
-+                             "      \"hwhandler\" : \"%h\",\n" \
-+                             "      \"action\" : \"%A\",\n" \
-+                             "      \"path_faults\" : %0,\n" \
-+                             "      \"vend\" : \"%v\",\n" \
-+                             "      \"prod\" : \"%p\",\n" \
-+                             "      \"rev\" : \"%e\",\n" \
-+                             "      \"switch_grp\" : %1,\n" \
-+                             "      \"map_loads\" : %2,\n" \
-+                             "      \"total_q_time\" : %3,\n" \
-+                             "      \"q_timeouts\" : %4,"
-+
-+#define PRINT_JSON_GROUP     "{\n" \
-+                             "         \"selector\" : \"%s\",\n" \
-+                             "         \"pri\" : %p,\n" \
-+                             "         \"dm_st\" : \"%t\","
-+
-+#define PRINT_JSON_GROUP_NUM "         \"group\" : %d,\n"
-+
-+#define PRINT_JSON_PATH      "{\n" \
-+                             "            \"dev\" : \"%d\",\n"\
-+                             "            \"dev_t\" : \"%D\",\n" \
-+                             "            \"dm_st\" : \"%t\",\n" \
-+                             "            \"dev_st\" : \"%o\",\n" \
-+                             "            \"chk_st\" : \"%T\",\n" \
-+                             "            \"checker\" : \"%c\",\n" \
-+                             "            \"pri\" : %p,\n" \
-+                             "            \"host_wwnn\" : \"%N\",\n" \
-+                             "            \"target_wwnn\" : \"%n\",\n" \
-+                             "            \"host_wwpn\" : \"%R\",\n" \
-+                             "            \"target_wwpn\" : \"%r\",\n" \
-+                             "            \"host_adapter\" : \"%a\""
-+
- #define MAX_LINE_LEN  80
- #define MAX_LINES     64
- #define MAX_FIELD_LEN 64
-@@ -41,6 +98,10 @@ int snprint_path (char *, int, char *, struct path *, int);
- int snprint_multipath (char *, int, char *, struct multipath *, int);
- int snprint_multipath_topology (char *, int, struct multipath * mpp,
- 				int verbosity);
-+int snprint_multipath_topology_json (char * buff, int len,
-+				struct vectors * vecs);
-+int snprint_multipath_map_json (char * buff, int len,
-+				struct multipath * mpp, int last);
- int snprint_defaults (char *, int);
- int snprint_blacklist (char *, int);
- int snprint_blacklist_except (char *, int);
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index d991cd0..20ee3db 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -207,6 +207,7 @@ load_keys (void)
- 	r += add_key(keys, "setprstatus", SETPRSTATUS, 0);
- 	r += add_key(keys, "unsetprstatus", UNSETPRSTATUS, 0);
- 	r += add_key(keys, "format", FMT, 1);
-+	r += add_key(keys, "json", JSON, 0);
- 
- 	if (r) {
- 		free_keys(keys);
-@@ -537,8 +538,10 @@ cli_init (void) {
- 	add_handler(LIST+MAPS+FMT, NULL);
- 	add_handler(LIST+MAPS+RAW+FMT, NULL);
- 	add_handler(LIST+MAPS+TOPOLOGY, NULL);
-+	add_handler(LIST+MAPS+JSON, NULL);
- 	add_handler(LIST+TOPOLOGY, NULL);
- 	add_handler(LIST+MAP+TOPOLOGY, NULL);
-+	add_handler(LIST+MAP+JSON, NULL);
- 	add_handler(LIST+MAP+FMT, NULL);
- 	add_handler(LIST+MAP+RAW+FMT, NULL);
- 	add_handler(LIST+CONFIG, NULL);
-diff --git a/multipathd/cli.h b/multipathd/cli.h
-index 84ca40f..92cb41b 100644
---- a/multipathd/cli.h
-+++ b/multipathd/cli.h
-@@ -36,6 +36,7 @@ enum {
- 	__SETPRSTATUS,
- 	__UNSETPRSTATUS,
- 	__FMT,
-+	__JSON,
- };
- 
- #define LIST		(1 << __LIST)
-@@ -74,6 +75,7 @@ enum {
- #define SETPRSTATUS	(1ULL << __SETPRSTATUS)
- #define UNSETPRSTATUS	(1ULL << __UNSETPRSTATUS)
- #define FMT		(1ULL << __FMT)
-+#define JSON		(1ULL << __JSON)
- 
- #define INITIAL_REPLY_LEN	1200
- 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 8b3cb9d..a1b7052 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -156,6 +156,70 @@ show_maps_topology (char ** r, int * len, struct vectors * vecs)
- }
- 
- int
-+show_maps_json (char ** r, int * len, struct vectors * vecs)
-+{
-+	int i;
-+	struct multipath * mpp;
-+	char * c;
-+	char * reply;
-+	unsigned int maxlen = INITIAL_REPLY_LEN *
-+			PRINT_JSON_MULTIPLIER * VECTOR_SIZE(vecs->mpvec);
-+	int again = 1;
-+
-+	vector_foreach_slot(vecs->mpvec, mpp, i) {
-+		if (update_multipath(vecs, mpp->alias, 0)) {
-+			return 1;
-+		}
-+	}
-+
-+	reply = MALLOC(maxlen);
-+
-+	while (again) {
-+		if (!reply)
-+			return 1;
-+
-+		c = reply;
-+
-+		c += snprint_multipath_topology_json(c, maxlen, vecs);
-+		again = ((c - reply) == maxlen);
-+
-+		REALLOC_REPLY(reply, again, maxlen);
-+	}
-+	*r = reply;
-+	*len = (int)(c - reply);
-+	return 0;
-+}
-+
-+int
-+show_map_json (char ** r, int * len, struct multipath * mpp,
-+		   struct vectors * vecs)
-+{
-+	char * c;
-+	char * reply;
-+	unsigned int maxlen = INITIAL_REPLY_LEN;
-+	int again = 1;
-+
-+	if (update_multipath(vecs, mpp->alias, 0))
-+		return 1;
-+	reply = MALLOC(maxlen);
-+
-+	while (again) {
-+		if (!reply)
-+			return 1;
-+
-+		c = reply;
-+
-+		c += snprint_multipath_map_json(c, maxlen, mpp, 1);
-+		again = ((c - reply) == maxlen);
-+
-+		REALLOC_REPLY(reply, again, maxlen);
-+	}
-+	*r = reply;
-+	*len = (int)(c - reply);
-+	return 0;
-+}
-+
-+int
- show_config (char ** r, int * len)
- {
- 	char * c;
-@@ -291,6 +355,35 @@ cli_list_maps_topology (void * v, char ** reply, int * len, void * data)
- }
- 
- int
-+cli_list_map_json (void * v, char ** reply, int * len, void * data)
-+{
-+	struct multipath * mpp;
-+	struct vectors * vecs = (struct vectors *)data;
-+	char * param = get_keyparam(v, MAP);
-+
-+	param = convert_dev(param, 0);
-+	get_path_layout(vecs->pathvec, 0);
-+	mpp = find_mp_by_str(vecs->mpvec, param);
-+
-+	if (!mpp)
-+		return 1;
-+
-+	condlog(3, "list multipath json %s (operator)", param);
-+
-+	return show_map_json(reply, len, mpp, vecs);
-+}
-+
-+int
-+cli_list_maps_json (void * v, char ** reply, int * len, void * data)
-+{
-+	struct vectors * vecs = (struct vectors *)data;
-+
-+	condlog(3, "list multipaths json (operator)");
-+
-+	return show_maps_json(reply, len, vecs);
-+}
-+
-+int
- cli_list_wildcards (void * v, char ** reply, int * len, void * data)
- {
- 	char * c;
-diff --git a/multipathd/cli_handlers.h b/multipathd/cli_handlers.h
-index 5d51018..e838f19 100644
---- a/multipathd/cli_handlers.h
-+++ b/multipathd/cli_handlers.h
-@@ -13,6 +13,8 @@ int cli_list_maps_status (void * v, char ** reply, int * len, void * data);
- int cli_list_maps_stats (void * v, char ** reply, int * len, void * data);
- int cli_list_map_topology (void * v, char ** reply, int * len, void * data);
- int cli_list_maps_topology (void * v, char ** reply, int * len, void * data);
-+int cli_list_map_json (void * v, char ** reply, int * len, void * data);
-+int cli_list_maps_json (void * v, char ** reply, int * len, void * data);
- int cli_list_config (void * v, char ** reply, int * len, void * data);
- int cli_list_blacklist (void * v, char ** reply, int * len, void * data);
- int cli_list_devices (void * v, char ** reply, int * len, void * data);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 2c7486d..3d71c4f 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1129,9 +1129,11 @@ uxlsnrloop (void * ap)
- 	set_handler_callback(LIST+MAPS+RAW+FMT, cli_list_maps_raw);
- 	set_handler_callback(LIST+MAPS+TOPOLOGY, cli_list_maps_topology);
- 	set_handler_callback(LIST+TOPOLOGY, cli_list_maps_topology);
-+	set_handler_callback(LIST+MAPS+JSON, cli_list_maps_json);
- 	set_handler_callback(LIST+MAP+TOPOLOGY, cli_list_map_topology);
- 	set_handler_callback(LIST+MAP+FMT, cli_list_map_fmt);
- 	set_handler_callback(LIST+MAP+RAW+FMT, cli_list_map_fmt);
-+	set_handler_callback(LIST+MAP+JSON, cli_list_map_json);
- 	set_unlocked_handler_callback(LIST+CONFIG, cli_list_config);
- 	set_unlocked_handler_callback(LIST+BLACKLIST, cli_list_blacklist);
- 	set_handler_callback(LIST+DEVICES, cli_list_devices);
--- 
-2.5.5
+On Sun, 22 May 2016, James Johnston wrote:
+
+> > On Fri, 20 May 2016, James Johnston wrote:
+> > 
+> > > > On Mon, 16 May 2016, Tim Small wrote:
+> > > >
+> > > > > On 08/05/16 19:39, James Johnston wrote:
+> > > > > > I've run into a problem where the bcache writeback cache can't be flushed to
+> > > > > > disk when the backing device is a LUKS / dm-crypt device and the cache set has
+> > > > > > a non-default bucket size.  Basically, only a few megabytes will be flushed to
+> > > > > > disk, and then it gets stuck.  Stuck means that the bcache writeback task
+> > > > > > thrashes the disk by constantly reading hundreds of MB/second from the cache set
+> > > > > > in an infinite loop, while not actually progressing (dirty_data never decreases
+> > > > > > beyond a certain point).
+> > > > >
+> > > > > > [...]
+> > > > >
+> > > > > > The situation is basically unrecoverable as far as I can tell: if you attempt
+> > > > > > to detach the cache set then the cache set disk gets thrashed extra-hard
+> > > > > > forever, and it's impossible to actually get the cache set detached.  The only
+> > > > > > solution seems to be to back up the data and destroy the volume...
+> > > > >
+> > > > > You can boot an older kernel to flush the device without destroying it
+> > > > > (I'm guessing that's because older kernels split down the big requests
+> > > > > which are failing on the 4.4 kernel).  Once flushed you could put the
+> > > > > cache into writethrough mode, or use a smaller bucket size.
+> > > >
+> > > > Indeed, can someone test 4.1.y and see if the problem persists with a 2M
+> > > > bucket size?  (If someone has already tested 4.1, then appologies as I've
+> > > > not yet seen that report.)
+> > > >
+> > > > If 4.1 works, then I think a bisect is in order.  Such a bisect would at
+> > > > least highlight the problem and might indicate a (hopefully trivial) fix.
+> > >
+> > > To help narrow this down, I tested the following generic pre-compiled mainline kernels
+> > > on Ubuntu 15.10:
+> > >
+> > >  * WORKS:  http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.3.6-wily/
+> > >  * DOES NOT WORK:  http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.4-rc1+cod1-wily/
+> > >
+> > > I also tried the default & latest distribution-provided 4.2 kernel.  It worked.
+> > > This one also worked:
+> > >
+> > >  * WORKS:  http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.2.8-wily/
+> > >
+> > > So it seems to me that it is a regression from 4.3.6 kernel to any 4.4 kernel.  That
+> > > should help save time with bisection...
+> > 
+> > Below is the patchlist for md and block that might help with a place to
+> > start.  Are there any other places in the Linux tree where we should watch
+> > for changes?
+> > 
+> > I'm wondering if it might be in dm-4.4-changes since this is dm-crypt
+> > related, but it could be ac322de which was quite large.
+> > 
+> > James or Tim,
+> > 
+> > Can you try building ac322de?  If that produces the problem, then there
+> > are only 3 more to try (unless this was actually a problem in 4.3 which
+> > was fixed in 4.3.y, but hopefully that isn't so).
+> > 
+> > ccf21b6 is probably the next to test to rule out neil's big md patch,
+> > which Linus abreviated in the commit log so it must be quite long.  OTOH,
+> > if dm-4.4-changes works, then I'm not sure what commit might produce the
+> > problem because the rest are not obviously relevant to the issue that are
+> > more recent. 
+> 
+> So I decided to go ahead and bisect it today.  Looks like the bad commit is
+> this one.  The commit prior flushed the bcache writeback cache without
+> incident; this one does not and I guess caused this bcache regression.
+> (FWIW ac322de came up during bisection, and tested good.)
+> 
+> johnstonj@kernel-build:~/linux$ git bisect bad
+> dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7 is the first bad commit
+> commit dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7
+> Author: Mikulas Patocka <mpatocka@redhat.com>
+> Date:   Wed Oct 21 16:34:20 2015 -0400
+> 
+>     dm: eliminate unused "bioset" process for each bio-based DM device
+> 
+>     Commit 54efd50bfd873e2dbf784e0b21a8027ba4299a3e ("block: make
+>     generic_make_request handle arbitrarily sized bios") makes it possible
+>     for block devices to process large bios.  In doing so that commit
+>     allocates a new queue->bio_split bioset for each block device, this
+>     bioset is used for allocating bios when the driver needs to split large
+>     bios.
+> 
+>     Each bioset allocates a workqueue process, thus the above commit
+>     increases the number of processes allocated per block device.
+> 
+>     DM doesn't need the queue->bio_split bioset, thus we can deallocate it.
+>     This reduces the number of allocated processes per bio-based DM device
+>     from 3 to 2.  Also remove the call to blk_queue_split(), it is not
+>     needed because DM does its own splitting.
+> 
+>     Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+>     Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> 
+> The patch for this commit is very brief; reproduced here:
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 9555843..64b50b7 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1763,8 +1763,6 @@ static void dm_make_request(struct request_queue *q, struct bio *bio)
+> 
+>         map = dm_get_live_table(md, &srcu_idx);
+> 
+> -       blk_queue_split(q, &bio, q->bio_split);
+> -
+>         generic_start_io_acct(rw, bio_sectors(bio), &dm_disk(md)->part0);
+> 
+>         /* if we're suspended, we have to queue this io for later */
+> @@ -2792,6 +2790,12 @@ int dm_setup_md_queue(struct mapped_device *md)
+>         case DM_TYPE_BIO_BASED:
+>                 dm_init_old_md_queue(md);
+>                 blk_queue_make_request(md->queue, dm_make_request);
+> +               /*
+> +                * DM handles splitting bios as needed.  Free the bio_split bioset
+> +                * since it won't be used (saves 1 process per bio-based DM device).
+> +                */
+> +               bioset_free(md->queue->bio_split);
+> +               md->queue->bio_split = NULL;
+>                 break;
+>         }
+> 
+> Here is the bisect log:
+> 
+> johnstonj@kernel-build:~/linux$ git bisect log
+> git bisect start
+> # good: [6a13feb9c82803e2b815eca72fa7a9f5561d7861] Linux 4.3
+> git bisect good 6a13feb9c82803e2b815eca72fa7a9f5561d7861
+> # bad: [8005c49d9aea74d382f474ce11afbbc7d7130bec] Linux 4.4-rc1
+> git bisect bad 8005c49d9aea74d382f474ce11afbbc7d7130bec
+> # bad: [118c216e16c5ccb028cd03a0dcd56d17a07ff8d7] Merge tag 'staging-4.4-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/staging
+> git bisect bad 118c216e16c5ccb028cd03a0dcd56d17a07ff8d7
+> # good: [e627078a0cbdc0c391efeb5a2c4eb287328fd633] Merge branch 'for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/s390/linux
+> git bisect good e627078a0cbdc0c391efeb5a2c4eb287328fd633
+> # good: [c17c6da659571a115c7b4983da6c6ac464317c34] staging: wilc1000: rename pfScanResult of struct scan_attr
+> git bisect good c17c6da659571a115c7b4983da6c6ac464317c34
+> # good: [7bdb7d554e0e433b92b63f3472523cc3067f8ab4] Staging: rtl8192u: ieee80211: corrected indent
+> git bisect good 7bdb7d554e0e433b92b63f3472523cc3067f8ab4
+> # good: [ac322de6bf5416cb145b58599297b8be73cd86ac] Merge tag 'md/4.4' of git://neil.brown.name/md
+> git bisect good ac322de6bf5416cb145b58599297b8be73cd86ac
+> # good: [a4d8e93c3182a54d8d21a4d1cec6538ae1be9e16] Merge tag 'usb-for-v4.4' of git://git.kernel.org/pub/scm/linux/kernel/git/balbi/usb into usb-next
+> git bisect good a4d8e93c3182a54d8d21a4d1cec6538ae1be9e16
+> # good: [4f56f3fdca43c9a18339b6e0c3b1aa2f57f6d0b0] serial: 8250: Tolerate clock variance for max baud rate
+> git bisect good 4f56f3fdca43c9a18339b6e0c3b1aa2f57f6d0b0
+> # good: [e052c6d15c61cc4caff2f06cbca72b183da9f15e] tty: Use unbound workqueue for all input workers
+> git bisect good e052c6d15c61cc4caff2f06cbca72b183da9f15e
+> # good: [b9ca0c948c921e960006aaf319a29c004917cdf6] uwb: neh: Use setup_timer
+> git bisect good b9ca0c948c921e960006aaf319a29c004917cdf6
+> # bad: [aad9ae4550755edc020b5c511a8b54f0104b2f47] dm switch: simplify conditional in alloc_region_table()
+> git bisect bad aad9ae4550755edc020b5c511a8b54f0104b2f47
+> # good: [a3d939ae7b5f82688a6d3450f95286eaea338328] dm: convert ffs to __ffs
+> git bisect good a3d939ae7b5f82688a6d3450f95286eaea338328
+> # bad: [00272c854ee17b804ce81ef706f611dac17f4f89] dm linear: remove redundant target name from error messages
+> git bisect bad 00272c854ee17b804ce81ef706f611dac17f4f89
+> # bad: [4c7da06f5a780bbf44ebd7547789e48536d0a823] dm persistent data: eliminate unnecessary return values
+> git bisect bad 4c7da06f5a780bbf44ebd7547789e48536d0a823
+> # bad: [dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7] dm: eliminate unused "bioset" process for each bio-based DM device
+> git bisect bad dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7
+> # first bad commit: [dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7] dm: eliminate unused "bioset" process for each bio-based DM device
+> 
+> Commands used for testing:
+> 
+> # Make cache set
+> make-bcache --bucket 2M -C /dev/sdb
+> # Set up backing device crypto
+> cryptsetup luksFormat /dev/sdc
+> cryptsetup open --type luks /dev/sdc backCrypt
+> # Make backing device & enable writeback
+> make-bcache -B /dev/mapper/backCrypt
+> bcache-super-show /dev/sdb | grep cset.uuid | cut -f 3 > /sys/block/bcache0/bcache/attach
+> echo writeback > /sys/block/bcache0/bcache/cache_mode
+> 
+> # KILL SEQUENCE
+> 
+> cd /sys/block/bcache0/bcache
+> echo 0 > sequential_cutoff
+> # Verify that the cache is attached (i.e. does not say "no cache")
+> cat state
+> dd if=/dev/urandom of=/dev/bcache0 bs=1M count=250
+> cat dirty_data
+> cat state
+> # Next line causes severe disk thrashing and failure to flush writeback cache
+> # on bad commits.
+> echo 1 > detach
+> cat dirty_data
+> cat state
+> 
+> Hope this provides some insight into the problem...
+> 
+> James
+> 
+> 
+> 
+
+--
+Eric Wheeler
