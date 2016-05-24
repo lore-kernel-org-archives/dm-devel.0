@@ -1,14 +1,12 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: multipathd: Add 'sysfs' prioritizer
-Date: Tue, 24 May 2016 12:06:15 -0500
-Message-ID: <20160524170615.GN26117@octiron.msp.redhat.com>
-References: <1463998828-28133-1-git-send-email-hare@suse.de>
+From: Todd Gill <tgill@redhat.com>
+Subject: [PATCH v5 0/1] add option to output JSON for multipathd
+	command
+Date: Tue, 24 May 2016 14:03:06 -0400
+Message-ID: <1464112987-11577-1-git-send-email-tgill@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1463998828-28133-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,232 +16,138 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: dm-devel@redhat.com
+Cc: Todd Gill <tgill@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, May 23, 2016 at 12:20:28PM +0200, Hannes Reinecke wrote:
-> Recent kernels have an 'access_state' attribute which allows
-> us to read the asymmetric access state directly from sysfs.
+Hi,
 
-Neat. Just some thoughts. I'm not sure if you want to add a prioritizer
-option to be able to change what the pref bit does (perhaps
-"no_exclusive_pref_bit"). Also, we should probably make the alua
-prioritizer default to the same pref bit behavior as the sysfs
-prioritizer.
+I had earlier sent an email to dm-devel proposing we add a feature
+in multipathd to output multipath map topology in JSON format. This
+patch contains to the code for that feature.
 
-ACK
+Having an option for the  CLI to output in JSON would allow higher
+level applications to more easily monitor/manage multipath.
 
--Ben
+I thought it was best to take advantage of some of the existing
+snprintf_xxx functions rather than adding a library dependency
+to multipathd.
 
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> ---
->  libmultipath/discovery.c           | 33 +++++++++++++++++++++++++++++
->  libmultipath/discovery.h           |  2 ++
->  libmultipath/prio.h                |  1 +
->  libmultipath/prioritizers/Makefile |  3 ++-
->  libmultipath/prioritizers/sysfs.c  | 43 ++++++++++++++++++++++++++++++++++++++
->  libmultipath/propsel.c             |  6 +++++-
->  multipath/multipath.conf.5         | 14 ++++++++++++-
->  7 files changed, 99 insertions(+), 3 deletions(-)
->  create mode 100644 libmultipath/prioritizers/sysfs.c
-> 
-> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-> index a364056..4a4b828 100644
-> --- a/libmultipath/discovery.c
-> +++ b/libmultipath/discovery.c
-> @@ -208,6 +208,8 @@ declare_sysfs_get_str(devtype);
->  declare_sysfs_get_str(vendor);
->  declare_sysfs_get_str(model);
->  declare_sysfs_get_str(rev);
-> +declare_sysfs_get_str(access_state);
-> +declare_sysfs_get_str(preferred_path);
->  
->  ssize_t
->  sysfs_get_vpd (struct udev_device * udev, int pg,
-> @@ -483,6 +485,37 @@ int sysfs_get_iscsi_ip_address(struct path *pp, char *ip_address)
->  	return 1;
->  }
->  
-> +int
-> +sysfs_get_asymmetric_access_state(struct path *pp, char *buff, int buflen)
-> +{
-> +	struct udev_device *parent = pp->udev;
-> +	char value[16], *eptr;
-> +	unsigned int preferred;
-> +
-> +	while (parent) {
-> +		const char *subsys = udev_device_get_subsystem(parent);
-> +		if (subsys && !strncmp(subsys, "scsi", 4))
-> +			break;
-> +		parent = udev_device_get_parent(parent);
-> +	}
-> +
-> +	if (!parent)
-> +		return -1;
-> +
-> +	if (sysfs_get_access_state(parent, buff, buflen) <= 0)
-> +		return -1;
-> +
-> +	if (sysfs_get_preferred_path(parent, value, 16) <= 0)
-> +		return 0;
-> +
-> +	preferred = strtoul(value, &eptr, 0);
-> +	if (value == eptr || preferred == ULONG_MAX) {
-> +		/* Parse error, ignore */
-> +		return 0;
-> +	}
-> +	return  preferred;
-> +}
-> +
->  static void
->  sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
->  {
-> diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-> index 5931bc6..b45c802 100644
-> --- a/libmultipath/discovery.h
-> +++ b/libmultipath/discovery.h
-> @@ -47,6 +47,8 @@ int sysfs_get_host_pci_name(struct path *pp, char *pci_name);
->  int sysfs_get_iscsi_ip_address(struct path *pp, char *ip_address);
->  ssize_t sysfs_get_vpd (struct udev_device * udev, int pg, unsigned char * buff,
->  		       size_t len);
-> +int sysfs_get_asymmetric_access_state(struct path *pp,
-> +				      char *buff, int buflen);
->  
->  /*
->   * discovery bitmask
-> diff --git a/libmultipath/prio.h b/libmultipath/prio.h
-> index 495688f..65abf54 100644
-> --- a/libmultipath/prio.h
-> +++ b/libmultipath/prio.h
-> @@ -29,6 +29,7 @@ struct path;
->  #define PRIO_RDAC "rdac"
->  #define PRIO_DATACORE "datacore"
->  #define PRIO_WEIGHTED_PATH "weightedpath"
-> +#define PRIO_SYSFS "sysfs"
->  
->  /*
->   * Value used to mark the fact prio was not defined
-> diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
-> index 6cfac88..0d1857f 100644
-> --- a/libmultipath/prioritizers/Makefile
-> +++ b/libmultipath/prioritizers/Makefile
-> @@ -15,7 +15,8 @@ LIBS = \
->  	libpriodatacore.so \
->  	libpriohds.so \
->  	libprioweightedpath.so \
-> -	libprioiet.so
-> +	libprioiet.so \
-> +	libpriosysfs.so
->  
->  CFLAGS += -I..
->  
-> diff --git a/libmultipath/prioritizers/sysfs.c b/libmultipath/prioritizers/sysfs.c
-> new file mode 100644
-> index 0000000..35a5c83
-> --- /dev/null
-> +++ b/libmultipath/prioritizers/sysfs.c
-> @@ -0,0 +1,43 @@
-> +/*
-> + * sysfs.c
-> + *
-> + * Copyright(c) 2016 Hannes Reinecke, SUSE Linux GmbH
-> + */
-> +
-> +#include <stdio.h>
-> +
-> +#include "structs.h"
-> +#include "discovery.h"
-> +#include "prio.h"
-> +
-> +static const struct {
-> +	unsigned char value;
-> +	char *name;
-> +} sysfs_access_state_map[] = {
-> +	{ 50, "active/optimized" },
-> +	{ 10, "active/non-optimized" },
-> +	{  5, "lba-dependent" },
-> +	{  1, "standby" },
-> +};
-> +
-> +int getprio (struct path * pp, char * args)
-> +{
-> +	int prio = 0, rc, i;
-> +	char buff[512];
-> +
-> +	rc = sysfs_get_asymmetric_access_state(pp, buff, 512);
-> +	if (rc < 0)
-> +		return PRIO_UNDEF;
-> +	prio = 0;
-> +	for (i = 0; i < 4; i++) {
-> +		if (!strncmp(buff, sysfs_access_state_map[i].name,
-> +			     strlen(sysfs_access_state_map[i].name))) {
-> +			prio = sysfs_access_state_map[i].value;
-> +			break;
-> +		}
-> +	}
-> +	if (rc > 0)
-> +		prio += 80;
-> +
-> +	return prio;
-> +}
-> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-> index 8abe360..b0182de 100644
-> --- a/libmultipath/propsel.c
-> +++ b/libmultipath/propsel.c
-> @@ -374,6 +374,7 @@ detect_prio(struct path * pp)
->  	int ret;
->  	struct prio *p = &pp->prio;
->  	int tpgs = 0;
-> +	char buff[512];
->  
->  	if ((tpgs = get_target_port_group_support(pp->fd)) <= 0)
->  		return;
-> @@ -383,7 +384,10 @@ detect_prio(struct path * pp)
->  		return;
->  	if (get_asymmetric_access_state(pp->fd, ret) < 0)
->  		return;
-> -	prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
-> +	if (sysfs_get_asymmetric_access_state(pp, buff, 512) < 0)
-> +		prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
-> +	else
-> +		prio_get(p, PRIO_SYSFS, DEFAULT_PRIO_ARGS);
->  }
->  
->  #define set_prio(src, msg)						\
-> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index 2ff88c4..aaaa01b 100644
-> --- a/multipath/multipath.conf.5
-> +++ b/multipath/multipath.conf.5
-> @@ -203,6 +203,10 @@ Generate the path priority for NetApp arrays.
->  .B rdac
->  Generate the path priority for LSI/Engenio/NetApp E-Series RDAC controller.
->  .TP
-> +.B sysfs
-> +Use the sysfs attributes access_state and preferred_path to generate the
-> +path priority.
-> +.TP
->  .B hp_sw
->  Generate the path priority for Compaq/HP controller in
->  active/standby mode.
-> @@ -449,8 +453,16 @@ If set to
->  .I yes
->  , multipath will try to detect if the device supports ALUA. If so, the device
->  will automatically use the
-> +.I sysfs
-> +prioritizer if the required sysfs attributes
-> +.I access_state
-> +and
-> +.I preferred_path
-> +are supported, or the
->  .I alua
-> -prioritizer. If not, the prioritizer will be selected as usual. Default is
-> +prioritizer if not. If set to
-> +.I no
-> +, the prioritizer will be selected as usual. Default is
->  .I no
->  .TP
->  .B force_sync
-> -- 
-> 2.6.6
+Any feedback welcome.
+
+v2:
+- added major/minor version fields
+- updates from feedback
+- added path groups
+- changed indent levels to make it easier to read
+- removed quotes from integer fields
+- fixed bug when the JSON string length exceeded the allocated memory
+- removed multipath field from path object - it isn't needed since
+  the path is inside the map
+
+v3:
+- split out vend/prod/rev into seperate fields
+- added new format specifiers for map:
+  %v - vend
+  %p - prod
+  %e - rev
+- removed vend/prod/rev from the path level since it is in the map
+
+v4:
+- removed space from major/minor version fields
+
+v5:
+- add group number at the group level
+- use an underscore to seperate words in the key part of the
+JSON
+- remove hcil, next_check, size, serial fields
+- remove uuid from the path level - it is already in the map
+- change JSON key from dm-st to dm_st
+- make all keys lower case
+- remove unnecessary call to memset - this addresses the performance
+problem.  memset is already called in MALLOC (zalloc)
+- multiply the initial allocation of memory with VECTOR_SIZE(vecs->mpvec)
+to reduce the number of realloc calls.
+- corrected reply + 1 in return of string length, correct length is
+c - reply, not c - reply + 1
+
+# multipathd show map dm-4 json
+{
+   "major_version": 0,
+   "minor_version": 1,
+   "map":{
+      "name" : "360a980004236646530244268305a3147",
+      "uuid" : "360a980004236646530244268305a3147",
+      "sysfs" : "dm-4",
+      "failback" : "immediate",
+      "queueing" : "on",
+      "paths" : 2,
+      "write_prot" : "rw",
+      "dm_st" : "active",
+      "features" : "4 queue_if_no_path pg_init_retries 50 retain_attached_hw_handle",
+      "hwhandler" : "0",
+      "action" : "",
+      "path_faults" : 0,
+      "vend" : "NETAPP",
+      "prod" : "LUN",
+      "rev" : "811a",
+      "switch_grp" : 0,
+      "map_loads" : 1,
+      "total_q_time" : 0,
+      "q_timeouts" : 0,
+      "path_groups": [{
+         "selector" : "service-time 0",
+         "pri" : 50,
+         "dm_st" : "active",
+         "group" : 1,
+         "paths": [{
+            "dev" : "sdi",
+            "dev_t" : "8:128",
+            "dm_st" : "active",
+            "dev_st" : "running",
+            "chk_st" : "ready",
+            "checker" : "tur",
+            "pri" : 50,
+            "host_wwnn" : "0x50014380120d8425",
+            "target_wwnn" : "0x500a098080ba5a64",
+            "host_wwpn" : "0x50014380120d8424",
+            "target_wwpn" : "0x500a098180ba5a64",
+            "host_adapter" : "0000:00:03.0"
+         }]
+      },{
+         "selector" : "service-time 0",
+         "pri" : 10,
+         "dm_st" : "enabled",
+         "group" : 2,
+         "paths": [{
+            "dev" : "sdp",
+            "dev_t" : "8:240",
+            "dm_st" : "active",
+            "dev_st" : "running",
+            "chk_st" : "ready",
+            "checker" : "tur",
+            "pri" : 10,
+            "host_wwnn" : "0x50014380120d8427",
+            "target_wwnn" : "0x500a098080ba5a64",
+            "host_wwpn" : "0x50014380120d8426",
+            "target_wwpn" : "0x500a098190ba5a64",
+            "host_adapter" : "0000:00:03.0"
+         }]
+      }]
+   }
+}
+
+Todd Gill (1):
+  add display of map information in JSON format
+
+ libmultipath/print.c      | 222 ++++++++++++++++++++++++++++++++++++++++++++++
+ libmultipath/print.h      |  61 +++++++++++++
+ multipathd/cli.c          |   3 +
+ multipathd/cli.h          |   2 +
+ multipathd/cli_handlers.c |  93 +++++++++++++++++++
+ multipathd/cli_handlers.h |   2 +
+ multipathd/main.c         |   2 +
+ 7 files changed, 385 insertions(+)
+
+-- 
+2.5.5
