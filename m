@@ -1,16 +1,10 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: multipath-tools : A way needless to restart
- multipathd damon while attaching new device to host which met a path
- failure
-Date: Wed, 25 May 2016 12:46:03 -0500
-Message-ID: <20160525174603.GP26117@octiron.msp.redhat.com>
-References: <63ADC13FD55D6546B7DECE290D39E373CB5D9A@H3CMLB12-EX.srv.huawei-3com.com>
+From: "Navin P.S" <navinp1912@gmail.com>
+Subject: Snapshot origin table as P/PO snapshot with /dev/null
+Date: Thu, 26 May 2016 05:07:43 +0530
+Message-ID: <CAA=4085AdSO4uXrBwyrMyiSMAmRk=kyxucJ1TLLTcDkXsgvBpw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============1190096585362341026=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <63ADC13FD55D6546B7DECE290D39E373CB5D9A@H3CMLB12-EX.srv.huawei-3com.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,70 +14,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Gechangwei <ge.changwei@h3c.com>
-Cc: Zhongjinming <zhongjinming@h3c.com>, Guozhonghua <guozhonghua@h3c.com>, Zhangguanghui <zhang.guanghui@h3c.com>, Shichangkuo <shi.changkuo@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "christophe.varoqui@gmail.com" <christophe.varoqui@gmail.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-V2hpbGUgaGF2aW5nIG11bHRpcGF0aGQgcmV0YWluIGZhaWxlZCBkZXZpY2VzIHdoZW4gaXQgcmVz
-dGFydHMgbWF5IGJlIGEKbGl0dGxlIHRyaWNreSwgc2luY2UgaXQgd29uJ3Qga25vdyBhbnl0aGlu
-ZyBhYm91dCB0aG9zZSBkZXZpY2VzLCBoYXZpbmcKaXQgcmV0YWluIHRoZXNlIGRldmljZXMgZHVy
-aW5nIGEgcmVsb2FkICh3aGljaCBpcyBlbm91Z2ggdG8gYmUgYWJsZSB0bwpjaGFuZ2UgdGhlIGNv
-bmZpZ3VyYXRpb24pIHNob3VsZCBiZSBkb2FibGUuICBJIGFncmVlIHRoYXQgbXVsdGlwYXRoZApz
-aG91bGQgbm90IGJlIHJlbW92aW5nIGRldmljZXMgaWYgdGhleSBoYXZlbid0IGJlZW4gcmVtb3Zl
-ZCBmcm9tIHRoZQpzeXN0ZW0gc2luY2UsIGxpa2UgeW91IHNheSwgdGhhdCB3aWxsIGtlZXAgbXVs
-dGlwYXRoZCBmcm9tIHJlYWN0aW5nIHRvCnRoZSBkZXZpY2UncyBsYXRlciByZWNvdmVyeS4KCkkn
-bGwgdGFrZSBhIGxvb2sgaW50byBkb2luZyB0aGlzLgoKLUJlbgoKT24gTW9uLCBNYXkgMjMsIDIw
-MTYgYXQgMDM6Mzg6MzVBTSArMDAwMCwgR2VjaGFuZ3dlaSB3cm90ZToKPiAgICBIaSwKPiAKPiAg
-ICDCoAo+IAo+ICAgIEkgZW5jb3VudGVyZWQgYW4gIGlzc3VlIHRoYXQgIGRldm1hcHBlciBkaXNh
-cHBlYXJlZCAgd2hpbGUgdGhlICBtdWx0aXBhdGhkCj4gICAgZGFtZW9uIHdhcyByZXN0YXJ0ZWQu
-Cj4gCj4gICAgwqAKPiAKPiAgICBEaWdnaW5nIGludG8gIHRoZSByb290ICBjYXVzZSBvZiAgcHJl
-Y2VkaW5nIGlzc3VlLCAgSSBmb3VuZCAgc3RvcmFnZSAgcGF0aAo+ICAgIGZhaWx1cmUgd2hpbGUg
-IHJlc3RhcnRpbmcgdGhlICBtdWx0aXBhdGhkIGRhZW1vbi4gIEl0IHNlZW1zICB1bnJlYXNvbmFi
-bGUsCj4gICAgYmVjYXVzZSB0aGUgc3RvcmFnZSBwYXRoIG1heSByZWNvdmVyIGluIHRoZSBmdXR1
-cmUuCj4gCj4gICAgwqAKPiAKPiAgICBXaGVuICB1c2luZyAgbXVsdGlwYXRoLXRvb2xzICB0byAg
-IGNyZWF0ZSAgZGV2aWNlICBtYXBwZXIsICBJICAgY29uZmlndXJlZAo+ICAgIOKAnGJsYWNrbGlz
-dCBzZWN0aW9u4oCdICBhbmQg4oCcYmxhY2tsaXN0ICBleGNlcHRpb24gIHNlY3Rpb27igJ0sIHdo
-aWNoICBtZWV0cyAgbXkKPiAgICByZXF1aXJlbWVudCB0aGF0IG9ubHkgYSBzbWFsbCBwYXJ0IG9m
-ICBTQ1NJIGRpc2sgY2FuIGJlIHVzZWQgdW5kZXJuZWF0aCAgYQo+ICAgIGRldmljZSBtYXBwZXIu
-Cj4gCj4gICAgwqAKPiAKPiAgICBBZnRlciByZXN0YXJ0aW5nIHRoZSBtdWx0aXBhdGhkIGRhZW1v
-biwgdGhlIGRldmljZSBtYXBwZXIgb2YgcGF0aCAgZmFpbHVyZQo+ICAgIGRpc2FwcGVhcnMgYW5k
-IGl0IHdvbuKAmXQgIGNvbWViYWNrIGV2ZW4gdGhlIHN0b3JhZ2UgIHBhdGhzIHJlY292ZXIuIFNv
-ICB0aGUKPiAgICBmaWxlIHN5c3RlbSBvbiB0aGF0IGRldm1hcHBlciBjYW7igJl0IGJlIGF2YWls
-YWJsZS4KPiAKPiAgICDCoAo+IAo+ICAgIEkgd29uZGVyIHRoYXQgaWYgdGhlcmUgaXMgYSBzb2x1
-dGlvbiB0aGF0IGEgZGV2aWNlIG1hcHBlciBvZiBwYXRoICBmYWlsdXJlCj4gICAgY2FuIGNvbWUg
-YmFjayB0byBhY3RpdmUgZXZlbiBJIHJlc3RhcnQgdGhlIG11bHRpcGF0aGQgZGFlbW9uPwo+IAo+
-ICAgIMKgCj4gCj4gICAgSWYgc3VjaCBhIHNvbHV0aW9uIGV4aXN0cywgaXQgd2lsbCBiZSBtYXJ2
-ZWxvdXMKPiAKPiAgICDCoAo+IAo+ICAgIElmIG5vdCwgIEkgIHByb3Bvc2UgIGEgIHVzZXJsYW5k
-ICBpbnRlcmZhY2UgIHRvICBhZGQgIGJsYWNrbGlzdCAgZXhjZXB0aW9uCj4gICAgZHluYW1pY2Fs
-bHkuIEFmdGVyIHRoZSBibGFja2xpc3QgZXhjZXB0aW9uIGlzIGFkZGVkIHRvIOKAnGNvbmbigJ0s
-IOKAnG11bHRpcGF0aGQKPiAgICBhZGQgbWFwICRtYXDigJ0gYW5kICDigJxtdWx0aXBhdGhkIGFk
-ZCBwYXRo4oCdICBjYW4gYmUgdXNlZCB0byAgYWRkIG5ldyBtYXAgIGFuZAo+ICAgIHBhdGguCj4g
-Cj4gICAgwqAKPiAKPiAgICBJbiBhIG51dHNoZWxsLCB3ZSBjYW4gZHluYW1pY2FsbHkgIGFkZCBl
-bGlzdCwgbWFwIGFuZCBwYXRocyAgcmVzcGVjdGl2ZWx5Lgo+ICAgIEFuZCBtdWx0aXBhdGhkICBk
-YW1vbiAgaXMgIG5vdCAgbmVjZXNzYXJ5ICB0byAgcmVzdGFydCAgZHVlICB0byAgcHJlY2VkaW5n
-Cj4gICAgc29sdXRpb24uCj4gCj4gICAgwqAKPiAKPiAgICBBbnkgZXhwZXJ0cyBvZiBETSBoYXZl
-IGFueSBjb21tZW50cyAgb24gbXkgc29sdXRpb24gYW5kIHRoZSBpc3N1ZSBJICBmYWNlZAo+ICAg
-IHdpdGg/Cj4gCj4gICAgwqAKPiAKPiAgICDCoAo+IAo+ICAgIFlvdXIgcmVwbHkgaXMgdmVyeSBp
-bXBvcnRhbnQgdG8gbWUuCj4gCj4gICAgwqAKPiAKPiAgICBUaGFua3MuCj4gCj4gICAgwqAKPiAK
-PiAgICBCUi4KPiAKPiAgICDCoAo+IAo+ICAgIENoYXVuY2V5IEdlCj4gCj4gICAgLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLQo+ICAgIOacrOmCruS7tuWPiuWFtumZhOS7tuWQq+acieadreW3nuWNjuS4iemA
-muS/oeaKgOacr+aciemZkOWFrOWPuOeahOS/neWvhuS/oeaBr++8jOS7hemZkOS6juWPkemAgee7
-meS4iumdouWcsOWdgAo+ICAgIOS4reWIl+WHugo+ICAgIOeahOS4quS6uuaIlue+pOe7hOOAguem
-geatouS7u+S9leWFtuS7luS6uuS7peS7u+S9leW9ouW8j+S9v+eUqO+8iOWMheaLrOS9huS4jemZ
-kOS6juWFqOmDqOaIlumDqOWIhuWcsOazhOmcsuOAgQo+ICAgIOWkjeWItuOAgQo+ICAgIOaIluaV
-o+WPke+8ieacrOmCruS7tuS4reeahOS/oeaBr+OAguWmguaenOaCqOmUmeaUtuS6huacrOmCruS7
-tu+8jOivt+aCqOeri+WNs+eUteivneaIlumCruS7tumAmuefpeWPkeS7tuS6uuW5tgo+ICAgIOWI
-oOmZpOacrAo+ICAgIOmCruS7tu+8gQo+ICAgIFRoaXMgZS1tYWlsIGFuZCBpdHMgYXR0YWNobWVu
-dHMgY29udGFpbiBjb25maWRlbnRpYWwgaW5mb3JtYXRpb24gZnJvbSBIM0MsCj4gICAgd2hpY2gg
-aXMKPiAgICBpbnRlbmRlZCBvbmx5IGZvciB0aGUgcGVyc29uIG9yIGVudGl0eSB3aG9zZSBhZGRy
-ZXNzIGlzIGxpc3RlZCBhYm92ZS4gQW55Cj4gICAgdXNlIG9mIHRoZQo+ICAgIGluZm9ybWF0aW9u
-IGNvbnRhaW5lZCBoZXJlaW4gaW4gYW55IHdheSAoaW5jbHVkaW5nLCBidXQgbm90IGxpbWl0ZWQg
-dG8sCj4gICAgdG90YWwgb3IgcGFydGlhbAo+ICAgIGRpc2Nsb3N1cmUsIHJlcHJvZHVjdGlvbiwg
-b3IgZGlzc2VtaW5hdGlvbikgYnkgcGVyc29ucyBvdGhlciB0aGFuIHRoZQo+ICAgIGludGVuZGVk
-Cj4gICAgcmVjaXBpZW50KHMpIGlzIHByb2hpYml0ZWQuIElmIHlvdSByZWNlaXZlIHRoaXMgZS1t
-YWlsIGluIGVycm9yLCBwbGVhc2UKPiAgICBub3RpZnkgdGhlIHNlbmRlcgo+ICAgIGJ5IHBob25l
-IG9yIGVtYWlsIGltbWVkaWF0ZWx5IGFuZCBkZWxldGUgaXQhCgotLQpkbS1kZXZlbCBtYWlsaW5n
-IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
-bGlzdGluZm8vZG0tZGV2ZWw=
+--===============1190096585362341026==
+Content-Type: multipart/alternative; boundary=001a11463b925552390533b32b6d
+
+--001a11463b925552390533b32b6d
+Content-Type: text/plain; charset=UTF-8
+
+Hi,
+  If i have a snapshot origin created using dmsetup create table with a
+mapping  real device  with (major,minor) =(8,18) and lets name it
+/dev/mapper/dmso . Now the set of reads are writes done from
+/dev/mapper/dmso have some values (R,W).
+
+Had i been creating a persistent snapshot using (P or PO) mode with origin
+device as /dev/null and COW device is my real device (maj,min)=8,18 and it
+is named as /dev/mapper/dmsp. Now if i do the exact same reads and writes
+that i did to dmso (snapshot-origin) , will get i the same set of output
+values (R,W).
+
+In my experiment i did. So i'm asking is there a case where it differs ?
+
+Also i looked at the code in drivers/md/dm-snap.c and i find that both the
+drivers snapshot and snapshot-origin use the same __orgin_write . So my
+partial/incomplete understanding is that it works from the read/write view
+point from /dev/mapper/dmsp.
+
+I'll not be using the snapshot-merge feature , so merging to /dev/null is
+irrelevant here.
+
+Regards,
+-- Navin
+
+--001a11463b925552390533b32b6d
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<div>=C2=A0 If i have a snapshot origin created using d=
+msetup create table with a mapping =C2=A0real device =C2=A0with (major,mino=
+r) =3D(8,18) and lets name it /dev/mapper/dmso . Now the set of reads are w=
+rites done from /dev/mapper/dmso have some values (R,W).</div><div><br></di=
+v><div>Had i been creating a persistent snapshot using (P or PO) mode with =
+origin device as /dev/null and COW device is my real device (maj,min)=3D8,1=
+8 and it is named as /dev/mapper/dmsp. Now if i do the exact same reads and=
+ writes that i did to dmso (snapshot-origin) , will get i the same set of o=
+utput values (R,W).</div><div><br></div><div>In my experiment i did. So i&#=
+39;m asking is there a case where it differs ?=C2=A0</div><div><br></div><d=
+iv>Also i looked at the code in drivers/md/dm-snap.c and i find that both t=
+he drivers snapshot and snapshot-origin use the same __orgin_write . So my =
+partial/incomplete understanding is that it works from the read/write view =
+point from /dev/mapper/dmsp.</div><div><br></div><div>I&#39;ll not be using=
+ the snapshot-merge feature , so merging to /dev/null is irrelevant here.</=
+div><div><br></div><div>Regards,</div><div><div><div class=3D"gmail_signatu=
+re">-- Navin </div>
+</div></div></div>
+
+--001a11463b925552390533b32b6d--
+
+
+--===============1190096585362341026==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1190096585362341026==--
