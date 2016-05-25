@@ -1,96 +1,89 @@
-From: Baolin Wang <baolin.wang@linaro.org>
-Subject: Re: [RFC 1/3] block: Introduce blk_bio_map_sg() to map one bio
-Date: Wed, 25 May 2016 17:02:53 +0800
-Message-ID: <CAMz4kuJiQqEuoD9bDohaiD=jV7PoDzK55LE8Cejod-MX1hHaxQ@mail.gmail.com>
-References: <cover.1464144790.git.baolin.wang@linaro.org>
-	<abe693fad3abb0adfc0cf9ca5b3d287fdb0f2d5b.1464144791.git.baolin.wang@linaro.org>
-	<CACVXFVMYm_3rHe5wxs9YA15h+N0EfjMcGQEgnzLZTVbh7HUaRw@mail.gmail.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: multipath-tools : A way needless to restart
+ multipathd damon while attaching new device to host which met a path
+ failure
+Date: Wed, 25 May 2016 12:46:03 -0500
+Message-ID: <20160525174603.GP26117@octiron.msp.redhat.com>
+References: <63ADC13FD55D6546B7DECE290D39E373CB5D9A@H3CMLB12-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <CACVXFVMYm_3rHe5wxs9YA15h+N0EfjMcGQEgnzLZTVbh7HUaRw@mail.gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Ming Lei <ming.lei@canonical.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, David Miller <davem@davemloft.net>, ebiggers3@gmail.com, js1304@gmail.com, tadeusz.struk@intel.com, smueller@chronox.de, Masanari Iida <standby24x7@gmail.com>, Shaohua Li <shli@kernel.org>, Dan Williams <dan.j.williams@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Sagi Grimberg <sagig@mellanox.com>, Kent Overstreet <kent.overstreet@gmail.com>, Keith Busch <keith.busch@intel.com>, Tejun Heo <tj@kernel.org>, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <63ADC13FD55D6546B7DECE290D39E373CB5D9A@H3CMLB12-EX.srv.huawei-3com.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Gechangwei <ge.changwei@h3c.com>
+Cc: Zhongjinming <zhongjinming@h3c.com>, Guozhonghua <guozhonghua@h3c.com>, Zhangguanghui <zhang.guanghui@h3c.com>, Shichangkuo <shi.changkuo@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "christophe.varoqui@gmail.com" <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On 25 May 2016 at 16:52, Ming Lei <ming.lei@canonical.com> wrote:
->>  /*
->> + * map a bio to scatterlist, return number of sg entries setup.
->> + */
->> +int blk_bio_map_sg(struct request_queue *q, struct bio *bio,
->> +                  struct scatterlist *sglist,
->> +                  struct scatterlist **sg)
->> +{
->> +       struct bio_vec bvec, bvprv = { NULL };
->> +       struct bvec_iter iter;
->> +       int nsegs, cluster;
->> +
->> +       nsegs = 0;
->> +       cluster = blk_queue_cluster(q);
->> +
->> +       if (bio->bi_rw & REQ_DISCARD) {
->> +               /*
->> +                * This is a hack - drivers should be neither modifying the
->> +                * biovec, nor relying on bi_vcnt - but because of
->> +                * blk_add_request_payload(), a discard bio may or may not have
->> +                * a payload we need to set up here (thank you Christoph) and
->> +                * bi_vcnt is really the only way of telling if we need to.
->> +                */
->> +
->> +               if (bio->bi_vcnt)
->> +                       goto single_segment;
->> +
->> +               return 0;
->> +       }
->> +
->> +       if (bio->bi_rw & REQ_WRITE_SAME) {
->> +single_segment:
->> +               *sg = sglist;
->> +               bvec = bio_iovec(bio);
->> +               sg_set_page(*sg, bvec.bv_page, bvec.bv_len, bvec.bv_offset);
->> +               return 1;
->> +       }
->> +
->> +       bio_for_each_segment(bvec, bio, iter)
->> +               __blk_segment_map_sg(q, &bvec, sglist, &bvprv, sg,
->> +                                    &nsegs, &cluster);
->> +
->> +       return nsegs;
->> +}
->> +EXPORT_SYMBOL(blk_bio_map_sg);
->
-> You can use __blk_bios_map_sg() to implement blk_bio_map_sg(),
-> then code duplication may be avoided.
-
-OK. I'll re-factor the code to map one bio.
-
->
->> +
->> +/*
->>   * map a request to scatterlist, return number of sg entries setup. Caller
->>   * must make sure sg can hold rq->nr_phys_segments entries
->>   */
->> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
->> index 1fd8fdf..e5de4f8 100644
->> --- a/include/linux/blkdev.h
->> +++ b/include/linux/blkdev.h
->> @@ -1013,6 +1013,9 @@ extern void blk_queue_write_cache(struct request_queue *q, bool enabled, bool fu
->>  extern struct backing_dev_info *blk_get_backing_dev_info(struct block_device *bdev);
->>
->>  extern int blk_rq_map_sg(struct request_queue *, struct request *, struct scatterlist *);
->> +extern int blk_bio_map_sg(struct request_queue *q, struct bio *bio,
->> +                         struct scatterlist *sglist,
->> +                         struct scatterlist **sg);
->>  extern void blk_dump_rq_flags(struct request *, char *);
->>  extern long nr_blockdev_pages(void);
->>
->> --
->> 1.7.9.5
->>
-
-
-
--- 
-Baolin.wang
-Best Regards
+V2hpbGUgaGF2aW5nIG11bHRpcGF0aGQgcmV0YWluIGZhaWxlZCBkZXZpY2VzIHdoZW4gaXQgcmVz
+dGFydHMgbWF5IGJlIGEKbGl0dGxlIHRyaWNreSwgc2luY2UgaXQgd29uJ3Qga25vdyBhbnl0aGlu
+ZyBhYm91dCB0aG9zZSBkZXZpY2VzLCBoYXZpbmcKaXQgcmV0YWluIHRoZXNlIGRldmljZXMgZHVy
+aW5nIGEgcmVsb2FkICh3aGljaCBpcyBlbm91Z2ggdG8gYmUgYWJsZSB0bwpjaGFuZ2UgdGhlIGNv
+bmZpZ3VyYXRpb24pIHNob3VsZCBiZSBkb2FibGUuICBJIGFncmVlIHRoYXQgbXVsdGlwYXRoZApz
+aG91bGQgbm90IGJlIHJlbW92aW5nIGRldmljZXMgaWYgdGhleSBoYXZlbid0IGJlZW4gcmVtb3Zl
+ZCBmcm9tIHRoZQpzeXN0ZW0gc2luY2UsIGxpa2UgeW91IHNheSwgdGhhdCB3aWxsIGtlZXAgbXVs
+dGlwYXRoZCBmcm9tIHJlYWN0aW5nIHRvCnRoZSBkZXZpY2UncyBsYXRlciByZWNvdmVyeS4KCkkn
+bGwgdGFrZSBhIGxvb2sgaW50byBkb2luZyB0aGlzLgoKLUJlbgoKT24gTW9uLCBNYXkgMjMsIDIw
+MTYgYXQgMDM6Mzg6MzVBTSArMDAwMCwgR2VjaGFuZ3dlaSB3cm90ZToKPiAgICBIaSwKPiAKPiAg
+ICDCoAo+IAo+ICAgIEkgZW5jb3VudGVyZWQgYW4gIGlzc3VlIHRoYXQgIGRldm1hcHBlciBkaXNh
+cHBlYXJlZCAgd2hpbGUgdGhlICBtdWx0aXBhdGhkCj4gICAgZGFtZW9uIHdhcyByZXN0YXJ0ZWQu
+Cj4gCj4gICAgwqAKPiAKPiAgICBEaWdnaW5nIGludG8gIHRoZSByb290ICBjYXVzZSBvZiAgcHJl
+Y2VkaW5nIGlzc3VlLCAgSSBmb3VuZCAgc3RvcmFnZSAgcGF0aAo+ICAgIGZhaWx1cmUgd2hpbGUg
+IHJlc3RhcnRpbmcgdGhlICBtdWx0aXBhdGhkIGRhZW1vbi4gIEl0IHNlZW1zICB1bnJlYXNvbmFi
+bGUsCj4gICAgYmVjYXVzZSB0aGUgc3RvcmFnZSBwYXRoIG1heSByZWNvdmVyIGluIHRoZSBmdXR1
+cmUuCj4gCj4gICAgwqAKPiAKPiAgICBXaGVuICB1c2luZyAgbXVsdGlwYXRoLXRvb2xzICB0byAg
+IGNyZWF0ZSAgZGV2aWNlICBtYXBwZXIsICBJICAgY29uZmlndXJlZAo+ICAgIOKAnGJsYWNrbGlz
+dCBzZWN0aW9u4oCdICBhbmQg4oCcYmxhY2tsaXN0ICBleGNlcHRpb24gIHNlY3Rpb27igJ0sIHdo
+aWNoICBtZWV0cyAgbXkKPiAgICByZXF1aXJlbWVudCB0aGF0IG9ubHkgYSBzbWFsbCBwYXJ0IG9m
+ICBTQ1NJIGRpc2sgY2FuIGJlIHVzZWQgdW5kZXJuZWF0aCAgYQo+ICAgIGRldmljZSBtYXBwZXIu
+Cj4gCj4gICAgwqAKPiAKPiAgICBBZnRlciByZXN0YXJ0aW5nIHRoZSBtdWx0aXBhdGhkIGRhZW1v
+biwgdGhlIGRldmljZSBtYXBwZXIgb2YgcGF0aCAgZmFpbHVyZQo+ICAgIGRpc2FwcGVhcnMgYW5k
+IGl0IHdvbuKAmXQgIGNvbWViYWNrIGV2ZW4gdGhlIHN0b3JhZ2UgIHBhdGhzIHJlY292ZXIuIFNv
+ICB0aGUKPiAgICBmaWxlIHN5c3RlbSBvbiB0aGF0IGRldm1hcHBlciBjYW7igJl0IGJlIGF2YWls
+YWJsZS4KPiAKPiAgICDCoAo+IAo+ICAgIEkgd29uZGVyIHRoYXQgaWYgdGhlcmUgaXMgYSBzb2x1
+dGlvbiB0aGF0IGEgZGV2aWNlIG1hcHBlciBvZiBwYXRoICBmYWlsdXJlCj4gICAgY2FuIGNvbWUg
+YmFjayB0byBhY3RpdmUgZXZlbiBJIHJlc3RhcnQgdGhlIG11bHRpcGF0aGQgZGFlbW9uPwo+IAo+
+ICAgIMKgCj4gCj4gICAgSWYgc3VjaCBhIHNvbHV0aW9uIGV4aXN0cywgaXQgd2lsbCBiZSBtYXJ2
+ZWxvdXMKPiAKPiAgICDCoAo+IAo+ICAgIElmIG5vdCwgIEkgIHByb3Bvc2UgIGEgIHVzZXJsYW5k
+ICBpbnRlcmZhY2UgIHRvICBhZGQgIGJsYWNrbGlzdCAgZXhjZXB0aW9uCj4gICAgZHluYW1pY2Fs
+bHkuIEFmdGVyIHRoZSBibGFja2xpc3QgZXhjZXB0aW9uIGlzIGFkZGVkIHRvIOKAnGNvbmbigJ0s
+IOKAnG11bHRpcGF0aGQKPiAgICBhZGQgbWFwICRtYXDigJ0gYW5kICDigJxtdWx0aXBhdGhkIGFk
+ZCBwYXRo4oCdICBjYW4gYmUgdXNlZCB0byAgYWRkIG5ldyBtYXAgIGFuZAo+ICAgIHBhdGguCj4g
+Cj4gICAgwqAKPiAKPiAgICBJbiBhIG51dHNoZWxsLCB3ZSBjYW4gZHluYW1pY2FsbHkgIGFkZCBl
+bGlzdCwgbWFwIGFuZCBwYXRocyAgcmVzcGVjdGl2ZWx5Lgo+ICAgIEFuZCBtdWx0aXBhdGhkICBk
+YW1vbiAgaXMgIG5vdCAgbmVjZXNzYXJ5ICB0byAgcmVzdGFydCAgZHVlICB0byAgcHJlY2VkaW5n
+Cj4gICAgc29sdXRpb24uCj4gCj4gICAgwqAKPiAKPiAgICBBbnkgZXhwZXJ0cyBvZiBETSBoYXZl
+IGFueSBjb21tZW50cyAgb24gbXkgc29sdXRpb24gYW5kIHRoZSBpc3N1ZSBJICBmYWNlZAo+ICAg
+IHdpdGg/Cj4gCj4gICAgwqAKPiAKPiAgICDCoAo+IAo+ICAgIFlvdXIgcmVwbHkgaXMgdmVyeSBp
+bXBvcnRhbnQgdG8gbWUuCj4gCj4gICAgwqAKPiAKPiAgICBUaGFua3MuCj4gCj4gICAgwqAKPiAK
+PiAgICBCUi4KPiAKPiAgICDCoAo+IAo+ICAgIENoYXVuY2V5IEdlCj4gCj4gICAgLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLQo+ICAgIOacrOmCruS7tuWPiuWFtumZhOS7tuWQq+acieadreW3nuWNjuS4iemA
+muS/oeaKgOacr+aciemZkOWFrOWPuOeahOS/neWvhuS/oeaBr++8jOS7hemZkOS6juWPkemAgee7
+meS4iumdouWcsOWdgAo+ICAgIOS4reWIl+WHugo+ICAgIOeahOS4quS6uuaIlue+pOe7hOOAguem
+geatouS7u+S9leWFtuS7luS6uuS7peS7u+S9leW9ouW8j+S9v+eUqO+8iOWMheaLrOS9huS4jemZ
+kOS6juWFqOmDqOaIlumDqOWIhuWcsOazhOmcsuOAgQo+ICAgIOWkjeWItuOAgQo+ICAgIOaIluaV
+o+WPke+8ieacrOmCruS7tuS4reeahOS/oeaBr+OAguWmguaenOaCqOmUmeaUtuS6huacrOmCruS7
+tu+8jOivt+aCqOeri+WNs+eUteivneaIlumCruS7tumAmuefpeWPkeS7tuS6uuW5tgo+ICAgIOWI
+oOmZpOacrAo+ICAgIOmCruS7tu+8gQo+ICAgIFRoaXMgZS1tYWlsIGFuZCBpdHMgYXR0YWNobWVu
+dHMgY29udGFpbiBjb25maWRlbnRpYWwgaW5mb3JtYXRpb24gZnJvbSBIM0MsCj4gICAgd2hpY2gg
+aXMKPiAgICBpbnRlbmRlZCBvbmx5IGZvciB0aGUgcGVyc29uIG9yIGVudGl0eSB3aG9zZSBhZGRy
+ZXNzIGlzIGxpc3RlZCBhYm92ZS4gQW55Cj4gICAgdXNlIG9mIHRoZQo+ICAgIGluZm9ybWF0aW9u
+IGNvbnRhaW5lZCBoZXJlaW4gaW4gYW55IHdheSAoaW5jbHVkaW5nLCBidXQgbm90IGxpbWl0ZWQg
+dG8sCj4gICAgdG90YWwgb3IgcGFydGlhbAo+ICAgIGRpc2Nsb3N1cmUsIHJlcHJvZHVjdGlvbiwg
+b3IgZGlzc2VtaW5hdGlvbikgYnkgcGVyc29ucyBvdGhlciB0aGFuIHRoZQo+ICAgIGludGVuZGVk
+Cj4gICAgcmVjaXBpZW50KHMpIGlzIHByb2hpYml0ZWQuIElmIHlvdSByZWNlaXZlIHRoaXMgZS1t
+YWlsIGluIGVycm9yLCBwbGVhc2UKPiAgICBub3RpZnkgdGhlIHNlbmRlcgo+ICAgIGJ5IHBob25l
+IG9yIGVtYWlsIGltbWVkaWF0ZWx5IGFuZCBkZWxldGUgaXQhCgotLQpkbS1kZXZlbCBtYWlsaW5n
+IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
+bGlzdGluZm8vZG0tZGV2ZWw=
