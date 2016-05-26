@@ -1,84 +1,58 @@
-From: "Navin P.S" <navinp1912@gmail.com>
-Subject: Snapshot origin table as P/PO snapshot with /dev/null
-Date: Thu, 26 May 2016 05:07:43 +0530
-Message-ID: <CAA=4085AdSO4uXrBwyrMyiSMAmRk=kyxucJ1TLLTcDkXsgvBpw@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: bio-based DM multipath is back from the dead [was: Re: Notes from
+ the four separate IO track sessions at LSF/MM]
+Date: Wed, 25 May 2016 22:38:56 -0400
+Message-ID: <20160526023855.GA20659@redhat.com>
+References: <1461800389.2311.70.camel@HansenPartnership.com>
+ <20160428121108.GA9903@redhat.com>
+ <1461858038.2307.16.camel@HansenPartnership.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1190096585362341026=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1461858038.2307.16.camel@HansenPartnership.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: linux-block@vger.kernel.org, lsf@lists.linux-foundation.org, device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, hch@lst.de
 List-Id: dm-devel.ids
 
---===============1190096585362341026==
-Content-Type: multipart/alternative; boundary=001a11463b925552390533b32b6d
+On Thu, Apr 28 2016 at 11:40am -0400,
+James Bottomley <James.Bottomley@HansenPartnership.com> wrote:
 
---001a11463b925552390533b32b6d
-Content-Type: text/plain; charset=UTF-8
+> On Thu, 2016-04-28 at 08:11 -0400, Mike Snitzer wrote:
+> > Full disclosure: I'll be looking at reinstating bio-based DM multipath to
+> > regain efficiencies that now really matter when issuing IO to extremely
+> > fast devices (e.g. NVMe).  bio cloning is now very cheap (due to
+> > immutable biovecs), coupled with the emerging multipage biovec work that
+> > will help construct larger bios, so I think it is worth pursuing to at
+> > least keep our options open.
 
-Hi,
-  If i have a snapshot origin created using dmsetup create table with a
-mapping  real device  with (major,minor) =(8,18) and lets name it
-/dev/mapper/dmso . Now the set of reads are writes done from
-/dev/mapper/dmso have some values (R,W).
+Please see the 4 topmost commits I've published here:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.8
 
-Had i been creating a persistent snapshot using (P or PO) mode with origin
-device as /dev/null and COW device is my real device (maj,min)=8,18 and it
-is named as /dev/mapper/dmsp. Now if i do the exact same reads and writes
-that i did to dmso (snapshot-origin) , will get i the same set of output
-values (R,W).
+All request-based DM multipath support/advances have been completly
+preserved.  I've just made it so that we can now have bio-based DM
+multipath too.
 
-In my experiment i did. So i'm asking is there a case where it differs ?
+All of the various modes have been tested using mptest:
+https://github.com/snitm/mptest
 
-Also i looked at the code in drivers/md/dm-snap.c and i find that both the
-drivers snapshot and snapshot-origin use the same __orgin_write . So my
-partial/incomplete understanding is that it works from the read/write view
-point from /dev/mapper/dmsp.
+> OK, but remember the reason we moved from bio to request was partly to
+> be nearer to the device but also because at that time requests were
+> accumulations of bios which had to be broken out, go back up the stack
+> individually and be re-elevated, which adds to the inefficiency.  In
+> theory the bio splitting work will mean that we only have one or two
+> split bios per request (because they were constructed from a split up
+> huge bio), but when we send them back to the top to be reconstructed as
+> requests there's no guarantee that the split will be correct a second
+> time around and we might end up resplitting the already split bios.  If
+> you do reassembly into the huge bio again before resend down the next
+> queue, that's starting to look like quite a lot of work as well.
 
-I'll not be using the snapshot-merge feature , so merging to /dev/null is
-irrelevant here.
+I've not even delved into the level you're laser-focused on here.
+But I'm struggling to grasp why multipath is any different than any
+other bio-based device...
 
-Regards,
--- Navin
-
---001a11463b925552390533b32b6d
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Hi,<div>=C2=A0 If i have a snapshot origin created using d=
-msetup create table with a mapping =C2=A0real device =C2=A0with (major,mino=
-r) =3D(8,18) and lets name it /dev/mapper/dmso . Now the set of reads are w=
-rites done from /dev/mapper/dmso have some values (R,W).</div><div><br></di=
-v><div>Had i been creating a persistent snapshot using (P or PO) mode with =
-origin device as /dev/null and COW device is my real device (maj,min)=3D8,1=
-8 and it is named as /dev/mapper/dmsp. Now if i do the exact same reads and=
- writes that i did to dmso (snapshot-origin) , will get i the same set of o=
-utput values (R,W).</div><div><br></div><div>In my experiment i did. So i&#=
-39;m asking is there a case where it differs ?=C2=A0</div><div><br></div><d=
-iv>Also i looked at the code in drivers/md/dm-snap.c and i find that both t=
-he drivers snapshot and snapshot-origin use the same __orgin_write . So my =
-partial/incomplete understanding is that it works from the read/write view =
-point from /dev/mapper/dmsp.</div><div><br></div><div>I&#39;ll not be using=
- the snapshot-merge feature , so merging to /dev/null is irrelevant here.</=
-div><div><br></div><div>Regards,</div><div><div><div class=3D"gmail_signatu=
-re">-- Navin </div>
-</div></div></div>
-
---001a11463b925552390533b32b6d--
-
-
---===============1190096585362341026==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1190096585362341026==--
+FYI, the paper I reference in my "dm mpath: reinstate bio-based support"
+commit gets into what I've always thought the real justification was for
+the transition from bio-based to request-based.
