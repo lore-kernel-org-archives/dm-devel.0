@@ -1,116 +1,188 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: bio-based DM multipath is back from the dead [was: Re: Notes from
- the four separate IO track sessions at LSF/MM]
-Date: Fri, 27 May 2016 10:39:50 +0200
-Message-ID: <574807D6.4030208@suse.de>
-References: <1461800389.2311.70.camel@HansenPartnership.com>
- <20160428121108.GA9903@redhat.com>
- <1461858038.2307.16.camel@HansenPartnership.com>
- <20160526023855.GA20659@redhat.com>
+From: Baolin Wang <baolin.wang@linaro.org>
+Subject: Re: [RFC 2/3] crypto: Introduce CRYPTO_ALG_BULK flag
+Date: Fri, 27 May 2016 17:04:35 +0800
+Message-ID: <CAMz4kuLmac=VQu=htEzQa3pnWmDBzresK-8bFjoG7n8LBgLuZQ@mail.gmail.com>
+References: <cover.1464144790.git.baolin.wang@linaro.org>
+	<7f0fef5fe473a451e352b2d42e1eed483fd28667.1464144791.git.baolin.wang@linaro.org>
+	<5747E9CF.7010706@gmail.com>
+	<CAMz4kuK2yFqtdNJBn1POOo9Y_4=Rk2q8BP8P1P+JdYJk2oLnFw@mail.gmail.com>
+	<5747FD04.4090707@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20160526023855.GA20659@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: linux-block@vger.kernel.org, lsf@lists.linux-foundation.org, device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, hch@lst.de
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5747FD04.4090707@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Milan Broz <gmazyland@gmail.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, David Miller <davem@davemloft.net>, Eric Biggers <ebiggers3@gmail.com>, Joonsoo Kim <js1304@gmail.com>, tadeusz.struk@intel.com, smueller@chronox.de, Masanari Iida <standby24x7@gmail.com>, Shaohua Li <shli@kernel.org>, Dan Williams <dan.j.williams@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Sagi Grimberg <sagig@mellanox.com>, Kent Overstreet <kent.overstreet@gmail.com>, Keith Busch <keith.busch@intel.com>, Tejun Heo <tj@kernel.org>, Ming Lei <ming.lei@canonical.com>, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vg>
 List-Id: dm-devel.ids
 
-On 05/26/2016 04:38 AM, Mike Snitzer wrote:
-> On Thu, Apr 28 2016 at 11:40am -0400,
-> James Bottomley <James.Bottomley@HansenPartnership.com> wrote:
+On 27 May 2016 at 15:53, Milan Broz <gmazyland@gmail.com> wrote:
+> On 05/27/2016 09:04 AM, Baolin Wang wrote:
+>> Hi Milan,
+>>
+>> On 27 May 2016 at 14:31, Milan Broz <gmazyland@gmail.com> wrote:
+>>> On 05/25/2016 08:12 AM, Baolin Wang wrote:
+>>>> Now some cipher hardware engines prefer to handle bulk block rather than one
+>>>> sector (512 bytes) created by dm-crypt, cause these cipher engines can handle
+>>>> the intermediate values (IV) by themselves in one bulk block. This means we
+>>>> can increase the size of the request by merging request rather than always 512
+>>>> bytes and thus increase the hardware engine processing speed.
+>>>
+>>> Hi,
+>>>
+>>> could you please elaborate how exactly you are processing independently
+>>> encrypted sectors? For example with XTS mode. Do you play internally with
+>>> tweak calculation? Does this keep 512 bytes sector encryption blocks independent?
+>>>
+>>> (If not, it is breaking compatibility everywhere and you are reinventing
+>>> disk encryption logic here - just for performance reason for some hw
+>>> not designed for this task... But that was said several times already.)
+>>
+>> These are what the cipher hardware engine and engine driver should do,
+>> for software we just need send one initial IV and bulk data to crypto
+>> layer, which is enough.
 >
->> On Thu, 2016-04-28 at 08:11 -0400, Mike Snitzer wrote:
->>> Full disclosure: I'll be looking at reinstating bio-based DM multip=
-ath to
->>> regain efficiencies that now really matter when issuing IO to extre=
-mely
->>> fast devices (e.g. NVMe).  bio cloning is now very cheap (due to
->>> immutable biovecs), coupled with the emerging multipage biovec work=
- that
->>> will help construct larger bios, so I think it is worth pursuing to=
- at
->>> least keep our options open.
+> Hi,
 >
-> Please see the 4 topmost commits I've published here:
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.g=
-it/log/?h=3Ddm-4.8
+> Thanks for answer.
 >
-> All request-based DM multipath support/advances have been completly
-> preserved.  I've just made it so that we can now have bio-based DM
-> multipath too.
->
-> All of the various modes have been tested using mptest:
-> https://github.com/snitm/mptest
->
->> OK, but remember the reason we moved from bio to request was partly =
-to
->> be nearer to the device but also because at that time requests were
->> accumulations of bios which had to be broken out, go back up the sta=
-ck
->> individually and be re-elevated, which adds to the inefficiency.  In
->> theory the bio splitting work will mean that we only have one or two
->> split bios per request (because they were constructed from a split u=
-p
->> huge bio), but when we send them back to the top to be reconstructed=
- as
->> requests there's no guarantee that the split will be correct a secon=
-d
->> time around and we might end up resplitting the already split bios. =
- If
->> you do reassembly into the huge bio again before resend down the nex=
-t
->> queue, that's starting to look like quite a lot of work as well.
->
-> I've not even delved into the level you're laser-focused on here.
-> But I'm struggling to grasp why multipath is any different than any
-> other bio-based device...
->
-Actually, _failover_ is not the primary concern. This is on a (relative=
-)=20
-slow path so any performance degradation during failover is acceptable.
+> So this is just doing some kind of batch processing optimization inside the driver?
+> I still do not understand why it is not possible to "batch" these requests inside
+> you driver (with async API) then and process them in one go without any changes
+> to dmcrypt though. (But I am not familiar with these drivers.)
 
-No, the real issue is load-balancing.
-If you have several paths you have to schedule I/O across all paths,=20
-_and_ you should be feeding these paths efficiently.
+I think it is not only for the driver level, but also for cipher API.
+If one cipher engine can support bulk mode, then we should send bulk
+data to it, not only one sector, which need to be implemented at top
+API level, such as:
 
-With the original (bio-based) layout you had to schedule on the bio=20
-level, causing the requests to be inefficiently assembled.
-Hence the 'rr_min_io' parameter, which were changing paths after=20
-rr_min_io _bios_. I did some experimenting a while back (I even had a=20
-presentation on LSF at one point ...), and figuring that you would get =
-a=20
-performance degradation once the rr_min_io parameter went below 100.
-But this means that paths will be switched after every 100 bios,=20
-irrespective of into how many requests they'll be assembled.
-It also means that we have a rather 'choppy' load-balancing behaviour,=20
-and cannot achieve 'true' load balancing as the I/O scheduler on the bi=
-o=20
-level doesn't have any idea when a new request will be assembled.
+skcipher_request_set_crypt(req, sgt_in.sgl, sgt_out.sgl, total_bytes,
+iv); /* send sg table to crypt layer */
 
-I was sort-of hoping that with the large bio work from Shaohua we could=
-=20
-build bio which would not require any merging, ie building bios which=20
-would be assembled into a single request per bio.
-Then the above problem wouldn't exist anymore and we _could_ do=20
-scheduling on bio level.
-But from what I've gathered this is not always possible (eg for btrfs=20
-with delayed allocation).
+If move these optimization into driver, it means we need to merge
+requests from dm-crypt together to be one big request for engine
+driver, but it will be low efficiency and not help. Why we can not
+send one bulk request at first in dm-crypt? We just need to set the
+different parameters for skcipher_request_set_crypt() function
+according to different cipher mode in dm-crypt.
 
-Have you found another way of addressing this problem?
+>
+> If I understand it correctly, subsequent IVs are calculated inside
+> your driver just based on some initial value?
 
-Cheers,
+Yes, something like this.
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> This can work only for sequential IVs (or, better said, for predictable
+> IVs like plain64, implemented inside your hw/driver).
+>
+> It cannot work for IVs/tweaks that are randomized or keyed (like ESSIV).
+> Yes, I know that using ESSIV for XTS is considered overkill but I do not
+> see you are checking this condition anywhere in code (we can definitely
+> configure such a mapping).
+
+So if some ciphers (like: aes(cbc)) can not support bulk mode, then we
+should not add the  CRYPTO_ALG_BULK flag for this cipher in the cipher
+driver.
+
+>
+>>>> So introduce 'CRYPTO_ALG_BULK' flag to indicate this cipher can support bulk
+>>>> mode.
+>>>
+>>> What exactly skcipher will do if this flag is set?
+>>
+>> I think that depends on how to implement the cipher engine driver.
+>
+> I do not care about implementation details, I just would like to see
+> some high-level description for the new API flag.
+> (Or at least read the code that implements it :)
+
+I think for high-level description, we can use sg table to map one
+bulk block and send to crypt layer by skcipher_request_set_crypt()
+function.
+
+>
+>>> Which drivers it should use? I do not see any posted patch that uses this flag yet.
+>>> How we can test it?
+>>
+>> Some cipher engine drivers which support bulk mode should use this
+>> flag. Yeah, we need upstream one cipher driver with this flag for
+>> testing.
+>
+> I think if you introduce new flag, you should also post drivers that uses it.
+> Otherwise it is just unused code for mainline.
+
+Yeah, that's right.
+
+>
+> And I definitely would like to test it somewhere and see real
+> performance data (not just simple dd).
+
+OK. Thanks.
+
+>
+> Thanks,
+> Milan
+>
+>>
+>>>
+>>> Milan
+>>>
+>>>>
+>>>> Signed-off-by: Baolin Wang <baolin.wang@linaro.org>
+>>>> ---
+>>>>  include/crypto/skcipher.h |    7 +++++++
+>>>>  include/linux/crypto.h    |    6 ++++++
+>>>>  2 files changed, 13 insertions(+)
+>>>>
+>>>> diff --git a/include/crypto/skcipher.h b/include/crypto/skcipher.h
+>>>> index 0f987f5..d89d29a 100644
+>>>> --- a/include/crypto/skcipher.h
+>>>> +++ b/include/crypto/skcipher.h
+>>>> @@ -519,5 +519,12 @@ static inline void skcipher_request_set_crypt(
+>>>>       req->iv = iv;
+>>>>  }
+>>>>
+>>>> +static inline unsigned int skcipher_is_bulk_mode(struct crypto_skcipher *sk_tfm)
+>>>> +{
+>>>> +     struct crypto_tfm *tfm = crypto_skcipher_tfm(sk_tfm);
+>>>> +
+>>>> +     return crypto_tfm_alg_bulk(tfm);
+>>>> +}
+>>>> +
+>>>>  #endif       /* _CRYPTO_SKCIPHER_H */
+>>>>
+>>>> diff --git a/include/linux/crypto.h b/include/linux/crypto.h
+>>>> index 6e28c89..a315487 100644
+>>>> --- a/include/linux/crypto.h
+>>>> +++ b/include/linux/crypto.h
+>>>> @@ -63,6 +63,7 @@
+>>>>  #define CRYPTO_ALG_DEAD                      0x00000020
+>>>>  #define CRYPTO_ALG_DYING             0x00000040
+>>>>  #define CRYPTO_ALG_ASYNC             0x00000080
+>>>> +#define CRYPTO_ALG_BULK                      0x00000100
+>>>>
+>>>>  /*
+>>>>   * Set this bit if and only if the algorithm requires another algorithm of
+>>>> @@ -623,6 +624,11 @@ static inline u32 crypto_tfm_alg_type(struct crypto_tfm *tfm)
+>>>>       return tfm->__crt_alg->cra_flags & CRYPTO_ALG_TYPE_MASK;
+>>>>  }
+>>>>
+>>>> +static inline unsigned int crypto_tfm_alg_bulk(struct crypto_tfm *tfm)
+>>>> +{
+>>>> +     return tfm->__crt_alg->cra_flags & CRYPTO_ALG_BULK;
+>>>> +}
+>>>> +
+>>>>  static inline unsigned int crypto_tfm_alg_blocksize(struct crypto_tfm *tfm)
+>>>>  {
+>>>>       return tfm->__crt_alg->cra_blocksize;
+>>>>
+>>>
+>>
+>>
+>>
+
+
+
+-- 
+Baolin.wang
+Best Regards
