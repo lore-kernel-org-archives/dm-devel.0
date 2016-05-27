@@ -1,240 +1,175 @@
-From: Baolin Wang <baolin.wang@linaro.org>
-Subject: [RFC v2 3/3] md: dm-crypt: Introduce the bulk mode method when sending request
-Date: Fri, 27 May 2016 19:11:24 +0800
-Message-ID: <afa4ebdae7f8cb364d7563e8d32f064c0aa0111f.1464346333.git.baolin.wang@linaro.org>
-References: <cover.1464346333.git.baolin.wang@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1464346333.git.baolin.wang@linaro.org>
-In-Reply-To: <cover.1464346333.git.baolin.wang@linaro.org>
-References: <cover.1464346333.git.baolin.wang@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, herbert@gondor.apana.org.au, davem@davemloft.net
-Cc: ebiggers3@gmail.com, js1304@gmail.com, tadeusz.struk@intel.com, smueller@chronox.de, standby24x7@gmail.com, shli@kernel.org, dan.j.williams@intel.com, martin.petersen@oracle.com, sagig@mellanox.com, kent.overstreet@gmail.com, keith.busch@intel.com, tj@kernel.org, ming.lei@canonical.com, broonie@kernel.org, arnd@arndb.de, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, baolin.wang@linaro.org
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: bio-based DM multipath is back from the dead [was: Re: Notes
+ from the four separate IO track sessions at LSF/MM]
+Date: Fri, 27 May 2016 10:44:08 -0400
+Message-ID: <20160527144407.GA31394@redhat.com>
+References: <1461800389.2311.70.camel@HansenPartnership.com>
+ <20160428121108.GA9903@redhat.com>
+ <1461858038.2307.16.camel@HansenPartnership.com>
+ <20160526023855.GA20659@redhat.com>
+ <574807D6.4030208@suse.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <574807D6.4030208@suse.de>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>
+Cc: James Bottomley <James.Bottomley@hansenpartnership.com>, linux-block@vger.kernel.org, lsf@lists.linux-foundation.org, device-mapper development <dm-devel@redhat.com>, hch@lst.de, linux-scsi <linux-scsi@vger.kernel.org>, axboe@kernel.dk, Ming Lei <ming.lei@canonical.com>
 List-Id: dm-devel.ids
 
-In now dm-crypt code, it is ineffective to map one segment (always one
-sector) of one bio with just only one scatterlist at one time for hardware
-crypto engine. Especially for some encryption mode (like ecb or xts mode)
-cooperating with the crypto engine, they just need one initial IV or null
-IV instead of different IV for each sector. In this situation We can consider
-to use multiple scatterlists to map the whole bio and send all scatterlists
-of one bio to crypto engine to encrypt or decrypt, which can improve the
-hardware engine's efficiency.
+On Fri, May 27 2016 at  4:39am -0400,
+Hannes Reinecke <hare@suse.de> wrote:
 
-With this optimization, On my test setup (beaglebone black board) using 64KB
-I/Os on an eMMC storage device I saw about 60% improvement in throughput for
-encrypted writes, and about 100% improvement for encrypted reads. But this
-is not fit for other modes which need different IV for each sector.
+> On 05/26/2016 04:38 AM, Mike Snitzer wrote:
+> >On Thu, Apr 28 2016 at 11:40am -0400,
+> >James Bottomley <James.Bottomley@HansenPartnership.com> wrote:
+> >
+> >>On Thu, 2016-04-28 at 08:11 -0400, Mike Snitzer wrote:
+> >>>Full disclosure: I'll be looking at reinstating bio-based DM multipath to
+> >>>regain efficiencies that now really matter when issuing IO to extremely
+> >>>fast devices (e.g. NVMe).  bio cloning is now very cheap (due to
+> >>>immutable biovecs), coupled with the emerging multipage biovec work that
+> >>>will help construct larger bios, so I think it is worth pursuing to at
+> >>>least keep our options open.
+> >
+> >Please see the 4 topmost commits I've published here:
+> >https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.8
+> >
+> >All request-based DM multipath support/advances have been completly
+> >preserved.  I've just made it so that we can now have bio-based DM
+> >multipath too.
+> >
+> >All of the various modes have been tested using mptest:
+> >https://github.com/snitm/mptest
+> >
+> >>OK, but remember the reason we moved from bio to request was partly to
+> >>be nearer to the device but also because at that time requests were
+> >>accumulations of bios which had to be broken out, go back up the stack
+> >>individually and be re-elevated, which adds to the inefficiency.  In
+> >>theory the bio splitting work will mean that we only have one or two
+> >>split bios per request (because they were constructed from a split up
+> >>huge bio), but when we send them back to the top to be reconstructed as
+> >>requests there's no guarantee that the split will be correct a second
+> >>time around and we might end up resplitting the already split bios.  If
+> >>you do reassembly into the huge bio again before resend down the next
+> >>queue, that's starting to look like quite a lot of work as well.
+> >
+> >I've not even delved into the level you're laser-focused on here.
+> >But I'm struggling to grasp why multipath is any different than any
+> >other bio-based device...
+> >
+> Actually, _failover_ is not the primary concern. This is on a
+> (relative) slow path so any performance degradation during failover
+> is acceptable.
+> 
+> No, the real issue is load-balancing.
+> If you have several paths you have to schedule I/O across all paths,
+> _and_ you should be feeding these paths efficiently.
 
-Signed-off-by: Baolin Wang <baolin.wang@linaro.org>
----
- drivers/md/dm-crypt.c |  145 ++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 144 insertions(+), 1 deletion(-)
+<snip well known limitation of bio-based mpath load balancing, also
+detailed in the multipath paper I refernced>
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 4f3cb35..2101f35 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -33,6 +33,7 @@
- #include <linux/device-mapper.h>
- 
- #define DM_MSG_PREFIX "crypt"
-+#define DM_MAX_SG_LIST	1024
- 
- /*
-  * context holding the current state of a multi-part conversion
-@@ -142,6 +143,9 @@ struct crypt_config {
- 	char *cipher;
- 	char *cipher_string;
- 
-+	struct sg_table sgt_in;
-+	struct sg_table sgt_out;
-+
- 	struct crypt_iv_operations *iv_gen_ops;
- 	union {
- 		struct iv_essiv_private essiv;
-@@ -837,6 +841,129 @@ static u8 *iv_of_dmreq(struct crypt_config *cc,
- 		crypto_skcipher_alignmask(any_tfm(cc)) + 1);
- }
- 
-+static void crypt_init_sg_table(struct scatterlist *sgl)
-+{
-+	struct scatterlist *sg;
-+	int i;
-+
-+	for_each_sg(sgl, sg, DM_MAX_SG_LIST, i) {
-+		if (i < DM_MAX_SG_LIST - 1 && sg_is_last(sg))
-+			sg_unmark_end(sg);
-+		else if (i == DM_MAX_SG_LIST - 1)
-+			sg_mark_end(sg);
-+	}
-+
-+	for_each_sg(sgl, sg, DM_MAX_SG_LIST, i) {
-+		memset(sg, 0, sizeof(struct scatterlist));
-+
-+		if (i == DM_MAX_SG_LIST - 1)
-+			sg_mark_end(sg);
-+	}
-+}
-+
-+static void crypt_reinit_sg_table(struct crypt_config *cc)
-+{
-+	if (!cc->sgt_in.orig_nents || !cc->sgt_out.orig_nents)
-+		return;
-+
-+	crypt_init_sg_table(cc->sgt_in.sgl);
-+	crypt_init_sg_table(cc->sgt_out.sgl);
-+}
-+
-+static int crypt_alloc_sg_table(struct crypt_config *cc)
-+{
-+	unsigned int bulk_mode = skcipher_is_bulk_mode(any_tfm(cc));
-+	int ret = 0;
-+
-+	if (!bulk_mode)
-+		goto out_skip_alloc;
-+
-+	ret = sg_alloc_table(&cc->sgt_in, DM_MAX_SG_LIST, GFP_KERNEL);
-+	if (ret)
-+		goto out_skip_alloc;
-+
-+	ret = sg_alloc_table(&cc->sgt_out, DM_MAX_SG_LIST, GFP_KERNEL);
-+	if (ret)
-+		goto out_free_table;
-+
-+	return 0;
-+
-+out_free_table:
-+	sg_free_table(&cc->sgt_in);
-+out_skip_alloc:
-+	cc->sgt_in.orig_nents = 0;
-+	cc->sgt_out.orig_nents = 0;
-+
-+	return ret;
-+}
-+
-+static int crypt_convert_bulk_block(struct crypt_config *cc,
-+				    struct convert_context *ctx,
-+				    struct skcipher_request *req)
-+{
-+	struct bio *bio_in = ctx->bio_in;
-+	struct bio *bio_out = ctx->bio_out;
-+	unsigned int total_bytes = bio_in->bi_iter.bi_size;
-+	unsigned int total_sg_in, total_sg_out;
-+	struct scatterlist *sg_in, *sg_out;
-+	struct dm_crypt_request *dmreq;
-+	u8 *iv;
-+	int r;
-+
-+	if (!cc->sgt_in.orig_nents || !cc->sgt_out.orig_nents)
-+		return -EINVAL;
-+
-+	dmreq = dmreq_of_req(cc, req);
-+	iv = iv_of_dmreq(cc, dmreq);
-+	dmreq->iv_sector = ctx->cc_sector;
-+	dmreq->ctx = ctx;
-+
-+	total_sg_in = blk_bio_map_sg(bdev_get_queue(bio_in->bi_bdev),
-+				     bio_in, cc->sgt_in.sgl);
-+	if ((total_sg_in <= 0) || (total_sg_in > DM_MAX_SG_LIST)) {
-+		DMERR("%s in sg map error %d, sg table nents[%d]\n",
-+		      __func__, total_sg_in, cc->sgt_in.orig_nents);
-+		return -EINVAL;
-+	}
-+
-+	ctx->iter_in.bi_size -= total_bytes;
-+	sg_in = cc->sgt_in.sgl;
-+	sg_out = cc->sgt_in.sgl;
-+
-+	if (bio_data_dir(bio_in) == READ)
-+		goto set_crypt;
-+
-+	total_sg_out = blk_bio_map_sg(bdev_get_queue(bio_out->bi_bdev),
-+				      bio_out, cc->sgt_out.sgl);
-+	if ((total_sg_out <= 0) || (total_sg_out > DM_MAX_SG_LIST)) {
-+		DMERR("%s out sg map error %d, sg table nents[%d]\n",
-+		      __func__, total_sg_out, cc->sgt_out.orig_nents);
-+		return -EINVAL;
-+	}
-+
-+	ctx->iter_out.bi_size -= total_bytes;
-+	sg_out = cc->sgt_out.sgl;
-+
-+set_crypt:
-+	if (cc->iv_gen_ops) {
-+		r = cc->iv_gen_ops->generator(cc, iv, dmreq);
-+		if (r < 0)
-+			return r;
-+	}
-+
-+	skcipher_request_set_crypt(req, sg_in, sg_out, total_bytes, iv);
-+
-+	if (bio_data_dir(ctx->bio_in) == WRITE)
-+		r = crypto_skcipher_encrypt(req);
-+	else
-+		r = crypto_skcipher_decrypt(req);
-+
-+	if (!r && cc->iv_gen_ops && cc->iv_gen_ops->post)
-+		r = cc->iv_gen_ops->post(cc, iv, dmreq);
-+
-+	return r;
-+}
-+
- static int crypt_convert_block(struct crypt_config *cc,
- 			       struct convert_context *ctx,
- 			       struct skcipher_request *req)
-@@ -920,6 +1047,7 @@ static void crypt_free_req(struct crypt_config *cc,
- static int crypt_convert(struct crypt_config *cc,
- 			 struct convert_context *ctx)
- {
-+	unsigned int bulk_mode;
- 	int r;
- 
- 	atomic_set(&ctx->cc_pending, 1);
-@@ -930,7 +1058,14 @@ static int crypt_convert(struct crypt_config *cc,
- 
- 		atomic_inc(&ctx->cc_pending);
- 
--		r = crypt_convert_block(cc, ctx, ctx->req);
-+		bulk_mode = skcipher_is_bulk_mode(any_tfm(cc));
-+		if (!bulk_mode) {
-+			r = crypt_convert_block(cc, ctx, ctx->req);
-+		} else {
-+			r = crypt_convert_bulk_block(cc, ctx, ctx->req);
-+			if (r == -EINVAL)
-+				r = crypt_convert_block(cc, ctx, ctx->req);
-+		}
- 
- 		switch (r) {
- 		/*
-@@ -1081,6 +1216,7 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
- 	if (io->ctx.req)
- 		crypt_free_req(cc, io->ctx.req, base_bio);
- 
-+	crypt_reinit_sg_table(cc);
- 	base_bio->bi_error = error;
- 	bio_endio(base_bio);
- }
-@@ -1563,6 +1699,9 @@ static void crypt_dtr(struct dm_target *ti)
- 	kzfree(cc->cipher);
- 	kzfree(cc->cipher_string);
- 
-+	sg_free_table(&cc->sgt_in);
-+	sg_free_table(&cc->sgt_out);
-+
- 	/* Must zero key material before freeing */
- 	kzfree(cc);
- }
-@@ -1718,6 +1857,10 @@ static int crypt_ctr_cipher(struct dm_target *ti,
- 		}
- 	}
- 
-+	ret = crypt_alloc_sg_table(cc);
-+	if (ret)
-+		DMWARN("Allocate sg table for bulk mode failed");
-+
- 	ret = 0;
- bad:
- 	kfree(cipher_api);
--- 
-1.7.9.5
+Right, as my patch header details, this is the only limitation that
+remains with the reinstated bio-based DM multipath.
+
+> I was sort-of hoping that with the large bio work from Shaohua we
+
+I think you mean Ming Lei and his multipage biovec work?
+
+> could build bio which would not require any merging, ie building
+> bios which would be assembled into a single request per bio.
+> Then the above problem wouldn't exist anymore and we _could_ do
+> scheduling on bio level.
+> But from what I've gathered this is not always possible (eg for
+> btrfs with delayed allocation).
+
+I doubt many people are running btrfs over multipath in production
+but...
+
+Taking a step back: reinstating bio-based DM multipath is _not_ at the
+expense of request-based DM multipath.  As you can see I've made it so
+that all modes (bio-based, request_fn rq-based, and blk-mq rq-based) are
+supported by a single DM multipath target.  When the trnasition to
+request-based happened it would've been wise to preserve bio-based but I
+digress...
+
+So, the point is: there isn't any one-size-fits-all DM multipath queue
+mode here.  If a storage config benefits from the request_fn IO
+schedulers (but isn't hurt by .request_fn's queue lock, so slower
+rotational storage?) then use queue_mode=2.  If the storage is connected
+to a large NUMA system and there is some reason to want to use blk-mq
+request_queue at the DM level: use queue_mode=3.  If the storage is
+_really_ fast and doesn't care about extra IO grooming (e.g. sorting and
+merging) then select bio-based using queue_mode=1.
+
+I collected some quick performance numbers against a null_blk device, on
+a single NUMA node system, with various DM layers ontop -- the multipath
+runs are only with a single path... fio workload is just 10 sec randread:
+
+FIO_QUEUE_DEPTH=32
+FIO_RUNTIME=10
+FIO_NUMJOBS=12
+{FIO} --numa_cpu_nodes=${NID} --numa_mem_policy=bind:${NID} --cpus_allowed_policy=split --group_reporting --rw=randread --bs=4k --numjobs=${FIO_NUMJOBS} \
+              --iodepth=${FIO_QUEUE_DEPTH} --runtime=${FIO_RUNTIME} --time_based --loops=1 --ioengine=libaio \
+              --direct=1 --invalidate=1 --randrepeat=1 --norandommap --exitall --name task_${TASK_NAME} --filename=${DEVICE}"
+
+I need real hardware (NVMe over Fabrics please!) to really test this
+stuff properly; but I think the following results at least approximate
+the relative performance of each multipath mode.
+
+On null_blk blk-mq
+------------------
+
+baseline:
+null_blk blk-mq       iops=1936.3K
+dm-linear             iops=1616.1K
+
+multipath using round-robin path-selector:
+bio-based             iops=1579.8K
+blk-mq rq-based       iops=1411.6K
+request_fn rq-based   iops=326491
+
+multipath using queue-length path-selector:
+bio-based             iops=1526.2K
+blk-mq rq-based       iops=1351.9K
+request_fn rq-based   iops=326399
+
+On null_blk bio-based
+---------------------
+
+baseline:
+null_blk blk-mq       iops=2776.8K
+dm-linear             iops=2183.5K
+
+multipath using round-robin path-selector:
+bio-based             iops=2101.5K
+
+multipath using queue-length path-selector:
+bio-based             iops=2019.4K
+
+I haven't even looked at optimizing bio-based DM yet.. not liking that
+dm-linear is taking a ~15% - ~20% hit from baseline null_blk.  But nice
+to see bio-based multipath is very comparable to dm-linear.  So any
+future bio-based DM performance advances should translate to better
+multipath perf.
+
+> Have you found another way of addressing this problem?
+
+No, bio sorting/merging really isn't a problem for DM multipath to
+solve.
+
+Though Jens did say (in the context of one of these dm-crypt bulk mode
+threads) that the block core _could_ grow some additional _minimalist_
+capability for bio merging:
+https://www.redhat.com/archives/dm-devel/2015-November/msg00130.html
+
+I'd like to understand a bit more about what Jens is thinking in that
+area because it could benefit DM thinp as well (though that is using bio
+sorting rather than merging, introduced via commit 67324ea188).
+
+I'm not opposed to any line of future development -- but development
+needs to be driven by observed limitations while testing on _real_
+hardware.
+
+Mike
