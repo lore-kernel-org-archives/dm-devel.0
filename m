@@ -1,175 +1,281 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: bio-based DM multipath is back from the dead [was: Re: Notes
- from the four separate IO track sessions at LSF/MM]
-Date: Fri, 27 May 2016 10:44:08 -0400
-Message-ID: <20160527144407.GA31394@redhat.com>
-References: <1461800389.2311.70.camel@HansenPartnership.com>
- <20160428121108.GA9903@redhat.com>
- <1461858038.2307.16.camel@HansenPartnership.com>
- <20160526023855.GA20659@redhat.com>
- <574807D6.4030208@suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-crypt: Fix error with too large bios (was: bcache gets
+ stuck flushing writeback cache when used in combination with LUKS/dm-crypt
+ and non-default bucket size)
+Date: Fri, 27 May 2016 10:47:02 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1605271037470.2109@file01.intranet.prod.int.rdu2.redhat.com>
+References: <044401d1a958$ea7ef4e0$bf7cdea0$@codenest.com> <5739F07A.5090608@buttersideup.com> <alpine.LRH.2.11.1605191618560.22436@mx.ewheeler.net> <02b101d1b265$2bc46fb0$834d4f10$@codenest.com> <alpine.LRH.2.11.1605201322530.26328@mx.ewheeler.net>
+ <034e01d1b3e2$1de2f910$59a8eb30$@codenest.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <574807D6.4030208@suse.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: James Bottomley <James.Bottomley@hansenpartnership.com>, linux-block@vger.kernel.org, lsf@lists.linux-foundation.org, device-mapper development <dm-devel@redhat.com>, hch@lst.de, linux-scsi <linux-scsi@vger.kernel.org>, axboe@kernel.dk, Ming Lei <ming.lei@canonical.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <034e01d1b3e2$1de2f910$59a8eb30$@codenest.com>
+Sender: linux-bcache-owner@vger.kernel.org
+To: James Johnston <johnstonj.public@codenest.com>
+Cc: 'Eric Wheeler' <bcache@lists.ewheeler.net>, 'Tim Small' <tim@buttersideup.com>, 'Kent Overstreet' <kent.overstreet@gmail.com>, 'Alasdair Kergon' <agk@redhat.com>, 'Mike Snitzer' <snitzer@redhat.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, dm-crypt@saout.de, 'Neil Brown' <neilb@suse.com>, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, May 27 2016 at  4:39am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
+Hi
 
-> On 05/26/2016 04:38 AM, Mike Snitzer wrote:
-> >On Thu, Apr 28 2016 at 11:40am -0400,
-> >James Bottomley <James.Bottomley@HansenPartnership.com> wrote:
-> >
-> >>On Thu, 2016-04-28 at 08:11 -0400, Mike Snitzer wrote:
-> >>>Full disclosure: I'll be looking at reinstating bio-based DM multipath to
-> >>>regain efficiencies that now really matter when issuing IO to extremely
-> >>>fast devices (e.g. NVMe).  bio cloning is now very cheap (due to
-> >>>immutable biovecs), coupled with the emerging multipage biovec work that
-> >>>will help construct larger bios, so I think it is worth pursuing to at
-> >>>least keep our options open.
-> >
-> >Please see the 4 topmost commits I've published here:
-> >https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.8
-> >
-> >All request-based DM multipath support/advances have been completly
-> >preserved.  I've just made it so that we can now have bio-based DM
-> >multipath too.
-> >
-> >All of the various modes have been tested using mptest:
-> >https://github.com/snitm/mptest
-> >
-> >>OK, but remember the reason we moved from bio to request was partly to
-> >>be nearer to the device but also because at that time requests were
-> >>accumulations of bios which had to be broken out, go back up the stack
-> >>individually and be re-elevated, which adds to the inefficiency.  In
-> >>theory the bio splitting work will mean that we only have one or two
-> >>split bios per request (because they were constructed from a split up
-> >>huge bio), but when we send them back to the top to be reconstructed as
-> >>requests there's no guarantee that the split will be correct a second
-> >>time around and we might end up resplitting the already split bios.  If
-> >>you do reassembly into the huge bio again before resend down the next
-> >>queue, that's starting to look like quite a lot of work as well.
-> >
-> >I've not even delved into the level you're laser-focused on here.
-> >But I'm struggling to grasp why multipath is any different than any
-> >other bio-based device...
-> >
-> Actually, _failover_ is not the primary concern. This is on a
-> (relative) slow path so any performance degradation during failover
-> is acceptable.
+Here I'm sending a patch for this bug.
+
+BTW. I found several other bugs in bcache when testing this.
+
+1) make-bcache and the other tools do not perform endian conversion - 
+consequently bcache doesn't work on big-endian machines.
+
+2) bcache cannot be compiled on newer gcc because of inline keyword. Note 
+that in GNU C, the inline keyword is just a hint that doesn't change 
+correntness or behavior of a program. However, according to ANSI C, the 
+inline keywork changes meaning of a program - GCC recently switched to 
+ANSI C by default and so the code doesn't compile. This is a patch:
+
+	--- bcache-tools.orig/bcache.c
+	+++ bcache-tools/bcache.c
+	@@ -115,7 +115,7 @@ static const uint64_t crc_table[256] = {
+	        0x9AFCE626CE85B507ULL
+	 };
+
+	-inline uint64_t crc64(const void *_data, size_t len)
+	+uint64_t crc64(const void *_data, size_t len)
+	 {
+	        uint64_t crc = 0xFFFFFFFFFFFFFFFFULL;
+	        const unsigned char *data = _data;
+
+3) dm-crypt returns large bios with -EIO and bcache responds by attempting 
+to submit the bios again and again (which results in the reported loop). 
+The patch below fixes dm-crypt to not return errors, however you should 
+also fix bcache to handle errors gracefully (i.e. stop using the device on 
+I/O error, and don't submit the bios over and over again).
+
+Mikulas
+
+
+
+On Sun, 22 May 2016, James Johnston wrote:
+
+> > On Fri, 20 May 2016, James Johnston wrote:
+> > 
+> > > > On Mon, 16 May 2016, Tim Small wrote:
+> > > >
+> > > > > On 08/05/16 19:39, James Johnston wrote:
+> > > > > > I've run into a problem where the bcache writeback cache can't be flushed to
+> > > > > > disk when the backing device is a LUKS / dm-crypt device and the cache set has
+> > > > > > a non-default bucket size.  Basically, only a few megabytes will be flushed to
+> > > > > > disk, and then it gets stuck.  Stuck means that the bcache writeback task
+> > > > > > thrashes the disk by constantly reading hundreds of MB/second from the cache set
+> > > > > > in an infinite loop, while not actually progressing (dirty_data never decreases
+> > > > > > beyond a certain point).
+> > > > >
+> > > > > > [...]
+> > > > >
+> > > > > > The situation is basically unrecoverable as far as I can tell: if you attempt
+> > > > > > to detach the cache set then the cache set disk gets thrashed extra-hard
+> > > > > > forever, and it's impossible to actually get the cache set detached.  The only
+> > > > > > solution seems to be to back up the data and destroy the volume...
+> > > > >
+> > > > > You can boot an older kernel to flush the device without destroying it
+> > > > > (I'm guessing that's because older kernels split down the big requests
+> > > > > which are failing on the 4.4 kernel).  Once flushed you could put the
+> > > > > cache into writethrough mode, or use a smaller bucket size.
+> > > >
+> > > > Indeed, can someone test 4.1.y and see if the problem persists with a 2M
+> > > > bucket size?  (If someone has already tested 4.1, then appologies as I've
+> > > > not yet seen that report.)
+> > > >
+> > > > If 4.1 works, then I think a bisect is in order.  Such a bisect would at
+> > > > least highlight the problem and might indicate a (hopefully trivial) fix.
+> > >
+> > > To help narrow this down, I tested the following generic pre-compiled mainline kernels
+> > > on Ubuntu 15.10:
+> > >
+> > >  * WORKS:  http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.3.6-wily/
+> > >  * DOES NOT WORK:  http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.4-rc1+cod1-wily/
+> > >
+> > > I also tried the default & latest distribution-provided 4.2 kernel.  It worked.
+> > > This one also worked:
+> > >
+> > >  * WORKS:  http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.2.8-wily/
+> > >
+> > > So it seems to me that it is a regression from 4.3.6 kernel to any 4.4 kernel.  That
+> > > should help save time with bisection...
+> > 
+> > Below is the patchlist for md and block that might help with a place to
+> > start.  Are there any other places in the Linux tree where we should watch
+> > for changes?
+> > 
+> > I'm wondering if it might be in dm-4.4-changes since this is dm-crypt
+> > related, but it could be ac322de which was quite large.
+> > 
+> > James or Tim,
+> > 
+> > Can you try building ac322de?  If that produces the problem, then there
+> > are only 3 more to try (unless this was actually a problem in 4.3 which
+> > was fixed in 4.3.y, but hopefully that isn't so).
+> > 
+> > ccf21b6 is probably the next to test to rule out neil's big md patch,
+> > which Linus abreviated in the commit log so it must be quite long.  OTOH,
+> > if dm-4.4-changes works, then I'm not sure what commit might produce the
+> > problem because the rest are not obviously relevant to the issue that are
+> > more recent. 
 > 
-> No, the real issue is load-balancing.
-> If you have several paths you have to schedule I/O across all paths,
-> _and_ you should be feeding these paths efficiently.
+> So I decided to go ahead and bisect it today.  Looks like the bad commit is
+> this one.  The commit prior flushed the bcache writeback cache without
+> incident; this one does not and I guess caused this bcache regression.
+> (FWIW ac322de came up during bisection, and tested good.)
+> 
+> johnstonj@kernel-build:~/linux$ git bisect bad
+> dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7 is the first bad commit
+> commit dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7
+> Author: Mikulas Patocka <mpatocka@redhat.com>
+> Date:   Wed Oct 21 16:34:20 2015 -0400
+> 
+>     dm: eliminate unused "bioset" process for each bio-based DM device
+> 
+>     Commit 54efd50bfd873e2dbf784e0b21a8027ba4299a3e ("block: make
+>     generic_make_request handle arbitrarily sized bios") makes it possible
+>     for block devices to process large bios.  In doing so that commit
+>     allocates a new queue->bio_split bioset for each block device, this
+>     bioset is used for allocating bios when the driver needs to split large
+>     bios.
+> 
+>     Each bioset allocates a workqueue process, thus the above commit
+>     increases the number of processes allocated per block device.
+> 
+>     DM doesn't need the queue->bio_split bioset, thus we can deallocate it.
+>     This reduces the number of allocated processes per bio-based DM device
+>     from 3 to 2.  Also remove the call to blk_queue_split(), it is not
+>     needed because DM does its own splitting.
+> 
+>     Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+>     Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> 
+> The patch for this commit is very brief; reproduced here:
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 9555843..64b50b7 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1763,8 +1763,6 @@ static void dm_make_request(struct request_queue *q, struct bio *bio)
+> 
+>         map = dm_get_live_table(md, &srcu_idx);
+> 
+> -       blk_queue_split(q, &bio, q->bio_split);
+> -
+>         generic_start_io_acct(rw, bio_sectors(bio), &dm_disk(md)->part0);
+> 
+>         /* if we're suspended, we have to queue this io for later */
+> @@ -2792,6 +2790,12 @@ int dm_setup_md_queue(struct mapped_device *md)
+>         case DM_TYPE_BIO_BASED:
+>                 dm_init_old_md_queue(md);
+>                 blk_queue_make_request(md->queue, dm_make_request);
+> +               /*
+> +                * DM handles splitting bios as needed.  Free the bio_split bioset
+> +                * since it won't be used (saves 1 process per bio-based DM device).
+> +                */
+> +               bioset_free(md->queue->bio_split);
+> +               md->queue->bio_split = NULL;
+>                 break;
+>         }
+> 
+> Here is the bisect log:
+> 
+> johnstonj@kernel-build:~/linux$ git bisect log
+> git bisect start
+> # good: [6a13feb9c82803e2b815eca72fa7a9f5561d7861] Linux 4.3
+> git bisect good 6a13feb9c82803e2b815eca72fa7a9f5561d7861
+> # bad: [8005c49d9aea74d382f474ce11afbbc7d7130bec] Linux 4.4-rc1
+> git bisect bad 8005c49d9aea74d382f474ce11afbbc7d7130bec
+> # bad: [118c216e16c5ccb028cd03a0dcd56d17a07ff8d7] Merge tag 'staging-4.4-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/staging
+> git bisect bad 118c216e16c5ccb028cd03a0dcd56d17a07ff8d7
+> # good: [e627078a0cbdc0c391efeb5a2c4eb287328fd633] Merge branch 'for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/s390/linux
+> git bisect good e627078a0cbdc0c391efeb5a2c4eb287328fd633
+> # good: [c17c6da659571a115c7b4983da6c6ac464317c34] staging: wilc1000: rename pfScanResult of struct scan_attr
+> git bisect good c17c6da659571a115c7b4983da6c6ac464317c34
+> # good: [7bdb7d554e0e433b92b63f3472523cc3067f8ab4] Staging: rtl8192u: ieee80211: corrected indent
+> git bisect good 7bdb7d554e0e433b92b63f3472523cc3067f8ab4
+> # good: [ac322de6bf5416cb145b58599297b8be73cd86ac] Merge tag 'md/4.4' of git://neil.brown.name/md
+> git bisect good ac322de6bf5416cb145b58599297b8be73cd86ac
+> # good: [a4d8e93c3182a54d8d21a4d1cec6538ae1be9e16] Merge tag 'usb-for-v4.4' of git://git.kernel.org/pub/scm/linux/kernel/git/balbi/usb into usb-next
+> git bisect good a4d8e93c3182a54d8d21a4d1cec6538ae1be9e16
+> # good: [4f56f3fdca43c9a18339b6e0c3b1aa2f57f6d0b0] serial: 8250: Tolerate clock variance for max baud rate
+> git bisect good 4f56f3fdca43c9a18339b6e0c3b1aa2f57f6d0b0
+> # good: [e052c6d15c61cc4caff2f06cbca72b183da9f15e] tty: Use unbound workqueue for all input workers
+> git bisect good e052c6d15c61cc4caff2f06cbca72b183da9f15e
+> # good: [b9ca0c948c921e960006aaf319a29c004917cdf6] uwb: neh: Use setup_timer
+> git bisect good b9ca0c948c921e960006aaf319a29c004917cdf6
+> # bad: [aad9ae4550755edc020b5c511a8b54f0104b2f47] dm switch: simplify conditional in alloc_region_table()
+> git bisect bad aad9ae4550755edc020b5c511a8b54f0104b2f47
+> # good: [a3d939ae7b5f82688a6d3450f95286eaea338328] dm: convert ffs to __ffs
+> git bisect good a3d939ae7b5f82688a6d3450f95286eaea338328
+> # bad: [00272c854ee17b804ce81ef706f611dac17f4f89] dm linear: remove redundant target name from error messages
+> git bisect bad 00272c854ee17b804ce81ef706f611dac17f4f89
+> # bad: [4c7da06f5a780bbf44ebd7547789e48536d0a823] dm persistent data: eliminate unnecessary return values
+> git bisect bad 4c7da06f5a780bbf44ebd7547789e48536d0a823
+> # bad: [dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7] dm: eliminate unused "bioset" process for each bio-based DM device
+> git bisect bad dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7
+> # first bad commit: [dbba42d8a9ebddcc1c1412e8457f79f3cb6ef6e7] dm: eliminate unused "bioset" process for each bio-based DM device
+> 
+> Commands used for testing:
+> 
+> # Make cache set
+> make-bcache --bucket 2M -C /dev/sdb
+> # Set up backing device crypto
+> cryptsetup luksFormat /dev/sdc
+> cryptsetup open --type luks /dev/sdc backCrypt
+> # Make backing device & enable writeback
+> make-bcache -B /dev/mapper/backCrypt
+> bcache-super-show /dev/sdb | grep cset.uuid | cut -f 3 > /sys/block/bcache0/bcache/attach
+> echo writeback > /sys/block/bcache0/bcache/cache_mode
+> 
+> # KILL SEQUENCE
+> 
+> cd /sys/block/bcache0/bcache
+> echo 0 > sequential_cutoff
+> # Verify that the cache is attached (i.e. does not say "no cache")
+> cat state
+> dd if=/dev/urandom of=/dev/bcache0 bs=1M count=250
+> cat dirty_data
+> cat state
+> # Next line causes severe disk thrashing and failure to flush writeback cache
+> # on bad commits.
+> echo 1 > detach
+> cat dirty_data
+> cat state
+> 
+> Hope this provides some insight into the problem...
+> 
+> James
 
-<snip well known limitation of bio-based mpath load balancing, also
-detailed in the multipath paper I refernced>
+dm-crypt: Fix error with too large bios
 
-Right, as my patch header details, this is the only limitation that
-remains with the reinstated bio-based DM multipath.
+When dm-crypt processes writes, it allocates a new bio in the function
+crypt_alloc_buffer. The bio is allocated from a bio set and it can have at
+most BIO_MAX_PAGES vector entries, however the incoming bio can be larger
+if it was allocated by other means. For example, bcache creates bios
+larger than BIO_MAX_PAGES. If the incoming bio is larger, bio_alloc_bioset
+fails and error is returned.
 
-> I was sort-of hoping that with the large bio work from Shaohua we
+To avoid the error, we test for too large bio in the function crypt_map
+and dm_accept_partial_bio to split the bio. dm_accept_partial_bio trims
+the current bio to the desired size and requests that the device mapper
+core sends another bio with the rest of the data.
 
-I think you mean Ming Lei and his multipage biovec work?
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org	# v3.16+
 
-> could build bio which would not require any merging, ie building
-> bios which would be assembled into a single request per bio.
-> Then the above problem wouldn't exist anymore and we _could_ do
-> scheduling on bio level.
-> But from what I've gathered this is not always possible (eg for
-> btrfs with delayed allocation).
-
-I doubt many people are running btrfs over multipath in production
-but...
-
-Taking a step back: reinstating bio-based DM multipath is _not_ at the
-expense of request-based DM multipath.  As you can see I've made it so
-that all modes (bio-based, request_fn rq-based, and blk-mq rq-based) are
-supported by a single DM multipath target.  When the trnasition to
-request-based happened it would've been wise to preserve bio-based but I
-digress...
-
-So, the point is: there isn't any one-size-fits-all DM multipath queue
-mode here.  If a storage config benefits from the request_fn IO
-schedulers (but isn't hurt by .request_fn's queue lock, so slower
-rotational storage?) then use queue_mode=2.  If the storage is connected
-to a large NUMA system and there is some reason to want to use blk-mq
-request_queue at the DM level: use queue_mode=3.  If the storage is
-_really_ fast and doesn't care about extra IO grooming (e.g. sorting and
-merging) then select bio-based using queue_mode=1.
-
-I collected some quick performance numbers against a null_blk device, on
-a single NUMA node system, with various DM layers ontop -- the multipath
-runs are only with a single path... fio workload is just 10 sec randread:
-
-FIO_QUEUE_DEPTH=32
-FIO_RUNTIME=10
-FIO_NUMJOBS=12
-{FIO} --numa_cpu_nodes=${NID} --numa_mem_policy=bind:${NID} --cpus_allowed_policy=split --group_reporting --rw=randread --bs=4k --numjobs=${FIO_NUMJOBS} \
-              --iodepth=${FIO_QUEUE_DEPTH} --runtime=${FIO_RUNTIME} --time_based --loops=1 --ioengine=libaio \
-              --direct=1 --invalidate=1 --randrepeat=1 --norandommap --exitall --name task_${TASK_NAME} --filename=${DEVICE}"
-
-I need real hardware (NVMe over Fabrics please!) to really test this
-stuff properly; but I think the following results at least approximate
-the relative performance of each multipath mode.
-
-On null_blk blk-mq
-------------------
-
-baseline:
-null_blk blk-mq       iops=1936.3K
-dm-linear             iops=1616.1K
-
-multipath using round-robin path-selector:
-bio-based             iops=1579.8K
-blk-mq rq-based       iops=1411.6K
-request_fn rq-based   iops=326491
-
-multipath using queue-length path-selector:
-bio-based             iops=1526.2K
-blk-mq rq-based       iops=1351.9K
-request_fn rq-based   iops=326399
-
-On null_blk bio-based
----------------------
-
-baseline:
-null_blk blk-mq       iops=2776.8K
-dm-linear             iops=2183.5K
-
-multipath using round-robin path-selector:
-bio-based             iops=2101.5K
-
-multipath using queue-length path-selector:
-bio-based             iops=2019.4K
-
-I haven't even looked at optimizing bio-based DM yet.. not liking that
-dm-linear is taking a ~15% - ~20% hit from baseline null_blk.  But nice
-to see bio-based multipath is very comparable to dm-linear.  So any
-future bio-based DM performance advances should translate to better
-multipath perf.
-
-> Have you found another way of addressing this problem?
-
-No, bio sorting/merging really isn't a problem for DM multipath to
-solve.
-
-Though Jens did say (in the context of one of these dm-crypt bulk mode
-threads) that the block core _could_ grow some additional _minimalist_
-capability for bio merging:
-https://www.redhat.com/archives/dm-devel/2015-November/msg00130.html
-
-I'd like to understand a bit more about what Jens is thinking in that
-area because it could benefit DM thinp as well (though that is using bio
-sorting rather than merging, introduced via commit 67324ea188).
-
-I'm not opposed to any line of future development -- but development
-needs to be driven by observed limitations while testing on _real_
-hardware.
-
-Mike
+Index: linux-4.6/drivers/md/dm-crypt.c
+===================================================================
+--- linux-4.6.orig/drivers/md/dm-crypt.c
++++ linux-4.6/drivers/md/dm-crypt.c
+@@ -2137,6 +2137,10 @@ static int crypt_map(struct dm_target *t
+ 	struct dm_crypt_io *io;
+ 	struct crypt_config *cc = ti->private;
+ 
++	if (unlikely(bio->bi_iter.bi_size > BIO_MAX_SIZE) &&
++	    (bio->bi_rw & (REQ_FLUSH | REQ_DISCARD | REQ_WRITE)) == REQ_WRITE)
++		dm_accept_partial_bio(bio, BIO_MAX_SIZE >> SECTOR_SHIFT);
++
+ 	/*
+ 	 * If bio is REQ_FLUSH or REQ_DISCARD, just bypass crypt queues.
+ 	 * - for REQ_FLUSH device-mapper core ensures that no IO is in-flight
