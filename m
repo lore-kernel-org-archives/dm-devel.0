@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 5/7] multipath: validate devmap names
-Date: Tue, 31 May 2016 18:16:48 -0500
-Message-ID: <1464736610-20027-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 1/7] multipathd: handler fixes
+Date: Tue, 31 May 2016 18:16:44 -0500
+Message-ID: <1464736610-20027-2-git-send-email-bmarzins@redhat.com>
 References: <1464736610-20027-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,77 +21,49 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Any device identifier given to multipath that isn't either a block
-device or a major:minor id is assumed to be a multipath alias. This can
-cause some confusing messages if the user accidentally enters something
-that is clearly a pathname, but isn't a block device. Since multipath
-device aliases are not allowed to have a "/" in them, multipath now
-checks the identifier for this before assuming that is is a device
-alias, and if there is a "/", it errors out with a helpful message.
+We now have unlocked handlers, but these can't be used to call functions
+that will access the pathvec, mpvec, or conf, since these are what the
+vecs lock protects. cli_list_config and cli_list_blacklist both need to
+access conf, so they can't be unlocked handlers.
+
+Also, if parse_cmd fails to lock the vecs->lock when it calls
+pthread_mutex_timedlock, we can't call unlock() on it, because unlocking
+a mutex you haven't locked causes undefined behviour. So we need to
+only execute the handler if didn't timeout trying to acquire the lock.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/alias.c | 8 ++++++++
- libmultipath/alias.h | 1 +
- multipath/main.c     | 7 ++++++-
- 3 files changed, 15 insertions(+), 1 deletion(-)
+ multipathd/cli.c  | 2 +-
+ multipathd/main.c | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-index 7d12a0c..5fdcdb5 100644
---- a/libmultipath/alias.c
-+++ b/libmultipath/alias.c
-@@ -36,6 +36,14 @@
-  * See the file COPYING included with this distribution for more details.
-  */
- 
-+int
-+valid_alias(char *alias)
-+{
-+	if (strchr(alias, '/') != NULL)
-+		return 0;
-+	return 1;
-+}
-+
- 
- static int
- format_devname(char *name, int id, int len, char *prefix)
-diff --git a/libmultipath/alias.h b/libmultipath/alias.h
-index 9cb3e8f..95473ff 100644
---- a/libmultipath/alias.h
-+++ b/libmultipath/alias.h
-@@ -7,6 +7,7 @@
- "# alias wwid\n" \
- "#\n"
- 
-+int valid_alias(char *alias);
- char *get_user_friendly_alias(char *wwid, char *file, char *prefix,
- 			      int bindings_readonly);
- int get_user_friendly_wwid(char *alias, char *buff, char *file);
-diff --git a/multipath/main.c b/multipath/main.c
-index c33f689..aadebec 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -465,8 +465,9 @@ get_dev_type(char *dev) {
- 	}
- 	else if (sscanf(dev, "%d:%d", &i, &i) == 2)
- 		return DEV_DEVT;
--	else
-+	else if (valid_alias(dev))
- 		return DEV_DEVMAP;
-+	return DEV_NONE;
- }
- 
- int
-@@ -596,6 +597,10 @@ main (int argc, char *argv[])
- 		strncpy(conf->dev, argv[optind], FILE_NAME_SIZE);
- 		if (conf->dev_type != DEV_UEVENT)
- 			conf->dev_type = get_dev_type(conf->dev);
-+		if (conf->dev_type == DEV_NONE) {
-+			condlog(0, "'%s' is not a valid argument\n", conf->dev);
-+			goto out;
-+		}
- 	}
- 	conf->daemon = 0;
- 	if (conf->dev_type == DEV_UEVENT) {
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index d991cd0..1925d82 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -496,7 +496,7 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
+ 			pthread_testcancel();
+ 			r = h->fn(cmdvec, reply, len, data);
+ 		}
+-		lock_cleanup_pop(vecs->lock);
++		pthread_cleanup_pop(!r);
+ 	} else
+ 		r = h->fn(cmdvec, reply, len, data);
+ 	free_keys(cmdvec);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 2c7486d..77c802b 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1132,8 +1132,8 @@ uxlsnrloop (void * ap)
+ 	set_handler_callback(LIST+MAP+TOPOLOGY, cli_list_map_topology);
+ 	set_handler_callback(LIST+MAP+FMT, cli_list_map_fmt);
+ 	set_handler_callback(LIST+MAP+RAW+FMT, cli_list_map_fmt);
+-	set_unlocked_handler_callback(LIST+CONFIG, cli_list_config);
+-	set_unlocked_handler_callback(LIST+BLACKLIST, cli_list_blacklist);
++	set_handler_callback(LIST+CONFIG, cli_list_config);
++	set_handler_callback(LIST+BLACKLIST, cli_list_blacklist);
+ 	set_handler_callback(LIST+DEVICES, cli_list_devices);
+ 	set_handler_callback(LIST+WILDCARDS, cli_list_wildcards);
+ 	set_handler_callback(ADD+PATH, cli_add_path);
 -- 
 1.8.3.1
