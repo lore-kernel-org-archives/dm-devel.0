@@ -1,137 +1,59 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 2/7] libmultipath: remove calls to
-	dm_udev_complete
-Date: Tue, 31 May 2016 18:16:45 -0500
-Message-ID: <1464736610-20027-3-git-send-email-bmarzins@redhat.com>
-References: <1464736610-20027-1-git-send-email-bmarzins@redhat.com>
+From: "James Johnston" <johnstonj.public@codenest.com>
+Subject: RE: [PATCH] dm-crypt: Fix error with too large bios (was: bcache gets stuck flushing writeback cache when used in combination with LUKS/dm-crypt and non-default bucket size)
+Date: Wed, 1 Jun 2016 04:19:11 -0000
+Message-ID: <07be01d1bbbc$c2e37f70$48aa7e50$@codenest.com>
+References: <044401d1a958$ea7ef4e0$bf7cdea0$@codenest.com> <5739F07A.5090608@buttersideup.com> <alpine.LRH.2.11.1605191618560.22436@mx.ewheeler.net> <02b101d1b265$2bc46fb0$834d4f10$@codenest.com> <alpine.LRH.2.11.1605201322530.26328@mx.ewheeler.net> <034e01d1b3e2$1de2f910$59a8eb30$@codenest.com> <alpine.LRH.2.02.1605271037470.2109@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain;
+	charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1464736610-20027-1-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.1605271037470.2109@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Language: en-us
+Sender: linux-raid-owner@vger.kernel.org
+To: 'Mikulas Patocka' <mpatocka@redhat.com>
+Cc: 'Eric Wheeler' <bcache@lists.ewheeler.net>, 'Tim Small' <tim@buttersideup.com>, 'Kent Overstreet' <kent.overstreet@gmail.com>, 'Alasdair Kergon' <agk@redhat.com>, 'Mike Snitzer' <snitzer@redhat.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, dm-crypt@saout.de, 'Neil Brown' <neilb@suse.com>, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-There were two places where the code was calling dm_udev_complete, when
-dm_task_set_cookie() failed and when a subsequent call dm_task_run()
-failed.  It is correct in neither of these cases.  If
-dm_task_set_cookie() fails, device mapper will zero out the cookie
-before returning, so there is nothing to complete. If it succeeds and
-there is a cookie, something has to wait on it, or it will hang around
-in the system forever. dm_udev_complete() will not wait on the cookie or
-clean it up. Its job is to signal to the waiters that they are done
-waiting.  This is called for us when dm_task_run() fails, so calling
-dm_udev_wait() then will not block but immediately clean up the cookie.
+On Fri, 27 May 2016, Mikulas Patocka wrote:
+> dm-crypt: Fix error with too large bios
+> 
+> When dm-crypt processes writes, it allocates a new bio in the function
+> crypt_alloc_buffer. The bio is allocated from a bio set and it can have at
+> most BIO_MAX_PAGES vector entries, however the incoming bio can be larger
+> if it was allocated by other means. For example, bcache creates bios
+> larger than BIO_MAX_PAGES. If the incoming bio is larger, bio_alloc_bioset
+> fails and error is returned.
+> 
+> To avoid the error, we test for too large bio in the function crypt_map
+> and dm_accept_partial_bio to split the bio. dm_accept_partial_bio trims
+> the current bio to the desired size and requests that the device mapper
+> core sends another bio with the rest of the data.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org	# v3.16+
 
-This patch simply removes all of the dm_udev_complete() calls.
+Tested-by: James Johnston <johnstonj.public@codenest.com>
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- kpartx/devmapper.c       | 20 ++++----------------
- libmultipath/devmapper.c | 17 +++--------------
- 2 files changed, 7 insertions(+), 30 deletions(-)
+I tested this patch by:
 
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index e006bc3..c5ba39d 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -77,19 +77,13 @@ dm_simplecmd (int task, const char *name, int no_flush, uint16_t udev_flags) {
- #ifdef LIBDM_API_COOKIE
- 	if (!udev_sync)
- 		udev_flags |= DM_UDEV_DISABLE_LIBRARY_FALLBACK;
--	if (udev_wait_flag && !dm_task_set_cookie(dmt, &cookie, udev_flags)) {
--		dm_udev_complete(cookie);
-+	if (udev_wait_flag && !dm_task_set_cookie(dmt, &cookie, udev_flags))
- 		goto out;
--	}
- #endif
- 	r = dm_task_run(dmt);
- #ifdef LIBDM_API_COOKIE
--	if (udev_wait_flag) {
--		if (!r)
--			dm_udev_complete(cookie);
--		else
-+	if (udev_wait_flag)
- 			dm_udev_wait(cookie);
--	}
- #endif
- 	out:
- 	dm_task_destroy(dmt);
-@@ -145,19 +139,13 @@ dm_addmap (int task, const char *name, const char *target,
- 	if (!udev_sync)
- 		udev_flags = DM_UDEV_DISABLE_LIBRARY_FALLBACK;
- 	if (task == DM_DEVICE_CREATE &&
--	    !dm_task_set_cookie(dmt, &cookie, udev_flags)) {
--		dm_udev_complete(cookie);
-+	    !dm_task_set_cookie(dmt, &cookie, udev_flags))
- 		goto addout;
--	}
- #endif
- 	r = dm_task_run (dmt);
- #ifdef LIBDM_API_COOKIE
--	if (task == DM_DEVICE_CREATE) {
--		if (!r)
--			dm_udev_complete(cookie);
--		else
-+	if (task == DM_DEVICE_CREATE)
- 			dm_udev_wait(cookie);
--	}
- #endif
- addout:
- 	dm_task_destroy (dmt);
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 6d1a5d6..ce884e2 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -237,12 +237,8 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync, uint16_t
- 
- 	r = dm_task_run (dmt);
- 
--	if (udev_wait_flag) {
--		if (!r)
--			dm_udev_complete(cookie);
--		else
-+	if (udev_wait_flag)
- 			dm_udev_wait(cookie);
--	}
- 	out:
- 	dm_task_destroy (dmt);
- 	return r;
-@@ -325,12 +321,8 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
- 
- 	r = dm_task_run (dmt);
- 
--	if (task == DM_DEVICE_CREATE) {
--		if (!r)
--			dm_udev_complete(cookie);
--		else
-+	if (task == DM_DEVICE_CREATE)
- 			dm_udev_wait(cookie);
--	}
- 	freeout:
- 	if (prefixed_uuid)
- 		FREE(prefixed_uuid);
-@@ -1431,10 +1423,7 @@ dm_rename (const char * old, char * new)
- 		goto out;
- 	r = dm_task_run(dmt);
- 
--	if (!r)
--		dm_udev_complete(cookie);
--	else
--		dm_udev_wait(cookie);
-+	dm_udev_wait(cookie);
- 
- out:
- 	dm_task_destroy(dmt);
--- 
-1.8.3.1
+1.  Building v4.7-rc1 from Torvalds git repo.  Confirmed that original bug
+    still occurs on Ubuntu 15.10.
+
+2.  Applying your patch to v4.7-rc1.  My kill sequence no longer works,
+    and the writeback cache is now successfully flushed to disk, and the
+    cache can be detached from the backing device.
+
+3.  To check data integrity, copied 250 MB of /dev/urandom to some file
+    on main volume.  Then, dd copy this file to /dev/bcache0.  Then,
+    detached the cache device from the backing device.  Then, rebooted.
+    Then, dd copy /dev/bcache0 to another file on main volume.  Then,
+    diff the files and confirm no changes.
+
+So it looks like it works, based on this admittedly brief testing.  Thanks!
+
+Best regards,
+
+James Johnston
+
+
