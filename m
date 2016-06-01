@@ -1,64 +1,49 @@
-From: Ritesh Raj Sarraf <rrs@debian.org>
-Subject: [PATCH] Fix build failure on multiple arches
-Date: Wed,  1 Jun 2016 19:24:33 +0530
-Message-ID: <1464789273-10220-1-git-send-email-rrs@debian.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-log-writes: fix bug with too large bios
+Date: Wed, 1 Jun 2016 10:02:43 -0400
+Message-ID: <20160601140243.GC30759@redhat.com>
+References: <alpine.LRH.2.02.1605271047280.2109@file01.intranet.prod.int.rdu2.redhat.com>
+ <07bf01d1bbbd$53991750$facb45f0$@codenest.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Ritesh Raj Sarraf <rrs@debian.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <07bf01d1bbbd$53991750$facb45f0$@codenest.com>
+Sender: linux-bcache-owner@vger.kernel.org
+To: James Johnston <johnstonj.public@codenest.com>
+Cc: 'Mikulas Patocka' <mpatocka@redhat.com>, "'Alasdair G. Kergon'" <agk@redhat.com>, 'Josef Bacik' <jbacik@fb.com>, 'Eric Wheeler' <bcache@lists.ewheeler.net>, dm-crypt@saout.de, dm-devel@redhat.com, 'Neil Brown' <neilb@suse.com>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, 'Kent Overstreet' <kent.overstreet@gmail.com>, 'Tim Small' <tim@buttersideup.com>
 List-Id: dm-devel.ids
 
-VGhlIGJ1aWxkIHNlZW1zIHRvIGJlIGZhaWxpbmcgb24gY29tbW9uIDMyIGJpdCBhcmNoaXRlY3R1
-cmVzLCB3aGVyZQoidW5zaWduZWQgbG9uZyIgYW5kICJ1aW50NjRfdCIgdGVuZCB0byBwcm9kdWNl
-IGEgZGlmZmVyZW50IHZhbHVlcy4KVGhpcyBhbm9tYWx5IGlzIG5vdCBzZWVuIG9uIHRoZSBjb21t
-b24gNjRiaXQgYXJjaGl0ZWN0dXJlcy4KCgpCdWlsZCBmYWlsdXJlCj09PT09PT09PT09PT09PQoK
-Y2MgLWcgLU8yIC1mUElFIC1mc3RhY2stcHJvdGVjdG9yLXN0cm9uZyAtV2Zvcm1hdCAtV2Vycm9y
-PWZvcm1hdC1zZWN1cml0eSAtc3RhdGljLWxpYmdjYyAtV2RhdGUtdGltZSAtRF9GT1JUSUZZX1NP
-VVJDRT0yIC1PMiAtZyAtcGlwZSAtV2Zvcm1hdC1zZWN1cml0eSAtV2FsbCAtV3AsLURfRk9SVElG
-WV9TT1VSQ0U9MiAtZmV4Y2VwdGlvbnMgLWZzdGFjay1wcm90ZWN0b3IgLS1wYXJhbT1zc3AtYnVm
-ZmVyLXNpemU9NCAtV3VudXNlZCAtV3N0cmljdC1wcm90b3R5cGVzIC1mUElDIC1ETElCX1NUUklO
-Rz1cIi9saWJcIiAtRFJVTl9ESVI9XCJydW5cIiAtSS4uL2xpYm11bHRpcGF0aCAtSS4uL2xpYm1w
-YXRocGVyc2lzdCAtSS4uL2xpYm1wYXRoY21kIC1jIC1vIGNsaS5vIGNsaS5jCmNsaS5jOjExMjox
-OiBlcnJvcjogY29uZmxpY3RpbmcgdHlwZXMgZm9yICdzZXRfdW5sb2NrZWRfaGFuZGxlcl9jYWxs
-YmFjaycKIHNldF91bmxvY2tlZF9oYW5kbGVyX2NhbGxiYWNrICh1bnNpZ25lZCBsb25nIGZwLGlu
-dCAoKmZuKSh2b2lkICosIGNoYXIgKiosIGludCAqLCB2b2lkICopKQogXgpJbiBmaWxlIGluY2x1
-ZGVkIGZyb20gY2xpLmM6MTY6MDoKY2xpLmg6MTEwOjU6IG5vdGU6IHByZXZpb3VzIGRlY2xhcmF0
-aW9uIG9mICdzZXRfdW5sb2NrZWRfaGFuZGxlcl9jYWxsYmFjaycgd2FzIGhlcmUKIGludCBzZXRf
-dW5sb2NrZWRfaGFuZGxlcl9jYWxsYmFjayAodWludDY0X3QgZnAsIGludCAoKmZuKSh2b2lkICos
-IGNoYXIgKiosIGludCAqLCB2b2lkICopKTsKICAgICBeCi4uL01ha2VmaWxlLmluYzo3NDogcmVj
-aXBlIGZvciB0YXJnZXQgJ2NsaS5vJyBmYWlsZWQKbWFrZVsyXTogKioqIFtjbGkub10gRXJyb3Ig
-MQptYWtlWzJdOiBMZWF2aW5nIGRpcmVjdG9yeSAnL8KrUEtHQlVJTERESVLCuy9tdWx0aXBhdGhk
-JwpNYWtlZmlsZTo0MjogcmVjaXBlIGZvciB0YXJnZXQgJ3JlY3Vyc2UnIGZhaWxlZAptYWtlWzFd
-OiAqKiogW3JlY3Vyc2VdIEVycm9yIDIKbWFrZVsxXTogTGVhdmluZyBkaXJlY3RvcnkgJy/Cq1BL
-R0JVSUxERElSwrsnCmRlYmlhbi9ydWxlczo0NTogcmVjaXBlIGZvciB0YXJnZXQgJ2J1aWxkLW11
-bHRpcGF0aC11ZGViLXN0YW1wJyBmYWlsZWQKbWFrZTogKioqIFtidWlsZC1tdWx0aXBhdGgtdWRl
-Yi1zdGFtcF0gRXJyb3IgMgpkcGtnLWJ1aWxkcGFja2FnZTogZXJyb3I6IGRlYmlhbi9ydWxlcyBi
-dWlsZC1hcmNoIGdhdmUgZXJyb3IgZXhpdCBzdGF0dXMgMgrilIDilIDilIDilIDilIDilIDilIDi
-lIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDi
-lIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDi
-lIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDi
-lIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIAKQnVpbGQgZmlu
-aXNoZWQgYXQgMjAxNjA1MzEtMTQwNQoKU2lnbmVkLW9mZi1ieTogUml0ZXNoIFJhaiBTYXJyYWYg
-PHJyc0BkZWJpYW4ub3JnPgotLS0KIG11bHRpcGF0aGQvY2xpLmMgfCAyICstCiAxIGZpbGUgY2hh
-bmdlZCwgMSBpbnNlcnRpb24oKyksIDEgZGVsZXRpb24oLSkKCmRpZmYgLS1naXQgYS9tdWx0aXBh
-dGhkL2NsaS5jIGIvbXVsdGlwYXRoZC9jbGkuYwppbmRleCBkOTkxY2QwLi5iOTkzMGRjIDEwMDY0
-NAotLS0gYS9tdWx0aXBhdGhkL2NsaS5jCisrKyBiL211bHRpcGF0aGQvY2xpLmMKQEAgLTEwOSw3
-ICsxMDksNyBAQCBzZXRfaGFuZGxlcl9jYWxsYmFjayAodWludDY0X3QgZnAsIGludCAoKmZuKSh2
-b2lkICosIGNoYXIgKiosIGludCAqLCB2b2lkICopKQogfQogCiBpbnQKLXNldF91bmxvY2tlZF9o
-YW5kbGVyX2NhbGxiYWNrICh1bnNpZ25lZCBsb25nIGZwLGludCAoKmZuKSh2b2lkICosIGNoYXIg
-KiosIGludCAqLCB2b2lkICopKQorc2V0X3VubG9ja2VkX2hhbmRsZXJfY2FsbGJhY2sgKHVpbnQ2
-NF90IGZwLGludCAoKmZuKSh2b2lkICosIGNoYXIgKiosIGludCAqLCB2b2lkICopKQogewogCXN0
-cnVjdCBoYW5kbGVyICogaCA9IGZpbmRfaGFuZGxlcihmcCk7CiAKLS0gCjIuOC4xCgotLQpkbS1k
-ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
-Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Wed, Jun 01 2016 at 12:23am -0400,
+James Johnston <johnstonj.public@codenest.com> wrote:
+
+> Hi Mikulas,
+> 
+> > bio_alloc can allocate a bio with at most BIO_MAX_PAGES (256) vector
+> > entries. However, the incoming bio may have more vector entries if it was
+> > allocated by other means. For example, bcache submits bios with more than
+> > BIO_MAX_PAGES entries. This results in bio_alloc failure.
+> > 
+> > To avoid the failure, change the code so that it allocates bio with at
+> > most BIO_MAX_PAGES entries. If the incoming bio has more entries,
+> > bio_add_page will fail and a new bio will be allocated - the code that
+> > handles bio_add_page failure already exists in the dm-log-writes target.
+> > 
+> > Also, move atomic_inc(&lc->io_blocks) before bio_alloc to fix a bug that
+> > the target hangs if bio_alloc fails. The error path does put_io_block(lc),
+> > so we must do atomic_inc(&lc->io_blocks) before invoking the error path to
+> > avoid underflow of lc->io_blocks.
+> > 
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > Cc: stable@vger.kernel.org	# v4.1+
+> 
+> How does this relate to the previous patch you made to dm-crypt?  How best
+> should I test this?  It looks like the dm-crypt patch fixed the problem.
+> 
+> Should I test by applying this patch ONLY and reverting the dm-crypt patch?
+> (i.e. does this patch also fix the problem.)  Or should I just test with
+> both patches applied simultaneously?
+
+The dm-log-writes patch has nothing to do with the dm-crypt patch.  It
+is just that both targets have comparable issues with bcache issuing
+really large bios.
