@@ -1,45 +1,43 @@
-From: "James Johnston" <johnstonj.public@codenest.com>
-Subject: RE: [PATCH] dm-log-writes: fix bug with too large bios
-Date: Wed, 1 Jun 2016 04:23:17 -0000
-Message-ID: <07bf01d1bbbd$53991750$facb45f0$@codenest.com>
-References: <alpine.LRH.2.02.1605271047280.2109@file01.intranet.prod.int.rdu2.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-bcache-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1605271047280.2109@file01.intranet.prod.int.rdu2.redhat.com>
-Content-Language: en-us
-Sender: linux-bcache-owner@vger.kernel.org
-To: 'Mikulas Patocka' <mpatocka@redhat.com>, "'Alasdair G. Kergon'" <agk@redhat.com>, 'Mike Snitzer' <msnitzer@redhat.com>, 'Josef Bacik' <jbacik@fb.com>
-Cc: dm-devel@redhat.com, 'Eric Wheeler' <bcache@lists.ewheeler.net>, 'Tim Small' <tim@buttersideup.com>, 'Kent Overstreet' <kent.overstreet@gmail.com>, linux-bcache@vger.kernel.org, dm-crypt@saout.de, 'Neil Brown' <neilb@suse.com>, linux-raid@vger.kernel.org
+From: Baolin Wang <baolin.wang@linaro.org>
+Subject: [RFC v3 0/4] Introduce the bulk mode method when sending request to crypto layer
+Date: Wed,  1 Jun 2016 12:58:03 +0800
+Message-ID: <cover.1464756501.git.baolin.wang@linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, herbert@gondor.apana.org.au, davem@davemloft.net
+Cc: ebiggers3@gmail.com, js1304@gmail.com, tadeusz.struk@intel.com, smueller@chronox.de, standby24x7@gmail.com, shli@kernel.org, dan.j.williams@intel.com, martin.petersen@oracle.com, sagig@mellanox.com, kent.overstreet@gmail.com, keith.busch@intel.com, tj@kernel.org, ming.lei@canonical.com, broonie@kernel.org, arnd@arndb.de, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, baolin.wang@linaro.org
 List-Id: dm-devel.ids
 
-Hi Mikulas,
+This patchset will check if the cipher can support bulk mode, then dm-crypt
+will handle different ways to send requests to crypto layer according to
+cipher mode. For bulk mode, we can use sg table to map the whole bio and
+send all scatterlists of one bio to crypto engine to encrypt or decrypt,
+which can improve the hardware engine's efficiency.
 
-> bio_alloc can allocate a bio with at most BIO_MAX_PAGES (256) vector
-> entries. However, the incoming bio may have more vector entries if it was
-> allocated by other means. For example, bcache submits bios with more than
-> BIO_MAX_PAGES entries. This results in bio_alloc failure.
-> 
-> To avoid the failure, change the code so that it allocates bio with at
-> most BIO_MAX_PAGES entries. If the incoming bio has more entries,
-> bio_add_page will fail and a new bio will be allocated - the code that
-> handles bio_add_page failure already exists in the dm-log-writes target.
-> 
-> Also, move atomic_inc(&lc->io_blocks) before bio_alloc to fix a bug that
-> the target hangs if bio_alloc fails. The error path does put_io_block(lc),
-> so we must do atomic_inc(&lc->io_blocks) before invoking the error path to
-> avoid underflow of lc->io_blocks.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: stable@vger.kernel.org	# v4.1+
+Changes since v2:
+ - Add one cipher user with CRYPTO_ALG_BULK flag to support bulk mode.
+ - Add one atomic variable to avoid the sg table race.
 
-How does this relate to the previous patch you made to dm-crypt?  How best
-should I test this?  It looks like the dm-crypt patch fixed the problem.
+Changes since v1:
+ - Refactor the blk_bio_map_sg() function to avoid duplicated code.
+ - Move the sg table allocation to crypt_ctr_cipher() function to avoid memory
+   allocation in the IO path.
+ - Remove the crypt_sg_entry() function.
+ - Other optimization.
 
-Should I test by applying this patch ONLY and reverting the dm-crypt patch?
-(i.e. does this patch also fix the problem.)  Or should I just test with
-both patches applied simultaneously?
+Baolin Wang (4):
+  block: Introduce blk_bio_map_sg() to map one bio
+  crypto: Introduce CRYPTO_ALG_BULK flag
+  md: dm-crypt: Introduce the bulk mode method when sending request
+  crypto: Add the CRYPTO_ALG_BULK flag for ecb(aes) cipher
 
-James
+ block/blk-merge.c         |   36 ++++++++--
+ drivers/crypto/omap-aes.c |    2 +-
+ drivers/md/dm-crypt.c     |  159 ++++++++++++++++++++++++++++++++++++++++++++-
+ include/crypto/skcipher.h |    7 ++
+ include/linux/blkdev.h    |    2 +
+ include/linux/crypto.h    |    6 ++
+ 6 files changed, 205 insertions(+), 7 deletions(-)
+
+-- 
+1.7.9.5
