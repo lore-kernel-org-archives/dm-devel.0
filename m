@@ -1,51 +1,64 @@
-From: Zhengyuan Liu <liuzhengyuang521@gmail.com>
-Subject: super-block written got dislocation while 64K PAGE_SIZE enable.
-Date: Wed, 1 Jun 2016 16:20:47 +0800
-Message-ID: <CAOOPZo6+dtw9VWHnMhR8LEeFxEdNGOMthCw-PqRNmnLP2eAq1g@mail.gmail.com>
+From: Ritesh Raj Sarraf <rrs@debian.org>
+Subject: [PATCH] Fix build failure on multiple arches
+Date: Wed,  1 Jun 2016 19:24:33 +0530
+Message-ID: <1464789273-10220-1-git-send-email-rrs@debian.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-bcache-owner@vger.kernel.org>
-Sender: linux-bcache-owner@vger.kernel.org
-To: linux-bcache@vger.kernel.org, kent.overstreet@gmail.com, dm-devel@redhat.com
-Cc: huhai@kylinos.cn
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Ritesh Raj Sarraf <rrs@debian.org>
 List-Id: dm-devel.ids
 
-Hi, I have created a mapped block device (bcach0) using make-bcache on
-ARM64 server which has kernel enable 64K page size. However, the
-bcach0 disappeared after the server reboot and there is no or dirty
-metadata on super block of both cache device and back device . The
-output of command  bcache-super-show was as bellow showed:
-   [root@master Linux-4.4-LTS-storage]# bcache-super-show  /dev/sdb
-   sb.magic bad magic
-   Invalid superblock (bad magic)
-/dev/sdb was the backing device and cache device got bad magic too.
-
-I tried to traced the written process of super block in bcache source
-code and found that is the issue of PAGE_SIZE. It seems that the
-bcache  was designed only considering for 4K PAGE_SIZE and it works
-right only on 4K PAGE_SIZE exactly. To make bcache work correctly on
-64K PAGE_SIZE, I committed a patch as bellow showd:
-    diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
-    index 330cd6e..ef567cd 100644
-    --- a/drivers/md/bcache/super.c
-    +++ b/drivers/md/bcache/super.c
-    @@ -224,6 +224,12 @@ static void __write_super(struct cache_sb
-*sb, struct bio     *bio
-        bio->bi_iter.bi_size    = SB_SIZE;
-        bch_bio_map(bio, NULL);
-
-    +#ifdef CONFIG_ARM64_64K_PAGES
-    +       out = (struct cache_sb *)((char *)out + (SB_SECTOR<<9));
-    +       pr_debug("sb_page_adress %x, sb_address %x,page_size
-          %d\n",page_address(bio
-    +       bio->bi_io_vec[0].bv_offset = (SB_SECTOR<<9);
-    +#endif
-
-        out->offset             = cpu_to_le64(sb->offset);
-        out->version            = cpu_to_le64(sb->version);
-
-Does it not recommend to use bcache on 64K PAGE_SIZE? or it only
-considers for 4K PAGE_SIZE for bcache currently?
-Maybe it is more suitable  for me to redefine some macro such as
-SB_SECTOR, BDEV_DATA_START_DEFAULT to make bcache work correctly on
-both 64K PAGE_SIZE and 4K PAGE_SIZE.
+VGhlIGJ1aWxkIHNlZW1zIHRvIGJlIGZhaWxpbmcgb24gY29tbW9uIDMyIGJpdCBhcmNoaXRlY3R1
+cmVzLCB3aGVyZQoidW5zaWduZWQgbG9uZyIgYW5kICJ1aW50NjRfdCIgdGVuZCB0byBwcm9kdWNl
+IGEgZGlmZmVyZW50IHZhbHVlcy4KVGhpcyBhbm9tYWx5IGlzIG5vdCBzZWVuIG9uIHRoZSBjb21t
+b24gNjRiaXQgYXJjaGl0ZWN0dXJlcy4KCgpCdWlsZCBmYWlsdXJlCj09PT09PT09PT09PT09PQoK
+Y2MgLWcgLU8yIC1mUElFIC1mc3RhY2stcHJvdGVjdG9yLXN0cm9uZyAtV2Zvcm1hdCAtV2Vycm9y
+PWZvcm1hdC1zZWN1cml0eSAtc3RhdGljLWxpYmdjYyAtV2RhdGUtdGltZSAtRF9GT1JUSUZZX1NP
+VVJDRT0yIC1PMiAtZyAtcGlwZSAtV2Zvcm1hdC1zZWN1cml0eSAtV2FsbCAtV3AsLURfRk9SVElG
+WV9TT1VSQ0U9MiAtZmV4Y2VwdGlvbnMgLWZzdGFjay1wcm90ZWN0b3IgLS1wYXJhbT1zc3AtYnVm
+ZmVyLXNpemU9NCAtV3VudXNlZCAtV3N0cmljdC1wcm90b3R5cGVzIC1mUElDIC1ETElCX1NUUklO
+Rz1cIi9saWJcIiAtRFJVTl9ESVI9XCJydW5cIiAtSS4uL2xpYm11bHRpcGF0aCAtSS4uL2xpYm1w
+YXRocGVyc2lzdCAtSS4uL2xpYm1wYXRoY21kIC1jIC1vIGNsaS5vIGNsaS5jCmNsaS5jOjExMjox
+OiBlcnJvcjogY29uZmxpY3RpbmcgdHlwZXMgZm9yICdzZXRfdW5sb2NrZWRfaGFuZGxlcl9jYWxs
+YmFjaycKIHNldF91bmxvY2tlZF9oYW5kbGVyX2NhbGxiYWNrICh1bnNpZ25lZCBsb25nIGZwLGlu
+dCAoKmZuKSh2b2lkICosIGNoYXIgKiosIGludCAqLCB2b2lkICopKQogXgpJbiBmaWxlIGluY2x1
+ZGVkIGZyb20gY2xpLmM6MTY6MDoKY2xpLmg6MTEwOjU6IG5vdGU6IHByZXZpb3VzIGRlY2xhcmF0
+aW9uIG9mICdzZXRfdW5sb2NrZWRfaGFuZGxlcl9jYWxsYmFjaycgd2FzIGhlcmUKIGludCBzZXRf
+dW5sb2NrZWRfaGFuZGxlcl9jYWxsYmFjayAodWludDY0X3QgZnAsIGludCAoKmZuKSh2b2lkICos
+IGNoYXIgKiosIGludCAqLCB2b2lkICopKTsKICAgICBeCi4uL01ha2VmaWxlLmluYzo3NDogcmVj
+aXBlIGZvciB0YXJnZXQgJ2NsaS5vJyBmYWlsZWQKbWFrZVsyXTogKioqIFtjbGkub10gRXJyb3Ig
+MQptYWtlWzJdOiBMZWF2aW5nIGRpcmVjdG9yeSAnL8KrUEtHQlVJTERESVLCuy9tdWx0aXBhdGhk
+JwpNYWtlZmlsZTo0MjogcmVjaXBlIGZvciB0YXJnZXQgJ3JlY3Vyc2UnIGZhaWxlZAptYWtlWzFd
+OiAqKiogW3JlY3Vyc2VdIEVycm9yIDIKbWFrZVsxXTogTGVhdmluZyBkaXJlY3RvcnkgJy/Cq1BL
+R0JVSUxERElSwrsnCmRlYmlhbi9ydWxlczo0NTogcmVjaXBlIGZvciB0YXJnZXQgJ2J1aWxkLW11
+bHRpcGF0aC11ZGViLXN0YW1wJyBmYWlsZWQKbWFrZTogKioqIFtidWlsZC1tdWx0aXBhdGgtdWRl
+Yi1zdGFtcF0gRXJyb3IgMgpkcGtnLWJ1aWxkcGFja2FnZTogZXJyb3I6IGRlYmlhbi9ydWxlcyBi
+dWlsZC1hcmNoIGdhdmUgZXJyb3IgZXhpdCBzdGF0dXMgMgrilIDilIDilIDilIDilIDilIDilIDi
+lIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDi
+lIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDi
+lIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDi
+lIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIAKQnVpbGQgZmlu
+aXNoZWQgYXQgMjAxNjA1MzEtMTQwNQoKU2lnbmVkLW9mZi1ieTogUml0ZXNoIFJhaiBTYXJyYWYg
+PHJyc0BkZWJpYW4ub3JnPgotLS0KIG11bHRpcGF0aGQvY2xpLmMgfCAyICstCiAxIGZpbGUgY2hh
+bmdlZCwgMSBpbnNlcnRpb24oKyksIDEgZGVsZXRpb24oLSkKCmRpZmYgLS1naXQgYS9tdWx0aXBh
+dGhkL2NsaS5jIGIvbXVsdGlwYXRoZC9jbGkuYwppbmRleCBkOTkxY2QwLi5iOTkzMGRjIDEwMDY0
+NAotLS0gYS9tdWx0aXBhdGhkL2NsaS5jCisrKyBiL211bHRpcGF0aGQvY2xpLmMKQEAgLTEwOSw3
+ICsxMDksNyBAQCBzZXRfaGFuZGxlcl9jYWxsYmFjayAodWludDY0X3QgZnAsIGludCAoKmZuKSh2
+b2lkICosIGNoYXIgKiosIGludCAqLCB2b2lkICopKQogfQogCiBpbnQKLXNldF91bmxvY2tlZF9o
+YW5kbGVyX2NhbGxiYWNrICh1bnNpZ25lZCBsb25nIGZwLGludCAoKmZuKSh2b2lkICosIGNoYXIg
+KiosIGludCAqLCB2b2lkICopKQorc2V0X3VubG9ja2VkX2hhbmRsZXJfY2FsbGJhY2sgKHVpbnQ2
+NF90IGZwLGludCAoKmZuKSh2b2lkICosIGNoYXIgKiosIGludCAqLCB2b2lkICopKQogewogCXN0
+cnVjdCBoYW5kbGVyICogaCA9IGZpbmRfaGFuZGxlcihmcCk7CiAKLS0gCjIuOC4xCgotLQpkbS1k
+ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
+Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
