@@ -1,72 +1,51 @@
-From: Baolin Wang <baolin.wang@linaro.org>
-Subject: [RFC v3 2/4] crypto: Introduce CRYPTO_ALG_BULK flag
-Date: Wed,  1 Jun 2016 12:58:05 +0800
-Message-ID: <47e9ddd8c9ea9ad9e29c8cb027d19d8459ea1479.1464756501.git.baolin.wang@linaro.org>
-References: <cover.1464756501.git.baolin.wang@linaro.org>
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <cover.1464756501.git.baolin.wang@linaro.org>
-In-Reply-To: <cover.1464756501.git.baolin.wang@linaro.org>
-References: <cover.1464756501.git.baolin.wang@linaro.org>
-Sender: linux-crypto-owner@vger.kernel.org
-To: axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, herbert@gondor.apana.org.au, davem@davemloft.net
-Cc: ebiggers3@gmail.com, js1304@gmail.com, tadeusz.struk@intel.com, smueller@chronox.de, standby24x7@gmail.com, shli@kernel.org, dan.j.williams@intel.com, martin.petersen@oracle.com, sagig@mellanox.com, kent.overstreet@gmail.com, keith.busch@intel.com, tj@kernel.org, ming.lei@canonical.com, broonie@kernel.org, arnd@arndb.de, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, baolin.wang@linaro.org
+From: Zhengyuan Liu <liuzhengyuang521@gmail.com>
+Subject: super-block written got dislocation while 64K PAGE_SIZE enable.
+Date: Wed, 1 Jun 2016 16:20:47 +0800
+Message-ID: <CAOOPZo6+dtw9VWHnMhR8LEeFxEdNGOMthCw-PqRNmnLP2eAq1g@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-bcache-owner@vger.kernel.org>
+Sender: linux-bcache-owner@vger.kernel.org
+To: linux-bcache@vger.kernel.org, kent.overstreet@gmail.com, dm-devel@redhat.com
+Cc: huhai@kylinos.cn
 List-Id: dm-devel.ids
 
-Now some cipher hardware engines prefer to handle bulk block rather than one
-sector (512 bytes) created by dm-crypt, cause these cipher engines can handle
-the intermediate values (IV) by themselves in one bulk block. This means we
-can increase the size of the request by merging request rather than always 512
-bytes and thus increase the hardware engine processing speed.
+Hi, I have created a mapped block device (bcach0) using make-bcache on
+ARM64 server which has kernel enable 64K page size. However, the
+bcach0 disappeared after the server reboot and there is no or dirty
+metadata on super block of both cache device and back device . The
+output of command  bcache-super-show was as bellow showed:
+   [root@master Linux-4.4-LTS-storage]# bcache-super-show  /dev/sdb
+   sb.magic bad magic
+   Invalid superblock (bad magic)
+/dev/sdb was the backing device and cache device got bad magic too.
 
-So introduce 'CRYPTO_ALG_BULK' flag to indicate this cipher can support bulk
-mode.
+I tried to traced the written process of super block in bcache source
+code and found that is the issue of PAGE_SIZE. It seems that the
+bcache  was designed only considering for 4K PAGE_SIZE and it works
+right only on 4K PAGE_SIZE exactly. To make bcache work correctly on
+64K PAGE_SIZE, I committed a patch as bellow showd:
+    diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+    index 330cd6e..ef567cd 100644
+    --- a/drivers/md/bcache/super.c
+    +++ b/drivers/md/bcache/super.c
+    @@ -224,6 +224,12 @@ static void __write_super(struct cache_sb
+*sb, struct bio     *bio
+        bio->bi_iter.bi_size    = SB_SIZE;
+        bch_bio_map(bio, NULL);
 
-Signed-off-by: Baolin Wang <baolin.wang@linaro.org>
----
- include/crypto/skcipher.h |    7 +++++++
- include/linux/crypto.h    |    6 ++++++
- 2 files changed, 13 insertions(+)
+    +#ifdef CONFIG_ARM64_64K_PAGES
+    +       out = (struct cache_sb *)((char *)out + (SB_SECTOR<<9));
+    +       pr_debug("sb_page_adress %x, sb_address %x,page_size
+          %d\n",page_address(bio
+    +       bio->bi_io_vec[0].bv_offset = (SB_SECTOR<<9);
+    +#endif
 
-diff --git a/include/crypto/skcipher.h b/include/crypto/skcipher.h
-index 0f987f5..d89d29a 100644
---- a/include/crypto/skcipher.h
-+++ b/include/crypto/skcipher.h
-@@ -519,5 +519,12 @@ static inline void skcipher_request_set_crypt(
- 	req->iv = iv;
- }
- 
-+static inline unsigned int skcipher_is_bulk_mode(struct crypto_skcipher *sk_tfm)
-+{
-+	struct crypto_tfm *tfm = crypto_skcipher_tfm(sk_tfm);
-+
-+	return crypto_tfm_alg_bulk(tfm);
-+}
-+
- #endif	/* _CRYPTO_SKCIPHER_H */
- 
-diff --git a/include/linux/crypto.h b/include/linux/crypto.h
-index 6e28c89..a315487 100644
---- a/include/linux/crypto.h
-+++ b/include/linux/crypto.h
-@@ -63,6 +63,7 @@
- #define CRYPTO_ALG_DEAD			0x00000020
- #define CRYPTO_ALG_DYING		0x00000040
- #define CRYPTO_ALG_ASYNC		0x00000080
-+#define CRYPTO_ALG_BULK			0x00000100
- 
- /*
-  * Set this bit if and only if the algorithm requires another algorithm of
-@@ -623,6 +624,11 @@ static inline u32 crypto_tfm_alg_type(struct crypto_tfm *tfm)
- 	return tfm->__crt_alg->cra_flags & CRYPTO_ALG_TYPE_MASK;
- }
- 
-+static inline unsigned int crypto_tfm_alg_bulk(struct crypto_tfm *tfm)
-+{
-+	return tfm->__crt_alg->cra_flags & CRYPTO_ALG_BULK;
-+}
-+
- static inline unsigned int crypto_tfm_alg_blocksize(struct crypto_tfm *tfm)
- {
- 	return tfm->__crt_alg->cra_blocksize;
--- 
-1.7.9.5
+        out->offset             = cpu_to_le64(sb->offset);
+        out->version            = cpu_to_le64(sb->version);
+
+Does it not recommend to use bcache on 64K PAGE_SIZE? or it only
+considers for 4K PAGE_SIZE for bcache currently?
+Maybe it is more suitable  for me to redefine some macro such as
+SB_SECTOR, BDEV_DATA_START_DEFAULT to make bcache work correctly on
+both 64K PAGE_SIZE and 4K PAGE_SIZE.
