@@ -1,84 +1,78 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: RE: [PATCH] dm-log-writes: fix bug with too large bios
-Date: Wed, 1 Jun 2016 13:32:59 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1606010621140.6561@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1605271047280.2109@file01.intranet.prod.int.rdu2.redhat.com> <07bf01d1bbbd$53991750$facb45f0$@codenest.com>
+From: Eric Wheeler <bcache@lists.ewheeler.net>
+Subject: Re: super-block written got dislocation while 64K PAGE_SIZE
+ enable.
+Date: Wed, 1 Jun 2016 11:05:20 -0700 (PDT)
+Message-ID: <alpine.LRH.2.11.1606011057370.9562@mail.ewheeler.net>
+References: <CAOOPZo6+dtw9VWHnMhR8LEeFxEdNGOMthCw-PqRNmnLP2eAq1g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-bcache-owner@vger.kernel.org>
-In-Reply-To: <07bf01d1bbbd$53991750$facb45f0$@codenest.com>
+In-Reply-To: <CAOOPZo6+dtw9VWHnMhR8LEeFxEdNGOMthCw-PqRNmnLP2eAq1g@mail.gmail.com>
 Sender: linux-bcache-owner@vger.kernel.org
-To: James Johnston <johnstonj.public@codenest.com>
-Cc: "'Alasdair G. Kergon'" <agk@redhat.com>, 'Mike Snitzer' <msnitzer@redhat.com>, 'Josef Bacik' <jbacik@fb.com>, dm-devel@redhat.com, 'Eric Wheeler' <bcache@lists.ewheeler.net>, 'Tim Small' <tim@buttersideup.com>, 'Kent Overstreet' <kent.overstreet@gmail.com>, linux-bcache@vger.kernel.org, dm-crypt@saout.de, 'Neil Brown' <neilb@suse.com>, linux-raid@vger.kernel.org
+To: Zhengyuan Liu <liuzhengyuang521@gmail.com>
+Cc: linux-bcache@vger.kernel.org, kent.overstreet@gmail.com, dm-devel@redhat.com, huhai@kylinos.cn
 List-Id: dm-devel.ids
 
+On Wed, 1 Jun 2016, Zhengyuan Liu wrote:
 
-
-On Wed, 1 Jun 2016, James Johnston wrote:
-
-> Hi Mikulas,
+> Hi, I have created a mapped block device (bcach0) using make-bcache on
+> ARM64 server which has kernel enable 64K page size. However, the
+> bcach0 disappeared after the server reboot and there is no or dirty
+> metadata on super block of both cache device and back device . The
+> output of command  bcache-super-show was as bellow showed:
+>    [root@master Linux-4.4-LTS-storage]# bcache-super-show  /dev/sdb
+>    sb.magic bad magic
+>    Invalid superblock (bad magic)
+> /dev/sdb was the backing device and cache device got bad magic too.
 > 
-> > bio_alloc can allocate a bio with at most BIO_MAX_PAGES (256) vector
-> > entries. However, the incoming bio may have more vector entries if it was
-> > allocated by other means. For example, bcache submits bios with more than
-> > BIO_MAX_PAGES entries. This results in bio_alloc failure.
-> > 
-> > To avoid the failure, change the code so that it allocates bio with at
-> > most BIO_MAX_PAGES entries. If the incoming bio has more entries,
-> > bio_add_page will fail and a new bio will be allocated - the code that
-> > handles bio_add_page failure already exists in the dm-log-writes target.
-> > 
-> > Also, move atomic_inc(&lc->io_blocks) before bio_alloc to fix a bug that
-> > the target hangs if bio_alloc fails. The error path does put_io_block(lc),
-> > so we must do atomic_inc(&lc->io_blocks) before invoking the error path to
-> > avoid underflow of lc->io_blocks.
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Cc: stable@vger.kernel.org	# v4.1+
+> I tried to traced the written process of super block in bcache source
+> code and found that is the issue of PAGE_SIZE. It seems that the
+> bcache  was designed only considering for 4K PAGE_SIZE and it works
+> right only on 4K PAGE_SIZE exactly. To make bcache work correctly on
+> 64K PAGE_SIZE, I committed a patch as bellow showd:
+>     diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+>     index 330cd6e..ef567cd 100644
+>     --- a/drivers/md/bcache/super.c
+>     +++ b/drivers/md/bcache/super.c
+>     @@ -224,6 +224,12 @@ static void __write_super(struct cache_sb
+> *sb, struct bio     *bio
+>         bio->bi_iter.bi_size    = SB_SIZE;
+>         bch_bio_map(bio, NULL);
 > 
-> How does this relate to the previous patch you made to dm-crypt?  How best
-> should I test this?  It looks like the dm-crypt patch fixed the problem.
+>     +#ifdef CONFIG_ARM64_64K_PAGES
+>     +       out = (struct cache_sb *)((char *)out + (SB_SECTOR<<9));
+>     +       pr_debug("sb_page_adress %x, sb_address %x,page_size
+>           %d\n",page_address(bio
+>     +       bio->bi_io_vec[0].bv_offset = (SB_SECTOR<<9);
+>     +#endif
 > 
-> Should I test by applying this patch ONLY and reverting the dm-crypt patch?
-> (i.e. does this patch also fix the problem.)  Or should I just test with
-> both patches applied simultaneously?
+>         out->offset             = cpu_to_le64(sb->offset);
+>         out->version            = cpu_to_le64(sb->version);
 > 
-> James
+> Does it not recommend to use bcache on 64K PAGE_SIZE? or it only
+> considers for 4K PAGE_SIZE for bcache currently?
+> Maybe it is more suitable  for me to redefine some macro such as
+> SB_SECTOR, BDEV_DATA_START_DEFAULT to make bcache work correctly on
+> both 64K PAGE_SIZE and 4K PAGE_SIZE.
 
-When I found a bug in dm-crypt, I searched the other targets for the same 
-problem and found out that the same bug is also present in dm-log-writes.
+I think a patch to support arbitrary page size would be great.  Can 
+you write the macros in terms of PAGE_SIZE or PAGE_SHIFT?  
 
-The bug in dm-log-writes can be reproduced if you make a bcache device 
-with 2MiB bucket size and place in on the dm-log-writes target.
+(Out of curiosity, what ARM64 hardware are you using?)
 
-When the bug is present, the dm-log-writes target reports "device-mapper: 
-log-writes: Couldn't alloc log bio".
+Kent, this may affect bcachefs too.  Can you think of any other places 
+that might have PAGE_SIZE!=4k issues?
 
-This is a script that triggers the bug for dm-log-writes. Before running 
-the script, create devices /dev/mapper/loop-test1, loop-test2 and 
-loop-test3.
-
-Mikulas
+-Eric
 
 
-wipefs -a /dev/mapper/loop-test1
-./make-bcache --wipe-bcache --bucket 2M -C /dev/mapper/loop-test1
-dmsetup create backCrypt --table "0 `blockdev --getsize /dev/mapper/loop-test2` log-writes /dev/mapper/loop-test2 /dev/mapper/loop-test3"
-wipefs -a /dev/mapper/backCrypt
-./make-bcache --wipe-bcache -B /dev/mapper/backCrypt
-modprobe bcache
-echo /dev/mapper/loop-test1 > /sys/fs/bcache/register
-echo /dev/mapper/backCrypt > /sys/fs/bcache/register
-./bcache-super-show /dev/mapper/loop-test1 | grep cset.uuid | cut -f 3 >/sys/block/bcache0/bcache/attach
-echo writeback > /sys/block/bcache0/bcache/cache_mode
+--
+Eric Wheeler
 
-cd /sys/block/bcache0/bcache
-echo 0 > sequential_cutoff
-# Verify that the cache is attached (i.e. does not say "no cache")
-cat state
-dd if=/dev/urandom of=/dev/bcache0 bs=1M count=250
-cat dirty_data
-cat state
-echo 1 > detach
-cat dirty_data
-cat state
+
+
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-bcache" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
