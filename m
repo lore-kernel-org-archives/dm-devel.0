@@ -1,264 +1,88 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 2/2] multipathd: Add 'sysfs' prioritizer
-Date: Fri,  3 Jun 2016 10:34:22 +0200
-Message-ID: <1464942862-4469-3-git-send-email-hare@suse.de>
-References: <1464942862-4469-1-git-send-email-hare@suse.de>
+From: Baolin Wang <baolin.wang@linaro.org>
+Subject: Re: [RFC v2 2/3] crypto: Introduce CRYPTO_ALG_BULK flag
+Date: Fri, 3 Jun 2016 17:23:59 +0800
+Message-ID: <CAMz4kuL4zAg8dRRM7Lv4tp-c_GHq=0mYzvb88gDEd5YSOtvpRA@mail.gmail.com>
+References: <cover.1464346333.git.baolin.wang@linaro.org> <47e9ddd8c9ea9ad9e29c8cb027d19d8459ea1479.1464346333.git.baolin.wang@linaro.org>
+ <20160602082606.GA15226@gondor.apana.org.au> <CAMz4kuJsR0OUJFq68B6znmoTfSeaT_Xhmq14Y4yGSWDJcNE6Hw@mail.gmail.com>
+ <20160603065146.GA29953@gondor.apana.org.au> <CAMz4ku+C75VxiO41dBZDm9+PZ_BuUWqY_bmhRDbRwKPVCp+O-g@mail.gmail.com>
+ <20160603075435.GA30149@gondor.apana.org.au> <CAMz4kuJA7ii=sjGq9APNSDMZQmh4yj46mmm44noYQegQo+=cAw@mail.gmail.com>
+ <20160603082152.GA30551@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1464942862-4469-1-git-send-email-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160603082152.GA30551@gondor.apana.org.au>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, David Miller <davem@davemloft.net>, Eric Biggers <ebiggers3@gmail.com>, Joonsoo Kim <js1304@gmail.com>, tadeusz.struk@intel.com, smueller@chronox.de, Masanari Iida <standby24x7@gmail.com>, Shaohua Li <shli@kernel.org>, Dan Williams <dan.j.williams@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Sagi Grimberg <sagig@mellanox.com>, Kent Overstreet <kent.overstreet@gmail.com>, Keith Busch <keith.busch@intel.com>, Tejun Heo <tj@kernel.org>, Ming Lei <ming.lei@canonical.com>, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>, LKML <linux-kernel@vger.ker>
 List-Id: dm-devel.ids
 
-Recent kernels have an 'access_state' attribute which allows
-us to read the asymmetric access state directly from sysfs.
+On 3 June 2016 at 16:21, Herbert Xu <herbert@gondor.apana.org.au> wrote:
+> On Fri, Jun 03, 2016 at 04:15:28PM +0800, Baolin Wang wrote:
+>>
+>> Suppose the cbc(aes) algorithm, which can not be handled through bulk
+>> interface, it need to map the data sector by sector.
+>> If we also handle the cbc(aes) algorithm with bulk interface, we need
+>> to divide the sg table into sectors and need to allocate request
+>> memory for each divided sectors (As Mike pointed out  this is in the
+>> IO mapping
+>> path and we try to avoid memory allocations at all costs -- due to the
+>> risk of deadlock when issuing IO to stacked block devices (dm-crypt
+>> could be part of a much more elaborate IO stack). ), that will
+>> introduce more messy things I think.
+>
+> Perhaps I'm not making myself very clear.  If you move the IV
+> generation into the crypto API, those crypto API algorithms will
+> be operating at the sector level.
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- libmultipath/discovery.c           | 33 +++++++++++++++++++++
- libmultipath/discovery.h           |  2 ++
- libmultipath/prio.h                |  1 +
- libmultipath/prioritizers/Makefile |  3 +-
- libmultipath/prioritizers/sysfs.c  | 61 ++++++++++++++++++++++++++++++++++++++
- libmultipath/propsel.c             |  6 +++-
- multipath/multipath.conf.5         | 17 +++++++++--
- 7 files changed, 119 insertions(+), 4 deletions(-)
- create mode 100644 libmultipath/prioritizers/sysfs.c
+Yeah, IV generation is OK. But it is not only related to IV thing. For example:
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index db82b00..a6e1ed6 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -208,6 +208,8 @@ declare_sysfs_get_str(devtype);
- declare_sysfs_get_str(vendor);
- declare_sysfs_get_str(model);
- declare_sysfs_get_str(rev);
-+declare_sysfs_get_str(access_state);
-+declare_sysfs_get_str(preferred_path);
- 
- ssize_t
- sysfs_get_vpd (struct udev_device * udev, int pg,
-@@ -483,6 +485,37 @@ int sysfs_get_iscsi_ip_address(struct path *pp, char *ip_address)
- 	return 1;
- }
- 
-+int
-+sysfs_get_asymmetric_access_state(struct path *pp, char *buff, int buflen)
-+{
-+	struct udev_device *parent = pp->udev;
-+	char value[16], *eptr;
-+	unsigned int preferred;
-+
-+	while (parent) {
-+		const char *subsys = udev_device_get_subsystem(parent);
-+		if (subsys && !strncmp(subsys, "scsi", 4))
-+			break;
-+		parent = udev_device_get_parent(parent);
-+	}
-+
-+	if (!parent)
-+		return -1;
-+
-+	if (sysfs_get_access_state(parent, buff, buflen) <= 0)
-+		return -1;
-+
-+	if (sysfs_get_preferred_path(parent, value, 16) <= 0)
-+		return 0;
-+
-+	preferred = strtoul(value, &eptr, 0);
-+	if (value == eptr || preferred == ULONG_MAX) {
-+		/* Parse error, ignore */
-+		return 0;
-+	}
-+	return  preferred;
-+}
-+
- static void
- sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- {
-diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index 5931bc6..b45c802 100644
---- a/libmultipath/discovery.h
-+++ b/libmultipath/discovery.h
-@@ -47,6 +47,8 @@ int sysfs_get_host_pci_name(struct path *pp, char *pci_name);
- int sysfs_get_iscsi_ip_address(struct path *pp, char *ip_address);
- ssize_t sysfs_get_vpd (struct udev_device * udev, int pg, unsigned char * buff,
- 		       size_t len);
-+int sysfs_get_asymmetric_access_state(struct path *pp,
-+				      char *buff, int buflen);
- 
- /*
-  * discovery bitmask
-diff --git a/libmultipath/prio.h b/libmultipath/prio.h
-index 495688f..65abf54 100644
---- a/libmultipath/prio.h
-+++ b/libmultipath/prio.h
-@@ -29,6 +29,7 @@ struct path;
- #define PRIO_RDAC "rdac"
- #define PRIO_DATACORE "datacore"
- #define PRIO_WEIGHTED_PATH "weightedpath"
-+#define PRIO_SYSFS "sysfs"
- 
- /*
-  * Value used to mark the fact prio was not defined
-diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
-index 6cfac88..0d1857f 100644
---- a/libmultipath/prioritizers/Makefile
-+++ b/libmultipath/prioritizers/Makefile
-@@ -15,7 +15,8 @@ LIBS = \
- 	libpriodatacore.so \
- 	libpriohds.so \
- 	libprioweightedpath.so \
--	libprioiet.so
-+	libprioiet.so \
-+	libpriosysfs.so
- 
- CFLAGS += -I..
- 
-diff --git a/libmultipath/prioritizers/sysfs.c b/libmultipath/prioritizers/sysfs.c
-new file mode 100644
-index 0000000..e8eb034
---- /dev/null
-+++ b/libmultipath/prioritizers/sysfs.c
-@@ -0,0 +1,61 @@
-+/*
-+ * sysfs.c
-+ *
-+ * Copyright(c) 2016 Hannes Reinecke, SUSE Linux GmbH
-+ */
-+
-+#include <stdio.h>
-+
-+#include "structs.h"
-+#include "discovery.h"
-+#include "prio.h"
-+
-+static const struct {
-+	unsigned char value;
-+	char *name;
-+} sysfs_access_state_map[] = {
-+	{ 50, "active/optimized" },
-+	{ 10, "active/non-optimized" },
-+	{  5, "lba-dependent" },
-+	{  1, "standby" },
-+};
-+
-+int get_exclusive_pref_arg(char *args)
-+{
-+	char *ptr;
-+
-+	if (args == NULL)
-+		return 0;
-+	ptr = strstr(args, "exclusive_pref_bit");
-+	if (!ptr)
-+		return 0;
-+	if (ptr[18] != '\0' && ptr[18] != ' ' && ptr[18] != '\t')
-+		return 0;
-+	if (ptr != args && ptr[-1] != ' ' && ptr[-1] != '\t')
-+		return 0;
-+	return 1;
-+}
-+
-+int getprio (struct path * pp, char * args)
-+{
-+	int prio = 0, rc, i;
-+	char buff[512];
-+	int exclusive_pref;
-+
-+	exclusive_pref = get_exclusive_pref_arg(args);
-+	rc = sysfs_get_asymmetric_access_state(pp, buff, 512);
-+	if (rc < 0)
-+		return PRIO_UNDEF;
-+	prio = 0;
-+	for (i = 0; i < 4; i++) {
-+		if (!strncmp(buff, sysfs_access_state_map[i].name,
-+			     strlen(sysfs_access_state_map[i].name))) {
-+			prio = sysfs_access_state_map[i].value;
-+			break;
-+		}
-+	}
-+	if (rc > 0 && (prio != 50 || exclusive_pref))
-+		prio += 80;
-+
-+	return prio;
-+}
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 8abe360..b0182de 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -374,6 +374,7 @@ detect_prio(struct path * pp)
- 	int ret;
- 	struct prio *p = &pp->prio;
- 	int tpgs = 0;
-+	char buff[512];
- 
- 	if ((tpgs = get_target_port_group_support(pp->fd)) <= 0)
- 		return;
-@@ -383,7 +384,10 @@ detect_prio(struct path * pp)
- 		return;
- 	if (get_asymmetric_access_state(pp->fd, ret) < 0)
- 		return;
--	prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
-+	if (sysfs_get_asymmetric_access_state(pp, buff, 512) < 0)
-+		prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
-+	else
-+		prio_get(p, PRIO_SYSFS, DEFAULT_PRIO_ARGS);
- }
- 
- #define set_prio(src, msg)						\
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 2ff88c4..a66f27f 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -203,6 +203,11 @@ Generate the path priority for NetApp arrays.
- .B rdac
- Generate the path priority for LSI/Engenio/NetApp E-Series RDAC controller.
- .TP
-+.B sysfs
-+Use the sysfs attributes access_state and preferred_path to generate the
-+path priority. This prioritizer accepts the optional prio_arg
-+.I exclusive_pref_bit
-+.TP
- .B hp_sw
- Generate the path priority for Compaq/HP controller in
- active/standby mode.
-@@ -241,7 +246,7 @@ these values can be looked up through sysfs or by running
- .B alua
- If
- .I exclusive_pref_bit
--is set, paths with the TPGS pref bit set will always be in their own path
-+is set, paths with the preferred path bit set will always be in their own path
- group.
- .RE
- .TP
-@@ -449,8 +454,16 @@ If set to
- .I yes
- , multipath will try to detect if the device supports ALUA. If so, the device
- will automatically use the
-+.I sysfs
-+prioritizer if the required sysfs attributes
-+.I access_state
-+and
-+.I preferred_path
-+are supported, or the
- .I alua
--prioritizer. If not, the prioritizer will be selected as usual. Default is
-+prioritizer if not. If set to
-+.I no
-+, the prioritizer will be selected as usual. Default is
- .I no
- .TP
- .B force_sync
+(1) For ecb(aes) algorithm which don't need to handle IV generation,
+so it can support bulk mode:
+Assuming one 64K size bio coming , we can map the whole bio with one
+sg table in dm-crypt (assume it used 16 scatterlists from sg table),
+then issue the 'skcipher_request_set_crypt()' function to set one
+request with the mapped sg table, which will be sent to crypto driver
+to be handled.
+
+(2) For cbc(aes) algorithm which need to handle IV generation sector
+by sector, so it can not support bulk mode and can not use bulk
+interface:
+Assuming one 64K size bio coming , we should map the bio sector by
+sector with one scatterlist at one time. Each time we will issue the
+'skcipher_request_set_crypt()' function to set one request with only
+one mapped scatterlist, until it handled done the whole bio.
+
+(3) As your suggestion, if we also use bulk interface for cbc(aes)
+algorithm assuming it did all the requisite magic to generate the
+correct IV:
+Assuming one 64K size bio coming, we can map the whole bio with one sg
+table in crypt_convert_bulk_block() function. But if we send this bulk
+request to crypto layer, we should divide the bulk request into small
+requests, and each small request should be one sector size (512 bytes)
+with assuming the correct IV, but we need to allocate small requests
+memory for the division, which will not good for IO mapping, and how
+each small request connect to dm-crypt (how to notify the request is
+done?)?
+
+Thus we should not handle every algorithm with bulk interface.
+
+>
+> For example, assuming you're doing lmk, then the algorithm would
+> be called lmk(cbc(aes)) and it will take as its input one or more
+> sectors and for each sector it should generate an IV and operate
+> on it.
+
+
+
+>
+> Cheers,
+> --
+> Email: Herbert Xu <herbert@gondor.apana.org.au>
+> Home Page: http://gondor.apana.org.au/~herbert/
+> PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+
+
+
 -- 
-2.6.6
+Baolin.wang
+Best Regards
