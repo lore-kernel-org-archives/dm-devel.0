@@ -1,12 +1,13 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] multipathd: rework patch 'move 'filter_devnode'
-	under vector lock'
-Date: Fri,  3 Jun 2016 09:24:32 +0200
-Message-ID: <1464938672-3075-1-git-send-email-hare@suse.de>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: multipathd: Add 'sysfs' prioritizer
+Date: Fri, 3 Jun 2016 09:24:21 +0200
+Message-ID: <CABr-Gnd2357TS3UY4DtMqGc0DihRo-CU4hgQ1U9fS5p90=K_NQ@mail.gmail.com>
+References: <1463998828-28133-1-git-send-email-hare@suse.de>
+	<20160531223414.00004376@localhost> <57512C55.2010008@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============5309792012153721432=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <57512C55.2010008@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,148 +17,136 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>
 List-Id: dm-devel.ids
 
-The original patch was causing a segfault during booting when
-calling 'lock_cleanup_pop()' in uev_add_path().
-As the patch itself was quite intrusive (and the segfault was
-promising really hard to debug; all pointers were valid when calling
-lock_cleanup_pop()) I've reverted it and replaced it by
-a simpler version which would just store the blacklists
-in a local copy, and update the pointers upon reconfiguration.
-As pointer updates can be assumed to be atomic the blacklists
-will always be valid so we do not need any synchronisation here.
+--===============5309792012153721432==
+Content-Type: multipart/alternative; boundary=001a1142b8bc8c510e05345a9c80
 
-Signed-off-by: Hannes Reinecke <hare@suse.com>
----
- multipathd/main.c | 49 ++++++++++++++++++++++---------------------------
- 1 file changed, 22 insertions(+), 27 deletions(-)
+--001a1142b8bc8c510e05345a9c80
+Content-Type: text/plain; charset=UTF-8
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 2c7486d..774a74e 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -108,6 +108,8 @@ pthread_cond_t config_cond = PTHREAD_COND_INITIALIZER;
- struct vectors * gvecs;
- 
- struct udev * udev;
-+vector blist_devnode;
-+vector elist_devnode;
- 
- const char *
- daemon_status(void)
-@@ -580,11 +582,6 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
- 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 	lock(vecs->lock);
- 	pthread_testcancel();
--	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
--			   uev->kernel) > 0) {
--		ret = 0;
--		goto out_unlock;
--	}
- 	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
- 	if (pp) {
- 		int r;
-@@ -642,7 +639,6 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
- 		free_path(pp);
- 		ret = 1;
- 	}
--out_unlock:
- 	lock_cleanup_pop(vecs->lock);
- 	return ret;
- }
-@@ -786,23 +782,22 @@ fail:
- static int
- uev_remove_path (struct uevent *uev, struct vectors * vecs)
- {
--	struct path *pp = NULL;
--	int ret = 0;
-+	struct path *pp;
-+	int ret;
- 
- 	condlog(2, "%s: remove path (uevent)", uev->kernel);
- 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 	lock(vecs->lock);
- 	pthread_testcancel();
--	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
--			   uev->kernel) == 0) {
--		pp = find_path_by_dev(vecs->pathvec, uev->kernel);
--		if (pp)
--			ret = ev_remove_path(pp, vecs);
--		else
--			/* Not an error; path might have been purged earlier */
--			condlog(0, "%s: path already removed", uev->kernel);
--	}
-+	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
-+	if (pp)
-+		ret = ev_remove_path(pp, vecs);
- 	lock_cleanup_pop(vecs->lock);
-+	if (!pp) {
-+		/* Not an error; path might have been purged earlier */
-+		condlog(0, "%s: path already removed", uev->kernel);
-+		return 0;
-+	}
- 	return ret;
- }
- 
-@@ -912,7 +907,7 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 	ro = uevent_get_disk_ro(uev);
- 
- 	if (ro >= 0) {
--		struct path * pp = NULL;
-+		struct path * pp;
- 		struct multipath *mpp = NULL;
- 
- 		condlog(2, "%s: update path write_protect to '%d' (uevent)",
-@@ -925,10 +920,6 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 		 * need to be at the same indentation level, hence
- 		 * this slightly convoluted codepath.
- 		 */
--		if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
--				   uev->kernel) > 0) {
--			goto out_unlock;
--		}
- 		pp = find_path_by_dev(vecs->pathvec, uev->kernel);
- 		if (pp) {
- 			if (pp->initialized == INIT_REQUESTED_UDEV) {
-@@ -948,13 +939,11 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 					uev->kernel, mpp->alias, retval);
- 			}
- 		}
--	out_unlock:
- 		lock_cleanup_pop(vecs->lock);
- 		if (!pp) {
--			if (retval)
--				condlog(0, "%s: spurious uevent, path not found",
--					uev->kernel);
--			return retval;
-+			condlog(0, "%s: spurious uevent, path not found",
-+				uev->kernel);
-+			return 1;
- 		}
- 		if (retval == 2)
- 			return uev_add_path(uev, vecs);
-@@ -1072,6 +1061,10 @@ uev_trigger (struct uevent * uev, void * trigger_data)
- 	/*
- 	 * path add/remove event
- 	 */
-+	if (filter_devnode(blist_devnode, elist_devnode,
-+			   uev->kernel) > 0)
-+		goto out;
-+
- 	if (!strncmp(uev->action, "add", 3)) {
- 		r = uev_add_path(uev, vecs);
- 		goto out;
-@@ -1897,6 +1890,8 @@ reconfigure (struct vectors * vecs)
- 		conf = old;
- 	}
- 	uxsock_timeout = conf->uxsock_timeout;
-+	blist_devnode = conf->blist_devnode;
-+	elist_devnode = conf->elist_devnode;
- 
- 	return retval;
- }
--- 
-2.6.6
+I was waiting to see your response to Ben's comment about the pref bit
+default values and tunable.
+
+On Fri, Jun 3, 2016 at 9:05 AM, Hannes Reinecke <hare@suse.de> wrote:
+
+>
+>
+> On 05/31/2016 10:34 PM, Sebastian Herbszt wrote:
+> > Hannes Reinecke wrote:
+> >> Recent kernels have an 'access_state' attribute which allows
+> >> us to read the asymmetric access state directly from sysfs.
+> >>
+> >> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> >> ---
+> >>  libmultipath/discovery.c           | 33 +++++++++++++++++++++++++++++
+> >>  libmultipath/discovery.h           |  2 ++
+> >>  libmultipath/prio.h                |  1 +
+> >>  libmultipath/prioritizers/Makefile |  3 ++-
+> >>  libmultipath/prioritizers/sysfs.c  | 43
+> ++++++++++++++++++++++++++++++++++++++
+> >>  libmultipath/propsel.c             |  6 +++++-
+> >>  multipath/multipath.conf.5         | 14 ++++++++++++-
+> >>  7 files changed, 99 insertions(+), 3 deletions(-)
+> >>  create mode 100644 libmultipath/prioritizers/sysfs.c
+> >
+> > How about just adding this to the alua prioritizer?
+> > This new feature could then depend on a "sysfs" argument.
+> >
+> No. The 'sysfs' prioritizer is using the abstract kernel sysfs
+> interface, for which every device handler provides the information.
+> So in theory it's independent on the underlying device handler.
+>
+> However, only the ALUA device handler has been reworked to provide
+> up-to-date information; for the other device handlers there is a
+> risk of the sysfs information is getting out-of-date.
+>
+> Hence I've restricted the 'detect_prioritizer' algorithm to select
+> 'sysfs' only if an ALUA system is present.
+> But this doesn't imply in any way that the 'sysfs' prioritizer can be
+> used only for ALUA systems.
+>
+> Christophe, what about merging the patch?
+>
+> Cheers,
+>
+> Hannes
+>
+
+--001a1142b8bc8c510e05345a9c80
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I was waiting to see your response to Ben&#39;s comment ab=
+out the pref bit default values and tunable.</div><div class=3D"gmail_extra=
+"><br><div class=3D"gmail_quote">On Fri, Jun 3, 2016 at 9:05 AM, Hannes Rei=
+necke <span dir=3D"ltr">&lt;<a href=3D"mailto:hare@suse.de" target=3D"_blan=
+k">hare@suse.de</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" =
+style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><sp=
+an class=3D""><br>
+<br>
+On 05/31/2016 10:34 PM, Sebastian Herbszt wrote:<br>
+&gt; Hannes Reinecke wrote:<br>
+&gt;&gt; Recent kernels have an &#39;access_state&#39; attribute which allo=
+ws<br>
+&gt;&gt; us to read the asymmetric access state directly from sysfs.<br>
+&gt;&gt;<br>
+&gt;&gt; Signed-off-by: Hannes Reinecke &lt;<a href=3D"mailto:hare@suse.de"=
+>hare@suse.de</a>&gt;<br>
+&gt;&gt; ---<br>
+&gt;&gt;=C2=A0 libmultipath/discovery.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0| 33 +++++++++++++++++++++++++++++<br>
+&gt;&gt;=C2=A0 libmultipath/discovery.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0|=C2=A0 2 ++<br>
+&gt;&gt;=C2=A0 libmultipath/prio.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 |=C2=A0 1 +<br>
+&gt;&gt;=C2=A0 libmultipath/prioritizers/Makefile |=C2=A0 3 ++-<br>
+&gt;&gt;=C2=A0 libmultipath/prioritizers/sysfs.c=C2=A0 | 43 +++++++++++++++=
++++++++++++++++++++++++<br>
+&gt;&gt;=C2=A0 libmultipath/propsel.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0|=C2=A0 6 +++++-<br>
+&gt;&gt;=C2=A0 multipath/multipath.conf.5=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+| 14 ++++++++++++-<br>
+&gt;&gt;=C2=A0 7 files changed, 99 insertions(+), 3 deletions(-)<br>
+&gt;&gt;=C2=A0 create mode 100644 libmultipath/prioritizers/sysfs.c<br>
+&gt;<br>
+&gt; How about just adding this to the alua prioritizer?<br>
+&gt; This new feature could then depend on a &quot;sysfs&quot; argument.<br=
+>
+&gt;<br>
+</span>No. The &#39;sysfs&#39; prioritizer is using the abstract kernel sys=
+fs<br>
+interface, for which every device handler provides the information.<br>
+So in theory it&#39;s independent on the underlying device handler.<br>
+<br>
+However, only the ALUA device handler has been reworked to provide<br>
+up-to-date information; for the other device handlers there is a<br>
+risk of the sysfs information is getting out-of-date.<br>
+<br>
+Hence I&#39;ve restricted the &#39;detect_prioritizer&#39; algorithm to sel=
+ect<br>
+&#39;sysfs&#39; only if an ALUA system is present.<br>
+But this doesn&#39;t imply in any way that the &#39;sysfs&#39; prioritizer =
+can be<br>
+used only for ALUA systems.<br>
+<br>
+Christophe, what about merging the patch?<br>
+<br>
+Cheers,<br>
+<br>
+Hannes<br>
+</blockquote></div><br></div>
+
+--001a1142b8bc8c510e05345a9c80--
+
+
+--===============5309792012153721432==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5309792012153721432==--
