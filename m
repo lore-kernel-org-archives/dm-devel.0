@@ -1,14 +1,11 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 0/2] multipathd: Add 'sysfs' prioritizer
-Date: Fri, 3 Jun 2016 13:03:24 -0500
-Message-ID: <20160603180324.GS26117@octiron.msp.redhat.com>
-References: <1464942862-4469-1-git-send-email-hare@suse.de>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] libmpathcmd: Fixup FSF address
+Date: Fri, 3 Jun 2016 22:56:27 +0200
+Message-ID: <9c66fa50-a9cf-cfd9-175f-4839e3af75cd@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1464942862-4469-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,40 +15,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Hannes Reinecke <hare@suse.com>, device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 03, 2016 at 10:34:20AM +0200, Hannes Reinecke wrote:
-> Hi all,
-> 
-> hardly necessary to send an entire patchset, but there you go.
-> I've now modified the sysfs prioritizer to generate the same
-> priority the alua one would do, including the 'exclusive_pref_bit'
-> setting.
-> So this should address the issues Ben raised.
+Hannes Reinecke wrote:
 
-Thanks
+> Our build system complained that the header file still
+> refers to the old FSF snail mail address.
 
-ACK
+This is a pointless change.
 
--Ben
+scripts/checkpatch.pl from kernel sources already is warning about it:
+"Do not include the paragraph about writing to the Free Software Foundation's
+mailing address from the sample GPL notice. The FSF has changed addresses in
+the past, and may do so again. Linux already includes a copy of the GPL."
 
+Much better is replace all occurrences from:
+"if not, write to the Free Software Foundation, Inc.,
+59 Temple Place - Suite 330, Boston, MA  02111-1307, USA."
+
+to:
+"if not, see <http://www.gnu.org/licenses/>."
+
+> Signed-off-by: Hannes Reinecke <hare@suse.com>
+> ---
+>  libmpathcmd/mpath_cmd.h | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> Hannes Reinecke (2):
->   alua prioritizer: Fix typo 'perf'
->   multipathd: Add 'sysfs' prioritizer
-> 
->  libmultipath/discovery.c           | 33 +++++++++++++++++++++
->  libmultipath/discovery.h           |  2 ++
->  libmultipath/prio.h                |  1 +
->  libmultipath/prioritizers/Makefile |  3 +-
->  libmultipath/prioritizers/alua.c   |  8 ++---
->  libmultipath/prioritizers/sysfs.c  | 61 ++++++++++++++++++++++++++++++++++++++
->  libmultipath/propsel.c             |  6 +++-
->  multipath/multipath.conf.5         | 17 +++++++++--
->  8 files changed, 123 insertions(+), 8 deletions(-)
->  create mode 100644 libmultipath/prioritizers/sysfs.c
-> 
-> -- 
-> 2.6.6
+> diff --git a/libmpathcmd/mpath_cmd.h b/libmpathcmd/mpath_cmd.h
+> index 6d80a2f..4ec0291 100644
+> --- a/libmpathcmd/mpath_cmd.h
+> +++ b/libmpathcmd/mpath_cmd.h
+> @@ -15,7 +15,7 @@
+>   *
+>   * You should have received a copy of the GNU Lesser General Public
+>   * License along with this program; if not, write to the Free Software
+> - * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
+> + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+>   * USA.
