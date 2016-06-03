@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 1/2] alua prioritizer: Fix typo 'perf'
-Date: Fri,  3 Jun 2016 10:34:21 +0200
-Message-ID: <1464942862-4469-2-git-send-email-hare@suse.de>
+Subject: [PATCH 2/2] multipathd: Add 'sysfs' prioritizer
+Date: Fri,  3 Jun 2016 10:34:22 +0200
+Message-ID: <1464942862-4469-3-git-send-email-hare@suse.de>
 References: <1464942862-4469-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,53 +18,247 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The bit is called the 'preferred_path' bit. Nothing do to with
-performance.
+Recent kernels have an 'access_state' attribute which allows
+us to read the asymmetric access state directly from sysfs.
 
-Signed-off-by: Hannes Reinecke <hare@suse.com>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/prioritizers/alua.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ libmultipath/discovery.c           | 33 +++++++++++++++++++++
+ libmultipath/discovery.h           |  2 ++
+ libmultipath/prio.h                |  1 +
+ libmultipath/prioritizers/Makefile |  3 +-
+ libmultipath/prioritizers/sysfs.c  | 61 ++++++++++++++++++++++++++++++++++++++
+ libmultipath/propsel.c             |  6 +++-
+ multipath/multipath.conf.5         | 17 +++++++++--
+ 7 files changed, 119 insertions(+), 4 deletions(-)
+ create mode 100644 libmultipath/prioritizers/sysfs.c
 
-diff --git a/libmultipath/prioritizers/alua.c b/libmultipath/prioritizers/alua.c
-index cd4aafc..973e01e 100644
---- a/libmultipath/prioritizers/alua.c
-+++ b/libmultipath/prioritizers/alua.c
-@@ -75,7 +75,7 @@ get_alua_info(struct path * pp)
- 	return rc;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index db82b00..a6e1ed6 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -208,6 +208,8 @@ declare_sysfs_get_str(devtype);
+ declare_sysfs_get_str(vendor);
+ declare_sysfs_get_str(model);
+ declare_sysfs_get_str(rev);
++declare_sysfs_get_str(access_state);
++declare_sysfs_get_str(preferred_path);
+ 
+ ssize_t
+ sysfs_get_vpd (struct udev_device * udev, int pg,
+@@ -483,6 +485,37 @@ int sysfs_get_iscsi_ip_address(struct path *pp, char *ip_address)
+ 	return 1;
  }
  
--int get_exclusive_perf_arg(char *args)
-+int get_exclusive_pref_arg(char *args)
++int
++sysfs_get_asymmetric_access_state(struct path *pp, char *buff, int buflen)
++{
++	struct udev_device *parent = pp->udev;
++	char value[16], *eptr;
++	unsigned int preferred;
++
++	while (parent) {
++		const char *subsys = udev_device_get_subsystem(parent);
++		if (subsys && !strncmp(subsys, "scsi", 4))
++			break;
++		parent = udev_device_get_parent(parent);
++	}
++
++	if (!parent)
++		return -1;
++
++	if (sysfs_get_access_state(parent, buff, buflen) <= 0)
++		return -1;
++
++	if (sysfs_get_preferred_path(parent, value, 16) <= 0)
++		return 0;
++
++	preferred = strtoul(value, &eptr, 0);
++	if (value == eptr || preferred == ULONG_MAX) {
++		/* Parse error, ignore */
++		return 0;
++	}
++	return  preferred;
++}
++
+ static void
+ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
  {
- 	char *ptr;
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index 5931bc6..b45c802 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -47,6 +47,8 @@ int sysfs_get_host_pci_name(struct path *pp, char *pci_name);
+ int sysfs_get_iscsi_ip_address(struct path *pp, char *ip_address);
+ ssize_t sysfs_get_vpd (struct udev_device * udev, int pg, unsigned char * buff,
+ 		       size_t len);
++int sysfs_get_asymmetric_access_state(struct path *pp,
++				      char *buff, int buflen);
  
-@@ -96,12 +96,12 @@ int getprio (struct path * pp, char * args)
- 	int rc;
- 	int aas;
- 	int priopath;
--	int exclusive_perf;
+ /*
+  * discovery bitmask
+diff --git a/libmultipath/prio.h b/libmultipath/prio.h
+index 495688f..65abf54 100644
+--- a/libmultipath/prio.h
++++ b/libmultipath/prio.h
+@@ -29,6 +29,7 @@ struct path;
+ #define PRIO_RDAC "rdac"
+ #define PRIO_DATACORE "datacore"
+ #define PRIO_WEIGHTED_PATH "weightedpath"
++#define PRIO_SYSFS "sysfs"
+ 
+ /*
+  * Value used to mark the fact prio was not defined
+diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
+index 6cfac88..0d1857f 100644
+--- a/libmultipath/prioritizers/Makefile
++++ b/libmultipath/prioritizers/Makefile
+@@ -15,7 +15,8 @@ LIBS = \
+ 	libpriodatacore.so \
+ 	libpriohds.so \
+ 	libprioweightedpath.so \
+-	libprioiet.so
++	libprioiet.so \
++	libpriosysfs.so
+ 
+ CFLAGS += -I..
+ 
+diff --git a/libmultipath/prioritizers/sysfs.c b/libmultipath/prioritizers/sysfs.c
+new file mode 100644
+index 0000000..e8eb034
+--- /dev/null
++++ b/libmultipath/prioritizers/sysfs.c
+@@ -0,0 +1,61 @@
++/*
++ * sysfs.c
++ *
++ * Copyright(c) 2016 Hannes Reinecke, SUSE Linux GmbH
++ */
++
++#include <stdio.h>
++
++#include "structs.h"
++#include "discovery.h"
++#include "prio.h"
++
++static const struct {
++	unsigned char value;
++	char *name;
++} sysfs_access_state_map[] = {
++	{ 50, "active/optimized" },
++	{ 10, "active/non-optimized" },
++	{  5, "lba-dependent" },
++	{  1, "standby" },
++};
++
++int get_exclusive_pref_arg(char *args)
++{
++	char *ptr;
++
++	if (args == NULL)
++		return 0;
++	ptr = strstr(args, "exclusive_pref_bit");
++	if (!ptr)
++		return 0;
++	if (ptr[18] != '\0' && ptr[18] != ' ' && ptr[18] != '\t')
++		return 0;
++	if (ptr != args && ptr[-1] != ' ' && ptr[-1] != '\t')
++		return 0;
++	return 1;
++}
++
++int getprio (struct path * pp, char * args)
++{
++	int prio = 0, rc, i;
++	char buff[512];
 +	int exclusive_pref;
- 
- 	if (pp->fd < 0)
- 		return -ALUA_PRIO_NO_INFORMATION;
- 
--	exclusive_perf = get_exclusive_perf_arg(args);
++
 +	exclusive_pref = get_exclusive_pref_arg(args);
- 	rc = get_alua_info(pp);
- 	if (rc >= 0) {
- 		aas = (rc & 0x0f);
-@@ -122,7 +122,7 @@ int getprio (struct path * pp, char * args)
- 			default:
- 				rc = 0;
- 		}
--		if (priopath && (aas != AAS_OPTIMIZED || exclusive_perf))
-+		if (priopath && (aas != AAS_OPTIMIZED || exclusive_pref))
- 			rc += 80;
- 	} else {
- 		switch(-rc) {
++	rc = sysfs_get_asymmetric_access_state(pp, buff, 512);
++	if (rc < 0)
++		return PRIO_UNDEF;
++	prio = 0;
++	for (i = 0; i < 4; i++) {
++		if (!strncmp(buff, sysfs_access_state_map[i].name,
++			     strlen(sysfs_access_state_map[i].name))) {
++			prio = sysfs_access_state_map[i].value;
++			break;
++		}
++	}
++	if (rc > 0 && (prio != 50 || exclusive_pref))
++		prio += 80;
++
++	return prio;
++}
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 8abe360..b0182de 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -374,6 +374,7 @@ detect_prio(struct path * pp)
+ 	int ret;
+ 	struct prio *p = &pp->prio;
+ 	int tpgs = 0;
++	char buff[512];
+ 
+ 	if ((tpgs = get_target_port_group_support(pp->fd)) <= 0)
+ 		return;
+@@ -383,7 +384,10 @@ detect_prio(struct path * pp)
+ 		return;
+ 	if (get_asymmetric_access_state(pp->fd, ret) < 0)
+ 		return;
+-	prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
++	if (sysfs_get_asymmetric_access_state(pp, buff, 512) < 0)
++		prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
++	else
++		prio_get(p, PRIO_SYSFS, DEFAULT_PRIO_ARGS);
+ }
+ 
+ #define set_prio(src, msg)						\
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 2ff88c4..a66f27f 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -203,6 +203,11 @@ Generate the path priority for NetApp arrays.
+ .B rdac
+ Generate the path priority for LSI/Engenio/NetApp E-Series RDAC controller.
+ .TP
++.B sysfs
++Use the sysfs attributes access_state and preferred_path to generate the
++path priority. This prioritizer accepts the optional prio_arg
++.I exclusive_pref_bit
++.TP
+ .B hp_sw
+ Generate the path priority for Compaq/HP controller in
+ active/standby mode.
+@@ -241,7 +246,7 @@ these values can be looked up through sysfs or by running
+ .B alua
+ If
+ .I exclusive_pref_bit
+-is set, paths with the TPGS pref bit set will always be in their own path
++is set, paths with the preferred path bit set will always be in their own path
+ group.
+ .RE
+ .TP
+@@ -449,8 +454,16 @@ If set to
+ .I yes
+ , multipath will try to detect if the device supports ALUA. If so, the device
+ will automatically use the
++.I sysfs
++prioritizer if the required sysfs attributes
++.I access_state
++and
++.I preferred_path
++are supported, or the
+ .I alua
+-prioritizer. If not, the prioritizer will be selected as usual. Default is
++prioritizer if not. If set to
++.I no
++, the prioritizer will be selected as usual. Default is
+ .I no
+ .TP
+ .B force_sync
 -- 
 2.6.6
