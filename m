@@ -1,109 +1,54 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] libmpathcmd: Fixup FSF address
-Date: Fri, 3 Jun 2016 08:44:03 +0200
-Message-ID: <CABr-Gnc4n=DtrNeL05xDrmk0YGt7AHQGGtZ4yyB38ZmqF-krEw@mail.gmail.com>
-References: <1464936117-792-1-git-send-email-hare@suse.de>
+From: Baolin Wang <baolin.wang@linaro.org>
+Subject: Re: [RFC v2 2/3] crypto: Introduce CRYPTO_ALG_BULK flag
+Date: Fri, 3 Jun 2016 14:48:34 +0800
+Message-ID: <CAMz4kuJsR0OUJFq68B6znmoTfSeaT_Xhmq14Y4yGSWDJcNE6Hw@mail.gmail.com>
+References: <cover.1464346333.git.baolin.wang@linaro.org> <47e9ddd8c9ea9ad9e29c8cb027d19d8459ea1479.1464346333.git.baolin.wang@linaro.org>
+ <20160602082606.GA15226@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2630698325078232907=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1464936117-792-1-git-send-email-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Hannes Reinecke <hare@suse.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160602082606.GA15226@gondor.apana.org.au>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, David Miller <davem@davemloft.net>, Eric Biggers <ebiggers3@gmail.com>, Joonsoo Kim <js1304@gmail.com>, tadeusz.struk@intel.com, smueller@chronox.de, Masanari Iida <standby24x7@gmail.com>, Shaohua Li <shli@kernel.org>, Dan Williams <dan.j.williams@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Sagi Grimberg <sagig@mellanox.com>, Kent Overstreet <kent.overstreet@gmail.com>, Keith Busch <keith.busch@intel.com>, Tejun Heo <tj@kernel.org>, Ming Lei <ming.lei@canonical.com>, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>, LKML <linux-kernel@vger.ker>
 List-Id: dm-devel.ids
 
---===============2630698325078232907==
-Content-Type: multipart/alternative; boundary=001a1140f1a26f752a05345a0c8b
+Hi Herbet,
 
---001a1140f1a26f752a05345a0c8b
-Content-Type: text/plain; charset=UTF-8
-
-Merged.
-
-On Fri, Jun 3, 2016 at 8:41 AM, Hannes Reinecke <hare@suse.de> wrote:
-
-> Our build system complained that the header file still
-> refers to the old FSF snail mail address.
+On 2 June 2016 at 16:26, Herbert Xu <herbert@gondor.apana.org.au> wrote:
+> On Fri, May 27, 2016 at 07:11:23PM +0800, Baolin Wang wrote:
+>> Now some cipher hardware engines prefer to handle bulk block rather than one
+>> sector (512 bytes) created by dm-crypt, cause these cipher engines can handle
+>> the intermediate values (IV) by themselves in one bulk block. This means we
+>> can increase the size of the request by merging request rather than always 512
+>> bytes and thus increase the hardware engine processing speed.
+>>
+>> So introduce 'CRYPTO_ALG_BULK' flag to indicate this cipher can support bulk
+>> mode.
+>>
+>> Signed-off-by: Baolin Wang <baolin.wang@linaro.org>
 >
-> Signed-off-by: Hannes Reinecke <hare@suse.com>
-> ---
->  libmpathcmd/mpath_cmd.h | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+> I think a better aproach would be to explicitly move the IV generation
+> into the crypto API, similar to how we handle IPsec.  Once you do
+> that then every algorithm can be handled through the bulk interface.
 >
-> diff --git a/libmpathcmd/mpath_cmd.h b/libmpathcmd/mpath_cmd.h
-> index 6d80a2f..4ec0291 100644
-> --- a/libmpathcmd/mpath_cmd.h
-> +++ b/libmpathcmd/mpath_cmd.h
-> @@ -15,7 +15,7 @@
->   *
->   * You should have received a copy of the GNU Lesser General Public
->   * License along with this program; if not, write to the Free Software
-> - * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
-> + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
->   * USA.
->   */
->
+
+Sorry for late reply.
+If we move the IV generation into the crypto API, we also can not
+handle every algorithm with the bulk interface. Cause we also need to
+use different methods to map one whole bio or map one sector according
+to the algorithm whether can support bulk mode or not. Please correct
+me if I misunderstand your points. Thanks.
+
+
+> Cheers,
 > --
-> 2.6.6
->
->
-
---001a1140f1a26f752a05345a0c8b
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Merged.</div><div class=3D"gmail_extra"><br><div class=3D"=
-gmail_quote">On Fri, Jun 3, 2016 at 8:41 AM, Hannes Reinecke <span dir=3D"l=
-tr">&lt;<a href=3D"mailto:hare@suse.de" target=3D"_blank">hare@suse.de</a>&=
-gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 =
-0 .8ex;border-left:1px #ccc solid;padding-left:1ex">Our build system compla=
-ined that the header file still<br>
-refers to the old FSF snail mail address.<br>
-<br>
-Signed-off-by: Hannes Reinecke &lt;<a href=3D"mailto:hare@suse.com">hare@su=
-se.com</a>&gt;<br>
----<br>
-=C2=A0libmpathcmd/mpath_cmd.h | 2 +-<br>
-=C2=A01 file changed, 1 insertion(+), 1 deletion(-)<br>
-<br>
-diff --git a/libmpathcmd/mpath_cmd.h b/libmpathcmd/mpath_cmd.h<br>
-index 6d80a2f..4ec0291 100644<br>
---- a/libmpathcmd/mpath_cmd.h<br>
-+++ b/libmpathcmd/mpath_cmd.h<br>
-@@ -15,7 +15,7 @@<br>
-=C2=A0 *<br>
-=C2=A0 * You should have received a copy of the GNU Lesser General Public<b=
-r>
-=C2=A0 * License along with this program; if not, write to the Free Softwar=
-e<br>
-- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA=C2=A0 02111-1=
-307,<br>
-+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA=C2=A0 02110-1=
-301,<br>
-=C2=A0 * USA.<br>
-=C2=A0 */<br>
-<span class=3D"HOEnZb"><font color=3D"#888888"><br>
---<br>
-2.6.6<br>
-<br>
-</font></span></blockquote></div><br></div>
-
---001a1140f1a26f752a05345a0c8b--
+> Email: Herbert Xu <herbert@gondor.apana.org.au>
+> Home Page: http://gondor.apana.org.au/~herbert/
+> PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
 
 
---===============2630698325078232907==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
 
-
---===============2630698325078232907==--
+-- 
+Baolin.wang
+Best Regards
