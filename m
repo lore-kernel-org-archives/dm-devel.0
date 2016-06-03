@@ -1,46 +1,94 @@
-From: Baolin Wang <baolin.wang@linaro.org>
-Subject: Re: [RFC v2 2/3] crypto: Introduce CRYPTO_ALG_BULK flag
-Date: Fri, 3 Jun 2016 15:10:31 +0800
-Message-ID: <CAMz4ku+C75VxiO41dBZDm9+PZ_BuUWqY_bmhRDbRwKPVCp+O-g@mail.gmail.com>
-References: <cover.1464346333.git.baolin.wang@linaro.org> <47e9ddd8c9ea9ad9e29c8cb027d19d8459ea1479.1464346333.git.baolin.wang@linaro.org>
- <20160602082606.GA15226@gondor.apana.org.au> <CAMz4kuJsR0OUJFq68B6znmoTfSeaT_Xhmq14Y4yGSWDJcNE6Hw@mail.gmail.com>
- <20160603065146.GA29953@gondor.apana.org.au>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH] multipathd: update defaults
+Date: Fri,  3 Jun 2016 09:14:32 +0200
+Message-ID: <1464938072-2885-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20160603065146.GA29953@gondor.apana.org.au>
-Sender: linux-raid-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, David Miller <davem@davemloft.net>, Eric Biggers <ebiggers3@gmail.com>, Joonsoo Kim <js1304@gmail.com>, tadeusz.struk@intel.com, smueller@chronox.de, Masanari Iida <standby24x7@gmail.com>, Shaohua Li <shli@kernel.org>, Dan Williams <dan.j.williams@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Sagi Grimberg <sagig@mellanox.com>, Kent Overstreet <kent.overstreet@gmail.com>, Keith Busch <keith.busch@intel.com>, Tejun Heo <tj@kernel.org>, Ming Lei <ming.lei@canonical.com>, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>, LKML <linux-kernel@vger.ker>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 3 June 2016 at 14:51, Herbert Xu <herbert@gondor.apana.org.au> wrote:
-> On Fri, Jun 03, 2016 at 02:48:34PM +0800, Baolin Wang wrote:
->>
->> If we move the IV generation into the crypto API, we also can not
->> handle every algorithm with the bulk interface. Cause we also need to
->> use different methods to map one whole bio or map one sector according
->> to the algorithm whether can support bulk mode or not. Please correct
->> me if I misunderstand your points. Thanks.
->
-> Which ones can't be handled this way?
+For years I've been telling our customers to use the 'tur' checker
+as the current default 'directio' will cause spurious path failures
+under high load.
 
-What I mean is bulk mode and sector mode's difference is not only the
-IV handling method, but also the method to map the data with
-scatterlists.
-Then we have two processes in dm-crypt ( crypt_convert_block() and
-crypt_convert_bulk_block() ) to handle the data, so we can not handle
-every algorithm with the bulk interface.
+And for several versions (years, even) the linux kernel has the ability
+to correctly detect the device handler, so we should be making
+'retain_hw_handler' the default.
+And if we do this we also want to enable 'detect_prio', to ensure
+we pick the correct prioritizer.
 
->
-> Cheers,
-> --
-> Email: Herbert Xu <herbert@gondor.apana.org.au>
-> Home Page: http://gondor.apana.org.au/~herbert/
-> PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+So this patch updates the default setting to always enable
+'retain_hw_handler' and 'detect_prio' and switch to 'tur'
+as the default path checker.
 
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ libmultipath/checkers.h    | 2 +-
+ libmultipath/defaults.h    | 4 ++--
+ multipath/multipath.conf.5 | 4 ++--
+ 3 files changed, 5 insertions(+), 5 deletions(-)
 
-
+diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+index a935b3f..374c826 100644
+--- a/libmultipath/checkers.h
++++ b/libmultipath/checkers.h
+@@ -85,7 +85,7 @@ enum path_check_state {
+ #define READSECTOR0  "readsector0"
+ #define CCISS_TUR    "cciss_tur"
+ 
+-#define DEFAULT_CHECKER DIRECTIO
++#define DEFAULT_CHECKER TUR
+ 
+ #define ASYNC_TIMEOUT_SEC	30
+ 
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 96f5a2c..4948271 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -16,8 +16,8 @@
+ #define DEFAULT_FIND_MULTIPATHS	0
+ #define DEFAULT_FAST_IO_FAIL	5
+ #define DEFAULT_DEV_LOSS_TMO   600
+-#define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_OFF
+-#define DEFAULT_DETECT_PRIO DETECT_PRIO_OFF
++#define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_ON
++#define DEFAULT_DETECT_PRIO DETECT_PRIO_ON
+ #define DEFAULT_DEFERRED_REMOVE DEFERRED_REMOVE_OFF
+ #define DEFAULT_DELAY_CHECKS DELAY_CHECKS_OFF
+ #define DEFAULT_UEVENT_STACKSIZE 256
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index aaaa01b..20a2304 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -295,7 +295,7 @@ Check the path state for LSI/Engenio/NetApp E-Series RDAC storage controller.
+ .B directio
+ Read the first sector with direct I/O.
+ .TP
+-Default value is \fIdirectio\fR.
++Default value is \fItur\fR.
+ .RE
+ .TP
+ .B failback
+@@ -463,7 +463,7 @@ are supported, or the
+ prioritizer if not. If set to
+ .I no
+ , the prioritizer will be selected as usual. Default is
+-.I no
++.I yes
+ .TP
+ .B force_sync
+ If set to
 -- 
-Baolin.wang
-Best Regards
+2.6.6
