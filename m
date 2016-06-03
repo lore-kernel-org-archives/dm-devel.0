@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] multipathd: update defaults
-Date: Fri,  3 Jun 2016 09:14:32 +0200
-Message-ID: <1464938072-2885-1-git-send-email-hare@suse.de>
+Subject: [PATCH] multipathd: rework patch 'move 'filter_devnode'
+	under vector lock'
+Date: Fri,  3 Jun 2016 09:24:32 +0200
+Message-ID: <1464938672-3075-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,79 +17,147 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com
+Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-For years I've been telling our customers to use the 'tur' checker
-as the current default 'directio' will cause spurious path failures
-under high load.
+The original patch was causing a segfault during booting when
+calling 'lock_cleanup_pop()' in uev_add_path().
+As the patch itself was quite intrusive (and the segfault was
+promising really hard to debug; all pointers were valid when calling
+lock_cleanup_pop()) I've reverted it and replaced it by
+a simpler version which would just store the blacklists
+in a local copy, and update the pointers upon reconfiguration.
+As pointer updates can be assumed to be atomic the blacklists
+will always be valid so we do not need any synchronisation here.
 
-And for several versions (years, even) the linux kernel has the ability
-to correctly detect the device handler, so we should be making
-'retain_hw_handler' the default.
-And if we do this we also want to enable 'detect_prio', to ensure
-we pick the correct prioritizer.
-
-So this patch updates the default setting to always enable
-'retain_hw_handler' and 'detect_prio' and switch to 'tur'
-as the default path checker.
-
-Signed-off-by: Hannes Reinecke <hare@suse.de>
+Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/checkers.h    | 2 +-
- libmultipath/defaults.h    | 4 ++--
- multipath/multipath.conf.5 | 4 ++--
- 3 files changed, 5 insertions(+), 5 deletions(-)
+ multipathd/main.c | 49 ++++++++++++++++++++++---------------------------
+ 1 file changed, 22 insertions(+), 27 deletions(-)
 
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index a935b3f..374c826 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -85,7 +85,7 @@ enum path_check_state {
- #define READSECTOR0  "readsector0"
- #define CCISS_TUR    "cciss_tur"
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 2c7486d..774a74e 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -108,6 +108,8 @@ pthread_cond_t config_cond = PTHREAD_COND_INITIALIZER;
+ struct vectors * gvecs;
  
--#define DEFAULT_CHECKER DIRECTIO
-+#define DEFAULT_CHECKER TUR
+ struct udev * udev;
++vector blist_devnode;
++vector elist_devnode;
  
- #define ASYNC_TIMEOUT_SEC	30
+ const char *
+ daemon_status(void)
+@@ -580,11 +582,6 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
+ 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
+ 	lock(vecs->lock);
+ 	pthread_testcancel();
+-	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
+-			   uev->kernel) > 0) {
+-		ret = 0;
+-		goto out_unlock;
+-	}
+ 	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
+ 	if (pp) {
+ 		int r;
+@@ -642,7 +639,6 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
+ 		free_path(pp);
+ 		ret = 1;
+ 	}
+-out_unlock:
+ 	lock_cleanup_pop(vecs->lock);
+ 	return ret;
+ }
+@@ -786,23 +782,22 @@ fail:
+ static int
+ uev_remove_path (struct uevent *uev, struct vectors * vecs)
+ {
+-	struct path *pp = NULL;
+-	int ret = 0;
++	struct path *pp;
++	int ret;
  
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index 96f5a2c..4948271 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -16,8 +16,8 @@
- #define DEFAULT_FIND_MULTIPATHS	0
- #define DEFAULT_FAST_IO_FAIL	5
- #define DEFAULT_DEV_LOSS_TMO   600
--#define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_OFF
--#define DEFAULT_DETECT_PRIO DETECT_PRIO_OFF
-+#define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_ON
-+#define DEFAULT_DETECT_PRIO DETECT_PRIO_ON
- #define DEFAULT_DEFERRED_REMOVE DEFERRED_REMOVE_OFF
- #define DEFAULT_DELAY_CHECKS DELAY_CHECKS_OFF
- #define DEFAULT_UEVENT_STACKSIZE 256
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index aaaa01b..20a2304 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -295,7 +295,7 @@ Check the path state for LSI/Engenio/NetApp E-Series RDAC storage controller.
- .B directio
- Read the first sector with direct I/O.
- .TP
--Default value is \fIdirectio\fR.
-+Default value is \fItur\fR.
- .RE
- .TP
- .B failback
-@@ -463,7 +463,7 @@ are supported, or the
- prioritizer if not. If set to
- .I no
- , the prioritizer will be selected as usual. Default is
--.I no
-+.I yes
- .TP
- .B force_sync
- If set to
+ 	condlog(2, "%s: remove path (uevent)", uev->kernel);
+ 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
+ 	lock(vecs->lock);
+ 	pthread_testcancel();
+-	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
+-			   uev->kernel) == 0) {
+-		pp = find_path_by_dev(vecs->pathvec, uev->kernel);
+-		if (pp)
+-			ret = ev_remove_path(pp, vecs);
+-		else
+-			/* Not an error; path might have been purged earlier */
+-			condlog(0, "%s: path already removed", uev->kernel);
+-	}
++	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
++	if (pp)
++		ret = ev_remove_path(pp, vecs);
+ 	lock_cleanup_pop(vecs->lock);
++	if (!pp) {
++		/* Not an error; path might have been purged earlier */
++		condlog(0, "%s: path already removed", uev->kernel);
++		return 0;
++	}
+ 	return ret;
+ }
+ 
+@@ -912,7 +907,7 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 	ro = uevent_get_disk_ro(uev);
+ 
+ 	if (ro >= 0) {
+-		struct path * pp = NULL;
++		struct path * pp;
+ 		struct multipath *mpp = NULL;
+ 
+ 		condlog(2, "%s: update path write_protect to '%d' (uevent)",
+@@ -925,10 +920,6 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 		 * need to be at the same indentation level, hence
+ 		 * this slightly convoluted codepath.
+ 		 */
+-		if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
+-				   uev->kernel) > 0) {
+-			goto out_unlock;
+-		}
+ 		pp = find_path_by_dev(vecs->pathvec, uev->kernel);
+ 		if (pp) {
+ 			if (pp->initialized == INIT_REQUESTED_UDEV) {
+@@ -948,13 +939,11 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 					uev->kernel, mpp->alias, retval);
+ 			}
+ 		}
+-	out_unlock:
+ 		lock_cleanup_pop(vecs->lock);
+ 		if (!pp) {
+-			if (retval)
+-				condlog(0, "%s: spurious uevent, path not found",
+-					uev->kernel);
+-			return retval;
++			condlog(0, "%s: spurious uevent, path not found",
++				uev->kernel);
++			return 1;
+ 		}
+ 		if (retval == 2)
+ 			return uev_add_path(uev, vecs);
+@@ -1072,6 +1061,10 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 	/*
+ 	 * path add/remove event
+ 	 */
++	if (filter_devnode(blist_devnode, elist_devnode,
++			   uev->kernel) > 0)
++		goto out;
++
+ 	if (!strncmp(uev->action, "add", 3)) {
+ 		r = uev_add_path(uev, vecs);
+ 		goto out;
+@@ -1897,6 +1890,8 @@ reconfigure (struct vectors * vecs)
+ 		conf = old;
+ 	}
+ 	uxsock_timeout = conf->uxsock_timeout;
++	blist_devnode = conf->blist_devnode;
++	elist_devnode = conf->elist_devnode;
+ 
+ 	return retval;
+ }
 -- 
 2.6.6
