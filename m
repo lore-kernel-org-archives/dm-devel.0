@@ -1,49 +1,46 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [RFC v2 2/3] crypto: Introduce CRYPTO_ALG_BULK flag
-Date: Fri, 3 Jun 2016 16:21:52 +0800
-Message-ID: <20160603082152.GA30551@gondor.apana.org.au>
-References: <cover.1464346333.git.baolin.wang@linaro.org>
- <47e9ddd8c9ea9ad9e29c8cb027d19d8459ea1479.1464346333.git.baolin.wang@linaro.org>
- <20160602082606.GA15226@gondor.apana.org.au>
- <CAMz4kuJsR0OUJFq68B6znmoTfSeaT_Xhmq14Y4yGSWDJcNE6Hw@mail.gmail.com>
- <20160603065146.GA29953@gondor.apana.org.au>
- <CAMz4ku+C75VxiO41dBZDm9+PZ_BuUWqY_bmhRDbRwKPVCp+O-g@mail.gmail.com>
- <20160603075435.GA30149@gondor.apana.org.au>
- <CAMz4kuJA7ii=sjGq9APNSDMZQmh4yj46mmm44noYQegQo+=cAw@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH 0/2] multipathd: Add 'sysfs' prioritizer
+Date: Fri,  3 Jun 2016 10:34:20 +0200
+Message-ID: <1464942862-4469-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAMz4kuJA7ii=sjGq9APNSDMZQmh4yj46mmm44noYQegQo+=cAw@mail.gmail.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Baolin Wang <baolin.wang@linaro.org>
-Cc: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, David Miller <davem@davemloft.net>, Eric Biggers <ebiggers3@gmail.com>, Joonsoo Kim <js1304@gmail.com>, tadeusz.struk@intel.com, smueller@chronox.de, Masanari Iida <standby24x7@gmail.com>, Shaohua Li <shli@kernel.org>, Dan Williams <dan.j.williams@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Sagi Grimberg <sagig@mellanox.com>, Kent Overstreet <kent.overstreet@gmail.com>, Keith Busch <keith.busch@intel.com>, Tejun Heo <tj@kernel.org>, Ming Lei <ming.lei@canonical.com>, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>, LKML <linux-kernel@vger.ker>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jun 03, 2016 at 04:15:28PM +0800, Baolin Wang wrote:
->
-> Suppose the cbc(aes) algorithm, which can not be handled through bulk
-> interface, it need to map the data sector by sector.
-> If we also handle the cbc(aes) algorithm with bulk interface, we need
-> to divide the sg table into sectors and need to allocate request
-> memory for each divided sectors (As Mike pointed out  this is in the
-> IO mapping
-> path and we try to avoid memory allocations at all costs -- due to the
-> risk of deadlock when issuing IO to stacked block devices (dm-crypt
-> could be part of a much more elaborate IO stack). ), that will
-> introduce more messy things I think.
+Hi all,
 
-Perhaps I'm not making myself very clear.  If you move the IV
-generation into the crypto API, those crypto API algorithms will
-be operating at the sector level.
+hardly necessary to send an entire patchset, but there you go.
+I've now modified the sysfs prioritizer to generate the same
+priority the alua one would do, including the 'exclusive_pref_bit'
+setting.
+So this should address the issues Ben raised.
 
-For example, assuming you're doing lmk, then the algorithm would
-be called lmk(cbc(aes)) and it will take as its input one or more
-sectors and for each sector it should generate an IV and operate
-on it.
+Hannes Reinecke (2):
+  alua prioritizer: Fix typo 'perf'
+  multipathd: Add 'sysfs' prioritizer
 
-Cheers,
+ libmultipath/discovery.c           | 33 +++++++++++++++++++++
+ libmultipath/discovery.h           |  2 ++
+ libmultipath/prio.h                |  1 +
+ libmultipath/prioritizers/Makefile |  3 +-
+ libmultipath/prioritizers/alua.c   |  8 ++---
+ libmultipath/prioritizers/sysfs.c  | 61 ++++++++++++++++++++++++++++++++++++++
+ libmultipath/propsel.c             |  6 +++-
+ multipath/multipath.conf.5         | 17 +++++++++--
+ 8 files changed, 123 insertions(+), 8 deletions(-)
+ create mode 100644 libmultipath/prioritizers/sysfs.c
+
 -- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+2.6.6
