@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 6/8] libmpathcmd: Do not install header file as
-	executable
-Date: Fri,  3 Jun 2016 08:40:38 +0200
-Message-ID: <1464936038-709-1-git-send-email-hare@suse.de>
+Subject: [PATCH] libmpathcmd: Fixup FSF address
+Date: Fri,  3 Jun 2016 08:41:57 +0200
+Message-ID: <1464936117-792-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -20,26 +19,26 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-Our build system complained that the mpath_cmd.h header file is
-installed as executable.
+Our build system complained that the header file still
+refers to the old FSF snail mail address.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmpathcmd/Makefile | 2 +-
+ libmpathcmd/mpath_cmd.h | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmpathcmd/Makefile b/libmpathcmd/Makefile
-index 0304ecc..6fca165 100644
---- a/libmpathcmd/Makefile
-+++ b/libmpathcmd/Makefile
-@@ -19,7 +19,7 @@ install: $(LIBS)
- 	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
- 	ln -sf $(LIBS) $(DESTDIR)$(syslibdir)/$(DEVLIB)
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(incdir)
--	$(INSTALL_PROGRAM) -m 755 mpath_cmd.h $(DESTDIR)$(incdir)
-+	$(INSTALL_PROGRAM) -m 644 mpath_cmd.h $(DESTDIR)$(incdir)
+diff --git a/libmpathcmd/mpath_cmd.h b/libmpathcmd/mpath_cmd.h
+index 6d80a2f..4ec0291 100644
+--- a/libmpathcmd/mpath_cmd.h
++++ b/libmpathcmd/mpath_cmd.h
+@@ -15,7 +15,7 @@
+  *
+  * You should have received a copy of the GNU Lesser General Public
+  * License along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+  * USA.
+  */
  
- uninstall:
- 	rm -f $(DESTDIR)$(syslibdir)/$(LIBS)
 -- 
 2.6.6
