@@ -1,12 +1,11 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 0/2] multipath-tools: Housekeeping
-Date: Sat, 4 Jun 2016 09:13:53 +0200
-Message-ID: <CABr-Gnfzix=vXZKQ0_ESwDyLi=H=w+HXZns5nq3D04s9XAgjgg@mail.gmail.com>
-References: <1464997974-19881-1-git-send-email-xose.vazquez@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipathd: update defaults
+Date: Sun, 5 Jun 2016 20:24:17 +0200
+Message-ID: <a230b117-9f8c-b43e-465c-1ea58d4c883a@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4905357884718304190=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1464997974-19881-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,101 +15,101 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
+Cc: matthias.rudolph@hds.com, sramani@pillardata.com, jim.lester@compellent.com, yacine@alyseo.com, g.shyamsundar@yahoo.co.in, sean.stewart@netapp.com, davidw@netapp.com, brking@linux.vnet.ibm.com, bartb@pivot3.com, egoggin@emc.com
 List-Id: dm-devel.ids
 
---===============4905357884718304190==
-Content-Type: multipart/alternative; boundary=001a1142100affaa5a05346e94e4
+Hannes Reinecke wrote:
 
---001a1142100affaa5a05346e94e4
-Content-Type: text/plain; charset=UTF-8
+> For years I've been telling our customers to use the 'tur' checker
+> as the current default 'directio' will cause spurious path failures
+> under high load.
 
-Merged.
-Thanks.
+If directio is unreliable, it must be _fixed_ or *removed* .
+And this text in multipath.conf.5 needs to be replaced:
+"readsector0 (Deprecated) Read the first sector of the device.
+This checker is being deprecated, please use directio instead"
 
-On Sat, Jun 4, 2016 at 1:52 AM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
+There are 11 devices with path_checker=directio as default option,
+what to do with them ?
 
-> I don't know if you want to keep these ones:
-> [Hannes says, and Benjamin agrees:]
->
-> getuid/usb_id
-> > Huh? What is that doing there?
-> > It should really have been moved to the udev package ...
->
-> multipath/01_udev
-> multipath/02_multipath
-> > Not used anymore with systemd/dracut
->
-> Xose Vazquez Perez (2):
->   multipath-tools: tarballs from gitweb
->   multipath-tools: remove useless init scripts
->
->  README                            |   4 +
->  multipathd/multipathd.init.debian |  29 ------
->  multipathd/multipathd.init.redhat | 152 -----------------------------
->  multipathd/multipathd.init.suse   | 200
-> --------------------------------------
->  4 files changed, 4 insertions(+), 381 deletions(-)
->  delete mode 100644 multipathd/multipathd.init.debian
->  delete mode 100644 multipathd/multipathd.init.redhat
->  delete mode 100644 multipathd/multipathd.init.suse
->
-> --
-> 2.5.5
->
->
+> And for several versions (years, even) the linux kernel has the ability
+> to correctly detect the device handler, so we should be making
+> 'retain_hw_handler' the default.
+> And if we do this we also want to enable 'detect_prio', to ensure
+> we pick the correct prioritizer.
 
---001a1142100affaa5a05346e94e4
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+I do really like both features, it makes the multipath setup almost
+a completely unattended task. And neat for live_cd, installers of
+distributions, rescue environments and anywhere with a ro /etc.
 
-<div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
-<br><div class=3D"gmail_quote">On Sat, Jun 4, 2016 at 1:52 AM, Xose Vazquez=
- Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" targ=
-et=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote c=
-lass=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;=
-padding-left:1ex">I don&#39;t know if you want to keep these ones:<br>
-[Hannes says, and Benjamin agrees:]<br>
-<br>
-getuid/usb_id<br>
-&gt; Huh? What is that doing there?<br>
-&gt; It should really have been moved to the udev package ...<br>
-<br>
-multipath/01_udev<br>
-multipath/02_multipath<br>
-&gt; Not used anymore with systemd/dracut<br>
-<br>
-Xose Vazquez Perez (2):<br>
-=C2=A0 multipath-tools: tarballs from gitweb<br>
-=C2=A0 multipath-tools: remove useless init scripts<br>
-<br>
-=C2=A0README=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 |=C2=A0 =C2=A04 +<br>
-=C2=A0multipathd/multipathd.init.debian |=C2=A0 29 ------<br>
-=C2=A0multipathd/multipathd.init.redhat | 152 -----------------------------=
-<br>
-=C2=A0multipathd/multipathd.init.suse=C2=A0 =C2=A0| 200 -------------------=
--------------------<br>
-=C2=A04 files changed, 4 insertions(+), 381 deletions(-)<br>
-=C2=A0delete mode 100644 multipathd/multipathd.init.debian<br>
-=C2=A0delete mode 100644 multipathd/multipathd.init.redhat<br>
-=C2=A0delete mode 100644 multipathd/multipathd.init.suse<br>
-<span class=3D"HOEnZb"><font color=3D"#888888"><br>
---<br>
-2.5.5<br>
-<br>
-</font></span></blockquote></div><br></div>
+There are a handful of devices with prio=alua as default option,
+and they should be revoked to their "original" configuration.
 
---001a1142100affaa5a05346e94e4--
+> So this patch updates the default setting to always enable
+> 'retain_hw_handler' and 'detect_prio' and switch to 'tur'
+> as the default path checker.
 
+The patch should be split in two: directio->tur and autodetect_alua.
 
---===============4905357884718304190==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+CCed: All controllers maintainers, let's see what they think.
 
-
---===============4905357884718304190==--
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> ---
+>  libmultipath/checkers.h    | 2 +-
+>  libmultipath/defaults.h    | 4 ++--
+>  multipath/multipath.conf.5 | 4 ++--
+>  3 files changed, 5 insertions(+), 5 deletions(-)
+> 
+> diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+> index a935b3f..374c826 100644
+> --- a/libmultipath/checkers.h
+> +++ b/libmultipath/checkers.h
+> @@ -85,7 +85,7 @@ enum path_check_state {
+>  #define READSECTOR0  "readsector0"
+>  #define CCISS_TUR    "cciss_tur"
+>  
+> -#define DEFAULT_CHECKER DIRECTIO
+> +#define DEFAULT_CHECKER TUR
+>  
+>  #define ASYNC_TIMEOUT_SEC	30
+>  
+> diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+> index 96f5a2c..4948271 100644
+> --- a/libmultipath/defaults.h
+> +++ b/libmultipath/defaults.h
+> @@ -16,8 +16,8 @@
+>  #define DEFAULT_FIND_MULTIPATHS	0
+>  #define DEFAULT_FAST_IO_FAIL	5
+>  #define DEFAULT_DEV_LOSS_TMO   600
+> -#define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_OFF
+> -#define DEFAULT_DETECT_PRIO DETECT_PRIO_OFF
+> +#define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_ON
+> +#define DEFAULT_DETECT_PRIO DETECT_PRIO_ON
+>  #define DEFAULT_DEFERRED_REMOVE DEFERRED_REMOVE_OFF
+>  #define DEFAULT_DELAY_CHECKS DELAY_CHECKS_OFF
+>  #define DEFAULT_UEVENT_STACKSIZE 256
+> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+> index aaaa01b..20a2304 100644
+> --- a/multipath/multipath.conf.5
+> +++ b/multipath/multipath.conf.5
+> @@ -295,7 +295,7 @@ Check the path state for LSI/Engenio/NetApp E-Series RDAC storage controller.
+>  .B directio
+>  Read the first sector with direct I/O.
+>  .TP
+> -Default value is \fIdirectio\fR.
+> +Default value is \fItur\fR.
+>  .RE
+>  .TP
+>  .B failback
+> @@ -463,7 +463,7 @@ are supported, or the
+>  prioritizer if not. If set to
+>  .I no
+>  , the prioritizer will be selected as usual. Default is
+> -.I no
+> +.I yes
+>  .TP
+>  .B force_sync
+>  If set to
+> -- 
+> 2.6.6
