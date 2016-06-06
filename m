@@ -1,45 +1,32 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 17/45] xfs: use bio op accessors
-Date: Mon, 6 Jun 2016 08:22:30 +0200
-Message-ID: <575516A6.4080806@suse.de>
+Subject: Re: [PATCH 24/45] dm: use bio op accessors
+Date: Mon, 6 Jun 2016 08:43:51 +0200
+Message-ID: <57551BA7.8080102@suse.de>
 References: <1465155145-10812-1-git-send-email-mchristi@redhat.com>
-	<1465155145-10812-18-git-send-email-mchristi@redhat.com>
+ <1465155145-10812-25-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1465155145-10812-18-git-send-email-mchristi@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <1465155145-10812-25-git-send-email-mchristi@redhat.com>
+Sender: linux-bcache-owner@vger.kernel.org
+To: mchristi@redhat.com, linux-f2fs-devel@lists.sourceforge.net, linux-ext4@vger.kernel.org, konrad.wilk@oracle.com, drbd-dev@lists.linbit.com, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-bcache@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-mtd@lists.infradead.org, target-devel@vger.kernel.org, linux-btrfs@vger.kernel.org, osd-dev@open-osd.org, xfs@oss.sgi.com, ocfs2-devel@oss.oracle.com
 List-Id: dm-devel.ids
 
-On 06/05/2016 09:31 PM, mchristi@redhat.com wrote:
+On 06/05/2016 09:32 PM, mchristi@redhat.com wrote:
 > From: Mike Christie <mchristi@redhat.com>
-> =
-
-> Separate the op from the rq_flag_bits and have xfs
+>=20
+> Separate the op from the rq_flag_bits and have dm
 > set/get the bio using bio_set_op_attrs/bio_op.
-> =
-
+>=20
 > Signed-off-by: Mike Christie <mchristi@redhat.com>
-> ---
-> =
-
+>=20
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 
 Cheers,
 
 Hannes
--- =
-
+--=20
 Dr. Hannes Reinecke		   Teamlead Storage & Networking
 hare@suse.de			               +49 911 74053 688
 SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
