@@ -1,47 +1,51 @@
-From: Baolin Wang <baolin.wang@linaro.org>
-Subject: Re: [RFC v2 1/3] block: Introduce blk_bio_map_sg() to map one bio
-Date: Mon, 6 Jun 2016 13:04:17 +0800
-Message-ID: <CAMz4kuL6PFANg=f0t7mCAk=CqJisdmZyxcUqWf8ZUj0mRLQrXQ@mail.gmail.com>
-References: <cover.1464346333.git.baolin.wang@linaro.org> <2f0f6811938dafd14c6c7b1dbe8fbabfdcbb19c1.1464346333.git.baolin.wang@linaro.org>
- <57519670.6050306@kernel.dk>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 01/45] block/fs/drivers: remove rw argument from submit_bio
+Date: Mon, 6 Jun 2016 08:12:42 +0200
+Message-ID: <5755145A.3070500@suse.de>
+References: <1465155145-10812-1-git-send-email-mchristi@redhat.com>
+	<1465155145-10812-2-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <57519670.6050306@kernel.dk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, David Miller <davem@davemloft.net>, Eric Biggers <ebiggers3@gmail.com>, Joonsoo Kim <js1304@gmail.com>, tadeusz.struk@intel.com, smueller@chronox.de, Masanari Iida <standby24x7@gmail.com>, Shaohua Li <shli@kernel.org>, Dan Williams <dan.j.williams@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Sagi Grimberg <sagig@mellanox.com>, Kent Overstreet <kent.overstreet@gmail.com>, Keith Busch <keith.busch@intel.com>, Tejun Heo <tj@kernel.org>, Ming Lei <ming.lei@canonical.com>, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>, LKML <linux-ke>
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <xfs-bounces@oss.sgi.com>
+In-Reply-To: <1465155145-10812-2-git-send-email-mchristi@redhat.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: mchristi@redhat.com, linux-f2fs-devel@lists.sourceforge.net, linux-ext4@vger.kernel.org, konrad.wilk@oracle.com, drbd-dev@lists.linbit.com, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-bcache@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-mtd@lists.infradead.org, target-devel@vger.kernel.org, linux-btrfs@vger.kernel.org, osd-dev@open-osd.org, xfs@oss.sgi.com, ocfs2-devel@oss.oracle.com
 List-Id: dm-devel.ids
 
-On 3 June 2016 at 22:38, Jens Axboe <axboe@kernel.dk> wrote:
-> On 05/27/2016 05:11 AM, Baolin Wang wrote:
->>
->> +/*
->> + * Map a bio to scatterlist, return number of sg entries setup. Caller
->> must
->> + * make sure sg can hold bio segments entries.
->> + */
->> +int blk_bio_map_sg(struct request_queue *q, struct bio *bio,
->> +                  struct scatterlist *sglist)
->> +{
->> +       struct scatterlist *sg = NULL;
->> +       int nsegs = 0;
->> +
->> +       if (bio)
->> +               nsegs = __blk_bios_map_sg(q, bio, sglist, &sg, true);
->> +
->> +       if (sg)
->> +               sg_mark_end(sg);
->
->
-> Put that if (sg) inside the if (bio) section, 'sg' isn't going to be
-> non-NULL outside of that.
->
-> Additionally, who would call this with a NULL bio? That seems odd, I'd
-> get rid of that check completely.
+On 06/05/2016 09:31 PM, mchristi@redhat.com wrote:
+> From: Mike Christie <mchristi@redhat.com>
+> =
 
-OK. I'll fix these in next version. Thanks for your comments.
+> This has callers of submit_bio/submit_bio_wait set the bio->bi_rw
+> instead of passing it in. This makes that use the same as
+> generic_make_request and how we set the other bio fields.
+> =
 
--- 
-Baolin.wang
-Best Regards
+> Signed-off-by: Mike Christie <mchristi@redhat.com>
+> ---
+Reviewed-by: Hannes Reinecke <hare@suse.com>
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=FCrnberg)
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
