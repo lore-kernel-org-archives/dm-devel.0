@@ -1,74 +1,49 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 30/45] block: copy bio op to request op
-Date: Mon, 6 Jun 2016 08:48:24 +0200
-Message-ID: <57551CB8.1070409@suse.de>
+Subject: Re: [PATCH 37/45] drivers: use req op accessor
+Date: Mon, 6 Jun 2016 08:50:19 +0200
+Message-ID: <57551D2B.1090707@suse.de>
 References: <1465155145-10812-1-git-send-email-mchristi@redhat.com>
-	<1465155145-10812-31-git-send-email-mchristi@redhat.com>
+ <1465155145-10812-38-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1465155145-10812-31-git-send-email-mchristi@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <target-devel-owner@vger.kernel.org>
+In-Reply-To: <1465155145-10812-38-git-send-email-mchristi@redhat.com>
+Sender: target-devel-owner@vger.kernel.org
+To: mchristi@redhat.com, linux-f2fs-devel@lists.sourceforge.net, linux-ext4@vger.kernel.org, konrad.wilk@oracle.com, drbd-dev@lists.linbit.com, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-bcache@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-mtd@lists.infradead.org, target-devel@vger.kernel.org, linux-btrfs@vger.kernel.org, osd-dev@open-osd.org, xfs@oss.sgi.com, ocfs2-devel@oss.oracle.com
 List-Id: dm-devel.ids
 
 On 06/05/2016 09:32 PM, mchristi@redhat.com wrote:
 > From: Mike Christie <mchristi@redhat.com>
-> =
-
-> The bio users should now always be setting up the bio op. This patch
-> has the block layer copy that to the request.
-> =
-
+>=20
+> The req operation REQ_OP is separated from the rq_flag_bits
+> definition. This converts the block layer drivers to
+> use req_op to get the op from the request struct.
+>=20
 > Signed-off-by: Mike Christie <mchristi@redhat.com>
 > ---
->  block/blk-core.c | 6 +++---
->  1 file changed, 3 insertions(+), 3 deletions(-)
-> =
-
-> diff --git a/block/blk-core.c b/block/blk-core.c
-> index 7e943dc..3c45254 100644
-> --- a/block/blk-core.c
-> +++ b/block/blk-core.c
-> @@ -2976,8 +2976,7 @@ EXPORT_SYMBOL_GPL(__blk_end_request_err);
->  void blk_rq_bio_prep(struct request_queue *q, struct request *rq,
->  		     struct bio *bio)
->  {
-> -	/* Bit 0 (R/W) is identical in rq->cmd_flags and bio->bi_rw */
-> -	rq->cmd_flags |=3D bio->bi_rw & REQ_WRITE;
-> +	req_set_op(rq, bio_op(bio));
->  =
-
->  	if (bio_has_data(bio))
->  		rq->nr_phys_segments =3D bio_phys_segments(q, bio);
-> @@ -3062,7 +3061,8 @@ EXPORT_SYMBOL_GPL(blk_rq_unprep_clone);
->  static void __blk_rq_prep_clone(struct request *dst, struct request *src)
->  {
->  	dst->cpu =3D src->cpu;
-> -	dst->cmd_flags |=3D (src->cmd_flags & REQ_CLONE_MASK) | REQ_NOMERGE;
-> +	req_set_op_attrs(dst, req_op(src),
-> +			 (src->cmd_flags & REQ_CLONE_MASK) | REQ_NOMERGE);
->  	dst->cmd_type =3D src->cmd_type;
->  	dst->__sector =3D blk_rq_pos(src);
->  	dst->__data_len =3D blk_rq_bytes(src);
-> =
-
+>  drivers/block/loop.c              |  6 +++---
+>  drivers/block/mtip32xx/mtip32xx.c |  2 +-
+>  drivers/block/nbd.c               |  2 +-
+>  drivers/block/rbd.c               |  4 ++--
+>  drivers/block/xen-blkfront.c      |  8 +++++---
+>  drivers/ide/ide-floppy.c          |  2 +-
+>  drivers/md/dm.c                   |  2 +-
+>  drivers/mmc/card/block.c          |  7 +++----
+>  drivers/mmc/card/queue.c          |  6 ++----
+>  drivers/mmc/card/queue.h          |  5 ++++-
+>  drivers/mtd/mtd_blkdevs.c         |  2 +-
+>  drivers/nvme/host/core.c          |  2 +-
+>  drivers/nvme/host/nvme.h          |  4 ++--
+>  drivers/scsi/sd.c                 | 25 ++++++++++++++++---------
+>  14 files changed, 43 insertions(+), 34 deletions(-)
+>=20
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 
 Cheers,
 
 Hannes
--- =
-
+--=20
 Dr. Hannes Reinecke		   Teamlead Storage & Networking
 hare@suse.de			               +49 911 74053 688
 SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
