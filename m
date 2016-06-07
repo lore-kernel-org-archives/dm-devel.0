@@ -1,36 +1,46 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH] multipath-tools: unreachable controllers
-	maintainers
-Date: Mon, 06 Jun 2016 11:59:13 -0400
-Message-ID: <yq1eg8aqpf2.fsf@sermon.lab.mkp.net>
-References: <1465156471-20249-1-git-send-email-xose.vazquez@gmail.com>
-	<19ca1ccf-fd12-4fba-e587-9337e26f8fd7@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <19ca1ccf-fd12-4fba-e587-9337e26f8fd7@gmail.com> (Xose Vazquez
-	Perez's message of "Mon, 6 Jun 2016 16:38:29 +0200")
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+From: Baolin Wang <baolin.wang@linaro.org>
+Subject: [RFC v4 0/4] Introduce the bulk mode method when sending request to crypto layer
+Date: Tue,  7 Jun 2016 20:17:03 +0800
+Message-ID: <cover.1465301616.git.baolin.wang@linaro.org>
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, herbert@gondor.apana.org.au, davem@davemloft.net
+Cc: ebiggers3@gmail.com, js1304@gmail.com, tadeusz.struk@intel.com, smueller@chronox.de, standby24x7@gmail.com, shli@kernel.org, dan.j.williams@intel.com, martin.petersen@oracle.com, sagig@mellanox.com, kent.overstreet@gmail.com, keith.busch@intel.com, tj@kernel.org, ming.lei@canonical.com, broonie@kernel.org, arnd@arndb.de, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, baolin.wang@linaro.org
 List-Id: dm-devel.ids
 
->>>>> "Xose" == Xose Vazquez Perez <xose.vazquez@gmail.com> writes:
+This patchset will check if the cipher can support bulk mode, then dm-crypt
+will handle different ways to send requests to crypto layer according to
+cipher mode. For bulk mode, we can use sg table to map the whole bio and
+send all scatterlists of one bio to crypto engine to encrypt or decrypt,
+which can improve the hardware engine's efficiency.
 
-Xose> pillardata.com was bought by Oracle time ago, and it has no MX
-Xose> record. So Pillar Data controller family: Srinivasan Ramani
-Xose> <sramani@pillardata.com> is also orphan.
+Changes since v3:
+ - Some optimization for blk_bio_map_sg() function.
 
-Srinivasan Ramani <srinivas.ramani@oracle.com> is the correct address.
+Changes since v2:
+ - Add one cipher user with CRYPTO_ALG_BULK flag to support bulk mode.
+ - Add one atomic variable to avoid the sg table race.
+
+Changes since v1:
+ - Refactor the blk_bio_map_sg() function to avoid duplicated code.
+ - Move the sg table allocation to crypt_ctr_cipher() function to avoid memory
+ allocation in the IO path.
+ - Remove the crypt_sg_entry() function.
+ - Other optimization.
+
+Baolin Wang (4):
+  block: Introduce blk_bio_map_sg() to map one bio
+  crypto: Introduce CRYPTO_ALG_BULK flag
+  md: dm-crypt: Introduce the bulk mode method when sending request
+  crypto: Add the CRYPTO_ALG_BULK flag for ecb(aes) cipher
+
+ block/blk-merge.c         |   19 ++++++
+ drivers/crypto/omap-aes.c |    2 +-
+ drivers/md/dm-crypt.c     |  159 ++++++++++++++++++++++++++++++++++++++++++++-
+ include/crypto/skcipher.h |    7 ++
+ include/linux/blkdev.h    |    2 +
+ include/linux/crypto.h    |    6 ++
+ 6 files changed, 193 insertions(+), 2 deletions(-)
 
 -- 
-Martin K. Petersen	Oracle Linux Engineering
+1.7.9.5
