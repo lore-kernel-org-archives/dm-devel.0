@@ -1,34 +1,34 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: unreachable controllers
-	maintainers
-Date: Tue, 7 Jun 2016 15:17:04 +0200
-Message-ID: <d8b4c566-5bab-86b8-7b55-18c18befc9bd@gmail.com>
-References: <1465156471-20249-1-git-send-email-xose.vazquez@gmail.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [RFC v4 2/4] crypto: Introduce CRYPTO_ALG_BULK flag
+Date: Tue, 7 Jun 2016 22:16:13 +0800
+Message-ID: <20160607141613.GA2237@gondor.apana.org.au>
+References: <cover.1465301616.git.baolin.wang@linaro.org>
+ <238ce3d506051c863300b90720c3e103175747cc.1465301616.git.baolin.wang@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1465156471-20249-1-git-send-email-xose.vazquez@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <238ce3d506051c863300b90720c3e103175747cc.1465301616.git.baolin.wang@linaro.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Baolin Wang <baolin.wang@linaro.org>
+Cc: axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, davem@davemloft.net, ebiggers3@gmail.com, js1304@gmail.com, tadeusz.struk@intel.com, smueller@chronox.de, standby24x7@gmail.com, shli@kernel.org, dan.j.williams@intel.com, martin.petersen@oracle.com, sagig@mellanox.com, kent.overstreet@gmail.com, keith.busch@intel.com, tj@kernel.org, ming.lei@canonical.com, broonie@kernel.org, arnd@arndb.de, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 06/05/2016 09:54 PM, Xose Vazquez Perez wrote:
-
-> Replace 3 unreachable controllers maintainers, their emails are bounced,
-> with the default maintainer(Christophe Varoqui <christophe.varoqui@opensvc.com>)
+On Tue, Jun 07, 2016 at 08:17:05PM +0800, Baolin Wang wrote:
+> Now some cipher hardware engines prefer to handle bulk block rather than one
+> sector (512 bytes) created by dm-crypt, cause these cipher engines can handle
+> the intermediate values (IV) by themselves in one bulk block. This means we
+> can increase the size of the request by merging request rather than always 512
+> bytes and thus increase the hardware engine processing speed.
 > 
-> Compellent Technologies, Inc.: Jim Lester <jim.lester@compellent.com>
+> So introduce 'CRYPTO_ALG_BULK' flag to indicate this cipher can support bulk
+> mode.
+> 
+> Signed-off-by: Baolin Wang <baolin.wang@linaro.org>
 
-FYI, Compellent was bought by DELL some time ago.
-
-> NETAPP controller family: Dave Wysochanski <davidw@netapp.com>
-> IBM NSeries (NETAPP) controller family: Dave Wysochanski <davidw@netapp.com>
+Nack.  As I said before, please do it using explicit IV generators
+like we do for IPsec.
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
