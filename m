@@ -1,108 +1,45 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH] multipathd: update defaults
-Date: Tue, 7 Jun 2016 15:48:22 -0500
-Message-ID: <20160607204822.GA8095@octiron.msp.redhat.com>
-References: <1464938072-2885-1-git-send-email-hare@suse.de>
+From: Baolin Wang <baolin.wang@linaro.org>
+Subject: Re: [RFC v4 2/4] crypto: Introduce CRYPTO_ALG_BULK flag
+Date: Wed, 8 Jun 2016 10:00:56 +0800
+Message-ID: <CAMz4kuLsAyo7pO3VhCV9QdyHJ8njc6dfvORf55Nc_JTDVR-inQ@mail.gmail.com>
+References: <cover.1465301616.git.baolin.wang@linaro.org> <238ce3d506051c863300b90720c3e103175747cc.1465301616.git.baolin.wang@linaro.org>
+ <20160607141613.GA2237@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1464938072-2885-1-git-send-email-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20160607141613.GA2237@gondor.apana.org.au>
+Sender: linux-raid-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, David Miller <davem@davemloft.net>, Eric Biggers <ebiggers3@gmail.com>, Joonsoo Kim <js1304@gmail.com>, tadeusz.struk@intel.com, smueller@chronox.de, Masanari Iida <standby24x7@gmail.com>, Shaohua Li <shli@kernel.org>, Dan Williams <dan.j.williams@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Sagi Grimberg <sagig@mellanox.com>, Kent Overstreet <kent.overstreet@gmail.com>, Keith Busch <keith.busch@intel.com>, Tejun Heo <tj@kernel.org>, Ming Lei <ming.lei@canonical.com>, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>, LKML <linux-kernel@vger.ker>
 List-Id: dm-devel.ids
 
-On Fri, Jun 03, 2016 at 09:14:32AM +0200, Hannes Reinecke wrote:
-> For years I've been telling our customers to use the 'tur' checker
-> as the current default 'directio' will cause spurious path failures
-> under high load.
-> 
-> And for several versions (years, even) the linux kernel has the ability
-> to correctly detect the device handler, so we should be making
-> 'retain_hw_handler' the default.
-> And if we do this we also want to enable 'detect_prio', to ensure
-> we pick the correct prioritizer.
-> 
-> So this patch updates the default setting to always enable
-> 'retain_hw_handler' and 'detect_prio' and switch to 'tur'
-> as the default path checker.
+Hi Herbert,
 
-ACK
+On 7 June 2016 at 22:16, Herbert Xu <herbert@gondor.apana.org.au> wrote:
+> On Tue, Jun 07, 2016 at 08:17:05PM +0800, Baolin Wang wrote:
+>> Now some cipher hardware engines prefer to handle bulk block rather than one
+>> sector (512 bytes) created by dm-crypt, cause these cipher engines can handle
+>> the intermediate values (IV) by themselves in one bulk block. This means we
+>> can increase the size of the request by merging request rather than always 512
+>> bytes and thus increase the hardware engine processing speed.
+>>
+>> So introduce 'CRYPTO_ALG_BULK' flag to indicate this cipher can support bulk
+>> mode.
+>>
+>> Signed-off-by: Baolin Wang <baolin.wang@linaro.org>
+>
+> Nack.  As I said before, please do it using explicit IV generators
+> like we do for IPsec.
 
--Ben
+OK. I would like to try your suggestion. Thanks.
 
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> ---
->  libmultipath/checkers.h    | 2 +-
->  libmultipath/defaults.h    | 4 ++--
->  multipath/multipath.conf.5 | 4 ++--
->  3 files changed, 5 insertions(+), 5 deletions(-)
-> 
-> diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-> index a935b3f..374c826 100644
-> --- a/libmultipath/checkers.h
-> +++ b/libmultipath/checkers.h
-> @@ -85,7 +85,7 @@ enum path_check_state {
->  #define READSECTOR0  "readsector0"
->  #define CCISS_TUR    "cciss_tur"
->  
-> -#define DEFAULT_CHECKER DIRECTIO
-> +#define DEFAULT_CHECKER TUR
->  
->  #define ASYNC_TIMEOUT_SEC	30
->  
-> diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-> index 96f5a2c..4948271 100644
-> --- a/libmultipath/defaults.h
-> +++ b/libmultipath/defaults.h
-> @@ -16,8 +16,8 @@
->  #define DEFAULT_FIND_MULTIPATHS	0
->  #define DEFAULT_FAST_IO_FAIL	5
->  #define DEFAULT_DEV_LOSS_TMO   600
-> -#define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_OFF
-> -#define DEFAULT_DETECT_PRIO DETECT_PRIO_OFF
-> +#define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_ON
-> +#define DEFAULT_DETECT_PRIO DETECT_PRIO_ON
->  #define DEFAULT_DEFERRED_REMOVE DEFERRED_REMOVE_OFF
->  #define DEFAULT_DELAY_CHECKS DELAY_CHECKS_OFF
->  #define DEFAULT_UEVENT_STACKSIZE 256
-> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index aaaa01b..20a2304 100644
-> --- a/multipath/multipath.conf.5
-> +++ b/multipath/multipath.conf.5
-> @@ -295,7 +295,7 @@ Check the path state for LSI/Engenio/NetApp E-Series RDAC storage controller.
->  .B directio
->  Read the first sector with direct I/O.
->  .TP
-> -Default value is \fIdirectio\fR.
-> +Default value is \fItur\fR.
->  .RE
->  .TP
->  .B failback
-> @@ -463,7 +463,7 @@ are supported, or the
->  prioritizer if not. If set to
->  .I no
->  , the prioritizer will be selected as usual. Default is
-> -.I no
-> +.I yes
->  .TP
->  .B force_sync
->  If set to
-> -- 
-> 2.6.6
-> 
 > --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> Email: Herbert Xu <herbert@gondor.apana.org.au>
+> Home Page: http://gondor.apana.org.au/~herbert/
+> PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+
+
+
+-- 
+Baolin.wang
+Best Regards
