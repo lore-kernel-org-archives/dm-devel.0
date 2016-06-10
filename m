@@ -1,16 +1,11 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 05/57] Add HP MSA 2040 to the hardware table
-Date: Fri, 10 Jun 2016 08:17:13 +0200
-Message-ID: <575A5B69.60600@suse.de>
-References: <1461755458-29225-1-git-send-email-hare@suse.de>
-	<1461755458-29225-6-git-send-email-hare@suse.de>
-	<20160429000605.00006561@localhost> <5722F736.1050404@suse.de>
-	<01a29af9-deb9-64be-b01d-a1e248382cbc@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: multipath-tools: pg_init_retries not documented
+Date: Fri, 10 Jun 2016 15:36:28 +0200
+Message-ID: <1be7fe2e-8343-c8f4-d56b-a7a057b17468@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <01a29af9-deb9-64be-b01d-a1e248382cbc@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,60 +15,13 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Sebastian Herbszt <herbszt@gmx.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDYvMDkvMjAxNiAwNDoyMCBQTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+IE9uIDA0
-LzI5LzIwMTYgMDc6NTUgQU0sIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPiAKPj4gT24gMDQvMjkv
-MjAxNiAxMjowNiBBTSwgU2ViYXN0aWFuIEhlcmJzenQgd3JvdGU6Cj4+Pgo+Pj4+IGRpZmYgLS1n
-aXQgYS9saWJtdWx0aXBhdGgvaHd0YWJsZS5jIGIvbGlibXVsdGlwYXRoL2h3dGFibGUuYwo+Pj4+
-IGluZGV4IGE0YWUwNTMuLjI4ZWU1OTUgMTAwNjQ0Cj4+Pj4gLS0tIGEvbGlibXVsdGlwYXRoL2h3
-dGFibGUuYwo+Pj4+ICsrKyBiL2xpYm11bHRpcGF0aC9od3RhYmxlLmMKPj4+PiBAQCAtMTc1LDYg
-KzE3NSwyMSBAQCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewo+Pj4+ICAJ
-CS5wcmlvX25hbWUgICAgID0gUFJJT19BTFVBLAo+Pj4+ICAJCS5wcmlvX2FyZ3MgICAgID0gTlVM
-TCwKPj4+PiAgCX0sCj4+Pj4gKwl7Cj4+Pj4gKwkJLyogSFAgTVNBIDEwNDAvMjA0MCBwcm9kdWN0
-IGZhbWlseSAqLwo+Pj4+ICsJCS52ZW5kb3IgICAgICAgID0gIkhQIiwKPj4+PiArCQkucHJvZHVj
-dCAgICAgICA9ICJNU0EgKDF8MikwNDAgU0EoTnxTKSIsCj4+Pj4gKwkJLmZlYXR1cmVzICAgICAg
-PSBERUZBVUxUX0ZFQVRVUkVTLAo+Pj4+ICsJCS5od2hhbmRsZXIgICAgID0gREVGQVVMVF9IV0hB
-TkRMRVIsCj4+Pj4gKwkJLnBncG9saWN5ICAgICAgPSBHUk9VUF9CWV9QUklPLAo+Pj4+ICsJCS5w
-Z2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwKPj4+PiArCQkucnJfd2VpZ2h0ICAg
-ICA9IFJSX1dFSUdIVF9OT05FLAo+Pj4+ICsJCS5ub19wYXRoX3JldHJ5ID0gMTgsCj4+Pj4gKwkJ
-Lm1pbmlvICAgICAgICAgPSAxMDAsCj4+Pj4gKwkJLmNoZWNrZXJfbmFtZSAgPSBUVVIsCj4+Pj4g
-KwkJLnByaW9fbmFtZSAgICAgPSBQUklPX0FMVUEsCj4+Pj4gKwkJLnByaW9fYXJncyAgICAgPSBO
-VUxMLAo+Pj4+ICsJfSwKPj4+PiAgCj4+Pj4gIAl7Cj4+Pj4gIAkJLyogSFAgU1ZTUCAqLwo+Pj4K
-Pj4+IEFueSByZWFzb24gZm9yIGEgc2VwYXJhdGUgZW50cnkgYW5kIG5vdCBtZXJnaW5nIGl0IHdp
-dGgKPj4+ICJIUCBNU0EyMDAwIHByb2R1Y3QgZmFtaWx5IHdpdGggbmV3IGZpcm13YXJlIiA/Cj4+
-Pgo+PiBZZXMuIE1TQTIwMDAgYXJlIGNvbXBsZXRlbHkgZGlmZmVyZW50IGJlYXN0cywgc28gSSdk
-IGxpa2UgdG8ga2VlcAo+PiB0aGVtIHNlcGFyYXRlLgo+IAo+IFNlYmFzdGlhbiBpcyByaWdodC4K
-PiAKPiBBbmQgdGhlc2UgdGhyZWUgY2FuIGJlIGZvbGRlZCBpbnRvIG9uZSwgYmVjYXVzZSB0aGV5
-IHNoYXJlICpleGFjdGx5KiB0aGUKPiBzYW1lIGNvbmZpZ3VyYXRpb24uCj4gCk5vdGUgdGhhdCBJ
-IGRpZG4ndCBzYXkgdGhleSBfY2Fubm90XyBiZSBtZXJnZWQuCkkndmUgc2FpZCB0aGF0IEkgd291
-bGQgX2xpa2VfIHRvIGtlZXAgdGhlbSBzZXBhcmF0ZSwgYmVpbmcgYXMgdGhleSBhcmUKdG90YWxs
-eSBkaWZmZXJlbnQgaGFyZHdhcmUtd2lzZS4KCgo+IC8qIEhQIE1TQTIwMDAgcHJvZHVjdCBmYW1p
-bHkgd2l0aCBuZXcgZmlybXdhcmUgKi8KPiAudmVuZG9yICAgICAgICA9ICJIUCIsCj4gLnByb2R1
-Y3QgICAgICAgPSAiTVNBMjAxMnNhfE1TQTIzKDEyfDI0KShmY3xpfHNhKXxNU0EyMDAwcyBWT0xV
-TUUiLAo+IAo+IC8qIEhQIFAyMDAwIGZhbWlseSBhcnJheXMgKi8KPiAudmVuZG9yICAgICAgICA9
-ICJIUCIsCj4gLnByb2R1Y3QgICAgICAgPSAiUDIwMDAgRzMgRkN8UDIwMDBHMyBGQy9pU0NTSXxQ
-MjAwMCBHMyBTQVN8UDIwMDAgRzMgaVNDU0kiLAo+IAo+IC8qIEhQIE1TQSAxMDQwLzIwNDAgcHJv
-ZHVjdCBmYW1pbHkgKi8KPiAudmVuZG9yICAgICAgICA9ICJIUCIsCj4gLnByb2R1Y3QgICAgICAg
-PSAiTVNBICgxfDIpMDQwIFNBKE58UykiLAo+IAo+IAo+IEluIFZ4Vk0obGlidnhtc2Eya2ZjX3Nh
-KSB0aGV5IGFyZSBncm91cGVkIHRoYXQgd2F5Ogo+IGh0dHBzOi8vd2ViLmFyY2hpdmUub3JnL3dl
-Yi8yMDE2MDYwODIzMzE0MC9odHRwczovL3NvcnQudmVyaXRhcy5jb20vYXNsL2RldGFpbHMvNzU2
-Cj4gCj4gT3RoZXJ3aXNlIGlmIGh3dGFibGUuYyBpcyBmaWxsZWQgd2l0aCBhIGxvdCBvZiBkdXBs
-aWNhdGUgZW50cmllcywKPiBpdCBjb3VsZCBiZSB1bm1hbmFnZWFibGUuCj4gCldlbGwuCk1TQTIw
-MDAgaXMgYWxyZWFkeSBvdXQgb2Ygc3VwcG9ydCwgYW5kIFAyMDAwIGlzIGhlYWRpbmcgdGhlcmUu
-ClNvIGl0J3MgX2V4dHJlbWVseV8gdW5saWtlbHkgdGhhdCB3ZSBnZXQgYWRkaXRpb25hbCBoYXJk
-d2FyZSBlbnRyaWVzIGZvcgp0aG9zZS4KQXQgdGhlIHNhbWUgdGltZSwgcmUtZ3JvdXBpbmcgaGFy
-ZHdhcmUgZW50cmllcyBieSBjb21iaW5pbmcgcmVndWxhcgpleHByZXNzaW9ucyBhbHdheXMgaGFz
-IHRoZSByZWFsIHJpc2sgb2YgbWVzc2luZyB1cCB0aGUgcmVndWxhcgpleHByZXNzaW9ucywgYW5k
-IHJlcXVpcmVzIGEgdGVzdCBvbiB0aGUgYWN0dWFsIGhhcmR3YXJlIHRvIGNoZWNrIGlmIHdlCmRp
-ZG4ndCBtZXNzIHVwLiBTZWVpbmcgdGhlIGJvdGggYXJlIGJhc2ljYWxseSB1bnN1cHBvcnRlZCBp
-dCdsbCBnZXQgaGFyZAp0byB2YWxpZGF0ZSB0aGlzLgpGb3IgdGhpcyByZWFzb25zIEkgcHJlZmVy
-IHRvIGxlYXZlIHRoZW0gYWxvbmUuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVp
-bmVja2UJCSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZQkJCSAg
-ICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0
-ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBK
-LiBHdWlsZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoK
-LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
-cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Hi,
+
+pg_init_retries(features) is not documented anywhere in multipath-tools.
+
+Only the kernel has some hints:
+drivers/md/dm-mpath.c:  unsigned pg_init_retries;       /* Number of times to retry pg_init */
+drivers/md/dm-mpath.c:          {1, 50, "pg_init_retries must be between 1 and 50"},
