@@ -1,16 +1,18 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [dm:for-next 1/4] drivers/md/dm.c:1757:36: error:
- passing argument 2 of 'dm_mq_init_request_queue' from incompatible pointer
- type
-Date: Fri, 10 Jun 2016 15:18:03 -0400
-Message-ID: <20160610191803.GA30231@redhat.com>
-References: <201606110159.BUvhrj8S%fengguang.wu@intel.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 05/57] Add HP MSA 2040 to the hardware table
+Date: Sat, 11 Jun 2016 12:06:35 +0200
+Message-ID: <575BE2AB.1070608@suse.de>
+References: <1461755458-29225-1-git-send-email-hare@suse.de>
+	<1461755458-29225-6-git-send-email-hare@suse.de>
+	<20160429000605.00006561@localhost> <5722F736.1050404@suse.de>
+	<01a29af9-deb9-64be-b01d-a1e248382cbc@gmail.com>
+	<575A5B69.60600@suse.de>
+	<feddf362-5f06-120f-4b0b-8143bf5875c8@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <201606110159.BUvhrj8S%fengguang.wu@intel.com>
+In-Reply-To: <feddf362-5f06-120f-4b0b-8143bf5875c8@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,54 +22,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: kbuild test robot <fengguang.wu@intel.com>
-Cc: dm-devel@redhat.com, kbuild-all@01.org
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 10 2016 at  2:00pm -0400,
-kbuild test robot <fengguang.wu@intel.com> wrote:
-
-> tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
-> head:   b18ef3eb063790f62f2630015a116cb495cb143f
-> commit: 3fa1ee95f14c676ef9d8f53516f31f1bdcb194f1 [1/4] dm: move request-based code out to dm-rq.[hc]
-> config: i386-defconfig (attached as .config)
-> compiler: gcc-6 (Debian 6.1.1-1) 6.1.1 20160430
-> reproduce:
->         git checkout 3fa1ee95f14c676ef9d8f53516f31f1bdcb194f1
->         # save the attached .config to linux build tree
->         make ARCH=i386 
-> 
-> Note: the dm/for-next HEAD b18ef3eb063790f62f2630015a116cb495cb143f builds fine.
->       It only hurts bisectibility.
-> 
-> All errors (new ones prefixed by >>):
-> 
->    drivers/md/dm.c: In function 'dm_setup_md_queue':
-> >> drivers/md/dm.c:1757:36: error: passing argument 2 of 'dm_mq_init_request_queue' from incompatible pointer type [-Werror=incompatible-pointer-types]
->       r = dm_mq_init_request_queue(md, t);
->                                        ^
->    In file included from drivers/md/dm.c:9:0:
->    drivers/md/dm-rq.h:52:5: note: expected 'struct dm_target *' but argument is of type 'struct dm_table *'
->     int dm_mq_init_request_queue(struct mapped_device *md, struct dm_target *immutable_tgt);
->         ^~~~~~~~~~~~~~~~~~~~~~~~
->    cc1: some warnings being treated as errors
-> 
-> vim +/dm_mq_init_request_queue +1757 drivers/md/dm.c
-> 
->   1751			if (r) {
->   1752				DMERR("Cannot initialize queue for request-based mapped device");
->   1753				return r;
->   1754			}
->   1755			break;
->   1756		case DM_TYPE_MQ_REQUEST_BASED:
-> > 1757			r = dm_mq_init_request_queue(md, t);
->   1758			if (r) {
->   1759				DMERR("Cannot initialize queue for request-based dm-mq mapped device");
->   1760				return r;
-> 
-> ---
-> 0-DAY kernel test infrastructure                Open Source Technology Center
-> https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
-
-
-I fixed this up, sorry for the noise.
+T24gMDYvMTAvMjAxNiAwNDozMCBQTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+IE9uIDA2
+LzEwLzIwMTYgMDg6MTcgQU0sIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPgo+PiBPbiAwNi8wOS8y
+MDE2IDA0OjIwIFBNLCBYb3NlIFZhenF1ZXogUGVyZXogd3JvdGU6Cj4KPj4+IEluIFZ4Vk0obGli
+dnhtc2Eya2ZjX3NhKSB0aGV5IGFyZSBncm91cGVkIHRoYXQgd2F5Ogo+Pj4gaHR0cHM6Ly93ZWIu
+YXJjaGl2ZS5vcmcvd2ViLzIwMTYwNjA4MjMzMTQwL2h0dHBzOi8vc29ydC52ZXJpdGFzLmNvbS9h
+c2wvZGV0YWlscy83NTYKPj4+Cj4+PiBPdGhlcndpc2UgaWYgaHd0YWJsZS5jIGlzIGZpbGxlZCB3
+aXRoIGEgbG90IG9mIGR1cGxpY2F0ZSBlbnRyaWVzLAo+Pj4gaXQgY291bGQgYmUgdW5tYW5hZ2Vh
+YmxlLgo+Cj4+IFdlbGwuCj4+IE1TQTIwMDAgaXMgYWxyZWFkeSBvdXQgb2Ygc3VwcG9ydCwgYW5k
+IFAyMDAwIGlzIGhlYWRpbmcgdGhlcmUuCj4+IFNvIGl0J3MgX2V4dHJlbWVseV8gdW5saWtlbHkg
+dGhhdCB3ZSBnZXQgYWRkaXRpb25hbCBoYXJkd2FyZSBlbnRyaWVzIGZvcgo+PiB0aG9zZS4KPj4g
+QXQgdGhlIHNhbWUgdGltZSwgcmUtZ3JvdXBpbmcgaGFyZHdhcmUgZW50cmllcyBieSBjb21iaW5p
+bmcgcmVndWxhcgo+PiBleHByZXNzaW9ucyBhbHdheXMgaGFzIHRoZSByZWFsIHJpc2sgb2YgbWVz
+c2luZyB1cCB0aGUgcmVndWxhcgo+PiBleHByZXNzaW9ucywgYW5kIHJlcXVpcmVzIGEgdGVzdCBv
+biB0aGUgYWN0dWFsIGhhcmR3YXJlIHRvIGNoZWNrIGlmIHdlCj4+IGRpZG4ndCBtZXNzIHVwLiBT
+ZWVpbmcgdGhlIGJvdGggYXJlIGJhc2ljYWxseSB1bnN1cHBvcnRlZCBpdCdsbCBnZXQgaGFyZAo+
+PiB0byB2YWxpZGF0ZSB0aGlzLgo+PiBGb3IgdGhpcyByZWFzb25zIEkgcHJlZmVyIHRvIGxlYXZl
+IHRoZW0gYWxvbmUuCj4KPiBCVFcsIGEgIlVuaXQgc2VyaWFsIG51bWJlciIgYXR0cmlidXRlIGNv
+dWxkIGJlIGFkZGVkIHRvIHByb3ZpZGUgbW9yZSBmbGV4aWJpbGl0eS4KPgpFcnJtLgoKQW5kIHRo
+aXMgcmVsYXRlcyB0byB0aGUgcXVvdGVkIG1haWwgbGlrZSAuLi4gaG93PwoKUGxlYXNlIHNlbmQg
+YSBzZXBhcmF0ZSBtYWlsICh3aXRoIGEgbmV3IHN1YmplY3QpIGZvciB0aGlzLgpPdGhlcndpc2Ug
+d2UnbGwgbmV2ZXIgZmluZCBpdCBhZ2FpbiBvbiB0aGUgbWFpbGluZyBsaXN0IGFyY2hpdmVzLgoK
+Q2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICAgICB6U2VyaWVzICYg
+U3RvcmFnZQpoYXJlQHN1c2UuZGUJCQkgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVY
+IFByb2R1Y3RzIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogSi4gSGF3
+biwgSi4gR3VpbGQsIEYuIEltZW5kw7ZyZmZlciwgSFJCIDE2NzQ2IChBRyBOw7xybmJlcmcpCgot
+LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5y
+ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
