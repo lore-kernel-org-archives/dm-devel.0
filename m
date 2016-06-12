@@ -1,13 +1,14 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 2/2] multipath-tools: housekeeping at prioritizers
-Date: Sun, 12 Jun 2016 00:14:41 +0200
-Message-ID: <1465683281-21755-2-git-send-email-xose.vazquez@gmail.com>
-References: <1465683281-21755-1-git-send-email-xose.vazquez@gmail.com>
+Subject: Re: multipath-tools: looking for weird values at
+	hwtable.c
+Date: Sun, 12 Jun 2016 12:39:09 +0200
+Message-ID: <39994ffa-b0a8-b91b-694e-050cfb759dd7@gmail.com>
+References: <0e79b203-6005-5b18-d093-2c5ba5f16430@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1465683281-21755-1-git-send-email-xose.vazquez@gmail.com>
+In-Reply-To: <0e79b203-6005-5b18-d093-2c5ba5f16430@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,86 +18,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-add PRIO_IET to libmultipath/prio.h and sort them alphabetically.
+On 06/11/2016 11:53 PM, Xose Vazquez Perez wrote:
+
+> Do you see something wrong/weird? (mainly in less repeated patterns)
+
+Forget the previous email, last member(NULL/0) should has been deleted.
 
 
-"datacore" and "iet" are missing in multipath.conf.5 !!!
+      1                 .checker_name  = EMC_CLARIION,
+      1                 .dev_loss      = 60,
+      1                 .dev_loss      = MAX_DEV_LOSS_TMO,
+      1                 .fast_io_fail  = 10,
+      1                 .fast_io_fail  = 5,
+      1                 .features      = "3 queue_if_no_path pg_init_retries 50",
+      1                 .flush_on_last_del = FLUSH_ENABLED,
+      1                 .hwhandler     = "1 emc",
+      1                 .minio         = 15,
+      1                 .minio         = DEFAULT_MINIO,
+      1                 .minio_rq      = DEFAULT_MINIO_RQ,
+      1                 .no_path_retry = 0,
+      1                 .no_path_retry = 10,
+      1                 .no_path_retry = 5,
+      1                 .no_path_retry = 6,
+      1                 .pgfailback    = 15,
+      1                 .pgpolicy      = FAILOVER,
+      1                 .prio_name     = PRIO_EMC,
+      1                 .prio_name     = PRIO_HDS,
+
+      2                 .checker_name  = HP_SW,
+      2                 .hwhandler     = "1 hp_sw",
+      2                 .no_path_retry = 30,
+      2                 .prio_name     = PRIO_HP_SW,
+      2                 .prio_name     = PRIO_ONTAP,
+      2                 .selector      = "queue-length 0",
+      2                 .uid_attribute = "ID_UID",
+      2                 .user_friendly_names = USER_FRIENDLY_NAMES_OFF,
+
+      3                 .checker_name  = DEFAULT_CHECKER,
+      3                 .detect_prio   = DETECT_PRIO_ON,
+      3                 .minio         = 128,
+      3                 .no_path_retry = 300,
+      3                 .retain_hwhandler = RETAIN_HWHANDLER_ON,
+
+      4                 .no_path_retry = 18,
+      4                 .no_path_retry = (300 / DEFAULT_CHECKINT),
+
+      5                 .no_path_retry = 15,
+      5                 .pgpolicy      = GROUP_BY_SERIAL,
+
+      6                 .features      = "2 pg_init_retries 50",
+      6                 .hwhandler     = "1 alua",
+
+      7                 .no_path_retry = 12,
 
 
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/prio.h                | 21 +++++++++++----------
- libmultipath/prioritizers/Makefile | 16 ++++++++--------
- 2 files changed, 19 insertions(+), 18 deletions(-)
+     11                 .checker_name  = DIRECTIO,
+     11                 .minio         = 100,
 
-diff --git a/libmultipath/prio.h b/libmultipath/prio.h
-index 495688f..258dee7 100644
---- a/libmultipath/prio.h
-+++ b/libmultipath/prio.h
-@@ -19,16 +19,17 @@ struct path;
- /*
-  * Known prioritizers for use in hwtable.c
-  */
--#define PRIO_ALUA "alua"
--#define PRIO_CONST "const"
--#define PRIO_EMC "emc"
--#define PRIO_HDS "hds"
--#define PRIO_HP_SW "hp_sw"
--#define PRIO_ONTAP "ontap"
--#define PRIO_RANDOM "random"
--#define PRIO_RDAC "rdac"
--#define PRIO_DATACORE "datacore"
--#define PRIO_WEIGHTED_PATH "weightedpath"
-+#define PRIO_ALUA		"alua"
-+#define PRIO_CONST		"const"
-+#define PRIO_DATACORE		"datacore"
-+#define PRIO_EMC		"emc"
-+#define PRIO_HDS		"hds"
-+#define PRIO_HP_SW		"hp_sw"
-+#define PRIO_IET		"iet"
-+#define PRIO_ONTAP		"ontap"
-+#define PRIO_RANDOM		"random"
-+#define PRIO_RDAC		"rdac"
-+#define PRIO_WEIGHTED_PATH	"weightedpath"
- 
- /*
-  * Value used to mark the fact prio was not defined
-diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
-index 6cfac88..ca7b85c 100644
---- a/libmultipath/prioritizers/Makefile
-+++ b/libmultipath/prioritizers/Makefile
-@@ -5,17 +5,17 @@
- include ../../Makefile.inc
- 
- LIBS = \
--	libpriorandom.so \
--	libprioconst.so \
--	libpriohp_sw.so \
--	libprioemc.so \
--	libpriordac.so \
- 	libprioalua.so \
--	libprioontap.so \
-+	libprioconst.so \
- 	libpriodatacore.so \
-+	libprioemc.so \
- 	libpriohds.so \
--	libprioweightedpath.so \
--	libprioiet.so
-+	libpriohp_sw.so \
-+	libprioiet.so \
-+	libprioontap.so \
-+	libpriorandom.so \
-+	libpriordac.so \
-+	libprioweightedpath.so
- 
- CFLAGS += -I..
- 
--- 
-2.5.5
+     15                 .no_path_retry = NO_PATH_RETRY_QUEUE,
+     18                 .prio_name     = PRIO_ALUA,
+     19                 .checker_name  = RDAC,
+     20                 .features      = "1 queue_if_no_path",
+     21                 .hwhandler     = "1 rdac",
+     21                 .prio_name     = PRIO_RDAC,
+     22                 .pgpolicy      = MULTIBUS,
+     24                 .pgfailback    = FAILBACK_UNDEF,
+     28                 .no_path_retry = NO_PATH_RETRY_UNDEF,
+     28                 .prio_name     = DEFAULT_PRIO,
+     38                 .checker_name  = TUR,
+     44                 .hwhandler     = DEFAULT_HWHANDLER,
+     46                 .pgpolicy      = GROUP_BY_PRIO,
+     47                 .features      = DEFAULT_FEATURES,
+     49                 .pgfailback    = -FAILBACK_IMMEDIATE,
+     71                 .rr_weight     = RR_WEIGHT_NONE,
+     72                 .prio_args     = NULL,
