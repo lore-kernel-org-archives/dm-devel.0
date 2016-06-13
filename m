@@ -1,62 +1,48 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: change checker in RDAC devices
-	with the native
-Date: Mon, 13 Jun 2016 19:02:20 +0200
-Message-ID: <1465837340-20257-1-git-send-email-xose.vazquez@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+From: Toshi Kani <toshi.kani@hpe.com>
+Subject: [PATCH 2/6] block: Check GENHD_FL_DAX for DAX capability
+Date: Mon, 13 Jun 2016 16:21:33 -0600
+Message-ID: <1465856497-19698-3-git-send-email-toshi.kani@hpe.com>
+References: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com, dan.j.williams@intel.com
+Cc: ross.zwisler@linux.intel.com, viro@zeniv.linux.org.uk, axboe@kernel.dk, toshi.kani@hpe.com, linux-nvdimm@lists.01.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Replace TUR checker with RDAC for:
-"OPENstorage D280"
-"STK6580_6780"
+Now that GENHD_FL_DAX is set to all drivers supporting DAX,
+change bdev_direct_access() and __blkdev_get() to check this
+GENHD_FL_DAX flag.
 
-I don't know if it's a bug or feature, but for all other RDAC devices
-"hwhandler" "checker" and "prio" are rdac.
-
-*This patch needs an explicit ACK from Hannes and Christophe*
-
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Signed-off-by: Toshi Kani <toshi.kani@hpe.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: Dan Williams <dan.j.williams@intel.com>
+Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
+Cc: <linux-fsdevel@vger.kernel.org>
 ---
- libmultipath/hwtable.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ fs/block_dev.c |    5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index c4258e1..44a4669 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -949,7 +949,7 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
--		.checker_name  = TUR,
-+		.checker_name  = RDAC,
- 		.prio_name     = PRIO_RDAC,
- 		.prio_args     = NULL,
- 	},
-@@ -981,7 +981,7 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
--		.checker_name  = TUR,
-+		.checker_name  = RDAC,
- 		.prio_name     = PRIO_RDAC,
- 		.prio_args     = NULL,
- 	},
--- 
-2.5.5
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 71ccab1..61935ee 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -493,7 +493,7 @@ long bdev_direct_access(struct block_device *bdev, struct blk_dax_ctl *dax)
+ 
+ 	if (size < 0)
+ 		return size;
+-	if (!ops->direct_access)
++	if (!(bdev->bd_disk->flags & GENHD_FL_DAX) || !ops->direct_access)
+ 		return -EOPNOTSUPP;
+ 	if ((sector + DIV_ROUND_UP(size, 512)) >
+ 					part_nr_sects_read(bdev->bd_part))
+@@ -1287,7 +1287,8 @@ static int __blkdev_get(struct block_device *bdev, fmode_t mode, int for_part)
+ 		bdev->bd_disk = disk;
+ 		bdev->bd_queue = disk->queue;
+ 		bdev->bd_contains = bdev;
+-		if (IS_ENABLED(CONFIG_BLK_DEV_DAX) && disk->fops->direct_access)
++		if (IS_ENABLED(CONFIG_BLK_DEV_DAX) &&
++		    disk->flags & GENHD_FL_DAX)
+ 			bdev->bd_inode->i_flags = S_DAX;
+ 		else
+ 			bdev->bd_inode->i_flags = 0;
