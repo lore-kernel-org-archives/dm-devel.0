@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add TEGILE devices to hardware
-	table
-Date: Mon, 13 Jun 2016 16:38:50 +0200
-Message-ID: <1465828730-11869-1-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add Pure Storage device to
+	hardware table
+Date: Mon, 13 Jun 2016 18:30:37 +0200
+Message-ID: <1465835437-18350-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,20 +19,17 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-based on documentation provided by manufacturer:
-http://pages.tegile.com/rs/568-BVY-995/images/Oracle%20BPG%201.0.pdf
+based on documentation provided by the manufacturer:
+https://support.purestorage.com/@api/deki/files/1733/=Pure_Storage_Oracle_DB_Best_Practices.pdf?revision=2
 
-vendor                  "TEGILE"
-product                 "ZEBI-FC|INTELLIFLASH"
-hardware_handler        "1 alua"
-path_selector           "round- robin 0"
-path_grouping_policy    "group_by_prio"
-no_path_retry           10
-dev_loss_tmo            50
+vendor                  "PURE"
+product                 "FlashArray"	(extracted from outputs)
+path_selector           "round-robin 0"
+path_grouping_policy    multibus
+rr_min_io               1
 path_checker            tur
-prio                    alua
-failback                30
-rr_min_io               128
+fast_io_fail_tmo        10
+dev_loss_tmo            30
 
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Hannes Reinecke <hare@suse.de>
@@ -40,34 +37,31 @@ Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
+ libmultipath/hwtable.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 66b5123..a126b7c 100644
+index a126b7c..c4258e1 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -1176,6 +1176,25 @@ static struct hwentry default_hw[] = {
- 		.checker_name  = TUR,
+@@ -1195,6 +1195,22 @@ static struct hwentry default_hw[] = {
+ 		.minio         = 128,
  	},
  	/*
-+	 * Tegile Systems, Inc.
++	 * Pure Storage, Inc.
 +	 *
 +	 * Maintainer : Christophe Varoqui
 +	 * Mail : christophe.varoqui@opensvc.com
 +	 */
 +	{
-+		.vendor        = "TEGILE",
-+		.product       = "ZEBI-FC|INTELLIFLASH",
-+		.hwhandler     = "1 alua",
++		.vendor        = "PURE",
++		.product       = "FlashArray",
 +		.selector      = "round-robin 0",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.no_path_retry = 10,
-+		.dev_loss      = 50,
++		.pgpolicy      = MULTIBUS,
++		.minio         = 1,
 +		.checker_name  = TUR,
-+		.prio_name     = PRIO_ALUA,
-+		.pgfailback    = 30,
-+		.minio         = 128,
++		.fast_io_fail  = 10,
++		.dev_loss      = 30,
 +	},
 +	/*
  	 * EOL
