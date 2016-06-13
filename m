@@ -1,7 +1,8 @@
-From: Ritesh Raj Sarraf <rrs@debian.org>
-Subject: [PATCH] Update kpartx manpage with current output
-Date: Mon, 13 Jun 2016 14:10:47 +0530
-Message-ID: <1465807247-15392-1-git-send-email-rrs@debian.org>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add TEGILE devices to hardware
+	table
+Date: Mon, 13 Jun 2016 16:38:50 +0200
+Message-ID: <1465828730-11869-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,40 +16,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Ritesh Raj Sarraf <rrs@debian.org>, xose.vazquez@gmail.com
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-See Debian Bug #796948 for details
-Many users are reported to be consuming the output in a scripted setup
+based on documentation provided by manufacturer:
+http://pages.tegile.com/rs/568-BVY-995/images/Oracle%20BPG%201.0.pdf
 
-Signed-off-by: Ritesh Raj Sarraf <rrs@debian.org>
+vendor                  "TEGILE"
+product                 "ZEBI-FC|INTELLIFLASH"
+hardware_handler        "1 alua"
+path_selector           "round- robin 0"
+path_grouping_policy    "group_by_prio"
+no_path_retry           10
+dev_loss_tmo            50
+path_checker            tur
+prio                    alua
+failback                30
+rr_min_io               128
+
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- kpartx/kpartx.8 | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ libmultipath/hwtable.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
 
-diff --git a/kpartx/kpartx.8 b/kpartx/kpartx.8
-index 021ddc0..564d93b 100644
---- a/kpartx/kpartx.8
-+++ b/kpartx/kpartx.8
-@@ -50,15 +50,15 @@ kpartx \-av disk.img
- .PP
- This will output lines such as:
- .IP
--loop3p1 : 0 20964762 /dev/loop3 63
-+add map loop1p1 (254:4): 0 409597 linear 7:1 3
- .PP
- The 
--.I loop3p1
-+.I loop1p1
- is the name of a device file under 
- .I /dev/mapper
- which you can use to access the partition, for example to fsck it:
- .IP
--fsck /dev/mapper/loop3p1
-+fsck /dev/mapper/loop1p1
- .PP
- When you're done, you need to remove the devices:
- .IP
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 66b5123..a126b7c 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -1176,6 +1176,25 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = TUR,
+ 	},
+ 	/*
++	 * Tegile Systems, Inc.
++	 *
++	 * Maintainer : Christophe Varoqui
++	 * Mail : christophe.varoqui@opensvc.com
++	 */
++	{
++		.vendor        = "TEGILE",
++		.product       = "ZEBI-FC|INTELLIFLASH",
++		.hwhandler     = "1 alua",
++		.selector      = "round-robin 0",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.no_path_retry = 10,
++		.dev_loss      = 50,
++		.checker_name  = TUR,
++		.prio_name     = PRIO_ALUA,
++		.pgfailback    = 30,
++		.minio         = 128,
++	},
++	/*
+ 	 * EOL
+ 	 */
+ 	{
 -- 
-2.8.1
+2.5.5
