@@ -1,84 +1,47 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add INFINIDAT devices to
-	hardware table
-Date: Tue, 14 Jun 2016 00:46:56 +0200
-Message-ID: <1465858016-12175-1-git-send-email-xose.vazquez@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 0/6] Support DAX for device-mapper dm-linear devices
+Date: Mon, 13 Jun 2016 18:57:57 -0400
+Message-ID: <20160613225756.GA18417@redhat.com>
+References: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Toshi Kani <toshi.kani@hpe.com>
+Cc: agk@redhat.com, dan.j.williams@intel.com, ross.zwisler@linux.intel.com, viro@zeniv.linux.org.uk, axboe@kernel.dk, linux-nvdimm@ml01.01.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-based on documentation provided by the manufacturer:
-https://support.infinidat.com/hc/en-us/articles/202319222
+On Mon, Jun 13 2016 at  6:21pm -0400,
+Toshi Kani <toshi.kani@hpe.com> wrote:
 
-  vendor "NFINIDAT"             <----- This is not a bug, it's _NFINIDAT_
-  product "InfiniBox.*"
-  prio alua
-  path_grouping_policy group_by_prio
-  path_checker tur
-  path_selector "round-robin 0"
-  features "0"
-  failback 30
-  rr_weight priorities
-  no_path_retry fail
-  rr_min_io 1    # for kernels up to 2.6.31
-  rr_min_io_rq 1 # for kernels 2.6.31 or newer
-  flush_on_last_del yes
-  fast_io_fail_tmo 5
-  dev_loss_tmo 30
+> This patch-set adds DAX support to device-mapper dm-linear devices
+> used by LVM.  It works with LVM commands as follows:
+>  - Creation of a logical volume with all DAX capable devices (such
+>    as pmem) sets the logical volume DAX capable as well.
+>  - Once a logical volume is set to DAX capable, the volume may not
+>    be extended with non-DAX capable devices.
+> 
+> The direct_access interface is added to dm and dm-linear to map
+> a request to a target device.
+> 
+>  - Patch 1-2 introduce GENHD_FL_DAX flag to indicate DAX capability.
+>  - Patch 3-4 add direct_access functions to dm and dm-linear.
+>  - Patch 5-6 set GENHD_FL_DAX to dm when all targets are DAX capable.
+> 
+> ---
+> Toshi Kani (6):
+>  1/6 genhd: Add GENHD_FL_DAX to gendisk flags
+>  2/6 block: Check GENHD_FL_DAX for DAX capability
+>  3/6 dm: Add dm_blk_direct_access() for mapped device
+>  4/6 dm-linear: Add linear_direct_access()
+>  5/6 dm, dm-linear: Add dax_supported to dm_target
+>  6/6 dm: Enable DAX support for mapper device
 
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 22 ++++++++++++++++++++++
- 1 file changed, 22 insertions(+)
+Thanks a lot for doing this.  I recently added it to my TODO so your
+patches come at a great time.
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 44a4669..650dee6 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1211,6 +1211,28 @@ static struct hwentry default_hw[] = {
- 		.dev_loss      = 30,
- 	},
- 	/*
-+	 * Infinidat, Inc.
-+	 *
-+	 * Maintainer : Christophe Varoqui
-+	 * Mail : christophe.varoqui@opensvc.com
-+	 */
-+	{
-+		.vendor        = "NFINIDAT",
-+		.product       = "InfiniBox.*",
-+		.prio_name     = PRIO_ALUA,
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.checker_name  = TUR,
-+		.selector      = "round-robin 0",
-+		.features      = DEFAULT_FEATURES,
-+		.pgfailback    = 30,
-+		.rr_weight     = RR_WEIGHT_PRIO,
-+		.no_path_retry = NO_PATH_RETRY_FAIL,
-+		.minio_rq      = 1,
-+		.flush_on_last_del = FLUSH_ENABLED,
-+		.fast_io_fail  = 5,
-+		.dev_loss      = 30,
-+	},
-+	/*
- 	 * EOL
- 	 */
- 	{
--- 
-2.5.5
+I'll try to get to reviewing/testing your work by the end of this week.
+
+Mike
