@@ -1,103 +1,87 @@
 From: Toshi Kani <toshi.kani@hpe.com>
-Subject: [PATCH 3/6] dm: Add dm_blk_direct_access() for mapped device
-Date: Mon, 13 Jun 2016 16:21:34 -0600
-Message-ID: <1465856497-19698-4-git-send-email-toshi.kani@hpe.com>
+Subject: [PATCH 1/6] genhd: Add GENHD_FL_DAX to gendisk flags
+Date: Mon, 13 Jun 2016 16:21:32 -0600
+Message-ID: <1465856497-19698-2-git-send-email-toshi.kani@hpe.com>
 References: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
 Return-path: <linux-raid-owner@vger.kernel.org>
 In-Reply-To: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
 Sender: linux-raid-owner@vger.kernel.org
 To: agk@redhat.com, snitzer@redhat.com, dan.j.williams@intel.com
-Cc: ross.zwisler@linux.intel.com, viro@zeniv.linux.org.uk, axboe@kernel.dk, toshi.kani@hpe.com, linux-nvdimm@lists.01.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: ross.zwisler@linux.intel.com, viro@zeniv.linux.org.uk, axboe@kernel.dk, toshi.kani@hpe.com, linux-nvdimm@lists.01.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-s390@vger.kernel.org
 List-Id: dm-devel.ids
 
-Change mapped device to implement direct_access function,
-dm_blk_direct_access(), which calls a target direct_access
-function.  'struct target_type' is extended to have target
-direct_access interface.  This function limits direct
-accessible size to the dm_target's limit with max_io_len().
+Currently, presence of direct_access() in block_device_operations
+indicates support of DAX on its block device.  Because
+block_device_operations is instantiated with 'const', this DAX
+capablity may not be enabled conditinally.
+
+In preparation for supporting DAX to device-mapper devices, add
+GENHD_FL_DAX to gendisk flags to indicate that this block device
+supports DAX.  This will allow to set the DAX capability based on
+how mapped device is composed.
 
 Signed-off-by: Toshi Kani <toshi.kani@hpe.com>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>
 Cc: Dan Williams <dan.j.williams@intel.com>
 Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
+Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>
+Cc: Heiko Carstens <heiko.carstens@de.ibm.com>
+Cc: <linux-s390@vger.kernel.org>
 ---
- drivers/md/dm.c               |   29 +++++++++++++++++++++++++++++
- include/linux/device-mapper.h |   10 ++++++++++
- 2 files changed, 39 insertions(+)
+ drivers/block/brd.c          |    2 +-
+ drivers/nvdimm/pmem.c        |    2 +-
+ drivers/s390/block/dcssblk.c |    1 +
+ include/linux/genhd.h        |    2 +-
+ 4 files changed, 4 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 1b2f962..6e9f958 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1473,6 +1473,34 @@ int dm_set_target_max_io_len(struct dm_target *ti, sector_t len)
- }
- EXPORT_SYMBOL_GPL(dm_set_target_max_io_len);
+diff --git a/drivers/block/brd.c b/drivers/block/brd.c
+index c04bd9b..43a6765 100644
+--- a/drivers/block/brd.c
++++ b/drivers/block/brd.c
+@@ -518,7 +518,7 @@ static struct brd_device *brd_alloc(int i)
+ 	disk->fops		= &brd_fops;
+ 	disk->private_data	= brd;
+ 	disk->queue		= brd->brd_queue;
+-	disk->flags		= GENHD_FL_EXT_DEVT;
++	disk->flags		= GENHD_FL_EXT_DEVT | GENHD_FL_DAX;
+ 	sprintf(disk->disk_name, "ram%d", i);
+ 	set_capacity(disk, rd_size * 2);
  
-+static long dm_blk_direct_access(struct block_device *bdev, sector_t sector,
-+	void __pmem **kaddr, pfn_t *pfn, long size)
-+{
-+	struct mapped_device *md = bdev->bd_disk->private_data;
-+	struct dm_table *map;
-+	struct dm_target *ti;
-+	int srcu_idx;
-+	long len, ret = -EIO;
-+
-+	map = dm_get_live_table(md, &srcu_idx);
-+	if (!map)
-+		return ret;
-+
-+	ti = dm_table_find_target(map, sector);
-+	if (!dm_target_is_valid(ti))
-+		goto out;
-+
-+	len = max_io_len(sector, ti) << SECTOR_SHIFT;
-+	size = min(len, size);
-+
-+	if (ti->type->direct_access)
-+		ret = ti->type->direct_access(ti, sector, kaddr, pfn, size);
-+
-+out:
-+	dm_put_live_table(md, srcu_idx);
-+	return min(ret, size);
-+}
-+
- /*
-  * A target may call dm_accept_partial_bio only from the map routine.  It is
-  * allowed for all bio types except REQ_FLUSH.
-@@ -3721,6 +3749,7 @@ static const struct block_device_operations dm_blk_dops = {
- 	.open = dm_blk_open,
- 	.release = dm_blk_close,
- 	.ioctl = dm_blk_ioctl,
-+	.direct_access = dm_blk_direct_access,
- 	.getgeo = dm_blk_getgeo,
- 	.pr_ops = &dm_pr_ops,
- 	.owner = THIS_MODULE
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 0830c9e..16e6c8c 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -116,6 +116,15 @@ typedef void (*dm_io_hints_fn) (struct dm_target *ti,
-  */
- typedef int (*dm_busy_fn) (struct dm_target *ti);
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 608fc44..3847449 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -295,7 +295,7 @@ static int pmem_attach_disk(struct device *dev,
  
-+/*
-+ * Returns:
-+ *  < 0 : error
-+ * >= 0 : the number of bytes accessible at the address
-+ */
-+typedef long (*dm_direct_access_fn) (struct dm_target *ti, sector_t sector,
-+				     void __pmem **kaddr, pfn_t *pfn,
-+				     long size);
-+
- void dm_error(const char *message);
+ 	disk->fops		= &pmem_fops;
+ 	disk->queue		= q;
+-	disk->flags		= GENHD_FL_EXT_DEVT;
++	disk->flags		= GENHD_FL_EXT_DEVT | GENHD_FL_DAX;
+ 	nvdimm_namespace_disk_name(ndns, disk->disk_name);
+ 	disk->driverfs_dev = dev;
+ 	set_capacity(disk, (pmem->size - pmem->pfn_pad - pmem->data_offset)
+diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+index bed53c4..60b1857 100644
+--- a/drivers/s390/block/dcssblk.c
++++ b/drivers/s390/block/dcssblk.c
+@@ -616,6 +616,7 @@ dcssblk_add_store(struct device *dev, struct device_attribute *attr, const char
+ 	dev_info->gd->queue = dev_info->dcssblk_queue;
+ 	dev_info->gd->private_data = dev_info;
+ 	dev_info->gd->driverfs_dev = &dev_info->dev;
++	dev_info->gd->flags = GENHD_FL_DAX;
+ 	blk_queue_make_request(dev_info->dcssblk_queue, dcssblk_make_request);
+ 	blk_queue_logical_block_size(dev_info->dcssblk_queue, 4096);
  
- struct dm_dev {
-@@ -162,6 +171,7 @@ struct target_type {
- 	dm_busy_fn busy;
- 	dm_iterate_devices_fn iterate_devices;
- 	dm_io_hints_fn io_hints;
-+	dm_direct_access_fn direct_access;
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index 359a8e4..9dc3a3d 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -131,7 +131,7 @@ struct hd_struct {
+ };
  
- 	/* For internal device-mapper use. */
- 	struct list_head list;
+ #define GENHD_FL_REMOVABLE			1
+-/* 2 is unused */
++#define GENHD_FL_DAX				2
+ #define GENHD_FL_MEDIA_CHANGE_NOTIFY		4
+ #define GENHD_FL_CD				8
+ #define GENHD_FL_UP				16
