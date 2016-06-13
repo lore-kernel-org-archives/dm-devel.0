@@ -1,87 +1,84 @@
-From: Toshi Kani <toshi.kani@hpe.com>
-Subject: [PATCH 1/6] genhd: Add GENHD_FL_DAX to gendisk flags
-Date: Mon, 13 Jun 2016 16:21:32 -0600
-Message-ID: <1465856497-19698-2-git-send-email-toshi.kani@hpe.com>
-References: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: agk@redhat.com, snitzer@redhat.com, dan.j.williams@intel.com
-Cc: ross.zwisler@linux.intel.com, viro@zeniv.linux.org.uk, axboe@kernel.dk, toshi.kani@hpe.com, linux-nvdimm@lists.01.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-s390@vger.kernel.org
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add INFINIDAT devices to
+	hardware table
+Date: Tue, 14 Jun 2016 00:46:56 +0200
+Message-ID: <1465858016-12175-1-git-send-email-xose.vazquez@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Currently, presence of direct_access() in block_device_operations
-indicates support of DAX on its block device.  Because
-block_device_operations is instantiated with 'const', this DAX
-capablity may not be enabled conditinally.
+based on documentation provided by the manufacturer:
+https://support.infinidat.com/hc/en-us/articles/202319222
 
-In preparation for supporting DAX to device-mapper devices, add
-GENHD_FL_DAX to gendisk flags to indicate that this block device
-supports DAX.  This will allow to set the DAX capability based on
-how mapped device is composed.
+  vendor "NFINIDAT"             <----- This is not a bug, it's _NFINIDAT_
+  product "InfiniBox.*"
+  prio alua
+  path_grouping_policy group_by_prio
+  path_checker tur
+  path_selector "round-robin 0"
+  features "0"
+  failback 30
+  rr_weight priorities
+  no_path_retry fail
+  rr_min_io 1    # for kernels up to 2.6.31
+  rr_min_io_rq 1 # for kernels 2.6.31 or newer
+  flush_on_last_del yes
+  fast_io_fail_tmo 5
+  dev_loss_tmo 30
 
-Signed-off-by: Toshi Kani <toshi.kani@hpe.com>
-Cc: Jens Axboe <axboe@kernel.dk>
-Cc: Dan Williams <dan.j.williams@intel.com>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
-Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>
-Cc: Heiko Carstens <heiko.carstens@de.ibm.com>
-Cc: <linux-s390@vger.kernel.org>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- drivers/block/brd.c          |    2 +-
- drivers/nvdimm/pmem.c        |    2 +-
- drivers/s390/block/dcssblk.c |    1 +
- include/linux/genhd.h        |    2 +-
- 4 files changed, 4 insertions(+), 3 deletions(-)
+ libmultipath/hwtable.c | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
 
-diff --git a/drivers/block/brd.c b/drivers/block/brd.c
-index c04bd9b..43a6765 100644
---- a/drivers/block/brd.c
-+++ b/drivers/block/brd.c
-@@ -518,7 +518,7 @@ static struct brd_device *brd_alloc(int i)
- 	disk->fops		= &brd_fops;
- 	disk->private_data	= brd;
- 	disk->queue		= brd->brd_queue;
--	disk->flags		= GENHD_FL_EXT_DEVT;
-+	disk->flags		= GENHD_FL_EXT_DEVT | GENHD_FL_DAX;
- 	sprintf(disk->disk_name, "ram%d", i);
- 	set_capacity(disk, rd_size * 2);
- 
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 608fc44..3847449 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -295,7 +295,7 @@ static int pmem_attach_disk(struct device *dev,
- 
- 	disk->fops		= &pmem_fops;
- 	disk->queue		= q;
--	disk->flags		= GENHD_FL_EXT_DEVT;
-+	disk->flags		= GENHD_FL_EXT_DEVT | GENHD_FL_DAX;
- 	nvdimm_namespace_disk_name(ndns, disk->disk_name);
- 	disk->driverfs_dev = dev;
- 	set_capacity(disk, (pmem->size - pmem->pfn_pad - pmem->data_offset)
-diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
-index bed53c4..60b1857 100644
---- a/drivers/s390/block/dcssblk.c
-+++ b/drivers/s390/block/dcssblk.c
-@@ -616,6 +616,7 @@ dcssblk_add_store(struct device *dev, struct device_attribute *attr, const char
- 	dev_info->gd->queue = dev_info->dcssblk_queue;
- 	dev_info->gd->private_data = dev_info;
- 	dev_info->gd->driverfs_dev = &dev_info->dev;
-+	dev_info->gd->flags = GENHD_FL_DAX;
- 	blk_queue_make_request(dev_info->dcssblk_queue, dcssblk_make_request);
- 	blk_queue_logical_block_size(dev_info->dcssblk_queue, 4096);
- 
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 359a8e4..9dc3a3d 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -131,7 +131,7 @@ struct hd_struct {
- };
- 
- #define GENHD_FL_REMOVABLE			1
--/* 2 is unused */
-+#define GENHD_FL_DAX				2
- #define GENHD_FL_MEDIA_CHANGE_NOTIFY		4
- #define GENHD_FL_CD				8
- #define GENHD_FL_UP				16
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 44a4669..650dee6 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -1211,6 +1211,28 @@ static struct hwentry default_hw[] = {
+ 		.dev_loss      = 30,
+ 	},
+ 	/*
++	 * Infinidat, Inc.
++	 *
++	 * Maintainer : Christophe Varoqui
++	 * Mail : christophe.varoqui@opensvc.com
++	 */
++	{
++		.vendor        = "NFINIDAT",
++		.product       = "InfiniBox.*",
++		.prio_name     = PRIO_ALUA,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.checker_name  = TUR,
++		.selector      = "round-robin 0",
++		.features      = DEFAULT_FEATURES,
++		.pgfailback    = 30,
++		.rr_weight     = RR_WEIGHT_PRIO,
++		.no_path_retry = NO_PATH_RETRY_FAIL,
++		.minio_rq      = 1,
++		.flush_on_last_del = FLUSH_ENABLED,
++		.fast_io_fail  = 5,
++		.dev_loss      = 30,
++	},
++	/*
+ 	 * EOL
+ 	 */
+ 	{
+-- 
+2.5.5
