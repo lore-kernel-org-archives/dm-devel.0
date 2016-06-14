@@ -1,86 +1,47 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] multipath-tools: change checker in RDAC
- devices with the native
-Date: Tue, 14 Jun 2016 07:58:54 +0200
-Message-ID: <575F9D1E.1060301@suse.de>
-References: <1465837340-20257-1-git-send-email-xose.vazquez@gmail.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH 0/6] Support DAX for device-mapper dm-linear devices
+Date: Tue, 14 Jun 2016 00:30:58 -0700
+Message-ID: <CAPcyv4jjaRBCuX3=8w-Yun79SZ25kp553Nc_WT5KBoPKq81bnw@mail.gmail.com>
+References: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
+	<CAPcyv4jdM1phR=kGoP2-7tfsVvbNe2C6hHNS5TD28ALGZQQTSw@mail.gmail.com>
+	<1465861755.3504.185.camel@hpe.com>
+	<CAPcyv4hnKRc6qrPPuKo1r3=YmuAAaeSSv7xBOpDMAy5UuUhoHw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1465837340-20257-1-git-send-email-xose.vazquez@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <CAPcyv4hnKRc6qrPPuKo1r3=YmuAAaeSSv7xBOpDMAy5UuUhoHw@mail.gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: "Kani, Toshimitsu" <toshi.kani@hpe.com>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "agk@redhat.com" <agk@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "axboe@kernel.dk" <axboe@kernel.dk>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, "ross.zwisler@linux.intel.com" <ross.zwisler@linux.intel.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 06/13/2016 07:02 PM, Xose Vazquez Perez wrote:
-> Replace TUR checker with RDAC for:
-> "OPENstorage D280"
-> "STK6580_6780"
-> =
+On Mon, Jun 13, 2016 at 5:02 PM, Dan Williams <dan.j.williams@intel.com> wrote:
+> On Mon, Jun 13, 2016 at 4:59 PM, Kani, Toshimitsu <toshi.kani@hpe.com> wrote:
+>> On Mon, 2016-06-13 at 16:18 -0700, Dan Williams wrote:
+>>> Thanks Toshi!
+>>>
+>>> On Mon, Jun 13, 2016 at 3:21 PM, Toshi Kani <toshi.kani@hpe.com> wrote:
+>>> >
+>>> > This patch-set adds DAX support to device-mapper dm-linear devices
+>>> > used by LVM.  It works with LVM commands as follows:
+>>> >  - Creation of a logical volume with all DAX capable devices (such
+>>> >    as pmem) sets the logical volume DAX capable as well.
+>>> >  - Once a logical volume is set to DAX capable, the volume may not
+>>> >    be extended with non-DAX capable devices.
+>>>
+>>> I don't mind this, but it seems a policy decision that the kernel does
+>>> not need to make.  A sufficiently sophisticated user could cope with
+>>> DAX being available at varying LBAs.  Would it be sufficient to move
+>>> this policy decision to userspace tooling?
+>>
+>> I think this is a kernel restriction.  When a block device is declared as
+>> DAX capable, it should mean that the whole device is DAX capable.  So, I
+>> think we need to assure the same to a mapped device.
+>
+> Hmm, but we already violate this with badblocks.  The device is DAX
+> capable, but certain LBAs will return an error if direct_access is
+> attempted.
 
-> I don't know if it's a bug or feature, but for all other RDAC devices
-> "hwhandler" "checker" and "prio" are rdac.
-> =
-
-> *This patch needs an explicit ACK from Hannes and Christophe*
-> =
-
-> Cc: Hannes Reinecke <hare@suse.de>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/hwtable.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> =
-
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index c4258e1..44a4669 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -949,7 +949,7 @@ static struct hwentry default_hw[] =3D {
->  		.pgfailback    =3D -FAILBACK_IMMEDIATE,
->  		.rr_weight     =3D RR_WEIGHT_NONE,
->  		.no_path_retry =3D NO_PATH_RETRY_UNDEF,
-> -		.checker_name  =3D TUR,
-> +		.checker_name  =3D RDAC,
->  		.prio_name     =3D PRIO_RDAC,
->  		.prio_args     =3D NULL,
->  	},
-> @@ -981,7 +981,7 @@ static struct hwentry default_hw[] =3D {
->  		.pgfailback    =3D -FAILBACK_IMMEDIATE,
->  		.rr_weight     =3D RR_WEIGHT_NONE,
->  		.no_path_retry =3D NO_PATH_RETRY_UNDEF,
-> -		.checker_name  =3D TUR,
-> +		.checker_name  =3D RDAC,
->  		.prio_name     =3D PRIO_RDAC,
->  		.prio_args     =3D NULL,
->  	},
-> =
-
-Actually it doesn't matter; 'TUR' will work better under high I/O load,
-whereas RDAC has quirks for some array-specific settings.
-But for consistencies sake we should be switching to 'RDAC' here, too.
-
-Acked-by: Hannes Reinecke <hare@suse.com>
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+Nevermind, for this to be useful we would need to fallback to regular
+mmap for a portion of the linear span.  That's different than the
+badblocks case.
