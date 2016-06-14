@@ -1,66 +1,117 @@
-From: "Kani, Toshimitsu" <toshi.kani@hpe.com>
+From: Jeff Moyer <jmoyer@redhat.com>
 Subject: Re: [PATCH 0/6] Support DAX for device-mapper dm-linear devices
-Date: Tue, 14 Jun 2016 18:00:06 +0000
-Message-ID: <1465926601.3504.231.camel@hpe.com>
+Date: Tue, 14 Jun 2016 16:19:19 -0400
+Message-ID: <x49inxbzfp4.fsf@segfault.boston.devel.redhat.com>
 References: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
-	 <CAPcyv4jdM1phR=kGoP2-7tfsVvbNe2C6hHNS5TD28ALGZQQTSw@mail.gmail.com>
-	 <1465861755.3504.185.camel@hpe.com>
-	 <x49fusf282h.fsf@segfault.boston.devel.redhat.com>
-	 <20160614154131.GB25876@redhat.com>
+	<CAPcyv4jdM1phR=kGoP2-7tfsVvbNe2C6hHNS5TD28ALGZQQTSw@mail.gmail.com>
+	<1465861755.3504.185.camel@hpe.com>
+	<x49fusf282h.fsf@segfault.boston.devel.redhat.com>
+	<20160614154131.GB25876@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160614154131.GB25876@redhat.com>
-Content-Language: en-US
-Content-ID: <33CEEFCFD9E6D544AC0549754A5686D4@NAMPRD84.PROD.OUTLOOK.COM>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "jmoyer@redhat.com" <jmoyer@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-nvdimm@ml01.01.org" <linux-nvdimm@ml01.01.org>, "agk@redhat.com" <agk@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "dan.j.williams@intel.com" <dan.j.williams@intel.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "ross.zwisler@linux.intel.com" <ross.zwisler@linux.intel.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20160614154131.GB25876@redhat.com> (Mike Snitzer's message of
+	"Tue, 14 Jun 2016 11:41:31 -0400")
+Sender: linux-raid-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "Kani, Toshimitsu" <toshi.kani@hpe.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "linux-nvdimm@lists.01.org" <linux-nvdimm@ml01.01.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "dan.j.williams@intel.com" <dan.j.williams@intel.com>, "ross.zwisler@linux.intel.com" <ross.zwisler@linux.intel.com>, "agk@redhat.com" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE2LTA2LTE0IGF0IDExOjQxIC0wNDAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
-IE9uIFR1ZSwgSnVuIDE0IDIwMTYgYXTCoMKgOTo1MGFtIC0wNDAwLA0KPiBKZWZmIE1veWVyIDxq
-bW95ZXJAcmVkaGF0LmNvbT4gd3JvdGU6DQo+ID4gIkthbmksIFRvc2hpbWl0c3UiIDx0b3NoaS5r
-YW5pQGhwZS5jb20+IHdyaXRlczoNCj4gPiA+ID4gSSBoYWQgZG0tbGluZWFyIGFuZCBtZC1yYWlk
-MCBzdXBwb3J0IG9uIG15IGxpc3Qgb2YgdGhpbmdzIHRvIGxvb2sNCj4gPiA+ID4gYXQsIGRpZCB5
-b3UgaGF2ZSByYWlkMCBpbiB5b3VyIHBsYW5zPw0KPiA+ID4NCj4gPiA+IFllcywgSSBob3BlIHRv
-IGV4dGVuZCBmdXJ0aGVyIGFuZCByYWlkMCBpcyBhIGdvb2QgY2FuZGlkYXRlLiANCj4gPiDCoMKg
-DQo+ID4gZG0tZmxha2V5IHdvdWxkIGFsbG93IG1vcmUgeGZzdGVzdHMgdGVzdCBjYXNlcyB0byBy
-dW4uwqDCoEknZCBzYXkgdGhhdCdzDQo+ID4gbW9yZSBpbXBvcnRhbnQgdGhhbiBsaW5lYXIgb3Ig
-cmFpZDAuwqDCoDstKQ0KPg0KPiBSZWdhcmRsZXNzIG9mIHdoaWNoIHRhcmdldChzKSBncm93IERB
-WCBzdXBwb3J0IHRoZSBtb3N0IHByZXNzaW5nIGluaXRpYWwNCj4gY29uY2VybiBpcyBnZXR0aW5n
-IHRoZSBETSBkZXZpY2Ugc3RhY2tpbmcgY29ycmVjdC7CoMKgQW5kIHZlcmlmeWluZyB0aGF0DQo+
-IElPIHRoYXQgY3Jvc3MgcG1lbSBkZXZpY2UgYm91bmRhcmllcyBhcmUgYmVpbmcgcHJvcGVybHkg
-c3BsaXQgYnkgRE0NCj4gY29yZSAodmlhIGRyaXZlcnMvbWQvZG0uYzpfX3NwbGl0X2FuZF9wcm9j
-ZXNzX25vbl9mbHVzaCgpJ3MgY2FsbCB0bw0KPiBtYXhfaW9fbGVuKS4NCg0KQWdyZWVkLiBJJ3Zl
-IGJyaWVmbHkgdGVzdGVkIHN0YWNraW5nIGFuZCBpdCBzZWVtcyB3b3JraW5nIGZpbmUuIMKgQXMg
-Zm9yIElPDQpjcm9zc2luZyBwbWVtIGRldmljZSBib3VuZGFyaWVzLMKgX19zcGxpdF9hbmRfcHJv
-Y2Vzc19ub25fZmx1c2goKSBpcyB1c2VkDQp3aGVuIHRoZSBkZXZpY2UgaXMgbW91bnRlZCB3aXRo
-b3V0IERBWCBvcHRpb24uIMKgV2l0aCBEQVgsIHRoaXMgY2FzZSBpcw0KaGFuZGxlZCBieSBkbV9i
-bGtfZGlyZWN0X2FjY2VzcygpIHRoYXQgbGltaXRzIHJldHVybiBzaXplLiDCoFRoaXMgbGVhZHMg
-dGhlDQpjYWxsZXIgdG8gaXRlcmF0ZSAocmVhZC93cml0ZSkgb3IgZmFsbGJhY2sgdG8gYSBzbWFs
-bGVyIHNpemUgKG1tYXAgcGZhdWx0KS4NCg0KPiBNeSBob3BlIGlzIHRvIG5haWwgZG93biB0aGUg
-RE0gY29yZSBhbmQgaXRzIGRlcGVuZGVuY2llcyBpbiBibG9jayBldGMuDQo+IERvaW5nIHNvIGlu
-IHRlcm1zIG9mIGRtLWxpbmVhciBkb2Vzbid0IHNlZW0gbGlrZSB3YXN0ZWQgZWZmb3J0DQo+IGNv
-bnNpZGVyaW5nIHlvdSB0b2xkIG1lIGl0J2QgYmUgdXNlZnVsIHRvIGhhdmUgZm9yIHBtZW0gZGV2
-aWNlcy4NCg0KWWVzLCBJIHRoaW5rIGRtLWxpbmVhciBpcyB1c2VmdWwgYXMgaXQgZ2l2ZXMgbW9y
-ZSBmbGV4aWJpbGl0eSwgZXguIGl0IGFsbG93cw0KY3JlYXRpbmcgYSBsYXJnZSBkZXZpY2Ugd2l0
-aCBtdWx0aXBsZSBwbWVtIGRldmljZXMuDQoNCj4gPiBBbHNvLCB0aGUgbmV4dCBzdGVwIGluIHRo
-aXMgd29yayBpcyB0byB0aGVuIGRlY2lkZSBob3cgdG8gZGV0ZXJtaW5lIG9uDQo+ID4gd2hhdCBu
-dW1hIG5vZGUgYW4gTEJBIHJlc2lkZXMuwqDCoFdlIGhhZCBkaXNjdXNzZWQgdGhpcyBhdCBhIHBy
-aW9yDQo+ID4gcGx1bWJlcnMgY29uZmVyZW5jZSwgYW5kIEkgdGhpbmsgdGhlIGNvbnNlbnN1cyB3
-YXMgdG8gdXNlIHhhdHRycy4NCj4gPiBUb3NoaSwgZG8geW91IGFsc28gcGxhbiB0byBkbyB0aGF0
-IHdvcms/DQo+DQo+IEhvdyBkb2VzIHRoZSBhc3NvY2lhdGVkIE5VTUEgbm9kZSByZWxhdGUgdG8g
-dGhpcz/CoMKgRG9lcyB0aGUNCj4gRE0gcmVxdWVzdHNfcXVldWUgbmVlZCB0byBiZSBzZXR1cCB0
-byBvbmx5IGFsbG9jYXRlIGZyb20gdGhlIE5VTUEgbm9kZQ0KPiB0aGUgcG1lbSBkZXZpY2UgaXMg
-YXR0YWNoZWQgdG8/wqDCoEkgcmVjZW50bHkgYWRkZWQgc3VwcG9ydCBmb3IgdGhpcyB0bw0KPiBE
-TS7CoMKgQnV0IHRoZXJlIHdpbGwgbGlrZWx5IGJlIHNvbWUgY29kZSBuZWVkIHRvIHByb3BhZ2F0
-ZSB0aGUgTlVNQSBub2RlDQo+IGlkIGFjY29yZGluZ2x5Lg0KDQpFYWNoIHBtZW0gZGV2aWNlIGhh
-cyBzeXNmcyAibnVtYV9ub2RlIiBzbyB0aGF0IHRvb2xzIGxpa2UgbnVtYWN0bCBjYW4gYmUNCnVz
-ZWQgdG8gYmluZCBhcHBsaWNhdGlvbiB0byBydW4gb24gdGhlIHNhbWUgbG9jYWxpdHkgYXMgcG1l
-bSBkZXZpY2UgKHNpbmNlDQpDUFUgZGlyZWN0bHkgYWNjZXNzZXMgdG8gcG1lbSkuIMKgVGhpcyB3
-b24ndCB3b3JrIHdlbGwgd2l0aCBtYXBwZWQgZGV2aWNlDQpzaW5jZSBpdCBjYW4gYmUgY29tcG9z
-ZWQgd2l0aCBtdWx0aXBsZSBsb2NhbGl0aWVzLiDCoExvY2FsaXR5IGluZm8gd291bGQgbmVlZA0K
-dG8gYmUgbWFuYWdlZCBmaWxlLWJhc2lzIGFzIEplZmYgbWVudGlvbmVkLg0KDQpUaGFua3MsDQot
-VG9zaGk=
+Mike Snitzer <snitzer@redhat.com> writes:
+
+> On Tue, Jun 14 2016 at  9:50am -0400,
+> Jeff Moyer <jmoyer@redhat.com> wrote:
+>
+>> "Kani, Toshimitsu" <toshi.kani@hpe.com> writes:
+>>=20
+>> >> I had dm-linear and md-raid0 support on my list of things to look=
+ at,
+>> >> did you have raid0 in your plans?
+>> >
+>> > Yes, I hope to extend further and raid0 is a good candidate. =C2=A0=
+=C2=A0
+>>=20
+>> dm-flakey would allow more xfstests test cases to run.  I'd say that=
+'s
+>> more important than linear or raid0.  ;-)
+>
+> Regardless of which target(s) grow DAX support the most pressing init=
+ial
+> concern is getting the DM device stacking correct.  And verifying tha=
+t
+> IO that cross pmem device boundaries are being properly split by DM
+> core (via drivers/md/dm.c:__split_and_process_non_flush()'s call to
+> max_io_len).
+
+That was a tongue-in-cheek comment.  You're reading way too much into
+it.
+
+>> Also, the next step in this work is to then decide how to determine =
+on
+>> what numa node an LBA resides.  We had discussed this at a prior
+>> plumbers conference, and I think the consensus was to use xattrs.
+>> Toshi, do you also plan to do that work?
+>
+> How does the associated NUMA node relate to this?  Does the
+> DM requests_queue need to be setup to only allocate from the NUMA nod=
+e
+> the pmem device is attached to?  I recently added support for this to
+> DM.  But there will likely be some code need to propagate the NUMA no=
+de
+> id accordingly.
+
+I assume you mean allocate memory (the volatile kind).  That should wor=
+k
+the same between pmem and regular block devices, no?
+
+What I was getting at was that applications may want to know on which
+node their data resides.  Right now, it's easy to tell because a single
+device cannot span numa nodes, or, if it does, it does so via an
+interleave, so numa information isn't interesting.  However, once data
+on a single file system can be placed on multiple different numa nodes,
+applications may want to query and/or control that placement.
+
+Here's a snippet from a blog post I never finished:
+
+There are two essential questions that need to be answered regarding
+persistent memory and NUMA: first, would an application benefit from
+being able to query the NUMA locality of its data, and second, would
+an application benefit from being able to specify a placement policy
+for its data?  This article is an attempt to summarize the current
+state of hardware and software in order to consider the above two
+questions.  We begin with a short list of use cases for these
+interfaces, which will frame the discussion.
+
+=46irst, let's consider an interface that allows an application to quer=
+y
+the NUMA placement of existing data.  With such information, an
+application may want to perform the following actions:
+
+- relocate application processes to the same NUMA node as their data.
+  (Interfaces for moving a process are readily available.)
+- specify a memory (RAM) allocation policy so that memory allocations
+  come from the same NUMA node as the data.
+
+Second, we consider an interface that allows an application to specify
+a placement policy for new data.  Using this interface, an application
+may:
+
+- ensure data is stored on the same NUMA node as the one on which the
+  application is running
+- ensure data is stored on the same NUMA node as an I/O adapter such
+  as a network card, that is a producer of data stored to NVM.
+- ensure data is stored on a different NUMA node:
+  - so that the data is stored on the same NUMA node as related data
+  - because the data does not need the faster access afforded by local
+    NUMA placement.  Presumably this is a trade-off, and other data
+    will require local placement to meet the performance goals of the
+    application.
+
+Cheers,
+Jeff
+--
+To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
