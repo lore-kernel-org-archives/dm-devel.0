@@ -1,46 +1,66 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: correct a syntax error in
-	multipath.conf.5
-Date: Tue, 14 Jun 2016 19:52:50 +0200
-Message-ID: <1465926770-28323-1-git-send-email-xose.vazquez@gmail.com>
+From: "Kani, Toshimitsu" <toshi.kani@hpe.com>
+Subject: Re: [PATCH 0/6] Support DAX for device-mapper dm-linear devices
+Date: Tue, 14 Jun 2016 18:00:06 +0000
+Message-ID: <1465926601.3504.231.camel@hpe.com>
+References: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
+	 <CAPcyv4jdM1phR=kGoP2-7tfsVvbNe2C6hHNS5TD28ALGZQQTSw@mail.gmail.com>
+	 <1465861755.3504.185.camel@hpe.com>
+	 <x49fusf282h.fsf@segfault.boston.devel.redhat.com>
+	 <20160614154131.GB25876@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160614154131.GB25876@redhat.com>
+Content-Language: en-US
+Content-ID: <33CEEFCFD9E6D544AC0549754A5686D4@NAMPRD84.PROD.OUTLOOK.COM>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "jmoyer@redhat.com" <jmoyer@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-nvdimm@ml01.01.org" <linux-nvdimm@ml01.01.org>, "agk@redhat.com" <agk@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "dan.j.williams@intel.com" <dan.j.williams@intel.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "ross.zwisler@linux.intel.com" <ross.zwisler@linux.intel.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-$ groff -z -b -wall ./multipath/multipath.conf.5
-./multipath/multipath.conf.5:519: warning: macro `timeout' not defined (possibly missing space after `ti')
-
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- multipath/multipath.conf.5 | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 2ff88c4..d24f6fe 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -516,7 +516,7 @@ Default is
- CLI receive timeout in milliseconds. For larger systems CLI commands
- might timeout before the multipathd lock is released and the CLI command
- can be processed. This will result in errors like
--'timeout receiving packet' to be returned from CLI commands.
-+"timeout receiving packet" to be returned from CLI commands.
- In these cases it is recommended to increase the CLI timeout to avoid
- those issues. The default is
- .I 1000
--- 
-2.5.5
+T24gVHVlLCAyMDE2LTA2LTE0IGF0IDExOjQxIC0wNDAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
+IE9uIFR1ZSwgSnVuIDE0IDIwMTYgYXTCoMKgOTo1MGFtIC0wNDAwLA0KPiBKZWZmIE1veWVyIDxq
+bW95ZXJAcmVkaGF0LmNvbT4gd3JvdGU6DQo+ID4gIkthbmksIFRvc2hpbWl0c3UiIDx0b3NoaS5r
+YW5pQGhwZS5jb20+IHdyaXRlczoNCj4gPiA+ID4gSSBoYWQgZG0tbGluZWFyIGFuZCBtZC1yYWlk
+MCBzdXBwb3J0IG9uIG15IGxpc3Qgb2YgdGhpbmdzIHRvIGxvb2sNCj4gPiA+ID4gYXQsIGRpZCB5
+b3UgaGF2ZSByYWlkMCBpbiB5b3VyIHBsYW5zPw0KPiA+ID4NCj4gPiA+IFllcywgSSBob3BlIHRv
+IGV4dGVuZCBmdXJ0aGVyIGFuZCByYWlkMCBpcyBhIGdvb2QgY2FuZGlkYXRlLiANCj4gPiDCoMKg
+DQo+ID4gZG0tZmxha2V5IHdvdWxkIGFsbG93IG1vcmUgeGZzdGVzdHMgdGVzdCBjYXNlcyB0byBy
+dW4uwqDCoEknZCBzYXkgdGhhdCdzDQo+ID4gbW9yZSBpbXBvcnRhbnQgdGhhbiBsaW5lYXIgb3Ig
+cmFpZDAuwqDCoDstKQ0KPg0KPiBSZWdhcmRsZXNzIG9mIHdoaWNoIHRhcmdldChzKSBncm93IERB
+WCBzdXBwb3J0IHRoZSBtb3N0IHByZXNzaW5nIGluaXRpYWwNCj4gY29uY2VybiBpcyBnZXR0aW5n
+IHRoZSBETSBkZXZpY2Ugc3RhY2tpbmcgY29ycmVjdC7CoMKgQW5kIHZlcmlmeWluZyB0aGF0DQo+
+IElPIHRoYXQgY3Jvc3MgcG1lbSBkZXZpY2UgYm91bmRhcmllcyBhcmUgYmVpbmcgcHJvcGVybHkg
+c3BsaXQgYnkgRE0NCj4gY29yZSAodmlhIGRyaXZlcnMvbWQvZG0uYzpfX3NwbGl0X2FuZF9wcm9j
+ZXNzX25vbl9mbHVzaCgpJ3MgY2FsbCB0bw0KPiBtYXhfaW9fbGVuKS4NCg0KQWdyZWVkLiBJJ3Zl
+IGJyaWVmbHkgdGVzdGVkIHN0YWNraW5nIGFuZCBpdCBzZWVtcyB3b3JraW5nIGZpbmUuIMKgQXMg
+Zm9yIElPDQpjcm9zc2luZyBwbWVtIGRldmljZSBib3VuZGFyaWVzLMKgX19zcGxpdF9hbmRfcHJv
+Y2Vzc19ub25fZmx1c2goKSBpcyB1c2VkDQp3aGVuIHRoZSBkZXZpY2UgaXMgbW91bnRlZCB3aXRo
+b3V0IERBWCBvcHRpb24uIMKgV2l0aCBEQVgsIHRoaXMgY2FzZSBpcw0KaGFuZGxlZCBieSBkbV9i
+bGtfZGlyZWN0X2FjY2VzcygpIHRoYXQgbGltaXRzIHJldHVybiBzaXplLiDCoFRoaXMgbGVhZHMg
+dGhlDQpjYWxsZXIgdG8gaXRlcmF0ZSAocmVhZC93cml0ZSkgb3IgZmFsbGJhY2sgdG8gYSBzbWFs
+bGVyIHNpemUgKG1tYXAgcGZhdWx0KS4NCg0KPiBNeSBob3BlIGlzIHRvIG5haWwgZG93biB0aGUg
+RE0gY29yZSBhbmQgaXRzIGRlcGVuZGVuY2llcyBpbiBibG9jayBldGMuDQo+IERvaW5nIHNvIGlu
+IHRlcm1zIG9mIGRtLWxpbmVhciBkb2Vzbid0IHNlZW0gbGlrZSB3YXN0ZWQgZWZmb3J0DQo+IGNv
+bnNpZGVyaW5nIHlvdSB0b2xkIG1lIGl0J2QgYmUgdXNlZnVsIHRvIGhhdmUgZm9yIHBtZW0gZGV2
+aWNlcy4NCg0KWWVzLCBJIHRoaW5rIGRtLWxpbmVhciBpcyB1c2VmdWwgYXMgaXQgZ2l2ZXMgbW9y
+ZSBmbGV4aWJpbGl0eSwgZXguIGl0IGFsbG93cw0KY3JlYXRpbmcgYSBsYXJnZSBkZXZpY2Ugd2l0
+aCBtdWx0aXBsZSBwbWVtIGRldmljZXMuDQoNCj4gPiBBbHNvLCB0aGUgbmV4dCBzdGVwIGluIHRo
+aXMgd29yayBpcyB0byB0aGVuIGRlY2lkZSBob3cgdG8gZGV0ZXJtaW5lIG9uDQo+ID4gd2hhdCBu
+dW1hIG5vZGUgYW4gTEJBIHJlc2lkZXMuwqDCoFdlIGhhZCBkaXNjdXNzZWQgdGhpcyBhdCBhIHBy
+aW9yDQo+ID4gcGx1bWJlcnMgY29uZmVyZW5jZSwgYW5kIEkgdGhpbmsgdGhlIGNvbnNlbnN1cyB3
+YXMgdG8gdXNlIHhhdHRycy4NCj4gPiBUb3NoaSwgZG8geW91IGFsc28gcGxhbiB0byBkbyB0aGF0
+IHdvcms/DQo+DQo+IEhvdyBkb2VzIHRoZSBhc3NvY2lhdGVkIE5VTUEgbm9kZSByZWxhdGUgdG8g
+dGhpcz/CoMKgRG9lcyB0aGUNCj4gRE0gcmVxdWVzdHNfcXVldWUgbmVlZCB0byBiZSBzZXR1cCB0
+byBvbmx5IGFsbG9jYXRlIGZyb20gdGhlIE5VTUEgbm9kZQ0KPiB0aGUgcG1lbSBkZXZpY2UgaXMg
+YXR0YWNoZWQgdG8/wqDCoEkgcmVjZW50bHkgYWRkZWQgc3VwcG9ydCBmb3IgdGhpcyB0bw0KPiBE
+TS7CoMKgQnV0IHRoZXJlIHdpbGwgbGlrZWx5IGJlIHNvbWUgY29kZSBuZWVkIHRvIHByb3BhZ2F0
+ZSB0aGUgTlVNQSBub2RlDQo+IGlkIGFjY29yZGluZ2x5Lg0KDQpFYWNoIHBtZW0gZGV2aWNlIGhh
+cyBzeXNmcyAibnVtYV9ub2RlIiBzbyB0aGF0IHRvb2xzIGxpa2UgbnVtYWN0bCBjYW4gYmUNCnVz
+ZWQgdG8gYmluZCBhcHBsaWNhdGlvbiB0byBydW4gb24gdGhlIHNhbWUgbG9jYWxpdHkgYXMgcG1l
+bSBkZXZpY2UgKHNpbmNlDQpDUFUgZGlyZWN0bHkgYWNjZXNzZXMgdG8gcG1lbSkuIMKgVGhpcyB3
+b24ndCB3b3JrIHdlbGwgd2l0aCBtYXBwZWQgZGV2aWNlDQpzaW5jZSBpdCBjYW4gYmUgY29tcG9z
+ZWQgd2l0aCBtdWx0aXBsZSBsb2NhbGl0aWVzLiDCoExvY2FsaXR5IGluZm8gd291bGQgbmVlZA0K
+dG8gYmUgbWFuYWdlZCBmaWxlLWJhc2lzIGFzIEplZmYgbWVudGlvbmVkLg0KDQpUaGFua3MsDQot
+VG9zaGk=
