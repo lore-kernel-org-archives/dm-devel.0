@@ -1,74 +1,37 @@
-From: <Menny_Hamburger@dell.com>
-Subject: Re: [PATCH] multipath-tools: add Pure Storage device to
- hardware table
-Date: Tue, 14 Jun 2016 12:37:01 +0000
-Message-ID: <1465907821099.6145@Dell.com>
-References: <1465835437-18350-1-git-send-email-xose.vazquez@gmail.com>,
-	<dc5c07f3-361b-9d32-c926-a394c1543c9a@gmail.com>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [PATCH 0/6] Support DAX for device-mapper dm-linear devices
+Date: Tue, 14 Jun 2016 09:50:30 -0400
+Message-ID: <x49fusf282h.fsf@segfault.boston.devel.redhat.com>
+References: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
+	<CAPcyv4jdM1phR=kGoP2-7tfsVvbNe2C6hHNS5TD28ALGZQQTSw@mail.gmail.com>
+	<1465861755.3504.185.camel@hpe.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <dc5c07f3-361b-9d32-c926-a394c1543c9a@gmail.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: xose.vazquez@gmail.com, christophe.varoqui@opensvc.com, dm-devel@redhat.com, brian@purestorage.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1465861755.3504.185.camel@hpe.com> (Toshimitsu Kani's message of
+	"Mon, 13 Jun 2016 23:59:20 +0000")
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Kani, Toshimitsu" <toshi.kani@hpe.com>
+Cc: "dan.j.williams@intel.com" <dan.j.williams@intel.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "agk@redhat.com" <agk@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "axboe@kernel.dk" <axboe@kernel.dk>, "linux-nvdimm@lists.01.org" <linux-nvdimm@ml01.01.org>, "ross.zwisler@linux.intel.com" <ross.zwisler@linux.intel.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-If driver names are different between tophat and magichat you can stick with different names instead of an alias in modprobe.conf and do "install x modprobe install y" in modprobe.conf
-________________________________________
-From: dm-devel-bounces@redhat.com <dm-devel-bounces@redhat.com> on behalf of Xose Vazquez Perez <xose.vazquez@gmail.com>
-Sent: Tuesday, June 14, 2016 3:32 PM
-To: Christophe Varoqui; device-mapper development; Brian Bunker
-Subject: Re: [dm-devel] [PATCH] multipath-tools: add Pure Storage device to hardware table
+"Kani, Toshimitsu" <toshi.kani@hpe.com> writes:
 
-On 06/13/2016 06:30 PM, Xose Vazquez Perez wrote:
-
-> based on documentation provided by the manufacturer:
-> https://support.purestorage.com/@api/deki/files/1733/=Pure_Storage_Oracle_DB_Best_Practices.pdf?revision=2
+>> I had dm-linear and md-raid0 support on my list of things to look at=
+,
+>> did you have raid0 in your plans?
 >
-> vendor                  "PURE"
-> product                 "FlashArray"  (extracted from outputs)
+> Yes, I hope to extend further and raid0 is a good candidate. =C2=A0=C2=
+=A0
 
-Please DROP this one. It was already included by Brian Bunker <brian@purestorage.com>
+dm-flakey would allow more xfstests test cases to run.  I'd say that's
+more important than linear or raid0.  ;-)
 
-> +     {
-> +             .vendor        = "PURE",
-> +             .product       = "FlashArray",
-> +             .selector      = "round-robin 0",
-> +             .pgpolicy      = MULTIBUS,
-> +             .minio         = 1,
-> +             .checker_name  = TUR,
-> +             .fast_io_fail  = 10,
-> +             .dev_loss      = 30,
-> +     },
+Also, the next step in this work is to then decide how to determine on
+what numa node an LBA resides.  We had discussed this at a prior
+plumbers conference, and I think the consensus was to use xattrs.
+Toshi, do you also plan to do that work?
 
-Though it's a bit different. Why ?
-
-+               .vendor        = "PURE",
-+               .product       = "FlashArray",
-+               .features      = DEFAULT_FEATURES,
-+               .hwhandler     = DEFAULT_HWHANDLER,
-+               .selector      = "queue-length 0",
-+               .pgpolicy      = MULTIBUS,
-+               .pgfailback    = -FAILBACK_IMMEDIATE,
-+               .checker_name  = TUR,
-+               .fast_io_fail  = 10,
-+               .user_friendly_names = USER_FRIENDLY_NAMES_OFF,
-+               .prio_name     = DEFAULT_PRIO,
-+               .no_path_retry = 0,
-+               .dev_loss      = 60,
-+               .prio_args     = NULL,
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+Cheers,
+Jeff
