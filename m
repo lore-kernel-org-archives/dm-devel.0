@@ -1,69 +1,40 @@
-From: Chris Friesen <chris.friesen@windriver.com>
-Subject: Re: [bug?]  "vgs" command hanging after running "targetctl clear"
-Date: Wed, 15 Jun 2016 16:14:12 -0600
-Message-ID: <5761D334.2030504@windriver.com>
-References: <57619E07.2030406@windriver.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add patchwork info to README
+Date: Thu, 16 Jun 2016 01:12:53 +0200
+Message-ID: <1466032373-4107-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <target-devel-owner@vger.kernel.org>
-In-Reply-To: <57619E07.2030406@windriver.com>
-Sender: target-devel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, target-devel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On 06/15/2016 12:27 PM, Chris Friesen wrote:
-> I'm running a CentOS-7 based system, so if that disqualifies me due to the
-> amount of kernel patches please let me know. :)
->
-> Anyways, I've run into some weird behaviour.  I have a single system.  I'm
-> exporting an ISCSI target using targetctl.  The backing store is a
-> thinly-provisioned LVM volume, where the underlying PV is a single drbd device,
-> which in turn is backed by /dev/sdb1.  The LVM/drbd setup (as well as other
-> configuration) is done by scripts and I'm not aware of all the exact config
-> details.
->
-> I'm using iscsiadm to discover and then login to the target, so that "ls -l
-> /dev/disk/by-path" shows this:
->
-> lrwxrwxrwx 1 root root  9 Jun 15 16:36
-> ip-127.0.0.1:3260-iscsi-iqn.2014-10.com.example.server1:iscsi-1-lun-0 -> ../../sdc
->
->
-> Now here's where it gets a bit odd.  If I run "targetctl clear", then run "vgs",
-> the vgs command hangs.  /proc/<pid>/stack for the hung process looks like this:
->
-> controller-0:/home/wrsroot# cat /proc/15379/stack
-> [<ffffffff81081ae5>] flush_work+0x105/0x1d0
-> [<ffffffff81081c39>] __cancel_work_timer+0x89/0x120
-> [<ffffffff81081d03>] cancel_delayed_work_sync+0x13/0x20
-> [<ffffffff812dba60>] disk_block_events+0x80/0x90
-> [<ffffffff811dee0e>] __blkdev_get+0x6e/0x4d0
-> [<ffffffff811df445>] blkdev_get+0x1d5/0x360
-> [<ffffffff811df67b>] blkdev_open+0x5b/0x80
-> [<ffffffff811a1cc7>] do_dentry_open+0x1a7/0x2e0
-> [<ffffffff811a1ef9>] vfs_open+0x39/0x70
-> [<ffffffff811b131d>] do_last+0x1ed/0x1270
-> [<ffffffff811b4082>] path_openat+0xc2/0x490
-> [<ffffffff811b584b>] do_filp_open+0x4b/0xb0
-> [<ffffffff811a33c3>] do_sys_open+0xf3/0x1f0
-> [<ffffffff811a34de>] SyS_open+0x1e/0x20
-> [<ffffffff81681249>] system_call_fastpath+0x16/0x1b
-> [<ffffffffffffffff>] 0xffffffffffffffff
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ README | 1 +
+ 1 file changed, 1 insertion(+)
 
-I ran "strace vgs" and that helped sort out what was going on, it's got nothing 
-to do with the kernel.
-
-The system that hung was using "use_lvmetad=0" in lvm.conf with the default 
-"global_filter" setting, so when running the "vgs" command it was going out and 
-scanning all block devices to see if they were part of LVM, including the iscsi 
-device which was no longer accessible since the target had been taken down.  The 
-open() on that device hung until it hit the 900 sec timeout, then it continued on.
-
-The working system had "use_lvmetad=1", so it wasn't scanning all block devices. 
-  Setting an explicit "global_filter" value also worked to prevent it from 
-trying to scan the iscsi device.
-
-Sorry for the noise.
-
-Chris
+diff --git a/README b/README
+index 77b79b8..c1c53fc 100644
+--- a/README
++++ b/README
+@@ -25,5 +25,6 @@ To get latest devel code: git clone http://git.opensvc.com/multipath-tools/.git
+ 
+ Mailing list: http://www.redhat.com/mailman/listinfo/dm-devel
+ Gitweb: http://git.opensvc.com/?p=multipath-tools/.git
++Patchwork: http://patchwork.kernel.org/project/dm-devel/list/
+ 
+ Current maintainer is Christophe Varoqui <christophe.varoqui@opensvc.com>
+-- 
+2.5.5
