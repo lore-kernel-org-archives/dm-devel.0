@@ -1,46 +1,92 @@
-From: Baolin Wang <baolin.wang@linaro.org>
-Subject: Re: [RFC v4 2/4] crypto: Introduce CRYPTO_ALG_BULK flag
-Date: Wed, 15 Jun 2016 16:48:19 +0800
-Message-ID: <CAMz4kuLc4gdx2EJ=dy8OvBY3J_3OTHX0xi=Ps4YoaO3X-cE-zQ@mail.gmail.com>
-References: <cover.1465301616.git.baolin.wang@linaro.org> <238ce3d506051c863300b90720c3e103175747cc.1465301616.git.baolin.wang@linaro.org>
- <20160607141613.GA2237@gondor.apana.org.au> <CAMz4kuLsAyo7pO3VhCV9QdyHJ8njc6dfvORf55Nc_JTDVR-inQ@mail.gmail.com>
- <CAMz4kuKXJ5xUXj111VBb9hMH=kT3Y5P3_iVtgeS8kidbLZ+6TA@mail.gmail.com>
- <20160615064939.GA14227@gondor.apana.org.au> <CAMz4ku+s-6MQWHhnaau9fK9ssYJNpS9UFvgASoacP0e3vj-zzg@mail.gmail.com>
- <20160615073951.GA14986@gondor.apana.org.au>
+From: Gris Ge <fge@redhat.com>
+Subject: [PATCH] Multipath: Remove duplicated memset() for
+	multipathd show command.
+Date: Wed, 15 Jun 2016 22:50:38 +0800
+Message-ID: <20160615145038.10249-1-fge@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <20160615073951.GA14986@gondor.apana.org.au>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, David Miller <davem@davemloft.net>, Eric Biggers <ebiggers3@gmail.com>, Joonsoo Kim <js1304@gmail.com>, tadeusz.struk@intel.com, smueller@chronox.de, Masanari Iida <standby24x7@gmail.com>, Shaohua Li <shli@kernel.org>, Dan Williams <dan.j.williams@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Sagi Grimberg <sagig@mellanox.com>, Kent Overstreet <kent.overstreet@gmail.com>, Keith Busch <keith.busch@intel.com>, Tejun Heo <tj@kernel.org>, Ming Lei <ming.lei@canonical.com>, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>, LKML <linux-kernel@vger.ker>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
-On 15 June 2016 at 15:39, Herbert Xu <herbert@gondor.apana.org.au> wrote:
-> On Wed, Jun 15, 2016 at 03:38:02PM +0800, Baolin Wang wrote:
->>
->> But that means we should divide the bulk request into 512-byte size
->> requests and break up the mapped sg table for each request. Another
->> hand we should allocate memory for each request in crypto layer, which
->> dm-crypt have supplied one high efficiency way. I think these are
->> really top level how to use the crypro APIs, does that need to move
->> into crypto laryer? Thanks.
->
-> I have already explained to you how you can piggy-back off dm-crypt's
-> allocation, so what's the problem?
+Problem:
 
-Because the request created in dm-crypt is connecting with dm-crypt
-closely, I am worried if it can work or introduce other issues if we
-move these top level things into crypto layer. Anyway I will try to do
-that. Thanks.
+ * The duplicated memset() wasted too much time. For example:
+   with 5k paths, "sudo multipathd -k'show paths'" command will have
+   at least 5k times of memset().
 
-> --
-> Email: Herbert Xu <herbert@gondor.apana.org.au>
-> Home Page: http://gondor.apana.org.au/~herbert/
-> PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+Reasons:
 
+ * The memory passing to snprint_xxx(e.g. snprint_multipath) is already
+   zeroed by MALLOC().
 
+ * No need to zero memory before snprintf which will always terminate
+   the string with '\0'.
 
+Signed-off-by: Gris Ge <fge@redhat.com>
+---
+ libmultipath/print.c | 10 ----------
+ 1 file changed, 10 deletions(-)
+
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 2d159ed..e3c14b6 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -782,8 +782,6 @@ snprint_multipath_header (char * line, int len, char * format)
+ 	int fwd;
+ 	struct multipath_data * data;
+ 
+-	memset(line, 0, len);
+-
+ 	do {
+ 		if (!TAIL)
+ 			break;
+@@ -817,8 +815,6 @@ snprint_multipath (char * line, int len, char * format,
+ 	struct multipath_data * data;
+ 	char buff[MAX_FIELD_LEN] = {};
+ 
+-	memset(line, 0, len);
+-
+ 	do {
+ 		if (!TAIL)
+ 			break;
+@@ -853,8 +849,6 @@ snprint_path_header (char * line, int len, char * format)
+ 	int fwd;
+ 	struct path_data * data;
+ 
+-	memset(line, 0, len);
+-
+ 	do {
+ 		if (!TAIL)
+ 			break;
+@@ -888,8 +882,6 @@ snprint_path (char * line, int len, char * format,
+ 	struct path_data * data;
+ 	char buff[MAX_FIELD_LEN];
+ 
+-	memset(line, 0, len);
+-
+ 	do {
+ 		if (!TAIL)
+ 			break;
+@@ -925,8 +917,6 @@ snprint_pathgroup (char * line, int len, char * format,
+ 	struct pathgroup_data * data;
+ 	char buff[MAX_FIELD_LEN];
+ 
+-	memset(line, 0, len);
+-
+ 	do {
+ 		if (!TAIL)
+ 			break;
 -- 
-Baolin.wang
-Best Regards
+2.8.3
