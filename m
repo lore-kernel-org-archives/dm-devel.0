@@ -1,100 +1,73 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/6] Support DAX for device-mapper dm-linear devices
-Date: Tue, 14 Jun 2016 22:35:02 -0400
-Message-ID: <20160615023502.GC5443@redhat.com>
-References: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
- <CAPcyv4jdM1phR=kGoP2-7tfsVvbNe2C6hHNS5TD28ALGZQQTSw@mail.gmail.com>
- <1465861755.3504.185.camel@hpe.com>
- <x49fusf282h.fsf@segfault.boston.devel.redhat.com>
- <20160614154131.GB25876@redhat.com>
- <x49inxbzfp4.fsf@segfault.boston.devel.redhat.com>
- <20160615014658.GA5443@redhat.com>
- <CAPcyv4g6hRciQHA=QMf3BUKxHOpyZCUSX1E9Huc8U2GxqHK4vA@mail.gmail.com>
+From: Baolin Wang <baolin.wang@linaro.org>
+Subject: Re: [RFC v4 2/4] crypto: Introduce CRYPTO_ALG_BULK flag
+Date: Wed, 15 Jun 2016 14:27:04 +0800
+Message-ID: <CAMz4kuKXJ5xUXj111VBb9hMH=kT3Y5P3_iVtgeS8kidbLZ+6TA@mail.gmail.com>
+References: <cover.1465301616.git.baolin.wang@linaro.org> <238ce3d506051c863300b90720c3e103175747cc.1465301616.git.baolin.wang@linaro.org>
+ <20160607141613.GA2237@gondor.apana.org.au> <CAMz4kuLsAyo7pO3VhCV9QdyHJ8njc6dfvORf55Nc_JTDVR-inQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAPcyv4g6hRciQHA=QMf3BUKxHOpyZCUSX1E9Huc8U2GxqHK4vA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Jeff Moyer <jmoyer@redhat.com>, "Kani, Toshimitsu" <toshi.kani@hpe.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "linux-nvdimm@lists.01.org" <linux-nvdimm@ml01.01.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "ross.zwisler@linux.intel.com" <ross.zwisler@linux.intel.com>, "agk@redhat.com" <agk@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <CAMz4kuLsAyo7pO3VhCV9QdyHJ8njc6dfvORf55Nc_JTDVR-inQ@mail.gmail.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, David Miller <davem@davemloft.net>, Eric Biggers <ebiggers3@gmail.com>, Joonsoo Kim <js1304@gmail.com>, tadeusz.struk@intel.com, smueller@chronox.de, Masanari Iida <standby24x7@gmail.com>, Shaohua Li <shli@kernel.org>, Dan Williams <dan.j.williams@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Sagi Grimberg <sagig@mellanox.com>, Kent Overstreet <kent.overstreet@gmail.com>, Keith Busch <keith.busch@intel.com>, Tejun Heo <tj@kernel.org>, Ming Lei <ming.lei@canonical.com>, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, linux-block@vger.kernel.org, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>, LKML <linux-kernel@vger.ker>
 List-Id: dm-devel.ids
 
-On Tue, Jun 14 2016 at 10:07pm -0400,
-Dan Williams <dan.j.williams@intel.com> wrote:
+Hi Herbert,
 
-> On Tue, Jun 14, 2016 at 6:46 PM, Mike Snitzer <snitzer@redhat.com> wrote:
-> > On Tue, Jun 14 2016 at  4:19pm -0400,
-> > Jeff Moyer <jmoyer@redhat.com> wrote:
-> >
-> >> Mike Snitzer <snitzer@redhat.com> writes:
-> >>
-> >> > On Tue, Jun 14 2016 at  9:50am -0400,
-> >> > Jeff Moyer <jmoyer@redhat.com> wrote:
-> >> >
-> >> >> "Kani, Toshimitsu" <toshi.kani@hpe.com> writes:
-> >> >>
-> >> >> >> I had dm-linear and md-raid0 support on my list of things to look at,
-> >> >> >> did you have raid0 in your plans?
-> >> >> >
-> >> >> > Yes, I hope to extend further and raid0 is a good candidate.
-> >> >>
-> >> >> dm-flakey would allow more xfstests test cases to run.  I'd say that's
-> >> >> more important than linear or raid0.  ;-)
-> >> >
-> >> > Regardless of which target(s) grow DAX support the most pressing initial
-> >> > concern is getting the DM device stacking correct.  And verifying that
-> >> > IO that cross pmem device boundaries are being properly split by DM
-> >> > core (via drivers/md/dm.c:__split_and_process_non_flush()'s call to
-> >> > max_io_len).
-> >>
-> >> That was a tongue-in-cheek comment.  You're reading way too much into
-> >> it.
-> >>
-> >> >> Also, the next step in this work is to then decide how to determine on
-> >> >> what numa node an LBA resides.  We had discussed this at a prior
-> >> >> plumbers conference, and I think the consensus was to use xattrs.
-> >> >> Toshi, do you also plan to do that work?
-> >> >
-> >> > How does the associated NUMA node relate to this?  Does the
-> >> > DM requests_queue need to be setup to only allocate from the NUMA node
-> >> > the pmem device is attached to?  I recently added support for this to
-> >> > DM.  But there will likely be some code need to propagate the NUMA node
-> >> > id accordingly.
-> >>
-> >> I assume you mean allocate memory (the volatile kind).  That should work
-> >> the same between pmem and regular block devices, no?
-> >
-> > This is the commit I made to train DM to be numa node aware:
-> > 115485e83f497fdf9b4 ("dm: add 'dm_numa_node' module parameter")
-> 
-> Hmm, but this is global for all DM device instances.
+On 8 June 2016 at 10:00, Baolin Wang <baolin.wang@linaro.org> wrote:
+> Hi Herbert,
+>
+> On 7 June 2016 at 22:16, Herbert Xu <herbert@gondor.apana.org.au> wrote:
+>> On Tue, Jun 07, 2016 at 08:17:05PM +0800, Baolin Wang wrote:
+>>> Now some cipher hardware engines prefer to handle bulk block rather than one
+>>> sector (512 bytes) created by dm-crypt, cause these cipher engines can handle
+>>> the intermediate values (IV) by themselves in one bulk block. This means we
+>>> can increase the size of the request by merging request rather than always 512
+>>> bytes and thus increase the hardware engine processing speed.
+>>>
+>>> So introduce 'CRYPTO_ALG_BULK' flag to indicate this cipher can support bulk
+>>> mode.
+>>>
+>>> Signed-off-by: Baolin Wang <baolin.wang@linaro.org>
+>>
+>> Nack.  As I said before, please do it using explicit IV generators
+>> like we do for IPsec.
+>
+> OK. I would like to try your suggestion. Thanks.
 
-Right, only because I didn't have a convenient way to allow the user to
-specify it on a per-device level.  But I'll defer skinning that cat for
-now since in this pmem case we'd inherit from the underlying device(s)
+After some investigation, I still think we should divide the bulk
+request from dm-crypt into small request (each one is 512bytes) if
+this algorithm is not support bulk mode (like CBC). We have talked
+with dm-crypt
+maintainers why dm-crypt always use 512 bytes as one request size in
+below thread, could you please check it?
+http://www.kernelhub.org/?p=2&msg=907022
 
-> > As is the DM code is focused on memory allocations.  But I think blk-mq
-> > may use the NUMA node for via tag_set->numa_node.  But that is moot
-> > given pmem is bio-based right?
-> 
-> Right.
-> 
-> >
-> > Steps could be taken to make all threads DM creates for a a given device
-> > get pinned to the specified NUMA node too.
-> 
-> I think it would be useful if a DM instance inherited the numa node
-> from the component devices by default (assuming they're all from the
-> same node).  A "dev_to_node(disk_to_dev(disk))" conversion works for
-> pmem devices.
+That means if we move the IV handling into crypto API, we still can
+not use bulk interface for all algorithm, for example we still need to
+read/write with 512 bytes for CBC, you can't use 4k or more block on
+CBC (and most other encryption modes). If only a part of 4k block is
+written (and then system crash happens), CBC would corrupt the block
+completely. It means if we map one whole bio with bulk interface in
+dm-crypt, we need to divide into every 512 bytes requests in crypto
+layer. So I don't think we can handle every algorithm with bulk
+interface just moving the IV handling into crypto API. Thanks.
 
-OK, I can look to make that happen.
- 
-> As far as I understand, Jeff wants to go further and have a linear
-> span across component devices from different nodes with an interface
-> to do an LBA-to-numa-node conversion.
+>
+>> --
+>> Email: Herbert Xu <herbert@gondor.apana.org.au>
+>> Home Page: http://gondor.apana.org.au/~herbert/
+>> PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+>
+>
+>
+> --
+> Baolin.wang
+> Best Regards
 
-All that variability makes DM's ability to do anything sane with it
-close to impossible considering memory pools, threads, etc are all
-pinned during the first activation of the DM device.
+
+
+-- 
+Baolin.wang
+Best Regards
