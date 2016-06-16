@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 03/39] libmultipath: fixup uninitialized return
-	value in dm_reassign_table()
-Date: Thu, 16 Jun 2016 11:47:09 +0200
-Message-ID: <1466070465-1021-4-git-send-email-hare@suse.de>
+Subject: [PATCH 17/39] libmultipath: memory leak in iet.c
+Date: Thu, 16 Jun 2016 11:47:23 +0200
+Message-ID: <1466070465-1021-18-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,25 +21,30 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+'pmatch' was never freed.
 Found by coverity.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/devmapper.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/prioritizers/iet.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index ce884e2..6e675fe 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -1447,7 +1447,7 @@ void dm_reassign_deps(char *table, char *dep, char *newdep)
- 
- int dm_reassign_table(const char *name, char *old, char *new)
- {
--	int r, modified = 0;
-+	int r = 0, modified = 0;
- 	uint64_t start, length;
- 	struct dm_task *dmt, *reload_dmt;
- 	char *target, *params = NULL;
+diff --git a/libmultipath/prioritizers/iet.c b/libmultipath/prioritizers/iet.c
+index 0bcc48b..3549665 100644
+--- a/libmultipath/prioritizers/iet.c
++++ b/libmultipath/prioritizers/iet.c
+@@ -59,10 +59,11 @@ char *find_regex(char * string, char * regex)
+ 				if (result) {
+ 					strncpy(result, &string[start], size);
+ 					result[size] = '\0';
++					free(pmatch);
+ 					return result;
+ 				}
+ 			}
+-			else return NULL;
++			free(pmatch);
+ 		}
+ 	}
+ 	return NULL;
 -- 
 2.6.6
