@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 20/39] libmpathpersist: memory leak in
-	mpath_persistent_reserve_(in, out)()
-Date: Thu, 16 Jun 2016 11:47:26 +0200
-Message-ID: <1466070465-1021-21-git-send-email-hare@suse.de>
+Subject: [PATCH 01/39] multipathd: correctly free refwwid in
+	cli_add_map()
+Date: Thu, 16 Jun 2016 11:47:07 +0200
+Message-ID: <1466070465-1021-2-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,40 +22,33 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When either curmp or pathvec couldn't be allocated we never
-free up the other one, too.
+We need to free the refwwid only when present.
 Found by coverity.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmpathpersist/mpath_persist.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ multipathd/cli_handlers.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index c4b8521..cfc2f0f 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -195,6 +195,10 @@ int mpath_persistent_reserve_in (int fd, int rq_servact,
- 	if (!curmp || !pathvec){
- 		condlog (0, "%s: vector allocation failed.", alias);
- 		ret = MPATH_PR_DMMP_ERROR;
-+		if (curmp)
-+			vector_free(curmp);
-+		if (pathvec)
-+			vector_free(pathvec);
- 		goto out;
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index a1b7052..52bcdaa 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -715,6 +715,7 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
+ 					condlog(2, "%s: coalesce_paths failed",
+ 									param);
+ 				dm_lib_release();
++				FREE(refwwid);
+ 			}
+ 		} /*we attempt to create device only once*/
+ 		count++;
+@@ -726,7 +727,6 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
  	}
- 
-@@ -285,6 +289,10 @@ int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
- 	if (!curmp || !pathvec){
- 		condlog (0, "%s: vector allocation failed.", alias);
- 		ret = MPATH_PR_DMMP_ERROR;
-+		if (curmp)
-+			vector_free(curmp);
-+		if (pathvec)
-+			vector_free(pathvec);
- 		goto out;
- 	}
+ 	rc = ev_add_map(dev_path, alias, vecs);
+ 	FREE(alias);
+-	FREE(refwwid);
+ 	return rc;
+ }
  
 -- 
 2.6.6
