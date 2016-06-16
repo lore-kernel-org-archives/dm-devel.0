@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 04/39] libmultipath: free pathgroup in
-	group_by_prio()
-Date: Thu, 16 Jun 2016 11:47:10 +0200
-Message-ID: <1466070465-1021-5-git-send-email-hare@suse.de>
+Subject: [PATCH 23/39] libmultipath: missing break in hds
+	prioritizer
+Date: Thu, 16 Jun 2016 11:47:29 +0200
+Message-ID: <1466070465-1021-24-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,49 +22,32 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If we encounter an error when storing the pathgroup or paths
-the pathgroup is never deallocated.
 Found by coverity.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/pgpolicies.c | 14 ++++++++++----
- 1 file changed, 10 insertions(+), 4 deletions(-)
+ libmultipath/prioritizers/hds.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
-index 2981d51..f440441 100644
---- a/libmultipath/pgpolicies.c
-+++ b/libmultipath/pgpolicies.c
-@@ -341,8 +341,10 @@ group_by_prio (struct multipath * mp)
- 		if (!pgp)
- 			goto out;
- 
--		if (store_path(pgp->paths, VECTOR_SLOT(mp->paths, 0)))
--				goto out;
-+		if (store_path(pgp->paths, VECTOR_SLOT(mp->paths, 0))) {
-+			free_pathgroup(pgp, KEEP_PATHS);
-+			goto out;
-+		}
- 
- 		vector_del_slot(mp->paths, 0);
- 
-@@ -350,11 +352,15 @@ group_by_prio (struct multipath * mp)
- 		 * Store the new path group into the vector.
- 		 */
- 		if (i < VECTOR_SIZE(mp->pg)) {
--			if (!vector_insert_slot(mp->pg, i, pgp))
-+			if (!vector_insert_slot(mp->pg, i, pgp)) {
-+				free_pathgroup(pgp, KEEP_PATHS);
- 				goto out;
-+			}
- 		} else {
--			if (store_pathgroup(mp->pg, pgp))
-+			if (store_pathgroup(mp->pg, pgp)) {
-+				free_pathgroup(pgp, KEEP_PATHS);
- 				goto out;
-+			}
+diff --git a/libmultipath/prioritizers/hds.c b/libmultipath/prioritizers/hds.c
+index 8043b5b..db8c4c0 100644
+--- a/libmultipath/prioritizers/hds.c
++++ b/libmultipath/prioritizers/hds.c
+@@ -151,6 +151,7 @@ int hds_modular_prio (const char *dev, int fd)
+ 			return 0;
+ 			break;
  		}
- 
- 		/*
++		break;
+ 	case '1': case '3': case '5': case '7': case '9':
+ 		switch (ldev[3]) {
+ 		case '0': case '2': case '4': case '6': case '8': case 'A': case 'C': case 'E':
+@@ -162,6 +163,7 @@ int hds_modular_prio (const char *dev, int fd)
+ 			return 1;
+ 			break;
+ 		}
++		break;
+ 	}
+ 	return -1;
+ }
 -- 
 2.6.6
