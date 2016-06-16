@@ -1,38 +1,46 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH] dm raid: don't use 'const' in function return
-Date: Thu, 16 Jun 2016 11:03:25 +0200
-Message-ID: <20160616090359.984712-1-arnd@arndb.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Arnd Bergmann <arnd@arndb.de>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH 33/39] multipathd: missing mpath_disconnect() in
+	uxclnt()
+Date: Thu, 16 Jun 2016 11:47:39 +0200
+Message-ID: <1466070465-1021-34-git-send-email-hare@suse.de>
+References: <1466070465-1021-1-git-send-email-hare@suse.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1466070465-1021-1-git-send-email-hare@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-A newly introduced function has 'const int' as the return type,
-but as "make W=1" reports, that has no meaning:
+We should be calling mpath_disconnect() in uxclnt().
+Found by coverity.
 
-drivers/md/dm-raid.c:510:18: error: type qualifiers ignored on function return type [-Werror=ignored-qualifiers]
-
-This changes the return type to plain 'int'.
-
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-Fixes: 33e53f06850f ("dm raid: introduce extended superblock and new raid types to support takeover/reshaping")
+Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- drivers/md/dm-raid.c | 2 +-
+ multipathd/uxclnt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 96bcff7a0b94..55d25ac87bda 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -507,7 +507,7 @@ static const char *raid10_md_layout_to_format(int layout)
+diff --git a/multipathd/uxclnt.c b/multipathd/uxclnt.c
+index 06c1bf8..37afaac 100644
+--- a/multipathd/uxclnt.c
++++ b/multipathd/uxclnt.c
+@@ -135,6 +135,6 @@ int uxclnt(char * inbuf, unsigned int timeout)
+ 		process_req(fd, inbuf, timeout);
+ 	else
+ 		process(fd, timeout);
+-
++	mpath_disconnect(fd);
+ 	return 0;
  }
- 
- /* Return md raid10 algorithm for @name */
--static const int raid10_name_to_format(const char *name)
-+static int raid10_name_to_format(const char *name)
- {
- 	if (!strcasecmp(name, "near"))
- 		return ALGORITHM_RAID10_NEAR;
 -- 
-2.9.0
+2.6.6
