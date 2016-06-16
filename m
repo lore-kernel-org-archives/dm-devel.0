@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 33/39] multipathd: missing mpath_disconnect() in
-	uxclnt()
-Date: Thu, 16 Jun 2016 11:47:39 +0200
-Message-ID: <1466070465-1021-34-git-send-email-hare@suse.de>
+Subject: [PATCH 30/39] kpartx: use fstat() when reading sysfs
+	attributes
+Date: Thu, 16 Jun 2016 11:47:36 +0200
+Message-ID: <1466070465-1021-31-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,25 +22,39 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We should be calling mpath_disconnect() in uxclnt().
-Found by coverity.
+Coverity pointed out that we shouldn't be using stat()/open(),
+as the file might have vanished or changed in between those
+two calls. So modify it to open()/fstat() instead.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- multipathd/uxclnt.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kpartx/lopart.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
 
-diff --git a/multipathd/uxclnt.c b/multipathd/uxclnt.c
-index 06c1bf8..37afaac 100644
---- a/multipathd/uxclnt.c
-+++ b/multipathd/uxclnt.c
-@@ -135,6 +135,6 @@ int uxclnt(char * inbuf, unsigned int timeout)
- 		process_req(fd, inbuf, timeout);
- 	else
- 		process(fd, timeout);
+diff --git a/kpartx/lopart.c b/kpartx/lopart.c
+index 5495e27..d4a2ab4 100644
+--- a/kpartx/lopart.c
++++ b/kpartx/lopart.c
+@@ -117,14 +117,16 @@ find_loop_by_file (const char * filename)
+ 			continue;
+ 		sprintf(dev, "/dev/%s", dent->d_name);
+ 
+-		if (stat (dev, &statbuf) != 0 ||
+-		    !S_ISBLK(statbuf.st_mode))
+-			continue;
 -
-+	mpath_disconnect(fd);
- 	return 0;
- }
+ 		fd = open (dev, O_RDONLY);
+ 		if (fd < 0)
+ 			break;
+ 
++		if (fstat (fd, &statbuf) != 0 ||
++		    !S_ISBLK(statbuf.st_mode)) {
++			close (fd);
++			continue;
++		}
++
+ 		if (ioctl (fd, LOOP_GET_STATUS, &loopinfo) != 0) {
+ 			close (fd);
+ 			continue;
 -- 
 2.6.6
