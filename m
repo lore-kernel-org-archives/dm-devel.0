@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 28/39] kpartx: Handle errors from lseek()
-Date: Thu, 16 Jun 2016 11:47:34 +0200
-Message-ID: <1466070465-1021-29-git-send-email-hare@suse.de>
+Subject: [PATCH 15/39] libmultipath: use fstat() when reading
+	sysfs attributes
+Date: Thu, 16 Jun 2016 11:47:21 +0200
+Message-ID: <1466070465-1021-16-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,29 +22,144 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Found by coverity.
+Coverity pointed out that we shouldn't be using stat()/open(),
+as the file might have vanished or changed in between those
+two calls. So modify it to open()/fstat() instead.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- kpartx/gpt.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ libmultipath/sysfs.c | 59 +++++++++++++++++++++++++++++-----------------------
+ 1 file changed, 33 insertions(+), 26 deletions(-)
 
-diff --git a/kpartx/gpt.c b/kpartx/gpt.c
-index 5a54970..3dac605 100644
---- a/kpartx/gpt.c
-+++ b/kpartx/gpt.c
-@@ -206,9 +206,10 @@ read_lba(int fd, uint64_t lba, void *buffer, size_t bytes)
- 	int sector_size = get_sector_size(fd);
- 	off_t offset = lba * sector_size;
- 	uint64_t lastlba;
--        ssize_t bytesread;
-+	ssize_t bytesread;
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index de7df40..a74de9f 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -57,30 +57,31 @@ ssize_t sysfs_attr_get_value(struct udev_device *dev, const char *attr_name,
+ 	snprintf(devpath, PATH_SIZE, "%s/%s", udev_device_get_syspath(dev),
+ 		 attr_name);
+ 	condlog(4, "open '%s'", devpath);
+-	if (stat(devpath, &statbuf) != 0) {
++	/* read attribute value */
++	fd = open(devpath, O_RDONLY);
++	if (fd < 0) {
++		condlog(4, "attribute '%s' can not be opened: %s",
++			devpath, strerror(errno));
++		return -errno;
++	}
++	if (fstat(fd, &statbuf) < 0) {
+ 		condlog(4, "stat '%s' failed: %s", devpath, strerror(errno));
++		close(fd);
+ 		return -ENXIO;
+ 	}
+-
+ 	/* skip directories */
+ 	if (S_ISDIR(statbuf.st_mode)) {
+ 		condlog(4, "%s is a directory", devpath);
++		close(fd);
+ 		return -EISDIR;
+ 	}
+-
+ 	/* skip non-writeable files */
+ 	if ((statbuf.st_mode & S_IRUSR) == 0) {
+ 		condlog(4, "%s is not readable", devpath);
++		close(fd);
+ 		return -EPERM;
+ 	}
  
--	lseek(fd, offset, SEEK_SET);
-+	if (lseek(fd, offset, SEEK_SET) < 0)
-+		return 0;
- 	bytesread = read(fd, buffer, bytes);
+-	/* read attribute value */
+-	fd = open(devpath, O_RDONLY);
+-	if (fd < 0) {
+-		condlog(4, "attribute '%s' can not be opened: %s",
+-			devpath, strerror(errno));
+-		return -errno;
+-	}
+ 	size = read(fd, value, value_len);
+ 	if (size < 0) {
+ 		condlog(4, "read from %s failed: %s", devpath, strerror(errno));
+@@ -112,30 +113,33 @@ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
+ 	snprintf(devpath, PATH_SIZE, "%s/%s", udev_device_get_syspath(dev),
+ 		 attr_name);
+ 	condlog(4, "open '%s'", devpath);
+-	if (stat(devpath, &statbuf) != 0) {
++	/* read attribute value */
++	fd = open(devpath, O_RDONLY);
++	if (fd < 0) {
++		condlog(4, "attribute '%s' can not be opened: %s",
++			devpath, strerror(errno));
++		return -errno;
++	}
++	if (fstat(fd, &statbuf) != 0) {
+ 		condlog(4, "stat '%s' failed: %s", devpath, strerror(errno));
++		close(fd);
+ 		return -ENXIO;
+ 	}
  
- 	lastlba = last_lba(fd);
+ 	/* skip directories */
+ 	if (S_ISDIR(statbuf.st_mode)) {
+ 		condlog(4, "%s is a directory", devpath);
++		close(fd);
+ 		return -EISDIR;
+ 	}
+ 
+ 	/* skip non-writeable files */
+ 	if ((statbuf.st_mode & S_IRUSR) == 0) {
+ 		condlog(4, "%s is not readable", devpath);
++		close(fd);
+ 		return -EPERM;
+ 	}
+ 
+-	/* read attribute value */
+-	fd = open(devpath, O_RDONLY);
+-	if (fd < 0) {
+-		condlog(4, "attribute '%s' can not be opened: %s",
+-			devpath, strerror(errno));
+-		return -errno;
+-	}
+ 	size = read(fd, value, value_len);
+ 	if (size < 0) {
+ 		condlog(4, "read from %s failed: %s", devpath, strerror(errno));
+@@ -163,30 +167,33 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+ 	snprintf(devpath, PATH_SIZE, "%s/%s", udev_device_get_syspath(dev),
+ 		 attr_name);
+ 	condlog(4, "open '%s'", devpath);
+-	if (stat(devpath, &statbuf) != 0) {
++	/* write attribute value */
++	fd = open(devpath, O_WRONLY);
++	if (fd < 0) {
++		condlog(4, "attribute '%s' can not be opened: %s",
++			devpath, strerror(errno));
++		return -errno;
++	}
++	if (fstat(fd, &statbuf) != 0) {
+ 		condlog(4, "stat '%s' failed: %s", devpath, strerror(errno));
++		close(fd);
+ 		return -errno;
+ 	}
+ 
+ 	/* skip directories */
+ 	if (S_ISDIR(statbuf.st_mode)) {
+ 		condlog(4, "%s is a directory", devpath);
++		close(fd);
+ 		return -EISDIR;
+ 	}
+ 
+ 	/* skip non-writeable files */
+ 	if ((statbuf.st_mode & S_IWUSR) == 0) {
+ 		condlog(4, "%s is not writeable", devpath);
++		close(fd);
+ 		return -EPERM;
+ 	}
+ 
+-	/* write attribute value */
+-	fd = open(devpath, O_WRONLY);
+-	if (fd < 0) {
+-		condlog(4, "attribute '%s' can not be opened: %s",
+-			devpath, strerror(errno));
+-		return -errno;
+-	}
+ 	size = write(fd, value, value_len);
+ 	if (size < 0) {
+ 		condlog(4, "write to %s failed: %s", devpath, strerror(errno));
 -- 
 2.6.6
