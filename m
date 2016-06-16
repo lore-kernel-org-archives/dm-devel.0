@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 17/39] libmultipath: memory leak in iet.c
-Date: Thu, 16 Jun 2016 11:47:23 +0200
-Message-ID: <1466070465-1021-18-git-send-email-hare@suse.de>
+Subject: [PATCH 26/39] kpartx: fixup filedescriptor leak in
+	set_loop()
+Date: Thu, 16 Jun 2016 11:47:32 +0200
+Message-ID: <1466070465-1021-27-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,30 +22,25 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-'pmatch' was never freed.
+Upon error 'ffd' was never closed.
 Found by coverity.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/prioritizers/iet.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ kpartx/lopart.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/libmultipath/prioritizers/iet.c b/libmultipath/prioritizers/iet.c
-index 0bcc48b..3549665 100644
---- a/libmultipath/prioritizers/iet.c
-+++ b/libmultipath/prioritizers/iet.c
-@@ -59,10 +59,11 @@ char *find_regex(char * string, char * regex)
- 				if (result) {
- 					strncpy(result, &string[start], size);
- 					result[size] = '\0';
-+					free(pmatch);
- 					return result;
- 				}
- 			}
--			else return NULL;
-+			free(pmatch);
- 		}
+diff --git a/kpartx/lopart.c b/kpartx/lopart.c
+index e7f6090..5495e27 100644
+--- a/kpartx/lopart.c
++++ b/kpartx/lopart.c
+@@ -252,6 +252,7 @@ set_loop (const char *device, const char *file, int offset, int *loopro)
  	}
- 	return NULL;
+ 
+ 	if ((fd = open (device, mode)) < 0) {
++		close(ffd);
+ 		perror (device);
+ 		return 1;
+ 	}
 -- 
 2.6.6
