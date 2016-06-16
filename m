@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 12/39] libmultipath/uevent.c: handle errors from
-	setsockopt()
-Date: Thu, 16 Jun 2016 11:47:18 +0200
-Message-ID: <1466070465-1021-13-git-send-email-hare@suse.de>
+Subject: [PATCH 07/39] libmultipath: missing NULL check in
+	set_pgfailback()
+Date: Thu, 16 Jun 2016 11:47:13 +0200
+Message-ID: <1466070465-1021-8-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -26,41 +26,21 @@ Found by coverity.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/uevent.c | 15 +++++++++++----
- 1 file changed, 11 insertions(+), 4 deletions(-)
+ libmultipath/dict.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index fb8b4a7..ff4bc86 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -291,8 +291,12 @@ int failback_listen(void)
- 		}
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 7f912ec..9920a9b 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -805,6 +805,8 @@ set_pgfailback(vector strvec, void *ptr)
+ 	char * buff;
  
- 		/* enable receiving of the sender credentials */
--		setsockopt(sock, SOL_SOCKET, SO_PASSCRED,
--			   &feature_on, sizeof(feature_on));
-+		retval = setsockopt(sock, SOL_SOCKET, SO_PASSCRED,
-+				    &feature_on, sizeof(feature_on));
-+		if (retval < 0) {
-+			condlog(0, "failed to enable credential passing, exit");
-+			goto exit;
-+		}
+ 	buff = set_value(strvec);
++	if (!buff)
++		return 1;
  
- 	} else {
- 		/* Fallback to read kernel netlink events */
-@@ -330,8 +334,11 @@ int failback_listen(void)
- 		condlog(3, "receive buffer size for socket is %u.", rcvsz);
- 
- 		/* enable receiving of the sender credentials */
--		setsockopt(sock, SOL_SOCKET, SO_PASSCRED,
--			   &feature_on, sizeof(feature_on));
-+		if (setsockopt(sock, SOL_SOCKET, SO_PASSCRED,
-+			       &feature_on, sizeof(feature_on)) < 0) {
-+			condlog(0, "error on enabling credential passing for socket");
-+			exit(1);
-+		}
- 
- 		retval = bind(sock, (struct sockaddr *) &snl,
- 			      sizeof(struct sockaddr_nl));
+ 	if (strlen(buff) == 6 && !strcmp(buff, "manual"))
+ 		*int_ptr = -FAILBACK_MANUAL;
 -- 
 2.6.6
