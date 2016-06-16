@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 08/39] libmultipath: remove stale references to
-	fd_ep in uevent_listen()
-Date: Thu, 16 Jun 2016 11:47:14 +0200
-Message-ID: <1466070465-1021-9-git-send-email-hare@suse.de>
+Subject: [PATCH 04/39] libmultipath: free pathgroup in
+	group_by_prio()
+Date: Thu, 16 Jun 2016 11:47:10 +0200
+Message-ID: <1466070465-1021-5-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,34 +22,49 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+If we encounter an error when storing the pathgroup or paths
+the pathgroup is never deallocated.
 Found by coverity.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/uevent.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ libmultipath/pgpolicies.c | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 454b819..fb8b4a7 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -474,7 +474,7 @@ int uevent_listen(struct udev *udev)
- {
- 	int err = 2;
- 	struct udev_monitor *monitor = NULL;
--	int fd, fd_ep = -1, socket_flags, events;
-+	int fd, socket_flags, events;
- 	int need_failback = 1;
- 	int timeout = 30;
- 	LIST_HEAD(uevlisten_tmp);
-@@ -579,8 +579,6 @@ int uevent_listen(struct udev *udev)
- 	}
- 	need_failback = 0;
- out:
--	if (fd_ep >= 0)
--		close(fd_ep);
- 	if (monitor)
- 		udev_monitor_unref(monitor);
- 	if (need_failback)
+diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
+index 2981d51..f440441 100644
+--- a/libmultipath/pgpolicies.c
++++ b/libmultipath/pgpolicies.c
+@@ -341,8 +341,10 @@ group_by_prio (struct multipath * mp)
+ 		if (!pgp)
+ 			goto out;
+ 
+-		if (store_path(pgp->paths, VECTOR_SLOT(mp->paths, 0)))
+-				goto out;
++		if (store_path(pgp->paths, VECTOR_SLOT(mp->paths, 0))) {
++			free_pathgroup(pgp, KEEP_PATHS);
++			goto out;
++		}
+ 
+ 		vector_del_slot(mp->paths, 0);
+ 
+@@ -350,11 +352,15 @@ group_by_prio (struct multipath * mp)
+ 		 * Store the new path group into the vector.
+ 		 */
+ 		if (i < VECTOR_SIZE(mp->pg)) {
+-			if (!vector_insert_slot(mp->pg, i, pgp))
++			if (!vector_insert_slot(mp->pg, i, pgp)) {
++				free_pathgroup(pgp, KEEP_PATHS);
+ 				goto out;
++			}
+ 		} else {
+-			if (store_pathgroup(mp->pg, pgp))
++			if (store_pathgroup(mp->pg, pgp)) {
++				free_pathgroup(pgp, KEEP_PATHS);
+ 				goto out;
++			}
+ 		}
+ 
+ 		/*
 -- 
 2.6.6
