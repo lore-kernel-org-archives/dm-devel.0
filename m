@@ -1,56 +1,45 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: add Pure Storage device to
- hardware table
-Date: Thu, 16 Jun 2016 17:55:19 +0200
-Message-ID: <f67e41f8-4783-df57-63bb-1e9403b1893d@gmail.com>
-References: <1465835437-18350-1-git-send-email-xose.vazquez@gmail.com>
-	<575F9C9C.4060007@suse.de>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: [PATCH] dm raid: don't use 'const' in function return
+Date: Thu, 16 Jun 2016 18:21:25 +0200
+Message-ID: <5762D205.9090706@redhat.com>
+References: <20160616090359.984712-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <575F9C9C.4060007@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160616090359.984712-1-arnd@arndb.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>, Mike Snitzer <snitzer@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 06/14/2016 07:56 AM, Hannes Reinecke wrote:
 
-> On 06/13/2016 06:30 PM, Xose Vazquez Perez wrote:
-> [...]
->> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
->> index a126b7c..c4258e1 100644
->> --- a/libmultipath/hwtable.c
->> +++ b/libmultipath/hwtable.c
->> @@ -1195,6 +1195,22 @@ static struct hwentry default_hw[] = {
->>  		.minio         = 128,
->>  	},
->>  	/*
->> +	 * Pure Storage, Inc.
->> +	 *
->> +	 * Maintainer : Christophe Varoqui
->> +	 * Mail : christophe.varoqui@opensvc.com
->> +	 */
->>
-> Please drop the 'Maintainer' line.
-> Christophe is the maintainer of the multipath-tools package itself, so
-> everything which doesn't have an explicit owner is maintained by him anyway.
+Thanks Arnd.
+
+On 06/16/2016 11:03 AM, Arnd Bergmann wrote:
+> A newly introduced function has 'const int' as the return type,
+> but as "make W=1" reports, that has no meaning:
 >
-> Plus I think it's a bad style, appointing someone to become a maintainer
-> without having asked first.
-
-It was made that way originally, see 1b6188ce. So I followed the stream.
-But I see lately any patch for new hardware includes a maintainer.
-
-Even the controller/vendor families were disorganized.
-
-I will do it.
+> drivers/md/dm-raid.c:510:18: error: type qualifiers ignored on function return type [-Werror=ignored-qualifiers]
+>
+> This changes the return type to plain 'int'.
+>
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> Fixes: 33e53f06850f ("dm raid: introduce extended superblock and new raid types to support takeover/reshaping")
+> ---
+>   drivers/md/dm-raid.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index 96bcff7a0b94..55d25ac87bda 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -507,7 +507,7 @@ static const char *raid10_md_layout_to_format(int layout)
+>   }
+>   
+>   /* Return md raid10 algorithm for @name */
+> -static const int raid10_name_to_format(const char *name)
+> +static int raid10_name_to_format(const char *name)
+>   {
+>   	if (!strcasecmp(name, "near"))
+>   		return ALGORITHM_RAID10_NEAR;
