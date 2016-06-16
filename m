@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 01/39] multipathd: correctly free refwwid in
-	cli_add_map()
-Date: Thu, 16 Jun 2016 11:47:07 +0200
-Message-ID: <1466070465-1021-2-git-send-email-hare@suse.de>
+Subject: [PATCH 06/39] libmultipath: memory leak in
+	add_map_without_path()
+Date: Thu, 16 Jun 2016 11:47:12 +0200
+Message-ID: <1466070465-1021-7-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,33 +22,32 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We need to free the refwwid only when present.
+If we call add_map_without_path() with an empty alias the
+mpp structure is never freed.
 Found by coverity.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- multipathd/cli_handlers.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/structs_vec.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index a1b7052..52bcdaa 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -715,6 +715,7 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
- 					condlog(2, "%s: coalesce_paths failed",
- 									param);
- 				dm_lib_release();
-+				FREE(refwwid);
- 			}
- 		} /*we attempt to create device only once*/
- 		count++;
-@@ -726,7 +727,6 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
- 	}
- 	rc = ev_add_map(dev_path, alias, vecs);
- 	FREE(alias);
--	FREE(refwwid);
- 	return rc;
- }
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index e992b54..20a7457 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -414,8 +414,12 @@ add_map_without_path (struct vectors * vecs, char * alias)
+ {
+ 	struct multipath * mpp = alloc_multipath();
+ 
+-	if (!mpp || !alias)
++	if (!mpp)
++		return NULL;
++	if (!alias) {
++		FREE(mpp);
+ 		return NULL;
++	}
+ 
+ 	mpp->alias = STRDUP(alias);
  
 -- 
 2.6.6
