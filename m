@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 14/39] libmultipath: drop unused variable 'diop'
-	in libsg.c
-Date: Thu, 16 Jun 2016 11:47:20 +0200
-Message-ID: <1466070465-1021-15-git-send-email-hare@suse.de>
+Subject: [PATCH 38/39] libmultipath/devmapper.c: fixup possible
+	buffer overflow
+Date: Thu, 16 Jun 2016 11:47:44 +0200
+Message-ID: <1466070465-1021-39-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,33 +22,70 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Fixup possible buffer overflow in dm_reassign_table().
 Found by coverity.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/checkers/libsg.c | 3 ---
- 1 file changed, 3 deletions(-)
+ libmultipath/devmapper.c | 18 +++++++++++++-----
+ 1 file changed, 13 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/checkers/libsg.c b/libmultipath/checkers/libsg.c
-index 0d3af1f..958ea92 100644
---- a/libmultipath/checkers/libsg.c
-+++ b/libmultipath/checkers/libsg.c
-@@ -19,7 +19,6 @@ sg_read (int sg_fd, unsigned char * buff, int buff_len,
- 	long long start_block = 0;
- 	int bs = 512;
- 	int cdbsz = 10;
--	int * diop = NULL;
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 0223e18..926d2f5 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -1434,15 +1434,18 @@ out:
+ void dm_reassign_deps(char *table, char *dep, char *newdep)
+ {
+ 	char *p, *n;
+-	char newtable[PARAMS_SIZE];
++	char *newtable;
  
- 	unsigned char rdCmd[cdbsz];
- 	unsigned char *sbb = sense;
-@@ -55,8 +54,6 @@ sg_read (int sg_fd, unsigned char * buff, int buff_len,
- 	io_hdr.sbp = sense;
- 	io_hdr.timeout = timeout * 1000;
- 	io_hdr.pack_id = (int)start_block;
--	if (diop && *diop)
--	io_hdr.flags |= SG_FLAG_DIRECT_IO;
+-	strcpy(newtable, table);
++	newtable = strdup(table);
++	if (!newtable)
++		return;
+ 	p = strstr(newtable, dep);
+ 	n = table + (p - newtable);
+ 	strcpy(n, newdep);
+ 	n += strlen(newdep);
+ 	p += strlen(dep);
+ 	strcat(n, p);
++	free(newtable);
+ }
  
- retry:
- 	memset(sense, 0, sense_len);
+ int dm_reassign_table(const char *name, char *old, char *new)
+@@ -1451,7 +1454,7 @@ int dm_reassign_table(const char *name, char *old, char *new)
+ 	uint64_t start, length;
+ 	struct dm_task *dmt, *reload_dmt;
+ 	char *target, *params = NULL;
+-	char buff[PARAMS_SIZE];
++	char *buff;
+ 	void *next = NULL;
+ 
+ 	if (!(dmt = dm_task_create(DM_DEVICE_TABLE)))
+@@ -1472,8 +1475,12 @@ int dm_reassign_table(const char *name, char *old, char *new)
+ 	do {
+ 		next = dm_get_next_target(dmt, next, &start, &length,
+ 					  &target, &params);
+-		memset(buff, 0, PARAMS_SIZE);
+-		strcpy(buff, params);
++		buff = strdup(params);
++		if (!buff) {
++			condlog(3, "%s: failed to replace target %s, "
++				"out of memory", name, target);
++			goto out_reload;
++		}
+ 		if (strcmp(target, TGT_MPATH) && strstr(params, old)) {
+ 			condlog(3, "%s: replace target %s %s",
+ 				name, target, buff);
+@@ -1483,6 +1490,7 @@ int dm_reassign_table(const char *name, char *old, char *new)
+ 			modified++;
+ 		}
+ 		dm_task_add_target(reload_dmt, start, length, target, buff);
++		free(buff);
+ 	} while (next);
+ 
+ 	if (modified) {
 -- 
 2.6.6
