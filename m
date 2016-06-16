@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 27/39] kpartx: do not use 'const' for mapname in
-	get_hotplug_device()
-Date: Thu, 16 Jun 2016 11:47:33 +0200
-Message-ID: <1466070465-1021-28-git-send-email-hare@suse.de>
+Subject: [PATCH 25/39] kpartx: Memory leak in get_hotplug_device()
+Date: Thu, 16 Jun 2016 11:47:31 +0200
+Message-ID: <1466070465-1021-26-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,23 +21,43 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+We allocate a string for 'device', but never free it on error.
+And the string 'mapname' is never freed at all.
+Found by coverity.
+
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- kpartx/kpartx.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kpartx/kpartx.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
 
 diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index e1ebc96..4de13fa 100644
+index e8c35d4..e1ebc96 100644
 --- a/kpartx/kpartx.c
 +++ b/kpartx/kpartx.c
-@@ -150,7 +150,7 @@ static char *
- get_hotplug_device(void)
- {
- 	unsigned int major, minor, off, len;
--	const char *mapname;
-+	char *mapname;
- 	char *devname = NULL;
- 	char *device = NULL;
- 	char *var = NULL;
+@@ -178,16 +178,21 @@ get_hotplug_device(void)
+ 	len = strlen(mapname);
+ 
+ 	/* Dirname + mapname + \0 */
+-	if (!(device = (char *)malloc(sizeof(char) * (off + len + 1))))
++	if (!(device = (char *)malloc(sizeof(char) * (off + len + 1)))) {
++		free(mapname);
+ 		return NULL;
++	}
+ 
+ 	/* Create new device name. */
+ 	snprintf(device, off + 1, "%s", devname);
+ 	snprintf(device + off, len + 1, "%s", mapname);
+ 
+-	if (strlen(device) != (off + len))
++	if (strlen(device) != (off + len)) {
++		free(device);
++		free(mapname);
+ 		return NULL;
+-
++	}
++	free(mapname);
+ 	return device;
+ }
+ 
 -- 
 2.6.6
