@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 09/39] libmultipath/devmapper.c: Remove unused
-	'next' argument
-Date: Thu, 16 Jun 2016 11:47:15 +0200
-Message-ID: <1466070465-1021-10-git-send-email-hare@suse.de>
+Subject: [PATCH 11/39] libmultipath/devmapper.c: check for errors
+	from sscanf()
+Date: Thu, 16 Jun 2016 11:47:17 +0200
+Message-ID: <1466070465-1021-12-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -26,69 +26,24 @@ Found by coverity.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/devmapper.c | 15 ++++++---------
- 1 file changed, 6 insertions(+), 9 deletions(-)
+ libmultipath/devmapper.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 6e675fe..f395481 100644
+index f395481..0223e18 100644
 --- a/libmultipath/devmapper.c
 +++ b/libmultipath/devmapper.c
-@@ -421,7 +421,6 @@ dm_get_map(const char * name, unsigned long long * size, char * outparams)
- {
- 	int r = 1;
- 	struct dm_task *dmt;
--	void *next = NULL;
- 	uint64_t start, length;
- 	char *target_type = NULL;
- 	char *params = NULL;
-@@ -438,8 +437,8 @@ dm_get_map(const char * name, unsigned long long * size, char * outparams)
- 		goto out;
+@@ -116,7 +116,10 @@ dm_lib_prereq (void)
  
- 	/* Fetch 1st target */
--	next = dm_get_next_target(dmt, next, &start, &length,
--				  &target_type, &params);
-+	dm_get_next_target(dmt, NULL, &start, &length,
-+			   &target_type, &params);
+ 	dm_get_library_version(version, sizeof(version));
+ 	condlog(3, "libdevmapper version %s", version);
+-	sscanf(version, "%d.%d.%d ", &v[0], &v[1], &v[2]);
++	if (sscanf(version, "%d.%d.%d ", &v[0], &v[1], &v[2]) != 3) {
++		condlog(0, "invalid libdevmapper version %s", version);
++		return 1;
++	}
  
- 	if (size)
- 		*size = length;
-@@ -530,7 +529,6 @@ dm_get_status(char * name, char * outstatus)
- {
- 	int r = 1;
- 	struct dm_task *dmt;
--	void *next = NULL;
- 	uint64_t start, length;
- 	char *target_type;
- 	char *status;
-@@ -547,8 +545,8 @@ dm_get_status(char * name, char * outstatus)
- 		goto out;
- 
- 	/* Fetch 1st target */
--	next = dm_get_next_target(dmt, next, &start, &length,
--				  &target_type, &status);
-+	dm_get_next_target(dmt, NULL, &start, &length,
-+			   &target_type, &status);
- 
- 	if (snprintf(outstatus, PARAMS_SIZE, "%s", status) <= PARAMS_SIZE)
- 		r = 0;
-@@ -571,7 +569,6 @@ dm_type(const char * name, char * type)
- {
- 	int r = 0;
- 	struct dm_task *dmt;
--	void *next = NULL;
- 	uint64_t start, length;
- 	char *target_type = NULL;
- 	char *params;
-@@ -588,8 +585,8 @@ dm_type(const char * name, char * type)
- 		goto out;
- 
- 	/* Fetch 1st target */
--	next = dm_get_next_target(dmt, next, &start, &length,
--				  &target_type, &params);
-+	dm_get_next_target(dmt, NULL, &start, &length,
-+			   &target_type, &params);
- 
- 	if (!target_type)
- 		r = -1;
+ 	if VERSION_GE(v, minv)
+ 		return 0;
 -- 
 2.6.6
