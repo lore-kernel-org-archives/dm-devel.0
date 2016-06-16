@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 29/39] kpartx/devmapper.c: Remove unused 'next'
-	argument
-Date: Thu, 16 Jun 2016 11:47:35 +0200
-Message-ID: <1466070465-1021-30-git-send-email-hare@suse.de>
+Subject: [PATCH 22/39] libmpathpersist: Handle send error
+Date: Thu, 16 Jun 2016 11:47:28 +0200
+Message-ID: <1466070465-1021-23-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -26,31 +25,29 @@ Found by coverity.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- kpartx/devmapper.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ libmpathpersist/mpath_updatepr.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index c5ba39d..382f511 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -311,7 +311,6 @@ dm_get_map(int major, int minor, char * outparams)
- {
- 	int r = 1;
- 	struct dm_task *dmt;
--	void *next = NULL;
- 	uint64_t start, length;
- 	char *target_type = NULL;
- 	char *params = NULL;
-@@ -327,8 +326,8 @@ dm_get_map(int major, int minor, char * outparams)
- 		goto out;
+diff --git a/libmpathpersist/mpath_updatepr.c b/libmpathpersist/mpath_updatepr.c
+index bda8991..0529d13 100644
+--- a/libmpathpersist/mpath_updatepr.c
++++ b/libmpathpersist/mpath_updatepr.c
+@@ -33,10 +33,14 @@ int update_prflag(char * arg1, char * arg2, int noisy)
  
- 	/* Fetch 1st target */
--	next = dm_get_next_target(dmt, next, &start, &length,
--				  &target_type, &params);
-+	dm_get_next_target(dmt, NULL, &start, &length,
-+			   &target_type, &params);
- 
- 	if (snprintf(outparams, PARAMS_SIZE, "%s", params) <= PARAMS_SIZE)
- 		r = 0;
+ 	snprintf(str,sizeof(str),"map %s %s", arg1, arg2);
+ 	condlog (2, "%s: pr flag message=%s", arg1, str);
+-	send_packet(fd, str);
++	if (send_packet(fd, str) != 0) {
++		condlog(2, "%s: message=%s send error=%d", arg1, str, errno);
++		mpath_disconnect(fd);
++		return -2;
++	}
+ 	ret = recv_packet(fd, &reply, DEFAULT_REPLY_TIMEOUT);
+ 	if (ret < 0) {
+-		condlog(2, "%s: message=%s error=%d", arg1, str, errno);
++		condlog(2, "%s: message=%s recv error=%d", arg1, str, errno);
+ 		ret = -2;
+ 	} else {
+ 		condlog (2, "%s: message=%s reply=%s", arg1, str, reply);
 -- 
 2.6.6
