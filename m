@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 31/39] kpartx/lopart.c: use fstat() when reading
-	device nodes
-Date: Thu, 16 Jun 2016 11:47:37 +0200
-Message-ID: <1466070465-1021-32-git-send-email-hare@suse.de>
+Subject: [PATCH 09/39] libmultipath/devmapper.c: Remove unused
+	'next' argument
+Date: Thu, 16 Jun 2016 11:47:15 +0200
+Message-ID: <1466070465-1021-10-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,44 +22,73 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Coverity pointed out that we shouldn't be using stat()/open(),
-as the file might have vanished or changed in between those
-two calls. So modify it to open()/fstat() instead.
+Found by coverity.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- kpartx/lopart.c | 13 ++++++-------
- 1 file changed, 6 insertions(+), 7 deletions(-)
+ libmultipath/devmapper.c | 15 ++++++---------
+ 1 file changed, 6 insertions(+), 9 deletions(-)
 
-diff --git a/kpartx/lopart.c b/kpartx/lopart.c
-index d4a2ab4..f29cfc1 100644
---- a/kpartx/lopart.c
-+++ b/kpartx/lopart.c
-@@ -169,19 +169,18 @@ find_unused_loop_device (void)
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 6e675fe..f395481 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -421,7 +421,6 @@ dm_get_map(const char * name, unsigned long long * size, char * outparams)
+ {
+ 	int r = 1;
+ 	struct dm_task *dmt;
+-	void *next = NULL;
+ 	uint64_t start, length;
+ 	char *target_type = NULL;
+ 	char *params = NULL;
+@@ -438,8 +437,8 @@ dm_get_map(const char * name, unsigned long long * size, char * outparams)
+ 		goto out;
  
- 		sprintf(dev, "/dev/loop%d", next_loop);
+ 	/* Fetch 1st target */
+-	next = dm_get_next_target(dmt, next, &start, &length,
+-				  &target_type, &params);
++	dm_get_next_target(dmt, NULL, &start, &length,
++			   &target_type, &params);
  
--		if (stat (dev, &statbuf) == 0 && S_ISBLK(statbuf.st_mode)) {
--			somedev++;
--			fd = open (dev, O_RDONLY);
--
--			if (fd >= 0) {
--
-+		fd = open (dev, O_RDONLY);
-+		if (fd >= 0) {
-+			if (fstat (fd, &statbuf) == 0 &&
-+			    S_ISBLK(statbuf.st_mode)) {
-+				somedev++;
- 				if(ioctl (fd, LOOP_GET_STATUS, &loopinfo) == 0)
- 					someloop++;		/* in use */
- 				else if (errno == ENXIO)
- 					next_loop_dev = xstrdup(dev);
+ 	if (size)
+ 		*size = length;
+@@ -530,7 +529,6 @@ dm_get_status(char * name, char * outstatus)
+ {
+ 	int r = 1;
+ 	struct dm_task *dmt;
+-	void *next = NULL;
+ 	uint64_t start, length;
+ 	char *target_type;
+ 	char *status;
+@@ -547,8 +545,8 @@ dm_get_status(char * name, char * outstatus)
+ 		goto out;
  
--				close (fd);
- 			}
-+			close (fd);
+ 	/* Fetch 1st target */
+-	next = dm_get_next_target(dmt, next, &start, &length,
+-				  &target_type, &status);
++	dm_get_next_target(dmt, NULL, &start, &length,
++			   &target_type, &status);
  
- 			/* continue trying as long as devices exist */
- 			continue;
+ 	if (snprintf(outstatus, PARAMS_SIZE, "%s", status) <= PARAMS_SIZE)
+ 		r = 0;
+@@ -571,7 +569,6 @@ dm_type(const char * name, char * type)
+ {
+ 	int r = 0;
+ 	struct dm_task *dmt;
+-	void *next = NULL;
+ 	uint64_t start, length;
+ 	char *target_type = NULL;
+ 	char *params;
+@@ -588,8 +585,8 @@ dm_type(const char * name, char * type)
+ 		goto out;
+ 
+ 	/* Fetch 1st target */
+-	next = dm_get_next_target(dmt, next, &start, &length,
+-				  &target_type, &params);
++	dm_get_next_target(dmt, NULL, &start, &length,
++			   &target_type, &params);
+ 
+ 	if (!target_type)
+ 		r = -1;
 -- 
 2.6.6
