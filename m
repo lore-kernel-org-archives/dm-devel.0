@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 16/39] libmultipath: fixup possible buffer
-	overflow in alua_rtpg.c
-Date: Thu, 16 Jun 2016 11:47:22 +0200
-Message-ID: <1466070465-1021-17-git-send-email-hare@suse.de>
+Subject: [PATCH 31/39] kpartx/lopart.c: use fstat() when reading
+	device nodes
+Date: Thu, 16 Jun 2016 11:47:37 +0200
+Message-ID: <1466070465-1021-32-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,55 +22,44 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We need to reserve an additional 4 bytes for the length of
-the response buffer, so add a proper range check to avoid
-accidental wrap-arounds.
-Found by coverity.
+Coverity pointed out that we shouldn't be using stat()/open(),
+as the file might have vanished or changed in between those
+two calls. So modify it to open()/fstat() instead.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/prioritizers/alua_rtpg.c | 8 +++++++-
- 1 file changed, 7 insertions(+), 1 deletion(-)
+ kpartx/lopart.c | 13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
 
-diff --git a/libmultipath/prioritizers/alua_rtpg.c b/libmultipath/prioritizers/alua_rtpg.c
-index 636aae5..22b0d4f 100644
---- a/libmultipath/prioritizers/alua_rtpg.c
-+++ b/libmultipath/prioritizers/alua_rtpg.c
-@@ -15,6 +15,7 @@
- #include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
-+#include <limits.h>
- #include <sys/ioctl.h>
- #include <inttypes.h>
- #include <libudev.h>
-@@ -219,6 +220,9 @@ get_target_port_group(struct path * pp)
- 			goto out;
+diff --git a/kpartx/lopart.c b/kpartx/lopart.c
+index d4a2ab4..f29cfc1 100644
+--- a/kpartx/lopart.c
++++ b/kpartx/lopart.c
+@@ -169,19 +169,18 @@ find_unused_loop_device (void)
  
- 		scsi_buflen = (buf[2] << 8 | buf[3]) + 4;
-+		/* Paranoia */
-+		if (scsi_buflen >= USHRT_MAX)
-+			scsi_buflen = USHRT_MAX;
- 		if (buflen < scsi_buflen) {
- 			free(buf);
- 			buf = (unsigned char *)malloc(scsi_buflen);
-@@ -303,7 +307,7 @@ get_asymmetric_access_state(int fd, unsigned int tpg)
- 	struct rtpg_tpg_dscr *	dscr;
- 	int			rc;
- 	int			buflen;
--	uint32_t		scsi_buflen;
-+	uint64_t		scsi_buflen;
+ 		sprintf(dev, "/dev/loop%d", next_loop);
  
- 	buflen = 4096;
- 	buf = (unsigned char *)malloc(buflen);
-@@ -317,6 +321,8 @@ get_asymmetric_access_state(int fd, unsigned int tpg)
- 	if (rc < 0)
- 		goto out;
- 	scsi_buflen = (buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3]) + 4;
-+	if (scsi_buflen > UINT_MAX)
-+		scsi_buflen = UINT_MAX;
- 	if (buflen < scsi_buflen) {
- 		free(buf);
- 		buf = (unsigned char *)malloc(scsi_buflen);
+-		if (stat (dev, &statbuf) == 0 && S_ISBLK(statbuf.st_mode)) {
+-			somedev++;
+-			fd = open (dev, O_RDONLY);
+-
+-			if (fd >= 0) {
+-
++		fd = open (dev, O_RDONLY);
++		if (fd >= 0) {
++			if (fstat (fd, &statbuf) == 0 &&
++			    S_ISBLK(statbuf.st_mode)) {
++				somedev++;
+ 				if(ioctl (fd, LOOP_GET_STATUS, &loopinfo) == 0)
+ 					someloop++;		/* in use */
+ 				else if (errno == ENXIO)
+ 					next_loop_dev = xstrdup(dev);
+ 
+-				close (fd);
+ 			}
++			close (fd);
+ 
+ 			/* continue trying as long as devices exist */
+ 			continue;
 -- 
 2.6.6
