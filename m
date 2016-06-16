@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 25/39] kpartx: Memory leak in get_hotplug_device()
-Date: Thu, 16 Jun 2016 11:47:31 +0200
-Message-ID: <1466070465-1021-26-git-send-email-hare@suse.de>
+Subject: [PATCH 28/39] kpartx: Handle errors from lseek()
+Date: Thu, 16 Jun 2016 11:47:34 +0200
+Message-ID: <1466070465-1021-29-git-send-email-hare@suse.de>
 References: <1466070465-1021-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,43 +21,29 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We allocate a string for 'device', but never free it on error.
-And the string 'mapname' is never freed at all.
 Found by coverity.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- kpartx/kpartx.c | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
+ kpartx/gpt.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index e8c35d4..e1ebc96 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -178,16 +178,21 @@ get_hotplug_device(void)
- 	len = strlen(mapname);
+diff --git a/kpartx/gpt.c b/kpartx/gpt.c
+index 5a54970..3dac605 100644
+--- a/kpartx/gpt.c
++++ b/kpartx/gpt.c
+@@ -206,9 +206,10 @@ read_lba(int fd, uint64_t lba, void *buffer, size_t bytes)
+ 	int sector_size = get_sector_size(fd);
+ 	off_t offset = lba * sector_size;
+ 	uint64_t lastlba;
+-        ssize_t bytesread;
++	ssize_t bytesread;
  
- 	/* Dirname + mapname + \0 */
--	if (!(device = (char *)malloc(sizeof(char) * (off + len + 1))))
-+	if (!(device = (char *)malloc(sizeof(char) * (off + len + 1)))) {
-+		free(mapname);
- 		return NULL;
-+	}
+-	lseek(fd, offset, SEEK_SET);
++	if (lseek(fd, offset, SEEK_SET) < 0)
++		return 0;
+ 	bytesread = read(fd, buffer, bytes);
  
- 	/* Create new device name. */
- 	snprintf(device, off + 1, "%s", devname);
- 	snprintf(device + off, len + 1, "%s", mapname);
- 
--	if (strlen(device) != (off + len))
-+	if (strlen(device) != (off + len)) {
-+		free(device);
-+		free(mapname);
- 		return NULL;
--
-+	}
-+	free(mapname);
- 	return device;
- }
- 
+ 	lastlba = last_lba(fd);
 -- 
 2.6.6
