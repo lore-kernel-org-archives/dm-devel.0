@@ -1,40 +1,38 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add patchwork info to README
-Date: Thu, 16 Jun 2016 01:12:53 +0200
-Message-ID: <1466032373-4107-1-git-send-email-xose.vazquez@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH] dm raid: don't use 'const' in function return
+Date: Thu, 16 Jun 2016 11:03:25 +0200
+Message-ID: <20160616090359.984712-1-arnd@arndb.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Arnd Bergmann <arnd@arndb.de>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- README | 1 +
- 1 file changed, 1 insertion(+)
+A newly introduced function has 'const int' as the return type,
+but as "make W=1" reports, that has no meaning:
 
-diff --git a/README b/README
-index 77b79b8..c1c53fc 100644
---- a/README
-+++ b/README
-@@ -25,5 +25,6 @@ To get latest devel code: git clone http://git.opensvc.com/multipath-tools/.git
+drivers/md/dm-raid.c:510:18: error: type qualifiers ignored on function return type [-Werror=ignored-qualifiers]
+
+This changes the return type to plain 'int'.
+
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+Fixes: 33e53f06850f ("dm raid: introduce extended superblock and new raid types to support takeover/reshaping")
+---
+ drivers/md/dm-raid.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 96bcff7a0b94..55d25ac87bda 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -507,7 +507,7 @@ static const char *raid10_md_layout_to_format(int layout)
+ }
  
- Mailing list: http://www.redhat.com/mailman/listinfo/dm-devel
- Gitweb: http://git.opensvc.com/?p=multipath-tools/.git
-+Patchwork: http://patchwork.kernel.org/project/dm-devel/list/
- 
- Current maintainer is Christophe Varoqui <christophe.varoqui@opensvc.com>
+ /* Return md raid10 algorithm for @name */
+-static const int raid10_name_to_format(const char *name)
++static int raid10_name_to_format(const char *name)
+ {
+ 	if (!strcasecmp(name, "near"))
+ 		return ALGORITHM_RAID10_NEAR;
 -- 
-2.5.5
+2.9.0
