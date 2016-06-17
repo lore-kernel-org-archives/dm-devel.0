@@ -1,8 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH v2 03/10] multipath-tools: add TEGILE devices to
-	hardware table
-Date: Fri, 17 Jun 2016 16:52:41 +0200
-Message-ID: <1466175169-16684-3-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: RDAC border
+Date: Fri, 17 Jun 2016 16:52:49 +0200
+Message-ID: <1466175169-16684-11-git-send-email-xose.vazquez@gmail.com>
 References: <1466175169-16684-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,57 +17,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-based on documentation provided by manufacturer:
-http://pages.tegile.com/rs/568-BVY-995/images/Oracle%20BPG%201.0.pdf
-
-vendor                  "TEGILE"
-product                 "ZEBI-FC|INTELLIFLASH"
-hardware_handler        "1 alua"
-path_selector           "round- robin 0"
-path_grouping_policy    "group_by_prio"
-no_path_retry           10
-dev_loss_tmo            50
-path_checker            tur
-prio                    alua
-failback                30
-rr_min_io               128
-
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+
 ---
- libmultipath/hwtable.c | 16 ++++++++++++++++
- 1 file changed, 16 insertions(+)
+There are 21 disorganized RDAC devices.
+
+What do you prefer?
+
+Order by original manufacturer, current manufacturer or
+by real controllers families. Or a mixed combination.
+
+???
+---
+ libmultipath/hwtable.c | 1 +
+ 1 file changed, 1 insertion(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 0ea7968..d882f31 100644
+index b67568f..ae562c6 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -1211,6 +1211,22 @@ static struct hwentry default_hw[] = {
- 		.dev_loss      = 30,
+@@ -1074,6 +1074,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 		.prio_args     = NULL,
  	},
- 	/*
-+	 * Tegile Systems, Inc.
-+	 */
-+	{
-+		.vendor        = "TEGILE",
-+		.product       = "ZEBI-FC|INTELLIFLASH",
-+		.hwhandler     = "1 alua",
-+		.selector      = "round-robin 0",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.no_path_retry = 10,
-+		.dev_loss      = 50,
-+		.checker_name  = TUR,
-+		.prio_name     = PRIO_ALUA,
-+		.pgfailback    = 30,
-+		.minio         = 128,
-+	},
-+	/*
- 	 * EOL
- 	 */
++	/* RDAC ends here */
  	{
+ 		.vendor	       = "Intel",
+ 		.product       = "Multi-Flex",
 -- 
 2.5.5
