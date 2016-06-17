@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: RDAC border
-Date: Fri, 17 Jun 2016 16:52:49 +0200
-Message-ID: <1466175169-16684-11-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 04/10] multipath-tools: remove current maintainer
+	from orphan array families.
+Date: Fri, 17 Jun 2016 16:52:42 +0200
+Message-ID: <1466175169-16684-4-git-send-email-xose.vazquez@gmail.com>
 References: <1466175169-16684-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,39 +18,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Redundant.
+
 Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-
 ---
-There are 21 disorganized RDAC devices.
-
-What do you prefer?
-
-Order by original manufacturer, current manufacturer or
-by real controllers families. Or a mixed combination.
-
-???
----
- libmultipath/hwtable.c | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/hwtable.c | 18 ------------------
+ 1 file changed, 18 deletions(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index b67568f..ae562c6 100644
+index d882f31..46aa9cd 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -1074,6 +1074,7 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_RDAC,
- 		.prio_args     = NULL,
+@@ -57,9 +57,6 @@ static struct hwentry default_hw[] = {
  	},
-+	/* RDAC ends here */
+ 	/*
+ 	 * StorageWorks controller family
+-	 *
+-	 * Maintainer : Christophe Varoqui
+-	 * Mail : christophe.varoqui@opensvc.com
+ 	 */
  	{
- 		.vendor	       = "Intel",
- 		.product       = "Multi-Flex",
+ 		.vendor        = "3PARdata",
+@@ -238,9 +235,6 @@ static struct hwentry default_hw[] = {
+ 	},
+ 	/*
+ 	 * DDN controller family
+-	 *
+-	 * Maintainer : Christophe Varoqui
+-	 * Mail : christophe.varoqui@opensvc.com
+ 	 */
+ 	{
+ 		.vendor        = "DDN",
+@@ -319,9 +313,6 @@ static struct hwentry default_hw[] = {
+ 	},
+ 	/*
+ 	 * Fujitsu controller family
+-	 *
+-	 * Maintainer : Christophe Varoqui
+-	 * Mail : christophe.varoqui@opensvc.com
+ 	 */
+ 	{
+ 		.vendor        = "FSC",
+@@ -874,9 +865,6 @@ static struct hwentry default_hw[] = {
+ 
+ 	/*
+ 	 * SGI arrays
+-	 *
+-	 * Maintainer : Christophe Varoqui
+-	 * Mail : christophe.varoqui@opensvc.com
+ 	 */
+ 	{
+ 		.vendor        = "SGI",
+@@ -935,9 +923,6 @@ static struct hwentry default_hw[] = {
+ 	},
+ 	/*
+ 	 * STK arrays
+-	 *
+-	 * Maintainer : Christophe Varoqui
+-	 * Mail : christophe.varoqui@opensvc.com
+ 	 */
+ 	{
+ 		.vendor        = "STK",
+@@ -955,9 +940,6 @@ static struct hwentry default_hw[] = {
+ 	},
+ 	/*
+ 	 * SUN arrays
+-	 *
+-	 * Maintainer : Christophe Varoqui
+-	 * Mail : christophe.varoqui@opensvc.com
+ 	 */
+ 	{
+ 		.vendor        = "SUN",
 -- 
 2.5.5
