@@ -1,164 +1,95 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 3/3] block: implement (some of) fallocate for block devices
-Date: Thu, 16 Jun 2016 18:17:47 -0700
-Message-ID: <146612626773.12764.9800994140955661542.stgit@birch.djwong.org>
-References: <146612624734.12764.4316680863289411106.stgit@birch.djwong.org>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: unreachable controllers
+	maintainers
+Date: Fri, 17 Jun 2016 12:32:55 +0200
+Message-ID: <7731a278-4876-049d-3454-42f6bbb673f9@gmail.com>
+References: <1465156471-20249-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <146612624734.12764.4316680863289411106.stgit-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
-Cc: linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, bfoster-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1465156471-20249-1-git-send-email-xose.vazquez@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: matthias.rudolph@hds.com, sramani@pillardata.com, yacine@alyseo.com, g.shyamsundar@yahoo.co.in, device-mapper development <dm-devel@redhat.com>, sean.stewart@netapp.com, brking@linux.vnet.ibm.com, bartb@pivot3.com, egoggin@emc.com
 List-Id: dm-devel.ids
 
-After much discussion, it seems that the fallocate feature flag
-FALLOC_FL_ZERO_RANGE maps nicely to SCSI WRITE SAME; and the feature
-FALLOC_FL_PUNCH_HOLE maps nicely to the devices that have been
-whitelisted for zeroing SCSI UNMAP.  Punch still requires that
-FALLOC_FL_KEEP_SIZE is set.  A length that goes past the end of the
-device will be clamped to the device size if KEEP_SIZE is set; or will
-return -EINVAL if not.  Both start and length must be aligned to the
-device's logical block size.
+On 06/05/2016 09:54 PM, Xose Vazquez Perez wrote:
+> Replace 3 unreachable controllers maintainers, their emails are bounced,
+> with the default maintainer(Christophe Varoqui <christophe.varoqui@opensvc.com>)
 
-Since the semantics of fallocate are fairly well established already,
-wire up the two pieces.  The other fallocate variants (collapse range,
-insert range, and allocate blocks) are not supported.
+Please DROP this patch.
 
-v2: Incorporate feedback from Christoph & Linus.  Tentatively add
-a requirement that the fallocate arguments be aligned to logical block
-size, and put in a few XXX comments ahead of LSF discussion.
-
-v3: Forward port to 4.7.
-
-Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
----
- fs/block_dev.c |   84 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/open.c      |    3 +-
- 2 files changed, 86 insertions(+), 1 deletion(-)
-
-
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 71ccab1..a3975c4 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -30,6 +30,7 @@
- #include <linux/cleancache.h>
- #include <linux/dax.h>
- #include <linux/badblocks.h>
-+#include <linux/falloc.h>
- #include <asm/uaccess.h>
- #include "internal.h"
- 
-@@ -1802,6 +1803,88 @@ static const struct address_space_operations def_blk_aops = {
- 	.is_dirty_writeback = buffer_check_dirty_writeback,
- };
- 
-+#define	BLKDEV_FALLOC_FL_SUPPORTED					\
-+		(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |		\
-+		 FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE)
-+
-+static long blkdev_fallocate(struct file *file, int mode, loff_t start,
-+			     loff_t len)
-+{
-+	struct block_device *bdev = I_BDEV(bdev_file_inode(file));
-+	struct request_queue *q = bdev_get_queue(bdev);
-+	struct address_space *mapping;
-+	loff_t end = start + len - 1;
-+	loff_t isize;
-+	int error;
-+
-+	/* Fail if we don't recognize the flags. */
-+	if (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
-+		return -EOPNOTSUPP;
-+
-+	/* Don't go off the end of the device. */
-+	isize = i_size_read(bdev->bd_inode);
-+	if (start >= isize)
-+		return -EINVAL;
-+	if (end > isize) {
-+		if (mode & FALLOC_FL_KEEP_SIZE) {
-+			len = isize - start;
-+			end = start + len - 1;
-+		} else
-+			return -EINVAL;
-+	}
-+
-+	/*
-+	 * Don't allow IO that isn't aligned to logical block size.
-+	 */
-+	if ((start | len) & (bdev_logical_block_size(bdev) - 1))
-+		return -EINVAL;
-+
-+	/* Invalidate the page cache, including dirty pages. */
-+	mapping = bdev->bd_inode->i_mapping;
-+	truncate_inode_pages_range(mapping, start, end);
-+
-+	switch (mode) {
-+	case FALLOC_FL_ZERO_RANGE:
-+	case FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE:
-+		error = blkdev_issue_zeroout(bdev, start >> 9, len >> 9,
-+					    GFP_KERNEL, false);
-+		if (error)
-+			return error;
-+		break;
-+	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE:
-+		/* Only punch if the device can do zeroing discard. */
-+		if (!blk_queue_discard(q) || !q->limits.discard_zeroes_data)
-+			return -EOPNOTSUPP;
-+		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
-+					     GFP_KERNEL, 0);
-+		if (error)
-+			return error;
-+		break;
-+	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE:
-+		/*
-+		 * XXX: a well known search engine vendor interprets this
-+		 * flag (in other circumstances) to mean "I don't care if
-+		 * we can read stale contents later".  Is it appropriate
-+		 * to wire this up to the non-zeroing discard?
-+		 */
-+		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
-+					     GFP_KERNEL, 0);
-+		if (error)
-+			return error;
-+		break;
-+	default:
-+		return -EOPNOTSUPP;
-+	}
-+
-+	/*
-+	 * Invalidate again; if someone wandered in and dirtied a page,
-+	 * the caller will be given -EBUSY;
-+	 */
-+	return invalidate_inode_pages2_range(mapping,
-+					     start >> PAGE_SHIFT,
-+					     end >> PAGE_SHIFT);
-+}
-+
- const struct file_operations def_blk_fops = {
- 	.open		= blkdev_open,
- 	.release	= blkdev_close,
-@@ -1816,6 +1899,7 @@ const struct file_operations def_blk_fops = {
- #endif
- 	.splice_read	= generic_file_splice_read,
- 	.splice_write	= iter_file_splice_write,
-+	.fallocate	= blkdev_fallocate,
- };
- 
- int ioctl_by_bdev(struct block_device *bdev, unsigned cmd, unsigned long arg)
-diff --git a/fs/open.c b/fs/open.c
-index 93ae3cd..b2dbda4 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -289,7 +289,8 @@ int vfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
- 	 * Let individual file system decide if it supports preallocation
- 	 * for directories or not.
- 	 */
--	if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
-+	if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode) &&
-+	    !S_ISBLK(inode->i_mode))
- 		return -ENODEV;
- 
- 	/* Check for wrap through zero too */
+> Compellent Technologies, Inc.: Jim Lester <jim.lester@compellent.com>
+> NETAPP controller family: Dave Wysochanski <davidw@netapp.com>
+> IBM NSeries (NETAPP) controller family: Dave Wysochanski <davidw@netapp.com>
+> 
+> 
+> Cc: bartb@pivot3.com
+> Cc: brking@linux.vnet.ibm.com
+> Cc: egoggin@emc.com
+> Cc: g.shyamsundar@yahoo.co.in
+> Cc: matthias.rudolph@hds.com
+> Cc: sean.stewart@netapp.com
+> Cc: sramani@pillardata.com
+> Cc: yacine@alyseo.com
+> Cc: Hannes Reinecke <hare@suse.de>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> 
+> ---
+> 
+> If anyone in the Cc: list is not currently in charge of a listed controller
+> at hwtable.c, please drop here an email, thanks.
+> Ideally, an impersonal address is desired, e.g.: linux-mpt@mycompany.com
+> 
+> ---
+>  libmultipath/hwtable.c | 12 ++++++------
+>  1 file changed, 6 insertions(+), 6 deletions(-)
+> 
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 66b5123..5c49e32 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -20,8 +20,8 @@ static struct hwentry default_hw[] = {
+>  	/*
+>  	 * Compellent Technologies, Inc.
+>  	 *
+> -	 * Maintainer : Jim Lester, Compellent
+> -	 * Mail : jim.lester@compellent.com
+> +	 * Maintainer : Christophe Varoqui
+> +	 * Mail : christophe.varoqui@opensvc.com
+>  	 */
+>  	{
+>  		.vendor        = "COMPELNT",
+> @@ -790,8 +790,8 @@ static struct hwentry default_hw[] = {
+>  	/*
+>  	 * NETAPP controller family
+>  	 *
+> -	 * Maintainer : Dave Wysochanski
+> -	 * Mail : davidw@netapp.com
+> +	 * Maintainer : Christophe Varoqui
+> +	 * Mail : christophe.varoqui@opensvc.com
+>  	 */
+>  	{
+>  		.vendor        = "NETAPP",
+> @@ -835,8 +835,8 @@ static struct hwentry default_hw[] = {
+>  	/*
+>  	 * IBM NSeries (NETAPP) controller family
+>  	 *
+> -	 * Maintainer : Dave Wysochanski
+> -	 * Mail : davidw@netapp.com
+> +	 * Maintainer : Christophe Varoqui
+> +	 * Mail : christophe.varoqui@opensvc.com
+>  	 */
+>  	{
+>  		.vendor        = "IBM",
+> 
