@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 02/26] Use 'mptable' as argument for find_mpe()
-	and get_mpe_wwid()
-Date: Mon, 20 Jun 2016 10:08:49 +0200
-Message-ID: <1466410153-23896-3-git-send-email-hare@suse.de>
+Subject: [PATCH 13/26] multipath: make 'dev' internal to the
+	multipath program
+Date: Mon, 20 Jun 2016 10:09:00 +0200
+Message-ID: <1466410153-23896-14-git-send-email-hare@suse.de>
 References: <1466410153-23896-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,117 +22,197 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Only the multipath program is accessing the config entry 'dev',
+so we should be making it a local variable.
+
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/config.c      | 8 ++++----
- libmultipath/config.h      | 4 ++--
- libmultipath/configure.c   | 2 +-
- libmultipath/propsel.c     | 2 +-
- libmultipath/structs_vec.c | 4 ++--
- 5 files changed, 10 insertions(+), 10 deletions(-)
+ libmultipath/config.c |  3 ---
+ libmultipath/config.h |  1 -
+ multipath/main.c      | 43 +++++++++++++++++++++++--------------------
+ 3 files changed, 23 insertions(+), 24 deletions(-)
 
 diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 8b9e770..00f3e53 100644
+index 88a0f09..137ff6a 100644
 --- a/libmultipath/config.c
 +++ b/libmultipath/config.c
-@@ -125,7 +125,7 @@ find_hwe (vector hwtable, char * vendor, char * product, char * revision)
- }
+@@ -478,9 +478,6 @@ free_config (struct config * conf)
+ 	if (!conf)
+ 		return;
  
- extern struct mpentry *
--find_mpe (char * wwid)
-+find_mpe (vector mptable, char * wwid)
- {
- 	int i;
- 	struct mpentry * mpe;
-@@ -133,7 +133,7 @@ find_mpe (char * wwid)
- 	if (!wwid)
- 		return NULL;
- 
--	vector_foreach_slot (conf->mptable, mpe, i)
-+	vector_foreach_slot (mptable, mpe, i)
- 		if (mpe->wwid && !strcmp(mpe->wwid, wwid))
- 			return mpe;
- 
-@@ -141,7 +141,7 @@ find_mpe (char * wwid)
- }
- 
- extern char *
--get_mpe_wwid (char * alias)
-+get_mpe_wwid (vector mptable, char * alias)
- {
- 	int i;
- 	struct mpentry * mpe;
-@@ -149,7 +149,7 @@ get_mpe_wwid (char * alias)
- 	if (!alias)
- 		return NULL;
- 
--	vector_foreach_slot (conf->mptable, mpe, i)
-+	vector_foreach_slot (mptable, mpe, i)
- 		if (mpe->alias && strcmp(mpe->alias, alias) == 0)
- 			return mpe->wwid;
+-	if (conf->dev)
+-		FREE(conf->dev);
+-
+ 	if (conf->multipath_dir)
+ 		FREE(conf->multipath_dir);
  
 diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 466e31e..2acee25 100644
+index 06e83dc..d46b9ce 100644
 --- a/libmultipath/config.h
 +++ b/libmultipath/config.h
-@@ -179,8 +179,8 @@ struct config {
- struct config * conf;
+@@ -141,7 +141,6 @@ struct config {
+ 	int uev_wait_timeout;
+ 	unsigned int version[3];
  
- struct hwentry * find_hwe (vector hwtable, char * vendor, char * product, char *revision);
--struct mpentry * find_mpe (char * wwid);
--char * get_mpe_wwid (char * alias);
-+struct mpentry * find_mpe (vector hwtable, char * wwid);
-+char * get_mpe_wwid (vector hwtable, char * alias);
+-	char * dev;
+ 	struct udev * udev;
+ 	char * multipath_dir;
+ 	char * selector;
+diff --git a/multipath/main.c b/multipath/main.c
+index 5b0cb7e..2825c8e 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -239,7 +239,7 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+  *   1: Failure
+  */
+ static int
+-configure (enum mpath_cmds cmd, enum devtypes dev_type)
++configure (enum mpath_cmds cmd, enum devtypes dev_type, char *devpath)
+ {
+ 	vector curmp = NULL;
+ 	vector pathvec = NULL;
+@@ -262,7 +262,7 @@ configure (enum mpath_cmds cmd, enum devtypes dev_type)
+ 	vecs.pathvec = pathvec;
+ 	vecs.mpvec = curmp;
  
- struct hwentry * alloc_hwe (void);
- struct mpentry * alloc_mpe (void);
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 8e938c0..a830bcd 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -1042,7 +1042,7 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
- 		/*
- 		 * or may be an alias
- 		 */
--		refwwid = get_mpe_wwid(dev);
-+		refwwid = get_mpe_wwid(conf->hwtable, dev);
+-	dev = convert_dev(conf->dev, (dev_type == DEV_DEVNODE));
++	dev = convert_dev(devpath, (dev_type == DEV_DEVNODE));
  
- 		/*
- 		 * or directly a wwid
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 4111fa5..f803cdc 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -409,7 +409,7 @@ select_prio (struct path * pp)
+ 	/*
+ 	 * if we have a blacklisted device parameter, exit early
+@@ -273,20 +273,20 @@ configure (enum mpath_cmds cmd, enum devtypes dev_type)
+ 			    conf->elist_devnode, dev) > 0)) {
+ 		if (cmd == CMD_VALID_PATH)
+ 			printf("%s is not a valid multipath device path\n",
+-			       conf->dev);
++			       devpath);
+ 		goto out;
+ 	}
+ 	/*
+ 	 * scope limiting must be translated into a wwid
+ 	 * failing the translation is fatal (by policy)
+ 	 */
+-	if (conf->dev) {
+-		int failed = get_refwwid(cmd, conf->dev, dev_type,
++	if (devpath) {
++		int failed = get_refwwid(cmd, devpath, dev_type,
+ 					 pathvec, &refwwid);
+ 		if (!refwwid) {
+-			condlog(4, "%s: failed to get wwid", conf->dev);
++			condlog(4, "%s: failed to get wwid", devpath);
+ 			if (failed == 2 && cmd == CMD_VALID_PATH)
+-				printf("%s is not a valid multipath device path\n", conf->dev);
++				printf("%s is not a valid multipath device path\n", devpath);
+ 			else
+ 				condlog(3, "scope is nul");
+ 			goto out;
+@@ -324,7 +324,7 @@ configure (enum mpath_cmds cmd, enum devtypes dev_type)
+ 				r = 0;
+ 
+ 			printf("%s %s a valid multipath device path\n",
+-			       conf->dev, r == 0 ? "is" : "is not");
++			       devpath, r == 0 ? "is" : "is not");
  			goto out;
  		}
  	}
--	mpe = find_mpe(pp->wwid);
-+	mpe = find_mpe(conf->hwtable, pp->wwid);
- 	set_prio(mpe, "(LUN setting)");
- 	set_prio(conf->overrides, "(overrides setting)");
- 	set_prio(pp->hwe, "controller setting)");
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 20a7457..b00832e 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -385,7 +385,7 @@ __setup_multipath (struct vectors * vecs, struct multipath * mpp, int reset)
+@@ -332,7 +332,7 @@ configure (enum mpath_cmds cmd, enum devtypes dev_type)
+ 	/*
+ 	 * get a path list
+ 	 */
+-	if (conf->dev)
++	if (devpath)
+ 		di_flag = DI_WWID;
+ 
+ 	if (cmd == CMD_LIST_LONG)
+@@ -368,7 +368,7 @@ configure (enum mpath_cmds cmd, enum devtypes dev_type)
+ 		if (VECTOR_SIZE(curmp) != 0 || VECTOR_SIZE(pathvec) > 1)
+ 			r = 0;
+ 		printf("%s %s a valid multipath device path\n",
+-		       conf->dev, r == 0 ? "is" : "is not");
++		       devpath, r == 0 ? "is" : "is not");
+ 		goto out;
  	}
  
- 	set_multipath_wwid(mpp);
--	mpp->mpe = find_mpe(mpp->wwid);
-+	mpp->mpe = find_mpe(conf->hwtable, mpp->wwid);
- 	condlog(3, "%s: discover", mpp->alias);
+@@ -481,6 +481,7 @@ main (int argc, char *argv[])
+ 	int r = 1;
+ 	enum mpath_cmds cmd = CMD_CREATE;
+ 	enum devtypes dev_type;
++	char *dev = NULL;
  
- 	if (!mpp->hwe)
-@@ -469,7 +469,7 @@ add_map_with_path (struct vectors * vecs,
- 	if (!(mpp = alloc_multipath()))
- 		return NULL;
+ 	udev = udev_new();
+ 	logsink = 0;
+@@ -592,16 +593,16 @@ main (int argc, char *argv[])
+ 	dm_udev_set_sync_support(1);
  
--	mpp->mpe = find_mpe(pp->wwid);
-+	mpp->mpe = find_mpe(conf->hwtable, pp->wwid);
- 	mpp->hwe = pp->hwe;
+ 	if (optind < argc) {
+-		conf->dev = MALLOC(FILE_NAME_SIZE);
++		dev = MALLOC(FILE_NAME_SIZE);
  
- 	strcpy(mpp->wwid, pp->wwid);
+-		if (!conf->dev)
++		if (!dev)
+ 			goto out;
+ 
+-		strncpy(conf->dev, argv[optind], FILE_NAME_SIZE);
++		strncpy(dev, argv[optind], FILE_NAME_SIZE);
+ 		if (dev_type != DEV_UEVENT)
+-			dev_type = get_dev_type(conf->dev);
++			dev_type = get_dev_type(dev);
+ 		if (dev_type == DEV_NONE) {
+-			condlog(0, "'%s' is not a valid argument\n", conf->dev);
++			condlog(0, "'%s' is not a valid argument\n", dev);
+ 			goto out;
+ 		}
+ 	}
+@@ -631,7 +632,7 @@ main (int argc, char *argv[])
+ 	}
+ 
+ 	if (cmd == CMD_VALID_PATH &&
+-	    (!conf->dev || dev_type == DEV_DEVMAP)) {
++	    (!dev || dev_type == DEV_DEVMAP)) {
+ 		condlog(0, "the -c option requires a path to check");
+ 		goto out;
+ 	}
+@@ -642,12 +643,12 @@ main (int argc, char *argv[])
+ 		fd = mpath_connect();
+ 		if (fd == -1) {
+ 			printf("%s is not a valid multipath device path\n",
+-				conf->dev);
++				dev);
+ 			goto out;
+ 		}
+ 		mpath_disconnect(fd);
+ 	}
+-	if (cmd == CMD_REMOVE_WWID && !conf->dev) {
++	if (cmd == CMD_REMOVE_WWID && !dev) {
+ 		condlog(0, "the -w option requires a device");
+ 		goto out;
+ 	}
+@@ -674,7 +675,7 @@ main (int argc, char *argv[])
+ 	}
+ 	if (conf->remove == FLUSH_ONE) {
+ 		if (dev_type == DEV_DEVMAP) {
+-			r = dm_suspend_and_flush_map(conf->dev);
++			r = dm_suspend_and_flush_map(dev);
+ 		} else
+ 			condlog(0, "must provide a map name to remove");
+ 
+@@ -684,7 +685,7 @@ main (int argc, char *argv[])
+ 		r = dm_flush_maps();
+ 		goto out;
+ 	}
+-	while ((r = configure(cmd, dev_type)) < 0)
++	while ((r = configure(cmd, dev_type, dev)) < 0)
+ 		condlog(3, "restart multipath configuration process");
+ 
+ out:
+@@ -706,6 +707,8 @@ out_free_config:
+ 	free_config(conf);
+ 	conf = NULL;
+ 	udev_unref(udev);
++	if (dev)
++		FREE(dev);
+ #ifdef _DEBUG_
+ 	dbg_free_final(NULL);
+ #endif
 -- 
 2.6.6
