@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 25/26] multipathd: use userspace RCU to access
-	configuration
-Date: Mon, 20 Jun 2016 10:09:12 +0200
-Message-ID: <1466410153-23896-26-git-send-email-hare@suse.de>
+Subject: [PATCH 12/26] multipath: make 'dev_type' internal to the
+	multipath program
+Date: Mon, 20 Jun 2016 10:08:59 +0200
+Message-ID: <1466410153-23896-13-git-send-email-hare@suse.de>
 References: <1466410153-23896-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,250 +22,155 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-As the configuration is accessed from various threads at
-various points in time any configuration change is tricky.
-To avoid any race conditions this patch encapsulates any
-configuration accesses via RCU, which will avoid any races
-during reconfiguration.
+Only the multipath program uses the 'dev_type' config entry,
+so we should be dropping it from the main configuration and
+make it a local variable to the multipath program.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/config.h |  2 ++
- libmultipath/waiter.c |  3 +++
- mpathpersist/main.c   |  4 ++++
- multipath/main.c      |  4 ++++
- multipathd/Makefile   |  2 +-
- multipathd/main.c     | 42 +++++++++++++++++++++++++++++++++---------
- 6 files changed, 47 insertions(+), 10 deletions(-)
+ libmultipath/config.c |  1 -
+ libmultipath/config.h |  1 -
+ multipath/main.c      | 29 +++++++++++++++--------------
+ 3 files changed, 15 insertions(+), 16 deletions(-)
 
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 6f3c4e8..88a0f09 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -595,7 +595,6 @@ load_config (char * file, struct udev *udev)
+ 		conf->verbosity = DEFAULT_VERBOSITY;
+ 
+ 	conf->udev = udev;
+-	conf->dev_type = DEV_NONE;
+ 	conf->minio = DEFAULT_MINIO;
+ 	conf->minio_rq = DEFAULT_MINIO_RQ;
+ 	get_sys_max_fds(&conf->max_fds);
 diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 289403e..92f2be9 100644
+index eed606c..06e83dc 100644
 --- a/libmultipath/config.h
 +++ b/libmultipath/config.h
-@@ -3,6 +3,7 @@
- 
- #include <sys/types.h>
- #include <stdint.h>
-+#include <urcu.h>
- 
- #define ORIGIN_DEFAULT 0
- #define ORIGIN_CONFIG  1
-@@ -96,6 +97,7 @@ struct mpentry {
- };
- 
- struct config {
-+	struct rcu_head rcu;
+@@ -99,7 +99,6 @@ struct config {
  	int verbosity;
  	int pgpolicy_flag;
  	int pgpolicy;
-diff --git a/libmultipath/waiter.c b/libmultipath/waiter.c
-index 219876b..34c0110 100644
---- a/libmultipath/waiter.c
-+++ b/libmultipath/waiter.c
-@@ -9,6 +9,7 @@
- #include <sys/mman.h>
- #include <pthread.h>
- #include <signal.h>
-+#include <urcu.h>
- 
- #include "vector.h"
- #include "memory.h"
-@@ -41,6 +42,7 @@ void free_waiter (void *data)
- 	if (wp->dmt)
- 		dm_task_destroy(wp->dmt);
- 
-+	rcu_unregister_thread();
- 	FREE(wp);
- }
- 
-@@ -167,6 +169,7 @@ void *waitevent (void *et)
- 	waiter = (struct event_thread *)et;
- 	pthread_cleanup_push(free_waiter, et);
- 
-+	rcu_register_thread();
- 	while (1) {
- 		r = waiteventloop(waiter);
- 
-diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-index e4fb39c..5fb831e 100644
---- a/mpathpersist/main.c
-+++ b/mpathpersist/main.c
-@@ -53,6 +53,10 @@ void put_multipath_config(struct config *conf)
- 	/* Noop for now */
- }
- 
-+void rcu_register_thread_memb(void) {}
-+
-+void rcu_unregister_thread_memb(void) {}
-+
- int main (int argc, char * argv[])
- {
- 	int fd, c, res;
+-	enum devtypes dev_type;
+ 	int minio;
+ 	int minio_rq;
+ 	int checkint;
 diff --git a/multipath/main.c b/multipath/main.c
-index 2ed3003..719d935 100644
+index bd7da58..5b0cb7e 100644
 --- a/multipath/main.c
 +++ b/multipath/main.c
-@@ -73,6 +73,10 @@ void put_multipath_config(struct config *conf)
- 	/* Noop for now */
- }
- 
-+void rcu_register_thread_memb(void) {}
-+
-+void rcu_unregister_thread_memb(void) {}
-+
+@@ -239,7 +239,7 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+  *   1: Failure
+  */
  static int
- filter_pathvec (vector pathvec, char * refwwid)
+-configure (enum mpath_cmds cmd)
++configure (enum mpath_cmds cmd, enum devtypes dev_type)
  {
-diff --git a/multipathd/Makefile b/multipathd/Makefile
-index 9b0210f..ec977f3 100644
---- a/multipathd/Makefile
-+++ b/multipathd/Makefile
-@@ -9,7 +9,7 @@ CFLAGS += -I$(multipathdir) -I$(mpathpersistdir) -I$(mpathcmddir)
- ifdef SYSTEMD
- 	CFLAGS += -DUSE_SYSTEMD=$(SYSTEMD)
- endif
--LDFLAGS += -lpthread -ldevmapper -lreadline
-+LDFLAGS += -lurcu -lpthread -ldevmapper -lreadline
- ifdef SYSTEMD
- 	ifeq ($(shell test $(SYSTEMD) -gt 209 && echo 1), 1)
- 		LDFLAGS += -lsystemd
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d2b57cf..9682b3e 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -17,6 +17,7 @@
- #include <limits.h>
- #include <linux/oom.h>
- #include <libudev.h>
-+#include <urcu.h>
- #ifdef USE_SYSTEMD
- #include <systemd/sd-daemon.h>
- #endif
-@@ -206,12 +207,13 @@ int set_config_state(enum daemon_status state)
+ 	vector curmp = NULL;
+ 	vector pathvec = NULL;
+@@ -262,12 +262,12 @@ configure (enum mpath_cmds cmd)
+ 	vecs.pathvec = pathvec;
+ 	vecs.mpvec = curmp;
  
- struct config *get_multipath_config(void)
- {
--	return multipath_conf;
-+	rcu_read_lock();
-+	return rcu_dereference(multipath_conf);
- }
+-	dev = convert_dev(conf->dev, (conf->dev_type == DEV_DEVNODE));
++	dev = convert_dev(conf->dev, (dev_type == DEV_DEVNODE));
  
- void put_multipath_config(struct config *conf)
- {
--	/* Noop for now */
-+	rcu_read_unlock();
- }
+ 	/*
+ 	 * if we have a blacklisted device parameter, exit early
+ 	 */
+-	if (dev && conf->dev_type == DEV_DEVNODE &&
++	if (dev && dev_type == DEV_DEVNODE &&
+ 	    cmd != CMD_REMOVE_WWID &&
+ 	    (filter_devnode(conf->blist_devnode,
+ 			    conf->elist_devnode, dev) > 0)) {
+@@ -281,7 +281,7 @@ configure (enum mpath_cmds cmd)
+ 	 * failing the translation is fatal (by policy)
+ 	 */
+ 	if (conf->dev) {
+-		int failed = get_refwwid(cmd, conf->dev, conf->dev_type,
++		int failed = get_refwwid(cmd, conf->dev, dev_type,
+ 					 pathvec, &refwwid);
+ 		if (!refwwid) {
+ 			condlog(4, "%s: failed to get wwid", conf->dev);
+@@ -480,6 +480,7 @@ main (int argc, char *argv[])
+ 	extern int optind;
+ 	int r = 1;
+ 	enum mpath_cmds cmd = CMD_CREATE;
++	enum devtypes dev_type;
  
- static int
-@@ -1124,23 +1126,33 @@ out:
- 	return r;
- }
+ 	udev = udev_new();
+ 	logsink = 0;
+@@ -554,7 +555,7 @@ main (int argc, char *argv[])
+ 			exit(0);
+ 		case 'u':
+ 			cmd = CMD_VALID_PATH;
+-			conf->dev_type = DEV_UEVENT;
++			dev_type = DEV_UEVENT;
+ 			break;
+ 		case 'w':
+ 			cmd = CMD_REMOVE_WWID;
+@@ -597,14 +598,14 @@ main (int argc, char *argv[])
+ 			goto out;
  
-+static void *rcu_unregister(void *param)
-+{
-+	rcu_unregister_thread();
-+	return NULL;
-+}
-+
- static void *
- ueventloop (void * ap)
- {
- 	struct udev *udev = ap;
- 
-+	pthread_cleanup_push(rcu_unregister, NULL);
-+	rcu_register_thread();
- 	if (uevent_listen(udev))
- 		condlog(0, "error starting uevent listener");
--
-+	pthread_cleanup_pop(1);
- 	return NULL;
- }
- 
- static void *
- uevqloop (void * ap)
- {
-+	pthread_cleanup_push(rcu_unregister, NULL);
-+	rcu_register_thread();
- 	if (uevent_dispatch(&uev_trigger, ap))
- 		condlog(0, "error starting uevent dispatcher");
--
-+	pthread_cleanup_pop(1);
- 	return NULL;
- }
- static void *
-@@ -1150,7 +1162,8 @@ uxlsnrloop (void * ap)
- 		condlog(1, "Failed to init uxsock listener");
- 		return NULL;
- 	}
--
-+	pthread_cleanup_push(rcu_unregister, NULL);
-+	rcu_register_thread();
- 	set_handler_callback(LIST+PATHS, cli_list_paths);
- 	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
- 	set_handler_callback(LIST+PATHS+RAW+FMT, cli_list_paths_raw);
-@@ -1200,7 +1213,7 @@ uxlsnrloop (void * ap)
- 
- 	umask(077);
- 	uxsock_listen(&uxsock_trigger, ap);
--
-+	pthread_cleanup_pop(1);
- 	return NULL;
- }
- 
-@@ -1713,6 +1726,8 @@ checkerloop (void *ap)
- 	struct timeval last_time;
- 	struct config *conf;
- 
-+	pthread_cleanup_push(rcu_unregister, NULL);
-+	rcu_register_thread();
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 	vecs = (struct vectors *)ap;
- 	condlog(2, "path checkers start up");
-@@ -1844,6 +1859,7 @@ checkerloop (void *ap)
- 			}
+ 		strncpy(conf->dev, argv[optind], FILE_NAME_SIZE);
+-		if (conf->dev_type != DEV_UEVENT)
+-			conf->dev_type = get_dev_type(conf->dev);
+-		if (conf->dev_type == DEV_NONE) {
++		if (dev_type != DEV_UEVENT)
++			dev_type = get_dev_type(conf->dev);
++		if (dev_type == DEV_NONE) {
+ 			condlog(0, "'%s' is not a valid argument\n", conf->dev);
+ 			goto out;
  		}
  	}
-+	pthread_cleanup_pop(1);
- 	return NULL;
- }
+-	if (conf->dev_type == DEV_UEVENT) {
++	if (dev_type == DEV_UEVENT) {
+ 		openlog("multipath", 0, LOG_DAEMON);
+ 		setlogmask(LOG_UPTO(conf->verbosity + 3));
+ 		logsink = 1;
+@@ -630,12 +631,12 @@ main (int argc, char *argv[])
+ 	}
  
-@@ -1947,6 +1963,13 @@ need_to_delay_reconfig(struct vectors * vecs)
- 	return 0;
- }
+ 	if (cmd == CMD_VALID_PATH &&
+-	    (!conf->dev || conf->dev_type == DEV_DEVMAP)) {
++	    (!conf->dev || dev_type == DEV_DEVMAP)) {
+ 		condlog(0, "the -c option requires a path to check");
+ 		goto out;
+ 	}
+ 	if (cmd == CMD_VALID_PATH &&
+-	    conf->dev_type == DEV_UEVENT) {
++	    dev_type == DEV_UEVENT) {
+ 		int fd;
  
-+void rcu_free_config(struct rcu_head *head)
-+{
-+	struct config *conf = container_of(head, struct config, rcu);
-+
-+	free_config(conf);
-+}
-+
- int
- reconfigure (struct vectors * vecs)
- {
-@@ -1979,12 +2002,12 @@ reconfigure (struct vectors * vecs)
- 		conf->ignore_new_devs = ignore_new_devs;
- 	uxsock_timeout = conf->uxsock_timeout;
+ 		fd = mpath_connect();
+@@ -672,7 +673,7 @@ main (int argc, char *argv[])
+ 		goto out;
+ 	}
+ 	if (conf->remove == FLUSH_ONE) {
+-		if (conf->dev_type == DEV_DEVMAP) {
++		if (dev_type == DEV_DEVMAP) {
+ 			r = dm_suspend_and_flush_map(conf->dev);
+ 		} else
+ 			condlog(0, "must provide a map name to remove");
+@@ -683,7 +684,7 @@ main (int argc, char *argv[])
+ 		r = dm_flush_maps();
+ 		goto out;
+ 	}
+-	while ((r = configure(cmd)) < 0)
++	while ((r = configure(cmd, dev_type)) < 0)
+ 		condlog(3, "restart multipath configuration process");
  
--	old = multipath_conf;
--	multipath_conf = conf;
-+	old = rcu_dereference(multipath_conf);
-+	rcu_assign_pointer(multipath_conf, conf);
-+	call_rcu(&old->rcu, rcu_free_config);
+ out:
+@@ -693,7 +694,7 @@ out:
+ 	cleanup_prio();
+ 	cleanup_checkers();
  
- 	configure(vecs, 1);
+-	if (conf->dev_type == DEV_UEVENT)
++	if (dev_type == DEV_UEVENT)
+ 		closelog();
  
--	free_config(old);
- 
- 	return 0;
- }
-@@ -2177,6 +2200,7 @@ child (void * param)
- 
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 	signal_init();
-+	rcu_init();
- 
- 	setup_thread_attr(&misc_attr, 64 * 1024, 1);
- 	setup_thread_attr(&uevent_attr, DEFAULT_UEVENT_STACKSIZE * 1024, 1);
+ out_free_config:
 -- 
 2.6.6
