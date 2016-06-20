@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 06/26] libmultipath: use 'is_daemon' as argument
-	for domap() etc
-Date: Mon, 20 Jun 2016 10:08:53 +0200
-Message-ID: <1466410153-23896-7-git-send-email-hare@suse.de>
+Subject: [PATCH 14/26] libmultipath: separate out 'udev' config
+	entry
+Date: Mon, 20 Jun 2016 10:09:01 +0200
+Message-ID: <1466410153-23896-15-git-send-email-hare@suse.de>
 References: <1466410153-23896-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,312 +22,329 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Use 'is_daemon' as argument for domap() and coalesce_paths()
-to avoid having to access struct config.
+Rather than add the 'udev' structure to the config entry we should
+be using a separate global variable here. Otherwise we run into
+a risk of udev getting out-of-sync internally when recreating
+the udev structure.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/configure.c   | 16 ++++++++--------
- libmultipath/configure.h   |  6 +++---
- libmultipath/structs_vec.c | 15 ++++++++-------
- libmultipath/structs_vec.h |  9 +++++----
- multipath/main.c           |  3 ++-
- multipathd/cli_handlers.c  |  6 +++---
- multipathd/main.c          | 14 +++++++-------
- 7 files changed, 36 insertions(+), 33 deletions(-)
+ libmpathpersist/mpath_persist.c |  3 ++-
+ libmultipath/config.c           |  3 +--
+ libmultipath/config.h           |  4 ++--
+ libmultipath/configure.c        |  6 +++---
+ libmultipath/discovery.c        | 18 +++++++++---------
+ libmultipath/print.c            |  4 ++--
+ multipath/main.c                |  4 ++--
+ multipathd/cli_handlers.c       |  2 +-
+ multipathd/main.c               | 12 ++++++------
+ 9 files changed, 28 insertions(+), 28 deletions(-)
 
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index af2374f..dc11d4f 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -34,11 +34,12 @@
+ 
+ #define __STDC_FORMAT_MACROS 1
+ 
++struct udev *udev;
+ 
+ int
+ mpath_lib_init (struct udev *udev)
+ {
+-	if (load_config(DEFAULT_CONFIGFILE, udev)){
++	if (load_config(DEFAULT_CONFIGFILE)){
+ 		condlog(0, "Failed to initialize multipath config.");
+ 		return 1;
+ 	}
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 137ff6a..3e59205 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -577,7 +577,7 @@ process_config_dir(vector keywords, char *dir)
+ }
+ 
+ int
+-load_config (char * file, struct udev *udev)
++load_config (char * file)
+ {
+ 	if (!conf)
+ 		conf = alloc_config();
+@@ -591,7 +591,6 @@ load_config (char * file, struct udev *udev)
+ 	if (!conf->verbosity)
+ 		conf->verbosity = DEFAULT_VERBOSITY;
+ 
+-	conf->udev = udev;
+ 	conf->minio = DEFAULT_MINIO;
+ 	conf->minio_rq = DEFAULT_MINIO_RQ;
+ 	get_sys_max_fds(&conf->max_fds);
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index d46b9ce..c8f2c32 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -141,7 +141,6 @@ struct config {
+ 	int uev_wait_timeout;
+ 	unsigned int version[3];
+ 
+-	struct udev * udev;
+ 	char * multipath_dir;
+ 	char * selector;
+ 	char * uid_attribute;
+@@ -174,6 +173,7 @@ struct config {
+ };
+ 
+ struct config * conf;
++extern struct udev * udev;
+ 
+ struct hwentry * find_hwe (vector hwtable, char * vendor, char * product, char *revision);
+ struct mpentry * find_mpe (vector hwtable, char * wwid);
+@@ -189,7 +189,7 @@ void free_mptable (vector mptable);
+ 
+ int store_hwe (vector hwtable, struct hwentry *);
+ 
+-int load_config (char * file, struct udev * udev);
++int load_config (char * file);
+ struct config * alloc_config (void);
+ void free_config (struct config * conf);
+ 
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index f7cd110..d15d898 100644
+index 8c16e23..9be74fa 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
-@@ -579,7 +579,7 @@ fail:
- #define DOMAP_DRY	3
+@@ -953,7 +953,7 @@ get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
  
- extern int
--domap (struct multipath * mpp, char * params)
-+domap (struct multipath * mpp, char * params, int is_daemon)
- {
- 	int r = DOMAP_FAIL;
+ 		pp = find_path_by_dev(pathvec, buff);
+ 		if (!pp) {
+-			struct udev_device *udevice = udev_device_new_from_subsystem_sysname(conf->udev, "block", buff);
++			struct udev_device *udevice = udev_device_new_from_subsystem_sysname(udev, "block", buff);
  
-@@ -655,7 +655,7 @@ domap (struct multipath * mpp, char * params)
- 		 */
- 		if (mpp->action == ACT_CREATE)
- 			remember_wwid(mpp->wwid);
--		if (!conf->daemon) {
-+		if (!is_daemon) {
- 			/* multipath client mode */
- 			dm_switchgroup(mpp->alias, mpp->bestpg);
- 		} else  {
-@@ -731,7 +731,7 @@ out:
- }
- 
- extern int
--coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_reload)
-+coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_reload, int is_daemon)
- {
- 	int r = 1;
- 	int k, i;
-@@ -830,7 +830,7 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
- 		if (mpp->action == ACT_UNDEF)
- 			select_action(mpp, curmp, force_reload);
- 
--		r = domap(mpp, params);
-+		r = domap(mpp, params, is_daemon);
- 
- 		if (r == DOMAP_FAIL || r == DOMAP_RETRY) {
- 			condlog(3, "%s: domap (%u) failure "
-@@ -848,7 +848,7 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
- 		if (r == DOMAP_DRY)
- 			continue;
- 
--		if (!conf->daemon && !conf->allow_queueing && !check_daemon()) {
-+		if (!is_daemon && !conf->allow_queueing && !check_daemon()) {
- 			if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF &&
- 			    mpp->no_path_retry != NO_PATH_RETRY_FAIL)
- 				condlog(3, "%s: multipathd not running, unset "
-@@ -873,7 +873,7 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
- 			}
+ 			if (!udevice) {
+ 				condlog(2, "%s: can't get udev device", buff);
+@@ -985,7 +985,7 @@ get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
  		}
+ 		pp = find_path_by_dev(pathvec, buff);
+ 		if (!pp) {
+-			struct udev_device *udevice = udev_device_new_from_devnum(conf->udev, 'b', parse_devt(dev));
++			struct udev_device *udevice = udev_device_new_from_devnum(udev, 'b', parse_devt(dev));
  
--		if (!conf->daemon && mpp->action != ACT_NOTHING)
-+		if (!is_daemon && mpp->action != ACT_NOTHING)
- 			print_multipath_topology(mpp, conf->verbosity);
- 
- 		if (newmp) {
-@@ -1068,7 +1068,7 @@ out:
- 	return 1;
- }
- 
--extern int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh)
-+extern int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh, int is_daemon)
- {
- 	char params[PARAMS_SIZE] = {0};
- 	struct path *pp;
-@@ -1091,7 +1091,7 @@ extern int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh)
+ 			if (!udevice) {
+ 				condlog(2, "%s: can't get udev device", dev);
+@@ -1010,7 +1010,7 @@ get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
  	}
- 	select_action(mpp, vecs->mpvec, 1);
  
--	r = domap(mpp, params);
-+	r = domap(mpp, params, is_daemon);
- 	if (r == DOMAP_FAIL || r == DOMAP_RETRY) {
- 		condlog(3, "%s: domap (%u) failure "
- 			"for reload map", mpp->alias, r);
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index f357d9a..c0338bf 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -25,9 +25,9 @@ enum actions {
- #define FLUSH_ALL 2
+ 	if (dev_type == DEV_UEVENT) {
+-		struct udev_device *udevice = udev_device_new_from_environment(conf->udev);
++		struct udev_device *udevice = udev_device_new_from_environment(udev);
  
- int setup_map (struct multipath * mpp, char * params, int params_size );
--int domap (struct multipath * mpp, char * params);
-+int domap (struct multipath * mpp, char * params, int is_daemon);
- int reinstate_paths (struct multipath *mpp);
--int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid, int force_reload);
-+int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid, int force_reload, int is_daemon);
- int get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid);
--int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh);
-+int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh, int is_daemon);
- int sysfs_get_host_adapter_name(struct path *pp, char *adapter_name);
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 1b1a5f3..8e75504 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -247,7 +247,7 @@ extract_hwe_from_path(struct multipath * mpp)
- }
+ 		if (!udevice) {
+ 			condlog(2, "%s: can't get udev device", dev);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 019faef..d850aba 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -141,7 +141,7 @@ path_discovery (vector pathvec, struct config * conf, int flag)
+ 	const char *devpath;
+ 	int num_paths = 0, total_paths = 0;
  
- static int
--update_multipath_table (struct multipath *mpp, vector pathvec)
-+update_multipath_table (struct multipath *mpp, vector pathvec, int is_daemon)
- {
- 	char params[PARAMS_SIZE] = {0};
+-	udev_iter = udev_enumerate_new(conf->udev);
++	udev_iter = udev_enumerate_new(udev);
+ 	if (!udev_iter)
+ 		return -ENOMEM;
  
-@@ -259,7 +259,7 @@ update_multipath_table (struct multipath *mpp, vector pathvec)
+@@ -154,7 +154,7 @@ path_discovery (vector pathvec, struct config * conf, int flag)
+ 		const char *devtype;
+ 		devpath = udev_list_entry_get_name(entry);
+ 		condlog(4, "Discover device %s", devpath);
+-		udevice = udev_device_new_from_syspath(conf->udev, devpath);
++		udevice = udev_device_new_from_syspath(udev, devpath);
+ 		if (!udevice) {
+ 			condlog(4, "%s: no udev information", devpath);
+ 			continue;
+@@ -323,7 +323,7 @@ sysfs_get_tgt_nodename (struct path *pp, char * node)
+ 	value = udev_device_get_sysname(tgtdev);
+ 	if (sscanf(value, "rport-%d:%d-%d",
+ 		   &host, &channel, &tgtid) == 3) {
+-		tgtdev = udev_device_new_from_subsystem_sysname(conf->udev,
++		tgtdev = udev_device_new_from_subsystem_sysname(udev,
+ 				"fc_remote_ports", value);
+ 		if (tgtdev) {
+ 			condlog(3, "SCSI target %d:%d:%d -> "
+@@ -356,7 +356,7 @@ sysfs_get_tgt_nodename (struct path *pp, char * node)
+ 		tgtid = -1;
+ 	}
+ 	if (parent && tgtname) {
+-		tgtdev = udev_device_new_from_subsystem_sysname(conf->udev,
++		tgtdev = udev_device_new_from_subsystem_sysname(udev,
+ 				"iscsi_session", tgtname);
+ 		if (tgtdev) {
+ 			const char *value;
+@@ -430,7 +430,7 @@ int sysfs_get_host_pci_name(struct path *pp, char *pci_name)
  		return 1;
- 	}
  
--	if (disassemble_map(pathvec, params, mpp, conf->daemon)) {
-+	if (disassemble_map(pathvec, params, mpp, is_daemon)) {
- 		condlog(3, "%s: cannot disassemble map", mpp->alias);
+ 	sprintf(host_name, "host%d", pp->sg_id.host_no);
+-	hostdev = udev_device_new_from_subsystem_sysname(conf->udev,
++	hostdev = udev_device_new_from_subsystem_sysname(udev,
+ 			"scsi_host", host_name);
+ 	if (!hostdev)
  		return 1;
- 	}
-@@ -314,7 +314,7 @@ void sync_paths(struct multipath *mpp, vector pathvec)
- }
+@@ -466,7 +466,7 @@ int sysfs_get_iscsi_ip_address(struct path *pp, char *ip_address)
+ 	const char *value;
  
- extern int
--update_multipath_strings (struct multipath *mpp, vector pathvec)
-+update_multipath_strings (struct multipath *mpp, vector pathvec, int is_daemon)
- {
- 	if (!mpp)
- 		return 1;
-@@ -326,7 +326,7 @@ update_multipath_strings (struct multipath *mpp, vector pathvec)
- 	free_pgvec(mpp->pg, KEEP_PATHS);
- 	mpp->pg = NULL;
+ 	sprintf(host_name, "host%d", pp->sg_id.host_no);
+-	hostdev = udev_device_new_from_subsystem_sysname(conf->udev,
++	hostdev = udev_device_new_from_subsystem_sysname(udev,
+ 			"iscsi_host", host_name);
+ 	if (hostdev) {
+ 		value = udev_device_get_sysattr_value(hostdev,
+@@ -492,7 +492,7 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
  
--	if (update_multipath_table(mpp, pathvec))
-+	if (update_multipath_table(mpp, pathvec, is_daemon))
- 		return 1;
- 	sync_paths(mpp, pathvec);
+ 	sprintf(rport_id, "rport-%d:%d-%d",
+ 		pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.transport_id);
+-	rport_dev = udev_device_new_from_subsystem_sysname(conf->udev,
++	rport_dev = udev_device_new_from_subsystem_sysname(udev,
+ 				"fc_remote_ports", rport_id);
+ 	if (!rport_dev) {
+ 		condlog(1, "%s: No fc_remote_port device for '%s'", pp->dev,
+@@ -596,7 +596,7 @@ sysfs_set_session_tmo(struct multipath *mpp, struct path *pp)
+ 	char value[11];
  
-@@ -365,7 +365,8 @@ set_no_path_retry(struct multipath *mpp)
- }
+ 	sprintf(session_id, "session%d", pp->sg_id.transport_id);
+-	session_dev = udev_device_new_from_subsystem_sysname(conf->udev,
++	session_dev = udev_device_new_from_subsystem_sysname(udev,
+ 				"iscsi_session", session_id);
+ 	if (!session_dev) {
+ 		condlog(1, "%s: No iscsi session for '%s'", pp->dev,
+@@ -638,7 +638,7 @@ sysfs_set_nexus_loss_tmo(struct multipath *mpp, struct path *pp)
  
- extern int
--__setup_multipath (struct vectors * vecs, struct multipath * mpp, int reset)
-+__setup_multipath (struct vectors * vecs, struct multipath * mpp,
-+		   int reset, int is_daemon)
- {
- 	if (dm_get_info(mpp->alias, &mpp->dmi)) {
- 		/* Error accessing table */
-@@ -379,7 +380,7 @@ __setup_multipath (struct vectors * vecs, struct multipath * mpp, int reset)
- 		goto out;
- 	}
- 
--	if (update_multipath_strings(mpp, vecs->pathvec)) {
-+	if (update_multipath_strings(mpp, vecs->pathvec, is_daemon)) {
- 		condlog(0, "%s: failed to setup multipath", mpp->alias);
- 		goto out;
- 	}
-@@ -548,7 +549,7 @@ int update_multipath (struct vectors *vecs, char *mapname, int reset)
- 		return 2;
- 	}
- 
--	if (__setup_multipath(vecs, mpp, reset))
-+	if (__setup_multipath(vecs, mpp, reset, 1))
- 		return 1; /* mpp freed in setup_multipath */
- 
- 	/*
-diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-index 2e06beb..c8e78b5 100644
---- a/libmultipath/structs_vec.h
-+++ b/libmultipath/structs_vec.h
-@@ -22,10 +22,11 @@ void orphan_path (struct path * pp, const char *reason);
- int verify_paths(struct multipath * mpp, struct vectors * vecs);
- int update_mpp_paths(struct multipath * mpp, vector pathvec);
- int __setup_multipath (struct vectors * vecs, struct multipath * mpp,
--		       int reset);
--#define setup_multipath(vecs, mpp) __setup_multipath(vecs, mpp, 1)
--int update_multipath_strings (struct multipath *mpp, vector pathvec);
--	
-+		       int reset, int is_daemon);
-+#define setup_multipath(vecs, mpp) __setup_multipath(vecs, mpp, 1, 1)
-+int update_multipath_strings (struct multipath *mpp, vector pathvec,
-+			      int is_daemon);
-+
- void remove_map (struct multipath * mpp, struct vectors * vecs, int purge_vec);
- void remove_map_and_stop_waiter (struct multipath * mpp, struct vectors * vecs, int purge_vec);
- void remove_maps (struct vectors * vecs);
+ 	sprintf(end_dev_id, "end_device-%d:%d",
+ 		pp->sg_id.host_no, pp->sg_id.transport_id);
+-	sas_dev = udev_device_new_from_subsystem_sysname(conf->udev,
++	sas_dev = udev_device_new_from_subsystem_sysname(udev,
+ 				"sas_end_device", end_dev_id);
+ 	if (!sas_dev) {
+ 		condlog(1, "%s: No SAS end device for '%s'", pp->dev,
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index e3c14b6..03c7859 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -530,7 +530,7 @@ snprint_host_attr (char * buff, size_t len, struct path * pp, char *attr)
+ 	if (pp->sg_id.proto_id != SCSI_PROTOCOL_FCP)
+ 		return snprintf(buff, len, "[undef]");
+ 	sprintf(host_id, "host%d", pp->sg_id.host_no);
+-	host_dev = udev_device_new_from_subsystem_sysname(conf->udev, "fc_host",
++	host_dev = udev_device_new_from_subsystem_sysname(udev, "fc_host",
+ 							  host_id);
+ 	if (!host_dev) {
+ 		condlog(1, "%s: No fc_host device for '%s'", pp->dev, host_id);
+@@ -570,7 +570,7 @@ snprint_tgt_wwpn (char * buff, size_t len, struct path * pp)
+ 		return snprintf(buff, len, "[undef]");
+ 	sprintf(rport_id, "rport-%d:%d-%d",
+ 		pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.transport_id);
+-	rport_dev = udev_device_new_from_subsystem_sysname(conf->udev,
++	rport_dev = udev_device_new_from_subsystem_sysname(udev,
+ 				"fc_remote_ports", rport_id);
+ 	if (!rport_dev) {
+ 		condlog(1, "%s: No fc_remote_port device for '%s'", pp->dev,
 diff --git a/multipath/main.c b/multipath/main.c
-index 30710ea..4b77023 100644
+index 2825c8e..df6a7ca 100644
 --- a/multipath/main.c
 +++ b/multipath/main.c
-@@ -380,7 +380,8 @@ configure (void)
- 	/*
- 	 * core logic entry point
- 	 */
--	r = coalesce_paths(&vecs, NULL, refwwid, conf->force_reload);
-+	r = coalesce_paths(&vecs, NULL, refwwid,
-+			   conf->force_reload, conf->daemon);
+@@ -60,6 +60,7 @@
+ #include <mpath_cmd.h>
  
- out:
- 	if (refwwid)
+ int logsink;
++struct udev *udev;
+ 
+ static int
+ filter_pathvec (vector pathvec, char * refwwid)
+@@ -474,7 +475,6 @@ get_dev_type(char *dev) {
+ int
+ main (int argc, char *argv[])
+ {
+-	struct udev *udev;
+ 	int arg;
+ 	extern char *optarg;
+ 	extern int optind;
+@@ -485,7 +485,7 @@ main (int argc, char *argv[])
+ 
+ 	udev = udev_new();
+ 	logsink = 0;
+-	if (load_config(DEFAULT_CONFIGFILE, udev))
++	if (load_config(DEFAULT_CONFIGFILE))
+ 		exit(1);
+ 	while ((arg = getopt(argc, argv, ":adchl::FfM:v:p:b:BritquwW")) != EOF ) {
+ 		switch(arg) {
 diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 52bcdaa..0ca0807 100644
+index 05dcb41..c8c712a 100644
 --- a/multipathd/cli_handlers.c
 +++ b/multipathd/cli_handlers.c
-@@ -711,7 +711,7 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
- 			rc = get_refwwid(param, DEV_DEVMAP, vecs->pathvec,
- 								&refwwid);
- 			if (refwwid) {
--				if (coalesce_paths(vecs, NULL, refwwid, 0))
-+				if (coalesce_paths(vecs, NULL, refwwid, 0, conf->daemon))
- 					condlog(2, "%s: coalesce_paths failed",
- 									param);
- 				dm_lib_release();
-@@ -789,7 +789,7 @@ cli_reload(void *v, char **reply, int *len, void *data)
- 		return 1;
- 	}
+@@ -637,7 +637,7 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
+ 	} else {
+ 		struct udev_device *udevice;
  
--	return reload_map(vecs, mpp, 0);
-+	return reload_map(vecs, mpp, 0, conf->daemon);
- }
- 
- int resize_map(struct multipath *mpp, unsigned long long size,
-@@ -802,7 +802,7 @@ int resize_map(struct multipath *mpp, unsigned long long size,
- 	update_mpp_paths(mpp, vecs->pathvec);
- 	setup_map(mpp, params, PARAMS_SIZE);
- 	mpp->action = ACT_RESIZE;
--	if (domap(mpp, params) <= 0) {
-+	if (domap(mpp, params, conf->daemon) <= 0) {
- 		condlog(0, "%s: failed to resize map : %s", mpp->alias,
- 			strerror(errno));
- 		mpp->size = orig_size;
+-		udevice = udev_device_new_from_subsystem_sysname(conf->udev,
++		udevice = udev_device_new_from_subsystem_sysname(udev,
+ 								 "block",
+ 								 param);
+ 		r = store_pathinfo(vecs->pathvec, conf->hwtable,
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 8592982..22284f9 100644
+index 6230798..9a44390 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -379,7 +379,7 @@ retry:
- 		retries = -1;
- 		goto fail;
- 	}
--	if (domap(mpp, params) <= 0 && retries-- > 0) {
-+	if (domap(mpp, params, conf->daemon) <= 0 && retries-- > 0) {
- 		condlog(0, "%s: map_udate sleep", mpp->alias);
- 		sleep(1);
- 		goto retry;
-@@ -487,7 +487,7 @@ ev_add_map (char * dev, char * alias, struct vectors * vecs)
- 	r = get_refwwid(dev, DEV_DEVMAP, vecs->pathvec, &refwwid);
+@@ -1877,7 +1877,7 @@ reconfigure (struct vectors * vecs)
+ 	/* Re-read any timezone changes */
+ 	tzset();
  
- 	if (refwwid) {
--		r = coalesce_paths(vecs, NULL, refwwid, 0);
-+		r = coalesce_paths(vecs, NULL, refwwid, 0, conf->daemon);
- 		dm_lib_release();
- 	}
+-	if (!load_config(DEFAULT_CONFIGFILE, udev)) {
++	if (!load_config(DEFAULT_CONFIGFILE)) {
+ 		dm_drv_version(conf->version, TGT_MPATH);
+ 		conf->verbosity = old->verbosity;
+ 		conf->bindings_read_only = old->bindings_read_only;
+@@ -2081,8 +2081,6 @@ child (void * param)
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
+ 	signal_init();
  
-@@ -724,7 +724,7 @@ rescan:
- 	 * reload the map for the multipath mapped device
- 	 */
- retry:
--	ret = domap(mpp, params);
-+	ret = domap(mpp, params, conf->daemon);
- 	if (ret <= 0) {
- 		if (ret < 0 && retries-- > 0) {
- 			condlog(0, "%s: retry domap for addition of new "
-@@ -866,7 +866,7 @@ ev_remove_path (struct path *pp, struct vectors * vecs)
- 		 * reload the map
- 		 */
- 		mpp->action = ACT_RELOAD;
--		if (domap(mpp, params) <= 0) {
-+		if (domap(mpp, params, conf->daemon) <= 0) {
- 			condlog(0, "%s: failed in domap for "
- 				"removal of path %s",
- 				mpp->alias, pp->dev);
-@@ -931,7 +931,7 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 				}
- 			}
- 			if (mpp) {
--				retval = reload_map(vecs, mpp, 0);
-+				retval = reload_map(vecs, mpp, 0, conf->daemon);
+-	udev = udev_new();
+-
+ 	setup_thread_attr(&misc_attr, 64 * 1024, 1);
+ 	setup_thread_attr(&uevent_attr, DEFAULT_UEVENT_STACKSIZE * 1024, 1);
+ 	setup_thread_attr(&waiter_attr, 32 * 1024, 1);
+@@ -2105,7 +2103,7 @@ child (void * param)
+ 	condlog(2, "--------start up--------");
+ 	condlog(2, "read " DEFAULT_CONFIGFILE);
  
- 				condlog(2, "%s: map %s reloaded (retval %d)",
- 					uev->kernel, mpp->alias, retval);
-@@ -1361,7 +1361,7 @@ int update_prio(struct path *pp, int refresh_all)
+-	if (load_config(DEFAULT_CONFIGFILE, udev))
++	if (load_config(DEFAULT_CONFIGFILE))
+ 		goto failed;
  
- int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
- {
--	if (reload_map(vecs, mpp, refresh))
-+	if (reload_map(vecs, mpp, refresh, conf->daemon))
- 		return 1;
+ 	uxsock_timeout = conf->uxsock_timeout;
+@@ -2384,6 +2382,8 @@ main (int argc, char *argv[])
+ 	if (!conf)
+ 		exit(1);
  
- 	dm_lib_release();
-@@ -1798,7 +1798,7 @@ configure (struct vectors * vecs, int start_waiters)
- 	/*
- 	 * create new set of maps & push changed ones into dm
- 	 */
--	if (coalesce_paths(vecs, mpvec, NULL, 1))
-+	if (coalesce_paths(vecs, mpvec, NULL, 1, conf->daemon))
- 		return 1;
++	udev = udev_new();
++
+ 	while ((arg = getopt(argc, argv, ":dsv:k::Bn")) != EOF ) {
+ 	switch(arg) {
+ 		case 'd':
+@@ -2403,7 +2403,7 @@ main (int argc, char *argv[])
+ 			logsink = -1;
+ 			break;
+ 		case 'k':
+-			if (load_config(DEFAULT_CONFIGFILE, udev_new()))
++			if (load_config(DEFAULT_CONFIGFILE))
+ 				exit(1);
+ 			uxclnt(optarg, uxsock_timeout + 100);
+ 			exit(0);
+@@ -2424,7 +2424,7 @@ main (int argc, char *argv[])
+ 		char * s = cmd;
+ 		char * c = s;
  
- 	/*
+-		if (load_config(DEFAULT_CONFIGFILE, udev_new()))
++		if (load_config(DEFAULT_CONFIGFILE))
+ 			exit(1);
+ 		memset(cmd, 0x0, CMDSIZE);
+ 		while (optind < argc) {
 -- 
 2.6.6
