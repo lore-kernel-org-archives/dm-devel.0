@@ -1,117 +1,110 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: Missing patches
-Date: Mon, 20 Jun 2016 13:35:04 +0200
-Message-ID: <CABr-Gndm2Mm1wfrmviHLdcaz0_X9o+k062Ggf4rg6w=6PDOXaA@mail.gmail.com>
-References: <CABr-GncjECgjZp6aXEYLtn8UPu5pCFiw9asNaSWaZO4WGB+KVw@mail.gmail.com>
-	<231be53b-9202-0232-5eb8-7763d33c82a8@gmail.com>
+From: Bart Van Assche <bart.vanassche@gmail.com>
+Subject: Re: [PATCH 1/3] block: invalidate the page cache when issuing
+	BLKZEROOUT.
+Date: Mon, 20 Jun 2016 14:35:29 +0200
+Message-ID: <7589fc01-a000-a912-f9b5-cf099cc2d27a@acm.org>
+References: <146612624734.12764.4316680863289411106.stgit@birch.djwong.org>
+	<146612625412.12764.6647932282740152837.stgit@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8640871675636649197=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <231be53b-9202-0232-5eb8-7763d33c82a8@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
+In-Reply-To: <146612625412.12764.6647932282740152837.stgit@birch.djwong.org>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: "Darrick J. Wong" <darrick.wong@oracle.com>, "axboe@kernel.dk" <axboe@kernel.dk>
+Cc: "hch@infradead.org" <hch@infradead.org>, "tytso@mit.edu" <tytso@mit.edu>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "bfoster@redhat.com" <bfoster@redhat.com>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
---===============8640871675636649197==
-Content-Type: multipart/alternative; boundary=001a114b157487075f0535b418cb
+On 06/17/2016 03:18 AM, Darrick J. Wong wrote:
+> Invalidate the page cache (as a regular O_DIRECT write would do) to avoid
+> returning stale cache contents at a later time.
+>
+> v5: Refactor the 4.4 refactoring of the ioctl code into separate functions.
+> Split the page invalidation and the new ioctl into separate patches.
+>
+> Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> ---
+>  block/ioctl.c |   29 +++++++++++++++++++++++------
+>  1 file changed, 23 insertions(+), 6 deletions(-)
+>
+>
+> diff --git a/block/ioctl.c b/block/ioctl.c
+> index ed2397f..d001f52 100644
+> --- a/block/ioctl.c
+> +++ b/block/ioctl.c
+> @@ -225,7 +225,9 @@ static int blk_ioctl_zeroout(struct block_device *bdev, fmode_t mode,
+>  		unsigned long arg)
+>  {
+>  	uint64_t range[2];
+> -	uint64_t start, len;
+> +	struct address_space *mapping;
+> +	uint64_t start, end, len;
+> +	int ret;
+>
+>  	if (!(mode & FMODE_WRITE))
+>  		return -EBADF;
+> @@ -235,18 +237,33 @@ static int blk_ioctl_zeroout(struct block_device *bdev, fmode_t mode,
+>
+>  	start = range[0];
+>  	len = range[1];
+> +	end = start + len - 1;
+>
+>  	if (start & 511)
+>  		return -EINVAL;
+>  	if (len & 511)
+>  		return -EINVAL;
+> -	start >>= 9;
+> -	len >>= 9;
+> -
+> -	if (start + len > (i_size_read(bdev->bd_inode) >> 9))
+> +	if (end >= (uint64_t)i_size_read(bdev->bd_inode))
+> +		return -EINVAL;
+> +	if (end < start)
+>  		return -EINVAL;
+>
+> -	return blkdev_issue_zeroout(bdev, start, len, GFP_KERNEL, false);
+> +	/* Invalidate the page cache, including dirty pages */
+> +	mapping = bdev->bd_inode->i_mapping;
+> +	truncate_inode_pages_range(mapping, start, end);
+> +
+> +	ret = blkdev_issue_zeroout(bdev, start >> 9, len >> 9, GFP_KERNEL,
+> +				    false);
+> +	if (ret)
+> +		return ret;
+> +
+> +	/*
+> +	 * Invalidate again; if someone wandered in and dirtied a page,
+> +	 * the caller will be given -EBUSY.
+> +	 */
+> +	return invalidate_inode_pages2_range(mapping,
+> +					     start >> PAGE_SHIFT,
+> +					     end >> PAGE_SHIFT);
+>  }
 
---001a114b157487075f0535b418cb
-Content-Type: text/plain; charset=UTF-8
+Hello Darrick,
 
-Thanks, I really missing the Apple controller family patch.
+Maybe this has already been discussed, but anyway: in the POSIX spec 
+(http://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html) I 
+found the following: "This volume of POSIX.1-2008 does not specify 
+behavior of concurrent writes to a file from multiple processes. 
+Applications should use some form of concurrency control."
 
-For "replace spaces with tabs in defaults.h" I was deferring, in doubt :
-seems to be a coding style issue. Is the tabbed format agreed on with other
-maintainers ? I wouldn't want to go in a patch-revert loop over this ;)
-
-I deferred the RDAC border patch, waiting for responses to you RFC. The
-one-liner "border" patch will be folded into the real patch resulting from
-the argument.
+Do we really need the invalidate_inode_pages2_range() call?
 
 Thanks,
-Christophe
 
+Bart.
 
-
-On Mon, Jun 20, 2016 at 1:06 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
-
-> On 06/20/2016 09:35 AM, Christophe Varoqui wrote:
->
-> > I went through the patch backlog since June 4th and merged your work.
->
-> These three are missing:
-> https://patchwork.kernel.org/project/dm-devel/list/?submitter=3680
->
-> - "[1/2] multipath-tools: replace spaces with tabs in defaults.h"
-> - "multipath-tools: fix up Apple controller family"
-> - "multipath-tools: RDAC border", this was more a RFC than a real patch.
->
-> And "[06/10] multipath-tools: new email address for Srinivas Ramani"
-> was applied, and it was waiting ACK from Srinivas. But it's up to you.
->
-> I thought you were using patchwork to handle your queue.
->
-
---001a114b157487075f0535b418cb
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Thanks, I really missing the Apple controller family patch=
-.<div><br></div><div>For &quot;<span style=3D"font-size:19.2px">replace spa=
-ces with tabs in defaults.h</span>&quot; I was deferring, in doubt : seems =
-to be a coding style issue. Is the tabbed format agreed on with other maint=
-ainers ? I wouldn&#39;t want to go in a patch-revert loop over this ;)</div=
-><div><br></div><div>I deferred the RDAC border patch, waiting for response=
-s to you RFC. The one-liner &quot;border&quot; patch will be folded into th=
-e real patch resulting from the argument.</div><div><br></div><div>Thanks,<=
-/div><div>Christophe</div><div><br></div><div><br></div></div><div class=3D=
-"gmail_extra"><br><div class=3D"gmail_quote">On Mon, Jun 20, 2016 at 1:06 P=
-M, Xose Vazquez Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@=
-gmail.com" target=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<b=
-r><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:=
-1px #ccc solid;padding-left:1ex">On 06/20/2016 09:35 AM, Christophe Varoqui=
- wrote:<br>
-<br>
-&gt; I went through the patch backlog since June 4th and merged your work.<=
-br>
-<br>
-These three are missing:<br>
-<a href=3D"https://patchwork.kernel.org/project/dm-devel/list/?submitter=3D=
-3680" rel=3D"noreferrer" target=3D"_blank">https://patchwork.kernel.org/pro=
-ject/dm-devel/list/?submitter=3D3680</a><br>
-<br>
-- &quot;[1/2] multipath-tools: replace spaces with tabs in defaults.h&quot;=
-<br>
-- &quot;multipath-tools: fix up Apple controller family&quot;<br>
-- &quot;multipath-tools: RDAC border&quot;, this was more a RFC than a real=
- patch.<br>
-<br>
-And &quot;[06/10] multipath-tools: new email address for Srinivas Ramani&qu=
-ot;<br>
-was applied, and it was waiting ACK from Srinivas. But it&#39;s up to you.<=
-br>
-<br>
-I thought you were using patchwork to handle your queue.<br>
-</blockquote></div><br></div>
-
---001a114b157487075f0535b418cb--
-
-
---===============8640871675636649197==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============8640871675636649197==--
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
