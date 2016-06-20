@@ -1,12 +1,13 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] Update kpartx manpage with current output
-Date: Mon, 20 Jun 2016 09:30:49 +0200
-Message-ID: <CABr-GncGgOGUW3-WttK=bTYfGBMrE3fG6ucKXMMLOE=bNP2byQ@mail.gmail.com>
-References: <1465807247-15392-1-git-send-email-rrs@debian.org>
+Subject: Re: [PATCH 00/39] multipath: coverity fixes
+Date: Mon, 20 Jun 2016 09:32:13 +0200
+Message-ID: <CABr-Gncmmn70=pwsu_+E9a0T2YXtLi9fj=_TX4UAtc-kkRDfTA@mail.gmail.com>
+References: <1466070465-1021-1-git-send-email-hare@suse.de>
+	<57679699.4050300@suse.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2558026207736582574=="
+Content-Type: multipart/mixed; boundary="===============7363845117744652549=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1465807247-15392-1-git-send-email-rrs@debian.org>
+In-Reply-To: <57679699.4050300@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,111 +17,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ritesh Raj Sarraf <rrs@debian.org>
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============2558026207736582574==
-Content-Type: multipart/alternative; boundary=001a113fc0a8068e340535b0afb9
+--===============7363845117744652549==
+Content-Type: multipart/alternative; boundary=001a1140d2befed74f0535b0b3f7
 
---001a113fc0a8068e340535b0afb9
+--001a1140d2befed74f0535b0b3f7
 Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-Applied.
+I pulled the coverity branch today.
+Thanks.
 
-On Mon, Jun 13, 2016 at 10:40 AM, Ritesh Raj Sarraf <rrs@debian.org> wrote:
+On Mon, Jun 20, 2016 at 9:09 AM, Hannes Reinecke <hare@suse.de> wrote:
 
-> See Debian Bug #796948 for details
-> Many users are reported to be consuming the output in a scripted setup
+> On 06/16/2016 11:47 AM, Hannes Reinecke wrote:
+> > Hi all,
+> >
+> > here's a bunch of fixes from a recent coverity run.
+> > Nothing critical, mostly memory leaks and possible
+> > buffer overflows. And the usual missing return value
+> > check.
+> >
+> > As usual, comments and reviews are welcome.
+> >
+> Ping?
+> I've got another patchset (converting config accesses to RCU)
+> which sort of relies on this one...
 >
-> Signed-off-by: Ritesh Raj Sarraf <rrs@debian.org>
-> ---
->  kpartx/kpartx.8 | 6 +++---
->  1 file changed, 3 insertions(+), 3 deletions(-)
+> Cheers,
 >
-> diff --git a/kpartx/kpartx.8 b/kpartx/kpartx.8
-> index 021ddc0..564d93b 100644
-> --- a/kpartx/kpartx.8
-> +++ b/kpartx/kpartx.8
-> @@ -50,15 +50,15 @@ kpartx \-av disk.img
->  .PP
->  This will output lines such as:
->  .IP
-> -loop3p1 : 0 20964762 /dev/loop3 63
-> +add map loop1p1 (254:4): 0 409597 linear 7:1 3
->  .PP
->  The
-> -.I loop3p1
-> +.I loop1p1
->  is the name of a device file under
->  .I /dev/mapper
->  which you can use to access the partition, for example to fsck it:
->  .IP
-> -fsck /dev/mapper/loop3p1
-> +fsck /dev/mapper/loop1p1
->  .PP
->  When you're done, you need to remove the devices:
->  .IP
+> Hannes
 > --
-> 2.8.1
->
+> Dr. Hannes Reinecke                Teamlead Storage & Networking
+> hare@suse.de                                   +49 911 74053 688
+> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
+> GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+> HRB 21284 (AG N=C3=BCrnberg)
 >
 
---001a113fc0a8068e340535b0afb9
+--001a1140d2befed74f0535b0b3f7
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Applied.</div><div class=3D"gmail_extra"><br><div class=3D=
-"gmail_quote">On Mon, Jun 13, 2016 at 10:40 AM, Ritesh Raj Sarraf <span dir=
-=3D"ltr">&lt;<a href=3D"mailto:rrs@debian.org" target=3D"_blank">rrs@debian=
-.org</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"ma=
-rgin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">See Debian Bug=
- #796948 for details<br>
-Many users are reported to be consuming the output in a scripted setup<br>
+<div dir=3D"ltr">I pulled the coverity branch today.<div>Thanks.</div></div=
+><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Mon, Jun 20, =
+2016 at 9:09 AM, Hannes Reinecke <span dir=3D"ltr">&lt;<a href=3D"mailto:ha=
+re@suse.de" target=3D"_blank">hare@suse.de</a>&gt;</span> wrote:<br><blockq=
+uote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc =
+solid;padding-left:1ex"><span class=3D"">On 06/16/2016 11:47 AM, Hannes Rei=
+necke wrote:<br>
+&gt; Hi all,<br>
+&gt;<br>
+&gt; here&#39;s a bunch of fixes from a recent coverity run.<br>
+&gt; Nothing critical, mostly memory leaks and possible<br>
+&gt; buffer overflows. And the usual missing return value<br>
+&gt; check.<br>
+&gt;<br>
+&gt; As usual, comments and reviews are welcome.<br>
+&gt;<br>
+</span>Ping?<br>
+I&#39;ve got another patchset (converting config accesses to RCU)<br>
+which sort of relies on this one...<br>
 <br>
-Signed-off-by: Ritesh Raj Sarraf &lt;<a href=3D"mailto:rrs@debian.org">rrs@=
-debian.org</a>&gt;<br>
----<br>
-=C2=A0kpartx/kpartx.8 | 6 +++---<br>
-=C2=A01 file changed, 3 insertions(+), 3 deletions(-)<br>
+Cheers,<br>
 <br>
-diff --git a/kpartx/kpartx.8 b/kpartx/kpartx.8<br>
-index 021ddc0..564d93b 100644<br>
---- a/kpartx/kpartx.8<br>
-+++ b/kpartx/kpartx.8<br>
-@@ -50,15 +50,15 @@ kpartx \-av disk.img<br>
-=C2=A0.PP<br>
-=C2=A0This will output lines such as:<br>
-=C2=A0.IP<br>
--loop3p1 : 0 20964762 /dev/loop3 63<br>
-+add map loop1p1 (254:4): 0 409597 linear 7:1 3<br>
-=C2=A0.PP<br>
-=C2=A0The<br>
--.I loop3p1<br>
-+.I loop1p1<br>
-=C2=A0is the name of a device file under<br>
-=C2=A0.I /dev/mapper<br>
-=C2=A0which you can use to access the partition, for example to fsck it:<br=
->
-=C2=A0.IP<br>
--fsck /dev/mapper/loop3p1<br>
-+fsck /dev/mapper/loop1p1<br>
-=C2=A0.PP<br>
-=C2=A0When you&#39;re done, you need to remove the devices:<br>
-=C2=A0.IP<br>
+Hannes<br>
 <span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.8.1<br>
-<br>
+Dr. Hannes Reinecke=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+Teamlead Storage &amp; Networking<br>
+<a href=3D"mailto:hare@suse.de">hare@suse.de</a>=C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0<a href=3D"tel:%2B49%20911%2074053%20688" value=3D"=
++4991174053688">+49 911 74053 688</a><br>
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg<br>
+GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton<br>
+HRB 21284 (AG N=C3=BCrnberg)<br>
 </font></span></blockquote></div><br></div>
 
---001a113fc0a8068e340535b0afb9--
+--001a1140d2befed74f0535b0b3f7--
 
 
---===============2558026207736582574==
+--===============7363845117744652549==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============2558026207736582574==--
+--===============7363845117744652549==--
