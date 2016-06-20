@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 18/26] checkers: use 'multipath_dir' as argument
-Date: Mon, 20 Jun 2016 10:09:05 +0200
-Message-ID: <1466410153-23896-19-git-send-email-hare@suse.de>
+Subject: [PATCH 05/26] dmparser: use 'is_daemon' as argument for
+	disassemble_map()
+Date: Mon, 20 Jun 2016 10:08:52 +0200
+Message-ID: <1466410153-23896-6-git-send-email-hare@suse.de>
 References: <1466410153-23896-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,152 +22,96 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Pass in the 'multipath_dir' config setting as explicit argument
-for init_checkers() and checker_get(). With this we can remove
-references to struct config.
+Use 'is_daemon' as argument for disassemble_map() so that
+dmparser.c doesn't need to access 'struct config' anymore.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/checkers.c | 22 +++++++++++++---------
- libmultipath/checkers.h |  6 +++---
- libmultipath/propsel.c  |  2 +-
- multipath/main.c        |  2 +-
- multipathd/main.c       |  2 +-
- 5 files changed, 19 insertions(+), 15 deletions(-)
+ libmpathpersist/mpath_persist.c | 2 +-
+ libmultipath/dmparser.c         | 6 +++---
+ libmultipath/dmparser.h         | 2 +-
+ libmultipath/structs_vec.c      | 2 +-
+ multipath/main.c                | 2 +-
+ 5 files changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index ef1d099..ad7d96c 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -7,7 +7,6 @@
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 35e8837..ad6aec9 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -395,7 +395,7 @@ get_mpvec (vector curmp, vector pathvec, char * refwwid)
+ 		condlog(3, "params = %s", params);
+ 		dm_get_status(mpp->alias, status);
+ 		condlog(3, "status = %s", status);
+-		disassemble_map (pathvec, params, mpp);
++		disassemble_map (pathvec, params, mpp, conf->daemon);
+ 
+ 		/*
+ 		 * disassemble_map() can add new paths to pathvec.
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 98fb559..9e79ecd 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -13,7 +13,6 @@
+ #include "structs.h"
+ #include "util.h"
  #include "debug.h"
- #include "checkers.h"
- #include "vector.h"
 -#include "config.h"
  
- char *checker_state_names[] = {
-       "wild",
-@@ -29,9 +28,9 @@ char * checker_state_name (int i)
- 	return checker_state_names[i];
+ #define WORD_SIZE 64
+ 
+@@ -142,7 +141,8 @@ assemble_map (struct multipath * mp, char * params, int len)
  }
  
--int init_checkers (void)
-+int init_checkers (char *multipath_dir)
+ extern int
+-disassemble_map (vector pathvec, char * params, struct multipath * mpp)
++disassemble_map (vector pathvec, char * params, struct multipath * mpp,
++		 int is_daemon)
  {
--	if (!add_checker(DEFAULT_CHECKER))
-+	if (!add_checker(multipath_dir, DEFAULT_CHECKER))
+ 	char * word;
+ 	char * p;
+@@ -351,7 +351,7 @@ disassemble_map (vector pathvec, char * params, struct multipath * mpp)
+ 						WWID_SIZE - 1);
+ 				}
+ 				/* Only call this in multipath client mode */
+-				if (!conf->daemon && store_path(pathvec, pp))
++				if (!is_daemon && store_path(pathvec, pp))
+ 					goto out1;
+ 			} else {
+ 				if (!strlen(pp->wwid) &&
+diff --git a/libmultipath/dmparser.h b/libmultipath/dmparser.h
+index 1b45df0..e1badb0 100644
+--- a/libmultipath/dmparser.h
++++ b/libmultipath/dmparser.h
+@@ -1,3 +1,3 @@
+ int assemble_map (struct multipath *, char *, int);
+-int disassemble_map (vector, char *, struct multipath *);
++int disassemble_map (vector, char *, struct multipath *, int);
+ int disassemble_status (char *, struct multipath *);
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index b00832e..1b1a5f3 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -259,7 +259,7 @@ update_multipath_table (struct multipath *mpp, vector pathvec)
  		return 1;
- 	return 0;
- }
-@@ -89,10 +88,10 @@ struct checker * checker_lookup (char * name)
- 		if (!strncmp(name, c->name, CHECKER_NAME_LEN))
- 			return c;
  	}
--	return add_checker(name);
-+	return NULL;
- }
  
--struct checker * add_checker (char * name)
-+struct checker * add_checker (char *multipath_dir, char * name)
- {
- 	char libname[LIB_CHECKER_NAMELEN];
- 	struct stat stbuf;
-@@ -104,10 +103,10 @@ struct checker * add_checker (char * name)
- 		return NULL;
- 	snprintf(c->name, CHECKER_NAME_LEN, "%s", name);
- 	snprintf(libname, LIB_CHECKER_NAMELEN, "%s/libcheck%s.so",
--		 conf->multipath_dir, name);
-+		 multipath_dir, name);
- 	if (stat(libname,&stbuf) < 0) {
- 		condlog(0,"Checker '%s' not found in %s",
--			name, conf->multipath_dir);
-+			name, multipath_dir);
- 		goto out;
+-	if (disassemble_map(pathvec, params, mpp)) {
++	if (disassemble_map(pathvec, params, mpp, conf->daemon)) {
+ 		condlog(3, "%s: cannot disassemble map", mpp->alias);
+ 		return 1;
  	}
- 	condlog(3, "loading %s checker", libname);
-@@ -253,13 +252,18 @@ void checker_clear_message (struct checker *c)
- 	c->message[0] = '\0';
- }
- 
--void checker_get (struct checker * dst, char * name)
-+void checker_get (char *multipath_dir, struct checker * dst, char * name)
- {
--	struct checker * src = checker_lookup(name);
-+	struct checker * src = NULL;
- 
- 	if (!dst)
- 		return;
- 
-+	if (name && strlen(name)) {
-+		src = checker_lookup(name);
-+		if (!src)
-+			src = add_checker(multipath_dir, name);
-+	}
- 	if (!src) {
- 		dst->check = NULL;
- 		return;
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index a935b3f..a24b12e 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -119,9 +119,9 @@ struct checker {
- #define MSG(c, fmt, args...) snprintf((c)->message, CHECKER_MSG_LEN, fmt, ##args);
- 
- char * checker_state_name (int);
--int init_checkers (void);
-+int init_checkers (char *);
- void cleanup_checkers (void);
--struct checker * add_checker (char *);
-+struct checker * add_checker (char *, char *);
- struct checker * checker_lookup (char *);
- int checker_init (struct checker *, void **);
- void checker_put (struct checker *);
-@@ -136,6 +136,6 @@ int checker_selected (struct checker *);
- char * checker_name (struct checker *);
- char * checker_message (struct checker *);
- void checker_clear_message (struct checker *c);
--void checker_get (struct checker *, char *);
-+void checker_get (char *, struct checker *, char *);
- 
- #endif /* _CHECKERS_H */
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index f803cdc..c1f3d4e 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -328,7 +328,7 @@ select_checker(struct path *pp)
- 	do_set(checker_name, conf, checker_name, "(config file setting)");
- 	do_default(checker_name, DEFAULT_CHECKER);
- out:
--	checker_get(c, checker_name);
-+	checker_get(conf->multipath_dir, c, checker_name);
- 	condlog(3, "%s: path_checker = %s %s", pp->dev, c->name, origin);
- 	if (conf->checker_timeout) {
- 		c->timeout = conf->checker_timeout;
 diff --git a/multipath/main.c b/multipath/main.c
-index ca4c1f5..70412a8 100644
+index 0dbe281..30710ea 100644
 --- a/multipath/main.c
 +++ b/multipath/main.c
-@@ -622,7 +622,7 @@ main (int argc, char *argv[])
- 				conf->max_fds, strerror(errno));
- 	}
+@@ -206,7 +206,7 @@ get_dm_mpvec (vector curmp, vector pathvec, char * refwwid)
+ 		dm_get_status(mpp->alias, status);
+ 		condlog(3, "status = %s", status);
  
--	if (init_checkers()) {
-+	if (init_checkers(conf->multipath_dir)) {
- 		condlog(0, "failed to initialize checkers");
- 		goto out;
- 	}
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 6c3efb2..09b96c6 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2110,7 +2110,7 @@ child (void * param)
+-		disassemble_map(pathvec, params, mpp);
++		disassemble_map(pathvec, params, mpp, conf->daemon);
  
- 	dm_init(conf->verbosity);
- 	dm_drv_version(conf->version, TGT_MPATH);
--	if (init_checkers()) {
-+	if (init_checkers(conf->multipath_dir)) {
- 		condlog(0, "failed to initialize checkers");
- 		goto failed;
- 	}
+ 		/*
+ 		 * disassemble_map() can add new paths to pathvec.
 -- 
 2.6.6
