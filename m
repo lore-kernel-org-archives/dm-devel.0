@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 16/26] discovery: Pass in 'hwtable' for
-	get_state() and scsi_sysfs_discovery()
-Date: Mon, 20 Jun 2016 10:09:03 +0200
-Message-ID: <1466410153-23896-17-git-send-email-hare@suse.de>
+Subject: [PATCH 02/26] Use 'mptable' as argument for find_mpe()
+	and get_mpe_wwid()
+Date: Mon, 20 Jun 2016 10:08:49 +0200
+Message-ID: <1466410153-23896-3-git-send-email-hare@suse.de>
 References: <1466410153-23896-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,156 +24,115 @@ List-Id: dm-devel.ids
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/discovery.c | 28 ++++++++++++++--------------
- libmultipath/discovery.h |  2 +-
- multipathd/main.c        |  2 +-
- 3 files changed, 16 insertions(+), 16 deletions(-)
+ libmultipath/config.c      | 8 ++++----
+ libmultipath/config.h      | 4 ++--
+ libmultipath/configure.c   | 2 +-
+ libmultipath/propsel.c     | 2 +-
+ libmultipath/structs_vec.c | 4 ++--
+ 5 files changed, 10 insertions(+), 10 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 0bf1bc2..e598337 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1067,7 +1067,7 @@ get_vpd_sgio (int fd, int pg, char * str, int maxlen)
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 8b9e770..00f3e53 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -125,7 +125,7 @@ find_hwe (vector hwtable, char * vendor, char * product, char * revision)
  }
  
- static int
--scsi_sysfs_pathinfo (struct path * pp)
-+scsi_sysfs_pathinfo (struct path * pp, vector hwtable)
+ extern struct mpentry *
+-find_mpe (char * wwid)
++find_mpe (vector mptable, char * wwid)
  {
- 	struct udev_device *parent;
- 	const char *attr_path = NULL;
-@@ -1109,7 +1109,7 @@ scsi_sysfs_pathinfo (struct path * pp)
- 	/*
- 	 * set the hwe configlet pointer
- 	 */
--	pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id, pp->rev);
-+	pp->hwe = find_hwe(hwtable, pp->vendor_id, pp->product_id, pp->rev);
+ 	int i;
+ 	struct mpentry * mpe;
+@@ -133,7 +133,7 @@ find_mpe (char * wwid)
+ 	if (!wwid)
+ 		return NULL;
  
- 	/*
- 	 * host / bus / target / lun
-@@ -1134,7 +1134,7 @@ scsi_sysfs_pathinfo (struct path * pp)
+-	vector_foreach_slot (conf->mptable, mpe, i)
++	vector_foreach_slot (mptable, mpe, i)
+ 		if (mpe->wwid && !strcmp(mpe->wwid, wwid))
+ 			return mpe;
+ 
+@@ -141,7 +141,7 @@ find_mpe (char * wwid)
  }
  
- static int
--ccw_sysfs_pathinfo (struct path * pp)
-+ccw_sysfs_pathinfo (struct path * pp, vector hwtable)
+ extern char *
+-get_mpe_wwid (char * alias)
++get_mpe_wwid (vector mptable, char * alias)
  {
- 	struct udev_device *parent;
- 	char attr_buff[NAME_SIZE];
-@@ -1170,7 +1170,7 @@ ccw_sysfs_pathinfo (struct path * pp)
- 	/*
- 	 * set the hwe configlet pointer
- 	 */
--	pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id, NULL);
-+	pp->hwe = find_hwe(hwtable, pp->vendor_id, pp->product_id, NULL);
+ 	int i;
+ 	struct mpentry * mpe;
+@@ -149,7 +149,7 @@ get_mpe_wwid (char * alias)
+ 	if (!alias)
+ 		return NULL;
  
- 	/*
- 	 * host / bus / target / lun
-@@ -1193,7 +1193,7 @@ ccw_sysfs_pathinfo (struct path * pp)
- }
+-	vector_foreach_slot (conf->mptable, mpe, i)
++	vector_foreach_slot (mptable, mpe, i)
+ 		if (mpe->alias && strcmp(mpe->alias, alias) == 0)
+ 			return mpe->wwid;
  
- static int
--cciss_sysfs_pathinfo (struct path * pp)
-+cciss_sysfs_pathinfo (struct path * pp, vector hwtable)
- {
- 	const char * attr_path = NULL;
- 	struct udev_device *parent;
-@@ -1233,7 +1233,7 @@ cciss_sysfs_pathinfo (struct path * pp)
- 	/*
- 	 * set the hwe configlet pointer
- 	 */
--	pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id, pp->rev);
-+	pp->hwe = find_hwe(hwtable, pp->vendor_id, pp->product_id, pp->rev);
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 466e31e..2acee25 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -179,8 +179,8 @@ struct config {
+ struct config * conf;
  
- 	/*
- 	 * host / bus / target / lun
-@@ -1323,7 +1323,7 @@ path_offline (struct path * pp)
- }
+ struct hwentry * find_hwe (vector hwtable, char * vendor, char * product, char *revision);
+-struct mpentry * find_mpe (char * wwid);
+-char * get_mpe_wwid (char * alias);
++struct mpentry * find_mpe (vector hwtable, char * wwid);
++char * get_mpe_wwid (vector hwtable, char * alias);
  
- int
--sysfs_pathinfo(struct path * pp)
-+sysfs_pathinfo(struct path * pp, vector hwtable)
- {
- 	if (common_sysfs_pathinfo(pp))
- 		return 1;
-@@ -1339,13 +1339,13 @@ sysfs_pathinfo(struct path * pp)
- 	if (pp->bus == SYSFS_BUS_UNDEF)
- 		return 0;
- 	else if (pp->bus == SYSFS_BUS_SCSI) {
--		if (scsi_sysfs_pathinfo(pp))
-+		if (scsi_sysfs_pathinfo(pp, hwtable))
- 			return 1;
- 	} else if (pp->bus == SYSFS_BUS_CCW) {
--		if (ccw_sysfs_pathinfo(pp))
-+		if (ccw_sysfs_pathinfo(pp, hwtable))
- 			return 1;
- 	} else if (pp->bus == SYSFS_BUS_CCISS) {
--		if (cciss_sysfs_pathinfo(pp))
-+		if (cciss_sysfs_pathinfo(pp, hwtable))
- 			return 1;
+ struct hwentry * alloc_hwe (void);
+ struct mpentry * alloc_mpe (void);
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 8e938c0..a830bcd 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -1042,7 +1042,7 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
+ 		/*
+ 		 * or may be an alias
+ 		 */
+-		refwwid = get_mpe_wwid(dev);
++		refwwid = get_mpe_wwid(conf->hwtable, dev);
+ 
+ 		/*
+ 		 * or directly a wwid
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 4111fa5..f803cdc 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -409,7 +409,7 @@ select_prio (struct path * pp)
+ 			goto out;
+ 		}
  	}
- 	return 0;
-@@ -1397,7 +1397,7 @@ cciss_ioctl_pathinfo (struct path * pp, int mask)
- }
+-	mpe = find_mpe(pp->wwid);
++	mpe = find_mpe(conf->hwtable, pp->wwid);
+ 	set_prio(mpe, "(LUN setting)");
+ 	set_prio(conf->overrides, "(overrides setting)");
+ 	set_prio(pp->hwe, "controller setting)");
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 20a7457..b00832e 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -385,7 +385,7 @@ __setup_multipath (struct vectors * vecs, struct multipath * mpp, int reset)
+ 	}
  
- int
--get_state (struct path * pp, int daemon)
-+get_state (struct path * pp, vector hwtable, int daemon)
- {
- 	struct checker * c = &pp->checker;
- 	int state;
-@@ -1406,7 +1406,7 @@ get_state (struct path * pp, int daemon)
+ 	set_multipath_wwid(mpp);
+-	mpp->mpe = find_mpe(mpp->wwid);
++	mpp->mpe = find_mpe(conf->hwtable, mpp->wwid);
+ 	condlog(3, "%s: discover", mpp->alias);
  
- 	if (!checker_selected(c)) {
- 		if (daemon) {
--			if (pathinfo(pp, conf->hwtable, DI_SYSFS) != PATHINFO_OK) {
-+			if (pathinfo(pp, hwtable, DI_SYSFS) != PATHINFO_OK) {
- 				condlog(3, "%s: couldn't get sysfs pathinfo",
- 					pp->dev);
- 				return PATH_UNCHECKED;
-@@ -1610,7 +1610,7 @@ pathinfo (struct path *pp, vector hwtable, int mask)
- 	/*
- 	 * fetch info available in sysfs
- 	 */
--	if (mask & DI_SYSFS && sysfs_pathinfo(pp))
-+	if (mask & DI_SYSFS && sysfs_pathinfo(pp, hwtable))
- 		return PATHINFO_FAILED;
+ 	if (!mpp->hwe)
+@@ -469,7 +469,7 @@ add_map_with_path (struct vectors * vecs,
+ 	if (!(mpp = alloc_multipath()))
+ 		return NULL;
  
- 	if (mask & DI_BLACKLIST && mask & DI_SYSFS) {
-@@ -1649,7 +1649,7 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+-	mpp->mpe = find_mpe(pp->wwid);
++	mpp->mpe = find_mpe(conf->hwtable, pp->wwid);
+ 	mpp->hwe = pp->hwe;
  
- 	if (mask & DI_CHECKER) {
- 		if (path_state == PATH_UP) {
--			pp->chkrstate = pp->state = get_state(pp, 0);
-+			pp->chkrstate = pp->state = get_state(pp, hwtable, 0);
- 			if (pp->state == PATH_UNCHECKED ||
- 			    pp->state == PATH_WILD)
- 				goto blank;
-diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index 45c8a4a..2619015 100644
---- a/libmultipath/discovery.h
-+++ b/libmultipath/discovery.h
-@@ -34,7 +34,7 @@ int path_discovery (vector pathvec, struct config * conf, int flag);
- 
- int do_tur (char *);
- int path_offline (struct path *);
--int get_state (struct path * pp, int daemon);
-+int get_state (struct path * pp, vector hwtable, int daemon);
- int pathinfo (struct path *, vector hwtable, int mask);
- int alloc_path_with_pathinfo (vector hwtable, struct udev_device *udevice,
- 			      int flag, struct path **pp_ptr);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 9a44390..fe80d1a 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1421,7 +1421,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 		newstate = PATH_DOWN;
- 
- 	if (newstate == PATH_UP)
--		newstate = get_state(pp, 1);
-+		newstate = get_state(pp, conf->hwtable, 1);
- 	else
- 		checker_clear_message(&pp->checker);
- 
+ 	strcpy(mpp->wwid, pp->wwid);
 -- 
 2.6.6
