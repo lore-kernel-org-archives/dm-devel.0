@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 08/26] libmultipath: Do not access 'conf->cmd' in
-	domap()
-Date: Mon, 20 Jun 2016 10:08:55 +0200
-Message-ID: <1466410153-23896-9-git-send-email-hare@suse.de>
+Subject: [PATCH 09/26] libmultipath: add 'cmd' as argument for
+	get_refwwid()
+Date: Mon, 20 Jun 2016 10:08:56 +0200
+Message-ID: <1466410153-23896-10-git-send-email-hare@suse.de>
 References: <1466410153-23896-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,131 +22,146 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-'conf->cmd' is only ever set if we're called from multipath, so
-we can combine the 'is_daemon' argument and the 'conf->cmd' check
-in domap() and avoid accessing 'conf->cmd' in domap().
+This patch adds an 'cmd' argument to get_refwwid(). This allows
+store_pathvec() to be simplified and avoids accesses to conf->cmd.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/config.h    | 1 +
- libmultipath/configure.c | 7 +++++--
- libmultipath/configure.h | 3 ++-
- multipath/main.c         | 5 +++--
- multipathd/main.c        | 4 ++--
- 5 files changed, 13 insertions(+), 7 deletions(-)
+ libmultipath/configure.c  | 13 +++++++++----
+ libmultipath/configure.h  |  3 ++-
+ libmultipath/discovery.c  |  4 +---
+ multipath/main.c          |  4 ++--
+ multipathd/cli_handlers.c |  4 ++--
+ multipathd/main.c         |  2 +-
+ 6 files changed, 17 insertions(+), 13 deletions(-)
 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 51afd22..715b887 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -24,6 +24,7 @@ enum devtypes {
- };
- 
- enum mpath_cmds {
-+	CMD_NONE,
- 	CMD_CREATE,
- 	CMD_DRY_RUN,
- 	CMD_LIST_SHORT,
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index d15d898..44b2d2b 100644
+index 44b2d2b..8c16e23 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
-@@ -586,7 +586,7 @@ domap (struct multipath * mpp, char * params, int is_daemon)
- 	/*
- 	 * last chance to quit before touching the devmaps
- 	 */
--	if (conf->cmd == CMD_DRY_RUN && mpp->action != ACT_NOTHING) {
-+	if (mpp->action == ACT_DRY_RUN) {
- 		print_multipath_topology(mpp, conf->verbosity);
- 		return DOMAP_DRY;
- 	}
-@@ -731,10 +731,11 @@ out:
- }
- 
+@@ -925,12 +925,14 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+  * 2 - blacklist
+  */
  extern int
--coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_reload, int is_daemon)
-+coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_reload, enum mpath_cmds cmd)
+-get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
++get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
++	     vector pathvec, char **wwid)
  {
- 	int r = 1;
- 	int k, i;
-+	int is_daemon = (cmd == CMD_NONE) ? 1 : 0;
- 	char params[PARAMS_SIZE];
- 	struct multipath * mpp;
- 	struct path * pp1;
-@@ -827,6 +828,8 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
- 			continue;
- 		}
+ 	int ret = 1;
+ 	struct path * pp;
+ 	char buff[FILE_NAME_SIZE];
+ 	char * refwwid = NULL, tmpwwid[WWID_SIZE];
++	int flags = DI_SYSFS | DI_WWID;
  
-+		if (cmd == CMD_DRY_RUN)
-+			mpp->action = ACT_DRY_RUN;
- 		if (mpp->action == ACT_UNDEF)
- 			select_action(mpp, curmp, force_reload);
- 
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index c0338bf..8d474ea 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -19,6 +19,7 @@ enum actions {
- 	ACT_CREATE,
- 	ACT_RESIZE,
- 	ACT_FORCERENAME,
-+	ACT_DRY_RUN,
- };
- 
- #define FLUSH_ONE 1
-@@ -27,7 +28,7 @@ enum actions {
- int setup_map (struct multipath * mpp, char * params, int params_size );
- int domap (struct multipath * mpp, char * params, int is_daemon);
- int reinstate_paths (struct multipath *mpp);
--int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid, int force_reload, int is_daemon);
-+int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid, int force_reload, enum mpath_cmds cmd);
- int get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid);
- int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh, int is_daemon);
- int sysfs_get_host_adapter_name(struct path *pp, char *adapter_name);
-diff --git a/multipath/main.c b/multipath/main.c
-index 7c35ce1..e16c6cc 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -381,7 +381,7 @@ configure (void)
- 	 * core logic entry point
- 	 */
- 	r = coalesce_paths(&vecs, NULL, refwwid,
--			   conf->force_reload, 0);
-+			   conf->force_reload, conf->cmd);
- 
- out:
- 	if (refwwid)
-@@ -484,7 +484,8 @@ main (int argc, char *argv[])
- 	logsink = 0;
- 	if (load_config(DEFAULT_CONFIGFILE, udev))
- 		exit(1);
--
-+	/* Default to CMD_CREATE */
-+	conf->cmd = CMD_CREATE;
- 	while ((arg = getopt(argc, argv, ":adchl::FfM:v:p:b:BritquwW")) != EOF ) {
- 		switch(arg) {
- 		case 1: printf("optarg : %s\n",optarg);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 9568ae9..036872c 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -487,7 +487,7 @@ ev_add_map (char * dev, char * alias, struct vectors * vecs)
- 	r = get_refwwid(dev, DEV_DEVMAP, vecs->pathvec, &refwwid);
- 
- 	if (refwwid) {
--		r = coalesce_paths(vecs, NULL, refwwid, 0, 1);
-+		r = coalesce_paths(vecs, NULL, refwwid, 0, CMD_NONE);
- 		dm_lib_release();
- 	}
- 
-@@ -1798,7 +1798,7 @@ configure (struct vectors * vecs, int start_waiters)
- 	/*
- 	 * create new set of maps & push changed ones into dm
- 	 */
--	if (coalesce_paths(vecs, mpvec, NULL, 1, 1))
-+	if (coalesce_paths(vecs, mpvec, NULL, 1, CMD_NONE))
+ 	if (!wwid)
+ 		return 1;
+@@ -939,6 +941,9 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
+ 	if (dev_type == DEV_NONE)
  		return 1;
  
- 	/*
++	if (cmd != CMD_REMOVE_WWID)
++		flags |= DI_BLACKLIST;
++
+ 	if (dev_type == DEV_DEVNODE) {
+ 		if (basenamecpy(dev, buff, FILE_NAME_SIZE) == 0) {
+ 			condlog(1, "basename failed for '%s' (%s)",
+@@ -955,7 +960,7 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
+ 				return 1;
+ 			}
+ 			ret = store_pathinfo(pathvec, conf->hwtable, udevice,
+-					     DI_SYSFS | DI_WWID, &pp);
++					     flags, &pp);
+ 			udev_device_unref(udevice);
+ 			if (!pp) {
+ 				if (ret == 1)
+@@ -987,7 +992,7 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
+ 				return 1;
+ 			}
+ 			ret = store_pathinfo(pathvec, conf->hwtable, udevice,
+-					     DI_SYSFS | DI_WWID, &pp);
++					     flags, &pp);
+ 			udev_device_unref(udevice);
+ 			if (!pp) {
+ 				if (ret == 1)
+@@ -1012,7 +1017,7 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
+ 			return 1;
+ 		}
+ 		ret = store_pathinfo(pathvec, conf->hwtable, udevice,
+-				     DI_SYSFS | DI_WWID, &pp);
++				     flags, &pp);
+ 		udev_device_unref(udevice);
+ 		if (!pp) {
+ 			if (ret == 1)
+diff --git a/libmultipath/configure.h b/libmultipath/configure.h
+index 8d474ea..442c956 100644
+--- a/libmultipath/configure.h
++++ b/libmultipath/configure.h
+@@ -29,6 +29,7 @@ int setup_map (struct multipath * mpp, char * params, int params_size );
+ int domap (struct multipath * mpp, char * params, int is_daemon);
+ int reinstate_paths (struct multipath *mpp);
+ int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid, int force_reload, enum mpath_cmds cmd);
+-int get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid);
++int get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
++		 vector pathvec, char **wwid);
+ int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh, int is_daemon);
+ int sysfs_get_host_adapter_name(struct path *pp, char *adapter_name);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 126a54f..6fc2e8f 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -90,9 +90,7 @@ store_pathinfo (vector pathvec, vector hwtable, struct udev_device *udevice,
+ 		goto out;
+ 	}
+ 	pp->udev = udev_device_ref(udevice);
+-	err = pathinfo(pp, hwtable,
+-		       (conf->cmd == CMD_REMOVE_WWID)? flag :
+-						       (flag | DI_BLACKLIST));
++	err = pathinfo(pp, hwtable, flag);
+ 	if (err)
+ 		goto out;
+ 
+diff --git a/multipath/main.c b/multipath/main.c
+index e16c6cc..bf2fd31 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -281,8 +281,8 @@ configure (void)
+ 	 * failing the translation is fatal (by policy)
+ 	 */
+ 	if (conf->dev) {
+-		int failed = get_refwwid(conf->dev, conf->dev_type, pathvec,
+-					 &refwwid);
++		int failed = get_refwwid(conf->cmd, conf->dev, conf->dev_type,
++					 pathvec, &refwwid);
+ 		if (!refwwid) {
+ 			condlog(4, "%s: failed to get wwid", conf->dev);
+ 			if (failed == 2 && conf->cmd == CMD_VALID_PATH)
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index eaeaa74..05dcb41 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -708,8 +708,8 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
+ 		if (!alias && !count) {
+ 			condlog(2, "%s: mapname not found for %d:%d",
+ 				param, major, minor);
+-			rc = get_refwwid(param, DEV_DEVMAP, vecs->pathvec,
+-								&refwwid);
++			rc = get_refwwid(CMD_NONE, param, DEV_DEVMAP,
++					 vecs->pathvec, &refwwid);
+ 			if (refwwid) {
+ 				if (coalesce_paths(vecs, NULL, refwwid, 0, 1))
+ 					condlog(2, "%s: coalesce_paths failed",
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 036872c..6230798 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -484,7 +484,7 @@ ev_add_map (char * dev, char * alias, struct vectors * vecs)
+ 			return 1;
+ 		}
+ 	}
+-	r = get_refwwid(dev, DEV_DEVMAP, vecs->pathvec, &refwwid);
++	r = get_refwwid(CMD_NONE, dev, DEV_DEVMAP, vecs->pathvec, &refwwid);
+ 
+ 	if (refwwid) {
+ 		r = coalesce_paths(vecs, NULL, refwwid, 0, CMD_NONE);
 -- 
 2.6.6
