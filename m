@@ -1,145 +1,111 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: Possible data corruption with dm-thin
-Date: Tue, 21 Jun 2016 12:46:59 +0200
-Message-ID: <5cfb25da-40ce-ffab-d56b-8e1338d90340@redhat.com>
-References: <CAAR726JWQ4VKOVR87QX6Tmuhu1JnCymm7coLT=TFn3BseKm8XA@mail.gmail.com>
-	<54221955-a21e-5152-00e3-d6b78e0c78ef@redhat.com>
-	<CAAR726KwSx0VU3E4UxhSgtfYyOeYJLdsxJrut10UJcfoOQ7hfw@mail.gmail.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 0/6] Support DAX for device-mapper dm-linear devices
+Date: Tue, 21 Jun 2016 09:41:47 -0400
+Message-ID: <20160621134147.GA26392@redhat.com>
+References: <1465856497-19698-1-git-send-email-toshi.kani@hpe.com>
+ <20160613225756.GA18417@redhat.com>
+ <20160620180043.GA21261@redhat.com>
+ <1466446861.3504.243.camel@hpe.com>
+ <20160620194026.GA21657@redhat.com>
+ <20160620195217.GB21657@redhat.com>
+ <1466452883.3504.244.camel@hpe.com>
+ <1466457467.3504.249.camel@hpe.com>
+ <20160620222236.GA22461@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAAR726KwSx0VU3E4UxhSgtfYyOeYJLdsxJrut10UJcfoOQ7hfw@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Dennis Yang <dennisyang@qnap.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160620222236.GA22461-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: "Kani, Toshimitsu" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, axboe-b10kYP2dOMg@public.gmane.org
+Cc: "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org" <linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Dne 21.6.2016 v 12:40 Dennis Yang napsal(a):
->
->
-> 2016-06-21 16:59 GMT+08:00 Zdenek Kabelac <zkabelac@redhat.com
-> <mailto:zkabelac@redhat.com>>:
->
->     Dne 21.6.2016 v 09:56 Dennis Yang napsal(a):
->
->         Hi,
->
->         We have been dealing with a data corruption issue when we run out I/O
->         test suite made by ourselves with multiple thin devices built on top of a
->         thin-pool. In our test suites, we will create multiple thin devices and
->         continually write to them, check the file checksum, and delete all files
->         and issue DISCARD to reclaim space if no checksum error takes place.
->
->         We found that there is one data access pattern could corrupt the data.
->         Suppose that there are two thin devices A and B, and device A receives
->         a DISCARD bio to discard a physical(pool) block 100. Device A will quiesce
->         all previous I/O and held both virtual and physical data cell before it
->         actually remove the corresponding data mapping. After the data mapping
->         is removed, both data cell will be released and this DISCARD bio will
->         be passed down to underlying devices. If device B tries to allocate
->         a new block at the very same moment, it could reuse the block 100 which
->         was just been discarded by device A (suppose metadata commit had
->         been triggered, for a block cannot be reused in the same transaction).
->         In this case, we will have a race between the WRITE bio coming from
->         device B and the DISCARD bio coming from device A. Once the WRITE
->         bio completes before the DISCARD bio, there would be checksum error
->         for device B.
->
->         So my question is, does dm-thin have any mechanism to eliminate the
->         race when
->         discarded block is reused right away by another device?
->
->         Any help would be grateful.
->         Thanks,
->
->
->
->     Please provide version of kernel and surrounding tools (OS release version)?
->     also are you using  'lvm2'  or you use directly 'dmsetup/ioctl' ?
->     (in the later case we would need to see exact sequencing of operation).
->
->     Also please provide  reproducer script.
->
->
->     Regards
->
->     Zdenek
->
->     --
->     dm-devel mailing list
->     dm-devel@redhat.com <mailto:dm-devel@redhat.com>
->     https://www.redhat.com/mailman/listinfo/dm-devel
->
->
->
-> Hi Zdenek,
->
-> We are using a customized dm-thin driver based on linux 3.19.8 running
-> on our QNAP NAS. Also, we create all our thin devices with "lvm2". I am
+On Mon, Jun 20 2016 at  6:22pm -0400,
+Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 
-Please try to reproduce with recent kernel 4.6.
+> On Mon, Jun 20 2016 at  5:28pm -0400,
+> Kani, Toshimitsu <toshi.kani-ZPxbGqLxI0U@public.gmane.org> wrote:
+> =
 
-Regards
+> > =
 
-Zdenek
+> > Hi Mike,
+> > =
 
-> afraid that I cannot provide the reproducer script since we reproduce this by
-> running the I/O stress test suite on Windows to all thin devices exported to
-> them via samba and iSCSI.
->
-> The following is the trace of thin-pool we dumped via blktrace. The data
-> corruption takes place from sector address 310150144 to 310150144 + 832.
->
-> 252,19   1   154916   184.875465510 29959  Q   W 310150144 + 1024 [kworker/u8:0]
-> 252,19   0   205964   185.496309521     0      C   W 310150144 + 1024 [0]
-> ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-> At first, pool receives a 1024 sector WRITE bio which had allocated a pool block.
->
-> 252,19   3   353811   656.542481344 30280  Q   D 310150144 + 1024 [kworker/u8:8]
-> ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-> Pool receives a 1024 sector (thin block size) DISCARD bio passed down by one
-> of the thin device.
->
-> 252,19   1   495204   656.558652936 30280  Q   W 310150144 + 832 [kworker/u8:8]
-> ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-> Another thin device passed down a 832 sector WRITE bio to the exact same place.
->
-> 252,19   3   353820   656.564140283     0      C   W 310150144 + 832 [0]
-> 252,19   0   697455   656.770883592     0      C   D 310150144 + 1024 [0]
-> ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-> Although the DISCARD bio was queued before the WRITE bio, their completion had
-> been reordered which could corrupt the data.
->
-> 252,19   1   515212   684.425478220 20751  A   R 310150144 + 80 <- (252,22)
-> 28932096
-> 252,19   1   515213   684.425478325 20751  Q   R 310150144 + 80 [smbd]
-> 252,19   0   725274   684.425741079 23937  C   R 310150144 + 80 [0]
->
-> Hope this helps.
-> Thanks,
->
-> Dennis
->
-> --
-> Dennis Yang
-> QNAP Systems, Inc.
-> Skype: qnap.dennis.yang
-> Email: dennisyang@qnap.com <mailto:dennisyang@qnap.com>
-> Tel: (+886)-2-2393-5152 ext. 15018
-> Address: 13F., No.56, Sec. 1, Xinsheng S. Rd., Zhongzheng Dist., Taipei City,
-> Taiwan
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+> > Can you fold the following patch to the dm-linear patch?
+> > =
+
+> > Thanks,
+> > -Tsohi
+> > =
+
+> > ------
+> > Subject: [PATCH] dm-linear: Fix partition handling for DAX
+> > =
+
+> > Partition handling was missing in linear_direct_access().
+> > Call bdev_direct_access(), instead of directly calling
+> > target direct_access function.
+> > =
+
+> > Signed-off-by: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+> > ---
+> > =A0drivers/md/dm-linear.c |=A0=A0=A014 ++++++++++----
+> > =A01 file changed, 10 insertions(+), 4 deletions(-)
+> > =
+
+> > diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+> > index 325aa06..38323e4 100644
+> > --- a/drivers/md/dm-linear.c
+> > +++ b/drivers/md/dm-linear.c
+> > @@ -148,10 +148,16 @@ static long linear_direct_access(struct dm_target=
+ *ti,
+> > sector_t sector,
+> > =A0{
+> > =A0	struct linear_c *lc =3D ti->private;
+> > =A0	struct block_device *bdev =3D lc->dev->bdev;
+> > -	const struct block_device_operations *bd_ops =3D bdev->bd_disk->fops;
+> > -
+> > -	return bd_ops->direct_access(bdev, linear_map_sector(ti, sector),
+> > -				=A0=A0=A0=A0=A0kaddr, pfn, size);
+> > +	struct blk_dax_ctl dax =3D {
+> > +		.sector =3D linear_map_sector(ti, sector),
+> > +		.size =3D size,
+> > +	};
+> > +	long ret;
+> > +
+> > +	ret =3D bdev_direct_access(bdev, &dax);
+> > +	*kaddr =3D dax.addr;
+> > +	*pfn =3D dax.pfn;
+> > +	return ret;
+> > =A0}
+> > =A0
+> > =A0static struct target_type linear_target =3D {
+> =
+
+> Looks good, I folded it in and tested it to work.  Pushed to my 'wip'
+> branch.
+> =
+
+> No longer seeing any corruption in my test that was using partitions to
+> span pmem devices with a dm-linear device.
+> =
+
+> Jens, any chance you'd be open to picking up the first 2 patches in this
+> series?  Or would you like to see them folded or something different?
+
+I'm now wondering if we'd be better off setting a new QUEUE_FLAG_DAX
+rather than establish GENHD_FL_DAX on the genhd?
+
+It'd be quite a bit easier to allow upper layers (e.g. XFS and ext4) to
+check for a queue flag.
