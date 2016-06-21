@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 9/9] multipath-tools: minor edit in hwtable
-Date: Tue, 21 Jun 2016 02:36:04 +0200
-Message-ID: <1466469364-14446-9-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 3/9] multipath-tools: reduce regex for DGC
+	CLARiiON CX/AX and EMC VNX
+Date: Tue, 21 Jun 2016 02:35:58 +0200
+Message-ID: <1466469364-14446-3-git-send-email-xose.vazquez@gmail.com>
 References: <1466469364-14446-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,51 +21,32 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-delete empty lines and correct a NEC product.
+vendor="DGC" and product=".*" is tooooo broad.
+Using same product labels as in drivers/scsi/scsi_dh.c
+
+Field-tested with Clariion VNX7500.
 
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 5 +----
- 1 file changed, 1 insertion(+), 4 deletions(-)
+ libmultipath/hwtable.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 47a2e61..fb334ab 100644
+index 206d1fd..a8dc0de 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -189,7 +189,6 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_ALUA,
- 		.prio_args     = NULL,
+@@ -267,8 +267,8 @@ static struct hwentry default_hw[] = {
  	},
--
  	{
- 		/* HP SVSP */
- 		.vendor        = "HP",
-@@ -205,7 +204,6 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_ALUA,
- 		.prio_args     = NULL,
- 	},
--
- 	{
- 		/* HP Smart Array */
- 		.vendor        = "HP",
-@@ -861,7 +859,6 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_ALUA,
- 		.prio_args     = NULL,
- 	},
--
- 	/*
- 	 * SGI
- 	 */
-@@ -910,7 +907,7 @@ static struct hwentry default_hw[] = {
- 	 * NEC
- 	 */
- 	{
--		/* Storage M Series */
-+		/* M-Series */
- 		.vendor        = "NEC",
- 		.product       = "DISK ARRAY",
- 		.features      = DEFAULT_FEATURES,
+ 		/* DGC CLARiiON CX/AX and EMC VNX */
+-		.vendor        = "DGC",
+-		.product       = ".*",
++		.vendor        = "^DGC",
++		.product       = "^RAID|^DISK|^VRAID",
+ 		.bl_product    = "LUNZ",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = "1 emc",
 -- 
 2.5.5
