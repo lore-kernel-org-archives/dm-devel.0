@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 5/9] multipath-tools: add DELL MD34xx/MD38xx
-Date: Tue, 21 Jun 2016 02:36:00 +0200
-Message-ID: <1466469364-14446-5-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 7/9] multipath-tools: tips on adding new devices
+	with proprietary handlers
+Date: Tue, 21 Jun 2016 02:36:02 +0200
+Message-ID: <1466469364-14446-7-git-send-email-xose.vazquez@gmail.com>
 References: <1466469364-14446-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,55 +18,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>, Babu Moger <Babu.Moger@netapp.com>, Sean Stewart <sean.stewart@netapp.com>
 List-Id: dm-devel.ids
 
-New MD34xx/MD38xx family based also on RDAC:
-http://downloads.dell.com/manuals/common/md34xx_md38xx_support%20matrix2_en-us.pdf
+kernel(SCSI) and multipath-tools should be in sync.
+Currently in drivers/scsi/scsi_dh.c:
 
-MD3400   12 Gbps direct attached SAS storage array with 12 drives (3.5 inch)
-MD3420   12 Gbps direct attached SAS storage array with 24 drives (2.5 inch)
-MD3460   12 Gbps direct attached SAS storage dense array
-MD3800i  10 Gbps iSCSI network storage array with 12 drives (3.5 inch)
-MD3820i  10 Gbps iSCSI network storage array with 24 drives (2.5 inch)
-MD3860i  10 Gbps iSCSI network storage dense array
-MD3800f  16 Gbps FC network storage array with 12 drives (3.5 inch)
-MD3820f  16 Gbps FC network storage array with 24 drives (2.5 inch)
-MD3860f  16 Gbps FC network storage dense array
+ {"DGC", "RAID",                 "clariion" },
+ {"DGC", "DISK",                 "clariion" },
+ {"DGC", "VRAID",                "clariion" },
 
+ {"COMPAQ", "MSA1000 VOLUME",    "hp_sw" },
+ {"COMPAQ", "HSV110",            "hp_sw" },
+ {"HP", "HSV100",                "hp_sw"},
+ {"DEC", "HSG80",                "hp_sw"},
+
+ {"IBM", "1722",                 "rdac", },
+ {"IBM", "1724",                 "rdac", },
+ {"IBM", "1726",                 "rdac", },
+ {"IBM", "1742",                 "rdac", },
+ {"IBM", "1745",                 "rdac", },
+ {"IBM", "1746",                 "rdac", },
+ {"IBM", "1813",                 "rdac", }, -> missing in multipath-tools !!!
+
+Added in 4df01b. It's an IBM DCS3860.
+
+ {"IBM", "1814",                 "rdac", },
+ {"IBM", "1815",                 "rdac", },
+ {"IBM", "1818",                 "rdac", },
+ {"IBM", "3526",                 "rdac", },
+ {"SGI", "TP9",                  "rdac", },
+ {"SGI", "IS",                   "rdac", },
+ {"STK", "OPENstorage D280",     "rdac", },
+ {"STK", "FLEXLINE 380",         "rdac", },
+ {"SUN", "CSM",                  "rdac", },
+ {"SUN", "LCSM100",              "rdac", },
+ {"SUN", "STK6580_6780",         "rdac", },
+ {"SUN", "SUN_6180",             "rdac", },
+ {"SUN", "ArrayStorage",         "rdac", }, -> missing in multipath-tools !!!
+
+Added in 66195f. Unknown device, too generic name.
+
+ {"DELL", "MD3",                 "rdac", },
+ {"NETAPP", "INF-01-00",         "rdac", },
+ {"LSI", "INF-01-00",            "rdac", },
+ {"ENGENIO", "INF-01-00",        "rdac", },
+
+Cc: Babu Moger <Babu.Moger@netapp.com>
+Cc: Sean Stewart <sean.stewart@netapp.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+ libmultipath/hwtable.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 031102c..62e284d 100644
+index 62e284d..47a2e61 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -764,6 +764,21 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_RDAC,
- 		.prio_args     = NULL,
- 	},
-+	{
-+		/* DELL MD34xx/MD38xx */
-+		.vendor        = "DELL",
-+		.product       = "MD34xx|MD38xx",
-+		.bl_product    = "Universal Xport",
-+		.features      = "2 pg_init_retries 50",
-+		.hwhandler     = "1 rdac",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = 15,
-+		.checker_name  = RDAC,
-+		.prio_name     = PRIO_RDAC,
-+		.prio_args     = NULL,
-+	},
+@@ -15,6 +15,11 @@
+  * You are welcome to claim maintainership over a controller
+  * family. Please mail the currently enlisted maintainer and
+  * the upstream package maintainer.
++ *
++ * WARNING:
++ *
++ * Devices with a proprietary handler must also be included in
++ * the kernel side. Currently at drivers/scsi/scsi_dh.c
+  */
+ static struct hwentry default_hw[] = {
  	/*
- 	 * NETAPP
- 	 */
 -- 
 2.5.5
