@@ -1,63 +1,51 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2 1/3] block: add QUEUE_FLAG_DAX for devices to
- advertise their DAX support
-Date: Thu, 23 Jun 2016 17:11:32 -0400
-Message-ID: <20160623211131.GA9163@redhat.com>
-References: <1466639694-25394-1-git-send-email-toshi.kani@hpe.com>
- <1466639694-25394-2-git-send-email-toshi.kani@hpe.com>
- <CACTTzNYAxtY-d8+8Vo=Y2WpuXVaSkJk9PC7DcHXKJuU=gqvXFw@mail.gmail.com>
- <1466702773.3504.363.camel@hpe.com>
+From: "Kani, Toshimitsu" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Subject: Re: [PATCH v3 3/4] dm: add infrastructure for DAX support
+Date: Thu, 23 Jun 2016 23:36:25 +0000
+Message-ID: <1466724984.3504.380.camel@hpe.com>
+References: <1466715953-40692-1-git-send-email-snitzer@redhat.com>
+ <1466715953-40692-4-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1466702773.3504.363.camel@hpe.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: "Kani, Toshimitsu" <toshi.kani@hpe.com>
-Cc: "yigal@plexistor.com" <yigal@plexistor.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>, "linux-nvdimm@lists.01.org" <linux-nvdimm@ml01.01.org>, "heiko.carstens@de.ibm.com" <heiko.carstens@de.ibm.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "schwidefsky@de.ibm.com" <schwidefsky@de.ibm.com>, "dan.j.williams@intel.com" <dan.j.williams@intel.com>, "agk@redhat.com" <agk@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <1466715953-40692-4-git-send-email-snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Language: en-US
+Content-ID: <BD7440CD95B45B4696404A994BE2037B-mmYPd6ayCNGroOM5E8FhRbjFIynDaujOfM0AETQt39g@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: "dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: "linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org" <linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Thu, Jun 23 2016 at  1:36pm -0400,
-Kani, Toshimitsu <toshi.kani@hpe.com> wrote:
-
-> On Thu, 2016-06-23 at 19:31 +0300, Yigal Korman wrote:
-> > On Thu, Jun 23, 2016 at 2:54 AM, Toshi Kani <toshi.kani@hpe.com> wr=
-ote:
-> > >=20
-> > >=20
-> > > Currently, presence of direct_access() in block_device_operations
-> > > indicates support of DAX on its block device.=A0=A0Because
-> > > block_device_operations is instantiated with 'const', this DAX
-> > > capablity may not be enabled conditinally.
-> > >=20
-> > > In preparation for supporting DAX to device-mapper devices, add
-> > > QUEUE_FLAG_DAX to request_queue flags to advertise their DAX
-> > > support.=A0=A0This will allow to set the DAX capability based on =
-how
-> > > mapped device is composed.
-> >=20
-> > Hi Toshi,
-> > This patch is very helpful!
-> > I think QUEUE_FLAG_DAX can also help with identifying dax devices i=
-n
-> > userspace.
-> > Perhaps you'd be willing to squash the patch below with this one or
-> > add it to your submission?
->=20
-> Hi Yigal,
->=20
-> Good idea. =A0Mike can probably take it into his tree, but I will inc=
-lude it
-> into the series if I needed to submit v3.
->=20
-> Acked-by: Toshi Kani <toshi.kani@hpe.com>
-
-As you can see I sent out v3 of this set.  Jens will need to pick up th=
-e
-"block:" patches but I'll pick up the DM patches once Jens does so.
---
-To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+T24gVGh1LCAyMDE2LTA2LTIzIGF0IDE3OjA1IC0wNDAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQrC
+oDoNCj4gK3N0YXRpYyBpbnQgZGV2aWNlX3N1cHBvcnRzX2RheChzdHJ1Y3QgZG1fdGFyZ2V0ICp0
+aSwgc3RydWN0IGRtX2RldiAqZGV2LA0KPiArCQkJwqDCoMKgwqDCoMKgwqBzZWN0b3JfdCBzdGFy
+dCwgc2VjdG9yX3QgbGVuLCB2b2lkICpkYXRhKQ0KPiArew0KPiArCXN0cnVjdCByZXF1ZXN0X3F1
+ZXVlICpxID0gYmRldl9nZXRfcXVldWUoZGV2LT5iZGV2KTsNCj4gKw0KPiArCXJldHVybiBxICYm
+IGJsa19xdWV1ZV9kYXgocSk7DQo+ICt9DQo+ICsNCj4gK3N0YXRpYyBib29sIGRtX3RhYmxlX3N1
+cHBvcnRzX2RheChzdHJ1Y3QgZG1fdGFibGUgKnQpDQo+ICt7DQo+ICsJc3RydWN0IGRtX3Rhcmdl
+dCAqdGk7DQo+ICsJdW5zaWduZWQgaSA9IDA7DQo+ICsNCj4gKwkvKiBFbnN1cmUgdGhhdCBhbGwg
+dGFyZ2V0cyBzdXBwb3J0IERBWC4gKi8NCj4gKwl3aGlsZSAoaSA8IGRtX3RhYmxlX2dldF9udW1f
+dGFyZ2V0cyh0KSkgew0KPiArCQl0aSA9IGRtX3RhYmxlX2dldF90YXJnZXQodCwgaSsrKTsNCj4g
+Kw0KPiArCQlpZiAoIXRpLT50eXBlLT5kaXJlY3RfYWNjZXNzKQ0KPiArCQkJcmV0dXJuIGZhbHNl
+Ow0KPiArDQo+ICsJCWlmICghdGktPnR5cGUtPml0ZXJhdGVfZGV2aWNlcyB8fA0KPiArCQnCoMKg
+wqDCoCF0aS0+dHlwZS0+aXRlcmF0ZV9kZXZpY2VzKHRpLCBkZXZpY2Vfc3VwcG9ydHNfZGF4LA0K
+PiBOVUxMKSkNCj4gKwkJCXJldHVybiBmYWxzZTsNCj4gKwl9DQo+ICsNCj4gKwlyZXR1cm4gdHJ1
+ZTsNCj4gK30NCj4gKw0KDQpIaSBNaWtlLA0KDQpUaGFua3MgZm9yIHRoZSB1cGRhdGUuIMKgSSBo
+YXZlIGEgcXVlc3Rpb24gYWJvdXQgdGhlIGFib3ZlIGNoYW5nZS4gwqBUYXJnZXRzIG1heQ0KaGF2
+ZSB0aGVpciBvd24gcGFyYW1ldGVycy4gwqBGb3IgaW5zdGFuY2UsIGRtLXN0cmlwZSBoYXMgJ2No
+dW5rX3NpemUnLCB3aGljaCBpcw0KY2hlY2tlZCBpbiBzdHJpcGVfY3RyKCkuIMKgREFYIGFkZHMg
+YWRkaXRpb25hbCByZXN0cmljdGlvbiB0aGF0IGNodW5rX3NpemUNCm5lZWRzIHRvIGJlIGFsaWdu
+ZWQgYnkgcGFnZSBzaXplLiDCoFNvLCBJIHRoaW5rIHdlIG5lZWQgdG8ga2VlcCB0YXJnZXQNCnJl
+c3BvbnNpYmxlIHRvIHZlcmlmeSBpZiBEQVggY2FuIGJlIHN1cHBvcnRlZC4gwqBXaGF0IGRvIHlv
+dSB0aGluaz8NCg0KVGhhbmtzLA0KLVRvc2hpCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fCkxpbnV4LW52ZGltbSBtYWlsaW5nIGxpc3QKTGludXgtbnZkaW1t
+QGxpc3RzLjAxLm9yZwpodHRwczovL2xpc3RzLjAxLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2xpbnV4
+LW52ZGltbQo=
