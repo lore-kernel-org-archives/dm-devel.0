@@ -1,40 +1,82 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: killall DEFAULT_*
-Date: Thu, 23 Jun 2016 19:31:48 +0200
-Message-ID: <ce51a338-902c-039e-8d22-daca3edadcc1@gmail.com>
-References: <1466689340-5590-1-git-send-email-xose.vazquez@gmail.com>
-	<1466689340-5590-4-git-send-email-xose.vazquez@gmail.com>
-	<576BE8CE.9040201@suse.de>
+From: "Kani, Toshimitsu" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Subject: Re: [PATCH v2 1/3] block: add QUEUE_FLAG_DAX for devices to advertise
+ their DAX support
+Date: Thu, 23 Jun 2016 17:36:29 +0000
+Message-ID: <1466702773.3504.363.camel@hpe.com>
+References: <1466639694-25394-1-git-send-email-toshi.kani@hpe.com>
+ <1466639694-25394-2-git-send-email-toshi.kani@hpe.com>
+ <CACTTzNYAxtY-d8+8Vo=Y2WpuXVaSkJk9PC7DcHXKJuU=gqvXFw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <576BE8CE.9040201@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: Matthias Rudolph <matthias.rudolph@hds.com>, Yacine Kheddache <yacine@alyseo.com>, device-mapper development <dm-devel@redhat.com>, "Brian King,
-	IBM" <brking@linux.vnet.ibm.com>, Srinivasan Ramani <srinivas.ramani@oracle.com>, Sean Stewart <sean.stewart@netapp.com>, Shyam Sundar <g.shyamsundar@yahoo.co.in>, "Bart Brooks,
-	Pivot3" <bartb@pivot3.com>, "Edward Goggin, EMC" <egoggin@emc.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <CACTTzNYAxtY-d8+8Vo=Y2WpuXVaSkJk9PC7DcHXKJuU=gqvXFw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
+Content-ID: <A05A57BD466AE547BFBD6DA231D4B9FD-mmYPd6ayCNGroOM5E8FhRbjFIynDaujOfM0AETQt39g@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: "yigal-/8YdC2HfS5554TAoqtyWWQ@public.gmane.org" <yigal-/8YdC2HfS5554TAoqtyWWQ@public.gmane.org>
+Cc: "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, "heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org" <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org" <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On 06/23/2016 03:49 PM, Hannes Reinecke wrote:
-
-> Why do you need to set it to 'DEFAULT_CHECKER'?
-> It's the default, right?
-> So it should be sufficient to just delete those lines...
-
-More candidates to be deleted ???
-
-      1                 .minio         = DEFAULT_MINIO,
-      1                 .minio_rq      = DEFAULT_MINIO_RQ,
-     28                 .prio_name     = DEFAULT_PRIO,
-     44                 .hwhandler     = DEFAULT_HWHANDLER,
-     48                 .features      = DEFAULT_FEATURES,
+T24gVGh1LCAyMDE2LTA2LTIzIGF0IDE5OjMxICswMzAwLCBZaWdhbCBLb3JtYW4gd3JvdGU6DQo+
+IE9uIFRodSwgSnVuIDIzLCAyMDE2IGF0IDI6NTQgQU0sIFRvc2hpIEthbmkgPHRvc2hpLmthbmlA
+aHBlLmNvbT4gd3JvdGU6DQo+ID4gDQo+ID4gDQo+ID4gQ3VycmVudGx5LCBwcmVzZW5jZSBvZiBk
+aXJlY3RfYWNjZXNzKCkgaW4gYmxvY2tfZGV2aWNlX29wZXJhdGlvbnMNCj4gPiBpbmRpY2F0ZXMg
+c3VwcG9ydCBvZiBEQVggb24gaXRzIGJsb2NrIGRldmljZS7CoMKgQmVjYXVzZQ0KPiA+IGJsb2Nr
+X2RldmljZV9vcGVyYXRpb25zIGlzIGluc3RhbnRpYXRlZCB3aXRoICdjb25zdCcsIHRoaXMgREFY
+DQo+ID4gY2FwYWJsaXR5IG1heSBub3QgYmUgZW5hYmxlZCBjb25kaXRpbmFsbHkuDQo+ID4gDQo+
+ID4gSW4gcHJlcGFyYXRpb24gZm9yIHN1cHBvcnRpbmcgREFYIHRvIGRldmljZS1tYXBwZXIgZGV2
+aWNlcywgYWRkDQo+ID4gUVVFVUVfRkxBR19EQVggdG8gcmVxdWVzdF9xdWV1ZSBmbGFncyB0byBh
+ZHZlcnRpc2UgdGhlaXIgREFYDQo+ID4gc3VwcG9ydC7CoMKgVGhpcyB3aWxsIGFsbG93IHRvIHNl
+dCB0aGUgREFYIGNhcGFiaWxpdHkgYmFzZWQgb24gaG93DQo+ID4gbWFwcGVkIGRldmljZSBpcyBj
+b21wb3NlZC4NCj4gDQo+IEhpIFRvc2hpLA0KPiBUaGlzIHBhdGNoIGlzIHZlcnkgaGVscGZ1bCEN
+Cj4gSSB0aGluayBRVUVVRV9GTEFHX0RBWCBjYW4gYWxzbyBoZWxwIHdpdGggaWRlbnRpZnlpbmcg
+ZGF4IGRldmljZXMgaW4NCj4gdXNlcnNwYWNlLg0KPiBQZXJoYXBzIHlvdSdkIGJlIHdpbGxpbmcg
+dG8gc3F1YXNoIHRoZSBwYXRjaCBiZWxvdyB3aXRoIHRoaXMgb25lIG9yDQo+IGFkZCBpdCB0byB5
+b3VyIHN1Ym1pc3Npb24/DQoNCkhpIFlpZ2FsLA0KDQpHb29kIGlkZWEuIMKgTWlrZSBjYW4gcHJv
+YmFibHkgdGFrZSBpdCBpbnRvIGhpcyB0cmVlLCBidXQgSSB3aWxsIGluY2x1ZGUgaXQNCmludG8g
+dGhlIHNlcmllcyBpZiBJIG5lZWRlZCB0byBzdWJtaXQgdjMuDQoNCkFja2VkLWJ5OiBUb3NoaSBL
+YW5pIDx0b3NoaS5rYW5pQGhwZS5jb20+DQoNCkkgaGF2ZSBvbmUgbWlub3IgY29tbWVudCBiZWxv
+dy4NCg0KPiBbUEFUQ0hdIGJsb2NrOiBleHBvc2UgUVVFVUVfRkxBR19EQVggaW4gc3lzZnMNCj4g
+DQo+IFRoZXJlJ3MgY3VycmVudGx5IG5vIHdheSB0byBpZGVudGlmeSBEQVggZW5hYmxlZCBkZXZp
+Y2VzIGluIHVzZXJzcGFjZS4NCj4gDQo+IFNpZ25lZC1vZmYtYnk6IFlpZ2FsIEtvcm1hbiA8eWln
+YWxAcGxleGlzdG9yLmNvbT4NCj4gLS0tDQo+IMKgYmxvY2svYmxrLXN5c2ZzLmMgfCAxNSArKysr
+KysrKysrKysrKysNCj4gwqAxIGZpbGUgY2hhbmdlZCwgMTUgaW5zZXJ0aW9ucygrKQ0KPiANCj4g
+ZGlmZiAtLWdpdCBhL2Jsb2NrL2Jsay1zeXNmcy5jIGIvYmxvY2svYmxrLXN5c2ZzLmMNCj4gaW5k
+ZXggOTkyMDU5Ni4uZDU1MTI2ZCAxMDA2NDQNCj4gLS0tIGEvYmxvY2svYmxrLXN5c2ZzLmMNCj4g
+KysrIGIvYmxvY2svYmxrLXN5c2ZzLmMNCj4gQEAgLTM3OSw2ICszNzksMTUgQEAgc3RhdGljIHNz
+aXplX3QgcXVldWVfd2Nfc3RvcmUoc3RydWN0DQo+IHJlcXVlc3RfcXVldWUgKnEsIGNvbnN0IGNo
+YXIgKnBhZ2UsDQo+IMKgwqDCoMKgwqDCoMKgwqByZXR1cm4gY291bnQ7DQo+IMKgfQ0KPiANCj4g
+K3N0YXRpYyBzc2l6ZV90IHF1ZXVlX2RheF9zaG93KHN0cnVjdCByZXF1ZXN0X3F1ZXVlICpxLCBj
+aGFyICpwYWdlKQ0KPiArew0KPiArwqDCoMKgwqDCoMKgwqBpbnQgYml0Ow0KPiArDQo+ICvCoMKg
+wqDCoMKgwqDCoGJpdCA9IHRlc3RfYml0KFFVRVVFX0ZMQUdfREFYLCAmcS0+cXVldWVfZmxhZ3Mp
+Ow0KPiArDQo+ICvCoMKgwqDCoMKgwqDCoHJldHVybiBxdWV1ZV92YXJfc2hvdyhiaXQsIHBhZ2Up
+Ow0KDQpUaGlzIGNhbiBiZToNCglyZXR1cm4gcXVldWVfdmFyX3Nob3coYmxrX3F1ZXVlX2RheChx
+KSwgcGFnZSk7DQoNClRoYW5rcywNCi1Ub3NoaQ0KDQo+ICt9DQo+ICsNCj4gwqBzdGF0aWMgc3Ry
+dWN0IHF1ZXVlX3N5c2ZzX2VudHJ5IHF1ZXVlX3JlcXVlc3RzX2VudHJ5ID0gew0KPiDCoMKgwqDC
+oMKgwqDCoMKgLmF0dHIgPSB7Lm5hbWUgPSAibnJfcmVxdWVzdHMiLCAubW9kZSA9IFNfSVJVR08g
+fCBTX0lXVVNSIH0sDQo+IMKgwqDCoMKgwqDCoMKgwqAuc2hvdyA9IHF1ZXVlX3JlcXVlc3RzX3No
+b3csDQo+IEBAIC01MTYsNiArNTI1LDExIEBAIHN0YXRpYyBzdHJ1Y3QgcXVldWVfc3lzZnNfZW50
+cnkgcXVldWVfd2NfZW50cnkgPSB7DQo+IMKgwqDCoMKgwqDCoMKgwqAuc3RvcmUgPSBxdWV1ZV93
+Y19zdG9yZSwNCj4gwqB9Ow0KPiANCj4gK3N0YXRpYyBzdHJ1Y3QgcXVldWVfc3lzZnNfZW50cnkg
+cXVldWVfZGF4X2VudHJ5ID0gew0KPiArwqDCoMKgwqDCoMKgwqAuYXR0ciA9IHsubmFtZSA9ICJk
+YXgiLCAubW9kZSA9IFNfSVJVR08gfSwNCj4gK8KgwqDCoMKgwqDCoMKgLnNob3cgPSBxdWV1ZV9k
+YXhfc2hvdywNCj4gK307DQo+ICsNCj4gwqBzdGF0aWMgc3RydWN0IGF0dHJpYnV0ZSAqZGVmYXVs
+dF9hdHRyc1tdID0gew0KPiDCoMKgwqDCoMKgwqDCoMKgJnF1ZXVlX3JlcXVlc3RzX2VudHJ5LmF0
+dHIsDQo+IMKgwqDCoMKgwqDCoMKgwqAmcXVldWVfcmFfZW50cnkuYXR0ciwNCj4gQEAgLTU0Miw2
+ICs1NTYsNyBAQCBzdGF0aWMgc3RydWN0IGF0dHJpYnV0ZSAqZGVmYXVsdF9hdHRyc1tdID0gew0K
+PiDCoMKgwqDCoMKgwqDCoMKgJnF1ZXVlX3JhbmRvbV9lbnRyeS5hdHRyLA0KPiDCoMKgwqDCoMKg
+wqDCoMKgJnF1ZXVlX3BvbGxfZW50cnkuYXR0ciwNCj4gwqDCoMKgwqDCoMKgwqDCoCZxdWV1ZV93
+Y19lbnRyeS5hdHRyLA0KPiArwqDCoMKgwqDCoMKgwqAmcXVldWVfZGF4X2VudHJ5LmF0dHIsDQo+
+IMKgwqDCoMKgwqDCoMKgwqBOVUxMLA0KPiDCoH07DQo+IA0KX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX18KTGludXgtbnZkaW1tIG1haWxpbmcgbGlzdApMaW51
+eC1udmRpbW1AbGlzdHMuMDEub3JnCmh0dHBzOi8vbGlzdHMuMDEub3JnL21haWxtYW4vbGlzdGlu
+Zm8vbGludXgtbnZkaW1tCg==
