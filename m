@@ -1,61 +1,76 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: NetApp Ontap
-Date: Fri, 24 Jun 2016 20:11:37 +0200
-Message-ID: <70702f9d-a3b8-fb4b-ce6a-cf66cb2ba8e8@gmail.com>
-References: <1465156471-20249-1-git-send-email-xose.vazquez@gmail.com>
-	<5769FA0F.9030307@netapp.com>
-	<86788d57-d39a-2618-8078-0f5342c92af0@gmail.com>
-	<576D7369.4000101@netapp.com>
+From: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Subject: [PATCH] dm stripe: add DAX support
+Date: Fri, 24 Jun 2016 12:23:30 -0600
+Message-ID: <1466792610-30369-1-git-send-email-toshi.kani@hpe.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <576D7369.4000101@netapp.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin George <marting@netapp.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On 06/24/2016 07:52 PM, Martin George wrote:
+Change dm-stripe to implement direct_access function,
+stripe_direct_access(), which maps bdev and sector and
+calls direct_access function of its physical target device.
 
-> On 6/24/2016 1:12 AM, Xose Vazquez Perez wrote:
->>
->> And one question, should NETAPP/LUN.* and IBM/Nseries.* share the same options?
->>
-> Yes, let them share the same options for now. I have some further updates on
-> this which I will share later. Thanks.
+Signed-off-by: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Cc: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+---
+ drivers/md/dm-stripe.c |   25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
 
-Right now they are different:
-
---- netapp-ontap        2016-06-24 20:05:35.182539928 +0200
-+++ ibm-ontap   2016-06-24 20:05:26.750552635 +0200
-@@ -1,18 +1,14 @@
-        {
--               .vendor        = "NETAPP",
--               .product       = "LUN.*",
--               .features      = "3 queue_if_no_path pg_init_retries 50",
-+               .vendor        = "IBM",
-+               .product       = "Nseries.*",
-+               .features      = "1 queue_if_no_path",
-                .hwhandler     = DEFAULT_HWHANDLER,
-                .pgpolicy      = GROUP_BY_PRIO,
-                .pgfailback    = -FAILBACK_IMMEDIATE,
--               .flush_on_last_del = FLUSH_ENABLED,
-                .rr_weight     = RR_WEIGHT_NONE,
-                .no_path_retry = NO_PATH_RETRY_UNDEF,
-                .minio         = 128,
--               .dev_loss      = MAX_DEV_LOSS_TMO,
--               .checker_name  = TUR,
-+               .checker_name  = DIRECTIO,
-                .prio_name     = PRIO_ONTAP,
-                .prio_args     = NULL,
--               .retain_hwhandler = RETAIN_HWHANDLER_ON,
--               .detect_prio   = DETECT_PRIO_ON,
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index 48f1c01..8925f6a 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -308,6 +308,30 @@ static int stripe_map(struct dm_target *ti, struct bio *bio)
+ 	return DM_MAPIO_REMAPPED;
+ }
+ 
++static long stripe_direct_access(struct dm_target *ti, sector_t sector,
++		void __pmem **kaddr, pfn_t *pfn, long size)
++{
++	struct stripe_c *sc;
++	struct block_device *bdev;
++	uint32_t stripe;
++	struct blk_dax_ctl dax = {
++		.size = size,
++	};
++	long ret;
++
++	sc = ti->private;
++	stripe_map_sector(sc, sector, &stripe, &dax.sector);
++
++	dax.sector += sc->stripe[stripe].physical_start;
++	bdev = sc->stripe[stripe].dev->bdev;
++
++	ret = bdev_direct_access(bdev, &dax);
++	*kaddr = dax.addr;
++	*pfn = dax.pfn;
++
++	return ret;
++}
++
+ /*
+  * Stripe status:
+  *
+@@ -425,6 +449,7 @@ static struct target_type stripe_target = {
+ 	.status = stripe_status,
+ 	.iterate_devices = stripe_iterate_devices,
+ 	.io_hints = stripe_io_hints,
++	.direct_access = stripe_direct_access,
+ };
+ 
+ int __init dm_stripe_init(void)
