@@ -1,50 +1,54 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: block: fix blk_queue_split() resource exhaustion
-Date: Fri, 24 Jun 2016 11:15:47 -0400
-Message-ID: <20160624151547.GA13898@redhat.com>
-References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
- <CACVXFVOtzcPpmg9Z_P6xN99dW=Sb_cCQNd-VcP0s5Nk0yHbwXQ@mail.gmail.com>
- <20160624142711.GF3239@soda.linbit>
+From: "Kani, Toshimitsu" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Subject: Re: [PATCH v3 3/4] dm: add infrastructure for DAX support
+Date: Fri, 24 Jun 2016 15:40:24 +0000
+Message-ID: <1466782822.3504.391.camel@hpe.com>
+References: <1466715953-40692-1-git-send-email-snitzer@redhat.com>
+ <1466715953-40692-4-git-send-email-snitzer@redhat.com>
+ <1466724984.3504.380.camel@hpe.com> <20160624014930.GA10540@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160624142711.GF3239@soda.linbit>
-Sender: linux-raid-owner@vger.kernel.org
-To: Lars Ellenberg <lars.ellenberg@linbit.com>
-Cc: Ming Lei <ming.lei@canonical.com>, linux-block@vger.kernel.org, Roland Kammerer <roland.kammerer@linbit.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, Kent Overstreet <kent.overstreet@gmail.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Takashi Iwai <tiwai@suse.de>, Jiri Kosina <jkosina@suse.cz>, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "open list:BCACHE (BLOCK LAYER CACHE)" <linux-bcache@vger.kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20160624014930.GA10540-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Language: en-US
+Content-ID: <18CC78150207B44888EC52FD807E6F55-mmYPd6ayCNGroOM5E8FhRbjFIynDaujOfM0AETQt39g@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org" <linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Fri, Jun 24 2016 at 10:27am -0400,
-Lars Ellenberg <lars.ellenberg@linbit.com> wrote:
-
-> On Fri, Jun 24, 2016 at 07:36:57PM +0800, Ming Lei wrote:
-> > >
-> > > This is not a theoretical problem.
-> > > At least int DRBD, and an unfortunately high IO concurrency wrt. the
-> > > "max-buffers" setting, without this patch we have a reproducible deadlock.
-> > 
-> > Is there any log about the deadlock? And is there any lockdep warning
-> > if it is enabled?
-> 
-> In DRBD, to avoid potentially very long internal queues as we wait for
-> our replication peer device and local backend, we limit the number of
-> in-flight bios we accept, and block in our ->make_request_fn() if that
-> number exceeds a configured watermark ("max-buffers").
-> 
-> Works fine, as long as we could assume that once our make_request_fn()
-> returns, any bios we "recursively" submitted against the local backend
-> would be dispatched. Which used to be the case.
-
-It'd be useful to know whether this patch fixes your issue:
-https://patchwork.kernel.org/patch/7398411/
-
-Ming Lei didn't like it due to concerns about I contexts changing
-(whereby breaking merging that occurs via plugging).
-
-But if it _does_ fix your issue then the case for the change is
-increased; and we just need to focus on addressing Ming's concerns
-(Mikulas has some ideas).
-
-Conversely, and in parallel, Mikulas can look to see if your approach
-fixes the observed dm-snapshot deadlock that he set out to fix.
+T24gVGh1LCAyMDE2LTA2LTIzIGF0IDIxOjQ5IC0wNDAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
+IE9uIFRodSwgSnVuIDIzIDIwMTYgYXTCoMKgNzozNnBtIC0wNDAwLA0KPiBLYW5pLCBUb3NoaW1p
+dHN1IDx0b3NoaS5rYW5pQGhwZS5jb20+IHdyb3RlOg0KwqA6DQo+ID4gVGhhbmtzIGZvciB0aGUg
+dXBkYXRlLiDCoEkgaGF2ZSBhIHF1ZXN0aW9uIGFib3V0IHRoZSBhYm92ZSBjaGFuZ2UuIMKgVGFy
+Z2V0cw0KPiA+IG1heSBoYXZlIHRoZWlyIG93biBwYXJhbWV0ZXJzLiDCoEZvciBpbnN0YW5jZSwg
+ZG0tc3RyaXBlIGhhcyAnY2h1bmtfc2l6ZScsDQo+ID4gd2hpY2ggaXMgY2hlY2tlZCBpbiBzdHJp
+cGVfY3RyKCkuIMKgREFYIGFkZHMgYWRkaXRpb25hbCByZXN0cmljdGlvbiB0aGF0DQo+ID4gY2h1
+bmtfc2l6ZSBuZWVkcyB0byBiZSBhbGlnbmVkIGJ5IHBhZ2Ugc2l6ZS4gwqBTbywgSSB0aGluayB3
+ZSBuZWVkIHRvIGtlZXANCj4gPiB0YXJnZXQgcmVzcG9uc2libGUgdG8gdmVyaWZ5IGlmIERBWCBj
+YW4gYmUgc3VwcG9ydGVkLiDCoFdoYXQgZG8geW91IHRoaW5rPw0KPg0KPiBXZSd2ZSBuZXZlciBo
+YWQgdG8gY29uY2VybiB0aGUgZG0tc3RyaXBlIHRhcmdldCB3aXRoIGhhcmR3YXJlDQo+IHNwZWNp
+ZmljIGNodW5rX3NpemUgdmFsaWRhdGlvbi7CoMKgVGhlIHVzZXIgaXMgYWJsZSB0byBzcGVjaWZ5
+IHRoZQ0KPiBjaHVua19zaXplIHZpYSBsdm0yJ3MgbHZjcmVhdGUgLUkgYXJndW1lbnQuwqDCoFll
+cyB0aGlzIGdpdmVzIHVzZXJzIGVub3VnaA0KPiByb3BlIHRvIGhhbmcgdGhlbXNlbHZlcyBidXQg
+aXQgaXMgdmVyeSBlYXN5IHRvIGNvbmZpZ3VyZSBhIGRtLXN0cmlwZQ0KPiBkZXZpY2Ugd2l0aCB0
+aGUgYXBwcm9wcmlhdGUgY2h1bmsgc2l6ZSAoUEFHRV9TSVpFKSBmcm9tIHVzZXJzcGFjZS4NCj4g
+DQo+IEJ1dCBsdm0yIGNvdWxkIGV2ZW4gYmUgdHJhaW5lZCB0byBtYWtlIHN1cmUgdGhlIGNodW5r
+X3NpemUgaXMgYSBmYWN0b3INCj4gb2YgcGh5c2ljYWxfYmxvY2tfc2l6ZSAoUEFHRV9TSVpFIGlu
+IHRoZSBjYXNlIG9mIHBtZW0pIGlmIHRoZSB1bmRlcmx5aW5nDQo+IGRldmljZXMgZXhwb3J0IHF1
+ZXVlL2RheD0xDQoNCmx2Y3JlYXRlwqAtSSBvbmx5IGFsbG93cyBtdWx0aXBsZSBvZiBwYWdlIHNp
+emUsIHNvIHdlIGFyZSBPSyB3aXRoIGx2bTIuIMKgSSB3YXMNCndvbmRlcmluZyBpZiB0aGUgY2hl
+Y2sgaW4gbHZtMiBpcyBlbm91Z2guIMKgQXJlIHRoZXJlIGFueSBvdGhlciB0b29scyB0aGF0IG1h
+eQ0KYmUgdXNlZCB0byBjb25maWd1cmUgc3RyaXBlIHNpemU/IMKgQ2FuIHdlIHRydXN0IHVzZXJz
+cGFjZSBvbiB0aGlzPw0KDQpUaGFua3MsDQotVG9zaGkKX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX18KTGludXgtbnZkaW1tIG1haWxpbmcgbGlzdApMaW51eC1u
+dmRpbW1AbGlzdHMuMDEub3JnCmh0dHBzOi8vbGlzdHMuMDEub3JnL21haWxtYW4vbGlzdGluZm8v
+bGludXgtbnZkaW1tCg==
