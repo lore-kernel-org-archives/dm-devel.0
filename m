@@ -1,66 +1,201 @@
-From: "Kani, Toshimitsu" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
-Subject: Re: dm stripe: add DAX support
-Date: Fri, 24 Jun 2016 20:46:31 +0000
-Message-ID: <1466801190.3504.411.camel@hpe.com>
-References: <1466792610-30369-1-git-send-email-toshi.kani@hpe.com>
- <201606250312.OzHHesq4%fengguang.wu@intel.com>
- <20160624200239.GA15587@redhat.com>
+From: Ming Lei <ming.lei@canonical.com>
+Subject: Re: [RFC] block: fix blk_queue_split() resource exhaustion
+Date: Sat, 25 Jun 2016 17:30:29 +0800
+Message-ID: <CACVXFVMtMi9WXYQLa3_XZi7W8ZsJe1GnnTLX+7tRMhFAMUSHtA@mail.gmail.com>
+References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
+ <CACVXFVOtzcPpmg9Z_P6xN99dW=Sb_cCQNd-VcP0s5Nk0yHbwXQ@mail.gmail.com> <20160624142711.GF3239@soda.linbit>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20160624200239.GA15587-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Content-Language: en-US
-Content-ID: <02E894F273BD694B959C66D17098EC9E-mmYPd6ayCNGroOM5E8FhRbjFIynDaujOfM0AETQt39g@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: "lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org" <linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "kbuild-all-JC7UmRfGjtg@public.gmane.org" <kbuild-all-JC7UmRfGjtg@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160624142711.GF3239@soda.linbit>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Lars Ellenberg <lars.ellenberg@linbit.com>
+Cc: linux-block@vger.kernel.org, Roland Kammerer <roland.kammerer@linbit.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, Kent Overstreet <kent.overstreet@gmail.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Takashi Iwai <tiwai@suse.de>, Jiri Kosina <jkosina@suse.cz>, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "open list:BCACHE (BLOCK LAYER CACHE)" <linux-bcache@vger.kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE2LTA2LTI0IGF0IDE2OjAyIC0wNDAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
-IE9uIEZyaSwgSnVuIDI0IDIwMTYgYXTCoMKgMzo1OHBtIC0wNDAwLA0KPiBrYnVpbGQgdGVzdCBy
-b2JvdCA8bGtwQGludGVsLmNvbT4gd3JvdGU6DQo+IA0KPiA+IA0KPiA+IEhpLA0KPiA+IA0KPiA+
-IFthdXRvIGJ1aWxkIHRlc3QgV0FSTklORyBvbiBkbS9mb3ItbmV4dF0NCj4gPiBbYWxzbyBidWls
-ZCB0ZXN0IFdBUk5JTkcgb24gdjQuNy1yYzQgbmV4dC0yMDE2MDYyNF0NCj4gPiBbaWYgeW91ciBw
-YXRjaCBpcyBhcHBsaWVkIHRvIHRoZSB3cm9uZyBnaXQgdHJlZSwgcGxlYXNlIGRyb3AgdXMgYSBu
-b3RlIHRvDQo+ID4gaGVscCBpbXByb3ZlIHRoZSBzeXN0ZW1dDQo+ID4gDQo+ID4gdXJsOsKgwqDC
-oMKgaHR0cHM6Ly9naXRodWIuY29tLzBkYXktY2kvbGludXgvY29tbWl0cy9Ub3NoaS1LYW5pL2Rt
-LXN0cmlwZS1hZGQtDQo+ID4gREFYLXN1cHBvcnQvMjAxNjA2MjUtMDIyNjAwDQo+ID4gYmFzZTrC
-oMKgwqBodHRwczovL2dpdC5rZXJuZWwub3JnL3B1Yi9zY20vbGludXgva2VybmVsL2dpdC9kZXZp
-Y2UtbWFwcGVyL2xpbnUNCj4gPiB4LWRtLmdpdCBmb3ItbmV4dA0KPiA+IGNvbmZpZzogbTY4ay1z
-dW4zX2RlZmNvbmZpZyAoYXR0YWNoZWQgYXMgLmNvbmZpZykNCj4gPiBjb21waWxlcjogbTY4ay1s
-aW51eC1nY2MgKEdDQykgNC45LjANCj4gPiByZXByb2R1Y2U6DQo+ID4gwqDCoMKgwqDCoMKgwqDC
-oHdnZXQgaHR0cHM6Ly9naXQua2VybmVsLm9yZy9jZ2l0L2xpbnV4L2tlcm5lbC9naXQvd2ZnL2xr
-cC10ZXN0cy5naQ0KPiA+IHQvcGxhaW4vc2Jpbi9tYWtlLmNyb3NzIC1PIH4vYmluL21ha2UuY3Jv
-c3MNCj4gPiDCoMKgwqDCoMKgwqDCoMKgY2htb2QgK3ggfi9iaW4vbWFrZS5jcm9zcw0KPiA+IMKg
-wqDCoMKgwqDCoMKgwqAjIHNhdmUgdGhlIGF0dGFjaGVkIC5jb25maWcgdG8gbGludXggYnVpbGQg
-dHJlZQ0KPiA+IMKgwqDCoMKgwqDCoMKgwqBtYWtlLmNyb3NzIEFSQ0g9bTY4a8KgDQo+ID4gDQo+
-ID4gQWxsIHdhcm5pbmdzIChuZXcgb25lcyBwcmVmaXhlZCBieSA+Pik6DQo+ID4gDQo+ID4gwqDC
-oMKgZHJpdmVycy9tZC9kbS1zdHJpcGUuYzo0NTI6MjogZXJyb3I6IHVua25vd24gZmllbGQgJ2Rp
-cmVjdF9hY2Nlc3MnDQo+ID4gc3BlY2lmaWVkIGluIGluaXRpYWxpemVyDQo+ID4gwqDCoMKgwqDC
-oC5kaXJlY3RfYWNjZXNzID0gc3RyaXBlX2RpcmVjdF9hY2Nlc3MsDQo+ID4gwqDCoMKgwqDCoF4N
-Cj4gPiDCoMKgwqBkcml2ZXJzL21kL2RtLXN0cmlwZS5jOjQ1MjoyOiB3YXJuaW5nOiBtaXNzaW5n
-IGJyYWNlcyBhcm91bmQNCj4gPiBpbml0aWFsaXplciBbLVdtaXNzaW5nLWJyYWNlc10NCj4gPiDC
-oMKgwqBkcml2ZXJzL21kL2RtLXN0cmlwZS5jOjQ1MjoyOiB3YXJuaW5nOiAobmVhciBpbml0aWFs
-aXphdGlvbiBmb3INCj4gPiAnc3RyaXBlX3RhcmdldC5saXN0JykgWy1XbWlzc2luZy1icmFjZXNd
-DQo+ID4gPiANCj4gPiA+ID4gDQo+ID4gPiA+IGRyaXZlcnMvbWQvZG0tc3RyaXBlLmM6NDUyOjI6
-IHdhcm5pbmc6IGluaXRpYWxpemF0aW9uIGZyb20NCj4gPiA+ID4gaW5jb21wYXRpYmxlIHBvaW50
-ZXIgdHlwZQ0KPiA+IMKgwqDCoGRyaXZlcnMvbWQvZG0tc3RyaXBlLmM6NDUyOjI6IHdhcm5pbmc6
-IChuZWFyIGluaXRpYWxpemF0aW9uIGZvcg0KPiA+ICdzdHJpcGVfdGFyZ2V0Lmxpc3QubmV4dCcp
-DQo+DQo+IEZZSSwgb3ZlcnplYWxvdXMga2J1aWxkIHJvYm90IGJ1aWxkIGZhaWx1cmUgaGVyZS4u
-IEkgaGF2ZW4ndCBzdGFnZWQgdGhlDQo+IHByZXJlcSBETSBjb3JlIGNoYW5nZXMgeWV0IGJlY2F1
-c2UgSSdtIHdhaXRpbmcgZm9yIEplbnMgdG8gdGFrZSB0aGUgMg0KPiBibG9jayBjaGFuZ2VzIHRo
-b3NlIGRlcGVuZCBvbi4NCg0KVGhpcyBwYXRjaCBhcHBsaWVzIG9uIHRvcCBvZiB3aXAuIMKgQ291
-bGQgdGhpcyBiZSBiZWNhdXNlICdmb3ItbmV4dCcgZG9lcyBub3QNCmhhdmUgdGhlIHByZXZpb3Vz
-IGRtL2RtLWxpbmVhciBzZXJpZXM/DQoNClRoYW5rcywNCi1Ub3NoaSDCoApfX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpMaW51eC1udmRpbW0gbWFpbGluZyBs
-aXN0CkxpbnV4LW52ZGltbUBsaXN0cy4wMS5vcmcKaHR0cHM6Ly9saXN0cy4wMS5vcmcvbWFpbG1h
-bi9saXN0aW5mby9saW51eC1udmRpbW0K
+On Fri, Jun 24, 2016 at 10:27 PM, Lars Ellenberg
+<lars.ellenberg@linbit.com> wrote:
+> On Fri, Jun 24, 2016 at 07:36:57PM +0800, Ming Lei wrote:
+>> >
+>> > This is not a theoretical problem.
+>> > At least int DRBD, and an unfortunately high IO concurrency wrt. the
+>> > "max-buffers" setting, without this patch we have a reproducible deadlock.
+>>
+>> Is there any log about the deadlock? And is there any lockdep warning
+>> if it is enabled?
+>
+> In DRBD, to avoid potentially very long internal queues as we wait for
+> our replication peer device and local backend, we limit the number of
+> in-flight bios we accept, and block in our ->make_request_fn() if that
+> number exceeds a configured watermark ("max-buffers").
+>
+> Works fine, as long as we could assume that once our make_request_fn()
+> returns, any bios we "recursively" submitted against the local backend
+> would be dispatched. Which used to be the case.
+>
+> commit 54efd50 block: make generic_make_request handle arbitrarily sized bios
+> introduced blk_queue_split(), which will split any bio that is
+> violating the queue limits into a smaller piece to be processed
+> right away, and queue the "rest" on current->bio_list to be
+> processed by the iteration in generic_make_request() once the
+> current ->make_request_fn() returns.
+>
+> Before that, any user was supposed to go through bio_add_page(),
+> which would call our merge bvec function, and that should already
+> be sufficient to not violate queue limits.
+>
+> Previously, typically the next in line bio to be processed would
+> be the cloned one we passed down to our backend device, which in
+> case of further stacking devices (e.g. logical volume, raid1 or
+> similar) may again push further bios on that list.
+> All of which would simply be processed in turn.
+
+Could you clarify if the issue is triggered in drbd without dm/md involved?
+Or the issue is always triggered with dm/md over drbd?
+
+As Mike mentioned, there is one known issue with dm-snapshot.
+
+>
+> Now, with blk_queue_split(), the next-in-line bio would be the
+> next piece of the "too big" original bio, so we end up calling
+> several times into our ->make_request_fn() without even
+> dispatching one bio to the backend.
+
+If your ->make_request_fn() is called several times, each time
+at least you should dispatch one bio returnd from blk_queue_split(),
+so I don't understand why even one bio isn't dispatched out.
+
+>
+> With highly concurrent IO and/or very small "max-buffers" setting,
+> this can deadlock, where the current submit path would wait for
+> the completion of the bios supposedly already passed to the
+> backend, but which actually are not even dispatched yet, rotting
+> away on current->bio_list.
+
+Suppose your ->make_request_fn only handles the bio returned
+from blk_queue_split(), I don't understand why your driver waits
+for the 'rest' bios from the blk_queue_split().
+
+Maybe drbd driver calls generic_make_request() in
+->make_request_fn() and supposes the bio is always dispatched
+out once generic_make_request() returns, is it right?
+
+>
+> I could code around that in various ways inside the DRBD make_request_fn,
+> or always dispatch the backend bios to a different (thread or work_queue)
+> context, but I'd rather have the distinction between "recursively
+> submitted" bios and "pushed back part of originally passed in bio" as
+> implemented in this patch.
+>
+> Thanks,
+>
+>     Lars
+>
+>> > I'm unsure if it could cause problems in md raid in some corner cases
+>> > or when a rebuild/scrub/... starts in a "bad" moment.
+>> >
+>> > It also may increase "stress" on any involved bio_set,
+>> > because it may increase the number of bios that are allocated
+>> > before the first of them is actually processed, causing more
+>> > frequent calls of punt_bios_to_rescuer().
+>> >
+>> > Alternatively,
+>> > a simple one-line change to generic_make_request() would also "fix" it,
+>> > by processing all recursive bios in LIFO order.
+>> > But that may change the order in which bios reach the "physical" layer,
+>> > in case they are in fact split into many smaller pieces, for example in
+>> > a striping setup, which may have other performance implications.
+>> >
+>> >  | diff --git a/block/blk-core.c b/block/blk-core.c
+>> >  | index 2475b1c7..a5623f6 100644
+>> >  | --- a/block/blk-core.c
+>> >  | +++ b/block/blk-core.c
+>> >  | @@ -2048,7 +2048,7 @@ blk_qc_t generic_make_request(struct bio *bio)
+>> >  |       * should be added at the tail
+>> >  |       */
+>> >  |      if (current->bio_list) {
+>> >  | -            bio_list_add(current->bio_list, bio);
+>> >  | +            bio_list_add_head(current->bio_list, bio);
+>> >  |              goto out;
+>> >  |      }
+>
+>> > diff --git a/block/blk-core.c b/block/blk-core.c
+>> > index 2475b1c7..f03ff4c 100644
+>> > --- a/block/blk-core.c
+>> > +++ b/block/blk-core.c
+>> > @@ -2031,7 +2031,7 @@ end_io:
+>> >   */
+>> >  blk_qc_t generic_make_request(struct bio *bio)
+>> >  {
+>> > -       struct bio_list bio_list_on_stack;
+>> > +       struct recursion_to_iteration_bio_lists bio_lists_on_stack;
+>> >         blk_qc_t ret = BLK_QC_T_NONE;
+>> >
+>> >         if (!generic_make_request_checks(bio))
+>> > @@ -2040,15 +2040,18 @@ blk_qc_t generic_make_request(struct bio *bio)
+>
+>> > -       if (current->bio_list) {
+>> > -               bio_list_add(current->bio_list, bio);
+>> > +       if (current->bio_lists) {
+>> > +               bio_list_add(&current->bio_lists->recursion, bio);
+>> >                 goto out;
+>> >         }
+>> >
+>
+>> > @@ -2067,8 +2070,9 @@ blk_qc_t generic_make_request(struct bio *bio)
+>> >          * bio_list, and call into ->make_request() again.
+>> >          */
+>> >         BUG_ON(bio->bi_next);
+>> > -       bio_list_init(&bio_list_on_stack);
+>> > -       current->bio_list = &bio_list_on_stack;
+>> > +       bio_list_init(&bio_lists_on_stack.recursion);
+>> > +       bio_list_init(&bio_lists_on_stack.remainder);
+>> > +       current->bio_lists = &bio_lists_on_stack;
+>> >         do {
+>> >                 struct request_queue *q = bdev_get_queue(bio->bi_bdev);
+>> >
+>> > @@ -2076,16 +2080,14 @@ blk_qc_t generic_make_request(struct bio *bio)
+>> >                         ret = q->make_request_fn(q, bio);
+>> >
+>> >                         blk_queue_exit(q);
+>> > -
+>> > -                       bio = bio_list_pop(current->bio_list);
+>> >                 } else {
+>> > -                       struct bio *bio_next = bio_list_pop(current->bio_list);
+>> > -
+>> >                         bio_io_error(bio);
+>> > -                       bio = bio_next;
+>> >                 }
+>> > +               bio = bio_list_pop(&current->bio_lists->recursion);
+>> > +               if (!bio)
+>> > +                       bio = bio_list_pop(&current->bio_lists->remainder);
+>> >         } while (bio);
+>> > -       current->bio_list = NULL; /* deactivate */
+>> > +       current->bio_lists = NULL; /* deactivate */
+>> >
+>> >  out:
+>> >         return ret;
+>> > diff --git a/block/blk-merge.c b/block/blk-merge.c
+>> > index 2613531..8da0c22 100644
+>> > --- a/block/blk-merge.c
+>> > +++ b/block/blk-merge.c
+>> > @@ -172,6 +172,7 @@ void blk_queue_split(struct request_queue *q, struct bio **bio,
+>> >         struct bio *split, *res;
+>> >         unsigned nsegs;
+>> >
+>> > +       BUG_ON(!current->bio_lists);
+>> >         if ((*bio)->bi_rw & REQ_DISCARD)
+>> >                 split = blk_bio_discard_split(q, *bio, bs, &nsegs);
+>> >         else if ((*bio)->bi_rw & REQ_WRITE_SAME)
+>> > @@ -190,7 +191,7 @@ void blk_queue_split(struct request_queue *q, struct bio **bio,
+>> >
+>> >                 bio_chain(split, *bio);
+>> >                 trace_block_split(q, split, (*bio)->bi_iter.bi_sector);
+>> > -               generic_make_request(*bio);
+>> > +               bio_list_add_head(&current->bio_lists->remainder, *bio);
+>> >                 *bio = split;
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-block" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
