@@ -1,201 +1,189 @@
-From: Ming Lei <ming.lei@canonical.com>
-Subject: Re: [RFC] block: fix blk_queue_split() resource exhaustion
-Date: Sat, 25 Jun 2016 17:30:29 +0800
-Message-ID: <CACVXFVMtMi9WXYQLa3_XZi7W8ZsJe1GnnTLX+7tRMhFAMUSHtA@mail.gmail.com>
-References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
- <CACVXFVOtzcPpmg9Z_P6xN99dW=Sb_cCQNd-VcP0s5Nk0yHbwXQ@mail.gmail.com> <20160624142711.GF3239@soda.linbit>
+From: Dennis Yang <dennisyang@qnap.com>
+Subject: Re: Possible data corruption with dm-thin
+Date: Mon, 27 Jun 2016 17:32:35 +0800
+Message-ID: <CAAR726KCTJnbJhU-XhAn0xv3RVEHZY-NFjSNnWqnuVVO6kR4xQ@mail.gmail.com>
+References: <CAAR726JWQ4VKOVR87QX6Tmuhu1JnCymm7coLT=TFn3BseKm8XA@mail.gmail.com>
+	<20160624135510.GA13946@roamer.bos.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160624142711.GF3239@soda.linbit>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Lars Ellenberg <lars.ellenberg@linbit.com>
-Cc: linux-block@vger.kernel.org, Roland Kammerer <roland.kammerer@linbit.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, Kent Overstreet <kent.overstreet@gmail.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Takashi Iwai <tiwai@suse.de>, Jiri Kosina <jkosina@suse.cz>, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "open list:BCACHE (BLOCK LAYER CACHE)" <linux-bcache@vger.kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="===============5457158760609248397=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20160624135510.GA13946@roamer.bos.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Dennis Yang <dennisyang@qnap.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 24, 2016 at 10:27 PM, Lars Ellenberg
-<lars.ellenberg@linbit.com> wrote:
-> On Fri, Jun 24, 2016 at 07:36:57PM +0800, Ming Lei wrote:
->> >
->> > This is not a theoretical problem.
->> > At least int DRBD, and an unfortunately high IO concurrency wrt. the
->> > "max-buffers" setting, without this patch we have a reproducible deadlock.
->>
->> Is there any log about the deadlock? And is there any lockdep warning
->> if it is enabled?
->
-> In DRBD, to avoid potentially very long internal queues as we wait for
-> our replication peer device and local backend, we limit the number of
-> in-flight bios we accept, and block in our ->make_request_fn() if that
-> number exceeds a configured watermark ("max-buffers").
->
-> Works fine, as long as we could assume that once our make_request_fn()
-> returns, any bios we "recursively" submitted against the local backend
-> would be dispatched. Which used to be the case.
->
-> commit 54efd50 block: make generic_make_request handle arbitrarily sized bios
-> introduced blk_queue_split(), which will split any bio that is
-> violating the queue limits into a smaller piece to be processed
-> right away, and queue the "rest" on current->bio_list to be
-> processed by the iteration in generic_make_request() once the
-> current ->make_request_fn() returns.
->
-> Before that, any user was supposed to go through bio_add_page(),
-> which would call our merge bvec function, and that should already
-> be sufficient to not violate queue limits.
->
-> Previously, typically the next in line bio to be processed would
-> be the cloned one we passed down to our backend device, which in
-> case of further stacking devices (e.g. logical volume, raid1 or
-> similar) may again push further bios on that list.
-> All of which would simply be processed in turn.
+--===============5457158760609248397==
+Content-Type: multipart/alternative; boundary=047d7bb049c67f3d0405363f342e
 
-Could you clarify if the issue is triggered in drbd without dm/md involved?
-Or the issue is always triggered with dm/md over drbd?
+--047d7bb049c67f3d0405363f342e
+Content-Type: text/plain; charset=UTF-8
 
-As Mike mentioned, there is one known issue with dm-snapshot.
+Hi Joe,
 
->
-> Now, with blk_queue_split(), the next-in-line bio would be the
-> next piece of the "too big" original bio, so we end up calling
-> several times into our ->make_request_fn() without even
-> dispatching one bio to the backend.
+2016-06-24 21:55 GMT+08:00 Edward Thornber <thornber@redhat.com>:
 
-If your ->make_request_fn() is called several times, each time
-at least you should dispatch one bio returnd from blk_queue_split(),
-so I don't understand why even one bio isn't dispatched out.
+> Hi Dennis,
+>
+> On Tue, Jun 21, 2016 at 03:56:26PM +0800, Dennis Yang wrote:
+> > So my question is, does dm-thin have any mechanism to eliminate the race
+> > when
+> > discarded block is reused right away by another device?
+>
+> I'll try and recreate your scenario.  The transaction-manager will not
+> reallocate a block that's been freed within a transaction so that we
+> can always rollback.  So as long as there hasn't been a commit,
+> reallocation shouldn't be possible.  This is what normally guards
+> allocation, but in your case I think you may be onto something and we
+> may have to hold onto the data cell until the passdown discards are
+> complete.
+>
+> - Joe
+>
 
->
-> With highly concurrent IO and/or very small "max-buffers" setting,
-> this can deadlock, where the current submit path would wait for
-> the completion of the bios supposedly already passed to the
-> backend, but which actually are not even dispatched yet, rotting
-> away on current->bio_list.
+In my experience, this issue is pretty hard to reproduce solely by a
+thin-pool
+which is built on top of a regular hard disk or RAID, since I rarely
+observe the
+DISCARD and WRITE coming from different thin devices get reordered in the
+lower level. In my system, the thin-pool is built on top of another
+device-mapper
+device providing data tiering functionality which could delay the DISCARD
+request a little bit and lead to a request reorder situation.
 
-Suppose your ->make_request_fn only handles the bio returned
-from blk_queue_split(), I don't understand why your driver waits
-for the 'rest' bios from the blk_queue_split().
+Based on the log I had, I suspect that there was metadata commit before
+another
+thin device reused the discarded block while the DISCARD request was still
+being
+processed by the lower level stacks. In this case, holding the data cell
+until the
+passdown discards are complete seems to only protect the discarded block
+from
+being reallocated by the same thin device which allocates the block in the
+first place,
+because only those write I/Os that are going to the same device will be
+prisoned.
 
-Maybe drbd driver calls generic_make_request() in
-->make_request_fn() and supposes the bio is always dispatched
-out once generic_make_request() returns, is it right?
+In my opinion, I think maybe the to-be-discard block should only be freed
+after the
+passdown discards have been complete. I had only written a patch in this
+way and
+applied it on my site since last week, and the issue had not been seen on
+my site
+for 72 hours. I am not very confident about whether this patch will cause
+any side
+effect, I would be highly appreciated if you can share your concern with me.
 
+Thanks for your reply,
+Dennis
+
+
+
+
+-- 
+Dennis Yang
+QNAP Systems, Inc.
+Skype: qnap.dennis.yang
+Email: dennisyang@qnap.com
+Tel: (+886)-2-2393-5152 ext. 15018
+Address: 13F., No.56, Sec. 1, Xinsheng S. Rd., Zhongzheng Dist., Taipei
+City, Taiwan
+
+--047d7bb049c67f3d0405363f342e
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Joe,<div class=3D"gmail_extra"><br><div class=3D"gmail_=
+quote">2016-06-24 21:55 GMT+08:00 Edward Thornber <span dir=3D"ltr">&lt;<a =
+href=3D"mailto:thornber@redhat.com" target=3D"_blank">thornber@redhat.com</=
+a>&gt;</span>:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .=
+8ex;border-left:1px #ccc solid;padding-left:1ex">Hi Dennis,<br>
+<span class=3D""><br>
+On Tue, Jun 21, 2016 at 03:56:26PM +0800, Dennis Yang wrote:<br>
+&gt; So my question is, does dm-thin have any mechanism to eliminate the ra=
+ce<br>
+&gt; when<br>
+&gt; discarded block is reused right away by another device?<br>
+<br>
+</span>I&#39;ll try and recreate your scenario.=C2=A0 The transaction-manag=
+er will not<br>
+reallocate a block that&#39;s been freed within a transaction so that we<br=
 >
-> I could code around that in various ways inside the DRBD make_request_fn,
-> or always dispatch the backend bios to a different (thread or work_queue)
-> context, but I'd rather have the distinction between "recursively
-> submitted" bios and "pushed back part of originally passed in bio" as
-> implemented in this patch.
+can always rollback.=C2=A0 So as long as there hasn&#39;t been a commit,<br=
 >
-> Thanks,
->
->     Lars
->
->> > I'm unsure if it could cause problems in md raid in some corner cases
->> > or when a rebuild/scrub/... starts in a "bad" moment.
->> >
->> > It also may increase "stress" on any involved bio_set,
->> > because it may increase the number of bios that are allocated
->> > before the first of them is actually processed, causing more
->> > frequent calls of punt_bios_to_rescuer().
->> >
->> > Alternatively,
->> > a simple one-line change to generic_make_request() would also "fix" it,
->> > by processing all recursive bios in LIFO order.
->> > But that may change the order in which bios reach the "physical" layer,
->> > in case they are in fact split into many smaller pieces, for example in
->> > a striping setup, which may have other performance implications.
->> >
->> >  | diff --git a/block/blk-core.c b/block/blk-core.c
->> >  | index 2475b1c7..a5623f6 100644
->> >  | --- a/block/blk-core.c
->> >  | +++ b/block/blk-core.c
->> >  | @@ -2048,7 +2048,7 @@ blk_qc_t generic_make_request(struct bio *bio)
->> >  |       * should be added at the tail
->> >  |       */
->> >  |      if (current->bio_list) {
->> >  | -            bio_list_add(current->bio_list, bio);
->> >  | +            bio_list_add_head(current->bio_list, bio);
->> >  |              goto out;
->> >  |      }
->
->> > diff --git a/block/blk-core.c b/block/blk-core.c
->> > index 2475b1c7..f03ff4c 100644
->> > --- a/block/blk-core.c
->> > +++ b/block/blk-core.c
->> > @@ -2031,7 +2031,7 @@ end_io:
->> >   */
->> >  blk_qc_t generic_make_request(struct bio *bio)
->> >  {
->> > -       struct bio_list bio_list_on_stack;
->> > +       struct recursion_to_iteration_bio_lists bio_lists_on_stack;
->> >         blk_qc_t ret = BLK_QC_T_NONE;
->> >
->> >         if (!generic_make_request_checks(bio))
->> > @@ -2040,15 +2040,18 @@ blk_qc_t generic_make_request(struct bio *bio)
->
->> > -       if (current->bio_list) {
->> > -               bio_list_add(current->bio_list, bio);
->> > +       if (current->bio_lists) {
->> > +               bio_list_add(&current->bio_lists->recursion, bio);
->> >                 goto out;
->> >         }
->> >
->
->> > @@ -2067,8 +2070,9 @@ blk_qc_t generic_make_request(struct bio *bio)
->> >          * bio_list, and call into ->make_request() again.
->> >          */
->> >         BUG_ON(bio->bi_next);
->> > -       bio_list_init(&bio_list_on_stack);
->> > -       current->bio_list = &bio_list_on_stack;
->> > +       bio_list_init(&bio_lists_on_stack.recursion);
->> > +       bio_list_init(&bio_lists_on_stack.remainder);
->> > +       current->bio_lists = &bio_lists_on_stack;
->> >         do {
->> >                 struct request_queue *q = bdev_get_queue(bio->bi_bdev);
->> >
->> > @@ -2076,16 +2080,14 @@ blk_qc_t generic_make_request(struct bio *bio)
->> >                         ret = q->make_request_fn(q, bio);
->> >
->> >                         blk_queue_exit(q);
->> > -
->> > -                       bio = bio_list_pop(current->bio_list);
->> >                 } else {
->> > -                       struct bio *bio_next = bio_list_pop(current->bio_list);
->> > -
->> >                         bio_io_error(bio);
->> > -                       bio = bio_next;
->> >                 }
->> > +               bio = bio_list_pop(&current->bio_lists->recursion);
->> > +               if (!bio)
->> > +                       bio = bio_list_pop(&current->bio_lists->remainder);
->> >         } while (bio);
->> > -       current->bio_list = NULL; /* deactivate */
->> > +       current->bio_lists = NULL; /* deactivate */
->> >
->> >  out:
->> >         return ret;
->> > diff --git a/block/blk-merge.c b/block/blk-merge.c
->> > index 2613531..8da0c22 100644
->> > --- a/block/blk-merge.c
->> > +++ b/block/blk-merge.c
->> > @@ -172,6 +172,7 @@ void blk_queue_split(struct request_queue *q, struct bio **bio,
->> >         struct bio *split, *res;
->> >         unsigned nsegs;
->> >
->> > +       BUG_ON(!current->bio_lists);
->> >         if ((*bio)->bi_rw & REQ_DISCARD)
->> >                 split = blk_bio_discard_split(q, *bio, bs, &nsegs);
->> >         else if ((*bio)->bi_rw & REQ_WRITE_SAME)
->> > @@ -190,7 +191,7 @@ void blk_queue_split(struct request_queue *q, struct bio **bio,
->> >
->> >                 bio_chain(split, *bio);
->> >                 trace_block_split(q, split, (*bio)->bi_iter.bi_sector);
->> > -               generic_make_request(*bio);
->> > +               bio_list_add_head(&current->bio_lists->remainder, *bio);
->> >                 *bio = split;
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-block" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+reallocation shouldn&#39;t be possible.=C2=A0 This is what normally guards<=
+br>
+allocation, but in your case I think you may be onto something and we<br>
+may have to hold onto the data cell until the passdown discards are<br>
+complete.<br>
+<br>
+- Joe<br>
+</blockquote></div><br>In my experience, this issue is pretty hard to repro=
+duce solely by a thin-pool=C2=A0</div><div class=3D"gmail_extra">which is b=
+uilt on top of a regular hard disk or RAID, since I rarely observe the=C2=
+=A0</div><div class=3D"gmail_extra">DISCARD and WRITE coming from different=
+ thin devices get reordered in the=C2=A0</div><div class=3D"gmail_extra">lo=
+wer level. In my system, the thin-pool is built on top of another device-ma=
+pper=C2=A0</div><div class=3D"gmail_extra">device providing data tiering fu=
+nctionality which could delay the DISCARD=C2=A0</div><div class=3D"gmail_ex=
+tra">request a little bit and lead to a request reorder situation.=C2=A0</d=
+iv><div class=3D"gmail_extra"><br></div><div class=3D"gmail_extra">Based on=
+ the log I had, I suspect that there was metadata commit before another</di=
+v><div class=3D"gmail_extra">thin device reused the discarded block while t=
+he DISCARD request was still being</div><div class=3D"gmail_extra">processe=
+d by the lower level stacks. In this case, holding the data cell until the=
+=C2=A0</div><div class=3D"gmail_extra">passdown discards are complete seems=
+ to only protect the discarded block from</div><div class=3D"gmail_extra">b=
+eing reallocated by the same thin device which allocates the block in the f=
+irst place,</div><div class=3D"gmail_extra">because only those write I/Os t=
+hat are going to the same device will be prisoned.=C2=A0</div><div class=3D=
+"gmail_extra"><br></div><div class=3D"gmail_extra">In my opinion, I think m=
+aybe the to-be-discard block should only be freed after the</div><div class=
+=3D"gmail_extra">passdown discards have been complete. I had only written a=
+ patch in this way and=C2=A0</div><div class=3D"gmail_extra">applied it on =
+my site since last week, and the issue had not been seen on my site=C2=A0</=
+div><div class=3D"gmail_extra">for 72 hours. I am not very confident about =
+whether this patch will cause any side</div><div class=3D"gmail_extra">effe=
+ct, I would be highly appreciated if you can share your concern with me.</d=
+iv><div class=3D"gmail_extra"><br></div><div class=3D"gmail_extra">Thanks f=
+or your reply,</div><div class=3D"gmail_extra">Dennis =C2=A0=C2=A0</div><di=
+v class=3D"gmail_extra"><br></div><div class=3D"gmail_extra"><br></div><div=
+ class=3D"gmail_extra">=C2=A0 =C2=A0</div><div class=3D"gmail_extra"><div><=
+br></div>-- <br><div class=3D"gmail_signature" data-smartmail=3D"gmail_sign=
+ature"><div dir=3D"ltr"><span lang=3D"EN-US" style=3D"font-size:10pt;font-f=
+amily:Arial,sans-serif">Dennis Yang=C2=A0</span><span lang=3D"EN-US" style=
+=3D"font-size:10pt;font-family:Arial,sans-serif">=C2=A0</span><span lang=3D=
+"EN-US" style=3D"font-size:10pt;font-family:Arial,sans-serif"><br>QNAP Syst=
+ems, Inc.</span><div><span lang=3D"EN-US" style=3D"font-size:10pt;font-fami=
+ly:Arial,sans-serif">Skype: qnap.dennis.yang<br>Email:</span><span lang=3D"=
+EN-US" style=3D"font-size:10pt;font-family:Arial,sans-serif">=C2=A0<a href=
+=3D"mailto:dennisyang@qnap.com" target=3D"_blank">dennisyang@qnap.com</a></=
+span><div><span lang=3D"EN-US" style=3D"font-size:10pt;font-family:Arial,sa=
+ns-serif">Tel:</span><span style=3D"font-family:Arial,sans-serif;font-size:=
+13.333333969116211px">=C2=A0(+886)-2-2393-5152 ext.=C2=A0</span><span style=
+=3D"font-family:Arial,sans-serif;font-size:13.333333969116211px">15018</spa=
+n><div><font face=3D"Arial, sans-serif" size=3D"2">Address:=C2=A0</font><sp=
+an style=3D"color:rgb(51,51,51);font-family:Verdana,Arial,Helvetica,sans-se=
+rif;font-size:12px;line-height:18.66666603088379px">13F., No.56, Sec. 1, Xi=
+nsheng S. Rd., Zhongzheng Dist., Taipei City, Taiwan</span></div></div></di=
+v></div></div>
+</div></div>
+
+--047d7bb049c67f3d0405363f342e--
+
+
+--===============5457158760609248397==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5457158760609248397==--
