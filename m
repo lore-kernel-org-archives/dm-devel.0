@@ -1,135 +1,86 @@
-From: Lars Ellenberg <lars.ellenberg@linbit.com>
-Subject: Re: [RFC] block: fix blk_queue_split() resource exhaustion
-Date: Tue, 28 Jun 2016 10:45:36 +0200
-Message-ID: <20160628084534.GI3239@soda.linbit>
-References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
- <CACVXFVOtzcPpmg9Z_P6xN99dW=Sb_cCQNd-VcP0s5Nk0yHbwXQ@mail.gmail.com>
- <20160624142711.GF3239@soda.linbit>
- <CACVXFVMtMi9WXYQLa3_XZi7W8ZsJe1GnnTLX+7tRMhFAMUSHtA@mail.gmail.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: [PATCH] dm mpath: Fix a dm_blk_ioctl() deadlock
+Date: Tue, 28 Jun 2016 11:07:46 +0200
+Message-ID: <c987a4ca-4b55-0b3a-a414-2608f2ded132@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CACVXFVMtMi9WXYQLa3_XZi7W8ZsJe1GnnTLX+7tRMhFAMUSHtA@mail.gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Ming Lei <ming.lei@canonical.com>
-Cc: linux-block@vger.kernel.org, Roland Kammerer <roland.kammerer@linbit.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, Kent Overstreet <kent.overstreet@gmail.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Takashi Iwai <tiwai@suse.de>, Jiri Kosina <jkosina@suse.cz>, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "open list:BCACHE (BLOCK LAYER CACHE)" <linux-bcache@vger.kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Jun 25, 2016 at 05:30:29PM +0800, Ming Lei wrote:
-> On Fri, Jun 24, 2016 at 10:27 PM, Lars Ellenberg
-> <lars.ellenberg@linbit.com> wrote:
-> > On Fri, Jun 24, 2016 at 07:36:57PM +0800, Ming Lei wrote:
-> >> >
-> >> > This is not a theoretical problem.
-> >> > At least int DRBD, and an unfortunately high IO concurrency wrt. the
-> >> > "max-buffers" setting, without this patch we have a reproducible deadlock.
-> >>
-> >> Is there any log about the deadlock? And is there any lockdep warning
-> >> if it is enabled?
-> >
-> > In DRBD, to avoid potentially very long internal queues as we wait for
-> > our replication peer device and local backend, we limit the number of
-> > in-flight bios we accept, and block in our ->make_request_fn() if that
-> > number exceeds a configured watermark ("max-buffers").
-> >
-> > Works fine, as long as we could assume that once our make_request_fn()
-> > returns, any bios we "recursively" submitted against the local backend
-> > would be dispatched. Which used to be the case.
-> >
-> > commit 54efd50 block: make generic_make_request handle arbitrarily sized bios
-> > introduced blk_queue_split(), which will split any bio that is
-> > violating the queue limits into a smaller piece to be processed
-> > right away, and queue the "rest" on current->bio_list to be
-> > processed by the iteration in generic_make_request() once the
-> > current ->make_request_fn() returns.
-> >
-> > Before that, any user was supposed to go through bio_add_page(),
-> > which would call our merge bvec function, and that should already
-> > be sufficient to not violate queue limits.
-> >
-> > Previously, typically the next in line bio to be processed would
-> > be the cloned one we passed down to our backend device, which in
-> > case of further stacking devices (e.g. logical volume, raid1 or
-> > similar) may again push further bios on that list.
-> > All of which would simply be processed in turn.
-> 
-> Could you clarify if the issue is triggered in drbd without dm/md involved?
-> Or the issue is always triggered with dm/md over drbd?
-> 
-> As Mike mentioned, there is one known issue with dm-snapshot.
+Avoid that submitting an ioctl to a dm device while an underlying
+block device is being removed triggers a deadlock. The call traces
+reported by SysRq-w if the deadlock occurs are as follows:
 
+sysrq: SysRq : Show Blocked State
+  task                        PC stack   pid father
+systemd-udevd   D ffff8803683f7878     0  6684    494 0x00000006
+Call Trace:
+ [<ffffffff815acf97>] schedule+0x37/0x90
+ [<ffffffff815b14bb>] schedule_timeout+0x18b/0x230
+ [<ffffffff815ac61f>] io_schedule_timeout+0x9f/0x110
+ [<ffffffff815ad786>] bit_wait_io+0x16/0x60
+ [<ffffffff815ad579>] __wait_on_bit_lock+0x49/0xa0
+ [<ffffffff8111b3d6>] __lock_page+0xb6/0xc0
+ [<ffffffff8112f6a4>] truncate_inode_pages_range+0x444/0x790
+ [<ffffffff8112fa00>] truncate_inode_pages+0x10/0x20
+ [<ffffffff811d6ef0>] kill_bdev+0x30/0x40
+ [<ffffffff811d8201>] __blkdev_put+0x71/0x360
+ [<ffffffff811d8539>] blkdev_put+0x49/0x170
+ [<ffffffff811d8680>] blkdev_close+0x20/0x30
+ [<ffffffff8119e338>] __fput+0xe8/0x1f0
+ [<ffffffff8119e479>] ____fput+0x9/0x10
+ [<ffffffff8107876c>] task_work_run+0x7c/0xb0
+ [<ffffffff8105d047>] do_exit+0x3b7/0xb10
+ [<ffffffff8105d82b>] do_group_exit+0x4b/0xc0
+ [<ffffffff81068f25>] get_signal+0x1c5/0x7f0
+ [<ffffffff8101a1a3>] do_signal+0x23/0x700
+ [<ffffffff810020d3>] exit_to_usermode_loop+0x73/0xb0
+ [<ffffffff81002580>] syscall_return_slowpath+0xb0/0xc0
+ [<ffffffff815b2537>] entry_SYSCALL_64_fastpath+0xaa/0xac
+systemd-udevd   D ffff880062613cd8     0  6767    494 0x00000000
+Call Trace:
+ [<ffffffff815acf97>] schedule+0x37/0x90
+ [<ffffffff815b1487>] schedule_timeout+0x157/0x230
+ [<ffffffff810c0d33>] msleep+0x33/0x40
+ [<ffffffffa0341a5b>] dm_grab_bdev_for_ioctl+0x7b/0x150 [dm_mod]
+ [<ffffffffa0341e25>] dm_blk_ioctl+0x35/0x80 [dm_mod]
+ [<ffffffff812b36eb>] blkdev_ioctl+0x25b/0x980
+ [<ffffffff811d79b8>] block_ioctl+0x38/0x40
+ [<ffffffff811afd5e>] do_vfs_ioctl+0x8e/0x660
+ [<ffffffff811b036c>] SyS_ioctl+0x3c/0x70
+ [<ffffffff815b24a9>] entry_SYSCALL_64_fastpath+0x1c/0xac
 
-The issue can always be triggered, even if only DRBD is involved.
+Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: <stable@vger.kernel.org>
+---
+ drivers/md/dm.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-> If your ->make_request_fn() is called several times, each time
-> at least you should dispatch one bio returnd from blk_queue_split(),
-> so I don't understand why even one bio isn't dispatched out.
-
-I'll try to "visualize" the mechanics of "my" deadlock here.
-
-Just to clarify the effect, assume we had a driver that
-for $reasons would limit the number of in-flight IO to
-one single bio.
-
-=== before bio_queue_split()
-
-Previously, if something would want to read some range of blocks,
-it would allocate a bio, call bio_add_page() a number of times,
-and once the bio was "full", call generic_make_request(),
-and fill the next bio, then submit that one.
-
-Stacking: "single_in_flight" (q1) -> "sda" (q2)
-
-  generic_make_request(bio)	current->bio_list	in-flight
-   B_orig_1				NULL		0
-    q1->make_request_fn(B_orig_1)	empty
-    							1
-	recursive call, queues:		B_1_remapped
-    iterative call:
-    q2->make_request_fn(B_1_remapped)	empty
-    		-> actually dispatched to hardware
-  return of generic_make_request(B_orig_1).
-   B_orig_2
-    q1->make_request_fn(B_orig_1)
-    							1
-	blocks, waits for in-flight to drop
-	...
-	completion of B_orig_1				0
-
-	recursive call, queues:		B_2_remapped
-    iterative call:
-    q2->make_request_fn(B_2_remapped)	empty
-    		-> actually dispatched to hardware
-  return of generic_make_request(B_orig_2).
-
-
-=== with bio_queue_split()
-
-Now, uppser layers buils one large bio.
-
-  generic_make_request(bio)	current->bio_list	in-flight
-   B_orig				NULL		0
-    q1->make_request_fn(B_orig)		empty
-    blk_queue_split(B_orig) splits into
-    					B_orig_r1
-    B_orig_s1
-    							1
-	recursive call, queues:		B_orig_r1, B_s1_remapped
-    iterative call:
-    q1->make_request_fn(B_orig_r1)	B_s1_remapped
-	blocks, waits for in-flight to drop
-	...
-	which never happens,
-	because B_s1_remapped has not even been submitted to q2 yet,
-	let alone dispatched to hardware.
-
-
-Obviously we don't limit ourselves to just one request, but with larger
-incoming bios, with the number of times we split them, with the number
-of stacking layers below us, or even layers below us that *also*
-call blk_queue_split (or equivalent open coded clone and split)
-themselves to split even further, things get worse.
-
-    Lars
-
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 1b2f962..f3564e1 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -630,7 +630,8 @@ retry:
+ 
+ out:
+ 	dm_put_live_table(md, srcu_idx);
+-	if (r == -ENOTCONN && !fatal_signal_pending(current)) {
++	if (r == -ENOTCONN && !fatal_signal_pending(current) &&
++	    !blk_queue_dying(bdev_get_queue(*bdev))) {
+ 		msleep(10);
+ 		goto retry;
+ 	}
+-- 
+2.8.4
