@@ -1,13 +1,15 @@
-From: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
-Subject: [PATCH 2/2] dm snap: add fake origin_direct_access
-Date: Tue, 28 Jun 2016 13:37:16 -0600
-Message-ID: <1467142636-21094-3-git-send-email-toshi.kani@hpe.com>
+From: "Kani, Toshimitsu" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Subject: Re: [PATCH 0/2] fix dm-snap for dax
+Date: Tue, 28 Jun 2016 19:43:26 +0000
+Message-ID: <1467143000.3504.431.camel@hpe.com>
 References: <1467142636-21094-1-git-send-email-toshi.kani@hpe.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 In-Reply-To: <1467142636-21094-1-git-send-email-toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Content-Language: en-US
+Content-ID: <49AF3059A3F22F43BC6FCF0B51BAEEB0-mmYPd6ayCNGroOM5E8FhRbjFIynDaujOfM0AETQt39g@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -17,54 +19,37 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+To: "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 List-Id: dm-devel.ids
 
-dax-capable mapped-device is marked as DM_TYPE_DAX_BIO_BASED,
-which supports both dax and bio-based operations.  dm-snap
-needs to work with dax-capable device when bio-based operation
-is used.
-
-Add fake origin_direct_access() to origin device so that its
-origin device is also marked as DM_TYPE_DAX_BIO_BASED for
-dax-capable device.  This allows to extend target's DM table.
-dm-snap works normally when bio-based operation is used.
-
-dm-snap does not support dax operation, and mount with dax
-option to a target device or snapshot device fails.
-
-Signed-off-by: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
----
- drivers/md/dm-snap.c |    8 ++++++++
- 1 file changed, 8 insertions(+)
-
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 69ab1ff..c472f04 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -2301,6 +2301,13 @@ static int origin_map(struct dm_target *ti, struct bio *bio)
- 	return do_origin(o->dev, bio);
- }
- 
-+static long origin_direct_access(struct dm_target *ti, sector_t sector,
-+		void __pmem **kaddr, pfn_t *pfn, long size)
-+{
-+	DMWARN("device does not support dax.");
-+	return -EIO;
-+}
-+
- /*
-  * Set the target "max_io_len" field to the minimum of all the snapshots'
-  * chunk sizes.
-@@ -2360,6 +2367,7 @@ static struct target_type origin_target = {
- 	.postsuspend = origin_postsuspend,
- 	.status  = origin_status,
- 	.iterate_devices = origin_iterate_devices,
-+	.direct_access = origin_direct_access,
- };
- 
- static struct target_type snapshot_target = {
+U29ycnksIHN1YmplY3QgbGluZSBzaG91bGQgYmUgIltQQVRDSCAwLzJdIGZpeCBkbS1zbmFwIGZv
+ciBkYXgiDQotVG9zaGkNCg0KT24gVHVlLCAyMDE2LTA2LTI4IGF0IDEzOjM3IC0wNjAwLCBUb3No
+aSBLYW5pIHdyb3RlOg0KPiBJIG5vdGljZWQgdGhhdCBkbS1zbmFwIHJlbG9hZHMgRE0gdGFibGUg
+b2YgdGFyZ2V0IG1hcHBlZC1kZXZpY2UsIHdoaWNoDQo+IGZhaWxzIGZvciBkYXgtY2FwYWJsZSBk
+ZXZpY2UgYWZ0ZXIgZGF4IHN1cHBvcnQgaXMgYWRkZWQuwqDCoElkZWFsbHksDQo+IGFkZGluZyBk
+YXggc3VwcG9ydCB0byBkbS1zbmFwIHNvbHZlcyB0aGUgaXNzdWUsIGJ1dCBpdCBjYW5ub3QgYmUg
+ZG9uZQ0KPiBlYXNpbHkuwqDCoFRoaXMgcGF0Y2gtc2V0IGFsbG93cyBkbS1zbmFwIHRvIHdvcmsg
+d2l0aCBkYXgtY2FwYWJsZSB0YXJnZXQNCj4gZGV2aWNlcyB3aGVuIGJpby1iYXNlZCBvcGVyYXRp
+b24gaXMgdXNlZC4NCj4gDQo+IGRheCBvcGVyYXRpb24gaXMgdW5zdXBwb3J0ZWQgd2l0aCBkbS1z
+bmFwLCBzdWNoIHRoYXQ6DQo+IMKgYSkgQWZ0ZXIgc25hcHNob3QgaXMgdGFrZW4sIG1vdW50IHdp
+dGggZGF4IG9wdGlvbiB0byBhIHRhcmdldCBkZXZpY2UNCj4gwqDCoMKgwqBvciBhIHNuYXBzaG90
+IGRldmljZSBmYWlscy7CoMKgVGhleSBjYW4gYmUgbW91bnRlZCB3aXRob3V0IGRheC4NCj4gwqBi
+KSBBZnRlciBzbmFwc2hvdCBpcyB0YWtlbiB0byBhIGRheC1tb3VudGVkIHRhcmdldCBkZXZpY2Us
+IGFueSB3cml0ZXPCoA0KPiDCoMKgwqDCoHRvIHRoZSB0YXJnZXQgZGV2aWNlIGZhaWxzIChFSU8p
+Lg0KPiANCj4gYikgY2FuIGJlIHByb3RlY3RlZCBieSBjaGFuZ2luZyBsdmNyZWF0ZSB0byBmYWls
+IHdoZW4gc25hcHNob3QgaXMNCj4gcmVxdWVzdGVkIHRvIGEgZGF4LW1vdW50ZWQgdGFyZ2V0IGRl
+dmljZS7CoA0KPiANCj4gLSBQYXRjaCAxIHNvbHZlcyBhbiBlcnJvciB3aGVuIGx2cmVtb3ZlIGlz
+IG1hZGUgdG8gYSBzbmFwc2hvdCBkZXZpY2UuDQo+IC0gUGF0Y2ggMiBzb2x2ZXMgYW4gZXJyb3Ig
+d2hlbiBsdmNyZWF0ZSAtLXNuYXBzaG90IGlzIG1hZGUgdG8gYSBkYXgtDQo+IMKgIGNhcGFibGUg
+ZGV2aWNlLg0KPiANCj4gLS0tDQo+IFRvc2hpIEthbmkgKDIpOg0KPiDCoDEvMiBkbTogdXBkYXRl
+IHRhYmxlIHR5cGUgY2hlY2sgZm9yIGRheA0KPiDCoDIvMiBkbSBzbmFwOiBhZGQgZmFrZSBvcmln
+aW5fZGlyZWN0X2FjY2Vzcw0KPiANCj4gLS0tDQo+IMKgZHJpdmVycy9tZC9kbS1pb2N0bC5jIHwg
+MTEgKysrKysrKysrKy0NCj4gwqBkcml2ZXJzL21kL2RtLXNuYXAuY8KgwqB8wqDCoDggKysrKysr
+KysNCj4gwqAyIGZpbGVzIGNoYW5nZWQsIDE4IGluc2VydGlvbnMoKyksIDEgZGVsZXRpb24oLSkN
+Cj4gX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18NCj4gTGlu
+dXgtbnZkaW1tIG1haWxpbmcgbGlzdA0KPiBMaW51eC1udmRpbW1AbGlzdHMuMDEub3JnDQo+IGh0
+dHBzOi8vbGlzdHMuMDEub3JnL21haWxtYW4vbGlzdGluZm8vbGludXgtbnZkaW1tCl9fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkxpbnV4LW52ZGltbSBtYWls
+aW5nIGxpc3QKTGludXgtbnZkaW1tQGxpc3RzLjAxLm9yZwpodHRwczovL2xpc3RzLjAxLm9yZy9t
+YWlsbWFuL2xpc3RpbmZvL2xpbnV4LW52ZGltbQo=
