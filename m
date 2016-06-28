@@ -1,11 +1,14 @@
-From: Xieyingtai <xieyingtai@huawei.com>
-Subject: (no subject)
-Date: Tue, 28 Jun 2016 10:54:20 +0000
-Message-ID: <AF7C226D2A4F8B4D913D33FF7150AE0531BD85FC@szxeml556-mbs.china.huawei.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm mpath: Fix a dm_blk_ioctl() deadlock
+Date: Tue, 28 Jun 2016 14:15:26 -0400
+Message-ID: <20160628181526.GA8013@redhat.com>
+References: <c987a4ca-4b55-0b3a-a414-2608f2ded132@sandisk.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4487922423126067607=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: zh-CN
+Content-Disposition: inline
+In-Reply-To: <c987a4ca-4b55-0b3a-a414-2608f2ded132@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,322 +18,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============4487922423126067607==
-Content-Language: zh-CN
-Content-Type: multipart/related;
-	boundary="_004_AF7C226D2A4F8B4D913D33FF7150AE0531BD85FCszxeml556mbschi_";
-	type="multipart/alternative"
+On Tue, Jun 28 2016 at  5:07am -0400,
+Bart Van Assche <bart.vanassche@sandisk.com> wrote:
 
---_004_AF7C226D2A4F8B4D913D33FF7150AE0531BD85FCszxeml556mbschi_
-Content-Type: multipart/alternative;
-	boundary="_000_AF7C226D2A4F8B4D913D33FF7150AE0531BD85FCszxeml556mbschi_"
+> Avoid that submitting an ioctl to a dm device while an underlying
+> block device is being removed triggers a deadlock. The call traces
+> reported by SysRq-w if the deadlock occurs are as follows:
+> 
+> sysrq: SysRq : Show Blocked State
+>   task                        PC stack   pid father
+> systemd-udevd   D ffff8803683f7878     0  6684    494 0x00000006
+> Call Trace:
+>  [<ffffffff815acf97>] schedule+0x37/0x90
+>  [<ffffffff815b14bb>] schedule_timeout+0x18b/0x230
+>  [<ffffffff815ac61f>] io_schedule_timeout+0x9f/0x110
+>  [<ffffffff815ad786>] bit_wait_io+0x16/0x60
+>  [<ffffffff815ad579>] __wait_on_bit_lock+0x49/0xa0
+>  [<ffffffff8111b3d6>] __lock_page+0xb6/0xc0
+>  [<ffffffff8112f6a4>] truncate_inode_pages_range+0x444/0x790
+>  [<ffffffff8112fa00>] truncate_inode_pages+0x10/0x20
+>  [<ffffffff811d6ef0>] kill_bdev+0x30/0x40
+>  [<ffffffff811d8201>] __blkdev_put+0x71/0x360
+>  [<ffffffff811d8539>] blkdev_put+0x49/0x170
+>  [<ffffffff811d8680>] blkdev_close+0x20/0x30
+>  [<ffffffff8119e338>] __fput+0xe8/0x1f0
+>  [<ffffffff8119e479>] ____fput+0x9/0x10
+>  [<ffffffff8107876c>] task_work_run+0x7c/0xb0
+>  [<ffffffff8105d047>] do_exit+0x3b7/0xb10
+>  [<ffffffff8105d82b>] do_group_exit+0x4b/0xc0
+>  [<ffffffff81068f25>] get_signal+0x1c5/0x7f0
+>  [<ffffffff8101a1a3>] do_signal+0x23/0x700
+>  [<ffffffff810020d3>] exit_to_usermode_loop+0x73/0xb0
+>  [<ffffffff81002580>] syscall_return_slowpath+0xb0/0xc0
+>  [<ffffffff815b2537>] entry_SYSCALL_64_fastpath+0xaa/0xac
+> systemd-udevd   D ffff880062613cd8     0  6767    494 0x00000000
+> Call Trace:
+>  [<ffffffff815acf97>] schedule+0x37/0x90
+>  [<ffffffff815b1487>] schedule_timeout+0x157/0x230
+>  [<ffffffff810c0d33>] msleep+0x33/0x40
+>  [<ffffffffa0341a5b>] dm_grab_bdev_for_ioctl+0x7b/0x150 [dm_mod]
+>  [<ffffffffa0341e25>] dm_blk_ioctl+0x35/0x80 [dm_mod]
+>  [<ffffffff812b36eb>] blkdev_ioctl+0x25b/0x980
+>  [<ffffffff811d79b8>] block_ioctl+0x38/0x40
+>  [<ffffffff811afd5e>] do_vfs_ioctl+0x8e/0x660
+>  [<ffffffff811b036c>] SyS_ioctl+0x3c/0x70
+>  [<ffffffff815b24a9>] entry_SYSCALL_64_fastpath+0x1c/0xac
+> 
+> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+> Cc: <stable@vger.kernel.org>
+> ---
+>  drivers/md/dm.c | 3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 1b2f962..f3564e1 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -630,7 +630,8 @@ retry:
+>  
+>  out:
+>  	dm_put_live_table(md, srcu_idx);
+> -	if (r == -ENOTCONN && !fatal_signal_pending(current)) {
+> +	if (r == -ENOTCONN && !fatal_signal_pending(current) &&
+> +	    !blk_queue_dying(bdev_get_queue(*bdev))) {
+>  		msleep(10);
+>  		goto retry;
+>  	}
+> -- 
+> 2.8.4
 
---_000_AF7C226D2A4F8B4D913D33FF7150AE0531BD85FCszxeml556mbschi_
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Hi Bart,
 
+This patch doesn't make sense.
 
-According to the process in select_checker() and get_state(), sysfs_get_tim=
-eout should return 1 in normal case.
+In the context of dm-mpath.c:multipath_prepare_ioctl, *bdev is only
+valid if r == 0.  But r == -ENOTCONN so how can *bdev be valid?
 
----
-libmultipath/discovery.c | 2 +-
-1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 126a54f..cd3443d 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -271,7 +271,7 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeou=
-t)
-   }
-   *timeout =3D t;
--   return 0;
-+   return 1;
-}
- int
---
-1.8.3.4
-
---_000_AF7C226D2A4F8B4D913D33FF7150AE0531BD85FCszxeml556mbschi_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:dt=3D"uuid:C2F41010-65B3-11d1-A29F-00AA00C14882" xmlns:m=3D"http://sc=
-hemas.microsoft.com/office/2004/12/omml" xmlns=3D"http://www.w3.org/TR/REC-=
-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
->
-<meta name=3D"Microsoft Theme 2.00" content=3D"Radial 011">
-<meta name=3D"Generator" content=3D"Microsoft Word 12 (filtered medium)">
-<style><!--
-/* Font Definitions */
-@font-face
-	{font-family:SimSun;
-	panose-1:2 1 6 0 3 1 1 1 1 1;}
-@font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:SimSun;
-	panose-1:2 1 6 0 3 1 1 1 1 1;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0cm;
-	margin-bottom:.0001pt;
-	text-align:justify;
-	text-justify:inter-ideograph;
-	font-size:10.5pt;
-	font-family:"Calibri","sans-serif";
-	color:black;}
-h1
-	{mso-style-priority:9;
-	mso-style-link:"\6807\9898 1 Char";
-	margin-top:17.0pt;
-	margin-right:0cm;
-	margin-bottom:16.5pt;
-	margin-left:0cm;
-	text-align:justify;
-	text-justify:inter-ideograph;
-	line-height:240%;
-	page-break-after:avoid;
-	font-size:16.0pt;
-	font-family:"Calibri","sans-serif";
-	color:black;}
-h2
-	{mso-style-priority:9;
-	mso-style-link:"\6807\9898 2 Char";
-	margin-top:13.0pt;
-	margin-right:0cm;
-	margin-bottom:13.0pt;
-	margin-left:0cm;
-	text-align:justify;
-	text-justify:inter-ideograph;
-	line-height:173%;
-	page-break-after:avoid;
-	font-size:14.0pt;
-	font-family:"Calibri","sans-serif";
-	color:black;
-	font-weight:normal;}
-h3
-	{mso-style-priority:9;
-	mso-style-link:"\6807\9898 3 Char";
-	margin-top:13.0pt;
-	margin-right:0cm;
-	margin-bottom:13.0pt;
-	margin-left:0cm;
-	text-align:justify;
-	text-justify:inter-ideograph;
-	line-height:173%;
-	page-break-after:avoid;
-	font-size:13.0pt;
-	font-family:"Calibri","sans-serif";
-	color:black;
-	font-weight:normal;}
-h4
-	{mso-style-priority:9;
-	mso-style-link:"\6807\9898 4 Char";
-	margin-top:14.0pt;
-	margin-right:0cm;
-	margin-bottom:14.5pt;
-	margin-left:0cm;
-	text-align:justify;
-	text-justify:inter-ideograph;
-	line-height:156%;
-	page-break-after:avoid;
-	font-size:14.0pt;
-	font-family:"Calibri","sans-serif";
-	color:black;
-	font-weight:normal;}
-h5
-	{mso-style-priority:9;
-	mso-style-link:"\6807\9898 5 Char";
-	margin-top:14.0pt;
-	margin-right:0cm;
-	margin-bottom:14.5pt;
-	margin-left:0cm;
-	text-align:justify;
-	text-justify:inter-ideograph;
-	line-height:156%;
-	page-break-after:avoid;
-	font-size:13.0pt;
-	font-family:"Calibri","sans-serif";
-	color:black;
-	font-weight:normal;}
-h6
-	{mso-style-priority:9;
-	mso-style-link:"\6807\9898 6 Char";
-	margin-top:12.0pt;
-	margin-right:0cm;
-	margin-bottom:3.2pt;
-	margin-left:0cm;
-	text-align:justify;
-	text-justify:inter-ideograph;
-	line-height:133%;
-	page-break-after:avoid;
-	font-size:11.0pt;
-	font-family:"Calibri","sans-serif";
-	color:black;
-	font-weight:normal;}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:#6666FF;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:#993333;
-	text-decoration:underline;}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	color:black;}
-span.1Char
-	{mso-style-name:"\6807\9898 1 Char";
-	mso-style-priority:9;
-	mso-style-link:"\6807\9898 1";
-	font-family:SimSun;
-	color:black;
-	font-weight:bold;}
-span.2Char
-	{mso-style-name:"\6807\9898 2 Char";
-	mso-style-priority:9;
-	mso-style-link:"\6807\9898 2";
-	font-family:SimSun;
-	color:black;}
-span.3Char
-	{mso-style-name:"\6807\9898 3 Char";
-	mso-style-priority:9;
-	mso-style-link:"\6807\9898 3";
-	font-family:SimSun;
-	color:black;}
-span.4Char
-	{mso-style-name:"\6807\9898 4 Char";
-	mso-style-priority:9;
-	mso-style-link:"\6807\9898 4";
-	font-family:SimSun;
-	color:black;}
-span.5Char
-	{mso-style-name:"\6807\9898 5 Char";
-	mso-style-priority:9;
-	mso-style-link:"\6807\9898 5";
-	font-family:SimSun;
-	color:black;}
-span.6Char
-	{mso-style-name:"\6807\9898 6 Char";
-	mso-style-priority:9;
-	mso-style-link:"\6807\9898 6";
-	font-family:SimSun;
-	color:black;}
-.MsoChpDefault
-	{mso-style-type:export-only;}
-/* Page Definitions */
-@page WordSection1
-	{size:612.0pt 792.0pt;
-	margin:72.0pt 90.0pt 72.0pt 90.0pt;}
-div.WordSection1
-	{page:WordSection1;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]-->
-</head>
-<body bgcolor=3D"white" background=3D"cid:image001.gif@01D1D16E.3317A390" l=
-ang=3D"ZH-CN" link=3D"#6666FF" vlink=3D"#993333" style=3D"text-justify-trim=
-:punctuation">
-<img src=3D"cid:image001.gif@01D1D16E.3317A390" v:src=3D"cid:image001.gif@0=
-1D1D16E.3317A390" v:shapes=3D"_x0000_Mail" width=3D"0" height=3D"0" class=
-=3D"shape" style=3D"display:none;width:0;height:0"><!--[if gte mso 9]><xml>
-<v:background id=3D"_x0000_s1025" o:bwmode=3D"white" o:targetscreensize=3D"=
-800,600">
-<v:fill src=3D"cid:image001.gif@01D1D16E.3317A390" o:title=3D"radbkgnd" typ=
-e=3D"frame" />
-</v:background></xml><![endif]-->
-<div class=3D"WordSection1">
-<p class=3D"MsoNormal"><span lang=3D"EN-US">According to the process in sel=
-ect_checker() and get_state(), sysfs_get_timeout should return 1 in normal =
-case.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">---<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">libmultipath/discovery.c | 2 &#=
-43;-<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">1 file changed, 1 insertion(&#4=
-3;), 1 deletion(-)<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">diff --git a/libmultipath/disco=
-very.c b/libmultipath/discovery.c<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">index 126a54f..cd3443d 100644<o=
-:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">--- a/libmultipath/discovery.c<=
-o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">&#43;&#43;&#43; b/libmultipath/=
-discovery.c<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">@@ -271,7 &#43;271,7 @@ sysfs_g=
-et_timeout(struct path *pp, unsigned int *timeout)<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp; }<o:p></o:p></span=
-></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;&nbsp; *timeout =3D t;<o:=
-p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US"><o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">-&nbsp;&nbsp; return 0;<o:p></o=
-:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">&#43;&nbsp;&nbsp; return 1;<o:p=
-></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">}<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US"><o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">&nbsp;int<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">-- <o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">1.8.3.4<o:p></o:p></span></p>
-</div>
-</body>
-</html>
-
---_000_AF7C226D2A4F8B4D913D33FF7150AE0531BD85FCszxeml556mbschi_--
-
---_004_AF7C226D2A4F8B4D913D33FF7150AE0531BD85FCszxeml556mbschi_
-Content-Type: image/gif; name="image001.gif"
-Content-Description: image001.gif
-Content-Disposition: inline; filename="image001.gif"; size=1065;
-	creation-date="Tue, 28 Jun 2016 10:54:20 GMT";
-	modification-date="Tue, 28 Jun 2016 10:54:20 GMT"
-Content-ID: <image001.gif@01D1D16E.3317A390>
-Content-Transfer-Encoding: base64
-
-R0lGODlhkAEsAYD/AP///8zM/ywAAAAAkAEsAUAC/4SPqcvtD6OctNqLs968+w+G4kiW5omm6sq2
-7gvH8kzX9o3n+s73/g8MCofEovGITCqXzKbzCY1Kp9Sq9YrNarfcrvcLDovH5PIjYE5r0eq2+91g
-h+Xwuptuz+v3/L7/DxgoOEhYaHiImKi4WIjH+Ag54RhJWZkwaZkJianZ6fkJGio66sVJegpnirrK
-2uqi6voF6zlLWkt1m5kbm7XL++j7KzxMXAwQbJzMg6zcTMPsHP2BRi1tfY2drb3N3e39DR4uPk5e
-bn5uBI2+zt7u/g5vXs2oHl9Vb5/vgK/f38TvA6A/ENSqGTyG8KDChAwXzhsIMaLEie8EUryIkZzF
-jP/dNnLU5vGjyJEkS4YKaTKlSk0oMzpsCPOlzJg0Z9qsifOmzpw8A+z82TMo0JmtWq5EYPRP0kFL
-fzQ9KuMp1KlUq1rtIfWq1q1IsnL9Cjas2LFky5o9izat2rVs27p9Czeu3Ll069p1ifCuM696+/r9
-Cziw4MGE6/A9urDTYbWLnzSW+7jwm8g4KBO23AKzZKSbUWnm8LmzaMSjS5s+jTq16tVsQ7N+DTs2
-Edeyl9CuneQ27iO6dxfp7XsI8OBAhhM/jjy58uXMmysx7jy6dNXQp8Oobp04djHbQbvqzg48LmPi
-vRclVr5D+ijry7XPDv/E+/jT6NunOP++hvz6L/D/71/BfwBKIOCAZxi4RYEIMrRgg1Io6OCBEZYy
-IYUVcgHhhQpkqCFnHfbyIYghXsFhiCV+eGKHKWq44oUtVvjihDFGOKODNTZ444I5IrijgT0O+COA
-QfY3pH5F3nfkSEMJxeSSQ/nUZJROSknllFZWieVOd1io0o0vJgnIl1xadaKYXHFo5lcQpglWgWyG
-9d+bcLI35lj5ySnWfHjm6cSefDLh55yA1ukjodRlGZNPVy6KqE5QMgppozS5AyYiD4HEWF57QUae
-XZUu8NSnq4ga6mCionDqL6mKsGp0rTr36lx8xQrXYrQud2s0uW7oG3iY7WoNdKEBe41utxGLDWWX
-/wY0IonNtYosN6lGK60e1HZkx7XYphJfktp+c+S34LYh7rhplAsbuq+pyxq75nJXKLzxguHuoc3e
-cy+++U5Rb2r9ovbvaQGbNnBpBY92sGgJd7bwZg1L9nBhEW+T4sSYruFighljDKPGHXMso8chg7wv
-FBYLdnJgKQO2sq5dtLwphiU/ODOdNTt2M845/4MjvTrOsTPPQds2r89CkgFzX0nrtfRdTXs6NNHd
-bumZpJFebXXWCimqdddYJ2bA03WJTRfZskb9HNq5Mfeq2cCEqXZXcfMWHLFux3V3rXOns/dvfc/2
-t3AOn3SZLSyzkrfI352N3lrLdspn4gx87XXllAhfbjmigcNVAAA7
-
---_004_AF7C226D2A4F8B4D913D33FF7150AE0531BD85FCszxeml556mbschi_--
-
-
---===============4487922423126067607==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============4487922423126067607==--
+Mike
