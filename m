@@ -1,7 +1,7 @@
 From: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
-Subject: [PATCH 1/2] dm: update table type check for dax
-Date: Tue, 28 Jun 2016 13:37:15 -0600
-Message-ID: <1467142636-21094-2-git-send-email-toshi.kani@hpe.com>
+Subject: [PATCH 2/2] dm snap: add fake origin_direct_access
+Date: Tue, 28 Jun 2016 13:37:16 -0600
+Message-ID: <1467142636-21094-3-git-send-email-toshi.kani@hpe.com>
 References: <1467142636-21094-1-git-send-email-toshi.kani@hpe.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,44 +21,50 @@ To: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-Allow table type DM_TYPE_BIO_BASED to extend with
-DM_TYPE_DAX_BIO_BASED since DM_TYPE_DAX_BIO_BASED
-supports bio-based requests.
+dax-capable mapped-device is marked as DM_TYPE_DAX_BIO_BASED,
+which supports both dax and bio-based operations.  dm-snap
+needs to work with dax-capable device when bio-based operation
+is used.
+
+Add fake origin_direct_access() to origin device so that its
+origin device is also marked as DM_TYPE_DAX_BIO_BASED for
+dax-capable device.  This allows to extend target's DM table.
+dm-snap works normally when bio-based operation is used.
+
+dm-snap does not support dax operation, and mount with dax
+option to a target device or snapshot device fails.
 
 Signed-off-by: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
 Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- drivers/md/dm-ioctl.c |   11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+ drivers/md/dm-snap.c |    8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index b59e3459..0f32791 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1267,6 +1267,15 @@ static int populate_table(struct dm_table *table,
- 	return dm_table_complete(table);
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 69ab1ff..c472f04 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -2301,6 +2301,13 @@ static int origin_map(struct dm_target *ti, struct bio *bio)
+ 	return do_origin(o->dev, bio);
  }
  
-+static bool is_valid_type(unsigned cur, unsigned new)
++static long origin_direct_access(struct dm_target *ti, sector_t sector,
++		void __pmem **kaddr, pfn_t *pfn, long size)
 +{
-+	if (cur == new ||
-+	    (cur == DM_TYPE_BIO_BASED && new == DM_TYPE_DAX_BIO_BASED))
-+		return true;
-+
-+	return false;
++	DMWARN("device does not support dax.");
++	return -EIO;
 +}
 +
- static int table_load(struct dm_ioctl *param, size_t param_size)
- {
- 	int r;
-@@ -1309,7 +1318,7 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
- 			DMWARN("unable to set up device queue for new table.");
- 			goto err_unlock_md_type;
- 		}
--	} else if (dm_get_md_type(md) != dm_table_get_type(t)) {
-+	} else if (!is_valid_type(dm_get_md_type(md), dm_table_get_type(t))) {
- 		DMWARN("can't change device type after initial table load.");
- 		r = -EINVAL;
- 		goto err_unlock_md_type;
+ /*
+  * Set the target "max_io_len" field to the minimum of all the snapshots'
+  * chunk sizes.
+@@ -2360,6 +2367,7 @@ static struct target_type origin_target = {
+ 	.postsuspend = origin_postsuspend,
+ 	.status  = origin_status,
+ 	.iterate_devices = origin_iterate_devices,
++	.direct_access = origin_direct_access,
+ };
+ 
+ static struct target_type snapshot_target = {
