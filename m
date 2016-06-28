@@ -1,15 +1,15 @@
-From: "Kani, Toshimitsu" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
-Subject: Re: [PATCH 0/2] fix dm-snap for dax
-Date: Tue, 28 Jun 2016 19:43:26 +0000
-Message-ID: <1467143000.3504.431.camel@hpe.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 1/2] dm: update table type check for dax
+Date: Tue, 28 Jun 2016 16:07:15 -0400
+Message-ID: <20160628200714.GC8300@redhat.com>
 References: <1467142636-21094-1-git-send-email-toshi.kani@hpe.com>
+ <1467142636-21094-2-git-send-email-toshi.kani@hpe.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <1467142636-21094-1-git-send-email-toshi.kani-ZPxbGqLxI0U@public.gmane.org>
-Content-Language: en-US
-Content-ID: <49AF3059A3F22F43BC6FCF0B51BAEEB0-mmYPd6ayCNGroOM5E8FhRbjFIynDaujOfM0AETQt39g@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1467142636-21094-2-git-send-email-toshi.kani-ZPxbGqLxI0U@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -19,37 +19,68 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Cc: linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-U29ycnksIHN1YmplY3QgbGluZSBzaG91bGQgYmUgIltQQVRDSCAwLzJdIGZpeCBkbS1zbmFwIGZv
-ciBkYXgiDQotVG9zaGkNCg0KT24gVHVlLCAyMDE2LTA2LTI4IGF0IDEzOjM3IC0wNjAwLCBUb3No
-aSBLYW5pIHdyb3RlOg0KPiBJIG5vdGljZWQgdGhhdCBkbS1zbmFwIHJlbG9hZHMgRE0gdGFibGUg
-b2YgdGFyZ2V0IG1hcHBlZC1kZXZpY2UsIHdoaWNoDQo+IGZhaWxzIGZvciBkYXgtY2FwYWJsZSBk
-ZXZpY2UgYWZ0ZXIgZGF4IHN1cHBvcnQgaXMgYWRkZWQuwqDCoElkZWFsbHksDQo+IGFkZGluZyBk
-YXggc3VwcG9ydCB0byBkbS1zbmFwIHNvbHZlcyB0aGUgaXNzdWUsIGJ1dCBpdCBjYW5ub3QgYmUg
-ZG9uZQ0KPiBlYXNpbHkuwqDCoFRoaXMgcGF0Y2gtc2V0IGFsbG93cyBkbS1zbmFwIHRvIHdvcmsg
-d2l0aCBkYXgtY2FwYWJsZSB0YXJnZXQNCj4gZGV2aWNlcyB3aGVuIGJpby1iYXNlZCBvcGVyYXRp
-b24gaXMgdXNlZC4NCj4gDQo+IGRheCBvcGVyYXRpb24gaXMgdW5zdXBwb3J0ZWQgd2l0aCBkbS1z
-bmFwLCBzdWNoIHRoYXQ6DQo+IMKgYSkgQWZ0ZXIgc25hcHNob3QgaXMgdGFrZW4sIG1vdW50IHdp
-dGggZGF4IG9wdGlvbiB0byBhIHRhcmdldCBkZXZpY2UNCj4gwqDCoMKgwqBvciBhIHNuYXBzaG90
-IGRldmljZSBmYWlscy7CoMKgVGhleSBjYW4gYmUgbW91bnRlZCB3aXRob3V0IGRheC4NCj4gwqBi
-KSBBZnRlciBzbmFwc2hvdCBpcyB0YWtlbiB0byBhIGRheC1tb3VudGVkIHRhcmdldCBkZXZpY2Us
-IGFueSB3cml0ZXPCoA0KPiDCoMKgwqDCoHRvIHRoZSB0YXJnZXQgZGV2aWNlIGZhaWxzIChFSU8p
-Lg0KPiANCj4gYikgY2FuIGJlIHByb3RlY3RlZCBieSBjaGFuZ2luZyBsdmNyZWF0ZSB0byBmYWls
-IHdoZW4gc25hcHNob3QgaXMNCj4gcmVxdWVzdGVkIHRvIGEgZGF4LW1vdW50ZWQgdGFyZ2V0IGRl
-dmljZS7CoA0KPiANCj4gLSBQYXRjaCAxIHNvbHZlcyBhbiBlcnJvciB3aGVuIGx2cmVtb3ZlIGlz
-IG1hZGUgdG8gYSBzbmFwc2hvdCBkZXZpY2UuDQo+IC0gUGF0Y2ggMiBzb2x2ZXMgYW4gZXJyb3Ig
-d2hlbiBsdmNyZWF0ZSAtLXNuYXBzaG90IGlzIG1hZGUgdG8gYSBkYXgtDQo+IMKgIGNhcGFibGUg
-ZGV2aWNlLg0KPiANCj4gLS0tDQo+IFRvc2hpIEthbmkgKDIpOg0KPiDCoDEvMiBkbTogdXBkYXRl
-IHRhYmxlIHR5cGUgY2hlY2sgZm9yIGRheA0KPiDCoDIvMiBkbSBzbmFwOiBhZGQgZmFrZSBvcmln
-aW5fZGlyZWN0X2FjY2Vzcw0KPiANCj4gLS0tDQo+IMKgZHJpdmVycy9tZC9kbS1pb2N0bC5jIHwg
-MTEgKysrKysrKysrKy0NCj4gwqBkcml2ZXJzL21kL2RtLXNuYXAuY8KgwqB8wqDCoDggKysrKysr
-KysNCj4gwqAyIGZpbGVzIGNoYW5nZWQsIDE4IGluc2VydGlvbnMoKyksIDEgZGVsZXRpb24oLSkN
-Cj4gX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18NCj4gTGlu
-dXgtbnZkaW1tIG1haWxpbmcgbGlzdA0KPiBMaW51eC1udmRpbW1AbGlzdHMuMDEub3JnDQo+IGh0
-dHBzOi8vbGlzdHMuMDEub3JnL21haWxtYW4vbGlzdGluZm8vbGludXgtbnZkaW1tCl9fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkxpbnV4LW52ZGltbSBtYWls
-aW5nIGxpc3QKTGludXgtbnZkaW1tQGxpc3RzLjAxLm9yZwpodHRwczovL2xpc3RzLjAxLm9yZy9t
-YWlsbWFuL2xpc3RpbmZvL2xpbnV4LW52ZGltbQo=
+On Tue, Jun 28 2016 at  3:37pm -0400,
+Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org> wrote:
+
+> Allow table type DM_TYPE_BIO_BASED to extend with
+> DM_TYPE_DAX_BIO_BASED since DM_TYPE_DAX_BIO_BASED
+> supports bio-based requests.
+> 
+> Signed-off-by: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+> Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> ---
+>  drivers/md/dm-ioctl.c |   11 ++++++++++-
+>  1 file changed, 10 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+> index b59e3459..0f32791 100644
+> --- a/drivers/md/dm-ioctl.c
+> +++ b/drivers/md/dm-ioctl.c
+> @@ -1267,6 +1267,15 @@ static int populate_table(struct dm_table *table,
+>  	return dm_table_complete(table);
+>  }
+>  
+> +static bool is_valid_type(unsigned cur, unsigned new)
+> +{
+> +	if (cur == new ||
+> +	    (cur == DM_TYPE_BIO_BASED && new == DM_TYPE_DAX_BIO_BASED))
+> +		return true;
+> +
+> +	return false;
+> +}
+> +
+>  static int table_load(struct dm_ioctl *param, size_t param_size)
+>  {
+>  	int r;
+> @@ -1309,7 +1318,7 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+>  			DMWARN("unable to set up device queue for new table.");
+>  			goto err_unlock_md_type;
+>  		}
+> -	} else if (dm_get_md_type(md) != dm_table_get_type(t)) {
+> +	} else if (!is_valid_type(dm_get_md_type(md), dm_table_get_type(t))) {
+>  		DMWARN("can't change device type after initial table load.");
+>  		r = -EINVAL;
+>  		goto err_unlock_md_type;
+> 
+
+You said in the 0th header: "Patch 1 solves an error when lvremove is
+made to a snapshot device."
+
+I'm not seeing why this patch 1 fixes anything specific to snapshot
+device removal (but I can see why patch 2 makes snapshot creation
+"work").  I'll apply your 2nd patch and see if I can see what you mean.
+
+I actually see this error, without either of your 2 proposed patches
+applied, when I try to create a snapshot of a DAX capable LV:
+
+# lvcreate -s -n snap -L 100M pmem/lv
+  device-mapper: reload ioctl on (253:7) failed: Invalid argument
+  Failed to lock logical volume pmem/lv.
+  Aborting. Manual intervention required.
+Jun 28 15:57:28 rhel-storage-02 kernel: device-mapper: ioctl: can't change device type after initial table load.
