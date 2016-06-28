@@ -1,11 +1,13 @@
 From: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
-Subject: [PATCH 0/2] Support DAX for device-mapper dm-linear devices
-Date: Tue, 28 Jun 2016 13:37:14 -0600
-Message-ID: <1467142636-21094-1-git-send-email-toshi.kani@hpe.com>
+Subject: [PATCH 1/2] dm: update table type check for dax
+Date: Tue, 28 Jun 2016 13:37:15 -0600
+Message-ID: <1467142636-21094-2-git-send-email-toshi.kani@hpe.com>
+References: <1467142636-21094-1-git-send-email-toshi.kani@hpe.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <1467142636-21094-1-git-send-email-toshi.kani-ZPxbGqLxI0U@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -19,31 +21,44 @@ To: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-I noticed that dm-snap reloads DM table of target mapped-device, which
-fails for dax-capable device after dax support is added.  Ideally,
-adding dax support to dm-snap solves the issue, but it cannot be done
-easily.  This patch-set allows dm-snap to work with dax-capable target
-devices when bio-based operation is used.
+Allow table type DM_TYPE_BIO_BASED to extend with
+DM_TYPE_DAX_BIO_BASED since DM_TYPE_DAX_BIO_BASED
+supports bio-based requests.
 
-dax operation is unsupported with dm-snap, such that:
- a) After snapshot is taken, mount with dax option to a target device
-    or a snapshot device fails.  They can be mounted without dax.
- b) After snapshot is taken to a dax-mounted target device, any writes 
-    to the target device fails (EIO).
-
-b) can be protected by changing lvcreate to fail when snapshot is
-requested to a dax-mounted target device. 
-
-- Patch 1 solves an error when lvremove is made to a snapshot device.
-- Patch 2 solves an error when lvcreate --snapshot is made to a dax-
-  capable device.
-
+Signed-off-by: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
-Toshi Kani (2):
- 1/2 dm: update table type check for dax
- 2/2 dm snap: add fake origin_direct_access
+ drivers/md/dm-ioctl.c |   11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
 
----
- drivers/md/dm-ioctl.c | 11 ++++++++++-
- drivers/md/dm-snap.c  |  8 ++++++++
- 2 files changed, 18 insertions(+), 1 deletion(-)
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index b59e3459..0f32791 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1267,6 +1267,15 @@ static int populate_table(struct dm_table *table,
+ 	return dm_table_complete(table);
+ }
+ 
++static bool is_valid_type(unsigned cur, unsigned new)
++{
++	if (cur == new ||
++	    (cur == DM_TYPE_BIO_BASED && new == DM_TYPE_DAX_BIO_BASED))
++		return true;
++
++	return false;
++}
++
+ static int table_load(struct dm_ioctl *param, size_t param_size)
+ {
+ 	int r;
+@@ -1309,7 +1318,7 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+ 			DMWARN("unable to set up device queue for new table.");
+ 			goto err_unlock_md_type;
+ 		}
+-	} else if (dm_get_md_type(md) != dm_table_get_type(t)) {
++	} else if (!is_valid_type(dm_get_md_type(md), dm_table_get_type(t))) {
+ 		DMWARN("can't change device type after initial table load.");
+ 		r = -EINVAL;
+ 		goto err_unlock_md_type;
