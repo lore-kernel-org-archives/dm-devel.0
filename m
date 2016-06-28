@@ -1,71 +1,49 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm mpath: Fix a dm_blk_ioctl() deadlock
-Date: Tue, 28 Jun 2016 15:33:03 -0400
-Message-ID: <20160628193302.GB8300@redhat.com>
-References: <c987a4ca-4b55-0b3a-a414-2608f2ded132@sandisk.com>
-	<20160628181526.GA8013@redhat.com>
-	<f2f4fe18-b3e0-30f6-5f4f-0fee385bade8@sandisk.com>
-	<20160628185913.GA8185@redhat.com>
-	<873d69e4-f668-b0f0-0e87-3e2cf9b92fca@sandisk.com>
+From: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Subject: [PATCH 0/2] Support DAX for device-mapper dm-linear devices
+Date: Tue, 28 Jun 2016 13:37:14 -0600
+Message-ID: <1467142636-21094-1-git-send-email-toshi.kani@hpe.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <873d69e4-f668-b0f0-0e87-3e2cf9b92fca@sandisk.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, Jun 28 2016 at  3:16pm -0400,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+I noticed that dm-snap reloads DM table of target mapped-device, which
+fails for dax-capable device after dax support is added.  Ideally,
+adding dax support to dm-snap solves the issue, but it cannot be done
+easily.  This patch-set allows dm-snap to work with dax-capable target
+devices when bio-based operation is used.
 
-> On 06/28/2016 08:59 PM, Mike Snitzer wrote:
-> >Can we go back to what it is you've experienced?  is it that you have
-> >'queue_if_no_path' enabled and are issuing ioctls to an mpath device
-> >(while removing underlying paths) you'll experience a live-lock (_not_
-> >deadlock) once no valid paths exist?
-> >
-> >If that isn't what you're hitting then I'd like to better understand how
-> >a request_queue that is "dying" isn't able to keep itself up enough to
-> >fail IO issued to it (to allow normal error handling to trap the IO
-> >failure).
-> 
-> Hello Mike,
-> 
-> Since I started testing kernel v4.7-rc<n> I noticed about twenty
-> times that systemd-udevd got stuck in truncate_inode_pages(). I have
-> not yet seen this with any older kernel version. queue_if_no_path is
-> indeed enabled in my tests. The test I run consists of running fio
-> on top of an mpath device and repeatedly removing and restoring the
-> underlying devices. The test script is available at
-> https://github.com/bvanassche/srp-test/blob/master/tests/02. Please
-> let me know if you need more information.
+dax operation is unsupported with dm-snap, such that:
+ a) After snapshot is taken, mount with dax option to a target device
+    or a snapshot device fails.  They can be mounted without dax.
+ b) After snapshot is taken to a dax-mounted target device, any writes 
+    to the target device fails (EIO).
 
-I'm not going to be able to setup this test and chase this in the
-near-term.  If you want this fixed soon then I'll need you to continue
-chasing this.
+b) can be protected by changing lvcreate to fail when snapshot is
+requested to a dax-mounted target device. 
 
-Something else must be going on.  I fail to see how avoiding dying
-queues, like your 2nd path selectors patch does, should be needed.
+- Patch 1 solves an error when lvremove is made to a snapshot device.
+- Patch 2 solves an error when lvcreate --snapshot is made to a dax-
+  capable device.
 
-A dying queue, and the underlying device that is being torn down, still
-needs to complete (fail) any of its outstanding IO -- or IO issued to it
-e.g. via __blkdev_driver_ioctl -- right?
+---
+Toshi Kani (2):
+ 1/2 dm: update table type check for dax
+ 2/2 dm snap: add fake origin_direct_access
 
-Could your driver's queue maybe not be getting torn down like it did in the
-past? -- if it lingers in this "dying" state then that could start to
-explain why this is happening all of a sudden in v4.7-rc<n>.  Would be
-nice to know if that is what is happening.
-
-But you've definitely seen that your path selector patch, that skips
-selecting paths with dying queues, avoids this live-lock issue?
+---
+ drivers/md/dm-ioctl.c | 11 ++++++++++-
+ drivers/md/dm-snap.c  |  8 ++++++++
+ 2 files changed, 18 insertions(+), 1 deletion(-)
