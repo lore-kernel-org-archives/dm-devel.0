@@ -1,43 +1,33 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH 2/3] block: require write_same and discard requests align
-	to logical block size
-Date: Wed, 29 Jun 2016 00:58:06 -0400
-Message-ID: <yq1oa6ksiap.fsf@sermon.lab.mkp.net>
-References: <146612624734.12764.4316680863289411106.stgit@birch.djwong.org>
-	<146612626092.12764.773833541076937471.stgit@birch.djwong.org>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [BUG] multipath-tools: multipathd/main.c: cannot jump
+ from this goto statement to its label
+Date: Wed, 29 Jun 2016 15:36:29 +0200
+Message-ID: <fcfe982c-4d96-71f7-4a93-93eaeb18322b@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <146612626092.12764.773833541076937471.stgit@birch.djwong.org>
-	(Darrick J. Wong's message of "Thu, 16 Jun 2016 18:17:41 -0700")
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, xfs@oss.sgi.com, hch@infradead.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
->>>>> "Darrick" == Darrick J Wong <darrick.wong@oracle.com> writes:
+spotted by clang-3.8.0:
 
-Darrick> Make sure that the offset and length arguments that we're using
-Darrick> to construct WRITE SAME and DISCARD requests are actually
-Darrick> aligned to the logical block size.  Failure to do this causes
-Darrick> other errors in other parts of the block layer or the SCSI
-Darrick> layer because disks don't support partial logical block writes.
-
-Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
-
--- 
-Martin K. Petersen	Oracle Linux Engineering
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+make[1]: Entering directory '/home/xose/tmp/arrays/multipath-tools.x1/multipathd'
+clang -O2 -g -pipe -Wformat-security -Wall -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wunused -Wstrict-prototypes -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -I../libmultipath
+-I../libmpathpersist -I../libmpathcmd -DUSE_SYSTEMD=229 -c -o main.o main.c
+main.c:586:3: error: cannot jump from this goto statement to its label
+  goto out_unlock;
+  ^
+main.c:631:38: note: jump bypasses initialization of variable with __attribute__((cleanup))
+ do { struct __pthread_cleanup_frame __clframe __attribute__ ((__cleanup__ (__pthread_cleanup_routine))) = { .__cancel_routine = (cleanup_lock), .__cancel_arg = (&vecs->lock), .__do_it = 1 };;
+                                     ^
+1 error generated.
