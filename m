@@ -1,80 +1,101 @@
 From: =?UTF-8?q?Matias=20Bj=C3=B8rling?= <m@bjorling.me>
-Subject: [PATCH 0/6] enable sysfs for lightnvm
-Date: Wed, 29 Jun 2016 16:51:35 +0200
-Message-ID: <1467211901-26707-1-git-send-email-m@bjorling.me>
+Subject: [PATCH 2/6] null_blk: refactor to support non-gendisk
+	devices
+Date: Wed, 29 Jun 2016 16:51:37 +0200
+Message-ID: <1467211901-26707-3-git-send-email-m@bjorling.me>
+References: <1467211901-26707-1-git-send-email-m@bjorling.me>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1467211901-26707-1-git-send-email-m@bjorling.me>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, axboe@fb.com, keith.busch@intel.com, linux-nvme@lists.infradead.org, dm-devel@redhat.com
 Cc: =?UTF-8?q?Matias=20Bj=C3=B8rling?= <m@bjorling.me>
 List-Id: dm-devel.ids
 
-The common way to expose a storage device is to export it through the
-gendisk structure, which takes care of handling the visibility lifetime
-of the device to user-space and carries device driver and block layer
-specific sysfs entries.
-
-=46or LightNVM, no gendisk is exposed, which hides these entries.
-
-This patchset enables LightNVM to expose a subset of the gendisk entrie=
-s
-by implementing a new non-gendisk device that only exposes the sysfs
-entries that are relevant to the device driver and LightNVM. For exampl=
-e
-/mq and the NVMe sysfs entries.
-
-The new non-gendisk exposes itself in place of the original gendisk.
-Thus, a gendisk device exposed through /sys/class/nvme/nvme0n1, will
-still be exposed through the same directory, although only with the /mq=
-,
-lightnvm, and nvme specific entries.
-
-The LightNVM storage device can be found through sysfs by searching
-for devices that has the "lightnvm" dev type.
-
-The patches require the just posted patches before they can be applied.
-They can also be found in the for-4.8/sysfs branch at:
-
-  https://github.com/OpenChannelSSD/linux.git
-
-v3:
- - Fixed missing divising by nvme block nr.
-v2:
- - Updated "expose gennvm target type" to expose its own kobject, which
-   pblk and others can hook into.
- - Fixed missing disk_name in null_blk patch on lightnvm device
-
-Matias Bj=C3=B8rling (4):
-  nvme: refactor namespaces to support non-gendisk devices
-  null_blk: refactor to support non-gendisk devices
-  blk-mq: register device instead of disk
-  lightnvm: let drivers control the lifetime of nvm_dev
-
-Simon A. F. Lund (2):
-  lightnvm: expose device geometry through sysfs
-  lightnvm: expose gennvm target type through sysfs
-
- block/blk-mq-sysfs.c         |  13 ++-
- block/blk-sysfs.c            |   4 +-
- drivers/block/null_blk.c     | 128 +++++++++++++++++-----------
- drivers/lightnvm/Makefile    |   2 +-
- drivers/lightnvm/core.c      |  54 +++++-------
- drivers/lightnvm/gennvm.c    | 112 +++++++++++++++++++++----
- drivers/lightnvm/lightnvm.h  |  35 ++++++++
- drivers/lightnvm/sysfs.c     | 195 +++++++++++++++++++++++++++++++++++=
-++++++++
- drivers/md/dm.c              |   2 +-
- drivers/nvme/host/core.c     | 165 ++++++++++++++++++++---------------=
--
- drivers/nvme/host/lightnvm.c |  34 ++++++--
- drivers/nvme/host/nvme.h     |  26 ++++--
- include/linux/blk-mq.h       |   4 +-
- include/linux/lightnvm.h     |  28 +++++--
- 14 files changed, 603 insertions(+), 199 deletions(-)
- create mode 100644 drivers/lightnvm/lightnvm.h
- create mode 100644 drivers/lightnvm/sysfs.c
-
---=20
-2.1.4
+V2l0aCBMaWdodE5WTSBlbmFibGVkIGRldmljZXMsIHRoZSBnZW5kaXNrIHN0cnVjdHVyZSBpcyBu
+b3QgZXhwb3NlZAp0byB0aGUgdXNlci4gVGhpcyBoaWRlcyB0aGUgZGV2aWNlIGRyaXZlciBzcGVj
+aWZpYyBzeXNmcyBlbnRyaWVzLCBhbmQKcHJldmVudHMgYmluZGluZyBvZiBMaWdodE5WTSBnZW9t
+ZXRyeSBpbmZvcm1hdGlvbiB0byB0aGUgZGV2aWNlLgoKUmVmYWN0b3IgdGhlIGRldmljZSByZWdp
+c3RyYXRpb24gcHJvY2Vzcywgc28gdGhhdCBnZW5kaXNrIGFuZApub24tZ2VuZGlzayBkZXZpY2Vz
+IGFyZSBlYXNpbHkgbWFuYWdlZC4KClNpZ25lZC1vZmYtYnk6IE1hdGlhcyBCasO4cmxpbmcgPG1A
+YmpvcmxpbmcubWU+Ci0tLQogZHJpdmVycy9ibG9jay9udWxsX2Jsay5jIHwgMTEwICsrKysrKysr
+KysrKysrKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiAxIGZpbGUgY2hhbmdlZCwg
+NjEgaW5zZXJ0aW9ucygrKSwgNDkgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvZHJpdmVycy9i
+bG9jay9udWxsX2Jsay5jIGIvZHJpdmVycy9ibG9jay9udWxsX2Jsay5jCmluZGV4IGNhYjk3NTku
+LjMxMTdkZjEgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvYmxvY2svbnVsbF9ibGsuYworKysgYi9kcml2
+ZXJzL2Jsb2NrL251bGxfYmxrLmMKQEAgLTQxNCwyMyArNDE0LDYgQEAgc3RhdGljIHZvaWQgY2xl
+YW51cF9xdWV1ZXMoc3RydWN0IG51bGxiICpudWxsYikKIAlrZnJlZShudWxsYi0+cXVldWVzKTsK
+IH0KIAotc3RhdGljIHZvaWQgbnVsbF9kZWxfZGV2KHN0cnVjdCBudWxsYiAqbnVsbGIpCi17Ci0J
+bGlzdF9kZWxfaW5pdCgmbnVsbGItPmxpc3QpOwotCi0JaWYgKHVzZV9saWdodG52bSkKLQkJbnZt
+X3VucmVnaXN0ZXIobnVsbGItPmRpc2tfbmFtZSk7Ci0JZWxzZQotCQlkZWxfZ2VuZGlzayhudWxs
+Yi0+ZGlzayk7Ci0JYmxrX2NsZWFudXBfcXVldWUobnVsbGItPnEpOwotCWlmIChxdWV1ZV9tb2Rl
+ID09IE5VTExfUV9NUSkKLQkJYmxrX21xX2ZyZWVfdGFnX3NldCgmbnVsbGItPnRhZ19zZXQpOwot
+CWlmICghdXNlX2xpZ2h0bnZtKQotCQlwdXRfZGlzayhudWxsYi0+ZGlzayk7Ci0JY2xlYW51cF9x
+dWV1ZXMobnVsbGIpOwotCWtmcmVlKG51bGxiKTsKLX0KLQogI2lmZGVmIENPTkZJR19OVk0KIAog
+c3RhdGljIHZvaWQgbnVsbF9sbnZtX2VuZF9pbyhzdHJ1Y3QgcmVxdWVzdCAqcnEsIGludCBlcnJv
+cikKQEAgLTU2NCwxMCArNTQ3LDQxIEBAIHN0YXRpYyBzdHJ1Y3QgbnZtX2Rldl9vcHMgbnVsbF9s
+bnZtX2Rldl9vcHMgPSB7CiAJLyogU2ltdWxhdGUgbnZtZSBwcm90b2NvbCByZXN0cmljdGlvbiAq
+LwogCS5tYXhfcGh5c19zZWN0CQk9IDY0LAogfTsKKworc3RhdGljIGludCBudWxsX252bV9yZWdp
+c3RlcihzdHJ1Y3QgbnVsbGIgKm51bGxiKQoreworCXJldHVybiBudm1fcmVnaXN0ZXIobnVsbGIt
+PnEsIG51bGxiLT5kaXNrX25hbWUsICZudWxsX2xudm1fZGV2X29wcyk7Cit9CisKK3N0YXRpYyB2
+b2lkIG51bGxfbnZtX3VucmVnaXN0ZXIoc3RydWN0IG51bGxiICpudWxsYikKK3sKKwludm1fdW5y
+ZWdpc3RlcihudWxsYi0+ZGlza19uYW1lKTsKK30KICNlbHNlCi1zdGF0aWMgc3RydWN0IG52bV9k
+ZXZfb3BzIG51bGxfbG52bV9kZXZfb3BzOworc3RhdGljIGludCBudWxsX252bV9yZWdpc3Rlcihz
+dHJ1Y3QgbnVsbGIgKm51bGxiKQoreworCXJldHVybiAtRUlOVkFMOworfQorc3RhdGljIHZvaWQg
+bnVsbF9udm1fdW5yZWdpc3RlcihzdHJ1Y3QgbnVsbGIgKm51bGxiKSB7fQogI2VuZGlmIC8qIENP
+TkZJR19OVk0gKi8KIAorc3RhdGljIHZvaWQgbnVsbF9kZWxfZGV2KHN0cnVjdCBudWxsYiAqbnVs
+bGIpCit7CisJbGlzdF9kZWxfaW5pdCgmbnVsbGItPmxpc3QpOworCisJaWYgKHVzZV9saWdodG52
+bSkKKwkJbnVsbF9udm1fdW5yZWdpc3RlcihudWxsYik7CisJZWxzZQorCQlkZWxfZ2VuZGlzayhu
+dWxsYi0+ZGlzayk7CisJYmxrX2NsZWFudXBfcXVldWUobnVsbGItPnEpOworCWlmIChxdWV1ZV9t
+b2RlID09IE5VTExfUV9NUSkKKwkJYmxrX21xX2ZyZWVfdGFnX3NldCgmbnVsbGItPnRhZ19zZXQp
+OworCWlmICghdXNlX2xpZ2h0bnZtKQorCQlwdXRfZGlzayhudWxsYi0+ZGlzayk7CisJY2xlYW51
+cF9xdWV1ZXMobnVsbGIpOworCWtmcmVlKG51bGxiKTsKK30KKwogc3RhdGljIGludCBudWxsX29w
+ZW4oc3RydWN0IGJsb2NrX2RldmljZSAqYmRldiwgZm1vZGVfdCBtb2RlKQogewogCXJldHVybiAw
+OwpAQCAtNjQwLDExICs2NTQsMzIgQEAgc3RhdGljIGludCBpbml0X2RyaXZlcl9xdWV1ZXMoc3Ry
+dWN0IG51bGxiICpudWxsYikKIAlyZXR1cm4gMDsKIH0KIAotc3RhdGljIGludCBudWxsX2FkZF9k
+ZXYodm9pZCkKK3N0YXRpYyBpbnQgbnVsbF9nZW5kaXNrX3JlZ2lzdGVyKHN0cnVjdCBudWxsYiAq
+bnVsbGIpCiB7CiAJc3RydWN0IGdlbmRpc2sgKmRpc2s7Ci0Jc3RydWN0IG51bGxiICpudWxsYjsK
+IAlzZWN0b3JfdCBzaXplOworCisJZGlzayA9IG51bGxiLT5kaXNrID0gYWxsb2NfZGlza19ub2Rl
+KDEsIGhvbWVfbm9kZSk7CisJaWYgKCFkaXNrKQorCQlyZXR1cm4gLUVOT01FTTsKKwlzaXplID0g
+Z2IgKiAxMDI0ICogMTAyNCAqIDEwMjRVTEw7CisJc2V0X2NhcGFjaXR5KGRpc2ssIHNpemUgPj4g
+OSk7CisKKwlkaXNrLT5mbGFncyB8PSBHRU5IRF9GTF9FWFRfREVWVCB8IEdFTkhEX0ZMX1NVUFBS
+RVNTX1BBUlRJVElPTl9JTkZPOworCWRpc2stPm1ham9yCQk9IG51bGxfbWFqb3I7CisJZGlzay0+
+Zmlyc3RfbWlub3IJPSBudWxsYi0+aW5kZXg7CisJZGlzay0+Zm9wcwkJPSAmbnVsbF9mb3BzOwor
+CWRpc2stPnByaXZhdGVfZGF0YQk9IG51bGxiOworCWRpc2stPnF1ZXVlCQk9IG51bGxiLT5xOwor
+CXN0cm5jcHkoZGlzay0+ZGlza19uYW1lLCBudWxsYi0+ZGlza19uYW1lLCBESVNLX05BTUVfTEVO
+KTsKKworCWFkZF9kaXNrKGRpc2spOworCXJldHVybiAwOworfQorCitzdGF0aWMgaW50IG51bGxf
+YWRkX2Rldih2b2lkKQoreworCXN0cnVjdCBudWxsYiAqbnVsbGI7CiAJaW50IHJ2OwogCiAJbnVs
+bGIgPSBremFsbG9jX25vZGUoc2l6ZW9mKCpudWxsYiksIEdGUF9LRVJORUwsIGhvbWVfbm9kZSk7
+CkBAIC03MTYsNDIgKzc1MSwxOSBAQCBzdGF0aWMgaW50IG51bGxfYWRkX2Rldih2b2lkKQogCiAJ
+c3ByaW50ZihudWxsYi0+ZGlza19uYW1lLCAibnVsbGIlZCIsIG51bGxiLT5pbmRleCk7CiAKLQlp
+ZiAodXNlX2xpZ2h0bnZtKSB7Ci0JCXJ2ID0gbnZtX3JlZ2lzdGVyKG51bGxiLT5xLCBudWxsYi0+
+ZGlza19uYW1lLAotCQkJCQkJCSZudWxsX2xudm1fZGV2X29wcyk7Ci0JCWlmIChydikKLQkJCWdv
+dG8gb3V0X2NsZWFudXBfYmxrX3F1ZXVlOwotCQlnb3RvIGRvbmU7Ci0JfQorCWlmICh1c2VfbGln
+aHRudm0pCisJCXJ2ID0gbnVsbF9udm1fcmVnaXN0ZXIobnVsbGIpOworCWVsc2UKKwkJcnYgPSBu
+dWxsX2dlbmRpc2tfcmVnaXN0ZXIobnVsbGIpOwogCi0JZGlzayA9IG51bGxiLT5kaXNrID0gYWxs
+b2NfZGlza19ub2RlKDEsIGhvbWVfbm9kZSk7Ci0JaWYgKCFkaXNrKSB7Ci0JCXJ2ID0gLUVOT01F
+TTsKLQkJZ290byBvdXRfY2xlYW51cF9saWdodG52bTsKLQl9Ci0Jc2l6ZSA9IGdiICogMTAyNCAq
+IDEwMjQgKiAxMDI0VUxMOwotCXNldF9jYXBhY2l0eShkaXNrLCBzaXplID4+IDkpOworCWlmIChy
+dikKKwkJZ290byBvdXRfY2xlYW51cF9ibGtfcXVldWU7CiAKLQlkaXNrLT5mbGFncyB8PSBHRU5I
+RF9GTF9FWFRfREVWVCB8IEdFTkhEX0ZMX1NVUFBSRVNTX1BBUlRJVElPTl9JTkZPOwotCWRpc2st
+Pm1ham9yCQk9IG51bGxfbWFqb3I7Ci0JZGlzay0+Zmlyc3RfbWlub3IJPSBudWxsYi0+aW5kZXg7
+Ci0JZGlzay0+Zm9wcwkJPSAmbnVsbF9mb3BzOwotCWRpc2stPnByaXZhdGVfZGF0YQk9IG51bGxi
+OwotCWRpc2stPnF1ZXVlCQk9IG51bGxiLT5xOwotCXN0cm5jcHkoZGlzay0+ZGlza19uYW1lLCBu
+dWxsYi0+ZGlza19uYW1lLCBESVNLX05BTUVfTEVOKTsKLQotCWFkZF9kaXNrKGRpc2spOwotCi1k
+b25lOgogCW11dGV4X2xvY2soJmxvY2spOwogCWxpc3RfYWRkX3RhaWwoJm51bGxiLT5saXN0LCAm
+bnVsbGJfbGlzdCk7CiAJbXV0ZXhfdW5sb2NrKCZsb2NrKTsKIAogCXJldHVybiAwOwotCi1vdXRf
+Y2xlYW51cF9saWdodG52bToKLQlpZiAodXNlX2xpZ2h0bnZtKQotCQludm1fdW5yZWdpc3Rlcihu
+dWxsYi0+ZGlza19uYW1lKTsKIG91dF9jbGVhbnVwX2Jsa19xdWV1ZToKIAlibGtfY2xlYW51cF9x
+dWV1ZShudWxsYi0+cSk7CiBvdXRfY2xlYW51cF90YWdzOgotLSAKMi4xLjQKCi0tCmRtLWRldmVs
+IG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20v
+bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
