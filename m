@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/3] block: prepare for timed bio offload
-Date: Tue, 28 Jun 2016 20:18:47 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1606282018070.7298@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 3/3] block: use timed offload
+Date: Tue, 28 Jun 2016 20:19:43 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1606282018520.7298@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,261 +19,153 @@ To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Z
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Replace the pointer current->bio_list with structure queued_bios.
-It is a prerequisite for the following patch that will use the timer
-placed in this structure.
+This patch introduces a timed bio offload.
+
+When a process schedules and there are bios queued on
+current->queued_bios, we submit a timer that redirects the queued bios to
+a workqueue after a specific timeout (currently 1s).
+
+The reason for the timer is that immediate bio offload could change
+ordering of bios and it could theoretically cause performance regressions.
+So, we offload bios only if the process is blocked for a certain amount of
+time.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- block/bio.c               |    6 +++---
- block/blk-core.c          |   16 ++++++++--------
- drivers/md/bcache/btree.c |   12 ++++++------
- drivers/md/dm-bufio.c     |    2 +-
- drivers/md/raid1.c        |    6 +++---
- drivers/md/raid10.c       |    6 +++---
- include/linux/blkdev.h    |    7 ++++++-
- include/linux/sched.h     |    4 ++--
- 8 files changed, 32 insertions(+), 27 deletions(-)
+ block/bio.c      |   45 +++++++++++++++++++++++++++++++++------------
+ block/blk-core.c |   19 +++++++++++++++++--
+ 2 files changed, 50 insertions(+), 14 deletions(-)
 
-Index: linux-4.7-rc5-devel/include/linux/sched.h
-===================================================================
---- linux-4.7-rc5-devel.orig/include/linux/sched.h	2016-06-27 23:01:44.000000000 +0200
-+++ linux-4.7-rc5-devel/include/linux/sched.h	2016-06-27 23:02:56.000000000 +0200
-@@ -128,7 +128,7 @@ struct sched_attr {
- 
- struct futex_pi_state;
- struct robust_list_head;
--struct bio_list;
-+struct queued_bios;
- struct fs_struct;
- struct perf_event_context;
- struct blk_plug;
-@@ -1727,7 +1727,7 @@ struct task_struct {
- 	void *journal_info;
- 
- /* stacked block device info */
--	struct bio_list *bio_list;
-+	struct queued_bios *queued_bios;
- 
- #ifdef CONFIG_BLOCK
- /* stack plugging */
-Index: linux-4.7-rc5-devel/block/blk-core.c
-===================================================================
---- linux-4.7-rc5-devel.orig/block/blk-core.c	2016-06-27 18:58:32.000000000 +0200
-+++ linux-4.7-rc5-devel/block/blk-core.c	2016-06-28 14:24:52.000000000 +0200
-@@ -2077,7 +2077,7 @@ end_io:
-  */
- blk_qc_t generic_make_request(struct bio *bio)
- {
--	struct bio_list bio_list_on_stack;
-+	struct queued_bios queued_bios_on_stack;
- 	blk_qc_t ret = BLK_QC_T_NONE;
- 
- 	if (!generic_make_request_checks(bio))
-@@ -2093,8 +2093,8 @@ blk_qc_t generic_make_request(struct bio
- 	 * it is non-NULL, then a make_request is active, and new requests
- 	 * should be added at the tail
- 	 */
--	if (current->bio_list) {
--		bio_list_add(current->bio_list, bio);
-+	if (current->queued_bios) {
-+		bio_list_add(&current->queued_bios->bio_list, bio);
- 		goto out;
- 	}
- 
-@@ -2113,8 +2113,8 @@ blk_qc_t generic_make_request(struct bio
- 	 * bio_list, and call into ->make_request() again.
- 	 */
- 	BUG_ON(bio->bi_next);
--	bio_list_init(&bio_list_on_stack);
--	current->bio_list = &bio_list_on_stack;
-+	bio_list_init(&queued_bios_on_stack.bio_list);
-+	current->queued_bios = &queued_bios_on_stack;
- 	do {
- 		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
- 
-@@ -2123,15 +2123,15 @@ blk_qc_t generic_make_request(struct bio
- 
- 			blk_queue_exit(q);
- 
--			bio = bio_list_pop(current->bio_list);
-+			bio = bio_list_pop(&current->queued_bios->bio_list);
- 		} else {
--			struct bio *bio_next = bio_list_pop(current->bio_list);
-+			struct bio *bio_next = bio_list_pop(&current->queued_bios->bio_list);
- 
- 			bio_io_error(bio);
- 			bio = bio_next;
- 		}
- 	} while (bio);
--	current->bio_list = NULL; /* deactivate */
-+	current->queued_bios = NULL; /* deactivate */
- 
- out:
- 	return ret;
-Index: linux-4.7-rc5-devel/include/linux/blkdev.h
-===================================================================
---- linux-4.7-rc5-devel.orig/include/linux/blkdev.h	2016-06-28 14:13:16.000000000 +0200
-+++ linux-4.7-rc5-devel/include/linux/blkdev.h	2016-06-28 14:23:14.000000000 +0200
-@@ -1119,6 +1119,11 @@ static inline bool blk_needs_flush_plug(
- 		 !list_empty(&plug->cb_list));
- }
- 
-+struct queued_bios {
-+	struct bio_list bio_list;
-+	struct timer_list timer;
-+};
-+
- extern void blk_flush_bio_list(struct task_struct *tsk);
- 
- static inline void blk_flush_queued_io(struct task_struct *tsk)
-@@ -1126,7 +1131,7 @@ static inline void blk_flush_queued_io(s
- 	/*
- 	 * Flush any queued bios to corresponding rescue threads.
- 	 */
--	if (tsk->bio_list && !bio_list_empty(tsk->bio_list))
-+	if (tsk->queued_bios && !bio_list_empty(&tsk->queued_bios->bio_list))
- 		blk_flush_bio_list(tsk);
- 	/*
- 	 * Flush any plugged IO that is queued.
 Index: linux-4.7-rc5-devel/block/bio.c
 ===================================================================
---- linux-4.7-rc5-devel.orig/block/bio.c	2016-06-28 14:25:21.000000000 +0200
-+++ linux-4.7-rc5-devel/block/bio.c	2016-06-28 14:29:15.000000000 +0200
-@@ -363,13 +363,13 @@ static void bio_alloc_rescue(struct work
- void blk_flush_bio_list(struct task_struct *tsk)
- {
+--- linux-4.7-rc5-devel.orig/block/bio.c	2016-06-28 17:05:40.000000000 +0200
++++ linux-4.7-rc5-devel/block/bio.c	2016-06-28 18:30:12.000000000 +0200
+@@ -338,9 +338,10 @@ static void bio_alloc_rescue(struct work
  	struct bio *bio;
--	struct bio_list list = *tsk->bio_list;
--	bio_list_init(tsk->bio_list);
-+	struct bio_list list = tsk->queued_bios->bio_list;
-+	bio_list_init(&tsk->queued_bios->bio_list);
+ 
+ 	while (1) {
+-		spin_lock(&bs->rescue_lock);
++		unsigned long flags;
++		spin_lock_irqsave(&bs->rescue_lock, flags);
+ 		bio = bio_list_pop(&bs->rescue_list);
+-		spin_unlock(&bs->rescue_lock);
++		spin_unlock_irqrestore(&bs->rescue_lock, flags);
+ 
+ 		if (!bio)
+ 			break;
+@@ -350,33 +351,53 @@ static void bio_alloc_rescue(struct work
+ }
+ 
+ /**
+- * blk_flush_bio_list
+- * @tsk: task_struct whose bio_list must be flushed
++ * blk_timer_flush_bio_list
+  *
+- * Pop bios queued on @tsk->bio_list and submit each of them to
++ * Pop bios queued on q->bio_list and submit each of them to
+  * their rescue workqueue.
+  *
+- * If the bio doesn't have a bio_set, we leave it on @tsk->bio_list.
++ * If the bio doesn't have a bio_set, we leave it on q->bio_list.
+  * However, stacking drivers should use bio_set, so this shouldn't be
+  * an issue.
+  */
+-void blk_flush_bio_list(struct task_struct *tsk)
++static void blk_timer_flush_bio_list(unsigned long data)
+ {
++	struct queued_bios *q = (struct queued_bios *)data;
+ 	struct bio *bio;
+-	struct bio_list list = tsk->queued_bios->bio_list;
+-	bio_list_init(&tsk->queued_bios->bio_list);
++
++	struct bio_list list = q->bio_list;
++	bio_list_init(&q->bio_list);
  
  	while ((bio = bio_list_pop(&list))) {
++		unsigned long flags;
  		struct bio_set *bs = bio->bi_pool;
  		if (unlikely(!bs)) {
--			bio_list_add(tsk->bio_list, bio);
-+			bio_list_add(&tsk->queued_bios->bio_list, bio);
+-			bio_list_add(&tsk->queued_bios->bio_list, bio);
++			bio_list_add(&q->bio_list, bio);
  			continue;
  		}
  
-Index: linux-4.7-rc5-devel/drivers/md/bcache/btree.c
-===================================================================
---- linux-4.7-rc5-devel.orig/drivers/md/bcache/btree.c	2016-06-28 14:39:58.000000000 +0200
-+++ linux-4.7-rc5-devel/drivers/md/bcache/btree.c	2016-06-28 14:40:17.000000000 +0200
-@@ -450,7 +450,7 @@ void __bch_btree_node_write(struct btree
- 
- 	trace_bcache_btree_write(b);
- 
--	BUG_ON(current->bio_list);
-+	BUG_ON(current->queued_bios);
- 	BUG_ON(b->written >= btree_blocks(b));
- 	BUG_ON(b->written && !i->keys);
- 	BUG_ON(btree_bset_first(b)->seq != i->seq);
-@@ -544,7 +544,7 @@ static void bch_btree_leaf_dirty(struct 
- 
- 	/* Force write if set is too big */
- 	if (set_bytes(i) > PAGE_SIZE - 48 &&
--	    !current->bio_list)
-+	    !current->queued_bios)
- 		bch_btree_node_write(b, NULL);
+-		spin_lock(&bs->rescue_lock);
++		spin_lock_irqsave(&bs->rescue_lock, flags);
+ 		bio_list_add(&bs->rescue_list, bio);
+ 		queue_work(bs->rescue_workqueue, &bs->rescue_work);
+-		spin_unlock(&bs->rescue_lock);
++		spin_unlock_irqrestore(&bs->rescue_lock, flags);
++	}
++}
++
++#define BIO_RESCUE_TIMEOUT	HZ
++
++/**
++ * blk_flush_bio_list
++ * @tsk: task_struct whose bio_list must be flushed
++ *
++ * This function sets up a timer that flushes the queued bios.
++ */
++void blk_flush_bio_list(struct task_struct *tsk)
++{
++	struct queued_bios *q = tsk->queued_bios;
++	if (q->timer.function == NULL) {
++		setup_timer(&q->timer, blk_timer_flush_bio_list,
++			    (unsigned long)q);
++		mod_timer(&q->timer, jiffies + BIO_RESCUE_TIMEOUT);
+ 	}
  }
  
-@@ -889,7 +889,7 @@ static struct btree *mca_alloc(struct ca
+Index: linux-4.7-rc5-devel/block/blk-core.c
+===================================================================
+--- linux-4.7-rc5-devel.orig/block/blk-core.c	2016-06-28 16:46:01.000000000 +0200
++++ linux-4.7-rc5-devel/block/blk-core.c	2016-06-28 17:42:24.000000000 +0200
+@@ -2078,6 +2078,7 @@ end_io:
+ blk_qc_t generic_make_request(struct bio *bio)
  {
- 	struct btree *b;
+ 	struct queued_bios queued_bios_on_stack;
++	struct queued_bios *q;
+ 	blk_qc_t ret = BLK_QC_T_NONE;
  
--	BUG_ON(current->bio_list);
-+	BUG_ON(current->queued_bios);
- 
- 	lockdep_assert_held(&c->bucket_lock);
- 
-@@ -976,7 +976,7 @@ retry:
- 	b = mca_find(c, k);
- 
- 	if (!b) {
--		if (current->bio_list)
-+		if (current->queued_bios)
- 			return ERR_PTR(-EAGAIN);
- 
- 		mutex_lock(&c->bucket_lock);
-@@ -2127,7 +2127,7 @@ static int bch_btree_insert_node(struct 
- 
- 	return 0;
- split:
--	if (current->bio_list) {
-+	if (current->queued_bios) {
- 		op->lock = b->c->root->level + 1;
- 		return -EAGAIN;
- 	} else if (op->lock <= b->c->root->level) {
-@@ -2209,7 +2209,7 @@ int bch_btree_insert(struct cache_set *c
- 	struct btree_insert_op op;
- 	int ret = 0;
- 
--	BUG_ON(current->bio_list);
-+	BUG_ON(current->queued_bios);
- 	BUG_ON(bch_keylist_empty(keys));
- 
- 	bch_btree_op_init(&op.op, 0);
-Index: linux-4.7-rc5-devel/drivers/md/dm-bufio.c
-===================================================================
---- linux-4.7-rc5-devel.orig/drivers/md/dm-bufio.c	2016-06-28 14:39:59.000000000 +0200
-+++ linux-4.7-rc5-devel/drivers/md/dm-bufio.c	2016-06-28 14:40:30.000000000 +0200
-@@ -177,7 +177,7 @@ static inline int dm_bufio_cache_index(s
- #define DM_BUFIO_CACHE(c)	(dm_bufio_caches[dm_bufio_cache_index(c)])
- #define DM_BUFIO_CACHE_NAME(c)	(dm_bufio_cache_names[dm_bufio_cache_index(c)])
- 
--#define dm_bufio_in_request()	(!!current->bio_list)
-+#define dm_bufio_in_request()	(!!current->queued_bios)
- 
- static void dm_bufio_lock(struct dm_bufio_client *c)
- {
-Index: linux-4.7-rc5-devel/drivers/md/raid1.c
-===================================================================
---- linux-4.7-rc5-devel.orig/drivers/md/raid1.c	2016-06-28 14:39:59.000000000 +0200
-+++ linux-4.7-rc5-devel/drivers/md/raid1.c	2016-06-28 14:42:00.000000000 +0200
-@@ -876,8 +876,8 @@ static sector_t wait_barrier(struct r1co
- 				    (!conf->barrier ||
- 				     ((conf->start_next_window <
- 				       conf->next_resync + RESYNC_SECTORS) &&
--				      current->bio_list &&
--				      !bio_list_empty(current->bio_list))),
-+				      current->queued_bios &&
-+				      !bio_list_empty(&current->queued_bios->bio_list))),
- 				    conf->resync_lock);
- 		conf->nr_waiting--;
+ 	if (!generic_make_request_checks(bio))
+@@ -2093,8 +2094,17 @@ blk_qc_t generic_make_request(struct bio
+ 	 * it is non-NULL, then a make_request is active, and new requests
+ 	 * should be added at the tail
+ 	 */
+-	if (current->queued_bios) {
+-		bio_list_add(&current->queued_bios->bio_list, bio);
++	q = current->queued_bios;
++	if (q) {
++		/*
++		 * The timer may modify q->bio_list. So we must stop the timer
++		 * before modifying the list.
++		 */
++		if (q->timer.function != NULL) {
++			del_timer_sync(&q->timer);
++			q->timer.function = NULL;
++		}
++		bio_list_add(&q->bio_list, bio);
+ 		goto out;
  	}
-@@ -1014,7 +1014,7 @@ static void raid1_unplug(struct blk_plug
- 	struct r1conf *conf = mddev->private;
- 	struct bio *bio;
  
--	if (from_schedule || current->bio_list) {
-+	if (from_schedule || current->queued_bios) {
- 		spin_lock_irq(&conf->device_lock);
- 		bio_list_merge(&conf->pending_bio_list, &plug->pending);
- 		conf->pending_count += plug->pending_cnt;
-Index: linux-4.7-rc5-devel/drivers/md/raid10.c
-===================================================================
---- linux-4.7-rc5-devel.orig/drivers/md/raid10.c	2016-06-28 14:40:00.000000000 +0200
-+++ linux-4.7-rc5-devel/drivers/md/raid10.c	2016-06-28 14:47:44.000000000 +0200
-@@ -945,8 +945,8 @@ static void wait_barrier(struct r10conf 
- 		wait_event_lock_irq(conf->wait_barrier,
- 				    !conf->barrier ||
- 				    (conf->nr_pending &&
--				     current->bio_list &&
--				     !bio_list_empty(current->bio_list)),
-+				     current->queued_bios &&
-+				     !bio_list_empty(&current->queued_bios->bio_list)),
- 				    conf->resync_lock);
- 		conf->nr_waiting--;
- 	}
-@@ -1022,7 +1022,7 @@ static void raid10_unplug(struct blk_plu
- 	struct r10conf *conf = mddev->private;
- 	struct bio *bio;
+@@ -2114,6 +2124,7 @@ blk_qc_t generic_make_request(struct bio
+ 	 */
+ 	BUG_ON(bio->bi_next);
+ 	bio_list_init(&queued_bios_on_stack.bio_list);
++	queued_bios_on_stack.timer.function = NULL;
+ 	current->queued_bios = &queued_bios_on_stack;
+ 	do {
+ 		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
+@@ -2130,6 +2141,10 @@ blk_qc_t generic_make_request(struct bio
+ 			bio_io_error(bio);
+ 			bio = bio_next;
+ 		}
++		if (unlikely(queued_bios_on_stack.timer.function != NULL)) {
++			del_timer_sync(&queued_bios_on_stack.timer);
++			queued_bios_on_stack.timer.function = NULL;
++		}
+ 	} while (bio);
+ 	current->queued_bios = NULL; /* deactivate */
  
--	if (from_schedule || current->bio_list) {
-+	if (from_schedule || current->queued_bios) {
- 		spin_lock_irq(&conf->device_lock);
- 		bio_list_merge(&conf->pending_bio_list, &plug->pending);
- 		conf->pending_count += plug->pending_cnt;
