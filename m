@@ -1,12 +1,13 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [BUG] multipath-tools: multipathd/main.c: cannot jump
- from this goto statement to its label
-Date: Wed, 29 Jun 2016 15:36:29 +0200
-Message-ID: <fcfe982c-4d96-71f7-4a93-93eaeb18322b@gmail.com>
+Subject: multipath-tools: clang warnings(30)
+Date: Wed, 29 Jun 2016 16:06:04 +0200
+Message-ID: <655b670f-2eb1-127f-10d1-2d48ea3bfe73@gmail.com>
+References: <fcfe982c-4d96-71f7-4a93-93eaeb18322b@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <fcfe982c-4d96-71f7-4a93-93eaeb18322b@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,13 +22,8 @@ List-Id: dm-devel.ids
 
 spotted by clang-3.8.0:
 
-make[1]: Entering directory '/home/xose/tmp/arrays/multipath-tools.x1/multipathd'
-clang -O2 -g -pipe -Wformat-security -Wall -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wunused -Wstrict-prototypes -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -I../libmultipath
--I../libmpathpersist -I../libmpathcmd -DUSE_SYSTEMD=229 -c -o main.o main.c
-main.c:586:3: error: cannot jump from this goto statement to its label
-  goto out_unlock;
-  ^
-main.c:631:38: note: jump bypasses initialization of variable with __attribute__((cleanup))
- do { struct __pthread_cleanup_frame __clframe __attribute__ ((__cleanup__ (__pthread_cleanup_routine))) = { .__cancel_routine = (cleanup_lock), .__cancel_arg = (&vecs->lock), .__do_it = 1 };;
-                                     ^
-1 error generated.
+28 warnings: array index X is past the end of the array (which contains Y element) [-Warray-bounds]
+ 1  warning: address of array 'mpp->wwid' will always evaluate to 'true' [-Wpointer-bool-conversion]
+ 1  warning: expression which evaluates to zero treated as a null pointer constant of type 'char *' [-Wnon-literal-null-conversion
+
+clang output(81k): https://drive.google.com/file/d/0B_B6YmEmO7cDeEF1bXRVRHhFbDQ
