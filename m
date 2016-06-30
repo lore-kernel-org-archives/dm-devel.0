@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 2/5] multipath-tools: merge RPM_OPT_FLAGS into
-	OPTFLAGS
-Date: Thu, 30 Jun 2016 15:42:13 +0200
-Message-ID: <1467294136-19275-3-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 3/5] multipath-tools: don't create
+	/usr/share/doc/mpathpersist/ from make install
+Date: Thu, 30 Jun 2016 15:42:14 +0200
+Message-ID: <1467294136-19275-4-git-send-email-xose.vazquez@gmail.com>
 References: <1467294136-19275-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,30 +21,26 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
+Useless, it's empty.
+
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- Makefile.inc | 6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+ libmpathpersist/Makefile | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index d7fc444..c4bea67 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -59,11 +59,9 @@ mpathcmddir = $(TOPDIR)/libmpathcmd
- GZIP        = gzip -9 -c
- INSTALL_PROGRAM = install
- 
--ifndef RPM_OPT_FLAGS
--	RPM_OPT_FLAGS = -O2 -g -pipe -Wformat-security -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4
--endif
-+OPTFLAGS     = -Wunused -Wstrict-prototypes -O2 -g -pipe -Wformat-security -Wall \
-+		-Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4
- 
--OPTFLAGS     = $(RPM_OPT_FLAGS) -Wunused -Wstrict-prototypes
- CFLAGS	     = $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
- SHARED_FLAGS = -shared
- 
+diff --git a/libmpathpersist/Makefile b/libmpathpersist/Makefile
+index dd02158..70b2974 100644
+--- a/libmpathpersist/Makefile
++++ b/libmpathpersist/Makefile
+@@ -32,7 +32,6 @@ install: $(LIBS)
+ 	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(syslibdir)
+ 	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(man3dir)
+ 	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(incdir)
+-	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)/usr/share/doc/mpathpersist/
+ 	ln -sf $(DESTDIR)$(syslibdir)/$(LIBS) $(DESTDIR)$(syslibdir)/$(DEVLIB)
+ 	install -m 644 mpath_persistent_reserve_in.3.gz $(DESTDIR)$(man3dir)
+ 	install -m 644 mpath_persistent_reserve_out.3.gz $(DESTDIR)$(man3dir)
 -- 
 2.7.4
