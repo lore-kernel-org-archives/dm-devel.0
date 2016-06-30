@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 4/5] multipath-tools: don't create /etc/init.d
-	from make install
-Date: Thu, 30 Jun 2016 15:42:15 +0200
-Message-ID: <1467294136-19275-5-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 2/5] multipath-tools: merge RPM_OPT_FLAGS into
+	OPTFLAGS
+Date: Thu, 30 Jun 2016 15:42:13 +0200
+Message-ID: <1467294136-19275-3-git-send-email-xose.vazquez@gmail.com>
 References: <1467294136-19275-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,47 +21,30 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-sysv scripts were deleted time ago.
-
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- Makefile.inc        | 1 -
- multipathd/Makefile | 2 --
- 2 files changed, 3 deletions(-)
+ Makefile.inc | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
 diff --git a/Makefile.inc b/Makefile.inc
-index c4bea67..7adeb46 100644
+index d7fc444..c4bea67 100644
 --- a/Makefile.inc
 +++ b/Makefile.inc
-@@ -48,7 +48,6 @@ multipathdir = $(TOPDIR)/libmultipath
- mandir      = $(prefix)/usr/share/man/man8
- man5dir     = $(prefix)/usr/share/man/man5
- man3dir      = $(prefix)/usr/share/man/man3
--rcdir	    = $(prefix)/etc/init.d
- syslibdir   = $(prefix)/$(LIB)
- incdir      = $(prefix)/usr/include
- libdir	    = $(prefix)/$(LIB)/multipath
-diff --git a/multipathd/Makefile b/multipathd/Makefile
-index 9b0210f..7fb1d3f 100644
---- a/multipathd/Makefile
-+++ b/multipathd/Makefile
-@@ -46,7 +46,6 @@ $(EXEC): $(OBJS)
- install:
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(bindir)
- 	$(INSTALL_PROGRAM) -m 755 $(EXEC) $(DESTDIR)$(bindir)
--	$(INSTALL_PROGRAM) -d $(DESTDIR)$(rcdir)
- ifdef SYSTEMD
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(unitdir)
- 	$(INSTALL_PROGRAM) -m 644 $(EXEC).service $(DESTDIR)$(unitdir)
-@@ -57,7 +56,6 @@ endif
+@@ -59,11 +59,9 @@ mpathcmddir = $(TOPDIR)/libmpathcmd
+ GZIP        = gzip -9 -c
+ INSTALL_PROGRAM = install
  
- uninstall:
- 	rm -f $(DESTDIR)$(bindir)/$(EXEC)
--	rm -f $(DESTDIR)$(rcdir)/$(EXEC)
- 	rm -f $(DESTDIR)$(mandir)/$(EXEC).8.gz
- 	rm -f $(DESTDIR)$(unitdir)/$(EXEC).service
- 	rm -f $(DESTDIR)$(unitdir)/$(EXEC).socket
+-ifndef RPM_OPT_FLAGS
+-	RPM_OPT_FLAGS = -O2 -g -pipe -Wformat-security -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4
+-endif
++OPTFLAGS     = -Wunused -Wstrict-prototypes -O2 -g -pipe -Wformat-security -Wall \
++		-Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4
+ 
+-OPTFLAGS     = $(RPM_OPT_FLAGS) -Wunused -Wstrict-prototypes
+ CFLAGS	     = $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
+ SHARED_FLAGS = -shared
+ 
 -- 
 2.7.4
