@@ -1,76 +1,79 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/3] offload bios to a thread
-Date: Thu, 30 Jun 2016 15:40:24 -0400
-Message-ID: <20160630194023.GA21338@redhat.com>
-References: <alpine.LRH.2.02.1606282014380.7298@file01.intranet.prod.int.rdu2.redhat.com>
+From: J Freyensee <james_p_freyensee@linux.intel.com>
+Subject: Re: [PATCH 5/6] lightnvm: expose device geometry through sysfs
+Date: Thu, 30 Jun 2016 13:01:15 -0700
+Message-ID: <1467316875.21253.24.camel@linux.intel.com>
+References: <1467211901-26707-1-git-send-email-m@bjorling.me>
+	 <1467211901-26707-6-git-send-email-m@bjorling.me>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1606282014380.7298@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, axboe@kernel.dk
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Roland Kammerer <roland.kammerer@linbit.com>, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1467211901-26707-6-git-send-email-m@bjorling.me>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Matias =?ISO-8859-1?Q?Bj=F8rling?= <m@bjorling.me>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, axboe@fb.com, keith.busch@intel.com, linux-nvme@lists.infradead.org, dm-devel@redhat.com
+Cc: "Simon A. F. Lund" <slund@cnexlabs.com>
 List-Id: dm-devel.ids
 
-[cc'ing linux-block and drbd folks]
+On Wed, 2016-06-29 at 16:51 +0200, Matias Bj=C3=B8rling wrote:
+> From: "Simon A. F. Lund" <slund@cnexlabs.com>
+>=20
+> For a host to access an Open-Channel SSD, it has to know its
+> geometry,
+> so that it writes and reads at the appropriate device bounds.
+>=20
+> Currently, the geometry information is kept within the kernel, and
+> not
+> exported to user-space for consumption. This patch exposes the
+> configuration through sysfs and enables user-space libraries, such as
+> liblightnvm, to use the sysfs implementation to get the geometry of
+> an
+> Open-Channel SSD.
+>=20
+> The sysfs entries are stored within the device hierarchy, and can be
+> found using the "lightnvm" device type.
+>=20
+> An example configuration looks like this:
+>=20
+> /sys/class/nvme/
+> =E2=94=94=E2=94=80=E2=94=80 nvme0n1
+>    =E2=94=9C=E2=94=80=E2=94=80 capabilities: 3
+>    =E2=94=9C=E2=94=80=E2=94=80 device_mode: 1
+>    =E2=94=9C=E2=94=80=E2=94=80 channel_parallelism: 0
+>    =E2=94=9C=E2=94=80=E2=94=80 erase_max: 1000000
+>    =E2=94=9C=E2=94=80=E2=94=80 erase_typ: 1000000
+>    =E2=94=9C=E2=94=80=E2=94=80 flash_media_type: 0
+>    =E2=94=9C=E2=94=80=E2=94=80 media_capabilities: 0x00000001
+>    =E2=94=9C=E2=94=80=E2=94=80 media_type: 0
+>    =E2=94=9C=E2=94=80=E2=94=80 multiplane: 0x00010101
+>    =E2=94=9C=E2=94=80=E2=94=80 num_blocks: 1022
+>    =E2=94=9C=E2=94=80=E2=94=80 num_channels: 1
+>    =E2=94=9C=E2=94=80=E2=94=80 num_luns: 4
+>    =E2=94=9C=E2=94=80=E2=94=80 num_pages: 64
+>    =E2=94=9C=E2=94=80=E2=94=80 num_planes: 1
+>    =E2=94=9C=E2=94=80=E2=94=80 page_size: 4096
+>    =E2=94=9C=E2=94=80=E2=94=80 prog_max: 100000
+>    =E2=94=9C=E2=94=80=E2=94=80 prog_typ: 100000
+>    =E2=94=9C=E2=94=80=E2=94=80 read_max: 10000
+>    =E2=94=9C=E2=94=80=E2=94=80 read_typ: 10000
+>    =E2=94=9C=E2=94=80=E2=94=80 sector_oob_size: 0
+>    =E2=94=9C=E2=94=80=E2=94=80 sector_size: 4096
+>    =E2=94=9C=E2=94=80=E2=94=80 media_manager: gennvm
+>    =E2=94=9C=E2=94=80=E2=94=80 ppa_format: 0x380830082808001010102008
+>    =E2=94=9C=E2=94=80=E2=94=80 vendor_opcode: 0
+>    =E2=94=94=E2=94=80=E2=94=80 version: 1
+>=20
 
-On Tue, Jun 28 2016 at  8:16pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+That is an awful lot of new things to add under nvme0n1-type sysfs
+entries when there is already a decent amount of stuff under it.
 
-> Hi
-> 
-> Here I'm sending three patches to fix the deadlocks in snapshot and 
-> snapshot-merge.
-> 
-> The first patch fixes the deadlock, the following 2 patches introduce a 
-> timer, so that bios are not offloaded immediatelly, they are offloaded 
-> after a specified timeout, because immediate offloading can change order 
-> of bios and it could theoretically produce regressions. I don't know if 
-> these regressions really exist or not.
-> 
-> If there is some way to push the patches upstream, try it.
-
-Some fix must happen before the more recent upstream kernels can be
-reliably used in stacked bio-based workloads (in production).  We simply
-cannot ignore this issue any more.
-
-drbd is also hitting the same generic_make_request (current->bio_list)
-problem, see:
-https://www.redhat.com/archives/dm-devel/2016-June/msg00326.html
-
-Mikulas, I've taken your 3 proposed patches patches and refactored them
-some to split out intermediate patches that hopefully make review
-easier.  Nothing other than variable names and some other style stuff
-was changed -- headers were tweaked some to help with clarity.
-
-Please see the 5 topmost "block: ..." patches here:
-http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=wip
-
-It should be noted that Jens had a quick look at this set and wanted to
-throw up a little when he saw the (ab)use of a timer to defer punting to
-the workqueue.  I explained that without the timer, always punting to
-the workqueue, we could hurt performance by reordering IO or crippling
-onstack plugging.  He said he'd try to think of a cleaner way forward.
-
-Lars, please feel free to see if this set addresses the similar deadlock
-you saw/fixed with drbd.  We need to converge on an acceptable fix for
-this problem -- preferably sooner rather than later!
-
-Conversely, Mikulas: if you can easily reproduce the dm-snapshot
-deadlock please try Lars' fix to see if it is workable for our DM needs.
+Any chance these new things could be stuck under a separate sysfs
+directory under each nvmeXnY device?  If these things are mainly
+beneficial to LightNVM, it will be easier for a LightNVM newbie to
+find, recognize, and consider all the important things in an Open
+Channel SSD solution if it's under a separate directory.  And for
+current SSD solutions that don't seem to need these things exposed in
+sysfs for operation, it will make what is directly under nvmeXnY
+directories less cluttered.
 
 Thanks,
-Mike
-
-p.s. I'm on holiday until next Wednesday (7/6).. so may be slow to
-     respond until then.
+Jay
