@@ -1,7 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 0/5] multipath-tools: Makefiles housekeeping
-Date: Thu, 30 Jun 2016 15:44:13 +0200
-Message-ID: <1467294253-19376-1-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 0/2] multipath-tools: Licence housekeeping
+Date: Thu, 30 Jun 2016 16:39:51 +0200
+Message-ID: <1467297593-20514-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -22,19 +22,21 @@ Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
+Xose Vazquez Perez (2):
+  multipath-tools: replace FSF address with a www pointer
+  multipath-tools: replace COPYING with a fresh copy from gnu.org
 
-Xose Vazquez Perez (5):
-  multipath-tools: delete spec/rpm traces from Makefile
-  multipath-tools: merge RPM_OPT_FLAGS into OPTFLAGS
-  multipath-tools: don't create /usr/share/doc/mpathpersist/ from make install
-  multipath-tools: don't create /etc/init.d from make install
-  multipath-tools: make uninstall leaves traces behind
-
- Makefile                 | 9 ---------
- Makefile.inc             | 7 ++-----
- libmpathpersist/Makefile | 3 ++-
- multipathd/Makefile      | 2 --
- 4 files changed, 4 insertions(+), 17 deletions(-)
+ COPYING                           | 22 ++++++++++------------
+ kpartx/dasd.c                     |  4 +---
+ kpartx/dasd.h                     |  4 +---
+ kpartx/efi.h                      |  3 +--
+ kpartx/gpt.c                      |  3 +--
+ kpartx/gpt.h                      |  3 +--
+ libmpathcmd/mpath_cmd.h           |  6 ++----
+ libmultipath/checkers/cciss_tur.c |  6 +-----
+ libmultipath/sysfs.c              |  3 +--
+ libmultipath/uevent.c             |  3 +--
+ 10 files changed, 20 insertions(+), 37 deletions(-)
 
 -- 
 2.7.4
