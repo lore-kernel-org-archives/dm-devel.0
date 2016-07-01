@@ -1,13 +1,14 @@
 From: Gris Ge <fge@redhat.com>
-Subject: [PATCH V3 0/3] Introducing multipath C API
-Date: Fri,  1 Jul 2016 20:46:53 +0800
-Message-ID: <20160701124656.169890-1-fge@redhat.com>
+Subject: [PATCH V3 1/3] multipath-tools: Increase MAX_REPLY_LEN.
+Date: Fri,  1 Jul 2016 20:46:54 +0800
+Message-ID: <20160701124656.169890-2-fge@redhat.com>
 References: <1455264623-16199-2-git-send-email-fge@redhat.com>
+	<20160701124656.169890-1-fge@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1455264623-16199-2-git-send-email-fge@redhat.com>
+In-Reply-To: <20160701124656.169890-1-fge@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,55 +22,39 @@ To: dm-devel@redhat.com
 Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
-Changes since V2:
- * Use json interface "show maps json".
- * Removed the use of enum.
- * Use libmpathcmd for IPC communication.
- * Include two trivial fixes for libmpathcmd.
+Problem:
 
-Gris Ge (3):
-  multipath-tools: Increase MAX_REPLY_LEN.
-  multipath-tools: Set errno mpath_recv_reply() when failure.
-  multipath-tools: Introducing multipath C API <libdmmp/libdmmp.h>
+    mpath_recv_reply() return -EINVA with 2k paths.
 
- .gitignore                        |    4 +
- Makefile                          |    1 +
- Makefile.inc                      |    3 +
- libdmmp/DEV_NOTES                 |   41 +
- libdmmp/Makefile                  |   78 +
- libdmmp/docs/kernel-doc           | 2971 +++++++++++++++++++++++++++++++++++++
- libdmmp/docs/libdmmp.h.3          |  113 ++
- libdmmp/docs/split-man.pl         |   41 +
- libdmmp/libdmmp.c                 |  272 ++++
- libdmmp/libdmmp.pc.in             |    9 +
- libdmmp/libdmmp/libdmmp.h         |  607 ++++++++
- libdmmp/libdmmp_misc.c            |   87 ++
- libdmmp/libdmmp_mp.c              |  150 ++
- libdmmp/libdmmp_path.c            |  115 ++
- libdmmp/libdmmp_pg.c              |  208 +++
- libdmmp/libdmmp_private.h         |  208 +++
- libdmmp/test/Makefile             |   30 +
- libdmmp/test/libdmmp_speed_test.c |   49 +
- libdmmp/test/libdmmp_test.c       |  144 ++
- libmpathcmd/mpath_cmd.c           |   10 +-
- libmpathcmd/mpath_cmd.h           |    4 +-
- 21 files changed, 5140 insertions(+), 5 deletions(-)
- create mode 100644 libdmmp/DEV_NOTES
- create mode 100644 libdmmp/Makefile
- create mode 100644 libdmmp/docs/kernel-doc
- create mode 100644 libdmmp/docs/libdmmp.h.3
- create mode 100644 libdmmp/docs/split-man.pl
- create mode 100644 libdmmp/libdmmp.c
- create mode 100644 libdmmp/libdmmp.pc.in
- create mode 100644 libdmmp/libdmmp/libdmmp.h
- create mode 100644 libdmmp/libdmmp_misc.c
- create mode 100644 libdmmp/libdmmp_mp.c
- create mode 100644 libdmmp/libdmmp_path.c
- create mode 100644 libdmmp/libdmmp_pg.c
- create mode 100644 libdmmp/libdmmp_private.h
- create mode 100644 libdmmp/test/Makefile
- create mode 100644 libdmmp/test/libdmmp_speed_test.c
- create mode 100644 libdmmp/test/libdmmp_test.c
+Root cause:
 
+    With 2k paths(1k mpaths) simulated by scsi_debug, the 'show maps json'
+    requires 1633217 bytes while MAX_REPLY_LEN is 65535 bytes.
+
+Fix:
+
+    Increase MAX_REPLY_LEN to 10485760(10MiB) which is enough for 10k
+    paths.
+
+Signed-off-by: Gris Ge <fge@redhat.com>
+---
+ libmpathcmd/mpath_cmd.h | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/libmpathcmd/mpath_cmd.h b/libmpathcmd/mpath_cmd.h
+index f33f000..d65c648 100644
+--- a/libmpathcmd/mpath_cmd.h
++++ b/libmpathcmd/mpath_cmd.h
+@@ -28,7 +28,9 @@ extern "C" {
+ 
+ #define DEFAULT_SOCKET		"/org/kernel/linux/storage/multipathd"
+ #define DEFAULT_REPLY_TIMEOUT	1000
+-#define MAX_REPLY_LEN		65536
++#define MAX_REPLY_LEN		10485760
++/* ^ 10 MiB, enough for 'show maps json' command with 10k paths which
++ *   requires about 8 MiB */
+ 
+ 
+ /*
 -- 
 2.9.0
