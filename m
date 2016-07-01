@@ -1,7 +1,8 @@
 From: Gris Ge <fge@redhat.com>
-Subject: [PATCH V3 1/3] multipath-tools: Increase MAX_REPLY_LEN.
-Date: Fri,  1 Jul 2016 20:46:54 +0800
-Message-ID: <20160701124656.169890-2-fge@redhat.com>
+Subject: [PATCH V3 2/3] multipath-tools: Set errno
+	mpath_recv_reply() when failure.
+Date: Fri,  1 Jul 2016 20:46:55 +0800
+Message-ID: <20160701124656.169890-3-fge@redhat.com>
 References: <1455264623-16199-2-git-send-email-fge@redhat.com>
 	<20160701124656.169890-1-fge@redhat.com>
 Mime-Version: 1.0
@@ -22,39 +23,41 @@ To: dm-devel@redhat.com
 Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
-Problem:
-
-    mpath_recv_reply() return -EINVA with 2k paths.
-
-Root cause:
-
-    With 2k paths(1k mpaths) simulated by scsi_debug, the 'show maps json'
-    requires 1633217 bytes while MAX_REPLY_LEN is 65535 bytes.
-
-Fix:
-
-    Increase MAX_REPLY_LEN to 10485760(10MiB) which is enough for 10k
-    paths.
+Enforce what mpath_cmd.h states "-1 on failure (with errno set)" for
+mpath_recv_reply() by set errno and return -1 on failure.
 
 Signed-off-by: Gris Ge <fge@redhat.com>
 ---
- libmpathcmd/mpath_cmd.h | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ libmpathcmd/mpath_cmd.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
 
-diff --git a/libmpathcmd/mpath_cmd.h b/libmpathcmd/mpath_cmd.h
-index f33f000..d65c648 100644
---- a/libmpathcmd/mpath_cmd.h
-+++ b/libmpathcmd/mpath_cmd.h
-@@ -28,7 +28,9 @@ extern "C" {
- 
- #define DEFAULT_SOCKET		"/org/kernel/linux/storage/multipathd"
- #define DEFAULT_REPLY_TIMEOUT	1000
--#define MAX_REPLY_LEN		65536
-+#define MAX_REPLY_LEN		10485760
-+/* ^ 10 MiB, enough for 'show maps json' command with 10k paths which
-+ *   requires about 8 MiB */
- 
- 
- /*
+diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
+index 2290ecb..309634e 100644
+--- a/libmpathcmd/mpath_cmd.c
++++ b/libmpathcmd/mpath_cmd.c
+@@ -141,9 +141,11 @@ int mpath_recv_reply(int fd, char **reply, unsigned int timeout)
+ 	*reply = NULL;
+ 	len = mpath_recv_reply_len(fd, timeout);
+ 	if (len <= 0)
+-		return len;
+-	if (len > MAX_REPLY_LEN)
+-		return -EINVAL;
++		return -1;
++	if (len > MAX_REPLY_LEN) {
++		errno = EINVAL;
++		return -1;
++	}
+ 	*reply = malloc(len);
+ 	if (!*reply)
+ 		return -1;
+@@ -151,7 +153,7 @@ int mpath_recv_reply(int fd, char **reply, unsigned int timeout)
+ 	if (err) {
+ 		free(*reply);
+ 		*reply = NULL;
+-		return err;
++		return -1;
+ 	}
+ 	return 0;
+ }
 -- 
 2.9.0
