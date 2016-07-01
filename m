@@ -1,9 +1,10 @@
 From: Gris Ge <fge@redhat.com>
-Subject: [PATCH 3/3] multipath-tools: Introducing multipath C API
-	<libdmmp/libdmmp.h>
-Date: Fri,  1 Jul 2016 20:55:15 +0800
-Message-ID: <20160701125515.193457-1-fge@redhat.com>
-References: <20160701124656.169890-1-fge@redhat.com>
+Subject: [PATCH V3 3/3] multipath-tools: Introducing multipath C
+	API <libdmmp/libdmmp.h>
+Date: Fri,  1 Jul 2016 20:46:56 +0800
+Message-ID: <20160701124656.169890-4-fge@redhat.com>
+References: <1455264623-16199-2-git-send-email-fge@redhat.com>
+	<20160701124656.169890-1-fge@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -51,9 +52,9 @@ Performance:
  * 10k scsi_debug sdX with 2 disks per mpath (i7-3520M 8GiB RAM):
    $ make -C libdmmp speed_test
    Got 5000 mpath
-   real 4.66
-   user 0.24
-   sys 0.00
+   real 3.37
+   user 0.19
+   sys 0.02
 
 Misc:
  * Developer note is libdmmp/DEV_NOTES.
@@ -3411,7 +3412,7 @@ index 0000000..452fd8a
 +close OUT;
 diff --git a/libdmmp/libdmmp.c b/libdmmp/libdmmp.c
 new file mode 100644
-index 0000000..02180f8
+index 0000000..f8762fd
 --- /dev/null
 +++ b/libdmmp/libdmmp.c
 @@ -0,0 +1,272 @@
@@ -3453,7 +3454,7 @@ index 0000000..02180f8
 +
 +#define _DEFAULT_UXSOCK_TIMEOUT		60000
 +/* ^ 60 seconds. On system with 10k sdX, dmmp_mpath_array_get()
-+ *   only take 5 seconds, so this default value should work on most user cases.
++ *   only take 3.5 seconds, so this default value should be OK for most users.
 + */
 +
 +#define _DMMP_IPC_SHOW_JSON_CMD			"show maps json"
@@ -4410,7 +4411,7 @@ index 0000000..27f1161
 +}
 diff --git a/libdmmp/libdmmp_mp.c b/libdmmp/libdmmp_mp.c
 new file mode 100644
-index 0000000..9103d5b
+index 0000000..437a84c
 --- /dev/null
 +++ b/libdmmp/libdmmp_mp.c
 @@ -0,0 +1,150 @@
@@ -4514,7 +4515,7 @@ index 0000000..9103d5b
 +		dmmp_mp->dmmp_pg_count = ar_pgs_len & UINT32_MAX;
 +
 +	dmmp_mp->dmmp_pgs = (struct dmmp_path_group **)
-+		malloc(sizeof(struct dmmp_path_gorup *) *
++		malloc(sizeof(struct dmmp_path_group *) *
 +		       dmmp_mp->dmmp_pg_count);
 +	_dmmp_alloc_null_check(ctx, dmmp_mp->dmmp_pgs, rc, out);
 +	for (; i < dmmp_mp->dmmp_pg_count; ++i)
