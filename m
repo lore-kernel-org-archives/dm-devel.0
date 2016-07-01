@@ -1,16 +1,14 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 17/26] libmultipath: use 'struct config' as
- argument for pathinfo()
-Date: Fri, 1 Jul 2016 15:25:37 -0500
-Message-ID: <20160701202537.GY8095@octiron.msp.redhat.com>
+Subject: Re: [PATCH 00/26] Userspace-RCU for config accesses
+Date: Fri, 1 Jul 2016 15:44:00 -0500
+Message-ID: <20160701204400.GZ8095@octiron.msp.redhat.com>
 References: <1466410153-23896-1-git-send-email-hare@suse.de>
-	<1466410153-23896-18-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1466410153-23896-18-git-send-email-hare@suse.de>
+In-Reply-To: <1466410153-23896-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,124 +19,111 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, Jun 20, 2016 at 10:09:04AM +0200, Hannes Reinecke wrote:
-> pathinfo() requires access to the entire configuration, not just
-> hwtable. So don't pretend this is the case.
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.com>
-> ---
->  libmpathpersist/mpath_persist.c |  6 +++---
->  libmultipath/configure.c        |  8 ++++----
->  libmultipath/discovery.c        | 37 ++++++++++++++++++-------------------
->  libmultipath/discovery.h        |  8 ++++----
->  libmultipath/structs_vec.c      |  2 +-
->  multipath/main.c                |  6 +++---
->  multipathd/cli_handlers.c       |  2 +-
->  multipathd/main.c               | 16 ++++++++--------
->  8 files changed, 42 insertions(+), 43 deletions(-)
-> 
+On Mon, Jun 20, 2016 at 10:08:47AM +0200, Hannes Reinecke wrote:
+> Hi all,
 
-<snip>
-
-> --- a/libmultipath/discovery.c
-> +++ b/libmultipath/discovery.c
-> @@ -32,7 +32,7 @@
->  #include "defaults.h"
->  
->  int
-> -alloc_path_with_pathinfo (vector hwtable, struct udev_device *udevice,
-> +alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
->  			  int flag, struct path **pp_ptr)
->  {
->  	int err = PATHINFO_FAILED;
-> @@ -55,7 +55,7 @@ alloc_path_with_pathinfo (vector hwtable, struct udev_device *udevice,
->  		condlog(0, "pp->dev too small");
->  	} else {
->  		pp->udev = udev_device_ref(udevice);
-> -		err = pathinfo(pp, hwtable, flag | DI_BLACKLIST);
-> +		err = pathinfo(pp, conf, flag | DI_BLACKLIST);
->  	}
->  
->  	if (err)
-> @@ -66,8 +66,8 @@ alloc_path_with_pathinfo (vector hwtable, struct udev_device *udevice,
->  }
->  
->  int
-> -store_pathinfo (vector pathvec, vector hwtable, struct udev_device *udevice,
-> -		int flag, struct path **pp_ptr)
-> +store_pathinfo (vector pathvec, struct config *conf,
-> +		struct udev_device *udevice, int flag, struct path **pp_ptr)
->  {
->  	int err = PATHINFO_FAILED;
->  	struct path * pp;
-> @@ -90,7 +90,7 @@ store_pathinfo (vector pathvec, vector hwtable, struct udev_device *udevice,
->  		goto out;
->  	}
->  	pp->udev = udev_device_ref(udevice);
-> -	err = pathinfo(pp, hwtable, flag);
-> +	err = pathinfo(pp, conf, flag);
->  	if (err)
->  		goto out;
->  
-> @@ -126,10 +126,10 @@ path_discover (vector pathvec, struct config * conf,
->  
->  	pp = find_path_by_dev(pathvec, (char *)devname);
->  	if (!pp) {
-> -		return store_pathinfo(pathvec, conf->hwtable,
-> +		return store_pathinfo(pathvec, conf,
->  				      udevice, flag, NULL);
->  	}
-> -	return pathinfo(pp, conf->hwtable, flag);
-> +	return pathinfo(pp, conf, flag);
->  }
->  
->  int
-> @@ -1397,7 +1397,7 @@ cciss_ioctl_pathinfo (struct path * pp, int mask)
->  }
->  
->  int
-> -get_state (struct path * pp, vector hwtable, int daemon)
-> +get_state (struct path * pp, struct config *conf)
->  {
->  	struct checker * c = &pp->checker;
->  	int state;
-> @@ -1405,8 +1405,8 @@ get_state (struct path * pp, vector hwtable, int daemon)
->  	condlog(3, "%s: get_state", pp->dev);
->  
->  	if (!checker_selected(c)) {
-> -		if (daemon) {
-> -			if (pathinfo(pp, hwtable, DI_SYSFS) != PATHINFO_OK) {
-> +		if (!pp->hwe) {
-> +			if (pathinfo(pp, conf, DI_SYSFS) != PATHINFO_OK) {
->  				condlog(3, "%s: couldn't get sysfs pathinfo",
->  					pp->dev);
->  				return PATH_UNCHECKED;
-> @@ -1425,12 +1425,11 @@ get_state (struct path * pp, vector hwtable, int daemon)
->  		}
->  	}
->  	checker_clear_message(c);
-> -	if (daemon) {
-> -		if (conf->force_sync == 0)
-> -			checker_set_async(c);
-> -		else
-> -			checker_set_sync(c);
-> -	}
-> +	if (conf->force_sync == 0)
-> +		checker_set_async(c);
-> +	else
-> +		checker_set_sync(c);
-> +
->  	if (!conf->checker_timeout &&
->  	    sysfs_get_timeout(pp, &(c->timeout)) <= 0)
->  		c->timeout = DEF_TIMEOUT;
-
-I don't think that this change to get_state is correct. Previously,
-we've always had the checker set to synchronous mode when run by the
-multipath command.  With this change the checker will now run in async
-mode by default.  It should be easy to just overwrite conf->force_sync
-when running the multipath command to fix this.
+ACK on all patches besides 2 and 17 (which I've commented on).
 
 -Ben
+
+> 
+> as Benjamin Marzinski pointed out the 'config' structure is
+> not protected, but it will be re-allocated whenever we do a
+> reconfiguration.
+> This leads to inevitable race conditions, which ATM are only
+> imperfectly handled.
+> With this patchset accesses to the configuration are RCU-protected,
+> so we are guaranteed that the pointer to the configuration is always
+> valid.
+> To facilitate this the patchset moves the 'cmd', 'dev', and 'dev_type'
+> entries out of the configuration, and replaces them with local variables
+> in multipath.
+> 
+> The patchset can be found at
+> 
+> github.com:/hreinecke/multipath-tools.git
+> branch rcu
+> 
+> As usual, comments and reviews are welcome.
+> 
+> Hannes Reinecke (26):
+>   Revert patch 'move filter_devnode() under vector lock'
+>   Use 'mptable' as argument for find_mpe() and get_mpe_wwid()
+>   config: set 'deferred_remove' defaults at correct call
+>   devmapper: explicit config settings
+>   dmparser: use 'is_daemon' as argument for disassemble_map()
+>   libmultipath: use 'is_daemon' as argument for domap() etc
+>   libmultipath: drop 'daemon' configuration setting
+>   libmultipath: Do not access 'conf->cmd' in domap()
+>   libmultipath: add 'cmd' as argument for get_refwwid()
+>   libmultipath: fallback to checking environment variable in
+>     get_udev_uid()
+>   multipath: make 'cmd' internal to multipath program
+>   multipath: make 'dev_type' internal to the multipath program
+>   multipath: make 'dev' internal to the multipath program
+>   libmultipath: separate out 'udev' config entry
+>   libmultipath: use 'checkint' as argument for sysfs_set_scsi_tmo()
+>   discovery: Pass in 'hwtable' for get_state() and
+>     scsi_sysfs_discovery()
+>   libmultipath: use 'struct config' as argument for pathinfo()
+>   checkers: use 'multipath_dir' as argument
+>   prio: use 'multipath_dir' as argument
+>   libmultipath: use 'timeout' as argument for getprio()
+>   libmultipath: use explicit 'config' argument for configuration file
+>     parsing
+>   libmultipath: use (get,put)_multipath_config() accessors
+>   multipathd: Fixup commandline argument handling
+>   multipath: make 'struct config' a local variable
+>   multipathd: use userspace RCU to access configuration
+>   libmultipath: Allocate keywords directly
+> 
+>  libmpathpersist/mpath_persist.c       |  28 +--
+>  libmpathpersist/mpath_persist.h       |   6 +-
+>  libmultipath/checkers.c               |  22 ++-
+>  libmultipath/checkers.h               |   6 +-
+>  libmultipath/config.c                 |  43 ++---
+>  libmultipath/config.h                 |  18 +-
+>  libmultipath/configure.c              | 163 +++++++++++------
+>  libmultipath/configure.h              |  10 +-
+>  libmultipath/debug.c                  |   3 +
+>  libmultipath/devmapper.c              |  21 +--
+>  libmultipath/devmapper.h              |   4 +-
+>  libmultipath/dict.c                   |  79 ++++----
+>  libmultipath/dict.h                   |   2 +-
+>  libmultipath/discovery.c              | 121 +++++++------
+>  libmultipath/discovery.h              |  12 +-
+>  libmultipath/dmparser.c               |   6 +-
+>  libmultipath/dmparser.h               |   2 +-
+>  libmultipath/parser.c                 |  61 +++----
+>  libmultipath/parser.h                 |  27 +--
+>  libmultipath/print.c                  |  72 ++++----
+>  libmultipath/print.h                  |  16 +-
+>  libmultipath/prio.c                   |  40 +++--
+>  libmultipath/prio.h                   |  14 +-
+>  libmultipath/prioritizers/alua.c      |  12 +-
+>  libmultipath/prioritizers/alua_rtpg.c |  25 +--
+>  libmultipath/prioritizers/alua_rtpg.h |   6 +-
+>  libmultipath/prioritizers/emc.c       |   8 +-
+>  libmultipath/prioritizers/hds.c       |   8 +-
+>  libmultipath/prioritizers/hp_sw.c     |  46 ++---
+>  libmultipath/prioritizers/ontap.c     |  19 +-
+>  libmultipath/prioritizers/rdac.c      |   8 +-
+>  libmultipath/propsel.c                |  99 +++++-----
+>  libmultipath/propsel.h                |  48 ++---
+>  libmultipath/structs_vec.c            |  62 ++++---
+>  libmultipath/structs_vec.h            |  13 +-
+>  libmultipath/waiter.c                 |   4 +
+>  libmultipath/wwids.c                  |  22 ++-
+>  mpathpersist/main.c                   |  24 ++-
+>  multipath/main.c                      | 199 ++++++++++++---------
+>  multipathd/Makefile                   |   2 +-
+>  multipathd/cli_handlers.c             |  84 ++++++---
+>  multipathd/main.c                     | 327 +++++++++++++++++++++++-----------
+>  multipathd/uxlsnr.c                   |   5 -
+>  43 files changed, 1063 insertions(+), 734 deletions(-)
+> 
+> -- 
+> 2.6.6
