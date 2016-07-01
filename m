@@ -1,15 +1,16 @@
-From: Gris Ge <fge@redhat.com>
-Subject: [PATCH V3 2/3] multipath-tools: Set errno
-	mpath_recv_reply() when failure.
-Date: Fri,  1 Jul 2016 20:46:55 +0800
-Message-ID: <20160701124656.169890-3-fge@redhat.com>
-References: <1455264623-16199-2-git-send-email-fge@redhat.com>
-	<20160701124656.169890-1-fge@redhat.com>
+From: Edward Thornber <thornber@redhat.com>
+Subject: Re: Possible data corruption with dm-thin
+Date: Fri, 1 Jul 2016 09:18:56 -0400
+Message-ID: <20160701131856.GB32440@roamer.bos.redhat.com>
+References: <CAAR726JWQ4VKOVR87QX6Tmuhu1JnCymm7coLT=TFn3BseKm8XA@mail.gmail.com>
+	<20160624135510.GA13946@roamer.bos.redhat.com>
+	<CAAR726KCTJnbJhU-XhAn0xv3RVEHZY-NFjSNnWqnuVVO6kR4xQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160701124656.169890-1-fge@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CAAR726KCTJnbJhU-XhAn0xv3RVEHZY-NFjSNnWqnuVVO6kR4xQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,45 +20,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Gris Ge <fge@redhat.com>
+To: Dennis Yang <dennisyang@qnap.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Enforce what mpath_cmd.h states "-1 on failure (with errno set)" for
-mpath_recv_reply() by set errno and return -1 on failure.
+Hi Dennis,
 
-Signed-off-by: Gris Ge <fge@redhat.com>
----
- libmpathcmd/mpath_cmd.c | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
+Sorry to take so long about getting back to you.  There was a bug in
+the btree library that I mistakenly thought was caused by my fix for
+your problem.  Anyway, could you try and recreate your problem with
+these two patches applied please (patches are against v4.7-rc5 + my
+usual thin-dev extras):
 
-diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
-index 2290ecb..309634e 100644
---- a/libmpathcmd/mpath_cmd.c
-+++ b/libmpathcmd/mpath_cmd.c
-@@ -141,9 +141,11 @@ int mpath_recv_reply(int fd, char **reply, unsigned int timeout)
- 	*reply = NULL;
- 	len = mpath_recv_reply_len(fd, timeout);
- 	if (len <= 0)
--		return len;
--	if (len > MAX_REPLY_LEN)
--		return -EINVAL;
-+		return -1;
-+	if (len > MAX_REPLY_LEN) {
-+		errno = EINVAL;
-+		return -1;
-+	}
- 	*reply = malloc(len);
- 	if (!*reply)
- 		return -1;
-@@ -151,7 +153,7 @@ int mpath_recv_reply(int fd, char **reply, unsigned int timeout)
- 	if (err) {
- 		free(*reply);
- 		*reply = NULL;
--		return err;
-+		return -1;
- 	}
- 	return 0;
- }
--- 
-2.9.0
+    https://github.com/jthornber/linux-2.6/commit/ebdd99fc12acd0e9178831549896633171d5af1d
+    https://github.com/jthornber/linux-2.6/commit/c05989b59d091270c2bf7dd05bdb7a3575223529
+
+Thanks,
+
+- Joe
