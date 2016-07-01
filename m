@@ -1,16 +1,16 @@
-From: Edward Thornber <thornber@redhat.com>
-Subject: Re: Possible data corruption with dm-thin
-Date: Fri, 1 Jul 2016 09:18:56 -0400
-Message-ID: <20160701131856.GB32440@roamer.bos.redhat.com>
-References: <CAAR726JWQ4VKOVR87QX6Tmuhu1JnCymm7coLT=TFn3BseKm8XA@mail.gmail.com>
-	<20160624135510.GA13946@roamer.bos.redhat.com>
-	<CAAR726KCTJnbJhU-XhAn0xv3RVEHZY-NFjSNnWqnuVVO6kR4xQ@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH V3 1/3] multipath-tools: Increase
+ MAX_REPLY_LEN.
+Date: Fri, 1 Jul 2016 16:46:53 +0200
+Message-ID: <5776825D.8050202@suse.de>
+References: <1455264623-16199-2-git-send-email-fge@redhat.com>
+	<20160701124656.169890-1-fge@redhat.com>
+	<20160701124656.169890-2-fge@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAAR726KCTJnbJhU-XhAn0xv3RVEHZY-NFjSNnWqnuVVO6kR4xQ@mail.gmail.com>
+In-Reply-To: <20160701124656.169890-2-fge@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,21 +20,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dennis Yang <dennisyang@qnap.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Dennis,
+On 07/01/2016 02:46 PM, Gris Ge wrote:
+> Problem:
+> =
 
-Sorry to take so long about getting back to you.  There was a bug in
-the btree library that I mistakenly thought was caused by my fix for
-your problem.  Anyway, could you try and recreate your problem with
-these two patches applied please (patches are against v4.7-rc5 + my
-usual thin-dev extras):
+>     mpath_recv_reply() return -EINVA with 2k paths.
+> =
 
-    https://github.com/jthornber/linux-2.6/commit/ebdd99fc12acd0e9178831549896633171d5af1d
-    https://github.com/jthornber/linux-2.6/commit/c05989b59d091270c2bf7dd05bdb7a3575223529
+> Root cause:
+> =
 
-Thanks,
+>     With 2k paths(1k mpaths) simulated by scsi_debug, the 'show maps json'
+>     requires 1633217 bytes while MAX_REPLY_LEN is 65535 bytes.
+> =
 
-- Joe
+> Fix:
+> =
+
+>     Increase MAX_REPLY_LEN to 10485760(10MiB) which is enough for 10k
+>     paths.
+> =
+
+> Signed-off-by: Gris Ge <fge@redhat.com>
+> ---
+>  libmpathcmd/mpath_cmd.h | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
+> =
+
+> diff --git a/libmpathcmd/mpath_cmd.h b/libmpathcmd/mpath_cmd.h
+> index f33f000..d65c648 100644
+> --- a/libmpathcmd/mpath_cmd.h
+> +++ b/libmpathcmd/mpath_cmd.h
+> @@ -28,7 +28,9 @@ extern "C" {
+>  =
+
+>  #define DEFAULT_SOCKET		"/org/kernel/linux/storage/multipathd"
+>  #define DEFAULT_REPLY_TIMEOUT	1000
+> -#define MAX_REPLY_LEN		65536
+> +#define MAX_REPLY_LEN		10485760
+> +/* ^ 10 MiB, enough for 'show maps json' command with 10k paths which
+> + *   requires about 8 MiB */
+>  =
+
+>  =
+
+Huh.
+Can't say I like it. The limit is pretty much self-imposed, so I'd
+rather bite the bullet and make it size-independent.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=FCrnberg)
