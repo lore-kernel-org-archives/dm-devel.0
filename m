@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 02/26] Use 'mptable' as argument for
- find_mpe() and get_mpe_wwid()
-Date: Fri, 1 Jul 2016 14:48:33 -0500
-Message-ID: <20160701194833.GX8095@octiron.msp.redhat.com>
+Subject: Re: [PATCH 17/26] libmultipath: use 'struct config' as
+ argument for pathinfo()
+Date: Fri, 1 Jul 2016 15:25:37 -0500
+Message-ID: <20160701202537.GY8095@octiron.msp.redhat.com>
 References: <1466410153-23896-1-git-send-email-hare@suse.de>
-	<1466410153-23896-3-git-send-email-hare@suse.de>
+	<1466410153-23896-18-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1466410153-23896-3-git-send-email-hare@suse.de>
+In-Reply-To: <1466410153-23896-18-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,137 +24,121 @@ To: Hannes Reinecke <hare@suse.de>
 Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, Jun 20, 2016 at 10:08:49AM +0200, Hannes Reinecke wrote:
+On Mon, Jun 20, 2016 at 10:09:04AM +0200, Hannes Reinecke wrote:
+> pathinfo() requires access to the entire configuration, not just
+> hwtable. So don't pretend this is the case.
+> 
 > Signed-off-by: Hannes Reinecke <hare@suse.com>
 > ---
->  libmultipath/config.c      | 8 ++++----
->  libmultipath/config.h      | 4 ++--
->  libmultipath/configure.c   | 2 +-
->  libmultipath/propsel.c     | 2 +-
->  libmultipath/structs_vec.c | 4 ++--
->  5 files changed, 10 insertions(+), 10 deletions(-)
+>  libmpathpersist/mpath_persist.c |  6 +++---
+>  libmultipath/configure.c        |  8 ++++----
+>  libmultipath/discovery.c        | 37 ++++++++++++++++++-------------------
+>  libmultipath/discovery.h        |  8 ++++----
+>  libmultipath/structs_vec.c      |  2 +-
+>  multipath/main.c                |  6 +++---
+>  multipathd/cli_handlers.c       |  2 +-
+>  multipathd/main.c               | 16 ++++++++--------
+>  8 files changed, 42 insertions(+), 43 deletions(-)
 > 
-> diff --git a/libmultipath/config.c b/libmultipath/config.c
-> index 8b9e770..00f3e53 100644
-> --- a/libmultipath/config.c
-> +++ b/libmultipath/config.c
-> @@ -125,7 +125,7 @@ find_hwe (vector hwtable, char * vendor, char * product, char * revision)
+
+<snip>
+
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -32,7 +32,7 @@
+>  #include "defaults.h"
+>  
+>  int
+> -alloc_path_with_pathinfo (vector hwtable, struct udev_device *udevice,
+> +alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
+>  			  int flag, struct path **pp_ptr)
+>  {
+>  	int err = PATHINFO_FAILED;
+> @@ -55,7 +55,7 @@ alloc_path_with_pathinfo (vector hwtable, struct udev_device *udevice,
+>  		condlog(0, "pp->dev too small");
+>  	} else {
+>  		pp->udev = udev_device_ref(udevice);
+> -		err = pathinfo(pp, hwtable, flag | DI_BLACKLIST);
+> +		err = pathinfo(pp, conf, flag | DI_BLACKLIST);
+>  	}
+>  
+>  	if (err)
+> @@ -66,8 +66,8 @@ alloc_path_with_pathinfo (vector hwtable, struct udev_device *udevice,
 >  }
 >  
->  extern struct mpentry *
-> -find_mpe (char * wwid)
-> +find_mpe (vector mptable, char * wwid)
+>  int
+> -store_pathinfo (vector pathvec, vector hwtable, struct udev_device *udevice,
+> -		int flag, struct path **pp_ptr)
+> +store_pathinfo (vector pathvec, struct config *conf,
+> +		struct udev_device *udevice, int flag, struct path **pp_ptr)
 >  {
->  	int i;
->  	struct mpentry * mpe;
-> @@ -133,7 +133,7 @@ find_mpe (char * wwid)
->  	if (!wwid)
->  		return NULL;
+>  	int err = PATHINFO_FAILED;
+>  	struct path * pp;
+> @@ -90,7 +90,7 @@ store_pathinfo (vector pathvec, vector hwtable, struct udev_device *udevice,
+>  		goto out;
+>  	}
+>  	pp->udev = udev_device_ref(udevice);
+> -	err = pathinfo(pp, hwtable, flag);
+> +	err = pathinfo(pp, conf, flag);
+>  	if (err)
+>  		goto out;
 >  
-> -	vector_foreach_slot (conf->mptable, mpe, i)
-> +	vector_foreach_slot (mptable, mpe, i)
->  		if (mpe->wwid && !strcmp(mpe->wwid, wwid))
->  			return mpe;
+> @@ -126,10 +126,10 @@ path_discover (vector pathvec, struct config * conf,
 >  
-> @@ -141,7 +141,7 @@ find_mpe (char * wwid)
+>  	pp = find_path_by_dev(pathvec, (char *)devname);
+>  	if (!pp) {
+> -		return store_pathinfo(pathvec, conf->hwtable,
+> +		return store_pathinfo(pathvec, conf,
+>  				      udevice, flag, NULL);
+>  	}
+> -	return pathinfo(pp, conf->hwtable, flag);
+> +	return pathinfo(pp, conf, flag);
 >  }
 >  
->  extern char *
-> -get_mpe_wwid (char * alias)
-> +get_mpe_wwid (vector mptable, char * alias)
+>  int
+> @@ -1397,7 +1397,7 @@ cciss_ioctl_pathinfo (struct path * pp, int mask)
+>  }
+>  
+>  int
+> -get_state (struct path * pp, vector hwtable, int daemon)
+> +get_state (struct path * pp, struct config *conf)
 >  {
->  	int i;
->  	struct mpentry * mpe;
-> @@ -149,7 +149,7 @@ get_mpe_wwid (char * alias)
->  	if (!alias)
->  		return NULL;
+>  	struct checker * c = &pp->checker;
+>  	int state;
+> @@ -1405,8 +1405,8 @@ get_state (struct path * pp, vector hwtable, int daemon)
+>  	condlog(3, "%s: get_state", pp->dev);
 >  
-> -	vector_foreach_slot (conf->mptable, mpe, i)
-> +	vector_foreach_slot (mptable, mpe, i)
->  		if (mpe->alias && strcmp(mpe->alias, alias) == 0)
->  			return mpe->wwid;
->  
-> diff --git a/libmultipath/config.h b/libmultipath/config.h
-> index 466e31e..2acee25 100644
-> --- a/libmultipath/config.h
-> +++ b/libmultipath/config.h
-> @@ -179,8 +179,8 @@ struct config {
->  struct config * conf;
->  
->  struct hwentry * find_hwe (vector hwtable, char * vendor, char * product, char *revision);
-> -struct mpentry * find_mpe (char * wwid);
-> -char * get_mpe_wwid (char * alias);
-> +struct mpentry * find_mpe (vector hwtable, char * wwid);
-> +char * get_mpe_wwid (vector hwtable, char * alias);
-
-Why do we call this vector hwtable, instead of mptable, since we want to
-pass in the mptable?
-
->  
->  struct hwentry * alloc_hwe (void);
->  struct mpentry * alloc_mpe (void);
-> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> index 8e938c0..a830bcd 100644
-> --- a/libmultipath/configure.c
-> +++ b/libmultipath/configure.c
-> @@ -1042,7 +1042,7 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
->  		/*
->  		 * or may be an alias
->  		 */
-> -		refwwid = get_mpe_wwid(dev);
-> +		refwwid = get_mpe_wwid(conf->hwtable, dev);
-
-And why are we passing in the hwtable? Shouldn't be be using
-conf->mptable?
-
->  		/*
->  		 * or directly a wwid
-> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-> index 4111fa5..f803cdc 100644
-> --- a/libmultipath/propsel.c
-> +++ b/libmultipath/propsel.c
-> @@ -409,7 +409,7 @@ select_prio (struct path * pp)
->  			goto out;
+>  	if (!checker_selected(c)) {
+> -		if (daemon) {
+> -			if (pathinfo(pp, hwtable, DI_SYSFS) != PATHINFO_OK) {
+> +		if (!pp->hwe) {
+> +			if (pathinfo(pp, conf, DI_SYSFS) != PATHINFO_OK) {
+>  				condlog(3, "%s: couldn't get sysfs pathinfo",
+>  					pp->dev);
+>  				return PATH_UNCHECKED;
+> @@ -1425,12 +1425,11 @@ get_state (struct path * pp, vector hwtable, int daemon)
 >  		}
 >  	}
-> -	mpe = find_mpe(pp->wwid);
-> +	mpe = find_mpe(conf->hwtable, pp->wwid);
+>  	checker_clear_message(c);
+> -	if (daemon) {
+> -		if (conf->force_sync == 0)
+> -			checker_set_async(c);
+> -		else
+> -			checker_set_sync(c);
+> -	}
+> +	if (conf->force_sync == 0)
+> +		checker_set_async(c);
+> +	else
+> +		checker_set_sync(c);
+> +
+>  	if (!conf->checker_timeout &&
+>  	    sysfs_get_timeout(pp, &(c->timeout)) <= 0)
+>  		c->timeout = DEF_TIMEOUT;
 
-And here as well.
-
->  	set_prio(mpe, "(LUN setting)");
->  	set_prio(conf->overrides, "(overrides setting)");
->  	set_prio(pp->hwe, "controller setting)");
-> diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-> index 20a7457..b00832e 100644
-> --- a/libmultipath/structs_vec.c
-> +++ b/libmultipath/structs_vec.c
-> @@ -385,7 +385,7 @@ __setup_multipath (struct vectors * vecs, struct multipath * mpp, int reset)
->  	}
->  
->  	set_multipath_wwid(mpp);
-> -	mpp->mpe = find_mpe(mpp->wwid);
-> +	mpp->mpe = find_mpe(conf->hwtable, mpp->wwid);
-
-dido
-
->  	condlog(3, "%s: discover", mpp->alias);
->  
->  	if (!mpp->hwe)
-> @@ -469,7 +469,7 @@ add_map_with_path (struct vectors * vecs,
->  	if (!(mpp = alloc_multipath()))
->  		return NULL;
->  
-> -	mpp->mpe = find_mpe(pp->wwid);
-> +	mpp->mpe = find_mpe(conf->hwtable, pp->wwid);
-
-dido.
-
->  	mpp->hwe = pp->hwe;
->  
->  	strcpy(mpp->wwid, pp->wwid);
+I don't think that this change to get_state is correct. Previously,
+we've always had the checker set to synchronous mode when run by the
+multipath command.  With this change the checker will now run in async
+mode by default.  It should be easy to just overwrite conf->force_sync
+when running the multipath command to fix this.
 
 -Ben
-
-> -- 
-> 2.6.6
