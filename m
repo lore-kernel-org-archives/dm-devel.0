@@ -1,477 +1,468 @@
-From: Ming Lei <ming.lei@canonical.com>
-Subject: Re: [RFC] block: fix blk_queue_split() resource exhaustion
-Date: Sat, 2 Jul 2016 18:28:29 +0800
-Message-ID: <CACVXFVMTp17gcM8HEMrZ+0TJWgpGk+VWDgC7t+rMAancWZEFFw@mail.gmail.com>
-References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: make defaults values more
+	visible in multipath.conf.5
+Date: Sun,  3 Jul 2016 01:06:19 +0200
+Message-ID: <1467500779-28754-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-bcache-owner@vger.kernel.org>
-In-Reply-To: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
-Sender: linux-bcache-owner@vger.kernel.org
-To: Lars Ellenberg <lars.ellenberg@linbit.com>
-Cc: linux-block <linux-block@vger.kernel.org>, Roland Kammerer <roland.kammerer@linbit.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, Kent Overstreet <kent.overstreet@gmail.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Takashi Iwai <tiwai@suse.de>, Jiri Kosina <jkosina@suse.cz>, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "open list:BCACHE (BLOCK LAYER CACHE)" <linux-bcache@vger.kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 22, 2016 at 4:22 PM, Lars Ellenberg
-<lars.ellenberg@linbit.com> wrote:
-> For a long time, generic_make_request() converts recursion into
-> iteration by queuing recursive arguments on current->bio_list.
->
-> This is convenient for stacking drivers,
-> the top-most driver would take the originally submitted bio,
-> and re-submit a re-mapped version of it, or one or more clones,
-> or one or more new allocated bios to its backend(s). Which
-> are then simply processed in turn, and each can again queue
-> more "backend-bios" until we reach the bottom of the driver stack,
-> and actually dispatch to the real backend device.
->
-> Any stacking driver ->make_request_fn() could expect that,
-> once it returns, any backend-bios it submitted via recursive calls
-> to generic_make_request() would now be processed and dispatched, before
-> the current task would call into this driver again.
->
-> This is changed by commit
->   54efd50 block: make generic_make_request handle arbitrarily sized bios
->
-> Drivers may call blk_queue_split() inside their ->make_request_fn(),
-> which may split the current bio into a front-part to be dealt with
-> immediately, and a remainder-part, which may need to be split even
-> further. That remainder-part will simply also be pushed to
-> current->bio_list, and would end up being head-of-queue, in front
-> of any backend-bios the current make_request_fn() might submit during
-> processing of the fron-part.
->
-> Which means the current task would immediately end up back in the same
-> make_request_fn() of the same driver again, before any of its backend
-> bios have even been processed.
->
-> This can lead to resource starvation deadlock.
-> Drivers could avoid this by learning to not need blk_queue_split(),
-> or by submitting their backend bios in a different context (dedicated
-> kernel thread, work_queue context, ...). Or by playing funny re-ordering
-> games with entries on current->bio_list.
->
-> Instead, I suggest to distinguish between recursive calls to
-> generic_make_request(), and pushing back the remainder part in
-> blk_queue_split(), by pointing current->bio_lists to a
->         struct recursion_to_iteration_bio_lists {
->                 struct bio_list recursion;
->                 struct bio_list remainder;
->         }
->
-> To have all bios targeted to drivers lower in the stack processed before
-> processing the next piece of a bio targeted at the higher levels,
-> as long as queued bios resulting from recursion are available,
-> they will continue to be processed in FIFO order.
-> Pushed back bio-parts resulting from blk_queue_split() will be processed
-> in LIFO order, one-by-one, whenever the recursion list becomes empty.
->
-> Signed-off-by: Lars Ellenberg <lars.ellenberg@linbit.com>
-> Signed-off-by: Roland Kammerer <roland.kammerer@linbit.com>
-> ---
->
-> This is not a theoretical problem.
-> At least int DRBD, and an unfortunately high IO concurrency wrt. the
-> "max-buffers" setting, without this patch we have a reproducible deadlock.
->
-> I'm unsure if it could cause problems in md raid in some corner cases
-> or when a rebuild/scrub/... starts in a "bad" moment.
->
-> It also may increase "stress" on any involved bio_set,
-> because it may increase the number of bios that are allocated
-> before the first of them is actually processed, causing more
-> frequent calls of punt_bios_to_rescuer().
->
-> Alternatively,
-> a simple one-line change to generic_make_request() would also "fix" it,
-> by processing all recursive bios in LIFO order.
-> But that may change the order in which bios reach the "physical" layer,
-> in case they are in fact split into many smaller pieces, for example in
-> a striping setup, which may have other performance implications.
->
->  | diff --git a/block/blk-core.c b/block/blk-core.c
->  | index 2475b1c7..a5623f6 100644
->  | --- a/block/blk-core.c
->  | +++ b/block/blk-core.c
->  | @@ -2048,7 +2048,7 @@ blk_qc_t generic_make_request(struct bio *bio)
->  |       * should be added at the tail
->  |       */
->  |      if (current->bio_list) {
->  | -            bio_list_add(current->bio_list, bio);
->  | +            bio_list_add_head(current->bio_list, bio);
->  |              goto out;
->  |      }
->
-> Any fix would need to go to stable 4.3.x and up.
-> This patch does apply as is to 4.5 and up,
-> with a trivial fixup (or a cherry-pick of cda2264) to 4.4,
-> and with some more (also trivial) fixup to 4.3 because of
-> GFP_WAIT -> GFP_RECLAIM and comment rewrap.
->
-> Any input?
+Put them in a new paragraph, and in bold.
 
-The idea looks good, but not sure it can cover all cases of
-dm over brbd or brbd over dm and maintaining two lists
-becomes too complicated.
+Easier to read and cleaner layout.
 
-One clean solution may be to convert the loop of generic_make_request()
-into the following way:
+man page in PDF at: https://drive.google.com/file/d/0B_B6YmEmO7cDVTl2djM1YkZMNFE
 
-do {
-    struct bio *splitted, *remainder = NULL;
-    struct request_queue *q = bdev_get_queue(bio->bi_bdev);
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ multipath/multipath.conf.5 | 221 +++++++++++++++++++++++++++++++--------------
+ 1 file changed, 153 insertions(+), 68 deletions(-)
 
-    blk_queue_split(q, &bio, &remainder, q->bio_split);
-
-    ret = q->make_request_fn(q, bio);
-
-    if (remainder)
-         bio_list_add(current->bio_list, remainder);
-    bio = bio_list_pop(current->bio_list);
-} while (bio)
-
-And blk_queue_split() need a bit change and all its external calling
-have to be removed.
-
-Of cource we also need to fix blk_queue_bounce() first, but that can
-be done easily by handling bounced bio via generic_make_request().
-
-> How should I proceed?
-
-I think the issue need to be fixed.
-
-Thanks,
-Ming
-
->
-> ---
->  block/bio.c               | 14 +++++++-------
->  block/blk-core.c          | 32 +++++++++++++++++---------------
->  block/blk-merge.c         |  3 ++-
->  drivers/md/bcache/btree.c | 12 ++++++------
->  drivers/md/dm-bufio.c     |  2 +-
->  drivers/md/md.h           |  7 +++++++
->  drivers/md/raid1.c        |  5 ++---
->  drivers/md/raid10.c       |  5 ++---
->  include/linux/bio.h       | 11 +++++++++++
->  include/linux/sched.h     |  4 ++--
->  10 files changed, 57 insertions(+), 38 deletions(-)
->
-> diff --git a/block/bio.c b/block/bio.c
-> index 0e4aa42..2ffcea0 100644
-> --- a/block/bio.c
-> +++ b/block/bio.c
-> @@ -368,10 +368,10 @@ static void punt_bios_to_rescuer(struct bio_set *bs)
->         bio_list_init(&punt);
->         bio_list_init(&nopunt);
->
-> -       while ((bio = bio_list_pop(current->bio_list)))
-> +       while ((bio = bio_list_pop(&current->bio_lists->recursion)))
->                 bio_list_add(bio->bi_pool == bs ? &punt : &nopunt, bio);
->
-> -       *current->bio_list = nopunt;
-> +       current->bio_lists->recursion = nopunt;
->
->         spin_lock(&bs->rescue_lock);
->         bio_list_merge(&bs->rescue_list, &punt);
-> @@ -453,13 +453,13 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
->                  *
->                  * We solve this, and guarantee forward progress, with a rescuer
->                  * workqueue per bio_set. If we go to allocate and there are
-> -                * bios on current->bio_list, we first try the allocation
-> -                * without __GFP_DIRECT_RECLAIM; if that fails, we punt those
-> -                * bios we would be blocking to the rescuer workqueue before
-> -                * we retry with the original gfp_flags.
-> +                * bios on current->bio_lists->recursion, we first try the
-> +                * allocation without __GFP_DIRECT_RECLAIM; if that fails, we
-> +                * punt those bios we would be blocking to the rescuer
-> +                * workqueue before we retry with the original gfp_flags.
->                  */
->
-> -               if (current->bio_list && !bio_list_empty(current->bio_list))
-> +               if (current->bio_lists && !bio_list_empty(&current->bio_lists->recursion))
->                         gfp_mask &= ~__GFP_DIRECT_RECLAIM;
->
->                 p = mempool_alloc(bs->bio_pool, gfp_mask);
-> diff --git a/block/blk-core.c b/block/blk-core.c
-> index 2475b1c7..f03ff4c 100644
-> --- a/block/blk-core.c
-> +++ b/block/blk-core.c
-> @@ -2031,7 +2031,7 @@ end_io:
->   */
->  blk_qc_t generic_make_request(struct bio *bio)
->  {
-> -       struct bio_list bio_list_on_stack;
-> +       struct recursion_to_iteration_bio_lists bio_lists_on_stack;
->         blk_qc_t ret = BLK_QC_T_NONE;
->
->         if (!generic_make_request_checks(bio))
-> @@ -2040,15 +2040,18 @@ blk_qc_t generic_make_request(struct bio *bio)
->         /*
->          * We only want one ->make_request_fn to be active at a time, else
->          * stack usage with stacked devices could be a problem.  So use
-> -        * current->bio_list to keep a list of requests submited by a
-> -        * make_request_fn function.  current->bio_list is also used as a
-> +        * current->bio_lists to keep a list of requests submited by a
-> +        * make_request_fn function.  current->bio_lists is also used as a
->          * flag to say if generic_make_request is currently active in this
->          * task or not.  If it is NULL, then no make_request is active.  If
->          * it is non-NULL, then a make_request is active, and new requests
-> -        * should be added at the tail
-> +        * should be added at the tail of current->bio_lists->recursion;
-> +        * remainder bios resulting from a call to bio_queue_split() from
-> +        * within ->make_request_fn() should be added to the head of
-> +        * current->bio_lists->remainder.
->          */
-> -       if (current->bio_list) {
-> -               bio_list_add(current->bio_list, bio);
-> +       if (current->bio_lists) {
-> +               bio_list_add(&current->bio_lists->recursion, bio);
->                 goto out;
->         }
->
-> @@ -2057,7 +2060,7 @@ blk_qc_t generic_make_request(struct bio *bio)
->          * Before entering the loop, bio->bi_next is NULL (as all callers
->          * ensure that) so we have a list with a single bio.
->          * We pretend that we have just taken it off a longer list, so
-> -        * we assign bio_list to a pointer to the bio_list_on_stack,
-> +        * we assign bio_list to a pointer to the bio_lists_on_stack,
->          * thus initialising the bio_list of new bios to be
->          * added.  ->make_request() may indeed add some more bios
->          * through a recursive call to generic_make_request.  If it
-> @@ -2067,8 +2070,9 @@ blk_qc_t generic_make_request(struct bio *bio)
->          * bio_list, and call into ->make_request() again.
->          */
->         BUG_ON(bio->bi_next);
-> -       bio_list_init(&bio_list_on_stack);
-> -       current->bio_list = &bio_list_on_stack;
-> +       bio_list_init(&bio_lists_on_stack.recursion);
-> +       bio_list_init(&bio_lists_on_stack.remainder);
-> +       current->bio_lists = &bio_lists_on_stack;
->         do {
->                 struct request_queue *q = bdev_get_queue(bio->bi_bdev);
->
-> @@ -2076,16 +2080,14 @@ blk_qc_t generic_make_request(struct bio *bio)
->                         ret = q->make_request_fn(q, bio);
->
->                         blk_queue_exit(q);
-> -
-> -                       bio = bio_list_pop(current->bio_list);
->                 } else {
-> -                       struct bio *bio_next = bio_list_pop(current->bio_list);
-> -
->                         bio_io_error(bio);
-> -                       bio = bio_next;
->                 }
-> +               bio = bio_list_pop(&current->bio_lists->recursion);
-> +               if (!bio)
-> +                       bio = bio_list_pop(&current->bio_lists->remainder);
->         } while (bio);
-> -       current->bio_list = NULL; /* deactivate */
-> +       current->bio_lists = NULL; /* deactivate */
->
->  out:
->         return ret;
-> diff --git a/block/blk-merge.c b/block/blk-merge.c
-> index 2613531..8da0c22 100644
-> --- a/block/blk-merge.c
-> +++ b/block/blk-merge.c
-> @@ -172,6 +172,7 @@ void blk_queue_split(struct request_queue *q, struct bio **bio,
->         struct bio *split, *res;
->         unsigned nsegs;
->
-> +       BUG_ON(!current->bio_lists);
->         if ((*bio)->bi_rw & REQ_DISCARD)
->                 split = blk_bio_discard_split(q, *bio, bs, &nsegs);
->         else if ((*bio)->bi_rw & REQ_WRITE_SAME)
-> @@ -190,7 +191,7 @@ void blk_queue_split(struct request_queue *q, struct bio **bio,
->
->                 bio_chain(split, *bio);
->                 trace_block_split(q, split, (*bio)->bi_iter.bi_sector);
-> -               generic_make_request(*bio);
-> +               bio_list_add_head(&current->bio_lists->remainder, *bio);
->                 *bio = split;
->         }
->  }
-> diff --git a/drivers/md/bcache/btree.c b/drivers/md/bcache/btree.c
-> index eab505e..eb0b41a 100644
-> --- a/drivers/md/bcache/btree.c
-> +++ b/drivers/md/bcache/btree.c
-> @@ -450,7 +450,7 @@ void __bch_btree_node_write(struct btree *b, struct closure *parent)
->
->         trace_bcache_btree_write(b);
->
-> -       BUG_ON(current->bio_list);
-> +       BUG_ON(current->bio_lists);
->         BUG_ON(b->written >= btree_blocks(b));
->         BUG_ON(b->written && !i->keys);
->         BUG_ON(btree_bset_first(b)->seq != i->seq);
-> @@ -544,7 +544,7 @@ static void bch_btree_leaf_dirty(struct btree *b, atomic_t *journal_ref)
->
->         /* Force write if set is too big */
->         if (set_bytes(i) > PAGE_SIZE - 48 &&
-> -           !current->bio_list)
-> +           !current->bio_lists)
->                 bch_btree_node_write(b, NULL);
->  }
->
-> @@ -889,7 +889,7 @@ static struct btree *mca_alloc(struct cache_set *c, struct btree_op *op,
->  {
->         struct btree *b;
->
-> -       BUG_ON(current->bio_list);
-> +       BUG_ON(current->bio_lists);
->
->         lockdep_assert_held(&c->bucket_lock);
->
-> @@ -976,7 +976,7 @@ retry:
->         b = mca_find(c, k);
->
->         if (!b) {
-> -               if (current->bio_list)
-> +               if (current->bio_lists)
->                         return ERR_PTR(-EAGAIN);
->
->                 mutex_lock(&c->bucket_lock);
-> @@ -2127,7 +2127,7 @@ static int bch_btree_insert_node(struct btree *b, struct btree_op *op,
->
->         return 0;
->  split:
-> -       if (current->bio_list) {
-> +       if (current->bio_lists) {
->                 op->lock = b->c->root->level + 1;
->                 return -EAGAIN;
->         } else if (op->lock <= b->c->root->level) {
-> @@ -2209,7 +2209,7 @@ int bch_btree_insert(struct cache_set *c, struct keylist *keys,
->         struct btree_insert_op op;
->         int ret = 0;
->
-> -       BUG_ON(current->bio_list);
-> +       BUG_ON(current->bio_lists);
->         BUG_ON(bch_keylist_empty(keys));
->
->         bch_btree_op_init(&op.op, 0);
-> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-> index cd77216..b64d4f0 100644
-> --- a/drivers/md/dm-bufio.c
-> +++ b/drivers/md/dm-bufio.c
-> @@ -174,7 +174,7 @@ static inline int dm_bufio_cache_index(struct dm_bufio_client *c)
->  #define DM_BUFIO_CACHE(c)      (dm_bufio_caches[dm_bufio_cache_index(c)])
->  #define DM_BUFIO_CACHE_NAME(c) (dm_bufio_cache_names[dm_bufio_cache_index(c)])
->
-> -#define dm_bufio_in_request()  (!!current->bio_list)
-> +#define dm_bufio_in_request()  (!!current->bio_lists)
->
->  static void dm_bufio_lock(struct dm_bufio_client *c)
->  {
-> diff --git a/drivers/md/md.h b/drivers/md/md.h
-> index b5c4be7..7afc71c 100644
-> --- a/drivers/md/md.h
-> +++ b/drivers/md/md.h
-> @@ -663,6 +663,13 @@ static inline void rdev_dec_pending(struct md_rdev *rdev, struct mddev *mddev)
->         }
->  }
->
-> +static inline bool current_has_pending_bios(void)
-> +{
-> +       return current->bio_lists && (
-> +             !bio_list_empty(&current->bio_lists->recursion) ||
-> +             !bio_list_empty(&current->bio_lists->remainder));
-> +}
-> +
->  extern struct md_cluster_operations *md_cluster_ops;
->  static inline int mddev_is_clustered(struct mddev *mddev)
->  {
-> diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-> index c7c8cde..811f2c0 100644
-> --- a/drivers/md/raid1.c
-> +++ b/drivers/md/raid1.c
-> @@ -876,8 +876,7 @@ static sector_t wait_barrier(struct r1conf *conf, struct bio *bio)
->                                     (!conf->barrier ||
->                                      ((conf->start_next_window <
->                                        conf->next_resync + RESYNC_SECTORS) &&
-> -                                     current->bio_list &&
-> -                                     !bio_list_empty(current->bio_list))),
-> +                                     current_has_pending_bios())),
->                                     conf->resync_lock);
->                 conf->nr_waiting--;
->         }
-> @@ -1014,7 +1013,7 @@ static void raid1_unplug(struct blk_plug_cb *cb, bool from_schedule)
->         struct r1conf *conf = mddev->private;
->         struct bio *bio;
->
-> -       if (from_schedule || current->bio_list) {
-> +       if (from_schedule || current->bio_lists) {
->                 spin_lock_irq(&conf->device_lock);
->                 bio_list_merge(&conf->pending_bio_list, &plug->pending);
->                 conf->pending_count += plug->pending_cnt;
-> diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-> index c7de2a5..2c70717 100644
-> --- a/drivers/md/raid10.c
-> +++ b/drivers/md/raid10.c
-> @@ -945,8 +945,7 @@ static void wait_barrier(struct r10conf *conf)
->                 wait_event_lock_irq(conf->wait_barrier,
->                                     !conf->barrier ||
->                                     (conf->nr_pending &&
-> -                                    current->bio_list &&
-> -                                    !bio_list_empty(current->bio_list)),
-> +                                    current_has_pending_bios()),
->                                     conf->resync_lock);
->                 conf->nr_waiting--;
->         }
-> @@ -1022,7 +1021,7 @@ static void raid10_unplug(struct blk_plug_cb *cb, bool from_schedule)
->         struct r10conf *conf = mddev->private;
->         struct bio *bio;
->
-> -       if (from_schedule || current->bio_list) {
-> +       if (from_schedule || current->bio_lists) {
->                 spin_lock_irq(&conf->device_lock);
->                 bio_list_merge(&conf->pending_bio_list, &plug->pending);
->                 conf->pending_count += plug->pending_cnt;
-> diff --git a/include/linux/bio.h b/include/linux/bio.h
-> index 9faebf7..57e45a0 100644
-> --- a/include/linux/bio.h
-> +++ b/include/linux/bio.h
-> @@ -598,6 +598,17 @@ struct bio_list {
->         struct bio *tail;
->  };
->
-> +/* for generic_make_request() */
-> +struct recursion_to_iteration_bio_lists {
-> +       /* For stacking drivers submitting to their respective backend.
-> +        * Added to tail, processed in FIFO order. */
-> +       struct bio_list recursion;
-> +       /* For pushing back the "remainder" part resulting from calling
-> +        * blk_queue_split(). Added to head, processed in LIFO order,
-> +        * once the "recursion" list has been drained. */
-> +       struct bio_list remainder;
-> +};
-> +
->  static inline int bio_list_empty(const struct bio_list *bl)
->  {
->         return bl->head == NULL;
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index 6e42ada..146eedc 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -128,7 +128,7 @@ struct sched_attr {
->
->  struct futex_pi_state;
->  struct robust_list_head;
-> -struct bio_list;
-> +struct recursion_to_iteration_bio_lists;
->  struct fs_struct;
->  struct perf_event_context;
->  struct blk_plug;
-> @@ -1727,7 +1727,7 @@ struct task_struct {
->         void *journal_info;
->
->  /* stacked block device info */
-> -       struct bio_list *bio_list;
-> +       struct recursion_to_iteration_bio_lists *bio_lists;
->
->  #ifdef CONFIG_BLOCK
->  /* stack plugging */
-> --
-> 1.9.1
->
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 9f0d194..b85ea14 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -1,4 +1,4 @@
+-.TH MULTIPATH.CONF 5 "30 November 2006"
++.TH MULTIPATH.CONF 5 2016-07-03 "Linux"
+ .SH NAME
+ multipath.conf \- multipath daemon configuration file
+ .SH DESCRIPTION
+@@ -78,17 +78,24 @@ the interval between checks will gradually increase to
+ This value will be overridden by the
+ .B WatchdogSec
+ setting in the multipathd.service definition if systemd is used.
+-Default is
+-.I 5
++.RS
++.TP
++Default value is: \fB5\fR
++.RE
+ .TP
+ .B max_polling_interval
+-maximal interval between two path checks in seconds; default is
+-.I 4 * polling_interval
++maximal interval between two path checks in seconds.
++.RS
++.TP
++Default value is: \fB4 * polling_interval\fR
++.RE
+ .TP
+ .B multipath_dir
+-directory where the dynamic shared objects are stored; default is system
+-dependent, commonly
+-.I /lib/multipath
++directory where the dynamic shared objects are stored.
++.RS
++.TP
++Default value is: \fB<system dependent>\fR, commonly /lib64/multipath/
++.RE
+ .TP
+ .B find_multipaths
+ If set to
+@@ -109,20 +116,29 @@ Whenever a multipath device is created with find_multipaths set, multipath will
+ remeber the WWID of the device, so that it will automatically create the
+ device again, as soon as it sees a path with that WWID. This should allow most
+ users to have multipath automatically choose the correct paths to make into
+-multipath devices, without having to edit the blacklist; Default is
+-.I no
++multipath devices, without having to edit the blacklist.
++.RS
++.TP
++Default value is: \fBno\fR
++.RE
+ .TP
+ .B verbosity
+ default verbosity. Higher values increase the verbosity level. Valid
+-levels are between 0 and 6; default is
+-.I 2
++levels are between 0 and 6.
++.RS
++.TP
++Default value is: \fB2\fR
++.RE
+ .TP
+ .B reassign_maps
+ enable reassigning of device-mapper maps. With this option multipathd
+ will remap existing device-mapper maps to always point to multipath
+ device, not the underlying block devices. Possible values are
+-\fIyes\fR and \fIno\fR. Default is
+-.I yes
++\fIyes\fR and \fIno\fR.
++.RS
++.TP
++Default value is: \fByes\fR
++.RE
+ .TP
+ .B path_selector
+ The default path selector algorithm to use; they are offered by the
+@@ -164,13 +180,15 @@ per-multipath option in the configuration file.
+ 1 priority group per target node name. Target node names are fetched
+ in /sys/class/fc_transport/target*/node_name.
+ .TP
+-Default value is \fIfailover\fR.
++Default value is: \fBfailover\fR
+ .RE
+ .TP
+ .B uid_attribute
+-The udev attribute providing a unique path
+-identifier. Default value is
+-.I ID_SERIAL
++The udev attribute providing a unique path identifier.
++.RS
++.TP
++Default value is: \fBID_SERIAL\fR
++.RE
+ .TP
+ .B getuid_callout
+ The default program and args to callout to obtain a unique path
+@@ -217,7 +235,7 @@ Generate a random priority between 1 and 10.
+ Generate the path priority based on the regular expression and the
+ priority provided as argument. requires prio_args keyword.
+ .TP
+-Default value is \fBnone\fR.
++Default value is: \fBnone\fR
+ .RE
+ .TP
+ .B prio_args
+@@ -293,7 +311,7 @@ Check the path state for LSI/Engenio/NetApp E-Series RDAC storage controller.
+ deprecated, it will cause spurious path failures under high load.
+ Please use \fItur\fR instead.
+ .TP
+-Default value is \fItur\fR.
++Default value is: \fBtur\fR
+ .RE
+ .TP
+ .B failback
+@@ -315,19 +333,24 @@ another node requested the failover.
+ .B values > 0
+ deferred failback (time to defer in seconds)
+ .TP
+-Default value is \fImanual\fR.
++Default value is: \fBmanual\fR
+ .RE
+ .TP
+ .B  rr_min_io
+ The number of IO to route to a path before switching to the next in
+-the same path group. This is only for BIO based multipath. Default is
+-.I 1000
++the same path group. This is only for BIO based multipath.
++.RS
++.TP
++Default value is: \fB1000\fR
++.RE
+ .TP
+ .B rr_min_io_rq
+ The number of IO requests to route to a path before switching to the
+ next in the same path group. This is only for request based multipath.
+-Default is
+-.I 1
++.RS
++.TP
++Default value is: \fB1\fR
++.RE
+ .TP
+ .B rr_weight
+ If set to \fIpriorities\fR the multipath configurator will assign
+@@ -335,8 +358,10 @@ path weights as "path prio * rr_min_io". Possible values are
+ .I priorities
+ or
+ .IR uniform .
+-Default is
+-.IR uniform .
++.RS
++.TP
++Default value is: \fBuniform\fR
++.RE
+ .TP
+ .B no_path_retry
+ Specify the number of retries until disable queueing, or
+@@ -344,7 +369,10 @@ Specify the number of retries until disable queueing, or
+ for immediate failure (no queueing),
+ .I queue
+ for never stop queueing. If unset no queueing is attempted.
+-Default is unset.
++.RS
++.TP
++Default value is: \fB<unset>\fR
++.RE
+ .TP
+ .B user_friendly_names
+ If set to
+@@ -356,15 +384,20 @@ If set to
+ .I no
+ use the WWID as the alias. In either case this be will
+ be overridden by any specific aliases in the \fImultipaths\fR section.
+-Default is
+-.I no
++.RS
++.TP
++Default value is: \fBno\fR
++.RE
+ .TP
+ .B flush_on_last_del
+ If set to
+ .I yes
+ , multipathd will disable queueing when the last path to a device has been
+-deleted. Default is
+-.I no
++deleted.
++.RS
++.TP
++Default value is: \fBno\fR
++.RE
+ .TP
+ .B max_fds
+ Specify the maximum number of file descriptors that can be opened by multipath
+@@ -376,8 +409,11 @@ if that number is greated than 1024.
+ .TP
+ .B checker_timeout
+ Specify the timeout to use for path checkers and prioritizers that issue scsi
+-commands with an explicit timeout, in seconds; default taken from
+-.I /sys/block/sd<x>/device/timeout
++commands with an explicit timeout, in seconds.
++.RS
++.TP
++Default value is: in \fB/sys/block/sd<x>/device/timeout\fR
++.RE
+ .TP
+ .B fast_io_fail_tmo
+ Specify the number of seconds the scsi layer will wait after a problem has been
+@@ -396,7 +432,11 @@ retry interval
+ if a number of retries is given with \fIno_path_retry\fR and the
+ overall retry interval is longer than the specified \fIdev_loss_tmo\fR value.
+ The linux kernel will cap this value to \fI300\fR if \fBfast_io_fail_tmo\fR
+-is not set. Default is 600.
++is not set.
++.RS
++.TP
++Default value is: \fB600\fR
++.RE
+ .TP
+ .B queue_without_daemon
+ If set to
+@@ -408,18 +448,26 @@ for IO to return from the device after multipathd has been stopped. Without
+ multipathd running, access to the paths cannot be restored, and the kernel
+ cannot be told to stop queueing IO. Setting queue_without_daemon to
+ .I no
+-, avoids this problem. Default is
+-.I no
++, avoids this problem.
++.RS
++.TP
++Default value is: \fBno\fR
++.RE
+ .TP
+ .B bindings_file
+-The full pathname of the binding file to be used when the user_friendly_names option is set. Defaults to
+-.I /etc/multipath/bindings
++The full pathname of the binding file to be used when the user_friendly_names option is set.
++.RS
++.TP
++Default value is: \fB/etc/multipath/bindings\fR
++.RE
+ .TP
+ .B wwids_file
+ The full pathname of the wwids file, which is used by multipath to keep track
+ of the wwids for LUNs it has created multipath devices on in the past.
+-Defaults to
+-.I /etc/multipath/wwids
++.RS
++.TP
++Default value is: \fB/etc/multipath/wwids\fR
++.RE
+ .TP
+ .B log_checker_err
+ If set to
+@@ -427,15 +475,22 @@ If set to
+ , multipathd logs the first path checker error at logging level 2. Any later
+ errors are logged at level 3 until the device is restored. If set to
+ .I always
+-, multipathd always logs the path checker error at logging level 2. Default is
+-.I always
++, multipathd always logs the path checker error at logging level 2.
++.RS
++.TP
++Default value is: \fBalways\fR
++.RE
+ .TP
+ .B reservation_key
+ This is the service action reservation key used by mpathpersist.  It must be
+ set for all multipath devices using persistent reservations, and it must be
+ the same as the RESERVATION KEY field of the PERSISTENT RESERVE OUT parameter
+ list which contains an 8-byte value provided by the application client to the
+-device server to identify the I_T nexus. It is unset by default.
++device server to identify the I_T nexus.
++.RS
++.TP
++Default value is: \fB<unset>\fR
++.RE
+ .TP
+ .B retain_attached_hw_handler
+ If set to
+@@ -443,8 +498,11 @@ If set to
+ and the scsi layer has already attached a hardware_handler to the device,
+ multipath will not force the device to use the hardware_handler specified by
+ mutipath.conf. If the scsi layer has not attached a hardware handler,
+-multipath will continue to use its configured hardware handler. Default is
+-.I no
++multipath will continue to use its configured hardware handler.
++.RS
++.TP
++Default value is: \fBno\fR
++.RE
+ .TP
+ .B detect_prio
+ If set to
+@@ -452,17 +510,22 @@ If set to
+ , multipath will try to detect if the device supports ALUA. If so, the device
+ will automatically use the
+ .I alua
+-prioritizer. If not, the prioritizer will be selected as usual. Default is
+-.I no
++prioritizer. If not, the prioritizer will be selected as usual.
++.RS
++.TP
++Default value is: \fBno\fR
++.RE
+ .TP
+ .B force_sync
+ If set to
+ .I yes
+ , multipathd will call the path checkers in sync mode only.  This means that
+ only one checker will run at a time.  This is useful in the case where many
+-multipathd checkers running in parallel causes significant CPU pressure. The
+-Default is
+-.I no
++multipathd checkers running in parallel causes significant CPU pressure.
++.RS
++.TP
++Default value is: \fBno\fR
++.RE
+ .TP
+ .B deferred_remove
+ If set to
+@@ -471,15 +534,21 @@ If set to
+ last path device has been deleted.  This means that if the multipath device is
+ still in use, it will be freed when the last user closes it.  If path is added
+ to the multipath device before the last user closes it, the deferred remove
+-will be canceled. Default is
+-.I no
++will be canceled.
++.RS
++.TP
++Default value is: \fBno\fR
++.RE
+ .TP
+ .B config_dir
+ If set to anything other than "", multipath will search this directory
+ alphabetically for file ending in ".conf" and it will read configuration
+ information from them, just as if it was in /etc/multipath.conf.  config_dir
+-must either be "" or a fully qualified directory name. Default is
+-.I "/etc/multipath/conf.d"
++must either be "" or a fully qualified directory name.
++.RS
++.TP
++Default value is: \fB/etc/multipath/conf.d/\fR
++.RE
+ .TP
+ .B delay_watch_checks
+ If set to a value greater than 0, multipathd will watch paths that have
+@@ -487,8 +556,11 @@ recently become valid for this many checks.  If they fail again while they are
+ being watched, when they next become valid, they will not be used until they
+ have stayed up for
+ .I delay_wait_checks
+-checks. Default is
+-.I no
++checks.
++.RS
++.TP
++Default value is: \fBno\fR
++.RE
+ .TP
+ .B delay_wait_checks
+ If set to a value greater than 0, when a device that has recently come back
+@@ -497,8 +569,11 @@ online fails again within
+ checks, the next time it comes back online, it will marked and delayed, and not
+ used until it has passed
+ .I delay_wait_checks
+-checks. Default is
+-.I no
++checks.
++.RS
++.TP
++Default value is: \fBno\fR
++.RE
+ .TP
+ .B strict_timinig
+ If set to
+@@ -511,8 +586,10 @@ here the missing ticks will be accounted for on the next round.
+ A warning will be printed if path checks take longer than
+ .I polling_interval
+ seconds.
+-Default is
+-.I no
++.RS
++.TP
++Default value is: \fBno\fR
++.RE
+ .TP
+ .B uxsock_timeout
+ CLI receive timeout in milliseconds. For larger systems CLI commands
+@@ -520,16 +597,21 @@ might timeout before the multipathd lock is released and the CLI command
+ can be processed. This will result in errors like
+ "timeout receiving packet" to be returned from CLI commands.
+ In these cases it is recommended to increase the CLI timeout to avoid
+-those issues. The default is
+-.I 1000
++those issues.
++.RS
++.TP
++Default value is: \fB1000\fR
++.RE
+ .TP
+ .B missing_uev_wait_timeout
+ Controls how many seconds multipathd will wait, after a new multipath device
+ is created, to receive a change event from udev for the device, before
+ automatically enabling device reloads. Usually multipathd will delay reloads
+-on a device until it receives a change uevent from the initial table load. The
+-default is
+-.I 30
++on a device until it receives a change uevent from the initial table load.
++.RS
++.TP
++Default value is: \fB30\fR
++.RE
+ .
+ .SH "blacklist section"
+ The
+@@ -574,8 +656,11 @@ The following keywords are recognized:
+ The \fIWorld Wide Identification\fR of a device.
+ .TP
+ .B property
+-Regular expression of the udev property to be whitelisted. Defaults to
+-.I (ID_WWN|SCSI_IDENT_.*)
++Regular expression of the udev property to be whitelisted.
++.RS
++.TP
++Default value is: \fB(ID_WWN|SCSI_IDENT_.*)\fR
++.RE
+ .TP
+ .B devnode
+ Regular expression of the device nodes to be whitelisted.
+-- 
+2.7.4
