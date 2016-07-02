@@ -1,96 +1,140 @@
-From: Gris Ge <fge@redhat.com>
-Subject: Re: [PATCH V3 1/3] multipath-tools: Increase
- MAX_REPLY_LEN.
-Date: Sat, 2 Jul 2016 08:25:37 +0800
-Message-ID: <20160702002537.GA1361@redhat.com>
-References: <1455264623-16199-2-git-send-email-fge@redhat.com>
-	<20160701124656.169890-1-fge@redhat.com>
-	<20160701124656.169890-2-fge@redhat.com> <5776825D.8050202@suse.de>
+From: Ming Lei <ming.lei@canonical.com>
+Subject: Re: [RFC] block: fix blk_queue_split() resource exhaustion
+Date: Sat, 2 Jul 2016 18:03:22 +0800
+Message-ID: <CACVXFVPK_g3uSVynnA=4-F3nPPoP9U_CgQRf7-tFP4sziNBD8A@mail.gmail.com>
+References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
+ <CACVXFVOtzcPpmg9Z_P6xN99dW=Sb_cCQNd-VcP0s5Nk0yHbwXQ@mail.gmail.com>
+ <20160624142711.GF3239@soda.linbit> <CACVXFVMtMi9WXYQLa3_XZi7W8ZsJe1GnnTLX+7tRMhFAMUSHtA@mail.gmail.com>
+ <20160628084534.GI3239@soda.linbit>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7935746991624584643=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5776825D.8050202@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <20160628084534.GI3239@soda.linbit>
+Sender: linux-bcache-owner@vger.kernel.org
+To: Lars Ellenberg <lars.ellenberg@linbit.com>
+Cc: linux-block <linux-block@vger.kernel.org>, Roland Kammerer <roland.kammerer@linbit.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, Kent Overstreet <kent.overstreet@gmail.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Takashi Iwai <tiwai@suse.de>, Jiri Kosina <jkosina@suse.cz>, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "open list:BCACHE (BLOCK LAYER CACHE)" <linux-bcache@vger.kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
+On Tue, Jun 28, 2016 at 4:45 PM, Lars Ellenberg
+<lars.ellenberg@linbit.com> wrote:
+> On Sat, Jun 25, 2016 at 05:30:29PM +0800, Ming Lei wrote:
+>> On Fri, Jun 24, 2016 at 10:27 PM, Lars Ellenberg
+>> <lars.ellenberg@linbit.com> wrote:
+>> > On Fri, Jun 24, 2016 at 07:36:57PM +0800, Ming Lei wrote:
+>> >> >
+>> >> > This is not a theoretical problem.
+>> >> > At least int DRBD, and an unfortunately high IO concurrency wrt. the
+>> >> > "max-buffers" setting, without this patch we have a reproducible deadlock.
+>> >>
+>> >> Is there any log about the deadlock? And is there any lockdep warning
+>> >> if it is enabled?
+>> >
+>> > In DRBD, to avoid potentially very long internal queues as we wait for
+>> > our replication peer device and local backend, we limit the number of
+>> > in-flight bios we accept, and block in our ->make_request_fn() if that
+>> > number exceeds a configured watermark ("max-buffers").
+>> >
+>> > Works fine, as long as we could assume that once our make_request_fn()
+>> > returns, any bios we "recursively" submitted against the local backend
+>> > would be dispatched. Which used to be the case.
+>> >
+>> > commit 54efd50 block: make generic_make_request handle arbitrarily sized bios
+>> > introduced blk_queue_split(), which will split any bio that is
+>> > violating the queue limits into a smaller piece to be processed
+>> > right away, and queue the "rest" on current->bio_list to be
+>> > processed by the iteration in generic_make_request() once the
+>> > current ->make_request_fn() returns.
+>> >
+>> > Before that, any user was supposed to go through bio_add_page(),
+>> > which would call our merge bvec function, and that should already
+>> > be sufficient to not violate queue limits.
+>> >
+>> > Previously, typically the next in line bio to be processed would
+>> > be the cloned one we passed down to our backend device, which in
+>> > case of further stacking devices (e.g. logical volume, raid1 or
+>> > similar) may again push further bios on that list.
+>> > All of which would simply be processed in turn.
+>>
+>> Could you clarify if the issue is triggered in drbd without dm/md involved?
+>> Or the issue is always triggered with dm/md over drbd?
+>>
+>> As Mike mentioned, there is one known issue with dm-snapshot.
+>
+>
+> The issue can always be triggered, even if only DRBD is involved.
+>
+>> If your ->make_request_fn() is called several times, each time
+>> at least you should dispatch one bio returnd from blk_queue_split(),
+>> so I don't understand why even one bio isn't dispatched out.
+>
+> I'll try to "visualize" the mechanics of "my" deadlock here.
+>
+> Just to clarify the effect, assume we had a driver that
+> for $reasons would limit the number of in-flight IO to
+> one single bio.
+>
+> === before bio_queue_split()
+>
+> Previously, if something would want to read some range of blocks,
+> it would allocate a bio, call bio_add_page() a number of times,
+> and once the bio was "full", call generic_make_request(),
+> and fill the next bio, then submit that one.
+>
+> Stacking: "single_in_flight" (q1) -> "sda" (q2)
+>
+>   generic_make_request(bio)     current->bio_list       in-flight
+>    B_orig_1                             NULL            0
+>     q1->make_request_fn(B_orig_1)       empty
+>                                                         1
+>         recursive call, queues:         B_1_remapped
+>     iterative call:
+>     q2->make_request_fn(B_1_remapped)   empty
+>                 -> actually dispatched to hardware
+>   return of generic_make_request(B_orig_1).
+>    B_orig_2
+>     q1->make_request_fn(B_orig_1)
+>                                                         1
+>         blocks, waits for in-flight to drop
+>         ...
+>         completion of B_orig_1                          0
+>
+>         recursive call, queues:         B_2_remapped
+>     iterative call:
+>     q2->make_request_fn(B_2_remapped)   empty
+>                 -> actually dispatched to hardware
+>   return of generic_make_request(B_orig_2).
+>
+>
+> === with bio_queue_split()
+>
+> Now, uppser layers buils one large bio.
+>
+>   generic_make_request(bio)     current->bio_list       in-flight
+>    B_orig                               NULL            0
+>     q1->make_request_fn(B_orig)         empty
+>     blk_queue_split(B_orig) splits into
+>                                         B_orig_r1
+>     B_orig_s1
+>                                                         1
+>         recursive call, queues:         B_orig_r1, B_s1_remapped
+>     iterative call:
+>     q1->make_request_fn(B_orig_r1)      B_s1_remapped
+>         blocks, waits for in-flight to drop
+>         ...
+>         which never happens,
+>         because B_s1_remapped has not even been submitted to q2 yet,
+>         let alone dispatched to hardware.
+>
+>
+> Obviously we don't limit ourselves to just one request, but with larger
+> incoming bios, with the number of times we split them, with the number
+> of stacking layers below us, or even layers below us that *also*
+> call blk_queue_split (or equivalent open coded clone and split)
+> themselves to split even further, things get worse.
 
---===============7935746991624584643==
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="ew6BAiZeqk4r7MaW"
-Content-Disposition: inline
+Thanks for your so detailed explanation!
 
+Now I believe the issue is really from blk_queue_split(), and I will comment
+on your patch later.
 
---ew6BAiZeqk4r7MaW
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On Fri, Jul 01, 2016 at 04:46:53PM +0200, Hannes Reinecke wrote:
-> > -#define MAX_REPLY_LEN		65536
-> > +#define MAX_REPLY_LEN		10485760
-> > +/* ^ 10 MiB, enough for 'show maps json' command with 10k paths which
-> > + *   requires about 8 MiB */
-> > =20
-> > =20
-> Huh.
-> Can't say I like it. The limit is pretty much self-imposed, so I'd
-> rather bite the bullet and make it size-independent.
->=20
-> Cheers,
->=20
-> Hannes
-> --=20
-> Dr. Hannes Reinecke		   Teamlead Storage & Networking
-
-Hi Hannes Reinecke,
-
-How about limit the input command string size and let multipathd
-output size-independent?
-
-Best regards.
-
---=20
-Gris Ge
-
---ew6BAiZeqk4r7MaW
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJXdwn8AAoJEGzN5Y/kHij/ZhcP/AruJQaITgU6uBetneim9+tb
-WLPeODXFJ/fxBr1sQnnUNDSjv9mUmqIL2k5PuH2D+NwwqJ+mcjw3naK2wD6CFCtp
-dYkGDR75+HprqtKfHmdsSZXNfqlbRWbzVurDjIZLj1bqfq38WiFAX0oymT0+2paS
-EmA6+v+OfhOfe+kZ3hhzR1slGcjYeiLQjLo29dZcD+caaMPNW1j5qffhtGnkxlbZ
-fwecTDai/SI/ADC60RO3dpsIb9eAcJx5Qpv2BMFZzcQkMCbVY2XDUwYiSukCzB2X
-2t42huiEDU/4BPN5rr72xb3Loep/1eFTdMGYtV+eAeF7khuN31sAgFxzimq+LDPv
-MAIqTNlWVcrlbt1ZPz0W5OGBi3ijHHZ71vdsC+IgdeEY3zX52aB/vt3SpWWhLoEn
-bkb6j2gx9mMuxIKL9TkMuG2JR/Q0WLEMklnfCoDtfjIpx+DSWRTWVdvYCETCIG5r
-zIzk206g66sZeAW+r7twDi/Lzij4ye2A+17XiYnKPM+CuJz27MCOpvoXS7eaEoYM
-izSZ0aRV7ZohHtwFasv68D3a/OMtluEvDJgqins7riUEqtkelpCrsonasqw6B+HA
-rcDICY2PFCcZDMtoNNAjUt68Skrm/0rK9PTiMMgxM52SQRfGG0BYtSNlBTwG5KEC
-Hnd8RcUiwDXckkGd4YTO
-=Xba+
------END PGP SIGNATURE-----
-
---ew6BAiZeqk4r7MaW--
-
-
---===============7935746991624584643==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7935746991624584643==--
+thanks,
