@@ -1,47 +1,51 @@
 From: Lars Ellenberg <lars.ellenberg@linbit.com>
-Subject: Re: [PATCH 0/3] offload bios to a thread
-Date: Mon, 4 Jul 2016 10:09:36 +0200
-Message-ID: <20160704080935.GM3239@soda.linbit>
-References: <alpine.LRH.2.02.1606282014380.7298@file01.intranet.prod.int.rdu2.redhat.com>
-	<20160630194023.GA21338@redhat.com>
-	<20160630231518.GA22518@redhat.com>
+Subject: Re: [RFC] block: fix blk_queue_split() resource exhaustion
+Date: Mon, 4 Jul 2016 10:20:07 +0200
+Message-ID: <20160704082006.GN3239@soda.linbit>
+References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
+ <CACVXFVMTp17gcM8HEMrZ+0TJWgpGk+VWDgC7t+rMAancWZEFFw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20160630231518.GA22518@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Roland Kammerer <roland.kammerer@linbit.com>
+In-Reply-To: <CACVXFVMTp17gcM8HEMrZ+0TJWgpGk+VWDgC7t+rMAancWZEFFw@mail.gmail.com>
+Sender: linux-bcache-owner@vger.kernel.org
+To: Ming Lei <ming.lei@canonical.com>
+Cc: linux-block <linux-block@vger.kernel.org>, Roland Kammerer <roland.kammerer@linbit.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, Kent Overstreet <kent.overstreet@gmail.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Takashi Iwai <tiwai@suse.de>, Jiri Kosina <jkosina@suse.cz>, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "open list:BCACHE (BLOCK LAYER CACHE)" <linux-bcache@vger.kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Thu, Jun 30, 2016 at 07:15:18PM -0400, Mike Snitzer wrote:
-> > Lars, please feel free to see if this set addresses the similar deadlock
-> > you saw/fixed with drbd.
-
-I'm pretty sure it will help, but will confirm.
-
-> > We need to converge on an acceptable fix for
-> > this problem -- preferably sooner rather than later!
-> > 
-> > Conversely, Mikulas: if you can easily reproduce the dm-snapshot
-> > deadlock please try Lars' fix to see if it is workable for our DM needs.
+On Sat, Jul 02, 2016 at 06:28:29PM +0800, Ming Lei wrote:
+> The idea looks good, but not sure it can cover all cases of
+> dm over brbd or brbd over dm and maintaining two lists
+> becomes too complicated.
 > 
-> I hadn't reviewed Lars' patch yet but Mikulas pointed out to me that
-> Lars' patch is focused on the blk_queue_split() path -- and given that
-> DM doesn't use this function (nor do DM devices even have a 'bio_split'
-> bioset, see commit dbba42d8a9e) it won't fix the DM (snapshot) deadlock.
+> One clean solution may be to convert the loop of generic_make_request()
+> into the following way:
+> 
+> do {
+>     struct bio *splitted, *remainder = NULL;
+>     struct request_queue *q = bdev_get_queue(bio->bi_bdev);
+> 
+>     blk_queue_split(q, &bio, &remainder, q->bio_split);
+> 
+>     ret = q->make_request_fn(q, bio);
+> 
+>     if (remainder)
+>          bio_list_add(current->bio_list, remainder);
+>     bio = bio_list_pop(current->bio_list);
+> } while (bio)
 
-Don't you get it implicitly when using dm-mq -> blk-mq?
+Not good enough.
+
+Consider DRBD on device-mapper on device-mapper on scsi,
+or insert multipath and / or md raid into the stack.
+The iterative call to q->make_request_fn() in the second iteration
+may queue bios after the remainder.
+
+Goal was to first process all "deeper level" bios
+before processing the remainder.
+
+You can achieve this by doing last-in-first-out on bio_list,
+or by using two lists, as I suggested in the original post.
 
     Lars
-	
