@@ -1,15 +1,15 @@
 From: Gris Ge <fge@redhat.com>
-Subject: [PATCH V3 3/3] multipath-tools: Introducing multipath C
-	API <libdmmp/libdmmp.h>
-Date: Fri,  1 Jul 2016 20:46:56 +0800
-Message-ID: <20160701124656.169890-4-fge@redhat.com>
-References: <1455264623-16199-2-git-send-email-fge@redhat.com>
-	<20160701124656.169890-1-fge@redhat.com>
+Subject: [PATCH V5 3/3] multipath-tools: Introducing multipath C
+	API
+Date: Mon,  4 Jul 2016 17:40:12 +0800
+Message-ID: <20160704094012.121934-4-fge@redhat.com>
+References: <20160704091704.119896-1-fge@redhat.com>
+	<20160704094012.121934-1-fge@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160701124656.169890-1-fge@redhat.com>
+In-Reply-To: <20160704094012.121934-1-fge@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -49,6 +49,13 @@ Usage:
 
 Performance:
 
+ * 2k scsi_debug sdX with 2 disks per mpath (i7-3520M 8GiB RAM):
+   $ make -C libdmmp speed_test
+   Got 1000 mpath
+   real 0.57
+   user 0.05
+   sys 0.02
+
  * 10k scsi_debug sdX with 2 disks per mpath (i7-3520M 8GiB RAM):
    $ make -C libdmmp speed_test
    Got 5000 mpath
@@ -69,7 +76,7 @@ Signed-off-by: Gris Ge <fge@redhat.com>
  libdmmp/docs/kernel-doc           | 2971 +++++++++++++++++++++++++++++++++++++
  libdmmp/docs/libdmmp.h.3          |  113 ++
  libdmmp/docs/split-man.pl         |   41 +
- libdmmp/libdmmp.c                 |  272 ++++
+ libdmmp/libdmmp.c                 |  286 ++++
  libdmmp/libdmmp.pc.in             |    9 +
  libdmmp/libdmmp/libdmmp.h         |  607 ++++++++
  libdmmp/libdmmp_misc.c            |   87 ++
@@ -80,7 +87,7 @@ Signed-off-by: Gris Ge <fge@redhat.com>
  libdmmp/test/Makefile             |   30 +
  libdmmp/test/libdmmp_speed_test.c |   49 +
  libdmmp/test/libdmmp_test.c       |  144 ++
- 19 files changed, 5131 insertions(+)
+ 19 files changed, 5145 insertions(+)
  create mode 100644 libdmmp/DEV_NOTES
  create mode 100644 libdmmp/Makefile
  create mode 100644 libdmmp/docs/kernel-doc
@@ -3412,10 +3419,10 @@ index 0000000..452fd8a
 +close OUT;
 diff --git a/libdmmp/libdmmp.c b/libdmmp/libdmmp.c
 new file mode 100644
-index 0000000..f8762fd
+index 0000000..e29a639
 --- /dev/null
 +++ b/libdmmp/libdmmp.c
-@@ -0,0 +1,272 @@
+@@ -0,0 +1,286 @@
 +/*
 + * Copyright (C) 2015 - 2016 Red Hat, Inc.
 + *
@@ -3461,6 +3468,7 @@ index 0000000..f8762fd
 +#define _DMMP_JSON_MAJOR_KEY			"major_version"
 +#define _DMMP_JSON_MAJOR_VERSION		0
 +#define _DMMP_JSON_MAPS_KEY			"maps"
++#define _ERRNO_STR_BUFF_SIZE			256
 +
 +struct dmmp_context {
 +	void (*log_func)(struct dmmp_context *ctx, int priority,
@@ -3560,6 +3568,7 @@ index 0000000..f8762fd
 +	int ar_maps_len = -1;
 +	int socket_fd = -1;
 +	int errno_save = 0;
++	char errno_str_buff[_ERRNO_STR_BUFF_SIZE];
 +
 +	assert(ctx != NULL);
 +	assert(dmmp_mps != NULL);
@@ -3570,14 +3579,26 @@ index 0000000..f8762fd
 +
 +	socket_fd = mpath_connect();
 +	if (socket_fd == -1) {
-+		_error(ctx, "IPC failed with error %d", errno);
-+		rc = DMMP_ERR_IPC_ERROR;
++		errno_save = errno;
++		memset(errno_str_buff, 0, _ERRNO_STR_BUFF_SIZE);
++		strerror_r(errno_save, errno_str_buff, _ERRNO_STR_BUFF_SIZE);
++		if (errno_save == ECONNREFUSED) {
++			rc = DMMP_ERR_NO_DAEMON;
++			_error(ctx, "Socket connection refuse. "
++			       "Maybe multipathd daemon is not running");
++		} else {
++			_error(ctx, "IPC failed with error %d(%s)", errno_save,
++			       errno_str_buff);
++			rc = DMMP_ERR_IPC_ERROR;
++		}
 +		goto out;
 +	}
 +
 +	if (mpath_process_cmd(socket_fd, _DMMP_IPC_SHOW_JSON_CMD,
 +			      &j_str, ctx->tmo) != 0) {
 +		errno_save = errno;
++		memset(errno_str_buff, 0, _ERRNO_STR_BUFF_SIZE);
++		strerror_r(errno_save, errno_str_buff, _ERRNO_STR_BUFF_SIZE);
 +		mpath_disconnect(socket_fd);
 +		if (errno_save == ETIMEDOUT) {
 +			rc = DMMP_ERR_IPC_TIMEOUT;
@@ -3586,12 +3607,11 @@ index 0000000..f8762fd
 +			goto out;
 +		}
 +		_error(ctx, "IPC failed when process command '%s' with "
-+		       "error %d",
-+		       _DMMP_IPC_SHOW_JSON_CMD, errno_save);
++		       "error %d(%s)", _DMMP_IPC_SHOW_JSON_CMD, errno_save,
++		       errno_str_buff);
 +		rc = DMMP_ERR_IPC_ERROR;
 +		goto out;
 +	}
-+	mpath_disconnect(socket_fd);
 +
 +	if ((j_str == NULL) || (strlen(j_str) == 0)) {
 +		_error(ctx, "IPC return empty reply for command %s",
@@ -3641,7 +3661,6 @@ index 0000000..f8762fd
 +		goto out;
 +	}
 +
-+
 +	ar_maps_len = array_list_length(ar_maps);
 +	if (ar_maps_len < 0) {
 +		rc = DMMP_ERR_BUG;
@@ -3674,6 +3693,8 @@ index 0000000..f8762fd
 +	}
 +
 +out:
++	if (socket_fd >= 0)
++		mpath_disconnect(socket_fd);
 +	free(j_str);
 +	if (j_token != NULL)
 +		json_tokener_free(j_token);
