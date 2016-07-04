@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 23/26] multipathd: Fixup commandline argument
-	handling
-Date: Mon,  4 Jul 2016 09:08:43 +0200
-Message-ID: <1467616126-10036-24-git-send-email-hare@suse.de>
+Subject: [PATCH 15/26] libmultipath: use 'checkint' as argument
+	for sysfs_set_scsi_tmo()
+Date: Mon,  4 Jul 2016 09:08:35 +0200
+Message-ID: <1467616126-10036-16-git-send-email-hare@suse.de>
 References: <1467616126-10036-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,110 +22,59 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-multipathd would attempt to store the commandline arguments in
-an empty configuration, which would later be overwritten when
-reading in the main configuration.
-And it would not pass in the arguments correctly when using the
-CLI interface.
-So with this patch the commandline arguments are stored in
-global variables, which then will always overwrite settings
-from the configuration file.
-
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- multipathd/main.c | 33 ++++++++++++++++++++++-----------
- 1 file changed, 22 insertions(+), 11 deletions(-)
+ libmultipath/configure.c | 2 +-
+ libmultipath/discovery.c | 4 ++--
+ libmultipath/discovery.h | 2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 84dd1f8..c4d6f9f 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -99,6 +99,9 @@ struct mpath_event_param
- unsigned int mpath_mx_alloc_len;
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index ce07741..54fcde2 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -294,7 +294,7 @@ setup_map (struct multipath * mpp, char * params, int params_size)
+ 	select_delay_watch_checks(mpp);
+ 	select_delay_wait_checks(mpp);
  
- int logsink;
-+int verbosity;
-+int bindings_read_only;
-+int ignore_new_devs;
- enum daemon_status running_state = DAEMON_INIT;
- pid_t daemon_pid;
- pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
-@@ -1893,9 +1896,12 @@ reconfigure (struct vectors * vecs)
+-	sysfs_set_scsi_tmo(mpp);
++	sysfs_set_scsi_tmo(mpp, conf->checkint);
+ 	/*
+ 	 * assign paths to path groups -- start with no groups and all paths
+ 	 * in mpp->paths
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index d850aba..0bf1bc2 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -661,14 +661,14 @@ sysfs_set_nexus_loss_tmo(struct multipath *mpp, struct path *pp)
+ }
  
- 	if (!load_config(DEFAULT_CONFIGFILE)) {
- 		dm_drv_version(conf->version, TGT_MPATH);
--		conf->verbosity = old->verbosity;
--		conf->bindings_read_only = old->bindings_read_only;
--		conf->ignore_new_devs = old->ignore_new_devs;
-+		if (verbosity)
-+			conf->verbosity = verbosity;
-+		if (bindings_read_only)
-+			conf->bindings_read_only = bindings_read_only;
-+		if (ignore_new_devs)
-+			conf->ignore_new_devs = ignore_new_devs;
- 		configure(vecs, 1);
- 		multipath_conf = conf;
- 		free_config(old);
-@@ -2121,6 +2127,12 @@ child (void * param)
- 	if (load_config(DEFAULT_CONFIGFILE))
- 		goto failed;
+ int
+-sysfs_set_scsi_tmo (struct multipath *mpp)
++sysfs_set_scsi_tmo (struct multipath *mpp, int checkint)
+ {
+ 	struct path *pp;
+ 	int i;
+ 	int dev_loss_tmo = mpp->dev_loss;
  
-+	if (verbosity)
-+		conf->verbosity = verbosity;
-+	if (bindings_read_only)
-+		conf->bindings_read_only = bindings_read_only;
-+	if (ignore_new_devs)
-+		conf->ignore_new_devs = ignore_new_devs;
- 	uxsock_timeout = conf->uxsock_timeout;
- 	multipath_conf = conf;
- 	dm_init(conf->verbosity);
-@@ -2392,11 +2404,6 @@ main (int argc, char *argv[])
- 			strerror(errno));
- 	umask(umask(077) | 022);
+ 	if (mpp->no_path_retry > 0) {
+-		uint64_t no_path_retry_tmo = mpp->no_path_retry * conf->checkint;
++		uint64_t no_path_retry_tmo = mpp->no_path_retry * checkint;
  
--	conf = alloc_config();
--
--	if (!conf)
--		exit(1);
--
- 	udev = udev_new();
- 
- 	while ((arg = getopt(argc, argv, ":dsv:k::Bn")) != EOF ) {
-@@ -2412,7 +2419,7 @@ main (int argc, char *argv[])
- 			    !isdigit(optarg[0]))
- 				exit(1);
- 
--			conf->verbosity = atoi(optarg);
-+			verbosity = atoi(optarg);
- 			break;
- 		case 's':
- 			logsink = -1;
-@@ -2420,13 +2427,15 @@ main (int argc, char *argv[])
- 		case 'k':
- 			if (load_config(DEFAULT_CONFIGFILE))
- 				exit(1);
-+			if (verbosity)
-+				conf->verbosity = verbosity;
- 			uxclnt(optarg, uxsock_timeout + 100);
- 			exit(0);
- 		case 'B':
--			conf->bindings_read_only = 1;
-+			bindings_read_only = 1;
- 			break;
- 		case 'n':
--			conf->ignore_new_devs = 1;
-+			ignore_new_devs = 1;
- 			break;
- 		default:
- 			fprintf(stderr, "Invalid argument '-%c'\n",
-@@ -2441,6 +2450,8 @@ main (int argc, char *argv[])
- 
- 		if (load_config(DEFAULT_CONFIGFILE))
- 			exit(1);
-+		if (verbosity)
-+			conf->verbosity = verbosity;
- 		memset(cmd, 0x0, CMDSIZE);
- 		while (optind < argc) {
- 			if (strchr(argv[optind], ' '))
+ 		if (no_path_retry_tmo > MAX_DEV_LOSS_TMO)
+ 			no_path_retry_tmo = MAX_DEV_LOSS_TMO;
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index 5931bc6..45c8a4a 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -41,7 +41,7 @@ int alloc_path_with_pathinfo (vector hwtable, struct udev_device *udevice,
+ int store_pathinfo (vector pathvec, vector hwtable,
+ 		    struct udev_device *udevice, int flag,
+ 		    struct path **pp_ptr);
+-int sysfs_set_scsi_tmo (struct multipath *mpp);
++int sysfs_set_scsi_tmo (struct multipath *mpp, int checkint);
+ int sysfs_get_timeout(struct path *pp, unsigned int *timeout);
+ int sysfs_get_host_pci_name(struct path *pp, char *pci_name);
+ int sysfs_get_iscsi_ip_address(struct path *pp, char *ip_address);
 -- 
 2.6.6
