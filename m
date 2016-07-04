@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 13/26] multipath: make 'dev' internal to the
-	multipath program
-Date: Mon,  4 Jul 2016 09:08:33 +0200
-Message-ID: <1467616126-10036-14-git-send-email-hare@suse.de>
+Subject: [PATCH 23/26] multipathd: Fixup commandline argument
+	handling
+Date: Mon,  4 Jul 2016 09:08:43 +0200
+Message-ID: <1467616126-10036-24-git-send-email-hare@suse.de>
 References: <1467616126-10036-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,197 +22,110 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Only the multipath program is accessing the config entry 'dev',
-so we should be making it a local variable.
+multipathd would attempt to store the commandline arguments in
+an empty configuration, which would later be overwritten when
+reading in the main configuration.
+And it would not pass in the arguments correctly when using the
+CLI interface.
+So with this patch the commandline arguments are stored in
+global variables, which then will always overwrite settings
+from the configuration file.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/config.c |  3 ---
- libmultipath/config.h |  1 -
- multipath/main.c      | 43 +++++++++++++++++++++++--------------------
- 3 files changed, 23 insertions(+), 24 deletions(-)
+ multipathd/main.c | 33 ++++++++++++++++++++++-----------
+ 1 file changed, 22 insertions(+), 11 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 88a0f09..137ff6a 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -478,9 +478,6 @@ free_config (struct config * conf)
- 	if (!conf)
- 		return;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 84dd1f8..c4d6f9f 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -99,6 +99,9 @@ struct mpath_event_param
+ unsigned int mpath_mx_alloc_len;
  
--	if (conf->dev)
--		FREE(conf->dev);
+ int logsink;
++int verbosity;
++int bindings_read_only;
++int ignore_new_devs;
+ enum daemon_status running_state = DAEMON_INIT;
+ pid_t daemon_pid;
+ pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
+@@ -1893,9 +1896,12 @@ reconfigure (struct vectors * vecs)
+ 
+ 	if (!load_config(DEFAULT_CONFIGFILE)) {
+ 		dm_drv_version(conf->version, TGT_MPATH);
+-		conf->verbosity = old->verbosity;
+-		conf->bindings_read_only = old->bindings_read_only;
+-		conf->ignore_new_devs = old->ignore_new_devs;
++		if (verbosity)
++			conf->verbosity = verbosity;
++		if (bindings_read_only)
++			conf->bindings_read_only = bindings_read_only;
++		if (ignore_new_devs)
++			conf->ignore_new_devs = ignore_new_devs;
+ 		configure(vecs, 1);
+ 		multipath_conf = conf;
+ 		free_config(old);
+@@ -2121,6 +2127,12 @@ child (void * param)
+ 	if (load_config(DEFAULT_CONFIGFILE))
+ 		goto failed;
+ 
++	if (verbosity)
++		conf->verbosity = verbosity;
++	if (bindings_read_only)
++		conf->bindings_read_only = bindings_read_only;
++	if (ignore_new_devs)
++		conf->ignore_new_devs = ignore_new_devs;
+ 	uxsock_timeout = conf->uxsock_timeout;
+ 	multipath_conf = conf;
+ 	dm_init(conf->verbosity);
+@@ -2392,11 +2404,6 @@ main (int argc, char *argv[])
+ 			strerror(errno));
+ 	umask(umask(077) | 022);
+ 
+-	conf = alloc_config();
 -
- 	if (conf->multipath_dir)
- 		FREE(conf->multipath_dir);
- 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index f28508f..8ebc43f 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -141,7 +141,6 @@ struct config {
- 	int uev_wait_timeout;
- 	unsigned int version[3];
- 
--	char * dev;
- 	struct udev * udev;
- 	char * multipath_dir;
- 	char * selector;
-diff --git a/multipath/main.c b/multipath/main.c
-index 5b0cb7e..2825c8e 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -239,7 +239,7 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
-  *   1: Failure
-  */
- static int
--configure (enum mpath_cmds cmd, enum devtypes dev_type)
-+configure (enum mpath_cmds cmd, enum devtypes dev_type, char *devpath)
- {
- 	vector curmp = NULL;
- 	vector pathvec = NULL;
-@@ -262,7 +262,7 @@ configure (enum mpath_cmds cmd, enum devtypes dev_type)
- 	vecs.pathvec = pathvec;
- 	vecs.mpvec = curmp;
- 
--	dev = convert_dev(conf->dev, (dev_type == DEV_DEVNODE));
-+	dev = convert_dev(devpath, (dev_type == DEV_DEVNODE));
- 
- 	/*
- 	 * if we have a blacklisted device parameter, exit early
-@@ -273,20 +273,20 @@ configure (enum mpath_cmds cmd, enum devtypes dev_type)
- 			    conf->elist_devnode, dev) > 0)) {
- 		if (cmd == CMD_VALID_PATH)
- 			printf("%s is not a valid multipath device path\n",
--			       conf->dev);
-+			       devpath);
- 		goto out;
- 	}
- 	/*
- 	 * scope limiting must be translated into a wwid
- 	 * failing the translation is fatal (by policy)
- 	 */
--	if (conf->dev) {
--		int failed = get_refwwid(cmd, conf->dev, dev_type,
-+	if (devpath) {
-+		int failed = get_refwwid(cmd, devpath, dev_type,
- 					 pathvec, &refwwid);
- 		if (!refwwid) {
--			condlog(4, "%s: failed to get wwid", conf->dev);
-+			condlog(4, "%s: failed to get wwid", devpath);
- 			if (failed == 2 && cmd == CMD_VALID_PATH)
--				printf("%s is not a valid multipath device path\n", conf->dev);
-+				printf("%s is not a valid multipath device path\n", devpath);
- 			else
- 				condlog(3, "scope is nul");
- 			goto out;
-@@ -324,7 +324,7 @@ configure (enum mpath_cmds cmd, enum devtypes dev_type)
- 				r = 0;
- 
- 			printf("%s %s a valid multipath device path\n",
--			       conf->dev, r == 0 ? "is" : "is not");
-+			       devpath, r == 0 ? "is" : "is not");
- 			goto out;
- 		}
- 	}
-@@ -332,7 +332,7 @@ configure (enum mpath_cmds cmd, enum devtypes dev_type)
- 	/*
- 	 * get a path list
- 	 */
--	if (conf->dev)
-+	if (devpath)
- 		di_flag = DI_WWID;
- 
- 	if (cmd == CMD_LIST_LONG)
-@@ -368,7 +368,7 @@ configure (enum mpath_cmds cmd, enum devtypes dev_type)
- 		if (VECTOR_SIZE(curmp) != 0 || VECTOR_SIZE(pathvec) > 1)
- 			r = 0;
- 		printf("%s %s a valid multipath device path\n",
--		       conf->dev, r == 0 ? "is" : "is not");
-+		       devpath, r == 0 ? "is" : "is not");
- 		goto out;
- 	}
- 
-@@ -481,6 +481,7 @@ main (int argc, char *argv[])
- 	int r = 1;
- 	enum mpath_cmds cmd = CMD_CREATE;
- 	enum devtypes dev_type;
-+	char *dev = NULL;
- 
+-	if (!conf)
+-		exit(1);
+-
  	udev = udev_new();
- 	logsink = 0;
-@@ -592,16 +593,16 @@ main (int argc, char *argv[])
- 	dm_udev_set_sync_support(1);
  
- 	if (optind < argc) {
--		conf->dev = MALLOC(FILE_NAME_SIZE);
-+		dev = MALLOC(FILE_NAME_SIZE);
+ 	while ((arg = getopt(argc, argv, ":dsv:k::Bn")) != EOF ) {
+@@ -2412,7 +2419,7 @@ main (int argc, char *argv[])
+ 			    !isdigit(optarg[0]))
+ 				exit(1);
  
--		if (!conf->dev)
-+		if (!dev)
- 			goto out;
+-			conf->verbosity = atoi(optarg);
++			verbosity = atoi(optarg);
+ 			break;
+ 		case 's':
+ 			logsink = -1;
+@@ -2420,13 +2427,15 @@ main (int argc, char *argv[])
+ 		case 'k':
+ 			if (load_config(DEFAULT_CONFIGFILE))
+ 				exit(1);
++			if (verbosity)
++				conf->verbosity = verbosity;
+ 			uxclnt(optarg, uxsock_timeout + 100);
+ 			exit(0);
+ 		case 'B':
+-			conf->bindings_read_only = 1;
++			bindings_read_only = 1;
+ 			break;
+ 		case 'n':
+-			conf->ignore_new_devs = 1;
++			ignore_new_devs = 1;
+ 			break;
+ 		default:
+ 			fprintf(stderr, "Invalid argument '-%c'\n",
+@@ -2441,6 +2450,8 @@ main (int argc, char *argv[])
  
--		strncpy(conf->dev, argv[optind], FILE_NAME_SIZE);
-+		strncpy(dev, argv[optind], FILE_NAME_SIZE);
- 		if (dev_type != DEV_UEVENT)
--			dev_type = get_dev_type(conf->dev);
-+			dev_type = get_dev_type(dev);
- 		if (dev_type == DEV_NONE) {
--			condlog(0, "'%s' is not a valid argument\n", conf->dev);
-+			condlog(0, "'%s' is not a valid argument\n", dev);
- 			goto out;
- 		}
- 	}
-@@ -631,7 +632,7 @@ main (int argc, char *argv[])
- 	}
- 
- 	if (cmd == CMD_VALID_PATH &&
--	    (!conf->dev || dev_type == DEV_DEVMAP)) {
-+	    (!dev || dev_type == DEV_DEVMAP)) {
- 		condlog(0, "the -c option requires a path to check");
- 		goto out;
- 	}
-@@ -642,12 +643,12 @@ main (int argc, char *argv[])
- 		fd = mpath_connect();
- 		if (fd == -1) {
- 			printf("%s is not a valid multipath device path\n",
--				conf->dev);
-+				dev);
- 			goto out;
- 		}
- 		mpath_disconnect(fd);
- 	}
--	if (cmd == CMD_REMOVE_WWID && !conf->dev) {
-+	if (cmd == CMD_REMOVE_WWID && !dev) {
- 		condlog(0, "the -w option requires a device");
- 		goto out;
- 	}
-@@ -674,7 +675,7 @@ main (int argc, char *argv[])
- 	}
- 	if (conf->remove == FLUSH_ONE) {
- 		if (dev_type == DEV_DEVMAP) {
--			r = dm_suspend_and_flush_map(conf->dev);
-+			r = dm_suspend_and_flush_map(dev);
- 		} else
- 			condlog(0, "must provide a map name to remove");
- 
-@@ -684,7 +685,7 @@ main (int argc, char *argv[])
- 		r = dm_flush_maps();
- 		goto out;
- 	}
--	while ((r = configure(cmd, dev_type)) < 0)
-+	while ((r = configure(cmd, dev_type, dev)) < 0)
- 		condlog(3, "restart multipath configuration process");
- 
- out:
-@@ -706,6 +707,8 @@ out_free_config:
- 	free_config(conf);
- 	conf = NULL;
- 	udev_unref(udev);
-+	if (dev)
-+		FREE(dev);
- #ifdef _DEBUG_
- 	dbg_free_final(NULL);
- #endif
+ 		if (load_config(DEFAULT_CONFIGFILE))
+ 			exit(1);
++		if (verbosity)
++			conf->verbosity = verbosity;
+ 		memset(cmd, 0x0, CMDSIZE);
+ 		while (optind < argc) {
+ 			if (strchr(argv[optind], ' '))
 -- 
 2.6.6
