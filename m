@@ -1,11 +1,16 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH V5 3/3] Introducing multipath C API
-Date: Mon, 4 Jul 2016 18:32:56 +0200
-Message-ID: <90c5e679-2942-12ce-4e77-9cc1f475ee45@gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 0/3] offload bios to a thread
+Date: Mon, 4 Jul 2016 18:27:57 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1607041824110.16388@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1606282014380.7298@file01.intranet.prod.int.rdu2.redhat.com>
+	<20160630194023.GA21338@redhat.com>
+	<20160630231518.GA22518@redhat.com>
+	<20160704080935.GM3239@soda.linbit>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20160704080935.GM3239@soda.linbit>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,96 +20,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Gris Ge <fge@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
+To: Lars Ellenberg <lars.ellenberg@linbit.com>
+Cc: axboe@kernel.dk, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Roland Kammerer <roland.kammerer@linbit.com>
 List-Id: dm-devel.ids
 
-Gris Ge wrote:
 
-> diff --git a/libdmmp/Makefile b/libdmmp/Makefile
-> new file mode 100644
-> index 0000000..ce7ca3f
-> --- /dev/null
-> +++ b/libdmmp/Makefile
-> @@ -0,0 +1,78 @@
-> +# Makefile
-> +#
-> +# Copyright (C) 2015 - 2016 Red Hat, Inc.
-> +# Gris Ge <fge@redhat.com>
-> +#
-> +include ../Makefile.inc
-> +
-> +LIBDMMP_VERSION=0.1.0
-> +SONAME=$(LIBDMMP_VERSION)
-> +DEVLIB = libdmmp.so
-> +LIBS = $(DEVLIB).$(SONAME)
-> +LIBDEPS = -pthread
-> +PKGFILE = libdmmp.pc
-> +EXTRA_MAN_FILES = libdmmp.h.3
-> +HEADERS = libdmmp/libdmmp.h
-> +OBJS = libdmmp.o libdmmp_mp.o libdmmp_pg.o libdmmp_path.o libdmmp_misc.o
-> +
-> +CFLAGS += -fvisibility=hidden -I$(libdmmpdir) -I$(mpathcmddir) \
-> +	  $(shell pkg-config --cflags json-c)
-> +LDFLAGS += $(shell pkg-config --libs json-c) -L$(mpathcmddir) -lmpathcmd
-> +
-> +all: $(LIBS) doc
-> +
-> +$(LIBS): $(OBJS)
-> +	$(CC) $(LDFLAGS) $(SHARED_FLAGS) \
-> +	-Wl,-soname=$@ $(CFLAGS) -o $@ $(OBJS) $(LIBDEPS)
-> +	ln -sf $@ $(DEVLIB)
-> +
 
-> +install:
-> +	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
-> +	$(INSTALL_PROGRAM) -m 644 -D \
-> +		$(HEADERS) $(DESTDIR)/$(includedir)/$(HEADERS)
-> +	ln -sf $(LIBS) $(DESTDIR)/$(syslibdir)/$(DEVLIB)
-> +	$(INSTALL_PROGRAM) -m 644 -D \
-> +		$(PKGFILE).in $(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
-> +	perl -i -pe 's|__VERSION__|$(LIBDMMP_VERSION)|g' \
-> +		$(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
-> +	perl -i -pe 's|__LIBDIR__|$(syslibdir)|g' \
-> +		$(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
-> +	perl -i -pe 's|__INCLUDEDIR__|$(includedir)|g' \
-> +		$(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
+On Mon, 4 Jul 2016, Lars Ellenberg wrote:
 
-Please, replace perl with sed, awk or any other basic tool.
+> On Thu, Jun 30, 2016 at 07:15:18PM -0400, Mike Snitzer wrote:
+> > > Lars, please feel free to see if this set addresses the similar deadlock
+> > > you saw/fixed with drbd.
+> 
+> I'm pretty sure it will help, but will confirm.
+> 
+> > > We need to converge on an acceptable fix for
+> > > this problem -- preferably sooner rather than later!
+> > > 
+> > > Conversely, Mikulas: if you can easily reproduce the dm-snapshot
+> > > deadlock please try Lars' fix to see if it is workable for our DM needs.
+> > 
+> > I hadn't reviewed Lars' patch yet but Mikulas pointed out to me that
+> > Lars' patch is focused on the blk_queue_split() path -- and given that
+> > DM doesn't use this function (nor do DM devices even have a 'bio_split'
+> > bioset, see commit dbba42d8a9e) it won't fix the DM (snapshot) deadlock.
+> 
+> Don't you get it implicitly when using dm-mq -> blk-mq?
+> 
+>     Lars
 
-> +	@for file in docs/man/*.3.gz; do \
-> +		$(INSTALL_PROGRAM) -m 644 -D \
-> +			$$file \
-> +			$(DESTDIR)/$(man3dir)/ || exit $?; \
-> +	done
-> +
-> +uninstall:
-> +	rm -f $(DESTDIR)$(syslibdir)/$(LIBS)
-> +	rm -f $(DESTDIR)$(includedir)/$(HEADERS)
-> +	rm -f $(DESTDIR)/$(syslibdir)/$(DEVLIB)
-> +	@for file in $(DESTDIR)/$(man3dir)/dmmp_*; do \
-> +		rm $$file; \
-> +	done
-> +	rm -f $(DESTDIR)$(man3dir)/libdmmp.h*
-> +
-> +clean:
-> +	rm -f core *.a *.o *.gz *.so *.so.*
-> +	rm -f docs/man/*.3.gz
-> +	$(MAKE) -C test clean
-> +
-> +check: all
-> +	$(MAKE) -C test check
-> +
-> +speed_test: all
-> +	$(MAKE) -C test speed_test
-> +
-> +doc: docs/man/$(EXTRA_MAN_FILES).gz
-> +
-> +docs/man/$(EXTRA_MAN_FILES).gz: $(HEADERS)
-> +	@for file in $(EXTRA_MAN_FILES); do \
-> +		$(INSTALL_PROGRAM) -v -m 644 -D docs/$$file docs/man/$$file; \
-> +	done
-> +	perl docs/kernel-doc -man $(HEADERS) | perl docs/split-man.pl docs/man
-> +	@for file in docs/man/*.3; do \
-> +		gzip -f $$file; \
-> +	done
-> +	find docs/man -type f -name \*[0-9].gz
+There were observed deadlocks just between dm targets, caused by queuing 
+bios on current->bio_list.
+
+The underlying block device was not involved in the deadlocks. Therefore I 
+conclude that changing the behavior of blk_queue_split would not resolve 
+these deadlocks (because dm targets do not use blk_queue_split).
+
+Mikulas
