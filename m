@@ -1,11 +1,11 @@
 From: Gris Ge <fge@redhat.com>
-Subject: Re: [PATCH V4 0/3] Introducing multipath C API
-Date: Mon, 4 Jul 2016 17:27:27 +0800
-Message-ID: <20160704092726.GA3198@redhat.com>
-References: <20160704091146.GA3081@redhat.com>
-	<20160704091704.119896-1-fge@redhat.com>
+Subject: [PATCH V5 0/3] Introducing multipath C API
+Date: Mon,  4 Jul 2016 17:40:09 +0800
+Message-ID: <20160704094012.121934-1-fge@redhat.com>
+References: <20160704091704.119896-1-fge@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0397546358002902594=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20160704091704.119896-1-fge@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -18,69 +18,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
+Changes since V4:
 
---===============0397546358002902594==
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="YiEDa0DAkWCtVeE4"
-Content-Disposition: inline
+ * Remove the unused constant incorrectly added to libmpathcmd in V3.
+ * The patch 3/3 could also be found in below link if dm-devel mailing list
+   discard that patch again:
+    https://github.com/cathay4t/multipath-tools/commit/b992056a447b90251a65aa4919055c70aa62a498.patch 
 
+Changes since V3:
+ * New way to limit the IPC command length.
+ * Treat IPC connection refuse error as DMMP_ERR_NO_DAEMON.
 
---YiEDa0DAkWCtVeE4
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Gris Ge (3):
+  multipath-tools: New way to limit the IPC command length.
+  multipath-tools: Set errno mpath_recv_reply() when failure
+  multipath-tools: Introducing multipath C API
 
-On Mon, Jul 04, 2016 at 05:17:01PM +0800, Gris Ge wrote:
-> Changes since V3:
->  * Replace limitation of MAX_REPLY_LEN with MAX_SEND_CMD_LEN.
->  * Treat IPC connection refuse error as DMMP_ERR_NO_DAEMON.
->
-> Gris Ge (3):
->   multipath-tools: New way to limit the IPC command length.
->   multipath-tools: Set errno mpath_recv_reply() when failure
->   multipath-tools: Introducing multipath C API
-No idea why patch 3/3 got discard by this mailing list.
-Size limitation?
+ .gitignore                            |    4 +
+ Makefile                              |    1 +
+ Makefile.inc                          |    3 +
+ libdmmp/DEV_NOTES                     |   41 +
+ libdmmp/Makefile                      |   78 +
+ libdmmp/docs/kernel-doc               | 2971 +++++++++++++++++++++++++++++++++
+ libdmmp/docs/libdmmp.h.3              |  113 ++
+ libdmmp/docs/split-man.pl             |   41 +
+ libdmmp/libdmmp.c                     |  286 ++++
+ libdmmp/libdmmp.pc.in                 |    9 +
+ libdmmp/libdmmp/libdmmp.h             |  607 +++++++
+ libdmmp/libdmmp_misc.c                |   87 +
+ libdmmp/libdmmp_mp.c                  |  150 ++
+ libdmmp/libdmmp_path.c                |  115 ++
+ libdmmp/libdmmp_pg.c                  |  208 +++
+ libdmmp/libdmmp_private.h             |  208 +++
+ libdmmp/test/Makefile                 |   30 +
+ libdmmp/test/libdmmp_speed_test.c     |   49 +
+ libdmmp/test/libdmmp_test.c           |  144 ++
+ libmpathcmd/mpath_cmd.c               |    6 +-
+ libmpathcmd/mpath_cmd.h               |    2 -
+ libmpathpersist/mpath_updatepr.c      |    6 +-
+ libmultipath/Makefile                 |    2 +-
+ libmultipath/alias.c                  |    1 -
+ libmultipath/configure.c              |    5 +-
+ libmultipath/file.c                   |   24 +-
+ libmultipath/file.h                   |    1 +
+ libmultipath/uxsock.h                 |    6 -
+ libmultipath/wwids.c                  |    1 -
+ multipath/main.c                      |    1 -
+ multipathd/Makefile                   |    2 +-
+ multipathd/uxclnt.c                   |   13 +-
+ multipathd/uxlsnr.c                   |   12 +-
+ {libmultipath => multipathd}/uxsock.c |   69 +-
+ multipathd/uxsock.h                   |   13 +
+ 35 files changed, 5210 insertions(+), 99 deletions(-)
+ create mode 100644 libdmmp/DEV_NOTES
+ create mode 100644 libdmmp/Makefile
+ create mode 100644 libdmmp/docs/kernel-doc
+ create mode 100644 libdmmp/docs/libdmmp.h.3
+ create mode 100644 libdmmp/docs/split-man.pl
+ create mode 100644 libdmmp/libdmmp.c
+ create mode 100644 libdmmp/libdmmp.pc.in
+ create mode 100644 libdmmp/libdmmp/libdmmp.h
+ create mode 100644 libdmmp/libdmmp_misc.c
+ create mode 100644 libdmmp/libdmmp_mp.c
+ create mode 100644 libdmmp/libdmmp_path.c
+ create mode 100644 libdmmp/libdmmp_pg.c
+ create mode 100644 libdmmp/libdmmp_private.h
+ create mode 100644 libdmmp/test/Makefile
+ create mode 100644 libdmmp/test/libdmmp_speed_test.c
+ create mode 100644 libdmmp/test/libdmmp_test.c
+ delete mode 100644 libmultipath/uxsock.h
+ rename {libmultipath => multipathd}/uxsock.c (67%)
+ create mode 100644 multipathd/uxsock.h
 
-The patch could be found at:
-https://github.com/cathay4t/multipath-tools/commit/1c083e37af8ce4aa626df086=
-7e508b2b428f1c3a.patch
-
-
---=20
-Gris Ge
-
---YiEDa0DAkWCtVeE4
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJXeiv6AAoJEGzN5Y/kHij/UzEP/icZDiN+9JKsVdcOcHs1ehaU
-/QTUas7o2Sf4zAiv8rdS/cZtSM0NvdkjuwS+Co4eWvkYeBS0mXOVzGreuRXp6PcG
-qOgPcgI1n116jG8mLhUCubYlmWgii8TYux9FG05G2JHNWIxB1lQUgaGhQYNWA/da
-gnbnzIeuXJBNLzvVOKuggB1Eh/HIe7lYdoxdUzOu4Ko7F2fjjyaJJ13ITQXTAcXV
-w0Qphm2MMPmYI34DJodKZtnYsABUJhIsL3p3GWyK86f4t10P5SF20X3IH481G/ZI
-yyCZDvbLFxMkPDu7u2S5rJA54rc29UuD6B0VwV4cbtWQrZ8K2hO2sb/+yGh6hapR
-Q1atb28FKIyafLzAI0xPy4XTAmr6B0H2zXOhLQaOtui1T8uxdXMrIJ6fc9/YhvKa
-KtUfPMleTzlUFJoQ7MB6fQesJ3TjjGvbHmQkBhpLMWiKSOAo3/44BujIWNjcbQU1
-ItVjB4oSs9+XLUCHsg50rd4UQgIFUxQwKrZ2Pjqr/tDKv127oO/JDriPnJmQtShK
-CbI074O8Al80D/b/RjFI/J/NCT6AMpRyB7qQDJACcwN82wIoisTR1zwmuGHaoztk
-kKI7ffNY1B5h4gssmaBhLNVxmJ75FMV5alCVsxV4KI8PclPS5dAENyjuVrWTeb1y
-5qtOl+zkI+IRcTNAXjdJ
-=qf+i
------END PGP SIGNATURE-----
-
---YiEDa0DAkWCtVeE4--
-
-
---===============0397546358002902594==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0397546358002902594==--
+-- 
+2.9.0
