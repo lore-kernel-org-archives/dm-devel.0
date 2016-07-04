@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 02/26] Use 'mptable' as argument for find_mpe()
-	and get_mpe_wwid()
-Date: Mon,  4 Jul 2016 09:08:22 +0200
-Message-ID: <1467616126-10036-3-git-send-email-hare@suse.de>
+Subject: [PATCH 04/26] devmapper: explicit config settings
+Date: Mon,  4 Jul 2016 09:08:24 +0200
+Message-ID: <1467616126-10036-5-git-send-email-hare@suse.de>
 References: <1467616126-10036-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,117 +21,184 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Rather than access 'conf' from within the code this patch moves
+those settings to function arguments. So with this patch we don't
+need to access 'struct config' anymore.
+
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/config.c      | 8 ++++----
- libmultipath/config.h      | 4 ++--
- libmultipath/configure.c   | 2 +-
- libmultipath/propsel.c     | 2 +-
- libmultipath/structs_vec.c | 4 ++--
- 5 files changed, 10 insertions(+), 10 deletions(-)
+ libmultipath/configure.c |  6 ++++--
+ libmultipath/devmapper.c | 21 +++++++++++----------
+ libmultipath/devmapper.h |  4 ++--
+ multipath/main.c         |  2 +-
+ multipathd/main.c        |  2 +-
+ 5 files changed, 19 insertions(+), 16 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 8b9e770..00f3e53 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -125,7 +125,7 @@ find_hwe (vector hwtable, char * vendor, char * product, char * revision)
- }
- 
- extern struct mpentry *
--find_mpe (char * wwid)
-+find_mpe (vector mptable, char * wwid)
- {
- 	int i;
- 	struct mpentry * mpe;
-@@ -133,7 +133,7 @@ find_mpe (char * wwid)
- 	if (!wwid)
- 		return NULL;
- 
--	vector_foreach_slot (conf->mptable, mpe, i)
-+	vector_foreach_slot (mptable, mpe, i)
- 		if (mpe->wwid && !strcmp(mpe->wwid, wwid))
- 			return mpe;
- 
-@@ -141,7 +141,7 @@ find_mpe (char * wwid)
- }
- 
- extern char *
--get_mpe_wwid (char * alias)
-+get_mpe_wwid (vector mptable, char * alias)
- {
- 	int i;
- 	struct mpentry * mpe;
-@@ -149,7 +149,7 @@ get_mpe_wwid (char * alias)
- 	if (!alias)
- 		return NULL;
- 
--	vector_foreach_slot (conf->mptable, mpe, i)
-+	vector_foreach_slot (mptable, mpe, i)
- 		if (mpe->alias && strcmp(mpe->alias, alias) == 0)
- 			return mpe->wwid;
- 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 466e31e..7693ca6 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -179,8 +179,8 @@ struct config {
- struct config * conf;
- 
- struct hwentry * find_hwe (vector hwtable, char * vendor, char * product, char *revision);
--struct mpentry * find_mpe (char * wwid);
--char * get_mpe_wwid (char * alias);
-+struct mpentry * find_mpe (vector mptable, char * wwid);
-+char * get_mpe_wwid (vector mptable, char * alias);
- 
- struct hwentry * alloc_hwe (void);
- struct mpentry * alloc_mpe (void);
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 8e938c0..e49e7ea 100644
+index e49e7ea..a98b1ca 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
-@@ -1042,7 +1042,7 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
- 		/*
- 		 * or may be an alias
- 		 */
--		refwwid = get_mpe_wwid(dev);
-+		refwwid = get_mpe_wwid(conf->mptable, dev);
+@@ -633,11 +633,13 @@ domap (struct multipath * mpp, char * params)
+ 		break;
  
- 		/*
- 		 * or directly a wwid
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 4111fa5..71a0941 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -409,7 +409,7 @@ select_prio (struct path * pp)
- 			goto out;
- 		}
+ 	case ACT_RENAME:
+-		r = dm_rename(mpp->alias_old, mpp->alias);
++		r = dm_rename(mpp->alias_old, mpp->alias,
++			      conf->partition_delim);
+ 		break;
+ 
+ 	case ACT_FORCERENAME:
+-		r = dm_rename(mpp->alias_old, mpp->alias);
++		r = dm_rename(mpp->alias_old, mpp->alias,
++			      conf->partition_delim);
+ 		if (r)
+ 			r = dm_addmap_reload(mpp, params, 0);
+ 		break;
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 926d2f5..b50e9e6 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -19,7 +19,6 @@
+ #include "debug.h"
+ #include "memory.h"
+ #include "devmapper.h"
+-#include "config.h"
+ #include "sysfs.h"
+ 
+ #include "log_pthread.h"
+@@ -32,6 +31,8 @@
+ #define UUID_PREFIX "mpath-"
+ #define UUID_PREFIX_LEN 6
+ 
++static int dm_conf_verbosity;
++
+ #ifdef LIBDM_API_DEFERRED
+ static int dm_cancel_remove_partmaps(const char * mapname);
+ #endif
+@@ -65,7 +66,7 @@ dm_write_log (int level, const char *file, int line, const char *f, ...)
+ 	if (level > 6)
+ 		level = 6;
+ 
+-	thres = (conf) ? conf->verbosity : 0;
++	thres = dm_conf_verbosity;
+ 	if (thres <= 3 || level > thres)
+ 		return;
+ 
+@@ -94,9 +95,9 @@ dm_write_log (int level, const char *file, int line, const char *f, ...)
+ }
+ 
+ extern void
+-dm_init(void) {
++dm_init(int v) {
+ 	dm_log_init(&dm_write_log);
+-	dm_log_init_verbose(conf ? conf->verbosity + 3 : 0);
++	dm_log_init_verbose(v + 3);
+ }
+ 
+ static int
+@@ -1375,21 +1376,21 @@ rename_partmap (const char *name, void *data)
+ 	for (offset = strlen(rd->old); name[offset] && !(isdigit(name[offset])); offset++); /* do nothing */
+ 	snprintf(buff, PARAMS_SIZE, "%s%s%s", rd->new, rd->delim,
+ 		 name + offset);
+-	dm_rename(name, buff);
++	dm_rename(name, buff, rd->delim);
+ 	condlog(4, "partition map %s renamed", name);
+ 	return 0;
+ }
+ 
+ int
+-dm_rename_partmaps (const char * old, char * new)
++dm_rename_partmaps (const char * old, char * new, char *delim)
+ {
+ 	struct rename_data rd;
+ 
+ 	rd.old = old;
+ 	rd.new = new;
+ 
+-	if (conf->partition_delim)
+-		rd.delim = conf->partition_delim;
++	if (delim)
++		rd.delim = delim;
+ 	if (isdigit(new[strlen(new)-1]))
+ 		rd.delim = "p";
+ 	else
+@@ -1398,13 +1399,13 @@ dm_rename_partmaps (const char * old, char * new)
+ }
+ 
+ int
+-dm_rename (const char * old, char * new)
++dm_rename (const char * old, char * new, char *delim)
+ {
+ 	int r = 0;
+ 	struct dm_task *dmt;
+ 	uint32_t cookie;
+ 
+-	if (dm_rename_partmaps(old, new))
++	if (dm_rename_partmaps(old, new, delim))
+ 		return r;
+ 
+ 	if (!(dmt = dm_task_create(DM_DEVICE_RENAME)))
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index b5df369..4bc3b11 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -12,7 +12,7 @@
+ #define MPATH_UDEV_RELOAD_FLAG 0
+ #endif
+ 
+-void dm_init(void);
++void dm_init(int verbosity);
+ int dm_prereq (void);
+ int dm_drv_version (unsigned int * version, char * str);
+ int dm_simplecmd_flush (int, const char *, uint16_t);
+@@ -46,7 +46,7 @@ int dm_remove_partmaps (const char * mapname, int need_sync,
+ 			int deferred_remove);
+ int dm_get_uuid(char *name, char *uuid);
+ int dm_get_info (char * mapname, struct dm_info ** dmi);
+-int dm_rename (const char * old, char * new);
++int dm_rename (const char * old, char * new, char * delim);
+ int dm_reassign(const char * mapname);
+ int dm_reassign_table(const char *name, char *old, char *new);
+ int dm_setgeometry(struct multipath *mpp);
+diff --git a/multipath/main.c b/multipath/main.c
+index aadebec..0dbe281 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -583,6 +583,7 @@ main (int argc, char *argv[])
+ 		exit(1);
  	}
--	mpe = find_mpe(pp->wwid);
-+	mpe = find_mpe(conf->mptable, pp->wwid);
- 	set_prio(mpe, "(LUN setting)");
- 	set_prio(conf->overrides, "(overrides setting)");
- 	set_prio(pp->hwe, "controller setting)");
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 20a7457..38df71b 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -385,7 +385,7 @@ __setup_multipath (struct vectors * vecs, struct multipath * mpp, int reset)
+ 
++	dm_init(conf->verbosity);
+ 	if (dm_prereq())
+ 		exit(1);
+ 	dm_drv_version(conf->version, TGT_MPATH);
+@@ -627,7 +628,6 @@ main (int argc, char *argv[])
+ 		condlog(0, "failed to initialize prioritizers");
+ 		goto out;
  	}
+-	dm_init();
  
- 	set_multipath_wwid(mpp);
--	mpp->mpe = find_mpe(mpp->wwid);
-+	mpp->mpe = find_mpe(conf->mptable, mpp->wwid);
- 	condlog(3, "%s: discover", mpp->alias);
+ 	if (conf->cmd == CMD_VALID_PATH &&
+ 	    (!conf->dev || conf->dev_type == DEV_DEVMAP)) {
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 3b79aef..8592982 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2111,6 +2111,7 @@ child (void * param)
  
- 	if (!mpp->hwe)
-@@ -469,7 +469,7 @@ add_map_with_path (struct vectors * vecs,
- 	if (!(mpp = alloc_multipath()))
- 		return NULL;
+ 	uxsock_timeout = conf->uxsock_timeout;
  
--	mpp->mpe = find_mpe(pp->wwid);
-+	mpp->mpe = find_mpe(conf->mptable, pp->wwid);
- 	mpp->hwe = pp->hwe;
++	dm_init(conf->verbosity);
+ 	dm_drv_version(conf->version, TGT_MPATH);
+ 	if (init_checkers()) {
+ 		condlog(0, "failed to initialize checkers");
+@@ -2368,7 +2369,6 @@ main (int argc, char *argv[])
+ 	int foreground = 0;
  
- 	strcpy(mpp->wwid, pp->wwid);
+ 	logsink = 1;
+-	dm_init();
+ 
+ 	if (getuid() != 0) {
+ 		fprintf(stderr, "need to be root\n");
 -- 
 2.6.6
