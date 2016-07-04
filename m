@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 09/26] libmultipath: add 'cmd' as argument for
-	get_refwwid()
-Date: Mon,  4 Jul 2016 09:08:29 +0200
-Message-ID: <1467616126-10036-10-git-send-email-hare@suse.de>
+Subject: [PATCH 16/26] discovery: Pass in 'hwtable' for
+	get_state() and scsi_sysfs_discovery()
+Date: Mon,  4 Jul 2016 09:08:36 +0200
+Message-ID: <1467616126-10036-17-git-send-email-hare@suse.de>
 References: <1467616126-10036-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,146 +22,158 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch adds an 'cmd' argument to get_refwwid(). This allows
-store_pathvec() to be simplified and avoids accesses to conf->cmd.
-
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/configure.c  | 13 +++++++++----
- libmultipath/configure.h  |  3 ++-
- libmultipath/discovery.c  |  4 +---
- multipath/main.c          |  4 ++--
- multipathd/cli_handlers.c |  4 ++--
- multipathd/main.c         |  2 +-
- 6 files changed, 17 insertions(+), 13 deletions(-)
+ libmultipath/discovery.c | 28 ++++++++++++++--------------
+ libmultipath/discovery.h |  2 +-
+ multipathd/main.c        |  2 +-
+ 3 files changed, 16 insertions(+), 16 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index a111f6e..ab53af2 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -925,12 +925,14 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
-  * 2 - blacklist
-  */
- extern int
--get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
-+get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
-+	     vector pathvec, char **wwid)
- {
- 	int ret = 1;
- 	struct path * pp;
- 	char buff[FILE_NAME_SIZE];
- 	char * refwwid = NULL, tmpwwid[WWID_SIZE];
-+	int flags = DI_SYSFS | DI_WWID;
- 
- 	if (!wwid)
- 		return 1;
-@@ -939,6 +941,9 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
- 	if (dev_type == DEV_NONE)
- 		return 1;
- 
-+	if (cmd != CMD_REMOVE_WWID)
-+		flags |= DI_BLACKLIST;
-+
- 	if (dev_type == DEV_DEVNODE) {
- 		if (basenamecpy(dev, buff, FILE_NAME_SIZE) == 0) {
- 			condlog(1, "basename failed for '%s' (%s)",
-@@ -955,7 +960,7 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
- 				return 1;
- 			}
- 			ret = store_pathinfo(pathvec, conf->hwtable, udevice,
--					     DI_SYSFS | DI_WWID, &pp);
-+					     flags, &pp);
- 			udev_device_unref(udevice);
- 			if (!pp) {
- 				if (ret == 1)
-@@ -987,7 +992,7 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
- 				return 1;
- 			}
- 			ret = store_pathinfo(pathvec, conf->hwtable, udevice,
--					     DI_SYSFS | DI_WWID, &pp);
-+					     flags, &pp);
- 			udev_device_unref(udevice);
- 			if (!pp) {
- 				if (ret == 1)
-@@ -1012,7 +1017,7 @@ get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid)
- 			return 1;
- 		}
- 		ret = store_pathinfo(pathvec, conf->hwtable, udevice,
--				     DI_SYSFS | DI_WWID, &pp);
-+				     flags, &pp);
- 		udev_device_unref(udevice);
- 		if (!pp) {
- 			if (ret == 1)
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index 8d474ea..442c956 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -29,6 +29,7 @@ int setup_map (struct multipath * mpp, char * params, int params_size );
- int domap (struct multipath * mpp, char * params, int is_daemon);
- int reinstate_paths (struct multipath *mpp);
- int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid, int force_reload, enum mpath_cmds cmd);
--int get_refwwid (char * dev, enum devtypes dev_type, vector pathvec, char **wwid);
-+int get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
-+		 vector pathvec, char **wwid);
- int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh, int is_daemon);
- int sysfs_get_host_adapter_name(struct path *pp, char *adapter_name);
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 126a54f..6fc2e8f 100644
+index 0bf1bc2..e598337 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -90,9 +90,7 @@ store_pathinfo (vector pathvec, vector hwtable, struct udev_device *udevice,
- 		goto out;
- 	}
- 	pp->udev = udev_device_ref(udevice);
--	err = pathinfo(pp, hwtable,
--		       (conf->cmd == CMD_REMOVE_WWID)? flag :
--						       (flag | DI_BLACKLIST));
-+	err = pathinfo(pp, hwtable, flag);
- 	if (err)
- 		goto out;
+@@ -1067,7 +1067,7 @@ get_vpd_sgio (int fd, int pg, char * str, int maxlen)
+ }
  
-diff --git a/multipath/main.c b/multipath/main.c
-index e16c6cc..bf2fd31 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -281,8 +281,8 @@ configure (void)
- 	 * failing the translation is fatal (by policy)
+ static int
+-scsi_sysfs_pathinfo (struct path * pp)
++scsi_sysfs_pathinfo (struct path * pp, vector hwtable)
+ {
+ 	struct udev_device *parent;
+ 	const char *attr_path = NULL;
+@@ -1109,7 +1109,7 @@ scsi_sysfs_pathinfo (struct path * pp)
+ 	/*
+ 	 * set the hwe configlet pointer
  	 */
- 	if (conf->dev) {
--		int failed = get_refwwid(conf->dev, conf->dev_type, pathvec,
--					 &refwwid);
-+		int failed = get_refwwid(conf->cmd, conf->dev, conf->dev_type,
-+					 pathvec, &refwwid);
- 		if (!refwwid) {
- 			condlog(4, "%s: failed to get wwid", conf->dev);
- 			if (failed == 2 && conf->cmd == CMD_VALID_PATH)
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index eaeaa74..05dcb41 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -708,8 +708,8 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
- 		if (!alias && !count) {
- 			condlog(2, "%s: mapname not found for %d:%d",
- 				param, major, minor);
--			rc = get_refwwid(param, DEV_DEVMAP, vecs->pathvec,
--								&refwwid);
-+			rc = get_refwwid(CMD_NONE, param, DEV_DEVMAP,
-+					 vecs->pathvec, &refwwid);
- 			if (refwwid) {
- 				if (coalesce_paths(vecs, NULL, refwwid, 0, 1))
- 					condlog(2, "%s: coalesce_paths failed",
+-	pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id, pp->rev);
++	pp->hwe = find_hwe(hwtable, pp->vendor_id, pp->product_id, pp->rev);
+ 
+ 	/*
+ 	 * host / bus / target / lun
+@@ -1134,7 +1134,7 @@ scsi_sysfs_pathinfo (struct path * pp)
+ }
+ 
+ static int
+-ccw_sysfs_pathinfo (struct path * pp)
++ccw_sysfs_pathinfo (struct path * pp, vector hwtable)
+ {
+ 	struct udev_device *parent;
+ 	char attr_buff[NAME_SIZE];
+@@ -1170,7 +1170,7 @@ ccw_sysfs_pathinfo (struct path * pp)
+ 	/*
+ 	 * set the hwe configlet pointer
+ 	 */
+-	pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id, NULL);
++	pp->hwe = find_hwe(hwtable, pp->vendor_id, pp->product_id, NULL);
+ 
+ 	/*
+ 	 * host / bus / target / lun
+@@ -1193,7 +1193,7 @@ ccw_sysfs_pathinfo (struct path * pp)
+ }
+ 
+ static int
+-cciss_sysfs_pathinfo (struct path * pp)
++cciss_sysfs_pathinfo (struct path * pp, vector hwtable)
+ {
+ 	const char * attr_path = NULL;
+ 	struct udev_device *parent;
+@@ -1233,7 +1233,7 @@ cciss_sysfs_pathinfo (struct path * pp)
+ 	/*
+ 	 * set the hwe configlet pointer
+ 	 */
+-	pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id, pp->rev);
++	pp->hwe = find_hwe(hwtable, pp->vendor_id, pp->product_id, pp->rev);
+ 
+ 	/*
+ 	 * host / bus / target / lun
+@@ -1323,7 +1323,7 @@ path_offline (struct path * pp)
+ }
+ 
+ int
+-sysfs_pathinfo(struct path * pp)
++sysfs_pathinfo(struct path * pp, vector hwtable)
+ {
+ 	if (common_sysfs_pathinfo(pp))
+ 		return 1;
+@@ -1339,13 +1339,13 @@ sysfs_pathinfo(struct path * pp)
+ 	if (pp->bus == SYSFS_BUS_UNDEF)
+ 		return 0;
+ 	else if (pp->bus == SYSFS_BUS_SCSI) {
+-		if (scsi_sysfs_pathinfo(pp))
++		if (scsi_sysfs_pathinfo(pp, hwtable))
+ 			return 1;
+ 	} else if (pp->bus == SYSFS_BUS_CCW) {
+-		if (ccw_sysfs_pathinfo(pp))
++		if (ccw_sysfs_pathinfo(pp, hwtable))
+ 			return 1;
+ 	} else if (pp->bus == SYSFS_BUS_CCISS) {
+-		if (cciss_sysfs_pathinfo(pp))
++		if (cciss_sysfs_pathinfo(pp, hwtable))
+ 			return 1;
+ 	}
+ 	return 0;
+@@ -1397,7 +1397,7 @@ cciss_ioctl_pathinfo (struct path * pp, int mask)
+ }
+ 
+ int
+-get_state (struct path * pp, int daemon)
++get_state (struct path * pp, vector hwtable, int daemon)
+ {
+ 	struct checker * c = &pp->checker;
+ 	int state;
+@@ -1406,7 +1406,7 @@ get_state (struct path * pp, int daemon)
+ 
+ 	if (!checker_selected(c)) {
+ 		if (daemon) {
+-			if (pathinfo(pp, conf->hwtable, DI_SYSFS) != PATHINFO_OK) {
++			if (pathinfo(pp, hwtable, DI_SYSFS) != PATHINFO_OK) {
+ 				condlog(3, "%s: couldn't get sysfs pathinfo",
+ 					pp->dev);
+ 				return PATH_UNCHECKED;
+@@ -1610,7 +1610,7 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ 	/*
+ 	 * fetch info available in sysfs
+ 	 */
+-	if (mask & DI_SYSFS && sysfs_pathinfo(pp))
++	if (mask & DI_SYSFS && sysfs_pathinfo(pp, hwtable))
+ 		return PATHINFO_FAILED;
+ 
+ 	if (mask & DI_BLACKLIST && mask & DI_SYSFS) {
+@@ -1649,7 +1649,7 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ 
+ 	if (mask & DI_CHECKER) {
+ 		if (path_state == PATH_UP) {
+-			pp->chkrstate = pp->state = get_state(pp, 0);
++			pp->chkrstate = pp->state = get_state(pp, hwtable, 0);
+ 			if (pp->state == PATH_UNCHECKED ||
+ 			    pp->state == PATH_WILD)
+ 				goto blank;
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index 45c8a4a..2619015 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -34,7 +34,7 @@ int path_discovery (vector pathvec, struct config * conf, int flag);
+ 
+ int do_tur (char *);
+ int path_offline (struct path *);
+-int get_state (struct path * pp, int daemon);
++int get_state (struct path * pp, vector hwtable, int daemon);
+ int pathinfo (struct path *, vector hwtable, int mask);
+ int alloc_path_with_pathinfo (vector hwtable, struct udev_device *udevice,
+ 			      int flag, struct path **pp_ptr);
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 036872c..6230798 100644
+index 9a44390..fe80d1a 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -484,7 +484,7 @@ ev_add_map (char * dev, char * alias, struct vectors * vecs)
- 			return 1;
- 		}
- 	}
--	r = get_refwwid(dev, DEV_DEVMAP, vecs->pathvec, &refwwid);
-+	r = get_refwwid(CMD_NONE, dev, DEV_DEVMAP, vecs->pathvec, &refwwid);
+@@ -1421,7 +1421,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 		newstate = PATH_DOWN;
  
- 	if (refwwid) {
- 		r = coalesce_paths(vecs, NULL, refwwid, 0, CMD_NONE);
+ 	if (newstate == PATH_UP)
+-		newstate = get_state(pp, 1);
++		newstate = get_state(pp, conf->hwtable, 1);
+ 	else
+ 		checker_clear_message(&pp->checker);
+ 
 -- 
 2.6.6
