@@ -1,13 +1,12 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 3/3] block: use timed offload
-Date: Mon, 4 Jul 2016 18:59:20 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1607041858260.16388@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1607041846020.16388@file01.intranet.prod.int.rdu2.redhat.com>
+From: Gris Ge <fge@redhat.com>
+Subject: Re: [PATCH V5 3/3] Introducing multipath C API
+Date: Tue, 5 Jul 2016 11:17:19 +0800
+Message-ID: <20160705031719.GA4128@redhat.com>
+References: <90c5e679-2942-12ce-4e77-9cc1f475ee45@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1449486424224432163=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1607041846020.16388@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <90c5e679-2942-12ce-4e77-9cc1f475ee45@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,159 +16,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: dm-devel@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This patch introduces a timed bio offload.
 
-When a process schedules and there are bios queued on
-current->queued_bios, we submit a timer that redirects the queued bios to
-a workqueue after a specific timeout (currently 1s).
+--===============1449486424224432163==
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="PNTmBPCT7hxwcZjr"
+Content-Disposition: inline
 
-The reason for the timer is that immediate bio offload could change
-ordering of bios and it could theoretically cause performance regressions.
-So, we offload bios only if the process is blocked for a certain amount of
-time.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+--PNTmBPCT7hxwcZjr
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
----
- block/bio.c      |   45 +++++++++++++++++++++++++++++++++------------
- block/blk-core.c |   19 +++++++++++++++++--
- 2 files changed, 50 insertions(+), 14 deletions(-)
+On Mon, Jul 04, 2016 at 06:32:56PM +0200, Xose Vazquez Perez wrote:
+> Gris Ge wrote:
+>=20
+> > +	perl -i -pe 's|__INCLUDEDIR__|$(includedir)|g' \
+> > +		$(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
+>=20
+> Please, replace perl with sed, awk or any other basic tool.
+>=20
+Hi Xose Vazquez Perez,
 
-Index: linux-4.7-rc5-devel/block/bio.c
-===================================================================
---- linux-4.7-rc5-devel.orig/block/bio.c	2016-06-30 17:25:56.000000000 +0200
-+++ linux-4.7-rc5-devel/block/bio.c	2016-06-30 17:26:04.000000000 +0200
-@@ -338,9 +338,10 @@ static void bio_alloc_rescue(struct work
- 	struct bio *bio;
- 
- 	while (1) {
--		spin_lock(&bs->rescue_lock);
-+		unsigned long flags;
-+		spin_lock_irqsave(&bs->rescue_lock, flags);
- 		bio = bio_list_pop(&bs->rescue_list);
--		spin_unlock(&bs->rescue_lock);
-+		spin_unlock_irqrestore(&bs->rescue_lock, flags);
- 
- 		if (!bio)
- 			break;
-@@ -350,35 +351,55 @@ static void bio_alloc_rescue(struct work
- }
- 
- /**
-- * blk_flush_bio_list
-- * @tsk: task_struct whose bio_list must be flushed
-+ * blk_timer_flush_bio_list
-  *
-- * Pop bios queued on @tsk->bio_list and submit each of them to
-+ * Pop bios queued on q->bio_list and submit each of them to
-  * their rescue workqueue.
-  *
-- * If the bio doesn't have a bio_set, we leave it on @tsk->bio_list.
-+ * If the bio doesn't have a bio_set, we leave it on q->bio_list.
-  * If the bio is allocated from fs_bio_set, we must leave it to avoid
-  * deadlock on loopback block device.
-  * Stacking bio drivers should use bio_set, so this shouldn't be
-  * an issue.
-  */
--void blk_flush_bio_list(struct task_struct *tsk)
-+static void blk_timer_flush_bio_list(unsigned long data)
- {
-+	struct queued_bios *q = (struct queued_bios *)data;
- 	struct bio *bio;
--	struct bio_list list = tsk->queued_bios->bio_list;
--	bio_list_init(&tsk->queued_bios->bio_list);
-+
-+	struct bio_list list = q->bio_list;
-+	bio_list_init(&q->bio_list);
- 
- 	while ((bio = bio_list_pop(&list))) {
-+		unsigned long flags;
- 		struct bio_set *bs = bio->bi_pool;
- 		if (unlikely(!bs) || bs == fs_bio_set) {
--			bio_list_add(&tsk->queued_bios->bio_list, bio);
-+			bio_list_add(&q->bio_list, bio);
- 			continue;
- 		}
- 
--		spin_lock(&bs->rescue_lock);
-+		spin_lock_irqsave(&bs->rescue_lock, flags);
- 		bio_list_add(&bs->rescue_list, bio);
- 		queue_work(bs->rescue_workqueue, &bs->rescue_work);
--		spin_unlock(&bs->rescue_lock);
-+		spin_unlock_irqrestore(&bs->rescue_lock, flags);
-+	}
-+}
-+
-+#define BIO_RESCUE_TIMEOUT	HZ
-+
-+/**
-+ * blk_flush_bio_list
-+ * @tsk: task_struct whose bio_list must be flushed
-+ *
-+ * This function sets up a timer that flushes the queued bios.
-+ */
-+void blk_flush_bio_list(struct task_struct *tsk)
-+{
-+	struct queued_bios *q = tsk->queued_bios;
-+	if (q->timer.function == NULL) {
-+		setup_timer(&q->timer, blk_timer_flush_bio_list,
-+			    (unsigned long)q);
-+		mod_timer(&q->timer, jiffies + BIO_RESCUE_TIMEOUT);
- 	}
- }
- 
-Index: linux-4.7-rc5-devel/block/blk-core.c
-===================================================================
---- linux-4.7-rc5-devel.orig/block/blk-core.c	2016-06-30 17:25:56.000000000 +0200
-+++ linux-4.7-rc5-devel/block/blk-core.c	2016-06-30 17:26:04.000000000 +0200
-@@ -2032,6 +2032,7 @@ end_io:
- blk_qc_t generic_make_request(struct bio *bio)
- {
- 	struct queued_bios queued_bios_on_stack;
-+	struct queued_bios *q;
- 	blk_qc_t ret = BLK_QC_T_NONE;
- 
- 	if (!generic_make_request_checks(bio))
-@@ -2047,8 +2048,17 @@ blk_qc_t generic_make_request(struct bio
- 	 * it is non-NULL, then a make_request is active, and new requests
- 	 * should be added at the tail
- 	 */
--	if (current->queued_bios) {
--		bio_list_add(&current->queued_bios->bio_list, bio);
-+	q = current->queued_bios;
-+	if (q) {
-+		/*
-+		 * The timer may modify q->bio_list. So we must stop the timer
-+		 * before modifying the list.
-+		 */
-+		if (q->timer.function != NULL) {
-+			del_timer_sync(&q->timer);
-+			q->timer.function = NULL;
-+		}
-+		bio_list_add(&q->bio_list, bio);
- 		goto out;
- 	}
- 
-@@ -2068,6 +2078,7 @@ blk_qc_t generic_make_request(struct bio
- 	 */
- 	BUG_ON(bio->bi_next);
- 	bio_list_init(&queued_bios_on_stack.bio_list);
-+	queued_bios_on_stack.timer.function = NULL;
- 	current->queued_bios = &queued_bios_on_stack;
- 	do {
- 		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
-@@ -2084,6 +2095,10 @@ blk_qc_t generic_make_request(struct bio
- 			bio_io_error(bio);
- 			bio = bio_next;
- 		}
-+		if (unlikely(queued_bios_on_stack.timer.function != NULL)) {
-+			del_timer_sync(&queued_bios_on_stack.timer);
-+			queued_bios_on_stack.timer.function = NULL;
-+		}
- 	} while (bio);
- 	current->queued_bios = NULL; /* deactivate */
- 
+it's quit complex to handle folder path with '/' in sed or
+awk unless I missed anything.
+
+As we need perl in 'kernel-doc' tool blow to generate manpage,
+can I keep it?
+> > +	perl docs/kernel-doc -man $(HEADERS) | perl docs/split-man.pl docs/man
+> > +	@for file in docs/man/*.3; do \
+> > +		gzip -f $$file; \
+> > +	done
+> > +	find docs/man -type f -name \*[0-9].gz
+
+--=20
+Gris Ge
+
+--PNTmBPCT7hxwcZjr
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBCAAGBQJXeya7AAoJEGzN5Y/kHij/tFYQAKATeqR/F+UaGeT+am+2yQ6C
+DN4XJiL+7Bde275BBvFCqFleXZcIxNfba2g/q/oIcub+UnsFWh201ApdD9eSYea+
+cfRs25KvulgSSAcGH8QlNmkYFJlpcyvEhowNE3r8lH05NVW9s8bB6Cyb5prR3f/6
+Itw3q7YxJ8mL7RxaYcy6+xLJNot96SJcEgfH9VsIpxr6ZbJJanPrB0EbultW7gpL
+YwoI12KQjPHj+PxOi6besEM9mlniTehGWIH11HSbYSlNA/RkfU7Dx338Clnpc9Kr
+100au9Vr8kKSj7YlZTZQnuYl6Q8sj9VuExnDGspFJpzbuIqNn3qQr9utAaycc7FT
+x5fihGoaN4otw62LpNPXbkBmMqFACwNcXLo94PxIt2XHUs1UY4ecraGuzc7zhdsY
+rqbwfad+9zgdqcyuDIZBYaklBMC3EdXF+LT8xdARg3jVuFWGq+BGVEUgTdevdjLe
+j+Wkw3AOt5N4ELXDoTxmCLGWtEMi4JJKi+WgSCeKc2RaTUQzArPBM1qZQFxykPEx
+w8MFiUXZ5AUyl036U4Bc6FpA7llKdBWQD+5sZWcr5SaEB71LumMIgZJUKcFjJI1s
+9kho+eG6SESvCPQqYxVHpa+kolPP6BQMpTdx97KALiWeucGw3PluJDQ84AmiIMfQ
+ieY45UQ2Pce4PfmHq0E+
+=2dO0
+-----END PGP SIGNATURE-----
+
+--PNTmBPCT7hxwcZjr--
+
+
+--===============1449486424224432163==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1449486424224432163==--
