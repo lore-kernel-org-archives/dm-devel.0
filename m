@@ -1,8 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH 20/26] dm raid: fix rs_is_recovering() to allow
-	for lvextend
-Date: Wed,  6 Jul 2016 19:24:51 +0200
-Message-ID: <1467825897-26058-21-git-send-email-heinzm@redhat.com>
+Subject: [PATCH 10/26] dm raid: fix rs_set_capacity on growing
+	reshape
+Date: Wed,  6 Jul 2016 19:24:41 +0200
+Message-ID: <1467825897-26058-11-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -24,30 +24,29 @@ From: Heinz Mauelshagen <heinzm@redhat.com>
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/md/dm-raid.c | 9 +++------
+ 1 file changed, 3 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 14b3d93..1ff469f 100644
+index 62e31b4..63883f4 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -372,7 +372,7 @@ static bool rs_is_reshapable(struct raid_set *rs)
- /* Return true, if raid set in @rs is recovering */
- static bool rs_is_recovering(struct raid_set *rs)
+@@ -616,13 +616,10 @@ static struct raid_type *get_raid_type_by_ll(const int level, const int layout)
+ static void rs_set_capacity(struct raid_set *rs)
  {
--	return rs->md.recovery_cp != MaxSector;
-+	return rs->md.recovery_cp < rs->dev[0].rdev.sectors;
+ 	struct mddev *mddev = &rs->md;
++	struct gendisk *gendisk = dm_disk(dm_table_get_md(rs->ti->table));
+ 
+-	if (rs->ti->len != mddev->array_sectors) {
+-		struct gendisk *gendisk = dm_disk(dm_table_get_md(rs->ti->table));
+-
+-		set_capacity(gendisk, mddev->array_sectors);
+-		revalidate_disk(gendisk);
+-	}
++	set_capacity(gendisk, mddev->array_sectors);
++	revalidate_disk(gendisk);
  }
  
- /* Return true, if raid set in @rs is reshaping */
-@@ -3532,7 +3532,7 @@ static int raid_preresume(struct dm_target *ti)
- 
- 	rs_set_capacity(rs);
- 
--	/* Check for any reshape request and region size change unless new raid set */
-+	/* Check for any reshape request unless new raid set */
- 	if (test_and_clear_bit(RT_FLAG_RESHAPE_RS, &rs->runtime_flags)) {
- 		/* Initiate a reshape. */
- 		mddev_lock_nointr(mddev);
+ /*
 -- 
 2.5.5
