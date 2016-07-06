@@ -1,8 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH 03/26] dm raid: the sync_page_io() metadata_op
-	argument is bool
-Date: Wed,  6 Jul 2016 19:24:34 +0200
-Message-ID: <1467825897-26058-4-git-send-email-heinzm@redhat.com>
+Subject: [PATCH 15/26] dm raid: fix new superblock/bitmap
+	creation on disk addition
+Date: Wed,  6 Jul 2016 19:24:46 +0200
+Message-ID: <1467825897-26058-16-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -24,32 +24,23 @@ From: Heinz Mauelshagen <heinzm@redhat.com>
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/md/dm-raid.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index e8e9b6a..0eceee8 100644
+index 4572202..5e41bf3 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -1784,7 +1784,7 @@ static int read_disk_sb(struct md_rdev *rdev, int size)
- 	if (rdev->sb_loaded)
- 		return 0;
+@@ -2850,8 +2850,9 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 			set_bit(RT_FLAG_KEEP_RS_FROZEN, &rs->runtime_flags);
+ 		}
  
--	if (!sync_page_io(rdev, 0, size, rdev->sb_page, REQ_OP_READ, 0, 1)) {
-+	if (!sync_page_io(rdev, 0, size, rdev->sb_page, REQ_OP_READ, 0, true)) {
- 		DMERR("Failed to read superblock of device at position %d",
- 		      rdev->raid_disk);
- 		md_error(rdev->mddev, rdev);
-@@ -3258,8 +3258,8 @@ static void attempt_restore_of_faulty_devices(struct raid_set *rs)
- 	for (i = 0; i < rs->md.raid_disks; i++) {
- 		r = &rs->dev[i].rdev;
- 		if (test_bit(Faulty, &r->flags) && r->sb_page &&
--		    sync_page_io(r, 0, r->sb_size, r->sb_page, REQ_OP_READ, 0,
--				 1)) {
-+		    sync_page_io(r, 0, r->sb_size, r->sb_page,
-+				 REQ_OP_READ, 0, true)) {
- 			DMINFO("Faulty %s device #%d has readable super block."
- 			       "  Attempting to revive it.",
- 			       rs->raid_type->name, i);
++		/* Create new superblocks and bitmaps, if any */
+ 		if (rs->md.raid_disks < rs->raid_disks)
+-			set_bit(MD_ARRAY_FIRST_USE, &mddev->flags);
++			set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
+ 
+ 		rs_set_cur(rs);
+ 		rs_setup_recovery(rs, MaxSector);
 -- 
 2.5.5
