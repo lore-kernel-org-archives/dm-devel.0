@@ -1,8 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH 05/26] dm raid: more restricting data_offset
-	value checks
-Date: Wed,  6 Jul 2016 19:24:36 +0200
-Message-ID: <1467825897-26058-6-git-send-email-heinzm@redhat.com>
+Subject: [PATCH 13/26] dm raid: fix raid10 device size error on
+	out-of-place reshape
+Date: Wed,  6 Jul 2016 19:24:44 +0200
+Message-ID: <1467825897-26058-14-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -24,22 +24,29 @@ From: Heinz Mauelshagen <heinzm@redhat.com>
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ drivers/md/dm-raid.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index a382985..b1dbf28 100644
+index 6dc4940..8118f1e 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -1221,7 +1221,8 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
- 				return -EINVAL;
- 			}
- 			/* Ensure sensible data offset */
--			if (value < 0) {
-+			if (value < 0 ||
-+			    (value && (value < MIN_FREE_RESHAPE_SPACE || value % to_sector(PAGE_SIZE)))) {
- 				rs->ti->error = "Bogus data_offset value";
- 				return -EINVAL;
- 			}
+@@ -622,8 +622,16 @@ static struct raid_type *get_raid_type_by_ll(const int level, const int layout)
+ static void rs_set_capacity(struct raid_set *rs)
+ {
+ 	struct mddev *mddev = &rs->md;
++	struct md_rdev *rdev;
+ 	struct gendisk *gendisk = dm_disk(dm_table_get_md(rs->ti->table));
+ 
++	/*
++	 * raid10 sets rdev->sector to the device size, which
++	 * is unintended in case of out-of-place reshaping
++	 */
++	rdev_for_each(rdev, mddev)
++		rdev->sectors = mddev->dev_sectors;
++
+ 	set_capacity(gendisk, mddev->array_sectors);
+ 	revalidate_disk(gendisk);
+ }
 -- 
 2.5.5
