@@ -1,7 +1,7 @@
 From: heinzm@redhat.com
-Subject: [PATCH 06/26] dm raid: remove bogus comment
-Date: Wed,  6 Jul 2016 19:24:37 +0200
-Message-ID: <1467825897-26058-7-git-send-email-heinzm@redhat.com>
+Subject: [PATCH 08/26] dm raid: fix comment typos
+Date: Wed,  6 Jul 2016 19:24:39 +0200
+Message-ID: <1467825897-26058-9-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -23,21 +23,25 @@ From: Heinz Mauelshagen <heinzm@redhat.com>
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 2 --
- 1 file changed, 2 deletions(-)
+ drivers/md/dm-raid.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index b1dbf28..d387d24 100644
+index f6120e1..cc6eb7c 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -1487,8 +1487,6 @@ static int raid_is_congested(struct dm_target_callbacks *cb, int bits)
-  *
-  * Conversions of raid sets from one MD personality to another
-  * have to conform to restrictions which are enforced here.
-- *
-- * Degration is already checked for in rs_check_conversion() below.
-  */
- static int rs_check_takeover(struct raid_set *rs)
- {
+@@ -2510,10 +2510,10 @@ static int rs_setup_reshape(struct raid_set *rs)
+ 	 *   be available at the end of each disk
+ 	 *
+ 	 * - data_offset and new_data_offset are
+-	 *   adjusted for afreentioned out of place
++	 *   adjusted for aforementioned out of place
+ 	 *   reshaping based on userspace passing in
+ 	 *   the "data_offset <sectors>" key/value
+-	 *   pair via te constructor
++	 *   pair via the constructor
+ 	 */
+ 
+ 	/* Add disk(s) */
 -- 
 2.5.5
