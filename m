@@ -1,9 +1,10 @@
-From: zhang.kai16@zte.com.cn
-Subject: [PATCH] multipah: fix 'multipath -p' with invalid policy
-Date: Wed, 6 Jul 2016 14:21:03 +0800
-Message-ID: <OFEF0477A6.E2A8E55E-ON48257FE8.001271D0-48257FE8.0022DD1A@zte.com.cn>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: dm-flakey NOT to return -EIO on READ?
+Date: Wed, 6 Jul 2016 15:33:25 +0900
+Message-ID: <217a0cf8-4853-6316-3016-77460073061d@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3881452989287310480=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -14,129 +15,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: dm-devel@redhat.com, tang.junhui@zte.com.cn
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multipart message in MIME format.
+Hi,
 
---===============3881452989287310480==
-Content-Type: multipart/alternative;
-	boundary="=_alternative 0022DD0F48257FE8_="
+I am using dm-flakey to emulate a broken device that should return -EIO on both read and write.
+I use the parameter up_interval=0 and down_interval=1.
 
-This is a multipart message in MIME format.
+But when I am dd-ing the flakey device, while write fails, read succeeds.
+This isn't the behavior I expect.
 
---=_alternative 0022DD0F48257FE8_=
-Content-Type: text/plain; charset="US-ASCII"
+Then I looked into the code.
 
-hi,
+326 static int flakey_end_io(struct dm_target *ti, struct bio *bio, int error)
+327 {
+328         struct flakey_c *fc = ti->private;
+329         struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
+330 
+331         /*
+332          * Corrupt successful READs while in down state.
+333          * If flags were specified, only corrupt those that match.
+334          */
+335         if (fc->corrupt_bio_byte && !error && pb->bio_submitted &&
+336             (bio_data_dir(bio) == READ) && (fc->corrupt_bio_rw == READ) &&
+337             all_corrupt_bio_flags_match(bio, fc))
+338                 corrupt_bio_data(bio, fc);
+339 
+340         return error;
+341 }
 
-When we excute 'multipath -p' with invalid policy, get_pgpolicy_id() 
-returns IOPOLICY_UNDEF. 
-We should compare conf->pgpolicy_flag with IOPOLICY_UNDEF, otherwise, it 
-couldn't get what we want.
+When the bio direction is READ and currupt_bio_bytes isn't specified
+the READ bio is handled normally right?
 
+I think READ requests should return -EIO if
 
- ---
- multipath/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+1. corrupt_bio_bytes isn't specified
+2. but the requested is handled during down interval.
 
-diff --git a/multipath/main.c b/multipath/main.c
-index c33f689..af7cf5b 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -532,7 +532,7 @@ main (int argc, char *argv[])
-                                                 break;
-                                 case 'p':
-                                                 conf->pgpolicy_flag = 
-get_pgpolicy_id(optarg);
--                                                if (conf->pgpolicy_flag 
-== -1) {
-+                                                if (conf->pgpolicy_flag 
-== IOPOLICY_UNDEF) {
- printf("'%s' is not a valid policy\n", optarg);
- usage(argv[0]);
-                                                                 exit(1);
--- 
-1.9.1
+as well as WRITE requests:
 
+305                 /*
+306                  * Corrupt matching writes.
+307                  */
+308                 if (fc->corrupt_bio_byte && (fc->corrupt_bio_rw == WRITE)) {
+309                         if (all_corrupt_bio_flags_match(bio, fc))
+310                                 corrupt_bio_data(bio, fc);
+311                         goto map_bio;
+312                 }
+313 
+314                 /*
+315                  * By default, error all I/O.
+316                  */
+317                 return -EIO;
+318         }
 
---------------------------------------------------------
-ZTE Information Security Notice: The information contained in this mail (and any attachment transmitted herewith) is privileged and confidential and is intended for the exclusive use of the addressee(s).  If you are not an intended recipient, any disclosure, reproduction, distribution or other dissemination or use of the information contained is strictly prohibited.  If you have received this mail in error, please delete it and notify us immediately.
+This code is similar to what we see in the end_io.
 
---=_alternative 0022DD0F48257FE8_=
-Content-Type: text/html; charset="US-ASCII"
+If my understanding is correct, I would like to modify dm-flakey to return -EIO in the end_io.
 
-<font size=2 face="sans-serif">hi,</font>
-<br>
-<br><font size=2 face="sans-serif">When we excute 'multipath -p' with invalid
-policy, get_pgpolicy_id() returns IOPOLICY_UNDEF. </font>
-<br><font size=2 face="sans-serif">We should compare conf-&gt;pgpolicy_flag
-with IOPOLICY_UNDEF, otherwise, it couldn't get what we want.</font>
-<br><font size=2 face="sans-serif"><br>
-</font>
-<br><font size=2>&nbsp;</font><tt><font size=2>---<br>
- multipath/main.c | 2 +-<br>
- 1 file changed, 1 insertion(+), 1 deletion(-)<br>
-<br>
-diff --git a/multipath/main.c b/multipath/main.c<br>
-index c33f689..af7cf5b 100644<br>
---- a/multipath/main.c<br>
-+++ b/multipath/main.c<br>
-@@ -532,7 +532,7 @@ main (int argc, char *argv[])<br>
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;break;<br>
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-case 'p':<br>
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;conf-&gt;pgpolicy_flag
-= get_pgpolicy_id(optarg);<br>
-- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-if (conf-&gt;pgpolicy_flag == -1) {<br>
-+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-if (conf-&gt;pgpolicy_flag == IOPOLICY_UNDEF) {<br>
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-printf(&quot;'%s' is not a valid policy\n&quot;, optarg);<br>
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-usage(argv[0]);<br>
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-exit(1);<br>
--- <br>
-1.9.1</font></tt><tt><font size=3><br>
-</font></tt>
-<br>
-<br>
+I would like to request for comments.
 
-<br><pre><font color="blue">
---------------------------------------------------------
-ZTE Information Security Notice: The information contained in this mail (and any attachment transmitted herewith) is privileged and confidential and is intended for the exclusive use of the addressee(s).  If you are not an intended recipient, any disclosure, reproduction, distribution or other dissemination or use of the information contained is strictly prohibited.  If you have received this mail in error, please delete it and notify us immediately.
+Thanks,
 
-</font></pre><br>
-
---=_alternative 0022DD0F48257FE8_=--
-
-
---===============3881452989287310480==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3881452989287310480==--
+- Akira
