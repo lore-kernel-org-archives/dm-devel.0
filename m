@@ -1,46 +1,93 @@
-From: Minfei Huang <mnghuan@gmail.com>
-Subject: Re: [PATCH RESENT] dm: Check kthread_run's return value
-Date: Wed, 6 Jul 2016 21:38:41 +0800
-Message-ID: <20160706133841.GB1712@MinfeideMacBook-Pro.local>
-References: <1467645927-4143-1-git-send-email-mnghuan@gmail.com>
- <20160706131601.GA28379@redhat.com>
- <20160706132755.GA1712@MinfeideMacBook-Pro.local>
- <20160706133129.GB28379@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 0/3] offload bios to a thread
+Date: Wed, 6 Jul 2016 09:53:33 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1607060946530.27982@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1607041846020.16388@file01.intranet.prod.int.rdu2.redhat.com>
+	<20160706133656.GA28547@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160706133129.GB28379@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20160706133656.GA28547@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: agk@redhat.com, shli@kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-On 07/06/16 at 09:31P, Mike Snitzer wrote:
-> On Wed, Jul 06 2016 at  9:27am -0400,
-> Minfei Huang <mnghuan@gmail.com> wrote:
+
+
+On Wed, 6 Jul 2016, Mike Snitzer wrote:
+
+> On Mon, Jul 04 2016 at  6:53pm -0400,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
 > 
-> > On 07/06/16 at 09:16P, Mike Snitzer wrote:
-> > > On Mon, Jul 04 2016 at 11:25am -0400,
-> > > Minfei Huang <mnghuan@gmail.com> wrote:
-> > > 
-> > > > kthread function is used to process kthread_work. And there is no return
-> > > > value checking during create this thread. Add this checking to fix this
-> > > > issue.
-> > > > 
-> > > > Signed-off-by: Minfei Huang <mnghuan@gmail.com>
-> > > This needed rebasing against linux-dm.git's 'for-next'.  I've now staged
-> > > this fix for 4.8 inclusion, see:
-> > > https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=7193a9defcab6f3d3f1eb64c68bad7534e5a39ad
+> > Hi
 > > 
-> > Seems that we should fix it in stable as well.
+> > This is the second version of patches that fix deadlocks by redirecting 
+> > bios from current->bio_list to rescuer workqueues.
+> > 
+> > I found out that the original patches caused deadlock with the loopback 
+> > device. When the loopback device is used, both lower and upper filesystems 
+> > use the same bio set - fs_bio_set. Consequently, bios submitted by both of 
+> > them end up on the same rescuer workqueue. There is a deadlock possibility 
+> > - if generic_make_request for the upper filesystem's bio blocks (because 
+> > there are too many requests in flight on the loop device), it may stall 
+> > processing some bios for the lower filesystem.
+> > 
+> > Ideadlly, each filesystem should have its own bio set. But it doesn't. So 
+> > I fix this problem by not offloading bios allocated from fs_bio_set.
 > 
-> Given the code movement it isn't easy to do (by simply adding a stable@
-> cc).  I've not seen a single report of an ignored kthread_run() failure
-> for multipath using .request_fn interface.
+> I'd much preferred you just send an incremental fix that built on the
+> tree you know I started, here:
+> http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=wip
 
-Yep, this bug will be trigged in very restrict condition, also dm is
-installed in boot time when there are a lot of memory avaiable.
+You need to change three patches in your git:
+* block: flush queued bios when process blocks to avoid deadlock
+* block: prepare for timed offload of queued bios to workqueue
+* block: use timed offload of queued bios to a workqueue
+because this bug is present in all of them.
 
-Thanks
-Minfei
+When these patches are sent to Linus, the bug should not be present in any 
+of them.
+
+Mikulas
+
+> I've now folded your fix into this tree.
+> 
+> But please don't ignore work you know that was done to further prepare
+> your patches for inclusion.  It makes for tedious busy work on my end to
+> pull out the incremental fix, which is simply:
+> 
+> diff --git a/block/bio.c b/block/bio.c
+> index 7c49b91..80ebe88 100644
+> --- a/block/bio.c
+> +++ b/block/bio.c
+> @@ -357,7 +357,9 @@ static void bio_alloc_rescue(struct work_struct *work)
+>   * to their rescue workqueue.
+>   *
+>   * If the bio doesn't have a bio_set, we leave it on queued_bios->bio_list.
+> - * However, stacking drivers should use bio_set, so this shouldn't be
+> + * If the bio is allocated from fs_bio_set, we must leave it to avoid
+> + * deadlock on loopback block device.
+> + * But stacking drivers should use a bio_set, so this shouldn't be
+>   * an issue.
+>   */
+>  static void blk_timer_flush_bio_list(unsigned long data)
+> @@ -371,7 +373,7 @@ static void blk_timer_flush_bio_list(unsigned long data)
+>  	while ((bio = bio_list_pop(&list))) {
+>  		unsigned long flags;
+>  		struct bio_set *bs = bio->bi_pool;
+> -		if (unlikely(!bs)) {
+> +		if (unlikely(!bs) || bs == fs_bio_set) {
+>  			bio_list_add(&queued_bios->bio_list, bio);
+>  			continue;
+>  		}
+> 
