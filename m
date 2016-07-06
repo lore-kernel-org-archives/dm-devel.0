@@ -1,7 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH 25/26] dm raid: use rdev_for_each in status
-Date: Wed,  6 Jul 2016 19:24:56 +0200
-Message-ID: <1467825897-26058-26-git-send-email-heinzm@redhat.com>
+Subject: [PATCH 04/26] dm raid: reject too many write_mostly
+	devices
+Date: Wed,  6 Jul 2016 19:24:35 +0200
+Message-ID: <1467825897-26058-5-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -23,23 +24,41 @@ From: Heinz Mauelshagen <heinzm@redhat.com>
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/md/dm-raid.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 2ea3982..e4d0bc1 100644
+index 0eceee8..a382985 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -3186,8 +3186,8 @@ static void raid_status(struct dm_target *ti, status_type_t type,
- 		sync_action = decipher_sync_action(&rs->md);
+@@ -1025,7 +1025,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ {
+ 	int value, raid10_format = ALGORITHM_RAID10_DEFAULT;
+ 	unsigned raid10_copies = 2;
+-	unsigned i;
++	unsigned i, write_mostly = 0;
+ 	unsigned region_size = 0;
+ 	sector_t max_io_len;
+ 	const char *arg, *key;
+@@ -1179,6 +1179,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 				return -EINVAL;
+ 			}
  
- 		/* HM FIXME: do we want another state char for raid0? It shows 'D' or 'A' now */
--		for (i = 0; i < rs->raid_disks; i++)
--			DMEMIT(__raid_dev_status(&rs->dev[i].rdev, array_in_sync));
-+		rdev_for_each(rdev, mddev)
-+			DMEMIT(__raid_dev_status(rdev, array_in_sync));
++			write_mostly++;
+ 			set_bit(WriteMostly, &rs->dev[value].rdev.flags);
+ 			set_bit(__CTR_FLAG_WRITE_MOSTLY, &rs->ctr_flags);
+ 		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_MAX_WRITE_BEHIND))) {
+@@ -1303,6 +1304,11 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 		return -EINVAL;
+ 	}
  
- 		/*
- 		 * In-sync/Reshape ratio:
++	if (write_mostly >= rs->md.raid_disks) {
++		rs->ti->error = "Can't set all raid1 devices to write_mostly";
++		return -EINVAL;
++	}
++
+ 	if (validate_region_size(rs, region_size))
+ 		return -EINVAL;
+ 
 -- 
 2.5.5
