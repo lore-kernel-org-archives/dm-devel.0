@@ -1,10 +1,9 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: dm-flakey NOT to return -EIO on READ?
-Date: Wed, 6 Jul 2016 15:33:25 +0900
-Message-ID: <217a0cf8-4853-6316-3016-77460073061d@gmail.com>
+From: zhang.kai16@zte.com.cn
+Subject: [PATCH] multipathd: fix waiter_attr resource leak
+Date: Wed, 6 Jul 2016 16:08:04 +0800
+Message-ID: <OF23BCA109.0BE2FFED-ON48257FE8.0023BAD2-48257FE8.002CA989@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============6178219320604636123=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,67 +14,103 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: christophe varoqui <christophe.varoqui@free.fr>
+Cc: dm-devel@redhat.com, tang.junhui@zte.com.cn
 List-Id: dm-devel.ids
 
-Hi,
+This is a multipart message in MIME format.
 
-I am using dm-flakey to emulate a broken device that should return -EIO on both read and write.
-I use the parameter up_interval=0 and down_interval=1.
+--===============6178219320604636123==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 002CA98148257FE8_="
 
-But when I am dd-ing the flakey device, while write fails, read succeeds.
-This isn't the behavior I expect.
+This is a multipart message in MIME format.
 
-Then I looked into the code.
+--=_alternative 002CA98148257FE8_=
+Content-Type: text/plain; charset="US-ASCII"
 
-326 static int flakey_end_io(struct dm_target *ti, struct bio *bio, int error)
-327 {
-328         struct flakey_c *fc = ti->private;
-329         struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
-330 
-331         /*
-332          * Corrupt successful READs while in down state.
-333          * If flags were specified, only corrupt those that match.
-334          */
-335         if (fc->corrupt_bio_byte && !error && pb->bio_submitted &&
-336             (bio_data_dir(bio) == READ) && (fc->corrupt_bio_rw == READ) &&
-337             all_corrupt_bio_flags_match(bio, fc))
-338                 corrupt_bio_data(bio, fc);
-339 
-340         return error;
-341 }
+As a global variable waiter_attr of thread attribute was set up in the 
+daemon, 
+however,it hasn't been destroyed when the daemon exited.
+We need deinitialize waiter_attr.
+ 
 
-When the bio direction is READ and currupt_bio_bytes isn't specified
-the READ bio is handled normally right?
+---
+ multipathd/main.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-I think READ requests should return -EIO if
+diff --git a/multipathd/main.c b/multipathd/main.c
+index b86374f..09c5485 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2317,6 +2317,9 @@ child (void * param)
+                 conf = NULL;
+                 udev_unref(udev);
+                 udev = NULL;
++
++                pthread_attr_destroy(&waiter_attr);
++
+ #ifdef _DEBUG_
+                 dbg_free_final(NULL);
+ #endif
+-- 
+1.9.1
 
-1. corrupt_bio_bytes isn't specified
-2. but the requested is handled during down interval.
 
-as well as WRITE requests:
+--------------------------------------------------------
+ZTE Information Security Notice: The information contained in this mail (and any attachment transmitted herewith) is privileged and confidential and is intended for the exclusive use of the addressee(s).  If you are not an intended recipient, any disclosure, reproduction, distribution or other dissemination or use of the information contained is strictly prohibited.  If you have received this mail in error, please delete it and notify us immediately.
 
-305                 /*
-306                  * Corrupt matching writes.
-307                  */
-308                 if (fc->corrupt_bio_byte && (fc->corrupt_bio_rw == WRITE)) {
-309                         if (all_corrupt_bio_flags_match(bio, fc))
-310                                 corrupt_bio_data(bio, fc);
-311                         goto map_bio;
-312                 }
-313 
-314                 /*
-315                  * By default, error all I/O.
-316                  */
-317                 return -EIO;
-318         }
+--=_alternative 002CA98148257FE8_=
+Content-Type: text/html; charset="US-ASCII"
 
-This code is similar to what we see in the end_io.
+<font size=2 face="sans-serif">As a global variable waiter_attr of thread
+attribute was set up in the daemon, </font>
+<br><font size=2 face="sans-serif">however,it hasn't been destroyed when
+the daemon exited.</font>
+<br><font size=2 face="sans-serif">We need deinitialize waiter_attr.</font>
+<br><font size=2 face="sans-serif">&nbsp;<br>
+</font>
+<br><tt><font size=2>---<br>
+ multipathd/main.c | 3 +++<br>
+ 1 file changed, 3 insertions(+)<br>
+<br>
+diff --git a/multipathd/main.c b/multipathd/main.c<br>
+index b86374f..09c5485 100644<br>
+--- a/multipathd/main.c<br>
++++ b/multipathd/main.c<br>
+@@ -2317,6 +2317,9 @@ child (void * param)<br>
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;conf
+= NULL;<br>
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;udev_unref(udev);<br>
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;udev
+= NULL;<br>
++<br>
++ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+pthread_attr_destroy(&amp;waiter_attr);<br>
++<br>
+ #ifdef _DEBUG_<br>
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;dbg_free_final(NULL);<br>
+ #endif<br>
+-- <br>
+1.9.1<br>
+</font></tt>
+<br>
+<br>
 
-If my understanding is correct, I would like to modify dm-flakey to return -EIO in the end_io.
+<br><pre><font color="blue">
+--------------------------------------------------------
+ZTE Information Security Notice: The information contained in this mail (and any attachment transmitted herewith) is privileged and confidential and is intended for the exclusive use of the addressee(s).  If you are not an intended recipient, any disclosure, reproduction, distribution or other dissemination or use of the information contained is strictly prohibited.  If you have received this mail in error, please delete it and notify us immediately.
 
-I would like to request for comments.
+</font></pre><br>
 
-Thanks,
+--=_alternative 002CA98148257FE8_=--
 
-- Akira
+
+--===============6178219320604636123==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6178219320604636123==--
