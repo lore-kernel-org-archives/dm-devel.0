@@ -1,8 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH 21/26] dm raid: found way to allow resize during
-	shrink
-Date: Wed,  6 Jul 2016 19:24:52 +0200
-Message-ID: <1467825897-26058-22-git-send-email-heinzm@redhat.com>
+Subject: [PATCH 24/26] dm raid: use rs->raid_disks to avoid
+	memory leaks on free and more consistent throughout
+Date: Wed,  6 Jul 2016 19:24:55 +0200
+Message-ID: <1467825897-26058-25-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -24,105 +24,65 @@ From: Heinz Mauelshagen <heinzm@redhat.com>
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 34 +++++++++++++++++++---------------
- 1 file changed, 19 insertions(+), 15 deletions(-)
+ drivers/md/dm-raid.c | 11 +++++------
+ 1 file changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 1ff469f..846c58d 100644
+index 4caf51fe..2ea3982 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -2682,6 +2682,7 @@ static void configure_discard_support(struct raid_set *rs)
- static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+@@ -717,7 +717,7 @@ static void raid_set_free(struct raid_set *rs)
  {
- 	int r;
-+	bool resize = false;
- 	struct raid_type *rt;
- 	unsigned num_raid_params, num_raid_devs;
- 	sector_t calculated_dev_sectors;
-@@ -2760,7 +2761,7 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	if (r)
- 		goto bad;
+ 	int i;
  
--	rs_setup_recovery(rs, calculated_dev_sectors);
-+	resize = calculated_dev_sectors != rs->dev[0].rdev.sectors;
+-	for (i = 0; i < rs->md.raid_disks; i++) {
++	for (i = 0; i < rs->raid_disks; i++) {
+ 		if (rs->dev[i].meta_dev)
+ 			dm_put_device(rs->ti, rs->dev[i].meta_dev);
+ 		md_rdev_clear(&rs->dev[i].rdev);
+@@ -757,7 +757,7 @@ static int parse_dev_params(struct raid_set *rs, struct dm_arg_set *as)
+ 	if (!arg)
+ 		return -EINVAL;
  
- 	INIT_WORK(&rs->md.event_work, do_table_event);
- 	ti->private = rs;
-@@ -2770,8 +2771,6 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	rs_config_restore(rs, &rs_layout);
+-	for (i = 0; i < rs->md.raid_disks; i++) {
++	for (i = 0; i < rs->raid_disks; i++) {
+ 		rs->dev[i].rdev.raid_disk = i;
  
- 	if (test_bit(MD_ARRAY_FIRST_USE, &rs->md.flags)) {
--		set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
--		rs_set_new(rs);
- 		/* A new raid6 set has to be recovered to ensure proper parity and Q-Syndrome */
- 		if (rs_is_raid6(rs) &&
- 		    test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags)) {
-@@ -2780,16 +2779,18 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 			goto bad;
- 		}
- 		rs_setup_recovery(rs, 0);
--	} else if (rs_is_recovering(rs) || rs_is_reshaping(rs)) {
--		/* Have to reject size change request during recovery/reshape */
--		if (calculated_dev_sectors != rs->dev[0].rdev.sectors) {
--			ti->error = rs_is_recovering(rs) ?
--				    "Can't resize a recovering raid set" :
--				    "Can't resize a reshaping raid set";
-+		set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
-+		rs_set_new(rs);
-+	} else if (rs_is_recovering(rs)) {
-+		; /* skip setup rs */
-+	} else if (rs_is_reshaping(rs)) {
-+		/* Have to reject size change request during reshape */
-+		if (resize) {
-+			ti->error = "Can't resize a reshaping raid set";
- 			r = -EPERM;
- 			goto bad;
- 		}
--		/* skip setup rs */
-+		; /* skip setup rs */
- 	} else if (rs_takeover_requested(rs)) {
- 		if (rs_is_reshaping(rs)) {
- 			ti->error = "Can't takeover a reshaping raid set";
-@@ -2799,8 +2800,9 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 
- 		/*
- 		 * If a takeover is needed, userspace sets any additional
--		 * devices to rebuild, so just set the level to the new
--		 * requested one and allow the raid set to run
-+		 * devices to rebuild, so set the level to the new requested
-+		 * one, prohibit requesting recovery, allow the raid
-+		 * set to run and store superblocks during resume.
+ 		rs->dev[i].meta_dev = NULL;
+@@ -961,7 +961,7 @@ static int validate_raid_redundancy(struct raid_set *rs)
+ 		 *	    C	 D    D	   E	E
  		 */
- 		r = rs_check_takeover(rs);
- 		if (r)
-@@ -2812,6 +2814,7 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 
- 		set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
- 		set_bit(RT_FLAG_KEEP_RS_FROZEN, &rs->runtime_flags);
-+		rs_setup_recovery(rs, MaxSector);
- 		rs_set_new(rs);
- 	} else if (rs_reshape_requested(rs)) {
- 		if (rs_is_reshaping(rs)) {
-@@ -2868,16 +2871,17 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 		if (rs->md.raid_disks < rs->raid_disks)
- 			set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
- 
--		rs_set_cur(rs);
- 		rs_setup_recovery(rs, MaxSector);
--	} else {
- 		rs_set_cur(rs);
-+	} else {
-+		/* May not set recovery when a device rebuild is requested */
- 		if (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags)) {
- 			rs_setup_recovery(rs, MaxSector);
- 			set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
- 		} else
- 			rs_setup_recovery(rs, test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags) ?
--					      0 : calculated_dev_sectors);
-+					      0 : (resize ? calculated_dev_sectors : MaxSector));
-+		rs_set_cur(rs);
+ 		if (__is_raid10_near(rs->md.new_layout)) {
+-			for (i = 0; i < rs->raid_disks; i++) {
++			for (i = 0; i < rs->md.raid_disks; i++) {
+ 				if (!(i % copies))
+ 					rebuilds_per_group = 0;
+ 				if ((!rs->dev[i].rdev.sb_page ||
+@@ -1085,7 +1085,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 	 * What is found in the superblocks of the devices is always
+ 	 * authoritative, unless 'rebuild' or '[no]sync' was specified.
+ 	 */
+-	for (i = 0; i < rs->md.raid_disks; i++) {
++	for (i = 0; i < rs->raid_disks; i++) {
+ 		set_bit(In_sync, &rs->dev[i].rdev.flags);
+ 		rs->dev[i].rdev.recovery_offset = MaxSector;
  	}
+@@ -2714,7 +2714,7 @@ static void configure_discard_support(struct raid_set *rs)
+ 	/* RAID level 4,5,6 require discard_zeroes_data for data integrity! */
+ 	raid456 = (rs->md.level == 4 || rs->md.level == 5 || rs->md.level == 6);
  
- 	/* If constructor requested it, change data and new_data offsets */
+-	for (i = 0; i < rs->md.raid_disks; i++) {
++	for (i = 0; i < rs->raid_disks; i++) {
+ 		struct request_queue *q;
+ 
+ 		if (!rs->dev[i].rdev.bdev)
+@@ -3186,7 +3186,6 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 		sync_action = decipher_sync_action(&rs->md);
+ 
+ 		/* HM FIXME: do we want another state char for raid0? It shows 'D' or 'A' now */
+-		rdev_for_each(rdev, mddev)
+ 		for (i = 0; i < rs->raid_disks; i++)
+ 			DMEMIT(__raid_dev_status(&rs->dev[i].rdev, array_in_sync));
+ 
 -- 
 2.5.5
