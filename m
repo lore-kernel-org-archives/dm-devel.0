@@ -1,8 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH 07/26] dm raid: enhance comments in takeover
-	checks
-Date: Wed,  6 Jul 2016 19:24:38 +0200
-Message-ID: <1467825897-26058-8-git-send-email-heinzm@redhat.com>
+Subject: [PATCH 19/26] dm raid: fix rebuild and catch bogus
+	sync/resync flags
+Date: Wed,  6 Jul 2016 19:24:50 +0200
+Message-ID: <1467825897-26058-20-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -24,30 +24,52 @@ From: Heinz Mauelshagen <heinzm@redhat.com>
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/md/dm-raid.c | 19 ++++++++++++++++---
+ 1 file changed, 16 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index d387d24..f6120e1 100644
+index 2fb5a9b..14b3d93 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -1610,7 +1610,7 @@ static int rs_check_takeover(struct raid_set *rs)
- 		    mddev->raid_disks == 2)
- 			return 0;
+@@ -1312,6 +1312,13 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 		return -EINVAL;
+ 	}
  
--		/* raid5 with parity N -> raid6 with parity N */
-+		/* raid5_* ->  raid6_*_6 with Q-Syndrome N (e.g. raid5_ra -> raid6_ra_6 */
- 		if (mddev->new_level == 6 &&
- 		    ((mddev->layout == ALGORITHM_PARITY_N && mddev->new_layout == ALGORITHM_PARITY_N) ||
- 		      __within_range(mddev->new_layout, ALGORITHM_LEFT_ASYMMETRIC_6, ALGORITHM_RIGHT_SYMMETRIC_6)))
-@@ -1628,7 +1628,7 @@ static int rs_check_takeover(struct raid_set *rs)
- 		    mddev->layout == ALGORITHM_PARITY_N)
- 			return 0;
++	if (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags) &&
++	    (test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags) ||
++	     test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags))) {
++		rs->ti->error = "sync/nosync and rebuild are mutually exclusive";
++		return -EINVAL;
++	}
++
+ 	if (write_mostly >= rs->md.raid_disks) {
+ 		rs->ti->error = "Can't set all raid1 devices to write_mostly";
+ 		return -EINVAL;
+@@ -2776,7 +2783,9 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	} else if (rs_is_recovering(rs) || rs_is_reshaping(rs)) {
+ 		/* Have to reject size change request during recovery/reshape */
+ 		if (calculated_dev_sectors != rs->dev[0].rdev.sectors) {
+-			ti->error = "Can't resize a recovering/reshaping raid set";
++			ti->error = rs_is_recovering(rs) ?
++				    "Can't resize a recovering raid set" :
++				    "Can't resize a reshaping raid set";
+ 			r = -EPERM;
+ 			goto bad;
+ 		}
+@@ -2863,8 +2872,12 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		rs_setup_recovery(rs, MaxSector);
+ 	} else {
+ 		rs_set_cur(rs);
+-		rs_setup_recovery(rs, test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags) ?
+-				      0 : calculated_dev_sectors);
++		if (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags)) {
++			rs_setup_recovery(rs, MaxSector);
++			set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
++		} else
++			rs_setup_recovery(rs, test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags) ?
++					      0 : calculated_dev_sectors);
+ 	}
  
--		/* raid6_*_n with parity N -> raid5_* */
-+		/* raid6_*_n with Q-Syndrome N -> raid5_* */
- 		if (mddev->new_level == 5 &&
- 		    ((mddev->layout == ALGORITHM_PARITY_N && mddev->new_layout == ALGORITHM_PARITY_N) ||
- 		     __within_range(mddev->new_layout, ALGORITHM_LEFT_ASYMMETRIC, ALGORITHM_RIGHT_SYMMETRIC)))
+ 	/* If constructor requested it, change data and new_data offsets */
 -- 
 2.5.5
