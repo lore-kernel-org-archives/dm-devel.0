@@ -1,7 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH V2 11/26] dm raid: clearify and fix recovery
-Date: Thu,  7 Jul 2016 16:25:41 +0200
-Message-ID: <1467901544-31250-1-git-send-email-heinzm@redhat.com>
+Subject: [PATCH V2 23/26] dm raid: support delta_disk for raid1,
+	fix table output
+Date: Thu,  7 Jul 2016 16:25:44 +0200
+Message-ID: <1467901544-31250-4-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -21,174 +22,208 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-Add function rs_setup_recovery() to allow for defined
-setup of RAID set recovery in the constructor.
+Add "delta_disks" constructor argument support to raid1 to allow for consistent
+userspace disk addition/removal handling.
 
-Will be called with dev_sectors={0, rdev->sectors, MaxSectors}
-to recover a new or enforced sync, grown or not to be synhronized
-RAID set respectively.
-
-Prevents recovery on raid0, which doesn't support it.
-
-Enforces recovery on raid6 to ensure properly defined Syndromes
-madatory for that MD personality are being created. 
+Fix raid_status() to report all raid disks with status and table output on disk
+adding reshapes, not just the ones listed on the mddev;
+optimize its rebuild and writemostly output.
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 64 ++++++++++++++++++++++++++++++++++++++++++++--------
- 1 file changed, 55 insertions(+), 9 deletions(-)
+ drivers/md/dm-raid.c | 92 ++++++++++++++++++++++++++++------------------------
+ 1 file changed, 49 insertions(+), 43 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 63883f4..7e334b6 100644
+index 473c6d9..4caf51fe 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -349,6 +349,12 @@ static bool rs_is_raid10(struct raid_set *rs)
- 	return rs->md.level == 10;
- }
+@@ -132,6 +132,7 @@ struct raid_dev {
+ 				 CTR_FLAG_MAX_RECOVERY_RATE | \
+ 				 CTR_FLAG_MAX_WRITE_BEHIND | \
+ 				 CTR_FLAG_REGION_SIZE | \
++				 CTR_FLAG_DELTA_DISKS | \
+ 				 CTR_FLAG_DATA_OFFSET)
  
-+/* Return true, if raid set in @rs is level 6 */
-+static bool rs_is_raid6(struct raid_set *rs)
-+{
-+	return rs->md.level == 6;
-+}
+ /* "raid10" does not accept any raid1 or stripe cache options */
+@@ -1714,9 +1715,13 @@ static bool rs_reshape_requested(struct raid_set *rs)
+ 		 rs->delta_disks;
+ 
+ 	/* Historical case to support raid1 reshape without delta disks */
+-	if (mddev->level == 1)
++	if (mddev->level == 1) {
++		if (rs->delta_disks)
++			return !!rs->delta_disks;
 +
- /* Return true, if raid set in @rs is level 4, 5 or 6 */
- static bool rs_is_raid456(struct raid_set *rs)
- {
-@@ -681,7 +687,7 @@ static struct raid_set *raid_set_alloc(struct dm_target *ti, struct raid_type *r
- 	rs->md.layout = raid_type->algorithm;
- 	rs->md.new_layout = rs->md.layout;
- 	rs->md.delta_disks = 0;
--	rs->md.recovery_cp = rs_is_raid0(rs) ? MaxSector : 0;
-+	rs->md.recovery_cp = MaxSector;
- 
- 	for (i = 0; i < raid_devs; i++)
- 		md_rdev_init(&rs->dev[i].rdev);
-@@ -1090,7 +1096,6 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
- 				rs->ti->error = "Only one 'nosync' argument allowed";
- 				return -EINVAL;
- 			}
--			rs->md.recovery_cp = MaxSector;
- 			continue;
- 		}
- 		if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_SYNC))) {
-@@ -1098,7 +1103,6 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
- 				rs->ti->error = "Only one 'sync' argument allowed";
- 				return -EINVAL;
- 			}
--			rs->md.recovery_cp = 0;
- 			continue;
- 		}
- 		if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_RAID10_USE_NEAR_SETS))) {
-@@ -1412,7 +1416,6 @@ static int rs_set_dev_and_array_sectors(struct raid_set *rs, bool use_mddev)
- 	struct mddev *mddev = &rs->md;
- 	struct md_rdev *rdev;
- 	sector_t array_sectors = rs->ti->len, dev_sectors = rs->ti->len;
--	sector_t cur_dev_sectors = rs->dev[0].rdev.sectors;
- 
- 	if (use_mddev) {
- 		delta_disks = mddev->delta_disks;
-@@ -1453,15 +1456,50 @@ static int rs_set_dev_and_array_sectors(struct raid_set *rs, bool use_mddev)
- 	mddev->array_sectors = array_sectors;
- 	mddev->dev_sectors = dev_sectors;
- 
--	if (!rs_is_raid0(rs) && dev_sectors > cur_dev_sectors)
--		mddev->recovery_cp = dev_sectors;
--
- 	return 0;
- bad:
- 	rs->ti->error = "Target length not divisible by number of data devices";
- 	return EINVAL;
- }
- 
-+/* Setup recovery on @rs */
-+static void __rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
-+{
-+	/* raid0 does not recover */
-+	if (rs_is_raid0(rs))
-+		rs->md.recovery_cp = MaxSector;
-+	/*
-+	 * A raid6 set has to be recovered either
-+	 * completely or for the grown part to
-+	 * ensure proper parity and Q-Syndrome
-+	 */
-+	else if (rs_is_raid6(rs))
-+		rs->md.recovery_cp = dev_sectors;
-+	/*
-+	 * Other raid set types may skip recovery
-+	 * depending on the 'nosync' flag.
-+	 */
-+	else
-+		rs->md.recovery_cp = test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags)
-+				     ? MaxSector : dev_sectors;
-+}
-+
-+/* Setup recovery on @rs based on raid type, device size and 'nosync' flag */
-+static void rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
-+{
-+	if (!dev_sectors)
-+		/* New raid set or 'sync' flag provided */
-+		__rs_setup_recovery(rs, 0);
-+	else if (dev_sectors == MaxSector)
-+		/* Prevent recovery */
-+		__rs_setup_recovery(rs, MaxSector);
-+	else if (rs->dev[0].rdev.sectors < dev_sectors)
-+		/* Grown raid set */
-+		__rs_setup_recovery(rs, rs->dev[0].rdev.sectors);
-+	else
-+		__rs_setup_recovery(rs, MaxSector);
-+}
-+
- static void do_table_event(struct work_struct *ws)
- {
- 	struct raid_set *rs = container_of(ws, struct raid_set, md.event_work);
-@@ -2086,7 +2124,6 @@ static int super_init_validation(struct raid_set *rs, struct md_rdev *rdev)
- 		if (new_devs == rs->raid_disks) {
- 			DMINFO("Superblocks created for new raid set");
- 			set_bit(MD_ARRAY_FIRST_USE, &mddev->flags);
--			mddev->recovery_cp = 0;
- 		} else if (new_devs != rebuilds &&
- 			   new_devs != rs->delta_disks) {
- 			DMERR("New device injected into existing raid set without "
-@@ -2633,6 +2670,7 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	int r;
- 	struct raid_type *rt;
- 	unsigned num_raid_params, num_raid_devs;
-+	sector_t calculated_dev_sectors;
- 	struct raid_set *rs = NULL;
- 	const char *arg;
- 	struct rs_layout rs_layout;
-@@ -2689,6 +2727,8 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	if (r)
- 		return r;
- 
-+	calculated_dev_sectors = rs->dev[0].rdev.sectors;
-+
- 	/*
- 	 * Backup any new raid set level, layout, ...
- 	 * requested to be able to compare to superblock
-@@ -2700,6 +2740,8 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	if (r)
- 		goto bad;
- 
-+	rs_setup_recovery(rs, calculated_dev_sectors);
-+
- 	INIT_WORK(&rs->md.event_work, do_table_event);
- 	ti->private = rs;
- 	ti->num_flush_bios = 1;
-@@ -2786,8 +2828,12 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 			set_bit(MD_ARRAY_FIRST_USE, &rs->md.flags);
- 
- 		rs_set_cur(rs);
--	} else
-+		rs_setup_recovery(rs, MaxSector);
-+	} else {
- 		rs_set_cur(rs);
-+		rs_setup_recovery(rs, test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags) ?
-+				      0 : calculated_dev_sectors);
+ 		return !change &&
+ 		       mddev->raid_disks != rs->raid_disks;
 +	}
  
- 	/* If constructor requested it, change data and new_data offsets */
- 	r = rs_adjust_data_offsets(rs);
+ 	if (mddev->level == 10)
+ 		return change &&
+@@ -1837,8 +1842,8 @@ static int rs_check_reshape(struct raid_set *rs)
+ 		rs->ti->error = "Convert request on recovering raid set prohibited";
+ 	else if (rs_is_reshaping(rs))
+ 		rs->ti->error = "raid set already reshaping!";
+-	else if (!(rs_is_raid10(rs) || rs_is_raid456(rs)))
+-		rs->ti->error = "Reshaping only supported for raid4/5/6/10";
++	else if (!(rs_is_raid1(rs) || rs_is_raid10(rs) || rs_is_raid456(rs)))
++		rs->ti->error = "Reshaping only supported for raid1/4/5/6/10";
+ 	else
+ 		return 0;
+ 
+@@ -2566,16 +2571,17 @@ static int rs_prepare_reshape(struct raid_set *rs)
+ 	} else if (rs_is_raid456(rs))
+ 		reshape = true;
+ 
+-	/*
+-	 * HM FIXME: process raid1 via delta_disks as well?
+-	 *           Would cause allocations in raid1->check_reshape
+-	 *           though, thus more issues with potential failures
+-	 */
+ 	else if (rs_is_raid1(rs)) {
+-		set_bit(RT_FLAG_KEEP_RS_FROZEN, &rs->runtime_flags);
+-		mddev->raid_disks = rs->raid_disks;
+-		reshape = false;
+-
++		if (rs->delta_disks) {
++			/* Process raid1 via delta_disks */
++			mddev->degraded = rs->delta_disks < 0 ? -rs->delta_disks : rs->delta_disks;
++			reshape = true;
++		} else {
++			/* Process raid1 without delta_disks */
++			mddev->raid_disks = rs->raid_disks;
++			set_bit(RT_FLAG_KEEP_RS_FROZEN, &rs->runtime_flags);
++			reshape = false;
++		}
+ 	} else {
+ 		rs->ti->error = "Called with bogus raid type";
+ 		return -EINVAL;
+@@ -2585,12 +2591,9 @@ static int rs_prepare_reshape(struct raid_set *rs)
+ 		set_bit(RT_FLAG_RESHAPE_RS, &rs->runtime_flags);
+ 		set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
+ 		set_bit(RT_FLAG_KEEP_RS_FROZEN, &rs->runtime_flags);
+-	}
+-	/* Create new superblocks and bitmaps, if any */
+-	if (mddev->raid_disks < rs->raid_disks) {
++	} else if (mddev->raid_disks < rs->raid_disks)
++		/* Create new superblocks and bitmaps, if any new disks */
+ 		set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
+-		rs_set_cur(rs);
+-	}
+ 
+ 	return 0;
+ }
+@@ -2656,7 +2659,7 @@ static int rs_setup_reshape(struct raid_set *rs)
+ 			rdev->raid_disk = d;
+ 
+ 			rdev->sectors = mddev->dev_sectors;
+-			rdev->recovery_offset = MaxSector;
++			rdev->recovery_offset = rs_is_raid1(rs) ? 0 : MaxSector;
+ 		}
+ 
+ 		mddev->reshape_backwards = 0; /* adding disks -> forward reshape */
+@@ -2971,10 +2974,12 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		/* Restore new, ctr requested layout to perform check */
+ 		rs_config_restore(rs, &rs_layout);
+ 
+-		r = rs->md.pers->check_reshape(&rs->md);
+-		if (r) {
+-			ti->error = "Reshape check failed";
+-			goto bad_check_reshape;
++		if (rs->md.pers->start_reshape) {
++			r = rs->md.pers->check_reshape(&rs->md);
++			if (r) {
++				ti->error = "Reshape check failed";
++				goto bad_check_reshape;
++			}
+ 		}
+ 	}
+ 
+@@ -3150,10 +3155,11 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 	struct raid_set *rs = ti->private;
+ 	struct mddev *mddev = &rs->md;
+ 	struct r5conf *conf = mddev->private;
+-	int max_nr_stripes = conf ? conf->max_nr_stripes : 0;
++	int i, max_nr_stripes = conf ? conf->max_nr_stripes : 0;
+ 	bool array_in_sync;
+ 	unsigned int raid_param_cnt = 1; /* at least 1 for chunksize */
+ 	unsigned int sz = 0;
++	unsigned int rebuild_disks;
+ 	unsigned int write_mostly_params = 0;
+ 	sector_t progress, resync_max_sectors, resync_mismatches;
+ 	const char *sync_action;
+@@ -3181,7 +3187,8 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 
+ 		/* HM FIXME: do we want another state char for raid0? It shows 'D' or 'A' now */
+ 		rdev_for_each(rdev, mddev)
+-			DMEMIT(__raid_dev_status(rdev, array_in_sync));
++		for (i = 0; i < rs->raid_disks; i++)
++			DMEMIT(__raid_dev_status(&rs->dev[i].rdev, array_in_sync));
+ 
+ 		/*
+ 		 * In-sync/Reshape ratio:
+@@ -3233,11 +3240,11 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 		/* Report the table line string you would use to construct this raid set */
+ 
+ 		/* Calculate raid parameter count */
+-		rdev_for_each(rdev, mddev)
+-			if (test_bit(WriteMostly, &rdev->flags))
++		for (i = 0; i < rs->raid_disks; i++)
++			if (test_bit(WriteMostly, &rs->dev[i].rdev.flags))
+ 				write_mostly_params += 2;
+-		raid_param_cnt += memweight(rs->rebuild_disks,
+-					    DISKS_ARRAY_ELEMS * sizeof(*rs->rebuild_disks)) * 2 +
++		rebuild_disks = memweight(rs->rebuild_disks, DISKS_ARRAY_ELEMS * sizeof(*rs->rebuild_disks));
++		raid_param_cnt += rebuild_disks * 2 +
+ 				  write_mostly_params +
+ 				  hweight32(rs->ctr_flags & CTR_FLAG_OPTIONS_NO_ARGS) +
+ 				  hweight32(rs->ctr_flags & CTR_FLAG_OPTIONS_ONE_ARG) * 2;
+@@ -3264,18 +3271,20 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 					  mddev->bitmap_info.daemon_sleep);
+ 		if (test_bit(__CTR_FLAG_DELTA_DISKS, &rs->ctr_flags))
+ 			DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_DELTA_DISKS),
+-					 mddev->delta_disks);
++					 max(rs->delta_disks, mddev->delta_disks));
+ 		if (test_bit(__CTR_FLAG_STRIPE_CACHE, &rs->ctr_flags))
+ 			DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_STRIPE_CACHE),
+ 					 max_nr_stripes);
+-		rdev_for_each(rdev, mddev)
+-			if (test_bit(rdev->raid_disk, (void *) rs->rebuild_disks))
+-				DMEMIT(" %s %u", dm_raid_arg_name_by_flag(CTR_FLAG_REBUILD),
+-						 rdev->raid_disk);
+-		rdev_for_each(rdev, mddev)
+-			if (test_bit(WriteMostly, &rdev->flags))
+-				DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_WRITE_MOSTLY),
+-						 rdev->raid_disk);
++		if (rebuild_disks)
++			for (i = 0; i < rs->raid_disks; i++)
++				if (test_bit(rs->dev[i].rdev.raid_disk, (void *) rs->rebuild_disks))
++					DMEMIT(" %s %u", dm_raid_arg_name_by_flag(CTR_FLAG_REBUILD),
++							 rs->dev[i].rdev.raid_disk);
++		if (write_mostly_params)
++			for (i = 0; i < rs->raid_disks; i++)
++				if (test_bit(WriteMostly, &rs->dev[i].rdev.flags))
++					DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_WRITE_MOSTLY),
++					       rs->dev[i].rdev.raid_disk);
+ 		if (test_bit(__CTR_FLAG_MAX_WRITE_BEHIND, &rs->ctr_flags))
+ 			DMEMIT(" %s %lu", dm_raid_arg_name_by_flag(CTR_FLAG_MAX_WRITE_BEHIND),
+ 					  mddev->bitmap_info.max_write_behind);
+@@ -3286,12 +3295,9 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 			DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_MIN_RECOVERY_RATE),
+ 					 mddev->sync_speed_min);
+ 		DMEMIT(" %d", rs->raid_disks);
+-		rdev_for_each(rdev, mddev) {
+-			struct raid_dev *rd = container_of(rdev, struct raid_dev, rdev);
+-
+-			DMEMIT(" %s %s", __get_dev_name(rd->meta_dev),
+-					 __get_dev_name(rd->data_dev));
+-		}
++		for (i = 0; i < rs->raid_disks; i++)
++			DMEMIT(" %s %s", __get_dev_name(rs->dev[i].meta_dev),
++					 __get_dev_name(rs->dev[i].data_dev));
+ 	}
+ }
+ 
 -- 
 2.5.5
