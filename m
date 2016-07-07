@@ -1,109 +1,153 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: block: fix blk_queue_split() resource exhaustion
-Date: Thu, 7 Jul 2016 08:47:12 -0400
-Message-ID: <20160707124712.GC2737@redhat.com>
+From: Ming Lei <ming.lei@canonical.com>
+Subject: Re: [RFC] block: fix blk_queue_split() resource exhaustion
+Date: Thu, 7 Jul 2016 21:14:59 +0800
+Message-ID: <CACVXFVNZD9Li9gf2r-jjPkSHin5XmSpWFseRt2-5SYdn4GYj0g@mail.gmail.com>
 References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
- <871t36ggcr.fsf@notabene.neil.brown.name>
- <20160707081616.GH13335@soda.linbit>
- <20160707123937.GK13335@soda.linbit>
+ <CACVXFVMTp17gcM8HEMrZ+0TJWgpGk+VWDgC7t+rMAancWZEFFw@mail.gmail.com>
+ <20160704082006.GN3239@soda.linbit> <CACVXFVNTKsRQ0PQTL47-ceP-KqMR-zR4DO1v-ey5NTUYv8bUog@mail.gmail.com>
+ <20160706123841.GA13335@soda.linbit> <CACVXFVPO1mwf9+MKosv_xY8Wz2KeShVVnefffgVr0wr=Tdo57Q@mail.gmail.com>
+ <20160707080328.GG13335@soda.linbit>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160707123937.GK13335@soda.linbit>
-Sender: linux-raid-owner@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <20160707080328.GG13335@soda.linbit>
+Sender: linux-bcache-owner@vger.kernel.org
 To: Lars Ellenberg <lars.ellenberg@linbit.com>
-Cc: NeilBrown <neilb@suse.com>, linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, Ming Lei <ming.lei@canonical.com>, linux-bcache@vger.kernel.org, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, Takashi Iwai <tiwai@suse.de>, dm-devel@redhat.com, Ingo Molnar <mingo@redhat.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, Roland Kammerer <roland.kammerer@linbit.com>
+Cc: linux-block <linux-block@vger.kernel.org>, Roland Kammerer <roland.kammerer@linbit.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, Kent Overstreet <kent.overstreet@gmail.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Takashi Iwai <tiwai@suse.de>, Jiri Kosina <jkosina@suse.cz>, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "open list:BCACHE (BLOCK LAYER CACHE)" <linux-bcache@vger.kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Thu, Jul 07 2016 at  8:39am -0400,
-Lars Ellenberg <lars.ellenberg@linbit.com> wrote:
+On Thu, Jul 7, 2016 at 4:03 PM, Lars Ellenberg
+<lars.ellenberg@linbit.com> wrote:
+> On Wed, Jul 06, 2016 at 11:57:51PM +0800, Ming Lei wrote:
+>> > ==== my suggestion
+>> >
+>> > generic_make_request(bio_orig)
+>> >                 NULL                    in-flight=0
+>> > bio_orig        empty                   in-flight=0
+>> > qA->make_request_fn(bio_orig)
+>> >   blk_queue_split()
+>> >   result:
+>> >   bio_s, and bio_r stuffed away to head of remainder list.
+>> >                                         in-flight=1
+>> >   bio_c = bio_clone(bio_s)
+>> >   generic_make_request(bio_c to qB)
+>> >                 bio_c
+>> > <-return
+>> >                 bio_c
+>> >   bio_list_pop()
+>> >                 empty
+>> > qB->make_request_fn(bio_c)
+>> >   (Assume it does not clone, but only remap.
+>> >   But it may also be a striping layer,
+>> >   and queue more than one bio here.)
+>> >   generic_make_request(bio_c to qC)
+>> >                 bio_c
+>> > <-return
+>> >   bio_list_pop()
+>> >                 empty
+>> > qC->make_request_fn(bio_c)
+>> >   generic_make_request(bio_c to qD)
+>> >                 bio_c
+>> > <-return
+>> >   bio_list_pop()
+>> >                 empty
+>> > qD->make_request_fn(bio_c)
+>> >         dispatches to hardware
+>> > <-return
+>> >                 empty
+>> >    bio_list_pop()
+>> >    NULL, great, lets pop from remainder list
+>> > qA->make_request_fn(bio_r)              in-flight=?
+>> >
+>> >         May block, but only until completion of bio_c.
+>> >         Which may already have happened.
+>> >
+>> >         *makes progress*
+>>
+>> I admit your solution is smart, but it isn't easy to prove it as correct
+>> in theory.  But if the traversal can be mapped into pre-order traversal
+>> of the above binary tree, it may be correct.
+>
+> What are you talking about.
+> There is no tree.
+> There is a single fifo.
+> And I suggest to make that one fifo, and one lifo instead.
 
-> On Thu, Jul 07, 2016 at 10:16:16AM +0200, Lars Ellenberg wrote:
-> > > > Instead, I suggest to distinguish between recursive calls to
-> > > > generic_make_request(), and pushing back the remainder part in
-> > > > blk_queue_split(), by pointing current->bio_lists to a
-> > > > 	struct recursion_to_iteration_bio_lists {
-> > > > 		struct bio_list recursion;
-> > > > 		struct bio_list remainder;
-> > > > 	}
-> > > >
-> > > > To have all bios targeted to drivers lower in the stack processed before
-> > > > processing the next piece of a bio targeted at the higher levels,
-> > > > as long as queued bios resulting from recursion are available,
-> > > > they will continue to be processed in FIFO order.
-> > > > Pushed back bio-parts resulting from blk_queue_split() will be processed
-> > > > in LIFO order, one-by-one, whenever the recursion list becomes empty.
-> > > 
-> > > I really like this change.  It seems to precisely address the problem.
-> > > The "problem" being that requests for "this" device are potentially
-> > > mixed up with requests from underlying devices.
-> > > However I'm not sure it is quite general enough.
-> > > 
-> > > The "remainder" list is a stack of requests aimed at "this" level or
-> > > higher, and I think it will always exactly fit that description.
-> > > The "recursion" list needs to be a queue of requests aimed at the next
-> > > level down, and that doesn't quiet work, because once you start acting
-> > > on the first entry in that list, all the rest become "this" level.
-> > 
-> > Uhm, well,
-> > that's how it has been since you introduced this back in 2007, d89d879.
-> > And it worked.
-> > 
-> > > I think you can address this by always calling ->make_request_fn with an
-> > > empty "recursion", then after the call completes, splice the "recursion"
-> > > list that resulted (if any) on top of the "remainder" stack.
-> > > 
-> > > This way, the "remainder" stack is always "requests for lower-level
-> > > devices before request for upper level devices" and the "recursion"
-> > > queue is always "requests for devices below the current level".
-> > 
-> > Yes, I guess that would work as well,
-> > but may need "empirical proof" to check for performance regressions.
-> > 
-> > > I also really *don't* like the idea of punting to a separate thread - it
-> > > seems to be just delaying the problem.
-> > > 
-> > > Can you try move the bio_list_init(->recursion) call to just before
-> > > the ->make_request_fn() call, and adding
-> > >     bio_list_merge_head(->remainder, ->recursion)
-> > > just after?
-> > > (or something like that) and confirm it makes sense, and works?
-> > 
-> > Sure, will do.
-> 
-> Attached,
-> on top of the patch of my initial post.
-> Also fixes the issue for me.
-> 
-> > I'd suggest this would be a patch on its own though, on top of this one.
-> > Because it would change the order in which stacked bios are processed
-> > wrt the way it used to be since 2007 (my suggestion as is does not).
-> > 
-> > Which may change performance metrics.
-> > It may even improve some of them,
-> > or maybe it does nothing, but we don't know.
-> > 
-> > Thanks,
-> > 
-> >     Lars
-> > 
+The implementation may use fifo(queue) or lifo(stack), but the traversal
+order actually is pre-order on one binary tree if we think the splitted bio and
+the cloned bio as left child, and the remainder bio as right child.
 
-> From 73254eae63786aca0af10e42e5b41465c90d8da8 Mon Sep 17 00:00:00 2001
-> From: Lars Ellenberg <lars.ellenberg@linbit.com>
-> Date: Thu, 7 Jul 2016 11:03:30 +0200
-> Subject: [PATCH] block: generic_make_request() recursive bios: process deepest
->  levels first
-> 
-> By providing each q->make_request_fn() with an empty "recursion"
-> bio_list, then merging any recursively submitted bios to the
-> head of the "remainder" list, we can make the recursion-to-iteration
-> logic in generic_make_request() process deepest level bios first.
-> 
-> ---
-> 
-> As suggested by Neil Brown while discussing
-> [RFC] block: fix blk_queue_split() resource exhaustion
-> https://lkml.org/lkml/2016/7/7/27
+The big benifit of modeling the algorithem as tree is that the implementation
+can be proved easily.
 
-Will look closer at this today, thanks!
+Your patch is very similar with non-recursive pre-order algorithem.
+
+And the one line change approach is just the typical pre-order
+recursive algorithem on binary tree.
+
+Let's abstract the one line change into following pseudocode:
+
+bio_list_add_head(current->bio_list, bio);
+
+while (!bio_list_empty(current->bio_list)) {
+
+       bio = bio_list_pop(current->bio_list);
+
+        q->make_request_fn(q, bio);   //visit the node
+}
+
+q->make_request_fn(q, bio)
+       -> blk_queue_split(split, bio)
+              -> generic_make_request(remainder)
+                    ->bio_list_add_head(current->bio_list, bio);
+              -> push(split) & pop(split) & visit the split bio
+                        ->generic_make_request(cloned_bio)
+                              ->bio_list_add_head(current->bio_list, bio);
+
+If you compare the above with the non-recursive pre-order traversal
+implementation[1], it is basically same.
+
+[1] http://algorithmsandme.in/2015/03/preorder-traversal-of-tree-without-recursion/
+
+The main difference between oneline change and this patch is the submit
+order in the following situation:
+
+q->make_request_fn(bio)
+          ->generic_make_request(cloned_bio0)
+          ->generic_make_request(cloned_bio1)
+          ->generic_make_request(cloned_bio2)
+
+But the three BIOs are often submitted into different queues, so the order
+may not make a big difference. Even they are submitted to same queue
+(disk), the order change may not be a issue too because there is still
+I/O scheduler.
+
+And do we have stacked driver which submits several BIOs to same queue
+in .make_request_fn()?
+
+If there isn't such case, I suggest the oneline change, together with
+the pre-order traversal comment since it is very simple.
+
+Thanks,
+
+>
+>   |<------ original bio ----->|
+>   |piece|----remainder--------|
+>
+>   |piece| is then processed, just as it was before,
+>   all recursive submissions turned into iterative processing,
+>   in the exact order they have been called recursively.
+>   Until all deeper level submissions have been fully processed.
+>
+>   If deeper levels are again calling bio_queue_split, their
+>   respective remainder are queued in front of the "top level"
+>   remainder.
+>
+>   And only then, the remainders are processed,
+>   just as if they did come in as "original bio", see above.
+>
+> So if it did make progress before,
+> it will make progress now.
+>
+>     Lars
+>
