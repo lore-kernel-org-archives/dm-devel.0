@@ -1,153 +1,194 @@
-From: Ming Lei <ming.lei@canonical.com>
-Subject: Re: [RFC] block: fix blk_queue_split() resource exhaustion
-Date: Thu, 7 Jul 2016 21:14:59 +0800
-Message-ID: <CACVXFVNZD9Li9gf2r-jjPkSHin5XmSpWFseRt2-5SYdn4GYj0g@mail.gmail.com>
-References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
- <CACVXFVMTp17gcM8HEMrZ+0TJWgpGk+VWDgC7t+rMAancWZEFFw@mail.gmail.com>
- <20160704082006.GN3239@soda.linbit> <CACVXFVNTKsRQ0PQTL47-ceP-KqMR-zR4DO1v-ey5NTUYv8bUog@mail.gmail.com>
- <20160706123841.GA13335@soda.linbit> <CACVXFVPO1mwf9+MKosv_xY8Wz2KeShVVnefffgVr0wr=Tdo57Q@mail.gmail.com>
- <20160707080328.GG13335@soda.linbit>
+From: heinzm@redhat.com
+Subject: [PATCH V2 11/26] dm raid: clearify and fix recovery
+Date: Thu,  7 Jul 2016 16:25:41 +0200
+Message-ID: <1467901544-31250-1-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-bcache-owner@vger.kernel.org>
-In-Reply-To: <20160707080328.GG13335@soda.linbit>
-Sender: linux-bcache-owner@vger.kernel.org
-To: Lars Ellenberg <lars.ellenberg@linbit.com>
-Cc: linux-block <linux-block@vger.kernel.org>, Roland Kammerer <roland.kammerer@linbit.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, Kent Overstreet <kent.overstreet@gmail.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Takashi Iwai <tiwai@suse.de>, Jiri Kosina <jkosina@suse.cz>, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "open list:BCACHE (BLOCK LAYER CACHE)" <linux-bcache@vger.kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 7, 2016 at 4:03 PM, Lars Ellenberg
-<lars.ellenberg@linbit.com> wrote:
-> On Wed, Jul 06, 2016 at 11:57:51PM +0800, Ming Lei wrote:
->> > ==== my suggestion
->> >
->> > generic_make_request(bio_orig)
->> >                 NULL                    in-flight=0
->> > bio_orig        empty                   in-flight=0
->> > qA->make_request_fn(bio_orig)
->> >   blk_queue_split()
->> >   result:
->> >   bio_s, and bio_r stuffed away to head of remainder list.
->> >                                         in-flight=1
->> >   bio_c = bio_clone(bio_s)
->> >   generic_make_request(bio_c to qB)
->> >                 bio_c
->> > <-return
->> >                 bio_c
->> >   bio_list_pop()
->> >                 empty
->> > qB->make_request_fn(bio_c)
->> >   (Assume it does not clone, but only remap.
->> >   But it may also be a striping layer,
->> >   and queue more than one bio here.)
->> >   generic_make_request(bio_c to qC)
->> >                 bio_c
->> > <-return
->> >   bio_list_pop()
->> >                 empty
->> > qC->make_request_fn(bio_c)
->> >   generic_make_request(bio_c to qD)
->> >                 bio_c
->> > <-return
->> >   bio_list_pop()
->> >                 empty
->> > qD->make_request_fn(bio_c)
->> >         dispatches to hardware
->> > <-return
->> >                 empty
->> >    bio_list_pop()
->> >    NULL, great, lets pop from remainder list
->> > qA->make_request_fn(bio_r)              in-flight=?
->> >
->> >         May block, but only until completion of bio_c.
->> >         Which may already have happened.
->> >
->> >         *makes progress*
->>
->> I admit your solution is smart, but it isn't easy to prove it as correct
->> in theory.  But if the traversal can be mapped into pre-order traversal
->> of the above binary tree, it may be correct.
->
-> What are you talking about.
-> There is no tree.
-> There is a single fifo.
-> And I suggest to make that one fifo, and one lifo instead.
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-The implementation may use fifo(queue) or lifo(stack), but the traversal
-order actually is pre-order on one binary tree if we think the splitted bio and
-the cloned bio as left child, and the remainder bio as right child.
+Add function rs_setup_recovery() to allow for defined
+setup of RAID set recovery in the constructor.
 
-The big benifit of modeling the algorithem as tree is that the implementation
-can be proved easily.
+Will be called with dev_sectors={0, rdev->sectors, MaxSectors}
+to recover a new or enforced sync, grown or not to be synhronized
+RAID set respectively.
 
-Your patch is very similar with non-recursive pre-order algorithem.
+Prevents recovery on raid0, which doesn't support it.
 
-And the one line change approach is just the typical pre-order
-recursive algorithem on binary tree.
+Enforces recovery on raid6 to ensure properly defined Syndromes
+madatory for that MD personality are being created. 
 
-Let's abstract the one line change into following pseudocode:
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/dm-raid.c | 64 ++++++++++++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 55 insertions(+), 9 deletions(-)
 
-bio_list_add_head(current->bio_list, bio);
-
-while (!bio_list_empty(current->bio_list)) {
-
-       bio = bio_list_pop(current->bio_list);
-
-        q->make_request_fn(q, bio);   //visit the node
-}
-
-q->make_request_fn(q, bio)
-       -> blk_queue_split(split, bio)
-              -> generic_make_request(remainder)
-                    ->bio_list_add_head(current->bio_list, bio);
-              -> push(split) & pop(split) & visit the split bio
-                        ->generic_make_request(cloned_bio)
-                              ->bio_list_add_head(current->bio_list, bio);
-
-If you compare the above with the non-recursive pre-order traversal
-implementation[1], it is basically same.
-
-[1] http://algorithmsandme.in/2015/03/preorder-traversal-of-tree-without-recursion/
-
-The main difference between oneline change and this patch is the submit
-order in the following situation:
-
-q->make_request_fn(bio)
-          ->generic_make_request(cloned_bio0)
-          ->generic_make_request(cloned_bio1)
-          ->generic_make_request(cloned_bio2)
-
-But the three BIOs are often submitted into different queues, so the order
-may not make a big difference. Even they are submitted to same queue
-(disk), the order change may not be a issue too because there is still
-I/O scheduler.
-
-And do we have stacked driver which submits several BIOs to same queue
-in .make_request_fn()?
-
-If there isn't such case, I suggest the oneline change, together with
-the pre-order traversal comment since it is very simple.
-
-Thanks,
-
->
->   |<------ original bio ----->|
->   |piece|----remainder--------|
->
->   |piece| is then processed, just as it was before,
->   all recursive submissions turned into iterative processing,
->   in the exact order they have been called recursively.
->   Until all deeper level submissions have been fully processed.
->
->   If deeper levels are again calling bio_queue_split, their
->   respective remainder are queued in front of the "top level"
->   remainder.
->
->   And only then, the remainders are processed,
->   just as if they did come in as "original bio", see above.
->
-> So if it did make progress before,
-> it will make progress now.
->
->     Lars
->
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 63883f4..7e334b6 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -349,6 +349,12 @@ static bool rs_is_raid10(struct raid_set *rs)
+ 	return rs->md.level == 10;
+ }
+ 
++/* Return true, if raid set in @rs is level 6 */
++static bool rs_is_raid6(struct raid_set *rs)
++{
++	return rs->md.level == 6;
++}
++
+ /* Return true, if raid set in @rs is level 4, 5 or 6 */
+ static bool rs_is_raid456(struct raid_set *rs)
+ {
+@@ -681,7 +687,7 @@ static struct raid_set *raid_set_alloc(struct dm_target *ti, struct raid_type *r
+ 	rs->md.layout = raid_type->algorithm;
+ 	rs->md.new_layout = rs->md.layout;
+ 	rs->md.delta_disks = 0;
+-	rs->md.recovery_cp = rs_is_raid0(rs) ? MaxSector : 0;
++	rs->md.recovery_cp = MaxSector;
+ 
+ 	for (i = 0; i < raid_devs; i++)
+ 		md_rdev_init(&rs->dev[i].rdev);
+@@ -1090,7 +1096,6 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 				rs->ti->error = "Only one 'nosync' argument allowed";
+ 				return -EINVAL;
+ 			}
+-			rs->md.recovery_cp = MaxSector;
+ 			continue;
+ 		}
+ 		if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_SYNC))) {
+@@ -1098,7 +1103,6 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 				rs->ti->error = "Only one 'sync' argument allowed";
+ 				return -EINVAL;
+ 			}
+-			rs->md.recovery_cp = 0;
+ 			continue;
+ 		}
+ 		if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_RAID10_USE_NEAR_SETS))) {
+@@ -1412,7 +1416,6 @@ static int rs_set_dev_and_array_sectors(struct raid_set *rs, bool use_mddev)
+ 	struct mddev *mddev = &rs->md;
+ 	struct md_rdev *rdev;
+ 	sector_t array_sectors = rs->ti->len, dev_sectors = rs->ti->len;
+-	sector_t cur_dev_sectors = rs->dev[0].rdev.sectors;
+ 
+ 	if (use_mddev) {
+ 		delta_disks = mddev->delta_disks;
+@@ -1453,15 +1456,50 @@ static int rs_set_dev_and_array_sectors(struct raid_set *rs, bool use_mddev)
+ 	mddev->array_sectors = array_sectors;
+ 	mddev->dev_sectors = dev_sectors;
+ 
+-	if (!rs_is_raid0(rs) && dev_sectors > cur_dev_sectors)
+-		mddev->recovery_cp = dev_sectors;
+-
+ 	return 0;
+ bad:
+ 	rs->ti->error = "Target length not divisible by number of data devices";
+ 	return EINVAL;
+ }
+ 
++/* Setup recovery on @rs */
++static void __rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
++{
++	/* raid0 does not recover */
++	if (rs_is_raid0(rs))
++		rs->md.recovery_cp = MaxSector;
++	/*
++	 * A raid6 set has to be recovered either
++	 * completely or for the grown part to
++	 * ensure proper parity and Q-Syndrome
++	 */
++	else if (rs_is_raid6(rs))
++		rs->md.recovery_cp = dev_sectors;
++	/*
++	 * Other raid set types may skip recovery
++	 * depending on the 'nosync' flag.
++	 */
++	else
++		rs->md.recovery_cp = test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags)
++				     ? MaxSector : dev_sectors;
++}
++
++/* Setup recovery on @rs based on raid type, device size and 'nosync' flag */
++static void rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
++{
++	if (!dev_sectors)
++		/* New raid set or 'sync' flag provided */
++		__rs_setup_recovery(rs, 0);
++	else if (dev_sectors == MaxSector)
++		/* Prevent recovery */
++		__rs_setup_recovery(rs, MaxSector);
++	else if (rs->dev[0].rdev.sectors < dev_sectors)
++		/* Grown raid set */
++		__rs_setup_recovery(rs, rs->dev[0].rdev.sectors);
++	else
++		__rs_setup_recovery(rs, MaxSector);
++}
++
+ static void do_table_event(struct work_struct *ws)
+ {
+ 	struct raid_set *rs = container_of(ws, struct raid_set, md.event_work);
+@@ -2086,7 +2124,6 @@ static int super_init_validation(struct raid_set *rs, struct md_rdev *rdev)
+ 		if (new_devs == rs->raid_disks) {
+ 			DMINFO("Superblocks created for new raid set");
+ 			set_bit(MD_ARRAY_FIRST_USE, &mddev->flags);
+-			mddev->recovery_cp = 0;
+ 		} else if (new_devs != rebuilds &&
+ 			   new_devs != rs->delta_disks) {
+ 			DMERR("New device injected into existing raid set without "
+@@ -2633,6 +2670,7 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	int r;
+ 	struct raid_type *rt;
+ 	unsigned num_raid_params, num_raid_devs;
++	sector_t calculated_dev_sectors;
+ 	struct raid_set *rs = NULL;
+ 	const char *arg;
+ 	struct rs_layout rs_layout;
+@@ -2689,6 +2727,8 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	if (r)
+ 		return r;
+ 
++	calculated_dev_sectors = rs->dev[0].rdev.sectors;
++
+ 	/*
+ 	 * Backup any new raid set level, layout, ...
+ 	 * requested to be able to compare to superblock
+@@ -2700,6 +2740,8 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	if (r)
+ 		goto bad;
+ 
++	rs_setup_recovery(rs, calculated_dev_sectors);
++
+ 	INIT_WORK(&rs->md.event_work, do_table_event);
+ 	ti->private = rs;
+ 	ti->num_flush_bios = 1;
+@@ -2786,8 +2828,12 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 			set_bit(MD_ARRAY_FIRST_USE, &rs->md.flags);
+ 
+ 		rs_set_cur(rs);
+-	} else
++		rs_setup_recovery(rs, MaxSector);
++	} else {
+ 		rs_set_cur(rs);
++		rs_setup_recovery(rs, test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags) ?
++				      0 : calculated_dev_sectors);
++	}
+ 
+ 	/* If constructor requested it, change data and new_data offsets */
+ 	r = rs_adjust_data_offsets(rs);
+-- 
+2.5.5
