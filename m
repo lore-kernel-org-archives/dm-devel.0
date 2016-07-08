@@ -1,152 +1,102 @@
-From: Lars Ellenberg <lars.ellenberg@linbit.com>
-Subject: Re: [dm-devel] [RFC] block: fix blk_queue_split() resource exhaustion
-Date: Fri, 8 Jul 2016 10:02:19 +0200
-Message-ID: <20160708080219.GT13335@soda.linbit>
-References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
- <871t36ggcr.fsf@notabene.neil.brown.name>
- <20160707081616.GH13335@soda.linbit>
- <87vb0hf6fb.fsf@notabene.neil.brown.name>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH 0/4] multipath-tools: Ceph rbd support
+Date: Fri, 8 Jul 2016 10:15:29 +0200
+Message-ID: <CABr-Gnc34cJ9oRB4J=0Rv1jgZ_Cr=uvMHwHAy_49XHGuBy33XQ@mail.gmail.com>
+References: <1467706353-16878-1-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <87vb0hf6fb.fsf@notabene.neil.brown.name>
-Sender: linux-kernel-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.com>
-Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, Ming Lei <ming.lei@canonical.com>, linux-bcache@vger.kernel.org, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, Takashi Iwai <tiwai@suse.de>, dm-devel@redhat.com, Ingo Molnar <mingo@redhat.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, Roland Kammerer <roland.kammerer@linbit.com>
+Content-Type: multipart/mixed; boundary="===============0127965105313055380=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1467706353-16878-1-git-send-email-mchristi@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Christie <mchristi@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jul 08, 2016 at 08:07:52AM +1000, NeilBrown wrote:
-> Before I introduced the recursion limiting, requests were handled as an
-> in-order tree walk.  The code I wrote tried to preserve that but didn't
-> for several reasons.  I think we need to restore the original in-order
-> walk because it makes the most sense.
-> So after processing a particular bio, we should then process all the
-> 'child' bios - bios send to underlying devices.  Then the 'sibling'
-> bios, that were split off, and then any remaining parents and ancestors.
-> 
-> You patch created the right structures for doing this, my proposal took
-> it a step closer, but now after more careful analysis I don't think it
-> is quite right.
-> With my previous proposal (and you latest patch - thanks!) requests for
-> "this" level are stacked, but they should be queued.
-> If a make_request_fn only ever submits one request for this level and
-> zero or more lower levels, then the difference between a queue and a
-> stack is irrelevant.  If it submited more that one, a stack would cause
-> them to be handled in the reverse order.
+--===============0127965105313055380==
+Content-Type: multipart/alternative; boundary=001a11410840df1d7b05371b67c2
 
-We have a device stack.
-q_this_level->make_request_fn() cannot possibly submit anything
-on "this_level", or it would create a device loop, I think.
+--001a11410840df1d7b05371b67c2
+Content-Type: text/plain; charset=UTF-8
 
-So we start with the initial, "top most" call to generic_make_request().
-That is one single bio. All queues are empty.
+Hi Mike,
 
-This bio is then passed on to its destination queue make_request_fn().
+this patchset was broken by the resync with hannes rcu v2 branch.
+Can you rebase it in the light of the changes to the conf pointer access
+applied in dbd9ad6f0e555707335ec71e1c5bec1723e02f79 ?
 
-Which may chose to split it (via blk_queue_split, or like dm does, or
-else). If it, like blk_queue_split() does, splits it into
-"piece-I-can-handle-now" and "remainder", both still targeted at the
-top most (current) queue, I think the "remainder" should just be pushed
-back, which will make it look as if upper layers did
-	generic_make_request("piece-I-can-handle-now");
-	generic_make_request("remainder");
-Which I do, by using bio_list_add_head(remainder, bio); (*head*).
+Thanks.
 
-I don't see any other way for a make_request_fn(bio(l=x)) to generate
-"sibling" bios to the same level (l=x) as its own argument.
+On Tue, Jul 5, 2016 at 10:12 AM, Mike Christie <mchristi@redhat.com> wrote:
 
-This same q(l=x)->make_request_fn(bio(l=x)) may now call
-generic_make_request() for zero or more "child" bios (l=x+1),
-which are queued in order: bio_list_add(recursion, bio); (*tail*).
-Then, once l=x returns, the queue generated by it is spliced
-in front of the "remainder" (*head*).
-All bios are processed in the order they have been queued,
-by peeling off of the head.
+> The following patches add Ceph rbd support for handling
+> blacklisted devices. This does not support features like
+> multibus.
+>
+> My specific use is for exporting rbd images through multiple
+> LIO instances. In this case, we have one rbd instance that
+> has the exclusive lock and send WRITE requests. If that host
+> becomes unreachable, then another host will grab the lock,
+> and blacklist the original host to prevent it from sending stale
+> IO (when blacklisted IO will be failed by the OSD).
+>
+> To recover from this, this patchset adds a repair() callout
+> to the checker. If the path is in the PATH_DOWN state this
+> callout can be used to fix it up. For my case, I am remapping
+> the device to flush stale IO and cleanup the old lock,
+> and then unblacklisting myself.
+>
+>
+>
 
-After all "child" bios of level l>=x+1 have been processed,
-the next bio to be processed will be the "pushed back" remainder.
+--001a11410840df1d7b05371b67c2
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-All "Natural order".
+<div dir=3D"ltr">Hi Mike,<div><br></div><div>this patchset was broken by th=
+e resync with hannes rcu v2 branch.</div><div>Can you rebase it in the ligh=
+t of the changes to the conf pointer access applied in=C2=A0dbd9ad6f0e55570=
+7335ec71e1c5bec1723e02f79 ?</div><div><br></div><div>Thanks.</div></div><di=
+v class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Tue, Jul 5, 2016 =
+at 10:12 AM, Mike Christie <span dir=3D"ltr">&lt;<a href=3D"mailto:mchristi=
+@redhat.com" target=3D"_blank">mchristi@redhat.com</a>&gt;</span> wrote:<br=
+><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1=
+px #ccc solid;padding-left:1ex">The following patches add Ceph rbd support =
+for handling<br>
+blacklisted devices. This does not support features like<br>
+multibus.<br>
+<br>
+My specific use is for exporting rbd images through multiple<br>
+LIO instances. In this case, we have one rbd instance that<br>
+has the exclusive lock and send WRITE requests. If that host<br>
+becomes unreachable, then another host will grab the lock,<br>
+and blacklist the original host to prevent it from sending stale<br>
+IO (when blacklisted IO will be failed by the OSD).<br>
+<br>
+To recover from this, this patchset adds a repair() callout<br>
+to the checker. If the path is in the PATH_DOWN state this<br>
+callout can be used to fix it up. For my case, I am remapping<br>
+the device to flush stale IO and cleanup the old lock,<br>
+and then unblacklisting myself.<br>
+<br>
+<br>
+</blockquote></div><br></div>
 
-> To make the patch "perfect", and maybe even more elegant we could treat
-> ->remainder and ->recursion more alike.
-> i.e.:
->   - generic make request has a private "stack" of requests.
->   - before calling ->make_request_fn(), both ->remainder and ->recursion
->     are initialised
->   - after ->make_request_fn(), ->remainder are spliced in to top of
->     'stack', then ->recursion is spliced onto that.
->   - If stack is not empty, the top request is popped and we loop to top.
-> 
-> This reliably follows in-order execution, and handles siblings correctly
-> (in submitted order) if/when a request splits off multiple siblings.
+--001a11410840df1d7b05371b67c2--
 
-The only splitting that creates siblings on the current level
-is blk_queue_split(), which splits the current bio into
-"front piece" and "remainder", already processed in this order.
 
-Anything else creating "siblings" is not creating siblings for the
-current layer, but for the next deeper layer, which are queue on
-"recursion" and also processed in the order they have been generated.
+--===============0127965105313055380==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> I think that as long a requests are submitted in the order they are
-> created at each level there is no reason to expect performance
-> regressions.
-> All we are doing is changing the ordering between requests generated at
-> different levels, and I think we are restoring a more natural order.
 
-I believe both patches combined are doing exactly this already.
-I could rename .remainder to .todo or .incoming, though.
-
-.incoming = [ bio(l=0) ]
-.recursion = []
-
-split
-
-.incoming = [ bio(l=0,now_1), bio(l=0,remainder_1) ]
-.recursion = []
-
-process head of .incoming
-
-.incoming = [ bio(l=0,remainder_1) ]
-.recursion = [ bio(l=1,a), bio(l=1,b), bio(l=1,c), ... ]
-
-merge_head
-
-.incoming = [ bio(l=1,a), bio(l=1,b), bio(l=1,c), ...,
-		bio(l=0,remainder_1) ]
-.recursion = []
-
-process head of .incoming, potentially split first
-
-.incoming = [ bio(l=1,a,now), bio(l=1,a,remainder), bio(l=1,b), bio(l=1,c), ...,
-		bio(l=0,remainder_1) ]
-...
-.incoming = [ bio(l=1,a,remainder), bio(l=1,b), bio(l=1,c), ...,
-		bio(l=0,remainder_1) ]
-.recursion = [ bio(l=2,aa), bio(l=2,ab), ... ]
-
-merge_head
-
-.incoming = [ bio(l=2,aa), bio(l=2,ab), ...,
-		bio(l=1,a,remainder), bio(l=1,b), bio(l=1,c), ...,
-		bio(l=0,remainder_1) ]
-.recursion = []
-
-...
-
-process away ... until back at l=0
-
-.incoming = [ bio(l=0,remainder_1) ]
-.recursion = []
-
-potentially split further
-.incoming = [ bio(l=0,now_2), bio(l=0,remainder_2) ]
-.recursion = []
-
-rinse, repeat.
-
-Thanks,
-
-    Lars Ellenberg
+--===============0127965105313055380==--
