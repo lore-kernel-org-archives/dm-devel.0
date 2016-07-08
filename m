@@ -1,13 +1,12 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: Subject: [PATCH 1/1] multipath-tools: fix dm- device
-	filtering
-Date: Fri, 8 Jul 2016 08:55:38 +0200
-Message-ID: <CABr-Gnf_=7R7GTnJz_eamQEVtv=aEV7Zx3v2QGDRRj2u5NVuvw@mail.gmail.com>
-References: <CAAZtj82kfWDjnqLYbqi==BRGukYQXCV=mTR3hmD6XOiD-C3-0Q@mail.gmail.com>
+Subject: Re: [PATCH 0/5] multipath-tools: Makefiles housekeeping
+Date: Fri, 8 Jul 2016 09:03:07 +0200
+Message-ID: <CABr-Gne9t80fXUAdfyo=MzWWYYmsg7qejR+bOYaHoaBtdfd16Q@mail.gmail.com>
+References: <1467294253-19376-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7437254170305897669=="
+Content-Type: multipart/mixed; boundary="===============6555623960261415769=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAAZtj82kfWDjnqLYbqi==BRGukYQXCV=mTR3hmD6XOiD-C3-0Q@mail.gmail.com>
+In-Reply-To: <1467294253-19376-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,78 +16,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dragan Stancevic <dragan.stancevic@canonical.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============7437254170305897669==
-Content-Type: multipart/alternative; boundary=001a114108405200ec05371a4a95
+--===============6555623960261415769==
+Content-Type: multipart/alternative; boundary=001a114108401ac8ef05371a658b
 
---001a114108405200ec05371a4a95
+--001a114108401ac8ef05371a658b
 Content-Type: text/plain; charset=UTF-8
 
-Hannes, Ben, do you ack this one ?
+This patchset is merged.
+Thanks.
 
-On Thu, Jun 23, 2016 at 11:06 PM, Dragan Stancevic <
-dragan.stancevic@canonical.com> wrote:
+On Thu, Jun 30, 2016 at 3:44 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
+wrote:
 
-> Hi Christophe,
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 >
-> can you please take a look at the attached patch, we are seeing quite a
-> few cases with the following errors:
 >
-> failed to get udev uid: Invalid argument
-> failed to get sysfs uid: Invalid argument
-> failed to get sgio uid: No such file or directory
+> Xose Vazquez Perez (5):
+>   multipath-tools: delete spec/rpm traces from Makefile
+>   multipath-tools: merge RPM_OPT_FLAGS into OPTFLAGS
+>   multipath-tools: don't create /usr/share/doc/mpathpersist/ from make
+> install
+>   multipath-tools: don't create /etc/init.d from make install
+>   multipath-tools: make uninstall leaves traces behind
 >
-> It causes a lot of confusion because the devices in question are in the
-> blacklist but aren't getting filtered. I don't know the code well enough,
-> but it seems that maybe there should be no condition in the filtering and
-> the code should just be:
-> if (dev && (filter_devnode(conf->blist_devnode, conf->elist_devnode, dev)
-> > 0)) {
+>  Makefile                 | 9 ---------
+>  Makefile.inc             | 7 ++-----
+>  libmpathpersist/Makefile | 3 ++-
+>  multipathd/Makefile      | 2 --
+>  4 files changed, 4 insertions(+), 17 deletions(-)
 >
-> But I went for smaller change option, by just allowing DEV_UEVENT to also
-> be filtered.
+> --
+> 2.7.4
 >
-> What do you think?
->
-> Thanks.
 >
 
---001a114108405200ec05371a4a95
+--001a114108401ac8ef05371a658b
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Hannes, Ben, do you ack this one ?</div><div class=3D"gmai=
-l_extra"><br><div class=3D"gmail_quote">On Thu, Jun 23, 2016 at 11:06 PM, D=
-ragan Stancevic <span dir=3D"ltr">&lt;<a href=3D"mailto:dragan.stancevic@ca=
-nonical.com" target=3D"_blank">dragan.stancevic@canonical.com</a>&gt;</span=
-> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;bo=
-rder-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi Christophe,<=
-br><div><br></div><div>can you please take a look at the attached patch, we=
- are seeing quite a few cases with the following errors:</div><div><br></di=
-v><div><div>failed to get udev uid: Invalid argument</div><div>failed to ge=
-t sysfs uid: Invalid argument</div><div>failed to get sgio uid: No such fil=
-e or directory</div></div><div><br></div><div>It causes a lot of confusion =
-because the devices in question are in the blacklist but aren&#39;t getting=
- filtered. I don&#39;t know the code well enough, but it seems that maybe t=
-here should be no condition in the filtering and the code should just be:</=
-div><div>if (dev &amp;&amp; (filter_devnode(conf-&gt;blist_devnode, conf-&g=
-t;elist_devnode, dev) &gt; 0)) {<br></div><div><br></div><div>But I went fo=
-r smaller change option, by just allowing=C2=A0DEV_UEVENT to also be filter=
-ed.</div><div><br></div><div>What do you think?</div><div><br></div><div>Th=
-anks.</div></div>
-</blockquote></div><br></div>
+<div dir=3D"ltr">This patchset is merged.<div>Thanks.</div></div><div class=
+=3D"gmail_extra"><br><div class=3D"gmail_quote">On Thu, Jun 30, 2016 at 3:4=
+4 PM, Xose Vazquez Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazqu=
+ez@gmail.com" target=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote=
+:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-le=
+ft:1px #ccc solid;padding-left:1ex">Cc: Christophe Varoqui &lt;<a href=3D"m=
+ailto:christophe.varoqui@opensvc.com">christophe.varoqui@opensvc.com</a>&gt=
+;<br>
+Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
+-devel@redhat.com</a>&gt;<br>
+Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
+com">xose.vazquez@gmail.com</a>&gt;<br>
+<br>
+<br>
+Xose Vazquez Perez (5):<br>
+=C2=A0 multipath-tools: delete spec/rpm traces from Makefile<br>
+=C2=A0 multipath-tools: merge RPM_OPT_FLAGS into OPTFLAGS<br>
+=C2=A0 multipath-tools: don&#39;t create /usr/share/doc/mpathpersist/ from =
+make install<br>
+=C2=A0 multipath-tools: don&#39;t create /etc/init.d from make install<br>
+=C2=A0 multipath-tools: make uninstall leaves traces behind<br>
+<br>
+=C2=A0Makefile=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0| 9 ---------<br>
+=C2=A0Makefile.inc=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| 7 ++---=
+--<br>
+=C2=A0libmpathpersist/Makefile | 3 ++-<br>
+=C2=A0multipathd/Makefile=C2=A0 =C2=A0 =C2=A0 | 2 --<br>
+=C2=A04 files changed, 4 insertions(+), 17 deletions(-)<br>
+<span class=3D"HOEnZb"><font color=3D"#888888"><br>
+--<br>
+2.7.4<br>
+<br>
+</font></span></blockquote></div><br></div>
 
---001a114108405200ec05371a4a95--
+--001a114108401ac8ef05371a658b--
 
 
---===============7437254170305897669==
+--===============6555623960261415769==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============7437254170305897669==--
+--===============6555623960261415769==--
