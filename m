@@ -1,102 +1,201 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 0/4] multipath-tools: Ceph rbd support
-Date: Fri, 8 Jul 2016 10:15:29 +0200
-Message-ID: <CABr-Gnc34cJ9oRB4J=0Rv1jgZ_Cr=uvMHwHAy_49XHGuBy33XQ@mail.gmail.com>
-References: <1467706353-16878-1-git-send-email-mchristi@redhat.com>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [dm-devel] [RFC] block: fix blk_queue_split() resource	exhaustion
+Date: Fri, 08 Jul 2016 19:39:36 +1000
+Message-ID: <877fcwfoyv.fsf@notabene.neil.brown.name>
+References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com> <871t36ggcr.fsf@notabene.neil.brown.name> <20160707081616.GH13335@soda.linbit> <87vb0hf6fb.fsf@notabene.neil.brown.name> <20160708080219.GT13335@soda.linbit>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0127965105313055380=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1467706353-16878-1-git-send-email-mchristi@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Christie <mchristi@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160708080219.GT13335@soda.linbit>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Lars Ellenberg <lars.ellenberg@linbit.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, Ming Lei <ming.lei@canonical.com>, linux-kernel@vger.kernel.org, Zheng Liu <gnehzuil.liu@gmail.com>, linux-block@vger.kernel.org, Takashi Iwai <tiwai@suse.de>, linux-bcache@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Alasdair Kergon <agk@redhat.com>, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Roland Kammerer <roland.kammerer@linbit.com>
 List-Id: dm-devel.ids
 
---===============0127965105313055380==
-Content-Type: multipart/alternative; boundary=001a11410840df1d7b05371b67c2
-
---001a11410840df1d7b05371b67c2
-Content-Type: text/plain; charset=UTF-8
-
-Hi Mike,
-
-this patchset was broken by the resync with hannes rcu v2 branch.
-Can you rebase it in the light of the changes to the conf pointer access
-applied in dbd9ad6f0e555707335ec71e1c5bec1723e02f79 ?
-
-Thanks.
-
-On Tue, Jul 5, 2016 at 10:12 AM, Mike Christie <mchristi@redhat.com> wrote:
-
-> The following patches add Ceph rbd support for handling
-> blacklisted devices. This does not support features like
-> multibus.
->
-> My specific use is for exporting rbd images through multiple
-> LIO instances. In this case, we have one rbd instance that
-> has the exclusive lock and send WRITE requests. If that host
-> becomes unreachable, then another host will grab the lock,
-> and blacklist the original host to prevent it from sending stale
-> IO (when blacklisted IO will be failed by the OSD).
->
-> To recover from this, this patchset adds a repair() callout
-> to the checker. If the path is in the PATH_DOWN state this
-> callout can be used to fix it up. For my case, I am remapping
-> the device to flush stale IO and cleanup the old lock,
-> and then unblacklisting myself.
->
->
->
-
---001a11410840df1d7b05371b67c2
-Content-Type: text/html; charset=UTF-8
+--=-=-=
+Content-Type: text/plain
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Hi Mike,<div><br></div><div>this patchset was broken by th=
-e resync with hannes rcu v2 branch.</div><div>Can you rebase it in the ligh=
-t of the changes to the conf pointer access applied in=C2=A0dbd9ad6f0e55570=
-7335ec71e1c5bec1723e02f79 ?</div><div><br></div><div>Thanks.</div></div><di=
-v class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Tue, Jul 5, 2016 =
-at 10:12 AM, Mike Christie <span dir=3D"ltr">&lt;<a href=3D"mailto:mchristi=
-@redhat.com" target=3D"_blank">mchristi@redhat.com</a>&gt;</span> wrote:<br=
-><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1=
-px #ccc solid;padding-left:1ex">The following patches add Ceph rbd support =
-for handling<br>
-blacklisted devices. This does not support features like<br>
-multibus.<br>
-<br>
-My specific use is for exporting rbd images through multiple<br>
-LIO instances. In this case, we have one rbd instance that<br>
-has the exclusive lock and send WRITE requests. If that host<br>
-becomes unreachable, then another host will grab the lock,<br>
-and blacklist the original host to prevent it from sending stale<br>
-IO (when blacklisted IO will be failed by the OSD).<br>
-<br>
-To recover from this, this patchset adds a repair() callout<br>
-to the checker. If the path is in the PATH_DOWN state this<br>
-callout can be used to fix it up. For my case, I am remapping<br>
-the device to flush stale IO and cleanup the old lock,<br>
-and then unblacklisting myself.<br>
-<br>
-<br>
-</blockquote></div><br></div>
+On Fri, Jul 08 2016, Lars Ellenberg wrote:
 
---001a11410840df1d7b05371b67c2--
+> On Fri, Jul 08, 2016 at 08:07:52AM +1000, NeilBrown wrote:
+>> Before I introduced the recursion limiting, requests were handled as an
+>> in-order tree walk.  The code I wrote tried to preserve that but didn't
+>> for several reasons.  I think we need to restore the original in-order
+>> walk because it makes the most sense.
+>> So after processing a particular bio, we should then process all the
+>> 'child' bios - bios send to underlying devices.  Then the 'sibling'
+>> bios, that were split off, and then any remaining parents and ancestors.
+>>=20
+>> You patch created the right structures for doing this, my proposal took
+>> it a step closer, but now after more careful analysis I don't think it
+>> is quite right.
+>> With my previous proposal (and you latest patch - thanks!) requests for
+>> "this" level are stacked, but they should be queued.
+>> If a make_request_fn only ever submits one request for this level and
+>> zero or more lower levels, then the difference between a queue and a
+>> stack is irrelevant.  If it submited more that one, a stack would cause
+>> them to be handled in the reverse order.
+>
+> We have a device stack.
+> q_this_level->make_request_fn() cannot possibly submit anything
+> on "this_level", or it would create a device loop, I think.
+>
+> So we start with the initial, "top most" call to generic_make_request().
+> That is one single bio. All queues are empty.
+>
+> This bio is then passed on to its destination queue make_request_fn().
+>
+> Which may chose to split it (via blk_queue_split, or like dm does, or
+> else). If it, like blk_queue_split() does, splits it into
+> "piece-I-can-handle-now" and "remainder", both still targeted at the
+> top most (current) queue, I think the "remainder" should just be pushed
+> back, which will make it look as if upper layers did
+> 	generic_make_request("piece-I-can-handle-now");
+> 	generic_make_request("remainder");
+> Which I do, by using bio_list_add_head(remainder, bio); (*head*).
 
+This is exactly what I mean by "submitting a request at 'this' level".
+Maybe that is a poor way to express it.  Within a make_request_fn, you
+cannot "submit" a request, you can only "queue" a request.
+generic_make_request hides that by doing something different for a call
+From=20a make_request_fn that for a call from anywhere else.
+The important thing is to have 2 queues to queue to.
 
---===============0127965105313055380==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+>
+> I don't see any other way for a make_request_fn(bio(l=3Dx)) to generate
+> "sibling" bios to the same level (l=3Dx) as its own argument.
 
+Yes, it only comes from splitting.
 
---===============0127965105313055380==--
+>
+> This same q(l=3Dx)->make_request_fn(bio(l=3Dx)) may now call
+> generic_make_request() for zero or more "child" bios (l=3Dx+1),
+> which are queued in order: bio_list_add(recursion, bio); (*tail*).
+> Then, once l=3Dx returns, the queue generated by it is spliced
+> in front of the "remainder" (*head*).
+> All bios are processed in the order they have been queued,
+> by peeling off of the head.
+>
+> After all "child" bios of level l>=3Dx+1 have been processed,
+> the next bio to be processed will be the "pushed back" remainder.
+>
+> All "Natural order".
+>
+>> To make the patch "perfect", and maybe even more elegant we could treat
+>> ->remainder and ->recursion more alike.
+>> i.e.:
+>>   - generic make request has a private "stack" of requests.
+>>   - before calling ->make_request_fn(), both ->remainder and ->recursion
+>>     are initialised
+>>   - after ->make_request_fn(), ->remainder are spliced in to top of
+>>     'stack', then ->recursion is spliced onto that.
+>>   - If stack is not empty, the top request is popped and we loop to top.
+>>=20
+>> This reliably follows in-order execution, and handles siblings correctly
+>> (in submitted order) if/when a request splits off multiple siblings.
+>
+> The only splitting that creates siblings on the current level
+> is blk_queue_split(), which splits the current bio into
+> "front piece" and "remainder", already processed in this order.
+
+Yes.
+I imagine that a driver *could* split a bio into three parts with a
+single allocation, but I cannot actually see any point in doing it.  So
+I was over-complicating things.
+
+>
+> Anything else creating "siblings" is not creating siblings for the
+> current layer, but for the next deeper layer, which are queue on
+> "recursion" and also processed in the order they have been generated.
+>
+>> I think that as long a requests are submitted in the order they are
+>> created at each level there is no reason to expect performance
+>> regressions.
+>> All we are doing is changing the ordering between requests generated at
+>> different levels, and I think we are restoring a more natural order.
+>
+> I believe both patches combined are doing exactly this already.
+> I could rename .remainder to .todo or .incoming, though.
+
+:-)  neither "remainder" or "recursion" seem like brilliant names to me,
+but I don't have anything better to suggest.  Naming is hard!
+As long as a comment explains the name clearly I could cope with X and Y.
+
+>
+> .incoming =3D [ bio(l=3D0) ]
+> .recursion =3D []
+>
+> split
+>
+> .incoming =3D [ bio(l=3D0,now_1), bio(l=3D0,remainder_1) ]
+> .recursion =3D []
+>
+> process head of .incoming
+>
+> .incoming =3D [ bio(l=3D0,remainder_1) ]
+> .recursion =3D [ bio(l=3D1,a), bio(l=3D1,b), bio(l=3D1,c), ... ]
+>
+> merge_head
+>
+> .incoming =3D [ bio(l=3D1,a), bio(l=3D1,b), bio(l=3D1,c), ...,
+> 		bio(l=3D0,remainder_1) ]
+> .recursion =3D []
+>
+> process head of .incoming, potentially split first
+>
+> .incoming =3D [ bio(l=3D1,a,now), bio(l=3D1,a,remainder), bio(l=3D1,b), b=
+io(l=3D1,c), ...,
+> 		bio(l=3D0,remainder_1) ]
+> ...
+> .incoming =3D [ bio(l=3D1,a,remainder), bio(l=3D1,b), bio(l=3D1,c), ...,
+> 		bio(l=3D0,remainder_1) ]
+> .recursion =3D [ bio(l=3D2,aa), bio(l=3D2,ab), ... ]
+>
+> merge_head
+>
+> .incoming =3D [ bio(l=3D2,aa), bio(l=3D2,ab), ...,
+> 		bio(l=3D1,a,remainder), bio(l=3D1,b), bio(l=3D1,c), ...,
+> 		bio(l=3D0,remainder_1) ]
+> .recursion =3D []
+>
+> ...
+>
+> process away ... until back at l=3D0
+>
+> .incoming =3D [ bio(l=3D0,remainder_1) ]
+> .recursion =3D []
+>
+> potentially split further
+> .incoming =3D [ bio(l=3D0,now_2), bio(l=3D0,remainder_2) ]
+> .recursion =3D []
+>
+> rinse, repeat.
+
+I think we just might be in violent agreement.
+
+Thanks,
+NeilBrown
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBCAAGBQJXf3TYAAoJEDnsnt1WYoG5ZU0P/ikpEaqKzxaAOr/+RgZGaje5
+Bs+UYuIc/UqJ3MTqL075LGD2Y/Bu3aK6oiCAKvHsatPx/28Akc3lzmOOQF9Mr/sw
+Vf63Sp53roKS6IswJeIf7U0+y8d0M/YIxysP7KfjiT9KyubSyTmgICgAkatQ3lbL
+gnZyiJr11BMPxQ74Iluw56yRzmvr7DAjZJ+Mm4Zn/jh43N1XiE0AQ/dWk5tQm80N
+VOYKNayBL9uyOl/W4AIy55+6yfN6DlwgsisAVPodTyfcbj3YlSTsLta5zRE6YRw4
+2WNay7R5muc3GQb5gZCGXgDbLoimGkOAf5WSQU/HCh0+4jGbSHLc7bJljZN48RYE
+WzJ7LAhSOdil8PMbHzbb65vPBHBiBJv51DaID43hhLTD1mPjoIAPURhOb5QYLYmN
+oAVx8dGgtRj2TTqGstXrIKXe/zA5h0JPM3+w2QVSdKaJwnd1EW1PLAPNoTe0boAM
+JpEXbZxOyRjFbTif2naO9xUXZYEa35lkxMpr8R03hDtzrQxmANpZqUBQkGUSI4ud
+RhWcZihj8ZHcdJIt+t5VWlEj+Ibh1iAEm+2+ddyK18C6sJV/72NTsCoJ3mCqyTlJ
+f/ZwQG41mzaLGM7J/2H6lPwbqOwKohcwrIH9dZpoSXyDkZuMiT9HGHVbugYjvBkw
+44sDYhDtVnYoHS9V7EyO
+=TUTD
+-----END PGP SIGNATURE-----
+--=-=-=--
