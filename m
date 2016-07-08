@@ -1,12 +1,13 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 1/1] multipath-tools: fix dm- device filtering
-Date: Fri, 8 Jul 2016 09:42:43 +0200
-Message-ID: <CABr-Gnd2iwXPm_eXo0WPhQCKiEbkndqGDeB97XSKoyB4RAmz4A@mail.gmail.com>
-References: <CAAZtj81O6sRAG7j9DQdbPtTpnAsygPa55FU0_dZJgfyiwHmBEw@mail.gmail.com>
+Subject: Re: [PATCH] multipah: fix 'multipath -p' with invalid
+	policy
+Date: Fri, 8 Jul 2016 09:57:31 +0200
+Message-ID: <CABr-Gnd74jEErxhNsbqiBq5hNhVMHRzaBPhLR9ipC9p1jucw5w@mail.gmail.com>
+References: <OFEF0477A6.E2A8E55E-ON48257FE8.001271D0-48257FE8.0022DD1A@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1006945931976454083=="
+Content-Type: multipart/mixed; boundary="===============3620326631624172763=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAAZtj81O6sRAG7j9DQdbPtTpnAsygPa55FU0_dZJgfyiwHmBEw@mail.gmail.com>
+In-Reply-To: <OFEF0477A6.E2A8E55E-ON48257FE8.001271D0-48257FE8.0022DD1A@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,119 +17,183 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dragan Stancevic <dragan.stancevic@canonical.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: zhang.kai16@zte.com.cn
+Cc: device-mapper development <dm-devel@redhat.com>, tang.junhui@zte.com.cn
 List-Id: dm-devel.ids
 
---===============1006945931976454083==
-Content-Type: multipart/alternative; boundary=001a113fc0a8b9edb805371af23b
+--===============3620326631624172763==
+Content-Type: multipart/alternative; boundary=001a114b1574a5d25105371b2743
 
---001a113fc0a8b9edb805371af23b
+--001a114b1574a5d25105371b2743
 Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-Rebased and merged.
+Merged.
+
+For your information,
+- the patches you send are not applicable through git am.
+- please don't use my @free.fr email address. You can use @opensvc.com
+instead.
+
 Thanks.
 
-On Tue, Jul 5, 2016 at 10:46 PM, Dragan Stancevic <
-dragan.stancevic@canonical.com> wrote:
+On Wed, Jul 6, 2016 at 8:21 AM, <zhang.kai16@zte.com.cn> wrote:
 
-> During "service multipath-tools start" /sbin/multipath is
-> called on dm- devices that are filtered but due to a condition
-> conf->dev_type == DEV_DEVNODE in filtering code multipath
-> binary wasn't dropping out when hitting a dm- device. This
-> was due to the fact that in this case conf->dev_type is
-> set to DEV_UEVENT.
+> hi,
 >
-> This is causing the logs to be filled with following
-> messages:
+> When we excute 'multipath -p' with invalid policy, get_pgpolicy_id()
+> returns IOPOLICY_UNDEF.
+> We should compare conf->pgpolicy_flag with IOPOLICY_UNDEF, otherwise, it
+> couldn't get what we want.
 >
-> multipath: dm-6: failed to get udev uid: Invalid argument
-> multipath: dm-6: failed to get sysfs uid: Invalid argument
-> multipath: dm-6: failed to get sgio uid: No such file or directory
 >
-> This change alows the filtering to happen.
->
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
->
-> Signed-off-by: Dragan Stancevic <dragan.stancevic@canonical.com>
-> ---
->  multipath/main.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
+>  ---
+> multipath/main.c | 2 +-
+> 1 file changed, 1 insertion(+), 1 deletion(-)
 >
 > diff --git a/multipath/main.c b/multipath/main.c
-> index aadebec..d89298b 100644
+> index c33f689..af7cf5b 100644
 > --- a/multipath/main.c
 > +++ b/multipath/main.c
-> @@ -267,7 +267,8 @@ configure (void)
->         /*
->          * if we have a blacklisted device parameter, exit early
->          */
-> -       if (dev && conf->dev_type == DEV_DEVNODE &&
-> +       if (dev && (conf->dev_type == DEV_DEVNODE ||
-> +                   conf->dev_type == DEV_UEVENT) &&
->             conf->cmd != CMD_REMOVE_WWID &&
->             (filter_devnode(conf->blist_devnode,
->                             conf->elist_devnode, dev) > 0)) {
-> --
-> 2.1.0
+> @@ -532,7 +532,7 @@ main (int argc, char *argv[])
+>                                                    break;
+>                                   case 'p':
+>                                                    conf->pgpolicy_flag =
+=3D
+> get_pgpolicy_id(optarg);
+> -                                                   if
+> (conf->pgpolicy_flag =3D=3D -1) {
+> +                                                   if
+> (conf->pgpolicy_flag =3D=3D IOPOLICY_UNDEF) {
 >
+> printf("'%s' is not a valid policy\n", optarg);
+>
+> usage(argv[0]);
+>
+> exit(1);
+> --
+> 1.9.1
+>
+>
+>
+>
+> --------------------------------------------------------
+> ZTE Information Security Notice: The information contained in this mail (=
+and any attachment transmitted herewith) is privileged and confidential and=
+ is intended for the exclusive use of the addressee(s).  If you are not an =
+intended recipient, any disclosure, reproduction, distribution or other dis=
+semination or use of the information contained is strictly prohibited.  If =
+you have received this mail in error, please delete it and notify us immedi=
+ately.
+>
+>
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 >
 
---001a113fc0a8b9edb805371af23b
+--001a114b1574a5d25105371b2743
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Rebased and merged.<div>Thanks.</div></div><div class=3D"g=
-mail_extra"><br><div class=3D"gmail_quote">On Tue, Jul 5, 2016 at 10:46 PM,=
- Dragan Stancevic <span dir=3D"ltr">&lt;<a href=3D"mailto:dragan.stancevic@=
-canonical.com" target=3D"_blank">dragan.stancevic@canonical.com</a>&gt;</sp=
-an> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;=
-border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><div>During &=
-quot;service multipath-tools start&quot; /sbin/multipath is</div><div>calle=
-d on dm- devices that are filtered but due to a condition</div><div>conf-&g=
-t;dev_type =3D=3D DEV_DEVNODE in filtering code multipath</div><div>binary =
-wasn&#39;t dropping out when hitting a dm- device. This</div><div>was due t=
-o the fact that in this case conf-&gt;dev_type is</div><div>set to DEV_UEVE=
-NT.</div><div><br></div><div>This is causing the logs to be filled with fol=
-lowing</div><div>messages:</div><div><br></div><div>multipath: dm-6: failed=
- to get udev uid: Invalid argument</div><div>multipath: dm-6: failed to get=
- sysfs uid: Invalid argument</div><div>multipath: dm-6: failed to get sgio =
-uid: No such file or directory</div><div><br></div><div>This change alows t=
-he filtering to happen.</div><div><br></div><div>Cc: Christophe Varoqui &lt=
-;<a href=3D"mailto:christophe.varoqui@opensvc.com" target=3D"_blank">christ=
-ophe.varoqui@opensvc.com</a>&gt;</div><div>Cc: device-mapper development &l=
-t;<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.=
-com</a>&gt;</div><div><br></div><div>Signed-off-by: Dragan Stancevic &lt;<a=
- href=3D"mailto:dragan.stancevic@canonical.com" target=3D"_blank">dragan.st=
-ancevic@canonical.com</a>&gt;</div><div>---</div><div>=C2=A0multipath/main.=
-c | 3 ++-=C2=A0</div><div>=C2=A01 file changed, 2 insertions(+), 1 deletion=
-(-)</div><div><br></div><div>diff --git a/multipath/main.c b/multipath/main=
-.c</div><div>index aadebec..d89298b 100644</div><div>--- a/multipath/main.c=
-</div><div>+++ b/multipath/main.c</div><div>@@ -267,7 +267,8 @@ configure (=
-void)</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 /*</div><div>=C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0* if we have a blacklisted device parameter, exit early</d=
-iv><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/</div><div>- =C2=A0 =C2=A0 =C2=
-=A0 if (dev &amp;&amp; conf-&gt;dev_type =3D=3D DEV_DEVNODE &amp;&amp;</div=
-><div>+ =C2=A0 =C2=A0 =C2=A0 if (dev &amp;&amp; (conf-&gt;dev_type =3D=3D D=
-EV_DEVNODE ||</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 conf-&gt;dev_type =3D=3D DEV_UEVENT) &amp;&amp;</div><div>=C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 conf-&gt;cmd !=3D CMD_REMOVE_WWID &a=
-mp;&amp;</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 (filter_devnod=
-e(conf-&gt;blist_devnode,</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 conf-&gt;elist_=
-devnode, dev) &gt; 0)) {</div><span class=3D"HOEnZb"><font color=3D"#888888=
-"><div>--=C2=A0</div><div>2.1.0</div><div><br></div></font></span></div>
-</blockquote></div><br></div>
+<div dir=3D"ltr">Merged.<div><br></div><div>For your information,</div><div=
+>- the patches you send are not applicable through git am.</div><div>- plea=
+se don&#39;t use my @<a href=3D"http://free.fr">free.fr</a> email address. =
+You can use @<a href=3D"http://opensvc.com">opensvc.com</a> instead.</div><=
+div><br></div><div>Thanks.</div></div><div class=3D"gmail_extra"><br><div c=
+lass=3D"gmail_quote">On Wed, Jul 6, 2016 at 8:21 AM,  <span dir=3D"ltr">&lt=
+;<a href=3D"mailto:zhang.kai16@zte.com.cn" target=3D"_blank">zhang.kai16@zt=
+e.com.cn</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=
+=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><font si=
+ze=3D"2" face=3D"sans-serif">hi,</font>
+<br>
+<br><font size=3D"2" face=3D"sans-serif">When we excute &#39;multipath -p&#=
+39; with invalid
+policy, get_pgpolicy_id() returns IOPOLICY_UNDEF. </font>
+<br><font size=3D"2" face=3D"sans-serif">We should compare conf-&gt;pgpolic=
+y_flag
+with IOPOLICY_UNDEF, otherwise, it couldn&#39;t get what we want.</font>
+<br><font size=3D"2" face=3D"sans-serif"><br>
+</font>
+<br><font size=3D"2">=C2=A0</font><tt><font size=3D"2">---<br>
+ multipath/main.c | 2 +-<br>
+ 1 file changed, 1 insertion(+), 1 deletion(-)<br>
+<br>
+diff --git a/multipath/main.c b/multipath/main.c<br>
+index c33f689..af7cf5b 100644<br>
+--- a/multipath/main.c<br>
++++ b/multipath/main.c<br>
+@@ -532,7 +532,7 @@ main (int argc, char *argv[])<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0break;<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+case &#39;p&#39;:<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0conf-&gt;pgpo=
+licy_flag
+=3D get_pgpolicy_id(optarg);<br>
+- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+if (conf-&gt;pgpolicy_flag =3D=3D -1) {<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+if (conf-&gt;pgpolicy_flag =3D=3D IOPOLICY_UNDEF) {<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+printf(&quot;&#39;%s&#39; is not a valid policy\n&quot;, optarg);<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+usage(argv[0]);<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+exit(1);<span class=3D"HOEnZb"><font color=3D"#888888"><br>
+-- <br>
+1.9.1</font></span></font></tt><span class=3D"HOEnZb"><font color=3D"#88888=
+8"><tt><font size=3D"3"><br>
+</font></tt>
+<br>
+<br>
 
---001a113fc0a8b9edb805371af23b--
+<br><pre><font color=3D"blue">
+--------------------------------------------------------
+ZTE Information Security Notice: The information contained in this mail (an=
+d any attachment transmitted herewith) is privileged and confidential and i=
+s intended for the exclusive use of the addressee(s).  If you are not an in=
+tended recipient, any disclosure, reproduction, distribution or other disse=
+mination or use of the information contained is strictly prohibited.  If yo=
+u have received this mail in error, please delete it and notify us immediat=
+ely.
+
+</font></pre><br>
+</font></span><br>--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
+rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
+<br></blockquote></div><br></div>
+
+--001a114b1574a5d25105371b2743--
 
 
---===============1006945931976454083==
+--===============3620326631624172763==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1006945931976454083==--
+--===============3620326631624172763==--
