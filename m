@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 07/14] multipath-tools: clarify RDAC class info
+Subject: [PATCH 06/14] multipath-tools: clarify ONTAP class info
 	at multipath.conf.5
-Date: Fri,  8 Jul 2016 19:49:52 +0200
-Message-ID: <1468000199-15566-8-git-send-email-xose.vazquez@gmail.com>
+Date: Fri,  8 Jul 2016 19:49:51 +0200
+Message-ID: <1468000199-15566-7-git-send-email-xose.vazquez@gmail.com>
 References: <1468000199-15566-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,54 +18,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Sean Stewart <sean.stewart@netapp.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-RDAC(Redundant Dual Active Controller) done by LSI/Engenio/NetApp
-are NetApp E-Series/F-Series and OEM arrays from IBM DELL SGI STK
-and SUN.
+ontap prio is *exclusively* for NetApp ONTAP class and OEM arrays,
+as IBM NSeries.
 
-Cc: Sean Stewart <sean.stewart@netapp.com>
+Cc: Martin George <marting@netapp.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- multipath/multipath.conf.5 | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+ multipath/multipath.conf.5 | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 33f7df8..a59e7a1 100644
+index 5e70315..33f7df8 100644
 --- a/multipath/multipath.conf.5
 +++ b/multipath/multipath.conf.5
-@@ -224,7 +224,8 @@ accepts the optional prio_arg
- Generate the path priority for NetApp ONTAP class and OEM arrays as IBM NSeries.
+@@ -221,7 +221,7 @@ accepts the optional prio_arg
+ .I exclusive_pref_bit
+ .TP
+ .I ontap
+-Generate the path priority for NetApp arrays.
++Generate the path priority for NetApp ONTAP class and OEM arrays as IBM NSeries.
  .TP
  .I rdac
--Generate the path priority for LSI/Engenio/NetApp E-Series RDAC controller.
-+Generate the path priority for LSI/Engenio/NetApp RDAC class as NetApp E/EF
-+Series, and OEM arrays from IBM DELL SGI STK and SUN.
- .TP
- .I hp_sw
- Generate the path priority for Compaq/HP controller in
-@@ -313,7 +314,8 @@ for CLARiiON CX/AX and EMC VNX arrays families.
- Check the path state for HP storage arrays with Active/Standby firmware.
- .TP
- .I rdac
--Check the path state for LSI/Engenio/NetApp E-Series RDAC storage controller.
-+Check the path state for LSI/Engenio/NetApp RDAC class as NetApp E/EF
-+Series, and OEM arrays from IBM DELL SGI STK and SUN.
- .TP
- .I directio
- (Deprecated) Read the first sector with direct I/O. This checker is being
-@@ -812,7 +814,8 @@ The following hardware handler are implemented:
- Hardware handler for DGC class arrays as CLARiiON CX/AX and EMC VNX families.
- .TP
- .I 1 rdac
--Hardware handler for LSI/Engenio/NetApp E-Series RDAC storage controller.
-+Hardware handler for LSI/Engenio/NetApp RDAC class as NetApp E/EF
-+Series, and OEM arrays from IBM DELL SGI STK and SUN.
- .TP
- .I 1 hp_sw
- Hardware handler for Compaq/HP storage arrays in active/standby
+ Generate the path priority for LSI/Engenio/NetApp E-Series RDAC controller.
 -- 
 2.7.4
