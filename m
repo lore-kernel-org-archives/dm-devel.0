@@ -1,43 +1,96 @@
-From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3 0/4] Support DAX for device-mapper linear devices
-Date: Fri, 8 Jul 2016 15:30:20 -0400
-Message-ID: <20160708193020.GA11043@redhat.com>
-References: <1466715953-40692-1-git-send-email-snitzer@redhat.com>
- <20160630170053.GA20750@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH] multipathd: fix waiter_attr resource leak
+Date: Fri, 8 Jul 2016 14:33:14 -0500
+Message-ID: <20160708193314.GJ8095@octiron.msp.redhat.com>
+References: <OF23BCA109.0BE2FFED-ON48257FE8.0023BAD2-48257FE8.002CA989@zte.com.cn>
+	<CABr-GndMYzjsQrpvi8vNrD9AYUzLO7KmSFOkaOE-Mb4t+O-p5Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20160630170053.GA20750-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, toshi.kani-ZPxbGqLxI0U@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
-Cc: linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
+In-Reply-To: <CABr-GndMYzjsQrpvi8vNrD9AYUzLO7KmSFOkaOE-Mb4t+O-p5Q@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: zhang.kai16@zte.com.cn, device-mapper development <dm-devel@redhat.com>, tang.junhui@zte.com.cn
 List-Id: dm-devel.ids
 
-On Thu, Jun 30 2016 at  1:00pm -0400,
-Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+On Fri, Jul 08, 2016 at 09:59:18AM +0200, Christophe Varoqui wrote:
 
-> On Thu, Jun 23 2016 at  5:05pm -0400,
-> Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> 
-> > Jens, please pick up the first 2 block patches and I'll get the other
-> > 2 DM patches staged for 4.8.
-> 
-> Hey Jens,
-> 
-> Looks like you're back so I figured I'd ping you on these first 2 block
-> patches again.  Can you pick them up for 4.8/core?
-> 
-> Thanks,
-> Mike
+ACK
 
-ping^2
+-Ben
+
+
+>    Ben, Hannes, I'd appreciate your ack on this patch.
+>    Thanks.
+>    On Wed, Jul 6, 2016 at 10:08 AM, <[1]zhang.kai16@zte.com.cn> wrote:
+> =
+
+>      As a global variable waiter_attr of thread attribute was set up in t=
+he
+>      daemon,
+>      however,it hasn't been destroyed when the daemon exited.
+>      We need deinitialize waiter_attr.
+>      =A0
+>      ---
+>      multipathd/main.c | 3 +++
+>      1 file changed, 3 insertions(+)
+> =
+
+>      diff --git a/multipathd/main.c b/multipathd/main.c
+>      index b86374f..09c5485 100644
+>      --- a/multipathd/main.c
+>      +++ b/multipathd/main.c
+>      @@ -2317,6 +2317,9 @@ child (void * param)
+>      =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0conf =3D NULL;
+>      =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0udev_unref(udev);
+>      =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0udev =3D NULL;
+>      +
+>      + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 pthread_attr_destroy(&waiter_attr);
+>      +
+>      #ifdef _DEBUG_
+>      =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0dbg_free_final(NULL);
+>      #endif
+>      --
+>      1.9.1
+> =
+
+>  --------------------------------------------------------
+>  ZTE Information Security Notice: The information contained in this mail =
+(and any attachment transmitted herewith) is privileged and confidential an=
+d is intended for the exclusive use of the addressee(s).  If you are not an=
+ intended recipient, any disclosure, reproduction, distribution or other di=
+ssemination or use of the information contained is strictly prohibited.  If=
+ you have received this mail in error, please delete it and notify us immed=
+iately.
+> =
+
+> =
+
+>      --
+>      dm-devel mailing list
+>      [2]dm-devel@redhat.com
+>      [3]https://www.redhat.com/mailman/listinfo/dm-devel
+> =
+
+> References
+> =
+
+>    Visible links
+>    1. mailto:zhang.kai16@zte.com.cn
+>    2. mailto:dm-devel@redhat.com
+>    3. https://www.redhat.com/mailman/listinfo/dm-devel
+
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
