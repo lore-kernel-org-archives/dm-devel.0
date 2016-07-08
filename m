@@ -1,12 +1,13 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath/main.c fix a minor typo
-Date: Fri, 8 Jul 2016 08:12:53 +0200
-Message-ID: <CABr-GncmwHYxuBAXc2H4hZ1S4md3x-CY0y0t6hwOKOH9iFS0eA@mail.gmail.com>
-References: <1911e0e1-006d-1946-e157-afa8b9a5b4df@redhat.com>
+Subject: Re: [PATCH 1/2] multipath-tools: replace spaces with
+	tabs in defaults.h
+Date: Fri, 8 Jul 2016 08:19:05 +0200
+Message-ID: <CABr-GnfVuV1eJeGG6rF5c6qFKa+q4QBb4AYJ2MX-R8gR8Fj3NA@mail.gmail.com>
+References: <1465683281-21755-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4180978497009797782=="
+Content-Type: multipart/mixed; boundary="===============1303277609359718771=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1911e0e1-006d-1946-e157-afa8b9a5b4df@redhat.com>
+In-Reply-To: <1465683281-21755-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,133 +17,145 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mgandhi@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============4180978497009797782==
-Content-Type: multipart/alternative; boundary=001a114012607179ef053719b1c8
+--===============1303277609359718771==
+Content-Type: multipart/alternative; boundary=001a1142c9b2a06019053719c7bf
 
---001a114012607179ef053719b1c8
+--001a1142c9b2a06019053719c7bf
 Content-Type: text/plain; charset=UTF-8
 
-Rebased and merged.
+Merged.
 Thanks.
 
-On Fri, Jul 1, 2016 at 1:17 PM, Milan P. Gandhi <mgandhi@redhat.com> wrote:
+On Sun, Jun 12, 2016 at 12:14 AM, Xose Vazquez Perez <xose.vazquez@gmail.com
+> wrote:
 
-> Hello, Below patch fixes a minor typo in multipath/main.c
+> replace spaces by tabs in defaults.h
 >
-> Thanks,
-> Milan.
->
-> Signed-off-by: Milan P. Gandhi <mgandhi@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 > ---
+>  libmultipath/defaults.h | 20 ++++++++++----------
+>  1 file changed, 10 insertions(+), 10 deletions(-)
 >
-> diff --git a/multipath/main.c b/multipath/main.c
-> index aadebec..7d23521 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -288,7 +288,7 @@ configure (void)
->                         if (failed == 2 && conf->cmd == CMD_VALID_PATH)
->                                 printf("%s is not a valid multipath device
-> path\n", conf->dev);
->                         else
-> -                               condlog(3, "scope is nul");
-> +                               condlog(3, "scope is null");
->                         goto out;
->                 }
->                 if (conf->cmd == CMD_REMOVE_WWID) {
-> @@ -360,7 +360,7 @@ configure (void)
+> diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+> index 96f5a2c..dc70a74 100644
+> --- a/libmultipath/defaults.h
+> +++ b/libmultipath/defaults.h
+> @@ -7,22 +7,22 @@
+>  #define DEFAULT_HWHANDLER      "0"
+>  #define DEFAULT_MINIO          1000
+>  #define DEFAULT_MINIO_RQ       1
+> -#define DEFAULT_PGPOLICY       FAILOVER
+> -#define DEFAULT_FAILBACK       -FAILBACK_MANUAL
+> -#define DEFAULT_RR_WEIGHT      RR_WEIGHT_NONE
+> -#define DEFAULT_NO_PATH_RETRY  NO_PATH_RETRY_UNDEF
+> +#define DEFAULT_PGPOLICY       FAILOVER
+> +#define DEFAULT_FAILBACK       -FAILBACK_MANUAL
+> +#define DEFAULT_RR_WEIGHT      RR_WEIGHT_NONE
+> +#define DEFAULT_NO_PATH_RETRY  NO_PATH_RETRY_UNDEF
+>  #define DEFAULT_VERBOSITY      2
+>  #define DEFAULT_REASSIGN_MAPS  0
+>  #define DEFAULT_FIND_MULTIPATHS        0
+>  #define DEFAULT_FAST_IO_FAIL   5
+> -#define DEFAULT_DEV_LOSS_TMO   600
+> +#define DEFAULT_DEV_LOSS_TMO   600
+>  #define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_OFF
+> -#define DEFAULT_DETECT_PRIO DETECT_PRIO_OFF
+> -#define DEFAULT_DEFERRED_REMOVE DEFERRED_REMOVE_OFF
+> -#define DEFAULT_DELAY_CHECKS DELAY_CHECKS_OFF
+> +#define DEFAULT_DETECT_PRIO    DETECT_PRIO_OFF
+> +#define DEFAULT_DEFERRED_REMOVE        DEFERRED_REMOVE_OFF
+> +#define DEFAULT_DELAY_CHECKS   DELAY_CHECKS_OFF
+>  #define DEFAULT_UEVENT_STACKSIZE 256
+> -#define DEFAULT_RETRIGGER_DELAY 10
+> -#define DEFAULT_RETRIGGER_TRIES 3
+> +#define DEFAULT_RETRIGGER_DELAY        10
+> +#define DEFAULT_RETRIGGER_TRIES        3
+>  #define DEFAULT_UEV_WAIT_TIMEOUT 30
 >
->
->         if (conf->cmd == CMD_VALID_PATH) {
-> -               /* This only happens if find_multipaths is and
-> +               /* This only happens if find_multipaths and
->                  * ignore_wwids is set.
->                  * If there is currently a multipath device matching
->                  * the refwwid, or there is more than one path matching
->
+>  #define DEFAULT_CHECKINT       5
 > --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> 2.5.5
+>
 >
 
---001a114012607179ef053719b1c8
+--001a1142c9b2a06019053719c7bf
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Rebased and merged.<div>Thanks.</div></div><div class=3D"g=
-mail_extra"><br><div class=3D"gmail_quote">On Fri, Jul 1, 2016 at 1:17 PM, =
-Milan P. Gandhi <span dir=3D"ltr">&lt;<a href=3D"mailto:mgandhi@redhat.com"=
- target=3D"_blank">mgandhi@redhat.com</a>&gt;</span> wrote:<br><blockquote =
-class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid=
-;padding-left:1ex">Hello, Below patch fixes a minor typo in multipath/main.=
-c<br>
+<div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
+<br><div class=3D"gmail_quote">On Sun, Jun 12, 2016 at 12:14 AM, Xose Vazqu=
+ez Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" ta=
+rget=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote=
+ class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc soli=
+d;padding-left:1ex">replace spaces by tabs in defaults.h<br>
 <br>
-Thanks,<br>
-Milan.<br>
-<br>
-Signed-off-by: Milan P. Gandhi &lt;<a href=3D"mailto:mgandhi@redhat.com">mg=
-andhi@redhat.com</a>&gt;<br>
+Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com=
+">christophe.varoqui@opensvc.com</a>&gt;<br>
+Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
+-devel@redhat.com</a>&gt;<br>
+Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
+com">xose.vazquez@gmail.com</a>&gt;<br>
 ---<br>
+=C2=A0libmultipath/defaults.h | 20 ++++++++++----------<br>
+=C2=A01 file changed, 10 insertions(+), 10 deletions(-)<br>
 <br>
-diff --git a/multipath/main.c b/multipath/main.c<br>
-index aadebec..7d23521 100644<br>
---- a/multipath/main.c<br>
-+++ b/multipath/main.c<br>
-@@ -288,7 +288,7 @@ configure (void)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 if (failed =3D=3D 2 &amp;&amp; conf-&gt;cmd =3D=3D CMD_VALID_PAT=
-H)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 printf(&quot;%s is not a valid multi=
-path device path\n&quot;, conf-&gt;dev);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 else<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0condlog(3, &quot;scope is nul&quot;);=
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h<br>
+index 96f5a2c..dc70a74 100644<br>
+--- a/libmultipath/defaults.h<br>
++++ b/libmultipath/defaults.h<br>
+@@ -7,22 +7,22 @@<br>
+=C2=A0#define DEFAULT_HWHANDLER=C2=A0 =C2=A0 =C2=A0 &quot;0&quot;<br>
+=C2=A0#define DEFAULT_MINIO=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 1000<br>
+=C2=A0#define DEFAULT_MINIO_RQ=C2=A0 =C2=A0 =C2=A0 =C2=A01<br>
+-#define DEFAULT_PGPOLICY=C2=A0 =C2=A0 =C2=A0 =C2=A0FAILOVER<br>
+-#define DEFAULT_FAILBACK=C2=A0 =C2=A0 =C2=A0 =C2=A0-FAILBACK_MANUAL<br>
+-#define DEFAULT_RR_WEIGHT=C2=A0 =C2=A0 =C2=A0 RR_WEIGHT_NONE<br>
+-#define DEFAULT_NO_PATH_RETRY=C2=A0 NO_PATH_RETRY_UNDEF<br>
++#define DEFAULT_PGPOLICY=C2=A0 =C2=A0 =C2=A0 =C2=A0FAILOVER<br>
++#define DEFAULT_FAILBACK=C2=A0 =C2=A0 =C2=A0 =C2=A0-FAILBACK_MANUAL<br>
++#define DEFAULT_RR_WEIGHT=C2=A0 =C2=A0 =C2=A0 RR_WEIGHT_NONE<br>
++#define DEFAULT_NO_PATH_RETRY=C2=A0 NO_PATH_RETRY_UNDEF<br>
+=C2=A0#define DEFAULT_VERBOSITY=C2=A0 =C2=A0 =C2=A0 2<br>
+=C2=A0#define DEFAULT_REASSIGN_MAPS=C2=A0 0<br>
+=C2=A0#define DEFAULT_FIND_MULTIPATHS=C2=A0 =C2=A0 =C2=A0 =C2=A0 0<br>
+=C2=A0#define DEFAULT_FAST_IO_FAIL=C2=A0 =C2=A05<br>
+-#define DEFAULT_DEV_LOSS_TMO=C2=A0 =C2=A0600<br>
++#define DEFAULT_DEV_LOSS_TMO=C2=A0 =C2=A0600<br>
+=C2=A0#define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_OFF<br>
+-#define DEFAULT_DETECT_PRIO DETECT_PRIO_OFF<br>
+-#define DEFAULT_DEFERRED_REMOVE DEFERRED_REMOVE_OFF<br>
+-#define DEFAULT_DELAY_CHECKS DELAY_CHECKS_OFF<br>
++#define DEFAULT_DETECT_PRIO=C2=A0 =C2=A0 DETECT_PRIO_OFF<br>
++#define DEFAULT_DEFERRED_REMOVE=C2=A0 =C2=A0 =C2=A0 =C2=A0 DEFERRED_REMOVE=
+_OFF<br>
++#define DEFAULT_DELAY_CHECKS=C2=A0 =C2=A0DELAY_CHECKS_OFF<br>
+=C2=A0#define DEFAULT_UEVENT_STACKSIZE 256<br>
+-#define DEFAULT_RETRIGGER_DELAY 10<br>
+-#define DEFAULT_RETRIGGER_TRIES 3<br>
++#define DEFAULT_RETRIGGER_DELAY=C2=A0 =C2=A0 =C2=A0 =C2=A0 10<br>
++#define DEFAULT_RETRIGGER_TRIES=C2=A0 =C2=A0 =C2=A0 =C2=A0 3<br>
+=C2=A0#define DEFAULT_UEV_WAIT_TIMEOUT 30<br>
 <br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0condlog(3, &quot;scope is null&quot;)=
-;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 goto out;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (conf-&gt;cmd =
-=3D=3D CMD_REMOVE_WWID) {<br>
-@@ -360,7 +360,7 @@ configure (void)<br>
+=C2=A0#define DEFAULT_CHECKINT=C2=A0 =C2=A0 =C2=A0 =C2=A05<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+2.5.5<br>
 <br>
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (conf-&gt;cmd =3D=3D CMD_VALID_PATH) {<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* This only happen=
-s if find_multipaths is and<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* This only happen=
-s if find_multipaths and<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* ignore_wwid=
-s is set.<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* If there is=
- currently a multipath device matching<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* the refwwid=
-, or there is more than one path matching<br>
-<br>
---<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
-<br>
-</blockquote></div><br></div>
+</font></span></blockquote></div><br></div>
 
---001a114012607179ef053719b1c8--
+--001a1142c9b2a06019053719c7bf--
 
 
---===============4180978497009797782==
+--===============1303277609359718771==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============4180978497009797782==--
+--===============1303277609359718771==--
