@@ -1,43 +1,77 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH 00/14] update and general clean up of
-	multipath.conf.5
-Date: Sat, 9 Jul 2016 00:14:21 +0200
-Message-ID: <537c67ef-fc65-f1cd-65e0-91a70fcfd10a@gmail.com>
-References: <1468000199-15566-1-git-send-email-xose.vazquez@gmail.com>
+From: scar <scar-47zfDnpWZoPQT0dZR+AlfA@public.gmane.org>
+Subject: iSCSI device / error getting device,
+	error adding target to table
+Date: Fri, 8 Jul 2016 16:16:08 -0700
+Message-ID: <nlpc7p$mh8$1@ger.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1468000199-15566-1-git-send-email-xose.vazquez@gmail.com>
+Return-path: <dm-devel-bounces-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+	<mailto:dm-devel-request-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Post: <mailto:dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Help: <mailto:dm-devel-request-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org?subject=help>
 List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>
+	<mailto:dm-devel-request-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org?subject=subscribe>
+Sender: dm-devel-bounces-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Errors-To: dm-devel-bounces-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+To: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On 07/08/2016 07:49 PM, Xose Vazquez Perez wrote:
+We have a DotHill iSCSI device which i've already setup with one volume. 
+  The device has two controllers each with two network ports, so the 
+volume is accessible via four different IP addresses.  On the initiator, 
+the volume thus shows up as four disks, /dev/sde thru /dev/sdh.  I 
+already created a partition and currently i just mount one of the 
+partitions, but would like to setup multipath instead so if something 
+fails, the multipath device will continue working without having to 
+remount anything.
 
-> Final result in PDF(35k): https://drive.google.com/file/d/0B_B6YmEmO7cDa09mdTlGa1NlSWc
+I used scsi_id to find the WWID of sde thru sdh, they all have the same 
+WWID.  I thought a multipath.conf like this would work:
 
-raw file: https://drive.google.com/file/d/0B_B6YmEmO7cDcHlIVG5GcVlfWGM
+blacklist {
+         wwid "*"
+}
+blacklist_exceptions {
+	wwid "3600c0ff00012400bdb0e485701000000"
+}
+defaults {
+	selector		"round-robin 0"
+	path_grouping_policy	multibus
+	getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
+	user_friendly_names	yes
+}
+multipaths {
+	multipath {
+		wwid	3600c0ff00012400bdb0e485701000000
+	}
+}
+devices {
+	device {
+		vendor		"DotHill"
+		product		"R/Evo 2330-2R"
+		no_path_retry	"queue"
+	}
+}
 
-to see it in color with less as pager:
+but when i start multipathd i see a bunch of errors and no successes:
 
-export LESS_TERMCAP_mb=$'\e[00;35m'
-export LESS_TERMCAP_md=$'\e[00;36m'
-export LESS_TERMCAP_me=$'\e[0m'
-export LESS_TERMCAP_se=$'\e[0m'
-export LESS_TERMCAP_so=$'\e[00;44;37m'
-export LESS_TERMCAP_ue=$'\e[0m'
-export LESS_TERMCAP_us=$'\e[00;33m'
-export GROFF_NO_SGR=1
-export MANPAGER=less
+Jul  8 16:02:42 initiator kernel: device-mapper: table: 253:3: 
+multipath: error getting device
+Jul  8 16:02:42 initiator kernel: device-mapper: ioctl: error adding 
+target to table
+[previous 2 lines repeated several times]
+Jul  8 16:02:42 initiator multipathd: path checkers start up
+Jul  8 16:02:46 initiator kernel: device-mapper: table: 253:3: 
+multipath: error getting device
+Jul  8 16:02:46 initiator kernel: device-mapper: ioctl: error adding 
+target to table
+Jul  8 16:02:46 initiator multipathd: dm-3: remove map (uevent)
+Jul  8 16:02:46 initiator multipathd: dm-3: devmap not registered, can't 
+remove
+[previous 4 lines repeated several times]
 
-with most is instant:
-export MANPAGER=most
+and 'multipath -v2' command doesn't print anything.  The 
+initiator/server is running RHEL5.
