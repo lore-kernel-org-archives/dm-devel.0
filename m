@@ -1,8 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 1/3] multipath-tools: install libs in a standard
-	way
-Date: Fri,  8 Jul 2016 18:28:19 +0200
-Message-ID: <1467995301-14226-2-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 2/3] multipath-tools: merge OPTFLAGS into CFLAGS
+Date: Fri,  8 Jul 2016 18:28:20 +0200
+Message-ID: <1467995301-14226-3-git-send-email-xose.vazquez@gmail.com>
 References: <1467995301-14226-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,48 +17,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Mathieu Trudel-Lapierre <mathieu.trudel-lapierre@canonical.com>, Dragan Stancevic <dragan.stancevic@canonical.com>, device-mapper development <dm-devel@redhat.com>, Ritesh Raj Sarraf <rrs@debian.org>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Louis Bouchard <louis.bouchard@canonical.com>
 List-Id: dm-devel.ids
 
-Drop full path of libmpathpersist when linking,
-and add a link for libmultipath.so
+OPTFLAGS is not used anywhere, but maybe it's intrusive for distributions.
 
+Cc: Mathieu Trudel-Lapierre <mathieu.trudel-lapierre@canonical.com>
+Cc: Dragan Stancevic <dragan.stancevic@canonical.com>
+Cc: Louis Bouchard <louis.bouchard@canonical.com>
+Cc: Ritesh Raj Sarraf <rrs@debian.org>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmpathpersist/Makefile | 2 +-
- libmultipath/Makefile    | 2 ++
- 2 files changed, 3 insertions(+), 1 deletion(-)
+ Makefile.inc | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
 
-diff --git a/libmpathpersist/Makefile b/libmpathpersist/Makefile
-index d22bcdd..2f91401 100644
---- a/libmpathpersist/Makefile
-+++ b/libmpathpersist/Makefile
-@@ -32,7 +32,7 @@ install: $(LIBS)
- 	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(syslibdir)
- 	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(man3dir)
- 	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(incdir)
--	$(LN) $(DESTDIR)$(syslibdir)/$(LIBS) $(DESTDIR)$(syslibdir)/$(DEVLIB)
-+	$(LN) $(LIBS) $(DESTDIR)$(syslibdir)/$(DEVLIB)
- 	$(INSTALL_PROGRAM) -m 644 mpath_persistent_reserve_in.3.gz $(DESTDIR)$(man3dir)
- 	$(INSTALL_PROGRAM) -m 644 mpath_persistent_reserve_out.3.gz $(DESTDIR)$(man3dir)
- 	$(INSTALL_PROGRAM) -m 644 mpath_persist.h $(DESTDIR)$(incdir)
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index de13e47..a14d4b3 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -63,9 +63,11 @@ install:
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(syslibdir)
- 	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
- 	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(libdir)
-+	$(LN) $(LIBS) $(DESTDIR)$(syslibdir)/$(DEVLIB)
+diff --git a/Makefile.inc b/Makefile.inc
+index 01d743c..b7077fc 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -60,10 +60,9 @@ RM          = rm -f
+ LN          = ln -sf
+ INSTALL_PROGRAM = install
  
- uninstall:
- 	$(RM) $(DESTDIR)$(syslibdir)/$(LIBS)
-+	$(RM) $(DESTDIR)$(syslibdir)/$(DEVLIB)
+-OPTFLAGS     = -Wunused -Wstrict-prototypes -O2 -g -pipe -Wformat-security -Wall \
+-		-Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4
+-
+-CFLAGS	     = $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
++CFLAGS      = -Wunused -Wstrict-prototypes -O2 -g -pipe -Wformat-security -Wall \
++		-Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 \
++		-fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
+ SHARED_FLAGS = -shared
  
- clean:
- 	$(RM) core *.a *.o *.gz *.so *.so.*
+ %.o:	%.c
 -- 
 2.7.4
