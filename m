@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 06/14] multipath-tools: clarify ONTAP class info
-	at multipath.conf.5
-Date: Fri,  8 Jul 2016 19:49:51 +0200
-Message-ID: <1468000199-15566-7-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 13/14] multipath-tools: add undocumented features
+	to multipath.conf.5
+Date: Fri,  8 Jul 2016 19:49:58 +0200
+Message-ID: <1468000199-15566-14-git-send-email-xose.vazquez@gmail.com>
 References: <1468000199-15566-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,32 +18,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Chandra Seetharaman <sekharan@us.ibm.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-ontap prio is *exclusively* for NetApp ONTAP class and OEM arrays,
-as IBM NSeries.
+pg_init_retries - kernel commit c9e45581a
+pg_init_delay_msecs - kernel commit 4e2d19e46
 
-Cc: Martin George <marting@netapp.com>
+Cc: Dave Wysochanski <dwysocha@redhat.com>
+Cc: Chandra Seetharaman <sekharan@us.ibm.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- multipath/multipath.conf.5 | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipath/multipath.conf.5 | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
 
 diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 5e70315..33f7df8 100644
+index 8ac9d5a..3e1a6db 100644
 --- a/multipath/multipath.conf.5
 +++ b/multipath/multipath.conf.5
-@@ -221,7 +221,7 @@ accepts the optional prio_arg
- .I exclusive_pref_bit
+@@ -296,9 +296,9 @@ Specify any device-mapper features to be used. Syntax is
+ .I num list
+ where
+ .I num
+-is the number of features in
++is the number, between 0 and 6, of features in
+ .I list.
+-Possible values for the feature list are
++Possible values for the feature list are:
+ .RS
+ .TP 12
+ .I queue_if_no_path
+@@ -309,6 +309,12 @@ keyword.
+ .I no_partitions
+ Disable automatic partitions generation via kpartx.
  .TP
- .I ontap
--Generate the path priority for NetApp arrays.
-+Generate the path priority for NetApp ONTAP class and OEM arrays as IBM NSeries.
++.I pg_init_retries
++Number of times to retry pg_init, it must be between 1 and 50.
++.TP
++.I pg_init_delay_msecs
++Number of msecs before pg_init retry, it must be between 0 and 60000.
++.TP
+ Default value is: \fB0\fR
+ .RE
  .TP
- .I rdac
- Generate the path priority for LSI/Engenio/NetApp E-Series RDAC controller.
 -- 
 2.7.4
