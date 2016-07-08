@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 2/3] multipath-tools: merge OPTFLAGS into CFLAGS
-Date: Fri,  8 Jul 2016 18:28:20 +0200
-Message-ID: <1467995301-14226-3-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 3/3] multipath-tools: delete INSTALL_PROGRAM from
+	libmpathpersist/Makefile
+Date: Fri,  8 Jul 2016 18:28:21 +0200
+Message-ID: <1467995301-14226-4-git-send-email-xose.vazquez@gmail.com>
 References: <1467995301-14226-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,41 +18,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: Mathieu Trudel-Lapierre <mathieu.trudel-lapierre@canonical.com>, Dragan Stancevic <dragan.stancevic@canonical.com>, device-mapper development <dm-devel@redhat.com>, Ritesh Raj Sarraf <rrs@debian.org>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Louis Bouchard <louis.bouchard@canonical.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-OPTFLAGS is not used anywhere, but maybe it's intrusive for distributions.
+It's already taken from "include ../Makefile.inc"
 
-Cc: Mathieu Trudel-Lapierre <mathieu.trudel-lapierre@canonical.com>
-Cc: Dragan Stancevic <dragan.stancevic@canonical.com>
-Cc: Louis Bouchard <louis.bouchard@canonical.com>
-Cc: Ritesh Raj Sarraf <rrs@debian.org>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- Makefile.inc | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ libmpathpersist/Makefile | 2 --
+ 1 file changed, 2 deletions(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 01d743c..b7077fc 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -60,10 +60,9 @@ RM          = rm -f
- LN          = ln -sf
- INSTALL_PROGRAM = install
+diff --git a/libmpathpersist/Makefile b/libmpathpersist/Makefile
+index 2f91401..a2dd7ed 100644
+--- a/libmpathpersist/Makefile
++++ b/libmpathpersist/Makefile
+@@ -3,8 +3,6 @@
+ BUILD = glibc
+ include ../Makefile.inc
  
--OPTFLAGS     = -Wunused -Wstrict-prototypes -O2 -g -pipe -Wformat-security -Wall \
--		-Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4
+-INSTALL_PROGRAM = install
 -
--CFLAGS	     = $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
-+CFLAGS      = -Wunused -Wstrict-prototypes -O2 -g -pipe -Wformat-security -Wall \
-+		-Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 \
-+		-fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
- SHARED_FLAGS = -shared
- 
- %.o:	%.c
+ SONAME=0
+ DEVLIB = libmpathpersist.so
+ LIBS = $(DEVLIB).$(SONAME)
 -- 
 2.7.4
