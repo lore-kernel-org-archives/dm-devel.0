@@ -1,197 +1,321 @@
-From: NeilBrown <neilb@suse.com>
-Subject: Re: block: fix blk_queue_split() resource exhaustion
-Date: Fri, 08 Jul 2016 08:40:16 +1000
-Message-ID: <87shvlf4xb.fsf@notabene.neil.brown.name>
-References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com> <871t36ggcr.fsf@notabene.neil.brown.name> <20160707124505.GB2737@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCHv2 00/26] Userspace-RCU for config accesses
+Date: Fri, 8 Jul 2016 07:53:00 +0200
+Message-ID: <CABr-Gnfo8W-uMAhyZb3aYQp_nKHa2fhL9ytP9EUawOB=RY5tUQ@mail.gmail.com>
+References: <1467616126-10036-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha256; protocol="application/pgp-signature"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160707124505.GB2737@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Lars Ellenberg <lars.ellenberg@linbit.com>, linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, Ming Lei <ming.lei@canonical.com>, linux-bcache@vger.kernel.org, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, Takashi Iwai <tiwai@suse.de>, dm-devel@redhat.com, Ingo Molnar <mingo@redhat.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, Roland Kammerer <roland.kammerer@linbit.com>
+Content-Type: multipart/mixed; boundary="===============5743344458867530591=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1467616126-10036-1-git-send-email-hare@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---=-=-=
-Content-Type: text/plain
+--===============5743344458867530591==
+Content-Type: multipart/alternative; boundary=001a1140d2be5348390537196a72
+
+--001a1140d2be5348390537196a72
+Content-Type: text/plain; charset=UTF-8
+
+The rcu v2 branch is now merged.
+
+Thanks.
+
+On Mon, Jul 4, 2016 at 9:08 AM, Hannes Reinecke <hare@suse.de> wrote:
+
+> Hi all,
+>
+> as Benjamin Marzinski pointed out the 'config' structure is
+> not protected, but it will be re-allocated whenever we do a
+> reconfiguration.
+> This leads to inevitable race conditions, which ATM are only
+> imperfectly handled.
+> With this patchset accesses to the configuration are RCU-protected,
+> so we are guaranteed that the pointer to the configuration is always
+> valid.
+> To facilitate this the patchset moves the 'cmd', 'dev', and 'dev_type'
+> entries out of the configuration, and replaces them with local variables
+> in multipath.
+>
+> Changes to the original version:
+> - Fixup arguments for get_mpe_wwid() and find_mpe() as
+>   found by Ben Marzinski
+> - Revert to original handling in get_state() as found
+>   by Ben Marzinski
+>
+> The patchset can be found at
+>
+> github.com:/hreinecke/multipath-tools.git
+> branch rcu.v2
+>
+> As usual, comments and reviews are welcome.
+>
+> Hannes Reinecke (26):
+>   Revert patch 'move filter_devnode() under vector lock'
+>   Use 'mptable' as argument for find_mpe() and get_mpe_wwid()
+>   config: set 'deferred_remove' defaults at correct call
+>   devmapper: explicit config settings
+>   dmparser: use 'is_daemon' as argument for disassemble_map()
+>   libmultipath: use 'is_daemon' as argument for domap() etc
+>   libmultipath: drop 'daemon' configuration setting
+>   libmultipath: Do not access 'conf->cmd' in domap()
+>   libmultipath: add 'cmd' as argument for get_refwwid()
+>   libmultipath: fallback to checking environment variable in
+>     get_udev_uid()
+>   multipath: make 'cmd' internal to multipath program
+>   multipath: make 'dev_type' internal to the multipath program
+>   multipath: make 'dev' internal to the multipath program
+>   libmultipath: separate out 'udev' config entry
+>   libmultipath: use 'checkint' as argument for sysfs_set_scsi_tmo()
+>   discovery: Pass in 'hwtable' for get_state() and
+>     scsi_sysfs_discovery()
+>   libmultipath: use 'struct config' as argument for pathinfo()
+>   checkers: use 'multipath_dir' as argument
+>   prio: use 'multipath_dir' as argument
+>   libmultipath: use 'timeout' as argument for getprio()
+>   libmultipath: use explicit 'config' argument for configuration file
+>     parsing
+>   libmultipath: use (get,put)_multipath_config() accessors
+>   multipathd: Fixup commandline argument handling
+>   multipath: make 'struct config' a local variable
+>   multipathd: use userspace RCU to access configuration
+>   libmultipath: Allocate keywords directly
+>
+>  libmpathpersist/mpath_persist.c       |  28 +--
+>  libmpathpersist/mpath_persist.h       |   6 +-
+>  libmultipath/checkers.c               |  22 ++-
+>  libmultipath/checkers.h               |   6 +-
+>  libmultipath/config.c                 |  43 ++---
+>  libmultipath/config.h                 |  18 +-
+>  libmultipath/configure.c              | 163 +++++++++++------
+>  libmultipath/configure.h              |  10 +-
+>  libmultipath/debug.c                  |   3 +
+>  libmultipath/devmapper.c              |  21 +--
+>  libmultipath/devmapper.h              |   4 +-
+>  libmultipath/dict.c                   |  79 ++++----
+>  libmultipath/dict.h                   |   2 +-
+>  libmultipath/discovery.c              | 108 ++++++-----
+>  libmultipath/discovery.h              |  12 +-
+>  libmultipath/dmparser.c               |   6 +-
+>  libmultipath/dmparser.h               |   2 +-
+>  libmultipath/parser.c                 |  61 +++----
+>  libmultipath/parser.h                 |  27 +--
+>  libmultipath/print.c                  |  72 ++++----
+>  libmultipath/print.h                  |  16 +-
+>  libmultipath/prio.c                   |  40 +++--
+>  libmultipath/prio.h                   |  14 +-
+>  libmultipath/prioritizers/alua.c      |  12 +-
+>  libmultipath/prioritizers/alua_rtpg.c |  25 +--
+>  libmultipath/prioritizers/alua_rtpg.h |   6 +-
+>  libmultipath/prioritizers/emc.c       |   8 +-
+>  libmultipath/prioritizers/hds.c       |   8 +-
+>  libmultipath/prioritizers/hp_sw.c     |  46 ++---
+>  libmultipath/prioritizers/ontap.c     |  19 +-
+>  libmultipath/prioritizers/rdac.c      |   8 +-
+>  libmultipath/propsel.c                |  99 +++++-----
+>  libmultipath/propsel.h                |  48 ++---
+>  libmultipath/structs_vec.c            |  62 ++++---
+>  libmultipath/structs_vec.h            |  13 +-
+>  libmultipath/waiter.c                 |   4 +
+>  libmultipath/wwids.c                  |  22 ++-
+>  mpathpersist/main.c                   |  24 ++-
+>  multipath/main.c                      | 199 ++++++++++++---------
+>  multipathd/Makefile                   |   2 +-
+>  multipathd/cli_handlers.c             |  84 ++++++---
+>  multipathd/main.c                     | 327
+> +++++++++++++++++++++++-----------
+>  multipathd/uxlsnr.c                   |   5 -
+>  43 files changed, 1057 insertions(+), 727 deletions(-)
+>
+> --
+> 2.6.6
+>
+>
+
+--001a1140d2be5348390537196a72
+Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Jul 07 2016, Mike Snitzer wrote:
-
-> On Thu, Jul 07 2016 at  1:35am -0400,
-> NeilBrown <neilb@suse.com> wrote:
+<div dir=3D"ltr">The rcu v2 branch is now merged.<div><br></div><div>Thanks=
+.</div></div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On M=
+on, Jul 4, 2016 at 9:08 AM, Hannes Reinecke <span dir=3D"ltr">&lt;<a href=
+=3D"mailto:hare@suse.de" target=3D"_blank">hare@suse.de</a>&gt;</span> wrot=
+e:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-l=
+eft:1px #ccc solid;padding-left:1ex">Hi all,<br>
+<br>
+as Benjamin Marzinski pointed out the &#39;config&#39; structure is<br>
+not protected, but it will be re-allocated whenever we do a<br>
+reconfiguration.<br>
+This leads to inevitable race conditions, which ATM are only<br>
+imperfectly handled.<br>
+With this patchset accesses to the configuration are RCU-protected,<br>
+so we are guaranteed that the pointer to the configuration is always<br>
+valid.<br>
+To facilitate this the patchset moves the &#39;cmd&#39;, &#39;dev&#39;, and=
+ &#39;dev_type&#39;<br>
+entries out of the configuration, and replaces them with local variables<br=
 >
->> On Wed, Jun 22 2016, Lars Ellenberg wrote:
->>=20
->> > For a long time, generic_make_request() converts recursion into
->> > iteration by queuing recursive arguments on current->bio_list.
->> >
->> > This is convenient for stacking drivers,
->> > the top-most driver would take the originally submitted bio,
->> > and re-submit a re-mapped version of it, or one or more clones,
->> > or one or more new allocated bios to its backend(s). Which
->> > are then simply processed in turn, and each can again queue
->> > more "backend-bios" until we reach the bottom of the driver stack,
->> > and actually dispatch to the real backend device.
->> >
->> > Any stacking driver ->make_request_fn() could expect that,
->> > once it returns, any backend-bios it submitted via recursive calls
->> > to generic_make_request() would now be processed and dispatched, before
->> > the current task would call into this driver again.
->> >
->> > This is changed by commit
->> >   54efd50 block: make generic_make_request handle arbitrarily sized bi=
-os
->> >
->> > Drivers may call blk_queue_split() inside their ->make_request_fn(),
->> > which may split the current bio into a front-part to be dealt with
->> > immediately, and a remainder-part, which may need to be split even
->> > further. That remainder-part will simply also be pushed to
->> > current->bio_list, and would end up being head-of-queue, in front
->> > of any backend-bios the current make_request_fn() might submit during
->> > processing of the fron-part.
->> >
->> > Which means the current task would immediately end up back in the same
->> > make_request_fn() of the same driver again, before any of its backend
->> > bios have even been processed.
->> >
->> > This can lead to resource starvation deadlock.
->> > Drivers could avoid this by learning to not need blk_queue_split(),
->> > or by submitting their backend bios in a different context (dedicated
->> > kernel thread, work_queue context, ...). Or by playing funny re-orderi=
-ng
->> > games with entries on current->bio_list.
->> >
->> > Instead, I suggest to distinguish between recursive calls to
->> > generic_make_request(), and pushing back the remainder part in
->> > blk_queue_split(), by pointing current->bio_lists to a
->> > 	struct recursion_to_iteration_bio_lists {
->> > 		struct bio_list recursion;
->> > 		struct bio_list remainder;
->> > 	}
->> >
->> > To have all bios targeted to drivers lower in the stack processed befo=
-re
->> > processing the next piece of a bio targeted at the higher levels,
->> > as long as queued bios resulting from recursion are available,
->> > they will continue to be processed in FIFO order.
->> > Pushed back bio-parts resulting from blk_queue_split() will be process=
-ed
->> > in LIFO order, one-by-one, whenever the recursion list becomes empty.
->>=20
->> I really like this change.  It seems to precisely address the problem.
->> The "problem" being that requests for "this" device are potentially
->> mixed up with requests from underlying devices.
->> However I'm not sure it is quite general enough.
->>=20
->> The "remainder" list is a stack of requests aimed at "this" level or
->> higher, and I think it will always exactly fit that description.
->> The "recursion" list needs to be a queue of requests aimed at the next
->> level down, and that doesn't quiet work, because once you start acting
->> on the first entry in that list, all the rest become "this" level.
->>=20
->> I think you can address this by always calling ->make_request_fn with an
->> empty "recursion", then after the call completes, splice the "recursion"
->> list that resulted (if any) on top of the "remainder" stack.
->>=20
->> This way, the "remainder" stack is always "requests for lower-level
->> devices before request for upper level devices" and the "recursion"
->> queue is always "requests for devices below the current level".
->>=20
->> I also really *don't* like the idea of punting to a separate thread
+in multipath.<br>
+<br>
+Changes to the original version:<br>
+- Fixup arguments for get_mpe_wwid() and find_mpe() as<br>
+=C2=A0 found by Ben Marzinski<br>
+- Revert to original handling in get_state() as found<br>
+=C2=A0 by Ben Marzinski<br>
+<br>
+The patchset can be found at<br>
+<br>
+github.com:/hreinecke/multipath-tools.git<br>
+branch rcu.v2<br>
+<br>
+As usual, comments and reviews are welcome.<br>
+<br>
+Hannes Reinecke (26):<br>
+=C2=A0 Revert patch &#39;move filter_devnode() under vector lock&#39;<br>
+=C2=A0 Use &#39;mptable&#39; as argument for find_mpe() and get_mpe_wwid()<=
+br>
+=C2=A0 config: set &#39;deferred_remove&#39; defaults at correct call<br>
+=C2=A0 devmapper: explicit config settings<br>
+=C2=A0 dmparser: use &#39;is_daemon&#39; as argument for disassemble_map()<=
+br>
+=C2=A0 libmultipath: use &#39;is_daemon&#39; as argument for domap() etc<br=
 >
-> Hi Neil,
+=C2=A0 libmultipath: drop &#39;daemon&#39; configuration setting<br>
+=C2=A0 libmultipath: Do not access &#39;conf-&gt;cmd&#39; in domap()<br>
+=C2=A0 libmultipath: add &#39;cmd&#39; as argument for get_refwwid()<br>
+=C2=A0 libmultipath: fallback to checking environment variable in<br>
+=C2=A0 =C2=A0 get_udev_uid()<br>
+=C2=A0 multipath: make &#39;cmd&#39; internal to multipath program<br>
+=C2=A0 multipath: make &#39;dev_type&#39; internal to the multipath program=
+<br>
+=C2=A0 multipath: make &#39;dev&#39; internal to the multipath program<br>
+=C2=A0 libmultipath: separate out &#39;udev&#39; config entry<br>
+=C2=A0 libmultipath: use &#39;checkint&#39; as argument for sysfs_set_scsi_=
+tmo()<br>
+=C2=A0 discovery: Pass in &#39;hwtable&#39; for get_state() and<br>
+=C2=A0 =C2=A0 scsi_sysfs_discovery()<br>
+=C2=A0 libmultipath: use &#39;struct config&#39; as argument for pathinfo()=
+<br>
+=C2=A0 checkers: use &#39;multipath_dir&#39; as argument<br>
+=C2=A0 prio: use &#39;multipath_dir&#39; as argument<br>
+=C2=A0 libmultipath: use &#39;timeout&#39; as argument for getprio()<br>
+=C2=A0 libmultipath: use explicit &#39;config&#39; argument for configurati=
+on file<br>
+=C2=A0 =C2=A0 parsing<br>
+=C2=A0 libmultipath: use (get,put)_multipath_config() accessors<br>
+=C2=A0 multipathd: Fixup commandline argument handling<br>
+=C2=A0 multipath: make &#39;struct config&#39; a local variable<br>
+=C2=A0 multipathd: use userspace RCU to access configuration<br>
+=C2=A0 libmultipath: Allocate keywords directly<br>
+<br>
+=C2=A0libmpathpersist/mpath_persist.c=C2=A0 =C2=A0 =C2=A0 =C2=A0|=C2=A0 28 =
++--<br>
+=C2=A0libmpathpersist/mpath_persist.h=C2=A0 =C2=A0 =C2=A0 =C2=A0|=C2=A0 =C2=
+=A06 +-<br>
+=C2=A0libmultipath/checkers.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0|=C2=A0 22 ++-<br>
+=C2=A0libmultipath/checkers.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0|=C2=A0 =C2=A06 +-<br>
+=C2=A0libmultipath/config.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0|=C2=A0 43 ++---<br>
+=C2=A0libmultipath/config.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0|=C2=A0 18 +-<br>
+=C2=A0libmultipath/configure.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 | 163 +++++++++++------<br>
+=C2=A0libmultipath/configure.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 |=C2=A0 10 +-<br>
+=C2=A0libmultipath/debug.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 |=C2=A0 =C2=A03 +<br>
+=C2=A0libmultipath/devmapper.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 |=C2=A0 21 +--<br>
+=C2=A0libmultipath/devmapper.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 |=C2=A0 =C2=A04 +-<br>
+=C2=A0libmultipath/dict.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0|=C2=A0 79 ++++----<br>
+=C2=A0libmultipath/dict.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0|=C2=A0 =C2=A02 +-<br>
+=C2=A0libmultipath/discovery.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 | 108 ++++++-----<br>
+=C2=A0libmultipath/discovery.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 |=C2=A0 12 +-<br>
+=C2=A0libmultipath/dmparser.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0|=C2=A0 =C2=A06 +-<br>
+=C2=A0libmultipath/dmparser.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0|=C2=A0 =C2=A02 +-<br>
+=C2=A0libmultipath/parser.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0|=C2=A0 61 +++----<br>
+=C2=A0libmultipath/parser.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0|=C2=A0 27 +--<br>
+=C2=A0libmultipath/print.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 |=C2=A0 72 ++++----<br>
+=C2=A0libmultipath/print.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 |=C2=A0 16 +-<br>
+=C2=A0libmultipath/prio.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0|=C2=A0 40 +++--<br>
+=C2=A0libmultipath/prio.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0|=C2=A0 14 +-<br>
+=C2=A0libmultipath/prioritizers/alua.c=C2=A0 =C2=A0 =C2=A0 |=C2=A0 12 +-<br=
 >
-> Was this concern about "punting to a separate thread" in reference to
-> the line of work from Mikulas at the top of this 'wip' branch?
-> http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=3Dwip
-
-A little bit in response to
-  https://patchwork.kernel.org/patch/7398411/
-which you linked upthread, but more in response to the per-blocked
-workqueue threads we now have. The (Commit df2cb6daa4) really seemed
-like a lazy solution.
-I may will be that the current proposal makes these threads redundant by
-completely handling the first section split of a request before looking
-to see if there is any more to split.
-
-For this to work, each split would need to be a binary split.
-i.e.
-  If request is too big:
-    1/ split into A that isn't too big and B
-    2/ add B to the "remainder" queue
-    3/ generate sub requests for A and submit them to "recursion" queue
-
-Then 'A' would be completely submitted before B was started, so it would
-be safe for B to wait for any resources (like something from a mempool)
-that A might be using.
-
+=C2=A0libmultipath/prioritizers/alua_rtpg.c |=C2=A0 25 +--<br>
+=C2=A0libmultipath/prioritizers/alua_rtpg.h |=C2=A0 =C2=A06 +-<br>
+=C2=A0libmultipath/prioritizers/emc.c=C2=A0 =C2=A0 =C2=A0 =C2=A0|=C2=A0 =C2=
+=A08 +-<br>
+=C2=A0libmultipath/prioritizers/hds.c=C2=A0 =C2=A0 =C2=A0 =C2=A0|=C2=A0 =C2=
+=A08 +-<br>
+=C2=A0libmultipath/prioritizers/hp_sw.c=C2=A0 =C2=A0 =C2=A0|=C2=A0 46 ++---=
+<br>
+=C2=A0libmultipath/prioritizers/ontap.c=C2=A0 =C2=A0 =C2=A0|=C2=A0 19 +-<br=
 >
->> - it seems to be just delaying the problem.
->
-> Have you looked at this closely?  Not seeing how you can say that given
-> that on schedule the bios on current->bio_list are flushed.
+=C2=A0libmultipath/prioritizers/rdac.c=C2=A0 =C2=A0 =C2=A0 |=C2=A0 =C2=A08 =
++-<br>
+=C2=A0libmultipath/propsel.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 |=C2=A0 99 +++++-----<br>
+=C2=A0libmultipath/propsel.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 |=C2=A0 48 ++---<br>
+=C2=A0libmultipath/structs_vec.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 |=
+=C2=A0 62 ++++---<br>
+=C2=A0libmultipath/structs_vec.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 |=
+=C2=A0 13 +-<br>
+=C2=A0libmultipath/waiter.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0|=C2=A0 =C2=A04 +<br>
+=C2=A0libmultipath/wwids.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 |=C2=A0 22 ++-<br>
+=C2=A0mpathpersist/main.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0|=C2=A0 24 ++-<br>
+=C2=A0multipath/main.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 | 199 ++++++++++++---------<br>
+=C2=A0multipathd/Makefile=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0|=C2=A0 =C2=A02 +-<br>
+=C2=A0multipathd/cli_handlers.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0|=C2=A0 84 ++++++---<br>
+=C2=A0multipathd/main.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0| 327 +++++++++++++++++++++++-----------<br>
+=C2=A0multipathd/uxlsnr.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0|=C2=A0 =C2=A05 -<br>
+=C2=A043 files changed, 1057 insertions(+), 727 deletions(-)<br>
+<span class=3D"HOEnZb"><font color=3D"#888888"><br>
+--<br>
+2.6.6<br>
+<br>
+</font></span></blockquote></div><br></div>
 
-I fully accept that it is similar to a current solution.  I just don't
-like either.
+--001a1140d2be5348390537196a72--
 
-In the sequence of steps given in
-https://patchwork.kernel.org/patch/7398411/
 
-step 6 would now not happen until after the bio mentioned in step 4 has
-been completely submitted, and so after step5 has had a chance to
-release the lock.
+--===============5743344458867530591==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
->
-> The incremental work to delay the offload of queued bios is just meant
-> to preserve existing bio submission order unless there is reason to
-> believe a deadlock exists.
->
-> I would agree that this timer based approach is rather "gross" to some
-> degree _but_ it beats deadlocks!  This code needs fixing.  And the fix
-> cannot be constrained to bio_queue_split() because DM isn't even using
-> it.
 
-Yes, the 1-second timer isn't the most elegant thing ever.  Certainly
-better than a deadlock.  But I think we can do better.
-
-Certainly DM needs fixing, as well as md (and maybe others).  The fix
-should be fairly easy though.
-For md/raid0, the loop in raid0_make_request would be discarded
-and the
-	} while (split !=3D bio);
-at the end would be replaced by
-       if (split !=3D bio)
-              generic_queue_request(bio);
-
-though probably with a better function name.
-generic_queue_request() would add the bio to the ->remainder list.
-
-Presumably DM could do something similar, but I'm not familiar enough
-with the code to say precisely what.
-
-Thanks,
-NeilBrown
-
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJXftpQAAoJEDnsnt1WYoG5coMP/0hj3sVVk3NA1KQzRKOc8KRX
-fpqqTvmjJTt3NMUI1vGDnR16Pqz41zcdOwqvjfFUloY+kDRQUav1Q71bBDpkCfhu
-UWj2lUqOSpmSmKT09xCi4R4MoKaCOxCV1VhYyAlxUPQiorbVaH0iQfRxAvDi+om+
-emFFOSKmfslst9aOzBjZ9XCFsysOmM6j1L6kTknhxAIw1g/KXfnvvDf53U1iy0FZ
-gVDG2XcIK2jJ7zIYk90v2qgRqh0JNc2BhwZcl4p0dGxCkmkdOMDa57QEFcW0iS+c
-4n/yCNsxZ0PTlvisKZ9htz88RrUZtVIj7g1ZUdwnQX+YQWfOZgycr4H+6n3hbLwc
-gafqhl9c9YcigU/bHSECM3Fx4qFN9I63I+MRuEBWZ764nu16ubKcsFhnJ4tz0p8p
-nJ51Wa7RFvxICpmF5o8WSb1U98DpNKD+0E7YF/nZlTN42xsrdQlBDN2h9PdgFHpk
-yROEI1sSljr0KbY3YElndqurvbxNZGRXrlTPpiOWf4Hni/t5mDK/Nj7e4QdruPRY
-rdyz92FX3i3mXeeTOnryYBDbrk72Z2QlLmbC1ac2BPtnb8pDD8QFLu1sDzl3YigQ
-SZgvBlMJCN05bJo5zfQ2E6UQ5O2hE3x8AqxKlMFeKBnlbRdiwWQx9tmu9M998c3Y
-9JiCogFRZvZgw7EEyAQM
-=ywyK
------END PGP SIGNATURE-----
---=-=-=--
+--===============5743344458867530591==--
