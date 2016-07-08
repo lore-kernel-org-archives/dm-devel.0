@@ -1,15 +1,14 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH] multipathd: fix waiter_attr resource leak
-Date: Fri, 8 Jul 2016 14:33:14 -0500
-Message-ID: <20160708193314.GJ8095@octiron.msp.redhat.com>
-References: <OF23BCA109.0BE2FFED-ON48257FE8.0023BAD2-48257FE8.002CA989@zte.com.cn>
-	<CABr-GndMYzjsQrpvi8vNrD9AYUzLO7KmSFOkaOE-Mb4t+O-p5Q@mail.gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [Question] udev ID_UID attribute ???
+Date: Fri, 8 Jul 2016 22:45:11 +0200
+Message-ID: <c6ca404f-4e0e-d7c9-de1f-60e0697df789@gmail.com>
+References: <22f39ecd-bfe7-d3b0-87af-e0b28d368bc8@gmail.com>
+	<5c9472d8-ef1a-bfd7-a916-d4120d881fc1@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CABr-GndMYzjsQrpvi8vNrD9AYUzLO7KmSFOkaOE-Mb4t+O-p5Q@mail.gmail.com>
+In-Reply-To: <5c9472d8-ef1a-bfd7-a916-d4120d881fc1@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,78 +18,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: zhang.kai16@zte.com.cn, device-mapper development <dm-devel@redhat.com>, tang.junhui@zte.com.cn
+To: Mike Christie <mchristi@redhat.com>, device-mapper development <dm-devel@redhat.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
-On Fri, Jul 08, 2016 at 09:59:18AM +0200, Christophe Varoqui wrote:
+On 07/08/2016 05:52 PM, Mike Christie wrote:
 
-ACK
+> On 07/07/2016 04:21 PM, Xose Vazquez Perez wrote:
+>> Is "ID_UID" really valid?
+>>
+>> libmultipath/hwtable.c:         .uid_attribute = "ID_UID",
+>>
+> 
+> I was wondering the same thing. For ceph rbd, we do not have the normal
+> scsi serial/wwn values, so I am modifying our udev rule to export ID_UID.
+> 
+> I made the ID_UID, the values we use for the udev (/dev/rbd) name which
+> is the pool name (basically just a grouping of storage) plus the image
+> name (basically name of a disk created in a pool).
 
--Ben
+ID_UID isn't "standard". It wasn't found in kernel, multipath-tools or systemd(udev)
+sources.
+
+It's variable returned by dasdinfo from 390-tools package, it contains the "DASD uid"
+of a dasd device. And it's used by udev rules to make symlinks for dasd devices under
+/dev/disk/by-id/
+
+This is hercules, but in a LPAR shows a similar output:
+sles11-s390x:~ # dasdinfo -e -a -d /dev/dasda
+ID_BUS=ccw
+ID_TYPE=disk
+ID_UID=HRC.ZZ000000000001.0120.22
+ID_XUID=HRC.ZZ000000000001.0120.22
+ID_SERIAL=0X0122
+
+sles11-s390x:~ # grep ID_UID  /etc/udev/rules.d/59-dasd.rules
+KERNEL=="dasd*[!0-9]", ENV{ID_UID}=="?*", SYMLINK+="disk/by-id/$env{ID_BUS}-$env{ID_UID}"
+KERNEL=="dasd*[0-9]", ENV{ID_UID}=="?*", SYMLINK+="disk/by-id/$env{ID_BUS}-$env{ID_UID}-part%n"
 
 
->    Ben, Hannes, I'd appreciate your ack on this patch.
->    Thanks.
->    On Wed, Jul 6, 2016 at 10:08 AM, <[1]zhang.kai16@zte.com.cn> wrote:
-> =
+It was used for dasd devices in multipath-tools because they haven't a WWN.
 
->      As a global variable waiter_attr of thread attribute was set up in t=
-he
->      daemon,
->      however,it hasn't been destroyed when the daemon exited.
->      We need deinitialize waiter_attr.
->      =A0
->      ---
->      multipathd/main.c | 3 +++
->      1 file changed, 3 insertions(+)
-> =
-
->      diff --git a/multipathd/main.c b/multipathd/main.c
->      index b86374f..09c5485 100644
->      --- a/multipathd/main.c
->      +++ b/multipathd/main.c
->      @@ -2317,6 +2317,9 @@ child (void * param)
->      =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0conf =3D NULL;
->      =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0udev_unref(udev);
->      =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0udev =3D NULL;
->      +
->      + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 pthread_attr_destroy(&waiter_attr);
->      +
->      #ifdef _DEBUG_
->      =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0dbg_free_final(NULL);
->      #endif
->      --
->      1.9.1
-> =
-
->  --------------------------------------------------------
->  ZTE Information Security Notice: The information contained in this mail =
-(and any attachment transmitted herewith) is privileged and confidential an=
-d is intended for the exclusive use of the addressee(s).  If you are not an=
- intended recipient, any disclosure, reproduction, distribution or other di=
-ssemination or use of the information contained is strictly prohibited.  If=
- you have received this mail in error, please delete it and notify us immed=
-iately.
-> =
-
-> =
-
->      --
->      dm-devel mailing list
->      [2]dm-devel@redhat.com
->      [3]https://www.redhat.com/mailman/listinfo/dm-devel
-> =
-
-> References
-> =
-
->    Visible links
->    1. mailto:zhang.kai16@zte.com.cn
->    2. mailto:dm-devel@redhat.com
->    3. https://www.redhat.com/mailman/listinfo/dm-devel
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+So, invent another undocumented variable name :-) , "ID_CEPH" or "ID_CEPH-RBD" ...
