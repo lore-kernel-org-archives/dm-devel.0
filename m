@@ -1,128 +1,62 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 2/2] dm: call PR reserve/unreserve on each underlying device
-Date: Fri,  8 Jul 2016 21:23:51 +0900
-Message-ID: <1467980631-18945-3-git-send-email-hch@lst.de>
-References: <1467980631-18945-1-git-send-email-hch@lst.de>
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1467980631-18945-1-git-send-email-hch@lst.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
-Cc: linux-block@vger.kernel.org
+From: Lars Ellenberg <lars.ellenberg@linbit.com>
+Subject: Re: [dm-devel] [RFC] block: fix blk_queue_split() resource exhaustion
+Date: Fri, 8 Jul 2016 14:52:25 +0200
+Message-ID: <20160708125225.GV13335@soda.linbit>
+References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
+ <871t36ggcr.fsf@notabene.neil.brown.name>
+ <20160707081616.GH13335@soda.linbit>
+ <87vb0hf6fb.fsf@notabene.neil.brown.name>
+ <CACVXFVOpY5f4o-hKc+HFsap=a5YY95SGQ-4n33mWPxm=P+gS-g@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CACVXFVOpY5f4o-hKc+HFsap=a5YY95SGQ-4n33mWPxm=P+gS-g@mail.gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Ming Lei <ming.lei@canonical.com>
+Cc: NeilBrown <neilb@suse.com>, linux-block <linux-block@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, "open list:BCACHE (BLOCK LAYER CACHE)" <linux-bcache@vger.kernel.org>, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, Takashi Iwai <tiwai@suse.de>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Ingo Molnar <mingo@redhat.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, Roland Kammerer <roland.kammerer@linbit.com>
 List-Id: dm-devel.ids
 
-So far we tried to rely on the SCSI 'all target ports' bit to register
-all path, but for many setups this didn't work properly as the different
-path aren seen as separate initiators to the target instead of multiple
-ports of the same initiator.  Because of that we'll stop setting the
-'all target ports' bit in SCSI, and let device mapper handle iterating
-over the device for each path and register it manually.
+On Fri, Jul 08, 2016 at 07:08:32PM +0800, Ming Lei wrote:
+> > So after processing a particular bio, we should then process all the
+> > 'child' bios - bios send to underlying devices.  Then the 'sibling'
+> > bios, that were split off, and then any remaining parents and ancestors.
+> 
+> IMHO, that is just what the oneline patch is doing, isn't it?
+> 
+> | diff --git a/block/blk-core.c b/block/blk-core.c
+>  | index 2475b1c7..a5623f6 100644
+>  | --- a/block/blk-core.c
+>  | +++ b/block/blk-core.c
+>  | @@ -2048,7 +2048,7 @@ blk_qc_t generic_make_request(struct bio *bio)
+>  |       * should be added at the tail
+>  |       */
+>  |      if (current->bio_list) {
+>  | -            bio_list_add(current->bio_list, bio);
+>  | +            bio_list_add_head(current->bio_list, bio);
+>  |              goto out;
+>  |      }
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- drivers/md/dm.c | 85 +++++++++++++++++++++++++++++++++++++++++++++++----------
- 1 file changed, 70 insertions(+), 15 deletions(-)
+Almost, but not quite.
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 1b2f962..e4e98b7 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -3601,26 +3601,81 @@ void dm_free_md_mempools(struct dm_md_mempools *pools)
- 	kfree(pools);
- }
- 
--static int dm_pr_register(struct block_device *bdev, u64 old_key, u64 new_key,
--			  u32 flags)
-+struct dm_pr {
-+	u64	old_key;
-+	u64	new_key;
-+	u32	flags;
-+	bool	fail_early;
-+};
-+
-+static int dm_call_pr(struct block_device *bdev, iterate_devices_callout_fn fn,
-+		void *data)
- {
- 	struct mapped_device *md = bdev->bd_disk->private_data;
--	const struct pr_ops *ops;
--	fmode_t mode;
--	int r;
-+	struct dm_table *table;
-+	struct dm_target *ti;
-+	int ret = 0, srcu_idx;
- 
--	r = dm_grab_bdev_for_ioctl(md, &bdev, &mode);
--	if (r < 0)
--		return r;
-+	table = dm_get_live_table(md, &srcu_idx);
-+	if (!table || !dm_table_get_size(table))
-+		return -ENOTTY;
- 
--	ops = bdev->bd_disk->fops->pr_ops;
--	if (ops && ops->pr_register)
--		r = ops->pr_register(bdev, old_key, new_key, flags);
--	else
--		r = -EOPNOTSUPP;
-+	/* We only support devices that have a single target */
-+	ret = -ENOTTY;
-+	if (dm_table_get_num_targets(table) != 1)
-+		goto out;
-+	ti = dm_table_get_target(table, 0);
- 
--	bdput(bdev);
--	return r;
-+	ret = -EINVAL;
-+	if (!ti->type->iterate_devices)
-+		goto out;
-+
-+	ret = ti->type->iterate_devices(ti, fn, data);
-+	if (ret)
-+		goto out;
-+
-+	ret = 0;
-+out:
-+	dm_put_live_table(md, srcu_idx);
-+	return ret;
-+}
-+
-+/*
-+ * For register / unregister we need to manually call out to every path.
-+ */
-+static int __dm_pr_register(struct dm_target *ti, struct dm_dev *dev,
-+		sector_t start, sector_t len, void *data)
-+{
-+	struct dm_pr *pr = data;
-+	const struct pr_ops *ops = dev->bdev->bd_disk->fops->pr_ops;
-+
-+	if (!ops || !ops->pr_register)
-+		return -EOPNOTSUPP;
-+	return ops->pr_register(dev->bdev, pr->old_key, pr->new_key, pr->flags);
-+}
-+
-+static int dm_pr_register(struct block_device *bdev, u64 old_key, u64 new_key,
-+			  u32 flags)
-+{
-+	struct dm_pr pr = {
-+		.old_key	= old_key,
-+		.new_key	= new_key,
-+		.flags		= flags,
-+		.fail_early	= true,
-+	};
-+	int ret;
-+
-+	ret = dm_call_pr(bdev, __dm_pr_register, &pr);
-+	if (ret && new_key) {
-+		/* unregister all paths if we failed to register any path */
-+		pr.old_key = new_key;
-+		pr.new_key = 0;
-+		pr.flags = 0;
-+		pr.fail_early = false;
-+		dm_call_pr(bdev, __dm_pr_register, &pr);
-+	}
-+
-+	return ret;
- }
- 
- static int dm_pr_reserve(struct block_device *bdev, u64 key, enum pr_type type,
--- 
-2.1.4
+As explained earlier, this will re-order.
+It will still process bios in "deepest level first" order,
+but it will process "sibling" bios in reverse submission order.
+
+Think "very large bio" submitted to a stripe set
+with small stripe width/stripe unit size.
+
+So I'd expect this to be a performance hit in some scenarios,
+unless the stack at some deeper level does back-merging in its elevator.
+(If some driver is not able to merge stuff because of "reverse submission
+order" this can easily mean saturating IOPS of the physical device with
+small requests, throttling bandwidth to a minimum.)
+
+That's why I mentioned it as "potential easy fix for the deadlock",
+but did not suggest it as the proper way to fix this.
+
+If however the powers that be decide that this was a non-issue,
+we could use it this way.
+
+	Lars
 
