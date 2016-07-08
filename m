@@ -1,201 +1,182 @@
-From: NeilBrown <neilb@suse.com>
-Subject: Re: [dm-devel] [RFC] block: fix blk_queue_split() resource	exhaustion
-Date: Fri, 08 Jul 2016 19:39:36 +1000
-Message-ID: <877fcwfoyv.fsf@notabene.neil.brown.name>
-References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com> <871t36ggcr.fsf@notabene.neil.brown.name> <20160707081616.GH13335@soda.linbit> <87vb0hf6fb.fsf@notabene.neil.brown.name> <20160708080219.GT13335@soda.linbit>
+From: Ming Lei <ming.lei@canonical.com>
+Subject: Re: [dm-devel] [RFC] block: fix blk_queue_split() resource exhaustion
+Date: Fri, 8 Jul 2016 19:08:32 +0800
+Message-ID: <CACVXFVOpY5f4o-hKc+HFsap=a5YY95SGQ-4n33mWPxm=P+gS-g@mail.gmail.com>
+References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
+ <871t36ggcr.fsf@notabene.neil.brown.name> <20160707081616.GH13335@soda.linbit>
+ <87vb0hf6fb.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha256; protocol="application/pgp-signature"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160708080219.GT13335@soda.linbit>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Lars Ellenberg <lars.ellenberg@linbit.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, Ming Lei <ming.lei@canonical.com>, linux-kernel@vger.kernel.org, Zheng Liu <gnehzuil.liu@gmail.com>, linux-block@vger.kernel.org, Takashi Iwai <tiwai@suse.de>, linux-bcache@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Alasdair Kergon <agk@redhat.com>, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Roland Kammerer <roland.kammerer@linbit.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <87vb0hf6fb.fsf@notabene.neil.brown.name>
+Sender: linux-bcache-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>
+Cc: Lars Ellenberg <lars.ellenberg@linbit.com>, linux-block <linux-block@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, "open list:BCACHE (BLOCK LAYER CACHE)" <linux-bcache@vger.kernel.org>, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, Takashi Iwai <tiwai@suse.de>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Ingo Molnar <mingo@redhat.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, Roland Kammerer <roland.kammerer@linb>
 List-Id: dm-devel.ids
 
---=-=-=
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+On Fri, Jul 8, 2016 at 6:07 AM, NeilBrown <neilb@suse.com> wrote:
+> On Thu, Jul 07 2016, Lars Ellenberg wrote:
+>
+>> On Thu, Jul 07, 2016 at 03:35:48PM +1000, NeilBrown wrote:
+>>> On Wed, Jun 22 2016, Lars Ellenberg wrote:
+>>>
+>>> > For a long time, generic_make_request() converts recursion into
+>>> > iteration by queuing recursive arguments on current->bio_list.
+>>> >
+>>> > This is convenient for stacking drivers,
+>>> > the top-most driver would take the originally submitted bio,
+>>> > and re-submit a re-mapped version of it, or one or more clones,
+>>> > or one or more new allocated bios to its backend(s). Which
+>>> > are then simply processed in turn, and each can again queue
+>>> > more "backend-bios" until we reach the bottom of the driver stack,
+>>> > and actually dispatch to the real backend device.
+>>> >
+>>> > Any stacking driver ->make_request_fn() could expect that,
+>>> > once it returns, any backend-bios it submitted via recursive calls
+>>> > to generic_make_request() would now be processed and dispatched, before
+>>> > the current task would call into this driver again.
+>>> >
+>>> > This is changed by commit
+>>> >   54efd50 block: make generic_make_request handle arbitrarily sized bios
+>>> >
+>>> > Drivers may call blk_queue_split() inside their ->make_request_fn(),
+>>> > which may split the current bio into a front-part to be dealt with
+>>> > immediately, and a remainder-part, which may need to be split even
+>>> > further. That remainder-part will simply also be pushed to
+>>> > current->bio_list, and would end up being head-of-queue, in front
+>>> > of any backend-bios the current make_request_fn() might submit during
+>>> > processing of the fron-part.
+>>> >
+>>> > Which means the current task would immediately end up back in the same
+>>> > make_request_fn() of the same driver again, before any of its backend
+>>> > bios have even been processed.
+>>> >
+>>> > This can lead to resource starvation deadlock.
+>>> > Drivers could avoid this by learning to not need blk_queue_split(),
+>>> > or by submitting their backend bios in a different context (dedicated
+>>> > kernel thread, work_queue context, ...). Or by playing funny re-ordering
+>>> > games with entries on current->bio_list.
+>>> >
+>>> > Instead, I suggest to distinguish between recursive calls to
+>>> > generic_make_request(), and pushing back the remainder part in
+>>> > blk_queue_split(), by pointing current->bio_lists to a
+>>> >    struct recursion_to_iteration_bio_lists {
+>>> >            struct bio_list recursion;
+>>> >            struct bio_list remainder;
+>>> >    }
+>>> >
+>>> > To have all bios targeted to drivers lower in the stack processed before
+>>> > processing the next piece of a bio targeted at the higher levels,
+>>> > as long as queued bios resulting from recursion are available,
+>>> > they will continue to be processed in FIFO order.
+>>> > Pushed back bio-parts resulting from blk_queue_split() will be processed
+>>> > in LIFO order, one-by-one, whenever the recursion list becomes empty.
+>>>
+>>> I really like this change.  It seems to precisely address the problem.
+>>> The "problem" being that requests for "this" device are potentially
+>>> mixed up with requests from underlying devices.
+>>> However I'm not sure it is quite general enough.
+>>>
+>>> The "remainder" list is a stack of requests aimed at "this" level or
+>>> higher, and I think it will always exactly fit that description.
+>>> The "recursion" list needs to be a queue of requests aimed at the next
+>>> level down, and that doesn't quiet work, because once you start acting
+>>> on the first entry in that list, all the rest become "this" level.
+>>
+>> Uhm, well,
+>> that's how it has been since you introduced this back in 2007, d89d879.
+>> And it worked.
+>
+> Just because it "worked", doesn't mean it was "right" :-)
+>
+>>
+>>> I think you can address this by always calling ->make_request_fn with an
+>>> empty "recursion", then after the call completes, splice the "recursion"
+>>> list that resulted (if any) on top of the "remainder" stack.
+>>>
+>>> This way, the "remainder" stack is always "requests for lower-level
+>>> devices before request for upper level devices" and the "recursion"
+>>> queue is always "requests for devices below the current level".
+>>
+>> Yes, I guess that would work as well,
+>> but may need "empirical proof" to check for performance regressions.
+>>
+>>> I also really *don't* like the idea of punting to a separate thread - it
+>>> seems to be just delaying the problem.
+>>>
+>>> Can you try move the bio_list_init(->recursion) call to just before
+>>> the ->make_request_fn() call, and adding
+>>>     bio_list_merge_head(->remainder, ->recursion)
+>>> just after?
+>>> (or something like that) and confirm it makes sense, and works?
+>>
+>> Sure, will do.
+>> I'd suggest this would be a patch on its own though, on top of this one.
+>> Because it would change the order in which stacked bios are processed
+>> wrt the way it used to be since 2007 (my suggestion as is does not).
+>
+> Yes, because I think the original order is wrong, as you have helped me
+> to see.
+> Before I introduced the recursion limiting, requests were handled as an
+> in-order tree walk.  The code I wrote tried to preserve that but didn't
+> for several reasons.  I think we need to restore the original in-order
+> walk because it makes the most sense.
 
-On Fri, Jul 08 2016, Lars Ellenberg wrote:
+> So after processing a particular bio, we should then process all the
+> 'child' bios - bios send to underlying devices.  Then the 'sibling'
+> bios, that were split off, and then any remaining parents and ancestors.
 
-> On Fri, Jul 08, 2016 at 08:07:52AM +1000, NeilBrown wrote:
->> Before I introduced the recursion limiting, requests were handled as an
->> in-order tree walk.  The code I wrote tried to preserve that but didn't
->> for several reasons.  I think we need to restore the original in-order
->> walk because it makes the most sense.
->> So after processing a particular bio, we should then process all the
->> 'child' bios - bios send to underlying devices.  Then the 'sibling'
->> bios, that were split off, and then any remaining parents and ancestors.
->>=20
->> You patch created the right structures for doing this, my proposal took
->> it a step closer, but now after more careful analysis I don't think it
->> is quite right.
->> With my previous proposal (and you latest patch - thanks!) requests for
->> "this" level are stacked, but they should be queued.
->> If a make_request_fn only ever submits one request for this level and
->> zero or more lower levels, then the difference between a queue and a
->> stack is irrelevant.  If it submited more that one, a stack would cause
->> them to be handled in the reverse order.
->
-> We have a device stack.
-> q_this_level->make_request_fn() cannot possibly submit anything
-> on "this_level", or it would create a device loop, I think.
->
-> So we start with the initial, "top most" call to generic_make_request().
-> That is one single bio. All queues are empty.
->
-> This bio is then passed on to its destination queue make_request_fn().
->
-> Which may chose to split it (via blk_queue_split, or like dm does, or
-> else). If it, like blk_queue_split() does, splits it into
-> "piece-I-can-handle-now" and "remainder", both still targeted at the
-> top most (current) queue, I think the "remainder" should just be pushed
-> back, which will make it look as if upper layers did
-> 	generic_make_request("piece-I-can-handle-now");
-> 	generic_make_request("remainder");
-> Which I do, by using bio_list_add_head(remainder, bio); (*head*).
+IMHO, that is just what the oneline patch is doing, isn't it?
 
-This is exactly what I mean by "submitting a request at 'this' level".
-Maybe that is a poor way to express it.  Within a make_request_fn, you
-cannot "submit" a request, you can only "queue" a request.
-generic_make_request hides that by doing something different for a call
-From=20a make_request_fn that for a call from anywhere else.
-The important thing is to have 2 queues to queue to.
-
->
-> I don't see any other way for a make_request_fn(bio(l=3Dx)) to generate
-> "sibling" bios to the same level (l=3Dx) as its own argument.
-
-Yes, it only comes from splitting.
-
->
-> This same q(l=3Dx)->make_request_fn(bio(l=3Dx)) may now call
-> generic_make_request() for zero or more "child" bios (l=3Dx+1),
-> which are queued in order: bio_list_add(recursion, bio); (*tail*).
-> Then, once l=3Dx returns, the queue generated by it is spliced
-> in front of the "remainder" (*head*).
-> All bios are processed in the order they have been queued,
-> by peeling off of the head.
->
-> After all "child" bios of level l>=3Dx+1 have been processed,
-> the next bio to be processed will be the "pushed back" remainder.
->
-> All "Natural order".
->
->> To make the patch "perfect", and maybe even more elegant we could treat
->> ->remainder and ->recursion more alike.
->> i.e.:
->>   - generic make request has a private "stack" of requests.
->>   - before calling ->make_request_fn(), both ->remainder and ->recursion
->>     are initialised
->>   - after ->make_request_fn(), ->remainder are spliced in to top of
->>     'stack', then ->recursion is spliced onto that.
->>   - If stack is not empty, the top request is popped and we loop to top.
->>=20
->> This reliably follows in-order execution, and handles siblings correctly
->> (in submitted order) if/when a request splits off multiple siblings.
->
-> The only splitting that creates siblings on the current level
-> is blk_queue_split(), which splits the current bio into
-> "front piece" and "remainder", already processed in this order.
-
-Yes.
-I imagine that a driver *could* split a bio into three parts with a
-single allocation, but I cannot actually see any point in doing it.  So
-I was over-complicating things.
-
->
-> Anything else creating "siblings" is not creating siblings for the
-> current layer, but for the next deeper layer, which are queue on
-> "recursion" and also processed in the order they have been generated.
->
->> I think that as long a requests are submitted in the order they are
->> created at each level there is no reason to expect performance
->> regressions.
->> All we are doing is changing the ordering between requests generated at
->> different levels, and I think we are restoring a more natural order.
->
-> I believe both patches combined are doing exactly this already.
-> I could rename .remainder to .todo or .incoming, though.
-
-:-)  neither "remainder" or "recursion" seem like brilliant names to me,
-but I don't have anything better to suggest.  Naming is hard!
-As long as a comment explains the name clearly I could cope with X and Y.
-
->
-> .incoming =3D [ bio(l=3D0) ]
-> .recursion =3D []
->
-> split
->
-> .incoming =3D [ bio(l=3D0,now_1), bio(l=3D0,remainder_1) ]
-> .recursion =3D []
->
-> process head of .incoming
->
-> .incoming =3D [ bio(l=3D0,remainder_1) ]
-> .recursion =3D [ bio(l=3D1,a), bio(l=3D1,b), bio(l=3D1,c), ... ]
->
-> merge_head
->
-> .incoming =3D [ bio(l=3D1,a), bio(l=3D1,b), bio(l=3D1,c), ...,
-> 		bio(l=3D0,remainder_1) ]
-> .recursion =3D []
->
-> process head of .incoming, potentially split first
->
-> .incoming =3D [ bio(l=3D1,a,now), bio(l=3D1,a,remainder), bio(l=3D1,b), b=
-io(l=3D1,c), ...,
-> 		bio(l=3D0,remainder_1) ]
-> ...
-> .incoming =3D [ bio(l=3D1,a,remainder), bio(l=3D1,b), bio(l=3D1,c), ...,
-> 		bio(l=3D0,remainder_1) ]
-> .recursion =3D [ bio(l=3D2,aa), bio(l=3D2,ab), ... ]
->
-> merge_head
->
-> .incoming =3D [ bio(l=3D2,aa), bio(l=3D2,ab), ...,
-> 		bio(l=3D1,a,remainder), bio(l=3D1,b), bio(l=3D1,c), ...,
-> 		bio(l=3D0,remainder_1) ]
-> .recursion =3D []
->
-> ...
->
-> process away ... until back at l=3D0
->
-> .incoming =3D [ bio(l=3D0,remainder_1) ]
-> .recursion =3D []
->
-> potentially split further
-> .incoming =3D [ bio(l=3D0,now_2), bio(l=3D0,remainder_2) ]
-> .recursion =3D []
->
-> rinse, repeat.
-
-I think we just might be in violent agreement.
+| diff --git a/block/blk-core.c b/block/blk-core.c
+ | index 2475b1c7..a5623f6 100644
+ | --- a/block/blk-core.c
+ | +++ b/block/blk-core.c
+ | @@ -2048,7 +2048,7 @@ blk_qc_t generic_make_request(struct bio *bio)
+ |       * should be added at the tail
+ |       */
+ |      if (current->bio_list) {
+ | -            bio_list_add(current->bio_list, bio);
+ | +            bio_list_add_head(current->bio_list, bio);
+ |              goto out;
+ |      }
 
 Thanks,
-NeilBrown
 
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJXf3TYAAoJEDnsnt1WYoG5ZU0P/ikpEaqKzxaAOr/+RgZGaje5
-Bs+UYuIc/UqJ3MTqL075LGD2Y/Bu3aK6oiCAKvHsatPx/28Akc3lzmOOQF9Mr/sw
-Vf63Sp53roKS6IswJeIf7U0+y8d0M/YIxysP7KfjiT9KyubSyTmgICgAkatQ3lbL
-gnZyiJr11BMPxQ74Iluw56yRzmvr7DAjZJ+Mm4Zn/jh43N1XiE0AQ/dWk5tQm80N
-VOYKNayBL9uyOl/W4AIy55+6yfN6DlwgsisAVPodTyfcbj3YlSTsLta5zRE6YRw4
-2WNay7R5muc3GQb5gZCGXgDbLoimGkOAf5WSQU/HCh0+4jGbSHLc7bJljZN48RYE
-WzJ7LAhSOdil8PMbHzbb65vPBHBiBJv51DaID43hhLTD1mPjoIAPURhOb5QYLYmN
-oAVx8dGgtRj2TTqGstXrIKXe/zA5h0JPM3+w2QVSdKaJwnd1EW1PLAPNoTe0boAM
-JpEXbZxOyRjFbTif2naO9xUXZYEa35lkxMpr8R03hDtzrQxmANpZqUBQkGUSI4ud
-RhWcZihj8ZHcdJIt+t5VWlEj+Ibh1iAEm+2+ddyK18C6sJV/72NTsCoJ3mCqyTlJ
-f/ZwQG41mzaLGM7J/2H6lPwbqOwKohcwrIH9dZpoSXyDkZuMiT9HGHVbugYjvBkw
-44sDYhDtVnYoHS9V7EyO
-=TUTD
------END PGP SIGNATURE-----
---=-=-=--
+>
+> You patch created the right structures for doing this, my proposal took
+> it a step closer, but now after more careful analysis I don't think it
+> is quite right.
+> With my previous proposal (and you latest patch - thanks!) requests for
+> "this" level are stacked, but they should be queued.
+> If a make_request_fn only ever submits one request for this level and
+> zero or more lower levels, then the difference between a queue and a
+> stack is irrelevant.  If it submited more that one, a stack would cause
+> them to be handled in the reverse order.
+>
+> To make the patch "perfect", and maybe even more elegant we could treat
+> ->remainder and ->recursion more alike.
+> i.e.:
+>   - generic make request has a private "stack" of requests.
+>   - before calling ->make_request_fn(), both ->remainder and ->recursion
+>     are initialised
+>   - after ->make_request_fn(), ->remainder are spliced in to top of
+>     'stack', then ->recursion is spliced onto that.
+>   - If stack is not empty, the top request is popped and we loop to top.
+>
+> This reliably follows in-order execution, and handles siblings correctly
+> (in submitted order) if/when a request splits off multiple siblings.
+>
+>>
+>> Which may change performance metrics.
+>> It may even improve some of them,
+>> or maybe it does nothing, but we don't know.
+>
+> I think that as long a requests are submitted in the order they are
+> created at each level there is no reason to expect performance
+> regressions.
+> All we are doing is changing the ordering between requests generated at
+> different levels, and I think we are restoring a more natural order.
+>
+> Thanks,
+> NeilBrown
