@@ -1,160 +1,152 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipathd: fix waiter_attr resource leak
-Date: Fri, 8 Jul 2016 09:59:18 +0200
-Message-ID: <CABr-GndMYzjsQrpvi8vNrD9AYUzLO7KmSFOkaOE-Mb4t+O-p5Q@mail.gmail.com>
-References: <OF23BCA109.0BE2FFED-ON48257FE8.0023BAD2-48257FE8.002CA989@zte.com.cn>
+From: Lars Ellenberg <lars.ellenberg@linbit.com>
+Subject: Re: [dm-devel] [RFC] block: fix blk_queue_split() resource exhaustion
+Date: Fri, 8 Jul 2016 10:02:19 +0200
+Message-ID: <20160708080219.GT13335@soda.linbit>
+References: <1466583730-28595-1-git-send-email-lars.ellenberg@linbit.com>
+ <871t36ggcr.fsf@notabene.neil.brown.name>
+ <20160707081616.GH13335@soda.linbit>
+ <87vb0hf6fb.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1294277211946708252=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <OF23BCA109.0BE2FFED-ON48257FE8.0023BAD2-48257FE8.002CA989@zte.com.cn>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: zhang.kai16@zte.com.cn
-Cc: device-mapper development <dm-devel@redhat.com>, tang.junhui@zte.com.cn
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <87vb0hf6fb.fsf@notabene.neil.brown.name>
+Sender: linux-kernel-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>
+Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, Ming Lei <ming.lei@canonical.com>, linux-bcache@vger.kernel.org, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, Takashi Iwai <tiwai@suse.de>, dm-devel@redhat.com, Ingo Molnar <mingo@redhat.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, Roland Kammerer <roland.kammerer@linbit.com>
 List-Id: dm-devel.ids
 
---===============1294277211946708252==
-Content-Type: multipart/alternative; boundary=001a1140d2befd920005371b2d20
+On Fri, Jul 08, 2016 at 08:07:52AM +1000, NeilBrown wrote:
+> Before I introduced the recursion limiting, requests were handled as an
+> in-order tree walk.  The code I wrote tried to preserve that but didn't
+> for several reasons.  I think we need to restore the original in-order
+> walk because it makes the most sense.
+> So after processing a particular bio, we should then process all the
+> 'child' bios - bios send to underlying devices.  Then the 'sibling'
+> bios, that were split off, and then any remaining parents and ancestors.
+> 
+> You patch created the right structures for doing this, my proposal took
+> it a step closer, but now after more careful analysis I don't think it
+> is quite right.
+> With my previous proposal (and you latest patch - thanks!) requests for
+> "this" level are stacked, but they should be queued.
+> If a make_request_fn only ever submits one request for this level and
+> zero or more lower levels, then the difference between a queue and a
+> stack is irrelevant.  If it submited more that one, a stack would cause
+> them to be handled in the reverse order.
 
---001a1140d2befd920005371b2d20
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+We have a device stack.
+q_this_level->make_request_fn() cannot possibly submit anything
+on "this_level", or it would create a device loop, I think.
 
-Ben, Hannes, I'd appreciate your ack on this patch.
+So we start with the initial, "top most" call to generic_make_request().
+That is one single bio. All queues are empty.
 
-Thanks.
+This bio is then passed on to its destination queue make_request_fn().
 
-On Wed, Jul 6, 2016 at 10:08 AM, <zhang.kai16@zte.com.cn> wrote:
+Which may chose to split it (via blk_queue_split, or like dm does, or
+else). If it, like blk_queue_split() does, splits it into
+"piece-I-can-handle-now" and "remainder", both still targeted at the
+top most (current) queue, I think the "remainder" should just be pushed
+back, which will make it look as if upper layers did
+	generic_make_request("piece-I-can-handle-now");
+	generic_make_request("remainder");
+Which I do, by using bio_list_add_head(remainder, bio); (*head*).
 
-> As a global variable waiter_attr of thread attribute was set up in the
-> daemon,
-> however,it hasn't been destroyed when the daemon exited.
-> We need deinitialize waiter_attr.
->
->
-> ---
-> multipathd/main.c | 3 +++
-> 1 file changed, 3 insertions(+)
->
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index b86374f..09c5485 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -2317,6 +2317,9 @@ child (void * param)
->                  conf =3D NULL;
->                  udev_unref(udev);
->                  udev =3D NULL;
-> +
-> +                 pthread_attr_destroy(&waiter_attr);
-> +
-> #ifdef _DEBUG_
->                  dbg_free_final(NULL);
-> #endif
-> --
-> 1.9.1
->
->
->
->
-> --------------------------------------------------------
-> ZTE Information Security Notice: The information contained in this mail (=
-and any attachment transmitted herewith) is privileged and confidential and=
- is intended for the exclusive use of the addressee(s).  If you are not an =
-intended recipient, any disclosure, reproduction, distribution or other dis=
-semination or use of the information contained is strictly prohibited.  If =
-you have received this mail in error, please delete it and notify us immedi=
-ately.
->
->
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+I don't see any other way for a make_request_fn(bio(l=x)) to generate
+"sibling" bios to the same level (l=x) as its own argument.
 
---001a1140d2befd920005371b2d20
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+This same q(l=x)->make_request_fn(bio(l=x)) may now call
+generic_make_request() for zero or more "child" bios (l=x+1),
+which are queued in order: bio_list_add(recursion, bio); (*tail*).
+Then, once l=x returns, the queue generated by it is spliced
+in front of the "remainder" (*head*).
+All bios are processed in the order they have been queued,
+by peeling off of the head.
 
-<div dir=3D"ltr">Ben, Hannes, I&#39;d appreciate your ack on this patch.<di=
-v><br></div><div>Thanks.</div></div><div class=3D"gmail_extra"><br><div cla=
-ss=3D"gmail_quote">On Wed, Jul 6, 2016 at 10:08 AM,  <span dir=3D"ltr">&lt;=
-<a href=3D"mailto:zhang.kai16@zte.com.cn" target=3D"_blank">zhang.kai16@zte=
-.com.cn</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D=
-"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><font size=
-=3D"2" face=3D"sans-serif">As a global variable waiter_attr of thread
-attribute was set up in the daemon, </font>
-<br><font size=3D"2" face=3D"sans-serif">however,it hasn&#39;t been destroy=
-ed when
-the daemon exited.</font>
-<br><font size=3D"2" face=3D"sans-serif">We need deinitialize waiter_attr.<=
-/font>
-<br><font size=3D"2" face=3D"sans-serif">=C2=A0<br>
-</font>
-<br><tt><font size=3D"2">---<br>
- multipathd/main.c | 3 +++<br>
- 1 file changed, 3 insertions(+)<br>
-<br>
-diff --git a/multipathd/main.c b/multipathd/main.c<br>
-index b86374f..09c5485 100644<br>
---- a/multipathd/main.c<br>
-+++ b/multipathd/main.c<br>
-@@ -2317,6 +2317,9 @@ child (void * param)<br>
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0conf
-=3D NULL;<br>
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0udev_unref(u=
-dev);<br>
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0udev
-=3D NULL;<br>
-+<br>
-+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
-pthread_attr_destroy(&amp;waiter_attr);<br>
-+<br>
- #ifdef _DEBUG_<br>
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0dbg_free_fin=
-al(NULL);<br>
- #endif<span class=3D"HOEnZb"><font color=3D"#888888"><br>
--- <br>
-1.9.1<br>
-</font></span></font></tt><span class=3D"HOEnZb"><font color=3D"#888888">
-<br>
-<br>
+After all "child" bios of level l>=x+1 have been processed,
+the next bio to be processed will be the "pushed back" remainder.
 
-<br><pre><font color=3D"blue">
---------------------------------------------------------
-ZTE Information Security Notice: The information contained in this mail (an=
-d any attachment transmitted herewith) is privileged and confidential and i=
-s intended for the exclusive use of the addressee(s).  If you are not an in=
-tended recipient, any disclosure, reproduction, distribution or other disse=
-mination or use of the information contained is strictly prohibited.  If yo=
-u have received this mail in error, please delete it and notify us immediat=
-ely.
+All "Natural order".
 
-</font></pre><br>
-</font></span><br>--<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
-<br></blockquote></div><br></div>
+> To make the patch "perfect", and maybe even more elegant we could treat
+> ->remainder and ->recursion more alike.
+> i.e.:
+>   - generic make request has a private "stack" of requests.
+>   - before calling ->make_request_fn(), both ->remainder and ->recursion
+>     are initialised
+>   - after ->make_request_fn(), ->remainder are spliced in to top of
+>     'stack', then ->recursion is spliced onto that.
+>   - If stack is not empty, the top request is popped and we loop to top.
+> 
+> This reliably follows in-order execution, and handles siblings correctly
+> (in submitted order) if/when a request splits off multiple siblings.
 
---001a1140d2befd920005371b2d20--
+The only splitting that creates siblings on the current level
+is blk_queue_split(), which splits the current bio into
+"front piece" and "remainder", already processed in this order.
 
+Anything else creating "siblings" is not creating siblings for the
+current layer, but for the next deeper layer, which are queue on
+"recursion" and also processed in the order they have been generated.
 
---===============1294277211946708252==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+> I think that as long a requests are submitted in the order they are
+> created at each level there is no reason to expect performance
+> regressions.
+> All we are doing is changing the ordering between requests generated at
+> different levels, and I think we are restoring a more natural order.
 
+I believe both patches combined are doing exactly this already.
+I could rename .remainder to .todo or .incoming, though.
 
---===============1294277211946708252==--
+.incoming = [ bio(l=0) ]
+.recursion = []
+
+split
+
+.incoming = [ bio(l=0,now_1), bio(l=0,remainder_1) ]
+.recursion = []
+
+process head of .incoming
+
+.incoming = [ bio(l=0,remainder_1) ]
+.recursion = [ bio(l=1,a), bio(l=1,b), bio(l=1,c), ... ]
+
+merge_head
+
+.incoming = [ bio(l=1,a), bio(l=1,b), bio(l=1,c), ...,
+		bio(l=0,remainder_1) ]
+.recursion = []
+
+process head of .incoming, potentially split first
+
+.incoming = [ bio(l=1,a,now), bio(l=1,a,remainder), bio(l=1,b), bio(l=1,c), ...,
+		bio(l=0,remainder_1) ]
+...
+.incoming = [ bio(l=1,a,remainder), bio(l=1,b), bio(l=1,c), ...,
+		bio(l=0,remainder_1) ]
+.recursion = [ bio(l=2,aa), bio(l=2,ab), ... ]
+
+merge_head
+
+.incoming = [ bio(l=2,aa), bio(l=2,ab), ...,
+		bio(l=1,a,remainder), bio(l=1,b), bio(l=1,c), ...,
+		bio(l=0,remainder_1) ]
+.recursion = []
+
+...
+
+process away ... until back at l=0
+
+.incoming = [ bio(l=0,remainder_1) ]
+.recursion = []
+
+potentially split further
+.incoming = [ bio(l=0,now_2), bio(l=0,remainder_2) ]
+.recursion = []
+
+rinse, repeat.
+
+Thanks,
+
+    Lars Ellenberg
