@@ -1,77 +1,46 @@
-From: scar <scar-47zfDnpWZoPQT0dZR+AlfA@public.gmane.org>
-Subject: iSCSI device / error getting device,
-	error adding target to table
-Date: Fri, 8 Jul 2016 16:16:08 -0700
-Message-ID: <nlpc7p$mh8$1@ger.gmane.org>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH 4/6] multipath-tools: delete minio_rq attribute
+	when it is equal to default value
+Date: Sat,  9 Jul 2016 01:58:46 +0200
+Message-ID: <1468022328-5905-5-git-send-email-xose.vazquez@gmail.com>
+References: <1468022328-5905-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1468022328-5905-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org?subject=unsubscribe>
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Help: <mailto:dm-devel-request-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org?subject=help>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org?subject=subscribe>
-Sender: dm-devel-bounces-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Errors-To: dm-devel-bounces-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-To: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-We have a DotHill iSCSI device which i've already setup with one volume. 
-  The device has two controllers each with two network ports, so the 
-volume is accessible via four different IP addresses.  On the initiator, 
-the volume thus shows up as four disks, /dev/sde thru /dev/sdh.  I 
-already created a partition and currently i just mount one of the 
-partitions, but would like to setup multipath instead so if something 
-fails, the multipath device will continue working without having to 
-remount anything.
+      1                 .minio_rq      = 1,
 
-I used scsi_id to find the WWID of sde thru sdh, they all have the same 
-WWID.  I thought a multipath.conf like this would work:
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-blacklist {
-         wwid "*"
-}
-blacklist_exceptions {
-	wwid "3600c0ff00012400bdb0e485701000000"
-}
-defaults {
-	selector		"round-robin 0"
-	path_grouping_policy	multibus
-	getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
-	user_friendly_names	yes
-}
-multipaths {
-	multipath {
-		wwid	3600c0ff00012400bdb0e485701000000
-	}
-}
-devices {
-	device {
-		vendor		"DotHill"
-		product		"R/Evo 2330-2R"
-		no_path_retry	"queue"
-	}
-}
-
-but when i start multipathd i see a bunch of errors and no successes:
-
-Jul  8 16:02:42 initiator kernel: device-mapper: table: 253:3: 
-multipath: error getting device
-Jul  8 16:02:42 initiator kernel: device-mapper: ioctl: error adding 
-target to table
-[previous 2 lines repeated several times]
-Jul  8 16:02:42 initiator multipathd: path checkers start up
-Jul  8 16:02:46 initiator kernel: device-mapper: table: 253:3: 
-multipath: error getting device
-Jul  8 16:02:46 initiator kernel: device-mapper: ioctl: error adding 
-target to table
-Jul  8 16:02:46 initiator multipathd: dm-3: remove map (uevent)
-Jul  8 16:02:46 initiator multipathd: dm-3: devmap not registered, can't 
-remove
-[previous 4 lines repeated several times]
-
-and 'multipath -v2' command doesn't print anything.  The 
-initiator/server is running RHEL5.
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index efc1759..d3be19a 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -914,7 +914,6 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = 30,
+ 		.rr_weight     = RR_WEIGHT_PRIO,
+ 		.no_path_retry = NO_PATH_RETRY_FAIL,
+-		.minio_rq      = 1,
+ 		.flush_on_last_del = FLUSH_ENABLED,
+ 		.fast_io_fail  = 5,
+ 		.dev_loss      = 30,
+-- 
+2.7.4
