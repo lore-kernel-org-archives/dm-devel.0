@@ -1,12 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 0/6] Delete attributes with default values
-Date: Sat, 9 Jul 2016 10:17:05 +0200
-Message-ID: <CABr-GncP-rzeXogT1EFZTtFrre2UUSV6i-AJ27GZ3mTvcxx-7Q@mail.gmail.com>
-References: <1468022328-5905-1-git-send-email-xose.vazquez@gmail.com>
+From: Ritesh Raj Sarraf <rrs@debian.org>
+Subject: Re: [PATCH 2/3] multipath-tools: merge OPTFLAGS into
+	CFLAGS
+Date: Sat, 09 Jul 2016 11:19:31 +0200
+Message-ID: <1468055971.5895.0.camel@debian.org>
+References: <1467995301-14226-1-git-send-email-xose.vazquez@gmail.com>
+	<1467995301-14226-3-git-send-email-xose.vazquez@gmail.com>
+Reply-To: rrs@debian.org
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8316871660372430581=="
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1468022328-5905-1-git-send-email-xose.vazquez@gmail.com>
+In-Reply-To: <1467995301-14226-3-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,110 +21,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: Dragan@redhat.com, Mathieu Trudel-Lapierre <mathieu.trudel-lapierre@canonical.com>, Stancevic <dragan.stancevic@canonical.com>, device-mapper development <dm-devel@redhat.com>, Louis Bouchard <louis.bouchard@canonical.com>
 List-Id: dm-devel.ids
 
---===============8316871660372430581==
-Content-Type: multipart/alternative; boundary=001a1141084075170105372f8ba4
-
---001a1141084075170105372f8ba4
-Content-Type: text/plain; charset=UTF-8
-
-I'll wait for comments from distribution maintainers on this patchset.
-
-Because, though we have already deleted the checker_name settings when
-equal to the default value, it should be clear that with this patchset
-changing a default may cause re-certification for all impacted devices.
-This can be viewed as a problem for distributors.
-
-Hannes, Ben, do you ack this patchset ? If not, what do we do the
-checker_name settings, that I understood Hannes wanted to switch to TUR
-anyway.
-
-
-On Sat, Jul 9, 2016 at 1:58 AM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
-
-> Xose Vazquez Perez (6):
->   multipath-tools: delete attributes with DEFAULT_* values in hwtable.c
->   multipath-tools: delete prio_args attribute when it is equal to default
-> value
->   multipath-tools: delete no_path_retry attribute when it is equal to
-> default value
->   multipath-tools: delete minio_rq attribute when it is equal to default
-> value
->   multipath-tools: delete fast_io_fail attribute when it is equal to
-> default value
->   multipath-tools: delete pgpolicy attribute when it is equal to default
-> value
->
->  libmultipath/hwtable.c | 226
-> -------------------------------------------------
->  1 file changed, 226 deletions(-)
->
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
->
-> --
-> 2.7.4
->
->
-
---001a1141084075170105372f8ba4
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">I&#39;ll wait for comments from distribution maintainers o=
-n this patchset.<div><br></div><div>Because, though we have already deleted=
- the checker_name settings when equal to the default value, it should be cl=
-ear that with this patchset changing a default may cause re-certification f=
-or all impacted devices. This can be viewed as a problem for distributors.<=
-/div><div><br></div><div>Hannes, Ben, do you ack this patchset ? If not, wh=
-at do we do the checker_name settings, that I understood Hannes wanted to s=
-witch to TUR anyway.</div><div><br></div></div><div class=3D"gmail_extra"><=
-br><div class=3D"gmail_quote">On Sat, Jul 9, 2016 at 1:58 AM, Xose Vazquez =
-Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" targe=
-t=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote cl=
-ass=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;p=
-adding-left:1ex">Xose Vazquez Perez (6):<br>
-=C2=A0 multipath-tools: delete attributes with DEFAULT_* values in hwtable.=
-c<br>
-=C2=A0 multipath-tools: delete prio_args attribute when it is equal to defa=
-ult value<br>
-=C2=A0 multipath-tools: delete no_path_retry attribute when it is equal to =
-default value<br>
-=C2=A0 multipath-tools: delete minio_rq attribute when it is equal to defau=
-lt value<br>
-=C2=A0 multipath-tools: delete fast_io_fail attribute when it is equal to d=
-efault value<br>
-=C2=A0 multipath-tools: delete pgpolicy attribute when it is equal to defau=
-lt value<br>
-<br>
-=C2=A0libmultipath/hwtable.c | 226 ----------------------------------------=
----------<br>
-=C2=A01 file changed, 226 deletions(-)<br>
-<br>
-Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com=
-">christophe.varoqui@opensvc.com</a>&gt;<br>
-Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
--devel@redhat.com</a>&gt;<br>
-Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
-com">xose.vazquez@gmail.com</a>&gt;<br>
-<br>
---<br>
-2.7.4<br>
-<br>
-</blockquote></div><br></div>
-
---001a1141084075170105372f8ba4--
-
-
---===============8316871660372430581==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============8316871660372430581==--
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQpIYXNoOiBTSEE1MTIKClRoYW5rcyBY
+b3NlLgoKVGhlc2UgY2hhbmdlcyBhcmUgZ29vZCB3aXRoIERlYmlhbi4KCgpSaXRlc2gKCk9uIEZy
+aSwgMjAxNi0wNy0wOCBhdCAxODoyOCArMDIwMCwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+
+IE9QVEZMQUdTIGlzIG5vdCB1c2VkIGFueXdoZXJlLCBidXQgbWF5YmUgaXQncyBpbnRydXNpdmUg
+Zm9yIGRpc3RyaWJ1dGlvbnMuCj4gCj4gQ2M6IE1hdGhpZXUgVHJ1ZGVsLUxhcGllcnJlIDxtYXRo
+aWV1LnRydWRlbC1sYXBpZXJyZUBjYW5vbmljYWwuY29tPgo+IENjOiBEcmFnYW4gU3RhbmNldmlj
+IDxkcmFnYW4uc3RhbmNldmljQGNhbm9uaWNhbC5jb20+Cj4gQ2M6IExvdWlzIEJvdWNoYXJkIDxs
+b3Vpcy5ib3VjaGFyZEBjYW5vbmljYWwuY29tPgo+IENjOiBSaXRlc2ggUmFqIFNhcnJhZiA8cnJz
+QGRlYmlhbi5vcmc+Cj4gQ2M6IEJlbmphbWluIE1hcnppbnNraSA8Ym1hcnppbnNAcmVkaGF0LmNv
+bT4KPiBDYzogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuZGU+Cj4gQ2M6IENocmlzdG9waGUg
+VmFyb3F1aSA8Y2hyaXN0b3BoZS52YXJvcXVpQG9wZW5zdmMuY29tPgo+IENjOiBkZXZpY2UtbWFw
+cGVyIGRldmVsb3BtZW50IDxkbS1kZXZlbEByZWRoYXQuY29tPgo+IFNpZ25lZC1vZmYtYnk6IFhv
+c2UgVmF6cXVleiBQZXJleiA8eG9zZS52YXpxdWV6QGdtYWlsLmNvbT4KPiAtLS0KPiDCoE1ha2Vm
+aWxlLmluYyB8IDcgKysrLS0tLQo+IMKgMSBmaWxlIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKSwg
+NCBkZWxldGlvbnMoLSkKPiAKPiBkaWZmIC0tZ2l0IGEvTWFrZWZpbGUuaW5jIGIvTWFrZWZpbGUu
+aW5jCj4gaW5kZXggMDFkNzQzYy4uYjcwNzdmYyAxMDA2NDQKPiAtLS0gYS9NYWtlZmlsZS5pbmMK
+PiArKysgYi9NYWtlZmlsZS5pbmMKPiBAQCAtNjAsMTAgKzYwLDkgQEAgUk3CoMKgwqDCoMKgwqDC
+oMKgwqDCoD0gcm0gLWYKPiDCoExOwqDCoMKgwqDCoMKgwqDCoMKgwqA9IGxuIC1zZgo+IMKgSU5T
+VEFMTF9QUk9HUkFNID0gaW5zdGFsbAo+IMKgCj4gLU9QVEZMQUdTwqDCoMKgwqDCoD0gLVd1bnVz
+ZWQgLVdzdHJpY3QtcHJvdG90eXBlcyAtTzIgLWcgLXBpcGUgLVdmb3JtYXQtc2VjdXJpdHkKPiAt
+V2FsbCBcCj4gLQkJLVdwLC1EX0ZPUlRJRllfU09VUkNFPTIgLWZleGNlcHRpb25zIC1mc3RhY2st
+cHJvdGVjdG9yIC0tCj4gcGFyYW09c3NwLWJ1ZmZlci1zaXplPTQKPiAtCj4gLUNGTEFHUwnCoMKg
+wqDCoMKgPSAkKE9QVEZMQUdTKSAtZlBJQyAtRExJQl9TVFJJTkc9XCIke0xJQn1cIgo+IC1EUlVO
+X0RJUj1cIiR7UlVOfVwiCj4gK0NGTEFHU8KgwqDCoMKgwqDCoD0gLVd1bnVzZWQgLVdzdHJpY3Qt
+cHJvdG90eXBlcyAtTzIgLWcgLXBpcGUgLVdmb3JtYXQtc2VjdXJpdHkKPiAtV2FsbCBcCj4gKwkJ
+LVdwLC1EX0ZPUlRJRllfU09VUkNFPTIgLWZleGNlcHRpb25zIC1mc3RhY2stcHJvdGVjdG9yIC0t
+Cj4gcGFyYW09c3NwLWJ1ZmZlci1zaXplPTQgXAo+ICsJCS1mUElDIC1ETElCX1NUUklORz1cIiR7
+TElCfVwiIC1EUlVOX0RJUj1cIiR7UlVOfVwiCj4gwqBTSEFSRURfRkxBR1MgPSAtc2hhcmVkCj4g
+wqAKPiDCoCUubzoJJS5jCi0gLS0gClJpdGVzaCBSYWogU2FycmFmIHwgaHR0cDovL3Blb3BsZS5k
+ZWJpYW4ub3JnL35ycnMKRGViaWFuIC0gVGhlIFVuaXZlcnNhbCBPcGVyYXRpbmcgU3lzdGVtCi0t
+LS0tQkVHSU4gUEdQIFNJR05BVFVSRS0tLS0tCgppUUljQkFFQkNnQUdCUUpYZ01HakFBb0pFS1k2
+V0tQeTRYVnBzM0lQL2k4V2pDZHJHTi9iaGZwUWdydDl3RTA5Ckp6WWNMdHFITW9VdjN0VCtZcUpX
+M3ZwTmdBbjVVSXVqS2tNb2dZYnA1a3J2Zkc5TVA0WUZMMFZuNHdJM0VCVG0KWFhSbmFCdW1IekUr
+UVloZWM3V25sVExFY3YxUkV4eXZ5eDhWMWNxWDdmRkN6WmZRR21qbW9GUURMMUNQTjgyWgpYYlkw
+UWZaV0hCYnBrTm41N1A3b0NOR3FuYkwwSXlxdlZuTmNUeG1jekFMZ3lTbXA1OXc4V0lTNzJrU2l3
+TUVICm1BZ2ZZWjFGZXFsOFExbVF1MWNRTjhwUGNGWmdLME00cjJSdFowU2lRY1FWdFhWQ0R1aFdD
+TVF6VjFlRXZoUEwKdEFnNzhBSmpuTEZNRFI4azlzcEthR2RMb3llZjdsVHR4eFV4eU02aEVzMDhJ
+cHF4Z2VkWUQybFp2anFMTlFtRwpRVGtrRGZxRFJuZitxZUx1Sk1UeFJDSmF2QVhWTzFmMjl1a3lu
+SjJUbTk4TEVseERFdVc5VVAxMGhHVUhHQTVVCkt5QnQvZkNXOUFVcjB1VHFPOTUrU0NjSGhOTXlM
+dXFEUDVyWlZKN2hDY2JVdHpHVGJyQWxROExJYlg2QllEQWMKdFRUbjI3WnFHdFFrVjRoNDlZakl6
+aFg4Y3NDenJZZWp5STZsdEl1S2llUElQYmEyUW5qYVJwNjVDMHpzUjRJTQpHeTdodm11Z1ZJWTd2
+TVRGZXY5bmszcUlnenU1a1k2dEExNU13MzlvN0ZjOHVSeXJGeXRtZlg2UHpzdi9PS0N4CldLTnBV
+WWYzQzVyVThPT2RRNzNmVDJkRW1iKytyUzk5U0I3WjBqRUFBVDlPQ2VEcCtmZkIrRlZ0bTdyaG9o
+U0YKbFVyZHVsNmpTZHV3VjJwU2xBNXMKPU5WWEkKLS0tLS1FTkQgUEdQIFNJR05BVFVSRS0tLS0t
+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
+dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
