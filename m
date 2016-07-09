@@ -1,14 +1,13 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 00/14] update and general clean up of
-	multipath.conf.5
-Date: Sat, 9 Jul 2016 09:58:20 +0200
-Message-ID: <CABr-Gnc2XbpPmpQ2Sc1_gEcG8vDb3+5cpQi7AyfdDXtArH16HA@mail.gmail.com>
-References: <1468000199-15566-1-git-send-email-xose.vazquez@gmail.com>
-	<537c67ef-fc65-f1cd-65e0-91a70fcfd10a@gmail.com>
+Subject: Re: [PATCH] multipath-tools: document uid_attribute for
+	scsi and dasd devices
+Date: Sat, 9 Jul 2016 10:03:04 +0200
+Message-ID: <CABr-Gnf1f9=-1JgeP_5=dapoi5yTjk3V3gCwRENEC-CPbTqOVQ@mail.gmail.com>
+References: <1468015308-4063-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8313739034038430914=="
+Content-Type: multipart/mixed; boundary="===============6532468514512657420=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <537c67ef-fc65-f1cd-65e0-91a70fcfd10a@gmail.com>
+In-Reply-To: <1468015308-4063-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,86 +21,101 @@ To: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============8313739034038430914==
-Content-Type: multipart/alternative; boundary=001a1140d2be68d7d705372f48f2
+--===============6532468514512657420==
+Content-Type: multipart/alternative; boundary=001a113fb59c4c713205372f59af
 
---001a1140d2be68d7d705372f48f2
+--001a113fb59c4c713205372f59af
 Content-Type: text/plain; charset=UTF-8
 
-Nice.
-This patchset is merged.
+Merged.
 Thanks.
 
-On Sat, Jul 9, 2016 at 12:14 AM, Xose Vazquez Perez <xose.vazquez@gmail.com>
+On Sat, Jul 9, 2016 at 12:01 AM, Xose Vazquez Perez <xose.vazquez@gmail.com>
 wrote:
 
-> On 07/08/2016 07:49 PM, Xose Vazquez Perez wrote:
+> Default for SCSI devices is ID_SERIAL, a standard udev variable.
+> Default for DASD devices is ID_UID, returned by dasdinfo from 390-tools
+> package.
 >
-> > Final result in PDF(35k):
-> https://drive.google.com/file/d/0B_B6YmEmO7cDa09mdTlGa1NlSWc
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  multipath/multipath.conf.5 | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
 >
-> raw file: https://drive.google.com/file/d/0B_B6YmEmO7cDcHlIVG5GcVlfWGM
+> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+> index 794275e..709ab3c 100644
+> --- a/multipath/multipath.conf.5
+> +++ b/multipath/multipath.conf.5
+> @@ -191,7 +191,9 @@ Default value is: \fBfailover\fR
+>  The udev attribute providing a unique path identifier.
+>  .RS
+>  .TP
+> -Default value is: \fBID_SERIAL\fR
+> +Default value is: \fBID_SERIAL\fR for SCSI devices
+> +.TP
+> +Default value is: \fBID_UID\fR for DASD devices
+>  .RE
+>  .TP
+>  .B getuid_callout
+> --
+> 2.7.4
 >
-> to see it in color with less as pager:
->
-> export LESS_TERMCAP_mb=$'\e[00;35m'
-> export LESS_TERMCAP_md=$'\e[00;36m'
-> export LESS_TERMCAP_me=$'\e[0m'
-> export LESS_TERMCAP_se=$'\e[0m'
-> export LESS_TERMCAP_so=$'\e[00;44;37m'
-> export LESS_TERMCAP_ue=$'\e[0m'
-> export LESS_TERMCAP_us=$'\e[00;33m'
-> export GROFF_NO_SGR=1
-> export MANPAGER=less
->
-> with most is instant:
-> export MANPAGER=most
 >
 
---001a1140d2be68d7d705372f48f2
+--001a113fb59c4c713205372f59af
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Nice.<div>This patchset is merged.</div><div>Thanks.</div>=
-</div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Sat, Jul=
- 9, 2016 at 12:14 AM, Xose Vazquez Perez <span dir=3D"ltr">&lt;<a href=3D"m=
-ailto:xose.vazquez@gmail.com" target=3D"_blank">xose.vazquez@gmail.com</a>&=
-gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 =
-0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span class=3D"">On 07/=
-08/2016 07:49 PM, Xose Vazquez Perez wrote:<br>
+<div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
+<br><div class=3D"gmail_quote">On Sat, Jul 9, 2016 at 12:01 AM, Xose Vazque=
+z Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" tar=
+get=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote =
+class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid=
+;padding-left:1ex">Default for SCSI devices is ID_SERIAL, a standard udev v=
+ariable.<br>
+Default for DASD devices is ID_UID, returned by dasdinfo from 390-tools pac=
+kage.<br>
 <br>
-&gt; Final result in PDF(35k): <a href=3D"https://drive.google.com/file/d/0=
-B_B6YmEmO7cDa09mdTlGa1NlSWc" rel=3D"noreferrer" target=3D"_blank">https://d=
-rive.google.com/file/d/0B_B6YmEmO7cDa09mdTlGa1NlSWc</a><br>
+Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com=
+">christophe.varoqui@opensvc.com</a>&gt;<br>
+Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
+-devel@redhat.com</a>&gt;<br>
+Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
+com">xose.vazquez@gmail.com</a>&gt;<br>
+---<br>
+=C2=A0multipath/multipath.conf.5 | 4 +++-<br>
+=C2=A01 file changed, 3 insertions(+), 1 deletion(-)<br>
 <br>
-</span>raw file: <a href=3D"https://drive.google.com/file/d/0B_B6YmEmO7cDcH=
-lIVG5GcVlfWGM" rel=3D"noreferrer" target=3D"_blank">https://drive.google.co=
-m/file/d/0B_B6YmEmO7cDcHlIVG5GcVlfWGM</a><br>
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5<br>
+index 794275e..709ab3c 100644<br>
+--- a/multipath/multipath.conf.5<br>
++++ b/multipath/multipath.conf.5<br>
+@@ -191,7 +191,9 @@ Default value is: \fBfailover\fR<br>
+=C2=A0The udev attribute providing a unique path identifier.<br>
+=C2=A0.RS<br>
+=C2=A0.TP<br>
+-Default value is: \fBID_SERIAL\fR<br>
++Default value is: \fBID_SERIAL\fR for SCSI devices<br>
++.TP<br>
++Default value is: \fBID_UID\fR for DASD devices<br>
+=C2=A0.RE<br>
+=C2=A0.TP<br>
+=C2=A0.B getuid_callout<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+2.7.4<br>
 <br>
-to see it in color with less as pager:<br>
-<br>
-export LESS_TERMCAP_mb=3D$&#39;\e[00;35m&#39;<br>
-export LESS_TERMCAP_md=3D$&#39;\e[00;36m&#39;<br>
-export LESS_TERMCAP_me=3D$&#39;\e[0m&#39;<br>
-export LESS_TERMCAP_se=3D$&#39;\e[0m&#39;<br>
-export LESS_TERMCAP_so=3D$&#39;\e[00;44;37m&#39;<br>
-export LESS_TERMCAP_ue=3D$&#39;\e[0m&#39;<br>
-export LESS_TERMCAP_us=3D$&#39;\e[00;33m&#39;<br>
-export GROFF_NO_SGR=3D1<br>
-export MANPAGER=3Dless<br>
-<br>
-with most is instant:<br>
-export MANPAGER=3Dmost<br>
-</blockquote></div><br></div>
+</font></span></blockquote></div><br></div>
 
---001a1140d2be68d7d705372f48f2--
+--001a113fb59c4c713205372f59af--
 
 
---===============8313739034038430914==
+--===============6532468514512657420==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============8313739034038430914==--
+--===============6532468514512657420==--
