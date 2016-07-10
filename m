@@ -1,14 +1,11 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH V5 3/3] Introducing multipath C API
-Date: Sun, 10 Jul 2016 18:26:53 +0200
-Message-ID: <77cd4f5a-2783-6365-7375-f809d699adda@gmail.com>
-References: <90c5e679-2942-12ce-4e77-9cc1f475ee45@gmail.com>
-	<20160705031719.GA4128@redhat.com>
+From: Martin George <marting@netapp.com>
+Subject: [PATCH] multipath-tools: Remove NetApp IBM Nseries code
+Date: Mon, 11 Jul 2016 01:55:36 +0530
+Message-ID: <2927779.USFptljH3X@marting-ubuntu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160705031719.GA4128@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,31 +15,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Gris Ge <fge@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On 07/05/2016 05:17 AM, Gris Ge wrote:
+Remove the NetApp IBM Nseries code due to the following reasons:
 
-> On Mon, Jul 04, 2016 at 06:32:56PM +0200, Xose Vazquez Perez wrote:
->> Gris Ge wrote:
->>
->>> +	perl -i -pe 's|__INCLUDEDIR__|$(includedir)|g' \
->>> +		$(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
->>
->> Please, replace perl with sed, awk or any other basic tool.
-> 
-> it's quit complex to handle folder path with '/' in sed or
-> awk unless I missed anything.
-> 
-> As we need perl in 'kernel-doc' tool blow to generate manpage,
-> can I keep it?
->
->>> +	perl docs/kernel-doc -man $(HEADERS) | perl docs/split-man.pl docs/man
->>> +	@for file in docs/man/*.3; do \
->>> +		gzip -f $$file; \
->>> +	done
->>> +	find docs/man -type f -name \*[0-9].gz
-> 
+1) The NetApp IBM Nseries product is obsolete now.
 
-This is up to Christophe's taste.
+2) Even earlier, the NetApp IBM Nseries product line never used a
+VID/PID of "IBM" & "Nseries" respectively. Instead, it always
+used the same VID/PID of "NETAPP" & "LUN" itself, similar to the
+ONTAP product line. So this piece of code was redundant from the
+beginning itself.
+
+Signed-off-by: Martin George <marting@netapp.com>
+---
+ libmultipath/hwtable.c     | 14 --------------
+ multipath/multipath.conf.5 |  2 +-
+ 2 files changed, 1 insertion(+), 15 deletions(-)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index a89ea87..140e802 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -770,20 +770,6 @@ static struct hwentry default_hw[] = {
+ 		.retain_hwhandler = RETAIN_HWHANDLER_ON,
+ 		.detect_prio   = DETECT_PRIO_ON,
+ 	},
+-	{
+-		/* IBM NSeries */
+-		.vendor        = "IBM",
+-		.product       = "Nseries.*",
+-		.features      = "1 queue_if_no_path",
+-		.hwhandler     = DEFAULT_HWHANDLER,
+-		.pgpolicy      = GROUP_BY_PRIO,
+-		.pgfailback    = -FAILBACK_IMMEDIATE,
+-		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = NO_PATH_RETRY_UNDEF,
+-		.minio         = 128,
+-		.prio_name     = PRIO_ONTAP,
+-		.prio_args     = NULL,
+-	},
+ 	/*
+ 	 * NEXENTA
+ 	 *
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 709ab3c..0b4d366 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -224,7 +224,7 @@ accepts the optional prio_arg \fIexclusive_pref_bit\fR.
+ .TP
+ .I ontap
+ (Hardware-dependent)
+-Generate the path priority for NetApp ONTAP class and OEM arrays as IBM NSeries.
++Generate the path priority for NetApp ONTAP class arrays.
+ .TP
+ .I rdac
+ (Hardware-dependent)
+-- 
+1.9.1
