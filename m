@@ -1,51 +1,88 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 0/6] Delete attributes with default values
-Date: Mon, 11 Jul 2016 16:33:21 +0200
-Message-ID: <5783AE31.5040406@suse.de>
-References: <1468022328-5905-1-git-send-email-xose.vazquez@gmail.com>
-	<CABr-GncP-rzeXogT1EFZTtFrre2UUSV6i-AJ27GZ3mTvcxx-7Q@mail.gmail.com>
+From: Matthias Dahl <ml_linux-kernel@binary-island.eu>
+Subject: Re: [dm-devel] [4.7.0rc6] Page Allocation Failures with dm-crypt
+Date: Mon, 11 Jul 2016 16:47:17 +0200
+Message-ID: <2786d2f951a90eb00502096aca71e05b@mail.ud19.udmedia.de>
+References: <28dc911645dce0b5741c369dd7650099@mail.ud19.udmedia.de>
+ <e7af885e08e1ced4f75313bfdfda166d@mail.ud19.udmedia.de>
+ <20160711131818.GA28102@redhat.com> <20160711133051.GA28308@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-GncP-rzeXogT1EFZTtFrre2UUSV6i-AJ27GZ3mTvcxx-7Q@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=US-ASCII;
+ format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20160711133051.GA28308@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 07/09/2016 10:17 AM, Christophe Varoqui wrote:
-> I'll wait for comments from distribution maintainers on this patchset.
-> =
+Hello Mike...
 
-> Because, though we have already deleted the checker_name settings when
-> equal to the default value, it should be clear that with this patchset
-> changing a default may cause re-certification for all impacted devices.
-> This can be viewed as a problem for distributors.
-> =
+On 2016-07-11 15:30, Mike Snitzer wrote:
 
-> Hannes, Ben, do you ack this patchset ? If not, what do we do the
-> checker_name settings, that I understood Hannes wanted to switch to TUR
-> anyway.
-> =
+> But that is expected given you're doing an unbounded buffered write to
+> the device.  What isn't expected, to me anyway, is that the mm 
+> subsystem
+> (or the default knobs for buffered writeback) would be so aggressive
+> about delaying writeback.
 
-That is fine. Eliminating the default values shouldn't cause any issues
-with us.
+Ok. But, and please correct me if I am wrong, I was under the impression
+that only the file caches/buffers were affected, iow, if I use free to
+monitor the memory usage, the used memory increases to the point where 
+it
+consumes all memory, not the buffers/file caches... that is what I am
+seeing here.
 
-Cheers,
+Also, if I use dd directly on the device w/o dm-crypt in-between, there
+is no problem. Sure, buffers increase hugely also... but only those.
 
-Hannes
--- =
+> Why are you doing this test anyway?  Such a large buffered write 
+> doesn't
+> seem to accurately model any application I'm aware of (but obviously it
+> should still "work").
 
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+It is not a test per se. I simply wanted to fill the partition with 
+noise.
+And doing it this way is faster than using urandom or anything. ;-) That 
+is
+why I stumbled over this issue in the first place.
+
+> Now that is weird.  Are you (or the distro you're using) setting any mm
+> subsystem tunables to really broken values?
+
+You can see those in my initial mail. I attached the kernel warnings, 
+all
+sysctl tunables and more. Maybe that helps.
+
+> What is your raid10's full stripesize?
+
+4 disks in RAID10, with a stripe size of 64k.
+
+> Is your dd IO size of 512K somehow triggering excess R-M-W cycles which
+> is exacerbating the problem?
+
+The partitions are properly aligned. And as you can see, with that 
+stripe
+size, there is no issue.
+
+In the meantime I did some further tests: I created an ext2 on the
+partition as well as a 60GiB container image on it. I used that image
+with dm-crypt, same parameters as before. No matter what I do here, I
+cannot trigger the same behavior.
+
+Maybe it is an interaction issue between dm-crypt and the s/w RAID. But
+at this point, I have no idea how to further diagnose/test it. If you
+can point me in any direction that would be great...
+
+With Kind Regards from Germany
+Matthias
+
+-- 
+Dipl.-Inf. (FH) Matthias Dahl | Software Engineer | binary-island.eu
+  services: custom software [desktop, mobile, web], server administration
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
