@@ -1,11 +1,15 @@
-From: Martin George <marting@netapp.com>
-Subject: [PATCH] multipath-tools: Remove NetApp IBM Nseries code
-Date: Mon, 11 Jul 2016 01:55:36 +0530
-Message-ID: <2927779.USFptljH3X@marting-ubuntu>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [Question] udev ID_UID attribute ???
+Date: Mon, 11 Jul 2016 08:40:50 +0200
+Message-ID: <57833F72.30304@suse.de>
+References: <22f39ecd-bfe7-d3b0-87af-e0b28d368bc8@gmail.com>
+	<5c9472d8-ef1a-bfd7-a916-d4120d881fc1@redhat.com>
+	<c6ca404f-4e0e-d7c9-de1f-60e0697df789@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <c6ca404f-4e0e-d7c9-de1f-60e0697df789@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,63 +19,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Mike Christie <mchristi@redhat.com>, device-mapper development <dm-devel@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
-Remove the NetApp IBM Nseries code due to the following reasons:
-
-1) The NetApp IBM Nseries product is obsolete now.
-
-2) Even earlier, the NetApp IBM Nseries product line never used a
-VID/PID of "IBM" & "Nseries" respectively. Instead, it always
-used the same VID/PID of "NETAPP" & "LUN" itself, similar to the
-ONTAP product line. So this piece of code was redundant from the
-beginning itself.
-
-Signed-off-by: Martin George <marting@netapp.com>
----
- libmultipath/hwtable.c     | 14 --------------
- multipath/multipath.conf.5 |  2 +-
- 2 files changed, 1 insertion(+), 15 deletions(-)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index a89ea87..140e802 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -770,20 +770,6 @@ static struct hwentry default_hw[] = {
- 		.retain_hwhandler = RETAIN_HWHANDLER_ON,
- 		.detect_prio   = DETECT_PRIO_ON,
- 	},
--	{
--		/* IBM NSeries */
--		.vendor        = "IBM",
--		.product       = "Nseries.*",
--		.features      = "1 queue_if_no_path",
--		.hwhandler     = DEFAULT_HWHANDLER,
--		.pgpolicy      = GROUP_BY_PRIO,
--		.pgfailback    = -FAILBACK_IMMEDIATE,
--		.rr_weight     = RR_WEIGHT_NONE,
--		.no_path_retry = NO_PATH_RETRY_UNDEF,
--		.minio         = 128,
--		.prio_name     = PRIO_ONTAP,
--		.prio_args     = NULL,
--	},
- 	/*
- 	 * NEXENTA
- 	 *
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 709ab3c..0b4d366 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -224,7 +224,7 @@ accepts the optional prio_arg \fIexclusive_pref_bit\fR.
- .TP
- .I ontap
- (Hardware-dependent)
--Generate the path priority for NetApp ONTAP class and OEM arrays as IBM NSeries.
-+Generate the path priority for NetApp ONTAP class arrays.
- .TP
- .I rdac
- (Hardware-dependent)
--- 
-1.9.1
+T24gMDcvMDgvMjAxNiAxMDo0NSBQTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+IE9uIDA3
+LzA4LzIwMTYgMDU6NTIgUE0sIE1pa2UgQ2hyaXN0aWUgd3JvdGU6Cj4gCj4+IE9uIDA3LzA3LzIw
+MTYgMDQ6MjEgUE0sIFhvc2UgVmF6cXVleiBQZXJleiB3cm90ZToKPj4+IElzICJJRF9VSUQiIHJl
+YWxseSB2YWxpZD8KPj4+Cj4+PiBsaWJtdWx0aXBhdGgvaHd0YWJsZS5jOiAgICAgICAgIC51aWRf
+YXR0cmlidXRlID0gIklEX1VJRCIsCj4+Pgo+Pgo+PiBJIHdhcyB3b25kZXJpbmcgdGhlIHNhbWUg
+dGhpbmcuIEZvciBjZXBoIHJiZCwgd2UgZG8gbm90IGhhdmUgdGhlIG5vcm1hbAo+PiBzY3NpIHNl
+cmlhbC93d24gdmFsdWVzLCBzbyBJIGFtIG1vZGlmeWluZyBvdXIgdWRldiBydWxlIHRvIGV4cG9y
+dCBJRF9VSUQuCj4+Cj4+IEkgbWFkZSB0aGUgSURfVUlELCB0aGUgdmFsdWVzIHdlIHVzZSBmb3Ig
+dGhlIHVkZXYgKC9kZXYvcmJkKSBuYW1lIHdoaWNoCj4+IGlzIHRoZSBwb29sIG5hbWUgKGJhc2lj
+YWxseSBqdXN0IGEgZ3JvdXBpbmcgb2Ygc3RvcmFnZSkgcGx1cyB0aGUgaW1hZ2UKPj4gbmFtZSAo
+YmFzaWNhbGx5IG5hbWUgb2YgYSBkaXNrIGNyZWF0ZWQgaW4gYSBwb29sKS4KPiAKPiBJRF9VSUQg
+aXNuJ3QgInN0YW5kYXJkIi4gSXQgd2Fzbid0IGZvdW5kIGluIGtlcm5lbCwgbXVsdGlwYXRoLXRv
+b2xzIG9yIHN5c3RlbWQodWRldikKPiBzb3VyY2VzLgo+IAo+IEl0J3MgdmFyaWFibGUgcmV0dXJu
+ZWQgYnkgZGFzZGluZm8gZnJvbSAzOTAtdG9vbHMgcGFja2FnZSwgaXQgY29udGFpbnMgdGhlICJE
+QVNEIHVpZCIKPiBvZiBhIGRhc2QgZGV2aWNlLiBBbmQgaXQncyB1c2VkIGJ5IHVkZXYgcnVsZXMg
+dG8gbWFrZSBzeW1saW5rcyBmb3IgZGFzZCBkZXZpY2VzIHVuZGVyCj4gL2Rldi9kaXNrL2J5LWlk
+Lwo+IAo+IFRoaXMgaXMgaGVyY3VsZXMsIGJ1dCBpbiBhIExQQVIgc2hvd3MgYSBzaW1pbGFyIG91
+dHB1dDoKPiBzbGVzMTEtczM5MHg6fiAjIGRhc2RpbmZvIC1lIC1hIC1kIC9kZXYvZGFzZGEKPiBJ
+RF9CVVM9Y2N3Cj4gSURfVFlQRT1kaXNrCj4gSURfVUlEPUhSQy5aWjAwMDAwMDAwMDAwMS4wMTIw
+LjIyCj4gSURfWFVJRD1IUkMuWlowMDAwMDAwMDAwMDEuMDEyMC4yMgo+IElEX1NFUklBTD0wWDAx
+MjIKPiAKPiBzbGVzMTEtczM5MHg6fiAjIGdyZXAgSURfVUlEICAvZXRjL3VkZXYvcnVsZXMuZC81
+OS1kYXNkLnJ1bGVzCj4gS0VSTkVMPT0iZGFzZCpbITAtOV0iLCBFTlZ7SURfVUlEfT09Ij8qIiwg
+U1lNTElOSys9ImRpc2svYnktaWQvJGVudntJRF9CVVN9LSRlbnZ7SURfVUlEfSIKPiBLRVJORUw9
+PSJkYXNkKlswLTldIiwgRU5We0lEX1VJRH09PSI/KiIsIFNZTUxJTksrPSJkaXNrL2J5LWlkLyRl
+bnZ7SURfQlVTfS0kZW52e0lEX1VJRH0tcGFydCVuIgo+IApQcmltYXJ5IHJlYXNvbiBoZXJlIGlz
+IHRoYXQgREFTRHMgYWxyZWFkeSBoYWQgYW4gSURfU0VSSUFMLCB3aGljaApoYXBwZW5zIHRvIGNv
+bnRhaW4gdGhlIGRpc2sgbnVtYmVyLiBXaGljaCB1bmZvcnR1bmF0ZWx5IGlzIF9ub3RfIHVuaXF1
+ZSwKYnV0IHJhdGhlciBwZXIgZ3Vlc3QuIFNvIHdlIGhhZCB0byBjb21lIHVwIHdpdGggYSBkaWZm
+ZXJlbnQgaWRlbnRpZmllcgpoZXJlIHRvIGdldCBwZXJzaXN0ZW50IF9hbmRfIHVuaXF1ZSBXV0lE
+cy4KCihBbmQgdGhlcmUgYWxzbyB0aGUgdGhpbmdpZSB3aXRoIElCTXMgR0RQUlMsIHdoaWNoIHJl
+cXVpcmVzIHVzIHRvIGhhdmUKY29tcGxldGVseSBkaWZmZXJlbnQgV1dJRHMsIHRvby4gQnV0IGxl
+dCdzIG5vdCBiZSBzaWRldHJhY2tlZCBoZXJlKS4KCj4gCj4gSXQgd2FzIHVzZWQgZm9yIGRhc2Qg
+ZGV2aWNlcyBpbiBtdWx0aXBhdGgtdG9vbHMgYmVjYXVzZSB0aGV5IGhhdmVuJ3QgYSBXV04uCj4g
+CldlbGwuLi4gQXMgbWVudGlvbmVkIGFib3ZlLCB0aGV5IGhhdmUgb25lIF9ub3dfICh0aGF0J3Mg
+dGhlCklEX1VJRC9JRF9YVUlEIGFib3ZlKS4gQnV0IGJ5IHRoZSB0aW1lIHdlJ3ZlIGJlZW4gZG9p
+bmcgdGhlIHBlcnNpc3RlbnQKbmFtZXMgdGhleSBkaWRuJ3QuCgpJIHdvdWxkIHJhdGhlciBtYWtl
+IHN1cmUgQ2VwaC9SQkQgaGFzIGEgc3lzZnMgYXR0cmlidXRlIHNvbWV3aGVyZSB3aGljaApjb250
+YWlucyBhIHVuaXF1ZSBudW1iZXIuCkFuZCB0aGVuIHdlIGNvdWxkIGNvZGUgYSBzaW1pbGFyIHRo
+aW5nIGxpa2Ugd2UgZGlkIGZvciBTQ1NJIHdpdGggdGhlCnZwZDgzIGFjY2VzcyB0byBnZXQgdGhl
+IFdXSUQuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgIFRlYW1s
+ZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAgICs0
+OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8
+cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBt
+YW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFp
+bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
+bWFuL2xpc3RpbmZvL2RtLWRldmVs
