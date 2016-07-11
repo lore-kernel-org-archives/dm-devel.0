@@ -1,27 +1,51 @@
-From: Lars Ellenberg <lars.ellenberg@linbit.com>
-Subject: Re: [PATCH 1/1] block: fix blk_queue_split() resource exhaustion
-Date: Mon, 11 Jul 2016 16:13:35 +0200
-Message-ID: <20160711141335.GZ13335@soda.linbit>
-References: <1467990243-3531-1-git-send-email-lars.ellenberg@linbit.com>
- <1467990243-3531-2-git-send-email-lars.ellenberg@linbit.com>
- <20160708184957.GA10765@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 0/6] Delete attributes with default values
+Date: Mon, 11 Jul 2016 16:33:21 +0200
+Message-ID: <5783AE31.5040406@suse.de>
+References: <1468022328-5905-1-git-send-email-xose.vazquez@gmail.com>
+	<CABr-GncP-rzeXogT1EFZTtFrre2UUSV6i-AJ27GZ3mTvcxx-7Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160708184957.GA10765@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, Keith Busch <keith.busch@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, Ming Lei <ming.lei@canonical.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, NeilBrown <neilb@suse.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Takashi Iwai <tiwai@suse.de>, linux-bcache@vger.kernel.org, Zheng Liu <gnehzuil.liu@gmail.com>, Kent Overstreet <kent.overstreet@gmail.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Ingo Molnar <mingo@redhat.com>, Alasdair Kergon <agk@redhat.com>, Roland Kammerer <roland.kammerer@linbit.com>
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CABr-GncP-rzeXogT1EFZTtFrre2UUSV6i-AJ27GZ3mTvcxx-7Q@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Dropped the XXX comment (oops),
-moved the current_has_pending_bios() helper to bio.h
-and dropped the identical ones from bio.c and md.h.
+On 07/09/2016 10:17 AM, Christophe Varoqui wrote:
+> I'll wait for comments from distribution maintainers on this patchset.
+> =
 
-Reposted in-thread as
-[PATCH v2 1/1] block: fix blk_queue_split() resource exhaustion
+> Because, though we have already deleted the checker_name settings when
+> equal to the default value, it should be clear that with this patchset
+> changing a default may cause re-certification for all impacted devices.
+> This can be viewed as a problem for distributors.
+> =
 
-Thanks,
+> Hannes, Ben, do you ack this patchset ? If not, what do we do the
+> checker_name settings, that I understood Hannes wanted to switch to TUR
+> anyway.
+> =
 
-    Lars Ellenberg
+That is fine. Eliminating the default values shouldn't cause any issues
+with us.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=FCrnberg)
