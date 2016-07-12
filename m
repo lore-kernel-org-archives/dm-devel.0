@@ -1,10 +1,10 @@
-From: Jack Wang <jack.wang.usish@gmail.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
 Subject: Re: poor thin performance, relative to thick
-Date: Tue, 12 Jul 2016 10:28:40 +0200
-Message-ID: <CA+res+RiK-qARGYgasWoLMTDXZ8RpF9eXy1uYUHxNSqJ6Joxfg@mail.gmail.com>
+Date: Tue, 12 Jul 2016 10:30:55 +0200
+Message-ID: <11fdff8e-c629-0762-dcd2-f485dc7703ea@redhat.com>
 References: <20160711204454.GA24378@helmut>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20160711204454.GA24378@helmut>
@@ -17,10 +17,10 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-2016-07-11 22:44 GMT+02:00 Jon Bernard <jbernard@tuxion.com>:
+Dne 11.7.2016 v 22:44 Jon Bernard napsal(a):
 > Greetings,
 >
 > I have recently noticed a large difference in performance between thick
@@ -52,20 +52,21 @@ List-Id: dm-devel.ids
 >
 > If there are any specific questions or tests I can run, I'm happy to do
 > so.  Let me know how I can help.
->
-> --
-> Jon
 
-Hi Jon,
 
-Have you try to enable scsi_mq mode in newer kernel eg 4.6, see if it
-makes any difference?
+Have you tried different 'chunk-sizes' ?
 
-Regards,
-Jack
+The smaller the chunk/block-size  is - the better snapshot utilization is,
+but more contention (e.g. try 512K)
 
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Also there is a big difference when you perform initial block provisioning
+or you use already provisioned block -  so the 'more' realistic measurement
+should be taken on already provisioned thin device.
+
+And finally -  thin devices from a single thin-pool are not meant to be 
+heavily used in parallel (I'd not recommend to use more then 16 devs) - there 
+is still large room for improvement, but correctness has the priority.
+
+Regards
+
+Zdenek
