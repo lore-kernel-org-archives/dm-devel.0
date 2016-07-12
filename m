@@ -1,87 +1,66 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: Remove NetApp IBM Nseries
- code
-Date: Tue, 12 Jul 2016 04:00:08 +0200
-Message-ID: <65b0fdc5-8c18-f8b9-086c-7d2c54c20135@gmail.com>
-References: <2927779.USFptljH3X@marting-ubuntu>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [dm-devel] [PATCH v2 1/1] block: fix blk_queue_split() resource	exhaustion
+Date: Tue, 12 Jul 2016 12:55:10 +1000
+Message-ID: <87lh17efap.fsf@notabene.neil.brown.name>
+References: <1467990243-3531-1-git-send-email-lars.ellenberg@linbit.com> <1467990243-3531-2-git-send-email-lars.ellenberg@linbit.com> <20160711141042.GY13335@soda.linbit>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2927779.USFptljH3X@marting-ubuntu>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin George <marting@netapp.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <20160711141042.GY13335@soda.linbit>
+Sender: linux-bcache-owner@vger.kernel.org
+To: Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, Ming Lei <ming.lei@canonical.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Takashi Iwai <tiwai@suse.de>, linux-bcache@vger.kernel.org, Zheng Liu <gnehzuil.liu@gmail.com>, Kent Overstreet <kent.overstreet@gmail.com>, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Ingo Molnar <mingo@redhat.com>, Alasdair Kergon <agk@redhat.com>, Roland Kammerer <roland.kammerer@linbit.com>
 List-Id: dm-devel.ids
 
-On 07/10/2016 10:25 PM, Martin George wrote:
+--=-=-=
+Content-Type: text/plain
 
-> Remove the NetApp IBM Nseries code due to the following reasons:
-> 
-> 1) The NetApp IBM Nseries product is obsolete now.
+On Tue, Jul 12 2016, Lars Ellenberg wrote:
+....
+>
+> Instead, I suggest to distinguish between recursive calls to
+> generic_make_request(), and pushing back the remainder part in
+> blk_queue_split(), by pointing current->bio_lists to a
+> 	struct recursion_to_iteration_bio_lists {
+> 		struct bio_list recursion;
+> 		struct bio_list queue;
+> 	}
+>
+> By providing each q->make_request_fn() with an empty "recursion"
+> bio_list, then merging any recursively submitted bios to the
+> head of the "queue" list, we can make the recursion-to-iteration
+> logic in generic_make_request() process deepest level bios first,
+> and "sibling" bios of the same level in "natural" order.
+>
+> Signed-off-by: Lars Ellenberg <lars.ellenberg@linbit.com>
+> Signed-off-by: Roland Kammerer <roland.kammerer@linbit.com>
 
-This really doesn't matter.
+Reviewed-by: NeilBrown <neilb@suse.com>
 
-> 2) Even earlier, the NetApp IBM Nseries product line never used a
-> VID/PID of "IBM" & "Nseries" respectively. Instead, it always
-> used the same VID/PID of "NETAPP" & "LUN" itself, similar to the
-> ONTAP product line. So this piece of code was redundant from the
-> beginning itself.
+Thanks again for doing this - I think this is a very significant
+improvement and could allow other simplifications.
 
-OK, thank you for the notice.
+NeilBrown
 
-> Signed-off-by: Martin George <marting@netapp.com>
-> ---
->  libmultipath/hwtable.c     | 14 --------------
->  multipath/multipath.conf.5 |  2 +-
->  2 files changed, 1 insertion(+), 15 deletions(-)
-> 
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index a89ea87..140e802 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -770,20 +770,6 @@ static struct hwentry default_hw[] = {
->  		.retain_hwhandler = RETAIN_HWHANDLER_ON,
->  		.detect_prio   = DETECT_PRIO_ON,
->  	},
-> -	{
-> -		/* IBM NSeries */
-> -		.vendor        = "IBM",
-> -		.product       = "Nseries.*",
-> -		.features      = "1 queue_if_no_path",
-> -		.hwhandler     = DEFAULT_HWHANDLER,
-> -		.pgpolicy      = GROUP_BY_PRIO,
-> -		.pgfailback    = -FAILBACK_IMMEDIATE,
-> -		.rr_weight     = RR_WEIGHT_NONE,
-> -		.no_path_retry = NO_PATH_RETRY_UNDEF,
-> -		.minio         = 128,
-> -		.prio_name     = PRIO_ONTAP,
-> -		.prio_args     = NULL,
-> -	},
->  	/*
->  	 * NEXENTA
->  	 *
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
 
-> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index 709ab3c..0b4d366 100644
-> --- a/multipath/multipath.conf.5
-> +++ b/multipath/multipath.conf.5
-> @@ -224,7 +224,7 @@ accepts the optional prio_arg \fIexclusive_pref_bit\fR.
->  .TP
->  .I ontap
->  (Hardware-dependent)
-> -Generate the path priority for NetApp ONTAP class and OEM arrays as IBM NSeries.
-> +Generate the path priority for NetApp ONTAP class arrays.
->  .TP
->  .I rdac
->  (Hardware-dependent)
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
 
-But I would like to preserve that text in the man page.
+iQIcBAEBCAAGBQJXhFwOAAoJEDnsnt1WYoG5m3kQAIeT+C3JZCXXmBrt4taPkTU7
+1FAk0kU9rzEAm6O+3VvenmZRYbR0bR0gsMrifYB36+87cNqn5uCPw61xPUjCn9Zj
+UDvX2Shz7JBBCCw0cQRYALYcIlqCX+8nSmb8egzqk5mMTVrKxaAc0IOGNsTrkkVz
+8ZQzCRD46p/SDngQur9Wz+IorSjWjNHG4O8WpAhXYPnsn3WA1dqtBVFz8FGH/Hw2
+jkJ3RbmDv9F63/WBcEDAltxDNZ1Gz5YTHejDtxwjFWcJ7LJmPsbILB/ecNiA0eRP
+/L3Ti2XPL3pyd97AnT4ibYpn7LsiMSn0A639lfA6AECZPvVlh+NBLSFds1lKg2ne
+Oapm6EOFf1LLIoBDWBk9niht1z+CrhhBKiagsPuqIPJLQuY8ZGD6YDZm737N436I
+QOa215dhQGCUE4m+rHgs679wsRIbSbP8gJsA8tCkC+cOn7EXPQc9FmoiQJhr1AJ1
+KjIwPb2xkmtKR0ZGN/szk79PEoqwHe0KzAFXKcS+tWt5WezHAfrzKgL8DHT4QHy3
+TH0yyz9o6UeBeKEQMFwr6eWryjgmWMi+X4PO9x+3yalxYJ6IsNm6Oa6qT/8OmWuw
+/yLvL2TnKF7KTp3tedmMogUwYySdO+MIQsEztFUgrh5I/z7otFOVevMmllM29+pE
+fBqs1jgmES+HDl2+Zuit
+=s0FL
+-----END PGP SIGNATURE-----
+--=-=-=--
