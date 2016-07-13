@@ -1,97 +1,81 @@
-From: Sagi Grimberg <sagi@grimberg.me>
-Subject: Re: NVMeoF multi-path setup
-Date: Wed, 13 Jul 2016 13:19:34 +0300
-Message-ID: <578615B6.8030702@grimberg.me>
-References: <CAF1ivSbe+NboO+nbiWfEijHFJPd-AgNa=4AvWT24-HjH8A_izw@mail.gmail.com>
-	<1467323858.15863.3.camel@ssi> <20160630225207.GB22293@redhat.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: Page Allocation Failures/OOM with dm-crypt on software RAID10
+ (Intel Rapid Storage)
+Date: Wed, 13 Jul 2016 13:21:26 +0200
+Message-ID: <20160713112126.GH28723@dhcp22.suse.cz>
+References: <02580b0a303da26b669b4a9892624b13@mail.ud19.udmedia.de>
+ <20160712095013.GA14591@dhcp22.suse.cz>
+ <d9dbe0328e938eb7544fdb2aa8b5a9c7@mail.ud19.udmedia.de>
+ <20160712114920.GF14586@dhcp22.suse.cz>
+ <e6c2087730e530e77c2b12d50495bdc9@mail.ud19.udmedia.de>
+ <20160712140715.GL14586@dhcp22.suse.cz>
+ <459d501038de4d25db6d140ac5ea5f8d@mail.ud19.udmedia.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160630225207.GB22293@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Ming Lin <mlin@kernel.org>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-nvme@lists.infradead.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <459d501038de4d25db6d140ac5ea5f8d@mail.ud19.udmedia.de>
+Sender: owner-linux-mm@kvack.org
+To: Matthias Dahl <ml_linux-kernel@binary-island.eu>
+Cc: linux-raid@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
+On Tue 12-07-16 16:56:32, Matthias Dahl wrote:
+> Hello Michal...
+> 
+> On 2016-07-12 16:07, Michal Hocko wrote:
+> 
+> > /proc/slabinfo could at least point on who is eating that memory.
+> 
+> Thanks. I have made another test (and thus again put the RAID10 out of
+> sync for the 100th time, sigh) and made regular snapshots of slabinfo
+> which I have attached to this mail.
+> 
+> > Direct IO doesn't get throttled like buffered IO.
+> 
+> Is buffered i/o not used in both cases if I don't explicitly request
+> direct i/o?
+> 
+>     dd if=/dev/zero /dev/md126p5 bs=512K
+> and dd if=/dev/zero /dev/mapper/test-device bs=512K
 
+OK, I misunderstood your question though. You were mentioning the direct
+IO earlier so I thought you were referring to it here as well.
+ 
+> Given that the test-device is dm-crypt on md125p5. Aren't both using
+> buffered i/o?
 
-On 01/07/16 01:52, Mike Snitzer wrote:
-> On Thu, Jun 30 2016 at  5:57pm -0400,
-> Ming Lin <mlin@kernel.org> wrote:
->
->> On Thu, 2016-06-30 at 14:08 -0700, Ming Lin wrote:
->>> Hi Mike,
->>>
->>> I'm trying to test NVMeoF multi-path.
->>>
->>> root@host:~# lsmod |grep dm_multipath
->>> dm_multipath           24576  0
->>> root@host:~# ps aux |grep multipath
->>> root     13183  0.0  0.1 238452  4972 ?        SLl  13:41   0:00
->>> /sbin/multipathd
->>>
->>> I have nvme0 and nvme1 that are 2 paths to the same NVMe subsystem.
->>>
->>> root@host:/sys/class/nvme# grep . nvme*/address
->>> nvme0/address:traddr=192.168.3.2,trsvcid=1023
->>> nvme1/address:traddr=192.168.2.2,trsvcid=1023
->>>
->>> root@host:/sys/class/nvme# grep . nvme*/subsysnqn
->>> nvme0/subsysnqn:nqn.testiqn
->>> nvme1/subsysnqn:nqn.testiqn
->>>
->>> root@host:~# /lib/udev/scsi_id --export --whitelisted -d /dev/nvme1n1
->>> ID_SCSI=1
->>> ID_VENDOR=NVMe
->>> ID_VENDOR_ENC=NVMe\x20\x20\x20\x20
->>> ID_MODEL=Linux
->>> ID_MODEL_ENC=Linux
->>> ID_REVISION=0-rc
->>> ID_TYPE=disk
->>> ID_SERIAL=SNVMe_Linux
->>> ID_SERIAL_SHORT=
->>> ID_SCSI_SERIAL=1122334455667788
->>>
->>> root@host:~# /lib/udev/scsi_id --export --whitelisted -d /dev/nvme0n1
->>> ID_SCSI=1
->>> ID_VENDOR=NVMe
->>> ID_VENDOR_ENC=NVMe\x20\x20\x20\x20
->>> ID_MODEL=Linux
->>> ID_MODEL_ENC=Linux
->>> ID_REVISION=0-rc
->>> ID_TYPE=disk
->>> ID_SERIAL=SNVMe_Linux
->>> ID_SERIAL_SHORT=
->>> ID_SCSI_SERIAL=1122334455667788
->>>
->>> But seems multipathd didn't recognize these 2 devices.
->>>
->>> What else I'm missing?
->>
->> There are two problems:
->>
->> 1. there is no "/block/" in the path
->>
->> /sys/devices/virtual/nvme-fabrics/block/nvme0/nvme0n1
->
-> You clarified that it is:
-> /sys/devices/virtual/nvme-fabrics/ctl/nvme0/nvme0n1
->
-> Do you have CONFIG_BLK_DEV_NVME_SCSI enabled?
+Yes they are.
 
-Indeed, for dm-multipath we need CONFIG_BLK_DEV_NVME_SCSI on.
+> > the number of pages under writeback was more or less same throughout
+> > the time but there are some local fluctuations when some pages do get
+> > completed.
+> 
+> The pages under writeback are those directly destined for the disk, so
+> after dm-crypt had done its encryption?
 
-Another thing I noticed was that for nvme we need to manually
-set the timeout value because nvme devices don't expose
-device/timeout sysfs file. This causes dm-multipath to take
-a 200 seconds default (not a huge problem because we
-have keep alive in fabrics too).
+Those are submitted for the IO. dm-crypt will allocate a "shadow" page
+for each of them to perform the encryption and only then submit the IO
+to the storage underneath see
+http://lkml.kernel.org/r/alpine.LRH.2.02.1607121907160.24806@file01.intranet.prod.int.rdu2.redhat.com
+
+> > If not you can enable allocator trace point for a particular object
+> > size (or range of sizes) and see who is requesting them.
+> 
+> If that support is baked into the Fedora provided kernel that is. If
+> you could give me a few hints or pointers, how to properly do a allocator
+> trace point and get some decent data out of it, that would be nice.
+
+You need to have a kernel with CONFIG_TRACEPOINTS and then enable them
+via debugfs. You are interested in kmalloc tracepoint and specify a size
+as a filter to only see those that are really interesting. I haven't
+checked your slabinfo yet - hope to get to it later today.
+-- 
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
