@@ -1,89 +1,61 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 0/6] Delete attributes with default values
-Date: Wed, 13 Jul 2016 11:17:34 -0500
-Message-ID: <20160713161734.GN8095@octiron.msp.redhat.com>
-References: <1468022328-5905-1-git-send-email-xose.vazquez@gmail.com>
-	<CABr-GncP-rzeXogT1EFZTtFrre2UUSV6i-AJ27GZ3mTvcxx-7Q@mail.gmail.com>
+From: Ondrej Kozina <okozina@redhat.com>
+Subject: Re: [dm-devel] Page Allocation Failures/OOM with dm-crypt on software
+ RAID10 (Intel Rapid Storage)
+Date: Wed, 13 Jul 2016 18:24:51 +0200
+Message-ID: <2704a8dd-48c5-82b8-890e-72bf5e1ed1e1@redhat.com>
+References: <02580b0a303da26b669b4a9892624b13@mail.ud19.udmedia.de>
+ <20160712095013.GA14591@dhcp22.suse.cz>
+ <d9dbe0328e938eb7544fdb2aa8b5a9c7@mail.ud19.udmedia.de>
+ <20160712114920.GF14586@dhcp22.suse.cz>
+ <e6c2087730e530e77c2b12d50495bdc9@mail.ud19.udmedia.de>
+ <20160712140715.GL14586@dhcp22.suse.cz>
+ <459d501038de4d25db6d140ac5ea5f8d@mail.ud19.udmedia.de>
+ <20160713112126.GH28723@dhcp22.suse.cz>
+ <20160713121828.GI28723@dhcp22.suse.cz>
+ <74b9325c37948cf2b460bd759cff23dd@mail.ud19.udmedia.de>
+ <20160713134717.GL28723@dhcp22.suse.cz>
+ <a6e48e37cce530f286e6669fdfc0b3f8@mail.ud19.udmedia.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CABr-GncP-rzeXogT1EFZTtFrre2UUSV6i-AJ27GZ3mTvcxx-7Q@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <a6e48e37cce530f286e6669fdfc0b3f8@mail.ud19.udmedia.de>
+Sender: owner-linux-mm@kvack.org
+To: Matthias Dahl <ml_linux-kernel@binary-island.eu>, Michal Hocko <mhocko@kernel.org>
+Cc: linux-raid@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Jul 09, 2016 at 10:17:05AM +0200, Christophe Varoqui wrote:
->    I'll wait for comments from distribution maintainers on this patchset.
->    Because, though we have already deleted the checker_name settings when
->    equal to the default value, it should be clear that with this patchset
->    changing a default may cause re-certification for all impacted devices.
->    This can be viewed as a problem for distributors.
->    Hannes, Ben, do you ack this patchset ? If not, what do we do the
->    checker_name settings, that I understood Hannes wanted to switch to TUR
->    anyway.
+On 07/13/2016 05:32 PM, Matthias Dahl wrote:
+>
+> No matter what, I have no clue how to further diagnose this issue. And
+> given that I already had unsolvable issues with dm-crypt a couple of
+> months ago with my old machine where the system simply hang itself or
+> went OOM when the swap was encrypted and just a few kilobytes needed to
+> be swapped out, I am not so sure anymore I can trust dm-crypt with a
+> full disk encryption to the point where I feel "safe"... as-in, nothing
+> bad will happen or the system won't suddenly hang itself due to it. Or
+> if a bug is introduced, that it will actually be possible to diagnose it
+> and help fix it or that it will even be eventually fixed. Which is
+> really
+> a pity, since I would really have liked to help solve this. With the
+> swap issue, I did git bisects, tests, narrowed it down to kernel
+> versions
+> when said bug was introduced... but in the end, the bug is still present
+> as far as I know. :(
+>
 
-I'm fine with this.
+One step after another. Mathias, your original report was not forgotten, 
+it's just not so easy to find the real culprit and fix it without 
+causing yet another regression. See the 
+https://marc.info/?l=linux-mm&m=146825178722612&w=2 thread...
 
--Ben
+Not to mention that on current 4.7-rc7 kernels it behaves yet slightly 
+differently (yet far from ideally).
 
->    On Sat, Jul 9, 2016 at 1:58 AM, Xose Vazquez Perez
->    <[1]xose.vazquez@gmail.com> wrote:
-> =
+Regards O.
 
->      Xose Vazquez Perez (6):
->      =A0 multipath-tools: delete attributes with DEFAULT_* values in hwta=
-ble.c
->      =A0 multipath-tools: delete prio_args attribute when it is equal to
->      default value
->      =A0 multipath-tools: delete no_path_retry attribute when it is equal=
- to
->      default value
->      =A0 multipath-tools: delete minio_rq attribute when it is equal to d=
-efault
->      value
->      =A0 multipath-tools: delete fast_io_fail attribute when it is equal =
-to
->      default value
->      =A0 multipath-tools: delete pgpolicy attribute when it is equal to d=
-efault
->      value
-> =
-
->      =A0libmultipath/hwtable.c | 226
->      -------------------------------------------------
->      =A01 file changed, 226 deletions(-)
-> =
-
->      Cc: Christophe Varoqui <[2]christophe.varoqui@opensvc.com>
->      Cc: device-mapper development <[3]dm-devel@redhat.com>
->      Signed-off-by: Xose Vazquez Perez <[4]xose.vazquez@gmail.com>
-> =
-
->      --
->      2.7.4
-> =
-
-> References
-> =
-
->    Visible links
->    1. mailto:xose.vazquez@gmail.com
->    2. mailto:christophe.varoqui@opensvc.com
->    3. mailto:dm-devel@redhat.com
->    4. mailto:xose.vazquez@gmail.com
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
