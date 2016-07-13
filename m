@@ -1,46 +1,77 @@
-From: "Kani, Toshimitsu" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
-Subject: Re: dm stripe: add DAX support
-Date: Wed, 13 Jul 2016 15:03:31 +0000
-Message-ID: <1468422189.8908.53.camel@hpe.com>
-References: <1466792610-30369-1-git-send-email-toshi.kani@hpe.com>
- <20160624182859.GD13898@redhat.com> <1468362104.8908.43.camel@hpe.com>
- <20160713020100.GA5872@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: System freezes after OOM
+Date: Wed, 13 Jul 2016 11:21:41 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1607131114390.31769@file01.intranet.prod.int.rdu2.redhat.com>
+References: <57837CEE.1010609@redhat.com> <f80dc690-7e71-26b2-59a2-5a1557d26713@redhat.com> <9be09452-de7f-d8be-fd5d-4a80d1cd1ba3@redhat.com> <alpine.LRH.2.02.1607111027080.14327@file01.intranet.prod.int.rdu2.redhat.com> <20160712064905.GA14586@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1607121907160.24806@file01.intranet.prod.int.rdu2.redhat.com> <20160713111006.GF28723@dhcp22.suse.cz> <20160713125050.GJ28723@dhcp22.suse.cz> <97c60afe-d922-ce4c-3a5c-5b15bf0fe2da@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20160713020100.GA5872-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Content-Language: en-US
-Content-ID: <F7B5EE46DC71E74F88AE591FF8F4EAFF-mmYPd6ayCNGroOM5E8FhRbjFIynDaujOfM0AETQt39g@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: "axboe-b10kYP2dOMg@public.gmane.org" <axboe-b10kYP2dOMg@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org" <linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <97c60afe-d922-ce4c-3a5c-5b15bf0fe2da@gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Milan Broz <gmazyland@gmail.com>
+Cc: Michal Hocko <mhocko@kernel.org>, Ondrej Kozina <okozina@redhat.com>, Jerome Marchand <jmarchan@redhat.com>, Stanislav Kozina <skozina@redhat.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE2LTA3LTEyIGF0IDIyOjAxIC0wNDAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
-IE9uIFR1ZSwgSnVsIDEyIDIwMTYgYXTCoMKgNjoyMnBtIC0wNDAwLA0KPiBLYW5pLCBUb3NoaW1p
-dHN1IDx0b3NoaS5rYW5pQGhwZS5jb20+IHdyb3RlOg0KPiA+IE9uIEZyaSwgMjAxNi0wNi0yNCBh
-dCAxNDoyOSAtMDQwMCwgTWlrZSBTbml0emVyIHdyb3RlOg0KPiA+ID4gwqANCsKgOg0KPiBUaGFu
-a3MgZm9yIHB1dHRpbmcgdGhpcyBzdW1tYXJ5IHRvZ2V0aGVyLsKgwqBVbmZvcnR1bmF0ZWx5IG5v
-bmUgb2YgdGhlIERNDQo+IGNoYW5nZXMgY2FuIGJlIHF1ZXVlZCBmb3IgNC44IHVudGlsIEplbnMg
-dGFrZXMgdGhlIDIgYmxvY2sgY29yZSBwYXRjaGVzOg0KPiBodHRwczovL3BhdGNod29yay5rZXJu
-ZWwub3JnL3BhdGNoLzkxOTYwMjEvDQo+IGh0dHBzOi8vcGF0Y2h3b3JrLmtlcm5lbC5vcmcvcGF0
-Y2gvOTE5NjAxOS8NCj4gDQo+IE5vdCBzdXJlIHdoYXQgdGhlIGhvbGQgdXAgYW5kL29yIGlzc3Vl
-IGlzIHdpdGggdGhlbS7CoMKgQnV0IEkndmUgYXNrZWQNCj4gdHdpY2UgKGFuZCBpbXBsaWNpbHR5
-IGEgM3JkIHRpbWUgaGVyZSkuwqDCoEhvcGVmdWxseSB0aGV5IGxhbmQgaW4gdGltZSBmb3INCj4g
-NC44Lg0KDQpIaSBKZW5zLA0KDQpDYW4geW91IHRha2UgdGhlIHR3byBwYXRjaGVzIGFib3ZlPyDC
-oFRoZXNlIHBhdGNoZXMgYWRkIFFVRVVFX0ZMQUdfREFYIGFuZCBpdHMNCnN5c2ZzIHNob3cgZnVu
-Yy4gwqBUaGV5IGFsbG93IGRldmljZS1tYXBwZXIgdG8gc2V0IGRheC1jYXBhYmlsaXR5IGJhc2Vk
-IG9uIGl0cw0KY29uZmlndXJhdGlvbiwgYW5kIGFsc28gYWxsb3cgdXNlciBhcHBsaWNhdGlvbnMg
-dG8gY2hlY2sgZGF4LWNhcGFiaWxpdHkgdmlhDQpzeXNmcy4NCg0KVGhhbmtzLA0KLVRvc2hpwqAN
-Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkxpbnV4LW52
-ZGltbSBtYWlsaW5nIGxpc3QKTGludXgtbnZkaW1tQGxpc3RzLjAxLm9yZwpodHRwczovL2xpc3Rz
-LjAxLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2xpbnV4LW52ZGltbQo=
+
+
+On Wed, 13 Jul 2016, Milan Broz wrote:
+
+> On 07/13/2016 02:50 PM, Michal Hocko wrote:
+> > On Wed 13-07-16 13:10:06, Michal Hocko wrote:
+> >> On Tue 12-07-16 19:44:11, Mikulas Patocka wrote:
+> > [...]
+> >>> As long as swapping is in progress, the free memory is below the limit 
+> >>> (because the swapping activity itself consumes any memory over the limit). 
+> >>> And that triggered the OOM killer prematurely.
+> >>
+> >> I am not sure I understand the last part. Are you saing that we trigger
+> >> OOM because the initiated swapout will not be able to finish the IO thus
+> >> release the page in time?
+> >>
+> >> The oom detection checks waits for an ongoing writeout if there is no
+> >> reclaim progress and at least half of the reclaimable memory is either
+> >> dirty or under writeback. Pages under swaout are marked as under
+> >> writeback AFAIR. The writeout path (dm-crypt worker in this case) should
+> >> be able to allocate a memory from the mempool, hand over to the crypt
+> >> layer and finish the IO. Is it possible this might take a lot of time?
+> > 
+> > I am not familiar with the crypto API but from what I understood from
+> > crypt_convert the encryption is done asynchronously. Then I got lost in
+> > the indirection. Who is completing the request and from what kind of
+> > context? Is it possible it wouldn't be runable for a long time?
+> 
+> If you mean crypt_convert in dm-crypt, then it can do asynchronous completion
+> but usually (with AES-NI ans sw implementations) it run the operation completely
+> synchronously.
+> Asynchronous processing is quite rare, usually only on some specific hardware
+> crypto accelerators.
+> 
+> Once the encryption is finished, the cloned bio is sent to the block
+> layer for processing.
+> (There is also some magic with sorting writes but Mikulas knows this better.)
+
+dm-crypt receives requests in crypt_map, then it distributes write 
+requests to multiple encryption threads. Encryption is done usually 
+synchronously; asynchronous completion is used only when using some PCI 
+cards that accelerate encryption. When encryption finishes, the encrypted 
+pages are submitted to a thread dmcrypt_write that sorts the requests 
+using rbtree and submits them.
+
+The block layer has a deficiency that it cannot merge adjacent requests 
+submitted by the different threads.
+
+If we submitted requests directly from encryption threads, lack of merging 
+degraded performance seriously.
+
+Mikulas
+
+> Milan
+> p.s. I added cc to dm-devel, some dmcrypt people reads only this list.
+> 
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
