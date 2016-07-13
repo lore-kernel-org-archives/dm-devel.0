@@ -1,15 +1,14 @@
-From: Jon Bernard <jbernard@tuxion.com>
-Subject: Re: poor thin performance, relative to thick
-Date: Wed, 13 Jul 2016 00:00:06 -0400
-Message-ID: <20160713040006.GB30280@helmut>
-References: <20160711204454.GA24378@helmut>
-	<11fdff8e-c629-0762-dcd2-f485dc7703ea@redhat.com>
+From: Sagi Grimberg <sagi@grimberg.me>
+Subject: Re: NVMeoF multi-path setup
+Date: Wed, 13 Jul 2016 13:19:34 +0300
+Message-ID: <578615B6.8030702@grimberg.me>
+References: <CAF1ivSbe+NboO+nbiWfEijHFJPd-AgNa=4AvWT24-HjH8A_izw@mail.gmail.com>
+	<1467323858.15863.3.camel@ssi> <20160630225207.GB22293@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <11fdff8e-c629-0762-dcd2-f485dc7703ea@redhat.com>
+In-Reply-To: <20160630225207.GB22293@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,81 +18,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>
-Cc: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, Ming Lin <mlin@kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-nvme@lists.infradead.org
 List-Id: dm-devel.ids
 
-KiBaZGVuZWsgS2FiZWxhYyA8emthYmVsYWNAcmVkaGF0LmNvbT4gd3JvdGU6Cj4gRG5lIDExLjcu
-MjAxNiB2IDIyOjQ0IEpvbiBCZXJuYXJkIG5hcHNhbChhKToKPiA+IEdyZWV0aW5ncywKPiA+IAo+
-ID4gSSBoYXZlIHJlY2VudGx5IG5vdGljZWQgYSBsYXJnZSBkaWZmZXJlbmNlIGluIHBlcmZvcm1h
-bmNlIGJldHdlZW4gdGhpY2sKPiA+IGFuZCB0aGluIExWTSB2b2x1bWVzIGFuZCBJJ20gdHJ5aW5n
-IHRvIHVuZGVyc3RhbmQgd2h5IHRoYXQgaXQgdGhlIGNhc2UuCj4gPiAKPiA+IEluIHN1bW1hcnks
-IGZvciB0aGUgc2FtZSBGSU8gdGVzdCAoYXR0YWNoZWQpLCBJJ20gc2VlaW5nIDU2MGsgaW9wcyBv
-biBhCj4gPiB0aGljayB2b2x1bWUgdnMuIDIwMGsgaW9wcyBmb3IgYSB0aGluIHZvbHVtZSBhbmQg
-dGhlc2UgcmVzdWx0cyBhcmUKPiA+IHByZXR0eSBjb25zaXN0ZW50IGFjcm9zcyBkaWZmZXJlbnQg
-cnVucy4KPiA+IAo+ID4gSSBub3RpY2VkIHRoYXQgaWYgSSBydW4gdHdvIEZJTyB0ZXN0cyBzaW11
-bHRhbmVvdXNseSBvbiAyIHNlcGFyYXRlIHRoaW4KPiA+IHBvb2xzLCBJIG5ldCBuZWFybHkgZG91
-YmxlIHRoZSBwZXJmb3JtYW5jZSBvZiBhIHNpbmdsZSBwb29sLiAgQW5kIHR3bwo+ID4gdGVzdHMg
-b24gdGhpbiB2b2x1bWVzIHdpdGhpbiB0aGUgc2FtZSBwb29sIHdpbGwgc3BsaXQgdGhlIG1heGlt
-dW0gaW9wcwo+ID4gb2YgdGhlIHNpbmdsZSBwb29sIChlc3NlbnRpYWxseSBoYWxmKS4gIEFuZCBJ
-IHNlZSBzaW1pbGFyIHJlc3VsdHMgZnJvbQo+ID4gbGludXggMy4xMCBhbmQgNC42Lgo+ID4gCj4g
-PiBJIHVuZGVyc3RhbmQgdGhhdCB0aGluIG11c3QgdHJhY2sgbWV0YWRhdGEgYXMgcGFydCBvZiBp
-dHMgZGVzaWduIGFuZCBzbwo+ID4gc29tZSBhZGRpdGlvbmFsIG92ZXJoZWFkIGlzIHRvIGJlIGV4
-cGVjdGVkLCBidXQgSSdtIHdvbmRlcmluZyBpZiB3ZSBjYW4KPiA+IG5hcnJvdyB0aGUgZ2FwIGEg
-Yml0Lgo+ID4gCj4gPiBJbiBjYXNlIGl0IGhlbHBzLCBJIGFsc28gZW5hYmxlZCBMT0NLX1NUQVQg
-YW5kIGdhdGhlcmVkIGxvY2tpbmcKPiA+IHN0YXRpc3RpY3MgZm9yIGJvdGggdGhpY2sgYW5kIHRo
-aW4gcnVucyAoYXR0YWNoZWQpLgo+ID4gCj4gPiBJJ20gY3VyaW91cyB0byBrbm93IHdoZXRoZXIg
-dGhpcyBpcyBhIGtub3cgaXNzdWUsIGFuZCBpZiBJIGNhbiBkbwo+ID4gYW55dGhpbmcgdGhlIGhl
-bHAgaW1wcm92ZSB0aGUgc2l0dWF0aW9uLiAgSSB3b25kZXIgaWYgdGhlIHVzZSBvZiB0aGUKPiA+
-IHByaW1hcnkgc3BpbmxvY2sgaW4gdGhlIHBvb2wgc3RydWN0dXJlIGNvdWxkIGJlIGltcHJvdmVk
-IC0gdGhlIGxvY2sKPiA+IHN0YXRpc3RpY3MgYXBwZWFyIHRvIGluZGljYXRlIGEgc2lnbmlmaWNh
-bnQgYW1vdW50IG9mIHRpbWUgY29udGVuZGluZwo+ID4gd2l0aCB0aGF0IG9uZS4gIE9yIG1heWJl
-IGl0J3Mgc29tZXRoaW5nIGVsc2UgZW50aXJlbHksIGFuZCBpbiB0aGF0IGNhc2UKPiA+IHBsZWFz
-ZSBlbmxpZ2h0ZW4gbWUuCj4gPiAKPiA+IElmIHRoZXJlIGFyZSBhbnkgc3BlY2lmaWMgcXVlc3Rp
-b25zIG9yIHRlc3RzIEkgY2FuIHJ1biwgSSdtIGhhcHB5IHRvIGRvCj4gPiBzby4gIExldCBtZSBr
-bm93IGhvdyBJIGNhbiBoZWxwLgo+IAo+IAo+IEhhdmUgeW91IHRyaWVkIGRpZmZlcmVudCAnY2h1
-bmstc2l6ZXMnID8KPiAKPiBUaGUgc21hbGxlciB0aGUgY2h1bmsvYmxvY2stc2l6ZSAgaXMgLSB0
-aGUgYmV0dGVyIHNuYXBzaG90IHV0aWxpemF0aW9uIGlzLAo+IGJ1dCBtb3JlIGNvbnRlbnRpb24g
-KGUuZy4gdHJ5IDUxMkspCgpUaGF0J3MgYSBnb29kIHRob3VnaHQsIEknbSByZS1ydW5uaW5nIG15
-IHRlc3RzIG5vdyB3aXRoIHNvbWUgYWRqdXN0bWVudHMKKGluY2x1ZGluZyB3cml0ZXMgaW5zdGVh
-ZCBvZiByZWFkcykgYW5kIEkgd2lsbCBpbmNsdWRlIHZhcmllZCBjaHVuawpzaXplcyBhcyB3ZWxs
-LiAgSSBkaWQgcnVuIGEgY291cGxlIG9mIHJhbmRvbSB3cml0ZSB0ZXN0cyB3aXRoIDY0ayBjaHVu
-awpzaXplIGFuZCBpdCBkb2VzIGdpdmUgc2xpZ2h0bHkgYmV0dGVyIHBlcmZvcm1hbmNlLCBidXQg
-dGhlIGRpc2NyZXBhbmN5CmJldHdlZW4gdGhpbmsgYW5kIHRoaW4gaXMgc3RpbGwgcHJlc2VudC4g
-IEknbGwgcG9zdCBteSBudW1iZXJzIG9uY2UgSSd2ZQpnb3QgZXZlcnl0aGluZyBjb2xsZWN0ZWQg
-YW5kIHByZXBhcmVkLgoKPiBBbHNvIHRoZXJlIGlzIGEgYmlnIGRpZmZlcmVuY2Ugd2hlbiB5b3Ug
-cGVyZm9ybSBpbml0aWFsIGJsb2NrIHByb3Zpc2lvbmluZwo+IG9yIHlvdSB1c2UgYWxyZWFkeSBw
-cm92aXNpb25lZCBibG9jayAtICBzbyB0aGUgJ21vcmUnIHJlYWxpc3RpYyBtZWFzdXJlbWVudAo+
-IHNob3VsZCBiZSB0YWtlbiBvbiBhbHJlYWR5IHByb3Zpc2lvbmVkIHRoaW4gZGV2aWNlLgoKVGhh
-dCdzIGhlbHBmdWwgdG8ga25vdy4gIFlvdSdyZSBzdWdnZXN0aW5nIHRoYXQgSSBmaXJzdCB3cml0
-ZSB0byBlYWNoIG9mCnRoZSBibG9ja3MgdG8gdHJpZ2dlciBwcm92aXNpb25pbmcsIGFuZCB0aGVu
-IHJ1biB0aGUgZmlvIHRlc3Q/Cgo+IEFuZCBmaW5hbGx5IC0gIHRoaW4gZGV2aWNlcyBmcm9tIGEg
-c2luZ2xlIHRoaW4tcG9vbCBhcmUgbm90IG1lYW50IHRvIGJlCj4gaGVhdmlseSB1c2VkIGluIHBh
-cmFsbGVsIChJJ2Qgbm90IHJlY29tbWVuZCB0byB1c2UgbW9yZSB0aGVuIDE2IGRldnMpIC0KPiB0
-aGVyZSBpcyBzdGlsbCBsYXJnZSByb29tIGZvciBpbXByb3ZlbWVudCwgYnV0IGNvcnJlY3RuZXNz
-IGhhcyB0aGUgcHJpb3JpdHkuCgpNeSBjdXJyZW50IHRlc3Rpbmcgc2V0dXAgbG9va3MgbGlrZToK
-CnNkYSAgICAgICAgICAgICAgICAgICAgICA4OjAgICAgMCAgIDQ3N0cgIDAgZGlzayAgCuKUlOKU
-gG1kMCAgICAgICAgICAgICAgICAgICAgOTowICAgIDAgICAzLjdUICAwIHJhaWQwIAogIOKUnOKU
-gHRoaW4tcG9vbDFfdG1ldGEgICAyNTM6MCAgICAwICAxNS44RyAgMCBsdm0gICAKICDilIIg4pSU
-4pSAdGhpbi1wb29sMS10cG9vbCAyNTM6MiAgICAwICAgICAxVCAgMCBsdm0gICAKICDilIIgICDi
-lJzilIB0aGluLXBvb2wxICAgICAyNTM6MyAgICAwICAgICAxVCAgMCBsdm0gICAKICDilIIgICDi
-lJTilIB0aGluLXRoaW5kaXNrMSAyNTM6OSAgICAwICAgMTAwRyAgMCBsdm0gICAKICDilJzilIB0
-aGluLXBvb2wxX3RkYXRhICAgMjUzOjEgICAgMCAgICAgMVQgIDAgbHZtICAgCiAg4pSCIOKUlOKU
-gHRoaW4tcG9vbDEtdHBvb2wgMjUzOjIgICAgMCAgICAgMVQgIDAgbHZtICAgCiAg4pSCICAg4pSc
-4pSAdGhpbi1wb29sMSAgICAgMjUzOjMgICAgMCAgICAgMVQgIDAgbHZtICAgCiAg4pSCICAg4pSU
-4pSAdGhpbi10aGluZGlzazEgMjUzOjkgICAgMCAgIDEwMEcgIDAgbHZtICAgCiAg4pSc4pSAdGhp
-bi1wb29sMl90bWV0YSAgIDI1Mzo0ICAgIDAgIDE1LjhHICAwIGx2bSAgIAogIOKUgiDilJTilIB0
-aGluLXBvb2wyLXRwb29sIDI1Mzo2ICAgIDAgICAgIDFUICAwIGx2bSAgIAogIOKUgiAgIOKUnOKU
-gHRoaW4tcG9vbDIgICAgIDI1Mzo3ICAgIDAgICAgIDFUICAwIGx2bSAgIAogIOKUgiAgIOKUlOKU
-gHRoaW4tdGhpbmRpc2syIDI1MzoxMCAgIDAgICAxMDBHICAwIGx2bSAgIAogIOKUnOKUgHRoaW4t
-cG9vbDJfdGRhdGEgICAyNTM6NSAgICAwICAgICAxVCAgMCBsdm0gICAKICDilIIg4pSU4pSAdGhp
-bi1wb29sMi10cG9vbCAyNTM6NiAgICAwICAgICAxVCAgMCBsdm0gICAKICDilIIgICDilJzilIB0
-aGluLXBvb2wyICAgICAyNTM6NyAgICAwICAgICAxVCAgMCBsdm0gICAKICDilIIgICDilJTilIB0
-aGluLXRoaW5kaXNrMiAyNTM6MTAgICAwICAgMTAwRyAgMCBsdm0gICAKICDilJTilIB0aGluLXRo
-aWNrICAgICAgICAgMjUzOjggICAgMCAgIDEwMEcgIDAgbHZtICAgCgpJJ20gcnVubmluZyBmaW8g
-b24gZWl0aGVyIHRoaW4gKDI1Mzo5KSBvciB0aGljayAoMjUzOjgpIGJ1dCBvbmx5IG9uZQp2b2x1
-bWUgYXQgYSB0aW1lLCBzbyBJIGRvbid0IHRoaW5rIHByZXNzdXJlIGZyb20gcGFyYWxsZWwgdXNl
-IHdvdWxkIGJlIGEKZmFjdG9yIGZvciBtZS4gIEl0IHdvdWxkIGJlIGludGVyZXN0aW5nIHRvIHNl
-ZSB3aGF0IGtpbmQgb2YgZmFsbG9mZgpvY2N1cnMgYXMgdGhlIG51bWJlciBvZiBkZXZpY2VzIGlu
-Y3JlYXNlcy4KCi0tIApKb24KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
-YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+
+
+On 01/07/16 01:52, Mike Snitzer wrote:
+> On Thu, Jun 30 2016 at  5:57pm -0400,
+> Ming Lin <mlin@kernel.org> wrote:
+>
+>> On Thu, 2016-06-30 at 14:08 -0700, Ming Lin wrote:
+>>> Hi Mike,
+>>>
+>>> I'm trying to test NVMeoF multi-path.
+>>>
+>>> root@host:~# lsmod |grep dm_multipath
+>>> dm_multipath           24576  0
+>>> root@host:~# ps aux |grep multipath
+>>> root     13183  0.0  0.1 238452  4972 ?        SLl  13:41   0:00
+>>> /sbin/multipathd
+>>>
+>>> I have nvme0 and nvme1 that are 2 paths to the same NVMe subsystem.
+>>>
+>>> root@host:/sys/class/nvme# grep . nvme*/address
+>>> nvme0/address:traddr=192.168.3.2,trsvcid=1023
+>>> nvme1/address:traddr=192.168.2.2,trsvcid=1023
+>>>
+>>> root@host:/sys/class/nvme# grep . nvme*/subsysnqn
+>>> nvme0/subsysnqn:nqn.testiqn
+>>> nvme1/subsysnqn:nqn.testiqn
+>>>
+>>> root@host:~# /lib/udev/scsi_id --export --whitelisted -d /dev/nvme1n1
+>>> ID_SCSI=1
+>>> ID_VENDOR=NVMe
+>>> ID_VENDOR_ENC=NVMe\x20\x20\x20\x20
+>>> ID_MODEL=Linux
+>>> ID_MODEL_ENC=Linux
+>>> ID_REVISION=0-rc
+>>> ID_TYPE=disk
+>>> ID_SERIAL=SNVMe_Linux
+>>> ID_SERIAL_SHORT=
+>>> ID_SCSI_SERIAL=1122334455667788
+>>>
+>>> root@host:~# /lib/udev/scsi_id --export --whitelisted -d /dev/nvme0n1
+>>> ID_SCSI=1
+>>> ID_VENDOR=NVMe
+>>> ID_VENDOR_ENC=NVMe\x20\x20\x20\x20
+>>> ID_MODEL=Linux
+>>> ID_MODEL_ENC=Linux
+>>> ID_REVISION=0-rc
+>>> ID_TYPE=disk
+>>> ID_SERIAL=SNVMe_Linux
+>>> ID_SERIAL_SHORT=
+>>> ID_SCSI_SERIAL=1122334455667788
+>>>
+>>> But seems multipathd didn't recognize these 2 devices.
+>>>
+>>> What else I'm missing?
+>>
+>> There are two problems:
+>>
+>> 1. there is no "/block/" in the path
+>>
+>> /sys/devices/virtual/nvme-fabrics/block/nvme0/nvme0n1
+>
+> You clarified that it is:
+> /sys/devices/virtual/nvme-fabrics/ctl/nvme0/nvme0n1
+>
+> Do you have CONFIG_BLK_DEV_NVME_SCSI enabled?
+
+Indeed, for dm-multipath we need CONFIG_BLK_DEV_NVME_SCSI on.
+
+Another thing I noticed was that for nvme we need to manually
+set the timeout value because nvme devices don't expose
+device/timeout sysfs file. This causes dm-multipath to take
+a 200 seconds default (not a huge problem because we
+have keep alive in fabrics too).
