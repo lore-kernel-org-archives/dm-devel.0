@@ -1,74 +1,89 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: System freezes after OOM
-Date: Wed, 13 Jul 2016 11:21:41 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1607131114390.31769@file01.intranet.prod.int.rdu2.redhat.com>
-References: <57837CEE.1010609@redhat.com> <f80dc690-7e71-26b2-59a2-5a1557d26713@redhat.com> <9be09452-de7f-d8be-fd5d-4a80d1cd1ba3@redhat.com> <alpine.LRH.2.02.1607111027080.14327@file01.intranet.prod.int.rdu2.redhat.com> <20160712064905.GA14586@dhcp22.suse.cz>
- <alpine.LRH.2.02.1607121907160.24806@file01.intranet.prod.int.rdu2.redhat.com> <20160713111006.GF28723@dhcp22.suse.cz> <20160713125050.GJ28723@dhcp22.suse.cz> <97c60afe-d922-ce4c-3a5c-5b15bf0fe2da@gmail.com>
+From: Matthias Dahl <ml_linux-kernel@binary-island.eu>
+Subject: Re: Page Allocation Failures/OOM with dm-crypt on software RAID10
+ (Intel Rapid Storage)
+Date: Wed, 13 Jul 2016 17:32:12 +0200
+Message-ID: <a6e48e37cce530f286e6669fdfc0b3f8@mail.ud19.udmedia.de>
+References: <02580b0a303da26b669b4a9892624b13@mail.ud19.udmedia.de>
+ <20160712095013.GA14591@dhcp22.suse.cz>
+ <d9dbe0328e938eb7544fdb2aa8b5a9c7@mail.ud19.udmedia.de>
+ <20160712114920.GF14586@dhcp22.suse.cz>
+ <e6c2087730e530e77c2b12d50495bdc9@mail.ud19.udmedia.de>
+ <20160712140715.GL14586@dhcp22.suse.cz>
+ <459d501038de4d25db6d140ac5ea5f8d@mail.ud19.udmedia.de>
+ <20160713112126.GH28723@dhcp22.suse.cz>
+ <20160713121828.GI28723@dhcp22.suse.cz>
+ <74b9325c37948cf2b460bd759cff23dd@mail.ud19.udmedia.de>
+ <20160713134717.GL28723@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=US-ASCII;
+ format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <97c60afe-d922-ce4c-3a5c-5b15bf0fe2da@gmail.com>
+In-Reply-To: <20160713134717.GL28723@dhcp22.suse.cz>
 Sender: owner-linux-mm@kvack.org
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Michal Hocko <mhocko@kernel.org>, Ondrej Kozina <okozina@redhat.com>, Jerome Marchand <jmarchan@redhat.com>, Stanislav Kozina <skozina@redhat.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: linux-raid@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
+Hello...
 
+On 2016-07-13 15:47, Michal Hocko wrote:
 
-On Wed, 13 Jul 2016, Milan Broz wrote:
+> This is getting out of my area of expertise so I am not sure I can help
+> you much more, I am afraid.
 
-> On 07/13/2016 02:50 PM, Michal Hocko wrote:
-> > On Wed 13-07-16 13:10:06, Michal Hocko wrote:
-> >> On Tue 12-07-16 19:44:11, Mikulas Patocka wrote:
-> > [...]
-> >>> As long as swapping is in progress, the free memory is below the limit 
-> >>> (because the swapping activity itself consumes any memory over the limit). 
-> >>> And that triggered the OOM killer prematurely.
-> >>
-> >> I am not sure I understand the last part. Are you saing that we trigger
-> >> OOM because the initiated swapout will not be able to finish the IO thus
-> >> release the page in time?
-> >>
-> >> The oom detection checks waits for an ongoing writeout if there is no
-> >> reclaim progress and at least half of the reclaimable memory is either
-> >> dirty or under writeback. Pages under swaout are marked as under
-> >> writeback AFAIR. The writeout path (dm-crypt worker in this case) should
-> >> be able to allocate a memory from the mempool, hand over to the crypt
-> >> layer and finish the IO. Is it possible this might take a lot of time?
-> > 
-> > I am not familiar with the crypto API but from what I understood from
-> > crypt_convert the encryption is done asynchronously. Then I got lost in
-> > the indirection. Who is completing the request and from what kind of
-> > context? Is it possible it wouldn't be runable for a long time?
-> 
-> If you mean crypt_convert in dm-crypt, then it can do asynchronous completion
-> but usually (with AES-NI ans sw implementations) it run the operation completely
-> synchronously.
-> Asynchronous processing is quite rare, usually only on some specific hardware
-> crypto accelerators.
-> 
-> Once the encryption is finished, the cloned bio is sent to the block
-> layer for processing.
-> (There is also some magic with sorting writes but Mikulas knows this better.)
+That's okay. Thank you so much for investing the time.
 
-dm-crypt receives requests in crypt_map, then it distributes write 
-requests to multiple encryption threads. Encryption is done usually 
-synchronously; asynchronous completion is used only when using some PCI 
-cards that accelerate encryption. When encryption finishes, the encrypted 
-pages are submitted to a thread dmcrypt_write that sorts the requests 
-using rbtree and submits them.
+For what it is worth, I did some further tests and here is what I came
+up with:
 
-The block layer has a deficiency that it cannot merge adjacent requests 
-submitted by the different threads.
+If I create the plain dm-crypt device with 
+--perf-submit_from_crypt_cpus,
+I can run the tests for as long as I want but the memory problem never
+occurs, meaning buffer/cache increase accordingly and thus free memory
+decreases but used mem stays pretty constant low. Yet the problem here
+is, the system becomes sluggish and throughput is severely impacted.
+ksoftirqd is hovering at 100% the whole time.
 
-If we submitted requests directly from encryption threads, lack of merging 
-degraded performance seriously.
+Somehow my guess is that normally dm-crypt simply takes every request,
+encrypts it and queues it internally by itself. And that queue is then
+slowly emptied to the underlying device kernel queue. That is why I am
+seeing the exploding increase in used memory (rather than in 
+buffer/cache)
+which in the end causes a OOM situation. But that is just my guess. And
+IMHO that is not the right thing to do (tm), as can be seen in this 
+case.
 
-Mikulas
+No matter what, I have no clue how to further diagnose this issue. And
+given that I already had unsolvable issues with dm-crypt a couple of
+months ago with my old machine where the system simply hang itself or
+went OOM when the swap was encrypted and just a few kilobytes needed to
+be swapped out, I am not so sure anymore I can trust dm-crypt with a
+full disk encryption to the point where I feel "safe"... as-in, nothing
+bad will happen or the system won't suddenly hang itself due to it. Or
+if a bug is introduced, that it will actually be possible to diagnose it
+and help fix it or that it will even be eventually fixed. Which is 
+really
+a pity, since I would really have liked to help solve this. With the
+swap issue, I did git bisects, tests, narrowed it down to kernel 
+versions
+when said bug was introduced... but in the end, the bug is still present
+as far as I know. :(
 
-> Milan
-> p.s. I added cc to dm-devel, some dmcrypt people reads only this list.
-> 
+I will probably look again into ext4 fs encryption. My whole point is
+just that in case any of disks go faulty and needs to be replaced or
+sent in for warranty, I don't have to worry about mails, personal or
+business data still being left on the device (e.g. if it is no longer
+accessible or has reallocated sectors or whatever) in a readable form.
+
+Oh well. Pity, really.
+
+Thanks again,
+Matthias
+
+-- 
+Dipl.-Inf. (FH) Matthias Dahl | Software Engineer | binary-island.eu
+  services: custom software [desktop, mobile, web], server administration
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
