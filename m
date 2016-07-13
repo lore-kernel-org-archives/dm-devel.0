@@ -1,15 +1,15 @@
 From: Jon Bernard <jbernard@tuxion.com>
 Subject: Re: poor thin performance, relative to thick
-Date: Tue, 12 Jul 2016 23:29:41 -0400
-Message-ID: <20160713032926.GA30280@helmut>
+Date: Wed, 13 Jul 2016 00:00:06 -0400
+Message-ID: <20160713040006.GB30280@helmut>
 References: <20160711204454.GA24378@helmut>
-	<CA+res+RiK-qARGYgasWoLMTDXZ8RpF9eXy1uYUHxNSqJ6Joxfg@mail.gmail.com>
+	<11fdff8e-c629-0762-dcd2-f485dc7703ea@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CA+res+RiK-qARGYgasWoLMTDXZ8RpF9eXy1uYUHxNSqJ6Joxfg@mail.gmail.com>
+In-Reply-To: <11fdff8e-c629-0762-dcd2-f485dc7703ea@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,62 +19,81 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jack Wang <jack.wang.usish@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-* Jack Wang <jack.wang.usish@gmail.com> wrote:
-> 2016-07-11 22:44 GMT+02:00 Jon Bernard <jbernard@tuxion.com>:
-> > Greetings,
-> >
-> > I have recently noticed a large difference in performance between thick
-> > and thin LVM volumes and I'm trying to understand why that it the case.
-> >
-> > In summary, for the same FIO test (attached), I'm seeing 560k iops on a
-> > thick volume vs. 200k iops for a thin volume and these results are
-> > pretty consistent across different runs.
-> >
-> > I noticed that if I run two FIO tests simultaneously on 2 separate thin
-> > pools, I net nearly double the performance of a single pool.  And two
-> > tests on thin volumes within the same pool will split the maximum iops
-> > of the single pool (essentially half).  And I see similar results from
-> > linux 3.10 and 4.6.
-> >
-> > I understand that thin must track metadata as part of its design and so
-> > some additional overhead is to be expected, but I'm wondering if we can
-> > narrow the gap a bit.
-> >
-> > In case it helps, I also enabled LOCK_STAT and gathered locking
-> > statistics for both thick and thin runs (attached).
-> >
-> > I'm curious to know whether this is a know issue, and if I can do
-> > anything the help improve the situation.  I wonder if the use of the
-> > primary spinlock in the pool structure could be improved - the lock
-> > statistics appear to indicate a significant amount of time contending
-> > with that one.  Or maybe it's something else entirely, and in that case
-> > please enlighten me.
-> >
-> > If there are any specific questions or tests I can run, I'm happy to do
-> > so.  Let me know how I can help.
-> >
-> > --
-> > Jon
-> 
-> Hi Jon,
-> 
-> Have you try to enable scsi_mq mode in newer kernel eg 4.6, see if it
-> makes any difference?
-
-Thanks for the suggestion, I had not tried it previously.  I added
-'scsi_mod.usb_blk_mq=Y' and 'dm_mod.use_blk_mq=Y' to my kernel command
-line and verified the mq subdirectory contents in /sys/block/<device>.
-All seemed to be correctly enabled.  I also realized that
-dm_mod.use_blk_mq is only for multipath, so I don't think it's relevant
-to my tests.
-
-Results were very similar to previous tests, ~10x slowdown from thick to
-thin.  Mike raised several good points, I'm re-running the tests and
-will post new results in response.
-
--- 
-Jon
+KiBaZGVuZWsgS2FiZWxhYyA8emthYmVsYWNAcmVkaGF0LmNvbT4gd3JvdGU6Cj4gRG5lIDExLjcu
+MjAxNiB2IDIyOjQ0IEpvbiBCZXJuYXJkIG5hcHNhbChhKToKPiA+IEdyZWV0aW5ncywKPiA+IAo+
+ID4gSSBoYXZlIHJlY2VudGx5IG5vdGljZWQgYSBsYXJnZSBkaWZmZXJlbmNlIGluIHBlcmZvcm1h
+bmNlIGJldHdlZW4gdGhpY2sKPiA+IGFuZCB0aGluIExWTSB2b2x1bWVzIGFuZCBJJ20gdHJ5aW5n
+IHRvIHVuZGVyc3RhbmQgd2h5IHRoYXQgaXQgdGhlIGNhc2UuCj4gPiAKPiA+IEluIHN1bW1hcnks
+IGZvciB0aGUgc2FtZSBGSU8gdGVzdCAoYXR0YWNoZWQpLCBJJ20gc2VlaW5nIDU2MGsgaW9wcyBv
+biBhCj4gPiB0aGljayB2b2x1bWUgdnMuIDIwMGsgaW9wcyBmb3IgYSB0aGluIHZvbHVtZSBhbmQg
+dGhlc2UgcmVzdWx0cyBhcmUKPiA+IHByZXR0eSBjb25zaXN0ZW50IGFjcm9zcyBkaWZmZXJlbnQg
+cnVucy4KPiA+IAo+ID4gSSBub3RpY2VkIHRoYXQgaWYgSSBydW4gdHdvIEZJTyB0ZXN0cyBzaW11
+bHRhbmVvdXNseSBvbiAyIHNlcGFyYXRlIHRoaW4KPiA+IHBvb2xzLCBJIG5ldCBuZWFybHkgZG91
+YmxlIHRoZSBwZXJmb3JtYW5jZSBvZiBhIHNpbmdsZSBwb29sLiAgQW5kIHR3bwo+ID4gdGVzdHMg
+b24gdGhpbiB2b2x1bWVzIHdpdGhpbiB0aGUgc2FtZSBwb29sIHdpbGwgc3BsaXQgdGhlIG1heGlt
+dW0gaW9wcwo+ID4gb2YgdGhlIHNpbmdsZSBwb29sIChlc3NlbnRpYWxseSBoYWxmKS4gIEFuZCBJ
+IHNlZSBzaW1pbGFyIHJlc3VsdHMgZnJvbQo+ID4gbGludXggMy4xMCBhbmQgNC42Lgo+ID4gCj4g
+PiBJIHVuZGVyc3RhbmQgdGhhdCB0aGluIG11c3QgdHJhY2sgbWV0YWRhdGEgYXMgcGFydCBvZiBp
+dHMgZGVzaWduIGFuZCBzbwo+ID4gc29tZSBhZGRpdGlvbmFsIG92ZXJoZWFkIGlzIHRvIGJlIGV4
+cGVjdGVkLCBidXQgSSdtIHdvbmRlcmluZyBpZiB3ZSBjYW4KPiA+IG5hcnJvdyB0aGUgZ2FwIGEg
+Yml0Lgo+ID4gCj4gPiBJbiBjYXNlIGl0IGhlbHBzLCBJIGFsc28gZW5hYmxlZCBMT0NLX1NUQVQg
+YW5kIGdhdGhlcmVkIGxvY2tpbmcKPiA+IHN0YXRpc3RpY3MgZm9yIGJvdGggdGhpY2sgYW5kIHRo
+aW4gcnVucyAoYXR0YWNoZWQpLgo+ID4gCj4gPiBJJ20gY3VyaW91cyB0byBrbm93IHdoZXRoZXIg
+dGhpcyBpcyBhIGtub3cgaXNzdWUsIGFuZCBpZiBJIGNhbiBkbwo+ID4gYW55dGhpbmcgdGhlIGhl
+bHAgaW1wcm92ZSB0aGUgc2l0dWF0aW9uLiAgSSB3b25kZXIgaWYgdGhlIHVzZSBvZiB0aGUKPiA+
+IHByaW1hcnkgc3BpbmxvY2sgaW4gdGhlIHBvb2wgc3RydWN0dXJlIGNvdWxkIGJlIGltcHJvdmVk
+IC0gdGhlIGxvY2sKPiA+IHN0YXRpc3RpY3MgYXBwZWFyIHRvIGluZGljYXRlIGEgc2lnbmlmaWNh
+bnQgYW1vdW50IG9mIHRpbWUgY29udGVuZGluZwo+ID4gd2l0aCB0aGF0IG9uZS4gIE9yIG1heWJl
+IGl0J3Mgc29tZXRoaW5nIGVsc2UgZW50aXJlbHksIGFuZCBpbiB0aGF0IGNhc2UKPiA+IHBsZWFz
+ZSBlbmxpZ2h0ZW4gbWUuCj4gPiAKPiA+IElmIHRoZXJlIGFyZSBhbnkgc3BlY2lmaWMgcXVlc3Rp
+b25zIG9yIHRlc3RzIEkgY2FuIHJ1biwgSSdtIGhhcHB5IHRvIGRvCj4gPiBzby4gIExldCBtZSBr
+bm93IGhvdyBJIGNhbiBoZWxwLgo+IAo+IAo+IEhhdmUgeW91IHRyaWVkIGRpZmZlcmVudCAnY2h1
+bmstc2l6ZXMnID8KPiAKPiBUaGUgc21hbGxlciB0aGUgY2h1bmsvYmxvY2stc2l6ZSAgaXMgLSB0
+aGUgYmV0dGVyIHNuYXBzaG90IHV0aWxpemF0aW9uIGlzLAo+IGJ1dCBtb3JlIGNvbnRlbnRpb24g
+KGUuZy4gdHJ5IDUxMkspCgpUaGF0J3MgYSBnb29kIHRob3VnaHQsIEknbSByZS1ydW5uaW5nIG15
+IHRlc3RzIG5vdyB3aXRoIHNvbWUgYWRqdXN0bWVudHMKKGluY2x1ZGluZyB3cml0ZXMgaW5zdGVh
+ZCBvZiByZWFkcykgYW5kIEkgd2lsbCBpbmNsdWRlIHZhcmllZCBjaHVuawpzaXplcyBhcyB3ZWxs
+LiAgSSBkaWQgcnVuIGEgY291cGxlIG9mIHJhbmRvbSB3cml0ZSB0ZXN0cyB3aXRoIDY0ayBjaHVu
+awpzaXplIGFuZCBpdCBkb2VzIGdpdmUgc2xpZ2h0bHkgYmV0dGVyIHBlcmZvcm1hbmNlLCBidXQg
+dGhlIGRpc2NyZXBhbmN5CmJldHdlZW4gdGhpbmsgYW5kIHRoaW4gaXMgc3RpbGwgcHJlc2VudC4g
+IEknbGwgcG9zdCBteSBudW1iZXJzIG9uY2UgSSd2ZQpnb3QgZXZlcnl0aGluZyBjb2xsZWN0ZWQg
+YW5kIHByZXBhcmVkLgoKPiBBbHNvIHRoZXJlIGlzIGEgYmlnIGRpZmZlcmVuY2Ugd2hlbiB5b3Ug
+cGVyZm9ybSBpbml0aWFsIGJsb2NrIHByb3Zpc2lvbmluZwo+IG9yIHlvdSB1c2UgYWxyZWFkeSBw
+cm92aXNpb25lZCBibG9jayAtICBzbyB0aGUgJ21vcmUnIHJlYWxpc3RpYyBtZWFzdXJlbWVudAo+
+IHNob3VsZCBiZSB0YWtlbiBvbiBhbHJlYWR5IHByb3Zpc2lvbmVkIHRoaW4gZGV2aWNlLgoKVGhh
+dCdzIGhlbHBmdWwgdG8ga25vdy4gIFlvdSdyZSBzdWdnZXN0aW5nIHRoYXQgSSBmaXJzdCB3cml0
+ZSB0byBlYWNoIG9mCnRoZSBibG9ja3MgdG8gdHJpZ2dlciBwcm92aXNpb25pbmcsIGFuZCB0aGVu
+IHJ1biB0aGUgZmlvIHRlc3Q/Cgo+IEFuZCBmaW5hbGx5IC0gIHRoaW4gZGV2aWNlcyBmcm9tIGEg
+c2luZ2xlIHRoaW4tcG9vbCBhcmUgbm90IG1lYW50IHRvIGJlCj4gaGVhdmlseSB1c2VkIGluIHBh
+cmFsbGVsIChJJ2Qgbm90IHJlY29tbWVuZCB0byB1c2UgbW9yZSB0aGVuIDE2IGRldnMpIC0KPiB0
+aGVyZSBpcyBzdGlsbCBsYXJnZSByb29tIGZvciBpbXByb3ZlbWVudCwgYnV0IGNvcnJlY3RuZXNz
+IGhhcyB0aGUgcHJpb3JpdHkuCgpNeSBjdXJyZW50IHRlc3Rpbmcgc2V0dXAgbG9va3MgbGlrZToK
+CnNkYSAgICAgICAgICAgICAgICAgICAgICA4OjAgICAgMCAgIDQ3N0cgIDAgZGlzayAgCuKUlOKU
+gG1kMCAgICAgICAgICAgICAgICAgICAgOTowICAgIDAgICAzLjdUICAwIHJhaWQwIAogIOKUnOKU
+gHRoaW4tcG9vbDFfdG1ldGEgICAyNTM6MCAgICAwICAxNS44RyAgMCBsdm0gICAKICDilIIg4pSU
+4pSAdGhpbi1wb29sMS10cG9vbCAyNTM6MiAgICAwICAgICAxVCAgMCBsdm0gICAKICDilIIgICDi
+lJzilIB0aGluLXBvb2wxICAgICAyNTM6MyAgICAwICAgICAxVCAgMCBsdm0gICAKICDilIIgICDi
+lJTilIB0aGluLXRoaW5kaXNrMSAyNTM6OSAgICAwICAgMTAwRyAgMCBsdm0gICAKICDilJzilIB0
+aGluLXBvb2wxX3RkYXRhICAgMjUzOjEgICAgMCAgICAgMVQgIDAgbHZtICAgCiAg4pSCIOKUlOKU
+gHRoaW4tcG9vbDEtdHBvb2wgMjUzOjIgICAgMCAgICAgMVQgIDAgbHZtICAgCiAg4pSCICAg4pSc
+4pSAdGhpbi1wb29sMSAgICAgMjUzOjMgICAgMCAgICAgMVQgIDAgbHZtICAgCiAg4pSCICAg4pSU
+4pSAdGhpbi10aGluZGlzazEgMjUzOjkgICAgMCAgIDEwMEcgIDAgbHZtICAgCiAg4pSc4pSAdGhp
+bi1wb29sMl90bWV0YSAgIDI1Mzo0ICAgIDAgIDE1LjhHICAwIGx2bSAgIAogIOKUgiDilJTilIB0
+aGluLXBvb2wyLXRwb29sIDI1Mzo2ICAgIDAgICAgIDFUICAwIGx2bSAgIAogIOKUgiAgIOKUnOKU
+gHRoaW4tcG9vbDIgICAgIDI1Mzo3ICAgIDAgICAgIDFUICAwIGx2bSAgIAogIOKUgiAgIOKUlOKU
+gHRoaW4tdGhpbmRpc2syIDI1MzoxMCAgIDAgICAxMDBHICAwIGx2bSAgIAogIOKUnOKUgHRoaW4t
+cG9vbDJfdGRhdGEgICAyNTM6NSAgICAwICAgICAxVCAgMCBsdm0gICAKICDilIIg4pSU4pSAdGhp
+bi1wb29sMi10cG9vbCAyNTM6NiAgICAwICAgICAxVCAgMCBsdm0gICAKICDilIIgICDilJzilIB0
+aGluLXBvb2wyICAgICAyNTM6NyAgICAwICAgICAxVCAgMCBsdm0gICAKICDilIIgICDilJTilIB0
+aGluLXRoaW5kaXNrMiAyNTM6MTAgICAwICAgMTAwRyAgMCBsdm0gICAKICDilJTilIB0aGluLXRo
+aWNrICAgICAgICAgMjUzOjggICAgMCAgIDEwMEcgIDAgbHZtICAgCgpJJ20gcnVubmluZyBmaW8g
+b24gZWl0aGVyIHRoaW4gKDI1Mzo5KSBvciB0aGljayAoMjUzOjgpIGJ1dCBvbmx5IG9uZQp2b2x1
+bWUgYXQgYSB0aW1lLCBzbyBJIGRvbid0IHRoaW5rIHByZXNzdXJlIGZyb20gcGFyYWxsZWwgdXNl
+IHdvdWxkIGJlIGEKZmFjdG9yIGZvciBtZS4gIEl0IHdvdWxkIGJlIGludGVyZXN0aW5nIHRvIHNl
+ZSB3aGF0IGtpbmQgb2YgZmFsbG9mZgpvY2N1cnMgYXMgdGhlIG51bWJlciBvZiBkZXZpY2VzIGlu
+Y3JlYXNlcy4KCi0tIApKb24KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
+YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
