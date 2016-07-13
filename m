@@ -1,92 +1,89 @@
-From: Matthias Dahl <ml_linux-kernel@binary-island.eu>
-Subject: Re: Page Allocation Failures/OOM with dm-crypt on software RAID10
- (Intel Rapid Storage)
-Date: Wed, 13 Jul 2016 17:32:12 +0200
-Message-ID: <a6e48e37cce530f286e6669fdfc0b3f8@mail.ud19.udmedia.de>
-References: <02580b0a303da26b669b4a9892624b13@mail.ud19.udmedia.de>
- <20160712095013.GA14591@dhcp22.suse.cz>
- <d9dbe0328e938eb7544fdb2aa8b5a9c7@mail.ud19.udmedia.de>
- <20160712114920.GF14586@dhcp22.suse.cz>
- <e6c2087730e530e77c2b12d50495bdc9@mail.ud19.udmedia.de>
- <20160712140715.GL14586@dhcp22.suse.cz>
- <459d501038de4d25db6d140ac5ea5f8d@mail.ud19.udmedia.de>
- <20160713112126.GH28723@dhcp22.suse.cz>
- <20160713121828.GI28723@dhcp22.suse.cz>
- <74b9325c37948cf2b460bd759cff23dd@mail.ud19.udmedia.de>
- <20160713134717.GL28723@dhcp22.suse.cz>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 0/6] Delete attributes with default values
+Date: Wed, 13 Jul 2016 11:17:34 -0500
+Message-ID: <20160713161734.GN8095@octiron.msp.redhat.com>
+References: <1468022328-5905-1-git-send-email-xose.vazquez@gmail.com>
+	<CABr-GncP-rzeXogT1EFZTtFrre2UUSV6i-AJ27GZ3mTvcxx-7Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII;
- format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20160713134717.GL28723@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: linux-raid@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CABr-GncP-rzeXogT1EFZTtFrre2UUSV6i-AJ27GZ3mTvcxx-7Q@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Hello...
+On Sat, Jul 09, 2016 at 10:17:05AM +0200, Christophe Varoqui wrote:
+>    I'll wait for comments from distribution maintainers on this patchset.
+>    Because, though we have already deleted the checker_name settings when
+>    equal to the default value, it should be clear that with this patchset
+>    changing a default may cause re-certification for all impacted devices.
+>    This can be viewed as a problem for distributors.
+>    Hannes, Ben, do you ack this patchset ? If not, what do we do the
+>    checker_name settings, that I understood Hannes wanted to switch to TUR
+>    anyway.
 
-On 2016-07-13 15:47, Michal Hocko wrote:
+I'm fine with this.
 
-> This is getting out of my area of expertise so I am not sure I can help
-> you much more, I am afraid.
+-Ben
 
-That's okay. Thank you so much for investing the time.
+>    On Sat, Jul 9, 2016 at 1:58 AM, Xose Vazquez Perez
+>    <[1]xose.vazquez@gmail.com> wrote:
+> =
 
-For what it is worth, I did some further tests and here is what I came
-up with:
+>      Xose Vazquez Perez (6):
+>      =A0 multipath-tools: delete attributes with DEFAULT_* values in hwta=
+ble.c
+>      =A0 multipath-tools: delete prio_args attribute when it is equal to
+>      default value
+>      =A0 multipath-tools: delete no_path_retry attribute when it is equal=
+ to
+>      default value
+>      =A0 multipath-tools: delete minio_rq attribute when it is equal to d=
+efault
+>      value
+>      =A0 multipath-tools: delete fast_io_fail attribute when it is equal =
+to
+>      default value
+>      =A0 multipath-tools: delete pgpolicy attribute when it is equal to d=
+efault
+>      value
+> =
 
-If I create the plain dm-crypt device with 
---perf-submit_from_crypt_cpus,
-I can run the tests for as long as I want but the memory problem never
-occurs, meaning buffer/cache increase accordingly and thus free memory
-decreases but used mem stays pretty constant low. Yet the problem here
-is, the system becomes sluggish and throughput is severely impacted.
-ksoftirqd is hovering at 100% the whole time.
+>      =A0libmultipath/hwtable.c | 226
+>      -------------------------------------------------
+>      =A01 file changed, 226 deletions(-)
+> =
 
-Somehow my guess is that normally dm-crypt simply takes every request,
-encrypts it and queues it internally by itself. And that queue is then
-slowly emptied to the underlying device kernel queue. That is why I am
-seeing the exploding increase in used memory (rather than in 
-buffer/cache)
-which in the end causes a OOM situation. But that is just my guess. And
-IMHO that is not the right thing to do (tm), as can be seen in this 
-case.
+>      Cc: Christophe Varoqui <[2]christophe.varoqui@opensvc.com>
+>      Cc: device-mapper development <[3]dm-devel@redhat.com>
+>      Signed-off-by: Xose Vazquez Perez <[4]xose.vazquez@gmail.com>
+> =
 
-No matter what, I have no clue how to further diagnose this issue. And
-given that I already had unsolvable issues with dm-crypt a couple of
-months ago with my old machine where the system simply hang itself or
-went OOM when the swap was encrypted and just a few kilobytes needed to
-be swapped out, I am not so sure anymore I can trust dm-crypt with a
-full disk encryption to the point where I feel "safe"... as-in, nothing
-bad will happen or the system won't suddenly hang itself due to it. Or
-if a bug is introduced, that it will actually be possible to diagnose it
-and help fix it or that it will even be eventually fixed. Which is 
-really
-a pity, since I would really have liked to help solve this. With the
-swap issue, I did git bisects, tests, narrowed it down to kernel 
-versions
-when said bug was introduced... but in the end, the bug is still present
-as far as I know. :(
+>      --
+>      2.7.4
+> =
 
-I will probably look again into ext4 fs encryption. My whole point is
-just that in case any of disks go faulty and needs to be replaced or
-sent in for warranty, I don't have to worry about mails, personal or
-business data still being left on the device (e.g. if it is no longer
-accessible or has reallocated sectors or whatever) in a readable form.
+> References
+> =
 
-Oh well. Pity, really.
+>    Visible links
+>    1. mailto:xose.vazquez@gmail.com
+>    2. mailto:christophe.varoqui@opensvc.com
+>    3. mailto:dm-devel@redhat.com
+>    4. mailto:xose.vazquez@gmail.com
 
-Thanks again,
-Matthias
-
--- 
-Dipl.-Inf. (FH) Matthias Dahl | Software Engineer | binary-island.eu
-  services: custom software [desktop, mobile, web], server administration
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
