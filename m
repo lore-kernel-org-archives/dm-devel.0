@@ -1,8 +1,8 @@
-From: Michal Hocko <mhocko@kernel.org>
+From: Matthias Dahl <ml_linux-kernel@binary-island.eu>
 Subject: Re: Page Allocation Failures/OOM with dm-crypt on software RAID10
  (Intel Rapid Storage)
-Date: Wed, 13 Jul 2016 14:18:28 +0200
-Message-ID: <20160713121828.GI28723@dhcp22.suse.cz>
+Date: Wed, 13 Jul 2016 15:18:11 +0200
+Message-ID: <74b9325c37948cf2b460bd759cff23dd@mail.ud19.udmedia.de>
 References: <02580b0a303da26b669b4a9892624b13@mail.ud19.udmedia.de>
  <20160712095013.GA14591@dhcp22.suse.cz>
  <d9dbe0328e938eb7544fdb2aa8b5a9c7@mail.ud19.udmedia.de>
@@ -11,46 +11,52 @@ References: <02580b0a303da26b669b4a9892624b13@mail.ud19.udmedia.de>
  <20160712140715.GL14586@dhcp22.suse.cz>
  <459d501038de4d25db6d140ac5ea5f8d@mail.ud19.udmedia.de>
  <20160713112126.GH28723@dhcp22.suse.cz>
+ <20160713121828.GI28723@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII;
+ format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20160713112126.GH28723@dhcp22.suse.cz>
+In-Reply-To: <20160713121828.GI28723@dhcp22.suse.cz>
 Sender: owner-linux-mm@kvack.org
-To: Matthias Dahl <ml_linux-kernel@binary-island.eu>
-Cc: linux-raid@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: linux-raid@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed 13-07-16 13:21:26, Michal Hocko wrote:
-> On Tue 12-07-16 16:56:32, Matthias Dahl wrote:
-[...]
-> > If that support is baked into the Fedora provided kernel that is. If
-> > you could give me a few hints or pointers, how to properly do a allocator
-> > trace point and get some decent data out of it, that would be nice.
-> 
-> You need to have a kernel with CONFIG_TRACEPOINTS and then enable them
-> via debugfs. You are interested in kmalloc tracepoint and specify a size
-> as a filter to only see those that are really interesting. I haven't
-> checked your slabinfo yet - hope to get to it later today.
+Hello Michal,
 
-The largest contributors seem to be
-$ zcat slabinfo.txt.gz | awk '{printf "%s %d\n" , $1, $6*$15}' | head_and_tail.sh 133 | paste-with-diff.sh | sort -n -k3
-			initial	diff [#pages]
-radix_tree_node 	3444    2592
-debug_objects_cache     388     46159
-file_lock_ctx   	114     138570
-buffer_head     	5616    238704
-kmalloc-256     	328     573164
-bio-3   		24      1118984
+many thanks for all your time and help on this issue. It is very much
+appreciated and I hope we can track this down somehow.
 
-So it seems we are accumulating bios and 256B objects. Buffer heads as
-well but so much. Having over 4G worth of bios sounds really suspicious.
-Note that they pin pages to be written so this might be consuming the
-rest of the unaccounted memory! So the main question is why those bios
-do not get dispatched or finished.
+On 2016-07-13 14:18, Michal Hocko wrote:
+
+> So it seems we are accumulating bios and 256B objects. Buffer heads as
+> well but so much. Having over 4G worth of bios sounds really 
+> suspicious.
+> Note that they pin pages to be written so this might be consuming the
+> rest of the unaccounted memory! So the main question is why those bios
+> do not get dispatched or finished.
+
+Ok. It is the Block IOs that do not get completed. I do get it right
+that those bio-3 are already the encrypted data that should be written
+out but do not for some reason? I tried to figure this out myself but
+couldn't find anything -- what does the number "-3" state? It is the
+position in some chain or has it a different meaning?
+
+Do you think a trace like you mentioned would help shed some more light
+on this? Or would you recommend something else?
+
+I have also cc' Mike Snitzer who commented on this issue before, maybe
+he can see some pattern here as well. Pity that Neil Brown is no longer
+available as I think this is also somehow related to it being a Intel
+Rapid Storage RAID10... since it is the only way I can reproduce it. :(
+
+Thanks,
+Matthias
+
 -- 
-Michal Hocko
-SUSE Labs
+Dipl.-Inf. (FH) Matthias Dahl | Software Engineer | binary-island.eu
+  services: custom software [desktop, mobile, web], server administration
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
