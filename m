@@ -1,84 +1,85 @@
-From: Michal Hocko <mhocko@kernel.org>
+From: David Rientjes <rientjes@google.com>
 Subject: Re: System freezes after OOM
-Date: Thu, 14 Jul 2016 19:39:00 +0200
-Message-ID: <20160714173900.GB29355@dhcp22.suse.cz>
-References: <alpine.LRH.2.02.1607111027080.14327@file01.intranet.prod.int.rdu2.redhat.com>
- <20160712064905.GA14586@dhcp22.suse.cz>
- <alpine.LRH.2.02.1607121907160.24806@file01.intranet.prod.int.rdu2.redhat.com>
- <20160713111006.GF28723@dhcp22.suse.cz>
- <alpine.LRH.2.02.1607131021410.31769@file01.intranet.prod.int.rdu2.redhat.com>
- <20160714125129.GA12289@dhcp22.suse.cz>
- <740b17f0-e1bb-b021-e9e1-ad6dcf5f033a@redhat.com>
- <20160714153120.GD12289@dhcp22.suse.cz>
- <9ca3459a-8226-b870-163e-58e2bb10df74@redhat.com>
- <20160714173659.GA29355@dhcp22.suse.cz>
+Date: Thu, 14 Jul 2016 13:22:40 -0700 (PDT)
+Message-ID: <alpine.DEB.2.10.1607141316240.68666@chino.kir.corp.google.com>
+References: <57837CEE.1010609@redhat.com> <f80dc690-7e71-26b2-59a2-5a1557d26713@redhat.com> <9be09452-de7f-d8be-fd5d-4a80d1cd1ba3@redhat.com> <alpine.LRH.2.02.1607111027080.14327@file01.intranet.prod.int.rdu2.redhat.com> <20160712064905.GA14586@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1607121907160.24806@file01.intranet.prod.int.rdu2.redhat.com> <2d5e1f84-e886-7b98-cb11-170d7104fd13@I-love.SAKURA.ne.jp> <20160713133955.GK28723@dhcp22.suse.cz> <alpine.LRH.2.02.1607131004340.31769@file01.intranet.prod.int.rdu2.redhat.com>
+ <20160713145638.GM28723@dhcp22.suse.cz> <alpine.LRH.2.02.1607131105080.31769@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.10.1607131644590.92037@chino.kir.corp.google.com>
+ <alpine.LRH.2.02.1607140818250.15554@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20160714173659.GA29355@dhcp22.suse.cz>
+In-Reply-To: <alpine.LRH.2.02.1607140818250.15554@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: owner-linux-mm@kvack.org
-To: Ondrej Kozina <okozina@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Jerome Marchand <jmarchan@redhat.com>, Stanislav Kozina <skozina@redhat.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Michal Hocko <mhocko@kernel.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Ondrej Kozina <okozina@redhat.com>, Jerome Marchand <jmarchan@redhat.com>, Stanislav Kozina <skozina@redhat.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu 14-07-16 19:36:59, Michal Hocko wrote:
-> On Thu 14-07-16 19:07:52, Ondrej Kozina wrote:
-> > On 07/14/2016 05:31 PM, Michal Hocko wrote:
-> > > On Thu 14-07-16 16:08:28, Ondrej Kozina wrote:
-> > > [...]
-> > > > As Mikulas pointed out, this doesn't work. The system froze as well with the
-> > > > patch above. Will try to tweak the patch with Mikulas's suggestion...
-> > > 
-> > > Thank you for testing! Do you happen to have traces of the frozen
-> > > processes? Does the flusher still gets throttled because the bias it
-> > > gets is not sufficient. Or does it get throttled at a different place?
-> > > 
-> > 
-> > Sure. Here it is (including sysrq+t and sysrq+w output): https://okozina.fedorapeople.org/bugs/swap_on_dmcrypt/4.7.0-rc7+/1/4.7.0-rc7+.log
+On Thu, 14 Jul 2016, Mikulas Patocka wrote:
+
+> > schedule
+> > schedule_timeout
+> > io_schedule_timeout
+> > mempool_alloc
+> > __split_and_process_bio
+> > dm_request
+> > generic_make_request
+> > submit_bio
+> > mpage_readpages
+> > ext4_readpages
+> > __do_page_cache_readahead
+> > ra_submit
+> > filemap_fault
+> > handle_mm_fault
+> > __do_page_fault
+> > do_page_fault
+> > page_fault
 > 
-> Thanks a lot! This is helpful.
-> [  162.716376] active_anon:107874 inactive_anon:108176 isolated_anon:64
-> [  162.716376]  active_file:1086 inactive_file:1103 isolated_file:0
-> [  162.716376]  unevictable:0 dirty:0 writeback:69824 unstable:0
-> [  162.716376]  slab_reclaimable:3119 slab_unreclaimable:24124
-> [  162.716376]  mapped:2165 shmem:57 pagetables:1509 bounce:0
-> [  162.716376]  free:701 free_pcp:0 free_cma:0
+> Device mapper should be able to proceed if there is no available memory. 
+> If it doesn't proceed, there is a bug in it.
 > 
-> No surprise that PF_LESS_THROTTLE didn't help. It gives some bias but
-> considering how many pages are under writeback it cannot possibly help
-> to prevent from sleeping in throttle_vm_writeout. I suppose adding
-> the following on top of the memalloc patch helps, right?
-> It is an alternative to what you were suggesting in other email but
-> it doesn't affect current_may_throttle paths which I would rather not
-> touch.
 
-Just read the other email and your patch properly and this is basically
-equivalent thing. I will think more about potential issues this might
-cause and send a proper patch for wider review.
+The above stack trace has nothing to do with the device mapper with 
+pre-f9054c70d28b behavior.  It simply is calling into mempool_alloc() and 
+no elements are being returned to the mempool that allow it to return.
 
-> ---
-> diff --git a/mm/page-writeback.c b/mm/page-writeback.c
-> index 7fbb2d008078..a37661f1a11b 100644
-> --- a/mm/page-writeback.c
-> +++ b/mm/page-writeback.c
-> @@ -1971,6 +1971,9 @@ void throttle_vm_writeout(gfp_t gfp_mask)
->  	unsigned long background_thresh;
->  	unsigned long dirty_thresh;
->  
-> +	if (current->flags & PF_LESS_THROTTLE)
-> +		return;
-> +
->          for ( ; ; ) {
->  		global_dirty_limits(&background_thresh, &dirty_thresh);
->  		dirty_thresh = hard_dirty_limit(&global_wb_domain, dirty_thresh);
-> -- 
-> Michal Hocko
-> SUSE Labs
+Recall that in the above situation, the whole system is oom; nothing can 
+allocate memory.  The oom killer has selected the above process to be oom 
+killed, so all other processes on the system trying to allocate memory 
+will stall in the page allocator waiting for this process to exit.
 
--- 
-Michal Hocko
-SUSE Labs
+The natural response to this situation is to allow access to memory 
+reserves, if possible, so that mempool_alloc() may return.  There is no 
+guarantee that _anything_ can return memory to the mempool, especially in 
+a system oom condition where nothing can make forward progress.  Insisting 
+that should be guaranteed is not helpful.
+
+> I'd like to ask - what device mapper targets did you use in this case? Are 
+> there some other deadlocked processes? (show sysrq-t, sysrq-w when this 
+> happened)
+> 
+
+Every process on the system is deadlocked because they cannot get memory 
+through the page allocator until the above process exits.  That is how the 
+oom killer works: select a process, kill it, give it access to memory 
+reserves so it may exit and free its memory, and wait.
+
+> Did the machine lock up completely with that stacktrace, or was it just 
+> slowed down?
+> 
+
+Hundreds of machines locked up and rebooted after a two hour watchdog 
+timeout.
+
+> > That's obviously not the case if we have hundreds of machines timing out 
+> > after two hours waiting for that fault to succeed.  The mempool interface 
+> > cannot require that users return elements to the pool synchronous with all 
+> > allocators so that we can happily loop forever, the only requirement on 
+> 
+> Mempool users must return objects to the mempool.
+> 
+
+Not possible when the system is livelocked.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
