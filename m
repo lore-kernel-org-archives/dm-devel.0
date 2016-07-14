@@ -1,67 +1,84 @@
-From: Christian Kastner <ckk@debian.org>
-Subject: [PATCH] kpartx: Fix check whether to detach loop device
-Date: Wed, 13 Jul 2016 19:23:02 +0200
-Message-ID: <1468430582-4260-1-git-send-email-ckk@debian.org>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: System freezes after OOM
+Date: Thu, 14 Jul 2016 11:09:35 +0200
+Message-ID: <20160714090934.GB4079@dhcp22.suse.cz>
+References: <57837CEE.1010609@redhat.com>
+ <f80dc690-7e71-26b2-59a2-5a1557d26713@redhat.com>
+ <9be09452-de7f-d8be-fd5d-4a80d1cd1ba3@redhat.com>
+ <alpine.LRH.2.02.1607111027080.14327@file01.intranet.prod.int.rdu2.redhat.com>
+ <20160712064905.GA14586@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1607121907160.24806@file01.intranet.prod.int.rdu2.redhat.com>
+ <20160713111006.GF28723@dhcp22.suse.cz>
+ <20160713125050.GJ28723@dhcp22.suse.cz>
+ <97c60afe-d922-ce4c-3a5c-5b15bf0fe2da@gmail.com>
+ <alpine.LRH.2.02.1607131114390.31769@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Christian Kastner <ckk@kvr.at>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1607131114390.31769@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Milan Broz <gmazyland@gmail.com>, Ondrej Kozina <okozina@redhat.com>, Jerome Marchand <jmarchan@redhat.com>, Stanislav Kozina <skozina@redhat.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Christian Kastner <ckk@kvr.at>
+On Wed 13-07-16 11:21:41, Mikulas Patocka wrote:
+> 
+> 
+> On Wed, 13 Jul 2016, Milan Broz wrote:
+> 
+> > On 07/13/2016 02:50 PM, Michal Hocko wrote:
+> > > On Wed 13-07-16 13:10:06, Michal Hocko wrote:
+> > >> On Tue 12-07-16 19:44:11, Mikulas Patocka wrote:
+> > > [...]
+> > >>> As long as swapping is in progress, the free memory is below the limit 
+> > >>> (because the swapping activity itself consumes any memory over the limit). 
+> > >>> And that triggered the OOM killer prematurely.
+> > >>
+> > >> I am not sure I understand the last part. Are you saing that we trigger
+> > >> OOM because the initiated swapout will not be able to finish the IO thus
+> > >> release the page in time?
+> > >>
+> > >> The oom detection checks waits for an ongoing writeout if there is no
+> > >> reclaim progress and at least half of the reclaimable memory is either
+> > >> dirty or under writeback. Pages under swaout are marked as under
+> > >> writeback AFAIR. The writeout path (dm-crypt worker in this case) should
+> > >> be able to allocate a memory from the mempool, hand over to the crypt
+> > >> layer and finish the IO. Is it possible this might take a lot of time?
+> > > 
+> > > I am not familiar with the crypto API but from what I understood from
+> > > crypt_convert the encryption is done asynchronously. Then I got lost in
+> > > the indirection. Who is completing the request and from what kind of
+> > > context? Is it possible it wouldn't be runable for a long time?
+> > 
+> > If you mean crypt_convert in dm-crypt, then it can do asynchronous completion
+> > but usually (with AES-NI ans sw implementations) it run the operation completely
+> > synchronously.
+> > Asynchronous processing is quite rare, usually only on some specific hardware
+> > crypto accelerators.
+> > 
+> > Once the encryption is finished, the cloned bio is sent to the block
+> > layer for processing.
+> > (There is also some magic with sorting writes but Mikulas knows this better.)
+> 
+> dm-crypt receives requests in crypt_map, then it distributes write 
+> requests to multiple encryption threads. Encryption is done usually 
+> synchronously; asynchronous completion is used only when using some PCI 
+> cards that accelerate encryption. When encryption finishes, the encrypted 
+> pages are submitted to a thread dmcrypt_write that sorts the requests 
+> using rbtree and submits them.
 
-When invoking kpartx -d $FOO with $FOO being a regular file, the intention is
-to also detach the loop device backing $FOO using del_loop(), but this
-currently doesn't happen, as can be seen by calling losetup -a afterwards.
+OK. I was worried that the async context would depend on WQ and a lack
+of workers could lead to long stalls. Dedicated kernel threads seem
+sufficient.
 
-This is because the check for the type of $FOO, prior to the del_loop() call, is
-broken. S_ISREG() is called on a buffer that initially did contain the status of
-$FOO, but was later overwritten with the status of the backing loop device.
-
-This replaces the S_ISREG() test with a check for whether the loop device path
-is not NULL. If it isn't, then we know that it contains the correct path, and
-del_loop() can be called safely on that.
-
-Reported as Debian bug #829496; that bug also has more information.
-
-Signed-off-by: Christian Kastner <ckk@kvr.at>
----
- kpartx/kpartx.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
-
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index 4de13fa..b7b4047 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -482,14 +482,14 @@ main(int argc, char **argv){
- 					printf("del devmap : %s\n", partname);
- 			}
- 
--			if (S_ISREG (buf.st_mode)) {
--				if (del_loop(device)) {
-+			if (loopdev) {
-+				if (del_loop(loopdev)) {
- 					if (verbose)
- 						printf("can't del loop : %s\n",
--							device);
-+							loopdev);
- 					exit(1);
- 				}
--				printf("loop deleted : %s\n", device);
-+				printf("loop deleted : %s\n", loopdev);
- 			}
- 			break;
- 
+Thanks for the clarification.
 -- 
-2.8.1
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
