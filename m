@@ -1,25 +1,19 @@
-From: David Rientjes <rientjes@google.com>
+From: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
 Subject: Re: System freezes after OOM
-Date: Wed, 13 Jul 2016 16:53:28 -0700 (PDT)
-Message-ID: <alpine.DEB.2.10.1607131644590.92037__1800.76038600436$1468499586$gmane$org@chino.kir.corp.google.com>
-References: <57837CEE.1010609@redhat.com>
-	<f80dc690-7e71-26b2-59a2-5a1557d26713@redhat.com>
-	<9be09452-de7f-d8be-fd5d-4a80d1cd1ba3@redhat.com>
-	<alpine.LRH.2.02.1607111027080.14327@file01.intranet.prod.int.rdu2.redhat.com>
-	<20160712064905.GA14586@dhcp22.suse.cz>
-	<alpine.LRH.2.02.1607121907160.24806@file01.intranet.prod.int.rdu2.redhat.com>
-	<2d5e1f84-e886-7b98-cb11-170d7104fd13@I-love.SAKURA.ne.jp>
-	<20160713133955.GK28723@dhcp22.suse.cz>
+Date: Thu, 14 Jul 2016 20:01:27 +0900
+Message-ID: <201607142001.BJD07258.SMOHFOJVtLFOQF__38884.2561086223$1468499602$gmane$org@I-love.SAKURA.ne.jp>
+References: <20160713133955.GK28723@dhcp22.suse.cz>
 	<alpine.LRH.2.02.1607131004340.31769@file01.intranet.prod.int.rdu2.redhat.com>
 	<20160713145638.GM28723@dhcp22.suse.cz>
 	<alpine.LRH.2.02.1607131105080.31769@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.10.1607131644590.92037@chino.kir.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Resent-To: dm-devel@redhat.com
-Resent-Message-ID: <c7f3bf7e-4ae3-e179-6a3c-83e0ce86aff0@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1607131105080.31769@file01.intranet.prod.int.rdu2.redhat.com>
+Resent-Message-ID: <b737d58a-24b3-13a9-bac5-ece7f556047c@redhat.com>
+In-Reply-To: <alpine.DEB.2.10.1607131644590.92037@chino.kir.corp.google.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,52 +23,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Stanislav Kozina <skozina@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, linux-kernel@vger.kernel.org, Michal Hocko <mhocko@kernel.org>, linux-mm@kvack.org, Ondrej Kozina <okozina@redhat.com>, Jerome Marchand <jmarchan@redhat.com>
+To: rientjes@google.com, mpatocka@redhat.com
+Cc: skozina@redhat.com, linux-kernel@vger.kernel.org, mhocko@kernel.org, linux-mm@kvack.org, okozina@redhat.com, jmarchan@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 13 Jul 2016, Mikulas Patocka wrote:
-
-> What are the real problems that f9054c70d28bc214b2857cf8db8269f4f45a5e23 
-> tries to fix?
+Michal Hocko wrote:
+> OK, this is the part I have missed. I didn't realize that the swapout
+> path, which is indeed PF_MEMALLOC, can get down to blk code which uses
+> mempools. A quick code travers shows that at least
+> 	make_request_fn = blk_queue_bio
+> 	blk_queue_bio
+> 	  get_request
+> 	    __get_request
 > 
+> might do that. And in that case I agree that the above mentioned patch
+> has unintentional side effects and should be re-evaluated. David, what
+> do you think? An obvious fixup would be considering TIF_MEMDIE in
+> mempool_alloc explicitly.
 
-It prevents the whole system from livelocking due to an oom killed process 
-stalling forever waiting for mempool_alloc() to return.  No other threads 
-may be oom killed while waiting for it to exit.
+TIF_MEMDIE is racy. Since the OOM killer sets TIF_MEMDIE on only one thread,
+there is no guarantee that TIF_MEMDIE is set to the thread which is looping
+inside mempool_alloc(). And since __GFP_NORETRY is used (regardless of
+f9054c70d28bc214), out_of_memory() is not called via __alloc_pages_may_oom().
+This means that the thread which is looping inside mempool_alloc() can't
+get TIF_MEMDIE unless TIF_MEMDIE is set by the OOM killer.
 
-> Do you have a stacktrace where it deadlocked, or was just a theoretical 
-> consideration?
+Maybe set __GFP_NOMEMALLOC by default at mempool_alloc() and remove it
+at mempool_alloc() when fatal_signal_pending() is true? But that behavior
+can OOM-kill somebody else when current was not OOM-killed. Sigh...
+
+David Rientjes wrote:
+> On Wed, 13 Jul 2016, Mikulas Patocka wrote:
 > 
-
-schedule
-schedule_timeout
-io_schedule_timeout
-mempool_alloc
-__split_and_process_bio
-dm_request
-generic_make_request
-submit_bio
-mpage_readpages
-ext4_readpages
-__do_page_cache_readahead
-ra_submit
-filemap_fault
-handle_mm_fault
-__do_page_fault
-do_page_fault
-page_fault
-
-> Mempool users generally (except for some flawed cases like fs_bio_set) do 
-> not require memory to proceed. So if you just loop in mempool_alloc, the 
-> processes that exhasted the mempool reserve will eventually return objects 
-> to the mempool and you should proceed.
+> > What are the real problems that f9054c70d28bc214b2857cf8db8269f4f45a5e23 
+> > tries to fix?
+> > 
 > 
+> It prevents the whole system from livelocking due to an oom killed process 
+> stalling forever waiting for mempool_alloc() to return.  No other threads 
+> may be oom killed while waiting for it to exit.
 
-That's obviously not the case if we have hundreds of machines timing out 
-after two hours waiting for that fault to succeed.  The mempool interface 
-cannot require that users return elements to the pool synchronous with all 
-allocators so that we can happily loop forever, the only requirement on 
-the interface is that mempool_alloc() must succeed.  If the context of the 
-thread doing mempool_alloc() allows access to memory reserves, this will 
-always be allowed by the page allocator.  This is not a mempool problem.
+Is that concern still valid? We have the OOM reaper for CONFIG_MMU=y case.
