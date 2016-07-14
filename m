@@ -1,49 +1,65 @@
-From: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
-Subject: Re: Page Allocation Failures/OOM with dm-crypt on software RAID10
- (Intel Rapid Storage)
-Date: Thu, 14 Jul 2016 20:18:49 +0900
-Message-ID: <9074e82f-bf52-011e-8bd7-5731d2b0dcaa@I-love.SAKURA.ne.jp>
-References: <02580b0a303da26b669b4a9892624b13@mail.ud19.udmedia.de>
- <20160712095013.GA14591@dhcp22.suse.cz>
- <d9dbe0328e938eb7544fdb2aa8b5a9c7@mail.ud19.udmedia.de>
- <20160712114920.GF14586@dhcp22.suse.cz>
- <e6c2087730e530e77c2b12d50495bdc9@mail.ud19.udmedia.de>
- <20160712140715.GL14586@dhcp22.suse.cz>
- <459d501038de4d25db6d140ac5ea5f8d@mail.ud19.udmedia.de>
- <20160713112126.GH28723@dhcp22.suse.cz>
- <20160713121828.GI28723@dhcp22.suse.cz>
- <74b9325c37948cf2b460bd759cff23dd@mail.ud19.udmedia.de>
- <20160713134717.GL28723@dhcp22.suse.cz>
+From: zhang.kai16@zte.com.cn
+Subject: [PATCH] libmultipath:fix loop traversed partly
+Date: Thu, 14 Jul 2016 20:09:33 +0800
+Message-ID: <1468498173-8328-1-git-send-email-zhang.kai16@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20160713134717.GL28723@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>, Matthias Dahl <ml_linux-kernel@binary-island.eu>
-Cc: linux-raid@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe varoqui <christophe.varoqui@free.fr>
+Cc: "zhang.kai" <zhang.kai16@zte.com.cn>, dm-devel@redhat.com, tang.junhui@zte.com.cn
 List-Id: dm-devel.ids
 
-On 2016/07/13 22:47, Michal Hocko wrote:
-> On Wed 13-07-16 15:18:11, Matthias Dahl wrote:
->> I tried to figure this out myself but
->> couldn't find anything -- what does the number "-3" state? It is the
->> position in some chain or has it a different meaning?
-> 
-> $ git grep "kmem_cache_create.*bio"
-> block/bio-integrity.c:  bip_slab = kmem_cache_create("bio_integrity_payload",
-> 
-> so there doesn't seem to be any cache like that in the vanilla kernel.
-> 
-It is
+From: "zhang.kai" <zhang.kai16@zte.com.cn>
 
-  snprintf(bslab->name, sizeof(bslab->name), "bio-%d", entry);
+Problem:
+With each iteration of the vector_foreach_slot() loop statement,
+some slots couldn't be traversed when a slot is deleted from vector.
 
-line in bio_find_or_create_slab() in block/bio.c.
-I think you can identify who is creating it by printing backtrace at that line.
+Reasons:
+Currently,loop's index 'i' is not decremented correspondingly when a slot is
+deleted from vector.Meanwhile, in the vector_foreach_slot() loop, mpp is assigned
+from vector newmp directly, so find_slot() could be omitted.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Signed-off-by: zhang.kai <zhang.kai16@zte.com.cn>
+---
+ libmultipath/configure.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index a9b9cf0..c06a3df 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -924,16 +924,14 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+ 	if (newmp) {
+ 		vector_foreach_slot (newmp, mpp, i) {
+ 			char alias[WWID_SIZE];
+-			int j;
+ 
+ 			if (!deadmap(mpp))
+ 				continue;
+ 
+ 			strncpy(alias, mpp->alias, WWID_SIZE - 1);
+ 
+-			if ((j = find_slot(newmp, (void *)mpp)) != -1)
+-				vector_del_slot(newmp, j);
+-
++			vector_del_slot(newmp, i);
++			i--;
+ 			remove_map(mpp, vecs, 0);
+ 
+ 			if (dm_flush_map(alias))
+-- 
+2.8.1.windows.1
+
+--------------------------------------------------------
+ZTE Information Security Notice: The information contained in this mail (and any attachment transmitted herewith) is privileged and confidential and is intended for the exclusive use of the addressee(s).  If you are not an intended recipient, any disclosure, reproduction, distribution or other dissemination or use of the information contained is strictly prohibited.  If you have received this mail in error, please delete it and notify us immediately.
