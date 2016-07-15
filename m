@@ -1,105 +1,113 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: System freezes after OOM
-Date: Fri, 15 Jul 2016 14:22:11 +0200
-Message-ID: <20160715122210.GG11811@dhcp22.suse.cz>
-References: <20160712064905.GA14586@dhcp22.suse.cz>
- <alpine.LRH.2.02.1607121907160.24806@file01.intranet.prod.int.rdu2.redhat.com>
- <20160713111006.GF28723@dhcp22.suse.cz>
- <alpine.LRH.2.02.1607131021410.31769@file01.intranet.prod.int.rdu2.redhat.com>
- <20160714125129.GA12289@dhcp22.suse.cz>
- <alpine.LRH.2.02.1607140952550.1102@file01.intranet.prod.int.rdu2.redhat.com>
- <20160714145937.GB12289@dhcp22.suse.cz>
- <alpine.LRH.2.02.1607141315130.17819@file01.intranet.prod.int.rdu2.redhat.com>
- <20160715083510.GD11811@dhcp22.suse.cz>
- <alpine.LRH.2.02.1607150802380.5034@file01.intranet.prod.int.rdu2.redhat.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: write directly to device mapper snapshot origin
+ device ?
+Date: Fri, 15 Jul 2016 14:35:04 +0200
+Message-ID: <331dd729-34be-a1fa-abfe-c4ad21e7541c@redhat.com>
+References: <CAA=4086wdhAxNsWjAYgZG3bWORV2vF3YpMQk9OTjAg22MJi07Q@mail.gmail.com>
+	<CAA=4086b_9xz32cU+DnuUMGU=rZhWZ=+UVfjwq0AKnX3C7k3qA@mail.gmail.com>
+	<alpine.LRH.2.02.1607150738100.5034@file01.intranet.prod.int.rdu2.redhat.com>
+	<CAA=4086fe1a02vm8VWHyCpUD15pO_2vBsiVhcik1kx8Xt+5EYA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1607150802380.5034@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Ondrej Kozina <okozina@redhat.com>, Jerome Marchand <jmarchan@redhat.com>, Stanislav Kozina <skozina@redhat.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAA=4086fe1a02vm8VWHyCpUD15pO_2vBsiVhcik1kx8Xt+5EYA@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Navin P.S" <navinp1912@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri 15-07-16 08:11:22, Mikulas Patocka wrote:
-> 
-> 
-> On Fri, 15 Jul 2016, Michal Hocko wrote:
-> 
-> > On Thu 14-07-16 13:35:35, Mikulas Patocka wrote:
-> > > On Thu, 14 Jul 2016, Michal Hocko wrote:
-> > > > On Thu 14-07-16 10:00:16, Mikulas Patocka wrote:
-> > > > > But it needs other changes to honor the PF_LESS_THROTTLE flag:
-> > > > > 
-> > > > > static int current_may_throttle(void)
-> > > > > {
-> > > > >         return !(current->flags & PF_LESS_THROTTLE) ||
-> > > > >                 current->backing_dev_info == NULL ||
-> > > > >                 bdi_write_congested(current->backing_dev_info);
-> > > > > }
-> > > > > --- if you set PF_LESS_THROTTLE, current_may_throttle may still return 
-> > > > > true if one of the other conditions is met.
-> > > > 
-> > > > That is true but doesn't that mean that the device is congested and
-> > > > waiting a bit is the right thing to do?
-> > > 
-> > > You shouldn't really throttle mempool allocations at all. It's better to 
-> > > fail the allocation quickly and allocate from a mempool reserve than to 
-> > > wait 0.1 seconds in the reclaim path.
-> > 
-> > Well, but we do that already, no? The first allocation request is NOWAIT
-> 
-> The stacktraces showed that the kcryptd process was throttled when it 
-> tried to do mempool allocation. Mempool adds the __GFP_NORETRY flag to the 
-> allocation, but unfortunatelly, this flag doesn't prevent the allocator 
-> from throttling.
+Dne 15.7.2016 v 14:15 Navin P.S napsal(a):
+> On Fri, Jul 15, 2016 at 5:21 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
+>>
+>>
+>> On Fri, 15 Jul 2016, Navin P.S wrote:
+>>
+>>> Resend ..
+>>>
+>>> On Thu, Jul 14, 2016 at 7:55 PM, Navin P.S <navinp1912@gmail.com> wrote:
+>>>> Hi,
+>>>>   Can i do dd if=/dev/zero of=/dev/mapper/dmo count=20 ? where dmo is
+>>>> a dm snapshot origin created through dmsetup command. Instead of
+>>>> /dev/zero i can write valid devices.
+>>>>
+>>>> I could create the dmo through some lvm2 commands.
+>>
+>> lvcreate -s
+>>
+>>>> Is direct write
+>>>> with 4k (page size values ) allowed when it is mapped to 2 block
+>>>> devices in linear mode ?
+>>>>
+>>>>
+>>>> Regards,
+>>>> -- Navin
+>>>
+>>> I'm seeing  OOM followed by reboot of host machine.
+>>> Does this mean this device cannot to exported to containers for writing ?
+>>
+>> The snapshot driver requires 32 bytes of memory for one chunk (the chunk
+>> size is selected with the "-c" switch to lvcreate). You should set system
+>> memory according to that.
+>>
+>> Mikulas
+>>
+>>> -- Navin
+>>>
+>
+>
+>
+>
+> Are origin devices readonly ?
+>
+> When i do dd if=/dev/zero of=/dev/mapper/ff count=10, it kills all the
+> process says OOM.
+>
+> How do you go about debugging this ? I'm running 4.7.0-rc7+ .
+>
+>
+> root@vm-xenial-foo:~# dmsetup info
+> Name:              cryptie4-ff
+> State:             ACTIVE
+> Read Ahead:        256
+> Tables present:    LIVE
+> Open count:        0
+> Event number:      0
+> Major, minor:      251, 0
+> Number of targets: 2
+>
+> Name:              ff
+> State:             ACTIVE
+> Read Ahead:        256
+> Tables present:    LIVE
+> Open count:        0
+> Event number:      0
+> Major, minor:      251, 1
+> Number of targets: 1
+>
+> root@vm-xenial-foo:~# dmsetup status
+> cryptie4-ff: 0 102400 linear
+> cryptie4-ff: 102400 122880 linear
+> ff: 0 102400 snapshot-origin
+> root@vm-xenial-foo:~#
 
-Yes and in fact it shouldn't prevent any throttling. The flag merely
-says that the allocation should give up rather than retry
-reclaim/compaction again and again.
+Hi
 
-> I say that the process doing mempool allocation shouldn't ever be 
-> throttled. Maybe add __GFP_NOTHROTTLE?
+Maybe you should have started with reading documenation for snapshot target ?
 
-A specific gfp flag would be an option but we are slowly running out of
-bit space there and I am not yet convinced PF_LESS_THROTTLE is
-unsuitable.
+linux/Documentation/device-mapper/snapshot.txt
 
-> > and then we try to consume an object from the pool. We are re-adding
-> > __GFP_DIRECT_RECLAIM in case both fail. The point of throttling is to
-> > prevent from scanning through LRUs too quickly while we know that the
-> > bdi is congested.
-> 
-> > > dm-crypt can do approximatelly 100MB/s. That means that it processes 25k 
-> > > swap pages per second. If you wait in mempool_alloc, the allocation would 
-> > > be satisfied in 0.00004s. If you wait in the allocator's throttle 
-> > > function, you waste 0.1s.
-> > > 
-> > > 
-> > > It is also questionable if those 0.1 second sleeps are reasonable at all. 
-> > > SSDs with 100k IOPS are common - they can drain the request queue in much 
-> > > less time than 0.1 second. I think those hardcoded 0.1 second sleeps 
-> > > should be replaced with sleeps until the device stops being congested.
-> > 
-> > Well if we do not do throttle_vm_writeout then the only remaining
-> > writeout throttling for PF_LESS_THROTTLE is wait_iff_congested for
-> > the direct reclaim and that should wake up if the device stops being
-> > congested AFAIU.
-> 
-> I mean - a proper thing is to use active wakeup for the throttling, rather 
-> than retrying every 0.1 second. Polling for some condition is generally 
-> bad idea.
-> 
-> If there are too many pages under writeback, you should sleep on a wait 
-> queue. When the number of pages under writeback drops, wake up the wait 
-> queue.
+If you don't like to read much doc - I'd highly recommend to stay at 'lvm2' 
+command level and create snapshot via  'lvcreate -s'
 
-I might be missing something but exactly this is what happens in
-wait_iff_congested no? If the bdi doesn't see the congestion it wakes up
-the reclaim context even before the timeout. Or are we talking past each
-other?
+Regards
 
--- 
-Michal Hocko
-SUSE Labs
+Zdenek
