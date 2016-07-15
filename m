@@ -1,116 +1,74 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH V6 0/3] Introducing multipath C API
-Date: Fri, 15 Jul 2016 16:36:45 -0500
-Message-ID: <20160715213645.GQ8095@octiron.msp.redhat.com>
-References: <1453953120-7023-1-git-send-email-fge@redhat.com>
-	<20160712065038.17565-1-fge@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: System freezes after OOM
+Date: Fri, 15 Jul 2016 17:39:55 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1607151730430.21114@file01.intranet.prod.int.rdu2.redhat.com>
+References: <57837CEE.1010609@redhat.com> <9be09452-de7f-d8be-fd5d-4a80d1cd1ba3@redhat.com> <alpine.LRH.2.02.1607111027080.14327@file01.intranet.prod.int.rdu2.redhat.com> <20160712064905.GA14586@dhcp22.suse.cz> <alpine.LRH.2.02.1607121907160.24806@file01.intranet.prod.int.rdu2.redhat.com>
+ <2d5e1f84-e886-7b98-cb11-170d7104fd13@I-love.SAKURA.ne.jp> <20160713133955.GK28723@dhcp22.suse.cz> <alpine.LRH.2.02.1607131004340.31769@file01.intranet.prod.int.rdu2.redhat.com> <20160713145638.GM28723@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1607131105080.31769@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.10.1607131644590.92037@chino.kir.corp.google.com> <alpine.LRH.2.02.1607140818250.15554@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.10.1607141316240.68666@chino.kir.corp.google.com>
+ <alpine.LRH.2.02.1607150711270.5034@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.10.1607151422140.121215@chino.kir.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20160712065038.17565-1-fge@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Gris Ge <fge@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <alpine.DEB.2.10.1607151422140.121215@chino.kir.corp.google.com>
+Sender: owner-linux-mm@kvack.org
+To: David Rientjes <rientjes@google.com>
+Cc: Michal Hocko <mhocko@kernel.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Ondrej Kozina <okozina@redhat.com>, Jerome Marchand <jmarchan@redhat.com>, Stanislav Kozina <skozina@redhat.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Jul 12, 2016 at 02:50:35PM +0800, Gris Ge wrote:
 
-ACK, with my comment on patch 1/3
 
--Ben
+On Fri, 15 Jul 2016, David Rientjes wrote:
 
-> Changes since V5:
->  * Fix commit message typo of patch 1/3:
->     'EINVA vs EINVAL' and 'dedicate vs dedicated'
->  * Use $(LN) and $(RM) in Makefile in patch 3/3.
->  * Rebased to current master(c9aef428b1b16b8128c9fbed1cdefe30bed4ac6f).
+> On Fri, 15 Jul 2016, Mikulas Patocka wrote:
 > 
-> Changes since V4:
+> > > There is no guarantee that _anything_ can return memory to the mempool,
+> > 
+> > You misunderstand mempools if you make such claims.
+> > 
+> > There is in fact guarantee that objects will be returned to mempool. In 
+> > the past I reviewed device mapper thoroughly to make sure that it can make 
+> > forward progress even if there is no available memory.
+> > 
+> > I don't know what should I tell you if you keep on repeating the same 
+> > false claim over and over again. Should I explain mempool oprerations to 
+> > you in detail? Or will you find it on your own?
+> > 
 > 
->  * Remove the unused constant incorrectly added to libmpathcmd in V3.
->  * The patch 3/3 could also be found in below link if dm-devel mailing list
->    discard that patch again:
->     https://github.com/cathay4t/multipath-tools/commit/b992056a447b90251a65aa4919055c70aa62a498.patch
-> 
-> Changes since V3:
->  * New way to limit the IPC command length.
->  * Treat IPC connection refuse error as DMMP_ERR_NO_DAEMON.
-> 
-> Gris Ge (3):
->   multipath-tools: New way to limit the IPC command length.
->   multipath-tools: Set errno mpath_recv_reply() when failure
->   multipath-tools: Introducing multipath C API
-> 
->  .gitignore                            |    4 +
->  Makefile                              |    1 +
->  Makefile.inc                          |    3 +
->  libdmmp/DEV_NOTES                     |   41 +
->  libdmmp/Makefile                      |   78 +
->  libdmmp/docs/kernel-doc               | 2971 +++++++++++++++++++++++++++++++++
->  libdmmp/docs/libdmmp.h.3              |  113 ++
->  libdmmp/docs/split-man.pl             |   41 +
->  libdmmp/libdmmp.c                     |  286 ++++
->  libdmmp/libdmmp.pc.in                 |    9 +
->  libdmmp/libdmmp/libdmmp.h             |  607 +++++++
->  libdmmp/libdmmp_misc.c                |   87 +
->  libdmmp/libdmmp_mp.c                  |  150 ++
->  libdmmp/libdmmp_path.c                |  115 ++
->  libdmmp/libdmmp_pg.c                  |  208 +++
->  libdmmp/libdmmp_private.h             |  208 +++
->  libdmmp/test/Makefile                 |   30 +
->  libdmmp/test/libdmmp_speed_test.c     |   49 +
->  libdmmp/test/libdmmp_test.c           |  144 ++
->  libmpathcmd/mpath_cmd.c               |    6 +-
->  libmpathcmd/mpath_cmd.h               |    2 -
->  libmpathpersist/mpath_updatepr.c      |    6 +-
->  libmultipath/Makefile                 |    2 +-
->  libmultipath/alias.c                  |    1 -
->  libmultipath/configure.c              |    5 +-
->  libmultipath/file.c                   |   24 +-
->  libmultipath/file.h                   |    1 +
->  libmultipath/uxsock.h                 |    6 -
->  libmultipath/wwids.c                  |    1 -
->  multipath/main.c                      |    1 -
->  multipathd/Makefile                   |    2 +-
->  multipathd/uxclnt.c                   |   13 +-
->  multipathd/uxlsnr.c                   |   12 +-
->  {libmultipath => multipathd}/uxsock.c |   69 +-
->  multipathd/uxsock.h                   |   13 +
->  35 files changed, 5210 insertions(+), 99 deletions(-)
->  create mode 100644 libdmmp/DEV_NOTES
->  create mode 100644 libdmmp/Makefile
->  create mode 100644 libdmmp/docs/kernel-doc
->  create mode 100644 libdmmp/docs/libdmmp.h.3
->  create mode 100644 libdmmp/docs/split-man.pl
->  create mode 100644 libdmmp/libdmmp.c
->  create mode 100644 libdmmp/libdmmp.pc.in
->  create mode 100644 libdmmp/libdmmp/libdmmp.h
->  create mode 100644 libdmmp/libdmmp_misc.c
->  create mode 100644 libdmmp/libdmmp_mp.c
->  create mode 100644 libdmmp/libdmmp_path.c
->  create mode 100644 libdmmp/libdmmp_pg.c
->  create mode 100644 libdmmp/libdmmp_private.h
->  create mode 100644 libdmmp/test/Makefile
->  create mode 100644 libdmmp/test/libdmmp_speed_test.c
->  create mode 100644 libdmmp/test/libdmmp_test.c
->  delete mode 100644 libmultipath/uxsock.h
->  rename {libmultipath => multipathd}/uxsock.c (67%)
->  create mode 100644 multipathd/uxsock.h
-> 
-> -- 
-> 2.9.0
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> If you are talking about patches you're proposing for 4.8 or any guarantee 
+> of memory freeing that the oom killer/reaper will provide in 4.8, that's 
+> fine.  However, the state of the 4.7 kernel is the same as it was when I 
+> fixed this issue that timed out hundreds of our machines and is 
+> contradicted by that evidence.  Our machines time out after two hours with 
+> the oom victim looping forever in mempool_alloc(), so if there was a 
+
+And what about the oom reaper? It should have freed all victim's pages 
+even if the victim is looping in mempool_alloc. Why the oom reaper didn't 
+free up memory?
+
+> guarantee that elements would be returned in a completely livelocked 
+> kernel in 4.7 or earlier kernels, that would not have been the case.  I 
+
+And what kind of targets do you use in device mapper in the configuration 
+that livelocked? Do you use some custom google-developed drivers?
+
+Please describe the whole stack of block I/O devices when this livelock 
+happened.
+
+Most device mapper drivers can really make forward progress when they are 
+out of memory, so I'm interested what kind of configuration do you have.
+
+> frankly don't care about your patch reviewing of dm mempool usage when 
+> dm_request() livelocked our kernel.
+
+If it livelocked, it is a bug in some underlying block driver, not a bug 
+in mempool_alloc.
+
+> Feel free to formally propose patches either for 4.7 or 4.8.
+
+Mikulas
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
