@@ -1,88 +1,34 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 2/3] multipath-tools: merge OPTFLAGS into
-	CFLAGS
-Date: Fri, 15 Jul 2016 12:19:58 +0200
-Message-ID: <2af5e805-8bfe-72dc-d476-1c0184b76720@suse.de>
-References: <1467995301-14226-1-git-send-email-xose.vazquez@gmail.com>
-	<1467995301-14226-3-git-send-email-xose.vazquez@gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: System freezes after OOM
+Date: Fri, 15 Jul 2016 07:21:59 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1607150711270.5034@file01.intranet.prod.int.rdu2.redhat.com>
+References: <57837CEE.1010609@redhat.com> <f80dc690-7e71-26b2-59a2-5a1557d26713@redhat.com> <9be09452-de7f-d8be-fd5d-4a80d1cd1ba3@redhat.com> <alpine.LRH.2.02.1607111027080.14327@file01.intranet.prod.int.rdu2.redhat.com> <20160712064905.GA14586@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1607121907160.24806@file01.intranet.prod.int.rdu2.redhat.com> <2d5e1f84-e886-7b98-cb11-170d7104fd13@I-love.SAKURA.ne.jp> <20160713133955.GK28723@dhcp22.suse.cz> <alpine.LRH.2.02.1607131004340.31769@file01.intranet.prod.int.rdu2.redhat.com>
+ <20160713145638.GM28723@dhcp22.suse.cz> <alpine.LRH.2.02.1607131105080.31769@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.10.1607131644590.92037@chino.kir.corp.google.com> <alpine.LRH.2.02.1607140818250.15554@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.DEB.2.10.1607141316240.68666@chino.kir.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1467995301-14226-3-git-send-email-xose.vazquez@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Mathieu Trudel-Lapierre <mathieu.trudel-lapierre@canonical.com>, Dragan Stancevic <dragan.stancevic@canonical.com>, device-mapper development <dm-devel@redhat.com>, Ritesh Raj Sarraf <rrs@debian.org>, Louis Bouchard <louis.bouchard@canonical.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.10.1607141316240.68666@chino.kir.corp.google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Rientjes <rientjes@google.com>
+Cc: Michal Hocko <mhocko@kernel.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Ondrej Kozina <okozina@redhat.com>, Jerome Marchand <jmarchan@redhat.com>, Stanislav Kozina <skozina@redhat.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 07/08/2016 06:28 PM, Xose Vazquez Perez wrote:
-> OPTFLAGS is not used anywhere, but maybe it's intrusive for distributions.
-> =
 
-> Cc: Mathieu Trudel-Lapierre <mathieu.trudel-lapierre@canonical.com>
-> Cc: Dragan Stancevic <dragan.stancevic@canonical.com>
-> Cc: Louis Bouchard <louis.bouchard@canonical.com>
-> Cc: Ritesh Raj Sarraf <rrs@debian.org>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Hannes Reinecke <hare@suse.de>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  Makefile.inc | 7 +++----
->  1 file changed, 3 insertions(+), 4 deletions(-)
-> =
 
-> diff --git a/Makefile.inc b/Makefile.inc
-> index 01d743c..b7077fc 100644
-> --- a/Makefile.inc
-> +++ b/Makefile.inc
-> @@ -60,10 +60,9 @@ RM          =3D rm -f
->  LN          =3D ln -sf
->  INSTALL_PROGRAM =3D install
->  =
+On Thu, 14 Jul 2016, David Rientjes wrote:
 
-> -OPTFLAGS     =3D -Wunused -Wstrict-prototypes -O2 -g -pipe -Wformat-secu=
-rity -Wall \
-> -		-Wp,-D_FORTIFY_SOURCE=3D2 -fexceptions -fstack-protector --param=3Dssp=
--buffer-size=3D4
-> -
-> -CFLAGS	     =3D $(OPTFLAGS) -fPIC -DLIB_STRING=3D\"${LIB}\" -DRUN_DIR=3D=
-\"${RUN}\"
-> +CFLAGS      =3D -Wunused -Wstrict-prototypes -O2 -g -pipe -Wformat-secur=
-ity -Wall \
-> +		-Wp,-D_FORTIFY_SOURCE=3D2 -fexceptions -fstack-protector --param=3Dssp=
--buffer-size=3D4 \
-> +		-fPIC -DLIB_STRING=3D\"${LIB}\" -DRUN_DIR=3D\"${RUN}\"
->  SHARED_FLAGS =3D -shared
->  =
+> There is no guarantee that _anything_ can return memory to the mempool,
 
->  %.o:	%.c
-> =
+You misunderstand mempools if you make such claims.
 
-Nope, doesn't work for us.
-Our buildsystem is using a distinct set of flags, which we need to use
-for the build process.
-At the same time we have no idea if there are other flags (like includes
-etc) which are required by the build itself.
+There is in fact guarantee that objects will be returned to mempool. In 
+the past I reviewed device mapper thoroughly to make sure that it can make 
+forward progress even if there is no available memory.
 
-Please revert, this breaks our build.
+I don't know what should I tell you if you keep on repeating the same 
+false claim over and over again. Should I explain mempool oprerations to 
+you in detail? Or will you find it on your own?
 
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+Mikulas
