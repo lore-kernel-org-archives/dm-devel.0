@@ -1,266 +1,87 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 3/3] multipathd: Add 'sysfs' prioritizer
-Date: Fri, 15 Jul 2016 08:48:57 +0200
-Message-ID: <1468565337-5178-4-git-send-email-hare@suse.de>
-References: <1468565337-5178-1-git-send-email-hare@suse.de>
+From: Matthias Dahl <ml_linux-kernel@binary-island.eu>
+Subject: Re: Page Allocation Failures/OOM with dm-crypt on software RAID10
+ (Intel Rapid Storage) with check/repair/sync
+Date: Fri, 15 Jul 2016 09:11:02 +0200
+Message-ID: <005574d77d3f5dbc2643044a1e2468dc@mail.ud19.udmedia.de>
+References: <02580b0a303da26b669b4a9892624b13@mail.ud19.udmedia.de>
+ <20160712095013.GA14591@dhcp22.suse.cz>
+ <d9dbe0328e938eb7544fdb2aa8b5a9c7@mail.ud19.udmedia.de>
+ <20160712114920.GF14586@dhcp22.suse.cz>
+ <e6c2087730e530e77c2b12d50495bdc9@mail.ud19.udmedia.de>
+ <20160712140715.GL14586@dhcp22.suse.cz>
+ <459d501038de4d25db6d140ac5ea5f8d@mail.ud19.udmedia.de>
+ <20160713112126.GH28723@dhcp22.suse.cz>
+ <20160713121828.GI28723@dhcp22.suse.cz>
+ <74b9325c37948cf2b460bd759cff23dd@mail.ud19.udmedia.de>
+ <20160713134717.GL28723@dhcp22.suse.cz>
+ <9074e82f-bf52-011e-8bd7-5731d2b0dcaa@I-love.SAKURA.ne.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII;
+ format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1468565337-5178-1-git-send-email-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <9074e82f-bf52-011e-8bd7-5731d2b0dcaa@I-love.SAKURA.ne.jp>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, linux-raid@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Recent kernels have an 'access_state' attribute which allows
-us to read the asymmetric access state directly from sysfs.
+Hello...
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- libmultipath/discovery.c           | 33 +++++++++++++++++++++
- libmultipath/discovery.h           |  2 ++
- libmultipath/prio.h                |  1 +
- libmultipath/prioritizers/Makefile |  3 +-
- libmultipath/prioritizers/sysfs.c  | 61 ++++++++++++++++++++++++++++++++++++++
- libmultipath/propsel.c             |  6 +++-
- multipath/multipath.conf.5         | 19 ++++++++++--
- 7 files changed, 120 insertions(+), 5 deletions(-)
- create mode 100644 libmultipath/prioritizers/sysfs.c
+I am rather persistent (stubborn?) when it comes to tracking down bugs,
+if somehow possible... and it seems it paid off... somewhat. ;-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index e9e0313..07c60cf 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -209,6 +209,8 @@ declare_sysfs_get_str(devtype);
- declare_sysfs_get_str(vendor);
- declare_sysfs_get_str(model);
- declare_sysfs_get_str(rev);
-+declare_sysfs_get_str(access_state);
-+declare_sysfs_get_str(preferred_path);
- 
- ssize_t
- sysfs_get_vpd (struct udev_device * udev, int pg,
-@@ -484,6 +486,37 @@ int sysfs_get_iscsi_ip_address(struct path *pp, char *ip_address)
- 	return 1;
- }
- 
-+int
-+sysfs_get_asymmetric_access_state(struct path *pp, char *buff, int buflen)
-+{
-+	struct udev_device *parent = pp->udev;
-+	char value[16], *eptr;
-+	unsigned int preferred;
-+
-+	while (parent) {
-+		const char *subsys = udev_device_get_subsystem(parent);
-+		if (subsys && !strncmp(subsys, "scsi", 4))
-+			break;
-+		parent = udev_device_get_parent(parent);
-+	}
-+
-+	if (!parent)
-+		return -1;
-+
-+	if (sysfs_get_access_state(parent, buff, buflen) <= 0)
-+		return -1;
-+
-+	if (sysfs_get_preferred_path(parent, value, 16) <= 0)
-+		return 0;
-+
-+	preferred = strtoul(value, &eptr, 0);
-+	if (value == eptr || preferred == ULONG_MAX) {
-+		/* Parse error, ignore */
-+		return 0;
-+	}
-+	return  preferred;
-+}
-+
- static void
- sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- {
-diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index 321d930..0f5b1e6 100644
---- a/libmultipath/discovery.h
-+++ b/libmultipath/discovery.h
-@@ -47,6 +47,8 @@ int sysfs_get_host_pci_name(struct path *pp, char *pci_name);
- int sysfs_get_iscsi_ip_address(struct path *pp, char *ip_address);
- ssize_t sysfs_get_vpd (struct udev_device * udev, int pg, unsigned char * buff,
- 		       size_t len);
-+int sysfs_get_asymmetric_access_state(struct path *pp,
-+				      char *buff, int buflen);
- 
- /*
-  * discovery bitmask
-diff --git a/libmultipath/prio.h b/libmultipath/prio.h
-index 7195986..032028e 100644
---- a/libmultipath/prio.h
-+++ b/libmultipath/prio.h
-@@ -30,6 +30,7 @@ struct path;
- #define PRIO_RANDOM		"random"
- #define PRIO_RDAC		"rdac"
- #define PRIO_WEIGHTED_PATH	"weightedpath"
-+#define PRIO_SYSFS		"sysfs"
- 
- /*
-  * Value used to mark the fact prio was not defined
-diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
-index 903a139..bb76700 100644
---- a/libmultipath/prioritizers/Makefile
-+++ b/libmultipath/prioritizers/Makefile
-@@ -15,7 +15,8 @@ LIBS = \
- 	libprioontap.so \
- 	libpriorandom.so \
- 	libpriordac.so \
--	libprioweightedpath.so
-+	libprioweightedpath.so \
-+	libpriosysfs.so
- 
- CFLAGS += -I..
- 
-diff --git a/libmultipath/prioritizers/sysfs.c b/libmultipath/prioritizers/sysfs.c
-new file mode 100644
-index 0000000..ff567df
---- /dev/null
-+++ b/libmultipath/prioritizers/sysfs.c
-@@ -0,0 +1,61 @@
-+/*
-+ * sysfs.c
-+ *
-+ * Copyright(c) 2016 Hannes Reinecke, SUSE Linux GmbH
-+ */
-+
-+#include <stdio.h>
-+
-+#include "structs.h"
-+#include "discovery.h"
-+#include "prio.h"
-+
-+static const struct {
-+	unsigned char value;
-+	char *name;
-+} sysfs_access_state_map[] = {
-+	{ 50, "active/optimized" },
-+	{ 10, "active/non-optimized" },
-+	{  5, "lba-dependent" },
-+	{  1, "standby" },
-+};
-+
-+int get_exclusive_pref_arg(char *args)
-+{
-+	char *ptr;
-+
-+	if (args == NULL)
-+		return 0;
-+	ptr = strstr(args, "exclusive_pref_bit");
-+	if (!ptr)
-+		return 0;
-+	if (ptr[18] != '\0' && ptr[18] != ' ' && ptr[18] != '\t')
-+		return 0;
-+	if (ptr != args && ptr[-1] != ' ' && ptr[-1] != '\t')
-+		return 0;
-+	return 1;
-+}
-+
-+int getprio (struct path * pp, char * args, unsigned int timeout)
-+{
-+	int prio = 0, rc, i;
-+	char buff[512];
-+	int exclusive_pref;
-+
-+	exclusive_pref = get_exclusive_pref_arg(args);
-+	rc = sysfs_get_asymmetric_access_state(pp, buff, 512);
-+	if (rc < 0)
-+		return PRIO_UNDEF;
-+	prio = 0;
-+	for (i = 0; i < 4; i++) {
-+		if (!strncmp(buff, sysfs_access_state_map[i].name,
-+			     strlen(sysfs_access_state_map[i].name))) {
-+			prio = sysfs_access_state_map[i].value;
-+			break;
-+		}
-+	}
-+	if (rc > 0 && (prio != 50 || exclusive_pref))
-+		prio += 80;
-+
-+	return prio;
-+}
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index beb0798..0caf269 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -375,6 +375,8 @@ detect_prio(struct config *conf, struct path * pp)
- 	struct prio *p = &pp->prio;
- 	int tpgs = 0;
- 	unsigned int timeout = conf->checker_timeout;
-+	char buff[512];
-+	char *default_prio = PRIO_ALUA;
- 
- 	if ((tpgs = get_target_port_group_support(pp->fd, timeout)) <= 0)
- 		return;
-@@ -384,7 +386,9 @@ detect_prio(struct config *conf, struct path * pp)
- 		return;
- 	if (get_asymmetric_access_state(pp->fd, ret, timeout) < 0)
- 		return;
--	prio_get(conf->multipath_dir, p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
-+	if (sysfs_get_asymmetric_access_state(pp, buff, 512) >= 0)
-+		default_prio = PRIO_SYSFS;
-+	prio_get(conf->multipath_dir, p, default_prio, DEFAULT_PRIO_ARGS);
- }
- 
- #define set_prio(dir, src, msg)					\
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 709ab3c..fc3877f 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -212,6 +212,11 @@ are implemented:
- .I const
- Return a constant priority of \fI1\fR.
- .TP
-+.I sysfs
-+Use the sysfs attributes \fIaccess_state\fR and \fIpreferred_path\fR to
-+generate the path priority. This prioritizer accepts the optional prio_arg
-+.I exclusive_pref_bit
-+.TP
- .I emc
- (Hardware-dependent)
- Generate the path priority for DGC class arrays as CLARiiON CX/AX and
-@@ -277,8 +282,8 @@ these values can be looked up through sysfs or by running
- .I alua
- If
- .I exclusive_pref_bit
--is set, paths with the TPGS pref bit set will always be in their own path
--group.
-+is set, paths with the \fIpreferred path\fR bit set will always
-+be in their own path group.
- .TP
- .I datacore
- .I preferredsds
-@@ -569,8 +574,16 @@ If set to
- .I yes
- , multipath will try to detect if the device supports SCSI-3 ALUA. If so, the
- device will automatically use the
-+.I sysfs
-+prioritizer if the required sysfs attributes
-+.I access_state
-+and
-+.I preferred_path
-+are supported, or the
- .I alua
--prioritizer. If not, the prioritizer will be selected as usual.
-+prioritizer if not. If set to
-+.I no
-+, the prioritizer will be selected as usual.
- .RS
- .TP
- Default value is: \fBno\fR
+So I did quite a lot more further tests and came up with something very
+interesting: As long as the RAID is in sync (as-in: sync_action=idle),
+I can not for the life of me trigger this issue -- the used memory
+still explodes to most of the RAM but it oscillates back and forth.
+
+I did very stupid things to stress the machine while dd was running as
+usual on the dm-crypt device. I opened a second dd instance with the
+same parameters on the dm-crypt device. I wrote a simple program that
+allocated random amounts of memory (up to 10 GiB), memset them and after
+a random amount of time released it again -- in a continuous loop. I
+put heavy network stress on the machine... whatever I could think of.
+
+No matter what, the issue did not trigger. And I repeated said tests
+quite a few times over extended time periods (usually an hour or so).
+Everything worked beautifully with nice speeds and no noticeable system
+slow-downs/lag.
+
+As soon as I issued a "check" to sync_action of the RAID device, it was
+just a matter of a second until the OOM killer kicked in and all hell
+broke loose again. And basically all of my tests where done while the
+RAID device was syncing -- due to a very unfortunate series of events.
+
+I tried to repeat that same test with an external (USB3) connected disk
+with a Linux s/w RAID10 over two partitions... but unfortunately that
+behaves rather differently. I assume it is because it is connected
+through USB and not SATA. While doing those tests on my RAID10 with the
+4 internal SATA3 disks, you can see w/ free that the "used memory" does
+explode to most of the RAM and then oscillates back and forth. With the
+same test on the external disk through, that does not happen at all. The
+used memory stays pretty much constant and only the buffers vary... but
+most of the memory is still free in that case.
+
+I hope my persistence on the matter is not annoying and finally leads us
+somewhere where the real issue hides.
+
+Any suggestions, opinions and ideas are greatly appreciated as I have
+pretty much exhausted mine at this time.
+
+Last but not least: I switched my testing to a OpenSuSE Tumbleweed Live
+system (x86_64 w/ kernel 4.6.3) as Rawhide w/ 4.7.0rcX behaves rather
+strangely and unstable at times.
+
+Thanks,
+Matthias
+
 -- 
-2.6.6
+Dipl.-Inf. (FH) Matthias Dahl | Software Engineer | binary-island.eu
+  services: custom software [desktop, mobile, web], server administration
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
