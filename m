@@ -1,106 +1,188 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: [RFC PATCH 1/2] mempool: do not consume memory reserves from the reclaim path
-Date: Mon, 18 Jul 2016 10:41:24 +0200
-Message-ID: <1468831285-27242-1-git-send-email-mhocko@kernel.org>
-References: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: linux-mm@kvack.org
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, David Rientjes <rientjes@google.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, Michal Hocko <mhocko@suse.com>
+From: keld@keldix.com
+Subject: Re: Recover filenames from failed RAID0
+Date: Mon, 18 Jul 2016 11:37:41 +0200
+Message-ID: <20160718093740.GB24856@www5.open-std.org>
+References: <CAAVC+N5m74MyDqZamHgy71vRMhcEY8w_OkiG-GMQKU=JG-QkxA@mail.gmail.com> <CAAVC+N78o675MpkJN=VO_zZhh7ePer1zU-ePLJi4eNH04ih3mw@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAAVC+N78o675MpkJN=VO_zZhh7ePer1zU-ePLJi4eNH04ih3mw@mail.gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Michel Dubois <michel.dubois.mtl@gmail.com>
+Cc: linux-raid@vger.kernel.org, Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Keith Busch <keith.busch@intel.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, Ming Lei <ming.lei@canonical.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, NeilBrown <neilb@suse.com>, linux-kernel@vger.kernel.org, Takashi Iwai <tiwai@suse.de>, linux-bcache@vger.kernel.org, Zheng Liu <gnehzuil.liu@gmail.com>, Kent Overstreet <kent.overstreet@gmail.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Ingo Molnar <mingo@redhat.com>, Alasdair Kergon <agk@redhat.com>, Roland Kammerer <roland.kammerer@linbit.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-From: Michal Hocko <mhocko@suse.com>
+Hi
 
-There has been a report about OOM killer invoked when swapping out to
-a dm-crypt device. The primary reason seems to be that the swapout
-out IO managed to completely deplete memory reserves. Mikulas was
-able to bisect and explained the issue by pointing to f9054c70d28b
-("mm, mempool: only set __GFP_NOMEMALLOC if there are free elements").
+Which file system did you use?
+I once wrote some code to get files out of an ext3 filesystem, 
+http://www.open-std.org/keld/readme-salvage.html
 
-The reason is that the swapout path is not throttled properly because
-the md-raid layer needs to allocate from the generic_make_request path
-which means it allocates from the PF_MEMALLOC context. dm layer uses
-mempool_alloc in order to guarantee a forward progress which used to
-inhibit access to memory reserves when using page allocator. This has
-changed by f9054c70d28b ("mm, mempool: only set __GFP_NOMEMALLOC if
-there are free elements") which has dropped the __GFP_NOMEMALLOC
-protection when the memory pool is depleted.
+Maybe you can make some corrections for it to work
+as I remember the code, then if you hit a directory, it will salvage the file names and the files
+of that directory.
 
-If we are running out of memory and the only way forward to free memory
-is to perform swapout we just keep consuming memory reserves rather than
-throttling the mempool allocations and allowing the pending IO to
-complete up to a moment when the memory is depleted completely and there
-is no way forward but invoking the OOM killer. This is less than
-optimal.
+Best regards
+keld
 
-The original intention of f9054c70d28b was to help with the OOM
-situations where the oom victim depends on mempool allocation to make a
-forward progress. We can handle that case in a different way, though. We
-can check whether the current task has access to memory reserves ad an
-OOM victim (TIF_MEMDIE) and drop __GFP_NOMEMALLOC protection if the pool
-is empty.
-
-David Rientjes was objecting that such an approach wouldn't help if the
-oom victim was blocked on a lock held by process doing mempool_alloc. This
-is very similar to other oom deadlock situations and we have oom_reaper
-to deal with them so it is reasonable to rely on the same mechanism
-rather inventing a different one which has negative side effects.
-
-Fixes: f9054c70d28b ("mm, mempool: only set __GFP_NOMEMALLOC if there are free elements")
-Bisected-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Michal Hocko <mhocko@suse.com>
----
- mm/mempool.c | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
-
-diff --git a/mm/mempool.c b/mm/mempool.c
-index 8f65464da5de..ea26d75c8adf 100644
---- a/mm/mempool.c
-+++ b/mm/mempool.c
-@@ -322,20 +322,20 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
- 
- 	might_sleep_if(gfp_mask & __GFP_DIRECT_RECLAIM);
- 
-+	gfp_mask |= __GFP_NOMEMALLOC;   /* don't allocate emergency reserves */
- 	gfp_mask |= __GFP_NORETRY;	/* don't loop in __alloc_pages */
- 	gfp_mask |= __GFP_NOWARN;	/* failures are OK */
- 
- 	gfp_temp = gfp_mask & ~(__GFP_DIRECT_RECLAIM|__GFP_IO);
- 
- repeat_alloc:
--	if (likely(pool->curr_nr)) {
--		/*
--		 * Don't allocate from emergency reserves if there are
--		 * elements available.  This check is racy, but it will
--		 * be rechecked each loop.
--		 */
--		gfp_temp |= __GFP_NOMEMALLOC;
--	}
-+	/*
-+	 * Make sure that the OOM victim will get access to memory reserves
-+	 * properly if there are no objects in the pool to prevent from
-+	 * livelocks.
-+	 */
-+	if (!likely(pool->curr_nr) && test_thread_flag(TIF_MEMDIE))
-+		gfp_temp &= ~__GFP_NOMEMALLOC;
- 
- 	element = pool->alloc(gfp_temp, pool->pool_data);
- 	if (likely(element != NULL))
-@@ -359,7 +359,7 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
- 	 * We use gfp mask w/o direct reclaim or IO for the first round.  If
- 	 * alloc failed with that and @pool was empty, retry immediately.
- 	 */
--	if ((gfp_temp & ~__GFP_NOMEMALLOC) != gfp_mask) {
-+	if ((gfp_temp & __GFP_DIRECT_RECLAIM) != (gfp_mask & __GFP_DIRECT_RECLAIM)) {
- 		spin_unlock_irqrestore(&pool->lock, flags);
- 		gfp_temp = gfp_mask;
- 		goto repeat_alloc;
--- 
-2.8.1
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+On Sun, Jul 17, 2016 at 03:10:03PM -0400, Michel Dubois wrote:
+> Dear linux-raid mailing list,
+> 
+> I have a RAID0 array of four 3TB disks that failed on the "third" disk.
+> 
+> I am aware of the non-redundancy of RAID0 but I would like to recover
+> the filenames from that RAID0. If I could recover some data it would
+> be a bonus.
+> 
+> Below you'll find the outputs of the following commands
+>  mdadm --examine /dev/sd[abcd]1
+>  fdisk -l
+> 
+> where sda1, sdb1, sdc1 and sdd1 should be the 4 RAID devices.
+> 
+> What could be my next step?
+> 
+> I thank you for your time
+> 
+> Michel Dubois
+> 
+> ======================
+> mdadm --examine /dev/sd[abcd]1
+> /dev/sda1:
+>           Magic : a92b4efc
+>         Version : 00.90.00
+>            UUID : 7d247a6e:7b5d46c8:f52d9c89:db304b21
+>   Creation Time : Mon Apr 23 19:55:36 2012
+>      Raid Level : raid1
+>   Used Dev Size : 20980800 (20.01 GiB 21.48 GB)
+>      Array Size : 20980800 (20.01 GiB 21.48 GB)
+>    Raid Devices : 4
+>   Total Devices : 3
+> Preferred Minor : 0
+> 
+>     Update Time : Mon Jun 27 21:12:23 2016
+>           State : clean
+>  Active Devices : 3
+> Working Devices : 3
+>  Failed Devices : 1
+>   Spare Devices : 0
+>        Checksum : 1a57db60 - correct
+>          Events : 164275
+> 
+> 
+>       Number   Major   Minor   RaidDevice State
+> this     0       8        1        0      active sync   /dev/sda1
+> 
+>    0     0       8        1        0      active sync   /dev/sda1
+>    1     1       8       17        1      active sync   /dev/sdb1
+>    2     2       0        0        2      faulty removed
+>    3     3       8       33        3      active sync   /dev/sdc1
+> /dev/sdb1:
+>           Magic : a92b4efc
+>         Version : 00.90.00
+>            UUID : 7d247a6e:7b5d46c8:f52d9c89:db304b21
+>   Creation Time : Mon Apr 23 19:55:36 2012
+>      Raid Level : raid1
+>   Used Dev Size : 20980800 (20.01 GiB 21.48 GB)
+>      Array Size : 20980800 (20.01 GiB 21.48 GB)
+>    Raid Devices : 4
+>   Total Devices : 3
+> Preferred Minor : 0
+> 
+>     Update Time : Mon Jun 27 21:12:23 2016
+>           State : clean
+>  Active Devices : 3
+> Working Devices : 3
+>  Failed Devices : 1
+>   Spare Devices : 0
+>        Checksum : 1a57db72 - correct
+>          Events : 164275
+> 
+> 
+>       Number   Major   Minor   RaidDevice State
+> this     1       8       17        1      active sync   /dev/sdb1
+> 
+>    0     0       8        1        0      active sync   /dev/sda1
+>    1     1       8       17        1      active sync   /dev/sdb1
+>    2     2       0        0        2      faulty removed
+>    3     3       8       33        3      active sync   /dev/sdc1
+> /dev/sdc1:
+>           Magic : a92b4efc
+>         Version : 00.90.00
+>            UUID : 7d247a6e:7b5d46c8:f52d9c89:db304b21
+>   Creation Time : Mon Apr 23 19:55:36 2012
+>      Raid Level : raid1
+>   Used Dev Size : 20980800 (20.01 GiB 21.48 GB)
+>      Array Size : 20980800 (20.01 GiB 21.48 GB)
+>    Raid Devices : 4
+>   Total Devices : 3
+> Preferred Minor : 0
+> 
+>     Update Time : Mon Jun 27 21:12:23 2016
+>           State : clean
+>  Active Devices : 3
+> Working Devices : 3
+>  Failed Devices : 1
+>   Spare Devices : 0
+>        Checksum : 1a57db86 - correct
+>          Events : 164275
+> 
+> 
+>       Number   Major   Minor   RaidDevice State
+> this     3       8       33        3      active sync   /dev/sdc1
+> 
+>    0     0       8        1        0      active sync   /dev/sda1
+>    1     1       8       17        1      active sync   /dev/sdb1
+>    2     2       0        0        2      faulty removed
+>    3     3       8       33        3      active sync   /dev/sdc1
+> 
+> ======================
+> fdisk -l
+> 
+> WARNING: GPT (GUID Partition Table) detected on '/dev/sda'! The util
+> fdisk doesn't support GPT. Use GNU Parted.
+> 
+> 
+> Disk /dev/sda: 3000.5 GB, 3000592982016 bytes
+> 255 heads, 63 sectors/track, 364801 cylinders
+> Units = cylinders of 16065 * 512 = 8225280 bytes
+> Disk identifier: 0x03afffbe
+> 
+>    Device Boot      Start         End      Blocks   Id  System
+> /dev/sda1               1      267350  2147483647+  ee  EFI GPT
+> 
+> WARNING: GPT (GUID Partition Table) detected on '/dev/sdb'! The util
+> fdisk doesn't support GPT. Use GNU Parted.
+> 
+> 
+> Disk /dev/sdb: 3000.5 GB, 3000592982016 bytes
+> 255 heads, 63 sectors/track, 364801 cylinders
+> Units = cylinders of 16065 * 512 = 8225280 bytes
+> Disk identifier: 0x142a889c
+> 
+>    Device Boot      Start         End      Blocks   Id  System
+> /dev/sdb1               1      267350  2147483647+  ee  EFI GPT
+> 
+> WARNING: GPT (GUID Partition Table) detected on '/dev/sdc'! The util
+> fdisk doesn't support GPT. Use GNU Parted.
+> 
+> 
+> Disk /dev/sdc: 3000.5 GB, 3000592982016 bytes
+> 255 heads, 63 sectors/track, 364801 cylinders
+> Units = cylinders of 16065 * 512 = 8225280 bytes
+> Disk identifier: 0x3daebd50
+> 
+>    Device Boot      Start         End      Blocks   Id  System
+> /dev/sdc1               1      267350  2147483647+  ee  EFI GPT
+> 
+> Disk /dev/md0: 21.4 GB, 21484339200 bytes
+> 2 heads, 4 sectors/track, 5245200 cylinders
+> Units = cylinders of 8 * 512 = 4096 bytes
+> Disk identifier: 0x00000000
+> 
+> Disk /dev/md0 doesn't contain a valid partition table
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-raid" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
