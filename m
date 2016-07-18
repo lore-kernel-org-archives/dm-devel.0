@@ -1,16 +1,11 @@
-From: Gris Ge <fge@redhat.com>
-Subject: Re: [PATCH V6 1/3] multipath-tools: New way to limit the
- IPC command length.
-Date: Mon, 18 Jul 2016 20:38:32 +0800
-Message-ID: <20160718123832.GA39932@redhat.com>
-References: <1453953120-7023-1-git-send-email-fge@redhat.com>
-	<20160712065038.17565-1-fge@redhat.com>
-	<20160712065038.17565-2-fge@redhat.com>
-	<20160715213545.GP8095@octiron.msp.redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: remove final \ in fprintf
+Date: Mon, 18 Jul 2016 15:23:59 +0200
+Message-ID: <1468848239-6163-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4904085947003482748=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160715213545.GP8095@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,73 +15,92 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
+Useless.
 
---===============4904085947003482748==
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="tThc/1wpZn/ma/RB"
-Content-Disposition: inline
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ multipath/main.c | 64 ++++++++++++++++++++++++++++----------------------------
+ 1 file changed, 32 insertions(+), 32 deletions(-)
 
-
---tThc/1wpZn/ma/RB
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On Fri, Jul 15, 2016 at 04:35:45PM -0500, Benjamin Marzinski wrote:
-> On Tue, Jul 12, 2016 at 02:50:36PM +0800, Gris Ge wrote:
->=20
-> The only thing that I wonder about with this patch is, when previously
-> the multipath client code would have failed with EPIPE, and (at least in
-> some cases) spit out a semi-useful message, the program will now
-> terminate because of the SIGPIPE signal.  I'm not sure it makes any real
-> difference, since we weren't very diligent with returning useful error
-> messages in this case, and the client code isn't very likely to get
-> SIGPIPE.
->=20
-> I'm not very concerned if nobody else thinks this is important, I just
-> though I should bring it up.
->=20
-> -Ben
->=20
-Thanks Ben, I will make next version of patch to handle/ignore
-SIGPIPE.
-
---=20
-Gris Ge
-
---tThc/1wpZn/ma/RB
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJXjM3IAAoJEGzN5Y/kHij/BxIP/3rHGYoQrJSFYMMG/l8fLtas
-w5Pj7V/SXUaESEixh6hsYYCLjGT582bgCPdTV9AxvPffJLUm+RQvjJeepVCS1O6j
-YySvf3OJBC+aflOVVZOuXgplMK2+baO2L3tDVBn6DlL+O67sdbg+pTSK+dMul9C0
-11C7498Ba3XVjzoYgB2QCMIrAqaUEAfxabNAOlBUkc6pcZmQOMksqvbwQ0xdisgZ
-fQYp06mmHfFH9vt9A1w85pmyYvYRXSbew4ZWGA00bDoU3dWCMVM68axhLxpPxYkq
-hO4tlGt/78Uee694RBZqrBdWLuiii1yYGIwZ/r32m1vlvxZSB5YZu6JVHP6/Fgcd
-JeR0I1bMp8S40M4tJfsMI7VqxDO22iMrCyFGIGMJ85XyQ2ZJNdLlykPwuigGL9vv
-uoSVyye6Q788qKeUeJV3qa/+DhlfWFWUzRnYAKqdOQlMuuyGKRoiQNHr4qF6uH/1
-K7txuKOcxaWh4cXKQ4WbMS2O8XYZVjbkZFbNht096hE85GOBJoyjQ8ByPy0j//lY
-xGYiHknxjlPpJoCpWhXH9jUGXWKagIyNSoocpYMHlzhImXmVX6IqDKXP7IPTV4yE
-aOyKPFZ8fRPTFk6tSXYRX1/dzcpRNCw8g2lvY4EouLg7bSrCDp95ZvX9UNbUJB2q
-TskFJEmmOs0vatgh//0f
-=R77h
------END PGP SIGNATURE-----
-
---tThc/1wpZn/ma/RB--
-
-
---===============4904085947003482748==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============4904085947003482748==--
+diff --git a/multipath/main.c b/multipath/main.c
+index 907a96c..0bec0d2 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -110,38 +110,38 @@ usage (char * progname)
+ 	fprintf (stderr,
+ 		"\n"
+ 		"Where:\n"
+-		"  -h      print this usage text\n" \
+-		"  -l      show multipath topology (sysfs and DM info)\n" \
+-		"  -ll     show multipath topology (maximum info)\n" \
+-		"  -f      flush a multipath device map\n" \
+-		"  -F      flush all multipath device maps\n" \
+-		"  -a      add a device wwid to the wwids file\n" \
+-		"  -c      check if a device should be a path in a multipath device\n" \
+-		"  -q      allow queue_if_no_path when multipathd is not running\n"\
+-		"  -d      dry run, do not create or update devmaps\n" \
+-		"  -t      dump internal hardware table\n" \
+-		"  -r      force devmap reload\n" \
+-		"  -i      ignore wwids file\n" \
+-		"  -B      treat the bindings file as read only\n" \
+-		"  -b fil  bindings file location\n" \
+-		"  -w      remove a device from the wwids file\n" \
+-		"  -W      reset the wwids file include only the current devices\n" \
+-		"  -p pol  force all maps to specified path grouping policy :\n" \
+-		"          . failover            one path per priority group\n" \
+-		"          . multibus            all paths in one priority group\n" \
+-		"          . group_by_serial     one priority group per serial\n" \
+-		"          . group_by_prio       one priority group per priority lvl\n" \
+-		"          . group_by_node_name  one priority group per target node\n" \
+-		"  -v lvl  verbosity level\n" \
+-		"          . 0 no output\n" \
+-		"          . 1 print created devmap names only\n" \
+-		"          . 2 default verbosity\n" \
+-		"          . 3 print debug information\n" \
+-		"  dev     action limited to:\n" \
+-		"          . multipath named 'dev' (ex: mpath0) or\n" \
+-		"          . multipath whose wwid is 'dev' (ex: 60051..)\n" \
+-		"          . multipath including the path named 'dev' (ex: /dev/sda)\n" \
+-		"          . multipath including the path with maj:min 'dev' (ex: 8:0)\n" \
++		"  -h      print this usage text\n"
++		"  -l      show multipath topology (sysfs and DM info)\n"
++		"  -ll     show multipath topology (maximum info)\n"
++		"  -f      flush a multipath device map\n"
++		"  -F      flush all multipath device maps\n"
++		"  -a      add a device wwid to the wwids file\n"
++		"  -c      check if a device should be a path in a multipath device\n"
++		"  -q      allow queue_if_no_path when multipathd is not running\n"
++		"  -d      dry run, do not create or update devmaps\n"
++		"  -t      dump internal hardware table\n"
++		"  -r      force devmap reload\n"
++		"  -i      ignore wwids file\n"
++		"  -B      treat the bindings file as read only\n"
++		"  -b fil  bindings file location\n"
++		"  -w      remove a device from the wwids file\n"
++		"  -W      reset the wwids file include only the current devices\n"
++		"  -p pol  force all maps to specified path grouping policy :\n"
++		"          . failover            one path per priority group\n"
++		"          . multibus            all paths in one priority group\n"
++		"          . group_by_serial     one priority group per serial\n"
++		"          . group_by_prio       one priority group per priority lvl\n"
++		"          . group_by_node_name  one priority group per target node\n"
++		"  -v lvl  verbosity level\n"
++		"          . 0 no output\n"
++		"          . 1 print created devmap names only\n"
++		"          . 2 default verbosity\n"
++		"          . 3 print debug information\n"
++		"  dev     action limited to:\n"
++		"          . multipath named 'dev' (ex: mpath0) or\n"
++		"          . multipath whose wwid is 'dev' (ex: 60051..)\n"
++		"          . multipath including the path named 'dev' (ex: /dev/sda)\n"
++		"          . multipath including the path with maj:min 'dev' (ex: 8:0)\n"
+ 		);
+ 
+ }
+-- 
+2.7.4
