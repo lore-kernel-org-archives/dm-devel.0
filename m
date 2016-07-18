@@ -1,51 +1,57 @@
-From: Matthias Dahl <ml_linux-kernel@binary-island.eu>
-Subject: Re: Page Allocation Failures/OOM with dm-crypt on software RAID10
- (Intel Rapid Storage) with check/repair/sync
-Date: Mon, 18 Jul 2016 09:24:28 +0200
-Message-ID: <3e08f5186a4650775a56bd0aabad6a44@mail.ud19.udmedia.de>
-References: <02580b0a303da26b669b4a9892624b13@mail.ud19.udmedia.de>
- <20160712095013.GA14591@dhcp22.suse.cz>
- <d9dbe0328e938eb7544fdb2aa8b5a9c7@mail.ud19.udmedia.de>
- <20160712114920.GF14586@dhcp22.suse.cz>
- <e6c2087730e530e77c2b12d50495bdc9@mail.ud19.udmedia.de>
- <20160712140715.GL14586@dhcp22.suse.cz>
- <459d501038de4d25db6d140ac5ea5f8d@mail.ud19.udmedia.de>
- <20160713112126.GH28723@dhcp22.suse.cz>
- <20160713121828.GI28723@dhcp22.suse.cz>
- <74b9325c37948cf2b460bd759cff23dd@mail.ud19.udmedia.de>
- <20160713134717.GL28723@dhcp22.suse.cz>
- <9074e82f-bf52-011e-8bd7-5731d2b0dcaa@I-love.SAKURA.ne.jp>
- <005574d77d3f5dbc2643044a1e2468dc@mail.ud19.udmedia.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII;
- format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <005574d77d3f5dbc2643044a1e2468dc@mail.ud19.udmedia.de>
-Sender: linux-raid-owner@vger.kernel.org
-To: linux-raid@vger.kernel.org
-Cc: Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Michal Hocko <mhocko@kernel.org>, Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+From: Michal Hocko <mhocko@kernel.org>
+Subject: [RFC PATCH 0/2] mempool vs. page allocator interaction
+Date: Mon, 18 Jul 2016 10:39:22 +0200
+Message-ID: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: linux-mm@kvack.org
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, David Rientjes <rientjes@google.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello again...
+Hi,
+there have been two issues identified when investigating dm-crypt
+backed swap recently [1]. The first one looks like a regression from
+f9054c70d28b ("mm, mempool: only set __GFP_NOMEMALLOC if there are free
+elements") because swapout path can now deplete all the available memory
+reserves. The first patch tries to address that issue by dropping
+__GFP_NOMEMALLOC only to TIF_MEMDIE tasks.
 
-So I spent all weekend doing further tests, since this issue is
-really bugging me for obvious reasons.
+The second issue is that dm writeout path which relies on mempool
+allocator gets throttled by the direct reclaim in throttle_vm_writeout
+which just makes the whole memory pressure problem even worse. The
+patch2 just makes sure that we annotate mempool users to be throttled
+less by PF_LESS_THROTTLE flag and prevent from throttle_vm_writeout for
+that path. mempool users are usually the IO path and throttle them less
+sounds like a reasonable way to go.
 
-I thought it would be beneficial if I created a bug report that
-summarized and centralized everything in one place rather than
-having everything spread across several lists and posts.
+I do not have any more complicated dm setup available so I would
+appreciate if dm people (CCed) could give these two a try.
 
-Here the bug report I created:
-https://bugzilla.kernel.org/show_bug.cgi?id=135481
+Also it would be great to iron out concerns from David. He has posted a
+deadlock stack trace [2] which has led to f9054c70d28b which is bio
+allocation lockup because the TIF_MEMDIE process cannot make a forward
+progress without access to memory reserve. This case should be fixed by
+patch 1 AFAICS. There are other potential cases when the stuck mempool
+is called from PF_MEMALLOC context and blocks the oom victim indirectly
+(over a lock) but I believe those are much less likely and we have the
+oom reaper to make a forward progress.
 
-If anyone has any suggestions, ideas or wants me to do further tests,
-please just let me know. There is not much more I can do at this point
-without further help/guidance.
+Sorry of pulling the discussion outside of the original email thread
+but there were more lines of dicussion there and I felt discussing
+particualr solution with its justification has a greater chance of
+moving towards a solution. I am sending this as an RFC because this
+needs a deep review as there might be other side effects I do not see
+(especially about patch 2).
 
-Thanks,
-Matthias
+Any comments, suggestions are welcome.
 
--- 
-Dipl.-Inf. (FH) Matthias Dahl | Software Engineer | binary-island.eu
-  services: custom software [desktop, mobile, web], server administration
+---
+[1] http://lkml.kernel.org/r/alpine.LRH.2.02.1607111027080.14327@file01.intranet.prod.int.rdu2.redhat.com
+[2] http://lkml.kernel.org/r/alpine.DEB.2.10.1607131644590.92037@chino.kir.corp.google.com
+
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
