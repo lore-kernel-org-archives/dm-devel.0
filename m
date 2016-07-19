@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Subject: [PATCH] multipath-tools: memory.h is a local header in
-	multipathd/uxclnt.c
-Date: Tue, 19 Jul 2016 19:53:45 +0200
-Message-ID: <1468950825-26402-1-git-send-email-xose.vazquez@gmail.com>
+	libmultipath/checkers/emc_clariion.c
+Date: Tue, 19 Jul 2016 20:10:45 +0200
+Message-ID: <1468951845-27059-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,27 +19,33 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-If it is removed, the compiler warns: "undefined reference to `FREE'"
+Added in 57a6c5c7.
+But it could be removed because it's already included in "checkers.h"
 
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- multipathd/uxclnt.c | 2 +-
+ libmultipath/checkers/emc_clariion.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipathd/uxclnt.c b/multipathd/uxclnt.c
-index a0d58c3..109a217 100644
---- a/multipathd/uxclnt.c
-+++ b/multipathd/uxclnt.c
-@@ -20,7 +20,7 @@
- 
- #include "mpath_cmd.h"
- #include "uxsock.h"
+diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
+index a797734..5e416a0 100644
+--- a/libmultipath/checkers/emc_clariion.c
++++ b/libmultipath/checkers/emc_clariion.c
+@@ -10,12 +10,12 @@
+ #include <fcntl.h>
+ #include <sys/ioctl.h>
+ #include <errno.h>
 -#include <memory.h>
-+#include "memory.h"
- #include "defaults.h"
  
- #include "vector.h"
+ #include "../libmultipath/sg_include.h"
+ #include "libsg.h"
+ #include "checkers.h"
+ #include "debug.h"
++#include "memory.h"
+ 
+ #define INQUIRY_CMD     0x12
+ #define INQUIRY_CMDLEN  6
 -- 
 2.7.4
