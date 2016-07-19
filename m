@@ -1,51 +1,89 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: memory.h is a local header in
-	libmultipath/checkers/emc_clariion.c
-Date: Tue, 19 Jul 2016 20:10:45 +0200
-Message-ID: <1468951845-27059-1-git-send-email-xose.vazquez@gmail.com>
+From: David Rientjes <rientjes@google.com>
+Subject: Re: [RFC PATCH 1/2] mempool: do not consume memory reserves from
+ the reclaim path
+Date: Tue, 19 Jul 2016 13:45:52 -0700 (PDT)
+Message-ID: <alpine.DEB.2.10.1607191315400.58064@chino.kir.corp.google.com>
+References: <1468831164-26621-1-git-send-email-mhocko@kernel.org> <1468831285-27242-1-git-send-email-mhocko@kernel.org> <20160719135426.GA31229@cmpxchg.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160719135426.GA31229@cmpxchg.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Johannes Weiner <hannes@cmpxchg.org>
+Cc: Michal Hocko <mhocko@kernel.org>, linux-mm@kvack.org, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, Michal Hocko <mhocko@suse.com>
 List-Id: dm-devel.ids
 
-Added in 57a6c5c7.
-But it could be removed because it's already included in "checkers.h"
+On Tue, 19 Jul 2016, Johannes Weiner wrote:
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/checkers/emc_clariion.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+> Mempool guarantees forward progress by having all necessary memory
+> objects for the guaranteed operation in reserve. Think about it this
+> way: you should be able to delete the pool->alloc() call entirely and
+> still make reliable forward progress. It would kill concurrency and be
+> super slow, but how could it be affected by a system OOM situation?
+> 
+> If our mempool_alloc() is waiting for an object that an OOM victim is
+> holding, where could that OOM victim get stuck before giving it back?
+> As I asked in the previous thread, surely you wouldn't do a mempool
+> allocation first and then rely on an unguarded page allocation to make
+> forward progress, right? It would defeat the purpose of using mempools
+> in the first place. And surely the OOM victim wouldn't be waiting for
+> a lock that somebody doing mempool_alloc() *against the same mempool*
+> is holding. That'd be an obvious ABBA deadlock.
+> 
+> So maybe I'm just dense, but could somebody please outline the exact
+> deadlock diagram? Who is doing what, and how are they getting stuck?
+> 
+> cpu0:                     cpu1:
+>                           mempool_alloc(pool0)
+> mempool_alloc(pool0)
+>   wait for cpu1
+>                           not allocating memory - would defeat mempool
+>                           not taking locks held by cpu0* - would ABBA
+>                           ???
+>                           mempool_free(pool0)
+> 
+> Thanks
+> 
+> * or any other task that does mempool_alloc(pool0) before unlock
+> 
 
-diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
-index a797734..5e416a0 100644
---- a/libmultipath/checkers/emc_clariion.c
-+++ b/libmultipath/checkers/emc_clariion.c
-@@ -10,12 +10,12 @@
- #include <fcntl.h>
- #include <sys/ioctl.h>
- #include <errno.h>
--#include <memory.h>
- 
- #include "../libmultipath/sg_include.h"
- #include "libsg.h"
- #include "checkers.h"
- #include "debug.h"
-+#include "memory.h"
- 
- #define INQUIRY_CMD     0x12
- #define INQUIRY_CMDLEN  6
--- 
-2.7.4
+I'm approaching this from a perspective of any possible mempool usage, not 
+with any single current user in mind.
+
+Any mempool_alloc() user that then takes a contended mutex can do this.  
+An example:
+
+	taskA		taskB		taskC
+	-----		-----		-----
+	mempool_alloc(a)
+			mutex_lock(b)
+	mutex_lock(b)
+					mempool_alloc(a)
+
+Imagine the mempool_alloc() done by taskA depleting all free elements so 
+we rely on it to do mempool_free() before any other mempool allocator can 
+be guaranteed.
+
+If taskC is oom killed, or has PF_MEMALLOC set, it cannot access memory 
+reserves from the page allocator if __GFP_NOMEMALLOC is automatic in 
+mempool_alloc().  This livelocks the page allocator for all processes.
+
+taskB in this case need only stall after taking mutex_lock() successfully; 
+that could be because of the oom livelock, it is contended on another 
+mutex held by an allocator, etc.
+
+Obviously taskB stalling while holding a mutex that is contended by a 
+mempool user holding an element is not preferred, but it's possible.  (A 
+simplified version is also possible with 0-size mempools, which are also 
+allowed.)
+
+My point is that I don't think we should be forcing any behavior wrt 
+memory reserves as part of the mempool implementation.  In the above, 
+taskC mempool_alloc() would succeed and not livelock unless 
+__GFP_NOMEMALLOC is forced.  The mempool_alloc() user may construct their 
+set of gfp flags as appropriate just like any other memory allocator in 
+the kernel.
+
+The alternative would be to ensure no mempool users ever take a lock that 
+another thread can hold while contending another mutex or allocating 
+memory itself.
