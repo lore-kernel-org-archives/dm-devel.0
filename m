@@ -1,183 +1,84 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [RFC PATCH 2/2] mm, mempool: do not throttle PF_LESS_THROTTLE
- tasks
-Date: Tue, 19 Jul 2016 17:50:58 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1607191750380.1437@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1468831164-26621-1-git-send-email-mhocko@kernel.org> <1468831285-27242-1-git-send-email-mhocko@kernel.org> <1468831285-27242-2-git-send-email-mhocko@kernel.org>
+Subject: Re: [RFC PATCH 1/2] mempool: do not consume memory reserves from
+ the reclaim path
+Date: Tue, 19 Jul 2016 18:01:05 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1607191751300.1437@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1468831164-26621-1-git-send-email-mhocko@kernel.org> <1468831285-27242-1-git-send-email-mhocko@kernel.org> <20160719135426.GA31229@cmpxchg.org> <20160719141956.GJ9486@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1468831285-27242-2-git-send-email-mhocko@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20160719141956.GJ9486@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
 To: Michal Hocko <mhocko@kernel.org>
-Cc: linux-mm@kvack.org, Ondrej Kozina <okozina@redhat.com>, David Rientjes <rientjes@google.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, Michal Hocko <mhocko@suse.com>
+Cc: Johannes Weiner <hannes@cmpxchg.org>, linux-mm@kvack.org, Ondrej Kozina <okozina@redhat.com>, David Rientjes <rientjes@google.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
 
-On Mon, 18 Jul 2016, Michal Hocko wrote:
+On Tue, 19 Jul 2016, Michal Hocko wrote:
 
-> From: Michal Hocko <mhocko@suse.com>
+> On Tue 19-07-16 09:54:26, Johannes Weiner wrote:
+> > On Mon, Jul 18, 2016 at 10:41:24AM +0200, Michal Hocko wrote:
+> > > The original intention of f9054c70d28b was to help with the OOM
+> > > situations where the oom victim depends on mempool allocation to make a
+> > > forward progress. We can handle that case in a different way, though. We
+> > > can check whether the current task has access to memory reserves ad an
+> > > OOM victim (TIF_MEMDIE) and drop __GFP_NOMEMALLOC protection if the pool
+> > > is empty.
+> > > 
+> > > David Rientjes was objecting that such an approach wouldn't help if the
+> > > oom victim was blocked on a lock held by process doing mempool_alloc. This
+> > > is very similar to other oom deadlock situations and we have oom_reaper
+> > > to deal with them so it is reasonable to rely on the same mechanism
+> > > rather inventing a different one which has negative side effects.
+> > 
+> > I don't understand how this scenario wouldn't be a flat-out bug.
+> > 
+> > Mempool guarantees forward progress by having all necessary memory
+> > objects for the guaranteed operation in reserve. Think about it this
+> > way: you should be able to delete the pool->alloc() call entirely and
+> > still make reliable forward progress. It would kill concurrency and be
+> > super slow, but how could it be affected by a system OOM situation?
 > 
-> Mikulas has reported that a swap backed by dm-crypt doesn't work
-> properly because the swapout cannot make a sufficient forward progress
-> as the writeout path depends on dm_crypt worker which has to allocate
-> memory to perform the encryption. In order to guarantee a forward
-> progress it relies on the mempool allocator. mempool_alloc(), however,
-> prefers to use the underlying (usually page) allocator before it grabs
-> objects from the pool. Such an allocation can dive into the memory
-> reclaim and consequently to throttle_vm_writeout. If there are too many
-> dirty or pages under writeback it will get throttled even though it is
-> in fact a flusher to clear pending pages.
-> 
-> [  345.352536] kworker/u4:0    D ffff88003df7f438 10488     6      2 0x00000000
-> [  345.352536] Workqueue: kcryptd kcryptd_crypt [dm_crypt]
-> [  345.352536]  ffff88003df7f438 ffff88003e5d0380 ffff88003e5d0380 ffff88003e5d8e80
-> [  345.352536]  ffff88003dfb3240 ffff88003df73240 ffff88003df80000 ffff88003df7f470
-> [  345.352536]  ffff88003e5d0380 ffff88003e5d0380 ffff88003df7f828 ffff88003df7f450
-> [  345.352536] Call Trace:
-> [  345.352536]  [<ffffffff818d466c>] schedule+0x3c/0x90
-> [  345.352536]  [<ffffffff818d96a8>] schedule_timeout+0x1d8/0x360
-> [  345.352536]  [<ffffffff81135e40>] ? detach_if_pending+0x1c0/0x1c0
-> [  345.352536]  [<ffffffff811407c3>] ? ktime_get+0xb3/0x150
-> [  345.352536]  [<ffffffff811958cf>] ? __delayacct_blkio_start+0x1f/0x30
-> [  345.352536]  [<ffffffff818d39e4>] io_schedule_timeout+0xa4/0x110
-> [  345.352536]  [<ffffffff8121d886>] congestion_wait+0x86/0x1f0
-> [  345.352536]  [<ffffffff810fdf40>] ? prepare_to_wait_event+0xf0/0xf0
-> [  345.352536]  [<ffffffff812061d4>] throttle_vm_writeout+0x44/0xd0
-> [  345.352536]  [<ffffffff81211533>] shrink_zone_memcg+0x613/0x720
-> [  345.352536]  [<ffffffff81211720>] shrink_zone+0xe0/0x300
-> [  345.352536]  [<ffffffff81211aed>] do_try_to_free_pages+0x1ad/0x450
-> [  345.352536]  [<ffffffff81211e7f>] try_to_free_pages+0xef/0x300
-> [  345.352536]  [<ffffffff811fef19>] __alloc_pages_nodemask+0x879/0x1210
-> [  345.352536]  [<ffffffff810e8080>] ? sched_clock_cpu+0x90/0xc0
-> [  345.352536]  [<ffffffff8125a8d1>] alloc_pages_current+0xa1/0x1f0
-> [  345.352536]  [<ffffffff81265ef5>] ? new_slab+0x3f5/0x6a0
-> [  345.352536]  [<ffffffff81265dd7>] new_slab+0x2d7/0x6a0
-> [  345.352536]  [<ffffffff810e7f87>] ? sched_clock_local+0x17/0x80
-> [  345.352536]  [<ffffffff812678cb>] ___slab_alloc+0x3fb/0x5c0
-> [  345.352536]  [<ffffffff811f71bd>] ? mempool_alloc_slab+0x1d/0x30
-> [  345.352536]  [<ffffffff810e7f87>] ? sched_clock_local+0x17/0x80
-> [  345.352536]  [<ffffffff811f71bd>] ? mempool_alloc_slab+0x1d/0x30
-> [  345.352536]  [<ffffffff81267ae1>] __slab_alloc+0x51/0x90
-> [  345.352536]  [<ffffffff811f71bd>] ? mempool_alloc_slab+0x1d/0x30
-> [  345.352536]  [<ffffffff81267d9b>] kmem_cache_alloc+0x27b/0x310
-> [  345.352536]  [<ffffffff811f71bd>] mempool_alloc_slab+0x1d/0x30
-> [  345.352536]  [<ffffffff811f6f11>] mempool_alloc+0x91/0x230
-> [  345.352536]  [<ffffffff8141a02d>] bio_alloc_bioset+0xbd/0x260
-> [  345.352536]  [<ffffffffc02f1a54>] kcryptd_crypt+0x114/0x3b0 [dm_crypt]
-> 
-> Memory pools are usually used for the writeback paths and it doesn't
-> really make much sense to throttle them just because there are too many
-> dirty/writeback pages. The main purpose of throttle_vm_writeout is to
-> make sure that the pageout path doesn't generate too much dirty data.
-> Considering that we are in mempool path which performs __GFP_NORETRY
-> requests the risk shouldn't be really high.
-> 
-> Fix this by ensuring that mempool users will get PF_LESS_THROTTLE and
-> that such processes are not throttled in throttle_vm_writeout. They can
-> still get throttled due to current_may_throttle() sleeps but that should
-> happen when the backing device itself is congested which sounds like a
-> proper reaction.
-> 
-> Please note that the bonus given by domain_dirty_limits() alone is not
-> sufficient because at least dm-crypt has to double buffer each page
-> under writeback so this won't be sufficient to prevent from being
-> throttled.
-> 
-> There are other users of the flag but they are in the writeout path so
-> this looks like a proper thing for them as well.
-> 
-> Reported-by: Mikulas Patocka <mpatocka@redhat.com>
-> Signed-off-by: Michal Hocko <mhocko@suse.com>
+> Yes this is my understanding of the mempool usage as well. It is much
 
-Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
-Tested-by: Mikulas Patocka <mpatocka@redhat.com>
+Yes, that's correct.
 
-> ---
->  mm/mempool.c        | 19 +++++++++++++++----
->  mm/page-writeback.c |  3 +++
->  2 files changed, 18 insertions(+), 4 deletions(-)
+> harder to check whether mempool users are really behaving and they do
+> not request more than the pre allocated pool allows them, though. That
+> would be a bug in the consumer not the mempool as such of course.
 > 
-> diff --git a/mm/mempool.c b/mm/mempool.c
-> index ea26d75c8adf..916e95c4192c 100644
-> --- a/mm/mempool.c
-> +++ b/mm/mempool.c
-> @@ -310,7 +310,8 @@ EXPORT_SYMBOL(mempool_resize);
->   */
->  void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
->  {
-> -	void *element;
-> +	unsigned int pflags = current->flags;
-> +	void *element = NULL;
->  	unsigned long flags;
->  	wait_queue_t wait;
->  	gfp_t gfp_temp;
-> @@ -328,6 +329,12 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
->  
->  	gfp_temp = gfp_mask & ~(__GFP_DIRECT_RECLAIM|__GFP_IO);
->  
-> +	/*
-> +	 * Make sure that the allocation doesn't get throttled during the
-> +	 * reclaim
-> +	 */
-> +	if (gfpflags_allow_blocking(gfp_mask))
-> +		current->flags |= PF_LESS_THROTTLE;
->  repeat_alloc:
->  	/*
->  	 * Make sure that the OOM victim will get access to memory reserves
-> @@ -339,7 +346,7 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
->  
->  	element = pool->alloc(gfp_temp, pool->pool_data);
->  	if (likely(element != NULL))
-> -		return element;
-> +		goto out;
->  
->  	spin_lock_irqsave(&pool->lock, flags);
->  	if (likely(pool->curr_nr)) {
-> @@ -352,7 +359,7 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
->  		 * for debugging.
->  		 */
->  		kmemleak_update_trace(element);
-> -		return element;
-> +		goto out;
->  	}
->  
->  	/*
-> @@ -369,7 +376,7 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
->  	/* We must not sleep if !__GFP_DIRECT_RECLAIM */
->  	if (!(gfp_mask & __GFP_DIRECT_RECLAIM)) {
->  		spin_unlock_irqrestore(&pool->lock, flags);
-> -		return NULL;
-> +		goto out;
->  	}
->  
->  	/* Let's wait for someone else to return an element to @pool */
-> @@ -386,6 +393,10 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
->  
->  	finish_wait(&pool->wait, &wait);
->  	goto repeat_alloc;
-> +out:
-> +	if (gfpflags_allow_blocking(gfp_mask))
-> +		tsk_restore_flags(current, pflags, PF_LESS_THROTTLE);
-> +	return element;
->  }
->  EXPORT_SYMBOL(mempool_alloc);
->  
-> diff --git a/mm/page-writeback.c b/mm/page-writeback.c
-> index 7fbb2d008078..a37661f1a11b 100644
-> --- a/mm/page-writeback.c
-> +++ b/mm/page-writeback.c
-> @@ -1971,6 +1971,9 @@ void throttle_vm_writeout(gfp_t gfp_mask)
->  	unsigned long background_thresh;
->  	unsigned long dirty_thresh;
->  
-> +	if (current->flags & PF_LESS_THROTTLE)
-> +		return;
-> +
->          for ( ; ; ) {
->  		global_dirty_limits(&background_thresh, &dirty_thresh);
->  		dirty_thresh = hard_dirty_limit(&global_wb_domain, dirty_thresh);
+> My original understanding of f9054c70d28b was that it acts as
+> a prevention for issues where the OOM victim loops inside the
+> mempool_alloc not doing reasonable progress because those who should
+> refill the pool are stuck for some reason (aka assume that not all
+> mempool users are behaving or they have unexpected dependencies like WQ
+> without WQ_MEM_RECLAIM and similar).
+
+David Rientjes didn't tell us what is the configuration of his servers, we 
+don't know what dm targets and block device drivers is he using, we don't 
+know how they are connected - so it not really possible to know what 
+happened for him.
+
+Mikulas
+
+> My thinking was that the victim has access to memory reserves by default
+> so it sounds reasonable to preserve this access also when it is in the
+> mempool_alloc. Therefore I wanted to preserve that particular logic and
+> came up with this patch which should be safer than f9054c70d28b. But the
+> more I am thinking about it the more it sounds like papering over a bug
+> somewhere else.
+> 
+> So I guess we should just go and revert f9054c70d28b and get back to
+> David's lockup and investigate what exactly went wrong and why. The
+> current form of f9054c70d28b is simply too dangerous.
 > -- 
-> 2.8.1
+> Michal Hocko
+> SUSE Labs
 > 
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
