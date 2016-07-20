@@ -1,80 +1,139 @@
 From: Michal Hocko <mhocko@kernel.org>
 Subject: Re: [RFC PATCH 1/2] mempool: do not consume memory reserves from the
  reclaim path
-Date: Wed, 20 Jul 2016 08:44:29 +0200
-Message-ID: <20160720064429.GB11249@dhcp22.suse.cz>
+Date: Wed, 20 Jul 2016 10:15:42 +0200
+Message-ID: <20160720081541.GF11249@dhcp22.suse.cz>
 References: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
  <1468831285-27242-1-git-send-email-mhocko@kernel.org>
- <alpine.LRH.2.02.1607191749330.1437@file01.intranet.prod.int.rdu2.redhat.com>
+ <20160719135426.GA31229@cmpxchg.org>
+ <alpine.DEB.2.10.1607191315400.58064@chino.kir.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1607191749330.1437@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-mm@kvack.org, Ondrej Kozina <okozina@redhat.com>, David Rientjes <rientjes@google.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
+In-Reply-To: <alpine.DEB.2.10.1607191315400.58064@chino.kir.corp.google.com>
+Sender: owner-linux-mm@kvack.org
+To: David Rientjes <rientjes@google.com>
+Cc: Johannes Weiner <hannes@cmpxchg.org>, linux-mm@kvack.org, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue 19-07-16 17:50:29, Mikulas Patocka wrote:
+On Tue 19-07-16 13:45:52, David Rientjes wrote:
+> On Tue, 19 Jul 2016, Johannes Weiner wrote:
 > 
+> > Mempool guarantees forward progress by having all necessary memory
+> > objects for the guaranteed operation in reserve. Think about it this
+> > way: you should be able to delete the pool->alloc() call entirely and
+> > still make reliable forward progress. It would kill concurrency and be
+> > super slow, but how could it be affected by a system OOM situation?
+> > 
+> > If our mempool_alloc() is waiting for an object that an OOM victim is
+> > holding, where could that OOM victim get stuck before giving it back?
+> > As I asked in the previous thread, surely you wouldn't do a mempool
+> > allocation first and then rely on an unguarded page allocation to make
+> > forward progress, right? It would defeat the purpose of using mempools
+> > in the first place. And surely the OOM victim wouldn't be waiting for
+> > a lock that somebody doing mempool_alloc() *against the same mempool*
+> > is holding. That'd be an obvious ABBA deadlock.
+> > 
+> > So maybe I'm just dense, but could somebody please outline the exact
+> > deadlock diagram? Who is doing what, and how are they getting stuck?
+> > 
+> > cpu0:                     cpu1:
+> >                           mempool_alloc(pool0)
+> > mempool_alloc(pool0)
+> >   wait for cpu1
+> >                           not allocating memory - would defeat mempool
+> >                           not taking locks held by cpu0* - would ABBA
+> >                           ???
+> >                           mempool_free(pool0)
+> > 
+> > Thanks
+> > 
+> > * or any other task that does mempool_alloc(pool0) before unlock
+> > 
 > 
-> On Mon, 18 Jul 2016, Michal Hocko wrote:
+> I'm approaching this from a perspective of any possible mempool usage, not 
+> with any single current user in mind.
 > 
-> > From: Michal Hocko <mhocko@suse.com>
-> > 
-> > There has been a report about OOM killer invoked when swapping out to
-> > a dm-crypt device. The primary reason seems to be that the swapout
-> > out IO managed to completely deplete memory reserves. Mikulas was
-> > able to bisect and explained the issue by pointing to f9054c70d28b
-> > ("mm, mempool: only set __GFP_NOMEMALLOC if there are free elements").
-> > 
-> > The reason is that the swapout path is not throttled properly because
-> > the md-raid layer needs to allocate from the generic_make_request path
-> > which means it allocates from the PF_MEMALLOC context. dm layer uses
-> > mempool_alloc in order to guarantee a forward progress which used to
-> > inhibit access to memory reserves when using page allocator. This has
-> > changed by f9054c70d28b ("mm, mempool: only set __GFP_NOMEMALLOC if
-> > there are free elements") which has dropped the __GFP_NOMEMALLOC
-> > protection when the memory pool is depleted.
-> > 
-> > If we are running out of memory and the only way forward to free memory
-> > is to perform swapout we just keep consuming memory reserves rather than
-> > throttling the mempool allocations and allowing the pending IO to
-> > complete up to a moment when the memory is depleted completely and there
-> > is no way forward but invoking the OOM killer. This is less than
-> > optimal.
-> > 
-> > The original intention of f9054c70d28b was to help with the OOM
-> > situations where the oom victim depends on mempool allocation to make a
-> > forward progress. We can handle that case in a different way, though. We
-> > can check whether the current task has access to memory reserves ad an
-> > OOM victim (TIF_MEMDIE) and drop __GFP_NOMEMALLOC protection if the pool
-> > is empty.
-> > 
-> > David Rientjes was objecting that such an approach wouldn't help if the
-> > oom victim was blocked on a lock held by process doing mempool_alloc. This
-> > is very similar to other oom deadlock situations and we have oom_reaper
-> > to deal with them so it is reasonable to rely on the same mechanism
-> > rather inventing a different one which has negative side effects.
-> > 
-> > Fixes: f9054c70d28b ("mm, mempool: only set __GFP_NOMEMALLOC if there are free elements")
-> > Bisected-by: Mikulas Patocka <mpatocka@redhat.com>
+> Any mempool_alloc() user that then takes a contended mutex can do this.  
+> An example:
 > 
-> Bisect was done by Ondrej Kozina.
+> 	taskA		taskB		taskC
+> 	-----		-----		-----
+> 	mempool_alloc(a)
+> 			mutex_lock(b)
+> 	mutex_lock(b)
+> 					mempool_alloc(a)
+> 
+> Imagine the mempool_alloc() done by taskA depleting all free elements so 
+> we rely on it to do mempool_free() before any other mempool allocator can 
+> be guaranteed.
+> 
+> If taskC is oom killed, or has PF_MEMALLOC set, it cannot access memory 
+> reserves from the page allocator if __GFP_NOMEMALLOC is automatic in 
+> mempool_alloc().  This livelocks the page allocator for all processes.
+> 
+> taskB in this case need only stall after taking mutex_lock() successfully; 
+> that could be because of the oom livelock, it is contended on another 
+> mutex held by an allocator, etc.
 
-OK, fixed
-
-> > Signed-off-by: Michal Hocko <mhocko@suse.com>
+But that falls down to the deadlock described by Johannes above because
+then the mempool user would _depend_ on an "unguarded page allocation"
+via that particular lock and that is a bug.
+ 
+> Obviously taskB stalling while holding a mutex that is contended by a 
+> mempool user holding an element is not preferred, but it's possible.  (A 
+> simplified version is also possible with 0-size mempools, which are also 
+> allowed.)
 > 
-> Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
-> Tested-by: Mikulas Patocka <mpatocka@redhat.com>
+> My point is that I don't think we should be forcing any behavior wrt 
+> memory reserves as part of the mempool implementation. 
 
-Let's see whether we decide to go with this patch or a plain revert. In
-any case I will mark the patch for stable so it will end up in both 4.6
-and 4.7
+Isn't the reserve management the whole point of the mempool approach?
 
-Anyway thanks for your and Ondrejs help here!
+> In the above, 
+> taskC mempool_alloc() would succeed and not livelock unless 
+> __GFP_NOMEMALLOC is forced. 
+
+Or it would get stuck because even page allocator memory reserves got
+depleted. Without any way to throttle there is no guarantee to make
+further progress. In fact this is not a theoretical situation. It has
+been observed with the swap over dm-crypt and there shouldn't be any
+lock dependeces you are describing above there AFAIU.
+
+> The mempool_alloc() user may construct their 
+> set of gfp flags as appropriate just like any other memory allocator in 
+> the kernel.
+
+So which users of mempool_alloc would benefit from not having
+__GFP_NOMEMALLOC and why?
+
+> The alternative would be to ensure no mempool users ever take a lock that 
+> another thread can hold while contending another mutex or allocating 
+> memory itself.
+
+I am not sure how can we enforce that but surely that would detect a
+clear mempool usage bug. Lockdep could be probably extended to do so.
+
+Anway, I feel we are looping in a circle. We have a clear regression
+caused by your patch. It might solve some oom livelock you are seeing
+but there are only very dim details about it and the patch might very
+well paper over a bug in mempool usage somewhere else. We definitely
+need more details to know that better.
+
+That being said, f9054c70d28b ("mm, mempool: only set __GFP_NOMEMALLOC
+if there are free elements") should be either reverted or
+http://lkml.kernel.org/r/1468831285-27242-1-git-send-email-mhocko@kernel.org
+should be applied as a temporal workaround because it would make a
+lockup less likely for now until we find out more about your issue.
+
+Does that sound like a way forward?
 -- 
 Michal Hocko
 SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
