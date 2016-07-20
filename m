@@ -1,102 +1,88 @@
-From: David Rientjes <rientjes@google.com>
-Subject: Re: [RFC PATCH 1/2] mempool: do not consume memory reserves from
- the reclaim path
-Date: Wed, 20 Jul 2016 14:06:26 -0700 (PDT)
-Message-ID: <alpine.DEB.2.10.1607201353230.22427@chino.kir.corp.google.com>
-References: <1468831164-26621-1-git-send-email-mhocko@kernel.org> <1468831285-27242-1-git-send-email-mhocko@kernel.org> <20160719135426.GA31229@cmpxchg.org> <alpine.DEB.2.10.1607191315400.58064@chino.kir.corp.google.com>
- <20160720081541.GF11249@dhcp22.suse.cz>
+From: Sheng Yang <sheng@yasker.org>
+Subject: Re: [PATCH v4 18/21] fuse: Add support for pid namespaces
+Date: Wed, 20 Jul 2016 15:28:21 -0700
+Message-ID: <CA+2rt423x-EiF=9x2zRTM35hzWOv=rH1urifRTCdpE_p=GO9FQ@mail.gmail.com>
+References: <1461699396-33000-1-git-send-email-seth.forshee@canonical.com>
+ <1461699396-33000-19-git-send-email-seth.forshee@canonical.com>
+ <CA+2rt426_pshAauQizcxkfAq16vmEpB4sJ4genW_ucosH3j=zQ@mail.gmail.com> <20160720125201.GA52079@ubuntu-hedt>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160720081541.GF11249@dhcp22.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Johannes Weiner <hannes@cmpxchg.org>, linux-mm@kvack.org, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20160720125201.GA52079@ubuntu-hedt>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Seth Forshee <seth.forshee@canonical.com>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Miklos Szeredi <miklos@szeredi.hu>, Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Richard Weinberger <richard.weinberger@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Miklos Szeredi <mszeredi@redhat.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, kernel list <linux-kernel@vger.kernel.org>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-fsdevel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, selinux@tycho.nsa.gov, cgroups@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, 20 Jul 2016, Michal Hocko wrote:
+On Wed, Jul 20, 2016 at 5:52 AM, Seth Forshee
+<seth.forshee@canonical.com> wrote:
+> On Tue, Jul 19, 2016 at 07:44:11PM -0700, Sheng Yang wrote:
+>> On Tue, Apr 26, 2016 at 12:36 PM, Seth Forshee
+>> <seth.forshee@canonical.com> wrote:
+>> > When the userspace process servicing fuse requests is running in
+>> > a pid namespace then pids passed via the fuse fd are not being
+>> > translated into that process' namespace. Translation is necessary
+>> > for the pid to be useful to that process.
+>> >
+>> > Since no use case currently exists for changing namespaces all
+>> > translations can be done relative to the pid namespace in use
+>> > when fuse_conn_init() is called. For fuse this translates to
+>> > mount time, and for cuse this is when /dev/cuse is opened. IO for
+>> > this connection from another namespace will return errors.
+>> >
+>> > Requests from processes whose pid cannot be translated into the
+>> > target namespace are not permitted, except for requests
+>> > allocated via fuse_get_req_nofail_nopages. For no-fail requests
+>> > in.h.pid will be 0 if the pid translation fails.
+>>
+>> Hi Seth,
+>>
+>> This patch caused a regression in our major container use case with
+>> FUSE in Ubuntu 16.04, as patch was checked in as Ubuntu Sauce in
+>> Ubuntu 4.4.0-6.21 kernel.
+>>
+>> The use case is:
+>> 1. Create a Docker container.
+>> 2. Inside the container, start the FUSE backend, and mounted fs.
+>> 3. Following step 2 in the container, create a loopback device to map
+>> a file in the mounted fuse to create a block device, which will be
+>> available to the whole system.
+>>
+>> It works well before this commit.
+>>
+>> The use case is broken because no matter which namespace losetup runs,
+>> the real request from loopback device seems always come from init ns,
+>> thus it will be in different ns running fuse backend. So the request
+>> will got denied, because the ns running fuse won't able to see the
+>> things from higher level(level 0 in fact) pid namespace.
+>>
+>> I think since init pid ns has ability to access any process in the
+>> system, it should able to access the fuse mounted by any pid namespace
+>> process as well.
+>>
+>> What you think?
+>
+> It sounds like we need to remove the restriction on accessing the
+> filesystem from a different pid namespace. I don't think this poses a
+> security problem. However there's no pid mapping that is usable by the
+> userspace fuse process, so what do we put in the fuse request? Probably
+> the only candidates are 0 and 0xffffffff.
 
-> > Any mempool_alloc() user that then takes a contended mutex can do this.  
-> > An example:
-> > 
-> > 	taskA		taskB		taskC
-> > 	-----		-----		-----
-> > 	mempool_alloc(a)
-> > 			mutex_lock(b)
-> > 	mutex_lock(b)
-> > 					mempool_alloc(a)
-> > 
-> > Imagine the mempool_alloc() done by taskA depleting all free elements so 
-> > we rely on it to do mempool_free() before any other mempool allocator can 
-> > be guaranteed.
-> > 
-> > If taskC is oom killed, or has PF_MEMALLOC set, it cannot access memory 
-> > reserves from the page allocator if __GFP_NOMEMALLOC is automatic in 
-> > mempool_alloc().  This livelocks the page allocator for all processes.
-> > 
-> > taskB in this case need only stall after taking mutex_lock() successfully; 
-> > that could be because of the oom livelock, it is contended on another 
-> > mutex held by an allocator, etc.
-> 
-> But that falls down to the deadlock described by Johannes above because
-> then the mempool user would _depend_ on an "unguarded page allocation"
-> via that particular lock and that is a bug.
->  
+Thanks Seth, I don't think it will be a security problem either, if we
+remove the restriction.
 
-It becomes a deadlock because of mempool_alloc(a) forcing 
-__GFP_NOMEMALLOC, I agree.
+>
+> So a question for the fuse developers - is one value or the other
+> preferrable for fuse_in_header.pid when the pid cannot be mapped, and is
+> this going to cause problems for any fuse filesystems? I suspect that
+> few filesystems actually look at the pid anyway, and already for a
+> filesystem mounted in a pid namespace the values being given to
+> userspace won't be correct for the namespace of the fuse process.
+>
 
-For that not to be the case, it must be required that between 
-mempool_alloc() and mempool_free() that we take no mutex that may be held 
-by any other thread on the system, in any context, that is allocating 
-memory.  If that's a caller's bug as you describe it, and only enabled by 
-mempool_alloc() forcing __GFP_NOMEMALLOC, then please add the relevant 
-lockdep detection, which would be trivial to add, so we can determine if 
-any users are unsafe and prevent this issue in the future.  The 
-overwhelming goal here should be to prevent possible problems in the 
-future especially if an API does not allow you to opt-out of the behavior.
+At least in our system we're not looking into the pid at all.
 
-> > My point is that I don't think we should be forcing any behavior wrt 
-> > memory reserves as part of the mempool implementation. 
-> 
-> Isn't the reserve management the whole point of the mempool approach?
-> 
+--Sheng
 
-No, the whole point is to maintain the freelist of elements that are 
-guaranteed; my suggestion is that we cannot make that guarantee if we are 
-blocked from freeing elements.  It's trivial to fix by allowing 
-__GFP_NOMEMALLOC from the caller in cases where you cannot possibly be 
-blocked by an oom victim.
-
-> Or it would get stuck because even page allocator memory reserves got
-> depleted. Without any way to throttle there is no guarantee to make
-> further progress. In fact this is not a theoretical situation. It has
-> been observed with the swap over dm-crypt and there shouldn't be any
-> lock dependeces you are describing above there AFAIU.
-> 
-
-They should do mempool_alloc(__GFP_NOMEMALLOC), no argument.
-
-> > The mempool_alloc() user may construct their 
-> > set of gfp flags as appropriate just like any other memory allocator in 
-> > the kernel.
-> 
-> So which users of mempool_alloc would benefit from not having
-> __GFP_NOMEMALLOC and why?
-> 
-
-Any mempool_alloc() user that would be blocked on returning the element 
-back to the freelist by an oom condition.  I think the dm-crypt case is 
-quite unique on how it is able to deplete memory reserves.
-
-> Anway, I feel we are looping in a circle. We have a clear regression
-> caused by your patch. It might solve some oom livelock you are seeing
-> but there are only very dim details about it and the patch might very
-> well paper over a bug in mempool usage somewhere else. We definitely
-> need more details to know that better.
-> 
-
-What is the objection to allowing __GFP_NOMEMALLOC from the caller with 
-clear documentation on how to use it?  It can be described to not allow 
-depletion of memory reserves with the caveat that the caller must ensure 
-mempool_free() cannot be blocked in lowmem situations.
+> Seth
+>
