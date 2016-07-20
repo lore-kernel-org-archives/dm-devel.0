@@ -1,98 +1,102 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-mq and end_clone_request()
-Date: Wed, 20 Jul 2016 14:33:21 -0400
-Message-ID: <20160720183321.GA20223@redhat.com>
-References: <4ed669ed-beae-76a8-b806-a284565b327a@sandisk.com>
- <20160720140815.GA19045@redhat.com>
- <20160720142727.GA57399@redhat.com>
- <1ca6d31d-f175-9daa-9ddd-17d653851ceb@sandisk.com>
+From: David Rientjes <rientjes@google.com>
+Subject: Re: [RFC PATCH 1/2] mempool: do not consume memory reserves from
+ the reclaim path
+Date: Wed, 20 Jul 2016 14:06:26 -0700 (PDT)
+Message-ID: <alpine.DEB.2.10.1607201353230.22427@chino.kir.corp.google.com>
+References: <1468831164-26621-1-git-send-email-mhocko@kernel.org> <1468831285-27242-1-git-send-email-mhocko@kernel.org> <20160719135426.GA31229@cmpxchg.org> <alpine.DEB.2.10.1607191315400.58064@chino.kir.corp.google.com>
+ <20160720081541.GF11249@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1ca6d31d-f175-9daa-9ddd-17d653851ceb@sandisk.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160720081541.GF11249@dhcp22.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Johannes Weiner <hannes@cmpxchg.org>, linux-mm@kvack.org, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jul 20 2016 at  1:37pm -0400,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+On Wed, 20 Jul 2016, Michal Hocko wrote:
 
-> On 07/20/2016 07:27 AM, Mike Snitzer wrote:
-> >On Wed, Jul 20 2016 at 10:08am -0400,
-> >Mike Snitzer <snitzer@redhat.com> wrote:
-> >[ ... ]
-> >diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-> >index 7a96618..347ff25 100644
-> >--- a/drivers/md/dm-rq.c
-> >+++ b/drivers/md/dm-rq.c
-> >@@ -414,7 +414,7 @@ static void dm_complete_request(struct request *rq, int error)
-> > 	if (!rq->q->mq_ops)
-> > 		blk_complete_request(rq);
-> > 	else
-> >-		blk_mq_complete_request(rq, error);
-> >+		blk_mq_complete_request(rq, 0);
-> > }
-> >
-> > /*
+> > Any mempool_alloc() user that then takes a contended mutex can do this.  
+> > An example:
+> > 
+> > 	taskA		taskB		taskC
+> > 	-----		-----		-----
+> > 	mempool_alloc(a)
+> > 			mutex_lock(b)
+> > 	mutex_lock(b)
+> > 					mempool_alloc(a)
+> > 
+> > Imagine the mempool_alloc() done by taskA depleting all free elements so 
+> > we rely on it to do mempool_free() before any other mempool allocator can 
+> > be guaranteed.
+> > 
+> > If taskC is oom killed, or has PF_MEMALLOC set, it cannot access memory 
+> > reserves from the page allocator if __GFP_NOMEMALLOC is automatic in 
+> > mempool_alloc().  This livelocks the page allocator for all processes.
+> > 
+> > taskB in this case need only stall after taking mutex_lock() successfully; 
+> > that could be because of the oom livelock, it is contended on another 
+> > mutex held by an allocator, etc.
 > 
-> Hello Mike,
+> But that falls down to the deadlock described by Johannes above because
+> then the mempool user would _depend_ on an "unguarded page allocation"
+> via that particular lock and that is a bug.
+>  
+
+It becomes a deadlock because of mempool_alloc(a) forcing 
+__GFP_NOMEMALLOC, I agree.
+
+For that not to be the case, it must be required that between 
+mempool_alloc() and mempool_free() that we take no mutex that may be held 
+by any other thread on the system, in any context, that is allocating 
+memory.  If that's a caller's bug as you describe it, and only enabled by 
+mempool_alloc() forcing __GFP_NOMEMALLOC, then please add the relevant 
+lockdep detection, which would be trivial to add, so we can determine if 
+any users are unsafe and prevent this issue in the future.  The 
+overwhelming goal here should be to prevent possible problems in the 
+future especially if an API does not allow you to opt-out of the behavior.
+
+> > My point is that I don't think we should be forcing any behavior wrt 
+> > memory reserves as part of the mempool implementation. 
 > 
-> Thanks for the patch. But unfortunately even with this patch applied
-> I see fio reporting I/O errors when run on top of dm-mq after a
-> (simulated) cable pull. I think these errors occur because
-> dm_softirq_done() fails requests if clone == NULL and tio->error !=
-> NULL. Adding WARN_ON_ONCE(error && !tio->clone) in
-> dm_complete_request() produced the following call stack:
+> Isn't the reserve management the whole point of the mempool approach?
 > 
-> Workqueue: kblockd blk_mq_run_work_fn
-> Call Trace:
->  [<ffffffff8132aa27>] dump_stack+0x68/0xa1
->  [<ffffffff81061ed6>] __warn+0xc6/0xe0
->  [<ffffffff81061fa8>] warn_slowpath_null+0x18/0x20
->  [<ffffffffa0253fda>] dm_complete_request+0x8a/0xb0 [dm_mod]
->  [<ffffffffa0255200>] map_request+0x70/0x2e0 [dm_mod]
->  [<ffffffffa025771d>] dm_mq_queue_rq+0x7d/0x120 [dm_mod]
->  [<ffffffff8131195a>] __blk_mq_run_hw_queue+0x1da/0x350
->  [<ffffffff813120a0>] blk_mq_run_work_fn+0x10/0x20
->  [<ffffffff8107f279>] process_one_work+0x1f9/0x6a0
->  [<ffffffff8107f769>] worker_thread+0x49/0x490
->  [<ffffffff81085f7a>] kthread+0xea/0x100
->  [<ffffffff8162faff>] ret_from_fork+0x1f/0x40
+
+No, the whole point is to maintain the freelist of elements that are 
+guaranteed; my suggestion is that we cannot make that guarantee if we are 
+blocked from freeing elements.  It's trivial to fix by allowing 
+__GFP_NOMEMALLOC from the caller in cases where you cannot possibly be 
+blocked by an oom victim.
+
+> Or it would get stuck because even page allocator memory reserves got
+> depleted. Without any way to throttle there is no guarantee to make
+> further progress. In fact this is not a theoretical situation. It has
+> been observed with the swap over dm-crypt and there shouldn't be any
+> lock dependeces you are describing above there AFAIU.
 > 
-> Please let me know if you need more information.
 
-Cable pull testing isn't new.  I'd have thought it covered (albeit
-simulated) via mptest.  Does mptest pass for you?
-https://github.com/snitm/mptest
+They should do mempool_alloc(__GFP_NOMEMALLOC), no argument.
 
-Last I knew your tests were all passing with dm-mq.  Would love to
-understand how/when they have regressed.
+> > The mempool_alloc() user may construct their 
+> > set of gfp flags as appropriate just like any other memory allocator in 
+> > the kernel.
+> 
+> So which users of mempool_alloc would benefit from not having
+> __GFP_NOMEMALLOC and why?
+> 
 
-If clone is NULL then the request wasn't actually issued to (or even
-allocated from the tag space of) the underlying blk-mq request_queue
-(via clone_and_map_rq's call to __multipath_map).
+Any mempool_alloc() user that would be blocked on returning the element 
+back to the freelist by an oom condition.  I think the dm-crypt case is 
+quite unique on how it is able to deplete memory reserves.
 
-The original request could've been previously cloned, failed due to
-cable pull, it began retry via requeue, but on retry
-blk_mq_alloc_request() could've failed in __multipath_map() -- (maybe
-now the request_queue was "dying"?).  Or __multipath_map() failed for
-some other reason.
+> Anway, I feel we are looping in a circle. We have a clear regression
+> caused by your patch. It might solve some oom livelock you are seeing
+> but there are only very dim details about it and the patch might very
+> well paper over a bug in mempool usage somewhere else. We definitely
+> need more details to know that better.
+> 
 
-Would be interesting to know the error returned from map_request()'s
-ti->type->clone_and_map_rq().  Really should just be DM_MAPIO_REQUEUE.
-But the stack you've provided shows map_request calling
-dm_complete_request(), which implies dm_kill_unmapped_request() is being
-called due to ti->type->clone_and_map_rq() returning < 0.
-
-Could be that __multipath_map() is returning an error even before it
-would've otherwise called blk_mq_alloc_request().
-
-You said you are using queue_if_no_path?  Would be interesting to see
-where __multipth_map is returning with an error.
-
-Could be that __multipath_map() should respond differently if
-blk_mq_alloc_request() fails and the queue is dying -- at a minimum the
-path should be failed.  But before we explore that we need to understand
-why the clone_and_map_rq() is returning < 0.
+What is the objection to allowing __GFP_NOMEMALLOC from the caller with 
+clear documentation on how to use it?  It can be described to not allow 
+depletion of memory reserves with the caveat that the caller must ensure 
+mempool_free() cannot be blocked in lowmem situations.
