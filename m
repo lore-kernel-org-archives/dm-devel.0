@@ -1,72 +1,45 @@
-From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Subject: Re: dm stripe: add DAX support
-Date: Wed, 20 Jul 2016 21:03:40 -0600
-Message-ID: <b5897254-1374-6653-2794-65c310237167@kernel.dk>
-References: <1466792610-30369-1-git-send-email-toshi.kani@hpe.com>
- <20160624182859.GD13898@redhat.com> <1468362104.8908.43.camel@hpe.com>
- <20160713020100.GA5872@redhat.com> <1468422189.8908.53.camel@hpe.com>
- <20160721000142.GA21913@redhat.com>
+From: Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v4 18/21] fuse: Add support for pid namespaces
+Date: Thu, 21 Jul 2016 09:25:17 +0200
+Message-ID: <CAOssrKfJrQuf_exBVGtn-EBOBnRhhNWe+2P=VkEqtp3qmGYiFA@mail.gmail.com>
+References: <1461699396-33000-1-git-send-email-seth.forshee@canonical.com>
+ <1461699396-33000-19-git-send-email-seth.forshee@canonical.com>
+ <CA+2rt426_pshAauQizcxkfAq16vmEpB4sJ4genW_ucosH3j=zQ@mail.gmail.com> <20160720125201.GA52079@ubuntu-hedt>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20160721000142.GA21913-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, axboe-b10kYP2dOMg@public.gmane.org
-Cc: "linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org" <linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160720125201.GA52079@ubuntu-hedt>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: Sheng Yang <sheng-bA7cAZRAfhAdnm+yROfE0A@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, selinux-+05T5uksL2qpZYMLLGbcSA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On 07/20/2016 06:01 PM, Mike Snitzer wrote:
-> On Wed, Jul 13 2016 at 11:03am -0400,
-> Kani, Toshimitsu <toshi.kani-ZPxbGqLxI0U@public.gmane.org> wrote:
->
->> On Tue, 2016-07-12 at 22:01 -0400, Mike Snitzer wrote:
->>> On Tue, Jul 12 2016 at  6:22pm -0400,
->>> Kani, Toshimitsu <toshi.kani-ZPxbGqLxI0U@public.gmane.org> wrote:
->>>> On Fri, 2016-06-24 at 14:29 -0400, Mike Snitzer wrote:
->>>>>
->>  :
->>> Thanks for putting this summary together.  Unfortunately none of the DM
->>> changes can be queued for 4.8 until Jens takes the 2 block core patches:
->>> https://patchwork.kernel.org/patch/9196021/
->>> https://patchwork.kernel.org/patch/9196019/
->>>
->>> Not sure what the hold up and/or issue is with them.  But I've asked
->>> twice (and implicilty a 3rd time here).  Hopefully they land in time for
->>> 4.8.
->>
->> Hi Jens,
->>
->> Can you take the two patches above?  These patches add QUEUE_FLAG_DAX and its
->> sysfs show func.  They allow device-mapper to set dax-capability based on its
->> configuration, and also allow user applications to check dax-capability via
->> sysfs.
->
-> Hi Jens,
->
-> As I shared with you before, here are the 2 patches I staged in
-> linux-next via linux-dm.git's 'for-next' (same as in the patchwork
-> references above) -- these were staged just so we had linux-next
-> coverage until you picked them up.
->
-> Please pick these up for 4.8 -- the changes are straightforward, are
-> required for DM's DAX support, and Dan Williams has also acked them:
->
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=6c00531c6affa42b165df73a1eac3289bc45f4c4
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=51d1a5abcd0e88cb4528f35643245ea59cf234f1
->
-> Feel free to pick them up from patchwork or cherry-pick from
-> linux-dm.git
+On Wed, Jul 20, 2016 at 2:52 PM, Seth Forshee
+<seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
 
-Added for 4.8, thanks!
+> It sounds like we need to remove the restriction on accessing the
+> filesystem from a different pid namespace. I don't think this poses a
+> security problem. However there's no pid mapping that is usable by the
+> userspace fuse process, so what do we put in the fuse request? Probably
+> the only candidates are 0 and 0xffffffff.
+>
+> So a question for the fuse developers - is one value or the other
+> preferrable for fuse_in_header.pid when the pid cannot be mapped, and is
+> this going to cause problems for any fuse filesystems? I suspect that
+> few filesystems actually look at the pid anyway, and already for a
+> filesystem mounted in a pid namespace the values being given to
+> userspace won't be correct for the namespace of the fuse process.
 
--- 
-Jens Axboe
+pid = 0 sounds good.
+
+The pid from the request is used for example to get the auxiliary
+group list by libfuse (fuse_req_getgroups()).   That's not used by all
+filesystems and it will return an error in case it can't find the proc
+entry (which it won't for pid == 0).
+
+It would be nice if we could transfer the group list through the
+userspace/kernel protocol, since then it wouldn't depend on proc and
+on being in the same pid namespace.  But that's another story.
+
+Thanks,
+Miklos
