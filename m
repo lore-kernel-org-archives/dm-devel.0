@@ -1,15 +1,12 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH] multipathd: restore paths after reconfigure
-Date: Thu, 21 Jul 2016 12:58:29 -0500
-Message-ID: <20160721175829.GR8095@octiron.msp.redhat.com>
-References: <1467409569-16088-1-git-send-email-bmarzins@redhat.com>
-	<758f2ab7-c8ed-06d9-f891-5cdaf893a5a7@sandisk.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: replace <sys/poll.h> with
+	<poll.h>
+Date: Thu, 21 Jul 2016 21:29:28 +0200
+Message-ID: <1469129368-2855-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <758f2ab7-c8ed-06d9-f891-5cdaf893a5a7@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,47 +16,87 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 21, 2016 at 09:29:37AM -0700, Bart Van Assche wrote:
-> On 07/01/2016 02:46 PM, Benjamin Marzinski wrote:
-> >multipathd has code to finish gathering the information of paths that
-> >were not active at the time they were discovered. When the checker loop
-> >goes to check a path, and notices that it wasn't fully initialized, it
-> >is supposed to complete the initialization.  However the code is broken.
-> >This means that if you reconfigure multipathd while paths are down, they
-> >will no longer be usable. This patch makes sure that check_path will
-> >actually rerun pathinfo to finish setting up the path, so that after the
-> >path comes back up, it will be usable again.
-> >[ ... ]
-> >@@ -1779,7 +1785,13 @@ checkerloop (void *ap)
-> > 			lock(vecs->lock);
-> > 			pthread_testcancel();
-> > 			vector_foreach_slot (vecs->pathvec, pp, i) {
-> >-				num_paths += check_path(vecs, pp, ticks);
-> >+				rc = check_path(vecs, pp, ticks);
-> >+				if (rc < 0) {
-> >+					vector_del_slot(vecs->pathvec, i);
-> >+					free_path(pp);
-> >+					i--;
-> >+				} else;
-> >+					num_paths += rc;
-> > 			}
-> > 			lock_cleanup_pop(vecs->lock);
-> > 		}
-> 
-> Hi Ben,
-> 
-> Was the semicolon after the "else" intended or was it a typo?
+The standard place of poll.h is in /usr/include/
+Spotted by musl libc.
 
-Oops! That was a typo. I'll send off a quick patch. Thanks for catching
-that.
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmpathpersist/mpath_updatepr.c | 2 +-
+ libmultipath/uevent.c            | 2 +-
+ libmultipath/uxsock.c            | 2 +-
+ multipathd/uxclnt.c              | 2 +-
+ multipathd/uxlsnr.c              | 2 +-
+ 5 files changed, 5 insertions(+), 5 deletions(-)
 
--Ben
-
-> 
-> Thanks,
-> 
-> Bart.
+diff --git a/libmpathpersist/mpath_updatepr.c b/libmpathpersist/mpath_updatepr.c
+index be73de4..9ff4b30 100644
+--- a/libmpathpersist/mpath_updatepr.c
++++ b/libmpathpersist/mpath_updatepr.c
+@@ -9,7 +9,7 @@
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <sys/un.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <errno.h>
+ #include "debug.h"
+ #include "mpath_cmd.h"
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index ca41d35..5f3204b 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -33,7 +33,7 @@
+ #include <sys/socket.h>
+ #include <sys/user.h>
+ #include <sys/un.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <linux/types.h>
+ #include <linux/netlink.h>
+ #include <pthread.h>
+diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
+index f6d4ffa..775e278 100644
+--- a/libmultipath/uxsock.c
++++ b/libmultipath/uxsock.c
+@@ -13,7 +13,7 @@
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <sys/un.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <signal.h>
+ #include <errno.h>
+ #ifdef USE_SYSTEMD
+diff --git a/multipathd/uxclnt.c b/multipathd/uxclnt.c
+index 109a217..62ff6f4 100644
+--- a/multipathd/uxclnt.c
++++ b/multipathd/uxclnt.c
+@@ -14,7 +14,7 @@
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <sys/un.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <readline/readline.h>
+ #include <readline/history.h>
+ 
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 8ab55ea..0159648 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -19,7 +19,7 @@
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <sys/un.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <sys/time.h>
+ #include <signal.h>
+ #include "checkers.h"
+-- 
+2.7.4
