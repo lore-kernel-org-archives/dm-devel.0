@@ -1,45 +1,121 @@
-From: Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v4 18/21] fuse: Add support for pid namespaces
-Date: Thu, 21 Jul 2016 09:25:17 +0200
-Message-ID: <CAOssrKfJrQuf_exBVGtn-EBOBnRhhNWe+2P=VkEqtp3qmGYiFA@mail.gmail.com>
-References: <1461699396-33000-1-git-send-email-seth.forshee@canonical.com>
- <1461699396-33000-19-git-send-email-seth.forshee@canonical.com>
- <CA+2rt426_pshAauQizcxkfAq16vmEpB4sJ4genW_ucosH3j=zQ@mail.gmail.com> <20160720125201.GA52079@ubuntu-hedt>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC PATCH 1/2] mempool: do not consume memory reserves from the
+ reclaim path
+Date: Thu, 21 Jul 2016 10:52:03 +0200
+Message-ID: <20160721085202.GC26379@dhcp22.suse.cz>
+References: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
+ <1468831285-27242-1-git-send-email-mhocko@kernel.org>
+ <20160719135426.GA31229@cmpxchg.org>
+ <alpine.DEB.2.10.1607191315400.58064@chino.kir.corp.google.com>
+ <20160720081541.GF11249@dhcp22.suse.cz>
+ <alpine.DEB.2.10.1607201353230.22427@chino.kir.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160720125201.GA52079@ubuntu-hedt>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: Sheng Yang <sheng-bA7cAZRAfhAdnm+yROfE0A@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, selinux-+05T5uksL2qpZYMLLGbcSA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.10.1607201353230.22427@chino.kir.corp.google.com>
+Sender: owner-linux-mm@kvack.org
+To: David Rientjes <rientjes@google.com>
+Cc: Johannes Weiner <hannes@cmpxchg.org>, linux-mm@kvack.org, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jul 20, 2016 at 2:52 PM, Seth Forshee
-<seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+On Wed 20-07-16 14:06:26, David Rientjes wrote:
+> On Wed, 20 Jul 2016, Michal Hocko wrote:
+> 
+> > > Any mempool_alloc() user that then takes a contended mutex can do this.  
+> > > An example:
+> > > 
+> > > 	taskA		taskB		taskC
+> > > 	-----		-----		-----
+> > > 	mempool_alloc(a)
+> > > 			mutex_lock(b)
+> > > 	mutex_lock(b)
+> > > 					mempool_alloc(a)
+> > > 
+> > > Imagine the mempool_alloc() done by taskA depleting all free elements so 
+> > > we rely on it to do mempool_free() before any other mempool allocator can 
+> > > be guaranteed.
+> > > 
+> > > If taskC is oom killed, or has PF_MEMALLOC set, it cannot access memory 
+> > > reserves from the page allocator if __GFP_NOMEMALLOC is automatic in 
+> > > mempool_alloc().  This livelocks the page allocator for all processes.
+> > > 
+> > > taskB in this case need only stall after taking mutex_lock() successfully; 
+> > > that could be because of the oom livelock, it is contended on another 
+> > > mutex held by an allocator, etc.
+> > 
+> > But that falls down to the deadlock described by Johannes above because
+> > then the mempool user would _depend_ on an "unguarded page allocation"
+> > via that particular lock and that is a bug.
+> >  
+> 
+> It becomes a deadlock because of mempool_alloc(a) forcing 
+> __GFP_NOMEMALLOC, I agree.
+> 
+> For that not to be the case, it must be required that between 
+> mempool_alloc() and mempool_free() that we take no mutex that may be held 
+> by any other thread on the system, in any context, that is allocating 
+> memory.  If that's a caller's bug as you describe it, and only enabled by 
+> mempool_alloc() forcing __GFP_NOMEMALLOC, then please add the relevant 
+> lockdep detection, which would be trivial to add, so we can determine if 
+> any users are unsafe and prevent this issue in the future.
 
-> It sounds like we need to remove the restriction on accessing the
-> filesystem from a different pid namespace. I don't think this poses a
-> security problem. However there's no pid mapping that is usable by the
-> userspace fuse process, so what do we put in the fuse request? Probably
-> the only candidates are 0 and 0xffffffff.
->
-> So a question for the fuse developers - is one value or the other
-> preferrable for fuse_in_header.pid when the pid cannot be mapped, and is
-> this going to cause problems for any fuse filesystems? I suspect that
-> few filesystems actually look at the pid anyway, and already for a
-> filesystem mounted in a pid namespace the values being given to
-> userspace won't be correct for the namespace of the fuse process.
+I am sorry but I am neither familiar with the lockdep internals nor I
+have a time to add this support.
 
-pid = 0 sounds good.
+> The 
+> overwhelming goal here should be to prevent possible problems in the 
+> future especially if an API does not allow you to opt-out of the behavior.
 
-The pid from the request is used for example to get the auxiliary
-group list by libfuse (fuse_req_getgroups()).   That's not used by all
-filesystems and it will return an error in case it can't find the proc
-entry (which it won't for pid == 0).
+The __GFP_NOMEMALLOC enforcement is there since b84a35be0285 ("[PATCH]
+mempool: NOMEMALLOC and NORETRY") so more than 10 years ago. So I think
+it is quite reasonable to expect that users are familiar with this fact
+and handle it properly in the vast majority cases. In fact mempool
+deadlocks are really rare.
 
-It would be nice if we could transfer the group list through the
-userspace/kernel protocol, since then it wouldn't depend on proc and
-on being in the same pid namespace.  But that's another story.
+[...]
 
-Thanks,
-Miklos
+> > Or it would get stuck because even page allocator memory reserves got
+> > depleted. Without any way to throttle there is no guarantee to make
+> > further progress. In fact this is not a theoretical situation. It has
+> > been observed with the swap over dm-crypt and there shouldn't be any
+> > lock dependeces you are describing above there AFAIU.
+> > 
+> 
+> They should do mempool_alloc(__GFP_NOMEMALLOC), no argument.
+
+How that would be any different from any other mempool user which can be
+invoked from the swap out path - aka any other IO path?
+
+> What is the objection to allowing __GFP_NOMEMALLOC from the caller with 
+> clear documentation on how to use it?  It can be described to not allow 
+> depletion of memory reserves with the caveat that the caller must ensure 
+> mempool_free() cannot be blocked in lowmem situations.
+
+Look, there are
+$ git grep mempool_alloc | wc -l
+304
+
+many users of this API and we do not want to flip the default behavior
+which is there for more than 10 years. So far you have been arguing
+about potential deadlocks and haven't shown any particular path which
+would have a direct or indirect dependency between mempool and normal
+allocator and it wouldn't be a bug. As the matter of fact the change
+we are discussing here causes a regression. If you want to change the
+semantic of mempool allocator then you are absolutely free to do so. In
+a separate patch which would be discussed with IO people and other
+users, though. But we _absolutely_ want to fix the regression first
+and have a simple fix for 4.6 and 4.7 backports. At this moment there
+are revert and patch 1 on the table.  The later one should make your
+backtrace happy and should be only as a temporal fix until we find out
+what is actually misbehaving on your systems. If you are not interested
+to pursue that way I will simply go with the revert.
+-- 
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
