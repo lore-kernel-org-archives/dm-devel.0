@@ -1,121 +1,207 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH 1/2] mempool: do not consume memory reserves from the
- reclaim path
-Date: Thu, 21 Jul 2016 10:52:03 +0200
-Message-ID: <20160721085202.GC26379@dhcp22.suse.cz>
-References: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
- <1468831285-27242-1-git-send-email-mhocko@kernel.org>
- <20160719135426.GA31229@cmpxchg.org>
- <alpine.DEB.2.10.1607191315400.58064@chino.kir.corp.google.com>
- <20160720081541.GF11249@dhcp22.suse.cz>
- <alpine.DEB.2.10.1607201353230.22427@chino.kir.corp.google.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.10.1607201353230.22427@chino.kir.corp.google.com>
-Sender: owner-linux-mm@kvack.org
-To: David Rientjes <rientjes@google.com>
-Cc: Johannes Weiner <hannes@cmpxchg.org>, linux-mm@kvack.org, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
+From: Stefan Bader <stefan.bader@canonical.com>
+Subject: bcache super block corruption with non 4k pages
+Date: Thu, 21 Jul 2016 10:58:33 +0200
+Message-ID: <1469091513-11233-1-git-send-email-stefan.bader@canonical.com>
+Return-path: <linux-bcache-owner@vger.kernel.org>
+Sender: linux-bcache-owner@vger.kernel.org
+To: linux-bcache@vger.kernel.org, dm-devel@redhat.com
+Cc: liuzhengyuang521@gmail.com, kent.overstreet@gmail.com, bcache@linux.ewheeler.net, apw@canonical.com, stefan.bader@canonical.com
 List-Id: dm-devel.ids
 
-On Wed 20-07-16 14:06:26, David Rientjes wrote:
-> On Wed, 20 Jul 2016, Michal Hocko wrote:
-> 
-> > > Any mempool_alloc() user that then takes a contended mutex can do this.  
-> > > An example:
-> > > 
-> > > 	taskA		taskB		taskC
-> > > 	-----		-----		-----
-> > > 	mempool_alloc(a)
-> > > 			mutex_lock(b)
-> > > 	mutex_lock(b)
-> > > 					mempool_alloc(a)
-> > > 
-> > > Imagine the mempool_alloc() done by taskA depleting all free elements so 
-> > > we rely on it to do mempool_free() before any other mempool allocator can 
-> > > be guaranteed.
-> > > 
-> > > If taskC is oom killed, or has PF_MEMALLOC set, it cannot access memory 
-> > > reserves from the page allocator if __GFP_NOMEMALLOC is automatic in 
-> > > mempool_alloc().  This livelocks the page allocator for all processes.
-> > > 
-> > > taskB in this case need only stall after taking mutex_lock() successfully; 
-> > > that could be because of the oom livelock, it is contended on another 
-> > > mutex held by an allocator, etc.
-> > 
-> > But that falls down to the deadlock described by Johannes above because
-> > then the mempool user would _depend_ on an "unguarded page allocation"
-> > via that particular lock and that is a bug.
-> >  
-> 
-> It becomes a deadlock because of mempool_alloc(a) forcing 
-> __GFP_NOMEMALLOC, I agree.
-> 
-> For that not to be the case, it must be required that between 
-> mempool_alloc() and mempool_free() that we take no mutex that may be held 
-> by any other thread on the system, in any context, that is allocating 
-> memory.  If that's a caller's bug as you describe it, and only enabled by 
-> mempool_alloc() forcing __GFP_NOMEMALLOC, then please add the relevant 
-> lockdep detection, which would be trivial to add, so we can determine if 
-> any users are unsafe and prevent this issue in the future.
+I was pointed at the thread which seems to address the same after
+I wrote most of below text. Did not want to re-write this so please
+bear with the odd layout.
 
-I am sorry but I am neither familiar with the lockdep internals nor I
-have a time to add this support.
+https://www.redhat.com/archives/dm-devel/2016-June/msg00015.html
 
-> The 
-> overwhelming goal here should be to prevent possible problems in the 
-> future especially if an API does not allow you to opt-out of the behavior.
+Zhengyuan tries to fix the problem by relocating the superblock on
+disk. But I am not sure whether there is really any guarantee about
+how __bread fills data into the buffer_head. What if there is the next
+odd arch with 128K pages?
 
-The __GFP_NOMEMALLOC enforcement is there since b84a35be0285 ("[PATCH]
-mempool: NOMEMALLOC and NORETRY") so more than 10 years ago. So I think
-it is quite reasonable to expect that users are familiar with this fact
-and handle it properly in the vast majority cases. In fact mempool
-deadlocks are really rare.
+So below is an attempt to be more generic. Still I don't feel completely
+happy with the way that a page moves (or is shared) between buffer_head
+and biovec. What I tried to outline below is to let the register functions
+allocate bio+biovec memory and use the in-memory sb_cache data to initialize
+the biovec buffer.
 
-[...]
+-Stefan
 
-> > Or it would get stuck because even page allocator memory reserves got
-> > depleted. Without any way to throttle there is no guarantee to make
-> > further progress. In fact this is not a theoretical situation. It has
-> > been observed with the swap over dm-crypt and there shouldn't be any
-> > lock dependeces you are describing above there AFAIU.
-> > 
-> 
-> They should do mempool_alloc(__GFP_NOMEMALLOC), no argument.
 
-How that would be any different from any other mempool user which can be
-invoked from the swap out path - aka any other IO path?
+---
 
-> What is the objection to allowing __GFP_NOMEMALLOC from the caller with 
-> clear documentation on how to use it?  It can be described to not allow 
-> depletion of memory reserves with the caveat that the caller must ensure 
-> mempool_free() cannot be blocked in lowmem situations.
+This was seen on ppc64le with 64k page size. The problem is that
+in that case __bread returns a page where b_data is not at the
+start of the page. And I am not really sure that the way bcache
+re-purposes the page returned by __bread to be used as biovec 
+element is really a good idea.
 
-Look, there are
-$ git grep mempool_alloc | wc -l
-304
+The way it is now, I saw __bread return a 64k page where b_data
+was starting at 4k offset. Then __write_super was modifying some
+data at offset 0 but for example not writing the magic number again.
 
-many users of this API and we do not want to flip the default behavior
-which is there for more than 10 years. So far you have been arguing
-about potential deadlocks and haven't shown any particular path which
-would have a direct or indirect dependency between mempool and normal
-allocator and it wouldn't be a bug. As the matter of fact the change
-we are discussing here causes a regression. If you want to change the
-semantic of mempool allocator then you are absolutely free to do so. In
-a separate patch which would be discussed with IO people and other
-users, though. But we _absolutely_ want to fix the regression first
-and have a simple fix for 4.6 and 4.7 backports. At this moment there
-are revert and patch 1 on the table.  The later one should make your
-backtrace happy and should be only as a temporal fix until we find out
-what is actually misbehaving on your systems. If you are not interested
-to pursue that way I will simply go with the revert.
+Not sure why (maybe this messes up flushes, too) but the bad data was not
+immediately written back when the devices were registered. So at that time
+bcache-super-show would report data as it was written by user-space (like
+the cache type still 0 and not 3, and claiming the cache to still bei
+detached).
+
+But when stopping the cache and unregistering the cache set this changed
+and bcache-super-show was reporting a bad magic number (as expected).
+
+The patch below works around this (tested with 64k and 4k pages) but I
+am not really sure this is a clean approach. My gut feeling would be that
+the bio structures should be allocated speperately (I think there is a way
+of allocating a bioset without using a pool). Then that separate page could
+be pre-initialized from the super block structure without passing around
+a page the feels more private to __bread usage...
+
+-Stefan
+
+
+
+From 3652e98359b876f3c1e6d7b9b7305e3411178296 Mon Sep 17 00:00:00 2001
+From: Stefan Bader <stefan.bader@canonical.com>
+Date: Wed, 20 Jul 2016 12:06:27 +0200
+Subject: [PATCH] bcache: handle non 4k pages returned by __bread
+
+On non-x86 arches pages can be bigger than 4k. Currently read_super
+returns a reference to the page used as buffer in the buffer_head
+that is returned by __bread().
+With 4k page size and a requested read this normally ends up with 
+the super block data starting at offset 0. But as seen on ppc64le
+with 64k page size, the data can start at an offset (from what I
+saw the offset was 4k).
+This causes harm later on when __write_super() maps the super
+block data at the start of the page acquired before and also
+not writes back all fields (particularly the super block magic).
+
+Try to avoid this by also returning the potential offset within the
+sb_page from read_super() and fully initiallize the single bvec of
+the bio used for __write_super() calls. Doing that is the same as
+would have been done in bch_bio_map() which now must not be used in
+__write_super().
+
+Signed-off-by: Stefan Bader <stefan.bader@canonical.com>
+
+removedebug
+
+Signed-off-by: Stefan Bader <stefan.bader@canonical.com>
+---
+ drivers/md/bcache/super.c | 22 +++++++++++++++-------
+ 1 file changed, 15 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+index e169739..3e0d2de 100644
+--- a/drivers/md/bcache/super.c
++++ b/drivers/md/bcache/super.c
+@@ -62,7 +62,7 @@ struct workqueue_struct *bcache_wq;
+ /* Superblock */
+ 
+ static const char *read_super(struct cache_sb *sb, struct block_device *bdev,
+-			      struct page **res)
++			      struct page **res, unsigned int *off)
+ {
+ 	const char *err;
+ 	struct cache_sb *s;
+@@ -192,6 +192,7 @@ static const char *read_super(struct cache_sb *sb, struct block_device *bdev,
+ 	err = NULL;
+ 
+ 	get_page(bh->b_page);
++	*off = (unsigned int) (bh->b_data - ((char *) page_address(bh->b_page)));
+ 	*res = bh->b_page;
+ err:
+ 	put_bh(bh);
+@@ -202,19 +203,19 @@ static void write_bdev_super_endio(struct bio *bio)
+ {
+ 	struct cached_dev *dc = bio->bi_private;
+ 	/* XXX: error checking */
+-
+ 	closure_put(&dc->sb_write);
+ }
+ 
+ static void __write_super(struct cache_sb *sb, struct bio *bio)
+ {
+-	struct cache_sb *out = page_address(bio->bi_io_vec[0].bv_page);
++	struct cache_sb *out = page_address(bio->bi_io_vec[0].bv_page) +
++			       bio->bi_io_vec[0].bv_offset;
+ 	unsigned i;
+ 
+ 	bio->bi_iter.bi_sector	= SB_SECTOR;
+ 	bio->bi_rw		= REQ_SYNC|REQ_META;
+ 	bio->bi_iter.bi_size	= SB_SIZE;
+-	bch_bio_map(bio, NULL);
++	// bch_bio_map(bio, NULL);
+ 
+ 	out->offset		= cpu_to_le64(sb->offset);
+ 	out->version		= cpu_to_le64(sb->version);
+@@ -1139,6 +1140,7 @@ static int cached_dev_init(struct cached_dev *dc, unsigned block_size)
+ /* Cached device - bcache superblock */
+ 
+ static void register_bdev(struct cache_sb *sb, struct page *sb_page,
++				 unsigned int sb_off,
+ 				 struct block_device *bdev,
+ 				 struct cached_dev *dc)
+ {
+@@ -1154,6 +1156,8 @@ static void register_bdev(struct cache_sb *sb, struct page *sb_page,
+ 	dc->sb_bio.bi_max_vecs	= 1;
+ 	dc->sb_bio.bi_io_vec	= dc->sb_bio.bi_inline_vecs;
+ 	dc->sb_bio.bi_io_vec[0].bv_page = sb_page;
++	dc->sb_bio.bi_io_vec[0].bv_len = SB_SIZE;
++	dc->sb_bio.bi_io_vec[0].bv_offset = sb_off;
+ 	get_page(sb_page);
+ 
+ 	if (cached_dev_init(dc, sb->block_size << 9))
+@@ -1839,6 +1843,7 @@ static int cache_alloc(struct cache_sb *sb, struct cache *ca)
+ }
+ 
+ static int register_cache(struct cache_sb *sb, struct page *sb_page,
++				unsigned int sb_off,
+ 				struct block_device *bdev, struct cache *ca)
+ {
+ 	char name[BDEVNAME_SIZE];
+@@ -1853,6 +1858,8 @@ static int register_cache(struct cache_sb *sb, struct page *sb_page,
+ 	ca->sb_bio.bi_max_vecs	= 1;
+ 	ca->sb_bio.bi_io_vec	= ca->sb_bio.bi_inline_vecs;
+ 	ca->sb_bio.bi_io_vec[0].bv_page = sb_page;
++	ca->sb_bio.bi_io_vec[0].bv_len  = SB_SIZE;
++	ca->sb_bio.bi_io_vec[0].bv_offset = sb_off;
+ 	get_page(sb_page);
+ 
+ 	if (blk_queue_discard(bdev_get_queue(ca->bdev)))
+@@ -1936,6 +1943,7 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
+ 	struct cache_sb *sb = NULL;
+ 	struct block_device *bdev = NULL;
+ 	struct page *sb_page = NULL;
++	unsigned int sb_off;
+ 
+ 	if (!try_module_get(THIS_MODULE))
+ 		return -EBUSY;
+@@ -1967,7 +1975,7 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
+ 	if (set_blocksize(bdev, 4096))
+ 		goto err_close;
+ 
+-	err = read_super(sb, bdev, &sb_page);
++	err = read_super(sb, bdev, &sb_page, &sb_off);
+ 	if (err)
+ 		goto err_close;
+ 
+@@ -1977,14 +1985,14 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
+ 			goto err_close;
+ 
+ 		mutex_lock(&bch_register_lock);
+-		register_bdev(sb, sb_page, bdev, dc);
++		register_bdev(sb, sb_page, sb_off, bdev, dc);
+ 		mutex_unlock(&bch_register_lock);
+ 	} else {
+ 		struct cache *ca = kzalloc(sizeof(*ca), GFP_KERNEL);
+ 		if (!ca)
+ 			goto err_close;
+ 
+-		if (register_cache(sb, sb_page, bdev, ca) != 0)
++		if (register_cache(sb, sb_page, sb_off, bdev, ca) != 0)
+ 			goto err_close;
+ 	}
+ out:
 -- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+1.9.1
