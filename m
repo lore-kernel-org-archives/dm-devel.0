@@ -1,102 +1,56 @@
-From: Johannes Weiner <hannes@cmpxchg.org>
-Subject: Re: [RFC PATCH 1/2] mempool: do not consume memory reserves from the
- reclaim path
-Date: Thu, 21 Jul 2016 11:26:31 -0400
-Message-ID: <20160721152631.GA30303@cmpxchg.org>
-References: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
- <1468831285-27242-1-git-send-email-mhocko@kernel.org>
- <20160719135426.GA31229@cmpxchg.org>
- <alpine.DEB.2.10.1607191315400.58064@chino.kir.corp.google.com>
- <20160720081541.GF11249@dhcp22.suse.cz>
- <alpine.DEB.2.10.1607201353230.22427@chino.kir.corp.google.com>
- <20160721085202.GC26379@dhcp22.suse.cz>
- <20160721121300.GA21806@cmpxchg.org>
- <20160721145309.GR26379@dhcp22.suse.cz>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: [PATCH] multipathd: restore paths after reconfigure
+Date: Thu, 21 Jul 2016 09:29:37 -0700
+Message-ID: <758f2ab7-c8ed-06d9-f891-5cdaf893a5a7@sandisk.com>
+References: <1467409569-16088-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20160721145309.GR26379@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: David Rientjes <rientjes@google.com>, linux-mm@kvack.org, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1467409569-16088-1-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 21, 2016 at 04:53:10PM +0200, Michal Hocko wrote:
-> From: Michal Hocko <mhocko@suse.com>
-> Date: Thu, 21 Jul 2016 16:40:59 +0200
-> Subject: [PATCH] Revert "mm, mempool: only set __GFP_NOMEMALLOC if there are
->  free elements"
-> 
-> This reverts commit f9054c70d28bc214b2857cf8db8269f4f45a5e23.
-> 
-> There has been a report about OOM killer invoked when swapping out to
-> a dm-crypt device. The primary reason seems to be that the swapout
-> out IO managed to completely deplete memory reserves. Ondrej was
+On 07/01/2016 02:46 PM, Benjamin Marzinski wrote:
+> multipathd has code to finish gathering the information of paths that
+> were not active at the time they were discovered. When the checker loop
+> goes to check a path, and notices that it wasn't fully initialized, it
+> is supposed to complete the initialization.  However the code is broken.
+> This means that if you reconfigure multipathd while paths are down, they
+> will no longer be usable. This patch makes sure that check_path will
+> actually rerun pathinfo to finish setting up the path, so that after the
+> path comes back up, it will be usable again.
+> [ ... ]
+> @@ -1779,7 +1785,13 @@ checkerloop (void *ap)
+>  			lock(vecs->lock);
+>  			pthread_testcancel();
+>  			vector_foreach_slot (vecs->pathvec, pp, i) {
+> -				num_paths += check_path(vecs, pp, ticks);
+> +				rc = check_path(vecs, pp, ticks);
+> +				if (rc < 0) {
+> +					vector_del_slot(vecs->pathvec, i);
+> +					free_path(pp);
+> +					i--;
+> +				} else;
+> +					num_paths += rc;
+>  			}
+>  			lock_cleanup_pop(vecs->lock);
+>  		}
 
--out
+Hi Ben,
 
-> able to bisect and explained the issue by pointing to f9054c70d28b
-> ("mm, mempool: only set __GFP_NOMEMALLOC if there are free elements").
-> 
-> The reason is that the swapout path is not throttled properly because
-> the md-raid layer needs to allocate from the generic_make_request path
-> which means it allocates from the PF_MEMALLOC context. dm layer uses
-> mempool_alloc in order to guarantee a forward progress which used to
-> inhibit access to memory reserves when using page allocator. This has
-> changed by f9054c70d28b ("mm, mempool: only set __GFP_NOMEMALLOC if
-> there are free elements") which has dropped the __GFP_NOMEMALLOC
-> protection when the memory pool is depleted.
-> 
-> If we are running out of memory and the only way forward to free memory
-> is to perform swapout we just keep consuming memory reserves rather than
-> throttling the mempool allocations and allowing the pending IO to
-> complete up to a moment when the memory is depleted completely and there
-> is no way forward but invoking the OOM killer. This is less than
-> optimal.
-> 
-> The original intention of f9054c70d28b was to help with the OOM
-> situations where the oom victim depends on mempool allocation to make a
-> forward progress. David has mentioned the following backtrace:
-> 
-> schedule
-> schedule_timeout
-> io_schedule_timeout
-> mempool_alloc
-> __split_and_process_bio
-> dm_request
-> generic_make_request
-> submit_bio
-> mpage_readpages
-> ext4_readpages
-> __do_page_cache_readahead
-> ra_submit
-> filemap_fault
-> handle_mm_fault
-> __do_page_fault
-> do_page_fault
-> page_fault
-> 
-> We do not know more about why the mempool is depleted without being
-> replenished in time, though. In any case the dm layer shouldn't depend
-> on any allocations outside of the dedicated pools so a forward progress
-> should be guaranteed. If this is not the case then the dm should be
-> fixed rather than papering over the problem and postponing it to later
-> by accessing more memory reserves.
-> 
-> mempools are a mechanism to maintain dedicated memory reserves to guaratee
-> forward progress. Allowing them an unbounded access to the page allocator
-> memory reserves is going against the whole purpose of this mechanism.
-> 
-> Bisected-by: Ondrej Kozina <okozina@redhat.com>
-> Signed-off-by: Michal Hocko <mhocko@suse.com>
+Was the semicolon after the "else" intended or was it a typo?
 
-Reviewed-by: Johannes Weiner <hannes@cmpxchg.org>
+Thanks,
 
-Thanks Michal
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Bart.
