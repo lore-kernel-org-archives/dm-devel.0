@@ -1,102 +1,50 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: replace <sys/poll.h> with
-	<poll.h>
-Date: Thu, 21 Jul 2016 21:29:28 +0200
-Message-ID: <1469129368-2855-1-git-send-email-xose.vazquez@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-mq and end_clone_request()
+Date: Thu, 21 Jul 2016 16:32:09 -0400
+Message-ID: <20160721203209.GB27509@redhat.com>
+References: <4ed669ed-beae-76a8-b806-a284565b327a@sandisk.com>
+ <20160720140815.GA19045@redhat.com>
+ <20160720142727.GA57399@redhat.com>
+ <1ca6d31d-f175-9daa-9ddd-17d653851ceb@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1ca6d31d-f175-9daa-9ddd-17d653851ceb@sandisk.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-The standard place of poll.h is in /usr/include/
-Spotted by musl libc.
+On Wed, Jul 20 2016 at  1:37pm -0400,
+Bart Van Assche <bart.vanassche@sandisk.com> wrote:
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmpathpersist/mpath_updatepr.c | 2 +-
- libmultipath/uevent.c            | 2 +-
- libmultipath/uxsock.c            | 2 +-
- multipathd/uxclnt.c              | 2 +-
- multipathd/uxlsnr.c              | 2 +-
- 5 files changed, 5 insertions(+), 5 deletions(-)
+> On 07/20/2016 07:27 AM, Mike Snitzer wrote:
+> >On Wed, Jul 20 2016 at 10:08am -0400,
+> >Mike Snitzer <snitzer@redhat.com> wrote:
+> >[ ... ]
+> >diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+> >index 7a96618..347ff25 100644
+> >--- a/drivers/md/dm-rq.c
+> >+++ b/drivers/md/dm-rq.c
+> >@@ -414,7 +414,7 @@ static void dm_complete_request(struct request *rq, int error)
+> > 	if (!rq->q->mq_ops)
+> > 		blk_complete_request(rq);
+> > 	else
+> >-		blk_mq_complete_request(rq, error);
+> >+		blk_mq_complete_request(rq, 0);
+> > }
+> >
+> > /*
+> 
+> Hello Mike,
+> 
+> Thanks for the patch. But unfortunately even with this patch applied
+> I see fio reporting I/O errors when run on top of dm-mq after a
+> (simulated) cable pull.
 
-diff --git a/libmpathpersist/mpath_updatepr.c b/libmpathpersist/mpath_updatepr.c
-index be73de4..9ff4b30 100644
---- a/libmpathpersist/mpath_updatepr.c
-+++ b/libmpathpersist/mpath_updatepr.c
-@@ -9,7 +9,7 @@
- #include <sys/types.h>
- #include <sys/socket.h>
- #include <sys/un.h>
--#include <sys/poll.h>
-+#include <poll.h>
- #include <errno.h>
- #include "debug.h"
- #include "mpath_cmd.h"
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index ca41d35..5f3204b 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -33,7 +33,7 @@
- #include <sys/socket.h>
- #include <sys/user.h>
- #include <sys/un.h>
--#include <sys/poll.h>
-+#include <poll.h>
- #include <linux/types.h>
- #include <linux/netlink.h>
- #include <pthread.h>
-diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
-index f6d4ffa..775e278 100644
---- a/libmultipath/uxsock.c
-+++ b/libmultipath/uxsock.c
-@@ -13,7 +13,7 @@
- #include <sys/types.h>
- #include <sys/socket.h>
- #include <sys/un.h>
--#include <sys/poll.h>
-+#include <poll.h>
- #include <signal.h>
- #include <errno.h>
- #ifdef USE_SYSTEMD
-diff --git a/multipathd/uxclnt.c b/multipathd/uxclnt.c
-index 109a217..62ff6f4 100644
---- a/multipathd/uxclnt.c
-+++ b/multipathd/uxclnt.c
-@@ -14,7 +14,7 @@
- #include <sys/types.h>
- #include <sys/socket.h>
- #include <sys/un.h>
--#include <sys/poll.h>
-+#include <poll.h>
- #include <readline/readline.h>
- #include <readline/history.h>
- 
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 8ab55ea..0159648 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -19,7 +19,7 @@
- #include <sys/types.h>
- #include <sys/socket.h>
- #include <sys/un.h>
--#include <sys/poll.h>
-+#include <poll.h>
- #include <sys/time.h>
- #include <signal.h>
- #include "checkers.h"
--- 
-2.7.4
+BTW, curious, how is it that you're simulating the cable pull?  I'd like
+to see if doing the same, via a new test in mptest, exposes this issue
+you're hitting.
+
+Mike
