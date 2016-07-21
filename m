@@ -1,75 +1,81 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [4.7-rc6 snapshot] xfstests::generic/081 unable to tear down
- snapshot VG
-Date: Thu, 21 Jul 2016 09:18:05 +1000
-Message-ID: <20160720231805.GX12670@dastard>
-References: <20160719002202.GE16044@dastard>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: dm stripe: add DAX support
+Date: Wed, 20 Jul 2016 20:01:42 -0400
+Message-ID: <20160721000142.GA21913@redhat.com>
+References: <1466792610-30369-1-git-send-email-toshi.kani@hpe.com>
+ <20160624182859.GD13898@redhat.com>
+ <1468362104.8908.43.camel@hpe.com>
+ <20160713020100.GA5872@redhat.com>
+ <1468422189.8908.53.camel@hpe.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <fstests-owner@vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20160719002202.GE16044@dastard>
-Sender: fstests-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: fstests@vger.kernel.org, xfs@oss.sgi.com
+In-Reply-To: <1468422189.8908.53.camel-ZPxbGqLxI0U@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: axboe-b10kYP2dOMg@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org
+Cc: "linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org" <linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Tue, Jul 19, 2016 at 10:22:02AM +1000, Dave Chinner wrote:
-> Hi folks,
-> 
-> I'm currently running the latest set of XFS patches through QA, and
-> I'm getting generic/081 failing and leaving a block device in an
-> unrecoverable EBUSY state. I'm running xfstests on a pair of 8GB
-> fake pmem devices:
-> 
-> $ sudo ./run_check.sh " -i sparse=1" "" " -s xfs generic/081"
-....
+On Wed, Jul 13 2016 at 11:03am -0400,
+Kani, Toshimitsu <toshi.kani-ZPxbGqLxI0U@public.gmane.org> wrote:
 
-More problems after this failure, while trying to sort out a
-workaround I can use. Reboot the machine after triggering it, and on
-next boot I've ended up with:
+> On Tue, 2016-07-12 at 22:01 -0400, Mike Snitzer wrote:
+> > On Tue, Jul 12 2016 at=A0=A06:22pm -0400,
+> > Kani, Toshimitsu <toshi.kani-ZPxbGqLxI0U@public.gmane.org> wrote:
+> > > On Fri, 2016-06-24 at 14:29 -0400, Mike Snitzer wrote:
+> > > > =A0
+> =A0:
+> > Thanks for putting this summary together.=A0=A0Unfortunately none of th=
+e DM
+> > changes can be queued for 4.8 until Jens takes the 2 block core patches:
+> > https://patchwork.kernel.org/patch/9196021/
+> > https://patchwork.kernel.org/patch/9196019/
+> > =
 
-$ sudo lvs
-  LV       VG     Attr       LSize   Pool Origin   Data%  Meta%  Move Log Cpy%Sync Convert
-  base_081 vg_081 owi---s--- 256.00m                                                      
-  snap_081 vg_081 swi---s---   4.00m      base_081  
-$ sudo vgs
-  VG     #PV #LV #SN Attr   VSize VFree
-  vg_081   1   2   1 wz--n- 8.00g 7.74g
-$ sudo pvs
-  PV         VG     Fmt  Attr PSize PFree
-  /dev/pmem1 vg_081 lvm2 a--  8.00g 7.74g
-$ sudo lvremove -f vg_081/snap_081
-  Incorrect metadata area header checksum on /dev/pmem1 at offset 4096
-  WARNING: Failed to write an MDA of VG vg_081.
-  Failed to write VG vg_081.
-  Incorrect metadata area header checksum on /dev/pmem1 at offset 4096
-$ sudo vgremove -f vg_081
-  Incorrect metadata area header checksum on /dev/pmem1 at offset 4096
-  WARNING: Failed to write an MDA of VG vg_081.
-  Failed to write VG vg_081.
-  Incorrect metadata area header checksum on /dev/pmem1 at offset 4096
-$ sudo pvremove -f /dev/pmem1
-  PV /dev/pmem1 belongs to Volume Group vg_081 so please use vgreduce first.
-  (If you are certain you need pvremove, then confirm by using --force twice.)
-$
+> > Not sure what the hold up and/or issue is with them.=A0=A0But I've asked
+> > twice (and implicilty a 3rd time here).=A0=A0Hopefully they land in tim=
+e for
+> > 4.8.
+> =
 
-So whatever is going wrong is also resulting in corrupted LVM
-headers on disk.
+> Hi Jens,
+> =
 
-Ok, so it appears that the only workaround I've found that is
-reliable is to add a "sleep 5" between the unmount and the vgremove
-command. Adding udev settle commands does nothing, and there's
-nothing else i can think of that would affect the unmounted
-filesystem or block device once the unmount has returned to
-userspace.
+> Can you take the two patches above? =A0These patches add QUEUE_FLAG_DAX a=
+nd its
+> sysfs show func. =A0They allow device-mapper to set dax-capability based =
+on its
+> configuration, and also allow user applications to check dax-capability v=
+ia
+> sysfs.
 
-I've only ever seen this occur on pmem devices, so maybe it's
-something perculiar to them....
+Hi Jens,
 
-Cheers,
+As I shared with you before, here are the 2 patches I staged in
+linux-next via linux-dm.git's 'for-next' (same as in the patchwork
+references above) -- these were staged just so we had linux-next
+coverage until you picked them up.
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+Please pick these up for 4.8 -- the changes are straightforward, are
+required for DM's DAX support, and Dan Williams has also acked them:
+
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/com=
+mit/?h=3Dfor-next&id=3D6c00531c6affa42b165df73a1eac3289bc45f4c4
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/com=
+mit/?h=3Dfor-next&id=3D51d1a5abcd0e88cb4528f35643245ea59cf234f1
+
+Feel free to pick them up from patchwork or cherry-pick from
+linux-dm.git
+
+Thanks!
+Mike
