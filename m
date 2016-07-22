@@ -1,9 +1,11 @@
-From: Gi-Oh Kim <gi-oh.kim@profitbricks.com>
-Subject: [RFC] multipathd: memory leak from orphan_path()
-Date: Fri, 22 Jul 2016 23:20:36 +0200
-Message-ID: <CAJX1YtbKqPVE8eQQtcEKJECQ=WhVo6BftqWnNJ7=rq+r+Vd-2A@mail.gmail.com>
+From: james harvey <jamespharvey20@gmail.com>
+Subject: During systemd/udev,
+	device-mapper trying to work with non-LVM volumes
+Date: Fri, 22 Jul 2016 19:14:30 -0400
+Message-ID: <CA+X5Wn5tbL02XpG-JMvZ4-Sdg+sv=yymD1s6Afboag59LqD94Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5967364932076728836=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -14,164 +16,95 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, hare@suse.de, snitzer@redhat.com, Elmar Gerdes <elmar.gerdes@profitbricks.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============5967364932076728836==
-Content-Type: multipart/alternative; boundary=001a11352d40c8141605384003b7
+If I understand what's going on here, I think device-mapper is trying
+to work with two volumes that don't involve LVM, causing the errors.
+Is this a device-mapper bug?  A udev bug?  Something I have configured
+wrong?
 
---001a11352d40c8141605384003b7
-Content-Type: text/plain; charset=UTF-8
+During boot, I see the following messages:
 
-Hello,
+===============================
+starting version 230
+:: running early hook [lvm2]
+:: running hook [udev]
+:: Triggering uevents...
+    [    3.964973] device-mapper: table: 253:21: thin: Unable to
+activate thin device while pool is suspended
+    [    4.023198] device-mapper: table: 253:22: thin: Unable to
+activate thin device while pool is suspended
+. . .
+===============================
 
-I checked the memory consuming of the multipathd and found it consumes too
-much memory.
-Following is the result I have got from 6 servers.
-Longer running multipathd consumes more memory.
+In dmesg, I see:
 
-# ps -eo user,pid,ppid,rss,size,vsize,pmem,pcpu,time,cmd --sort -rss | grep
-multipath
-root      2948     1  4376 66764  98572  0.0  0.0 00:00:01 /sbin/multipathd
-root      3035     1  8648 71068 102876  0.0  0.1 00:09:11 /sbin/multipathd
-root     39004     1 10236 137944 169752  0.0 0.1 03:20:43 /sbin/multipathd
-root      3149     1 11976 139792 171600  0.0 0.2 05:37:37 /sbin/multipathd
-root      3168     1 13792 76056 107864  0.0  0.3 07:04:41 /sbin/multipathd
-root      3135     1 14920 142500 174308  0.0 0.4 08:49:38 /sbin/multipathd
+===============================
+[    3.313426] Btrfs loaded
+[    3.313987] BTRFS: device label terrasnapper_boot devid 1 transid 13 /dev/md2
+[    3.314219] BTRFS: device label terramain_boot devid 1 transid 27 /dev/md1
+[    3.391995] device-mapper: thin: Data device (dm-5) discard
+unsupported: Disabling discard passdown.
+[    3.392803] device-mapper: thin: Data device (dm-3) discard
+unsupported: Disabling discard passdown.
+[    3.520545] BTRFS: device label terrasnapper devid 3 transid 28 /dev/dm-13
+[    3.520931] BTRFS: device label terramain devid 2 transid 35 /dev/dm-11
+[    3.574622] BTRFS: device label persistent devid 3 transid 11 /dev/dm-14
+[    3.590508] BTRFS: device label terrasnapper devid 2 transid 28 /dev/dm-12
+[    3.604053] BTRFS: device label terramain devid 3 transid 35 /dev/dm-10
+[    3.711390] BTRFS: device label persistent devid 2 transid 11 /dev/dm-15
+[    3.788923] md: bind<dm-16>
+[    3.790860] md/raid1:md0: active with 3 out of 3 mirrors
+[    3.790909] md0: detected capacity change from 0 to 17163091968
+[    3.961862] device-mapper: thin: Data device (dm-18) discard
+unsupported: Disabling discard passdown.
+[    3.964973] device-mapper: table: 253:21: thin: Unable to activate
+thin device while pool is suspended
+[    3.965075] device-mapper: ioctl: error adding target to table
+[    4.023198] device-mapper: table: 253:22: thin: Unable to activate
+thin device while pool is suspended
+[    4.023295] device-mapper: ioctl: error adding target to table
+[    4.111046] BTRFS: device label terrasnapper devid 1 transid 28 /dev/dm-21
+[    4.188863] BTRFS: device label persistent devid 1 transid 11 /dev/dm-23
+[    4.196150] BTRFS: device label terramain devid 1 transid 35 /dev/dm-22
+===============================
 
+There are 3 hard drives, all platter SATA.
 
-So I did valgrind test with debian 0.4.9 version and I've got following
-error.
-pp->getuid is initialized by malloc but it is not freed.
+dm-21 and dm-22 are NOT using LVM.  (If that is what is being referred
+to by "table: 253:21" and "table: 253:22".) They are each a btrfs
+filesystem, on a md RAID 1, of 3 hard drive partitions.  They're each
+separate boot partitions, for separate installs.
 
-==14958== 280 bytes in 4 blocks are definitely lost in loss record 2 of 3
-==14958==    at 0x4C28C20: malloc (vg_replace_malloc.c:296)
-==14958==    by 0x5702D2E: select_getuid (in /lib/libmultipath.so.0)
-==14958==    by 0x56FFA0F: ??? (in /lib/libmultipath.so.0)
-==14958==    by 0x5701707: pathinfo (in /lib/libmultipath.so.0)
-==14958==    by 0x5701BDE: store_pathinfo (in /lib/libmultipath.so.0)
-==14958==    by 0x5701F17: path_discovery (in /lib/libmultipath.so.0)
-==14958==    by 0x407916: configure (main.c:1310)
-==14958==    by 0x404B60: child (main.c:1623)
-==14958==    by 0x404B60: main (main.c:1834)
+All other volumes in the system are btrfs RAID's on LVM volumes, not
+using md arrays.  (Except swap is an md array of raw LVM volumes.)
 
+dmsetup table shows (253:21 and 253:22 are NOT on here)
 
-Finally I've applied following patch.
-The valgrind does not complain any more.
-I checked the latest source but orphan_path() has no patch like that.
-I'd appreciate if you would review my patch and give me any feedback.
-
-
-------------------------- 8< ------------------
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 6d2d45e..007b5eb 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -84,6 +84,8 @@ orphan_path (struct path * pp, const char *reason)
-        pp->mpp = NULL;
-        pp->dmstate = PSTATE_UNDEF;
-        pp->uid_attribute = NULL;
-+    if (pp->getuid)
-+        free(pp->getuid);
-        pp->getuid = NULL;
-        prio_put(&pp->prio);
-        checker_put(&pp->checker);
-
---001a11352d40c8141605384003b7
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><span style=3D"font-size:12.8px">Hello,</span><br style=3D=
-"font-size:12.8px"><br style=3D"font-size:12.8px"><span style=3D"font-size:=
-12.8px">I checked the memory consuming of the multipathd and found it consu=
-mes too much memory.</span><br style=3D"font-size:12.8px"><span style=3D"fo=
-nt-size:12.8px">Following is the result I have got from 6 servers.</span><b=
-r style=3D"font-size:12.8px"><span style=3D"font-size:12.8px">Longer runnin=
-g multipathd consumes more memory.</span><br style=3D"font-size:12.8px"><br=
- style=3D"font-size:12.8px"><span style=3D"font-size:12.8px"># ps -eo user,=
-pid,ppid,rss,size,vsize,p</span><span style=3D"font-size:12.8px">mem,pcpu,t=
-ime,cmd --sort -rss | grep multipath</span><br style=3D"font-size:12.8px"><=
-span style=3D"font-size:12.8px">root=C2=A0 =C2=A0 =C2=A0 2948=C2=A0 =C2=A0 =
-=C2=A01=C2=A0 4376 66764=C2=A0 98572=C2=A0 0.0=C2=A0 0.0 00:00:01 /sbin/mul=
-tipathd</span><br style=3D"font-size:12.8px"><span style=3D"font-size:12.8p=
-x">root=C2=A0 =C2=A0 =C2=A0 3035=C2=A0 =C2=A0 =C2=A01=C2=A0 8648 71068 1028=
-76=C2=A0 0.0=C2=A0 0.1 00:09:11 /sbin/multipathd</span><br style=3D"font-si=
-ze:12.8px"><span style=3D"font-size:12.8px">root=C2=A0 =C2=A0 =C2=A039004=
-=C2=A0 =C2=A0 =C2=A01 10236 137944 169752=C2=A0 0.0 0.1 03:20:43 /sbin/mult=
-ipathd</span><br style=3D"font-size:12.8px"><span style=3D"font-size:12.8px=
-">root=C2=A0 =C2=A0 =C2=A0 3149=C2=A0 =C2=A0 =C2=A01 11976 139792 171600=C2=
-=A0 0.0 0.2 05:37:37 /sbin/multipathd</span><br style=3D"font-size:12.8px">=
-<span style=3D"font-size:12.8px">root=C2=A0 =C2=A0 =C2=A0 3168=C2=A0 =C2=A0=
- =C2=A01 13792 76056 107864=C2=A0 0.0=C2=A0 0.3 07:04:41 /sbin/multipathd</=
-span><br style=3D"font-size:12.8px"><span style=3D"font-size:12.8px">root=
-=C2=A0 =C2=A0 =C2=A0 3135=C2=A0 =C2=A0 =C2=A01 14920 142500 174308=C2=A0 0.=
-0 0.4 08:49:38 /sbin/multipathd</span><br style=3D"font-size:12.8px"><br st=
-yle=3D"font-size:12.8px"><br style=3D"font-size:12.8px"><span style=3D"font=
--size:12.8px">So I did valgrind test with debian 0.4.9 version and I&#39;ve=
- got following error.</span><br style=3D"font-size:12.8px"><span style=3D"f=
-ont-size:12.8px">pp-&gt;getuid is initialized by malloc but it is not freed=
-.</span><br style=3D"font-size:12.8px"><br style=3D"font-size:12.8px"><span=
- style=3D"font-size:12.8px">=3D=3D14958=3D=3D 280 bytes in 4 blocks are def=
-initely lost in loss record 2 of 3</span><br style=3D"font-size:12.8px"><sp=
-an style=3D"font-size:12.8px">=3D=3D14958=3D=3D=C2=A0 =C2=A0 at 0x4C28C20: =
-malloc (vg_replace_malloc.c:296)</span><br style=3D"font-size:12.8px"><span=
- style=3D"font-size:12.8px">=3D=3D14958=3D=3D=C2=A0 =C2=A0 by 0x5702D2E: se=
-lect_getuid (in /lib/libmultipath.so.0)</span><br style=3D"font-size:12.8px=
-"><span style=3D"font-size:12.8px">=3D=3D14958=3D=3D=C2=A0 =C2=A0 by 0x56FF=
-A0F: ??? (in /lib/libmultipath.so.0)</span><br style=3D"font-size:12.8px"><=
-span style=3D"font-size:12.8px">=3D=3D14958=3D=3D=C2=A0 =C2=A0 by 0x5701707=
-: pathinfo (in /lib/libmultipath.so.0)</span><br style=3D"font-size:12.8px"=
-><span style=3D"font-size:12.8px">=3D=3D14958=3D=3D=C2=A0 =C2=A0 by 0x5701B=
-DE: store_pathinfo (in /lib/libmultipath.so.0)</span><br style=3D"font-size=
-:12.8px"><span style=3D"font-size:12.8px">=3D=3D14958=3D=3D=C2=A0 =C2=A0 by=
- 0x5701F17: path_discovery (in /lib/libmultipath.so.0)</span><br style=3D"f=
-ont-size:12.8px"><span style=3D"font-size:12.8px">=3D=3D14958=3D=3D=C2=A0 =
-=C2=A0 by 0x407916: configure (main.c:1310)</span><br style=3D"font-size:12=
-.8px"><span style=3D"font-size:12.8px">=3D=3D14958=3D=3D=C2=A0 =C2=A0 by 0x=
-404B60: child (main.c:1623)</span><br style=3D"font-size:12.8px"><span styl=
-e=3D"font-size:12.8px">=3D=3D14958=3D=3D=C2=A0 =C2=A0 by 0x404B60: main (ma=
-in.c:1834)</span><br style=3D"font-size:12.8px"><br style=3D"font-size:12.8=
-px"><br style=3D"font-size:12.8px"><span style=3D"font-size:12.8px">Finally=
- I&#39;ve applied following patch.</span><br style=3D"font-size:12.8px"><sp=
-an style=3D"font-size:12.8px">The valgrind does not complain any more.</spa=
-n><br style=3D"font-size:12.8px"><span style=3D"font-size:12.8px">I checked=
- the latest source but orphan_path() has no patch like that.</span><br styl=
-e=3D"font-size:12.8px"><span style=3D"font-size:12.8px">I&#39;d appreciate =
-if you would review my patch and give me any feedback.</span><br style=3D"f=
-ont-size:12.8px"><br style=3D"font-size:12.8px"><br style=3D"font-size:12.8=
-px"><span style=3D"font-size:12.8px">------------------------- 8&lt; ------=
-------------</span><br style=3D"font-size:12.8px"><span style=3D"font-size:=
-12.8px">diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.=
-c</span><br style=3D"font-size:12.8px"><span style=3D"font-size:12.8px">ind=
-ex 6d2d45e..007b5eb 100644</span><br style=3D"font-size:12.8px"><span style=
-=3D"font-size:12.8px">--- a/libmultipath/structs_vec.c</span><br style=3D"f=
-ont-size:12.8px"><span style=3D"font-size:12.8px">+++ b/libmultipath/struct=
-s_vec.c</span><br style=3D"font-size:12.8px"><span style=3D"font-size:12.8p=
-x">@@ -84,6 +84,8 @@ orphan_path (struct path * pp, const char *reason)</sp=
-an><br style=3D"font-size:12.8px"><span style=3D"font-size:12.8px">=C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 pp-&gt;mpp =3D NULL;</span><br style=3D"font-size:12.8=
-px"><span style=3D"font-size:12.8px">=C2=A0 =C2=A0 =C2=A0 =C2=A0 pp-&gt;dms=
-tate =3D PSTATE_UNDEF;</span><br style=3D"font-size:12.8px"><span style=3D"=
-font-size:12.8px">=C2=A0 =C2=A0 =C2=A0 =C2=A0 pp-&gt;uid_attribute =3D NULL=
-;</span><br style=3D"font-size:12.8px"><span style=3D"font-size:12.8px">+=
-=C2=A0 =C2=A0 if (pp-&gt;getuid)</span><br style=3D"font-size:12.8px"><span=
- style=3D"font-size:12.8px">+=C2=A0 =C2=A0 =C2=A0 =C2=A0 free(pp-&gt;getuid=
-);</span><br style=3D"font-size:12.8px"><span style=3D"font-size:12.8px">=
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 pp-&gt;getuid =3D NULL;</span><br style=3D"font=
--size:12.8px"><span style=3D"font-size:12.8px">=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-prio_put(&amp;pp-&gt;prio);</span><br style=3D"font-size:12.8px"><span styl=
-e=3D"font-size:12.8px">=C2=A0 =C2=A0 =C2=A0 =C2=A0 checker_put(&amp;pp-&gt;=
-checker);</span><br>
-</div>
-
---001a11352d40c8141605384003b7--
-
-
---===============5967364932076728836==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5967364932076728836==--
+===============================
+disk3-disk3thin: 0 1048576000 linear 253:6 0
+disk3-terramain3: 0 209715200 thin 253:6 1
+disk3-disk3thin-tpool: 0 1048576000 thin-pool 253:4 253:5 512 0 0
+disk3-disk3thin_tdata: 0 1048576000 linear 8:35 33818624
+disk2-terraswap2: 0 33554432 linear 8:19 2048
+disk1-disk1thin-tpool: 0 1048576000 thin-pool 253:17 253:18 512 0 0
+disk1-disk1thin_tdata: 0 1048576000 linear 8:3 33818624
+disk3-disk3thin_tmeta: 0 262144 linear 8:35 1082394624
+disk1-disk1thin_tmeta: 0 262144 linear 8:3 1082394624
+disk2-disk2thin: 0 1048576000 linear 253:7 0
+disk3-terrasnapper3: 0 209715200 thin 253:6 2
+disk2-persistent2: 0 209715200 thin 253:7 3
+disk3-terraswap3: 0 33554432 linear 8:35 2048
+disk1-disk1thin: 0 1048576000 linear 253:19 0
+disk2-terrasnapper2: 0 209715200 thin 253:7 2
+disk1-terramain1: 0 209715200 thin 253:19 1
+disk2-disk2thin-tpool: 0 1048576000 thin-pool 253:2 253:3 512 0 0
+disk2-disk2thin_tdata: 0 1048576000 linear 8:19 33818624
+disk1-persistent1: 0 209715200 thin 253:19 3
+disk2-disk2thin_tmeta: 0 262144 linear 8:19 1082394624
+disk1-terrasnapper1: 0 209715200 thin 253:19 2
+disk2-terramain2: 0 209715200 thin 253:7 1
+disk3-persistent3: 0 209715200 thin 253:6 3
+disk1-terraswap1: 0 33554432 linear 8:3 2048
+===============================
