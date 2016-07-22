@@ -1,12 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipathd: fix typo that breaks failure path
-Date: Fri, 22 Jul 2016 11:59:49 +0200
-Message-ID: <CABr-GndZBw7edOp=H-rhcSShaE=2oeLBj-Q2TauW5ASXQ9gOpQ@mail.gmail.com>
-References: <1469134780-13163-1-git-send-email-bmarzins@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH] multipathd: Correctly invalidate configuration
+	during shutdown
+Date: Fri, 22 Jul 2016 13:04:25 +0200
+Message-ID: <1469185465-12287-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0800159088020618667=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1469134780-13163-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,104 +16,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
---===============0800159088020618667==
-Content-Type: multipart/alternative; boundary=001a114109cedbd9f20538367ef7
+We still need to use rcu primitives when shutting down the system;
+the original configuration might have become invalidated.
 
---001a114109cedbd9f20538367ef7
-Content-Type: text/plain; charset=UTF-8
+Signed-off-by: Hannes Reinecke <hare@suse.com>
+---
+ libmultipath/structs_vec.c |  2 ++
+ multipathd/main.c          | 16 +++++++++++++---
+ 2 files changed, 15 insertions(+), 3 deletions(-)
 
-Merged.
-Thanks.
-
-On Thu, Jul 21, 2016 at 10:59 PM, Benjamin Marzinski <bmarzins@redhat.com>
-wrote:
-
-> There wasn't supposed to be a semicolon after the "else" when checking
-> paths in checkerloop().
->
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  multipathd/main.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index c129298..d90d856 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -1790,7 +1790,7 @@ checkerloop (void *ap)
->                                         vector_del_slot(vecs->pathvec, i);
->                                         free_path(pp);
->                                         i--;
-> -                               } else;
-> +                               } else
->                                         num_paths += rc;
->                         }
->                         lock_cleanup_pop(vecs->lock);
-> --
-> 1.8.3.1
->
->
-
---001a114109cedbd9f20538367ef7
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
-<br><div class=3D"gmail_quote">On Thu, Jul 21, 2016 at 10:59 PM, Benjamin M=
-arzinski <span dir=3D"ltr">&lt;<a href=3D"mailto:bmarzins@redhat.com" targe=
-t=3D"_blank">bmarzins@redhat.com</a>&gt;</span> wrote:<br><blockquote class=
-=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
-ing-left:1ex">There wasn&#39;t supposed to be a semicolon after the &quot;e=
-lse&quot; when checking<br>
-paths in checkerloop().<br>
-<br>
-Signed-off-by: Benjamin Marzinski &lt;<a href=3D"mailto:bmarzins@redhat.com=
-">bmarzins@redhat.com</a>&gt;<br>
----<br>
-=C2=A0multipathd/main.c | 2 +-<br>
-=C2=A01 file changed, 1 insertion(+), 1 deletion(-)<br>
-<br>
-diff --git a/multipathd/main.c b/multipathd/main.c<br>
-index c129298..d90d856 100644<br>
---- a/multipathd/main.c<br>
-+++ b/multipathd/main.c<br>
-@@ -1790,7 +1790,7 @@ checkerloop (void *ap)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 vector_d=
-el_slot(vecs-&gt;pathvec, i);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 free_pat=
-h(pp);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 i--;<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0} else;<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0} else<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 num_path=
-s +=3D rc;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 }<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 lock_cleanup_pop(vecs-&gt;lock);<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-1.8.3.1<br>
-<br>
-</font></span></blockquote></div><br></div>
-
---001a114109cedbd9f20538367ef7--
-
-
---===============0800159088020618667==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0800159088020618667==--
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index adb1911..a0c8869 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -409,10 +409,12 @@ __setup_multipath (struct vectors * vecs, struct multipath * mpp,
+ 			mpp->alias);
+ 	}
+ 	if (reset) {
++		conf = get_multipath_config();
+ 		select_rr_weight(conf, mpp);
+ 		select_pgfailback(conf, mpp);
+ 		set_no_path_retry(conf, mpp);
+ 		select_flush_on_last_del(conf, mpp);
++		put_multipath_config(conf);
+ 		if (VECTOR_SIZE(mpp->paths) != 0)
+ 			dm_cancel_deferred_remove(mpp);
+ 	}
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 8784307..3eeb4c6 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2245,7 +2245,7 @@ child (void * param)
+ 	if (ignore_new_devs)
+ 		conf->ignore_new_devs = ignore_new_devs;
+ 	uxsock_timeout = conf->uxsock_timeout;
+-	multipath_conf = conf;
++	rcu_assign_pointer(multipath_conf, conf);
+ 	dm_init(conf->verbosity);
+ 	dm_drv_version(conf->version, TGT_MPATH);
+ 	if (init_checkers(conf->multipath_dir)) {
+@@ -2313,6 +2313,11 @@ child (void * param)
+ 	}
+ #endif
+ 	/*
++	 * Startup done, invalidate configuration
++	 */
++	conf = NULL;
++
++	/*
+ 	 * Signal start of configuration
+ 	 */
+ 	post_config_state(DAEMON_CONFIGURE);
+@@ -2362,7 +2367,9 @@ child (void * param)
+ 			if (!need_to_delay_reconfig(vecs)) {
+ 				reconfigure(vecs);
+ 			} else {
++				conf = get_multipath_config();
+ 				conf->delayed_reconfig = 1;
++				put_multipath_config(conf);
+ 			}
+ 			lock_cleanup_pop(vecs->lock);
+ 			post_config_state(DAEMON_IDLE);
+@@ -2370,9 +2377,11 @@ child (void * param)
+ 	}
+ 
+ 	lock(vecs->lock);
++	conf = get_multipath_config();
+ 	if (conf->queue_without_daemon == QUE_NO_DAEMON_OFF)
+ 		vector_foreach_slot(vecs->mpvec, mpp, i)
+ 			dm_queue_if_no_path(mpp->alias, 0);
++	put_multipath_config(conf);
+ 	remove_maps_and_stop_waiters(vecs);
+ 	unlock(vecs->lock);
+ 
+@@ -2418,8 +2427,9 @@ child (void * param)
+ 	 * because logging functions like dlog() and dm_write_log()
+ 	 * reference the config.
+ 	 */
+-	free_config(conf);
+-	conf = NULL;
++	conf = rcu_dereference(multipath_conf);
++	rcu_assign_pointer(multipath_conf, NULL);
++	call_rcu(&conf->rcu, rcu_free_config);
+ 	udev_unref(udev);
+ 	udev = NULL;
+ 	pthread_attr_destroy(&waiter_attr);
+-- 
+2.6.6
