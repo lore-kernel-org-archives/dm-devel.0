@@ -1,135 +1,169 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH 2/2] mm, mempool: do not throttle PF_LESS_THROTTLE
- tasks
-Date: Fri, 22 Jul 2016 11:15:59 +0200
-Message-ID: <20160722091558.GF794@dhcp22.suse.cz>
-References: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
- <1468831285-27242-1-git-send-email-mhocko@kernel.org>
- <1468831285-27242-2-git-send-email-mhocko@kernel.org>
- <87oa5q5abi.fsf@notabene.neil.brown.name>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH] multipathd: fix memory leak in reconfigure()
+Date: Fri, 22 Jul 2016 11:40:04 +0200
+Message-ID: <CABr-Gnei0RHg1ZXo9D4Y753WZ+Te4_ECCC-h6PEvn2hWhATzfg@mail.gmail.com>
+References: <1468844071-5484-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <87oa5q5abi.fsf@notabene.neil.brown.name>
-Sender: owner-linux-mm@kvack.org
-To: NeilBrown <neilb@suse.de>
-Cc: linux-mm@kvack.org, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, David Rientjes <rientjes@google.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Mel Gorman <mgorman@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
+Content-Type: multipart/mixed; boundary="===============4638241003343997207=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1468844071-5484-1-git-send-email-tang.junhui@zte.com.cn>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: tang.junhui@zte.com.cn
+Cc: zhang.kai16@zte.com.cn, device-mapper development <dm-devel@redhat.com>, christophe varoqui <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
-On Fri 22-07-16 18:46:57, Neil Brown wrote:
-> On Mon, Jul 18 2016, Michal Hocko wrote:
-> 
-> > From: Michal Hocko <mhocko@suse.com>
-> >
-> > Mikulas has reported that a swap backed by dm-crypt doesn't work
-> > properly because the swapout cannot make a sufficient forward progress
-> > as the writeout path depends on dm_crypt worker which has to allocate
-> > memory to perform the encryption. In order to guarantee a forward
-> > progress it relies on the mempool allocator. mempool_alloc(), however,
-> > prefers to use the underlying (usually page) allocator before it grabs
-> > objects from the pool. Such an allocation can dive into the memory
-> > reclaim and consequently to throttle_vm_writeout.
-> 
-> That's just broken.
-> I used to think mempool should always use the pre-allocated reserves
-> first.  That is surely the most logical course of action.  Otherwise
-> that memory is just sitting there doing nothing useful.
-> 
-> I spoke to Nick Piggin about this some years ago and he pointed out that
-> the kmalloc allocation paths are much better optimized for low overhead
-> when there is plenty of memory.  They can just pluck a free block of a
-> per-CPU list without taking any locks.   By contrast, accessing the
-> preallocated pool always requires a spinlock.
-> 
-> So it makes lots of sense to prefer the underlying allocator if it can
-> provide a quick response.  If it cannot, the sensible thing is to use
-> the pool, or wait for the pool to be replenished.
-> 
-> So the allocator should never wait at all, never enter reclaim, never
-> throttle.
-> 
-> Looking at the current code, __GFP_DIRECT_RECLAIM is disabled the first
-> time through, but if the pool is empty, direct-reclaim is allowed on the
-> next attempt.  Presumably this is where the throttling comes in ??
+--===============4638241003343997207==
+Content-Type: multipart/alternative; boundary=001a11402e64228dec0538363828
 
-Yes that is correct.
+--001a11402e64228dec0538363828
+Content-Type: text/plain; charset=UTF-8
 
-> I suspect that it really shouldn't do that. It should leave kswapd to
-> do reclaim (so __GFP_KSWAPD_RECLAIM is appropriate) and only wait in
-> mempool_alloc where pool->wait can wake it up.
+Merged.
+Thanks.
 
-Mikulas was already suggesting that and my concern was that this would
-give up prematurely even under mild page cache load when there are many
-clean page cache pages. If we just back off and rely on kswapd which
-might get stuck on the writeout then the IO throughput can be reduced
-I believe which would make the whole memory pressure just worse. So I am
-not sure this is a good idea in general. I completely agree with you
-that the mempool request shouldn't be throttled unless there is a strong
-reason for that. More on that below.
+On Mon, Jul 18, 2016 at 2:14 PM, <tang.junhui@zte.com.cn> wrote:
 
-> If I'm following the code properly, the stack trace below can only
-> happen if the first pool->alloc() attempt, with direct-reclaim disabled,
-> fails and the pool is empty, so mempool_alloc() calls prepare_to_wait()
-> and io_schedule_timeout().
+> From: "tang.junhui" <tang.junhui@zte.com.cn>
+>
+> Problem:
+> Memory leak exists in reconfigure() when multipathd command reconfigure is
+> executed.
+>
+> Reasons:
+>  * The following judgment condition is not satisfied when there is no path,
+>    free_pathvec() is not called to free the vector of vecs->pathvec:
+>        if (VECTOR_SIZE(vecs->pathvec))
+>            free_pathvec(vecs->pathvec, FREE_PATHS);
+>  * Then the vecs->pathvec is set to NULL, so the vector memory which
+>    vecs->pathvec pointed to is leaked:
+>        vecs->pathvec = NULL;
+>
+> Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+> ---
+>  multipathd/main.c | 4 +---
+>  1 file changed, 1 insertion(+), 3 deletions(-)
+>
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index c129298..d9731cd 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -1997,9 +1997,7 @@ reconfigure (struct vectors * vecs)
+>         if (VECTOR_SIZE(vecs->mpvec))
+>                 remove_maps_and_stop_waiters(vecs);
+>
+> -       if (VECTOR_SIZE(vecs->pathvec))
+> -               free_pathvec(vecs->pathvec, FREE_PATHS);
+> -
+> +       free_pathvec(vecs->pathvec, FREE_PATHS);
+>         vecs->pathvec = NULL;
+>
+>         /* Re-read any timezone changes */
+> --
+> 2.8.1.windows.1
+>
+> --------------------------------------------------------
+> ZTE Information Security Notice: The information contained in this mail
+> (and any attachment transmitted herewith) is privileged and confidential
+> and is intended for the exclusive use of the addressee(s).  If you are not
+> an intended recipient, any disclosure, reproduction, distribution or other
+> dissemination or use of the information contained is strictly prohibited.
+> If you have received this mail in error, please delete it and notify us
+> immediately.
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
 
-mempool_alloc retries immediatelly without any sleep after the first
-no-reclaim attempt.
+--001a11402e64228dec0538363828
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-> I suspect the timeout *doesn't* fire (5 seconds is along time) so it
-> gets woken up when there is something in the pool.  It then loops around
-> and tries pool->alloc() again, even though there is something in the
-> pool.  This might be justified if that ->alloc would never block, but
-> obviously it does.
-> 
-> I would very strongly recommend just changing mempool_alloc() to
-> permanently mask out __GFP_DIRECT_RECLAIM.
-> 
-> Quite separately I don't think PF_LESS_THROTTLE is at all appropriate.
-> It is "LESS" throttle, not "NO" throttle, but you have made
-> throttle_vm_writeout never throttle PF_LESS_THROTTLE threads.
+<div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
+<br><div class=3D"gmail_quote">On Mon, Jul 18, 2016 at 2:14 PM,  <span dir=
+=3D"ltr">&lt;<a href=3D"mailto:tang.junhui@zte.com.cn" target=3D"_blank">ta=
+ng.junhui@zte.com.cn</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_qu=
+ote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex=
+">From: &quot;tang.junhui&quot; &lt;<a href=3D"mailto:tang.junhui@zte.com.c=
+n">tang.junhui@zte.com.cn</a>&gt;<br>
+<br>
+Problem:<br>
+Memory leak exists in reconfigure() when multipathd command reconfigure is =
+executed.<br>
+<br>
+Reasons:<br>
+=C2=A0* The following judgment condition is not satisfied when there is no =
+path,<br>
+=C2=A0 =C2=A0free_pathvec() is not called to free the vector of vecs-&gt;pa=
+thvec:<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0if (VECTOR_SIZE(vecs-&gt;pathvec))<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0free_pathvec(vecs-&gt;pathvec, FRE=
+E_PATHS);<br>
+=C2=A0* Then the vecs-&gt;pathvec is set to NULL, so the vector memory whic=
+h<br>
+=C2=A0 =C2=A0vecs-&gt;pathvec pointed to is leaked:<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0vecs-&gt;pathvec =3D NULL;<br>
+<br>
+Signed-off-by: tang.junhui &lt;<a href=3D"mailto:tang.junhui@zte.com.cn">ta=
+ng.junhui@zte.com.cn</a>&gt;<br>
+---<br>
+=C2=A0multipathd/main.c | 4 +---<br>
+=C2=A01 file changed, 1 insertion(+), 3 deletions(-)<br>
+<br>
+diff --git a/multipathd/main.c b/multipathd/main.c<br>
+index c129298..d9731cd 100644<br>
+--- a/multipathd/main.c<br>
++++ b/multipathd/main.c<br>
+@@ -1997,9 +1997,7 @@ reconfigure (struct vectors * vecs)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (VECTOR_SIZE(vecs-&gt;mpvec))<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 remove_maps_and_sto=
+p_waiters(vecs);<br>
+<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0if (VECTOR_SIZE(vecs-&gt;pathvec))<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0free_pathvec(vecs-&=
+gt;pathvec, FREE_PATHS);<br>
+-<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0free_pathvec(vecs-&gt;pathvec, FREE_PATHS);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 vecs-&gt;pathvec =3D NULL;<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 /* Re-read any timezone changes */<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+2.8.1.windows.1<br>
+<br>
+--------------------------------------------------------<br>
+ZTE Information Security Notice: The information contained in this mail (an=
+d any attachment transmitted herewith) is privileged and confidential and i=
+s intended for the exclusive use of the addressee(s).=C2=A0 If you are not =
+an intended recipient, any disclosure, reproduction, distribution or other =
+dissemination or use of the information contained is strictly prohibited.=
+=C2=A0 If you have received this mail in error, please delete it and notify=
+ us immediately.<br>
+<br>
+--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
+rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
+<br>
+</font></span></blockquote></div><br></div>
 
-Yes that is correct. But it still allows to throttle on congestion:
-shrink_inactive_list:
-	/*
-	 * Stall direct reclaim for IO completions if underlying BDIs or zone
-	 * is congested. Allow kswapd to continue until it starts encountering
-	 * unqueued dirty pages or cycling through the LRU too quickly.
-	 */
-	if (!sc->hibernation_mode && !current_is_kswapd() &&
-	    current_may_throttle())
-		wait_iff_congested(pgdat, BLK_RW_ASYNC, HZ/10);
+--001a11402e64228dec0538363828--
 
-My thinking was that throttle_vm_writeout is there to prevent from
-dirtying too many pages from the reclaim the context.  PF_LESS_THROTTLE
-is part of the writeout so throttling it on too many dirty pages is
-questionable (well we get some bias but that is not really reliable). It
-still makes sense to throttle when the backing device is congested
-because the writeout path wouldn't make much progress anyway and we also
-do not want to cycle through LRU lists too quickly in that case.
 
-Or is this assumption wrong for nfsd_vfs_write? Can it cause unbounded
-dirtying of memory?
+--===============4638241003343997207==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> The purpose of that flag is to allow a thread to dirty a page-cache page
-> as part of cleaning another page-cache page.
-> So it makes sense for loop and sometimes for nfsd.  It would make sense
-> for dm-crypt if it was putting the encrypted version in the page cache.
-> But if dm-crypt is just allocating a transient page (which I think it
-> is), then a mempool should be sufficient (and we should make sure it is
-> sufficient) and access to an extra 10% (or whatever) of the page cache
-> isn't justified.
 
-If you think that PF_LESS_THROTTLE (ab)use in mempool_alloc is not
-appropriate then would a PF_MEMPOOL be any better?
-
-Thanks!
--- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+--===============4638241003343997207==--
