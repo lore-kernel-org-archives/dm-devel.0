@@ -1,109 +1,46 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] multipathd: Correctly invalidate configuration
-	during shutdown
-Date: Fri, 22 Jul 2016 13:04:25 +0200
-Message-ID: <1469185465-12287-1-git-send-email-hare@suse.de>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [RFC PATCH 1/2] mempool: do not consume memory reserves from the
+ reclaim path
+Date: Fri, 22 Jul 2016 14:26:19 +0200
+Message-ID: <15177f2d-cd00-dade-fc25-12a0c241e8f5@suse.cz>
+References: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
+ <1468831285-27242-1-git-send-email-mhocko@kernel.org>
+ <20160719135426.GA31229@cmpxchg.org>
+ <alpine.DEB.2.10.1607191315400.58064@chino.kir.corp.google.com>
+ <20160720081541.GF11249@dhcp22.suse.cz>
+ <alpine.DEB.2.10.1607201353230.22427@chino.kir.corp.google.com>
+ <20160721085202.GC26379@dhcp22.suse.cz> <20160721121300.GA21806@cmpxchg.org>
+ <20160721145309.GR26379@dhcp22.suse.cz> <20160722063720.GB794@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20160722063720.GB794@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>
+Cc: David Rientjes <rientjes@google.com>, linux-mm@kvack.org, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We still need to use rcu primitives when shutting down the system;
-the original configuration might have become invalidated.
+On 07/22/2016 08:37 AM, Michal Hocko wrote:
+> On Thu 21-07-16 16:53:09, Michal Hocko wrote:
+>> From d64815758c212643cc1750774e2751721685059a Mon Sep 17 00:00:00 2001
+>> From: Michal Hocko <mhocko@suse.com>
+>> Date: Thu, 21 Jul 2016 16:40:59 +0200
+>> Subject: [PATCH] Revert "mm, mempool: only set __GFP_NOMEMALLOC if there are
+>>  free elements"
+>>
+>> This reverts commit f9054c70d28bc214b2857cf8db8269f4f45a5e23.
+>
+> I've noticed that Andrew has already picked this one up. Is anybody
+> against marking it for stable?
 
-Signed-off-by: Hannes Reinecke <hare@suse.com>
----
- libmultipath/structs_vec.c |  2 ++
- multipathd/main.c          | 16 +++++++++++++---
- 2 files changed, 15 insertions(+), 3 deletions(-)
+It would be strange to have different behavior with known regression in 
+4.6 and 4.7 stables. Actually, there's still time for 4.7 proper?
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index adb1911..a0c8869 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -409,10 +409,12 @@ __setup_multipath (struct vectors * vecs, struct multipath * mpp,
- 			mpp->alias);
- 	}
- 	if (reset) {
-+		conf = get_multipath_config();
- 		select_rr_weight(conf, mpp);
- 		select_pgfailback(conf, mpp);
- 		set_no_path_retry(conf, mpp);
- 		select_flush_on_last_del(conf, mpp);
-+		put_multipath_config(conf);
- 		if (VECTOR_SIZE(mpp->paths) != 0)
- 			dm_cancel_deferred_remove(mpp);
- 	}
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 8784307..3eeb4c6 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2245,7 +2245,7 @@ child (void * param)
- 	if (ignore_new_devs)
- 		conf->ignore_new_devs = ignore_new_devs;
- 	uxsock_timeout = conf->uxsock_timeout;
--	multipath_conf = conf;
-+	rcu_assign_pointer(multipath_conf, conf);
- 	dm_init(conf->verbosity);
- 	dm_drv_version(conf->version, TGT_MPATH);
- 	if (init_checkers(conf->multipath_dir)) {
-@@ -2313,6 +2313,11 @@ child (void * param)
- 	}
- #endif
- 	/*
-+	 * Startup done, invalidate configuration
-+	 */
-+	conf = NULL;
-+
-+	/*
- 	 * Signal start of configuration
- 	 */
- 	post_config_state(DAEMON_CONFIGURE);
-@@ -2362,7 +2367,9 @@ child (void * param)
- 			if (!need_to_delay_reconfig(vecs)) {
- 				reconfigure(vecs);
- 			} else {
-+				conf = get_multipath_config();
- 				conf->delayed_reconfig = 1;
-+				put_multipath_config(conf);
- 			}
- 			lock_cleanup_pop(vecs->lock);
- 			post_config_state(DAEMON_IDLE);
-@@ -2370,9 +2377,11 @@ child (void * param)
- 	}
- 
- 	lock(vecs->lock);
-+	conf = get_multipath_config();
- 	if (conf->queue_without_daemon == QUE_NO_DAEMON_OFF)
- 		vector_foreach_slot(vecs->mpvec, mpp, i)
- 			dm_queue_if_no_path(mpp->alias, 0);
-+	put_multipath_config(conf);
- 	remove_maps_and_stop_waiters(vecs);
- 	unlock(vecs->lock);
- 
-@@ -2418,8 +2427,9 @@ child (void * param)
- 	 * because logging functions like dlog() and dm_write_log()
- 	 * reference the config.
- 	 */
--	free_config(conf);
--	conf = NULL;
-+	conf = rcu_dereference(multipath_conf);
-+	rcu_assign_pointer(multipath_conf, NULL);
-+	call_rcu(&conf->rcu, rcu_free_config);
- 	udev_unref(udev);
- 	udev = NULL;
- 	pthread_attr_destroy(&waiter_attr);
--- 
-2.6.6
+Vlastimil
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
