@@ -1,12 +1,15 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: remove final \ in fprintf
-Date: Fri, 22 Jul 2016 11:42:56 +0200
-Message-ID: <CABr-GncGCtC7XRxU7gpEMuv_JL0VH042h0qpKSqUxT45w0uaEg@mail.gmail.com>
-References: <1468848239-6163-1-git-send-email-xose.vazquez@gmail.com>
+Subject: Re: [PATCH 2/3] multipath-tools: merge OPTFLAGS into
+	CFLAGS
+Date: Fri, 22 Jul 2016 11:43:39 +0200
+Message-ID: <CABr-GndggX27px+4fczvw2+RGsFQ8RKpD=TELSxR7BYjdzE12Q@mail.gmail.com>
+References: <1467995301-14226-1-git-send-email-xose.vazquez@gmail.com>
+	<1467995301-14226-3-git-send-email-xose.vazquez@gmail.com>
+	<2af5e805-8bfe-72dc-d476-1c0184b76720@suse.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6466910103574572259=="
+Content-Type: multipart/mixed; boundary="===============6753854398857782769=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1468848239-6163-1-git-send-email-xose.vazquez@gmail.com>
+In-Reply-To: <2af5e805-8bfe-72dc-d476-1c0184b76720@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,281 +19,174 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: Mathieu Trudel-Lapierre <mathieu.trudel-lapierre@canonical.com>, Dragan Stancevic <dragan.stancevic@canonical.com>, device-mapper development <dm-devel@redhat.com>, Ritesh Raj Sarraf <rrs@debian.org>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Louis Bouchard <louis.bouchard@canonical.com>
 List-Id: dm-devel.ids
 
---===============6466910103574572259==
-Content-Type: multipart/alternative; boundary=001a114102e465660205383642c4
+--===============6753854398857782769==
+Content-Type: multipart/alternative; boundary=001a11410fecfeff68053836445d
 
---001a114102e465660205383642c4
+--001a11410fecfeff68053836445d
 Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-Merged.
+Reverted.
 
-On Mon, Jul 18, 2016 at 3:23 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
+On Fri, Jul 15, 2016 at 12:19 PM, Hannes Reinecke <hare@suse.de> wrote:
 
-> Useless.
+> On 07/08/2016 06:28 PM, Xose Vazquez Perez wrote:
+> > OPTFLAGS is not used anywhere, but maybe it's intrusive for
+> distributions.
+> >
+> > Cc: Mathieu Trudel-Lapierre <mathieu.trudel-lapierre@canonical.com>
+> > Cc: Dragan Stancevic <dragan.stancevic@canonical.com>
+> > Cc: Louis Bouchard <louis.bouchard@canonical.com>
+> > Cc: Ritesh Raj Sarraf <rrs@debian.org>
+> > Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> > Cc: Hannes Reinecke <hare@suse.de>
+> > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> > Cc: device-mapper development <dm-devel@redhat.com>
+> > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> > ---
+> >  Makefile.inc | 7 +++----
+> >  1 file changed, 3 insertions(+), 4 deletions(-)
+> >
+> > diff --git a/Makefile.inc b/Makefile.inc
+> > index 01d743c..b7077fc 100644
+> > --- a/Makefile.inc
+> > +++ b/Makefile.inc
+> > @@ -60,10 +60,9 @@ RM          =3D rm -f
+> >  LN          =3D ln -sf
+> >  INSTALL_PROGRAM =3D install
+> >
+> > -OPTFLAGS     =3D -Wunused -Wstrict-prototypes -O2 -g -pipe
+> -Wformat-security -Wall \
+> > -             -Wp,-D_FORTIFY_SOURCE=3D2 -fexceptions -fstack-protector
+> --param=3Dssp-buffer-size=3D4
+> > -
+> > -CFLAGS            =3D $(OPTFLAGS) -fPIC -DLIB_STRING=3D\"${LIB}\"
+> -DRUN_DIR=3D\"${RUN}\"
+> > +CFLAGS      =3D -Wunused -Wstrict-prototypes -O2 -g -pipe
+> -Wformat-security -Wall \
+> > +             -Wp,-D_FORTIFY_SOURCE=3D2 -fexceptions -fstack-protector
+> --param=3Dssp-buffer-size=3D4 \
+> > +             -fPIC -DLIB_STRING=3D\"${LIB}\" -DRUN_DIR=3D\"${RUN}\"
+> >  SHARED_FLAGS =3D -shared
+> >
+> >  %.o: %.c
+> >
+> Nope, doesn't work for us.
+> Our buildsystem is using a distinct set of flags, which we need to use
+> for the build process.
+> At the same time we have no idea if there are other flags (like includes
+> etc) which are required by the build itself.
 >
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  multipath/main.c | 64
-> ++++++++++++++++++++++++++++----------------------------
->  1 file changed, 32 insertions(+), 32 deletions(-)
+> Please revert, this breaks our build.
 >
-> diff --git a/multipath/main.c b/multipath/main.c
-> index 907a96c..0bec0d2 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -110,38 +110,38 @@ usage (char * progname)
->         fprintf (stderr,
->                 "\n"
->                 "Where:\n"
-> -               "  -h      print this usage text\n" \
-> -               "  -l      show multipath topology (sysfs and DM info)\n" \
-> -               "  -ll     show multipath topology (maximum info)\n" \
-> -               "  -f      flush a multipath device map\n" \
-> -               "  -F      flush all multipath device maps\n" \
-> -               "  -a      add a device wwid to the wwids file\n" \
-> -               "  -c      check if a device should be a path in a
-> multipath device\n" \
-> -               "  -q      allow queue_if_no_path when multipathd is not
-> running\n"\
-> -               "  -d      dry run, do not create or update devmaps\n" \
-> -               "  -t      dump internal hardware table\n" \
-> -               "  -r      force devmap reload\n" \
-> -               "  -i      ignore wwids file\n" \
-> -               "  -B      treat the bindings file as read only\n" \
-> -               "  -b fil  bindings file location\n" \
-> -               "  -w      remove a device from the wwids file\n" \
-> -               "  -W      reset the wwids file include only the current
-> devices\n" \
-> -               "  -p pol  force all maps to specified path grouping
-> policy :\n" \
-> -               "          . failover            one path per priority
-> group\n" \
-> -               "          . multibus            all paths in one priority
-> group\n" \
-> -               "          . group_by_serial     one priority group per
-> serial\n" \
-> -               "          . group_by_prio       one priority group per
-> priority lvl\n" \
-> -               "          . group_by_node_name  one priority group per
-> target node\n" \
-> -               "  -v lvl  verbosity level\n" \
-> -               "          . 0 no output\n" \
-> -               "          . 1 print created devmap names only\n" \
-> -               "          . 2 default verbosity\n" \
-> -               "          . 3 print debug information\n" \
-> -               "  dev     action limited to:\n" \
-> -               "          . multipath named 'dev' (ex: mpath0) or\n" \
-> -               "          . multipath whose wwid is 'dev' (ex:
-> 60051..)\n" \
-> -               "          . multipath including the path named 'dev' (ex:
-> /dev/sda)\n" \
-> -               "          . multipath including the path with maj:min
-> 'dev' (ex: 8:0)\n" \
-> +               "  -h      print this usage text\n"
-> +               "  -l      show multipath topology (sysfs and DM info)\n"
-> +               "  -ll     show multipath topology (maximum info)\n"
-> +               "  -f      flush a multipath device map\n"
-> +               "  -F      flush all multipath device maps\n"
-> +               "  -a      add a device wwid to the wwids file\n"
-> +               "  -c      check if a device should be a path in a
-> multipath device\n"
-> +               "  -q      allow queue_if_no_path when multipathd is not
-> running\n"
-> +               "  -d      dry run, do not create or update devmaps\n"
-> +               "  -t      dump internal hardware table\n"
-> +               "  -r      force devmap reload\n"
-> +               "  -i      ignore wwids file\n"
-> +               "  -B      treat the bindings file as read only\n"
-> +               "  -b fil  bindings file location\n"
-> +               "  -w      remove a device from the wwids file\n"
-> +               "  -W      reset the wwids file include only the current
-> devices\n"
-> +               "  -p pol  force all maps to specified path grouping
-> policy :\n"
-> +               "          . failover            one path per priority
-> group\n"
-> +               "          . multibus            all paths in one priority
-> group\n"
-> +               "          . group_by_serial     one priority group per
-> serial\n"
-> +               "          . group_by_prio       one priority group per
-> priority lvl\n"
-> +               "          . group_by_node_name  one priority group per
-> target node\n"
-> +               "  -v lvl  verbosity level\n"
-> +               "          . 0 no output\n"
-> +               "          . 1 print created devmap names only\n"
-> +               "          . 2 default verbosity\n"
-> +               "          . 3 print debug information\n"
-> +               "  dev     action limited to:\n"
-> +               "          . multipath named 'dev' (ex: mpath0) or\n"
-> +               "          . multipath whose wwid is 'dev' (ex: 60051..)\n"
-> +               "          . multipath including the path named 'dev' (ex:
-> /dev/sda)\n"
-> +               "          . multipath including the path with maj:min
-> 'dev' (ex: 8:0)\n"
->                 );
+> Cheers,
 >
->  }
+> Hannes
 > --
-> 2.7.4
->
+> Dr. Hannes Reinecke                Teamlead Storage & Networking
+> hare@suse.de                                   +49 911 74053 688
+> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
+> GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+> HRB 21284 (AG N=C3=BCrnberg)
 >
 
---001a114102e465660205383642c4
+--001a11410fecfeff68053836445d
 Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: quoted-printable
 
-PGRpdiBkaXI9Imx0ciI+TWVyZ2VkLjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+
-PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPk9uIE1vbiwgSnVsIDE4LCAyMDE2IGF0IDM6MjMgUE0s
-IFhvc2UgVmF6cXVleiBQZXJleiA8c3BhbiBkaXI9Imx0ciI+Jmx0OzxhIGhyZWY9Im1haWx0bzp4
-b3NlLnZhenF1ZXpAZ21haWwuY29tIiB0YXJnZXQ9Il9ibGFuayI+eG9zZS52YXpxdWV6QGdtYWls
-LmNvbTwvYT4mZ3Q7PC9zcGFuPiB3cm90ZTo8YnI+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1
-b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7
-cGFkZGluZy1sZWZ0OjFleCI+VXNlbGVzcy48YnI+DQo8YnI+DQpDYzogQ2hyaXN0b3BoZSBWYXJv
-cXVpICZsdDs8YSBocmVmPSJtYWlsdG86Y2hyaXN0b3BoZS52YXJvcXVpQG9wZW5zdmMuY29tIj5j
-aHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb208L2E+Jmd0Ozxicj4NCkNjOiBkZXZpY2UtbWFw
-cGVyIGRldmVsb3BtZW50ICZsdDs8YSBocmVmPSJtYWlsdG86ZG0tZGV2ZWxAcmVkaGF0LmNvbSI+
-ZG0tZGV2ZWxAcmVkaGF0LmNvbTwvYT4mZ3Q7PGJyPg0KU2lnbmVkLW9mZi1ieTogWG9zZSBWYXpx
-dWV6IFBlcmV6ICZsdDs8YSBocmVmPSJtYWlsdG86eG9zZS52YXpxdWV6QGdtYWlsLmNvbSI+eG9z
-ZS52YXpxdWV6QGdtYWlsLmNvbTwvYT4mZ3Q7PGJyPg0KLS0tPGJyPg0KwqBtdWx0aXBhdGgvbWFp
-bi5jIHwgNjQgKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS08YnI+DQrCoDEgZmlsZSBjaGFuZ2VkLCAzMiBpbnNlcnRpb25zKCspLCAzMiBkZWxl
-dGlvbnMoLSk8YnI+DQo8YnI+DQpkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoL21haW4uYyBiL211bHRp
-cGF0aC9tYWluLmM8YnI+DQppbmRleCA5MDdhOTZjLi4wYmVjMGQyIDEwMDY0NDxicj4NCi0tLSBh
-L211bHRpcGF0aC9tYWluLmM8YnI+DQorKysgYi9tdWx0aXBhdGgvbWFpbi5jPGJyPg0KQEAgLTEx
-MCwzOCArMTEwLDM4IEBAIHVzYWdlIChjaGFyICogcHJvZ25hbWUpPGJyPg0KwqAgwqAgwqAgwqAg
-ZnByaW50ZiAoc3RkZXJyLDxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgICZxdW90O1xuJnF1
-b3Q7PGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgJnF1b3Q7V2hlcmU6XG4mcXVvdDs8YnI+
-DQotwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAmcXVvdDvCoCAtaMKgIMKgIMKgIHByaW50IHRoaXMg
-dXNhZ2UgdGV4dFxuJnF1b3Q7IFw8YnI+DQotwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAmcXVvdDvC
-oCAtbMKgIMKgIMKgIHNob3cgbXVsdGlwYXRoIHRvcG9sb2d5IChzeXNmcyBhbmQgRE0gaW5mbylc
-biZxdW90OyBcPGJyPg0KLcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgJnF1b3Q7wqAgLWxswqAgwqAg
-wqBzaG93IG11bHRpcGF0aCB0b3BvbG9neSAobWF4aW11bSBpbmZvKVxuJnF1b3Q7IFw8YnI+DQot
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAmcXVvdDvCoCAtZsKgIMKgIMKgIGZsdXNoIGEgbXVsdGlw
-YXRoIGRldmljZSBtYXBcbiZxdW90OyBcPGJyPg0KLcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgJnF1
-b3Q7wqAgLUbCoCDCoCDCoCBmbHVzaCBhbGwgbXVsdGlwYXRoIGRldmljZSBtYXBzXG4mcXVvdDsg
-XDxicj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIC1hwqAgwqAgwqAgYWRkIGEg
-ZGV2aWNlIHd3aWQgdG8gdGhlIHd3aWRzIGZpbGVcbiZxdW90OyBcPGJyPg0KLcKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgJnF1b3Q7wqAgLWPCoCDCoCDCoCBjaGVjayBpZiBhIGRldmljZSBzaG91bGQg
-YmUgYSBwYXRoIGluIGEgbXVsdGlwYXRoIGRldmljZVxuJnF1b3Q7IFw8YnI+DQotwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAmcXVvdDvCoCAtccKgIMKgIMKgIGFsbG93IHF1ZXVlX2lmX25vX3BhdGgg
-d2hlbiBtdWx0aXBhdGhkIGlzIG5vdCBydW5uaW5nXG4mcXVvdDtcPGJyPg0KLcKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgJnF1b3Q7wqAgLWTCoCDCoCDCoCBkcnkgcnVuLCBkbyBub3QgY3JlYXRlIG9y
-IHVwZGF0ZSBkZXZtYXBzXG4mcXVvdDsgXDxicj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZx
-dW90O8KgIC10wqAgwqAgwqAgZHVtcCBpbnRlcm5hbCBoYXJkd2FyZSB0YWJsZVxuJnF1b3Q7IFw8
-YnI+DQotwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAmcXVvdDvCoCAtcsKgIMKgIMKgIGZvcmNlIGRl
-dm1hcCByZWxvYWRcbiZxdW90OyBcPGJyPg0KLcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgJnF1b3Q7
-wqAgLWnCoCDCoCDCoCBpZ25vcmUgd3dpZHMgZmlsZVxuJnF1b3Q7IFw8YnI+DQotwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAmcXVvdDvCoCAtQsKgIMKgIMKgIHRyZWF0IHRoZSBiaW5kaW5ncyBmaWxl
-IGFzIHJlYWQgb25seVxuJnF1b3Q7IFw8YnI+DQotwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAmcXVv
-dDvCoCAtYiBmaWzCoCBiaW5kaW5ncyBmaWxlIGxvY2F0aW9uXG4mcXVvdDsgXDxicj4NCi3CoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIC13wqAgwqAgwqAgcmVtb3ZlIGEgZGV2aWNlIGZy
-b20gdGhlIHd3aWRzIGZpbGVcbiZxdW90OyBcPGJyPg0KLcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-JnF1b3Q7wqAgLVfCoCDCoCDCoCByZXNldCB0aGUgd3dpZHMgZmlsZSBpbmNsdWRlIG9ubHkgdGhl
-IGN1cnJlbnQgZGV2aWNlc1xuJnF1b3Q7IFw8YnI+DQotwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAm
-cXVvdDvCoCAtcCBwb2zCoCBmb3JjZSBhbGwgbWFwcyB0byBzcGVjaWZpZWQgcGF0aCBncm91cGlu
-ZyBwb2xpY3kgOlxuJnF1b3Q7IFw8YnI+DQotwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAmcXVvdDvC
-oCDCoCDCoCDCoCDCoCAuIGZhaWxvdmVywqAgwqAgwqAgwqAgwqAgwqAgb25lIHBhdGggcGVyIHBy
-aW9yaXR5IGdyb3VwXG4mcXVvdDsgXDxicj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90
-O8KgIMKgIMKgIMKgIMKgIC4gbXVsdGlidXPCoCDCoCDCoCDCoCDCoCDCoCBhbGwgcGF0aHMgaW4g
-b25lIHByaW9yaXR5IGdyb3VwXG4mcXVvdDsgXDxicj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCZxdW90O8KgIMKgIMKgIMKgIMKgIC4gZ3JvdXBfYnlfc2VyaWFswqAgwqAgwqBvbmUgcHJpb3Jp
-dHkgZ3JvdXAgcGVyIHNlcmlhbFxuJnF1b3Q7IFw8YnI+DQotwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAmcXVvdDvCoCDCoCDCoCDCoCDCoCAuIGdyb3VwX2J5X3ByaW/CoCDCoCDCoCDCoG9uZSBwcmlv
-cml0eSBncm91cCBwZXIgcHJpb3JpdHkgbHZsXG4mcXVvdDsgXDxicj4NCi3CoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCZxdW90O8KgIMKgIMKgIMKgIMKgIC4gZ3JvdXBfYnlfbm9kZV9uYW1lwqAgb25l
-IHByaW9yaXR5IGdyb3VwIHBlciB0YXJnZXQgbm9kZVxuJnF1b3Q7IFw8YnI+DQotwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAmcXVvdDvCoCAtdiBsdmzCoCB2ZXJib3NpdHkgbGV2ZWxcbiZxdW90OyBc
-PGJyPg0KLcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgJnF1b3Q7wqAgwqAgwqAgwqAgwqAgLiAwIG5v
-IG91dHB1dFxuJnF1b3Q7IFw8YnI+DQotwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAmcXVvdDvCoCDC
-oCDCoCDCoCDCoCAuIDEgcHJpbnQgY3JlYXRlZCBkZXZtYXAgbmFtZXMgb25seVxuJnF1b3Q7IFw8
-YnI+DQotwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAmcXVvdDvCoCDCoCDCoCDCoCDCoCAuIDIgZGVm
-YXVsdCB2ZXJib3NpdHlcbiZxdW90OyBcPGJyPg0KLcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgJnF1
-b3Q7wqAgwqAgwqAgwqAgwqAgLiAzIHByaW50IGRlYnVnIGluZm9ybWF0aW9uXG4mcXVvdDsgXDxi
-cj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIGRldsKgIMKgIMKgYWN0aW9uIGxp
-bWl0ZWQgdG86XG4mcXVvdDsgXDxicj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8Kg
-IMKgIMKgIMKgIMKgIC4gbXVsdGlwYXRoIG5hbWVkICYjMzk7ZGV2JiMzOTsgKGV4OiBtcGF0aDAp
-IG9yXG4mcXVvdDsgXDxicj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIMKgIMKg
-IMKgIMKgIC4gbXVsdGlwYXRoIHdob3NlIHd3aWQgaXMgJiMzOTtkZXYmIzM5OyAoZXg6IDYwMDUx
-Li4pXG4mcXVvdDsgXDxicj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIMKgIMKg
-IMKgIMKgIC4gbXVsdGlwYXRoIGluY2x1ZGluZyB0aGUgcGF0aCBuYW1lZCAmIzM5O2RldiYjMzk7
-IChleDogL2Rldi9zZGEpXG4mcXVvdDsgXDxicj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZx
-dW90O8KgIMKgIMKgIMKgIMKgIC4gbXVsdGlwYXRoIGluY2x1ZGluZyB0aGUgcGF0aCB3aXRoIG1h
-ajptaW4gJiMzOTtkZXYmIzM5OyAoZXg6IDg6MClcbiZxdW90OyBcPGJyPg0KK8KgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgJnF1b3Q7wqAgLWjCoCDCoCDCoCBwcmludCB0aGlzIHVzYWdlIHRleHRcbiZx
-dW90Ozxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIC1swqAgwqAgwqAgc2hv
-dyBtdWx0aXBhdGggdG9wb2xvZ3kgKHN5c2ZzIGFuZCBETSBpbmZvKVxuJnF1b3Q7PGJyPg0KK8Kg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgJnF1b3Q7wqAgLWxswqAgwqAgwqBzaG93IG11bHRpcGF0aCB0
-b3BvbG9neSAobWF4aW11bSBpbmZvKVxuJnF1b3Q7PGJyPg0KK8KgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgJnF1b3Q7wqAgLWbCoCDCoCDCoCBmbHVzaCBhIG11bHRpcGF0aCBkZXZpY2UgbWFwXG4mcXVv
-dDs8YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAmcXVvdDvCoCAtRsKgIMKgIMKgIGZsdXNo
-IGFsbCBtdWx0aXBhdGggZGV2aWNlIG1hcHNcbiZxdW90Ozxicj4NCivCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCZxdW90O8KgIC1hwqAgwqAgwqAgYWRkIGEgZGV2aWNlIHd3aWQgdG8gdGhlIHd3aWRz
-IGZpbGVcbiZxdW90Ozxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIC1jwqAg
-wqAgwqAgY2hlY2sgaWYgYSBkZXZpY2Ugc2hvdWxkIGJlIGEgcGF0aCBpbiBhIG11bHRpcGF0aCBk
-ZXZpY2VcbiZxdW90Ozxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIC1xwqAg
-wqAgwqAgYWxsb3cgcXVldWVfaWZfbm9fcGF0aCB3aGVuIG11bHRpcGF0aGQgaXMgbm90IHJ1bm5p
-bmdcbiZxdW90Ozxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIC1kwqAgwqAg
-wqAgZHJ5IHJ1biwgZG8gbm90IGNyZWF0ZSBvciB1cGRhdGUgZGV2bWFwc1xuJnF1b3Q7PGJyPg0K
-K8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKgJnF1b3Q7wqAgLXTCoCDCoCDCoCBkdW1wIGludGVybmFs
-IGhhcmR3YXJlIHRhYmxlXG4mcXVvdDs8YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAmcXVv
-dDvCoCAtcsKgIMKgIMKgIGZvcmNlIGRldm1hcCByZWxvYWRcbiZxdW90Ozxicj4NCivCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIC1pwqAgwqAgwqAgaWdub3JlIHd3aWRzIGZpbGVcbiZx
-dW90Ozxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIC1CwqAgwqAgwqAgdHJl
-YXQgdGhlIGJpbmRpbmdzIGZpbGUgYXMgcmVhZCBvbmx5XG4mcXVvdDs8YnI+DQorwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAmcXVvdDvCoCAtYiBmaWzCoCBiaW5kaW5ncyBmaWxlIGxvY2F0aW9uXG4m
-cXVvdDs8YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAmcXVvdDvCoCAtd8KgIMKgIMKgIHJl
-bW92ZSBhIGRldmljZSBmcm9tIHRoZSB3d2lkcyBmaWxlXG4mcXVvdDs8YnI+DQorwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAmcXVvdDvCoCAtV8KgIMKgIMKgIHJlc2V0IHRoZSB3d2lkcyBmaWxlIGlu
-Y2x1ZGUgb25seSB0aGUgY3VycmVudCBkZXZpY2VzXG4mcXVvdDs8YnI+DQorwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAmcXVvdDvCoCAtcCBwb2zCoCBmb3JjZSBhbGwgbWFwcyB0byBzcGVjaWZpZWQg
-cGF0aCBncm91cGluZyBwb2xpY3kgOlxuJnF1b3Q7PGJyPg0KK8KgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgJnF1b3Q7wqAgwqAgwqAgwqAgwqAgLiBmYWlsb3ZlcsKgIMKgIMKgIMKgIMKgIMKgIG9uZSBw
-YXRoIHBlciBwcmlvcml0eSBncm91cFxuJnF1b3Q7PGJyPg0KK8KgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgJnF1b3Q7wqAgwqAgwqAgwqAgwqAgLiBtdWx0aWJ1c8KgIMKgIMKgIMKgIMKgIMKgIGFsbCBw
-YXRocyBpbiBvbmUgcHJpb3JpdHkgZ3JvdXBcbiZxdW90Ozxicj4NCivCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCZxdW90O8KgIMKgIMKgIMKgIMKgIC4gZ3JvdXBfYnlfc2VyaWFswqAgwqAgwqBvbmUg
-cHJpb3JpdHkgZ3JvdXAgcGVyIHNlcmlhbFxuJnF1b3Q7PGJyPg0KK8KgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgJnF1b3Q7wqAgwqAgwqAgwqAgwqAgLiBncm91cF9ieV9wcmlvwqAgwqAgwqAgwqBvbmUg
-cHJpb3JpdHkgZ3JvdXAgcGVyIHByaW9yaXR5IGx2bFxuJnF1b3Q7PGJyPg0KK8KgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgJnF1b3Q7wqAgwqAgwqAgwqAgwqAgLiBncm91cF9ieV9ub2RlX25hbWXCoCBv
-bmUgcHJpb3JpdHkgZ3JvdXAgcGVyIHRhcmdldCBub2RlXG4mcXVvdDs8YnI+DQorwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAmcXVvdDvCoCAtdiBsdmzCoCB2ZXJib3NpdHkgbGV2ZWxcbiZxdW90Ozxi
-cj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIMKgIMKgIMKgIMKgIC4gMCBubyBv
-dXRwdXRcbiZxdW90Ozxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIMKgIMKg
-IMKgIMKgIC4gMSBwcmludCBjcmVhdGVkIGRldm1hcCBuYW1lcyBvbmx5XG4mcXVvdDs8YnI+DQor
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAmcXVvdDvCoCDCoCDCoCDCoCDCoCAuIDIgZGVmYXVsdCB2
-ZXJib3NpdHlcbiZxdW90Ozxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIMKg
-IMKgIMKgIMKgIC4gMyBwcmludCBkZWJ1ZyBpbmZvcm1hdGlvblxuJnF1b3Q7PGJyPg0KK8KgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgJnF1b3Q7wqAgZGV2wqAgwqAgwqBhY3Rpb24gbGltaXRlZCB0bzpc
-biZxdW90Ozxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIMKgIMKgIMKgIMKg
-IC4gbXVsdGlwYXRoIG5hbWVkICYjMzk7ZGV2JiMzOTsgKGV4OiBtcGF0aDApIG9yXG4mcXVvdDs8
-YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAmcXVvdDvCoCDCoCDCoCDCoCDCoCAuIG11bHRp
-cGF0aCB3aG9zZSB3d2lkIGlzICYjMzk7ZGV2JiMzOTsgKGV4OiA2MDA1MS4uKVxuJnF1b3Q7PGJy
-Pg0KK8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKgJnF1b3Q7wqAgwqAgwqAgwqAgwqAgLiBtdWx0aXBh
-dGggaW5jbHVkaW5nIHRoZSBwYXRoIG5hbWVkICYjMzk7ZGV2JiMzOTsgKGV4OiAvZGV2L3NkYSlc
-biZxdW90Ozxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCZxdW90O8KgIMKgIMKgIMKgIMKg
-IC4gbXVsdGlwYXRoIGluY2x1ZGluZyB0aGUgcGF0aCB3aXRoIG1hajptaW4gJiMzOTtkZXYmIzM5
-OyAoZXg6IDg6MClcbiZxdW90Ozxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgICk7PGJyPg0K
-PGJyPg0KwqB9PGJyPg0KPHNwYW4gY2xhc3M9IkhPRW5aYiI+PGZvbnQgY29sb3I9IiM4ODg4ODgi
-Pi0tPGJyPg0KMi43LjQ8YnI+DQo8YnI+DQo8L2ZvbnQ+PC9zcGFuPjwvYmxvY2txdW90ZT48L2Rp
-dj48YnI+PC9kaXY+DQo=
---001a114102e465660205383642c4--
+<div dir=3D"ltr">Reverted.</div><div class=3D"gmail_extra"><br><div class=
+=3D"gmail_quote">On Fri, Jul 15, 2016 at 12:19 PM, Hannes Reinecke <span di=
+r=3D"ltr">&lt;<a href=3D"mailto:hare@suse.de" target=3D"_blank">hare@suse.d=
+e</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margi=
+n:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div class=3D"HOE=
+nZb"><div class=3D"h5">On 07/08/2016 06:28 PM, Xose Vazquez Perez wrote:<br=
+>
+&gt; OPTFLAGS is not used anywhere, but maybe it&#39;s intrusive for distri=
+butions.<br>
+&gt;<br>
+&gt; Cc: Mathieu Trudel-Lapierre &lt;<a href=3D"mailto:mathieu.trudel-lapie=
+rre@canonical.com">mathieu.trudel-lapierre@canonical.com</a>&gt;<br>
+&gt; Cc: Dragan Stancevic &lt;<a href=3D"mailto:dragan.stancevic@canonical.=
+com">dragan.stancevic@canonical.com</a>&gt;<br>
+&gt; Cc: Louis Bouchard &lt;<a href=3D"mailto:louis.bouchard@canonical.com"=
+>louis.bouchard@canonical.com</a>&gt;<br>
+&gt; Cc: Ritesh Raj Sarraf &lt;<a href=3D"mailto:rrs@debian.org">rrs@debian=
+.org</a>&gt;<br>
+&gt; Cc: Benjamin Marzinski &lt;<a href=3D"mailto:bmarzins@redhat.com">bmar=
+zins@redhat.com</a>&gt;<br>
+&gt; Cc: Hannes Reinecke &lt;<a href=3D"mailto:hare@suse.de">hare@suse.de</=
+a>&gt;<br>
+&gt; Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensv=
+c.com">christophe.varoqui@opensvc.com</a>&gt;<br>
+&gt; Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.co=
+m">dm-devel@redhat.com</a>&gt;<br>
+&gt; Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@g=
+mail.com">xose.vazquez@gmail.com</a>&gt;<br>
+&gt; ---<br>
+&gt;=C2=A0 Makefile.inc | 7 +++----<br>
+&gt;=C2=A0 1 file changed, 3 insertions(+), 4 deletions(-)<br>
+&gt;<br>
+&gt; diff --git a/Makefile.inc b/Makefile.inc<br>
+&gt; index 01d743c..b7077fc 100644<br>
+&gt; --- a/Makefile.inc<br>
+&gt; +++ b/Makefile.inc<br>
+&gt; @@ -60,10 +60,9 @@ RM=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =3D rm -f<br>
+&gt;=C2=A0 LN=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =3D ln -sf<br>
+&gt;=C2=A0 INSTALL_PROGRAM =3D install<br>
+&gt;<br>
+&gt; -OPTFLAGS=C2=A0 =C2=A0 =C2=A0=3D -Wunused -Wstrict-prototypes -O2 -g -=
+pipe -Wformat-security -Wall \<br>
+&gt; -=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0-Wp,-D_FORTIFY_SOURCE=
+=3D2 -fexceptions -fstack-protector --param=3Dssp-buffer-size=3D4<br>
+&gt; -<br>
+&gt; -CFLAGS=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =3D $(OPTFLAGS) -fPIC=
+ -DLIB_STRING=3D\&quot;${LIB}\&quot; -DRUN_DIR=3D\&quot;${RUN}\&quot;<br>
+&gt; +CFLAGS=C2=A0 =C2=A0 =C2=A0 =3D -Wunused -Wstrict-prototypes -O2 -g -p=
+ipe -Wformat-security -Wall \<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0-Wp,-D_FORTIFY_SOURCE=
+=3D2 -fexceptions -fstack-protector --param=3Dssp-buffer-size=3D4 \<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0-fPIC -DLIB_STRING=3D=
+\&quot;${LIB}\&quot; -DRUN_DIR=3D\&quot;${RUN}\&quot;<br>
+&gt;=C2=A0 SHARED_FLAGS =3D -shared<br>
+&gt;<br>
+&gt;=C2=A0 %.o: %.c<br>
+&gt;<br>
+</div></div>Nope, doesn&#39;t work for us.<br>
+Our buildsystem is using a distinct set of flags, which we need to use<br>
+for the build process.<br>
+At the same time we have no idea if there are other flags (like includes<br=
+>
+etc) which are required by the build itself.<br>
+<br>
+Please revert, this breaks our build.<br>
+<br>
+Cheers,<br>
+<br>
+Hannes<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+Dr. Hannes Reinecke=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+Teamlead Storage &amp; Networking<br>
+<a href=3D"mailto:hare@suse.de">hare@suse.de</a>=C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0<a href=3D"tel:%2B49%20911%2074053%20688" value=3D"=
++4991174053688">+49 911 74053 688</a><br>
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg<br>
+GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton<br>
+HRB 21284 (AG N=C3=BCrnberg)<br>
+</font></span></blockquote></div><br></div>
+
+--001a11410fecfeff68053836445d--
 
 
---===============6466910103574572259==
+--===============6753854398857782769==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============6466910103574572259==--
+--===============6753854398857782769==--
