@@ -1,13 +1,14 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: add template to add new
-	hardware
-Date: Fri, 22 Jul 2016 11:50:10 +0200
-Message-ID: <CABr-GncFHdyry2A=HMnNMTb5P-BEz+stfVs9yVhPE27gsDKWWg@mail.gmail.com>
-References: <1468334507-7531-1-git-send-email-xose.vazquez@gmail.com>
+Subject: Re: [PATCH 0/6] Delete attributes with default values
+Date: Fri, 22 Jul 2016 11:52:40 +0200
+Message-ID: <CABr-Gne+2HXVXGLQXv0_ECitYPnfSjnvbTKqGnVqjd-MirNiHg@mail.gmail.com>
+References: <1468022328-5905-1-git-send-email-xose.vazquez@gmail.com>
+	<CABr-GncP-rzeXogT1EFZTtFrre2UUSV6i-AJ27GZ3mTvcxx-7Q@mail.gmail.com>
+	<20160713161734.GN8095@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0598474241002114435=="
+Content-Type: multipart/mixed; boundary="===============1647383435421716797=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1468334507-7531-1-git-send-email-xose.vazquez@gmail.com>
+In-Reply-To: <20160713161734.GN8095@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,173 +18,191 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
---===============0598474241002114435==
-Content-Type: multipart/alternative; boundary=001a114102e44ad9c40538365c09
+--===============1647383435421716797==
+Content-Type: multipart/alternative; boundary=001a11402e6439c5fc05383665a5
 
---001a114102e44ad9c40538365c09
+--001a11402e6439c5fc05383665a5
 Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-Merged.
+Ok.
+All defaults settings tweaks and removal patches from Xos=C3=A9 are merged.
+
 Thanks.
 
-On Tue, Jul 12, 2016 at 4:41 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
+
+On Wed, Jul 13, 2016 at 6:17 PM, Benjamin Marzinski <bmarzins@redhat.com>
 wrote:
 
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/hwtable.c | 42 ++++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 42 insertions(+)
+> On Sat, Jul 09, 2016 at 10:17:05AM +0200, Christophe Varoqui wrote:
+> >    I'll wait for comments from distribution maintainers on this patchse=
+t.
+> >    Because, though we have already deleted the checker_name settings wh=
+en
+> >    equal to the default value, it should be clear that with this patchs=
+et
+> >    changing a default may cause re-certification for all impacted
+> devices.
+> >    This can be viewed as a problem for distributors.
+> >    Hannes, Ben, do you ack this patchset ? If not, what do we do the
+> >    checker_name settings, that I understood Hannes wanted to switch to
+> TUR
+> >    anyway.
 >
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index 5b896ee..a1fc3e8 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -16,6 +16,8 @@
->   * family. Please mail the currently enlisted maintainer and
->   * the upstream package maintainer.
->   *
-> + * Please, use the TEMPLATE below to add new hardware.
-> + *
->   * WARNING:
->   *
->   * Devices with a proprietary handler must also be included in
-> @@ -756,6 +758,46 @@ static struct hwentry default_hw[] = {
->                 .pgfailback    = 30,
->                 .minio         = 128,
->         },
-> +#if 0
-> +       /*
-> +        * Copy this TEMPLATE to add new hardware.
-> +        *
-> +        * Keep only mandatory and modified attributes.
-> +        * Standard attributes must be removed.
-> +        *
-> +        * COMPANY_NAME
-> +        *
-> +        * Maintainer : XXX
-> +        * Mail : XXX
-> +        */
-> +       {
-> +               .vendor        = "VENDOR", (Mandatory)
-> +               .product       = "PRODUCT", (Mandatory)
-> +               .revision      = "REVISION",
-> +               .bl_product    = "BL_PRODUCT",
-> +               .pgpolicy      = GROUP_BY_PRIO,
-> +               .uid_attribute = "ID_SERIAL",
-> +               .selector      = "service-time 0",
-> +               .checker_name  = TUR,
-> +               .features      = "0",
-> +               .hwhandler     = "0",
-> +               .prio_name     = "const",
-> +               .prio_args     = "",
-> +               .pgfailback    = -FAILBACK_IMMEDIATE,
-> +               .rr_weight     = RR_WEIGHT_NONE,
-> +               .no_path_retry = NO_PATH_RETRY_UNDEF,
-> +               .minio         = 1000,
-> +               .minio_rq      = 1,
-> +               .flush_on_last_del = FLUSH_DISABLED,
-> +               .fast_io_fail  = 5,
-> +               .dev_loss      = 600,
-> +               .retain_hwhandler = RETAIN_HWHANDLER_ON,
-> +               .detect_prio   = DETECT_PRIO_ON,
-> +               .deferred_remove = DEFERRED_REMOVE_OFF,
-> +               .delay_watch_checks = DELAY_CHECKS_OFF,
-> +               .delay_wait_checks = DELAY_CHECKS_OFF,
-> +       },
-> +#endif
->         /*
->          * EOL
->          */
-> --
-> 2.7.4
+> I'm fine with this.
+>
+> -Ben
+>
+> >    On Sat, Jul 9, 2016 at 1:58 AM, Xose Vazquez Perez
+> >    <[1]xose.vazquez@gmail.com> wrote:
+> >
+> >      Xose Vazquez Perez (6):
+> >        multipath-tools: delete attributes with DEFAULT_* values in
+> hwtable.c
+> >        multipath-tools: delete prio_args attribute when it is equal to
+> >      default value
+> >        multipath-tools: delete no_path_retry attribute when it is equal
+> to
+> >      default value
+> >        multipath-tools: delete minio_rq attribute when it is equal to
+> default
+> >      value
+> >        multipath-tools: delete fast_io_fail attribute when it is equal =
+to
+> >      default value
+> >        multipath-tools: delete pgpolicy attribute when it is equal to
+> default
+> >      value
+> >
+> >       libmultipath/hwtable.c | 226
+> >      -------------------------------------------------
+> >       1 file changed, 226 deletions(-)
+> >
+> >      Cc: Christophe Varoqui <[2]christophe.varoqui@opensvc.com>
+> >      Cc: device-mapper development <[3]dm-devel@redhat.com>
+> >      Signed-off-by: Xose Vazquez Perez <[4]xose.vazquez@gmail.com>
+> >
+> >      --
+> >      2.7.4
+> >
+> > References
+> >
+> >    Visible links
+> >    1. mailto:xose.vazquez@gmail.com
+> >    2. mailto:christophe.varoqui@opensvc.com
+> >    3. mailto:dm-devel@redhat.com
+> >    4. mailto:xose.vazquez@gmail.com
+>
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
 >
 >
 
---001a114102e44ad9c40538365c09
+--001a11402e6439c5fc05383665a5
 Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: quoted-printable
 
-PGRpdiBkaXI9Imx0ciI+TWVyZ2VkLjxkaXY+VGhhbmtzLjwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9
-ImdtYWlsX2V4dHJhIj48YnI+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPk9uIFR1ZSwgSnVsIDEy
-LCAyMDE2IGF0IDQ6NDEgUE0sIFhvc2UgVmF6cXVleiBQZXJleiA8c3BhbiBkaXI9Imx0ciI+Jmx0
-OzxhIGhyZWY9Im1haWx0bzp4b3NlLnZhenF1ZXpAZ21haWwuY29tIiB0YXJnZXQ9Il9ibGFuayI+
-eG9zZS52YXpxdWV6QGdtYWlsLmNvbTwvYT4mZ3Q7PC9zcGFuPiB3cm90ZTo8YnI+PGJsb2NrcXVv
-dGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxl
-ZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+Q2M6IENocmlzdG9waGUgVmFyb3F1
-aSAmbHQ7PGEgaHJlZj0ibWFpbHRvOmNocmlzdG9waGUudmFyb3F1aUBvcGVuc3ZjLmNvbSI+Y2hy
-aXN0b3BoZS52YXJvcXVpQG9wZW5zdmMuY29tPC9hPiZndDs8YnI+DQpDYzogZGV2aWNlLW1hcHBl
-ciBkZXZlbG9wbWVudCAmbHQ7PGEgaHJlZj0ibWFpbHRvOmRtLWRldmVsQHJlZGhhdC5jb20iPmRt
-LWRldmVsQHJlZGhhdC5jb208L2E+Jmd0Ozxicj4NClNpZ25lZC1vZmYtYnk6IFhvc2UgVmF6cXVl
-eiBQZXJleiAmbHQ7PGEgaHJlZj0ibWFpbHRvOnhvc2UudmF6cXVlekBnbWFpbC5jb20iPnhvc2Uu
-dmF6cXVlekBnbWFpbC5jb208L2E+Jmd0Ozxicj4NCi0tLTxicj4NCsKgbGlibXVsdGlwYXRoL2h3
-dGFibGUuYyB8IDQyICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKzxi
-cj4NCsKgMSBmaWxlIGNoYW5nZWQsIDQyIGluc2VydGlvbnMoKyk8YnI+DQo8YnI+DQpkaWZmIC0t
-Z2l0IGEvbGlibXVsdGlwYXRoL2h3dGFibGUuYyBiL2xpYm11bHRpcGF0aC9od3RhYmxlLmM8YnI+
-DQppbmRleCA1Yjg5NmVlLi5hMWZjM2U4IDEwMDY0NDxicj4NCi0tLSBhL2xpYm11bHRpcGF0aC9o
-d3RhYmxlLmM8YnI+DQorKysgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jPGJyPg0KQEAgLTE2LDYg
-KzE2LDggQEA8YnI+DQrCoCAqIGZhbWlseS4gUGxlYXNlIG1haWwgdGhlIGN1cnJlbnRseSBlbmxp
-c3RlZCBtYWludGFpbmVyIGFuZDxicj4NCsKgICogdGhlIHVwc3RyZWFtIHBhY2thZ2UgbWFpbnRh
-aW5lci48YnI+DQrCoCAqPGJyPg0KKyAqIFBsZWFzZSwgdXNlIHRoZSBURU1QTEFURSBiZWxvdyB0
-byBhZGQgbmV3IGhhcmR3YXJlLjxicj4NCisgKjxicj4NCsKgICogV0FSTklORzo8YnI+DQrCoCAq
-PGJyPg0KwqAgKiBEZXZpY2VzIHdpdGggYSBwcm9wcmlldGFyeSBoYW5kbGVyIG11c3QgYWxzbyBi
-ZSBpbmNsdWRlZCBpbjxicj4NCkBAIC03NTYsNiArNzU4LDQ2IEBAIHN0YXRpYyBzdHJ1Y3QgaHdl
-bnRyeSBkZWZhdWx0X2h3W10gPSB7PGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgLnBnZmFp
-bGJhY2vCoCDCoCA9IDMwLDxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIC5taW5pb8KgIMKg
-IMKgIMKgIMKgPSAxMjgsPGJyPg0KwqAgwqAgwqAgwqAgfSw8YnI+DQorI2lmIDA8YnI+DQorwqAg
-wqAgwqAgwqAvKjxicj4NCivCoCDCoCDCoCDCoCAqIENvcHkgdGhpcyBURU1QTEFURSB0byBhZGQg
-bmV3IGhhcmR3YXJlLjxicj4NCivCoCDCoCDCoCDCoCAqPGJyPg0KK8KgIMKgIMKgIMKgICogS2Vl
-cCBvbmx5IG1hbmRhdG9yeSBhbmQgbW9kaWZpZWQgYXR0cmlidXRlcy48YnI+DQorwqAgwqAgwqAg
-wqAgKiBTdGFuZGFyZCBhdHRyaWJ1dGVzIG11c3QgYmUgcmVtb3ZlZC48YnI+DQorwqAgwqAgwqAg
-wqAgKjxicj4NCivCoCDCoCDCoCDCoCAqIENPTVBBTllfTkFNRTxicj4NCivCoCDCoCDCoCDCoCAq
-PGJyPg0KK8KgIMKgIMKgIMKgICogTWFpbnRhaW5lciA6IFhYWDxicj4NCivCoCDCoCDCoCDCoCAq
-IE1haWwgOiBYWFg8YnI+DQorwqAgwqAgwqAgwqAgKi88YnI+DQorwqAgwqAgwqAgwqB7PGJyPg0K
-K8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKgLnZlbmRvcsKgIMKgIMKgIMKgID0gJnF1b3Q7VkVORE9S
-JnF1b3Q7LCAoTWFuZGF0b3J5KTxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoC5wcm9kdWN0
-wqAgwqAgwqAgwqA9ICZxdW90O1BST0RVQ1QmcXVvdDssIChNYW5kYXRvcnkpPGJyPg0KK8KgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgLnJldmlzaW9uwqAgwqAgwqAgPSAmcXVvdDtSRVZJU0lPTiZxdW90
-Oyw8YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAuYmxfcHJvZHVjdMKgIMKgID0gJnF1b3Q7
-QkxfUFJPRFVDVCZxdW90Oyw8YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAucGdwb2xpY3nC
-oCDCoCDCoCA9IEdST1VQX0JZX1BSSU8sPGJyPg0KK8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKgLnVp
-ZF9hdHRyaWJ1dGUgPSAmcXVvdDtJRF9TRVJJQUwmcXVvdDssPGJyPg0KK8KgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgLnNlbGVjdG9ywqAgwqAgwqAgPSAmcXVvdDtzZXJ2aWNlLXRpbWUgMCZxdW90Oyw8
-YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAuY2hlY2tlcl9uYW1lwqAgPSBUVVIsPGJyPg0K
-K8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKgLmZlYXR1cmVzwqAgwqAgwqAgPSAmcXVvdDswJnF1b3Q7
-LDxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoC5od2hhbmRsZXLCoCDCoCDCoD0gJnF1b3Q7
-MCZxdW90Oyw8YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAucHJpb19uYW1lwqAgwqAgwqA9
-ICZxdW90O2NvbnN0JnF1b3Q7LDxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoC5wcmlvX2Fy
-Z3PCoCDCoCDCoD0gJnF1b3Q7JnF1b3Q7LDxicj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoC5w
-Z2ZhaWxiYWNrwqAgwqAgPSAtRkFJTEJBQ0tfSU1NRURJQVRFLDxicj4NCivCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoC5ycl93ZWlnaHTCoCDCoCDCoD0gUlJfV0VJR0hUX05PTkUsPGJyPg0KK8KgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgLm5vX3BhdGhfcmV0cnkgPSBOT19QQVRIX1JFVFJZX1VOREVGLDxi
-cj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoC5taW5pb8KgIMKgIMKgIMKgIMKgPSAxMDAwLDxi
-cj4NCivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoC5taW5pb19yccKgIMKgIMKgID0gMSw8YnI+DQor
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAuZmx1c2hfb25fbGFzdF9kZWwgPSBGTFVTSF9ESVNBQkxF
-RCw8YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAuZmFzdF9pb19mYWlswqAgPSA1LDxicj4N
-CivCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoC5kZXZfbG9zc8KgIMKgIMKgID0gNjAwLDxicj4NCivC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoC5yZXRhaW5faHdoYW5kbGVyID0gUkVUQUlOX0hXSEFORExF
-Ul9PTiw8YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAuZGV0ZWN0X3ByaW/CoCDCoD0gREVU
-RUNUX1BSSU9fT04sPGJyPg0KK8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKgLmRlZmVycmVkX3JlbW92
-ZSA9IERFRkVSUkVEX1JFTU9WRV9PRkYsPGJyPg0KK8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKgLmRl
-bGF5X3dhdGNoX2NoZWNrcyA9IERFTEFZX0NIRUNLU19PRkYsPGJyPg0KK8KgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgLmRlbGF5X3dhaXRfY2hlY2tzID0gREVMQVlfQ0hFQ0tTX09GRiw8YnI+DQorwqAg
-wqAgwqAgwqB9LDxicj4NCisjZW5kaWY8YnI+DQrCoCDCoCDCoCDCoCAvKjxicj4NCsKgIMKgIMKg
-IMKgIMKgKiBFT0w8YnI+DQrCoCDCoCDCoCDCoCDCoCovPGJyPg0KPHNwYW4gY2xhc3M9IkhPRW5a
-YiI+PGZvbnQgY29sb3I9IiM4ODg4ODgiPi0tPGJyPg0KMi43LjQ8YnI+DQo8YnI+DQo8L2ZvbnQ+
-PC9zcGFuPjwvYmxvY2txdW90ZT48L2Rpdj48YnI+PC9kaXY+DQo=
---001a114102e44ad9c40538365c09--
+<div dir=3D"ltr">Ok.<div>All defaults settings tweaks and removal patches f=
+rom Xos=C3=A9 are merged.</div><div><br></div><div>Thanks.<br><div><br></di=
+v></div></div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On =
+Wed, Jul 13, 2016 at 6:17 PM, Benjamin Marzinski <span dir=3D"ltr">&lt;<a h=
+ref=3D"mailto:bmarzins@redhat.com" target=3D"_blank">bmarzins@redhat.com</a=
+>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 =
+0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span class=3D"">On S=
+at, Jul 09, 2016 at 10:17:05AM +0200, Christophe Varoqui wrote:<br>
+&gt;=C2=A0 =C2=A0 I&#39;ll wait for comments from distribution maintainers =
+on this patchset.<br>
+&gt;=C2=A0 =C2=A0 Because, though we have already deleted the checker_name =
+settings when<br>
+&gt;=C2=A0 =C2=A0 equal to the default value, it should be clear that with =
+this patchset<br>
+&gt;=C2=A0 =C2=A0 changing a default may cause re-certification for all imp=
+acted devices.<br>
+&gt;=C2=A0 =C2=A0 This can be viewed as a problem for distributors.<br>
+&gt;=C2=A0 =C2=A0 Hannes, Ben, do you ack this patchset ? If not, what do w=
+e do the<br>
+&gt;=C2=A0 =C2=A0 checker_name settings, that I understood Hannes wanted to=
+ switch to TUR<br>
+&gt;=C2=A0 =C2=A0 anyway.<br>
+<br>
+</span>I&#39;m fine with this.<br>
+<br>
+-Ben<br>
+<span class=3D""><br>
+&gt;=C2=A0 =C2=A0 On Sat, Jul 9, 2016 at 1:58 AM, Xose Vazquez Perez<br>
+</span><span class=3D"">&gt;=C2=A0 =C2=A0 &lt;[1]<a href=3D"mailto:xose.vaz=
+quez@gmail.com">xose.vazquez@gmail.com</a>&gt; wrote:<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 Xose Vazquez Perez (6):<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 multipath-tools: delete attributes with DEF=
+AULT_* values in hwtable.c<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 multipath-tools: delete prio_args attribute=
+ when it is equal to<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 default value<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 multipath-tools: delete no_path_retry attri=
+bute when it is equal to<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 default value<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 multipath-tools: delete minio_rq attribute =
+when it is equal to default<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 value<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 multipath-tools: delete fast_io_fail attrib=
+ute when it is equal to<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 default value<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 multipath-tools: delete pgpolicy attribute =
+when it is equal to default<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 value<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0libmultipath/hwtable.c | 226<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 -------------------------------------------------<=
+br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A01 file changed, 226 deletions(-)<br>
+&gt;<br>
+</span>&gt;=C2=A0 =C2=A0 =C2=A0 Cc: Christophe Varoqui &lt;[2]<a href=3D"ma=
+ilto:christophe.varoqui@opensvc.com">christophe.varoqui@opensvc.com</a>&gt;=
+<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 Cc: device-mapper development &lt;[3]<a href=3D"ma=
+ilto:dm-devel@redhat.com">dm-devel@redhat.com</a>&gt;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 Signed-off-by: Xose Vazquez Perez &lt;[4]<a href=
+=3D"mailto:xose.vazquez@gmail.com">xose.vazquez@gmail.com</a>&gt;<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 --<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 2.7.4<br>
+&gt;<br>
+&gt; References<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 Visible links<br>
+&gt;=C2=A0 =C2=A0 1. mailto:<a href=3D"mailto:xose.vazquez@gmail.com">xose.=
+vazquez@gmail.com</a><br>
+&gt;=C2=A0 =C2=A0 2. mailto:<a href=3D"mailto:christophe.varoqui@opensvc.co=
+m">christophe.varoqui@opensvc.com</a><br>
+&gt;=C2=A0 =C2=A0 3. mailto:<a href=3D"mailto:dm-devel@redhat.com">dm-devel=
+@redhat.com</a><br>
+&gt;=C2=A0 =C2=A0 4. mailto:<a href=3D"mailto:xose.vazquez@gmail.com">xose.=
+vazquez@gmail.com</a><br>
+<div class=3D"HOEnZb"><div class=3D"h5"><br>
+&gt; --<br>
+&gt; dm-devel mailing list<br>
+&gt; <a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
+&gt; <a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"no=
+referrer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-deve=
+l</a><br>
+<br>
+</div></div></blockquote></div><br></div>
+
+--001a11402e6439c5fc05383665a5--
 
 
---===============0598474241002114435==
+--===============1647383435421716797==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0598474241002114435==--
+--===============1647383435421716797==--
