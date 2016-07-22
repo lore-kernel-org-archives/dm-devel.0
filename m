@@ -1,12 +1,13 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] libmultipath:fix loop traversed partly
-Date: Fri, 22 Jul 2016 11:44:52 +0200
-Message-ID: <CABr-Gneo3J3m1c1pWbFnn0b-OEf7e0o7c_ipaVchn7uk6fFwXg@mail.gmail.com>
-References: <1468498173-8328-1-git-send-email-zhang.kai16@zte.com.cn>
+Subject: Re: [PATCH] kpartx: Fix check whether to detach loop
+	device
+Date: Fri, 22 Jul 2016 11:45:33 +0200
+Message-ID: <CABr-Gncjgq+3sqic4tCypbyHE4P3iQ-qOgir_8q=zLDE2eNHsA@mail.gmail.com>
+References: <1468430582-4260-1-git-send-email-ckk@debian.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3089685155611004478=="
+Content-Type: multipart/mixed; boundary="===============1652870854613020708=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1468498173-8328-1-git-send-email-zhang.kai16@zte.com.cn>
+In-Reply-To: <1468430582-4260-1-git-send-email-ckk@debian.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,74 +17,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: zhang.kai16@zte.com.cn
-Cc: device-mapper development <dm-devel@redhat.com>, tang.junhui@zte.com.cn, christophe varoqui <christophe.varoqui@free.fr>
+To: Christian Kastner <ckk@debian.org>
+Cc: Christian Kastner <ckk@kvr.at>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============3089685155611004478==
-Content-Type: multipart/alternative; boundary=001a1142bc6c5230490538364912
+--===============1652870854613020708==
+Content-Type: multipart/alternative; boundary=001a11412e42c002770538364b1e
 
---001a1142bc6c5230490538364912
+--001a11412e42c002770538364b1e
 Content-Type: text/plain; charset=UTF-8
 
-Your fix is now merged.
+Merged.
 Thanks.
 
-On Thu, Jul 14, 2016 at 2:09 PM, <zhang.kai16@zte.com.cn> wrote:
+On Wed, Jul 13, 2016 at 7:23 PM, Christian Kastner <ckk@debian.org> wrote:
 
-> From: "zhang.kai" <zhang.kai16@zte.com.cn>
+> From: Christian Kastner <ckk@kvr.at>
 >
-> Problem:
-> With each iteration of the vector_foreach_slot() loop statement,
-> some slots couldn't be traversed when a slot is deleted from vector.
->
-> Reasons:
-> Currently,loop's index 'i' is not decremented correspondingly when a slot
+> When invoking kpartx -d $FOO with $FOO being a regular file, the intention
 > is
-> deleted from vector.Meanwhile, in the vector_foreach_slot() loop, mpp is
-> assigned
-> from vector newmp directly, so find_slot() could be omitted.
+> to also detach the loop device backing $FOO using del_loop(), but this
+> currently doesn't happen, as can be seen by calling losetup -a afterwards.
 >
-> Signed-off-by: zhang.kai <zhang.kai16@zte.com.cn>
+> This is because the check for the type of $FOO, prior to the del_loop()
+> call, is
+> broken. S_ISREG() is called on a buffer that initially did contain the
+> status of
+> $FOO, but was later overwritten with the status of the backing loop device.
+>
+> This replaces the S_ISREG() test with a check for whether the loop device
+> path
+> is not NULL. If it isn't, then we know that it contains the correct path,
+> and
+> del_loop() can be called safely on that.
+>
+> Reported as Debian bug #829496; that bug also has more information.
+>
+> Signed-off-by: Christian Kastner <ckk@kvr.at>
 > ---
->  libmultipath/configure.c | 6 ++----
->  1 file changed, 2 insertions(+), 4 deletions(-)
+>  kpartx/kpartx.c | 8 ++++----
+>  1 file changed, 4 insertions(+), 4 deletions(-)
 >
-> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> index a9b9cf0..c06a3df 100644
-> --- a/libmultipath/configure.c
-> +++ b/libmultipath/configure.c
-> @@ -924,16 +924,14 @@ coalesce_paths (struct vectors * vecs, vector newmp,
-> char * refwwid, int force_r
->         if (newmp) {
->                 vector_foreach_slot (newmp, mpp, i) {
->                         char alias[WWID_SIZE];
-> -                       int j;
+> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+> index 4de13fa..b7b4047 100644
+> --- a/kpartx/kpartx.c
+> +++ b/kpartx/kpartx.c
+> @@ -482,14 +482,14 @@ main(int argc, char **argv){
+>                                         printf("del devmap : %s\n",
+> partname);
+>                         }
 >
->                         if (!deadmap(mpp))
->                                 continue;
+> -                       if (S_ISREG (buf.st_mode)) {
+> -                               if (del_loop(device)) {
+> +                       if (loopdev) {
+> +                               if (del_loop(loopdev)) {
+>                                         if (verbose)
+>                                                 printf("can't del loop :
+> %s\n",
+> -                                                       device);
+> +                                                       loopdev);
+>                                         exit(1);
+>                                 }
+> -                               printf("loop deleted : %s\n", device);
+> +                               printf("loop deleted : %s\n", loopdev);
+>                         }
+>                         break;
 >
->                         strncpy(alias, mpp->alias, WWID_SIZE - 1);
->
-> -                       if ((j = find_slot(newmp, (void *)mpp)) != -1)
-> -                               vector_del_slot(newmp, j);
-> -
-> +                       vector_del_slot(newmp, i);
-> +                       i--;
->                         remove_map(mpp, vecs, 0);
->
->                         if (dm_flush_map(alias))
 > --
-> 2.8.1.windows.1
->
-> --------------------------------------------------------
-> ZTE Information Security Notice: The information contained in this mail
-> (and any attachment transmitted herewith) is privileged and confidential
-> and is intended for the exclusive use of the addressee(s).  If you are not
-> an intended recipient, any disclosure, reproduction, distribution or other
-> dissemination or use of the information contained is strictly prohibited.
-> If you have received this mail in error, please delete it and notify us
-> immediately.
+> 2.8.1
 >
 > --
 > dm-devel mailing list
@@ -91,83 +92,94 @@ On Thu, Jul 14, 2016 at 2:09 PM, <zhang.kai16@zte.com.cn> wrote:
 > https://www.redhat.com/mailman/listinfo/dm-devel
 >
 
---001a1142bc6c5230490538364912
+--001a11412e42c002770538364b1e
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Your fix is now merged.<div>Thanks.</div></div><div class=
-=3D"gmail_extra"><br><div class=3D"gmail_quote">On Thu, Jul 14, 2016 at 2:0=
-9 PM,  <span dir=3D"ltr">&lt;<a href=3D"mailto:zhang.kai16@zte.com.cn" targ=
-et=3D"_blank">zhang.kai16@zte.com.cn</a>&gt;</span> wrote:<br><blockquote c=
-lass=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;=
-padding-left:1ex">From: &quot;zhang.kai&quot; &lt;<a href=3D"mailto:zhang.k=
-ai16@zte.com.cn">zhang.kai16@zte.com.cn</a>&gt;<br>
+<div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
+<br><div class=3D"gmail_quote">On Wed, Jul 13, 2016 at 7:23 PM, Christian K=
+astner <span dir=3D"ltr">&lt;<a href=3D"mailto:ckk@debian.org" target=3D"_b=
+lank">ckk@debian.org</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_qu=
+ote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex=
+">From: Christian Kastner &lt;<a href=3D"mailto:ckk@kvr.at">ckk@kvr.at</a>&=
+gt;<br>
 <br>
-Problem:<br>
-With each iteration of the vector_foreach_slot() loop statement,<br>
-some slots couldn&#39;t be traversed when a slot is deleted from vector.<br=
->
+When invoking kpartx -d $FOO with $FOO being a regular file, the intention =
+is<br>
+to also detach the loop device backing $FOO using del_loop(), but this<br>
+currently doesn&#39;t happen, as can be seen by calling losetup -a afterwar=
+ds.<br>
 <br>
-Reasons:<br>
-Currently,loop&#39;s index &#39;i&#39; is not decremented correspondingly w=
-hen a slot is<br>
-deleted from vector.Meanwhile, in the vector_foreach_slot() loop, mpp is as=
-signed<br>
-from vector newmp directly, so find_slot() could be omitted.<br>
+This is because the check for the type of $FOO, prior to the del_loop() cal=
+l, is<br>
+broken. S_ISREG() is called on a buffer that initially did contain the stat=
+us of<br>
+$FOO, but was later overwritten with the status of the backing loop device.=
 <br>
-Signed-off-by: zhang.kai &lt;<a href=3D"mailto:zhang.kai16@zte.com.cn">zhan=
-g.kai16@zte.com.cn</a>&gt;<br>
+<br>
+This replaces the S_ISREG() test with a check for whether the loop device p=
+ath<br>
+is not NULL. If it isn&#39;t, then we know that it contains the correct pat=
+h, and<br>
+del_loop() can be called safely on that.<br>
+<br>
+Reported as Debian bug #829496; that bug also has more information.<br>
+<br>
+Signed-off-by: Christian Kastner &lt;<a href=3D"mailto:ckk@kvr.at">ckk@kvr.=
+at</a>&gt;<br>
 ---<br>
-=C2=A0libmultipath/configure.c | 6 ++----<br>
-=C2=A01 file changed, 2 insertions(+), 4 deletions(-)<br>
+=C2=A0kpartx/kpartx.c | 8 ++++----<br>
+=C2=A01 file changed, 4 insertions(+), 4 deletions(-)<br>
 <br>
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c<br>
-index a9b9cf0..c06a3df 100644<br>
---- a/libmultipath/configure.c<br>
-+++ b/libmultipath/configure.c<br>
-@@ -924,16 +924,14 @@ coalesce_paths (struct vectors * vecs, vector newmp, =
-char * refwwid, int force_r<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (newmp) {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 vector_foreach_slot=
- (newmp, mpp, i) {<br>
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c<br>
+index 4de13fa..b7b4047 100644<br>
+--- a/kpartx/kpartx.c<br>
++++ b/kpartx/kpartx.c<br>
+@@ -482,14 +482,14 @@ main(int argc, char **argv){<br>
 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 char alias[WWID_SIZE];<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0int j;<br>
-<br>
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 printf(&=
+quot;del devmap : %s\n&quot;, partname);<br>
 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 if (!deadmap(mpp))<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 continue;<br>
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 strncpy(alias, mpp-&gt;alias, WWID_SIZE - 1);<br>
+=A0 =C2=A0 }<br>
 <br>
 -=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0if ((j =3D find_slot(newmp, (void *)mpp)) !=3D -1)<br>
+=A0 =C2=A0if (S_ISREG (buf.st_mode)) {<br>
 -=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0vector_del_slot(newmp, j);<br>
--<br>
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0if (del_loop(device)) {<br>
 +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0vector_del_slot(newmp, i);<br>
+=A0 =C2=A0if (loopdev) {<br>
 +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0i--;<br>
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0if (del_loop(loopdev)) {<br>
 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 remove_map(mpp, vecs, 0);<br>
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (verb=
+ose)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 printf(&quot;can&#39;t del loop : %s\n&quot;,<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0device);<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0loopdev);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 exit(1);=
 <br>
 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 if (dm_flush_map(alias))<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.8.1.windows.1<br>
-<br>
---------------------------------------------------------<br>
-ZTE Information Security Notice: The information contained in this mail (an=
-d any attachment transmitted herewith) is privileged and confidential and i=
-s intended for the exclusive use of the addressee(s).=C2=A0 If you are not =
-an intended recipient, any disclosure, reproduction, distribution or other =
-dissemination or use of the information contained is strictly prohibited.=
-=C2=A0 If you have received this mail in error, please delete it and notify=
- us immediately.<br>
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0printf(&quot;loop deleted : %s\n&quot=
+;, device);<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0printf(&quot;loop deleted : %s\n&quot=
+;, loopdev);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 }<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 break;<br>
+<span class=3D"HOEnZb"><font color=3D"#888888"><br>
+--<br>
+2.8.1<br>
 <br>
 --<br>
 dm-devel mailing list<br>
@@ -177,14 +189,14 @@ rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
 <br>
 </font></span></blockquote></div><br></div>
 
---001a1142bc6c5230490538364912--
+--001a11412e42c002770538364b1e--
 
 
---===============3089685155611004478==
+--===============1652870854613020708==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============3089685155611004478==--
+--===============1652870854613020708==--
