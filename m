@@ -1,12 +1,12 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 0/3] sysfs prioritizer
-Date: Fri, 22 Jul 2016 11:44:01 +0200
-Message-ID: <CABr-Gnfxpra=oriKQSmqjc+WLNHc1Z+7k30TCvA2FhD0NU-9wA@mail.gmail.com>
-References: <1468565337-5178-1-git-send-email-hare@suse.de>
+Subject: Re: [PATCH] libmultipath:fix loop traversed partly
+Date: Fri, 22 Jul 2016 11:44:52 +0200
+Message-ID: <CABr-Gneo3J3m1c1pWbFnn0b-OEf7e0o7c_ipaVchn7uk6fFwXg@mail.gmail.com>
+References: <1468498173-8328-1-git-send-email-zhang.kai16@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4279678895724952360=="
+Content-Type: multipart/mixed; boundary="===============3089685155611004478=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1468565337-5178-1-git-send-email-hare@suse.de>
+In-Reply-To: <1468498173-8328-1-git-send-email-zhang.kai16@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,115 +16,175 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: zhang.kai16@zte.com.cn
+Cc: device-mapper development <dm-devel@redhat.com>, tang.junhui@zte.com.cn, christophe varoqui <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
---===============4279678895724952360==
-Content-Type: multipart/alternative; boundary=001a1140211e44565405383646c8
+--===============3089685155611004478==
+Content-Type: multipart/alternative; boundary=001a1142bc6c5230490538364912
 
---001a1140211e44565405383646c8
+--001a1142bc6c5230490538364912
 Content-Type: text/plain; charset=UTF-8
 
-Finally merged.
+Your fix is now merged.
 Thanks.
 
-On Fri, Jul 15, 2016 at 8:48 AM, Hannes Reinecke <hare@suse.de> wrote:
+On Thu, Jul 14, 2016 at 2:09 PM, <zhang.kai16@zte.com.cn> wrote:
 
-> Hi all,
+> From: "zhang.kai" <zhang.kai16@zte.com.cn>
 >
-> this is a resend of a previous patchset for adding a 'sysfs'
-> prioritizer. This prioritizer uses the sysfs attributes
-> 'access_state' and 'exclusive_pref_bit' to generate the
-> path priority.
-> Priority values are identical to those from the 'alua'
-> prioritizer.
+> Problem:
+> With each iteration of the vector_foreach_slot() loop statement,
+> some slots couldn't be traversed when a slot is deleted from vector.
 >
-> Note: the mentioned sysfs attributes are filled in by
-> every device handler, but only the 'alua' handler has
-> enough logic to keep them up-to-date.
-> So use with caution for other device handlers.
+> Reasons:
+> Currently,loop's index 'i' is not decremented correspondingly when a slot
+> is
+> deleted from vector.Meanwhile, in the vector_foreach_slot() loop, mpp is
+> assigned
+> from vector newmp directly, so find_slot() could be omitted.
 >
-> Hannes Reinecke (3):
->   libmultipath: call get_vpd_uid() if no uid_attribute is set
->   alua prioritizer: Fix typo 'perf'
->   multipathd: Add 'sysfs' prioritizer
+> Signed-off-by: zhang.kai <zhang.kai16@zte.com.cn>
+> ---
+>  libmultipath/configure.c | 6 ++----
+>  1 file changed, 2 insertions(+), 4 deletions(-)
 >
->  libmultipath/discovery.c           | 36 ++++++++++++++++++++++
->  libmultipath/discovery.h           |  2 ++
->  libmultipath/prio.h                |  1 +
->  libmultipath/prioritizers/Makefile |  3 +-
->  libmultipath/prioritizers/alua.c   |  8 ++---
->  libmultipath/prioritizers/sysfs.c  | 61
-> ++++++++++++++++++++++++++++++++++++++
->  libmultipath/propsel.c             |  6 +++-
->  multipath/multipath.conf.5         | 19 ++++++++++--
->  8 files changed, 127 insertions(+), 9 deletions(-)
->  create mode 100644 libmultipath/prioritizers/sysfs.c
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index a9b9cf0..c06a3df 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -924,16 +924,14 @@ coalesce_paths (struct vectors * vecs, vector newmp,
+> char * refwwid, int force_r
+>         if (newmp) {
+>                 vector_foreach_slot (newmp, mpp, i) {
+>                         char alias[WWID_SIZE];
+> -                       int j;
+>
+>                         if (!deadmap(mpp))
+>                                 continue;
+>
+>                         strncpy(alias, mpp->alias, WWID_SIZE - 1);
+>
+> -                       if ((j = find_slot(newmp, (void *)mpp)) != -1)
+> -                               vector_del_slot(newmp, j);
+> -
+> +                       vector_del_slot(newmp, i);
+> +                       i--;
+>                         remove_map(mpp, vecs, 0);
+>
+>                         if (dm_flush_map(alias))
+> --
+> 2.8.1.windows.1
+>
+> --------------------------------------------------------
+> ZTE Information Security Notice: The information contained in this mail
+> (and any attachment transmitted herewith) is privileged and confidential
+> and is intended for the exclusive use of the addressee(s).  If you are not
+> an intended recipient, any disclosure, reproduction, distribution or other
+> dissemination or use of the information contained is strictly prohibited.
+> If you have received this mail in error, please delete it and notify us
+> immediately.
 >
 > --
-> 2.6.6
->
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 >
 
---001a1140211e44565405383646c8
+--001a1142bc6c5230490538364912
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Finally merged.<div>Thanks.</div></div><div class=3D"gmail=
-_extra"><br><div class=3D"gmail_quote">On Fri, Jul 15, 2016 at 8:48 AM, Han=
-nes Reinecke <span dir=3D"ltr">&lt;<a href=3D"mailto:hare@suse.de" target=
-=3D"_blank">hare@suse.de</a>&gt;</span> wrote:<br><blockquote class=3D"gmai=
-l_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left=
-:1ex">Hi all,<br>
+<div dir=3D"ltr">Your fix is now merged.<div>Thanks.</div></div><div class=
+=3D"gmail_extra"><br><div class=3D"gmail_quote">On Thu, Jul 14, 2016 at 2:0=
+9 PM,  <span dir=3D"ltr">&lt;<a href=3D"mailto:zhang.kai16@zte.com.cn" targ=
+et=3D"_blank">zhang.kai16@zte.com.cn</a>&gt;</span> wrote:<br><blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;=
+padding-left:1ex">From: &quot;zhang.kai&quot; &lt;<a href=3D"mailto:zhang.k=
+ai16@zte.com.cn">zhang.kai16@zte.com.cn</a>&gt;<br>
 <br>
-this is a resend of a previous patchset for adding a &#39;sysfs&#39;<br>
-prioritizer. This prioritizer uses the sysfs attributes<br>
-&#39;access_state&#39; and &#39;exclusive_pref_bit&#39; to generate the<br>
-path priority.<br>
-Priority values are identical to those from the &#39;alua&#39;<br>
-prioritizer.<br>
+Problem:<br>
+With each iteration of the vector_foreach_slot() loop statement,<br>
+some slots couldn&#39;t be traversed when a slot is deleted from vector.<br=
+>
 <br>
-Note: the mentioned sysfs attributes are filled in by<br>
-every device handler, but only the &#39;alua&#39; handler has<br>
-enough logic to keep them up-to-date.<br>
-So use with caution for other device handlers.<br>
+Reasons:<br>
+Currently,loop&#39;s index &#39;i&#39; is not decremented correspondingly w=
+hen a slot is<br>
+deleted from vector.Meanwhile, in the vector_foreach_slot() loop, mpp is as=
+signed<br>
+from vector newmp directly, so find_slot() could be omitted.<br>
 <br>
-Hannes Reinecke (3):<br>
-=C2=A0 libmultipath: call get_vpd_uid() if no uid_attribute is set<br>
-=C2=A0 alua prioritizer: Fix typo &#39;perf&#39;<br>
-=C2=A0 multipathd: Add &#39;sysfs&#39; prioritizer<br>
+Signed-off-by: zhang.kai &lt;<a href=3D"mailto:zhang.kai16@zte.com.cn">zhan=
+g.kai16@zte.com.cn</a>&gt;<br>
+---<br>
+=C2=A0libmultipath/configure.c | 6 ++----<br>
+=C2=A01 file changed, 2 insertions(+), 4 deletions(-)<br>
 <br>
-=C2=A0libmultipath/discovery.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| 36=
- ++++++++++++++++++++++<br>
-=C2=A0libmultipath/discovery.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|=C2=
-=A0 2 ++<br>
-=C2=A0libmultipath/prio.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 |=C2=A0 1 +<br>
-=C2=A0libmultipath/prioritizers/Makefile |=C2=A0 3 +-<br>
-=C2=A0libmultipath/prioritizers/alua.c=C2=A0 =C2=A0|=C2=A0 8 ++---<br>
-=C2=A0libmultipath/prioritizers/sysfs.c=C2=A0 | 61 ++++++++++++++++++++++++=
-++++++++++++++<br>
-=C2=A0libmultipath/propsel.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0|=C2=A0 6 +++-<br>
-=C2=A0multipath/multipath.conf.5=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| 19 ++++=
-++++++--<br>
-=C2=A08 files changed, 127 insertions(+), 9 deletions(-)<br>
-=C2=A0create mode 100644 libmultipath/prioritizers/sysfs.c<br>
-<span class=3D"HOEnZb"><font color=3D"#888888"><br>
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c<br>
+index a9b9cf0..c06a3df 100644<br>
+--- a/libmultipath/configure.c<br>
++++ b/libmultipath/configure.c<br>
+@@ -924,16 +924,14 @@ coalesce_paths (struct vectors * vecs, vector newmp, =
+char * refwwid, int force_r<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (newmp) {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 vector_foreach_slot=
+ (newmp, mpp, i) {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 char alias[WWID_SIZE];<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0int j;<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 if (!deadmap(mpp))<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 continue;<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 strncpy(alias, mpp-&gt;alias, WWID_SIZE - 1);<br>
+<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0if ((j =3D find_slot(newmp, (void *)mpp)) !=3D -1)<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0vector_del_slot(newmp, j);<br>
+-<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0vector_del_slot(newmp, i);<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0i--;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 remove_map(mpp, vecs, 0);<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 if (dm_flush_map(alias))<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+2.8.1.windows.1<br>
+<br>
+--------------------------------------------------------<br>
+ZTE Information Security Notice: The information contained in this mail (an=
+d any attachment transmitted herewith) is privileged and confidential and i=
+s intended for the exclusive use of the addressee(s).=C2=A0 If you are not =
+an intended recipient, any disclosure, reproduction, distribution or other =
+dissemination or use of the information contained is strictly prohibited.=
+=C2=A0 If you have received this mail in error, please delete it and notify=
+ us immediately.<br>
+<br>
 --<br>
-2.6.6<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
+rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
 <br>
 </font></span></blockquote></div><br></div>
 
---001a1140211e44565405383646c8--
+--001a1142bc6c5230490538364912--
 
 
---===============4279678895724952360==
+--===============3089685155611004478==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============4279678895724952360==--
+--===============3089685155611004478==--
