@@ -1,64 +1,66 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: vplex and multipath-tools
-Date: Sat, 23 Jul 2016 17:46:19 +0200
-Message-ID: <CABr-GneNEdgredZQo1z92z3bjeP65Jyq63L20UP9ojwXMNESgg@mail.gmail.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [RFC PATCH 1/2] mempool: do not consume memory reserves from the
+ reclaim path
+Date: Sat, 23 Jul 2016 20:52:20 +0200
+Message-ID: <32d24e54-d5de-1b84-7ac3-cc4c41767657@suse.cz>
+References: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
+ <1468831285-27242-1-git-send-email-mhocko@kernel.org>
+ <20160719135426.GA31229@cmpxchg.org>
+ <alpine.DEB.2.10.1607191315400.58064@chino.kir.corp.google.com>
+ <20160720081541.GF11249@dhcp22.suse.cz>
+ <alpine.DEB.2.10.1607201353230.22427@chino.kir.corp.google.com>
+ <20160721085202.GC26379@dhcp22.suse.cz> <20160721121300.GA21806@cmpxchg.org>
+ <20160721145309.GR26379@dhcp22.suse.cz> <20160722063720.GB794@dhcp22.suse.cz>
+ <15177f2d-cd00-dade-fc25-12a0c241e8f5@suse.cz>
+ <20160722124448.ad6f9b8be8fe1552b076096c@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5393543427223454654=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Edward Goggin, EMC" <egoggin@emc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20160722124448.ad6f9b8be8fe1552b076096c@linux-foundation.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, David Rientjes <rientjes@google.com>, linux-mm@kvack.org, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============5393543427223454654==
-Content-Type: multipart/alternative; boundary=001a11402e64d0228905384f73b4
+On 07/22/2016 09:44 PM, Andrew Morton wrote:
+> On Fri, 22 Jul 2016 14:26:19 +0200 Vlastimil Babka <vbabka@suse.cz> wrote:
+> 
+>> On 07/22/2016 08:37 AM, Michal Hocko wrote:
+>>> On Thu 21-07-16 16:53:09, Michal Hocko wrote:
+>>>> From d64815758c212643cc1750774e2751721685059a Mon Sep 17 00:00:00 2001
+>>>> From: Michal Hocko <mhocko@suse.com>
+>>>> Date: Thu, 21 Jul 2016 16:40:59 +0200
+>>>> Subject: [PATCH] Revert "mm, mempool: only set __GFP_NOMEMALLOC if there are
+>>>>  free elements"
+>>>>
+>>>> This reverts commit f9054c70d28bc214b2857cf8db8269f4f45a5e23.
+>>>
+>>> I've noticed that Andrew has already picked this one up. Is anybody
+>>> against marking it for stable?
+>>
+>> It would be strange to have different behavior with known regression in 
+>> 4.6 and 4.7 stables. Actually, there's still time for 4.7 proper?
+>>
+> 
+> I added the cc:stable.
+> 
+> Do we need to bust a gut to rush it into 4.7?  It sounds safer to let
+> it bake for a while, fix it in 4.7.1?
 
---001a11402e64d0228905384f73b4
-Content-Type: text/plain; charset=UTF-8
+Yeah, I guess it's safer to wait now. Would be different if the reverted
+commit went in the same cycle.
 
-Hi Ed,
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo@kvack.org.  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> 
 
-does EMC have a specific prioritizer to select the local head in a vplex
-cross-connect setup ?
-
-If not, would it be useful to develop one ? ... or does a particular setup
-in multipath.conf suffices (not resorting to the weightedpath prioritizer,
-which is not easy to deploy site-wise) ?
-
-If you are no longer the appropriate person to answer, please route me ...
-
-Thanks,
-Christophe Varoqui
-
---001a11402e64d0228905384f73b4
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Hi Ed,<div><br></div><div>does EMC have a specific priorit=
-izer to select the local head in a vplex cross-connect setup ?</div><div><b=
-r></div><div>If not, would it be useful to develop one ? ... or does a part=
-icular setup in multipath.conf suffices (not resorting to the weightedpath =
-prioritizer, which is not easy to deploy site-wise) ?</div><div><br></div><=
-div>If you are no longer the appropriate person to answer, please route me =
-...</div><div><br></div><div>Thanks,</div><div>Christophe Varoqui</div><div=
-><br></div></div>
-
---001a11402e64d0228905384f73b4--
-
-
---===============5393543427223454654==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5393543427223454654==--
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
