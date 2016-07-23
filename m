@@ -1,66 +1,94 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [RFC PATCH 1/2] mempool: do not consume memory reserves from the
- reclaim path
-Date: Sat, 23 Jul 2016 20:52:20 +0200
-Message-ID: <32d24e54-d5de-1b84-7ac3-cc4c41767657@suse.cz>
-References: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
- <1468831285-27242-1-git-send-email-mhocko@kernel.org>
- <20160719135426.GA31229@cmpxchg.org>
- <alpine.DEB.2.10.1607191315400.58064@chino.kir.corp.google.com>
- <20160720081541.GF11249@dhcp22.suse.cz>
- <alpine.DEB.2.10.1607201353230.22427@chino.kir.corp.google.com>
- <20160721085202.GC26379@dhcp22.suse.cz> <20160721121300.GA21806@cmpxchg.org>
- <20160721145309.GR26379@dhcp22.suse.cz> <20160722063720.GB794@dhcp22.suse.cz>
- <15177f2d-cd00-dade-fc25-12a0c241e8f5@suse.cz>
- <20160722124448.ad6f9b8be8fe1552b076096c@linux-foundation.org>
+From: Gary <admin@garyshood.com>
+Subject: dm-cache as a writeback cache that streams all writes to
+ cache, and then updates origin
+Date: Fri, 22 Jul 2016 18:56:47 -0700
+Message-ID: <CAMOP6rNqF3K2-st5_W+nekUnvghT4oZAWMN9fj9SWhPDTmBR_w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20160722124448.ad6f9b8be8fe1552b076096c@linux-foundation.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, David Rientjes <rientjes@google.com>, linux-mm@kvack.org, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Mel Gorman <mgorman@suse.de>, Neil Brown <neilb@suse.de>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
+Content-Type: multipart/mixed; boundary="===============6229019247218382061=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 07/22/2016 09:44 PM, Andrew Morton wrote:
-> On Fri, 22 Jul 2016 14:26:19 +0200 Vlastimil Babka <vbabka@suse.cz> wrote:
-> 
->> On 07/22/2016 08:37 AM, Michal Hocko wrote:
->>> On Thu 21-07-16 16:53:09, Michal Hocko wrote:
->>>> From d64815758c212643cc1750774e2751721685059a Mon Sep 17 00:00:00 2001
->>>> From: Michal Hocko <mhocko@suse.com>
->>>> Date: Thu, 21 Jul 2016 16:40:59 +0200
->>>> Subject: [PATCH] Revert "mm, mempool: only set __GFP_NOMEMALLOC if there are
->>>>  free elements"
->>>>
->>>> This reverts commit f9054c70d28bc214b2857cf8db8269f4f45a5e23.
->>>
->>> I've noticed that Andrew has already picked this one up. Is anybody
->>> against marking it for stable?
->>
->> It would be strange to have different behavior with known regression in 
->> 4.6 and 4.7 stables. Actually, there's still time for 4.7 proper?
->>
-> 
-> I added the cc:stable.
-> 
-> Do we need to bust a gut to rush it into 4.7?  It sounds safer to let
-> it bake for a while, fix it in 4.7.1?
+--===============6229019247218382061==
+Content-Type: multipart/alternative; boundary=001a114452e226a556053843dd3f
 
-Yeah, I guess it's safer to wait now. Would be different if the reverted
-commit went in the same cycle.
+--001a114452e226a556053843dd3f
+Content-Type: text/plain; charset=UTF-8
 
-> 
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo@kvack.org.  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
-> 
+I haven't tested the MQ policy since I'm on kernel 4.6, I am on SMQ. I have
+a spinning disk as the origin that is falling behind as a mysql slave. I
+added an ssd writeback cache but I can still see a a large amount of random
+writes going to the spinning disk on iotop. The filesystem is XFS. Origin
+is 2tb, but the dataset I am working with is only 305gb. The cache is 40gb
+total.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+dmsetup status shows
+
+cached: 0 3906766976 cache 8 330/1663 512 163686/163686 1781562 5956880
+6792625 24895886 18847 18847 3398 1 writeback 2 migration_threshold 2048
+smq 0 rw -
+
+a minute later shows
+
+cached: 0 3906766976 cache 8 330/1663 512 163686/163686 1781956 5959500
+6794474 24908493 18850 18850 3396 1 writeback 2 migration_threshold 2048
+smq 0 rw -
+
+I was looking over the archives of dm-cache and came across
+https://www.redhat.com/archives/dm-devel/2015-September/msg00090.html
+
+I understand that dm-cache does not just blindly stream all writes to the
+cache and then update the origin. Is there some way I can enable that
+though (even if it involves changing code)? The hotspot feature is
+impractical for this workload and is of little help it seems. I know the
+SSD taking writes by itself can keep up, I just can't dedicate that much
+SSD space to this right now. I have to turn barriers off to make the hard
+disk keep up and I'd rather not do that.
+
+--001a114452e226a556053843dd3f
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>I haven&#39;t tested the MQ policy since I&#39;m on k=
+ernel 4.6, I am on SMQ. I have a spinning disk as the origin that is fallin=
+g behind as a mysql slave. I added an ssd writeback cache but I can still s=
+ee a a large amount of random writes going to the spinning disk on iotop. T=
+he filesystem is XFS. Origin is 2tb, but the dataset I am working with is o=
+nly 305gb. The cache is 40gb total.<br></div><div><br></div><div>dmsetup st=
+atus shows</div><div><br></div><div>cached: 0 3906766976 cache 8 330/1663 5=
+12 163686/163686 1781562 5956880 6792625 24895886 18847 18847 3398 1 writeb=
+ack 2 migration_threshold 2048 smq 0 rw -<br></div><div><br></div><div>a mi=
+nute later shows</div><div><br></div><div>cached: 0 3906766976 cache 8 330/=
+1663 512 163686/163686 1781956 5959500 6794474 24908493 18850 18850 3396 1 =
+writeback 2 migration_threshold 2048 smq 0 rw -<br></div><div><br></div><di=
+v>I was looking over the archives of dm-cache and came across <a href=3D"ht=
+tps://www.redhat.com/archives/dm-devel/2015-September/msg00090.html">https:=
+//www.redhat.com/archives/dm-devel/2015-September/msg00090.html</a><br></di=
+v><div><br></div><div>I understand that dm-cache does not just blindly stre=
+am all writes to the cache and then update the origin. Is there some way I =
+can enable that though (even if it involves changing code)? The hotspot fea=
+ture is impractical for this workload and is of little help it seems. I kno=
+w the SSD taking writes by itself can keep up, I just can&#39;t dedicate th=
+at much SSD space to this right now. I have to turn barriers off to make th=
+e hard disk keep up and I&#39;d rather not do that.</div></div>
+
+--001a114452e226a556053843dd3f--
+
+
+--===============6229019247218382061==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6229019247218382061==--
