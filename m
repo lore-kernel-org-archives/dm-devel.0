@@ -1,110 +1,370 @@
-From: james harvey <jamespharvey20@gmail.com>
-Subject: During systemd/udev,
-	device-mapper trying to work with non-LVM volumes
-Date: Fri, 22 Jul 2016 19:14:30 -0400
-Message-ID: <CA+X5Wn5tbL02XpG-JMvZ4-Sdg+sv=yymD1s6Afboag59LqD94Q@mail.gmail.com>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [RFC PATCH 2/2] mm, mempool: do not throttle PF_LESS_THROTTLE tasks
+Date: Sat, 23 Jul 2016 10:12:24 +1000
+Message-ID: <878twt5i1j.fsf@notabene.neil.brown.name>
+References: <1468831164-26621-1-git-send-email-mhocko@kernel.org> <1468831285-27242-1-git-send-email-mhocko@kernel.org> <1468831285-27242-2-git-send-email-mhocko@kernel.org> <87oa5q5abi.fsf@notabene.neil.brown.name> <20160722091558.GF794@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160722091558.GF794@dhcp22.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: linux-mm@kvack.org, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, David Rientjes <rientjes@google.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Mel Gorman <mgorman@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If I understand what's going on here, I think device-mapper is trying
-to work with two volumes that don't involve LVM, causing the errors.
-Is this a device-mapper bug?  A udev bug?  Something I have configured
-wrong?
+--=-=-=
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-During boot, I see the following messages:
+On Fri, Jul 22 2016, Michal Hocko wrote:
 
-===============================
-starting version 230
-:: running early hook [lvm2]
-:: running hook [udev]
-:: Triggering uevents...
-    [    3.964973] device-mapper: table: 253:21: thin: Unable to
-activate thin device while pool is suspended
-    [    4.023198] device-mapper: table: 253:22: thin: Unable to
-activate thin device while pool is suspended
-. . .
-===============================
+> On Fri 22-07-16 18:46:57, Neil Brown wrote:
+>> On Mon, Jul 18 2016, Michal Hocko wrote:
+>>=20
+>> > From: Michal Hocko <mhocko@suse.com>
+>> >
+>> > Mikulas has reported that a swap backed by dm-crypt doesn't work
+>> > properly because the swapout cannot make a sufficient forward progress
+>> > as the writeout path depends on dm_crypt worker which has to allocate
+>> > memory to perform the encryption. In order to guarantee a forward
+>> > progress it relies on the mempool allocator. mempool_alloc(), however,
+>> > prefers to use the underlying (usually page) allocator before it grabs
+>> > objects from the pool. Such an allocation can dive into the memory
+>> > reclaim and consequently to throttle_vm_writeout.
+>>=20
+>> That's just broken.
+>> I used to think mempool should always use the pre-allocated reserves
+>> first.  That is surely the most logical course of action.  Otherwise
+>> that memory is just sitting there doing nothing useful.
+>>=20
+>> I spoke to Nick Piggin about this some years ago and he pointed out that
+>> the kmalloc allocation paths are much better optimized for low overhead
+>> when there is plenty of memory.  They can just pluck a free block of a
+>> per-CPU list without taking any locks.   By contrast, accessing the
+>> preallocated pool always requires a spinlock.
+>>=20
+>> So it makes lots of sense to prefer the underlying allocator if it can
+>> provide a quick response.  If it cannot, the sensible thing is to use
+>> the pool, or wait for the pool to be replenished.
+>>=20
+>> So the allocator should never wait at all, never enter reclaim, never
+>> throttle.
+>>=20
+>> Looking at the current code, __GFP_DIRECT_RECLAIM is disabled the first
+>> time through, but if the pool is empty, direct-reclaim is allowed on the
+>> next attempt.  Presumably this is where the throttling comes in ??
+>
+> Yes that is correct.
+>
+>> I suspect that it really shouldn't do that. It should leave kswapd to
+>> do reclaim (so __GFP_KSWAPD_RECLAIM is appropriate) and only wait in
+>> mempool_alloc where pool->wait can wake it up.
+>
+> Mikulas was already suggesting that and my concern was that this would
+> give up prematurely even under mild page cache load when there are many
+> clean page cache pages.
 
-In dmesg, I see:
+That's a valid point - freeing up clean pages is a reasonable thing for
+a mempool allocator to try to do.
 
-===============================
-[    3.313426] Btrfs loaded
-[    3.313987] BTRFS: device label terrasnapper_boot devid 1 transid 13 /dev/md2
-[    3.314219] BTRFS: device label terramain_boot devid 1 transid 27 /dev/md1
-[    3.391995] device-mapper: thin: Data device (dm-5) discard
-unsupported: Disabling discard passdown.
-[    3.392803] device-mapper: thin: Data device (dm-3) discard
-unsupported: Disabling discard passdown.
-[    3.520545] BTRFS: device label terrasnapper devid 3 transid 28 /dev/dm-13
-[    3.520931] BTRFS: device label terramain devid 2 transid 35 /dev/dm-11
-[    3.574622] BTRFS: device label persistent devid 3 transid 11 /dev/dm-14
-[    3.590508] BTRFS: device label terrasnapper devid 2 transid 28 /dev/dm-12
-[    3.604053] BTRFS: device label terramain devid 3 transid 35 /dev/dm-10
-[    3.711390] BTRFS: device label persistent devid 2 transid 11 /dev/dm-15
-[    3.788923] md: bind<dm-16>
-[    3.790860] md/raid1:md0: active with 3 out of 3 mirrors
-[    3.790909] md0: detected capacity change from 0 to 17163091968
-[    3.961862] device-mapper: thin: Data device (dm-18) discard
-unsupported: Disabling discard passdown.
-[    3.964973] device-mapper: table: 253:21: thin: Unable to activate
-thin device while pool is suspended
-[    3.965075] device-mapper: ioctl: error adding target to table
-[    4.023198] device-mapper: table: 253:22: thin: Unable to activate
-thin device while pool is suspended
-[    4.023295] device-mapper: ioctl: error adding target to table
-[    4.111046] BTRFS: device label terrasnapper devid 1 transid 28 /dev/dm-21
-[    4.188863] BTRFS: device label persistent devid 1 transid 11 /dev/dm-23
-[    4.196150] BTRFS: device label terramain devid 1 transid 35 /dev/dm-22
-===============================
+>                          If we just back off and rely on kswapd which
+> might get stuck on the writeout then the IO throughput can be reduced
 
-There are 3 hard drives, all platter SATA.
+If I were king of MM, I would make a decree to be proclaimed throughout
+the land
+    kswapd must never sleep except when it explicitly chooses to
 
-dm-21 and dm-22 are NOT using LVM.  (If that is what is being referred
-to by "table: 253:21" and "table: 253:22".) They are each a btrfs
-filesystem, on a md RAID 1, of 3 hard drive partitions.  They're each
-separate boot partitions, for separate installs.
+Maybe that is impractical, but having firm rules like that would go a
+long way to make it possible to actually understand and reason about how
+MM works.  As it is, there seems to be a tendency to put bandaids over
+bandaids.
 
-All other volumes in the system are btrfs RAID's on LVM volumes, not
-using md arrays.  (Except swap is an md array of raw LVM volumes.)
+> I believe which would make the whole memory pressure just worse. So I am
+> not sure this is a good idea in general. I completely agree with you
+> that the mempool request shouldn't be throttled unless there is a strong
+> reason for that. More on that below.
+>
+>> If I'm following the code properly, the stack trace below can only
+>> happen if the first pool->alloc() attempt, with direct-reclaim disabled,
+>> fails and the pool is empty, so mempool_alloc() calls prepare_to_wait()
+>> and io_schedule_timeout().
+>
+> mempool_alloc retries immediatelly without any sleep after the first
+> no-reclaim attempt.
 
-dmsetup table shows (253:21 and 253:22 are NOT on here)
+I missed that ... I see it now... I wonder if anyone has contemplated
+using some modern programming techniques like, maybe, a "while" loop in
+there..
+Something like the below...
 
-===============================
-disk3-disk3thin: 0 1048576000 linear 253:6 0
-disk3-terramain3: 0 209715200 thin 253:6 1
-disk3-disk3thin-tpool: 0 1048576000 thin-pool 253:4 253:5 512 0 0
-disk3-disk3thin_tdata: 0 1048576000 linear 8:35 33818624
-disk2-terraswap2: 0 33554432 linear 8:19 2048
-disk1-disk1thin-tpool: 0 1048576000 thin-pool 253:17 253:18 512 0 0
-disk1-disk1thin_tdata: 0 1048576000 linear 8:3 33818624
-disk3-disk3thin_tmeta: 0 262144 linear 8:35 1082394624
-disk1-disk1thin_tmeta: 0 262144 linear 8:3 1082394624
-disk2-disk2thin: 0 1048576000 linear 253:7 0
-disk3-terrasnapper3: 0 209715200 thin 253:6 2
-disk2-persistent2: 0 209715200 thin 253:7 3
-disk3-terraswap3: 0 33554432 linear 8:35 2048
-disk1-disk1thin: 0 1048576000 linear 253:19 0
-disk2-terrasnapper2: 0 209715200 thin 253:7 2
-disk1-terramain1: 0 209715200 thin 253:19 1
-disk2-disk2thin-tpool: 0 1048576000 thin-pool 253:2 253:3 512 0 0
-disk2-disk2thin_tdata: 0 1048576000 linear 8:19 33818624
-disk1-persistent1: 0 209715200 thin 253:19 3
-disk2-disk2thin_tmeta: 0 262144 linear 8:19 1082394624
-disk1-terrasnapper1: 0 209715200 thin 253:19 2
-disk2-terramain2: 0 209715200 thin 253:7 1
-disk3-persistent3: 0 209715200 thin 253:6 3
-disk1-terraswap1: 0 33554432 linear 8:3 2048
-===============================
+>
+>> I suspect the timeout *doesn't* fire (5 seconds is along time) so it
+>> gets woken up when there is something in the pool.  It then loops around
+>> and tries pool->alloc() again, even though there is something in the
+>> pool.  This might be justified if that ->alloc would never block, but
+>> obviously it does.
+>>=20
+>> I would very strongly recommend just changing mempool_alloc() to
+>> permanently mask out __GFP_DIRECT_RECLAIM.
+>>=20
+>> Quite separately I don't think PF_LESS_THROTTLE is at all appropriate.
+>> It is "LESS" throttle, not "NO" throttle, but you have made
+>> throttle_vm_writeout never throttle PF_LESS_THROTTLE threads.
+>
+> Yes that is correct. But it still allows to throttle on congestion:
+> shrink_inactive_list:
+> 	/*
+> 	 * Stall direct reclaim for IO completions if underlying BDIs or zone
+> 	 * is congested. Allow kswapd to continue until it starts encountering
+> 	 * unqueued dirty pages or cycling through the LRU too quickly.
+> 	 */
+> 	if (!sc->hibernation_mode && !current_is_kswapd() &&
+> 	    current_may_throttle())
+> 		wait_iff_congested(pgdat, BLK_RW_ASYNC, HZ/10);
+>
+> My thinking was that throttle_vm_writeout is there to prevent from
+> dirtying too many pages from the reclaim the context.  PF_LESS_THROTTLE
+> is part of the writeout so throttling it on too many dirty pages is
+> questionable (well we get some bias but that is not really reliable). It
+> still makes sense to throttle when the backing device is congested
+> because the writeout path wouldn't make much progress anyway and we also
+> do not want to cycle through LRU lists too quickly in that case.
+
+"dirtying ... from the reclaim context" ??? What does that mean?
+According to
+  Commit: 26eecbf3543b ("[PATCH] vm: pageout throttling")
+From=20the history tree, the purpose of throttle_vm_writeout() is to
+limit the amount of memory that is concurrently under I/O.
+That seems strange to me because I thought it was the responsibility of
+each backing device to impose a limit - a maximum queue size of some
+sort.
+I remember when NFS didn't impose a limit and you could end up with lots
+of memory in NFS write-back, and very long latencies could result.
+
+So I wonder what throttle_vm_writeout() really achieves these days.  Is
+it just a bandaid that no-one is brave enough to remove?
+
+I guess it could play a role in balancing the freeing of clean pages,
+which can be done instantly, against dirty pages, which require
+writeback.  Without some throttling, might all clean pages being cleaned
+too quickly, just trashing our read caches?
+
+>
+> Or is this assumption wrong for nfsd_vfs_write? Can it cause unbounded
+> dirtying of memory?
+
+In most cases, nfsd it just like any other application and needs to be
+throttled like any other application when it writes too much data.
+The only time nfsd *needs* PF_LESS_THROTTLE when when a loop-back mount
+is active.  When the same page cache is the source and destination of
+writes.
+So nfsd needs to be able to dirty a few more pages when nothing else
+can due to high dirty count.  Otherwise it deadlocks.
+The main use of PF_LESS_THROTTLE is in zone_dirty_limit() and
+domain_dirty_limits() where an extra 25% is allowed to overcome this
+deadlock.
+
+The use of PF_LESS_THROTTLE in current_may_throttle() in vmscan.c is to
+avoid a live-lock.  A key premise is that nfsd only allocates unbounded
+memory when it is writing to the page cache.  So it only needs to be
+throttled when the backing device it is writing to is congested.  It is
+particularly important that it *doesn't* get throttled just because an
+NFS backing device is congested, because nfsd might be trying to clear
+that congestion.
+
+In general, callers of try_to_free_pages() might get throttled when any
+backing device is congested.  This is a reasonable default when we don't
+know what they are allocating memory for.  When we do know the purpose of
+the allocation, we can be more cautious about throttling.
+
+If a thread is allocating just to dirty pages for a given backing
+device, we only need to throttle the allocation if the backing device is
+congested.  Any further throttling needed happens in
+balance_dirty_pages().
+
+If a thread is only making transient allocations, ones which will be
+freed shortly afterwards (not, for example, put in a cache), then I
+don't think it needs to be throttled at all.  I think this universally
+applies to mempools.
+In the case of dm_crypt, if it is writing too fast it will eventually be
+throttled in generic_make_request when the underlying device has a full
+queue and so blocks waiting for requests to be completed, and thus parts
+of them returned to the mempool.
+
+
+>
+>> The purpose of that flag is to allow a thread to dirty a page-cache page
+>> as part of cleaning another page-cache page.
+>> So it makes sense for loop and sometimes for nfsd.  It would make sense
+>> for dm-crypt if it was putting the encrypted version in the page cache.
+>> But if dm-crypt is just allocating a transient page (which I think it
+>> is), then a mempool should be sufficient (and we should make sure it is
+>> sufficient) and access to an extra 10% (or whatever) of the page cache
+>> isn't justified.
+>
+> If you think that PF_LESS_THROTTLE (ab)use in mempool_alloc is not
+> appropriate then would a PF_MEMPOOL be any better?
+
+Why a PF rather than a GFP flag?
+NFSD uses a PF because there is no GFP interface for filesystem write.
+But mempool can pass down a GFP flag, so I think it should.
+The meaning of the flag is, in my opinion, that a 'transient' allocation
+is being requested.  i.e. an allocation which will be used for a single
+purpose for a short amount of time and will then be freed.  In
+particularly it will never be placed in a cache, and if it is ever
+placed on a queue, that is certain to be a queue with an upper bound on
+the size and with guaranteed forward progress in the face of memory
+pressure.
+Any allocation request for a use case with those properties should be
+allowed to set GFP_TRANSIENT (for example) with the effect that the
+allocation will not be throttled.
+A key point with the name is to identify the purpose of the flag, not a
+specific use case (mempool) which we want it for.
+
+At least, that is what I think we should do today...
+
+NeilBrown
+
+
+>
+> Thanks!
+> --=20
+> Michal Hocko
+> SUSE Labs
+
+
+diff --git a/mm/mempool.c b/mm/mempool.c
+index 8f65464da5de..2dded8c1b9d7 100644
+=2D-- a/mm/mempool.c
++++ b/mm/mempool.c
+@@ -313,7 +313,6 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
+ 	void *element;
+ 	unsigned long flags;
+ 	wait_queue_t wait;
+=2D	gfp_t gfp_temp;
+=20
+ 	/* If oom killed, memory reserves are essential to prevent livelock */
+ 	VM_WARN_ON_ONCE(gfp_mask & __GFP_NOMEMALLOC);
+@@ -325,67 +324,47 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
+ 	gfp_mask |=3D __GFP_NORETRY;	/* don't loop in __alloc_pages */
+ 	gfp_mask |=3D __GFP_NOWARN;	/* failures are OK */
+=20
+=2D	gfp_temp =3D gfp_mask & ~(__GFP_DIRECT_RECLAIM|__GFP_IO);
++	element =3D pool->alloc(gfp_mask & ~(__GFP_DIRECT_RECLAIM|__GFP_IO),
++			      pool->pool_data);
+=20
+=2Drepeat_alloc:
+=2D	if (likely(pool->curr_nr)) {
+=2D		/*
+=2D		 * Don't allocate from emergency reserves if there are
+=2D		 * elements available.  This check is racy, but it will
+=2D		 * be rechecked each loop.
+=2D		 */
+=2D		gfp_temp |=3D __GFP_NOMEMALLOC;
+=2D	}
++	while (!element) {
++		spin_lock_irqsave(&pool->lock, flags);
++		if (likely(pool->curr_nr)) {
++			element =3D remove_element(pool, gfp_mask);
++			spin_unlock_irqrestore(&pool->lock, flags);
++			/* paired with rmb in mempool_free(), read comment there */
++			smp_wmb();
++			/*
++			 * Update the allocation stack trace as this is more useful
++			 * for debugging.
++			 */
++			kmemleak_update_trace(element);
++			break;
++		}
++
++		/* We must not sleep if !__GFP_DIRECT_RECLAIM */
++		if (!(gfp_mask & __GFP_DIRECT_RECLAIM)) {
++			spin_unlock_irqrestore(&pool->lock, flags);
++			break;
++		}
+=20
+=2D	element =3D pool->alloc(gfp_temp, pool->pool_data);
+=2D	if (likely(element !=3D NULL))
+=2D		return element;
++		/* Let's wait for someone else to return an element to @pool */
++		init_wait(&wait);
++		prepare_to_wait(&pool->wait, &wait, TASK_UNINTERRUPTIBLE);
+=20
+=2D	spin_lock_irqsave(&pool->lock, flags);
+=2D	if (likely(pool->curr_nr)) {
+=2D		element =3D remove_element(pool, gfp_temp);
+ 		spin_unlock_irqrestore(&pool->lock, flags);
+=2D		/* paired with rmb in mempool_free(), read comment there */
+=2D		smp_wmb();
++
+ 		/*
+=2D		 * Update the allocation stack trace as this is more useful
+=2D		 * for debugging.
++		 * FIXME: this should be io_schedule().  The timeout is there as a
++		 * workaround for some DM problems in 2.6.18.
+ 		 */
+=2D		kmemleak_update_trace(element);
+=2D		return element;
+=2D	}
++		io_schedule_timeout(5*HZ);
+=20
+=2D	/*
+=2D	 * We use gfp mask w/o direct reclaim or IO for the first round.  If
+=2D	 * alloc failed with that and @pool was empty, retry immediately.
+=2D	 */
+=2D	if ((gfp_temp & ~__GFP_NOMEMALLOC) !=3D gfp_mask) {
+=2D		spin_unlock_irqrestore(&pool->lock, flags);
+=2D		gfp_temp =3D gfp_mask;
+=2D		goto repeat_alloc;
+=2D	}
+=2D	gfp_temp =3D gfp_mask;
++		finish_wait(&pool->wait, &wait);
+=20
+=2D	/* We must not sleep if !__GFP_DIRECT_RECLAIM */
+=2D	if (!(gfp_mask & __GFP_DIRECT_RECLAIM)) {
+=2D		spin_unlock_irqrestore(&pool->lock, flags);
+=2D		return NULL;
++		element =3D pool->alloc(gfp_mask, pool->pool_data);
+ 	}
+=2D
+=2D	/* Let's wait for someone else to return an element to @pool */
+=2D	init_wait(&wait);
+=2D	prepare_to_wait(&pool->wait, &wait, TASK_UNINTERRUPTIBLE);
+=2D
+=2D	spin_unlock_irqrestore(&pool->lock, flags);
+=2D
+=2D	/*
+=2D	 * FIXME: this should be io_schedule().  The timeout is there as a
+=2D	 * workaround for some DM problems in 2.6.18.
+=2D	 */
+=2D	io_schedule_timeout(5*HZ);
+=2D
+=2D	finish_wait(&pool->wait, &wait);
+=2D	goto repeat_alloc;
++	return element;
+ }
+ EXPORT_SYMBOL(mempool_alloc);
+=20
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBCAAGBQJXkrZoAAoJEDnsnt1WYoG57k8QAJqQbfMhE0Vqhd6xK9i3+MT3
+LK4YpnyowV+VpOF/rF8SMG9yBsu/Xhjc+DemDDaTrfl3WwtV1qp5gjyb1U8cYIQj
+tmW4RIDeVbf+fZ98iclxT8bMziklgyOFD1h9KuakXFDMn8zkQ3SibAza9PbJXtna
+Xiwu6hXVhXAFNJQd0lVjP3+TcGB4N0iTC3KfpxbfATduGjXqyxwiwRqk/hdglGNJ
+noEWYcZY7bcHdun4tqAhh4SU/XiPnlAv4PBVCvf5RNlWwDBY9N1W0KaSV3MzsknN
+QTVr4ZjkmSpXVH88hFmXgdWHmB50oPO23wWnPbLNY1Hi3ZdQeXuleHwnL+c1Z7Bj
+6sRAswwpr+cYADDI5fJUpFJq4NmiyUYLxfdmNteEQvBr/6p/X3B72BzPPlhQ8iHj
+DXuQDpHJOzV23AdrJl59M2G9vsnvbUbpz83DiMvppPj3KrCau0dJGPYHrPddfU3i
+PhxUjKAWCVzGCZxEN6E4kZCzSTZokwlZTHri06/1JIOwhN++ONjSDshnv5hqkwmv
+0gjdcRvq62Qtnk242wj932EGaKieTzKKeYGOf0tkUDdxZg9FkK0h+pZhC8YtCEM+
+bmWFEgDLiAXE7TGrRxKzNmOVyK+Wc4eKQibGZxHZbXpXk2Xi8dCnGhBL6f6X+QXw
+eL7DgQLm/wNQ3w+AZuex
+=nUz8
+-----END PGP SIGNATURE-----
+--=-=-=--
