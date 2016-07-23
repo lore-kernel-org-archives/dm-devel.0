@@ -1,8 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 4/5] multipath-tools: replace leading spaces with
-	tabs II
-Date: Sat, 23 Jul 2016 02:29:11 +0200
-Message-ID: <1469233752-11708-4-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 5/5] multipath-tools: hwtable housekeeping
+Date: Sat, 23 Jul 2016 02:29:12 +0200
+Message-ID: <1469233752-11708-5-git-send-email-xose.vazquez@gmail.com>
 References: <1469233752-11708-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,504 +20,653 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Mainly replace less than 8 ^spaces with tabs where is required and remove
-^space from goto labels.
+Mainly: arrange some families, clean redundant labels, detail IBM devices,
+add remaining attributes to last member(NULL) and add missing vendor labels.
 
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- kpartx/Makefile                   |   2 +-
- kpartx/dasd.c                     |   2 +-
- kpartx/gpt.c                      |   2 +-
- kpartx/kpartx.rules               |   2 +-
- libmpathpersist/mpath_pr_ioctl.h  |  96 +++++++++++++++++-----------------
- libmultipath/Makefile             |  12 ++---
- libmultipath/checkers.c           |  20 +++----
- libmultipath/checkers/cciss.h     | 106 +++++++++++++++++++-------------------
- libmultipath/checkers/tur.c       |   2 +-
- libmultipath/devmapper.h          |   6 +--
- libmultipath/prioritizers/hp_sw.c |   2 +-
- libmultipath/prioritizers/ontap.c |   8 +--
- libmultipath/structs.h            |   8 +--
- multipathd/main.h                 |  12 ++---
- 14 files changed, 140 insertions(+), 140 deletions(-)
+ libmultipath/hwtable.c | 299 +++++++++++++++++++++++++++----------------------
+ 1 file changed, 162 insertions(+), 137 deletions(-)
 
-diff --git a/kpartx/Makefile b/kpartx/Makefile
-index 5476545..70f836e 100644
---- a/kpartx/Makefile
-+++ b/kpartx/Makefile
-@@ -14,7 +14,7 @@ endif
- 
- LDFLAGS = -ldevmapper
- OBJS = bsd.o dos.o kpartx.o solaris.o unixware.o dasd.o sun.o \
--       gpt.o mac.o ps3.o crc32.o lopart.o xstrncpy.o devmapper.o
-+	gpt.o mac.o ps3.o crc32.o lopart.o xstrncpy.o devmapper.o
- EXEC = kpartx
- 
- all: $(EXEC)
-diff --git a/kpartx/dasd.c b/kpartx/dasd.c
-index 046a08b..0cd2002 100644
---- a/kpartx/dasd.c
-+++ b/kpartx/dasd.c
-@@ -280,7 +280,7 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
- 		retval = 1;
- 	}
- 
-- out:
-+out:
- 	if (data != NULL)
- 		free(data);
- 	if (fd_dasd != -1 && fd_dasd != fd)
-diff --git a/kpartx/gpt.c b/kpartx/gpt.c
-index 75a1c2b..3511886 100644
---- a/kpartx/gpt.c
-+++ b/kpartx/gpt.c
-@@ -592,7 +592,7 @@ find_valid_gpt(int fd, gpt_header ** gpt, gpt_entry ** ptes)
- 		return 1;
- 	}
- 
-- fail:
-+fail:
- 	if (pgpt)  { free(pgpt);   pgpt=NULL; }
- 	if (agpt)  { free(agpt);   agpt=NULL; }
- 	if (pptes) { free(pptes); pptes=NULL; }
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index 8858a60..1713f3c 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -38,6 +38,6 @@ ENV{ID_FS_USAGE}=="filesystem|other", ENV{ID_FS_LABEL_ENC}=="?*", \
- ENV{DM_ACTION}=="PATH_FAILED|PATH_REINSTATED", GOTO="kpartx_end"
- ENV{DM_NR_VALID_PATHS}=="0", GOTO="kpartx_end"
- ENV{DM_STATE}!="SUSPENDED", ENV{DM_UUID}=="mpath-*", \
--        RUN+="/sbin/kpartx -u -p -part /dev/$name"
-+	RUN+="/sbin/kpartx -u -p -part /dev/$name"
- 
- LABEL="kpartx_end"
-diff --git a/libmpathpersist/mpath_pr_ioctl.h b/libmpathpersist/mpath_pr_ioctl.h
-index 7dfda5a..625490f 100644
---- a/libmpathpersist/mpath_pr_ioctl.h
-+++ b/libmpathpersist/mpath_pr_ioctl.h
-@@ -5,17 +5,17 @@
- 
- #if 0
- static const char * pr_type_strs[] = {
--    "obsolete [0]",
--    "Write Exclusive",
--    "obsolete [2]",
--    "Exclusive Access",
--    "obsolete [4]",
--    "Write Exclusive, registrants only",
--    "Exclusive Access, registrants only",
--    "Write Exclusive, all registrants",
--    "Exclusive Access, all registrants",
--    "obsolete [9]", "obsolete [0xa]", "obsolete [0xb]", "obsolete [0xc]",
--    "obsolete [0xd]", "obsolete [0xe]", "obsolete [0xf]",
-+	"obsolete [0]",
-+	"Write Exclusive",
-+	"obsolete [2]",
-+	"Exclusive Access",
-+	"obsolete [4]",
-+	"Write Exclusive, registrants only",
-+	"Exclusive Access, registrants only",
-+	"Write Exclusive, all registrants",
-+	"Exclusive Access, all registrants",
-+	"obsolete [9]", "obsolete [0xa]", "obsolete [0xb]", "obsolete [0xc]",
-+	"obsolete [0xd]", "obsolete [0xe]", "obsolete [0xf]",
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 44fc309..1efaeee 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -25,15 +25,6 @@
+  */
+ static struct hwentry default_hw[] = {
+ 	/*
+-	 * Compellent Technologies/DELL
+-	 */
+-	{
+-		.vendor        = "COMPELNT",
+-		.product       = "Compellent Vol",
+-		.pgpolicy      = MULTIBUS,
+-		.no_path_retry = NO_PATH_RETRY_QUEUE,
+-	},
+-	/*
+ 	 * Apple
+ 	 *
+ 	 * Maintainer : Shyam Sundar
+@@ -46,7 +37,7 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	/*
+-	 * StorageWorks/HPE
++	 * HPE
+ 	 */
+ 	{
+ 		.vendor        = "3PARdata",
+@@ -99,7 +90,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	{
+-		/* HP MSA2000 family with old firmware */
++		/* MSA2000 family with old firmware */
+ 		.vendor        = "HP",
+ 		.product       = "(MSA2[02]12fc|MSA2012i)",
+ 		.pgpolicy      = MULTIBUS,
+@@ -107,7 +98,7 @@ static struct hwentry default_hw[] = {
+ 		.minio         = 100,
+ 	},
+ 	{
+-		/* HP MSA2000 family with new firmware */
++		/* MSA2000 family with new firmware */
+ 		.vendor        = "HP",
+ 		.product       = "(MSA2012sa|MSA23(12|24)(fc|i|sa)|MSA2000s VOLUME)",
+ 		.no_path_retry = 18,
+@@ -115,7 +106,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	{
+-		/* HP MSA 1040/2040 family */
++		/* MSA 1040/2040 family */
+ 		.vendor        = "HP",
+ 		.product       = "MSA (1|2)040 SA(N|S)",
+ 		.no_path_retry = 18,
+@@ -123,7 +114,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	{
+-		/* HP SVSP */
++		/* SVSP */
+ 		.vendor        = "HP",
+ 		.product       = "HSVX700",
+ 		.hwhandler     = "1 alua",
+@@ -132,7 +123,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	{
+-		/* HP Smart Array */
++		/* Smart Array */
+ 		.vendor        = "HP",
+ 		.product       = "LOGICAL VOLUME.*",
+ 		.pgpolicy      = MULTIBUS,
+@@ -140,7 +131,7 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = 12,
+ 	},
+ 	{
+-		/* HP P2000 family */
++		/* P2000 family */
+ 		.vendor        = "HP",
+ 		.product       = "(P2000 G3 FC|P2000G3 FC/iSCSI|P2000 G3 SAS|P2000 G3 iSCSI)",
+ 		.no_path_retry = 18,
+@@ -148,7 +139,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	/*
+-	 * DDN
++	 * DataDirect Networks
+ 	 */
+ 	{
+ 		.vendor        = "DDN",
+@@ -196,6 +187,49 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	/*
++	 * DELL
++	 */
++	{
++		/* Compellent family */
++		.vendor        = "COMPELNT",
++		.product       = "Compellent Vol",
++		.pgpolicy      = MULTIBUS,
++		.no_path_retry = NO_PATH_RETRY_QUEUE,
++	},
++	{
++		/* MD3000 */
++		.vendor        = "DELL",
++		.product       = "MD3000",
++		.bl_product    = "Universal Xport",
++		.features      = "2 pg_init_retries 50",
++		.hwhandler     = "1 rdac",
++		.no_path_retry = 15,
++		.checker_name  = RDAC,
++		.prio_name     = PRIO_RDAC,
++	},
++	{
++		/* MD32xx/MD36xx */
++		.vendor        = "DELL",
++		.product       = "(MD32xx|MD36xx)",
++		.bl_product    = "Universal Xport",
++		.features      = "2 pg_init_retries 50",
++		.hwhandler     = "1 rdac",
++		.no_path_retry = 15,
++		.checker_name  = RDAC,
++		.prio_name     = PRIO_RDAC,
++	},
++	{
++		/* MD34xx/MD38xx */
++		.vendor        = "DELL",
++		.product       = "(MD34xx|MD38xx)",
++		.bl_product    = "Universal Xport",
++		.features      = "2 pg_init_retries 50",
++		.hwhandler     = "1 rdac",
++		.no_path_retry = 15,
++		.checker_name  = RDAC,
++		.prio_name     = PRIO_RDAC,
++	},
++	/*
+ 	 * Fujitsu
+ 	 */
+ 	{
+@@ -211,6 +245,12 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = 10,
+ 		.prio_name     = PRIO_ALUA,
+ 	},
++		/* FibreCAT S80 */
++	{
++		.vendor        = "EUROLOGC",
++		.product       = "FC2502",
++		.pgfailback    = FAILBACK_UNDEF,
++	},
+ 	/*
+ 	 * Hitachi
+ 	 *
+@@ -242,7 +282,7 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	{
+-		/* IBM FAStT 1722-600 */
++		/* DS4300 / FAStT600 */
+ 		.vendor        = "IBM",
+ 		.product       = "^1722-600",
+ 		.bl_product    = "Universal Xport",
+@@ -253,7 +293,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
+-		/* IBM DS4100 */
++		/* DS4100 / FAStT100 */
+ 		.vendor        = "IBM",
+ 		.product       = "^1724",
+ 		.bl_product    = "Universal Xport",
+@@ -264,7 +304,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
+-		/* IBM DS3200 / DS3300 / DS3400 */
++		/* DS3200 / DS3300 / DS3400 / Boot DS */
+ 		.vendor        = "IBM",
+ 		.product       = "^1726",
+ 		.bl_product    = "Universal Xport",
+@@ -275,7 +315,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
+-		/* IBM DS4400 / DS4500 / FAStT700 */
++		/* DS4400 / DS4500 / FAStT700 / FAStT900 */
+ 		.vendor        = "IBM",
+ 		.product       = "^1742",
+ 		.bl_product    = "Universal Xport",
+@@ -285,6 +325,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
++		/* DS3500 / DS3512 / DS3524 */
+ 		.vendor        = "IBM",
+ 		.product       = "^(1745|1746)",
+ 		.bl_product    = "Universal Xport",
+@@ -295,7 +336,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
+-		/* IBM DS4700 */
++		/* DS3950 / DS4200 / DS4700 / DS5020 */
+ 		.vendor        = "IBM",
+ 		.product       = "^1814",
+ 		.bl_product    = "Universal Xport",
+@@ -305,7 +346,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
+-		/* IBM DS4800 */
++		/* DS4800 */
+ 		.vendor        = "IBM",
+ 		.product       = "^1815",
+ 		.bl_product    = "Universal Xport",
+@@ -315,7 +356,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
+-		/* IBM DS5000 */
++		/* DS5000 / DS5100 / DS5300 / DCS3700 */
+ 		.vendor        = "IBM",
+ 		.product       = "^1818",
+ 		.bl_product    = "Universal Xport",
+@@ -325,7 +366,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
+-		/* IBM Netfinity Fibre Channel RAID Controller Unit */
++		/* Netfinity Fibre Channel RAID Controller Unit */
+ 		.vendor        = "IBM",
+ 		.product       = "^3526",
+ 		.bl_product    = "Universal Xport",
+@@ -335,14 +376,14 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
+-		/* IBM DS4200 / FAStT200 */
++		/* DS4200 / FAStT200 */
+ 		.vendor        = "IBM",
+ 		.product       = "^3542",
+ 		.pgpolicy      = GROUP_BY_SERIAL,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	{
+-		/* IBM ESS F20 aka Shark */
++		/* Enterprise Storage Server / Shark 800 */
+ 		.vendor        = "IBM",
+ 		.product       = "^2105800",
+ 		.features      = "1 queue_if_no_path",
+@@ -350,7 +391,7 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	{
+-		/* IBM ESS F20 aka Shark */
++		/* Enterprise Storage Server / Shark F20 */
+ 		.vendor        = "IBM",
+ 		.product       = "^2105F20",
+ 		.features      = "1 queue_if_no_path",
+@@ -358,14 +399,14 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	{
+-		/* IBM DS6000 */
++		/* DS6000 */
+ 		.vendor        = "IBM",
+ 		.product       = "^1750500",
+ 		.features      = "1 queue_if_no_path",
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	{
+-		/* IBM DS8000 */
++		/* DS8000 */
+ 		.vendor        = "IBM",
+ 		.product       = "^2107900",
+ 		.features      = "1 queue_if_no_path",
+@@ -373,14 +414,14 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	{
+-		/* IBM SAN Volume Controller */
++		/* SAN Volume Controller / Storwize */
+ 		.vendor        = "IBM",
+ 		.product       = "^2145",
+ 		.features      = "1 queue_if_no_path",
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	{
+-		/* IBM S/390 ECKD DASD */
++		/* S/390 ECKD DASD */
+ 		.vendor        = "IBM",
+ 		.product       = "S/390 DASD ECKD",
+ 		.bl_product    = "S/390.*",
+@@ -390,7 +431,7 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	{
+-		/* IBM S/390 FBA DASD */
++		/* S/390 FBA DASD */
+ 		.vendor        = "IBM",
+ 		.product       = "S/390 DASD FBA",
+ 		.bl_product    = "S/390.*",
+@@ -400,7 +441,7 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	{
+-		/* IBM IPR */
++		/* Power RAID (IPR) */
+ 		.vendor        = "IBM",
+ 		.product       = "^IPR.*",
+ 		.features      = "1 queue_if_no_path",
+@@ -408,7 +449,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	{
+-		/* IBM RSSM */
++		/* SAS RAID Controller Module (RSSM) */
+ 		.vendor        = "IBM",
+ 		.product       = "1820N00",
+ 		.no_path_retry = NO_PATH_RETRY_QUEUE,
+@@ -416,7 +457,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	{
+-		/* IBM XIV Storage System */
++		/* XIV Storage System */
+ 		.vendor        = "IBM",
+ 		.product       = "2810XIV",
+ 		.features      = "1 queue_if_no_path",
+@@ -438,7 +479,7 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = (300 / DEFAULT_CHECKINT),
+ 	},
+ 	{
+-		/* IBM 3303 NVDISK */
++		/* 3303 NVDISK */
+ 		.vendor        = "IBM",
+ 		.product       = "3303      NVDISK",
+ 		.no_path_retry = (300 / DEFAULT_CHECKINT),
+@@ -453,43 +494,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	/*
+-	 * DELL
+-	 */
+-	{
+-		/* DELL MD3000 */
+-		.vendor        = "DELL",
+-		.product       = "MD3000",
+-		.bl_product    = "Universal Xport",
+-		.features      = "2 pg_init_retries 50",
+-		.hwhandler     = "1 rdac",
+-		.no_path_retry = 15,
+-		.checker_name  = RDAC,
+-		.prio_name     = PRIO_RDAC,
+-	},
+-	{
+-		/* DELL MD32xx/MD36xx */
+-		.vendor        = "DELL",
+-		.product       = "(MD32xx|MD36xx)",
+-		.bl_product    = "Universal Xport",
+-		.features      = "2 pg_init_retries 50",
+-		.hwhandler     = "1 rdac",
+-		.no_path_retry = 15,
+-		.checker_name  = RDAC,
+-		.prio_name     = PRIO_RDAC,
+-	},
+-	{
+-		/* DELL MD34xx/MD38xx */
+-		.vendor        = "DELL",
+-		.product       = "(MD34xx|MD38xx)",
+-		.bl_product    = "Universal Xport",
+-		.features      = "2 pg_init_retries 50",
+-		.hwhandler     = "1 rdac",
+-		.no_path_retry = 15,
+-		.checker_name  = RDAC,
+-		.prio_name     = PRIO_RDAC,
+-	},
+-	/*
+-	 * NETAPP ONTAP family
++	 * NetApp ONTAP family
+ 	 *
+ 	 * Maintainer : Martin George
+ 	 * Mail : marting@netapp.com
+@@ -511,8 +516,23 @@ static struct hwentry default_hw[] = {
+ 		.minio         = 128,
+ 		.prio_name     = PRIO_ONTAP,
+ 	},
++	/* LSI/Engenio/NetApp RDAC family
++	 *
++	 * Maintainer : Sean Stewart
++	 * Mail : sean.stewart@netapp.com
++	 */
++	{
++		.vendor        = "(NETAPP|LSI|ENGENIO)",
++		.product       = "INF-01-00",
++		.bl_product    = "Universal Xport",
++		.features      = "2 pg_init_retries 50",
++		.hwhandler     = "1 rdac",
++		.no_path_retry = 30,
++		.checker_name  = RDAC,
++		.prio_name     = PRIO_RDAC,
++	},
+ 	/*
+-	 * NEXENTA
++	 * Nexenta
+ 	 *
+ 	 * Maintainer : Yacine Kheddache
+ 	 * Mail : yacine@alyseo.com
+@@ -526,18 +546,6 @@ static struct hwentry default_hw[] = {
+ 		.minio         = 128,
+ 	},
+ 	/*
+-	 * Pillar Data/Oracle
+-	 *
+-	 * Maintainer : Srinivasan Ramani
+-	 * Mail : srinivas.ramani@oracle.com
+-	 */
+-	{
+-		.vendor        = "Pillar",
+-		.product       = "Axiom.*",
+-		.pgfailback    = FAILBACK_UNDEF,
+-		.prio_name     = PRIO_ALUA,
+-	},
+-	/*
+ 	 * SGI
+ 	 */
+ 	{
+@@ -576,9 +584,22 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	/*
+-	 * STK/Oracle
++	 * Oracle
+ 	 */
+ 	{
++		/*
++		 * Pillar Data
++		 *
++		 * Maintainer : Srinivasan Ramani
++		 * Mail : srinivas.ramani@oracle.com
++		 */
++		.vendor        = "Pillar",
++		.product       = "Axiom.*",
++		.pgfailback    = FAILBACK_UNDEF,
++		.prio_name     = PRIO_ALUA,
++	},
++		/* StorageTek */
++	{
+ 		.vendor        = "STK",
+ 		.product       = "OPENstorage D280",
+ 		.bl_product    = "Universal Xport",
+@@ -586,9 +607,16 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = RDAC,
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+-	/*
+-	 * SUN/Oracle
+-	 */
++	{
++		.vendor        = "STK",
++		.product       = "FLEXLINE 380",
++		.bl_product    = "Universal Xport",
++		.hwhandler     = "1 rdac",
++		.no_path_retry = NO_PATH_RETRY_QUEUE,
++		.checker_name  = RDAC,
++		.prio_name     = PRIO_RDAC,
++	},
++		/* SUN */
+ 	{
+ 		.vendor        = "SUN",
+ 		.product       = "(StorEdge 3510|T4)",
+@@ -604,25 +632,6 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
+-		.vendor        = "EUROLOGC",
+-		.product       = "FC2502",
+-		.pgfailback    = FAILBACK_UNDEF,
+-	},
+-	/*
+-	 * Pivot3
+-	 *
+-	 * Maintainer : Bart Brooks, Pivot3
+-	 * Mail : bartb@pivot3.com
+-	 */
+-	{
+-		.vendor        = "PIVOT3",
+-		.product       = "RAIGE VOLUME",
+-		.features      = "1 queue_if_no_path",
+-		.pgpolicy      = MULTIBUS,
+-		.pgfailback    = FAILBACK_UNDEF,
+-		.minio         = 100,
+-	},
+-	{
+ 		.vendor        = "SUN",
+ 		.product       = "CSM200_R",
+ 		.bl_product    = "Universal Xport",
+@@ -631,8 +640,8 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = RDAC,
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+-	/* SUN/LSI 2510, 2540, 2530, 2540 */
+ 	{
++		/* 2510 / 2540 / 2530 / 2540 */
+ 		.vendor        = "SUN",
+ 		.product       = "LCSM100_[IEFS]",
+ 		.bl_product    = "Universal Xport",
+@@ -641,8 +650,8 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = RDAC,
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+-	/* StorageTek 6180 */
+ 	{
++		/* StorageTek 6180 */
+ 		.vendor        = "SUN",
+ 		.product       = "SUN_6180",
+ 		.bl_product    = "Universal Xport",
+@@ -651,30 +660,23 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = RDAC,
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+-	/* LSI/Engenio/NetApp RDAC
++	/*
++	 * Pivot3
+ 	 *
+-	 * Maintainer : Sean Stewart
+-	 * Mail : sean.stewart@netapp.com
++	 * Maintainer : Bart Brooks, Pivot3
++	 * Mail : bartb@pivot3.com
+ 	 */
+ 	{
+-		.vendor        = "(NETAPP|LSI|ENGENIO)",
+-		.product       = "INF-01-00",
+-		.bl_product    = "Universal Xport",
+-		.features      = "2 pg_init_retries 50",
+-		.hwhandler     = "1 rdac",
+-		.no_path_retry = 30,
+-		.checker_name  = RDAC,
+-		.prio_name     = PRIO_RDAC,
+-	},
+-	{
+-		.vendor        = "STK",
+-		.product       = "FLEXLINE 380",
+-		.bl_product    = "Universal Xport",
+-		.hwhandler     = "1 rdac",
+-		.no_path_retry = NO_PATH_RETRY_QUEUE,
+-		.checker_name  = RDAC,
+-		.prio_name     = PRIO_RDAC,
++		.vendor        = "PIVOT3",
++		.product       = "RAIGE VOLUME",
++		.features      = "1 queue_if_no_path",
++		.pgpolicy      = MULTIBUS,
++		.pgfailback    = FAILBACK_UNDEF,
++		.minio         = 100,
+ 	},
++	/*
++	 * Intel
++	 */
+ 	{
+ 		.vendor	       = "Intel",
+ 		.product       = "Multi-Flex",
+@@ -682,6 +684,9 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = NO_PATH_RETRY_QUEUE,
+ 		.prio_name     = PRIO_ALUA,
+ 	},
++	/*
++	 * Linux-IO Target
++	 */
+ 	{
+ 		.vendor	       = "(LIO-ORG|SUSE)",
+ 		.product       = "RBD",
+@@ -690,6 +695,9 @@ static struct hwentry default_hw[] = {
+ 		.minio         = 100,
+ 		.prio_name     = PRIO_ALUA,
+ 	},
++	/*
++	 * DataCore
++	 */
+ 	{
+ 		.vendor	       = "DataCore",
+ 		.product       = "SANmelody",
+@@ -702,6 +710,9 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = NO_PATH_RETRY_QUEUE,
+ 		.prio_name     = PRIO_ALUA,
+ 	},
++	/*
++	 * Pure Storage
++	 */
+ 	{
+ 		.vendor        = "PURE",
+ 		.product       = "FlashArray",
+@@ -710,6 +721,9 @@ static struct hwentry default_hw[] = {
+ 		.fast_io_fail  = 10,
+ 		.dev_loss      = 60,
+ 	},
++	/*
++	 * Huawei
++	 */
+ 	{
+ 		.vendor        = "HUAWEI",
+ 		.product       = "XSG1",
+@@ -804,18 +818,29 @@ static struct hwentry default_hw[] = {
+ 	{
+ 		.vendor        = NULL,
+ 		.product       = NULL,
++		.revision      = NULL,
++		.bl_product    = NULL,
++		.pgpolicy      = 0,
++		.uid_attribute = NULL,
++		.selector      = NULL,
++		.checker_name  = NULL,
+ 		.features      = NULL,
+ 		.hwhandler     = NULL,
+-		.selector      = NULL,
+-		.pgpolicy      = 0,
++		.prio_name     = NULL,
++		.prio_args     = NULL,
+ 		.pgfailback    = 0,
+ 		.rr_weight     = 0,
+ 		.no_path_retry = 0,
+ 		.minio         = 0,
+ 		.minio_rq      = 0,
+-		.checker_name  = NULL,
+-		.prio_name     = NULL,
+-		.prio_args     = NULL,
++		.flush_on_last_del = 0,
++		.fast_io_fail  = 0,
++		.dev_loss      = 0,
++		.retain_hwhandler = NULL,
++		.detect_prio   = NULL,
++		.deferred_remove = NULL,
++		.delay_watch_checks = 0,
++		.delay_wait_checks = 0,
+ 	},
  };
- #endif
  
-@@ -24,43 +24,43 @@ typedef unsigned char    BYTE;      /* unsigned numeric, bit patterns */
- 
- typedef struct SenseData
- {
--    BYTE        Error_Code;
--    BYTE        Segment_Number; /* not applicable to DAC */
--    BYTE        Sense_Key;
--    BYTE        Information[ 4 ];
--    BYTE        Additional_Len;
--    LWORD       Command_Specific_Info;
--    BYTE        ASC;
--    BYTE        ASCQ;
--    BYTE        Field_Replaceable_Unit;
--    BYTE        Sense_Key_Specific_Info[ 3 ];
--    BYTE        Recovery_Action[ 2 ];
--    BYTE        Total_Errors;
--    BYTE        Total_Retries;
--    BYTE        ASC_Stack_1;
--    BYTE        ASCQ_Stack_1;
--    BYTE        ASC_Stack_2;
--    BYTE        ASCQ_Stack_2;
--    BYTE        Additional_FRU_Info[ 8 ];
--    BYTE        Error_Specific_Info[ 3 ];
--    BYTE        Error_Detection_Point[ 4 ];
--    BYTE        Original_CDB[10];
--    BYTE        Host_ID;
--    BYTE        Host_Descriptor[ 2 ];
--    BYTE        Serial_Number[ 16 ];
--    BYTE        Array_SW_Revision[ 4 ];
--    BYTE        Data_Xfer_Operation;
--    BYTE        LUN_Number;
--    BYTE        LUN_Status;
--    BYTE        Drive_ID;
--    BYTE        Xfer_Start_Drive_ID;
--    BYTE        Drive_SW_Revision[ 4 ];
--    BYTE        Drive_Product_ID[ 16 ];
--    BYTE        PowerUp_Status[ 2 ];
--    BYTE        RAID_Level;
--    BYTE        Drive_Sense_ID[ 2 ];
--    BYTE        Drive_Sense_Data[ 32 ];
--    BYTE        Reserved2[24];
-+	BYTE        Error_Code;
-+	BYTE        Segment_Number; /* not applicable to DAC */
-+	BYTE        Sense_Key;
-+	BYTE        Information[ 4 ];
-+	BYTE        Additional_Len;
-+	LWORD       Command_Specific_Info;
-+	BYTE        ASC;
-+	BYTE        ASCQ;
-+	BYTE        Field_Replaceable_Unit;
-+	BYTE        Sense_Key_Specific_Info[ 3 ];
-+	BYTE        Recovery_Action[ 2 ];
-+	BYTE        Total_Errors;
-+	BYTE        Total_Retries;
-+	BYTE        ASC_Stack_1;
-+	BYTE        ASCQ_Stack_1;
-+	BYTE        ASC_Stack_2;
-+	BYTE        ASCQ_Stack_2;
-+	BYTE        Additional_FRU_Info[ 8 ];
-+	BYTE        Error_Specific_Info[ 3 ];
-+	BYTE        Error_Detection_Point[ 4 ];
-+	BYTE        Original_CDB[10];
-+	BYTE        Host_ID;
-+	BYTE        Host_Descriptor[ 2 ];
-+	BYTE        Serial_Number[ 16 ];
-+	BYTE        Array_SW_Revision[ 4 ];
-+	BYTE        Data_Xfer_Operation;
-+	BYTE        LUN_Number;
-+	BYTE        LUN_Status;
-+	BYTE        Drive_ID;
-+	BYTE        Xfer_Start_Drive_ID;
-+	BYTE        Drive_SW_Revision[ 4 ];
-+	BYTE        Drive_Product_ID[ 16 ];
-+	BYTE        PowerUp_Status[ 2 ];
-+	BYTE        RAID_Level;
-+	BYTE        Drive_Sense_ID[ 2 ];
-+	BYTE        Drive_Sense_Data[ 32 ];
-+	BYTE        Reserved2[24];
- } SenseData_t;
- 
- #define MPATH_PRIN_CMD 0x5e
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index a14d4b3..e44397b 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -18,12 +18,12 @@ ifdef SYSTEMD
- endif
- 
- OBJS = memory.o parser.o vector.o devmapper.o callout.o \
--       hwtable.o blacklist.o util.o dmparser.o config.o \
--       structs.o discovery.o propsel.o dict.o \
--       pgpolicies.o debug.o defaults.o uevent.o \
--       switchgroup.o uxsock.o print.o alias.o log_pthread.o \
--       log.o configure.o structs_vec.o sysfs.o prio.o checkers.o \
--       lock.o waiter.o file.o wwids.o prioritizers/alua_rtpg.o
-+	hwtable.o blacklist.o util.o dmparser.o config.o \
-+	structs.o discovery.o propsel.o dict.o \
-+	pgpolicies.o debug.o defaults.o uevent.o \
-+	switchgroup.o uxsock.o print.o alias.o log_pthread.o \
-+	log.o configure.o structs_vec.o sysfs.o prio.o checkers.o \
-+	lock.o waiter.o file.o wwids.o prioritizers/alua_rtpg.o
- 
- LIBDM_API_FLUSH = $(shell grep -Ecs '^[a-z]*[[:space:]]+dm_task_no_flush' /usr/include/libdevmapper.h)
- 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index ad7d96c..42baa86 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -9,16 +9,16 @@
- #include "vector.h"
- 
- char *checker_state_names[] = {
--      "wild",
--      "unchecked",
--      "down",
--      "up",
--      "shaky",
--      "ghost",
--      "pending",
--      "timeout",
--      "removed",
--      "delayed",
-+	"wild",
-+	"unchecked",
-+	"down",
-+	"up",
-+	"shaky",
-+	"ghost",
-+	"pending",
-+	"timeout",
-+	"removed",
-+	"delayed",
- };
- 
- static LIST_HEAD(checkers);
-diff --git a/libmultipath/checkers/cciss.h b/libmultipath/checkers/cciss.h
-index c9fa84a..cf20946 100644
---- a/libmultipath/checkers/cciss.h
-+++ b/libmultipath/checkers/cciss.h
-@@ -43,76 +43,76 @@
- 
- //Command List Structure
- typedef union _SCSI3Addr_struct {
--   struct {
--    BYTE Dev;
--    BYTE Bus:6;
--    BYTE Mode:2;        // b00
--  } PeripDev;
--   struct {
--    BYTE DevLSB;
--    BYTE DevMSB:6;
--    BYTE Mode:2;        // b01
--  } LogDev;
--   struct {
--    BYTE Dev:5;
--    BYTE Bus:3;
--    BYTE Targ:6;
--    BYTE Mode:2;        // b10
--  } LogUnit;
-+	struct {
-+		BYTE Dev;
-+		BYTE Bus:6;
-+		BYTE Mode:2;        // b00
-+	} PeripDev;
-+	struct {
-+		BYTE DevLSB;
-+		BYTE DevMSB:6;
-+		BYTE Mode:2;        // b01
-+	} LogDev;
-+	struct {
-+		BYTE Dev:5;
-+		BYTE Bus:3;
-+		BYTE Targ:6;
-+		BYTE Mode:2;        // b10
-+	} LogUnit;
- } SCSI3Addr_struct;
- 
- typedef struct _PhysDevAddr_struct {
--  DWORD             TargetId:24;
--  DWORD             Bus:6;
--  DWORD             Mode:2;
--  SCSI3Addr_struct  Target[2]; //2 level target device addr
-+	DWORD             TargetId:24;
-+	DWORD             Bus:6;
-+	DWORD             Mode:2;
-+	SCSI3Addr_struct  Target[2]; //2 level target device addr
- } PhysDevAddr_struct;
- 
- typedef struct _LogDevAddr_struct {
--  DWORD            VolId:30;
--  DWORD            Mode:2;
--  BYTE             reserved[4];
-+	DWORD            VolId:30;
-+	DWORD            Mode:2;
-+	BYTE             reserved[4];
- } LogDevAddr_struct;
- 
- typedef union _LUNAddr_struct {
--  BYTE               LunAddrBytes[8];
--  SCSI3Addr_struct   SCSI3Lun[4];
--  PhysDevAddr_struct PhysDev;
--  LogDevAddr_struct  LogDev;
-+	BYTE               LunAddrBytes[8];
-+	SCSI3Addr_struct   SCSI3Lun[4];
-+	PhysDevAddr_struct PhysDev;
-+	LogDevAddr_struct  LogDev;
- } LUNAddr_struct;
- 
- typedef struct _RequestBlock_struct {
--  BYTE   CDBLen;
--  struct {
--    BYTE Type:3;
--    BYTE Attribute:3;
--    BYTE Direction:2;
--  } Type;
--  HWORD  Timeout;
--  BYTE   CDB[16];
-+	BYTE   CDBLen;
-+	struct {
-+		BYTE Type:3;
-+		BYTE Attribute:3;
-+		BYTE Direction:2;
-+	} Type;
-+	HWORD  Timeout;
-+	BYTE   CDB[16];
- } RequestBlock_struct;
- 
- typedef union _MoreErrInfo_struct{
--  struct {
--    BYTE  Reserved[3];
--    BYTE  Type;
--    DWORD ErrorInfo;
--  }Common_Info;
--  struct{
--    BYTE  Reserved[2];
--    BYTE  offense_size;//size of offending entry
--    BYTE  offense_num; //byte # of offense 0-base
--    DWORD offense_value;
--  }Invalid_Cmd;
--}MoreErrInfo_struct;
-+	struct {
-+		BYTE  Reserved[3];
-+		BYTE  Type;
-+		DWORD ErrorInfo;
-+	} Common_Info;
-+	struct{
-+		BYTE  Reserved[2];
-+		BYTE  offense_size;//size of offending entry
-+		BYTE  offense_num; //byte # of offense 0-base
-+		DWORD offense_value;
-+	} Invalid_Cmd;
-+} MoreErrInfo_struct;
- 
- typedef struct _ErrorInfo_struct {
--  BYTE               ScsiStatus;
--  BYTE               SenseLen;
--  HWORD              CommandStatus;
--  DWORD              ResidualCnt;
--  MoreErrInfo_struct MoreErrInfo;
--  BYTE               SenseInfo[SENSEINFOBYTES];
-+	BYTE               ScsiStatus;
-+	BYTE               SenseLen;
-+	HWORD              CommandStatus;
-+	DWORD              ResidualCnt;
-+	MoreErrInfo_struct MoreErrInfo;
-+	BYTE               SenseInfo[SENSEINFOBYTES];
- } ErrorInfo_struct;
- 
- #pragma pack()
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 2edc8ad..c4ef8a8 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -107,7 +107,7 @@ tur_check(int fd, unsigned int timeout, char *msg)
- 	unsigned char sense_buffer[32];
- 	int retry_tur = 5;
- 
-- retry:
-+retry:
- 	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
- 	memset(&sense_buffer, 0, 32);
- 	io_hdr.interface_id = 'S';
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index 4bc3b11..442d42e 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -52,9 +52,9 @@ int dm_reassign_table(const char *name, char *old, char *new);
- int dm_setgeometry(struct multipath *mpp);
- 
- #define VERSION_GE(v, minv) ( \
-- (v[0] > minv[0]) || \
-- ((v[0] == minv[0]) && (v[1] > minv[1])) || \
-- ((v[0] == minv[0]) && (v[1] == minv[1]) && (v[2] >= minv[2])) \
-+	(v[0] > minv[0]) || \
-+	((v[0] == minv[0]) && (v[1] > minv[1])) || \
-+	((v[0] == minv[0]) && (v[1] == minv[1]) && (v[2] >= minv[2])) \
- )
- 
- #endif /* _DEVMAPPER_H */
-diff --git a/libmultipath/prioritizers/hp_sw.c b/libmultipath/prioritizers/hp_sw.c
-index 253fd51..6b0ed39 100644
---- a/libmultipath/prioritizers/hp_sw.c
-+++ b/libmultipath/prioritizers/hp_sw.c
-@@ -48,7 +48,7 @@ int hp_sw_prio(const char *dev, int fd, unsigned int timeout)
- 	io_hdr.sbp = sb;
- 	io_hdr.timeout = get_prio_timeout(timeout, 60000);
- 	io_hdr.pack_id = 0;
-- retry:
-+retry:
- 	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
- 		pp_hp_sw_log(0, "sending tur command failed");
- 		goto out;
-diff --git a/libmultipath/prioritizers/ontap.c b/libmultipath/prioritizers/ontap.c
-index 747dfb5..4084c65 100644
---- a/libmultipath/prioritizers/ontap.c
-+++ b/libmultipath/prioritizers/ontap.c
-@@ -113,7 +113,7 @@ static int send_gva(const char *dev, int fd, unsigned char pg,
- 		goto out;
- 	}
- 	ret = 0;
-- out:
-+out:
- 	return(ret);
- }
- 
-@@ -171,7 +171,7 @@ static int get_proxy(const char *dev, int fd, unsigned int timeout)
- 	}
- 	ret = (results[19] & 0x02) >> 1;
- 
-- out:
-+out:
- 	return(ret);
- }
- 
-@@ -221,13 +221,13 @@ static int ontap_prio(const char *dev, int fd, unsigned int timeout)
- 		return 0;
- 	}
- 
-- try_fcp_proxy:
-+try_fcp_proxy:
- 	rc = get_proxy(dev, fd, timeout);
- 	if (rc >= 0) {
- 		is_proxy = rc;
- 	}
- 
-- prio_select:
-+prio_select:
- 	if (is_iscsi_hardware) {
- 		return 3;
- 	} else if (is_iscsi_software) {
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 9f216df..a87cda6 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -167,10 +167,10 @@ struct sg_id {
- #  define HDIO_GETGEO	0x0301	/* get device geometry */
- 
- struct hd_geometry {
--      unsigned char heads;
--      unsigned char sectors;
--      unsigned short cylinders;
--      unsigned long start;
-+	unsigned char heads;
-+	unsigned char sectors;
-+	unsigned short cylinders;
-+	unsigned long start;
- };
- #endif
- 
-diff --git a/multipathd/main.h b/multipathd/main.h
-index 10b3a6d..f72580d 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -4,12 +4,12 @@
- #define MAPGCINT 5
- 
- enum daemon_status {
--    DAEMON_INIT,
--    DAEMON_START,
--    DAEMON_CONFIGURE,
--    DAEMON_IDLE,
--    DAEMON_RUNNING,
--    DAEMON_SHUTDOWN,
-+	DAEMON_INIT,
-+	DAEMON_START,
-+	DAEMON_CONFIGURE,
-+	DAEMON_IDLE,
-+	DAEMON_RUNNING,
-+	DAEMON_SHUTDOWN,
- };
- 
- struct prout_param_descriptor;
 -- 
 2.7.4
