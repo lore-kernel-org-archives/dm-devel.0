@@ -1,77 +1,84 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-mq and end_clone_request()
-Date: Mon, 25 Jul 2016 17:23:25 -0400
-Message-ID: <20160725212325.GA23961@redhat.com>
-References: <4ed669ed-beae-76a8-b806-a284565b327a@sandisk.com>
- <20160720140815.GA19045@redhat.com>
- <20160720142727.GA57399@redhat.com>
- <1ca6d31d-f175-9daa-9ddd-17d653851ceb@sandisk.com>
- <20160720183321.GA20223@redhat.com>
- <84d9dc64-0c10-ed1a-7bc1-e656874853a5@sandisk.com>
- <20160725175344.GA23000@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [RFC PATCH 2/2] mm, mempool: do not throttle PF_LESS_THROTTLE
+ tasks
+Date: Mon, 25 Jul 2016 17:52:17 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1607251730280.11852@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1468831164-26621-1-git-send-email-mhocko@kernel.org> <1468831285-27242-1-git-send-email-mhocko@kernel.org> <1468831285-27242-2-git-send-email-mhocko@kernel.org> <87oa5q5abi.fsf@notabene.neil.brown.name> <20160722091558.GF794@dhcp22.suse.cz>
+ <878twt5i1j.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160725175344.GA23000@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <878twt5i1j.fsf@notabene.neil.brown.name>
+Sender: owner-linux-mm@kvack.org
+To: NeilBrown <neilb@suse.com>
+Cc: Michal Hocko <mhocko@kernel.org>, linux-mm@kvack.org, Ondrej Kozina <okozina@redhat.com>, David Rientjes <rientjes@google.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Mel Gorman <mgorman@suse.de>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 25 2016 at  1:53pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
 
-> On Thu, Jul 21 2016 at  4:58pm -0400,
-> Bart Van Assche <bart.vanassche@sandisk.com> wrote:
-> 
-> > On 07/20/2016 11:33 AM, Mike Snitzer wrote:
-> > >Would be interesting to know the error returned from map_request()'s
-> > >ti->type->clone_and_map_rq().  Really should just be DM_MAPIO_REQUEUE.
-> > >But the stack you've provided shows map_request calling
-> > >dm_complete_request(), which implies dm_kill_unmapped_request() is being
-> > >called due to ti->type->clone_and_map_rq() returning < 0.
-> > 
-> > Hello Mike,
-> > 
-> > Apparently certain requests fail with -EIO because DM_DEV_SUSPEND
-> > ioctls are being submitted to the same multipath target. As you know
-> > DM_DEV_SUSPEND changes QUEUE_IF_NO_PATH from 1 into 0. A WARN_ON()
-> > statement that I added in driver dm-mpath statement learned me that
-> > multipathd is submitting these DM_DEV_SUSPEND ioctls. In the output
-> > of strace -fp$(pidof multipathd) I found the following:
-> > 
-> > [pid 13927] ioctl(5, DM_TABLE_STATUS, 0x7fa1000483f0) = 0
-> > [pid 13927] write(1, "mpathbe: failed to setup multipa"..., 35) = 35
-> > [pid 13927] write(1, "dm-0: uev_add_map failed\n", 25) = 25
-> > [pid 13927] write(1, "uevent trigger error\n", 21) = 21
-> > [pid 13927] write(1, "sdh: remove path (uevent)\n", 26) = 26
-> > [pid 13927] ioctl(5, DM_TABLE_LOAD, 0x7fa1000483f0) = 0
-> > [pid 13927] ioctl(5, DM_DEV_SUSPEND, 0x7fa1000483f0) = 0
-> > 
-> > I'm still analyzing these and other messages.
-> 
-> The various ioctls you're seeing is just multipathd responding to the
-> failures.  Part of reloading a table (with revised path info, etc) is to
-> suspend and then resume the device that is being updated.
-> 
-> But I'm not actually sure on the historic reasoning of why
-> queue_if_no_path is disabled (and active setting saved) on suspend.
-> 
-> I'll think about this further but maybe others recall why?
 
-I think it dates back to when we queued IO within the multipath target.
-Commit e809917735ebf ("dm mpath: push back requests instead of
-queueing") obviously changed how we handle the retry.
+On Sat, 23 Jul 2016, NeilBrown wrote:
 
-But regardless __must_push_back() should catch the case where
-queue_io_no_path is cleared during suspend (by checking if current !=
-saved).
+> "dirtying ... from the reclaim context" ??? What does that mean?
+> According to
+>   Commit: 26eecbf3543b ("[PATCH] vm: pageout throttling")
+> From the history tree, the purpose of throttle_vm_writeout() is to
+> limit the amount of memory that is concurrently under I/O.
+> That seems strange to me because I thought it was the responsibility of
+> each backing device to impose a limit - a maximum queue size of some
+> sort.
 
-SO I'd be curious to know if your debugging has enabled you to identify
-exactly where in the dm-mapth.c code the -EIO return is being
-established.  do_end_io() is the likely candidate -- but again the
-__must_push_back() check should prevent it and DM_ENDIO_REQUEUE should
-be returned.
+Device mapper doesn't impose any limit for in-flight bios.
 
-Mike
+Some simple device mapper targets (such as linear or stripe) pass bio 
+directly to the underlying device with generic_make_request, so if the 
+underlying device's request limit is reached, the target's request routine 
+waits.
+
+However, complex dm targets (such as dm-crypt, dm-mirror, dm-thin) pass 
+bios to a workqueue that processes them. And since there is no limit on 
+the number of workqueue entries, there is no limit on the number of 
+in-flight bios.
+
+I've seen a case when I had a HPFS filesystem on dm-crypt. I wrote to the 
+filesystem, there was about 2GB dirty data. The HPFS filesystem used 
+512-byte bios. dm-crypt allocates one temporary page for each incoming 
+bio. So, there were 4M bios in flight, each bio allocated 4k temporary 
+page - that is attempted 16GB allocation. It didn't trigger OOM condition 
+(because mempool allocations don't ever trigger it), but it temporarily 
+exhausted all computer's memory.
+
+I've made some patches that limit in-flight bios for device mapper in the 
+past, but there were not integrated into upstream.
+
+> If a thread is only making transient allocations, ones which will be
+> freed shortly afterwards (not, for example, put in a cache), then I
+> don't think it needs to be throttled at all.  I think this universally
+> applies to mempools.
+> In the case of dm_crypt, if it is writing too fast it will eventually be
+> throttled in generic_make_request when the underlying device has a full
+> queue and so blocks waiting for requests to be completed, and thus parts
+> of them returned to the mempool.
+
+No, it won't be throttled.
+
+dm-crypt does:
+1. pass the bio to the encryption workqueue
+2. allocate the outgoing bio and allocate temporary pages for the 
+   encrypted data
+3. do the encryption
+4. pass the bio to the writer thread
+5. submit the write request with generic_make_request
+
+So, if the underlying block device is throttled, it stalls the writer 
+thread, but it doesn't stall the encryption threads and it doesn't stall 
+the caller that submits the bios to dm-crypt.
+
+There can be really high number of in-flight bios for dm-crypt.
+
+Mikulas
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
