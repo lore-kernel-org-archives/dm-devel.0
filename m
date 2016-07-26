@@ -1,126 +1,89 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: replace remaining leading
-	spaces with tabs
-Date: Tue, 26 Jul 2016 01:10:03 +0200
-Message-ID: <1469488203-24448-1-git-send-email-xose.vazquez@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-mq and end_clone_request()
+Date: Mon, 25 Jul 2016 21:16:07 -0400
+Message-ID: <20160726011607.GA77078@redhat.com>
+References: <4ed669ed-beae-76a8-b806-a284565b327a@sandisk.com>
+ <20160720140815.GA19045@redhat.com>
+ <20160720142727.GA57399@redhat.com>
+ <1ca6d31d-f175-9daa-9ddd-17d653851ceb@sandisk.com>
+ <20160720183321.GA20223@redhat.com>
+ <84d9dc64-0c10-ed1a-7bc1-e656874853a5@sandisk.com>
+ <20160725175344.GA23000@redhat.com>
+ <20160725212325.GA23961@redhat.com>
+ <1490356d-2c0e-d94a-7a88-5e8bc89953ef@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1490356d-2c0e-d94a-7a88-5e8bc89953ef@sandisk.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-spotted by checkpatch.pl
+On Mon, Jul 25 2016 at  6:00P -0400,
+Bart Van Assche <bart.vanassche@sandisk.com> wrote:
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- kpartx/dasd.c            |  4 ++--
- kpartx/lopart.c          | 32 +++++++++++++++-----------------
- libmultipath/devmapper.c |  2 +-
- mpathpersist/main.c      |  2 +-
- 4 files changed, 19 insertions(+), 21 deletions(-)
+> On 07/25/2016 02:23 PM, Mike Snitzer wrote:
+> >So I'd be curious to know if your debugging has enabled you to identify
+> >exactly where in the dm-mapth.c code the -EIO return is being
+> >established.  do_end_io() is the likely candidate -- but again the
+> >__must_push_back() check should prevent it and DM_ENDIO_REQUEUE should
+> >be returned.
+> 
+> Hello Mike,
+> 
+> Thanks for looking further into this. The pr_info() statement that I had
+> added in the following code block in __multipath_map() fired what told me
+> that the following code block triggered the -EIO return:
+> 
+> 	if (!pgpath) {
+> 		if (!must_push_back(m))
+> 			r = -EIO;	/* Failed */
+> 		pr_info("%s(): (a) returning %d\n", __func__, r);
+> 		return r;
+> 	}
+> 
+> From the system log:
+> 
+> kernel: mpath 254:0: queue_if_no_path 1 -> 0
+> kernel: __multipath_map(): (a) returning -5
+> 
+> The code that I had added in queue_if_no_path() is as follows:
+> 
+> 	old = test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
+>         [ ... ]
+> 	pr_info("mpath %s: queue_if_no_path %d -> %d\n",
+> 		dm_device_name(dm_table_get_md(m->ti->table)), old,
+> 		queue_if_no_path);
 
-diff --git a/kpartx/dasd.c b/kpartx/dasd.c
-index 0cd2002..faf5e2e 100644
---- a/kpartx/dasd.c
-+++ b/kpartx/dasd.c
-@@ -233,7 +233,7 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
- 			    || EBCtoASC[f1.DS1FMTID] == '5'
- 			    || EBCtoASC[f1.DS1FMTID] == '7'
- 			    || EBCtoASC[f1.DS1FMTID] == '9') {
--			        blk++;
-+				blk++;
- 				continue;
- 			}
+Hi Bart,
+
+Please try this patch to see if it fixes your issue, thanks.
+
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 52baf8a..287caa7 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -433,10 +433,17 @@ failed:
+  */
+ static int must_push_back(struct multipath *m)
+ {
+-	return (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) ||
+-		((test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) !=
+-		  test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags)) &&
+-		 dm_noflush_suspending(m->ti)));
++	bool r;
++	unsigned long flags;
++
++	spin_lock_irqsave(&m->lock, flags);
++	r = (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) ||
++	     ((test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) !=
++	       test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags)) &&
++	      dm_noflush_suspending(m->ti)));
++	spin_unlock_irqrestore(&m->lock, flags);
++
++	return r;
+ }
  
-@@ -243,7 +243,7 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
- 				break;
- 
- 			/* OK, we got valid partition data */
--		        offset = cchh2blk(&f1.DS1EXT1.llimit, &geo);
-+			offset = cchh2blk(&f1.DS1EXT1.llimit, &geo);
- 			size  = cchh2blk(&f1.DS1EXT1.ulimit, &geo) -
- 				offset + geo.sectors;
- 			sp[counter].start = sectors512(offset, blocksize);
-diff --git a/kpartx/lopart.c b/kpartx/lopart.c
-index e8e3f08..5d20450 100644
---- a/kpartx/lopart.c
-+++ b/kpartx/lopart.c
-@@ -211,23 +211,21 @@ find_unused_loop_device (void)
- 		fprintf(stderr, "mount: could not find any device /dev/loop#");
- 
- 	else if (!someloop) {
--	    if (loop_known == 1)
--		fprintf(stderr,
--		    "mount: Could not find any loop device.\n"
--		    "       Maybe /dev/loop# has a wrong major number?");
--	    else if (loop_known == -1)
--		fprintf(stderr,
--		    "mount: Could not find any loop device, and, according to %s,\n"
--		    "       this kernel does not know about the loop device.\n"
--		    "       (If so, then recompile or `modprobe loop'.)",
--		      PROC_DEVICES);
--
--	    else
--		fprintf(stderr,
--		    "mount: Could not find any loop device. Maybe this kernel does not know\n"
--		    "       about the loop device (then recompile or `modprobe loop'), or\n"
--		    "       maybe /dev/loop# has the wrong major number?");
--
-+		if (loop_known == 1)
-+			fprintf(stderr,
-+				"mount: Could not find any loop device.\n"
-+				"       Maybe /dev/loop# has a wrong major number?");
-+		else if (loop_known == -1)
-+			fprintf(stderr,
-+				"mount: Could not find any loop device, and, according to %s,\n"
-+				"       this kernel does not know about the loop device.\n"
-+				"       (If so, then recompile or `modprobe loop'.)",
-+				PROC_DEVICES);
-+		else
-+			fprintf(stderr,
-+				"mount: Could not find any loop device. Maybe this kernel does not know\n"
-+				"       about the loop device (then recompile or `modprobe loop'), or\n"
-+				"       maybe /dev/loop# has the wrong major number?");
- 	} else
- 		fprintf(stderr, "mount: could not find any free loop device");
- 	return 0;
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 2c76d8b..9b2c706 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -664,7 +664,7 @@ dm_dev_t (const char * mapname, char * dev_t, int len)
- 		goto out;
- 
- 	if (snprintf(dev_t, len, "%i:%i", info.major, info.minor) > len)
--		    goto out;
-+		goto out;
- 
- 	r = 0;
- out:
-diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-index bf9c721..6e922a2 100644
---- a/mpathpersist/main.c
-+++ b/mpathpersist/main.c
-@@ -744,7 +744,7 @@ mpath_print_transport_id(struct prin_fulldescr *fdesc)
- 			break;
- 		case MPATH_PROTOCOL_ID_SAS:
- 			printf("   SAS ");
--			 if (0 != fdesc->trnptid.format_code)
-+			if (0 != fdesc->trnptid.format_code)
- 				printf(" [Unexpected format code: %d]\n",
- 						fdesc->trnptid.format_code);
- 			dumpHex((const char *)fdesc->trnptid.sas_address, 8, 0);
--- 
-2.7.4
+ /*
