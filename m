@@ -1,63 +1,63 @@
-From: Kent Overstreet <kent.overstreet@gmail.com>
-Subject: Re: bcache super block corruption with non 4k pages
-Date: Tue, 26 Jul 2016 04:49:18 -0800
-Message-ID: <20160726124918.GA15102@kmo-pixel>
-References: <1469091513-11233-1-git-send-email-stefan.bader@canonical.com>
- <fce2a0a9-47d1-a052-997c-b14cd62dcf46@canonical.com>
- <20160726102148.GA20130@kmo-pixel>
- <e09788a2-71f4-96ff-cca4-943c1bc1d9bb@canonical.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-mq and end_clone_request()
+Date: Tue, 26 Jul 2016 12:06:11 -0400
+Message-ID: <20160726160611.GA32174@redhat.com>
+References: <4ed669ed-beae-76a8-b806-a284565b327a@sandisk.com>
+	<20160720140815.GA19045@redhat.com>
+	<20160720142727.GA57399@redhat.com>
+	<1ca6d31d-f175-9daa-9ddd-17d653851ceb@sandisk.com>
+	<20160720183321.GA20223@redhat.com>
+	<84d9dc64-0c10-ed1a-7bc1-e656874853a5@sandisk.com>
+	<20160725175344.GA23000@redhat.com>
+	<08a1e048-8191-08bc-a39b-4c04a89ee2d4@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <e09788a2-71f4-96ff-cca4-943c1bc1d9bb@canonical.com>
-Sender: linux-bcache-owner@vger.kernel.org
-To: Stefan Bader <stefan.bader@canonical.com>
-Cc: linux-bcache@vger.kernel.org, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, liuzhengyuang521@gmail.com, bcache@linux.ewheeler.net, apw@canonical.com
+In-Reply-To: <08a1e048-8191-08bc-a39b-4c04a89ee2d4@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Jul 26, 2016 at 02:32:31PM +0200, Stefan Bader wrote:
-> On 26.07.2016 12:21, Kent Overstreet wrote:
-> > On Tue, Jul 26, 2016 at 11:51:25AM +0200, Stefan Bader wrote:
-> >> On 21.07.2016 10:58, Stefan Bader wrote:
-> >>> I was pointed at the thread which seems to address the same after
-> >>> I wrote most of below text. Did not want to re-write this so please
-> >>> bear with the odd layout.
-> >>>
-> >>> https://www.redhat.com/archives/dm-devel/2016-June/msg00015.html
-> >>>
-> >>> Zhengyuan tries to fix the problem by relocating the superblock on
-> >>> disk. But I am not sure whether there is really any guarantee about
-> >>> how __bread fills data into the buffer_head. What if there is the next
-> >>> odd arch with 128K pages?
-> >>>
-> >>> So below is an attempt to be more generic. Still I don't feel completely
-> >>> happy with the way that a page moves (or is shared) between buffer_head
-> >>> and biovec. What I tried to outline below is to let the register functions
-> >>> allocate bio+biovec memory and use the in-memory sb_cache data to initialize
-> >>> the biovec buffer.
-> >>
-> >> Any opinions here? Also adding LKML as I don't seem to get through moderation on
-> >> dm-devel.
-> > 
-> > The correct solution is to rip out the __bread() and just read the superblock by
-> > issuing a bio, the same way all the other IO in bcache is done.
-> > 
-> > This is the way it's done in the bcache-dev branch - unfortunately, the patch
-> > that does that in bcache-dev is big and invasive and probably not worth the
-> > hassle to backport:
-> > 
-> > https://evilpiepirate.org/git/linux-bcache.git/commit/?h=bcache-dev&id=303eb67bffad57b4d9e71523e7df04bf258e66d1
-> 
-> I agree that this looks better and also rather large.
-> > 
-> > Probably best to just do something small and localized.
-> > 
-> So what did you think about the change I did? It seemed to be ok for 4K and 64K
-> at least and is rather small. And I believe that, compared to Zhengyuan's
-> approach this would have the benefit of not changing the superblock sector. So
-> it would be compatible with previously created superblocks.
+On Tue, Jul 26 2016 at  2:02am -0400,
+Hannes Reinecke <hare@suse.de> wrote:
 
-Too ugly to live. Just kmalloc() 4k, allocate a bio on the stack, set it up, and
-submit it with submit_bio_wait(). Use virt_to_page(), don't bother with raw
-pages - you want 4k, not whatever the page size is.
+> On 07/25/2016 07:53 PM, Mike Snitzer wrote:
+> >
+> >The various ioctls you're seeing is just multipathd responding to the
+> >failures.  Part of reloading a table (with revised path info, etc) is to
+> >suspend and then resume the device that is being updated.
+> >
+> >But I'm not actually sure on the historic reasoning of why
+> >queue_if_no_path is disabled (and active setting saved) on suspend.
+> >
+> >I'll think about this further but maybe others recall why?
+> >
+> Yes, originally multipath was using the device-mapper internal
+> queueing mechanism, which meant that queued I/O was holding a
+> reference to the table. So you couldn't change the table while I/O
+> was pending/queued, and you'd have to unset queue_if_no_path to
+> allow the tables to be swapped.
+> (Or something. That's the reasoning I gave to myself when seeing
+> that construct. And I found myself pretty convincing. Not that I've
+> ever tested that.)
+> So with commit e809917735ebf ("dm mpath: push back requests instead of
+> queueing") that obviously isn't true anymore, and I'd love to see that
+> quirk go.
+
+Yeah, but unfortunately (or fortunately?) I've reinstated bio-based
+multipath support -- for current 4.8 merge -- that actually _does_ make
+use of (and reintroduces) the multipath target's internal queueing only
+for bio-based use, see:
+
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.8&id=76e33fe4e2c4363c2b9f627472bd43dc235c3406
