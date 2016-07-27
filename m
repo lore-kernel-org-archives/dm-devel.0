@@ -1,86 +1,41 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [dm-devel] [RFC PATCH 2/2] mm, mempool: do not throttle
- PF_LESS_THROTTLE tasks
-Date: Wed, 27 Jul 2016 20:40:21 +0200
-Message-ID: <20160727184021.GF21859@dhcp22.suse.cz>
-References: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
- <1468831285-27242-1-git-send-email-mhocko@kernel.org>
- <1468831285-27242-2-git-send-email-mhocko@kernel.org>
- <87oa5q5abi.fsf@notabene.neil.brown.name>
- <20160722091558.GF794@dhcp22.suse.cz>
- <878twt5i1j.fsf@notabene.neil.brown.name>
- <alpine.LRH.2.02.1607251730280.11852@file01.intranet.prod.int.rdu2.redhat.com>
- <87invr4tjm.fsf@notabene.neil.brown.name>
- <alpine.LRH.2.02.1607270948040.1779@file01.intranet.prod.int.rdu2.redhat.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: [dm-devel] dm-mq and end_clone_request()
+Date: Wed, 27 Jul 2016 12:06:12 -0700
+Message-ID: <81581dc1-46d1-193b-748f-54a0524634f6@sandisk.com>
+References: <20160720142727.GA57399@redhat.com>
+ <1ca6d31d-f175-9daa-9ddd-17d653851ceb@sandisk.com>
+ <20160720183321.GA20223@redhat.com>
+ <84d9dc64-0c10-ed1a-7bc1-e656874853a5@sandisk.com>
+ <20160725175344.GA23000@redhat.com> <20160725212325.GA23961@redhat.com>
+ <1490356d-2c0e-d94a-7a88-5e8bc89953ef@sandisk.com>
+ <20160726011607.GA77078@redhat.com>
+ <577bc6d5-9c78-b6d3-10f7-10626c0da516@sandisk.com>
+ <20160727140828.GA5692@redhat.com>
+ <20160727155215.GA12197@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1607270948040.1779@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: NeilBrown <neilb@suse.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Mel Gorman <mgorman@suse.de>, David Rientjes <rientjes@google.com>, Ondrej Kozina <okozina@redhat.com>, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20160727155215.GA12197@octiron.msp.redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Benjamin Marzinski <bmarzins@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Wed 27-07-16 10:28:40, Mikulas Patocka wrote:
-> 
-> 
-> On Wed, 27 Jul 2016, NeilBrown wrote:
-> 
-> > On Tue, Jul 26 2016, Mikulas Patocka wrote:
-> > 
-> > > On Sat, 23 Jul 2016, NeilBrown wrote:
-> > >
-> > >> "dirtying ... from the reclaim context" ??? What does that mean?
-> > >> According to
-> > >>   Commit: 26eecbf3543b ("[PATCH] vm: pageout throttling")
-> > >> From the history tree, the purpose of throttle_vm_writeout() is to
-> > >> limit the amount of memory that is concurrently under I/O.
-> > >> That seems strange to me because I thought it was the responsibility of
-> > >> each backing device to impose a limit - a maximum queue size of some
-> > >> sort.
-> > >
-> > > Device mapper doesn't impose any limit for in-flight bios.
-> > 
-> > I would suggest that it probably should. At least it should
-> > "set_wb_congested()" when the number of in-flight bios reaches some
-> > arbitrary threshold.
-> 
-> If we set the device mapper device as congested, it can again trigger that 
-> mempool alloc throttling bug.
-> 
-> I.e. suppose that we swap to a dm-crypt device. The dm-crypt device 
-> becomes clogged and sets its state as congested. The underlying block 
-> device is not congested.
-> 
-> The mempool_alloc function in the dm-crypt workqueue sets the 
-> PF_LESS_THROTTLE flag, and tries to allocate memory, but according to 
-> Michal's patches, processes with PF_LESS_THROTTLE may still get throttled.
-> 
-> So if we set the dm-crypt device as congested, it can incorrectly throttle 
-> the dm-crypt workqueue that does allocations of temporary pages and 
-> encryption.
-> 
-> I think that approach with PF_LESS_THROTTLE in mempool_alloc is incorrect 
-> and that mempool allocations should never be throttled.
+On 07/27/2016 08:52 AM, Benjamin Marzinski wrote:
+> if you look in drivers/md/dm-ioctl.c at do_resume(), device mapper
+> internally does a suspend when you call resume with a new table loaded.
+> That's when these suspends are happening.
+>
+> In the userspace tools, this happens in the DM_DEVICE_RESUME calls after
+> dm_addmap_reload(), which loads the new table.  These all happen in the
+> domap() function.
 
-I'm not really sure this is the right approach. If a particular mempool
-user cannot ever be throttled by the page allocator then it should
-perform GFP_NOWAIT. Even mempool allocations shouldn't allow reclaim to
-scan pages too quickly even when LRU lists are full of dirty pages. But
-as I've said that would restrict the success rates even under light page
-cache load. Throttling on the wait_iff_congested should be quite rare.
+Thanks Ben for chiming in. As far as I can see md->map is only used in 
+the I/O submission path but not in the I/O completion path. So why to 
+suspend and resume I/O before activating the new map? Do you think it 
+would be safe to activate the new map without suspending and resuming I/O?
 
-Anyway do you see an excessive throttling with the patch posted
-http://lkml.kernel.org/r/20160725192344.GD2166@dhcp22.suse.cz ? Or from
-another side. Do you see an excessive number of dirty/writeback pages
-wrt. the dirty threshold or any other undesirable side effects?
--- 
-Michal Hocko
-SUSE Labs
+Thanks,
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Bart.
