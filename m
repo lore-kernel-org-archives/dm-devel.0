@@ -1,115 +1,86 @@
 From: Michal Hocko <mhocko@kernel.org>
 Subject: Re: [dm-devel] [RFC PATCH 2/2] mm, mempool: do not throttle
  PF_LESS_THROTTLE tasks
-Date: Wed, 27 Jul 2016 20:24:11 +0200
-Message-ID: <20160727182411.GE21859@dhcp22.suse.cz>
+Date: Wed, 27 Jul 2016 20:40:21 +0200
+Message-ID: <20160727184021.GF21859@dhcp22.suse.cz>
 References: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
  <1468831285-27242-1-git-send-email-mhocko@kernel.org>
  <1468831285-27242-2-git-send-email-mhocko@kernel.org>
  <87oa5q5abi.fsf@notabene.neil.brown.name>
  <20160722091558.GF794@dhcp22.suse.cz>
  <878twt5i1j.fsf@notabene.neil.brown.name>
- <20160725083247.GD9401@dhcp22.suse.cz>
- <87lh0n4ufs.fsf@notabene.neil.brown.name>
+ <alpine.LRH.2.02.1607251730280.11852@file01.intranet.prod.int.rdu2.redhat.com>
+ <87invr4tjm.fsf@notabene.neil.brown.name>
+ <alpine.LRH.2.02.1607270948040.1779@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <87lh0n4ufs.fsf@notabene.neil.brown.name>
-Sender: linux-kernel-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.com>
-Cc: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Mel Gorman <mgorman@suse.de>, David Rientjes <rientjes@google.com>, Ondrej Kozina <okozina@redhat.com>, Andrew Morton <akpm@linux-foundation.org>
+In-Reply-To: <alpine.LRH.2.02.1607270948040.1779@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: NeilBrown <neilb@suse.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Mel Gorman <mgorman@suse.de>, David Rientjes <rientjes@google.com>, Ondrej Kozina <okozina@redhat.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
-On Wed 27-07-16 13:43:35, NeilBrown wrote:
-> On Mon, Jul 25 2016, Michal Hocko wrote:
+On Wed 27-07-16 10:28:40, Mikulas Patocka wrote:
 > 
-> > On Sat 23-07-16 10:12:24, NeilBrown wrote:
-[...]
-> >> > My thinking was that throttle_vm_writeout is there to prevent from
-> >> > dirtying too many pages from the reclaim the context.  PF_LESS_THROTTLE
-> >> > is part of the writeout so throttling it on too many dirty pages is
-> >> > questionable (well we get some bias but that is not really reliable). It
-> >> > still makes sense to throttle when the backing device is congested
-> >> > because the writeout path wouldn't make much progress anyway and we also
-> >> > do not want to cycle through LRU lists too quickly in that case.
-> >> 
-> >> "dirtying ... from the reclaim context" ??? What does that mean?
-> >
-> > Say you would cause a swapout from the reclaim context. You would
-> > effectively dirty that anon page until it gets written down to the
-> > storage.
 > 
-> I should probably figure out how swap really works.  I have vague ideas
-> which are probably missing important details...
-> Isn't the first step that the page gets moved into the swap-cache - and
-> marked dirty I guess.  Then it gets written out and the page is marked
-> 'clean'.
-> Then further memory pressure might push it out of the cache, or an early
-> re-use would pull it back from the cache.
-> If so, then "dirtying in reclaim context" could also be described as
-> "moving into the swap cache" - yes?
-
-Yes that is basically correct
-
-> So should there be a limit on dirty
-> pages in the swap cache just like there is for dirty pages in any
-> filesystem (the max_dirty_ratio thing) ??
-> Maybe there is?
-
-There is no limit AFAIK. We are relying that the reclaim is throttled
-when necessary.
- 
-> >> The use of PF_LESS_THROTTLE in current_may_throttle() in vmscan.c is to
-> >> avoid a live-lock.  A key premise is that nfsd only allocates unbounded
-> >> memory when it is writing to the page cache.  So it only needs to be
-> >> throttled when the backing device it is writing to is congested.  It is
-> >> particularly important that it *doesn't* get throttled just because an
-> >> NFS backing device is congested, because nfsd might be trying to clear
-> >> that congestion.
-> >
-> > Thanks for the clarification. IIUC then removing throttle_vm_writeout
-> > for the nfsd writeout should be harmless as well, right?
+> On Wed, 27 Jul 2016, NeilBrown wrote:
 > 
-> Certainly shouldn't hurt from the perspective of nfsd.
+> > On Tue, Jul 26 2016, Mikulas Patocka wrote:
+> > 
+> > > On Sat, 23 Jul 2016, NeilBrown wrote:
+> > >
+> > >> "dirtying ... from the reclaim context" ??? What does that mean?
+> > >> According to
+> > >>   Commit: 26eecbf3543b ("[PATCH] vm: pageout throttling")
+> > >> From the history tree, the purpose of throttle_vm_writeout() is to
+> > >> limit the amount of memory that is concurrently under I/O.
+> > >> That seems strange to me because I thought it was the responsibility of
+> > >> each backing device to impose a limit - a maximum queue size of some
+> > >> sort.
+> > >
+> > > Device mapper doesn't impose any limit for in-flight bios.
+> > 
+> > I would suggest that it probably should. At least it should
+> > "set_wb_congested()" when the number of in-flight bios reaches some
+> > arbitrary threshold.
 > 
-> >> >> The purpose of that flag is to allow a thread to dirty a page-cache page
-> >> >> as part of cleaning another page-cache page.
-> >> >> So it makes sense for loop and sometimes for nfsd.  It would make sense
-> >> >> for dm-crypt if it was putting the encrypted version in the page cache.
-> >> >> But if dm-crypt is just allocating a transient page (which I think it
-> >> >> is), then a mempool should be sufficient (and we should make sure it is
-> >> >> sufficient) and access to an extra 10% (or whatever) of the page cache
-> >> >> isn't justified.
-> >> >
-> >> > If you think that PF_LESS_THROTTLE (ab)use in mempool_alloc is not
-> >> > appropriate then would a PF_MEMPOOL be any better?
-> >> 
-> >> Why a PF rather than a GFP flag?
-> >
-> > Well, short answer is that gfp masks are almost depleted.
+> If we set the device mapper device as congested, it can again trigger that 
+> mempool alloc throttling bug.
 > 
-> Really?  We have 26.
+> I.e. suppose that we swap to a dm-crypt device. The dm-crypt device 
+> becomes clogged and sets its state as congested. The underlying block 
+> device is not congested.
 > 
-> pagemap has a cute hack to store both GFP flags and other flag bits in
-> the one 32 it number per address_space.  'struct address_space' could
-> afford an extra 32 number I think.
+> The mempool_alloc function in the dm-crypt workqueue sets the 
+> PF_LESS_THROTTLE flag, and tries to allocate memory, but according to 
+> Michal's patches, processes with PF_LESS_THROTTLE may still get throttled.
 > 
-> radix_tree_root adds 3 'tag' flags to the gfp_mask.
-> There is 16bits of free space in radix_tree_node (between 'offset' and
-> 'count').  That space on the root node could store a record of which tags
-> are set anywhere.  Or would that extra memory de-ref be a killer?
+> So if we set the dm-crypt device as congested, it can incorrectly throttle 
+> the dm-crypt workqueue that does allocations of temporary pages and 
+> encryption.
+> 
+> I think that approach with PF_LESS_THROTTLE in mempool_alloc is incorrect 
+> and that mempool allocations should never be throttled.
 
-Yes these are reasons why adding new gfp flags is more complicated.
+I'm not really sure this is the right approach. If a particular mempool
+user cannot ever be throttled by the page allocator then it should
+perform GFP_NOWAIT. Even mempool allocations shouldn't allow reclaim to
+scan pages too quickly even when LRU lists are full of dirty pages. But
+as I've said that would restrict the success rates even under light page
+cache load. Throttling on the wait_iff_congested should be quite rare.
 
-> I think we'd end up with cleaner code if we removed the cute-hacks.  And
-> we'd be able to use 6 more GFP flags!!  (though I do wonder if we really
-> need all those 26).
-
-Well, maybe we are able to remove those hacks, I wouldn't definitely
-be opposed.  But right now I am not even convinced that the mempool
-specific gfp flags is the right way to go.
-
+Anyway do you see an excessive throttling with the patch posted
+http://lkml.kernel.org/r/20160725192344.GD2166@dhcp22.suse.cz ? Or from
+another side. Do you see an excessive number of dirty/writeback pages
+wrt. the dirty threshold or any other undesirable side effects?
 -- 
 Michal Hocko
 SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
