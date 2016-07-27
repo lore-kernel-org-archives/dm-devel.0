@@ -1,90 +1,71 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-mq and end_clone_request()
-Date: Wed, 27 Jul 2016 10:08:28 -0400
-Message-ID: <20160727140828.GA5692@redhat.com>
-References: <20160720140815.GA19045@redhat.com>
- <20160720142727.GA57399@redhat.com>
- <1ca6d31d-f175-9daa-9ddd-17d653851ceb@sandisk.com>
- <20160720183321.GA20223@redhat.com>
- <84d9dc64-0c10-ed1a-7bc1-e656874853a5@sandisk.com>
- <20160725175344.GA23000@redhat.com>
- <20160725212325.GA23961@redhat.com>
- <1490356d-2c0e-d94a-7a88-5e8bc89953ef@sandisk.com>
- <20160726011607.GA77078@redhat.com>
- <577bc6d5-9c78-b6d3-10f7-10626c0da516@sandisk.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [RFC PATCH 2/2] mm, mempool: do not throttle
+ PF_LESS_THROTTLE tasks
+Date: Wed, 27 Jul 2016 10:28:40 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1607270948040.1779@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1468831164-26621-1-git-send-email-mhocko@kernel.org> <1468831285-27242-1-git-send-email-mhocko@kernel.org> <1468831285-27242-2-git-send-email-mhocko@kernel.org> <87oa5q5abi.fsf@notabene.neil.brown.name> <20160722091558.GF794@dhcp22.suse.cz>
+ <878twt5i1j.fsf@notabene.neil.brown.name> <alpine.LRH.2.02.1607251730280.11852@file01.intranet.prod.int.rdu2.redhat.com> <87invr4tjm.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <577bc6d5-9c78-b6d3-10f7-10626c0da516@sandisk.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <87invr4tjm.fsf@notabene.neil.brown.name>
+Sender: linux-kernel-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>
+Cc: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, LKML <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Mel Gorman <mgorman@suse.de>, David Rientjes <rientjes@google.com>, Ondrej Kozina <okozina@redhat.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
-On Tue, Jul 26 2016 at  6:51pm -0400,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
 
-> On 07/25/2016 06:15 PM, Mike Snitzer wrote:
-> > Please try this patch to see if it fixes your issue, thanks.
-> > 
-> > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> > index 52baf8a..287caa7 100644
-> > --- a/drivers/md/dm-mpath.c
-> > +++ b/drivers/md/dm-mpath.c
-> > @@ -433,10 +433,17 @@ failed:
-> >   */
-> >  static int must_push_back(struct multipath *m)
-> >  {
-> > -	return (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) ||
-> > -		((test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) !=
-> > -		  test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags)) &&
-> > -		 dm_noflush_suspending(m->ti)));
-> > +	bool r;
-> > +	unsigned long flags;
-> > +
-> > +	spin_lock_irqsave(&m->lock, flags);
-> > +	r = (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) ||
-> > +	     ((test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) !=
-> > +	       test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags)) &&
-> > +	      dm_noflush_suspending(m->ti)));
-> > +	spin_unlock_irqrestore(&m->lock, flags);
-> > +
-> > +	return r;
-> >  }
-> >  
-> >  /*
->  
-> Hello Mike,
+
+On Wed, 27 Jul 2016, NeilBrown wrote:
+
+> On Tue, Jul 26 2016, Mikulas Patocka wrote:
 > 
-> Thank you for having made this patch available. Unfortunately even
-> with this patch applied I still see fio reporting I/O errors and the
-> following text still appears in the system log immediately before the
-> I/O errors are reported (due to debug statements I added in the device
-> mapper; mpath 254:0 and mpathbe refer to the same dm device):
+> > On Sat, 23 Jul 2016, NeilBrown wrote:
+> >
+> >> "dirtying ... from the reclaim context" ??? What does that mean?
+> >> According to
+> >>   Commit: 26eecbf3543b ("[PATCH] vm: pageout throttling")
+> >> From the history tree, the purpose of throttle_vm_writeout() is to
+> >> limit the amount of memory that is concurrently under I/O.
+> >> That seems strange to me because I thought it was the responsibility of
+> >> each backing device to impose a limit - a maximum queue size of some
+> >> sort.
+> >
+> > Device mapper doesn't impose any limit for in-flight bios.
 > 
-> Jul 26 15:40:37 ion-dev-ib-ini kernel: mpath 254:0: queue_if_no_path 0 -> 1
-> Jul 26 15:40:37 ion-dev-ib-ini kernel: executing DM ioctl DEV_SUSPEND on mpathbe
-> Jul 26 15:40:37 ion-dev-ib-ini kernel: mpath 254:0: queue_if_no_path 1 -> 0
+> I would suggest that it probably should. At least it should
+> "set_wb_congested()" when the number of in-flight bios reaches some
+> arbitrary threshold.
 
-This is all as expected.  Only question I have: is
-dm_noflush_suspending() false? -- I assume so given must_push_back() is
-returning false.
+If we set the device mapper device as congested, it can again trigger that 
+mempool alloc throttling bug.
 
-I'm struggling to appreciate why must_push_back() is only true if
-noflush is used.  Regardless of which type, if there are no paths and
-queue_if_no_path was configured (implied by current != saved) then we
-shouldn't be returning -EIO back up the stack.
+I.e. suppose that we swap to a dm-crypt device. The dm-crypt device 
+becomes clogged and sets its state as congested. The underlying block 
+device is not congested.
 
-> BTW, I have not yet been able to determine which user space code
-> triggers the DEV_SUSPEND ioctl. A condlog() call I had added just
-> above dm_simplecmd_flush(DM_DEVICE_SUSPEND, mapname, 0) call in
-> multipathd did not produce any output.
+The mempool_alloc function in the dm-crypt workqueue sets the 
+PF_LESS_THROTTLE flag, and tries to allocate memory, but according to 
+Michal's patches, processes with PF_LESS_THROTTLE may still get throttled.
 
-I need to dig into the multipath-tools userspace code more to be able to
-answer.  But I've cc'd Ben Marzinski explicitly to get his insight.
+So if we set the dm-crypt device as congested, it can incorrectly throttle 
+the dm-crypt workqueue that does allocations of temporary pages and 
+encryption.
 
-Curious if multipath-tools _always_ use the noflush variant of suspend?
-If not then we're setting ourselves up to return -EIO when we shouldn't.
+I think that approach with PF_LESS_THROTTLE in mempool_alloc is incorrect 
+and that mempool allocations should never be throttled.
 
-Mike
+> > I've made some patches that limit in-flight bios for device mapper in
+> > the past, but there were not integrated into upstream.
+> 
+> I second the motion to resurrect these.
+
+I uploaded those patches here:
+
+http://people.redhat.com/~mpatocka/patches/kernel/dm-limit-outstanding-bios/
+
+Mikulas
+
+> Thanks,
+> NeilBrown
+> 
