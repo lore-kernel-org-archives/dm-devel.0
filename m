@@ -1,114 +1,115 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [dm-devel] dm-mq and end_clone_request()
-Date: Wed, 27 Jul 2016 10:52:15 -0500
-Message-ID: <20160727155215.GA12197@octiron.msp.redhat.com>
-References: <20160720142727.GA57399@redhat.com>
- <1ca6d31d-f175-9daa-9ddd-17d653851ceb@sandisk.com>
- <20160720183321.GA20223@redhat.com>
- <84d9dc64-0c10-ed1a-7bc1-e656874853a5@sandisk.com>
- <20160725175344.GA23000@redhat.com>
- <20160725212325.GA23961@redhat.com>
- <1490356d-2c0e-d94a-7a88-5e8bc89953ef@sandisk.com>
- <20160726011607.GA77078@redhat.com>
- <577bc6d5-9c78-b6d3-10f7-10626c0da516@sandisk.com>
- <20160727140828.GA5692@redhat.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [dm-devel] [RFC PATCH 2/2] mm, mempool: do not throttle
+ PF_LESS_THROTTLE tasks
+Date: Wed, 27 Jul 2016 20:24:11 +0200
+Message-ID: <20160727182411.GE21859@dhcp22.suse.cz>
+References: <1468831164-26621-1-git-send-email-mhocko@kernel.org>
+ <1468831285-27242-1-git-send-email-mhocko@kernel.org>
+ <1468831285-27242-2-git-send-email-mhocko@kernel.org>
+ <87oa5q5abi.fsf@notabene.neil.brown.name>
+ <20160722091558.GF794@dhcp22.suse.cz>
+ <878twt5i1j.fsf@notabene.neil.brown.name>
+ <20160725083247.GD9401@dhcp22.suse.cz>
+ <87lh0n4ufs.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20160727140828.GA5692@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+In-Reply-To: <87lh0n4ufs.fsf@notabene.neil.brown.name>
+Sender: linux-kernel-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>
+Cc: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Mel Gorman <mgorman@suse.de>, David Rientjes <rientjes@google.com>, Ondrej Kozina <okozina@redhat.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
-On Wed, Jul 27, 2016 at 10:08:28AM -0400, Mike Snitzer wrote:
-> On Tue, Jul 26 2016 at  6:51pm -0400,
-> Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+On Wed 27-07-16 13:43:35, NeilBrown wrote:
+> On Mon, Jul 25 2016, Michal Hocko wrote:
 > 
-> > On 07/25/2016 06:15 PM, Mike Snitzer wrote:
-> > > Please try this patch to see if it fixes your issue, thanks.
-> > > 
-> > > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> > > index 52baf8a..287caa7 100644
-> > > --- a/drivers/md/dm-mpath.c
-> > > +++ b/drivers/md/dm-mpath.c
-> > > @@ -433,10 +433,17 @@ failed:
-> > >   */
-> > >  static int must_push_back(struct multipath *m)
-> > >  {
-> > > -	return (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) ||
-> > > -		((test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) !=
-> > > -		  test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags)) &&
-> > > -		 dm_noflush_suspending(m->ti)));
-> > > +	bool r;
-> > > +	unsigned long flags;
-> > > +
-> > > +	spin_lock_irqsave(&m->lock, flags);
-> > > +	r = (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) ||
-> > > +	     ((test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) !=
-> > > +	       test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags)) &&
-> > > +	      dm_noflush_suspending(m->ti)));
-> > > +	spin_unlock_irqrestore(&m->lock, flags);
-> > > +
-> > > +	return r;
-> > >  }
-> > >  
-> > >  /*
-> >  
-> > Hello Mike,
-> > 
-> > Thank you for having made this patch available. Unfortunately even
-> > with this patch applied I still see fio reporting I/O errors and the
-> > following text still appears in the system log immediately before the
-> > I/O errors are reported (due to debug statements I added in the device
-> > mapper; mpath 254:0 and mpathbe refer to the same dm device):
-> > 
-> > Jul 26 15:40:37 ion-dev-ib-ini kernel: mpath 254:0: queue_if_no_path 0 -> 1
-> > Jul 26 15:40:37 ion-dev-ib-ini kernel: executing DM ioctl DEV_SUSPEND on mpathbe
-> > Jul 26 15:40:37 ion-dev-ib-ini kernel: mpath 254:0: queue_if_no_path 1 -> 0
+> > On Sat 23-07-16 10:12:24, NeilBrown wrote:
+[...]
+> >> > My thinking was that throttle_vm_writeout is there to prevent from
+> >> > dirtying too many pages from the reclaim the context.  PF_LESS_THROTTLE
+> >> > is part of the writeout so throttling it on too many dirty pages is
+> >> > questionable (well we get some bias but that is not really reliable). It
+> >> > still makes sense to throttle when the backing device is congested
+> >> > because the writeout path wouldn't make much progress anyway and we also
+> >> > do not want to cycle through LRU lists too quickly in that case.
+> >> 
+> >> "dirtying ... from the reclaim context" ??? What does that mean?
+> >
+> > Say you would cause a swapout from the reclaim context. You would
+> > effectively dirty that anon page until it gets written down to the
+> > storage.
 > 
-> This is all as expected.  Only question I have: is
-> dm_noflush_suspending() false? -- I assume so given must_push_back() is
-> returning false.
-> 
-> I'm struggling to appreciate why must_push_back() is only true if
-> noflush is used.  Regardless of which type, if there are no paths and
-> queue_if_no_path was configured (implied by current != saved) then we
-> shouldn't be returning -EIO back up the stack.
-> 
-> > BTW, I have not yet been able to determine which user space code
-> > triggers the DEV_SUSPEND ioctl. A condlog() call I had added just
-> > above dm_simplecmd_flush(DM_DEVICE_SUSPEND, mapname, 0) call in
-> > multipathd did not produce any output.
+> I should probably figure out how swap really works.  I have vague ideas
+> which are probably missing important details...
+> Isn't the first step that the page gets moved into the swap-cache - and
+> marked dirty I guess.  Then it gets written out and the page is marked
+> 'clean'.
+> Then further memory pressure might push it out of the cache, or an early
+> re-use would pull it back from the cache.
+> If so, then "dirtying in reclaim context" could also be described as
+> "moving into the swap cache" - yes?
 
-if you look in drivers/md/dm-ioctl.c at do_resume(), device mapper
-internally does a suspend when you call resume with a new table loaded.
-That's when these suspends are happening.
+Yes that is basically correct
 
-In the userspace tools, this happens in the DM_DEVICE_RESUME calls after
-dm_addmap_reload(), which loads the new table.  These all happen in the
-domap() function.
+> So should there be a limit on dirty
+> pages in the swap cache just like there is for dirty pages in any
+> filesystem (the max_dirty_ratio thing) ??
+> Maybe there is?
+
+There is no limit AFAIK. We are relying that the reclaim is throttled
+when necessary.
  
-> I need to dig into the multipath-tools userspace code more to be able to
-> answer.  But I've cc'd Ben Marzinski explicitly to get his insight.
+> >> The use of PF_LESS_THROTTLE in current_may_throttle() in vmscan.c is to
+> >> avoid a live-lock.  A key premise is that nfsd only allocates unbounded
+> >> memory when it is writing to the page cache.  So it only needs to be
+> >> throttled when the backing device it is writing to is congested.  It is
+> >> particularly important that it *doesn't* get throttled just because an
+> >> NFS backing device is congested, because nfsd might be trying to clear
+> >> that congestion.
+> >
+> > Thanks for the clarification. IIUC then removing throttle_vm_writeout
+> > for the nfsd writeout should be harmless as well, right?
 > 
-> Curious if multipath-tools _always_ use the noflush variant of suspend?
-> If not then we're setting ourselves up to return -EIO when we shouldn't.
-
-There is only one time when we don't use noflush. That's when we resize
-the table, and that's because we could otherwise have IOs that are past
-the end of the device. It's been a known issue for a while now that you
-cannot resize a multipath device with no working paths. Or (to say it in
-a way that doesn't assume that people are stupid) if you lose all of
-your paths while resizing a multipath device, IOs will fail. I've never
-heard of anyone pushing back on that limitation.
-
--Ben
-
-> Mike
+> Certainly shouldn't hurt from the perspective of nfsd.
 > 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> >> >> The purpose of that flag is to allow a thread to dirty a page-cache page
+> >> >> as part of cleaning another page-cache page.
+> >> >> So it makes sense for loop and sometimes for nfsd.  It would make sense
+> >> >> for dm-crypt if it was putting the encrypted version in the page cache.
+> >> >> But if dm-crypt is just allocating a transient page (which I think it
+> >> >> is), then a mempool should be sufficient (and we should make sure it is
+> >> >> sufficient) and access to an extra 10% (or whatever) of the page cache
+> >> >> isn't justified.
+> >> >
+> >> > If you think that PF_LESS_THROTTLE (ab)use in mempool_alloc is not
+> >> > appropriate then would a PF_MEMPOOL be any better?
+> >> 
+> >> Why a PF rather than a GFP flag?
+> >
+> > Well, short answer is that gfp masks are almost depleted.
+> 
+> Really?  We have 26.
+> 
+> pagemap has a cute hack to store both GFP flags and other flag bits in
+> the one 32 it number per address_space.  'struct address_space' could
+> afford an extra 32 number I think.
+> 
+> radix_tree_root adds 3 'tag' flags to the gfp_mask.
+> There is 16bits of free space in radix_tree_node (between 'offset' and
+> 'count').  That space on the root node could store a record of which tags
+> are set anywhere.  Or would that extra memory de-ref be a killer?
+
+Yes these are reasons why adding new gfp flags is more complicated.
+
+> I think we'd end up with cleaner code if we removed the cute-hacks.  And
+> we'd be able to use 6 more GFP flags!!  (though I do wonder if we really
+> need all those 26).
+
+Well, maybe we are able to remove those hacks, I wouldn't definitely
+be opposed.  But right now I am not even convinced that the mempool
+specific gfp flags is the right way to go.
+
+-- 
+Michal Hocko
+SUSE Labs
