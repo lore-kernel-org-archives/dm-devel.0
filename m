@@ -1,15 +1,14 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH 7/7] multipathd: Fix a use-after-free
-Date: Thu, 28 Jul 2016 06:57:20 -0700
-Message-ID: <869a0286-9951-5d4a-256a-94df13c5bbe7@sandisk.com>
-References: <bbd91f1e-a995-29d7-03cd-3e779249ec15@sandisk.com>
-	<86fd1f05-b386-6d80-e537-ba8c78d23268@sandisk.com>
-	<0d1da974-b53e-80fb-a533-b31cb558a6ca@suse.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 1/2] multipath-tools: change default failback
+ from manual to immediate
+Date: Thu, 28 Jul 2016 16:03:34 +0200
+Message-ID: <c3922f2d-d524-4700-e890-902a22c89491@suse.de>
+References: <1468271522-3052-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <0d1da974-b53e-80fb-a533-b31cb558a6ca@suse.de>
+In-Reply-To: <1468271522-3052-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,38 +18,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 07/28/16 06:45, Hannes Reinecke wrote:
-> On 07/27/2016 11:14 PM, Bart Van Assche wrote:
->> diff --git a/multipathd/main.c b/multipathd/main.c
->> index f4c8245..6a4135c 100644
->> --- a/multipathd/main.c
->> +++ b/multipathd/main.c
->> @@ -2376,9 +2376,11 @@ child (void * param)
->>  	}
->>
->>  	lock(vecs->lock);
->> +	conf = get_multipath_config();
->>  	if (conf->queue_without_daemon == QUE_NO_DAEMON_OFF)
->>  		vector_foreach_slot(vecs->mpvec, mpp, i)
->>  			dm_queue_if_no_path(mpp->alias, 0);
->> +	put_multipath_config(conf);
->>  	remove_maps_and_stop_waiters(vecs);
->>  	unlock(vecs->lock);
->>
->>
-> This one is already included in my patch 'multipathd: Correctly
-> invalidate configuration during shutdown', which also contains some
-> additional fixes for RCU config access.
->
-> I would prefer taking that instead of this patch.
+On 07/11/2016 11:12 PM, Xose Vazquez Perez wrote:
+> Default value is: manual
+>       1                 .pgfailback    =3D 15,
+>       2                 .pgfailback    =3D 30,
+>      24                 .pgfailback    =3D FAILBACK_UNDEF,
+>      50                 .pgfailback    =3D -FAILBACK_IMMEDIATE,
+> =
 
-Hello Hannes,
+> manual is not used by any device.
+> =
 
-You are right. I had not yet noticed that your patch includes the above 
-change. Christophe, please drop this patch.
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  libmultipath/defaults.h    |  2 +-
+>  libmultipath/hwtable.c     | 50 ----------------------------------------=
+------
+>  multipath/multipath.conf.5 |  2 +-
+>  3 files changed, 2 insertions(+), 52 deletions(-)
+> =
 
-Bart.
+Please revert.
+
+'immediate' fallback only makes sense if the device has a working
+prioritizer _and_ supports a 'preferred path'.
+None of which can be assumed for an unknown device, so this patch
+will break automatic configuration.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=FCrnberg)
