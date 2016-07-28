@@ -1,14 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
 Subject: Re: [PATCH 7/7] multipathd: Fix a use-after-free
-Date: Thu, 28 Jul 2016 15:45:19 +0200
-Message-ID: <0d1da974-b53e-80fb-a533-b31cb558a6ca@suse.de>
+Date: Thu, 28 Jul 2016 06:57:20 -0700
+Message-ID: <869a0286-9951-5d4a-256a-94df13c5bbe7@sandisk.com>
 References: <bbd91f1e-a995-29d7-03cd-3e779249ec15@sandisk.com>
 	<86fd1f05-b386-6d80-e537-ba8c78d23268@sandisk.com>
+	<0d1da974-b53e-80fb-a533-b31cb558a6ca@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <86fd1f05-b386-6d80-e537-ba8c78d23268@sandisk.com>
+In-Reply-To: <0d1da974-b53e-80fb-a533-b31cb558a6ca@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,45 +19,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDcvMjcvMjAxNiAxMToxNCBQTSwgQmFydCBWYW4gQXNzY2hlIHdyb3RlOgo+IEF2b2lkIHRo
-YXQgVmFsZ3JpbmQgcmVwb3J0cyB0aGUgZm9sbG93aW5nOgo+IAo+IEludmFsaWQgcmVhZCBvZiBz
-aXplIDQKPiAgICBhdCAweDQwQzdBRTogY2hpbGQgKG1haW4uYzoyMzgyKQo+ICAgIGJ5IDB4NDBE
-MkRDOiBtYWluIChtYWluLmM6MjYwOCkKPiAgQWRkcmVzcyAweDdlZDI1NWMgaXMgNzYgYnl0ZXMg
-aW5zaWRlIGEgYmxvY2sgb2Ygc2l6ZSA0MTYgZnJlZSdkCj4gICAgYXQgMHg0QzJFMzhCOiBmcmVl
-IChpbiAvdXNyL2xpYjY0L3ZhbGdyaW5kL3ZncHJlbG9hZF9tZW1jaGVjay1hbWQ2NC1saW51eC5z
-bykKPiAgICBieSAweDVERDM3RUQ6IGZyZWVfY29uZmlnIChjb25maWcuYzo1MzkpCj4gICAgYnkg
-MHg0MEI3NkM6IHJjdV9mcmVlX2NvbmZpZyAobWFpbi5jOjE5ODcpCj4gICAgYnkgMHg0RTNDMUZG
-OiBjYWxsX3JjdV90aHJlYWQgKHVyY3UtY2FsbC1yY3UtaW1wbC5oOjMzMikKPiAgICBieSAweDUw
-NDc0NzM6IHN0YXJ0X3RocmVhZCAocHRocmVhZF9jcmVhdGUuYzozMzMpCj4gICAgYnkgMHg2NzFD
-M0VDOiBjbG9uZSAoY2xvbmUuUzoxMDkpCj4gIEJsb2NrIHdhcyBhbGxvYydkIGF0Cj4gICAgYXQg
-MHg0QzJEMTJGOiBtYWxsb2MgKGluIC91c3IvbGliNjQvdmFsZ3JpbmQvdmdwcmVsb2FkX21lbWNo
-ZWNrLWFtZDY0LWxpbnV4LnNvKQo+ICAgIGJ5IDB4NURDN0Q5QjogemFsbG9jIChtZW1vcnkuYzo0
-MSkKPiAgICBieSAweDVERDM0RDc6IGFsbG9jX2NvbmZpZyAoY29uZmlnLmM6NDcyKQo+ICAgIGJ5
-IDB4NUREM0E4NzogbG9hZF9jb25maWcgKGNvbmZpZy5jOjU4MikKPiAgICBieSAweDQwQkY5ODog
-Y2hpbGQgKG1haW4uYzoyMjQ2KQo+ICAgIGJ5IDB4NDBEMkRDOiBtYWluIChtYWluLmM6MjYwOCkK
-PiAKPiBTaWduZWQtb2ZmLWJ5OiBCYXJ0IFZhbiBBc3NjaGUgPGJhcnQudmFuYXNzY2hlQHNhbmRp
-c2suY29tPgo+IC0tLQo+ICBtdWx0aXBhdGhkL21haW4uYyB8IDIgKysKPiAgMSBmaWxlIGNoYW5n
-ZWQsIDIgaW5zZXJ0aW9ucygrKQo+IAo+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL21haW4uYyBi
-L211bHRpcGF0aGQvbWFpbi5jCj4gaW5kZXggZjRjODI0NS4uNmE0MTM1YyAxMDA2NDQKPiAtLS0g
-YS9tdWx0aXBhdGhkL21haW4uYwo+ICsrKyBiL211bHRpcGF0aGQvbWFpbi5jCj4gQEAgLTIzNzYs
-OSArMjM3NiwxMSBAQCBjaGlsZCAodm9pZCAqIHBhcmFtKQo+ICAJfQo+ICAKPiAgCWxvY2sodmVj
-cy0+bG9jayk7Cj4gKwljb25mID0gZ2V0X211bHRpcGF0aF9jb25maWcoKTsKPiAgCWlmIChjb25m
-LT5xdWV1ZV93aXRob3V0X2RhZW1vbiA9PSBRVUVfTk9fREFFTU9OX09GRikKPiAgCQl2ZWN0b3Jf
-Zm9yZWFjaF9zbG90KHZlY3MtPm1wdmVjLCBtcHAsIGkpCj4gIAkJCWRtX3F1ZXVlX2lmX25vX3Bh
-dGgobXBwLT5hbGlhcywgMCk7Cj4gKwlwdXRfbXVsdGlwYXRoX2NvbmZpZyhjb25mKTsKPiAgCXJl
-bW92ZV9tYXBzX2FuZF9zdG9wX3dhaXRlcnModmVjcyk7Cj4gIAl1bmxvY2sodmVjcy0+bG9jayk7
-Cj4gIAo+IApUaGlzIG9uZSBpcyBhbHJlYWR5IGluY2x1ZGVkIGluIG15IHBhdGNoICdtdWx0aXBh
-dGhkOiBDb3JyZWN0bHkKaW52YWxpZGF0ZSBjb25maWd1cmF0aW9uIGR1cmluZyBzaHV0ZG93bics
-IHdoaWNoIGFsc28gY29udGFpbnMgc29tZQphZGRpdGlvbmFsIGZpeGVzIGZvciBSQ1UgY29uZmln
-IGFjY2Vzcy4KCkkgd291bGQgcHJlZmVyIHRha2luZyB0aGF0IGluc3RlYWQgb2YgdGhpcyBwYXRj
-aC4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgVGVhbWxlYWQg
-U3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkx
-MSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJl
-cmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxkLCBELiBVcG1hbnl1
-LCBHLiBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5n
-IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
-bGlzdGluZm8vZG0tZGV2ZWw=
+On 07/28/16 06:45, Hannes Reinecke wrote:
+> On 07/27/2016 11:14 PM, Bart Van Assche wrote:
+>> diff --git a/multipathd/main.c b/multipathd/main.c
+>> index f4c8245..6a4135c 100644
+>> --- a/multipathd/main.c
+>> +++ b/multipathd/main.c
+>> @@ -2376,9 +2376,11 @@ child (void * param)
+>>  	}
+>>
+>>  	lock(vecs->lock);
+>> +	conf = get_multipath_config();
+>>  	if (conf->queue_without_daemon == QUE_NO_DAEMON_OFF)
+>>  		vector_foreach_slot(vecs->mpvec, mpp, i)
+>>  			dm_queue_if_no_path(mpp->alias, 0);
+>> +	put_multipath_config(conf);
+>>  	remove_maps_and_stop_waiters(vecs);
+>>  	unlock(vecs->lock);
+>>
+>>
+> This one is already included in my patch 'multipathd: Correctly
+> invalidate configuration during shutdown', which also contains some
+> additional fixes for RCU config access.
+>
+> I would prefer taking that instead of this patch.
+
+Hello Hannes,
+
+You are right. I had not yet noticed that your patch includes the above 
+change. Christophe, please drop this patch.
+
+Bart.
