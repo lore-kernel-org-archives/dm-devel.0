@@ -1,14 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 1/2] multipath-tools: change default failback
- from manual to immediate
-Date: Thu, 28 Jul 2016 16:03:34 +0200
-Message-ID: <c3922f2d-d524-4700-e890-902a22c89491@suse.de>
+Subject: Re: [PATCH 2/2] multipath-tools: change default
+ path_grouping_policy from failover to group_by_prio
+Date: Thu, 28 Jul 2016 16:06:27 +0200
+Message-ID: <76957be3-8db8-7863-7152-b67c18194c36@suse.de>
 References: <1468271522-3052-1-git-send-email-xose.vazquez@gmail.com>
+	<1468271522-3052-2-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1468271522-3052-1-git-send-email-xose.vazquez@gmail.com>
+In-Reply-To: <1468271522-3052-2-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,14 +24,14 @@ Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 On 07/11/2016 11:12 PM, Xose Vazquez Perez wrote:
-> Default value is: manual
->       1                 .pgfailback    =3D 15,
->       2                 .pgfailback    =3D 30,
->      24                 .pgfailback    =3D FAILBACK_UNDEF,
->      50                 .pgfailback    =3D -FAILBACK_IMMEDIATE,
+> Default value is: failover
+>       5                 .pgpolicy      =3D GROUP_BY_SERIAL,
+>      23                 .pgpolicy      =3D MULTIBUS,
+>      48                 .pgpolicy      =3D GROUP_BY_PRIO,
 > =
 
-> manual is not used by any device.
+> failover is only used by 1 device:
+> IBM/3303 NVDISK
 > =
 
 > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
@@ -38,18 +39,20 @@ On 07/11/2016 11:12 PM, Xose Vazquez Perez wrote:
 > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 > ---
 >  libmultipath/defaults.h    |  2 +-
->  libmultipath/hwtable.c     | 50 ----------------------------------------=
+>  libmultipath/hwtable.c     | 49 +---------------------------------------=
 ------
 >  multipath/multipath.conf.5 |  2 +-
->  3 files changed, 2 insertions(+), 52 deletions(-)
+>  3 files changed, 3 insertions(+), 50 deletions(-)
 > =
 
-Please revert.
+Please reconsider.
 
-'immediate' fallback only makes sense if the device has a working
-prioritizer _and_ supports a 'preferred path'.
-None of which can be assumed for an unknown device, so this patch
-will break automatic configuration.
+'group_by_prio' requires a working prioritizer, which we cannot assume
+for an unknown device.
+
+To handle this situation properly we should be using 'group_by_prio' as
+the default is a prioritizer is found and switch to 'failover' for all
+other cases.
 
 Cheers,
 
