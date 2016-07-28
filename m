@@ -1,91 +1,62 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-mq and end_clone_request()
-Date: Thu, 28 Jul 2016 09:33:46 -0400
-Message-ID: <20160728133346.GA12272@redhat.com>
-References: <20160720142727.GA57399@redhat.com>
- <1ca6d31d-f175-9daa-9ddd-17d653851ceb@sandisk.com>
- <20160720183321.GA20223@redhat.com>
- <84d9dc64-0c10-ed1a-7bc1-e656874853a5@sandisk.com>
- <20160725175344.GA23000@redhat.com>
- <20160725212325.GA23961@redhat.com>
- <1490356d-2c0e-d94a-7a88-5e8bc89953ef@sandisk.com>
- <20160726011607.GA77078@redhat.com>
- <20160727200939.GA82654@redhat.com>
- <dd513a39-eb62-cc3c-d214-e4eca5e65a4e@sandisk.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 7/7] multipathd: Fix a use-after-free
+Date: Thu, 28 Jul 2016 15:45:19 +0200
+Message-ID: <0d1da974-b53e-80fb-a533-b31cb558a6ca@suse.de>
+References: <bbd91f1e-a995-29d7-03cd-3e779249ec15@sandisk.com>
+	<86fd1f05-b386-6d80-e537-ba8c78d23268@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <dd513a39-eb62-cc3c-d214-e4eca5e65a4e@sandisk.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <86fd1f05-b386-6d80-e537-ba8c78d23268@sandisk.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Jul 27 2016 at  7:05pm -0400,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
-
-> On 07/27/2016 01:09 PM, Mike Snitzer wrote:
-> > In addition to the above patch, please apply this patch and retest your
-> >4.7 kernel:
-> >
-> >diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> >index 287caa7..16583c1 100644
-> >--- a/drivers/md/dm-mpath.c
-> >+++ b/drivers/md/dm-mpath.c
-> >@@ -1416,12 +1416,14 @@ static void multipath_postsuspend(struct dm_target *ti)
-> > static void multipath_resume(struct dm_target *ti)
-> > {
-> > 	struct multipath *m = ti->private;
-> >+	unsigned long flags;
-> >
-> >+	spin_lock_irqsave(&m->lock, flags);
-> > 	if (test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags))
-> > 		set_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
-> > 	else
-> > 		clear_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
-> >-	smp_mb__after_atomic();
-> >+	spin_unlock_irqrestore(&m->lock, flags);
-> > }
-> >
-> > /*
-> 
-> Hello Mike,
-> 
-> Thanks again for having made this patch available. I will test it as
-> soon as I have the time. BTW, in the meantime I ran a few tests with
-> DM_MQ_DEFAULT=n since until now I ran all tests with
-> DM_MQ_DEFAULT=y. The result of these tests is as follows:
-> * v4.6.0, v4.6.5 and v4.7.0 with DM_MQ_DEFAULT=y: first simulated
-> path removal triggers I/O errors.
-> * v4.6.4, v4.6.5 and v4.7.0 with DM_MQ_DEFAULT=n: test passes more
-> than 100 iterations.
-
-I think this may point to an SRP issue then.  Is the synthetic "cable
-pull" (by writing to /sys/class/srp_remote_ports/port-*/delete)
-representitive of what actually happens if a cable is physically pulled?
-
-Or is yur synthetic method hitting the device way harder than would
-happen with an actual production fault?
-
-Again, there hasn't been any report of failures (EIO or otherwise) with
-extensive scsi-mq and dm-mq testing on a larger FC testbed.
-
-> I have not yet run any tests with kernel v4.5.x because in the test
-> I ran the ib_srp and ib_srpt drivers are loaded on the same system
-> and because I need five v4.7 LIO patches to run this test pass but
-> unfortunately these patches do not apply cleanly on the v4.5.x code
-> base.
-> 
-> Please let me know if you need more information.
-
-Can the target core be made to use SRP in loopback (local test machine)
-mode?  The mptest harness currently defaults to using tcmloop.  Would be
-great if I could somehow exercise the SRP code without needing a
-fullblown IB setup.
-
-But if there isn't a way to achieve that test coverage I can
-probably/hopefully get access to a subset of a larger IB/SRP testbed.
-
-Please advise, thanks.
-Mike
+T24gMDcvMjcvMjAxNiAxMToxNCBQTSwgQmFydCBWYW4gQXNzY2hlIHdyb3RlOgo+IEF2b2lkIHRo
+YXQgVmFsZ3JpbmQgcmVwb3J0cyB0aGUgZm9sbG93aW5nOgo+IAo+IEludmFsaWQgcmVhZCBvZiBz
+aXplIDQKPiAgICBhdCAweDQwQzdBRTogY2hpbGQgKG1haW4uYzoyMzgyKQo+ICAgIGJ5IDB4NDBE
+MkRDOiBtYWluIChtYWluLmM6MjYwOCkKPiAgQWRkcmVzcyAweDdlZDI1NWMgaXMgNzYgYnl0ZXMg
+aW5zaWRlIGEgYmxvY2sgb2Ygc2l6ZSA0MTYgZnJlZSdkCj4gICAgYXQgMHg0QzJFMzhCOiBmcmVl
+IChpbiAvdXNyL2xpYjY0L3ZhbGdyaW5kL3ZncHJlbG9hZF9tZW1jaGVjay1hbWQ2NC1saW51eC5z
+bykKPiAgICBieSAweDVERDM3RUQ6IGZyZWVfY29uZmlnIChjb25maWcuYzo1MzkpCj4gICAgYnkg
+MHg0MEI3NkM6IHJjdV9mcmVlX2NvbmZpZyAobWFpbi5jOjE5ODcpCj4gICAgYnkgMHg0RTNDMUZG
+OiBjYWxsX3JjdV90aHJlYWQgKHVyY3UtY2FsbC1yY3UtaW1wbC5oOjMzMikKPiAgICBieSAweDUw
+NDc0NzM6IHN0YXJ0X3RocmVhZCAocHRocmVhZF9jcmVhdGUuYzozMzMpCj4gICAgYnkgMHg2NzFD
+M0VDOiBjbG9uZSAoY2xvbmUuUzoxMDkpCj4gIEJsb2NrIHdhcyBhbGxvYydkIGF0Cj4gICAgYXQg
+MHg0QzJEMTJGOiBtYWxsb2MgKGluIC91c3IvbGliNjQvdmFsZ3JpbmQvdmdwcmVsb2FkX21lbWNo
+ZWNrLWFtZDY0LWxpbnV4LnNvKQo+ICAgIGJ5IDB4NURDN0Q5QjogemFsbG9jIChtZW1vcnkuYzo0
+MSkKPiAgICBieSAweDVERDM0RDc6IGFsbG9jX2NvbmZpZyAoY29uZmlnLmM6NDcyKQo+ICAgIGJ5
+IDB4NUREM0E4NzogbG9hZF9jb25maWcgKGNvbmZpZy5jOjU4MikKPiAgICBieSAweDQwQkY5ODog
+Y2hpbGQgKG1haW4uYzoyMjQ2KQo+ICAgIGJ5IDB4NDBEMkRDOiBtYWluIChtYWluLmM6MjYwOCkK
+PiAKPiBTaWduZWQtb2ZmLWJ5OiBCYXJ0IFZhbiBBc3NjaGUgPGJhcnQudmFuYXNzY2hlQHNhbmRp
+c2suY29tPgo+IC0tLQo+ICBtdWx0aXBhdGhkL21haW4uYyB8IDIgKysKPiAgMSBmaWxlIGNoYW5n
+ZWQsIDIgaW5zZXJ0aW9ucygrKQo+IAo+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL21haW4uYyBi
+L211bHRpcGF0aGQvbWFpbi5jCj4gaW5kZXggZjRjODI0NS4uNmE0MTM1YyAxMDA2NDQKPiAtLS0g
+YS9tdWx0aXBhdGhkL21haW4uYwo+ICsrKyBiL211bHRpcGF0aGQvbWFpbi5jCj4gQEAgLTIzNzYs
+OSArMjM3NiwxMSBAQCBjaGlsZCAodm9pZCAqIHBhcmFtKQo+ICAJfQo+ICAKPiAgCWxvY2sodmVj
+cy0+bG9jayk7Cj4gKwljb25mID0gZ2V0X211bHRpcGF0aF9jb25maWcoKTsKPiAgCWlmIChjb25m
+LT5xdWV1ZV93aXRob3V0X2RhZW1vbiA9PSBRVUVfTk9fREFFTU9OX09GRikKPiAgCQl2ZWN0b3Jf
+Zm9yZWFjaF9zbG90KHZlY3MtPm1wdmVjLCBtcHAsIGkpCj4gIAkJCWRtX3F1ZXVlX2lmX25vX3Bh
+dGgobXBwLT5hbGlhcywgMCk7Cj4gKwlwdXRfbXVsdGlwYXRoX2NvbmZpZyhjb25mKTsKPiAgCXJl
+bW92ZV9tYXBzX2FuZF9zdG9wX3dhaXRlcnModmVjcyk7Cj4gIAl1bmxvY2sodmVjcy0+bG9jayk7
+Cj4gIAo+IApUaGlzIG9uZSBpcyBhbHJlYWR5IGluY2x1ZGVkIGluIG15IHBhdGNoICdtdWx0aXBh
+dGhkOiBDb3JyZWN0bHkKaW52YWxpZGF0ZSBjb25maWd1cmF0aW9uIGR1cmluZyBzaHV0ZG93bics
+IHdoaWNoIGFsc28gY29udGFpbnMgc29tZQphZGRpdGlvbmFsIGZpeGVzIGZvciBSQ1UgY29uZmln
+IGFjY2Vzcy4KCkkgd291bGQgcHJlZmVyIHRha2luZyB0aGF0IGluc3RlYWQgb2YgdGhpcyBwYXRj
+aC4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgVGVhbWxlYWQg
+U3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkx
+MSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJl
+cmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxkLCBELiBVcG1hbnl1
+LCBHLiBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5n
+IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
+bGlzdGluZm8vZG0tZGV2ZWw=
