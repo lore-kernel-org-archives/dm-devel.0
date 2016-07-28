@@ -1,13 +1,16 @@
-From: "Milan P. Gandhi" <mgandhi@redhat.com>
-Subject: [Patch] multipath-tools: Check if multipathd is running
- or not and print a warning
-Date: Thu, 28 Jul 2016 17:18:02 +0530
-Message-ID: <ebce9048-140b-b217-6438-8f2370026cc8@redhat.com>
-Reply-To: mgandhi@redhat.com
+From: Marian Csontos <mcsontos@redhat.com>
+Subject: Re: During systemd/udev,
+ device-mapper trying to work with non-LVM volumes
+Date: Thu, 28 Jul 2016 15:13:32 +0200
+Message-ID: <a0ddfe76-9f37-d6d8-6b35-9533b5641d6f@redhat.com>
+References: <CA+X5Wn5tbL02XpG-JMvZ4-Sdg+sv=yymD1s6Afboag59LqD94Q@mail.gmail.com>
+	<4d36f133-5e8f-3e89-9038-5268b7b6f770@redhat.com>
+	<CA+X5Wn5nZjyC2qk7yDYkMH+LX6kznjoEcubcMjC7tgN+k5vfbw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CA+X5Wn5nZjyC2qk7yDYkMH+LX6kznjoEcubcMjC7tgN+k5vfbw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,126 +20,128 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: james harvey <jamespharvey20@gmail.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+On 07/28/2016 03:33 AM, james harvey wrote:
+> On Wed, Jul 27, 2016 at 2:49 PM, Marian Csontos <mcsontos@redhat.com> wrote:
+>> On 07/23/2016 01:14 AM, james harvey wrote:
+>>>
+>>> If I understand what's going on here, I think device-mapper is trying
+>>> to work with two volumes that don't involve LVM, causing the errors.
+>>
+>>
+>> If I understand correctly, these volumes DO involve LVM.
+>>
+>> It is not LV on top of your BTRFS volumes, but your BTRFS volumes are on top
+>> of LVM.
+>
+> I do have some BTRFS volumes on top of LVM, including my 2 root
+> volumes, but my 2 boot partitions don't involve LVM.  They're raw disk
+> partitions - MD RAID 1 - BTRFS.
+>
+> The kernel error references "table: 253:21" and "table: 253:22".
+> These entries are not referred to by running dmsetup.  If these
+> correspond to dm-21 and dm-22, those are the boot volumes that don't
+> involve LVM at all.
+>
+>> Using BTRFS with thin-shapshots is not a good idea, especially, if you have
+>> multiple snapshots of btrfs' underlying device active.
+>>
+>> Why are you usingn BTRFS on top of thin-pool?
+>> BTRFS does have snapshots and IMHO you should pick either BTRFS or
+>> thin-pool.
+>
+> I'm not using thin-snapshots, just the thin-provisioning feature.  Is
+> running BTRFS in that scenario still a bad situation?  Why's that?
+> I'm going to be using a lot of virtual machines, which is my main
+> reason for wanting thin-provisioning.
+>
+> I'm only using btrfs snapshots.
+>
+>>> Is this a device-mapper bug?  A udev bug?  Something I have configured
+>>> wrong?
+>>
+>> Hard to say...
+>>
+>> Which distribution?
+>> Kernel, lvm version?
+>
+> Sorry for not mentioning.  Arch, kernel 4.6.4, lvm 2.02.161, device
+> mapper 1.02.131, thin-pool 1.18.0
+>
+>> Ideally run `lvmdump -m` and post output, please.
+>
+> The number of kernel errors during boot that I'm getting seems to be
+> random.  (Probably some type of race condition?)  My original post
+> happened to be that it was using the ones not using LVM, but sometimes
+> it's doing it on LVM backed volumes too.  Occasionally it gives no
+> kernel errors.
+>
+> On this boot, I have these errors:
+>
+> ==========
+> [    3.319387] device-mapper: table: 253:5: thin: Unable to activate
+> thin device while pool is suspended
+> [    3.394258] device-mapper: table: 253:6: thin: Unable to activate
+> thin device while pool is suspended
+> [    3.632259] device-mapper: table: 253:13: thin: Unable to activate
+> thin device while pool is suspended
+> [    3.698752] device-mapper: table: 253:14: thin: Unable to activate
+> thin device while pool is suspended
+> [    4.045282] device-mapper: table: 253:21: thin: Unable to activate
+> thin device while pool is suspended
+> [    4.117778] device-mapper: table: 253:22: thin: Unable to activate
+> thin device while pool is suspended
+> ==========
+>
+> I've attached lvmdump-terra-snapper-2016072803258.tgz created during
+> the boot that gave these 6 errors.
 
-With this patch dm-multipath commands e.g. multipath -v2,
-multipath -ll etc. now checks if there are multipath
-device maps created, and multipathd service is running 
-or not? If the multipath devices are created, but multipathd 
-service is not running then there will be a warning 
-message displayed to inform the user that IO failover/
-failback may not work as expected without multipathd 
-process running.
+James, there is nothing in the logs suggesting any of the devices is not 
+DM device.
 
-I have tested this patch with Fedora 23, and latest 
-upstream multipath-tools
+*_boot devices are "md" devices, (9:{0,1,2})
 
-Signed-off-by: Milan P. Gandhi <mgandhi@redhat.com>
----
+These are all thin LVs (/disk({1,2,3})-(main|snapper)\1/):
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 707e6be..de79ed6 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -715,7 +715,8 @@ deadmap (struct multipath * mpp)
- 	return 1; /* dead */
- }
- 
--int check_daemon(void)
-+extern int
-+check_daemon(void)
- {
- 	int fd;
- 	char *reply;
-@@ -752,6 +753,7 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
- {
- 	int r = 1;
- 	int k, i;
-+	int map_processed = 0;
- 	int is_daemon = (cmd == CMD_NONE) ? 1 : 0;
- 	char params[PARAMS_SIZE];
- 	struct multipath * mpp;
-@@ -916,6 +918,13 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
- 			else
- 				remove_map(mpp, vecs, 0);
- 		}
-+
-+		/* By now at least one multipath device map is processed,
-+		 * so set map_processed = 1
-+		 */
-+		if (!map_processed)
-+			map_processed = 1;
-+
- 	}
- 	/*
- 	 * Flush maps with only dead paths (ie not in sysfs)
-@@ -941,6 +950,17 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
- 				condlog(2, "%s: remove (dead)", alias);
- 		}
- 	}
-+
-+	/* If there is at least one multipath device map processed then
-+	 * check if 'multipathd' service is running or not?
-+	 */
-+	if (map_processed) {
-+		if (!is_daemon && !check_daemon()){
-+			condlog(0, "'multipathd' service is currently not "
-+				"running, IO failover/failback will not work");
-+		}
-+	}
-+
- 	return 0;
- }
- 
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index 442c956..ff76927 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -28,6 +28,7 @@ enum actions {
- int setup_map (struct multipath * mpp, char * params, int params_size );
- int domap (struct multipath * mpp, char * params, int is_daemon);
- int reinstate_paths (struct multipath *mpp);
-+int check_daemon(void);
- int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid, int force_reload, enum mpath_cmds cmd);
- int get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
- 		 vector pathvec, char **wwid);
-diff --git a/multipath/main.c b/multipath/main.c
-index 6ccece7..177986e 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -202,6 +202,7 @@ static int
- get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
- {
- 	int i;
-+	int maps_present = 0;
- 	struct multipath * mpp;
- 	char params[PARAMS_SIZE], status[PARAMS_SIZE];
- 
-@@ -253,7 +254,24 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
- 
- 		if (cmd == CMD_CREATE)
- 			reinstate_paths(mpp);
-+
-+		/* At this place we have found at least one multipath
-+		 * device map, so set maps_present = 1
-+		 */
-+		if (!maps_present)
-+			maps_present = 1;
-+	}
-+
-+	/* If there is at least one multipath device map present then
-+	 * check if 'multipathd' service is running or not?
-+	 */
-+	if (maps_present && !check_daemon()) {
-+		condlog(0, "multipath device maps are present, but "
-+			"'multipathd' service is not running");
-+		condlog(0, "IO failover/failback will not work without "
-+			"'multipathd' service running");
- 	}
-+
- 	return 0;
- }
- 
+For example 253:5 and 6:
+
+Name                  Maj Min Stat Open Targ Event  UUID 
+
+disk3-main3           253   6 L--w    0    1      0 
+LVM-OHvenodGhFiZBRegTTkz6jt26MhoNxmCEdGScUBBGM5Sk6922y7HeBL0OJfOMO4v
+disk3-snapper3        253   5 L--w    1    1      0 
+LVM-OHvenodGhFiZBRegTTkz6jt26MhoNxmCZ3VcsAUU8fynWzcVnr81EJxpJh3Z8IE9
+
+
+This looks like an issue with locking, where activation of thin-volume 
+is attempted and gets past through locks while while the pool is 
+suspended, or that there is something else in the system suspending the 
+pool.
+
+This should not normally happen, any chance "locking_type" in 
+/etc/lvm/lvm.conf your initramdisk is set to 0 or 5?
+
+May be full journal would help us to see more...
+
+Also these seems to have no effect on running system, as I see in the 
+dmsetup outputs all the affected LVs were activated afterwards, or have 
+you activated them manually?
+
+-- Martian
+
+>
+> I've also attached lvmdump-terra-snapper-2016072812433.tgz created
+> during a different boot, that only errors on 253:13 and 253:21.
+
+
+
+>
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
