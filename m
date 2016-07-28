@@ -1,15 +1,14 @@
-From: Ritesh Raj Sarraf <rrs@debian.org>
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
 Subject: Re: What license is multipath-tools under
-Date: Thu, 28 Jul 2016 22:23:21 +0530
-Message-ID: <1469724801.17451.27.camel@debian.org>
+Date: Thu, 28 Jul 2016 13:26:03 -0400
+Message-ID: <1469726763.2295.20.camel@HansenPartnership.com>
 References: <1469616127.6204.9.camel@debian.org>
 	<26bf809d-9e9e-b4ae-9110-a67819246907@gmail.com>
-Reply-To: rrs@debian.org
+	<1469724801.17451.27.camel@debian.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============6391201060587246551=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <26bf809d-9e9e-b4ae-9110-a67819246907@gmail.com>
+In-Reply-To: <1469724801.17451.27.camel@debian.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,71 +18,165 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+To: rrs@debian.org, Xose Vazquez Perez <xose.vazquez@gmail.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQpIYXNoOiBTSEE1MTIKClRoYW5rcyBY
-b3NlLCBmb3IgZGlnZ2luZyB0aGlzIGluZm9ybWF0aW9uLiBCdXQgc2hvdWxkbid0IHRoaXMgaW5m
-b3JtYXRpb24gZ28KaW50byByZXNwZWN0aXZlIHNvdXJjZSBmaWxlcz8KClJlY2VudGx5LCBhdCBE
-ZWJjb25mLCBJIGNhbWUgYXdhcmUgb2YgRm9zc29sb2d5IFsxXS4gSXQgaXMgYSBjb21wbGlhbmNl
-IHRvb2wgZm9yCmxpY2Vuc2UsIGNvcHlyaWdodCBhbmQgZXhwb3J0IGNvbnRyb2wgc2NhbnMuIEkg
-aGF2ZSBzcGF3bmVkIG9mZiBhIGpvYiBbMl0gYW5kIGFtCmN1cmlvdXMgb2YgdGhlIHJlc3VsdC4g
-QnV0IGxvb2tzIGxpa2UgdGhlaXIgc2VydmVyIG1heSBiZSBoYXZpbmcgYSBwcm9ibGVtIGF0CnRo
-ZSBtb21lbnQuCgpCdXQgaXQgaXMgc3RhbmRhcmQgcHJhY3Rpc2UgaW4gbW9zdCBGcmVlIFNvZnR3
-YXJlIHByb2plY3RzIHRvIGRlZmluZSB0aGUKbGljZW5zaW5nIHByb3Blci4gQW5kIGZvciBhIHBy
-b2plY3Qgd2l0aCBtaXhlZCBsaWNlbnNlcywgaXQnZCBiZSBiZXN0IHRvIGhhdmUKaW5kaXZpZHVh
-bCBzb3VyY2UgZmlsZXMgbWVudGlvbiB0aGVpciBsaWNlbnNlLgoKClsxXcKgaHR0cHM6Ly93d3cu
-Zm9zc29sb2d5Lm9yZy8KWzJdwqBodHRwOi8vNTIuMjYuOTcuMTQzL3JlcG8vP21vZD1zaG93am9i
-cwoKCk9uIFRodSwgMjAxNi0wNy0yOCBhdCAwMDoxOSArMDIwMCwgWG9zZSBWYXpxdWV6IFBlcmV6
-IHdyb3RlOgo+IE9uIDA3LzI3LzIwMTYgMTI6NDIgUE0sIFJpdGVzaCBSYWogU2FycmFmIHdyb3Rl
-Ogo+IAo+ID4gCj4gPiBJIGp1c3QgcmFuIHNvbWUgY29tcGxpYW5jZSB0b29scyBvbiBtdWx0aXBh
-dGggYW5kIHRoZSByZXN1bHRzIHdlcmVuJ3QgdmVyeQo+ID4gYXBwZWFsaW5nIGluIHJlZ2FyZCB0
-byBsaWNlbnNpbmcgYW5kIGNvcHlyaWdodCBpbmZvcm1hdGlvbi4KPiA+IAo+ID4gVGhlIHN0YW5k
-YXJkIENPUFlJTkcgZmlsZSBtZW50aW9ucyBMR1BMIHYyLgo+ID4gT24gdGhlIG90aGVyIGhhbmQs
-IHRoZSBtYWpvcml0eSBvZiB0aGUgc291cmNlIGNvZGUgaGFzIG5vIGxpY2Vuc2UgbWVudGlvbmVk
-Cj4gPiBpbgo+ID4gaXRzIGhlYWRlci4gU29tZSB0aGF0IGRvIGhhdmUsIG1lbnRpb24gaXQgYXMg
-R1BMdjIsIGFuZCBzb21lIGFzIEdQTHYyKwo+IAo+ICJObyBjb3B5cmlnaHQiIG9yICJVTktOT1dO
-IiBmaWxlcyBzaG91bGQgYmUgY292ZXJlZCBieSBDT1BZSU5HIGxpY2VuY2UoTEdQTAo+IHYyKS4K
-PiBFeGNlcHQ6Cj4gCj4ga3BhcnR4Lwo+IEl0IGNvbWVzIGZyb20gcGFydHgodXRpbC1saW51eCks
-IGFuZCB0aGVzZSBmaWxlcyBhcmUgdW5kZXIgIkdQTCB2MiIgb3IKPiAiR1BMIHYyIG9yIGxhdGVy
-Ii4gSW5kZXBlbmRlbnQgYmluYXJ5Lgo+IAo+IAo+IGxpYm11bHRpcGF0aC9wcmlvcml0aXplcnMv
-b250YXAuYwo+IEl0J3MgIkdQTCB2MiIuIEJ1dCBpdCdzIGEgcGx1Z2luLiA/Pz8KPiAKPiAKPiBs
-aWJtdWx0aXBhdGgvY2hlY2tlcnMvY2Npc3NfdHVyLmMKPiBTb3VyY2Ugc2F5cyAiR1BMIHYyIG9y
-IGxhdGVyIiwgYW5kOgo+IC8qCj4gwqAqwqDCoFRoaXMgcHJvZ3JhbSBvcmlnaW5hbGx5IGRlcml2
-ZWQgZnJvbSBhbmQgaW5zcGlyZWQgYnkKPiDCoCrCoMKgQ2hyaXN0b3BoZSBWYXJvcXVpJ3MgdHVy
-LmMsIHBhcnQgb2YgbGliY2hlY2tlci4KPiDCoCovCj4gQXQgbGlibXVsdGlwYXRoL2NoZWNrZXJz
-L3R1ci5jIHRoZXJlIGlzIG5vIGxpY2VuY2UsIGJ1dCBpdCdzIGRlcml2ZWQgZnJvbQo+IHNyYy9z
-Z190dXJzLmMKPiBmcm9tIHNnM191dGlscy4gQW5kIHRoaXMgb25lIGlzIHVuZGVyICJHUEwgdjIg
-b3IgbGF0ZXIiLiBCdXQgaXQncyBhIHBsdWdpbi4KPiA/Pz8KPiAKPiAKPiBsaWJtdWx0aXBhdGgv
-bWVtb3J5LmMKPiBsaWJtdWx0aXBhdGgvbWVtb3J5LmgKPiBsaWJtdWx0aXBhdGgvcGFyc2VyLmMK
-PiBsaWJtdWx0aXBhdGgvcGFyc2VyLmgKPiBsaWJtdWx0aXBhdGgvdmVjdG9yLmMKPiBsaWJtdWx0
-aXBhdGgvdmVjdG9yLmgKPiBUaGVzZSBjb21lcyBmcm9tIGtlZXBhbGl2ZWQsIGFuZCB0aGV5IGFy
-ZSB1bmRlciAiR1BMIHYyIG9yIGxhdGVyIi4KPiAKPiAKPiBsaWJtdWx0aXBhdGgvdmVyc2lvbi5o
-Ogo+ICJHUEwgdjIgb3IgbGF0ZXIiLgo+IAo+IAo+IGxpYm11bHRpcGF0aC9maWxlLmMKPiBsaWJt
-dWx0aXBhdGgvYWxpYXMuYwo+IFNvdXJjZSBzYXlzOgo+IC8qCj4gwqAqIHNpZ25pZmljYW50IHBh
-cnRzIG9mIHRoaXMgZmlsZSB3ZXJlIHRha2VuIGZyb20gaXNjc2ktYmluZGluZ3MuYyBvZiB0aGUK
-PiDCoCogbGludXgtaXNjc2kgcHJvamVjdC4KPiBBbmQgdGhleSBhcmUgdW5kZXIgIkdQTCB2MiBv
-ciBsYXRlciIuCj4gCj4gCj4gbGlibXVsdGlwYXRoL3VldmVudC5jCj4gbGlibXVsdGlwYXRoL3N5
-c2ZzLmMKPiBUaGVzZSBjb21lIGZyb20gdWRldiwgYW5kIHRoZXkgYXJlICJHUEwgdjIiLgo+IAo+
-IAo+IEdQTCBjb2RlIGNhbiBub3QgYmUgbWl4ZWQgd2l0aCBMR1BMIGNvZGUuIFNvIEkgZ3Vlc3Mg
-bGlibXVsdGlwYXRoLyBmaWxlcyBhcmUKPiAiR1BMIHYyIiA/Pz8KPiAKPiAKPiBtdWx0aXBhdGgv
-bWFpbi5jCj4gVW5kZXIgIkdQTCB2MiBvciBsYXRlciIuIEl0J3MgbGlua2VkIHdpdGggbGlibXVs
-dGlwYXRoLnNvIGFuZCBsaWJtcGF0aGNtZC5zby4KLSAtLSAKUml0ZXNoIFJhaiBTYXJyYWYgfCBo
-dHRwOi8vcGVvcGxlLmRlYmlhbi5vcmcvfnJycwpEZWJpYW4gLSBUaGUgVW5pdmVyc2FsIE9wZXJh
-dGluZyBTeXN0ZW0KLS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KCmlRSWNCQUVCQ2dBR0JR
-SlhtamlCQUFvSkVLWTZXS1B5NFhWcFNhMFFBSXVmRW03RUNPT0JSR0dFVVR1TDZHSDUKdjhHVERN
-YXQ0K3VDRFE5SmZPTkRTbGZ0Nmg2OWFRdDdUNzgzZEFIc0VXNTJlVnpMUnhpTXYzLzQ5dDVsbXA4
-VgpqM3lmTnEwS0VjK01KMkh4M1FzVkkxWnNKc21rTFpjMGhCZ0JLUmY3aE1PNHVwTXhTSk4yYVYw
-Yzd3OWdackRFCmZ4ckhVZDNyRmVzYVF2ME5ZNVpGR2ZPV3FmZnhrc1F4bGhyaHJnM0t4YURiZFph
-ZWIzRCs1VGp0QXFaY3I4Tm8KT2lhVlRkbGU5bXNzUCtiUE5MNE9rN3krUlpOWi8zT2RieHBiU3dM
-RCsyWnFYYWJvemRpN01mZTdnbWROZ0lYVAozY0lCNi9VbXkrdU13NFlpamJxN1lzV2IrRVdtTUkx
-Q2ZNRGEvREJCNE5CbzVPN2tWUTUrMDcvc2hEUjArc2VqCms2WS8vcmVMajRoR21qemg5WDZtUnFi
-YngvTXBNZTIzaUZRb2NYT1Q2VnZqUVh0bm9wMTJGcU5kcE03OEJ1ZncKYjNMMWRIbjJPb2dReHY5
-cmNlNlZmZHAybUlSeVFveDZxOWRUQm9MQmJBUGtFalVuVmo4TUVDakhkR0tyV2w2WQozYmc1dWRH
-aE5PamtOckhUais2RENPRVhLY2NMUFhuSml1SmJpZGpJZFIxanBqVmE2a2xxVlphT0w2dStScGkr
-CnVwNFlXZVVXRTd1aDh1cVkwazZjQTJCbitDSVhTY1dKWVFrbVVIU2RFVnJRdjBscVlwc1NzbXdY
-cGNjYzVkYUIKc1ZOSDNRNmd4R0pHRXZORjRGZ2drMCttOVhCeG5UTDBheFgzZkdxVnJQNVU5ZnRL
-NmtwUXVMVElSQVdzdHIzVgpxR1RnNHRld1VDbDhvVE9mZE45Sgo9eWh5TQotLS0tLUVORCBQR1Ag
-U0lHTkFUVVJFLS0tLS0KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
-Y29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+
+--===============6391201060587246551==
+Content-Type: multipart/signed; micalg="pgp-sha256";
+	protocol="application/pgp-signature"; boundary="=-kI7/HyvZPlCDlIIPQImB"
+
+
+--=-kI7/HyvZPlCDlIIPQImB
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+On Thu, 2016-07-28 at 22:23 +0530, Ritesh Raj Sarraf wrote:
+> Thanks Xose, for digging this information. But shouldn't this=20
+> information go into respective source files?
+
+If there's a COPYING file, there's no need for individual files to have
+a copyright.  The licence of the file defaults to whatever COPYING (or
+LICENCE or some recognizable top level file says).  A significant
+number of Linux Kernel files don't have individual file header copyrigh
+ts, if you want an example of this.
+
+> Recently, at Debconf, I came aware of Fossology [1]. It is a=20
+> compliance tool for license, copyright and export control scans. I=20
+> have spawned off a job [2] and am curious of the result. But looks=20
+> like their server may be having a problem at the moment.
+>=20
+> But it is standard practise in most Free Software projects to define=20
+> the licensing proper. And for a project with mixed licenses, it'd be=20
+> best to have individual source files mention their license.
+>=20
+
+It may be a best practice and even practised by some projects, but if
+Linux doesn't do it, it's hard to say it's standard practice.
+
+James
+
+> [1] https://www.fossology.org/
+> [2] http://52.26.97.143/repo/?mod=3Dshowjobs
+>=20
+>=20
+> On Thu, 2016-07-28 at 00:19 +0200, Xose Vazquez Perez wrote:
+> > On 07/27/2016 12:42 PM, Ritesh Raj Sarraf wrote:
+> >=20
+> > >=20
+> > > I just ran some compliance tools on multipath and the results
+> > > weren't very
+> > > appealing in regard to licensing and copyright information.
+> > >=20
+> > > The standard COPYING file mentions LGPL v2.
+> > > On the other hand, the majority of the source code has no license
+> > > mentioned
+> > > in
+> > > its header. Some that do have, mention it as GPLv2, and some as
+> > > GPLv2+
+> >=20
+> > "No copyright" or "UNKNOWN" files should be covered by COPYING
+> > licence(LGPL
+> > v2).
+> > Except:
+> >=20
+> > kpartx/
+> > It comes from partx(util-linux), and these files are under "GPL v2"
+> > or
+> > "GPL v2 or later". Independent binary.
+> >=20
+> >=20
+> > libmultipath/prioritizers/ontap.c
+> > It's "GPL v2". But it's a plugin. ???
+> >=20
+> >=20
+> > libmultipath/checkers/cciss_tur.c
+> > Source says "GPL v2 or later", and:
+> > /*
+> >  *  This program originally derived from and inspired by
+> >  *  Christophe Varoqui's tur.c, part of libchecker.
+> >  */
+> > At libmultipath/checkers/tur.c there is no licence, but it's
+> > derived from
+> > src/sg_turs.c
+> > from sg3_utils. And this one is under "GPL v2 or later". But it's a
+> > plugin.
+> > ???
+> >=20
+> >=20
+> > libmultipath/memory.c
+> > libmultipath/memory.h
+> > libmultipath/parser.c
+> > libmultipath/parser.h
+> > libmultipath/vector.c
+> > libmultipath/vector.h
+> > These comes from keepalived, and they are under "GPL v2 or later".
+> >=20
+> >=20
+> > libmultipath/version.h:
+> > "GPL v2 or later".
+> >=20
+> >=20
+> > libmultipath/file.c
+> > libmultipath/alias.c
+> > Source says:
+> > /*
+> >  * significant parts of this file were taken from iscsi-bindings.c
+> > of the
+> >  * linux-iscsi project.
+> > And they are under "GPL v2 or later".
+> >=20
+> >=20
+> > libmultipath/uevent.c
+> > libmultipath/sysfs.c
+> > These come from udev, and they are "GPL v2".
+> >=20
+> >=20
+> > GPL code can not be mixed with LGPL code. So I guess libmultipath/
+> > files are
+> > "GPL v2" ???
+> >=20
+> >=20
+> > multipath/main.c
+> > Under "GPL v2 or later". It's linked with libmultipath.so and
+> > libmpathcmd.so.
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
+--=-kI7/HyvZPlCDlIIPQImB
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+Content-Transfer-Encoding: 7bit
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAABCAAGBQJXmkArAAoJEAVr7HOZEZN40fsP/iq869MOYW+TpnCwMEQClaEr
+HyuSQf3E/pLu5j8wAzJk+hoUxpZxwE/zSgSg1lDp9o427gxlIbiqgvXfgiXYnSE8
+fw/Qy+/5VOctDsu+06nlgO305B5IRQbIqyBp2aNRd8Xycwm4QuuTJc0MHIr5q1x3
+8jJgnmUe+ceNSmNQnCtMCfBgSykWxrG32+yaDn3uZWLA/B0wFTjRqkMBhbsryUjY
+2qLp4KWD8IQPLmNwrjE1lwqBHOIf+j8PA4eivnVr2sMAg853XiwDrylyaJ+OiW+K
+8On7I8/tOQvpEJNqojatnJjyTFbO/V2Od4ALorGkAzvyG54vt838fExN1274sPZN
+j27seTE04txMRKkQe8a8xIs0KkIFQgbRFOQZ8U5yhiBvmWhUzHudRTp0hWk3PzJI
+nftVjwDcrJvEfKRTGqkowP7tY+JwhLZFTmt5Q+IZMCVcFiZHdJhlVYdZpC4c495o
+UH8RYmw2pQ2Qg2UOO9iBae5no/UxmW74hf/FyZ6iANo5GpjHMCjqn4cXNLiygQzj
+iK2rGGj6FFQyXxHqjMaSjGqEfuUdaQFS0zxBfEZEyVp3vXZ9pfFWUQamFGgm7cYs
+diTicG8nlOJ5OTXbn9zmWk4CdI5UhteTbsI+CNJrKvuxa7u/1Ez00LaeIHXfyGox
+u3Cx981PHeQ38IowWoBe
+=ibCR
+-----END PGP SIGNATURE-----
+
+--=-kI7/HyvZPlCDlIIPQImB--
+
+
+--===============6391201060587246551==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6391201060587246551==--
