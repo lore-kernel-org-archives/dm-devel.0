@@ -1,147 +1,91 @@
-From: Marian Csontos <mcsontos@redhat.com>
-Subject: Re: During systemd/udev,
- device-mapper trying to work with non-LVM volumes
-Date: Thu, 28 Jul 2016 15:13:32 +0200
-Message-ID: <a0ddfe76-9f37-d6d8-6b35-9533b5641d6f@redhat.com>
-References: <CA+X5Wn5tbL02XpG-JMvZ4-Sdg+sv=yymD1s6Afboag59LqD94Q@mail.gmail.com>
-	<4d36f133-5e8f-3e89-9038-5268b7b6f770@redhat.com>
-	<CA+X5Wn5nZjyC2qk7yDYkMH+LX6kznjoEcubcMjC7tgN+k5vfbw@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-mq and end_clone_request()
+Date: Thu, 28 Jul 2016 09:33:46 -0400
+Message-ID: <20160728133346.GA12272@redhat.com>
+References: <20160720142727.GA57399@redhat.com>
+ <1ca6d31d-f175-9daa-9ddd-17d653851ceb@sandisk.com>
+ <20160720183321.GA20223@redhat.com>
+ <84d9dc64-0c10-ed1a-7bc1-e656874853a5@sandisk.com>
+ <20160725175344.GA23000@redhat.com>
+ <20160725212325.GA23961@redhat.com>
+ <1490356d-2c0e-d94a-7a88-5e8bc89953ef@sandisk.com>
+ <20160726011607.GA77078@redhat.com>
+ <20160727200939.GA82654@redhat.com>
+ <dd513a39-eb62-cc3c-d214-e4eca5e65a4e@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CA+X5Wn5nZjyC2qk7yDYkMH+LX6kznjoEcubcMjC7tgN+k5vfbw@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: james harvey <jamespharvey20@gmail.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <dd513a39-eb62-cc3c-d214-e4eca5e65a4e@sandisk.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 07/28/2016 03:33 AM, james harvey wrote:
-> On Wed, Jul 27, 2016 at 2:49 PM, Marian Csontos <mcsontos@redhat.com> wrote:
->> On 07/23/2016 01:14 AM, james harvey wrote:
->>>
->>> If I understand what's going on here, I think device-mapper is trying
->>> to work with two volumes that don't involve LVM, causing the errors.
->>
->>
->> If I understand correctly, these volumes DO involve LVM.
->>
->> It is not LV on top of your BTRFS volumes, but your BTRFS volumes are on top
->> of LVM.
->
-> I do have some BTRFS volumes on top of LVM, including my 2 root
-> volumes, but my 2 boot partitions don't involve LVM.  They're raw disk
-> partitions - MD RAID 1 - BTRFS.
->
-> The kernel error references "table: 253:21" and "table: 253:22".
-> These entries are not referred to by running dmsetup.  If these
-> correspond to dm-21 and dm-22, those are the boot volumes that don't
-> involve LVM at all.
->
->> Using BTRFS with thin-shapshots is not a good idea, especially, if you have
->> multiple snapshots of btrfs' underlying device active.
->>
->> Why are you usingn BTRFS on top of thin-pool?
->> BTRFS does have snapshots and IMHO you should pick either BTRFS or
->> thin-pool.
->
-> I'm not using thin-snapshots, just the thin-provisioning feature.  Is
-> running BTRFS in that scenario still a bad situation?  Why's that?
-> I'm going to be using a lot of virtual machines, which is my main
-> reason for wanting thin-provisioning.
->
-> I'm only using btrfs snapshots.
->
->>> Is this a device-mapper bug?  A udev bug?  Something I have configured
->>> wrong?
->>
->> Hard to say...
->>
->> Which distribution?
->> Kernel, lvm version?
->
-> Sorry for not mentioning.  Arch, kernel 4.6.4, lvm 2.02.161, device
-> mapper 1.02.131, thin-pool 1.18.0
->
->> Ideally run `lvmdump -m` and post output, please.
->
-> The number of kernel errors during boot that I'm getting seems to be
-> random.  (Probably some type of race condition?)  My original post
-> happened to be that it was using the ones not using LVM, but sometimes
-> it's doing it on LVM backed volumes too.  Occasionally it gives no
-> kernel errors.
->
-> On this boot, I have these errors:
->
-> ==========
-> [    3.319387] device-mapper: table: 253:5: thin: Unable to activate
-> thin device while pool is suspended
-> [    3.394258] device-mapper: table: 253:6: thin: Unable to activate
-> thin device while pool is suspended
-> [    3.632259] device-mapper: table: 253:13: thin: Unable to activate
-> thin device while pool is suspended
-> [    3.698752] device-mapper: table: 253:14: thin: Unable to activate
-> thin device while pool is suspended
-> [    4.045282] device-mapper: table: 253:21: thin: Unable to activate
-> thin device while pool is suspended
-> [    4.117778] device-mapper: table: 253:22: thin: Unable to activate
-> thin device while pool is suspended
-> ==========
->
-> I've attached lvmdump-terra-snapper-2016072803258.tgz created during
-> the boot that gave these 6 errors.
+On Wed, Jul 27 2016 at  7:05pm -0400,
+Bart Van Assche <bart.vanassche@sandisk.com> wrote:
 
-James, there is nothing in the logs suggesting any of the devices is not 
-DM device.
+> On 07/27/2016 01:09 PM, Mike Snitzer wrote:
+> > In addition to the above patch, please apply this patch and retest your
+> >4.7 kernel:
+> >
+> >diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> >index 287caa7..16583c1 100644
+> >--- a/drivers/md/dm-mpath.c
+> >+++ b/drivers/md/dm-mpath.c
+> >@@ -1416,12 +1416,14 @@ static void multipath_postsuspend(struct dm_target *ti)
+> > static void multipath_resume(struct dm_target *ti)
+> > {
+> > 	struct multipath *m = ti->private;
+> >+	unsigned long flags;
+> >
+> >+	spin_lock_irqsave(&m->lock, flags);
+> > 	if (test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags))
+> > 		set_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
+> > 	else
+> > 		clear_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
+> >-	smp_mb__after_atomic();
+> >+	spin_unlock_irqrestore(&m->lock, flags);
+> > }
+> >
+> > /*
+> 
+> Hello Mike,
+> 
+> Thanks again for having made this patch available. I will test it as
+> soon as I have the time. BTW, in the meantime I ran a few tests with
+> DM_MQ_DEFAULT=n since until now I ran all tests with
+> DM_MQ_DEFAULT=y. The result of these tests is as follows:
+> * v4.6.0, v4.6.5 and v4.7.0 with DM_MQ_DEFAULT=y: first simulated
+> path removal triggers I/O errors.
+> * v4.6.4, v4.6.5 and v4.7.0 with DM_MQ_DEFAULT=n: test passes more
+> than 100 iterations.
 
-*_boot devices are "md" devices, (9:{0,1,2})
+I think this may point to an SRP issue then.  Is the synthetic "cable
+pull" (by writing to /sys/class/srp_remote_ports/port-*/delete)
+representitive of what actually happens if a cable is physically pulled?
 
-These are all thin LVs (/disk({1,2,3})-(main|snapper)\1/):
+Or is yur synthetic method hitting the device way harder than would
+happen with an actual production fault?
 
-For example 253:5 and 6:
+Again, there hasn't been any report of failures (EIO or otherwise) with
+extensive scsi-mq and dm-mq testing on a larger FC testbed.
 
-Name                  Maj Min Stat Open Targ Event  UUID 
+> I have not yet run any tests with kernel v4.5.x because in the test
+> I ran the ib_srp and ib_srpt drivers are loaded on the same system
+> and because I need five v4.7 LIO patches to run this test pass but
+> unfortunately these patches do not apply cleanly on the v4.5.x code
+> base.
+> 
+> Please let me know if you need more information.
 
-disk3-main3           253   6 L--w    0    1      0 
-LVM-OHvenodGhFiZBRegTTkz6jt26MhoNxmCEdGScUBBGM5Sk6922y7HeBL0OJfOMO4v
-disk3-snapper3        253   5 L--w    1    1      0 
-LVM-OHvenodGhFiZBRegTTkz6jt26MhoNxmCZ3VcsAUU8fynWzcVnr81EJxpJh3Z8IE9
+Can the target core be made to use SRP in loopback (local test machine)
+mode?  The mptest harness currently defaults to using tcmloop.  Would be
+great if I could somehow exercise the SRP code without needing a
+fullblown IB setup.
 
+But if there isn't a way to achieve that test coverage I can
+probably/hopefully get access to a subset of a larger IB/SRP testbed.
 
-This looks like an issue with locking, where activation of thin-volume 
-is attempted and gets past through locks while while the pool is 
-suspended, or that there is something else in the system suspending the 
-pool.
-
-This should not normally happen, any chance "locking_type" in 
-/etc/lvm/lvm.conf your initramdisk is set to 0 or 5?
-
-May be full journal would help us to see more...
-
-Also these seems to have no effect on running system, as I see in the 
-dmsetup outputs all the affected LVs were activated afterwards, or have 
-you activated them manually?
-
--- Martian
-
->
-> I've also attached lvmdump-terra-snapper-2016072812433.tgz created
-> during a different boot, that only errors on 253:13 and 253:21.
-
-
-
->
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+Please advise, thanks.
+Mike
