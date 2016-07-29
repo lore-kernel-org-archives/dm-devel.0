@@ -1,70 +1,128 @@
-From: Kai Krakow <hurikhan77@gmail.com>
-Subject: Re: To add, or not to add, a bio REQ_ROTATIONAL flag
-Date: Fri, 29 Jul 2016 18:28:11 +0200
-Message-ID: <20160729182811.27c0595c@jupiter.sol.kaishome.de>
-References: <alpine.LRH.2.11.1607281603530.10662@mail.ewheeler.net>
-	<579AABAA.2020200@youngman.org.uk>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-flakey NOT to return -EIO on READ?
+Date: Fri, 29 Jul 2016 13:30:12 -0400
+Message-ID: <20160729173012.GA88908@redhat.com>
+References: <217a0cf8-4853-6316-3016-77460073061d@gmail.com>
+	<CAM4Jq_5kBs2WKNOiLrVL8XMTSJQhPdvO-XKROhzpLXdOATFw7w@mail.gmail.com>
+	<07b6affb-a09d-7d55-65f8-6d476a5471aa@gmail.com>
+	<f059f3f1-a860-aee5-20b7-d6b3ed6b467d@gmail.com>
+	<CAM4Jq_7WWFsviFXeAYa5gd_wrL73Fuz0goXbzG7Q-dYujkh1ag@mail.gmail.com>
+	<0dc69d8f-1595-1677-5028-f920d7b54eb0@gmail.com>
+	<CAM4Jq_4+RuRppTQXDBkp7Kg4tRV52pwcfEfm5HZtC88h0v-aWw@mail.gmail.com>
+	<20160729143542.GA19246@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-bcache-owner@vger.kernel.org>
-Sender: linux-bcache-owner@vger.kernel.org
-To: linux-bcache@vger.kernel.org
-Cc: linux-raid@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.orglinux-raid@vger.kernel.orglinux-block@vger.kernel.orgdm-devel@redhat.comlinux-raid@vger.kernel.orgdm-devel@redhat.comlinux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20160729143542.GA19246@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Lukas Herbolt <lherbolt@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Akira Hayakawa <ruby.wktk@gmail.com>
 List-Id: dm-devel.ids
 
-Am Fri, 29 Jul 2016 02:04:42 +0100
-schrieb Wols Lists <antlists@youngman.org.uk>:
+On Fri, Jul 29 2016 at 10:35am -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-> On 29/07/16 01:50, Eric Wheeler wrote:
-> > Hello all,
+> On Fri, Jul 29 2016 at 10:31am -0400,
+> Lukas Herbolt <lherbolt@redhat.com> wrote:
+> 
+> >  - http://people.redhat.com/~lherbolt/dm-flakey/v4.7-dm_flakey.tar.gz
 > > 
-> > With the many SSD caching layers being developed (bcache, dm-cache, 
-> > dm-writeboost, etc), how could we flag a bio from userspace to
-> > indicate whether the bio is preferred to hit spinning disks instead
-> > of an SSD?
-> > 
-> > Unnecessary promotions, evections, and writeback increase the write
-> > burden on the caching layer and burns out SSDs too fast (TBW), thus
-> > requring equipment replacement.  
+> > Lukas
 > 
-> What's the spec of these devices? How long are they expected to last?
-> 
-> Other recent posts on this (linux-raid) mailing list refer to tests on
-> SSDs that indicates their typical life is way beyond their nominal
-> life, and that in normal usage they are actually likely to outlive
-> "spinning rust".
+> Please post an incremental patch relative to 4.7 or latest Linus
+> kernel.  Don't make people suffer with tarballs of whatever you've
+> packaged above.
 
-Well, using SSD as a caching layer is probably everything else but
-normal usage. Caching involves writing a lot of data given the fact
-that it usually backs huge storage pools and is there to eliminate/hide
-inefficient usage patterns of rotational media. Caching layers like
-bcache do its best to turn writes to the device into optimal write
-patterns at best - but still, it writes a lot of data.
+I pulled out your incremental diff.  Your proposed fix isn't correct.  It
+breaks the corrupt_bio_byte feature.  We cannot blindly drop reads early
+in flakey_map(), like you've proposed, because the corrupt_bio_byte
+feature relies on corrupt data being returned on read during the
+down_interval.
 
-> http://techreport.com/review/24841/introducing-the-ssd-endurance-experiment
-> 
-> http://techreport.com/review/27909/the-ssd-endurance-experiment-theyre-all-dead/3
-> 
-> Looking at the results, the FIRST drives only started failing once
-> they'd written some 700 Terabytes. How long is it going to take you to
-> write that much data over a SATA3 link?
+The issue reported is: reads aren't dropped during the "down_interval".
 
-I had a Crucial MX100 128GB SSD as bcache (writeback mode) in the past.
-It lasted exactly 12-13 months when I was forced to replace it: The
-lifetime of the SSD reached around 95% according to smartctl. The specs
-say, it has a lifetime guarantee of 85TB written. I guess it could have
-lasted longer due to bcache's optimized access patterns - but I didn't
-want to test it. Bigger SSDs usually last a lot longer, so now I'm
-using a Samsung 850 Evo 500GB which has a guarantee of 150TBW.
-According to tests, it probably goes a lot higher before failing (like
-250TBW estimated) but I don't want to test this is writeback mode.
+I do agree that this needs fixing, and it was commit a3998799fb4df ("dm
+flakey: add corrupt_bio_byte feature") that caused this regression.
 
-So the idea of reducing writes to the caching layer, or better
-eliminate useless writes altogether, would be very welcome.
+But a fix must not break the corrupt_bio_byte feature.
 
+This fix should resolve the problem, I'll be staging it to go upstream
+during the 4.8-rc cycle (Akira, please test to verify your test fails as
+expected now):
+
+From: Mike Snitzer <snitzer@redhat.com>
+Date: Fri, 29 Jul 2016 13:19:55 -0400
+Subject: [PATCH] dm flakey: error READ bios during the down_interval
+
+When the corrupt_bio_byte feature was introduced it caused READ bios to
+no longer be errored with -EIO during the down_interval.  This had to do
+with the complexity of needing to submit READs if the corrupt_bio_byte
+feature was used.
+
+Fix it so READ bios are properly errored with -EIO; doing so early in
+flakey_map() as long as there isn't a match for the corrupt_bio_byte
+feature.
+
+Fixes: a3998799fb4df ("dm flakey: add corrupt_bio_byte feature")
+Reported-by: Akira Hayakawa <ruby.wktk@gmail.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org
+---
+ drivers/md/dm-flakey.c | 23 +++++++++++++++--------
+ 1 file changed, 15 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index 29b99fb..19db13e 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -289,10 +289,16 @@ static int flakey_map(struct dm_target *ti, struct bio *bio)
+ 		pb->bio_submitted = true;
+ 
+ 		/*
+-		 * Map reads as normal.
++		 * Map reads as normal only if corrupt_bio_byte set.
+ 		 */
+-		if (bio_data_dir(bio) == READ)
+-			goto map_bio;
++		if (bio_data_dir(bio) == READ) {
++			/* If flags were specified, only corrupt those that match. */
++			if (fc->corrupt_bio_byte && (fc->corrupt_bio_rw == READ) &&
++			    all_corrupt_bio_flags_match(bio, fc))
++				goto map_bio;
++			else
++				return -EIO;
++		}
+ 
+ 		/*
+ 		 * Drop writes?
+@@ -330,12 +336,13 @@ static int flakey_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 
+ 	/*
+ 	 * Corrupt successful READs while in down state.
+-	 * If flags were specified, only corrupt those that match.
+ 	 */
+-	if (fc->corrupt_bio_byte && !error && pb->bio_submitted &&
+-	    (bio_data_dir(bio) == READ) && (fc->corrupt_bio_rw == READ) &&
+-	    all_corrupt_bio_flags_match(bio, fc))
+-		corrupt_bio_data(bio, fc);
++	if (!error && pb->bio_submitted && (bio_data_dir(bio) == READ)) {
++		if (fc->corrupt_bio_byte)
++			corrupt_bio_data(bio, fc);
++		else
++			return -EIO;
++	}
+ 
+ 	return error;
+ }
 -- 
-Regards,
-Kai
-
-Replies to list-only preferred.
+2.7.4 (Apple Git-66)
