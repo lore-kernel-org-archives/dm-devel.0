@@ -1,12 +1,12 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 11/18] multipath-tools: add Xiotech ISE
-	1400/2400/3400/3401 to hwtable
-Date: Sat, 30 Jul 2016 02:28:19 +0200
-Message-ID: <1469838506-15689-11-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 17/18] multipath-tools: add HPE StoreVirtual
+	P4000 family to hwtable
+Date: Sat, 30 Jul 2016 02:28:25 +0200
+Message-ID: <1469838506-15689-17-git-send-email-xose.vazquez@gmail.com>
 References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -21,28 +21,34 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-QmFzZWQgb24gZG9jdW1lbnRhdGlvbiBwcm92aWRlZCBieSB0aGUgbWFudWZhY3R1cmVyOgpodHRw
-czovL2RyaXZlLmdvb2dsZS5jb20vZmlsZS9kLzBCX0I2WW1FbU83Y0RjMjAxYTNabGNtRnZVbU0K
-CkZvciB0aGUgbGF0ZXN0IDIgdXBkYXRlcyBvZiBSZWRoYXQgNi54CnZlbmRvciAgICAgICAgICAg
-ICAgICAgICJYSU9URUNIIgpwcm9kdWN0ICAgICAgICAgICAgICAgICAiSVNFKFsxMl00MDB8MzQw
-WzAxXSkiCnBhdGhfZ3JvdXBpbmdfcG9saWN5ICAgIG11bHRpYnVzCnByaW9fY2FsbG91dCAgICAg
-ICAgICAgIOKAnG5vbmXigJ0KcGF0aF9jaGVja2VyICAgICAgICAgICAgdHVyCnBhdGhfc2VsZWN0
-b3IgICAgICAgICAgIOKAnHJvdW5kLXJvYmluIDDigJ0KZmFpbGJhY2sgICAgICAgICAgICAgICAg
-aW1tZWRpYXRlCmRldl9sb3NzX3RtbyAgICAgICAgICAgIDYwMApmYXN0X2lvX2ZhaWxfdG1vICAg
-ICAgICA1Cm5vX3BhdGhfcmV0cnkgICAgICAgICAgIDEyCnJyX21pbl9pb19ycSAgICAgICAgICAg
-IDEKCkNjOiBDaHJpc3RvcGhlIFZhcm9xdWkgPGNocmlzdG9waGUudmFyb3F1aUBvcGVuc3ZjLmNv
-bT4KQ2M6IGRldmljZS1tYXBwZXIgZGV2ZWxvcG1lbnQgPGRtLWRldmVsQHJlZGhhdC5jb20+ClNp
-Z25lZC1vZmYtYnk6IFhvc2UgVmF6cXVleiBQZXJleiA8eG9zZS52YXpxdWV6QGdtYWlsLmNvbT4K
-LS0tCiBsaWJtdWx0aXBhdGgvaHd0YWJsZS5jIHwgMTAgKysrKysrKysrKwogMSBmaWxlIGNoYW5n
-ZWQsIDEwIGluc2VydGlvbnMoKykKCmRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvaHd0YWJsZS5j
-IGIvbGlibXVsdGlwYXRoL2h3dGFibGUuYwppbmRleCA0NWE2MzMyLi4zYjY3MDMwIDEwMDY0NAot
-LS0gYS9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCisrKyBiL2xpYm11bHRpcGF0aC9od3RhYmxlLmMK
-QEAgLTg1Myw2ICs4NTMsMTYgQEAgc3RhdGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9
-IHsKIAkJLnJyX3dlaWdodCAgICAgPSBSUl9XRUlHSFRfUFJJTywKIAkJLm5vX3BhdGhfcmV0cnkg
-PSAxNSwKIAl9LAorCS8qCisJICogWGlvdGVjaAorCSAqLworCXsKKwkJLnZlbmRvciAgICAgICAg
-PSAiWElPVEVDSCIsCisJCS5wcm9kdWN0ICAgICAgID0gIklTRShbMTJdNDAwfDM0MFswMV0pIiwK
-KwkJLnNlbGVjdG9yICAgICAgPSAicm91bmQtcm9iaW4gMCIsCisJCS5wZ3BvbGljeSAgICAgID0g
-TVVMVElCVVMsCisJCS5ub19wYXRoX3JldHJ5ID0gMTIsCisJfSwKICNpZiAwCiAJLyoKIAkgKiBD
-b3B5IHRoaXMgVEVNUExBVEUgdG8gYWRkIG5ldyBoYXJkd2FyZS4KLS0gCjIuNy40CgotLQpkbS1k
-ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
-Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+No official documentation. Based on field-tested configuration:
+https://www.citrix.com/blogs/2013/10/02/hp-p4000-multipath-config-file/
+
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index e4c7b7d..51e115d 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -139,6 +139,14 @@ static struct hwentry default_hw[] = {
+ 		.minio         = 100,
+ 		.prio_name     = PRIO_ALUA,
+ 	},
++		/* StoreVirtual P4000 family */
++	{
++		.vendor        = "LEFTHAND",
++		.product       = "^(P4000.*|iSCSIDisk)",
++		.no_path_retry = 18,
++		.minio         = 100,
++		.prio_name     = PRIO_ALUA,
++	},
+ 	/*
+ 	 * DataDirect Networks
+ 	 */
+-- 
+2.7.4
