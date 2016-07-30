@@ -1,14 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [RFC] [PATCH] add serial keyword to the weightedpath
-	prioritizer
-Date: Mon, 1 Aug 2016 09:49:32 +0200
-Message-ID: <d9c1d17d-83c2-3e68-166c-78f44c5dd21d@suse.de>
-References: <CABr-Gndh4LLgd=T00GdtwNVrFgL7Te91BwjZ0Dh4uYyDi3c9bA@mail.gmail.com>
+From: Srinivas Ramani <srinivas.ramani@oracle.com>
+Subject: Re: [PATCH] multipath-tools: Pillar/Axiom supports
+	failback=immediate
+Date: Sat, 30 Jul 2016 16:18:05 -0700 (PDT)
+Message-ID: <e46f78fd-b5cd-4498-a96e-d30b6a58d0d3@default>
+References: <<1469913348-9350-1-git-send-email-xose.vazquez@gmail.com>>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-Gndh4LLgd=T00GdtwNVrFgL7Te91BwjZ0Dh4uYyDi3c9bA@mail.gmail.com>
+In-Reply-To: <<1469913348-9350-1-git-send-email-xose.vazquez@gmail.com>>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,40 +18,109 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Srinivasan Ramani <srinivas.ramani@oracle.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDcvMzEvMjAxNiAwOToyNiBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+IEJlbiwg
-SGFubmVzLAo+Cj4gQ2FuIHlvdSByZXZpZXcgdGhpcyBwYXRjaCwgYWRkaW5nIGEgbmV3ICdzZXJp
-YWwnIGtleXdvcmQgdG8gdGhlCj4gd2VpZ2h0ZWRwYXRoIHByaW9yaXRpemVyLgo+Cj4gSSBjb21w
-aWxlLXRlc3RlZCBpdCBvbmx5LCBhcyBJIGhhdmUgbm8gdGVzdGluZyBlbnZpcm9ubWVudCBhdCBo
-YW5kIGF0Cj4gdGhlIG1vbWVudC4KPgo+IEkgY29tbWl0ZWQgaXQgaW4gYSBzZXBhcmF0ZSAnd2Vp
-Z2h0ZWRwYXRoLXNlcmlhbCcgYnJhbmNoIGZvciBub3cuCj4KPiBodHRwOi8vZ2l0Lm9wZW5zdmMu
-Y29tLz9wPW11bHRpcGF0aC10b29scy8uZ2l0O2E9Y29tbWl0ZGlmZjtoPTRkZDE2ZDk5MjgxMTA0
-ZmMzNTA0YWQ3MzYyNjg5NGE1YzM3MDJmYjMKPgo+IFRoYW5rcywKPiBDaHJpc3RvcGhlIFZhcm9x
-dWkKPiBPcGVuU1ZDCj4KV2VsbC4KSW4gZ2VuZXJhbCwgc3VyZSwgZmluZSwgSSBkb24ndCBoYXZl
-IGFueSBpc3N1ZXMgd2l0aCB0aGF0LgpJZiB0aGUgY3VzdG9tZXIgd2FudHMgdG8gZGlkZGxlIHdp
-dGggaGlzIGFycmF5IHRoYXQgd2F5Li4uCgpUaGUgbW9yZSBnZW5lcmFsIHByb2JsZW0gSSdtIHNl
-ZWluZyBpcyB0aGF0IG91ciBjdXJyZW50IHR3by1sYXllcmVkIApwcmlvcml0eSBzZXR1cCAocGF0
-aCBncm91cHMgd2l0aCBkaXN0aW5jdCBwcmlvcml0aWVzIGFuZCBwYXRocyB3aXRoaW4gCnRoZW0p
-IG1pZ2h0IG5vdCBiZSBsZWFkaW5nIHRvIGlzc3VlcyB3aXRoIGxhcmdlciBhbmQgbW9yZSBjb21w
-bGV4IHNjZW5hcmlvcy4KCkFUTSB3ZSBhbHJlYWR5IGhhdmUgdGhlIHByb2JsZW0gdGhhdCBjbHVz
-dGVyZWQgc2NlbmFyaW9zIGxpa2UgdGhpczoKClN0b3JhZ2Ugbm9kZSAxKGFjdGl2ZSk6CiAgIFBh
-dGggMSAob3B0aW1hbCk6CiAgICAgTFVOIDEsIExVTjIKICAgUGF0aCAyIChub24tb3B0aW1hbCk6
-CiAgICAgTFVOIDEsIExVTjIKClN0b3JhZ2Ugbm9kZSAyKHBhc3NpdmUpOgogICBQYXRoIDEob3B0
-aW1hbCk6CiAgICAgIExVTiAxLCBMVU4yCiAgIFBhdGggMihub24tb3B0aW1hbCk6CiAgICAgIExV
-TiAxLCBMVU4yCgpjYW4gbm90IGJlIHJlcHJlc2VudGVkIHByb3Blcmx5IHdpdGggbXVsdGlwYXRo
-IHRvb2xzLgpXZSBhcmUgZm9yY2VkIHRvIGVpdGhlcgphKSBzZXQgJ3N0b3JhZ2Ugbm9kZSAyJyB0
-byAnZmFpbGVkJywgd2hpY2ggd291bGQga2lsbAogICAgYW55IGNsdXN0ZXIgaW5zdGFuY2UgYWNj
-ZXNzaW5nIG9ubHkgJ3N0b3JhZ2Ugbm9kZSAyJwpvcgpiKSBtYXAgYWxsIHByaW9yaXRpZXMgZnJv
-bSAnc3RvcmFnZSBub2RlIDInIHRvICcwJywKICAgIHRoZXJlYnkgbG9zaW5nIGFsbCBwcmlvcml0
-eSBpbmZvcm1hdGlvbgoKVGhpbmdzIGJlY29tZSBldmVuIG1vcmUgY29udm9sdXRlZCBpZiBib3Ro
-IHN0b3JhZ2Ugbm9kZXMgYXJlIGluIGZhY3QgCmFjY2Vzc2libGUsIG9yIGlmIHNvbWVvbmUgd291
-bGQgYmUgdXNpbmcgZGlmZmVyZW50IHRyYW5zcG9ydHMuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRy
-LiBIYW5uZXMgUmVpbmVja2UJCSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVA
-c3VzZS5kZQkJCSAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21i
-SCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEou
-IFNtaXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcg
-TsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
-aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Hi;
+
+The changes needed would be :
+
+
+/*
+         * Pillar Data controller family
+         *
+         * Maintainer : Srinivasan Ramani
+         * Mail : srinivas.ramani@oracle.com
+         */
+        {
+                .vendor        = "^Pillar(  )?$",
+                .product       = "^Axiom"
+                .getuid        = DEFAULT_GETUID,
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = DEFAULT_HWHANDLER,
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = GROUP_BY_PRIO,
+                .pgfailback    = FAILBACK_UNDEF,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = NO_PATH_RETRY_UNDEF,
+                .minio         = DEFAULT_MINIO,
+                .checker_name  = TUR,
+                .prio_name     = PRIO_ALUA,
+        },
+        /*
+         * Oracle FS controller family
+         *
+         * Maintainer : Srinivasan Ramani
+         * Mail : srinivas.ramani@oracle.com
+         */
+        {
+                .vendor        = "^Oracle(  )?$",
+                .product       = "^Oracle FS",
+                .getuid        = DEFAULT_GETUID,
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = DEFAULT_HWHANDLER,
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = GROUP_BY_PRIO,
+                .pgfailback    = FAILBACK_UNDEF,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = NO_PATH_RETRY_UNDEF,
+                .minio         = DEFAULT_MINIO,
+                .checker_name  = TUR,
+                .prio_name     = PRIO_ALUA,
+        },
+
+
+
+With Best Regards
+Srini
+-----Original Message-----
+From: Xose Vazquez Perez [mailto:xose.vazquez@gmail.com] 
+Sent: Saturday, July 30, 2016 2:16 PM
+Cc: Xose Vazquez Perez; Srinivasan Ramani; Christophe Varoqui; device-mapper development
+Subject: [PATCH] multipath-tools: Pillar/Axiom supports failback=immediate
+
+ALUA device with support for preferred_path. Confirmed by the vendor's utils and docs:
+https://docs.oracle.com/cd/E35311_02/E28846_08/E41503_01/conPathSelection.html
+
+Auto-generated template from Oracle FS Path Manager 4.0:
+        vendor                "^Pillar(  )?$"
+        product               "^Axiom"
+        path_grouping_policy  group_by_prio
+        prio                  oraclefspm
+        path_checker          oraclefspm
+        failback              immediate
+        path_selector         "round-robin 0"
+
+Template from Axiom Path Manager 3.1 for RHEL-6.1:
+        vendor               "Pillar"
+        product              "*"
+        path_grouping_policy group_by_prio
+        prio                 pillarapm
+        path_checker         pillarapm
+        failback             immediate
+        no_path_retry        60
+        dev_loss_tmo         60
+        fast_io_fail_tmo     30
+
+Cc: Srinivasan Ramani <srinivas.ramani@oracle.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c index fe4a51f..ed23c92 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -635,7 +635,6 @@ static struct hwentry default_hw[] = {
+ 		.vendor        = "Pillar",
+ 		.product       = "Axiom.*",
+ 		.prio_name     = PRIO_ALUA,
+-		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	{
+ 		.vendor        = "^Oracle",
+--
+2.7.4
