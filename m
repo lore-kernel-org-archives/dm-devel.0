@@ -1,8 +1,8 @@
-From: heinzm@redhat.com
-Subject: [PATCH] dm raid: fix processing of max_recovery_rate
-	constructor flag
-Date: Wed, 27 Jul 2016 23:33:52 +0200
-Message-ID: <1469655232-19231-1-git-send-email-heinzm@redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: Pillar/Axiom supports
+	failback=immediate
+Date: Sat, 30 Jul 2016 23:15:48 +0200
+Message-ID: <1469913348-9350-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,33 +16,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: Srinivasan Ramani <srinivas.ramani@oracle.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
+ALUA device with support for preferred_path. Confirmed by
+the vendor's utils and docs:
+https://docs.oracle.com/cd/E35311_02/E28846_08/E41503_01/conPathSelection.html
 
-__CTR_FLAG_MIN_RECOVERY_RATE was used instead of __CTR_FLAG_MAX_RECOVERY_RATE
-thus causing max_recovery_rate to be rejected in case min_recovery_rate
-was already set.
+Auto-generated template from Oracle FS Path Manager 4.0:
+        vendor                "^Pillar(  )?$"
+        product               "^Axiom"
+        path_grouping_policy  group_by_prio
+        prio                  oraclefspm
+        path_checker          oraclefspm
+        failback              immediate
+        path_selector         "round-robin 0"
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+Template from Axiom Path Manager 3.1 for RHEL-6.1:
+        vendor               "Pillar"
+        product              "*"
+        path_grouping_policy group_by_prio
+        prio                 pillarapm
+        path_checker         pillarapm
+        failback             immediate
+        no_path_retry        60
+        dev_loss_tmo         60
+        fast_io_fail_tmo     30
+
+Cc: Srinivasan Ramani <srinivas.ramani@oracle.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- drivers/md/dm-raid.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/hwtable.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 8498354..5ef6b5a 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -1270,7 +1270,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
- 			}
- 			rs->md.sync_speed_min = (int)value;
- 		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_MAX_RECOVERY_RATE))) {
--			if (test_and_set_bit(__CTR_FLAG_MIN_RECOVERY_RATE, &rs->ctr_flags)) {
-+			if (test_and_set_bit(__CTR_FLAG_MAX_RECOVERY_RATE, &rs->ctr_flags)) {
- 				rs->ti->error = "Only one max_recovery_rate argument pair allowed";
- 				return -EINVAL;
- 			}
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index fe4a51f..ed23c92 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -635,7 +635,6 @@ static struct hwentry default_hw[] = {
+ 		.vendor        = "Pillar",
+ 		.product       = "Axiom.*",
+ 		.prio_name     = PRIO_ALUA,
+-		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	{
+ 		.vendor        = "^Oracle",
 -- 
-2.5.5
+2.7.4
