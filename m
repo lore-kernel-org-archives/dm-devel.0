@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 03/18] multipath-tools: reorganize NetApp devices
-Date: Sat, 30 Jul 2016 02:28:11 +0200
-Message-ID: <1469838506-15689-3-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 04/18] multipath-tools: add NetApp/SolidFir to
+	hwtable
+Date: Sat, 30 Jul 2016 02:28:12 +0200
+Message-ID: <1469838506-15689-4-git-send-email-xose.vazquez@gmail.com>
 References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,59 +18,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Sean Stewart <sean.stewart@netapp.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Cc: Martin George <marting@netapp.com>
-Cc: Sean Stewart <sean.stewart@netapp.com>
+Based on info provided directly by the manufacturer:
+http://www.solidfire.com/
+http://www.netapp.com/us/products/storage-systems/solidfire/
+
+Redhat 7+:
+vendor "SolidFir"
+product "SSD SAN"
+path_grouping_policy multibus
+path_checker tur
+hardware_handler "0"
+failback immediate
+rr_weight uniform
+rr_min_io 10
+rr_min_io_rq 10
+features "0"
+no_path_retry 24
+prio const
+
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 21 ++++++++++++---------
- 1 file changed, 12 insertions(+), 9 deletions(-)
+ libmultipath/hwtable.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 73ba4ee..3952b42 100644
+index 3952b42..bd0bd8c 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -494,12 +494,15 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_ALUA,
+@@ -526,6 +526,15 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = RDAC,
+ 		.prio_name     = PRIO_RDAC,
  	},
++	{
++		/* SolidFir */
++		.vendor        = "SolidFir",
++		.product       = "SSD SAN",
++		.pgpolicy      = MULTIBUS,
++		.no_path_retry = 24,
++		.minio         = 10,
++		.minio_rq      = 10,
++	},
  	/*
--	 * NetApp ONTAP family
--	 *
--	 * Maintainer : Martin George
--	 * Mail : marting@netapp.com
-+	 * NetApp
- 	 */
- 	{
-+		/*
-+		 * ONTAP family
-+		 *
-+		 * Maintainer : Martin George
-+		 * Mail : marting@netapp.com
-+		 */
- 		.vendor        = "NETAPP",
- 		.product       = "LUN.*",
- 		.features      = "3 queue_if_no_path pg_init_retries 50",
-@@ -508,12 +511,12 @@ static struct hwentry default_hw[] = {
- 		.dev_loss      = MAX_DEV_LOSS_TMO,
- 		.prio_name     = PRIO_ONTAP,
- 	},
--	/* LSI/Engenio/NetApp RDAC family
--	 *
--	 * Maintainer : Sean Stewart
--	 * Mail : sean.stewart@netapp.com
--	 */
- 	{
-+		/* LSI/Engenio/NetApp RDAC family
-+		 *
-+		 * Maintainer : Sean Stewart
-+		 * Mail : sean.stewart@netapp.com
-+		 */
- 		.vendor        = "(NETAPP|LSI|ENGENIO)",
- 		.product       = "INF-01-00",
- 		.bl_product    = "Universal Xport",
+ 	 * Nexenta
+ 	 *
 -- 
 2.7.4
