@@ -1,11 +1,14 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 01/18] multipath-tools: add KOVE/XPD to hwtable
-Date: Sat, 30 Jul 2016 02:28:09 +0200
-Message-ID: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 02/18] multipath-tools: Remove ONTAP IBM Nseries
+	from hwtable
+Date: Sat, 30 Jul 2016 02:28:10 +0200
+Message-ID: <1469838506-15689-2-git-send-email-xose.vazquez@gmail.com>
+References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,54 +18,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: Nick Russo <nick.russo@kove.net>, device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Info provided directly by the manufacturer - http://kove.net/xpd :
+Originally from Martin George <marting@netapp.com>
 
-.vendor        = "KOVE",
-.product       = "XPD",
-.features      = DEFAULT_FEATURES,
-.hwhandler     = DEFAULT_HWHANDLER,
-.selector      = "round-robin 0",
-.pgpolicy      = MULTIBUS,
-.pgfailback    = -FAILBACK_IMMEDIATE,
-.rr_weight     = RR_WEIGHT_NONE,
-.no_path_retry = DEFAULT_NO_PATH_RETRY,
-.minio         = DEFAULT_MINIO,
-.minio_rq      = DEFAULT_MINIO_RQ,
-.checker_name  = DIRECTIO,
-.prio_name     = DEFAULT_PRIO,
-.prio_args     = NULL,
+He wrote:
+"Even earlier, the NetApp IBM Nseries product line never used a
+VID/PID of "IBM" & "Nseries" respectively. Instead, it always
+used the same VID/PID of "NETAPP" & "LUN" itself, similar to the
+ONTAP product line. So this piece of code was redundant from the
+beginning itself."
 
-Cc: Nick Russo <nick.russo@kove.net>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Martin George <marting@netapp.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ libmultipath/hwtable.c | 8 --------
+ 1 file changed, 8 deletions(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 1efaeee..3e22714 100644
+index 3e22714..73ba4ee 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -771,6 +771,16 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = 30,
- 		.minio         = 128,
+@@ -508,14 +508,6 @@ static struct hwentry default_hw[] = {
+ 		.dev_loss      = MAX_DEV_LOSS_TMO,
+ 		.prio_name     = PRIO_ONTAP,
  	},
-+	/*
-+	 * Kove
-+	 */
-+	{
-+		.vendor        = "KOVE",
-+		.product       = "XPD",
-+		.selector      = "round-robin 0",
-+		.pgpolicy      = MULTIBUS,
-+		.no_path_retry = DEFAULT_NO_PATH_RETRY,
-+	},
- #if 0
- 	/*
- 	 * Copy this TEMPLATE to add new hardware.
+-	{
+-		/* IBM NSeries */
+-		.vendor        = "IBM",
+-		.product       = "Nseries.*",
+-		.features      = "1 queue_if_no_path",
+-		.minio         = 128,
+-		.prio_name     = PRIO_ONTAP,
+-	},
+ 	/* LSI/Engenio/NetApp RDAC family
+ 	 *
+ 	 * Maintainer : Sean Stewart
 -- 
 2.7.4
