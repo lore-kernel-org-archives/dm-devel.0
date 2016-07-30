@@ -1,8 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 04/18] multipath-tools: add NetApp/SolidFir to
-	hwtable
-Date: Sat, 30 Jul 2016 02:28:12 +0200
-Message-ID: <1469838506-15689-4-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 05/18] multipath-tools: add Nimble to hwtable
+Date: Sat, 30 Jul 2016 02:28:13 +0200
+Message-ID: <1469838506-15689-5-git-send-email-xose.vazquez@gmail.com>
 References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,50 +20,56 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Based on info provided directly by the manufacturer:
-http://www.solidfire.com/
-http://www.netapp.com/us/products/storage-systems/solidfire/
+Based on documentation provided by the manufacturer:
+http://www.nimblestorage.com/bpg_nimble_storage_linux_fibre_channel.pdf
 
-Redhat 7+:
-vendor "SolidFir"
-product "SSD SAN"
-path_grouping_policy multibus
+vendor "Nimble"
+product "Server"
+prio "alua"
+path_grouping_policy group_by_prio
 path_checker tur
-hardware_handler "0"
-failback immediate
-rr_weight uniform
-rr_min_io 10
-rr_min_io_rq 10
-features "0"
-no_path_retry 24
-prio const
+hardware_handler "1 alua"
+features "1 queue_if_no_path"
+rr_weight priorities
+rr_min_io_rq 20
+failback 10
+path_selector "round-robin 0"
+dev_loss_tmo infinity
+fast_io_fail_tmo 1
 
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ libmultipath/hwtable.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 3952b42..bd0bd8c 100644
+index bd0bd8c..673148a 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -526,6 +526,15 @@ static struct hwentry default_hw[] = {
- 		.checker_name  = RDAC,
- 		.prio_name     = PRIO_RDAC,
+@@ -785,6 +785,22 @@ static struct hwentry default_hw[] = {
+ 		.pgpolicy      = MULTIBUS,
+ 		.no_path_retry = DEFAULT_NO_PATH_RETRY,
  	},
++	/*
++	 * Nimble Storage
++	 */
 +	{
-+		/* SolidFir */
-+		.vendor        = "SolidFir",
-+		.product       = "SSD SAN",
-+		.pgpolicy      = MULTIBUS,
-+		.no_path_retry = 24,
-+		.minio         = 10,
-+		.minio_rq      = 10,
++		.vendor        = "Nimble",
++		.product       = "Server",
++		.prio_name     = PRIO_ALUA,
++		.hwhandler     = "1 alua",
++		.features      = "1 queue_if_no_path",
++		.rr_weight     = RR_WEIGHT_PRIO,
++		.minio_rq      = 20,
++		.pgfailback    = 10,
++		.selector      = "round-robin 0",
++		.dev_loss      = MAX_DEV_LOSS_TMO,
++		.fast_io_fail  = 1,
 +	},
+ #if 0
  	/*
- 	 * Nexenta
- 	 *
+ 	 * Copy this TEMPLATE to add new hardware.
 -- 
 2.7.4
