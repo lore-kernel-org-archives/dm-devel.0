@@ -1,12 +1,12 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 06/18] multipath-tools: add IBM/FlashSystem to
-	hwtable
-Date: Sat, 30 Jul 2016 02:28:14 +0200
-Message-ID: <1469838506-15689-6-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 11/18] multipath-tools: add Xiotech ISE
+	1400/2400/3400/3401 to hwtable
+Date: Sat, 30 Jul 2016 02:28:19 +0200
+Message-ID: <1469838506-15689-11-git-send-email-xose.vazquez@gmail.com>
 References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -21,69 +21,28 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Based on documentation of the manufacturer:
-
-- FlashSystem 820 and FlashSystem 900:
-   http://www.redbooks.ibm.com/redbooks/pdfs/sg248271.pdf
-
-vendor                  "IBM"
-product                 "FlashSystem-9840"
-path_selector           "queue-length 0"        # Linux 6.2, if available
-path_grouping_policy    multibus
-path_checker            tur
-rr_min_io_rq            4                       # Linux 6.x
-rr_weight               uniform
-no_path_retry           fail
-failback                immediate
-dev_loss_tmo            300
-fast_io_fail_tmo        25
-
-- FlashSystem 710/810/720/820:
-   http://www.ibm.com/support/knowledgecenter/ST2NVR/com.ibm.storage.flashsystem.1.1.doc/rsaa6.pdf
-
-vendor                  "IBM"
-product                 "FlashSystem"
-path_selector           "round-robin 0"         # Linux 5, Linux 6
-path_grouping_policy    multibus
-path_checker            tur
-rr_min_io_rq            4                       # 6.x,FlashSystem 720/820
-rr_min_io_              4                       # 5.x,FlashSystem 720/820
-rr_weight               uniform
-no_path_retry           fail
-failback                immediate
-dev_loss_tmo            300
-fast_io_fail_tmo        25
-
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 673148a..6ea20b2 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -465,6 +465,18 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = 15,
- 		.minio         = 15,
- 	},
-+	{
-+		/* FlashSystem */
-+		.vendor        = "IBM",
-+		.product       = "FlashSystem",
-+		.selector      = "queue-length 0",
-+		.pgpolicy      = MULTIBUS,
-+		.minio         = 4,
-+		.minio_rq      = 4,
-+		.no_path_retry = NO_PATH_RETRY_FAIL,
-+		.dev_loss      = 300,
-+		.fast_io_fail  = 25,
-+	},
- 	/*
- 	 * IBM Power Virtual SCSI Devices
- 	 *
--- 
-2.7.4
+QmFzZWQgb24gZG9jdW1lbnRhdGlvbiBwcm92aWRlZCBieSB0aGUgbWFudWZhY3R1cmVyOgpodHRw
+czovL2RyaXZlLmdvb2dsZS5jb20vZmlsZS9kLzBCX0I2WW1FbU83Y0RjMjAxYTNabGNtRnZVbU0K
+CkZvciB0aGUgbGF0ZXN0IDIgdXBkYXRlcyBvZiBSZWRoYXQgNi54CnZlbmRvciAgICAgICAgICAg
+ICAgICAgICJYSU9URUNIIgpwcm9kdWN0ICAgICAgICAgICAgICAgICAiSVNFKFsxMl00MDB8MzQw
+WzAxXSkiCnBhdGhfZ3JvdXBpbmdfcG9saWN5ICAgIG11bHRpYnVzCnByaW9fY2FsbG91dCAgICAg
+ICAgICAgIOKAnG5vbmXigJ0KcGF0aF9jaGVja2VyICAgICAgICAgICAgdHVyCnBhdGhfc2VsZWN0
+b3IgICAgICAgICAgIOKAnHJvdW5kLXJvYmluIDDigJ0KZmFpbGJhY2sgICAgICAgICAgICAgICAg
+aW1tZWRpYXRlCmRldl9sb3NzX3RtbyAgICAgICAgICAgIDYwMApmYXN0X2lvX2ZhaWxfdG1vICAg
+ICAgICA1Cm5vX3BhdGhfcmV0cnkgICAgICAgICAgIDEyCnJyX21pbl9pb19ycSAgICAgICAgICAg
+IDEKCkNjOiBDaHJpc3RvcGhlIFZhcm9xdWkgPGNocmlzdG9waGUudmFyb3F1aUBvcGVuc3ZjLmNv
+bT4KQ2M6IGRldmljZS1tYXBwZXIgZGV2ZWxvcG1lbnQgPGRtLWRldmVsQHJlZGhhdC5jb20+ClNp
+Z25lZC1vZmYtYnk6IFhvc2UgVmF6cXVleiBQZXJleiA8eG9zZS52YXpxdWV6QGdtYWlsLmNvbT4K
+LS0tCiBsaWJtdWx0aXBhdGgvaHd0YWJsZS5jIHwgMTAgKysrKysrKysrKwogMSBmaWxlIGNoYW5n
+ZWQsIDEwIGluc2VydGlvbnMoKykKCmRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvaHd0YWJsZS5j
+IGIvbGlibXVsdGlwYXRoL2h3dGFibGUuYwppbmRleCA0NWE2MzMyLi4zYjY3MDMwIDEwMDY0NAot
+LS0gYS9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCisrKyBiL2xpYm11bHRpcGF0aC9od3RhYmxlLmMK
+QEAgLTg1Myw2ICs4NTMsMTYgQEAgc3RhdGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9
+IHsKIAkJLnJyX3dlaWdodCAgICAgPSBSUl9XRUlHSFRfUFJJTywKIAkJLm5vX3BhdGhfcmV0cnkg
+PSAxNSwKIAl9LAorCS8qCisJICogWGlvdGVjaAorCSAqLworCXsKKwkJLnZlbmRvciAgICAgICAg
+PSAiWElPVEVDSCIsCisJCS5wcm9kdWN0ICAgICAgID0gIklTRShbMTJdNDAwfDM0MFswMV0pIiwK
+KwkJLnNlbGVjdG9yICAgICAgPSAicm91bmQtcm9iaW4gMCIsCisJCS5wZ3BvbGljeSAgICAgID0g
+TVVMVElCVVMsCisJCS5ub19wYXRoX3JldHJ5ID0gMTIsCisJfSwKICNpZiAwCiAJLyoKIAkgKiBD
+b3B5IHRoaXMgVEVNUExBVEUgdG8gYWRkIG5ldyBoYXJkd2FyZS4KLS0gCjIuNy40CgotLQpkbS1k
+ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
+Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
