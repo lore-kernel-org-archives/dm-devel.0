@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 02/18] multipath-tools: Remove ONTAP IBM Nseries
-	from hwtable
-Date: Sat, 30 Jul 2016 02:28:10 +0200
-Message-ID: <1469838506-15689-2-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 13/18] multipath-tools: delete nearly all
+	attribute of last member(NULL) in hwtable
+Date: Sat, 30 Jul 2016 02:28:21 +0200
+Message-ID: <1469838506-15689-13-git-send-email-xose.vazquez@gmail.com>
 References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,42 +21,49 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Originally from Martin George <marting@netapp.com>
+They are "useless".
+Leave only mandatory attributes.
 
-He wrote:
-"Even earlier, the NetApp IBM Nseries product line never used a
-VID/PID of "IBM" & "Nseries" respectively. Instead, it always
-used the same VID/PID of "NETAPP" & "LUN" itself, similar to the
-ONTAP product line. So this piece of code was redundant from the
-beginning itself."
-
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Martin George <marting@netapp.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 8 --------
- 1 file changed, 8 deletions(-)
+ libmultipath/hwtable.c | 23 -----------------------
+ 1 file changed, 23 deletions(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 3e22714..73ba4ee 100644
+index 822f7ff..ebad919 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -508,14 +508,6 @@ static struct hwentry default_hw[] = {
- 		.dev_loss      = MAX_DEV_LOSS_TMO,
- 		.prio_name     = PRIO_ONTAP,
+@@ -910,29 +910,6 @@ static struct hwentry default_hw[] = {
+ 	{
+ 		.vendor        = NULL,
+ 		.product       = NULL,
+-		.revision      = NULL,
+-		.bl_product    = NULL,
+-		.pgpolicy      = 0,
+-		.uid_attribute = NULL,
+-		.selector      = NULL,
+-		.checker_name  = NULL,
+-		.features      = NULL,
+-		.hwhandler     = NULL,
+-		.prio_name     = NULL,
+-		.prio_args     = NULL,
+-		.pgfailback    = 0,
+-		.rr_weight     = 0,
+-		.no_path_retry = 0,
+-		.minio         = 0,
+-		.minio_rq      = 0,
+-		.flush_on_last_del = 0,
+-		.fast_io_fail  = 0,
+-		.dev_loss      = 0,
+-		.retain_hwhandler = NULL,
+-		.detect_prio   = NULL,
+-		.deferred_remove = NULL,
+-		.delay_watch_checks = 0,
+-		.delay_wait_checks = 0,
  	},
--	{
--		/* IBM NSeries */
--		.vendor        = "IBM",
--		.product       = "Nseries.*",
--		.features      = "1 queue_if_no_path",
--		.minio         = 128,
--		.prio_name     = PRIO_ONTAP,
--	},
- 	/* LSI/Engenio/NetApp RDAC family
- 	 *
- 	 * Maintainer : Sean Stewart
+ };
+ 
 -- 
 2.7.4
