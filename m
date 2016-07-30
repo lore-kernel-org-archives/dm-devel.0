@@ -1,12 +1,11 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 15/18] multipath-tools: add official name to
-	Huawei devices
-Date: Sat, 30 Jul 2016 02:28:23 +0200
-Message-ID: <1469838506-15689-15-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 18/18] multipath-tools: add Oracle FS to hwtable
+Date: Sat, 30 Jul 2016 02:28:26 +0200
+Message-ID: <1469838506-15689-18-git-send-email-xose.vazquez@gmail.com>
 References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -18,33 +17,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Srinivasan Ramani <srinivas.ramani@oracle.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-from http://www.t10.org/ftp/t10/vendorid.txt
-Its official name is: "HUASY"
-
-Just in case.
-
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 728680a..a9e65fc 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -755,7 +755,7 @@ static struct hwentry default_hw[] = {
- 	 * Huawei
- 	 */
- 	{
--		.vendor        = "HUAWEI",
-+		.vendor        = "(HUAWEI|HUASY)",
- 		.product       = "XSG1",
- 		.pgpolicy      = MULTIBUS,
- 	},
--- 
-2.7.4
+QmFzZWQgb24gYW4gYXV0by1nZW5lcmF0ZWQgdGVtcGxhdGUgZnJvbSBPcmFjbGUgRlMgUGF0aCBN
+YW5hZ2VyIDQuMDoKICAgICAgICB2ZW5kb3IgICAgICAgICAgICAgICAgICAiXk9yYWNsZSggICk/
+JCIKICAgICAgICBwcm9kdWN0ICAgICAgICAgICAgICAgICAiXk9yYWNsZSBGUyIKICAgICAgICBw
+YXRoX3NlbGVjdG9yICAgICAgICAgICAicm91bmQtcm9iaW4gMCIKICAgICAgICBwYXRoX2dyb3Vw
+aW5nX3BvbGljeSAgICBncm91cF9ieV9wcmlvCiAgICAgICAgcHJpbyAgICAgICAgICAgICAgICAg
+ICAgb3JhY2xlZnNwbQogICAgICAgIHBhdGhfY2hlY2tlciAgICAgICAgICAgIG9yYWNsZWZzcG0K
+ICAgICAgICBmYWlsYmFjayAgICAgICAgICAgICAgICBpbW1lZGlhdGUKCk9yYWNsZSBpcyB1c2lu
+ZyBhIGN1c3RvbWl6ZWQgY2hlY2tlciBhbmQgcHJpb3JpdGl6ZXIsIGFuZCBydW5uaW5nCmEgZGFl
+bW9uLgouCuKUnOKUgOKUgCBldGMK4pSCwqDCoCDilJTilIDilIAgaW5pdC5kCuKUgsKgwqAgICAg
+IOKUlOKUgOKUgCBvcmFjbGUtZnNwbWQK4pSU4pSA4pSAIG9wdAogICAg4pSU4pSA4pSAIG9yYWNs
+ZQogICAgICAgIOKUlOKUgOKUgCBmc3BtCiAgICAgICAgICAgIOKUnOKUgOKUgCBiaW4KICAgICAg
+ICAgICAg4pSCwqDCoCDilJzilIDilIAgZnNwbWQKICAgICAgICAgICAg4pSCwqDCoCDilJTilIDi
+lIAgZnNwbS11cGRhdGUtbXB0CiAgICAgICAgICAgIOKUlOKUgOKUgCBwbHVnaW5zCiAgICAgICAg
+ICAgICAgICDilJzilIDilIAgbGliY2hlY2tvcmFjbGVmc3BtLnNvCiAgICAgICAgICAgICAgICDi
+lJzilIDilIAgbGlicHJpb29yYWNsZWZzcG0uc28KICAgICAgICAgICAgICAgIOKUlOKUgOKUgCBt
+cGF0aF9wcmlvX29yYWNsZWZzcG0KCkNjOiBTcmluaXZhc2FuIFJhbWFuaSA8c3Jpbml2YXMucmFt
+YW5pQG9yYWNsZS5jb20+CkNjOiBDaHJpc3RvcGhlIFZhcm9xdWkgPGNocmlzdG9waGUudmFyb3F1
+aUBvcGVuc3ZjLmNvbT4KQ2M6IGRldmljZS1tYXBwZXIgZGV2ZWxvcG1lbnQgPGRtLWRldmVsQHJl
+ZGhhdC5jb20+ClNpZ25lZC1vZmYtYnk6IFhvc2UgVmF6cXVleiBQZXJleiA8eG9zZS52YXpxdWV6
+QGdtYWlsLmNvbT4KLS0tCiBsaWJtdWx0aXBhdGgvaHd0YWJsZS5jIHwgMTAgKysrKysrKystLQog
+MSBmaWxlIGNoYW5nZWQsIDggaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKCmRpZmYgLS1n
+aXQgYS9saWJtdWx0aXBhdGgvaHd0YWJsZS5jIGIvbGlibXVsdGlwYXRoL2h3dGFibGUuYwppbmRl
+eCA1MWUxMTVkLi5mZTRhNTFmIDEwMDY0NAotLS0gYS9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCisr
+KyBiL2xpYm11bHRpcGF0aC9od3RhYmxlLmMKQEAgLTYyNSwxNyArNjI1LDIzIEBAIHN0YXRpYyBz
+dHJ1Y3QgaHdlbnRyeSBkZWZhdWx0X2h3W10gPSB7CiAJLyoKIAkgKiBPcmFjbGUKIAkgKi8KLQl7
+CiAJCS8qCi0JCSAqIFBpbGxhciBEYXRhCisJCSAqIFBpbGxhciBEYXRhIC8gT3JhY2xlIEZTCiAJ
+CSAqCiAJCSAqIE1haW50YWluZXIgOiBTcmluaXZhc2FuIFJhbWFuaQogCQkgKiBNYWlsIDogc3Jp
+bml2YXMucmFtYW5pQG9yYWNsZS5jb20KIAkJICovCisJewogCQkudmVuZG9yICAgICAgICA9ICJQ
+aWxsYXIiLAogCQkucHJvZHVjdCAgICAgICA9ICJBeGlvbS4qIiwKKwkJLnByaW9fbmFtZSAgICAg
+PSBQUklPX0FMVUEsCiAJCS5wZ2ZhaWxiYWNrICAgID0gRkFJTEJBQ0tfVU5ERUYsCisJfSwKKwl7
+CisJCS52ZW5kb3IgICAgICAgID0gIl5PcmFjbGUiLAorCQkucHJvZHVjdCAgICAgICA9ICJeT3Jh
+Y2xlIEZTLioiLAogCQkucHJpb19uYW1lICAgICA9IFBSSU9fQUxVQSwKKwkJLnNlbGVjdG9yICAg
+ICAgPSAicm91bmQtcm9iaW4gMCIsCiAJfSwKIAkJLyogU3RvcmFnZVRlayAqLwogCXsKLS0gCjIu
+Ny40CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
+L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
