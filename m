@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 08/18] multipath-tools: add FUJITSU/ETERNUS
-	2000/4000/8000 to hwtable
-Date: Sat, 30 Jul 2016 02:28:16 +0200
-Message-ID: <1469838506-15689-8-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 06/18] multipath-tools: add IBM/FlashSystem to
+	hwtable
+Date: Sat, 30 Jul 2016 02:28:14 +0200
+Message-ID: <1469838506-15689-6-git-send-email-xose.vazquez@gmail.com>
 References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,43 +21,69 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Based on documentation provided by the manufacturer:
-http://storage-system.fujitsu.com/global/manual/diskarray/pdf/p3am-3192-en.pdf
+Based on documentation of the manufacturer:
 
-For SUSE Linux Enterprise Server 11
+- FlashSystem 820 and FlashSystem 900:
+   http://www.redbooks.ibm.com/redbooks/pdfs/sg248271.pdf
 
-vendor                  "FUJITSU"
-product                 "E[248]000"
-prio                    alua
-path_grouping_policy    group_by_prio
-path_selector           "round-robin 0"
+vendor                  "IBM"
+product                 "FlashSystem-9840"
+path_selector           "queue-length 0"        # Linux 6.2, if available
+path_grouping_policy    multibus
+path_checker            tur
+rr_min_io_rq            4                       # Linux 6.x
+rr_weight               uniform
+no_path_retry           fail
 failback                immediate
-no_path_retry           10
+dev_loss_tmo            300
+fast_io_fail_tmo        25
 
+- FlashSystem 710/810/720/820:
+   http://www.ibm.com/support/knowledgecenter/ST2NVR/com.ibm.storage.flashsystem.1.1.doc/rsaa6.pdf
+
+vendor                  "IBM"
+product                 "FlashSystem"
+path_selector           "round-robin 0"         # Linux 5, Linux 6
+path_grouping_policy    multibus
+path_checker            tur
+rr_min_io_rq            4                       # 6.x,FlashSystem 720/820
+rr_min_io_              4                       # 5.x,FlashSystem 720/820
+rr_weight               uniform
+no_path_retry           fail
+failback                immediate
+dev_loss_tmo            300
+fast_io_fail_tmo        25
+
+Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+ libmultipath/hwtable.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index d1e9c81..1845881 100644
+index 673148a..6ea20b2 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -257,6 +257,13 @@ static struct hwentry default_hw[] = {
- 		.product       = "FC2502",
- 		.pgfailback    = FAILBACK_UNDEF,
+@@ -465,6 +465,18 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = 15,
+ 		.minio         = 15,
  	},
 +	{
-+		.vendor        = "FUJITSU",
-+		.product       = "E[248]000",
-+		.prio_name     = PRIO_ALUA,
-+		.no_path_retry = 10,
-+		.selector      = "round-robin 0",
++		/* FlashSystem */
++		.vendor        = "IBM",
++		.product       = "FlashSystem",
++		.selector      = "queue-length 0",
++		.pgpolicy      = MULTIBUS,
++		.minio         = 4,
++		.minio_rq      = 4,
++		.no_path_retry = NO_PATH_RETRY_FAIL,
++		.dev_loss      = 300,
++		.fast_io_fail  = 25,
 +	},
  	/*
- 	 * Hitachi
+ 	 * IBM Power Virtual SCSI Devices
  	 *
 -- 
 2.7.4
