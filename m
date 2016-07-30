@@ -1,8 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 09/18] multipath-tools: add VIOLIN/ "SAN ARRAY"
-	and "SAN ARRAY ALUA" to hwtable
-Date: Sat, 30 Jul 2016 02:28:17 +0200
-Message-ID: <1469838506-15689-9-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 07/18] multipath-tools: add EMC/Celerra to hwtable
+Date: Sat, 30 Jul 2016 02:28:15 +0200
+Message-ID: <1469838506-15689-7-git-send-email-xose.vazquez@gmail.com>
 References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,98 +17,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Edward Goggin <egoggin@emc.com>
 List-Id: dm-devel.ids
 
-Based on documentation provided by the manufacturer:
-https://drive.google.com/open?id=0B_B6YmEmO7cDQlMzc1BsaUxZRVU
+Based on documentation of the manufacturer:
+http://www.emc.com/collateral/TechnicalDocument/docu5128.pdf
 
-* For "SAN ARRAY ALUA":
+vendor "EMC"
+product "Celerra"
+path_grouping_policy "multibus"
+path_checker "tur"
+no_path_retry "30"
 
-- Red Hat Enterprise Linux 6.x:
-vendor "VIOLIN"
-product "SAN ARRAY ALUA"
-path_grouping_policy group_by_prio
-getuid_callout "/lib/udev/scsi_id --whitelisted --replace- whitespace --page=0x80 --device=/dev/%n"
-prio "alua"
-path_checker tur
-path_selector "round-robin 0"
-hardware_handler "1 alua"
-failback immediate
-rr_weight uniform
-no_path_retry fail
-rr_min_io_rq 4
-
-- SUSE Enterprise Linux 11 SP3:
-vendor "VIOLIN"
-product "SAN ARRAY ALUA"
-path_grouping_policy group_by_prio
-prio "alua"
-path_checker tur
-path_selector "round-robin 0"
-hardware_handler "0"
-failback immediate
-no_path_retry 100
-detect_prio yes
-
-* For "SAN ARRAY":
-
-- Red Hat Enterprise Linux 6.x:
-vendor "VIOLIN"
-product "SAN ARRAY"
-path_grouping_policy group_by_serial
-getuid_callout "/lib/udev/scsi_id --whitelisted -- replace-whitespace --page=0x80 --device=/dev/%n"
-path_checker tur
-path_selector "round-robin 0"
-hardware_handler "0"
-failback immediate
-rr_weight uniform
-no_path_retry fail
-rr_min_io_rq 4
-
-- SUSE Enterprise Linux 11 SP3:
-vendor "VIOLIN"
-product "SAN ARRAY"
-path_grouping_policy group_by_serial
-path_checker tur
-path_selector "round-robin 0"
-hardware_handler "0"
-failback immediate
-rr_weight uniform
-no_path_retry 100
-
+Cc: Edward Goggin <egoggin@emc.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+ libmultipath/hwtable.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 1845881..4d5717a 100644
+index 6ea20b2..d1e9c81 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -772,6 +772,21 @@ static struct hwentry default_hw[] = {
- 		.features      = "1 queue_if_no_path",
- 		.no_path_retry = 300,
+@@ -186,6 +186,12 @@ static struct hwentry default_hw[] = {
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
  	},
 +	{
-+		.vendor        = "VIOLIN",
-+		.product       = "SAN ARRAY",
-+		.pgpolicy      = GROUP_BY_SERIAL,
-+		.selector      = "round-robin 0",
-+		.no_path_retry = 100,
-+	},
-+	{
-+		.vendor        = "VIOLIN",
-+		.product       = "SAN ARRAY ALUA",
-+		.prio_name     = PRIO_ALUA,
-+		.selector      = "round-robin 0",
-+		.hwhandler     = "1 alua",
-+		.no_path_retry = 100,
++		.vendor        = "EMC",
++		.product       = "Celerra",
++		.pgpolicy      = MULTIBUS,
++		.no_path_retry = 30,
 +	},
  	/*
- 	 * Infinidat
+ 	 * DELL
  	 */
 -- 
 2.7.4
