@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 07/18] multipath-tools: add EMC/Celerra to hwtable
-Date: Sat, 30 Jul 2016 02:28:15 +0200
-Message-ID: <1469838506-15689-7-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 14/18] multipath-tools: change path grouping
+	policy for EUROLOGC/FC2502
+Date: Sat, 30 Jul 2016 02:28:22 +0200
+Message-ID: <1469838506-15689-14-git-send-email-xose.vazquez@gmail.com>
 References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,42 +18,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Edward Goggin <egoggin@emc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Based on documentation of the manufacturer:
-http://www.emc.com/collateral/TechnicalDocument/docu5128.pdf
+No prio defined and .pgpolicy=GROUP_BY_PRIO are an impossible combination.
 
-vendor "EMC"
-product "Celerra"
-path_grouping_policy "multibus"
-path_checker "tur"
-no_path_retry "30"
-
-Cc: Edward Goggin <egoggin@emc.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ libmultipath/hwtable.c | 1 +
+ 1 file changed, 1 insertion(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 6ea20b2..d1e9c81 100644
+index ebad919..728680a 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -186,6 +186,12 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
+@@ -256,6 +256,7 @@ static struct hwentry default_hw[] = {
+ 		.vendor        = "EUROLOGC",
+ 		.product       = "FC2502",
  		.pgfailback    = FAILBACK_UNDEF,
- 	},
-+	{
-+		.vendor        = "EMC",
-+		.product       = "Celerra",
 +		.pgpolicy      = MULTIBUS,
-+		.no_path_retry = 30,
-+	},
- 	/*
- 	 * DELL
- 	 */
+ 	},
+ 	{
+ 		.vendor        = "FUJITSU",
 -- 
 2.7.4
