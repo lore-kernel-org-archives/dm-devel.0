@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 05/18] multipath-tools: add Nimble to hwtable
-Date: Sat, 30 Jul 2016 02:28:13 +0200
-Message-ID: <1469838506-15689-5-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 10/18] multipath-tools: add Nexsan E-Series and
+	SATABeast/SATABoy to hwtable
+Date: Sat, 30 Jul 2016 02:28:18 +0200
+Message-ID: <1469838506-15689-10-git-send-email-xose.vazquez@gmail.com>
 References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,52 +22,72 @@ Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.va
 List-Id: dm-devel.ids
 
 Based on documentation provided by the manufacturer:
-http://www.nimblestorage.com/bpg_nimble_storage_linux_fibre_channel.pdf
+https://drive.google.com/file/d/0B_B6YmEmO7cDeGRXeG85MXFVMEU
 
-vendor "Nimble"
-product "Server"
-prio "alua"
-path_grouping_policy group_by_prio
-path_checker tur
-hardware_handler "1 alua"
-features "1 queue_if_no_path"
-rr_weight priorities
-rr_min_io_rq 20
-failback 10
-path_selector "round-robin 0"
-dev_loss_tmo infinity
-fast_io_fail_tmo 1
+Redhat 6:
+vendor                  "NEXSAN "
+product                 "NXS-B0.*|SATAB.*"
+getuid_callout          "/lib/udev/scsi_id --whitelisted --device=/dev/%n"
+path_grouping_policy    group_by_prio
+prio                    alua
+path_checker            directio
+path_selector           "round-robin 0"
+hardware_handler        "0"
+rr_weight               priorities
+no_path_retry           15
+failback                immediate
+
+SUSE 11 (including OpenSUSE):
+vendor                  "NEXSAN "
+product                 "NXS-B0.*|SATAB.*"
+getuid_callout          "/lib/udev/scsi_id --whitelisted -g -u -d /dev/%n"
+path_grouping_policy    group_by_prio
+prio                    alua
+path_checker            directio
+path_selector           "round-robin 0"
+hardware_handler        "0"
+rr_weight               priorities
+no_path_retry           15
+failback                immediate
+
+Debian Wheezy:
+vendor                  "NEXSAN "
+product                 "NXS-B0.*|SATAB.*"
+path_grouping_policy    group_by_prio
+prio                    alua
+path_checker            directio
+path_selector           "round-robin 0"
+hardware_handler        "1 alua"
+rr_weight               priorities
+no_path_retry           5
+failback                immediate
 
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 16 ++++++++++++++++
- 1 file changed, 16 insertions(+)
+ libmultipath/hwtable.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index bd0bd8c..673148a 100644
+index 4d5717a..45a6332 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -785,6 +785,22 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
- 		.no_path_retry = DEFAULT_NO_PATH_RETRY,
+@@ -841,6 +841,18 @@ static struct hwentry default_hw[] = {
+ 		.dev_loss      = MAX_DEV_LOSS_TMO,
+ 		.fast_io_fail  = 1,
  	},
 +	/*
-+	 * Nimble Storage
++	 * Nexsan
 +	 */
 +	{
-+		.vendor        = "Nimble",
-+		.product       = "Server",
++		.vendor        = "NEXSAN",
++		.product       = "(NXS-B0.*|SATAB.*)",
++		.selector      = "round-robin 0",
 +		.prio_name     = PRIO_ALUA,
 +		.hwhandler     = "1 alua",
-+		.features      = "1 queue_if_no_path",
 +		.rr_weight     = RR_WEIGHT_PRIO,
-+		.minio_rq      = 20,
-+		.pgfailback    = 10,
-+		.selector      = "round-robin 0",
-+		.dev_loss      = MAX_DEV_LOSS_TMO,
-+		.fast_io_fail  = 1,
++		.no_path_retry = 15,
 +	},
  #if 0
  	/*
