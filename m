@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 10/18] multipath-tools: add Nexsan E-Series and
-	SATABeast/SATABoy to hwtable
-Date: Sat, 30 Jul 2016 02:28:18 +0200
-Message-ID: <1469838506-15689-10-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 09/18] multipath-tools: add VIOLIN/ "SAN ARRAY"
+	and "SAN ARRAY ALUA" to hwtable
+Date: Sat, 30 Jul 2016 02:28:17 +0200
+Message-ID: <1469838506-15689-9-git-send-email-xose.vazquez@gmail.com>
 References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,75 +22,94 @@ Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.va
 List-Id: dm-devel.ids
 
 Based on documentation provided by the manufacturer:
-https://drive.google.com/file/d/0B_B6YmEmO7cDeGRXeG85MXFVMEU
+https://drive.google.com/open?id=0B_B6YmEmO7cDQlMzc1BsaUxZRVU
 
-Redhat 6:
-vendor                  "NEXSAN "
-product                 "NXS-B0.*|SATAB.*"
-getuid_callout          "/lib/udev/scsi_id --whitelisted --device=/dev/%n"
-path_grouping_policy    group_by_prio
-prio                    alua
-path_checker            directio
-path_selector           "round-robin 0"
-hardware_handler        "0"
-rr_weight               priorities
-no_path_retry           15
-failback                immediate
+* For "SAN ARRAY ALUA":
 
-SUSE 11 (including OpenSUSE):
-vendor                  "NEXSAN "
-product                 "NXS-B0.*|SATAB.*"
-getuid_callout          "/lib/udev/scsi_id --whitelisted -g -u -d /dev/%n"
-path_grouping_policy    group_by_prio
-prio                    alua
-path_checker            directio
-path_selector           "round-robin 0"
-hardware_handler        "0"
-rr_weight               priorities
-no_path_retry           15
-failback                immediate
+- Red Hat Enterprise Linux 6.x:
+vendor "VIOLIN"
+product "SAN ARRAY ALUA"
+path_grouping_policy group_by_prio
+getuid_callout "/lib/udev/scsi_id --whitelisted --replace- whitespace --page=0x80 --device=/dev/%n"
+prio "alua"
+path_checker tur
+path_selector "round-robin 0"
+hardware_handler "1 alua"
+failback immediate
+rr_weight uniform
+no_path_retry fail
+rr_min_io_rq 4
 
-Debian Wheezy:
-vendor                  "NEXSAN "
-product                 "NXS-B0.*|SATAB.*"
-path_grouping_policy    group_by_prio
-prio                    alua
-path_checker            directio
-path_selector           "round-robin 0"
-hardware_handler        "1 alua"
-rr_weight               priorities
-no_path_retry           5
-failback                immediate
+- SUSE Enterprise Linux 11 SP3:
+vendor "VIOLIN"
+product "SAN ARRAY ALUA"
+path_grouping_policy group_by_prio
+prio "alua"
+path_checker tur
+path_selector "round-robin 0"
+hardware_handler "0"
+failback immediate
+no_path_retry 100
+detect_prio yes
+
+* For "SAN ARRAY":
+
+- Red Hat Enterprise Linux 6.x:
+vendor "VIOLIN"
+product "SAN ARRAY"
+path_grouping_policy group_by_serial
+getuid_callout "/lib/udev/scsi_id --whitelisted -- replace-whitespace --page=0x80 --device=/dev/%n"
+path_checker tur
+path_selector "round-robin 0"
+hardware_handler "0"
+failback immediate
+rr_weight uniform
+no_path_retry fail
+rr_min_io_rq 4
+
+- SUSE Enterprise Linux 11 SP3:
+vendor "VIOLIN"
+product "SAN ARRAY"
+path_grouping_policy group_by_serial
+path_checker tur
+path_selector "round-robin 0"
+hardware_handler "0"
+failback immediate
+rr_weight uniform
+no_path_retry 100
 
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+ libmultipath/hwtable.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 4d5717a..45a6332 100644
+index 1845881..4d5717a 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -841,6 +841,18 @@ static struct hwentry default_hw[] = {
- 		.dev_loss      = MAX_DEV_LOSS_TMO,
- 		.fast_io_fail  = 1,
+@@ -772,6 +772,21 @@ static struct hwentry default_hw[] = {
+ 		.features      = "1 queue_if_no_path",
+ 		.no_path_retry = 300,
  	},
-+	/*
-+	 * Nexsan
-+	 */
 +	{
-+		.vendor        = "NEXSAN",
-+		.product       = "(NXS-B0.*|SATAB.*)",
++		.vendor        = "VIOLIN",
++		.product       = "SAN ARRAY",
++		.pgpolicy      = GROUP_BY_SERIAL,
 +		.selector      = "round-robin 0",
-+		.prio_name     = PRIO_ALUA,
-+		.hwhandler     = "1 alua",
-+		.rr_weight     = RR_WEIGHT_PRIO,
-+		.no_path_retry = 15,
++		.no_path_retry = 100,
 +	},
- #if 0
++	{
++		.vendor        = "VIOLIN",
++		.product       = "SAN ARRAY ALUA",
++		.prio_name     = PRIO_ALUA,
++		.selector      = "round-robin 0",
++		.hwhandler     = "1 alua",
++		.no_path_retry = 100,
++	},
  	/*
- 	 * Copy this TEMPLATE to add new hardware.
+ 	 * Infinidat
+ 	 */
 -- 
 2.7.4
