@@ -1,7 +1,7 @@
 From: Akira Hayakawa <ruby.wktk@gmail.com>
 Subject: Re: dm-flakey NOT to return -EIO on READ?
-Date: Sat, 30 Jul 2016 07:55:49 +0900
-Message-ID: <1bfec2ff-2c77-12ac-ca33-4ff6ea566030@gmail.com>
+Date: Sat, 30 Jul 2016 09:26:43 +0900
+Message-ID: <c3b3b1bd-c4f6-adf3-c4d1-bea038c19e5c@gmail.com>
 References: <217a0cf8-4853-6316-3016-77460073061d@gmail.com>
 	<CAM4Jq_5kBs2WKNOiLrVL8XMTSJQhPdvO-XKROhzpLXdOATFw7w@mail.gmail.com>
 	<07b6affb-a09d-7d55-65f8-6d476a5471aa@gmail.com>
@@ -24,19 +24,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Lukas Herbolt <lherbolt@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Lukas Herbolt <lherbolt@redhat.com>
 List-Id: dm-devel.ids
 
-I just looked at the patch. (not tested yet)
+Mike,
 
-I think the else part in the endio isn't necessary.
+> This fix should resolve the problem, I'll be staging it to go upstream
+> during the 4.8-rc cycle (Akira, please test to verify your test fails as
+> expected now):
 
-> +		else
-> +			return -EIO;
+I tested with the patch and it's now ok.
 
 Akira
-
 
 On 2016/07/30 2:30, Mike Snitzer wrote:
 > On Fri, Jul 29 2016 at 10:35am -0400,
