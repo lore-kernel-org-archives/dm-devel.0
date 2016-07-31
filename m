@@ -1,15 +1,17 @@
-From: Sebastian Herbszt <herbszt@gmx.de>
-Subject: Re: [PATCH 08/18] multipath-tools: add FUJITSU/ETERNUS
- 2000/4000/8000 to hwtable
-Date: Sun, 31 Jul 2016 21:39:48 +0200
-Message-ID: <20160731213948.00003cdc@gmx.de>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH 16/18] multipath-tools: Use ALUA for HP 3PAR
+Date: Sun, 31 Jul 2016 22:43:40 +0200
+Message-ID: <cc29c462-f1d4-f74a-5b16-1236b48b85ea@gmail.com>
 References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
-	<1469838506-15689-8-git-send-email-xose.vazquez@gmail.com>
+	<1469838506-15689-16-git-send-email-xose.vazquez@gmail.com>
+	<trinity-e6c25fb4-7664-4f5d-9885-5aba45504689-1469916891284@3capp-gmx-bs13>
+	<aeee838a-6d44-ee76-62c5-4d97cbcaca80@gmail.com>
+	<trinity-56e0175a-2d50-4b23-bcd6-901dba2baf2f-1469991975804@3capp-gmx-bs42>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1469838506-15689-8-git-send-email-xose.vazquez@gmail.com>
+In-Reply-To: <trinity-56e0175a-2d50-4b23-bcd6-901dba2baf2f-1469991975804@3capp-gmx-bs42>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,51 +21,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>
+To: Sebastian Herbszt <herbszt@gmx.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Xose Vazquez Perez wrote:
-> Based on documentation provided by the manufacturer:
-> http://storage-system.fujitsu.com/global/manual/diskarray/pdf/p3am-3192-en.pdf
-> 
-> For SUSE Linux Enterprise Server 11
-> 
-> vendor                  "FUJITSU"
-> product                 "E[248]000"
-> prio                    alua
-> path_grouping_policy    group_by_prio
-> path_selector           "round-robin 0"
-> failback                immediate
-> no_path_retry           10
-> 
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/hwtable.c | 7 +++++++
->  1 file changed, 7 insertions(+)
-> 
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index d1e9c81..1845881 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -257,6 +257,13 @@ static struct hwentry default_hw[] = {
->  		.product       = "FC2502",
->  		.pgfailback    = FAILBACK_UNDEF,
->  	},
-> +	{
-> +		.vendor        = "FUJITSU",
-> +		.product       = "E[248]000",
-> +		.prio_name     = PRIO_ALUA,
-> +		.no_path_retry = 10,
-> +		.selector      = "round-robin 0",
-> +	},
->  	/*
->  	 * Hitachi
->  	 *
+On 07/31/2016 09:06 PM, Sebastian Herbszt wrote:
 
-How about dropping the path selector and merging
-the entry with ETERNUS DX?
+> Xose Vazquez Perez wrote:
+>>
+>> No. It's related to hardware_handler, "alua" in this case.
+> 
+> So how does the output of 'multipath -ll' looks like for persona 1 and 2
+> with and without 'retain_attached_hw_handler'?
 
-Sebastian
+retain_attached_hw_handler is innocuous.
+The paths grouping policy is controlled by the "path_grouping_policy" keyword,
+multibus vs. group_by_prio. See man page.
+
+
+Persona 1 and 2 basically is the same, but:
+
+Persona 1:	path_grouping_policy = multibus
+		failback = manual
+		prio = const
+
+Persona 2:	path_grouping_policy = group_by_prio
+		failback = immediate
+		prio = alua				(this is irrelevant, alua-prio is autodetected)
+		hardware_handler= "1 alua"		(this is irrelevant, all hardware handlers are autodetected)
+
+With 3PAR-OS 3.1.3, or later, you should use "Persona 2"
