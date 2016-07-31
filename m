@@ -1,15 +1,15 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH 16/18] multipath-tools: Use ALUA for HP 3PAR
-Date: Sun, 31 Jul 2016 01:39:23 +0200
-Message-ID: <aeee838a-6d44-ee76-62c5-4d97cbcaca80@gmail.com>
-References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
-	<1469838506-15689-16-git-send-email-xose.vazquez@gmail.com>
-	<trinity-e6c25fb4-7664-4f5d-9885-5aba45504689-1469916891284@3capp-gmx-bs13>
+Subject: Re: [PATCH] multipath-tools: Pillar/Axiom supports
+	failback=immediate
+Date: Sun, 31 Jul 2016 02:02:41 +0200
+Message-ID: <4527a2e7-83b8-7c19-041d-a01fdb5cd684@gmail.com>
+References: <<1469913348-9350-1-git-send-email-xose.vazquez@gmail.com>
+	<e46f78fd-b5cd-4498-a96e-d30b6a58d0d3@default>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <trinity-e6c25fb4-7664-4f5d-9885-5aba45504689-1469916891284@3capp-gmx-bs13>
+In-Reply-To: <e46f78fd-b5cd-4498-a96e-d30b6a58d0d3@default>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,18 +19,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Sebastian Herbszt <herbszt@gmx.de>
+To: Srinivas Ramani <srinivas.ramani@oracle.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 07/31/2016 12:14 AM, Sebastian Herbszt wrote:
+On 07/31/2016 01:18 AM, Srinivas Ramani wrote:
 
-> Xose Vazquez Perez wrote:
+Pillar/Axiom and "Oracle FS" configs look the same.
 
->> Sebastian was not convinced with this change, full thread: https://marc.info/?t=146175638600002
->> But there is no automatic way to change .pgpolicy from MULTIBUS to GROUP_BY_PRIO.
->> So we should stick to latest manufacturer's recommendations:
+>                 .vendor        = "^Pillar(  )?$",
+>                 .product       = "^Axiom"
+>                 .getuid        = DEFAULT_GETUID,
+>                 .features      = DEFAULT_FEATURES,
+>                 .hwhandler     = DEFAULT_HWHANDLER,
+>                 .selector      = DEFAULT_SELECTOR,
+>                 .pgpolicy      = GROUP_BY_PRIO,
+>                 .pgfailback    = FAILBACK_UNDEF, <<<<<-----------
 
-> So 'retain_attached_hw_handler' suggested by Hannes doesn't work?
+Why pgfailback is FAILBACK_UNDEF(manual)?, when in your
+/etc/multipath.conf template it's "immediate".
 
-No. It's related to hardware_handler, "alua" in this case.
+> Auto-generated template from Oracle FS Path Manager 4.0:
+>         vendor                "^Pillar(  )?$"
+>         product               "^Axiom"
+>         path_grouping_policy  group_by_prio
+>         prio                  oraclefspm
+>         path_checker          oraclefspm
+>         failback              immediate          <<<<<-----------
+>         path_selector         "round-robin 0"
+> 
+> Template from Axiom Path Manager 3.1 for RHEL-6.1:
+>         vendor               "Pillar"
+>         product              "*"
+>         path_grouping_policy group_by_prio
+>         prio                 pillarapm
+>         path_checker         pillarapm
+>         failback             immediate          <<<<<-----------
+>         no_path_retry        60
+>         dev_loss_tmo         60
+>         fast_io_fail_tmo     30
+
+Thank you.
