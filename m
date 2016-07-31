@@ -1,17 +1,15 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH 16/18] multipath-tools: Use ALUA for HP 3PAR
-Date: Sun, 31 Jul 2016 22:43:40 +0200
-Message-ID: <cc29c462-f1d4-f74a-5b16-1236b48b85ea@gmail.com>
-References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
-	<1469838506-15689-16-git-send-email-xose.vazquez@gmail.com>
-	<trinity-e6c25fb4-7664-4f5d-9885-5aba45504689-1469916891284@3capp-gmx-bs13>
-	<aeee838a-6d44-ee76-62c5-4d97cbcaca80@gmail.com>
-	<trinity-56e0175a-2d50-4b23-bcd6-901dba2baf2f-1469991975804@3capp-gmx-bs42>
+Subject: Re: [PATCH 5/5] multipath-tools: hwtable housekeeping
+Date: Sun, 31 Jul 2016 23:59:35 +0200
+Message-ID: <cb83cdfc-e721-7477-8722-716c445f6b55@gmail.com>
+References: <1469233752-11708-1-git-send-email-xose.vazquez@gmail.com>
+	<1469233752-11708-5-git-send-email-xose.vazquez@gmail.com>
+	<CABr-Gnfo1zGZRJSnd=gBKFFpww2f_GOdMk2t-Gx_rxybD3C=rw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <trinity-56e0175a-2d50-4b23-bcd6-901dba2baf2f-1469991975804@3capp-gmx-bs42>
+In-Reply-To: <CABr-Gnfo1zGZRJSnd=gBKFFpww2f_GOdMk2t-Gx_rxybD3C=rw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,33 +19,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Sebastian Herbszt <herbszt@gmx.de>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 07/31/2016 09:06 PM, Sebastian Herbszt wrote:
+On 07/31/2016 10:55 AM, Christophe Varoqui wrote:
 
-> Xose Vazquez Perez wrote:
->>
->> No. It's related to hardware_handler, "alua" in this case.
-> 
-> So how does the output of 'multipath -ll' looks like for persona 1 and 2
-> with and without 'retain_attached_hw_handler'?
+> The "change default failback from manual to immediate" patch is
+> reverted, as requested by Hannes.
 
-retain_attached_hw_handler is innocuous.
-The paths grouping policy is controlled by the "path_grouping_policy" keyword,
-multibus vs. group_by_prio. See man page.
+Hannes asked also to revert: 1234de2486211995be3193205387c08c6f682f91
+"change default path_grouping_policy from failover to group_by_prio"
 
 
-Persona 1 and 2 basically is the same, but:
+And a minimalist request, could you remove just this link from the front-page? :
+http://christophe.varoqui.free.fr/multipath-tools/multipath-tools-0.5.0.tar.bz2
+Some distributions are monitoring upstream projects to detect new
+releases. And they are getting outdated/wrong information.
 
-Persona 1:	path_grouping_policy = multibus
-		failback = manual
-		prio = const
-
-Persona 2:	path_grouping_policy = group_by_prio
-		failback = immediate
-		prio = alua				(this is irrelevant, alua-prio is autodetected)
-		hardware_handler= "1 alua"		(this is irrelevant, all hardware handlers are autodetected)
-
-With 3PAR-OS 3.1.3, or later, you should use "Persona 2"
+Thank you.
