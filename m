@@ -1,16 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Subject: Re: [RFC] [PATCH] add serial keyword to the weightedpath
 	prioritizer
-Date: Mon, 1 Aug 2016 13:40:36 +0200
-Message-ID: <135275ad-ad45-7be3-d23c-6dc0dfb9d833@suse.de>
+Date: Mon, 1 Aug 2016 14:25:06 +0200
+Message-ID: <CABr-Gnd6zGeHgo5ka1LjQ5xB2WtZVCW_-=fH8UYZR_qppfog8Q@mail.gmail.com>
 References: <CABr-Gndh4LLgd=T00GdtwNVrFgL7Te91BwjZ0Dh4uYyDi3c9bA@mail.gmail.com>
 	<d9c1d17d-83c2-3e68-166c-78f44c5dd21d@suse.de>
 	<CABr-GnfBwx6Fb1D7-2L0RiUP_ujOP8ZpH2WM0kyQR8f42424Pg@mail.gmail.com>
+	<135275ad-ad45-7be3-d23c-6dc0dfb9d833@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============4673123857389224494=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-GnfBwx6Fb1D7-2L0RiUP_ujOP8ZpH2WM0kyQR8f42424Pg@mail.gmail.com>
+In-Reply-To: <135275ad-ad45-7be3-d23c-6dc0dfb9d833@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,70 +20,290 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: Hannes Reinecke <hare@suse.de>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDgvMDEvMjAxNiAxMDo0MiBBTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+Cj4KPiBP
-biBNb24sIEF1ZyAxLCAyMDE2IGF0IDk6NDkgQU0sIEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNl
-LmRlCj4gPG1haWx0bzpoYXJlQHN1c2UuZGU+PiB3cm90ZToKPgo+ICAgICBPbiAwNy8zMS8yMDE2
-IDA5OjI2IFBNLCBDaHJpc3RvcGhlIFZhcm9xdWkgd3JvdGU6Cj4KPiAgICAgICAgIEJlbiwgSGFu
-bmVzLAo+Cj4gICAgICAgICBDYW4geW91IHJldmlldyB0aGlzIHBhdGNoLCBhZGRpbmcgYSBuZXcg
-J3NlcmlhbCcga2V5d29yZCB0byB0aGUKPiAgICAgICAgIHdlaWdodGVkcGF0aCBwcmlvcml0aXpl
-ci4KPgo+ICAgICAgICAgSSBjb21waWxlLXRlc3RlZCBpdCBvbmx5LCBhcyBJIGhhdmUgbm8gdGVz
-dGluZyBlbnZpcm9ubWVudCBhdAo+ICAgICAgICAgaGFuZCBhdAo+ICAgICAgICAgdGhlIG1vbWVu
-dC4KPgo+ICAgICAgICAgSSBjb21taXRlZCBpdCBpbiBhIHNlcGFyYXRlICd3ZWlnaHRlZHBhdGgt
-c2VyaWFsJyBicmFuY2ggZm9yIG5vdy4KPgo+ICAgICAgICAgaHR0cDovL2dpdC5vcGVuc3ZjLmNv
-bS8/cD1tdWx0aXBhdGgtdG9vbHMvLmdpdDthPWNvbW1pdGRpZmY7aD00ZGQxNmQ5OTI4MTEwNGZj
-MzUwNGFkNzM2MjY4OTRhNWMzNzAyZmIzCj4KPiAgICAgICAgIFRoYW5rcywKPiAgICAgICAgIENo
-cmlzdG9waGUgVmFyb3F1aQo+ICAgICAgICAgT3BlblNWQwo+Cj4gICAgIFdlbGwuCj4gICAgIElu
-IGdlbmVyYWwsIHN1cmUsIGZpbmUsIEkgZG9uJ3QgaGF2ZSBhbnkgaXNzdWVzIHdpdGggdGhhdC4K
-PiAgICAgSWYgdGhlIGN1c3RvbWVyIHdhbnRzIHRvIGRpZGRsZSB3aXRoIGhpcyBhcnJheSB0aGF0
-IHdheS4uLgo+Cj4gICAgIFRoZSBtb3JlIGdlbmVyYWwgcHJvYmxlbSBJJ20gc2VlaW5nIGlzIHRo
-YXQgb3VyIGN1cnJlbnQgdHdvLWxheWVyZWQKPiAgICAgcHJpb3JpdHkgc2V0dXAgKHBhdGggZ3Jv
-dXBzIHdpdGggZGlzdGluY3QgcHJpb3JpdGllcyBhbmQgcGF0aHMKPiAgICAgd2l0aGluIHRoZW0p
-IG1pZ2h0IG5vdCBiZSBsZWFkaW5nIHRvIGlzc3VlcyB3aXRoIGxhcmdlciBhbmQgbW9yZQo+ICAg
-ICBjb21wbGV4IHNjZW5hcmlvcy4KPgo+ICAgICBBVE0gd2UgYWxyZWFkeSBoYXZlIHRoZSBwcm9i
-bGVtIHRoYXQgY2x1c3RlcmVkIHNjZW5hcmlvcyBsaWtlIHRoaXM6Cj4KPiAgICAgU3RvcmFnZSBu
-b2RlIDEoYWN0aXZlKToKPiAgICAgICBQYXRoIDEgKG9wdGltYWwpOgo+ICAgICAgICAgTFVOIDEs
-IExVTjIKPiAgICAgICBQYXRoIDIgKG5vbi1vcHRpbWFsKToKPiAgICAgICAgIExVTiAxLCBMVU4y
-Cj4KPiAgICAgU3RvcmFnZSBub2RlIDIocGFzc2l2ZSk6Cj4gICAgICAgUGF0aCAxKG9wdGltYWwp
-Ogo+ICAgICAgICAgIExVTiAxLCBMVU4yCj4gICAgICAgUGF0aCAyKG5vbi1vcHRpbWFsKToKPiAg
-ICAgICAgICBMVU4gMSwgTFVOMgo+Cj4gICAgIGNhbiBub3QgYmUgcmVwcmVzZW50ZWQgcHJvcGVy
-bHkgd2l0aCBtdWx0aXBhdGggdG9vbHMuCj4gICAgIFdlIGFyZSBmb3JjZWQgdG8gZWl0aGVyCj4g
-ICAgIGEpIHNldCAnc3RvcmFnZSBub2RlIDInIHRvICdmYWlsZWQnLCB3aGljaCB3b3VsZCBraWxs
-Cj4gICAgICAgIGFueSBjbHVzdGVyIGluc3RhbmNlIGFjY2Vzc2luZyBvbmx5ICdzdG9yYWdlIG5v
-ZGUgMicKPiAgICAgb3IKPiAgICAgYikgbWFwIGFsbCBwcmlvcml0aWVzIGZyb20gJ3N0b3JhZ2Ug
-bm9kZSAyJyB0byAnMCcsCj4gICAgICAgIHRoZXJlYnkgbG9zaW5nIGFsbCBwcmlvcml0eSBpbmZv
-cm1hdGlvbgo+Cj4gICAgIFRoaW5ncyBiZWNvbWUgZXZlbiBtb3JlIGNvbnZvbHV0ZWQgaWYgYm90
-aCBzdG9yYWdlIG5vZGVzIGFyZSBpbiBmYWN0Cj4gICAgIGFjY2Vzc2libGUsIG9yIGlmIHNvbWVv
-bmUgd291bGQgYmUgdXNpbmcgZGlmZmVyZW50IHRyYW5zcG9ydHMuCj4KPiBXb3VsZCBzb21ldGhp
-bmcgbGlrZSAicHJpbyBhbHVhK3dlaWdodGVkcGF0aCIgcHJvZHVjZSBjb3JyZWN0IHByaW9yaXRp
-ZXMKPiBmb3IgdGhlIHBhdGggZ3JvdXBpbmcgPyB3aGVyZSBwcmlvcml0aWVzIHJlcG9ydGVkIGJ5
-IGFsdWEgd291bGQgYmUgYWRkZWQKPiB0byB0aG9zZSByZXBvcnRlZCBieSB3ZWlnaHRlZCBwYXRo
-LiBUaGF0IHN5bnRheCBleHRlbnNpb24gd291bGQgcmVkdWNlCj4gdGhlIG5lZWQgdG8gZGV2ZWxv
-cCBtb3JlIGNvbXBsZXggcHJpb3JpdGl6ZXJzLgo+CkhtbS4KQWxsb3dpbmcgc3RhY2tlZCBwcmlv
-cml0aXplcnMgaXMgYSBuaWNlIGlkZWEuCkJ1dCB0aGVuIHdlIG5lZWQgdG8gaW1wb3NlIHNvbWUg
-cHJlZmVyZW5jZSBoZXJlOyBpZiB3ZSBkbyBub3Qgc2V0IGFueSAKcmVzdHJpY3Rpb25zIG9uIHRo
-ZSB2YWx1ZSBvZiB0aGUgcHJpb3JpdGl6ZXJzIHdlIGVuZCB1cCB3aXRoIGEganVtYmxlIG9mIAoo
-ZXNzZW50aWFsbHkgdW5yZWFkYWJsZSkgcHJpb3JpdGllcy4KRUcgaWYgeW91ciB3ZWlnaHRlZHBh
-dGggcmV0dXJucyB2YWx1ZXMgb2YgJzUnIG9yICcwJyB0aGV5J2xsIGJlIHJlYWRpbHkgCm9ic2N1
-cmVkIGJ5IGFsdWEgaW5mb3JtYXRpb24sIHdoaWNoIHVzZXMgJzUnIGZvciB0aGUgbm9uLW9wdGlt
-aXplZCBwYXRoLgoKU28gaWYgd2Ugd2VyZSB0byBnb3QgdGhhdCByb3V0ZSB3ZSBuZWVkIHRvIHJl
-c3RyaWN0IHRoZSB2YWx1ZXMgb2YgdGhlIApwcmlvcml0aXplcnMgdG8gZWcgMjU2LCBhbmQgc2hp
-ZnQgdGhlIHN0YWNrZWQgcHJpb3JpdGl6ZXIgdmFsdWVzIG9udG9wIApvZiBlYWNoIG90aGVyLgpF
-RyB3aXRoIGEgc3RhY2tlZCAncHJpb19hbHVhK3dlaWdodGVkcGF0aCcgd2Ugc2hvdWxkIGVuZCB1
-cCB3aXRoIGEgCnByaW9yaXR5IG9mIDB4QUFXVy4KV2l0aCB0aGF0IHdlIGNhbiBhbGxvdyB1cCB0
-byA0IGxldmVscyBvZiBzdGFja2luZyAob3IgOCBpZiB3ZSBleHRlbmQgCnRoYXQgdG8gNjQgYml0
-cyksIGFuZCBzdGlsbCBrZWVwIHNvdXJjZS1sZXZlbCBjb21wYWJpbGl0eSB3aXRoIHRoZSAKb3Jp
-Z2luYWwgY29kZS4KV2UgY291bGQgZXZlbiByZWR1Y2UgdGhlIHBlcm1pc3NpdmUgdmFsdWVzIGZv
-ciB0aGUgcHJpb3JpdHplcnMgZXZlbiAKbW9yZTsgMTYgaXMgZW5vdWdoIGV2ZW4gZm9yIEFMVUEs
-IGFuZCB0aGF0IHdvdWxkIGxlYXZlIHVzIHdpdGggZW5vdWdoIApyb29tIG9mIDEwMjQgcG9zc2li
-bGUgc3RhY2tpbmcgbGV2ZWxzIDotKQoKQnV0IGluIGdlbmVyYWwgSSBsaWtlIHRoZSBpZGVhLgoK
-Q2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICBUZWFtbGVhZCBTdG9y
-YWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTExIDc0
-MDUzIDY4OApTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpH
-RjogRi4gSW1lbmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgSi4gR3VpbGQsIEQuIFVwbWFueXUsIEcu
-IE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlz
-dApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
-aW5mby9kbS1kZXZlbA==
+--===============4673123857389224494==
+Content-Type: multipart/alternative; boundary=001a1140211ece3e27053901b0da
+
+--001a1140211ece3e27053901b0da
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Or we could honor arythmetic expressions like "5*alua+weightedpath", giving
+users more control about preferences (and more opportunities to step on
+their toes, sure).
+
+Another idea, less invasive if possible, but less versatile :
+
+- Merge the alua prioritizer into the weightedpath prioritizer, given the
+optimized/non-optimized and other ALUA states are available in the path
+struct and have their snprint_path_* function and %wildcard.
+
+- Then weightedpath prio_args can be extended to support additive
+priorities, like "alua <optimized state>:<... state> 10 serial foo 20"
+
+
+On Mon, Aug 1, 2016 at 1:40 PM, Hannes Reinecke <hare@suse.de> wrote:
+
+> On 08/01/2016 10:42 AM, Christophe Varoqui wrote:
+>
+>>
+>>
+>> On Mon, Aug 1, 2016 at 9:49 AM, Hannes Reinecke <hare@suse.de
+>> <mailto:hare@suse.de>> wrote:
+>>
+>>     On 07/31/2016 09:26 PM, Christophe Varoqui wrote:
+>>
+>>         Ben, Hannes,
+>>
+>>         Can you review this patch, adding a new 'serial' keyword to the
+>>         weightedpath prioritizer.
+>>
+>>         I compile-tested it only, as I have no testing environment at
+>>         hand at
+>>         the moment.
+>>
+>>         I commited it in a separate 'weightedpath-serial' branch for now=
+.
+>>
+>>
+>> http://git.opensvc.com/?p=3Dmultipath-tools/.git;a=3Dcommitdiff;h=3D4dd1=
+6d99281104fc3504ad73626894a5c3702fb3
+>>
+>>         Thanks,
+>>         Christophe Varoqui
+>>         OpenSVC
+>>
+>>     Well.
+>>     In general, sure, fine, I don't have any issues with that.
+>>     If the customer wants to diddle with his array that way...
+>>
+>>     The more general problem I'm seeing is that our current two-layered
+>>     priority setup (path groups with distinct priorities and paths
+>>     within them) might not be leading to issues with larger and more
+>>     complex scenarios.
+>>
+>>     ATM we already have the problem that clustered scenarios like this:
+>>
+>>     Storage node 1(active):
+>>       Path 1 (optimal):
+>>         LUN 1, LUN2
+>>       Path 2 (non-optimal):
+>>         LUN 1, LUN2
+>>
+>>     Storage node 2(passive):
+>>       Path 1(optimal):
+>>          LUN 1, LUN2
+>>       Path 2(non-optimal):
+>>          LUN 1, LUN2
+>>
+>>     can not be represented properly with multipath tools.
+>>     We are forced to either
+>>     a) set 'storage node 2' to 'failed', which would kill
+>>        any cluster instance accessing only 'storage node 2'
+>>     or
+>>     b) map all priorities from 'storage node 2' to '0',
+>>        thereby losing all priority information
+>>
+>>     Things become even more convoluted if both storage nodes are in fact
+>>     accessible, or if someone would be using different transports.
+>>
+>> Would something like "prio alua+weightedpath" produce correct priorities
+>> for the path grouping ? where priorities reported by alua would be added
+>> to those reported by weighted path. That syntax extension would reduce
+>> the need to develop more complex prioritizers.
+>>
+>> Hmm.
+> Allowing stacked prioritizers is a nice idea.
+> But then we need to impose some preference here; if we do not set any
+> restrictions on the value of the prioritizers we end up with a jumble of
+> (essentially unreadable) priorities.
+> EG if your weightedpath returns values of '5' or '0' they'll be readily
+> obscured by alua information, which uses '5' for the non-optimized path.
+>
+> So if we were to got that route we need to restrict the values of the
+> prioritizers to eg 256, and shift the stacked prioritizer values ontop of
+> each other.
+> EG with a stacked 'prio_alua+weightedpath' we should end up with a
+> priority of 0xAAWW.
+> With that we can allow up to 4 levels of stacking (or 8 if we extend that
+> to 64 bits), and still keep source-level compability with the original co=
+de.
+> We could even reduce the permissive values for the prioritzers even more;
+> 16 is enough even for ALUA, and that would leave us with enough room of
+> 1024 possible stacking levels :-)
+>
+> But in general I like the idea.
+>
+>
+> Cheers,
+>
+> Hannes
+> --
+> Dr. Hannes Reinecke                Teamlead Storage & Networking
+> hare@suse.de                                   +49 911 74053 688
+> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
+> GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+> HRB 21284 (AG N=C3=BCrnberg)
+>
+
+--001a1140211ece3e27053901b0da
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Or we could honor arythmetic expressions like &quot;5*alua=
++weightedpath&quot;, giving users more control about preferences (and more =
+opportunities to step on their toes, sure).<div><br></div><div>Another idea=
+, less invasive if possible, but less versatile :</div><div><br></div><div>=
+- Merge the alua prioritizer into the weightedpath prioritizer, given the o=
+ptimized/non-optimized and other ALUA states are available in the path stru=
+ct and have their snprint_path_* function and %wildcard.</div><div><br></di=
+v><div>- Then weightedpath prio_args can be extended to support additive pr=
+iorities, like &quot;alua &lt;optimized state&gt;:&lt;... state&gt; 10 seri=
+al foo 20&quot;</div><div><br></div></div><div class=3D"gmail_extra"><br><d=
+iv class=3D"gmail_quote">On Mon, Aug 1, 2016 at 1:40 PM, Hannes Reinecke <s=
+pan dir=3D"ltr">&lt;<a href=3D"mailto:hare@suse.de" target=3D"_blank">hare@=
+suse.de</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D=
+"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span class=
+=3D"">On 08/01/2016 10:42 AM, Christophe Varoqui wrote:<br>
+</span><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-=
+left:1px #ccc solid;padding-left:1ex"><span class=3D"">
+<br>
+<br>
+On Mon, Aug 1, 2016 at 9:49 AM, Hannes Reinecke &lt;<a href=3D"mailto:hare@=
+suse.de" target=3D"_blank">hare@suse.de</a><br></span><div><div class=3D"h5=
+">
+&lt;mailto:<a href=3D"mailto:hare@suse.de" target=3D"_blank">hare@suse.de</=
+a>&gt;&gt; wrote:<br>
+<br>
+=C2=A0 =C2=A0 On 07/31/2016 09:26 PM, Christophe Varoqui wrote:<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 Ben, Hannes,<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 Can you review this patch, adding a new &#39;se=
+rial&#39; keyword to the<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 weightedpath prioritizer.<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 I compile-tested it only, as I have no testing =
+environment at<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 hand at<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 the moment.<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 I commited it in a separate &#39;weightedpath-s=
+erial&#39; branch for now.<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 <a href=3D"http://git.opensvc.com/?p=3Dmultipat=
+h-tools/.git;a=3Dcommitdiff;h=3D4dd16d99281104fc3504ad73626894a5c3702fb3" r=
+el=3D"noreferrer" target=3D"_blank">http://git.opensvc.com/?p=3Dmultipath-t=
+ools/.git;a=3Dcommitdiff;h=3D4dd16d99281104fc3504ad73626894a5c3702fb3</a><b=
+r>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 Thanks,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 Christophe Varoqui<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 OpenSVC<br>
+<br>
+=C2=A0 =C2=A0 Well.<br>
+=C2=A0 =C2=A0 In general, sure, fine, I don&#39;t have any issues with that=
+.<br>
+=C2=A0 =C2=A0 If the customer wants to diddle with his array that way...<br=
+>
+<br>
+=C2=A0 =C2=A0 The more general problem I&#39;m seeing is that our current t=
+wo-layered<br>
+=C2=A0 =C2=A0 priority setup (path groups with distinct priorities and path=
+s<br>
+=C2=A0 =C2=A0 within them) might not be leading to issues with larger and m=
+ore<br>
+=C2=A0 =C2=A0 complex scenarios.<br>
+<br>
+=C2=A0 =C2=A0 ATM we already have the problem that clustered scenarios like=
+ this:<br>
+<br>
+=C2=A0 =C2=A0 Storage node 1(active):<br>
+=C2=A0 =C2=A0 =C2=A0 Path 1 (optimal):<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 LUN 1, LUN2<br>
+=C2=A0 =C2=A0 =C2=A0 Path 2 (non-optimal):<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 LUN 1, LUN2<br>
+<br>
+=C2=A0 =C2=A0 Storage node 2(passive):<br>
+=C2=A0 =C2=A0 =C2=A0 Path 1(optimal):<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0LUN 1, LUN2<br>
+=C2=A0 =C2=A0 =C2=A0 Path 2(non-optimal):<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0LUN 1, LUN2<br>
+<br>
+=C2=A0 =C2=A0 can not be represented properly with multipath tools.<br>
+=C2=A0 =C2=A0 We are forced to either<br>
+=C2=A0 =C2=A0 a) set &#39;storage node 2&#39; to &#39;failed&#39;, which wo=
+uld kill<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0any cluster instance accessing only &#39;storage=
+ node 2&#39;<br>
+=C2=A0 =C2=A0 or<br>
+=C2=A0 =C2=A0 b) map all priorities from &#39;storage node 2&#39; to &#39;0=
+&#39;,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0thereby losing all priority information<br>
+<br>
+=C2=A0 =C2=A0 Things become even more convoluted if both storage nodes are =
+in fact<br>
+=C2=A0 =C2=A0 accessible, or if someone would be using different transports=
+.<br>
+<br>
+Would something like &quot;prio alua+weightedpath&quot; produce correct pri=
+orities<br>
+for the path grouping ? where priorities reported by alua would be added<br=
+>
+to those reported by weighted path. That syntax extension would reduce<br>
+the need to develop more complex prioritizers.<br>
+<br>
+</div></div></blockquote>
+Hmm.<br>
+Allowing stacked prioritizers is a nice idea.<br>
+But then we need to impose some preference here; if we do not set any restr=
+ictions on the value of the prioritizers we end up with a jumble of (essent=
+ially unreadable) priorities.<br>
+EG if your weightedpath returns values of &#39;5&#39; or &#39;0&#39; they&#=
+39;ll be readily obscured by alua information, which uses &#39;5&#39; for t=
+he non-optimized path.<br>
+<br>
+So if we were to got that route we need to restrict the values of the prior=
+itizers to eg 256, and shift the stacked prioritizer values ontop of each o=
+ther.<br>
+EG with a stacked &#39;prio_alua+weightedpath&#39; we should end up with a =
+priority of 0xAAWW.<br>
+With that we can allow up to 4 levels of stacking (or 8 if we extend that t=
+o 64 bits), and still keep source-level compability with the original code.=
+<br>
+We could even reduce the permissive values for the prioritzers even more; 1=
+6 is enough even for ALUA, and that would leave us with enough room of 1024=
+ possible stacking levels :-)<br>
+<br>
+But in general I like the idea.<div class=3D"HOEnZb"><div class=3D"h5"><br>
+<br>
+Cheers,<br>
+<br>
+Hannes<br>
+-- <br>
+Dr. Hannes Reinecke=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+Teamlead Storage &amp; Networking<br>
+<a href=3D"mailto:hare@suse.de" target=3D"_blank">hare@suse.de</a>=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<a href=3D"tel:%2B49%20911%207=
+4053%20688" value=3D"+4991174053688" target=3D"_blank">+49 911 74053 688</a=
+><br>
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg<br>
+GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton<br>
+HRB 21284 (AG N=C3=BCrnberg)<br>
+</div></div></blockquote></div><br></div>
+
+--001a1140211ece3e27053901b0da--
+
+
+--===============4673123857389224494==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============4673123857389224494==--
