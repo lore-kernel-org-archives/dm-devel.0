@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: delete nearly all attributes of
-	the last member(NULL) in hwtable
-Date: Mon,  1 Aug 2016 16:11:19 +0200
-Message-ID: <1470060679-6993-1-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: Pillar/Axiom supports
+	failback=immediate
+Date: Mon,  1 Aug 2016 16:18:56 +0200
+Message-ID: <1470061136-7367-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,41 +16,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Srinivasan Ramani <srinivas.ramani@oracle.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-They are "useless".
-Leave only mandatory attributes.
+ALUA device with support for preferred_path. Confirmed by
+the vendor's utils and docs: https://docs.oracle.com/cd/E35311_02/E28846_08/E41503_01/conPathSelection.html
+and also the vendor: https://marc.info/?l=dm-devel&m=147004019524938
 
+Cc: Srinivasan Ramani <srinivas.ramani@oracle.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 12 ------------
- 1 file changed, 12 deletions(-)
+ libmultipath/hwtable.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index dfd84dc..d53cd34 100644
+index d53cd34..6655c98 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -901,18 +901,6 @@ static struct hwentry default_hw[] = {
- 	{
- 		.vendor        = NULL,
- 		.product       = NULL,
--		.features      = NULL,
--		.hwhandler     = NULL,
--		.selector      = NULL,
--		.pgpolicy      = 0,
--		.pgfailback    = 0,
--		.rr_weight     = 0,
--		.no_path_retry = 0,
--		.minio         = 0,
--		.minio_rq      = 0,
--		.checker_name  = NULL,
--		.prio_name     = NULL,
--		.prio_args     = NULL,
+@@ -597,7 +597,7 @@ static struct hwentry default_hw[] = {
+ 		.vendor        = "Pillar",
+ 		.product       = "Axiom.*",
+ 		.pgpolicy      = GROUP_BY_PRIO,
+-		.pgfailback    = FAILBACK_UNDEF,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.prio_name     = PRIO_ALUA,
  	},
- };
- 
+ 	/*
 -- 
 2.7.4
