@@ -1,8 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: Pillar/Axiom supports
-	failback=immediate
-Date: Mon,  1 Aug 2016 16:18:56 +0200
-Message-ID: <1470061136-7367-1-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: Use ALUA for HP 3PAR
+Date: Mon,  1 Aug 2016 16:28:48 +0200
+Message-ID: <1470061728-7620-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,33 +15,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: Srinivasan Ramani <srinivas.ramani@oracle.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Sebastian Herbszt <herbszt@gmx.de>
 List-Id: dm-devel.ids
 
-ALUA device with support for preferred_path. Confirmed by
-the vendor's utils and docs: https://docs.oracle.com/cd/E35311_02/E28846_08/E41503_01/conPathSelection.html
-and also the vendor: https://marc.info/?l=dm-devel&m=147004019524938
+Original patch from Hannes Reinecke <hare@suse.de>:
 
-Cc: Srinivasan Ramani <srinivas.ramani@oracle.com>
+                .vendor        = "3PARdata",
+                .product       = "VV",
+                .features      = DEFAULT_FEATURES,
+-               .hwhandler     = DEFAULT_HWHANDLER,
+-               .pgpolicy      = MULTIBUS,
+-               .pgfailback    = FAILBACK_UNDEF,
++               .hwhandler     = "1 alua",
++               .pgpolicy      = GROUP_BY_PRIO,
++               .pgfailback    = -FAILBACK_IMMEDIATE,
+                .rr_weight     = RR_WEIGHT_NONE,
+-               .no_path_retry = NO_PATH_RETRY_UNDEF,
+-               .checker_name  = DEFAULT_CHECKER,
+-               .prio_name     = DEFAULT_PRIO,
++               .no_path_retry = 18,
++               .checker_name  = TUR,
++               .prio_name     = PRIO_ALUA,
+                .prio_args     = NULL,
+
+Sebastian was not convinced with this change, full thread: https://marc.info/?t=146175638600002
+But there is no automatic way to change .pgpolicy from MULTIBUS to GROUP_BY_PRIO.
+So we should stick to latest manufacturer's recommendations:
+
+"With 3PAR OS 3.1.3 or later, Hewlett Packard Enterprise recommends host persona
+2 (ALUA). Advantages of Host Persona 2 (ALUA):
+o A single VV migration can be performed by using 3PAR Peer Motion if the
+  source and destination 3PAR StoreServ Storage array uses host persona 2
+  (required by the 3PAR OS).
+o Host persona 2 is required for Storage Federation (required by the 3PAR OS).
+
+*3PAR plans to support additional features in later HPE 3PAR OS releases only at
+  Generic-ALUA Persona 2
+
+Persona_Number Persona_Name   Host_Operating_System       Additional_Capabilities
+============== ============== ==========================  =======================
+1              Generic        Linux, Windows and Solaris  UARepLun, SESLun
+2              Generic-ALUA   Linux, Windows and Solaris  UARepLun, SESLun, ALUA
+6              Generic-Legacy Linux, Windows and Solaris  None
+
+o UARepLun -  Notifies the host of newly exported VLUNs and should trigger a LUN
+              discovery request on the host, making the VLUN automatically
+              available on format.
+o SESLun   -  Enables iSCSI Enclosure Services (SES) LUN ID 254 for Host Explorer
+              agent support.
+o ALUA     -  Enables the Asymmetric Logical Unit Access (ALUA) command and
+              asymmetric state change unit attention when path counts change
+              due to adding or removing ports in the host's definition."
+
+HPE 3PAR docs: http://www.hpe.com/info/storage/docs
+
+Cc: Sebastian Herbszt <herbszt@gmx.de>
+Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/hwtable.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index d53cd34..6655c98 100644
+index 6655c98..d65a353 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -597,7 +597,7 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "Pillar",
- 		.product       = "Axiom.*",
- 		.pgpolicy      = GROUP_BY_PRIO,
+@@ -52,8 +52,11 @@ static struct hwentry default_hw[] = {
+ 	{
+ 		.vendor        = "3PARdata",
+ 		.product       = "VV",
+-		.pgpolicy      = MULTIBUS,
 -		.pgfailback    = FAILBACK_UNDEF,
++		.pgpolicy      = GROUP_BY_PRIO,
 +		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.prio_name     = PRIO_ALUA,
++		.hwhandler     = "1 alua",
++		.prio_name     = PRIO_ALUA,
++		.no_path_retry = 18,
  	},
- 	/*
+ 	{
+ 		.vendor        = "DEC",
 -- 
 2.7.4
