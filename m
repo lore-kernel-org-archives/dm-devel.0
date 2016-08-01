@@ -1,14 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [RFC] [PATCH] add serial keyword to the weightedpath
 	prioritizer
-Date: Mon, 1 Aug 2016 10:42:13 +0200
-Message-ID: <CABr-GnfBwx6Fb1D7-2L0RiUP_ujOP8ZpH2WM0kyQR8f42424Pg@mail.gmail.com>
+Date: Mon, 1 Aug 2016 13:40:36 +0200
+Message-ID: <135275ad-ad45-7be3-d23c-6dc0dfb9d833@suse.de>
 References: <CABr-Gndh4LLgd=T00GdtwNVrFgL7Te91BwjZ0Dh4uYyDi3c9bA@mail.gmail.com>
 	<d9c1d17d-83c2-3e68-166c-78f44c5dd21d@suse.de>
+	<CABr-GnfBwx6Fb1D7-2L0RiUP_ujOP8ZpH2WM0kyQR8f42424Pg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3702401710936434243=="
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d9c1d17d-83c2-3e68-166c-78f44c5dd21d@suse.de>
+In-Reply-To: <CABr-GnfBwx6Fb1D7-2L0RiUP_ujOP8ZpH2WM0kyQR8f42424Pg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,165 +20,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============3702401710936434243==
-Content-Type: multipart/alternative; boundary=001a11402e64ab3f1d0538fe93cd
-
---001a11402e64ab3f1d0538fe93cd
-Content-Type: text/plain; charset=UTF-8
-
-On Mon, Aug 1, 2016 at 9:49 AM, Hannes Reinecke <hare@suse.de> wrote:
-
-> On 07/31/2016 09:26 PM, Christophe Varoqui wrote:
->
->> Ben, Hannes,
->>
->> Can you review this patch, adding a new 'serial' keyword to the
->> weightedpath prioritizer.
->>
->> I compile-tested it only, as I have no testing environment at hand at
->> the moment.
->>
->> I commited it in a separate 'weightedpath-serial' branch for now.
->>
->>
->> http://git.opensvc.com/?p=multipath-tools/.git;a=commitdiff;h=4dd16d99281104fc3504ad73626894a5c3702fb3
->>
->> Thanks,
->> Christophe Varoqui
->> OpenSVC
->>
->> Well.
-> In general, sure, fine, I don't have any issues with that.
-> If the customer wants to diddle with his array that way...
->
-> The more general problem I'm seeing is that our current two-layered
-> priority setup (path groups with distinct priorities and paths within them)
-> might not be leading to issues with larger and more complex scenarios.
->
-> ATM we already have the problem that clustered scenarios like this:
->
-> Storage node 1(active):
->   Path 1 (optimal):
->     LUN 1, LUN2
->   Path 2 (non-optimal):
->     LUN 1, LUN2
->
-> Storage node 2(passive):
->   Path 1(optimal):
->      LUN 1, LUN2
->   Path 2(non-optimal):
->      LUN 1, LUN2
->
-> can not be represented properly with multipath tools.
-> We are forced to either
-> a) set 'storage node 2' to 'failed', which would kill
->    any cluster instance accessing only 'storage node 2'
-> or
-> b) map all priorities from 'storage node 2' to '0',
->    thereby losing all priority information
->
-> Things become even more convoluted if both storage nodes are in fact
-> accessible, or if someone would be using different transports.
->
-> Would something like "prio alua+weightedpath" produce correct priorities
-for the path grouping ? where priorities reported by alua would be added to
-those reported by weighted path. That syntax extension would reduce the
-need to develop more complex prioritizers.
-
-The prio_args to prio mapping, wouldn't be nice though.
-
-Concerning transports, we can also extend the weightedpath prioritizer, and
-if the multi-prioritizer setup is implemented we could even weight on
-serial+transport with a "prio weighedpath+weightedpath" setup.
-
---001a11402e64ab3f1d0538fe93cd
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><br><div class=3D"gmail_extra"><br><div class=3D"gmail_quo=
-te">On Mon, Aug 1, 2016 at 9:49 AM, Hannes Reinecke <span dir=3D"ltr">&lt;<=
-a href=3D"mailto:hare@suse.de" target=3D"_blank">hare@suse.de</a>&gt;</span=
-> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;bo=
-rder-left:1px #ccc solid;padding-left:1ex"><span>On 07/31/2016 09:26 PM, Ch=
-ristophe Varoqui wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex">
-Ben, Hannes,<br>
-<br>
-Can you review this patch, adding a new &#39;serial&#39; keyword to the<br>
-weightedpath prioritizer.<br>
-<br>
-I compile-tested it only, as I have no testing environment at hand at<br>
-the moment.<br>
-<br>
-I commited it in a separate &#39;weightedpath-serial&#39; branch for now.<b=
-r>
-<br>
-<a href=3D"http://git.opensvc.com/?p=3Dmultipath-tools/.git;a=3Dcommitdiff;=
-h=3D4dd16d99281104fc3504ad73626894a5c3702fb3" rel=3D"noreferrer" target=3D"=
-_blank">http://git.opensvc.com/?p=3Dmultipath-tools/.git;a=3Dcommitdiff;h=
-=3D4dd16d99281104fc3504ad73626894a5c3702fb3</a><br>
-<br>
-Thanks,<br>
-Christophe Varoqui<br>
-OpenSVC<br>
-<br>
-</blockquote></span>
-Well.<br>
-In general, sure, fine, I don&#39;t have any issues with that.<br>
-If the customer wants to diddle with his array that way...<br>
-<br>
-The more general problem I&#39;m seeing is that our current two-layered pri=
-ority setup (path groups with distinct priorities and paths within them) mi=
-ght not be leading to issues with larger and more complex scenarios.<br>
-<br>
-ATM we already have the problem that clustered scenarios like this:<br>
-<br>
-Storage node 1(active):<br>
-=C2=A0 Path 1 (optimal):<br>
-=C2=A0 =C2=A0 LUN 1, LUN2<br>
-=C2=A0 Path 2 (non-optimal):<br>
-=C2=A0 =C2=A0 LUN 1, LUN2<br>
-<br>
-Storage node 2(passive):<br>
-=C2=A0 Path 1(optimal):<br>
-=C2=A0 =C2=A0 =C2=A0LUN 1, LUN2<br>
-=C2=A0 Path 2(non-optimal):<br>
-=C2=A0 =C2=A0 =C2=A0LUN 1, LUN2<br>
-<br>
-can not be represented properly with multipath tools.<br>
-We are forced to either<br>
-a) set &#39;storage node 2&#39; to &#39;failed&#39;, which would kill<br>
-=C2=A0 =C2=A0any cluster instance accessing only &#39;storage node 2&#39;<b=
-r>
-or<br>
-b) map all priorities from &#39;storage node 2&#39; to &#39;0&#39;,<br>
-=C2=A0 =C2=A0thereby losing all priority information<br>
-<br>
-Things become even more convoluted if both storage nodes are in fact access=
-ible, or if someone would be using different transports.<br>
-<br></blockquote><div>Would something like &quot;prio alua+weightedpath&quo=
-t; produce correct priorities for the path grouping ? where priorities repo=
-rted by alua would be added to those reported by weighted path. That syntax=
- extension would reduce the need to develop more complex prioritizers.</div=
-><div><br></div><div>The prio_args to prio mapping, wouldn&#39;t be nice th=
-ough.</div><div><br></div><div>Concerning transports, we can also extend th=
-e weightedpath prioritizer, and if the multi-prioritizer setup is implement=
-ed we could even weight on serial+transport with a &quot;prio weighedpath+w=
-eightedpath&quot; setup.</div><div><br></div></div></div></div>
-
---001a11402e64ab3f1d0538fe93cd--
-
-
---===============3702401710936434243==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3702401710936434243==--
+T24gMDgvMDEvMjAxNiAxMDo0MiBBTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+Cj4KPiBP
+biBNb24sIEF1ZyAxLCAyMDE2IGF0IDk6NDkgQU0sIEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNl
+LmRlCj4gPG1haWx0bzpoYXJlQHN1c2UuZGU+PiB3cm90ZToKPgo+ICAgICBPbiAwNy8zMS8yMDE2
+IDA5OjI2IFBNLCBDaHJpc3RvcGhlIFZhcm9xdWkgd3JvdGU6Cj4KPiAgICAgICAgIEJlbiwgSGFu
+bmVzLAo+Cj4gICAgICAgICBDYW4geW91IHJldmlldyB0aGlzIHBhdGNoLCBhZGRpbmcgYSBuZXcg
+J3NlcmlhbCcga2V5d29yZCB0byB0aGUKPiAgICAgICAgIHdlaWdodGVkcGF0aCBwcmlvcml0aXpl
+ci4KPgo+ICAgICAgICAgSSBjb21waWxlLXRlc3RlZCBpdCBvbmx5LCBhcyBJIGhhdmUgbm8gdGVz
+dGluZyBlbnZpcm9ubWVudCBhdAo+ICAgICAgICAgaGFuZCBhdAo+ICAgICAgICAgdGhlIG1vbWVu
+dC4KPgo+ICAgICAgICAgSSBjb21taXRlZCBpdCBpbiBhIHNlcGFyYXRlICd3ZWlnaHRlZHBhdGgt
+c2VyaWFsJyBicmFuY2ggZm9yIG5vdy4KPgo+ICAgICAgICAgaHR0cDovL2dpdC5vcGVuc3ZjLmNv
+bS8/cD1tdWx0aXBhdGgtdG9vbHMvLmdpdDthPWNvbW1pdGRpZmY7aD00ZGQxNmQ5OTI4MTEwNGZj
+MzUwNGFkNzM2MjY4OTRhNWMzNzAyZmIzCj4KPiAgICAgICAgIFRoYW5rcywKPiAgICAgICAgIENo
+cmlzdG9waGUgVmFyb3F1aQo+ICAgICAgICAgT3BlblNWQwo+Cj4gICAgIFdlbGwuCj4gICAgIElu
+IGdlbmVyYWwsIHN1cmUsIGZpbmUsIEkgZG9uJ3QgaGF2ZSBhbnkgaXNzdWVzIHdpdGggdGhhdC4K
+PiAgICAgSWYgdGhlIGN1c3RvbWVyIHdhbnRzIHRvIGRpZGRsZSB3aXRoIGhpcyBhcnJheSB0aGF0
+IHdheS4uLgo+Cj4gICAgIFRoZSBtb3JlIGdlbmVyYWwgcHJvYmxlbSBJJ20gc2VlaW5nIGlzIHRo
+YXQgb3VyIGN1cnJlbnQgdHdvLWxheWVyZWQKPiAgICAgcHJpb3JpdHkgc2V0dXAgKHBhdGggZ3Jv
+dXBzIHdpdGggZGlzdGluY3QgcHJpb3JpdGllcyBhbmQgcGF0aHMKPiAgICAgd2l0aGluIHRoZW0p
+IG1pZ2h0IG5vdCBiZSBsZWFkaW5nIHRvIGlzc3VlcyB3aXRoIGxhcmdlciBhbmQgbW9yZQo+ICAg
+ICBjb21wbGV4IHNjZW5hcmlvcy4KPgo+ICAgICBBVE0gd2UgYWxyZWFkeSBoYXZlIHRoZSBwcm9i
+bGVtIHRoYXQgY2x1c3RlcmVkIHNjZW5hcmlvcyBsaWtlIHRoaXM6Cj4KPiAgICAgU3RvcmFnZSBu
+b2RlIDEoYWN0aXZlKToKPiAgICAgICBQYXRoIDEgKG9wdGltYWwpOgo+ICAgICAgICAgTFVOIDEs
+IExVTjIKPiAgICAgICBQYXRoIDIgKG5vbi1vcHRpbWFsKToKPiAgICAgICAgIExVTiAxLCBMVU4y
+Cj4KPiAgICAgU3RvcmFnZSBub2RlIDIocGFzc2l2ZSk6Cj4gICAgICAgUGF0aCAxKG9wdGltYWwp
+Ogo+ICAgICAgICAgIExVTiAxLCBMVU4yCj4gICAgICAgUGF0aCAyKG5vbi1vcHRpbWFsKToKPiAg
+ICAgICAgICBMVU4gMSwgTFVOMgo+Cj4gICAgIGNhbiBub3QgYmUgcmVwcmVzZW50ZWQgcHJvcGVy
+bHkgd2l0aCBtdWx0aXBhdGggdG9vbHMuCj4gICAgIFdlIGFyZSBmb3JjZWQgdG8gZWl0aGVyCj4g
+ICAgIGEpIHNldCAnc3RvcmFnZSBub2RlIDInIHRvICdmYWlsZWQnLCB3aGljaCB3b3VsZCBraWxs
+Cj4gICAgICAgIGFueSBjbHVzdGVyIGluc3RhbmNlIGFjY2Vzc2luZyBvbmx5ICdzdG9yYWdlIG5v
+ZGUgMicKPiAgICAgb3IKPiAgICAgYikgbWFwIGFsbCBwcmlvcml0aWVzIGZyb20gJ3N0b3JhZ2Ug
+bm9kZSAyJyB0byAnMCcsCj4gICAgICAgIHRoZXJlYnkgbG9zaW5nIGFsbCBwcmlvcml0eSBpbmZv
+cm1hdGlvbgo+Cj4gICAgIFRoaW5ncyBiZWNvbWUgZXZlbiBtb3JlIGNvbnZvbHV0ZWQgaWYgYm90
+aCBzdG9yYWdlIG5vZGVzIGFyZSBpbiBmYWN0Cj4gICAgIGFjY2Vzc2libGUsIG9yIGlmIHNvbWVv
+bmUgd291bGQgYmUgdXNpbmcgZGlmZmVyZW50IHRyYW5zcG9ydHMuCj4KPiBXb3VsZCBzb21ldGhp
+bmcgbGlrZSAicHJpbyBhbHVhK3dlaWdodGVkcGF0aCIgcHJvZHVjZSBjb3JyZWN0IHByaW9yaXRp
+ZXMKPiBmb3IgdGhlIHBhdGggZ3JvdXBpbmcgPyB3aGVyZSBwcmlvcml0aWVzIHJlcG9ydGVkIGJ5
+IGFsdWEgd291bGQgYmUgYWRkZWQKPiB0byB0aG9zZSByZXBvcnRlZCBieSB3ZWlnaHRlZCBwYXRo
+LiBUaGF0IHN5bnRheCBleHRlbnNpb24gd291bGQgcmVkdWNlCj4gdGhlIG5lZWQgdG8gZGV2ZWxv
+cCBtb3JlIGNvbXBsZXggcHJpb3JpdGl6ZXJzLgo+CkhtbS4KQWxsb3dpbmcgc3RhY2tlZCBwcmlv
+cml0aXplcnMgaXMgYSBuaWNlIGlkZWEuCkJ1dCB0aGVuIHdlIG5lZWQgdG8gaW1wb3NlIHNvbWUg
+cHJlZmVyZW5jZSBoZXJlOyBpZiB3ZSBkbyBub3Qgc2V0IGFueSAKcmVzdHJpY3Rpb25zIG9uIHRo
+ZSB2YWx1ZSBvZiB0aGUgcHJpb3JpdGl6ZXJzIHdlIGVuZCB1cCB3aXRoIGEganVtYmxlIG9mIAoo
+ZXNzZW50aWFsbHkgdW5yZWFkYWJsZSkgcHJpb3JpdGllcy4KRUcgaWYgeW91ciB3ZWlnaHRlZHBh
+dGggcmV0dXJucyB2YWx1ZXMgb2YgJzUnIG9yICcwJyB0aGV5J2xsIGJlIHJlYWRpbHkgCm9ic2N1
+cmVkIGJ5IGFsdWEgaW5mb3JtYXRpb24sIHdoaWNoIHVzZXMgJzUnIGZvciB0aGUgbm9uLW9wdGlt
+aXplZCBwYXRoLgoKU28gaWYgd2Ugd2VyZSB0byBnb3QgdGhhdCByb3V0ZSB3ZSBuZWVkIHRvIHJl
+c3RyaWN0IHRoZSB2YWx1ZXMgb2YgdGhlIApwcmlvcml0aXplcnMgdG8gZWcgMjU2LCBhbmQgc2hp
+ZnQgdGhlIHN0YWNrZWQgcHJpb3JpdGl6ZXIgdmFsdWVzIG9udG9wIApvZiBlYWNoIG90aGVyLgpF
+RyB3aXRoIGEgc3RhY2tlZCAncHJpb19hbHVhK3dlaWdodGVkcGF0aCcgd2Ugc2hvdWxkIGVuZCB1
+cCB3aXRoIGEgCnByaW9yaXR5IG9mIDB4QUFXVy4KV2l0aCB0aGF0IHdlIGNhbiBhbGxvdyB1cCB0
+byA0IGxldmVscyBvZiBzdGFja2luZyAob3IgOCBpZiB3ZSBleHRlbmQgCnRoYXQgdG8gNjQgYml0
+cyksIGFuZCBzdGlsbCBrZWVwIHNvdXJjZS1sZXZlbCBjb21wYWJpbGl0eSB3aXRoIHRoZSAKb3Jp
+Z2luYWwgY29kZS4KV2UgY291bGQgZXZlbiByZWR1Y2UgdGhlIHBlcm1pc3NpdmUgdmFsdWVzIGZv
+ciB0aGUgcHJpb3JpdHplcnMgZXZlbiAKbW9yZTsgMTYgaXMgZW5vdWdoIGV2ZW4gZm9yIEFMVUEs
+IGFuZCB0aGF0IHdvdWxkIGxlYXZlIHVzIHdpdGggZW5vdWdoIApyb29tIG9mIDEwMjQgcG9zc2li
+bGUgc3RhY2tpbmcgbGV2ZWxzIDotKQoKQnV0IGluIGdlbmVyYWwgSSBsaWtlIHRoZSBpZGVhLgoK
+Q2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICBUZWFtbGVhZCBTdG9y
+YWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTExIDc0
+MDUzIDY4OApTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpH
+RjogRi4gSW1lbmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgSi4gR3VpbGQsIEQuIFVwbWFueXUsIEcu
+IE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlz
+dApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
+aW5mby9kbS1kZXZlbA==
