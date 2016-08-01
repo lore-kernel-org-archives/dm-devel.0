@@ -1,14 +1,12 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [RFC] [PATCH] add serial keyword to the weightedpath
- prioritizer
-Date: Mon, 1 Aug 2016 09:02:21 -0700
-Message-ID: <577b156f-4b6f-ae00-10ba-d5b65fbe2ae7@sandisk.com>
-References: <CABr-Gndh4LLgd=T00GdtwNVrFgL7Te91BwjZ0Dh4uYyDi3c9bA@mail.gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: change .pgpolicy and
+	.pgfailback to default values in the template
+Date: Mon,  1 Aug 2016 17:31:51 +0200
+Message-ID: <1470065511-8373-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-Gndh4LLgd=T00GdtwNVrFgL7Te91BwjZ0Dh4uYyDi3c9bA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,23 +16,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On 07/31/2016 12:26 PM, Christophe Varoqui wrote:
-> Can you review this patch, adding a new 'serial' keyword to the
-> weightedpath prioritizer.
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Is the following part of the patch intended?
-
-         } else if (!strcmp(regex, WWN)) {
--               if (build_wwn_path(pp, path, FILE_NAME_SIZE) != 0) {
-+               if (build_serial_path(pp, path, FILE_NAME_SIZE) != 0) {
-
-Additionally, have you considered to apply the mulitpathd -> multipathd 
-spelling fix in this patch as a separate patch?
-
-Thanks,
-
-Bart.
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index d65a353..e95db96 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -875,7 +875,7 @@ static struct hwentry default_hw[] = {
+ 		.product       = "PRODUCT",
+ 		.revision      = "REVISION",
+ 		.bl_product    = "BL_PRODUCT",
+-		.pgpolicy      = GROUP_BY_PRIO,
++		.pgpolicy      = FAILOVER,
+ 		.uid_attribute = "ID_SERIAL",
+ 		.selector      = "service-time 0",
+ 		.checker_name  = TUR,
+@@ -883,7 +883,7 @@ static struct hwentry default_hw[] = {
+ 		.hwhandler     = "0",
+ 		.prio_name     = "const",
+ 		.prio_args     = "",
+-		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.pgfailback    = -FAILBACK_MANUAL,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+ 		.no_path_retry = NO_PATH_RETRY_UNDEF,
+ 		.minio         = 1000,
+-- 
+2.7.4
