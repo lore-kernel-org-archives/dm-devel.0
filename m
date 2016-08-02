@@ -1,23 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-mq and end_clone_request()
-Date: Tue, 2 Aug 2016 13:45:34 -0400
-Message-ID: <20160802174533.GA18714@redhat.com>
-References: <a5c1a149-b1a2-b5a4-2207-bdaf32db3cbd@sandisk.com>
-	<757522831.7667712.1470059860543.JavaMail.zimbra@redhat.com>
-	<536022978.7668211.1470060125271.JavaMail.zimbra@redhat.com>
-	<931235537.7668834.1470060339483.JavaMail.zimbra@redhat.com>
-	<1264951811.7684268.1470065187014.JavaMail.zimbra@redhat.com>
-	<17da3ab0-233a-2cec-f921-bfd42c953ccc@sandisk.com>
-	<20160801175948.GA6685@redhat.com>
-	<f9e71e1d-54ca-40fe-a5ea-ae2863c94ff9@sandisk.com>
-	<20160801204628.GA94704@redhat.com>
-	<8e265fcc-8021-830e-ffcb-23a8a28ec247@sandisk.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH optional] multipath-tools: remove superfluous
+	comments
+Date: Tue,  2 Aug 2016 19:59:55 +0200
+Message-ID: <1470160795-6450-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <8e265fcc-8021-830e-ffcb-23a8a28ec247@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,58 +16,108 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Laurence Oberman <loberman@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, Aug 01 2016 at  6:41pm -0400,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+They are implicit in the attributes.
 
-> On 08/01/2016 01:46 PM, Mike Snitzer wrote:
-> > Please retry both variant (CONFIG_DM_MQ_DEFAULT=y first) with this patch
-> > applied.  Interested to see if things look better for you (WARN_ON_ONCEs
-> > added just to see if we hit the corresponding suspend/stopped state
-> > while mapping requests -- if so this speaks to an inherently racy
-> > problem that will need further investigation for a proper fix but
-> > results from this should let us know if we're closer).
-> > 
-> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > index 1b2f962..0e0f6e0 100644
-> > --- a/drivers/md/dm.c
-> > +++ b/drivers/md/dm.c
-> > @@ -2007,6 +2007,9 @@ static int map_request(struct dm_rq_target_io *tio, struct request *rq,
-> >  	struct dm_target *ti = tio->ti;
-> >  	struct request *clone = NULL;
-> >  
-> > +	if (WARN_ON_ONCE(unlikely(dm_suspended_md(md))))
-> > +		return DM_MAPIO_REQUEUE;
-> > +
-> >  	if (tio->clone) {
-> >  		clone = tio->clone;
-> >  		r = ti->type->map_rq(ti, clone, &tio->info);
-> > @@ -2722,6 +2725,9 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
-> >  		dm_put_live_table(md, srcu_idx);
-> >  	}
-> >  
-> > +	if (WARN_ON_ONCE(unlikely(test_bit(BLK_MQ_S_STOPPED, &hctx->state))))
-> > +		return BLK_MQ_RQ_QUEUE_BUSY;
-> > +
-> >  	if (ti->type->busy && ti->type->busy(ti))
-> >  		return BLK_MQ_RQ_QUEUE_BUSY;
-> 
-> Hello Mike,
-> 
-> The test results with this patch and also the three other patches that
-> have been posted in the context of this e-mail thread applied on top of
-> kernel v4.7 are as follows:
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 11 -----------
+ 1 file changed, 11 deletions(-)
 
-Hi Bart,
-
-Please do these same tests against a v4.7 kernel with the 4 patches from
-this branch applied (no need for your other debug patches):
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.7-mpath-fixes
-
-I've had good results with my blk-mq SRP based testing.
-
-Thanks,
-Mike
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index fbbe9e0..c67647c 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -214,7 +214,6 @@ static struct hwentry default_hw[] = {
+ 	 * DELL
+ 	 */
+ 	{
+-		/* Compellent family */
+ 		.vendor        = "COMPELNT",
+ 		.product       = "Compellent Vol",
+ 		.pgpolicy      = MULTIBUS,
+@@ -222,7 +221,6 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = NO_PATH_RETRY_QUEUE,
+ 	},
+ 	{
+-		/* MD3000 */
+ 		.vendor        = "DELL",
+ 		.product       = "MD3000",
+ 		.bl_product    = "Universal Xport",
+@@ -235,7 +233,6 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
+-		/* MD32xx/MD36xx */
+ 		.vendor        = "DELL",
+ 		.product       = "(MD32xx|MD36xx)",
+ 		.bl_product    = "Universal Xport",
+@@ -248,7 +245,6 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
+-		/* MD34xx/MD38xx */
+ 		.vendor        = "DELL",
+ 		.product       = "(MD34xx|MD38xx)",
+ 		.bl_product    = "Universal Xport",
+@@ -481,7 +477,6 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	{
+-		/* S/390 ECKD DASD */
+ 		.vendor        = "IBM",
+ 		.product       = "S/390 DASD ECKD",
+ 		.bl_product    = "S/390.*",
+@@ -491,7 +486,6 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	{
+-		/* S/390 FBA DASD */
+ 		.vendor        = "IBM",
+ 		.product       = "S/390 DASD FBA",
+ 		.bl_product    = "S/390.*",
+@@ -536,7 +530,6 @@ static struct hwentry default_hw[] = {
+ 	 * Mail : brking@linux.vnet.ibm.com
+ 	 */
+ 	{
+-		/* AIX VDASD */
+ 		.vendor        = "AIX",
+ 		.product       = "VDASD",
+ 		.pgpolicy      = MULTIBUS,
+@@ -544,14 +537,12 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = (300 / DEFAULT_CHECKINT),
+ 	},
+ 	{
+-		/* 3303 NVDISK */
+ 		.vendor        = "IBM",
+ 		.product       = "3303      NVDISK",
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.no_path_retry = (300 / DEFAULT_CHECKINT),
+ 	},
+ 	{
+-		/* AIX NVDISK */
+ 		.vendor        = "AIX",
+ 		.product       = "NVDISK",
+ 		.hwhandler     = "1 alua",
+@@ -674,7 +665,6 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+-		/* StorageTek */
+ 	{
+ 		.vendor        = "STK",
+ 		.product       = "OPENstorage D280",
+@@ -696,7 +686,6 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = RDAC,
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+-		/* SUN */
+ 	{
+ 		.vendor        = "SUN",
+ 		.product       = "(StorEdge 3510|T4)",
+-- 
+2.7.4
