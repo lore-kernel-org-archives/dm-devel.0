@@ -1,37 +1,63 @@
-From: Baole Ni <baolex.ni@intel.com>
-Subject: [PATCH 0315/1285] Replace numeric parameter like 0444 with macro
-Date: Tue,  2 Aug 2016 18:59:20 +0800
-Message-ID: <20160802105920.2540-1-baolex.ni@intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: shli@kernel.org, snitzer@redhat.com, dm-devel@redhat.com, hal.rosenstock@gmail.com, dledford@redhat.com, sean.hefty@intel.com, bp@alien8.de
-Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, chuansheng.liu@intel.com, baolex.ni@intel.com
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH] dm-mpath: always return reservation conflict
+Date: Tue,  2 Aug 2016 14:36:32 +0200
+Message-ID: <1470141392-25479-2-git-send-email-hch@lst.de>
+References: <1470141392-25479-1-git-send-email-hch@lst.de>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1470141392-25479-1-git-send-email-hch@lst.de>
+Sender: linux-scsi-owner@vger.kernel.org
+To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Cc: hare@suse.com, Hannes Reinecke <hare@suse.de>
 List-Id: dm-devel.ids
 
-I find that the developers often just specified the numeric value
-when calling a macro which is defined with a parameter for access permission.
-As we know, these numeric value for access permission have had the corresponding macro,
-and that using macro can improve the robustness and readability of the code,
-thus, I suggest replacing the numeric parameter with the macro.
+From: Hannes Reinecke <hare@suse.de>
 
-Signed-off-by: Chuansheng Liu <chuansheng.liu@intel.com>
-Signed-off-by: Baole Ni <baolex.ni@intel.com>
+If dm-mpath encounters an reservation conflict it should not fail the
+path (as communication with the target is not affected) but should
+rather retry on another path. However, in doing so we might be inducing
+a ping-pong between paths, with no guarantee of any forward progress.
+
+And arguably a reservation conflict is an unexpected error, so we should
+be passing it upwards to allow the application to take appropriate steps.
+
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+Acked-by: Christoph Hellwig <hch@lst.de>
+Tested-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/raid5.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-mpath.c | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 8959e6d..33562bf 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -66,7 +66,7 @@
- #define ANY_GROUP NUMA_NO_NODE
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 7eac080..8d2f916 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1555,16 +1555,22 @@ static int do_end_io(struct multipath *m, struct request *clone,
+ 	if (noretry_error(error))
+ 		return error;
  
- static bool devices_handle_discard_safely = false;
--module_param(devices_handle_discard_safely, bool, 0644);
-+module_param(devices_handle_discard_safely, bool, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
- MODULE_PARM_DESC(devices_handle_discard_safely,
- 		 "Set to Y if all devices in each array reliably return zeroes on reads from discarded regions");
- static struct workqueue_struct *raid5_wq;
+-	if (mpio->pgpath)
++	/*
++	 * EBADE signals an reservation conflict.
++	 * We shouldn't fail the path here as we can communicate with
++	 * the target. We should failover to the next path, but in
++	 * doing so we might be causing a ping-pong between paths.
++	 * So just return the reservation conflict error.
++	 */
++	if (error == -EBADE)
++		r = error;
++	else if (mpio->pgpath)
+ 		fail_path(mpio->pgpath);
+ 
+ 	if (!atomic_read(&m->nr_valid_paths)) {
+ 		if (!test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
+ 			if (!must_push_back_rq(m))
+ 				r = -EIO;
+-		} else {
+-			if (error == -EBADE)
+-				r = error;
+ 		}
+ 	}
+ 
 -- 
-2.9.2
+2.1.4
+
