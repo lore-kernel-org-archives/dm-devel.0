@@ -1,56 +1,37 @@
-From: peng.liang5@zte.com.cn
-Subject: [PATCH] multipathd: fix issue in 'map $map getprstatus'
-	reply
-Date: Tue, 2 Aug 2016 09:27:15 +0800
-Message-ID: <1470101235-8616-1-git-send-email-peng.liang5@zte.com.cn>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, peng liang <peng.liang5@zte.com.cn>
+From: Baole Ni <baolex.ni@intel.com>
+Subject: [PATCH 0315/1285] Replace numeric parameter like 0444 with macro
+Date: Tue,  2 Aug 2016 18:59:20 +0800
+Message-ID: <20160802105920.2540-1-baolex.ni@intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: shli@kernel.org, snitzer@redhat.com, dm-devel@redhat.com, hal.rosenstock@gmail.com, dledford@redhat.com, sean.hefty@intel.com, bp@alien8.de
+Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, chuansheng.liu@intel.com, baolex.ni@intel.com
 List-Id: dm-devel.ids
 
-From: peng liang <peng.liang5@zte.com.cn>
+I find that the developers often just specified the numeric value
+when calling a macro which is defined with a parameter for access permission.
+As we know, these numeric value for access permission have had the corresponding macro,
+and that using macro can improve the robustness and readability of the code,
+thus, I suggest replacing the numeric parameter with the macro.
 
-add missing newline to 'map|multipath $map getprstatus' reply
-
-Signed-off-by: peng liang <peng.liang5@zte.com.cn>
+Signed-off-by: Chuansheng Liu <chuansheng.liu@intel.com>
+Signed-off-by: Baole Ni <baolex.ni@intel.com>
 ---
- multipathd/cli_handlers.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ drivers/md/raid5.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 8ff4362..0b04504 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -1285,13 +1285,13 @@ cli_getprstatus (void * v, char ** reply, int * len, void * data)
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 8959e6d..33562bf 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -66,7 +66,7 @@
+ #define ANY_GROUP NUMA_NO_NODE
  
- 	condlog(3, "%s: prflag = %u", param, (unsigned int)mpp->prflag);
- 
--	*reply =(char *)malloc(2);
--	*len = 2;
--	memset(*reply,0,2);
-+	*reply =(char *)malloc(3);
-+	*len = 3;
-+	memset(*reply,0,3);
- 
- 
--	sprintf(*reply,"%d",mpp->prflag);
--	(*reply)[1]='\0';
-+	sprintf(*reply,"%d\n",mpp->prflag);
-+	(*reply)[2]='\0';
- 
- 
- 	condlog(3, "%s: reply = %s", param, *reply);
+ static bool devices_handle_discard_safely = false;
+-module_param(devices_handle_discard_safely, bool, 0644);
++module_param(devices_handle_discard_safely, bool, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+ MODULE_PARM_DESC(devices_handle_discard_safely,
+ 		 "Set to Y if all devices in each array reliably return zeroes on reads from discarded regions");
+ static struct workqueue_struct *raid5_wq;
 -- 
-2.8.1.windows.1
+2.9.2
