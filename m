@@ -1,101 +1,38 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: identify devices at hwtable
-Date: Tue,  2 Aug 2016 18:57:14 +0200
-Message-ID: <1470157034-4599-1-git-send-email-xose.vazquez@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+From: Baole Ni <baolex.ni@intel.com>
+Subject: [PATCH 0314/1285] Replace numeric parameter like 0444 with macro
+Date: Tue,  2 Aug 2016 18:59:15 +0800
+Message-ID: <20160802105915.2474-1-baolex.ni@intel.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com, shli@kernel.org, dm-devel@redhat.com, hal.rosenstock@gmail.com, dledford@redhat.com, sean.hefty@intel.com, bp@alien8.de
+Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, chuansheng.liu@intel.com, baolex.ni@intel.com
 List-Id: dm-devel.ids
 
-And also correct some of them.
+I find that the developers often just specified the numeric value
+when calling a macro which is defined with a parameter for access permission.
+As we know, these numeric value for access permission have had the corresponding macro,
+and that using macro can improve the robustness and readability of the code,
+thus, I suggest replacing the numeric parameter with the macro.
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Signed-off-by: Chuansheng Liu <chuansheng.liu@intel.com>
+Signed-off-by: Baole Ni <baolex.ni@intel.com>
 ---
- libmultipath/hwtable.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
+ drivers/md/dm-raid.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 6f7270b..fbbe9e0 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -68,7 +68,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 12,
- 	},
- 	{
--		/* MSA 1000/MSA1500 EVA 3000/5000 with old firmware */
-+		/* MSA 1000/1500 and EVA 3000/5000, with old firmware */
- 		.vendor        = "(COMPAQ|HP)",
- 		.product       = "(MSA|HSV)1.0.*",
- 		.features      = "1 queue_if_no_path",
-@@ -174,6 +174,7 @@ static struct hwentry default_hw[] = {
- 	 * Mail : egoggin@emc.com
- 	 */
- 	{
-+		/* Symmetrix / DMX / VMAX */
- 		.vendor        = "EMC",
- 		.product       = "SYMMETRIX",
- 		.pgpolicy      = MULTIBUS,
-@@ -194,6 +195,7 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_EMC,
- 	},
- 	{
-+		/* Invista / VPLEX */
- 		.vendor        = "EMC",
- 		.product       = "Invista",
- 		.bl_product    = "LUNZ",
-@@ -290,11 +292,13 @@ static struct hwentry default_hw[] = {
- 	 * Mail : matthias.rudolph@hds.com
- 	 */
- 	{
-+		/* USP-V, HUS VM, VSP, VSP G1000 and VSP GX00 families */
- 		.vendor        = "(HITACHI|HP)",
- 		.product       = "OPEN-.*",
- 		.pgpolicy      = MULTIBUS,
- 		.pgfailback    = FAILBACK_UNDEF,
- 	},
-+		/* AMS 2000 and HUS 100 families */
- 	{
- 		.vendor        = "HITACHI",
- 		.product       = "DF.*",
-@@ -578,7 +582,7 @@ static struct hwentry default_hw[] = {
- 	},
- 	{
- 		/*
--		 * RDAC family
-+		 * SANtricity(RDAC) family
- 		 *
- 		 * Maintainer : Sean Stewart
- 		 * Mail : sean.stewart@netapp.com
-@@ -630,7 +634,7 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_RDAC,
- 	},
- 	{
--		/* InfiniteStorage */
-+		/* InfiniteStorage ??? */
- 		.vendor        = "SGI",
- 		.product       = "IS.*",
- 		.bl_product    = "Universal Xport",
-@@ -722,7 +726,7 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_RDAC,
- 	},
- 	{
--		/* 2510 / 2540 / 2530 / 2540 */
-+		/* 2510 / 2530 / 2540 */
- 		.vendor        = "SUN",
- 		.product       = "LCSM100_[IEFS]",
- 		.bl_product    = "Universal Xport",
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 5253274..b01f1e9 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -1754,7 +1754,7 @@ static void __exit dm_raid_exit(void)
+ module_init(dm_raid_init);
+ module_exit(dm_raid_exit);
+ 
+-module_param(devices_handle_discard_safely, bool, 0644);
++module_param(devices_handle_discard_safely, bool, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+ MODULE_PARM_DESC(devices_handle_discard_safely,
+ 		 "Set to Y if all devices in each array reliably return zeroes on reads from discarded regions");
+ 
 -- 
-2.7.4
+2.9.2
+
