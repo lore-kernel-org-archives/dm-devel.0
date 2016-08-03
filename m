@@ -1,11 +1,10 @@
-From: heinzm@redhat.com
-Subject: [PATCH] dm raid: wrong status char during
-	resynchronization
-Date: Wed,  3 Aug 2016 22:57:42 +0200
-Message-ID: <1470257862-24490-1-git-send-email-heinzm@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+From: Peter Desnoyers <pjd@ccs.neu.edu>
+Subject: [high-level] user-space access to dm target?
+Date: Wed, 3 Aug 2016 17:46:08 -0400
+Message-ID: <15F559AF-6FF3-466A-AD5B-CFA61C8F1455@ccs.neu.edu>
+Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2104\))
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,37 +16,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
-
-During a resynchronization, device status char 'a' is
-put on the raid status line for every device of a RAID set
-changing to 'A' (unless device failure) when completed.
-
-Interrupting and restarting an resynchronization by
-reloading the table erroneously lead to status char 'A'.
-
-Solve by avoiding superfluous MD_RECOVERY_REQUESTED flag
-in raid_preresume().
-
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
----
- drivers/md/dm-raid.c | 1 -
- 1 file changed, 1 deletion(-)
-
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 5ef6b5a..d20050c 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3577,7 +3577,6 @@ static int raid_preresume(struct dm_target *ti)
- 	/* Be prepared for mddev_resume() in raid_resume() */
- 	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
- 	if (mddev->recovery_cp && mddev->recovery_cp < MaxSector) {
--		set_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
- 		set_bit(MD_RECOVERY_SYNC, &mddev->recovery);
- 		mddev->resync_min = mddev->recovery_cp;
- 	}
--- 
-2.5.5
+V2XigJlyZSBkZXZlbG9waW5nIGFuIFNNUiB0cmFuc2xhdGlvbiBsYXllciBpbiBhIGRldmljZSBt
+YXBwZXIgdGFyZ2V0LCBhbmQgd2XigJlkIGxpa2UgdG8ga2VlcCBhIGxvdCBvZiB0aGUgY29tcGxl
+eGl0eSAocmVjb3ZlcnkgYXQgc3RhcnR1cCwgcGFydHMgb2YgdGhlIGdhcmJhZ2UgY29sbGVjdGlv
+biBhbGdvcml0aG0pIGluIHVzZXIgc3BhY2UuCgpJIHdhcyB3b25kZXJpbmcgd2hhdCBwZW9wbGXi
+gJlzIHRob3VnaHRzIGFyZSBvbiB0aGUgYmVzdCBzdHJhdGVneSBmb3IgdGhlIHVzZXIva2VybmVs
+IGludGVyZmFjZSBoZXJlPwoKV2XigJlyZSBjdXJyZW50bHkgZG9pbmcgc29tZXRoaW5nIHF1aXRl
+IGdyb3NzIC0gdXNpbmcgYSAvcHJvYyBmaWxlIHdpdGggYSBzaW1wbGUgcHJvdG9jb2wgYmFzZWQg
+b24gcmVhZGluZyBhbmQgd3JpdGluZyBmaXhlZC1zaXplZCBiaW5hcnkgbWVzc2FnZXMuIEZvciBv
+dXIgcHVycG9zZXMgdGhpcyB3b3JrcyBmYWlybHkgd2VsbCwgYnV0IGNsZWFybHkgd2UgbmVlZCBz
+b21ldGhpbmcgY2xlYW5lciBpZiB3ZSB3YW50IHRoaXMgdG8gZ28gYW55d2hlcmUuCgpUaGFua3Ms
+Ci4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4u
+Li4uLi4uLi4uLi4uLgogUGV0ZXIgRGVzbm95ZXJzICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgIHBqZEBjY3MubmV1LmVkdQogTm9ydGhlYXN0ZXJuIENvbXB1dGVyICYgSW5mb3JtYXRp
+b24gU2NpZW5jZSAgICAgICg2MTcpIDM3My04NjgzCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
+CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
+bmZvL2RtLWRldmVs
