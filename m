@@ -1,13 +1,12 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 5/5] multipath-tools: remove redundant ;
-Date: Wed,  3 Aug 2016 20:14:00 +0200
-Message-ID: <1470248040-11789-5-git-send-email-xose.vazquez@gmail.com>
-References: <1470248040-11789-1-git-send-email-xose.vazquez@gmail.com>
+From: heinzm@redhat.com
+Subject: [PATCH] dm raid: wrong status char during
+	resynchronization
+Date: Wed,  3 Aug 2016 22:57:42 +0200
+Message-ID: <1470257862-24490-1-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1470248040-11789-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,58 +16,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-Found by checkpatch - WARNING: Statements terminations use 1 semicolon
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+During a resynchronization, device status char 'a' is
+put on the raid status line for every device of a RAID set
+changing to 'A' (unless device failure) when completed.
+
+Interrupting and restarting an resynchronization by
+reloading the table erroneously lead to status char 'A'.
+
+Solve by avoiding superfluous MD_RECOVERY_REQUESTED flag
+in raid_preresume().
+
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- kpartx/lopart.c                 | 2 +-
- libmpathpersist/mpath_persist.c | 2 +-
- libmultipath/wwids.c            | 2 +-
- 3 files changed, 3 insertions(+), 3 deletions(-)
+ drivers/md/dm-raid.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/kpartx/lopart.c b/kpartx/lopart.c
-index 5d20450..0ab1688 100644
---- a/kpartx/lopart.c
-+++ b/kpartx/lopart.c
-@@ -147,7 +147,7 @@ find_loop_by_file (const char * filename)
- extern char *
- find_unused_loop_device (void)
- {
--	char dev[20], *next_loop_dev = NULL;;
-+	char dev[20], *next_loop_dev = NULL;
- 	int fd, next_loop = 0, somedev = 0, someloop = 0, loop_known = 0;
- 	struct stat statbuf;
- 	struct loop_info loopinfo;
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index c5be6cd..7501651 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -642,7 +642,7 @@ int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
- 	struct path *pp = NULL;
- 	int active_pathcount = 0;
- 	pthread_attr_t attr;
--	int rc, found = 0;;
-+	int rc, found = 0;
- 	int count = 0;
- 	int status = MPATH_PR_SUCCESS;
- 	struct prin_resp resp;
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index a7c3249..babf149 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -273,7 +273,7 @@ out:
- int
- should_multipath(struct path *pp1, vector pathvec)
- {
--	int i, ignore_new_devs;;
-+	int i, ignore_new_devs;
- 	struct path *pp2;
- 	struct config *conf;
- 
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 5ef6b5a..d20050c 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3577,7 +3577,6 @@ static int raid_preresume(struct dm_target *ti)
+ 	/* Be prepared for mddev_resume() in raid_resume() */
+ 	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+ 	if (mddev->recovery_cp && mddev->recovery_cp < MaxSector) {
+-		set_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
+ 		set_bit(MD_RECOVERY_SYNC, &mddev->recovery);
+ 		mddev->resync_min = mddev->recovery_cp;
+ 	}
 -- 
-2.7.4
+2.5.5
