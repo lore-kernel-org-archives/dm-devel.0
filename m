@@ -1,68 +1,82 @@
-From: Sebastian Herbszt <herbszt@gmx.de>
-Subject: Re: [PATCH 16/18] multipath-tools: Use ALUA for HP 3PAR
-Date: Wed, 3 Aug 2016 02:17:25 +0200
-Message-ID: <20160803021725.000063d5@localhost>
-References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
-	<1469838506-15689-16-git-send-email-xose.vazquez@gmail.com>
-	<trinity-e6c25fb4-7664-4f5d-9885-5aba45504689-1469916891284@3capp-gmx-bs13>
-	<aeee838a-6d44-ee76-62c5-4d97cbcaca80@gmail.com>
-	<trinity-56e0175a-2d50-4b23-bcd6-901dba2baf2f-1469991975804@3capp-gmx-bs42>
-	<cc29c462-f1d4-f74a-5b16-1236b48b85ea@gmail.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: dm-mq and end_clone_request()
+Date: Tue, 2 Aug 2016 17:19:11 -0700
+Message-ID: <1a460c29-1530-d3e1-25ba-736d86aff12e@sandisk.com>
+References: <a5c1a149-b1a2-b5a4-2207-bdaf32db3cbd@sandisk.com>
+ <757522831.7667712.1470059860543.JavaMail.zimbra@redhat.com>
+ <536022978.7668211.1470060125271.JavaMail.zimbra@redhat.com>
+ <931235537.7668834.1470060339483.JavaMail.zimbra@redhat.com>
+ <1264951811.7684268.1470065187014.JavaMail.zimbra@redhat.com>
+ <17da3ab0-233a-2cec-f921-bfd42c953ccc@sandisk.com>
+ <20160801175948.GA6685@redhat.com>
+ <f9e71e1d-54ca-40fe-a5ea-ae2863c94ff9@sandisk.com>
+ <20160801204628.GA94704@redhat.com>
+ <8e265fcc-8021-830e-ffcb-23a8a28ec247@sandisk.com>
+ <20160802174533.GA18714@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <cc29c462-f1d4-f74a-5b16-1236b48b85ea@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20160802174533.GA18714@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Laurence Oberman <loberman@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Xose Vazquez Perez wrote:
-> On 07/31/2016 09:06 PM, Sebastian Herbszt wrote:
+On 08/02/2016 10:45 AM, Mike Snitzer wrote:
+> Please do these same tests against a v4.7 kernel with the 4 patches from
+> this branch applied (no need for your other debug patches):
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.7-mpath-fixes
 > 
-> > Xose Vazquez Perez wrote:
-> >>
-> >> No. It's related to hardware_handler, "alua" in this case.
-> > 
-> > So how does the output of 'multipath -ll' looks like for persona 1 and 2
-> > with and without 'retain_attached_hw_handler'?
-> 
-> retain_attached_hw_handler is innocuous.
-> The paths grouping policy is controlled by the "path_grouping_policy" keyword,
-> multibus vs. group_by_prio. See man page.
+> I've had good results with my blk-mq SRP based testing.
 
-multibus should equal
+Hello Mike,
 
-path_grouping_policy = group_by_prio
-prio = const
+Thanks again for having made these patches available. The results of my
+tests are as follows:
 
-> Persona 1 and 2 basically is the same, but:
-> 
-> Persona 1:	path_grouping_policy = multibus
-> 		failback = manual
-> 		prio = const
-> 
-> Persona 2:	path_grouping_policy = group_by_prio
-> 		failback = immediate
-> 		prio = alua				(this is irrelevant, alua-prio is autodetected)
-> 		hardware_handler= "1 alua"		(this is irrelevant, all hardware handlers are autodetected)
-> 
-> With 3PAR-OS 3.1.3, or later, you should use "Persona 2"
+(1) CONFIG_DM_MQ_DEFAULT=y, fio running on top of xfs
 
-The above change plus
+The first simulated cable pull caused the following messages to appear:
 
-retain_attached_hw_handler = yes
-detect_prio = yes
+[  428.716566] mpath 254:1: queue_if_no_path 1 -> 0
+[  428.729671] __multipath_map(): (a) returning -5
+[  428.729730] map_request(): clone_and_map_rq() returned -5
+[  428.729788] dm_complete_request: error = -5
+[  428.729846] dm_softirq_done: dm-1 tio->error = -5
+[  428.729904] blk_update_request: 880 callbacks suppressed
+[  428.729970] blk_update_request: I/O error (-5), dev dm-1, sector 2097024
 
-should work with persona 1 and 2.
+(2) CONFIG_DM_MQ_DEFAULT=y, fio running on top of ext4
 
-Sebastian
+The first simulated cable pull caused the following messages to appear:
+
+[  162.894737] mpath 254:0: queue_if_no_path 0 -> 1
+[  162.903155] executing DM ioctl DEV_SUSPEND on mpathbe
+[  162.903207] mpath 254:0: queue_if_no_path 1 -> 0
+[  162.903255] device-mapper: multipath: must_push_back: queue_if_no_path=0 suspend_active=1 suspending=0
+[  162.903256] __multipath_map(): (a) returning -5
+[  162.903257] map_request(): clone_and_map_rq() returned -5
+[  162.903258] dm_complete_request: error = -5
+[  162.903259] dm_softirq_done: dm-0 tio->error = -5
+[  162.903261] blk_update_request: I/O error (-5), dev dm-0, sector 263424
+[  162.903284] Buffer I/O error on dev dm-0, logical block 32928, lost sync page write
+
+(3) CONFIG_DM_MQ_DEFAULT=n, fio running on top of xfs
+
+This test passed once but on the second run fio reported "bad magic header" after
+a large number of iterations. I'm still analyzing the logs.
+
+(4) CONFIG_DM_MQ_DEFAULT=n, fio running on top of ext4
+
+Ran this test three times. The first two runs passed but during the third run
+fio reported again I/O errors and I found the following in the kernel log:
+
+[  954.048860] __multipath_map(): (a) returning -5
+[  954.048861] map_request(): clone_and_map_rq() returned -5
+[  954.048862] dm_complete_request: error = -5
+[  954.048870] dm_softirq_done: dm-0 tio->error = -5
+[  954.048873] blk_update_request: 15 callbacks suppressed
+[  954.048874] blk_update_request: I/O error (-5), dev dm-0, sector 159976
+
+Bart.
