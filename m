@@ -1,14 +1,18 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: add template to add new
-	hardware
-Date: Tue, 2 Aug 2016 22:34:04 +0200
-Message-ID: <b03717f3-b371-a4bb-19d2-d1b4af54d00d@gmail.com>
-References: <1468334507-7531-1-git-send-email-xose.vazquez@gmail.com>
+From: Sebastian Herbszt <herbszt@gmx.de>
+Subject: Re: [PATCH 16/18] multipath-tools: Use ALUA for HP 3PAR
+Date: Wed, 3 Aug 2016 02:17:25 +0200
+Message-ID: <20160803021725.000063d5@localhost>
+References: <1469838506-15689-1-git-send-email-xose.vazquez@gmail.com>
+	<1469838506-15689-16-git-send-email-xose.vazquez@gmail.com>
+	<trinity-e6c25fb4-7664-4f5d-9885-5aba45504689-1469916891284@3capp-gmx-bs13>
+	<aeee838a-6d44-ee76-62c5-4d97cbcaca80@gmail.com>
+	<trinity-56e0175a-2d50-4b23-bcd6-901dba2baf2f-1469991975804@3capp-gmx-bs42>
+	<cc29c462-f1d4-f74a-5b16-1236b48b85ea@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1468334507-7531-1-git-send-email-xose.vazquez@gmail.com>
+In-Reply-To: <cc29c462-f1d4-f74a-5b16-1236b48b85ea@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,49 +22,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>
 List-Id: dm-devel.ids
 
-On 07/12/2016 04:41 PM, Xose Vazquez Perez wrote:
+Xose Vazquez Perez wrote:
+> On 07/31/2016 09:06 PM, Sebastian Herbszt wrote:
+> 
+> > Xose Vazquez Perez wrote:
+> >>
+> >> No. It's related to hardware_handler, "alua" in this case.
+> > 
+> > So how does the output of 'multipath -ll' looks like for persona 1 and 2
+> > with and without 'retain_attached_hw_handler'?
+> 
+> retain_attached_hw_handler is innocuous.
+> The paths grouping policy is controlled by the "path_grouping_policy" keyword,
+> multibus vs. group_by_prio. See man page.
 
-> +	/*
-> +	 * Copy this TEMPLATE to add new hardware.
-> +	 *
-> +	 * Keep only mandatory and modified attributes.
-> +	 * Standard attributes must be removed.
-> +	 *
-> +	 * COMPANY_NAME
-> +	 *
-> +	 * Maintainer : XXX
-> +	 * Mail : XXX
-> +	 */
-> +	{
-> +		.vendor        = "VENDOR", (Mandatory)
-> +		.product       = "PRODUCT", (Mandatory)
-> +		.revision      = "REVISION",
-> +		.bl_product    = "BL_PRODUCT",
-> +		.pgpolicy      = GROUP_BY_PRIO,
-> +		.uid_attribute = "ID_SERIAL",
-> +		.selector      = "service-time 0",
-> +		.checker_name  = TUR,
-> +		.features      = "0",
-> +		.hwhandler     = "0",
-> +		.prio_name     = "const",
-> +		.prio_args     = "",
-> +		.pgfailback    = -FAILBACK_IMMEDIATE,
-> +		.rr_weight     = RR_WEIGHT_NONE,
-> +		.no_path_retry = NO_PATH_RETRY_UNDEF,
-> +		.minio         = 1000,
-> +		.minio_rq      = 1,
-> +		.flush_on_last_del = FLUSH_DISABLED,
-> +		.fast_io_fail  = 5,
-> +		.dev_loss      = 600,
-> +		.retain_hwhandler = RETAIN_HWHANDLER_ON,
-> +		.detect_prio   = DETECT_PRIO_ON,
-> +		.deferred_remove = DEFERRED_REMOVE_OFF,
-> +		.delay_watch_checks = DELAY_CHECKS_OFF,
-> +		.delay_wait_checks = DELAY_CHECKS_OFF,
+multibus should equal
 
-Note that ".getuid" ".alias_prefix" and ".user_friendly_names" were hidden
-consciously from the TEMPLATE.
+path_grouping_policy = group_by_prio
+prio = const
+
+> Persona 1 and 2 basically is the same, but:
+> 
+> Persona 1:	path_grouping_policy = multibus
+> 		failback = manual
+> 		prio = const
+> 
+> Persona 2:	path_grouping_policy = group_by_prio
+> 		failback = immediate
+> 		prio = alua				(this is irrelevant, alua-prio is autodetected)
+> 		hardware_handler= "1 alua"		(this is irrelevant, all hardware handlers are autodetected)
+> 
+> With 3PAR-OS 3.1.3, or later, you should use "Persona 2"
+
+The above change plus
+
+retain_attached_hw_handler = yes
+detect_prio = yes
+
+should work with persona 1 and 2.
+
+Sebastian
