@@ -1,13 +1,12 @@
-From: Benjamin Block <bblock@linux.vnet.ibm.com>
-Subject: bug: using smp_processor_id() in preemptible code in
-	rr_select_path()
-Date: Wed, 3 Aug 2016 17:35:45 +0200
-Message-ID: <20160803153545.GE20370@bblock-ThinkPad-W530>
+From: heinzm@redhat.com
+Subject: [PATCH] dm raid: constructor fails on non-zero
+	incompat_features
+Date: Wed,  3 Aug 2016 17:47:04 +0200
+Message-ID: <1470239224-5884-1-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,67 +16,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-Hej Mike,
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-when running a debug-kernel today with several multipath-devices using
-the round-robin path selector I noticed that the kernel throws these
-warnings here:
+When lvm2 userspace requests a RaidLV repair, it sets
+the rebuild constructor flag on the new, replaced DataLVs
+but does not clear the respective MetaLVs. Hence the
+superblock loaded from such new MetaLVs may have a non-zero
+incompat_features member and the constructor will fail on
+checking it to be zero.
 
-BUG: using smp_processor_id() in preemptible [00000000] code: kdmwork-252:0=
-/881
-caller is rr_select_path+0x36/0x108 [dm_round_robin]
-CPU: 1 PID: 881 Comm: kdmwork-252:0 Not tainted 4.7.0-debug #4
-       00000000617679b8 0000000061767a48 0000000000000002 0000000000000000
-       0000000061767ae8 0000000061767a60 0000000061767a60 00000000001145d0
-       0000000000000000 0000000000b962ae 0000000000bb291e 000000000000000b
-       0000000061767aa8 0000000061767a48 0000000000000000 0000000000000000
-       0700000000b962ae 00000000001145d0 0000000061767a48 0000000061767aa8
-Call Trace:
-([<00000000001144a2>] show_trace+0x8a/0xe0)
-([<0000000000114586>] show_stack+0x8e/0xf0)
-([<00000000006c7fdc>] dump_stack+0x9c/0xe0)
-([<00000000006fbbc0>] check_preemption_disabled+0x108/0x130)
-([<000003ff80268646>] rr_select_path+0x36/0x108 [dm_round_robin])
-([<000003ff80259a42>] choose_path_in_pg+0x42/0xc8 [dm_multipath])
-([<000003ff80259b62>] choose_pgpath+0x9a/0x1a0 [dm_multipath])
-([<000003ff8025b51a>] __multipath_map.isra.5+0x72/0x228 [dm_multipath])
-([<000003ff8025b75e>] multipath_map+0x3e/0x50 [dm_multipath])
-([<000003ff80225eb6>] map_request+0x66/0x458 [dm_mod])
-([<000003ff802262ec>] map_tio_request+0x44/0x70 [dm_mod])
-([<000000000016835a>] kthread_worker_fn+0xf2/0x1d8)
-([<00000000001681da>] kthread+0x112/0x120)
-([<000000000098378a>] kernel_thread_starter+0x6/0xc)
-([<0000000000983784>] kernel_thread_starter+0x0/0xc)
-no locks held by kdmwork-252:0/881.
+Solve by initializing the incompat_features member properly.
 
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/dm-raid.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-There are several more of these warnings, but all have the same
-stack-trace (this is on s390x, but this looks like its only common code)
-- sometimes the process-context is multipath.
-
-Looking at the changes in this function, it rather looks like this is
-caused by changes made in commit
-b0b477c7e0dd93f8916d106018ded1331b81bf61 (dm round robin: use percpu
-'repeat_count' and 'current_path').
-
-The kernel is a stock v4.7 with some debug options enabled (prominently
-DEBUG_PREEMPT). Need any more info?
-
-
-                                                    Beste Gr=FC=DFe / Best =
-regards,
-                                                      - Benjamin Block
--- =
-
-Linux on z Systems Development         /         IBM Systems & Technology G=
-roup
-		  IBM Deutschland Research & Development GmbH =
-
-Vorsitz. AufsR.: Martina Koederitz     /        Gesch=E4ftsf=FChrung: Dirk =
-Wittkopp
-Sitz der Gesellschaft: B=F6blingen / Registergericht: AmtsG Stuttgart, HRB =
-243294
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 8498354..2b1279c 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -1960,6 +1960,7 @@ static void super_sync(struct mddev *mddev, struct md_rdev *rdev)
+ 	sb->data_offset = cpu_to_le64(rdev->data_offset);
+ 	sb->new_data_offset = cpu_to_le64(rdev->new_data_offset);
+ 	sb->sectors = cpu_to_le64(rdev->sectors);
++	sb->incompat_features = cpu_to_le32(0);
+ 
+ 	/* Zero out the rest of the payload after the size of the superblock */
+ 	memset(sb + 1, 0, rdev->sb_size - sizeof(*sb));
+-- 
+2.5.5
