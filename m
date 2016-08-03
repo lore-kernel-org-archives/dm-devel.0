@@ -1,18 +1,14 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: During systemd/udev,
- device-mapper trying to work with non-LVM volumes
-Date: Wed, 3 Aug 2016 09:49:38 +0200
-Message-ID: <73dca46b-dd4e-cb35-edcc-6d5d36b2c3ba@redhat.com>
-References: <CA+X5Wn5tbL02XpG-JMvZ4-Sdg+sv=yymD1s6Afboag59LqD94Q@mail.gmail.com>
-	<4d36f133-5e8f-3e89-9038-5268b7b6f770@redhat.com>
-	<CA+X5Wn5nZjyC2qk7yDYkMH+LX6kznjoEcubcMjC7tgN+k5vfbw@mail.gmail.com>
-	<3608c518-ab93-c7fd-9dad-49650d234de6@redhat.com>
-	<CA+X5Wn6L4kvgOkBx2=M97ni=C-WaZuq0+CiuYv1UJr8ZLu1C0g@mail.gmail.com>
+From: peng.liang5@zte.com.cn
+Subject: Re: [PATCH] multipathd: fix issue in 'map $map
+	getprstatus' reply
+Date: Wed, 3 Aug 2016 15:00:04 +0800
+Message-ID: <OF8D5A238E.DA73F651-ON48258004.000AC1C8-48258004.00266F86@zte.com.cn>
+References: <1470101235-8616-1-git-send-email-peng.liang5@zte.com.cn>
+	<d7657727-1541-955f-95c0-ce452cc4217d@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0201536728568488540=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CA+X5Wn6L4kvgOkBx2=M97ni=C-WaZuq0+CiuYv1UJr8ZLu1C0g@mail.gmail.com>
+In-Reply-To: <d7657727-1541-955f-95c0-ce452cc4217d@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,263 +18,184 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: james harvey <jamespharvey20@gmail.com>, Marian Csontos <mcsontos@redhat.com>
-Cc: dm-devel@redhat.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, christophe varoqui <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
-Dne 3.8.2016 v 04:11 james harvey napsal(a):
-> Before I respond to all the other questions, lets clear up the
-> underlying misunderstanding here.
->
-> Maybe I'm missing something, but I think most/all of the responders
-> are thinking I'm using LVM snapshots.  If I am missing something,
-> saying "doesn't make sense" or "howto" doesn't really help.  Although
-> I may not be using LVM in the same way most people use it, I don't see
-> what instructions I'm violating.  I am NEVER EVER planning on running
-> LVM snapshots.  I'm NEVER EVER going to run "lvcreate -s".  I know you
-> can't make block level copies of BTRFS volumes that it can see at
-> once.  I have NEVER EVER ran "{l,v}gchange".
->
-> I want to have thin provisioning with KVM virtual machines.  I'm never
-> going to use docker, and I'm never going to use snapper on an LVM
-> snapshot basis, only having it use BTRFS snapshots.
->
-> Can't someone use thinly-provisioned LOGICAL volumes, and NEVER EVER
-> use thinly-provisioned SNAPSHOT volumes?  I've repeatedly said I'm not
-> using thin-provisioned snapshots.
->
-> Isn't the problem running BTRFS on LVM2 when a LVM2-snapshot is made,
-> that BTRFS gets confused by duplicate signatures?
->
-> So, if a user is NEVER EVER going to use LVM2 snapshots, isn't that OK?
->
-> /dev/sd{a,b,c}1 3.5G Linux RAID - to be used as /dev/md1 labeled main_boot
-> /dev/sd{a,b,c}2 3.5G Linux RAID - to be used as /dev/md2 labeled snapper_boot
-> /dev/sd{a,b,c}3 4.6T Linux LVM
-> # mdadm --create --name=main_boot --level 1 --metadata=1.0
-> --raid-devices=3 /dev/md1 /dev/sda1 /dev/sdb1 /dev/sdc1
-> # mkfs.btrfs --label main_boot /dev/disk/by-id/md-name-main_boot
-> # mdadm --create --name=snapper_boot --level 1 --metadata=1.0
-> --raid-devices=3 /dev/md2 /dev/sda2 /dev/sdb2 /dev/sdc2
-> # mkfs.btrfs --label snapper_boot /dev/disk/by-id/md-name-snapper_boot
-> # pvcreate /dev/disk/sda3
-> # vgcreate disk1 /dev/disk/sda3
-> # pvcreate /dev/disk/sdb3
-> # vgcreate disk2 /dev/disk/sdb3
-> # pvcreate /dev/disk/sdc3
-> # vgcreate disk3 /dev/disk/sdc3
-> # lvcreate --size 500G --thinpool disk1thin disk1
-> # lvcreate --size 500G --thinpool disk2thin disk2
-> # lvcreate --size 500G --thinpool disk3thin disk3
-> # lvcreate --virtualsize 100G --name main1 disk1/disk1thin
-> # lvcreate --virtualsize 100G --name main2 disk2/disk2thin
-> # lvcreate --virtualsize 100G --name main3 disk3/disk3thin
-> # mkfs.btrfs --label main --metadata raid1 --data raid1
-> /dev/disk1/main1 /dev/disk2/main2 /dev/disk3/main3
->
-> Then install to /dev/disk/by-label/main and using
-> /dev/disk/by-label/main_boot as its /boot?
->
-> Then only using btrfs subvolumes (snapshots) and NEVER EVER running
-> again ANY lv command having to do with main1/main2/main3?
->
+This is a multipart message in MIME format.
+--===============0201536728568488540==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 00266F8548258004_="
 
-Hi
+This is a multipart message in MIME format.
+--=_alternative 00266F8548258004_=
+Content-Type: text/plain; charset="GB2312"
+Content-Transfer-Encoding: base64
+
+SGkgQmFydCwNCg0KVGhhbmtzIGZvciB5b3VyIGFkdmljZSENCkkgaGF2ZSB1cGRhdGVkIHRoZSBz
+b2x1dGlvbiBhcyBmb2xsb3dzLiANCg0KZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvY2xpX2hhbmRs
+ZXJzLmMgYi9tdWx0aXBhdGhkL2NsaV9oYW5kbGVycy5jDQppbmRleCAwYjA0NTA0Li5jZWM0MGVi
+IDEwMDY0NA0KLS0tIGEvbXVsdGlwYXRoZC9jbGlfaGFuZGxlcnMuYw0KKysrIGIvbXVsdGlwYXRo
+ZC9jbGlfaGFuZGxlcnMuYw0KQEAgLTEsNiArMSw5IEBADQogLyoNCiAgKiBDb3B5cmlnaHQgKGMp
+IDIwMDUgQ2hyaXN0b3BoZSBWYXJvcXVpDQogICovDQorI2RlZmluZSBfR05VX1NPVVJDRQ0KKw0K
+KyNpbmNsdWRlIDxzdGRpby5oPg0KICNpbmNsdWRlICJjaGVja2Vycy5oIg0KICNpbmNsdWRlICJt
+ZW1vcnkuaCINCiAjaW5jbHVkZSAidmVjdG9yLmgiDQpAQCAtMTI4NSwxNCArMTI4OCw4IEBAIGNs
+aV9nZXRwcnN0YXR1cyAodm9pZCAqIHYsIGNoYXIgKiogcmVwbHksIGludCAqIA0KbGVuLCB2b2lk
+ICogZGF0YSkNCg0KICAgICAgICBjb25kbG9nKDMsICIlczogcHJmbGFnID0gJXUiLCBwYXJhbSwg
+KHVuc2lnbmVkIGludCltcHAtPnByZmxhZyk7DQoNCi0gICAgICAgKnJlcGx5ID0oY2hhciAqKW1h
+bGxvYygzKTsNCiAgICAgICAgKmxlbiA9IDM7DQotICAgICAgIG1lbXNldCgqcmVwbHksMCwzKTsN
+Ci0NCi0NCi0gICAgICAgc3ByaW50ZigqcmVwbHksIiVkXG4iLG1wcC0+cHJmbGFnKTsNCi0gICAg
+ICAgKCpyZXBseSlbMl09J1wwJzsNCi0NCisgICAgICAgYXNwcmludGYocmVwbHksICIlZFxuIiwg
+bXBwLT5wcmZsYWcpOw0KDQogICAgICAgIGNvbmRsb2coMywgIiVzOiByZXBseSA9ICVzIiwgcGFy
+YW0sICpyZXBseSk7IA0KDQoNCg0KDQq3orz+yMs6ICAgICAgICAgQmFydCBWYW4gQXNzY2hlIDxi
+YXJ0LnZhbmFzc2NoZUBzYW5kaXNrLmNvbT4NCsrVvP7IyzogICAgICAgICA8cGVuZy5saWFuZzVA
+enRlLmNvbS5jbj4sIGNocmlzdG9waGUgdmFyb3F1aSANCjxjaHJpc3RvcGhlLnZhcm9xdWlAZnJl
+ZS5mcj4sIA0Ks63LzTogICA8emhhbmcua2FpMTZAenRlLmNvbS5jbj4sIDxkbS1kZXZlbEByZWRo
+YXQuY29tPg0KyNXG2jogICAyMDE2LzA4LzAyIDIzOjIwDQrW98ziOiAgIFJlOiBbZG0tZGV2ZWxd
+IFtQQVRDSF0gbXVsdGlwYXRoZDogZml4IGlzc3VlIGluICdtYXAgJG1hcCANCmdldHByc3RhdHVz
+JyByZXBseQ0KDQoNCg0KT24gMDgvMDEvMjAxNiAwNjoyNyBQTSwgcGVuZy5saWFuZzVAenRlLmNv
+bS5jbiB3cm90ZToNCj4gRnJvbTogcGVuZyBsaWFuZyA8cGVuZy5saWFuZzVAenRlLmNvbS5jbj4N
+Cj4NCj4gYWRkIG1pc3NpbmcgbmV3bGluZSB0byAnbWFwfG11bHRpcGF0aCAkbWFwIGdldHByc3Rh
+dHVzJyByZXBseQ0KPg0KPiBTaWduZWQtb2ZmLWJ5OiBwZW5nIGxpYW5nIDxwZW5nLmxpYW5nNUB6
+dGUuY29tLmNuPg0KPiAtLS0NCj4gIG11bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmMgfCAxMCArKysr
+Ky0tLS0tDQo+ICAxIGZpbGUgY2hhbmdlZCwgNSBpbnNlcnRpb25zKCspLCA1IGRlbGV0aW9ucygt
+KQ0KPg0KPiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9jbGlfaGFuZGxlcnMuYyBiL211bHRpcGF0
+aGQvY2xpX2hhbmRsZXJzLmMNCj4gaW5kZXggOGZmNDM2Mi4uMGIwNDUwNCAxMDA2NDQNCj4gLS0t
+IGEvbXVsdGlwYXRoZC9jbGlfaGFuZGxlcnMuYw0KPiArKysgYi9tdWx0aXBhdGhkL2NsaV9oYW5k
+bGVycy5jDQo+IEBAIC0xMjg1LDEzICsxMjg1LDEzIEBAIGNsaV9nZXRwcnN0YXR1cyAodm9pZCAq
+IHYsIGNoYXIgKiogcmVwbHksIGludCAqIA0KbGVuLCB2b2lkICogZGF0YSkNCj4NCj4gICAgICAg
+ICAgICAgICAgY29uZGxvZygzLCAiJXM6IHByZmxhZyA9ICV1IiwgcGFyYW0sICh1bnNpZ25lZCAN
+CmludCltcHAtPnByZmxhZyk7DQo+DQo+IC0gICAgICAgICAgICAgICpyZXBseSA9KGNoYXIgKilt
+YWxsb2MoMik7DQo+IC0gICAgICAgICAgICAgICpsZW4gPSAyOw0KPiAtICAgICAgICAgICAgICBt
+ZW1zZXQoKnJlcGx5LDAsMik7DQo+ICsgICAgICAgICAgICAgICpyZXBseSA9KGNoYXIgKiltYWxs
+b2MoMyk7DQo+ICsgICAgICAgICAgICAgICpsZW4gPSAzOw0KPiArICAgICAgICAgICAgICBtZW1z
+ZXQoKnJlcGx5LDAsMyk7DQo+DQo+DQo+IC0gICAgICAgICAgICAgIHNwcmludGYoKnJlcGx5LCIl
+ZCIsbXBwLT5wcmZsYWcpOw0KPiAtICAgICAgICAgICAgICAoKnJlcGx5KVsxXT0nXDAnOw0KPiAr
+ICAgICAgICAgICAgICBzcHJpbnRmKCpyZXBseSwiJWRcbiIsbXBwLT5wcmZsYWcpOw0KPiArICAg
+ICAgICAgICAgICAoKnJlcGx5KVsyXT0nXDAnOw0KDQpIZWxsbyBQZW5nLA0KDQpQbGVhc2UgdXNl
+IGFzcHJpbnRmKCkgaW5zdGVhZCBvZiBtYWxsb2MoKSArIG1lbXNldCgpICsgc3ByaW50ZigpLiBT
+ZWUgDQphbHNvIA0KaHR0cHM6Ly93d3cuZ251Lm9yZy9zb2Z0d2FyZS9saWJjL21hbnVhbC9odG1s
+X25vZGUvRHluYW1pYy1PdXRwdXQuaHRtbA0KDQpUaGFua3MsDQoNCkJhcnQuDQoNCg0KDQo=
+--=_alternative 00266F8548258004_=
+Content-Type: text/html; charset="GB2312"
+Content-Transfer-Encoding: base64
+
+PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPkhpIEJhcnQsPC9mb250Pg0KPGJyPg0KPGJy
+Pjxmb250IHNpemU9MiBmYWNlPSJzYW5zLXNlcmlmIj5UaGFua3MgZm9yIHlvdXIgYWR2aWNlITwv
+Zm9udD4NCjxicj48Zm9udCBzaXplPTIgZmFjZT0ic2Fucy1zZXJpZiI+SSBoYXZlIHVwZGF0ZWQg
+dGhlIHNvbHV0aW9uIGFzIGZvbGxvd3MuDQo8L2ZvbnQ+DQo8YnI+DQo8YnI+PGZvbnQgc2l6ZT0x
+IGZhY2U9Ikx1Y2lkYSBDb25zb2xlIj48Yj5kaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9jbGlfaGFu
+ZGxlcnMuYw0KYi9tdWx0aXBhdGhkL2NsaV9oYW5kbGVycy5jPC9iPjwvZm9udD4NCjxicj48Zm9u
+dCBzaXplPTEgZmFjZT0iTHVjaWRhIENvbnNvbGUiPjxiPmluZGV4IDBiMDQ1MDQuLmNlYzQwZWIg
+MTAwNjQ0PC9iPjwvZm9udD4NCjxicj48Zm9udCBzaXplPTEgZmFjZT0iTHVjaWRhIENvbnNvbGUi
+PjxiPi0tLSBhL211bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmM8L2I+PC9mb250Pg0KPGJyPjxmb250
+IHNpemU9MSBmYWNlPSJMdWNpZGEgQ29uc29sZSI+PGI+KysrIGIvbXVsdGlwYXRoZC9jbGlfaGFu
+ZGxlcnMuYzwvYj48L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSMwMGMxYzIgZmFjZT0i
+THVjaWRhIENvbnNvbGUiPkBAIC0xLDYgKzEsOSBAQDwvZm9udD4NCjxicj48Zm9udCBzaXplPTEg
+ZmFjZT0iTHVjaWRhIENvbnNvbGUiPiZuYnNwOy8qPC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBm
+YWNlPSJMdWNpZGEgQ29uc29sZSI+Jm5ic3A7ICogQ29weXJpZ2h0IChjKSAyMDA1IENocmlzdG9w
+aGUNClZhcm9xdWk8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGZhY2U9Ikx1Y2lkYSBDb25zb2xl
+Ij4mbmJzcDsgKi88L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSMwMGMyMDAgZmFjZT0i
+THVjaWRhIENvbnNvbGUiPisjZGVmaW5lIF9HTlVfU09VUkNFPC9mb250Pg0KPGJyPjxmb250IHNp
+emU9MSBjb2xvcj0jMDBjMjAwIGZhY2U9Ikx1Y2lkYSBDb25zb2xlIj4rPC9mb250Pg0KPGJyPjxm
+b250IHNpemU9MSBjb2xvcj0jMDBjMjAwIGZhY2U9Ikx1Y2lkYSBDb25zb2xlIj4rI2luY2x1ZGUg
+Jmx0O3N0ZGlvLmgmZ3Q7PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBmYWNlPSJMdWNpZGEgQ29u
+c29sZSI+Jm5ic3A7I2luY2x1ZGUgJnF1b3Q7Y2hlY2tlcnMuaCZxdW90OzwvZm9udD4NCjxicj48
+Zm9udCBzaXplPTEgZmFjZT0iTHVjaWRhIENvbnNvbGUiPiZuYnNwOyNpbmNsdWRlICZxdW90O21l
+bW9yeS5oJnF1b3Q7PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBmYWNlPSJMdWNpZGEgQ29uc29s
+ZSI+Jm5ic3A7I2luY2x1ZGUgJnF1b3Q7dmVjdG9yLmgmcXVvdDs8L2ZvbnQ+DQo8YnI+PGZvbnQg
+c2l6ZT0xIGNvbG9yPSMwMGMxYzIgZmFjZT0iTHVjaWRhIENvbnNvbGUiPkBAIC0xMjg1LDE0ICsx
+Mjg4LDgNCkBAPC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJMdWNpZGEgQ29uc29sZSI+IGNsaV9n
+ZXRwcnN0YXR1cyAodm9pZCAqIHYsDQpjaGFyICoqIHJlcGx5LCBpbnQgKiBsZW4sIHZvaWQgKiBk
+YXRhKTwvZm9udD4NCjxicj4NCjxicj48Zm9udCBzaXplPTEgZmFjZT0iTHVjaWRhIENvbnNvbGUi
+PiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyBjb25kbG9nKDMsDQomcXVvdDslczogcHJmbGFn
+ID0gJXUmcXVvdDssIHBhcmFtLCAodW5zaWduZWQgaW50KW1wcC0mZ3Q7cHJmbGFnKTs8L2ZvbnQ+
+DQo8YnI+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSNjMjAwMDAgZmFjZT0iTHVjaWRhIENvbnNv
+bGUiPi0gJm5ic3A7ICZuYnNwOyAmbmJzcDsNCipyZXBseSA9KGNoYXIgKiltYWxsb2MoMyk7PC9m
+b250Pg0KPGJyPjxmb250IHNpemU9MSBmYWNlPSJMdWNpZGEgQ29uc29sZSI+Jm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICpsZW4NCj0gMzs8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9y
+PSNjMjAwMDAgZmFjZT0iTHVjaWRhIENvbnNvbGUiPi0gJm5ic3A7ICZuYnNwOyAmbmJzcDsNCm1l
+bXNldCgqcmVwbHksMCwzKTs8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSNjMjAwMDAg
+ZmFjZT0iTHVjaWRhIENvbnNvbGUiPi08L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSNj
+MjAwMDAgZmFjZT0iTHVjaWRhIENvbnNvbGUiPi08L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNv
+bG9yPSNjMjAwMDAgZmFjZT0iTHVjaWRhIENvbnNvbGUiPi0gJm5ic3A7ICZuYnNwOyAmbmJzcDsN
+CnNwcmludGYoKnJlcGx5LCZxdW90OyVkXG4mcXVvdDssbXBwLSZndDtwcmZsYWcpOzwvZm9udD4N
+Cjxicj48Zm9udCBzaXplPTEgY29sb3I9I2MyMDAwMCBmYWNlPSJMdWNpZGEgQ29uc29sZSI+LSAm
+bmJzcDsgJm5ic3A7ICZuYnNwOw0KKCpyZXBseSlbMl09J1wwJzs8L2ZvbnQ+DQo8YnI+PGZvbnQg
+c2l6ZT0xIGNvbG9yPSNjMjAwMDAgZmFjZT0iTHVjaWRhIENvbnNvbGUiPi08L2ZvbnQ+DQo8YnI+
+PGZvbnQgc2l6ZT0xIGNvbG9yPSMwMGMyMDAgZmFjZT0iTHVjaWRhIENvbnNvbGUiPis8L2ZvbnQ+
+PGZvbnQgc2l6ZT0xIGZhY2U9Ikx1Y2lkYSBDb25zb2xlIj4NCiZuYnNwOyAmbmJzcDsgJm5ic3A7
+IDwvZm9udD48Zm9udCBzaXplPTEgY29sb3I9IzAwYzIwMCBmYWNlPSJMdWNpZGEgQ29uc29sZSI+
+YXNwcmludGYocmVwbHksDQomcXVvdDslZFxuJnF1b3Q7LCBtcHAtJmd0O3ByZmxhZyk7PC9mb250
+Pg0KPGJyPg0KPGJyPjxmb250IHNpemU9MSBmYWNlPSJMdWNpZGEgQ29uc29sZSI+Jm5ic3A7ICZu
+YnNwOyAmbmJzcDsgJm5ic3A7IGNvbmRsb2coMywNCiZxdW90OyVzOiByZXBseSA9ICVzJnF1b3Q7
+LCBwYXJhbSwgKnJlcGx5KTs8L2ZvbnQ+PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPg0K
+Jm5ic3A7PGJyPg0KPC9mb250Pg0KPGJyPg0KPGJyPg0KPGJyPg0KPGJyPjxmb250IHNpemU9MSBj
+b2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPreivP7IyzogJm5ic3A7ICZuYnNwOw0KJm5i
+c3A7ICZuYnNwOyA8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPkJhcnQgVmFu
+IEFzc2NoZQ0KJmx0O2JhcnQudmFuYXNzY2hlQHNhbmRpc2suY29tJmd0OzwvZm9udD4NCjxicj48
+Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj7K1bz+yMs6ICZuYnNw
+OyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgPC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNl
+cmlmIj4mbHQ7cGVuZy5saWFuZzVAenRlLmNvbS5jbiZndDssDQpjaHJpc3RvcGhlIHZhcm9xdWkg
+Jmx0O2NocmlzdG9waGUudmFyb3F1aUBmcmVlLmZyJmd0OywgPC9mb250Pg0KPGJyPjxmb250IHNp
+emU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPrOty806ICZuYnNwOyAmbmJzcDsN
+CiZuYnNwOyAmbmJzcDs8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPiZsdDt6
+aGFuZy5rYWkxNkB6dGUuY29tLmNuJmd0OywNCiZsdDtkbS1kZXZlbEByZWRoYXQuY29tJmd0Ozwv
+Zm9udD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj7I
+1cbaOiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7IDwvZm9udD48Zm9udCBzaXplPTEgZmFj
+ZT0ic2Fucy1zZXJpZiI+MjAxNi8wOC8wMg0KMjM6MjA8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0x
+IGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+1vfM4jogJm5ic3A7ICZuYnNwOw0KJm5i
+c3A7ICZuYnNwOzwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+UmU6IFtkbS1k
+ZXZlbF0NCltQQVRDSF0gbXVsdGlwYXRoZDogZml4IGlzc3VlIGluICdtYXAgJG1hcCBnZXRwcnN0
+YXR1cycgcmVwbHk8L2ZvbnQ+DQo8YnI+DQo8aHIgbm9zaGFkZT4NCjxicj4NCjxicj4NCjxicj48
+dHQ+PGZvbnQgc2l6ZT0yPk9uIDA4LzAxLzIwMTYgMDY6MjcgUE0sIHBlbmcubGlhbmc1QHp0ZS5j
+b20uY24gd3JvdGU6PGJyPg0KJmd0OyBGcm9tOiBwZW5nIGxpYW5nICZsdDtwZW5nLmxpYW5nNUB6
+dGUuY29tLmNuJmd0Ozxicj4NCiZndDs8YnI+DQomZ3Q7IGFkZCBtaXNzaW5nIG5ld2xpbmUgdG8g
+J21hcHxtdWx0aXBhdGggJG1hcCBnZXRwcnN0YXR1cycgcmVwbHk8YnI+DQomZ3Q7PGJyPg0KJmd0
+OyBTaWduZWQtb2ZmLWJ5OiBwZW5nIGxpYW5nICZsdDtwZW5nLmxpYW5nNUB6dGUuY29tLmNuJmd0
+Ozxicj4NCiZndDsgLS0tPGJyPg0KJmd0OyAmbmJzcDttdWx0aXBhdGhkL2NsaV9oYW5kbGVycy5j
+IHwgMTAgKysrKystLS0tLTxicj4NCiZndDsgJm5ic3A7MSBmaWxlIGNoYW5nZWQsIDUgaW5zZXJ0
+aW9ucygrKSwgNSBkZWxldGlvbnMoLSk8YnI+DQomZ3Q7PGJyPg0KJmd0OyBkaWZmIC0tZ2l0IGEv
+bXVsdGlwYXRoZC9jbGlfaGFuZGxlcnMuYyBiL211bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmM8YnI+
+DQomZ3Q7IGluZGV4IDhmZjQzNjIuLjBiMDQ1MDQgMTAwNjQ0PGJyPg0KJmd0OyAtLS0gYS9tdWx0
+aXBhdGhkL2NsaV9oYW5kbGVycy5jPGJyPg0KJmd0OyArKysgYi9tdWx0aXBhdGhkL2NsaV9oYW5k
+bGVycy5jPGJyPg0KJmd0OyBAQCAtMTI4NSwxMyArMTI4NSwxMyBAQCBjbGlfZ2V0cHJzdGF0dXMg
+KHZvaWQgKiB2LCBjaGFyICoqIHJlcGx5LA0KaW50ICogbGVuLCB2b2lkICogZGF0YSk8YnI+DQom
+Z3Q7PGJyPg0KJmd0OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
+bmJzcDsgJm5ic3A7ICZuYnNwOw0KY29uZGxvZygzLCAmcXVvdDslczogcHJmbGFnID0gJXUmcXVv
+dDssIHBhcmFtLCAodW5zaWduZWQgaW50KW1wcC0mZ3Q7cHJmbGFnKTs8YnI+DQomZ3Q7PGJyPg0K
+Jmd0OyAtICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
+bmJzcDsNCipyZXBseSA9KGNoYXIgKiltYWxsb2MoMik7PGJyPg0KJmd0OyAtICZuYnNwOyAmbmJz
+cDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCipsZW4gPSAyOzxi
+cj4NCiZndDsgLSAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
+cDsgJm5ic3A7DQptZW1zZXQoKnJlcGx5LDAsMik7PGJyPg0KJmd0OyArICZuYnNwOyAmbmJzcDsg
+Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCipyZXBseSA9KGNoYXIg
+KiltYWxsb2MoMyk7PGJyPg0KJmd0OyArICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
+cDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCipsZW4gPSAzOzxicj4NCiZndDsgKyAmbmJzcDsgJm5i
+c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQptZW1zZXQoKnJl
+cGx5LDAsMyk7PGJyPg0KJmd0Ozxicj4NCiZndDs8YnI+DQomZ3Q7IC0gJm5ic3A7ICZuYnNwOyAm
+bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0Kc3ByaW50ZigqcmVwbHks
+JnF1b3Q7JWQmcXVvdDssbXBwLSZndDtwcmZsYWcpOzxicj4NCiZndDsgLSAmbmJzcDsgJm5ic3A7
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQooKnJlcGx5KVsxXT0n
+XDAnOzxicj4NCiZndDsgKyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7DQpzcHJpbnRmKCpyZXBseSwmcXVvdDslZFxuJnF1b3Q7LG1wcC0mZ3Q7
+cHJmbGFnKTs8YnI+DQomZ3Q7ICsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
+bmJzcDsgJm5ic3A7ICZuYnNwOw0KKCpyZXBseSlbMl09J1wwJzs8YnI+DQo8YnI+DQpIZWxsbyBQ
+ZW5nLDxicj4NCjxicj4NClBsZWFzZSB1c2UgYXNwcmludGYoKSBpbnN0ZWFkIG9mIG1hbGxvYygp
+ICsgbWVtc2V0KCkgKyBzcHJpbnRmKCkuIFNlZSA8YnI+DQphbHNvIDwvZm9udD48L3R0PjxhIGhy
+ZWY9Imh0dHBzOi8vd3d3LmdudS5vcmcvc29mdHdhcmUvbGliYy9tYW51YWwvaHRtbF9ub2RlL0R5
+bmFtaWMtT3V0cHV0Lmh0bWwiPjx0dD48Zm9udCBzaXplPTI+aHR0cHM6Ly93d3cuZ251Lm9yZy9z
+b2Z0d2FyZS9saWJjL21hbnVhbC9odG1sX25vZGUvRHluYW1pYy1PdXRwdXQuaHRtbDwvZm9udD48
+L3R0PjwvYT48dHQ+PGZvbnQgc2l6ZT0yPjxicj4NCjxicj4NClRoYW5rcyw8YnI+DQo8YnI+DQpC
+YXJ0Ljxicj4NCjxicj4NCjwvZm9udD48L3R0Pg0KPGJyPg0K
+--=_alternative 00266F8548258004_=--
 
 
-These are the steps you want to use:
-
-mdadm   whateverarrayyouwantouse   ->  mdXXX
-
-vgcreate  VG  /dev/mdXXX
-
-lvcreate -L1500G -T VG/pool
-lvcreate -V300G  -n disk VG/pool
-
-mkfs.btrfs --label main  /dev/VG/disk
-
----
-
-It's unsupported/unadvised  to combine  your BTRFS volume from  LVs from 
-different VG - you would need to be real expect to make all the activation 
-running properly.
-
-Handling autoexpansion of 3 separate pools used for single filesystem is 
-something untested & unsupported...
+--===============0201536728568488540==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
----
-
-Also note - there is no 'extra'  thin-snapshot.
-Thin snapshot is  just ordinary  thin volume - no difference.
-Thin volumes just have some mappings..
-
----
-
-If you are not going to run  'lvcreate -s' - why you talk about snapshots?
-Your emails are simply still too confusing...
-
-Regards
-
-
-Zdenek
-
-
-
-> On Thu, Jul 28, 2016 at 10:12 AM, Zdenek Kabelac <zkabelac@redhat.com> wrote:
->> Dne 28.7.2016 v 03:33 james harvey napsal(a):
->>>
->>> On Wed, Jul 27, 2016 at 2:49 PM, Marian Csontos <mcsontos@redhat.com>
->>> wrote:
->>>>
->>>> On 07/23/2016 01:14 AM, james harvey wrote:
->>>>>
->>>>>
->>>>> If I understand what's going on here, I think device-mapper is trying
->>>>> to work with two volumes that don't involve LVM, causing the errors.
->>>>
->>>>
->>>>
->>>> If I understand correctly, these volumes DO involve LVM.
->>>>
->>>> It is not LV on top of your BTRFS volumes, but your BTRFS volumes are on
->>>> top
->>>> of LVM.
->>>
->>>
->>> I do have some BTRFS volumes on top of LVM, including my 2 root
->>> volumes, but my 2 boot partitions don't involve LVM.  They're raw disk
->>> partitions - MD RAID 1 - BTRFS.
->>>
->>> The kernel error references "table: 253:21" and "table: 253:22".
->>> These entries are not referred to by running dmsetup.  If these
->>> correspond to dm-21 and dm-22, those are the boot volumes that don't
->>> involve LVM at all.
->>
->>
->> This doesn't make much sense.
->>
->> 253:XX are all DM devices -  few lines above you say   boot partitions are
->> 'raw disks'  now you say dm-21 & dm-22  are boot volumes ??
->>
->> LVM is volume manager - LV is DM device (maintained by lvm2 command)
->> There is nothing like  lvm2 device - it's always 'dm' device.
->>
->> lvm2  dm device has   LVM-   prefix in UUID
->>
->> In your 'dmsetup into -c' output all DM device have this prefix - so
->> all your DM device are lvm2  maintained devices.
->>
->>>
->>>> Using BTRFS with thin-shapshots is not a good idea, especially, if you
->>>> have
->>>> multiple snapshots of btrfs' underlying device active.
->>>>
->>>> Why are you usingn BTRFS on top of thin-pool?
->>>> BTRFS does have snapshots and IMHO you should pick either BTRFS or
->>>> thin-pool.
->>>
->>>
->>> I'm not using thin-snapshots, just the thin-provisioning feature.  Is
->>
->>
->> Again doesn't make sense...
->
-> Can you say a little more on this?  Just saying it doesn't make sense
-> gives me no direction.  I understand why many people might like to use
-> thin-snapshots, but can't a user just use thin-provisioning and NEVER
-> EVER use the LVM thin-snapshots?
->
->>> running BTRFS in that scenario still a bad situation?  Why's that?
->>> I'm going to be using a lot of virtual machines, which is my main
->>> reason for wanting thin-provisioning.
->>
->>
->> HOWTO....
->
-> Again, just saying I'm doing it wrong doesn't help.
->
->>
->>>
->>> I'm only using btrfs snapshots.
->>>
->>>>> Is this a device-mapper bug?  A udev bug?  Something I have configured
->>>>> wrong?
->>
->>
->> Seems like 99.99999% wrong configuration....
->>
->>
->>>>
->>>> Which distribution?
->>>> Kernel, lvm version?
->>>
->>>
->>> Sorry for not mentioning.  Arch, kernel 4.6.4, lvm 2.02.161, device
->>> mapper 1.02.131, thin-pool 1.18.0
->>>
->>>> Ideally run `lvmdump -m` and post output, please.
->>>
->>>
->>> The number of kernel errors during boot that I'm getting seems to be
->>> random.  (Probably some type of race condition?)  My original post
->>> happened to be that it was using the ones not using LVM, but sometimes
->>> it's doing it on LVM backed volumes too.  Occasionally it gives no
->>> kernel errors.
->>>
->>> On this boot, I have these errors:
->>>
->>> ==========
->>> [    3.319387] device-mapper: table: 253:5: thin: Unable to activate
->>> thin device while pool is suspended
->>> [    3.394258] device-mapper: table: 253:6: thin: Unable to activate
->>> thin device while pool is suspended
->>> [    3.632259] device-mapper: table: 253:13: thin: Unable to activate
->>> thin device while pool is suspended
->>> [    3.698752] device-mapper: table: 253:14: thin: Unable to activate
->>> thin device while pool is suspended
->>> [    4.045282] device-mapper: table: 253:21: thin: Unable to activate
->>> thin device while pool is suspended
->>> [    4.117778] device-mapper: table: 253:22: thin: Unable to activate
->>> thin device while pool is suspended
->>> ==========
->>>
->>
->>
->> Completely confused about this - are you trying to operate with thin devices
->> yourself with some 'dmsetup' commands ?   Eventually using 'docker' ?
->> Or maybe you haven configured lockless lvm2, where volumes are activated
->> with locking_type==0  ?
->>
->> Lvm surely doesn't try to activate thinLV from a suspended thin-pool ?
->>
->> So you really need to expose sequence of command you try to execute - we do
->> not have have crystal ball to reverse engineer your wrongly issued commands
->> out of kernel error messages -  i.e. is it some 'lvchange/vgchange'
->> producing it - then take  '-vvvv' trace out of those commands.
->>
->> Also -  why do you even mix  btrfs with mdadm & lvm2??
->>
->> btrfs has it's own solution for raid as well as for volume management.
->>
->> Combining  'btrfs' and lvm2 snapshot is basically a 'weapon of mass
->> destruction'  since  btrfs  has no idea which disk to use when multiple same
->> devices with same signature appears in the system.
->>
->> I'd strongly recommend to read some doc first to get familiar with basic
->> bricks of your device stack.
->>
->> The usage presented in tgz doesn't look like a proper use-case for lvm2 at
->> all, and rather a misuse based on misunderstanding how all these
->> technologies do work.
->>
->> Regards
->>
->> Zdenek
->>
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+--===============0201536728568488540==--
