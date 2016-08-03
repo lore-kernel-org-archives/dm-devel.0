@@ -1,81 +1,170 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [dm-devel] [RFC PATCH 2/2] mm, mempool: do not throttle
- PF_LESS_THROTTLE tasks
-Date: Wed, 3 Aug 2016 16:42:29 +0200
-Message-ID: <20160803144229.GD1490@dhcp22.suse.cz>
-References: <1468831285-27242-1-git-send-email-mhocko@kernel.org>
- <1468831285-27242-2-git-send-email-mhocko@kernel.org>
- <87oa5q5abi.fsf@notabene.neil.brown.name>
- <20160722091558.GF794@dhcp22.suse.cz>
- <878twt5i1j.fsf@notabene.neil.brown.name>
- <alpine.LRH.2.02.1607251730280.11852@file01.intranet.prod.int.rdu2.redhat.com>
- <87invr4tjm.fsf@notabene.neil.brown.name>
- <alpine.LRH.2.02.1607270948040.1779@file01.intranet.prod.int.rdu2.redhat.com>
- <20160727184021.GF21859@dhcp22.suse.cz>
- <alpine.LRH.2.02.1608030853430.15274@file01.intranet.prod.int.rdu2.redhat.com>
+From: Laurence Oberman <loberman@redhat.com>
+Subject: Re: dm-mq and end_clone_request()
+Date: Wed, 3 Aug 2016 11:10:14 -0400 (EDT)
+Message-ID: <114076006.8072270.1470237014051.JavaMail.zimbra@redhat.com>
+References: <536022978.7668211.1470060125271.JavaMail.zimbra@redhat.com> <20160802174533.GA18714@redhat.com> <1a460c29-1530-d3e1-25ba-736d86aff12e@sandisk.com> <20160803004013.GA19956@redhat.com> <1101234181.7977273.1470188006882.JavaMail.zimbra@redhat.com> <20160803021012.GA21383@redhat.com> <1221150553.7978667.1470190710829.JavaMail.zimbra@redhat.com> <766674512.7979990.1470192959236.JavaMail.zimbra@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1608030853430.15274@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: NeilBrown <neilb@suse.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Mel Gorman <mgorman@suse.de>, David Rientjes <rientjes@google.com>, Ondrej Kozina <okozina@redhat.com>, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <766674512.7979990.1470192959236.JavaMail.zimbra@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed 03-08-16 09:59:11, Mikulas Patocka wrote:
+
+
+----- Original Message -----
+> From: "Laurence Oberman" <loberman@redhat.com>
+> To: "Mike Snitzer" <snitzer@redhat.com>
+> Cc: "Bart Van Assche" <bart.vanassche@sandisk.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org
+> Sent: Tuesday, August 2, 2016 10:55:59 PM
+> Subject: Re: dm-mq and end_clone_request()
 > 
 > 
-> On Wed, 27 Jul 2016, Michal Hocko wrote:
 > 
-> > On Wed 27-07-16 10:28:40, Mikulas Patocka wrote:
-[...]
-> > > I think that approach with PF_LESS_THROTTLE in mempool_alloc is incorrect 
-> > > and that mempool allocations should never be throttled.
+> ----- Original Message -----
+> > From: "Laurence Oberman" <loberman@redhat.com>
+> > To: "Mike Snitzer" <snitzer@redhat.com>
+> > Cc: "Bart Van Assche" <bart.vanassche@sandisk.com>, dm-devel@redhat.com,
+> > linux-scsi@vger.kernel.org
+> > Sent: Tuesday, August 2, 2016 10:18:30 PM
+> > Subject: Re: dm-mq and end_clone_request()
 > > 
-> > I'm not really sure this is the right approach. If a particular mempool
-> > user cannot ever be throttled by the page allocator then it should
-> > perform GFP_NOWAIT.
-> 
-> Then, all block device drivers should have GFP_NOWAIT - which means that 
-> we can as well make it default.
-> 
-> But GFP_NOWAIT also disables direct reclaim. We really want direct reclaim 
-> when allocating from mempool - we just don't want to throttle due to block 
-> device congestion.
-> 
-> We could use __GFP_NORETRY as an indication that we don't want to sleep - 
-> or make a new flag __GFP_NO_THROTTLE.
-
-__GFP_NORETRY is used for other contexts so it is not suitable.
-__GFP_NO_THROTTLE would be possible but I would still prefer if we
-didn't go that way unless really necessary.
-
-> > Even mempool allocations shouldn't allow reclaim to
-> > scan pages too quickly even when LRU lists are full of dirty pages. But
-> > as I've said that would restrict the success rates even under light page
-> > cache load. Throttling on the wait_iff_congested should be quite rare.
 > > 
-> > Anyway do you see an excessive throttling with the patch posted
-> > http://lkml.kernel.org/r/20160725192344.GD2166@dhcp22.suse.cz ? Or from
+> > 
+> > ----- Original Message -----
+> > > From: "Mike Snitzer" <snitzer@redhat.com>
+> > > To: "Laurence Oberman" <loberman@redhat.com>
+> > > Cc: "Bart Van Assche" <bart.vanassche@sandisk.com>, dm-devel@redhat.com,
+> > > linux-scsi@vger.kernel.org
+> > > Sent: Tuesday, August 2, 2016 10:10:12 PM
+> > > Subject: Re: dm-mq and end_clone_request()
+> > > 
+> > > On Tue, Aug 02 2016 at  9:33pm -0400,
+> > > Laurence Oberman <loberman@redhat.com> wrote:
+> > > 
+> > > > Hi Bart
+> > > > 
+> > > > I simplified the test to 2 simple scripts and only running against one
+> > > > XFS
+> > > > file system.
+> > > > Can you validate these and tell me if its enough to emulate what you
+> > > > are
+> > > > doing.
+> > > > Perhaps our test-suite is too simple.
+> > > > 
+> > > > Start the test
+> > > > 
+> > > > # cat run_test.sh
+> > > > #!/bin/bash
+> > > > logger "Starting Bart's test"
+> > > > #for i in `seq 1 10`
+> > > > for i in 1
+> > > > do
+> > > > 	fio --verify=md5 -rw=randwrite --size=10M --bs=4K --loops=$((10**6)) \
+> > > >         --iodepth=64 --group_reporting --sync=1 --direct=1
+> > > >         --ioengine=libaio \
+> > > >         --directory="/data-$i" --name=data-integrity-test --thread
+> > > >         --numjobs=16 \
+> > > >         --runtime=600 --output=fio-output.txt >/dev/null &
+> > > > done
+> > > > 
+> > > > Delete the host, I wait 10s in between host deletions.
+> > > > But I also tested with 3s and still its stable with Mike's patches.
+> > > > 
+> > > > #!/bin/bash
+> > > > for i in /sys/class/srp_remote_ports/*
+> > > > do
+> > > >  echo "Deleting host $i, it will re-connect via srp_daemon"
+> > > >  echo 1 > $i/delete
+> > > >  sleep 10
+> > > > done
+> > > > 
+> > > > Check for I/O errors affecting XFS and we now have none with the
+> > > > patches
+> > > > Mike provided.
+> > > > After recovery I can create files in the xfs mount with no issues.
+> > > > 
+> > > > Can you use my scripts and 1 mount and see if it still fails for you.
+> > > 
+> > > In parallel we can try Bart's testsuite that he shared earlier in this
+> > > thread: https://github.com/bvanassche/srp-test
+> > > 
+> > > README.md says:
+> > > "Running these tests manually is tedious. Hence this test suite that
+> > > tests the SRP initiator and target drivers by loading both drivers on
+> > > the same server, by logging in using the IB loopback functionality and
+> > > by sending I/O through the SRP initiator driver to a RAM disk exported
+> > > by the SRP target driver."
+> > > 
+> > > This could explain why Bart is still seeing issues.  He isn't testing
+> > > real hardware -- as such he is using ramdisk to expose races, etc.
+> > > 
+> > > Mike
+> > > 
+> > 
+> > Hi Mike,
+> > 
+> > I looked at Bart's scripts, they looked fine but I wanted a more simplified
+> > way to bring the error out.
+> > Using ramdisk is not uncommon as an LIO backend via ib_srpt to serve LUNS.
+> > That is the same way I do it when I am not connected to a large array as it
+> > is the only way I can get EDR like speeds.
+> > 
+> > I don't thinks its racing due to the ramdisk back-end but  maybe we need to
+> > ramp ours up to run more in parallel in a loop.
+> > 
+> > I will run 21 parallel runs and see if it makes a difference tonight and
+> > report back tomorrow.
+> > Clearly prior to your final patches we were escaping back to the FS layer
+> > with errors but since your patches, at least in out test harness that is
+> > resolved.
+> > 
+> > Thanks
+> > Laurence
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> > the body of a message to majordomo@vger.kernel.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> > 
 > 
-> It didn't have much effect.
+> Hello
 > 
-> Since the patch 4e390b2b2f34b8daaabf2df1df0cf8f798b87ddb (revert of the 
-> limitless mempool allocations), swapping to dm-crypt works in the simple 
-> example.
+> I ran 20 parallel runs with 3 loops through host deletion and in each case
+> fio survived with no hard error escaping to the FS layer.
+> Its solid in our test bed,
+> Keep in mind we have no ib_srpt loaded as we have a hardware based array and
+> are connected directly to the array with EDR 100.
+> I am also not removing and reloading modules like is happening in Barts's
+> scripts and also not trying to delete mpath maps etc.
+> 
+> I focused only on the I/O error that was escaping up to the FS layer.
+> I will check in with Bart tomorrow.
+> 
+> Thanks
+> Laurence
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
 
-OK. Do you see any throttling due to wait_iff_congested?
-writeback_wait_iff_congested trace point should help here. If not maybe
-we should start with the above patch and see how it works in practise.
-If the there is still an excessive and unexpected throttling then we
-should move on to a more mempool/block layer users specific solution.
--- 
-Michal Hocko
-SUSE Labs
+Hi Bart
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Looking back at your email.
+
+I also get these, but those are expected as we are in the process of doing I/O when we yank the hosts and that has in-flights affected.
+
+Aug  2 22:41:23 jumpclient kernel: device-mapper: multipath: Failing path 8:192.
+Aug  2 22:41:23 jumpclient kernel: blk_update_request: I/O error, dev sdm, sector 258504
+Aug  2 22:41:23 jumpclient kernel: blk_update_request: I/O error, dev sdm, sector 60320
+
+However I never get any of these any more (with the patches applied) that you show:
+[  162.903284] Buffer I/O error on dev dm-0, logical block 32928, lost sync page write
+
+I will work with you to understand why with Mike's patches, its now stable here but not in your configuration
+
+Thanks
+Laurence
