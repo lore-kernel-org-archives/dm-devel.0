@@ -1,90 +1,240 @@
-From: Mike Christie <mchristi@redhat.com>
-Subject: Re: [PATCH 42/45] block, fs, drivers: remove REQ_OP compat defs and
-	related code
-Date: Wed, 3 Aug 2016 12:28:39 -0500
-Message-ID: <57A229C7.6010102@redhat.com>
-References: <1465155145-10812-1-git-send-email-mchristi@redhat.com>
-	<1465155145-10812-43-git-send-email-mchristi@redhat.com>
-	<CAOxpaSVzkR+9anramDg7nHxjb5hp0q_oKGRdEpiU07jWM=tzdQ@mail.gmail.com>
+From: Laurence Oberman <loberman@redhat.com>
+Subject: Re: [dm-devel] dm-mq and end_clone_request()
+Date: Wed, 3 Aug 2016 14:03:05 -0400 (EDT)
+Message-ID: <1165785378.8091030.1470247385715.JavaMail.zimbra@redhat.com>
+References: <536022978.7668211.1470060125271.JavaMail.zimbra@redhat.com> <20160801204628.GA94704@redhat.com> <8e265fcc-8021-830e-ffcb-23a8a28ec247@sandisk.com> <20160802174533.GA18714@redhat.com> <1a460c29-1530-d3e1-25ba-736d86aff12e@sandisk.com> <20160803004013.GA19956@redhat.com> <1101234181.7977273.1470188006882.JavaMail.zimbra@redhat.com> <4b015567-0fdb-dbf5-96e2-627e76b48a03@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <CAOxpaSVzkR+9anramDg7nHxjb5hp0q_oKGRdEpiU07jWM=tzdQ@mail.gmail.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Ross Zwisler <zwisler@gmail.com>, axboe@fb.com, Ross Zwisler <ross.zwisler@linux.intel.com>
-Cc: linux-bcache@vger.kernel.org, linux-block@vger.kernel.org, XFS Developers <xfs@oss.sgi.com>, ocfs2-devel@oss.oracle.com, linux-scsi@vger.kernel.org, konrad.wilk@oracle.com, LKML <linux-kernel@vger.kernel.org>, philipp.reisner@linbit.com, linux-f2fs-devel@lists.sourceforge.net, linux-raid@vger.kernel.org, dm-devel@redhat.com, target-devel@vger.kernel.org, linux-mtd@lists.infradead.org, osd-dev@open-osd.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, lars.ellenberg@linbit.com, linux-ext4 <linux-ext4@vger.kernel.org>, linux-btrfs@vger.kernel.org, drbd-dev@lists.linbit.com
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <4b015567-0fdb-dbf5-96e2-627e76b48a03@sandisk.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 08/03/2016 11:25 AM, Ross Zwisler wrote:
->  run fstests generic/008 at 2016-08-03 09:54:56
-> page:ffffea0017af04c0 count:3 mapcount:0 mapping:ffff8805eb059200 index:0x0
-> flags: 0x3fff8000002828(uptodate|lru|private|writeback)
-> page dumped because: VM_BUG_ON_PAGE(!PageLocked(page))
-> page->mem_cgroup:ffff8806098e0800
-> ------------[ cut here ]------------
-> kernel BUG at mm/filemap.c:833!
-> invalid opcode: 0000 [#1] SMP
-> Modules linked in: brd dax_pmem nd_pmem dax nd_btt nd_e820 libnvdimm
-> CPU: 0 PID: 2522 Comm: xfs_io Not tainted 4.7.0-rc2-00042-g4e1b2d52 #18
-> Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS
-> rel-1.9.1-0-gb3ef39f-prebuilt.qemu-project.org 04/01/2014
-> task: ffff8805ebae4ec0 ti: ffff8805eba3c000 task.ti: ffff8805eba3c000
-> RIP: 0010:[<ffffffff811de115>] [<ffffffff811de115>] unlock_page+0xa5/0xb0
-> RSP: 0018:ffff8805eba3fa60 EFLAGS: 00010282
-> RAX: 0000000000000021 RBX: 0000000000000000 RCX: 0000000000000006
-> RDX: 0000000000000000 RSI: 0000000000000001 RDI: ffff8806109ce200
-> RBP: ffff8805eba3fa60 R08: 0000000000000001 R09: 0000000000000001
-> R10: ffff8805ebae4ec0 R11: 0000000000000001 R12: ffffea0017af04c0
-> R13: 0000000000028000 R14: ffffffffa00202c0 R15: ffff88060eff1200
-> FS: 00007f87a31cf700(0000) GS:ffff880610800000(0000) knlGS:0000000000000000
-> CS: 0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-> CR2: 00007f87a31e6000 CR3: 000000060da31000 CR4: 00000000001406f0
-> Stack:
-> ffff8805eba3fa98 ffffffff812bd782 ffff8805eba3fdb0 0000000000001000
-> ffffea0017af04c0 0000000000000000 0000000000000088 ffff8805eba3fbe0
-> ffffffff812c3ff1 ffff8805eba3fd00 0000000000028000 0000000c00000000
-> Call Trace:
-> [<ffffffff812bd782>] bdev_write_page+0xb2/0xe0 fs/block_dev.c:462
-> [<ffffffff812c3ff1>] __mpage_writepage+0x5c1/0x750 fs/mpage.c:604
-> [<ffffffff811eedbd>] write_cache_pages+0x20d/0x5f0 mm/page-writeback.c:2261
-> [<ffffffff812c3955>] mpage_writepages+0x75/0xe0 fs/mpage.c:703
-> [<ffffffff8137951b>] ext2_writepages+0x3b/0x40 fs/ext2/inode.c:887
-> [<ffffffff811f27a1>] do_writepages+0x21/0x30 mm/page-writeback.c:2361
-> [<ffffffff811e1396>] __filemap_fdatawrite_range+0xc6/0x100 mm/filemap.c:300
-> [<ffffffff811e1514>] filemap_write_and_wait_range+0x44/0x90 mm/filemap.c:490
-> [<ffffffff812a7707>] __generic_file_fsync+0x27/0x90 fs/libfs.c:937
-> [<ffffffff812a7789>] generic_file_fsync+0x19/0x40 fs/libfs.c:974
-> [<ffffffff81377e9e>] ext2_fsync+0x2e/0x70 fs/ext2/file.c:149
-> [<ffffffff812b549b>] vfs_fsync_range+0x4b/0xb0 fs/sync.c:195
-> [< inline >] vfs_fsync fs/sync.c:209
-> [<ffffffff812b555d>] do_fsync+0x3d/0x70 fs/sync.c:219
-> [< inline >] SYSC_fsync fs/sync.c:227
-> [<ffffffff812b5810>] SyS_fsync+0x10/0x20 fs/sync.c:225
-> [<ffffffff81acd33c>] entry_SYSCALL_64_fastpath+0x1f/0xbd
-> arch/x86/entry/entry_64.S:207
-> Code: 00 00 48 d3 ea 89 d2 48 8d 0c 92 48 8d 14 4a 48 8d 3c d0 31 d2
-> e8 bc fc f1 ff 5d c3 48 c7 c6 20 1d ec 81 4c 89 c7 e8 bb 8d 03 00 <0f>
-> 0b 66 0f 1f 84 00 00 00 00 00 66 66 66 66 90 55 b9 08 00 00
-> RIP [<ffffffff811de115>] unlock_page+0xa5/0xb0 mm/filemap.c:833
-> RSP <ffff8805eba3fa60>
-> ---[ end trace d419bf59bba263fb ]---
 
 
-Thanks for testing and the detailed bug report. Looks like I missed the
-rw_page callback. Testing a patch right now. Should be done in a couple
-of hours.
+----- Original Message -----
+> From: "Bart Van Assche" <bart.vanassche@sandisk.com>
+> To: "Laurence Oberman" <loberman@redhat.com>, "Mike Snitzer" <snitzer@redhat.com>
+> Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+> Sent: Wednesday, August 3, 2016 12:06:17 PM
+> Subject: Re: [dm-devel] dm-mq and end_clone_request()
+> 
+> On 08/02/2016 06:33 PM, Laurence Oberman wrote:
+> > #!/bin/bash
+> > for i in /sys/class/srp_remote_ports/*
+> > do
+> >  echo "Deleting host $i, it will re-connect via srp_daemon"
+> >  echo 1 > $i/delete
+> >  sleep 10
+> > done
+> 
+> Hello Laurence,
+> 
+> Sorry but the above looks wrong to me. There should be a second loop
+> around this loop and the sleep statement should be moved from the inner
+> loop to the outer loop. The above code logs out one (initiator, target)
+> port pair at a time instead of logging out all paths at once.
+> 
+> Bart.
+> 
+
+Hi Bart
+
+Latest tests are still good on our side.
+I am now taking both paths out at the same time but still we seem stable here.
+First test removed sleep and we still had a delay, second test add a background so they ran as close as possible to the same time.
+Both tests passed.
+
+I will email messages log just to you.
+
+With no sleep we still have a gap when we delete paths of 9s and we are good.
+
+Aug  3 13:41:21 jumpclient multipathd: 360001ff0b035d000000000008d700001: remaining active paths: 1
+Aug  3 13:41:22 jumpclient multipathd: 360001ff0b035d000000000028d720003: remaining active paths: 1
+Aug  3 13:41:22 jumpclient multipathd: 360001ff0b035d000000000048d740005: remaining active paths: 1
+Aug  3 13:41:22 jumpclient multipathd: 360001ff0b035d000000000068d760007: remaining active paths: 1
+Aug  3 13:41:23 jumpclient multipathd: 360001ff0b035d0000000000b8d7b000c: remaining active paths: 1
+Aug  3 13:41:23 jumpclient multipathd: 360001ff0b035d0000000000d8d7d000e: remaining active paths: 1
+Aug  3 13:41:23 jumpclient multipathd: 360001ff0b035d000000000118d810012: remaining active paths: 1
+Aug  3 13:41:24 jumpclient multipathd: 360001ff0b035d000000000138d830014: remaining active paths: 1
+Aug  3 13:41:24 jumpclient multipathd: 360001ff0b035d000000000158d850016: remaining active paths: 1
+Aug  3 13:41:25 jumpclient multipathd: 360001ff0b035d000000000178d870018: remaining active paths: 1
+Aug  3 13:41:25 jumpclient multipathd: 360001ff0b035d000000000198d89001a: remaining active paths: 1
+Aug  3 13:41:25 jumpclient multipathd: 360001ff0b035d0000000001a8d8a001b: remaining active paths: 1
+Aug  3 13:41:25 jumpclient multipathd: 360001ff0b035d0000000001c8d8c001d: remaining active paths: 1
+Aug  3 13:41:26 jumpclient multipathd: 360001ff0b035d0000000001e8d8e001f: remaining active paths: 1
+Aug  3 13:41:26 jumpclient multipathd: 360001ff0b035d0000000001f8d8f0020: remaining active paths: 1
+Aug  3 13:41:26 jumpclient multipathd: 360001ff0b035d000000000208d900021: remaining active paths: 1
+Aug  3 13:41:26 jumpclient multipathd: 360001ff0b035d000000000228d920023: remaining active paths: 1
+Aug  3 13:41:28 jumpclient multipathd: 360001ff0b035d000000000248d940025: remaining active paths: 1
+Aug  3 13:41:29 jumpclient multipathd: 360001ff0b035d000000000268d960027: remaining active paths: 1
+Aug  3 13:41:29 jumpclient multipathd: 360001ff0b035d000000000278d970028: remaining active paths: 1
+Aug  3 13:41:30 jumpclient multipathd: 360001ff0b035d000000000288d980029: remaining active paths: 1
+Aug  3 13:41:35 jumpclient multipathd: 360001ff0b035d000000000008d700001: remaining active paths: 0
+Aug  3 13:41:36 jumpclient multipathd: 360001ff0b035d000000000028d720003: remaining active paths: 0
+Aug  3 13:41:37 jumpclient multipathd: 360001ff0b035d000000000048d740005: remaining active paths: 0
+Aug  3 13:41:37 jumpclient multipathd: 360001ff0b035d000000000068d760007: remaining active paths: 0
+Aug  3 13:41:38 jumpclient multipathd: 360001ff0b035d0000000000b8d7b000c: remaining active paths: 0
+Aug  3 13:41:38 jumpclient multipathd: 360001ff0b035d0000000000d8d7d000e: remaining active paths: 0
+Aug  3 13:41:38 jumpclient multipathd: 360001ff0b035d000000000108d800011: remaining active paths: 0
+Aug  3 13:41:38 jumpclient multipathd: 360001ff0b035d000000000118d810012: remaining active paths: 0
+Aug  3 13:41:38 jumpclient multipathd: 360001ff0b035d000000000138d830014: remaining active paths: 0
+Aug  3 13:41:39 jumpclient multipathd: 360001ff0b035d000000000158d850016: remaining active paths: 0
+Aug  3 13:41:39 jumpclient multipathd: 360001ff0b035d000000000178d870018: remaining active paths: 0
+Aug  3 13:41:39 jumpclient multipathd: 360001ff0b035d000000000198d89001a: remaining active paths: 0
+Aug  3 13:41:39 jumpclient multipathd: 360001ff0b035d0000000001a8d8a001b: remaining active paths: 0
+Aug  3 13:41:39 jumpclient multipathd: 360001ff0b035d0000000001c8d8c001d: remaining active paths: 0
+Aug  3 13:41:39 jumpclient multipathd: 360001ff0b035d0000000001e8d8e001f: remaining active paths: 0
+Aug  3 13:41:41 jumpclient multipathd: 360001ff0b035d0000000001f8d8f0020: remaining active paths: 0
+Aug  3 13:41:41 jumpclient multipathd: 360001ff0b035d000000000208d900021: remaining active paths: 0
+Aug  3 13:41:43 jumpclient multipathd: 360001ff0b035d000000000248d940025: remaining active paths: 0
+Aug  3 13:41:43 jumpclient multipathd: 360001ff0b035d000000000268d960027: remaining active paths: 0
+Aug  3 13:41:44 jumpclient multipathd: 360001ff0b035d000000000288d980029: remaining active paths: 0
+Aug  3 13:42:44 jumpclient multipathd: 360001ff0b035d000000000138d830014: remaining active paths: 2
+Aug  3 13:42:44 jumpclient multipathd: 360001ff0b035d000000000158d850016: remaining active paths: 2
+
+These are the only errors and they are expected.
+
+Aug  3 13:41:22 jumpclient kernel: blk_update_request: I/O error, dev sdd, sector 31141264880
+Aug  3 13:41:22 jumpclient kernel: blk_update_request: I/O error, dev sdd, sector 79928
+Aug  3 13:41:22 jumpclient kernel: blk_update_request: I/O error, dev sdd, sector 65264
+Aug  3 13:41:22 jumpclient kernel: blk_update_request: I/O error, dev sdd, sector 55232
+Aug  3 13:41:22 jumpclient kernel: blk_update_request: I/O error, dev sdd, sector 14152
+Aug  3 13:41:22 jumpclient kernel: blk_update_request: I/O error, dev sdd, sector 168880
+Aug  3 13:41:22 jumpclient kernel: blk_update_request: I/O error, dev sdd, sector 269392
+Aug  3 13:41:22 jumpclient kernel: blk_update_request: I/O error, dev sdd, sector 309200
+Aug  3 13:41:22 jumpclient kernel: blk_update_request: I/O error, dev sdd, sector 87520
+Aug  3 13:41:22 jumpclient kernel: blk_update_request: I/O error, dev sdd, sector 7744
+Aug  3 13:41:28 jumpclient kernel: blk_update_request: I/O error, dev sdca, sector 119984
+Aug  3 13:41:29 jumpclient kernel: blk_update_request: I/O error, dev sdcd, sector 31139908984
+Aug  3 13:41:29 jumpclient kernel: blk_update_request: I/O error, dev sdcd, sector 131136
+Aug  3 13:41:29 jumpclient kernel: blk_update_request: I/O error, dev sdcd, sector 97536
+Aug  3 13:41:29 jumpclient kernel: blk_update_request: I/O error, dev sdcd, sector 123264
+Aug  3 13:41:29 jumpclient kernel: blk_update_request: I/O error, dev sdcd, sector 110336
+Aug  3 13:41:29 jumpclient kernel: blk_update_request: I/O error, dev sdcd, sector 158136
+Aug  3 13:41:29 jumpclient kernel: blk_update_request: I/O error, dev sdcd, sector 156136
+Aug  3 13:41:29 jumpclient kernel: blk_update_request: I/O error, dev sdcd, sector 173072
+Aug  3 13:41:29 jumpclient kernel: blk_update_request: I/O error, dev sdcd, sector 6984
+Aug  3 13:41:35 jumpclient kernel: blk_update_request: I/O error, dev sdc, sector 130224
+Aug  3 13:41:35 jumpclient kernel: blk_update_request: I/O error, dev sdc, sector 225816
+Aug  3 13:41:36 jumpclient kernel: blk_update_request: I/O error, dev sdc, sector 248120
+Aug  3 13:41:36 jumpclient kernel: blk_update_request: I/O error, dev sdc, sector 242528
+Aug  3 13:41:36 jumpclient kernel: blk_update_request: I/O error, dev sdk, sector 251248
+Aug  3 13:41:36 jumpclient kernel: blk_update_request: I/O error, dev sdk, sector 242032
+Aug  3 13:41:36 jumpclient kernel: blk_update_request: I/O error, dev sdk, sector 203736
+Aug  3 13:41:36 jumpclient kernel: blk_update_request: I/O error, dev sdk, sector 31141107808
+Aug  3 13:41:36 jumpclient kernel: blk_update_request: I/O error, dev sdk, sector 233336
+Aug  3 13:41:36 jumpclient kernel: blk_update_request: I/O error, dev sdk, sector 187944
+Aug  3 13:41:41 jumpclient kernel: blk_update_request: I/O error, dev sdbl, sector 85800
+Aug  3 13:41:41 jumpclient kernel: blk_update_request: I/O error, dev sdbl, sector 74120
+Aug  3 13:41:41 jumpclient kernel: blk_update_request: I/O error, dev sdbl, sector 78216
+Aug  3 13:41:41 jumpclient kernel: blk_update_request: I/O error, dev sdbl, sector 79976
+Aug  3 13:41:41 jumpclient kernel: blk_update_request: I/O error, dev sdbl, sector 79552
+Aug  3 13:41:41 jumpclient kernel: blk_update_request: I/O error, dev sdbl, sector 87888
+Aug  3 13:41:43 jumpclient kernel: blk_update_request: I/O error, dev sdbt, sector 274368
+Aug  3 13:41:43 jumpclient kernel: blk_update_request: I/O error, dev sdbt, sector 31139814080
+Aug  3 13:41:43 jumpclient kernel: blk_update_request: I/O error, dev sdbx, sector 6776
+Aug  3 13:41:43 jumpclient kernel: blk_update_request: I/O error, dev sdbx, sector 302152
+
+Changing script to add & we take both away at the same time but still we seem to survive here.
+
+This is my configuration:
+
+360001ff0b035d000000000078d770008 dm-9 DDN     ,SFA14K          
+size=29T features='3 queue_if_no_path queue_mode mq' hwhandler='0' wp=rw
+|-+- policy='round-robin 0' prio=90 status=active
+| `- 1:0:0:7  sday 67:32  active ready running
+`-+- policy='round-robin 0' prio=10 status=enabled
+  `- 2:0:0:7  sdj  8:144  active ready running
+
+       device {
+        vendor                  "DDN"
+        product                 "SFA14K"
+        path_grouping_policy    group_by_prio
+        prio                    alua
+        path_selector           "round-robin 0"
+        path_checker            tur
+        failback                2
+        rr_weight               uniform
+        no_path_retry           12
+        dev_loss_tmo            10
+        fast_io_fail_tmo        5
+	features     "1 queue_if_no_path"
+    }
 
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+With &
+
+#!/bin/bash
+for i in /sys/class/srp_remote_ports/*
+do
+ echo "Deleting host $i, it will re-connect via srp_daemon" 
+ echo 1 > $i/delete &
+ #sleep 3
+done
+
+Here we lose both paths at the same time.
+
+[root@jumpclient bart_tests]# grep remaining messages
+Aug  3 13:49:38 jumpclient multipathd: 360001ff0b035d000000000008d700001: remaining active paths: 0
+Aug  3 13:49:38 jumpclient multipathd: 360001ff0b035d000000000028d720003: remaining active paths: 0
+Aug  3 13:49:38 jumpclient multipathd: 360001ff0b035d000000000048d740005: remaining active paths: 0
+Aug  3 13:49:41 jumpclient multipathd: 360001ff0b035d000000000068d760007: remaining active paths: 0
+Aug  3 13:49:42 jumpclient multipathd: 360001ff0b035d0000000000d8d7d000e: remaining active paths: 0
+Aug  3 13:49:45 jumpclient multipathd: 360001ff0b035d000000000118d810012: remaining active paths: 0
+Aug  3 13:49:45 jumpclient multipathd: 360001ff0b035d000000000108d800011: remaining active paths: 0
+Aug  3 13:49:47 jumpclient multipathd: 360001ff0b035d000000000158d850016: remaining active paths: 0
+Aug  3 13:49:48 jumpclient multipathd: 360001ff0b035d000000000178d870018: remaining active paths: 0
+Aug  3 13:49:48 jumpclient multipathd: 360001ff0b035d000000000198d89001a: remaining active paths: 0
+Aug  3 13:49:48 jumpclient multipathd: 360001ff0b035d0000000001a8d8a001b: remaining active paths: 0
+Aug  3 13:49:55 jumpclient multipathd: 360001ff0b035d0000000001e8d8e001f: remaining active paths: 0
+Aug  3 13:49:55 jumpclient multipathd: 360001ff0b035d0000000001f8d8f0020: remaining active paths: 0
+Aug  3 13:49:58 jumpclient multipathd: 360001ff0b035d000000000248d940025: remaining active paths: 0
+Aug  3 13:49:59 jumpclient multipathd: 360001ff0b035d000000000268d960027: remaining active paths: 0
+Aug  3 13:50:00 jumpclient multipathd: 360001ff0b035d000000000288d980029: remaining active paths: 0
+Aug  3 13:51:17 jumpclient multipathd: 360001ff0b035d000000000038d730004: remaining active paths: 2
+Aug  3 13:51:17 jumpclient multipathd: 360001ff0b035d000000000028d720003: remaining active paths: 2
+Aug  3 13:51:19 jumpclient multipathd: 360001ff0b035d000000000078d770008: remaining active paths: 2
+Aug  3 13:51:20 jumpclient multipathd: 360001ff0b035d0000000000a8d7a000b: remaining active paths: 2
+Aug  3 13:51:23 jumpclient multipathd: 360001ff0b035d0000000000d8d7d000e: remaining active paths: 2
+Aug  3 13:51:24 jumpclient multipathd: 360001ff0b035d000000000108d800011: remaining active paths: 2
+Aug  3 13:51:25 jumpclient multipathd: 360001ff0b035d0000000000f8d7f0010: remaining active paths: 2
+Aug  3 13:51:26 jumpclient multipathd: 360001ff0b035d000000000128d820013: remaining active paths: 2
+Aug  3 13:51:29 jumpclient multipathd: 360001ff0b035d0000000001c8d8c001d: remaining active paths: 2
+Aug  3 13:51:33 jumpclient multipathd: 360001ff0b035d000000000228d920023: remaining active paths: 2
+Aug  3 13:51:34 jumpclient multipathd: 360001ff0b035d000000000238d930024: remaining active paths: 2
+
+We still survive.
+
+[root@jumpclient bart_tests]# grep -i error messages
+Aug  3 13:49:38 jumpclient kernel: blk_update_request: I/O error, dev sdc, sector 98288
+Aug  3 13:49:38 jumpclient kernel: blk_update_request: I/O error, dev sdc, sector 98320
+Aug  3 13:49:38 jumpclient kernel: blk_update_request: I/O error, dev sdc, sector 46976
+Aug  3 13:49:38 jumpclient kernel: blk_update_request: I/O error, dev sde, sector 216720
+Aug  3 13:49:38 jumpclient kernel: blk_update_request: I/O error, dev sdg, sector 130672
+Aug  3 13:49:41 jumpclient kernel: blk_update_request: I/O error, dev sdi, sector 56984
+Aug  3 13:49:41 jumpclient kernel: blk_update_request: I/O error, dev sdi, sector 56120
+Aug  3 13:49:41 jumpclient kernel: blk_update_request: I/O error, dev sdi, sector 62112
+Aug  3 13:49:42 jumpclient kernel: blk_update_request: I/O error, dev sdp, sector 156944
+Aug  3 13:49:42 jumpclient kernel: blk_update_request: I/O error, dev sdp, sector 31140975496
+Aug  3 13:49:44 jumpclient kernel: blk_update_request: I/O error, dev sdt, sector 207392
+Aug  3 13:49:44 jumpclient kernel: blk_update_request: I/O error, dev sdt, sector 200568
+Aug  3 13:49:44 jumpclient kernel: blk_update_request: I/O error, dev sdt, sector 251048
+Aug  3 13:49:44 jumpclient kernel: blk_update_request: I/O error, dev sdt, sector 247616
+Aug  3 13:49:44 jumpclient kernel: blk_update_request: I/O error, dev sdt, sector 210592
+Aug  3 13:49:44 jumpclient kernel: blk_update_request: I/O error, dev sdt, sector 200120
+Aug  3 13:49:44 jumpclient kernel: blk_update_request: I/O error, dev sdt, sector 203000
+Aug  3 13:49:44 jumpclient kernel: blk_update_request: I/O error, dev sdt, sector 248640
+Aug  3 13:49:47 jumpclient kernel: blk_update_request: I/O error, dev sdx, sector 48232
+Aug  3 13:49:48 jumpclient kernel: blk_update_request: I/O error, dev sdz, sector 9984
+Aug  3 13:49:55 jumpclient kernel: blk_update_request: I/O error, dev sdag, sector 130512
+Aug  3 13:49:58 jumpclient kernel: blk_update_request: I/O error, dev sdai, sector 39040
+Aug  3 13:49:58 jumpclient kernel: blk_update_request: I/O error, dev sdam, sector 31140570528
+Aug  3 13:49:59 jumpclient kernel: blk_update_request: I/O error, dev sdao, sector 204552
+Aug  3 13:50:00 jumpclient kernel: blk_update_request: I/O error, dev sdaq, sector 31142052904
+
+
+
