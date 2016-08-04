@@ -1,12 +1,23 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 1/2] multipath-tools: remove pointless ".*" at
-	the end of a regex
-Date: Thu,  4 Aug 2016 19:31:40 +0200
-Message-ID: <1470331901-10846-1-git-send-email-xose.vazquez@gmail.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: dm-mq and end_clone_request()
+Date: Thu, 4 Aug 2016 10:42:36 -0700
+Message-ID: <4d60017e-818c-5630-549e-bf280abcf1c3@sandisk.com>
+References: <1264951811.7684268.1470065187014.JavaMail.zimbra@redhat.com>
+	<17da3ab0-233a-2cec-f921-bfd42c953ccc@sandisk.com>
+	<20160801175948.GA6685@redhat.com>
+	<f9e71e1d-54ca-40fe-a5ea-ae2863c94ff9@sandisk.com>
+	<20160801204628.GA94704@redhat.com>
+	<8e265fcc-8021-830e-ffcb-23a8a28ec247@sandisk.com>
+	<20160802174533.GA18714@redhat.com>
+	<1a460c29-1530-d3e1-25ba-736d86aff12e@sandisk.com>
+	<20160803004013.GA19956@redhat.com>
+	<eb1af921-d874-1f6a-c5d0-12d3cae04256@sandisk.com>
+	<20160804161047.GC6989@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20160804161047.GC6989@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,128 +27,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Laurence Oberman <loberman@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-At your option, they can be preserved to indicate "maybe anything could appear".
+On 08/04/2016 09:10 AM, Mike Snitzer wrote:
+> Anyway, at this point you're having us test too many changes that aren't
+> yet upstream:
+>
+> $ git diff bart/srp-initiator-for-next dm/dm-4.7-mpath-fixes -- drivers block include kernel | diffstat
+>  block/bio-integrity.c                   |    1
+>  block/blk-cgroup.c                      |    4
+>  block/blk-core.c                        |   16 ---
+>  block/blk-mq.c                          |   16 ---
+>  block/partition-generic.c               |    3
+>  drivers/acpi/acpica/nswalk.c            |    1
+>  drivers/infiniband/core/rw.c            |   24 +++--
+>  drivers/infiniband/core/verbs.c         |    9 --
+>  drivers/infiniband/hw/hfi1/Kconfig      |    1
+>  drivers/infiniband/hw/mlx4/qp.c         |    6 -
+>  drivers/infiniband/sw/rdmavt/Kconfig    |    1
+>  drivers/infiniband/ulp/isert/ib_isert.c |    2
+>  drivers/infiniband/ulp/isert/ib_isert.h |    1
+>  drivers/infiniband/ulp/srp/ib_srp.c     |  131 --------------------------------
+>  drivers/infiniband/ulp/srp/ib_srp.h     |    5 -
+>  drivers/infiniband/ulp/srpt/ib_srpt.c   |   10 +-
+>  drivers/infiniband/ulp/srpt/ib_srpt.h   |    6 -
+>  drivers/md/dm-crypt.c                   |    4
+>  drivers/md/dm-ioctl.c                   |   77 +++++++++---------
+>  drivers/md/dm-mpath.c                   |   32 -------
+>  drivers/md/dm.c                         |   22 -----
+>  drivers/scsi/scsi_lib.c                 |   36 +-------
+>  drivers/scsi/scsi_priv.h                |    2
+>  drivers/scsi/scsi_scan.c                |    2
+>  drivers/scsi/scsi_sysfs.c               |   48 -----------
+>  drivers/scsi/sd.c                       |    6 -
+>  drivers/scsi/sg.c                       |    3
+>  include/linux/blk-mq.h                  |    3
+>  include/linux/blk_types.h               |    5 -
+>  include/linux/blkdev.h                  |    1
+>  include/linux/dmar.h                    |    2
+>  include/rdma/ib_verbs.h                 |    6 -
+>  include/scsi/scsi_device.h              |    2
+>  kernel/sched/wait.c                     |    2
+>  34 files changed, 106 insertions(+), 384 deletions(-)
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 24 ++++++++++++------------
- 1 file changed, 12 insertions(+), 12 deletions(-)
+Hello Mike,
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index dacc9a3..6180751 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -31,7 +31,7 @@ static struct hwentry default_hw[] = {
- 	 * Mail : g.shyamsundar@yahoo.co.in
- 	 */
- 	{
--		.vendor        = "APPLE.*",
-+		.vendor        = "APPLE",
- 		.product       = "Xserve RAID",
- 		.pgpolicy      = MULTIBUS,
- 		.pgfailback    = FAILBACK_UNDEF,
-@@ -70,7 +70,7 @@ static struct hwentry default_hw[] = {
- 	{
- 		/* MSA 1000/1500 and EVA 3000/5000, with old firmware */
- 		.vendor        = "(COMPAQ|HP)",
--		.product       = "(MSA|HSV)1.0.*",
-+		.product       = "(MSA|HSV)1.0",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = "1 hp_sw",
- 		.pgpolicy      = GROUP_BY_PRIO,
-@@ -143,7 +143,7 @@ static struct hwentry default_hw[] = {
- 	{
- 		/* Smart Array */
- 		.vendor        = "HP",
--		.product       = "LOGICAL VOLUME.*",
-+		.product       = "LOGICAL VOLUME",
- 		.pgpolicy      = MULTIBUS,
- 		.pgfailback    = FAILBACK_UNDEF,
- 		.no_path_retry = 12,
-@@ -290,14 +290,14 @@ static struct hwentry default_hw[] = {
- 	{
- 		/* USP-V, HUS VM, VSP, VSP G1000 and VSP GX00 families */
- 		.vendor        = "(HITACHI|HP)",
--		.product       = "OPEN-.*",
-+		.product       = "OPEN-",
- 		.pgpolicy      = MULTIBUS,
- 		.pgfailback    = FAILBACK_UNDEF,
- 	},
- 	{
- 		/* AMS 2000 and HUS 100 families */
- 		.vendor        = "HITACHI",
--		.product       = "DF.*",
-+		.product       = "DF",
- 		.features      = "1 queue_if_no_path",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
-@@ -479,7 +479,7 @@ static struct hwentry default_hw[] = {
- 	{
- 		.vendor        = "IBM",
- 		.product       = "S/390 DASD ECKD",
--		.bl_product    = "S/390.*",
-+		.bl_product    = "S/390",
- 		.uid_attribute = "ID_UID",
- 		.features      = "1 queue_if_no_path",
- 		.pgpolicy      = MULTIBUS,
-@@ -488,7 +488,7 @@ static struct hwentry default_hw[] = {
- 	{
- 		.vendor        = "IBM",
- 		.product       = "S/390 DASD FBA",
--		.bl_product    = "S/390.*",
-+		.bl_product    = "S/390",
- 		.uid_attribute = "ID_UID",
- 		.features      = "1 queue_if_no_path",
- 		.pgpolicy      = MULTIBUS,
-@@ -497,7 +497,7 @@ static struct hwentry default_hw[] = {
- 	{
- 		/* Power RAID */
- 		.vendor        = "IBM",
--		.product       = "^IPR.*",
-+		.product       = "^IPR",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
-@@ -562,7 +562,7 @@ static struct hwentry default_hw[] = {
- 		 * Mail : marting@netapp.com
- 		 */
- 		.vendor        = "NETAPP",
--		.product       = "LUN.*",
-+		.product       = "LUN",
- 		.features      = "3 queue_if_no_path pg_init_retries 50",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
-@@ -627,7 +627,7 @@ static struct hwentry default_hw[] = {
- 	{
- 		/* InfiniteStorage ??? */
- 		.vendor        = "SGI",
--		.product       = "IS.*",
-+		.product       = "IS",
- 		.bl_product    = "Universal Xport",
- 		.features      = "2 pg_init_retries 50",
- 		.hwhandler     = "1 rdac",
-@@ -660,7 +660,7 @@ static struct hwentry default_hw[] = {
- 		 * Mail : srinivas.ramani@oracle.com
- 		 */
- 		.vendor        = "Pillar",
--		.product       = "Axiom.*",
-+		.product       = "Axiom",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.prio_name     = PRIO_ALUA,
-@@ -836,7 +836,7 @@ static struct hwentry default_hw[] = {
- 	 */
- 	{
- 		.vendor        = "NFINIDAT",
--		.product       = "InfiniBox.*",
-+		.product       = "InfiniBox",
- 		.prio_name     = PRIO_ALUA,
- 		.selector      = "round-robin 0",
- 		.pgpolicy      = GROUP_BY_PRIO,
--- 
-2.7.4
+Most of the changes you are referring to either are already upstream, 
+are expected to arrive in Linus' tree later this week or only add 
+debugging pr_info() statements. The changes that either are already 
+upstream or that are expected to be upstream soon are:
+
+$ for b in origin/master dledford-rdma/k.o/for-4.8-1 
+dledford-rdma/k.o/for-4.8-2; do git log v4.7..$b --author="Bart Van 
+Assche" | grep ^commit -A4 | sed -n 's/^    //p'; done
+block: Fix spelling in a source code comment
+dm ioctl: Simplify parameter buffer management code
+dm crypt: Fix sparse complaints
+block/blk-cgroup.c: Declare local symbols static
+block/bio-integrity.c: Add #include "blk.h"
+block/partition-generic.c: Remove a set-but-not-used variable
+IB/hfi1: Disable by default
+IB/rdmavt: Disable by default
+IB/isert: Remove an unused member variable
+IB/srpt: Simplify srpt_queue_response()
+IB/srpt: Limit the number of SG elements per work request
+IB/core, RDMA RW API: Do not exceed QP SGE send limit
+IB/core: Make rdma_rw_ctx_init() initialize all used fields
+
+Bart.
