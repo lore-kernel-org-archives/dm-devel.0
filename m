@@ -1,105 +1,48 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-mq and end_clone_request()
-Date: Thu, 4 Aug 2016 11:10:28 -0400
-Message-ID: <20160804151028.GA6989@redhat.com>
-References: <20160801175948.GA6685@redhat.com>
-	<f9e71e1d-54ca-40fe-a5ea-ae2863c94ff9@sandisk.com>
-	<20160801204628.GA94704@redhat.com>
-	<8e265fcc-8021-830e-ffcb-23a8a28ec247@sandisk.com>
-	<20160802174533.GA18714@redhat.com>
-	<1a460c29-1530-d3e1-25ba-736d86aff12e@sandisk.com>
-	<20160803004013.GA19956@redhat.com>
-	<eb1af921-d874-1f6a-c5d0-12d3cae04256@sandisk.com>
-	<e2749805-00fe-a5f0-157c-66d6d0910dd4@suse.de>
-	<c4c7a8d4-206e-f9a0-af5a-447e993f99de@suse.de>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 37/45] drivers: use req op accessor
+Date: Thu, 4 Aug 2016 08:46:22 -0700
+Message-ID: <20160804154622.GB15656@infradead.org>
+References: <1465155145-10812-1-git-send-email-mchristi@redhat.com>
+	<1465155145-10812-38-git-send-email-mchristi@redhat.com>
+	<CAOxpaSUMsgfTYsL0bL6VCnwxz7bpgpKO-ZfC5J8dFG9PN-hzvg@mail.gmail.com>
+	<87fbe31f-27b3-ff7a-e381-34fc1aad337e@redhat.com>
+	<CAJVOszAd9Eu88P2=QoNVArd0jwDH7KRe=OB82tCNMpjfv9B4KA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <xfs-bounces@oss.sgi.com>
 Content-Disposition: inline
-In-Reply-To: <c4c7a8d4-206e-f9a0-af5a-447e993f99de@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+In-Reply-To: <CAJVOszAd9Eu88P2=QoNVArd0jwDH7KRe=OB82tCNMpjfv9B4KA@mail.gmail.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Shaun Tancheff <shaun.tancheff@seagate.com>
+Cc: philipp.reisner@linbit.com, dm-devel@redhat.com, target-devel@vger.kernel.org, linux-mtd@lists.infradead.org, drbd-dev@lists.linbit.com, linux-scsi@vger.kernel.org, Mike Christie <mchristi@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, linux-ext4 <linux-ext4@vger.kernel.org>, konrad.wilk@oracle.com, XFS Developers <xfs@oss.sgi.com>, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, osd-dev@open-osd.org, Ross Zwisler <zwisler@gmail.com>, Jens Axboe <axboe@fb.com>, linux-raid@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-f2fs-devel@lists.sourceforge.net, linux-btrfs@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, lars.ellenberg@linbit.com, ocfs2-devel@oss.oracle.com
 List-Id: dm-devel.ids
 
-On Thu, Aug 04 2016 at  6:09am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
-
-> On 08/04/2016 11:53 AM, Hannes Reinecke wrote:
-> > On 08/03/2016 06:55 PM, Bart Van Assche wrote:
-> >> On 08/02/2016 05:40 PM, Mike Snitzer wrote:
-> >>> But I asked you to run the v4.7 kernel patches I
-> >>> pointed to _without_ any of your debug patches.
-> >>
-> >> I need several patches to fix bugs that are not related to the device
-> >> mapper, e.g. "sched: Avoid that __wait_on_bit_lock() hangs"
-> >> (https://lkml.org/lkml/2016/8/3/289).
-> >>
-> > Hmm. Can you test with this patch?
-> > 
-> > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> > index 7790a70..9daed03 100644
-> > --- a/drivers/md/dm-mpath.c
-> > +++ b/drivers/md/dm-mpath.c
-> > @@ -439,8 +439,7 @@ static int must_push_back(struct multipath *m)
-> >  {
-> >         return (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) ||
-> >                 ((test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) !=
-> > -                 test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags)) &&
-> > -                dm_noflush_suspending(m->ti)));
-> > +                 test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags)));
-> >  }
-> > 
-> >  /*
-> > 
-> > Reasoning:
-> > The original check for dm_noflush_suspending() was for bio-based
-> > drivers, which needed to queue I/O within the device-mapper core.
-> > So during suspend this I/O would keep a reference to the device-mapper
-> > core and the table couldn't be swapped.
-> > For request-based multipathing, however, the I/O is _never_ held within
-> > the device-mapper core but rather pushed back to the request queue.
-> > IE even for pushback the I/O will never hold a reference to the
-> > device-mapper core, and the tables can be swapped irrespective of the
-> > 'dm_noflush_suspend()' setting.
-> > 
-> > Or that's the idea, at least :-)
-> > 
-> > Yes Mike, I know, it's not going to work with bio-based multipathing.
-> > But this is just for figuring out where the real issue is.
-> > 
-> And indeed.
+On Wed, Aug 03, 2016 at 07:30:29PM -0500, Shaun Tancheff wrote:
+> I think the translation in loop.c is suspicious here:
 > 
-> multipathd is calling DM_SUSPEND _without_ the noflush_suspending flag.
-> (On the grounds that originally it needed to flush all I/O from the
-> device-mapper core).
-> Which will be causing I/O errors if any I/O is executed after
-> ->presuspend has been called.
+>     "if use DIO && not (a flush_flag or discard_flag)"
+> should translate to:
+>     "if use DIO && not ((a flush_flag) || op == discard)"
+> 
+> But in the patch I read:
+>     "if use DIO && ((not a flush_flag) || op == discard)
+> 
+> Which would have DIO && discards follow the AIO path?
 
-The only time multipathd doesn't use noflush is on resize.  Otherwise
-I'm pretty sure it _does_ use noflush all the time.
+Indeed.  Sorry for missing out on your patch, I just sent a fix
+in reply to Dave's other report earlier which is pretty similar to
+yours.
 
-But the point is that the map method shouldn't be called while the
-multipath device is suspended.
-
-I already provided fixes for this, staged here:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.8
-
-and relative to to 4.7:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.7-mpath-fixes
-
-With these patches our testing on real SRP hardware testbed (fast DDN
-backend) doesn't see any IO errors.
-
-But I'll revisit must_push_back relative to dm_noflush_suspending();
-specifically the new must_push_back_rq() could be made to not check
-dm_noflush_suspending().
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
