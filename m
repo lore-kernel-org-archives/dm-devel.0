@@ -1,11 +1,14 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: fix some comments in hwtable
-Date: Thu,  4 Aug 2016 19:25:59 +0200
-Message-ID: <1470331559-10560-1-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 2/2] multipath-tools: inform that regex can be
+	used in vendor, product and bl_product
+Date: Thu,  4 Aug 2016 19:31:41 +0200
+Message-ID: <1470331901-10846-2-git-send-email-xose.vazquez@gmail.com>
+References: <1470331901-10846-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1470331901-10846-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,83 +21,28 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
+Right now they are too wide regex, for example: "HITACHI"/"DF" or "SGI"/"IS".
+It should be used more extensively, at least, in product-ID.
+As I did in 34e345e8
+
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ libmultipath/hwtable.c | 1 +
+ 1 file changed, 1 insertion(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 79e9637..dacc9a3 100644
+index 6180751..a5d7402 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -49,7 +49,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 18,
- 	},
- 	{
--		/* RA8000/ESA12000 HSG80 */
-+		/* RA8000 / ESA12000 */
- 		.vendor        = "DEC",
- 		.product       = "HSG80",
- 		.features      = "1 queue_if_no_path",
-@@ -168,9 +168,9 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = FAILBACK_UNDEF,
- 	},
- 	/*
--	 * EMC/DELL
-+	 * EMC
+@@ -868,6 +868,7 @@ static struct hwentry default_hw[] = {
+ 	 * Keep only mandatory and modified attributes.
+ 	 * Attributes with default values must be removed.
+ 	 * .vendor and .product are mandatory, all other are optional.
++	 * POSIX regex can be used in .vendor, .product and .bl_product
  	 *
--	 * Maintainer : Edward Goggin, EMC
-+	 * Maintainer : Edward Goggin
- 	 * Mail : egoggin@emc.com
- 	 */
- 	{
-@@ -294,8 +294,8 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
- 		.pgfailback    = FAILBACK_UNDEF,
- 	},
--		/* AMS 2000 and HUS 100 families */
- 	{
-+		/* AMS 2000 and HUS 100 families */
- 		.vendor        = "HITACHI",
- 		.product       = "DF.*",
- 		.features      = "1 queue_if_no_path",
-@@ -306,7 +306,7 @@ static struct hwentry default_hw[] = {
- 	/*
- 	 * IBM
+ 	 * COMPANY_NAME
  	 *
--	 * Maintainer : Hannes Reinecke, SuSE
-+	 * Maintainer : Hannes Reinecke
- 	 * Mail : hare@suse.de
- 	 */
- 	{
-@@ -526,7 +526,7 @@ static struct hwentry default_hw[] = {
- 		/*
- 		 * IBM Power Virtual SCSI Devices
- 		 *
--		 * Maintainer : Brian King, IBM
-+		 * Maintainer : Brian King
- 		 * Mail : brking@linux.vnet.ibm.com
- 		 */
- 	{
-@@ -654,7 +654,7 @@ static struct hwentry default_hw[] = {
- 	 */
- 	{
- 		/*
--		 * Pillar Data / Oracle FS
-+		 * Pillar Data
- 		 *
- 		 * Maintainer : Srinivasan Ramani
- 		 * Mail : srinivas.ramani@oracle.com
-@@ -740,7 +740,7 @@ static struct hwentry default_hw[] = {
- 	/*
- 	 * Pivot3
- 	 *
--	 * Maintainer : Bart Brooks, Pivot3
-+	 * Maintainer : Bart Brooks
- 	 * Mail : bartb@pivot3.com
- 	 */
- 	{
 -- 
 2.7.4
