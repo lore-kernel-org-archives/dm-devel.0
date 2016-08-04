@@ -1,65 +1,29 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [RFC PATCH 2/2] mm, mempool: do not throttle
- PF_LESS_THROTTLE tasks
-Date: Thu, 4 Aug 2016 14:46:07 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1608041439420.21662@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1468831285-27242-1-git-send-email-mhocko@kernel.org> <1468831285-27242-2-git-send-email-mhocko@kernel.org> <87oa5q5abi.fsf@notabene.neil.brown.name> <20160722091558.GF794@dhcp22.suse.cz> <878twt5i1j.fsf@notabene.neil.brown.name>
- <alpine.LRH.2.02.1607251730280.11852@file01.intranet.prod.int.rdu2.redhat.com> <87invr4tjm.fsf@notabene.neil.brown.name> <alpine.LRH.2.02.1607270948040.1779@file01.intranet.prod.int.rdu2.redhat.com> <20160727184021.GF21859@dhcp22.suse.cz>
- <alpine.LRH.2.02.1608030853430.15274@file01.intranet.prod.int.rdu2.redhat.com> <20160803144229.GD1490@dhcp22.suse.cz>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-mq and end_clone_request()
+Date: Thu, 4 Aug 2016 19:58:50 -0400
+Message-ID: <20160804235850.GB13132@redhat.com>
+References: <20160801175948.GA6685@redhat.com>
+ <f9e71e1d-54ca-40fe-a5ea-ae2863c94ff9@sandisk.com>
+ <20160801204628.GA94704@redhat.com>
+ <8e265fcc-8021-830e-ffcb-23a8a28ec247@sandisk.com>
+ <20160802174533.GA18714@redhat.com>
+ <1a460c29-1530-d3e1-25ba-736d86aff12e@sandisk.com>
+ <20160803004013.GA19956@redhat.com>
+ <eb1af921-d874-1f6a-c5d0-12d3cae04256@sandisk.com>
+ <20160804161047.GC6989@redhat.com>
+ <4d60017e-818c-5630-549e-bf280abcf1c3@sandisk.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20160803144229.GD1490@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: NeilBrown <neilb@suse.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Mel Gorman <mgorman@suse.de>, David Rientjes <rientjes@google.com>, Ondrej Kozina <okozina@redhat.com>, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4d60017e-818c-5630-549e-bf280abcf1c3@sandisk.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Laurence Oberman <loberman@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
+I've staged another fix, Laurence is seeing success with this added:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.8&id=d50a6450104c237db1dc75314d17b78c990a8c05
 
-
-On Wed, 3 Aug 2016, Michal Hocko wrote:
-
-> > > Even mempool allocations shouldn't allow reclaim to
-> > > scan pages too quickly even when LRU lists are full of dirty pages. But
-> > > as I've said that would restrict the success rates even under light page
-> > > cache load. Throttling on the wait_iff_congested should be quite rare.
-> > > 
-> > > Anyway do you see an excessive throttling with the patch posted
-> > > http://lkml.kernel.org/r/20160725192344.GD2166@dhcp22.suse.cz ? Or from
-> > 
-> > It didn't have much effect.
-> > 
-> > Since the patch 4e390b2b2f34b8daaabf2df1df0cf8f798b87ddb (revert of the 
-> > limitless mempool allocations), swapping to dm-crypt works in the simple 
-> > example.
-> 
-> OK. Do you see any throttling due to wait_iff_congested?
-
-No, but I've seen occasional stalls of mempool allocations in 
-throttle_vm_writeout - but the patch that removed throttle_vm_writeout 
-didn't improve overall speed, so the stalls were only minor.
-
-> writeback_wait_iff_congested trace point should help here. If not maybe
-> we should start with the above patch and see how it works in practise.
-> If the there is still an excessive and unexpected throttling then we
-> should move on to a more mempool/block layer users specific solution.
-
-Currently, dm-crypt reports the device congested only if the underlying 
-block device is congested.
-
-But as others suggested, dm-crypt should report congested status if is 
-clogged due to slow encryption progress - and in that case you should not 
-throttle mempool allocations (because such throttling would decrease 
-encryption speed even more).
-
-Mikulas
-
-> -- 
-> Michal Hocko
-> SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+I'll be sending all the fixes I've queued to Linus tonight or early
+tomorrow (since I'll then be on vacation until Monday 8/15).
