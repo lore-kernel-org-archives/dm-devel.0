@@ -1,40 +1,65 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 2/2] multipath-tools: replace daddr_t type with
-	long in kpartx/solaris.c
-Date: Thu,  4 Aug 2016 20:24:32 +0200
-Message-ID: <1470335072-13867-2-git-send-email-xose.vazquez@gmail.com>
-References: <1470335072-13867-1-git-send-email-xose.vazquez@gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [RFC PATCH 2/2] mm, mempool: do not throttle
+ PF_LESS_THROTTLE tasks
+Date: Thu, 4 Aug 2016 14:46:07 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1608041439420.21662@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1468831285-27242-1-git-send-email-mhocko@kernel.org> <1468831285-27242-2-git-send-email-mhocko@kernel.org> <87oa5q5abi.fsf@notabene.neil.brown.name> <20160722091558.GF794@dhcp22.suse.cz> <878twt5i1j.fsf@notabene.neil.brown.name>
+ <alpine.LRH.2.02.1607251730280.11852@file01.intranet.prod.int.rdu2.redhat.com> <87invr4tjm.fsf@notabene.neil.brown.name> <alpine.LRH.2.02.1607270948040.1779@file01.intranet.prod.int.rdu2.redhat.com> <20160727184021.GF21859@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1608030853430.15274@file01.intranet.prod.int.rdu2.redhat.com> <20160803144229.GD1490@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1470335072-13867-1-git-send-email-xose.vazquez@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20160803144229.GD1490@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: NeilBrown <neilb@suse.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Mel Gorman <mgorman@suse.de>, David Rientjes <rientjes@google.com>, Ondrej Kozina <okozina@redhat.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
-ZGFkZHJfdCBpcyBhbiB1bmtub3cgdHlwZSBmb3IgbXVzbCBsaWJjCgptdXNsLWdjYyBvdXRwdXQ6
-CnNvbGFyaXMuYzoxNDoyOiBlcnJvcjogdW5rbm93biB0eXBlIG5hbWUg4oCYZGFkZHJfdOKAmQoK
-UmVwbGFjZSBpdCB3aXRoIGxvbmcuCgpDb21waWxlZCB0ZXN0ZWQgb25seSwgcGxlYXNlIHJldmll
-dy4KCkNjOiBDaHJpc3RvcGhlIFZhcm9xdWkgPGNocmlzdG9waGUudmFyb3F1aUBvcGVuc3ZjLmNv
-bT4KQ2M6IGRldmljZS1tYXBwZXIgZGV2ZWxvcG1lbnQgPGRtLWRldmVsQHJlZGhhdC5jb20+ClNp
-Z25lZC1vZmYtYnk6IFhvc2UgVmF6cXVleiBQZXJleiA8eG9zZS52YXpxdWV6QGdtYWlsLmNvbT4K
-LS0tCiBrcGFydHgvc29sYXJpcy5jIHwgMiArLQogMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9u
-KCspLCAxIGRlbGV0aW9uKC0pCgpkaWZmIC0tZ2l0IGEva3BhcnR4L3NvbGFyaXMuYyBiL2twYXJ0
-eC9zb2xhcmlzLmMKaW5kZXggMzU1YTZjYi4uMDFkYTM3OSAxMDA2NDQKLS0tIGEva3BhcnR4L3Nv
-bGFyaXMuYworKysgYi9rcGFydHgvc29sYXJpcy5jCkBAIC0xMSw3ICsxMSw3IEBACiBzdHJ1Y3Qg
-c29sYXJpc194ODZfc2xpY2UgewogCXVuc2lnbmVkIHNob3J0CXNfdGFnOwkJLyogSUQgdGFnIG9m
-IHBhcnRpdGlvbiAqLwogCXVuc2lnbmVkIHNob3J0CXNfZmxhZzsJCS8qIHBlcm1pc2lvbiBmbGFn
-cyAqLwotCWRhZGRyX3QJCXNfc3RhcnQ7CS8qIHN0YXJ0IHNlY3RvciBubyBvZiBwYXJ0aXRpb24g
-Ki8KKwlsb25nCQlzX3N0YXJ0OwkvKiBzdGFydCBzZWN0b3Igbm8gb2YgcGFydGl0aW9uICovCiAJ
-bG9uZwkJc19zaXplOwkJLyogIyBvZiBibG9ja3MgaW4gcGFydGl0aW9uICovCiB9OwogCi0tIAoy
-LjcuNAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
-Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+
+
+On Wed, 3 Aug 2016, Michal Hocko wrote:
+
+> > > Even mempool allocations shouldn't allow reclaim to
+> > > scan pages too quickly even when LRU lists are full of dirty pages. But
+> > > as I've said that would restrict the success rates even under light page
+> > > cache load. Throttling on the wait_iff_congested should be quite rare.
+> > > 
+> > > Anyway do you see an excessive throttling with the patch posted
+> > > http://lkml.kernel.org/r/20160725192344.GD2166@dhcp22.suse.cz ? Or from
+> > 
+> > It didn't have much effect.
+> > 
+> > Since the patch 4e390b2b2f34b8daaabf2df1df0cf8f798b87ddb (revert of the 
+> > limitless mempool allocations), swapping to dm-crypt works in the simple 
+> > example.
+> 
+> OK. Do you see any throttling due to wait_iff_congested?
+
+No, but I've seen occasional stalls of mempool allocations in 
+throttle_vm_writeout - but the patch that removed throttle_vm_writeout 
+didn't improve overall speed, so the stalls were only minor.
+
+> writeback_wait_iff_congested trace point should help here. If not maybe
+> we should start with the above patch and see how it works in practise.
+> If the there is still an excessive and unexpected throttling then we
+> should move on to a more mempool/block layer users specific solution.
+
+Currently, dm-crypt reports the device congested only if the underlying 
+block device is congested.
+
+But as others suggested, dm-crypt should report congested status if is 
+clogged due to slow encryption progress - and in that case you should not 
+throttle mempool allocations (because such throttling would decrease 
+encryption speed even more).
+
+Mikulas
+
+> -- 
+> Michal Hocko
+> SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
