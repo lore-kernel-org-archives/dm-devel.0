@@ -1,76 +1,104 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.8-rc1
-Date: Fri, 5 Aug 2016 11:52:40 -0400
-Message-ID: <20160805155239.GA2362@redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: bug: using smp_processor_id() in preemptible code in
+ rr_select_path()
+Date: Fri, 5 Aug 2016 09:54:35 -0600
+Message-ID: <107dc81f-675d-8ae4-0ac2-99c248a23c60@kernel.dk>
+References: <20160803153545.GE20370@bblock-ThinkPad-W530>
+ <20160805152705.GA17480@redhat.com>
+ <497f02e5-4f3d-8590-3096-fb5e2422bff4@kernel.dk>
+ <20160805154223.GA2340@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20160805154223.GA2340@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Benjamin Block <bblock@linux.vnet.ibm.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, hch@lst.de, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Linus,
+On 08/05/2016 09:42 AM, Mike Snitzer wrote:
+> On Fri, Aug 05 2016 at 11:33P -0400,
+> Jens Axboe <axboe@kernel.dk> wrote:
+>
+>> On 08/05/2016 09:27 AM, Mike Snitzer wrote:
+>>> On Wed, Aug 03 2016 at 11:35am -0400,
+>>> Benjamin Block <bblock@linux.vnet.ibm.com> wrote:
+>>>
+>>>> Hej Mike,
+>>>>
+>>>> when running a debug-kernel today with several multipath-devices using
+>>>> the round-robin path selector I noticed that the kernel throws these
+>>>> warnings here:
+>>>>
+>>>> BUG: using smp_processor_id() in preemptible [00000000] code: kdmwork-252:0/881
+>>>> caller is rr_select_path+0x36/0x108 [dm_round_robin]
+>>>> CPU: 1 PID: 881 Comm: kdmwork-252:0 Not tainted 4.7.0-debug #4
+>>>>       00000000617679b8 0000000061767a48 0000000000000002 0000000000000000
+>>>>       0000000061767ae8 0000000061767a60 0000000061767a60 00000000001145d0
+>>>>       0000000000000000 0000000000b962ae 0000000000bb291e 000000000000000b
+>>>>       0000000061767aa8 0000000061767a48 0000000000000000 0000000000000000
+>>>>       0700000000b962ae 00000000001145d0 0000000061767a48 0000000061767aa8
+>>>> Call Trace:
+>>>> ([<00000000001144a2>] show_trace+0x8a/0xe0)
+>>>> ([<0000000000114586>] show_stack+0x8e/0xf0)
+>>>> ([<00000000006c7fdc>] dump_stack+0x9c/0xe0)
+>>>> ([<00000000006fbbc0>] check_preemption_disabled+0x108/0x130)
+>>>> ([<000003ff80268646>] rr_select_path+0x36/0x108 [dm_round_robin])
+>>>> ([<000003ff80259a42>] choose_path_in_pg+0x42/0xc8 [dm_multipath])
+>>>> ([<000003ff80259b62>] choose_pgpath+0x9a/0x1a0 [dm_multipath])
+>>>> ([<000003ff8025b51a>] __multipath_map.isra.5+0x72/0x228 [dm_multipath])
+>>>> ([<000003ff8025b75e>] multipath_map+0x3e/0x50 [dm_multipath])
+>>>> ([<000003ff80225eb6>] map_request+0x66/0x458 [dm_mod])
+>>>> ([<000003ff802262ec>] map_tio_request+0x44/0x70 [dm_mod])
+>>>> ([<000000000016835a>] kthread_worker_fn+0xf2/0x1d8)
+>>>> ([<00000000001681da>] kthread+0x112/0x120)
+>>>> ([<000000000098378a>] kernel_thread_starter+0x6/0xc)
+>>>> ([<0000000000983784>] kernel_thread_starter+0x0/0xc)
+>>>> no locks held by kdmwork-252:0/881.
+>>>>
+>>>>
+>>>> There are several more of these warnings, but all have the same
+>>>> stack-trace (this is on s390x, but this looks like its only common code)
+>>>> - sometimes the process-context is multipath.
+>>>>
+>>>> Looking at the changes in this function, it rather looks like this is
+>>>> caused by changes made in commit
+>>>> b0b477c7e0dd93f8916d106018ded1331b81bf61 (dm round robin: use percpu
+>>>> 'repeat_count' and 'current_path').
+>>>>
+>>>> The kernel is a stock v4.7 with some debug options enabled (prominently
+>>>> DEBUG_PREEMPT). Need any more info?
+>>>
+>>> As you can see from commit b0b477c7e0dd9 the round-robin path selector
+>>> is now using percpu data (pointer) and a percpu_counter.
+>>>
+>>> I'm really not sure how else to access this percpu data.
+>>>
+>>> Cc'ing LKML, linux-block, Jens and hch to cast a wider net in the hopes
+>>> of getting an answer to how to fix this.
+>>
+>> From a quick look, looks like you are using this_cpu_ptr() without
+>> having preemption disabled.
+>
+> Right, that is what it looked like to me too.
+>
+> I'm just not sure on what the proper pattern is to fix this.
+>
+> I'll look closer though.
 
-I'll be on vacation through Sunday 8/14 so I'd prefer to get you these
-DM fixes before I go.
+I always forget the details (if this confuses lockdep or not), but you
+could potentially turn it into:
 
-The following changes since commit f7b32e4c021fd788f13f6785e17efbc3eb05b351:
+local_irq_save(flags);
+x = this_cpu_ptr();
+[...]
 
-  Merge branch 'for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/s390/linux (2016-08-02 12:41:13 -0400)
+spin_lock(&s->lock);
+[...]
 
-are available in the git repository at:
+instead.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.8-fixes
+-- 
+Jens Axboe
 
-for you to fetch changes up to 2a034ec197aa574dd159961cc661c9b08cd76425:
-
-  dm raid: fix use of wrong status char during resynchronization (2016-08-04 10:05:30 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-- A stable dm-flakey fix to error read IO during the 'down_interval'
-
-- A DM core suspend fix to establish the SUSPENDED flag before dropping
-  the SUSPENDING flag
-
-- A blk-mq request-based DM (dm-mq) dm_stop_queue() fix to properly stop
-  the blk-mq hw_queues (and cancel pending requeue work); also set/clear
-  QUEUE_FLAG_STOPPED when stopping/starting the dm-mq request_queue.
-
-- A DM multipath fix to harden locking of in-core state flags in the
-  face of concurrent access while handling path failures under heavy
-  IO.
-
-- A few small DM raid fixes to edge cases caught with further testing.
-
-----------------------------------------------------------------
-Heinz Mauelshagen (3):
-      dm raid: fix processing of max_recovery_rate constructor flag
-      dm raid: constructor fails on non-zero incompat_features
-      dm raid: fix use of wrong status char during resynchronization
-
-Mike Snitzer (4):
-      dm flakey: error READ bios during the down_interval
-      dm mpath: add locking to multipath_resume and must_push_back
-      dm rq: fix the starting and stopping of blk-mq queues
-      dm: set DMF_SUSPENDED* _before_ clearing DMF_NOFLUSH_SUSPENDING
-
- drivers/md/dm-flakey.c | 23 +++++++++++++++--------
- drivers/md/dm-mpath.c  | 24 ++++++++++++++++++++----
- drivers/md/dm-raid.c   |  4 ++--
- drivers/md/dm-rq.c     | 20 +++++++++++++++++++-
- drivers/md/dm.c        | 14 +++++++-------
- 5 files changed, 63 insertions(+), 22 deletions(-)
