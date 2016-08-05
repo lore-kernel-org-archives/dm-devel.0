@@ -1,65 +1,76 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: dm-mq and end_clone_request()
-Date: Fri, 5 Aug 2016 08:43:16 -0700
-Message-ID: <6161e993-0192-4a90-caed-ab1cb843059a@sandisk.com>
-References: <20160801175948.GA6685@redhat.com>
- <20160803004013.GA19956@redhat.com>
- <eb1af921-d874-1f6a-c5d0-12d3cae04256@sandisk.com>
- <20160804161047.GC6989@redhat.com>
- <4d60017e-818c-5630-549e-bf280abcf1c3@sandisk.com>
- <20160804235850.GB13132@redhat.com>
- <1649218.8261013.1470359248073.JavaMail.zimbra@redhat.com>
- <1931660518.8323360.1470397410683.JavaMail.zimbra@redhat.com>
- <2017110872.8357448.1470411545313.JavaMail.zimbra@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 4.8-rc1
+Date: Fri, 5 Aug 2016 11:52:40 -0400
+Message-ID: <20160805155239.GA2362@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <2017110872.8357448.1470411545313.JavaMail.zimbra@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Laurence Oberman <loberman@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-On 08/05/2016 08:39 AM, Laurence Oberman wrote:
-> I completely forgot I had set no_path_retry=12, so after 12 retries it will error out.
-> This is likely why I had different results seemingly affected by timing.
-> Mike reminded me of it this morning.
-> 
-> What do you have set for no_path_retry, because when I set it to queue, it blocks the paths coming back for some reason.
-> I am now investigating why that is happening :).
-> I see now I need to add "simultaneous all paths lost" scenarios to my QA testing, as its not a common scenario.
+Hi Linus,
 
-Hello Laurence,
+I'll be on vacation through Sunday 8/14 so I'd prefer to get you these
+DM fixes before I go.
 
-I'm using the following multipath.conf file for the tests I run:
+The following changes since commit f7b32e4c021fd788f13f6785e17efbc3eb05b351:
 
-defaults {
-	user_friendly_names	yes
-	queue_without_daemon	no
-}
+  Merge branch 'for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/s390/linux (2016-08-02 12:41:13 -0400)
 
-blacklist {
-	device {
-		vendor			"ATA"
-		product			".*"
-	}
-}
+are available in the git repository at:
 
-devices {
-	device {
-		vendor			"SCST_BIO|LIO-ORG"
-		product			".*"
-		features		"3 queue_if_no_path pg_init_retries 50"
-		path_grouping_policy	group_by_prio
-		path_selector		"queue-length 0"
-		path_checker		tur
-	}
-}
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.8-fixes
 
-blacklist_exceptions {
-        property        ".*"
-}
+for you to fetch changes up to 2a034ec197aa574dd159961cc661c9b08cd76425:
 
-Bart.
+  dm raid: fix use of wrong status char during resynchronization (2016-08-04 10:05:30 -0400)
 
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+- A stable dm-flakey fix to error read IO during the 'down_interval'
+
+- A DM core suspend fix to establish the SUSPENDED flag before dropping
+  the SUSPENDING flag
+
+- A blk-mq request-based DM (dm-mq) dm_stop_queue() fix to properly stop
+  the blk-mq hw_queues (and cancel pending requeue work); also set/clear
+  QUEUE_FLAG_STOPPED when stopping/starting the dm-mq request_queue.
+
+- A DM multipath fix to harden locking of in-core state flags in the
+  face of concurrent access while handling path failures under heavy
+  IO.
+
+- A few small DM raid fixes to edge cases caught with further testing.
+
+----------------------------------------------------------------
+Heinz Mauelshagen (3):
+      dm raid: fix processing of max_recovery_rate constructor flag
+      dm raid: constructor fails on non-zero incompat_features
+      dm raid: fix use of wrong status char during resynchronization
+
+Mike Snitzer (4):
+      dm flakey: error READ bios during the down_interval
+      dm mpath: add locking to multipath_resume and must_push_back
+      dm rq: fix the starting and stopping of blk-mq queues
+      dm: set DMF_SUSPENDED* _before_ clearing DMF_NOFLUSH_SUSPENDING
+
+ drivers/md/dm-flakey.c | 23 +++++++++++++++--------
+ drivers/md/dm-mpath.c  | 24 ++++++++++++++++++++----
+ drivers/md/dm-raid.c   |  4 ++--
+ drivers/md/dm-rq.c     | 20 +++++++++++++++++++-
+ drivers/md/dm.c        | 14 +++++++-------
+ 5 files changed, 63 insertions(+), 22 deletions(-)
