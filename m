@@ -1,12 +1,14 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add vendors' names as they are
-	registered at T10
-Date: Fri,  5 Aug 2016 22:09:52 +0200
-Message-ID: <1470427792-4897-1-git-send-email-xose.vazquez@gmail.com>
+Subject: Re: [PATCH v2 2/2]] multipath-tools: inform that regex
+ can be used in vendor, product, .revision and bl_product
+Date: Sat, 6 Aug 2016 01:23:16 +0200
+Message-ID: <e32c64d6-e36b-8e83-dff1-244425d4f25d@gmail.com>
+References: <1470332641-11282-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1470332641-11282-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,58 +18,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-For the record.
+On 08/04/2016 07:44 PM, Xose Vazquez Perez wrote:
 
-- Unregistered:
-AIX
-LIO-ORG
-NEXENTA
-TEGILE
+Please, DROP also this one(v2). Thanks.
+v3 is coming.
 
-- Registered at T10 with a different spelling/label:
-EUROLOGC
-HUAWEI
-Intel
-
-Real ones are:
-"EuroLogc" - Eurologic Systems Limited (now part of PMC Sierra)
-"HUASY"    - Huawei Symantec Technologies Co., Ltd.
-"INTEL"    - Intel Corporation
-
-
-HUASY has already been included in a previous patch.
-
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 797ea45..09131bc 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -276,7 +276,7 @@ static struct hwentry default_hw[] = {
- 	},
- 	{
- 		/* FibreCAT S80 */
--		.vendor        = "EUROLOGC",
-+		.vendor        = "(EUROLOGC|EuroLogc)",
- 		.product       = "FC2502",
- 		.pgpolicy      = MULTIBUS,
- 		.pgfailback    = FAILBACK_UNDEF,
-@@ -755,7 +755,7 @@ static struct hwentry default_hw[] = {
- 	 * Intel
- 	 */
- 	{
--		.vendor	       = "Intel",
-+		.vendor	       = "(Intel|INTEL)",
- 		.product       = "Multi-Flex",
- 		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
--- 
-2.7.4
+> Right now they are too wide regex, for example: "HITACHI"/"DF" or "SGI"/"IS".
+> It should be used more extensively, at least, in product-ID.
+> As I did in 34e345e8
+> 
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  libmultipath/hwtable.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 6180751..797ea45 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -868,6 +868,7 @@ static struct hwentry default_hw[] = {
+>  	 * Keep only mandatory and modified attributes.
+>  	 * Attributes with default values must be removed.
+>  	 * .vendor and .product are mandatory, all other are optional.
+> +	 * POSIX regex can be used in .vendor, .product, .revision and .bl_product
+>  	 *
+>  	 * COMPANY_NAME
+>  	 *
+> 
