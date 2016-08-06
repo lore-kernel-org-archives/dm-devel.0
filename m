@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 2/3] multipath-tools: revert add INFINIDAT
-	devices to hardware table
-Date: Sat,  6 Aug 2016 11:59:32 +0200
-Message-ID: <1470477573-3725-3-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 3/3] multipath-tools: revert add VIOLIN/CONCERTO
+	ARRAY to hardware table
+Date: Sat,  6 Aug 2016 11:59:33 +0200
+Message-ID: <1470477573-3725-4-git-send-email-xose.vazquez@gmail.com>
 References: <1470477573-3725-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -29,27 +29,27 @@ Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
  1 file changed, 15 deletions(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 69200f1..d46cd00 100644
+index d46cd00..af37c10 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -831,21 +831,6 @@ static struct hwentry default_hw[] = {
- 		.features      = "1 queue_if_no_path",
- 		.no_path_retry = 300,
+@@ -816,21 +816,6 @@ static struct hwentry default_hw[] = {
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
  	},
 -	/*
--	 * Infinidat
+-	 * Violin Memory
 -	 */
 -	{
--		.vendor        = "NFINIDAT",
--		.product       = "InfiniBox",
--		.prio_name     = PRIO_ALUA,
+-		.vendor        = "VIOLIN",
+-		.product       = "CONCERTO ARRAY",
 -		.selector      = "round-robin 0",
--		.pgpolicy      = GROUP_BY_PRIO,
--		.pgfailback    = 30,
+-		.pgpolicy      = MULTIBUS,
+-		.prio_name     = PRIO_ALUA,
+-		.minio         = 100,
 -		.rr_weight     = RR_WEIGHT_PRIO,
--		.no_path_retry = NO_PATH_RETRY_FAIL,
--		.flush_on_last_del = FLUSH_ENABLED,
--		.dev_loss      = 30,
+-		.pgfailback    = -FAILBACK_IMMEDIATE,
+-		.features      = "1 queue_if_no_path",
+-		.no_path_retry = 300,
 -	},
  #if 0
  	/*
