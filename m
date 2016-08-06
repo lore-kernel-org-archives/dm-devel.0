@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 5/7] multipath-tools: random fixes in
+Subject: [PATCH 7/7] multipath-tools: more fixes for
 	multipath.conf.5
-Date: Sun,  7 Aug 2016 00:40:06 +0200
-Message-ID: <1470523208-14067-5-git-send-email-xose.vazquez@gmail.com>
+Date: Sun,  7 Aug 2016 00:40:08 +0200
+Message-ID: <1470523208-14067-7-git-send-email-xose.vazquez@gmail.com>
 References: <1470523208-14067-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,144 +25,97 @@ Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- multipath/multipath.conf.5 | 45 +++++++++++++++++++++++++++------------------
- 1 file changed, 27 insertions(+), 18 deletions(-)
+ multipath/multipath.conf.5 | 25 ++++++++++++++-----------
+ 1 file changed, 14 insertions(+), 11 deletions(-)
 
 diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 14a8ccb..4567103 100644
+index fc620be..6267c45 100644
 --- a/multipath/multipath.conf.5
 +++ b/multipath/multipath.conf.5
-@@ -1,3 +1,10 @@
-+.\" ----------------------------------------------------------------------------
-+.\" Update the date below if you make any significant change.
-+.\"
-+.\" TODO: Look for XXX
-+.\"
-+.\" ----------------------------------------------------------------------------
-+.
- .TH MULTIPATH.CONF 5 2016-08-06 "Linux"
+@@ -1,11 +1,13 @@
+ .\" ----------------------------------------------------------------------------
+ .\" Update the date below if you make any significant change.
++.\" Make sure there are no errors with:
++.\" groff -z -wall -b -e -t multipath/multipath.conf.5
+ .\"
+ .\" TODO: Look for XXX
+ .\"
+ .\" ----------------------------------------------------------------------------
+ .
+-.TH MULTIPATH.CONF 5 2016-08-06 "Linux"
++.TH MULTIPATH.CONF 5 2016-08-07 "Linux"
  .
  .
-@@ -199,9 +206,9 @@ Default value is: \fBfailover\fR
- The udev attribute providing a unique path identifier.
+ .\" ----------------------------------------------------------------------------
+@@ -145,7 +147,7 @@ Default value is: \fBno\fR
+ .
+ .TP
+ .B multipath_dir
+-Directory where the dynamic shared objects are stored.
++Directory where the dynamic shared objects are stored. Defined at compile time.
  .RS
  .TP
--Default value is: \fBID_SERIAL\fR for SCSI devices
-+Default value is: for SCSI devices \fBID_SERIAL\fR
+ Default value is: \fB<system dependent>\fR, commonly \fI/lib64/multipath/\fR
+@@ -214,8 +216,8 @@ Default value is: for DASD devices \fBID_UID\fR
+ .
  .TP
--Default value is: \fBID_UID\fR for DASD devices
-+Default value is: for DASD devices \fBID_UID\fR
- .RE
+ .B getuid_callout
+-(Deprecated) The default program and args to callout to obtain a unique path
+-identifier. Should be specified with an absolute path.
++(Superseded by \fIuid_attribute\fR) The default program and args to callout
++to obtain a unique path identifier. Should be specified with an absolute path.
+ .TP
  .
  .
-@@ -264,9 +271,11 @@ Generate the path priority based on the regular expression and the
- priority provided as argument. Requires prio_args keyword.
- .TP
- .I datacore
-+.\" XXX
- ???. Requires prio_args keyword.
- .TP
- .I iet
-+.\" XXX
- ???. Requires prio_args keyword.
- .TP
- Default value is: \fBconst\fR
-@@ -285,18 +294,19 @@ Needs a value of the form
- .RS
- .TP 8
- .I hbtl
--regex can be of SCSI H:B:T:L format  Ex: 1:0:.:. , *:0:0:.
-+regex can be of SCSI H:B:T:L format. For example: 1:0:.:. , *:0:0:.
- .TP
- .I devname
--regex can be of device name format  Ex: sda , sd.e
-+regex can be of device name format. For example: sda , sd.e
- .TP
- .I serial
--regex can be of serial number format  Ex: .*J1FR.*324  The serial can be looked up through sysfs or by running multipathd show paths format "%z" Ex: 0395J1FR904324
-+regex can be of serial number format. For example: .*J1FR.*324 . The serial can be looked
-+up through sysfs or by running multipathd show paths format "%z". For example: 0395J1FR904324
- .TP
+@@ -306,7 +308,7 @@ up through sysfs or by running multipathd show paths format "%z". For example: 0
  .I wwn
  regex can be of the form \fI"host_wwnn:host_wwpn:target_wwnn:target_wwpn"\fR
  these values can be looked up through sysfs or by running \fImultipathd show paths format
--"%N:%R:%n:%r" Ex: 0x200100e08ba0aea0:0x210100e08ba0aea0:.*:.* , .*:.*:iqn.2009-10.com.redhat.msp.lab.ask-06:.*\fR
-+"%N:%R:%n:%r". For example: 0x200100e08ba0aea0:0x210100e08ba0aea0:.*:.* , .*:.*:iqn.2009-10.com.redhat.msp.lab.ask-06:.*\fR
+-"%N:%R:%n:%r". For example: 0x200100e08ba0aea0:0x210100e08ba0aea0:.*:.* , .*:.*:iqn.2009-10.com.redhat.msp.lab.ask-06:.*\fR
++"%N:%R:%n:%r"\fR. For example: 0x200100e08ba0aea0:0x210100e08ba0aea0:.*:.* , .*:.*:iqn.2009-10.com.redhat.msp.lab.ask-06:.*
  .RE
  .TP 12
  .I alua
-@@ -304,9 +314,11 @@ If \fIexclusive_pref_bit\fR is set, paths with the \fIpreferred path\fR bit
- set will always be in their own path group.
+@@ -333,8 +335,8 @@ Possible values for the feature list are:
+ .RS
+ .TP 12
+ .I queue_if_no_path
+-Queue IO if no path is active; identical to the \fIno_path_retry\fR
+-keyword.
++Queue IO if no path is active; identical to the \fIno_path_retry\fR keyword.
++See KNOWN ISSUES.
  .TP
- .I datacore
-+.\" XXX
- \fIpreferredsds\fR ???.
+ .I no_partitions
+ Disable automatic partitions generation via kpartx.
+@@ -412,8 +414,9 @@ active paths.
+ Do not perform automatic failback.
  .TP
- .I iet
-+.\" XXX
- \fIpreferredip\fR ???.
+ .I followover
+-Only perform automatic failback when the first path of a pathgroup
+-becomes active. This keeps a node from automatically failing back when
++Used to deal with multiple computers accessing the same Active/Passive storage
++devices. Only perform automatic failback when the first path of a pathgroup
++becomes active. This keeps a cluster node from automatically failing back when
+ another node requested the failover.
+ .TP
+ .I values > 0
+@@ -476,7 +479,7 @@ Specify the number of retries until disable queueing, or
+ .I fail
+ for immediate failure (no queueing),
+ .I queue
+-for never stop queueing. If unset no queueing is attempted.
++for never stop queueing. If unset no queueing is attempted. See KNOWN ISSUES.
+ .RS
  .TP
  Default value is: \fB<unset>\fR
-@@ -545,8 +557,7 @@ Specify the number of seconds the SCSI layer will wait after a problem has
- been detected on a FC remote port before removing it from the system. This
- can be set to "infinity" which sets it to the max value of 2147483647
- seconds, or 68 years. It will be automatically adjusted to the overall
--retry interval
--\fIno_path_retry\fR * \fIpolling_interval\fR
-+retry interval \fIno_path_retry\fR * \fIpolling_interval\fR
+@@ -561,7 +564,7 @@ retry interval \fIno_path_retry\fR * \fIpolling_interval\fR
  if a number of retries is given with \fIno_path_retry\fR and the
  overall retry interval is longer than the specified \fIdev_loss_tmo\fR value.
  The Linux kernel will cap this value to \fI300\fR if \fIfast_io_fail_tmo\fR
-@@ -802,10 +813,9 @@ Default value is: \fB30\fR
- .SH "blacklist section"
- .\" ----------------------------------------------------------------------------
- .
--The \fIblacklist\fR
--section is used to exclude specific device from inclusion in the
--multipath topology. It is most commonly used to exclude local disks or
--LUNs for the array controller.
-+The \fIblacklist\fR section is used to exclude specific device from inclusion in
-+the multipath topology. It is most commonly used to exclude local disks or LUNs
-+for the array controller.
- .LP
- .
- .
-@@ -834,10 +844,9 @@ keywords. For a full description of these keywords please see the
- .\" ----------------------------------------------------------------------------
- .
- The \fIblacklist_exceptions\fR section is used to revert the actions of the
--\fIblacklist\fR section, for example to include specific device in the
-+\fIblacklist\fR section. For example to include specific device in the
- multipath topology. This allows one to selectively include devices which
--would normally be excluded via the \fIblacklist\fR
--section.
-+would normally be excluded via the \fIblacklist\fR section.
- .LP
- .
- .
-@@ -890,8 +899,7 @@ Symbolic name for the multipath map.
- .
- .
- The following attributes are optional; if not set the default values
--are taken from the \fIdefaults\fR or \fIdevices\fR
--section:
-+are taken from the \fIdefaults\fR or \fIdevices\fR section:
- .sp 1
- .PD .1v
+-is not set.
++is not set. See KNOWN ISSUES.
  .RS
-@@ -1139,7 +1147,7 @@ The use of \fIqueue_if_no_path\fR or \fIno_path_retry\fR might lead to a
- deadlock if the \fIdev_loss_tmo\fR setting results in a device being removed
- while I/O is still queued. The multipath daemon will update the \fIdev_loss_tmo\fR
- setting accordingly to avoid this deadlock. Hence if both values are
--specified the order of precedence is \fIno_path_retry, queue_if_no_path, dev_loss_tmo.\fR
-+specified the order of precedence is \fIno_path_retry, queue_if_no_path, dev_loss_tmo\fR.
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -1158,3 +1166,4 @@ specified the order of precedence is \fIno_path_retry, queue_if_no_path, dev_los
- .
- \fImultipath-tools\fR was developed by Christophe Varoqui, <christophe.varoqui@opensvc.com>
- and others.
-+.\" EOF
+ .TP
+ Default value is: \fB600\fR
 -- 
 2.7.4
