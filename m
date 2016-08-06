@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 1/3] multipath-tools: revert add TEGILE devices
-	to hardware table
-Date: Sat,  6 Aug 2016 11:59:31 +0200
-Message-ID: <1470477573-3725-2-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 2/3] multipath-tools: revert add INFINIDAT
+	devices to hardware table
+Date: Sat,  6 Aug 2016 11:59:32 +0200
+Message-ID: <1470477573-3725-3-git-send-email-xose.vazquez@gmail.com>
 References: <1470477573-3725-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -29,27 +29,27 @@ Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
  1 file changed, 15 deletions(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 187c109..69200f1 100644
+index 69200f1..d46cd00 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -846,21 +846,6 @@ static struct hwentry default_hw[] = {
- 		.flush_on_last_del = FLUSH_ENABLED,
- 		.dev_loss      = 30,
+@@ -831,21 +831,6 @@ static struct hwentry default_hw[] = {
+ 		.features      = "1 queue_if_no_path",
+ 		.no_path_retry = 300,
  	},
 -	/*
--	 * Tegile Systems
+-	 * Infinidat
 -	 */
 -	{
--		.vendor        = "TEGILE",
--		.product       = "(ZEBI-(FC|ISCSI)|INTELLIFLASH)",
--		.hwhandler     = "1 alua",
--		.selector      = "round-robin 0",
--		.no_path_retry = 10,
--		.dev_loss      = 50,
+-		.vendor        = "NFINIDAT",
+-		.product       = "InfiniBox",
 -		.prio_name     = PRIO_ALUA,
+-		.selector      = "round-robin 0",
 -		.pgpolicy      = GROUP_BY_PRIO,
 -		.pgfailback    = 30,
--		.minio         = 128,
+-		.rr_weight     = RR_WEIGHT_PRIO,
+-		.no_path_retry = NO_PATH_RETRY_FAIL,
+-		.flush_on_last_del = FLUSH_ENABLED,
+-		.dev_loss      = 30,
 -	},
  #if 0
  	/*
