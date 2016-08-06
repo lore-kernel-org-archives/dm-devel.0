@@ -1,15 +1,14 @@
-From: james harvey <jamespharvey20@gmail.com>
-Subject: Re: lvmetad doesn't terminate with SIGTERM if thin
-	volume used
-Date: Fri, 5 Aug 2016 22:08:51 -0400
-Message-ID: <CA+X5Wn6DorjjziBD=R+60++bQgwAxDz_xvVsuv76u01Z8KKp6g@mail.gmail.com>
-References: <CA+X5Wn6rX5rjFOhz-V3r9QYY_Mcp-0ddBTRDSuhq4Xyy2ob-7Q@mail.gmail.com>
-	<CA+X5Wn5wn-engMAxvdqVSbK2bPo=9sz3485N3ZnCqGEZcQ79-Q@mail.gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH 1/3] multipath-tools: revert add TEGILE devices
+	to hardware table
+Date: Sat,  6 Aug 2016 11:59:31 +0200
+Message-ID: <1470477573-3725-2-git-send-email-xose.vazquez@gmail.com>
+References: <1470477573-3725-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CA+X5Wn5wn-engMAxvdqVSbK2bPo=9sz3485N3ZnCqGEZcQ79-Q@mail.gmail.com>
+In-Reply-To: <1470477573-3725-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,93 +18,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-U2FtZSBwcm9ibGVtIGFuZCBxdWVzdGlvbiBhYm91dCBpZiBhbiBpbW1lZGlhdGUgU0lHS0lMTCBp
-cyBPSyBmb3IgZG1ldmVudGQuCgpPbiBUaHUsIEF1ZyA0LCAyMDE2IGF0IDExOjIwIFBNLCBqYW1l
-cyBoYXJ2ZXkgPGphbWVzcGhhcnZleTIwQGdtYWlsLmNvbT4gd3JvdGU6Cj4gRG9lcyBpdCBtYXR0
-ZXIgYXQgYWxsIGlmIGx2bWV0YWQgc2h1dHMgZG93biBncmFjZWZ1bGx5Pwo+Cj4gQ2FuIEkgc2Fm
-ZWx5IGp1c3QgaGF2ZSBzeXN0ZW1kIHJpZ2h0IG9mZiB0aGUgYmF0IHNlbmQgYSBTSUdLSUxMPwo+
-Cj4gTW9zdCB0aGluZ3MgSSB3b3VsZG4ndCBhc2sgYWJvdXQsIGJ1dCBJJ20gd29uZGVyaW5nIGlm
-IHRoaXMgaXMgUFVSRUxZCj4gYSBjYWNoaW5nIGRhZW1vbiB3aGVyZSBncmFjZWZ1bGx5IHNodXR0
-aW5nIGRvd24gZG9lc24ndCByZWFsbHkgZG8KPiBhbnl0aGluZy4KPgo+IE9uIFdlZCwgQXVnIDMs
-IDIwMTYgYXQgMTA6NTEgUE0sIGphbWVzIGhhcnZleSA8amFtZXNwaGFydmV5MjBAZ21haWwuY29t
-PiB3cm90ZToKPj4gQWZ0ZXIgdXBncmFkaW5nIHRvIHN5c3RlbWQgdjIzMSwgbXkgc2h1dGRvd25z
-L3JlYm9vdHMgaGF2ZSBhIDkwIHNlY29uZAo+PiBkZWxheSBhdCB0aGUgdmVyeSBlbmQuICBMaW51
-eCBrdm0gNC42LjQtMS4KPj4KPj4gQWZ0ZXIgSSBsb29rZWQgaW50byBpdCwgSSBmb3VuZCBpdCdz
-IGR1ZSB0byBsdm1ldGFkIG5ldmVyIHRlcm1pbmF0aW5nCj4+IHdoZW4gcmVjZWl2aW5nIGEgU0lH
-VEVSTSwgYW5kIGFmdGVyIDkwIHNlY29uZHMsIHN5c3RlbWQgcGVyZm9ybXMgYQo+PiBTSUdLSUxM
-Lgo+Pgo+PiBzeXN0ZW1kIDIzMSAoY29tbWl0IGQ0NTA2MTI5KSBjaGFuZ2VkIHRoZSB0aW1lb3V0
-IG9uIHNlbmRpbmcgYSBTSUdLSUxMCj4+IGFmdGVyIGEgU0lHVEVSTSBmcm9tIDEwIHNlY29uZHMg
-dG8gOTAgc2Vjb25kcy4gIEkgdGhpbmsgdGhpcyBidWcgaGFzCj4+IGJlZW4gYXJvdW5kIGZvciBx
-dWl0ZSBhIHdoaWxlLCBiZWNhdXNlIEkndmUgbm90aWNlZCBzaHV0ZG93bnMgaGFkCj4+IGFib3V0
-IGEgMTAgc2Vjb25kIGRlbGF5IGF0IHRoZSBzYW1lIHNwb3QgdGhhdCBub3cgaGFzIGEgOTAgc2Vj
-b25kCj4+IGRlbGF5Lgo+Pgo+PiBXaXRoIGx2bWV0YWQgcnVubmluZyB3aXRoICItbCBhbGwiLCBh
-IHN5c3RlbWQgZGVidWcgZG1lc2cgbG9nIHRocm91Z2gKPj4gc2h1dGRvd24gaXMgYXR0YWNoZWQs
-IGFmdGVyIHJ1bm5pbmcgaXQgdGhyb3VnaCAiZ3JlcCAtaSBsdm0yIi4gIFRoZQo+PiBmdWxsICg0
-TUIpIHZlcnNpb24gaXMgaGVyZToKPj4gaHR0cDovLzQ1LjYzLjEwNi4yNDEvc2hhcmUvbHZtMi1s
-dm1ldGFkLnNodXRkb3duLWxvZzIudHh0Cj4+Cj4+IFRoaXMgYWxzbyBoYXBwZW5zIGlmIEkgYXR0
-ZW1wdCBzdG9wcGluZyBsdm0yLWx2bWV0YWQuICBBdHRhY2hlZCBpcwo+PiBpbmZvcm1hdGlvbiBz
-aG93aW5nIHRoYXQuCj4+Cj4+IEFsc28gYXR0YWNoZWQgaXMgdGhlIG1pbmltYWwgc3RlcHMgSSB1
-c2VkIHRvIGNhdXNlIHRoZSBwcm9ibGVtLCB1c2luZwo+PiBvbmUgZGlzayBhbmQgRVhUNC4KPj4K
-Pj4gSWYgZHVyaW5nIHRoZSBpbnN0YWxsIEkgY29tYmluZSB0aGUgMiBsdmNyZWF0ZSBjb21tYW5k
-cyBpbnRvIGEgc2luZ2xlCj4+IG9uZSB3aXRob3V0IHVzaW5nIHRoaW4gcG9vbHMsIHRoZW4gbHZt
-ZXRhZCB0ZXJtaW5hdGVzIHByZXR0eSBtdWNoCj4+IGltbWVkaWF0ZWx5IHdpdGggU0lHVEVSTS4K
-Pj4KPj4gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Cj4+Cj4+ICMgc3lzdGVtY3RsIHN0
-YXR1cyBsdm0yLWx2bWV0YWQKPj4g4pePIGx2bTItbHZtZXRhZC5zZXJ2aWNlIC0gTFZNMiBtZXRh
-ZGF0YSBkYWVtb24KPj4gICAgTG9hZGVkOiBsb2FkZWQgKC91c3IvbGliL3N5c3RlbWQvc3lzdGVt
-L2x2bTItbHZtZXRhZC5zZXJ2aWNlOwo+PiBkaXNhYmxlZDsgdmVuZG9yIHByZXNldDogZGlzYWJs
-ZWQpCj4+ICAgIEFjdGl2ZTogYWN0aXZlIChydW5uaW5nKSBzaW5jZSBXZWQgMjAxNi0wOC0wMyAy
-MTozNjo1NCBFRFQ7IDFtaW4gMTRzIGFnbwo+PiAgICAgIERvY3M6IG1hbjpsdm1ldGFkKDgpCj4+
-ICBNYWluIFBJRDogMzk4IChsdm1ldGFkKQo+PiAgICAgVGFza3M6IDIgKGxpbWl0OiA0OTE1KQo+
-PiAgICBDR3JvdXA6IC9zeXN0ZW0uc2xpY2UvbHZtMi1sdm1ldGFkLnNlcnZpY2UKPj4gICAgICAg
-ICAgICDilJTilIAzOTggL3Vzci9iaW4vbHZtZXRhZCAtZgo+Pgo+PiAjIHN5c3RlbWN0bCBzdG9w
-IGx2bTItbHZtZXRhZAo+PiB7e3sgYWZ0ZXIgOTAgc2Vjb25kcyB9fX0KPj4gV2FybmluZzogU3Rv
-cHBpbmcgbHZtMi1sdm1ldGFkLnNlcnZpY2UsIGJ1dCBpdCBjYW4gc3RpbGwgYmUgYWN0aXZhdGVk
-IGJ5Ogo+PiAgIGx2bTItbHZtZXRhZC5zb2NrZXQKPj4gIyBzeXN0ZW1jdGwgc3RhdHVzIGx2bTIt
-bHZtZXRhZAo+PiDil48gbHZtMi1sdm1ldGFkLnNlcnZpY2UgLSBMVk0yIG1ldGFkYXRhIGRhZW1v
-bgo+PiAgICBMb2FkZWQ6IGxvYWRlZCAoL3Vzci9saWIvc3lzdGVtZC9zeXN0ZW0vbHZtMi1sdm1l
-dGFkLnNlcnZpY2U7Cj4+IGRpc2FibGVkOyB2ZW5kb3IgcHJlc2V0OiBkaXNhYmxlZCkKPj4gICAg
-QWN0aXZlOiBmYWlsZWQgKFJlc3VsdDogc2lnbmFsKSBzaW5jZSBXZWQgMjAxNi0wOC0wMyAyMTo0
-MDozMyBFRFQ7IDEycyBhZ28KPj4gICAgICBEb2NzOiBtYW46bHZtZXRhZCg4KQo+PiAgIFByb2Nl
-c3M6IDM5OCBFeGVjU3RhcnQ9L3Vzci9iaW4vbHZtZXRhZCAtZiAoY29kZT1raWxsZWQsIHNpZ25h
-bD1LSUxMKQo+PiAgTWFpbiBQSUQ6IDM5OCAoY29kZT1raWxsZWQsIHNpZ25hbD1LSUxMKQo+Pgo+
-PiBBdWcgMDMgMjE6MzY6NTQgdGVycmEgc3lzdGVtZFsxXTogU3RhcnRlZCBMVk0yIG1ldGFkYXRh
-IGRhZW1vbi4KPj4gQXVnIDAzIDIxOjM5OjAzIHRlcnJhIHN5c3RlbWRbMV06IFN0b3BwaW5nIExW
-TTIgbWV0YWRhdGEgZGFlbW9uLi4uCj4+IEF1ZyAwMyAyMTozOTowMyB0ZXJyYSBsdm1ldGFkWzM5
-OF06IEZhaWxlZCB0byBhY2NlcHQgY29ubmVjdGlvbi4KPj4gQXVnIDAzIDIxOjQwOjMzIHRlcnJh
-IHN5c3RlbWRbMV06IGx2bTItbHZtZXRhZC5zZXJ2aWNlOiBTdGF0ZQo+PiAnc3RvcC1zaWd0ZXJt
-JyB0aW1lZCBvdXQuIEtpbGxpbmcuCj4+IEF1ZyAwMyAyMTo0MDozMyB0ZXJyYSBzeXN0ZW1kWzFd
-OiBsdm0yLWx2bWV0YWQuc2VydmljZTogS2lsbGluZwo+PiBwcm9jZXNzIDM5OCAobHZtZXRhZCkg
-d2l0aCBzaWduYWwgU0lHS0lMTC4KPj4gQXVnIDAzIDIxOjQwOjMzIHRlcnJhIHN5c3RlbWRbMV06
-IGx2bTItbHZtZXRhZC5zZXJ2aWNlOiBNYWluIHByb2Nlc3MKPj4gZXhpdGVkLCBjb2RlPWtpbGxl
-ZCwgc3RhdHVzPTkvS0lMTAo+PiBBdWcgMDMgMjE6NDA6MzMgdGVycmEgc3lzdGVtZFsxXTogU3Rv
-cHBlZCBMVk0yIG1ldGFkYXRhIGRhZW1vbi4KPj4gQXVnIDAzIDIxOjQwOjMzIHRlcnJhIHN5c3Rl
-bWRbMV06IGx2bTItbHZtZXRhZC5zZXJ2aWNlOiBVbml0IGVudGVyZWQKPj4gZmFpbGVkIHN0YXRl
-Lgo+PiBBdWcgMDMgMjE6NDA6MzMgdGVycmEgc3lzdGVtZFsxXTogbHZtMi1sdm1ldGFkLnNlcnZp
-Y2U6IEZhaWxlZCB3aXRoCj4+IHJlc3VsdCAnc2lnbmFsJy4KPj4KPj4gPT09PT09PT09PT09PT09
-PT09PT0KPj4KPj4gL2Rldi9zZGExIDMuNUcgTGludXggZmlsZXN5c3RlbQo+PiAvZGV2L3NkYTIg
-NC41VEIgTGludXggTFZNCj4+Cj4+IHsgU2V0dXAgTFZNIGFuZCBmaWxlc3lzdGVtcyB9Cj4+ICMg
-bWtmcy5leHQ0IC1MIGJvb3QgL2Rldi9zZGExCj4+ICMgcHZjcmVhdGUgL2Rldi9zZGEyCj4+ICMg
-dmdjcmVhdGUgZGlzazEgL2Rldi9zZGEyCj4+IHsgTWVyZ2luZyB0aGVzZSAyIGx2Y3JlYXRlcywg
-cmVtb3ZpbmcgdGhlIHRoaW4gdm9sdW1lIHVzYWdlIG1ha2VzCj4+IGx2bTItbHZtZXRhZCBwcm9w
-ZXJseSB0ZXJtaW5hdGUgb24gU0lHVEVSTSB9Cj4+ICMgbHZjcmVhdGUgLS1zaXplIDUwMEcgLS10
-aGlucG9vbCBkaXNrMXRoaW4gZGlzazEKPj4gIyBsdmNyZWF0ZSAtLXZpcnR1YWxzaXplIDEwMEcg
-LS1uYW1lIHJvb3QgZGlzazEvZGlzazF0aGluCj4+ICMgbWtmcy5leHQ0IC1MIC9tbnQgL2Rldi9k
-aXNrMS9tYWluCj4+ICMgbW91bnQgL2Rldi9kaXNrMS9tYWluIC9tbnQKPj4gIyBta2RpciAvbW50
-L2Jvb3QKPj4gIyBtb3VudCAvZGV2L3NkYTEgL21udC9ib290Cj4+Cj4+IHsgSW5zdGFsbCBBcmNo
-IExpbnV4IH0KPj4gIyB2aSAvZXRjL3BhY21hbi5kL21pcnJvcmxpc3QKPj4gIyBwYWNzdHJhcCAt
-aSAvbW50IGJhc2Ugc3lzbGludXggZ3B0ZmRpc2sgbHZtMgo+PiAjIGFyY2gtY2hyb290IC9tbnQK
-Pj4gIyB2aSAvZXRjL2xvY2FsZS5nZW4KPj4gIyBsb2NhbGUtZ2VuCj4+ICMgbG9jYWxlID4gL2V0
-Yy9sb2NhbGUuY29uZgo+PiAjIHZpIC9ldGMvbnNzd2l0Y2guY29uZgo+PiAjIHN5c3RlbWN0bCBl
-bmFibGUgc3lzdGVtZC1yZXNvbHZlZCBzeXN0ZW1kLW5ldHdvcmtkCj4+ICMgbG4gLXMgL3Vzci9z
-aGFyZS96b25laW5mby9BbWVyaWNhL0RldHJvaXQgL2V0Yy9sb2NhbHRpbWUKPj4gIyBod2Nsb2Nr
-IC0tdXRjIC0tc3lzdG9oYwo+PiAjIHBhc3N3ZAo+PiB7IEFkZCBsdm0yIGJldHdlZW4gYmxvY2sg
-YW5kIGZpbGVzeXN0ZW1zIH0KPj4gIyB2aSAvZXRjL21raW5pdGNwaW8uY29uZgo+PiAjIG1raW5p
-dGNwaW8gLXAgbGludXgKPj4gIyBlY2hvIGhvc3RuYW1lID4gL2V0Yy9ob3N0bmFtZQo+PiAjIHZp
-IC9ldGMvc3lzdGVtZC9uZXR3b3JrL2VucDMxczAubmV0d29yawo+PiAjIHN5c2xpbnV4LWluc3Rh
-bGxfdXBkYXRlIC1pIC1hIC1tCj4+ICMgdmkgL2Jvb3Qvc3lzbGludXgvc3lzbGludXguY2ZnCj4+
-Cj4+IHsgQWZ0ZXIgUmVib290IH0KPj4gIyB2aSAvZXRjL2ZzdGFiCgotLQpkbS1kZXZlbCBtYWls
-aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
-YW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 15 ---------------
+ 1 file changed, 15 deletions(-)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 187c109..69200f1 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -846,21 +846,6 @@ static struct hwentry default_hw[] = {
+ 		.flush_on_last_del = FLUSH_ENABLED,
+ 		.dev_loss      = 30,
+ 	},
+-	/*
+-	 * Tegile Systems
+-	 */
+-	{
+-		.vendor        = "TEGILE",
+-		.product       = "(ZEBI-(FC|ISCSI)|INTELLIFLASH)",
+-		.hwhandler     = "1 alua",
+-		.selector      = "round-robin 0",
+-		.no_path_retry = 10,
+-		.dev_loss      = 50,
+-		.prio_name     = PRIO_ALUA,
+-		.pgpolicy      = GROUP_BY_PRIO,
+-		.pgfailback    = 30,
+-		.minio         = 128,
+-	},
+ #if 0
+ 	/*
+ 	 * Copy this TEMPLATE to add new hardware.
+-- 
+2.7.4
