@@ -1,635 +1,161 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 4/7] multipath-tools: add dots(spaces) between
-	sections and keywords
-Date: Sun,  7 Aug 2016 00:40:05 +0200
-Message-ID: <1470523208-14067-4-git-send-email-xose.vazquez@gmail.com>
-References: <1470523208-14067-1-git-send-email-xose.vazquez@gmail.com>
+From: Benjamin Block <bblock@linux.vnet.ibm.com>
+Subject: Re: bug: using smp_processor_id() in preemptible code in
+ rr_select_path()
+Date: Sun, 7 Aug 2016 17:49:30 +0200
+Message-ID: <20160807154930.GA31352@bblock-ThinkPad-W530>
+References: <20160803153545.GE20370@bblock-ThinkPad-W530>
+ <20160805152705.GA17480@redhat.com>
+ <497f02e5-4f3d-8590-3096-fb5e2422bff4@kernel.dk>
+ <20160805154223.GA2340@redhat.com>
+ <107dc81f-675d-8ae4-0ac2-99c248a23c60@kernel.dk>
+ <20160805160638.GA17651@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1470523208-14067-1-git-send-email-xose.vazquez@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160805160638.GA17651@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, hch@lst.de, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Cleaner layout.
+On 12:06 Fri 05 Aug     , Mike Snitzer wrote:
+> On Fri, Aug 05 2016 at 11:54am -0400,
+> Jens Axboe <axboe@kernel.dk> wrote:
+> 
+> > On 08/05/2016 09:42 AM, Mike Snitzer wrote:
+> > >On Fri, Aug 05 2016 at 11:33P -0400,
+> > >Jens Axboe <axboe@kernel.dk> wrote:
+> > >
+> > >>On 08/05/2016 09:27 AM, Mike Snitzer wrote:
+> > >>>On Wed, Aug 03 2016 at 11:35am -0400,
+> > >>>Benjamin Block <bblock@linux.vnet.ibm.com> wrote:
+> > >>>
+> > >>>>Hej Mike,
+> > >>>>
+> > >>>>when running a debug-kernel today with several multipath-devices using
+> > >>>>the round-robin path selector I noticed that the kernel throws these
+> > >>>>warnings here:
+> > >>>>
+> > >>>>BUG: using smp_processor_id() in preemptible [00000000] code: kdmwork-252:0/881
+> > >>>>caller is rr_select_path+0x36/0x108 [dm_round_robin]
+> > >>>>CPU: 1 PID: 881 Comm: kdmwork-252:0 Not tainted 4.7.0-debug #4
+> > >>>>      00000000617679b8 0000000061767a48 0000000000000002 0000000000000000
+> > >>>>      0000000061767ae8 0000000061767a60 0000000061767a60 00000000001145d0
+> > >>>>      0000000000000000 0000000000b962ae 0000000000bb291e 000000000000000b
+> > >>>>      0000000061767aa8 0000000061767a48 0000000000000000 0000000000000000
+> > >>>>      0700000000b962ae 00000000001145d0 0000000061767a48 0000000061767aa8
+> > >>>>Call Trace:
+> > >>>>([<00000000001144a2>] show_trace+0x8a/0xe0)
+> > >>>>([<0000000000114586>] show_stack+0x8e/0xf0)
+> > >>>>([<00000000006c7fdc>] dump_stack+0x9c/0xe0)
+> > >>>>([<00000000006fbbc0>] check_preemption_disabled+0x108/0x130)
+> > >>>>([<000003ff80268646>] rr_select_path+0x36/0x108 [dm_round_robin])
+> > >>>>([<000003ff80259a42>] choose_path_in_pg+0x42/0xc8 [dm_multipath])
+> > >>>>([<000003ff80259b62>] choose_pgpath+0x9a/0x1a0 [dm_multipath])
+> > >>>>([<000003ff8025b51a>] __multipath_map.isra.5+0x72/0x228 [dm_multipath])
+> > >>>>([<000003ff8025b75e>] multipath_map+0x3e/0x50 [dm_multipath])
+> > >>>>([<000003ff80225eb6>] map_request+0x66/0x458 [dm_mod])
+> > >>>>([<000003ff802262ec>] map_tio_request+0x44/0x70 [dm_mod])
+> > >>>>([<000000000016835a>] kthread_worker_fn+0xf2/0x1d8)
+> > >>>>([<00000000001681da>] kthread+0x112/0x120)
+> > >>>>([<000000000098378a>] kernel_thread_starter+0x6/0xc)
+> > >>>>([<0000000000983784>] kernel_thread_starter+0x0/0xc)
+> > >>>>no locks held by kdmwork-252:0/881.
+> > >>>>
+> > >>>>
+> > >>>>There are several more of these warnings, but all have the same
+> > >>>>stack-trace (this is on s390x, but this looks like its only common code)
+> > >>>>- sometimes the process-context is multipath.
+> > >>>>
+> > >>>>Looking at the changes in this function, it rather looks like this is
+> > >>>>caused by changes made in commit
+> > >>>>b0b477c7e0dd93f8916d106018ded1331b81bf61 (dm round robin: use percpu
+> > >>>>'repeat_count' and 'current_path').
+> > >>>>
+> > >>>>The kernel is a stock v4.7 with some debug options enabled (prominently
+> > >>>>DEBUG_PREEMPT). Need any more info?
+> > >>>
+> > >>>As you can see from commit b0b477c7e0dd9 the round-robin path selector
+> > >>>is now using percpu data (pointer) and a percpu_counter.
+> > >>>
+> > >>>I'm really not sure how else to access this percpu data.
+> > >>>
+> > >>>Cc'ing LKML, linux-block, Jens and hch to cast a wider net in the hopes
+> > >>>of getting an answer to how to fix this.
+> > >>
+> > >>From a quick look, looks like you are using this_cpu_ptr() without
+> > >>having preemption disabled.
+> > >
+> > >Right, that is what it looked like to me too.
+> > >
+> > >I'm just not sure on what the proper pattern is to fix this.
+> > >
+> > >I'll look closer though.
+> > 
+> > I always forget the details (if this confuses lockdep or not), but you
+> > could potentially turn it into:
+> > 
+> > local_irq_save(flags);
+> > x = this_cpu_ptr();
+> > [...]
+> > 
+> > spin_lock(&s->lock);
+> > [...]
+> > 
+> > instead.
+> 
+> Cool, I've coded up the patch (compile tested only).
+> 
+> Benjamin, any chance you could test this against your v4.7 kernel and
+> report back?
+> 
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- multipath/multipath.conf.5 | 143 ++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 141 insertions(+), 2 deletions(-)
+I will give it a go on Monday. Thx for the quick fix.
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 1a96acf..14a8ccb 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -1,19 +1,28 @@
- .TH MULTIPATH.CONF 5 2016-08-06 "Linux"
-+.
-+.
- .\" ----------------------------------------------------------------------------
- .SH NAME
- .\" ----------------------------------------------------------------------------
-+.
- multipath.conf \- multipath daemon configuration file.
-+.
-+.
- .\" ----------------------------------------------------------------------------
- .SH DESCRIPTION
- .\" ----------------------------------------------------------------------------
-+.
- .B "/etc/multipath.conf"
- is the configuration file for the multipath daemon. It is used to
- overwrite the built-in configuration table of \fBmultipathd\fP.
- Any line whose first non-white-space character is a '#' is considered
- a comment line. Empty lines are ignored.
-+.
-+.
- .\" ----------------------------------------------------------------------------
- .SH SYNTAX
- .\" ----------------------------------------------------------------------------
-+.
- The configuration file contains entries of the form:
- .RS
- .nf
-@@ -44,6 +53,8 @@ Each \fIsection\fP contains one or more attributes or subsections. The
- recognized keywords for attributes or subsections depend on the
- section in which they occur.
- .LP
-+.
-+.
- The following \fIsection\fP keywords are recognized:
- .TP 17
- .B defaults
-@@ -73,10 +84,15 @@ This section defines values for attributes that should override the
- device-specific settings for all devices.
- .RE
- .LP
-+.
-+.
- .\" ----------------------------------------------------------------------------
- .SH "defaults section"
- .\" ----------------------------------------------------------------------------
-+.
- The \fIdefaults\fR section recognizes the following keywords:
-+.
-+.
- .TP 17
- .B verbosity
- Default verbosity. Higher values increase the verbosity level. Valid
-@@ -85,6 +101,8 @@ levels are between 0 and 6.
- .TP
- Default value is: \fB2\fR
- .RE
-+.
-+.
- .TP
- .B polling_interval
- Interval between two path checks in seconds. For properly functioning paths,
-@@ -95,6 +113,8 @@ setting in the multipathd.service definition if systemd is used.
- .TP
- Default value is: \fB5\fR
- .RE
-+.
-+.
- .TP
- .B max_polling_interval
- Maximal interval between two path checks in seconds.
-@@ -102,6 +122,8 @@ Maximal interval between two path checks in seconds.
- .TP
- Default value is: \fB4 * polling_interval\fR
- .RE
-+.
-+.
- .TP
- .B reassign_maps
- Enable reassigning of device-mapper maps. With this option multipathd
-@@ -112,6 +134,8 @@ device, not the underlying block devices. Possible values are
- .TP
- Default value is: \fBno\fR
- .RE
-+.
-+.
- .TP
- .B multipath_dir
- Directory where the dynamic shared objects are stored.
-@@ -119,6 +143,8 @@ Directory where the dynamic shared objects are stored.
- .TP
- Default value is: \fB<system dependent>\fR, commonly \fI/lib64/multipath/\fR
- .RE
-+.
-+.
- .TP
- .B path_selector
- The default path selector algorithm to use; they are offered by the
-@@ -138,6 +164,8 @@ to the path and its relative throughput.
- .TP
- Default value is: \fBservice-time 0\fR
- .RE
-+.
-+.
- .TP
- .B path_grouping_policy
- The default path grouping policy to apply to unspecified
-@@ -164,6 +192,8 @@ in \fI/sys/class/fc_transport/target*/node_name\fR.
- .TP
- Default value is: \fBfailover\fR
- .RE
-+.
-+.
- .TP
- .B uid_attribute
- The udev attribute providing a unique path identifier.
-@@ -173,11 +203,15 @@ Default value is: \fBID_SERIAL\fR for SCSI devices
- .TP
- Default value is: \fBID_UID\fR for DASD devices
- .RE
-+.
-+.
- .TP
- .B getuid_callout
- (Deprecated) The default program and args to callout to obtain a unique path
- identifier. Should be specified with an absolute path.
- .TP
-+.
-+.
- .B prio
- The name of the path priority routine. The specified routine
- should return a numeric value specifying the relative priority
-@@ -237,6 +271,8 @@ priority provided as argument. Requires prio_args keyword.
- .TP
- Default value is: \fBconst\fR
- .RE
-+.
-+.
- .TP
- .B prio_args
- Arguments to pass to to the prio function. This only applies to certain
-@@ -275,6 +311,8 @@ set will always be in their own path group.
- .TP
- Default value is: \fB<unset>\fR
- .RE
-+.
-+.
- .TP
- .B features
- Specify any device-mapper features to be used. Syntax is \fInum list\fR
-@@ -297,6 +335,8 @@ Number of msecs before pg_init retry, it must be between 0 and 60000.
- .TP
- Default value is: \fB0\fR
- .RE
-+.
-+.
- .TP
- .B path_checker
- The default method used to determine the paths state. Possible values
-@@ -336,6 +376,8 @@ Check the path state for HP/COMPAQ Smart Array(CCISS) controllers.
- .TP
- Default value is: \fBtur\fR
- .RE
-+.
-+.
- .TP
- .B alias_prefix
- The \fIuser_friendly_names\fR prefix.
-@@ -343,6 +385,8 @@ The \fIuser_friendly_names\fR prefix.
- .TP
- Default value is: \fBmpath\fR
- .RE
-+.
-+.
- .TP
- .B failback
- Tell multipathd how to manage path group failback.
-@@ -365,6 +409,8 @@ Deferred failback (time to defer in seconds).
- .TP
- Default value is: \fBmanual\fR
- .RE
-+.
-+.
- .TP
- .B  rr_min_io
- The number of IO to route to a path before switching to the next in
-@@ -373,6 +419,8 @@ the same path group. This is only for BIO based multipath.
- .TP
- Default value is: \fB1000\fR
- .RE
-+.
-+.
- .TP
- .B rr_min_io_rq
- The number of IO requests to route to a path before switching to the
-@@ -381,6 +429,8 @@ next in the same path group. This is only for request based multipath.
- .TP
- Default value is: \fB1\fR
- .RE
-+.
-+.
- .TP
- .B max_fds
- Specify the maximum number of file descriptors that can be opened by multipath
-@@ -393,6 +443,8 @@ if that number is greated than 1024.
- .TP
- Default value is: \fBmax\fR
- .RE
-+.
-+.
- .TP
- .B rr_weight
- If set to \fIpriorities\fR the multipath configurator will assign
-@@ -404,6 +456,8 @@ or
- .TP
- Default value is: \fBuniform\fR
- .RE
-+.
-+.
- .TP
- .B no_path_retry
- Specify the number of retries until disable queueing, or
-@@ -415,6 +469,8 @@ for never stop queueing. If unset no queueing is attempted.
- .TP
- Default value is: \fB<unset>\fR
- .RE
-+.
-+.
- .TP
- .B queue_without_daemon
- If set to
-@@ -431,6 +487,8 @@ cannot be told to stop queueing IO. Setting queue_without_daemon to
- .TP
- Default value is: \fBno\fR
- .RE
-+.
-+.
- .TP
- .B checker_timeout
- Specify the timeout to use for path checkers and prioritizers that issue SCSI
-@@ -439,6 +497,8 @@ commands with an explicit timeout, in seconds.
- .TP
- Default value is: in \fB/sys/block/sd<x>/device/timeout\fR
- .RE
-+.
-+.
- .TP
- .B flush_on_last_del
- If set to
-@@ -449,6 +509,8 @@ deleted.
- .TP
- Default value is: \fBno\fR
- .RE
-+.
-+.
- .TP
- .B user_friendly_names
- If set to
-@@ -462,6 +524,8 @@ be overridden by any specific aliases in the \fImultipaths\fR section.
- .TP
- Default value is: \fBno\fR
- .RE
-+.
-+.
- .TP
- .B fast_io_fail_tmo
- Specify the number of seconds the SCSI layer will wait after a problem has been
-@@ -473,6 +537,8 @@ will disable the timeout.
- .TP
- Default value is: in \fB5\fR
- .RE
-+.
-+.
- .TP
- .B dev_loss_tmo
- Specify the number of seconds the SCSI layer will wait after a problem has
-@@ -489,6 +555,8 @@ is not set.
- .TP
- Default value is: \fB600\fR
- .RE
-+.
-+.
- .TP
- .B bindings_file
- The full pathname of the binding file to be used when the user_friendly_names option is set.
-@@ -496,6 +564,8 @@ The full pathname of the binding file to be used when the user_friendly_names op
- .TP
- Default value is: \fB/etc/multipath/bindings\fR
- .RE
-+.
-+.
- .TP
- .B wwids_file
- The full pathname of the WWIDs file, which is used by multipath to keep track
-@@ -504,6 +574,8 @@ of the WWIDs for LUNs it has created multipath devices on in the past.
- .TP
- Default value is: \fB/etc/multipath/wwids\fR
- .RE
-+.
-+.
- .TP
- .B log_checker_err
- If set to
-@@ -516,6 +588,8 @@ errors are logged at level 3 until the device is restored. If set to
- .TP
- Default value is: \fBalways\fR
- .RE
-+.
-+.
- .TP
- .B reservation_key
- This is the service action reservation key used by mpathpersist. It must be
-@@ -527,6 +601,8 @@ device server to identify the I_T nexus.
- .TP
- Default value is: \fB<unset>\fR
- .RE
-+.
-+.
- .TP
- .B retain_attached_hw_handler
- If set to
-@@ -539,6 +615,8 @@ multipath will continue to use its configured hardware handler.
- .TP
- Default value is: \fByes\fR
- .RE
-+.
-+.
- .TP
- .B detect_prio
- If set to
-@@ -553,6 +631,8 @@ attributes \fIaccess_state\fR and \fIpreferred_path\fR are supported, or the
- .TP
- Default value is: \fByes\fR
- .RE
-+.
-+.
- .TP
- .B force_sync
- If set to
-@@ -564,6 +644,8 @@ multipathd checkers running in parallel causes significant CPU pressure.
- .TP
- Default value is: \fBno\fR
- .RE
-+.
-+.
- .TP
- .B strict_timinig
- If set to
-@@ -578,6 +660,8 @@ seconds.
- .TP
- Default value is: \fBno\fR
- .RE
-+.
-+.
- .TP
- .B deferred_remove
- If set to
-@@ -591,6 +675,8 @@ will be canceled.
- .TP
- Default value is: \fBno\fR
- .RE
-+.
-+.
- .TP
- .B partition_delimiter
- If this value is not set, when multipath renames a device, it will act just
-@@ -601,6 +687,8 @@ the \fI-p\fR option is used, and always add delimiter.
- .TP
- Default value is: \fB<unset>\fR
- .RE
-+.
-+.
- .TP
- .B config_dir
- If set to anything other than "", multipath will search this directory
-@@ -611,6 +699,8 @@ config_dir must either be "" or a fully qualified directory name.
- .TP
- Default value is: \fB/etc/multipath/conf.d/\fR
- .RE
-+.
-+.
- .TP
- .B delay_watch_checks
- If set to a value greater than 0, multipathd will watch paths that have
-@@ -621,6 +711,8 @@ have stayed up for \fIdelay_wait_checks\fR checks.
- .TP
- Default value is: \fBno\fR
- .RE
-+.
-+.
- .TP
- .B delay_wait_checks
- If set to a value greater than 0, when a device that has recently come back
-@@ -631,6 +723,8 @@ comes back online, it will marked and delayed, and not used until it has passed
- .TP
- Default value is: \fBno\fR
- .RE
-+.
-+.
- .TP
- .B find_multipaths
- If set to
-@@ -656,6 +750,8 @@ multipath devices, without having to edit the blacklist.
- .TP
- Default value is: \fBno\fR
- .RE
-+.
-+.
- .TP
- .B uxsock_timeout
- CLI receive timeout in milliseconds. For larger systems CLI commands
-@@ -668,6 +764,8 @@ those issues.
- .TP
- Default value is: \fB1000\fR
- .RE
-+.
-+.
- .TP
- .B retrigger_tries
- Sets the number of times multipathd will try to retrigger a uevent to get the
-@@ -676,6 +774,8 @@ WWID.
- .TP
- Default value is: \fB3\fR
- .RE
-+.
-+.
- .TP
- .B retrigger_delay
- Sets the amount of time, in seconds, to wait between retriggers.
-@@ -683,6 +783,8 @@ Sets the amount of time, in seconds, to wait between retriggers.
- .TP
- Default value is: \fB10\fR
- .RE
-+.
-+.
- .TP
- .B missing_uev_wait_timeout
- Controls how many seconds multipathd will wait, after a new multipath device
-@@ -694,14 +796,19 @@ on a device until it receives a change uevent from the initial table load.
- Default value is: \fB30\fR
- .RE
- .
-+.
-+.
- .\" ----------------------------------------------------------------------------
- .SH "blacklist section"
- .\" ----------------------------------------------------------------------------
-+.
- The \fIblacklist\fR
- section is used to exclude specific device from inclusion in the
- multipath topology. It is most commonly used to exclude local disks or
- LUNs for the array controller.
- .LP
-+.
-+.
- The following keywords are recognized:
- .TP 17
- .B devnode
-@@ -720,15 +827,20 @@ and
- .B product
- keywords. For a full description of these keywords please see the
- \fIdevices\fR section description.
-+.
-+.
- .\" ----------------------------------------------------------------------------
- .SH "blacklist_exceptions section"
- .\" ----------------------------------------------------------------------------
-+.
- The \fIblacklist_exceptions\fR section is used to revert the actions of the
- \fIblacklist\fR section, for example to include specific device in the
- multipath topology. This allows one to selectively include devices which
- would normally be excluded via the \fIblacklist\fR
- section.
- .LP
-+.
-+.
- The following keywords are recognized:
- .TP 17
- .B devnode
-@@ -756,12 +868,17 @@ The \fIproperty\fR blacklist and whitelist handling is different from the usual
- handling in the sense that the whitelist \fIhas\fR to be set, otherwise the
- device will be blacklisted. In these cases the message \fIblacklisted, udev
- property missing\fR will be displayed.
-+.
-+.
- .\" ----------------------------------------------------------------------------
- .SH "multipaths section"
- .\" ----------------------------------------------------------------------------
-+.
- The only recognized attribute for the \fImultipaths\fR section is the
- \fImultipath\fR subsection.
- .LP
-+.
-+.
- The \fImultipath\fR subsection recognizes the following attributes:
- .TP 17
- .B wwid
-@@ -770,6 +887,8 @@ The \fImultipath\fR subsection recognizes the following attributes:
- .B alias
- Symbolic name for the multipath map.
- .LP
-+.
-+.
- The following attributes are optional; if not set the default values
- are taken from the \fIdefaults\fR or \fIdevices\fR
- section:
-@@ -811,12 +930,17 @@ section:
- .RE
- .PD
- .LP
-+.
-+.
- .\" ----------------------------------------------------------------------------
- .SH "devices section"
- .\" ----------------------------------------------------------------------------
-+.
- The only recognized attribute for the \fIdevices\fR section is the \fIdevice\fR
- subsection.
- .LP
-+.
-+.
- The \fIdevice\fR subsection recognizes the following attributes:
- .TP 17
- .B vendor
-@@ -860,6 +984,8 @@ Hardware handler for SCSI-3 ALUA compatible arrays.
- .TP
- Default value is: \fB<unset>\fR
- .RE
-+.
-+.
- .LP
- The following attributes are optional; if not set the default values
- are taken from the \fIdefaults\fR
-@@ -910,9 +1036,12 @@ section:
- .RE
- .PD
- .LP
-+.
-+.
- .\" ----------------------------------------------------------------------------
- .SH "overrides section"
- .\" ----------------------------------------------------------------------------
-+.
- The overrides section recognizes the following optional attributes; if not set
- the values are taken from the \fIdevices\fR or \fIdefaults\fR sections:
- .sp 1
-@@ -967,9 +1096,12 @@ the values are taken from the \fIdevices\fR or \fIdefaults\fR sections:
- .RE
- .PD
- .LP
-+.
-+.
- .\" ----------------------------------------------------------------------------
- .SH "WWID generation"
- .\" ----------------------------------------------------------------------------
-+.
- Multipath uses a \fIWorld Wide Identification\fR (WWID) to determine
- which paths belong to the same device. Each path presenting the same
- WWID is assumed to point to the same device.
-@@ -993,9 +1125,12 @@ variable.
- If none of the \fIgetuid_callout\fR or \fIuid_attribute\fR parameters
- are present multipath will try to use the sysfs attribute
- \fIvpd_pg83\fR to generate the WWID.
-+.
-+.
- .\" ----------------------------------------------------------------------------
- .SH "KNOWN ISSUES"
- .\" ----------------------------------------------------------------------------
-+.
- The usage of \fIqueue_if_no_path\fR option can lead to \fID state\fR
- processes being hung and not killable in situations where all the paths to the
- LUN go offline. It is advisable to use the \fIno_path_retry\fR option instead.
-@@ -1005,17 +1140,21 @@ deadlock if the \fIdev_loss_tmo\fR setting results in a device being removed
- while I/O is still queued. The multipath daemon will update the \fIdev_loss_tmo\fR
- setting accordingly to avoid this deadlock. Hence if both values are
- specified the order of precedence is \fIno_path_retry, queue_if_no_path, dev_loss_tmo.\fR
--
-+.
-+.
- .\" ----------------------------------------------------------------------------
- .SH "SEE ALSO"
- .\" ----------------------------------------------------------------------------
-+.
- .BR udev (8),
- .BR dmsetup (8),
- .BR multipath (8),
- .BR multipathd (8).
--
-+.
-+.
- .\" ----------------------------------------------------------------------------
- .SH AUTHORS
- .\" ----------------------------------------------------------------------------
-+.
- \fImultipath-tools\fR was developed by Christophe Varoqui, <christophe.varoqui@opensvc.com>
- and others.
+
+- Benjamin
+
+> 
+> diff --git a/drivers/md/dm-round-robin.c b/drivers/md/dm-round-robin.c
+> index 4ace1da..ed446f8 100644
+> --- a/drivers/md/dm-round-robin.c
+> +++ b/drivers/md/dm-round-robin.c
+> @@ -210,14 +210,17 @@ static struct dm_path *rr_select_path(struct path_selector *ps, size_t nr_bytes)
+>  	struct path_info *pi = NULL;
+>  	struct dm_path *current_path = NULL;
+> 
+> +	local_irq_save(flags);
+>  	current_path = *this_cpu_ptr(s->current_path);
+>  	if (current_path) {
+>  		percpu_counter_dec(&s->repeat_count);
+> -		if (percpu_counter_read_positive(&s->repeat_count) > 0)
+> +		if (percpu_counter_read_positive(&s->repeat_count) > 0) {
+> +			local_irq_restore(flags);
+>  			return current_path;
+> +		}
+>  	}
+> 
+> -	spin_lock_irqsave(&s->lock, flags);
+> +	spin_lock(&s->lock);
+>  	if (!list_empty(&s->valid_paths)) {
+>  		pi = list_entry(s->valid_paths.next, struct path_info, list);
+>  		list_move_tail(&pi->list, &s->valid_paths);
+> @@ -225,7 +228,8 @@ static struct dm_path *rr_select_path(struct path_selector *ps, size_t nr_bytes)
+>  		set_percpu_current_path(s, pi->path);
+>  		current_path = pi->path;
+>  	}
+> -	spin_unlock_irqrestore(&s->lock, flags);
+> +	spin_unlock(&s->lock);
+> +	local_irq_restore(flags);
+> 
+>  	return current_path;
+>  }
+> 
+
 -- 
-2.7.4
+Linux on z Systems Development         /         IBM Systems & Technology Group
+		  IBM Deutschland Research & Development GmbH 
+Vorsitz. AufsR.: Martina Koederitz     /        Geschäftsführung: Dirk Wittkopp
+Sitz der Gesellschaft: Böblingen / Registergericht: AmtsG Stuttgart, HRB 243294
