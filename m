@@ -1,8 +1,7 @@
 From: Mike Christie <mchristi@redhat.com>
-Subject: [PATCH 2/4] multipath-tools: add checker callout to
-	repair path
-Date: Mon,  8 Aug 2016 07:01:48 -0500
-Message-ID: <1470657710-28081-3-git-send-email-mchristi@redhat.com>
+Subject: [PATCH 1/4] libmultipath: add rbd discovery
+Date: Mon,  8 Aug 2016 07:01:47 -0500
+Message-ID: <1470657710-28081-2-git-send-email-mchristi@redhat.com>
 References: <1470657710-28081-1-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,234 +21,152 @@ To: dm-devel@redhat.com, christophe.varoqui@opensvc.com
 Cc: Mike Christie <mchristi@redhat.com>
 List-Id: dm-devel.ids
 
-This patch adds a callback which can be used to repair a path
-if check() has determined it is in the PATH_DOWN state.
+rbd is a block device interface for Ceph. It does not support
+any SCSI commands, so this patch adds bus detection and virtual
+vendor/product pathinfo.
 
-The next patch that adds rbd checker support which will use this to
-handle the case where a rbd device is blacklisted.
+Changes since v1:
+1. Drop ID_UID use and implemented sysfs getuid support.
 
 Signed-off-by: Mike Christie <mchristi@redhat.com>
 ---
- libmultipath/checkers.c              | 23 +++++++++++++++++++++++
- libmultipath/checkers.h              |  4 ++++
- libmultipath/checkers/cciss_tur.c    |  5 +++++
- libmultipath/checkers/directio.c     |  5 +++++
- libmultipath/checkers/emc_clariion.c |  5 +++++
- libmultipath/checkers/hp_sw.c        |  5 +++++
- libmultipath/checkers/rdac.c         |  5 +++++
- libmultipath/checkers/readsector0.c  |  5 +++++
- libmultipath/checkers/tur.c          |  5 +++++
- multipathd/main.c                    |  9 +++++++++
- 10 files changed, 71 insertions(+)
+ libmultipath/checkers.h  |  1 +
+ libmultipath/discovery.c | 70 ++++++++++++++++++++++++++++++++++++++++++++++++
+ libmultipath/structs.h   |  1 +
+ 3 files changed, 72 insertions(+)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index 42baa86..8976c89 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -138,6 +138,14 @@ struct checker * add_checker (char *multipath_dir, char * name)
- 	if (!c->free)
- 		goto out;
- 
-+	c->repair = (void (*)(struct checker *)) dlsym(c->handle,
-+						       "libcheck_repair");
-+	errstr = dlerror();
-+	if (errstr != NULL)
-+		condlog(0, "A dynamic linking error occurred: (%s)", errstr);
-+	if (!c->repair)
-+		goto out;
-+
- 	c->fd = 0;
- 	c->sync = 1;
- 	list_add(&c->node, &checkers);
-@@ -203,6 +211,20 @@ void checker_put (struct checker * dst)
- 	free_checker(src);
- }
- 
-+void checker_repair (struct checker * c)
-+{
-+	if (!c)
-+		return;
-+
-+	c->message[0] = '\0';
-+	if (c->disable) {
-+		MSG(c, "checker disabled");
-+		return;
-+	}
-+
-+	c->repair(c);
-+}
-+
- int checker_check (struct checker * c)
- {
- 	int r;
-@@ -272,6 +294,7 @@ void checker_get (char *multipath_dir, struct checker * dst, char * name)
- 	dst->sync = src->sync;
- 	strncpy(dst->name, src->name, CHECKER_NAME_LEN);
- 	strncpy(dst->message, src->message, CHECKER_MSG_LEN);
-+	dst->repair = src->repair;
- 	dst->check = src->check;
- 	dst->init = src->init;
- 	dst->free = src->free;
 diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index 8fc8616..502d2d9 100644
+index ac382d7..8fc8616 100644
 --- a/libmultipath/checkers.h
 +++ b/libmultipath/checkers.h
-@@ -113,6 +113,9 @@ struct checker {
- 						multipath-wide. Use MALLOC if
- 						you want to stuff data in. */
- 	int (*check)(struct checker *);
-+	void (*repair)(struct checker *);     /* called if check returns
-+					        PATH_DOWN to bring path into
-+						usable state */
- 	int (*init)(struct checker *);       /* to allocate the context */
- 	void (*free)(struct checker *);      /* to free the context */
+@@ -84,6 +84,7 @@ enum path_check_state {
+ #define EMC_CLARIION "emc_clariion"
+ #define READSECTOR0  "readsector0"
+ #define CCISS_TUR    "cciss_tur"
++#define RBD          "rbd"
+ 
+ #define DEFAULT_CHECKER TUR
+ 
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 1fb4db4..61b389f 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1170,6 +1170,21 @@ scsi_sysfs_pathinfo (struct path * pp, vector hwtable)
+ }
+ 
+ static int
++rbd_sysfs_pathinfo (struct path * pp, vector hwtable)
++{
++	sprintf(pp->vendor_id, "Ceph");
++	sprintf(pp->product_id, "RBD");
++
++	condlog(3, "%s: vendor = %s product = %s", pp->dev, pp->vendor_id,
++		pp->product_id);
++	/*
++	 * set the hwe configlet pointer
++	 */
++	pp->hwe = find_hwe(hwtable, pp->vendor_id, pp->product_id, NULL);
++	return 0;
++}
++
++static int
+ ccw_sysfs_pathinfo (struct path * pp, vector hwtable)
+ {
+ 	struct udev_device *parent;
+@@ -1371,6 +1386,8 @@ sysfs_pathinfo(struct path * pp, vector hwtable)
+ 		pp->bus = SYSFS_BUS_CCW;
+ 	if (!strncmp(pp->dev,"sd", 2))
+ 		pp->bus = SYSFS_BUS_SCSI;
++	if (!strncmp(pp->dev,"rbd", 3))
++		pp->bus = SYSFS_BUS_RBD;
+ 
+ 	if (pp->bus == SYSFS_BUS_UNDEF)
+ 		return 0;
+@@ -1383,6 +1400,9 @@ sysfs_pathinfo(struct path * pp, vector hwtable)
+ 	} else if (pp->bus == SYSFS_BUS_CCISS) {
+ 		if (cciss_sysfs_pathinfo(pp, hwtable))
+ 			return 1;
++	} else if (pp->bus == SYSFS_BUS_RBD) {
++		if (rbd_sysfs_pathinfo(pp, hwtable))
++			return 1;
+ 	}
+ 	return 0;
+ }
+@@ -1540,6 +1560,53 @@ get_udev_uid(struct path * pp, char *uid_attribute)
+ }
+ 
+ static int
++get_rbd_uid(struct path * pp)
++{
++	struct udev_device *rbd_bus_dev;
++	int ret, rbd_bus_id;
++	const char *pool, *image, *snap;
++	char sysfs_path[PATH_SIZE];
++	uint64_t snap_id, max_snap_id = -3;
++
++	ret = sscanf(pp->dev, "rbd%d", &rbd_bus_id);
++	if (ret != 1)
++		return -EINVAL;
++
++	snprintf(sysfs_path, sizeof(sysfs_path), "/sys/bus/rbd/devices/%d",
++		 rbd_bus_id);
++	rbd_bus_dev = udev_device_new_from_syspath(udev, sysfs_path);
++	if (!rbd_bus_dev)
++		return -ENODEV;
++
++	ret = -EINVAL;
++	pool = udev_device_get_sysattr_value(rbd_bus_dev, "pool_id");
++	if (!pool)
++		goto free_dev;
++
++	image = udev_device_get_sysattr_value(rbd_bus_dev, "image_id");
++	if (!image)
++		goto free_dev;
++
++	snap = udev_device_get_sysattr_value(rbd_bus_dev, "snap_id");
++	if (!snap)
++		goto free_dev;
++	snap_id = strtoull(snap, NULL, 19);
++	if (snap_id >= max_snap_id)
++		ret = snprintf(pp->wwid, WWID_SIZE, "%s-%s", pool, image);
++	else
++		ret = snprintf(pp->wwid, WWID_SIZE, "%s-%s-%s", pool,
++			       image, snap);
++	if (ret >= WWID_SIZE) {
++		condlog(0, "%s: wwid overflow", pp->dev);
++		ret = -EOVERFLOW;
++	}
++
++free_dev:
++	udev_device_unref(rbd_bus_dev);
++	return ret;
++}
++
++static int
+ get_vpd_uid(struct path * pp)
+ {
+ 	struct udev_device *parent = pp->udev;
+@@ -1591,6 +1658,9 @@ get_uid (struct path * pp, int path_state)
+ 		} else
+ 			len = strlen(pp->wwid);
+ 		origin = "callout";
++	} else if (pp->bus == SYSFS_BUS_RBD) {
++		len = get_rbd_uid(pp);
++		origin = "sysfs";
+ 	} else {
+ 		int retrigger;
+ 
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index a87cda6..cb5d532 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -52,6 +52,7 @@ enum sysfs_buses {
+ 	SYSFS_BUS_IDE,
+ 	SYSFS_BUS_CCW,
+ 	SYSFS_BUS_CCISS,
++	SYSFS_BUS_RBD,
  };
-@@ -132,6 +135,7 @@ void checker_set_async (struct checker *);
- void checker_set_fd (struct checker *, int);
- void checker_enable (struct checker *);
- void checker_disable (struct checker *);
-+void checker_repair (struct checker *);
- int checker_check (struct checker *);
- int checker_selected (struct checker *);
- char * checker_name (struct checker *);
-diff --git a/libmultipath/checkers/cciss_tur.c b/libmultipath/checkers/cciss_tur.c
-index 81500dc..a0ffffe 100644
---- a/libmultipath/checkers/cciss_tur.c
-+++ b/libmultipath/checkers/cciss_tur.c
-@@ -59,6 +59,11 @@ void libcheck_free (struct checker * c)
- 	return;
- }
  
-+void libcheck_repair (struct checker * c)
-+{
-+	return;
-+}
-+
- extern int
- libcheck_check (struct checker * c)
- {
-diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
-index 94bf8f7..eec12d5 100644
---- a/libmultipath/checkers/directio.c
-+++ b/libmultipath/checkers/directio.c
-@@ -118,6 +118,11 @@ void libcheck_free (struct checker * c)
- 	free(ct);
- }
- 
-+void libcheck_repair (struct checker * c)
-+{
-+	return;
-+}
-+
- static int
- check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
- {
-diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
-index 5e416a0..a7b9f86 100644
---- a/libmultipath/checkers/emc_clariion.c
-+++ b/libmultipath/checkers/emc_clariion.c
-@@ -91,6 +91,11 @@ void libcheck_free (struct checker * c)
- 	free(c->context);
- }
- 
-+void libcheck_repair (struct checker * c)
-+{
-+	return;
-+}
-+
- int libcheck_check (struct checker * c)
- {
- 	unsigned char sense_buffer[128] = { 0, };
-diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
-index fe5e0f9..0cc1111 100644
---- a/libmultipath/checkers/hp_sw.c
-+++ b/libmultipath/checkers/hp_sw.c
-@@ -44,6 +44,11 @@ void libcheck_free (struct checker * c)
- 	return;
- }
- 
-+void libcheck_repair (struct checker * c)
-+{
-+	return;
-+}
-+
- static int
- do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
-        void *resp, int mx_resp_len, int noisy, unsigned int timeout)
-diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
-index 00e3c44..68682c8 100644
---- a/libmultipath/checkers/rdac.c
-+++ b/libmultipath/checkers/rdac.c
-@@ -139,6 +139,11 @@ void libcheck_free (struct checker * c)
- 	return;
- }
- 
-+void libcheck_repair (struct checker * c)
-+{
-+	return;
-+}
-+
- static int
- do_inq(int sg_fd, unsigned int pg_op, void *resp, int mx_resp_len,
-        unsigned int timeout)
-diff --git a/libmultipath/checkers/readsector0.c b/libmultipath/checkers/readsector0.c
-index 1c2a868..8fccb46 100644
---- a/libmultipath/checkers/readsector0.c
-+++ b/libmultipath/checkers/readsector0.c
-@@ -23,6 +23,11 @@ void libcheck_free (struct checker * c)
- 	return;
- }
- 
-+void libcheck_repair (struct checker * c)
-+{
-+	return;
-+}
-+
- int libcheck_check (struct checker * c)
- {
- 	unsigned char buf[4096];
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index c4ef8a8..219afc3 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -97,6 +97,11 @@ void libcheck_free (struct checker * c)
- 	return;
- }
- 
-+void libcheck_repair (struct checker * c)
-+{
-+	return;
-+}
-+
- #define TUR_MSG(msg, fmt, args...) snprintf(msg, CHECKER_MSG_LEN, fmt, ##args);
- 
- int
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 20589a7..f34500c 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1725,6 +1725,14 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	return 1;
- }
- 
-+void repair_path(struct vectors * vecs, struct path * pp)
-+{
-+	if (pp->state != PATH_DOWN)
-+		return;
-+
-+	checker_repair(&pp->checker);
-+}
-+
- static void *
- checkerloop (void *ap)
- {
-@@ -1796,6 +1804,7 @@ checkerloop (void *ap)
- 					i--;
- 				} else
- 					num_paths += rc;
-+				repair_path(vecs, pp);
- 			}
- 			lock_cleanup_pop(vecs->lock);
- 		}
+ enum pathstates {
 -- 
 2.7.2
