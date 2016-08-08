@@ -1,157 +1,91 @@
-From: Benjamin Block <bblock@linux.vnet.ibm.com>
-Subject: Re: [dm-devel] bug: using smp_processor_id() in preemptible code in
- rr_select_path()
-Date: Mon, 8 Aug 2016 19:04:12 +0200
-Message-ID: <20160808170412.GC31352@bblock-ThinkPad-W530>
-References: <20160803153545.GE20370@bblock-ThinkPad-W530>
- <20160805152705.GA17480@redhat.com>
- <497f02e5-4f3d-8590-3096-fb5e2422bff4@kernel.dk>
- <20160805154223.GA2340@redhat.com>
- <107dc81f-675d-8ae4-0ac2-99c248a23c60@kernel.dk>
- <20160805160638.GA17651@redhat.com>
- <20160808163236.GB31352@bblock-ThinkPad-W530>
- <4b62efae-c6e2-e552-5c26-de7a5107dfd4@kernel.dk>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: [dm-devel] dm-mq and end_clone_request()
+Date: Mon, 8 Aug 2016 15:39:07 -0700
+Message-ID: <077d2708-3360-d8d7-fb3c-d3a73a1e03ee@sandisk.com>
+References: <20160801175948.GA6685@redhat.com>
+ <4d60017e-818c-5630-549e-bf280abcf1c3@sandisk.com>
+ <20160804235850.GB13132@redhat.com>
+ <1649218.8261013.1470359248073.JavaMail.zimbra@redhat.com>
+ <1931660518.8323360.1470397410683.JavaMail.zimbra@redhat.com>
+ <73e2aeda-140d-72ab-d295-57f35139ae55@sandisk.com>
+ <1616390775.11191.1470494853559.JavaMail.zimbra@redhat.com>
+ <SN1PR0201MB1870C587B123A8F84A49C1BD811B0@SN1PR0201MB1870.namprd02.prod.outlook.com>
+ <551419047.135340.1470669997660.JavaMail.zimbra@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4b62efae-c6e2-e552-5c26-de7a5107dfd4@kernel.dk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, hch@lst.de
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <551419047.135340.1470669997660.JavaMail.zimbra@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Laurence Oberman <loberman@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, Johannes Thumshirn <jthumshirn@suse.de>
 List-Id: dm-devel.ids
 
-On 10:39 Mon 08 Aug     , Jens Axboe wrote:
-> On 08/08/2016 10:32 AM, Benjamin Block wrote:
-> >On 12:06 Fri 05 Aug     , Mike Snitzer wrote:
-> >>On Fri, Aug 05 2016 at 11:54am -0400,
-> >>Jens Axboe <axboe@kernel.dk> wrote:
-> >>
-> >>>On 08/05/2016 09:42 AM, Mike Snitzer wrote:
-> >>>>On Fri, Aug 05 2016 at 11:33P -0400,
-> >>>>Jens Axboe <axboe@kernel.dk> wrote:
-> >>>>
-> >>>>>On 08/05/2016 09:27 AM, Mike Snitzer wrote:
-> >>>>>>On Wed, Aug 03 2016 at 11:35am -0400,
-> >>>>>>Benjamin Block <bblock@linux.vnet.ibm.com> wrote:
-> >>>>>>
-> >>>>>>>Hej Mike,
-> >>>>>>>
-> >>>>>>>when running a debug-kernel today with several multipath-devices using
-> >>>>>>>the round-robin path selector I noticed that the kernel throws these
-> >>>>>>>warnings here:
-> >>>>>>>
-> >>>>>>>BUG: using smp_processor_id() in preemptible [00000000] code: kdmwork-252:0/881
-> >>>>>>>caller is rr_select_path+0x36/0x108 [dm_round_robin]
-> >>>>>>>CPU: 1 PID: 881 Comm: kdmwork-252:0 Not tainted 4.7.0-debug #4
-> >>>>>>>     00000000617679b8 0000000061767a48 0000000000000002 0000000000000000
-> >>>>>>>     0000000061767ae8 0000000061767a60 0000000061767a60 00000000001145d0
-> >>>>>>>     0000000000000000 0000000000b962ae 0000000000bb291e 000000000000000b
-> >>>>>>>     0000000061767aa8 0000000061767a48 0000000000000000 0000000000000000
-> >>>>>>>     0700000000b962ae 00000000001145d0 0000000061767a48 0000000061767aa8
-> >>>>>>>Call Trace:
-> >>>>>>>([<00000000001144a2>] show_trace+0x8a/0xe0)
-> >>>>>>>([<0000000000114586>] show_stack+0x8e/0xf0)
-> >>>>>>>([<00000000006c7fdc>] dump_stack+0x9c/0xe0)
-> >>>>>>>([<00000000006fbbc0>] check_preemption_disabled+0x108/0x130)
-> >>>>>>>([<000003ff80268646>] rr_select_path+0x36/0x108 [dm_round_robin])
-> >>>>>>>([<000003ff80259a42>] choose_path_in_pg+0x42/0xc8 [dm_multipath])
-> >>>>>>>([<000003ff80259b62>] choose_pgpath+0x9a/0x1a0 [dm_multipath])
-> >>>>>>>([<000003ff8025b51a>] __multipath_map.isra.5+0x72/0x228 [dm_multipath])
-> >>>>>>>([<000003ff8025b75e>] multipath_map+0x3e/0x50 [dm_multipath])
-> >>>>>>>([<000003ff80225eb6>] map_request+0x66/0x458 [dm_mod])
-> >>>>>>>([<000003ff802262ec>] map_tio_request+0x44/0x70 [dm_mod])
-> >>>>>>>([<000000000016835a>] kthread_worker_fn+0xf2/0x1d8)
-> >>>>>>>([<00000000001681da>] kthread+0x112/0x120)
-> >>>>>>>([<000000000098378a>] kernel_thread_starter+0x6/0xc)
-> >>>>>>>([<0000000000983784>] kernel_thread_starter+0x0/0xc)
-> >>>>>>>no locks held by kdmwork-252:0/881.
-> >>>>>>>
-> >[:snip:]
-> >>>
-> >>>I always forget the details (if this confuses lockdep or not), but you
-> >>>could potentially turn it into:
-> >>>
-> >>>local_irq_save(flags);
-> >>>x = this_cpu_ptr();
-> >>>[...]
-> >>>
-> >>>spin_lock(&s->lock);
-> >>>[...]
-> >>>
-> >>>instead.
-> >>
-> >>Cool, I've coded up the patch (compile tested only).
-> >>
-> >>Benjamin, any chance you could test this against your v4.7 kernel and
-> >>report back?
-> >>
-> >>Thanks,
-> >>Mike
-> >>
-> >>diff --git a/drivers/md/dm-round-robin.c b/drivers/md/dm-round-robin.c
-> >>index 4ace1da..ed446f8 100644
-> >>--- a/drivers/md/dm-round-robin.c
-> >>+++ b/drivers/md/dm-round-robin.c
-> >>@@ -210,14 +210,17 @@ static struct dm_path *rr_select_path(struct path_selector *ps, size_t nr_bytes)
-> >> 	struct path_info *pi = NULL;
-> >> 	struct dm_path *current_path = NULL;
-> >>
-> >>+	local_irq_save(flags);
-> >> 	current_path = *this_cpu_ptr(s->current_path);
-> >> 	if (current_path) {
-> >> 		percpu_counter_dec(&s->repeat_count);
-> >>-		if (percpu_counter_read_positive(&s->repeat_count) > 0)
-> >>+		if (percpu_counter_read_positive(&s->repeat_count) > 0) {
-> >>+			local_irq_restore(flags);
-> >> 			return current_path;
-> >>+		}
-> >> 	}
-> >>
-> >>-	spin_lock_irqsave(&s->lock, flags);
-> >>+	spin_lock(&s->lock);
-> >> 	if (!list_empty(&s->valid_paths)) {
-> >> 		pi = list_entry(s->valid_paths.next, struct path_info, list);
-> >> 		list_move_tail(&pi->list, &s->valid_paths);
-> >>@@ -225,7 +228,8 @@ static struct dm_path *rr_select_path(struct path_selector *ps, size_t nr_bytes)
-> >> 		set_percpu_current_path(s, pi->path);
-> >> 		current_path = pi->path;
-> >> 	}
-> >>-	spin_unlock_irqrestore(&s->lock, flags);
-> >>+	spin_unlock(&s->lock);
-> >>+	local_irq_restore(flags);
-> >>
-> >> 	return current_path;
-> >> }
-> >>
-> >
-> >Ok, this works as far as the warnings don't appear anymore. But while
-> >applying the patch and thinking about it, why local_irq_save() and not
-> >preempt_disable()? "Sounds" like this is the function you want, and I
-> >also stumbled across this in Documentation/preempt-locking.txt:
-> >
-> >  But keep in mind that 'irqs disabled' is a fundamentally unsafe way of
-> >  disabling preemption - any spin_unlock() decreasing the preemption
-> >  count to 0 might trigger a reschedule.
-> >
-> >The spinlock would do an other nested preempt_disable(), but those even
-> >out.
+On 08/08/2016 08:26 AM, Laurence Oberman wrote:
+> I will test this as well.
+> I have lost my DDN array today (sadly:)) but I have two systems
+> back to back again using ramdisk on the one to serve LUNS.
 > 
-> local_irq_save(), since we need to grab the lock irq safe very shortly
-> anyway. As long as they nest properly, the approach is fine, and it's
-> more efficient than first doing a preempt_disable(), then still needing
-> a irq safe spinlock.
-> 
+> If I pull from  https://github.com/bvanassche/linux again, and
+> switch branch to srp-initiator-for-next, will I get all Mikes
+> latest patches from last week + this. I guess I can just check
+> myself, but might as well just ask.
 
-Fair enough, it also doesn't look like the code is doing anything that
-could trigger a reschedule.
+Hello Laurence,
 
+Sorry but I do not yet have a fix available for the scsi_forget_host()
+crash you reported in an earlier e-mail. But Mike's latest patches
+including the patch below are now available at
+https://github.com/bvanassche/linux in the srp-initiator-for-next
+branch. Further feedback is welcome.
 
-                                                    Beste Grüße / Best regards,
-                                                      - Benjamin Block
+Thanks,
+
+Bart.
+
+[PATCH] Check invariants at runtime
+
+Warn if sdev->sdev_state != SDEV_DEL when __scsi_remove_device()
+returns. Check whether all __scsi_remove_device() callers hold the
+scan_mutex.
+---
+ drivers/scsi/scsi_sysfs.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/scsi/scsi_sysfs.c b/drivers/scsi/scsi_sysfs.c
+index 82209ad4..a21e321 100644
+--- a/drivers/scsi/scsi_sysfs.c
++++ b/drivers/scsi/scsi_sysfs.c
+@@ -1312,6 +1312,8 @@ void __scsi_remove_device(struct scsi_device *sdev)
+ {
+ 	struct device *dev = &sdev->sdev_gendev, *sdp = NULL;
+ 
++	lockdep_assert_held(&sdev->host->scan_mutex);
++
+ 	/*
+ 	 * This cleanup path is not reentrant and while it is impossible
+ 	 * to get a new reference with scsi_device_get() someone can still
+@@ -1321,8 +1323,11 @@ void __scsi_remove_device(struct scsi_device *sdev)
+ 		return;
+ 
+ 	if (sdev->is_visible) {
+-		if (scsi_device_set_state(sdev, SDEV_CANCEL) != 0)
++		if (scsi_device_set_state(sdev, SDEV_CANCEL) != 0) {
++			WARN_ONCE(sdev->sdev_state != SDEV_DEL,
++				  "sdev state %d\n", sdev->sdev_state);
+ 			return;
++		}
+ 
+ 		bsg_unregister_queue(sdev->request_queue);
+ 		sdp = scsi_get_ulpdev(dev);
+@@ -1339,6 +1344,8 @@ void __scsi_remove_device(struct scsi_device *sdev)
+ 	 * device.
+ 	 */
+ 	scsi_device_set_state(sdev, SDEV_DEL);
++	WARN_ONCE(sdev->sdev_state != SDEV_DEL, "sdev state %d\n",
++		  sdev->sdev_state);
+ 	blk_cleanup_queue(sdev->request_queue);
+ 	cancel_work_sync(&sdev->requeue_work);
+ 
 -- 
-Linux on z Systems Development         /         IBM Systems & Technology Group
-		  IBM Deutschland Research & Development GmbH 
-Vorsitz. AufsR.: Martina Koederitz     /        Geschäftsführung: Dirk Wittkopp
-Sitz der Gesellschaft: Böblingen / Registergericht: AmtsG Stuttgart, HRB 243294
+2.9.2
