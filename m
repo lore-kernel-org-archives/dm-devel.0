@@ -1,108 +1,145 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [dm-devel] dm-mq and end_clone_request()
-Date: Mon, 8 Aug 2016 08:28:34 -0700
-Message-ID: <6ea19251-fc58-64d9-006e-ae5d2cb293eb@acm.org>
-References: <20160801175948.GA6685@redhat.com>
-	<4d60017e-818c-5630-549e-bf280abcf1c3@sandisk.com>
-	<20160804235850.GB13132@redhat.com>
-	<1649218.8261013.1470359248073.JavaMail.zimbra@redhat.com>
-	<1931660518.8323360.1470397410683.JavaMail.zimbra@redhat.com>
-	<73e2aeda-140d-72ab-d295-57f35139ae55@sandisk.com>
-	<1616390775.11191.1470494853559.JavaMail.zimbra@redhat.com>
-	<SN1PR0201MB1870C587B123A8F84A49C1BD811B0@SN1PR0201MB1870.namprd02.prod.outlook.com>
-	<551419047.135340.1470669997660.JavaMail.zimbra@redhat.com>
+From: Benjamin Block <bblock@linux.vnet.ibm.com>
+Subject: Re: [dm-devel] bug: using smp_processor_id() in preemptible code in
+ rr_select_path()
+Date: Mon, 8 Aug 2016 18:32:36 +0200
+Message-ID: <20160808163236.GB31352@bblock-ThinkPad-W530>
+References: <20160803153545.GE20370@bblock-ThinkPad-W530>
+ <20160805152705.GA17480@redhat.com>
+ <497f02e5-4f3d-8590-3096-fb5e2422bff4@kernel.dk>
+ <20160805154223.GA2340@redhat.com>
+ <107dc81f-675d-8ae4-0ac2-99c248a23c60@kernel.dk>
+ <20160805160638.GA17651@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <551419047.135340.1470669997660.JavaMail.zimbra@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Laurence Oberman <loberman@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, Johannes Thumshirn <jthumshirn@suse.de>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160805160638.GA17651@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, hch@lst.de
 List-Id: dm-devel.ids
 
-On 08/08/16 08:26, Laurence Oberman wrote:
->
->
-> ----- Original Message -----
->> From: "Bart Van Assche" <Bart.VanAssche@sandisk.com>
->> To: "Laurence Oberman" <loberman@redhat.com>
->> Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, "Mike Snitzer" <snitzer@redhat.com>, "Johannes Thumshirn"
->> <jthumshirn@suse.de>
->> Sent: Monday, August 8, 2016 11:11:56 AM
->> Subject: Re: [dm-devel] dm-mq and end_clone_request()
->>
->> On 08/06/16 07:47, Laurence Oberman wrote:
->>> [66814.772851]  [<ffffffff8118e72f>] ? panic+0x1eb/0x233
->>> [66814.800207]  [<ffffffff810308f8>] oops_end+0xb8/0xd0
->>> [66814.827454]  [<ffffffff8106977e>] no_context+0x13e/0x3a0
->>> [66814.858368]  [<ffffffff811f3feb>] ? __slab_free+0x9b/0x280
->>> [66814.890365]  [<ffffffff81069ace>] __bad_area_nosemaphore+0xee/0x1d0
->>> [66814.926508]  [<ffffffff81069bc4>] bad_area_nosemaphore+0x14/0x20
->>> [66814.959939]  [<ffffffff8106a269>] __do_page_fault+0x89/0x4a0
->>> [66814.992039]  [<ffffffff811f3feb>] ? __slab_free+0x9b/0x280
->>> [66815.023052]  [<ffffffff8106a6b0>] do_page_fault+0x30/0x80
->>> [66815.053368]  [<ffffffff816c8b88>] page_fault+0x28/0x30
->>> [66815.083196]  [<ffffffff814ae4e9>] ? __scsi_remove_device+0x79/0x160
->>> [66815.117444]  [<ffffffff814ae5c2>] ? __scsi_remove_device+0x152/0x160
->>> [66815.152051]  [<ffffffff814ac790>] scsi_forget_host+0x60/0x70
->>> [66815.183939]  [<ffffffff814a0137>] scsi_remove_host+0x77/0x110
->>> [66815.216152]  [<ffffffffa0677be0>] srp_remove_work+0x90/0x200 [ib_srp]
->>> [66815.253221]  [<ffffffff810a2e72>] process_one_work+0x152/0x400
->>> [66815.286221]  [<ffffffff810a3765>] worker_thread+0x125/0x4b0
->>> [66815.317313]  [<ffffffff810a3640>] ? rescuer_thread+0x380/0x380
->>> [66815.349770]  [<ffffffff810a9298>] kthread+0xd8/0xf0
->>> [66815.376082]  [<ffffffff816c6b3f>] ret_from_fork+0x1f/0x40
->>> [66815.404767]  [<ffffffff810a91c0>] ? kthread_park+0x60/0x60
->>
->> Hello Laurence and Johannes,
->>
->> Later today I will start testing the following patch:
->>
->>
->> Subject: [PATCH] Fix a use-after-free in scsi_forget_host()
->>
->> Avoid that scsi_forget_host() can call __scsi_remove_device()
->> while scsi_device_dev_release_usercontext() is freeing the same
->> SCSI device.
->> ---
->>  drivers/scsi/scsi_scan.c | 3 ++-
->>  1 file changed, 2 insertions(+), 1 deletion(-)
->>
->> diff --git a/drivers/scsi/scsi_scan.c b/drivers/scsi/scsi_scan.c
->> index e0a78f5..6cffc90 100644
->> --- a/drivers/scsi/scsi_scan.c
->> +++ b/drivers/scsi/scsi_scan.c
->> @@ -1890,10 +1890,11 @@ void scsi_forget_host(struct Scsi_Host *shost)
->>   restart:
->>  	spin_lock_irqsave(shost->host_lock, flags);
->>  	list_for_each_entry(sdev, &shost->__devices, siblings) {
->> -		if (sdev->sdev_state == SDEV_DEL)
->> +		if (sdev->sdev_state == SDEV_DEL || scsi_device_get(sdev) < 0)
->>  			continue;
->>  		spin_unlock_irqrestore(shost->host_lock, flags);
->>  		__scsi_remove_device(sdev);
->> +		scsi_device_put(sdev);
->>  		goto restart;
->>  	}
->>  	spin_unlock_irqrestore(shost->host_lock, flags);
->> --
->> 2.9.2
->>
->>
->>
-> Hello Bart, Johannes
->
-> I will test this as well.
-> I have lost my DDN array today (sadly:)) but I have two systems back to back again using ramdisk on the one to serve LUNS.
->
-> If I pull from  https://github.com/bvanassche/linux again, and switch branch to srp-initiator-for-next, will I get all Mikes latest patches from last week + this.
-> I guess I can just check myself, but might as well just ask.
+On 12:06 Fri 05 Aug     , Mike Snitzer wrote:
+> On Fri, Aug 05 2016 at 11:54am -0400,
+> Jens Axboe <axboe@kernel.dk> wrote:
+> 
+> > On 08/05/2016 09:42 AM, Mike Snitzer wrote:
+> > >On Fri, Aug 05 2016 at 11:33P -0400,
+> > >Jens Axboe <axboe@kernel.dk> wrote:
+> > >
+> > >>On 08/05/2016 09:27 AM, Mike Snitzer wrote:
+> > >>>On Wed, Aug 03 2016 at 11:35am -0400,
+> > >>>Benjamin Block <bblock@linux.vnet.ibm.com> wrote:
+> > >>>
+> > >>>>Hej Mike,
+> > >>>>
+> > >>>>when running a debug-kernel today with several multipath-devices using
+> > >>>>the round-robin path selector I noticed that the kernel throws these
+> > >>>>warnings here:
+> > >>>>
+> > >>>>BUG: using smp_processor_id() in preemptible [00000000] code: kdmwork-252:0/881
+> > >>>>caller is rr_select_path+0x36/0x108 [dm_round_robin]
+> > >>>>CPU: 1 PID: 881 Comm: kdmwork-252:0 Not tainted 4.7.0-debug #4
+> > >>>>      00000000617679b8 0000000061767a48 0000000000000002 0000000000000000
+> > >>>>      0000000061767ae8 0000000061767a60 0000000061767a60 00000000001145d0
+> > >>>>      0000000000000000 0000000000b962ae 0000000000bb291e 000000000000000b
+> > >>>>      0000000061767aa8 0000000061767a48 0000000000000000 0000000000000000
+> > >>>>      0700000000b962ae 00000000001145d0 0000000061767a48 0000000061767aa8
+> > >>>>Call Trace:
+> > >>>>([<00000000001144a2>] show_trace+0x8a/0xe0)
+> > >>>>([<0000000000114586>] show_stack+0x8e/0xf0)
+> > >>>>([<00000000006c7fdc>] dump_stack+0x9c/0xe0)
+> > >>>>([<00000000006fbbc0>] check_preemption_disabled+0x108/0x130)
+> > >>>>([<000003ff80268646>] rr_select_path+0x36/0x108 [dm_round_robin])
+> > >>>>([<000003ff80259a42>] choose_path_in_pg+0x42/0xc8 [dm_multipath])
+> > >>>>([<000003ff80259b62>] choose_pgpath+0x9a/0x1a0 [dm_multipath])
+> > >>>>([<000003ff8025b51a>] __multipath_map.isra.5+0x72/0x228 [dm_multipath])
+> > >>>>([<000003ff8025b75e>] multipath_map+0x3e/0x50 [dm_multipath])
+> > >>>>([<000003ff80225eb6>] map_request+0x66/0x458 [dm_mod])
+> > >>>>([<000003ff802262ec>] map_tio_request+0x44/0x70 [dm_mod])
+> > >>>>([<000000000016835a>] kthread_worker_fn+0xf2/0x1d8)
+> > >>>>([<00000000001681da>] kthread+0x112/0x120)
+> > >>>>([<000000000098378a>] kernel_thread_starter+0x6/0xc)
+> > >>>>([<0000000000983784>] kernel_thread_starter+0x0/0xc)
+> > >>>>no locks held by kdmwork-252:0/881.
+> > >>>>
+[:snip:]
+> > 
+> > I always forget the details (if this confuses lockdep or not), but you
+> > could potentially turn it into:
+> > 
+> > local_irq_save(flags);
+> > x = this_cpu_ptr();
+> > [...]
+> > 
+> > spin_lock(&s->lock);
+> > [...]
+> > 
+> > instead.
+> 
+> Cool, I've coded up the patch (compile tested only).
+> 
+> Benjamin, any chance you could test this against your v4.7 kernel and
+> report back?
+> 
+> Thanks,
+> Mike
+> 
+> diff --git a/drivers/md/dm-round-robin.c b/drivers/md/dm-round-robin.c
+> index 4ace1da..ed446f8 100644
+> --- a/drivers/md/dm-round-robin.c
+> +++ b/drivers/md/dm-round-robin.c
+> @@ -210,14 +210,17 @@ static struct dm_path *rr_select_path(struct path_selector *ps, size_t nr_bytes)
+>  	struct path_info *pi = NULL;
+>  	struct dm_path *current_path = NULL;
+> 
+> +	local_irq_save(flags);
+>  	current_path = *this_cpu_ptr(s->current_path);
+>  	if (current_path) {
+>  		percpu_counter_dec(&s->repeat_count);
+> -		if (percpu_counter_read_positive(&s->repeat_count) > 0)
+> +		if (percpu_counter_read_positive(&s->repeat_count) > 0) {
+> +			local_irq_restore(flags);
+>  			return current_path;
+> +		}
+>  	}
+> 
+> -	spin_lock_irqsave(&s->lock, flags);
+> +	spin_lock(&s->lock);
+>  	if (!list_empty(&s->valid_paths)) {
+>  		pi = list_entry(s->valid_paths.next, struct path_info, list);
+>  		list_move_tail(&pi->list, &s->valid_paths);
+> @@ -225,7 +228,8 @@ static struct dm_path *rr_select_path(struct path_selector *ps, size_t nr_bytes)
+>  		set_percpu_current_path(s, pi->path);
+>  		current_path = pi->path;
+>  	}
+> -	spin_unlock_irqrestore(&s->lock, flags);
+> +	spin_unlock(&s->lock);
+> +	local_irq_restore(flags);
+> 
+>  	return current_path;
+>  }
+> 
 
-Hello Laurence,
+Ok, this works as far as the warnings don't appear anymore. But while
+applying the patch and thinking about it, why local_irq_save() and not
+preempt_disable()? "Sounds" like this is the function you want, and I
+also stumbled across this in Documentation/preempt-locking.txt:
 
-The above patch is not yet available on my srp-initiator-for-next 
-branch. I will push out that patch later today after it has been tested.
+  But keep in mind that 'irqs disabled' is a fundamentally unsafe way of
+  disabling preemption - any spin_unlock() decreasing the preemption
+  count to 0 might trigger a reschedule. 
 
-Bart.
+The spinlock would do an other nested preempt_disable(), but those even
+out.
+
+
+                                                    Beste Grüße / Best regards,
+                                                      - Benjamin Block
+-- 
+Linux on z Systems Development         /         IBM Systems & Technology Group
+		  IBM Deutschland Research & Development GmbH 
+Vorsitz. AufsR.: Martina Koederitz     /        Geschäftsführung: Dirk Wittkopp
+Sitz der Gesellschaft: Böblingen / Registergericht: AmtsG Stuttgart, HRB 243294
 
