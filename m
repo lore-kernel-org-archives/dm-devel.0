@@ -1,47 +1,43 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [dm-devel] dm-mq and end_clone_request()
-Date: Sun, 7 Aug 2016 15:31:11 -0700
-Message-ID: <ae1a211d-9351-e5fa-e3cb-0a9ba5be9dcd@acm.org>
-References: <20160801175948.GA6685@redhat.com>
-	<eb1af921-d874-1f6a-c5d0-12d3cae04256@sandisk.com>
-	<20160804161047.GC6989@redhat.com>
-	<4d60017e-818c-5630-549e-bf280abcf1c3@sandisk.com>
-	<20160804235850.GB13132@redhat.com>
-	<1649218.8261013.1470359248073.JavaMail.zimbra@redhat.com>
-	<1931660518.8323360.1470397410683.JavaMail.zimbra@redhat.com>
-	<73e2aeda-140d-72ab-d295-57f35139ae55@sandisk.com>
-	<1616390775.11191.1470494853559.JavaMail.zimbra@redhat.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: [high-level] user-space access to dm target?
+Date: Mon, 8 Aug 2016 12:42:29 +0900
+Message-ID: <64f36b9e-d3cc-0409-ff33-f07b2d8f6e62@gmail.com>
+References: <15F559AF-6FF3-466A-AD5B-CFA61C8F1455@ccs.neu.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1616390775.11191.1470494853559.JavaMail.zimbra@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Laurence Oberman <loberman@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <15F559AF-6FF3-466A-AD5B-CFA61C8F1455@ccs.neu.edu>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Peter Desnoyers <pjd@ccs.neu.edu>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 08/06/16 07:47, Laurence Oberman wrote:
-> [66813.933246] Workqueue: srp_remove srp_remove_work [ib_srp]
-> [ ... ]
-> [66815.152051]  [<ffffffff814ac790>] scsi_forget_host+0x60/0x70
-> [66815.183939]  [<ffffffff814a0137>] scsi_remove_host+0x77/0x110
-> [66815.216152]  [<ffffffffa0677be0>] srp_remove_work+0x90/0x200 [ib_srp]
-> [66815.253221]  [<ffffffff810a2e72>] process_one_work+0x152/0x400
-> [66815.286221]  [<ffffffff810a3765>] worker_thread+0x125/0x4b0
-> [66815.317313]  [<ffffffff810a3640>] ? rescuer_thread+0x380/0x380
-> [66815.349770]  [<ffffffff810a9298>] kthread+0xd8/0xf0
-> [66815.376082]  [<ffffffff816c6b3f>] ret_from_fork+0x1f/0x40
-> [66815.404767]  [<ffffffff810a91c0>] ? kthread_park+0x60/0x60
-
-Hello Laurence,
-
-This is a callstack I have not yet encountered myself during any test. 
-Please provide the output of the following commands:
-$ gdb /lib/modules/$(uname -r)/build/vmlinux
-(gdb) list *(scsi_forget_host+0x60)
-
-Thanks,
-
-Bart.
-
+SGkgUGV0ZXIsCgpKdXN0IGN1cmlvdXMuCgpBcmUgeW91IGxvb2tpbmcgZm9yIGRldmljZS1tYXBw
+ZXIgaW4gdXNlcmxhbmQgbGlrZSBGVVNFPwoKQWtpcmEKCk9uIDIwMTYvMDgvMDQgNjo0NiwgUGV0
+ZXIgRGVzbm95ZXJzIHdyb3RlOgo+IFdl4oCZcmUgZGV2ZWxvcGluZyBhbiBTTVIgdHJhbnNsYXRp
+b24gbGF5ZXIgaW4gYSBkZXZpY2UgbWFwcGVyIHRhcmdldCwgYW5kIHdl4oCZZCBsaWtlIHRvIGtl
+ZXAgYSBsb3Qgb2YgdGhlIGNvbXBsZXhpdHkgKHJlY292ZXJ5IGF0IHN0YXJ0dXAsIHBhcnRzIG9m
+IHRoZSBnYXJiYWdlIGNvbGxlY3Rpb24gYWxnb3JpdGhtKSBpbiB1c2VyIHNwYWNlLgo+IAo+IEkg
+d2FzIHdvbmRlcmluZyB3aGF0IHBlb3BsZeKAmXMgdGhvdWdodHMgYXJlIG9uIHRoZSBiZXN0IHN0
+cmF0ZWd5IGZvciB0aGUgdXNlci9rZXJuZWwgaW50ZXJmYWNlIGhlcmU/Cj4gCj4gV2XigJlyZSBj
+dXJyZW50bHkgZG9pbmcgc29tZXRoaW5nIHF1aXRlIGdyb3NzIC0gdXNpbmcgYSAvcHJvYyBmaWxl
+IHdpdGggYSBzaW1wbGUgcHJvdG9jb2wgYmFzZWQgb24gcmVhZGluZyBhbmQgd3JpdGluZyBmaXhl
+ZC1zaXplZCBiaW5hcnkgbWVzc2FnZXMuIEZvciBvdXIgcHVycG9zZXMgdGhpcyB3b3JrcyBmYWly
+bHkgd2VsbCwgYnV0IGNsZWFybHkgd2UgbmVlZCBzb21ldGhpbmcgY2xlYW5lciBpZiB3ZSB3YW50
+IHRoaXMgdG8gZ28gYW55d2hlcmUuCj4gCj4gVGhhbmtzLAo+IC4uLi4uLi4uLi4uLi4uLi4uLi4u
+Li4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLgo+ICBQZXRl
+ciBEZXNub3llcnMgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgcGpkQGNjcy5uZXUu
+ZWR1Cj4gIE5vcnRoZWFzdGVybiBDb21wdXRlciAmIEluZm9ybWF0aW9uIFNjaWVuY2UgICAgICAo
+NjE3KSAzNzMtODY4Mwo+IAo+IAo+IC0tCj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4gZG0tZGV2
+ZWxAcmVkaGF0LmNvbQo+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
+bS1kZXZlbAo+IAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
+aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
