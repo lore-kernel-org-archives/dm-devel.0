@@ -1,180 +1,133 @@
-From: Andrey Ryabinin <aryabinin@virtuozzo.com>
-Subject: [RFC] dm-crypt: add ability to use keys from the kernel key retention service
-Date: Tue, 9 Aug 2016 16:56:06 +0300
-Message-ID: <1470750966-13028-1-git-send-email-aryabinin@virtuozzo.com>
+From: Mike Christie <mchristi@redhat.com>
+Subject: Re: PATCH 0/4] multipath-tools: Ceph rbd support v2
+Date: Tue, 9 Aug 2016 13:26:40 -0500
+Message-ID: <57AA2060.20708@redhat.com>
+References: <1470657710-28081-1-git-send-email-mchristi@redhat.com>
+	<CABr-Gnf1vfGOMGcP8YF2tFMy5Z2Buwp7H9iXfCzuDC-S+FE7AA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <mbroz@redhat.com>, Igor Sukhih <igor@virtuozzo.com>, linux-kernel@vger.kernel.org, Andrey Ryabinin <aryabinin@virtuozzo.com>
+Content-Type: multipart/mixed; boundary="------------060600050407060606070907"
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CABr-Gnf1vfGOMGcP8YF2tFMy5Z2Buwp7H9iXfCzuDC-S+FE7AA@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The kernel key service is a generic way to store keys for the use of
-other subsystems. Currently there is no way to use kernel keys in dm-crypt.
-This patch aims to fix that. Instead of key userspace may pass a key
-description with preceding ':'. So message that constructs encryption
-mapping now looks like this:
+This is a multi-part message in MIME format.
+--------------060600050407060606070907
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 
-  <cipher> [<key>|:<key description>] <iv_offset> <dev_path> <start> [<#opt_params> <opt_params>]
+On 08/09/2016 10:36 AM, Christophe Varoqui wrote:
+> Merged.
+> 
 
-(I could propose another possible way to distinguish key from the key description.
-This would be to add new opt_param, something like 'key_in_keyring'.
-So if key_in_keyring is set than we have key description instead of key.)
+Thanks.
 
-Note: We haven't implemented userspace part for this yet.
+> I think it is worth advertizing here that the build now requires rados.h.
+> 
 
-Signed-off-by: Andrey Ryabinin <aryabinin@virtuozzo.com>
+Sorry about adding the silly dependency. How about the attached patch to
+make the rbd checker only be built if the user requests it. In the
+documentation for my use, I will describe how to build it. This way
+majority of users will not be bothered.
+
+
+> Thanks.
+> 
+> On Mon, Aug 8, 2016 at 2:01 PM, Mike Christie <mchristi@redhat.com> wrote:
+> 
+>> The following patches made over Christophe's tree today,
+>> add Ceph rbd support for handling blacklisted devices.
+>>
+>>
+>> This is not general support for rbd and multipath. There is
+>> no boot/root support and it does not support features like
+>> multibus. My use is for HA configurations, specifically for exporting
+>> rbd images through multiple LIO instances. In this case, we have one
+>> rbd instance that has the ceph rbd exclusive lock and it can send
+>> WRITE requests. If that host becomes unreachable, then another host
+>> will grab the lock, and blacklist the original host to prevent it from
+>> sending stale IO (when blacklisted IO will be failed by the OSD).
+>>
+>> To recover from that type of scenario, this patchset adds a repair()
+>> callout to the checker. If the path is in the PATH_DOWN state this
+>> callout can be used to fix it up. For my case, I am remapping
+>> the device to flush stale IO and cleanup the old lock,
+>> and then unblacklisting the path, so it can be used again.
+>>
+>> Changes since v1:
+>> - Drop ID_UID use and implemented sysfs getuid support.
+>> - Drop settings that were defaults and follow template.
+>> - Fix ceph auth/user.
+>>
+>>
+> 
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+
+
+--------------060600050407060606070907
+Content-Type: text/x-patch;
+	name="0001-PATCH-checker-do-not-build-rbd-by-default.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+	filename*0="0001-PATCH-checker-do-not-build-rbd-by-default.patch"
+
+From 4d0bfdfc032d4fabf0ac08ba105125ded168bd95 Mon Sep 17 00:00:00 2001
+From: Mike Christie <mchristi@redhat.com>
+Date: Tue, 9 Aug 2016 13:19:41 -0500
+Subject: [PATCH 1/1] checker: do not build rbd by default
+
+rbd is not a common driver and users will probably not have the
+tools/libs
+to use it. Make the rbd checker not built by default.
+
+Signed-off-by: Mike Christie <mchristi@redhat.com>
 ---
- drivers/md/dm-crypt.c | 95 ++++++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 86 insertions(+), 9 deletions(-)
+ libmultipath/checkers/Makefile | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 4e9784b..5a7899d 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -12,6 +12,7 @@
- #include <linux/module.h>
- #include <linux/init.h>
- #include <linux/kernel.h>
-+#include <linux/key.h>
- #include <linux/bio.h>
- #include <linux/blkdev.h>
- #include <linux/mempool.h>
-@@ -29,6 +30,7 @@
- #include <crypto/md5.h>
- #include <crypto/algapi.h>
- #include <crypto/skcipher.h>
-+#include <keys/user-type.h>
+diff --git a/libmultipath/checkers/Makefile b/libmultipath/checkers/Makefile
+index 5fd2099..aeb425f 100644
+--- a/libmultipath/checkers/Makefile
++++ b/libmultipath/checkers/Makefile
+@@ -11,8 +11,11 @@ LIBS= \
+ 	libcheckdirectio.so \
+ 	libcheckemc_clariion.so \
+ 	libcheckhp_sw.so \
+-	libcheckrdac.so \
+-	libcheckrbd.so
++	libcheckrdac.so
++
++ifneq ($(CHECKER_RBD),)
++LIBS += libcheckrbd.so
++endif
  
- #include <linux/device-mapper.h>
+ CFLAGS += -I..
  
-@@ -1489,21 +1491,91 @@ static int crypt_setkey_allcpus(struct crypt_config *cc)
- 	return err;
- }
- 
-+#ifdef CONFIG_KEYS
-+static int crypt_set_keyring_key(struct crypt_config *cc, char *key_desc)
-+{
-+	int ret = 0;
-+	struct key *key;
-+	const struct user_key_payload *ukp;
-+
-+	key = request_key(&key_type_user, key_desc, NULL);
-+	if (IS_ERR(key))
-+		return PTR_ERR(key);
-+
-+	rcu_read_lock();
-+	ret = key_validate(key);
-+	if (ret < 0)
-+		goto out;
-+
-+	ukp = user_key_payload(key);
-+	if (cc->key_size != ukp->datalen) {
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+	memcpy(cc->key, ukp->data, cc->key_size);
-+out:
-+	rcu_read_unlock();
-+	key_put(key);
-+	return ret;
-+}
-+
-+static int get_key_size(const char *key_desc)
-+{
-+	int ret;
-+	struct key *key;
-+
-+	if (key_desc[0] != ':')
-+		return strlen(key_desc) >> 1;
-+
-+	key = request_key(&key_type_user, key_desc + 1, NULL);
-+	if (IS_ERR(key))
-+		return PTR_ERR(key);
-+
-+	rcu_read_lock();
-+	ret = key_validate(key);
-+	if (ret < 0)
-+		goto out;
-+
-+	ret = user_key_payload(key)->datalen;
-+out:
-+	rcu_read_unlock();
-+	key_put(key);
-+	return ret;
-+}
-+#else
-+static int crypt_set_keyring_key(struct crypt_config *cc, char *key_desc)
-+{
-+	return -EINVAL;
-+}
-+
-+static int get_key_size(const char *key)
-+{
-+	return strlen(key) >> 1;
-+}
-+#endif
-+
- static int crypt_set_key(struct crypt_config *cc, char *key)
- {
- 	int r = -EINVAL;
- 	int key_string_len = strlen(key);
- 
--	/* The key size may not be changed. */
--	if (cc->key_size != (key_string_len >> 1))
--		goto out;
--
- 	/* Hyphen (which gives a key_size of zero) means there is no key. */
- 	if (!cc->key_size && strcmp(key, "-"))
- 		goto out;
- 
--	if (cc->key_size && crypt_decode_key(cc->key, key, cc->key_size) < 0)
--		goto out;
-+	/* ':' means that the key is in kernel keyring */
-+	if (key[0] == ':') {
-+		if (crypt_set_keyring_key(cc, key + 1))
-+			goto out;
-+	} else {
-+		/* The key size may not be changed. */
-+		if (cc->key_size != (key_string_len >> 1))
-+			goto out;
-+
-+		if (cc->key_size &&
-+			crypt_decode_key(cc->key, key, cc->key_size) < 0)
-+			goto out;
-+	}
- 
- 	set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
- 
-@@ -1730,12 +1802,13 @@ bad_mem:
- 
- /*
-  * Construct an encryption mapping:
-- * <cipher> <key> <iv_offset> <dev_path> <start>
-+ * <cipher> [<key>|:<key description>] <iv_offset> <dev_path> <start>
-  */
- static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- {
- 	struct crypt_config *cc;
--	unsigned int key_size, opt_params;
-+	int key_size;
-+	unsigned int opt_params;
- 	unsigned long long tmpll;
- 	int ret;
- 	size_t iv_size_padding;
-@@ -1752,7 +1825,11 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		return -EINVAL;
- 	}
- 
--	key_size = strlen(argv[1]) >> 1;
-+	key_size = get_key_size(argv[1]);
-+	if (key_size < 0) {
-+		ti->error = "Cannot parse key";
-+		return -EINVAL;
-+	}
- 
- 	cc = kzalloc(sizeof(*cc) + key_size * sizeof(u8), GFP_KERNEL);
- 	if (!cc) {
 -- 
-2.7.3
+2.7.2
+
+
+--------------060600050407060606070907
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------060600050407060606070907--
