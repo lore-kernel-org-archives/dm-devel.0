@@ -1,13 +1,11 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: multipath-tools: new clang warning
-Date: Tue, 9 Aug 2016 08:54:00 +0200
-Message-ID: <3247e81a-4204-3e23-79af-febc567f62d3@suse.de>
-References: <6d529a59-6178-4568-48ea-c5cc42c6811f@gmail.com>
+Subject: [PATCH 0/3] Clang fixes
+Date: Tue,  9 Aug 2016 09:31:10 +0200
+Message-ID: <1470727873-10502-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6d529a59-6178-4568-48ea-c5cc42c6811f@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,30 +15,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gMDgvMDYvMjAxNiAxMTozNyBQTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+IEhpIEhh
-bm5lcywKPiAKPiBJZiB5b3UgaGF2ZSBhIHNwYXJlIG1vbWVudCwgY291bGQgeW91IGNoZWNrIHRo
-aXMgbmV3IHdhcm5pbmc/Cj4gVGhpcyBjb2RlIHdhcyBhZGRlZCByZWNlbnRseSBpbiBiYzZkZDc5
-OAo+ICJtdWx0aXBhdGhkOiBBZGQgJ3N5c2ZzJyBwcmlvcml0aXplciIKPiAKPiBUaGFuayB5b3Uu
-Cj4gCj4gCj4gY2xhbmcgLVd1bnVzZWQgLVdzdHJpY3QtcHJvdG90eXBlcyAtTzIgLWcgLXBpcGUg
-LVdmb3JtYXQtc2VjdXJpdHkgLVdhbGwgLVdwLC1EX0ZPUlRJRllfU09VUkNFPTIgLWZleGNlcHRp
-b25zIC1mc3RhY2stcHJvdGVjdG9yIC0tcGFyYW09c3NwLWJ1ZmZlci1zaXplPTQgLWZQSUMgLURM
-SUJfU1RSSU5HPVwibGliNjRcIiAtRFJVTl9ESVI9XCJydW5cIgo+IC1XZXJyb3IgLUkuLi9saWJt
-cGF0aGNtZCAtRExJQkRNX0FQSV9GTFVTSCAtRF9HTlVfU09VUkNFIC1ETElCRE1fQVBJX0NPT0tJ
-RSAtRExJQlVERVZfQVBJX1JFQ1ZCVUYgLURVU0VfU1lTVEVNRD0yMjkgLURMSUJETV9BUElfREVG
-RVJSRUQgLWMgLW8gZGlzY292ZXJ5Lm8gZGlzY292ZXJ5LmMKPiBkaXNjb3ZlcnkuYzo1MTM6MzM6
-IGVycm9yOiBjb21wYXJpc29uIG9mIGNvbnN0YW50IDE4NDQ2NzQ0MDczNzA5NTUxNjE1IHdpdGgg
-ZXhwcmVzc2lvbiBvZiB0eXBlICd1bnNpZ25lZCBpbnQnIGlzIGFsd2F5cyBmYWxzZSBbLVdlcnJv
-ciwtV3RhdXRvbG9naWNhbC1jb25zdGFudC1vdXQtb2YtcmFuZ2UtY29tcGFyZV0KPiAgICAgICAg
-IGlmICh2YWx1ZSA9PSBlcHRyIHx8IHByZWZlcnJlZCA9PSBVTE9OR19NQVgpIHsKPiAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgIH5+fn5+fn5+fiBeICB+fn5+fn5+fn4KPiAKQWguIE9rLgoK
-V2lsbCBiZSBzZW5kaW5nIGEgcGF0Y2guCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMg
-UmVpbmVja2UJCSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZQkJ
-CSAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21iSCwgTWF4ZmVs
-ZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNtaXRoYXJk
-LCBKLiBHdWlsZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJn
-KQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93
-d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Hi Christophe,
+
+Xose found some issues when building with clang.
+
+Hannes Reinecke (3):
+  libmultipath/discovery.c: use 'unsigned long' instead of 'unsigned int'
+  libmultipath/parser.c: correctly terminate buffer
+  multipath: fixup check for out-of-scope maps
+
+ libmultipath/discovery.c | 2 +-
+ libmultipath/parser.c    | 2 +-
+ multipath/main.c         | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+-- 
+2.6.6
