@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 2/3] libmultipath/parser.c: correctly terminate
-	buffer
-Date: Tue,  9 Aug 2016 09:31:12 +0200
-Message-ID: <1470727873-10502-3-git-send-email-hare@suse.de>
+Subject: [PATCH 3/3] multipath: fixup check for out-of-scope maps
+Date: Tue,  9 Aug 2016 09:31:13 +0200
+Message-ID: <1470727873-10502-4-git-send-email-hare@suse.de>
 References: <1470727873-10502-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,26 +21,27 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-The code would be returning a static NULL buffer instead of
-terminating the original buffer.
+The 'wwid' in struct multipath is a static array, so a check for
+the existence of 'wwid' is pointless. We should rather check if
+the argument 'refwwid' is not NULL and has a length larger then '0'.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/parser.c | 2 +-
+ multipath/main.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index dd955f3..c47d891 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -171,7 +171,7 @@ snprint_keyword(char *buff, int len, char *fmt, struct keyword *kw, void *data)
- 			r = kw->print(conf, buff + fwd, len - fwd, data);
- 			put_multipath_config(conf);
- 			if (!r) { /* no output if no value */
--				buff = '\0';
-+				buff[0] = '\0';
- 				return 0;
- 			}
- 			fwd += r;
+diff --git a/multipath/main.c b/multipath/main.c
+index 93376a9..ee00fdbd 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -212,7 +212,7 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+ 		/*
+ 		 * discard out of scope maps
+ 		 */
+-		if (mpp->wwid && refwwid &&
++		if (refwwid && strlen(refwwid) &&
+ 		    strncmp(mpp->wwid, refwwid, WWID_SIZE)) {
+ 			condlog(3, "skip map %s: out of scope", mpp->alias);
+ 			free_multipath(mpp, KEEP_PATHS);
 -- 
 2.6.6
