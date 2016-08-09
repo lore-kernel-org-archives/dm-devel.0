@@ -1,64 +1,180 @@
-From: Laurence Oberman <loberman@redhat.com>
-Subject: Re: [dm-devel] dm-mq and end_clone_request()
-Date: Tue, 9 Aug 2016 13:21:15 -0400 (EDT)
-Message-ID: <967089395.387512.1470763275007.JavaMail.zimbra@redhat.com>
-References: <20160801175948.GA6685@redhat.com> <551419047.135340.1470669997660.JavaMail.zimbra@redhat.com> <077d2708-3360-d8d7-fb3c-d3a73a1e03ee@sandisk.com> <1345038259.188657.1470696767844.JavaMail.zimbra@redhat.com> <1771573384.192110.1470701350622.JavaMail.zimbra@redhat.com> <2aaad6b7-bfa4-b965-53bf-4420fe01d3e5@sandisk.com> <1494059467.386778.1470762767417.JavaMail.zimbra@redhat.com> <ad12fd05-f931-30a5-2efd-3d8a171a73cb@sandisk.com>
+From: Andrey Ryabinin <aryabinin@virtuozzo.com>
+Subject: [RFC] dm-crypt: add ability to use keys from the kernel key retention service
+Date: Tue, 9 Aug 2016 16:56:06 +0300
+Message-ID: <1470750966-13028-1-git-send-email-aryabinin@virtuozzo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <ad12fd05-f931-30a5-2efd-3d8a171a73cb@sandisk.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, Johannes Thumshirn <jthumshirn@suse.de>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <mbroz@redhat.com>, Igor Sukhih <igor@virtuozzo.com>, linux-kernel@vger.kernel.org, Andrey Ryabinin <aryabinin@virtuozzo.com>
 List-Id: dm-devel.ids
 
+The kernel key service is a generic way to store keys for the use of
+other subsystems. Currently there is no way to use kernel keys in dm-crypt.
+This patch aims to fix that. Instead of key userspace may pass a key
+description with preceding ':'. So message that constructs encryption
+mapping now looks like this:
 
+  <cipher> [<key>|:<key description>] <iv_offset> <dev_path> <start> [<#opt_params> <opt_params>]
 
------ Original Message -----
-> From: "Bart Van Assche" <bart.vanassche@sandisk.com>
-> To: "Laurence Oberman" <loberman@redhat.com>
-> Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, "Mike Snitzer" <snitzer@redhat.com>, "Johannes Thumshirn"
-> <jthumshirn@suse.de>
-> Sent: Tuesday, August 9, 2016 1:16:52 PM
-> Subject: Re: [dm-devel] dm-mq and end_clone_request()
-> 
-> On 08/09/2016 10:12 AM, Laurence Oberman wrote:
-> > I was talking about this patch
-> >
-> > --- a/drivers/scsi/scsi_scan.c
-> > +++ b/drivers/scsi/scsi_scan.c
-> > @@ -1890,10 +1890,11 @@ void scsi_forget_host(struct Scsi_Host *shost)
-> >   restart:
-> >          spin_lock_irqsave(shost->host_lock, flags);
-> >          list_for_each_entry(sdev, &shost->__devices, siblings) {
-> > -                if (sdev->sdev_state == SDEV_DEL)
-> > +                if (sdev->sdev_state == SDEV_DEL || scsi_device_get(sdev)
-> > < 0)
-> >                          continue;
-> >                  spin_unlock_irqrestore(shost->host_lock, flags);
-> >                  __scsi_remove_device(sdev);
-> > +                scsi_device_put(sdev);
-> >                  goto restart;
-> >          }
-> >          spin_unlock_irqrestore(shost->host_lock, flags);
-> 
-> Hello Laurence,
-> 
-> Did you run your tests with that patch applied? If so, it would help if
-> you could rerun your tests without that patch. If the above patch makes
-> a difference it means that it can happen that __scsi_remove_device()
-> does not change the device state into SDEV_DEL. That's a bug and we need
-> to know whether or not __scsi_remove_device() behaves correctly.
-> 
-> Thanks,
-> 
-> Bart.
-> 
-Yes Sir, I ran all yesterdays tests on your kernel with that patch applied.
-Of course it may well just be luck/coincidence that the host delete race is no longer happening
-so I agree we need to re-run the tests so I will revert and re-run.
-I will probably only get back to you tomorrow with the results.
+(I could propose another possible way to distinguish key from the key description.
+This would be to add new opt_param, something like 'key_in_keyring'.
+So if key_in_keyring is set than we have key description instead of key.)
 
-Thanks
-Laurence
+Note: We haven't implemented userspace part for this yet.
+
+Signed-off-by: Andrey Ryabinin <aryabinin@virtuozzo.com>
+---
+ drivers/md/dm-crypt.c | 95 ++++++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 86 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 4e9784b..5a7899d 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -12,6 +12,7 @@
+ #include <linux/module.h>
+ #include <linux/init.h>
+ #include <linux/kernel.h>
++#include <linux/key.h>
+ #include <linux/bio.h>
+ #include <linux/blkdev.h>
+ #include <linux/mempool.h>
+@@ -29,6 +30,7 @@
+ #include <crypto/md5.h>
+ #include <crypto/algapi.h>
+ #include <crypto/skcipher.h>
++#include <keys/user-type.h>
+ 
+ #include <linux/device-mapper.h>
+ 
+@@ -1489,21 +1491,91 @@ static int crypt_setkey_allcpus(struct crypt_config *cc)
+ 	return err;
+ }
+ 
++#ifdef CONFIG_KEYS
++static int crypt_set_keyring_key(struct crypt_config *cc, char *key_desc)
++{
++	int ret = 0;
++	struct key *key;
++	const struct user_key_payload *ukp;
++
++	key = request_key(&key_type_user, key_desc, NULL);
++	if (IS_ERR(key))
++		return PTR_ERR(key);
++
++	rcu_read_lock();
++	ret = key_validate(key);
++	if (ret < 0)
++		goto out;
++
++	ukp = user_key_payload(key);
++	if (cc->key_size != ukp->datalen) {
++		ret = -EINVAL;
++		goto out;
++	}
++	memcpy(cc->key, ukp->data, cc->key_size);
++out:
++	rcu_read_unlock();
++	key_put(key);
++	return ret;
++}
++
++static int get_key_size(const char *key_desc)
++{
++	int ret;
++	struct key *key;
++
++	if (key_desc[0] != ':')
++		return strlen(key_desc) >> 1;
++
++	key = request_key(&key_type_user, key_desc + 1, NULL);
++	if (IS_ERR(key))
++		return PTR_ERR(key);
++
++	rcu_read_lock();
++	ret = key_validate(key);
++	if (ret < 0)
++		goto out;
++
++	ret = user_key_payload(key)->datalen;
++out:
++	rcu_read_unlock();
++	key_put(key);
++	return ret;
++}
++#else
++static int crypt_set_keyring_key(struct crypt_config *cc, char *key_desc)
++{
++	return -EINVAL;
++}
++
++static int get_key_size(const char *key)
++{
++	return strlen(key) >> 1;
++}
++#endif
++
+ static int crypt_set_key(struct crypt_config *cc, char *key)
+ {
+ 	int r = -EINVAL;
+ 	int key_string_len = strlen(key);
+ 
+-	/* The key size may not be changed. */
+-	if (cc->key_size != (key_string_len >> 1))
+-		goto out;
+-
+ 	/* Hyphen (which gives a key_size of zero) means there is no key. */
+ 	if (!cc->key_size && strcmp(key, "-"))
+ 		goto out;
+ 
+-	if (cc->key_size && crypt_decode_key(cc->key, key, cc->key_size) < 0)
+-		goto out;
++	/* ':' means that the key is in kernel keyring */
++	if (key[0] == ':') {
++		if (crypt_set_keyring_key(cc, key + 1))
++			goto out;
++	} else {
++		/* The key size may not be changed. */
++		if (cc->key_size != (key_string_len >> 1))
++			goto out;
++
++		if (cc->key_size &&
++			crypt_decode_key(cc->key, key, cc->key_size) < 0)
++			goto out;
++	}
+ 
+ 	set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
+ 
+@@ -1730,12 +1802,13 @@ bad_mem:
+ 
+ /*
+  * Construct an encryption mapping:
+- * <cipher> <key> <iv_offset> <dev_path> <start>
++ * <cipher> [<key>|:<key description>] <iv_offset> <dev_path> <start>
+  */
+ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ {
+ 	struct crypt_config *cc;
+-	unsigned int key_size, opt_params;
++	int key_size;
++	unsigned int opt_params;
+ 	unsigned long long tmpll;
+ 	int ret;
+ 	size_t iv_size_padding;
+@@ -1752,7 +1825,11 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		return -EINVAL;
+ 	}
+ 
+-	key_size = strlen(argv[1]) >> 1;
++	key_size = get_key_size(argv[1]);
++	if (key_size < 0) {
++		ti->error = "Cannot parse key";
++		return -EINVAL;
++	}
+ 
+ 	cc = kzalloc(sizeof(*cc) + key_size * sizeof(u8), GFP_KERNEL);
+ 	if (!cc) {
+-- 
+2.7.3
