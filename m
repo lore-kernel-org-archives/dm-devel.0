@@ -1,12 +1,12 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 0/3] Clang fixes
-Date: Tue, 9 Aug 2016 17:13:56 +0200
-Message-ID: <CABr-GneVn8Hps0_+cLkj4SZ=-X-QEtpZ_8dh3FwrEkv8FzzOBQ@mail.gmail.com>
-References: <1470727873-10502-1-git-send-email-hare@suse.de>
+Subject: Re: multipathd: cancel free(pp->getuid) in orphan_path()
+Date: Tue, 9 Aug 2016 17:15:50 +0200
+Message-ID: <CABr-GnfNH3hnrXP-STHy8dXv-2W1oOSM_EDuuHJAiPCb6G6aLw@mail.gmail.com>
+References: <aa8b1b03-985a-597b-e0cd-eb7267878476@profitbricks.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4836302664915683459=="
+Content-Type: multipart/mixed; boundary="===============6816007046040884850=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1470727873-10502-1-git-send-email-hare@suse.de>
+In-Reply-To: <aa8b1b03-985a-597b-e0cd-eb7267878476@profitbricks.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,77 +16,107 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Gioh Kim <gi-oh.kim@profitbricks.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
---===============4836302664915683459==
-Content-Type: multipart/alternative; boundary=94eb2c0636124cf7590539a4fb9f
+--===============6816007046040884850==
+Content-Type: multipart/alternative; boundary=001a1140211e1a9c8c0539a502de
 
---94eb2c0636124cf7590539a4fb9f
+--001a1140211e1a9c8c0539a502de
 Content-Type: text/plain; charset=UTF-8
 
-Merged.
+Reverted,
 Thanks.
 
-On Tue, Aug 9, 2016 at 9:31 AM, Hannes Reinecke <hare@suse.de> wrote:
+On Tue, Aug 9, 2016 at 2:58 PM, Gioh Kim <gi-oh.kim@profitbricks.com> wrote:
 
-> Hi Christophe,
+> Hello,
 >
-> Xose found some issues when building with clang.
+> I have found "free(pp->getuid)" is added into orphan_path().
 >
-> Hannes Reinecke (3):
->   libmultipath/discovery.c: use 'unsigned long' instead of 'unsigned int'
->   libmultipath/parser.c: correctly terminate buffer
->   multipath: fixup check for out-of-scope maps
+> I think it'd better to revert the patch: http://git.opensvc.com/gitweb.
+> cgi?p=multipath-tools/.git;a=commit;h=44b753d34ff82ecc229407
+> fe8247b11f15f435ce
 >
->  libmultipath/discovery.c | 2 +-
->  libmultipath/parser.c    | 2 +-
->  multipath/main.c         | 2 +-
->  3 files changed, 3 insertions(+), 3 deletions(-)
+>
+> The latest code does not allocation memory for pp->getuid, but just share
+> the global value.
+>
+> Therefore pp->getuid should not be freed.
+>
+> I proposed it but I am wrong.
+>
+> I'm very sorry to confuse you.
+>
+>
 >
 > --
-> 2.6.6
+> Best regards,
+> Gioh Kim
+> TEL: 0176 2697 8962
 >
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 >
 
---94eb2c0636124cf7590539a4fb9f
+--001a1140211e1a9c8c0539a502de
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
-<br><div class=3D"gmail_quote">On Tue, Aug 9, 2016 at 9:31 AM, Hannes Reine=
-cke <span dir=3D"ltr">&lt;<a href=3D"mailto:hare@suse.de" target=3D"_blank"=
->hare@suse.de</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" st=
-yle=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">Hi Ch=
-ristophe,<br>
+<div dir=3D"ltr">Reverted,<div>Thanks.</div></div><div class=3D"gmail_extra=
+"><br><div class=3D"gmail_quote">On Tue, Aug 9, 2016 at 2:58 PM, Gioh Kim <=
+span dir=3D"ltr">&lt;<a href=3D"mailto:gi-oh.kim@profitbricks.com" target=
+=3D"_blank">gi-oh.kim@profitbricks.com</a>&gt;</span> wrote:<br><blockquote=
+ class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc soli=
+d;padding-left:1ex">Hello,<br>
 <br>
-Xose found some issues when building with clang.<br>
+I have found &quot;free(pp-&gt;getuid)&quot; is added into orphan_path().<b=
+r>
 <br>
-Hannes Reinecke (3):<br>
-=C2=A0 libmultipath/discovery.c: use &#39;unsigned long&#39; instead of &#3=
-9;unsigned int&#39;<br>
-=C2=A0 libmultipath/parser.c: correctly terminate buffer<br>
-=C2=A0 multipath: fixup check for out-of-scope maps<br>
+I think it&#39;d better to revert the patch: <a href=3D"http://git.opensvc.=
+com/gitweb.cgi?p=3Dmultipath-tools/.git;a=3Dcommit;h=3D44b753d34ff82ecc2294=
+07fe8247b11f15f435ce" rel=3D"noreferrer" target=3D"_blank">http://git.opens=
+vc.com/gitweb.<wbr>cgi?p=3Dmultipath-tools/.git;a=3Dc<wbr>ommit;h=3D44b753d=
+34ff82ecc229407<wbr>fe8247b11f15f435ce</a><br>
 <br>
-=C2=A0libmultipath/discovery.c | 2 +-<br>
-=C2=A0libmultipath/parser.c=C2=A0 =C2=A0 | 2 +-<br>
-=C2=A0multipath/main.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| 2 +-<br>
-=C2=A03 files changed, 3 insertions(+), 3 deletions(-)<br>
-<span class=3D"HOEnZb"><font color=3D"#888888"><br>
+<br>
+The latest code does not allocation memory for pp-&gt;getuid, but just shar=
+e the global value.<br>
+<br>
+Therefore pp-&gt;getuid should not be freed.<br>
+<br>
+I proposed it but I am wrong.<br>
+<br>
+I&#39;m very sorry to confuse you.<span class=3D"HOEnZb"><font color=3D"#88=
+8888"><br>
+<br>
+<br>
+<br>
+-- <br>
+Best regards,<br>
+Gioh Kim<br>
+TEL: 0176 2697 8962<br>
+<br>
 --<br>
-2.6.6<br>
-<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
+m</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
+rer" target=3D"_blank">https://www.redhat.com/mailman<wbr>/listinfo/dm-deve=
+l</a><br>
 </font></span></blockquote></div><br></div>
 
---94eb2c0636124cf7590539a4fb9f--
+--001a1140211e1a9c8c0539a502de--
 
 
---===============4836302664915683459==
+--===============6816007046040884850==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============4836302664915683459==--
+--===============6816007046040884850==--
