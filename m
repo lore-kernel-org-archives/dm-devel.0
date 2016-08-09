@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 1/3] libmultipath/discovery.c: use 'unsigned
-	long' instead of 'unsigned int'
-Date: Tue,  9 Aug 2016 09:31:11 +0200
-Message-ID: <1470727873-10502-2-git-send-email-hare@suse.de>
+Subject: [PATCH 2/3] libmultipath/parser.c: correctly terminate
+	buffer
+Date: Tue,  9 Aug 2016 09:31:12 +0200
+Message-ID: <1470727873-10502-3-git-send-email-hare@suse.de>
 References: <1470727873-10502-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,25 +22,26 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-We should be using 'unsigned long' for the variable preferred.
+The code would be returning a static NULL buffer instead of
+terminating the original buffer.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/discovery.c | 2 +-
+ libmultipath/parser.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 1fb4db4..38ab038 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -491,7 +491,7 @@ sysfs_get_asymmetric_access_state(struct path *pp, char *buff, int buflen)
- {
- 	struct udev_device *parent = pp->udev;
- 	char value[16], *eptr;
--	unsigned int preferred;
-+	unsigned long preferred;
- 
- 	while (parent) {
- 		const char *subsys = udev_device_get_subsystem(parent);
+diff --git a/libmultipath/parser.c b/libmultipath/parser.c
+index dd955f3..c47d891 100644
+--- a/libmultipath/parser.c
++++ b/libmultipath/parser.c
+@@ -171,7 +171,7 @@ snprint_keyword(char *buff, int len, char *fmt, struct keyword *kw, void *data)
+ 			r = kw->print(conf, buff + fwd, len - fwd, data);
+ 			put_multipath_config(conf);
+ 			if (!r) { /* no output if no value */
+-				buff = '\0';
++				buff[0] = '\0';
+ 				return 0;
+ 			}
+ 			fwd += r;
 -- 
 2.6.6
