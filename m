@@ -1,7 +1,8 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH] multipathd: fail path when path check timeout
-Date: Wed, 10 Aug 2016 16:10:38 +0800
-Message-ID: <1470816638-6404-1-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH] multipathd: fix memory allocation logic error
+	for polls in uxsock_listen()
+Date: Wed, 10 Aug 2016 17:32:40 +0800
+Message-ID: <1470821560-10864-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -21,28 +22,47 @@ List-Id: dm-devel.ids
 
 From: "tang.junhui" <tang.junhui@zte.com.cn>
 
-path should be failed when path status is PATH_TIMEOUT after check,
-otherwise, the valid number of paths in the map would be increased when
-the path status is PATH_UP after the next turn check, which would cause
-the valid number of paths exceeding the total number of paths in the map.
+logic error exists in memory allocation for polls in uxsock_listen(), even if the allocated memory size meet the needs, it is still to realloc memory, which is not up to expectations.
 
 Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 ---
- multipathd/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/uxlsnr.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index f5e9a01..01f1e58 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1585,7 +1585,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 		pp->checkint = conf->checkint;
- 		put_multipath_config(conf);
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index f114e59..fa29b2a 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -145,7 +145,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 	pthread_cleanup_push(uxsock_cleanup, NULL);
  
--		if (newstate == PATH_DOWN || newstate == PATH_SHAKY) {
-+		if (newstate == PATH_DOWN || newstate == PATH_SHAKY || newstate == PATH_TIMEOUT) {
- 			/*
- 			 * proactively fail path in the DM
- 			 */
+ 	condlog(3, "uxsock: startup listener");
+-	polls = (struct pollfd *)MALLOC(MIN_POLLS + 1);
++	polls = (struct pollfd *)MALLOC((MIN_POLLS + 1) * sizeof(struct pollfd));
+ 	if (!polls) {
+ 		condlog(0, "uxsock: failed to allocate poll fds");
+ 		return NULL;
+@@ -167,9 +167,11 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 		}
+ 		if (num_clients != old_clients) {
+ 			struct pollfd *new;
+-			if (num_clients < MIN_POLLS) {
++			if (num_clients <= MIN_POLLS && old_clients > MIN_POLLS) {
+ 				new = REALLOC(polls, (1 + MIN_POLLS) *
+ 						sizeof(struct pollfd));
++			} else if (num_clients <= MIN_POLLS && old_clients <= MIN_POLLS) {
++				new = polls;
+ 			} else {
+ 				new = REALLOC(polls, (1+num_clients) *
+ 						sizeof(struct pollfd));
+@@ -181,7 +183,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 				pthread_yield();
+ 				continue;
+ 			}
+-			num_clients = old_clients;
++			old_clients = num_clients;
+ 			polls = new;
+ 		}
+ 		polls[0].fd = ux_sock;
 -- 
 2.8.1.windows.1
