@@ -1,8 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 05/15] multipath-tools: replace "." for real
-	values in (COMPAQ|HP)/"(MSA|HSV)1.0"
-Date: Wed, 10 Aug 2016 18:20:28 +0200
-Message-ID: <1470846038-6590-5-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 07/15] multipath-tools: add Oracle FS to hwtable
+Date: Wed, 10 Aug 2016 18:20:30 +0200
+Message-ID: <1470846038-6590-7-git-send-email-xose.vazquez@gmail.com>
 References: <1470846038-6590-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,35 +17,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Srinivasan Ramani <srinivas.ramani@oracle.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Exact devices are in drivers/scsi/scsi_dh.c
+Based on info from the manufacturer.
+And also add ^ to Axiom.
 
-        {"COMPAQ", "MSA1000 VOLUME",    "hp_sw" },
-        {"COMPAQ", "HSV110",            "hp_sw" },
-        {"HP",     "HSV100",            "hp_sw"},
-
-Cc: Hannes Reinecke <hare@suse.de>
+Cc: Srinivasan Ramani <srinivas.ramani@oracle.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/hwtable.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index e0c33dc..c101b02 100644
+index b15020c..f7cd456 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -70,7 +70,7 @@ static struct hwentry default_hw[] = {
- 	{
- 		/* MSA 1000/1500 and EVA 3000/5000, with old firmware */
- 		.vendor        = "(COMPAQ|HP)",
--		.product       = "(MSA|HSV)1.0",
-+		.product       = "(MSA|HSV)1[01]0",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = "1 hp_sw",
+@@ -653,19 +653,27 @@ static struct hwentry default_hw[] = {
+ 	/*
+ 	 * Oracle
+ 	 */
+-	{
+ 		/*
+-		 * Pillar Data
++		 * Pillar Data / Oracle FS
+ 		 *
+ 		 * Maintainer : Srinivasan Ramani
+ 		 * Mail : srinivas.ramani@oracle.com
+ 		 */
+-		.vendor        = "Pillar",
+-		.product       = "Axiom",
++	{
++		.vendor        = "^Pillar",
++		.product       = "^Axiom",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.prio_name     = PRIO_ALUA,
++	},
++	{
++		.vendor        = "^Oracle",
++		.product       = "^Oracle FS",
  		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.prio_name     = PRIO_ALUA,
+ 	},
++		/* Sun - StorageTek */
+ 	{
+ 		.vendor        = "STK",
+ 		.product       = "OPENstorage D280",
 -- 
 2.7.4
