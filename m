@@ -1,16 +1,12 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: PATCH 0/4] multipath-tools: Ceph rbd support v2
-Date: Wed, 10 Aug 2016 08:42:04 -0700
-Message-ID: <daa224ee-612e-1ab4-af1e-9b13cc64db36@sandisk.com>
-References: <1470657710-28081-1-git-send-email-mchristi@redhat.com>
-	<CABr-Gnf1vfGOMGcP8YF2tFMy5Z2Buwp7H9iXfCzuDC-S+FE7AA@mail.gmail.com>
-	<57AA2060.20708@redhat.com>
-	<CABr-GndTq8hUNw8w_ES773R2LqpitkZm+=8JTfhJVktwuuSwfg@mail.gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH 01/15] multipath-tools: identify more devices at
+	hwtable
+Date: Wed, 10 Aug 2016 18:20:24 +0200
+Message-ID: <1470846038-6590-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-GndTq8hUNw8w_ES773R2LqpitkZm+=8JTfhJVktwuuSwfg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,25 +16,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Mike Christie <mchristi@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On 08/10/2016 12:55 AM, Christophe Varoqui wrote:
-> Distributors will surely want to build all checkers to have the docs and
-> hwtable in sync with the shipped checkers, and cover the widest range of
-> setups.
->
-> I'd rather drop this patch or, if it proves to be a problem, merge a
-> variant with the rbd checker build by default and not-buildable by
-> explicit define.
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-Hello Mike and Christophe,
-
-How about detecting at compile time whether the rbd header files are 
-available? That approach avoids that we have to introduce a configure 
-script and also avoids that the user has to enable rbd support 
-explicitly. In e.g. the fio makefile there are several tests to check 
-which libraries are available and can be used during the fio build.
-
-Bart.
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 2192d38..1222f47 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -468,7 +468,7 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	{
+-		/* SAN Volume Controller / Storwize */
++		/* Storwize family / SAN Volume Controller / Flex System V7000 */
+ 		.vendor        = "IBM",
+ 		.product       = "^2145",
+ 		.features      = "1 queue_if_no_path",
+@@ -811,6 +811,7 @@ static struct hwentry default_hw[] = {
+ 	 * Huawei
+ 	 */
+ 	{
++		/* OceanStor V3 */
+ 		.vendor        = "(HUAWEI|HUASY)",
+ 		.product       = "XSG1",
+ 		.pgpolicy      = MULTIBUS,
+-- 
+2.7.4
