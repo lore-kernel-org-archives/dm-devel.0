@@ -1,15 +1,11 @@
-From: Mike Christie <mchristi@redhat.com>
-Subject: Re: [PATCH 02/15] multipath-tools: remove
- pgpolicy=FAILOVER from Ceph/RBD
-Date: Wed, 10 Aug 2016 11:51:16 -0500
-Message-ID: <57AB5B84.5040002@redhat.com>
-References: <1470846038-6590-1-git-send-email-xose.vazquez@gmail.com>
-	<1470846038-6590-2-git-send-email-xose.vazquez@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: vplex and multipath-tools
+Date: Wed, 10 Aug 2016 22:36:59 +0200
+Message-ID: <884c0b71-917f-a6bb-03ca-cd5c0848c1fb@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1470846038-6590-2-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,35 +15,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Edward Goggin <egoggin@emc.com>, stupid-test@emc.com
 List-Id: dm-devel.ids
 
-On 08/10/2016 11:20 AM, Xose Vazquez Perez wrote:
-> It's already the default pgpolicy.
-> 
-> Cc: Mike Christie <mchristi@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/hwtable.c | 1 -
->  1 file changed, 1 deletion(-)
-> 
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index 1222f47..90c9b5b 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -826,7 +826,6 @@ static struct hwentry default_hw[] = {
->  	{
->  		.vendor        = "Ceph",
->  		.product       = "RBD",
-> -		.pgpolicy      = FAILOVER,
->  		.no_path_retry = NO_PATH_RETRY_FAIL,
->  		.checker_name  = RBD,
->  		.deferred_remove = DEFERRED_REMOVE_ON,
-> 
+Christophe Varoqui wrote:
 
-Thanks.
+> Hi Ed,
+> 
+> does EMC have a specific prioritizer to select the local head in a vplex
+> cross-connect setup ?
+> 
+> If not, would it be useful to develop one ? ... or does a particular setup
+> in multipath.conf suffices (not resorting to the weightedpath prioritizer,
+> which is not easy to deploy site-wise) ?
+> 
+> If you are no longer the appropriate person to answer, please route me ...
 
-Reviewed-by: Mike Christie <mchristi@redhat.com>
+I believe he no longer works at EMC since long time ago.
+
+There are no recent traces at any ml: https://marc.info/?w=2&r=1&s=+Edward+Goggin&q=a
+
+
+EMC MTA server does not send back an unknown user message.
