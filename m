@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 07/15] multipath-tools: add Oracle FS to hwtable
-Date: Wed, 10 Aug 2016 18:20:30 +0200
-Message-ID: <1470846038-6590-7-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 11/15] multipath-tools: add IBM/1813 - DCS3860 to
+	hwtable
+Date: Wed, 10 Aug 2016 18:20:34 +0200
+Message-ID: <1470846038-6590-11-git-send-email-xose.vazquez@gmail.com>
 References: <1470846038-6590-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,55 +18,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: Srinivasan Ramani <srinivas.ramani@oracle.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Sean Stewart <Sean.Stewart@netapp.com>
 List-Id: dm-devel.ids
 
-Based on info from the manufacturer.
-And also add ^ to Axiom.
+It's a RDAC device, confirmed by the original manufacturer(NetApp).
 
-Cc: Srinivasan Ramani <srinivas.ramani@oracle.com>
+Cc: Sean Stewart <Sean.Stewart@netapp.com>
+Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 16 ++++++++++++----
- 1 file changed, 12 insertions(+), 4 deletions(-)
+ libmultipath/hwtable.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index b15020c..f7cd456 100644
+index 3917d25..c256d05 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -653,19 +653,27 @@ static struct hwentry default_hw[] = {
- 	/*
- 	 * Oracle
- 	 */
--	{
- 		/*
--		 * Pillar Data
-+		 * Pillar Data / Oracle FS
- 		 *
- 		 * Maintainer : Srinivasan Ramani
- 		 * Mail : srinivas.ramani@oracle.com
- 		 */
--		.vendor        = "Pillar",
--		.product       = "Axiom",
-+	{
-+		.vendor        = "^Pillar",
-+		.product       = "^Axiom",
+@@ -373,6 +373,19 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = 30,
+ 	},
+ 	{
++		/* DCS3860 */
++		.vendor        = "IBM",
++		.product       = "^1813",
++		.bl_product    = "Universal Xport",
 +		.pgpolicy      = GROUP_BY_PRIO,
++		.checker_name  = RDAC,
++		.features      = "2 pg_init_retries 50",
++		.hwhandler     = "1 rdac",
++		.prio_name     = PRIO_RDAC,
 +		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.prio_name     = PRIO_ALUA,
++		.no_path_retry = 30,
 +	},
 +	{
-+		.vendor        = "^Oracle",
-+		.product       = "^Oracle FS",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.prio_name     = PRIO_ALUA,
- 	},
-+		/* Sun - StorageTek */
- 	{
- 		.vendor        = "STK",
- 		.product       = "OPENstorage D280",
+ 		/* DS3950 / DS4200 / DS4700 / DS5020 */
+ 		.vendor        = "IBM",
+ 		.product       = "^1814",
 -- 
 2.7.4
