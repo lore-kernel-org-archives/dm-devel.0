@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 11/15] multipath-tools: add IBM/1813 - DCS3860 to
-	hwtable
-Date: Wed, 10 Aug 2016 18:20:34 +0200
-Message-ID: <1470846038-6590-11-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 08/15] multipath-tools: remove blank line at
+	multipath.conf.5
+Date: Wed, 10 Aug 2016 18:20:31 +0200
+Message-ID: <1470846038-6590-8-git-send-email-xose.vazquez@gmail.com>
 References: <1470846038-6590-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,43 +18,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Sean Stewart <Sean.Stewart@netapp.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-It's a RDAC device, confirmed by the original manufacturer(NetApp).
-
-Cc: Sean Stewart <Sean.Stewart@netapp.com>
-Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ multipath/multipath.conf.5 | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 3917d25..c256d05 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -373,6 +373,19 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 30,
- 	},
- 	{
-+		/* DCS3860 */
-+		.vendor        = "IBM",
-+		.product       = "^1813",
-+		.bl_product    = "Universal Xport",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.checker_name  = RDAC,
-+		.features      = "2 pg_init_retries 50",
-+		.hwhandler     = "1 rdac",
-+		.prio_name     = PRIO_RDAC,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.no_path_retry = 30,
-+	},
-+	{
- 		/* DS3950 / DS4200 / DS4700 / DS5020 */
- 		.vendor        = "IBM",
- 		.product       = "^1814",
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index acc1f51..b34a320 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -814,7 +814,6 @@ Default value is: \fB30\fR
+ .RE
+ .
+ .
+-.
+ .\" ----------------------------------------------------------------------------
+ .SH "blacklist section"
+ .\" ----------------------------------------------------------------------------
 -- 
 2.7.4
