@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 14/15] multipath-tools: replace queue-length by
-	default selector
-Date: Wed, 10 Aug 2016 18:20:37 +0200
-Message-ID: <1470846038-6590-14-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 15/15] multipath-tools: document the relation
+	between queue_if_no_path and no_path_retry
+Date: Wed, 10 Aug 2016 18:20:38 +0200
+Message-ID: <1470846038-6590-15-git-send-email-xose.vazquez@gmail.com>
 References: <1470846038-6590-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,8 +21,7 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-service-time is more advanced, and it works better in asymmetric and
-asymmetric environments.
+Also mark queue_if_no_path as deprecated.
 
 Cc: Hannes Reinecke <hare@suse.de>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
@@ -30,28 +29,23 @@ Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 2 --
- 1 file changed, 2 deletions(-)
+ multipath/multipath.conf.5 | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index bc2d407..edfd8fe 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -198,7 +198,6 @@ static struct hwentry default_hw[] = {
- 	{
- 		.vendor        = "XtremIO",
- 		.product       = "XtremApp",
--		.selector      = "queue-length 0",
- 		.pgpolicy      = MULTIBUS,
- 		.pgfailback    = FAILBACK_UNDEF,
- 	},
-@@ -823,7 +822,6 @@ static struct hwentry default_hw[] = {
- 	{
- 		.vendor        = "PURE",
- 		.product       = "FlashArray",
--		.selector      = "queue-length 0",
- 		.pgpolicy      = MULTIBUS,
- 		.pgfailback    = FAILBACK_UNDEF,
- 		.fast_io_fail  = 10,
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 8dc5d08..3b66ddb 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -336,8 +336,8 @@ Possible values for the feature list are:
+ .RS
+ .TP 12
+ .I queue_if_no_path
+-Queue IO if no path is active; identical to the \fIno_path_retry\fR keyword.
+-See KNOWN ISSUES.
++(Superseded by \fIno_path_retry\fR) Queue IO if no path is active. Identical to the \fIno_path_retry\fR with
++\fIqueue\fR value. See KNOWN ISSUES.
+ .TP
+ .I no_partitions
+ Disable automatic partitions generation via kpartx.
 -- 
 2.7.4
