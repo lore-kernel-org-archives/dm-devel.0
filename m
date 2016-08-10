@@ -1,14 +1,16 @@
-From: Ondrej Kozina <okozina@redhat.com>
-Subject: Re: [RFC] dm-crypt: add ability to use keys from the
- kernel key retention service
-Date: Wed, 10 Aug 2016 13:16:11 +0200
-Message-ID: <7aa99e52-6ad8-9da2-759f-58c47f2e5256@redhat.com>
-References: <1470750966-13028-1-git-send-email-aryabinin@virtuozzo.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: PATCH 0/4] multipath-tools: Ceph rbd support v2
+Date: Wed, 10 Aug 2016 08:42:04 -0700
+Message-ID: <daa224ee-612e-1ab4-af1e-9b13cc64db36@sandisk.com>
+References: <1470657710-28081-1-git-send-email-mchristi@redhat.com>
+	<CABr-Gnf1vfGOMGcP8YF2tFMy5Z2Buwp7H9iXfCzuDC-S+FE7AA@mail.gmail.com>
+	<57AA2060.20708@redhat.com>
+	<CABr-GndTq8hUNw8w_ES773R2LqpitkZm+=8JTfhJVktwuuSwfg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1470750966-13028-1-git-send-email-aryabinin@virtuozzo.com>
+In-Reply-To: <CABr-GndTq8hUNw8w_ES773R2LqpitkZm+=8JTfhJVktwuuSwfg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,42 +20,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrey Ryabinin <aryabinin@virtuozzo.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Igor@redhat.com, Sukhih <igor@virtuozzo.com>, linux-kernel@vger.kernel.org, Milan Broz <mbroz@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Mike Christie <mchristi@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 08/09/2016 03:56 PM, Andrey Ryabinin wrote:
+On 08/10/2016 12:55 AM, Christophe Varoqui wrote:
+> Distributors will surely want to build all checkers to have the docs and
+> hwtable in sync with the shipped checkers, and cover the widest range of
+> setups.
+>
+> I'd rather drop this patch or, if it proves to be a problem, merge a
+> variant with the rbd checker build by default and not-buildable by
+> explicit define.
 
-Hi Andrey,
+Hello Mike and Christophe,
 
-I'm definitely in favour of dm-crypt with support for kernel keyring 
-service, but I think this patch do lack in addressing few issues:
+How about detecting at compile time whether the rbd header files are 
+available? That approach avoids that we have to introduce a configure 
+script and also avoids that the user has to enable rbd support 
+explicitly. In e.g. the fio makefile there are several tests to check 
+which libraries are available and can be used during the fio build.
 
-Currently the dm-crypt guarantees that on remove ioctl command the 
-volume key gets deleted from both crypto layer and device-mapper 
-subsystem without exception. I believe we should stick to the guarantee. 
-At least let's provide an option that would immediately invalidate the 
-key passed via key description on table destruction. Or on last table 
-destruction that would reach dm-crypt internal reference count on such 
-key equal to zero. Each table key has at least single copy in crypto 
-layer anyway... This is no big deal on live system (copy in crypto 
-layer) but after proper system shutdown there should be no key in system 
-memory (coldboot risk mitigation).
-
-While it may sound contradicting my claim about guaranteed key 
-destruction I'd like to be able to perform table load (imagine admin 
-wants to resize dm-crypt device) without need of reuploading the key 
-every time. Even when such user/admin has no access to already active 
-volume key put in a keyring. IOW it doesn't matter what keyring the key 
-was originally anchored in. (Re)load of table with valid key description 
-should always pass).
-
-The uspace part is about to land in cryptsetup 2.0 hopefully later this 
-year. Most probably the kernel keyring will be used with other features 
-of 2.0 release apart from loading dm-crypt mappings.
-
-Last but not least: Mind me asking where do you plan to use it? In case 
-we come with different implementation I'd like to reassure it'll be 
-still of use to you.
-
-Regards Ondrej
+Bart.
