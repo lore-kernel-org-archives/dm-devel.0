@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 06/15] multipath-tools: SGI/TP9300 is a RDAC array
-Date: Wed, 10 Aug 2016 18:20:29 +0200
-Message-ID: <1470846038-6590-6-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 02/15] multipath-tools: remove pgpolicy=FAILOVER
+	from Ceph/RBD
+Date: Wed, 10 Aug 2016 18:20:25 +0200
+Message-ID: <1470846038-6590-2-git-send-email-xose.vazquez@gmail.com>
 References: <1470846038-6590-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,38 +18,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Sean Stewart <Sean.Stewart@netapp.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Confirmed by the original manufacturer(NetApp).
+It's already the default pgpolicy.
 
-Cc: Sean Stewart <Sean.Stewart@netapp.com>
+Cc: Mike Christie <mchristi@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/hwtable.c | 1 -
+ 1 file changed, 1 deletion(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index c101b02..b15020c 100644
+index 1222f47..90c9b5b 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -610,13 +610,13 @@ static struct hwentry default_hw[] = {
- 	 */
+@@ -826,7 +826,6 @@ static struct hwentry default_hw[] = {
  	{
- 		.vendor        = "SGI",
--		.product       = "TP9[13]00",
-+		.product       = "TP9100",
- 		.pgpolicy      = MULTIBUS,
- 		.pgfailback    = FAILBACK_UNDEF,
- 	},
- 	{
- 		.vendor        = "SGI",
--		.product       = "TP9[45]00",
-+		.product       = "TP9[345]00",
- 		.bl_product    = "Universal Xport",
- 		.hwhandler     = "1 rdac",
- 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.vendor        = "Ceph",
+ 		.product       = "RBD",
+-		.pgpolicy      = FAILOVER,
+ 		.no_path_retry = NO_PATH_RETRY_FAIL,
+ 		.checker_name  = RBD,
+ 		.deferred_remove = DEFERRED_REMOVE_ON,
 -- 
 2.7.4
