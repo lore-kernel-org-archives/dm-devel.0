@@ -1,14 +1,11 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 09/11] multipath-tools: delete failback from
-	IBM/2810XIV
-Date: Thu, 11 Aug 2016 20:32:25 +0200
-Message-ID: <1470940345-4441-9-git-send-email-xose.vazquez@gmail.com>
-References: <1470940345-4441-1-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 10/11] multipath-tools: move code up in Makefile
+Date: Thu, 11 Aug 2016 20:33:37 +0200
+Message-ID: <1470940418-4604-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1470940345-4441-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,28 +18,42 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-nonsense with multibus as path_grouping_policy
-
-Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ Makefile | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 8114d3e..62633b1 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -517,7 +517,7 @@ static struct hwentry default_hw[] = {
- 		.product       = "2810XIV",
- 		.features      = "1 queue_if_no_path",
- 		.pgpolicy      = MULTIBUS,
--		.pgfailback    = 15,
-+		.pgfailback    = FAILBACK_UNDEF,
- 	},
- 		/*
- 		 * IBM Power Virtual SCSI Devices
+diff --git a/Makefile b/Makefile
+index 7786c83..95c7dfb 100644
+--- a/Makefile
++++ b/Makefile
+@@ -16,6 +16,12 @@ ifeq ($(KRNLSRC),)
+ 	endif
+ endif
+ 
++ifeq ($(MULTIPATH_VERSION),)
++	VERSION = $(shell basename ${PWD} | cut -d'-' -f3)
++else
++	VERSION = $(MULTIPATH_VERSION)
++endif
++
+ export KRNLSRC
+ export KRNLOBJ
+ 
+@@ -30,12 +36,6 @@ BUILDDIRS = \
+ 	mpathpersist \
+ 	kpartx
+ 
+-ifeq ($(MULTIPATH_VERSION),)
+-	VERSION = $(shell basename ${PWD} | cut -d'-' -f3)
+-else
+-	VERSION = $(MULTIPATH_VERSION)
+-endif
+-
+ all: recurse
+ 
+ recurse:
 -- 
 2.7.4
