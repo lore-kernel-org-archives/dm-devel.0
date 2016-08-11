@@ -1,49 +1,78 @@
-From: Andrey Ryabinin <aryabinin@virtuozzo.com>
-Subject: Re: [dm-devel] [RFC] dm-crypt: add ability to use keys from the
- kernel key retention service
-Date: Thu, 11 Aug 2016 18:01:40 +0300
-Message-ID: <2c12e229-5bf0-8bff-3b1d-0ddb49e38570@virtuozzo.com>
-References: <1470750966-13028-1-git-send-email-aryabinin@virtuozzo.com>
- <7aa99e52-6ad8-9da2-759f-58c47f2e5256@redhat.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: [PATCH 2/4] multipath-tools: add checker callout to
+ repair path
+Date: Thu, 11 Aug 2016 08:50:56 -0700
+Message-ID: <9d5dcfcd-2550-c9e9-94dc-47c34ebdb039@sandisk.com>
+References: <1470657710-28081-1-git-send-email-mchristi@redhat.com>
+	<1470657710-28081-3-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <7aa99e52-6ad8-9da2-759f-58c47f2e5256@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ondrej Kozina <okozina@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: Igor@redhat.com, Sukhih <igor@virtuozzo.com>, linux-kernel@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <mbroz@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1470657710-28081-3-git-send-email-mchristi@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Christie <mchristi@redhat.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com
 List-Id: dm-devel.ids
 
-
-
-On 08/10/2016 02:16 PM, Ondrej Kozina wrote:
-> On 08/09/2016 03:56 PM, Andrey Ryabinin wrote:
+On 08/08/2016 05:01 AM, Mike Christie wrote:
+> This patch adds a callback which can be used to repair a path
+> if check() has determined it is in the PATH_DOWN state.
 > 
-> Hi Andrey,
-> 
-> I'm definitely in favour of dm-crypt with support for kernel keyring service, but I think this patch do lack in addressing few issues:
-> 
-> Currently the dm-crypt guarantees that on remove ioctl command the volume key gets deleted from both crypto layer and device-mapper subsystem without exception. I believe we should stick to the guarantee. At least let's provide an option that would immediately invalidate the key passed via key description on table destruction. Or on last table destruction that would reach dm-crypt internal reference count on such key equal to zero. Each table key has at least single copy in crypto layer anyway... This is no big deal on live system (copy in crypto layer) but after proper system shutdown there should be no key in system memory (coldboot risk mitigation).
-> 
+> The next patch that adds rbd checker support which will use this to
+> handle the case where a rbd device is blacklisted.
 
-Hmm... I don't think that the kernel should do this (delete keys from keyring).
-It makes sense that remove command wipes the keys added by create command.
-But create command doesn't add keys to the keyring, so it would be odd if remove command clear such key.
-It sound like a userspace's responsibility to manage such keys.
+Hello Mike,
 
-> While it may sound contradicting my claim about guaranteed key destruction I'd like to be able to perform table load (imagine admin wants to resize dm-crypt device) without need of reuploading the key every time. Even when such user/admin has no access to already active volume key put in a keyring. IOW it doesn't matter what keyring the key was originally anchored in. (Re)load of table with valid key description should always pass).
-> 
+With this patch applied, with the TUR checker enabled in multipath.conf
+I see the following crash if I trigger SRP failover and failback:
 
-Well, at first we'll  need to understand how to perform table load without asking the key every time.
-But, for that case, it shouldn't matter whether the key passed directly or placed in keyring.
+ion-dev-ib-ini:~ # gdb ~bart/software/multipath-tools/multipathd/multipathd
+(gdb) handle SIGPIPE noprint nostop
+Signal        Stop      Print   Pass to program Description
+SIGPIPE       No        No      Yes             Broken pipe
+(gdb) run -d
+Aug 11 08:46:27 | sde: remove path (uevent)
+Aug 11 08:46:27 | mpathbe: adding map
+Aug 11 08:46:27 | 8:64: cannot find block device
+Aug 11 08:46:27 | Invalid device number 1
+Aug 11 08:46:27 | 1: cannot find block device
+Aug 11 08:46:27 | 8:96: cannot find block device
+Aug 11 08:46:27 | mpathbe: failed to setup multipath
+Aug 11 08:46:27 | dm-0: uev_add_map failed
+Aug 11 08:46:27 | uevent trigger error
 
+Thread 4 "multipathd" received signal SIGSEGV, Segmentation fault.
+[Switching to Thread 0x7ffff7f8b700 (LWP 8446)]
+0x0000000000000000 in ?? ()
+(gdb) bt
+#0  0x0000000000000000 in ?? ()
+#1  0x00007ffff6c41905 in checker_repair (c=0x7fffdc001ef0) at checkers.c:225
+#2  0x000000000040a760 in repair_path (vecs=0x66d7e0, pp=0x7fffdc001a40)
+    at main.c:1733
+#3  0x000000000040ab27 in checkerloop (ap=0x66d7e0) at main.c:1807
+#4  0x00007ffff79bb474 in start_thread (arg=0x7ffff7f8b700)
+    at pthread_create.c:333
+#5  0x00007ffff63243ed in clone ()
+    at ../sysdeps/unix/sysv/linux/x86_64/clone.S:109
+(gdb) up
+#1  0x00007ffff6c41905 in checker_repair (c=0x7fffdc001ef0) at checkers.c:225
+225             c->repair(c);
+(gdb) print *c
+$1 = {node = {next = 0x0, prev = 0x0}, handle = 0x0, refcount = 0, fd = 0, 
+  sync = 0, timeout = 0, disable = 0, name = '\000' <repeats 15 times>, 
+  message = '\000' <repeats 255 times>, context = 0x0, mpcontext = 0x0, 
+  check = 0x0, repair = 0x0, init = 0x0, free = 0x0}
 
-> The uspace part is about to land in cryptsetup 2.0 hopefully later this year. Most probably the kernel keyring will be used with other features of 2.0 release apart from loading dm-crypt mappings.
-> 
-> Last but not least: Mind me asking where do you plan to use it? In case we come with different implementation I'd like to reassure it'll be still of use to you.
-> 
+Can you have a look at this?
 
-Our plan is to use this for encrypting containers.
+Thanks,
 
-> Regards Ondrej
+Bart.
