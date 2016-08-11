@@ -1,12 +1,14 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 01/11] multipath-tools: add support for all IBM
-	Enterprise Storage Server / Shark family
-Date: Thu, 11 Aug 2016 20:32:17 +0200
-Message-ID: <1470940345-4441-1-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 07/11] multipath-tools: move DEFAULT_PRIO
+	DEFAULT_PRIO_ARGS and DEFAULT_CHECKER to libmultipath/defaults.h
+Date: Thu, 11 Aug 2016 20:32:23 +0200
+Message-ID: <1470940345-4441-7-git-send-email-xose.vazquez@gmail.com>
+References: <1470940345-4441-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1470940345-4441-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,47 +21,64 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Only F20 and 800 were included:
-2105F20 IBM Enterprise Storage Server Model F20
-2105800 IBM TotalStorage Enterprise Storage Server Model 800
-
-Added all of them with just "^2105"
-2105E10 IBM Enterprise Storage Server Model E10
-2105E20 IBM Enterprise Storage Server Model E20
-2105F10 IBM Enterprise Storage Server Model F10
-2105750 IBM TotalStorage Enterprise Storage Server Model 750
-
-Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 12 ++----------
- 1 file changed, 2 insertions(+), 10 deletions(-)
+ libmultipath/checkers.h | 3 +--
+ libmultipath/defaults.h | 3 +++
+ libmultipath/prio.h     | 4 +---
+ 3 files changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index edfd8fe..cd052e4 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -444,17 +444,9 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = FAILBACK_UNDEF,
- 	},
- 	{
--		/* Enterprise Storage Server / Shark 800 */
-+		/* Enterprise Storage Server / Shark family */
- 		.vendor        = "IBM",
--		.product       = "^2105800",
--		.features      = "1 queue_if_no_path",
--		.pgpolicy      = GROUP_BY_SERIAL,
--		.pgfailback    = FAILBACK_UNDEF,
--	},
--	{
--		/* Enterprise Storage Server / Shark F20 */
--		.vendor        = "IBM",
--		.product       = "^2105F20",
-+		.product       = "^2105",
- 		.features      = "1 queue_if_no_path",
- 		.pgpolicy      = GROUP_BY_SERIAL,
- 		.pgfailback    = FAILBACK_UNDEF,
+diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+index 502d2d9..4fb97c9 100644
+--- a/libmultipath/checkers.h
++++ b/libmultipath/checkers.h
+@@ -3,6 +3,7 @@
+ 
+ #include "list.h"
+ #include "memory.h"
++#include "defaults.h"
+ 
+ /*
+  *
+@@ -86,8 +87,6 @@ enum path_check_state {
+ #define CCISS_TUR    "cciss_tur"
+ #define RBD          "rbd"
+ 
+-#define DEFAULT_CHECKER TUR
+-
+ #define ASYNC_TIMEOUT_SEC	30
+ 
+ /*
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 3af85eb..9bf27d6 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -28,6 +28,9 @@
+ #define DEFAULT_RETRIGGER_DELAY	10
+ #define DEFAULT_RETRIGGER_TRIES	3
+ #define DEFAULT_UEV_WAIT_TIMEOUT 30
++#define DEFAULT_PRIO		"const"
++#define DEFAULT_PRIO_ARGS	""
++#define DEFAULT_CHECKER		TUR
+ 
+ #define DEFAULT_CHECKINT	5
+ #define MAX_CHECKINT(a)		(a << 2)
+diff --git a/libmultipath/prio.h b/libmultipath/prio.h
+index 032028e..261105b 100644
+--- a/libmultipath/prio.h
++++ b/libmultipath/prio.h
+@@ -12,9 +12,7 @@ struct path;
+ 
+ #include "list.h"
+ #include "memory.h"
+-
+-#define DEFAULT_PRIO "const"
+-#define DEFAULT_PRIO_ARGS ""
++#include "defaults.h"
+ 
+ /*
+  * Known prioritizers for use in hwtable.c
 -- 
 2.7.4
