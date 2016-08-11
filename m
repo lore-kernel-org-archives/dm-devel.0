@@ -1,15 +1,12 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 14/15] multipath-tools: replace queue-length
-	by default selector
-Date: Thu, 11 Aug 2016 08:52:27 +0200
-Message-ID: <CABr-GnfWdrj23yeg5BYK2mbf2eOS=TPmE0zSGhF0AXkGQV846g@mail.gmail.com>
-References: <1470846038-6590-1-git-send-email-xose.vazquez@gmail.com>
-	<1470846038-6590-14-git-send-email-xose.vazquez@gmail.com>
-	<411eb480-d21d-051b-1f7b-12631cae1f25@suse.de>
+Subject: Re: vplex and multipath-tools
+Date: Thu, 11 Aug 2016 08:57:56 +0200
+Message-ID: <CABr-GndXpJvBXwqK5CViQKTgzAXvzDnv-j=19CeskswMAUi70w@mail.gmail.com>
+References: <884c0b71-917f-a6bb-03ca-cd5c0848c1fb@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1025121597310292026=="
+Content-Type: multipart/mixed; boundary="===============1604816430041039483=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <411eb480-d21d-051b-1f7b-12631cae1f25@suse.de>
+In-Reply-To: <884c0b71-917f-a6bb-03ca-cd5c0848c1fb@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,172 +16,107 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: stupid-test@emc.com, device-mapper development <dm-devel@redhat.com>, Edward Goggin <egoggin@emc.com>
 List-Id: dm-devel.ids
 
---===============1025121597310292026==
-Content-Type: multipart/alternative; boundary=001a11412e4289bfb70539c635a5
+--===============1604816430041039483==
+Content-Type: multipart/alternative; boundary=001a1142be9a2498f80539c64964
 
---001a11412e4289bfb70539c635a5
+--001a1142be9a2498f80539c64964
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
 
-I agree with Hannes on this.
+Thank you for this information.
 
-The default values are not meant to provide optimal performance ... they
-are meant to provide an accessible LUN whatever the hardware and on the
-broader range of Linux kernels. Vendors are responsible to provide their
-array tuning as hwtable entries. And the size or factorization of the
-hwtable is not an issue.
+Anyway, the "static path weight by serial" patch I merged solve the "not
+easy to deploy site-wise" issue I raised ... in this particular vplex
+topology.
 
+For reference, more complex topologies would need new features Hannes and I
+discussed earlier on the mailing-list (prioritizer stacking for example).
 
-On Thu, Aug 11, 2016 at 7:58 AM, Hannes Reinecke <hare@suse.de> wrote:
+Regards,
+Christophe
 
-> On 08/10/2016 06:20 PM, Xose Vazquez Perez wrote:
-> > service-time is more advanced, and it works better in asymmetric and
-> > asymmetric environments.
+On Wed, Aug 10, 2016 at 10:36 PM, Xose Vazquez Perez <xose.vazquez@gmail.com
+> wrote:
+
+> Christophe Varoqui wrote:
+>
+> > Hi Ed,
 > >
-> > Cc: Hannes Reinecke <hare@suse.de>
-> > Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> > Cc: device-mapper development <dm-devel@redhat.com>
-> > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> > ---
-> >  libmultipath/hwtable.c | 2 --
-> >  1 file changed, 2 deletions(-)
+> > does EMC have a specific prioritizer to select the local head in a vplex
+> > cross-connect setup ?
 > >
-> > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> > index bc2d407..edfd8fe 100644
-> > --- a/libmultipath/hwtable.c
-> > +++ b/libmultipath/hwtable.c
-> > @@ -198,7 +198,6 @@ static struct hwentry default_hw[] =3D {
-> >       {
-> >               .vendor        =3D "XtremIO",
-> >               .product       =3D "XtremApp",
-> > -             .selector      =3D "queue-length 0",
-> >               .pgpolicy      =3D MULTIBUS,
-> >               .pgfailback    =3D FAILBACK_UNDEF,
-> >       },
-> > @@ -823,7 +822,6 @@ static struct hwentry default_hw[] =3D {
-> >       {
-> >               .vendor        =3D "PURE",
-> >               .product       =3D "FlashArray",
-> > -             .selector      =3D "queue-length 0",
-> >               .pgpolicy      =3D MULTIBUS,
-> >               .pgfailback    =3D FAILBACK_UNDEF,
-> >               .fast_io_fail  =3D 10,
+> > If not, would it be useful to develop one ? ... or does a particular
+> setup
+> > in multipath.conf suffices (not resorting to the weightedpath
+> prioritizer,
+> > which is not easy to deploy site-wise) ?
 > >
-> I would _not_ do this, unless tested on the real hardware.
-> Just claiming 'the other one is more advanced' is not enough here.
+> > If you are no longer the appropriate person to answer, please route me
+> ...
 >
-> NACK.
+> I believe he no longer works at EMC since long time ago.
 >
-> Cheers,
+> There are no recent traces at any ml: https://marc.info/?w=2&r=1&s=+
+> Edward+Goggin&q=a
 >
-> Hannes
-> --
-> Dr. Hannes Reinecke                Teamlead Storage & Networking
-> hare@suse.de                                   +49 911 74053 688
-> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
-> GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-> HRB 21284 (AG N=C3=BCrnberg)
+>
+> EMC MTA server does not send back an unknown user message.
 >
 
---001a11412e4289bfb70539c635a5
+--001a1142be9a2498f80539c64964
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">I agree with Hannes on this.<div><br></div><div>The defaul=
-t values are not meant to provide optimal performance ... they are meant to=
- provide an accessible LUN whatever the hardware and on the broader range o=
-f Linux kernels. Vendors are responsible to provide their array tuning as h=
-wtable entries. And the size or factorization of the hwtable is not an issu=
-e.</div><div><br></div></div><div class=3D"gmail_extra"><br><div class=3D"g=
-mail_quote">On Thu, Aug 11, 2016 at 7:58 AM, Hannes Reinecke <span dir=3D"l=
-tr">&lt;<a href=3D"mailto:hare@suse.de" target=3D"_blank">hare@suse.de</a>&=
-gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 =
-0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div class=3D"HOEnZb"><=
-div class=3D"h5">On 08/10/2016 06:20 PM, Xose Vazquez Perez wrote:<br>
-&gt; service-time is more advanced, and it works better in asymmetric and<b=
-r>
-&gt; asymmetric environments.<br>
-&gt;<br>
-&gt; Cc: Hannes Reinecke &lt;<a href=3D"mailto:hare@suse.de">hare@suse.de</=
-a>&gt;<br>
-&gt; Cc: Benjamin Marzinski &lt;<a href=3D"mailto:bmarzins@redhat.com">bmar=
-zins@redhat.com</a>&gt;<br>
-&gt; Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensv=
-c.com">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
-&gt; Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.co=
-m">dm-devel@redhat.com</a>&gt;<br>
-&gt; Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@g=
-mail.com">xose.vazquez@gmail.com</a>&gt;<br>
-&gt; ---<br>
-&gt;=C2=A0 libmultipath/hwtable.c | 2 --<br>
-&gt;=C2=A0 1 file changed, 2 deletions(-)<br>
-&gt;<br>
-&gt; diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c<br>
-&gt; index bc2d407..edfd8fe 100644<br>
-&gt; --- a/libmultipath/hwtable.c<br>
-&gt; +++ b/libmultipath/hwtable.c<br>
-&gt; @@ -198,7 +198,6 @@ static struct hwentry default_hw[] =3D {<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0{<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.vendor=C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =3D &quot;XtremIO&quot;,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.product=C2=A0 =
-=C2=A0 =C2=A0 =C2=A0=3D &quot;XtremApp&quot;,<br>
-&gt; -=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.selector=C2=A0 =C2=
-=A0 =C2=A0 =3D &quot;queue-length 0&quot;,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.pgpolicy=C2=A0 =
-=C2=A0 =C2=A0 =3D MULTIBUS,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.pgfailback=C2=
-=A0 =C2=A0 =3D FAILBACK_UNDEF,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0},<br>
-&gt; @@ -823,7 +822,6 @@ static struct hwentry default_hw[] =3D {<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0{<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.vendor=C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =3D &quot;PURE&quot;,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.product=C2=A0 =
-=C2=A0 =C2=A0 =C2=A0=3D &quot;FlashArray&quot;,<br>
-&gt; -=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.selector=C2=A0 =C2=
-=A0 =C2=A0 =3D &quot;queue-length 0&quot;,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.pgpolicy=C2=A0 =
-=C2=A0 =C2=A0 =3D MULTIBUS,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.pgfailback=C2=
-=A0 =C2=A0 =3D FAILBACK_UNDEF,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.fast_io_fail=C2=
-=A0 =3D 10,<br>
-&gt;<br>
-</div></div>I would _not_ do this, unless tested on the real hardware.<br>
-Just claiming &#39;the other one is more advanced&#39; is not enough here.<=
-br>
+<div dir=3D"ltr">Thank you for this information.<div><br></div><div>Anyway,=
+ the &quot;static path weight by serial&quot; patch I merged solve the &quo=
+t;not easy to deploy site-wise&quot; issue I raised ... in this particular =
+vplex topology.</div><div><br></div><div>For reference, more complex topolo=
+gies would need new features Hannes and I discussed earlier on the mailing-=
+list (prioritizer stacking for example).</div><div><br></div><div>Regards,<=
+/div><div>Christophe</div></div><div class=3D"gmail_extra"><br><div class=
+=3D"gmail_quote">On Wed, Aug 10, 2016 at 10:36 PM, Xose Vazquez Perez <span=
+ dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" target=3D"_blank=
+">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmai=
+l_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left=
+:1ex">Christophe Varoqui wrote:<br>
 <br>
-NACK.<br>
+&gt; Hi Ed,<br>
+&gt;<br>
+&gt; does EMC have a specific prioritizer to select the local head in a vpl=
+ex<br>
+&gt; cross-connect setup ?<br>
+&gt;<br>
+&gt; If not, would it be useful to develop one ? ... or does a particular s=
+etup<br>
+&gt; in multipath.conf suffices (not resorting to the weightedpath prioriti=
+zer,<br>
+&gt; which is not easy to deploy site-wise) ?<br>
+&gt;<br>
+&gt; If you are no longer the appropriate person to answer, please route me=
+ ...<br>
 <br>
-Cheers,<br>
+I believe he no longer works at EMC since long time ago.<br>
 <br>
-Hannes<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-Dr. Hannes Reinecke=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-Teamlead Storage &amp; Networking<br>
-<a href=3D"mailto:hare@suse.de">hare@suse.de</a>=C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0<a href=3D"tel:%2B49%20911%2074053%20688" value=3D"=
-+4991174053688">+49 911 74053 688</a><br>
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg<br>
-GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton<br>
-HRB 21284 (AG N=C3=BCrnberg)<br>
-</font></span></blockquote></div><br></div>
+There are no recent traces at any ml: <a href=3D"https://marc.info/?w=3D2&a=
+mp;r=3D1&amp;s=3D+Edward+Goggin&amp;q=3Da" rel=3D"noreferrer" target=3D"_bl=
+ank">https://marc.info/?w=3D2&amp;r=3D1&amp;s=3D+<wbr>Edward+Goggin&amp;q=
+=3Da</a><br>
+<br>
+<br>
+EMC MTA server does not send back an unknown user message.<br>
+</blockquote></div><br></div>
 
---001a11412e4289bfb70539c635a5--
+--001a1142be9a2498f80539c64964--
 
 
---===============1025121597310292026==
+--===============1604816430041039483==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1025121597310292026==--
+--===============1604816430041039483==--
