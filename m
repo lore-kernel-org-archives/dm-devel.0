@@ -1,79 +1,49 @@
-From: tang.junhui@zte.com.cn
-Subject: [PATCH] multipathd: fix some small bugs for cli socket
-Date: Thu, 11 Aug 2016 19:01:20 +0800
-Message-ID: <1470913280-1820-1-git-send-email-tang.junhui@zte.com.cn>
+From: Andrey Ryabinin <aryabinin@virtuozzo.com>
+Subject: Re: [dm-devel] [RFC] dm-crypt: add ability to use keys from the
+ kernel key retention service
+Date: Thu, 11 Aug 2016 18:01:40 +0300
+Message-ID: <2c12e229-5bf0-8bff-3b1d-0ddb49e38570@virtuozzo.com>
+References: <1470750966-13028-1-git-send-email-aryabinin@virtuozzo.com>
+ <7aa99e52-6ad8-9da2-759f-58c47f2e5256@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, "tang.junhui" <tang.junhui@zte.com.cn>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <7aa99e52-6ad8-9da2-759f-58c47f2e5256@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ondrej Kozina <okozina@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: Igor@redhat.com, Sukhih <igor@virtuozzo.com>, linux-kernel@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-From: "tang.junhui" <tang.junhui@zte.com.cn>
 
-1) mpath_recv_reply_len() should return error when the length which received by read_all() is wrong;
-2) The buffer which *reply point to maybe null when mpath_recv_reply() return with success,
-   so the caller needs to determine whether it is null, and then to use
-   it.
 
-Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
----
- libmpathcmd/mpath_cmd.c | 2 +-
- multipathd/uxclnt.c     | 3 +++
- multipathd/uxlsnr.c     | 4 ++++
- 3 files changed, 8 insertions(+), 1 deletion(-)
+On 08/10/2016 02:16 PM, Ondrej Kozina wrote:
+> On 08/09/2016 03:56 PM, Andrey Ryabinin wrote:
+> 
+> Hi Andrey,
+> 
+> I'm definitely in favour of dm-crypt with support for kernel keyring service, but I think this patch do lack in addressing few issues:
+> 
+> Currently the dm-crypt guarantees that on remove ioctl command the volume key gets deleted from both crypto layer and device-mapper subsystem without exception. I believe we should stick to the guarantee. At least let's provide an option that would immediately invalidate the key passed via key description on table destruction. Or on last table destruction that would reach dm-crypt internal reference count on such key equal to zero. Each table key has at least single copy in crypto layer anyway... This is no big deal on live system (copy in crypto layer) but after proper system shutdown there should be no key in system memory (coldboot risk mitigation).
+> 
 
-diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
-index 2290ecb..c058479 100644
---- a/libmpathcmd/mpath_cmd.c
-+++ b/libmpathcmd/mpath_cmd.c
-@@ -112,7 +112,7 @@ ssize_t mpath_recv_reply_len(int fd, unsigned int timeout)
- 		return ret;
- 	if (ret != sizeof(len)) {
- 		errno = EIO;
--		return ret;
-+		return -1;
- 	}
- 	return len;
- }
-diff --git a/multipathd/uxclnt.c b/multipathd/uxclnt.c
-index 62ff6f4..c5c32ea 100644
---- a/multipathd/uxclnt.c
-+++ b/multipathd/uxclnt.c
-@@ -28,6 +28,9 @@
- 
- static void print_reply(char *s)
- {
-+	if (!s)
-+		return;
-+
- 	if (isatty(1)) {
- 		printf("%s", s);
- 		return;
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index fa29b2a..7a9faf3 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -243,6 +243,10 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 					dead_client(c);
- 					continue;
- 				}
-+				if (!inbuf) {
-+					condlog(4, "recv_packet get null request");
-+					continue;
-+				}
- 				condlog(4, "cli[%d]: Got request [%s]",
- 					i, inbuf);
- 				uxsock_trigger(inbuf, &reply, &rlen,
--- 
-2.8.1.windows.1
+Hmm... I don't think that the kernel should do this (delete keys from keyring).
+It makes sense that remove command wipes the keys added by create command.
+But create command doesn't add keys to the keyring, so it would be odd if remove command clear such key.
+It sound like a userspace's responsibility to manage such keys.
+
+> While it may sound contradicting my claim about guaranteed key destruction I'd like to be able to perform table load (imagine admin wants to resize dm-crypt device) without need of reuploading the key every time. Even when such user/admin has no access to already active volume key put in a keyring. IOW it doesn't matter what keyring the key was originally anchored in. (Re)load of table with valid key description should always pass).
+> 
+
+Well, at first we'll  need to understand how to perform table load without asking the key every time.
+But, for that case, it shouldn't matter whether the key passed directly or placed in keyring.
+
+
+> The uspace part is about to land in cryptsetup 2.0 hopefully later this year. Most probably the kernel keyring will be used with other features of 2.0 release apart from loading dm-crypt mappings.
+> 
+> Last but not least: Mind me asking where do you plan to use it? In case we come with different implementation I'd like to reassure it'll be still of use to you.
+> 
+
+Our plan is to use this for encrypting containers.
+
+> Regards Ondrej
