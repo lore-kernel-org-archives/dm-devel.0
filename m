@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 02/11] multipath-tools: minor edit of
-	multipath/multipath.conf.5
-Date: Thu, 11 Aug 2016 20:32:18 +0200
-Message-ID: <1470940345-4441-2-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 09/11] multipath-tools: delete failback from
+	IBM/2810XIV
+Date: Thu, 11 Aug 2016 20:32:25 +0200
+Message-ID: <1470940345-4441-9-git-send-email-xose.vazquez@gmail.com>
 References: <1470940345-4441-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,65 +21,28 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Split long lines, and change a text from place.
+nonsense with multibus as path_grouping_policy
 
+Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- multipath/multipath.conf.5 | 17 ++++++++++-------
- 1 file changed, 10 insertions(+), 7 deletions(-)
+ libmultipath/hwtable.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 3b66ddb..fd4b1f2 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -147,10 +147,11 @@ Default value is: \fBno\fR
- .
- .TP
- .B multipath_dir
--Directory where the dynamic shared objects are stored. Defined at compile time.
-+Directory where the dynamic shared objects are stored.
- .RS
- .TP
--Default value is: \fB<system dependent>\fR, commonly \fI/lib64/multipath/\fR
-+Default value is: \fB<system dependent>\fR. Defined at compile time, commonly
-+\fI/lib64/multipath/\fR.
- .RE
- .
- .
-@@ -303,8 +304,9 @@ regex can be of SCSI H:B:T:L format. For example: 1:0:.:. , *:0:0:.
- regex can be of device name format. For example: sda , sd.e
- .TP
- .I serial
--regex can be of serial number format. For example: .*J1FR.*324 . The serial can be looked
--up through sysfs or by running multipathd show paths format "%z". For example: 0395J1FR904324
-+regex can be of serial number format. For example: .*J1FR.*324 . The serial can
-+be looked up through sysfs or by running multipathd show paths format "%z". For
-+example: 0395J1FR904324
- .TP
- .I wwn
- regex can be of the form \fI"host_wwnn:host_wwpn:target_wwnn:target_wwpn"\fR
-@@ -336,8 +338,8 @@ Possible values for the feature list are:
- .RS
- .TP 12
- .I queue_if_no_path
--(Superseded by \fIno_path_retry\fR) Queue IO if no path is active. Identical to the \fIno_path_retry\fR with
--\fIqueue\fR value. See KNOWN ISSUES.
-+(Superseded by \fIno_path_retry\fR) Queue IO if no path is active. Identical to
-+the \fIno_path_retry\fR with \fIqueue\fR value. See KNOWN ISSUES.
- .TP
- .I no_partitions
- Disable automatic partitions generation via kpartx.
-@@ -580,7 +582,8 @@ Default value is: \fB600\fR
- .
- .TP
- .B bindings_file
--The full pathname of the binding file to be used when the user_friendly_names option is set.
-+The full pathname of the binding file to be used when the user_friendly_names
-+option is set.
- .RS
- .TP
- Default value is: \fB/etc/multipath/bindings\fR
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 8114d3e..62633b1 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -517,7 +517,7 @@ static struct hwentry default_hw[] = {
+ 		.product       = "2810XIV",
+ 		.features      = "1 queue_if_no_path",
+ 		.pgpolicy      = MULTIBUS,
+-		.pgfailback    = 15,
++		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 		/*
+ 		 * IBM Power Virtual SCSI Devices
 -- 
 2.7.4
