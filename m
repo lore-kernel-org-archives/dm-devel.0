@@ -1,12 +1,19 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: scsi_dh_alua: Add new blacklist flag
-	'BLIST_SYNC_ALUA'
-Date: Fri, 12 Aug 2016 21:08:21 +0200
-Message-ID: <d7564361-eccf-3025-61ed-2b07ad7bd707@gmail.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH V6 1/3] multipath-tools: New way to limit the
+ IPC command length.
+Date: Fri, 12 Aug 2016 16:35:59 -0500
+Message-ID: <20160812213559.GP26062@octiron.msp.redhat.com>
+References: <1453953120-7023-1-git-send-email-fge@redhat.com>
+	<20160712065038.17565-1-fge@redhat.com>
+	<20160712065038.17565-2-fge@redhat.com>
+	<20160715213545.GP8095@octiron.msp.redhat.com>
+	<c9179069-b0a9-f409-860b-7b889a3cd654@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <c9179069-b0a9-f409-860b-7b889a3cd654@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,94 +23,149 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Sean Stewart <Sean.Stewart@netapp.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: Gris Ge <fge@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Hannes,
+On Fri, Aug 12, 2016 at 08:57:51AM -0700, Bart Van Assche wrote:
+> On 07/15/2016 02:35 PM, Benjamin Marzinski wrote:
+> >On Tue, Jul 12, 2016 at 02:50:36PM +0800, Gris Ge wrote:
+> >
+> >The only thing that I wonder about with this patch is, when previously
+> >the multipath client code would have failed with EPIPE, and (at least in
+> >some cases) spit out a semi-useful message, the program will now
+> >terminate because of the SIGPIPE signal.  I'm not sure it makes any real
+> >difference, since we weren't very diligent with returning useful error
+> >messages in this case, and the client code isn't very likely to get
+> >SIGPIPE.
+> >
+> >I'm not very concerned if nobody else thinks this is important, I just
+> >though I should bring it up.
+> 
+> Hello Ben,
+> 
+> How about modifying SIGPIPE handling in multipath/multipathd as in the
+> attached patch?
+> 
+> Thanks,
+> 
+> Bart.
 
-Why only NETAPP/INF-01-00 was included?
+> >From 2d834fcb135084805ab9ee219b663a4febb9c5d6 Mon Sep 17 00:00:00 2001
+> From: Bart Van Assche <bart.vanassche@sandisk.com>
+> Date: Fri, 12 Aug 2016 08:25:10 -0700
+> Subject: [PATCH] libmultipath, multipathd: Rework SIGPIPE handling
+> 
+> The behavior we want is as follows:
+> * If stdout is closed then multipathd stops due to SIGPIPE.
 
+I still don't understand why we ever what multipathd quitting with
+SIGPIPE.  I would much rather that the call return EPIPE and multipathd
+printed a useful error message, instead of simply quitting.
 
-Thank you.
+Also, I don't really like putting stuff that messes with signals in the
+libmpathcmd library.  Some users might want their program to get get
+those SIGPIPEs so they can handle them a certain way.  It seems like,
+since it isn't necessary to block the signal for this to work correctly,
+we should not be blocking it in the library, and multipathd should
+continue to make sure that it is ignoring the SIGPIPEs.
 
----cut---
-commit 851cde9909dd8b6fb90fab7f4e815c8f86c85a0d
-Author: Hannes Reinecke <hare@suse.de>
-Date:   Fri Feb 19 09:17:12 2016 +0100
+-Ben
 
-    scsi_dh_alua: Add new blacklist flag 'BLIST_SYNC_ALUA'
-
-    Add a new blacklist flag BLIST_SYNC_ALUA to instruct the
-    alua device handler to use synchronous command submission
-    for ALUA commands.
-
-    Reviewed-by: Bart Van Assche <bart.vanassche@sandisk.com>
-    Reviewed-by: Christoph Hellwig <hch@lst.de>
-    Signed-off-by: Hannes Reinecke <hare@suse.com>
-    Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
-
-diff --git a/drivers/scsi/device_handler/scsi_dh_alua.c b/drivers/scsi/device_handler/scsi_dh_alua.c
-index a3cb069..fbbe85e 100644
---- a/drivers/scsi/device_handler/scsi_dh_alua.c
-+++ b/drivers/scsi/device_handler/scsi_dh_alua.c
-@@ -366,6 +366,8 @@ static int alua_check_vpd(struct scsi_device *sdev, struct alua_dh_data *h,
- 		/* port group has changed. Update to new port group */
- 		rcu_assign_pointer(h->pg, pg);
- 	}
-+	if (sdev->synchronous_alua)
-+		pg->flags |= ALUA_SYNC_STPG;
- 	alua_rtpg_queue(h->pg, sdev, NULL);
- 	spin_unlock(&h->pg_lock);
-
-diff --git a/drivers/scsi/scsi_devinfo.c b/drivers/scsi/scsi_devinfo.c
-index bbfbfd9..3408578 100644
---- a/drivers/scsi/scsi_devinfo.c
-+++ b/drivers/scsi/scsi_devinfo.c
-@@ -220,6 +220,8 @@ static struct {
- 	{"NAKAMICH", "MJ-5.16S", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
- 	{"NEC", "PD-1 ODX654P", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
- 	{"NEC", "iStorage", NULL, BLIST_REPORTLUN2},
-+	{"NETAPP", "LUN C-Mode", NULL, BLIST_SYNC_ALUA},
-+	{"NETAPP", "INF-01-00", NULL, BLIST_SYNC_ALUA},
- 	{"NRC", "MBR-7", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
- 	{"NRC", "MBR-7.4", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
- 	{"PIONEER", "CD-ROM DRM-600", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
-diff --git a/drivers/scsi/scsi_scan.c b/drivers/scsi/scsi_scan.c
-index 1f02e84..420239c 100644
---- a/drivers/scsi/scsi_scan.c
-+++ b/drivers/scsi/scsi_scan.c
-@@ -964,6 +964,9 @@ static int scsi_add_lun(struct scsi_device *sdev, unsigned char *inq_result,
- 	if (*bflags & BLIST_NO_DIF)
- 		sdev->no_dif = 1;
-
-+	if (*bflags & BLIST_SYNC_ALUA)
-+		sdev->synchronous_alua = 1;
-+
- 	sdev->eh_timeout = SCSI_DEFAULT_EH_TIMEOUT;
-
- 	if (*bflags & BLIST_TRY_VPD_PAGES)
-diff --git a/include/scsi/scsi_device.h b/include/scsi/scsi_device.h
-index 9173ab5a..4af2b24 100644
---- a/include/scsi/scsi_device.h
-+++ b/include/scsi/scsi_device.h
-@@ -176,6 +176,7 @@ struct scsi_device {
- 	unsigned no_dif:1;	/* T10 PI (DIF) should be disabled */
- 	unsigned broken_fua:1;		/* Don't set FUA bit */
- 	unsigned lun_in_cdb:1;		/* Store LUN bits in CDB[1] */
-+	unsigned synchronous_alua:1;	/* Synchronous ALUA commands */
-
- 	atomic_t disk_events_disable_depth; /* disable depth for disk events */
-
-diff --git a/include/scsi/scsi_devinfo.h b/include/scsi/scsi_devinfo.h
-index 96e3f56..9f750cb 100644
---- a/include/scsi/scsi_devinfo.h
-+++ b/include/scsi/scsi_devinfo.h
-@@ -37,5 +37,6 @@
- #define BLIST_TRY_VPD_PAGES	0x10000000 /* Attempt to read VPD pages */
- #define BLIST_NO_RSOC		0x20000000 /* don't try to issue RSOC */
- #define BLIST_MAX_1024		0x40000000 /* maximum 1024 sector cdb length */
-+#define BLIST_SYNC_ALUA		0x80000000 /* Synchronous ALUA commands */
-
- #endif
----end---
+> * Sending data to a socket that has been closed by the receiver
+>   does not cause multipathd to stop.
+> 
+> Hence unblock SIGPIPE and use MSG_NOSIGNAL when sending data over
+> a socket.
+> 
+> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+> ---
+>  libmpathcmd/mpath_cmd.c |  4 ++--
+>  libmultipath/uxsock.c   | 17 ++---------------
+>  multipathd/main.c       |  8 +-------
+>  3 files changed, 5 insertions(+), 24 deletions(-)
+> 
+> diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
+> index 2290ecb..3a94d83 100644
+> --- a/libmpathcmd/mpath_cmd.c
+> +++ b/libmpathcmd/mpath_cmd.c
+> @@ -33,7 +33,7 @@ static ssize_t read_all(int fd, void *buf, size_t len, unsigned int timeout)
+>  			return -1;
+>  		} else if (!pfd.revents & POLLIN)
+>  			continue;
+> -		n = read(fd, buf, len);
+> +		n = recv(fd, buf, len, 0);
+>  		if (n < 0) {
+>  			if ((errno == EINTR) || (errno == EAGAIN))
+>  				continue;
+> @@ -56,7 +56,7 @@ static size_t write_all(int fd, const void *buf, size_t len)
+>  	size_t total = 0;
+>  
+>  	while (len) {
+> -		ssize_t n = write(fd, buf, len);
+> +		ssize_t n = send(fd, buf, len, MSG_NOSIGNAL);
+>  		if (n < 0) {
+>  			if ((errno == EINTR) || (errno == EAGAIN))
+>  				continue;
+> diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
+> index 775e278..880257f 100644
+> --- a/libmultipath/uxsock.c
+> +++ b/libmultipath/uxsock.c
+> @@ -81,7 +81,7 @@ size_t write_all(int fd, const void *buf, size_t len)
+>  	size_t total = 0;
+>  
+>  	while (len) {
+> -		ssize_t n = write(fd, buf, len);
+> +		ssize_t n = send(fd, buf, len, MSG_NOSIGNAL);
+>  		if (n < 0) {
+>  			if ((errno == EINTR) || (errno == EAGAIN))
+>  				continue;
+> @@ -138,20 +138,7 @@ ssize_t read_all(int fd, void *buf, size_t len, unsigned int timeout)
+>   */
+>  int send_packet(int fd, const char *buf)
+>  {
+> -	int ret = 0;
+> -	sigset_t set, old;
+> -
+> -	/* Block SIGPIPE */
+> -	sigemptyset(&set);
+> -	sigaddset(&set, SIGPIPE);
+> -	pthread_sigmask(SIG_BLOCK, &set, &old);
+> -
+> -	ret = mpath_send_cmd(fd, buf);
+> -
+> -	/* And unblock it again */
+> -	pthread_sigmask(SIG_SETMASK, &old, NULL);
+> -
+> -	return ret;
+> +	return mpath_send_cmd(fd, buf);
+>  }
+>  
+>  /*
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 54abfef..2be6cb2 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -2125,18 +2125,12 @@ sigusr2 (int sig)
+>  static void
+>  signal_init(void)
+>  {
+> -	sigset_t set;
+> -
+> -	sigemptyset(&set);
+> -	sigaddset(&set, SIGPIPE);
+> -	pthread_sigmask(SIG_SETMASK, &set, NULL);
+> -
+>  	signal_set(SIGHUP, sighup);
+>  	signal_set(SIGUSR1, sigusr1);
+>  	signal_set(SIGUSR2, sigusr2);
+>  	signal_set(SIGINT, sigend);
+>  	signal_set(SIGTERM, sigend);
+> -	signal(SIGPIPE, SIG_IGN);
+> +	signal_set(SIGPIPE, sigend);
+>  }
+>  
+>  static void
+> -- 
+> 2.9.2
+> 
