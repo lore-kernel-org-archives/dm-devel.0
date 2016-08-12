@@ -1,12 +1,13 @@
-From: tang.junhui@zte.com.cn
-Subject: [PATCH] libmultipath: retry to get path serial number by
-	get_serial() after failure by get_vpd_sysfs()
-Date: Fri, 12 Aug 2016 11:43:56 +0800
-Message-ID: <1470973436-11512-1-git-send-email-tang.junhui@zte.com.cn>
+From: Gris Ge <fge@redhat.com>
+Subject: [PATCH V7 0/4] multipath: Introducing multipath C API
+Date: Fri, 12 Aug 2016 20:12:36 +0800
+Message-ID: <20160812121240.47796-1-fge@redhat.com>
+References: <1453953120-7023-1-git-send-email-fge@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1453953120-7023-1-git-send-email-fge@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,43 +17,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, "tang.junhui" <tang.junhui@zte.com.cn>
+To: dm-devel@redhat.com
+Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
-From: "tang.junhui" <tang.junhui@zte.com.cn>
+Changes since V6:
+ * Add new patch(1/4) to block SIGPIPE when write() in libmpathcmd.
+ * Patch 2/4 does not have 'send_packet_daemon_only()' as SIGPIPE already
+   handled by libmpathcmd.
 
-Some operating systems have no such file vpd_pg80 in sys directory
-such as /sys/devices/platform/host23/session21/target23:0:0/23:0:0:33/,
-so path serial number would be failed to get by get_vpd_sysfs(),
-we need retry to get it by get_serial to avoid empty serial of the path.
+Changes since V5:
+ * Fix commit message typo of patch 1/3:
+    'EINVA vs EINVAL' and 'dedicate vs dedicated'
+ * Use $(LN) and $(RM) in Makefile in patch 3/3.
+ * Rebased to current master(c9aef428b1b16b8128c9fbed1cdefe30bed4ac6f).
 
-Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
----
- libmultipath/discovery.c | 10 +++++++---
- 1 file changed, 7 insertions(+), 3 deletions(-)
+Changes since V4:
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 0974c92..bb3116d 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1435,10 +1435,14 @@ scsi_ioctl_pathinfo (struct path * pp, int mask)
- 	if (!attr_path || pp->sg_id.host_no == -1)
- 		return 0;
- 
--	if (get_vpd_sysfs(parent, 0x80, pp->serial, SERIAL_SIZE) > 0)
--		condlog(3, "%s: serial = %s",
--			pp->dev, pp->serial);
-+	if (get_vpd_sysfs(parent, 0x80, pp->serial, SERIAL_SIZE) <= 0) {
-+		if (get_serial(pp->serial, SERIAL_SIZE, pp->fd)) {
-+			condlog(2, "%s: fail to get serial", pp->dev);
-+			return 0;
-+		}
-+	}
- 
-+	condlog(3, "%s: serial = %s", pp->dev, pp->serial);
- 	return 0;
- }
- 
+ * Remove the unused constant incorrectly added to libmpathcmd in V3.
+ * The patch 3/3 could also be found in below link if dm-devel mailing list
+   discard that patch again:
+    https://github.com/cathay4t/multipath-tools/commit/b992056a447b90251a65aa4919055c70aa62a498.patch
+
+Changes since V3:
+ * New way to limit the IPC command length.
+ * Treat IPC connection refuse error as DMMP_ERR_NO_DAEMON.
+
+
+Gris Ge (4):
+  libmpathcmd: Block SIGPIPE when write()
+  multipath-tools: New way to limit the IPC command length.
+  multipath-tools: Set errno mpath_recv_reply() when failure
+  multipath-tools: Introducing multipath C API
+
+ .gitignore                            |    4 +
+ Makefile                              |    1 +
+ Makefile.inc                          |    3 +
+ libdmmp/DEV_NOTES                     |   41 +
+ libdmmp/Makefile                      |   78 +
+ libdmmp/docs/kernel-doc               | 2971 +++++++++++++++++++++++++++++++++
+ libdmmp/docs/libdmmp.h.3              |  113 ++
+ libdmmp/docs/split-man.pl             |   41 +
+ libdmmp/libdmmp.c                     |  286 ++++
+ libdmmp/libdmmp.pc.in                 |    9 +
+ libdmmp/libdmmp/libdmmp.h             |  607 +++++++
+ libdmmp/libdmmp_misc.c                |   87 +
+ libdmmp/libdmmp_mp.c                  |  150 ++
+ libdmmp/libdmmp_path.c                |  115 ++
+ libdmmp/libdmmp_pg.c                  |  208 +++
+ libdmmp/libdmmp_private.h             |  208 +++
+ libdmmp/test/Makefile                 |   30 +
+ libdmmp/test/libdmmp_speed_test.c     |   49 +
+ libdmmp/test/libdmmp_test.c           |  144 ++
+ libmpathcmd/mpath_cmd.c               |   24 +-
+ libmpathcmd/mpath_cmd.h               |    2 -
+ libmpathpersist/mpath_updatepr.c      |    8 +-
+ libmultipath/Makefile                 |    2 +-
+ libmultipath/alias.c                  |    1 -
+ libmultipath/configure.c              |    5 +-
+ libmultipath/file.c                   |   24 +-
+ libmultipath/file.h                   |    1 +
+ libmultipath/uxsock.h                 |    6 -
+ libmultipath/wwids.c                  |    1 -
+ multipath/main.c                      |    1 -
+ multipathd/Makefile                   |    2 +-
+ multipathd/uxclnt.c                   |   16 +-
+ multipathd/uxlsnr.c                   |   10 +-
+ {libmultipath => multipathd}/uxsock.c |   89 +-
+ multipathd/uxsock.h                   |    8 +
+ 35 files changed, 5218 insertions(+), 127 deletions(-)
+ create mode 100644 libdmmp/DEV_NOTES
+ create mode 100644 libdmmp/Makefile
+ create mode 100644 libdmmp/docs/kernel-doc
+ create mode 100644 libdmmp/docs/libdmmp.h.3
+ create mode 100644 libdmmp/docs/split-man.pl
+ create mode 100644 libdmmp/libdmmp.c
+ create mode 100644 libdmmp/libdmmp.pc.in
+ create mode 100644 libdmmp/libdmmp/libdmmp.h
+ create mode 100644 libdmmp/libdmmp_misc.c
+ create mode 100644 libdmmp/libdmmp_mp.c
+ create mode 100644 libdmmp/libdmmp_path.c
+ create mode 100644 libdmmp/libdmmp_pg.c
+ create mode 100644 libdmmp/libdmmp_private.h
+ create mode 100644 libdmmp/test/Makefile
+ create mode 100644 libdmmp/test/libdmmp_speed_test.c
+ create mode 100644 libdmmp/test/libdmmp_test.c
+ delete mode 100644 libmultipath/uxsock.h
+ rename {libmultipath => multipathd}/uxsock.c (57%)
+ create mode 100644 multipathd/uxsock.h
+
 -- 
-2.8.1.windows.1
+2.9.2
