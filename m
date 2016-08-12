@@ -1,8 +1,7 @@
 From: Gris Ge <fge@redhat.com>
-Subject: [PATCH V7 3/4] multipath-tools: Set errno
-	mpath_recv_reply() when failure
-Date: Fri, 12 Aug 2016 20:12:39 +0800
-Message-ID: <20160812121240.47796-4-fge@redhat.com>
+Subject: [PATCH V7 1/4] libmpathcmd: Block SIGPIPE when write()
+Date: Fri, 12 Aug 2016 20:12:37 +0800
+Message-ID: <20160812121240.47796-2-fge@redhat.com>
 References: <1453953120-7023-1-git-send-email-fge@redhat.com>
 	<20160812121240.47796-1-fge@redhat.com>
 Mime-Version: 1.0
@@ -23,35 +22,61 @@ To: dm-devel@redhat.com
 Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
-Enforce what mpath_cmd.h states "-1 on failure (with errno set)" for
-mpath_recv_reply() by set errno and return -1 on failure.
+ * Just block SIGPIPE when write() and restore it when done.
+ * Use 'errno_save()' to preserve the errno of write().
 
 Signed-off-by: Gris Ge <fge@redhat.com>
 ---
- libmpathcmd/mpath_cmd.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmpathcmd/mpath_cmd.c | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
 
 diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
-index b400038..171a360 100644
+index 2290ecb..0daaf53 100644
 --- a/libmpathcmd/mpath_cmd.c
 +++ b/libmpathcmd/mpath_cmd.c
-@@ -155,7 +155,7 @@ int mpath_recv_reply(int fd, char **reply, unsigned int timeout)
- 	*reply = NULL;
- 	len = mpath_recv_reply_len(fd, timeout);
- 	if (len <= 0)
--		return len;
-+		return -1;
- 	*reply = malloc(len);
- 	if (!*reply)
- 		return -1;
-@@ -163,7 +163,7 @@ int mpath_recv_reply(int fd, char **reply, unsigned int timeout)
- 	if (err) {
- 		free(*reply);
- 		*reply = NULL;
--		return err;
-+		return -1;
+@@ -7,6 +7,7 @@
+ #include <poll.h>
+ #include <string.h>
+ #include <errno.h>
++#include <signal.h>
+ 
+ #include "mpath_cmd.h"
+ 
+@@ -54,20 +55,33 @@ static ssize_t read_all(int fd, void *buf, size_t len, unsigned int timeout)
+ static size_t write_all(int fd, const void *buf, size_t len)
+ {
+ 	size_t total = 0;
++	sigset_t set, old;
++	int errno_save = 0;
++
++	/* Block SIGPIPE */
++	sigemptyset(&set);
++	sigaddset(&set, SIGPIPE);
++	pthread_sigmask(SIG_BLOCK, &set, &old);
+ 
+ 	while (len) {
+ 		ssize_t n = write(fd, buf, len);
++		errno_save = errno;
+ 		if (n < 0) {
+ 			if ((errno == EINTR) || (errno == EAGAIN))
+ 				continue;
+-			return total;
++			goto out;
+ 		}
+ 		if (!n)
+-			return total;
++			goto out;
+ 		buf = n + (char *)buf;
+ 		len -= n;
+ 		total += n;
  	}
- 	return 0;
++out:
++	/* And unblock it again */
++	pthread_sigmask(SIG_SETMASK, &old, NULL);
++	errno = errno_save;
++
+ 	return total;
  }
+ 
 -- 
 2.9.2
