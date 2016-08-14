@@ -1,12 +1,15 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: document how to add devices
-	that need special flags in the SCSI subsystem
-Date: Sat, 13 Aug 2016 21:03:45 +0200
-Message-ID: <1471115025-8137-1-git-send-email-xose.vazquez@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-crypt: Fix error with too large bios
+Date: Sat, 13 Aug 2016 20:07:40 -0400
+Message-ID: <20160814000740.GA5317@redhat.com>
+References: <alpine.LRH.2.11.1608102050200.10662@mail.ewheeler.net>
+	<alpine.LRH.2.02.1608131342250.3291@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1608131342250.3291@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,81 +19,116 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, SCSI ML <linux-scsi@vger.kernel.org>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Eric Wheeler <dm-devel@lists.ewheeler.net>, dm-devel@redhat.com, hch@lst.de, johnstonj.public@codenest.com
 List-Id: dm-devel.ids
 
-Full flags list at include/scsi/scsi_devinfo.h
+[top-posting just because others went wild with it]
 
+I don't have a strong opinion but I just assumed the local dm-crypt
+workaround wasn't the way forward.  I didn't stage it because Christoph
+disagreed with it:
+https://lkml.org/lkml/2016/6/1/456
+https://lkml.org/lkml/2016/6/1/477
 
-Arrays controllers included currently:
+Also, this would appear to be a more generic fix:
+"block: make sure big bio is splitted into at most 256 bvecs
+https://lkml.org/lkml/2016/8/12/154
+(but Christoph disagrees there too, so the way forward isn't clear)
 
- {"3PARdata", "VV", NULL, BLIST_REPORTLUN2},
+Mike
 
- {"DEC", "HSG80", NULL, BLIST_REPORTLUN2 | BLIST_NOSTARTONADD},
- {"HP", "A6189A", NULL, BLIST_SPARSELUN | BLIST_LARGELUN},
- {"COMPAQ", "MSA1000", NULL, BLIST_SPARSELUN | BLIST_NOSTARTONADD},
- {"COMPAQ", "MSA1000 VOLUME", NULL, BLIST_SPARSELUN | BLIST_NOSTARTONADD},
- {"COMPAQ", "HSV110", NULL, BLIST_REPORTLUN2 | BLIST_NOSTARTONADD},
- {"HP", "HSV100", NULL, BLIST_REPORTLUN2 | BLIST_NOSTARTONADD},
- {"COMPAQ", "LOGICAL VOLUME", NULL, BLIST_FORCELUN | BLIST_MAX_512},
+On Sat, Aug 13 2016 at  1:45pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
- {"DDN", "SAN DataDirector", "*", BLIST_SPARSELUN},
-
- {"DGC", "RAID", NULL, BLIST_SPARSELUN},
- {"DGC", "DISK", NULL, BLIST_SPARSELUN},					<-- mising VDISK ??
- {"EMC", "SYMMETRIX", NULL, BLIST_SPARSELUN | BLIST_LARGELUN | BLIST_FORCELUN},
- {"EMC",  "Invista", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
-
- {"FSC", "CentricStor", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
-
- {"HITACHI", "OPEN-", "*", BLIST_REPORTLUN2},
- {"HP", "OPEN-", "*", BLIST_REPORTLUN2},
-
- {"HITACHI", "DF400", "*", BLIST_REPORTLUN2},
- {"HITACHI", "DF500", "*", BLIST_REPORTLUN2},
- {"HP", "DF400", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
- {"HP", "DF500", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
- {"HP", "DF600", "*", BLIST_SPARSELUN | BLIST_LARGELUN},			<-- bug, also apply: 627511e3e
-
- {"IBM", "ProFibre 4000R", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
-
- {"NETAPP", "LUN C-Mode", NULL, BLIST_SYNC_ALUA},				<-- ontap
-
- {"NETAPP", "INF-01-00", NULL, BLIST_SYNC_ALUA},				<-- rdac!!
-
- {"SGI", "TP9100", "*", BLIST_REPORTLUN2},
-
- {"Intel", "Multi-Flex", NULL, BLIST_NO_RSOC},
-
- {"SGI", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
- {"IBM", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
- {"SUN", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
- {"DELL", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
-
-
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
-Cc: Martin K. Petersen <martin.petersen@oracle.com>
-Cc: SCSI ML <linux-scsi@vger.kernel.org>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 3 +++
- 1 file changed, 3 insertions(+)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index a69002f..a489d6c 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -22,6 +22,9 @@
-  *
-  * Devices with a proprietary handler must also be included in
-  * the kernel side. Currently at drivers/scsi/scsi_dh.c
-+ *
-+ * Moreover, if a device needs a special treatment by the SCSI
-+ * subsystem it should be included in drivers/scsi/scsi_devinfo.c
-  */
- static struct hwentry default_hw[] = {
- 	/*
--- 
-2.7.4
+> Yes, this should be backported. It was lost somehow.
+> 
+> Mike, please put it to your git.
+> 
+> Mikulas
+> 
+> 
+> On Wed, 10 Aug 2016, Eric Wheeler wrote:
+> 
+> > Hello Mikulas and dm-devel list,
+> > 
+> > The simple patch below with is confirmed to fix James Johnston's issue and 
+> > doesn't appear to be in v4.8-rc1:
+> > 
+> > This references the following patchwork entry:
+> >   https://patchwork.kernel.org/patch/9138595/
+> > 
+> > Can we get this pushed upstream for v4.8?
+> > 
+> > --
+> > Eric Wheeler
+> > 
+> > 
+> > On Fri, 27 May 2016, Mikulas Patocka wrote:
+> > > dm-crypt: Fix error with too large bios
+> > > 
+> > > When dm-crypt processes writes, it allocates a new bio in the function
+> > > crypt_alloc_buffer. The bio is allocated from a bio set and it can have at
+> > > most BIO_MAX_PAGES vector entries, however the incoming bio can be larger
+> > > if it was allocated by other means. For example, bcache creates bios
+> > > larger than BIO_MAX_PAGES. If the incoming bio is larger, bio_alloc_bioset
+> > > fails and error is returned.
+> > > 
+> > > To avoid the error, we test for too large bio in the function crypt_map
+> > > and dm_accept_partial_bio to split the bio. dm_accept_partial_bio trims
+> > > the current bio to the desired size and requests that the device mapper
+> > > core sends another bio with the rest of the data.
+> > > 
+> > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > > Cc: stable@vger.kernel.org	# v3.16+
+> > 
+> > Tested-by: James Johnston <johnstonj.public@codenest.com>
+> > 
+> > I tested this patch by:
+> > 
+> > 1.  Building v4.7-rc1 from Torvalds git repo.  Confirmed that original bug
+> >     still occurs on Ubuntu 15.10.
+> > 
+> > 2.  Applying your patch to v4.7-rc1.  My kill sequence no longer works,
+> >     and the writeback cache is now successfully flushed to disk, and the
+> >     cache can be detached from the backing device.
+> > 
+> > 3.  To check data integrity, copied 250 MB of /dev/urandom to some file
+> >     on main volume.  Then, dd copy this file to /dev/bcache0.  Then,
+> >     detached the cache device from the backing device.  Then, rebooted.
+> >     Then, dd copy /dev/bcache0 to another file on main volume.  Then,
+> >     diff the files and confirm no changes.
+> > 
+> > So it looks like it works, based on this admittedly brief testing.  Thanks!
+> > 
+> > Best regards,
+> > 
+> > James Johnston
+> > 
+> > 
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> > 
+> > Patch
+> > 
+> > Index: linux-4.6/drivers/md/dm-crypt.c
+> > ===================================================================
+> > --- linux-4.6.orig/drivers/md/dm-crypt.c
+> > +++ linux-4.6/drivers/md/dm-crypt.c
+> > @@ -2137,6 +2137,10 @@  static int crypt_map(struct dm_target *t
+> >  	struct dm_crypt_io *io;
+> >  	struct crypt_config *cc = ti->private;
+> >  
+> > +	if (unlikely(bio->bi_iter.bi_size > BIO_MAX_SIZE) &&
+> > +	    (bio->bi_rw & (REQ_FLUSH | REQ_DISCARD | REQ_WRITE)) == REQ_WRITE)
+> > +		dm_accept_partial_bio(bio, BIO_MAX_SIZE >> SECTOR_SHIFT);
+> > +
+> >  	/*
+> >  	 * If bio is REQ_FLUSH or REQ_DISCARD, just bypass crypt queues.
+> >  	 * - for REQ_FLUSH device-mapper core ensures that no IO is in-flight
+> > 
+> > 
+> > 
+> > 
