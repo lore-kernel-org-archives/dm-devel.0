@@ -1,15 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-crypt: Fix error with too large bios
-Date: Sat, 13 Aug 2016 20:07:40 -0400
-Message-ID: <20160814000740.GA5317@redhat.com>
-References: <alpine.LRH.2.11.1608102050200.10662@mail.ewheeler.net>
-	<alpine.LRH.2.02.1608131342250.3291@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Christie <mchristi@redhat.com>
+Subject: Re: [PATCH 2/4] multipath-tools: add checker callout to
+ repair path
+Date: Sun, 14 Aug 2016 03:41:33 -0500
+Message-ID: <57B02EBD.9090206@redhat.com>
+References: <1470657710-28081-1-git-send-email-mchristi@redhat.com>
+	<1470657710-28081-3-git-send-email-mchristi@redhat.com>
+	<9d5dcfcd-2550-c9e9-94dc-47c34ebdb039@sandisk.com>
+	<57ACE12F.20700@redhat.com>
+	<e4286ca9-01cb-5cc0-2d67-38f68c0a19cb@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="------------010708090702070506070405"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1608131342250.3291@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <e4286ca9-01cb-5cc0-2d67-38f68c0a19cb@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,116 +21,131 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Eric Wheeler <dm-devel@lists.ewheeler.net>, dm-devel@redhat.com, hch@lst.de, johnstonj.public@codenest.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
-[top-posting just because others went wild with it]
+This is a multi-part message in MIME format.
+--------------010708090702070506070405
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 
-I don't have a strong opinion but I just assumed the local dm-crypt
-workaround wasn't the way forward.  I didn't stage it because Christoph
-disagreed with it:
-https://lkml.org/lkml/2016/6/1/456
-https://lkml.org/lkml/2016/6/1/477
+On 08/11/2016 04:41 PM, Bart Van Assche wrote:
+> On 08/11/2016 01:33 PM, Mike Christie wrote:
+>> Could you try the attached patch. I found two segfaults. If check_path
+>> returns less than 0 then we free the path and so we cannot call repair
+>> on it. If libcheck_init fails it memsets the checker, so we cannot call
+>> repair on it too.
+>>
+>> I moved the repair call to the specific paths that the path is down.
+> 
+> Hello Mike,
+> 
+> Thanks for the patch. Unfortunately even with this patch applied I can
+> still trigger a segfault sporadically:
+> 
 
-Also, this would appear to be a more generic fix:
-"block: make sure big bio is splitted into at most 256 bvecs
-https://lkml.org/lkml/2016/8/12/154
-(but Christoph disagrees there too, so the way forward isn't clear)
+Ok. This should fix all of them. Attached patch fixes:
 
-Mike
+1. If check_path returns less than 0 then we free the path and so we
+cannot call repair on it of course.
+2. If libcheck_init fails it memsets the checker, so we cannot call
+repair on it too.
+3. We can hit a race where when pathinfo is setting up a path, the path
+could have gone down. In the DI_CHECKER chunk we then do not run
+get_state and attach a checker. Later when check_path is run
+path_offline we could still return PATH_DOWN or PATH_REMOVED and
+get_state is again not run so we do not get to attach a checker again. I
+was then running repair_path since the state was PATH_DOWN, and kaboom.
 
-On Sat, Aug 13 2016 at  1:45pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+Attached patch should fix these issues.
 
-> Yes, this should be backported. It was lost somehow.
-> 
-> Mike, please put it to your git.
-> 
-> Mikulas
-> 
-> 
-> On Wed, 10 Aug 2016, Eric Wheeler wrote:
-> 
-> > Hello Mikulas and dm-devel list,
-> > 
-> > The simple patch below with is confirmed to fix James Johnston's issue and 
-> > doesn't appear to be in v4.8-rc1:
-> > 
-> > This references the following patchwork entry:
-> >   https://patchwork.kernel.org/patch/9138595/
-> > 
-> > Can we get this pushed upstream for v4.8?
-> > 
-> > --
-> > Eric Wheeler
-> > 
-> > 
-> > On Fri, 27 May 2016, Mikulas Patocka wrote:
-> > > dm-crypt: Fix error with too large bios
-> > > 
-> > > When dm-crypt processes writes, it allocates a new bio in the function
-> > > crypt_alloc_buffer. The bio is allocated from a bio set and it can have at
-> > > most BIO_MAX_PAGES vector entries, however the incoming bio can be larger
-> > > if it was allocated by other means. For example, bcache creates bios
-> > > larger than BIO_MAX_PAGES. If the incoming bio is larger, bio_alloc_bioset
-> > > fails and error is returned.
-> > > 
-> > > To avoid the error, we test for too large bio in the function crypt_map
-> > > and dm_accept_partial_bio to split the bio. dm_accept_partial_bio trims
-> > > the current bio to the desired size and requests that the device mapper
-> > > core sends another bio with the rest of the data.
-> > > 
-> > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > > Cc: stable@vger.kernel.org	# v3.16+
-> > 
-> > Tested-by: James Johnston <johnstonj.public@codenest.com>
-> > 
-> > I tested this patch by:
-> > 
-> > 1.  Building v4.7-rc1 from Torvalds git repo.  Confirmed that original bug
-> >     still occurs on Ubuntu 15.10.
-> > 
-> > 2.  Applying your patch to v4.7-rc1.  My kill sequence no longer works,
-> >     and the writeback cache is now successfully flushed to disk, and the
-> >     cache can be detached from the backing device.
-> > 
-> > 3.  To check data integrity, copied 250 MB of /dev/urandom to some file
-> >     on main volume.  Then, dd copy this file to /dev/bcache0.  Then,
-> >     detached the cache device from the backing device.  Then, rebooted.
-> >     Then, dd copy /dev/bcache0 to another file on main volume.  Then,
-> >     diff the files and confirm no changes.
-> > 
-> > So it looks like it works, based on this admittedly brief testing.  Thanks!
-> > 
-> > Best regards,
-> > 
-> > James Johnston
-> > 
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> > 
-> > Patch
-> > 
-> > Index: linux-4.6/drivers/md/dm-crypt.c
-> > ===================================================================
-> > --- linux-4.6.orig/drivers/md/dm-crypt.c
-> > +++ linux-4.6/drivers/md/dm-crypt.c
-> > @@ -2137,6 +2137,10 @@  static int crypt_map(struct dm_target *t
-> >  	struct dm_crypt_io *io;
-> >  	struct crypt_config *cc = ti->private;
-> >  
-> > +	if (unlikely(bio->bi_iter.bi_size > BIO_MAX_SIZE) &&
-> > +	    (bio->bi_rw & (REQ_FLUSH | REQ_DISCARD | REQ_WRITE)) == REQ_WRITE)
-> > +		dm_accept_partial_bio(bio, BIO_MAX_SIZE >> SECTOR_SHIFT);
-> > +
-> >  	/*
-> >  	 * If bio is REQ_FLUSH or REQ_DISCARD, just bypass crypt queues.
-> >  	 * - for REQ_FLUSH device-mapper core ensures that no IO is in-flight
-> > 
-> > 
-> > 
-> > 
+--------------010708090702070506070405
+Content-Type: text/x-patch;
+ name="multipathd-fix-segfault.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+ filename="multipathd-fix-segfault.patch"
+
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index 8976c89..fd999b0 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -213,7 +213,7 @@ void checker_put (struct checker * dst)
+ 
+ void checker_repair (struct checker * c)
+ {
+-	if (!c)
++	if (!c || !checker_selected(c))
+ 		return;
+ 
+ 	c->message[0] = '\0';
+diff --git a/multipathd/main.c b/multipathd/main.c
+index f5e9a01..c4ffe6f 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1442,6 +1442,16 @@ int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
+ 	return 0;
+ }
+ 
++void repair_path(struct path * pp)
++{
++	if (pp->state != PATH_DOWN)
++		return;
++
++	checker_repair(&pp->checker);
++	if (strlen(checker_message(&pp->checker)))
++		LOG_MSG(1, checker_message(&pp->checker));
++}
++
+ /*
+  * Returns '1' if the path has been checked, '-1' if it was blacklisted
+  * and '0' otherwise
+@@ -1606,6 +1616,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 			pp->mpp->failback_tick = 0;
+ 
+ 			pp->mpp->stat_path_failures++;
++			repair_path(pp);
+ 			return 1;
+ 		}
+ 
+@@ -1700,7 +1711,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	}
+ 
+ 	pp->state = newstate;
+-
++	repair_path(pp);
+ 
+ 	if (pp->mpp->wait_for_udev)
+ 		return 1;
+@@ -1725,14 +1736,6 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	return 1;
+ }
+ 
+-void repair_path(struct vectors * vecs, struct path * pp)
+-{
+-	if (pp->state != PATH_DOWN)
+-		return;
+-
+-	checker_repair(&pp->checker);
+-}
+-
+ static void *
+ checkerloop (void *ap)
+ {
+@@ -1804,7 +1807,6 @@ checkerloop (void *ap)
+ 					i--;
+ 				} else
+ 					num_paths += rc;
+-				repair_path(vecs, pp);
+ 			}
+ 			lock_cleanup_pop(vecs->lock);
+ 		}
+
+--------------010708090702070506070405
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------010708090702070506070405--
