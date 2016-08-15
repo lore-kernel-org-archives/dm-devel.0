@@ -1,12 +1,14 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 0/7] multipathd: Fix race conditions related to
- thread termination
-Date: Mon, 15 Aug 2016 08:24:06 -0700
-Message-ID: <31d43b64-36c8-1a24-a849-230b5cf6323c@sandisk.com>
+Subject: [PATCH 1/6] libmultipath: Remove a data structure that
+ has been commented out
+Date: Mon, 15 Aug 2016 08:25:58 -0700
+Message-ID: <aa9af767-0e91-f4f1-53f7-bbad76829d58@sandisk.com>
+References: <31d43b64-36c8-1a24-a849-230b5cf6323c@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <31d43b64-36c8-1a24-a849-230b5cf6323c@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,21 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello Christophe,
+Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+---
+ libmultipath/structs_vec.h | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
 
-As you may already have noticed the code in multipathd for terminating 
-worker threads triggers several race conditions. It would be appreciated 
-if you could review and/or apply the following seven patches that fix 
-these race conditions:
-
-0001-multipathd-fix-memory-allocation-logic-error-for-pol.patch
-0002-libmultipath-Remove-a-data-structure-that-has-been-c.patch
-0003-libmultipath-Remove-debugging-code-from-lock.h.patch
-0004-libmultipath-Convert-lock-and-unlock-into-inline-fun.patch
-0005-libmultipath-Inline-mutex-in-struct-mutex_lock.patch
-0006-libmultipath-Introduce-timedlock.patch
-0007-multipathd-Remove-a-busy-waiting-loop.patch
-
-Thanks,
-
-Bart.
+diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
+index 8ef547d..46f30af 100644
+--- a/libmultipath/structs_vec.h
++++ b/libmultipath/structs_vec.h
+@@ -4,11 +4,7 @@
+ #include "vector.h"
+ #include "config.h"
+ #include "lock.h"
+-/*
+-struct mutex_lock {
+-	pthread_mutex_t *mutex;
+-	int depth;
+-}; */
++
+ struct vectors {
+ 	struct mutex_lock lock; /* defined in lock.h */
+ 	vector pathvec;
+-- 
+2.9.2
