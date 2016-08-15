@@ -1,40 +1,94 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] libmultipath: fix memory API logic error
-Date: Mon, 15 Aug 2016 14:11:12 +0200
-Message-ID: <ee311fa6-305e-f3a9-b4c2-a81b31bdd732@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-mpath: always return reservation conflict
+Date: Mon, 15 Aug 2016 09:08:29 -0400
+Message-ID: <20160815130829.GA14829@redhat.com>
+References: <1470141392-25479-1-git-send-email-hch@lst.de>
+ <1470141392-25479-2-git-send-email-hch@lst.de>
+ <20160811183832.GA27144@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "tang.junhui " <tang.junhui@zte.com.cn>, device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160811183832.GA27144@lst.de>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, hare@suse.de
 List-Id: dm-devel.ids
 
-tang.junhui wrote:
+Not sure how Hannes' original patch was overlooked but...
 
-> Memroy API use mem_allocated to record the total size of used memory,
-> however, it's wrong to use size(p) as the length of freed memory in xfree(),
-> and memory may also be allocated by STRDUP() or REALLOC(), which is
-> not calculated into mem_allocated, so the total size of used memory is
-> not correctly. For these reasons, we removed these incorrectly code to keep
-> the code clean.
+One issue I see with the patch is it will return -EBADE regardless of
+whether 'queue_if_no_path' is set.  That's fine (since path isn't being
+failed for this case any more).  But why not just return error
+immediately?
 
->  libmpathpersist/mpath_updatepr.c |  1 -
->  libmultipath/memory.c            | 31 -------------------------------
->  libmultipath/memory.h            | 13 ++-----------
+But taking a step back, shouldn't all paths be tried once before
+returning an error?  Obviously that'd impose the use of a new
+'conflict_seen' (or whatever) flag at the end of 'struct pgpath'.  And
+then only return error if the flag is set.
 
-libmultipath/memory.[ch] files along with libmultipath/parser.[ch] and
-libmultipath/vector.[ch] come from keepalived/lib/ [1] .
+I threw together the following RFC patch to illustrate what I'm
+thinking, but thinking about this further it is tough to know all paths
+have seen the reservation conflict (my patch assumes if 'conflict_seen'
+is set then the conflict iterated through all paths.. but if paths
+aren't being failed there isn't a guarantee that the path selector
+didn't just hand us back the same path that just experienced the
+conflict).  So this is throw-away for now (and I'll get Hannes' patch
+applied for 4.8-rc3, with the tweak of returning -EBADE immediately): 
 
-Maybe it's worth to backport their fixes and new features.
-
-
-[1] https://github.com/acassen/keepalived
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index ac734e5..c3d92db 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -41,6 +41,7 @@ struct pgpath {
+ 	struct delayed_work activate_path;
+ 
+ 	bool is_active:1;		/* Path status */
++	bool conflict_seen:1;
+ };
+ 
+ #define path_to_pgpath(__pgp) container_of((__pgp), struct pgpath, path)
+@@ -1569,6 +1570,33 @@ static int do_end_io(struct multipath *m, struct request *clone,
+ 	if (noretry_error(error))
+ 		return error;
+ 
++	if (error == -EBADE) {
++		/*
++		 * EBADE signals a reservation conflict.
++		 * We shouldn't fail the path here as we can communicate with
++		 * the target. We should failover to the next path, but in
++		 * doing so we might be causing a ping-pong between paths.
++		 * Avoid this by only returning the reservation conflict error
++		 * if a conflict has been seen on all paths.
++		 */
++		if (!mpio->pgpath || mpio->pgpath->conflict_seen) {
++			struct priority_group *pg;
++			struct pgpath *p;
++
++			/* clear 'conflict_seen' for all pgpaths */
++			list_for_each_entry(pg, &m->priority_groups, list) {
++				list_for_each_entry(p, &pg->pgpaths, list) {
++					p->conflict_seen = false;
++				}
++			}
++			return error;
++		}
++		else if (mpio->pgpath) {
++			mpio->pgpath->conflict_seen = true;
++			return r;
++		}
++	}
++
+ 	if (mpio->pgpath)
+ 		fail_path(mpio->pgpath);
+ 
+@@ -1576,9 +1604,6 @@ static int do_end_io(struct multipath *m, struct request *clone,
+ 		if (!test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
+ 			if (!must_push_back_rq(m))
+ 				r = -EIO;
+-		} else {
+-			if (error == -EBADE)
+-				r = error;
+ 		}
+ 	}
+ 
