@@ -1,43 +1,28 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH 0/7] multipathd: Fix race conditions related
- to thread termination
-Date: Mon, 15 Aug 2016 08:29:18 -0700
-Message-ID: <d71738e7-4909-fb4d-8bc7-372035f7f161@sandisk.com>
-References: <31d43b64-36c8-1a24-a849-230b5cf6323c@sandisk.com>
+From: "Stewart, Sean" <Sean.Stewart@netapp.com>
+Subject: Re: [PATCH] scsi: blacklist all RDAC devices for BLIST_NO_ULD_ATTACH
+Date: Mon, 15 Aug 2016 15:43:55 +0000
+Message-ID: <50F34540-489B-4554-818E-6024FD88263F@netapp.com>
+References: <1471042563-5084-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <31d43b64-36c8-1a24-a849-230b5cf6323c@sandisk.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1471042563-5084-1-git-send-email-xose.vazquez@gmail.com>
+Content-Language: en-US
+Content-ID: <509A4240691AA64B88A3227DFAD6CDE5@hq.netapp.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 08/15/2016 08:24 AM, Bart Van Assche wrote:
-> As you may already have noticed the code in multipathd for terminating
-> worker threads triggers several race conditions. It would be appreciated
-> if you could review and/or apply the following seven patches that fix
-> these race conditions:
->
-> 0001-multipathd-fix-memory-allocation-logic-error-for-pol.patch
-> 0002-libmultipath-Remove-a-data-structure-that-has-been-c.patch
-> 0003-libmultipath-Remove-debugging-code-from-lock.h.patch
-> 0004-libmultipath-Convert-lock-and-unlock-into-inline-fun.patch
-> 0005-libmultipath-Inline-mutex-in-struct-mutex_lock.patch
-> 0006-libmultipath-Introduce-timedlock.patch
-> 0007-multipathd-Remove-a-busy-waiting-loop.patch
-
-(replying to my own e-mail)
-
-A correction: this series consists of 6 patches instead of 7.
-
-Bart.
+DQoNCk9uIDgvMTIvMTYsIDU6NTYgUE0sICJYb3NlIFZhenF1ZXogUGVyZXoiIDx4b3NlLnZhenF1
+ZXpAZ21haWwuY29tPiB3cm90ZToNCg0KICAgICJVbml2ZXJzYWwgWHBvcnQiIExVTiBpcyB1c2Vk
+IGZvciBpbi1iYW5kIHN0b3JhZ2UgYXJyYXkgbWFuYWdlbWVudC4NCiAgICANCiAgICBDYzogU2Vh
+biBTdGV3YXJ0IDxTZWFuLlN0ZXdhcnRAbmV0YXBwLmNvbT4NCiAgICBDYzogQ2hyaXN0b3BoZSBW
+YXJvcXVpIDxjaHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20+DQogICAgQ2M6IEphbWVzIEUu
+Si4gQm90dG9tbGV5IDxqZWpiQGxpbnV4LnZuZXQuaWJtLmNvbT4NCiAgICBDYzogTWFydGluIEsu
+IFBldGVyc2VuIDxtYXJ0aW4ucGV0ZXJzZW5Ab3JhY2xlLmNvbT4NCiAgICBDYzogU0NTSSBNTCA8
+bGludXgtc2NzaUB2Z2VyLmtlcm5lbC5vcmc+DQogICAgQ2M6IGRldmljZS1tYXBwZXIgZGV2ZWxv
+cG1lbnQgPGRtLWRldmVsQHJlZGhhdC5jb20+DQogICAgU2lnbmVkLW9mZi1ieTogWG9zZSBWYXpx
+dWV6IFBlcmV6IDx4b3NlLnZhenF1ZXpAZ21haWwuY29tPg0KICAgIC0tLQ0KDQpBY2tlZC1ieTog
+U2VhbiBTdGV3YXJ0IDxTZWFuLlN0ZXdhcnRAbmV0YXBwLmNvbT4gDQoNCg==
