@@ -1,7 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 5/6] libmultipath: Introduce timedlock()
-Date: Mon, 15 Aug 2016 08:27:19 -0700
-Message-ID: <fa507cf5-f421-6bdb-6713-992aee0025ca@sandisk.com>
+Subject: [PATCH 6/6] multipathd: Remove a busy-waiting loop
+Date: Mon, 15 Aug 2016 08:28:29 -0700
+Message-ID: <14804b8b-51a7-e860-91d7-9b594aeed63c@sandisk.com>
 References: <31d43b64-36c8-1a24-a849-230b5cf6323c@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,51 +21,97 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Introduce the function timedlock(). Ensure that the value of the
-"depth" member value is incorrect if pthread_mutex_timedlock()
-times out.
+Use pthread_join() to wait until worker threads have finished
+instead of using a counter to keep track of how many threads are
+trying to grab a mutex. Remove mutex_lock.depth since this member
+variable is no longer needed.
+
+This patch fixes two race conditions:
+* Incrementing "depth" in lock() without holding a mutex.
+* Destroying a mutex from the main thread without waiting for the
+  worker threads to finish using that mutex.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmultipath/lock.h | 11 +++++++++++
- multipathd/cli.c    |  3 +--
- 2 files changed, 12 insertions(+), 2 deletions(-)
+ libmultipath/lock.h | 15 +--------------
+ multipathd/main.c   | 13 ++++++-------
+ 2 files changed, 7 insertions(+), 21 deletions(-)
 
 diff --git a/libmultipath/lock.h b/libmultipath/lock.h
-index dc83336..9808480 100644
+index 9808480..a170efe 100644
 --- a/libmultipath/lock.h
 +++ b/libmultipath/lock.h
-@@ -18,6 +18,17 @@ static inline void lock(struct mutex_lock *a)
+@@ -3,35 +3,22 @@
+ 
+ #include <pthread.h>
+ 
+-/*
+- * Wrapper for the mutex. Includes a ref-count to keep
+- * track of how many there are out-standing threads blocking
+- * on a mutex. */
+ struct mutex_lock {
+ 	pthread_mutex_t mutex;
+-	int depth;
+ };
+ 
+ static inline void lock(struct mutex_lock *a)
+ {
+-	a->depth++;
  	pthread_mutex_lock(&a->mutex);
  }
  
-+static inline int timedlock(struct mutex_lock *a, struct timespec *tmo)
-+{
-+	int r;
-+
-+	a->depth++;
-+	r = pthread_mutex_timedlock(&a->mutex, tmo);
-+	if (r)
-+		a->depth--;
-+	return r;
-+}
-+
+ static inline int timedlock(struct mutex_lock *a, struct timespec *tmo)
+ {
+-	int r;
+-
+-	a->depth++;
+-	r = pthread_mutex_timedlock(&a->mutex, tmo);
+-	if (r)
+-		a->depth--;
+-	return r;
++	return pthread_mutex_timedlock(&a->mutex, tmo);
+ }
+ 
  static inline void unlock(struct mutex_lock *a)
  {
- 	a->depth--;
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index 9597736..9a19728 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -487,8 +487,7 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
+-	a->depth--;
+ 	pthread_mutex_unlock(&a->mutex);
+ }
  
- 		pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 		if (tmo.tv_sec) {
--			vecs->lock.depth++;
--			r = pthread_mutex_timedlock(&vecs->lock.mutex, &tmo);
-+			r = timedlock(&vecs->lock, &tmo);
- 		} else {
- 			lock(&vecs->lock);
- 			r = 0;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index fff482c..c288195 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2046,7 +2046,6 @@ init_vecs (void)
+ 		return NULL;
+ 
+ 	pthread_mutex_init(&vecs->lock.mutex, NULL);
+-	vecs->lock.depth = 0;
+ 
+ 	return vecs;
+ }
+@@ -2394,16 +2393,16 @@ child (void * param)
+ 	pthread_cancel(uxlsnr_thr);
+ 	pthread_cancel(uevq_thr);
+ 
++	pthread_join(check_thr, NULL);
++	pthread_join(uevent_thr, NULL);
++	pthread_join(uxlsnr_thr, NULL);
++	pthread_join(uevq_thr, NULL);
++
+ 	lock(&vecs->lock);
+ 	free_pathvec(vecs->pathvec, FREE_PATHS);
+ 	vecs->pathvec = NULL;
+ 	unlock(&vecs->lock);
+-	/* Now all the waitevent threads will start rushing in. */
+-	while (vecs->lock.depth > 0) {
+-		sleep (1); /* This is weak. */
+-		condlog(3, "Have %d wait event checkers threads to de-alloc,"
+-			" waiting...", vecs->lock.depth);
+-	}
++
+ 	pthread_mutex_destroy(&vecs->lock.mutex);
+ 	FREE(vecs);
+ 	vecs = NULL;
 -- 
 2.9.2
