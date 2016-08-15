@@ -1,15 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm-crypt: Fix error with too large bios
-Date: Mon, 15 Aug 2016 13:03:37 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1608151245120.13026@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.11.1608102050200.10662@mail.ewheeler.net>
-	<alpine.LRH.2.02.1608131342250.3291@file01.intranet.prod.int.rdu2.redhat.com>
-	<20160814000740.GA5317@redhat.com>
+From: Mike Christie <mchristi@redhat.com>
+Subject: [PATCH 2/2] multipathd: Don't call repair on blacklisted
+	paths
+Date: Mon, 15 Aug 2016 12:13:46 -0500
+Message-ID: <1471281226-7719-2-git-send-email-mchristi@redhat.com>
+References: <1471281226-7719-1-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160814000740.GA5317@redhat.com>
+In-Reply-To: <1471281226-7719-1-git-send-email-mchristi@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,56 +18,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@lst.de>
-Cc: Eric Wheeler <dm-devel@lists.ewheeler.net>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, johnstonj.public@codenest.com
+To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, bart.vanassche@sandisk.com
+Cc: Mike Christie <mchristi@redhat.com>
 List-Id: dm-devel.ids
 
+This fixes a regression added in
+015f87b16a7797a17afd514aec46e65c2a1a2f73
 
+If a path is blacklisted the checkerloop will free the path so
+don't call repair on it.
 
-On Sat, 13 Aug 2016, Mike Snitzer wrote:
+This moves the repair call down into check_path, because I think
+we also do not need to call it for other cases where we cannot get
+the uuid info or being orphaned.
 
-> [top-posting just because others went wild with it]
-> 
-> I don't have a strong opinion but I just assumed the local dm-crypt
-> workaround wasn't the way forward.  I didn't stage it because Christoph
-> disagreed with it:
-> https://lkml.org/lkml/2016/6/1/456
-> https://lkml.org/lkml/2016/6/1/477
-> 
-> Also, this would appear to be a more generic fix:
-> "block: make sure big bio is splitted into at most 256 bvecs
-> https://lkml.org/lkml/2016/8/12/154
-> (but Christoph disagrees there too, so the way forward isn't clear)
-> 
-> Mike
+Signed-off-by: Mike Christie <mchristi@redhat.com>
+---
+ multipathd/main.c | 22 ++++++++++++----------
+ 1 file changed, 12 insertions(+), 10 deletions(-)
 
-
-On Wed, Jun 01 2016 at  9:44am -0400, Christoph Hellwig <hch@infradead.org> wrote:
-
-> > > be dm-crypt.c.  Maybe you've identified some indirect use of
-> > > BIO_MAX_SIZE?
-> >
-> > I mean the recently introduced BIO_MAX_SIZE in -next tree:
-> >
-> https://git.kernel.org/cgit/linux/kernel/git/next/linux-next.git/commit/drivers/md/dm-crypt.c?id=4ed89c97b0706477b822ea2182827640c0cec486
->
-> The crazy bcache bios striking back once again.  I really think it's
-> harmful having a _MAX value and then having a minor driver
-> reinterpreting it and sending larger ones.  Until we can lift the
-> maximum limit in general nad have common code exercise it we really need
-> to stop bcache from sending these instead of littering the tree with
-> workarounds.
-
-The bio_kmalloc function allocates bios with up to 1024 vector entries (as 
-opposed to bio_alloc and bio_alloc_bioset that has a limit of 256 vector 
-entries).
-
-Device mapper is using bio_alloc_bioset with a bio set, so it is limited 
-to 256 vector entries, but other kernel users may use bio_kmalloc and 
-create larger bios.
-
-So, if you don't want bios with more than 256 vector entries to exist, you 
-should impose this limit in bio_kmalloc (and fix all the callers that use 
-it).
-
-Mikulas
+diff --git a/multipathd/main.c b/multipathd/main.c
+index f5e9a01..c4ffe6f 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1442,6 +1442,16 @@ int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
+ 	return 0;
+ }
+ 
++void repair_path(struct path * pp)
++{
++	if (pp->state != PATH_DOWN)
++		return;
++
++	checker_repair(&pp->checker);
++	if (strlen(checker_message(&pp->checker)))
++		LOG_MSG(1, checker_message(&pp->checker));
++}
++
+ /*
+  * Returns '1' if the path has been checked, '-1' if it was blacklisted
+  * and '0' otherwise
+@@ -1606,6 +1616,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 			pp->mpp->failback_tick = 0;
+ 
+ 			pp->mpp->stat_path_failures++;
++			repair_path(pp);
+ 			return 1;
+ 		}
+ 
+@@ -1700,7 +1711,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	}
+ 
+ 	pp->state = newstate;
+-
++	repair_path(pp);
+ 
+ 	if (pp->mpp->wait_for_udev)
+ 		return 1;
+@@ -1725,14 +1736,6 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	return 1;
+ }
+ 
+-void repair_path(struct vectors * vecs, struct path * pp)
+-{
+-	if (pp->state != PATH_DOWN)
+-		return;
+-
+-	checker_repair(&pp->checker);
+-}
+-
+ static void *
+ checkerloop (void *ap)
+ {
+@@ -1804,7 +1807,6 @@ checkerloop (void *ap)
+ 					i--;
+ 				} else
+ 					num_paths += rc;
+-				repair_path(vecs, pp);
+ 			}
+ 			lock_cleanup_pop(vecs->lock);
+ 		}
+-- 
+2.7.2
