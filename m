@@ -1,7 +1,7 @@
 From: Ram Pai <linuxram@us.ibm.com>
-Subject: [RFC PATCH 06/16] DM: separate out compression and decompression routines.
-Date: Mon, 15 Aug 2016 10:36:43 -0700
-Message-ID: <1471282613-31006-7-git-send-email-linuxram@us.ibm.com>
+Subject: [RFC PATCH 16/16] DM: add documentation for dm-inplace-compress.
+Date: Mon, 15 Aug 2016 10:36:53 -0700
+Message-ID: <1471282613-31006-17-git-send-email-linuxram@us.ibm.com>
 References: <1471282613-31006-1-git-send-email-linuxram@us.ibm.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1471282613-31006-1-git-send-email-linuxram@us.ibm.com>
@@ -10,209 +10,155 @@ To: LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, dm-devel@re
 Cc: shli@kernel.org, agk@redhat.com, snitzer@redhat.com, corbet@lwn.net, Ram Pai <linuxram@us.ibm.com>
 List-Id: dm-devel.ids
 
-Simplify the code by separating out the compression and decompression routines.
-
 Signed-off-by: Ram Pai <linuxram@us.ibm.com>
 ---
- drivers/md/dm-inplace-compress.c |  127 +++++++++++++++++++++-----------------
- 1 files changed, 71 insertions(+), 56 deletions(-)
+ .../device-mapper/dm-inplace-compress.text         |  138 ++++++++++++++++++++
+ 1 files changed, 138 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/device-mapper/dm-inplace-compress.text
 
-diff --git a/drivers/md/dm-inplace-compress.c b/drivers/md/dm-inplace-compress.c
-index c11567c..5c39169 100644
---- a/drivers/md/dm-inplace-compress.c
-+++ b/drivers/md/dm-inplace-compress.c
-@@ -793,8 +793,8 @@ static void dm_icomp_kfree(void *addr, unsigned int size)
- 
- static void dm_icomp_free_io_range(struct dm_icomp_io_range *io)
- {
--	kfree(io->decomp_data);
--	kfree(io->comp_data);
-+	dm_icomp_kfree(io->decomp_data, io->decomp_len);
-+	dm_icomp_kfree(io->comp_data, io->comp_len);
- 	kmem_cache_free(dm_icomp_io_range_cachep, io);
- }
- 
-@@ -861,12 +861,12 @@ static struct dm_icomp_io_range *dm_icomp_create_io_range(
- 	if (!io)
- 		return NULL;
- 
--	io->comp_data = kmalloc(dm_icomp_compressor_len(req->info, comp_len),
--								GFP_NOIO);
--	io->decomp_data = kmalloc(decomp_len, GFP_NOIO);
-+	io->comp_data = dm_icomp_kmalloc(
-+		dm_icomp_compressor_len(req->info, comp_len), GFP_NOIO);
-+	io->decomp_data = dm_icomp_kmalloc(decomp_len, GFP_NOIO);
- 	if (!io->decomp_data || !io->comp_data) {
--		kfree(io->decomp_data);
--		kfree(io->comp_data);
-+		dm_icomp_kfree(io->decomp_data, io->decomp_len);
-+		dm_icomp_kfree(io->comp_data, io->comp_len);
- 		kmem_cache_free(dm_icomp_io_range_cachep, io);
- 		return NULL;
- 	}
-@@ -928,51 +928,66 @@ static void dm_icomp_bio_copy(struct bio *bio, off_t bio_off, void *buf,
-  * We store the actual compressed len in the last u32 of the payload.
-  * If there is no free space, we add 512 to the payload size.
-  */
--static int dm_icomp_io_range_comp(struct dm_icomp_info *info, void *comp_data,
--	unsigned int *comp_len, void *decomp_data, unsigned int decomp_len,
--	bool do_comp)
-+static int dm_icomp_io_range_compress(struct dm_icomp_info *info,
-+		struct dm_icomp_io_range *io, unsigned int *comp_len,
-+		void *decomp_data, unsigned int decomp_len)
- {
--	struct crypto_comp *tfm;
-+	unsigned int actual_comp_len = io->comp_len;
- 	u32 *addr;
--	unsigned int actual_comp_len;
-+	struct crypto_comp *tfm =  info->tfm[get_cpu()];
- 	int ret;
- 
--	if (do_comp) {
--		actual_comp_len = *comp_len;
--
--		tfm = info->tfm[get_cpu()];
--		ret = crypto_comp_compress(tfm, decomp_data, decomp_len,
--			comp_data, &actual_comp_len);
--		put_cpu();
-+	ret = crypto_comp_compress(tfm, decomp_data, decomp_len,
-+		io->comp_data, &actual_comp_len);
- 
--		atomic64_add(decomp_len, &info->uncompressed_write_size);
--		if (ret || decomp_len < actual_comp_len + sizeof(u32) + 512) {
--			*comp_len = decomp_len;
--			atomic64_add(*comp_len, &info->compressed_write_size);
--			return 1;
--		}
-+	put_cpu();
-+	if (ret < 0)
-+		DMWARN("CO Error %d ", ret);
- 
--		*comp_len = round_up(actual_comp_len, 512);
--		if (*comp_len - actual_comp_len < sizeof(u32))
--			*comp_len += 512;
-+	atomic64_add(decomp_len, &info->uncompressed_write_size);
-+	if (ret || decomp_len < actual_comp_len + sizeof(u32) + 512) {
-+		*comp_len = decomp_len;
- 		atomic64_add(*comp_len, &info->compressed_write_size);
--		addr = comp_data + *comp_len;
--		addr--;
--		*addr = cpu_to_le32(actual_comp_len);
--	} else {
--		if (*comp_len == decomp_len)
--			return 1;
--		addr = comp_data + *comp_len;
--		addr--;
--		actual_comp_len = le32_to_cpu(*addr);
--
--		tfm = info->tfm[get_cpu()];
--		ret = crypto_comp_decompress(tfm, comp_data, actual_comp_len,
--			decomp_data, &decomp_len);
--		put_cpu();
--		if (ret)
--			return -EINVAL;
-+		return 1;
- 	}
+diff --git a/Documentation/device-mapper/dm-inplace-compress.text b/Documentation/device-mapper/dm-inplace-compress.text
+new file mode 100644
+index 0000000..c31e69e
+--- /dev/null
++++ b/Documentation/device-mapper/dm-inplace-compress.text
+@@ -0,0 +1,138 @@
++dm-inplace-compress
++====================
 +
-+	*comp_len = round_up(actual_comp_len, 512);
-+	if (*comp_len - actual_comp_len < sizeof(u32))
-+		*comp_len += 512;
-+	atomic64_add(*comp_len, &info->compressed_write_size);
-+	addr = io->comp_data + *comp_len;
-+	addr--;
-+	*addr = cpu_to_le32(actual_comp_len);
-+	return 0;
-+}
++Device-Mapper's "inplace-compress" target provides inplace compression of block
++devices using the kernel compression API.
 +
-+/*
-+ * return value:
-+ * < 0 : error
-+ * == 0 : ok
-+ * == 1 : ok, but comp/decomp is skipped
-+ */
-+static int dm_icomp_io_range_decompress(struct dm_icomp_info *info,
-+	void *comp_data, unsigned int comp_len, void *decomp_data,
-+	unsigned int decomp_len)
-+{
-+	struct crypto_comp *tfm;
-+	u32 *addr;
-+	int ret;
++Parameters: <device path> \
++	[ <#opt_params writethough> ]
++	[ <#opt_params <writeback> <meta_commit_delay> ]
++	[ <#opt_params compressor> <type> ]
 +
-+	if (comp_len == decomp_len)
-+		return 1;
 +
-+	addr = comp_data + comp_len;
-+	addr--;
-+	comp_len = le32_to_cpu(*addr);
++<writethrough>
++    Write data and metadata together.
 +
-+	tfm = info->tfm[get_cpu()];
-+	ret = crypto_comp_decompress(tfm, comp_data, comp_len,
-+		decomp_data, &decomp_len);
-+	put_cpu();
-+	if (ret)
-+		return -EINVAL;
- 	return 0;
- }
- 
-@@ -993,8 +1008,8 @@ static void dm_icomp_handle_read_decomp(struct dm_icomp_req *req)
- 		io->io_region.sector -= req->info->data_start;
- 
- 		/* Do decomp here */
--		ret = dm_icomp_io_range_comp(req->info, io->comp_data,
--			&io->comp_len, io->decomp_data, io->decomp_len, false);
-+		ret = dm_icomp_io_range_decompress(req->info, io->comp_data,
-+			io->comp_len, io->decomp_data, io->decomp_len);
- 		if (ret < 0) {
- 			req->result = -EIO;
- 			return;
-@@ -1140,8 +1155,8 @@ static int dm_icomp_handle_write_modify(struct dm_icomp_io_range *io,
- 	io->io_region.sector -= req->info->data_start;
- 
- 	/* decompress original data */
--	ret = dm_icomp_io_range_comp(req->info, io->comp_data, &io->comp_len,
--			io->decomp_data, io->decomp_len, false);
-+	ret = dm_icomp_io_range_decompress(req->info, io->comp_data,
-+		io->comp_len, io->decomp_data, io->decomp_len);
- 	if (ret < 0) {
- 		req->result = -EINVAL;
- 		return -EIO;
-@@ -1164,11 +1179,11 @@ static int dm_icomp_handle_write_modify(struct dm_icomp_io_range *io,
- 			   ((req->bio->bi_iter.bi_sector - start) << 9),
- 			   bio_sectors(req->bio) << 9, true);
- 
--			kfree(io->comp_data);
-+			dm_icomp_kfree(io->comp_data, io->comp_len);
- 			/* New compressed len might be bigger */
--			io->comp_data = kmalloc(
--				dm_icomp_compressor_len(req->info,
--					io->decomp_len), GFP_NOIO);
-+			io->comp_data = dm_icomp_kmalloc(
-+				dm_icomp_compressor_len(
-+				req->info, io->decomp_len), GFP_NOIO);
- 			io->comp_len = io->decomp_len;
- 			if (!io->comp_data) {
- 				req->result = -ENOMEM;
-@@ -1197,8 +1212,8 @@ static int dm_icomp_handle_write_modify(struct dm_icomp_io_range *io,
- 
- 	/* assume compress less data uses less space (at least 4k lsess data) */
- 	comp_len = io->comp_len;
--	ret = dm_icomp_io_range_comp(req->info, io->comp_data, &comp_len,
--		io->decomp_data + (offset << 9), count << 9, true);
-+	ret = dm_icomp_io_range_compress(req->info, io, &comp_len,
-+		io->decomp_data + (offset << 9), count << 9);
- 	if (ret < 0) {
- 		req->result = -EIO;
- 		return -EIO;
-@@ -1260,8 +1275,8 @@ static void dm_icomp_handle_write_comp(struct dm_icomp_req *req)
- 
- 	/* compress data */
- 	comp_len = io->comp_len;
--	ret = dm_icomp_io_range_comp(req->info, io->comp_data, &comp_len,
--		io->decomp_data, count << 9, true);
-+	ret = dm_icomp_io_range_compress(req->info, io, &comp_len,
-+			io->decomp_data, count << 9);
- 	if (ret < 0) {
- 		dm_icomp_free_io_range(io);
- 		req->result = -EIO;
++<writeback> <meta_commit_delay>
++    Write metadata every 'meta_commit_delay' interval.
++
++<device path>
++    This is the device that is going to be used as backend and contains the
++    compressed data.  You can specify it as a path like /dev/xxx or a device
++    number <major>:<minor>.
++
++<compressor> <type>
++    Choose the compressor algorithm. 'lzo' and '842'
++    compressors are supported.
++
++Example scripts
++===============
++
++create a inplace-compress block device using lzo compression. Write metadata
++and data together.
++[[
++#!/bin/sh
++# Create a inplace-compress device using dmsetup
++dmsetup create comp1 --table "0 `blockdev --getsize $1` inplacecompress $1
++		writethrough compressor lzo"
++]]
++
++
++create a inplace-compress block device using nx-842 hardware compression. Write
++metadata periodially every 5sec.
++
++[[
++#!/bin/sh
++# Create a inplace-compress device using dmsetup
++dmsetup create comp1 --table "0 `blockdev --getsize $1` inplacecompress $1
++		writeback 5 compressor 842"
++]]
++
++Description
++===========
++    This is a simple DM target supporting inplace compression. Its best suited for
++    SSD. The underlying disk must support 512B sector size, the target only
++    supports 4k sector size.
++
++    Disk layout:
++    |super|...meta...|..data...|
++
++    Store unit is 4k (a block). Super is 1 block, which stores meta and data
++    size and compression algorithm. Meta is a bitmap. For each data block,
++    there are 5 bits meta.
++
++    Data:
++
++    Data of a block is compressed. Compressed data is round up to 512B, which
++    is the payload. In disk, payload is stored at the beginning of logical
++    sector of the block. Let's look at an example. Say we store data to block
++    A, which is in sector B(A*8), its orginal size is 4k, compressed size is
++    1500. Compressed data (CD) will use 3 sectors (512B). The 3 sectors are the
++    payload. Payload will be stored at sector B.
++
++    ---------------------------------------------------
++    ... | CD1 | CD2 | CD3 |   |   |   |   |    | ...
++    ---------------------------------------------------
++        ^B    ^B+1  ^B+2                  ^B+7 ^B+8
++
++    For this block, we will not use sector B+3 to B+7 (a hole). We use 4 meta
++    bits to present payload size. The compressed size (1500) isn't stored in
++    meta directly. Instead, we store it at the last 32bits of payload. In this
++    example, we store it at the end of sector B+2. If compressed size +
++    sizeof(32bits) crosses a sector, payload size will increase one sector. If
++    payload uses 8 sectors, we store uncompressed data directly.
++
++    If IO size is bigger than one block, we can store the data as an extent.
++    Data of the whole extent will compressed and stored in the similar way like
++    above.  The first block of the extent is the head, all others are the tail.
++    If extent is 1 block, the block is head. We have 1 bit of meta to present
++    if a block is head or tail. If 4 meta bits of head block can't store extent
++    payload size, we will borrow tail block meta bits to store payload size.
++    Max allowd extent size is 128k, so we don't compress/decompress too big
++    size data.
++
++    Meta:
++    Modifying data will modify meta too. Meta will be written(flush) to disk
++    depending on meta write policy. We support writeback and writethrough mode.
++    In writeback mode, meta will be written to disk in an interval or a FLUSH
++    request.  In writethrough mode, data and meta data will be written to disk
++    together.
++
++    Advantages:
++
++    1. Simple. Since we store compressed data in-place, we don't need complicated
++    disk data management.
++    2. Efficient. For each 4k, we only need 5 bits meta. 1T data will use less than
++    200M meta, so we can load all meta into memory. And actual compression size is
++    in payload. So if IO doesn't need RMW and we use writeback meta flush, we don't
++    need extra IO for meta.
++
++    Disadvantages:
++
++    1. hole. Since we store compressed data in-place, there are a lot of holes
++    (in above example, B+3 - B+7) Hole can impact IO, because we can't do IO
++    merge.
++
++    2. 1:1 size. Compression doesn't change disk size. If disk is 1T, we can
++    only store 1T data even we do compression.
++
++    But this is for SSD only. Generally SSD firmware has a FTL layer to map
++    disk sectors to flash nand. High end SSD firmware has filesystem-like FTL.
++
++    1. hole. Disk has a lot of holes, but SSD FTL can still store data continuous
++    in nand. Even if we can't do IO merge in OS layer, SSD firmware can do it.
++
++    2. 1:1 size. On one side, we write compressed data to SSD, which means less
++    data is written to SSD. This will be very helpful to improve SSD garbage
++    collection, and so write speed and life cycle. So even this is a problem, the
++    target is still helpful. On the other side, advanced SSD FTL can easily do thin
++    provision. For example, if nand is 1T and we let SSD report it as 2T, and use
++    the SSD as compressed target. In such SSD, we don't have the 1:1 size issue.
++
++    So even if SSD FTL cannot map non-continuous disk sectors to continuous nand,
++    the compression target can still function well.
++
++
++Author:
++    Shaohua Li <shli@fusionio.com>
++    Ram Pai <ram.n.pai@gmail.com>
 -- 
 1.7.1
