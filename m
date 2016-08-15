@@ -1,63 +1,39 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-mpath: always return reservation conflict
-Date: Mon, 15 Aug 2016 09:40:39 -0400
-Message-ID: <20160815134039.GA5569@redhat.com>
-References: <1470141392-25479-1-git-send-email-hch@lst.de>
- <1470141392-25479-2-git-send-email-hch@lst.de>
- <20160811183832.GA27144@lst.de>
- <20160815130829.GA14829@redhat.com>
+From: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Subject: Re: [PATCH] libmultipath: fix memory API logic error
+Date: Mon, 15 Aug 2016 13:46:32 +0000
+Message-ID: <SN1PR0201MB18703D0169FED76519FD686881120@SN1PR0201MB1870.namprd02.prod.outlook.com>
+References: <1471258749-12176-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160815130829.GA14829@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "tang.junhui@zte.com.cn" <tang.junhui@zte.com.cn>, christophe varoqui <christophe.varoqui@free.fr>
+Cc: "zhang.kai16@zte.com.cn" <zhang.kai16@zte.com.cn>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Aug 15 2016 at  9:08P -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On 08/15/16 03:59, tang.junhui@zte.com.cn wrote:
+> From: "tang.junhui" <tang.junhui@zte.com.cn>
+>
+> Memroy API use mem_allocated to record the total size of used memory,
+> however, it's wrong to use size(p) as the length of freed memory in xfree(),
+> and memory may also be allocated by STRDUP() or REALLOC(), which is
+> not calculated into mem_allocated, so the total size of used memory is
+> not correctly. For these reasons, we removed these incorrectly code to keep
+> the code clean.
 
-> Not sure how Hannes' original patch was overlooked but...
+Nice work. BTW, I think it's worth mentioning that this patch also fixes 
+a data race. Without this patch the global variable mem_allocated is 
+manipulated by multiple threads without using atomics and without 
+serializing concurrent accesses.
 
-It wasn't overlooked.  It was very much unresolved.  The original thread
-unraveled to all sorts of PR edge case concerns (and doubt about whether
-anything relies on the current multipath handling of reservation
-conflicts).  See patchwork thread below.
-
-Obviously you have found a problematic case which requires Hannes'
-patch.  So there is definitely increased pressure to fix this.
-
-> One issue I see with the patch is it will return -EBADE regardless of
-> whether 'queue_if_no_path' is set.  That's fine (since path isn't being
-> failed for this case any more).  But why not just return error
-> immediately?
-> 
-> But taking a step back, shouldn't all paths be tried once before
-> returning an error?  Obviously that'd impose the use of a new
-> 'conflict_seen' (or whatever) flag at the end of 'struct pgpath'.  And
-> then only return error if the flag is set.
-> 
-> I threw together the following RFC patch to illustrate what I'm
-> thinking, but thinking about this further it is tough to know all paths
-> have seen the reservation conflict (my patch assumes if 'conflict_seen'
-> is set then the conflict iterated through all paths.. but if paths
-> aren't being failed there isn't a guarantee that the path selector
-> didn't just hand us back the same path that just experienced the
-> conflict).
-
-Seems we still need a more sophisticated approach.  But I'm left
-wondering: if we didn't do it would anything notice?  Sadly, the same
-big question from the original thread from a year ago:
-
-https://patchwork.kernel.org/patch/6797111/
-
-> So this is throw-away for now (and I'll get Hannes' patch applied for
-> 4.8-rc3, with the tweak of returning -EBADE immediately):
-
-Unfortunately, I'm _not_ staging Hannes' patch until I have James
-Bottomley's Ack (given his original issues with the patch haven't been
-explained away AFAICT).
-
-Mike
+Bart.
