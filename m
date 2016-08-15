@@ -1,14 +1,12 @@
 From: Mike Christie <mchristi@redhat.com>
-Subject: [PATCH 2/2] multipathd: Don't call repair on blacklisted
-	paths
-Date: Mon, 15 Aug 2016 12:13:46 -0500
-Message-ID: <1471281226-7719-2-git-send-email-mchristi@redhat.com>
-References: <1471281226-7719-1-git-send-email-mchristi@redhat.com>
+Subject: [PATCH 1/2] multipath-tools: check for initialized
+	checker before
+Date: Mon, 15 Aug 2016 12:13:45 -0500
+Message-ID: <1471281226-7719-1-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1471281226-7719-1-git-send-email-mchristi@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,81 +20,36 @@ To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, bart.vanassche@sandisk.
 Cc: Mike Christie <mchristi@redhat.com>
 List-Id: dm-devel.ids
 
-This fixes a regression added in
+This fixes a regression added with:
 015f87b16a7797a17afd514aec46e65c2a1a2f73
 
-If a path is blacklisted the checkerloop will free the path so
-don't call repair on it.
+We can hit a race where when pathinfo is setting up a path, the path
+could have gone down already. In the DI_CHECKER chunk we then do not run
+get_state and attach a checker. Later when check_path is run
+path_offline could still return PATH_DOWN or PATH_REMOVED and
+get_state is again not run so we do not get to attach a checker. I
+was then running repair_path since the state was PATH_DOWN, and we then
+hit a segfault.
 
-This moves the repair call down into check_path, because I think
-we also do not need to call it for other cases where we cannot get
-the uuid info or being orphaned.
+This has us test if a checker is selected before running repair.
 
 Signed-off-by: Mike Christie <mchristi@redhat.com>
 ---
- multipathd/main.c | 22 ++++++++++++----------
- 1 file changed, 12 insertions(+), 10 deletions(-)
+ libmultipath/checkers.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index f5e9a01..c4ffe6f 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1442,6 +1442,16 @@ int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
- 	return 0;
- }
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index 8976c89..fd999b0 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -213,7 +213,7 @@ void checker_put (struct checker * dst)
  
-+void repair_path(struct path * pp)
-+{
-+	if (pp->state != PATH_DOWN)
-+		return;
-+
-+	checker_repair(&pp->checker);
-+	if (strlen(checker_message(&pp->checker)))
-+		LOG_MSG(1, checker_message(&pp->checker));
-+}
-+
- /*
-  * Returns '1' if the path has been checked, '-1' if it was blacklisted
-  * and '0' otherwise
-@@ -1606,6 +1616,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 			pp->mpp->failback_tick = 0;
- 
- 			pp->mpp->stat_path_failures++;
-+			repair_path(pp);
- 			return 1;
- 		}
- 
-@@ -1700,7 +1711,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	}
- 
- 	pp->state = newstate;
--
-+	repair_path(pp);
- 
- 	if (pp->mpp->wait_for_udev)
- 		return 1;
-@@ -1725,14 +1736,6 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	return 1;
- }
- 
--void repair_path(struct vectors * vecs, struct path * pp)
--{
--	if (pp->state != PATH_DOWN)
--		return;
--
--	checker_repair(&pp->checker);
--}
--
- static void *
- checkerloop (void *ap)
+ void checker_repair (struct checker * c)
  {
-@@ -1804,7 +1807,6 @@ checkerloop (void *ap)
- 					i--;
- 				} else
- 					num_paths += rc;
--				repair_path(vecs, pp);
- 			}
- 			lock_cleanup_pop(vecs->lock);
- 		}
+-	if (!c)
++	if (!c || !checker_selected(c))
+ 		return;
+ 
+ 	c->message[0] = '\0';
 -- 
 2.7.2
