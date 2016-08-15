@@ -1,28 +1,38 @@
-From: "Stewart, Sean" <Sean.Stewart@netapp.com>
-Subject: Re: [PATCH] scsi: blacklist all RDAC devices for BLIST_NO_ULD_ATTACH
-Date: Mon, 15 Aug 2016 15:43:55 +0000
-Message-ID: <50F34540-489B-4554-818E-6024FD88263F@netapp.com>
-References: <1471042563-5084-1-git-send-email-xose.vazquez@gmail.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: [PATCH 2/4] multipath-tools: add checker callout to
+ repair path
+Date: Mon, 15 Aug 2016 09:24:18 -0700
+Message-ID: <8a40faa1-0856-26dc-dbb5-2460036115fe@sandisk.com>
+References: <1470657710-28081-1-git-send-email-mchristi@redhat.com>
+	<1470657710-28081-3-git-send-email-mchristi@redhat.com>
+	<9d5dcfcd-2550-c9e9-94dc-47c34ebdb039@sandisk.com>
+	<57ACE12F.20700@redhat.com>
+	<e4286ca9-01cb-5cc0-2d67-38f68c0a19cb@sandisk.com>
+	<57B02EBD.9090206@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1471042563-5084-1-git-send-email-xose.vazquez@gmail.com>
-Content-Language: en-US
-Content-ID: <509A4240691AA64B88A3227DFAD6CDE5@hq.netapp.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <57B02EBD.9090206@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Christie <mchristi@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
-DQoNCk9uIDgvMTIvMTYsIDU6NTYgUE0sICJYb3NlIFZhenF1ZXogUGVyZXoiIDx4b3NlLnZhenF1
-ZXpAZ21haWwuY29tPiB3cm90ZToNCg0KICAgICJVbml2ZXJzYWwgWHBvcnQiIExVTiBpcyB1c2Vk
-IGZvciBpbi1iYW5kIHN0b3JhZ2UgYXJyYXkgbWFuYWdlbWVudC4NCiAgICANCiAgICBDYzogU2Vh
-biBTdGV3YXJ0IDxTZWFuLlN0ZXdhcnRAbmV0YXBwLmNvbT4NCiAgICBDYzogQ2hyaXN0b3BoZSBW
-YXJvcXVpIDxjaHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20+DQogICAgQ2M6IEphbWVzIEUu
-Si4gQm90dG9tbGV5IDxqZWpiQGxpbnV4LnZuZXQuaWJtLmNvbT4NCiAgICBDYzogTWFydGluIEsu
-IFBldGVyc2VuIDxtYXJ0aW4ucGV0ZXJzZW5Ab3JhY2xlLmNvbT4NCiAgICBDYzogU0NTSSBNTCA8
-bGludXgtc2NzaUB2Z2VyLmtlcm5lbC5vcmc+DQogICAgQ2M6IGRldmljZS1tYXBwZXIgZGV2ZWxv
-cG1lbnQgPGRtLWRldmVsQHJlZGhhdC5jb20+DQogICAgU2lnbmVkLW9mZi1ieTogWG9zZSBWYXpx
-dWV6IFBlcmV6IDx4b3NlLnZhenF1ZXpAZ21haWwuY29tPg0KICAgIC0tLQ0KDQpBY2tlZC1ieTog
-U2VhbiBTdGV3YXJ0IDxTZWFuLlN0ZXdhcnRAbmV0YXBwLmNvbT4gDQoNCg==
+On 08/14/2016 01:41 AM, Mike Christie wrote:
+> Attached patch should fix these issues.
+
+Hello Mike,
+
+With that patch applied multipathd works again reliable on my test setup.
+
+Thanks!
+
+Bart.
