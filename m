@@ -1,8 +1,8 @@
 From: Ram Pai <linuxram@us.ibm.com>
-Subject: [RFC PATCH 08/16] DM: Tag a magicmarker at the end of
-	each compressed segment.
-Date: Mon, 15 Aug 2016 10:36:45 -0700
-Message-ID: <1471282613-31006-9-git-send-email-linuxram@us.ibm.com>
+Subject: [RFC PATCH 07/16] DM: Optimize memory allocated to hold
+	compressed buffer.
+Date: Mon, 15 Aug 2016 10:36:44 -0700
+Message-ID: <1471282613-31006-8-git-send-email-linuxram@us.ibm.com>
 References: <1471282613-31006-1-git-send-email-linuxram@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,82 +22,123 @@ To: LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, dm-devel@re
 Cc: shli@kernel.org, snitzer@redhat.com, agk@redhat.com, corbet@lwn.net
 List-Id: dm-devel.ids
 
-We store the size of the compressed segment, on the sector boundary. And later
-use that location to determine the size of the compressed segment. However if
-that location is corrupted for any reason we would'nt know. Hence add a
-magicmarker to catch for such corruptions.
+On an average the compressed size is less than 50% of the original buffer.  Use
+this knowledge to optimize the amount of space allocated to hold the compressed
+buffer. If the allocated size is determined to be insufficient than reallocate
+the required size.
 
 Signed-off-by: Ram Pai <linuxram@us.ibm.com>
 ---
- drivers/md/dm-inplace-compress.c |   24 ++++++++++++++++--------
- drivers/md/dm-inplace-compress.h |    1 +
- 2 files changed, 17 insertions(+), 8 deletions(-)
+ drivers/md/dm-inplace-compress.c |   39 ++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-inplace-compress.h |   11 ++++++++++
+ 2 files changed, 50 insertions(+), 0 deletions(-)
 
 diff --git a/drivers/md/dm-inplace-compress.c b/drivers/md/dm-inplace-compress.c
-index fe4a4c1..04decdd 100644
+index 5c39169..fe4a4c1 100644
 --- a/drivers/md/dm-inplace-compress.c
 +++ b/drivers/md/dm-inplace-compress.c
-@@ -984,19 +984,21 @@ static int dm_icomp_io_range_compress(struct dm_icomp_info *info,
+@@ -19,10 +19,12 @@ static struct dm_icomp_compressor_data compressors[] = {
+ 	[DMCP_COMP_ALG_LZO] = {
+ 		.name = "lzo",
+ 		.comp_len = lzo_comp_len,
++		.max_comp_len = lzo_max_comp_len,
+ 	},
+ 	[DMCP_COMP_ALG_842] = {
+ 		.name = "842",
+ 		.comp_len = nx842_comp_len,
++		.max_comp_len = nx842_max_comp_len,
+ 	},
+ };
+ static int default_compressor = -1;
+@@ -848,6 +850,14 @@ static inline int dm_icomp_compressor_len(struct dm_icomp_info *info, int len)
+ 	return len;
+ }
+ 
++static inline int dm_icomp_compressor_maxlen(struct dm_icomp_info *info,
++		int len)
++{
++	if (compressors[info->comp_alg].max_comp_len)
++		return compressors[info->comp_alg].max_comp_len(len);
++	return len;
++}
++
+ /*
+  * caller should set region.sector, region.count. bi_rw. IO always to/from
+  * comp_data
+@@ -919,6 +929,25 @@ static void dm_icomp_bio_copy(struct bio *bio, off_t bio_off, void *buf,
+ 	}
+ }
+ 
++static int dm_icomp_mod_to_max_io_range(struct dm_icomp_info *info,
++			 struct dm_icomp_io_range *io)
++{
++	unsigned int maxlen = dm_icomp_compressor_maxlen(info, io->decomp_len);
++
++	if (maxlen <= io->comp_len)
++		return -ENOSPC;
++	io->io_req.mem.ptr.addr = io->comp_data =
++		dm_icomp_krealloc(io->comp_data, maxlen,
++			io->comp_len, GFP_NOIO);
++	if (!io->comp_data) {
++		DMWARN("UNFORTUNE allocation failure ");
++		io->comp_len = 0;
++		return -ENOSPC;
++	}
++	io->comp_len = maxlen;
++	return 0;
++}
++
+ /*
+  * return value:
+  * < 0 : error
+@@ -940,7 +969,17 @@ static int dm_icomp_io_range_compress(struct dm_icomp_info *info,
+ 	ret = crypto_comp_compress(tfm, decomp_data, decomp_len,
+ 		io->comp_data, &actual_comp_len);
+ 
++	if (ret || actual_comp_len > io->comp_len) {
++		ret = dm_icomp_mod_to_max_io_range(info, io);
++		if (!ret) {
++			actual_comp_len = io->comp_len;
++			ret = crypto_comp_compress(tfm, decomp_data, decomp_len,
++				io->comp_data, &actual_comp_len);
++		}
++	}
++
+ 	put_cpu();
++
+ 	if (ret < 0)
  		DMWARN("CO Error %d ", ret);
  
- 	atomic64_add(decomp_len, &info->uncompressed_write_size);
--	if (ret || decomp_len < actual_comp_len + sizeof(u32) + 512) {
-+	if (ret || decomp_len < actual_comp_len + 2*sizeof(u32) + 512) {
- 		*comp_len = decomp_len;
- 		atomic64_add(*comp_len, &info->compressed_write_size);
- 		return 1;
- 	}
- 
- 	*comp_len = round_up(actual_comp_len, 512);
--	if (*comp_len - actual_comp_len < sizeof(u32))
-+	if (*comp_len - actual_comp_len < 2*sizeof(u32))
- 		*comp_len += 512;
- 	atomic64_add(*comp_len, &info->compressed_write_size);
- 	addr = io->comp_data + *comp_len;
- 	addr--;
- 	*addr = cpu_to_le32(actual_comp_len);
-+	addr--;
-+	*addr = cpu_to_le32(DMCP_COMPRESS_MAGIC);
- 	return 0;
- }
- 
-@@ -1020,13 +1022,19 @@ static int dm_icomp_io_range_decompress(struct dm_icomp_info *info,
- 	addr = comp_data + comp_len;
- 	addr--;
- 	comp_len = le32_to_cpu(*addr);
-+	addr--;
- 
--	tfm = info->tfm[get_cpu()];
--	ret = crypto_comp_decompress(tfm, comp_data, comp_len,
--		decomp_data, &decomp_len);
--	put_cpu();
--	if (ret)
--		return -EINVAL;
-+	if (comp_len == decomp_len)
-+		return 1;
-+	if (le32_to_cpu(*addr) == DMCP_COMPRESS_MAGIC) {
-+		tfm = info->tfm[get_cpu()];
-+		ret = crypto_comp_decompress(tfm, comp_data, comp_len,
-+			decomp_data, &decomp_len);
-+		put_cpu();
-+		if (ret)
-+			return -EINVAL;
-+	} else
-+		memset(decomp_data, 0, decomp_len);
- 	return 0;
- }
- 
 diff --git a/drivers/md/dm-inplace-compress.h b/drivers/md/dm-inplace-compress.h
-index 86c0ce6..1ce7a6e 100644
+index b61ff0d..86c0ce6 100644
 --- a/drivers/md/dm-inplace-compress.h
 +++ b/drivers/md/dm-inplace-compress.h
-@@ -3,6 +3,7 @@
- #include <linux/types.h>
+@@ -17,15 +17,26 @@ struct dm_icomp_super_block {
+ struct dm_icomp_compressor_data {
+ 	char *name;
+ 	int (*comp_len)(int comp_len);
++	int (*max_comp_len)(int comp_len);
+ };
  
- #define DMCP_SUPER_MAGIC 0x106526c206506c09
-+#define DMCP_COMPRESS_MAGIC 0xfaceecaf
- struct dm_icomp_super_block {
- 	__le64 magic;
- 	__le64 meta_blocks;
+ static inline int lzo_comp_len(int comp_len)
+ {
++	return lzo1x_worst_compress(comp_len) >> 1;
++}
++
++static inline int lzo_max_comp_len(int comp_len)
++{
+ 	return lzo1x_worst_compress(comp_len);
+ }
+ 
+ static inline int nx842_comp_len(int comp_len)
+ {
++	return (comp_len>>4)*7; /* less than half: 7/16 */
++}
++
++static inline int nx842_max_comp_len(int comp_len)
++{
+ 	return comp_len;
+ }
+ 
 -- 
 1.7.1
