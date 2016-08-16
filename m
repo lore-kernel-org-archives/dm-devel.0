@@ -1,16 +1,11 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: lvmetad doesn't terminate with SIGTERM if thin
-	volume used
-Date: Tue, 16 Aug 2016 11:57:42 +0200
-Message-ID: <78d5445c-e565-03ce-e586-2073aa7b0d99@redhat.com>
-References: <CA+X5Wn6rX5rjFOhz-V3r9QYY_Mcp-0ddBTRDSuhq4Xyy2ob-7Q@mail.gmail.com>
-	<CA+X5Wn5wn-engMAxvdqVSbK2bPo=9sz3485N3ZnCqGEZcQ79-Q@mail.gmail.com>
-	<CA+X5Wn6DorjjziBD=R+60++bQgwAxDz_xvVsuv76u01Z8KKp6g@mail.gmail.com>
+From: tang.junhui@zte.com.cn
+Subject: [PATCH] libmultipath: fix multipath -q command logic
+Date: Tue, 16 Aug 2016 19:32:18 +0800
+Message-ID: <1471347138-12032-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CA+X5Wn6DorjjziBD=R+60++bQgwAxDz_xvVsuv76u01Z8KKp6g@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,43 +15,131 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: james harvey <jamespharvey20@gmail.com>, dm-devel@redhat.com
+To: christophe varoqui <christophe.varoqui@free.fr>
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, "tang.junhui" <tang.junhui@zte.com.cn>
 List-Id: dm-devel.ids
 
-Dne 6.8.2016 v 04:08 james harvey napsal(a):
-> Same problem and question about if an immediate SIGKILL is OK for dmeventd.
->
-> On Thu, Aug 4, 2016 at 11:20 PM, james harvey <jamespharvey20@gmail.com> wrote:
->> Does it matter at all if lvmetad shuts down gracefully?
->>
->> Can I safely just have systemd right off the bat send a SIGKILL?
->>
->> Most things I wouldn't ask about, but I'm wondering if this is PURELY
->> a caching daemon where gracefully shutting down doesn't really do
->> anything.
->>
+From: "tang.junhui" <tang.junhui@zte.com.cn>
 
+multipath judged whether multipathd service in running by check_daemon() when executing
+mutipath commands, check_daemon() try to connect to the multipathd service and execute
+"show dameon" command. The expected result is that the command will be failed when the
+service is not running, however, mpath_connect() will activate the multipathd service when
+the service is not running, so check_daemon() always return with true. Another problem is that
+multipath command with -q parameter is not processed in coalesce_paths(). This patch fix for
+those two problems.
 
-Sigterm/sigint is ignored by dmeventd when device is monitored.
+Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+---
+ libmultipath/configure.c | 85 +++++++++++++++++++++++++++---------------------
+ 1 file changed, 48 insertions(+), 37 deletions(-)
 
-Before stopping dmevend - devices shall be unmonitored.
-(vg/lvchange)
-
-Killing 'dmeventd' in the middle of i.e. recovery operation might leave your 
-system in dizzy state (suspended devices) essentially useless.
-
-
-Somewhat similar ATM does apply to lvmetad - where lvm2 command will not like 
-death of lvmetad in the middle of operation and this may result in operation 
-failure (thought here the situation might get somewhat improved over the 
-time...) - but ATM don't kill  - just stop services.
-
-Fedora should be doing it properly on reboot - switching to ramdisk and
-continuing with shutdown sequence from there.  Unsure how other OS-es solves this.
-
-Using 'kill -9' (SIGKILL) is in general unsupported and any reported problems 
-caused by this usage are ignored...
-
-Regards
-
-Zdenek
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 707e6be..d8a17a6 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -715,36 +715,36 @@ deadmap (struct multipath * mpp)
+ 	return 1; /* dead */
+ }
+ 
+-int check_daemon(void)
++static int
++check_daemon(void)
+ {
+ 	int fd;
+-	char *reply;
+-	int ret = 0;
+-	unsigned int timeout;
+-	struct config *conf;
+-
+-	fd = mpath_connect();
+-	if (fd == -1)
+-		return 0;
++	struct flock lock;
+ 
+-	if (send_packet(fd, "show daemon") != 0)
+-		goto out;
+-	conf = get_multipath_config();
+-	timeout = conf->uxsock_timeout;
+-	put_multipath_config(conf);
+-	if (recv_packet(fd, &reply, timeout) != 0)
+-		goto out;
+-
+-	if (strstr(reply, "shutdown"))
+-		goto out_free;
+-
+-	ret = 1;
++	fd = open(DEFAULT_PIDFILE, O_RDONLY);
++	if (fd < 0) {
++		if (errno == ENOENT)
++			return 0;
++		if (errno == EMFILE)
++			condlog(0, "failed to open file, increase max_fds at %s", DEFAULT_CONFIGFILE);
++		else
++			condlog(0, "can not open pidfile %s: %s", DEFAULT_PIDFILE, strerror(errno));
++		return -1;
++	}
+ 
+-out_free:
+-	FREE(reply);
+-out:
+-	mpath_disconnect(fd);
+-	return ret;
++	lock.l_type = F_WRLCK;
++	lock.l_start = 0;
++	lock.l_whence = SEEK_SET;
++	lock.l_len = 0;
++	if (fcntl(fd, F_GETLK, &lock) < 0) {
++		condlog(0, "can not get file locker, %s: %s", DEFAULT_PIDFILE, strerror(errno));
++		close(fd);
++		return -1;
++	}
++	close(fd);
++	if (lock.l_type == F_UNLCK)
++		return 0;
++	return 1;
+ }
+ 
+ extern int
+@@ -873,17 +873,28 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+ 		if (r == DOMAP_DRY)
+ 			continue;
+ 
+-		conf = get_multipath_config();
+-		allow_queueing = conf->allow_queueing;
+-		put_multipath_config(conf);
+-		if (!is_daemon && !allow_queueing && !check_daemon()) {
+-			if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF &&
+-			    mpp->no_path_retry != NO_PATH_RETRY_FAIL)
+-				condlog(3, "%s: multipathd not running, unset "
+-					"queue_if_no_path feature", mpp->alias);
+-			if (!dm_queue_if_no_path(mpp->alias, 0))
+-				remove_feature(&mpp->features,
+-					       "queue_if_no_path");
++		/* run as multipath command and the service is not running */
++		if (!is_daemon && !check_daemon()) {
++			conf = get_multipath_config();
++			allow_queueing = conf->allow_queueing;
++			put_multipath_config(conf);
++			/* no -q choice */
++			if (!allow_queueing) {
++				if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF &&
++					mpp->no_path_retry != NO_PATH_RETRY_FAIL)
++					condlog(3, "%s: multipathd not running, unset "
++						"queue_if_no_path feature", mpp->alias);
++				if (!dm_queue_if_no_path(mpp->alias, 0))
++					remove_feature(&mpp->features,
++							"queue_if_no_path");
++			} else { /* with -q choice */
++				if (mpp->no_path_retry == NO_PATH_RETRY_UNDEF ||
++					mpp->no_path_retry == NO_PATH_RETRY_FAIL)
++					condlog(3, "%s: multipathd not running, set "
++						"queue_if_no_path feature", mpp->alias);
++				if (!dm_queue_if_no_path(mpp->alias, 1))
++					add_feature(&mpp->features, "queue_if_no_path");
++			}
+ 		}
+ 		else if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF) {
+ 			if (mpp->no_path_retry == NO_PATH_RETRY_FAIL) {
+-- 
+2.8.1.windows.1
