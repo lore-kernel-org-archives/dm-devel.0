@@ -1,14 +1,14 @@
-From: Ram Pai <linuxram@us.ibm.com>
-Subject: [RFC PATCH 07/16] DM: Optimize memory allocated to hold
-	compressed buffer.
-Date: Mon, 15 Aug 2016 10:36:44 -0700
-Message-ID: <1471282613-31006-8-git-send-email-linuxram@us.ibm.com>
-References: <1471282613-31006-1-git-send-email-linuxram@us.ibm.com>
+From: tang.junhui@zte.com.cn
+Subject: =?gb2312?b?tPC4tDogUmU6ICBbUEFUQ0hdIGxpYm11bHRpcGF0?=
+ =?gb2312?b?aDogZml4IG1lbW9yeSBBUEkgbG9naWMgZXJyb3I=?=
+Date: Tue, 16 Aug 2016 08:51:01 +0800
+Message-ID: <OF92ADA996.94271871-ON48258011.0003CD4D-48258011.0004A674@zte.com.cn>
+References: <1471258749-12176-1-git-send-email-tang.junhui@zte.com.cn>
+	<20160815135841.smic6ttprb7kwoc4@c203.arch.suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0787278204456002452=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1471282613-31006-1-git-send-email-linuxram@us.ibm.com>
+In-Reply-To: <20160815135841.smic6ttprb7kwoc4@c203.arch.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,127 +18,171 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-doc@vger.kernel.org
-Cc: shli@kernel.org, snitzer@redhat.com, agk@redhat.com, corbet@lwn.net
+To: Johannes Thumshirn <jthumshirn@suse.de>
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, christophe varoqui <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
-On an average the compressed size is less than 50% of the original buffer.  Use
-this knowledge to optimize the amount of space allocated to hold the compressed
-buffer. If the allocated size is determined to be insufficient than reallocate
-the required size.
+This is a multipart message in MIME format.
+--===============0787278204456002452==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 0004A67348258011_="
 
-Signed-off-by: Ram Pai <linuxram@us.ibm.com>
----
- drivers/md/dm-inplace-compress.c |   39 ++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-inplace-compress.h |   11 ++++++++++
- 2 files changed, 50 insertions(+), 0 deletions(-)
+This is a multipart message in MIME format.
+--=_alternative 0004A67348258011_=
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: base64
 
-diff --git a/drivers/md/dm-inplace-compress.c b/drivers/md/dm-inplace-compress.c
-index 5c39169..fe4a4c1 100644
---- a/drivers/md/dm-inplace-compress.c
-+++ b/drivers/md/dm-inplace-compress.c
-@@ -19,10 +19,12 @@ static struct dm_icomp_compressor_data compressors[] = {
- 	[DMCP_COMP_ALG_LZO] = {
- 		.name = "lzo",
- 		.comp_len = lzo_comp_len,
-+		.max_comp_len = lzo_max_comp_len,
- 	},
- 	[DMCP_COMP_ALG_842] = {
- 		.name = "842",
- 		.comp_len = nx842_comp_len,
-+		.max_comp_len = nx842_max_comp_len,
- 	},
- };
- static int default_compressor = -1;
-@@ -848,6 +850,14 @@ static inline int dm_icomp_compressor_len(struct dm_icomp_info *info, int len)
- 	return len;
- }
- 
-+static inline int dm_icomp_compressor_maxlen(struct dm_icomp_info *info,
-+		int len)
-+{
-+	if (compressors[info->comp_alg].max_comp_len)
-+		return compressors[info->comp_alg].max_comp_len(len);
-+	return len;
-+}
-+
- /*
-  * caller should set region.sector, region.count. bi_rw. IO always to/from
-  * comp_data
-@@ -919,6 +929,25 @@ static void dm_icomp_bio_copy(struct bio *bio, off_t bio_off, void *buf,
- 	}
- }
- 
-+static int dm_icomp_mod_to_max_io_range(struct dm_icomp_info *info,
-+			 struct dm_icomp_io_range *io)
-+{
-+	unsigned int maxlen = dm_icomp_compressor_maxlen(info, io->decomp_len);
-+
-+	if (maxlen <= io->comp_len)
-+		return -ENOSPC;
-+	io->io_req.mem.ptr.addr = io->comp_data =
-+		dm_icomp_krealloc(io->comp_data, maxlen,
-+			io->comp_len, GFP_NOIO);
-+	if (!io->comp_data) {
-+		DMWARN("UNFORTUNE allocation failure ");
-+		io->comp_len = 0;
-+		return -ENOSPC;
-+	}
-+	io->comp_len = maxlen;
-+	return 0;
-+}
-+
- /*
-  * return value:
-  * < 0 : error
-@@ -940,7 +969,17 @@ static int dm_icomp_io_range_compress(struct dm_icomp_info *info,
- 	ret = crypto_comp_compress(tfm, decomp_data, decomp_len,
- 		io->comp_data, &actual_comp_len);
- 
-+	if (ret || actual_comp_len > io->comp_len) {
-+		ret = dm_icomp_mod_to_max_io_range(info, io);
-+		if (!ret) {
-+			actual_comp_len = io->comp_len;
-+			ret = crypto_comp_compress(tfm, decomp_data, decomp_len,
-+				io->comp_data, &actual_comp_len);
-+		}
-+	}
-+
- 	put_cpu();
-+
- 	if (ret < 0)
- 		DMWARN("CO Error %d ", ret);
- 
-diff --git a/drivers/md/dm-inplace-compress.h b/drivers/md/dm-inplace-compress.h
-index b61ff0d..86c0ce6 100644
---- a/drivers/md/dm-inplace-compress.h
-+++ b/drivers/md/dm-inplace-compress.h
-@@ -17,15 +17,26 @@ struct dm_icomp_super_block {
- struct dm_icomp_compressor_data {
- 	char *name;
- 	int (*comp_len)(int comp_len);
-+	int (*max_comp_len)(int comp_len);
- };
- 
- static inline int lzo_comp_len(int comp_len)
- {
-+	return lzo1x_worst_compress(comp_len) >> 1;
-+}
-+
-+static inline int lzo_max_comp_len(int comp_len)
-+{
- 	return lzo1x_worst_compress(comp_len);
- }
- 
- static inline int nx842_comp_len(int comp_len)
- {
-+	return (comp_len>>4)*7; /* less than half: 7/16 */
-+}
-+
-+static inline int nx842_max_comp_len(int comp_len)
-+{
- 	return comp_len;
- }
- 
--- 
-1.7.1
+SGksIEpvaGFubmVzLA0KWW91ciBhZHZpY2UgaXMgbmljZSwgdGhhbmsgeW91DQpJIHdpbGwgc2Vu
+ZCB0aGUgbW9kaWZpZWQgcGF0Y2ggbGF0ZXIuDQoNCg0KDQoNCuWPkeS7tuS6ujogICAgICAgICBK
+b2hhbm5lcyBUaHVtc2hpcm4gPGp0aHVtc2hpcm5Ac3VzZS5kZT4NCuaUtuS7tuS6ujogICAgICAg
+ICB0YW5nLmp1bmh1aUB6dGUuY29tLmNuLCANCuaKhOmAgTogICBjaHJpc3RvcGhlIHZhcm9xdWkg
+PGNocmlzdG9waGUudmFyb3F1aUBmcmVlLmZyPiwgDQp6aGFuZy5rYWkxNkB6dGUuY29tLmNuLCBk
+bS1kZXZlbEByZWRoYXQuY29tDQrml6XmnJ86ICAgMjAxNi8wOC8xNSAyMTo1OQ0K5Li76aKYOiAg
+IFJlOiBbZG0tZGV2ZWxdIFtQQVRDSF0gbGlibXVsdGlwYXRoOiBmaXggbWVtb3J5IEFQSSBsb2dp
+YyBlcnJvcg0KDQoNCg0KT24gTW9uLCBBdWcgMTUsIDIwMTYgYXQgMDY6NTk6MDlQTSArMDgwMCwg
+dGFuZy5qdW5odWlAenRlLmNvbS5jbiB3cm90ZToNCj4gRnJvbTogInRhbmcuanVuaHVpIiA8dGFu
+Zy5qdW5odWlAenRlLmNvbS5jbj4NCj4gDQo+IE1lbXJveSBBUEkgdXNlIG1lbV9hbGxvY2F0ZWQg
+dG8gcmVjb3JkIHRoZSB0b3RhbCBzaXplIG9mIHVzZWQgbWVtb3J5LA0KPiBob3dldmVyLCBpdCdz
+IHdyb25nIHRvIHVzZSBzaXplKHApIGFzIHRoZSBsZW5ndGggb2YgZnJlZWQgbWVtb3J5IGluIA0K
+eGZyZWUoKSwNCj4gYW5kIG1lbW9yeSBtYXkgYWxzbyBiZSBhbGxvY2F0ZWQgYnkgU1RSRFVQKCkg
+b3IgUkVBTExPQygpLCB3aGljaCBpcw0KPiBub3QgY2FsY3VsYXRlZCBpbnRvIG1lbV9hbGxvY2F0
+ZWQsIHNvIHRoZSB0b3RhbCBzaXplIG9mIHVzZWQgbWVtb3J5IGlzDQo+IG5vdCBjb3JyZWN0bHku
+IEZvciB0aGVzZSByZWFzb25zLCB3ZSByZW1vdmVkIHRoZXNlIGluY29ycmVjdGx5IGNvZGUgdG8g
+DQprZWVwDQo+IHRoZSBjb2RlIGNsZWFuLg0KPiANCj4gU2lnbmVkLW9mZi1ieTogdGFuZy5qdW5o
+dWkgPHRhbmcuanVuaHVpQHp0ZS5jb20uY24+DQo+IC0tLQ0KPiAgbGlibXBhdGhwZXJzaXN0L21w
+YXRoX3VwZGF0ZXByLmMgfCAgMSAtDQo+ICBsaWJtdWx0aXBhdGgvbWVtb3J5LmMgICAgICAgICAg
+ICB8IDMxIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0NCj4gIGxpYm11bHRpcGF0aC9t
+ZW1vcnkuaCAgICAgICAgICAgIHwgMTMgKystLS0tLS0tLS0tLQ0KPiAgMyBmaWxlcyBjaGFuZ2Vk
+LCAyIGluc2VydGlvbnMoKyksIDQzIGRlbGV0aW9ucygtKQ0KPiANCj4gZGlmZiAtLWdpdCBhL2xp
+Ym1wYXRocGVyc2lzdC9tcGF0aF91cGRhdGVwci5jIA0KYi9saWJtcGF0aHBlcnNpc3QvbXBhdGhf
+dXBkYXRlcHIuYw0KPiBpbmRleCA5ZmY0YjMwLi41YWYyZTAzIDEwMDY0NA0KPiAtLS0gYS9saWJt
+cGF0aHBlcnNpc3QvbXBhdGhfdXBkYXRlcHIuYw0KPiArKysgYi9saWJtcGF0aHBlcnNpc3QvbXBh
+dGhfdXBkYXRlcHIuYw0KPiBAQCAtMTYsNyArMTYsNiBAQA0KPiAgI2luY2x1ZGUgInV4c29jay5o
+Ig0KPiAgI2luY2x1ZGUgIm1lbW9yeS5oIg0KPiANCj4gLXVuc2lnbmVkIGxvbmcgbWVtX2FsbG9j
+YXRlZDsgICAgLyogVG90YWwgbWVtb3J5IHVzZWQgaW4gQnl0ZXMgKi8NCj4gDQo+ICBpbnQgdXBk
+YXRlX3ByZmxhZyhjaGFyICogYXJnMSwgY2hhciAqIGFyZzIsIGludCBub2lzeSkNCj4gIHsNCj4g
+ZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9tZW1vcnkuYyBiL2xpYm11bHRpcGF0aC9tZW1vcnku
+Yw0KPiBpbmRleCAxMzY2ZjQ1Li41NDQxZTZhIDEwMDY0NA0KPiAtLS0gYS9saWJtdWx0aXBhdGgv
+bWVtb3J5LmMNCj4gKysrIGIvbGlibXVsdGlwYXRoL21lbW9yeS5jDQo+IEBAIC0yMiwzNyArMjIs
+NiBAQA0KPg0KDQpbLi4uXQ0KDQo+IC0NCj4gLXZvaWQNCj4gLXhmcmVlKHZvaWQgKnApDQo+IC17
+DQo+IC0gICAgICAgICAgICAgIG1lbV9hbGxvY2F0ZWQgLT0gc2l6ZW9mIChwKTsNCj4gLSAgICAg
+ICAgICAgICAgZnJlZShwKTsNCj4gLSAgICAgICAgICAgICAgcCA9IE5VTEw7DQo+IC19DQo+IC0N
+Cj4gIC8qDQoNClsuLi5dDQoNCj4gLSNkZWZpbmUgTUFMTE9DKG4pICAgICh6YWxsb2MobikpDQo+
+IC0jZGVmaW5lIEZSRUUocCkgICAgICAoeGZyZWUocCkpDQo+ICsjZGVmaW5lIE1BTExPQyhuKSAg
+ICAoY2FsbG9jKDEsKG4pKSkNCj4gKyNkZWZpbmUgRlJFRShwKSAgICAgIChmcmVlKHApKQ0KPiAg
+I2RlZmluZSBSRUFMTE9DKHAsbikgKHJlYWxsb2MoKHApLChuKSkpDQo+ICAjZGVmaW5lIFNUUkRV
+UChuKSAgICAoc3RyZHVwKG4pKQ0KDQpPbmUgbWlub3Igbml0LCB0aGUgb3JpZ2luYWwgeGZyZWUo
+KSBoYXMgc2V0IHRoZSBmcmVlZCBwb2ludGVyIHRvIDAsIHNvIA0KbWF5YmUgYQ0KDQojZGVmaW5l
+IEZSRUUocCkgZG8geyBmcmVlKHApOyBwID0gTlVMTCB9IHdoaWxlKDApDQoNCndvdWxkIGJlIGFk
+dmlzYWJsZS4gSSBwZXJzb25hbGx5IGxpa2Ugc2V0dGluZyBmcmVlJ2QgcG9pbnRlcnMgdG8gTlVM
+TCwNCmFzIGEgTlVMTCBwb2ludGVyIGFjY2VzcyBpcyBhIG1vcmUgaW1tZWRpYXRlIGZlZWRiYWNr
+IHRoYW4gc29tZSByYXRoZXINCm5hc3R5IHVzZS1hZnRlci1mcmVlLg0KDQpKdXN0IG15ICQwLjIN
+Cg0KQnl0ZSwNCiAgICAgICAgICAgICAgICAgSm9oYW5uZXMNCg0KLS0gDQpKb2hhbm5lcyBUaHVt
+c2hpcm4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBTdG9yYWdlDQpq
+dGh1bXNoaXJuQHN1c2UuZGUgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICs0OSA5MTEg
+NzQwNTMgNjg5DQpTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVy
+Zw0KR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbg0K
+SFJCIDIxMjg0IChBRyBOw7xybmJlcmcpDQpLZXkgZmluZ2VycHJpbnQgPSBFQzM4IDlDQUIgQzJD
+NCBGMjVEIDg2MDAgRDBEMCAwMzkzIDk2OUQgMkQ3NiAwODUwDQoNCg0K
+--=_alternative 0004A67348258011_=
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: base64
+
+PGZvbnQgc2l6ZT0yIGZhY2U9IkBBcmlhbCBVbmljb2RlIE1TIj5IaSwgSm9oYW5uZXMsPC9mb250
+Pg0KPGJyPjxmb250IHNpemU9MiBmYWNlPSJAQXJpYWwgVW5pY29kZSBNUyI+WW91ciBhZHZpY2Ug
+aXMgbmljZTwvZm9udD48Zm9udCBzaXplPTMgZmFjZT0iQEFyaWFsIFVuaWNvZGUgTVMiPiwNCnRo
+YW5rIHlvdTwvZm9udD4NCjxicj48Zm9udCBzaXplPTIgZmFjZT0iQEFyaWFsIFVuaWNvZGUgTVMi
+Pkkgd2lsbCBzZW5kIHRoZSBtb2RpZmllZCBwYXRjaA0KbGF0ZXIuPC9mb250Pjxmb250IHNpemU9
+MiBmYWNlPSJzYW5zLXNlcmlmIj48YnI+DQo8L2ZvbnQ+DQo8YnI+DQo8YnI+DQo8YnI+DQo8YnI+
+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+5Y+R5Lu25Lq6OiAm
+bmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7IDwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fu
+cy1zZXJpZiI+Sm9oYW5uZXMgVGh1bXNoaXJuDQombHQ7anRodW1zaGlybkBzdXNlLmRlJmd0Ozwv
+Zm9udD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj7m
+lLbku7bkuro6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgPC9mb250Pjxmb250IHNpemU9
+MSBmYWNlPSJzYW5zLXNlcmlmIj50YW5nLmp1bmh1aUB6dGUuY29tLmNuLA0KPC9mb250Pg0KPGJy
+Pjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPuaKhOmAgTogJm5i
+c3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOzwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1z
+ZXJpZiI+Y2hyaXN0b3BoZSB2YXJvcXVpDQombHQ7Y2hyaXN0b3BoZS52YXJvcXVpQGZyZWUuZnIm
+Z3Q7LCB6aGFuZy5rYWkxNkB6dGUuY29tLmNuLCBkbS1kZXZlbEByZWRoYXQuY29tPC9mb250Pg0K
+PGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPuaXpeacnzog
+Jm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyA8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNh
+bnMtc2VyaWYiPjIwMTYvMDgvMTUNCjIxOjU5PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xv
+cj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPuS4u+mimDogJm5ic3A7ICZuYnNwOw0KJm5ic3A7
+ICZuYnNwOzwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+UmU6IFtkbS1kZXZl
+bF0NCltQQVRDSF0gbGlibXVsdGlwYXRoOiBmaXggbWVtb3J5IEFQSSBsb2dpYyBlcnJvcjwvZm9u
+dD4NCjxicj4NCjxociBub3NoYWRlPg0KPGJyPg0KPGJyPg0KPGJyPjx0dD48Zm9udCBzaXplPTI+
+T24gTW9uLCBBdWcgMTUsIDIwMTYgYXQgMDY6NTk6MDlQTSArMDgwMCwgdGFuZy5qdW5odWlAenRl
+LmNvbS5jbg0Kd3JvdGU6PGJyPg0KJmd0OyBGcm9tOiAmcXVvdDt0YW5nLmp1bmh1aSZxdW90OyAm
+bHQ7dGFuZy5qdW5odWlAenRlLmNvbS5jbiZndDs8YnI+DQomZ3Q7IDxicj4NCiZndDsgTWVtcm95
+IEFQSSB1c2UgbWVtX2FsbG9jYXRlZCB0byByZWNvcmQgdGhlIHRvdGFsIHNpemUgb2YgdXNlZCBt
+ZW1vcnksPGJyPg0KJmd0OyBob3dldmVyLCBpdCdzIHdyb25nIHRvIHVzZSBzaXplKHApIGFzIHRo
+ZSBsZW5ndGggb2YgZnJlZWQgbWVtb3J5IGluDQp4ZnJlZSgpLDxicj4NCiZndDsgYW5kIG1lbW9y
+eSBtYXkgYWxzbyBiZSBhbGxvY2F0ZWQgYnkgU1RSRFVQKCkgb3IgUkVBTExPQygpLCB3aGljaCBp
+czxicj4NCiZndDsgbm90IGNhbGN1bGF0ZWQgaW50byBtZW1fYWxsb2NhdGVkLCBzbyB0aGUgdG90
+YWwgc2l6ZSBvZiB1c2VkIG1lbW9yeQ0KaXM8YnI+DQomZ3Q7IG5vdCBjb3JyZWN0bHkuIEZvciB0
+aGVzZSByZWFzb25zLCB3ZSByZW1vdmVkIHRoZXNlIGluY29ycmVjdGx5IGNvZGUNCnRvIGtlZXA8
+YnI+DQomZ3Q7IHRoZSBjb2RlIGNsZWFuLjxicj4NCiZndDsgPGJyPg0KJmd0OyBTaWduZWQtb2Zm
+LWJ5OiB0YW5nLmp1bmh1aSAmbHQ7dGFuZy5qdW5odWlAenRlLmNvbS5jbiZndDs8YnI+DQomZ3Q7
+IC0tLTxicj4NCiZndDsgJm5ic3A7bGlibXBhdGhwZXJzaXN0L21wYXRoX3VwZGF0ZXByLmMgfCAm
+bmJzcDsxIC08YnI+DQomZ3Q7ICZuYnNwO2xpYm11bHRpcGF0aC9tZW1vcnkuYyAmbmJzcDsgJm5i
+c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO3wNCjMxIC0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS08YnI+DQomZ3Q7ICZuYnNwO2xpYm11bHRpcGF0aC9tZW1vcnkuaCAmbmJzcDsg
+Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO3wNCjEzICsrLS0tLS0tLS0tLS08YnI+
+DQomZ3Q7ICZuYnNwOzMgZmlsZXMgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspLCA0MyBkZWxldGlv
+bnMoLSk8YnI+DQomZ3Q7IDxicj4NCiZndDsgZGlmZiAtLWdpdCBhL2xpYm1wYXRocGVyc2lzdC9t
+cGF0aF91cGRhdGVwci5jIGIvbGlibXBhdGhwZXJzaXN0L21wYXRoX3VwZGF0ZXByLmM8YnI+DQom
+Z3Q7IGluZGV4IDlmZjRiMzAuLjVhZjJlMDMgMTAwNjQ0PGJyPg0KJmd0OyAtLS0gYS9saWJtcGF0
+aHBlcnNpc3QvbXBhdGhfdXBkYXRlcHIuYzxicj4NCiZndDsgKysrIGIvbGlibXBhdGhwZXJzaXN0
+L21wYXRoX3VwZGF0ZXByLmM8YnI+DQomZ3Q7IEBAIC0xNiw3ICsxNiw2IEBAPGJyPg0KJmd0OyAm
+bmJzcDsjaW5jbHVkZSAmcXVvdDt1eHNvY2suaCZxdW90Ozxicj4NCiZndDsgJm5ic3A7I2luY2x1
+ZGUgJnF1b3Q7bWVtb3J5LmgmcXVvdDs8YnI+DQomZ3Q7ICZuYnNwOzxicj4NCiZndDsgLXVuc2ln
+bmVkIGxvbmcgbWVtX2FsbG9jYXRlZDsgJm5ic3A7ICZuYnNwOy8qIFRvdGFsIG1lbW9yeSB1c2Vk
+IGluDQpCeXRlcyAqLzxicj4NCiZndDsgJm5ic3A7PGJyPg0KJmd0OyAmbmJzcDtpbnQgdXBkYXRl
+X3ByZmxhZyhjaGFyICogYXJnMSwgY2hhciAqIGFyZzIsIGludCBub2lzeSk8YnI+DQomZ3Q7ICZu
+YnNwO3s8YnI+DQomZ3Q7IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvbWVtb3J5LmMgYi9saWJt
+dWx0aXBhdGgvbWVtb3J5LmM8YnI+DQomZ3Q7IGluZGV4IDEzNjZmNDUuLjU0NDFlNmEgMTAwNjQ0
+PGJyPg0KJmd0OyAtLS0gYS9saWJtdWx0aXBhdGgvbWVtb3J5LmM8YnI+DQomZ3Q7ICsrKyBiL2xp
+Ym11bHRpcGF0aC9tZW1vcnkuYzxicj4NCiZndDsgQEAgLTIyLDM3ICsyMiw2IEBAPGJyPg0KJmd0
+Ozxicj4NCjxicj4NClsuLi5dPGJyPg0KPGJyPg0KJmd0OyAtPGJyPg0KJmd0OyAtdm9pZDxicj4N
+CiZndDsgLXhmcmVlKHZvaWQgKnApPGJyPg0KJmd0OyAtezxicj4NCiZndDsgLSAmbmJzcDsgJm5i
+c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQptZW1fYWxsb2Nh
+dGVkIC09IHNpemVvZiAocCk7PGJyPg0KJmd0OyAtICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCmZyZWUocCk7PGJyPg0KJmd0OyAtICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCnAgPSBO
+VUxMOzxicj4NCiZndDsgLX08YnI+DQomZ3Q7IC08YnI+DQomZ3Q7ICZuYnNwOy8qPGJyPg0KPGJy
+Pg0KWy4uLl08YnI+DQo8YnI+DQomZ3Q7IC0jZGVmaW5lIE1BTExPQyhuKSAmbmJzcDsgJm5ic3A7
+KHphbGxvYyhuKSk8YnI+DQomZ3Q7IC0jZGVmaW5lIEZSRUUocCkgJm5ic3A7ICZuYnNwOyAmbmJz
+cDsoeGZyZWUocCkpPGJyPg0KJmd0OyArI2RlZmluZSBNQUxMT0MobikgJm5ic3A7ICZuYnNwOyhj
+YWxsb2MoMSwobikpKTxicj4NCiZndDsgKyNkZWZpbmUgRlJFRShwKSAmbmJzcDsgJm5ic3A7ICZu
+YnNwOyhmcmVlKHApKTxicj4NCiZndDsgJm5ic3A7I2RlZmluZSBSRUFMTE9DKHAsbikgKHJlYWxs
+b2MoKHApLChuKSkpPGJyPg0KJmd0OyAmbmJzcDsjZGVmaW5lIFNUUkRVUChuKSAmbmJzcDsgJm5i
+c3A7KHN0cmR1cChuKSk8YnI+DQo8YnI+DQpPbmUgbWlub3Igbml0LCB0aGUgb3JpZ2luYWwgeGZy
+ZWUoKSBoYXMgc2V0IHRoZSBmcmVlZCBwb2ludGVyIHRvIDAsIHNvDQptYXliZSBhPGJyPg0KPGJy
+Pg0KI2RlZmluZSBGUkVFKHApIGRvIHsgZnJlZShwKTsgcCA9IE5VTEwgfSB3aGlsZSgwKTxicj4N
+Cjxicj4NCndvdWxkIGJlIGFkdmlzYWJsZS4gSSBwZXJzb25hbGx5IGxpa2Ugc2V0dGluZyBmcmVl
+J2QgcG9pbnRlcnMgdG8gTlVMTCw8YnI+DQphcyBhIE5VTEwgcG9pbnRlciBhY2Nlc3MgaXMgYSBt
+b3JlIGltbWVkaWF0ZSBmZWVkYmFjayB0aGFuIHNvbWUgcmF0aGVyPGJyPg0KbmFzdHkgdXNlLWFm
+dGVyLWZyZWUuPGJyPg0KPGJyPg0KSnVzdCBteSAkMC4yPGJyPg0KPGJyPg0KQnl0ZSw8YnI+DQog
+Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0K
+Sm9oYW5uZXM8YnI+DQo8YnI+DQotLSA8YnI+DQpKb2hhbm5lcyBUaHVtc2hpcm4gJm5ic3A7ICZu
+YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZu
+YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
+c3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwO1N0b3JhZ2U8YnI+DQpqdGh1bXNoaXJuQHN1c2UuZGUg
+Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0K
+Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOys0
+OSA5MTEgNzQwNTMgNjg5PGJyPg0KU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQw
+OSBOw7xybmJlcmc8YnI+DQpHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBH
+cmFoYW0gTm9ydG9uPGJyPg0KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpPGJyPg0KS2V5IGZpbmdl
+cnByaW50ID0gRUMzOCA5Q0FCIEMyQzQgRjI1RCA4NjAwIEQwRDAgMDM5MyA5NjlEIDJENzYgMDg1
+MDxicj4NCjwvZm9udD48L3R0Pg0KPGJyPg0K
+--=_alternative 0004A67348258011_=--
+
+
+--===============0787278204456002452==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0787278204456002452==--
