@@ -1,145 +1,83 @@
-From: tang.junhui@zte.com.cn
-Subject: [PATCH] libmultipath: fix multipath -q command logic
-Date: Tue, 16 Aug 2016 19:32:18 +0800
-Message-ID: <1471347138-12032-1-git-send-email-tang.junhui@zte.com.cn>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, "tang.junhui" <tang.junhui@zte.com.cn>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH 1/5] multipath-tools: document how to add devices that need special flags in the SCSI subsystem
+Date: Tue, 16 Aug 2016 14:38:49 +0200
+Message-ID: <1471351133-7892-1-git-send-email-xose.vazquez@gmail.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: "tang.junhui" <tang.junhui@zte.com.cn>
+Full flags list at include/scsi/scsi_devinfo.h
 
-multipath judged whether multipathd service in running by check_daemon() when executing
-mutipath commands, check_daemon() try to connect to the multipathd service and execute
-"show dameon" command. The expected result is that the command will be failed when the
-service is not running, however, mpath_connect() will activate the multipathd service when
-the service is not running, so check_daemon() always return with true. Another problem is that
-multipath command with -q parameter is not processed in coalesce_paths(). This patch fix for
-those two problems.
+Arrays controllers included currently:
 
-Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+ {"3PARdata", "VV", NULL, BLIST_REPORTLUN2},
+
+ {"DEC", "HSG80", NULL, BLIST_REPORTLUN2 | BLIST_NOSTARTONADD},
+ {"HP", "A6189A", NULL, BLIST_SPARSELUN | BLIST_LARGELUN},
+ {"COMPAQ", "MSA1000", NULL, BLIST_SPARSELUN | BLIST_NOSTARTONADD},
+ {"COMPAQ", "MSA1000 VOLUME", NULL, BLIST_SPARSELUN | BLIST_NOSTARTONADD},
+ {"COMPAQ", "HSV110", NULL, BLIST_REPORTLUN2 | BLIST_NOSTARTONADD},
+ {"HP", "HSV100", NULL, BLIST_REPORTLUN2 | BLIST_NOSTARTONADD},
+ {"COMPAQ", "LOGICAL VOLUME", NULL, BLIST_FORCELUN | BLIST_MAX_512},
+
+ {"DDN", "SAN DataDirector", "*", BLIST_SPARSELUN},
+
+ {"DGC", "RAID", NULL, BLIST_SPARSELUN},
+ {"DGC", "DISK", NULL, BLIST_SPARSELUN},					<-- mising VDISK ??
+ {"EMC", "SYMMETRIX", NULL, BLIST_SPARSELUN | BLIST_LARGELUN | BLIST_FORCELUN},
+ {"EMC",  "Invista", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
+
+ {"FSC", "CentricStor", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
+
+ {"HITACHI", "OPEN-", "*", BLIST_REPORTLUN2},
+ {"HP", "OPEN-", "*", BLIST_REPORTLUN2},
+
+ {"HITACHI", "DF400", "*", BLIST_REPORTLUN2},
+ {"HITACHI", "DF500", "*", BLIST_REPORTLUN2},
+ {"HP", "DF400", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
+ {"HP", "DF500", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
+ {"HP", "DF600", "*", BLIST_SPARSELUN | BLIST_LARGELUN},			<-- bug, also apply: 627511e3e
+
+ {"IBM", "ProFibre 4000R", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
+
+ {"NETAPP", "LUN C-Mode", NULL, BLIST_SYNC_ALUA},				<-- ontap
+
+ {"NETAPP", "INF-01-00", NULL, BLIST_SYNC_ALUA},				<-- rdac!!
+
+ {"SGI", "TP9100", "*", BLIST_REPORTLUN2},
+
+ {"Intel", "Multi-Flex", NULL, BLIST_NO_RSOC},
+
+ {"SGI", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
+ {"IBM", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
+ {"SUN", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
+ {"DELL", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
+
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
+Cc: Martin K. Petersen <martin.petersen@oracle.com>
+Cc: SCSI ML <linux-scsi@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/configure.c | 85 +++++++++++++++++++++++++++---------------------
- 1 file changed, 48 insertions(+), 37 deletions(-)
+ libmultipath/hwtable.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 707e6be..d8a17a6 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -715,36 +715,36 @@ deadmap (struct multipath * mpp)
- 	return 1; /* dead */
- }
- 
--int check_daemon(void)
-+static int
-+check_daemon(void)
- {
- 	int fd;
--	char *reply;
--	int ret = 0;
--	unsigned int timeout;
--	struct config *conf;
--
--	fd = mpath_connect();
--	if (fd == -1)
--		return 0;
-+	struct flock lock;
- 
--	if (send_packet(fd, "show daemon") != 0)
--		goto out;
--	conf = get_multipath_config();
--	timeout = conf->uxsock_timeout;
--	put_multipath_config(conf);
--	if (recv_packet(fd, &reply, timeout) != 0)
--		goto out;
--
--	if (strstr(reply, "shutdown"))
--		goto out_free;
--
--	ret = 1;
-+	fd = open(DEFAULT_PIDFILE, O_RDONLY);
-+	if (fd < 0) {
-+		if (errno == ENOENT)
-+			return 0;
-+		if (errno == EMFILE)
-+			condlog(0, "failed to open file, increase max_fds at %s", DEFAULT_CONFIGFILE);
-+		else
-+			condlog(0, "can not open pidfile %s: %s", DEFAULT_PIDFILE, strerror(errno));
-+		return -1;
-+	}
- 
--out_free:
--	FREE(reply);
--out:
--	mpath_disconnect(fd);
--	return ret;
-+	lock.l_type = F_WRLCK;
-+	lock.l_start = 0;
-+	lock.l_whence = SEEK_SET;
-+	lock.l_len = 0;
-+	if (fcntl(fd, F_GETLK, &lock) < 0) {
-+		condlog(0, "can not get file locker, %s: %s", DEFAULT_PIDFILE, strerror(errno));
-+		close(fd);
-+		return -1;
-+	}
-+	close(fd);
-+	if (lock.l_type == F_UNLCK)
-+		return 0;
-+	return 1;
- }
- 
- extern int
-@@ -873,17 +873,28 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
- 		if (r == DOMAP_DRY)
- 			continue;
- 
--		conf = get_multipath_config();
--		allow_queueing = conf->allow_queueing;
--		put_multipath_config(conf);
--		if (!is_daemon && !allow_queueing && !check_daemon()) {
--			if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF &&
--			    mpp->no_path_retry != NO_PATH_RETRY_FAIL)
--				condlog(3, "%s: multipathd not running, unset "
--					"queue_if_no_path feature", mpp->alias);
--			if (!dm_queue_if_no_path(mpp->alias, 0))
--				remove_feature(&mpp->features,
--					       "queue_if_no_path");
-+		/* run as multipath command and the service is not running */
-+		if (!is_daemon && !check_daemon()) {
-+			conf = get_multipath_config();
-+			allow_queueing = conf->allow_queueing;
-+			put_multipath_config(conf);
-+			/* no -q choice */
-+			if (!allow_queueing) {
-+				if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF &&
-+					mpp->no_path_retry != NO_PATH_RETRY_FAIL)
-+					condlog(3, "%s: multipathd not running, unset "
-+						"queue_if_no_path feature", mpp->alias);
-+				if (!dm_queue_if_no_path(mpp->alias, 0))
-+					remove_feature(&mpp->features,
-+							"queue_if_no_path");
-+			} else { /* with -q choice */
-+				if (mpp->no_path_retry == NO_PATH_RETRY_UNDEF ||
-+					mpp->no_path_retry == NO_PATH_RETRY_FAIL)
-+					condlog(3, "%s: multipathd not running, set "
-+						"queue_if_no_path feature", mpp->alias);
-+				if (!dm_queue_if_no_path(mpp->alias, 1))
-+					add_feature(&mpp->features, "queue_if_no_path");
-+			}
- 		}
- 		else if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF) {
- 			if (mpp->no_path_retry == NO_PATH_RETRY_FAIL) {
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 1bc6f2c..4e1740a 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -22,6 +22,9 @@
+  *
+  * Devices with a proprietary handler must also be included in
+  * the kernel side. Currently at drivers/scsi/scsi_dh.c
++ *
++ * Moreover, if a device needs a special treatment by the SCSI
++ * subsystem it should be included in drivers/scsi/scsi_devinfo.c
+  */
+ static struct hwentry default_hw[] = {
+ 	/*
 -- 
-2.8.1.windows.1
+2.7.4
+
