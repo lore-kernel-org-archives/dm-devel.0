@@ -1,13 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 01/15] multipath-tools: identify more devices
-	at hwtable
-Date: Tue, 16 Aug 2016 09:51:35 +0200
-Message-ID: <CABr-Gne4XX55A2peJpMSukO8L+G3Hszso9vzZRN1GyNoAw1vSw@mail.gmail.com>
-References: <1470846038-6590-1-git-send-email-xose.vazquez@gmail.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: lvmetad doesn't terminate with SIGTERM if thin
+	volume used
+Date: Tue, 16 Aug 2016 11:57:42 +0200
+Message-ID: <78d5445c-e565-03ce-e586-2073aa7b0d99@redhat.com>
+References: <CA+X5Wn6rX5rjFOhz-V3r9QYY_Mcp-0ddBTRDSuhq4Xyy2ob-7Q@mail.gmail.com>
+	<CA+X5Wn5wn-engMAxvdqVSbK2bPo=9sz3485N3ZnCqGEZcQ79-Q@mail.gmail.com>
+	<CA+X5Wn6DorjjziBD=R+60++bQgwAxDz_xvVsuv76u01Z8KKp6g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6813289694058540191=="
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1470846038-6590-1-git-send-email-xose.vazquez@gmail.com>
+In-Reply-To: <CA+X5Wn6DorjjziBD=R+60++bQgwAxDz_xvVsuv76u01Z8KKp6g@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,120 +20,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: james harvey <jamespharvey20@gmail.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============6813289694058540191==
-Content-Type: multipart/alternative; boundary=001a114a5e923c925f053a2b9e76
-
---001a114a5e923c925f053a2b9e76
-Content-Type: text/plain; charset=UTF-8
-
-This set is merged, expect 10/15 and 14/15.
-Thanks.
-
-On Wed, Aug 10, 2016 at 6:20 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
-
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/hwtable.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
+Dne 6.8.2016 v 04:08 james harvey napsal(a):
+> Same problem and question about if an immediate SIGKILL is OK for dmeventd.
 >
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index 2192d38..1222f47 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -468,7 +468,7 @@ static struct hwentry default_hw[] = {
->                 .pgfailback    = FAILBACK_UNDEF,
->         },
->         {
-> -               /* SAN Volume Controller / Storwize */
-> +               /* Storwize family / SAN Volume Controller / Flex System
-> V7000 */
->                 .vendor        = "IBM",
->                 .product       = "^2145",
->                 .features      = "1 queue_if_no_path",
-> @@ -811,6 +811,7 @@ static struct hwentry default_hw[] = {
->          * Huawei
->          */
->         {
-> +               /* OceanStor V3 */
->                 .vendor        = "(HUAWEI|HUASY)",
->                 .product       = "XSG1",
->                 .pgpolicy      = MULTIBUS,
-> --
-> 2.7.4
->
->
-
---001a114a5e923c925f053a2b9e76
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">This set is merged, expect 10/15 and 14/15.<div>Thanks.</d=
-iv></div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Wed, =
-Aug 10, 2016 at 6:20 PM, Xose Vazquez Perez <span dir=3D"ltr">&lt;<a href=
-=3D"mailto:xose.vazquez@gmail.com" target=3D"_blank">xose.vazquez@gmail.com=
-</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin=
-:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">Cc: Christophe Var=
-oqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com">christophe.varoq=
-ui@opensvc.<wbr>com</a>&gt;<br>
-Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
--devel@redhat.com</a>&gt;<br>
-Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
-com">xose.vazquez@gmail.com</a>&gt;<br>
----<br>
-=C2=A0libmultipath/hwtable.c | 3 ++-<br>
-=C2=A01 file changed, 2 insertions(+), 1 deletion(-)<br>
-<br>
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c<br>
-index 2192d38..1222f47 100644<br>
---- a/libmultipath/hwtable.c<br>
-+++ b/libmultipath/hwtable.c<br>
-@@ -468,7 +468,7 @@ static struct hwentry default_hw[] =3D {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .pgfailback=C2=A0 =
-=C2=A0 =3D FAILBACK_UNDEF,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 },<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 {<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* SAN Volume Contr=
-oller / Storwize */<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* Storwize family =
-/ SAN Volume Controller / Flex System V7000 */<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .vendor=C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =3D &quot;IBM&quot;,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .product=C2=A0 =C2=
-=A0 =C2=A0 =C2=A0=3D &quot;^2145&quot;,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .features=C2=A0 =C2=
-=A0 =C2=A0 =3D &quot;1 queue_if_no_path&quot;,<br>
-@@ -811,6 +811,7 @@ static struct hwentry default_hw[] =3D {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* Huawei<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 {<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* OceanStor V3 */<=
-br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .vendor=C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =3D &quot;(HUAWEI|HUASY)&quot;,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .product=C2=A0 =C2=
-=A0 =C2=A0 =C2=A0=3D &quot;XSG1&quot;,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .pgpolicy=C2=A0 =C2=
-=A0 =C2=A0 =3D MULTIBUS,<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.7.4<br>
-<br>
-</font></span></blockquote></div><br></div>
-
---001a114a5e923c925f053a2b9e76--
+> On Thu, Aug 4, 2016 at 11:20 PM, james harvey <jamespharvey20@gmail.com> wrote:
+>> Does it matter at all if lvmetad shuts down gracefully?
+>>
+>> Can I safely just have systemd right off the bat send a SIGKILL?
+>>
+>> Most things I wouldn't ask about, but I'm wondering if this is PURELY
+>> a caching daemon where gracefully shutting down doesn't really do
+>> anything.
+>>
 
 
---===============6813289694058540191==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Sigterm/sigint is ignored by dmeventd when device is monitored.
+
+Before stopping dmevend - devices shall be unmonitored.
+(vg/lvchange)
+
+Killing 'dmeventd' in the middle of i.e. recovery operation might leave your 
+system in dizzy state (suspended devices) essentially useless.
 
 
---===============6813289694058540191==--
+Somewhat similar ATM does apply to lvmetad - where lvm2 command will not like 
+death of lvmetad in the middle of operation and this may result in operation 
+failure (thought here the situation might get somewhat improved over the 
+time...) - but ATM don't kill  - just stop services.
+
+Fedora should be doing it properly on reboot - switching to ramdisk and
+continuing with shutdown sequence from there.  Unsure how other OS-es solves this.
+
+Using 'kill -9' (SIGKILL) is in general unsupported and any reported problems 
+caused by this usage are ignored...
+
+Regards
+
+Zdenek
