@@ -1,12 +1,11 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 5/5] multipath-tools: add queue_mode to the
-	features list in multipath/multipath.conf.5
-Date: Tue, 16 Aug 2016 14:38:53 +0200
-Message-ID: <1471351133-7892-5-git-send-email-xose.vazquez@gmail.com>
+Subject: [PATCH 4/5] multipath-tools: delete .minio from hwtable
+Date: Tue, 16 Aug 2016 14:38:52 +0200
+Message-ID: <1471351133-7892-4-git-send-email-xose.vazquez@gmail.com>
 References: <1471351133-7892-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1471351133-7892-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -18,110 +17,117 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>, =?UTF-8?q?Jun=E2=80=99ichi=20Nomura?= <j-nomura@ce.jp.nec.com>
 List-Id: dm-devel.ids
 
-New undocumented feature, added in e83068a5f:
-
-    dm mpath: add optional "queue_mode" feature
-
-    Allow a user to specify an optional feature 'queue_mode <mode>' where
-    <mode> may be "bio", "rq" or "mq" -- which corresponds to bio-based,
-    request_fn rq-based, and blk-mq rq-based respectively.
-
-    If the queue_mode feature isn't specified the default for the
-    "multipath" target is still "rq" but if dm_mod.use_blk_mq is set to Y
-    it'll default to mode "mq".
-
-    This new queue_mode feature introduces the ability for each multipath
-    device to have its own queue_mode (whereas before this feature all
-    multipath devices effectively had to have the same queue_mode).
-
-Also add more info to other features.
-
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- multipath/multipath.conf.5 | 36 ++++++++++++++++++++++++------------
- 1 file changed, 24 insertions(+), 12 deletions(-)
-
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index fd4b1f2..40df315 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -3,11 +3,11 @@
- .\" Make sure there are no errors with:
- .\" groff -z -wall -b -e -t multipath/multipath.conf.5
- .\"
--.\" TODO: Look for XXX
-+.\" TODO: Look for XXX and ???
- .\"
- .\" ----------------------------------------------------------------------------
- .
--.TH MULTIPATH.CONF 5 2016-08-09 "Linux"
-+.TH MULTIPATH.CONF 5 2016-08-12 "Linux"
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -166,12 +166,15 @@ Loop through every path in the path group, sending the same amount of IO to
- each. Some aspects of behavior can be controlled with the attributes:
- \fIrr_min_io\fR, \fIrr_min_io_rq\fR and \fIrr_weight\fR.
- .TP
-+.\" XXX
- .I "queue-length 0"
--Send the next bunch of IO down the path with the least amount of outstanding IO.
-+(Since ??? kernel) Choose the path for the next bunch of IO based on the amount
-+of outstanding IO to the path.
- .TP
-+.\" XXX
- .I "service-time 0"
--Choose the path for the next bunch of IO based on the amount of outstanding IO
--to the path and its relative throughput.
-+(Since ??? kernel) Choose the path for the next bunch of IO based on the amount
-+of outstanding IO to the path and its relative throughput.
- .TP
- Default value is: \fBservice-time 0\fR
- .RE
-@@ -333,22 +336,31 @@ Default value is: \fB<unset>\fR
- .TP
- .B features
- Specify any device-mapper features to be used. Syntax is \fInum list\fR
--where \fInum\fR is the number, between 0 and 6, of features in \fIlist\fR.
-+where \fInum\fR is the number, between 0 and 8, of features in \fIlist\fR.
- Possible values for the feature list are:
- .RS
- .TP 12
-+.\" XXX
- .I queue_if_no_path
--(Superseded by \fIno_path_retry\fR) Queue IO if no path is active. Identical to
--the \fIno_path_retry\fR with \fIqueue\fR value. See KNOWN ISSUES.
-+(Superseded by \fIno_path_retry\fR) (Since ??? kernel) Queue IO if no path is active.
-+Identical to the \fIno_path_retry\fR with \fIqueue\fR value. See KNOWN ISSUES.
- .TP
- .I no_partitions
- Disable automatic partitions generation via kpartx.
- .TP
--.I pg_init_retries
--Number of times to retry pg_init, it must be between 1 and 50.
-+.\" XXX
-+.I pg_init_retries <times>
-+(Since ??? kernel) Number of times to retry pg_init, it must be between 1 and 50.
- .TP
--.I pg_init_delay_msecs
--Number of msecs before pg_init retry, it must be between 0 and 60000.
-+.\" XXX
-+.I pg_init_delay_msecs <msecs>
-+(Since ??? kernel) Number of msecs before pg_init retry, it must be between 0 and 60000.
-+.TP
-+.\" XXX
-+.I queue_mode <mode>
-+(Since ??? kernel) Select the the queue_mode per multipath device.
-+Where <mode> can be \fIbio\fR, \fIrq\fR or \fImq\fR. Which corresponds to
-+bio-based, request_fn rq-based, and blk-mq rq-based respectively.
- .TP
- Default value is: \fB0\fR
- .RE
--- 
-2.7.4
+SXQncyB1c2VsZXNzLCBkZWZhdWx0IHBhdGhfc2VsZWN0b3IgaXMgc2VydmljZS10aW1lLgpBbmQg
+ZG9jdW1lbnQgc29tZSBhc3BlY3RzIG9mIHJvdW5kLXJvYmluLgoKQ2M6IEtpeW9zaGkgVWVkYSA8
+ay11ZWRhQGN0LmpwLm5lYy5jb20+CkNjOiBKdW7igJlpY2hpIE5vbXVyYSA8ai1ub211cmFAY2Uu
+anAubmVjLmNvbT4KQ2M6IE1pa2UgQ2hyaXN0aWUgPG1jaHJpc3RpQHJlZGhhdC5jb20+CkNjOiBI
+YW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5kZT4KQ2M6IEJlbmphbWluIE1hcnppbnNraSA8Ym1h
+cnppbnNAcmVkaGF0LmNvbT4KQ2M6IENocmlzdG9waGUgVmFyb3F1aSA8Y2hyaXN0b3BoZS52YXJv
+cXVpQG9wZW5zdmMuY29tPgpDYzogZGV2aWNlLW1hcHBlciBkZXZlbG9wbWVudCA8ZG0tZGV2ZWxA
+cmVkaGF0LmNvbT4KU2lnbmVkLW9mZi1ieTogWG9zZSBWYXpxdWV6IFBlcmV6IDx4b3NlLnZhenF1
+ZXpAZ21haWwuY29tPgotLS0KIGxpYm11bHRpcGF0aC9od3RhYmxlLmMgICAgIHwgMTQgLS0tLS0t
+LS0tLS0tLS0KIG11bHRpcGF0aC9tdWx0aXBhdGguY29uZi41IHwgMjAgKysrKysrKysrKysrLS0t
+LS0tLS0KIDIgZmlsZXMgY2hhbmdlZCwgMTIgaW5zZXJ0aW9ucygrKSwgMjIgZGVsZXRpb25zKC0p
+CgpkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2h3dGFibGUuYyBiL2xpYm11bHRpcGF0aC9od3Rh
+YmxlLmMKaW5kZXggYjc0NjE2Yi4uMTFjZjQ5OCAxMDA2NDQKLS0tIGEvbGlibXVsdGlwYXRoL2h3
+dGFibGUuYworKysgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCkBAIC03OSw3ICs3OSw2IEBAIHN0
+YXRpYyBzdHJ1Y3QgaHdlbnRyeSBkZWZhdWx0X2h3W10gPSB7CiAJCS5wZ3BvbGljeSAgICAgID0g
+R1JPVVBfQllfUFJJTywKIAkJLnBnZmFpbGJhY2sgICAgPSBGQUlMQkFDS19VTkRFRiwKIAkJLm5v
+X3BhdGhfcmV0cnkgPSAxMiwKLQkJLm1pbmlvICAgICAgICAgPSAxMDAsCiAJCS5jaGVja2VyX25h
+bWUgID0gSFBfU1csCiAJCS5wcmlvX25hbWUgICAgID0gUFJJT19IUF9TVywKIAl9LApAQCAtOTAs
+NyArODksNiBAQCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdw
+b2xpY3kgICAgICA9IEdST1VQX0JZX1BSSU8sCiAJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNL
+X0lNTUVESUFURSwKIAkJLm5vX3BhdGhfcmV0cnkgPSAxMiwKLQkJLm1pbmlvICAgICAgICAgPSAx
+MDAsCiAJCS5wcmlvX25hbWUgICAgID0gUFJJT19BTFVBLAogCX0sCiAJewpAQCAtMTAwLDcgKzk4
+LDYgQEAgc3RhdGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKIAkJLnBncG9saWN5
+ICAgICAgPSBHUk9VUF9CWV9QUklPLAogCQkucGdmYWlsYmFjayAgICA9IC1GQUlMQkFDS19JTU1F
+RElBVEUsCiAJCS5ub19wYXRoX3JldHJ5ID0gMTIsCi0JCS5taW5pbyAgICAgICAgID0gMTAwLAog
+CQkucHJpb19uYW1lICAgICA9IFBSSU9fQUxVQSwKIAl9LAogCXsKQEAgLTExMCw3ICsxMDcsNiBA
+QCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdwb2xpY3kgICAg
+ICA9IE1VTFRJQlVTLAogCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNLX1VOREVGLAogCQkubm9f
+cGF0aF9yZXRyeSA9IDE4LAotCQkubWluaW8gICAgICAgICA9IDEwMCwKIAl9LAogCXsKIAkJLyog
+TVNBMjAwMCBmYW1pbHkgd2l0aCBuZXcgZmlybXdhcmUgKi8KQEAgLTExOSw3ICsxMTUsNiBAQCBz
+dGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdwb2xpY3kgICAgICA9
+IEdST1VQX0JZX1BSSU8sCiAJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwK
+IAkJLm5vX3BhdGhfcmV0cnkgPSAxOCwKLQkJLm1pbmlvICAgICAgICAgPSAxMDAsCiAJCS5wcmlv
+X25hbWUgICAgID0gUFJJT19BTFVBLAogCX0sCiAJewpAQCAtMTI5LDcgKzEyNCw2IEBAIHN0YXRp
+YyBzdHJ1Y3QgaHdlbnRyeSBkZWZhdWx0X2h3W10gPSB7CiAJCS5wZ3BvbGljeSAgICAgID0gR1JP
+VVBfQllfUFJJTywKIAkJLnBnZmFpbGJhY2sgICAgPSAtRkFJTEJBQ0tfSU1NRURJQVRFLAogCQku
+bm9fcGF0aF9yZXRyeSA9IDE4LAotCQkubWluaW8gICAgICAgICA9IDEwMCwKIAkJLnByaW9fbmFt
+ZSAgICAgPSBQUklPX0FMVUEsCiAJfSwKIAl7CkBAIC0xNDAsNyArMTM0LDYgQEAgc3RhdGljIHN0
+cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKIAkJLnBncG9saWN5ICAgICAgPSBHUk9VUF9C
+WV9QUklPLAogCQkucGdmYWlsYmFjayAgICA9IC1GQUlMQkFDS19JTU1FRElBVEUsCiAJCS5ub19w
+YXRoX3JldHJ5ID0gMTIsCi0JCS5taW5pbyAgICAgICAgID0gMTAwLAogCQkucHJpb19uYW1lICAg
+ICA9IFBSSU9fQUxVQSwKIAl9LAogCXsKQEAgLTE1OCw3ICsxNTEsNiBAQCBzdGF0aWMgc3RydWN0
+IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdwb2xpY3kgICAgICA9IEdST1VQX0JZX1BS
+SU8sCiAJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwKIAkJLm5vX3BhdGhf
+cmV0cnkgPSAxOCwKLQkJLm1pbmlvICAgICAgICAgPSAxMDAsCiAJCS5wcmlvX25hbWUgICAgID0g
+UFJJT19BTFVBLAogCX0sCiAJLyoKQEAgLTUyMCw3ICs1MTIsNiBAQCBzdGF0aWMgc3RydWN0IGh3
+ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdwb2xpY3kgICAgICA9IEdST1VQX0JZX1BSSU8s
+CiAJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwKIAkJLm5vX3BhdGhfcmV0
+cnkgPSBOT19QQVRIX1JFVFJZX1FVRVVFLAotCQkubWluaW8gICAgICAgICA9IDEwMCwKIAkJLnBy
+aW9fbmFtZSAgICAgPSBQUklPX0FMVUEsCiAJfSwKIAl7CkBAIC01MzAsNyArNTIxLDYgQEAgc3Rh
+dGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKIAkJLmZlYXR1cmVzICAgICAgPSAi
+MSBxdWV1ZV9pZl9ub19wYXRoIiwKIAkJLnBncG9saWN5ICAgICAgPSBNVUxUSUJVUywKIAkJLnBn
+ZmFpbGJhY2sgICAgPSBGQUlMQkFDS19VTkRFRiwKLQkJLm1pbmlvICAgICAgICAgPSAxNSwKIAl9
+LAogCQkvKgogCQkgKiBJQk0gUG93ZXIgVmlydHVhbCBTQ1NJIERldmljZXMKQEAgLTU3Nyw3ICs1
+NjcsNiBAQCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdwb2xp
+Y3kgICAgICA9IEdST1VQX0JZX1BSSU8sCiAJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lN
+TUVESUFURSwKIAkJLmZsdXNoX29uX2xhc3RfZGVsID0gRkxVU0hfRU5BQkxFRCwKLQkJLm1pbmlv
+ICAgICAgICAgPSAxMjgsCiAJCS5kZXZfbG9zcyAgICAgID0gTUFYX0RFVl9MT1NTX1RNTywKIAkJ
+LnByaW9fbmFtZSAgICAgPSBQUklPX09OVEFQLAogCX0sCkBAIC02MTIsNyArNjAxLDYgQEAgc3Rh
+dGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKIAkJLnBncG9saWN5ICAgICAgPSBH
+Uk9VUF9CWV9TRVJJQUwsCiAJCS5wZ2ZhaWxiYWNrICAgID0gRkFJTEJBQ0tfVU5ERUYsCiAJCS5u
+b19wYXRoX3JldHJ5ID0gMzAsCi0JCS5taW5pbyAgICAgICAgID0gMTI4LAogCX0sCiAJLyoKIAkg
+KiBTR0kKQEAgLTc3Niw3ICs3NjQsNiBAQCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9o
+d1tdID0gewogCQkuZmVhdHVyZXMgICAgICA9ICIxIHF1ZXVlX2lmX25vX3BhdGgiLAogCQkucGdw
+b2xpY3kgICAgICA9IE1VTFRJQlVTLAogCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNLX1VOREVG
+LAotCQkubWluaW8gICAgICAgICA9IDEwMCwKIAl9LAogCS8qCiAJICogSW50ZWwKQEAgLTgwMCw3
+ICs3ODcsNiBAQCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdw
+b2xpY3kgICAgICA9IEdST1VQX0JZX1BSSU8sCiAJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNL
+X0lNTUVESUFURSwKIAkJLm5vX3BhdGhfcmV0cnkgPSAxMiwKLQkJLm1pbmlvICAgICAgICAgPSAx
+MDAsCiAJCS5wcmlvX25hbWUgICAgID0gUFJJT19BTFVBLAogCX0sCiAJLyoKZGlmZiAtLWdpdCBh
+L211bHRpcGF0aC9tdWx0aXBhdGguY29uZi41IGIvbXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUK
+aW5kZXggNTVmZGUyMi4uZmQ0YjFmMiAxMDA2NDQKLS0tIGEvbXVsdGlwYXRoL211bHRpcGF0aC5j
+b25mLjUKKysrIGIvbXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUKQEAgLTcsNyArNyw3IEBACiAu
+XCIKIC5cIiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiAuCi0uVEggTVVMVElQQVRILkNPTkYgNSAyMDE2
+LTA4LTA3ICJMaW51eCIKKy5USCBNVUxUSVBBVEguQ09ORiA1IDIwMTYtMDgtMDkgIkxpbnV4Igog
+LgogLgogLlwiIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KQEAgLTE2Myw3ICsxNjMsOCBAQCBrZXJuZWwg
+bXVsdGlwYXRoIHRhcmdldC4gVGhlcmUgYXJlIHRocmVlIHNlbGVjdG9yIGFsZ29yaXRobXM6CiAu
+VFAgMTIKIC5JICJyb3VuZC1yb2JpbiAwIgogTG9vcCB0aHJvdWdoIGV2ZXJ5IHBhdGggaW4gdGhl
+IHBhdGggZ3JvdXAsIHNlbmRpbmcgdGhlIHNhbWUgYW1vdW50IG9mIElPIHRvCi1lYWNoLgorZWFj
+aC4gU29tZSBhc3BlY3RzIG9mIGJlaGF2aW9yIGNhbiBiZSBjb250cm9sbGVkIHdpdGggdGhlIGF0
+dHJpYnV0ZXM6CitcZklycl9taW5faW9cZlIsIFxmSXJyX21pbl9pb19ycVxmUiBhbmQgXGZJcnJf
+d2VpZ2h0XGZSLgogLlRQCiAuSSAicXVldWUtbGVuZ3RoIDAiCiBTZW5kIHRoZSBuZXh0IGJ1bmNo
+IG9mIElPIGRvd24gdGhlIHBhdGggd2l0aCB0aGUgbGVhc3QgYW1vdW50IG9mIG91dHN0YW5kaW5n
+IElPLgpAQCAtNDMzLDggKzQzNCw5IEBAIERlZmF1bHQgdmFsdWUgaXM6IFxmQm1hbnVhbFxmUgog
+LgogLlRQCiAuQiAgcnJfbWluX2lvCi1UaGUgbnVtYmVyIG9mIElPIHRvIHJvdXRlIHRvIGEgcGF0
+aCBiZWZvcmUgc3dpdGNoaW5nIHRvIHRoZSBuZXh0IGluCi10aGUgc2FtZSBwYXRoIGdyb3VwLiBU
+aGlzIGlzIG9ubHkgZm9yIEJJTyBiYXNlZCBtdWx0aXBhdGguCitOdW1iZXIgb2YgSU8gcmVxdWVz
+dHMgdG8gcm91dGUgdG8gYSBwYXRoIGJlZm9yZSBzd2l0Y2hpbmcgdG8gdGhlIG5leHQgaW4gdGhl
+CitzYW1lIHBhdGggZ3JvdXAuIFRoaXMgaXMgb25seSBmb3IgXGZJQmxvY2sgSS9PXGZSKEJJTykg
+YmFzZWQgbXVsdGlwYXRoIGFuZCAKK29ubHkgYXBwbHkgdG8gXGZJcm91bmQtcm9iaW5cZlIgcGF0
+aF9zZWxlY3Rvci4KIC5SUwogLlRQCiBEZWZhdWx0IHZhbHVlIGlzOiBcZkIxMDAwXGZSCkBAIC00
+NDMsOCArNDQ1LDkgQEAgRGVmYXVsdCB2YWx1ZSBpczogXGZCMTAwMFxmUgogLgogLlRQCiAuQiBy
+cl9taW5faW9fcnEKLVRoZSBudW1iZXIgb2YgSU8gcmVxdWVzdHMgdG8gcm91dGUgdG8gYSBwYXRo
+IGJlZm9yZSBzd2l0Y2hpbmcgdG8gdGhlCi1uZXh0IGluIHRoZSBzYW1lIHBhdGggZ3JvdXAuIFRo
+aXMgaXMgb25seSBmb3IgcmVxdWVzdCBiYXNlZCBtdWx0aXBhdGguCitOdW1iZXIgb2YgSU8gcmVx
+dWVzdHMgdG8gcm91dGUgdG8gYSBwYXRoIGJlZm9yZSBzd2l0Y2hpbmcgdG8gdGhlIG5leHQgaW4g
+dGhlCitzYW1lIHBhdGggZ3JvdXAuIFRoaXMgaXMgb25seSBmb3IgXGZJUmVxdWVzdFxmUiBiYXNl
+ZCBtdWx0aXBhdGggYW5kCitvbmx5IGFwcGx5IHRvIFxmSXJvdW5kLXJvYmluXGZSIHBhdGhfc2Vs
+ZWN0b3IuCiAuUlMKIC5UUAogRGVmYXVsdCB2YWx1ZSBpczogXGZCMVxmUgpAQCAtNDY3LDExICs0
+NzAsMTIgQEAgRGVmYXVsdCB2YWx1ZSBpczogXGZCbWF4XGZSCiAuCiAuVFAKIC5CIHJyX3dlaWdo
+dAotSWYgc2V0IHRvIFxmSXByaW9yaXRpZXNcZlIgdGhlIG11bHRpcGF0aCBjb25maWd1cmF0b3Ig
+d2lsbCBhc3NpZ24KLXBhdGggd2VpZ2h0cyBhcyAicGF0aCBwcmlvICogcnJfbWluX2lvIi4gUG9z
+c2libGUgdmFsdWVzIGFyZQorSWYgc2V0IHRvIFxmSXByaW9yaXRpZXNcZlIgdGhlIG11bHRpcGF0
+aCBjb25maWd1cmF0b3Igd2lsbCBhc3NpZ24gcGF0aCB3ZWlnaHRzCithcyAicGF0aCBwcmlvICog
+cnJfbWluX2lvIi4gUG9zc2libGUgdmFsdWVzIGFyZQogLkkgcHJpb3JpdGllcwogb3IKIC5JIHVu
+aWZvcm0gLgorT25seSBhcHBseSB0byBcZklyb3VuZC1yb2JpblxmUiBwYXRoX3NlbGVjdG9yLgog
+LlJTCiAuVFAKIERlZmF1bHQgdmFsdWUgaXM6IFxmQnVuaWZvcm1cZlIKLS0gCjIuNy40CgotLQpk
+bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
+YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
