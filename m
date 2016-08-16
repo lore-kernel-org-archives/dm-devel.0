@@ -1,7 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH] Makefile.inc: Remove -fexceptions from CFLAGS
-Date: Tue, 16 Aug 2016 12:56:22 -0700
-Message-ID: <e832fbcf-dde0-5b84-980a-cd0745d027c6@sandisk.com>
+Subject: [PATCH] multipathd: Suppress uninteresting data race
+	reports
+Date: Tue, 16 Aug 2016 13:00:47 -0700
+Message-ID: <01747bb5-c10e-a3b6-e440-d9443837a6f7@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,42 +20,50 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-No code in the multipath-tools project calls a C++ function that
-generates an exception. Hence remove -fexceptions. From the gcc
-manual:
+The global variable multipath_conf is modified through RCU. Hence
+avoid that the data race detection tools Helgrind and DRD report
+data races for this variable.
 
--fexceptions
+The global variable running_state is read without holding the mutex
+that protects changes of this variable. Suppress complaints about
+these reads.
 
-  Enable exception handling. Generates extra code needed to
-  propagate exceptions. For some targets, this implies GCC
-  generates frame unwind information for all functions, which can
-  produce significant data size overhead, although it does not
-  affect execution. If you do not specify this option, GCC
-  enables it by default for languages like C++ that normally
-  require exception handling, and disables it for languages like
-  C that do not normally require it. However, you may need to
-  enable this option when compiling C code that needs to
-  interoperate properly with exception handlers written in
-  C++. You may also wish to disable this option if you are
-  compiling older C++ programs that don't use exception handling.
+The global variable uxsock_timeout is not protected by any mutex.
+Suppress complaints about using this variable.
+
+This patch introduces a new build-time requirement, namely that
+the valgrind-devel package has been installed.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- Makefile.inc | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/main.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 0808e64..0631ca2 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -61,7 +61,7 @@ LN		= ln -sf
- INSTALL_PROGRAM	= install
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 1d73b4c..54abfef 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -23,6 +23,7 @@
+ #endif
+ #include <semaphore.h>
+ #include <time.h>
++#include <valgrind/helgrind.h>
  
- OPTFLAGS	= -Wunused -Wstrict-prototypes -O2 -g -pipe -Wformat-security -Wall \
--		  -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4
-+		  -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector --param=ssp-buffer-size=4
+ /*
+  * libcheckers
+@@ -2520,6 +2521,13 @@ main (int argc, char *argv[])
+ 	int foreground = 0;
+ 	struct config *conf;
  
- CFLAGS		= $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
- SHARED_FLAGS	= -shared
++	ANNOTATE_BENIGN_RACE_SIZED(&multipath_conf, sizeof(multipath_conf),
++				   "Manipulated through RCU");
++	ANNOTATE_BENIGN_RACE_SIZED(&running_state, sizeof(running_state),
++		"Suppress complaints about unprotected running_state reads");
++	ANNOTATE_BENIGN_RACE_SIZED(&uxsock_timeout, sizeof(uxsock_timeout),
++		"Suppress complaints about this scalar variable");
++
+ 	logsink = 1;
+ 
+ 	if (getuid() != 0) {
 -- 
 2.9.2
