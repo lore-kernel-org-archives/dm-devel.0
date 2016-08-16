@@ -1,13 +1,14 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 4/5] multipath-tools: delete .minio from hwtable
-Date: Tue, 16 Aug 2016 14:38:52 +0200
-Message-ID: <1471351133-7892-4-git-send-email-xose.vazquez@gmail.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH 2/5] multipath-tools: replace LDFLAGS with
+ LIBDEPS for groups of libraries in Makefiles
+Date: Tue, 16 Aug 2016 15:39:34 +0200
+Message-ID: <CABr-GncpYQP=K2wAGb-mFKg_T54ygSMWNUUDywSPPP3sJqXP8g@mail.gmail.com>
 References: <1471351133-7892-1-git-send-email-xose.vazquez@gmail.com>
+	<1471351133-7892-2-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============0750580309897837358=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1471351133-7892-1-git-send-email-xose.vazquez@gmail.com>
+In-Reply-To: <1471351133-7892-2-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,117 +18,308 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>, =?UTF-8?q?Jun=E2=80=99ichi=20Nomura?= <j-nomura@ce.jp.nec.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-SXQncyB1c2VsZXNzLCBkZWZhdWx0IHBhdGhfc2VsZWN0b3IgaXMgc2VydmljZS10aW1lLgpBbmQg
-ZG9jdW1lbnQgc29tZSBhc3BlY3RzIG9mIHJvdW5kLXJvYmluLgoKQ2M6IEtpeW9zaGkgVWVkYSA8
-ay11ZWRhQGN0LmpwLm5lYy5jb20+CkNjOiBKdW7igJlpY2hpIE5vbXVyYSA8ai1ub211cmFAY2Uu
-anAubmVjLmNvbT4KQ2M6IE1pa2UgQ2hyaXN0aWUgPG1jaHJpc3RpQHJlZGhhdC5jb20+CkNjOiBI
-YW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5kZT4KQ2M6IEJlbmphbWluIE1hcnppbnNraSA8Ym1h
-cnppbnNAcmVkaGF0LmNvbT4KQ2M6IENocmlzdG9waGUgVmFyb3F1aSA8Y2hyaXN0b3BoZS52YXJv
-cXVpQG9wZW5zdmMuY29tPgpDYzogZGV2aWNlLW1hcHBlciBkZXZlbG9wbWVudCA8ZG0tZGV2ZWxA
-cmVkaGF0LmNvbT4KU2lnbmVkLW9mZi1ieTogWG9zZSBWYXpxdWV6IFBlcmV6IDx4b3NlLnZhenF1
-ZXpAZ21haWwuY29tPgotLS0KIGxpYm11bHRpcGF0aC9od3RhYmxlLmMgICAgIHwgMTQgLS0tLS0t
-LS0tLS0tLS0KIG11bHRpcGF0aC9tdWx0aXBhdGguY29uZi41IHwgMjAgKysrKysrKysrKysrLS0t
-LS0tLS0KIDIgZmlsZXMgY2hhbmdlZCwgMTIgaW5zZXJ0aW9ucygrKSwgMjIgZGVsZXRpb25zKC0p
-CgpkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2h3dGFibGUuYyBiL2xpYm11bHRpcGF0aC9od3Rh
-YmxlLmMKaW5kZXggYjc0NjE2Yi4uMTFjZjQ5OCAxMDA2NDQKLS0tIGEvbGlibXVsdGlwYXRoL2h3
-dGFibGUuYworKysgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCkBAIC03OSw3ICs3OSw2IEBAIHN0
-YXRpYyBzdHJ1Y3QgaHdlbnRyeSBkZWZhdWx0X2h3W10gPSB7CiAJCS5wZ3BvbGljeSAgICAgID0g
-R1JPVVBfQllfUFJJTywKIAkJLnBnZmFpbGJhY2sgICAgPSBGQUlMQkFDS19VTkRFRiwKIAkJLm5v
-X3BhdGhfcmV0cnkgPSAxMiwKLQkJLm1pbmlvICAgICAgICAgPSAxMDAsCiAJCS5jaGVja2VyX25h
-bWUgID0gSFBfU1csCiAJCS5wcmlvX25hbWUgICAgID0gUFJJT19IUF9TVywKIAl9LApAQCAtOTAs
-NyArODksNiBAQCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdw
-b2xpY3kgICAgICA9IEdST1VQX0JZX1BSSU8sCiAJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNL
-X0lNTUVESUFURSwKIAkJLm5vX3BhdGhfcmV0cnkgPSAxMiwKLQkJLm1pbmlvICAgICAgICAgPSAx
-MDAsCiAJCS5wcmlvX25hbWUgICAgID0gUFJJT19BTFVBLAogCX0sCiAJewpAQCAtMTAwLDcgKzk4
-LDYgQEAgc3RhdGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKIAkJLnBncG9saWN5
-ICAgICAgPSBHUk9VUF9CWV9QUklPLAogCQkucGdmYWlsYmFjayAgICA9IC1GQUlMQkFDS19JTU1F
-RElBVEUsCiAJCS5ub19wYXRoX3JldHJ5ID0gMTIsCi0JCS5taW5pbyAgICAgICAgID0gMTAwLAog
-CQkucHJpb19uYW1lICAgICA9IFBSSU9fQUxVQSwKIAl9LAogCXsKQEAgLTExMCw3ICsxMDcsNiBA
-QCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdwb2xpY3kgICAg
-ICA9IE1VTFRJQlVTLAogCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNLX1VOREVGLAogCQkubm9f
-cGF0aF9yZXRyeSA9IDE4LAotCQkubWluaW8gICAgICAgICA9IDEwMCwKIAl9LAogCXsKIAkJLyog
-TVNBMjAwMCBmYW1pbHkgd2l0aCBuZXcgZmlybXdhcmUgKi8KQEAgLTExOSw3ICsxMTUsNiBAQCBz
-dGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdwb2xpY3kgICAgICA9
-IEdST1VQX0JZX1BSSU8sCiAJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwK
-IAkJLm5vX3BhdGhfcmV0cnkgPSAxOCwKLQkJLm1pbmlvICAgICAgICAgPSAxMDAsCiAJCS5wcmlv
-X25hbWUgICAgID0gUFJJT19BTFVBLAogCX0sCiAJewpAQCAtMTI5LDcgKzEyNCw2IEBAIHN0YXRp
-YyBzdHJ1Y3QgaHdlbnRyeSBkZWZhdWx0X2h3W10gPSB7CiAJCS5wZ3BvbGljeSAgICAgID0gR1JP
-VVBfQllfUFJJTywKIAkJLnBnZmFpbGJhY2sgICAgPSAtRkFJTEJBQ0tfSU1NRURJQVRFLAogCQku
-bm9fcGF0aF9yZXRyeSA9IDE4LAotCQkubWluaW8gICAgICAgICA9IDEwMCwKIAkJLnByaW9fbmFt
-ZSAgICAgPSBQUklPX0FMVUEsCiAJfSwKIAl7CkBAIC0xNDAsNyArMTM0LDYgQEAgc3RhdGljIHN0
-cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKIAkJLnBncG9saWN5ICAgICAgPSBHUk9VUF9C
-WV9QUklPLAogCQkucGdmYWlsYmFjayAgICA9IC1GQUlMQkFDS19JTU1FRElBVEUsCiAJCS5ub19w
-YXRoX3JldHJ5ID0gMTIsCi0JCS5taW5pbyAgICAgICAgID0gMTAwLAogCQkucHJpb19uYW1lICAg
-ICA9IFBSSU9fQUxVQSwKIAl9LAogCXsKQEAgLTE1OCw3ICsxNTEsNiBAQCBzdGF0aWMgc3RydWN0
-IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdwb2xpY3kgICAgICA9IEdST1VQX0JZX1BS
-SU8sCiAJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwKIAkJLm5vX3BhdGhf
-cmV0cnkgPSAxOCwKLQkJLm1pbmlvICAgICAgICAgPSAxMDAsCiAJCS5wcmlvX25hbWUgICAgID0g
-UFJJT19BTFVBLAogCX0sCiAJLyoKQEAgLTUyMCw3ICs1MTIsNiBAQCBzdGF0aWMgc3RydWN0IGh3
-ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdwb2xpY3kgICAgICA9IEdST1VQX0JZX1BSSU8s
-CiAJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwKIAkJLm5vX3BhdGhfcmV0
-cnkgPSBOT19QQVRIX1JFVFJZX1FVRVVFLAotCQkubWluaW8gICAgICAgICA9IDEwMCwKIAkJLnBy
-aW9fbmFtZSAgICAgPSBQUklPX0FMVUEsCiAJfSwKIAl7CkBAIC01MzAsNyArNTIxLDYgQEAgc3Rh
-dGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKIAkJLmZlYXR1cmVzICAgICAgPSAi
-MSBxdWV1ZV9pZl9ub19wYXRoIiwKIAkJLnBncG9saWN5ICAgICAgPSBNVUxUSUJVUywKIAkJLnBn
-ZmFpbGJhY2sgICAgPSBGQUlMQkFDS19VTkRFRiwKLQkJLm1pbmlvICAgICAgICAgPSAxNSwKIAl9
-LAogCQkvKgogCQkgKiBJQk0gUG93ZXIgVmlydHVhbCBTQ1NJIERldmljZXMKQEAgLTU3Nyw3ICs1
-NjcsNiBAQCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdwb2xp
-Y3kgICAgICA9IEdST1VQX0JZX1BSSU8sCiAJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lN
-TUVESUFURSwKIAkJLmZsdXNoX29uX2xhc3RfZGVsID0gRkxVU0hfRU5BQkxFRCwKLQkJLm1pbmlv
-ICAgICAgICAgPSAxMjgsCiAJCS5kZXZfbG9zcyAgICAgID0gTUFYX0RFVl9MT1NTX1RNTywKIAkJ
-LnByaW9fbmFtZSAgICAgPSBQUklPX09OVEFQLAogCX0sCkBAIC02MTIsNyArNjAxLDYgQEAgc3Rh
-dGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKIAkJLnBncG9saWN5ICAgICAgPSBH
-Uk9VUF9CWV9TRVJJQUwsCiAJCS5wZ2ZhaWxiYWNrICAgID0gRkFJTEJBQ0tfVU5ERUYsCiAJCS5u
-b19wYXRoX3JldHJ5ID0gMzAsCi0JCS5taW5pbyAgICAgICAgID0gMTI4LAogCX0sCiAJLyoKIAkg
-KiBTR0kKQEAgLTc3Niw3ICs3NjQsNiBAQCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9o
-d1tdID0gewogCQkuZmVhdHVyZXMgICAgICA9ICIxIHF1ZXVlX2lmX25vX3BhdGgiLAogCQkucGdw
-b2xpY3kgICAgICA9IE1VTFRJQlVTLAogCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNLX1VOREVG
-LAotCQkubWluaW8gICAgICAgICA9IDEwMCwKIAl9LAogCS8qCiAJICogSW50ZWwKQEAgLTgwMCw3
-ICs3ODcsNiBAQCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewogCQkucGdw
-b2xpY3kgICAgICA9IEdST1VQX0JZX1BSSU8sCiAJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNL
-X0lNTUVESUFURSwKIAkJLm5vX3BhdGhfcmV0cnkgPSAxMiwKLQkJLm1pbmlvICAgICAgICAgPSAx
-MDAsCiAJCS5wcmlvX25hbWUgICAgID0gUFJJT19BTFVBLAogCX0sCiAJLyoKZGlmZiAtLWdpdCBh
-L211bHRpcGF0aC9tdWx0aXBhdGguY29uZi41IGIvbXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUK
-aW5kZXggNTVmZGUyMi4uZmQ0YjFmMiAxMDA2NDQKLS0tIGEvbXVsdGlwYXRoL211bHRpcGF0aC5j
-b25mLjUKKysrIGIvbXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUKQEAgLTcsNyArNyw3IEBACiAu
-XCIKIC5cIiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiAuCi0uVEggTVVMVElQQVRILkNPTkYgNSAyMDE2
-LTA4LTA3ICJMaW51eCIKKy5USCBNVUxUSVBBVEguQ09ORiA1IDIwMTYtMDgtMDkgIkxpbnV4Igog
-LgogLgogLlwiIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KQEAgLTE2Myw3ICsxNjMsOCBAQCBrZXJuZWwg
-bXVsdGlwYXRoIHRhcmdldC4gVGhlcmUgYXJlIHRocmVlIHNlbGVjdG9yIGFsZ29yaXRobXM6CiAu
-VFAgMTIKIC5JICJyb3VuZC1yb2JpbiAwIgogTG9vcCB0aHJvdWdoIGV2ZXJ5IHBhdGggaW4gdGhl
-IHBhdGggZ3JvdXAsIHNlbmRpbmcgdGhlIHNhbWUgYW1vdW50IG9mIElPIHRvCi1lYWNoLgorZWFj
-aC4gU29tZSBhc3BlY3RzIG9mIGJlaGF2aW9yIGNhbiBiZSBjb250cm9sbGVkIHdpdGggdGhlIGF0
-dHJpYnV0ZXM6CitcZklycl9taW5faW9cZlIsIFxmSXJyX21pbl9pb19ycVxmUiBhbmQgXGZJcnJf
-d2VpZ2h0XGZSLgogLlRQCiAuSSAicXVldWUtbGVuZ3RoIDAiCiBTZW5kIHRoZSBuZXh0IGJ1bmNo
-IG9mIElPIGRvd24gdGhlIHBhdGggd2l0aCB0aGUgbGVhc3QgYW1vdW50IG9mIG91dHN0YW5kaW5n
-IElPLgpAQCAtNDMzLDggKzQzNCw5IEBAIERlZmF1bHQgdmFsdWUgaXM6IFxmQm1hbnVhbFxmUgog
-LgogLlRQCiAuQiAgcnJfbWluX2lvCi1UaGUgbnVtYmVyIG9mIElPIHRvIHJvdXRlIHRvIGEgcGF0
-aCBiZWZvcmUgc3dpdGNoaW5nIHRvIHRoZSBuZXh0IGluCi10aGUgc2FtZSBwYXRoIGdyb3VwLiBU
-aGlzIGlzIG9ubHkgZm9yIEJJTyBiYXNlZCBtdWx0aXBhdGguCitOdW1iZXIgb2YgSU8gcmVxdWVz
-dHMgdG8gcm91dGUgdG8gYSBwYXRoIGJlZm9yZSBzd2l0Y2hpbmcgdG8gdGhlIG5leHQgaW4gdGhl
-CitzYW1lIHBhdGggZ3JvdXAuIFRoaXMgaXMgb25seSBmb3IgXGZJQmxvY2sgSS9PXGZSKEJJTykg
-YmFzZWQgbXVsdGlwYXRoIGFuZCAKK29ubHkgYXBwbHkgdG8gXGZJcm91bmQtcm9iaW5cZlIgcGF0
-aF9zZWxlY3Rvci4KIC5SUwogLlRQCiBEZWZhdWx0IHZhbHVlIGlzOiBcZkIxMDAwXGZSCkBAIC00
-NDMsOCArNDQ1LDkgQEAgRGVmYXVsdCB2YWx1ZSBpczogXGZCMTAwMFxmUgogLgogLlRQCiAuQiBy
-cl9taW5faW9fcnEKLVRoZSBudW1iZXIgb2YgSU8gcmVxdWVzdHMgdG8gcm91dGUgdG8gYSBwYXRo
-IGJlZm9yZSBzd2l0Y2hpbmcgdG8gdGhlCi1uZXh0IGluIHRoZSBzYW1lIHBhdGggZ3JvdXAuIFRo
-aXMgaXMgb25seSBmb3IgcmVxdWVzdCBiYXNlZCBtdWx0aXBhdGguCitOdW1iZXIgb2YgSU8gcmVx
-dWVzdHMgdG8gcm91dGUgdG8gYSBwYXRoIGJlZm9yZSBzd2l0Y2hpbmcgdG8gdGhlIG5leHQgaW4g
-dGhlCitzYW1lIHBhdGggZ3JvdXAuIFRoaXMgaXMgb25seSBmb3IgXGZJUmVxdWVzdFxmUiBiYXNl
-ZCBtdWx0aXBhdGggYW5kCitvbmx5IGFwcGx5IHRvIFxmSXJvdW5kLXJvYmluXGZSIHBhdGhfc2Vs
-ZWN0b3IuCiAuUlMKIC5UUAogRGVmYXVsdCB2YWx1ZSBpczogXGZCMVxmUgpAQCAtNDY3LDExICs0
-NzAsMTIgQEAgRGVmYXVsdCB2YWx1ZSBpczogXGZCbWF4XGZSCiAuCiAuVFAKIC5CIHJyX3dlaWdo
-dAotSWYgc2V0IHRvIFxmSXByaW9yaXRpZXNcZlIgdGhlIG11bHRpcGF0aCBjb25maWd1cmF0b3Ig
-d2lsbCBhc3NpZ24KLXBhdGggd2VpZ2h0cyBhcyAicGF0aCBwcmlvICogcnJfbWluX2lvIi4gUG9z
-c2libGUgdmFsdWVzIGFyZQorSWYgc2V0IHRvIFxmSXByaW9yaXRpZXNcZlIgdGhlIG11bHRpcGF0
-aCBjb25maWd1cmF0b3Igd2lsbCBhc3NpZ24gcGF0aCB3ZWlnaHRzCithcyAicGF0aCBwcmlvICog
-cnJfbWluX2lvIi4gUG9zc2libGUgdmFsdWVzIGFyZQogLkkgcHJpb3JpdGllcwogb3IKIC5JIHVu
-aWZvcm0gLgorT25seSBhcHBseSB0byBcZklyb3VuZC1yb2JpblxmUiBwYXRoX3NlbGVjdG9yLgog
-LlJTCiAuVFAKIERlZmF1bHQgdmFsdWUgaXM6IFxmQnVuaWZvcm1cZlIKLS0gCjIuNy40CgotLQpk
-bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+--===============0750580309897837358==
+Content-Type: multipart/alternative; boundary=001a114102a4ba569b053a307a9a
+
+--001a114102a4ba569b053a307a9a
+Content-Type: text/plain; charset=UTF-8
+
+This one was not forgotten.
+I was waiting for follow-ons on the discussion with Bart.
+Do you have a position on the opportunity to align on the variable name
+used by autoconf ?
+
+The other patches of the set are now merged.
+Thanks.
+
+On Tue, Aug 16, 2016 at 2:38 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
+wrote:
+
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  kpartx/Makefile       | 4 ++--
+>  mpathpersist/Makefile | 4 ++--
+>  multipath/Makefile    | 4 ++--
+>  multipathd/Makefile   | 8 ++++----
+>  4 files changed, 10 insertions(+), 10 deletions(-)
+>
+> diff --git a/kpartx/Makefile b/kpartx/Makefile
+> index 8af0dc6..853288f 100644
+> --- a/kpartx/Makefile
+> +++ b/kpartx/Makefile
+> @@ -5,7 +5,7 @@ include ../Makefile.inc
+>
+>  CFLAGS += -I. -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+>
+> -LDFLAGS += -ldevmapper
+> +LIBDEPS += -ldevmapper
+>
+>  LIBDM_API_COOKIE = $(shell grep -Ecs '^[a-z]*[[:space:]]+dm_task_set_cookie'
+> /usr/include/libdevmapper.h)
+>
+> @@ -21,7 +21,7 @@ EXEC = kpartx
+>  all: $(EXEC)
+>
+>  $(EXEC): $(OBJS)
+> -       $(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS)
+> +       $(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
+>         $(GZIP) $(EXEC).8 > $(EXEC).8.gz
+>
+>  install: $(EXEC) $(EXEC).8
+> diff --git a/mpathpersist/Makefile b/mpathpersist/Makefile
+> index b6ab730..7921619 100644
+> --- a/mpathpersist/Makefile
+> +++ b/mpathpersist/Makefile
+> @@ -2,7 +2,7 @@ include ../Makefile.inc
+>
+>  CFLAGS += -I$(multipathdir) -I$(mpathpersistdir)
+>
+> -LDFLAGS += -lpthread -ldevmapper -L$(mpathpersistdir) -lmpathpersist \
+> +LIBDEPS += -lpthread -ldevmapper -L$(mpathpersistdir) -lmpathpersist \
+>            -L$(multipathdir) -L$(mpathcmddir) -lmpathcmd -lmultipath -ludev
+>
+>  EXEC = mpathpersist
+> @@ -12,7 +12,7 @@ OBJS = main.o
+>  all: $(EXEC)
+>
+>  $(EXEC): $(OBJS)
+> -       $(CC) $(OBJS) -o $(EXEC) $(LDFLAGS) $(CFLAGS)
+> +       $(CC) $(OBJS) -o $(EXEC) $(LDFLAGS) $(CFLAGS) $(LIBDEPS)
+>         $(GZIP) $(EXEC).8 > $(EXEC).8.gz
+>
+>  install:
+> diff --git a/multipath/Makefile b/multipath/Makefile
+> index b125ae3..f296add 100644
+> --- a/multipath/Makefile
+> +++ b/multipath/Makefile
+> @@ -5,7 +5,7 @@ include ../Makefile.inc
+>
+>  CFLAGS += -I$(multipathdir) -I$(mpathcmddir)
+>
+> -LDFLAGS += -lpthread -ldevmapper -ldl -L$(multipathdir) -lmultipath
+> -ludev \
+> +LIBDEPS += -lpthread -ldevmapper -ldl -L$(multipathdir) -lmultipath
+> -ludev \
+>            -L$(mpathcmddir) -lmpathcmd
+>
+>  EXEC = multipath
+> @@ -15,7 +15,7 @@ OBJS = main.o
+>  all: $(EXEC)
+>
+>  $(EXEC): $(OBJS)
+> -       $(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS)
+> +       $(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
+>         $(GZIP) $(EXEC).8 > $(EXEC).8.gz
+>         $(GZIP) $(EXEC).conf.5 > $(EXEC).conf.5.gz
+>
+> diff --git a/multipathd/Makefile b/multipathd/Makefile
+> index 03d7815..8524efa 100644
+> --- a/multipathd/Makefile
+> +++ b/multipathd/Makefile
+> @@ -8,16 +8,16 @@ include ../Makefile.inc
+>  #CFLAGS += -DLOGDBG
+>  CFLAGS += -I$(multipathdir) -I$(mpathpersistdir) -I$(mpathcmddir)
+>
+> -LDFLAGS += -ludev -ldl -L$(multipathdir) -lmultipath -L$(mpathpersistdir)
+> \
+> +LIBDEPS += -ludev -ldl -L$(multipathdir) -lmultipath -L$(mpathpersistdir)
+> \
+>            -lmpathpersist -L$(mpathcmddir) -lmpathcmd -lurcu -lpthread \
+>            -ldevmapper -lreadline
+>
+>  ifdef SYSTEMD
+>         CFLAGS += -DUSE_SYSTEMD=$(SYSTEMD)
+>         ifeq ($(shell test $(SYSTEMD) -gt 209 && echo 1), 1)
+> -               LDFLAGS += -lsystemd
+> +               LIBDEPS += -lsystemd
+>         else
+> -               LDFLAGS += -lsystemd-daemon
+> +               LIBDEPS += -lsystemd-daemon
+>         endif
+>  endif
+>
+> @@ -28,7 +28,7 @@ EXEC = multipathd
+>  all : $(EXEC)
+>
+>  $(EXEC): $(OBJS)
+> -       $(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(EXEC)
+> +       $(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(EXEC) $(LIBDEPS)
+>         $(GZIP) $(EXEC).8 > $(EXEC).8.gz
+>
+>  install:
+> --
+> 2.7.4
+>
+>
+
+--001a114102a4ba569b053a307a9a
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>This one was not forgotten.</div>I was waiting for fo=
+llow-ons on the discussion with Bart.<div>Do you have a position on the opp=
+ortunity to align on the variable name used by autoconf ?</div><div><br></d=
+iv><div>The other patches of the set are now merged.</div><div>Thanks.</div=
+></div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Tue, Au=
+g 16, 2016 at 2:38 PM, Xose Vazquez Perez <span dir=3D"ltr">&lt;<a href=3D"=
+mailto:xose.vazquez@gmail.com" target=3D"_blank">xose.vazquez@gmail.com</a>=
+&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0=
+ 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">Cc: Christophe Varoqui=
+ &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com">christophe.varoqui@o=
+pensvc.<wbr>com</a>&gt;<br>
+Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
+-devel@redhat.com</a>&gt;<br>
+Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
+com">xose.vazquez@gmail.com</a>&gt;<br>
+---<br>
+=C2=A0kpartx/Makefile=C2=A0 =C2=A0 =C2=A0 =C2=A0| 4 ++--<br>
+=C2=A0mpathpersist/Makefile | 4 ++--<br>
+=C2=A0multipath/Makefile=C2=A0 =C2=A0 | 4 ++--<br>
+=C2=A0multipathd/Makefile=C2=A0 =C2=A0| 8 ++++----<br>
+=C2=A04 files changed, 10 insertions(+), 10 deletions(-)<br>
+<br>
+diff --git a/kpartx/Makefile b/kpartx/Makefile<br>
+index 8af0dc6..853288f 100644<br>
+--- a/kpartx/Makefile<br>
++++ b/kpartx/Makefile<br>
+@@ -5,7 +5,7 @@ include ../Makefile.inc<br>
+<br>
+=C2=A0CFLAGS +=3D -I. -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=3D64<br>
+<br>
+-LDFLAGS +=3D -ldevmapper<br>
++LIBDEPS +=3D -ldevmapper<br>
+<br>
+=C2=A0LIBDM_API_COOKIE =3D $(shell grep -Ecs &#39;^[a-z]*[[:space:]]+dm_tas=
+k_<wbr>set_cookie&#39; /usr/include/libdevmapper.h)<br>
+<br>
+@@ -21,7 +21,7 @@ EXEC =3D kpartx<br>
+=C2=A0all: $(EXEC)<br>
+<br>
+=C2=A0$(EXEC): $(OBJS)<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS)<b=
+r>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $=
+(LIBDEPS)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).8 &gt; $(EXEC).8.gz<br>
+<br>
+=C2=A0install: $(EXEC) $(EXEC).8<br>
+diff --git a/mpathpersist/Makefile b/mpathpersist/Makefile<br>
+index b6ab730..7921619 100644<br>
+--- a/mpathpersist/Makefile<br>
++++ b/mpathpersist/Makefile<br>
+@@ -2,7 +2,7 @@ include ../Makefile.inc<br>
+<br>
+=C2=A0CFLAGS +=3D -I$(multipathdir) -I$(mpathpersistdir)<br>
+<br>
+-LDFLAGS +=3D -lpthread -ldevmapper -L$(mpathpersistdir) -lmpathpersist \<b=
+r>
++LIBDEPS +=3D -lpthread -ldevmapper -L$(mpathpersistdir) -lmpathpersist \<b=
+r>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0-L$(multipathdir) -L$(mpathcmddir)=
+ -lmpathcmd -lmultipath -ludev<br>
+<br>
+=C2=A0EXEC =3D mpathpersist<br>
+@@ -12,7 +12,7 @@ OBJS =3D main.o<br>
+=C2=A0all: $(EXEC)<br>
+<br>
+=C2=A0$(EXEC): $(OBJS)<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(OBJS) -o $(EXEC) $(LDFLAGS) $(CFLAGS)<b=
+r>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(OBJS) -o $(EXEC) $(LDFLAGS) $(CFLAGS) $=
+(LIBDEPS)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).8 &gt; $(EXEC).8.gz<br>
+<br>
+=C2=A0install:<br>
+diff --git a/multipath/Makefile b/multipath/Makefile<br>
+index b125ae3..f296add 100644<br>
+--- a/multipath/Makefile<br>
++++ b/multipath/Makefile<br>
+@@ -5,7 +5,7 @@ include ../Makefile.inc<br>
+<br>
+=C2=A0CFLAGS +=3D -I$(multipathdir) -I$(mpathcmddir)<br>
+<br>
+-LDFLAGS +=3D -lpthread -ldevmapper -ldl -L$(multipathdir) -lmultipath -lud=
+ev \<br>
++LIBDEPS +=3D -lpthread -ldevmapper -ldl -L$(multipathdir) -lmultipath -lud=
+ev \<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0-L$(mpathcmddir) -lmpathcmd<br>
+<br>
+=C2=A0EXEC =3D multipath<br>
+@@ -15,7 +15,7 @@ OBJS =3D main.o<br>
+=C2=A0all: $(EXEC)<br>
+<br>
+=C2=A0$(EXEC): $(OBJS)<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS)<b=
+r>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $=
+(LIBDEPS)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).8 &gt; $(EXEC).8.gz<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).conf.5 &gt; $(EXEC).conf.5.gz<b=
+r>
+<br>
+diff --git a/multipathd/Makefile b/multipathd/Makefile<br>
+index 03d7815..8524efa 100644<br>
+--- a/multipathd/Makefile<br>
++++ b/multipathd/Makefile<br>
+@@ -8,16 +8,16 @@ include ../Makefile.inc<br>
+=C2=A0#CFLAGS +=3D -DLOGDBG<br>
+=C2=A0CFLAGS +=3D -I$(multipathdir) -I$(mpathpersistdir) -I$(mpathcmddir)<b=
+r>
+<br>
+-LDFLAGS +=3D -ludev -ldl -L$(multipathdir) -lmultipath -L$(mpathpersistdir=
+) \<br>
++LIBDEPS +=3D -ludev -ldl -L$(multipathdir) -lmultipath -L$(mpathpersistdir=
+) \<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0-lmpathpersist -L$(mpathcmddir) -l=
+mpathcmd -lurcu -lpthread \<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0-ldevmapper -lreadline<br>
+<br>
+=C2=A0ifdef SYSTEMD<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 CFLAGS +=3D -DUSE_SYSTEMD=3D$(SYSTEMD)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 ifeq ($(shell test $(SYSTEMD) -gt 209 &amp;&amp=
+; echo 1), 1)<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0LDFLAGS +=3D -lsyst=
+emd<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0LIBDEPS +=3D -lsyst=
+emd<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 else<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0LDFLAGS +=3D -lsyst=
+emd-daemon<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0LIBDEPS +=3D -lsyst=
+emd-daemon<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 endif<br>
+=C2=A0endif<br>
+<br>
+@@ -28,7 +28,7 @@ EXEC =3D multipathd<br>
+=C2=A0all : $(EXEC)<br>
+<br>
+=C2=A0$(EXEC): $(OBJS)<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(EXEC)<b=
+r>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(EXEC) $=
+(LIBDEPS)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).8 &gt; $(EXEC).8.gz<br>
+<br>
+=C2=A0install:<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+2.7.4<br>
+<br>
+</font></span></blockquote></div><br></div>
+
+--001a114102a4ba569b053a307a9a--
+
+
+--===============0750580309897837358==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0750580309897837358==--
