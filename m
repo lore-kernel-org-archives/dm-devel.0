@@ -1,14 +1,11 @@
 From: tang.junhui@zte.com.cn
-Subject: =?gb2312?b?tPC4tDogUmU6ICBbUEFUQ0hdIGxpYm11bHRpcGF0?=
- =?gb2312?b?aDogZml4IG1lbW9yeSBBUEkgbG9naWMgZXJyb3I=?=
-Date: Tue, 16 Aug 2016 08:51:01 +0800
-Message-ID: <OF92ADA996.94271871-ON48258011.0003CD4D-48258011.0004A674@zte.com.cn>
-References: <1471258749-12176-1-git-send-email-tang.junhui@zte.com.cn>
-	<20160815135841.smic6ttprb7kwoc4@c203.arch.suse.de>
+Subject: [PATCH] libmultipath: fix memory API logic error
+Date: Tue, 16 Aug 2016 09:55:32 +0800
+Message-ID: <1471312532-7736-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0787278204456002452=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160815135841.smic6ttprb7kwoc4@c203.arch.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,171 +15,110 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Johannes Thumshirn <jthumshirn@suse.de>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, christophe varoqui <christophe.varoqui@free.fr>
+To: christophe varoqui <christophe.varoqui@free.fr>
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, "tang.junhui" <tang.junhui@zte.com.cn>
 List-Id: dm-devel.ids
 
-This is a multipart message in MIME format.
---===============0787278204456002452==
-Content-Type: multipart/alternative;
-	boundary="=_alternative 0004A67348258011_="
+From: "tang.junhui" <tang.junhui@zte.com.cn>
 
-This is a multipart message in MIME format.
---=_alternative 0004A67348258011_=
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: base64
+Memroy API use mem_allocated to record the total size of used memory,
+however, it's wrong to use size(p) as the length of freed memory in xfree(),
+and memory may also be allocated by STRDUP() or REALLOC(), which is
+not calculated into mem_allocated, so the total size of used memory is
+not correctly. For these reasons, we removed these incorrectly code to keep
+the code clean.
 
-SGksIEpvaGFubmVzLA0KWW91ciBhZHZpY2UgaXMgbmljZSwgdGhhbmsgeW91DQpJIHdpbGwgc2Vu
-ZCB0aGUgbW9kaWZpZWQgcGF0Y2ggbGF0ZXIuDQoNCg0KDQoNCuWPkeS7tuS6ujogICAgICAgICBK
-b2hhbm5lcyBUaHVtc2hpcm4gPGp0aHVtc2hpcm5Ac3VzZS5kZT4NCuaUtuS7tuS6ujogICAgICAg
-ICB0YW5nLmp1bmh1aUB6dGUuY29tLmNuLCANCuaKhOmAgTogICBjaHJpc3RvcGhlIHZhcm9xdWkg
-PGNocmlzdG9waGUudmFyb3F1aUBmcmVlLmZyPiwgDQp6aGFuZy5rYWkxNkB6dGUuY29tLmNuLCBk
-bS1kZXZlbEByZWRoYXQuY29tDQrml6XmnJ86ICAgMjAxNi8wOC8xNSAyMTo1OQ0K5Li76aKYOiAg
-IFJlOiBbZG0tZGV2ZWxdIFtQQVRDSF0gbGlibXVsdGlwYXRoOiBmaXggbWVtb3J5IEFQSSBsb2dp
-YyBlcnJvcg0KDQoNCg0KT24gTW9uLCBBdWcgMTUsIDIwMTYgYXQgMDY6NTk6MDlQTSArMDgwMCwg
-dGFuZy5qdW5odWlAenRlLmNvbS5jbiB3cm90ZToNCj4gRnJvbTogInRhbmcuanVuaHVpIiA8dGFu
-Zy5qdW5odWlAenRlLmNvbS5jbj4NCj4gDQo+IE1lbXJveSBBUEkgdXNlIG1lbV9hbGxvY2F0ZWQg
-dG8gcmVjb3JkIHRoZSB0b3RhbCBzaXplIG9mIHVzZWQgbWVtb3J5LA0KPiBob3dldmVyLCBpdCdz
-IHdyb25nIHRvIHVzZSBzaXplKHApIGFzIHRoZSBsZW5ndGggb2YgZnJlZWQgbWVtb3J5IGluIA0K
-eGZyZWUoKSwNCj4gYW5kIG1lbW9yeSBtYXkgYWxzbyBiZSBhbGxvY2F0ZWQgYnkgU1RSRFVQKCkg
-b3IgUkVBTExPQygpLCB3aGljaCBpcw0KPiBub3QgY2FsY3VsYXRlZCBpbnRvIG1lbV9hbGxvY2F0
-ZWQsIHNvIHRoZSB0b3RhbCBzaXplIG9mIHVzZWQgbWVtb3J5IGlzDQo+IG5vdCBjb3JyZWN0bHku
-IEZvciB0aGVzZSByZWFzb25zLCB3ZSByZW1vdmVkIHRoZXNlIGluY29ycmVjdGx5IGNvZGUgdG8g
-DQprZWVwDQo+IHRoZSBjb2RlIGNsZWFuLg0KPiANCj4gU2lnbmVkLW9mZi1ieTogdGFuZy5qdW5o
-dWkgPHRhbmcuanVuaHVpQHp0ZS5jb20uY24+DQo+IC0tLQ0KPiAgbGlibXBhdGhwZXJzaXN0L21w
-YXRoX3VwZGF0ZXByLmMgfCAgMSAtDQo+ICBsaWJtdWx0aXBhdGgvbWVtb3J5LmMgICAgICAgICAg
-ICB8IDMxIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0NCj4gIGxpYm11bHRpcGF0aC9t
-ZW1vcnkuaCAgICAgICAgICAgIHwgMTMgKystLS0tLS0tLS0tLQ0KPiAgMyBmaWxlcyBjaGFuZ2Vk
-LCAyIGluc2VydGlvbnMoKyksIDQzIGRlbGV0aW9ucygtKQ0KPiANCj4gZGlmZiAtLWdpdCBhL2xp
-Ym1wYXRocGVyc2lzdC9tcGF0aF91cGRhdGVwci5jIA0KYi9saWJtcGF0aHBlcnNpc3QvbXBhdGhf
-dXBkYXRlcHIuYw0KPiBpbmRleCA5ZmY0YjMwLi41YWYyZTAzIDEwMDY0NA0KPiAtLS0gYS9saWJt
-cGF0aHBlcnNpc3QvbXBhdGhfdXBkYXRlcHIuYw0KPiArKysgYi9saWJtcGF0aHBlcnNpc3QvbXBh
-dGhfdXBkYXRlcHIuYw0KPiBAQCAtMTYsNyArMTYsNiBAQA0KPiAgI2luY2x1ZGUgInV4c29jay5o
-Ig0KPiAgI2luY2x1ZGUgIm1lbW9yeS5oIg0KPiANCj4gLXVuc2lnbmVkIGxvbmcgbWVtX2FsbG9j
-YXRlZDsgICAgLyogVG90YWwgbWVtb3J5IHVzZWQgaW4gQnl0ZXMgKi8NCj4gDQo+ICBpbnQgdXBk
-YXRlX3ByZmxhZyhjaGFyICogYXJnMSwgY2hhciAqIGFyZzIsIGludCBub2lzeSkNCj4gIHsNCj4g
-ZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9tZW1vcnkuYyBiL2xpYm11bHRpcGF0aC9tZW1vcnku
-Yw0KPiBpbmRleCAxMzY2ZjQ1Li41NDQxZTZhIDEwMDY0NA0KPiAtLS0gYS9saWJtdWx0aXBhdGgv
-bWVtb3J5LmMNCj4gKysrIGIvbGlibXVsdGlwYXRoL21lbW9yeS5jDQo+IEBAIC0yMiwzNyArMjIs
-NiBAQA0KPg0KDQpbLi4uXQ0KDQo+IC0NCj4gLXZvaWQNCj4gLXhmcmVlKHZvaWQgKnApDQo+IC17
-DQo+IC0gICAgICAgICAgICAgIG1lbV9hbGxvY2F0ZWQgLT0gc2l6ZW9mIChwKTsNCj4gLSAgICAg
-ICAgICAgICAgZnJlZShwKTsNCj4gLSAgICAgICAgICAgICAgcCA9IE5VTEw7DQo+IC19DQo+IC0N
-Cj4gIC8qDQoNClsuLi5dDQoNCj4gLSNkZWZpbmUgTUFMTE9DKG4pICAgICh6YWxsb2MobikpDQo+
-IC0jZGVmaW5lIEZSRUUocCkgICAgICAoeGZyZWUocCkpDQo+ICsjZGVmaW5lIE1BTExPQyhuKSAg
-ICAoY2FsbG9jKDEsKG4pKSkNCj4gKyNkZWZpbmUgRlJFRShwKSAgICAgIChmcmVlKHApKQ0KPiAg
-I2RlZmluZSBSRUFMTE9DKHAsbikgKHJlYWxsb2MoKHApLChuKSkpDQo+ICAjZGVmaW5lIFNUUkRV
-UChuKSAgICAoc3RyZHVwKG4pKQ0KDQpPbmUgbWlub3Igbml0LCB0aGUgb3JpZ2luYWwgeGZyZWUo
-KSBoYXMgc2V0IHRoZSBmcmVlZCBwb2ludGVyIHRvIDAsIHNvIA0KbWF5YmUgYQ0KDQojZGVmaW5l
-IEZSRUUocCkgZG8geyBmcmVlKHApOyBwID0gTlVMTCB9IHdoaWxlKDApDQoNCndvdWxkIGJlIGFk
-dmlzYWJsZS4gSSBwZXJzb25hbGx5IGxpa2Ugc2V0dGluZyBmcmVlJ2QgcG9pbnRlcnMgdG8gTlVM
-TCwNCmFzIGEgTlVMTCBwb2ludGVyIGFjY2VzcyBpcyBhIG1vcmUgaW1tZWRpYXRlIGZlZWRiYWNr
-IHRoYW4gc29tZSByYXRoZXINCm5hc3R5IHVzZS1hZnRlci1mcmVlLg0KDQpKdXN0IG15ICQwLjIN
-Cg0KQnl0ZSwNCiAgICAgICAgICAgICAgICAgSm9oYW5uZXMNCg0KLS0gDQpKb2hhbm5lcyBUaHVt
-c2hpcm4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBTdG9yYWdlDQpq
-dGh1bXNoaXJuQHN1c2UuZGUgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICs0OSA5MTEg
-NzQwNTMgNjg5DQpTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVy
-Zw0KR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbg0K
-SFJCIDIxMjg0IChBRyBOw7xybmJlcmcpDQpLZXkgZmluZ2VycHJpbnQgPSBFQzM4IDlDQUIgQzJD
-NCBGMjVEIDg2MDAgRDBEMCAwMzkzIDk2OUQgMkQ3NiAwODUwDQoNCg0K
---=_alternative 0004A67348258011_=
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: base64
+Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+---
+ libmpathpersist/mpath_updatepr.c |  1 -
+ libmultipath/memory.c            | 31 -------------------------------
+ libmultipath/memory.h            | 13 ++-----------
+ 3 files changed, 2 insertions(+), 43 deletions(-)
 
-PGZvbnQgc2l6ZT0yIGZhY2U9IkBBcmlhbCBVbmljb2RlIE1TIj5IaSwgSm9oYW5uZXMsPC9mb250
-Pg0KPGJyPjxmb250IHNpemU9MiBmYWNlPSJAQXJpYWwgVW5pY29kZSBNUyI+WW91ciBhZHZpY2Ug
-aXMgbmljZTwvZm9udD48Zm9udCBzaXplPTMgZmFjZT0iQEFyaWFsIFVuaWNvZGUgTVMiPiwNCnRo
-YW5rIHlvdTwvZm9udD4NCjxicj48Zm9udCBzaXplPTIgZmFjZT0iQEFyaWFsIFVuaWNvZGUgTVMi
-Pkkgd2lsbCBzZW5kIHRoZSBtb2RpZmllZCBwYXRjaA0KbGF0ZXIuPC9mb250Pjxmb250IHNpemU9
-MiBmYWNlPSJzYW5zLXNlcmlmIj48YnI+DQo8L2ZvbnQ+DQo8YnI+DQo8YnI+DQo8YnI+DQo8YnI+
-PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+5Y+R5Lu25Lq6OiAm
-bmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7IDwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fu
-cy1zZXJpZiI+Sm9oYW5uZXMgVGh1bXNoaXJuDQombHQ7anRodW1zaGlybkBzdXNlLmRlJmd0Ozwv
-Zm9udD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj7m
-lLbku7bkuro6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgPC9mb250Pjxmb250IHNpemU9
-MSBmYWNlPSJzYW5zLXNlcmlmIj50YW5nLmp1bmh1aUB6dGUuY29tLmNuLA0KPC9mb250Pg0KPGJy
-Pjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPuaKhOmAgTogJm5i
-c3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOzwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1z
-ZXJpZiI+Y2hyaXN0b3BoZSB2YXJvcXVpDQombHQ7Y2hyaXN0b3BoZS52YXJvcXVpQGZyZWUuZnIm
-Z3Q7LCB6aGFuZy5rYWkxNkB6dGUuY29tLmNuLCBkbS1kZXZlbEByZWRoYXQuY29tPC9mb250Pg0K
-PGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPuaXpeacnzog
-Jm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyA8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNh
-bnMtc2VyaWYiPjIwMTYvMDgvMTUNCjIxOjU5PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xv
-cj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPuS4u+mimDogJm5ic3A7ICZuYnNwOw0KJm5ic3A7
-ICZuYnNwOzwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+UmU6IFtkbS1kZXZl
-bF0NCltQQVRDSF0gbGlibXVsdGlwYXRoOiBmaXggbWVtb3J5IEFQSSBsb2dpYyBlcnJvcjwvZm9u
-dD4NCjxicj4NCjxociBub3NoYWRlPg0KPGJyPg0KPGJyPg0KPGJyPjx0dD48Zm9udCBzaXplPTI+
-T24gTW9uLCBBdWcgMTUsIDIwMTYgYXQgMDY6NTk6MDlQTSArMDgwMCwgdGFuZy5qdW5odWlAenRl
-LmNvbS5jbg0Kd3JvdGU6PGJyPg0KJmd0OyBGcm9tOiAmcXVvdDt0YW5nLmp1bmh1aSZxdW90OyAm
-bHQ7dGFuZy5qdW5odWlAenRlLmNvbS5jbiZndDs8YnI+DQomZ3Q7IDxicj4NCiZndDsgTWVtcm95
-IEFQSSB1c2UgbWVtX2FsbG9jYXRlZCB0byByZWNvcmQgdGhlIHRvdGFsIHNpemUgb2YgdXNlZCBt
-ZW1vcnksPGJyPg0KJmd0OyBob3dldmVyLCBpdCdzIHdyb25nIHRvIHVzZSBzaXplKHApIGFzIHRo
-ZSBsZW5ndGggb2YgZnJlZWQgbWVtb3J5IGluDQp4ZnJlZSgpLDxicj4NCiZndDsgYW5kIG1lbW9y
-eSBtYXkgYWxzbyBiZSBhbGxvY2F0ZWQgYnkgU1RSRFVQKCkgb3IgUkVBTExPQygpLCB3aGljaCBp
-czxicj4NCiZndDsgbm90IGNhbGN1bGF0ZWQgaW50byBtZW1fYWxsb2NhdGVkLCBzbyB0aGUgdG90
-YWwgc2l6ZSBvZiB1c2VkIG1lbW9yeQ0KaXM8YnI+DQomZ3Q7IG5vdCBjb3JyZWN0bHkuIEZvciB0
-aGVzZSByZWFzb25zLCB3ZSByZW1vdmVkIHRoZXNlIGluY29ycmVjdGx5IGNvZGUNCnRvIGtlZXA8
-YnI+DQomZ3Q7IHRoZSBjb2RlIGNsZWFuLjxicj4NCiZndDsgPGJyPg0KJmd0OyBTaWduZWQtb2Zm
-LWJ5OiB0YW5nLmp1bmh1aSAmbHQ7dGFuZy5qdW5odWlAenRlLmNvbS5jbiZndDs8YnI+DQomZ3Q7
-IC0tLTxicj4NCiZndDsgJm5ic3A7bGlibXBhdGhwZXJzaXN0L21wYXRoX3VwZGF0ZXByLmMgfCAm
-bmJzcDsxIC08YnI+DQomZ3Q7ICZuYnNwO2xpYm11bHRpcGF0aC9tZW1vcnkuYyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO3wNCjMxIC0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS08YnI+DQomZ3Q7ICZuYnNwO2xpYm11bHRpcGF0aC9tZW1vcnkuaCAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO3wNCjEzICsrLS0tLS0tLS0tLS08YnI+
-DQomZ3Q7ICZuYnNwOzMgZmlsZXMgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspLCA0MyBkZWxldGlv
-bnMoLSk8YnI+DQomZ3Q7IDxicj4NCiZndDsgZGlmZiAtLWdpdCBhL2xpYm1wYXRocGVyc2lzdC9t
-cGF0aF91cGRhdGVwci5jIGIvbGlibXBhdGhwZXJzaXN0L21wYXRoX3VwZGF0ZXByLmM8YnI+DQom
-Z3Q7IGluZGV4IDlmZjRiMzAuLjVhZjJlMDMgMTAwNjQ0PGJyPg0KJmd0OyAtLS0gYS9saWJtcGF0
-aHBlcnNpc3QvbXBhdGhfdXBkYXRlcHIuYzxicj4NCiZndDsgKysrIGIvbGlibXBhdGhwZXJzaXN0
-L21wYXRoX3VwZGF0ZXByLmM8YnI+DQomZ3Q7IEBAIC0xNiw3ICsxNiw2IEBAPGJyPg0KJmd0OyAm
-bmJzcDsjaW5jbHVkZSAmcXVvdDt1eHNvY2suaCZxdW90Ozxicj4NCiZndDsgJm5ic3A7I2luY2x1
-ZGUgJnF1b3Q7bWVtb3J5LmgmcXVvdDs8YnI+DQomZ3Q7ICZuYnNwOzxicj4NCiZndDsgLXVuc2ln
-bmVkIGxvbmcgbWVtX2FsbG9jYXRlZDsgJm5ic3A7ICZuYnNwOy8qIFRvdGFsIG1lbW9yeSB1c2Vk
-IGluDQpCeXRlcyAqLzxicj4NCiZndDsgJm5ic3A7PGJyPg0KJmd0OyAmbmJzcDtpbnQgdXBkYXRl
-X3ByZmxhZyhjaGFyICogYXJnMSwgY2hhciAqIGFyZzIsIGludCBub2lzeSk8YnI+DQomZ3Q7ICZu
-YnNwO3s8YnI+DQomZ3Q7IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvbWVtb3J5LmMgYi9saWJt
-dWx0aXBhdGgvbWVtb3J5LmM8YnI+DQomZ3Q7IGluZGV4IDEzNjZmNDUuLjU0NDFlNmEgMTAwNjQ0
-PGJyPg0KJmd0OyAtLS0gYS9saWJtdWx0aXBhdGgvbWVtb3J5LmM8YnI+DQomZ3Q7ICsrKyBiL2xp
-Ym11bHRpcGF0aC9tZW1vcnkuYzxicj4NCiZndDsgQEAgLTIyLDM3ICsyMiw2IEBAPGJyPg0KJmd0
-Ozxicj4NCjxicj4NClsuLi5dPGJyPg0KPGJyPg0KJmd0OyAtPGJyPg0KJmd0OyAtdm9pZDxicj4N
-CiZndDsgLXhmcmVlKHZvaWQgKnApPGJyPg0KJmd0OyAtezxicj4NCiZndDsgLSAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQptZW1fYWxsb2Nh
-dGVkIC09IHNpemVvZiAocCk7PGJyPg0KJmd0OyAtICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCmZyZWUocCk7PGJyPg0KJmd0OyAtICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCnAgPSBO
-VUxMOzxicj4NCiZndDsgLX08YnI+DQomZ3Q7IC08YnI+DQomZ3Q7ICZuYnNwOy8qPGJyPg0KPGJy
-Pg0KWy4uLl08YnI+DQo8YnI+DQomZ3Q7IC0jZGVmaW5lIE1BTExPQyhuKSAmbmJzcDsgJm5ic3A7
-KHphbGxvYyhuKSk8YnI+DQomZ3Q7IC0jZGVmaW5lIEZSRUUocCkgJm5ic3A7ICZuYnNwOyAmbmJz
-cDsoeGZyZWUocCkpPGJyPg0KJmd0OyArI2RlZmluZSBNQUxMT0MobikgJm5ic3A7ICZuYnNwOyhj
-YWxsb2MoMSwobikpKTxicj4NCiZndDsgKyNkZWZpbmUgRlJFRShwKSAmbmJzcDsgJm5ic3A7ICZu
-YnNwOyhmcmVlKHApKTxicj4NCiZndDsgJm5ic3A7I2RlZmluZSBSRUFMTE9DKHAsbikgKHJlYWxs
-b2MoKHApLChuKSkpPGJyPg0KJmd0OyAmbmJzcDsjZGVmaW5lIFNUUkRVUChuKSAmbmJzcDsgJm5i
-c3A7KHN0cmR1cChuKSk8YnI+DQo8YnI+DQpPbmUgbWlub3Igbml0LCB0aGUgb3JpZ2luYWwgeGZy
-ZWUoKSBoYXMgc2V0IHRoZSBmcmVlZCBwb2ludGVyIHRvIDAsIHNvDQptYXliZSBhPGJyPg0KPGJy
-Pg0KI2RlZmluZSBGUkVFKHApIGRvIHsgZnJlZShwKTsgcCA9IE5VTEwgfSB3aGlsZSgwKTxicj4N
-Cjxicj4NCndvdWxkIGJlIGFkdmlzYWJsZS4gSSBwZXJzb25hbGx5IGxpa2Ugc2V0dGluZyBmcmVl
-J2QgcG9pbnRlcnMgdG8gTlVMTCw8YnI+DQphcyBhIE5VTEwgcG9pbnRlciBhY2Nlc3MgaXMgYSBt
-b3JlIGltbWVkaWF0ZSBmZWVkYmFjayB0aGFuIHNvbWUgcmF0aGVyPGJyPg0KbmFzdHkgdXNlLWFm
-dGVyLWZyZWUuPGJyPg0KPGJyPg0KSnVzdCBteSAkMC4yPGJyPg0KPGJyPg0KQnl0ZSw8YnI+DQog
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0K
-Sm9oYW5uZXM8YnI+DQo8YnI+DQotLSA8YnI+DQpKb2hhbm5lcyBUaHVtc2hpcm4gJm5ic3A7ICZu
-YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZu
-YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwO1N0b3JhZ2U8YnI+DQpqdGh1bXNoaXJuQHN1c2UuZGUg
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0K
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOys0
-OSA5MTEgNzQwNTMgNjg5PGJyPg0KU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQw
-OSBOw7xybmJlcmc8YnI+DQpHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBH
-cmFoYW0gTm9ydG9uPGJyPg0KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpPGJyPg0KS2V5IGZpbmdl
-cnByaW50ID0gRUMzOCA5Q0FCIEMyQzQgRjI1RCA4NjAwIEQwRDAgMDM5MyA5NjlEIDJENzYgMDg1
-MDxicj4NCjwvZm9udD48L3R0Pg0KPGJyPg0K
---=_alternative 0004A67348258011_=--
-
-
---===============0787278204456002452==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0787278204456002452==--
+diff --git a/libmpathpersist/mpath_updatepr.c b/libmpathpersist/mpath_updatepr.c
+index 9ff4b30..5af2e03 100644
+--- a/libmpathpersist/mpath_updatepr.c
++++ b/libmpathpersist/mpath_updatepr.c
+@@ -16,7 +16,6 @@
+ #include "uxsock.h"
+ #include "memory.h"
+ 
+-unsigned long mem_allocated;    /* Total memory used in Bytes */
+ 
+ int update_prflag(char * arg1, char * arg2, int noisy)
+ {
+diff --git a/libmultipath/memory.c b/libmultipath/memory.c
+index 1366f45..5441e6a 100644
+--- a/libmultipath/memory.c
++++ b/libmultipath/memory.c
+@@ -22,37 +22,6 @@
+ 
+ #include "memory.h"
+ 
+-/* Global var */
+-unsigned long mem_allocated;	/* Total memory used in Bytes */
+-
+-void *
+-xalloc(unsigned long size)
+-{
+-	void *mem;
+-	if ((mem = malloc(size)))
+-		mem_allocated += size;
+-	return mem;
+-}
+-
+-void *
+-zalloc(unsigned long size)
+-{
+-	void *mem;
+-	if ((mem = malloc(size))) {
+-		memset(mem, 0, size);
+-		mem_allocated += size;
+-	}
+-	return mem;
+-}
+-
+-void
+-xfree(void *p)
+-{
+-	mem_allocated -= sizeof (p);
+-	free(p);
+-	p = NULL;
+-}
+-
+ /*
+  * Memory management. in debug mode,
+  * help finding eventual memory leak.
+diff --git a/libmultipath/memory.h b/libmultipath/memory.h
+index 8573f6f..29a75ed 100644
+--- a/libmultipath/memory.h
++++ b/libmultipath/memory.h
+@@ -29,15 +29,6 @@
+ #include <string.h>
+ #include <assert.h>
+ 
+-/* extern types */
+-extern unsigned long mem_allocated;
+-extern void *xalloc(unsigned long size);
+-extern void *zalloc(unsigned long size);
+-extern void xfree(void *p);
+-
+-/* Global alloc macro */
+-#define ALLOC(n) (xalloc(n))
+-
+ /* Local defines */
+ #ifdef _DEBUG_
+ 
+@@ -63,8 +54,8 @@ extern void dbg_free_final(char *);
+ 
+ #else
+ 
+-#define MALLOC(n)    (zalloc(n))
+-#define FREE(p)      (xfree(p))
++#define MALLOC(n)    (calloc(1,(n)))
++#define FREE(p)      do { free(p); p = NULL; } while(0)
+ #define REALLOC(p,n) (realloc((p),(n)))
+ #define STRDUP(n)    (strdup(n))
+ 
+-- 
+2.8.1.windows.1
