@@ -1,8 +1,7 @@
-From: peng.liang5@zte.com.cn
-Subject: [PATCH] libmultipath: remove redundant code in
-	store_pathinfo
-Date: Wed, 17 Aug 2016 10:05:39 +0800
-Message-ID: <1471399539-7420-1-git-send-email-peng.liang5@zte.com.cn>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: fedora/rh: is hp_tur checker still needed?
+Date: Wed, 17 Aug 2016 15:12:21 +0200
+Message-ID: <859fb60d-10ee-00e8-b4d9-53ff237c2336@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,29 +15,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, peng liang <peng.liang5@zte.com.cn>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: peng liang <peng.liang5@zte.com.cn>
+Hi Benjamin,
 
-Signed-off-by: peng liang <peng.liang5@zte.com.cn>
----
- libmultipath/discovery.c | 2 --
- 1 file changed, 2 deletions(-)
-
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index bb3116d..0017d18 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -95,8 +95,6 @@ store_pathinfo (vector pathvec, struct config *conf,
- 		goto out;
- 
- 	err = store_path(pathvec, pp);
--	if (err)
--		goto out;
- 
- out:
- 	if (err)
--- 
-2.8.1.windows.1
+Doc says:
+On some storage devices, if a LUN is deleted from an existing multipathd
+device, and a new LUN is presented to the host, it may end up with the
+same LUN ID and name as the old LUN. In this case, multipath will assume
+that this is the old LUN and belongs to the existing multipath device.
+This cause cause corruption. A new path checker "hp_tur" has been added
+that verifies the WWID of the LUN when it checks the path, to avoid this
+problem.
+Code: http://pkgs.fedoraproject.org/cgit/rpms/device-mapper-multipath.git/plain/0007-RH-add-hp_tur-checker.patch
