@@ -1,17 +1,12 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH 6/6] multipathd: Remove a busy-waiting loop
-Date: Thu, 18 Aug 2016 15:42:39 -0700
-Message-ID: <6c63d47e-0c26-3bf6-1376-e82b838ea882@sandisk.com>
-References: <31d43b64-36c8-1a24-a849-230b5cf6323c@sandisk.com>
-	<14804b8b-51a7-e860-91d7-9b594aeed63c@sandisk.com>
-	<CAAZtj81LAeoq8Duvu1hLzyOFNp0B_ZAfcqyQAMvmQd19jRLw8A@mail.gmail.com>
-	<c7ce9f1d-861e-a9a8-443f-8f921ce742df@sandisk.com>
-	<CAAZtj80JMkFeoyy6aeNUZUAGeva-6cRd1pQo7O0P_czjqnn1Wg@mail.gmail.com>
+Subject: [PATCH] multipathd: Change four threads from detached
+	into joinable
+Date: Thu, 18 Aug 2016 15:44:51 -0700
+Message-ID: <f31a3171-80e1-c01a-a992-588bb063e619@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAAZtj80JMkFeoyy6aeNUZUAGeva-6cRd1pQo7O0P_czjqnn1Wg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,17 +16,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dragan Stancevic <dragan.stancevic@canonical.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 08/18/2016 01:54 PM, Dragan Stancevic wrote:
-> it looks ok to me, these three patches combined with your previous patch
-> that is already in the repo...
+Change the CLI listener, checker loop, uevent dispatcher and
+uevent listener threads from detached into joinable threads.
+This change is needed because calling pthread_join() is only
+allowed for joinable threads.
 
-Hello Dan,
+Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+Acked-by: dragan.stancevic@canonical.com
+---
+ multipathd/main.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Thanks for the feedback. I will send the first patch to Christophe but I 
-would like to give the second and third patches a bit more thought.
-
-Bart.
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 2be6cb2..6b3c856 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2216,8 +2216,8 @@ child (void * param)
+ 	signal_init();
+ 	rcu_init();
+ 
+-	setup_thread_attr(&misc_attr, 64 * 1024, 1);
+-	setup_thread_attr(&uevent_attr, DEFAULT_UEVENT_STACKSIZE * 1024, 1);
++	setup_thread_attr(&misc_attr, 64 * 1024, 0);
++	setup_thread_attr(&uevent_attr, DEFAULT_UEVENT_STACKSIZE * 1024, 0);
+ 	setup_thread_attr(&waiter_attr, 32 * 1024, 1);
+ 
+ 	if (logsink == 1) {
+-- 
+2.9.2
