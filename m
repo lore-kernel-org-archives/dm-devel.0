@@ -1,68 +1,181 @@
-From: Robert LeBlanc <robert@leblancnet.us>
-Subject: Re: [RFC] Some fixes to allow for more than 128 md devices.
-Date: Mon, 22 Aug 2016 10:03:50 -0600
-Message-ID: <CAANLjFqv33upkC5tLN8i77ysZCcFWqRYpqVUduBaCCAEOcZAqA@mail.gmail.com>
-References: <1471659031-30688-1-git-send-email-robert@leblancnet.us>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH v05 04/72] dm-log-userspace.h: use __u32, __s32 and __u64 from linux/types.h
+Date: Mon, 22 Aug 2016 20:32:21 +0200
+Message-ID: <1471890809-4383-5-git-send-email-mikko.rapeli@iki.fi>
+References: <1471890809-4383-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <1471659031-30688-1-git-send-email-robert@leblancnet.us>
-Sender: linux-raid-owner@vger.kernel.org
-To: linux-raid@vger.kernel.org
-Cc: dm-devel@redhat.com, Robert LeBlanc <robert@leblancnet.us>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1471890809-4383-1-git-send-email-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Apparently, the mdadm source on git-kernel.org (commit 13db17bd)
-already has the fixes to properly create the device nodes, but I still
-have the unexpected failure opening /dev/md1048574.
-----------------
-Robert LeBlanc
-PGP Fingerprint 79A2 9CA4 6CC4 45DD A904  C70E E654 3BB2 FA62 B9F1
+Fixes userspace compilation errors like:
 
+linux/dm-log-userspace.h:416:2: error: unknown type name ‘uint64_t’
 
-On Fri, Aug 19, 2016 at 8:10 PM, Robert LeBlanc <robert@leblancnet.us> wrote:
-> I'm stuck and need some help getting this across the finish line. This
-> is in no way complete, but to help show what I'm working on.
->
-> When we added more than 128 md devices, we started getting failures.
-> Looking through the code it seems that the minor dev number was being
-> stored in an int and causing overflow and wrecking havoc on everything.
-> I finally got the mknod in mdadm to correctly make the dev node with
-> minors up to 1048574 as expected in the mdadm code. However, I can
-> only create md devices up to 511. Trying to create an md higher than
-> that has an error where the device can't be read/opened strace reports:
-> open("/dev/.tmp.md.15341:9:1048574", O_RDWR|O_EXCL|O_DIRECT) = -1 ENXIO
-> (No such device or address)
-> while Python reports:
-> IOError: [Errno 6] No such device or address: '/dev/.tmp.md.3279:9:512'
->
-> A corresponding node is not created in /sys/block/md* for mds over 511.
->
-> I believe that there may be a bug in the kernel code that is now being
-> hit. After looking through the kernel code, I can't seem to find where
-> this might be. Please help me by either pointing me to the source
-> location that this might be a problem or fixing it based on these
-> patches I've worked on so far. I'm using 4.7.0 currently.
->
-> I'm using this for testing:
-> ./mdadm --create /dev/md1048574 --assume-clean --verbose --level=1 \
-> --raid-devices=2 /dev/loop0 missing
->
-> Yes, we have a real need for more than 128 and 512 md devices.
->
-> Please include me in any replies as I'm not on the ML.
->
-> Thank you.
->
-> Robert LeBlanc (1):
->   Some fixes to allow for more than 128 md devices.
->
->  Manage.c |  5 +++--
->  lib.c    |  2 +-
->  mdadm.h  |  6 +++---
->  util.c   | 25 +++++++++++++------------
->  4 files changed, 20 insertions(+), 18 deletions(-)
->
-> --
-> 2.8.1
->
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+---
+ include/uapi/linux/dm-log-userspace.h | 43 ++++++++++++++++++-----------------
+ 1 file changed, 22 insertions(+), 21 deletions(-)
+
+diff --git a/include/uapi/linux/dm-log-userspace.h b/include/uapi/linux/dm-log-userspace.h
+index 0fa0d9e..c5ff216 100644
+--- a/include/uapi/linux/dm-log-userspace.h
++++ b/include/uapi/linux/dm-log-userspace.h
+@@ -7,6 +7,7 @@
+ #ifndef __DM_LOG_USERSPACE_H__
+ #define __DM_LOG_USERSPACE_H__
+ 
++#include <linux/types.h>
+ #include <linux/dm-ioctl.h> /* For DM_UUID_LEN */
+ 
+ /*
+@@ -147,12 +148,12 @@
+ 
+ /*
+  * DM_ULOG_GET_REGION_SIZE corresponds to (found in dm-dirty-log.h):
+- * uint32_t (*get_region_size)(struct dm_dirty_log *log);
++ * __u32 (*get_region_size)(struct dm_dirty_log *log);
+  *
+  * Payload-to-userspace:
+  *	None.
+  * Payload-to-kernel:
+- *	uint64_t - contains the region size
++ *	__u64 - contains the region size
+  *
+  * The region size is something that was determined at constructor time.
+  * It is returned in the payload area and 'data_size' is set to
+@@ -168,11 +169,11 @@
+  * int (*is_clean)(struct dm_dirty_log *log, region_t region);
+  *
+  * Payload-to-userspace:
+- *	uint64_t - the region to get clean status on
++ *	__u64 - the region to get clean status on
+  * Payload-to-kernel:
+  *	int64_t  - 1 if clean, 0 otherwise
+  *
+- * Payload is sizeof(uint64_t) and contains the region for which the clean
++ * Payload is sizeof(__u64) and contains the region for which the clean
+  * status is being made.
+  *
+  * When the request has been processed, user-space must return the
+@@ -187,7 +188,7 @@
+  *		  int can_block);
+  *
+  * Payload-to-userspace:
+- *	uint64_t - the region to get sync status on
++ *	__u64 - the region to get sync status on
+  * Payload-to-kernel:
+  *	int64_t - 1 if in-sync, 0 otherwise
+  *
+@@ -203,7 +204,7 @@
+  * Payload-to-userspace:
+  *	If the 'integrated_flush' directive is present in the constructor
+  *	table, the payload is as same as DM_ULOG_MARK_REGION:
+- *		uint64_t [] - region(s) to mark
++ *		__u64 [] - region(s) to mark
+  *	else
+  *		None
+  * Payload-to-kernel:
+@@ -225,13 +226,13 @@
+  * void (*mark_region)(struct dm_dirty_log *log, region_t region);
+  *
+  * Payload-to-userspace:
+- *	uint64_t [] - region(s) to mark
++ *	__u64 [] - region(s) to mark
+  * Payload-to-kernel:
+  *	None.
+  *
+  * Incoming payload contains the one or more regions to mark dirty.
+  * The number of regions contained in the payload can be determined from
+- * 'data_size/sizeof(uint64_t)'.
++ * 'data_size/sizeof(__u64)'.
+  *
+  * When the request has been processed, user-space must return the
+  * dm_ulog_request to the kernel - setting the 'error' field and clearing
+@@ -244,13 +245,13 @@
+  * void (*clear_region)(struct dm_dirty_log *log, region_t region);
+  *
+  * Payload-to-userspace:
+- *	uint64_t [] - region(s) to clear
++ *	__u64 [] - region(s) to clear
+  * Payload-to-kernel:
+  *	None.
+  *
+  * Incoming payload contains the one or more regions to mark clean.
+  * The number of regions contained in the payload can be determined from
+- * 'data_size/sizeof(uint64_t)'.
++ * 'data_size/sizeof(__u64)'.
+  *
+  * When the request has been processed, user-space must return the
+  * dm_ulog_request to the kernel - setting the 'error' field and clearing
+@@ -267,7 +268,7 @@
+  * Payload-to-kernel:
+  *	{
+  *		int64_t i; -- 1 if recovery necessary, 0 otherwise
+- *		uint64_t r; -- The region to recover if i=1
++ *		__u64 r; -- The region to recover if i=1
+  *	}
+  * 'data_size' should be set appropriately.
+  *
+@@ -283,7 +284,7 @@
+  *
+  * Payload-to-userspace:
+  *	{
+- *		uint64_t - region to set sync state on
++ *		__u64 - region to set sync state on
+  *		int64_t  - 0 if not-in-sync, 1 if in-sync
+  *	}
+  * Payload-to-kernel:
+@@ -302,7 +303,7 @@
+  * Payload-to-userspace:
+  *	None.
+  * Payload-to-kernel:
+- *	uint64_t - the number of in-sync regions
++ *	__u64 - the number of in-sync regions
+  *
+  * No incoming payload.  Kernel-bound payload contains the number of
+  * regions that are in-sync (in a size_t).
+@@ -350,11 +351,11 @@
+  * int (*is_remote_recovering)(struct dm_dirty_log *log, region_t region);
+  *
+  * Payload-to-userspace:
+- *	uint64_t - region to determine recovery status on
++ *	__u64 - region to determine recovery status on
+  * Payload-to-kernel:
+  *	{
+  *		int64_t is_recovering;  -- 0 if no, 1 if yes
+- *		uint64_t in_sync_hint;  -- lowest region still needing resync
++ *		__u64 in_sync_hint;  -- lowest region still needing resync
+  *	}
+  *
+  * When the request has been processed, user-space must return the
+@@ -413,16 +414,16 @@ struct dm_ulog_request {
+ 	 * differentiate between logs that are being swapped and have the
+ 	 * same 'uuid'.  (Think "live" and "inactive" device-mapper tables.)
+ 	 */
+-	uint64_t luid;
++	__u64 luid;
+ 	char uuid[DM_UUID_LEN];
+ 	char padding[3];        /* Padding because DM_UUID_LEN = 129 */
+ 
+-	uint32_t version;       /* See DM_ULOG_REQUEST_VERSION */
+-	int32_t error;          /* Used to report back processing errors */
++	__u32 version;       /* See DM_ULOG_REQUEST_VERSION */
++	__s32 error;          /* Used to report back processing errors */
+ 
+-	uint32_t seq;           /* Sequence number for request */
+-	uint32_t request_type;  /* DM_ULOG_* defined above */
+-	uint32_t data_size;     /* How much data (not including this struct) */
++	__u32 seq;           /* Sequence number for request */
++	__u32 request_type;  /* DM_ULOG_* defined above */
++	__u32 data_size;     /* How much data (not including this struct) */
+ 
+ 	char data[0];
+ };
+-- 
+2.8.1
