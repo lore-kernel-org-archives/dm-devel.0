@@ -1,181 +1,188 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v05 04/72] dm-log-userspace.h: use __u32, __s32 and __u64 from linux/types.h
-Date: Mon, 22 Aug 2016 20:32:21 +0200
-Message-ID: <1471890809-4383-5-git-send-email-mikko.rapeli@iki.fi>
-References: <1471890809-4383-1-git-send-email-mikko.rapeli@iki.fi>
+From: Qu Wenruo <quwenruo@cn.fujitsu.com>
+Subject: Re: [dm-devel] [Regression/Behavior change]dm-flakey corrupt read
+ bio, even the feature is drop_writes
+Date: Tue, 23 Aug 2016 16:30:29 +0800
+Message-ID: <c66a14e2-0c62-bf1c-bcf6-9567d5cc87ba@cn.fujitsu.com>
+References: <cc2b06b5-7598-67ab-d528-9087cbf75f45@cn.fujitsu.com>
+ <CAM4Jq_4t0uGMA2KtGJWgM36wyu7czWjZQD0Lchh6n=gGZ9F+WQ@mail.gmail.com>
+ <CAM4Jq_424FJSogLYj5gcf_JsQTF8U8UjdpCbs_vpqjCtqFqXXw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1471890809-4383-1-git-send-email-mikko.rapeli@iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <CAM4Jq_424FJSogLYj5gcf_JsQTF8U8UjdpCbs_vpqjCtqFqXXw@mail.gmail.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Lukas Herbolt <lherbolt@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, btrfs <linux-btrfs@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Fixes userspace compilation errors like:
+Hi Lukas,
 
-linux/dm-log-userspace.h:416:2: error: unknown type name ‘uint64_t’
+Thanks for your patch, while I am a little concerned of it, even I'm a 
+newbie to flakey code.
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
----
- include/uapi/linux/dm-log-userspace.h | 43 ++++++++++++++++++-----------------
- 1 file changed, 22 insertions(+), 21 deletions(-)
+At 08/22/2016 10:53 PM, Lukas Herbolt wrote:
+> Hi Qu,
+>
+> Sorry for the confusion. Reading the email again and the code it seems
+> that the READS are really returned as -EIO if you set the drop_writes.
+> I just tested it and you are right.
+>
+> If I was reading the fstest correctly the flakey is created as:
+> ---
+> flakey: 0 409600 flakey 8:64 0 0 180 1 drop_writes
+> ---
+>
+> I believe the READs are dropped because it does not have any flags set.
+>
+> ---
+>         if (bio_data_dir(bio) == READ) {
+>             /* If flags were specified, only corrupt those that match. */
+>             if (fc->corrupt_bio_byte && (fc->corrupt_bio_rw == READ) &&
+>                 all_corrupt_bio_flags_match(bio, fc))
+>                 goto map_bio;
+>             else
+>                 return -EIO;
+>         }
+> ---
+>
+> with conclusion of setting:
+> ---
+>                 /*
+>                  * Flag this bio as submitted while down.
+>                  */
+>                 pb->bio_submitted = true;
+> ---
+>
+> I have quick test patch ready, but it probably broke more thing than
+> fixes so I will continue on it.
+> Just in case you want to test it. Diff is done again 4.8-rc1
+>
+> --- a/drivers/md/dm-flakey.c
+> +++ b/drivers/md/dm-flakey.c
+> @@ -292,6 +292,11 @@ static int flakey_map(struct dm_target *ti,
+> struct bio *bio)
+>                  * Map reads as normal only if corrupt_bio_byte set.
+>                  */
+>                 if (bio_data_dir(bio) == READ) {
+> +                        /* We should retunr all READS as ok in case
+> of DROP WRITES flag is set. */
+> +                       if (test_bit(DROP_WRITES, &fc->flags)) {
+> +                               pb->bio_submitted = false;
+> +                               goto map_bio;
+> +                       }
 
-diff --git a/include/uapi/linux/dm-log-userspace.h b/include/uapi/linux/dm-log-userspace.h
-index 0fa0d9e..c5ff216 100644
---- a/include/uapi/linux/dm-log-userspace.h
-+++ b/include/uapi/linux/dm-log-userspace.h
-@@ -7,6 +7,7 @@
- #ifndef __DM_LOG_USERSPACE_H__
- #define __DM_LOG_USERSPACE_H__
- 
-+#include <linux/types.h>
- #include <linux/dm-ioctl.h> /* For DM_UUID_LEN */
- 
- /*
-@@ -147,12 +148,12 @@
- 
- /*
-  * DM_ULOG_GET_REGION_SIZE corresponds to (found in dm-dirty-log.h):
-- * uint32_t (*get_region_size)(struct dm_dirty_log *log);
-+ * __u32 (*get_region_size)(struct dm_dirty_log *log);
-  *
-  * Payload-to-userspace:
-  *	None.
-  * Payload-to-kernel:
-- *	uint64_t - contains the region size
-+ *	__u64 - contains the region size
-  *
-  * The region size is something that was determined at constructor time.
-  * It is returned in the payload area and 'data_size' is set to
-@@ -168,11 +169,11 @@
-  * int (*is_clean)(struct dm_dirty_log *log, region_t region);
-  *
-  * Payload-to-userspace:
-- *	uint64_t - the region to get clean status on
-+ *	__u64 - the region to get clean status on
-  * Payload-to-kernel:
-  *	int64_t  - 1 if clean, 0 otherwise
-  *
-- * Payload is sizeof(uint64_t) and contains the region for which the clean
-+ * Payload is sizeof(__u64) and contains the region for which the clean
-  * status is being made.
-  *
-  * When the request has been processed, user-space must return the
-@@ -187,7 +188,7 @@
-  *		  int can_block);
-  *
-  * Payload-to-userspace:
-- *	uint64_t - the region to get sync status on
-+ *	__u64 - the region to get sync status on
-  * Payload-to-kernel:
-  *	int64_t - 1 if in-sync, 0 otherwise
-  *
-@@ -203,7 +204,7 @@
-  * Payload-to-userspace:
-  *	If the 'integrated_flush' directive is present in the constructor
-  *	table, the payload is as same as DM_ULOG_MARK_REGION:
-- *		uint64_t [] - region(s) to mark
-+ *		__u64 [] - region(s) to mark
-  *	else
-  *		None
-  * Payload-to-kernel:
-@@ -225,13 +226,13 @@
-  * void (*mark_region)(struct dm_dirty_log *log, region_t region);
-  *
-  * Payload-to-userspace:
-- *	uint64_t [] - region(s) to mark
-+ *	__u64 [] - region(s) to mark
-  * Payload-to-kernel:
-  *	None.
-  *
-  * Incoming payload contains the one or more regions to mark dirty.
-  * The number of regions contained in the payload can be determined from
-- * 'data_size/sizeof(uint64_t)'.
-+ * 'data_size/sizeof(__u64)'.
-  *
-  * When the request has been processed, user-space must return the
-  * dm_ulog_request to the kernel - setting the 'error' field and clearing
-@@ -244,13 +245,13 @@
-  * void (*clear_region)(struct dm_dirty_log *log, region_t region);
-  *
-  * Payload-to-userspace:
-- *	uint64_t [] - region(s) to clear
-+ *	__u64 [] - region(s) to clear
-  * Payload-to-kernel:
-  *	None.
-  *
-  * Incoming payload contains the one or more regions to mark clean.
-  * The number of regions contained in the payload can be determined from
-- * 'data_size/sizeof(uint64_t)'.
-+ * 'data_size/sizeof(__u64)'.
-  *
-  * When the request has been processed, user-space must return the
-  * dm_ulog_request to the kernel - setting the 'error' field and clearing
-@@ -267,7 +268,7 @@
-  * Payload-to-kernel:
-  *	{
-  *		int64_t i; -- 1 if recovery necessary, 0 otherwise
-- *		uint64_t r; -- The region to recover if i=1
-+ *		__u64 r; -- The region to recover if i=1
-  *	}
-  * 'data_size' should be set appropriately.
-  *
-@@ -283,7 +284,7 @@
-  *
-  * Payload-to-userspace:
-  *	{
-- *		uint64_t - region to set sync state on
-+ *		__u64 - region to set sync state on
-  *		int64_t  - 0 if not-in-sync, 1 if in-sync
-  *	}
-  * Payload-to-kernel:
-@@ -302,7 +303,7 @@
-  * Payload-to-userspace:
-  *	None.
-  * Payload-to-kernel:
-- *	uint64_t - the number of in-sync regions
-+ *	__u64 - the number of in-sync regions
-  *
-  * No incoming payload.  Kernel-bound payload contains the number of
-  * regions that are in-sync (in a size_t).
-@@ -350,11 +351,11 @@
-  * int (*is_remote_recovering)(struct dm_dirty_log *log, region_t region);
-  *
-  * Payload-to-userspace:
-- *	uint64_t - region to determine recovery status on
-+ *	__u64 - region to determine recovery status on
-  * Payload-to-kernel:
-  *	{
-  *		int64_t is_recovering;  -- 0 if no, 1 if yes
-- *		uint64_t in_sync_hint;  -- lowest region still needing resync
-+ *		__u64 in_sync_hint;  -- lowest region still needing resync
-  *	}
-  *
-  * When the request has been processed, user-space must return the
-@@ -413,16 +414,16 @@ struct dm_ulog_request {
- 	 * differentiate between logs that are being swapped and have the
- 	 * same 'uuid'.  (Think "live" and "inactive" device-mapper tables.)
- 	 */
--	uint64_t luid;
-+	__u64 luid;
- 	char uuid[DM_UUID_LEN];
- 	char padding[3];        /* Padding because DM_UUID_LEN = 129 */
- 
--	uint32_t version;       /* See DM_ULOG_REQUEST_VERSION */
--	int32_t error;          /* Used to report back processing errors */
-+	__u32 version;       /* See DM_ULOG_REQUEST_VERSION */
-+	__s32 error;          /* Used to report back processing errors */
- 
--	uint32_t seq;           /* Sequence number for request */
--	uint32_t request_type;  /* DM_ULOG_* defined above */
--	uint32_t data_size;     /* How much data (not including this struct) */
-+	__u32 seq;           /* Sequence number for request */
-+	__u32 request_type;  /* DM_ULOG_* defined above */
-+	__u32 data_size;     /* How much data (not including this struct) */
- 
- 	char data[0];
- };
--- 
-2.8.1
+According to my personal understanding, drop_writes should:
+1) Drop any write bio silently
+    Just as its name
+2) For read
+2.1) Read out data if the range doesn't include corrupt_bio_byte
+
+2.2) Read out corrupted data if the range contains corrupt_bio_byte.
+
+So it seems that 2.2) is not fulfilled.
+
+While it solves the problem I reported, I'm still concerned if it 
+matches the correct/designed behavior of flakey.
+
+Thanks,
+Qu
+>                         /* If flags were specified, only corrupt those
+> that match. */
+>                         if (fc->corrupt_bio_byte &&
+> (fc->corrupt_bio_rw == READ) &&
+>                             all_corrupt_bio_flags_match(bio, fc))
+>
+>
+>
+> On Mon, Aug 22, 2016 at 10:05 AM, Lukas Herbolt <lherbolt@redhat.com> wrote:
+>> Hello,
+>>
+>> There is patch from Mike. It's part of current pull request to 4.8-rc1
+>> For more details check:
+>>  - https://www.redhat.com/archives/dm-devel/2016-July/msg00561.html
+>>  - https://www.redhat.com/archives/dm-devel/2016-August/msg00109.html
+>>
+>> Lukas
+>>
+>> On Mon, Aug 22, 2016 at 9:31 AM, Qu Wenruo <quwenruo@cn.fujitsu.com> wrote:
+>>> Hi, Mike and btrfs and dm guys
+>>>
+>>> When doing regression test on v4.8-rc1, we found that fstests/btrfs/056
+>>> always fails. With the following dmesg:
+>>> ---
+>>> Buffer I/O error on dev dm-0, logical block 1310704, async page read
+>>> Buffer I/O error on dev dm-0, logical block 16, async page read
+>>> Buffer I/O error on dev dm-0, logical block 16, async page read
+>>> ---
+>>>
+>>> And bisect leads to the following commits:
+>>> ---
+>>> commit 99f3c90d0d85708e7401a81ce3314e50bf7f2819
+>>> Author: Mike Snitzer <snitzer@redhat.com>
+>>> Date:   Fri Jul 29 13:19:55 2016 -0400
+>>>
+>>>     dm flakey: error READ bios during the down_interval
+>>> ---
+>>>
+>>> While according to the document of dm-flakey, it says that when using
+>>> drop_writes feature, read bios are not affected:
+>>> ---
+>>>   drop_writes:
+>>>         All write I/O is silently ignored.
+>>>         Read I/O is handled correctly.
+>>> ---
+>>>
+>>> If I understand the word "correctly" correctly, it should means READ I/0 is
+>>> handled without problem.
+>>>
+>>> However with this commit, it also corrupt the read bio, leading to the test
+>>> failure.
+>>>
+>>>
+>>> At least there are two fixes available here;
+>>> 1) Fix fstest scripts
+>>>    The related macro is "_flakey_drop_and_remount yes", which will
+>>>    check the fs during the "drop_writes" time.
+>>>
+>>>    Currently, only btrfs/056 calls "_flakey_drop_and_remount" with
+>>>    "yes". So other test cases are not affected.
+>>>
+>>>    However, even we move the fsck outside of the "drop_writes" range,
+>>>    although test case can pass without problem, but we will still
+>>>    get a dmesg error:
+>>>    "Buffer I/O error on dev dm-0, logical block 1310704, async page read"
+>>>
+>>> 2) Revert to flakey behavior to allow READ bio
+>>>    Then everything is back to the old good days.
+>>>
+>>> Not sure which one is correct for current use case, as I'm not familiar with
+>>> dm codes.
+>>>
+>>> Any idea to fix dm-flaky and keep the READ bio behavior?
+>>>
+>>> Thanks,
+>>> Qu
+>>>
+>>>
+>>>
+>>>
+>>>
+>>> --
+>>> dm-devel mailing list
+>>> dm-devel@redhat.com
+>>> https://www.redhat.com/mailman/listinfo/dm-devel
+>>
+>>
+>>
+>> --
+>> Lukas Herbolt
+>> RHCE, RH436, BSc, SSc
+>> Senior Technical Support Engineer
+>> Global Support Services (GSS)
+>> Email:    lherbolt@redhat.com
+>
+>
+>
+
+
