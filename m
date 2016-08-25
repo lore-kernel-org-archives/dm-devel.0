@@ -1,11 +1,14 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH RFC] dm: Fix a bio leak in dec_pending()
-Date: Thu, 25 Aug 2016 13:57:31 -0700
-Message-ID: <1e64fe53-ed57-ef97-a077-19a153506e63@sandisk.com>
+Subject: Re: v4.8 dm-mpath
+Date: Thu, 25 Aug 2016 14:06:10 -0700
+Message-ID: <b8dd5787-e21c-8e64-a7fc-b609c11c13cf@sandisk.com>
+References: <afa6895b-7301-2856-a68e-eaf81bde311b@sandisk.com>
+	<20160816191241.GA16948@redhat.com> <20160817024302.GA29089@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20160817024302.GA29089@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,62 +19,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, device-mapper development <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Ensure that bio_endio() is called if io->error == DM_ENDIO_REQUEUE and
-__noflush_suspending(md) returns false. Posting this as an RFC since I'm
-not really familiar with the dm code.
+On 08/16/2016 07:43 PM, Mike Snitzer wrote:
+> On Tue, Aug 16 2016 at  3:12pm -0400,
+> Mike Snitzer <snitzer@redhat.com> wrote:
+>
+>> On Tue, Aug 16 2016 at  1:32pm -0400,
+>> Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+>>
+>>> Can you have a look at this?
+>>
+>> I'll get linux-dm.git's 'dm-4.8' branch (v4.8-rc2) loaded on one of my
+>> testbed systems to run the mptest testsuite.  It should provide coverage
+>> for simple failover and failback.
+>
+> I successfully ran mptest against that v4.8-rc2 based kernel.  Any
+> chance you could try mptest to see if it also passes for you?  Or if it
+> is able to trigger the issue for you.
+>
+> mptest's runtest script defaults to setting up scsi-mq and dm-mq.
 
-Fixes: commit 2e93ccc1933d ("dm: suspend: add noflush pushback")
-Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
----
- drivers/md/dm.c | 16 +++++++++-------
- 1 file changed, 9 insertions(+), 7 deletions(-)
+Hello Mike,
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index fa9b1cb..6e04357 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -767,6 +767,7 @@ static void dec_pending(struct dm_io *io, int error)
- 	int io_error;
- 	struct bio *bio;
- 	struct mapped_device *md = io->md;
-+	int noflush_suspending;
- 
- 	/* Push-back supersedes any I/O errors */
- 	if (unlikely(error)) {
-@@ -782,12 +783,16 @@ static void dec_pending(struct dm_io *io, int error)
- 			 * Target requested pushing back the I/O.
- 			 */
- 			spin_lock_irqsave(&md->deferred_lock, flags);
--			if (__noflush_suspending(md))
-+			noflush_suspending = __noflush_suspending(md);
-+			if (noflush_suspending)
- 				bio_list_add_head(&md->deferred, io->bio);
--			else
--				/* noflush suspend was interrupted. */
--				io->error = -EIO;
- 			spin_unlock_irqrestore(&md->deferred_lock, flags);
-+
-+			if (noflush_suspending)
-+				return;
-+
-+			/* noflush suspend was interrupted. */
-+			io->error = -EIO;
- 		}
- 
- 		io_error = io->error;
-@@ -795,9 +800,6 @@ static void dec_pending(struct dm_io *io, int error)
- 		end_io_acct(io);
- 		free_io(md, io);
- 
--		if (io_error == DM_ENDIO_REQUEUE)
--			return;
--
- 		if ((bio->bi_opf & REQ_PREFLUSH) && bio->bi_iter.bi_size) {
- 			/*
- 			 * Preflush done for flush with data, reissue
--- 
-2.9.3
+mptest on top of scsi_debug passes on v4.8-rc3 on the same system I used 
+to run my SRP tests:
+
+# ./runtest
+[ ... ]
+PASSED:  test_00_no_failure test_01_sdev_offline test_02_sdev_delete 
+test_03_dm_failpath test_04_dm_switchpg
+FAILED:
+
+My SRP tests pass on the same setup if I disable scsi-mq. However, I 
+still sporadically see I/O errors if I run srp-test 02 on kernel 
+v4.8-rc3 with scsi-mq and dm-mq:
+# srp-test/run_tests -t 02
+[ ... ]
+verify: bad magic header 0, wanted acca at file 
+/root/mnt1/data-integrity-test.1.0 offset 581632, length 4096
+fio: io_u error on file /root/mnt1/data-integrity-test.8.0: Input/output 
+error: write offset=8888320, buflen=4096
+
+Bart.
