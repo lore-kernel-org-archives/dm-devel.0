@@ -1,60 +1,480 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-crypt: rename crypt_setkey_allcpus to
-	crypt_setkey
-Date: Thu, 25 Aug 2016 07:12:54 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1608250711520.24332@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] Re: your dm patch for strace
+Date: Thu, 25 Aug 2016 08:27:21 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1608250823130.24332@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1608221155410.17400@file01.intranet.prod.int.rdu2.redhat.com>
+	<20160822170920.GA5147@altlinux.org>
+	<alpine.LRH.2.02.1608231303510.7049@file01.intranet.prod.int.rdu2.redhat.com>
+	<20160824.233543.198328104871315294.yamato@redhat.com>
+Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
-Cc: dm-devel@redhat.com
+Return-path: <strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+In-Reply-To: <20160824.233543.198328104871315294.yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/strace-devel>,
+	<mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=strace-devel>
+List-Post: <mailto:strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/strace-devel>,
+	<mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Errors-To: strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: Masatake YAMATO <yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: dm-devel.ids
 
-In the past, dm-crypt used per-cpu crypto context. This has been removed 
-in the kernel 3.15 and the crypto context is shared between all cpus. This 
-patch renames the function crypt_setkey_allcpus to crypt_setkey, because 
-there is really no activity that is done for all cpus.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Index: linux-2.6/drivers/md/dm-crypt.c
+On Wed, 24 Aug 2016, Masatake YAMATO wrote:
+
+> >> Are you talking about https://sourceforge.net/p/strace/mailman/message/34370586/ ?
+> > 
+> > Yes.
+> > 
+> >> The thread has apparently died without any follow-up from your side.
+> > 
+> > I didn't receive that last message, it was probably sent only to the 
+> > mailing list address, not to my address.
+> 
+> Can I expect you will submit updated version of the patch?
+> 
+> Masatake YAMATO
+
+Here I'm sending the updated device mapper strace patch with the comments 
+addressed. (please send replies to my email address, I'm not on the strace 
+mailing list)
+
+Mikulas
+
+Index: strace/configure.ac
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-crypt.c
-+++ linux-2.6/drivers/md/dm-crypt.c
-@@ -1470,7 +1470,7 @@ static int crypt_alloc_tfms(struct crypt
- 	return 0;
- }
+--- strace.orig/configure.ac
++++ strace/configure.ac
+@@ -363,6 +363,7 @@ AC_CHECK_HEADERS(m4_normalize([
+ 	elf.h
+ 	inttypes.h
+ 	linux/bsg.h
++	linux/dm-ioctl.h
+ 	linux/falloc.h
+ 	linux/fiemap.h
+ 	linux/filter.h
+Index: strace/dm.c
+===================================================================
+--- /dev/null
++++ strace/dm.c
+@@ -0,0 +1,351 @@
++#include "defs.h"
++
++#ifdef HAVE_LINUX_DM_IOCTL_H
++
++#include <sys/ioctl.h>
++#include <linux/dm-ioctl.h>
++
++static void
++dm_decode_device(const unsigned int code, const struct dm_ioctl *ioc)
++{
++	switch (code) {
++	case DM_REMOVE_ALL:
++	case DM_LIST_DEVICES:
++	case DM_LIST_VERSIONS:
++		break;
++	default:
++		if (ioc->dev)
++			tprintf(", dev=makedev(%u, %u)",
++				major(ioc->dev), minor(ioc->dev));
++		if (ioc->name[0]) {
++			tprints(", name=");
++			print_quoted_string(ioc->name, DM_NAME_LEN,
++					    QUOTE_0_TERMINATED);
++		}
++		if (ioc->uuid[0]) {
++			tprints(", uuid=");
++			print_quoted_string(ioc->uuid, DM_UUID_LEN,
++					    QUOTE_0_TERMINATED);
++		}
++		break;
++	}
++}
++
++static void
++dm_decode_values(struct tcb *tcp, const unsigned int code,
++		 const struct dm_ioctl *ioc)
++{
++	if (entering(tcp)) {
++		switch (code) {
++		case DM_TABLE_LOAD:
++			tprintf(", target_count=%"PRIu32"",
++				ioc->target_count);
++			break;
++		case DM_DEV_SUSPEND:
++			if (ioc->flags & DM_SUSPEND_FLAG)
++				break;
++		case DM_DEV_RENAME:
++		case DM_DEV_REMOVE:
++		case DM_DEV_WAIT:
++			tprintf(", event_nr=%"PRIu32"",
++				ioc->event_nr);
++			break;
++		}
++	} else if (!syserror(tcp)) {
++		switch (code) {
++		case DM_DEV_CREATE:
++		case DM_DEV_RENAME:
++		case DM_DEV_SUSPEND:
++		case DM_DEV_STATUS:
++		case DM_DEV_WAIT:
++		case DM_TABLE_LOAD:
++		case DM_TABLE_CLEAR:
++		case DM_TABLE_DEPS:
++		case DM_TABLE_STATUS:
++		case DM_TARGET_MSG:
++			tprintf(", target_count=%"PRIu32"",
++				ioc->target_count);
++			tprintf(", open_count=%"PRIu32"",
++				ioc->open_count);
++			tprintf(", event_nr=%"PRIu32"",
++				ioc->event_nr);
++			break;
++		}
++	}
++}
++
++#include "xlat/dm_flags.h"
++
++static void
++dm_decode_flags(const struct dm_ioctl *ioc)
++{
++	tprints(", flags=");
++	printflags(dm_flags, ioc->flags, "DM_???");
++}
++
++static void
++dm_decode_dm_target_spec(struct tcb *tcp, const struct dm_ioctl *ioc,
++			 const char *extra, uint32_t extra_size)
++{
++	uint32_t i;
++	uint32_t offset = ioc->data_start;
++	for (i = 0; i < ioc->target_count; i++) {
++		if (offset + (uint32_t)sizeof(struct dm_target_spec) >= offset &&
++		    offset + (uint32_t)sizeof(struct dm_target_spec) < extra_size) {
++			const struct dm_target_spec *s =
++				(const struct dm_target_spec *)(extra + offset);
++			tprintf(", {sector_start=%"PRIu64", length=%"PRIu64"",
++				(uint64_t)s->sector_start, (uint64_t)s->length);
++			if (!entering(tcp))
++				tprintf(", status=%"PRId32"", s->status);
++			tprints(", target_type=");
++			print_quoted_string(s->target_type, DM_MAX_TYPE_NAME,
++					    QUOTE_0_TERMINATED);
++			tprints(", string=");
++			print_quoted_string((const char *)(s + 1), extra_size -
++					    (offset +
++					    sizeof(struct dm_target_spec)),
++					    QUOTE_0_TERMINATED);
++			tprintf("}");
++			if (entering(tcp))
++				offset = offset + s->next;
++			else
++				offset = ioc->data_start + s->next;
++		} else {
++			tprints(", misplaced struct dm_target_spec");
++			break;
++		}
++	}
++}
++
++static void
++dm_decode_dm_target_deps(const struct dm_ioctl *ioc, const char *extra,
++			 uint32_t extra_size)
++{
++	uint32_t offset = ioc->data_start;
++	if (offset + (uint32_t)offsetof(struct dm_target_deps, dev) >= offset &&
++	    offset + (uint32_t)offsetof(struct dm_target_deps, dev) <= extra_size) {
++		uint32_t i;
++		uint32_t space = (extra_size - (offset +
++			offsetof(struct dm_target_deps, dev))) / sizeof(__u64);
++		const struct dm_target_deps *s =
++			(const struct dm_target_deps *)(extra + offset);
++		if (s->count > space)
++			goto misplaced;
++		tprints(", deps={");
++		for (i = 0; i < s->count; i++) {
++			tprintf("%smakedev(%u, %u)", i ? ", " : "",
++				major(s->dev[i]), minor(s->dev[i]));
++		}
++		tprints("}");
++	} else {
++ misplaced:
++		tprints(", misplaced struct dm_target_deps");
++	}
++}
++
++static void
++dm_decode_dm_name_list(const struct dm_ioctl *ioc, const char *extra,
++		       uint32_t extra_size)
++{
++	uint32_t offset = ioc->data_start;
++	while (1) {
++		if (offset + (uint32_t)offsetof(struct dm_name_list, name) >= offset &&
++		    offset + (uint32_t)offsetof(struct dm_name_list, name) < extra_size) {
++			const struct dm_name_list *s =
++				(const struct dm_name_list *)(extra + offset);
++			if (!s->dev)
++				break;
++			tprintf(", {dev=makedev(%u, %u), name=", major(s->dev), minor(s->dev));
++			print_quoted_string(s->name, extra_size - (offset +
++					    offsetof(struct dm_name_list,
++					    name)), QUOTE_0_TERMINATED);
++			tprints("}");
++			if (!s->next)
++				break;
++			if (offset + s->next < offset)
++				goto misplaced;
++			offset = offset + s->next;
++		} else {
++ misplaced:
++			tprints(", misplaced struct dm_name_list");
++			break;
++		}
++	}
++}
++
++static void
++dm_decode_dm_target_versions(const struct dm_ioctl *ioc, const char *extra,
++			     uint32_t extra_size)
++{
++	uint32_t offset = ioc->data_start;
++	while (1) {
++		if (offset + (uint32_t)offsetof(struct dm_target_versions, name) >=
++		    offset &&
++		    offset + (uint32_t)offsetof(struct dm_target_versions, name) <
++		    extra_size) {
++			const struct dm_target_versions *s =
++			    (const struct dm_target_versions *)(extra + offset);
++			tprints(", {name=");
++			print_quoted_string(s->name, extra_size - (offset +
++					    offsetof(struct dm_target_versions,
++					    name)), QUOTE_0_TERMINATED);
++			tprintf(", version=%"PRIu32".%"PRIu32".%"PRIu32"}",
++				s->version[0], s->version[1], s->version[2]);
++			if (!s->next)
++				break;
++			if (offset + s->next < offset)
++				goto misplaced;
++			offset = offset + s->next;
++		} else {
++ misplaced:
++			tprints(", misplaced struct dm_target_versions");
++			break;
++		}
++	}
++}
++
++static void
++dm_decode_dm_target_msg(const struct dm_ioctl *ioc, const char *extra,
++			uint32_t extra_size)
++{
++	uint32_t offset = ioc->data_start;
++	if (offset + (uint32_t)offsetof(struct dm_target_msg, message) >= offset &&
++	    offset + (uint32_t)offsetof(struct dm_target_msg, message) < extra_size) {
++		const struct dm_target_msg *s =
++			(const struct dm_target_msg *)(extra + offset);
++		tprintf(", {sector=%"PRIu64", message=", (uint64_t)s->sector);
++		print_quoted_string(s->message, extra_size -
++				    offsetof(struct dm_target_msg, message),
++				    QUOTE_0_TERMINATED);
++		tprints("}");
++	} else {
++		tprints(", misplaced struct dm_target_msg");
++	}
++}
++
++static void
++dm_decode_string(const struct dm_ioctl *ioc, const char *extra,
++		 uint32_t extra_size)
++{
++	uint32_t offset = ioc->data_start;
++	if (offset < extra_size) {
++		tprints(", string=");
++		print_quoted_string(extra + offset, extra_size - offset,
++				    QUOTE_0_TERMINATED);
++	} else {
++		tprints(", misplaced string");
++	}
++}
++
++static int
++dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
++{
++	struct dm_ioctl ioc;
++	char *extra = NULL;
++	uint32_t extra_size = 0;
++
++	if (umoven(tcp, arg, sizeof(ioc) - sizeof(ioc.data), (char *)&ioc) < 0)
++		return 0;
++	tprintf(", {version=%d.%d.%d", ioc.version[0], ioc.version[1],
++		ioc.version[2]);
++
++	/*
++	 * if we use a different version of ABI, do not attempt to decode
++	 * ioctl fields
++	 */
++	if (ioc.version[0] != DM_VERSION_MAJOR)
++		goto skip;
++
++	if (ioc.data_size > sizeof(ioc)) {
++		extra = malloc(ioc.data_size);
++		if (extra) {
++			extra_size = ioc.data_size;
++			if (umoven(tcp, arg, extra_size, extra) < 0) {
++				free(extra);
++				extra = NULL;
++				extra_size = 0;
++			}
++		}
++	}
++	dm_decode_device(code, &ioc);
++	dm_decode_values(tcp, code, &ioc);
++	dm_decode_flags(&ioc);
++	if (!abbrev(tcp)) switch (code) {
++		case DM_DEV_WAIT:
++		case DM_TABLE_STATUS:
++			if (entering(tcp) || syserror(tcp))
++				break;
++			dm_decode_dm_target_spec(tcp, &ioc, extra, extra_size);
++			break;
++		case DM_TABLE_LOAD:
++			if (!entering(tcp))
++				break;
++			dm_decode_dm_target_spec(tcp, &ioc, extra, extra_size);
++			break;
++		case DM_TABLE_DEPS:
++			if (entering(tcp) || syserror(tcp))
++				break;
++			dm_decode_dm_target_deps(&ioc, extra, extra_size);
++			break;
++		case DM_LIST_DEVICES:
++			if (entering(tcp) || syserror(tcp))
++				break;
++			dm_decode_dm_name_list(&ioc, extra, extra_size);
++			break;
++		case DM_LIST_VERSIONS:
++			if (entering(tcp) || syserror(tcp))
++				break;
++			dm_decode_dm_target_versions(&ioc, extra, extra_size);
++			break;
++		case DM_TARGET_MSG:
++			if (entering(tcp)) {
++				dm_decode_dm_target_msg(&ioc, extra,
++							extra_size);
++			} else if (!syserror(tcp) &&
++				   ioc.flags & DM_DATA_OUT_FLAG) {
++				dm_decode_string(&ioc, extra, extra_size);
++			}
++			break;
++		case DM_DEV_RENAME:
++		case DM_DEV_SET_GEOMETRY:
++			if (!entering(tcp))
++				break;
++			dm_decode_string(&ioc, extra, extra_size);
++			break;
++	}
++
++ skip:
++	tprints("}");
++	if (extra)
++		free(extra);
++	return 1;
++}
++
++int
++dm_ioctl(struct tcb *tcp, const unsigned int code, long arg)
++{
++	switch (code) {
++	case DM_VERSION:
++	case DM_REMOVE_ALL:
++	case DM_LIST_DEVICES:
++	case DM_DEV_CREATE:
++	case DM_DEV_REMOVE:
++	case DM_DEV_RENAME:
++	case DM_DEV_SUSPEND:
++	case DM_DEV_STATUS:
++	case DM_DEV_WAIT:
++	case DM_TABLE_LOAD:
++	case DM_TABLE_CLEAR:
++	case DM_TABLE_DEPS:
++	case DM_TABLE_STATUS:
++	case DM_LIST_VERSIONS:
++	case DM_TARGET_MSG:
++	case DM_DEV_SET_GEOMETRY:
++		return dm_known_ioctl(tcp, code, arg);
++	default:
++		return 0;
++	}
++}
++
++#endif
+Index: strace/ioctl.c
+===================================================================
+--- strace.orig/ioctl.c
++++ strace/ioctl.c
+@@ -282,6 +282,10 @@ ioctl_decode(struct tcb *tcp)
+ 	case 0x94:
+ 		return btrfs_ioctl(tcp, code, arg);
+ #endif
++#ifdef HAVE_LINUX_DM_IOCTL_H
++	case 0xfd:
++		return dm_ioctl(tcp, code, arg);
++#endif
+ 	default:
+ 		break;
+ 	}
+Index: strace/Makefile.am
+===================================================================
+--- strace.orig/Makefile.am
++++ strace/Makefile.am
+@@ -97,6 +97,7 @@ strace_SOURCES =	\
+ 	desc.c		\
+ 	dirent.c	\
+ 	dirent64.c	\
++	dm.c		\
+ 	empty.h		\
+ 	epoll.c		\
+ 	evdev.c		\
+Index: strace/defs.h
+===================================================================
+--- strace.orig/defs.h
++++ strace/defs.h
+@@ -640,6 +640,7 @@ extern void print_struct_statfs64(struct
  
--static int crypt_setkey_allcpus(struct crypt_config *cc)
-+static int crypt_setkey(struct crypt_config *cc)
- {
- 	unsigned subkey_size;
- 	int err = 0, i, r;
-@@ -1507,7 +1507,7 @@ static int crypt_set_key(struct crypt_co
+ extern void print_ifindex(unsigned int);
  
- 	set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
- 
--	r = crypt_setkey_allcpus(cc);
-+	r = crypt_setkey(cc);
- 
- out:
- 	/* Hex key string not needed after here, so wipe it. */
-@@ -1521,7 +1521,7 @@ static int crypt_wipe_key(struct crypt_c
- 	clear_bit(DM_CRYPT_KEY_VALID, &cc->flags);
- 	memset(&cc->key, 0, cc->key_size * sizeof(u8));
- 
--	return crypt_setkey_allcpus(cc);
-+	return crypt_setkey(cc);
- }
- 
- static void crypt_dtr(struct dm_target *ti)
++extern int dm_ioctl(struct tcb *, const unsigned int, long);
+ extern int file_ioctl(struct tcb *, const unsigned int, long);
+ extern int fs_x_ioctl(struct tcb *, const unsigned int, long);
+ extern int loop_ioctl(struct tcb *, const unsigned int, long);
+Index: strace/xlat/dm_flags.in
+===================================================================
+--- /dev/null
++++ strace/xlat/dm_flags.in
+@@ -0,0 +1,17 @@
++DM_READONLY_FLAG
++DM_SUSPEND_FLAG
++DM_PERSISTENT_DEV_FLAG
++DM_STATUS_TABLE_FLAG
++DM_ACTIVE_PRESENT_FLAG
++DM_INACTIVE_PRESENT_FLAG
++DM_BUFFER_FULL_FLAG
++DM_SKIP_BDGET_FLAG
++DM_SKIP_LOCKFS_FLAG
++DM_NOFLUSH_FLAG
++DM_QUERY_INACTIVE_TABLE_FLAG
++DM_UEVENT_GENERATED_FLAG
++DM_UUID_FLAG
++DM_SECURE_DATA_FLAG
++DM_DATA_OUT_FLAG
++DM_DEFERRED_REMOVE
++DM_INTERNAL_SUSPEND_FLAG
+
+------------------------------------------------------------------------------
