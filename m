@@ -1,19 +1,14 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: v4.8 dm-mpath
-Date: Fri, 26 Aug 2016 10:26:47 -0400
-Message-ID: <20160826142647.GA1876@redhat.com>
-References: <afa6895b-7301-2856-a68e-eaf81bde311b@sandisk.com>
-	<20160816191241.GA16948@redhat.com>
-	<20160817024302.GA29089@redhat.com>
-	<a85fe9dc-e09a-152f-8576-13e899cde9c4@sandisk.com>
-	<20160818015433.GA8972@redhat.com>
-	<ab6df671-d6b3-86b1-72e3-25e162b679b4@sandisk.com>
+Subject: Re: [PATCH RFC] dm: Fix a bio leak in dec_pending()
+Date: Fri, 26 Aug 2016 10:57:41 -0400
+Message-ID: <20160826145740.GB1876@redhat.com>
+References: <1e64fe53-ed57-ef97-a077-19a153506e63@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <ab6df671-d6b3-86b1-72e3-25e162b679b4@sandisk.com>
+In-Reply-To: <1e64fe53-ed57-ef97-a077-19a153506e63@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,44 +19,81 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, ejt@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Aug 25 2016 at  1:40pm -0400,
+On Thu, Aug 25 2016 at  4:57pm -0400,
 Bart Van Assche <bart.vanassche@sandisk.com> wrote:
 
-> On 08/17/2016 06:54 PM, Mike Snitzer wrote:
-> >On Wed, Aug 17 2016 at  8:29pm -0400,
-> >Bart Van Assche <bart.vanassche@sandisk.com> wrote:
-> >>Earlier today I came up with three patches that avoid the hang in
-> >>truncate_inode_pages_range() that I had reported before. It would be
-> >>appreciated if you could have a look at these patches. Please keep
-> >>in mind that I'm not a dm expert.
-> >
-> >I don't recall where you mentioned a hang in
-> >truncate_inode_pages_range().. ah I see it here:
-> >https://patchwork.kernel.org/patch/9202331/
+> Ensure that bio_endio() is called if io->error == DM_ENDIO_REQUEUE and
+> __noflush_suspending(md) returns false. Posting this as an RFC since I'm
+> not really familiar with the dm code.
 > 
-> Hello Mike,
+> Fixes: commit 2e93ccc1933d ("dm: suspend: add noflush pushback")
+> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+> Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+
+I did reinstate bio-based multipath recently.  But I just want to make
+sure: you realize that dec_pending() is only ever used by bio-based DM
+right? (dm-mq and .request_fn multipath are request-based)
+
+For request-based DM's handling of DM_ENDIO_REQUEUE please see
+drivers/md/dm-rq.c
+
+> ---
+>  drivers/md/dm.c | 16 +++++++++-------
+>  1 file changed, 9 insertions(+), 7 deletions(-)
 > 
-> As usual, thanks for the quick feedback. But it seems like I sent my
-> e-mail too soon: after I had sent my e-mail I ran again into the
-> truncate_inode_pages_range() hang.
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index fa9b1cb..6e04357 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -767,6 +767,7 @@ static void dec_pending(struct dm_io *io, int error)
+>  	int io_error;
+>  	struct bio *bio;
+>  	struct mapped_device *md = io->md;
+> +	int noflush_suspending;
+>  
+>  	/* Push-back supersedes any I/O errors */
+>  	if (unlikely(error)) {
+> @@ -782,12 +783,16 @@ static void dec_pending(struct dm_io *io, int error)
+>  			 * Target requested pushing back the I/O.
+>  			 */
+>  			spin_lock_irqsave(&md->deferred_lock, flags);
+> -			if (__noflush_suspending(md))
+> +			noflush_suspending = __noflush_suspending(md);
+> +			if (noflush_suspending)
+>  				bio_list_add_head(&md->deferred, io->bio);
+> -			else
+> -				/* noflush suspend was interrupted. */
+> -				io->error = -EIO;
+>  			spin_unlock_irqrestore(&md->deferred_lock, flags);
+> +
+> +			if (noflush_suspending)
+> +				return;
+> +
+> +			/* noflush suspend was interrupted. */
+> +			io->error = -EIO;
+>  		}
+>  
+>  		io_error = io->error;
+> @@ -795,9 +800,6 @@ static void dec_pending(struct dm_io *io, int error)
+>  		end_io_acct(io);
+>  		free_io(md, io);
+>  
+> -		if (io_error == DM_ENDIO_REQUEUE)
+> -			return;
+> -
+>  		if ((bio->bi_opf & REQ_PREFLUSH) && bio->bi_iter.bi_size) {
+>  			/*
+>  			 * Preflush done for flush with data, reissue
 
-I was skeptical your 3 earlier patches (particularly the __dm_destroy to
-use internel suspend patch) would fix anything you care about in your
-testing.  __dm_destroy is only used once all references on the DM mpath
-device are dropped.  When you do your fio + cable pull tests you're just
-bouncing underlying paths around.  You aren't _ever_ destroying the
-multipath device.  That is why your __dm_destroy patch seemed off the
-mark to me.
+bio-based DM's use of DM_ENDIO_REQUEUE is strictly confined to IFF the
+target is performing no-flush suspend (in the mpath case, see
+dm-mpath.c:must_push_back_bio()).  Otherwise, bio-based DM multipath
+queues bios local to the DM multipath target (see dm-mapth.c's
+'queued_bios' list).
 
-> So far I have run the fio +
-> simulated cable pulling test with the following configurations:
-> * scsi-mq + single queue dm: hang occurs after a few iterations.
-> * scsi-mq + dm-mq: hang occurs after a few iterations.
-> * single queue scsi + dm-mq: test passes.
-> 
-> I will have another look at the blk-mq core and scsi-mq core layers.
-
-OK.
+NOTE: dm-cache-target.c's use of DM_ENDIO_REQUEUE isn't well gaurded to
+only return DM_ENDIO_REQUEUE if the target is noflush suspending.  I'll
+review this closer and also check with Joe.
