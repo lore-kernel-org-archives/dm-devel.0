@@ -1,21 +1,12 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: v4.8 dm-mpath
-Date: Fri, 26 Aug 2016 12:35:21 -0400
-Message-ID: <20160826163521.GA2480@redhat.com>
-References: <afa6895b-7301-2856-a68e-eaf81bde311b@sandisk.com>
-	<20160816191241.GA16948@redhat.com>
-	<20160817024302.GA29089@redhat.com>
-	<a85fe9dc-e09a-152f-8576-13e899cde9c4@sandisk.com>
-	<20160818015433.GA8972@redhat.com>
-	<ab6df671-d6b3-86b1-72e3-25e162b679b4@sandisk.com>
-	<20160826142647.GA1876@redhat.com>
-	<47ef2a90-d465-9afa-ef1a-51b43f5c7915@sandisk.com>
+Subject: [git pull] device mapper fixes for 4.8-rc4
+Date: Fri, 26 Aug 2016 13:09:33 -0400
+Message-ID: <20160826170933.GA44443@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <47ef2a90-d465-9afa-ef1a-51b43f5c7915@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,61 +16,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Aug 26 2016 at 11:33am -0400,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+Hi Linus,
 
-> On 08/26/2016 07:26 AM, Mike Snitzer wrote:
-> >On Thu, Aug 25 2016 at  1:40pm -0400,
-> >Bart Van Assche <bart.vanassche@sandisk.com> wrote:
-> >>As usual, thanks for the quick feedback. But it seems like I sent my
-> >>e-mail too soon: after I had sent my e-mail I ran again into the
-> >>truncate_inode_pages_range() hang.
-> >
-> >I was skeptical your 3 earlier patches (particularly the __dm_destroy to
-> >use internel suspend patch) would fix anything you care about in your
-> >testing.  __dm_destroy is only used once all references on the DM mpath
-> >device are dropped.  When you do your fio + cable pull tests you're just
-> >bouncing underlying paths around.  You aren't _ever_ destroying the
-> >multipath device.  That is why your __dm_destroy patch seemed off the
-> >mark to me.
-> 
-> Hello Mike,
-> 
-> In case it wasn't clear, I want to drop the three patches you
-> referred to. But I also want to clarify that my tests *do* trigger
-> __dm_destroy(). If you have a look at the srp-test scripts then you
-> will see that "dmsetup remove" is invoked after each test. What I
-> see is that lock_page() and other page cache functions hang
-> sporadically around the time the dm device is removed, most likely
-> due to I/O that is submitted but never completed. That's why I
-> started looking at the scsi-mq/blk-mq device removal code.
+The following changes since commit fa8410b355251fd30341662a40ac6b22d3e38468:
 
-We're going round and round with a test that doesn't reflect 99% of the
-usage that DM multipath sees.  I think we need to take a step back and
-re-evaluate the test in question.
+  Linux 4.8-rc3 (2016-08-21 16:14:10 -0700)
 
-Could well be that there is some problem with outstanding IO racing with
-DM multipath device removal.  BUT I'd really appreciate it if you could
-make the 'dmsetup remove' phase secondary.  You're welcome to keep the
-test you have (with DM device removal mixed with IO), make it
-configurable with a flag or whatever, but it strikes me as much more of
-a niche concern.  Not dismissing the need to make whatever it is you're
-doing work.. but we're seriously conflating all the variables in play.
+are available in the git repository at:
 
-Customers aren't removing their multipath devices a lot.  So can we do
-this?
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm dm-4.8-fixes-3
 
-test step1:
-Lets at least verify that DM multipath fault handling capabilities
-during normal IO in the face of cable pulls is reliable (be them
-syntehtic pulls or real).
+for you to fetch changes up to 9c5a559d9495bba6e5b6c5ee4e8e2f2b71088684:
 
-test step2:
-Once the IO completes (after paths are restored) and fio ends _then_
-DM multipath devices can be removed.
+  dm log: fix unitialized bio operation flags (2016-08-24 21:55:05 -0400)
 
-You'll note that all mptest tests follow this 2 step pattern.
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+- Another stable fix for DM flakey (that tweaks the previous fix that
+  didn't factor in expected 'drop_writes' behavior for read IO).
+
+- A dm-log bio operation flags fix for the broader block changes that
+  were merged during the 4.8 merge window.
+
+----------------------------------------------------------------
+Heinz Mauelshagen (1):
+      dm log: fix unitialized bio operation flags
+
+Mike Snitzer (1):
+      dm flakey: fix reads to be issued if drop_writes configured
+
+ drivers/md/dm-flakey.c | 27 ++++++++++++++++-----------
+ drivers/md/dm-log.c    | 11 ++++++-----
+ 2 files changed, 22 insertions(+), 16 deletions(-)
