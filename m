@@ -1,65 +1,65 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: v4.8 dm-mpath
-Date: Thu, 25 Aug 2016 14:06:10 -0700
-Message-ID: <b8dd5787-e21c-8e64-a7fc-b609c11c13cf@sandisk.com>
-References: <afa6895b-7301-2856-a68e-eaf81bde311b@sandisk.com>
-	<20160816191241.GA16948@redhat.com> <20160817024302.GA29089@redhat.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: [PATCH v10 0/3] fallocate for block devices
+Date: Thu, 25 Aug 2016 17:02:01 -0700
+Message-ID: <147216972158.7860.13484490862091226290.stgit@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160817024302.GA29089@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Return-path: <xfs-bounces@oss.sgi.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: axboe@kernel.dk, darrick.wong@oracle.com
+Cc: hch@infradead.org, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, xfs@oss.sgi.com, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, bart.vanassche@sandisk.com
 List-Id: dm-devel.ids
 
-On 08/16/2016 07:43 PM, Mike Snitzer wrote:
-> On Tue, Aug 16 2016 at  3:12pm -0400,
-> Mike Snitzer <snitzer@redhat.com> wrote:
->
->> On Tue, Aug 16 2016 at  1:32pm -0400,
->> Bart Van Assche <bart.vanassche@sandisk.com> wrote:
->>
->>> Can you have a look at this?
->>
->> I'll get linux-dm.git's 'dm-4.8' branch (v4.8-rc2) loaded on one of my
->> testbed systems to run the mptest testsuite.  It should provide coverage
->> for simple failover and failback.
->
-> I successfully ran mptest against that v4.8-rc2 based kernel.  Any
-> chance you could try mptest to see if it also passes for you?  Or if it
-> is able to trigger the issue for you.
->
-> mptest's runtest script defaults to setting up scsi-mq and dm-mq.
+Hi,
 
-Hello Mike,
+This is a redesign of the patch series that fixes various interface
+problems with the existing "zero out this part of a block device"
+code.  BLKZEROOUT2 is gone.
 
-mptest on top of scsi_debug passes on v4.8-rc3 on the same system I used 
-to run my SRP tests:
+The first patch is still a fix to the existing BLKZEROOUT ioctl to
+invalidate the page cache if the zeroing command to the underlying
+device succeeds.  Without this patch we still have the pagecache
+coherence bug that's been in the kernel forever.
 
-# ./runtest
-[ ... ]
-PASSED:  test_00_no_failure test_01_sdev_offline test_02_sdev_delete 
-test_03_dm_failpath test_04_dm_switchpg
-FAILED:
+The second patch changes the internal block device functions to reject
+attempts to discard or zeroout that are not aligned to the logical
+block size.  Previously, we only checked that the start/len parameters
+were 512-byte aligned, which caused kernel BUG_ONs for unaligned IOs
+to 4k-LBA devices.
 
-My SRP tests pass on the same setup if I disable scsi-mq. However, I 
-still sporadically see I/O errors if I run srp-test 02 on kernel 
-v4.8-rc3 with scsi-mq and dm-mq:
-# srp-test/run_tests -t 02
-[ ... ]
-verify: bad magic header 0, wanted acca at file 
-/root/mnt1/data-integrity-test.1.0 offset 581632, length 4096
-fio: io_u error on file /root/mnt1/data-integrity-test.8.0: Input/output 
-error: write offset=8888320, buflen=4096
+The third patch creates an fallocate handler for block devices, wires
+up the FALLOC_FL_PUNCH_HOLE flag to zeroing-discard, and connects
+FALLOC_FL_ZERO_RANGE to write-same so that we can have a consistent
+fallocate interface between files and block devices.  It also allows
+the combination of PUNCH_HOLE and NO_HIDE_STALE to invoke non-zeroing
+discard.
 
-Bart.
+Test cases for the new block device fallocate are now in xfstests as
+generic/349-351.
+
+Comments and questions are, as always, welcome.  Patches are against
+4.8-rc3.
+
+v7: Strengthen parameter checking and fix various code issues pointed
+out by Linus and Christoph.
+v8: More code rearranging, rebase to 4.6-rc3, and dig into alignment
+issues.
+v9: Forward port to 4.7.
+v10: Forward port to 4.8.  Remove the extra call to
+invalidate_inode_pages2_range per Bart Van Assche's request.
+
+--D
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
