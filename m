@@ -1,12 +1,15 @@
-From: tang.junhui@zte.com.cn
-Subject: [PATCH] kpartx: partitions of mapped devices cannot be
-	created in redhat OS
-Date: Mon, 29 Aug 2016 19:12:02 +0800
-Message-ID: <1472469122-12952-1-git-send-email-tang.junhui@zte.com.cn>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: [PATCH] multipathd: Suppress uninteresting data race
+	reports
+Date: Mon, 29 Aug 2016 08:51:33 -0700
+Message-ID: <72cf1f62-3727-1ca0-4400-b6e352a98a08@sandisk.com>
+References: <01747bb5-c10e-a3b6-e440-d9443837a6f7@sandisk.com>
+	<CABr-Gnc6OQRhUeXtkHn-_CVYcSvYco78i1euggauTcjVNSrv5A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CABr-Gnc6OQRhUeXtkHn-_CVYcSvYco78i1euggauTcjVNSrv5A@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,50 +19,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, "tang.junhui" <tang.junhui@zte.com.cn>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: "tang.junhui" <tang.junhui@zte.com.cn>
+On 08/29/2016 12:19 AM, Christophe Varoqui wrote:
+> I think it would be fair to detect the valgrind headers presence in the
+> Makefile and ifdef the include (else define dummy ANNOTATE_* macros).
+>
+> Would you care to prepare that ?
 
-Environment variables such as DM_TABLE_STATE are used in kpartx.rules which exported
-by "dmsetup export" in previous udev rules in SuSE OS, however, there is no such command
-"dmsetup export" in redhat OS, so these environment variables are not initialized and
-partitions cannot be created. This patch replace "dmsetup export" with "dmsetup info"
-to get the status of mapped device, which can work well both in SuSE and redhat OS.
+Hello Christophe,
 
-Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
----
- kpartx/kpartx.rules | 10 +++++++---
- 1 file changed, 7 insertions(+), 3 deletions(-)
+How about adding a copy of the valgrind.h and helgrind.h header files to 
+the multipath-tools source tree? This is the approach that is followed 
+by several other projects, e.g. chromium. See also 
+https://chromium.googlesource.com/chromium/src/base/+/master/third_party/valgrind/valgrind.h.
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index 1713f3c..8c8b836 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -7,8 +7,12 @@
- KERNEL!="dm-*", GOTO="kpartx_end"
- ACTION=="remove", GOTO="kpartx_end"
- 
--ENV{DM_TABLE_STATE}!="LIVE", GOTO="kpartx_end"
--ENV{DM_DEPS}=="0", GOTO="kpartx_end"
-+ENV{DMSETUP_SBIN_PATH}="/sbin"
-+TEST!="$env{DMSETUP_SBIN_PATH}/dmsetup", ENV{DMSETUP_SBIN_PATH}="/usr/sbin"
-+IMPORT{program}="$env{DMSETUP_SBIN_PATH}/dmsetup info -j %M -m %m -c --nameprefixes --noheadings --rows -o tables_loaded,device_count"
-+
-+ENV{DM_TABLES_LOADED}!="Live", GOTO="kpartx_end"
-+ENV{DM_DEVICE_COUNT}=="0", GOTO="kpartx_end"
- 
- ENV{DM_UUID}=="?*", IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
- 
-@@ -37,7 +41,7 @@ ENV{ID_FS_USAGE}=="filesystem|other", ENV{ID_FS_LABEL_ENC}=="?*", \
- # Create dm tables for partitions
- ENV{DM_ACTION}=="PATH_FAILED|PATH_REINSTATED", GOTO="kpartx_end"
- ENV{DM_NR_VALID_PATHS}=="0", GOTO="kpartx_end"
--ENV{DM_STATE}!="SUSPENDED", ENV{DM_UUID}=="mpath-*", \
-+ENV{DM_SUSPENDED}!="Suspended", ENV{DM_UUID}=="mpath-*", \
- 	RUN+="/sbin/kpartx -u -p -part /dev/$name"
- 
- LABEL="kpartx_end"
--- 
-2.8.1.windows.1
+Thanks,
+
+Bart.
