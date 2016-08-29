@@ -1,102 +1,75 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipathd: Suppress uninteresting data race
-	reports
-Date: Mon, 29 Aug 2016 18:14:33 +0200
-Message-ID: <CABr-GnetkeF8=-PRrO7JfKU9UhnzDziqwL5x4DyDkadFZC+oKg@mail.gmail.com>
-References: <01747bb5-c10e-a3b6-e440-d9443837a6f7@sandisk.com>
-	<CABr-Gnc6OQRhUeXtkHn-_CVYcSvYco78i1euggauTcjVNSrv5A@mail.gmail.com>
-	<72cf1f62-3727-1ca0-4400-b6e352a98a08@sandisk.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-crypt: Fix error with too large bios
+Date: Mon, 29 Aug 2016 14:19:41 -0400
+Message-ID: <20160829181940.GA21794@redhat.com>
+References: <alpine.LRH.2.11.1608102050200.10662@mail.ewheeler.net>
+ <alpine.LRH.2.02.1608131342250.3291@file01.intranet.prod.int.rdu2.redhat.com>
+ <20160814000740.GA5317@redhat.com>
+ <alpine.LRH.2.02.1608151245120.13026@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.11.1608181742260.10662@mail.ewheeler.net>
+ <alpine.LRH.2.02.1608251426590.26645@file01.intranet.prod.int.rdu2.redhat.com>
+ <24746705-a3af-e634-e675-f2214b6cf356@kernel.dk>
+ <20160826140501.GA1061@redhat.com>
+ <alpine.LRH.2.02.1608271102560.14465@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7103211940731218997=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <72cf1f62-3727-1ca0-4400-b6e352a98a08@sandisk.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1608271102560.14465@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Eric Wheeler <dm-devel@lists.ewheeler.net>, Christoph Hellwig <hch@lst.de>, dm-devel@redhat.com, johnstonj.public@codenest.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
---===============7103211940731218997==
-Content-Type: multipart/alternative; boundary=001a113fc3a0e29e3a053b3828f4
+On Sat, Aug 27 2016 at 11:09am -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
---001a113fc3a0e29e3a053b3828f4
-Content-Type: text/plain; charset=UTF-8
+> 
+> 
+> On Fri, 26 Aug 2016, Mike Snitzer wrote:
+> 
+> > On Thu, Aug 25 2016 at  4:13pm -0400,
+> > Jens Axboe <axboe@kernel.dk> wrote:
+> > 
+> > > On 08/25/2016 12:34 PM, Mikulas Patocka wrote:
+> > > >
+> > > >Device mapper can't split the bio in generic_make_request - it frees the
+> > > >md->queue->bio_split bioset, to save one kernel thread per device. Device
+> > > >mapper uses its own splitting mechanism.
+> > > >
+> > > >So what is the final decision? - should device mapper split the big bio or
+> > > >should bcache not submit big bios?
+> > > >
+> > > >I think splitting big bios in the device mapper is better - simply because
+> > > >it is much less code than reworking bcache to split bios internally.
+> > > >
+> > > >BTW. In the device mapper, we have a layer dm-io, that was created to work
+> > > >around bio size limitations - it accepts unlimited I/O request and splits
+> > > >it to several bios. When bio size limitations are gone, we could simplify
+> > > >dm-io too.
+> > > 
+> > > The patch from Ming Lei was applied for 4.8 the other day.
+> > 
+> > See linux-block commit:
+> > 4d70dca4eadf2f block: make sure a big bio is split into at most 256 bvecs
+> > http://git.kernel.dk/cgit/linux-block/commit/?h=for-linus&id=4d70dca4eadf2f95abe389116ac02b8439c2d16c
+> 
+> But this patch won't work for device mapper, blk_bio_segment_split is 
+> called from blk_queue_split and device mapper doesn't use blk_queue_split 
+> (it can't because it frees queue->bio_split).
+> 
+> We still need these two patches:
+> https://www.redhat.com/archives/dm-devel/2016-May/msg00211.html
+> https://www.redhat.com/archives/dm-devel/2016-May/msg00210.html
 
-I would merge that too, sure.
+I'm left wondering whether it'd be better to revert commit dbba42d8a9e
+("dm: eliminate unused "bioset" process for each bio-based DM device")
 
-On Mon, Aug 29, 2016 at 5:51 PM, Bart Van Assche <bart.vanassche@sandisk.com
-> wrote:
+And also look for other areas of DM that could leverage the block core's
+relatively new splitting capabilities.
 
-> On 08/29/2016 12:19 AM, Christophe Varoqui wrote:
->
->> I think it would be fair to detect the valgrind headers presence in the
->> Makefile and ifdef the include (else define dummy ANNOTATE_* macros).
->>
->> Would you care to prepare that ?
->>
->
-> Hello Christophe,
->
-> How about adding a copy of the valgrind.h and helgrind.h header files to
-> the multipath-tools source tree? This is the approach that is followed by
-> several other projects, e.g. chromium. See also
-> https://chromium.googlesource.com/chromium/src/base/+/master
-> /third_party/valgrind/valgrind.h.
->
-> Thanks,
->
-> Bart.
->
+Otherwise, we'll just be sprinking more BIO_MAX_PAGES-based splitting
+code in DM targets because DM is so "special" that it doesn't need the
+block core's splitting (even though it clearly would now benefit).
 
---001a113fc3a0e29e3a053b3828f4
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">I would merge that too, sure.</div><div class=3D"gmail_ext=
-ra"><br><div class=3D"gmail_quote">On Mon, Aug 29, 2016 at 5:51 PM, Bart Va=
-n Assche <span dir=3D"ltr">&lt;<a href=3D"mailto:bart.vanassche@sandisk.com=
-" target=3D"_blank">bart.vanassche@sandisk.com</a>&gt;</span> wrote:<br><bl=
-ockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #=
-ccc solid;padding-left:1ex"><span class=3D"">On 08/29/2016 12:19 AM, Christ=
-ophe Varoqui wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex">
-I think it would be fair to detect the valgrind headers presence in the<br>
-Makefile and ifdef the include (else define dummy ANNOTATE_* macros).<br>
-<br>
-Would you care to prepare that ?<br>
-</blockquote>
-<br></span>
-Hello Christophe,<br>
-<br>
-How about adding a copy of the valgrind.h and helgrind.h header files to th=
-e multipath-tools source tree? This is the approach that is followed by sev=
-eral other projects, e.g. chromium. See also <a href=3D"https://chromium.go=
-oglesource.com/chromium/src/base/+/master/third_party/valgrind/valgrind.h" =
-rel=3D"noreferrer" target=3D"_blank">https://chromium.googlesource.<wbr>com=
-/chromium/src/base/+/master<wbr>/third_party/valgrind/valgrind<wbr>.h</a>.<=
-br>
-<br>
-Thanks,<br>
-<br>
-Bart.<br>
-</blockquote></div><br></div>
-
---001a113fc3a0e29e3a053b3828f4--
-
-
---===============7103211940731218997==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7103211940731218997==--
+Mike
