@@ -1,66 +1,177 @@
-From: Ming Lei <tom.leiming@gmail.com>
-Subject: Re: dm-crypt: Fix error with too large bios
-Date: Mon, 29 Aug 2016 13:22:30 +0800
-Message-ID: <CACVXFVP36-XU4J0D2xgvPBqvEMC6oGfXbbF8aGB0Rj-J10SizA@mail.gmail.com>
-References: <alpine.LRH.2.11.1608102050200.10662@mail.ewheeler.net>
- <alpine.LRH.2.02.1608131342250.3291@file01.intranet.prod.int.rdu2.redhat.com>
- <20160814000740.GA5317@redhat.com> <alpine.LRH.2.02.1608151245120.13026@file01.intranet.prod.int.rdu2.redhat.com>
- <alpine.LRH.2.11.1608181742260.10662@mail.ewheeler.net> <alpine.LRH.2.02.1608251426590.26645@file01.intranet.prod.int.rdu2.redhat.com>
- <24746705-a3af-e634-e675-f2214b6cf356@kernel.dk> <20160826140501.GA1061@redhat.com>
- <alpine.LRH.2.02.1608271102560.14465@file01.intranet.prod.int.rdu2.redhat.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH] multipathd: Suppress uninteresting data race
+	reports
+Date: Mon, 29 Aug 2016 09:19:35 +0200
+Message-ID: <CABr-Gnc6OQRhUeXtkHn-_CVYcSvYco78i1euggauTcjVNSrv5A@mail.gmail.com>
+References: <01747bb5-c10e-a3b6-e440-d9443837a6f7@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1608271102560.14465@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, Eric Wheeler <dm-devel@lists.ewheeler.net>, Christoph Hellwig <hch@lst.de>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, johnstonj.public@codenest.com, linux-block <linux-block@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="===============0114436332960455422=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <01747bb5-c10e-a3b6-e440-d9443837a6f7@sandisk.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Aug 27, 2016 at 11:09 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
->
->
-> On Fri, 26 Aug 2016, Mike Snitzer wrote:
->
->> On Thu, Aug 25 2016 at  4:13pm -0400,
->> Jens Axboe <axboe@kernel.dk> wrote:
->>
->> > On 08/25/2016 12:34 PM, Mikulas Patocka wrote:
->> > >
->> > >Device mapper can't split the bio in generic_make_request - it frees the
->> > >md->queue->bio_split bioset, to save one kernel thread per device. Device
->> > >mapper uses its own splitting mechanism.
->> > >
->> > >So what is the final decision? - should device mapper split the big bio or
->> > >should bcache not submit big bios?
->> > >
->> > >I think splitting big bios in the device mapper is better - simply because
->> > >it is much less code than reworking bcache to split bios internally.
->> > >
->> > >BTW. In the device mapper, we have a layer dm-io, that was created to work
->> > >around bio size limitations - it accepts unlimited I/O request and splits
->> > >it to several bios. When bio size limitations are gone, we could simplify
->> > >dm-io too.
->> >
->> > The patch from Ming Lei was applied for 4.8 the other day.
->>
->> See linux-block commit:
->> 4d70dca4eadf2f block: make sure a big bio is split into at most 256 bvecs
->> http://git.kernel.dk/cgit/linux-block/commit/?h=for-linus&id=4d70dca4eadf2f95abe389116ac02b8439c2d16c
->
-> But this patch won't work for device mapper, blk_bio_segment_split is
-> called from blk_queue_split and device mapper doesn't use blk_queue_split
-> (it can't because it frees queue->bio_split).
->
-> We still need these two patches:
-> https://www.redhat.com/archives/dm-devel/2016-May/msg00211.html
-> https://www.redhat.com/archives/dm-devel/2016-May/msg00210.html
+--===============0114436332960455422==
+Content-Type: multipart/alternative; boundary=001a11419434c16823053b30af60
 
-About the 2nd patch, it might not be good enough because in theory
-a small size bio still may include big bvecs, such as, each bvec points
-to 512byte buffer, so strictly speaking the bvec number should
-be checked instead of bio size.
+--001a11419434c16823053b30af60
+Content-Type: text/plain; charset=UTF-8
+
+Hi,
+
+I think it would be fair to detect the valgrind headers presence in the
+Makefile and ifdef the include (else define dummy ANNOTATE_* macros).
+
+Would you care to prepare that ?
+
+Thanks.
 
 
--- 
-Ming Lei
+On Tue, Aug 16, 2016 at 10:00 PM, Bart Van Assche <
+bart.vanassche@sandisk.com> wrote:
+
+> The global variable multipath_conf is modified through RCU. Hence
+> avoid that the data race detection tools Helgrind and DRD report
+> data races for this variable.
+>
+> The global variable running_state is read without holding the mutex
+> that protects changes of this variable. Suppress complaints about
+> these reads.
+>
+> The global variable uxsock_timeout is not protected by any mutex.
+> Suppress complaints about using this variable.
+>
+> This patch introduces a new build-time requirement, namely that
+> the valgrind-devel package has been installed.
+>
+> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+> ---
+>  multipathd/main.c | 8 ++++++++
+>  1 file changed, 8 insertions(+)
+>
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 1d73b4c..54abfef 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -23,6 +23,7 @@
+>  #endif
+>  #include <semaphore.h>
+>  #include <time.h>
+> +#include <valgrind/helgrind.h>
+>
+>  /*
+>   * libcheckers
+> @@ -2520,6 +2521,13 @@ main (int argc, char *argv[])
+>         int foreground = 0;
+>         struct config *conf;
+>
+> +       ANNOTATE_BENIGN_RACE_SIZED(&multipath_conf,
+> sizeof(multipath_conf),
+> +                                  "Manipulated through RCU");
+> +       ANNOTATE_BENIGN_RACE_SIZED(&running_state, sizeof(running_state),
+> +               "Suppress complaints about unprotected running_state
+> reads");
+> +       ANNOTATE_BENIGN_RACE_SIZED(&uxsock_timeout,
+> sizeof(uxsock_timeout),
+> +               "Suppress complaints about this scalar variable");
+> +
+>         logsink = 1;
+>
+>         if (getuid() != 0) {
+> --
+> 2.9.2
+>
+>
+
+--001a11419434c16823053b30af60
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<div><br></div><div>I think it would be fair to detect =
+the valgrind headers presence in the Makefile and ifdef the include (else d=
+efine dummy ANNOTATE_* macros).</div><div><br></div><div>Would you care to =
+prepare that ?</div><div><br></div><div>Thanks.</div><div><br></div></div><=
+div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Tue, Aug 16, 20=
+16 at 10:00 PM, Bart Van Assche <span dir=3D"ltr">&lt;<a href=3D"mailto:bar=
+t.vanassche@sandisk.com" target=3D"_blank">bart.vanassche@sandisk.com</a>&g=
+t;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0=
+ .8ex;border-left:1px #ccc solid;padding-left:1ex">The global variable mult=
+ipath_conf is modified through RCU. Hence<br>
+avoid that the data race detection tools Helgrind and DRD report<br>
+data races for this variable.<br>
+<br>
+The global variable running_state is read without holding the mutex<br>
+that protects changes of this variable. Suppress complaints about<br>
+these reads.<br>
+<br>
+The global variable uxsock_timeout is not protected by any mutex.<br>
+Suppress complaints about using this variable.<br>
+<br>
+This patch introduces a new build-time requirement, namely that<br>
+the valgrind-devel package has been installed.<br>
+<br>
+Signed-off-by: Bart Van Assche &lt;<a href=3D"mailto:bart.vanassche@sandisk=
+.com">bart.vanassche@sandisk.com</a>&gt;<br>
+---<br>
+=C2=A0multipathd/main.c | 8 ++++++++<br>
+=C2=A01 file changed, 8 insertions(+)<br>
+<br>
+diff --git a/multipathd/main.c b/multipathd/main.c<br>
+index 1d73b4c..54abfef 100644<br>
+--- a/multipathd/main.c<br>
++++ b/multipathd/main.c<br>
+@@ -23,6 +23,7 @@<br>
+=C2=A0#endif<br>
+=C2=A0#include &lt;semaphore.h&gt;<br>
+=C2=A0#include &lt;time.h&gt;<br>
++#include &lt;valgrind/helgrind.h&gt;<br>
+<br>
+=C2=A0/*<br>
+=C2=A0 * libcheckers<br>
+@@ -2520,6 +2521,13 @@ main (int argc, char *argv[])<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 int foreground =3D 0;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 struct config *conf;<br>
+<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0ANNOTATE_BENIGN_RACE_SIZED(&amp;<wbr>multipath_=
+conf, sizeof(multipath_conf),<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &quot;Manipulated through RCU=
+&quot;);<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0ANNOTATE_BENIGN_RACE_SIZED(&amp;<wbr>running_st=
+ate, sizeof(running_state),<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0&quot;Suppress comp=
+laints about unprotected running_state reads&quot;);<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0ANNOTATE_BENIGN_RACE_SIZED(&amp;<wbr>uxsock_tim=
+eout, sizeof(uxsock_timeout),<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0&quot;Suppress comp=
+laints about this scalar variable&quot;);<br>
++<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 logsink =3D 1;<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (getuid() !=3D 0) {<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+2.9.2<br>
+<br>
+</font></span></blockquote></div><br></div>
+
+--001a11419434c16823053b30af60--
+
+
+--===============0114436332960455422==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0114436332960455422==--
