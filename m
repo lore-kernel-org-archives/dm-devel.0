@@ -1,13 +1,12 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipathd: Suppress uninteresting data race
-	reports
-Date: Mon, 29 Aug 2016 09:19:35 +0200
-Message-ID: <CABr-Gnc6OQRhUeXtkHn-_CVYcSvYco78i1euggauTcjVNSrv5A@mail.gmail.com>
-References: <01747bb5-c10e-a3b6-e440-d9443837a6f7@sandisk.com>
+Subject: Re: [PATCH] Makefile.inc: Remove -fexceptions from CFLAGS
+Date: Mon, 29 Aug 2016 09:20:16 +0200
+Message-ID: <CABr-GnfP0O1npZkL4sR6AmocdRgBNqYec8gPK-O3LoO0HaFtYQ@mail.gmail.com>
+References: <e832fbcf-dde0-5b84-980a-cd0745d027c6@sandisk.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0114436332960455422=="
+Content-Type: multipart/mixed; boundary="===============2553291167158823473=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <01747bb5-c10e-a3b6-e440-d9443837a6f7@sandisk.com>
+In-Reply-To: <e832fbcf-dde0-5b84-980a-cd0745d027c6@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,157 +20,132 @@ To: Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============0114436332960455422==
-Content-Type: multipart/alternative; boundary=001a11419434c16823053b30af60
+--===============2553291167158823473==
+Content-Type: multipart/alternative; boundary=001a114002f828b591053b30b218
 
---001a11419434c16823053b30af60
+--001a114002f828b591053b30b218
 Content-Type: text/plain; charset=UTF-8
 
-Hi,
-
-I think it would be fair to detect the valgrind headers presence in the
-Makefile and ifdef the include (else define dummy ANNOTATE_* macros).
-
-Would you care to prepare that ?
-
+Merged.
 Thanks.
 
+On Tue, Aug 16, 2016 at 9:56 PM, Bart Van Assche <bart.vanassche@sandisk.com
+> wrote:
 
-On Tue, Aug 16, 2016 at 10:00 PM, Bart Van Assche <
-bart.vanassche@sandisk.com> wrote:
-
-> The global variable multipath_conf is modified through RCU. Hence
-> avoid that the data race detection tools Helgrind and DRD report
-> data races for this variable.
+> No code in the multipath-tools project calls a C++ function that
+> generates an exception. Hence remove -fexceptions. From the gcc
+> manual:
 >
-> The global variable running_state is read without holding the mutex
-> that protects changes of this variable. Suppress complaints about
-> these reads.
+> -fexceptions
 >
-> The global variable uxsock_timeout is not protected by any mutex.
-> Suppress complaints about using this variable.
->
-> This patch introduces a new build-time requirement, namely that
-> the valgrind-devel package has been installed.
+>   Enable exception handling. Generates extra code needed to
+>   propagate exceptions. For some targets, this implies GCC
+>   generates frame unwind information for all functions, which can
+>   produce significant data size overhead, although it does not
+>   affect execution. If you do not specify this option, GCC
+>   enables it by default for languages like C++ that normally
+>   require exception handling, and disables it for languages like
+>   C that do not normally require it. However, you may need to
+>   enable this option when compiling C code that needs to
+>   interoperate properly with exception handlers written in
+>   C++. You may also wish to disable this option if you are
+>   compiling older C++ programs that don't use exception handling.
 >
 > Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 > ---
->  multipathd/main.c | 8 ++++++++
->  1 file changed, 8 insertions(+)
+>  Makefile.inc | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 >
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 1d73b4c..54abfef 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -23,6 +23,7 @@
->  #endif
->  #include <semaphore.h>
->  #include <time.h>
-> +#include <valgrind/helgrind.h>
+> diff --git a/Makefile.inc b/Makefile.inc
+> index 0808e64..0631ca2 100644
+> --- a/Makefile.inc
+> +++ b/Makefile.inc
+> @@ -61,7 +61,7 @@ LN            = ln -sf
+>  INSTALL_PROGRAM        = install
 >
->  /*
->   * libcheckers
-> @@ -2520,6 +2521,13 @@ main (int argc, char *argv[])
->         int foreground = 0;
->         struct config *conf;
+>  OPTFLAGS       = -Wunused -Wstrict-prototypes -O2 -g -pipe
+> -Wformat-security -Wall \
+> -                 -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector
+> --param=ssp-buffer-size=4
+> +                 -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector
+> --param=ssp-buffer-size=4
 >
-> +       ANNOTATE_BENIGN_RACE_SIZED(&multipath_conf,
-> sizeof(multipath_conf),
-> +                                  "Manipulated through RCU");
-> +       ANNOTATE_BENIGN_RACE_SIZED(&running_state, sizeof(running_state),
-> +               "Suppress complaints about unprotected running_state
-> reads");
-> +       ANNOTATE_BENIGN_RACE_SIZED(&uxsock_timeout,
-> sizeof(uxsock_timeout),
-> +               "Suppress complaints about this scalar variable");
-> +
->         logsink = 1;
->
->         if (getuid() != 0) {
+>  CFLAGS         = $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\"
+> -DRUN_DIR=\"${RUN}\"
+>  SHARED_FLAGS   = -shared
 > --
 > 2.9.2
 >
 >
 
---001a11419434c16823053b30af60
+--001a114002f828b591053b30b218
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Hi,<div><br></div><div>I think it would be fair to detect =
-the valgrind headers presence in the Makefile and ifdef the include (else d=
-efine dummy ANNOTATE_* macros).</div><div><br></div><div>Would you care to =
-prepare that ?</div><div><br></div><div>Thanks.</div><div><br></div></div><=
-div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Tue, Aug 16, 20=
-16 at 10:00 PM, Bart Van Assche <span dir=3D"ltr">&lt;<a href=3D"mailto:bar=
-t.vanassche@sandisk.com" target=3D"_blank">bart.vanassche@sandisk.com</a>&g=
-t;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0=
- .8ex;border-left:1px #ccc solid;padding-left:1ex">The global variable mult=
-ipath_conf is modified through RCU. Hence<br>
-avoid that the data race detection tools Helgrind and DRD report<br>
-data races for this variable.<br>
+<div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
+<br><div class=3D"gmail_quote">On Tue, Aug 16, 2016 at 9:56 PM, Bart Van As=
+sche <span dir=3D"ltr">&lt;<a href=3D"mailto:bart.vanassche@sandisk.com" ta=
+rget=3D"_blank">bart.vanassche@sandisk.com</a>&gt;</span> wrote:<br><blockq=
+uote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc =
+solid;padding-left:1ex">No code in the multipath-tools project calls a C++ =
+function that<br>
+generates an exception. Hence remove -fexceptions. From the gcc<br>
+manual:<br>
 <br>
-The global variable running_state is read without holding the mutex<br>
-that protects changes of this variable. Suppress complaints about<br>
-these reads.<br>
+-fexceptions<br>
 <br>
-The global variable uxsock_timeout is not protected by any mutex.<br>
-Suppress complaints about using this variable.<br>
-<br>
-This patch introduces a new build-time requirement, namely that<br>
-the valgrind-devel package has been installed.<br>
+=C2=A0 Enable exception handling. Generates extra code needed to<br>
+=C2=A0 propagate exceptions. For some targets, this implies GCC<br>
+=C2=A0 generates frame unwind information for all functions, which can<br>
+=C2=A0 produce significant data size overhead, although it does not<br>
+=C2=A0 affect execution. If you do not specify this option, GCC<br>
+=C2=A0 enables it by default for languages like C++ that normally<br>
+=C2=A0 require exception handling, and disables it for languages like<br>
+=C2=A0 C that do not normally require it. However, you may need to<br>
+=C2=A0 enable this option when compiling C code that needs to<br>
+=C2=A0 interoperate properly with exception handlers written in<br>
+=C2=A0 C++. You may also wish to disable this option if you are<br>
+=C2=A0 compiling older C++ programs that don&#39;t use exception handling.<=
+br>
 <br>
 Signed-off-by: Bart Van Assche &lt;<a href=3D"mailto:bart.vanassche@sandisk=
 .com">bart.vanassche@sandisk.com</a>&gt;<br>
 ---<br>
-=C2=A0multipathd/main.c | 8 ++++++++<br>
-=C2=A01 file changed, 8 insertions(+)<br>
+=C2=A0Makefile.inc | 2 +-<br>
+=C2=A01 file changed, 1 insertion(+), 1 deletion(-)<br>
 <br>
-diff --git a/multipathd/main.c b/multipathd/main.c<br>
-index 1d73b4c..54abfef 100644<br>
---- a/multipathd/main.c<br>
-+++ b/multipathd/main.c<br>
-@@ -23,6 +23,7 @@<br>
-=C2=A0#endif<br>
-=C2=A0#include &lt;semaphore.h&gt;<br>
-=C2=A0#include &lt;time.h&gt;<br>
-+#include &lt;valgrind/helgrind.h&gt;<br>
+diff --git a/Makefile.inc b/Makefile.inc<br>
+index 0808e64..0631ca2 100644<br>
+--- a/Makefile.inc<br>
++++ b/Makefile.inc<br>
+@@ -61,7 +61,7 @@ LN=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =3D ln -sf<br=
+>
+=C2=A0INSTALL_PROGRAM=C2=A0 =C2=A0 =C2=A0 =C2=A0 =3D install<br>
 <br>
-=C2=A0/*<br>
-=C2=A0 * libcheckers<br>
-@@ -2520,6 +2521,13 @@ main (int argc, char *argv[])<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 int foreground =3D 0;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 struct config *conf;<br>
+=C2=A0OPTFLAGS=C2=A0 =C2=A0 =C2=A0 =C2=A0=3D -Wunused -Wstrict-prototypes -=
+O2 -g -pipe -Wformat-security -Wall \<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0-Wp,-D_FORTI=
+FY_SOURCE=3D2 -fexceptions -fstack-protector --param=3Dssp-buffer-size=3D4<=
+br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0-Wp,-D_FORTI=
+FY_SOURCE=3D2 -fstack-protector --param=3Dssp-buffer-size=3D4<br>
 <br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0ANNOTATE_BENIGN_RACE_SIZED(&amp;<wbr>multipath_=
-conf, sizeof(multipath_conf),<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &quot;Manipulated through RCU=
-&quot;);<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0ANNOTATE_BENIGN_RACE_SIZED(&amp;<wbr>running_st=
-ate, sizeof(running_state),<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0&quot;Suppress comp=
-laints about unprotected running_state reads&quot;);<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0ANNOTATE_BENIGN_RACE_SIZED(&amp;<wbr>uxsock_tim=
-eout, sizeof(uxsock_timeout),<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0&quot;Suppress comp=
-laints about this scalar variable&quot;);<br>
-+<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 logsink =3D 1;<br>
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (getuid() !=3D 0) {<br>
+=C2=A0CFLAGS=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=3D $(OPTFLAGS) -fPIC -DLIB_S=
+TRING=3D\&quot;${LIB}\&quot; -DRUN_DIR=3D\&quot;${RUN}\&quot;<br>
+=C2=A0SHARED_FLAGS=C2=A0 =C2=A0=3D -shared<br>
 <span class=3D"HOEnZb"><font color=3D"#888888">--<br>
 2.9.2<br>
 <br>
 </font></span></blockquote></div><br></div>
 
---001a11419434c16823053b30af60--
+--001a114002f828b591053b30b218--
 
 
---===============0114436332960455422==
+--===============2553291167158823473==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0114436332960455422==--
+--===============2553291167158823473==--
