@@ -1,8 +1,8 @@
 From: tang.junhui@zte.com.cn
 Subject: [PATCH] kpartx: partitions of mapped devices cannot be
 	created in redhat OS
-Date: Mon, 29 Aug 2016 19:09:18 +0800
-Message-ID: <1472468958-11300-1-git-send-email-tang.junhui@zte.com.cn>
+Date: Mon, 29 Aug 2016 19:12:02 +0800
+Message-ID: <1472469122-12952-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -25,8 +25,8 @@ From: "tang.junhui" <tang.junhui@zte.com.cn>
 Environment variables such as DM_TABLE_STATE are used in kpartx.rules which exported
 by "dmsetup export" in previous udev rules in SuSE OS, however, there is no such command
 "dmsetup export" in redhat OS, so these environment variables are not initialized and
- partitions cannot be created. This patch replace "dmsetup export" with "dmsetup info"
- to get the status of mapped device, which can work well both in SuSE and redhat OS.
+partitions cannot be created. This patch replace "dmsetup export" with "dmsetup info"
+to get the status of mapped device, which can work well both in SuSE and redhat OS.
 
 Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 ---
