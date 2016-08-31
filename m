@@ -1,7 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 5/9] dm: Add two lockdep_assert_held() statements
-Date: Wed, 31 Aug 2016 15:17:04 -0700
-Message-ID: <7036781c-db50-de26-a883-ab7e4fd34436@sandisk.com>
+Subject: [PATCH 3/9] dm: Introduce signal_pending_state()
+Date: Wed, 31 Aug 2016 15:16:22 -0700
+Message-ID: <9a148110-236f-2162-4229-fc2bc54995a6@sandisk.com>
 References: <18db2396-cd4f-1d52-1ffa-21b9b512eaf4@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,35 +21,29 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Document the locking assumptions for the __bind() and __dm_suspend()
-functions.
+Use signal_pending_state() instead of open-coding it. This patch does
+not change any functionality but makes it possible to pass TASK_KILLABLE
+as the second argument of dm_wait_for_completion(). See also commit
+16882c1e962b ("sched: fix TASK_WAKEKILL vs SIGKILL race").
 
-Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>.
 ---
- drivers/md/dm.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ drivers/md/dm.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 090ef31..0775411 100644
+index 1d3627c..7cce09e 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -1648,6 +1648,8 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
- 	struct request_queue *q = md->queue;
- 	sector_t size;
+@@ -1948,8 +1948,7 @@ static int dm_wait_for_completion(struct mapped_device *md, int sleep_state)
+ 		if (!md_in_flight(md))
+ 			break;
  
-+	lockdep_assert_held(&md->suspend_lock);
-+
- 	size = dm_table_get_size(t);
- 
- 	/*
-@@ -2089,6 +2091,8 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
- 	bool noflush = suspend_flags & DM_SUSPEND_NOFLUSH_FLAG;
- 	int r;
- 
-+	lockdep_assert_held(&md->suspend_lock);
-+
- 	/*
- 	 * DMF_NOFLUSH_SUSPENDING must be set before presuspend.
- 	 * This flag is cleared before dm_suspend returns.
+-		if (sleep_state == TASK_INTERRUPTIBLE &&
+-		    signal_pending(current)) {
++		if (signal_pending_state(sleep_state, current)) {
+ 			r = -EINTR;
+ 			break;
+ 		}
 -- 
 2.9.3
