@@ -1,7 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 3/9] dm: Introduce signal_pending_state()
-Date: Wed, 31 Aug 2016 15:16:22 -0700
-Message-ID: <9a148110-236f-2162-4229-fc2bc54995a6@sandisk.com>
+Subject: [PATCH 8/9] dm: Fix two race conditions related to
+ stopping and starting queues
+Date: Wed, 31 Aug 2016 15:18:11 -0700
+Message-ID: <82ff8574-8b73-8ba3-9098-741060f38fca@sandisk.com>
 References: <18db2396-cd4f-1d52-1ffa-21b9b512eaf4@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,29 +22,81 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Use signal_pending_state() instead of open-coding it. This patch does
-not change any functionality but makes it possible to pass TASK_KILLABLE
-as the second argument of dm_wait_for_completion(). See also commit
-16882c1e962b ("sched: fix TASK_WAKEKILL vs SIGKILL race").
+Ensure that all ongoing dm_mq_queue_rq() and dm_mq_requeue_request()
+calls have stopped before setting the "queue stopped" flag. This
+allows to remove the "queue stopped" test from dm_mq_queue_rq() and
+dm_mq_requeue_request(). Use BLK_MQ_S_STOPPED instead of
+QUEUE_FLAG_STOPPED.
 
-Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>.
+Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- drivers/md/dm.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ drivers/md/dm-rq.c | 29 +++++++----------------------
+ 1 file changed, 7 insertions(+), 22 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 1d3627c..7cce09e 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1948,8 +1948,7 @@ static int dm_wait_for_completion(struct mapped_device *md, int sleep_state)
- 		if (!md_in_flight(md))
- 			break;
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 8dc8cfb..b5db523 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -78,7 +78,6 @@ void dm_start_queue(struct request_queue *q)
+ 	if (!q->mq_ops)
+ 		dm_old_start_queue(q);
+ 	else {
+-		queue_flag_clear_unlocked(QUEUE_FLAG_STOPPED, q);
+ 		blk_mq_start_stopped_hw_queues(q, true);
+ 		blk_mq_kick_requeue_list(q);
+ 	}
+@@ -98,13 +97,13 @@ void dm_stop_queue(struct request_queue *q)
+ {
+ 	if (!q->mq_ops)
+ 		dm_old_stop_queue(q);
+-	else {
+-		spin_lock_irq(q->queue_lock);
+-		queue_flag_set(QUEUE_FLAG_STOPPED, q);
+-		spin_unlock_irq(q->queue_lock);
+-
++	else if (!blk_mq_queue_stopped(q)) {
++		/* Wait until dm_mq_queue_rq() has finished. */
++		blk_mq_freeze_queue(q);
++		/* Avoid that requeuing could restart the queue. */
+ 		blk_mq_cancel_requeue_work(q);
+ 		blk_mq_stop_hw_queues(q);
++		blk_mq_unfreeze_queue(q);
+ 	}
+ }
  
--		if (sleep_state == TASK_INTERRUPTIBLE &&
--		    signal_pending(current)) {
-+		if (signal_pending_state(sleep_state, current)) {
- 			r = -EINTR;
- 			break;
- 		}
+@@ -318,13 +317,10 @@ static void dm_old_requeue_request(struct request *rq)
+ static void dm_mq_requeue_request(struct request *rq)
+ {
+ 	struct request_queue *q = rq->q;
+-	unsigned long flags;
+ 
+ 	blk_mq_requeue_request(rq);
+-	spin_lock_irqsave(q->queue_lock, flags);
+-	if (!blk_queue_stopped(q))
+-		blk_mq_kick_requeue_list(q);
+-	spin_unlock_irqrestore(q->queue_lock, flags);
++	WARN_ON_ONCE(blk_mq_queue_stopped(q));
++	blk_mq_kick_requeue_list(q);
+ }
+ 
+ static void dm_requeue_original_request(struct mapped_device *md,
+@@ -867,17 +863,6 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 		dm_put_live_table(md, srcu_idx);
+ 	}
+ 
+-	/*
+-	 * On suspend dm_stop_queue() handles stopping the blk-mq
+-	 * request_queue BUT: even though the hw_queues are marked
+-	 * BLK_MQ_S_STOPPED at that point there is still a race that
+-	 * is allowing block/blk-mq.c to call ->queue_rq against a
+-	 * hctx that it really shouldn't.  The following check guards
+-	 * against this rarity (albeit _not_ race-free).
+-	 */
+-	if (unlikely(test_bit(BLK_MQ_S_STOPPED, &hctx->state)))
+-		return BLK_MQ_RQ_QUEUE_BUSY;
+-
+ 	if (ti->type->busy && ti->type->busy(ti))
+ 		return BLK_MQ_RQ_QUEUE_BUSY;
+ 
 -- 
 2.9.3
