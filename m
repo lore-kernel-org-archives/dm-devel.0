@@ -1,7 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 1/9] blk-mq: Introduce blk_mq_queue_stopped()
-Date: Wed, 31 Aug 2016 15:15:39 -0700
-Message-ID: <4c2aead4-cef6-00ae-7cb7-44fd74050de4@sandisk.com>
+Subject: [PATCH 2/9] dm: Rename a function argument
+Date: Wed, 31 Aug 2016 15:16:02 -0700
+Message-ID: <0753eed4-ba3a-a747-648d-cd5520916134@sandisk.com>
 References: <18db2396-cd4f-1d52-1ffa-21b9b512eaf4@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,61 +18,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <axboe@fb.com>, device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The function blk_queue_stopped() allows to test whether or not a
-non-mq queue has been stopped. Introduce a helper function that
-allows block drivers to query easily whether or not one or more
-hardware contexts of a blk-mq queue have been stopped.
+Rename 'interruptible' into 'sleep_state' to make it clear that this
+argument is a task state instead of a boolean.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: Jens Axboe <axboe@fb.com>
-Cc: Christoph Hellwig <hch@lst.de>
 ---
- block/blk-mq.c         | 17 +++++++++++++++++
- include/linux/blk-mq.h |  1 +
- 2 files changed, 18 insertions(+)
+ drivers/md/dm.c | 15 ++++++++++-----
+ 1 file changed, 10 insertions(+), 5 deletions(-)
 
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 0dcafa6..6929a52 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -965,6 +965,23 @@ void blk_mq_run_hw_queues(struct request_queue *q, bool async)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index fa9b1cb..1d3627c 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1934,7 +1934,8 @@ void dm_put(struct mapped_device *md)
  }
- EXPORT_SYMBOL(blk_mq_run_hw_queues);
+ EXPORT_SYMBOL_GPL(dm_put);
  
-+/*
-+ * The caller is responsible for serializing this function against
-+ * blk_mq_{start,stop}_hw_queue().
-+ */
-+bool blk_mq_queue_stopped(struct request_queue *q)
-+{
-+	struct blk_mq_hw_ctx *hctx;
-+	int i;
-+
-+	queue_for_each_hw_ctx(q, hctx, i)
-+		if (test_bit(BLK_MQ_S_STOPPED, &hctx->state))
-+			return true;
-+
-+	return false;
-+}
-+EXPORT_SYMBOL(blk_mq_queue_stopped);
-+
- void blk_mq_stop_hw_queue(struct blk_mq_hw_ctx *hctx)
+-static int dm_wait_for_completion(struct mapped_device *md, int interruptible)
++/* @sleep_state: e.g. TASK_INTERRUPTIBLE or TASK_UNINTERRUPTIBLE */
++static int dm_wait_for_completion(struct mapped_device *md, int sleep_state)
  {
- 	cancel_delayed_work(&hctx->run_work);
-diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
-index e43bbff..bd677bc 100644
---- a/include/linux/blk-mq.h
-+++ b/include/linux/blk-mq.h
-@@ -235,6 +235,7 @@ void blk_mq_kick_requeue_list(struct request_queue *q);
- void blk_mq_abort_requeue_list(struct request_queue *q);
- void blk_mq_complete_request(struct request *rq, int error);
+ 	int r = 0;
+ 	DECLARE_WAITQUEUE(wait, current);
+@@ -1942,12 +1943,12 @@ static int dm_wait_for_completion(struct mapped_device *md, int interruptible)
+ 	add_wait_queue(&md->wait, &wait);
  
-+bool blk_mq_queue_stopped(struct request_queue *q);
- void blk_mq_stop_hw_queue(struct blk_mq_hw_ctx *hctx);
- void blk_mq_start_hw_queue(struct blk_mq_hw_ctx *hctx);
- void blk_mq_stop_hw_queues(struct request_queue *q);
+ 	while (1) {
+-		set_current_state(interruptible);
++		set_current_state(sleep_state);
+ 
+ 		if (!md_in_flight(md))
+ 			break;
+ 
+-		if (interruptible == TASK_INTERRUPTIBLE &&
++		if (sleep_state == TASK_INTERRUPTIBLE &&
+ 		    signal_pending(current)) {
+ 			r = -EINTR;
+ 			break;
+@@ -2075,6 +2076,10 @@ static void unlock_fs(struct mapped_device *md)
+ }
+ 
+ /*
++ * @suspend_flags: DM_SUSPEND_LOCKFS_FLAG and/or DM_SUSPEND_NOFLUSH_FLAG
++ * @sleep_state: e.g. TASK_INTERRUPTIBLE or TASK_UNINTERRUPTIBLE
++ * @dmf_suspended_flag: DMF_SUSPENDED or DMF_SUSPENDED_INTERNALLY
++ *
+  * If __dm_suspend returns 0, the device is completely quiescent
+  * now. There is no request-processing activity. All new requests
+  * are being added to md->deferred list.
+@@ -2082,7 +2087,7 @@ static void unlock_fs(struct mapped_device *md)
+  * Caller must hold md->suspend_lock
+  */
+ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
+-			unsigned suspend_flags, int interruptible,
++			unsigned suspend_flags, int sleep_state,
+ 			int dmf_suspended_flag)
+ {
+ 	bool do_lockfs = suspend_flags & DM_SUSPEND_LOCKFS_FLAG;
+@@ -2149,7 +2154,7 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
+ 	 * We call dm_wait_for_completion to wait for all existing requests
+ 	 * to finish.
+ 	 */
+-	r = dm_wait_for_completion(md, interruptible);
++	r = dm_wait_for_completion(md, sleep_state);
+ 	if (!r)
+ 		set_bit(dmf_suspended_flag, &md->flags);
+ 
 -- 
 2.9.3
