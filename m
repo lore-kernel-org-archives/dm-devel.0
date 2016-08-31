@@ -1,13 +1,11 @@
-From: Mike Christie <mchristi@redhat.com>
-Subject: [PATCH 2/4] rbd: check for nonshared clients
-Date: Wed, 31 Aug 2016 16:44:28 -0500
-Message-ID: <1472679870-25654-3-git-send-email-mchristi@redhat.com>
-References: <1472679870-25654-1-git-send-email-mchristi@redhat.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: [PATCH 0/9] dm patches for kernel v4.9
+Date: Wed, 31 Aug 2016 15:14:32 -0700
+Message-ID: <18db2396-cd4f-1d52-1ffa-21b9b512eaf4@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1472679870-25654-1-git-send-email-mchristi@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,33 +15,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, christophe.varoqui@opensvc.com
-Cc: Mike Christie <mchristi@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The rbd checker only supports nonshared clients so add a check
-during init time.
+Hello Mike,
 
-Signed-off-by: Mike Christie <mchristi@redhat.com>
----
- libmultipath/checkers/rbd.c | 5 +++++
- 1 file changed, 5 insertions(+)
+This patch series avoids that removing a dm device hangs sporadically. I 
+would appreciate it if you would consider these patches for inclusion in 
+kernel v4.9. The patches in this series are:
 
-diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
-index f7b1087..6542bdb 100644
---- a/libmultipath/checkers/rbd.c
-+++ b/libmultipath/checkers/rbd.c
-@@ -123,6 +123,11 @@ int libcheck_init(struct checker * c)
- 	if (!config_info)
- 		goto free_addr;
- 
-+	if (!strstr(config_info, "noshare")) {
-+		condlog(3, "Only nonshared clients supported.");
-+		goto free_addr;
-+	}
-+
- 	ct->config_info = strdup(config_info);
- 	if (!ct->config_info)
- 		goto free_addr;
--- 
-2.7.2
+0001-blk-mq-Introduce-blk_mq_queue_stopped.patch
+0002-dm-Rename-a-function-argument.patch
+0003-dm-Introduce-signal_pending_state.patch
+0004-dm-Convert-wait-loops.patch
+0005-dm-Add-two-lockdep_assert_held-statements.patch
+0006-dm-Simplify-dm_old_stop_queue.patch
+0007-dm-Mark-block-layer-queue-dead-before-destroying-the.patch
+0008-dm-Fix-two-race-conditions-related-to-stopping-and-s.patch
+0009-dm-path-selector-Avoid-that-device-removal-triggers-.patch
+
+Thanks,
+
+Bart.
