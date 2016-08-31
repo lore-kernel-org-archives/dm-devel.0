@@ -1,34 +1,22 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH] dm-bufio: Remove deprecated create_singlethread_workqueue
-Date: Wed, 31 Aug 2016 10:21:49 -0400
-Message-ID: <20160831142149.GH12660@htj.duckdns.org>
-References: <20160830164911.GA26756@Karyakshetra>
+From: Mike Christie <mchristi@redhat.com>
+Subject: [PATCH 0/4] multipath-tools rbd checker fixes
+Date: Wed, 31 Aug 2016 16:44:26 -0500
+Message-ID: <1472679870-25654-1-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160830164911.GA26756@Karyakshetra>
-Sender: linux-raid-owner@vger.kernel.org
-To: Bhaktipriya Shridhar <bhaktipriya96@gmail.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, christophe.varoqui@opensvc.com
 List-Id: dm-devel.ids
 
-On Tue, Aug 30, 2016 at 10:19:11PM +0530, Bhaktipriya Shridhar wrote:
-> The workqueue "dm_bufio_wq" queues a single work item &dm_bufio_work and
-> hence it doesn't require execution ordering. Hence, alloc_workqueue has
-> been used to replace the deprecated create_singlethread_workqueue instance.
-> 
-> The WQ_MEM_RECLAIM flag has been set since md / dm are block multi disk
-> drivers and require forward progress under memory pressure.
-> 
-> Since there are fixed number of work items, explicit concurrency
-> limit is unnecessary here.
-> 
-> Signed-off-by: Bhaktipriya Shridhar <bhaktipriya96@gmail.com>
-
-Acked-by: Tejun Heo <tj@kernel.org>
-
-Thanks.
-
--- 
-tejun
+The following patches fix some minor issues in the rbd checker.
+They were made over the upsteam multipath-tools git tree.
