@@ -1,116 +1,93 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: should blk-mq halt requeue processing while queue is frozen?
-Date: Fri, 2 Sep 2016 20:34:45 -0400
-Message-ID: <20160903003445.GA20058@redhat.com>
-References: <20160901211718.GA12894@redhat.com>
- <20160901221823.GA13209@redhat.com>
- <f276cf3d-cad3-3e61-2903-754970f90445@sandisk.com>
- <20160901222654.GA13292@redhat.com>
- <938609b9-3a55-0ed3-ffeb-de27e1c1e864@sandisk.com>
- <20160901234754.GA13653@redhat.com>
- <6af010f8-0a8f-cf0e-d819-3b8e1c20b56e@sandisk.com>
- <20160902151213.GA17508@redhat.com>
- <20160902161059.GB17508@redhat.com>
- <aa663595-4890-adb1-a2b4-422b0b65b097@sandisk.com>
+From: james harvey <jamespharvey20@gmail.com>
+Subject: Re: lvmetad doesn't terminate with SIGTERM if thin
+	volume used
+Date: Fri, 2 Sep 2016 23:17:31 -0400
+Message-ID: <CA+X5Wn6HBdYhngV8UC109P2FnCu_8BWM17_odkvHLtvgUyXNHQ@mail.gmail.com>
+References: <CA+X5Wn6rX5rjFOhz-V3r9QYY_Mcp-0ddBTRDSuhq4Xyy2ob-7Q@mail.gmail.com>
+	<CA+X5Wn5wn-engMAxvdqVSbK2bPo=9sz3485N3ZnCqGEZcQ79-Q@mail.gmail.com>
+	<CA+X5Wn6DorjjziBD=R+60++bQgwAxDz_xvVsuv76u01Z8KKp6g@mail.gmail.com>
+	<78d5445c-e565-03ce-e586-2073aa7b0d99@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <aa663595-4890-adb1-a2b4-422b0b65b097@sandisk.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, hch@lst.de
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <78d5445c-e565-03ce-e586-2073aa7b0d99@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Sep 02 2016 at  6:42pm -0400,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+On Tue, Aug 16, 2016 at 5:57 AM, Zdenek Kabelac <zkabelac@redhat.com> wrote:
+> Dne 6.8.2016 v 04:08 james harvey napsal(a):
+>>
+>> Same problem and question about if an immediate SIGKILL is OK for
+>> dmeventd.
+>>
+>> On Thu, Aug 4, 2016 at 11:20 PM, james harvey <jamespharvey20@gmail.com>
+>> wrote:
+>>>
+>>> Does it matter at all if lvmetad shuts down gracefully?
+>>>
+>>> Can I safely just have systemd right off the bat send a SIGKILL?
+>>>
+>>> Most things I wouldn't ask about, but I'm wondering if this is PURELY
+>>> a caching daemon where gracefully shutting down doesn't really do
+>>> anything.
+>>>
+>
+>
+> Sigterm/sigint is ignored by dmeventd when device is monitored.
+>
+> Before stopping dmevend - devices shall be unmonitored.
+> (vg/lvchange)
+>
+> Killing 'dmeventd' in the middle of i.e. recovery operation might leave your
+> system in dizzy state (suspended devices) essentially useless.
+>
+>
+> Somewhat similar ATM does apply to lvmetad - where lvm2 command will not
+> like death of lvmetad in the middle of operation and this may result in
+> operation failure (thought here the situation might get somewhat improved
+> over the time...) - but ATM don't kill  - just stop services.
+>
+> Fedora should be doing it properly on reboot - switching to ramdisk and
+> continuing with shutdown sequence from there.  Unsure how other OS-es solves
+> this.
+>
+> Using 'kill -9' (SIGKILL) is in general unsupported and any reported
+> problems caused by this usage are ignored...
+>
+> Regards
+>
+> Zdenek
+>
 
-> On 09/02/2016 09:10 AM, Mike Snitzer wrote:
-> >On Fri, Sep 02 2016 at 11:12am -0400,
-> >Mike Snitzer <snitzer@redhat.com> wrote:
-> >
-> >>So in the case of blk-mq request-based DM: we cannot expect
-> >>blk_mq_freeze_queue(), during suspend, to complete if requests are
-> >>getting requeued to the blk-mq queue via BLK_MQ_RQ_QUEUE_BUSY.
-> >
-> >Looking closer at blk-mq.  Currently __blk_mq_run_hw_queue() will move
-> >any requeued requests to the hctx->dispatch list and then performs async
-> >blk_mq_run_hw_queue().
-> >
-> >To do what you hoped (have blk_mq_freeze_queue() discontinue all use of
-> >blk-mq hw queues during DM suspend) I think we'd need blk-mq to:
-> >1) avoid processing requeued IO if blk_mq_freeze_queue() was used to
-> >   freeze the queue.  Meaning it'd have to hold requeued work longer
-> >   than it currently does.
-> >2) Then once blk_mq_unfreeze_queue() is called it'd allow requeues to
-> >   proceed.
-> >
-> >This would be catering to a very specific requirement of DM (given it
-> >re-queues IO back to the request_queue during suspend).
-> >
-> >BUT all said, relative to request-based DM multipath, what we have is
-> >perfectly fine on a correctness level: the requests are re-queued
-> >because the blk-mq DM device is suspended.
-> >
-> >Unfortunately on an efficiency level DM suspend creates a lot of busy
-> >looping in blk-mq, with 100% cpu usage in a threads with names
-> >"kworker/3:1H", ideally we'd avoid that!
-> 
-> Hello Mike,
-> 
-> What blk_mq_freeze_queue() does is to wait until queue_rq() has
-> finished *and* all pending requests have completed.
+Got it.  Fedora defaults to having lvm2-monitor.service enabled, Arch
+doesn't.  (I've asked for that to be fixed.)  Arch also uses a
+shutdown ramdisk.
 
-Right, I had a look at blk-mq this afternoon and it is clear that the
-current implementation of blk-mq's freeze (in terms of percpu
-q->q_usage_counter dropping to zero) won't fly for the DM requeue
-usecase.
+A few follow-ups, then:
 
-> However, I think
-> in dm_stop_queue() all we need is to wait until queue_rq() has
-> finished. How about adding new functions in the block layer core to
-> realize this, e.g. something like in the attached (untested) patch?
-> Busy looping should be avoided - see also the tests of the new
-> "quiescing" flag.
+1) Should the lvm2-lvmetad, dm-event, and lvm2-monitor unit files be
+modified so they are never given a SIGKILL?  Even with
+lvm2-monitor.service enabled, even on Fedora, if systemd sees they
+don't SIGTERM/SIGINT within 90 seconds (systemd v231 is 90 seconds,
+was 10 second before), it's sending them a SIGKILL.  I think adding
+"SendSIGKILL=no" to the Service and Socket sections will do this, if I
+understand it correctly.
 
-I'll take a closer look at your patch next week.
+2) Should lvm2-lvmetad and dm-event systemd unit files want
+lvm2-monitor.service?
 
-The reuse of the mq_freeze_depth to achieve this quiesce/resume will
-need closer review -- likely by Jens.
-
->  void blk_mq_wake_waiters(struct request_queue *q)
->  {
->  	struct blk_mq_hw_ctx *hctx;
-> @@ -506,6 +546,9 @@ static void blk_mq_requeue_work(struct work_struct *work)
->  	struct request *rq, *next;
->  	unsigned long flags;
->  
-> +	if (blk_queue_quiescing(q))
-> +		return;
-> +
->  	spin_lock_irqsave(&q->requeue_lock, flags);
->  	list_splice_init(&q->requeue_list, &rq_list);
->  	spin_unlock_irqrestore(&q->requeue_lock, flags);
-> @@ -806,6 +849,8 @@ static void __blk_mq_run_hw_queue(struct blk_mq_hw_ctx *hctx)
->  	 */
->  	flush_busy_ctxs(hctx, &rq_list);
->  
-> +	rcu_read_lock();
-> +
->  	/*
->  	 * If we have previous entries on our dispatch list, grab them
->  	 * and stuff them at the front for more fair dispatch.
-> @@ -888,8 +933,11 @@ static void __blk_mq_run_hw_queue(struct blk_mq_hw_ctx *hctx)
->  		 *
->  		 * blk_mq_run_hw_queue() already checks the STOPPED bit
->  		 **/
-> -		blk_mq_run_hw_queue(hctx, true);
-> +		if (!blk_queue_quiescing(q))
-> +			blk_mq_run_hw_queue(hctx, true);
->  	}
-> +
-> +	rcu_read_unlock();
->  }
-
-Yes, those are the correct hooks to place code to conditionally
-short-circuit normal blk-mq operation.
+3) Could all LVM programs be changed so if they receive a
+SIGTERM/SIGINT and choose to ignore it, they give a warn/info/debug
+message?  Not doing so invites thinking a SIGKILL is the proper thing
+to do.
