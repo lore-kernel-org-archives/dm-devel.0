@@ -1,18 +1,16 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: lvmetad doesn't terminate with SIGTERM if thin
-	volume used
-Date: Mon, 5 Sep 2016 10:39:33 +0200
-Message-ID: <656f1a37-00b1-b074-32cd-1c5ec962e27d@redhat.com>
-References: <CA+X5Wn6rX5rjFOhz-V3r9QYY_Mcp-0ddBTRDSuhq4Xyy2ob-7Q@mail.gmail.com>
-	<CA+X5Wn5wn-engMAxvdqVSbK2bPo=9sz3485N3ZnCqGEZcQ79-Q@mail.gmail.com>
-	<CA+X5Wn6DorjjziBD=R+60++bQgwAxDz_xvVsuv76u01Z8KKp6g@mail.gmail.com>
-	<78d5445c-e565-03ce-e586-2073aa7b0d99@redhat.com>
-	<CA+X5Wn6HBdYhngV8UC109P2FnCu_8BWM17_odkvHLtvgUyXNHQ@mail.gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: request to update man
+ pages/TEMPLATE if "device subsection" keywords are changed
+Date: Mon, 5 Sep 2016 16:02:26 +0200
+Message-ID: <44c9bc97-9a33-ae34-4f98-71d8e6df15bf@gmail.com>
+References: <1472424064-9669-1-git-send-email-xose.vazquez@gmail.com>
+	<CABr-Gnd8j9eXtdmNUA8imo2zxt7B5aUH7XBoQGoOezkcruHwCg@mail.gmail.com>
+	<d8edc588-be80-b59f-51fa-07c0e077af3b@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CA+X5Wn6HBdYhngV8UC109P2FnCu_8BWM17_odkvHLtvgUyXNHQ@mail.gmail.com>
+In-Reply-To: <d8edc588-be80-b59f-51fa-07c0e077af3b@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,110 +20,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: james harvey <jamespharvey20@gmail.com>
-Cc: dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>, Sean McGinnis <sean_mcginnis@dell.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 3.9.2016 v 05:17 james harvey napsal(a):
-> On Tue, Aug 16, 2016 at 5:57 AM, Zdenek Kabelac <zkabelac@redhat.com> wrote:
->> Dne 6.8.2016 v 04:08 james harvey napsal(a):
->>>
->>> Same problem and question about if an immediate SIGKILL is OK for
->>> dmeventd.
->>>
->>> On Thu, Aug 4, 2016 at 11:20 PM, james harvey <jamespharvey20@gmail.com>
->>> wrote:
->>>>
->>>> Does it matter at all if lvmetad shuts down gracefully?
->>>>
->>>> Can I safely just have systemd right off the bat send a SIGKILL?
->>>>
->>>> Most things I wouldn't ask about, but I'm wondering if this is PURELY
->>>> a caching daemon where gracefully shutting down doesn't really do
->>>> anything.
->>>>
->>
->>
->> Sigterm/sigint is ignored by dmeventd when device is monitored.
->>
->> Before stopping dmevend - devices shall be unmonitored.
->> (vg/lvchange)
->>
->> Killing 'dmeventd' in the middle of i.e. recovery operation might leave your
->> system in dizzy state (suspended devices) essentially useless.
->>
->>
->> Somewhat similar ATM does apply to lvmetad - where lvm2 command will not
->> like death of lvmetad in the middle of operation and this may result in
->> operation failure (thought here the situation might get somewhat improved
->> over the time...) - but ATM don't kill  - just stop services.
->>
->> Fedora should be doing it properly on reboot - switching to ramdisk and
->> continuing with shutdown sequence from there.  Unsure how other OS-es solves
->> this.
->>
->> Using 'kill -9' (SIGKILL) is in general unsupported and any reported
->> problems caused by this usage are ignored...
->>
->> Regards
->>
->> Zdenek
->>
->
-> Got it.  Fedora defaults to having lvm2-monitor.service enabled, Arch
-> doesn't.  (I've asked for that to be fixed.)  Arch also uses a
-> shutdown ramdisk.
+On 08/29/2016 10:49 AM, Xose Vazquez Perez wrote:
 
-Using some device type WITHOUT monitoring is quite 'crazy' idea...
-Unless you are well aware of what you are doing,  thin, raid, mirror,
-snapshot device should be always monitored...
+> On 08/29/2016 09:25 AM, Christophe Varoqui wrote:
+> 
+>> Merged.
+> 
+> There are six pending patches:
+> https://patchwork.kernel.org/project/dm-devel/list/?submitter=3680
 
-So IMHO a thing to fix in Arch....
-
->
-> 1) Should the lvm2-lvmetad, dm-event, and lvm2-monitor unit files be
-> modified so they are never given a SIGKILL?  Even with
-> lvm2-monitor.service enabled, even on Fedora, if systemd sees they
-> don't SIGTERM/SIGINT within 90 seconds (systemd v231 is 90 seconds,
-> was 10 second before), it's sending them a SIGKILL.  I think adding
-> "SendSIGKILL=no" to the Service and Socket sections will do this, if I
-> understand it correctly.
-
-That's a different story here - it something is 'deadlocked' and
-can't move forward - killing things after 90 seconds can't make
-the situation any more worst likely - especially if you are doing shutdown...
-
-So no - there is no plan to use such option (SendSIGKILL=no) ATM
-(State-machine is pretty complex and when some devices are 'forgotten' in 
-suspend - it's quite hard to fix it).
-
-
-> 2) Should lvm2-lvmetad and dm-event systemd unit files want
-> lvm2-monitor.service?
-
-lvm2-lvmetad is unrelated to monitoring service (dmevent).
-
-
-> 3) Could all LVM programs be changed so if they receive a
-> SIGTERM/SIGINT and choose to ignore it, they give a warn/info/debug
-> message?  Not doing so invites thinking a SIGKILL is the proper thing
-> to do.
-
-
-SIGINT should  be handle with logging - (at least I've taken care  in dmeventd 
-- it should log this to syslog).
-
-Both daemons should be able to gracefully shutdown if they are not in use
-(i.e. no connection to lvmetad,  no monitored device in dmeventd).
-
-lvm2 command usually block signal processing while it's holding VG lock,
-but it should be breakable (SIGINT) in those 'process_each_lv'  loops or if 
-the command prompts - support for  SIGTERM is planned - but low-prio - so it 
-will happen - it's known issue - but bigger fishes are there for hunting ATM... :)
-
-The best is to open BZ if you find something breaking common logic.
-(So it's not lost in mailing list noice).
-
-Regards
-
-Zdenek
+patchwork was cleaned. They are:
+[PATCH v3] multipath-tools: Add Dell SC name and maintainer
+[PATCH] multipath-tools: identify some IBM FlashSystem arrays
+[PATCH 1/4] multipath-tools: replace queue_if_no_path with NO_PATH_RETRY_QUEUE
+[PATCH 2/4] multipath-tools: replace GROUP_BY_SERIAL with MULTIBUS for IBM 3542 and 2105
+[PATCH 3/4] multipath-tools: change default failback from manual to undefined
+[PATCH 4/4] multipath-tools: change default path_grouping_policy from failover to multibus
