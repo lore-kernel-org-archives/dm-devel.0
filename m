@@ -1,11 +1,14 @@
-From: Eric Biggers <ebiggers@google.com>
-Subject: [PATCH] dm verity: fix incorrect error message
-Date: Thu,  8 Sep 2016 12:21:28 -0700
-Message-ID: <1473362488-3733-1-git-send-email-ebiggers@google.com>
+From: zhang.kai16@zte.com.cn
+Subject: Re: [PATCH] kpartx: partitions of mapped devices cannot
+ be created in redhat OS
+Date: Fri, 9 Sep 2016 10:24:29 +0800
+Message-ID: <OFAC848A92.377D9D36-ON48258029.000A0F11-48258029.000D3268@zte.com.cn>
+References: <1472469122-12952-1-git-send-email-tang.junhui@zte.com.cn>	<1473161968.15423.1.camel@researchut.com>
+	<20160908155448.GI7016@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============8656754472321744715=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20160908155448.GI7016@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,27 +18,128 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, snitzer@redhat.com
-Cc: dm-devel@redhat.com, Eric Biggers <ebiggers@google.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, tang.junhui@zte.com.cn, Ritesh Raj Sarraf <rrs@researchut.com>, dm-devel-bounces@redhat.com
 List-Id: dm-devel.ids
 
-Signed-off-by: Eric Biggers <ebiggers@google.com>
----
- drivers/md/dm-verity-target.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+This is a multipart message in MIME format.
+--===============8656754472321744715==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 000D326448258029_="
 
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 0aba34a..7335d8a 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -868,7 +868,7 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 
- 	r = dm_get_device(ti, argv[2], FMODE_READ, &v->hash_dev);
- 	if (r) {
--		ti->error = "Data device lookup failed";
-+		ti->error = "Hash device lookup failed";
- 		goto bad;
- 	}
- 
--- 
-2.8.0.rc3.226.g39d4020
+This is a multipart message in MIME format.
+--=_alternative 000D326448258029_=
+Content-Type: text/plain; charset="GB2312"
+Content-Transfer-Encoding: base64
+
+SG93IHRvIGNyZWF0ZSBwYXJ0aXRpb25zIHdpdGhvdXQga3BhcnR4LnJ1bGVzIGlmIHdlIHdhbnQg
+dG8gdXNlIHRoZSBsYXRlc3QgDQp2ZXJzaW9uIG11bHRpcGF0aC10b29scyBvZiBvcGVuc3ZjIGlu
+IHJoZWw3LjI/DQoNCg0KDQq3orz+yMs6ICAgICAgICAgIkJlbmphbWluIE1hcnppbnNraSIgPGJt
+YXJ6aW5zQHJlZGhhdC5jb20+DQrK1bz+yMs6ICAgICAgICAgUml0ZXNoIFJhaiBTYXJyYWYgPHJy
+c0ByZXNlYXJjaHV0LmNvbT4sIA0Ks63LzTogICBkbS1kZXZlbEByZWRoYXQuY29tDQrI1cbaOiAg
+IDIwMTYtMDktMDkgMDA6MDINCtb3zOI6ICAgUmU6IFtkbS1kZXZlbF0gW1BBVENIXSBrcGFydHg6
+IHBhcnRpdGlvbnMgb2YgbWFwcGVkIGRldmljZXMgY2Fubm90IA0KYmUgY3JlYXRlZCBpbiByZWRo
+YXQgT1MNCreivP7IyzogZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tDQoNCg0KDQpPbiBUdWUs
+IFNlcCAwNiwgMjAxNiBhdCAwNTowOToyOFBNICswNTMwLCBSaXRlc2ggUmFqIFNhcnJhZiB3cm90
+ZToNCj4gWWVzLiBJbiBEZWJpYW4gdG9vLCB3ZSd2ZSBiZWVuIGhpdCBieSBzb21ldGhpbmcgc2lt
+aWxhci4NCj4gDQo+IGh0dHA6Ly9idWdzLmRlYmlhbi5vcmcvY2dpLWJpbi9idWdyZXBvcnQuY2dp
+P2J1Zz04Mjc0MTINCj4gDQpodHRwczovL2Fub25zY20uZGViaWFuLm9yZy9jZ2l0L3BrZy1sdm0v
+bXVsdGlwYXRoLXRvb2xzLmdpdC90cmVlL2RlYmlhbi9kbXNldHVwXw0KDQo+IGVudg0KDQpJIGp1
+c3Qgd2FudCB0byBwb2ludCBvdXQgdGhhdCB3ZSBkb24ndCBhY3R1YWxseSBkaXN0cmlidXRlIGtw
+YXJ0eC5ydWxlcw0KaW4gdGhlIHJlZGhhdCByZWxlYXNlcyBvZiB0aGUgbXVsdGlwYXRoLXRvb2xz
+Lg0KDQotQmVuDQoNCj4gDQo+IA0KPiANCj4gT24gTW9uLCAyMDE2LTA4LTI5IGF0IDE5OjEyICsw
+ODAwLCB0YW5nLmp1bmh1aUB6dGUuY29tLmNuIHdyb3RlOg0KPiA+IEZyb206ICJ0YW5nLmp1bmh1
+aSIgPHRhbmcuanVuaHVpQHp0ZS5jb20uY24+DQo+ID4gDQo+ID4gRW52aXJvbm1lbnQgdmFyaWFi
+bGVzIHN1Y2ggYXMgRE1fVEFCTEVfU1RBVEUgYXJlIHVzZWQgaW4ga3BhcnR4LnJ1bGVzIA0Kd2hp
+Y2gNCj4gPiBleHBvcnRlZA0KPiA+IGJ5ICJkbXNldHVwIGV4cG9ydCIgaW4gcHJldmlvdXMgdWRl
+diBydWxlcyBpbiBTdVNFIE9TLCBob3dldmVyLCB0aGVyZSANCmlzIG5vDQo+ID4gc3VjaCBjb21t
+YW5kDQo+ID4gImRtc2V0dXAgZXhwb3J0IiBpbiByZWRoYXQgT1MsIHNvIHRoZXNlIGVudmlyb25t
+ZW50IHZhcmlhYmxlcyBhcmUgbm90DQo+ID4gaW5pdGlhbGl6ZWQgYW5kDQo+ID4gcGFydGl0aW9u
+cyBjYW5ub3QgYmUgY3JlYXRlZC4gVGhpcyBwYXRjaCByZXBsYWNlICJkbXNldHVwIGV4cG9ydCIg
+d2l0aA0KPiA+ICJkbXNldHVwIGluZm8iDQo+ID4gdG8gZ2V0IHRoZSBzdGF0dXMgb2YgbWFwcGVk
+IGRldmljZSwgd2hpY2ggY2FuIHdvcmsgd2VsbCBib3RoIGluIFN1U0UgDQphbmQNCj4gPiByZWRo
+YXQgT1MuDQo+IC0tIA0KPiBHaXZlbiB0aGUgbGFyZ2UgbnVtYmVyIG9mIG1haWxpbmcgbGlzdHMg
+SSBmb2xsb3csIEkgcmVxdWVzdCB5b3UgdG8gQ0MNCj4gbWUgaW4gcmVwbGllcyBmb3IgcXVpY2tl
+ciByZXNwb25zZQ0KDQoNCg0KPiAtLQ0KPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QNCj4gZG0tZGV2
+ZWxAcmVkaGF0LmNvbQ0KPiBodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
+ZG0tZGV2ZWwNCg0KLS0NCmRtLWRldmVsIG1haWxpbmcgbGlzdA0KZG0tZGV2ZWxAcmVkaGF0LmNv
+bQ0KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsDQoNCg0K
+--=_alternative 000D326448258029_=
+Content-Type: text/html; charset="GB2312"
+Content-Transfer-Encoding: base64
+
+PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPkhvdyB0byBjcmVhdGUgcGFydGl0aW9ucyB3
+aXRob3V0IDwvZm9udD48dHQ+PGZvbnQgc2l6ZT0yPmtwYXJ0eC5ydWxlczwvZm9udD48L3R0Pjxm
+b250IHNpemU9MiBmYWNlPSJzYW5zLXNlcmlmIj4NCmlmIHdlIHdhbnQgdG8gdXNlIHRoZSBsYXRl
+c3QgdmVyc2lvbiBtdWx0aXBhdGgtdG9vbHMgb2Ygb3BlbnN2YyBpbiByaGVsNy4yPzwvZm9udD4N
+Cjxicj4NCjxicj4NCjxicj4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJz
+YW5zLXNlcmlmIj63orz+yMs6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgPC9mb250Pjxm
+b250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj4mcXVvdDtCZW5qYW1pbg0KTWFyemluc2tpJnF1
+b3Q7ICZsdDtibWFyemluc0ByZWRoYXQuY29tJmd0OzwvZm9udD4NCjxicj48Zm9udCBzaXplPTEg
+Y29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj7K1bz+yMs6ICZuYnNwOyAmbmJzcDsNCiZu
+YnNwOyAmbmJzcDsgPC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj5SaXRlc2gg
+UmFqDQpTYXJyYWYgJmx0O3Jyc0ByZXNlYXJjaHV0LmNvbSZndDssIDwvZm9udD4NCjxicj48Zm9u
+dCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj6zrcvNOiAmbmJzcDsgJm5i
+c3A7DQombmJzcDsgJm5ic3A7PC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj5k
+bS1kZXZlbEByZWRoYXQuY29tPC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVm
+IGZhY2U9InNhbnMtc2VyaWYiPsjVxto6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgPC9m
+b250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj4yMDE2LTA5LTA5DQowMDowMjwvZm9u
+dD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj7W98zi
+OiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7PC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJz
+YW5zLXNlcmlmIj5SZTogW2RtLWRldmVsXQ0KW1BBVENIXSBrcGFydHg6IHBhcnRpdGlvbnMgb2Yg
+bWFwcGVkIGRldmljZXMgY2Fubm90IGJlIGNyZWF0ZWQgaW4gcmVkaGF0DQpPUzwvZm9udD4NCjxi
+cj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj63orz+yMs6ICZu
+YnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDs8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMt
+c2VyaWYiPmRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbTwvZm9udD4NCjxicj4NCjxociBub3No
+YWRlPg0KPGJyPg0KPGJyPg0KPGJyPjx0dD48Zm9udCBzaXplPTI+T24gVHVlLCBTZXAgMDYsIDIw
+MTYgYXQgMDU6MDk6MjhQTSArMDUzMCwgUml0ZXNoIFJhag0KU2FycmFmIHdyb3RlOjxicj4NCiZn
+dDsgWWVzLiBJbiBEZWJpYW4gdG9vLCB3ZSd2ZSBiZWVuIGhpdCBieSBzb21ldGhpbmcgc2ltaWxh
+ci48YnI+DQomZ3Q7IDxicj4NCiZndDsgPC9mb250PjwvdHQ+PGEgaHJlZj0iaHR0cDovL2J1Z3Mu
+ZGViaWFuLm9yZy9jZ2ktYmluL2J1Z3JlcG9ydC5jZ2k/YnVnPTgyNzQxMiI+PHR0Pjxmb250IHNp
+emU9Mj5odHRwOi8vYnVncy5kZWJpYW4ub3JnL2NnaS1iaW4vYnVncmVwb3J0LmNnaT9idWc9ODI3
+NDEyPC9mb250PjwvdHQ+PC9hPjx0dD48Zm9udCBzaXplPTI+PGJyPg0KJmd0OyA8L2ZvbnQ+PC90
+dD48YSBocmVmPSJodHRwczovL2Fub25zY20uZGViaWFuLm9yZy9jZ2l0L3BrZy1sdm0vbXVsdGlw
+YXRoLXRvb2xzLmdpdC90cmVlL2RlYmlhbi9kbXNldHVwXyI+PHR0Pjxmb250IHNpemU9Mj5odHRw
+czovL2Fub25zY20uZGViaWFuLm9yZy9jZ2l0L3BrZy1sdm0vbXVsdGlwYXRoLXRvb2xzLmdpdC90
+cmVlL2RlYmlhbi9kbXNldHVwXzwvZm9udD48L3R0PjwvYT48dHQ+PGZvbnQgc2l6ZT0yPjxicj4N
+CiZndDsgZW52PGJyPg0KPGJyPg0KSSBqdXN0IHdhbnQgdG8gcG9pbnQgb3V0IHRoYXQgd2UgZG9u
+J3QgYWN0dWFsbHkgZGlzdHJpYnV0ZSBrcGFydHgucnVsZXM8YnI+DQppbiB0aGUgcmVkaGF0IHJl
+bGVhc2VzIG9mIHRoZSBtdWx0aXBhdGgtdG9vbHMuPGJyPg0KPGJyPg0KLUJlbjxicj4NCjxicj4N
+CiZndDsgPGJyPg0KJmd0OyA8YnI+DQomZ3Q7IDxicj4NCiZndDsgT24gTW9uLCAyMDE2LTA4LTI5
+IGF0IDE5OjEyICswODAwLCB0YW5nLmp1bmh1aUB6dGUuY29tLmNuIHdyb3RlOjxicj4NCiZndDsg
+Jmd0OyBGcm9tOiAmcXVvdDt0YW5nLmp1bmh1aSZxdW90OyAmbHQ7dGFuZy5qdW5odWlAenRlLmNv
+bS5jbiZndDs8YnI+DQomZ3Q7ICZndDsgPGJyPg0KJmd0OyAmZ3Q7IEVudmlyb25tZW50IHZhcmlh
+YmxlcyBzdWNoIGFzIERNX1RBQkxFX1NUQVRFIGFyZSB1c2VkIGluIGtwYXJ0eC5ydWxlcw0Kd2hp
+Y2g8YnI+DQomZ3Q7ICZndDsgZXhwb3J0ZWQ8YnI+DQomZ3Q7ICZndDsgYnkgJnF1b3Q7ZG1zZXR1
+cCBleHBvcnQmcXVvdDsgaW4gcHJldmlvdXMgdWRldiBydWxlcyBpbiBTdVNFDQpPUywgaG93ZXZl
+ciwgdGhlcmUgaXMgbm88YnI+DQomZ3Q7ICZndDsgc3VjaCBjb21tYW5kPGJyPg0KJmd0OyAmZ3Q7
+ICZxdW90O2Rtc2V0dXAgZXhwb3J0JnF1b3Q7IGluIHJlZGhhdCBPUywgc28gdGhlc2UgZW52aXJv
+bm1lbnQNCnZhcmlhYmxlcyBhcmUgbm90PGJyPg0KJmd0OyAmZ3Q7IGluaXRpYWxpemVkIGFuZDxi
+cj4NCiZndDsgJmd0OyBwYXJ0aXRpb25zIGNhbm5vdCBiZSBjcmVhdGVkLiBUaGlzIHBhdGNoIHJl
+cGxhY2UgJnF1b3Q7ZG1zZXR1cA0KZXhwb3J0JnF1b3Q7IHdpdGg8YnI+DQomZ3Q7ICZndDsgJnF1
+b3Q7ZG1zZXR1cCBpbmZvJnF1b3Q7PGJyPg0KJmd0OyAmZ3Q7IHRvIGdldCB0aGUgc3RhdHVzIG9m
+IG1hcHBlZCBkZXZpY2UsIHdoaWNoIGNhbiB3b3JrIHdlbGwgYm90aA0KaW4gU3VTRSBhbmQ8YnI+
+DQomZ3Q7ICZndDsgcmVkaGF0IE9TLjxicj4NCiZndDsgLS0gPGJyPg0KJmd0OyBHaXZlbiB0aGUg
+bGFyZ2UgbnVtYmVyIG9mIG1haWxpbmcgbGlzdHMgSSBmb2xsb3csIEkgcmVxdWVzdCB5b3UgdG8N
+CkNDPGJyPg0KJmd0OyBtZSBpbiByZXBsaWVzIGZvciBxdWlja2VyIHJlc3BvbnNlPGJyPg0KPGJy
+Pg0KPGJyPg0KPGJyPg0KJmd0OyAtLTxicj4NCiZndDsgZG0tZGV2ZWwgbWFpbGluZyBsaXN0PGJy
+Pg0KJmd0OyBkbS1kZXZlbEByZWRoYXQuY29tPGJyPg0KJmd0OyA8L2ZvbnQ+PC90dD48YSBocmVm
+PSJodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwiPjx0dD48
+Zm9udCBzaXplPTI+aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
+dmVsPC9mb250PjwvdHQ+PC9hPjx0dD48Zm9udCBzaXplPTI+PGJyPg0KPGJyPg0KLS08YnI+DQpk
+bS1kZXZlbCBtYWlsaW5nIGxpc3Q8YnI+DQpkbS1kZXZlbEByZWRoYXQuY29tPGJyPg0KPC9mb250
+PjwvdHQ+PGEgaHJlZj0iaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
+LWRldmVsIj48dHQ+PGZvbnQgc2l6ZT0yPmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
+aXN0aW5mby9kbS1kZXZlbDwvZm9udD48L3R0PjwvYT48dHQ+PGZvbnQgc2l6ZT0yPjxicj4NCjwv
+Zm9udD48L3R0Pg0KPGJyPg0K
+--=_alternative 000D326448258029_=--
+
+
+--===============8656754472321744715==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============8656754472321744715==--
