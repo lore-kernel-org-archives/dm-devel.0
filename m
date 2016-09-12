@@ -1,91 +1,64 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH] kpartx: partitions of mapped devices cannot
- be created in redhat OS
-Date: Fri, 9 Sep 2016 14:04:38 -0500
-Message-ID: <20160909190438.GK7016@octiron.msp.redhat.com>
-References: <1472469122-12952-1-git-send-email-tang.junhui@zte.com.cn>
-	<1473161968.15423.1.camel@researchut.com>
-	<20160908155448.GI7016@octiron.msp.redhat.com>
-	<OFAC848A92.377D9D36-ON48258029.000A0F11-48258029.000D3268@zte.com.cn>
+From: Minfei Huang <mnghuan@gmail.com>
+Subject: Re: [PATCH] dm: Return correct value in retry loop
+Date: Mon, 12 Sep 2016 09:39:06 +0800
+Message-ID: <20160912013906.GA24268@MinfeideMacBook-Pro.local>
+References: <1473148829-3317-1-git-send-email-mnghuan@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <OFAC848A92.377D9D36-ON48258029.000A0F11-48258029.000D3268@zte.com.cn>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: zhang.kai16@zte.com.cn
-Cc: dm-devel@redhat.com, tang.junhui@zte.com.cn, Ritesh Raj Sarraf <rrs@researchut.com>, dm-devel-bounces@redhat.com
+In-Reply-To: <1473148829-3317-1-git-send-email-mnghuan@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com, shli@kernel.org
+Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gRnJpLCBTZXAgMDksIDIwMTYgYXQgMTA6MjQ6MjlBTSArMDgwMCwgemhhbmcua2FpMTZAenRl
-LmNvbS5jbiB3cm90ZToKPiAgICBIb3cgdG8gY3JlYXRlIHBhcnRpdGlvbnMgd2l0aG91dCBrcGFy
-dHgucnVsZXMgaWYgd2Ugd2FudCB0byB1c2UgdGhlIGxhdGVzdAo+ICAgIHZlcnNpb24gbXVsdGlw
-YXRoLXRvb2xzIG9mIG9wZW5zdmMgaW4gcmhlbDcuMj8KClRoaXMgaXMgd2hhdCdzIGF0IHRoZSBl
-bmQgb2YgdGhlIC9saWIvdWRldi9ydWxlcy5kLzYyLW11bHRpcGF0aC5ydWxlcwpmaWxlIHRoYXQg
-Z2V0cyBpbnN0YWxsZWQgd2l0aCB0aGUgcmVndWxhciByaGVsLTcuMiBtdWx0aXBhdGggcGFja2Fn
-ZS4gSWYKeW91IGFkZCBpdCB0byB0aGUgZW5kIG9mIHRoZSBtdWx0aXBhdGgucnVsZXMgZmlsZSB0
-aGF0IGdldHMgaW5zdGFsbGVkCndpdGggdGhlIHVwc3RyZWFtIHBhY2thZ2UsIGp1c3QgYmVmb3Jl
-IHRoZQoKTEFCRUw9ImVuZF9tcGF0aCIKCmxpbmUsIGl0IHNob3VsZCB3b3JrIGZpbmU6CgpBQ1RJ
-T049PSJjaGFuZ2UiLCBJTVBPUlR7ZGJ9PSJETV9NVUxUSVBBVEhfTkVFRF9LUEFSVFgiCktFUk5F
-TCE9ImRtLSoiLCBHT1RPPSJlbmRfbXBhdGgiCkVOVntETV9VVUlEfT09Im1wYXRoLT8qfHBhcnRb
-MC05XSotbXBhdGgtPyoiLApPUFRJT05TKz0ibGlua19wcmlvcml0eT0xMCIKQUNUSU9OIT0iY2hh
-bmdlIiwgR09UTz0iZW5kX21wYXRoIgpFTlZ7RE1fVVVJRH0hPSJtcGF0aC0/KiIsIEdPVE89ImVu
-ZF9tcGF0aCIKRU5We0RNX1NVQlNZU1RFTV9VREVWX0ZMQUcxfT09IjEiLCBHT1RPPSJlbmRfbXBh
-dGgiCkVOVntETV9BQ1RJVkFUSU9OfT09IjEiLCBFTlZ7RE1fTVVMVElQQVRIX05FRURfS1BBUlRY
-fT0iMSIKRU5We0RNX1NVU1BFTkRFRH09PSIxIiwgR09UTz0iZW5kX21wYXRoIgpFTlZ7RE1fQUNU
-SU9OfT09IlBBVEhfRkFJTEVEIiwgR09UTz0iZW5kX21wYXRoIgpFTlZ7RE1fQUNUSVZBVElPTn0h
-PSIxIiwgRU5We0RNX01VTFRJUEFUSF9ORUVEX0tQQVJUWH0hPSIxIiwKR09UTz0iZW5kX21wYXRo
-IgpSVU4rPSIkZW52e01QQVRIX1NCSU5fUEFUSH0va3BhcnR4IC1hICR0ZW1wbm9kZSIsIFwKICAg
-ICAgICBFTlZ7RE1fTVVMVElQQVRIX05FRURfS1BBUlRYfT0iIgoKCj4gCj4gICAg77+977+977+9
-77+977+977+9OiDCoCDCoCDCoCDCoCAiQmVuamFtaW4gTWFyemluc2tpIiA8Ym1hcnppbnNAcmVk
-aGF0LmNvbT4KPiAgICDvv73VvO+/ve+/ve+/vTogwqAgwqAgwqAgwqAgUml0ZXNoIFJhaiBTYXJy
-YWYgPHJyc0ByZXNlYXJjaHV0LmNvbT4sCj4gICAg77+977+977+977+9OiDCoCDCoCDCoCDCoGRt
-LWRldmVsQHJlZGhhdC5jb20KPiAgICDvv73vv73vv73vv706IMKgIMKgIMKgIMKgIDIwMTYtMDkt
-MDkgMDA6MDIKPiAgICDvv73vv73vv73vv706IMKgIMKgIMKgIMKgUmU6IFtkbS1kZXZlbF0gW1BB
-VENIXSBrcGFydHg6IHBhcnRpdGlvbnMgb2YgbWFwcGVkIGRldmljZXMKPiAgICBjYW5ub3QgYmUg
-Y3JlYXRlZCBpbiByZWRoYXQgT1MKPiAgICDvv73vv73vv73vv73vv73vv706IMKgIMKgIMKgIMKg
-ZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tCj4gCj4gICAgLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KPiAK
-PiAgICBPbiBUdWUsIFNlcCAwNiwgMjAxNiBhdCAwNTowOToyOFBNICswNTMwLCBSaXRlc2ggUmFq
-IFNhcnJhZiB3cm90ZToKPiAgICA+IFllcy4gSW4gRGViaWFuIHRvbywgd2UndmUgYmVlbiBoaXQg
-Ynkgc29tZXRoaW5nIHNpbWlsYXIuCj4gICAgPgo+ICAgID4gWzFdaHR0cDovL2J1Z3MuZGViaWFu
-Lm9yZy9jZ2ktYmluL2J1Z3JlcG9ydC5jZ2k/YnVnPTgyNzQxMgo+ICAgID4KPiAgICBbMl1odHRw
-czovL2Fub25zY20uZGViaWFuLm9yZy9jZ2l0L3BrZy1sdm0vbXVsdGlwYXRoLXRvb2xzLmdpdC90
-cmVlL2RlYmlhbi9kbXNldHVwXwo+ICAgID4gZW52Cj4gCj4gICAgSSBqdXN0IHdhbnQgdG8gcG9p
-bnQgb3V0IHRoYXQgd2UgZG9uJ3QgYWN0dWFsbHkgZGlzdHJpYnV0ZSBrcGFydHgucnVsZXMKPiAg
-ICBpbiB0aGUgcmVkaGF0IHJlbGVhc2VzIG9mIHRoZSBtdWx0aXBhdGgtdG9vbHMuCj4gCj4gICAg
-LUJlbgo+IAo+ICAgID4KPiAgICA+Cj4gICAgPgo+ICAgID4gT24gTW9uLCAyMDE2LTA4LTI5IGF0
-IDE5OjEyICswODAwLCB0YW5nLmp1bmh1aUB6dGUuY29tLmNuIHdyb3RlOgo+ICAgID4gPiBGcm9t
-OiAidGFuZy5qdW5odWkiIDx0YW5nLmp1bmh1aUB6dGUuY29tLmNuPgo+ICAgID4gPgo+ICAgID4g
-PiBFbnZpcm9ubWVudCB2YXJpYWJsZXMgc3VjaCBhcyBETV9UQUJMRV9TVEFURSBhcmUgdXNlZCBp
-biBrcGFydHgucnVsZXMKPiAgICB3aGljaAo+ICAgID4gPiBleHBvcnRlZAo+ICAgID4gPiBieSAi
-ZG1zZXR1cCBleHBvcnQiIGluIHByZXZpb3VzIHVkZXYgcnVsZXMgaW4gU3VTRSBPUywgaG93ZXZl
-ciwgdGhlcmUKPiAgICBpcyBubwo+ICAgID4gPiBzdWNoIGNvbW1hbmQKPiAgICA+ID4gImRtc2V0
-dXAgZXhwb3J0IiBpbiByZWRoYXQgT1MsIHNvIHRoZXNlIGVudmlyb25tZW50IHZhcmlhYmxlcyBh
-cmUgbm90Cj4gICAgPiA+IGluaXRpYWxpemVkIGFuZAo+ICAgID4gPiBwYXJ0aXRpb25zIGNhbm5v
-dCBiZSBjcmVhdGVkLiBUaGlzIHBhdGNoIHJlcGxhY2UgImRtc2V0dXAgZXhwb3J0IiB3aXRoCj4g
-ICAgPiA+ICJkbXNldHVwIGluZm8iCj4gICAgPiA+IHRvIGdldCB0aGUgc3RhdHVzIG9mIG1hcHBl
-ZCBkZXZpY2UsIHdoaWNoIGNhbiB3b3JrIHdlbGwgYm90aCBpbiBTdVNFCj4gICAgYW5kCj4gICAg
-PiA+IHJlZGhhdCBPUy4KPiAgICA+IC0tCj4gICAgPiBHaXZlbiB0aGUgbGFyZ2UgbnVtYmVyIG9m
-IG1haWxpbmcgbGlzdHMgSSBmb2xsb3csIEkgcmVxdWVzdCB5b3UgdG8gQ0MKPiAgICA+IG1lIGlu
-IHJlcGxpZXMgZm9yIHF1aWNrZXIgcmVzcG9uc2UKPiAKPiAgICA+IC0tCj4gICAgPiBkbS1kZXZl
-bCBtYWlsaW5nIGxpc3QKPiAgICA+IGRtLWRldmVsQHJlZGhhdC5jb20KPiAgICA+IFszXWh0dHBz
-Oi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo+IAo+ICAgIC0tCj4g
-ICAgZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4gICAgZG0tZGV2ZWxAcmVkaGF0LmNvbQo+ICAgIFs0
-XWh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo+IAo+IFJl
-ZmVyZW5jZXMKPiAKPiAgICBWaXNpYmxlIGxpbmtzCj4gICAgMS4gaHR0cDovL2J1Z3MuZGViaWFu
-Lm9yZy9jZ2ktYmluL2J1Z3JlcG9ydC5jZ2k/YnVnPTgyNzQxMgo+ICAgIDIuIGh0dHBzOi8vYW5v
-bnNjbS5kZWJpYW4ub3JnL2NnaXQvcGtnLWx2bS9tdWx0aXBhdGgtdG9vbHMuZ2l0L3RyZWUvZGVi
-aWFuL2Rtc2V0dXBfCj4gICAgMy4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVsCj4gICAgNC4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVsCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
-bQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Ping.
+
+Any comment is appreciate.
+
+Thanks
+Minfei
+
+On 09/06/16 at 04:00P, Minfei Huang wrote:
+> dm_resume will return sliently in retry loop's failure. Assign a correct
+> return value in the failed loop.
+> 
+> Remove a useless assignment as well.
+> 
+> Signed-off-by: Minfei Huang <mnghuan@gmail.com>
+> ---
+>  drivers/md/dm.c | 5 ++---
+>  1 file changed, 2 insertions(+), 3 deletions(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index fa9b1cb..c935cc8 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -2249,10 +2249,11 @@ static int __dm_resume(struct mapped_device *md, struct dm_table *map)
+>  
+>  int dm_resume(struct mapped_device *md)
+>  {
+> -	int r = -EINVAL;
+> +	int r;
+>  	struct dm_table *map = NULL;
+>  
+>  retry:
+> +	r = -EINVAL;
+>  	mutex_lock_nested(&md->suspend_lock, SINGLE_DEPTH_NESTING);
+>  
+>  	if (!dm_suspended_md(md))
+> @@ -2277,10 +2278,8 @@ retry:
+>  
+>  	clear_bit(DMF_SUSPENDED, &md->flags);
+>  
+> -	r = 0;
+>  out:
+>  	mutex_unlock(&md->suspend_lock);
+> -
+>  	return r;
+>  }
+>  
+> -- 
+> 2.7.4 (Apple Git-66)
+> 
