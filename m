@@ -1,58 +1,81 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] kpartx: partitions of mapped devices cannot
- be created in redhat OS
-Date: Mon, 12 Sep 2016 08:09:57 +0200
-Message-ID: <a2f35e79-6ff2-f5e0-26ee-176a422e8647@suse.de>
-References: <1472469122-12952-1-git-send-email-tang.junhui@zte.com.cn>
-	<1473161968.15423.1.camel@researchut.com>
-	<20160908155448.GI7016@octiron.msp.redhat.com>
-	<OFAC848A92.377D9D36-ON48258029.000A0F11-48258029.000D3268@zte.com.cn>
-	<20160909190438.GK7016@octiron.msp.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: Return correct value in retry loop
+Date: Mon, 12 Sep 2016 11:01:42 -0400
+Message-ID: <20160912150142.GB16681@redhat.com>
+References: <1473148829-3317-1-git-send-email-mnghuan@gmail.com>
+ <20160912013906.GA24268@MinfeideMacBook-Pro.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160909190438.GK7016@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160912013906.GA24268@MinfeideMacBook-Pro.local>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Minfei Huang <mnghuan@gmail.com>
+Cc: agk@redhat.com, shli@kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gMDkvMDkvMjAxNiAwOTowNCBQTSwgQmVuamFtaW4gTWFyemluc2tpIHdyb3RlOgo+IE9uIEZy
-aSwgU2VwIDA5LCAyMDE2IGF0IDEwOjI0OjI5QU0gKzA4MDAsIHpoYW5nLmthaTE2QHp0ZS5jb20u
-Y24gd3JvdGU6Cj4+ICAgIEhvdyB0byBjcmVhdGUgcGFydGl0aW9ucyB3aXRob3V0IGtwYXJ0eC5y
-dWxlcyBpZiB3ZSB3YW50IHRvIHVzZSB0aGUgbGF0ZXN0Cj4+ICAgIHZlcnNpb24gbXVsdGlwYXRo
-LXRvb2xzIG9mIG9wZW5zdmMgaW4gcmhlbDcuMj8KPiAKPiBUaGlzIGlzIHdoYXQncyBhdCB0aGUg
-ZW5kIG9mIHRoZSAvbGliL3VkZXYvcnVsZXMuZC82Mi1tdWx0aXBhdGgucnVsZXMKPiBmaWxlIHRo
-YXQgZ2V0cyBpbnN0YWxsZWQgd2l0aCB0aGUgcmVndWxhciByaGVsLTcuMiBtdWx0aXBhdGggcGFj
-a2FnZS4gSWYKPiB5b3UgYWRkIGl0IHRvIHRoZSBlbmQgb2YgdGhlIG11bHRpcGF0aC5ydWxlcyBm
-aWxlIHRoYXQgZ2V0cyBpbnN0YWxsZWQKPiB3aXRoIHRoZSB1cHN0cmVhbSBwYWNrYWdlLCBqdXN0
-IGJlZm9yZSB0aGUKPiAKPiBMQUJFTD0iZW5kX21wYXRoIgo+IAo+IGxpbmUsIGl0IHNob3VsZCB3
-b3JrIGZpbmU6Cj4gCj4gQUNUSU9OPT0iY2hhbmdlIiwgSU1QT1JUe2RifT0iRE1fTVVMVElQQVRI
-X05FRURfS1BBUlRYIgo+IEtFUk5FTCE9ImRtLSoiLCBHT1RPPSJlbmRfbXBhdGgiCj4gRU5We0RN
-X1VVSUR9PT0ibXBhdGgtPyp8cGFydFswLTldKi1tcGF0aC0/KiIsCj4gT1BUSU9OUys9Imxpbmtf
-cHJpb3JpdHk9MTAiCj4gQUNUSU9OIT0iY2hhbmdlIiwgR09UTz0iZW5kX21wYXRoIgo+IEVOVntE
-TV9VVUlEfSE9Im1wYXRoLT8qIiwgR09UTz0iZW5kX21wYXRoIgo+IEVOVntETV9TVUJTWVNURU1f
-VURFVl9GTEFHMX09PSIxIiwgR09UTz0iZW5kX21wYXRoIgo+IEVOVntETV9BQ1RJVkFUSU9OfT09
-IjEiLCBFTlZ7RE1fTVVMVElQQVRIX05FRURfS1BBUlRYfT0iMSIKPiBFTlZ7RE1fU1VTUEVOREVE
-fT09IjEiLCBHT1RPPSJlbmRfbXBhdGgiCj4gRU5We0RNX0FDVElPTn09PSJQQVRIX0ZBSUxFRCIs
-IEdPVE89ImVuZF9tcGF0aCIKPiBFTlZ7RE1fQUNUSVZBVElPTn0hPSIxIiwgRU5We0RNX01VTFRJ
-UEFUSF9ORUVEX0tQQVJUWH0hPSIxIiwKPiBHT1RPPSJlbmRfbXBhdGgiCj4gUlVOKz0iJGVudntN
-UEFUSF9TQklOX1BBVEh9L2twYXJ0eCAtYSAkdGVtcG5vZGUiLCBcCj4gICAgICAgICBFTlZ7RE1f
-TVVMVElQQVRIX05FRURfS1BBUlRYfT0iIgo+IAo+IApBbnkgcGFydGljdWxhciByZWFzb24gd2h5
-IHRoaXMgY2FuJ3QgYmUgYSBzZXBhcmF0ZSBydWxlcyBmaWxlPwpJJ20gcGVyZmVjdGx5IGZpbmUg
-d2l0aCBoYXZpbmcgU1VTRSBhbmQgUkggc3BlY2lmaWMga3BhcnR4IHJ1bGVzLi4uCgpDaGVlcnMs
-CgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBO
-ZXR3b3JraW5nCmhhcmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4
-ClNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJ
-bWVuZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9u
-CkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
-dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
-LWRldmVs
+Thanks for the patch, I've picked it up as a stable@ fix for either
+4.8-rc7 or when the 4.9 merge windw opens (I'm leaning toward the latter
+since this issue has been around since 3.19 was released and there
+aren't any known problems/reports related to this oversight).
+
+Please see:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.8&id=7735f936a13d79bbaead1723e4532e65d4c4cf01
+
+On Sun, Sep 11 2016 at  9:39pm -0400,
+Minfei Huang <mnghuan@gmail.com> wrote:
+
+> Ping.
+> 
+> Any comment is appreciate.
+> 
+> Thanks
+> Minfei
+> 
+> On 09/06/16 at 04:00P, Minfei Huang wrote:
+> > dm_resume will return sliently in retry loop's failure. Assign a correct
+> > return value in the failed loop.
+> > 
+> > Remove a useless assignment as well.
+> > 
+> > Signed-off-by: Minfei Huang <mnghuan@gmail.com>
+> > ---
+> >  drivers/md/dm.c | 5 ++---
+> >  1 file changed, 2 insertions(+), 3 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> > index fa9b1cb..c935cc8 100644
+> > --- a/drivers/md/dm.c
+> > +++ b/drivers/md/dm.c
+> > @@ -2249,10 +2249,11 @@ static int __dm_resume(struct mapped_device *md, struct dm_table *map)
+> >  
+> >  int dm_resume(struct mapped_device *md)
+> >  {
+> > -	int r = -EINVAL;
+> > +	int r;
+> >  	struct dm_table *map = NULL;
+> >  
+> >  retry:
+> > +	r = -EINVAL;
+> >  	mutex_lock_nested(&md->suspend_lock, SINGLE_DEPTH_NESTING);
+> >  
+> >  	if (!dm_suspended_md(md))
+> > @@ -2277,10 +2278,8 @@ retry:
+> >  
+> >  	clear_bit(DMF_SUSPENDED, &md->flags);
+> >  
+> > -	r = 0;
+> >  out:
+> >  	mutex_unlock(&md->suspend_lock);
+> > -
+> >  	return r;
+> >  }
+> >  
+> > -- 
+> > 2.7.4 (Apple Git-66)
+> > 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
