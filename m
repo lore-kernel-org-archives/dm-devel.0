@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 1/6] blk-mq: introduce blk_mq_delay_kick_requeue_list()
-Date: Wed, 14 Sep 2016 12:29:31 -0400
-Message-ID: <1473870576-54331-2-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 2/6] dm rq: add DM_MAPIO_DELAY_REQUEUE to delay requeue of blk-mq requests
+Date: Wed, 14 Sep 2016 12:29:32 -0400
+Message-ID: <1473870576-54331-3-git-send-email-snitzer@redhat.com>
 References: <1473870576-54331-1-git-send-email-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <1473870576-54331-1-git-send-email-snitzer@redhat.com>
@@ -10,94 +10,143 @@ To: axboe@kernel.dk, dm-devel@redhat.com
 Cc: linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-blk_mq_delay_kick_requeue_list() provides the ability to kick the
-q->requeue_list after a specified time.  To do this the request_queue's
-'requeue_work' member was changed to a delayed_work.
+Otherwise blk-mq will immediately dispatch requests that are requeued
+via a BLK_MQ_RQ_QUEUE_BUSY return from blk_mq_ops .queue_rq.
 
-blk_mq_delay_kick_requeue_list() allows DM to defer processing requeued
-requests while it doesn't make sense to immediately requeue them
-(e.g. when all paths in a DM multipath have failed).
+Delayed requeue is implemented using blk_mq_delay_kick_requeue_list()
+with a delay of 5 secs.  In the context of DM multipath (all paths down)
+it doesn't make any sense to requeue more quickly.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- block/blk-mq.c         | 15 +++++++++++----
- include/linux/blk-mq.h |  1 +
- include/linux/blkdev.h |  2 +-
- 3 files changed, 13 insertions(+), 5 deletions(-)
+ drivers/md/dm-rq.c            | 32 ++++++++++++++++++--------------
+ include/linux/device-mapper.h |  1 +
+ 2 files changed, 19 insertions(+), 14 deletions(-)
 
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 13f5a6c..4ff96b7 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -501,7 +501,7 @@ EXPORT_SYMBOL(blk_mq_requeue_request);
- static void blk_mq_requeue_work(struct work_struct *work)
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 0d301d5..9eebc8d 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -336,20 +336,21 @@ static void dm_old_requeue_request(struct request *rq)
+ 	spin_unlock_irqrestore(q->queue_lock, flags);
+ }
+ 
+-static void dm_mq_requeue_request(struct request *rq)
++static void dm_mq_delay_requeue_request(struct request *rq, unsigned long msecs)
  {
- 	struct request_queue *q =
--		container_of(work, struct request_queue, requeue_work);
-+		container_of(work, struct request_queue, requeue_work.work);
- 	LIST_HEAD(rq_list);
- 	struct request *rq, *next;
+ 	struct request_queue *q = rq->q;
  	unsigned long flags;
-@@ -556,16 +556,23 @@ EXPORT_SYMBOL(blk_mq_add_to_requeue_list);
  
- void blk_mq_cancel_requeue_work(struct request_queue *q)
- {
--	cancel_work_sync(&q->requeue_work);
-+	cancel_delayed_work_sync(&q->requeue_work);
- }
- EXPORT_SYMBOL_GPL(blk_mq_cancel_requeue_work);
- 
- void blk_mq_kick_requeue_list(struct request_queue *q)
- {
--	kblockd_schedule_work(&q->requeue_work);
-+	kblockd_schedule_delayed_work(&q->requeue_work, 0);
- }
- EXPORT_SYMBOL(blk_mq_kick_requeue_list);
- 
-+void blk_mq_delay_kick_requeue_list(struct request_queue *q,
-+				    unsigned long delay)
-+{
-+	kblockd_schedule_delayed_work(&q->requeue_work, delay);
-+}
-+EXPORT_SYMBOL(blk_mq_delay_kick_requeue_list);
+ 	blk_mq_requeue_request(rq);
 +
- void blk_mq_abort_requeue_list(struct request_queue *q)
+ 	spin_lock_irqsave(q->queue_lock, flags);
+ 	if (!blk_queue_stopped(q))
+-		blk_mq_kick_requeue_list(q);
++		blk_mq_delay_kick_requeue_list(q, msecs_to_jiffies(msecs));
+ 	spin_unlock_irqrestore(q->queue_lock, flags);
+ }
+ 
+ static void dm_requeue_original_request(struct mapped_device *md,
+-					struct request *rq)
++					struct request *rq, bool delay_requeue)
  {
- 	unsigned long flags;
-@@ -2082,7 +2089,7 @@ struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
+ 	int rw = rq_data_dir(rq);
  
- 	q->sg_reserved_size = INT_MAX;
+@@ -359,7 +360,7 @@ static void dm_requeue_original_request(struct mapped_device *md,
+ 	if (!rq->q->mq_ops)
+ 		dm_old_requeue_request(rq);
+ 	else
+-		dm_mq_requeue_request(rq);
++		dm_mq_delay_requeue_request(rq, delay_requeue ? 5000 : 0);
  
--	INIT_WORK(&q->requeue_work, blk_mq_requeue_work);
-+	INIT_DELAYED_WORK(&q->requeue_work, blk_mq_requeue_work);
- 	INIT_LIST_HEAD(&q->requeue_list);
- 	spin_lock_init(&q->requeue_lock);
+ 	rq_completed(md, rw, false);
+ }
+@@ -389,7 +390,7 @@ static void dm_done(struct request *clone, int error, bool mapped)
+ 		return;
+ 	else if (r == DM_ENDIO_REQUEUE)
+ 		/* The target wants to requeue the I/O */
+-		dm_requeue_original_request(tio->md, tio->orig);
++		dm_requeue_original_request(tio->md, tio->orig, false);
+ 	else {
+ 		DMWARN("unimplemented target endio return value: %d", r);
+ 		BUG();
+@@ -629,8 +630,8 @@ static int dm_old_prep_fn(struct request_queue *q, struct request *rq)
  
-diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
-index e43bbff..bac01bb 100644
---- a/include/linux/blk-mq.h
-+++ b/include/linux/blk-mq.h
-@@ -232,6 +232,7 @@ void blk_mq_requeue_request(struct request *rq);
- void blk_mq_add_to_requeue_list(struct request *rq, bool at_head);
- void blk_mq_cancel_requeue_work(struct request_queue *q);
- void blk_mq_kick_requeue_list(struct request_queue *q);
-+void blk_mq_delay_kick_requeue_list(struct request_queue *q, unsigned long delay);
- void blk_mq_abort_requeue_list(struct request_queue *q);
- void blk_mq_complete_request(struct request *rq, int error);
+ /*
+  * Returns:
+- * 0                : the request has been processed
+- * DM_MAPIO_REQUEUE : the original request needs to be requeued
++ * DM_MAPIO_*       : the request has been processed as indicated
++ * DM_MAPIO_REQUEUE : the original request needs to be immediately requeued
+  * < 0              : the request was completed due to failure
+  */
+ static int map_request(struct dm_rq_target_io *tio, struct request *rq,
+@@ -643,6 +644,8 @@ static int map_request(struct dm_rq_target_io *tio, struct request *rq,
+ 	if (tio->clone) {
+ 		clone = tio->clone;
+ 		r = ti->type->map_rq(ti, clone, &tio->info);
++		if (r == DM_MAPIO_DELAY_REQUEUE)
++			return DM_MAPIO_REQUEUE; /* .request_fn requeue is always immediate */
+ 	} else {
+ 		r = ti->type->clone_and_map_rq(ti, rq, &tio->info, &clone);
+ 		if (r < 0) {
+@@ -650,9 +653,8 @@ static int map_request(struct dm_rq_target_io *tio, struct request *rq,
+ 			dm_kill_unmapped_request(rq, r);
+ 			return r;
+ 		}
+-		if (r != DM_MAPIO_REMAPPED)
+-			return r;
+-		if (setup_clone(clone, rq, tio, GFP_ATOMIC)) {
++		if (r == DM_MAPIO_REMAPPED &&
++		    setup_clone(clone, rq, tio, GFP_ATOMIC)) {
+ 			/* -ENOMEM */
+ 			ti->type->release_clone_rq(clone);
+ 			return DM_MAPIO_REQUEUE;
+@@ -671,7 +673,10 @@ static int map_request(struct dm_rq_target_io *tio, struct request *rq,
+ 		break;
+ 	case DM_MAPIO_REQUEUE:
+ 		/* The target wants to requeue the I/O */
+-		dm_requeue_original_request(md, tio->orig);
++		break;
++	case DM_MAPIO_DELAY_REQUEUE:
++		/* The target wants to requeue the I/O after a delay */
++		dm_requeue_original_request(md, tio->orig, true);
+ 		break;
+ 	default:
+ 		if (r > 0) {
+@@ -681,10 +686,9 @@ static int map_request(struct dm_rq_target_io *tio, struct request *rq,
  
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index e79055c..b0a6189 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -449,7 +449,7 @@ struct request_queue {
+ 		/* The target wants to complete the I/O */
+ 		dm_kill_unmapped_request(rq, r);
+-		return r;
+ 	}
  
- 	struct list_head	requeue_list;
- 	spinlock_t		requeue_lock;
--	struct work_struct	requeue_work;
-+	struct delayed_work	requeue_work;
+-	return 0;
++	return r;
+ }
  
- 	struct mutex		sysfs_lock;
+ static void dm_start_request(struct mapped_device *md, struct request *orig)
+@@ -727,7 +731,7 @@ static void map_tio_request(struct kthread_work *work)
+ 	struct mapped_device *md = tio->md;
  
+ 	if (map_request(tio, rq, md) == DM_MAPIO_REQUEUE)
+-		dm_requeue_original_request(md, rq);
++		dm_requeue_original_request(md, rq, false);
+ }
+ 
+ ssize_t dm_attr_rq_based_seq_io_merge_deadline_show(struct mapped_device *md, char *buf)
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 91acfce..ef7962e 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -590,6 +590,7 @@ extern struct ratelimit_state dm_ratelimit_state;
+ #define DM_MAPIO_SUBMITTED	0
+ #define DM_MAPIO_REMAPPED	1
+ #define DM_MAPIO_REQUEUE	DM_ENDIO_REQUEUE
++#define DM_MAPIO_DELAY_REQUEUE	3
+ 
+ #define dm_sector_div64(x, y)( \
+ { \
 -- 
 2.7.4 (Apple Git-66)
 
