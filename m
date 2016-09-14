@@ -1,7 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 3/3] block: Improve bio_set_op_attrs() robustness
-Date: Wed, 14 Sep 2016 10:46:22 +0200
-Message-ID: <2a6c6cbd-ccc6-ee89-99ca-c0267cf17ec0@sandisk.com>
+Subject: [PATCH 1/3] block: Document that bio_op() uses the data type of
+ bio.bi_opf
+Date: Wed, 14 Sep 2016 10:44:12 +0200
+Message-ID: <5e51ae40-994c-1f83-0575-6505662fb138@sandisk.com>
 References: <35e3cdd6-8983-6c84-cb4c-9a7be15aea55@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,13 +14,8 @@ To: Jens Axboe <axboe@fb.com>
 Cc: Mike Christie <mchristi@redhat.com>, Chris Mason <clm@fb.com>, Josef Bacik <jbacik@fb.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Hannes Reinecke <hare@suse.de>, Damien Le Moal <Damien.LeMoal@hgst.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Since REQ_OP_BITS == 3 and __REQ_NR_BITS == 30 it is not that hard
-to pass an op_flags argument to bio_set_op_attrs() that is larger
-than the number of bits reserved for the op_flags argument. Complain
-if this happens. Additionally, ensure that negative arguments trigger
-a complaint (1 << ... is signed while 1U << ... is unsigned; adding
-0U to an integer expression causes it to be promoted to an unsigned
-type).
+Make it clear that the sizeof(unsigned int) expression in BIO_OP_SHIFT
+refers to the bi_opf member of struct bio.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: Mike Christie <mchristi@redhat.com>
@@ -27,37 +23,22 @@ Cc: Christoph Hellwig <hch@lst.de>
 Cc: Hannes Reinecke <hare@suse.de>
 Cc: Damien Le Moal <damien.lemoal@hgst.com>
 ---
- include/linux/blk_types.h | 17 ++++++++++++-----
- 1 file changed, 12 insertions(+), 5 deletions(-)
+ include/linux/blk_types.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 311fa2f..53ee1a2 100644
+index 436f43f..1e1ef21 100644
 --- a/include/linux/blk_types.h
 +++ b/include/linux/blk_types.h
-@@ -93,11 +93,18 @@ struct bio {
- #define bio_flags(bio)	((bio)->bi_opf & ((1 << BIO_OP_SHIFT) - 1))
+@@ -89,7 +89,7 @@ struct bio {
+ 	struct bio_vec		bi_inline_vecs[0];
+ };
+ 
+-#define BIO_OP_SHIFT	(8 * sizeof(unsigned int) - REQ_OP_BITS)
++#define BIO_OP_SHIFT	(8 * FIELD_SIZEOF(struct bio, bi_opf) - REQ_OP_BITS)
  #define bio_op(bio)	((bio)->bi_opf >> BIO_OP_SHIFT)
  
--#define bio_set_op_attrs(bio, op, op_flags) do {		\
--	WARN_ON(op >= (1 << REQ_OP_BITS));			\
--	(bio)->bi_opf = bio_flags(bio);				\
--	(bio)->bi_opf |= ((unsigned int) (op) << BIO_OP_SHIFT);	\
--	(bio)->bi_opf |= op_flags;				\
-+#define bio_set_op_attrs(bio, op, op_flags) do {			\
-+	if (__builtin_constant_p(op))					\
-+		BUILD_BUG_ON((op) + 0U >= (1U << REQ_OP_BITS));		\
-+	else								\
-+		WARN_ON_ONCE((op) + 0U >= (1U << REQ_OP_BITS));		\
-+	if (__builtin_constant_p(op_flags))				\
-+		BUILD_BUG_ON((op_flags) + 0U >= (1U << BIO_OP_SHIFT));	\
-+	else								\
-+		WARN_ON_ONCE((op_flags) + 0U >= (1U << BIO_OP_SHIFT));	\
-+	(bio)->bi_opf = bio_flags(bio);					\
-+	(bio)->bi_opf |= (((op) + 0U) << BIO_OP_SHIFT);			\
-+	(bio)->bi_opf |= (op_flags);					\
- } while (0)
- 
- #define BIO_RESET_BYTES		offsetof(struct bio, bi_max_vecs)
+ #define bio_set_op_attrs(bio, op, op_flags) do {		\
 -- 
 2.10.0
 
