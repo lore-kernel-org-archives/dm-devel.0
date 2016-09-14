@@ -1,18 +1,30 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 2/3] block, dm-crypt, btrfs: Introduce bio_flags()
-Date: Wed, 14 Sep 2016 11:59:40 +0200
-Message-ID: <20160914095940.GD21938@lst.de>
-References: <35e3cdd6-8983-6c84-cb4c-9a7be15aea55@sandisk.com> <144083a3-2d0a-00ff-add2-a2f6f3690528@sandisk.com>
+From: Bart Van Assche <bart.vanassche@gmail.com>
+Subject: Re: [PATCH 1/3] blk-mq: introduce blk_mq_delay_kick_requeue_list()
+Date: Wed, 14 Sep 2016 13:28:21 +0200
+Message-ID: <7745fd2a-b8e3-f2c8-5154-4f0bcd263338@acm.org>
+References: <1473782495-44128-1-git-send-email-snitzer@redhat.com>
+ <1473782495-44128-2-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <144083a3-2d0a-00ff-add2-a2f6f3690528@sandisk.com>
+In-Reply-To: <1473782495-44128-2-git-send-email-snitzer@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: Jens Axboe <axboe@fb.com>, Mike Christie <mchristi@redhat.com>, Chris Mason <clm@fb.com>, Josef Bacik <jbacik@fb.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Hannes Reinecke <hare@suse.de>, Damien Le Moal <Damien.LeMoal@hgst.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>, axboe@kernel.dk, dm-devel@redhat.com
+Cc: linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Ok, looks fine after reading the next patch:
+On 09/13/2016 06:01 PM, Mike Snitzer wrote:
+> +void blk_mq_delay_kick_requeue_list(struct request_queue *q,
+> +				    unsigned long msecs)
+> +{
+> +	kblockd_schedule_delayed_work(&q->requeue_work, msecs);
+> +}
+> +EXPORT_SYMBOL(blk_mq_delay_kick_requeue_list);
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+Hello Mike,
+
+I think kblockd_schedule_delayed_work() expects that the second argument 
+is a number of jiffies instead of a number of milliseconds.
+
+Bart.
