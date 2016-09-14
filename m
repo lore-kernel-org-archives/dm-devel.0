@@ -1,44 +1,37 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 1/3] block: Document that bio_op() uses the data type of
+From: Johannes Thumshirn <jthumshirn@suse.de>
+Subject: Re: [PATCH 1/3] block: Document that bio_op() uses the data type of
  bio.bi_opf
-Date: Wed, 14 Sep 2016 10:44:12 +0200
-Message-ID: <5e51ae40-994c-1f83-0575-6505662fb138@sandisk.com>
+Date: Wed, 14 Sep 2016 10:52:25 +0200
+Message-ID: <20160914085225.f5jqwgzhin2dphm6@linux-x5ow.site>
 References: <35e3cdd6-8983-6c84-cb4c-9a7be15aea55@sandisk.com>
+ <5e51ae40-994c-1f83-0575-6505662fb138@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <35e3cdd6-8983-6c84-cb4c-9a7be15aea55@sandisk.com>
+Content-Disposition: inline
+In-Reply-To: <5e51ae40-994c-1f83-0575-6505662fb138@sandisk.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@fb.com>
-Cc: Mike Christie <mchristi@redhat.com>, Chris Mason <clm@fb.com>, Josef Bacik <jbacik@fb.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Hannes Reinecke <hare@suse.de>, Damien Le Moal <Damien.LeMoal@hgst.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: Jens Axboe <axboe@fb.com>, Mike Christie <mchristi@redhat.com>, Chris Mason <clm@fb.com>, Josef Bacik <jbacik@fb.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Hannes Reinecke <hare@suse.de>, Damien Le Moal <Damien.LeMoal@hgst.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Make it clear that the sizeof(unsigned int) expression in BIO_OP_SHIFT
-refers to the bi_opf member of struct bio.
+On Wed, Sep 14, 2016 at 10:44:12AM +0200, Bart Van Assche wrote:
+> Make it clear that the sizeof(unsigned int) expression in BIO_OP_SHIFT
+> refers to the bi_opf member of struct bio.
+> 
+> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+> Cc: Mike Christie <mchristi@redhat.com>
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: Hannes Reinecke <hare@suse.de>
+> Cc: Damien Le Moal <damien.lemoal@hgst.com>
+> ---
 
-Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: Mike Christie <mchristi@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Damien Le Moal <damien.lemoal@hgst.com>
----
- include/linux/blk_types.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 436f43f..1e1ef21 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -89,7 +89,7 @@ struct bio {
- 	struct bio_vec		bi_inline_vecs[0];
- };
- 
--#define BIO_OP_SHIFT	(8 * sizeof(unsigned int) - REQ_OP_BITS)
-+#define BIO_OP_SHIFT	(8 * FIELD_SIZEOF(struct bio, bi_opf) - REQ_OP_BITS)
- #define bio_op(bio)	((bio)->bi_opf >> BIO_OP_SHIFT)
- 
- #define bio_set_op_attrs(bio, op, op_flags) do {		\
+Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
 -- 
-2.10.0
-
+Johannes Thumshirn                                          Storage
+jthumshirn@suse.de                                +49 911 74053 689
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
+GF: Felix Imendörffer, Jane Smithard, Graham Norton
+HRB 21284 (AG Nürnberg)
+Key fingerprint = EC38 9CAB C2C4 F25D 8600 D0D0 0393 969D 2D76 0850
