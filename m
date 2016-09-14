@@ -1,51 +1,42 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Can we please make 'allow_discards' the default for
-	dm-crypt?
-Date: Tue, 13 Sep 2016 19:10:42 -0700
-Message-ID: <CA+55aFwEDs26shapevLziT+BPwvHgqOyikCaGcKsNHQLAw6oSw@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 1/3] blk-mq: introduce blk_mq_delay_kick_requeue_list()
+Date: Wed, 14 Sep 2016 08:22:17 +0200
+Message-ID: <a284da09-dbb7-5582-91ed-f5654386b579@suse.de>
+References: <1473782495-44128-1-git-send-email-snitzer@redhat.com>
+ <1473782495-44128-2-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <1473782495-44128-2-git-send-email-snitzer@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, axboe@kernel.dk, dm-devel@redhat.com
+Cc: linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-I really detest our current dm-crypt policy of not allowing discard by default.
+On 09/13/2016 06:01 PM, Mike Snitzer wrote:
+> blk_mq_delay_kick_requeue_list() provides the ability to kick the
+> q->requeue_list after a specified time.  To do this the request_queue's
+> 'requeue_work' member was changed to a delayed_work.
+> 
+> blk_mq_delay_kick_requeue_list() allows DM to defer processing requeued
+> requests while it doesn't make sense to immediately requeue them
+> (e.g. when all paths in a DM multipath have failed).
+> 
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  block/blk-mq.c         | 15 +++++++++++----
+>  include/linux/blk-mq.h |  1 +
+>  include/linux/blkdev.h |  2 +-
+>  3 files changed, 13 insertions(+), 5 deletions(-)
+> 
+Reviewed-by: Hannes Reinecke <hare@suse.com>
 
-It has this silly "but but security" reason behind it, but let's face
-it: if you don't want to do discards for security reasons, then JUST
-DON'T DO THEM. Or add a "no_discards" option.
+Cheers,
 
-Because right now, the default behavior is wrong. It's geared toward
-the 0.1% crazy-anal people, and making a *default* option for those
-people is just silly. The whole argument that "you can see access
-patterns and how much free space there is" is just complete bullshit.
-It's not what any sane person would care about.
-
-The rest of us just want to encrypt our data on our laptops in case
-they get stolen, and we don't want to not be able to do the occasional
-"fstrim".
-
-Yes, good flash doesn't need trimming all that much, but it won't
-hurt. And right now we penalize people who want to do the sane good
-thing.
-
-Sure, we could say that distros should just add the "allow_discard"
-flag instead, and maybe have a checkbox to say "are you a crazy anal
-person" along with the "encrypt disk" checkbox. But EVEN IF the distro
-were to do that, that doesn't mean that the kernel default should be
-the wrong way around.
-
-Comments?
-
-               Linus
+Hannes
+-- 
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 Nürnberg
+GF: J. Hawn, J. Guild, F. Imendörffer, HRB 16746 (AG Nürnberg)
