@@ -1,28 +1,30 @@
-From: Jens Axboe <axboe@fb.com>
-Subject: Re: [PATCH 0/3] block: Improve bio_set_op_attrs() robustness
-Date: Wed, 14 Sep 2016 08:48:50 -0600
-Message-ID: <7b465fd4-fd31-1561-239d-d0215b6557ea@fb.com>
-References: <35e3cdd6-8983-6c84-cb4c-9a7be15aea55@sandisk.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH 1/3] blk-mq: introduce blk_mq_delay_kick_requeue_list()
+Date: Wed, 14 Sep 2016 09:04:23 -0600
+Message-ID: <90cdf652-555a-e88a-72b2-0a81926d78e3@kernel.dk>
+References: <1473782495-44128-1-git-send-email-snitzer@redhat.com>
+ <1473782495-44128-2-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <35e3cdd6-8983-6c84-cb4c-9a7be15aea55@sandisk.com>
+In-Reply-To: <1473782495-44128-2-git-send-email-snitzer@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: Mike Christie <mchristi@redhat.com>, Chris Mason <clm@fb.com>, Josef Bacik <jbacik@fb.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Hannes Reinecke <hare@suse.de>, Damien Le Moal <damien.lemoal@hgst.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, linux-btrfs@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 09/14/2016 02:42 AM, Bart Van Assche wrote:
-> Hi Jens,
+On 09/13/2016 10:01 AM, Mike Snitzer wrote:
+> blk_mq_delay_kick_requeue_list() provides the ability to kick the
+> q->requeue_list after a specified time.  To do this the request_queue's
+> 'requeue_work' member was changed to a delayed_work.
 >
-> bio_set_op_attrs() does not yet check whether the "op_flags" field
-> overflows into the "op" field. Since adding support for SMR requires to
-> introduce more REQ_* flags I think it is important to have such a check.
-> Hence this patch series. Please consider these patches for inclusion in
-> the upstream Linux kernel.
+> blk_mq_delay_kick_requeue_list() allows DM to defer processing requeued
+> requests while it doesn't make sense to immediately requeue them
+> (e.g. when all paths in a DM multipath have failed).
 
-Thanks Bart, I like this series. Applied for 4.9.
+Looks fine to me, sans the missing jiffies conversion that Bart pointed
+out.
 
 -- 
 Jens Axboe
