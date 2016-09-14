@@ -1,19 +1,51 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 1/3] block: Document that bio_op() uses the data type
-        of bio.bi_opf
-Date: Wed, 14 Sep 2016 11:56:37 +0200
-Message-ID: <20160914095637.GA21938@lst.de>
-References: <35e3cdd6-8983-6c84-cb4c-9a7be15aea55@sandisk.com> <5e51ae40-994c-1f83-0575-6505662fb138@sandisk.com>
+Subject: Re: [PATCH 2/3] block, dm-crypt, btrfs: Introduce bio_flags()
+Date: Wed, 14 Sep 2016 11:58:14 +0200
+Message-ID: <20160914095814.GB21938@lst.de>
+References: <35e3cdd6-8983-6c84-cb4c-9a7be15aea55@sandisk.com> <144083a3-2d0a-00ff-add2-a2f6f3690528@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <5e51ae40-994c-1f83-0575-6505662fb138@sandisk.com>
-Sender: linux-btrfs-owner@vger.kernel.org
+In-Reply-To: <144083a3-2d0a-00ff-add2-a2f6f3690528@sandisk.com>
+Sender: linux-block-owner@vger.kernel.org
 To: Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: Jens Axboe <axboe@fb.com>, Mike Christie <mchristi@redhat.com>, Chris Mason <clm@fb.com>, Josef Bacik <jbacik@fb.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Hannes Reinecke <hare@suse.de>, Damien Le Moal <Damien.LeMoal@hgst.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Looks good,
+On Wed, Sep 14, 2016 at 10:45:36AM +0200, Bart Van Assche wrote:
+> Introduce the bio_flags() macro. Ensure that the second argument of
+> bio_set_op_attrs() only contains flags and no operation. This patch
+> does not change any functionality.
+> 
+> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+> Cc: Mike Christie <mchristi@redhat.com>
+> Cc: Chris Mason <clm@fb.com> (maintainer:BTRFS FILE SYSTEM)
+> Cc: Josef Bacik <jbacik@fb.com> (maintainer:BTRFS FILE SYSTEM)
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: Hannes Reinecke <hare@suse.de>
+> Cc: Damien Le Moal <damien.lemoal@hgst.com>
+> ---
+>  drivers/md/dm-crypt.c     | 2 +-
+>  fs/btrfs/inode.c          | 5 +++--
+>  include/linux/blk_types.h | 3 ++-
+>  3 files changed, 6 insertions(+), 4 deletions(-)
+> 
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 8742957..0448e7e 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -1136,7 +1136,7 @@ static void clone_init(struct dm_crypt_io *io, struct bio *clone)
+>  	clone->bi_private = io;
+>  	clone->bi_end_io  = crypt_endio;
+>  	clone->bi_bdev    = cc->dev->bdev;
+> -	bio_set_op_attrs(clone, bio_op(io->base_bio), io->base_bio->bi_opf);
+> +	bio_set_op_attrs(clone, bio_op(io->base_bio), bio_flags(io->base_bio));
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+Given that bio_set_op_attrs calls bio_flags internall do we need
+the call here as well?
+
+The other option might be to check that we only get flags inside the
+bio_flags space and let the caller sort it out, which sounds useful
+to me.
