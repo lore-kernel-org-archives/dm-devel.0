@@ -1,38 +1,44 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: dm-verity verification
-Date: Sat, 17 Sep 2016 14:45:42 +0200
-Message-ID: <e02cf252-ca4e-4086-43fc-a308a6ad74e0@gmail.com>
-References: <CANKSX+HxXiY5XgpMsk=DeQRYgntMiKH-2SLYzmD3ShTUM=NPtg@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH -next] dm cache policy smq: remove duplicated include
+ from dm-cache-policy-smq.c
+Date: Sat, 17 Sep 2016 10:37:44 -0400
+Message-ID: <20160917143743.GA73062@redhat.com>
+References: <1474087703-22600-1-git-send-email-weiyj.lk@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CANKSX+HxXiY5XgpMsk=DeQRYgntMiKH-2SLYzmD3ShTUM=NPtg@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: srikanth007m@gmail.com, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1474087703-22600-1-git-send-email-weiyj.lk@gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Wei Yongjun <weiyj.lk@gmail.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Shaohua Li <shli@kernel.org>, Wei Yongjun <weiyongjun1@huawei.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 09/17/2016 06:58 AM, $rik@nth  wrote:
-> Hi,
+On Sat, Sep 17 2016 at 12:48P -0400,
+Wei Yongjun <weiyj.lk@gmail.com> wrote:
+
+> From: Wei Yongjun <weiyongjun1@huawei.com>
 > 
-> Is there any suite or tests available to test the dm after enabling
-> for the first time on the kernel after making some changes. Please
-> help in pointing if any such are available.
+> Remove duplicated include.
+> 
+> Signed-off-by: Wei Yongjun <weiyongjun1@huawei.com>
+> ---
+>  drivers/md/dm-cache-policy-smq.c | 1 -
+>  1 file changed, 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-cache-policy-smq.c b/drivers/md/dm-cache-policy-smq.c
+> index 8de5bd9..c33f4a6 100644
+> --- a/drivers/md/dm-cache-policy-smq.c
+> +++ b/drivers/md/dm-cache-policy-smq.c
+> @@ -14,7 +14,6 @@
+>  #include <linux/mutex.h>
+>  #include <linux/vmalloc.h>
+>  #include <linux/math64.h>
+> -#include <linux/hash.h>
+>  
+>  #define DM_MSG_PREFIX "cache-policy-smq"
 
-cryptsetup source code contains very simple test (for veritysetup)
-but this is more intended to check that kernel-userspace interface
-works (for various settings).
+I resolved this by fixing the original commit (where I added hash.h
+without realizing it was already included).
 
-veritysetup also provides userspace-only verification (see verify command).
-(Just it does not understand current FEC extensions yet, patch for this
-will be merged in next major release.)
-
-Milan
+But thanks for the report.
