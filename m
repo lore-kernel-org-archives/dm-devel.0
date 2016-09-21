@@ -1,7 +1,8 @@
-From: tang.junhui@zte.com.cn
-Subject: [PATCH] mpathpersist: memset length is wrong
-Date: Wed, 21 Sep 2016 16:44:46 +0800
-Message-ID: <1474447486-8892-1-git-send-email-tang.junhui@zte.com.cn>
+From: jiangyiwen <jiangyiwen@huawei.com>
+Subject: dm-mpath: Handling SCSI-3 PR RELEASE in multi-controller
+ environment
+Date: Wed, 21 Sep 2016 17:14:38 +0800
+Message-ID: <57E24F7E.4030103@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,32 +16,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>, Chauhan@redhat.com, Vijay <Vijay.Chauhan@netapp.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, "tang.junhui" <tang.junhui@zte.com.cn>
+To: dm-devel@redhat.com
+Cc: wangyibin@huawei.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-From: "tang.junhui" <tang.junhui@zte.com.cn>
+Hi guys,
 
-variable transportids is cleared by memset() with wrong length MPATH_MX_TIDS,
-the length should be MPATH_MX_TIDS*sizeof(struct transportid).
+I'm sorry if someone else has already asked the same question before, but
+here's what we are facing with generic multipath.
 
-Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
----
- mpathpersist/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+We were evaluating SCSI-3 PR and hit the following issue:
 
-diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-index a55865f..8e8cc35 100644
---- a/mpathpersist/main.c
-+++ b/mpathpersist/main.c
-@@ -105,7 +105,7 @@ int main (int argc, char * argv[])
- 
- 	udev = udev_new();
- 	conf = mpath_lib_init(udev);
--	memset(transportids,0,MPATH_MX_TIDS);
-+	memset(transportids, 0, MPATH_MX_TIDS * sizeof(struct transportid));
- 	multipath_conf = conf;
- 
- 	while (1)
--- 
-2.8.1.windows.1
+Our IPSAN has two controllers (C1/C2). Our host is connected to both
+controllers. So we have 2 I_T nexus. The same key is registered on each I_T
+nexus. When we issue SCSI-3 PR RESERE through generic multipath, the
+reservation will be placed on one of the controllers (say, C1). Now if we
+issue SCSI-3 PR RELEASE, generic multipath will select _only_ one of its
+paths based on user defined path selection policy. The problem is that, if
+the selected path leads to controller C2, which does not hold the
+reservation, the reservation won't be released - and what's more, since the
+reservation is done by the same host, the RELEASE command returns
+successfully. So this gives us the illusion that the reservation is released
+but in fact it is still there.
+
+I know that there's a user space tool mpathpersist that can handle this
+problem by issuing release command on all available paths, but here I am
+talking about doing same thing in kernel space. So my question is, is there
+anyone who is working on supporting SCSI-3 PR in a multiple controller
+environment?
+
+Please advise. Thanks in advance!
+
+Best regards,
+Yiwen
