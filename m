@@ -1,75 +1,60 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm crypt: fix crash on exit
-Date: Wed, 21 Sep 2016 10:34:23 -0400
-Message-ID: <20160921143423.GA9748@redhat.com>
-References: <1474467749-30783-1-git-send-email-rabin.vincent@axis.com>
+Subject: Re: dm-mpath: Handling SCSI-3 PR RELEASE in
+ multi-controller environment
+Date: Wed, 21 Sep 2016 11:04:27 -0400
+Message-ID: <20160921150427.GB9748@redhat.com>
+References: <57E24F7E.4030103@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1474467749-30783-1-git-send-email-rabin.vincent@axis.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Rabin Vincent <rabin.vincent@axis.com>
-Cc: agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, mpatocka@redhat.com, Rabin Vincent <rabinv@axis.com>
+In-Reply-To: <57E24F7E.4030103@huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: jiangyiwen <jiangyiwen@huawei.com>
+Cc: wangyibin@huawei.com, dm-devel@redhat.com, hch@lst.de
 List-Id: dm-devel.ids
 
-On Wed, Sep 21 2016 at 10:22am -0400,
-Rabin Vincent <rabin.vincent@axis.com> wrote:
+On Wed, Sep 21 2016 at  5:14am -0400,
+jiangyiwen <jiangyiwen@huawei.com> wrote:
 
-> From: Rabin Vincent <rabinv@axis.com>
+> Hi guys,
 > 
-> As the documentation for kthread_stop() says, "if threadfn() may call
-> do_exit() itself, the caller must ensure task_struct can't go away".
-> dm-crypt does not ensure this and therefore crashes when crypt_dtr()
-> calls kthread_stop().  The crash is trivially reproducible by adding a
-> delay before the call to kthread_stop() and just opening and closing a
-> dm-crypt device.
+> I'm sorry if someone else has already asked the same question before, but
+> here's what we are facing with generic multipath.
 > 
->  general protection fault: 0000 [#1] PREEMPT SMP
->  CPU: 0 PID: 533 Comm: cryptsetup Not tainted 4.8.0-rc7+ #7
->  task: ffff88003bd0df40 task.stack: ffff8800375b4000
->  RIP: 0010: kthread_stop+0x52/0x300
->  Call Trace:
->   crypt_dtr+0x77/0x120
->   dm_table_destroy+0x6f/0x120
->   __dm_destroy+0x130/0x250
->   dm_destroy+0x13/0x20
->   dev_remove+0xe6/0x120
->   ? dev_suspend+0x250/0x250
->   ctl_ioctl+0x1fc/0x530
->   ? __lock_acquire+0x24f/0x1b10
->   dm_ctl_ioctl+0x13/0x20
->   do_vfs_ioctl+0x91/0x6a0
->   ? ____fput+0xe/0x10
->   ? entry_SYSCALL_64_fastpath+0x5/0xbd
->   ? trace_hardirqs_on_caller+0x151/0x1e0
->   SyS_ioctl+0x41/0x70
->   entry_SYSCALL_64_fastpath+0x1f/0xbd
+> We were evaluating SCSI-3 PR and hit the following issue:
 > 
-> This problem was introduced by bcbd94ff481e ("dm crypt: fix a possible
-> hang due to race condition on exit").
+> Our IPSAN has two controllers (C1/C2). Our host is connected to both
+> controllers. So we have 2 I_T nexus. The same key is registered on each I_T
+> nexus. When we issue SCSI-3 PR RESERE through generic multipath, the
+> reservation will be placed on one of the controllers (say, C1). Now if we
+> issue SCSI-3 PR RELEASE, generic multipath will select _only_ one of its
+> paths based on user defined path selection policy. The problem is that, if
+> the selected path leads to controller C2, which does not hold the
+> reservation, the reservation won't be released - and what's more, since the
+> reservation is done by the same host, the RELEASE command returns
+> successfully. So this gives us the illusion that the reservation is released
+> but in fact it is still there.
 > 
-> Looking at the description of that patch (excerpted below), it seems
-> like the problem it addresses can be solved by just using
-> set_current_state instead of __set_current_state, since we obviously
-> need the memory barrier.
+> I know that there's a user space tool mpathpersist that can handle this
+> problem by issuing release command on all available paths, but here I am
+> talking about doing same thing in kernel space. So my question is, is there
+> anyone who is working on supporting SCSI-3 PR in a multiple controller
+> environment?
 > 
-> | dm crypt: fix a possible hang due to race condition on exit
-> |
-> | A kernel thread executes __set_current_state(TASK_INTERRUPTIBLE),
-> | __add_wait_queue, spin_unlock_irq and then tests kthread_should_stop().
-> | It is possible that the processor reorders memory accesses so that
-> | kthread_should_stop() is executed before __set_current_state().  If
-> | such reordering happens, there is a possible race on thread
-> | termination: [...]
-> 
-> So this patch just reverts the aforementioned patch and changes the
-> __set_current_state(TASK_INTERRUPTIBLE) to set_current_state(...).  This
-> fixes the crash and should also fix the potential hang.
-> 
-> Fixes: bcbd94ff481e ("dm crypt: fix a possible hang due to race condition on exit")
-> Cc: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: stable@vger.kernel.org # v4.0+
-> Signed-off-by: Rabin Vincent <rabinv@axis.com>
+> Please advise. Thanks in advance!
 
-Thanks, I've staged this for the 4.9 merge window.
+Which kernel are you using?  Christoph (now cc'd) has introduced a new
+PR api.  I merged a fix from him relatively recently (commit 9c72bad1f3
+"dm: call PR reserve/unreserve on each underlying device")
+
+Mike
