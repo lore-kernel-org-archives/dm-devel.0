@@ -1,61 +1,46 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [PATCH] dm flakey: add DAX support
-Date: Wed, 21 Sep 2016 07:42:43 +1000
-Message-ID: <20160920214243.GA10454@dastard>
-References: <147440445480.62486.9559239844115396323.stgit@djiang5-desk3.ch.intel.com>
+From: tang.junhui@zte.com.cn
+Subject: [PATCH] mpathpersist: memset length is wrong
+Date: Wed, 21 Sep 2016 16:44:46 +0800
+Message-ID: <1474447486-8892-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <147440445480.62486.9559239844115396323.stgit-Cxk7aZI4ujnJARH06PadV2t3HXsI98Cx0E9HWUfgJXw@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dave Jiang <dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, fstests-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe varoqui <christophe.varoqui@free.fr>, Chauhan@redhat.com, Vijay <Vijay.Chauhan@netapp.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, "tang.junhui" <tang.junhui@zte.com.cn>
 List-Id: dm-devel.ids
 
-On Tue, Sep 20, 2016 at 01:47:34PM -0700, Dave Jiang wrote:
-> Change dm-flakey to implement direct_access function,
-> flakey_direct_access(), which maps sector and calls direct_access
-> function of its physical target device. This pretty much is a copy
-> from DM Linear.
-> 
-> This allows fs with DAX to pass in xfstests.
+From: "tang.junhui" <tang.junhui@zte.com.cn>
 
-They don't fail. They simply don't run like this:
+variable transportids is cleared by memset() with wrong length MPATH_MX_TIDS,
+the length should be MPATH_MX_TIDS*sizeof(struct transportid).
 
-generic/321 1s ... [not run] Cannot run tests with DAX on dmflakey devices
-generic/322 0s ... [not run] Cannot run tests with DAX on dmflakey devices
+Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+---
+ mpathpersist/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-> It does not actually introduce
-> data corruption and dropping writes unlike the non-DAX path. The main
-> reason is due to the I/O path being out of dmflakey's control once
-> direct_access() has been called. The the existing implementation cannot
-> be adapted to DAX I/O path. The error injection will be introduced at a
-> later date with more thought.
-
-Then introduce dmflakey DAX support at that time. Running tests that
-are supposed to exercise failure paths when those failure paths
-cannot be triggered is fundamentally useless. It leads a false
-indication that we are actually testing failures, when in fact we
-are doing nothing of the sort.
-
-Right now the test harness execution clearly documents that there is
-no failure testing being run on DAX devices, and that's the way it
-should remain until dmflakey, dmerror, etc can inject the required
-errors into the DAX paths....
-
-Cheers,
-
-Dave.
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index a55865f..8e8cc35 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -105,7 +105,7 @@ int main (int argc, char * argv[])
+ 
+ 	udev = udev_new();
+ 	conf = mpath_lib_init(udev);
+-	memset(transportids,0,MPATH_MX_TIDS);
++	memset(transportids, 0, MPATH_MX_TIDS * sizeof(struct transportid));
+ 	multipath_conf = conf;
+ 
+ 	while (1)
 -- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+2.8.1.windows.1
