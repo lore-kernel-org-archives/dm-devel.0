@@ -1,14 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: add swap_slot_free_notify handler
-Date: Wed, 21 Sep 2016 20:14:28 -0400
-Message-ID: <20160922001428.GA12676@redhat.com>
-References: <1474499386-27436-1-git-send-email-wonhong.kwon@lge.com>
+From: jiangyiwen <jiangyiwen@huawei.com>
+Subject: Re: dm-mpath: Handling SCSI-3 PR RELEASE in
+ multi-controller environment
+Date: Thu, 22 Sep 2016 16:14:50 +0800
+Message-ID: <57E392FA.3080006@huawei.com>
+References: <57E24F7E.4030103@huawei.com> <20160921150427.GB9748@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1474499386-27436-1-git-send-email-wonhong.kwon@lge.com>
+In-Reply-To: <20160921150427.GB9748@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,24 +18,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Wonhong Kwon <wonhong.kwon@lge.com>
-Cc: gunho.lee@lge.com, dm-devel@redhat.com, agk@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, hch@lst.de
+Cc: wangyibin@huawei.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Sep 21 2016 at  7:09pm -0400,
-Wonhong Kwon <wonhong.kwon@lge.com> wrote:
-
-> swap_slot_free_notify callback has been added to block_device_operations to
-> allow freeing memory allocated by RAM-based swap device like zram or zswap
-> more aggressively.
+On 2016/9/21 23:04, Mike Snitzer wrote:
+> On Wed, Sep 21 2016 at  5:14am -0400,
+> jiangyiwen <jiangyiwen@huawei.com> wrote:
 > 
-> In case of device mapper, it is also required if mapped target is being
-> used as swap device and it uses some in-memory metadata for swap entries.
-> This patch introduces swap_slot_free_notify callback into dm_blk_ops and
-> target device can implement its own handler to handle this via
-> slot_free_notify in target_type.
+>> Hi guys,
+>>
+>> I'm sorry if someone else has already asked the same question before, but
+>> here's what we are facing with generic multipath.
+>>
+>> We were evaluating SCSI-3 PR and hit the following issue:
+>>
+>> Our IPSAN has two controllers (C1/C2). Our host is connected to both
+>> controllers. So we have 2 I_T nexus. The same key is registered on each I_T
+>> nexus. When we issue SCSI-3 PR RESERE through generic multipath, the
+>> reservation will be placed on one of the controllers (say, C1). Now if we
+>> issue SCSI-3 PR RELEASE, generic multipath will select _only_ one of its
+>> paths based on user defined path selection policy. The problem is that, if
+>> the selected path leads to controller C2, which does not hold the
+>> reservation, the reservation won't be released - and what's more, since the
+>> reservation is done by the same host, the RELEASE command returns
+>> successfully. So this gives us the illusion that the reservation is released
+>> but in fact it is still there.
+>>
+>> I know that there's a user space tool mpathpersist that can handle this
+>> problem by issuing release command on all available paths, but here I am
+>> talking about doing same thing in kernel space. So my question is, is there
+>> anyone who is working on supporting SCSI-3 PR in a multiple controller
+>> environment?
+>>
+>> Please advise. Thanks in advance!
 > 
-> Signed-off-by: Wonhong Kwon <wonhong.kwon@lge.com>
+> Which kernel are you using?  Christoph (now cc'd) has introduced a new
+> PR api.  I merged a fix from him relatively recently (commit 9c72bad1f3
+> "dm: call PR reserve/unreserve on each underlying device")
+> 
+> Mike
+> 
+> .
+> 
+Hello Mike and Christoph,
 
-This change to DM core only makes sense once we have an upstream DM
-target that implements slot_free_notify hook.
+Thanks for the feedback! We are using ancient 3.0.x kernel so I guess we need to
+backport the PR API.
+
+I briefly reviewed the PR API. If I understand correctly, a bunch of PR
+dedicated operations (pr_ops) are defined in block_device_operations, which
+includes register, reserve, release, preempt and clear operations. But among
+these operations, only register() calls dm_call_pr(), which in turns iterates
+over the device for each path and does the registeration.
+
+My point is, we also need to do this in release operation, so that we can
+eliminate the possibility of trying to release the reservation on the wrong
+controller and get a fake success.
+
+Also, since device mapper or multipath doesn't have any idea of which path
+(and/or I_T nexus) has registered its key or holds the reservation, it's quite
+difficult for the APIs to handle failures like path breakage. Right now, it is
+up to the API user to do the error handling, which, IMHO, is painful. I am
+wondering whether this could be done within dm/multipath. Please advise.
+
+Thanks,
+Yiwen
