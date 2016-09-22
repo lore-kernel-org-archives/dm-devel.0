@@ -1,39 +1,40 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [RFC][PATCH] dm: Remove dm_bufio_cond_resched()
-Date: Thu, 22 Sep 2016 22:59:30 +0200 (CEST)
-Message-ID: <alpine.DEB.2.20.1609222257050.5640@nanos>
-References: <20160913084520.GA5012@twins.programming.kicks-ass.net> <20160913133959.GA22833@redhat.com> <20160919105325.GW5016@twins.programming.kicks-ass.net> <alpine.LRH.2.02.1609221645510.4447@file01.intranet.prod.int.rdu2.redhat.com>
+From: Andrey Ryabinin <aryabinin@virtuozzo.com>
+Subject: [PATCH] dm: remove dummy definition of 'struct dm_table'
+Date: Thu, 22 Sep 2016 19:36:39 +0300
+Message-ID: <1474562199-27248-1-git-send-email-aryabinin@virtuozzo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1609221645510.4447@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, Ingo Molnar <mingo@kernel.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org, Andrey Ryabinin <aryabinin@virtuozzo.com>
 List-Id: dm-devel.ids
 
-On Thu, 22 Sep 2016, Mikulas Patocka wrote:
-> On Mon, 19 Sep 2016, Peter Zijlstra wrote:
-> 
-> > On Tue, Sep 13, 2016 at 09:39:59AM -0400, Mike Snitzer wrote:
-> > > So I'm not sure how this dm-bufio local cond_resched() wrapper still got
-> > > in... happy to take your patch.
-> > > 
-> > > Please respond with whatever SOB you'd like applied to the patch header.
-> > 
-> > Sorry, for the delay, here goes.
-> 
-> Why not change it to might_sleep()? - that would be almost equivalent to 
+There is no need for it.
 
-You mean might_resched(). might_sleep() is not even remotely equivalent.
+Signed-off-by: Andrey Ryabinin <aryabinin@virtuozzo.com>
+---
+ drivers/md/dm-ioctl.c | 8 --------
+ 1 file changed, 8 deletions(-)
 
-> If we call the cond_resched() function in tight loops such as walking all 
-> buffers in a list, there may be performance penalty due to the call, so 
-> the call should be done only if it is really needed (i.e. in 
-> CONFIG_PREEMPT_VOLUNTARY case).
-
-Makes sense.
-
-Thanks,
-
-	tglx
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index 966eb4b..2d5594e 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -36,14 +36,6 @@ struct hash_cell {
+ 	struct dm_table *new_map;
+ };
+ 
+-/*
+- * A dummy definition to make RCU happy.
+- * struct dm_table should never be dereferenced in this file.
+- */
+-struct dm_table {
+-	int undefined__;
+-};
+-
+ struct vers_iter {
+     size_t param_size;
+     struct dm_target_versions *vers, *old_vers;
+-- 
+2.7.3
