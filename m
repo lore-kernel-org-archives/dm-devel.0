@@ -1,14 +1,10 @@
-From: jiangyiwen <jiangyiwen@huawei.com>
-Subject: Re: dm-mpath: Handling SCSI-3 PR RELEASE in
- multi-controller environment
-Date: Thu, 22 Sep 2016 16:14:50 +0800
-Message-ID: <57E392FA.3080006@huawei.com>
-References: <57E24F7E.4030103@huawei.com> <20160921150427.GB9748@redhat.com>
+From: Markus Hentsch <markus.hentsch@cloudandheat.com>
+Subject: Usage of dm-era
+Date: Thu, 22 Sep 2016 16:10:18 +0200
+Message-ID: <12089ffa-c3dd-523b-2302-58445f12e737@cloudandheat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============4458154291092187259=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160921150427.GB9748@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,69 +14,190 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, hch@lst.de
-Cc: wangyibin@huawei.com, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2016/9/21 23:04, Mike Snitzer wrote:
-> On Wed, Sep 21 2016 at  5:14am -0400,
-> jiangyiwen <jiangyiwen@huawei.com> wrote:
-> 
->> Hi guys,
->>
->> I'm sorry if someone else has already asked the same question before, but
->> here's what we are facing with generic multipath.
->>
->> We were evaluating SCSI-3 PR and hit the following issue:
->>
->> Our IPSAN has two controllers (C1/C2). Our host is connected to both
->> controllers. So we have 2 I_T nexus. The same key is registered on each I_T
->> nexus. When we issue SCSI-3 PR RESERE through generic multipath, the
->> reservation will be placed on one of the controllers (say, C1). Now if we
->> issue SCSI-3 PR RELEASE, generic multipath will select _only_ one of its
->> paths based on user defined path selection policy. The problem is that, if
->> the selected path leads to controller C2, which does not hold the
->> reservation, the reservation won't be released - and what's more, since the
->> reservation is done by the same host, the RELEASE command returns
->> successfully. So this gives us the illusion that the reservation is released
->> but in fact it is still there.
->>
->> I know that there's a user space tool mpathpersist that can handle this
->> problem by issuing release command on all available paths, but here I am
->> talking about doing same thing in kernel space. So my question is, is there
->> anyone who is working on supporting SCSI-3 PR in a multiple controller
->> environment?
->>
->> Please advise. Thanks in advance!
-> 
-> Which kernel are you using?  Christoph (now cc'd) has introduced a new
-> PR api.  I merged a fix from him relatively recently (commit 9c72bad1f3
-> "dm: call PR reserve/unreserve on each underlying device")
-> 
-> Mike
-> 
-> .
-> 
-Hello Mike and Christoph,
+This is a multi-part message in MIME format.
+--===============4458154291092187259==
+Content-Type: multipart/alternative;
+	boundary="------------96A05395730D4A2A57680794"
 
-Thanks for the feedback! We are using ancient 3.0.x kernel so I guess we need to
-backport the PR API.
+This is a multi-part message in MIME format.
+--------------96A05395730D4A2A57680794
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-I briefly reviewed the PR API. If I understand correctly, a bunch of PR
-dedicated operations (pr_ops) are defined in block_device_operations, which
-includes register, reserve, release, preempt and clear operations. But among
-these operations, only register() calls dm_call_pr(), which in turns iterates
-over the device for each path and does the registeration.
+Dear dm-devel community,
 
-My point is, we also need to do this in release operation, so that we can
-eliminate the possibility of trying to release the reservation on the wrong
-controller and get a fake success.
+I'm trying to get familiar with dm-era but I'm stuck.
 
-Also, since device mapper or multipath doesn't have any idea of which path
-(and/or I_T nexus) has registered its key or holds the reservation, it's quite
-difficult for the APIs to handle failures like path breakage. Right now, it is
-up to the API user to do the error handling, which, IMHO, is painful. I am
-wondering whether this could be done within dm/multipath. Please advise.
+What I'm trying to achieve is to have a dm-era device which keeps track
+of changed blocks on a seperate hard drive or logical volume/mapping in
+order to create a live backup solution.
 
-Thanks,
-Yiwen
+The documentation on dm-era is very sparse. So far I found a Gentoo wiki
+entry, a blog entry by Rackcorp and the official kernel doc.
+I tried to come up with a basic setup using a virtual machine running
+Ubuntu 16.04.
+
+So far I was able to create a setup that looks like this:
+http://i.imgur.com/LNCPima.png
+To set this up, I came up with the following script:
+http://pastebin.com/Y3B2m7wL
+It is inspired by the setup done by Rackcorp [1]. The resulting 'lsblk'
+looks like this:
+
+sdb                       8:16   0  256M  0 disk=20
+
+`-metadev-era           252:2    0  276K  0 dm  =20
+
+  |-era                 252:4    0  276K  0 dm  =20
+
+  `-era-access          252:5    0  276K  0 dm  =20
+
+sdc                       8:32   0  256M  0 disk=20
+
+`-metadev-data          252:3    0  256M  0 dm  =20
+
+  |-era                 252:4    0  276K  0 dm  =20
+
+  `-metadev-data-access 252:6    0  256M  0 dm   /media/sdc-data
+
+
+
+In comparison to Rackcorp's setup, I did the following adjustment:
+
+  * i) mounting /dev/mapper/metadev-data (or the underlying sdc) or ii)
+    using it as an origin device for era, seemed to be mutually exclusive=
+
+  * that's why I created an additional linear mapping called
+    'metadev-data-access' inspired by the 'era-access' device to be able
+    to mount and write to the sdc device again
+
+Basically this setup is supposed to track changed blocks on /dev/sdc and
+uses a mounted /dev/mapper/metadev-data-access at /media/sdc-data to
+access /dev/sdc on top of the dm setup.
+
+However, when reading the era metadata via 'era_dump
+/dev/mapper/era-access', I only get this result:
+
+<superblock uuid=3D"" block_size=3D"4096" nr_blocks=3D"1" current_era=3D"=
+1">
+
+  <era_array>
+
+    <era block=3D"0" era=3D"0"/>
+
+  </era_array>
+
+</superblock>
+
+
+Why is there only one block listed? Shouldn't that list exactly as much
+blocks as my 'metadev-data' device has, since it is the origin for the
+era target?
+Or is there some basic misunderstanding in my interpretation of how
+dm-era is supposed to work and be used?
+
+Please be so kind and shed some light on this!
+
+[1] http://blog.rackcorp.com/2016/03/dm-era-device-for-backups/
+
+
+Best Regards,
+
+Markus Hentsch
+Cloud&Heat Technologies
+
+
+--------------96A05395730D4A2A57680794
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+<html>
+  <head>
+
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  </head>
+  <body bgcolor="#FFFFFF" text="#000000">
+    Dear dm-devel community,<br>
+    <br>
+    I'm trying to get familiar with dm-era but I'm stuck.<br>
+    <br>
+    What I'm trying to achieve is to have a dm-era device which keeps
+    track of changed blocks on a seperate hard drive or logical
+    volume/mapping in order to create a live backup solution.<br>
+    <br>
+    The documentation on dm-era is very sparse. So far I found a Gentoo
+    wiki entry, a blog entry by Rackcorp and the official kernel doc.<br>
+    I tried to come up with a basic setup using a virtual machine
+    running Ubuntu 16.04.<br>
+    <br>
+    So far I was able to create a setup that looks like this: <a
+      href="http://i.imgur.com/LNCPima.png">http://i.imgur.com/LNCPima.png</a><br>
+    To set this up, I came up with the following script: <a
+      href="http://pastebin.com/Y3B2m7wL">http://pastebin.com/Y3B2m7wL</a><br>
+    It is inspired by the setup done by Rackcorp [1]. The resulting
+    'lsblk' looks like this:<br>
+    <pre>sdb                       8:16   0  256M  0 disk </pre>
+    <pre>`-metadev-era           252:2    0  276K  0 dm   </pre>
+    <pre>  |-era                 252:4    0  276K  0 dm   </pre>
+    <pre>  `-era-access          252:5    0  276K  0 dm   </pre>
+    <pre>sdc                       8:32   0  256M  0 disk </pre>
+    <pre>`-metadev-data          252:3    0  256M  0 dm   </pre>
+    <pre>  |-era                 252:4    0  276K  0 dm   </pre>
+    <pre>  `-metadev-data-access 252:6    0  256M  0 dm   /media/sdc-data</pre>
+    <br>
+    <br>
+    In comparison to Rackcorp's setup, I did the following adjustment:<br>
+    <ul>
+      <li>i) mounting /dev/mapper/metadev-data (or the underlying sdc)
+        or ii) using it as an origin device for era, seemed to be
+        mutually exclusive</li>
+      <li>that's why I created an additional linear mapping called
+        'metadev-data-access' inspired by the 'era-access' device to be
+        able to mount and write to the sdc device again</li>
+    </ul>
+    Basically this setup is supposed to track changed blocks on /dev/sdc
+    and uses a mounted /dev/mapper/metadev-data-access at
+    /media/sdc-data to access /dev/sdc on top of the dm setup.<br>
+    <br>
+    However, when reading the era metadata via 'era_dump
+    /dev/mapper/era-access', I only get this result:<br>
+    <pre>&lt;superblock uuid="" block_size="4096" nr_blocks="1" current_era="1"&gt;</pre>
+    <pre>  &lt;era_array&gt;</pre>
+    <pre>    &lt;era block="0" era="0"/&gt;</pre>
+    <pre>  &lt;/era_array&gt;</pre>
+    <pre>&lt;/superblock&gt;</pre>
+    <br>
+    Why is there only one block listed? Shouldn't that list exactly as
+    much blocks as my 'metadev-data' device has, since it is the origin
+    for the era target?<br>
+    Or is there some basic misunderstanding in my interpretation of how
+    dm-era is supposed to work and be used?<br>
+    <br>
+    Please be so kind and shed some light on this!<br>
+    <br>
+    [1] <a
+      href="http://blog.rackcorp.com/2016/03/dm-era-device-for-backups/">http://blog.rackcorp.com/2016/03/dm-era-device-for-backups/</a><br>
+    <br>
+    <br>
+    Best Regards,<br>
+    <br>
+    Markus Hentsch<br>
+    Cloud&amp;Heat Technologies<br>
+    <br>
+  </body>
+</html>
+
+--------------96A05395730D4A2A57680794--
+
+
+--===============4458154291092187259==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============4458154291092187259==--
