@@ -1,203 +1,158 @@
-From: Markus Hentsch <markus.hentsch@cloudandheat.com>
-Subject: Usage of dm-era
-Date: Thu, 22 Sep 2016 16:10:18 +0200
-Message-ID: <12089ffa-c3dd-523b-2302-58445f12e737@cloudandheat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [RFC][PATCH] dm: Remove dm_bufio_cond_resched()
+Date: Thu, 22 Sep 2016 16:53:41 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1609221645510.4447@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20160913084520.GA5012@twins.programming.kicks-ass.net> <20160913133959.GA22833@redhat.com> <20160919105325.GW5016@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4458154291092187259=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160919105325.GW5016@twins.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---===============4458154291092187259==
-Content-Type: multipart/alternative;
-	boundary="------------96A05395730D4A2A57680794"
-
-This is a multi-part message in MIME format.
---------------96A05395730D4A2A57680794
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-
-Dear dm-devel community,
-
-I'm trying to get familiar with dm-era but I'm stuck.
-
-What I'm trying to achieve is to have a dm-era device which keeps track
-of changed blocks on a seperate hard drive or logical volume/mapping in
-order to create a live backup solution.
-
-The documentation on dm-era is very sparse. So far I found a Gentoo wiki
-entry, a blog entry by Rackcorp and the official kernel doc.
-I tried to come up with a basic setup using a virtual machine running
-Ubuntu 16.04.
-
-So far I was able to create a setup that looks like this:
-http://i.imgur.com/LNCPima.png
-To set this up, I came up with the following script:
-http://pastebin.com/Y3B2m7wL
-It is inspired by the setup done by Rackcorp [1]. The resulting 'lsblk'
-looks like this:
-
-sdb                       8:16   0  256M  0 disk=20
-
-`-metadev-era           252:2    0  276K  0 dm  =20
-
-  |-era                 252:4    0  276K  0 dm  =20
-
-  `-era-access          252:5    0  276K  0 dm  =20
-
-sdc                       8:32   0  256M  0 disk=20
-
-`-metadev-data          252:3    0  256M  0 dm  =20
-
-  |-era                 252:4    0  276K  0 dm  =20
-
-  `-metadev-data-access 252:6    0  256M  0 dm   /media/sdc-data
 
 
+On Mon, 19 Sep 2016, Peter Zijlstra wrote:
 
-In comparison to Rackcorp's setup, I did the following adjustment:
+> On Tue, Sep 13, 2016 at 09:39:59AM -0400, Mike Snitzer wrote:
+> > So I'm not sure how this dm-bufio local cond_resched() wrapper still got
+> > in... happy to take your patch.
+> > 
+> > Please respond with whatever SOB you'd like applied to the patch header.
+> 
+> Sorry, for the delay, here goes.
 
-  * i) mounting /dev/mapper/metadev-data (or the underlying sdc) or ii)
-    using it as an origin device for era, seemed to be mutually exclusive=
+Why not change it to might_sleep()? - that would be almost equivalent to 
+the code that was there before (i.e. reschedule only if 
+CONFIG_PREEMPT_VOLUNTARY is set).
 
-  * that's why I created an additional linear mapping called
-    'metadev-data-access' inspired by the 'era-access' device to be able
-    to mount and write to the sdc device again
+If we call the cond_resched() function in tight loops such as walking all 
+buffers in a list, there may be performance penalty due to the call, so 
+the call should be done only if it is really needed (i.e. in 
+CONFIG_PREEMPT_VOLUNTARY case).
 
-Basically this setup is supposed to track changed blocks on /dev/sdc and
-uses a mounted /dev/mapper/metadev-data-access at /media/sdc-data to
-access /dev/sdc on top of the dm setup.
+Mikulas
 
-However, when reading the era metadata via 'era_dump
-/dev/mapper/era-access', I only get this result:
-
-<superblock uuid=3D"" block_size=3D"4096" nr_blocks=3D"1" current_era=3D"=
-1">
-
-  <era_array>
-
-    <era block=3D"0" era=3D"0"/>
-
-  </era_array>
-
-</superblock>
-
-
-Why is there only one block listed? Shouldn't that list exactly as much
-blocks as my 'metadev-data' device has, since it is the origin for the
-era target?
-Or is there some basic misunderstanding in my interpretation of how
-dm-era is supposed to work and be used?
-
-Please be so kind and shed some light on this!
-
-[1] http://blog.rackcorp.com/2016/03/dm-era-device-for-backups/
-
-
-Best Regards,
-
-Markus Hentsch
-Cloud&Heat Technologies
-
-
---------------96A05395730D4A2A57680794
-Content-Type: text/html; charset=utf-8
-Content-Transfer-Encoding: 8bit
-
-<html>
-  <head>
-
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
-  </head>
-  <body bgcolor="#FFFFFF" text="#000000">
-    Dear dm-devel community,<br>
-    <br>
-    I'm trying to get familiar with dm-era but I'm stuck.<br>
-    <br>
-    What I'm trying to achieve is to have a dm-era device which keeps
-    track of changed blocks on a seperate hard drive or logical
-    volume/mapping in order to create a live backup solution.<br>
-    <br>
-    The documentation on dm-era is very sparse. So far I found a Gentoo
-    wiki entry, a blog entry by Rackcorp and the official kernel doc.<br>
-    I tried to come up with a basic setup using a virtual machine
-    running Ubuntu 16.04.<br>
-    <br>
-    So far I was able to create a setup that looks like this: <a
-      href="http://i.imgur.com/LNCPima.png">http://i.imgur.com/LNCPima.png</a><br>
-    To set this up, I came up with the following script: <a
-      href="http://pastebin.com/Y3B2m7wL">http://pastebin.com/Y3B2m7wL</a><br>
-    It is inspired by the setup done by Rackcorp [1]. The resulting
-    'lsblk' looks like this:<br>
-    <pre>sdb                       8:16   0  256M  0 disk </pre>
-    <pre>`-metadev-era           252:2    0  276K  0 dm   </pre>
-    <pre>  |-era                 252:4    0  276K  0 dm   </pre>
-    <pre>  `-era-access          252:5    0  276K  0 dm   </pre>
-    <pre>sdc                       8:32   0  256M  0 disk </pre>
-    <pre>`-metadev-data          252:3    0  256M  0 dm   </pre>
-    <pre>  |-era                 252:4    0  276K  0 dm   </pre>
-    <pre>  `-metadev-data-access 252:6    0  256M  0 dm   /media/sdc-data</pre>
-    <br>
-    <br>
-    In comparison to Rackcorp's setup, I did the following adjustment:<br>
-    <ul>
-      <li>i) mounting /dev/mapper/metadev-data (or the underlying sdc)
-        or ii) using it as an origin device for era, seemed to be
-        mutually exclusive</li>
-      <li>that's why I created an additional linear mapping called
-        'metadev-data-access' inspired by the 'era-access' device to be
-        able to mount and write to the sdc device again</li>
-    </ul>
-    Basically this setup is supposed to track changed blocks on /dev/sdc
-    and uses a mounted /dev/mapper/metadev-data-access at
-    /media/sdc-data to access /dev/sdc on top of the dm setup.<br>
-    <br>
-    However, when reading the era metadata via 'era_dump
-    /dev/mapper/era-access', I only get this result:<br>
-    <pre>&lt;superblock uuid="" block_size="4096" nr_blocks="1" current_era="1"&gt;</pre>
-    <pre>  &lt;era_array&gt;</pre>
-    <pre>    &lt;era block="0" era="0"/&gt;</pre>
-    <pre>  &lt;/era_array&gt;</pre>
-    <pre>&lt;/superblock&gt;</pre>
-    <br>
-    Why is there only one block listed? Shouldn't that list exactly as
-    much blocks as my 'metadev-data' device has, since it is the origin
-    for the era target?<br>
-    Or is there some basic misunderstanding in my interpretation of how
-    dm-era is supposed to work and be used?<br>
-    <br>
-    Please be so kind and shed some light on this!<br>
-    <br>
-    [1] <a
-      href="http://blog.rackcorp.com/2016/03/dm-era-device-for-backups/">http://blog.rackcorp.com/2016/03/dm-era-device-for-backups/</a><br>
-    <br>
-    <br>
-    Best Regards,<br>
-    <br>
-    Markus Hentsch<br>
-    Cloud&amp;Heat Technologies<br>
-    <br>
-  </body>
-</html>
-
---------------96A05395730D4A2A57680794--
-
-
---===============4458154291092187259==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============4458154291092187259==--
+> ---
+> Subject: dm: Remove dm_bufio_cond_resched()
+> From: Peter Zijlstra <peterz@infradead.org>
+> Date: Tue, 13 Sep 2016 10:45:20 +0200
+> 
+> Remove pointless local wrappery. Use cond_resched() like everybody else.
+> 
+> Cc: Ingo Molnar <mingo@kernel.org>
+> Cc: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: Alasdair Kergon <agk@redhat.com>
+> Acked-by: Thomas Gleixner <tglx@linutronix.de>
+> Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+> ---
+>  drivers/md/dm-bufio.c |   31 +++++++++----------------------
+>  1 file changed, 9 insertions(+), 22 deletions(-)
+> 
+> --- a/drivers/md/dm-bufio.c
+> +++ b/drivers/md/dm-bufio.c
+> @@ -191,19 +191,6 @@ static void dm_bufio_unlock(struct dm_bu
+>  	mutex_unlock(&c->lock);
+>  }
+>  
+> -/*
+> - * FIXME Move to sched.h?
+> - */
+> -#ifdef CONFIG_PREEMPT_VOLUNTARY
+> -#  define dm_bufio_cond_resched()		\
+> -do {						\
+> -	if (unlikely(need_resched()))		\
+> -		_cond_resched();		\
+> -} while (0)
+> -#else
+> -#  define dm_bufio_cond_resched()                do { } while (0)
+> -#endif
+> -
+>  /*----------------------------------------------------------------*/
+>  
+>  /*
+> @@ -741,7 +728,7 @@ static void __flush_write_list(struct li
+>  			list_entry(write_list->next, struct dm_buffer, write_list);
+>  		list_del(&b->write_list);
+>  		submit_io(b, WRITE, b->block, write_endio);
+> -		dm_bufio_cond_resched();
+> +		cond_resched();
+>  	}
+>  	blk_finish_plug(&plug);
+>  }
+> @@ -780,7 +767,7 @@ static struct dm_buffer *__get_unclaimed
+>  			__unlink_buffer(b);
+>  			return b;
+>  		}
+> -		dm_bufio_cond_resched();
+> +		cond_resched();
+>  	}
+>  
+>  	list_for_each_entry_reverse(b, &c->lru[LIST_DIRTY], lru_list) {
+> @@ -791,7 +778,7 @@ static struct dm_buffer *__get_unclaimed
+>  			__unlink_buffer(b);
+>  			return b;
+>  		}
+> -		dm_bufio_cond_resched();
+> +		cond_resched();
+>  	}
+>  
+>  	return NULL;
+> @@ -923,7 +910,7 @@ static void __write_dirty_buffers_async(
+>  			return;
+>  
+>  		__write_dirty_buffer(b, write_list);
+> -		dm_bufio_cond_resched();
+> +		cond_resched();
+>  	}
+>  }
+>  
+> @@ -973,7 +960,7 @@ static void __check_watermark(struct dm_
+>  			return;
+>  
+>  		__free_buffer_wake(b);
+> -		dm_bufio_cond_resched();
+> +		cond_resched();
+>  	}
+>  
+>  	if (c->n_buffers[LIST_DIRTY] > threshold_buffers)
+> @@ -1170,7 +1157,7 @@ void dm_bufio_prefetch(struct dm_bufio_c
+>  				submit_io(b, READ, b->block, read_endio);
+>  			dm_bufio_release(b);
+>  
+> -			dm_bufio_cond_resched();
+> +			cond_resched();
+>  
+>  			if (!n_blocks)
+>  				goto flush_plug;
+> @@ -1291,7 +1278,7 @@ int dm_bufio_write_dirty_buffers(struct
+>  		    !test_bit(B_WRITING, &b->state))
+>  			__relink_lru(b, LIST_CLEAN);
+>  
+> -		dm_bufio_cond_resched();
+> +		cond_resched();
+>  
+>  		/*
+>  		 * If we dropped the lock, the list is no longer consistent,
+> @@ -1574,7 +1561,7 @@ static unsigned long __scan(struct dm_bu
+>  				freed++;
+>  			if (!--nr_to_scan || ((count - freed) <= retain_target))
+>  				return freed;
+> -			dm_bufio_cond_resched();
+> +			cond_resched();
+>  		}
+>  	}
+>  	return freed;
+> @@ -1808,7 +1795,7 @@ static void __evict_old_buffers(struct d
+>  		if (__try_evict_buffer(b, 0))
+>  			count--;
+>  
+> -		dm_bufio_cond_resched();
+> +		cond_resched();
+>  	}
+>  
+>  	dm_bufio_unlock(c);
+> 
