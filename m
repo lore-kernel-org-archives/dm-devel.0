@@ -1,43 +1,54 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: dm-mpath: Handling SCSI-3 PR RELEASE in
-	multi-controller	environment
-Date: Mon, 26 Sep 2016 18:03:17 +0200
-Message-ID: <20160926160317.GA17796@lst.de>
-References: <57E24F7E.4030103@huawei.com> <20160921150427.GB9748@redhat.com>
-	<57E392FA.3080006@huawei.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [dm-devel] dm-mpath: always return reservation conflict
+Date: Mon, 26 Sep 2016 09:52:30 -0700
+Message-ID: <20160926165230.GA5787@infradead.org>
+References: <1470141392-25479-1-git-send-email-hch@lst.de>
+ <1470141392-25479-2-git-send-email-hch@lst.de>
+ <20160811183832.GA27144@lst.de>
+ <20160815130829.GA14829@redhat.com>
+ <20160815134039.GA5569@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <57E392FA.3080006@huawei.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: jiangyiwen <jiangyiwen@huawei.com>
-Cc: wangyibin@huawei.com, dm-devel@redhat.com, hch@lst.de, Mike Snitzer <snitzer@redhat.com>
+In-Reply-To: <20160815134039.GA5569@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, dm-devel@redhat.com, linux-scsi@vger.kernel.org, Hannes Reinecke <hare@suse.com>, James.Bottomley@HansenPartnership.com
 List-Id: dm-devel.ids
 
-On Thu, Sep 22, 2016 at 04:14:50PM +0800, jiangyiwen wrote:
-> I briefly reviewed the PR API. If I understand correctly, a bunch of PR
-> dedicated operations (pr_ops) are defined in block_device_operations, which
-> includes register, reserve, release, preempt and clear operations. But among
-> these operations, only register() calls dm_call_pr(), which in turns iterates
-> over the device for each path and does the registeration.
+Getting back to this after Hannes recovered from his vacation
+and I had a chat with him..
 
-Register and unregister in fact, but they both multiple throught the
-same method.
+On Mon, Aug 15, 2016 at 09:40:39AM -0400, Mike Snitzer wrote:
+> Seems we still need a more sophisticated approach.  But I'm left
+> wondering: if we didn't do it would anything notice?  Sadly, the same
+> big question from the original thread from a year ago:
 
-> My point is, we also need to do this in release operation, so that we can
-> eliminate the possibility of trying to release the reservation on the wrong
-> controller and get a fake success.
+Yes.  I have a customer looking to push the pNFS SCSI layout into
+a product, and the major show stopper right now is that we can
+trivially get into failver loops without this (or and equivalent)
+fix.
 
-dm_grab_bdev_for_ioctl ensures that we have a working path.  At least
-that's the theory and my testing confirms it.  If you know a case where
-the release doesn't work using this path we'll need to fix.
+A year ago SCSI layout was still work in progress in the IETF,
+people use the similar block layout instead that doesn't use
+PRs and we also didn't have the in-kernel PR API, so you effectively
+couldn't use PRs with multipathing.
+
+> https://patchwork.kernel.org/patch/6797111/
+> 
+> > So this is throw-away for now (and I'll get Hannes' patch applied for
+> > 4.8-rc3, with the tweak of returning -EBADE immediately):
+> 
+> Unfortunately, I'm _not_ staging Hannes' patch until I have James
+> Bottomley's Ack (given his original issues with the patch haven't been
+> explained away AFAICT).
+
+I've added James to the Cc.  His argument was that the old behavior
+could be implemented to use some non-standard use of reservations
+without a specific example.  I don't really think his example even
+is practical - once we use dm-mpath it exclusively claims the underling
+block devices, so any sort of selective reservations would have had
+to happen before even starting dm-multipath.  So a dynamic SAN
+controller would have to tear down and rebuild the dm-multipath setup
+at all the time.
