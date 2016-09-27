@@ -1,103 +1,104 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [dm-devel] dm-mpath: always return reservation conflict
-Date: Tue, 27 Sep 2016 08:34:59 +0200
-Message-ID: <9f7ee494-1432-90ad-55e2-dbd223cd7bf3@suse.de>
-References: <1470141392-25479-1-git-send-email-hch@lst.de>
- <1470141392-25479-2-git-send-email-hch@lst.de>
- <20160811183832.GA27144@lst.de> <20160815130829.GA14829@redhat.com>
- <20160815134039.GA5569@redhat.com> <20160926165230.GA5787@infradead.org>
- <1474916784.2765.64.camel@HansenPartnership.com>
+From: Milan Broz <gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Hang problem with dm-crypt
+Date: Tue, 27 Sep 2016 08:44:49 +0200
+Message-ID: <2e3e43a9-706c-cb88-de2d-7577324f30c8@gmail.com>
+References: <858B57D94E9DE244922C3CF355D7FFD64EB5FFA0@SHSMSX104.ccr.corp.intel.com>
+ <d8ffe9ed-d6e7-53af-ce87-9512e94b8cfe@gmail.com>
+ <858B57D94E9DE244922C3CF355D7FFD64EB600BA@SHSMSX104.ccr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1474916784.2765.64.camel@HansenPartnership.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@HansenPartnership.com>, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, linux-scsi@vger.kernel.org, Hannes Reinecke <hare@suse.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
+In-Reply-To: <858B57D94E9DE244922C3CF355D7FFD64EB600BA-0J0gbvR4kTg/UvCtAeCM4rfspsVTdybXVpNB7YpNyf8@public.gmane.org>
+List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://www.saout.de/pipermail/dm-crypt/>
+List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
+List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
+List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
+Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
+Sender: "dm-crypt" <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
+To: "Yu, Wenqian" <wenqian.yu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "dm-crypt-4q3lyFh4P1g@public.gmane.org" <dm-crypt-4q3lyFh4P1g@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On 09/26/2016 09:06 PM, James Bottomley wrote:
-> On Mon, 2016-09-26 at 09:52 -0700, Christoph Hellwig wrote:
->> Getting back to this after Hannes recovered from his vacation
->> and I had a chat with him..
->>
->> On Mon, Aug 15, 2016 at 09:40:39AM -0400, Mike Snitzer wrote:
->>> Seems we still need a more sophisticated approach.  But I'm left
->>> wondering: if we didn't do it would anything notice?  Sadly, the
->>> same
->>> big question from the original thread from a year ago:
->>
->> Yes.  I have a customer looking to push the pNFS SCSI layout into
->> a product, and the major show stopper right now is that we can
->> trivially get into failver loops without this (or and equivalent)
->> fix.
->>
->> A year ago SCSI layout was still work in progress in the IETF,
->> people use the similar block layout instead that doesn't use
->> PRs and we also didn't have the in-kernel PR API, so you effectively
->> couldn't use PRs with multipathing.
->>
->>> https://patchwork.kernel.org/patch/6797111/
->>>
->>>> So this is throw-away for now (and I'll get Hannes' patch applied
->>>> for
->>>> 4.8-rc3, with the tweak of returning -EBADE immediately):
->>>
->>> Unfortunately, I'm _not_ staging Hannes' patch until I have James
->>> Bottomley's Ack (given his original issues with the patch haven't
->>> been
->>> explained away AFAICT).
->>
->> I've added James to the Cc.  His argument was that the old behavior
->> could be implemented to use some non-standard use of reservations
->> without a specific example.  I don't really think his example even
->> is practical - once we use dm-mpath it exclusively claims the 
->> underling block devices, so any sort of selective reservations would 
->> have had to happen before even starting dm-multipath.
+On 09/26/2016 03:08 PM, Yu, Wenqian wrote:
+> Hi, Milan,
 > 
-> Well, now that you've made me reread the thread from 14 months ago that
-> wasn't quite my objection.  The objection hinged on the fact that
-> anything that uses path specific reservations would now fail instead of
-> retrying on a different path.  I thought the IBM SVC did this and
-> Hannes implied he'd be able to check this ... did anyone check?  If
-> we've checked and there's no issue with the SVC, then I don't have any
-> other objections.
+> Thanks for the detail information. I noticed the comments and the underlying design logic.
 > 
->>   So a dynamic SAN controller would have to tear down and rebuild the
->> dm-multipath setup at all the time.
+> In dm-crypt existing design, there is an assumption that the acceleration driver can queue the requests which are not sent to hardware.  
 > 
-> That was the job of the SVC: it sat in the middle of the SAN and
-> controlled which node saw what storage.
+> I think there are at least two scenarios we should consider to make it more robust.
+> 1.  The queue is full even if the driver has the ability to queue a number of the requests.
+> 2.  The acceleration hardware/driver doesn't have the ability to queue the requests.
 > 
-> https://www.ibm.com/support/knowledgecenter/STPVGU/com.ibm.storage.svc.console.720.doc/svc_svcovr_1bcfiq.html
-> 
-> The SVC can issue its own reservations in those circumstances.  What
-> I'm not at all clear on is whether they'll interact badly with the dm
-> -mp reservations.
-> 
-In the end SVC is (for us) just another storage array.
-If and what SVC does in the background is of no interest to us.
-OTOH I'd be very surprised if the SVC would be allowing us to see
-remnants of its internal working (like persistent reservation errors);
-in doing so third-party applications would be able to see and possibly
-modify these persistent reservations and the SVC would find itself in a
-very fragile operating scenario.
-Also interactions with GPFS (which uses it's own set of reservations)
-will become very tricky.
+> Should we add other error code to handle this?
 
-So I sincerely doubt we'll ever see SVC-originated persistent
-reservations errors.
+I would prefer to ask on crypto API mailing list how the interface is expected to behave
+(if the queue/REQ_MAY_BACKLOG is mandatory etc) before complicating any logic in dmcrypt.
 
-And as a side-note, this particular patch is included in SLES since
-2011. With no noticeable side-effect.
+Also please send any possible patches to dm-devel mailing list (I added cc there now).
 
-Cheers,
+Thanks,
+Milan
 
-Hannes
--- 
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
-GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG Nürnberg)
+>  
+> Thanks,
+> - Wenqian
+> 
+> -----Original Message-----
+> From: Milan Broz [mailto:gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org] 
+> Sent: Monday, September 26, 2016 6:28 PM
+> To: Yu, Wenqian; dm-crypt-4q3lyFh4P1g@public.gmane.org
+> Subject: Re: [dm-crypt] Hang problem with dm-crypt
+> 
+> On 09/26/2016 08:50 AM, Yu, Wenqian wrote:
+>> I tried to use dm-crypt for disk encryption with accelerators and 
+>> found that it will hang when accelerator returned EBUSY, which means 
+>> the driver request queue is full.
+> 
+> That is normal state, when request is processed asynchronously later.
+> 
+> Please read explicit comments in code we added to understand this logic.
+> added in this commit:
+> http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/drivers/md/dm-crypt.c?id=54cea3f6681ad9360814e2926d1f723bbd0f74ed
+>  
+>> Per the logic in crypt_convert(), the request will be skipped if the 
+>> request is not sent to crypto driver when the driver request queue is 
+>> full.  Is this expected behavior?
+> 
+> It is not skipped, it is queued (or it waits if queue is full and then processes as asynchronous branch (EINPROGRESS))
+> 
+>> In crypt_convert_block(), the sector is advanced (bio_advance_iter()) 
+>> no matter whether crypto_skcipher_encrypt()/crypto_skcipher_decrypt()
+>> send the request to accelerator driver or not.   When the driver
+>> request queue is full, EBUSY will be returned from 
+>> crypto_skcipher_encrypt()/crypto_skcipher_decrypt().  And in 
+>> crypt_convert(), the existing implementation is waiting for a 
+>> completion from a request, which is not queued in the driver when 
+>> EBUSY is encountered from crypt_convert_block ().  In this case, the 
+>> sector should not be advanced or should be rolled back as the request 
+>> is not sent to accelerator driver.
+> 
+> I think it should be queued (IOW the one that returns BUSY should be queued).
+> If it is not done, I would say it is bug in acceleration driver.
+> Note this flag:
+> /*
+>  * Use REQ_MAY_BACKLOG so a cipher driver internally backlogs
+>  * requests if driver request queue is full.
+>  */
+> 
+> Anyway, this is more question for crypto API mailing list...
+> I think that dmcrypt processing is correct here.
+> 
+> Milan
+> _______________________________________________
+> dm-crypt mailing list
+> dm-crypt-4q3lyFh4P1g@public.gmane.org
+> http://www.saout.de/mailman/listinfo/dm-crypt
+> 
+_______________________________________________
+dm-crypt mailing list
+dm-crypt-4q3lyFh4P1g@public.gmane.org
+http://www.saout.de/mailman/listinfo/dm-crypt
