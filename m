@@ -1,45 +1,55 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 00/10] md/dm-crypt: Fine-tuning for five function
- implementations
-Date: Wed, 28 Sep 2016 11:38:04 -0400
-Message-ID: <20160928153804.GA25644@redhat.com>
+From: SF Markus Elfring <elfring@users.sourceforge.net>
+Subject: [PATCH 02/10] md/dm-crypt: Reduce the scope for a variable in
+ crypt_alloc_tfms()
+Date: Wed, 28 Sep 2016 17:38:27 +0200
+Message-ID: <2cc0fee8-2228-1f0c-9428-3b872a39e64b@users.sourceforge.net>
 References: <566ABCD9.1060404@users.sourceforge.net>
  <7c232017-e291-fd2d-5516-26e5150d90df@users.sourceforge.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
 In-Reply-To: <7c232017-e291-fd2d-5516-26e5150d90df@users.sourceforge.net>
 Sender: linux-raid-owner@vger.kernel.org
-To: SF Markus Elfring <elfring@users.sourceforge.net>
-Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Shaohua Li <shli@kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
+To: dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
 List-Id: dm-devel.ids
 
-On Wed, Sep 28 2016 at 11:34am -0400,
-SF Markus Elfring <elfring@users.sourceforge.net> wrote:
+From: Markus Elfring <elfring@users.sourceforge.net>
+Date: Wed, 28 Sep 2016 14:05:25 +0200
 
-> From: Markus Elfring <elfring@users.sourceforge.net>
-> Date: Wed, 28 Sep 2016 17:25:17 +0200
-> 
-> Some update suggestions were taken into account
-> from static source code analysis.
-> 
-> Markus Elfring (10):
->   Use kcalloc() in crypt_alloc_tfms()
->   Reduce the scope for a variable in crypt_alloc_tfms()
->   Rename a jump label in crypt_message()
->   Delete an unnecessary variable initialisation in crypt_message()
->   Rename a jump label in crypt_set_key()
->   Delete an unnecessary variable initialisation in crypt_set_key()
->   Rename a jump label in crypt_iv_tcw_whitening()
->   Return directly after a failed crypto_alloc_ahash() in crypt_iv_essiv_ctr()
->   Two checks and one function call less in crypt_iv_essiv_ctr() after error detection
->   Delete unnecessary variable initialisations in crypt_iv_essiv_ctr()
-> 
->  drivers/md/dm-crypt.c | 51 ++++++++++++++++++++++-----------------------------
->  1 file changed, 22 insertions(+), 29 deletions(-)
+Move the definition for the variable "err" (including its declaration)
+into an if branch (so that the corresponding setting will only be performed
+if a call of the function "crypto_alloc_skcipher" failed as before
+this refactoring).
 
-These are _not_ the kind of changes I want to be seeing.  Churn in the
-name of "fine-tuning".
+Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
+---
+ drivers/md/dm-crypt.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Nack.
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 68971a2..88a3b62 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1452,7 +1452,6 @@ static void crypt_free_tfms(struct crypt_config *cc)
+ static int crypt_alloc_tfms(struct crypt_config *cc, char *ciphermode)
+ {
+ 	unsigned i;
+-	int err;
+ 
+ 	cc->tfms = kcalloc(cc->tfms_count, sizeof(*cc->tfms), GFP_KERNEL);
+ 	if (!cc->tfms)
+@@ -1461,7 +1460,8 @@ static int crypt_alloc_tfms(struct crypt_config *cc, char *ciphermode)
+ 	for (i = 0; i < cc->tfms_count; i++) {
+ 		cc->tfms[i] = crypto_alloc_skcipher(ciphermode, 0, 0);
+ 		if (IS_ERR(cc->tfms[i])) {
+-			err = PTR_ERR(cc->tfms[i]);
++			int err = PTR_ERR(cc->tfms[i]);
++
+ 			crypt_free_tfms(cc);
+ 			return err;
+ 		}
+-- 
+2.10.0
+
