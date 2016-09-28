@@ -1,8 +1,8 @@
 From: SF Markus Elfring <elfring@users.sourceforge.net>
-Subject: [PATCH 07/10] md/dm-crypt: Rename a jump label in
- crypt_iv_tcw_whitening()
-Date: Wed, 28 Sep 2016 17:44:14 +0200
-Message-ID: <0d5a2aa2-b713-4c2a-cfe4-9c72fe8ec44a@users.sourceforge.net>
+Subject: [PATCH 08/10] md/dm-crypt: Return directly after a failed
+ crypto_alloc_ahash() in crypt_iv_essiv_ctr()
+Date: Wed, 28 Sep 2016 17:45:10 +0200
+Message-ID: <717a9850-4dcf-d6b3-838e-a84f91ac8e7d@users.sourceforge.net>
 References: <566ABCD9.1060404@users.sourceforge.net>
  <7c232017-e291-fd2d-5516-26e5150d90df@users.sourceforge.net>
 Mime-Version: 1.0
@@ -16,45 +16,30 @@ Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia 
 List-Id: dm-devel.ids
 
 From: Markus Elfring <elfring@users.sourceforge.net>
-Date: Wed, 28 Sep 2016 15:32:15 +0200
+Date: Wed, 28 Sep 2016 15:55:47 +0200
 
-Adjust jump labels according to the current Linux coding style convention.
+Return directly after a call of the function "crypto_alloc_ahash"
+failed here.
 
 Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
 ---
- drivers/md/dm-crypt.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ drivers/md/dm-crypt.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 3bc54c1..c457b5e 100644
+index c457b5e..47f6265 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -698,13 +698,13 @@ static int crypt_iv_tcw_whitening(struct crypt_config *cc,
- 	for (i = 0; i < 4; i++) {
- 		r = crypto_shash_init(desc);
- 		if (r)
--			goto out;
-+			goto zero_memory;
- 		r = crypto_shash_update(desc, &buf[i * 4], 4);
- 		if (r)
--			goto out;
-+			goto zero_memory;
- 		r = crypto_shash_final(desc, &buf[i * 4]);
- 		if (r)
--			goto out;
-+			goto zero_memory;
+@@ -375,8 +375,7 @@ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 	hash_tfm = crypto_alloc_ahash(opts, 0, CRYPTO_ALG_ASYNC);
+ 	if (IS_ERR(hash_tfm)) {
+ 		ti->error = "Error initializing ESSIV hash";
+-		err = PTR_ERR(hash_tfm);
+-		goto bad;
++		return PTR_ERR(hash_tfm);
  	}
- 	crypto_xor(&buf[0], &buf[12], 4);
- 	crypto_xor(&buf[4], &buf[8], 4);
-@@ -712,7 +712,7 @@ static int crypt_iv_tcw_whitening(struct crypt_config *cc,
- 	/* apply whitening (8 bytes) to whole sector */
- 	for (i = 0; i < ((1 << SECTOR_SHIFT) / 8); i++)
- 		crypto_xor(data + i * 8, buf, 8);
--out:
-+zero_memory:
- 	memzero_explicit(buf, sizeof(buf));
- 	return r;
- }
+ 
+ 	salt = kzalloc(crypto_ahash_digestsize(hash_tfm), GFP_KERNEL);
 -- 
 2.10.0
 
