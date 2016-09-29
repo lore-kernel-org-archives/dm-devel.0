@@ -1,40 +1,36 @@
 From: Theodore Ts'o <tytso@mit.edu>
-Subject: Re: [dm-devel] [PATCH 03/10] md/dm-crypt: Rename a jump label in
- crypt_message()
-Date: Thu, 29 Sep 2016 08:55:53 -0400
-Message-ID: <20160929125553.kn45yx6jud35463p@thunk.org>
+Subject: Re: dm snapshot: Use kmalloc_array() in init_origin_hash()
+Date: Thu, 29 Sep 2016 08:59:37 -0400
+Message-ID: <20160929125937.aaacsnbuxm6yhdqj@thunk.org>
 References: <566ABCD9.1060404@users.sourceforge.net>
- <7c232017-e291-fd2d-5516-26e5150d90df@users.sourceforge.net>
- <db29ff0c-8da9-e7ba-054d-a35f8b4fd2d7@users.sourceforge.net>
+ <080668d9-1e1e-e208-f9ea-ff718e8070e5@users.sourceforge.net>
+ <3861d349-48fd-162b-a749-83e007f70b41@users.sourceforge.net>
+ <1475142864.31297.5.camel@tiscali.nl>
+ <80feaa7d-7845-976a-a038-15da80283df8@users.sourceforge.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <db29ff0c-8da9-e7ba-054d-a35f8b4fd2d7@users.sourceforge.net>
+In-Reply-To: <80feaa7d-7845-976a-a038-15da80283df8@users.sourceforge.net>
 Sender: linux-kernel-owner@vger.kernel.org
 To: SF Markus Elfring <elfring@users.sourceforge.net>
-Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, Julia Lawall <julia.lawall@lip6.fr>, kernel-janitors@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
+Cc: Paul Bolle <pebolle@tiscali.nl>, Andy Whitcroft <apw@canonical.com>, Joe Perches <joe@perches.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>, Paolo Bonzini <pbonzini@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Sep 28, 2016 at 05:40:14PM +0200, SF Markus Elfring wrote:
-> From: Markus Elfring <elfring@users.sourceforge.net>
-> Date: Wed, 28 Sep 2016 14:54:39 +0200
+On Thu, Sep 29, 2016 at 01:45:41PM +0200, SF Markus Elfring wrote:
+> > We have no hope of fixing Markus' homegrown coccinelle script.
 > 
-> Adjust a jump label according to the current Linux coding style convention.
+> I have got an other impression. I see further possibilities
+> to clarify involved communication and software development challenges
+> for a few source code search patterns.
+> 
+> How do you think about to discuss the corresponding collateral evolution
+> a bit more?
 
-In what bizzaro world is the "current Linux coding style convention"
+Here's my suggestion:
 
-> -
-> -error:
-> +show_warning:
->  	DMWARN("unrecognised message received.");
->  	return -EINVAL;
->  }
+	https://www.youtube.com/watch?v=xAnVNXaa5oA
 
-"show_warning" is better than "error" when the net result of the goto
-is that the function returns -EINVAL?!?
+Regards,
 
-Please give it up with these drive-by shooting of auto-generated
-patches.  You're just embarassing yourself.
-
-							- Ted
+					- Ted
