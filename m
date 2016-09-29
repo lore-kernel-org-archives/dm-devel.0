@@ -1,8 +1,8 @@
 From: SF Markus Elfring <elfring@users.sourceforge.net>
-Subject: [PATCH 05/10] dm snapshot: Delete unnecessary variable
- initialisations in pending_complete()
-Date: Thu, 29 Sep 2016 11:13:14 +0200
-Message-ID: <9cb9e644-7d2e-0630-f26b-2143fc82eea6@users.sourceforge.net>
+Subject: [PATCH 06/10] dm snapshot: Delete an unnecessary variable
+ initialisation in snapshot_ctr()
+Date: Thu, 29 Sep 2016 11:14:19 +0200
+Message-ID: <882f19c7-7013-a0e7-6385-d6d19aa4e51b@users.sourceforge.net>
 References: <566ABCD9.1060404@users.sourceforge.net>
  <080668d9-1e1e-e208-f9ea-ff718e8070e5@users.sourceforge.net>
 Mime-Version: 1.0
@@ -16,33 +16,29 @@ Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia 
 List-Id: dm-devel.ids
 
 From: Markus Elfring <elfring@users.sourceforge.net>
-Date: Thu, 29 Sep 2016 08:25:47 +0200
+Date: Thu, 29 Sep 2016 08:38:29 +0200
 
-Three local variables will be set to an appropriate pointer a bit later.
+The local variable "r" will be set to an appropriate value a bit later.
 Thus omit the explicit initialisation at the beginning.
 
 Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
 ---
- drivers/md/dm-snap.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/md/dm-snap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index a6b797f..7bbd3c4 100644
+index 7bbd3c4..06b1b69 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -1450,9 +1450,9 @@ static void pending_complete(void *context, int success)
- 	struct dm_snap_pending_exception *pe = context;
- 	struct dm_exception *e;
- 	struct dm_snapshot *s = pe->snap;
--	struct bio *origin_bios = NULL;
--	struct bio *snapshot_bios = NULL;
--	struct bio *full_bio = NULL;
-+	struct bio *origin_bios;
-+	struct bio *snapshot_bios;
-+	struct bio *full_bio;
- 	int error = 0;
- 
- 	if (!success) {
+@@ -1102,7 +1102,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ {
+ 	struct dm_snapshot *s;
+ 	int i;
+-	int r = -EINVAL;
++	int r;
+ 	char *origin_path, *cow_path;
+ 	dev_t origin_dev, cow_dev;
+ 	unsigned args_used, num_flush_bios = 1;
 -- 
 2.10.0
 
