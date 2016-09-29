@@ -1,77 +1,57 @@
-From: Paul Bolle <pebolle@tiscali.nl>
+From: Joe Perches <joe@perches.com>
 Subject: Re: [PATCH 01/10] dm snapshot: Use kmalloc_array() in
  init_origin_hash()
-Date: Thu, 29 Sep 2016 11:54:24 +0200
-Message-ID: <1475142864.31297.5.camel@tiscali.nl>
+Date: Thu, 29 Sep 2016 03:02:56 -0700
+Message-ID: <1475143376.1946.2.camel@perches.com>
 References: <566ABCD9.1060404@users.sourceforge.net>
          <080668d9-1e1e-e208-f9ea-ff718e8070e5@users.sourceforge.net>
          <3861d349-48fd-162b-a749-83e007f70b41@users.sourceforge.net>
+         <1475142864.31297.5.camel@tiscali.nl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <3861d349-48fd-162b-a749-83e007f70b41@users.sourceforge.net>
+In-Reply-To: <1475142864.31297.5.camel@tiscali.nl>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Whitcroft <apw@canonical.com>, Joe Perches <joe@perches.com>
+To: Paul Bolle <pebolle@tiscali.nl>, Andy Whitcroft <apw@canonical.com>
 Cc: SF Markus Elfring <elfring@users.sourceforge.net>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
 List-Id: dm-devel.ids
 
-Andy, Joe,
-
-On Thu, 2016-09-29 at 11:07 +0200, SF Markus Elfring wrote:
-> * Multiplications for the size determination of memory allocations
->   indicated that array data structures should be processed.
->   Thus use the corresponding function "kmalloc_array".
+On Thu, 2016-09-29 at 11:54 +0200, Paul Bolle wrote:
+> Andy, Joe,
 > 
->   This issue was detected by using the Coccinelle software.
+> On Thu, 2016-09-29 at 11:07 +0200, SF Markus Elfring wrote:
+> > * Multiplications for the size determination of memory allocations
+> > � indicated that array data structures should be processed.
+> > � Thus use the corresponding function "kmalloc_array".
+> > 
+> > � This issue was detected by using the Coccinelle software.
+> 
+> 
+> We have no hope of fixing Markus' homegrown coccinelle script. But we
+> could try to fix the checkpatch false positive here.
 
-We have no hope of fixing Markus' homegrown coccinelle script. But we
-could try to fix the checkpatch false positive here. Something like:
+What's the false positive?
 
-diff --git a/scripts/checkpatch.pl b/scripts/checkpatch.pl
-index 206a6b3..b47201d 100755
---- a/scripts/checkpatch.pl
-+++ b/scripts/checkpatch.pl
-@@ -5693,7 +5693,7 @@ sub process {
- 				$r2 = $a1;
- 			}
- 			if ($r1 !~ /^sizeof\b/ && $r2 =~ /^sizeof\s*\S/ &&
--			    !($r1 =~ /^$Constant$/ || $r1 =~ /^[A-Z_][A-Z0-9_]*$/)) {
-+			    !($r1 =~ /^$Constant$/ || $r1 =~ /^[A-Z_][A-Z0-9_]*\b/)) {
- 				if (WARN("ALLOC_WITH_MULTIPLY",
- 					 "Prefer $newfunc over $oldfunc with multiply\n" . $herecurr) &&
- 				    $fix) {
+I get:
 
-Does that work for you too?
+$ ./scripts/checkpatch.pl -f drivers/md/dm-snap.c --show-types --types=alloc_with_multiply
+WARNING:ALLOC_WITH_MULTIPLY: Prefer kmalloc_array over kmalloc with multiply
+#329: FILE: drivers/md/dm-snap.c:329:
++	_origins = kmalloc(ORIGIN_HASH_SIZE * sizeof(struct list_head),
 
-> --- a/drivers/md/dm-snap.c
-> +++ b/drivers/md/dm-snap.c
-> @@ -326,8 +326,9 @@ static int init_origin_hash(void)
->  {
->  	int i;
->  
-> -	_origins = kmalloc(ORIGIN_HASH_SIZE * sizeof(struct list_head),
-> -			   GFP_KERNEL);
-> +	_origins = kmalloc_array(ORIGIN_HASH_SIZE,
-> +				 sizeof(*_origins),
-> +				 GFP_KERNEL);
->  	if (!_origins) {
->  		DMERR("unable to allocate memory for _origins");
->  		return -ENOMEM;
-> @@ -335,8 +336,9 @@ static int init_origin_hash(void)
->  	for (i = 0; i < ORIGIN_HASH_SIZE; i++)
->  		INIT_LIST_HEAD(_origins + i);
->  
-> -	_dm_origins = kmalloc(ORIGIN_HASH_SIZE * sizeof(struct list_head),
-> -			      GFP_KERNEL);
-> +	_dm_origins = kmalloc_array(ORIGIN_HASH_SIZE,
-> +				    sizeof(*_dm_origins),
-> +				    GFP_KERNEL);
->  	if (!_dm_origins) {
->  		DMERR("unable to allocate memory for _dm_origins");
->  		kfree(_origins);
+WARNING:ALLOC_WITH_MULTIPLY: Prefer kmalloc_array over kmalloc with multiply
+#338: FILE: drivers/md/dm-snap.c:338:
++	_dm_origins = kmalloc(ORIGIN_HASH_SIZE * sizeof(struct list_head),
 
-Thanks,
+total: 0 errors, 2 warnings, 2490 lines checked
 
+NOTE: For some of the reported defects, checkpatch may be able to
+������mechanically convert to the typical style using --fix or --fix-inplace.
 
-Paul Bolle
+drivers/md/dm-snap.c has style problems, please review.
+
+NOTE: Used message types: ALLOC_WITH_MULTIPLY
+
+NOTE: If any of the errors are false positives, please report
+������them to the maintainer, see CHECKPATCH in MAINTAINERS.
