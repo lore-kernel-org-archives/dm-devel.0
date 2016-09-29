@@ -1,24 +1,56 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: dm-mpath: always return reservation conflict
-Date: Thu, 29 Sep 2016 17:35:03 +0200
-Message-ID: <20160929153502.GC32512@lst.de>
-References: <1470141392-25479-1-git-send-email-hch@lst.de> <1470141392-25479-2-git-send-email-hch@lst.de> <20160811183832.GA27144@lst.de> <20160815130829.GA14829@redhat.com> <20160815134039.GA5569@redhat.com> <20160926165230.GA5787@infradead.org> <1474916784.2765.64.camel@HansenPartnership.com> <9f7ee494-1432-90ad-55e2-dbd223cd7bf3@suse.de> <1475002249.2716.31.camel@HansenPartnership.com> <20160929150132.GA31965@redhat.com>
+From: SF Markus Elfring <elfring@users.sourceforge.net>
+Subject: Re: [dm-devel] [PATCH 03/10] md/dm-crypt: Rename a jump label in
+ crypt_message()
+Date: Thu, 29 Sep 2016 17:43:57 +0200
+Message-ID: <e40a8107-7400-bc10-a212-563dd168aac5@users.sourceforge.net>
+References: <566ABCD9.1060404@users.sourceforge.net>
+ <7c232017-e291-fd2d-5516-26e5150d90df@users.sourceforge.net>
+ <db29ff0c-8da9-e7ba-054d-a35f8b4fd2d7@users.sourceforge.net>
+ <20160929125553.kn45yx6jud35463p@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160929150132.GA31965@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: James Bottomley <James.Bottomley@hansenpartnership.com>, Hannes Reinecke <hare@suse.de>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, linux-scsi@vger.kernel.org, Hannes Reinecke <hare@suse.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <kernel-janitors-owner@vger.kernel.org>
+In-Reply-To: <20160929125553.kn45yx6jud35463p@thunk.org>
+Sender: kernel-janitors-owner@vger.kernel.org
+To: Theodore Ts'o <tytso@mit.edu>
+Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, Julia Lawall <julia.lawall@lip6.fr>, kernel-janitors@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Thu, Sep 29, 2016 at 11:01:33AM -0400, Mike Snitzer wrote:
-> I've elected to just take this change for 4.9.  Please see:
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.9&id=8ff232c1a819c2e98d85974a3bff0b7b8e2970ed
+> In what bizzaro world is the "current Linux coding style convention"
 
-Thanks Mike.
+Do you look at the evolution for a document like "CodingStyle"?
 
-If any problems show up I will send you an incremental patch that limits
-this behavior to devices where we created reservations using the kernel
-pr_ops API.
+
+>> -
+>> -error:
+>> +show_warning:
+>>  	DMWARN("unrecognised message received.");
+>>  	return -EINVAL;
+>>  }
+> 
+> "show_warning" is better than "error"
+
+I got such an impression.
+
+
+> when the net result of the goto is that the function returns -EINVAL?!?
+
+Do other identifiers fit better for the desired description of "what" and "why"
+by jump labels?
+
+
+> Please give it up with these drive-by shooting of auto-generated patches.
+
+This update step was not auto-generated.
+
+There are further change possibilities where special analysis tools
+can help in the corresponding software development.
+
+
+> You're just embarassing yourself.
+
+Do you find any of my update suggestions worth for further considerations?
+
+Regards,
+Markus
