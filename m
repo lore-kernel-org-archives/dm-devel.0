@@ -1,8 +1,8 @@
 From: SF Markus Elfring <elfring@users.sourceforge.net>
-Subject: [PATCH 06/10] dm snapshot: Delete an unnecessary variable
- initialisation in snapshot_ctr()
-Date: Thu, 29 Sep 2016 11:14:19 +0200
-Message-ID: <882f19c7-7013-a0e7-6385-d6d19aa4e51b@users.sourceforge.net>
+Subject: [PATCH 07/10] dm snapshot: Delete an unnecessary variable
+ initialisation in merge_callback()
+Date: Thu, 29 Sep 2016 11:15:26 +0200
+Message-ID: <b5b90e8c-ea72-b357-cf28-f222d0a54ec0@users.sourceforge.net>
 References: <566ABCD9.1060404@users.sourceforge.net>
  <080668d9-1e1e-e208-f9ea-ff718e8070e5@users.sourceforge.net>
 Mime-Version: 1.0
@@ -16,9 +16,9 @@ Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia 
 List-Id: dm-devel.ids
 
 From: Markus Elfring <elfring@users.sourceforge.net>
-Date: Thu, 29 Sep 2016 08:38:29 +0200
+Date: Thu, 29 Sep 2016 09:00:06 +0200
 
-The local variable "r" will be set to an appropriate value a bit later.
+The local variable "b" will be set to an appropriate pointer a bit later.
 Thus omit the explicit initialisation at the beginning.
 
 Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
@@ -27,18 +27,18 @@ Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 7bbd3c4..06b1b69 100644
+index 06b1b69..1d90131 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -1102,7 +1102,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+@@ -1046,7 +1046,7 @@ static void error_bios(struct bio *bio);
+ static void merge_callback(int read_err, unsigned long write_err, void *context)
  {
- 	struct dm_snapshot *s;
- 	int i;
--	int r = -EINVAL;
-+	int r;
- 	char *origin_path, *cow_path;
- 	dev_t origin_dev, cow_dev;
- 	unsigned args_used, num_flush_bios = 1;
+ 	struct dm_snapshot *s = context;
+-	struct bio *b = NULL;
++	struct bio *b;
+ 
+ 	if (read_err || write_err) {
+ 		if (read_err)
 -- 
 2.10.0
 
