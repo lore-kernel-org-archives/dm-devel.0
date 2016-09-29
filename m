@@ -1,58 +1,55 @@
-From: Paul Bolle <pebolle@tiscali.nl>
-Subject: Re: [PATCH 01/10] dm snapshot: Use kmalloc_array() in
- init_origin_hash()
-Date: Thu, 29 Sep 2016 23:14:53 +0200
-Message-ID: <1475183693.31297.36.camel@tiscali.nl>
-References: <566ABCD9.1060404@users.sourceforge.net>
-         <080668d9-1e1e-e208-f9ea-ff718e8070e5@users.sourceforge.net>
-         <3861d349-48fd-162b-a749-83e007f70b41@users.sourceforge.net>
-         <1475142864.31297.5.camel@tiscali.nl> <1475143376.1946.2.camel@perches.com>
-         <1475147577.31297.11.camel@tiscali.nl>
-         <1475149503.31297.14.camel@tiscali.nl>
-         <1475161270.2027.5.camel@perches.com>
-         <1475178181.31297.21.camel@tiscali.nl>
-         <1475180693.1954.1.camel@perches.com>
-         <1475181593.31297.25.camel@tiscali.nl>
-         <1475182586.1954.3.camel@perches.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: [PATCH v11 0/3] fallocate for block devices
+Date: Thu, 29 Sep 2016 14:16:16 -0700
+Message-ID: <147518377601.22791.14436504108602322570.stgit@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
-Return-path: <kernel-janitors-owner@vger.kernel.org>
-In-Reply-To: <1475182586.1954.3.camel@perches.com>
-Sender: kernel-janitors-owner@vger.kernel.org
-To: Joe Perches <joe@perches.com>, Andy Whitcroft <apw@canonical.com>
-Cc: SF Markus Elfring <elfring@users.sourceforge.net>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: axboe@kernel.dk, akpm@linux-foundation.org, darrick.wong@oracle.com
+Cc: linux-block@vger.kernel.org, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, xfs@oss.sgi.com, hch@infradead.org, dm-devel@redhat.com, hare@suse.de, linux-fsdevel@vger.kernel.org, bart.vanassche@sandisk.com
 List-Id: dm-devel.ids
 
-On Thu, 2016-09-29 at 13:56 -0700, Joe Perches wrote:
-> It doesn't matter match either way to me.
-> 
-> The case for the unnecessary multiply with <= gcc 4.8 was
-> removed with:
-> 
-> commit 91c6a05f72a996bee5133e76374ab3ad7d3b9b72
-> Author: Alexey Dobriyan <adobriyan@gmail.com>
-> Date:   Tue Jul 26 15:22:08 2016 -0700
-> 
->     mm: faster kmalloc_array(), kcalloc()
->     
->     When both arguments to kmalloc_array() or kcalloc() are known at compile
->     time then their product is known at compile time but search for kmalloc
->     cache happens at runtime not at compile time.
->     
->     Link: http://lkml.kernel.org/r/20160627213454.GA2440@p183.telecom.by
->     Signed-off-by: Alexey Dobriyan <adobriyan@gmail.com>
->     Cc: Christoph Lameter <cl@linux.com>
->     Cc: Pekka Enberg <penberg@kernel.org>
->     Cc: David Rientjes <rientjes@google.com>
->     Cc: Joonsoo Kim <iamjoonsoo.kim@lge.com>
->     Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
->     Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Hi Andrew & others,
 
-You've lost me.
+This is a resend of the patchset to fix page cache coherency with
+BLKZEROOUT and implement fallocate for block devices.  This time I'm
+sending it direct to Andrew for inclusion because the block layer
+maintainer has not been responsive over the past year of submissions.
+Can this please go upstream for 4.9?
 
-Why does this stop you fixing an apparently wrong checkpatch rule,
-crude as parts of it are (ie, uppercase identifier must be a constant)?
+The first patch is still a fix to the existing BLKZEROOUT ioctl to
+invalidate the page cache if the zeroing command to the underlying
+device succeeds.  Without this patch we still have the pagecache
+coherence bug that's been in the kernel forever.
 
+The second patch changes the internal block device functions to reject
+attempts to discard or zeroout that are not aligned to the logical
+block size.  Previously, we only checked that the start/len parameters
+were 512-byte aligned, which caused kernel BUG_ONs for unaligned IOs
+to 4k-LBA devices.
 
-Paul Bolle
+The third patch creates an fallocate handler for block devices, wires
+up the FALLOC_FL_PUNCH_HOLE flag to zeroing-discard, and connects
+FALLOC_FL_ZERO_RANGE to write-same so that we can have a consistent
+fallocate interface between files and block devices.  It also allows
+the combination of PUNCH_HOLE and NO_HIDE_STALE to invoke non-zeroing
+discard.
+
+Test cases for the new block device fallocate are now in xfstests as
+generic/349-351.
+
+Comments and questions are, as always, welcome.  Patches are against
+4.8-rc8.
+
+v7: Strengthen parameter checking and fix various code issues pointed
+out by Linus and Christoph.
+v8: More code rearranging, rebase to 4.6-rc3, and dig into alignment
+issues.
+v9: Forward port to 4.7.
+v10: Forward port to 4.8.  Remove the extra call to
+invalidate_inode_pages2_range per Bart Van Assche's request.
+v11: Minor fallocate code cleanups suggested by Bart Van Assche.
+
+--D
