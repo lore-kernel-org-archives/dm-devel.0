@@ -1,31 +1,34 @@
-From: SF Markus Elfring <elfring@users.sourceforge.net>
-Subject: Re: dm snapshot: Use kmalloc_array() in init_origin_hash()
-Date: Thu, 29 Sep 2016 13:45:41 +0200
-Message-ID: <80feaa7d-7845-976a-a038-15da80283df8@users.sourceforge.net>
+From: Theodore Ts'o <tytso@mit.edu>
+Subject: Re: [dm-devel] [PATCH 05/10] md/dm-crypt: Rename a jump label in
+ crypt_set_key()
+Date: Thu, 29 Sep 2016 08:56:54 -0400
+Message-ID: <20160929125654.hxhuz3k6h3wdnfbq@thunk.org>
 References: <566ABCD9.1060404@users.sourceforge.net>
- <080668d9-1e1e-e208-f9ea-ff718e8070e5@users.sourceforge.net>
- <3861d349-48fd-162b-a749-83e007f70b41@users.sourceforge.net>
- <1475142864.31297.5.camel@tiscali.nl>
+ <7c232017-e291-fd2d-5516-26e5150d90df@users.sourceforge.net>
+ <f89d98a2-fe7e-a9d3-5bdc-2a1943e09049@users.sourceforge.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <1475142864.31297.5.camel@tiscali.nl>
+Content-Disposition: inline
+In-Reply-To: <f89d98a2-fe7e-a9d3-5bdc-2a1943e09049@users.sourceforge.net>
 Sender: linux-raid-owner@vger.kernel.org
-To: Paul Bolle <pebolle@tiscali.nl>
-Cc: Andy Whitcroft <apw@canonical.com>, Joe Perches <joe@perches.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>, Paolo Bonzini <pbonzini@redhat.com>
+To: SF Markus Elfring <elfring@users.sourceforge.net>
+Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, Julia Lawall <julia.lawall@lip6.fr>, kernel-janitors@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-> We have no hope of fixing Markus' homegrown coccinelle script.
+On Wed, Sep 28, 2016 at 05:42:28PM +0200, SF Markus Elfring wrote:
+> From: Markus Elfring <elfring@users.sourceforge.net>
+> Date: Wed, 28 Sep 2016 15:21:18 +0200
+> 
+> Adjust jump labels according to the current Linux coding style convention.
+> 
+> -
+> -out:
+> +set_memory:
+>  	/* Hex key string not needed after here, so wipe it. */
+>  	memset(key, '0', key_string_len);
 
-I have got an other impression. I see further possibilities
-to clarify involved communication and software development challenges
-for a few source code search patterns.
+Also not "current Linux coding style convetion".
 
-How do you think about to discuss the corresponding collateral evolution
-a bit more?
+							- Ted
 
-Are there any more constraints to consider?
-
-Regards,
-Markus
