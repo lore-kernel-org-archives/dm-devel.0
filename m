@@ -1,43 +1,60 @@
-From: Joe Perches <joe@perches.com>
-Subject: Re: [PATCH 01/10] dm snapshot: Use kmalloc_array() in
- init_origin_hash()
-Date: Thu, 29 Sep 2016 13:24:53 -0700
-Message-ID: <1475180693.1954.1.camel@perches.com>
-References: <566ABCD9.1060404@users.sourceforge.net>
-         <080668d9-1e1e-e208-f9ea-ff718e8070e5@users.sourceforge.net>
-         <3861d349-48fd-162b-a749-83e007f70b41@users.sourceforge.net>
-         <1475142864.31297.5.camel@tiscali.nl> <1475143376.1946.2.camel@perches.com>
-         <1475147577.31297.11.camel@tiscali.nl>
-         <1475149503.31297.14.camel@tiscali.nl>
-         <1475161270.2027.5.camel@perches.com>
-         <1475178181.31297.21.camel@tiscali.nl>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH v2 3/3] block: implement (some of) fallocate for block
+	devices
+Date: Thu, 29 Sep 2016 13:35:46 -0700
+Message-ID: <20160929203545.GF14092@birch.djwong.org>
+References: <147510957066.8940.13803086684642725401.stgit@birch.djwong.org>
+	<147510959149.8940.2897845352082568677.stgit@birch.djwong.org>
+	<20160929021900.GA4901@birch.djwong.org>
+	<423d057c-d2cc-9039-d8ee-c6526be3ae46@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1475178181.31297.21.camel@tiscali.nl>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Bolle <pebolle@tiscali.nl>, Andy Whitcroft <apw@canonical.com>
-Cc: SF Markus Elfring <elfring@users.sourceforge.net>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
+Content-Disposition: inline
+In-Reply-To: <423d057c-d2cc-9039-d8ee-c6526be3ae46@sandisk.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "tytso@mit.edu" <tytso@mit.edu>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "bfoster@redhat.com" <bfoster@redhat.com>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "hch@infradead.org" <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
-On Thu, 2016-09-29 at 21:43 +0200, Paul Bolle wrote:
-> On Thu, 2016-09-29 at 08:01 -0700, Joe Perches wrote:
-> > $Constant there is any number and the match regex is
-> > any upper case variable.
-> Why doesn't that regex match on "ORIGIN_HASH_SIZE"?
+On Thu, Sep 29, 2016 at 01:08:57PM -0700, Bart Van Assche wrote:
+> On 09/28/2016 07:19 PM, Darrick J. Wong wrote:
+> >After much discussion, it seems that the fallocate feature flag
+> >FALLOC_FL_ZERO_RANGE maps nicely to SCSI WRITE SAME; and the feature
+> >FALLOC_FL_PUNCH_HOLE maps nicely to the devices that have been
+> >whitelisted for zeroing SCSI UNMAP.  Punch still requires that
+> >FALLOC_FL_KEEP_SIZE is set.  A length that goes past the end of the
+> >device will be clamped to the device size if KEEP_SIZE is set; or will
+> >return -EINVAL if not.  Both start and length must be aligned to the
+> >device's logical block size.
+> >
+> >Since the semantics of fallocate are fairly well established already,
+> >wire up the two pieces.  The other fallocate variants (collapse range,
+> >insert range, and allocate blocks) are not supported.
+> 
+> For the FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE
+> case, it's probably safer not to try to send a discard to block devices that
+> do not support discard in order not to hit block driver bugs. But that's
+> something we can still discuss later. Hence:
 
-It does match.
+I'll just change it to check the queue flags and post a new revision.
+At this point I might as well repost the whole thing to reflect the
+reviewed-bys.
 
-Did you see my earlier email?
+--D
 
-$ ./scripts/checkpatch.pl -f drivers/md/dm-snap.c --show-types --types=alloc_with_multiply
-WARNING:ALLOC_WITH_MULTIPLY: Prefer kmalloc_array over kmalloc with multiply
-#329: FILE: drivers/md/dm-snap.c:329:
-+       _origins = kmalloc(ORIGIN_HASH_SIZE * sizeof(struct list_head),
+> Reviewed-by: Bart Van Assche <bart.vanassche@sandisk.com>
 
-WARNING:ALLOC_WITH_MULTIPLY: Prefer kmalloc_array over kmalloc with multiply
-#338: FILE: drivers/md/dm-snap.c:338:
-+       _dm_origins = kmalloc(ORIGIN_HASH_SIZE * sizeof(struct list_head),
-
-total: 0 errors, 2 warnings, 2490 lines checked
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
