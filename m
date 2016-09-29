@@ -1,64 +1,64 @@
-From: Joe Perches <joe@perches.com>
-Subject: Re: [PATCH 01/10] dm snapshot: Use kmalloc_array() in
- init_origin_hash()
-Date: Thu, 29 Sep 2016 14:21:22 -0700
-Message-ID: <1475184082.1954.5.camel@perches.com>
-References: <566ABCD9.1060404@users.sourceforge.net>
-         <080668d9-1e1e-e208-f9ea-ff718e8070e5@users.sourceforge.net>
-         <3861d349-48fd-162b-a749-83e007f70b41@users.sourceforge.net>
-         <1475142864.31297.5.camel@tiscali.nl> <1475143376.1946.2.camel@perches.com>
-         <1475147577.31297.11.camel@tiscali.nl>
-         <1475149503.31297.14.camel@tiscali.nl>
-         <1475161270.2027.5.camel@perches.com>
-         <1475178181.31297.21.camel@tiscali.nl>
-         <1475180693.1954.1.camel@perches.com>
-         <1475181593.31297.25.camel@tiscali.nl>
-         <1475182586.1954.3.camel@perches.com>
-         <1475183693.31297.36.camel@tiscali.nl>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: [PATCH 1/2] libmultipath/checkers/{rbd,
+ tur}: Fix pthread_cond_signal() calls
+Date: Thu, 29 Sep 2016 14:28:27 -0700
+Message-ID: <55a58c33-1edb-548d-f68b-d25cea442650@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <kernel-janitors-owner@vger.kernel.org>
-In-Reply-To: <1475183693.31297.36.camel@tiscali.nl>
-Sender: kernel-janitors-owner@vger.kernel.org
-To: Paul Bolle <pebolle@tiscali.nl>, Andy Whitcroft <apw@canonical.com>
-Cc: SF Markus Elfring <elfring@users.sourceforge.net>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 2016-09-29 at 23:14 +0200, Paul Bolle wrote:
-> On Thu, 2016-09-29 at 13:56 -0700, Joe Perches wrote:
-> > It doesn't matter match either way to me.
-> Why does this stop you fixing an apparently wrong checkpatch rule,
-> crude as parts of it are (ie, uppercase identifier must be a constant)?
+Calling pthread_cond_signal() without holding the associated
+mutex sporadically results in a lost wakeup. Hence call
+pthread_cond_signal() while holding the mutex used by
+pthread_cond_wait().
 
-It doesn't.  It just doesn't matter much (match) to me.
-Here:
+Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: Mike Christie <mchristi@redhat.com>
 ---
- scripts/checkpatch.pl | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ libmultipath/checkers/rbd.c | 2 +-
+ libmultipath/checkers/tur.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/scripts/checkpatch.pl b/scripts/checkpatch.pl
-index 3373c65fef1c..fc931d89152e 100755
---- a/scripts/checkpatch.pl
-+++ b/scripts/checkpatch.pl
-@@ -5835,8 +5835,8 @@ sub process {
- 		if ($^V && $^V ge 5.10.0 &&
- 		    $line =~ /\b($Lval)\s*\=\s*(?:$balanced_parens)?\s*(k[mz]alloc)\s*\(\s*($FuncArg)\s*\*\s*($FuncArg)\s*,/) {
- 			my $oldfunc = $3;
--			my $a1 = $4;
--			my $a2 = $10;
-+			my $a1 = trim($4);
-+			my $a2 = trim($10);
- 			my $newfunc = "kmalloc_array";
- 			$newfunc = "kcalloc" if ($oldfunc eq "kzalloc");
- 			my $r1 = $a1;
-@@ -5850,7 +5850,7 @@ sub process {
- 				if (WARN("ALLOC_WITH_MULTIPLY",
- 					 "Prefer $newfunc over $oldfunc with multiply\n" . $herecurr) &&
- 				    $fix) {
--					$fixed[$fixlinenr] =~ s/\b($Lval)\s*\=\s*(?:$balanced_parens)?\s*(k[mz]alloc)\s*\(\s*($FuncArg)\s*\*\s*($FuncArg)/$1 . ' = ' . "$newfunc(" . trim($r1) . ', ' . trim($r2)/e;
-+					$fixed[$fixlinenr] =~ s/\b($Lval)\s*\=\s*(?:$balanced_parens)?\s*(k[mz]alloc)\s*\(\s*($FuncArg)\s*\*\s*($FuncArg)/$1 . ' = ' . "$newfunc(" . $r1 . ', ' . $r2/e;
+diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
+index 874bcfa..41259c3 100644
+--- a/libmultipath/checkers/rbd.c
++++ b/libmultipath/checkers/rbd.c
+@@ -527,8 +527,8 @@ static void *rbd_thread(void *ctx)
+ 	/* checker done */
+ 	pthread_mutex_lock(&ct->lock);
+ 	ct->state = state;
+-	pthread_mutex_unlock(&ct->lock);
+ 	pthread_cond_signal(&ct->active);
++	pthread_mutex_unlock(&ct->lock);
  
- 				}
- 			}
-
+ 	condlog(3, "rbd%d thead finished, state %s", ct->rbd_bus_id,
+ 		checker_state_name(state));
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 8c1f633..94e4190 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -225,8 +225,8 @@ static void *tur_thread(void *ctx)
+ 	/* TUR checker done */
+ 	pthread_mutex_lock(&ct->lock);
+ 	ct->state = state;
+-	pthread_mutex_unlock(&ct->lock);
+ 	pthread_cond_signal(&ct->active);
++	pthread_mutex_unlock(&ct->lock);
+ 
+ 	condlog(3, "%d:%d: tur checker finished, state %s",
+ 		TUR_DEVT(ct), checker_state_name(state));
+-- 
+2.10.0
