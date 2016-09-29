@@ -1,166 +1,64 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 3/3] block: implement (some of) fallocate for block devices
-Date: Thu, 29 Sep 2016 14:16:40 -0700
-Message-ID: <147518379992.22791.8849838163218235007.stgit@birch.djwong.org>
-References: <147518377601.22791.14436504108602322570.stgit@birch.djwong.org>
+From: Joe Perches <joe@perches.com>
+Subject: Re: [PATCH 01/10] dm snapshot: Use kmalloc_array() in
+ init_origin_hash()
+Date: Thu, 29 Sep 2016 14:21:22 -0700
+Message-ID: <1475184082.1954.5.camel@perches.com>
+References: <566ABCD9.1060404@users.sourceforge.net>
+         <080668d9-1e1e-e208-f9ea-ff718e8070e5@users.sourceforge.net>
+         <3861d349-48fd-162b-a749-83e007f70b41@users.sourceforge.net>
+         <1475142864.31297.5.camel@tiscali.nl> <1475143376.1946.2.camel@perches.com>
+         <1475147577.31297.11.camel@tiscali.nl>
+         <1475149503.31297.14.camel@tiscali.nl>
+         <1475161270.2027.5.camel@perches.com>
+         <1475178181.31297.21.camel@tiscali.nl>
+         <1475180693.1954.1.camel@perches.com>
+         <1475181593.31297.25.camel@tiscali.nl>
+         <1475182586.1954.3.camel@perches.com>
+         <1475183693.31297.36.camel@tiscali.nl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <147518377601.22791.14436504108602322570.stgit@birch.djwong.org>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: axboe@kernel.dk, akpm@linux-foundation.org, darrick.wong@oracle.com
-Cc: hch@infradead.org, Hannes Reinecke <hare@suse.com>, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, xfs@oss.sgi.com, linux-block@vger.kernel.org, dm-devel@redhat.com, hare@suse.de, linux-fsdevel@vger.kernel.org, bart.vanassche@sandisk.com
+Return-path: <kernel-janitors-owner@vger.kernel.org>
+In-Reply-To: <1475183693.31297.36.camel@tiscali.nl>
+Sender: kernel-janitors-owner@vger.kernel.org
+To: Paul Bolle <pebolle@tiscali.nl>, Andy Whitcroft <apw@canonical.com>
+Cc: SF Markus Elfring <elfring@users.sourceforge.net>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
 List-Id: dm-devel.ids
 
-After much discussion, it seems that the fallocate feature flag
-FALLOC_FL_ZERO_RANGE maps nicely to SCSI WRITE SAME; and the feature
-FALLOC_FL_PUNCH_HOLE maps nicely to the devices that have been
-whitelisted for zeroing SCSI UNMAP.  Punch still requires that
-FALLOC_FL_KEEP_SIZE is set.  A length that goes past the end of the
-device will be clamped to the device size if KEEP_SIZE is set; or will
-return -EINVAL if not.  Both start and length must be aligned to the
-device's logical block size.
+On Thu, 2016-09-29 at 23:14 +0200, Paul Bolle wrote:
+> On Thu, 2016-09-29 at 13:56 -0700, Joe Perches wrote:
+> > It doesn't matter match either way to me.
+> Why does this stop you fixing an apparently wrong checkpatch rule,
+> crude as parts of it are (ie, uppercase identifier must be a constant)?
 
-Since the semantics of fallocate are fairly well established already,
-wire up the two pieces.  The other fallocate variants (collapse range,
-insert range, and allocate blocks) are not supported.
-
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-Reviewed-by: Hannes Reinecke <hare@suse.com>
-Reviewed-by: Bart Van Assche <bart.vanassche@sandisk.com>
+It doesn't.  It just doesn't matter much (match) to me.
+Here:
 ---
- fs/block_dev.c |   77 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/open.c      |    3 +-
- 2 files changed, 79 insertions(+), 1 deletion(-)
+ scripts/checkpatch.pl | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
+diff --git a/scripts/checkpatch.pl b/scripts/checkpatch.pl
+index 3373c65fef1c..fc931d89152e 100755
+--- a/scripts/checkpatch.pl
++++ b/scripts/checkpatch.pl
+@@ -5835,8 +5835,8 @@ sub process {
+ 		if ($^V && $^V ge 5.10.0 &&
+ 		    $line =~ /\b($Lval)\s*\=\s*(?:$balanced_parens)?\s*(k[mz]alloc)\s*\(\s*($FuncArg)\s*\*\s*($FuncArg)\s*,/) {
+ 			my $oldfunc = $3;
+-			my $a1 = $4;
+-			my $a2 = $10;
++			my $a1 = trim($4);
++			my $a2 = trim($10);
+ 			my $newfunc = "kmalloc_array";
+ 			$newfunc = "kcalloc" if ($oldfunc eq "kzalloc");
+ 			my $r1 = $a1;
+@@ -5850,7 +5850,7 @@ sub process {
+ 				if (WARN("ALLOC_WITH_MULTIPLY",
+ 					 "Prefer $newfunc over $oldfunc with multiply\n" . $herecurr) &&
+ 				    $fix) {
+-					$fixed[$fixlinenr] =~ s/\b($Lval)\s*\=\s*(?:$balanced_parens)?\s*(k[mz]alloc)\s*\(\s*($FuncArg)\s*\*\s*($FuncArg)/$1 . ' = ' . "$newfunc(" . trim($r1) . ', ' . trim($r2)/e;
++					$fixed[$fixlinenr] =~ s/\b($Lval)\s*\=\s*(?:$balanced_parens)?\s*(k[mz]alloc)\s*\(\s*($FuncArg)\s*\*\s*($FuncArg)/$1 . ' = ' . "$newfunc(" . $r1 . ', ' . $r2/e;
+ 
+ 				}
+ 			}
 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 08ae993..777fd9b 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -30,6 +30,7 @@
- #include <linux/cleancache.h>
- #include <linux/dax.h>
- #include <linux/badblocks.h>
-+#include <linux/falloc.h>
- #include <asm/uaccess.h>
- #include "internal.h"
- 
-@@ -1787,6 +1788,81 @@ static const struct address_space_operations def_blk_aops = {
- 	.is_dirty_writeback = buffer_check_dirty_writeback,
- };
- 
-+#define	BLKDEV_FALLOC_FL_SUPPORTED					\
-+		(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |		\
-+		 FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE)
-+
-+static long blkdev_fallocate(struct file *file, int mode, loff_t start,
-+			     loff_t len)
-+{
-+	struct block_device *bdev = I_BDEV(bdev_file_inode(file));
-+	struct request_queue *q = bdev_get_queue(bdev);
-+	struct address_space *mapping;
-+	loff_t end = start + len - 1;
-+	loff_t isize;
-+	int error;
-+
-+	/* Fail if we don't recognize the flags. */
-+	if (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
-+		return -EOPNOTSUPP;
-+
-+	/* Don't go off the end of the device. */
-+	isize = i_size_read(bdev->bd_inode);
-+	if (start >= isize)
-+		return -EINVAL;
-+	if (end >= isize) {
-+		if (mode & FALLOC_FL_KEEP_SIZE) {
-+			len = isize - start;
-+			end = start + len - 1;
-+		} else
-+			return -EINVAL;
-+	}
-+
-+	/*
-+	 * Don't allow IO that isn't aligned to logical block size.
-+	 */
-+	if ((start | len) & (bdev_logical_block_size(bdev) - 1))
-+		return -EINVAL;
-+
-+	/* Invalidate the page cache, including dirty pages. */
-+	mapping = bdev->bd_inode->i_mapping;
-+	truncate_inode_pages_range(mapping, start, end);
-+
-+	switch (mode) {
-+	case FALLOC_FL_ZERO_RANGE:
-+	case FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE:
-+		error = blkdev_issue_zeroout(bdev, start >> 9, len >> 9,
-+					    GFP_KERNEL, false);
-+		break;
-+	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE:
-+		/* Only punch if the device can do zeroing discard. */
-+		if (!blk_queue_discard(q) || !q->limits.discard_zeroes_data)
-+			return -EOPNOTSUPP;
-+		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
-+					     GFP_KERNEL, 0);
-+		break;
-+	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE:
-+		if (!blk_queue_discard(q))
-+			return -EOPNOTSUPP;
-+		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
-+					     GFP_KERNEL, 0);
-+		break;
-+	default:
-+		return -EOPNOTSUPP;
-+	}
-+	if (error)
-+		return error;
-+
-+	/*
-+	 * Invalidate again; if someone wandered in and dirtied a page,
-+	 * the caller will be given -EBUSY.  The third argument is
-+	 * inclusive, so the rounding here is safe.
-+	 */
-+	return invalidate_inode_pages2_range(mapping,
-+					     start >> PAGE_SHIFT,
-+					     end >> PAGE_SHIFT);
-+}
-+
- const struct file_operations def_blk_fops = {
- 	.open		= blkdev_open,
- 	.release	= blkdev_close,
-@@ -1801,6 +1877,7 @@ const struct file_operations def_blk_fops = {
- #endif
- 	.splice_read	= generic_file_splice_read,
- 	.splice_write	= iter_file_splice_write,
-+	.fallocate	= blkdev_fallocate,
- };
- 
- int ioctl_by_bdev(struct block_device *bdev, unsigned cmd, unsigned long arg)
-diff --git a/fs/open.c b/fs/open.c
-index 4fd6e25..01b6092 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -289,7 +289,8 @@ int vfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
- 	 * Let individual file system decide if it supports preallocation
- 	 * for directories or not.
- 	 */
--	if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
-+	if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode) &&
-+	    !S_ISBLK(inode->i_mode))
- 		return -ENODEV;
- 
- 	/* Check for wrap through zero too */
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
