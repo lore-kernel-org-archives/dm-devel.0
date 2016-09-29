@@ -1,8 +1,8 @@
 From: SF Markus Elfring <elfring@users.sourceforge.net>
-Subject: [PATCH 02/10] dm snapshot: Delete two error messages for a failed
- memory allocation
-Date: Thu, 29 Sep 2016 11:10:07 +0200
-Message-ID: <0204c749-986d-b419-73ca-23458916a31e@users.sourceforge.net>
+Subject: [PATCH 03/10] dm snapshot: Delete an unnecessary variable
+ initialisation in snapshot_map()
+Date: Thu, 29 Sep 2016 11:11:23 +0200
+Message-ID: <5e356088-8825-790d-08bf-c928144fdf01@users.sourceforge.net>
 References: <566ABCD9.1060404@users.sourceforge.net>
  <080668d9-1e1e-e208-f9ea-ff718e8070e5@users.sourceforge.net>
 Mime-Version: 1.0
@@ -12,45 +12,33 @@ Return-path: <linux-raid-owner@vger.kernel.org>
 In-Reply-To: <080668d9-1e1e-e208-f9ea-ff718e8070e5@users.sourceforge.net>
 Sender: linux-raid-owner@vger.kernel.org
 To: dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>, Wolfram Sang <wsa@the-dreams.de>
+Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
 List-Id: dm-devel.ids
 
 From: Markus Elfring <elfring@users.sourceforge.net>
-Date: Wed, 28 Sep 2016 22:33:09 +0200
+Date: Thu, 29 Sep 2016 08:00:29 +0200
 
-Omit extra messages for a memory allocation failure in this function.
-
-Link: http://events.linuxfoundation.org/sites/events/files/slides/LCJ16-Refactor_Strings-WSang_0.pdf
+The local variable "pe" will be set to an appropriate pointer a bit later.
+Thus omit the explicit initialisation at the beginning.
 
 Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
 ---
- drivers/md/dm-snap.c | 5 +----
- 1 file changed, 1 insertion(+), 4 deletions(-)
+ drivers/md/dm-snap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index f262f7e..7d81390 100644
+index 7d81390..82b7604 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -329,10 +329,8 @@ static int init_origin_hash(void)
- 	_origins = kmalloc_array(ORIGIN_HASH_SIZE,
- 				 sizeof(*_origins),
- 				 GFP_KERNEL);
--	if (!_origins) {
--		DMERR("unable to allocate memory for _origins");
-+	if (!_origins)
- 		return -ENOMEM;
--	}
- 	for (i = 0; i < ORIGIN_HASH_SIZE; i++)
- 		INIT_LIST_HEAD(_origins + i);
+@@ -1675,7 +1675,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+ 	struct dm_snapshot *s = ti->private;
+ 	int r = DM_MAPIO_REMAPPED;
+ 	chunk_t chunk;
+-	struct dm_snap_pending_exception *pe = NULL;
++	struct dm_snap_pending_exception *pe;
  
-@@ -340,7 +338,6 @@ static int init_origin_hash(void)
- 				    sizeof(*_dm_origins),
- 				    GFP_KERNEL);
- 	if (!_dm_origins) {
--		DMERR("unable to allocate memory for _dm_origins");
- 		kfree(_origins);
- 		return -ENOMEM;
- 	}
+ 	init_tracked_chunk(bio);
+ 
 -- 
 2.10.0
 
