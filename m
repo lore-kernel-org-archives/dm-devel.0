@@ -1,8 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH] dm-mpath: Only reprocess queued IO after pg
- initialization finished
-Date: Fri, 30 Sep 2016 08:59:06 -0700
-Message-ID: <fdedde34-4785-fe1d-f88f-a2d6b3713500@sandisk.com>
+Subject: [PATCH] dm: Change return type of pg_init_all_paths()
+ from int into void
+Date: Fri, 30 Sep 2016 10:44:10 -0700
+Message-ID: <159b1209-ab2b-a0a0-bfeb-89edcefbc1a0@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -17,41 +17,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-At least with dm-mq this patch reduces the number of multipath_busy()
-calls while scsi_dh_activate() is in progress from a few million to
-a few thousand.
+None of the callers of pg_init_all_paths() check its return value.
+Hence change the return type of pg_init_all_paths() from int into
+void.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: <stable@vger.kernel.org>
 ---
- drivers/md/dm-mpath.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ drivers/md/dm-mpath.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index dd80af2..dd66653 100644
+index dd66653..8e2341d 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -343,12 +343,15 @@ static void multipath_init_per_bio_data(struct bio *bio, struct dm_mpath_io **mp
-  * Path selection
-  *-----------------------------------------------*/
+@@ -378,16 +378,13 @@ static int __pg_init_all_paths(struct multipath *m)
+ 	return atomic_read(&m->pg_init_in_progress);
+ }
  
-+/* Returns a value > 0 if path group initialization is still in progress. */
- static int __pg_init_all_paths(struct multipath *m)
+-static int pg_init_all_paths(struct multipath *m)
++static void pg_init_all_paths(struct multipath *m)
  {
- 	struct pgpath *pgpath;
- 	unsigned long pg_init_delay = 0;
+-	int r;
+ 	unsigned long flags;
  
--	if (atomic_read(&m->pg_init_in_progress) || test_bit(MPATHF_PG_INIT_DISABLED, &m->flags))
-+	if (atomic_read(&m->pg_init_in_progress))
-+		return 1;
-+	if (test_bit(MPATHF_PG_INIT_DISABLED, &m->flags))
- 		return 0;
+ 	spin_lock_irqsave(&m->lock, flags);
+-	r = __pg_init_all_paths(m);
++	__pg_init_all_paths(m);
+ 	spin_unlock_irqrestore(&m->lock, flags);
+-
+-	return r;
+ }
  
- 	atomic_inc(&m->pg_init_count);
+ static void __switch_pg(struct multipath *m, struct priority_group *pg)
 -- 
 2.10.0
