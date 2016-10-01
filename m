@@ -1,56 +1,48 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH] dm: Change return type of pg_init_all_paths()
- from int into void
-Date: Fri, 30 Sep 2016 10:44:10 -0700
-Message-ID: <159b1209-ab2b-a0a0-bfeb-89edcefbc1a0@sandisk.com>
+From: SF Markus Elfring <elfring@users.sourceforge.net>
+Subject: [PATCH] md/dm-stats: Use kmalloc_array() in parse_histogram()
+Date: Sat, 1 Oct 2016 06:06:26 +0200
+Message-ID: <5edaeddf-218f-1a98-d600-84941214db89@users.sourceforge.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
 List-Id: dm-devel.ids
 
-None of the callers of pg_init_all_paths() check its return value.
-Hence change the return type of pg_init_all_paths() from int into
-void.
+From: Markus Elfring <elfring@users.sourceforge.net>
+Date: Sat, 1 Oct 2016 05:55:05 +0200
 
-Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+* A multiplication for the size determination of a memory allocation
+  indicated that an array data structure should be processed.
+  Thus use the corresponding function "kmalloc_array".
+
+  This issue was detected by using the Coccinelle software.
+
+* Replace the specification of a data type by a pointer dereference
+  to make the corresponding size determination a bit safer according to
+  the Linux coding style convention.
+
+Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
 ---
- drivers/md/dm-mpath.c | 7 ++-----
- 1 file changed, 2 insertions(+), 5 deletions(-)
+ drivers/md/dm-stats.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index dd66653..8e2341d 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -378,16 +378,13 @@ static int __pg_init_all_paths(struct multipath *m)
- 	return atomic_read(&m->pg_init_in_progress);
- }
+diff --git a/drivers/md/dm-stats.c b/drivers/md/dm-stats.c
+index 38b05f2..7b79425 100644
+--- a/drivers/md/dm-stats.c
++++ b/drivers/md/dm-stats.c
+@@ -917,7 +917,9 @@ static int parse_histogram(const char *h, unsigned *n_histogram_entries,
+ 		if (*q == ',')
+ 			(*n_histogram_entries)++;
  
--static int pg_init_all_paths(struct multipath *m)
-+static void pg_init_all_paths(struct multipath *m)
- {
--	int r;
- 	unsigned long flags;
+-	*histogram_boundaries = kmalloc(*n_histogram_entries * sizeof(unsigned long long), GFP_KERNEL);
++	*histogram_boundaries = kmalloc_array(*n_histogram_entries,
++					      sizeof(**histogram_boundaries),
++					      GFP_KERNEL);
+ 	if (!*histogram_boundaries)
+ 		return -ENOMEM;
  
- 	spin_lock_irqsave(&m->lock, flags);
--	r = __pg_init_all_paths(m);
-+	__pg_init_all_paths(m);
- 	spin_unlock_irqrestore(&m->lock, flags);
--
--	return r;
- }
- 
- static void __switch_pg(struct multipath *m, struct priority_group *pg)
 -- 
 2.10.0
