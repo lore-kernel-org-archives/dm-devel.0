@@ -1,54 +1,44 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] dm-mpath: Only reprocess queued IO after pg
- initialization finished
-Date: Sat, 1 Oct 2016 09:50:22 +0200
-Message-ID: <a8423c72-ac09-a50a-58c4-b692f91956bc@suse.de>
-References: <fdedde34-4785-fe1d-f88f-a2d6b3713500@sandisk.com>
+From: SF Markus Elfring <elfring@users.sourceforge.net>
+Subject: [PATCH 9/9] md/dm-table: Delete an unwanted space in
+ dm_table_get_integrity_disk()
+Date: Sat, 1 Oct 2016 09:53:34 +0200
+Message-ID: <03f6a9f1-6bd4-fed0-7232-8d537b69753b@users.sourceforge.net>
+References: <45984567-4421-5f8d-ddf3-eb2a769a1860@users.sourceforge.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <fdedde34-4785-fe1d-f88f-a2d6b3713500@sandisk.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <kernel-janitors-owner@vger.kernel.org>
+In-Reply-To: <45984567-4421-5f8d-ddf3-eb2a769a1860@users.sourceforge.net>
+Sender: kernel-janitors-owner@vger.kernel.org
+To: dm-devel@redhat.com, linux-raid@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
 List-Id: dm-devel.ids
 
-T24gMDkvMzAvMjAxNiAwNTo1OSBQTSwgQmFydCBWYW4gQXNzY2hlIHdyb3RlOgo+IEF0IGxlYXN0
-IHdpdGggZG0tbXEgdGhpcyBwYXRjaCByZWR1Y2VzIHRoZSBudW1iZXIgb2YgbXVsdGlwYXRoX2J1
-c3koKQo+IGNhbGxzIHdoaWxlIHNjc2lfZGhfYWN0aXZhdGUoKSBpcyBpbiBwcm9ncmVzcyBmcm9t
-IGEgZmV3IG1pbGxpb24gdG8KPiBhIGZldyB0aG91c2FuZC4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBC
-YXJ0IFZhbiBBc3NjaGUgPGJhcnQudmFuYXNzY2hlQHNhbmRpc2suY29tPgo+IENjOiBIYW5uZXMg
-UmVpbmVja2UgPGhhcmVAc3VzZS5kZT4KPiBDYzogSnVuJ2ljaGkgTm9tdXJhIDxqLW5vbXVyYUBj
-ZS5qcC5uZWMuY29tPgo+IENjOiA8c3RhYmxlQHZnZXIua2VybmVsLm9yZz4KPiAtLS0KPiAgZHJp
-dmVycy9tZC9kbS1tcGF0aC5jIHwgNSArKysrLQo+ICAxIGZpbGUgY2hhbmdlZCwgNCBpbnNlcnRp
-b25zKCspLCAxIGRlbGV0aW9uKC0pCj4gCj4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0tbXBh
-dGguYyBiL2RyaXZlcnMvbWQvZG0tbXBhdGguYwo+IGluZGV4IGRkODBhZjIuLmRkNjY2NTMgMTAw
-NjQ0Cj4gLS0tIGEvZHJpdmVycy9tZC9kbS1tcGF0aC5jCj4gKysrIGIvZHJpdmVycy9tZC9kbS1t
-cGF0aC5jCj4gQEAgLTM0MywxMiArMzQzLDE1IEBAIHN0YXRpYyB2b2lkIG11bHRpcGF0aF9pbml0
-X3Blcl9iaW9fZGF0YShzdHJ1Y3QgYmlvICpiaW8sIHN0cnVjdCBkbV9tcGF0aF9pbyAqKm1wCj4g
-ICAqIFBhdGggc2VsZWN0aW9uCj4gICAqLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0qLwo+ICAKPiArLyogUmV0dXJucyBhIHZhbHVlID4gMCBpZiBwYXRoIGdy
-b3VwIGluaXRpYWxpemF0aW9uIGlzIHN0aWxsIGluIHByb2dyZXNzLiAqLwo+ICBzdGF0aWMgaW50
-IF9fcGdfaW5pdF9hbGxfcGF0aHMoc3RydWN0IG11bHRpcGF0aCAqbSkKPiAgewo+ICAJc3RydWN0
-IHBncGF0aCAqcGdwYXRoOwo+ICAJdW5zaWduZWQgbG9uZyBwZ19pbml0X2RlbGF5ID0gMDsKPiAg
-Cj4gLQlpZiAoYXRvbWljX3JlYWQoJm0tPnBnX2luaXRfaW5fcHJvZ3Jlc3MpIHx8IHRlc3RfYml0
-KE1QQVRIRl9QR19JTklUX0RJU0FCTEVELCAmbS0+ZmxhZ3MpKQo+ICsJaWYgKGF0b21pY19yZWFk
-KCZtLT5wZ19pbml0X2luX3Byb2dyZXNzKSkKPiArCQlyZXR1cm4gMTsKPiArCWlmICh0ZXN0X2Jp
-dChNUEFUSEZfUEdfSU5JVF9ESVNBQkxFRCwgJm0tPmZsYWdzKSkKPiAgCQlyZXR1cm4gMDsKPiAg
-Cj4gIAlhdG9taWNfaW5jKCZtLT5wZ19pbml0X2NvdW50KTsKPiAKR29vZCBwb2ludC4KClJldmll
-d2VkLWJ5OiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5jb20+CgpDaGVlcnMsCgpIYW5uZXMK
-LS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgIHpTZXJpZXMgJiBTdG9yYWdlCmhhcmVAc3Vz
-ZS5kZQkJCSAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggUHJvZHVjdHMgR21iSCwg
-TWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBKLiBIYXduLCBKLiBHdWlsZCwgRi4g
-SW1lbmTDtnJmZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxp
-bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
-bi9saXN0aW5mby9kbS1kZXZlbA==
+From: Markus Elfring <elfring@users.sourceforge.net>
+Date: Sat, 1 Oct 2016 09:24:56 +0200
+
+The script "checkpatch.pl" pointed information out like the following.
+
+ERROR: "foo * bar" should be "foo *bar"
+
+Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
+---
+ drivers/md/dm-table.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index a948ffb..3ad1b1a 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1117,7 +1117,7 @@ static bool integrity_profile_exists(struct gendisk *disk)
+  * Get a disk whose integrity profile reflects the table's profile.
+  * Returns NULL if integrity support was inconsistent or unavailable.
+  */
+-static struct gendisk * dm_table_get_integrity_disk(struct dm_table *t)
++static struct gendisk *dm_table_get_integrity_disk(struct dm_table *t)
+ {
+ 	struct list_head *devices = dm_table_get_devices(t);
+ 	struct dm_dev_internal *dd = NULL;
+-- 
+2.10.0
+
