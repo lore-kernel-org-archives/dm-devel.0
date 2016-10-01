@@ -1,8 +1,7 @@
 From: SF Markus Elfring <elfring@users.sourceforge.net>
-Subject: [PATCH 7/9] md/dm-table: Adjust one function call together with a
- variable assignment
-Date: Sat, 1 Oct 2016 09:50:42 +0200
-Message-ID: <6bf7cb7c-13fd-f243-b34a-9efd0247a119@users.sourceforge.net>
+Subject: [PATCH 8/9] md/dm-table: Delete an unwanted space in high()
+Date: Sat, 1 Oct 2016 09:52:08 +0200
+Message-ID: <7a82ff8c-7ddd-0777-ec54-cfa603065ec8@users.sourceforge.net>
 References: <45984567-4421-5f8d-ddf3-eb2a769a1860@users.sourceforge.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
@@ -15,33 +14,32 @@ Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia 
 List-Id: dm-devel.ids
 
 From: Markus Elfring <elfring@users.sourceforge.net>
-Date: Sat, 1 Oct 2016 08:53:37 +0200
+Date: Sat, 1 Oct 2016 09:04:06 +0200
 
 The script "checkpatch.pl" pointed information out like the following.
 
-ERROR: do not use assignment in if condition
+ERROR: space prohibited after that '-' (ctx:WxW)
 
 Thus fix the affected source code place.
 
 Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
 ---
- drivers/md/dm-table.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ drivers/md/dm-table.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 9b7d8b7..40dde87 100644
+index 40dde87..a948ffb 100644
 --- a/drivers/md/dm-table.c
 +++ b/drivers/md/dm-table.c
-@@ -407,7 +407,8 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
- 		if (!dd)
- 			return -ENOMEM;
+@@ -109,7 +109,7 @@ static sector_t high(struct dm_table *t, unsigned int l, unsigned int n)
+ 		n = get_child(n, CHILDREN_PER_NODE - 1);
  
--		if ((r = dm_get_table_device(t->md, dev, mode, &dd->dm_dev))) {
-+		r = dm_get_table_device(t->md, dev, mode, &dd->dm_dev);
-+		if (r) {
- 			kfree(dd);
- 			return r;
- 		}
+ 	if (n >= t->counts[l])
+-		return (sector_t) - 1;
++		return (sector_t) -1;
+ 
+ 	return get_node(t, l, n)[KEYS_PER_NODE - 1];
+ }
 -- 
 2.10.0
 
