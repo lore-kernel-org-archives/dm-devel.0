@@ -1,8 +1,8 @@
 From: SF Markus Elfring <elfring@users.sourceforge.net>
-Subject: [PATCH 3/9] md/dm-table: Delete an unnecessary variable
- initialisation in dm_table_register_integrity()
-Date: Sat, 1 Oct 2016 09:45:37 +0200
-Message-ID: <984c0dd4-b392-cf4b-c42a-93bc859cc00b@users.sourceforge.net>
+Subject: [PATCH 4/9] md/dm-table: Delete an unnecessary variable
+ initialisation in dm_split_args()
+Date: Sat, 1 Oct 2016 09:46:37 +0200
+Message-ID: <881c92f5-e986-62a1-5c42-708ed8f28520@users.sourceforge.net>
 References: <45984567-4421-5f8d-ddf3-eb2a769a1860@users.sourceforge.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
@@ -15,10 +15,10 @@ Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia 
 List-Id: dm-devel.ids
 
 From: Markus Elfring <elfring@users.sourceforge.net>
-Date: Sat, 1 Oct 2016 07:25:43 +0200
+Date: Sat, 1 Oct 2016 07:37:27 +0200
 
-The local variable "template_disk" is reassigned by a statement
-at the beginning. Thus omit the explicit initialisation.
+The local variable "argv" will be set to an appropriate pointer
+a bit later. Thus omit the explicit initialisation at the beginning.
 
 Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
 ---
@@ -26,18 +26,18 @@ Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 73d38d0..67cc635 100644
+index 67cc635..e74763c 100644
 --- a/drivers/md/dm-table.c
 +++ b/drivers/md/dm-table.c
-@@ -1165,7 +1165,7 @@ static struct gendisk * dm_table_get_integrity_disk(struct dm_table *t)
- static int dm_table_register_integrity(struct dm_table *t)
+@@ -538,7 +538,7 @@ static char **realloc_argv(unsigned *array_size, char **old_argv)
+  */
+ int dm_split_args(int *argc, char ***argvp, char *input)
  {
- 	struct mapped_device *md = t->md;
--	struct gendisk *template_disk = NULL;
-+	struct gendisk *template_disk;
+-	char *start, *end = input, *out, **argv = NULL;
++	char *start, *end = input, *out, **argv;
+ 	unsigned array_size = 0;
  
- 	template_disk = dm_table_get_integrity_disk(t);
- 	if (!template_disk)
+ 	*argc = 0;
 -- 
 2.10.0
 
