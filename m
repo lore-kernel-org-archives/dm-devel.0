@@ -1,15 +1,11 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH] dm: Change return type of
- pg_init_all_paths() from int into void
-Date: Sat, 1 Oct 2016 08:30:04 -0700
-Message-ID: <47820332-7b29-96f7-a1c7-a7c6c00ccd56@sandisk.com>
-References: <159b1209-ab2b-a0a0-bfeb-89edcefbc1a0@sandisk.com>
-	<7c9f5edb-e967-d4da-9437-ff8a9a375b72@suse.de>
+From: Andre Caldas <andre.em.caldas@gmail.com>
+Subject: Choosing the device name in kpartx.
+Date: Sun, 2 Oct 2016 02:10:50 -0300
+Message-ID: <CADVh14WfxhnCj8Mok1iq-KXJ7hYOBF0rUBQboVdxfGT=Zdq6Tw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <7c9f5edb-e967-d4da-9437-ff8a9a375b72@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,57 +15,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 10/01/16 00:53, Hannes Reinecke wrote:
-> On 09/30/2016 07:44 PM, Bart Van Assche wrote:
->> None of the callers of pg_init_all_paths() check its return value.
->> Hence change the return type of pg_init_all_paths() from int into
->> void.
->>
->> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
->> ---
->>  drivers/md/dm-mpath.c | 7 ++-----
->>  1 file changed, 2 insertions(+), 5 deletions(-)
->>
->> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
->> index dd66653..8e2341d 100644
->> --- a/drivers/md/dm-mpath.c
->> +++ b/drivers/md/dm-mpath.c
->> @@ -378,16 +378,13 @@ static int __pg_init_all_paths(struct multipath *m)
->>  	return atomic_read(&m->pg_init_in_progress);
->>  }
->>
->> -static int pg_init_all_paths(struct multipath *m)
->> +static void pg_init_all_paths(struct multipath *m)
->>  {
->> -	int r;
->>  	unsigned long flags;
->>
->>  	spin_lock_irqsave(&m->lock, flags);
->> -	r = __pg_init_all_paths(m);
->> +	__pg_init_all_paths(m);
->>  	spin_unlock_irqrestore(&m->lock, flags);
->> -
->> -	return r;
->>  }
->>
->>  static void __switch_pg(struct multipath *m, struct priority_group *pg)
->>
-> Hmm. But this would invalidate your earlier patch, now would it not?
->
-> And at least in my code we _do_ check the return value in
-> pg_init_done(), and it's return value is used to check if we need to
-> wake up for submitting waiting I/O.
->
-> Which tree is the patch made against?
-
-Hello Hannes,
-
-This patch applies on top of kernel v4.8-rc8. In that kernel version the 
-return value of __pg_init_all_paths() is used but the return value of 
-pg_init_all_paths() is not used by any caller.
-
-Bart.
+RGVhciBkZXZlbG9wZXJzLAoKSSBhbSB3cml0aW5nIGEgc2NyaXB0IHVzaW5nIGtwYXJ0eC4gSXQg
+c2VlbXMgdG8gYmUgYSB2ZXJ5IHZlcnkgbmljZQp0b29sIHRoYXQgd2lsbCBtYWtlIG15IGxpZmUg
+YSBsb3QgZWFzaWVyIQoKQXMgSSB1bmRlcnN0b29kIGl0LCB3aGVuIEkgY2FsbAokIGtwYXJ0eCAt
+YSBkaXNrLmltZwprcGFydHggY2hvb3NlcyBhICJkZXZpY2UgbmFtZSIgWCwgZGV0ZWN0cyB0aGUg
+cGFydGl0aW9ucyBhbmQgdGhlaXIKbnVtYmVycyBOLCBhbmQgY3JlYXRlcyBkZXZpY2Ugbm9kZXMg
+d2l0aCBuYW1pbmcKWHBOLgoKQXMgSSB1bmRlcnN0b29kIGl0LCB0aGUgY29ycmVjdCB3YXkgdG8g
+a25vdyB3aGF0IG5hbWUgWCB3YXMgY2hvc2VuLCBpcwp0byBwYXJzZSB0aGUgb3V0cHV0LiBJIGFt
+IG5vdCBjb21mb3J0YWJsZSBvbiBkZXBlbmRpbmcgb24gdGhlIGZvcm1hdApvZiBzb21ldGhpbmcg
+dGhhdCBsb29rcyB0byBiZSBpbnRlbmRlZCBmb3IgaHVtYW5zIGFuZCBub3QgY29tcHV0ZXJzLgoK
+SSB0aGluayBpdCB3b3VsZCBiZSByZWFsbHkgbmljZSBpZiBJIGNvdWxkIGNob29zZSB0aGUgbmFt
+ZSBYIG15c2VsZi4KT2YgY291cnNlLCBJIHdvdWxkIGdldCBhbiBlcnJvciBpZiB0aGUgbmFtZSBp
+cyBhbHJlYWR5IGluIHVzZS4uLgoKSW4gbXkgc2NyaXB0LCBJIGtub3cgdGhlIHBhcnRpdGlvbiBu
+dW1iZXJzLiBJIGNhbiBjaG9vc2UgdGhlIGRlbGltaXRlcgp3aXRoICItcCIuIEluIG15IG9waW5p
+b24sIGl0IHdvdWxkIGJlIG5pY2UgaWY6CjEuIEkgY291bGQgY2hvc2UgWCBteXNlbGY7IG9yCjIu
+IElmIHRoZXJlIHdhcyBhbiBvcHRpb24gdG8gZ2V0IHRoZSBvdXRwdXQgb2Yga3BhcnR4IHRvIGJl
+IGp1c3QgdGhlCnBhdGggdG8gdGhlICJyb290IiBkZXZpY2U7IG9yCjMuIElmIHRoZXJlIHdhcyBh
+biBvcHRpb24gdG8gZ2V0IHRoZSBvdXRwdXQgb2Yga3BhcnR4IHRvIGJlIHN0YW5kYXJkCmFuZCBp
+bnRlbmRlZCBmb3IgcGFyc2luZzsgb3IKNC4gVGhlIGRvY3VtZW50YXRpb24gc3RhdGVkIHRoYXQg
+dGhlIG91dHB1dCBpcyBub3Qgc3VwcG9zZWQgdG8gY2hhbmdlCmluIGZ1dHVyZSB2ZXJzaW9ucyBv
+ZiBrcGFydHguCgpXZWxsLi4uIG1heWJlIEkganVzdCBtaXNzZWQgdGhlICJjb3JyZWN0IiB3YXkg
+dG8gc2NyaXB0IHdpdGgga3BhcnR4LgpJbiB0aGlzIGNhc2UsIEkgd291bGQgYmUgaGFwcHkgd2l0
+aCBzb21lIGd1aWRhbmNlLi4uIDotKQoKSW4gbXkgc2NyaXB0LCBJIGNyZWF0ZSBhIGZpbGUgd2l0
+aCBkZCwgcGFydGl0aW9uIGl0IHVzaW5nIHNmZGlzaywgdGhlbgptb3VudCBpdCB1c2luZyBrcGFy
+dHgvbW91bnQuCgoKVGhhbmsgeW91IGZvciB5b3VyIHRpbWUgYW5kIHBhdGllbmNlLi4uCkFuZHLD
+qSBDYWxkYXMuCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpo
+dHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
