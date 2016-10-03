@@ -1,7 +1,7 @@
 From: Andy Grover <agrover@redhat.com>
-Subject: [PATCH 7/9] dm: Implement dm_uevent_add()
-Date: Mon,  3 Oct 2016 12:22:58 -0700
-Message-ID: <1475522580-16723-8-git-send-email-agrover@redhat.com>
+Subject: [PATCH 6/9] dm: Rename dm_event_add to dm_event_queue
+Date: Mon,  3 Oct 2016 12:22:57 -0700
+Message-ID: <1475522580-16723-7-git-send-email-agrover@redhat.com>
 References: <1475522580-16723-1-git-send-email-agrover@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1475522580-16723-1-git-send-email-agrover@redhat.com>
@@ -10,78 +10,76 @@ To: gregkh@linuxfoundation.org, snitzer@redhat.com
 Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-This helper function builds and enqueues the uevent. Targets can use this
-when they do not need to customize the uevent beyond its name.
+For clarity. This function queues an event to be sent, which is not
+totally clear from the previous name. And, we want to reuse the name
+for something else.
 
 Signed-off-by: Andy Grover <agrover@redhat.com>
 ---
- Documentation/device-mapper/dm-uevent.txt |  5 +++++
- drivers/md/dm-uevent.c                    | 26 ++++++++++++++++++++++++++
- include/linux/device-mapper.h             |  1 +
- 3 files changed, 32 insertions(+)
+ Documentation/device-mapper/dm-uevent.txt | 2 +-
+ drivers/md/dm-mpath.c                     | 2 +-
+ drivers/md/dm.c                           | 4 ++--
+ include/linux/device-mapper.h             | 2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/Documentation/device-mapper/dm-uevent.txt b/Documentation/device-mapper/dm-uevent.txt
-index 4fcb71d..097e7f4 100644
+index 5780e76..4fcb71d 100644
 --- a/Documentation/device-mapper/dm-uevent.txt
 +++ b/Documentation/device-mapper/dm-uevent.txt
-@@ -30,6 +30,11 @@ void dm_uevent_free(struct dm_uevent *event)
+@@ -22,7 +22,7 @@ Optionally add event-specific data to the generated uevent. e.g. dm-mpath's
+ PATH_FAILED and PATH_REINSTATED uevents add path and number-of-remaining-paths
+ vars.
  
- Something went wrong, free the uevent instead of queueing it.
+-void dm_uevent_add(struct mapped_device *md, struct list_head *elist)
++void dm_uevent_queue(struct mapped_device *md, struct list_head *elist)
  
-+void dm_uevent_add(struct dm_target *ti, enum kobject_action action, char *name)
-+
-+Helper function that builds and queues a uevent if no additional
-+variables need to be added.
-+
- void dm_table_event(struct dm_table *t)
+ Hand off the uevent to the device's list of pending events.
  
- Triggers sending of queued uevents as well as waking up processes waiting on
-diff --git a/drivers/md/dm-uevent.c b/drivers/md/dm-uevent.c
-index 6a72de7..d139135 100644
---- a/drivers/md/dm-uevent.c
-+++ b/drivers/md/dm-uevent.c
-@@ -95,6 +95,32 @@ err_nomem:
- EXPORT_SYMBOL_GPL(dm_uevent_build);
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 26f99d0..467724c 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1282,7 +1282,7 @@ static void dm_path_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
+ 		goto err;
+ 	}
  
- /**
-+ * dm_uevent_add - Create and queue a basic uevent
-+ *
-+ * @ti:		The target to add a uevent for
-+ * @action:	The kobject action
-+ * @name:	The name of the uevent to add and queue
-+ *
-+ * If targets wish to create and queue a uevent but don't need to add
-+ * extra vars, they can do so more easily by calling this.
-+ * This is usually followed by a call to dm_table_event().
-+ */
-+void dm_uevent_add(struct dm_target *ti, enum kobject_action action, char *name)
-+{
-+	struct mapped_device *md = dm_table_get_md(ti->table);
-+	struct dm_uevent *event;
-+
-+	event = dm_uevent_build(md, ti, action, name);
-+	if (IS_ERR(event)) {
-+		DMERR("%s: dm_uevent_build() failed", __func__);
-+		return;
-+	}
-+
+-	dm_uevent_add(md, &event->elist);
 +	dm_uevent_queue(md, &event->elist);
-+}
-+EXPORT_SYMBOL_GPL(dm_uevent_add);
-+
-+/**
-  * dm_send_uevents - send uevents for given list
-  *
-  * @events:	list of events to send
+ 	return;
+ err:
+ 	dm_uevent_free(event);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 701c75f..37b3a82 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2419,7 +2419,7 @@ int dm_wait_event(struct mapped_device *md, int event_nr)
+ 			(event_nr != atomic_read(&md->event_nr)));
+ }
+ 
+-void dm_uevent_add(struct mapped_device *md, struct list_head *elist)
++void dm_uevent_queue(struct mapped_device *md, struct list_head *elist)
+ {
+ 	unsigned long flags;
+ 
+@@ -2427,7 +2427,7 @@ void dm_uevent_add(struct mapped_device *md, struct list_head *elist)
+ 	list_add(elist, &md->uevent_list);
+ 	spin_unlock_irqrestore(&md->uevent_lock, flags);
+ }
+-EXPORT_SYMBOL_GPL(dm_uevent_add);
++EXPORT_SYMBOL_GPL(dm_uevent_queue);
+ 
+ /*
+  * The gendisk is only valid as long as you have a reference
 diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 024207c..c102e29 100644
+index 91acfce..024207c 100644
 --- a/include/linux/device-mapper.h
 +++ b/include/linux/device-mapper.h
-@@ -420,6 +420,7 @@ uint32_t dm_get_event_nr(struct mapped_device *md);
+@@ -419,7 +419,7 @@ int dm_resume(struct mapped_device *md);
+ uint32_t dm_get_event_nr(struct mapped_device *md);
  int dm_wait_event(struct mapped_device *md, int event_nr);
  uint32_t dm_next_uevent_seq(struct mapped_device *md);
- void dm_uevent_queue(struct mapped_device *md, struct list_head *elist);
-+void dm_uevent_add(struct dm_target *ti, enum kobject_action action, char *name);
+-void dm_uevent_add(struct mapped_device *md, struct list_head *elist);
++void dm_uevent_queue(struct mapped_device *md, struct list_head *elist);
  
  /*
   * Info functions.
