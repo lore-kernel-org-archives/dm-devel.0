@@ -1,14 +1,12 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: add Dell EMC Unity
-	documentation
-Date: Mon, 3 Oct 2016 16:23:23 +0200
-Message-ID: <6e54360b-8d98-a0c7-0101-fcc73e6a74cd@gmail.com>
-References: <20160916231107.13762-1-xose.vazquez@gmail.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH] multipath-tools: merge emc and dell
+Date: Mon, 3 Oct 2016 16:27:21 +0200
+Message-ID: <CABr-GndBs1LHT+pnwspKXe95qz46DMLzdKstSnakrWbV7BeidA@mail.gmail.com>
+References: <1474047440-3221-1-git-send-email-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============7990890230590113680=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20160916231107.13762-1-xose.vazquez@gmail.com>
+In-Reply-To: <1474047440-3221-1-git-send-email-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,69 +16,121 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 09/17/2016 01:11 AM, Xose Vazquez Perez wrote:
+--===============7990890230590113680==
+Content-Type: multipart/alternative; boundary=001a113c9ea2fff176053df6bdf7
 
-> It's detected as DGC/VRAID
+--001a113c9ea2fff176053df6bdf7
+Content-Type: text/plain; charset=UTF-8
 
-This patch and "[PATCH] multipath-tools: merge emc and dell"
-are missing.
+Rebased and merged.
+Thanks.
 
-Thank you.
+On Fri, Sep 16, 2016 at 7:37 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
+wrote:
 
+> There can be only one.
+>
 > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 > Cc: device-mapper development <dm-devel@redhat.com>
 > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 > ---
->  libmultipath/hwtable.c     | 2 +-
->  multipath/multipath.conf.5 | 7 ++++---
->  2 files changed, 5 insertions(+), 4 deletions(-)
-> 
+>  libmultipath/hwtable.c | 5 +----
+>  1 file changed, 1 insertion(+), 4 deletions(-)
+>
 > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index b8b5bb7..8b2eec7 100644
+> index aaf7480..b8b5bb7 100644
 > --- a/libmultipath/hwtable.c
 > +++ b/libmultipath/hwtable.c
-> @@ -159,7 +159,7 @@ static struct hwentry default_hw[] = {
->  		.no_path_retry = 6,
->  	},
->  	{
-> -		/* DGC CLARiiON CX/AX and EMC VNX */
-> +		/* DGC CLARiiON CX/AX / EMC VNX and Unity */
->  		.vendor        = "^DGC",
->  		.product       = "^(RAID|DISK|VRAID)",
->  		.bl_product    = "LUNZ",
-> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index 8c0b47a..b377885 100644
-> --- a/multipath/multipath.conf.5
-> +++ b/multipath/multipath.conf.5
-> @@ -245,7 +245,7 @@ generate the path priority. This prioritizer accepts the optional prio_arg
->  .I emc
->  (Hardware-dependent)
->  Generate the path priority for DGC class arrays as CLARiiON CX/AX and
-> -EMC VNX families.
-> +EMC VNX and Unity families.
->  .TP
->  .I alua
->  (Hardware-dependent)
-> @@ -382,7 +382,7 @@ Issue a \fITEST UNIT READY\fR command to the device.
->  .I emc_clariion
->  (Hardware-dependent)
->  Query the DGC/EMC specific EVPD page 0xC0 to determine the path state
-> -for CLARiiON CX/AX and EMC VNX arrays families.
-> +for CLARiiON CX/AX and EMC VNX and Unity arrays families.
->  .TP
->  .I hp_sw
->  (Hardware-dependent)
-> @@ -1006,7 +1006,8 @@ The following hardware handler are implemented:
->  .TP 12
->  .I 1 emc
->  (Hardware-dependent)
-> -Hardware handler for DGC class arrays as CLARiiON CX/AX and EMC VNX families.
-> +Hardware handler for DGC class arrays as CLARiiON CX/AX and EMC VNX and Unity
-> +families.
->  .TP
->  .I 1 rdac
->  (Hardware-dependent)
-> 
+> @@ -150,7 +150,7 @@ static struct hwentry default_hw[] = {
+>                 .product       = "SAN DataDirector",
+>         },
+>         /*
+> -        * EMC
+> +        * Dell EMC
+>          */
+>         {
+>                 /* Symmetrix / DMX / VMAX */
+> @@ -181,9 +181,6 @@ static struct hwentry default_hw[] = {
+>                 .vendor        = "XtremIO",
+>                 .product       = "XtremApp",
+>         },
+> -       /*
+> -        * DELL
+> -        */
+>         {
+>                 /*
+>                  * Dell SC Series, formerly Compellent
+> --
+> 2.7.4
+>
+>
+
+--001a113c9ea2fff176053df6bdf7
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Rebased and merged.<div>Thanks.</div></div><div class=3D"g=
+mail_extra"><br><div class=3D"gmail_quote">On Fri, Sep 16, 2016 at 7:37 PM,=
+ Xose Vazquez Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gm=
+ail.com" target=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br>=
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
+x #ccc solid;padding-left:1ex">There can be only one.<br>
+<br>
+Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com=
+">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
+Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
+-devel@redhat.com</a>&gt;<br>
+Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
+com">xose.vazquez@gmail.com</a>&gt;<br>
+---<br>
+=C2=A0libmultipath/hwtable.c | 5 +----<br>
+=C2=A01 file changed, 1 insertion(+), 4 deletions(-)<br>
+<br>
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c<br>
+index aaf7480..b8b5bb7 100644<br>
+--- a/libmultipath/hwtable.c<br>
++++ b/libmultipath/hwtable.c<br>
+@@ -150,7 +150,7 @@ static struct hwentry default_hw[] =3D {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .product=C2=A0 =C2=
+=A0 =C2=A0 =C2=A0=3D &quot;SAN DataDirector&quot;,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 },<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 /*<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 * EMC<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 * Dell EMC<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* Symmetrix / DMX =
+/ VMAX */<br>
+@@ -181,9 +181,6 @@ static struct hwentry default_hw[] =3D {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .vendor=C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =3D &quot;XtremIO&quot;,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .product=C2=A0 =C2=
+=A0 =C2=A0 =C2=A0=3D &quot;XtremApp&quot;,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 },<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0/*<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 * DELL<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 */<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /*<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* Dell SC Ser=
+ies, formerly Compellent<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+2.7.4<br>
+<br>
+</font></span></blockquote></div><br></div>
+
+--001a113c9ea2fff176053df6bdf7--
+
+
+--===============7990890230590113680==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============7990890230590113680==--
