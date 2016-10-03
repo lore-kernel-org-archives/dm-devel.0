@@ -1,14 +1,17 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: Choosing the device name in kpartx.
-Date: Mon, 3 Oct 2016 07:59:41 +0100
-Message-ID: <20161003065940.GA3480@localhost.localdomain>
-References: <CADVh14WfxhnCj8Mok1iq-KXJ7hYOBF0rUBQboVdxfGT=Zdq6Tw@mail.gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: request to update man
+ pages/TEMPLATE if "device subsection" keywords are changed
+Date: Mon, 3 Oct 2016 12:42:16 +0200
+Message-ID: <9968b473-6090-9b80-c142-323e92bd46ad@gmail.com>
+References: <1472424064-9669-1-git-send-email-xose.vazquez@gmail.com>
+	<CABr-Gnd8j9eXtdmNUA8imo2zxt7B5aUH7XBoQGoOezkcruHwCg@mail.gmail.com>
+	<d8edc588-be80-b59f-51fa-07c0e077af3b@gmail.com>
+	<44c9bc97-9a33-ae34-4f98-71d8e6df15bf@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CADVh14WfxhnCj8Mok1iq-KXJ7hYOBF0rUBQboVdxfGT=Zdq6Tw@mail.gmail.com>
+In-Reply-To: <44c9bc97-9a33-ae34-4f98-71d8e6df15bf@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,38 +21,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andre Caldas <andre.em.caldas@gmail.com>
-Cc: dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, Oct 02, 2016 at 02:10:50AM -0300, Andre Caldas wrote:
-> As I understood it, when I call
-> $ kpartx -a disk.img
-> kpartx chooses a "device name" X, detects the partitions and their
-> numbers N, and creates device nodes with naming
-> XpN.
+On 09/05/2016 04:02 PM, Xose Vazquez Perez wrote:
 
-This command performs several steps for you. You can have greater
-control by issuing those steps yourself:
+> On 08/29/2016 10:49 AM, Xose Vazquez Perez wrote:
+> 
+>> On 08/29/2016 09:25 AM, Christophe Varoqui wrote:
+>>
+>>> Merged.
+>>
+>> There are six pending patches:
+>> https://patchwork.kernel.org/project/dm-devel/list/?submitter=3680
+> 
+> patchwork was cleaned. They are:
+> [PATCH v3] multipath-tools: Add Dell SC name and maintainer
+> [PATCH] multipath-tools: identify some IBM FlashSystem arrays
+> [PATCH 1/4] multipath-tools: replace queue_if_no_path with NO_PATH_RETRY_QUEUE
+> [PATCH 2/4] multipath-tools: replace GROUP_BY_SERIAL with MULTIBUS for IBM 3542 and 2105
+> [PATCH 3/4] multipath-tools: change default failback from manual to undefined
+> [PATCH 4/4] multipath-tools: change default path_grouping_policy from failover to multibus
+> [...]
 
-1. Create a loop device mapping the image (/dev/loopN)
-2. Create a device-mapper device with a linear map of the loop:
+Hi Christophe,
 
-   # dmsetup create $DEV_NAME --table="0 $DEV_SIZE linear /dev/loopN"
+Do I need resend any patch?
 
-   This allows you to give any DEV_NAME you like to the device (with
-   the default kpartx behaviour, the partitions just map the loop
-   device, so have names like 'loop0p1' etc.).
-
-3. Map partitions on the new dm device with kpartx:
-
-   # kpartx -a /dev/mapper/$DEV_NAME
-
-See the kpartx man page for options to fine-tune the partition device
-names.
-
-The dmsetup command has lots of options to control the output format
-that can be used to get readily parseable data.
-
-Regards,
-Bryn.
+Thank you.
