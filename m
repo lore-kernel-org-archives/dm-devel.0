@@ -1,12 +1,18 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: blacklist "Universal Xport" for
-	IBM/3542
-Date: Mon,  3 Oct 2016 14:36:24 +0200
-Message-ID: <20161003123624.15351-1-xose.vazquez@gmail.com>
+Subject: Re: [PATCH 2/4] multipath-tools: replace GROUP_BY_SERIAL
+ with MULTIBUS for IBM 3542 and 2105
+Date: Mon, 3 Oct 2016 15:04:04 +0200
+Message-ID: <e3d21de2-1b56-1ca7-1bf5-9af5a903fe9e@gmail.com>
+References: <1471543096-11441-1-git-send-email-xose.vazquez@gmail.com>
+	<1471543096-11441-2-git-send-email-xose.vazquez@gmail.com>
+	<CABr-GndoWMoFD898RPci4yJxFDvtwmhQTERH7QZqLk0Qm5mCuQ@mail.gmail.com>
+	<bd26cdfd-2b48-69de-cf4a-55f5e75c8c01@suse.de>
+	<CABr-GndK4pBmKUgsmjpuYvNH6xgj2R4O4p=jhRQAtT2B+LWg3g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CABr-GndK4pBmKUgsmjpuYvNH6xgj2R4O4p=jhRQAtT2B+LWg3g@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,28 +22,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 1 +
- 1 file changed, 1 insertion(+)
+On 10/03/2016 02:06 PM, Christophe Varoqui wrote:
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 42e7baf..5d4d1ce 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -428,6 +428,7 @@ static struct hwentry default_hw[] = {
- 		/* DS4200 / FAStT200 */
- 		.vendor        = "IBM",
- 		.product       = "^3542",
-+		.bl_product    = "Universal Xport",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--- 
-2.10.0
+> Thanks.
+> Patch pushed.
+
+>     >                     /* DS4200 / FAStT200 */
+>     >                     .vendor        = "IBM",
+>     >                     .product       = "^3542",
+>     >     -               .pgpolicy      = GROUP_BY_SERIAL,
+>     >     +               .pgpolicy      = MULTIBUS,
+>     >                     .pgfailback    = FAILBACK_UNDEF,
+>     >             },
+>     This is the IBM FAStT 200, which is IIRC an RDAC machine. So multibus
+>     will be wrong here, and it should be using the RDAC entry instead.
+
+A patch is needed also in the kernel side(drivers/scsi/scsi_dh.c).
