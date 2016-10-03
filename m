@@ -1,13 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 1/2] libmultipath/checkers/{rbd,
- tur}: Fix pthread_cond_signal() calls
-Date: Mon, 3 Oct 2016 13:52:33 +0200
-Message-ID: <CABr-Gncqe2b79FJJC1J9ArVhjGkWva160NsFmNh8RxDiW23e_g@mail.gmail.com>
-References: <55a58c33-1edb-548d-f68b-d25cea442650@sandisk.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 2/4] multipath-tools: replace GROUP_BY_SERIAL
+ with MULTIBUS for IBM 3542 and 2105
+Date: Mon, 3 Oct 2016 13:54:30 +0200
+Message-ID: <bd26cdfd-2b48-69de-cf4a-55f5e75c8c01@suse.de>
+References: <1471543096-11441-1-git-send-email-xose.vazquez@gmail.com>
+	<1471543096-11441-2-git-send-email-xose.vazquez@gmail.com>
+	<CABr-GndoWMoFD898RPci4yJxFDvtwmhQTERH7QZqLk0Qm5mCuQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7803609453563906126=="
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <55a58c33-1edb-548d-f68b-d25cea442650@sandisk.com>
+In-Reply-To: <CABr-GndoWMoFD898RPci4yJxFDvtwmhQTERH7QZqLk0Qm5mCuQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,142 +20,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============7803609453563906126==
-Content-Type: multipart/alternative; boundary=001a11401be86206b1053df494e2
-
---001a11401be86206b1053df494e2
-Content-Type: text/plain; charset=UTF-8
-
-Merged,
-Thanks.
-
-On Thu, Sep 29, 2016 at 11:28 PM, Bart Van Assche <
-bart.vanassche@sandisk.com> wrote:
-
-> Calling pthread_cond_signal() without holding the associated
-> mutex sporadically results in a lost wakeup. Hence call
-> pthread_cond_signal() while holding the mutex used by
-> pthread_cond_wait().
->
-> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
-> Cc: Mike Christie <mchristi@redhat.com>
-> ---
->  libmultipath/checkers/rbd.c | 2 +-
->  libmultipath/checkers/tur.c | 2 +-
->  2 files changed, 2 insertions(+), 2 deletions(-)
->
-> diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
-> index 874bcfa..41259c3 100644
-> --- a/libmultipath/checkers/rbd.c
-> +++ b/libmultipath/checkers/rbd.c
-> @@ -527,8 +527,8 @@ static void *rbd_thread(void *ctx)
->         /* checker done */
->         pthread_mutex_lock(&ct->lock);
->         ct->state = state;
-> -       pthread_mutex_unlock(&ct->lock);
->         pthread_cond_signal(&ct->active);
-> +       pthread_mutex_unlock(&ct->lock);
->
->         condlog(3, "rbd%d thead finished, state %s", ct->rbd_bus_id,
->                 checker_state_name(state));
-> diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-> index 8c1f633..94e4190 100644
-> --- a/libmultipath/checkers/tur.c
-> +++ b/libmultipath/checkers/tur.c
-> @@ -225,8 +225,8 @@ static void *tur_thread(void *ctx)
->         /* TUR checker done */
->         pthread_mutex_lock(&ct->lock);
->         ct->state = state;
-> -       pthread_mutex_unlock(&ct->lock);
->         pthread_cond_signal(&ct->active);
-> +       pthread_mutex_unlock(&ct->lock);
->
->         condlog(3, "%d:%d: tur checker finished, state %s",
->                 TUR_DEVT(ct), checker_state_name(state));
-> --
-> 2.10.0
->
->
-
---001a11401be86206b1053df494e2
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Merged,<div>Thanks.</div></div><div class=3D"gmail_extra">=
-<br><div class=3D"gmail_quote">On Thu, Sep 29, 2016 at 11:28 PM, Bart Van A=
-ssche <span dir=3D"ltr">&lt;<a href=3D"mailto:bart.vanassche@sandisk.com" t=
-arget=3D"_blank">bart.vanassche@sandisk.com</a>&gt;</span> wrote:<br><block=
-quote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc=
- solid;padding-left:1ex">Calling pthread_cond_signal() without holding the =
-associated<br>
-mutex sporadically results in a lost wakeup. Hence call<br>
-pthread_cond_signal() while holding the mutex used by<br>
-pthread_cond_wait().<br>
-<br>
-Signed-off-by: Bart Van Assche &lt;<a href=3D"mailto:bart.vanassche@sandisk=
-.com">bart.vanassche@sandisk.com</a>&gt;<br>
-Cc: Mike Christie &lt;<a href=3D"mailto:mchristi@redhat.com">mchristi@redha=
-t.com</a>&gt;<br>
----<br>
-=C2=A0libmultipath/checkers/rbd.c | 2 +-<br>
-=C2=A0libmultipath/checkers/tur.c | 2 +-<br>
-=C2=A02 files changed, 2 insertions(+), 2 deletions(-)<br>
-<br>
-diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c<br>
-index 874bcfa..41259c3 100644<br>
---- a/libmultipath/checkers/rbd.c<br>
-+++ b/libmultipath/checkers/rbd.c<br>
-@@ -527,8 +527,8 @@ static void *rbd_thread(void *ctx)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 /* checker done */<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 pthread_mutex_lock(&amp;ct-&gt;lock);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 ct-&gt;state =3D state;<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0pthread_mutex_unlock(&amp;ct-&gt;<wbr>lock);<br=
->
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 pthread_cond_signal(&amp;ct-&gt;<wbr>active);<b=
-r>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0pthread_mutex_unlock(&amp;ct-&gt;<wbr>lock);<br=
->
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 condlog(3, &quot;rbd%d thead finished, state %s=
-&quot;, ct-&gt;rbd_bus_id,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 checker_state_name(=
-state));<br>
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c<br>
-index 8c1f633..94e4190 100644<br>
---- a/libmultipath/checkers/tur.c<br>
-+++ b/libmultipath/checkers/tur.c<br>
-@@ -225,8 +225,8 @@ static void *tur_thread(void *ctx)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 /* TUR checker done */<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 pthread_mutex_lock(&amp;ct-&gt;lock);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 ct-&gt;state =3D state;<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0pthread_mutex_unlock(&amp;ct-&gt;<wbr>lock);<br=
->
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 pthread_cond_signal(&amp;ct-&gt;<wbr>active);<b=
-r>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0pthread_mutex_unlock(&amp;ct-&gt;<wbr>lock);<br=
->
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 condlog(3, &quot;%d:%d: tur checker finished, s=
-tate %s&quot;,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 TUR_DEVT(ct), check=
-er_state_name(state));<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.10.0<br>
-<br>
-</font></span></blockquote></div><br></div>
-
---001a11401be86206b1053df494e2--
-
-
---===============7803609453563906126==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7803609453563906126==--
+T24gMTAvMDMvMjAxNiAwMTowMiBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+IEhpIFhv
+c2UsCj4gCj4gR3JvdXAgYnkgc2VyaWFsIHN1cmUgY2FuIG1ha2Ugc2Vuc2UgZm9yIGhhcmR3YXJl
+IG5vdCBjYXBhYmxlIG9mIG11bHRpYnVzLgo+IAo+IENhbiB5b3Ugb3IgSGFubmVzIChsaXN0ZWQg
+YXMgbWFpbnRhaW5lciBmb3IgSUJNKSBjb25maXJtIHRoZSBjb25jZXJuZWQKPiBJQk0gYXJyYXlz
+IGFyZSBtdWx0aWJ1cyBjYXBhYmxlID8KPiAKPiBCZXN0IHJlZ2FyZHMsCj4gQ2hyaXN0b3BoZSBW
+YXJvcXVpCj4gT3BlblNWQwo+IAo+IE9uIFRodSwgQXVnIDE4LCAyMDE2IGF0IDc6NTggUE0sIFhv
+c2UgVmF6cXVleiBQZXJlego+IDx4b3NlLnZhenF1ZXpAZ21haWwuY29tIDxtYWlsdG86eG9zZS52
+YXpxdWV6QGdtYWlsLmNvbT4+IHdyb3RlOgo+IAo+ICAgICBJdCBkb2Vzbid0IG1ha2UgYW55IHNl
+bnNlIHRvIGhhdmUsIGJ5IGRlZmF1bHQsIEdST1VQX0JZX1NFUklBTCBpbgo+ICAgICByZWFsIGhh
+cmR3YXJlLgo+IAo+ICAgICBDYzogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuZGUgPG1haWx0
+bzpoYXJlQHN1c2UuZGU+Pgo+ICAgICBDYzogQ2hyaXN0b3BoZSBWYXJvcXVpIDxjaHJpc3RvcGhl
+LnZhcm9xdWlAb3BlbnN2Yy5jb20KPiAgICAgPG1haWx0bzpjaHJpc3RvcGhlLnZhcm9xdWlAb3Bl
+bnN2Yy5jb20+Pgo+ICAgICBDYzogZGV2aWNlLW1hcHBlciBkZXZlbG9wbWVudCA8ZG0tZGV2ZWxA
+cmVkaGF0LmNvbQo+ICAgICA8bWFpbHRvOmRtLWRldmVsQHJlZGhhdC5jb20+Pgo+ICAgICBTaWdu
+ZWQtb2ZmLWJ5OiBYb3NlIFZhenF1ZXogUGVyZXogPHhvc2UudmF6cXVlekBnbWFpbC5jb20KPiAg
+ICAgPG1haWx0bzp4b3NlLnZhenF1ZXpAZ21haWwuY29tPj4KPiAgICAgLS0tCj4gICAgICBsaWJt
+dWx0aXBhdGgvaHd0YWJsZS5jIHwgNCArKy0tCj4gICAgICAxIGZpbGUgY2hhbmdlZCwgMiBpbnNl
+cnRpb25zKCspLCAyIGRlbGV0aW9ucygtKQo+IAo+ICAgICBkaWZmIC0tZ2l0IGEvbGlibXVsdGlw
+YXRoL2h3dGFibGUuYyBiL2xpYm11bHRpcGF0aC9od3RhYmxlLmMKPiAgICAgaW5kZXggYWEzZWE5
+Yi4uNzJiNWUxZCAxMDA2NDQKPiAgICAgLS0tIGEvbGlibXVsdGlwYXRoL2h3dGFibGUuYwo+ICAg
+ICArKysgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCj4gICAgIEBAIC00NDMsNyArNDQzLDcgQEAg
+c3RhdGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKPiAgICAgICAgICAgICAgICAg
+ICAgIC8qIERTNDIwMCAvIEZBU3RUMjAwICovCj4gICAgICAgICAgICAgICAgICAgICAudmVuZG9y
+ICAgICAgICA9ICJJQk0iLAo+ICAgICAgICAgICAgICAgICAgICAgLnByb2R1Y3QgICAgICAgPSAi
+XjM1NDIiLAo+ICAgICAtICAgICAgICAgICAgICAgLnBncG9saWN5ICAgICAgPSBHUk9VUF9CWV9T
+RVJJQUwsCj4gICAgICsgICAgICAgICAgICAgICAucGdwb2xpY3kgICAgICA9IE1VTFRJQlVTLAo+
+ICAgICAgICAgICAgICAgICAgICAgLnBnZmFpbGJhY2sgICAgPSBGQUlMQkFDS19VTkRFRiwKPiAg
+ICAgICAgICAgICB9LApUaGlzIGlzIHRoZSBJQk0gRkFTdFQgMjAwLCB3aGljaCBpcyBJSVJDIGFu
+IFJEQUMgbWFjaGluZS4gU28gbXVsdGlidXMKd2lsbCBiZSB3cm9uZyBoZXJlLCBhbmQgaXQgc2hv
+dWxkIGJlIHVzaW5nIHRoZSBSREFDIGVudHJ5IGluc3RlYWQuCgo+ICAgICAgICAgICAgIHsKPiAg
+ICAgQEAgLTQ1MSw3ICs0NTEsNyBAQCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1td
+ID0gewo+ICAgICAgICAgICAgICAgICAgICAgLnZlbmRvciAgICAgICAgPSAiSUJNIiwKPiAgICAg
+ICAgICAgICAgICAgICAgIC5wcm9kdWN0ICAgICAgID0gIl4yMTA1IiwKPiAgICAgICAgICAgICAg
+ICAgICAgIC5ub19wYXRoX3JldHJ5ID0gTk9fUEFUSF9SRVRSWV9RVUVVRSwKPiAgICAgLSAgICAg
+ICAgICAgICAgIC5wZ3BvbGljeSAgICAgID0gR1JPVVBfQllfU0VSSUFMLAo+ICAgICArICAgICAg
+ICAgICAgICAgLnBncG9saWN5ICAgICAgPSBNVUxUSUJVUywKPiAgICAgICAgICAgICAgICAgICAg
+IC5wZ2ZhaWxiYWNrICAgID0gRkFJTEJBQ0tfVU5ERUYsCj4gICAgICAgICAgICAgfSwKPiAgICAg
+ICAgICAgICB7ClRoYXQncyB0aGUgb2xkIElCTSBFU1MgODAwOyB0aGlzIGlzIGEgZnVsbHkgc3lt
+bWV0cmljIGFjdGl2ZS1hY3RpdmUKYXJyYXkuIFNvIHllcywgbXVsdGlidXMgaXMgY29ycmVjdCBo
+ZXJlLgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICAgICB6U2Vy
+aWVzICYgU3RvcmFnZQpoYXJlQHN1c2UuZGUJCQkgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNF
+IExJTlVYIFByb2R1Y3RzIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjog
+Si4gSGF3biwgSi4gR3VpbGQsIEYuIEltZW5kw7ZyZmZlciwgSFJCIDE2NzQ2IChBRyBOw7xybmJl
+cmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
+L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
