@@ -1,8 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 04/15] libmultipath/checkers/rbd: Declare local
- functions static
-Date: Tue, 4 Oct 2016 10:38:15 -0700
-Message-ID: <61fe6d2b-489d-ba8a-1dd2-8820c4ad102d@sandisk.com>
+Subject: [PATCH 09/15] libmultipath/checkers/tur: Terminate a
+ statement with a semicolon
+Date: Tue, 4 Oct 2016 10:40:13 -0700
+Message-ID: <643c7858-58ed-1c2a-0463-cafbaef962bb@sandisk.com>
 References: <157defac-6527-ab23-92f2-9c1926042885@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,63 +19,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: Mike Christie <mchristi@redhat.com>
----
- libmultipath/checkers/rbd.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+This patch does not affect any functionality but helps editors to
+auto-indent the code below that statement correctly.
 
-diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
-index 1ee29c4..41259c3 100644
---- a/libmultipath/checkers/rbd.c
-+++ b/libmultipath/checkers/rbd.c
-@@ -220,7 +220,7 @@ free_ct:
- 	return 1;
- }
+Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+---
+ libmultipath/checkers/tur.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 67933cb..3f97f2a 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -215,7 +215,7 @@ static void *tur_thread(void *ctx)
  
--void cleanup_context(struct rbd_checker_context *ct)
-+static void cleanup_context(struct rbd_checker_context *ct)
- {
- 	pthread_mutex_destroy(&ct->lock);
- 	pthread_cond_destroy(&ct->active);
-@@ -317,7 +317,7 @@ free_bufs:
- 	return ret;
- }
+ 	ct->message[0] = '\0';
+ 	/* This thread can be canceled, so setup clean up */
+-	tur_thread_cleanup_push(ct)
++	tur_thread_cleanup_push(ct);
  
--int rbd_check(struct rbd_checker_context *ct, char *msg)
-+static int rbd_check(struct rbd_checker_context *ct, char *msg)
- {
- 	if (ct->blacklisted || rbd_is_blacklisted(ct, msg) == 1)
- 		return PATH_DOWN;
-@@ -333,7 +333,7 @@ int rbd_check(struct rbd_checker_context *ct, char *msg)
- 	return PATH_UP;
- }
- 
--int safe_write(int fd, const void *buf, size_t count)
-+static int safe_write(int fd, const void *buf, size_t count)
- {
- 	while (count > 0) {
- 		ssize_t r = write(fd, buf, count);
-@@ -493,7 +493,7 @@ static int rbd_repair(struct rbd_checker_context *ct, char *msg)
- #define rbd_thread_cleanup_push(ct) pthread_cleanup_push(cleanup_func, ct)
- #define rbd_thread_cleanup_pop(ct) pthread_cleanup_pop(1)
- 
--void cleanup_func(void *data)
-+static void cleanup_func(void *data)
- {
- 	int holders;
- 	struct rbd_checker_context *ct = data;
-@@ -506,7 +506,7 @@ void cleanup_func(void *data)
- 		cleanup_context(ct);
- }
- 
--void *rbd_thread(void *ctx)
-+static void *rbd_thread(void *ctx)
- {
- 	struct rbd_checker_context *ct = ctx;
- 	int state;
+ 	/* TUR checker start up */
+ 	pthread_mutex_lock(&ct->lock);
 -- 
 2.10.0
