@@ -1,7 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 14/15] libmultipath: Micro-optimize snprint_size()
-Date: Tue, 4 Oct 2016 10:41:59 -0700
-Message-ID: <f046a639-204e-4ad6-4865-e01c999af57c@sandisk.com>
+Subject: [PATCH 15/15] Makefile.inc: Enable -Wextra and
+	-Wformat-nonliteral
+Date: Tue, 4 Oct 2016 10:42:21 -0700
+Message-ID: <4d3a965d-3caa-e596-8351-d0ae2465e54d@sandisk.com>
 References: <157defac-6527-ab23-92f2-9c1926042885@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,41 +22,31 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Eliminate the stack array fmt[]. An interesting side effect of
-this patch is that it makes it possible for the compiler to
-verify whether the snprintf() arguments have a type that is
-appropriate for the format string.
+Instead of selecting some of the options enabled by -Wextra, enable
+-Wextra and disable some of the options enabled by -Wextra. Enable
+-Wformat-nonliteral.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmultipath/print.c | 7 +------
- 1 file changed, 1 insertion(+), 6 deletions(-)
+ Makefile.inc | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 94d6384..9aa41ad 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -73,7 +73,6 @@ static int
- snprint_size (char * buff, size_t len, unsigned long long size)
- {
- 	float s = (float)(size >> 1); /* start with KB */
--	char fmt[6] = {};
- 	char units[] = {'K','M','G','T','P'};
- 	char *u = units;
+diff --git a/Makefile.inc b/Makefile.inc
+index 376f00a..be6b2bc 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -61,8 +61,10 @@ RM		= rm -f
+ LN		= ln -sf
+ INSTALL_PROGRAM	= install
  
-@@ -81,12 +80,8 @@ snprint_size (char * buff, size_t len, unsigned long long size)
- 		s = s / 1024;
- 		u++;
- 	}
--	if (s < 10)
--		snprintf(fmt, 6, "%%.1f%c", *u);
--	else
--		snprintf(fmt, 6, "%%.0f%c", *u);
+-OPTFLAGS	= -Wunused -Wstrict-prototypes -O2 -g -pipe -Wformat-security -Wall \
+-		  -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector --param=ssp-buffer-size=4
++OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 \
++		  -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered\
++		  -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector \
++		  --param=ssp-buffer-size=4
  
--	return snprintf(buff, len, fmt, s);
-+	return snprintf(buff, len, "%.*f%c", s < 10, s, *u);
- }
- 
- /*
+ CFLAGS		= $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
+ SHARED_FLAGS	= -shared
 -- 
 2.10.0
