@@ -1,8 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 03/15] libmultipath/checkers/tur: Declare local
- functions static
-Date: Tue, 4 Oct 2016 10:37:50 -0700
-Message-ID: <66fed9ae-df6e-0ed1-43a4-21ac9d494d8d@sandisk.com>
+Subject: [PATCH 07/15] multipathd: Fix a data race
+Date: Tue, 4 Oct 2016 10:39:30 -0700
+Message-ID: <0084c5eb-4cda-ea52-3532-47b2ca1314a4@sandisk.com>
 References: <157defac-6527-ab23-92f2-9c1926042885@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,77 +21,75 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Avoid that the path check interval initialization loop races with
+other code that accesses the path vectors by executing that code
+on the context of the main thread instead of the checker loop.
+This patch avoids that DRD reports the following:
+
+Conflicting store by thread 1 at 0x07f3f1f8 size 8
+   at 0x40B50C: reconfigure (main.c:2014)
+   by 0x40C2EC: child (main.c:2371)
+   by 0x40CDA1: main (main.c:2609)
+Address 0x7f3f1f8 is at offset 40 from 0x7f3f1d0. Allocation context:
+   at 0x4C32995: calloc (in /usr/lib64/valgrind/vgpreload_drd-amd64-linux.so)
+   by 0x5DDAC36: zalloc (memory.c:34)
+   by 0x40B61A: init_vecs (main.c:2043)
+   by 0x40BF01: child (main.c:2295)
+   by 0x40CDA1: main (main.c:2609)
+
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmultipath/checkers/tur.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ multipathd/main.c | 24 +++++++++++++++---------
+ 1 file changed, 15 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index ad66918..94e4190 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -68,7 +68,7 @@ int libcheck_init (struct checker * c)
- 	return 0;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 3030e85..cdfafe8 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1742,6 +1742,19 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	return 1;
  }
  
--void cleanup_context(struct tur_checker_context *ct)
-+static void cleanup_context(struct tur_checker_context *ct)
++static void init_path_check_interval(struct vectors *vecs)
++{
++	struct config *conf;
++	struct path *pp;
++	unsigned int i;
++
++	vector_foreach_slot (vecs->pathvec, pp, i) {
++		conf = get_multipath_config();
++		pp->checkint = conf->checkint;
++		put_multipath_config(conf);
++	}
++}
++
+ static void *
+ checkerloop (void *ap)
  {
- 	pthread_mutex_destroy(&ct->lock);
- 	pthread_cond_destroy(&ct->active);
-@@ -104,7 +104,7 @@ void libcheck_repair (struct checker * c)
+@@ -1759,15 +1772,6 @@ checkerloop (void *ap)
+ 	vecs = (struct vectors *)ap;
+ 	condlog(2, "path checkers start up");
  
- #define TUR_MSG(msg, fmt, args...) snprintf(msg, CHECKER_MSG_LEN, fmt, ##args);
+-	/*
+-	 * init the path check interval
+-	 */
+-	vector_foreach_slot (vecs->pathvec, pp, i) {
+-		conf = get_multipath_config();
+-		pp->checkint = conf->checkint;
+-		put_multipath_config(conf);
+-	}
+-
+ 	/* Tweak start time for initial path check */
+ 	if (clock_gettime(CLOCK_MONOTONIC, &last_time) != 0)
+ 		last_time.tv_sec = 0;
+@@ -2327,6 +2331,8 @@ child (void * param)
+ 	 */
+ 	post_config_state(DAEMON_CONFIGURE);
  
--int
-+static int
- tur_check(int fd, unsigned int timeout, char *msg)
- {
- 	struct sg_io_hdr io_hdr;
-@@ -191,7 +191,7 @@ retry:
- #define tur_thread_cleanup_push(ct) pthread_cleanup_push(cleanup_func, ct)
- #define tur_thread_cleanup_pop(ct) pthread_cleanup_pop(1)
- 
--void cleanup_func(void *data)
-+static void cleanup_func(void *data)
- {
- 	int holders;
- 	struct tur_checker_context *ct = data;
-@@ -204,7 +204,7 @@ void cleanup_func(void *data)
- 		cleanup_context(ct);
- }
- 
--void *tur_thread(void *ctx)
-+static void *tur_thread(void *ctx)
- {
- 	struct tur_checker_context *ct = ctx;
- 	int state;
-@@ -235,7 +235,7 @@ void *tur_thread(void *ctx)
- }
- 
- 
--void tur_timeout(struct timespec *tsp)
-+static void tur_timeout(struct timespec *tsp)
- {
- 	struct timeval now;
- 
-@@ -245,7 +245,7 @@ void tur_timeout(struct timespec *tsp)
- 	tsp->tv_nsec += 1000000; /* 1 millisecond */
- }
- 
--void tur_set_async_timeout(struct checker *c)
-+static void tur_set_async_timeout(struct checker *c)
- {
- 	struct tur_checker_context *ct = c->context;
- 	struct timeval now;
-@@ -254,7 +254,7 @@ void tur_set_async_timeout(struct checker *c)
- 	ct->time = now.tv_sec + c->timeout;
- }
- 
--int tur_check_async_timeout(struct checker *c)
-+static int tur_check_async_timeout(struct checker *c)
- {
- 	struct tur_checker_context *ct = c->context;
- 	struct timeval now;
++	init_path_check_interval(vecs);
++
+ 	/*
+ 	 * Start uevent listener early to catch events
+ 	 */
 -- 
 2.10.0
