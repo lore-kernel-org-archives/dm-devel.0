@@ -1,8 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 10/15] libmultipath/checkers/tur: Move
- pthread_attr_destroy() call
-Date: Tue, 4 Oct 2016 10:40:32 -0700
-Message-ID: <69406132-f1a4-179f-1f3e-abbc4a66ec08@sandisk.com>
+Subject: [PATCH 04/15] libmultipath/checkers/rbd: Declare local
+ functions static
+Date: Tue, 4 Oct 2016 10:38:15 -0700
+Message-ID: <61fe6d2b-489d-ba8a-1dd2-8820c4ad102d@sandisk.com>
 References: <157defac-6527-ab23-92f2-9c1926042885@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,36 +19,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>
 List-Id: dm-devel.ids
 
-Move the pthread_attr_destroy() call up such that this function
-is also called if thread creation fails.
-
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: Mike Christie <mchristi@redhat.com>
 ---
- libmultipath/checkers/tur.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/checkers/rbd.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 3f97f2a..11f3c60 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -333,6 +333,7 @@ libcheck_check (struct checker * c)
- 		tur_set_async_timeout(c);
- 		setup_thread_attr(&attr, 32 * 1024, 1);
- 		r = pthread_create(&ct->thread, &attr, tur_thread, ct);
-+		pthread_attr_destroy(&attr);
- 		if (r) {
- 			pthread_spin_lock(&ct->hldr_lock);
- 			ct->holders--;
-@@ -343,7 +344,6 @@ libcheck_check (struct checker * c)
- 				" sync mode", TUR_DEVT(ct));
- 			return tur_check(c->fd, c->timeout, c->message);
- 		}
--		pthread_attr_destroy(&attr);
- 		tur_timeout(&tsp);
- 		r = pthread_cond_timedwait(&ct->active, &ct->lock, &tsp);
- 		tur_status = ct->state;
+diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
+index 1ee29c4..41259c3 100644
+--- a/libmultipath/checkers/rbd.c
++++ b/libmultipath/checkers/rbd.c
+@@ -220,7 +220,7 @@ free_ct:
+ 	return 1;
+ }
+ 
+-void cleanup_context(struct rbd_checker_context *ct)
++static void cleanup_context(struct rbd_checker_context *ct)
+ {
+ 	pthread_mutex_destroy(&ct->lock);
+ 	pthread_cond_destroy(&ct->active);
+@@ -317,7 +317,7 @@ free_bufs:
+ 	return ret;
+ }
+ 
+-int rbd_check(struct rbd_checker_context *ct, char *msg)
++static int rbd_check(struct rbd_checker_context *ct, char *msg)
+ {
+ 	if (ct->blacklisted || rbd_is_blacklisted(ct, msg) == 1)
+ 		return PATH_DOWN;
+@@ -333,7 +333,7 @@ int rbd_check(struct rbd_checker_context *ct, char *msg)
+ 	return PATH_UP;
+ }
+ 
+-int safe_write(int fd, const void *buf, size_t count)
++static int safe_write(int fd, const void *buf, size_t count)
+ {
+ 	while (count > 0) {
+ 		ssize_t r = write(fd, buf, count);
+@@ -493,7 +493,7 @@ static int rbd_repair(struct rbd_checker_context *ct, char *msg)
+ #define rbd_thread_cleanup_push(ct) pthread_cleanup_push(cleanup_func, ct)
+ #define rbd_thread_cleanup_pop(ct) pthread_cleanup_pop(1)
+ 
+-void cleanup_func(void *data)
++static void cleanup_func(void *data)
+ {
+ 	int holders;
+ 	struct rbd_checker_context *ct = data;
+@@ -506,7 +506,7 @@ void cleanup_func(void *data)
+ 		cleanup_context(ct);
+ }
+ 
+-void *rbd_thread(void *ctx)
++static void *rbd_thread(void *ctx)
+ {
+ 	struct rbd_checker_context *ct = ctx;
+ 	int state;
 -- 
 2.10.0
