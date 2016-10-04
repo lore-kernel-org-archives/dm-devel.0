@@ -1,38 +1,37 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH 2/2] multipathd,
- libmultipathd: Make delays independent of clock jumps
-Date: Mon, 3 Oct 2016 17:00:41 -0700
-Message-ID: <a154032e-09cb-fed3-247d-1044900a6f27@sandisk.com>
-References: <55a58c33-1edb-548d-f68b-d25cea442650@sandisk.com>
-	<8a70d61e-cdb8-858b-eaec-6bf557412cc8@sandisk.com>
-	<CABr-GndHANoDQrriUkZEnAKw+xr=W9MPk=AgrQX=G323+ZBv0A@mail.gmail.com>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH 0/9] Generate uevents for all DM events
+Date: Tue, 4 Oct 2016 09:20:15 +0200
+Message-ID: <20161004072015.GA11216@kroah.com>
+References: <1475522580-16723-1-git-send-email-agrover@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-GndHANoDQrriUkZEnAKw+xr=W9MPk=AgrQX=G323+ZBv0A@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1475522580-16723-1-git-send-email-agrover@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Grover <agrover@redhat.com>
+Cc: snitzer@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 10/03/2016 04:55 AM, Christophe Varoqui wrote:
-> This patch seems to depend on another patch flagging tur.c some function
-> static.
-> It seems I missed this patch. Is it tanked in your tree, and you want to
-> post it for inclusion ? Or do you prefer to rebase this "clock jump" patch ?
+On Mon, Oct 03, 2016 at 12:22:51PM -0700, Andy Grover wrote:
+> Hi Mike and GregKH,
+> 
+> I want a way to get devicemapper events without using the DM ioctl,
+> because that requires creating a thread to sleep in the ioctl for each
+> dm device I want events from.
+> 
+> It would seem like using uevents and KOBJ_CHANGE would be a good way
+> to do this, but Mike said that the uevent maintainers (Greg that's
+> you?) did not think this was a good idea?
 
-Hello Christophe,
+KBOJ_CHANGE is a tricky one.  It has been used for a variety of
+different things, but usually it is used to show that a major change has
+happened with a device like a docking station plug in or out.
 
-I will post all patches that are in my tree as soon as I have finished 
-testing these patches.
+How often do DM events happen?  What is triggering them?  How do you
+want to send them to userspace?  Through a sysfs file?  Why not just use
+your own netlink connection?
 
-Bart.
+thanks,
+
+greg k-h
