@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add HPE StoreVirtual 4000
-	family(LEFTHAND) to hwtable
-Date: Wed,  5 Oct 2016 23:00:14 +0200
-Message-ID: <20161005210014.9104-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add FUJITSU/ETERNUS
+	2000/4000/8000 to hwtable
+Date: Wed,  5 Oct 2016 23:12:52 +0200
+Message-ID: <20161005211252.9761-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,36 +19,34 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-No official documentation, based on field-tested configuration:
-https://www.citrix.com/blogs/2013/10/02/hp-p4000-multipath-config-file/
-https://community.hpe.com/t5/HPE-StoreVirtual-Storage/StoreVirtual-4000-and-multipath-tools-Linux/m-p/6874775
+Based on documentation provided by the manufacturer:
+http://storage-system.fujitsu.com/global/manual/diskarray/pdf/p3am-3192-en.pdf
 
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ libmultipath/hwtable.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 8ecaffb..e1ed7ef 100644
+index e1ed7ef..367aa0a 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -146,6 +146,15 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 18,
- 		.prio_name     = PRIO_ALUA,
+@@ -268,6 +268,14 @@ static struct hwentry default_hw[] = {
+ 		.product       = "FC2502",
+ 		.pgpolicy      = MULTIBUS,
  	},
 +	{
-+		/* StoreVirtual 4000 family */
-+		.vendor        = "LEFTHAND",
-+		.product       = "^(P4000|iSCSIDisk)",
++		.vendor        = "FUJITSU",
++		.product       = "E[248]000",
 +		.pgpolicy      = GROUP_BY_PRIO,
 +		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.no_path_retry = 18,
++		.no_path_retry = 10,
 +		.prio_name     = PRIO_ALUA,
 +	},
  	/*
- 	 * DataDirect Networks
- 	 */
+ 	 * Hitachi
+ 	 *
 -- 
 2.10.1
