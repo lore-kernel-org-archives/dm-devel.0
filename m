@@ -1,57 +1,63 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [dm-devel] [PATCH 0/9] Generate uevents for all DM events
-Date: Wed, 5 Oct 2016 08:51:01 +0200
-Message-ID: <20161005065101.GB11013@kroah.com>
-References: <1475522580-16723-1-git-send-email-agrover@redhat.com>
- <20161004072015.GA11216@kroah.com>
- <fe185eba-f802-6731-8da7-736c117db135@redhat.com>
- <20161005004004.GC28416@agk-dp.fab.redhat.com>
+From: Masatake YAMATO <yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] Re: your dm patch for strace
+Date: Wed, 05 Oct 2016 19:28:28 +0900 (JST)
+Message-ID: <20161005.192828.566127461630656590.yamato@redhat.com>
+References: <alpine.LRH.2.02.1608250823130.24332@file01.intranet.prod.int.rdu2.redhat.com>
+	<20160912171029.GA5263@altlinux.org>
+	<alpine.LRH.2.02.1610021751280.29417@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20161005004004.GC28416@agk-dp.fab.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Grover <agrover@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, snitzer@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+In-Reply-To: <alpine.LRH.2.02.1610021751280.29417-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/strace-devel>,
+	<mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=strace-devel>
+List-Post: <mailto:strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/strace-devel>,
+	<mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Errors-To: strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: dm-devel.ids
 
-On Wed, Oct 05, 2016 at 01:40:05AM +0100, Alasdair G Kergon wrote:
-> On Tue, Oct 04, 2016 at 04:39:28PM -0700, Andy Grover wrote:
-> > devicemapper is using uevents for:
-> > a. dm-verity detected corruption
-> > b. dm-multipath: path failed or reinstated
-> > c. dm device renamed
-> > d. there's also some use in md and bcache.
-> >
-> > devicemapper uses DM_EVENT ioctl (yuck) for:
-> > 1. dm-thin pool data/metadata filling up (hit a threshold)
-> > 2. dm-cache is now clean
-> > 3. dm-log flushed or log failed
-> > 4. dm-raid error detected or sync complete
-> 
-> > there doesn't seem to be much technical differentiation between the  
-> > two lists.
-> 
-> The distinction in dm is that events in the first category may affect
-> the availability of the device: they represent major (and hopefully
-> rare) changes.
-> 
-> Events in the second category are just notifications: no impact on /dev,
-> no need to trigger udev rules, and their use will continue to be
-> extended, and (rarely at the moment) could be frequent (which is no
-> problem for the existing polling-based mechanism).
-> 
-> > Instead of using uevent for everything, we could go to a separate  
-> > genetlink for 1-4 instead of making them use uevent like a-d, but we'd  
-> > end up with two different userspace notification techniques.
-> 
-> We see these as two different categories of notifications, and prefer
-> the greater flexibility a mechanism independent of uevents would
-> provide.  The team has discussed several alternatives over the years but
-> didn't make a decision as we've not yet reached a point where we're
-> straining the existing mechanism too far.
+I tested the patch and it works fine.
+Could you add following patch if you approve?
 
-So, no changes need to be made?  I'm confused here, who is wanting this
-changed?
+commit bae7528fa92283726caac1ec7a6c306274f8899d
+Author: Masatake YAMATO <yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Date:   Mon Aug 22 17:44:55 2016 +0900
 
-greg k-h
+    dm-ioctl: add a lvm private flag
+    
+    When I run "dmsetup ls" under dm-ioctl patched strace,
+    "strange DM_???" are found in its output.
+    
+        # ./strace -e ioctl dmsetup ls > /dev/null
+        ioctl(3, DM_VERSION, {version=4.0.0, flags=0x4 /* DM_??? */}, ...
+        ioctl(3, DM_LIST_DEVICES, {version=4.0.0, flags=0x4 /* DM_??? */}, ...
+        ...
+    
+    Associated definion for DM_??? is in lvm2 source tree. This commit
+    imports the definion to dm-ioctl list.
+    
+    Signed-off-by: Masatake YAMATO <yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+
+diff --git a/xlat/dm_flags.in b/xlat/dm_flags.in
+index ab4285c..1e7132b 100644
+--- a/xlat/dm_flags.in
++++ b/xlat/dm_flags.in
+@@ -1,5 +1,7 @@
+ DM_READONLY_FLAG
+ DM_SUSPEND_FLAG
++/* Defined in lvm2/libdm/ioctl/libdm-iface.c */
++DM_EXISTS_FLAG 0x00000004
+ DM_PERSISTENT_DEV_FLAG
+ DM_STATUS_TABLE_FLAG
+ DM_ACTIVE_PRESENT_FLAG
+
+------------------------------------------------------------------------------
+Check out the vibrant tech community on one of the world's most 
+engaging tech sites, SlashDot.org! http://sdm.link/slashdot
