@@ -1,7 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add Nimble arrays to hwtable
-Date: Thu,  6 Oct 2016 23:57:48 +0200
-Message-ID: <20161006215748.25104-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add Kaminario arrays to hwtable
+Date: Fri,  7 Oct 2016 00:36:55 +0200
+Message-ID: <20161006223655.26698-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -18,34 +18,31 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Based on documentation provided by the manufacturer:
-http://www.nimblestorage.com/bpg_nimble_storage_linux_fibre_channel.pdf
+Based on a config provided by the manufacturer:
+https://marc.info/?l=dm-devel&m=142683413902072
 
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+ libmultipath/hwtable.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index d3ffbea..bc81741 100644
+index bc81741..0f972ee 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -860,6 +860,17 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
+@@ -871,6 +871,14 @@ static struct hwentry default_hw[] = {
  		.prio_name     = PRIO_ALUA,
+ 		.no_path_retry = NO_PATH_RETRY_QUEUE,
  	},
 +	/*
-+	 * Nimble Storage
++	 * Kaminario
 +	 */
 +	{
-+		.vendor        = "Nimble",
-+		.product       = "Server",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.prio_name     = PRIO_ALUA,
-+		.no_path_retry = NO_PATH_RETRY_QUEUE,
++		.vendor        = "KMNRIO",
++		.product       = "K2",
++		.pgpolicy      = MULTIBUS,
 +	},
  #if 0
  	/*
