@@ -1,40 +1,144 @@
-From: Andy Grover <agrover@redhat.com>
-Subject: Re: [dm-devel] [PATCH 0/9] Generate uevents for all DM events
-Date: Wed, 5 Oct 2016 15:30:49 -0700
-Message-ID: <a2b3147e-c542-b449-e69a-2dce050c29a6@redhat.com>
-References: <1475522580-16723-1-git-send-email-agrover@redhat.com>
- <20161004072015.GA11216@kroah.com>
- <fe185eba-f802-6731-8da7-736c117db135@redhat.com>
- <20161005004004.GC28416@agk-dp.fab.redhat.com>
- <20161005065101.GB11013@kroah.com>
- <0afb2645-59e5-f9a6-ca1f-29aaadf59400@redhat.com>
- <20161005174358.GD28416@agk-dp.fab.redhat.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH] multipath-tools: add HPE StoreVirtual 4000
+ family(LEFTHAND) to hwtable
+Date: Thu, 6 Oct 2016 08:00:42 +0200
+Message-ID: <CABr-GnfkkrnxFB+bQ9_hO2kbr3tiJq7DiGpPFEYARR60NQW0Pw@mail.gmail.com>
+References: <20161005210014.9104-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161005174358.GD28416@agk-dp.fab.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Greg KH <gregkh@linuxfoundation.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, snitzer@redhat.com
+Content-Type: multipart/mixed; boundary="===============0552911448110264503=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20161005210014.9104-1-xose.vazquez@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 10/05/2016 10:43 AM, Alasdair G Kergon wrote:
-> On Wed, Oct 05, 2016 at 10:06:41AM -0700, Andy Grover wrote:
->> My project *would* like this added sooner, so I'll work on a revised
->> patchset that uses netlink instead of uevents, and will also work on a
->> revision to uevents.txt that talks about KOBJ_CHANGE and when it should
->> and should not be used, as described by agk, to help out the next person.
+--===============0552911448110264503==
+Content-Type: multipart/alternative; boundary=001a11401be890336e053e2c0386
+
+--001a11401be890336e053e2c0386
+Content-Type: text/plain; charset=UTF-8
+
+Merged.
+
+On Wed, Oct 5, 2016 at 11:00 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
+wrote:
+
+> No official documentation, based on field-tested configuration:
+> https://www.citrix.com/blogs/2013/10/02/hp-p4000-multipath-config-file/
+> https://community.hpe.com/t5/HPE-StoreVirtual-Storage/
+> StoreVirtual-4000-and-multipath-tools-Linux/m-p/6874775
 >
-> netlink might still be overkill for this at this stage, if it's only
-> making one thread able to monitor multiple devices efficiently.
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  libmultipath/hwtable.c | 9 +++++++++
+>  1 file changed, 9 insertions(+)
 >
-> Let's find out your requirements and see if there's anything different from
-> the ones we've debated before.
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 8ecaffb..e1ed7ef 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -146,6 +146,15 @@ static struct hwentry default_hw[] = {
+>                 .no_path_retry = 18,
+>                 .prio_name     = PRIO_ALUA,
+>         },
+> +       {
+> +               /* StoreVirtual 4000 family */
+> +               .vendor        = "LEFTHAND",
+> +               .product       = "^(P4000|iSCSIDisk)",
+> +               .pgpolicy      = GROUP_BY_PRIO,
+> +               .pgfailback    = -FAILBACK_IMMEDIATE,
+> +               .no_path_retry = 18,
+> +               .prio_name     = PRIO_ALUA,
+> +       },
+>         /*
+>          * DataDirect Networks
+>          */
+> --
+> 2.10.1
+>
+>
 
-Yeah just like Hannes said, I just want to get dm events for multiple dm 
-devices without burning a thread for each device. After your 
-clarification, netlink seems like the best option and not overkill.
+--001a11401be890336e053e2c0386
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-Give me a few days and I can have something for you to review.
+<div dir=3D"ltr">Merged.</div><div class=3D"gmail_extra"><br><div class=3D"=
+gmail_quote">On Wed, Oct 5, 2016 at 11:00 PM, Xose Vazquez Perez <span dir=
+=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" target=3D"_blank">xo=
+se.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_qu=
+ote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex=
+">No official documentation, based on field-tested configuration:<br>
+<a href=3D"https://www.citrix.com/blogs/2013/10/02/hp-p4000-multipath-confi=
+g-file/" rel=3D"noreferrer" target=3D"_blank">https://www.citrix.com/blogs/=
+<wbr>2013/10/02/hp-p4000-multipath-<wbr>config-file/</a><br>
+<a href=3D"https://community.hpe.com/t5/HPE-StoreVirtual-Storage/StoreVirtu=
+al-4000-and-multipath-tools-Linux/m-p/6874775" rel=3D"noreferrer" target=3D=
+"_blank">https://community.hpe.com/t5/<wbr>HPE-StoreVirtual-Storage/<wbr>St=
+oreVirtual-4000-and-<wbr>multipath-tools-Linux/m-p/<wbr>6874775</a><br>
+<br>
+Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com=
+">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
+Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
+-devel@redhat.com</a>&gt;<br>
+Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
+com">xose.vazquez@gmail.com</a>&gt;<br>
+---<br>
+=C2=A0libmultipath/hwtable.c | 9 +++++++++<br>
+=C2=A01 file changed, 9 insertions(+)<br>
+<br>
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c<br>
+index 8ecaffb..e1ed7ef 100644<br>
+--- a/libmultipath/hwtable.c<br>
++++ b/libmultipath/hwtable.c<br>
+@@ -146,6 +146,15 @@ static struct hwentry default_hw[] =3D {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .no_path_retry =3D =
+18,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .prio_name=C2=A0 =
+=C2=A0 =C2=A0=3D PRIO_ALUA,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 },<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0{<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* StoreVirtual 400=
+0 family */<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.vendor=C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =3D &quot;LEFTHAND&quot;,<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.product=C2=A0 =C2=
+=A0 =C2=A0 =C2=A0=3D &quot;^(P4000|iSCSIDisk)&quot;,<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.pgpolicy=C2=A0 =C2=
+=A0 =C2=A0 =3D GROUP_BY_PRIO,<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.pgfailback=C2=A0 =
+=C2=A0 =3D -FAILBACK_IMMEDIATE,<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.no_path_retry =3D =
+18,<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.prio_name=C2=A0 =
+=C2=A0 =C2=A0=3D PRIO_ALUA,<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0},<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 /*<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* DataDirect Networks<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+2.10.1<br>
+<br>
+</font></span></blockquote></div><br></div>
 
-Thanks -- Regards -- Andy
+--001a11401be890336e053e2c0386--
+
+
+--===============0552911448110264503==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0552911448110264503==--
