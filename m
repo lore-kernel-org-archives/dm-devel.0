@@ -1,7 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add Tegile arrays to hwtable
-Date: Fri,  7 Oct 2016 01:13:36 +0200
-Message-ID: <20161006231336.27566-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add IBM/FlashSystem to hwtable
+Date: Fri,  7 Oct 2016 15:15:22 +0200
+Message-ID: <20161007131522.3442-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -18,37 +18,43 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Based on documentation provided by the manufacturer:
-http://pages.tegile.com/rs/568-BVY-995/images/Oracle%20BPG%201.0.pdf
+System          Vendor Product          Multipathing Policy
+=============== ====== ================ =======================
+FlashSystem 710 IBM    FlashSystem      Symmetric Active/Active
+FlashSystem 720 IBM    FlashSystem      Symmetric Active/Active
+FlashSystem 810 IBM    FlashSystem      Symmetric Active/Active
+FlashSystem 820 IBM    FlashSystem      Symmetric Active/Active
+FlashSystem 840 IBM    FlashSystem-9840 Symmetric Active/Active
+FlashSystem 900 IBM    FlashSystem-9840 Symmetric Active/Active
 
+Based on documentation from the manufacturer:
+http://www.redbooks.ibm.com/redbooks/pdfs/sg248271.pdf
+
+Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+ libmultipath/hwtable.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 0f972ee..e1b055a 100644
+index e1b055a..ff6989d 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -879,6 +879,17 @@ static struct hwentry default_hw[] = {
- 		.product       = "K2",
+@@ -522,6 +522,13 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = NO_PATH_RETRY_QUEUE,
  		.pgpolicy      = MULTIBUS,
  	},
-+	/*
-+	 * Tegile Systems
-+	 */
 +	{
-+		.vendor        = "TEGILE",
-+		.product       = "(ZEBI-(FC|ISCSI)|INTELLIFLASH)",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.prio_name     = PRIO_ALUA,
-+		.no_path_retry = 10,
++		/* FlashSystem 710/720/810/820/840/900 */
++		.vendor        = "IBM",
++		.product       = "FlashSystem",
++		.no_path_retry = NO_PATH_RETRY_FAIL,
++		.pgpolicy      = MULTIBUS,
 +	},
- #if 0
- 	/*
- 	 * Copy this TEMPLATE to add new hardware.
+ 		/*
+ 		 * IBM Power Virtual SCSI Devices
+ 		 *
 -- 
 2.10.1
