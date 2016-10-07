@@ -1,7 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add NexGen arrays to hwtable
-Date: Fri,  7 Oct 2016 15:33:44 +0200
-Message-ID: <20161007133344.3858-1-xose.vazquez@gmail.com>
+Subject: [PATCH v2] multipath-tools: add NexGen arrays to hwtable
+Date: Fri,  7 Oct 2016 16:01:18 +0200
+Message-ID: <20161007140118.4618-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -26,11 +26,13 @@ Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
+v2 add vSTAC
+---
  libmultipath/hwtable.c | 8 ++++++++
  1 file changed, 8 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index ff6989d..5ec63c8 100644
+index ff6989d..637be3d 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
 @@ -776,6 +776,14 @@ static struct hwentry default_hw[] = {
@@ -39,7 +41,7 @@ index ff6989d..5ec63c8 100644
  	},
 +	{
 +		.vendor        = "(NexGen|Pivot3)",
-+		.product       = "TierStore",
++		.product       = "(TierStore|vSTAC)",
 +		.pgpolicy      = GROUP_BY_PRIO,
 +		.pgfailback    = -FAILBACK_IMMEDIATE,
 +		.prio_name     = PRIO_ALUA,
