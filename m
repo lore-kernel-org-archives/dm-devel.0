@@ -1,12 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper changes for 4.9
-Date: Fri, 7 Oct 2016 20:17:15 -0400
-Message-ID: <20161008001715.GA57910@redhat.com>
+From: <tang.junhui@zte.com.cn>
+Subject: Re:
+	=?utf-8?q?=5BPATCH_00/15=5D_Fifteen_multipath-tools_pa?=
+	=?utf-8?q?tches?=
+Date: Sat, 8 Oct 2016 10:05:25 +0800 (CST)
+Message-ID: <201610081005252322566@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed;
+	boundary="=====_001_next====="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+References: 157defac-6527-ab23-92f2-9c1926042885@sandisk.com,
+	CABr-GncKS=ocwyAZs5gS12OBAyWuzoKG7dSRGfpGFmV7s5s2uw@mail.gmail.com
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,100 +19,148 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Rabin Vincent <rabinv@axis.com>, Peter Zijlstra <peterz@infradead.org>, Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com, Minfei Huang <mnghuan@gmail.com>, Bart Van Assche <bart.vanassche@sandisk.com>, Alasdair G Kergon <agk@redhat.com>
+To: christophe.varoqui@opensvc.com
+Cc: bart.vanassche@sandisk.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Linus,
 
-These DM changes for 4.9 build ontop of Jens' 'for-4.9/block' branch due
-to dependency on the new blk_mq_delay_kick_requeue_list().
 
-The following changes since commit 2849450ad39d2e699fda2d5c6f41e05d87fd7004:
+--=====_001_next=====
+Content-Type: multipart/related;
+	boundary="=====_002_next====="
 
-  blk-mq: introduce blk_mq_delay_kick_requeue_list() (2016-09-14 11:48:34 -0600)
 
-are available in the git repository at:
+--=====_002_next=====
+Content-Type: multipart/alternative;
+	boundary="=====_003_next====="
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm tags/dm-4.9-changes
 
-for you to fetch changes up to 8ff232c1a819c2e98d85974a3bff0b7b8e2970ed:
+--=====_003_next=====
+Content-Transfer-Encoding: base64 
+Content-Type: text/plain;
+	charset="UTF-8"
 
-  dm mpath: always return reservation conflict without failing over (2016-09-29 10:57:07 -0400)
+SGVsbG8gQmFydCwNCg0KDQoNCiIwMDA3LW11bHRpcGF0aGQtRml4LWEtZGF0YS1yYWNlLnBhdGNo
+Ig0KDQpUaGlzIHBhdGNoIHNvbHZlZCB0aGUgZGF0YSByYWNlIHByb2JsZW0sIA0KDQpidXQgdGhl
+IGFzc2lnbm1lbnQgZm9yIHBhdGhzIGNoZWNrIGludGVydmFsIGhhcyBubyBlZmZlY3QsDQoNCnNp
+bmNlIHRoZXJlIGlzIG5vIHBhdGggaW4gdmVjcyB3aGVuIGNhbGxpbmcgaW5pdF9wYXRoX2NoZWNr
+X2ludGVydmFsKHZlY3MpIGluIGNoaWxkKCksDQoNCkkgdGhpbmsgaXQgaXMgYmV0dGVyIHRvIGNh
+bGwgIGluaXRfcGF0aF9jaGVja19pbnRlcnZhbCh2ZWNzKSBhdCByZWNvbmZpZ3VyZSgpIG9yIGNv
+bmZpZ3VyZSgpIA0KDQphZnRlciB0aGUgcGF0aHMgaGFzIGNyZWF0ZWQgaW4gdmVjcyAuDQoNCg0K
+DQoNClRoYW5rcywNCg0KVGFuZw0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0K
+DQoNCg0KDQoNCuWOn+Wni+mCruS7tg0KDQoNCg0K5Y+R5Lu25Lq677yaQ2hyaXN0b3BoZVZhcm9x
+dWkNCuaUtuS7tuS6uu+8mkJhcnQgVmFuIEFzc2NoZQ0K5oqE6YCB5Lq677yaZGV2aWNlLW1hcHBl
+ciBkZXZlbG9wbWVudA0K5pelIOacnyDvvJoyMDE25bm0MTDmnIgwNeaXpSAxNDo1Ng0K5Li7IOmi
+mCDvvJpSZTogW2RtLWRldmVsXSBbUEFUQ0ggMDAvMTVdIEZpZnRlZW4gbXVsdGlwYXRoLXRvb2xz
+IHBhdGNoZXMNCg0KDQoNCg0KDQpUaGUgc2V0IGlzIG1lcmdlZC5JIGp1c3QgYWRkZWQgYSBwYXRj
+aCB0byBmaXggdGhlIGRyZCBpbmNsdWRlIGluIGRlYnVnLmMNCg0KVGhhbmtzLA0KQ2hyaXN0b3Bo
+ZQ0KDQoNCg0KDQpPbiBUdWUsIE9jdCA0LCAyMDE2IGF0IDc6MzYgUE0sIEJhcnQgVmFuIEFzc2No
+ZSDvvJxiYXJ0LnZhbmFzc2NoZUBzYW5kaXNrLmNvbe+8niB3cm90ZToNCkhlbGxvIENocmlzdG9w
+aGUsDQogDQogQXMgcHJvbWlzZWQgSSBhbSBzZW5kaW5nIHlvdSB0aGUgbXVsdGlwYXRoLXRvb2xz
+IHBhdGNoZXMgZnJvbSBteSBsb2NhbCByZXBvc2l0b3J5LiBUaGUgbmFtZXMgb2YgdGhlc2UgcGF0
+Y2hlcyBhcmU6DQogDQogMDAwMS1saWJtdWx0aXBhdGgtcHJpb3JpdGl6ZXJzLW9udGFwLVJlbW92
+ZS1hbi11bnVzZWQtaW5jLnBhdGNoDQogMDAwMi1saWJtdWx0aXBhdGgtbWVtb3J5LU1vdmUtYW4t
+aW5jbHVkZS1kaXJlY3RpdmUucGF0Y2gNCiAwMDAzLWxpYm11bHRpcGF0aC1jaGVja2Vycy10dXIt
+RGVjbGFyZS1sb2NhbC1mdW5jdGlvbnMtc3QucGF0Y2gNCiAwMDA0LWxpYm11bHRpcGF0aC1jaGVj
+a2Vycy1yYmQtRGVjbGFyZS1sb2NhbC1mdW5jdGlvbnMtc3QucGF0Y2gNCiAwMDA1LW11bHRpcGF0
+aGQtbGlibXVsdGlwYXRoZC1NYWtlLWRlbGF5cy1pbmRlcGVuZGVudC1vZi0ucGF0Y2gNCiAwMDA2
+LW11bHRpcGF0aGQtU3VwcHJlc3MtdW5pbnRlcmVzdGluZy1kYXRhLXJhY2UtcmVwb3J0cy5wYXRj
+aA0KIDAwMDctbXVsdGlwYXRoZC1GaXgtYS1kYXRhLXJhY2UucGF0Y2gNCiAwMDA4LWxpYm11bHRp
+cGF0aC1jaGVja2Vycy10dXItSW50cm9kdWNlLXN0cmxjcHkucGF0Y2gNCiAwMDA5LWxpYm11bHRp
+cGF0aC1jaGVja2Vycy10dXItVGVybWluYXRlLWEtc3RhdGVtZW50LXdpdGgucGF0Y2gNCiAwMDEw
+LWxpYm11bHRpcGF0aC1jaGVja2Vycy10dXItTW92ZS1wdGhyZWFkX2F0dHJfZGVzdHJveS0ucGF0
+Y2gNCiAwMDExLWxpYm11bHRpcGF0aC1jaGVja2Vycy10dXItUHJvdGVjdC10dXJfY2hlY2tlcl9j
+b250ZXgucGF0Y2gNCiAwMDEyLWxpYm11bHRpcGF0aC1jaGVja2Vycy10dXItU2VyaWFsaXplLXR1
+cl9jaGVja2VyX2NvbnQucGF0Y2gNCiAwMDEzLWxpYm11bHRpcGF0aC1jaGVja2Vycy10dXItRml4
+LXJhY2VzLW9uLXR1cl9jaGVja2VyX2MucGF0Y2gNCiAwMDE0LWxpYm11bHRpcGF0aC1NaWNyby1v
+cHRpbWl6ZS1zbnByaW50X3NpemUucGF0Y2gNCiAwMDE1LU1ha2VmaWxlLmluYy1FbmFibGUtV2V4
+dHJhLWFuZC1XZm9ybWF0LW5vbmxpdGVyYWwucGF0Y2gNCiANCiBUaGFua3MsDQogDQogQmFydC4=
 
-Please pull, thanks.
-Mike
+--=====_003_next=====
+Content-Transfer-Encoding: base64
+Content-Type: text/html ;
+	charset="UTF-8"
 
-----------------------------------------------------------------
-. various fixes and cleanups for request-based DM core
+PGRpdiBjbGFzcz0iemNvbnRlbnRSb3ciPiA8cD48c3BhbiBzdHlsZT0ibGluZS1oZWlnaHQ6IDIx
+cHg7Ij5IZWxsbzwvc3Bhbj4mbmJzcDs8c3BhbiBzdHlsZT0ibGluZS1oZWlnaHQ6IDIxcHg7Ij5C
+YXJ0LDwvc3Bhbj48L3A+PHA+PHNwYW4gc3R5bGU9ImxpbmUtaGVpZ2h0OiAyMXB4OyI+PHNwYW4g
+aGlnaC1saWdodC1pZD0id18yNjcsd18yOTQiIGNsYXNzPSJoaWdoLWxpZ2h0IiBzdHlsZT0iY29s
+b3I6IHJnYigyNDUsIDExNywgMzkpOyBmb250LWZhbWlseTogYXJpYWwsIOWui+S9kzsgbGluZS1o
+ZWlnaHQ6IDIycHg7IGJhY2tncm91bmQtY29sb3I6IHJnYigyNDksIDI0OSwgMjQ5KTsiPjwvc3Bh
+bj48L3NwYW4+PC9wPjxwPiIwMDA3LW11bHRpcGF0aGQtRml4LWEtZGF0YS1yYWNlLnBhdGNoIjwv
+cD48cD5UaGlzIHBhdGNoIHNvbHZlZCB0aGUgZGF0YSByYWNlIHByb2JsZW0sJm5ic3A7PC9wPjxw
+PmJ1dCB0aGUgYXNzaWdubWVudCBmb3IgcGF0aHMgY2hlY2sgaW50ZXJ2YWwgaGFzIG5vIGVmZmVj
+dCw8L3A+PHA+c2luY2UgdGhlcmUgaXMgbm8gcGF0aCBpbiB2ZWNzIHdoZW4gY2FsbGluZyBpbml0
+X3BhdGhfY2hlY2tfaW50ZXJ2YWwodmVjcykgaW4gY2hpbGQoKSw8L3A+PHA+SSB0aGluayBpdCBp
+cyBiZXR0ZXIgdG8gPHNwYW4gc3R5bGU9ImxpbmUtaGVpZ2h0OiAyMXB4OyI+Y2FsbCAmbmJzcDs8
+L3NwYW4+PHNwYW4gc3R5bGU9ImxpbmUtaGVpZ2h0OiAyMXB4OyI+aW5pdF9wYXRoX2NoZWNrX2lu
+dGVydmFsKHZlY3MpJm5ic3A7PC9zcGFuPmF0Jm5ic3A7cmVjb25maWd1cmUoKSBvciZuYnNwO2Nv
+bmZpZ3VyZSgpJm5ic3A7PC9wPjxwPmFmdGVyIHRoZSBwYXRocyBoYXMgY3JlYXRlZCBpbiB2ZWNz
+IC48L3A+PHA+PGJyPjwvcD48cD5UaGFua3MsPC9wPjxwPlRhbmc8L3A+PHA+PGJyPjwvcD48cD48
+c3BhbiBzdHlsZT0ibGluZS1oZWlnaHQ6IDIxcHg7Ij48L3NwYW4+PC9wPjxwPjxicj48L3A+PHA+
+PGJyPjwvcD48cD48YnI+PC9wPjxwPjxicj48L3A+PHA+PGJyPjwvcD48ZGl2PjxkaXYgY2xhc3M9
+InpoaXN0b3J5Um93IiBzdHlsZT0iZGlzcGxheTpibG9jayI+PGRpdiBjbGFzcz0iemhpc3RvcnlE
+ZXMiIHN0eWxlPSJ3aWR0aDogMTAwJTsgaGVpZ2h0OiAyOHB4OyBsaW5lLWhlaWdodDogMjhweDsg
+YmFja2dyb3VuZC1jb2xvcjogI0UwRTVFOTsgY29sb3I6ICMxMzg4RkY7IHRleHQtYWxpZ246IGNl
+bnRlcjsiIGxhbmd1YWdlLWRhdGE9Ikhpc3RvcnlPcmdUeHQiPuWOn+Wni+mCruS7tjwvZGl2Pjxk
+aXYgaWQ9Inp3cml0ZUhpc3RvcnlDb250YWluZXIiPjxkaXYgY2xhc3M9ImNvbnRyb2wtZ3JvdXAg
+emhpc3RvcnlQYW5lbCI+PGRpdiBjbGFzcz0iemhpc3RvcnlIZWFkZXIiIHN0eWxlPSJwYWRkaW5n
+OiA4cHg7IGJhY2tncm91bmQtY29sb3I6ICNGNUY2Rjg7Ij48ZGl2PjxzdHJvbmcgbGFuZ3VhZ2Ut
+ZGF0YT0iSGlzdG9yeVNlbmRlclR4dCI+5Y+R5Lu25Lq677yaPC9zdHJvbmc+PHNwYW4gY2xhc3M9
+InpyZWFkVXNlck5hbWUiPkNocmlzdG9waGVWYXJvcXVpPC9zcGFuPjwvZGl2PjxkaXY+PHN0cm9u
+ZyBsYW5ndWFnZS1kYXRhPSJIaXN0b3J5VE9UeHQiPuaUtuS7tuS6uu+8mjwvc3Ryb25nPjxzcGFu
+IGNsYXNzPSJ6cmVhZFVzZXJOYW1lIiBzdHlsZT0iZGlzcGxheTogaW5saW5lLWJsb2NrOyI+QmFy
+dCBWYW4gQXNzY2hlOzwvc3Bhbj48L2Rpdj48ZGl2PjxzdHJvbmcgbGFuZ3VhZ2UtZGF0YT0iSGlz
+dG9yeUNDVHh0Ij7mioTpgIHkurrvvJo8L3N0cm9uZz48c3BhbiBjbGFzcz0ienJlYWRVc2VyTmFt
+ZSIgc3R5bGU9ImRpc3BsYXk6IGlubGluZS1ibG9jazsiPmRldmljZS1tYXBwZXIgZGV2ZWxvcG1l
+bnQ7PC9zcGFuPjwvZGl2PjxkaXY+PHN0cm9uZyBsYW5ndWFnZS1kYXRhPSJIaXN0b3J5RGF0ZVR4
+dCI+5pelIOacnyDvvJo8L3N0cm9uZz48c3BhbiBjbGFzcz0iIj4yMDE25bm0MTDmnIgwNeaXpSAx
+NDo1Njwvc3Bhbj48L2Rpdj48ZGl2PjxzdHJvbmcgbGFuZ3VhZ2UtZGF0YT0iSGlzdG9yeVN1Ympl
+Y3RUeHQiPuS4uyDpopgg77yaPC9zdHJvbmc+PHNwYW4gY2xhc3M9InpyZWFkVGl0bGUiPjxzdHJv
+bmc+UmU6IFtkbS1kZXZlbF0gW1BBVENIIDAwLzE1XSBGaWZ0ZWVuIG11bHRpcGF0aC10b29scyBw
+YXRjaGVzPC9zdHJvbmc+PC9zcGFuPjwvZGl2PjwvZGl2PjxwIGNsYXNzPSJ6aGlzdG9yeUNvbnRl
+bnQiPjxicj48L3A+PGRpdj48ZGl2PlRoZSBzZXQgaXMgbWVyZ2VkLjxkaXY+SSBqdXN0IGFkZGVk
+IGEgcGF0Y2ggdG8gZml4IHRoZSBkcmQgaW5jbHVkZSBpbiBkZWJ1Zy5jPC9kaXY+PGJyPjxkaXY+
+VGhhbmtzLDwvZGl2PjxkaXY+Q2hyaXN0b3BoZTwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWls
+X2V4dHJhIj48YnI+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPk9uIFR1ZSwgT2N0IDQsIDIwMTYg
+YXQgNzozNiBQTSwgQmFydCBWYW4gQXNzY2hlIO+8nDxhIGhyZWY9Im1haWx0bzpiYXJ0LnZhbmFz
+c2NoZUBzYW5kaXNrLmNvbSIgdGFyZ2V0PSJfYmxhbmsiPmJhcnQudmFuYXNzY2hlQHNhbmRpc2su
+Y29tPC9hPu+8niB3cm90ZTo8YnI+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHls
+ZT0ibWFyZ2luOiAwIDAgMCAwLjhleDtib3JkZXItbGVmdDogMS4wcHggcmdiKDIwNCwyMDQsMjA0
+KSBzb2xpZDtwYWRkaW5nLWxlZnQ6IDEuMGV4OyI+SGVsbG8gQ2hyaXN0b3BoZSw8YnI+IDxicj4g
+QXMgcHJvbWlzZWQgSSBhbSBzZW5kaW5nIHlvdSB0aGUgbXVsdGlwYXRoLXRvb2xzIHBhdGNoZXMg
+ZnJvbSBteSBsb2NhbCByZXBvc2l0b3J5LiBUaGUgbmFtZXMgb2YgdGhlc2UgcGF0Y2hlcyBhcmU6
+PGJyPiA8YnI+IDAwMDEtbGlibXVsdGlwYXRoLXByaW9yaXRpemVycy1vbnRhcC1SZW1vdmUtYW4t
+dW51c2VkLWluYy5wYXRjaDxicj4gMDAwMi1saWJtdWx0aXBhdGgtbWVtb3J5LU1vdmUtYW4taW5j
+bHVkZS1kaXJlY3RpdmUucGF0Y2g8YnI+IDAwMDMtbGlibXVsdGlwYXRoLWNoZWNrZXJzLXR1ci1E
+ZWNsYXJlLWxvY2FsLWZ1bmN0aW9ucy1zdC5wYXRjaDxicj4gMDAwNC1saWJtdWx0aXBhdGgtY2hl
+Y2tlcnMtcmJkLURlY2xhcmUtbG9jYWwtZnVuY3Rpb25zLXN0LnBhdGNoPGJyPiAwMDA1LW11bHRp
+cGF0aGQtbGlibXVsdGlwYXRoZC1NYWtlLWRlbGF5cy1pbmRlcGVuZGVudC1vZi0ucGF0Y2g8YnI+
+IDAwMDYtbXVsdGlwYXRoZC1TdXBwcmVzcy11bmludGVyZXN0aW5nLWRhdGEtcmFjZS1yZXBvcnRz
+LnBhdGNoPGJyPiAwMDA3LW11bHRpcGF0aGQtRml4LWEtZGF0YS1yYWNlLnBhdGNoPGJyPiAwMDA4
+LWxpYm11bHRpcGF0aC1jaGVja2Vycy10dXItSW50cm9kdWNlLXN0cmxjcHkucGF0Y2g8YnI+IDAw
+MDktbGlibXVsdGlwYXRoLWNoZWNrZXJzLXR1ci1UZXJtaW5hdGUtYS1zdGF0ZW1lbnQtd2l0aC5w
+YXRjaDxicj4gMDAxMC1saWJtdWx0aXBhdGgtY2hlY2tlcnMtdHVyLU1vdmUtcHRocmVhZF9hdHRy
+X2Rlc3Ryb3ktLnBhdGNoPGJyPiAwMDExLWxpYm11bHRpcGF0aC1jaGVja2Vycy10dXItUHJvdGVj
+dC10dXJfY2hlY2tlcl9jb250ZXgucGF0Y2g8YnI+IDAwMTItbGlibXVsdGlwYXRoLWNoZWNrZXJz
+LXR1ci1TZXJpYWxpemUtdHVyX2NoZWNrZXJfY29udC5wYXRjaDxicj4gMDAxMy1saWJtdWx0aXBh
+dGgtY2hlY2tlcnMtdHVyLUZpeC1yYWNlcy1vbi10dXJfY2hlY2tlcl9jLnBhdGNoPGJyPiAwMDE0
+LWxpYm11bHRpcGF0aC1NaWNyby1vcHRpbWl6ZS1zbnByaW50X3NpemUucGF0Y2g8YnI+IDAwMTUt
+TWFrZWZpbGUuaW5jLUVuYWJsZS1XZXh0cmEtYW5kLVdmb3JtYXQtbm9ubGl0ZXJhbC5wYXRjaDxi
+cj4gPGJyPiBUaGFua3MsPGJyPiA8YnI+IEJhcnQuPGJyPiA8L2Jsb2NrcXVvdGU+PC9kaXY+PGJy
+PjwvZGl2PjwvZGl2PjxwPjxicj48L3A+PC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+PHA+PGJyPjwv
+cD4gPC9kaXY+
 
-. add support for delaying the requeue of requests; used by DM multipath
-  when all paths have failed and 'queue_if_no_path' is enabled
 
-. DM cache improvements to speedup the loading metadata and the writing
-  of the hint array
+--=====_003_next=====--
 
-. fix potential for a dm-crypt crash on device teardown
+--=====_002_next=====--
 
-. remove dm_bufio_cond_resched() and just using cond_resched()
+--=====_001_next=====
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-. change DM multipath to return a reservation conflict error
-  immediately; rather than failing the path and retrying (potentially
-  indefinitely)
 
-----------------------------------------------------------------
-Bart Van Assche (7):
-      dm: mark request_queue dead before destroying the DM device
-      dm rq: factor out dm_mq_stop_queue()
-      dm rq: simplify dm_old_stop_queue()
-      dm: add two lockdep_assert_held() statements
-      dm: rename task state function arguments
-      dm: use signal_pending_state() in dm_wait_for_completion()
-      dm: convert wait loops to use autoremove_wake_function()
-
-Hannes Reinecke (1):
-      dm mpath: always return reservation conflict without failing over
-
-Joe Thornber (6):
-      dm array: add dm_array_new()
-      dm cache: speed up writing of the hint array
-      dm cache policy smq: distribute entries to random levels when switching to smq
-      dm btree: introduce cursor api
-      dm array: introduce cursor api
-      dm cache metadata: switch to using the new cursor api for loading metadata
-
-Mike Snitzer (7):
-      dm rq: take request_queue lock while clearing QUEUE_FLAG_STOPPED
-      dm mpath: check if path's request_queue is dying in activate_path()
-      dm rq: add DM_MAPIO_DELAY_REQUEUE to delay requeue of blk-mq requests
-      dm rq: reduce arguments passed to map_request() and dm_requeue_original_request()
-      dm rq: introduce dm_mq_kick_requeue_list()
-      dm mpath: use dm_mq_kick_requeue_list()
-      dm mpath: delay the requeue of blk-mq requests while all paths down
-
-Minfei Huang (1):
-      dm: return correct error code in dm_resume()'s retry loop
-
-Peter Zijlstra (1):
-      dm bufio: remove dm_bufio_cond_resched()
-
-Rabin Vincent (1):
-      dm crypt: fix crash on exit
-
- drivers/md/dm-bufio.c                 |  31 ++---
- drivers/md/dm-cache-metadata.c        | 183 +++++++++++++++------------
- drivers/md/dm-cache-policy-cleaner.c  |   2 +-
- drivers/md/dm-cache-policy-internal.h |   6 +-
- drivers/md/dm-cache-policy-smq.c      |  45 ++-----
- drivers/md/dm-cache-policy.h          |  10 +-
- drivers/md/dm-crypt.c                 |  24 ++--
- drivers/md/dm-mpath.c                 |  59 ++++-----
- drivers/md/dm-rq.c                    | 104 ++++++++++------
- drivers/md/dm-rq.h                    |   2 +
- drivers/md/dm.c                       |  37 +++---
- drivers/md/persistent-data/dm-array.c | 228 +++++++++++++++++++++++++++++-----
- drivers/md/persistent-data/dm-array.h |  52 ++++++++
- drivers/md/persistent-data/dm-btree.c | 162 ++++++++++++++++++++++++
- drivers/md/persistent-data/dm-btree.h |  35 ++++++
- include/linux/device-mapper.h         |   1 +
- 16 files changed, 716 insertions(+), 265 deletions(-)
+--=====_001_next=====--
