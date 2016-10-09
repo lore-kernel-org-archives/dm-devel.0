@@ -1,12 +1,12 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 02/21] dm: whitespace fixes
-Date: Sun, 9 Oct 2016 16:28:37 +0300
-Message-ID: <20161009132837.GA1936@obsidian>
+Subject: [PATCH 03/21] tests: Working around bounds check
+Date: Sun, 9 Oct 2016 16:28:48 +0300
+Message-ID: <20161009132848.GA2046@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Content-Disposition: inline
 In-Reply-To: <20161005.192828.566127461630656590.yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
@@ -22,247 +22,90 @@ To: strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
----
- dm.c |   87 +++++++++++++++++++++++++++++++++++++++---------------------------
- 1 file changed, 52 insertions(+), 35 deletions(-)
-
-diff --git a/dm.c b/dm.c
-index 33a3972..d81983d 100644
---- a/dm.c
-+++ b/dm.c
-@@ -2,8 +2,8 @@
- 
- #ifdef HAVE_LINUX_DM_IOCTL_H
- 
--#include <sys/ioctl.h>
--#include <linux/dm-ioctl.h>
-+# include <sys/ioctl.h>
-+# include <linux/dm-ioctl.h>
- 
- static void
- dm_decode_device(const unsigned int code, const struct dm_ioctl *ioc)
-@@ -38,7 +38,7 @@ dm_decode_values(struct tcb *tcp, const unsigned int code,
- 	if (entering(tcp)) {
- 		switch (code) {
- 		case DM_TABLE_LOAD:
--			tprintf(", target_count=%"PRIu32"",
-+			tprintf(", target_count=%" PRIu32,
- 				ioc->target_count);
- 			break;
- 		case DM_DEV_SUSPEND:
-@@ -47,7 +47,7 @@ dm_decode_values(struct tcb *tcp, const unsigned int code,
- 		case DM_DEV_RENAME:
- 		case DM_DEV_REMOVE:
- 		case DM_DEV_WAIT:
--			tprintf(", event_nr=%"PRIu32"",
-+			tprintf(", event_nr=%" PRIu32,
- 				ioc->event_nr);
- 			break;
- 		}
-@@ -63,11 +63,11 @@ dm_decode_values(struct tcb *tcp, const unsigned int code,
- 		case DM_TABLE_DEPS:
- 		case DM_TABLE_STATUS:
- 		case DM_TARGET_MSG:
--			tprintf(", target_count=%"PRIu32"",
-+			tprintf(", target_count=%" PRIu32,
- 				ioc->target_count);
--			tprintf(", open_count=%"PRIu32"",
-+			tprintf(", open_count=%" PRIu32,
- 				ioc->open_count);
--			tprintf(", event_nr=%"PRIu32"",
-+			tprintf(", event_nr=%" PRIu32,
- 				ioc->event_nr);
- 			break;
- 		}
-@@ -89,21 +89,23 @@ dm_decode_dm_target_spec(struct tcb *tcp, const struct dm_ioctl *ioc,
- {
- 	uint32_t i;
- 	uint32_t offset = ioc->data_start;
-+
- 	for (i = 0; i < ioc->target_count; i++) {
--		if (offset + (uint32_t)sizeof(struct dm_target_spec) >= offset &&
--		    offset + (uint32_t)sizeof(struct dm_target_spec) < extra_size) {
-+		if (offset + (uint32_t) sizeof(struct dm_target_spec) >= offset &&
-+		    offset + (uint32_t) sizeof(struct dm_target_spec) < extra_size) {
- 			uint32_t new_offset;
- 			const struct dm_target_spec *s =
--				(const struct dm_target_spec *)(extra + offset);
--			tprintf(", {sector_start=%"PRIu64", length=%"PRIu64"",
--				(uint64_t)s->sector_start, (uint64_t)s->length);
-+				(const struct dm_target_spec *) (extra + offset);
-+			tprintf(", {sector_start=%" PRIu64 ", length=%" PRIu64,
-+				(uint64_t) s->sector_start,
-+				(uint64_t) s->length);
- 			if (!entering(tcp))
--				tprintf(", status=%"PRId32"", s->status);
-+				tprintf(", status=%" PRId32, s->status);
- 			tprints(", target_type=");
- 			print_quoted_string(s->target_type, DM_MAX_TYPE_NAME,
- 					    QUOTE_0_TERMINATED);
- 			tprints(", string=");
--			print_quoted_string((const char *)(s + 1), extra_size -
-+			print_quoted_string((const char *) (s + 1), extra_size -
- 					    (offset +
- 					    sizeof(struct dm_target_spec)),
- 					    QUOTE_0_TERMINATED);
-@@ -112,7 +114,8 @@ dm_decode_dm_target_spec(struct tcb *tcp, const struct dm_ioctl *ioc,
- 				new_offset = offset + s->next;
- 			else
- 				new_offset = ioc->data_start + s->next;
--			if (new_offset <= offset + (uint32_t)sizeof(struct dm_target_spec))
-+			if (new_offset <= offset +
-+			    (uint32_t) sizeof(struct dm_target_spec))
- 				goto misplaced;
- 			offset = new_offset;
- 		} else {
-@@ -128,13 +131,15 @@ dm_decode_dm_target_deps(const struct dm_ioctl *ioc, const char *extra,
- 			 uint32_t extra_size)
- {
- 	uint32_t offset = ioc->data_start;
--	if (offset + (uint32_t)offsetof(struct dm_target_deps, dev) >= offset &&
--	    offset + (uint32_t)offsetof(struct dm_target_deps, dev) <= extra_size) {
-+	if (offset + (uint32_t) offsetof(struct dm_target_deps, dev) >= offset &&
-+	    offset + (uint32_t) offsetof(struct dm_target_deps, dev) <= extra_size) {
-+
- 		uint32_t i;
- 		uint32_t space = (extra_size - (offset +
- 			offsetof(struct dm_target_deps, dev))) / sizeof(__u64);
- 		const struct dm_target_deps *s =
--			(const struct dm_target_deps *)(extra + offset);
-+			(const struct dm_target_deps *) (extra + offset);
-+
- 		if (s->count > space)
- 			goto misplaced;
- 		tprints(", deps={");
-@@ -154,21 +159,25 @@ dm_decode_dm_name_list(const struct dm_ioctl *ioc, const char *extra,
- 		       uint32_t extra_size)
- {
- 	uint32_t offset = ioc->data_start;
-+
- 	while (1) {
--		if (offset + (uint32_t)offsetof(struct dm_name_list, name) >= offset &&
--		    offset + (uint32_t)offsetof(struct dm_name_list, name) < extra_size) {
-+		if (offset + (uint32_t) offsetof(struct dm_name_list, name) >= offset &&
-+		    offset + (uint32_t) offsetof(struct dm_name_list, name) < extra_size) {
- 			const struct dm_name_list *s =
--				(const struct dm_name_list *)(extra + offset);
-+				(const struct dm_name_list *) (extra + offset);
-+
- 			if (!s->dev)
- 				break;
--			tprintf(", {dev=makedev(%u, %u), name=", major(s->dev), minor(s->dev));
-+			tprintf(", {dev=makedev(%u, %u), name=", major(s->dev),
-+				minor(s->dev));
- 			print_quoted_string(s->name, extra_size - (offset +
- 					    offsetof(struct dm_name_list,
- 					    name)), QUOTE_0_TERMINATED);
- 			tprints("}");
- 			if (!s->next)
- 				break;
--			if (offset + s->next <= offset + (uint32_t)offsetof(struct dm_name_list, name))
-+			if (offset + s->next <= offset +
-+			    (uint32_t) offsetof(struct dm_name_list, name))
- 				goto misplaced;
- 			offset = offset + s->next;
- 		} else {
-@@ -184,22 +193,25 @@ dm_decode_dm_target_versions(const struct dm_ioctl *ioc, const char *extra,
- 			     uint32_t extra_size)
- {
- 	uint32_t offset = ioc->data_start;
-+
- 	while (1) {
--		if (offset + (uint32_t)offsetof(struct dm_target_versions, name) >=
-+		if (offset + (uint32_t) offsetof(struct dm_target_versions, name) >=
- 		    offset &&
--		    offset + (uint32_t)offsetof(struct dm_target_versions, name) <
-+		    offset + (uint32_t) offsetof(struct dm_target_versions, name) <
- 		    extra_size) {
- 			const struct dm_target_versions *s =
- 			    (const struct dm_target_versions *)(extra + offset);
-+
- 			tprints(", {name=");
- 			print_quoted_string(s->name, extra_size - (offset +
- 					    offsetof(struct dm_target_versions,
- 					    name)), QUOTE_0_TERMINATED);
--			tprintf(", version=%"PRIu32".%"PRIu32".%"PRIu32"}",
-+			tprintf(", version=%" PRIu32 ".%" PRIu32 ".%" PRIu32 "}",
- 				s->version[0], s->version[1], s->version[2]);
- 			if (!s->next)
- 				break;
--			if (offset + s->next <= offset + (uint32_t)offsetof(struct dm_target_versions, name))
-+			if (offset + s->next <= offset +
-+			    (uint32_t) offsetof(struct dm_target_versions, name))
- 				goto misplaced;
- 			offset = offset + s->next;
- 		} else {
-@@ -215,11 +227,14 @@ dm_decode_dm_target_msg(const struct dm_ioctl *ioc, const char *extra,
- 			uint32_t extra_size)
- {
- 	uint32_t offset = ioc->data_start;
--	if (offset + (uint32_t)offsetof(struct dm_target_msg, message) >= offset &&
--	    offset + (uint32_t)offsetof(struct dm_target_msg, message) < extra_size) {
-+
-+	if (offset + (uint32_t) offsetof(struct dm_target_msg, message) >= offset &&
-+	    offset + (uint32_t) offsetof(struct dm_target_msg, message) < extra_size) {
- 		const struct dm_target_msg *s =
--			(const struct dm_target_msg *)(extra + offset);
--		tprintf(", {sector=%"PRIu64", message=", (uint64_t)s->sector);
-+			(const struct dm_target_msg *) (extra + offset);
-+
-+		tprintf(", {sector=%" PRIu64 ", message=",
-+			(uint64_t) s->sector);
- 		print_quoted_string(s->message, extra_size -
- 				    offsetof(struct dm_target_msg, message),
- 				    QUOTE_0_TERMINATED);
-@@ -234,6 +249,7 @@ dm_decode_string(const struct dm_ioctl *ioc, const char *extra,
- 		 uint32_t extra_size)
- {
- 	uint32_t offset = ioc->data_start;
-+
- 	if (offset < extra_size) {
- 		tprints(", string=");
- 		print_quoted_string(extra + offset, extra_size - offset,
-@@ -250,7 +266,7 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
- 	char *extra = NULL;
- 	uint32_t extra_size = 0;
- 
--	if (umoven(tcp, arg, sizeof(ioc) - sizeof(ioc.data), (char *)&ioc) < 0)
-+	if (umoven(tcp, arg, sizeof(ioc) - sizeof(ioc.data), (char *) &ioc) < 0)
- 		return 0;
- 	tprintf(", {version=%d.%d.%d", ioc.version[0], ioc.version[1],
- 		ioc.version[2]);
-@@ -276,7 +292,8 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
- 	dm_decode_device(code, &ioc);
- 	dm_decode_values(tcp, code, &ioc);
- 	dm_decode_flags(&ioc);
--	if (!abbrev(tcp)) switch (code) {
-+	if (!abbrev(tcp))
-+		switch (code) {
- 		case DM_DEV_WAIT:
- 		case DM_TABLE_STATUS:
- 			if (entering(tcp) || syserror(tcp))
-@@ -308,7 +325,7 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
- 				dm_decode_dm_target_msg(&ioc, extra,
- 							extra_size);
- 			} else if (!syserror(tcp) &&
--				   ioc.flags & DM_DATA_OUT_FLAG) {
-+			    ioc.flags & DM_DATA_OUT_FLAG) {
- 				dm_decode_string(&ioc, extra, extra_size);
- 			}
- 			break;
-@@ -318,7 +335,7 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
- 				break;
- 			dm_decode_string(&ioc, extra, extra_size);
- 			break;
--	}
-+		}
- 
-  skip:
- 	tprints("}");
--- 
-1.7.10.4
-
-
-------------------------------------------------------------------------------
-Check out the vibrant tech community on one of the world's most 
-engaging tech sites, SlashDot.org! http://sdm.link/slashdot
+V2hlbiBidWlsZGluZyB3aXRoIC1XcCwtRF9GT1JUSUZZX1NPVVJDRT0yLCBkb21waWxlciBwcm9k
+dWNlcyB0aGUKZm9sbG93aW5nIHdhcm5pbmc6CgpJbiBmaWxlIGluY2x1ZGVkIGZyb20gL3Vzci9p
+bmNsdWRlL3N0cmluZy5oOjYzODowLAogICAgICAgICAgICAgICAgIGZyb20gaW9jdGxfZG0uYzo0
+OgpJbiBmdW5jdGlvbiDigJhzdHJjcHnigJksCiAgICBpbmxpbmVkIGZyb20g4oCYbWFpbuKAmSBh
+dCBpb2N0bF9kbS5jOjU3Ojg6Ci91c3IvaW5jbHVkZS9iaXRzL3N0cmluZzMuaDoxMDQ6Mzogd2Fy
+bmluZzogY2FsbCB0byBfX2J1aWx0aW5fX19zdHJjcHlfY2hrIHdpbGwgYWx3YXlzIG92ZXJmbG93
+IGRlc3RpbmF0aW9uIGJ1ZmZlciBbZW5hYmxlZCBieSBkZWZhdWx0XQogICByZXR1cm4gX19idWls
+dGluX19fc3RyY3B5X2NoayAoX19kZXN0LCBfX3NyYywgX19ib3MgKF9fZGVzdCkpOwogICBeCgpB
+bmQgbGF0ZXIgaXQgYWJvcnRzOgoKWyAgMjAwc10gRkFJTDogaW9jdGxfZG0KWyAgMjAwc10gPT09
+PT09PT09PT09PT0KWyAgMjAwc10KWyAgMjAwc10gKyAuLi9zdHJhY2UgLVYKWyAgMjAwc10gKyBU
+SU1FT1VUPSd0aW1lb3V0IC1zIDkgNjAnClsgIDIwMHNdICsgdGltZW91dCAtcyA5IDYwIHRydWUK
+WyAgMjAwc10gKyBleGVjIHRpbWVvdXQgLXMgOSA2MCAuL2lvY3RsX2RtLnRlc3QKWyAgMjAwc10g
+KyBydW5fcHJvZwpbICAyMDBzXSArICdbJyAwIC1lcSAwICddJwpbICAyMDBzXSArIHNldCAtLSAu
+L2lvY3RsX2RtClsgIDIwMHNdICsgYXJncz0uL2lvY3RsX2RtClsgIDIwMHNdICsgLi9pb2N0bF9k
+bQpbICAyMDBzXSAqKiogYnVmZmVyIG92ZXJmbG93IGRldGVjdGVkICoqKjogLi9pb2N0bF9kbSB0
+ZXJtaW5hdGVkClsgIDIwMHNdID09PT09PT0gQmFja3RyYWNlOiA9PT09PT09PT0KWyAgMjAwc10g
+L2xpYjY0L2xpYmMuc28uNihfX2ZvcnRpZnlfZmFpbCsweDM3KVsweDdmYmM4ZmExYWNiN10KWyAg
+MjAwc10gL2xpYjY0L2xpYmMuc28uNigrMHgxMGJlODApWzB4N2ZiYzhmYTE4ZTgwXQpbICAyMDBz
+XSAuL2lvY3RsX2RtWzB4NDAwNjE2XQpbICAyMDBzXSAvbGliNjQvbGliYy5zby42KF9fbGliY19z
+dGFydF9tYWluKzB4ZjUpWzB4N2ZiYzhmOTJlYWY1XQpbICAyMDBzXSAuL2lvY3RsX2RtWzB4NDAw
+NzM5XQpbICAyMDBzXSA9PT09PT09IE1lbW9yeSBtYXA6ID09PT09PT09ClsgIDIwMHNdIDAwNDAw
+MDAwLTAwNDAxMDAwIHIteHAgMDAwMDAwMDAgMDg6MDAgODQ3OTIgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAvaG9tZS9hYnVpbGQvcnBtYnVpbGQvQlVJTEQvc3RyYWNlLTQuMTMuMC4yNjAu
+YWYwODYvdGVzdHMvaW9jdGxfZG0KWyAgMjAwc10gMDA2MDEwMDAtMDA2MDIwMDAgci0tcCAwMDAw
+MTAwMCAwODowMCA4NDc5MiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC9ob21lL2FidWls
+ZC9ycG1idWlsZC9CVUlMRC9zdHJhY2UtNC4xMy4wLjI2MC5hZjA4Ni90ZXN0cy9pb2N0bF9kbQpb
+ICAyMDBzXSAwMDYwMjAwMC0wMDYwMzAwMCBydy1wIDAwMDAyMDAwIDA4OjAwIDg0NzkyICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgL2hvbWUvYWJ1aWxkL3JwbWJ1aWxkL0JVSUxEL3N0cmFj
+ZS00LjEzLjAuMjYwLmFmMDg2L3Rlc3RzL2lvY3RsX2RtClsgIDIwMHNdIDAyMjQ0MDAwLTAyMjY1
+MDAwIHJ3LXAgMDAwMDAwMDAgMDA6MDAgMCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICBbaGVhcF0KWyAgMjAwc10gN2ZiYzhmNmY1MDAwLTdmYmM4ZjcwYTAwMCByLXhwIDAwMDAwMDAw
+IDA4OjAwIDEzMTM0MSAgICAgICAgICAgICAgICAgICAgIC91c3IvbGliNjQvbGliZ2NjX3MtNC44
+LjItMjAxNDAxMjAuc28uMQpbICAyMDBzXSA3ZmJjOGY3MGEwMDAtN2ZiYzhmOTA5MDAwIC0tLXAg
+MDAwMTUwMDAgMDg6MDAgMTMxMzQxICAgICAgICAgICAgICAgICAgICAgL3Vzci9saWI2NC9saWJn
+Y2Nfcy00LjguMi0yMDE0MDEyMC5zby4xClsgIDIwMHNdIDdmYmM4ZjkwOTAwMC03ZmJjOGY5MGEw
+MDAgci0tcCAwMDAxNDAwMCAwODowMCAxMzEzNDEgICAgICAgICAgICAgICAgICAgICAvdXNyL2xp
+YjY0L2xpYmdjY19zLTQuOC4yLTIwMTQwMTIwLnNvLjEKWyAgMjAwc10gN2ZiYzhmOTBhMDAwLTdm
+YmM4ZjkwYjAwMCBydy1wIDAwMDE1MDAwIDA4OjAwIDEzMTM0MSAgICAgICAgICAgICAgICAgICAg
+IC91c3IvbGliNjQvbGliZ2NjX3MtNC44LjItMjAxNDAxMjAuc28uMQpbICAyMDBzXSA3ZmJjOGY5
+MGQwMDAtN2ZiYzhmYWMzMDAwIHIteHAgMDAwMDAwMDAgMDg6MDAgMTMxMzUwICAgICAgICAgICAg
+ICAgICAgICAgL3Vzci9saWI2NC9saWJjLTIuMTcuc28KWyAgMjAwc10gN2ZiYzhmYWMzMDAwLTdm
+YmM4ZmNjMzAwMCAtLS1wIDAwMWI2MDAwIDA4OjAwIDEzMTM1MCAgICAgICAgICAgICAgICAgICAg
+IC91c3IvbGliNjQvbGliYy0yLjE3LnNvClsgIDIwMHNdIDdmYmM4ZmNjMzAwMC03ZmJjOGZjYzcw
+MDAgci0tcCAwMDFiNjAwMCAwODowMCAxMzEzNTAgICAgICAgICAgICAgICAgICAgICAvdXNyL2xp
+YjY0L2xpYmMtMi4xNy5zbwpbICAyMDBzXSA3ZmJjOGZjYzcwMDAtN2ZiYzhmY2M5MDAwIHJ3LXAg
+MDAxYmEwMDAgMDg6MDAgMTMxMzUwICAgICAgICAgICAgICAgICAgICAgL3Vzci9saWI2NC9saWJj
+LTIuMTcuc28KWyAgMjAwc10gN2ZiYzhmY2M5MDAwLTdmYmM4ZmNjZTAwMCBydy1wIDAwMDAwMDAw
+IDAwOjAwIDAKWyAgMjAwc10gN2ZiYzhmY2Q1MDAwLTdmYmM4ZmNmNjAwMCByLXhwIDAwMDAwMDAw
+IDA4OjAwIDEzMTM0MyAgICAgICAgICAgICAgICAgICAgIC91c3IvbGliNjQvbGQtMi4xNy5zbwpb
+ICAyMDBzXSA3ZmJjOGZlZjEwMDAtN2ZiYzhmZWY1MDAwIHJ3LXAgMDAwMDAwMDAgMDA6MDAgMApb
+ICAyMDBzXSA3ZmJjOGZlZjUwMDAtN2ZiYzhmZWY2MDAwIHItLXAgMDAwMjAwMDAgMDg6MDAgMTMx
+MzQzICAgICAgICAgICAgICAgICAgICAgL3Vzci9saWI2NC9sZC0yLjE3LnNvClsgIDIwMHNdIDdm
+YmM4ZmVmNjAwMC03ZmJjOGZlZjcwMDAgcnctcCAwMDAyMTAwMCAwODowMCAxMzEzNDMgICAgICAg
+ICAgICAgICAgICAgICAvdXNyL2xpYjY0L2xkLTIuMTcuc28KWyAgMjAwc10gN2ZiYzhmZWY3MDAw
+LTdmYmM4ZmVmOTAwMCBydy1wIDAwMDAwMDAwIDAwOjAwIDAKWyAgMjAwc10gN2ZmZTliN2UzMDAw
+LTdmZmU5YjgwNjAwMCBydy1wIDAwMDAwMDAwIDAwOjAwIDAgICAgICAgICAgICAgICAgICAgICAg
+ICAgIFtzdGFja10KWyAgMjAwc10gN2ZmZTliODRkMDAwLTdmZmU5Yjg0ZjAwMCByLS1wIDAwMDAw
+MDAwIDAwOjAwIDAgICAgICAgICAgICAgICAgICAgICAgICAgIFt2dmFyXQpbICAyMDBzXSA3ZmZl
+OWI4NGYwMDAtN2ZmZTliODUxMDAwIHIteHAgMDAwMDAwMDAgMDA6MDAgMCAgICAgICAgICAgICAg
+ICAgICAgICAgICAgW3Zkc29dClsgIDIwMHNdIGZmZmZmZmZmZmY2MDAwMDAtZmZmZmZmZmZmZjYw
+MTAwMCByLXhwIDAwMDAwMDAwIDAwOjAwIDAgICAgICAgICAgICAgICAgICBbdnN5c2NhbGxdClsg
+IDIwMHNdIC4vaW5pdC5zaDogbGluZSA1MzogMTUxNjIgQWJvcnRlZCAgICAgICAgICAgICAgICAg
+IiRAIgpbICAyMDBzXSArIHJjPTEzNApbICAyMDBzXSArICdbJyAxMzQgLWVxIDc3ICddJwpbICAy
+MDBzXSArIGZhaWxfICcuL2lvY3RsX2RtIGZhaWxlZCB3aXRoIGNvZGUgMTM0JwpbICAyMDBzXSAr
+IHdhcm5fICdpb2N0bF9kbS50ZXN0OiBmYWlsZWQgdGVzdDogLi9pb2N0bF9kbSBmYWlsZWQgd2l0
+aCBjb2RlIDEzNCcKWyAgMjAwc10gKyBwcmludGYgJyVzXG4nICdpb2N0bF9kbS50ZXN0OiBmYWls
+ZWQgdGVzdDogLi9pb2N0bF9kbSBmYWlsZWQgd2l0aCBjb2RlIDEzNCcKWyAgMjAwc10gaW9jdGxf
+ZG0udGVzdDogZmFpbGVkIHRlc3Q6IC4vaW9jdGxfZG0gZmFpbGVkIHdpdGggY29kZSAxMzQKWyAg
+MjAwc10gKyBleGl0IDEKCkl0IGlzIGR1ZSB0aGUgZmFjdCB0aGF0IG1lc3NhZ2UgZmllbGQgaXMg
+MC1lbGVtZW50IGFycmF5LiBXb3JrZWQgYXJvdW5kCmJ5IGNvcHlpbmcgdG8gc3RyaW5nIGZpZWxk
+IHdpdGggYXBwcm9wcmlhdGUgb2Zmc2V0LgotLS0KIHRlc3RzL2lvY3RsX2RtLmMgfCAgICAzICsr
+LQogMSBmaWxlIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlvbigtKQoKZGlmZiAt
+LWdpdCBhL3Rlc3RzL2lvY3RsX2RtLmMgYi90ZXN0cy9pb2N0bF9kbS5jCmluZGV4IGE1OTQ1YWUu
+LmNiNmRkOTcgMTAwNjQ0Ci0tLSBhL3Rlc3RzL2lvY3RsX2RtLmMKKysrIGIvdGVzdHMvaW9jdGxf
+ZG0uYwpAQCAtNjQsNyArNjQsOCBAQCBtYWluKHZvaWQpCiAKIAlpbml0X3MoKTsKIAlzLnUudG0u
+dGFyZ2V0X21zZy5zZWN0b3IgPSAweDEyMzQ7Ci0Jc3RyY3B5KHMudS50bS50YXJnZXRfbXNnLm1l
+c3NhZ2UsICJ0bXNnIik7CisJc3RyY3B5KHMudS5zdHJpbmcgKyBvZmZzZXRvZihzdHJ1Y3QgZG1f
+dGFyZ2V0X21zZywgbWVzc2FnZSksCisJCSJ0bXNnIik7CiAJaW9jdGwoLTEsIERNX1RBUkdFVF9N
+U0csICZzKTsKIAlwcmludGYoImlvY3RsKC0xLCBETV9UQVJHRVRfTVNHLCAiCiAJICAgICAgICJ7
+dmVyc2lvbj00LjEuMiwgZGV2PW1ha2VkZXYoMTgsIDUyKSwgbmFtZT1cIm5ublwiLCAiCi0tIAox
+LjcuMTAuNAoKCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpDaGVjayBvdXQgdGhlIHZpYnJhbnQgdGVj
+aCBjb21tdW5pdHkgb24gb25lIG9mIHRoZSB3b3JsZCdzIG1vc3QgCmVuZ2FnaW5nIHRlY2ggc2l0
+ZXMsIFNsYXNoRG90Lm9yZyEgaHR0cDovL3NkbS5saW5rL3NsYXNoZG90Cl9fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fClN0cmFjZS1kZXZlbCBtYWlsaW5nIGxp
+c3QKU3RyYWNlLWRldmVsQGxpc3RzLnNvdXJjZWZvcmdlLm5ldApodHRwczovL2xpc3RzLnNvdXJj
+ZWZvcmdlLm5ldC9saXN0cy9saXN0aW5mby9zdHJhY2UtZGV2ZWwK
