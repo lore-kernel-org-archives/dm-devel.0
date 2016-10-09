@@ -1,7 +1,7 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 12/21] dm: Add inttypes.h, include reorder
-Date: Sun, 9 Oct 2016 16:30:40 +0300
-Message-ID: <20161009133040.GA3677@obsidian>
+Subject: [PATCH 14/21] dm: replace abbrev branching with goto
+Date: Sun, 9 Oct 2016 16:30:56 +0300
+Message-ID: <20161009133056.GA3900@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -22,37 +22,107 @@ To: strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-Build failed otherwise on RHEL 5.
 ---
- dm.c             |    3 ++-
- tests/ioctl_dm.c |    1 +
- 2 files changed, 3 insertions(+), 1 deletion(-)
+ dm.c |   78 ++++++++++++++++++++++++++++++++++--------------------------------
+ 1 file changed, 40 insertions(+), 38 deletions(-)
 
 diff --git a/dm.c b/dm.c
-index b6fb11d..a11196f 100644
+index 73a9b57..814d7d2 100644
 --- a/dm.c
 +++ b/dm.c
-@@ -2,8 +2,9 @@
+@@ -350,52 +350,54 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
+ 			}
+ 		}
+ 	}
+-	if (abbrev(tcp))
++
++	if (abbrev(tcp)) {
+ 		tprints(", ...");
+-	else
+-		switch (code) {
+-		case DM_DEV_WAIT:
+-		case DM_TABLE_STATUS:
+-			if (entering(tcp) || syserror(tcp))
+-				break;
+-			dm_decode_dm_target_spec(tcp, ioc, extra, extra_size);
+-			break;
+-		case DM_TABLE_LOAD:
+-			if (!entering(tcp))
+-				break;
+-			dm_decode_dm_target_spec(tcp, ioc, extra, extra_size);
++		goto skip;
++	}
++
++	switch (code) {
++	case DM_DEV_WAIT:
++	case DM_TABLE_STATUS:
++		if (entering(tcp) || syserror(tcp))
+ 			break;
+-		case DM_TABLE_DEPS:
+-			if (entering(tcp) || syserror(tcp))
+-				break;
+-			dm_decode_dm_target_deps(ioc, extra, extra_size);
++		dm_decode_dm_target_spec(tcp, ioc, extra, extra_size);
++		break;
++	case DM_TABLE_LOAD:
++		if (!entering(tcp))
+ 			break;
+-		case DM_LIST_DEVICES:
+-			if (entering(tcp) || syserror(tcp))
+-				break;
+-			dm_decode_dm_name_list(ioc, extra, extra_size);
++		dm_decode_dm_target_spec(tcp, ioc, extra, extra_size);
++		break;
++	case DM_TABLE_DEPS:
++		if (entering(tcp) || syserror(tcp))
+ 			break;
+-		case DM_LIST_VERSIONS:
+-			if (entering(tcp) || syserror(tcp))
+-				break;
+-			dm_decode_dm_target_versions(ioc, extra, extra_size);
++		dm_decode_dm_target_deps(ioc, extra, extra_size);
++		break;
++	case DM_LIST_DEVICES:
++		if (entering(tcp) || syserror(tcp))
+ 			break;
+-		case DM_TARGET_MSG:
+-			if (entering(tcp)) {
+-				dm_decode_dm_target_msg(ioc, extra,
+-							extra_size);
+-			} else if (!syserror(tcp) &&
+-			    ioc->flags & DM_DATA_OUT_FLAG) {
+-				dm_decode_string(ioc, extra, extra_size);
+-			}
++		dm_decode_dm_name_list(ioc, extra, extra_size);
++		break;
++	case DM_LIST_VERSIONS:
++		if (entering(tcp) || syserror(tcp))
+ 			break;
+-		case DM_DEV_RENAME:
+-		case DM_DEV_SET_GEOMETRY:
+-			if (!entering(tcp))
+-				break;
++		dm_decode_dm_target_versions(ioc, extra, extra_size);
++		break;
++	case DM_TARGET_MSG:
++		if (entering(tcp)) {
++			dm_decode_dm_target_msg(ioc, extra,
++						extra_size);
++		} else if (!syserror(tcp) && ioc->flags & DM_DATA_OUT_FLAG) {
+ 			dm_decode_string(ioc, extra, extra_size);
+-			break;
+ 		}
++		break;
++	case DM_DEV_RENAME:
++	case DM_DEV_SET_GEOMETRY:
++		if (!entering(tcp))
++			break;
++		dm_decode_string(ioc, extra, extra_size);
++		break;
++	}
  
- #ifdef HAVE_LINUX_DM_IOCTL_H
- 
--# include <sys/ioctl.h>
-+# include <inttypes.h>
- # include <linux/dm-ioctl.h>
-+# include <sys/ioctl.h>
- 
- # if DM_VERSION_MAJOR == 4
- 
-diff --git a/tests/ioctl_dm.c b/tests/ioctl_dm.c
-index 31f474c..94dbe93 100644
---- a/tests/ioctl_dm.c
-+++ b/tests/ioctl_dm.c
-@@ -1,4 +1,5 @@
- #include "tests.h"
-+#include <inttypes.h>
- #include <stdio.h>
- #include <stddef.h>
- #include <string.h>
+  skip:
+ 	tprints("}");
 -- 
 1.7.10.4
 
