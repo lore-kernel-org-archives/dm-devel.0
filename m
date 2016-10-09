@@ -1,12 +1,12 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 03/21] tests: Working around bounds check
-Date: Sun, 9 Oct 2016 16:28:48 +0300
-Message-ID: <20161009132848.GA2046@obsidian>
+Subject: [PATCH 04/21] dm: Minor output tweaks
+Date: Sun, 9 Oct 2016 16:28:55 +0300
+Message-ID: <20161009132855.GA2201@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Content-Disposition: inline
 In-Reply-To: <20161005.192828.566127461630656590.yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
@@ -22,90 +22,112 @@ To: strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-V2hlbiBidWlsZGluZyB3aXRoIC1XcCwtRF9GT1JUSUZZX1NPVVJDRT0yLCBkb21waWxlciBwcm9k
-dWNlcyB0aGUKZm9sbG93aW5nIHdhcm5pbmc6CgpJbiBmaWxlIGluY2x1ZGVkIGZyb20gL3Vzci9p
-bmNsdWRlL3N0cmluZy5oOjYzODowLAogICAgICAgICAgICAgICAgIGZyb20gaW9jdGxfZG0uYzo0
-OgpJbiBmdW5jdGlvbiDigJhzdHJjcHnigJksCiAgICBpbmxpbmVkIGZyb20g4oCYbWFpbuKAmSBh
-dCBpb2N0bF9kbS5jOjU3Ojg6Ci91c3IvaW5jbHVkZS9iaXRzL3N0cmluZzMuaDoxMDQ6Mzogd2Fy
-bmluZzogY2FsbCB0byBfX2J1aWx0aW5fX19zdHJjcHlfY2hrIHdpbGwgYWx3YXlzIG92ZXJmbG93
-IGRlc3RpbmF0aW9uIGJ1ZmZlciBbZW5hYmxlZCBieSBkZWZhdWx0XQogICByZXR1cm4gX19idWls
-dGluX19fc3RyY3B5X2NoayAoX19kZXN0LCBfX3NyYywgX19ib3MgKF9fZGVzdCkpOwogICBeCgpB
-bmQgbGF0ZXIgaXQgYWJvcnRzOgoKWyAgMjAwc10gRkFJTDogaW9jdGxfZG0KWyAgMjAwc10gPT09
-PT09PT09PT09PT0KWyAgMjAwc10KWyAgMjAwc10gKyAuLi9zdHJhY2UgLVYKWyAgMjAwc10gKyBU
-SU1FT1VUPSd0aW1lb3V0IC1zIDkgNjAnClsgIDIwMHNdICsgdGltZW91dCAtcyA5IDYwIHRydWUK
-WyAgMjAwc10gKyBleGVjIHRpbWVvdXQgLXMgOSA2MCAuL2lvY3RsX2RtLnRlc3QKWyAgMjAwc10g
-KyBydW5fcHJvZwpbICAyMDBzXSArICdbJyAwIC1lcSAwICddJwpbICAyMDBzXSArIHNldCAtLSAu
-L2lvY3RsX2RtClsgIDIwMHNdICsgYXJncz0uL2lvY3RsX2RtClsgIDIwMHNdICsgLi9pb2N0bF9k
-bQpbICAyMDBzXSAqKiogYnVmZmVyIG92ZXJmbG93IGRldGVjdGVkICoqKjogLi9pb2N0bF9kbSB0
-ZXJtaW5hdGVkClsgIDIwMHNdID09PT09PT0gQmFja3RyYWNlOiA9PT09PT09PT0KWyAgMjAwc10g
-L2xpYjY0L2xpYmMuc28uNihfX2ZvcnRpZnlfZmFpbCsweDM3KVsweDdmYmM4ZmExYWNiN10KWyAg
-MjAwc10gL2xpYjY0L2xpYmMuc28uNigrMHgxMGJlODApWzB4N2ZiYzhmYTE4ZTgwXQpbICAyMDBz
-XSAuL2lvY3RsX2RtWzB4NDAwNjE2XQpbICAyMDBzXSAvbGliNjQvbGliYy5zby42KF9fbGliY19z
-dGFydF9tYWluKzB4ZjUpWzB4N2ZiYzhmOTJlYWY1XQpbICAyMDBzXSAuL2lvY3RsX2RtWzB4NDAw
-NzM5XQpbICAyMDBzXSA9PT09PT09IE1lbW9yeSBtYXA6ID09PT09PT09ClsgIDIwMHNdIDAwNDAw
-MDAwLTAwNDAxMDAwIHIteHAgMDAwMDAwMDAgMDg6MDAgODQ3OTIgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAvaG9tZS9hYnVpbGQvcnBtYnVpbGQvQlVJTEQvc3RyYWNlLTQuMTMuMC4yNjAu
-YWYwODYvdGVzdHMvaW9jdGxfZG0KWyAgMjAwc10gMDA2MDEwMDAtMDA2MDIwMDAgci0tcCAwMDAw
-MTAwMCAwODowMCA4NDc5MiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC9ob21lL2FidWls
-ZC9ycG1idWlsZC9CVUlMRC9zdHJhY2UtNC4xMy4wLjI2MC5hZjA4Ni90ZXN0cy9pb2N0bF9kbQpb
-ICAyMDBzXSAwMDYwMjAwMC0wMDYwMzAwMCBydy1wIDAwMDAyMDAwIDA4OjAwIDg0NzkyICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgL2hvbWUvYWJ1aWxkL3JwbWJ1aWxkL0JVSUxEL3N0cmFj
-ZS00LjEzLjAuMjYwLmFmMDg2L3Rlc3RzL2lvY3RsX2RtClsgIDIwMHNdIDAyMjQ0MDAwLTAyMjY1
-MDAwIHJ3LXAgMDAwMDAwMDAgMDA6MDAgMCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICBbaGVhcF0KWyAgMjAwc10gN2ZiYzhmNmY1MDAwLTdmYmM4ZjcwYTAwMCByLXhwIDAwMDAwMDAw
-IDA4OjAwIDEzMTM0MSAgICAgICAgICAgICAgICAgICAgIC91c3IvbGliNjQvbGliZ2NjX3MtNC44
-LjItMjAxNDAxMjAuc28uMQpbICAyMDBzXSA3ZmJjOGY3MGEwMDAtN2ZiYzhmOTA5MDAwIC0tLXAg
-MDAwMTUwMDAgMDg6MDAgMTMxMzQxICAgICAgICAgICAgICAgICAgICAgL3Vzci9saWI2NC9saWJn
-Y2Nfcy00LjguMi0yMDE0MDEyMC5zby4xClsgIDIwMHNdIDdmYmM4ZjkwOTAwMC03ZmJjOGY5MGEw
-MDAgci0tcCAwMDAxNDAwMCAwODowMCAxMzEzNDEgICAgICAgICAgICAgICAgICAgICAvdXNyL2xp
-YjY0L2xpYmdjY19zLTQuOC4yLTIwMTQwMTIwLnNvLjEKWyAgMjAwc10gN2ZiYzhmOTBhMDAwLTdm
-YmM4ZjkwYjAwMCBydy1wIDAwMDE1MDAwIDA4OjAwIDEzMTM0MSAgICAgICAgICAgICAgICAgICAg
-IC91c3IvbGliNjQvbGliZ2NjX3MtNC44LjItMjAxNDAxMjAuc28uMQpbICAyMDBzXSA3ZmJjOGY5
-MGQwMDAtN2ZiYzhmYWMzMDAwIHIteHAgMDAwMDAwMDAgMDg6MDAgMTMxMzUwICAgICAgICAgICAg
-ICAgICAgICAgL3Vzci9saWI2NC9saWJjLTIuMTcuc28KWyAgMjAwc10gN2ZiYzhmYWMzMDAwLTdm
-YmM4ZmNjMzAwMCAtLS1wIDAwMWI2MDAwIDA4OjAwIDEzMTM1MCAgICAgICAgICAgICAgICAgICAg
-IC91c3IvbGliNjQvbGliYy0yLjE3LnNvClsgIDIwMHNdIDdmYmM4ZmNjMzAwMC03ZmJjOGZjYzcw
-MDAgci0tcCAwMDFiNjAwMCAwODowMCAxMzEzNTAgICAgICAgICAgICAgICAgICAgICAvdXNyL2xp
-YjY0L2xpYmMtMi4xNy5zbwpbICAyMDBzXSA3ZmJjOGZjYzcwMDAtN2ZiYzhmY2M5MDAwIHJ3LXAg
-MDAxYmEwMDAgMDg6MDAgMTMxMzUwICAgICAgICAgICAgICAgICAgICAgL3Vzci9saWI2NC9saWJj
-LTIuMTcuc28KWyAgMjAwc10gN2ZiYzhmY2M5MDAwLTdmYmM4ZmNjZTAwMCBydy1wIDAwMDAwMDAw
-IDAwOjAwIDAKWyAgMjAwc10gN2ZiYzhmY2Q1MDAwLTdmYmM4ZmNmNjAwMCByLXhwIDAwMDAwMDAw
-IDA4OjAwIDEzMTM0MyAgICAgICAgICAgICAgICAgICAgIC91c3IvbGliNjQvbGQtMi4xNy5zbwpb
-ICAyMDBzXSA3ZmJjOGZlZjEwMDAtN2ZiYzhmZWY1MDAwIHJ3LXAgMDAwMDAwMDAgMDA6MDAgMApb
-ICAyMDBzXSA3ZmJjOGZlZjUwMDAtN2ZiYzhmZWY2MDAwIHItLXAgMDAwMjAwMDAgMDg6MDAgMTMx
-MzQzICAgICAgICAgICAgICAgICAgICAgL3Vzci9saWI2NC9sZC0yLjE3LnNvClsgIDIwMHNdIDdm
-YmM4ZmVmNjAwMC03ZmJjOGZlZjcwMDAgcnctcCAwMDAyMTAwMCAwODowMCAxMzEzNDMgICAgICAg
-ICAgICAgICAgICAgICAvdXNyL2xpYjY0L2xkLTIuMTcuc28KWyAgMjAwc10gN2ZiYzhmZWY3MDAw
-LTdmYmM4ZmVmOTAwMCBydy1wIDAwMDAwMDAwIDAwOjAwIDAKWyAgMjAwc10gN2ZmZTliN2UzMDAw
-LTdmZmU5YjgwNjAwMCBydy1wIDAwMDAwMDAwIDAwOjAwIDAgICAgICAgICAgICAgICAgICAgICAg
-ICAgIFtzdGFja10KWyAgMjAwc10gN2ZmZTliODRkMDAwLTdmZmU5Yjg0ZjAwMCByLS1wIDAwMDAw
-MDAwIDAwOjAwIDAgICAgICAgICAgICAgICAgICAgICAgICAgIFt2dmFyXQpbICAyMDBzXSA3ZmZl
-OWI4NGYwMDAtN2ZmZTliODUxMDAwIHIteHAgMDAwMDAwMDAgMDA6MDAgMCAgICAgICAgICAgICAg
-ICAgICAgICAgICAgW3Zkc29dClsgIDIwMHNdIGZmZmZmZmZmZmY2MDAwMDAtZmZmZmZmZmZmZjYw
-MTAwMCByLXhwIDAwMDAwMDAwIDAwOjAwIDAgICAgICAgICAgICAgICAgICBbdnN5c2NhbGxdClsg
-IDIwMHNdIC4vaW5pdC5zaDogbGluZSA1MzogMTUxNjIgQWJvcnRlZCAgICAgICAgICAgICAgICAg
-IiRAIgpbICAyMDBzXSArIHJjPTEzNApbICAyMDBzXSArICdbJyAxMzQgLWVxIDc3ICddJwpbICAy
-MDBzXSArIGZhaWxfICcuL2lvY3RsX2RtIGZhaWxlZCB3aXRoIGNvZGUgMTM0JwpbICAyMDBzXSAr
-IHdhcm5fICdpb2N0bF9kbS50ZXN0OiBmYWlsZWQgdGVzdDogLi9pb2N0bF9kbSBmYWlsZWQgd2l0
-aCBjb2RlIDEzNCcKWyAgMjAwc10gKyBwcmludGYgJyVzXG4nICdpb2N0bF9kbS50ZXN0OiBmYWls
-ZWQgdGVzdDogLi9pb2N0bF9kbSBmYWlsZWQgd2l0aCBjb2RlIDEzNCcKWyAgMjAwc10gaW9jdGxf
-ZG0udGVzdDogZmFpbGVkIHRlc3Q6IC4vaW9jdGxfZG0gZmFpbGVkIHdpdGggY29kZSAxMzQKWyAg
-MjAwc10gKyBleGl0IDEKCkl0IGlzIGR1ZSB0aGUgZmFjdCB0aGF0IG1lc3NhZ2UgZmllbGQgaXMg
-MC1lbGVtZW50IGFycmF5LiBXb3JrZWQgYXJvdW5kCmJ5IGNvcHlpbmcgdG8gc3RyaW5nIGZpZWxk
-IHdpdGggYXBwcm9wcmlhdGUgb2Zmc2V0LgotLS0KIHRlc3RzL2lvY3RsX2RtLmMgfCAgICAzICsr
-LQogMSBmaWxlIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlvbigtKQoKZGlmZiAt
-LWdpdCBhL3Rlc3RzL2lvY3RsX2RtLmMgYi90ZXN0cy9pb2N0bF9kbS5jCmluZGV4IGE1OTQ1YWUu
-LmNiNmRkOTcgMTAwNjQ0Ci0tLSBhL3Rlc3RzL2lvY3RsX2RtLmMKKysrIGIvdGVzdHMvaW9jdGxf
-ZG0uYwpAQCAtNjQsNyArNjQsOCBAQCBtYWluKHZvaWQpCiAKIAlpbml0X3MoKTsKIAlzLnUudG0u
-dGFyZ2V0X21zZy5zZWN0b3IgPSAweDEyMzQ7Ci0Jc3RyY3B5KHMudS50bS50YXJnZXRfbXNnLm1l
-c3NhZ2UsICJ0bXNnIik7CisJc3RyY3B5KHMudS5zdHJpbmcgKyBvZmZzZXRvZihzdHJ1Y3QgZG1f
-dGFyZ2V0X21zZywgbWVzc2FnZSksCisJCSJ0bXNnIik7CiAJaW9jdGwoLTEsIERNX1RBUkdFVF9N
-U0csICZzKTsKIAlwcmludGYoImlvY3RsKC0xLCBETV9UQVJHRVRfTVNHLCAiCiAJICAgICAgICJ7
-dmVyc2lvbj00LjEuMiwgZGV2PW1ha2VkZXYoMTgsIDUyKSwgbmFtZT1cIm5ublwiLCAiCi0tIAox
-LjcuMTAuNAoKCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpDaGVjayBvdXQgdGhlIHZpYnJhbnQgdGVj
-aCBjb21tdW5pdHkgb24gb25lIG9mIHRoZSB3b3JsZCdzIG1vc3QgCmVuZ2FnaW5nIHRlY2ggc2l0
-ZXMsIFNsYXNoRG90Lm9yZyEgaHR0cDovL3NkbS5saW5rL3NsYXNoZG90Cl9fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fClN0cmFjZS1kZXZlbCBtYWlsaW5nIGxp
-c3QKU3RyYWNlLWRldmVsQGxpc3RzLnNvdXJjZWZvcmdlLm5ldApodHRwczovL2xpc3RzLnNvdXJj
-ZWZvcmdlLm5ldC9saXN0cy9saXN0aW5mby9zdHJhY2UtZGV2ZWwK
+Trying to make it more C-like and in line with common practices
+regarding structure printing.
+---
+ dm.c             |   21 +++++++++++++--------
+ tests/ioctl_dm.c |    2 +-
+ 2 files changed, 14 insertions(+), 9 deletions(-)
+
+diff --git a/dm.c b/dm.c
+index d81983d..ebdfc44 100644
+--- a/dm.c
++++ b/dm.c
+@@ -120,7 +120,7 @@ dm_decode_dm_target_spec(struct tcb *tcp, const struct dm_ioctl *ioc,
+ 			offset = new_offset;
+ 		} else {
+ misplaced:
+-			tprints(", misplaced struct dm_target_spec");
++			tprints(", /* misplaced struct dm_target_spec */ ...");
+ 			break;
+ 		}
+ 	}
+@@ -150,7 +150,7 @@ dm_decode_dm_target_deps(const struct dm_ioctl *ioc, const char *extra,
+ 		tprints("}");
+ 	} else {
+  misplaced:
+-		tprints(", misplaced struct dm_target_deps");
++		tprints(", /* misplaced struct dm_target_deps */ ...");
+ 	}
+ }
+ 
+@@ -182,7 +182,7 @@ dm_decode_dm_name_list(const struct dm_ioctl *ioc, const char *extra,
+ 			offset = offset + s->next;
+ 		} else {
+  misplaced:
+-			tprints(", misplaced struct dm_name_list");
++			tprints(", /* misplaced struct dm_name_list */ ...");
+ 			break;
+ 		}
+ 	}
+@@ -216,7 +216,8 @@ dm_decode_dm_target_versions(const struct dm_ioctl *ioc, const char *extra,
+ 			offset = offset + s->next;
+ 		} else {
+  misplaced:
+-			tprints(", misplaced struct dm_target_versions");
++			tprints(", /* misplaced struct dm_target_versions */ "
++				"...");
+ 			break;
+ 		}
+ 	}
+@@ -240,7 +241,7 @@ dm_decode_dm_target_msg(const struct dm_ioctl *ioc, const char *extra,
+ 				    QUOTE_0_TERMINATED);
+ 		tprints("}");
+ 	} else {
+-		tprints(", misplaced struct dm_target_msg");
++		tprints(", /* misplaced struct dm_target_msg */");
+ 	}
+ }
+ 
+@@ -255,7 +256,7 @@ dm_decode_string(const struct dm_ioctl *ioc, const char *extra,
+ 		print_quoted_string(extra + offset, extra_size - offset,
+ 				    QUOTE_0_TERMINATED);
+ 	} else {
+-		tprints(", misplaced string");
++		tprints(", /* misplaced string */");
+ 	}
+ }
+ 
+@@ -275,8 +276,10 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
+ 	 * if we use a different version of ABI, do not attempt to decode
+ 	 * ioctl fields
+ 	 */
+-	if (ioc.version[0] != DM_VERSION_MAJOR)
++	if (ioc.version[0] != DM_VERSION_MAJOR) {
++		tprints(", /* Unsupported device mapper ABI version */ ...");
+ 		goto skip;
++	}
+ 
+ 	if (ioc.data_size > sizeof(ioc)) {
+ 		extra = malloc(ioc.data_size);
+@@ -292,7 +295,9 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
+ 	dm_decode_device(code, &ioc);
+ 	dm_decode_values(tcp, code, &ioc);
+ 	dm_decode_flags(&ioc);
+-	if (!abbrev(tcp))
++	if (abbrev(tcp))
++		tprints(", ...");
++	else
+ 		switch (code) {
+ 		case DM_DEV_WAIT:
+ 		case DM_TABLE_STATUS:
+diff --git a/tests/ioctl_dm.c b/tests/ioctl_dm.c
+index cb6dd97..ba484ee 100644
+--- a/tests/ioctl_dm.c
++++ b/tests/ioctl_dm.c
+@@ -98,7 +98,7 @@ main(void)
+ 	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
+ 	       "uuid=\"uuu\", target_count=4294967295, flags=0, "
+ 	       "{sector_start=0, length=0, target_type=\"\", string=\"\"}, "
+-	       "misplaced struct dm_target_spec}, "
++	       "/* misplaced struct dm_target_spec */ ...}, "
+ 	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
+ 	       "uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
+ 
+-- 
+1.7.10.4
+
+
+------------------------------------------------------------------------------
+Check out the vibrant tech community on one of the world's most 
+engaging tech sites, SlashDot.org! http://sdm.link/slashdot
