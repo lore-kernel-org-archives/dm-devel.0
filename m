@@ -1,7 +1,7 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 20/21] dm: Fix printing of version field
-Date: Sun, 9 Oct 2016 16:31:35 +0300
-Message-ID: <20161009133135.GA4583@obsidian>
+Subject: [PATCH 19/21] dm: Add check whether command uses parameters
+Date: Sun, 9 Oct 2016 16:31:29 +0300
+Message-ID: <20161009133129.GA4492@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -23,26 +23,73 @@ Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR
 List-Id: dm-devel.ids
 
 ---
- dm.c |    6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ dm.c             |   25 ++++++++++++++++++++++---
+ tests/ioctl_dm.c |    2 +-
+ 2 files changed, 23 insertions(+), 4 deletions(-)
 
 diff --git a/dm.c b/dm.c
-index a48aa72..ff9e8ad 100644
+index caffc55..a48aa72 100644
 --- a/dm.c
 +++ b/dm.c
-@@ -342,7 +342,11 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
- 		return 1;
+@@ -281,6 +281,23 @@ dm_decode_string(const struct dm_ioctl *ioc, const char *extra,
+ 	}
+ }
+ 
++static inline bool
++dm_ioctl_has_params(const unsigned int code)
++{
++	switch (code) {
++	case DM_VERSION:
++	case DM_REMOVE_ALL:
++	case DM_DEV_CREATE:
++	case DM_DEV_REMOVE:
++	case DM_DEV_SUSPEND:
++	case DM_DEV_STATUS:
++	case DM_TABLE_CLEAR:
++		return false;
++	}
++
++	return true;
++}
++
+ static int
+ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
+ {
+@@ -336,8 +353,10 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
+ 		goto skip;
  	}
  
--	tprintf("%s{version=%d.%d.%d",  entering(tcp) ? ", " : " => ",
-+	/*
-+	 * device mapper code uses %d in some places and %u in another, but
-+	 * fields themselves are declared as __u32.
-+	 */
-+	tprintf("%s{version=%u.%u.%u",  entering(tcp) ? ", " : " => ",
- 		ioc->version[0], ioc->version[1], ioc->version[2]);
- 	/*
- 	 * if we use a different version of ABI, do not attempt to decode
+-	tprintf(", data_size=%u, data_start=%u",
+-		ioc->data_size, ioc->data_start);
++	tprintf(", data_size=%u", ioc->data_size);
++
++	if (dm_ioctl_has_params(code))
++		tprintf(", data_start=%u", ioc->data_start);
+ 
+ 	if (ioc->data_size < (sizeof(*ioc) - sizeof(ioc->data))) {
+ 		tprints(", /* Incorrect data_size */ ...");
+@@ -348,7 +367,7 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
+ 	dm_decode_values(tcp, code, ioc);
+ 	dm_decode_flags(ioc);
+ 
+-	if (ioc->data_size > sizeof(ioc)) {
++	if (dm_ioctl_has_params(code) && (ioc->data_size > sizeof(ioc))) {
+ 		extra = malloc(ioc->data_size);
+ 		if (extra) {
+ 			extra_size = ioc->data_size;
+diff --git a/tests/ioctl_dm.c b/tests/ioctl_dm.c
+index c120ed2..6ad4ea9 100644
+--- a/tests/ioctl_dm.c
++++ b/tests/ioctl_dm.c
+@@ -40,7 +40,7 @@ main(void)
+ 	init_s(&s.ioc, sizeof(s.ioc), 0);
+ 	ioctl(-1, DM_VERSION, &s);
+ 	printf("ioctl(-1, DM_VERSION, "
+-	       "{version=4.1.2, data_size=%zu, data_start=0, "
++	       "{version=4.1.2, data_size=%zu, "
+ 	       "dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0}) = "
+ 	       "-1 EBADF (%m)\n", sizeof(s.ioc));
+ 
 -- 
 1.7.10.4
 
