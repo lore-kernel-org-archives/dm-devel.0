@@ -1,8 +1,7 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 07/21] dm: Add definitions for ioctl commands not implemented
-	initially
-Date: Sun, 9 Oct 2016 16:29:55 +0300
-Message-ID: <20161009132955.GA3024@obsidian>
+Subject: [PATCH 05/21] xlat: Add values for dm_flags
+Date: Sun, 9 Oct 2016 16:29:41 +0300
+Message-ID: <20161009132941.GA2290@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -23,37 +22,65 @@ To: strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-dm.c [!DM_LIST_VERSIONS] (DM_LIST_VERSIONS): New definition.
-[!DM_TARGET_MSG] (DM_TARGET_MSG): Likewise.
-[!DM_DEV_SET_GEOMETRY] (DM_DEV_SET_GEOMETRY): Likewise.
----
- dm.c |   13 +++++++++++++
- 1 file changed, 13 insertions(+)
+Otherwise build fails on some old distros which lack DM_DATA_OUT_FLAG
+and other flags (excerpt from RHEL 5 build log):
 
-diff --git a/dm.c b/dm.c
-index 79bb7c7..66b615d 100644
---- a/dm.c
-+++ b/dm.c
-@@ -7,6 +7,19 @@
- 
- # if DM_VERSION_MAJOR == 4
- 
-+/* Definitions for command which have been added later */
-+
-+#  ifndef DM_LIST_VERSIONS
-+#   define DM_LIST_VERSIONS    _IOWR(DM_IOCTL, 0xd, struct dm_ioctl)
-+#  endif
-+#  ifndef DM_TARGET_MSG
-+#   define DM_TARGET_MSG       _IOWR(DM_IOCTL, 0xe, struct dm_ioctl)
-+#  endif
-+#  ifndef DM_DEV_SET_GEOMETRY
-+#   define DM_DEV_SET_GEOMETRY _IOWR(DM_IOCTL, 0xf, struct dm_ioctl)
-+#  endif
-+
-+
- static void
- dm_decode_device(const unsigned int code, const struct dm_ioctl *ioc)
- {
+[   66s] dm.c: In function 'dm_known_ioctl':
+[   66s] dm.c:311: error: 'DM_DATA_OUT_FLAG' undeclared (first use in this function)
+[   66s] dm.c:311: error: (Each undeclared identifier is reported only once
+[   66s] dm.c:311: error: for each function it appears in.)
+
+Curiously, EXISTS flags had been present in v1 of DM interface, but was
+removed in v4.
+
+* xlat/dm_flags.in: Add values for DM_*_FLAG constants (obtained from
+<linux/dm-ioctl.h>).
+---
+ xlat/dm_flags.in |   36 ++++++++++++++++++------------------
+ 1 file changed, 18 insertions(+), 18 deletions(-)
+
+diff --git a/xlat/dm_flags.in b/xlat/dm_flags.in
+index 1e7132b..fa734c8 100644
+--- a/xlat/dm_flags.in
++++ b/xlat/dm_flags.in
+@@ -1,19 +1,19 @@
+-DM_READONLY_FLAG
+-DM_SUSPEND_FLAG
++DM_READONLY_FLAG             (1 << 0)
++DM_SUSPEND_FLAG              (1 << 1)
+ /* Defined in lvm2/libdm/ioctl/libdm-iface.c */
+-DM_EXISTS_FLAG 0x00000004
+-DM_PERSISTENT_DEV_FLAG
+-DM_STATUS_TABLE_FLAG
+-DM_ACTIVE_PRESENT_FLAG
+-DM_INACTIVE_PRESENT_FLAG
+-DM_BUFFER_FULL_FLAG
+-DM_SKIP_BDGET_FLAG
+-DM_SKIP_LOCKFS_FLAG
+-DM_NOFLUSH_FLAG
+-DM_QUERY_INACTIVE_TABLE_FLAG
+-DM_UEVENT_GENERATED_FLAG
+-DM_UUID_FLAG
+-DM_SECURE_DATA_FLAG
+-DM_DATA_OUT_FLAG
+-DM_DEFERRED_REMOVE
+-DM_INTERNAL_SUSPEND_FLAG
++DM_EXISTS_FLAG               (1 << 2)
++DM_PERSISTENT_DEV_FLAG       (1 << 3)
++DM_STATUS_TABLE_FLAG         (1 << 4)
++DM_ACTIVE_PRESENT_FLAG       (1 << 5)
++DM_INACTIVE_PRESENT_FLAG     (1 << 6)
++DM_BUFFER_FULL_FLAG          (1 << 8)
++DM_SKIP_BDGET_FLAG           (1 << 9)
++DM_SKIP_LOCKFS_FLAG          (1 << 10)
++DM_NOFLUSH_FLAG              (1 << 11)
++DM_QUERY_INACTIVE_TABLE_FLAG (1 << 12)
++DM_UEVENT_GENERATED_FLAG     (1 << 13)
++DM_UUID_FLAG                 (1 << 14)
++DM_SECURE_DATA_FLAG          (1 << 15)
++DM_DATA_OUT_FLAG             (1 << 16)
++DM_DEFERRED_REMOVE           (1 << 17)
++DM_INTERNAL_SUSPEND_FLAG     (1 << 18)
 -- 
 1.7.10.4
 
