@@ -1,7 +1,8 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 17/21] dm: Add data_size and data_offset fields to output
-Date: Sun, 9 Oct 2016 16:31:16 +0300
-Message-ID: <20161009133116.GA4266@obsidian>
+Subject: [PATCH 18/21] tests/ioctl_dm: Allow passing size and data_start to
+	init_s
+Date: Sun, 9 Oct 2016 16:31:22 +0300
+Message-ID: <20161009133122.GA4364@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -23,115 +24,94 @@ Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR
 List-Id: dm-devel.ids
 
 ---
- dm.c             |    4 +++-
- tests/ioctl_dm.c |   41 ++++++++++++++++++++++++-----------------
- 2 files changed, 27 insertions(+), 18 deletions(-)
+ tests/ioctl_dm.c |   34 ++++++++++++++++------------------
+ 1 file changed, 16 insertions(+), 18 deletions(-)
 
-diff --git a/dm.c b/dm.c
-index 5c908c9..caffc55 100644
---- a/dm.c
-+++ b/dm.c
-@@ -327,7 +327,6 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
- 
- 	tprintf("%s{version=%d.%d.%d",  entering(tcp) ? ", " : " => ",
- 		ioc->version[0], ioc->version[1], ioc->version[2]);
--
- 	/*
- 	 * if we use a different version of ABI, do not attempt to decode
- 	 * ioctl fields
-@@ -337,6 +336,9 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
- 		goto skip;
- 	}
- 
-+	tprintf(", data_size=%u, data_start=%u",
-+		ioc->data_size, ioc->data_start);
-+
- 	if (ioc->data_size < (sizeof(*ioc) - sizeof(ioc->data))) {
- 		tprints(", /* Incorrect data_size */ ...");
- 		goto skip;
 diff --git a/tests/ioctl_dm.c b/tests/ioctl_dm.c
-index 94dbe93..6967ca2 100644
+index 6967ca2..c120ed2 100644
 --- a/tests/ioctl_dm.c
 +++ b/tests/ioctl_dm.c
-@@ -42,8 +42,9 @@ main(void)
- 	s.ioc.data_start = 0;
+@@ -21,32 +21,30 @@ static struct s {
+ 	} u;
+ } s;
+ 
+-static void init_s(void)
++static void init_s(struct dm_ioctl *s, size_t size, size_t offs)
+ {
+-	memset(&s, 0, sizeof s);
+-	s.ioc.version[0] = DM_VERSION_MAJOR;
+-	s.ioc.version[1] = 1;
+-	s.ioc.version[2] = 2;
+-	s.ioc.data_size = sizeof(s);
+-	s.ioc.data_start = offsetof(struct s, u);
+-	s.ioc.dev = 0x1234;
+-	strcpy(s.ioc.name, "nnn");
+-	strcpy(s.ioc.uuid, "uuu");
++	memset(s, 0, size);
++	s->version[0] = DM_VERSION_MAJOR;
++	s->version[1] = 1;
++	s->version[2] = 2;
++	s->data_size = size;
++	s->data_start = offs;
++	s->dev = 0x1234;
++	strcpy(s->name, "nnn");
++	strcpy(s->uuid, "uuu");
+ }
+ 
+ int
+ main(void)
+ {
+-	init_s();
+-	s.ioc.data_size = sizeof(s.ioc);
+-	s.ioc.data_start = 0;
++	init_s(&s.ioc, sizeof(s.ioc), 0);
  	ioctl(-1, DM_VERSION, &s);
  	printf("ioctl(-1, DM_VERSION, "
--	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
--	       "uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
-+	       "{version=4.1.2, data_size=%zu, data_start=0, "
-+	       "dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0}) = "
-+	       "-1 EBADF (%m)\n", sizeof(s.ioc));
+ 	       "{version=4.1.2, data_size=%zu, data_start=0, "
+ 	       "dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0}) = "
+ 	       "-1 EBADF (%m)\n", sizeof(s.ioc));
  
- 	init_s();
+-	init_s();
++	init_s(&s.ioc, sizeof(s), offsetof(struct s, u));
  	s.ioc.target_count = 1;
-@@ -55,10 +56,11 @@ main(void)
- 	strcpy(s.u.ts.target_params, "tparams");
- 	ioctl(-1, DM_TABLE_LOAD, &s);
- 	printf("ioctl(-1, DM_TABLE_LOAD, "
--	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
--	       "uuid=\"uuu\", target_count=1, flags=0, {sector_start=16, "
-+	       "{version=4.1.2, data_size=%u, data_start=%u, "
-+	       "dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", "
-+	       "target_count=1, flags=0, {sector_start=16, "
+ 	s.u.ts.target_spec.sector_start = 0x10;
+ 	s.u.ts.target_spec.length = 0x20;
+@@ -62,7 +60,7 @@ main(void)
  	       "length=32, target_type=\"tgt\", string=\"tparams\"}}) = "
--	       "-1 EBADF (%m)\n");
-+	       "-1 EBADF (%m)\n", s.ioc.data_size, s.ioc.data_start);
+ 	       "-1 EBADF (%m)\n", s.ioc.data_size, s.ioc.data_start);
  
- 	init_s();
+-	init_s();
++	init_s(&s.ioc, sizeof(s), offsetof(struct s, u));
  	s.u.tm.target_msg.sector = 0x1234;
-@@ -66,34 +68,39 @@ main(void)
+ 	strcpy(s.u.string + offsetof(struct dm_target_msg, message),
  		"tmsg");
- 	ioctl(-1, DM_TARGET_MSG, &s);
- 	printf("ioctl(-1, DM_TARGET_MSG, "
--	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
--	       "uuid=\"uuu\", flags=0, {sector=4660, message=\"tmsg\"}}) = "
--	       "-1 EBADF (%m)\n");
-+	       "{version=4.1.2, data_size=%u, data_start=%u, "
-+	       "dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0, "
-+	       "{sector=4660, message=\"tmsg\"}}) = -1 EBADF (%m)\n",
-+	       s.ioc.data_size, s.ioc.data_start);
+@@ -73,7 +71,7 @@ main(void)
+ 	       "{sector=4660, message=\"tmsg\"}}) = -1 EBADF (%m)\n",
+ 	       s.ioc.data_size, s.ioc.data_start);
  
- 	init_s();
+-	init_s();
++	init_s(&s.ioc, sizeof(s), offsetof(struct s, u));
  	strcpy(s.u.string, "10 20 30 40");
  	ioctl(-1, DM_DEV_SET_GEOMETRY, &s);
  	printf("ioctl(-1, DM_DEV_SET_GEOMETRY, "
--	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
--	       "uuid=\"uuu\", flags=0, string=\"10 20 30 40\"}) = "
--	       "-1 EBADF (%m)\n");
-+	       "{version=4.1.2, data_size=%u, data_start=%u, "
-+	       "dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0, "
-+	       "string=\"10 20 30 40\"}) = -1 EBADF (%m)\n",
-+	       s.ioc.data_size, s.ioc.data_start);
+@@ -82,7 +80,7 @@ main(void)
+ 	       "string=\"10 20 30 40\"}) = -1 EBADF (%m)\n",
+ 	       s.ioc.data_size, s.ioc.data_start);
  
- 	init_s();
+-	init_s();
++	init_s(&s.ioc, sizeof(s), offsetof(struct s, u));
  	strcpy(s.u.string, "new-name");
  	ioctl(-1, DM_DEV_RENAME, &s);
  	printf("ioctl(-1, DM_DEV_RENAME, "
--	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
--	       "uuid=\"uuu\", event_nr=0, flags=0, string=\"new-name\"}) = "
--	       "-1 EBADF (%m)\n");
-+	       "{version=4.1.2, data_size=%u, data_start=%u, "
-+	       "dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", event_nr=0, "
-+	       "flags=0, string=\"new-name\"}) = -1 EBADF (%m)\n",
-+	       s.ioc.data_size, s.ioc.data_start);
+@@ -91,7 +89,7 @@ main(void)
+ 	       "flags=0, string=\"new-name\"}) = -1 EBADF (%m)\n",
+ 	       s.ioc.data_size, s.ioc.data_start);
  
- 	init_s();
+-	init_s();
++	init_s(&s.ioc, sizeof(s), offsetof(struct s, u));
  	s.ioc.target_count = -1U;
  	ioctl(-1, DM_TABLE_LOAD, &s);
  	printf("ioctl(-1, DM_TABLE_LOAD, "
--	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
--	       "uuid=\"uuu\", target_count=4294967295, flags=0, "
-+	       "{version=4.1.2, data_size=%u, data_start=%u, "
-+	       "dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", "
-+	       "target_count=4294967295, flags=0, "
- 	       "{sector_start=0, length=0, target_type=\"\", string=\"\"}, "
--	       "/* misplaced struct dm_target_spec */ ...}) = -1 EBADF (%m)\n");
-+	       "/* misplaced struct dm_target_spec */ ...}) = -1 EBADF (%m)\n",
-+	       s.ioc.data_size, s.ioc.data_start);
- 
- 	puts("+++ exited with 0 +++");
- 	return 0;
 -- 
 1.7.10.4
 
