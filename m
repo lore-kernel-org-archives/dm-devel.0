@@ -1,7 +1,7 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 14/21] dm: replace abbrev branching with goto
-Date: Sun, 9 Oct 2016 16:30:56 +0300
-Message-ID: <20161009133056.GA3900@obsidian>
+Subject: [PATCH 15/21] dm: Additional data_size/data_start checks
+Date: Sun, 9 Oct 2016 16:31:02 +0300
+Message-ID: <20161009133102.GA4014@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -23,106 +23,35 @@ Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR
 List-Id: dm-devel.ids
 
 ---
- dm.c |   78 ++++++++++++++++++++++++++++++++++--------------------------------
- 1 file changed, 40 insertions(+), 38 deletions(-)
+ dm.c |    8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/dm.c b/dm.c
-index 73a9b57..814d7d2 100644
+index 814d7d2..289bc0d 100644
 --- a/dm.c
 +++ b/dm.c
-@@ -350,52 +350,54 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
- 			}
- 		}
+@@ -293,7 +293,8 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
+ 	if (!ioc)
+ 		return 0;
+ 
+-	if (umoven(tcp, arg, sizeof(*ioc) - sizeof(ioc->data), ioc) < 0) {
++	if ((umoven(tcp, arg, sizeof(*ioc) - sizeof(ioc->data), ioc) < 0) ||
++	    (ioc->data_size < offsetof(struct dm_ioctl, data_size))) {
+ 		free(ioc);
+ 		return 0;
  	}
--	if (abbrev(tcp))
-+
-+	if (abbrev(tcp)) {
- 		tprints(", ...");
--	else
--		switch (code) {
--		case DM_DEV_WAIT:
--		case DM_TABLE_STATUS:
--			if (entering(tcp) || syserror(tcp))
--				break;
--			dm_decode_dm_target_spec(tcp, ioc, extra, extra_size);
--			break;
--		case DM_TABLE_LOAD:
--			if (!entering(tcp))
--				break;
--			dm_decode_dm_target_spec(tcp, ioc, extra, extra_size);
+@@ -335,6 +336,11 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
+ 		goto skip;
+ 	}
+ 
++	if (ioc->data_size < (sizeof(*ioc) - sizeof(ioc->data))) {
++		tprints(", /* Incorrect data_size */ ...");
 +		goto skip;
 +	}
 +
-+	switch (code) {
-+	case DM_DEV_WAIT:
-+	case DM_TABLE_STATUS:
-+		if (entering(tcp) || syserror(tcp))
- 			break;
--		case DM_TABLE_DEPS:
--			if (entering(tcp) || syserror(tcp))
--				break;
--			dm_decode_dm_target_deps(ioc, extra, extra_size);
-+		dm_decode_dm_target_spec(tcp, ioc, extra, extra_size);
-+		break;
-+	case DM_TABLE_LOAD:
-+		if (!entering(tcp))
- 			break;
--		case DM_LIST_DEVICES:
--			if (entering(tcp) || syserror(tcp))
--				break;
--			dm_decode_dm_name_list(ioc, extra, extra_size);
-+		dm_decode_dm_target_spec(tcp, ioc, extra, extra_size);
-+		break;
-+	case DM_TABLE_DEPS:
-+		if (entering(tcp) || syserror(tcp))
- 			break;
--		case DM_LIST_VERSIONS:
--			if (entering(tcp) || syserror(tcp))
--				break;
--			dm_decode_dm_target_versions(ioc, extra, extra_size);
-+		dm_decode_dm_target_deps(ioc, extra, extra_size);
-+		break;
-+	case DM_LIST_DEVICES:
-+		if (entering(tcp) || syserror(tcp))
- 			break;
--		case DM_TARGET_MSG:
--			if (entering(tcp)) {
--				dm_decode_dm_target_msg(ioc, extra,
--							extra_size);
--			} else if (!syserror(tcp) &&
--			    ioc->flags & DM_DATA_OUT_FLAG) {
--				dm_decode_string(ioc, extra, extra_size);
--			}
-+		dm_decode_dm_name_list(ioc, extra, extra_size);
-+		break;
-+	case DM_LIST_VERSIONS:
-+		if (entering(tcp) || syserror(tcp))
- 			break;
--		case DM_DEV_RENAME:
--		case DM_DEV_SET_GEOMETRY:
--			if (!entering(tcp))
--				break;
-+		dm_decode_dm_target_versions(ioc, extra, extra_size);
-+		break;
-+	case DM_TARGET_MSG:
-+		if (entering(tcp)) {
-+			dm_decode_dm_target_msg(ioc, extra,
-+						extra_size);
-+		} else if (!syserror(tcp) && ioc->flags & DM_DATA_OUT_FLAG) {
- 			dm_decode_string(ioc, extra, extra_size);
--			break;
- 		}
-+		break;
-+	case DM_DEV_RENAME:
-+	case DM_DEV_SET_GEOMETRY:
-+		if (!entering(tcp))
-+			break;
-+		dm_decode_string(ioc, extra, extra_size);
-+		break;
-+	}
- 
-  skip:
- 	tprints("}");
+ 	dm_decode_device(code, ioc);
+ 	dm_decode_values(tcp, code, ioc);
+ 	dm_decode_flags(ioc);
 -- 
 1.7.10.4
 
