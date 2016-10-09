@@ -1,8 +1,8 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 06/21] dm: Some future-proofing by means of compile-time
-	DM_VERSION_MAJOR check
-Date: Sun, 9 Oct 2016 16:29:48 +0300
-Message-ID: <20161009132948.GA2910@obsidian>
+Subject: [PATCH 07/21] dm: Add definitions for ioctl commands not implemented
+	initially
+Date: Sun, 9 Oct 2016 16:29:55 +0300
+Message-ID: <20161009132955.GA3024@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -23,40 +23,37 @@ To: strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-* dm.c: Add check whether DM_VERSION_MAJOR equals to 4, provide empty
-dm_ioctl if check fails.
+dm.c [!DM_LIST_VERSIONS] (DM_LIST_VERSIONS): New definition.
+[!DM_TARGET_MSG] (DM_TARGET_MSG): Likewise.
+[!DM_DEV_SET_GEOMETRY] (DM_DEV_SET_GEOMETRY): Likewise.
 ---
- dm.c |   13 ++++++++++++-
- 1 file changed, 12 insertions(+), 1 deletion(-)
+ dm.c |   13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
 diff --git a/dm.c b/dm.c
-index ebdfc44..79bb7c7 100644
+index 79bb7c7..66b615d 100644
 --- a/dm.c
 +++ b/dm.c
-@@ -5,6 +5,8 @@
- # include <sys/ioctl.h>
- # include <linux/dm-ioctl.h>
+@@ -7,6 +7,19 @@
  
-+# if DM_VERSION_MAJOR == 4
+ # if DM_VERSION_MAJOR == 4
+ 
++/* Definitions for command which have been added later */
++
++#  ifndef DM_LIST_VERSIONS
++#   define DM_LIST_VERSIONS    _IOWR(DM_IOCTL, 0xd, struct dm_ioctl)
++#  endif
++#  ifndef DM_TARGET_MSG
++#   define DM_TARGET_MSG       _IOWR(DM_IOCTL, 0xe, struct dm_ioctl)
++#  endif
++#  ifndef DM_DEV_SET_GEOMETRY
++#   define DM_DEV_SET_GEOMETRY _IOWR(DM_IOCTL, 0xf, struct dm_ioctl)
++#  endif
++
 +
  static void
  dm_decode_device(const unsigned int code, const struct dm_ioctl *ioc)
  {
-@@ -375,4 +377,13 @@ dm_ioctl(struct tcb *tcp, const unsigned int code, long arg)
- 	}
- }
- 
--#endif
-+# else /* !(DM_VERSION_MAJOR == 4) */
-+
-+int
-+dm_ioctl(struct tcb *tcp, const unsigned int code, long arg)
-+{
-+	return 0;
-+}
-+
-+# endif /* DM_VERSION_MAJOR == 4 */
-+#endif /* HAVE_LINUX_DM_IOCTL_H */
 -- 
 1.7.10.4
 
