@@ -1,7 +1,7 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 00/21] Some possible additions to the DM ioctl patch for strace
-Date: Sun, 9 Oct 2016 16:27:52 +0300
-Message-ID: <20161009132752.GA28054@obsidian>
+Subject: [PATCH 01/21] tests/ioctl_dm: Formatting
+Date: Sun, 9 Oct 2016 16:28:30 +0300
+Message-ID: <20161009132830.GA1756@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -22,45 +22,88 @@ To: strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-Hello.
+---
+ tests/ioctl_dm.c |   42 +++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 35 insertions(+), 7 deletions(-)
 
-I've took the liberty to look at the patch and I'd like to propose some
-changes to it. Can you please review them from the DM side of things?
-I'm not quite sure I've understood all the specifics of the interface correctly,
-it's quite peculiar.
-
-I'm also preparing a patch for the DM ioctl decoder test, but it's not ready
-yet.
-
-Eugene Syromyatnikov (21):
-  tests/ioctl_dm: Formatting
-  dm: whitespace fixes
-  tests: Working around bounds check
-  dm: Minor output tweaks
-  xlat: Add values for dm_flags
-  dm: Some future-proofing by means of compile-time DM_VERSION_MAJOR
-    check
-  dm: Add definitions for ioctl commands not implemented initially
-  dm: Use static constants for offset sizes
-  dm: Remove char * cast
-  dm: use => instead of , for splitting output structure from input
-  dm: Compare entering field values with exiting ones
-  dm: Add inttypes.h, include reorder
-  dm: Move printing of dm_ioctl fields before allocation of extra data
-  dm: replace abbrev branching with goto
-  dm: Additional data_size/data_start checks
-  dm: Add comment regarding intended fall-through in switch statement
-  dm: Add data_size and data_offset fields to output
-  tests/ioctl_dm: Allow passing size and data_start to init_s
-  dm: Add check whether command uses parameters
-  dm: Fix printing of version field
-  dm: rewrite structure decoding
-
- dm.c             |  549 ++++++++++++++++++++++++++++++++++++------------------
- tests/ioctl_dm.c |   79 +++++---
- xlat/dm_flags.in |   36 ++--
- 3 files changed, 442 insertions(+), 222 deletions(-)
-
+diff --git a/tests/ioctl_dm.c b/tests/ioctl_dm.c
+index f4c3c8b..a5945ae 100644
+--- a/tests/ioctl_dm.c
++++ b/tests/ioctl_dm.c
+@@ -40,38 +40,66 @@ main(void)
+ 	s.ioc.data_size = sizeof(s.ioc);
+ 	s.ioc.data_start = 0;
+ 	ioctl(-1, DM_VERSION, &s);
+-	printf("ioctl(-1, DM_VERSION, {version=4.1.2, dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0}, {version=4.1.2, dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
++	printf("ioctl(-1, DM_VERSION, "
++	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
++	       "uuid=\"uuu\", flags=0}, "
++	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
++	       "uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
+ 
+ 	init_s();
+ 	s.ioc.target_count = 1;
+ 	s.u.ts.target_spec.sector_start = 0x10;
+ 	s.u.ts.target_spec.length = 0x20;
+-	s.u.ts.target_spec.next = sizeof(s.u.ts.target_spec) + sizeof(s.u.ts.target_params);
++	s.u.ts.target_spec.next =
++		sizeof(s.u.ts.target_spec) + sizeof(s.u.ts.target_params);
+ 	strcpy(s.u.ts.target_spec.target_type, "tgt");
+ 	strcpy(s.u.ts.target_params, "tparams");
+ 	ioctl(-1, DM_TABLE_LOAD, &s);
+-	printf("ioctl(-1, DM_TABLE_LOAD, {version=4.1.2, dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", target_count=1, flags=0, {sector_start=16, length=32, target_type=\"tgt\", string=\"tparams\"}}, {version=4.1.2, dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
++	printf("ioctl(-1, DM_TABLE_LOAD, "
++	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
++	       "uuid=\"uuu\", target_count=1, flags=0, {sector_start=16, "
++	       "length=32, target_type=\"tgt\", string=\"tparams\"}}, "
++	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
++	       "uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
+ 
+ 	init_s();
+ 	s.u.tm.target_msg.sector = 0x1234;
+ 	strcpy(s.u.tm.target_msg.message, "tmsg");
+ 	ioctl(-1, DM_TARGET_MSG, &s);
+-	printf("ioctl(-1, DM_TARGET_MSG, {version=4.1.2, dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0, {sector=4660, message=\"tmsg\"}}, {version=4.1.2, dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
++	printf("ioctl(-1, DM_TARGET_MSG, "
++	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
++	       "uuid=\"uuu\", flags=0, {sector=4660, message=\"tmsg\"}}, "
++	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
++	       "uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
+ 
+ 	init_s();
+ 	strcpy(s.u.string, "10 20 30 40");
+ 	ioctl(-1, DM_DEV_SET_GEOMETRY, &s);
+-	printf("ioctl(-1, DM_DEV_SET_GEOMETRY, {version=4.1.2, dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0, string=\"10 20 30 40\"}, {version=4.1.2, dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
++	printf("ioctl(-1, DM_DEV_SET_GEOMETRY, "
++	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
++	       "uuid=\"uuu\", flags=0, string=\"10 20 30 40\"}, "
++	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
++	       "uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
+ 
+ 	init_s();
+ 	strcpy(s.u.string, "new-name");
+ 	ioctl(-1, DM_DEV_RENAME, &s);
+-	printf("ioctl(-1, DM_DEV_RENAME, {version=4.1.2, dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", event_nr=0, flags=0, string=\"new-name\"}, {version=4.1.2, dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
++	printf("ioctl(-1, DM_DEV_RENAME, "
++	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
++	       "uuid=\"uuu\", event_nr=0, flags=0, string=\"new-name\"}, "
++	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
++	       "uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
+ 
+ 	init_s();
+ 	s.ioc.target_count = -1U;
+ 	ioctl(-1, DM_TABLE_LOAD, &s);
+-	printf("ioctl(-1, DM_TABLE_LOAD, {version=4.1.2, dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", target_count=4294967295, flags=0, {sector_start=0, length=0, target_type=\"\", string=\"\"}, misplaced struct dm_target_spec}, {version=4.1.2, dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
++	printf("ioctl(-1, DM_TABLE_LOAD, "
++	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
++	       "uuid=\"uuu\", target_count=4294967295, flags=0, "
++	       "{sector_start=0, length=0, target_type=\"\", string=\"\"}, "
++	       "misplaced struct dm_target_spec}, "
++	       "{version=4.1.2, dev=makedev(18, 52), name=\"nnn\", "
++	       "uuid=\"uuu\", flags=0}) = -1 EBADF (%m)\n");
+ 
+ 	puts("+++ exited with 0 +++");
+ 	return 0;
 -- 
 1.7.10.4
 
