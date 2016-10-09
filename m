@@ -1,8 +1,7 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 16/21] dm: Add comment regarding intended fall-through in
-	switch statement
-Date: Sun, 9 Oct 2016 16:31:09 +0300
-Message-ID: <20161009133109.GA4177@obsidian>
+Subject: [PATCH 20/21] dm: Fix printing of version field
+Date: Sun, 9 Oct 2016 16:31:35 +0300
+Message-ID: <20161009133135.GA4583@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -24,21 +23,26 @@ Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR
 List-Id: dm-devel.ids
 
 ---
- dm.c |    1 +
- 1 file changed, 1 insertion(+)
+ dm.c |    6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/dm.c b/dm.c
-index 289bc0d..5c908c9 100644
+index a48aa72..ff9e8ad 100644
 --- a/dm.c
 +++ b/dm.c
-@@ -60,6 +60,7 @@ dm_decode_values(struct tcb *tcp, const unsigned int code,
- 		case DM_DEV_SUSPEND:
- 			if (ioc->flags & DM_SUSPEND_FLAG)
- 				break;
-+			/* Fall through */
- 		case DM_DEV_RENAME:
- 		case DM_DEV_REMOVE:
- 		case DM_DEV_WAIT:
+@@ -342,7 +342,11 @@ dm_known_ioctl(struct tcb *tcp, const unsigned int code, long arg)
+ 		return 1;
+ 	}
+ 
+-	tprintf("%s{version=%d.%d.%d",  entering(tcp) ? ", " : " => ",
++	/*
++	 * device mapper code uses %d in some places and %u in another, but
++	 * fields themselves are declared as __u32.
++	 */
++	tprintf("%s{version=%u.%u.%u",  entering(tcp) ? ", " : " => ",
+ 		ioc->version[0], ioc->version[1], ioc->version[2]);
+ 	/*
+ 	 * if we use a different version of ABI, do not attempt to decode
 -- 
 1.7.10.4
 
