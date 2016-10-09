@@ -1,7 +1,7 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 05/21] xlat: Add values for dm_flags
-Date: Sun, 9 Oct 2016 16:29:41 +0300
-Message-ID: <20161009132941.GA2290@obsidian>
+Subject: [PATCH 08/21] dm: Use static constants for offset sizes
+Date: Sun, 9 Oct 2016 16:30:06 +0300
+Message-ID: <20161009133006.GA3129@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -22,65 +22,161 @@ To: strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-Otherwise build fails on some old distros which lack DM_DATA_OUT_FLAG
-and other flags (excerpt from RHEL 5 build log):
-
-[   66s] dm.c: In function 'dm_known_ioctl':
-[   66s] dm.c:311: error: 'DM_DATA_OUT_FLAG' undeclared (first use in this function)
-[   66s] dm.c:311: error: (Each undeclared identifier is reported only once
-[   66s] dm.c:311: error: for each function it appears in.)
-
-Curiously, EXISTS flags had been present in v1 of DM interface, but was
-removed in v4.
-
-* xlat/dm_flags.in: Add values for DM_*_FLAG constants (obtained from
-<linux/dm-ioctl.h>).
+This may improve readability an leads to more compact code.
 ---
- xlat/dm_flags.in |   36 ++++++++++++++++++------------------
- 1 file changed, 18 insertions(+), 18 deletions(-)
+ dm.c |   58 +++++++++++++++++++++++++++++++---------------------------
+ 1 file changed, 31 insertions(+), 27 deletions(-)
 
-diff --git a/xlat/dm_flags.in b/xlat/dm_flags.in
-index 1e7132b..fa734c8 100644
---- a/xlat/dm_flags.in
-+++ b/xlat/dm_flags.in
-@@ -1,19 +1,19 @@
--DM_READONLY_FLAG
--DM_SUSPEND_FLAG
-+DM_READONLY_FLAG             (1 << 0)
-+DM_SUSPEND_FLAG              (1 << 1)
- /* Defined in lvm2/libdm/ioctl/libdm-iface.c */
--DM_EXISTS_FLAG 0x00000004
--DM_PERSISTENT_DEV_FLAG
--DM_STATUS_TABLE_FLAG
--DM_ACTIVE_PRESENT_FLAG
--DM_INACTIVE_PRESENT_FLAG
--DM_BUFFER_FULL_FLAG
--DM_SKIP_BDGET_FLAG
--DM_SKIP_LOCKFS_FLAG
--DM_NOFLUSH_FLAG
--DM_QUERY_INACTIVE_TABLE_FLAG
--DM_UEVENT_GENERATED_FLAG
--DM_UUID_FLAG
--DM_SECURE_DATA_FLAG
--DM_DATA_OUT_FLAG
--DM_DEFERRED_REMOVE
--DM_INTERNAL_SUSPEND_FLAG
-+DM_EXISTS_FLAG               (1 << 2)
-+DM_PERSISTENT_DEV_FLAG       (1 << 3)
-+DM_STATUS_TABLE_FLAG         (1 << 4)
-+DM_ACTIVE_PRESENT_FLAG       (1 << 5)
-+DM_INACTIVE_PRESENT_FLAG     (1 << 6)
-+DM_BUFFER_FULL_FLAG          (1 << 8)
-+DM_SKIP_BDGET_FLAG           (1 << 9)
-+DM_SKIP_LOCKFS_FLAG          (1 << 10)
-+DM_NOFLUSH_FLAG              (1 << 11)
-+DM_QUERY_INACTIVE_TABLE_FLAG (1 << 12)
-+DM_UEVENT_GENERATED_FLAG     (1 << 13)
-+DM_UUID_FLAG                 (1 << 14)
-+DM_SECURE_DATA_FLAG          (1 << 15)
-+DM_DATA_OUT_FLAG             (1 << 16)
-+DM_DEFERRED_REMOVE           (1 << 17)
-+DM_INTERNAL_SUSPEND_FLAG     (1 << 18)
+diff --git a/dm.c b/dm.c
+index 66b615d..adfa97e 100644
+--- a/dm.c
++++ b/dm.c
+@@ -102,12 +102,14 @@ static void
+ dm_decode_dm_target_spec(struct tcb *tcp, const struct dm_ioctl *ioc,
+ 			 const char *extra, uint32_t extra_size)
+ {
++	static const uint32_t target_spec_size =
++		sizeof(struct dm_target_spec);
+ 	uint32_t i;
+ 	uint32_t offset = ioc->data_start;
+ 
+ 	for (i = 0; i < ioc->target_count; i++) {
+-		if (offset + (uint32_t) sizeof(struct dm_target_spec) >= offset &&
+-		    offset + (uint32_t) sizeof(struct dm_target_spec) < extra_size) {
++		if (offset + target_spec_size >= offset &&
++		    offset + target_spec_size < extra_size) {
+ 			uint32_t new_offset;
+ 			const struct dm_target_spec *s =
+ 				(const struct dm_target_spec *) (extra + offset);
+@@ -121,16 +123,14 @@ dm_decode_dm_target_spec(struct tcb *tcp, const struct dm_ioctl *ioc,
+ 					    QUOTE_0_TERMINATED);
+ 			tprints(", string=");
+ 			print_quoted_string((const char *) (s + 1), extra_size -
+-					    (offset +
+-					    sizeof(struct dm_target_spec)),
++					    (offset + target_spec_size),
+ 					    QUOTE_0_TERMINATED);
+ 			tprintf("}");
+ 			if (entering(tcp))
+ 				new_offset = offset + s->next;
+ 			else
+ 				new_offset = ioc->data_start + s->next;
+-			if (new_offset <= offset +
+-			    (uint32_t) sizeof(struct dm_target_spec))
++			if (new_offset <= offset + target_spec_size)
+ 				goto misplaced;
+ 			offset = new_offset;
+ 		} else {
+@@ -145,13 +145,15 @@ static void
+ dm_decode_dm_target_deps(const struct dm_ioctl *ioc, const char *extra,
+ 			 uint32_t extra_size)
+ {
++	static const uint32_t target_deps_dev_offs =
++		offsetof(struct dm_target_deps, dev);
+ 	uint32_t offset = ioc->data_start;
+-	if (offset + (uint32_t) offsetof(struct dm_target_deps, dev) >= offset &&
+-	    offset + (uint32_t) offsetof(struct dm_target_deps, dev) <= extra_size) {
+ 
++	if (offset + target_deps_dev_offs >= offset &&
++	    offset + target_deps_dev_offs <= extra_size) {
+ 		uint32_t i;
+-		uint32_t space = (extra_size - (offset +
+-			offsetof(struct dm_target_deps, dev))) / sizeof(__u64);
++		uint32_t space = (extra_size - offset - target_deps_dev_offs) /
++			sizeof(__u64);
+ 		const struct dm_target_deps *s =
+ 			(const struct dm_target_deps *) (extra + offset);
+ 
+@@ -173,11 +175,13 @@ static void
+ dm_decode_dm_name_list(const struct dm_ioctl *ioc, const char *extra,
+ 		       uint32_t extra_size)
+ {
++	static const uint32_t name_list_name_offs =
++		offsetof(struct dm_name_list, name);
+ 	uint32_t offset = ioc->data_start;
+ 
+ 	while (1) {
+-		if (offset + (uint32_t) offsetof(struct dm_name_list, name) >= offset &&
+-		    offset + (uint32_t) offsetof(struct dm_name_list, name) < extra_size) {
++		if (offset + name_list_name_offs >= offset &&
++		    offset + name_list_name_offs < extra_size) {
+ 			const struct dm_name_list *s =
+ 				(const struct dm_name_list *) (extra + offset);
+ 
+@@ -186,13 +190,12 @@ dm_decode_dm_name_list(const struct dm_ioctl *ioc, const char *extra,
+ 			tprintf(", {dev=makedev(%u, %u), name=", major(s->dev),
+ 				minor(s->dev));
+ 			print_quoted_string(s->name, extra_size - (offset +
+-					    offsetof(struct dm_name_list,
+-					    name)), QUOTE_0_TERMINATED);
++					    name_list_name_offs),
++					    QUOTE_0_TERMINATED);
+ 			tprints("}");
+ 			if (!s->next)
+ 				break;
+-			if (offset + s->next <= offset +
+-			    (uint32_t) offsetof(struct dm_name_list, name))
++			if (offset + s->next <= offset + name_list_name_offs)
+ 				goto misplaced;
+ 			offset = offset + s->next;
+ 		} else {
+@@ -207,26 +210,25 @@ static void
+ dm_decode_dm_target_versions(const struct dm_ioctl *ioc, const char *extra,
+ 			     uint32_t extra_size)
+ {
++	static const uint32_t target_vers_name_offs =
++		offsetof(struct dm_target_versions, name);
+ 	uint32_t offset = ioc->data_start;
+ 
+ 	while (1) {
+-		if (offset + (uint32_t) offsetof(struct dm_target_versions, name) >=
+-		    offset &&
+-		    offset + (uint32_t) offsetof(struct dm_target_versions, name) <
+-		    extra_size) {
++		if (offset + target_vers_name_offs >= offset &&
++		    offset + target_vers_name_offs < extra_size) {
+ 			const struct dm_target_versions *s =
+ 			    (const struct dm_target_versions *)(extra + offset);
+ 
+ 			tprints(", {name=");
+ 			print_quoted_string(s->name, extra_size - (offset +
+-					    offsetof(struct dm_target_versions,
+-					    name)), QUOTE_0_TERMINATED);
++					    target_vers_name_offs),
++					    QUOTE_0_TERMINATED);
+ 			tprintf(", version=%" PRIu32 ".%" PRIu32 ".%" PRIu32 "}",
+ 				s->version[0], s->version[1], s->version[2]);
+ 			if (!s->next)
+ 				break;
+-			if (offset + s->next <= offset +
+-			    (uint32_t) offsetof(struct dm_target_versions, name))
++			if (offset + s->next <= offset + target_vers_name_offs)
+ 				goto misplaced;
+ 			offset = offset + s->next;
+ 		} else {
+@@ -242,17 +244,19 @@ static void
+ dm_decode_dm_target_msg(const struct dm_ioctl *ioc, const char *extra,
+ 			uint32_t extra_size)
+ {
++	static const uint32_t target_msg_message_offs =
++		offsetof(struct dm_target_msg, message);
+ 	uint32_t offset = ioc->data_start;
+ 
+-	if (offset + (uint32_t) offsetof(struct dm_target_msg, message) >= offset &&
+-	    offset + (uint32_t) offsetof(struct dm_target_msg, message) < extra_size) {
++	if (offset + target_msg_message_offs >= offset &&
++	    offset + target_msg_message_offs < extra_size) {
+ 		const struct dm_target_msg *s =
+ 			(const struct dm_target_msg *) (extra + offset);
+ 
+ 		tprintf(", {sector=%" PRIu64 ", message=",
+ 			(uint64_t) s->sector);
+ 		print_quoted_string(s->message, extra_size -
+-				    offsetof(struct dm_target_msg, message),
++				    target_msg_message_offs,
+ 				    QUOTE_0_TERMINATED);
+ 		tprints("}");
+ 	} else {
 -- 
 1.7.10.4
 
