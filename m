@@ -1,13 +1,13 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH] multipath-tools: use internal drd.h file
-Date: Mon, 10 Oct 2016 13:01:23 -0700
-Message-ID: <b40d2cee-ea80-24c1-54d8-58c109a044b2@sandisk.com>
-References: <20161008202212.11963-1-xose.vazquez@gmail.com>
+Subject: Re: [PATCH 00/15] Fifteen multipath-tools patches
+Date: Mon, 10 Oct 2016 13:34:43 -0700
+Message-ID: <971ae354-4705-78c0-ad3b-3acf26a89380@sandisk.com>
+References: <201610081005252322566@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161008202212.11963-1-xose.vazquez@gmail.com>
+In-Reply-To: <201610081005252322566@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,59 +17,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: tang.junhui@zte.com.cn, christophe.varoqui@opensvc.com
+Cc: bart.vanassche@sandisk.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 10/08/2016 01:22 PM, Xose Vazquez Perez wrote:
-> Cc: Bart Van Assche <bart.vanassche@sandisk.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/debug.c | 2 +-
->  multipathd/main.c    | 2 +-
->  2 files changed, 2 insertions(+), 2 deletions(-)
+On 10/07/2016 07:05 PM, tang.junhui@zte.com.cn wrote:
+> "0007-multipathd-Fix-a-data-race.patch"
 >
-> diff --git a/libmultipath/debug.c b/libmultipath/debug.c
-> index 295136c..fbe171a 100644
-> --- a/libmultipath/debug.c
-> +++ b/libmultipath/debug.c
-> @@ -8,7 +8,7 @@
->  #include "log_pthread.h"
->  #include <sys/types.h>
->  #include <time.h>
-> -#include <../third-party/valgrind/drd.h>
-> +#include "../third-party/valgrind/drd.h"
->  #include "vector.h"
->  #include "config.h"
+> This patch solved the data race problem,
 >
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index cdfafe8..0998085 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -23,7 +23,6 @@
->  #endif
->  #include <semaphore.h>
->  #include <time.h>
-> -#include <valgrind/drd.h>
+> but the assignment for paths check interval has no effect,
 >
->  /*
->   * libmultipath
-> @@ -85,6 +84,7 @@ int uxsock_timeout;
->  #include "lock.h"
->  #include "waiter.h"
->  #include "wwids.h"
-> +#include "../third-party/valgrind/drd.h"
+> since there is no path in vecs when calling
+> init_path_check_interval(vecs) in child(),
 >
->  #define FILE_NAME_SIZE 256
->  #define CMDSIZE 160
+> I think it is better to call
+>  init_path_check_interval(vecs) at reconfigure() or configure()
+>
+> after the paths has created in vecs .
 
-Hello Xose,
+Hello Tang,
 
-The patch description is slightly misleading. I don't think anyone has a 
-/usr/third-party directory on her or his system so #include 
-<../third-party/valgrind/drd.h> will select the internal drd.h header 
-file. However, that first change improves consistency:
+If init_path_check_interval() doesn't have any effect then I propose to 
+remove that function. pp->checkint is namely already initialized in 
+cli_add_path().
 
-Reviewed-by: Bart Van Assche <bart.vanassche@sandisk.com>
+Bart.
