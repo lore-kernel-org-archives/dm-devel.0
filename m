@@ -1,15 +1,12 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH 15/15] Makefile.inc: Enable -Wextra and
- -Wformat-nonliteral
-Date: Mon, 10 Oct 2016 23:51:03 +0200
-Message-ID: <31744465-5fec-9eb8-760d-9fe55e2707af@gmail.com>
-References: <e3558026-9180-42a3-97ae-1f8fe66938de@gmail.com>
-	<ed6d4ecb-9460-d11a-da65-fea477fb6ac8@sandisk.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: [PATCH] libmultipath/checkers/tur: Fix a recently
+	introduced deadlock
+Date: Mon, 10 Oct 2016 16:12:28 -0700
+Message-ID: <424be81f-7f4b-db0f-a09d-cd4f14a8407a@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <ed6d4ecb-9460-d11a-da65-fea477fb6ac8@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,16 +16,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 10/10/2016 09:55 PM, Bart Van Assche wrote:
+Avoid that the tur_devt() call from libcheck_check() hangs.
 
-> On 10/10/2016 12:17 PM, Xose Vazquez Perez wrote:
->>
->> With this patch, clang is emitting four new warnings:
->
-> -Wformat-nonliteral helped me to catch a real bug. How about suppressing these warnings with a #pragma statement (see also
-> http://clang.llvm.org/docs/UsersManual.html#controlling-diagnostics-via-pragmas)?
+Fixes: commit 873be9fef222 ("libmultipath/checkers/tur: Serialize tur_checker_context.devt accesses")
+Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+---
+ libmultipath/checkers/tur.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-I don't know if it's worth pollutes the code to save a pair of clang warnings.
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index a7a70f6..81206e4 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -64,6 +64,7 @@ static const char *tur_devt(char *devt_buf, int size,
+ int libcheck_init (struct checker * c)
+ {
+ 	struct tur_checker_context *ct;
++	pthread_mutexattr_t attr;
+ 
+ 	ct = malloc(sizeof(struct tur_checker_context));
+ 	if (!ct)
+@@ -74,7 +75,10 @@ int libcheck_init (struct checker * c)
+ 	ct->fd = -1;
+ 	ct->holders = 1;
+ 	pthread_cond_init_mono(&ct->active);
+-	pthread_mutex_init(&ct->lock, NULL);
++	pthread_mutexattr_init(&attr);
++	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
++	pthread_mutex_init(&ct->lock, &attr);
++	pthread_mutexattr_destroy(&attr);
+ 	pthread_spin_init(&ct->hldr_lock, PTHREAD_PROCESS_PRIVATE);
+ 	c->context = ct;
+ 
+-- 
+2.10.0
