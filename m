@@ -1,13 +1,15 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH 00/15] Fifteen multipath-tools patches
-Date: Mon, 10 Oct 2016 13:34:43 -0700
-Message-ID: <971ae354-4705-78c0-ad3b-3acf26a89380@sandisk.com>
-References: <201610081005252322566@zte.com.cn>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm raid1: "mirror" target doesn't use all available
+ legs on multiple failures
+Date: Mon, 10 Oct 2016 16:41:27 -0400
+Message-ID: <20161010204126.GA20089@redhat.com>
+References: <1476118086-2975-1-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <201610081005252322566@zte.com.cn>
+Content-Disposition: inline
+In-Reply-To: <1476118086-2975-1-git-send-email-heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,29 +19,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: tang.junhui@zte.com.cn, christophe.varoqui@opensvc.com
-Cc: bart.vanassche@sandisk.com, dm-devel@redhat.com
+To: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 10/07/2016 07:05 PM, tang.junhui@zte.com.cn wrote:
-> "0007-multipathd-Fix-a-data-race.patch"
->
-> This patch solved the data race problem,
->
-> but the assignment for paths check interval has no effect,
->
-> since there is no path in vecs when calling
-> init_path_check_interval(vecs) in child(),
->
-> I think it is better to call
->  init_path_check_interval(vecs) at reconfigure() or configure()
->
-> after the paths has created in vecs .
+On Mon, Oct 10 2016 at 12:48pm -0400,
+Heinz Mauelshagen <heinzm@redhat.com> wrote:
 
-Hello Tang,
+> In case legs of a "mirror" target fail, any read will cause a new,
+> operational default leg to be selected and the read be resubmitted
+> to it. If that new default leg fails the read too, no other still
+> accessible legs are used to resubmit the read again thus failing
+> the io.
+> 
+> Fix by allowing the read to get resubmitted until there's no
+> operational legs any more.
+> 
+> Resolves: rhbz1383444
+> 
+> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 
-If init_path_check_interval() doesn't have any effect then I propose to 
-remove that function. pp->checkint is namely already initialized in 
-cli_add_path().
+Nothing seems to be checking bio_record->details.bi_bdev anymore.
+(The one you've removed really seems like a complete hack to begin with)
 
-Bart.
+Shouldn't this patch go further by removing the other 2 places that set
+bio_record->details.bi_bdev = NULL; ? 
+
+> ---
+>  drivers/md/dm-raid1.c | 11 -----------
+>  1 file changed, 11 deletions(-)
+> 
+> diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+> index 7a6254d..dd31019 100644
+> --- a/drivers/md/dm-raid1.c
+> +++ b/drivers/md/dm-raid1.c
+> @@ -1266,16 +1266,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
+>  		goto out;
+>  
+>  	if (unlikely(error)) {
+> -		if (!bio_record->details.bi_bdev) {
+> -			/*
+> -			 * There wasn't enough memory to record necessary
+> -			 * information for a retry or there was no other
+> -			 * mirror in-sync.
+> -			 */
+> -			DMERR_LIMIT("Mirror read failed.");
+> -			return -EIO;
+> -		}
+> -
+>  		m = bio_record->m;
+>  
+>  		DMERR("Mirror read failed from %s. Trying alternative device.",
+> @@ -1291,7 +1281,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
+>  			bd = &bio_record->details;
+>  
+>  			dm_bio_restore(bd, bio);
+> -			bio_record->details.bi_bdev = NULL;
+>  			bio->bi_error = 0;
+>  
+>  			queue_bio(ms, bio, rw);
+> -- 
+> 2.7.4
+> 
