@@ -1,8 +1,8 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH] dm raid1: "mirror" target read error on default
-	leg failure
-Date: Mon, 10 Oct 2016 17:58:23 +0200
-Message-ID: <1476115103-23203-1-git-send-email-heinzm@redhat.com>
+Subject: [PATCH] dm raid1: "mirror" target doesn't use all
+	available legs on multiple failures
+Date: Mon, 10 Oct 2016 18:48:06 +0200
+Message-ID: <1476118086-2975-1-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -17,34 +17,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-In case the default leg of a "mirror" target fails, any read will
-cause a new, operational default leg to be selected and the read be
-resubmitted to it. Nonetheless that io succeeds, an error will be
-reported back because bio->bi_error was not cleared properly.
+In case legs of a "mirror" target fail, any read will cause a new,
+operational default leg to be selected and the read be resubmitted
+to it. If that new default leg fails the read too, no other still
+accessible legs are used to resubmit the read again thus failing
+the io.
 
-Fix by clearing bio->bi_error before resubmission.
+Fix by allowing the read to get resubmitted until there's no
+operational legs any more.
 
-Resolves: rhbz1382516
+Resolves: rhbz1383444
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid1.c | 1 +
- 1 file changed, 1 insertion(+)
+ drivers/md/dm-raid1.c | 11 -----------
+ 1 file changed, 11 deletions(-)
 
 diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index bdf1606..7a6254d 100644
+index 7a6254d..dd31019 100644
 --- a/drivers/md/dm-raid1.c
 +++ b/drivers/md/dm-raid1.c
-@@ -1292,6 +1292,7 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
+@@ -1266,16 +1266,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 		goto out;
+ 
+ 	if (unlikely(error)) {
+-		if (!bio_record->details.bi_bdev) {
+-			/*
+-			 * There wasn't enough memory to record necessary
+-			 * information for a retry or there was no other
+-			 * mirror in-sync.
+-			 */
+-			DMERR_LIMIT("Mirror read failed.");
+-			return -EIO;
+-		}
+-
+ 		m = bio_record->m;
+ 
+ 		DMERR("Mirror read failed from %s. Trying alternative device.",
+@@ -1291,7 +1281,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 			bd = &bio_record->details;
  
  			dm_bio_restore(bd, bio);
- 			bio_record->details.bi_bdev = NULL;
-+			bio->bi_error = 0;
+-			bio_record->details.bi_bdev = NULL;
+ 			bio->bi_error = 0;
  
  			queue_bio(ms, bio, rw);
- 			return DM_ENDIO_INCOMPLETE;
 -- 
 2.7.4
