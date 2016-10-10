@@ -1,26 +1,50 @@
-From: Tahsin Erdogan <tahsin@google.com>
-Subject: Re: dm: free io_barrier after blk_cleanup_queue call
-Date: Mon, 10 Oct 2016 07:52:05 -0700
-Message-ID: <CAAeU0aMcaaMehJ31ANVFrwrC7YiCLW1dPosNujFtNyG9nOcC+g@mail.gmail.com>
-References: <1476102919-25112-1-git-send-email-tahsin@google.com> <20161010132542.GA17958@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH] dm raid1: "mirror" target read error on default
+	leg failure
+Date: Mon, 10 Oct 2016 17:58:23 +0200
+Message-ID: <1476115103-23203-1-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161010132542.GA17958@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Oct 10, 2016 at 6:25 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> I have to believe this was born out of code inspection rather than
-> actual need (due to crash, etc)?
+In case the default leg of a "mirror" target fails, any read will
+cause a new, operational default leg to be selected and the read be
+resubmitted to it. Nonetheless that io succeeds, an error will be
+reported back because bio->bi_error was not cleared properly.
 
-This got originated from several crashes I have seen with 4.3 kernel.
-The crashes
-were caused by null dereferencing of io_barrier->per_cpu_ref.
+Fix by clearing bio->bi_error before resubmission.
 
-The issue may no longer be relevant after commit c91852ff0815
-("dm: optimize dm_request_fn()") because conditions for accessing
-io_barrier may not longer exist. But fix should be considered for
-forked stable trees.
+Resolves: rhbz1382516
+
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/dm-raid1.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index bdf1606..7a6254d 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -1292,6 +1292,7 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 
+ 			dm_bio_restore(bd, bio);
+ 			bio_record->details.bi_bdev = NULL;
++			bio->bi_error = 0;
+ 
+ 			queue_bio(ms, bio, rw);
+ 			return DM_ENDIO_INCOMPLETE;
+-- 
+2.7.4
