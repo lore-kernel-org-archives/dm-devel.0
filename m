@@ -1,8 +1,8 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH] dm raid1: "mirror" target doesn't use all
-	available legs on multiple failures
-Date: Mon, 10 Oct 2016 18:48:06 +0200
-Message-ID: <1476118086-2975-1-git-send-email-heinzm@redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH 15/15] Makefile.inc: Enable -Wextra and
+ -Wformat-nonliteral
+Date: Mon, 10 Oct 2016 21:17:44 +0200
+Message-ID: <e3558026-9180-42a3-97ae-1f8fe66938de@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,54 +16,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, snitzer@redhat.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-In case legs of a "mirror" target fail, any read will cause a new,
-operational default leg to be selected and the read be resubmitted
-to it. If that new default leg fails the read too, no other still
-accessible legs are used to resubmit the read again thus failing
-the io.
+Hi Bart,
 
-Fix by allowing the read to get resubmitted until there's no
-operational legs any more.
+With this patch, clang is emitting four new warnings:
 
-Resolves: rhbz1383444
+> Instead of selecting some of the options enabled by -Wextra, enable
+> -Wextra and disable some of the options enabled by -Wextra. Enable
+> -Wformat-nonliteral.
+>
+> --- a/Makefile.inc
+> +++ b/Makefile.inc
+>  [...]
+> -OPTFLAGS	= -Wunused -Wstrict-prototypes -O2 -g -pipe -Wformat-security -Wall \
+> -		  -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector --param=ssp-buffer-size=4
+> +OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 \
+> +		  -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered\
+> +		  -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector \
+> +		  --param=ssp-buffer-size=4
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
----
- drivers/md/dm-raid1.c | 11 -----------
- 1 file changed, 11 deletions(-)
 
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index 7a6254d..dd31019 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -1266,16 +1266,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
- 		goto out;
- 
- 	if (unlikely(error)) {
--		if (!bio_record->details.bi_bdev) {
--			/*
--			 * There wasn't enough memory to record necessary
--			 * information for a retry or there was no other
--			 * mirror in-sync.
--			 */
--			DMERR_LIMIT("Mirror read failed.");
--			return -EIO;
--		}
--
- 		m = bio_record->m;
- 
- 		DMERR("Mirror read failed from %s. Trying alternative device.",
-@@ -1291,7 +1281,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
- 			bd = &bio_record->details;
- 
- 			dm_bio_restore(bd, bio);
--			bio_record->details.bi_bdev = NULL;
- 			bio->bi_error = 0;
- 
- 			queue_bio(ms, bio, rw);
--- 
-2.7.4
+clang -O2 -g -pipe -Wall -Wextra -Wformat=2 -Wno-sign-compare -Wno-unused-parameter -fstack-protector --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -I../libmpathcmd
+-DUSE_SYSTEMD=229 -DLIBDM_API_FLUSH -D_GNU_SOURCE -DLIBDM_API_COOKIE -DLIBUDEV_API_RECVBUF -DLIBDM_API_DEFERRED -c -o devmapper.o devmapper.c
+devmapper.c:86:20: warning: format string is not a string literal [-Wformat-nonliteral]
+                vfprintf(stdout, f, ap);
+                                 ^
+1 warning generated.
+
+clang -O2 -g -pipe -Wall -Wextra -Wformat=2 -Wno-sign-compare -Wno-unused-parameter -fstack-protector --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -I../libmpathcmd
+-DUSE_SYSTEMD=229 -DLIBDM_API_FLUSH -D_GNU_SOURCE -DLIBDM_API_COOKIE -DLIBUDEV_API_RECVBUF -DLIBDM_API_DEFERRED -c -o debug.o debug.c
+debug.c:41:21: warning: format string is not a string literal [-Wformat-nonliteral]
+                        vfprintf(stdout, fmt, ap);
+                                         ^~~
+1 warning generated.
+
+clang -O2 -g -pipe -Wall -Wextra -Wformat=2 -Wno-sign-compare -Wno-unused-parameter -fstack-protector --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -I../libmpathcmd
+-DUSE_SYSTEMD=229 -DLIBDM_API_FLUSH -D_GNU_SOURCE -DLIBDM_API_COOKIE -DLIBUDEV_API_RECVBUF -DLIBDM_API_DEFERRED -c -o log_pthread.o log_pthread.c
+log_pthread.c:28:17: warning: format string is not a string literal [-Wformat-nonliteral]
+                vsyslog(prio, fmt, ap);
+                              ^~~
+1 warning generated.
+
+clang -O2 -g -pipe -Wall -Wextra -Wformat=2 -Wno-sign-compare -Wno-unused-parameter -fstack-protector --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -I../libmpathcmd
+-DUSE_SYSTEMD=229 -DLIBDM_API_FLUSH -D_GNU_SOURCE -DLIBDM_API_COOKIE -DLIBUDEV_API_RECVBUF -DLIBDM_API_DEFERRED -c -o log.o log.c
+log.c:121:32: warning: format string is not a string literal [-Wformat-nonliteral]
+        vsnprintf(buff, MAX_MSG_SIZE, fmt, ap);
+                                      ^~~
+1 warning generated.
