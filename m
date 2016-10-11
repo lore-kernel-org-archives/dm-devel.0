@@ -1,7 +1,8 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 4/9] tests/ioctl_dm: whitespace
-Date: Wed, 12 Oct 2016 01:38:32 +0300
-Message-ID: <20161011223832.GA8730@obsidian>
+Subject: [PATCH 5/9] dm: Fix comma printing for the case when dm_target_msg
+	structure is inaccessible
+Date: Wed, 12 Oct 2016 01:38:42 +0300
+Message-ID: <20161011223842.GA8831@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -23,23 +24,27 @@ Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR
 List-Id: dm-devel.ids
 
 ---
- tests/ioctl_dm.c |    3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ dm.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/tests/ioctl_dm.c b/tests/ioctl_dm.c
-index 5f2689c..261983c 100644
---- a/tests/ioctl_dm.c
-+++ b/tests/ioctl_dm.c
-@@ -24,7 +24,8 @@ static struct s {
- 	} u;
- } s;
+diff --git a/dm.c b/dm.c
+index d846233..b1d455c 100644
+--- a/dm.c
++++ b/dm.c
+@@ -342,10 +342,12 @@ dm_decode_dm_target_msg(struct tcb *tcp, unsigned long addr,
+ 	    offset + target_msg_message_offs <= ioc->data_size) {
+ 		struct dm_target_msg s;
  
--static void init_s(struct dm_ioctl *s, size_t size, size_t offs)
-+static void
-+init_s(struct dm_ioctl *s, size_t size, size_t offs)
- {
- 	memset(s, 0, size);
- 	s->version[0] = DM_VERSION_MAJOR;
++		tprints(", ");
++
+ 		if (umove_or_printaddr(tcp, addr + offset, &s))
+ 			return;
+ 
+-		tprintf(", {sector=%" PRI__u64 ", message=", s.sector);
++		tprintf("{sector=%" PRI__u64 ", message=", s.sector);
+ 		printstr_ex(tcp, addr + offset + target_msg_message_offs,
+ 			    ioc->data_size - offset - target_msg_message_offs,
+ 			    QUOTE_0_TERMINATED);
 -- 
 1.7.10.4
 
