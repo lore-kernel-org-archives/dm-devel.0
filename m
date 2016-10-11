@@ -1,7 +1,7 @@
 From: Mike Christie <mchristi@redhat.com>
-Subject: [PATCH 1/5] rbd: fix sync repair support
-Date: Tue, 11 Oct 2016 16:36:51 -0500
-Message-ID: <1476221815-17900-2-git-send-email-mchristi@redhat.com>
+Subject: [PATCH 2/5] rbd: check for nonshared clients
+Date: Tue, 11 Oct 2016 16:36:52 -0500
+Message-ID: <1476221815-17900-3-git-send-email-mchristi@redhat.com>
 References: <1476221815-17900-1-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,26 +21,29 @@ To: dm-devel@redhat.com, christophe.varoqui@opensvc.com
 Cc: Mike Christie <mchristi@redhat.com>
 List-Id: dm-devel.ids
 
-If sync was set we were calling check instead
-of function passed in.
+The rbd checker only supports nonshared clients so add a check
+during init time.
 
 Signed-off-by: Mike Christie <mchristi@redhat.com>
 ---
- libmultipath/checkers/rbd.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/checkers/rbd.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
 diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
-index bfec2c9..8f88154 100644
+index 8f88154..f0497db 100644
 --- a/libmultipath/checkers/rbd.c
 +++ b/libmultipath/checkers/rbd.c
-@@ -552,7 +552,7 @@ static int rbd_exec_fn(struct checker *c, thread_fn *fn)
- 	int rbd_status, r;
+@@ -124,6 +124,11 @@ int libcheck_init(struct checker * c)
+ 	if (!config_info)
+ 		goto free_addr;
  
- 	if (c->sync)
--		return rbd_check(ct, c->message);
-+		return fn(ct, c->message);
- 	/*
- 	 * Async mode
- 	 */
++	if (!strstr(config_info, "noshare")) {
++		condlog(3, "Only nonshared clients supported.");
++		goto free_addr;
++	}
++
+ 	ct->config_info = strdup(config_info);
+ 	if (!ct->config_info)
+ 		goto free_addr;
 -- 
 2.7.2
