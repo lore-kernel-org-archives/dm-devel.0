@@ -1,16 +1,12 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] libmultipath: fix multipath -q command logic
-Date: Tue, 11 Oct 2016 12:33:43 +0200
-Message-ID: <48fb8d6b-b428-4f2f-a6df-4b566a04616d@suse.de>
-References: <1471347138-12032-1-git-send-email-tang.junhui@zte.com.cn>
-	<OF381EB462.38223C0B-ON48258049.0024FE75-48258049.00253123@zte.com.cn>
-	<CABr-GndYg_0cXdWWDMXtZt=0RjmJmT_hydSk-B7=d=QNWMPOqQ@mail.gmail.com>
-	<OF49F7969B.B27015BD-ON48258049.00328EDA-48258049.00330CC8@zte.com.cn>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: preload also scsi_dh_hp_sw
+	before run multipathd
+Date: Tue, 11 Oct 2016 14:55:15 +0200
+Message-ID: <20161011125515.8523-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <OF49F7969B.B27015BD-ON48258049.00328EDA-48258049.00330CC8@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,45 +16,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: tang.junhui@zte.com.cn, bmarzins@redhat.com
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>, zhang.kai16@zte.com.cn
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gMTAvMTEvMjAxNiAxMToxNyBBTSwgdGFuZy5qdW5odWlAenRlLmNvbS5jbiB3cm90ZToKPiBI
-ZWxsbyBIYW5uZXMsIEJlbiwKPiBDb3VsZCB5b3UgaGF2ZSBhIHJldmlldyBmb3IgdGhpcyBwYXRj
-aCwgYW55IGNvbW1lbnQgd2lsbCBiZSBoaWdobHkKPiBhcHByZWNpYXRlZC4KPgo+IFRoYW5rcywK
-PiBUYW5nCj4KPgo+Cj4KPiDlj5Hku7bkuro6ICAgICAgICAgQ2hyaXN0b3BoZSBWYXJvcXVpIDxj
-aHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20+Cj4g5pS25Lu25Lq6OiAgICAgICAgIHRhbmcu
-anVuaHVpQHp0ZS5jb20uY24sCj4g5oqE6YCBOiAgICAgICAgQmFydCBWYW4gQXNzY2hlIDxiYXJ0
-LnZhbmFzc2NoZUBzYW5kaXNrLmNvbT4sIGRldmljZS1tYXBwZXIKPiBkZXZlbG9wbWVudCA8ZG0t
-ZGV2ZWxAcmVkaGF0LmNvbT4sIHpoYW5nLmthaTE2QHp0ZS5jb20uY24KPiDml6XmnJ86ICAgICAg
-ICAgMjAxNi8xMC8xMSAxNDo1OQo+IOS4u+mimDogICAgICAgIFJlOiBbZG0tZGV2ZWxdIFtQQVRD
-SF0gbGlibXVsdGlwYXRoOiBmaXggbXVsdGlwYXRoIC1xCj4gY29tbWFuZCBsb2dpYwo+IOWPkeS7
-tuS6ujogICAgICAgIGRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbQo+IC0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LQo+Cj4KPgo+IEhhbm5lcywgQmVuLAo+Cj4gYXJlIHlvdSBvayB3aXRoIHRoZSBzb2x1dGlvbiB0
-byB0aGVzZSB0d28gaXNzdWVzLgo+IFNlZW1zIHNhbmUgdG8gbWUuCj4KVGhpcyBhY3R1YWxseSBp
-cyBvbmx5IHBhcnQgb2YgdGhlIHN0b3J5LgoKVGhlIHdob2xlIGlkZWEgb2YgaXNzdWluZyAnbXVs
-dGlwYXRoJyBpcyB0byBjaGVjayBpZiBhIGdpdmVuIHBhdGggCl9zaG91bGRfIGJlIG11bHRpcGF0
-aGVkIChhcyB0aGlzIGlzIHR5cGljYWxseSBjYWxsZWQgZnJvbSBhbiB1ZGV2IGV2ZW50KS4KQnV0
-IGFzIGl0J3MgY2FsbGVkIGZyb20gYW4gdWRldiBldmVudCB3ZSBjYW5ub3QgcmVseSBvbiB0aGUg
-bXVsdGlwYXRoIApkYWVtb24gdG8gYmUgc3RhcnRlZDsgd2UgbWlnaHQganVzdCBoYW5kbGUgYW4g
-ZXZlbnQgd2hpY2ggY2FtZSBpbiBiZWZvcmUgCm11bHRpcGF0aGQgZ290IHN0YXJ0ZWQgZnJvbSBz
-eXN0ZW1kLgpTbyBjaGVja2luZyBmb3IgdGhlIFBJRCBmaWxlIGlzIG5vdCBlbm91Z2gsIHdlIG5l
-ZWQgdG8gY2hlY2sgaWYgdGhlIApkYWVtb24gd2lsbCBiZSBzdGFydGVkIGV2ZW50dWFsbHkuCkFu
-ZCBpbiBmYWN0IGNoZWNraW5nIHRoZSBQSUQgZmlsZSBvciBjYWxsaW5nIG1wYXRoX2Nvbm5lY3Qo
-KSBpcyAKZXF1aXZhbGVudCwgd2l0aCB0aGUgYWRkZWQgYWR2YW50YWdlIHRoZSBtcGF0aF9jb25u
-ZWN0KCkgd2lsbCBzdGFydCB0aGUgCmRhZW1vbiBfaWYgZW5hYmxlZCBieSBzeXN0ZW1kXy4KU28g
-dGhpcyBwYXRjaCBkb2Vzbid0IGhlbHAgbXVjaCwgYXMgaXQgZG9lc24ndCBzb2x2ZSB0aGUgbWFp
-biBwcm9ibGVtIG9mIApmaWd1cmluZyBvdXQgaWYgbXVsdGlwYXRoZCBfc2hvdWxkXyBiZSBzdGFy
-dGVkLgoKSSd2ZSBkb25lIGEgcGF0Y2ggZm9yIGNoZWNraW5nIHRoZSAnLndhbnRzJyBkaXJlY3Rv
-cmllcyBmcm9tIHN5c3RlbWQsIApidXQgdGhpcyBvYnZpb3VzbHkgd2lsbCBvbmx5IHdvcmsgaWYg
-dGhlIE9TIGlzIHN5c3RlbWQtYmFzZWQuCkFuZCBpdCdzIG5vdCByZWFsbHkgcGVyZmVjdCwgYXMg
-dGhlcmUgYXJlIGNvcm5lci1jYXNlcyB3aGVyZSBqdXN0IApjaGVja2luZyBmb3IgdGhlIC53YW50
-cyBkaXJlY3RvcnkgaXMgbm90IGVub3VnaC4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5l
-cyBSZWluZWNrZQkJICAgICAgelNlcmllcyAmIFN0b3JhZ2UKaGFyZUBzdXNlLmRlCQkJICAgICAg
-KzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBQcm9kdWN0cyBHbWJILCBNYXhmZWxkc3RyLiA1
-LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEouIEhhd24sIEouIEd1aWxkLCBGLiBJbWVuZMO2cmZmZXIs
-IEhSQiAxNjc0NiAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
-dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
-LWRldmVs
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ multipathd/multipathd.service | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
+index e3d6f91..45aca35 100644
+--- a/multipathd/multipathd.service
++++ b/multipathd/multipathd.service
+@@ -11,7 +11,7 @@ Conflicts=shutdown.target
+ Type=notify
+ NotifyAccess=main
+ LimitCORE=infinity
+-ExecStartPre=/sbin/modprobe -a scsi_dh_alua scsi_dh_emc scsi_dh_rdac dm-multipath
++ExecStartPre=/sbin/modprobe -a scsi_dh_alua scsi_dh_emc scsi_dh_hp_sw scsi_dh_rdac dm-multipath
+ ExecStart=/sbin/multipathd -d -s
+ ExecReload=/sbin/multipathd reconfigure
+ 
+-- 
+2.10.1
