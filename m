@@ -1,13 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] mpathpersist: memset length is wrong
-Date: Tue, 11 Oct 2016 08:41:20 +0200
-Message-ID: <CABr-GnfT5f+zMmR3HivH7OC_dq5Cbdg+eqRrMdoL2=YnUh_nsw@mail.gmail.com>
-References: <1474447486-8892-1-git-send-email-tang.junhui@zte.com.cn>
-	<OF9BE89F56.9D2DAD11-ON48258049.00234303-48258049.002461FF@zte.com.cn>
+From: tang.junhui@zte.com.cn
+Subject: Re: [PATCH] multipathd: uxsock_timeout should be
+ assigned by conf->uxsock_timeout
+Date: Tue, 11 Oct 2016 14:42:53 +0800
+Message-ID: <OF78C25DBE.68C1AA2B-ON48258049.0024B703-48258049.0024E27C@zte.com.cn>
+References: <1473761329-8712-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1020458832872621179=="
+Content-Type: multipart/mixed; boundary="===============6622434615697291845=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <OF9BE89F56.9D2DAD11-ON48258049.00234303-48258049.002461FF@zte.com.cn>
+In-Reply-To: <1473761329-8712-1-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,190 +17,163 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: tang.junhui@zte.com.cn
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Vijay.Chauhan@netapp.com, device-mapper development <dm-devel@redhat.com>, zhang.kai16@zte.com.cn
+To: christophe.varoqui@opensvc.com
+Cc: bart.vanassche@sandisk.com, dm-devel@redhat.com, "tang.junhui" <tang.junhui@zte.com.cn>, zhang.kai16@zte.com.cn
 List-Id: dm-devel.ids
 
---===============1020458832872621179==
-Content-Type: multipart/alternative; boundary=001a1142bfc618f7d0053e912a3e
+This is a multipart message in MIME format.
+--===============6622434615697291845==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 0024E27A48258049_="
 
---001a1142bfc618f7d0053e912a3e
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+This is a multipart message in MIME format.
+--=_alternative 0024E27A48258049_=
+Content-Type: text/plain; charset="GB2312"
+Content-Transfer-Encoding: base64
 
-Seems right.
-Merged, with thanks.
+UGxlYXNlIGhhdmUgYSByZXZpZXcgZm9yIHRoaXMgcGF0Y2gsIGFueSBjb21tZW50IHdpbGwgYmUg
+aGlnaGx5IA0KYXBwcmVjaWF0ZWQuDQoNCg0KDQoNCreivP7IyzogICAgICAgICB0YW5nLmp1bmh1
+aUB6dGUuY29tLmNuDQrK1bz+yMs6ICAgICAgICAgY2hyaXN0b3BoZSB2YXJvcXVpIDxjaHJpc3Rv
+cGhlLnZhcm9xdWlAZnJlZS5mcj4sIA0Ks63LzTogICB6aGFuZy5rYWkxNkB6dGUuY29tLmNuLCBk
+bS1kZXZlbEByZWRoYXQuY29tLCAidGFuZy5qdW5odWkiIA0KPHRhbmcuanVuaHVpQHp0ZS5jb20u
+Y24+DQrI1cbaOiAgIDIwMTYvMDkvMTMgMTg6MTcNCtb3zOI6ICAgW2RtLWRldmVsXSBbUEFUQ0hd
+IG11bHRpcGF0aGQ6IHV4c29ja190aW1lb3V0IHNob3VsZCBiZSBhc3NpZ25lZCANCmJ5ICAgICAg
+Y29uZi0+dXhzb2NrX3RpbWVvdXQNCreivP7IyzogZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29t
+DQoNCg0KDQpGcm9tOiAidGFuZy5qdW5odWkiIDx0YW5nLmp1bmh1aUB6dGUuY29tLmNuPg0KDQp1
+eHNvY2tfdGltZW91dCBzaG91bGQgYmUgYXNzaWduZWQgYnkgY29uZi0+dXhzb2NrX3RpbWVvdXQN
+CmJlZm9yZSB1c2luZyBpdCBpbiB1eGNsbnQoKSBhcyBhIENMSSBjbGllbnQgdGltZW91dCB2YWx1
+ZSwNCm90aGVyd2lzZSBpdHMgZGVmYXVsdCB2YWx1ZSBpcyAwLCBhbmQgdGhlIENMSSBjbGllbnQg
+dGltZW91dA0KdmFsdWUgaXMgMCArIDEwMChtcyksIHNvIHRoZSBDTEkgY2xpZW50IHdpbGwgYmUg
+dGltZW91dCB2ZXJ5DQpxdWlja2x5Lg0KDQpTaWduZWQtb2ZmLWJ5OiB0YW5nLmp1bmh1aSA8dGFu
+Zy5qdW5odWlAenRlLmNvbS5jbj4NCi0tLQ0KIG11bHRpcGF0aGQvbWFpbi5jIHwgMiArKw0KIDEg
+ZmlsZSBjaGFuZ2VkLCAyIGluc2VydGlvbnMoKykNCg0KZGlmZiAtLWdpdCBhL211bHRpcGF0aGQv
+bWFpbi5jIGIvbXVsdGlwYXRoZC9tYWluLmMNCmluZGV4IDk2ZWYwMWYuLmEwOGYxYTUgMTAwNjQ0
+DQotLS0gYS9tdWx0aXBhdGhkL21haW4uYw0KKysrIGIvbXVsdGlwYXRoZC9tYWluLmMNCkBAIC0y
+NTQ5LDYgKzI1NDksNyBAQCBtYWluIChpbnQgYXJnYywgY2hhciAqYXJndltdKQ0KICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBl
+eGl0KDEpOw0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+IGlmICh2ZXJib3NpdHkpDQogY29uZi0+dmVyYm9zaXR5ID0gdmVyYm9zaXR5Ow0KKyAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHV4c29ja190aW1lb3V0ID0g
+DQpjb25mLT51eHNvY2tfdGltZW91dDsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICB1eGNsbnQob3B0YXJnLCANCnV4c29ja190aW1lb3V0ICsgMTAwKTsN
+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBleGl0KDAp
+Ow0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2FzZSAnQic6DQpAQCAtMjU3Myw2
+ICsyNTc0LDcgQEAgbWFpbiAoaW50IGFyZ2MsIGNoYXIgKmFyZ3ZbXSkNCiAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBleGl0KDEpOw0KICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgaWYgKHZlcmJvc2l0eSkNCiAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjb25mLT52ZXJib3NpdHkgPSANCnZlcmJvc2l0
+eTsNCisgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHV4c29ja190aW1lb3V0ID0gY29u
+Zi0+dXhzb2NrX3RpbWVvdXQ7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBtZW1z
+ZXQoY21kLCAweDAsIENNRFNJWkUpOw0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+d2hpbGUgKG9wdGluZCA8IGFyZ2MpIHsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICBpZiAoc3RyY2hyKGFyZ3Zbb3B0aW5kXSwgDQonICcpKQ0KLS0gDQoy
+LjguMS53aW5kb3dzLjENCg0KLS0NCmRtLWRldmVsIG1haWxpbmcgbGlzdA0KZG0tZGV2ZWxAcmVk
+aGF0LmNvbQ0KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+DQoNCg0K
+--=_alternative 0024E27A48258049_=
+Content-Type: text/html; charset="GB2312"
+Content-Transfer-Encoding: base64
 
-On Tue, Oct 11, 2016 at 8:37 AM, <tang.junhui@zte.com.cn> wrote:
-
-> Please have a review for this patch, any comment will be highly
-> appreciated.
->
->
->
->
-> =E5=8F=91=E4=BB=B6=E4=BA=BA:         tang.junhui@zte.com.cn
-> =E6=94=B6=E4=BB=B6=E4=BA=BA:         christophe varoqui <christophe.varoq=
-ui@free.fr>,
-> Chauhan@redhat.com, Vijay <Vijay.Chauhan@netapp.com>, Benjamin Marzinski =
-<
-> bmarzins@redhat.com>,
-> =E6=8A=84=E9=80=81:        zhang.kai16@zte.com.cn, dm-devel@redhat.com, "=
-tang.junhui" <
-> tang.junhui@zte.com.cn>
-> =E6=97=A5=E6=9C=9F:         2016/09/21 16:54
-> =E4=B8=BB=E9=A2=98:        [dm-devel] [PATCH] mpathpersist: memset length=
- is wrong
-> =E5=8F=91=E4=BB=B6=E4=BA=BA:        dm-devel-bounces@redhat.com
-> ------------------------------
->
->
->
-> From: "tang.junhui" <tang.junhui@zte.com.cn>
->
-> variable transportids is cleared by memset() with wrong length
-> MPATH_MX_TIDS,
-> the length should be MPATH_MX_TIDS*sizeof(struct transportid).
->
-> Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
-> ---
-> mpathpersist/main.c | 2 +-
-> 1 file changed, 1 insertion(+), 1 deletion(-)
->
-> diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-> index a55865f..8e8cc35 100644
-> --- a/mpathpersist/main.c
-> +++ b/mpathpersist/main.c
-> @@ -105,7 +105,7 @@ int main (int argc, char * argv[])
->
->                  udev =3D udev_new();
->                  conf =3D mpath_lib_init(udev);
-> -                 memset(transportids,0,MPATH_MX_TIDS);
-> +                 memset(transportids, 0, MPATH_MX_TIDS * sizeof(struct
-> transportid));
->                  multipath_conf =3D conf;
->
->                  while (1)
-> --
-> 2.8.1.windows.1
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
->
-
---001a1142bfc618f7d0053e912a3e
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Seems right.<div>Merged, with thanks.</div></div><div clas=
-s=3D"gmail_extra"><br><div class=3D"gmail_quote">On Tue, Oct 11, 2016 at 8:=
-37 AM,  <span dir=3D"ltr">&lt;<a href=3D"mailto:tang.junhui@zte.com.cn" tar=
-get=3D"_blank">tang.junhui@zte.com.cn</a>&gt;</span> wrote:<br><blockquote =
-class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid=
-;padding-left:1ex"><font size=3D"2">Please have a review</font><font size=
-=3D"2" face=3D"sans-serif">
-for this patch, any comment will be highly appreciated.<br>
-</font>
-<br>
-<br>
-<br>
-<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E5=8F=91=E4=BB=
-=B6=E4=BA=BA: =C2=A0 =C2=A0
-=C2=A0 =C2=A0 </font><font size=3D"1" face=3D"sans-serif"><a href=3D"mailto=
-:tang.junhui@zte.com.cn" target=3D"_blank">tang.junhui@zte.com.cn</a></font=
->
-<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E6=94=B6=E4=BB=
-=B6=E4=BA=BA: =C2=A0 =C2=A0
-=C2=A0 =C2=A0 </font><font size=3D"1" face=3D"sans-serif">christophe
-varoqui &lt;<a href=3D"mailto:christophe.varoqui@free.fr" target=3D"_blank"=
->christophe.varoqui@free.fr</a>&gt;, <a href=3D"mailto:Chauhan@redhat.com" =
-target=3D"_blank">Chauhan@redhat.com</a>, Vijay &lt;<a href=3D"mailto:Vijay=
-.Chauhan@netapp.com" target=3D"_blank">Vijay.Chauhan@netapp.com</a>&gt;,
-Benjamin Marzinski &lt;<a href=3D"mailto:bmarzins@redhat.com" target=3D"_bl=
-ank">bmarzins@redhat.com</a>&gt;, </font>
-<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E6=8A=84=E9=80=
-=81: =C2=A0 =C2=A0
-=C2=A0 =C2=A0</font><font size=3D"1" face=3D"sans-serif"><a href=3D"mailto:=
-zhang.kai16@zte.com.cn" target=3D"_blank">zhang.kai16@zte.com.cn</a>,
-<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
-m</a>, &quot;tang.junhui&quot; &lt;<a href=3D"mailto:tang.junhui@zte.com.cn=
-" target=3D"_blank">tang.junhui@zte.com.cn</a>&gt;</font>
-<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E6=97=A5=E6=9C=
-=9F: =C2=A0 =C2=A0
-=C2=A0 =C2=A0 </font><font size=3D"1" face=3D"sans-serif">2016/09/21
-16:54</font>
-<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E4=B8=BB=E9=A2=
-=98: =C2=A0 =C2=A0
-=C2=A0 =C2=A0</font><font size=3D"1" face=3D"sans-serif">[dm-devel] [PATCH]
-mpathpersist: memset length is wrong</font>
-<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E5=8F=91=E4=BB=
-=B6=E4=BA=BA: =C2=A0 =C2=A0
-=C2=A0 =C2=A0</font><font size=3D"1" face=3D"sans-serif"><a href=3D"mailto:=
-dm-devel-bounces@redhat.com" target=3D"_blank">dm-devel-bounces@redhat.com<=
-/a></font>
-<br>
-<hr noshade><div class=3D"HOEnZb"><div class=3D"h5">
-<br>
-<br>
-<br><tt><font size=3D"2">From: &quot;tang.junhui&quot; &lt;<a href=3D"mailt=
-o:tang.junhui@zte.com.cn" target=3D"_blank">tang.junhui@zte.com.cn</a>&gt;<=
-br>
-<br>
-variable transportids is cleared by memset() with wrong length MPATH_MX_TID=
-S,<br>
-the length should be MPATH_MX_TIDS*sizeof(struct transportid).<br>
-<br>
-Signed-off-by: tang.junhui &lt;<a href=3D"mailto:tang.junhui@zte.com.cn" ta=
-rget=3D"_blank">tang.junhui@zte.com.cn</a>&gt;<br>
----<br>
- mpathpersist/main.c | 2 +-<br>
- 1 file changed, 1 insertion(+), 1 deletion(-)<br>
-<br>
-diff --git a/mpathpersist/main.c b/mpathpersist/main.c<br>
-index a55865f..8e8cc35 100644<br>
---- a/mpathpersist/main.c<br>
-+++ b/mpathpersist/main.c<br>
-@@ -105,7 +105,7 @@ int main (int argc, char * argv[])<br>
- <br>
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0udev
-=3D udev_new();<br>
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0conf
-=3D mpath_lib_init(udev);<br>
-- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
-memset(transportids,0,MPATH_<wbr>MX_TIDS);<br>
-+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
-memset(transportids, 0, MPATH_MX_TIDS * sizeof(struct transportid));<br>
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0multipath_co=
-nf
-=3D conf;<br>
- <br>
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0while
-(1)<br>
--- <br>
-2.8.1.windows.1<br>
-<br>
---<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
-m</a><br>
-</font></tt><a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" ta=
-rget=3D"_blank"><tt><font size=3D"2">https://www.redhat.com/<wbr>mailman/li=
-stinfo/dm-devel</font></tt></a><tt><font size=3D"2"><br>
-</font></tt>
-<br>
-</div></div></blockquote></div><br></div>
-
---001a1142bfc618f7d0053e912a3e--
+PGZvbnQgc2l6ZT0yPlBsZWFzZSBoYXZlIGEgcmV2aWV3PC9mb250Pjxmb250IHNpemU9MiBmYWNl
+PSJzYW5zLXNlcmlmIj4NCmZvciB0aGlzIHBhdGNoLCBhbnkgY29tbWVudCB3aWxsIGJlIGhpZ2hs
+eSBhcHByZWNpYXRlZC48L2ZvbnQ+PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPjxicj4N
+CjwvZm9udD4NCjxicj4NCjxicj4NCjxicj4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1
+ZiBmYWNlPSJzYW5zLXNlcmlmIj63orz+yMs6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsg
+PC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj50YW5nLmp1bmh1aUB6dGUuY29t
+LmNuPC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2Vy
+aWYiPsrVvP7IyzogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyA8L2ZvbnQ+PGZvbnQgc2l6
+ZT0xIGZhY2U9InNhbnMtc2VyaWYiPmNocmlzdG9waGUNCnZhcm9xdWkgJmx0O2NocmlzdG9waGUu
+dmFyb3F1aUBmcmVlLmZyJmd0OywgPC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1
+ZjVmIGZhY2U9InNhbnMtc2VyaWYiPrOty806ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDs8
+L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPnpoYW5nLmthaTE2QHp0ZS5jb20u
+Y24sDQpkbS1kZXZlbEByZWRoYXQuY29tLCAmcXVvdDt0YW5nLmp1bmh1aSZxdW90OyAmbHQ7dGFu
+Zy5qdW5odWlAenRlLmNvbS5jbiZndDs8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1
+ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+yNXG2jogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
+OyA8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPjIwMTYvMDkvMTMNCjE4OjE3
+PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYi
+Ptb3zOI6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDs8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZh
+Y2U9InNhbnMtc2VyaWYiPltkbS1kZXZlbF0gW1BBVENIXQ0KbXVsdGlwYXRoZDogdXhzb2NrX3Rp
+bWVvdXQgc2hvdWxkIGJlIGFzc2lnbmVkIGJ5ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO2Nv
+bmYtJmd0O3V4c29ja190aW1lb3V0PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1
+ZjVmIGZhY2U9InNhbnMtc2VyaWYiPreivP7IyzogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
+OzwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+ZG0tZGV2ZWwtYm91bmNlc0By
+ZWRoYXQuY29tPC9mb250Pg0KPGJyPg0KPGhyIG5vc2hhZGU+DQo8YnI+DQo8YnI+DQo8YnI+PHR0
+Pjxmb250IHNpemU9Mj5Gcm9tOiAmcXVvdDt0YW5nLmp1bmh1aSZxdW90OyAmbHQ7dGFuZy5qdW5o
+dWlAenRlLmNvbS5jbiZndDs8YnI+DQo8YnI+DQp1eHNvY2tfdGltZW91dCBzaG91bGQgYmUgYXNz
+aWduZWQgYnkgY29uZi0mZ3Q7dXhzb2NrX3RpbWVvdXQ8YnI+DQpiZWZvcmUgdXNpbmcgaXQgaW4g
+dXhjbG50KCkgYXMgYSBDTEkgY2xpZW50IHRpbWVvdXQgdmFsdWUsPGJyPg0Kb3RoZXJ3aXNlIGl0
+cyBkZWZhdWx0IHZhbHVlIGlzIDAsIGFuZCB0aGUgQ0xJIGNsaWVudCB0aW1lb3V0PGJyPg0KdmFs
+dWUgaXMgMCArIDEwMChtcyksIHNvIHRoZSBDTEkgY2xpZW50IHdpbGwgYmUgdGltZW91dCB2ZXJ5
+PGJyPg0KcXVpY2tseS48YnI+DQo8YnI+DQpTaWduZWQtb2ZmLWJ5OiB0YW5nLmp1bmh1aSAmbHQ7
+dGFuZy5qdW5odWlAenRlLmNvbS5jbiZndDs8YnI+DQotLS08YnI+DQogbXVsdGlwYXRoZC9tYWlu
+LmMgfCAyICsrPGJyPg0KIDEgZmlsZSBjaGFuZ2VkLCAyIGluc2VydGlvbnMoKyk8YnI+DQo8YnI+
+DQpkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9tYWluLmMgYi9tdWx0aXBhdGhkL21haW4uYzxicj4N
+CmluZGV4IDk2ZWYwMWYuLmEwOGYxYTUgMTAwNjQ0PGJyPg0KLS0tIGEvbXVsdGlwYXRoZC9tYWlu
+LmM8YnI+DQorKysgYi9tdWx0aXBhdGhkL21haW4uYzxicj4NCkBAIC0yNTQ5LDYgKzI1NDksNyBA
+QCBtYWluIChpbnQgYXJnYywgY2hhciAqYXJndltdKTxicj4NCiAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCmV4aXQo
+MSk7PGJyPg0KICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwO2lmDQoodmVyYm9zaXR5KTxicj4NCiAmbmJzcDsgJm5ic3A7
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsN
+CiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsN
+CmNvbmYtJmd0O3ZlcmJvc2l0eSA9IHZlcmJvc2l0eTs8YnI+DQorICZuYnNwOyAmbmJzcDsgJm5i
+c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5i
+c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5i
+c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQp1eHNvY2tfdGlt
+ZW91dCA9IGNvbmYtJmd0O3V4c29ja190aW1lb3V0Ozxicj4NCiAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDt1eGNsbnQo
+b3B0YXJnLA0KdXhzb2NrX3RpbWVvdXQgKyAxMDApOzxicj4NCiAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtleGl0KDAp
+Ozxicj4NCiAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
+Jm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
+Jm5ic3A7ICZuYnNwOw0KY2FzZSAnQic6PGJyPg0KQEAgLTI1NzMsNiArMjU3NCw3IEBAIG1haW4g
+KGludCBhcmdjLCBjaGFyICphcmd2W10pPGJyPg0KICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO2V4aXQoMSk7PGJyPg0K
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
+Jm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
+Jm5ic3A7DQppZiAodmVyYm9zaXR5KTxicj4NCiAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
+Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsg
+Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsg
+Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtjb25mLSZndDt2ZXJib3Np
+dHkNCj0gdmVyYm9zaXR5Ozxicj4NCisgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDt1eHNvY2tfdGltZW91dA0KPSBjb25mLSZndDt1
+eHNvY2tfdGltZW91dDs8YnI+DQogJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
+bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
+bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCm1lbXNldChjbWQsIDB4MCwgQ01EU0laRSk7PGJy
+Pg0KICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
+cDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
+cDsgJm5ic3A7DQp3aGlsZSAob3B0aW5kICZsdDsgYXJnYykgezxicj4NCiAmbmJzcDsgJm5ic3A7
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtp
+Zg0KKHN0cmNocihhcmd2W29wdGluZF0sICcgJykpPGJyPg0KLS0gPGJyPg0KMi44LjEud2luZG93
+cy4xPGJyPg0KPGJyPg0KLS08YnI+DQpkbS1kZXZlbCBtYWlsaW5nIGxpc3Q8YnI+DQpkbS1kZXZl
+bEByZWRoYXQuY29tPGJyPg0KPC9mb250PjwvdHQ+PGEgaHJlZj0iaHR0cHM6Ly93d3cucmVkaGF0
+LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsIj48dHQ+PGZvbnQgc2l6ZT0yPmh0dHBzOi8v
+d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbDwvZm9udD48L3R0PjwvYT48
+dHQ+PGZvbnQgc2l6ZT0yPjxicj4NCjwvZm9udD48L3R0Pg0KPGJyPg0K
+--=_alternative 0024E27A48258049_=--
 
 
---===============1020458832872621179==
+--===============6622434615697291845==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1020458832872621179==--
+--===============6622434615697291845==--
