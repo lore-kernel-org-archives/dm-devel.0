@@ -1,8 +1,7 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 5/9] dm: Fix comma printing for the case when dm_target_msg
-	structure is inaccessible
-Date: Wed, 12 Oct 2016 01:38:42 +0300
-Message-ID: <20161011223842.GA8831@obsidian>
+Subject: [PATCH 6/9] tests/ioctl_dm: overly long string printing checks
+Date: Wed, 12 Oct 2016 01:39:02 +0300
+Message-ID: <20161011223902.GA8975@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -24,27 +23,43 @@ Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR
 List-Id: dm-devel.ids
 
 ---
- dm.c |    4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ tests/ioctl_dm.c |    8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/dm.c b/dm.c
-index d846233..b1d455c 100644
---- a/dm.c
-+++ b/dm.c
-@@ -342,10 +342,12 @@ dm_decode_dm_target_msg(struct tcb *tcp, unsigned long addr,
- 	    offset + target_msg_message_offs <= ioc->data_size) {
- 		struct dm_target_msg s;
+diff --git a/tests/ioctl_dm.c b/tests/ioctl_dm.c
+index 261983c..24232b7 100644
+--- a/tests/ioctl_dm.c
++++ b/tests/ioctl_dm.c
+@@ -67,12 +67,12 @@ main(void)
+ 	init_s(&s.ioc, sizeof(s), offsetof(struct s, u));
+ 	s.u.tm.target_msg.sector = 0x1234;
+ 	strcpy(s.u.string + offsetof(struct dm_target_msg, message),
+-		"tmsg");
++		"long target msg");
+ 	ioctl(-1, DM_TARGET_MSG, &s);
+ 	printf("ioctl(-1, DM_TARGET_MSG, "
+ 	       "{version=4.1.2, data_size=%u, data_start=%u, "
+ 	       "dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0, "
+-	       "{sector=4660, message=\"tmsg\"}}) = -1 EBADF (%m)\n",
++	       "{sector=4660, message=\"long targ\"...}}) = -1 EBADF (%m)\n",
+ 	       s.ioc.data_size, s.ioc.data_start);
  
-+		tprints(", ");
-+
- 		if (umove_or_printaddr(tcp, addr + offset, &s))
- 			return;
+ 	init_s(&s.ioc, sizeof(s), offsetof(struct s, u));
+@@ -85,12 +85,12 @@ main(void)
+ 	       s.ioc.data_size, s.ioc.data_start);
  
--		tprintf(", {sector=%" PRI__u64 ", message=", s.sector);
-+		tprintf("{sector=%" PRI__u64 ", message=", s.sector);
- 		printstr_ex(tcp, addr + offset + target_msg_message_offs,
- 			    ioc->data_size - offset - target_msg_message_offs,
- 			    QUOTE_0_TERMINATED);
+ 	init_s(&s.ioc, sizeof(s), offsetof(struct s, u));
+-	strcpy(s.u.string, "new-name");
++	strcpy(s.u.string, "new long name");
+ 	ioctl(-1, DM_DEV_RENAME, &s);
+ 	printf("ioctl(-1, DM_DEV_RENAME, "
+ 	       "{version=4.1.2, data_size=%u, data_start=%u, "
+ 	       "dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", event_nr=0, "
+-	       "flags=0, string=\"new-name\"}) = -1 EBADF (%m)\n",
++	       "flags=0, string=\"new long \"...}) = -1 EBADF (%m)\n",
+ 	       s.ioc.data_size, s.ioc.data_start);
+ 
+ 	init_s(&s.ioc, sizeof(s), offsetof(struct s, u));
 -- 
 1.7.10.4
 
