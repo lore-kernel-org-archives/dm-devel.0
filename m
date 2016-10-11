@@ -1,54 +1,54 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [dm-devel] [PATCH 1/1] dm raid: fix compat_features validation
-Date: Tue, 11 Oct 2016 17:44:21 +0200
-Message-ID: <591b9d8d-2036-2d0f-14f2-af176b5beaea@redhat.com>
+From: Andy Whitcroft <apw@canonical.com>
+Subject: [PATCH 1/1 V2] dm raid: fix compat_features validation
+Date: Tue, 11 Oct 2016 17:21:48 +0100
+Message-ID: <20161011162148.hz2ncmbvtmtmzjkz@brain>
 References: <20161011142835.11620-1-apw@canonical.com>
  <1c517f14-1234-7844-fc6a-cd1b9698fb8b@redhat.com>
  <20161011153808.nmyf6hafjaadcemw@brain>
+ <591b9d8d-2036-2d0f-14f2-af176b5beaea@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161011153808.nmyf6hafjaadcemw@brain>
+Content-Disposition: inline
+In-Reply-To: <591b9d8d-2036-2d0f-14f2-af176b5beaea@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Whitcroft <apw@canonical.com>
+To: Heinz Mauelshagen <heinzm@redhat.com>
 Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+From a30fba068e41214cb0ffcb14e68722482765e0c9 Mon Sep 17 00:00:00 2001
+From: Andy Whitcroft <apw@canonical.com>
+Date: Tue, 11 Oct 2016 15:16:57 +0100
 
+In ecbfb9f118bce4 ("dm raid: add raid level takeover support") a new
+compatible feature flag was added.  Validation for these compat_features
+was added but this only passes for new raid mappings with this feature
+flag.  This causes previously created raid mappings to be failed at
+import.
 
-On 10/11/2016 05:38 PM, Andy Whitcroft wrote:
-> On Tue, Oct 11, 2016 at 05:04:34PM +0200, Heinz Mauelshagen wrote:
->> Andy,
->>
->> good catch.
->>
->> We should rather check for  V190 support only in case any
->> compat feature flags are actually set.
->>
->> {
->> +       if (le32_to_cpu(sb->compat_features) &&
->> +           le32_to_cpu(sb->compat_features) != FEATURE_FLAG_SUPPORTS_V190)
->> {
->>                  rs->ti->error = "Unable to assemble array: Unknown flag(s)
->> in compatible feature flags";
->>                  return -EINVAL;
->>          }
-> If the feature flags are single bit combinations then I believe the
-> below does check exactly that.  Checking for no 1s outside of the
-> expected features, caring not for the value of the valid bits:
->
-> +     if (le32_to_cpu(sb->compat_features) & ~(FEATURE_FLAG_SUPPORTS_V190)) {
->
-> with the possibilty to or in additional feature bits as they are added.
+Check compat_features for the only valid combination.
 
-Thanks,
-I prefer this to be easier readable.
+Fixes: ecbfb9f118bce4 ("dm raid: add raid level takeover support")
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+---
+ drivers/md/dm-raid.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
->
-> -apw
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+V2: simplify checks as per maintainer.
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 8abde6b..2a39700 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -2258,7 +2258,8 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
+ 	if (!mddev->events && super_init_validation(rs, rdev))
+ 		return -EINVAL;
+ 
+-	if (le32_to_cpu(sb->compat_features) != FEATURE_FLAG_SUPPORTS_V190) {
++	if (le32_to_cpu(sb->compat_features) &&
++	    le32_to_cpu(sb->compat_features) != FEATURE_FLAG_SUPPORTS_V190) {
+ 		rs->ti->error = "Unable to assemble array: Unknown flag(s) in compatible feature flags";
+ 		return -EINVAL;
+ 	}
+-- 
+2.9.3
