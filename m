@@ -1,15 +1,14 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: remove hwhandler when it's
-	alua
-Date: Tue, 11 Oct 2016 08:43:54 +0200
-Message-ID: <CABr-GnfVSt3A_sGpJMwmQ4nJi879bNuQmkHtS_9L_UCYzaO6pw@mail.gmail.com>
-References: <20161006185021.3625-1-xose.vazquez@gmail.com>
-	<CABr-GnfHUoWn_q4LfvhDeF6w_vPcMg8VRjEN98quZ6+oes1Ryw@mail.gmail.com>
-	<1d46912b-0cad-89e4-2bd6-2b4c9e3fe67f@suse.de>
+Subject: Re: [PATCH] multipathd: uxsock_timeout should be
+ assigned by conf->uxsock_timeout
+Date: Tue, 11 Oct 2016 08:45:16 +0200
+Message-ID: <CABr-GnfFPyLkDJePE7TgPtjRBmNvyDncZDAGA7tizRPV+dk_PQ@mail.gmail.com>
+References: <1473761329-8712-1-git-send-email-tang.junhui@zte.com.cn>
+	<OF78C25DBE.68C1AA2B-ON48258049.0024B703-48258049.0024E27C@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2658944274282494110=="
+Content-Type: multipart/mixed; boundary="===============0892030712394547672=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1d46912b-0cad-89e4-2bd6-2b4c9e3fe67f@suse.de>
+In-Reply-To: <OF78C25DBE.68C1AA2B-ON48258049.0024B703-48258049.0024E27C@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,117 +18,243 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: tang.junhui@zte.com.cn
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>, zhang.kai16@zte.com.cn
 List-Id: dm-devel.ids
 
---===============2658944274282494110==
-Content-Type: multipart/alternative; boundary=94eb2c0c8ea24b9071053e913363
+--===============0892030712394547672==
+Content-Type: multipart/alternative; boundary=001a113f18862f7843053e9138e1
 
---94eb2c0c8ea24b9071053e913363
+--001a113f18862f7843053e9138e1
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-Right,
+Good,
+Merged.
 
-so Xos=C3=A9, can you confirm the last introduced hwtable entries don't nee=
-d the
-alua hwhandler :
-- nexsan
-- tegile
-- nimble
-- nfinidat
+On Tue, Oct 11, 2016 at 8:42 AM, <tang.junhui@zte.com.cn> wrote:
 
-Thanks.
-
-On Tue, Oct 11, 2016 at 8:22 AM, Hannes Reinecke <hare@suse.de> wrote:
-
-> On 10/11/2016 08:02 AM, Christophe Varoqui wrote:
-> > I'm not comfortable with this patch that induces a less predictable
-> > behaviour.
-> > We have that retain hardware handler switch that users can activate to
-> > achieve the purpose.
-> >
-> > Hannes, Ben, would you support that patch ?
-> >
-> > Best Regards,
-> > Christophe
-> >
-> Please don't apply this.
-> Autodetection will only work if the hardware handler is loaded.
-> If the handler is _not_ loaded autodetection won't work, either.
-> And if we add this patch multipath will never load the modules, neither.
+> Please have a review for this patch, any comment will be highly
+> appreciated.
 >
-> So we need this functionality as a fallback if autodetect does not work.
 >
-> Cheers,
 >
-> Hannes
+>
+> =E5=8F=91=E4=BB=B6=E4=BA=BA:         tang.junhui@zte.com.cn
+> =E6=94=B6=E4=BB=B6=E4=BA=BA:         christophe varoqui <christophe.varoq=
+ui@free.fr>,
+> =E6=8A=84=E9=80=81:        zhang.kai16@zte.com.cn, dm-devel@redhat.com, "=
+tang.junhui" <
+> tang.junhui@zte.com.cn>
+> =E6=97=A5=E6=9C=9F:         2016/09/13 18:17
+> =E4=B8=BB=E9=A2=98:        [dm-devel] [PATCH] multipathd: uxsock_timeout =
+should be
+> assigned by        conf->uxsock_timeout
+> =E5=8F=91=E4=BB=B6=E4=BA=BA:        dm-devel-bounces@redhat.com
+> ------------------------------
+>
+>
+>
+> From: "tang.junhui" <tang.junhui@zte.com.cn>
+>
+> uxsock_timeout should be assigned by conf->uxsock_timeout
+> before using it in uxclnt() as a CLI client timeout value,
+> otherwise its default value is 0, and the CLI client timeout
+> value is 0 + 100(ms), so the CLI client will be timeout very
+> quickly.
+>
+> Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+> ---
+> multipathd/main.c | 2 ++
+> 1 file changed, 2 insertions(+)
+>
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 96ef01f..a08f1a5 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -2549,6 +2549,7 @@ main (int argc, char *argv[])
+>
+> exit(1);
+>                                                    if (verbosity)
+>
+> conf->verbosity =3D verbosity;
+> +                                                   uxsock_timeout =3D
+> conf->uxsock_timeout;
+>                                                    uxclnt(optarg,
+> uxsock_timeout + 100);
+>                                                    exit(0);
+>                                   case 'B':
+> @@ -2573,6 +2574,7 @@ main (int argc, char *argv[])
+>                                                    exit(1);
+>                                   if (verbosity)
+>                                                    conf->verbosity =3D
+> verbosity;
+> +                                  uxsock_timeout =3D conf->uxsock_timeou=
+t;
+>                                   memset(cmd, 0x0, CMDSIZE);
+>                                   while (optind < argc) {
+>                                                    if
+> (strchr(argv[optind], ' '))
 > --
-> Dr. Hannes Reinecke                Teamlead Storage & Networking
-> hare@suse.de                                   +49 911 74053 688
-> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
-> GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-> HRB 21284 (AG N=C3=BCrnberg)
+> 2.8.1.windows.1
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
 >
 
---94eb2c0c8ea24b9071053e913363
+--001a113f18862f7843053e9138e1
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Right,<div><br></div><div>so Xos=C3=A9, can you confirm th=
-e last introduced hwtable entries don&#39;t need the alua hwhandler :</div>=
-<div>- nexsan</div><div>- tegile</div><div>- nimble</div><div>- nfinidat</d=
-iv><div><br></div><div>Thanks.</div></div><div class=3D"gmail_extra"><br><d=
-iv class=3D"gmail_quote">On Tue, Oct 11, 2016 at 8:22 AM, Hannes Reinecke <=
-span dir=3D"ltr">&lt;<a href=3D"mailto:hare@suse.de" target=3D"_blank">hare=
-@suse.de</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=
-=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span cl=
-ass=3D"">On 10/11/2016 08:02 AM, Christophe Varoqui wrote:<br>
-&gt; I&#39;m not comfortable with this patch that induces a less predictabl=
-e<br>
-&gt; behaviour.<br>
-&gt; We have that retain hardware handler switch that users can activate to=
+<div dir=3D"ltr">Good,<div>Merged.</div></div><div class=3D"gmail_extra"><b=
+r><div class=3D"gmail_quote">On Tue, Oct 11, 2016 at 8:42 AM,  <span dir=3D=
+"ltr">&lt;<a href=3D"mailto:tang.junhui@zte.com.cn" target=3D"_blank">tang.=
+junhui@zte.com.cn</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote=
+" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><=
+font size=3D"2">Please have a review</font><font size=3D"2" face=3D"sans-se=
+rif">
+for this patch, any comment will be highly appreciated.</font><font size=3D=
+"2" face=3D"sans-serif"><br>
+</font>
 <br>
-&gt; achieve the purpose.<br>
-&gt;<br>
-&gt; Hannes, Ben, would you support that patch ?<br>
-&gt;<br>
-&gt; Best Regards,<br>
-&gt; Christophe<br>
-&gt;<br>
-</span>Please don&#39;t apply this.<br>
-Autodetection will only work if the hardware handler is loaded.<br>
-If the handler is _not_ loaded autodetection won&#39;t work, either.<br>
-And if we add this patch multipath will never load the modules, neither.<br=
+<br>
+<br>
+<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E5=8F=91=E4=BB=
+=B6=E4=BA=BA: =C2=A0 =C2=A0
+=C2=A0 =C2=A0 </font><font size=3D"1" face=3D"sans-serif"><a href=3D"mailto=
+:tang.junhui@zte.com.cn" target=3D"_blank">tang.junhui@zte.com.cn</a></font=
 >
+<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E6=94=B6=E4=BB=
+=B6=E4=BA=BA: =C2=A0 =C2=A0
+=C2=A0 =C2=A0 </font><font size=3D"1" face=3D"sans-serif">christophe
+varoqui &lt;<a href=3D"mailto:christophe.varoqui@free.fr" target=3D"_blank"=
+>christophe.varoqui@free.fr</a>&gt;, </font>
+<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E6=8A=84=E9=80=
+=81: =C2=A0 =C2=A0
+=C2=A0 =C2=A0</font><font size=3D"1" face=3D"sans-serif"><a href=3D"mailto:=
+zhang.kai16@zte.com.cn" target=3D"_blank">zhang.kai16@zte.com.cn</a>,
+<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
+m</a>, &quot;tang.junhui&quot; &lt;<a href=3D"mailto:tang.junhui@zte.com.cn=
+" target=3D"_blank">tang.junhui@zte.com.cn</a>&gt;</font>
+<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E6=97=A5=E6=9C=
+=9F: =C2=A0 =C2=A0
+=C2=A0 =C2=A0 </font><font size=3D"1" face=3D"sans-serif">2016/09/13
+18:17</font>
+<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E4=B8=BB=E9=A2=
+=98: =C2=A0 =C2=A0
+=C2=A0 =C2=A0</font><font size=3D"1" face=3D"sans-serif">[dm-devel] [PATCH]
+multipathd: uxsock_timeout should be assigned by =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0conf-&gt;uxsock_timeout</font>
+<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E5=8F=91=E4=BB=
+=B6=E4=BA=BA: =C2=A0 =C2=A0
+=C2=A0 =C2=A0</font><font size=3D"1" face=3D"sans-serif"><a href=3D"mailto:=
+dm-devel-bounces@redhat.com" target=3D"_blank">dm-devel-bounces@redhat.com<=
+/a></font>
 <br>
-So we need this functionality as a fallback if autodetect does not work.<br=
->
+<hr noshade><div class=3D"HOEnZb"><div class=3D"h5">
 <br>
-Cheers,<br>
 <br>
-Hannes<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-Dr. Hannes Reinecke=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-Teamlead Storage &amp; Networking<br>
-<a href=3D"mailto:hare@suse.de">hare@suse.de</a>=C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0<a href=3D"tel:%2B49%20911%2074053%20688" value=3D"=
-+4991174053688">+49 911 74053 688</a><br>
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg<br>
-GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton<br>
-HRB 21284 (AG N=C3=BCrnberg)<br>
-</font></span></blockquote></div><br></div>
+<br><tt><font size=3D"2">From: &quot;tang.junhui&quot; &lt;<a href=3D"mailt=
+o:tang.junhui@zte.com.cn" target=3D"_blank">tang.junhui@zte.com.cn</a>&gt;<=
+br>
+<br>
+uxsock_timeout should be assigned by conf-&gt;uxsock_timeout<br>
+before using it in uxclnt() as a CLI client timeout value,<br>
+otherwise its default value is 0, and the CLI client timeout<br>
+value is 0 + 100(ms), so the CLI client will be timeout very<br>
+quickly.<br>
+<br>
+Signed-off-by: tang.junhui &lt;<a href=3D"mailto:tang.junhui@zte.com.cn" ta=
+rget=3D"_blank">tang.junhui@zte.com.cn</a>&gt;<br>
+---<br>
+ multipathd/main.c | 2 ++<br>
+ 1 file changed, 2 insertions(+)<br>
+<br>
+diff --git a/multipathd/main.c b/multipathd/main.c<br>
+index 96ef01f..a08f1a5 100644<br>
+--- a/multipathd/main.c<br>
++++ b/multipathd/main.c<br>
+@@ -2549,6 +2549,7 @@ main (int argc, char *argv[])<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+exit(1);<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0if
+(verbosity)<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+conf-&gt;verbosity =3D verbosity;<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+uxsock_timeout =3D conf-&gt;uxsock_timeout;<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0uxclnt(optarg=
+,
+uxsock_timeout + 100);<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0exit(0);<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+case &#39;B&#39;:<br>
+@@ -2573,6 +2574,7 @@ main (int argc, char *argv[])<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0exit(1);<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+if (verbosity)<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0conf-&gt;verb=
+osity
+=3D verbosity;<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0uxsock_timeou=
+t
+=3D conf-&gt;uxsock_timeout;<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+memset(cmd, 0x0, CMDSIZE);<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+while (optind &lt; argc) {<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0if
+(strchr(argv[optind], &#39; &#39;))<br>
+-- <br>
+2.8.1.windows.1<br>
+<br>
+--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
+m</a><br>
+</font></tt><a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" ta=
+rget=3D"_blank"><tt><font size=3D"2">https://www.redhat.com/<wbr>mailman/li=
+stinfo/dm-devel</font></tt></a><tt><font size=3D"2"><br>
+</font></tt>
+<br>
+</div></div></blockquote></div><br></div>
 
---94eb2c0c8ea24b9071053e913363--
+--001a113f18862f7843053e9138e1--
 
 
---===============2658944274282494110==
+--===============0892030712394547672==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============2658944274282494110==--
+--===============0892030712394547672==--
