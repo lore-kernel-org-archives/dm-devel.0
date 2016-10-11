@@ -1,13 +1,15 @@
-From: tang.junhui@zte.com.cn
-Subject: Re: [PATCH] multipathd: uxsock_timeout should be
- assigned by conf->uxsock_timeout
-Date: Tue, 11 Oct 2016 14:42:53 +0800
-Message-ID: <OF78C25DBE.68C1AA2B-ON48258049.0024B703-48258049.0024E27C@zte.com.cn>
-References: <1473761329-8712-1-git-send-email-tang.junhui@zte.com.cn>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH] multipath-tools: remove hwhandler when it's
+	alua
+Date: Tue, 11 Oct 2016 08:43:54 +0200
+Message-ID: <CABr-GnfVSt3A_sGpJMwmQ4nJi879bNuQmkHtS_9L_UCYzaO6pw@mail.gmail.com>
+References: <20161006185021.3625-1-xose.vazquez@gmail.com>
+	<CABr-GnfHUoWn_q4LfvhDeF6w_vPcMg8VRjEN98quZ6+oes1Ryw@mail.gmail.com>
+	<1d46912b-0cad-89e4-2bd6-2b4c9e3fe67f@suse.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6622434615697291845=="
+Content-Type: multipart/mixed; boundary="===============2658944274282494110=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1473761329-8712-1-git-send-email-tang.junhui@zte.com.cn>
+In-Reply-To: <1d46912b-0cad-89e4-2bd6-2b4c9e3fe67f@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,163 +19,117 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: bart.vanassche@sandisk.com, dm-devel@redhat.com, "tang.junhui" <tang.junhui@zte.com.cn>, zhang.kai16@zte.com.cn
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-This is a multipart message in MIME format.
---===============6622434615697291845==
-Content-Type: multipart/alternative;
-	boundary="=_alternative 0024E27A48258049_="
+--===============2658944274282494110==
+Content-Type: multipart/alternative; boundary=94eb2c0c8ea24b9071053e913363
 
-This is a multipart message in MIME format.
---=_alternative 0024E27A48258049_=
-Content-Type: text/plain; charset="GB2312"
-Content-Transfer-Encoding: base64
+--94eb2c0c8ea24b9071053e913363
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-UGxlYXNlIGhhdmUgYSByZXZpZXcgZm9yIHRoaXMgcGF0Y2gsIGFueSBjb21tZW50IHdpbGwgYmUg
-aGlnaGx5IA0KYXBwcmVjaWF0ZWQuDQoNCg0KDQoNCreivP7IyzogICAgICAgICB0YW5nLmp1bmh1
-aUB6dGUuY29tLmNuDQrK1bz+yMs6ICAgICAgICAgY2hyaXN0b3BoZSB2YXJvcXVpIDxjaHJpc3Rv
-cGhlLnZhcm9xdWlAZnJlZS5mcj4sIA0Ks63LzTogICB6aGFuZy5rYWkxNkB6dGUuY29tLmNuLCBk
-bS1kZXZlbEByZWRoYXQuY29tLCAidGFuZy5qdW5odWkiIA0KPHRhbmcuanVuaHVpQHp0ZS5jb20u
-Y24+DQrI1cbaOiAgIDIwMTYvMDkvMTMgMTg6MTcNCtb3zOI6ICAgW2RtLWRldmVsXSBbUEFUQ0hd
-IG11bHRpcGF0aGQ6IHV4c29ja190aW1lb3V0IHNob3VsZCBiZSBhc3NpZ25lZCANCmJ5ICAgICAg
-Y29uZi0+dXhzb2NrX3RpbWVvdXQNCreivP7IyzogZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29t
-DQoNCg0KDQpGcm9tOiAidGFuZy5qdW5odWkiIDx0YW5nLmp1bmh1aUB6dGUuY29tLmNuPg0KDQp1
-eHNvY2tfdGltZW91dCBzaG91bGQgYmUgYXNzaWduZWQgYnkgY29uZi0+dXhzb2NrX3RpbWVvdXQN
-CmJlZm9yZSB1c2luZyBpdCBpbiB1eGNsbnQoKSBhcyBhIENMSSBjbGllbnQgdGltZW91dCB2YWx1
-ZSwNCm90aGVyd2lzZSBpdHMgZGVmYXVsdCB2YWx1ZSBpcyAwLCBhbmQgdGhlIENMSSBjbGllbnQg
-dGltZW91dA0KdmFsdWUgaXMgMCArIDEwMChtcyksIHNvIHRoZSBDTEkgY2xpZW50IHdpbGwgYmUg
-dGltZW91dCB2ZXJ5DQpxdWlja2x5Lg0KDQpTaWduZWQtb2ZmLWJ5OiB0YW5nLmp1bmh1aSA8dGFu
-Zy5qdW5odWlAenRlLmNvbS5jbj4NCi0tLQ0KIG11bHRpcGF0aGQvbWFpbi5jIHwgMiArKw0KIDEg
-ZmlsZSBjaGFuZ2VkLCAyIGluc2VydGlvbnMoKykNCg0KZGlmZiAtLWdpdCBhL211bHRpcGF0aGQv
-bWFpbi5jIGIvbXVsdGlwYXRoZC9tYWluLmMNCmluZGV4IDk2ZWYwMWYuLmEwOGYxYTUgMTAwNjQ0
-DQotLS0gYS9tdWx0aXBhdGhkL21haW4uYw0KKysrIGIvbXVsdGlwYXRoZC9tYWluLmMNCkBAIC0y
-NTQ5LDYgKzI1NDksNyBAQCBtYWluIChpbnQgYXJnYywgY2hhciAqYXJndltdKQ0KICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBl
-eGl0KDEpOw0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-IGlmICh2ZXJib3NpdHkpDQogY29uZi0+dmVyYm9zaXR5ID0gdmVyYm9zaXR5Ow0KKyAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHV4c29ja190aW1lb3V0ID0g
-DQpjb25mLT51eHNvY2tfdGltZW91dDsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICB1eGNsbnQob3B0YXJnLCANCnV4c29ja190aW1lb3V0ICsgMTAwKTsN
-CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBleGl0KDAp
-Ow0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2FzZSAnQic6DQpAQCAtMjU3Myw2
-ICsyNTc0LDcgQEAgbWFpbiAoaW50IGFyZ2MsIGNoYXIgKmFyZ3ZbXSkNCiAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBleGl0KDEpOw0KICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgaWYgKHZlcmJvc2l0eSkNCiAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjb25mLT52ZXJib3NpdHkgPSANCnZlcmJvc2l0
-eTsNCisgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHV4c29ja190aW1lb3V0ID0gY29u
-Zi0+dXhzb2NrX3RpbWVvdXQ7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBtZW1z
-ZXQoY21kLCAweDAsIENNRFNJWkUpOw0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-d2hpbGUgKG9wdGluZCA8IGFyZ2MpIHsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICBpZiAoc3RyY2hyKGFyZ3Zbb3B0aW5kXSwgDQonICcpKQ0KLS0gDQoy
-LjguMS53aW5kb3dzLjENCg0KLS0NCmRtLWRldmVsIG1haWxpbmcgbGlzdA0KZG0tZGV2ZWxAcmVk
-aGF0LmNvbQ0KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
-DQoNCg0K
---=_alternative 0024E27A48258049_=
-Content-Type: text/html; charset="GB2312"
-Content-Transfer-Encoding: base64
+Right,
 
-PGZvbnQgc2l6ZT0yPlBsZWFzZSBoYXZlIGEgcmV2aWV3PC9mb250Pjxmb250IHNpemU9MiBmYWNl
-PSJzYW5zLXNlcmlmIj4NCmZvciB0aGlzIHBhdGNoLCBhbnkgY29tbWVudCB3aWxsIGJlIGhpZ2hs
-eSBhcHByZWNpYXRlZC48L2ZvbnQ+PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPjxicj4N
-CjwvZm9udD4NCjxicj4NCjxicj4NCjxicj4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1
-ZiBmYWNlPSJzYW5zLXNlcmlmIj63orz+yMs6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsg
-PC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj50YW5nLmp1bmh1aUB6dGUuY29t
-LmNuPC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2Vy
-aWYiPsrVvP7IyzogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyA8L2ZvbnQ+PGZvbnQgc2l6
-ZT0xIGZhY2U9InNhbnMtc2VyaWYiPmNocmlzdG9waGUNCnZhcm9xdWkgJmx0O2NocmlzdG9waGUu
-dmFyb3F1aUBmcmVlLmZyJmd0OywgPC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1
-ZjVmIGZhY2U9InNhbnMtc2VyaWYiPrOty806ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDs8
-L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPnpoYW5nLmthaTE2QHp0ZS5jb20u
-Y24sDQpkbS1kZXZlbEByZWRoYXQuY29tLCAmcXVvdDt0YW5nLmp1bmh1aSZxdW90OyAmbHQ7dGFu
-Zy5qdW5odWlAenRlLmNvbS5jbiZndDs8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1
-ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+yNXG2jogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
-OyA8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPjIwMTYvMDkvMTMNCjE4OjE3
-PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYi
-Ptb3zOI6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDs8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZh
-Y2U9InNhbnMtc2VyaWYiPltkbS1kZXZlbF0gW1BBVENIXQ0KbXVsdGlwYXRoZDogdXhzb2NrX3Rp
-bWVvdXQgc2hvdWxkIGJlIGFzc2lnbmVkIGJ5ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO2Nv
-bmYtJmd0O3V4c29ja190aW1lb3V0PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1
-ZjVmIGZhY2U9InNhbnMtc2VyaWYiPreivP7IyzogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
-OzwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+ZG0tZGV2ZWwtYm91bmNlc0By
-ZWRoYXQuY29tPC9mb250Pg0KPGJyPg0KPGhyIG5vc2hhZGU+DQo8YnI+DQo8YnI+DQo8YnI+PHR0
-Pjxmb250IHNpemU9Mj5Gcm9tOiAmcXVvdDt0YW5nLmp1bmh1aSZxdW90OyAmbHQ7dGFuZy5qdW5o
-dWlAenRlLmNvbS5jbiZndDs8YnI+DQo8YnI+DQp1eHNvY2tfdGltZW91dCBzaG91bGQgYmUgYXNz
-aWduZWQgYnkgY29uZi0mZ3Q7dXhzb2NrX3RpbWVvdXQ8YnI+DQpiZWZvcmUgdXNpbmcgaXQgaW4g
-dXhjbG50KCkgYXMgYSBDTEkgY2xpZW50IHRpbWVvdXQgdmFsdWUsPGJyPg0Kb3RoZXJ3aXNlIGl0
-cyBkZWZhdWx0IHZhbHVlIGlzIDAsIGFuZCB0aGUgQ0xJIGNsaWVudCB0aW1lb3V0PGJyPg0KdmFs
-dWUgaXMgMCArIDEwMChtcyksIHNvIHRoZSBDTEkgY2xpZW50IHdpbGwgYmUgdGltZW91dCB2ZXJ5
-PGJyPg0KcXVpY2tseS48YnI+DQo8YnI+DQpTaWduZWQtb2ZmLWJ5OiB0YW5nLmp1bmh1aSAmbHQ7
-dGFuZy5qdW5odWlAenRlLmNvbS5jbiZndDs8YnI+DQotLS08YnI+DQogbXVsdGlwYXRoZC9tYWlu
-LmMgfCAyICsrPGJyPg0KIDEgZmlsZSBjaGFuZ2VkLCAyIGluc2VydGlvbnMoKyk8YnI+DQo8YnI+
-DQpkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9tYWluLmMgYi9tdWx0aXBhdGhkL21haW4uYzxicj4N
-CmluZGV4IDk2ZWYwMWYuLmEwOGYxYTUgMTAwNjQ0PGJyPg0KLS0tIGEvbXVsdGlwYXRoZC9tYWlu
-LmM8YnI+DQorKysgYi9tdWx0aXBhdGhkL21haW4uYzxicj4NCkBAIC0yNTQ5LDYgKzI1NDksNyBA
-QCBtYWluIChpbnQgYXJnYywgY2hhciAqYXJndltdKTxicj4NCiAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCmV4aXQo
-MSk7PGJyPg0KICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwO2lmDQoodmVyYm9zaXR5KTxicj4NCiAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsN
-CiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsN
-CmNvbmYtJmd0O3ZlcmJvc2l0eSA9IHZlcmJvc2l0eTs8YnI+DQorICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQp1eHNvY2tfdGlt
-ZW91dCA9IGNvbmYtJmd0O3V4c29ja190aW1lb3V0Ozxicj4NCiAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDt1eGNsbnQo
-b3B0YXJnLA0KdXhzb2NrX3RpbWVvdXQgKyAxMDApOzxicj4NCiAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtleGl0KDAp
-Ozxicj4NCiAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOw0KY2FzZSAnQic6PGJyPg0KQEAgLTI1NzMsNiArMjU3NCw3IEBAIG1haW4g
-KGludCBhcmdjLCBjaGFyICphcmd2W10pPGJyPg0KICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO2V4aXQoMSk7PGJyPg0K
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7DQppZiAodmVyYm9zaXR5KTxicj4NCiAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtjb25mLSZndDt2ZXJib3Np
-dHkNCj0gdmVyYm9zaXR5Ozxicj4NCisgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDt1eHNvY2tfdGltZW91dA0KPSBjb25mLSZndDt1
-eHNvY2tfdGltZW91dDs8YnI+DQogJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
-bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
-bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCm1lbXNldChjbWQsIDB4MCwgQ01EU0laRSk7PGJy
-Pg0KICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
-cDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
-cDsgJm5ic3A7DQp3aGlsZSAob3B0aW5kICZsdDsgYXJnYykgezxicj4NCiAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtp
-Zg0KKHN0cmNocihhcmd2W29wdGluZF0sICcgJykpPGJyPg0KLS0gPGJyPg0KMi44LjEud2luZG93
-cy4xPGJyPg0KPGJyPg0KLS08YnI+DQpkbS1kZXZlbCBtYWlsaW5nIGxpc3Q8YnI+DQpkbS1kZXZl
-bEByZWRoYXQuY29tPGJyPg0KPC9mb250PjwvdHQ+PGEgaHJlZj0iaHR0cHM6Ly93d3cucmVkaGF0
-LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsIj48dHQ+PGZvbnQgc2l6ZT0yPmh0dHBzOi8v
-d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbDwvZm9udD48L3R0PjwvYT48
-dHQ+PGZvbnQgc2l6ZT0yPjxicj4NCjwvZm9udD48L3R0Pg0KPGJyPg0K
---=_alternative 0024E27A48258049_=--
+so Xos=C3=A9, can you confirm the last introduced hwtable entries don't nee=
+d the
+alua hwhandler :
+- nexsan
+- tegile
+- nimble
+- nfinidat
+
+Thanks.
+
+On Tue, Oct 11, 2016 at 8:22 AM, Hannes Reinecke <hare@suse.de> wrote:
+
+> On 10/11/2016 08:02 AM, Christophe Varoqui wrote:
+> > I'm not comfortable with this patch that induces a less predictable
+> > behaviour.
+> > We have that retain hardware handler switch that users can activate to
+> > achieve the purpose.
+> >
+> > Hannes, Ben, would you support that patch ?
+> >
+> > Best Regards,
+> > Christophe
+> >
+> Please don't apply this.
+> Autodetection will only work if the hardware handler is loaded.
+> If the handler is _not_ loaded autodetection won't work, either.
+> And if we add this patch multipath will never load the modules, neither.
+>
+> So we need this functionality as a fallback if autodetect does not work.
+>
+> Cheers,
+>
+> Hannes
+> --
+> Dr. Hannes Reinecke                Teamlead Storage & Networking
+> hare@suse.de                                   +49 911 74053 688
+> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
+> GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+> HRB 21284 (AG N=C3=BCrnberg)
+>
+
+--94eb2c0c8ea24b9071053e913363
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Right,<div><br></div><div>so Xos=C3=A9, can you confirm th=
+e last introduced hwtable entries don&#39;t need the alua hwhandler :</div>=
+<div>- nexsan</div><div>- tegile</div><div>- nimble</div><div>- nfinidat</d=
+iv><div><br></div><div>Thanks.</div></div><div class=3D"gmail_extra"><br><d=
+iv class=3D"gmail_quote">On Tue, Oct 11, 2016 at 8:22 AM, Hannes Reinecke <=
+span dir=3D"ltr">&lt;<a href=3D"mailto:hare@suse.de" target=3D"_blank">hare=
+@suse.de</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=
+=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span cl=
+ass=3D"">On 10/11/2016 08:02 AM, Christophe Varoqui wrote:<br>
+&gt; I&#39;m not comfortable with this patch that induces a less predictabl=
+e<br>
+&gt; behaviour.<br>
+&gt; We have that retain hardware handler switch that users can activate to=
+<br>
+&gt; achieve the purpose.<br>
+&gt;<br>
+&gt; Hannes, Ben, would you support that patch ?<br>
+&gt;<br>
+&gt; Best Regards,<br>
+&gt; Christophe<br>
+&gt;<br>
+</span>Please don&#39;t apply this.<br>
+Autodetection will only work if the hardware handler is loaded.<br>
+If the handler is _not_ loaded autodetection won&#39;t work, either.<br>
+And if we add this patch multipath will never load the modules, neither.<br=
+>
+<br>
+So we need this functionality as a fallback if autodetect does not work.<br=
+>
+<br>
+Cheers,<br>
+<br>
+Hannes<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+Dr. Hannes Reinecke=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+Teamlead Storage &amp; Networking<br>
+<a href=3D"mailto:hare@suse.de">hare@suse.de</a>=C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0<a href=3D"tel:%2B49%20911%2074053%20688" value=3D"=
++4991174053688">+49 911 74053 688</a><br>
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg<br>
+GF: F. Imend=C3=B6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton<br>
+HRB 21284 (AG N=C3=BCrnberg)<br>
+</font></span></blockquote></div><br></div>
+
+--94eb2c0c8ea24b9071053e913363--
 
 
---===============6622434615697291845==
+--===============2658944274282494110==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============6622434615697291845==--
+--===============2658944274282494110==--
