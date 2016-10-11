@@ -1,121 +1,78 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: dm raid1: "mirror" target doesn't use all available
- legs on multiple failures
-Date: Tue, 11 Oct 2016 16:56:47 +0200
-Message-ID: <490142e7-1fd4-19ad-5537-9ffbd44718c6@redhat.com>
-References: <1476118086-2975-1-git-send-email-heinzm@redhat.com>
-	<20161010204126.GA20089@redhat.com>
+Subject: Re: [dm-devel] [PATCH 1/1] dm raid: fix compat_features validation
+Date: Tue, 11 Oct 2016 17:04:34 +0200
+Message-ID: <1c517f14-1234-7844-fc6a-cd1b9698fb8b@redhat.com>
+References: <20161011142835.11620-1-apw@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161010204126.GA20089@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20161011142835.11620-1-apw@canonical.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Whitcroft <apw@canonical.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
 List-Id: dm-devel.ids
 
-On 10/10/2016 10:41 PM, Mike Snitzer wrote:
-> On Mon, Oct 10 2016 at 12:48pm -0400,
-> Heinz Mauelshagen <heinzm@redhat.com> wrote:
+
+Andy,
+
+good catch.
+
+We should rather check for  V190 support only in case any
+compat feature flags are actually set.
+
+I.e.:
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 8abde6b..2a39700 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -2258,7 +2258,8 @@ static int super_validate(struct raid_set *rs, 
+struct md_rdev *rdev)
+         if (!mddev->events && super_init_validation(rs, rdev))
+                 return -EINVAL;
+
+-       if (le32_to_cpu(sb->compat_features) != 
+FEATURE_FLAG_SUPPORTS_V190) {
++       if (le32_to_cpu(sb->compat_features) &&
++           le32_to_cpu(sb->compat_features) != 
+FEATURE_FLAG_SUPPORTS_V190) {
+                 rs->ti->error = "Unable to assemble array: Unknown 
+flag(s) in compatible feature flags";
+                 return -EINVAL;
+         }
+
+On 10/11/2016 04:28 PM, Andy Whitcroft wrote:
+> In commit ecbfb9f118bce4 ("dm raid: add raid level takeover support") a new
+> compatible feature flag was added.  Validation for these compat_features
+> was added but this only passes for new raid mappings with this feature
+> flag.  This causes previously created raid mappings to be failed at import.
 >
->> In case legs of a "mirror" target fail, any read will cause a new,
->> operational default leg to be selected and the read be resubmitted
->> to it. If that new default leg fails the read too, no other still
->> accessible legs are used to resubmit the read again thus failing
->> the io.
->>
->> Fix by allowing the read to get resubmitted until there's no
->> operational legs any more.
->>
->> Resolves: rhbz1383444
->>
->> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-> Nothing seems to be checking bio_record->details.bi_bdev anymore.
-> (The one you've removed really seems like a complete hack to begin with)
-
-The very point of removing "if (!bio_record->details.bi_bdev) { ..." is
-to  allow for resubmission of read bios to any other still operational leg
-after an initial resubmission failed.
-do_reads() will conditionally error the bio in case there are none or
-no in sync ones available.
-
-The "mirror" processing for read bios is:
-1) bio gets remapped to the default mirror in mirror_map() if region is
-     in sync our queued to the worker for submission
-2) mirror_end_io() spots read error and requeues to the worker
-3) worker
-     - submits bio to new, selected default if respective region is in sync
-     or
-     - fails bio if it aims at a non synchronized region
-4) if not already failed in do_reads(),
-     mirror_end_io() processes like in step 1 _but_
-     errors the read because of the "if (!bio_record->details.bi_bdev) { 
-..."
-
-
-My patch changes step 4 by removing the conditional to resubmit it
-again in case any other operational leg is available. If none's available,
-mirror_end_io() errors the read bios or the do_reads error logic applies
-in case of a resubmission.
-
-Why do you think this to be a hack?
-
+> Check compat_features for any valid combinations.
 >
-> Shouldn't this patch go further by removing the other 2 places that set
-> bio_record->details.bi_bdev = NULL; ?
-
-Yes, that's a good cleanup.
-
-Let's first settle any still open issues like other unspotted side effects
-and I'll do a patch v2 with it.
-
+> Fixes: ecbfb9f118bce4 ("dm raid: add raid level takeover support")
+> BugLink: http://bugs.launchpad.net/bugs/1631298
+> Signed-off-by: Andy Whitcroft <apw@canonical.com>
+> ---
+>   drivers/md/dm-raid.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
 >
->> ---
->>   drivers/md/dm-raid1.c | 11 -----------
->>   1 file changed, 11 deletions(-)
->>
->> diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
->> index 7a6254d..dd31019 100644
->> --- a/drivers/md/dm-raid1.c
->> +++ b/drivers/md/dm-raid1.c
->> @@ -1266,16 +1266,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
->>   		goto out;
->>   
->>   	if (unlikely(error)) {
->> -		if (!bio_record->details.bi_bdev) {
->> -			/*
->> -			 * There wasn't enough memory to record necessary
->> -			 * information for a retry or there was no other
->> -			 * mirror in-sync.
->> -			 */
->> -			DMERR_LIMIT("Mirror read failed.");
->> -			return -EIO;
->> -		}
->> -
->>   		m = bio_record->m;
->>   
->>   		DMERR("Mirror read failed from %s. Trying alternative device.",
->> @@ -1291,7 +1281,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
->>   			bd = &bio_record->details;
->>   
->>   			dm_bio_restore(bd, bio);
->> -			bio_record->details.bi_bdev = NULL;
->>   			bio->bi_error = 0;
->>   
->>   			queue_bio(ms, bio, rw);
->> -- 
->> 2.7.4
->>
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> It very much looks like these are intended to be optional extended feature
+> flags.  That we should be accepting any valid flag and rejecting any bit
+> not in that set.  We should however not be ensuring that specific bits
+> are actually set.  Certainly as things stand raid sets built on previous
+> kernel versions cannot be assembled.
+>
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index 8abde6b..6ddea60 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -2258,7 +2258,7 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
+>   	if (!mddev->events && super_init_validation(rs, rdev))
+>   		return -EINVAL;
+>   
+> -	if (le32_to_cpu(sb->compat_features) != FEATURE_FLAG_SUPPORTS_V190) {
+> +	if (le32_to_cpu(sb->compat_features) & ~(FEATURE_FLAG_SUPPORTS_V190)) {
+>   		rs->ti->error = "Unable to assemble array: Unknown flag(s) in compatible feature flags";
+>   		return -EINVAL;
+>   	}
