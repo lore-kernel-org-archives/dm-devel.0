@@ -1,8 +1,7 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 3/9] tests: Add check for presence of HAVE_LINUX_DM_IOCTL_H
-	macro definition to ioctl_dm test
-Date: Wed, 12 Oct 2016 01:38:25 +0300
-Message-ID: <20161011223825.GA8649@obsidian>
+Subject: [PATCH 4/9] tests/ioctl_dm: whitespace
+Date: Wed, 12 Oct 2016 01:38:32 +0300
+Message-ID: <20161011223832.GA8730@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -24,43 +23,23 @@ Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR
 List-Id: dm-devel.ids
 
 ---
- tests/ioctl_dm.c |   21 +++++++++++++++------
- 1 file changed, 15 insertions(+), 6 deletions(-)
+ tests/ioctl_dm.c |    3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/tests/ioctl_dm.c b/tests/ioctl_dm.c
-index 0a3bbf4..5f2689c 100644
+index 5f2689c..261983c 100644
 --- a/tests/ioctl_dm.c
 +++ b/tests/ioctl_dm.c
-@@ -1,10 +1,13 @@
- #include "tests.h"
--#include <inttypes.h>
--#include <stdio.h>
--#include <stddef.h>
--#include <string.h>
--#include <sys/ioctl.h>
--#include <linux/dm-ioctl.h>
-+
-+#ifdef HAVE_LINUX_DM_IOCTL_H
-+
-+# include <inttypes.h>
-+# include <stdio.h>
-+# include <stddef.h>
-+# include <string.h>
-+# include <sys/ioctl.h>
-+# include <linux/dm-ioctl.h>
+@@ -24,7 +24,8 @@ static struct s {
+ 	} u;
+ } s;
  
- static struct s {
- 	struct dm_ioctl ioc;
-@@ -103,3 +106,9 @@ main(void)
- 	puts("+++ exited with 0 +++");
- 	return 0;
- }
-+
-+#else /* !HAVE_LINUX_DM_IOCTL_H */
-+
-+SKIP_MAIN_UNDEFINED("HAVE_LINUX_DM_IOCTL_H")
-+
-+#endif /* HAVE_LINUX_DM_IOCTL_H */
+-static void init_s(struct dm_ioctl *s, size_t size, size_t offs)
++static void
++init_s(struct dm_ioctl *s, size_t size, size_t offs)
+ {
+ 	memset(s, 0, size);
+ 	s->version[0] = DM_VERSION_MAJOR;
 -- 
 1.7.10.4
 
