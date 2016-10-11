@@ -1,66 +1,46 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] multipath-tools: preload also scsi_dh_hp_sw
- before run multipathd
-Date: Tue, 11 Oct 2016 15:41:15 +0200
-Message-ID: <2779bae3-28f4-9b0f-b014-583b717f715e@suse.de>
-References: <20161011125515.8523-1-xose.vazquez@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161011125515.8523-1-xose.vazquez@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+From: Andy Whitcroft <apw@canonical.com>
+Subject: [PATCH 1/1] dm raid: fix compat_features validation
+Date: Tue, 11 Oct 2016 15:28:35 +0100
+Message-ID: <20161011142835.11620-1-apw@canonical.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Andy Whitcroft <apw@canonical.com>
 List-Id: dm-devel.ids
 
-On 10/11/2016 02:55 PM, Xose Vazquez Perez wrote:
-> Cc: Hannes Reinecke <hare@suse.de>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  multipathd/multipathd.service | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->
-> diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-> index e3d6f91..45aca35 100644
-> --- a/multipathd/multipathd.service
-> +++ b/multipathd/multipathd.service
-> @@ -11,7 +11,7 @@ Conflicts=3Dshutdown.target
->  Type=3Dnotify
->  NotifyAccess=3Dmain
->  LimitCORE=3Dinfinity
-> -ExecStartPre=3D/sbin/modprobe -a scsi_dh_alua scsi_dh_emc scsi_dh_rdac d=
-m-multipath
-> +ExecStartPre=3D/sbin/modprobe -a scsi_dh_alua scsi_dh_emc scsi_dh_hp_sw =
-scsi_dh_rdac dm-multipath
->  ExecStart=3D/sbin/multipathd -d -s
->  ExecReload=3D/sbin/multipathd reconfigure
->
->
-Well.
+In commit ecbfb9f118bce4 ("dm raid: add raid level takeover support") a new
+compatible feature flag was added.  Validation for these compat_features
+was added but this only passes for new raid mappings with this feature
+flag.  This causes previously created raid mappings to be failed at import.
 
-If you can point me to a single user of an MSA1500 I'm happy to include =
+Check compat_features for any valid combinations.
 
-it. If you don't know what an MSA1500 is nor what hp_sw does it's =
+Fixes: ecbfb9f118bce4 ("dm raid: add raid level takeover support")
+BugLink: http://bugs.launchpad.net/bugs/1631298
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+---
+ drivers/md/dm-raid.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-probably not a good idea to have it.
+It very much looks like these are intended to be optional extended feature
+flags.  That we should be accepting any valid flag and rejecting any bit
+not in that set.  We should however not be ensuring that specific bits
+are actually set.  Certainly as things stand raid sets built on previous
+kernel versions cannot be assembled.
 
-Cheers,
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 8abde6b..6ddea60 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -2258,7 +2258,7 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
+ 	if (!mddev->events && super_init_validation(rs, rdev))
+ 		return -EINVAL;
+ 
+-	if (le32_to_cpu(sb->compat_features) != FEATURE_FLAG_SUPPORTS_V190) {
++	if (le32_to_cpu(sb->compat_features) & ~(FEATURE_FLAG_SUPPORTS_V190)) {
+ 		rs->ti->error = "Unable to assemble array: Unknown flag(s) in compatible feature flags";
+ 		return -EINVAL;
+ 	}
+-- 
+2.9.3
 
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
