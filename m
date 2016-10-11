@@ -1,7 +1,8 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 0/9] Additional checks for strace DM ioctl decoder test
-Date: Wed, 12 Oct 2016 01:38:03 +0300
-Message-ID: <20161011223803.GA30714@obsidian>
+Subject: [PATCH 1/9] util: Add support for QUOTE_0_TERMINATED in user_style
+	to ptrintstr_ex
+Date: Wed, 12 Oct 2016 01:38:13 +0300
+Message-ID: <20161011223813.GA8414@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -22,42 +23,56 @@ To: strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-Hello.
+This enables printing size-limited (expectedly) ASCIZ strings.
+---
+ util.c |   18 +++++++++++++++---
+ 1 file changed, 15 insertions(+), 3 deletions(-)
 
-Aside from additional checks themselves, this patchset also contains two
-notable changes:
- * Fix for the previous patchset - misplaced comma printing ("dm: Fix comma
-   printing for the case when dm_target_msg structure is inaccessible").
- * Update of printstr_ex call, which enables proper handling of
-   QUOTE_0_TERMINATED user style (it prints cropped string without ellipsis
-   otherwise).
-
-Eugene Syromyatnikov (9):
-  util: Add support for QUOTE_0_TERMINATED in user_style to
-    ptrintstr_ex
-  tests: Add check for printing of overlength strings to ioctl_dm test
-  tests: Add check for presence of HAVE_LINUX_DM_IOCTL_H macro
-    definition to ioctl_dm test
-  tests/ioctl_dm: whitespace
-  dm: Fix comma printing for the case when dm_target_msg structure is
-    inaccessible
-  tests/ioctl_dm: overly long string printing checks
-  tests: Some additional checks for ioctl_dm test
-  tests: Add ioctl_dm to .gitignore
-  tests: Add checks for abbreviated DM ioctl output
-
- dm.c                  |    4 +-
- tests/.gitignore      |    2 +
- tests/Makefile.am     |    2 +
- tests/ioctl_dm-v.c    |    2 +
- tests/ioctl_dm-v.test |   12 +
- tests/ioctl_dm.c      |  653 +++++++++++++++++++++++++++++++++++++++++++++++--
- tests/ioctl_dm.test   |    2 +-
- util.c                |   18 +-
- 8 files changed, 674 insertions(+), 21 deletions(-)
- create mode 100644 tests/ioctl_dm-v.c
- create mode 100755 tests/ioctl_dm-v.test
-
+diff --git a/util.c b/util.c
+index 23a5fdb..00148d4 100644
+--- a/util.c
++++ b/util.c
+@@ -820,13 +820,13 @@ printstr_ex(struct tcb *tcp, long addr, long len, unsigned int user_style)
+ 		outstr = xmalloc(outstr_size);
+ 	}
+ 
+-	size = max_strlen;
++	size = max_strlen + 1;
+ 	if (len == -1) {
+ 		/*
+ 		 * Treat as a NUL-terminated string: fetch one byte more
+ 		 * because string_quote may look one byte ahead.
+ 		 */
+-		if (umovestr(tcp, addr, size + 1, str) < 0) {
++		if (umovestr(tcp, addr, size, str) < 0) {
+ 			printaddr(addr);
+ 			return;
+ 		}
+@@ -844,11 +844,23 @@ printstr_ex(struct tcb *tcp, long addr, long len, unsigned int user_style)
+ 
+ 	style |= user_style;
+ 
++	if (style & QUOTE_0_TERMINATED) {
++		if (size) {
++			--size;
++		} else {
++			tprints((len == -1) || (len == 0) ? "\"\"" : "\"\"...");
++			return;
++		}
++	}
++	if (size > max_strlen)
++		size = max_strlen;
++
+ 	/* If string_quote didn't see NUL and (it was supposed to be ASCIZ str
+ 	 * or we were requested to print more than -s NUM chars)...
+ 	 */
+ 	ellipsis = (string_quote(str, outstr, size, style) &&
+-			(len < 0 || (unsigned long) len > max_strlen));
++			((style & QUOTE_0_TERMINATED) ||
++				(unsigned long) len > max_strlen));
+ 
+ 	tprints(outstr);
+ 	if (ellipsis)
 -- 
 1.7.10.4
 
