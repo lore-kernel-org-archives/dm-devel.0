@@ -1,7 +1,7 @@
 From: Mike Christie <mchristi@redhat.com>
-Subject: [PATCH 5/5] rbd: use lock_on_read if set
-Date: Tue, 11 Oct 2016 16:36:55 -0500
-Message-ID: <1476221815-17900-6-git-send-email-mchristi@redhat.com>
+Subject: [PATCH 3/5] rbd: check for exclusive lock enabled
+Date: Tue, 11 Oct 2016 16:36:53 -0500
+Message-ID: <1476221815-17900-4-git-send-email-mchristi@redhat.com>
 References: <1476221815-17900-1-git-send-email-mchristi@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,47 +21,53 @@ To: dm-devel@redhat.com, christophe.varoqui@opensvc.com
 Cc: Mike Christie <mchristi@redhat.com>
 List-Id: dm-devel.ids
 
-If lock_on_read is set initially, pass it as a map option
-when remapping the image.
+Only attach the checker if the rbd image has the exclusive lock
+enabled.
 
 Signed-off-by: Mike Christie <mchristi@redhat.com>
 ---
- libmultipath/checkers/rbd.c | 9 ++++++++-
- 1 file changed, 8 insertions(+), 1 deletion(-)
+ libmultipath/checkers/rbd.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
 
 diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
-index e516166..c920cbb 100644
+index f0497db..89d7525 100644
 --- a/libmultipath/checkers/rbd.c
 +++ b/libmultipath/checkers/rbd.c
-@@ -46,6 +46,7 @@ struct rbd_checker_context {
- 	char *username;
- 	int remapped;
- 	int blacklisted;
-+	int lock_on_read:1;
+@@ -34,6 +34,8 @@ typedef int (thread_fn)(struct rbd_checker_context *ct, char *msg);
  
- 	rados_t cluster;
+ #define RBD_MSG(msg, fmt, args...) snprintf(msg, CHECKER_MSG_LEN, fmt, ##args);
  
-@@ -142,6 +143,9 @@ int libcheck_init(struct checker * c)
- 		goto free_addr;
- 	}
- 
-+	if (strstr(config_info, "lock_on_read"))
-+		ct->lock_on_read = 1;
++#define RBD_FEATURE_EXCLUSIVE_LOCK	(1 << 2)
 +
- 	ct->config_info = strdup(config_info);
- 	if (!ct->config_info)
+ struct rbd_checker_context {
+ 	int rbd_bus_id;
+ 	char *client_addr;
+@@ -66,8 +68,9 @@ int libcheck_init(struct checker * c)
+ 	struct udev_device *bus_dev;
+ 	struct udev *udev;
+ 	struct stat sb;
+-	const char *block_name, *addr, *config_info;
++	const char *block_name, *addr, *config_info, *features_str;
+ 	const char *image, *pool, *snap, *username;
++	uint64_t features = 0;
+ 	char sysfs_path[PATH_SIZE];
+ 	int ret;
+ 
+@@ -120,6 +123,15 @@ int libcheck_init(struct checker * c)
+ 	if (!ct->client_addr)
+ 		goto free_dev;
+ 
++	features_str = udev_device_get_sysattr_value(bus_dev, "features");
++	if (!features_str)
++		goto free_addr;
++	features = strtoll(features_str, NULL, 16);
++	if (!(features & RBD_FEATURE_EXCLUSIVE_LOCK)) {
++		condlog(3, "Exclusive lock not set.");
++		goto free_addr;
++	}
++
+ 	config_info = udev_device_get_sysattr_value(bus_dev, "config_info");
+ 	if (!config_info)
  		goto free_addr;
-@@ -398,7 +402,10 @@ static int rbd_remap(struct rbd_checker_context *ct)
- 	case 0:
- 		argv[i++] = "rbd";
- 		argv[i++] = "map";
--		argv[i++] = "-o noshare";
-+		if (ct->lock_on_read)
-+			argv[i++] = "-o noshare,lock_on_read";
-+		else
-+			argv[i++] = "-o noshare";
- 		if (ct->username) {
- 			argv[i++] = "--id";
- 			argv[i++] = ct->username;
 -- 
 2.7.2
