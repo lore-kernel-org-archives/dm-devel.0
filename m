@@ -1,56 +1,36 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH] libmultipath/checkers/tur: Fix a recently
-	introduced deadlock
-Date: Mon, 10 Oct 2016 16:12:28 -0700
-Message-ID: <424be81f-7f4b-db0f-a09d-cd4f14a8407a@sandisk.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 15/23] scsi_dh_alua: Add new blacklist flag
+ 'BLIST_SYNC_ALUA'
+Date: Tue, 11 Oct 2016 08:00:33 +0200
+Message-ID: <370deeee-d98a-12cc-8efa-5a4ee5037282@suse.de>
+References: <9c10ea3c-76e5-8aad-4b30-1fd34d9bf288@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <9c10ea3c-76e5-8aad-4b30-1fd34d9bf288@gmail.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, "Stewart, Sean" <Sean.Stewart@netapp.com>, "George, Martin" <Martin.George@netapp.com>, "Stankey, Robert" <Robert.Stankey@netapp.com>, "Schremmer, Steven" <Steven.Schremmer@netapp.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Avoid that the tur_devt() call from libcheck_check() hangs.
+On 10/10/2016 11:24 PM, Xose Vazquez Perez wrote:
+> Hi Hannes,
+> 
+> Try #2.
+> Is this needed for RDAC(INF-01-00) devices?
+> 
+Actually I have been in contact with NetApp, and they prefer _not_ to
+have the RDAC arrays marked for synchronous ALUA. They have validated
+things on their current firmware and the synchronous ALUA setting is not
+required anymore.
 
-Fixes: commit 873be9fef222 ("libmultipath/checkers/tur: Serialize tur_checker_context.devt accesses")
-Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
----
- libmultipath/checkers/tur.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+Cheers,
 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index a7a70f6..81206e4 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -64,6 +64,7 @@ static const char *tur_devt(char *devt_buf, int size,
- int libcheck_init (struct checker * c)
- {
- 	struct tur_checker_context *ct;
-+	pthread_mutexattr_t attr;
- 
- 	ct = malloc(sizeof(struct tur_checker_context));
- 	if (!ct)
-@@ -74,7 +75,10 @@ int libcheck_init (struct checker * c)
- 	ct->fd = -1;
- 	ct->holders = 1;
- 	pthread_cond_init_mono(&ct->active);
--	pthread_mutex_init(&ct->lock, NULL);
-+	pthread_mutexattr_init(&attr);
-+	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-+	pthread_mutex_init(&ct->lock, &attr);
-+	pthread_mutexattr_destroy(&attr);
- 	pthread_spin_init(&ct->hldr_lock, PTHREAD_PROCESS_PRIVATE);
- 	c->context = ct;
- 
+Hannes
 -- 
-2.10.0
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
+GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG Nürnberg)
