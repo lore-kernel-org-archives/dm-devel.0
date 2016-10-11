@@ -1,12 +1,13 @@
-From: tang.junhui@zte.com.cn
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Subject: Re: [PATCH] mpathpersist: memset length is wrong
-Date: Tue, 11 Oct 2016 14:37:24 +0800
-Message-ID: <OF9BE89F56.9D2DAD11-ON48258049.00234303-48258049.002461FF@zte.com.cn>
+Date: Tue, 11 Oct 2016 08:41:20 +0200
+Message-ID: <CABr-GnfT5f+zMmR3HivH7OC_dq5Cbdg+eqRrMdoL2=YnUh_nsw@mail.gmail.com>
 References: <1474447486-8892-1-git-send-email-tang.junhui@zte.com.cn>
+	<OF9BE89F56.9D2DAD11-ON48258049.00234303-48258049.002461FF@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0719673305669095623=="
+Content-Type: multipart/mixed; boundary="===============1020458832872621179=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1474447486-8892-1-git-send-email-tang.junhui@zte.com.cn>
+In-Reply-To: <OF9BE89F56.9D2DAD11-ON48258049.00234303-48258049.002461FF@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,110 +17,190 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com, Vijay.Chauhan@netapp.com, Benjamin Marzinski <bmarzins@redhat.com>, bart.vanassche@sandisk.com
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, "tang.junhui" <tang.junhui@zte.com.cn>
+To: tang.junhui@zte.com.cn
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Vijay.Chauhan@netapp.com, device-mapper development <dm-devel@redhat.com>, zhang.kai16@zte.com.cn
 List-Id: dm-devel.ids
 
-This is a multipart message in MIME format.
---===============0719673305669095623==
-Content-Type: multipart/alternative;
-	boundary="=_alternative 002461FC48258049_="
+--===============1020458832872621179==
+Content-Type: multipart/alternative; boundary=001a1142bfc618f7d0053e912a3e
 
-This is a multipart message in MIME format.
---=_alternative 002461FC48258049_=
-Content-Type: text/plain; charset="GB2312"
-Content-Transfer-Encoding: base64
+--001a1142bfc618f7d0053e912a3e
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-UGxlYXNlIGhhdmUgYSByZXZpZXcgZm9yIHRoaXMgcGF0Y2gsIGFueSBjb21tZW50IHdpbGwgYmUg
-aGlnaGx5IA0KYXBwcmVjaWF0ZWQuDQoNCg0KDQoNCreivP7IyzogICAgICAgICB0YW5nLmp1bmh1
-aUB6dGUuY29tLmNuDQrK1bz+yMs6ICAgICAgICAgY2hyaXN0b3BoZSB2YXJvcXVpIDxjaHJpc3Rv
-cGhlLnZhcm9xdWlAZnJlZS5mcj4sIA0KQ2hhdWhhbkByZWRoYXQuY29tLCBWaWpheSA8VmlqYXku
-Q2hhdWhhbkBuZXRhcHAuY29tPiwgQmVuamFtaW4gTWFyemluc2tpIA0KPGJtYXJ6aW5zQHJlZGhh
-dC5jb20+LCANCrOty806ICAgemhhbmcua2FpMTZAenRlLmNvbS5jbiwgZG0tZGV2ZWxAcmVkaGF0
-LmNvbSwgInRhbmcuanVuaHVpIiANCjx0YW5nLmp1bmh1aUB6dGUuY29tLmNuPg0KyNXG2jogICAy
-MDE2LzA5LzIxIDE2OjU0DQrW98ziOiAgIFtkbS1kZXZlbF0gW1BBVENIXSBtcGF0aHBlcnNpc3Q6
-IG1lbXNldCBsZW5ndGggaXMgd3JvbmcNCreivP7IyzogZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQu
-Y29tDQoNCg0KDQpGcm9tOiAidGFuZy5qdW5odWkiIDx0YW5nLmp1bmh1aUB6dGUuY29tLmNuPg0K
-DQp2YXJpYWJsZSB0cmFuc3BvcnRpZHMgaXMgY2xlYXJlZCBieSBtZW1zZXQoKSB3aXRoIHdyb25n
-IGxlbmd0aCANCk1QQVRIX01YX1RJRFMsDQp0aGUgbGVuZ3RoIHNob3VsZCBiZSBNUEFUSF9NWF9U
-SURTKnNpemVvZihzdHJ1Y3QgdHJhbnNwb3J0aWQpLg0KDQpTaWduZWQtb2ZmLWJ5OiB0YW5nLmp1
-bmh1aSA8dGFuZy5qdW5odWlAenRlLmNvbS5jbj4NCi0tLQ0KIG1wYXRocGVyc2lzdC9tYWluLmMg
-fCAyICstDQogMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCspLCAxIGRlbGV0aW9uKC0pDQoN
-CmRpZmYgLS1naXQgYS9tcGF0aHBlcnNpc3QvbWFpbi5jIGIvbXBhdGhwZXJzaXN0L21haW4uYw0K
-aW5kZXggYTU1ODY1Zi4uOGU4Y2MzNSAxMDA2NDQNCi0tLSBhL21wYXRocGVyc2lzdC9tYWluLmMN
-CisrKyBiL21wYXRocGVyc2lzdC9tYWluLmMNCkBAIC0xMDUsNyArMTA1LDcgQEAgaW50IG1haW4g
-KGludCBhcmdjLCBjaGFyICogYXJndltdKQ0KIA0KICAgICAgICAgICAgICAgICB1ZGV2ID0gdWRl
-dl9uZXcoKTsNCiAgICAgICAgICAgICAgICAgY29uZiA9IG1wYXRoX2xpYl9pbml0KHVkZXYpOw0K
-LSAgICAgICAgICAgICAgICBtZW1zZXQodHJhbnNwb3J0aWRzLDAsTVBBVEhfTVhfVElEUyk7DQor
-ICAgICAgICAgICAgICAgIG1lbXNldCh0cmFuc3BvcnRpZHMsIDAsIE1QQVRIX01YX1RJRFMgKiBz
-aXplb2Yoc3RydWN0IA0KdHJhbnNwb3J0aWQpKTsNCiAgICAgICAgICAgICAgICAgbXVsdGlwYXRo
-X2NvbmYgPSBjb25mOw0KIA0KICAgICAgICAgICAgICAgICB3aGlsZSAoMSkNCi0tIA0KMi44LjEu
-d2luZG93cy4xDQoNCi0tDQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QNCmRtLWRldmVsQHJlZGhhdC5j
-b20NCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA0KDQoN
-Cg==
---=_alternative 002461FC48258049_=
-Content-Type: text/html; charset="GB2312"
-Content-Transfer-Encoding: base64
+Seems right.
+Merged, with thanks.
 
-PGZvbnQgc2l6ZT0yPlBsZWFzZSBoYXZlIGEgcmV2aWV3PC9mb250Pjxmb250IHNpemU9MiBmYWNl
-PSJzYW5zLXNlcmlmIj4NCmZvciB0aGlzIHBhdGNoLCBhbnkgY29tbWVudCB3aWxsIGJlIGhpZ2hs
-eSBhcHByZWNpYXRlZC48YnI+DQo8L2ZvbnQ+DQo8YnI+DQo8YnI+DQo8YnI+DQo8YnI+PGZvbnQg
-c2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+t6K8/sjLOiAmbmJzcDsgJm5i
-c3A7DQombmJzcDsgJm5ic3A7IDwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+
-dGFuZy5qdW5odWlAenRlLmNvbS5jbjwvZm9udD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVm
-NWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj7K1bz+yMs6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJz
-cDsgPC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj5jaHJpc3RvcGhlDQp2YXJv
-cXVpICZsdDtjaHJpc3RvcGhlLnZhcm9xdWlAZnJlZS5mciZndDssIENoYXVoYW5AcmVkaGF0LmNv
-bSwgVmlqYXkgJmx0O1ZpamF5LkNoYXVoYW5AbmV0YXBwLmNvbSZndDssDQpCZW5qYW1pbiBNYXJ6
-aW5za2kgJmx0O2JtYXJ6aW5zQHJlZGhhdC5jb20mZ3Q7LCA8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6
-ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+s63LzTogJm5ic3A7ICZuYnNwOw0K
-Jm5ic3A7ICZuYnNwOzwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+emhhbmcu
-a2FpMTZAenRlLmNvbS5jbiwNCmRtLWRldmVsQHJlZGhhdC5jb20sICZxdW90O3RhbmcuanVuaHVp
-JnF1b3Q7ICZsdDt0YW5nLmp1bmh1aUB6dGUuY29tLmNuJmd0OzwvZm9udD4NCjxicj48Zm9udCBz
-aXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj7I1cbaOiAmbmJzcDsgJm5ic3A7
-DQombmJzcDsgJm5ic3A7IDwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+MjAx
-Ni8wOS8yMQ0KMTY6NTQ8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFj
-ZT0ic2Fucy1zZXJpZiI+1vfM4jogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOzwvZm9udD48
-Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+W2RtLWRldmVsXSBbUEFUQ0hdDQptcGF0aHBl
-cnNpc3Q6IG1lbXNldCBsZW5ndGggaXMgd3Jvbmc8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNv
-bG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+t6K8/sjLOiAmbmJzcDsgJm5ic3A7DQombmJz
-cDsgJm5ic3A7PC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj5kbS1kZXZlbC1i
-b3VuY2VzQHJlZGhhdC5jb208L2ZvbnQ+DQo8YnI+DQo8aHIgbm9zaGFkZT4NCjxicj4NCjxicj4N
-Cjxicj48dHQ+PGZvbnQgc2l6ZT0yPkZyb206ICZxdW90O3RhbmcuanVuaHVpJnF1b3Q7ICZsdDt0
-YW5nLmp1bmh1aUB6dGUuY29tLmNuJmd0Ozxicj4NCjxicj4NCnZhcmlhYmxlIHRyYW5zcG9ydGlk
-cyBpcyBjbGVhcmVkIGJ5IG1lbXNldCgpIHdpdGggd3JvbmcgbGVuZ3RoIE1QQVRIX01YX1RJRFMs
-PGJyPg0KdGhlIGxlbmd0aCBzaG91bGQgYmUgTVBBVEhfTVhfVElEUypzaXplb2Yoc3RydWN0IHRy
-YW5zcG9ydGlkKS48YnI+DQo8YnI+DQpTaWduZWQtb2ZmLWJ5OiB0YW5nLmp1bmh1aSAmbHQ7dGFu
-Zy5qdW5odWlAenRlLmNvbS5jbiZndDs8YnI+DQotLS08YnI+DQogbXBhdGhwZXJzaXN0L21haW4u
-YyB8IDIgKy08YnI+DQogMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCspLCAxIGRlbGV0aW9u
-KC0pPGJyPg0KPGJyPg0KZGlmZiAtLWdpdCBhL21wYXRocGVyc2lzdC9tYWluLmMgYi9tcGF0aHBl
-cnNpc3QvbWFpbi5jPGJyPg0KaW5kZXggYTU1ODY1Zi4uOGU4Y2MzNSAxMDA2NDQ8YnI+DQotLS0g
-YS9tcGF0aHBlcnNpc3QvbWFpbi5jPGJyPg0KKysrIGIvbXBhdGhwZXJzaXN0L21haW4uYzxicj4N
-CkBAIC0xMDUsNyArMTA1LDcgQEAgaW50IG1haW4gKGludCBhcmdjLCBjaGFyICogYXJndltdKTxi
-cj4NCiA8YnI+DQogJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDt1ZGV2DQo9IHVkZXZfbmV3KCk7PGJyPg0KICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7Y29uZg0KPSBt
-cGF0aF9saWJfaW5pdCh1ZGV2KTs8YnI+DQotICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
-bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCm1lbXNldCh0cmFuc3BvcnRpZHMsMCxNUEFUSF9N
-WF9USURTKTs8YnI+DQorICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsNCm1lbXNldCh0cmFuc3BvcnRpZHMsIDAsIE1QQVRIX01YX1RJRFMgKiBz
-aXplb2Yoc3RydWN0IHRyYW5zcG9ydGlkKSk7PGJyPg0KICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
-YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7bXVsdGlwYXRoX2NvbmYNCj0g
-Y29uZjs8YnI+DQogPGJyPg0KICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7d2hpbGUNCigxKTxicj4NCi0tIDxicj4NCjIuOC4xLndp
-bmRvd3MuMTxicj4NCjxicj4NCi0tPGJyPg0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0PGJyPg0KZG0t
-ZGV2ZWxAcmVkaGF0LmNvbTxicj4NCjwvZm9udD48L3R0PjxhIGhyZWY9Imh0dHBzOi8vd3d3LnJl
-ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbCI+PHR0Pjxmb250IHNpemU9Mj5odHRw
-czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw8L2ZvbnQ+PC90dD48
-L2E+PHR0Pjxmb250IHNpemU9Mj48YnI+DQo8L2ZvbnQ+PC90dD4NCjxicj4NCg==
---=_alternative 002461FC48258049_=--
+On Tue, Oct 11, 2016 at 8:37 AM, <tang.junhui@zte.com.cn> wrote:
+
+> Please have a review for this patch, any comment will be highly
+> appreciated.
+>
+>
+>
+>
+> =E5=8F=91=E4=BB=B6=E4=BA=BA:         tang.junhui@zte.com.cn
+> =E6=94=B6=E4=BB=B6=E4=BA=BA:         christophe varoqui <christophe.varoq=
+ui@free.fr>,
+> Chauhan@redhat.com, Vijay <Vijay.Chauhan@netapp.com>, Benjamin Marzinski =
+<
+> bmarzins@redhat.com>,
+> =E6=8A=84=E9=80=81:        zhang.kai16@zte.com.cn, dm-devel@redhat.com, "=
+tang.junhui" <
+> tang.junhui@zte.com.cn>
+> =E6=97=A5=E6=9C=9F:         2016/09/21 16:54
+> =E4=B8=BB=E9=A2=98:        [dm-devel] [PATCH] mpathpersist: memset length=
+ is wrong
+> =E5=8F=91=E4=BB=B6=E4=BA=BA:        dm-devel-bounces@redhat.com
+> ------------------------------
+>
+>
+>
+> From: "tang.junhui" <tang.junhui@zte.com.cn>
+>
+> variable transportids is cleared by memset() with wrong length
+> MPATH_MX_TIDS,
+> the length should be MPATH_MX_TIDS*sizeof(struct transportid).
+>
+> Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+> ---
+> mpathpersist/main.c | 2 +-
+> 1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+> index a55865f..8e8cc35 100644
+> --- a/mpathpersist/main.c
+> +++ b/mpathpersist/main.c
+> @@ -105,7 +105,7 @@ int main (int argc, char * argv[])
+>
+>                  udev =3D udev_new();
+>                  conf =3D mpath_lib_init(udev);
+> -                 memset(transportids,0,MPATH_MX_TIDS);
+> +                 memset(transportids, 0, MPATH_MX_TIDS * sizeof(struct
+> transportid));
+>                  multipath_conf =3D conf;
+>
+>                  while (1)
+> --
+> 2.8.1.windows.1
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
+>
+
+--001a1142bfc618f7d0053e912a3e
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Seems right.<div>Merged, with thanks.</div></div><div clas=
+s=3D"gmail_extra"><br><div class=3D"gmail_quote">On Tue, Oct 11, 2016 at 8:=
+37 AM,  <span dir=3D"ltr">&lt;<a href=3D"mailto:tang.junhui@zte.com.cn" tar=
+get=3D"_blank">tang.junhui@zte.com.cn</a>&gt;</span> wrote:<br><blockquote =
+class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid=
+;padding-left:1ex"><font size=3D"2">Please have a review</font><font size=
+=3D"2" face=3D"sans-serif">
+for this patch, any comment will be highly appreciated.<br>
+</font>
+<br>
+<br>
+<br>
+<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E5=8F=91=E4=BB=
+=B6=E4=BA=BA: =C2=A0 =C2=A0
+=C2=A0 =C2=A0 </font><font size=3D"1" face=3D"sans-serif"><a href=3D"mailto=
+:tang.junhui@zte.com.cn" target=3D"_blank">tang.junhui@zte.com.cn</a></font=
+>
+<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E6=94=B6=E4=BB=
+=B6=E4=BA=BA: =C2=A0 =C2=A0
+=C2=A0 =C2=A0 </font><font size=3D"1" face=3D"sans-serif">christophe
+varoqui &lt;<a href=3D"mailto:christophe.varoqui@free.fr" target=3D"_blank"=
+>christophe.varoqui@free.fr</a>&gt;, <a href=3D"mailto:Chauhan@redhat.com" =
+target=3D"_blank">Chauhan@redhat.com</a>, Vijay &lt;<a href=3D"mailto:Vijay=
+.Chauhan@netapp.com" target=3D"_blank">Vijay.Chauhan@netapp.com</a>&gt;,
+Benjamin Marzinski &lt;<a href=3D"mailto:bmarzins@redhat.com" target=3D"_bl=
+ank">bmarzins@redhat.com</a>&gt;, </font>
+<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E6=8A=84=E9=80=
+=81: =C2=A0 =C2=A0
+=C2=A0 =C2=A0</font><font size=3D"1" face=3D"sans-serif"><a href=3D"mailto:=
+zhang.kai16@zte.com.cn" target=3D"_blank">zhang.kai16@zte.com.cn</a>,
+<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
+m</a>, &quot;tang.junhui&quot; &lt;<a href=3D"mailto:tang.junhui@zte.com.cn=
+" target=3D"_blank">tang.junhui@zte.com.cn</a>&gt;</font>
+<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E6=97=A5=E6=9C=
+=9F: =C2=A0 =C2=A0
+=C2=A0 =C2=A0 </font><font size=3D"1" face=3D"sans-serif">2016/09/21
+16:54</font>
+<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E4=B8=BB=E9=A2=
+=98: =C2=A0 =C2=A0
+=C2=A0 =C2=A0</font><font size=3D"1" face=3D"sans-serif">[dm-devel] [PATCH]
+mpathpersist: memset length is wrong</font>
+<br><font size=3D"1" color=3D"#5f5f5f" face=3D"sans-serif">=E5=8F=91=E4=BB=
+=B6=E4=BA=BA: =C2=A0 =C2=A0
+=C2=A0 =C2=A0</font><font size=3D"1" face=3D"sans-serif"><a href=3D"mailto:=
+dm-devel-bounces@redhat.com" target=3D"_blank">dm-devel-bounces@redhat.com<=
+/a></font>
+<br>
+<hr noshade><div class=3D"HOEnZb"><div class=3D"h5">
+<br>
+<br>
+<br><tt><font size=3D"2">From: &quot;tang.junhui&quot; &lt;<a href=3D"mailt=
+o:tang.junhui@zte.com.cn" target=3D"_blank">tang.junhui@zte.com.cn</a>&gt;<=
+br>
+<br>
+variable transportids is cleared by memset() with wrong length MPATH_MX_TID=
+S,<br>
+the length should be MPATH_MX_TIDS*sizeof(struct transportid).<br>
+<br>
+Signed-off-by: tang.junhui &lt;<a href=3D"mailto:tang.junhui@zte.com.cn" ta=
+rget=3D"_blank">tang.junhui@zte.com.cn</a>&gt;<br>
+---<br>
+ mpathpersist/main.c | 2 +-<br>
+ 1 file changed, 1 insertion(+), 1 deletion(-)<br>
+<br>
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c<br>
+index a55865f..8e8cc35 100644<br>
+--- a/mpathpersist/main.c<br>
++++ b/mpathpersist/main.c<br>
+@@ -105,7 +105,7 @@ int main (int argc, char * argv[])<br>
+ <br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0udev
+=3D udev_new();<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0conf
+=3D mpath_lib_init(udev);<br>
+- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+memset(transportids,0,MPATH_<wbr>MX_TIDS);<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+memset(transportids, 0, MPATH_MX_TIDS * sizeof(struct transportid));<br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0multipath_co=
+nf
+=3D conf;<br>
+ <br>
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0while
+(1)<br>
+-- <br>
+2.8.1.windows.1<br>
+<br>
+--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
+m</a><br>
+</font></tt><a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" ta=
+rget=3D"_blank"><tt><font size=3D"2">https://www.redhat.com/<wbr>mailman/li=
+stinfo/dm-devel</font></tt></a><tt><font size=3D"2"><br>
+</font></tt>
+<br>
+</div></div></blockquote></div><br></div>
+
+--001a1142bfc618f7d0053e912a3e--
 
 
---===============0719673305669095623==
+--===============1020458832872621179==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0719673305669095623==--
+--===============1020458832872621179==--
