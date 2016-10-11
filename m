@@ -1,8 +1,8 @@
 From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 1/9] util: Add support for QUOTE_0_TERMINATED in user_style
-	to ptrintstr_ex
-Date: Wed, 12 Oct 2016 01:38:13 +0300
-Message-ID: <20161011223813.GA8414@obsidian>
+Subject: [PATCH 2/9] tests: Add check for printing of overlength strings to
+	ioctl_dm test
+Date: Wed, 12 Oct 2016 01:38:19 +0300
+Message-ID: <20161011223819.GA8545@obsidian>
 References: <20161005.192828.566127461630656590.yamato@redhat.com>
 Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
@@ -23,56 +23,37 @@ To: strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-This enables printing size-limited (expectedly) ASCIZ strings.
 ---
- util.c |   18 +++++++++++++++---
- 1 file changed, 15 insertions(+), 3 deletions(-)
+ tests/ioctl_dm.c    |    2 +-
+ tests/ioctl_dm.test |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/util.c b/util.c
-index 23a5fdb..00148d4 100644
---- a/util.c
-+++ b/util.c
-@@ -820,13 +820,13 @@ printstr_ex(struct tcb *tcp, long addr, long len, unsigned int user_style)
- 		outstr = xmalloc(outstr_size);
- 	}
+diff --git a/tests/ioctl_dm.c b/tests/ioctl_dm.c
+index 6ad4ea9..0a3bbf4 100644
+--- a/tests/ioctl_dm.c
++++ b/tests/ioctl_dm.c
+@@ -77,7 +77,7 @@ main(void)
+ 	printf("ioctl(-1, DM_DEV_SET_GEOMETRY, "
+ 	       "{version=4.1.2, data_size=%u, data_start=%u, "
+ 	       "dev=makedev(18, 52), name=\"nnn\", uuid=\"uuu\", flags=0, "
+-	       "string=\"10 20 30 40\"}) = -1 EBADF (%m)\n",
++	       "string=\"10 20 30 \"...}) = -1 EBADF (%m)\n",
+ 	       s.ioc.data_size, s.ioc.data_start);
  
--	size = max_strlen;
-+	size = max_strlen + 1;
- 	if (len == -1) {
- 		/*
- 		 * Treat as a NUL-terminated string: fetch one byte more
- 		 * because string_quote may look one byte ahead.
- 		 */
--		if (umovestr(tcp, addr, size + 1, str) < 0) {
-+		if (umovestr(tcp, addr, size, str) < 0) {
- 			printaddr(addr);
- 			return;
- 		}
-@@ -844,11 +844,23 @@ printstr_ex(struct tcb *tcp, long addr, long len, unsigned int user_style)
+ 	init_s(&s.ioc, sizeof(s), offsetof(struct s, u));
+diff --git a/tests/ioctl_dm.test b/tests/ioctl_dm.test
+index db77616..78866d3 100755
+--- a/tests/ioctl_dm.test
++++ b/tests/ioctl_dm.test
+@@ -5,7 +5,7 @@
+ . "${srcdir=.}/init.sh"
  
- 	style |= user_style;
- 
-+	if (style & QUOTE_0_TERMINATED) {
-+		if (size) {
-+			--size;
-+		} else {
-+			tprints((len == -1) || (len == 0) ? "\"\"" : "\"\"...");
-+			return;
-+		}
-+	}
-+	if (size > max_strlen)
-+		size = max_strlen;
-+
- 	/* If string_quote didn't see NUL and (it was supposed to be ASCIZ str
- 	 * or we were requested to print more than -s NUM chars)...
- 	 */
- 	ellipsis = (string_quote(str, outstr, size, style) &&
--			(len < 0 || (unsigned long) len > max_strlen));
-+			((style & QUOTE_0_TERMINATED) ||
-+				(unsigned long) len > max_strlen));
- 
- 	tprints(outstr);
- 	if (ellipsis)
+ run_prog > /dev/null
+-run_strace -a16 -veioctl $args > "$EXP"
++run_strace -a16 -s9 -veioctl $args > "$EXP"
+ check_prog grep
+ grep -v '^ioctl([012],' < "$LOG" > "$OUT"
+ match_diff "$OUT" "$EXP"
 -- 
 1.7.10.4
 
