@@ -1,16 +1,17 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Subject: Re: [PATCH] multipath-tools: preload also scsi_dh_hp_sw
  before run multipathd
-Date: Wed, 12 Oct 2016 14:43:11 +0200
-Message-ID: <3b74a980-ebe9-cda3-4d98-0072ae2c7f89@suse.de>
+Date: Wed, 12 Oct 2016 14:54:09 +0200
+Message-ID: <256cb0be-211e-8674-d727-3aa4576822fe@gmail.com>
 References: <20161011125515.8523-1-xose.vazquez@gmail.com>
 	<2779bae3-28f4-9b0f-b014-583b717f715e@suse.de>
 	<a00c50a5-3eae-edfb-f793-89fee7cd734c@gmail.com>
+	<3b74a980-ebe9-cda3-4d98-0072ae2c7f89@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <a00c50a5-3eae-edfb-f793-89fee7cd734c@gmail.com>
+In-Reply-To: <3b74a980-ebe9-cda3-4d98-0072ae2c7f89@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,45 +21,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Hannes Reinecke <hare@suse.de>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMTAvMTIvMjAxNiAwMTozNyBQTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+IE9uIDEw
-LzExLzIwMTYgMDM6NDEgUE0sIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPgo+PiBPbiAxMC8xMS8y
-MDE2IDAyOjU1IFBNLCBYb3NlIFZhenF1ZXogUGVyZXogd3JvdGU6Cj4+PiBDYzogSGFubmVzIFJl
-aW5lY2tlIDxoYXJlQHN1c2UuZGU+Cj4+PiBDYzogQ2hyaXN0b3BoZSBWYXJvcXVpIDxjaHJpc3Rv
-cGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20+Cj4+PiBDYzogZGV2aWNlLW1hcHBlciBkZXZlbG9wbWVu
-dCA8ZG0tZGV2ZWxAcmVkaGF0LmNvbT4KPj4+IFNpZ25lZC1vZmYtYnk6IFhvc2UgVmF6cXVleiBQ
-ZXJleiA8eG9zZS52YXpxdWV6QGdtYWlsLmNvbT4KPj4+IC0tLQo+Pj4gIG11bHRpcGF0aGQvbXVs
-dGlwYXRoZC5zZXJ2aWNlIHwgMiArLQo+Pj4gIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlvbigr
-KSwgMSBkZWxldGlvbigtKQo+Pj4KPj4+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL211bHRpcGF0
-aGQuc2VydmljZSBiL211bHRpcGF0aGQvbXVsdGlwYXRoZC5zZXJ2aWNlCj4+PiBpbmRleCBlM2Q2
-ZjkxLi40NWFjYTM1IDEwMDY0NAo+Pj4gLS0tIGEvbXVsdGlwYXRoZC9tdWx0aXBhdGhkLnNlcnZp
-Y2UKPj4+ICsrKyBiL211bHRpcGF0aGQvbXVsdGlwYXRoZC5zZXJ2aWNlCj4+PiBAQCAtMTEsNyAr
-MTEsNyBAQCBDb25mbGljdHM9c2h1dGRvd24udGFyZ2V0Cj4+PiAgVHlwZT1ub3RpZnkKPj4+ICBO
-b3RpZnlBY2Nlc3M9bWFpbgo+Pj4gIExpbWl0Q09SRT1pbmZpbml0eQo+Pj4gLUV4ZWNTdGFydFBy
-ZT0vc2Jpbi9tb2Rwcm9iZSAtYSBzY3NpX2RoX2FsdWEgc2NzaV9kaF9lbWMgc2NzaV9kaF9yZGFj
-IGRtLW11bHRpcGF0aAo+Pj4gK0V4ZWNTdGFydFByZT0vc2Jpbi9tb2Rwcm9iZSAtYSBzY3NpX2Ro
-X2FsdWEgc2NzaV9kaF9lbWMgc2NzaV9kaF9ocF9zdyBzY3NpX2RoX3JkYWMgZG0tbXVsdGlwYXRo
-Cj4+PiAgRXhlY1N0YXJ0PS9zYmluL211bHRpcGF0aGQgLWQgLXMKPj4+ICBFeGVjUmVsb2FkPS9z
-YmluL211bHRpcGF0aGQgcmVjb25maWd1cmUKPj4+Cj4+IElmIHlvdSBjYW4gcG9pbnQgbWUgdG8g
-YSBzaW5nbGUgdXNlciBvZiBhbiBNU0ExNTAwIEknbSBoYXBweSB0byBpbmNsdWRlIGl0LiBJZiB5
-b3UgZG9uJ3QKPj4ga25vdyB3aGF0IGFuIE1TQTE1MDAgaXMgbm9yIHdoYXQgaHBfc3cgZG9lcyBp
-dCdzIHByb2JhYmx5IG5vdCBhIGdvb2QgaWRlYSB0byBoYXZlIGl0Lgo+Cj4gV2h5Pwo+Cj4gc2Nz
-aV9kaF9ocF9zdyBpcyB1c2VkIGFsc28gZm9yIGRlYy9jb21wYXEgRVNBMTIwMDAgYW5kIFJBODAw
-MCBhcnJheXMgd2l0aCBIU0c4MCBjb250cm9sbGVyLgo+IEFuZCBpbiBIUCBNU0EgMTAwMC8xNTAw
-IGFuZCBFVkEgMzAwMC81MDAwLCB3aXRoIG9sZCBmaXJtd2FyZS4KPgpFVkE/IEkgc2luY2VyZWx5
-IGRvdWJ0IHRoYXQuCkRvIHlvdSByZWFsbHkgaGF2ZSBhbiBleGFtcGxlIGZvciB0aGF0PwoKQW55
-d2F5LgpQb2ludCBoZXJlIGlzLCB0aGVzZSBhcmUgX3JlYWxseV8gb2xkIFNDU0kgcGFyYWxsZWwg
-YXJyYXlzLiBBbmQgdGhlIApmYWlsb3ZlciBjb21tYW5kIGlzIF9yZWFsbHlfIHN0dXBpZCAoanVz
-dCBzZW5kIGEgU1RBUlQgU1RPUCBVTklUIHRvIHRoZSAKcGFzc2l2ZSBwYXRoKS4KQXMgdGhpcyBo
-YXMgYSB0ZW5kZW5jeSB0byBpbnRlcmZlcmUgd2l0aCBub3JtYWwgb3BlcmF0aW9uIEkgcHJlZmVy
-IHRvIApfTk9UXyBoYXZlIGl0IGxvYWRlZCBwZXIgZGVmYXVsdDsgaW4gZmFjdCwgSSdtIG9uIHRo
-ZSB2ZXJnZSBvZiByZW1vdmluZyAKaXQgYWx0b2dldGhlci4KCkNoZWVycywKCkhhbm5lcwotLSAK
-RHIuIEhhbm5lcyBSZWluZWNrZQkJICAgICAgelNlcmllcyAmIFN0b3JhZ2UKaGFyZUBzdXNlLmRl
-CQkJICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBQcm9kdWN0cyBHbWJILCBNYXhm
-ZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEouIEhhd24sIEouIEd1aWxkLCBGLiBJbWVu
-ZMO2cmZmZXIsIEhSQiAxNjc0NiAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBs
-aXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xp
-c3RpbmZvL2RtLWRldmVs
+On 10/12/2016 02:43 PM, Hannes Reinecke wrote:
+> On 10/12/2016 01:37 PM, Xose Vazquez Perez wrote:
+
+>> scsi_dh_hp_sw is used also for dec/compaq ESA12000 and RA8000 arrays with HSG80 controller.
+>> And in HP MSA 1000/1500 and EVA 3000/5000, with old firmware.
+>>
+> EVA? I sincerely doubt that.
+> Do you really have an example for that?
+
+        {
+                /* MSA 1000/1500 and EVA 3000/5000, with old firmware */
+                .vendor        = "(COMPAQ|HP)",
+                .product       = "(MSA|HSV)1[01]0",
+                .hwhandler     = "1 hp_sw",
+                .pgpolicy      = GROUP_BY_PRIO,
+                .no_path_retry = 12,
+                .checker_name  = HP_SW,
+                .prio_name     = PRIO_HP_SW,
+        },
+
+HSV100 is HP StorageWorks Enterprise Virtual Array 3000:
+ http://h18000.www1.hp.com/products/quickspecs/archives_Division/11619_div_v9/11619_div.PDF
+HSV110 is HP StorageWorks Enterprise Virtual Array 5000:
+ https://www.hpe.com/h20195/v2/GetPDF.aspx/c04282828.pdf
