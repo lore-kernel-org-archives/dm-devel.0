@@ -1,17 +1,12 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: remove hwhandler when it's
-	alua
-Date: Wed, 12 Oct 2016 17:17:22 +0200
-Message-ID: <d5843ac4-f8da-a66f-895a-3259df8f61be@gmail.com>
-References: <20161006185021.3625-1-xose.vazquez@gmail.com>
-	<CABr-GnfHUoWn_q4LfvhDeF6w_vPcMg8VRjEN98quZ6+oes1Ryw@mail.gmail.com>
-	<1d46912b-0cad-89e4-2bd6-2b4c9e3fe67f@suse.de>
-	<CABr-GnfVSt3A_sGpJMwmQ4nJi879bNuQmkHtS_9L_UCYzaO6pw@mail.gmail.com>
+Subject: [PATCH] multipath-tools: add Xiotech ISE arrays to
+	hwtable
+Date: Wed, 12 Oct 2016 18:06:37 +0200
+Message-ID: <20161012160637.15710-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-GnfVSt3A_sGpJMwmQ4nJi879bNuQmkHtS_9L_UCYzaO6pw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,13 +16,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gMTAvMTEvMjAxNiAwODo0MyBBTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgoKPiBzbyBY
-b3PDqSwgY2FuIHlvdSBjb25maXJtIHRoZSBsYXN0IGludHJvZHVjZWQgaHd0YWJsZSBlbnRyaWVz
-IGRvbid0IG5lZWQgdGhlIGFsdWEgaHdoYW5kbGVyIDoKClllcywgZGVmaW5lZDoKPiAtIHRlZ2ls
-ZQo+IC0gbmltYmxlCgpObyBuZWVkZWQvZGVmaW5lZDoKPiAtIG5leHNhbgo+IC0gbmZpbmlkYXQK
-LSBOZXhHZW58UGl2b3QzCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
-LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Based on documentation provided by the manufacturer:
+https://drive.google.com/file/d/0B_B6YmEmO7cDc201a3ZlcmFvUmM
+
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 4fffeb7..dc3010a 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -933,6 +933,15 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 		.no_path_retry = 15,
+ 	},
++	/*
++	 * Xiotech
++	 */
++	{
++		.vendor        = "(XIOTECH|XIOtech)",
++		.product       = "ISE",
++		.pgpolicy      = MULTIBUS,
++		.no_path_retry = 12,
++	},
+ #if 0
+ 	/*
+ 	 * Copy this TEMPLATE to add new hardware.
+-- 
+2.10.1
