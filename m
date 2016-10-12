@@ -1,10 +1,10 @@
-From: peng.liang5@zte.com.cn
-Subject: Re: [PATCH] multipathd: fix issue in 'map $map
-	getprstatus' reply
-Date: Wed, 12 Oct 2016 11:03:46 +0800
-Message-ID: <OF841ED337.71FB1AB0-ON4825804A.000FE81D-4825804A.0010D15C@zte.com.cn>
+From: Michael Wang <yun.wang@profitbricks.com>
+Subject: [RFC] unreleased lock after handler failure
+Date: Wed, 12 Oct 2016 09:59:13 +0200
+Message-ID: <018d2a56-5c23-4a61-5b27-8fe80a6283a8@profitbricks.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2620217624573382159=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,129 +15,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com
+To: christophe.varoqui@opensvc.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multipart message in MIME format.
---===============2620217624573382159==
-Content-Type: multipart/alternative;
-	boundary="=_alternative 0010D15A4825804A_="
+Hi, folks
 
-This is a multipart message in MIME format.
---=_alternative 0010D15A4825804A_=
-Content-Type: text/plain; charset="GB2312"
-Content-Transfer-Encoding: base64
+While we are testing with the latest multipathd, we encounter issue that once
+'del map' failed, all the following operation will show 'error -1 receiving packet'
+whatever how long the timeout has been set (we have applied the latest fix which
+make sure the poll will last for 10 seconds).
 
-UGxlYXNlIGhhdmUgYSByZXZpZXcgZm9yIHRoaXMgcGF0Y2gsIGhvcGUgZm9yIHlvdXIgY29tbWVu
-dHMuDQoNClRoYW5rcw0KDQoNCreivP7IyzogICAgICAgICBwZW5nLmxpYW5nNUB6dGUuY29tLmNu
-DQrK1bz+yMs6ICAgICAgICAgY2hyaXN0b3BoZSB2YXJvcXVpIDxjaHJpc3RvcGhlLnZhcm9xdWlA
-ZnJlZS5mcj4sIA0Ks63LzTogICB6aGFuZy5rYWkxNkB6dGUuY29tLmNuLCBkbS1kZXZlbEByZWRo
-YXQuY29tLCBwZW5nIGxpYW5nIA0KPHBlbmcubGlhbmc1QHp0ZS5jb20uY24+DQrI1cbaOiAgIDIw
-MTYtMDgtMDQgMTU6MzENCtb3zOI6ICAgW2RtLWRldmVsXSBbUEFUQ0hdIG11bHRpcGF0aGQ6IGZp
-eCBpc3N1ZSBpbiAnbWFwICRtYXAgZ2V0cHJzdGF0dXMnIA0KcmVwbHkNCreivP7IyzogZG0tZGV2
-ZWwtYm91bmNlc0ByZWRoYXQuY29tDQoNCg0KDQpGcm9tOiBwZW5nIGxpYW5nIDxwZW5nLmxpYW5n
-NUB6dGUuY29tLmNuPg0KDQotYWRkIG1pc3NpbmcgbmV3bGluZSB0byAnbWFwfG11bHRpcGF0aCAk
-bWFwIGdldHByc3RhdHVzJyByZXBseQ0KLXVzZSBhc3ByaW50ZiBpbnN0ZWFkIG9mIHNwcmludGYN
-Cg0KU2lnbmVkLW9mZi1ieTogcGVuZyBsaWFuZyA8cGVuZy5saWFuZzVAenRlLmNvbS5jbj4NCi0t
-LQ0KIG11bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmMgfCAxNCArKysrKystLS0tLS0tLQ0KIDEgZmls
-ZSBjaGFuZ2VkLCA2IGluc2VydGlvbnMoKyksIDggZGVsZXRpb25zKC0pDQoNCmRpZmYgLS1naXQg
-YS9tdWx0aXBhdGhkL2NsaV9oYW5kbGVycy5jIGIvbXVsdGlwYXRoZC9jbGlfaGFuZGxlcnMuYw0K
-aW5kZXggOGZmNDM2Mi4uMTY0NDVlYSAxMDA2NDQNCi0tLSBhL211bHRpcGF0aGQvY2xpX2hhbmRs
-ZXJzLmMNCisrKyBiL211bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmMNCkBAIC0xLDYgKzEsOSBAQA0K
-IC8qDQogICogQ29weXJpZ2h0IChjKSAyMDA1IENocmlzdG9waGUgVmFyb3F1aQ0KICAqLw0KKyNk
-ZWZpbmUgX0dOVV9TT1VSQ0UNCisNCisjaW5jbHVkZSA8c3RkaW8uaD4NCiAjaW5jbHVkZSAiY2hl
-Y2tlcnMuaCINCiAjaW5jbHVkZSAibWVtb3J5LmgiDQogI2luY2x1ZGUgInZlY3Rvci5oIg0KQEAg
-LTEyODUsMTQgKzEyODgsOSBAQCBjbGlfZ2V0cHJzdGF0dXMgKHZvaWQgKiB2LCBjaGFyICoqIHJl
-cGx5LCBpbnQgKiANCmxlbiwgdm9pZCAqIGRhdGEpDQogDQogICAgICAgICAgICAgICAgIGNvbmRs
-b2coMywgIiVzOiBwcmZsYWcgPSAldSIsIHBhcmFtLCAodW5zaWduZWQgDQppbnQpbXBwLT5wcmZs
-YWcpOw0KIA0KLSAgICAgICAgICAgICAgICAqcmVwbHkgPShjaGFyICopbWFsbG9jKDIpOw0KLSAg
-ICAgICAgICAgICAgICAqbGVuID0gMjsNCi0gICAgICAgICAgICAgICAgbWVtc2V0KCpyZXBseSww
-LDIpOw0KLQ0KLQ0KLSAgICAgICAgICAgICAgICBzcHJpbnRmKCpyZXBseSwiJWQiLG1wcC0+cHJm
-bGFnKTsNCi0gICAgICAgICAgICAgICAgKCpyZXBseSlbMV09J1wwJzsNCi0NCisgICAgICAgICAg
-ICAgICAgKmxlbiA9IGFzcHJpbnRmKHJlcGx5LCAiJWRcbiIsIG1wcC0+cHJmbGFnKTsNCisgICAg
-ICAgICAgICAgICAgaWYgKCpsZW4gPCAwKQ0KKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgcmV0dXJuIDE7DQogDQogICAgICAgICAgICAgICAgIGNvbmRsb2coMywgIiVzOiByZXBseSA9
-ICVzIiwgcGFyYW0sICpyZXBseSk7DQogDQotLSANCjIuOC4xLndpbmRvd3MuMQ0KDQotLQ0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0DQpkbS1kZXZlbEByZWRoYXQuY29tDQpodHRwczovL3d3dy5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwNCg0K
---=_alternative 0010D15A4825804A_=
-Content-Type: text/html; charset="GB2312"
-Content-Transfer-Encoding: base64
+After some debugging we found that inside parse_cmd(), the pthread_cleanup_pop()
+rely on '!r' as indicator for locked or not, while this will be overwritten if
+the handler return failed (1 in our case), and then the unlock will be missed.
 
-PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPjxicj4NCjwvZm9udD4NCjxicj48Zm9udCBz
-aXplPTIgZmFjZT0ic2Fucy1zZXJpZiI+UGxlYXNlIGhhdmUgYSByZXZpZXcgZm9yIHRoaXMgcGF0
-Y2gsDQpob3BlIGZvciB5b3VyIGNvbW1lbnRzLjwvZm9udD4NCjxicj4NCjxicj48Zm9udCBzaXpl
-PTIgZmFjZT0ic2Fucy1zZXJpZiI+VGhhbmtzPC9mb250Pg0KPGJyPg0KPGJyPg0KPGJyPjxmb250
-IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPreivP7IyzogJm5ic3A7ICZu
-YnNwOw0KJm5ic3A7ICZuYnNwOyA8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYi
-PnBlbmcubGlhbmc1QHp0ZS5jb20uY248L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1
-ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+ytW8/sjLOiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5i
-c3A7IDwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+Y2hyaXN0b3BoZQ0KdmFy
-b3F1aSAmbHQ7Y2hyaXN0b3BoZS52YXJvcXVpQGZyZWUuZnImZ3Q7LCA8L2ZvbnQ+DQo8YnI+PGZv
-bnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+s63LzTogJm5ic3A7ICZu
-YnNwOw0KJm5ic3A7ICZuYnNwOzwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+
-emhhbmcua2FpMTZAenRlLmNvbS5jbiwNCmRtLWRldmVsQHJlZGhhdC5jb20sIHBlbmcgbGlhbmcg
-Jmx0O3BlbmcubGlhbmc1QHp0ZS5jb20uY24mZ3Q7PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBj
-b2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPsjVxto6ICZuYnNwOyAmbmJzcDsNCiZuYnNw
-OyAmbmJzcDsgPC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj4yMDE2LTA4LTA0
-DQoxNTozMTwvZm9udD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5z
-LXNlcmlmIj7W98ziOiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7PC9mb250Pjxmb250IHNp
-emU9MSBmYWNlPSJzYW5zLXNlcmlmIj5bZG0tZGV2ZWxdIFtQQVRDSF0NCm11bHRpcGF0aGQ6IGZp
-eCBpc3N1ZSBpbiAnbWFwICRtYXAgZ2V0cHJzdGF0dXMnICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
-YnNwO3JlcGx5PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNh
-bnMtc2VyaWYiPreivP7IyzogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOzwvZm9udD48Zm9u
-dCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+ZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tPC9m
-b250Pg0KPGJyPg0KPGhyIG5vc2hhZGU+DQo8YnI+DQo8YnI+DQo8YnI+PHR0Pjxmb250IHNpemU9
-Mj5Gcm9tOiBwZW5nIGxpYW5nICZsdDtwZW5nLmxpYW5nNUB6dGUuY29tLmNuJmd0Ozxicj4NCjxi
-cj4NCi1hZGQgbWlzc2luZyBuZXdsaW5lIHRvICdtYXB8bXVsdGlwYXRoICRtYXAgZ2V0cHJzdGF0
-dXMnIHJlcGx5PGJyPg0KLXVzZSBhc3ByaW50ZiBpbnN0ZWFkIG9mIHNwcmludGY8YnI+DQo8YnI+
-DQpTaWduZWQtb2ZmLWJ5OiBwZW5nIGxpYW5nICZsdDtwZW5nLmxpYW5nNUB6dGUuY29tLmNuJmd0
-Ozxicj4NCi0tLTxicj4NCiBtdWx0aXBhdGhkL2NsaV9oYW5kbGVycy5jIHwgMTQgKysrKysrLS0t
-LS0tLS08YnI+DQogMSBmaWxlIGNoYW5nZWQsIDYgaW5zZXJ0aW9ucygrKSwgOCBkZWxldGlvbnMo
-LSk8YnI+DQo8YnI+DQpkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9jbGlfaGFuZGxlcnMuYyBiL211
-bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmM8YnI+DQppbmRleCA4ZmY0MzYyLi4xNjQ0NWVhIDEwMDY0
-NDxicj4NCi0tLSBhL211bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmM8YnI+DQorKysgYi9tdWx0aXBh
-dGhkL2NsaV9oYW5kbGVycy5jPGJyPg0KQEAgLTEsNiArMSw5IEBAPGJyPg0KIC8qPGJyPg0KICZu
-YnNwOyogQ29weXJpZ2h0IChjKSAyMDA1IENocmlzdG9waGUgVmFyb3F1aTxicj4NCiAmbmJzcDsq
-Lzxicj4NCisjZGVmaW5lIF9HTlVfU09VUkNFPGJyPg0KKzxicj4NCisjaW5jbHVkZSAmbHQ7c3Rk
-aW8uaCZndDs8YnI+DQogI2luY2x1ZGUgJnF1b3Q7Y2hlY2tlcnMuaCZxdW90Ozxicj4NCiAjaW5j
-bHVkZSAmcXVvdDttZW1vcnkuaCZxdW90Ozxicj4NCiAjaW5jbHVkZSAmcXVvdDt2ZWN0b3IuaCZx
-dW90Ozxicj4NCkBAIC0xMjg1LDE0ICsxMjg4LDkgQEAgY2xpX2dldHByc3RhdHVzICh2b2lkICog
-diwgY2hhciAqKiByZXBseSwgaW50ICoNCmxlbiwgdm9pZCAqIGRhdGEpPGJyPg0KIDxicj4NCiAm
-bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
-YnNwO2NvbmRsb2coMywNCiZxdW90OyVzOiBwcmZsYWcgPSAldSZxdW90OywgcGFyYW0sICh1bnNp
-Z25lZCBpbnQpbXBwLSZndDtwcmZsYWcpOzxicj4NCiA8YnI+DQotICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCipyZXBseSA9KGNoYXIgKilt
-YWxsb2MoMik7PGJyPg0KLSAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7DQoqbGVuID0gMjs8YnI+DQotICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
-YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCm1lbXNldCgqcmVwbHksMCwyKTs8YnI+
-DQotPGJyPg0KLTxicj4NCi0gJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
-cDsgJm5ic3A7ICZuYnNwOw0Kc3ByaW50ZigqcmVwbHksJnF1b3Q7JWQmcXVvdDssbXBwLSZndDtw
-cmZsYWcpOzxicj4NCi0gJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOw0KKCpyZXBseSlbMV09J1wwJzs8YnI+DQotPGJyPg0KKyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQoqbGVuID0gYXNw
-cmludGYocmVwbHksICZxdW90OyVkXG4mcXVvdDssIG1wcC0mZ3Q7cHJmbGFnKTs8YnI+DQorICZu
-YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCmlm
-ICgqbGVuICZsdDsgMCk8YnI+DQorICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7cmV0dXJuDQoxOzxicj4NCiA8YnI+DQogJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtj
-b25kbG9nKDMsDQomcXVvdDslczogcmVwbHkgPSAlcyZxdW90OywgcGFyYW0sICpyZXBseSk7PGJy
-Pg0KIDxicj4NCi0tIDxicj4NCjIuOC4xLndpbmRvd3MuMTxicj4NCjxicj4NCi0tPGJyPg0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0PGJyPg0KZG0tZGV2ZWxAcmVkaGF0LmNvbTxicj4NCjwvZm9udD48
-L3R0PjxhIGhyZWY9Imh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
-ZXZlbCI+PHR0Pjxmb250IHNpemU9Mj5odHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
-dGluZm8vZG0tZGV2ZWw8L2ZvbnQ+PC90dD48L2E+PHR0Pjxmb250IHNpemU9Mj48YnI+DQo8L2Zv
-bnQ+PC90dD4NCg==
---=_alternative 0010D15A4825804A_=--
+After applied below fix the problem got solved, although the del map failed, the
+other operation can still works.
+
+Could you please help to review whether this is really the problem to be fixed
+like that?
+
+Regards,
+Michael Wang
 
 
---===============2620217624573382159==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
 
-
---===============2620217624573382159==--
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index e8a9384..50161be 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -481,6 +481,7 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
+                tmo.tv_sec = 0;
+        }
+        if (h->locked) {
++               int locked = 0;
+                struct vectors * vecs = (struct vectors *)data;
+ 
+                pthread_cleanup_push(cleanup_lock, &vecs->lock);
+@@ -491,10 +492,11 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
+                        r = 0;
+                }
+                if (r == 0) {
++                       locked = 1;
+                        pthread_testcancel();
+                        r = h->fn(cmdvec, reply, len, data);
+                }
+-               pthread_cleanup_pop(!r);
++               pthread_cleanup_pop(locked);
+        } else
+                r = h->fn(cmdvec, reply, len, data);
+        free_keys(cmdvec);
