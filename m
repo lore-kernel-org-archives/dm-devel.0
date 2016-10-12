@@ -1,11 +1,16 @@
-From: Michael Wang <yun.wang@profitbricks.com>
-Subject: [PATCH] multipath-tools: release lock on handler failure
-Date: Wed, 12 Oct 2016 10:54:05 +0200
-Message-ID: <a822c1be-b984-b47b-7418-48d5cf069801@profitbricks.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: remove hwhandler when it's
+	alua
+Date: Wed, 12 Oct 2016 13:06:10 +0200
+Message-ID: <305ee5f4-8a06-4f33-6f72-892c0a9919a2@gmail.com>
+References: <20161006185021.3625-1-xose.vazquez@gmail.com>
+	<CABr-GnfHUoWn_q4LfvhDeF6w_vPcMg8VRjEN98quZ6+oes1Ryw@mail.gmail.com>
+	<1d46912b-0cad-89e4-2bd6-2b4c9e3fe67f@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1d46912b-0cad-89e4-2bd6-2b4c9e3fe67f@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,49 +20,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, tang.junhui@zte.com.cn
+To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On 10/11/2016 08:22 AM, Hannes Reinecke wrote:
 
-Inside parse_cmd() the pthread_cleanup_pop() rely on '!r' as the
-indicator of locked or not, while this will be overwritten if the
-handler return failed, and the unlock will be missing.
+> Autodetection will only work if the hardware handler is loaded.
+> If the handler is _not_ loaded autodetection won't work, either.
+> And if we add this patch multipath will never load the modules, neither.
+> So we need this functionality as a fallback if autodetect does not work.
 
-This will lead into the situation that all the following operation
-will trying to hold a lock which will never be released.
+I'm pretty sure all works flawlessly with this patch. Because I use similar
+options for EMC VNX7500(CLARiiON) configured as ALUA "Failover Mode 4 (Asymmetric Active/Active)",
+with SLES-11/12 and RHEL-6 booting from SAN.
 
-This patch using a separate flag to record the status of locking to
-make sure the unlock and lock are in pairs.
+For SLES it was added to DGC config:
+retain_attached_hw_handler yes
+detect_prio yes
 
-Signed-off-by: Michael Wang <yun.wang@profitbricks.com>
----
- multipathd/cli.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+In RHEL it's included by default:
+http://pkgs.fedoraproject.org/cgit/rpms/device-mapper-multipath.git/plain/0117-RHBZ-1198424-autodetect-clariion-alua.patch
 
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index e8a9384..50161be 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -481,6 +481,7 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
-                tmo.tv_sec = 0;
-        }
-        if (h->locked) {
-+               int locked = 0;
-                struct vectors * vecs = (struct vectors *)data;
+And the modules are preloaded by multipathd/multipathd.service:
+ExecStartPre=/sbin/modprobe -a scsi_dh_alua scsi_dh_emc scsi_dh_rdac dm-multipath
 
-                pthread_cleanup_push(cleanup_lock, &vecs->lock);
-@@ -491,10 +492,11 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
-                        r = 0;
-                }
-                if (r == 0) {
-+                       locked = 1;
-                        pthread_testcancel();
-                        r = h->fn(cmdvec, reply, len, data);
-                }
--               pthread_cleanup_pop(!r);
-+               pthread_cleanup_pop(locked);
-        } else
-                r = h->fn(cmdvec, reply, len, data);
-        free_keys(cmdvec);
--- 
-2.5.0
+
+RDAC devices also depend *exclusively* on "retain_attached_hw_handler" and "detect_prio"
+to run in ALUA mode.
