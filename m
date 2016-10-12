@@ -1,16 +1,11 @@
 From: Michael Wang <yun.wang@profitbricks.com>
-Subject: Re:
- =?utf-8?b?562U5aSNOiAgW1JGQ10gdW5yZWxlYXNlZCBsb2NrIGFm?=
- =?utf-8?q?ter_handler_failure?=
-Date: Wed, 12 Oct 2016 10:36:51 +0200
-Message-ID: <e48fe335-3e43-eefc-68a2-1d0cc2e8e07d@profitbricks.com>
-References: <018d2a56-5c23-4a61-5b27-8fe80a6283a8@profitbricks.com>
-	<OFF0B1B6BA.C0361FF8-ON4825804A.002E502E-4825804A.002F0026@zte.com.cn>
+Subject: [PATCH] multipath-tools: release lock on handler failure
+Date: Wed, 12 Oct 2016 10:54:05 +0200
+Message-ID: <a822c1be-b984-b47b-7418-48d5cf069801@profitbricks.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="gbk"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <OFF0B1B6BA.C0361FF8-ON4825804A.002E502E-4825804A.002F0026@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,71 +15,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: tang.junhui@zte.com.cn
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, tang.junhui@zte.com.cn
 List-Id: dm-devel.ids
 
-SGksIFRhbmcKCk9uIDEwLzEyLzIwMTYgMTA6MzMgQU0sIHRhbmcuanVuaHVpQHp0ZS5jb20uY24g
-d3JvdGU6Cj4gSGksIE1pY2hhZWwgV2FuZwo+IAo+IFRoaXMgcGF0Y2ggbG9va3Mgd2VsbCBmb3Ig
-bWUsIGNsZWFudXBfbG9jaygpIHNob3VsZCBiZSBjYWxsZWQgd2l0aG91dAo+IGFmZmVjdGVkYnkg
-dGhlIHJldHVybiB2YWx1ZSBvZiBoLT5mbigpLgoKVGhhbmtzIGZvciB0aGUgcXVpY2sgcmVzcG9u
-ZCwgSSdsbCBzdWJtaXQgYSBmb3JtYWwgcGF0Y2ggdGhlbiA6LSkKClJlZ2FyZHMsCk1pY2hhZWwg
-V2FuZwoKPiAKPiBSZWdhcmRzLAo+IFRhbmcKPiAKPiAKPiAKPiC3orz+yMs6ICAgICAgICAgTWlj
-aGFlbCBXYW5nIDx5dW4ud2FuZ0Bwcm9maXRicmlja3MuY29tPgo+IMrVvP7IyzogICAgICAgICBj
-aHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20sIGRtLWRldmVsQHJlZGhhdC5jb20sCj4gyNXG
-2jogICAgICAgICAyMDE2LzEwLzEyIDE2OjExCj4g1vfM4jogICAgICAgIFtkbS1kZXZlbF0gW1JG
-Q10gdW5yZWxlYXNlZCBsb2NrIGFmdGVyIGhhbmRsZXIgZmFpbHVyZQo+ILeivP7IyzogICAgICAg
-IGRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbQo+IC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQo+IAo+
-IAo+IAo+IEhpLCBmb2xrcwo+IAo+IFdoaWxlIHdlIGFyZSB0ZXN0aW5nIHdpdGggdGhlIGxhdGVz
-dCBtdWx0aXBhdGhkLCB3ZSBlbmNvdW50ZXIgaXNzdWUgdGhhdCBvbmNlCj4gJ2RlbCBtYXAnIGZh
-aWxlZCwgYWxsIHRoZSBmb2xsb3dpbmcgb3BlcmF0aW9uIHdpbGwgc2hvdyAnZXJyb3IgLTEgcmVj
-ZWl2aW5nIHBhY2tldCcKPiB3aGF0ZXZlciBob3cgbG9uZyB0aGUgdGltZW91dCBoYXMgYmVlbiBz
-ZXQgKHdlIGhhdmUgYXBwbGllZCB0aGUgbGF0ZXN0IGZpeCB3aGljaAo+IG1ha2Ugc3VyZSB0aGUg
-cG9sbCB3aWxsIGxhc3QgZm9yIDEwIHNlY29uZHMpLgo+IAo+IEFmdGVyIHNvbWUgZGVidWdnaW5n
-IHdlIGZvdW5kIHRoYXQgaW5zaWRlIHBhcnNlX2NtZCgpLCB0aGUgcHRocmVhZF9jbGVhbnVwX3Bv
-cCgpCj4gcmVseSBvbiAnIXInIGFzIGluZGljYXRvciBmb3IgbG9ja2VkIG9yIG5vdCwgd2hpbGUg
-dGhpcyB3aWxsIGJlIG92ZXJ3cml0dGVuIGlmCj4gdGhlIGhhbmRsZXIgcmV0dXJuIGZhaWxlZCAo
-MSBpbiBvdXIgY2FzZSksIGFuZCB0aGVuIHRoZSB1bmxvY2sgd2lsbCBiZSBtaXNzZWQuCj4gCj4g
-QWZ0ZXIgYXBwbGllZCBiZWxvdyBmaXggdGhlIHByb2JsZW0gZ290IHNvbHZlZCwgYWx0aG91Z2gg
-dGhlIGRlbCBtYXAgZmFpbGVkLCB0aGUKPiBvdGhlciBvcGVyYXRpb24gY2FuIHN0aWxsIHdvcmtz
-Lgo+IAo+IENvdWxkIHlvdSBwbGVhc2UgaGVscCB0byByZXZpZXcgd2hldGhlciB0aGlzIGlzIHJl
-YWxseSB0aGUgcHJvYmxlbSB0byBiZSBmaXhlZAo+IGxpa2UgdGhhdD8KPiAKPiBSZWdhcmRzLAo+
-IE1pY2hhZWwgV2FuZwo+IAo+IAo+IAo+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL2NsaS5jIGIv
-bXVsdGlwYXRoZC9jbGkuYwo+IGluZGV4IGU4YTkzODQuLjUwMTYxYmUgMTAwNjQ0Cj4gLS0tIGEv
-bXVsdGlwYXRoZC9jbGkuYwo+ICsrKyBiL211bHRpcGF0aGQvY2xpLmMKPiBAQCAtNDgxLDYgKzQ4
-MSw3IEBAIHBhcnNlX2NtZCAoY2hhciAqIGNtZCwgY2hhciAqKiByZXBseSwgaW50ICogbGVuLCB2
-b2lkICogZGF0YSwgaW50IHRpbWVvdXQgKQo+ICAgICAgICAgICAgICAgIHRtby50dl9zZWMgPSAw
-Owo+ICAgICAgICB9Cj4gICAgICAgIGlmIChoLT5sb2NrZWQpIHsKPiArICAgICAgICAgICAgICAg
-aW50IGxvY2tlZCA9IDA7Cj4gICAgICAgICAgICAgICAgc3RydWN0IHZlY3RvcnMgKiB2ZWNzID0g
-KHN0cnVjdCB2ZWN0b3JzICopZGF0YTsKPiAKPiAgICAgICAgICAgICAgICBwdGhyZWFkX2NsZWFu
-dXBfcHVzaChjbGVhbnVwX2xvY2ssICZ2ZWNzLT5sb2NrKTsKPiBAQCAtNDkxLDEwICs0OTIsMTEg
-QEAgcGFyc2VfY21kIChjaGFyICogY21kLCBjaGFyICoqIHJlcGx5LCBpbnQgKiBsZW4sIHZvaWQg
-KiBkYXRhLCBpbnQgdGltZW91dCApCj4gICAgICAgICAgICAgICAgICAgICAgICByID0gMDsKPiAg
-ICAgICAgICAgICAgICB9Cj4gICAgICAgICAgICAgICAgaWYgKHIgPT0gMCkgewo+ICsgICAgICAg
-ICAgICAgICAgICAgICAgIGxvY2tlZCA9IDE7Cj4gICAgICAgICAgICAgICAgICAgICAgICBwdGhy
-ZWFkX3Rlc3RjYW5jZWwoKTsKPiAgICAgICAgICAgICAgICAgICAgICAgIHIgPSBoLT5mbihjbWR2
-ZWMsIHJlcGx5LCBsZW4sIGRhdGEpOwo+ICAgICAgICAgICAgICAgIH0KPiAtICAgICAgICAgICAg
-ICAgcHRocmVhZF9jbGVhbnVwX3BvcCghcik7Cj4gKyAgICAgICAgICAgICAgIHB0aHJlYWRfY2xl
-YW51cF9wb3AobG9ja2VkKTsKPiAgICAgICAgfSBlbHNlCj4gICAgICAgICAgICAgICAgciA9IGgt
-PmZuKGNtZHZlYywgcmVwbHksIGxlbiwgZGF0YSk7Cj4gICAgICAgIGZyZWVfa2V5cyhjbWR2ZWMp
-Owo+IAo+IC0tCj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4gZG0tZGV2ZWxAcmVkaGF0LmNvbQo+
-IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo+IAoKLS0K
-ZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVk
-aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+
+Inside parse_cmd() the pthread_cleanup_pop() rely on '!r' as the
+indicator of locked or not, while this will be overwritten if the
+handler return failed, and the unlock will be missing.
+
+This will lead into the situation that all the following operation
+will trying to hold a lock which will never be released.
+
+This patch using a separate flag to record the status of locking to
+make sure the unlock and lock are in pairs.
+
+Signed-off-by: Michael Wang <yun.wang@profitbricks.com>
+---
+ multipathd/cli.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index e8a9384..50161be 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -481,6 +481,7 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
+                tmo.tv_sec = 0;
+        }
+        if (h->locked) {
++               int locked = 0;
+                struct vectors * vecs = (struct vectors *)data;
+
+                pthread_cleanup_push(cleanup_lock, &vecs->lock);
+@@ -491,10 +492,11 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
+                        r = 0;
+                }
+                if (r == 0) {
++                       locked = 1;
+                        pthread_testcancel();
+                        r = h->fn(cmdvec, reply, len, data);
+                }
+-               pthread_cleanup_pop(!r);
++               pthread_cleanup_pop(locked);
+        } else
+                r = h->fn(cmdvec, reply, len, data);
+        free_keys(cmdvec);
+-- 
+2.5.0
