@@ -1,14 +1,15 @@
-From: peng.liang5@zte.com.cn
-Subject: Re: [PATCH] multipathd: fix issue in 'map $map
-	getprstatus' reply
-Date: Thu, 13 Oct 2016 14:30:00 +0800
-Message-ID: <OF4C00E53C.5638BD7E-ON4825804B.0021C9DD-4825804B.0023B30C@zte.com.cn>
-References: <OF841ED337.71FB1AB0-ON4825804A.000FE81D-4825804A.0010D15C@zte.com.cn>
-	<2024ba47-6117-da6b-52cf-2450ddd7c30b@sandisk.com>
+From: Yibin Wang <wangyibin@huawei.com>
+Subject: Re: dm-mpath: Handling SCSI-3 PR RELEASE in
+ multi-controller environment
+Date: Thu, 13 Oct 2016 17:19:16 +0800
+Message-ID: <57FF5194.4030402@huawei.com>
+References: <1CD7AA44E04E6942954526708D37BF7B287F89@szxeml509-mbs.china.huawei.com>
+	<20161009151622.GA19856@lst.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1629886803383720811=="
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2024ba47-6117-da6b-52cf-2450ddd7c30b@sandisk.com>
+In-Reply-To: <20161009151622.GA19856@lst.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,168 +19,120 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: dm-devel@redhat.com, tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jiangyiwen <jiangyiwen@huawei.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multipart message in MIME format.
---===============1629886803383720811==
-Content-Type: multipart/alternative;
-	boundary="=_alternative 0023B3064825804B_="
+Hi Christoph,
 
-This is a multipart message in MIME format.
---=_alternative 0023B3064825804B_=
-Content-Type: text/plain; charset="GB2312"
-Content-Transfer-Encoding: base64
+Thanks for your reply. Comments inline...
 
-SGVsbG8gQmFydCwNCg0KVGhhbmtzIGZvciB5b3VyIGF0dGVudGlvbi4gSSBkb24ndCB0aGluayBp
-dCBpcyBuZWNlc3NhcnkgdG8gZG8gdGhhdC4NCldoYXRldmVyIHJldHVybmluZyAxIG9yIEVOT01F
-TSBpdCB3aWxsIHJlcGx5ICJmYWlsXG4iIGFuZCBzZXQgdGhlIA0KcmV0dXJuaW5nIHRvIDEuDQoN
-ClRoZSBleGVjdXRlZCBjb2RlIGluIHV4c29ja190cmlnZ2VyIGFzIGZvbGxvd3MuDQogICAgICAg
-IGlmIChyID4gMCkgew0KICAgICAgICAgICAgICAgIGlmIChyID09IEVUSU1FRE9VVCkNCiAgICAg
-ICAgICAgICAgICAgICAgICAgICpyZXBseSA9IFNUUkRVUCgidGltZW91dFxuIik7DQogICAgICAg
-ICAgICAgICAgZWxzZQ0KICAgICAgICAgICAgICAgICAgICAgICAgKnJlcGx5ID0gU1RSRFVQKCJm
-YWlsXG4iKTsNCiAgICAgICAgICAgICAgICAqbGVuID0gc3RybGVuKCpyZXBseSkgKyAxOw0KICAg
-ICAgICAgICAgICAgIHIgPSAxOw0KICAgICAgICB9IA0KDQoNCg0KDQq3orz+yMs6ICAgICAgICAg
-QmFydCBWYW4gQXNzY2hlIDxiYXJ0LnZhbmFzc2NoZUBzYW5kaXNrLmNvbT4NCsrVvP7IyzogICAg
-ICAgICA8cGVuZy5saWFuZzVAenRlLmNvbS5jbj4sIA0KPGNocmlzdG9waGUudmFyb3F1aUBvcGVu
-c3ZjLmNvbT4sIA0Ks63LzTogICA8dGFuZy5qdW5odWlAenRlLmNvbS5jbj4sIDx6aGFuZy5rYWkx
-NkB6dGUuY29tLmNuPiwgDQo8ZG0tZGV2ZWxAcmVkaGF0LmNvbT4NCsjVxto6ICAgMjAxNi8xMC8x
-MiAyMjo0NA0K1vfM4jogICBSZTogW2RtLWRldmVsXSBbUEFUQ0hdIG11bHRpcGF0aGQ6IGZpeCBp
-c3N1ZSBpbiAnbWFwICRtYXAgDQpnZXRwcnN0YXR1cycgcmVwbHkNCg0KDQoNCk9uIDEwLzExLzE2
-IDIwOjAzLCBwZW5nLmxpYW5nNUB6dGUuY29tLmNuIHdyb3RlOg0KPiBGcm9tOiBwZW5nIGxpYW5n
-IDxwZW5nLmxpYW5nNUB6dGUuY29tLmNuPg0KPiANCj4gLWFkZCBtaXNzaW5nIG5ld2xpbmUgdG8g
-J21hcHxtdWx0aXBhdGggJG1hcCBnZXRwcnN0YXR1cycgcmVwbHkNCj4gLXVzZSBhc3ByaW50ZiBp
-bnN0ZWFkIG9mIHNwcmludGYNCj4gDQo+IFNpZ25lZC1vZmYtYnk6IHBlbmcgbGlhbmcgPHBlbmcu
-bGlhbmc1QHp0ZS5jb20uY24+DQo+IC0tLQ0KPiBtdWx0aXBhdGhkL2NsaV9oYW5kbGVycy5jIHwg
-MTQgKysrKysrLS0tLS0tLS0NCj4gMSBmaWxlIGNoYW5nZWQsIDYgaW5zZXJ0aW9ucygrKSwgOCBk
-ZWxldGlvbnMoLSkNCj4gDQo+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL2NsaV9oYW5kbGVycy5j
-IGIvbXVsdGlwYXRoZC9jbGlfaGFuZGxlcnMuYw0KPiBpbmRleCA4ZmY0MzYyLi4xNjQ0NWVhIDEw
-MDY0NA0KPiAtLS0gYS9tdWx0aXBhdGhkL2NsaV9oYW5kbGVycy5jDQo+ICsrKyBiL211bHRpcGF0
-aGQvY2xpX2hhbmRsZXJzLmMNCj4gQEAgLTEsNiArMSw5IEBADQo+IC8qDQo+ICAqIENvcHlyaWdo
-dCAoYykgMjAwNSBDaHJpc3RvcGhlIFZhcm9xdWkNCj4gICovDQo+ICsjZGVmaW5lIF9HTlVfU09V
-UkNFDQo+ICsNCj4gKyNpbmNsdWRlIDxzdGRpby5oPg0KPiAjaW5jbHVkZSAiY2hlY2tlcnMuaCIN
-Cj4gI2luY2x1ZGUgIm1lbW9yeS5oIg0KPiAjaW5jbHVkZSAidmVjdG9yLmgiDQo+IEBAIC0xMjg1
-LDE0ICsxMjg4LDkgQEAgY2xpX2dldHByc3RhdHVzICh2b2lkICogdiwgY2hhciAqKiByZXBseSwg
-aW50ICoNCj4gbGVuLCB2b2lkICogZGF0YSkNCj4gDQo+ICAgICAgICAgICAgICAgICAgY29uZGxv
-ZygzLCAiJXM6IHByZmxhZyA9ICV1IiwgcGFyYW0sICh1bnNpZ25lZCANCmludCltcHAtPnByZmxh
-Zyk7DQo+IA0KPiAtICAgICAgICAgICAgICAgICAqcmVwbHkgPShjaGFyICopbWFsbG9jKDIpOw0K
-PiAtICAgICAgICAgICAgICAgICAqbGVuID0gMjsNCj4gLSAgICAgICAgICAgICAgICAgbWVtc2V0
-KCpyZXBseSwwLDIpOw0KPiAtDQo+IC0NCj4gLSAgICAgICAgICAgICAgICAgc3ByaW50ZigqcmVw
-bHksIiVkIixtcHAtPnByZmxhZyk7DQo+IC0gICAgICAgICAgICAgICAgICgqcmVwbHkpWzFdPSdc
-MCc7DQo+IC0NCj4gKyAgICAgICAgICAgICAgICAgKmxlbiA9IGFzcHJpbnRmKHJlcGx5LCAiJWRc
-biIsIG1wcC0+cHJmbGFnKTsNCj4gKyAgICAgICAgICAgICAgICAgaWYgKCpsZW4gPCAwKQ0KPiAr
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHJldHVybiAxOw0KPiANCj4gICAgICAg
-ICAgICAgICAgICBjb25kbG9nKDMsICIlczogcmVwbHkgPSAlcyIsIHBhcmFtLCAqcmVwbHkpOw0K
-DQpIZWxsbyBQZW5nLA0KDQpTb3JyeSBidXQgcmV0dXJuaW5nIDEgbG9va3Mgc29tZXdoYXQgaW5j
-b25zaXN0ZW50IHRvIG1lLiBUaGlzIGZ1bmN0aW9uDQppcyBjYWxsZWQgaW5kaXJlY3RseSBieSB1
-eHNvY2tfdHJpZ2dlcigpIGFuZCB0aGF0IGZ1bmN0aW9uIGV4cGVjdHMgdGhhdA0KY2xpX2dldHBy
-c3RhdHVzKCkgZWl0aGVyIHJldHVybnMgYSBwb3NpdGl2ZSBlcnJvciBjb2RlIChFLi4uKSBvciBh
-DQpuZWdhdGl2ZSBlcnJvciBjb2RlLiBQbGVhc2UgY2hhbmdlIHRoaXMgcGF0Y2ggc3VjaCB0aGF0
-IEVOT01FTSBpcw0KcmV0dXJuZWQgaW5zdGVhZCBvZiAxIGlmIGFzcHJpbnRmKCkgZmFpbHMuDQoN
-ClRoYW5rcywNCg0KQmFydC4NCg0KDQoNCg==
---=_alternative 0023B3064825804B_=
-Content-Type: text/html; charset="GB2312"
-Content-Transfer-Encoding: base64
+On 2016/10/9 23:16, Christoph Hellwig wrote:
+> Hi Yibin,
+>
+> On Sun, Oct 09, 2016 at 01:12:41PM +0000, wangyibin wrote:
+>> 1. Improper dm_pr_ops implementation.
+>> The dm_pr_ops functions, except register/unregister, all result in
+>> infinite loop by recursively calling themselves, which will definitely cause
+>> stack overflow. In fact, they should be implemented the same way as
+>> register/unregister by calling iterate_devices().
+> How do they recurse into themselves?  All of them do indeed call
+> another method of the same name, but that only happens after
+> the target ->prepare_ioctl ioctl method redirected them to a different
+> device.
+>
+> If you can reproduce a deadlock please post the exact table setup,
+> as this should not happen.
 
-PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPkhlbGxvIEJhcnQsPC9mb250Pg0KPGJyPg0K
-PGJyPjxmb250IHNpemU9MiBmYWNlPSJzYW5zLXNlcmlmIj5UaGFua3MgZm9yIHlvdXIgYXR0ZW50
-aW9uLiBJIGRvbid0IHRoaW5rDQppdCBpcyBuZWNlc3NhcnkgdG8gZG8gdGhhdC48L2ZvbnQ+DQo8
-YnI+PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPldoYXRldmVyIHJldHVybmluZyAxIG9y
-IDwvZm9udD48dHQ+PGZvbnQgc2l6ZT0yPkVOT01FTQ0KPC9mb250PjwvdHQ+PGZvbnQgc2l6ZT0y
-IGZhY2U9InNhbnMtc2VyaWYiPml0IHdpbGwgcmVwbHkgJnF1b3Q7ZmFpbFxuJnF1b3Q7DQphbmQg
-c2V0IHRoZSByZXR1cm5pbmcgdG8gMS48L2ZvbnQ+DQo8YnI+DQo8YnI+PGZvbnQgc2l6ZT0yIGZh
-Y2U9InNhbnMtc2VyaWYiPlRoZSBleGVjdXRlZCBjb2RlIGluIHV4c29ja190cmlnZ2VyDQphcyBm
-b2xsb3dzLjwvZm9udD4NCjxicj48dHQ+PGZvbnQgc2l6ZT0yPiZuYnNwOyAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyBpZiAociAmZ3Q7IDApDQp7PC9mb250PjwvdHQ+DQo8YnI+PHR0Pjxmb250IHNpemU9
-Mj4mbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
-OyBpZiAociA9PSBFVElNRURPVVQpPC9mb250PjwvdHQ+DQo8YnI+PHR0Pjxmb250IHNpemU9Mj4m
-bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAm
-bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgKnJlcGx5ID0gU1RSRFVQKCZxdW90O3RpbWVvdXRc
-biZxdW90Oyk7PC9mb250PjwvdHQ+DQo8YnI+PHR0Pjxmb250IHNpemU9Mj4mbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyBlbHNlPC9mb250Pjwv
-dHQ+DQo8YnI+PHR0Pjxmb250IHNpemU9Mj4mbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgKnJl
-cGx5ID0gU1RSRFVQKCZxdW90O2ZhaWxcbiZxdW90Oyk7PC9mb250PjwvdHQ+DQo8YnI+PHR0Pjxm
-b250IHNpemU9Mj4mbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5i
-c3A7ICZuYnNwOyAqbGVuID0gc3RybGVuKCpyZXBseSkgKyAxOzwvZm9udD48L3R0Pg0KPGJyPjx0
-dD48Zm9udCBzaXplPTI+Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsN
-CiZuYnNwOyAmbmJzcDsgciA9IDE7PC9mb250PjwvdHQ+DQo8YnI+PHR0Pjxmb250IHNpemU9Mj4m
-bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgfTwvZm9udD48L3R0Pjxmb250IHNpemU9MiBmYWNl
-PSJzYW5zLXNlcmlmIj4NCjxicj4NCjwvZm9udD4NCjxicj4NCjxicj4NCjxicj4NCjxicj48Zm9u
-dCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj63orz+yMs6ICZuYnNwOyAm
-bmJzcDsNCiZuYnNwOyAmbmJzcDsgPC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlm
-Ij5CYXJ0IFZhbiBBc3NjaGUNCiZsdDtiYXJ0LnZhbmFzc2NoZUBzYW5kaXNrLmNvbSZndDs8L2Zv
-bnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+ytW8
-/sjLOiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7IDwvZm9udD48Zm9udCBzaXplPTEgZmFj
-ZT0ic2Fucy1zZXJpZiI+Jmx0O3BlbmcubGlhbmc1QHp0ZS5jb20uY24mZ3Q7LA0KJmx0O2Nocmlz
-dG9waGUudmFyb3F1aUBvcGVuc3ZjLmNvbSZndDssIDwvZm9udD4NCjxicj48Zm9udCBzaXplPTEg
-Y29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj6zrcvNOiAmbmJzcDsgJm5ic3A7DQombmJz
-cDsgJm5ic3A7PC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj4mbHQ7dGFuZy5q
-dW5odWlAenRlLmNvbS5jbiZndDssDQombHQ7emhhbmcua2FpMTZAenRlLmNvbS5jbiZndDssICZs
-dDtkbS1kZXZlbEByZWRoYXQuY29tJmd0OzwvZm9udD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9
-IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj7I1cbaOiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5i
-c3A7IDwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+MjAxNi8xMC8xMg0KMjI6
-NDQ8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1zZXJp
-ZiI+1vfM4jogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOzwvZm9udD48Zm9udCBzaXplPTEg
-ZmFjZT0ic2Fucy1zZXJpZiI+UmU6IFtkbS1kZXZlbF0NCltQQVRDSF0gbXVsdGlwYXRoZDogZml4
-IGlzc3VlIGluICdtYXAgJG1hcCBnZXRwcnN0YXR1cycgcmVwbHk8L2ZvbnQ+DQo8YnI+DQo8aHIg
-bm9zaGFkZT4NCjxicj4NCjxicj4NCjxicj48dHQ+PGZvbnQgc2l6ZT0yPk9uIDEwLzExLzE2IDIw
-OjAzLCBwZW5nLmxpYW5nNUB6dGUuY29tLmNuIHdyb3RlOjxicj4NCiZndDsgRnJvbTogcGVuZyBs
-aWFuZyAmbHQ7cGVuZy5saWFuZzVAenRlLmNvbS5jbiZndDs8YnI+DQomZ3Q7IDxicj4NCiZndDsg
-LWFkZCBtaXNzaW5nIG5ld2xpbmUgdG8gJ21hcHxtdWx0aXBhdGggJG1hcCBnZXRwcnN0YXR1cycg
-cmVwbHk8YnI+DQomZ3Q7IC11c2UgYXNwcmludGYgaW5zdGVhZCBvZiBzcHJpbnRmPGJyPg0KJmd0
-OyA8YnI+DQomZ3Q7IFNpZ25lZC1vZmYtYnk6IHBlbmcgbGlhbmcgJmx0O3BlbmcubGlhbmc1QHp0
-ZS5jb20uY24mZ3Q7PGJyPg0KJmd0OyAtLS08YnI+DQomZ3Q7IG11bHRpcGF0aGQvY2xpX2hhbmRs
-ZXJzLmMgfCAxNCArKysrKystLS0tLS0tLTxicj4NCiZndDsgMSBmaWxlIGNoYW5nZWQsIDYgaW5z
-ZXJ0aW9ucygrKSwgOCBkZWxldGlvbnMoLSk8YnI+DQomZ3Q7IDxicj4NCiZndDsgZGlmZiAtLWdp
-dCBhL211bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmMgYi9tdWx0aXBhdGhkL2NsaV9oYW5kbGVycy5j
-PGJyPg0KJmd0OyBpbmRleCA4ZmY0MzYyLi4xNjQ0NWVhIDEwMDY0NDxicj4NCiZndDsgLS0tIGEv
-bXVsdGlwYXRoZC9jbGlfaGFuZGxlcnMuYzxicj4NCiZndDsgKysrIGIvbXVsdGlwYXRoZC9jbGlf
-aGFuZGxlcnMuYzxicj4NCiZndDsgQEAgLTEsNiArMSw5IEBAPGJyPg0KJmd0OyAvKjxicj4NCiZn
-dDsgJm5ic3A7KiBDb3B5cmlnaHQgKGMpIDIwMDUgQ2hyaXN0b3BoZSBWYXJvcXVpPGJyPg0KJmd0
-OyAmbmJzcDsqLzxicj4NCiZndDsgKyNkZWZpbmUgX0dOVV9TT1VSQ0U8YnI+DQomZ3Q7ICs8YnI+
-DQomZ3Q7ICsjaW5jbHVkZSAmbHQ7c3RkaW8uaCZndDs8YnI+DQomZ3Q7ICNpbmNsdWRlICZxdW90
-O2NoZWNrZXJzLmgmcXVvdDs8YnI+DQomZ3Q7ICNpbmNsdWRlICZxdW90O21lbW9yeS5oJnF1b3Q7
-PGJyPg0KJmd0OyAjaW5jbHVkZSAmcXVvdDt2ZWN0b3IuaCZxdW90Ozxicj4NCiZndDsgQEAgLTEy
-ODUsMTQgKzEyODgsOSBAQCBjbGlfZ2V0cHJzdGF0dXMgKHZvaWQgKiB2LCBjaGFyICoqIHJlcGx5
-LCBpbnQNCio8YnI+DQomZ3Q7IGxlbiwgdm9pZCAqIGRhdGEpPGJyPg0KJmd0OyA8YnI+DQomZ3Q7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7Y29uZGxvZygzLA0KJnF1b3Q7JXM6IHByZmxhZyA9ICV1JnF1b3Q7LCBwYXJhbSwgKHVu
-c2lnbmVkIGludCltcHAtJmd0O3ByZmxhZyk7PGJyPg0KJmd0OyA8YnI+DQomZ3Q7IC0gJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAqcmVwbHkg
-PShjaGFyDQoqKW1hbGxvYygyKTs8YnI+DQomZ3Q7IC0gJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAqbGVuID0gMjs8YnI+DQomZ3Q7IC0gJm5i
-c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyBtZW1z
-ZXQoKnJlcGx5LDAsMik7PGJyPg0KJmd0OyAtPGJyPg0KJmd0OyAtPGJyPg0KJmd0OyAtICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgc3ByaW50
-ZigqcmVwbHksJnF1b3Q7JWQmcXVvdDssbXBwLSZndDtwcmZsYWcpOzxicj4NCiZndDsgLSAmbmJz
-cDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICgqcmVw
-bHkpWzFdPSdcMCc7PGJyPg0KJmd0OyAtPGJyPg0KJmd0OyArICZuYnNwOyAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgKmxlbiA9IGFzcHJpbnRmKHJlcGx5
-LA0KJnF1b3Q7JWRcbiZxdW90OywgbXBwLSZndDtwcmZsYWcpOzxicj4NCiZndDsgKyAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7IGlmICgqbGVu
-DQombHQ7IDApPGJyPg0KJmd0OyArICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7cmV0dXJuIDE7PGJyPg0KJmd0OyA8YnI+DQomZ3Q7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7Y29uZGxvZygzLA0KJnF1b3Q7JXM6IHJlcGx5ID0gJXMmcXVvdDssIHBhcmFtLCAqcmVw
-bHkpOzxicj4NCjxicj4NCkhlbGxvIFBlbmcsPGJyPg0KPGJyPg0KU29ycnkgYnV0IHJldHVybmlu
-ZyAxIGxvb2tzIHNvbWV3aGF0IGluY29uc2lzdGVudCB0byBtZS4gVGhpcyBmdW5jdGlvbjxicj4N
-CmlzIGNhbGxlZCBpbmRpcmVjdGx5IGJ5IHV4c29ja190cmlnZ2VyKCkgYW5kIHRoYXQgZnVuY3Rp
-b24gZXhwZWN0cyB0aGF0PGJyPg0KY2xpX2dldHByc3RhdHVzKCkgZWl0aGVyIHJldHVybnMgYSBw
-b3NpdGl2ZSBlcnJvciBjb2RlIChFLi4uKSBvciBhPGJyPg0KbmVnYXRpdmUgZXJyb3IgY29kZS4g
-UGxlYXNlIGNoYW5nZSB0aGlzIHBhdGNoIHN1Y2ggdGhhdCBFTk9NRU0gaXM8YnI+DQpyZXR1cm5l
-ZCBpbnN0ZWFkIG9mIDEgaWYgYXNwcmludGYoKSBmYWlscy48YnI+DQo8YnI+DQpUaGFua3MsPGJy
-Pg0KPGJyPg0KQmFydC48YnI+DQo8YnI+DQo8L2ZvbnQ+PC90dD4NCjxicj4NCg==
---=_alternative 0023B3064825804B_=--
+Sorry, the dead lock was caused by incomplete backport of patches. So 
+this is not
+an issue any more.
 
+>> 2. Multipath device iteration policy is needed.
+>> Iteration policy should be added to multipath for PR operations.
+>> 	- For unregister, we should iterate on all devices.
+> That's what we do.
+>
+>> 	- For regisetr, we should stop iteration on failure, and followed by a
+>> 	 non-stopping unregister operation.
+> What do you mean with "non-stopping"?  Currently once register failed
+> for a path we then ungerigster all paths, and ignore failures (e.g. due
+> to a down path or an not already registered path).
 
---===============1629886803383720811==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+That's exactly what I meant - do not stop on failures while doing 
+unregistration.
 
+>
+>> 	- For reserve/query/preempt/clear, we should return success once an
+>> 	 iteration returns successfully.
+> That's what the dm_grab_bdev_for_ioctl path does.
 
---===============1629886803383720811==--
+If I understand correctly, dm_grab_bdev_for_ioctl() select a working 
+path, and
+pr_*() uses that path to do the actually work.
+
+This works for reserve/query/preempt/clear, but it may not work for 
+release.
+
+For example, if we have a device (/dev/dm-2) that is connected to two
+controllers, and we have one path for each controller, we got the 
+following with
+"multipath -ll":
+
+3690b11c000283cd00000112557e1b3c2 dm-2 .....
+size=10G features='1 queue_if_no_path' hwhandler='0' wp=rw
+`-+- policy='service-time 0' prio=1 status=active
+   |- 5:0:0:2 sda 8:112 active ready running
+     `- 6:0:0:2 sdb 8:208 active ready running
+
+Suppose we have registered the same keys (because all paths are on the same
+host) on all available paths.  And then we reserved the device on path 
+/dev/sda.
+
+Now if we want to release the reservation, dm_pr_release() will grab one 
+of the
+paths according to path selection policy. And the grabbed path _COULD_ be
+/dev/sdb. In this case, sd_pr_release() would be called on /dev/sdb 
+which will
+return 0  since the there's no reservation on this path. So this gives 
+up the
+illusion that the reservation is released while it's still placed on path
+/dev/sda.
+
+So, for dm_pr_release(), we need to use .iterate_devices() - and only 
+returns 0
+if one of the paths returns 0.
+
+>
+>> 3. Lack of query function.
+>> Sometimes we need to query the reservation key or registered keys.
+> If you have a use case for it feel free to add it.  My current user
+> doesn't need it.
+>
+>> 4. Lack of kernel space API.
+>> Currently there's only API for ioctl, which is meant to be called by user space
+>> utils. I know we can still call them anyway in kernel space via the help of
+>> {set,get}_fs(), but it looks ugly and unnatrual in every aspect.
+> The API is currently used from kernel space, that's why I added it.
+> If you point me to the code that you plan to submit which wants to use
+> it I'd be happy to help you in using it.
+
+I meant the API that callers from above block layer can use - They can 
+not call
+dm_pr_*() directly. So adding blkdev_pr_ops_{register/reserve/etc}() 
+would be
+great.
+
+>> 5. Support for multiple targets devices.
+>> An md device might have multiple targets. Current implementation only supports
+>> single target device.
+> That's because it is so far only intended for dm-multipath, which always
+> uses as single target.  I'm not against multi-target support, but we'll
+> need a detailed explanation of the use case.
+
+OK. Fair enough. That's rather a "good-to-have" than a "must-have".
+
+Thanks again for your reply!
+
+Best regards,
+Yibin
