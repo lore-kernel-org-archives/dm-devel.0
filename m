@@ -1,11 +1,10 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH v2] dm raid1: "mirror" target doesn't use all
-	available legs on multiple failures
-Date: Wed, 12 Oct 2016 18:39:29 +0200
-Message-ID: <1476290369-2248-1-git-send-email-heinzm@redhat.com>
+From: peng.liang5@zte.com.cn
+Subject: Re: [PATCH] libmultipath: remove redundant code in
+ store_pathinfo
+Date: Thu, 13 Oct 2016 14:39:41 +0800
+Message-ID: <OF1247CC1C.B33997F5-ON4825804B.0023F846-4825804B.0024961A@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============8330338465494168357=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,82 +15,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, snitzer@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-In case legs of a mirror target fail, any read will cause a new,
-operational default leg to be selected and the read be resubmitted
-to it. If that new default leg fails the read too, no other still
-accessible legs are used to resubmit the read again thus failing
-the io.
+This is a multipart message in MIME format.
+--===============8330338465494168357==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 002496194825804B_="
 
-Fix by allowing the read to get resubmitted until there's no
-operational legs any more.
+This is a multipart message in MIME format.
+--=_alternative 002496194825804B_=
+Content-Type: text/plain; charset="GB2312"
+Content-Transfer-Encoding: base64
 
-Removes any details.bi_dev use as a flag.
+UGxlYXNlIGhhdmUgYSByZXZpZXcgZm9yIHRoaXMgcGF0Y2gsIGhvcGUgZm9yIHlvdXIgY29tbWVu
+dHMuDQoNClRoYW5rcw0KDQq3orz+yMs6ICAgICAgICAgcGVuZy5saWFuZzVAenRlLmNvbS5jbg0K
+ytW8/sjLOiAgICAgICAgIGNocmlzdG9waGUgdmFyb3F1aSA8Y2hyaXN0b3BoZS52YXJvcXVpQGZy
+ZWUuZnI+LCANCrOty806ICAgemhhbmcua2FpMTZAenRlLmNvbS5jbiwgZG0tZGV2ZWxAcmVkaGF0
+LmNvbSwgcGVuZyBsaWFuZyANCjxwZW5nLmxpYW5nNUB6dGUuY29tLmNuPg0KyNXG2jogICAyMDE2
+LTA4LTE3IDE1OjA2DQrW98ziOiAgIFtkbS1kZXZlbF0gW1BBVENIXSBsaWJtdWx0aXBhdGg6IHJl
+bW92ZSByZWR1bmRhbnQgY29kZSBpbiANCnN0b3JlX3BhdGhpbmZvDQq3orz+yMs6IGRtLWRldmVs
+LWJvdW5jZXNAcmVkaGF0LmNvbQ0KDQoNCg0KRnJvbTogcGVuZyBsaWFuZyA8cGVuZy5saWFuZzVA
+enRlLmNvbS5jbj4NCg0KU2lnbmVkLW9mZi1ieTogcGVuZyBsaWFuZyA8cGVuZy5saWFuZzVAenRl
+LmNvbS5jbj4NCi0tLQ0KIGxpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYyB8IDIgLS0NCiAxIGZpbGUg
+Y2hhbmdlZCwgMiBkZWxldGlvbnMoLSkNCg0KZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9kaXNj
+b3ZlcnkuYyBiL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYw0KaW5kZXggYmIzMTE2ZC4uMDAxN2Qx
+OCAxMDA2NDQNCi0tLSBhL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYw0KKysrIGIvbGlibXVsdGlw
+YXRoL2Rpc2NvdmVyeS5jDQpAQCAtOTUsOCArOTUsNiBAQCBzdG9yZV9wYXRoaW5mbyAodmVjdG9y
+IHBhdGh2ZWMsIHN0cnVjdCBjb25maWcgKmNvbmYsDQogICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICBnb3RvIG91dDsNCiANCiAgICAgICAgICAgICAgICAgZXJyID0gc3RvcmVfcGF0aChw
+YXRodmVjLCBwcCk7DQotICAgICAgICAgICAgICAgIGlmIChlcnIpDQotICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICBnb3RvIG91dDsNCiANCiBvdXQ6DQogICAgICAgICAgICAgICAgIGlm
+IChlcnIpDQotLSANCjIuOC4xLndpbmRvd3MuMQ0KDQotLQ0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
+DQpkbS1kZXZlbEByZWRoYXQuY29tDQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
+dGluZm8vZG0tZGV2ZWwNCg0K
+--=_alternative 002496194825804B_=
+Content-Type: text/html; charset="GB2312"
+Content-Transfer-Encoding: base64
 
-Resolves: rhbz1383444
+PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPlBsZWFzZSBoYXZlIGEgcmV2aWV3IGZvciB0
+aGlzIHBhdGNoLCBob3BlDQpmb3IgeW91ciBjb21tZW50cy48L2ZvbnQ+DQo8YnI+DQo8YnI+PGZv
+bnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPlRoYW5rczwvZm9udD4NCjxicj4NCjxicj48Zm9u
+dCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj63orz+yMs6ICZuYnNwOyAm
+bmJzcDsNCiZuYnNwOyAmbmJzcDsgPC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlm
+Ij5wZW5nLmxpYW5nNUB6dGUuY29tLmNuPC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0j
+NWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPsrVvP7IyzogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZu
+YnNwOyA8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPmNocmlzdG9waGUNCnZh
+cm9xdWkgJmx0O2NocmlzdG9waGUudmFyb3F1aUBmcmVlLmZyJmd0OywgPC9mb250Pg0KPGJyPjxm
+b250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPrOty806ICZuYnNwOyAm
+bmJzcDsNCiZuYnNwOyAmbmJzcDs8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYi
+PnpoYW5nLmthaTE2QHp0ZS5jb20uY24sDQpkbS1kZXZlbEByZWRoYXQuY29tLCBwZW5nIGxpYW5n
+ICZsdDtwZW5nLmxpYW5nNUB6dGUuY29tLmNuJmd0OzwvZm9udD4NCjxicj48Zm9udCBzaXplPTEg
+Y29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj7I1cbaOiAmbmJzcDsgJm5ic3A7DQombmJz
+cDsgJm5ic3A7IDwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+MjAxNi0wOC0x
+Nw0KMTU6MDY8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fu
+cy1zZXJpZiI+1vfM4jogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOzwvZm9udD48Zm9udCBz
+aXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+W2RtLWRldmVsXSBbUEFUQ0hdDQpsaWJtdWx0aXBhdGg6
+IHJlbW92ZSByZWR1bmRhbnQgY29kZSBpbiAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtzdG9y
+ZV9wYXRoaW5mbzwvZm9udD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJz
+YW5zLXNlcmlmIj63orz+yMs6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDs8L2ZvbnQ+PGZv
+bnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPmRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbTwv
+Zm9udD4NCjxicj4NCjxociBub3NoYWRlPg0KPGJyPg0KPGJyPg0KPGJyPjx0dD48Zm9udCBzaXpl
+PTI+RnJvbTogcGVuZyBsaWFuZyAmbHQ7cGVuZy5saWFuZzVAenRlLmNvbS5jbiZndDs8YnI+DQo8
+YnI+DQpTaWduZWQtb2ZmLWJ5OiBwZW5nIGxpYW5nICZsdDtwZW5nLmxpYW5nNUB6dGUuY29tLmNu
+Jmd0Ozxicj4NCi0tLTxicj4NCiBsaWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMgfCAyIC0tPGJyPg0K
+IDEgZmlsZSBjaGFuZ2VkLCAyIGRlbGV0aW9ucygtKTxicj4NCjxicj4NCmRpZmYgLS1naXQgYS9s
+aWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMgYi9saWJtdWx0aXBhdGgvZGlzY292ZXJ5LmM8YnI+DQpp
+bmRleCBiYjMxMTZkLi4wMDE3ZDE4IDEwMDY0NDxicj4NCi0tLSBhL2xpYm11bHRpcGF0aC9kaXNj
+b3ZlcnkuYzxicj4NCisrKyBiL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYzxicj4NCkBAIC05NSw4
+ICs5NSw2IEBAIHN0b3JlX3BhdGhpbmZvICh2ZWN0b3IgcGF0aHZlYywgc3RydWN0IGNvbmZpZyAq
+Y29uZiw8YnI+DQogJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
+c3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
+c3A7ICZuYnNwOyAmbmJzcDsNCmdvdG8gb3V0Ozxicj4NCiA8YnI+DQogJm5ic3A7ICZuYnNwOyAm
+bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtlcnINCj0gc3Rv
+cmVfcGF0aChwYXRodmVjLCBwcCk7PGJyPg0KLSAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
+Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQppZiAoZXJyKTxicj4NCi0gJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtnb3RvDQpv
+dXQ7PGJyPg0KIDxicj4NCiBvdXQ6PGJyPg0KICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
+bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7aWYNCihlcnIpPGJyPg0KLS0gPGJyPg0K
+Mi44LjEud2luZG93cy4xPGJyPg0KPGJyPg0KLS08YnI+DQpkbS1kZXZlbCBtYWlsaW5nIGxpc3Q8
+YnI+DQpkbS1kZXZlbEByZWRoYXQuY29tPGJyPg0KPC9mb250PjwvdHQ+PGEgaHJlZj0iaHR0cHM6
+Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsIj48dHQ+PGZvbnQgc2l6
+ZT0yPmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbDwvZm9u
+dD48L3R0PjwvYT48dHQ+PGZvbnQgc2l6ZT0yPjxicj4NCjwvZm9udD48L3R0Pg0K
+--=_alternative 002496194825804B_=--
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
----
- drivers/md/dm-raid1.c | 16 ----------------
- 1 file changed, 16 deletions(-)
 
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index 7a6254d..a7fe697 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -145,7 +145,6 @@ static void dispatch_bios(void *context, struct bio_list *bio_list)
- 
- struct dm_raid1_bio_record {
- 	struct mirror *m;
--	/* if details->bi_bdev == NULL, details were not saved */
- 	struct dm_bio_details details;
- 	region_t write_region;
- };
-@@ -1200,8 +1199,6 @@ static int mirror_map(struct dm_target *ti, struct bio *bio)
- 	struct dm_raid1_bio_record *bio_record =
- 	  dm_per_bio_data(bio, sizeof(struct dm_raid1_bio_record));
- 
--	bio_record->details.bi_bdev = NULL;
--
- 	if (rw == WRITE) {
- 		/* Save region for mirror_end_io() handler */
- 		bio_record->write_region = dm_rh_bio_to_region(ms->rh, bio);
-@@ -1266,16 +1263,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
- 		goto out;
- 
- 	if (unlikely(error)) {
--		if (!bio_record->details.bi_bdev) {
--			/*
--			 * There wasn't enough memory to record necessary
--			 * information for a retry or there was no other
--			 * mirror in-sync.
--			 */
--			DMERR_LIMIT("Mirror read failed.");
--			return -EIO;
--		}
--
- 		m = bio_record->m;
- 
- 		DMERR("Mirror read failed from %s. Trying alternative device.",
-@@ -1291,7 +1278,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
- 			bd = &bio_record->details;
- 
- 			dm_bio_restore(bd, bio);
--			bio_record->details.bi_bdev = NULL;
- 			bio->bi_error = 0;
- 
- 			queue_bio(ms, bio, rw);
-@@ -1301,8 +1287,6 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
- 	}
- 
- out:
--	bio_record->details.bi_bdev = NULL;
--
- 	return error;
- }
- 
--- 
-2.7.4
+--===============8330338465494168357==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============8330338465494168357==--
