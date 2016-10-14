@@ -1,13 +1,17 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] add_feature: coredump
-Date: Fri, 14 Oct 2016 08:02:25 +0200
-Message-ID: <d7d282d7-691b-dbc1-1f44-c4933f9ecb8b@suse.de>
-References: <1476410880-7156-1-git-send-email-huang.wei56@zte.com.cn>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: dm-mpath: Handling SCSI-3 PR RELEASE in
+	multi-controller	environment
+Date: Fri, 14 Oct 2016 15:48:25 +0200
+Message-ID: <20161014134825.GA21707@lst.de>
+References: <1CD7AA44E04E6942954526708D37BF7B287F89@szxeml509-mbs.china.huawei.com>
+	<20161009151622.GA19856@lst.de> <57FF5194.4030402@huawei.com>
+	<57FF6CFD.3060708@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1476410880-7156-1-git-send-email-huang.wei56@zte.com.cn>
+Content-Disposition: inline
+In-Reply-To: <57FF6CFD.3060708@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,71 +21,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: huang.wei56@zte.com.cn, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn
+To: Yibin Wang <wangyibin@huawei.com>
+Cc: Jiangyiwen <jiangyiwen@huawei.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 10/14/2016 04:08 AM, huang.wei56@zte.com.cn wrote:
-> From: "wei.huang" <huang.wei56@zte.com.cn>
-> =
+Hi Yibin,
 
-> Problem:
-> when we configure device like vendor is COMPELNT in multipath.conf, multi=
-pathd will be coredump.
-> =
+On Thu, Oct 13, 2016 at 07:16:13PM +0800, Yibin Wang wrote:
+> BTW, did you mean using dm_pr::fail_early as the indication whether
+> multipath_iterate_devices() should fail early upon failure? If that's the 
+> case,
+> I can't see it is used anywhere except in dm_pr_register().
+>
+> Please correct me if I am wrong.  Thanks!
 
-> Reasons:
-> some vonders are not configured features in default_hw. In add_feature, s=
-trstr's first parameter *f maybe null.
-> =
-
-> Signed-off-by: wei.huang <huang.wei56@zte.com.cn>
-> ---
->  libmultipath/structs.c | 14 ++++++++++++++
->  1 file changed, 14 insertions(+)
-> =
-
-> diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-> index fee58e5..41e142f 100644
-> --- a/libmultipath/structs.c
-> +++ b/libmultipath/structs.c
-> @@ -520,6 +520,20 @@ add_feature (char **f, char *n)
->  	if (!n || *n =3D=3D '0')
->  		return 0;
->  =
-
-> +	/* default feature is null */
-> +	if(!*f)
-> +	{
-> +		l =3D strlen("1 ") + strlen(n) + 1;
-> +		t =3D MALLOC(l);
-> +		if (!t)
-> +			return 1;
-> +
-> +		snprintf(t, l, "1 %s", n);
-> +		*f =3D t;
-> +	=
-
-> +		return 0;
-> +	}
-> +
->  	/* Check if feature is already present */
->  	if (strstr(*f, n))
->  		return 0;
-> =
-
-No, that is wrong.
-It'll insert a '1' into the string if no features are present.
-
-I have a patch queued for fixing this one up.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+Yes, fail_early was intended to ensure we don't break out of the
+loop.  But it's obviously not checked in the current code, so we'll need
+to fix it indeed.  If you have existing patches for that please send
+them out, else I'm going to look into it.
