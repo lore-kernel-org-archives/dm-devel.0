@@ -1,8 +1,8 @@
 From: tang.wenjun3@zte.com.cn
-Subject: [PATCH 13/94] multipath-tools: identify more devices at
-	hwtable
-Date: Fri, 14 Oct 2016 09:55:55 +0800
-Message-ID: <1476410236-9368-13-git-send-email-tang.wenjun3@zte.com.cn>
+Subject: [PATCH 12/94] multipath-tools: add support for all IBM
+	Enterprise Storage Server / Shark family
+Date: Fri, 14 Oct 2016 09:55:54 +0800
+Message-ID: <1476410236-9368-12-git-send-email-tang.wenjun3@zte.com.cn>
 References: <1476410236-9368-1-git-send-email-tang.wenjun3@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,33 +24,47 @@ List-Id: dm-devel.ids
 
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
+Only F20 and 800 were included:
+2105F20 IBM Enterprise Storage Server Model F20
+2105800 IBM TotalStorage Enterprise Storage Server Model 800
+
+Added all of them with just "^2105"
+2105E10 IBM Enterprise Storage Server Model E10
+2105E20 IBM Enterprise Storage Server Model E20
+2105F10 IBM Enterprise Storage Server Model F10
+2105750 IBM TotalStorage Enterprise Storage Server Model 750
+
+Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/hwtable.c | 12 ++----------
+ 1 file changed, 2 insertions(+), 10 deletions(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 1ecaf19..01d3c53 100644
+index 2192d38..1ecaf19 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -460,7 +460,7 @@ static struct hwentry default_hw[] = {
+@@ -435,17 +435,9 @@ static struct hwentry default_hw[] = {
  		.pgfailback    = FAILBACK_UNDEF,
  	},
  	{
--		/* SAN Volume Controller / Storwize */
-+		/* Storwize family / SAN Volume Controller / Flex System V7000 */
+-		/* Enterprise Storage Server / Shark 800 */
++		/* Enterprise Storage Server / Shark family */
  		.vendor        = "IBM",
- 		.product       = "^2145",
+-		.product       = "^2105800",
+-		.features      = "1 queue_if_no_path",
+-		.pgpolicy      = GROUP_BY_SERIAL,
+-		.pgfailback    = FAILBACK_UNDEF,
+-	},
+-	{
+-		/* Enterprise Storage Server / Shark F20 */
+-		.vendor        = "IBM",
+-		.product       = "^2105F20",
++		.product       = "^2105",
  		.features      = "1 queue_if_no_path",
-@@ -803,6 +803,7 @@ static struct hwentry default_hw[] = {
- 	 * Huawei
- 	 */
- 	{
-+		/* OceanStor V3 */
- 		.vendor        = "(HUAWEI|HUASY)",
- 		.product       = "XSG1",
- 		.pgpolicy      = MULTIBUS,
+ 		.pgpolicy      = GROUP_BY_SERIAL,
+ 		.pgfailback    = FAILBACK_UNDEF,
 -- 
 2.8.1.windows.1
