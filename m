@@ -1,8 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 1/2] multipathd: Avoid "socket operation on
-	non-socket" errors
-Date: Fri, 14 Oct 2016 08:34:26 -0700
-Message-ID: <5e2dbb22-cfa0-28e4-bea7-ac0129c6b433@sandisk.com>
+Subject: [PATCH 2/2] multipathd: Avoid that a deadlock is
+ triggered sporadically during shutdown
+Date: Fri, 14 Oct 2016 08:35:47 -0700
+Message-ID: <5832949e-aa89-ebf2-11e1-67bbb4d050bf@sandisk.com>
 References: <a7920385-9f76-d029-48dd-31ebcb06a212@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,67 +22,30 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Changing write_all() into write() is safe for files since the
-POSIX standard guarantees that write() writes the entire buffer
-except if the disk is full, a resource limit is encountered or
-if interrupted by a signal. See also
-http://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html.
+pthread_cond_wait() is a thread cancellation point. If a thread that
+is waiting in pthread_cond_wait() is canceled it is possible that the
+mutex is re-acquired before the first cancellation cleanup handler
+is called. In this case the cleanup handler is uevq_stop() and that
+function locks uevq_lock. Avoid that calling uevq_stop() results in
+a deadlock due to an attempt to lock a non-recursive mutex recursively.
 
-Fixes: commit 810082e7a8cf ("libmultipath, multipathd: Rework SIGPIPE handling")
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmultipath/alias.c | 2 +-
- libmultipath/file.c  | 2 +-
- libmultipath/wwids.c | 4 ++--
- 3 files changed, 4 insertions(+), 4 deletions(-)
+ libmultipath/uevent.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-index b86843a..12afef8 100644
---- a/libmultipath/alias.c
-+++ b/libmultipath/alias.c
-@@ -219,7 +219,7 @@ allocate_binding(int fd, char *wwid, int id, char *prefix)
- 			strerror(errno));
- 		return NULL;
- 	}
--	if (write_all(fd, buf, strlen(buf)) != strlen(buf)){
-+	if (write(fd, buf, strlen(buf)) != strlen(buf)){
- 		condlog(0, "Cannot write binding to bindings file : %s",
- 			strerror(errno));
- 		/* clear partial write */
-diff --git a/libmultipath/file.c b/libmultipath/file.c
-index 74cde64..e4951c9 100644
---- a/libmultipath/file.c
-+++ b/libmultipath/file.c
-@@ -158,7 +158,7 @@ open_file(char *file, int *can_write, char *header)
- 			goto fail;
- 		/* If file is empty, write the header */
- 		size_t len = strlen(header);
--		if (write_all(fd, header, len) != len) {
-+		if (write(fd, header, len) != len) {
- 			condlog(0,
- 				"Cannot write header to file %s : %s", file,
- 				strerror(errno));
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index babf149..bc70a27 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -71,7 +71,7 @@ write_out_wwid(int fd, char *wwid) {
- 			strerror(errno));
- 		return -1;
- 	}
--	if (write_all(fd, buf, strlen(buf)) != strlen(buf)) {
-+	if (write(fd, buf, strlen(buf)) != strlen(buf)) {
- 		condlog(0, "cannot write wwid to wwids file : %s",
- 			strerror(errno));
- 		if (ftruncate(fd, offset))
-@@ -110,7 +110,7 @@ replace_wwids(vector mp)
- 		goto out_file;
- 	}
- 	len = strlen(WWIDS_FILE_HEADER);
--	if (write_all(fd, WWIDS_FILE_HEADER, len) != len) {
-+	if (write(fd, WWIDS_FILE_HEADER, len) != len) {
- 		condlog(0, "Can't write wwid file header : %s",
- 			strerror(errno));
- 		/* cleanup partially written header */
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 6247898..85fd2fb 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -52,7 +52,7 @@ typedef int (uev_trigger)(struct uevent *, void * trigger_data);
+ 
+ pthread_t uevq_thr;
+ LIST_HEAD(uevq);
+-pthread_mutex_t uevq_lock = PTHREAD_MUTEX_INITIALIZER;
++pthread_mutex_t uevq_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+ pthread_mutex_t *uevq_lockp = &uevq_lock;
+ pthread_cond_t uev_cond = PTHREAD_COND_INITIALIZER;
+ pthread_cond_t *uev_condp = &uev_cond;
 -- 
 2.10.0
