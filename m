@@ -1,13 +1,13 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] hwe_regmatch: match error
-Date: Fri, 14 Oct 2016 08:00:56 +0200
-Message-ID: <f26be52c-adc7-7aa2-eb17-d617bea8ff8c@suse.de>
-References: <1476410631-7840-1-git-send-email-huang.wei56@zte.com.cn>
+Subject: Re: [PATCH] add_feature: coredump
+Date: Fri, 14 Oct 2016 08:02:25 +0200
+Message-ID: <d7d282d7-691b-dbc1-1f44-c4933f9ecb8b@suse.de>
+References: <1476410880-7156-1-git-send-email-huang.wei56@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1476410631-7840-1-git-send-email-huang.wei56@zte.com.cn>
+In-Reply-To: <1476410880-7156-1-git-send-email-huang.wei56@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,46 +21,59 @@ To: huang.wei56@zte.com.cn, Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn
 List-Id: dm-devel.ids
 
-On 10/14/2016 04:03 AM, huang.wei56@zte.com.cn wrote:
+On 10/14/2016 04:08 AM, huang.wei56@zte.com.cn wrote:
 > From: "wei.huang" <huang.wei56@zte.com.cn>
 > =
 
 > Problem:
-> when we configure a device like vendor, product, revision all null in mul=
-tipath.conf, hwe_regmatch always return 0.
+> when we configure device like vendor is COMPELNT in multipath.conf, multi=
+pathd will be coredump.
 > =
 
 > Reasons:
-> \!hwe2->vendor, \!hwe2->product and \!hwe2->revision are all true.
+> some vonders are not configured features in default_hw. In add_feature, s=
+trstr's first parameter *f maybe null.
 > =
 
 > Signed-off-by: wei.huang <huang.wei56@zte.com.cn>
 > ---
->  libmultipath/config.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
+>  libmultipath/structs.c | 14 ++++++++++++++
+>  1 file changed, 14 insertions(+)
 > =
 
-> diff --git a/libmultipath/config.c b/libmultipath/config.c
-> index a48b8af..d99cd75 100644
-> --- a/libmultipath/config.c
-> +++ b/libmultipath/config.c
-> @@ -80,7 +80,8 @@ hwe_regmatch (struct hwentry *hwe1, struct hwentry *hwe=
-2)
->  	    regcomp(&rre, hwe1->revision, REG_EXTENDED|REG_NOSUB))
->  		goto out_pre;
+> diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+> index fee58e5..41e142f 100644
+> --- a/libmultipath/structs.c
+> +++ b/libmultipath/structs.c
+> @@ -520,6 +520,20 @@ add_feature (char **f, char *n)
+>  	if (!n || *n =3D=3D '0')
+>  		return 0;
 >  =
 
-> -	if ((!hwe1->vendor || !hwe2->vendor ||
-> +	if ((hwe2->vendor || hwe2->product || hwe2->revision) &&
-> +	    (!hwe1->vendor || !hwe2->vendor ||
->  	     !regexec(&vre, hwe2->vendor, 0, NULL, 0)) &&
->  	    (!hwe1->product || !hwe2->product ||
->  	     !regexec(&pre, hwe2->product, 0, NULL, 0)) &&
+> +	/* default feature is null */
+> +	if(!*f)
+> +	{
+> +		l =3D strlen("1 ") + strlen(n) + 1;
+> +		t =3D MALLOC(l);
+> +		if (!t)
+> +			return 1;
+> +
+> +		snprintf(t, l, "1 %s", n);
+> +		*f =3D t;
+> +	=
+
+> +		return 0;
+> +	}
+> +
+>  	/* Check if feature is already present */
+>  	if (strstr(*f, n))
+>  		return 0;
 > =
 
-Good point.
+No, that is wrong.
+It'll insert a '1' into the string if no features are present.
 
-Reviewed-by: Hannes Reinecke <hare@suse.com>
+I have a patch queued for fixing this one up.
 
 Cheers,
 
