@@ -1,16 +1,14 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH] multipathd: fix issue in 'map $map
- getprstatus' reply
-Date: Thu, 13 Oct 2016 15:43:40 -0700
-Message-ID: <15f01890-16ca-3c05-716a-e07b66e344fb@sandisk.com>
-References: <OF841ED337.71FB1AB0-ON4825804A.000FE81D-4825804A.0010D15C@zte.com.cn>
-	<2024ba47-6117-da6b-52cf-2450ddd7c30b@sandisk.com>
-	<OF4C00E53C.5638BD7E-ON4825804B.0021C9DD-4825804B.0023B30C@zte.com.cn>
+From: tang.wenjun3@zte.com.cn
+Subject: [PATCH 13/94] multipath-tools: identify more devices at
+	hwtable
+Date: Fri, 14 Oct 2016 09:55:55 +0800
+Message-ID: <1476410236-9368-13-git-send-email-tang.wenjun3@zte.com.cn>
+References: <1476410236-9368-1-git-send-email-tang.wenjun3@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <OF4C00E53C.5638BD7E-ON4825804B.0021C9DD-4825804B.0023B30C@zte.com.cn>
+In-Reply-To: <1476410236-9368-1-git-send-email-tang.wenjun3@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,34 +18,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: peng.liang5@zte.com.cn
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn
+To: 10144149@zte.com.cn
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On 10/12/2016 11:30 PM, peng.liang5@zte.com.cn wrote:
-> Thanks for your attention. I don't think it is necessary to do that.
-> Whatever returning 1 or ENOMEM it will reply "fail\n" and set the
-> returning to 1.
->
-> The executed code in uxsock_trigger as follows.
->         if (r > 0) {
->                 if (r == ETIMEDOUT)
->                         *reply = STRDUP("timeout\n");
->                 else
->                         *reply = STRDUP("fail\n");
->                 *len = strlen(*reply) + 1;
->                 r = 1;
->         }
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
-Hello Peng,
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-Anyone who wants to verify your patch has to look up the numeric value 
-of ETIMEDOUT to see whether or not the value of that constant is equal 
-to one. So using "return 1" makes the source code harder to read than 
-"return ENOMEM". Additionally, it is inconsistent from a stylistic point 
-of view that the caller compares the return value with an E... error 
-code and that the called function returns a numeric constant. So I would 
-appreciate it very much if you would change "return 1" into "return 
-ENOMEM" or any other symbolic E* error code of your preference.
-
-Bart.
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 1ecaf19..01d3c53 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -460,7 +460,7 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 	},
+ 	{
+-		/* SAN Volume Controller / Storwize */
++		/* Storwize family / SAN Volume Controller / Flex System V7000 */
+ 		.vendor        = "IBM",
+ 		.product       = "^2145",
+ 		.features      = "1 queue_if_no_path",
+@@ -803,6 +803,7 @@ static struct hwentry default_hw[] = {
+ 	 * Huawei
+ 	 */
+ 	{
++		/* OceanStor V3 */
+ 		.vendor        = "(HUAWEI|HUASY)",
+ 		.product       = "XSG1",
+ 		.pgpolicy      = MULTIBUS,
+-- 
+2.8.1.windows.1
