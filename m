@@ -1,70 +1,70 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH 1/1] dm raid: fix compat_features validation
-Date: Fri, 14 Oct 2016 19:14:32 +0200
-Message-ID: <dc788138-ba1f-339f-52e5-0cc763462496@redhat.com>
-References: <20161011142835.11620-1-apw@canonical.com>
- <1c517f14-1234-7844-fc6a-cd1b9698fb8b@redhat.com>
- <20161011153808.nmyf6hafjaadcemw@brain>
- <591b9d8d-2036-2d0f-14f2-af176b5beaea@redhat.com>
- <20161011174421.GA25738@redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add VIOLIN arrays to hardware
+	table
+Date: Sat, 15 Oct 2016 13:50:23 +0200
+Message-ID: <20161015115023.6773-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161011174421.GA25738@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Andy Whitcroft <apw@canonical.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
+Based on documentation provided by the manufacturer:
+https://drive.google.com/open?id=0B_B6YmEmO7cDQlMzc1BsaUxZRVU
 
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
 
-On 10/11/2016 07:44 PM, Mike Snitzer wrote:
-> On Tue, Oct 11 2016 at 11:44am -0400,
-> Heinz Mauelshagen <heinzm@redhat.com> wrote:
->
->>
->> On 10/11/2016 05:38 PM, Andy Whitcroft wrote:
->>> On Tue, Oct 11, 2016 at 05:04:34PM +0200, Heinz Mauelshagen wrote:
->>>> Andy,
->>>>
->>>> good catch.
->>>>
->>>> We should rather check for  V190 support only in case any
->>>> compat feature flags are actually set.
->>>>
->>>> {
->>>> +       if (le32_to_cpu(sb->compat_features) &&
->>>> +           le32_to_cpu(sb->compat_features) != FEATURE_FLAG_SUPPORTS_V190)
->>>> {
->>>>                  rs->ti->error = "Unable to assemble array: Unknown flag(s)
->>>> in compatible feature flags";
->>>>                  return -EINVAL;
->>>>          }
->>> If the feature flags are single bit combinations then I believe the
->>> below does check exactly that.  Checking for no 1s outside of the
->>> expected features, caring not for the value of the valid bits:
->>>
->>> +     if (le32_to_cpu(sb->compat_features) & ~(FEATURE_FLAG_SUPPORTS_V190)) {
->>>
->>> with the possibilty to or in additional feature bits as they are added.
->> Thanks,
->> I prefer this to be easier readable.
-> Readable or not, the code with the != is _not_ future-proof.  Whereas
-> Andy's solution is.  If/when a new compat feature comes along then
-> FEATURE_FLAG_SUPPORTS_V190 would be replaced to be a macro that ORs all
-> the new compat features together (e.g. FEATURE_FLAG_COMPAT).  E.g. how
-> dm-thin-metadata.c:__check_incompat_features() does.
-
-If we'll have to introduce more feature flags in the future (e.g. for 
-clustered raid1
-support), this is going to be based on the test_bit() API for consistency
-with any other flag processing we do in the target.
-
-Heinz
-
-> We can go with the != code for now, since any future changes would
-> likely cause this test to be changed.  Or we could fix it now _for
-> real_.
->
-> Mike
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index aca46ab..e34032d 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -944,6 +944,32 @@ static struct hwentry default_hw[] = {
+ 		.pgpolicy      = MULTIBUS,
+ 		.no_path_retry = 12,
+ 	},
++	/*
++	 * Violin Memory
++	 */
++	{
++		/* V3000 / V6000 Series */
++		.vendor        = "VIOLIN",
++		.product       = "SAN ARRAY$",
++		.pgpolicy      = GROUP_BY_SERIAL,
++		.no_path_retry = 30,
++	},
++	{
++		.vendor        = "VIOLIN",
++		.product       = "SAN ARRAY ALUA",
++		.hwhandler     = "1 alua",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.prio_name     = PRIO_ALUA,
++		.no_path_retry = 30,
++	},
++	{
++		/* FSP 7000 family */
++		.vendor        = "VIOLIN",
++		.product       = "CONCERTO ARRAY",
++		.pgpolicy      = MULTIBUS,
++		.no_path_retry = 30,
++	},
+ #if 0
+ 	/*
+ 	 * Copy this TEMPLATE to add new hardware.
+-- 
+2.10.1
