@@ -1,13 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: use internal drd.h file
-Date: Sun, 16 Oct 2016 17:54:12 +0200
-Message-ID: <CABr-Gndo+TkTLqxdCLiz7HCNiOpLuRoHJess5e6if9hVSKiYCg@mail.gmail.com>
-References: <20161008202212.11963-1-xose.vazquez@gmail.com>
-	<9e801117-cb59-b3a7-de85-b724326d2b34@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH RFC] multipath-tools: replace multipath
+	configuration output
+Date: Sun, 16 Oct 2016 18:03:41 +0200
+Message-ID: <20161016160341.8710-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1262091075069596633=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <9e801117-cb59-b3a7-de85-b724326d2b34@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,148 +16,200 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============1262091075069596633==
-Content-Type: multipart/alternative; boundary=94eb2c0c8ea27ec884053efd7863
 
---94eb2c0c8ea27ec884053efd7863
-Content-Type: text/plain; charset=UTF-8
-
-Merged.
-Thanks.
-
-On Sun, Oct 16, 2016 at 12:26 PM, Xose Vazquez Perez <xose.vazquez@gmail.com
-> wrote:
-
-> On 10/08/2016 10:22 PM, Xose Vazquez Perez wrote:
->
-> > Cc: Bart Van Assche <bart.vanassche@sandisk.com>
-> > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> > Cc: device-mapper development <dm-devel@redhat.com>
-> > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> > ---
-> >  libmultipath/debug.c | 2 +-
-> >  multipathd/main.c    | 2 +-
-> >  2 files changed, 2 insertions(+), 2 deletions(-)
->
-> This patch is missing.
-> Thank you.
->
->
-> > diff --git a/libmultipath/debug.c b/libmultipath/debug.c
-> > index 295136c..fbe171a 100644
-> > --- a/libmultipath/debug.c
-> > +++ b/libmultipath/debug.c
-> > @@ -8,7 +8,7 @@
-> >  #include "log_pthread.h"
-> >  #include <sys/types.h>
-> >  #include <time.h>
-> > -#include <../third-party/valgrind/drd.h>
-> > +#include "../third-party/valgrind/drd.h"
-> >  #include "vector.h"
-> >  #include "config.h"
-> >
-> > diff --git a/multipathd/main.c b/multipathd/main.c
-> > index cdfafe8..0998085 100644
-> > --- a/multipathd/main.c
-> > +++ b/multipathd/main.c
-> > @@ -23,7 +23,6 @@
-> >  #endif
-> >  #include <semaphore.h>
-> >  #include <time.h>
-> > -#include <valgrind/drd.h>
-> >
-> >  /*
-> >   * libmultipath
-> > @@ -85,6 +84,7 @@ int uxsock_timeout;
-> >  #include "lock.h"
-> >  #include "waiter.h"
-> >  #include "wwids.h"
-> > +#include "../third-party/valgrind/drd.h"
-> >
-> >  #define FILE_NAME_SIZE 256
-> >  #define CMDSIZE 160
-> >
->
->
-
---94eb2c0c8ea27ec884053efd7863
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
-<br><div class=3D"gmail_quote">On Sun, Oct 16, 2016 at 12:26 PM, Xose Vazqu=
-ez Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" ta=
-rget=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote=
- class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc soli=
-d;padding-left:1ex"><span class=3D"">On 10/08/2016 10:22 PM, Xose Vazquez P=
-erez wrote:<br>
-<br>
-&gt; Cc: Bart Van Assche &lt;<a href=3D"mailto:bart.vanassche@sandisk.com">=
-bart.vanassche@sandisk.com</a>&gt;<br>
-&gt; Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensv=
-c.com">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
-&gt; Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.co=
-m">dm-devel@redhat.com</a>&gt;<br>
-&gt; Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@g=
-mail.com">xose.vazquez@gmail.com</a>&gt;<br>
-&gt; ---<br>
-&gt;=C2=A0 libmultipath/debug.c | 2 +-<br>
-&gt;=C2=A0 multipathd/main.c=C2=A0 =C2=A0 | 2 +-<br>
-&gt;=C2=A0 2 files changed, 2 insertions(+), 2 deletions(-)<br>
-<br>
-</span>This patch is missing.<br>
-Thank you.<br>
-<div class=3D"HOEnZb"><div class=3D"h5"><br>
-<br>
-&gt; diff --git a/libmultipath/debug.c b/libmultipath/debug.c<br>
-&gt; index 295136c..fbe171a 100644<br>
-&gt; --- a/libmultipath/debug.c<br>
-&gt; +++ b/libmultipath/debug.c<br>
-&gt; @@ -8,7 +8,7 @@<br>
-&gt;=C2=A0 #include &quot;log_pthread.h&quot;<br>
-&gt;=C2=A0 #include &lt;sys/types.h&gt;<br>
-&gt;=C2=A0 #include &lt;time.h&gt;<br>
-&gt; -#include &lt;../third-party/valgrind/drd.<wbr>h&gt;<br>
-&gt; +#include &quot;../third-party/valgrind/drd.<wbr>h&quot;<br>
-&gt;=C2=A0 #include &quot;vector.h&quot;<br>
-&gt;=C2=A0 #include &quot;config.h&quot;<br>
-&gt;<br>
-&gt; diff --git a/multipathd/main.c b/multipathd/main.c<br>
-&gt; index cdfafe8..0998085 100644<br>
-&gt; --- a/multipathd/main.c<br>
-&gt; +++ b/multipathd/main.c<br>
-&gt; @@ -23,7 +23,6 @@<br>
-&gt;=C2=A0 #endif<br>
-&gt;=C2=A0 #include &lt;semaphore.h&gt;<br>
-&gt;=C2=A0 #include &lt;time.h&gt;<br>
-&gt; -#include &lt;valgrind/drd.h&gt;<br>
-&gt;<br>
-&gt;=C2=A0 /*<br>
-&gt;=C2=A0 =C2=A0* libmultipath<br>
-&gt; @@ -85,6 +84,7 @@ int uxsock_timeout;<br>
-&gt;=C2=A0 #include &quot;lock.h&quot;<br>
-&gt;=C2=A0 #include &quot;waiter.h&quot;<br>
-&gt;=C2=A0 #include &quot;wwids.h&quot;<br>
-&gt; +#include &quot;../third-party/valgrind/drd.<wbr>h&quot;<br>
-&gt;<br>
-&gt;=C2=A0 #define FILE_NAME_SIZE 256<br>
-&gt;=C2=A0 #define CMDSIZE 160<br>
-&gt;<br>
-<br>
-</div></div></blockquote></div><br></div>
-
---94eb2c0c8ea27ec884053efd7863--
+	This is a RFC patch!
 
 
---===============1262091075069596633==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+
+internal default	-> multipathd: internal setting
+
+LUN setting		-> multipath.conf: <multipaths section> setting
+
+overrides setting	-> multipath.conf: <overrides section> setting
+
+config file default	-> multipath.conf: file setting
+config file setting	-> multipath.conf: file setting
+
+controller setting	-> hardware: array controller setting
+detected setting	-> hardware: array controller setting
+
+sysfs setting		-> kernel: sysfs setting
+
+inherited setting	-> ??? unchanged ???
 
 
---===============1262091075069596633==--
+
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/propsel.c | 66 +++++++++++++++++++++++++-------------------------
+ 1 file changed, 33 insertions(+), 33 deletions(-)
+
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 1625990..450b1e3 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -41,28 +41,28 @@ do {									\
+ #define do_default(dest, value)						\
+ do {									\
+ 	dest = value;							\
+-	origin = "(internal default)";					\
++	origin = "(multipathd: internal setting)";			\
+ } while(0)
+ 
+ #define mp_set_mpe(var)							\
+-do_set(var, mp->mpe, mp->var, "(LUN setting)")
++do_set(var, mp->mpe, mp->var, "(multipath.conf: <multipaths section> setting)")
+ #define mp_set_hwe(var)							\
+-do_set(var, mp->hwe, mp->var, "(controller setting)")
++do_set(var, mp->hwe, mp->var, "(hardware: array controller setting)")
+ #define mp_set_ovr(var)							\
+-do_set(var, conf->overrides, mp->var, "(overrides setting)")
++do_set(var, conf->overrides, mp->var, "(multipath.conf: <overrides section> setting)")
+ #define mp_set_conf(var)						\
+-do_set(var, conf, mp->var, "(config file default)")
++do_set(var, conf, mp->var, "(multipath.conf: file setting)")
+ #define mp_set_default(var, value)					\
+ do_default(mp->var, value)
+ 
+ #define pp_set_mpe(var)							\
+-do_set(var, mpe, pp->var, "(LUN setting)")
++do_set(var, mpe, pp->var, "(multipath.conf: <multipaths section> setting)")
+ #define pp_set_hwe(var)							\
+-do_set(var, pp->hwe, pp->var, "(controller setting)")
++do_set(var, pp->hwe, pp->var, "(hardware: array controller setting)")
+ #define pp_set_conf(var)						\
+-do_set(var, conf, pp->var, "(config file default)")
++do_set(var, conf, pp->var, "(multipath.conf: file setting)")
+ #define pp_set_ovr(var)							\
+-do_set(var, conf->overrides, pp->var, "(overrides setting)")
++do_set(var, conf->overrides, pp->var, "(multipath.conf: <overrides section> setting)")
+ #define pp_set_default(var, value)					\
+ do_default(pp->var, value)
+ 
+@@ -77,9 +77,9 @@ do {									\
+ } while(0)
+ 
+ #define set_attr_mpe(var, shift)					\
+-do_attr_set(var, mp->mpe, shift, "(LUN setting)")
++do_attr_set(var, mp->mpe, shift, "(multipath.conf: <multipaths section> setting)")
+ #define set_attr_conf(var, shift)					\
+-do_attr_set(var, conf, shift, "(config file default)")
++do_attr_set(var, conf, shift, "(multipath.conf: file setting)")
+ 
+ extern int
+ select_mode (struct config *conf, struct multipath *mp)
+@@ -221,13 +221,13 @@ want_user_friendly_names(struct config *conf, struct multipath * mp)
+ 	int user_friendly_names;
+ 
+ 	do_set(user_friendly_names, mp->mpe, user_friendly_names,
+-	       "(LUN setting)");
++	       "(multipath.conf: <multipaths section> setting)");
+ 	do_set(user_friendly_names, conf->overrides, user_friendly_names,
+-	       "(overrides setting)");
++	       "(multipath.conf: <overrides section> setting)");
+ 	do_set(user_friendly_names, mp->hwe, user_friendly_names,
+-	       "(controller setting)");
++	       "(hardware: array controller setting)");
+ 	do_set(user_friendly_names, conf, user_friendly_names,
+-	       "(config file setting)");
++	       "(multipath.conf: file setting)");
+ 	do_default(user_friendly_names, USER_FRIENDLY_NAMES_OFF);
+ out:
+ 	condlog(3, "%s: user_friendly_names = %s %s", mp->wwid,
+@@ -243,7 +243,7 @@ select_alias (struct config *conf, struct multipath * mp)
+ 
+ 	if (mp->mpe && mp->mpe->alias) {
+ 		mp->alias = STRDUP(mp->mpe->alias);
+-		origin = "(LUN setting)";
++		origin = "(multipath.conf: <multipaths section> setting)";
+ 		goto out;
+ 	}
+ 
+@@ -323,24 +323,24 @@ select_checker(struct config *conf, struct path *pp)
+ 	char *origin, *checker_name;
+ 	struct checker * c = &pp->checker;
+ 
+-	do_set(checker_name, conf->overrides, checker_name, "(overrides setting)");
+-	do_set(checker_name, pp->hwe, checker_name, "(controller setting)");
+-	do_set(checker_name, conf, checker_name, "(config file setting)");
++	do_set(checker_name, conf->overrides, checker_name, "(multipath.conf: <overrides section> setting)");
++	do_set(checker_name, pp->hwe, checker_name, "(hardware: array controller setting)");
++	do_set(checker_name, conf, checker_name, "(multipath.conf: file setting)");
+ 	do_default(checker_name, DEFAULT_CHECKER);
+ out:
+ 	checker_get(conf->multipath_dir, c, checker_name);
+ 	condlog(3, "%s: path_checker = %s %s", pp->dev, c->name, origin);
+ 	if (conf->checker_timeout) {
+ 		c->timeout = conf->checker_timeout;
+-		condlog(3, "%s: checker timeout = %u s (config file default)",
++		condlog(3, "%s: checker timeout = %u s (multipath.conf: file setting)",
+ 				pp->dev, c->timeout);
+ 	}
+ 	else if (sysfs_get_timeout(pp, &c->timeout) > 0)
+-		condlog(3, "%s: checker timeout = %u ms (sysfs setting)",
++		condlog(3, "%s: checker timeout = %u ms (kernel: sysfs setting)",
+ 				pp->dev, c->timeout);
+ 	else {
+ 		c->timeout = DEF_TIMEOUT;
+-		condlog(3, "%s: checker timeout = %u ms (internal default)",
++		condlog(3, "%s: checker timeout = %u ms (multipathd: internal setting)",
+ 				pp->dev, c->timeout);
+ 	}
+ 	return 0;
+@@ -410,17 +410,17 @@ select_prio (struct config *conf, struct path * pp)
+ 	if (pp->detect_prio == DETECT_PRIO_ON) {
+ 		detect_prio(conf, pp);
+ 		if (prio_selected(p)) {
+-			origin = "(detected setting)";
++			origin = "(hardware: array controller setting)";
+ 			goto out;
+ 		}
+ 	}
+ 	mpe = find_mpe(conf->mptable, pp->wwid);
+-	set_prio(conf->multipath_dir, mpe, "(LUN setting)");
+-	set_prio(conf->multipath_dir, conf->overrides, "(overrides setting)");
+-	set_prio(conf->multipath_dir, pp->hwe, "controller setting)");
+-	set_prio(conf->multipath_dir, conf, "(config file default)");
++	set_prio(conf->multipath_dir, mpe, "(multipath.conf: <multipaths section> setting)");
++	set_prio(conf->multipath_dir, conf->overrides, "(multipath.conf: <overrides section> setting)");
++	set_prio(conf->multipath_dir, pp->hwe, "(hardware: array controller setting)");
++	set_prio(conf->multipath_dir, conf, "(multipath.conf: file setting)");
+ 	prio_get(conf->multipath_dir, p, DEFAULT_PRIO, DEFAULT_PRIO_ARGS);
+-	origin = "(internal default)";
++	origin = "(multipathd: internal setting)";
+ out:
+ 	/*
+ 	 * fetch tpgs mode for alua, if its not already obtained
+@@ -462,7 +462,7 @@ out:
+ 		condlog(3, "%s: no_path_retry = %s (inherited setting)",
+ 			mp->alias, buff);
+ 	else
+-		condlog(3, "%s: no_path_retry = undef (internal default)",
++		condlog(3, "%s: no_path_retry = undef (multipathd: internal setting)",
+ 			mp->alias);
+ 	return 0;
+ }
+@@ -472,10 +472,10 @@ select_minio_rq (struct config *conf, struct multipath * mp)
+ {
+ 	char *origin;
+ 
+-	do_set(minio_rq, mp->mpe, mp->minio, "(LUN setting)");
+-	do_set(minio_rq, conf->overrides, mp->minio, "(overrides setting)");
+-	do_set(minio_rq, mp->hwe, mp->minio, "(controller setting)");
+-	do_set(minio_rq, conf, mp->minio, "(config file setting)");
++	do_set(minio_rq, mp->mpe, mp->minio, "(multipath.conf: <multipaths section> setting)");
++	do_set(minio_rq, conf->overrides, mp->minio, "(multipath.conf: <overrides section> setting)");
++	do_set(minio_rq, mp->hwe, mp->minio, "(hardware: array controller setting)");
++	do_set(minio_rq, conf, mp->minio, "(multipath.conf: file setting)");
+ 	do_default(mp->minio, DEFAULT_MINIO_RQ);
+ out:
+ 	condlog(3, "%s: minio = %i %s", mp->alias, mp->minio, origin);
+-- 
+2.10.1
