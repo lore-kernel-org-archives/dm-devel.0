@@ -1,13 +1,13 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: merge dcssblk in similar
-	blacklist regex
-Date: Sun, 16 Oct 2016 17:53:54 +0200
-Message-ID: <CABr-GnfyGcxKpvLgqQ6KVqn-yUCPq8VK1NK0E8PtHb=Mm7oH4g@mail.gmail.com>
-References: <20161016135946.6479-1-xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: use internal drd.h file
+Date: Sun, 16 Oct 2016 17:54:12 +0200
+Message-ID: <CABr-Gndo+TkTLqxdCLiz7HCNiOpLuRoHJess5e6if9hVSKiYCg@mail.gmail.com>
+References: <20161008202212.11963-1-xose.vazquez@gmail.com>
+	<9e801117-cb59-b3a7-de85-b724326d2b34@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3203371652874108552=="
+Content-Type: multipart/mixed; boundary="===============1262091075069596633=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161016135946.6479-1-xose.vazquez@gmail.com>
+In-Reply-To: <9e801117-cb59-b3a7-de85-b724326d2b34@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,158 +18,147 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============3203371652874108552==
-Content-Type: multipart/alternative; boundary=001a1141277c76b63c053efd7734
+--===============1262091075069596633==
+Content-Type: multipart/alternative; boundary=94eb2c0c8ea27ec884053efd7863
 
---001a1141277c76b63c053efd7734
+--94eb2c0c8ea27ec884053efd7863
 Content-Type: text/plain; charset=UTF-8
 
 Merged.
 Thanks.
 
-On Sun, Oct 16, 2016 at 3:59 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
+On Sun, Oct 16, 2016 at 12:26 PM, Xose Vazquez Perez <xose.vazquez@gmail.com
+> wrote:
 
-> Similar patterns.
+> On 10/08/2016 10:22 PM, Xose Vazquez Perez wrote:
 >
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/blacklist.c   | 8 +-------
->  multipath/multipath.conf.5 | 2 +-
->  2 files changed, 2 insertions(+), 8 deletions(-)
+> > Cc: Bart Van Assche <bart.vanassche@sandisk.com>
+> > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> > Cc: device-mapper development <dm-devel@redhat.com>
+> > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> > ---
+> >  libmultipath/debug.c | 2 +-
+> >  multipathd/main.c    | 2 +-
+> >  2 files changed, 2 insertions(+), 2 deletions(-)
 >
-> diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
-> index aa8d975..f6c4506 100644
-> --- a/libmultipath/blacklist.c
-> +++ b/libmultipath/blacklist.c
-> @@ -172,7 +172,7 @@ setup_default_blist (struct config * conf)
->         char * str;
->         int i;
+> This patch is missing.
+> Thank you.
 >
-> -       str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]");
-> +       str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]");
->         if (!str)
->                 return 1;
->         if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
-> @@ -184,12 +184,6 @@ setup_default_blist (struct config * conf)
->         if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
->                 return 1;
 >
-> -       str = STRDUP("^dcssblk[0-9]");
-> -       if (!str)
-> -               return 1;
-> -       if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
-> -               return 1;
-> -
->         str = STRDUP("^nvme");
->         if (!str)
->                 return 1;
-> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index 313e21b..367688e 100644
-> --- a/multipath/multipath.conf.5
-> +++ b/multipath/multipath.conf.5
-> @@ -851,7 +851,7 @@ The following keywords are recognized:
->  Regular expression of the device nodes to be excluded.
->  .RS
->  .TP
-> -Default value is: \fB^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]\fR,
-> \fB^(td|hd|vd)[a-z]\fR, \fB^dcssblk[0-9]\fR and \fB^nvme\fR
-> +Default value is: \fB^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]\fR,
-> \fB^(td|hd|vd)[a-z]\fR and \fB^nvme\fR
->  .RE
->  .TP
->  .B wwid
-> --
-> 2.10.1
+> > diff --git a/libmultipath/debug.c b/libmultipath/debug.c
+> > index 295136c..fbe171a 100644
+> > --- a/libmultipath/debug.c
+> > +++ b/libmultipath/debug.c
+> > @@ -8,7 +8,7 @@
+> >  #include "log_pthread.h"
+> >  #include <sys/types.h>
+> >  #include <time.h>
+> > -#include <../third-party/valgrind/drd.h>
+> > +#include "../third-party/valgrind/drd.h"
+> >  #include "vector.h"
+> >  #include "config.h"
+> >
+> > diff --git a/multipathd/main.c b/multipathd/main.c
+> > index cdfafe8..0998085 100644
+> > --- a/multipathd/main.c
+> > +++ b/multipathd/main.c
+> > @@ -23,7 +23,6 @@
+> >  #endif
+> >  #include <semaphore.h>
+> >  #include <time.h>
+> > -#include <valgrind/drd.h>
+> >
+> >  /*
+> >   * libmultipath
+> > @@ -85,6 +84,7 @@ int uxsock_timeout;
+> >  #include "lock.h"
+> >  #include "waiter.h"
+> >  #include "wwids.h"
+> > +#include "../third-party/valgrind/drd.h"
+> >
+> >  #define FILE_NAME_SIZE 256
+> >  #define CMDSIZE 160
+> >
 >
 >
 
---001a1141277c76b63c053efd7734
+--94eb2c0c8ea27ec884053efd7863
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
 <div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
-<br><div class=3D"gmail_quote">On Sun, Oct 16, 2016 at 3:59 PM, Xose Vazque=
-z Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" tar=
-get=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote =
-class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid=
-;padding-left:1ex">Similar patterns.<br>
+<br><div class=3D"gmail_quote">On Sun, Oct 16, 2016 at 12:26 PM, Xose Vazqu=
+ez Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" ta=
+rget=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote=
+ class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc soli=
+d;padding-left:1ex"><span class=3D"">On 10/08/2016 10:22 PM, Xose Vazquez P=
+erez wrote:<br>
 <br>
-Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com=
-">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
-Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
--devel@redhat.com</a>&gt;<br>
-Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
-com">xose.vazquez@gmail.com</a>&gt;<br>
----<br>
-=C2=A0libmultipath/blacklist.c=C2=A0 =C2=A0| 8 +-------<br>
-=C2=A0multipath/multipath.conf.5 | 2 +-<br>
-=C2=A02 files changed, 2 insertions(+), 8 deletions(-)<br>
+&gt; Cc: Bart Van Assche &lt;<a href=3D"mailto:bart.vanassche@sandisk.com">=
+bart.vanassche@sandisk.com</a>&gt;<br>
+&gt; Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensv=
+c.com">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
+&gt; Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.co=
+m">dm-devel@redhat.com</a>&gt;<br>
+&gt; Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@g=
+mail.com">xose.vazquez@gmail.com</a>&gt;<br>
+&gt; ---<br>
+&gt;=C2=A0 libmultipath/debug.c | 2 +-<br>
+&gt;=C2=A0 multipathd/main.c=C2=A0 =C2=A0 | 2 +-<br>
+&gt;=C2=A0 2 files changed, 2 insertions(+), 2 deletions(-)<br>
 <br>
-diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c<br>
-index aa8d975..f6c4506 100644<br>
---- a/libmultipath/blacklist.c<br>
-+++ b/libmultipath/blacklist.c<br>
-@@ -172,7 +172,7 @@ setup_default_blist (struct config * conf)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 char * str;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 int i;<br>
+</span>This patch is missing.<br>
+Thank you.<br>
+<div class=3D"HOEnZb"><div class=3D"h5"><br>
 <br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0str =3D STRDUP(&quot;^(ram|raw|loop|fd|md|<wbr>=
-dm-|sr|scd|st)[0-9]&quot;);<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0str =3D STRDUP(&quot;^(ram|raw|loop|fd|md|<wbr>=
-dm-|sr|scd|st|dcssblk)[0-9]&quot;);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!str)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return 1;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (store_ble(conf-&gt;blist_<wbr>devnode, str,=
- ORIGIN_DEFAULT))<br>
-@@ -184,12 +184,6 @@ setup_default_blist (struct config * conf)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (store_ble(conf-&gt;blist_<wbr>devnode, str,=
- ORIGIN_DEFAULT))<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return 1;<br>
+&gt; diff --git a/libmultipath/debug.c b/libmultipath/debug.c<br>
+&gt; index 295136c..fbe171a 100644<br>
+&gt; --- a/libmultipath/debug.c<br>
+&gt; +++ b/libmultipath/debug.c<br>
+&gt; @@ -8,7 +8,7 @@<br>
+&gt;=C2=A0 #include &quot;log_pthread.h&quot;<br>
+&gt;=C2=A0 #include &lt;sys/types.h&gt;<br>
+&gt;=C2=A0 #include &lt;time.h&gt;<br>
+&gt; -#include &lt;../third-party/valgrind/drd.<wbr>h&gt;<br>
+&gt; +#include &quot;../third-party/valgrind/drd.<wbr>h&quot;<br>
+&gt;=C2=A0 #include &quot;vector.h&quot;<br>
+&gt;=C2=A0 #include &quot;config.h&quot;<br>
+&gt;<br>
+&gt; diff --git a/multipathd/main.c b/multipathd/main.c<br>
+&gt; index cdfafe8..0998085 100644<br>
+&gt; --- a/multipathd/main.c<br>
+&gt; +++ b/multipathd/main.c<br>
+&gt; @@ -23,7 +23,6 @@<br>
+&gt;=C2=A0 #endif<br>
+&gt;=C2=A0 #include &lt;semaphore.h&gt;<br>
+&gt;=C2=A0 #include &lt;time.h&gt;<br>
+&gt; -#include &lt;valgrind/drd.h&gt;<br>
+&gt;<br>
+&gt;=C2=A0 /*<br>
+&gt;=C2=A0 =C2=A0* libmultipath<br>
+&gt; @@ -85,6 +84,7 @@ int uxsock_timeout;<br>
+&gt;=C2=A0 #include &quot;lock.h&quot;<br>
+&gt;=C2=A0 #include &quot;waiter.h&quot;<br>
+&gt;=C2=A0 #include &quot;wwids.h&quot;<br>
+&gt; +#include &quot;../third-party/valgrind/drd.<wbr>h&quot;<br>
+&gt;<br>
+&gt;=C2=A0 #define FILE_NAME_SIZE 256<br>
+&gt;=C2=A0 #define CMDSIZE 160<br>
+&gt;<br>
 <br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0str =3D STRDUP(&quot;^dcssblk[0-9]&quot;);<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0if (!str)<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return 1;<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0if (store_ble(conf-&gt;blist_<wbr>devnode, str,=
- ORIGIN_DEFAULT))<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return 1;<br>
--<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 str =3D STRDUP(&quot;^nvme&quot;);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!str)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return 1;<br>
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5<br>
-index 313e21b..367688e 100644<br>
---- a/multipath/multipath.conf.5<br>
-+++ b/multipath/multipath.conf.5<br>
-@@ -851,7 +851,7 @@ The following keywords are recognized:<br>
-=C2=A0Regular expression of the device nodes to be excluded.<br>
-=C2=A0.RS<br>
-=C2=A0.TP<br>
--Default value is: \fB^(ram|raw|loop|fd|md|dm-|<wbr>sr|scd|st)[0-9]\fR, \fB=
-^(td|hd|vd)[a-z]\fR, \fB^dcssblk[0-9]\fR and \fB^nvme\fR<br>
-+Default value is: \fB^(ram|raw|loop|fd|md|dm-|<wbr>sr|scd|st|dcssblk)[0-9]=
-\fR, \fB^(td|hd|vd)[a-z]\fR and \fB^nvme\fR<br>
-=C2=A0.RE<br>
-=C2=A0.TP<br>
-=C2=A0.B wwid<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.10.1<br>
-<br>
-</font></span></blockquote></div><br></div>
+</div></div></blockquote></div><br></div>
 
---001a1141277c76b63c053efd7734--
+--94eb2c0c8ea27ec884053efd7863--
 
 
---===============3203371652874108552==
+--===============1262091075069596633==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============3203371652874108552==--
+--===============1262091075069596633==--
