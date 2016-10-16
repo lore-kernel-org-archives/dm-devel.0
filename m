@@ -1,13 +1,12 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: use internal drd.h file
-Date: Sun, 16 Oct 2016 12:26:18 +0200
-Message-ID: <9e801117-cb59-b3a7-de85-b724326d2b34@gmail.com>
-References: <20161008202212.11963-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: merge dcssblk in similar
+	blacklist regex
+Date: Sun, 16 Oct 2016 15:59:46 +0200
+Message-ID: <20161016135946.6479-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161008202212.11963-1-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,56 +16,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On 10/08/2016 10:22 PM, Xose Vazquez Perez wrote:
+Similar patterns.
 
-> Cc: Bart Van Assche <bart.vanassche@sandisk.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/debug.c | 2 +-
->  multipathd/main.c    | 2 +-
->  2 files changed, 2 insertions(+), 2 deletions(-)
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/blacklist.c   | 8 +-------
+ multipath/multipath.conf.5 | 2 +-
+ 2 files changed, 2 insertions(+), 8 deletions(-)
 
-This patch is missing.
-Thank you.
-
-
-> diff --git a/libmultipath/debug.c b/libmultipath/debug.c
-> index 295136c..fbe171a 100644
-> --- a/libmultipath/debug.c
-> +++ b/libmultipath/debug.c
-> @@ -8,7 +8,7 @@
->  #include "log_pthread.h"
->  #include <sys/types.h>
->  #include <time.h>
-> -#include <../third-party/valgrind/drd.h>
-> +#include "../third-party/valgrind/drd.h"
->  #include "vector.h"
->  #include "config.h"
->  
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index cdfafe8..0998085 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -23,7 +23,6 @@
->  #endif
->  #include <semaphore.h>
->  #include <time.h>
-> -#include <valgrind/drd.h>
->  
->  /*
->   * libmultipath
-> @@ -85,6 +84,7 @@ int uxsock_timeout;
->  #include "lock.h"
->  #include "waiter.h"
->  #include "wwids.h"
-> +#include "../third-party/valgrind/drd.h"
->  
->  #define FILE_NAME_SIZE 256
->  #define CMDSIZE 160
-> 
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+index aa8d975..f6c4506 100644
+--- a/libmultipath/blacklist.c
++++ b/libmultipath/blacklist.c
+@@ -172,7 +172,7 @@ setup_default_blist (struct config * conf)
+ 	char * str;
+ 	int i;
+ 
+-	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]");
++	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]");
+ 	if (!str)
+ 		return 1;
+ 	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+@@ -184,12 +184,6 @@ setup_default_blist (struct config * conf)
+ 	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+ 		return 1;
+ 
+-	str = STRDUP("^dcssblk[0-9]");
+-	if (!str)
+-		return 1;
+-	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+-		return 1;
+-
+ 	str = STRDUP("^nvme");
+ 	if (!str)
+ 		return 1;
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 313e21b..367688e 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -851,7 +851,7 @@ The following keywords are recognized:
+ Regular expression of the device nodes to be excluded.
+ .RS
+ .TP
+-Default value is: \fB^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]\fR, \fB^(td|hd|vd)[a-z]\fR, \fB^dcssblk[0-9]\fR and \fB^nvme\fR
++Default value is: \fB^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]\fR, \fB^(td|hd|vd)[a-z]\fR and \fB^nvme\fR
+ .RE
+ .TP
+ .B wwid
+-- 
+2.10.1
