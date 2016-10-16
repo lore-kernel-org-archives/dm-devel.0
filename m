@@ -1,14 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] multipath-tools: add VIOLIN arrays to
- hardware table
-Date: Sun, 16 Oct 2016 18:56:46 +0200
-Message-ID: <8a7363a9-43ad-92ac-c237-c6bbe8bcf5b3@suse.de>
-References: <20161015115023.6773-1-xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: use internal drd.h file
+Date: Sun, 16 Oct 2016 18:59:40 +0200
+Message-ID: <ea6f0aac-4ca5-e3dd-da71-5a4a1361de64@suse.de>
+References: <20161008202212.11963-1-xose.vazquez@gmail.com>
+	<9e801117-cb59-b3a7-de85-b724326d2b34@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"; Format="flowed"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161015115023.6773-1-xose.vazquez@gmail.com>
+In-Reply-To: <9e801117-cb59-b3a7-de85-b724326d2b34@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,57 +21,61 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 10/15/2016 01:50 PM, Xose Vazquez Perez wrote:
-> Based on documentation provided by the manufacturer:
-> https://drive.google.com/open?id=3D0B_B6YmEmO7cDQlMzc1BsaUxZRVU
+On 10/16/2016 12:26 PM, Xose Vazquez Perez wrote:
+> On 10/08/2016 10:22 PM, Xose Vazquez Perez wrote:
 >
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/hwtable.c | 26 ++++++++++++++++++++++++++
->  1 file changed, 26 insertions(+)
+>> Cc: Bart Van Assche <bart.vanassche@sandisk.com>
+>> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+>> Cc: device-mapper development <dm-devel@redhat.com>
+>> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+>> ---
+>>  libmultipath/debug.c | 2 +-
+>>  multipathd/main.c    | 2 +-
+>>  2 files changed, 2 insertions(+), 2 deletions(-)
 >
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index aca46ab..e34032d 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -944,6 +944,32 @@ static struct hwentry default_hw[] =3D {
->  		.pgpolicy      =3D MULTIBUS,
->  		.no_path_retry =3D 12,
->  	},
-> +	/*
-> +	 * Violin Memory
-> +	 */
-> +	{
-> +		/* V3000 / V6000 Series */
-> +		.vendor        =3D "VIOLIN",
-> +		.product       =3D "SAN ARRAY$",
-> +		.pgpolicy      =3D GROUP_BY_SERIAL,
-> +		.no_path_retry =3D 30,
-> +	},
-> +	{
-> +		.vendor        =3D "VIOLIN",
-> +		.product       =3D "SAN ARRAY ALUA",
-> +		.hwhandler     =3D "1 alua",
-> +		.pgpolicy      =3D GROUP_BY_PRIO,
-> +		.pgfailback    =3D -FAILBACK_IMMEDIATE,
-> +		.prio_name     =3D PRIO_ALUA,
-> +		.no_path_retry =3D 30,
-> +	},
-> +	{
-> +		/* FSP 7000 family */
-> +		.vendor        =3D "VIOLIN",
-> +		.product       =3D "CONCERTO ARRAY",
-> +		.pgpolicy      =3D MULTIBUS,
-> +		.no_path_retry =3D 30,
-> +	},
->  #if 0
->  	/*
->  	 * Copy this TEMPLATE to add new hardware.
+> This patch is missing.
+> Thank you.
 >
-Where's the point of the first and the third entry?
-They'll be identical to the default settings, no?
+>
+>> diff --git a/libmultipath/debug.c b/libmultipath/debug.c
+>> index 295136c..fbe171a 100644
+>> --- a/libmultipath/debug.c
+>> +++ b/libmultipath/debug.c
+>> @@ -8,7 +8,7 @@
+>>  #include "log_pthread.h"
+>>  #include <sys/types.h>
+>>  #include <time.h>
+>> -#include <../third-party/valgrind/drd.h>
+>> +#include "../third-party/valgrind/drd.h"
+>>  #include "vector.h"
+>>  #include "config.h"
+>>
+>> diff --git a/multipathd/main.c b/multipathd/main.c
+>> index cdfafe8..0998085 100644
+>> --- a/multipathd/main.c
+>> +++ b/multipathd/main.c
+>> @@ -23,7 +23,6 @@
+>>  #endif
+>>  #include <semaphore.h>
+>>  #include <time.h>
+>> -#include <valgrind/drd.h>
+>>
+>>  /*
+>>   * libmultipath
+>> @@ -85,6 +84,7 @@ int uxsock_timeout;
+>>  #include "lock.h"
+>>  #include "waiter.h"
+>>  #include "wwids.h"
+>> +#include "../third-party/valgrind/drd.h"
+>>
+>>  #define FILE_NAME_SIZE 256
+>>  #define CMDSIZE 160
+>>
+>
+Please don't.
+We're trying to keep dependencies to each package as small as possible.
+And requiring valgrind by default is not going to help here.
+Please make this a compile-time option.
 
 Cheers,
 
