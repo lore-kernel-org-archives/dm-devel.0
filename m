@@ -1,13 +1,14 @@
-From: huang.wei56@zte.com.cn
-Subject: Re: [PATCH] add_feature: coredump
-Date: Mon, 17 Oct 2016 10:37:56 +0800
-Message-ID: <OF0F4CDBD0.B1AC52B8-ON4825804F.000B65E2-4825804F.000E7331@zte.com.cn>
-References: <1476410880-7156-1-git-send-email-huang.wei56@zte.com.cn>
-	<d7d282d7-691b-dbc1-1f44-c4933f9ecb8b@suse.de>
+From: Michael Wang <yun.wang@profitbricks.com>
+Subject: Re: [PATCH] multipath-tools: release lock on handler
+ failure
+Date: Mon, 17 Oct 2016 10:02:58 +0200
+Message-ID: <f8227018-ea94-19b4-4bd8-5eb9e38f90c2@profitbricks.com>
+References: <a822c1be-b984-b47b-7418-48d5cf069801@profitbricks.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1569606805252848155=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d7d282d7-691b-dbc1-1f44-c4933f9ecb8b@suse.de>
+In-Reply-To: <a822c1be-b984-b47b-7418-48d5cf069801@profitbricks.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,168 +18,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn
+To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, tang.junhui@zte.com.cn
 List-Id: dm-devel.ids
 
-This is a multipart message in MIME format.
---===============1569606805252848155==
-Content-Type: multipart/alternative;
-	boundary="=_alternative 000E732E4825804F_="
+Dear maintainer, is this patch looks fine to you?
 
-This is a multipart message in MIME format.
---=_alternative 000E732E4825804F_=
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: base64
+Regards,
+Michael Wang
 
-SWYgbm8gZmVhdHVyZXMgYXJlIHByZXNlbnQsIHRoZSBmdW5jdGlvbiB3aWxsIHJldHVybiBmcm9t
-IHRoZSBjYXNlICJpZiAoIW4gDQp8fCAqbiA9PSAnMCcpIiAoIHN0cnVjdHMuYyBsaW5lIDUyMSkg
-LiANCg0KQmVjYXVzZSBhZGRfZmVhdHVyZSgpIGlzIGNhbGxlZCBieSBzb21lIGZ1bmN0aW9ucywg
-dGFraW5nIGEgcHJvdGVjdCBpbnNpZGUgDQppcyBtdWNoIHNhZmVyLg0KIA0KDQoNCg0KDQpIYW5u
-ZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5kZT4gDQoyMDE2LTEwLTE0IDE0OjAyDQoNCuaUtuS7tuS6
-ug0KaHVhbmcud2VpNTZAenRlLmNvbS5jbiwgQ2hyaXN0b3BoZSBWYXJvcXVpIA0KPGNocmlzdG9w
-aGUudmFyb3F1aUBvcGVuc3ZjLmNvbT4sIA0K5oqE6YCBDQpibWFyemluc0ByZWRoYXQuY29tLCBk
-bS1kZXZlbEByZWRoYXQuY29tLCB6aGFuZy5rYWkxNkB6dGUuY29tLmNuLCANCnRhbmcuanVuaHVp
-QHp0ZS5jb20uY24NCuS4u+mimA0KUmU6IFtQQVRDSF0gYWRkX2ZlYXR1cmU6IGNvcmVkdW1wDQoN
-Cg0KDQoNCg0KDQpPbiAxMC8xNC8yMDE2IDA0OjA4IEFNLCBodWFuZy53ZWk1NkB6dGUuY29tLmNu
-IHdyb3RlOg0KPiBGcm9tOiAid2VpLmh1YW5nIiA8aHVhbmcud2VpNTZAenRlLmNvbS5jbj4NCj4g
-DQo+IFByb2JsZW06DQo+IHdoZW4gd2UgY29uZmlndXJlIGRldmljZSBsaWtlIHZlbmRvciBpcyBD
-T01QRUxOVCBpbiBtdWx0aXBhdGguY29uZiwgDQptdWx0aXBhdGhkIHdpbGwgYmUgY29yZWR1bXAu
-DQo+IA0KPiBSZWFzb25zOg0KPiBzb21lIHZvbmRlcnMgYXJlIG5vdCBjb25maWd1cmVkIGZlYXR1
-cmVzIGluIGRlZmF1bHRfaHcuIEluIGFkZF9mZWF0dXJlLCANCnN0cnN0cidzIGZpcnN0IHBhcmFt
-ZXRlciAqZiBtYXliZSBudWxsLg0KPiANCj4gU2lnbmVkLW9mZi1ieTogd2VpLmh1YW5nIDxodWFu
-Zy53ZWk1NkB6dGUuY29tLmNuPg0KPiAtLS0NCj4gIGxpYm11bHRpcGF0aC9zdHJ1Y3RzLmMgfCAx
-NCArKysrKysrKysrKysrKw0KPiAgMSBmaWxlIGNoYW5nZWQsIDE0IGluc2VydGlvbnMoKykNCj4g
-DQo+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvc3RydWN0cy5jIGIvbGlibXVsdGlwYXRoL3N0
-cnVjdHMuYw0KPiBpbmRleCBmZWU1OGU1Li40MWUxNDJmIDEwMDY0NA0KPiAtLS0gYS9saWJtdWx0
-aXBhdGgvc3RydWN0cy5jDQo+ICsrKyBiL2xpYm11bHRpcGF0aC9zdHJ1Y3RzLmMNCj4gQEAgLTUy
-MCw2ICs1MjAsMjAgQEAgYWRkX2ZlYXR1cmUgKGNoYXIgKipmLCBjaGFyICpuKQ0KPiAgICAgICAg
-ICAgICAgICBpZiAoIW4gfHwgKm4gPT0gJzAnKQ0KPiAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgcmV0dXJuIDA7DQo+IA0KPiArICAgICAgICAgICAgICAvKiBkZWZhdWx0IGZlYXR1cmUg
-aXMgbnVsbCAqLw0KPiArICAgICAgICAgICAgICBpZighKmYpDQo+ICsgICAgICAgICAgICAgIHsN
-Cj4gKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGwgPSBzdHJsZW4oIjEgIikgKyBzdHJs
-ZW4obikgKyAxOw0KPiArICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdCA9IE1BTExPQyhs
-KTsNCj4gKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGlmICghdCkNCj4gKyAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICByZXR1cm4gMTsNCj4gKw0KPiAr
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc25wcmludGYodCwgbCwgIjEgJXMiLCBuKTsN
-Cj4gKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICpmID0gdDsNCj4gKyANCj4gKyAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgIHJldHVybiAwOw0KPiArICAgICAgICAgICAgICB9DQo+
-ICsNCj4gICAgICAgICAgICAgICAgLyogQ2hlY2sgaWYgZmVhdHVyZSBpcyBhbHJlYWR5IHByZXNl
-bnQgKi8NCj4gICAgICAgICAgICAgICAgaWYgKHN0cnN0cigqZiwgbikpDQo+ICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICByZXR1cm4gMDsNCj4gDQpObywgdGhhdCBpcyB3cm9uZy4NCkl0
-J2xsIGluc2VydCBhICcxJyBpbnRvIHRoZSBzdHJpbmcgaWYgbm8gZmVhdHVyZXMgYXJlIHByZXNl
-bnQuDQoNCkkgaGF2ZSBhIHBhdGNoIHF1ZXVlZCBmb3IgZml4aW5nIHRoaXMgb25lIHVwLg0KDQpD
-aGVlcnMsDQoNCkhhbm5lcw0KLS0gDQpEci4gSGFubmVzIFJlaW5lY2tlICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgVGVhbWxlYWQgU3RvcmFnZSAmIA0KTmV0d29ya2luZw0KaGFyZUBz
-dXNlLmRlICs0OSA5MTEgNzQwNTMgNjg4DQpTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUs
-IDkwNDA5IE7DvHJuYmVyZw0KR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1
-aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b24NCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQ0KDQoN
-Cg==
---=_alternative 000E732E4825804F_=
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: base64
-
-PHR0Pjxmb250IHNpemU9Mj5JZiBubyBmZWF0dXJlcyBhcmUgcHJlc2VudDwvZm9udD48L3R0Pjxm
-b250IHNpemU9MiBmYWNlPSJzYW5zLXNlcmlmIj4sDQp0aGUgZnVuY3Rpb24gd2lsbCByZXR1cm4g
-ZnJvbSB0aGUgY2FzZSA8L2ZvbnQ+PHR0Pjxmb250IHNpemU9Mj4mcXVvdDtpZg0KKCFuIHx8ICpu
-ID09ICcwJyk8L2ZvbnQ+PC90dD48Zm9udCBzaXplPTIgZmFjZT0ic2Fucy1zZXJpZiI+JnF1b3Q7
-ICggc3RydWN0cy5jDQpsaW5lIDUyMSkgLiA8L2ZvbnQ+DQo8YnI+DQo8YnI+PGZvbnQgc2l6ZT0x
-PkJlY2F1c2UgPC9mb250Pjxmb250IHNpemU9MiBmYWNlPSJzYW5zLXNlcmlmIj5hZGRfZmVhdHVy
-ZSgpDQppcyBjYWxsZWQgYnkgc29tZSBmdW5jdGlvbnMsIHRha2luZyBhIHByb3RlY3QgaW5zaWRl
-IGlzIG11Y2ggc2FmZXIuPGJyPg0KPC9mb250Pjxmb250IHNpemU9Mz4gPC9mb250Pg0KPGJyPg0K
-PGJyPg0KPGJyPg0KPGJyPg0KPHRhYmxlIHdpZHRoPTEwMCU+DQo8dHIgdmFsaWduPXRvcD4NCjx0
-ZCB3aWR0aD0zNiU+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPjxiPkhhbm5lcyBSZWlu
-ZWNrZSAmbHQ7aGFyZUBzdXNlLmRlJmd0OzwvYj4NCjwvZm9udD4NCjxwPjxmb250IHNpemU9MSBm
-YWNlPSJzYW5zLXNlcmlmIj4yMDE2LTEwLTE0IDE0OjAyPC9mb250Pg0KPHRkIHdpZHRoPTYzJT4N
-Cjx0YWJsZSB3aWR0aD0xMDAlPg0KPHRyIHZhbGlnbj10b3A+DQo8dGQ+DQo8ZGl2IGFsaWduPXJp
-Z2h0Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj7mlLbku7bkuro8L2ZvbnQ+PC9kaXY+
-DQo8dGQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPmh1YW5nLndlaTU2QHp0ZS5jb20u
-Y24sIENocmlzdG9waGUgVmFyb3F1aQ0KJmx0O2NocmlzdG9waGUudmFyb3F1aUBvcGVuc3ZjLmNv
-bSZndDssIDwvZm9udD4NCjx0ciB2YWxpZ249dG9wPg0KPHRkPg0KPGRpdiBhbGlnbj1yaWdodD48
-Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+5oqE6YCBPC9mb250PjwvZGl2Pg0KPHRkPjxm
-b250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj5ibWFyemluc0ByZWRoYXQuY29tLCBkbS1kZXZl
-bEByZWRoYXQuY29tLA0Kemhhbmcua2FpMTZAenRlLmNvbS5jbiwgdGFuZy5qdW5odWlAenRlLmNv
-bS5jbjwvZm9udD4NCjx0ciB2YWxpZ249dG9wPg0KPHRkPg0KPGRpdiBhbGlnbj1yaWdodD48Zm9u
-dCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+5Li76aKYPC9mb250PjwvZGl2Pg0KPHRkPjxmb250
-IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj5SZTogW1BBVENIXSBhZGRfZmVhdHVyZTogY29yZWR1
-bXA8L2ZvbnQ+PC90YWJsZT4NCjxicj4NCjx0YWJsZT4NCjx0ciB2YWxpZ249dG9wPg0KPHRkPg0K
-PHRkPjwvdGFibGU+DQo8YnI+PC90YWJsZT4NCjxicj4NCjxicj4NCjxicj48dHQ+PGZvbnQgc2l6
-ZT0yPk9uIDEwLzE0LzIwMTYgMDQ6MDggQU0sIGh1YW5nLndlaTU2QHp0ZS5jb20uY24gd3JvdGU6
-PGJyPg0KJmd0OyBGcm9tOiAmcXVvdDt3ZWkuaHVhbmcmcXVvdDsgJmx0O2h1YW5nLndlaTU2QHp0
-ZS5jb20uY24mZ3Q7PGJyPg0KJmd0OyA8YnI+DQomZ3Q7IFByb2JsZW06PGJyPg0KJmd0OyB3aGVu
-IHdlIGNvbmZpZ3VyZSBkZXZpY2UgbGlrZSB2ZW5kb3IgaXMgQ09NUEVMTlQgaW4gbXVsdGlwYXRo
-LmNvbmYsDQptdWx0aXBhdGhkIHdpbGwgYmUgY29yZWR1bXAuPGJyPg0KJmd0OyA8YnI+DQomZ3Q7
-IFJlYXNvbnM6PGJyPg0KJmd0OyBzb21lIHZvbmRlcnMgYXJlIG5vdCBjb25maWd1cmVkIGZlYXR1
-cmVzIGluIGRlZmF1bHRfaHcuIEluIGFkZF9mZWF0dXJlLA0Kc3Ryc3RyJ3MgZmlyc3QgcGFyYW1l
-dGVyICpmIG1heWJlIG51bGwuPGJyPg0KJmd0OyA8YnI+DQomZ3Q7IFNpZ25lZC1vZmYtYnk6IHdl
-aS5odWFuZyAmbHQ7aHVhbmcud2VpNTZAenRlLmNvbS5jbiZndDs8YnI+DQomZ3Q7IC0tLTxicj4N
-CiZndDsgJm5ic3A7bGlibXVsdGlwYXRoL3N0cnVjdHMuYyB8IDE0ICsrKysrKysrKysrKysrPGJy
-Pg0KJmd0OyAmbmJzcDsxIGZpbGUgY2hhbmdlZCwgMTQgaW5zZXJ0aW9ucygrKTxicj4NCiZndDsg
-PGJyPg0KJmd0OyBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL3N0cnVjdHMuYyBiL2xpYm11bHRp
-cGF0aC9zdHJ1Y3RzLmM8YnI+DQomZ3Q7IGluZGV4IGZlZTU4ZTUuLjQxZTE0MmYgMTAwNjQ0PGJy
-Pg0KJmd0OyAtLS0gYS9saWJtdWx0aXBhdGgvc3RydWN0cy5jPGJyPg0KJmd0OyArKysgYi9saWJt
-dWx0aXBhdGgvc3RydWN0cy5jPGJyPg0KJmd0OyBAQCAtNTIwLDYgKzUyMCwyMCBAQCBhZGRfZmVh
-dHVyZSAoY2hhciAqKmYsIGNoYXIgKm4pPGJyPg0KJmd0OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
-bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KaWYgKCFuIHx8ICpuID09
-ICcwJyk8YnI+DQomZ3Q7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO3JldHVybg0KMDs8YnI+DQomZ3Q7ICZuYnNwOzxi
-cj4NCiZndDsgKyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
-cDsgJm5ic3A7DQovKiBkZWZhdWx0IGZlYXR1cmUgaXMgbnVsbCAqLzxicj4NCiZndDsgKyAmbmJz
-cDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQppZigh
-KmYpPGJyPg0KJmd0OyArICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsNCns8YnI+DQomZ3Q7ICsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtsDQo9IHN0cmxlbigmcXVvdDsxICZx
-dW90OykgKyBzdHJsZW4obikgKyAxOzxicj4NCiZndDsgKyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
-bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNwOyAm
-bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO3QNCj0gTUFMTE9DKGwpOzxi
-cj4NCiZndDsgKyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
-cDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
-cDsgJm5ic3A7ICZuYnNwO2lmDQooIXQpPGJyPg0KJmd0OyArICZuYnNwOyAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQpyZXR1cm4gMTs8YnI+
-DQomZ3Q7ICs8YnI+DQomZ3Q7ICsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
-bmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
-bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtzbnByaW50Zih0LA0KbCwgJnF1b3Q7MSAlcyZxdW90
-Oywgbik7PGJyPg0KJmd0OyArICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7KmYNCj0gdDs8YnI+DQomZ3Q7ICsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KPGJyPg0KJmd0OyAr
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsN
-CiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7cmV0dXJuDQowOzxicj4NCiZndDsgKyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQp9PGJyPg0KJmd0OyArPGJyPg0KJmd0OyAmbmJz
-cDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-Ow0KLyogQ2hlY2sgaWYgZmVhdHVyZSBpcyBhbHJlYWR5IHByZXNlbnQgKi88YnI+DQomZ3Q7ICZu
-YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7DQppZiAoc3Ryc3RyKCpmLCBuKSk8YnI+DQomZ3Q7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
-YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZu
-YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO3JldHVybg0KMDs8
-YnI+DQomZ3Q7IDxicj4NCk5vLCB0aGF0IGlzIHdyb25nLjxicj4NCkl0J2xsIGluc2VydCBhICcx
-JyBpbnRvIHRoZSBzdHJpbmcgaWYgbm8gZmVhdHVyZXMgYXJlIHByZXNlbnQuPGJyPg0KPGJyPg0K
-SSBoYXZlIGEgcGF0Y2ggcXVldWVkIGZvciBmaXhpbmcgdGhpcyBvbmUgdXAuPGJyPg0KPGJyPg0K
-Q2hlZXJzLDxicj4NCjxicj4NCkhhbm5lczxicj4NCi0tIDxicj4NCkRyLiBIYW5uZXMgUmVpbmVj
-a2UgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQombmJz
-cDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQombmJz
-cDsgJm5ic3A7ICZuYnNwOyBUZWFtbGVhZCBTdG9yYWdlICZhbXA7IE5ldHdvcmtpbmc8YnI+DQpo
-YXJlQHN1c2UuZGUgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDsrNDkgOTExIDc0MDUzIDY4ODxicj4NClNVU0UgTElOVVggR21iSCwg
-TWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnPGJyPg0KR0Y6IEYuIEltZW5kw7ZyZmZlciwg
-Si4gU21pdGhhcmQsIEouIEd1aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b248YnI+DQpIUkIgMjEy
-ODQgKEFHIE7DvHJuYmVyZyk8YnI+DQo8L2ZvbnQ+PC90dD4NCjxicj4NCg==
---=_alternative 000E732E4825804F_=--
-
-
---===============1569606805252848155==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1569606805252848155==--
+On 10/12/2016 10:54 AM, Michael Wang wrote:
+> 
+> Inside parse_cmd() the pthread_cleanup_pop() rely on '!r' as the
+> indicator of locked or not, while this will be overwritten if the
+> handler return failed, and the unlock will be missing.
+> 
+> This will lead into the situation that all the following operation
+> will trying to hold a lock which will never be released.
+> 
+> This patch using a separate flag to record the status of locking to
+> make sure the unlock and lock are in pairs.
+> 
+> Signed-off-by: Michael Wang <yun.wang@profitbricks.com>
+> ---
+>  multipathd/cli.c | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
+> 
+> diff --git a/multipathd/cli.c b/multipathd/cli.c
+> index e8a9384..50161be 100644
+> --- a/multipathd/cli.c
+> +++ b/multipathd/cli.c
+> @@ -481,6 +481,7 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
+>                 tmo.tv_sec = 0;
+>         }
+>         if (h->locked) {
+> +               int locked = 0;
+>                 struct vectors * vecs = (struct vectors *)data;
+> 
+>                 pthread_cleanup_push(cleanup_lock, &vecs->lock);
+> @@ -491,10 +492,11 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
+>                         r = 0;
+>                 }
+>                 if (r == 0) {
+> +                       locked = 1;
+>                         pthread_testcancel();
+>                         r = h->fn(cmdvec, reply, len, data);
+>                 }
+> -               pthread_cleanup_pop(!r);
+> +               pthread_cleanup_pop(locked);
+>         } else
+>                 r = h->fn(cmdvec, reply, len, data);
+>         free_keys(cmdvec);
+> 
