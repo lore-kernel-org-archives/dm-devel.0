@@ -1,7 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Subject: [PATCH] multipath-tools: fix DEFAULT values
-Date: Mon, 17 Oct 2016 18:32:28 +0200
-Message-ID: <20161017163228.26804-1-xose.vazquez@gmail.com>
+Date: Mon, 17 Oct 2016 18:32:01 +0200
+Message-ID: <20161017163201.26755-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
