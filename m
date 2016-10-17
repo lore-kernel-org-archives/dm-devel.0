@@ -1,15 +1,11 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: add VIOLIN arrays to
- hardware table
-Date: Mon, 17 Oct 2016 16:49:29 +0200
-Message-ID: <e6f0fc3a-ef55-88c2-d0ca-e2e746fce44f@gmail.com>
-References: <20161015115023.6773-1-xose.vazquez@gmail.com>
-	<8a7363a9-43ad-92ac-c237-c6bbe8bcf5b3@suse.de>
+Subject: [PATCH] multipath-tools: fix DEFAULT values
+Date: Mon, 17 Oct 2016 18:32:28 +0200
+Message-ID: <20161017163228.26804-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8a7363a9-43ad-92ac-c237-c6bbe8bcf5b3@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,54 +15,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 10/16/2016 06:56 PM, Hannes Reinecke wrote:
+replace RR_WEIGHT_NONE with DEFAULT_RR_WEIGHT, and define DEFAULT_FLUSH
 
->> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
->> index aca46ab..e34032d 100644
->> --- a/libmultipath/hwtable.c
->> +++ b/libmultipath/hwtable.c
->> @@ -944,6 +944,32 @@ static struct hwentry default_hw[] = {
->>          .pgpolicy      = MULTIBUS,
->>          .no_path_retry = 12,
->>      },
->> +    /*
->> +     * Violin Memory
->> +     */
->> +    {
->> +        /* V3000 / V6000 Series */
->> +        .vendor        = "VIOLIN",
->> +        .product       = "SAN ARRAY$",
->> +        .pgpolicy      = GROUP_BY_SERIAL,
->> +        .no_path_retry = 30,
->> +    },
->> +    {
->> +        .vendor        = "VIOLIN",
->> +        .product       = "SAN ARRAY ALUA",
->> +        .hwhandler     = "1 alua",
->> +        .pgpolicy      = GROUP_BY_PRIO,
->> +        .pgfailback    = -FAILBACK_IMMEDIATE,
->> +        .prio_name     = PRIO_ALUA,
->> +        .no_path_retry = 30,
->> +    },
->> +    {
->> +        /* FSP 7000 family */
->> +        .vendor        = "VIOLIN",
->> +        .product       = "CONCERTO ARRAY",
->> +        .pgpolicy      = MULTIBUS,
->> +        .no_path_retry = 30,
->> +    },
->>  #if 0
->>      /*
->>       * Copy this TEMPLATE to add new hardware.
->>
-> Where's the point of the first and the third entry?
-> They'll be identical to the default settings, no?
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/defaults.h | 1 +
+ libmultipath/propsel.c  | 4 ++--
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-for VIOLIN/"SAN ARRAY"      .pgpolicy      = GROUP_BY_SERIAL,
-for VIOLIN/"CONCERTO ARRAY" .pgpolicy      = MULTIBUS,
-
-and DEFAULT_PGPOLICY is FAILOVER
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 9bf27d6..d00a86f 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -31,6 +31,7 @@
+ #define DEFAULT_PRIO		"const"
+ #define DEFAULT_PRIO_ARGS	""
+ #define DEFAULT_CHECKER		TUR
++#define DEFAULT_FLUSH		FLUSH_DISABLED
+ 
+ #define DEFAULT_CHECKINT	5
+ #define MAX_CHECKINT(a)		(a << 2)
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 1625990..88a1916 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -137,7 +137,7 @@ select_rr_weight (struct config *conf, struct multipath * mp)
+ 	mp_set_ovr(rr_weight);
+ 	mp_set_hwe(rr_weight);
+ 	mp_set_conf(rr_weight);
+-	mp_set_default(rr_weight, RR_WEIGHT_NONE);
++	mp_set_default(rr_weight, DEFAULT_RR_WEIGHT);
+ out:
+ 	print_rr_weight(buff, 13, &mp->rr_weight);
+ 	condlog(3, "%s: rr_weight = %s %s", mp->alias, buff, origin);
+@@ -550,7 +550,7 @@ select_flush_on_last_del(struct config *conf, struct multipath *mp)
+ 	mp_set_ovr(flush_on_last_del);
+ 	mp_set_hwe(flush_on_last_del);
+ 	mp_set_conf(flush_on_last_del);
+-	mp_set_default(flush_on_last_del, FLUSH_DISABLED);
++	mp_set_default(flush_on_last_del, DEFAULT_FLUSH);
+ out:
+ 	condlog(3, "%s: flush_on_last_del = %s %s", mp->alias,
+ 		(mp->flush_on_last_del == FLUSH_ENABLED)? "yes" : "no", origin);
+-- 
+2.10.1
