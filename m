@@ -1,53 +1,72 @@
-From: Masanari Iida <standby24x7@gmail.com>
-Subject: [PATCH] [linux-next] Doc: dm raid: Fix typo in dm-raid.txt
-Date: Mon, 17 Oct 2016 21:17:10 +0900
-Message-ID: <20161017121710.16927-1-standby24x7@gmail.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
-Sender: linux-doc-owner@vger.kernel.org
-To: snitzer@redhat.com, linux-kernel@vger.kernel.org, corbet@lwn.net, linux-doc@vger.kernel.org, agk@redhat.com, dm-devel@redhat.com
-Cc: Masanari Iida <standby24x7@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: add VIOLIN arrays to
+ hardware table
+Date: Mon, 17 Oct 2016 16:49:29 +0200
+Message-ID: <e6f0fc3a-ef55-88c2-d0ca-e2e746fce44f@gmail.com>
+References: <20161015115023.6773-1-xose.vazquez@gmail.com>
+	<8a7363a9-43ad-92ac-c237-c6bbe8bcf5b3@suse.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <8a7363a9-43ad-92ac-c237-c6bbe8bcf5b3@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch fix spelling typos in Documentation/device-mapper/dm-raid.txt.
+On 10/16/2016 06:56 PM, Hannes Reinecke wrote:
 
-Signed-off-by: Masanari Iida <standby24x7@gmail.com>
----
- Documentation/device-mapper/dm-raid.txt | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+>> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+>> index aca46ab..e34032d 100644
+>> --- a/libmultipath/hwtable.c
+>> +++ b/libmultipath/hwtable.c
+>> @@ -944,6 +944,32 @@ static struct hwentry default_hw[] = {
+>>          .pgpolicy      = MULTIBUS,
+>>          .no_path_retry = 12,
+>>      },
+>> +    /*
+>> +     * Violin Memory
+>> +     */
+>> +    {
+>> +        /* V3000 / V6000 Series */
+>> +        .vendor        = "VIOLIN",
+>> +        .product       = "SAN ARRAY$",
+>> +        .pgpolicy      = GROUP_BY_SERIAL,
+>> +        .no_path_retry = 30,
+>> +    },
+>> +    {
+>> +        .vendor        = "VIOLIN",
+>> +        .product       = "SAN ARRAY ALUA",
+>> +        .hwhandler     = "1 alua",
+>> +        .pgpolicy      = GROUP_BY_PRIO,
+>> +        .pgfailback    = -FAILBACK_IMMEDIATE,
+>> +        .prio_name     = PRIO_ALUA,
+>> +        .no_path_retry = 30,
+>> +    },
+>> +    {
+>> +        /* FSP 7000 family */
+>> +        .vendor        = "VIOLIN",
+>> +        .product       = "CONCERTO ARRAY",
+>> +        .pgpolicy      = MULTIBUS,
+>> +        .no_path_retry = 30,
+>> +    },
+>>  #if 0
+>>      /*
+>>       * Copy this TEMPLATE to add new hardware.
+>>
+> Where's the point of the first and the third entry?
+> They'll be identical to the default settings, no?
 
-diff --git a/Documentation/device-mapper/dm-raid.txt b/Documentation/device-mapper/dm-raid.txt
-index e5b6497116f4..89ecc8021178 100644
---- a/Documentation/device-mapper/dm-raid.txt
-+++ b/Documentation/device-mapper/dm-raid.txt
-@@ -17,7 +17,7 @@ The target is named "raid" and it accepts the following parameters:
-   raid0		RAID0 striping (no resilience)
-   raid1		RAID1 mirroring
-   raid4		RAID4 with dedicated last parity disk
--  raid5_n 	RAID5 with dedicated last parity disk suporting takeover
-+  raid5_n 	RAID5 with dedicated last parity disk supporting takeover
- 		Same as raid4
- 		-Transitory layout
-   raid5_la	RAID5 left asymmetric
-@@ -36,7 +36,7 @@ The target is named "raid" and it accepts the following parameters:
- 		- rotating parity N (right-to-left) with data continuation
-   raid6_n_6	RAID6 with dedicate parity disks
- 		- parity and Q-syndrome on the last 2 disks;
--		  laylout for takeover from/to raid4/raid5_n
-+		  layout for takeover from/to raid4/raid5_n
-   raid6_la_6	Same as "raid_la" plus dedicated last Q-syndrome disk
- 		- layout for takeover from raid5_la from/to raid6
-   raid6_ra_6	Same as "raid5_ra" dedicated last Q-syndrome disk
-@@ -137,8 +137,8 @@ The target is named "raid" and it accepts the following parameters:
- 		device removal (negative value) or device addition (positive
- 		value) to any reshape supporting raid levels 4/5/6 and 10.
- 		RAID levels 4/5/6 allow for addition of devices (metadata
--		and data device tupel), raid10_near and raid10_offset only
--		allow for device addtion. raid10_far does not support any
-+		and data device tuple), raid10_near and raid10_offset only
-+		allow for device addition. raid10_far does not support any
- 		reshaping at all.
- 		A minimum of devices have to be kept to enforce resilience,
- 		which is 3 devices for raid4/5 and 4 devices for raid6.
--- 
-2.10.1.432.g8a36cd8
+for VIOLIN/"SAN ARRAY"      .pgpolicy      = GROUP_BY_SERIAL,
+for VIOLIN/"CONCERTO ARRAY" .pgpolicy      = MULTIBUS,
 
+and DEFAULT_PGPOLICY is FAILOVER
