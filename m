@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: fix DEFAULT values
-Date: Mon, 17 Oct 2016 18:32:01 +0200
-Message-ID: <20161017163201.26755-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: replace static value with
+	default_variable for flush_on_last_del
+Date: Mon, 17 Oct 2016 19:09:49 +0200
+Message-ID: <20161017170949.27523-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -18,51 +19,27 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-replace RR_WEIGHT_NONE with DEFAULT_RR_WEIGHT, and define DEFAULT_FLUSH
-
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/defaults.h | 1 +
- libmultipath/propsel.c  | 4 ++--
- 2 files changed, 3 insertions(+), 2 deletions(-)
+ libmultipath/config.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index 9bf27d6..d00a86f 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -31,6 +31,7 @@
- #define DEFAULT_PRIO		"const"
- #define DEFAULT_PRIO_ARGS	""
- #define DEFAULT_CHECKER		TUR
-+#define DEFAULT_FLUSH		FLUSH_DISABLED
- 
- #define DEFAULT_CHECKINT	5
- #define MAX_CHECKINT(a)		(a << 2)
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 1625990..88a1916 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -137,7 +137,7 @@ select_rr_weight (struct config *conf, struct multipath * mp)
- 	mp_set_ovr(rr_weight);
- 	mp_set_hwe(rr_weight);
- 	mp_set_conf(rr_weight);
--	mp_set_default(rr_weight, RR_WEIGHT_NONE);
-+	mp_set_default(rr_weight, DEFAULT_RR_WEIGHT);
- out:
- 	print_rr_weight(buff, 13, &mp->rr_weight);
- 	condlog(3, "%s: rr_weight = %s %s", mp->alias, buff, origin);
-@@ -550,7 +550,7 @@ select_flush_on_last_del(struct config *conf, struct multipath *mp)
- 	mp_set_ovr(flush_on_last_del);
- 	mp_set_hwe(flush_on_last_del);
- 	mp_set_conf(flush_on_last_del);
--	mp_set_default(flush_on_last_del, FLUSH_DISABLED);
-+	mp_set_default(flush_on_last_del, DEFAULT_FLUSH);
- out:
- 	condlog(3, "%s: flush_on_last_del = %s %s", mp->alias,
- 		(mp->flush_on_last_del == FLUSH_ENABLED)? "yes" : "no", origin);
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index a48b8af..92e4deb 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -597,7 +597,7 @@ load_config (char * file)
+ 	conf->wwids_file = set_default(DEFAULT_WWIDS_FILE);
+ 	conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
+ 	conf->features = set_default(DEFAULT_FEATURES);
+-	conf->flush_on_last_del = 0;
++	conf->flush_on_last_del = DEFAULT_FLUSH;
+ 	conf->attribute_flags = 0;
+ 	conf->reassign_maps = DEFAULT_REASSIGN_MAPS;
+ 	conf->checkint = DEFAULT_CHECKINT;
 -- 
 2.10.1
