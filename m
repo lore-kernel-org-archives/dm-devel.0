@@ -1,177 +1,53 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: release lock on handler
-	failure
-Date: Mon, 17 Oct 2016 10:33:05 +0200
-Message-ID: <CABr-GncJjpWCGcwqY8-wzf8VE6F3045OumUgypYrHpAPToQMxg@mail.gmail.com>
-References: <a822c1be-b984-b47b-7418-48d5cf069801@profitbricks.com>
-	<f8227018-ea94-19b4-4bd8-5eb9e38f90c2@profitbricks.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8930659427548845516=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <f8227018-ea94-19b4-4bd8-5eb9e38f90c2@profitbricks.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Michael Wang <yun.wang@profitbricks.com>
-Cc: device-mapper development <dm-devel@redhat.com>, tang.junhui@zte.com.cn
+From: Masanari Iida <standby24x7@gmail.com>
+Subject: [PATCH] [linux-next] Doc: dm raid: Fix typo in dm-raid.txt
+Date: Mon, 17 Oct 2016 21:17:10 +0900
+Message-ID: <20161017121710.16927-1-standby24x7@gmail.com>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: snitzer@redhat.com, linux-kernel@vger.kernel.org, corbet@lwn.net, linux-doc@vger.kernel.org, agk@redhat.com, dm-devel@redhat.com
+Cc: Masanari Iida <standby24x7@gmail.com>
 List-Id: dm-devel.ids
 
---===============8930659427548845516==
-Content-Type: multipart/alternative; boundary=001a11401702cd1b1d053f0b6c87
+This patch fix spelling typos in Documentation/device-mapper/dm-raid.txt.
 
---001a11401702cd1b1d053f0b6c87
-Content-Type: text/plain; charset=UTF-8
+Signed-off-by: Masanari Iida <standby24x7@gmail.com>
+---
+ Documentation/device-mapper/dm-raid.txt | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-Merged.
-Thanks.
+diff --git a/Documentation/device-mapper/dm-raid.txt b/Documentation/device-mapper/dm-raid.txt
+index e5b6497116f4..89ecc8021178 100644
+--- a/Documentation/device-mapper/dm-raid.txt
++++ b/Documentation/device-mapper/dm-raid.txt
+@@ -17,7 +17,7 @@ The target is named "raid" and it accepts the following parameters:
+   raid0		RAID0 striping (no resilience)
+   raid1		RAID1 mirroring
+   raid4		RAID4 with dedicated last parity disk
+-  raid5_n 	RAID5 with dedicated last parity disk suporting takeover
++  raid5_n 	RAID5 with dedicated last parity disk supporting takeover
+ 		Same as raid4
+ 		-Transitory layout
+   raid5_la	RAID5 left asymmetric
+@@ -36,7 +36,7 @@ The target is named "raid" and it accepts the following parameters:
+ 		- rotating parity N (right-to-left) with data continuation
+   raid6_n_6	RAID6 with dedicate parity disks
+ 		- parity and Q-syndrome on the last 2 disks;
+-		  laylout for takeover from/to raid4/raid5_n
++		  layout for takeover from/to raid4/raid5_n
+   raid6_la_6	Same as "raid_la" plus dedicated last Q-syndrome disk
+ 		- layout for takeover from raid5_la from/to raid6
+   raid6_ra_6	Same as "raid5_ra" dedicated last Q-syndrome disk
+@@ -137,8 +137,8 @@ The target is named "raid" and it accepts the following parameters:
+ 		device removal (negative value) or device addition (positive
+ 		value) to any reshape supporting raid levels 4/5/6 and 10.
+ 		RAID levels 4/5/6 allow for addition of devices (metadata
+-		and data device tupel), raid10_near and raid10_offset only
+-		allow for device addtion. raid10_far does not support any
++		and data device tuple), raid10_near and raid10_offset only
++		allow for device addition. raid10_far does not support any
+ 		reshaping at all.
+ 		A minimum of devices have to be kept to enforce resilience,
+ 		which is 3 devices for raid4/5 and 4 devices for raid6.
+-- 
+2.10.1.432.g8a36cd8
 
-
-On Mon, Oct 17, 2016 at 10:02 AM, Michael Wang <yun.wang@profitbricks.com>
-wrote:
-
-> Dear maintainer, is this patch looks fine to you?
->
-> Regards,
-> Michael Wang
->
-> On 10/12/2016 10:54 AM, Michael Wang wrote:
-> >
-> > Inside parse_cmd() the pthread_cleanup_pop() rely on '!r' as the
-> > indicator of locked or not, while this will be overwritten if the
-> > handler return failed, and the unlock will be missing.
-> >
-> > This will lead into the situation that all the following operation
-> > will trying to hold a lock which will never be released.
-> >
-> > This patch using a separate flag to record the status of locking to
-> > make sure the unlock and lock are in pairs.
-> >
-> > Signed-off-by: Michael Wang <yun.wang@profitbricks.com>
-> > ---
-> >  multipathd/cli.c | 4 +++-
-> >  1 file changed, 3 insertions(+), 1 deletion(-)
-> >
-> > diff --git a/multipathd/cli.c b/multipathd/cli.c
-> > index e8a9384..50161be 100644
-> > --- a/multipathd/cli.c
-> > +++ b/multipathd/cli.c
-> > @@ -481,6 +481,7 @@ parse_cmd (char * cmd, char ** reply, int * len,
-> void * data, int timeout )
-> >                 tmo.tv_sec = 0;
-> >         }
-> >         if (h->locked) {
-> > +               int locked = 0;
-> >                 struct vectors * vecs = (struct vectors *)data;
-> >
-> >                 pthread_cleanup_push(cleanup_lock, &vecs->lock);
-> > @@ -491,10 +492,11 @@ parse_cmd (char * cmd, char ** reply, int * len,
-> void * data, int timeout )
-> >                         r = 0;
-> >                 }
-> >                 if (r == 0) {
-> > +                       locked = 1;
-> >                         pthread_testcancel();
-> >                         r = h->fn(cmdvec, reply, len, data);
-> >                 }
-> > -               pthread_cleanup_pop(!r);
-> > +               pthread_cleanup_pop(locked);
-> >         } else
-> >                 r = h->fn(cmdvec, reply, len, data);
-> >         free_keys(cmdvec);
-> >
->
-
---001a11401702cd1b1d053f0b6c87
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Merged.<div>Thanks.</div><div><br></div></div><div class=
-=3D"gmail_extra"><br><div class=3D"gmail_quote">On Mon, Oct 17, 2016 at 10:=
-02 AM, Michael Wang <span dir=3D"ltr">&lt;<a href=3D"mailto:yun.wang@profit=
-bricks.com" target=3D"_blank">yun.wang@profitbricks.com</a>&gt;</span> wrot=
-e:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-l=
-eft:1px #ccc solid;padding-left:1ex">Dear maintainer, is this patch looks f=
-ine to you?<br>
-<br>
-Regards,<br>
-Michael Wang<br>
-<div class=3D"HOEnZb"><div class=3D"h5"><br>
-On 10/12/2016 10:54 AM, Michael Wang wrote:<br>
-&gt;<br>
-&gt; Inside parse_cmd() the pthread_cleanup_pop() rely on &#39;!r&#39; as t=
-he<br>
-&gt; indicator of locked or not, while this will be overwritten if the<br>
-&gt; handler return failed, and the unlock will be missing.<br>
-&gt;<br>
-&gt; This will lead into the situation that all the following operation<br>
-&gt; will trying to hold a lock which will never be released.<br>
-&gt;<br>
-&gt; This patch using a separate flag to record the status of locking to<br=
->
-&gt; make sure the unlock and lock are in pairs.<br>
-&gt;<br>
-&gt; Signed-off-by: Michael Wang &lt;<a href=3D"mailto:yun.wang@profitbrick=
-s.com">yun.wang@profitbricks.com</a>&gt;<br>
-&gt; ---<br>
-&gt;=C2=A0 multipathd/cli.c | 4 +++-<br>
-&gt;=C2=A0 1 file changed, 3 insertions(+), 1 deletion(-)<br>
-&gt;<br>
-&gt; diff --git a/multipathd/cli.c b/multipathd/cli.c<br>
-&gt; index e8a9384..50161be 100644<br>
-&gt; --- a/multipathd/cli.c<br>
-&gt; +++ b/multipathd/cli.c<br>
-&gt; @@ -481,6 +481,7 @@ parse_cmd (char * cmd, char ** reply, int * len, v=
-oid * data, int timeout )<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0tmo.tv_se=
-c =3D 0;<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0}<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0if (h-&gt;locked) {<br>
-&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0int locked =3D=
- 0;<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0struct ve=
-ctors * vecs =3D (struct vectors *)data;<br>
-&gt;<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0pthread_c=
-leanup_push(cleanup_<wbr>lock, &amp;vecs-&gt;lock);<br>
-&gt; @@ -491,10 +492,11 @@ parse_cmd (char * cmd, char ** reply, int * len,=
- void * data, int timeout )<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0r =3D 0;<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0}<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0if (r =3D=
-=3D 0) {<br>
-&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0locked =3D 1;<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0pthread_testcancel();<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0r =3D h-&gt;fn(cmdvec, reply, len, data);<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0}<br>
-&gt; -=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0pthread_cleanu=
-p_pop(!r);<br>
-&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0pthread_cleanu=
-p_pop(locked);<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0} else<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0r =3D h-&=
-gt;fn(cmdvec, reply, len, data);<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0free_keys(cmdvec);<br>
-&gt;<br>
-</div></div></blockquote></div><br></div>
-
---001a11401702cd1b1d053f0b6c87--
-
-
---===============8930659427548845516==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============8930659427548845516==--
