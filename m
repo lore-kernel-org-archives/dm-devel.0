@@ -1,95 +1,98 @@
-From: Tahsin Erdogan <tahsin@google.com>
-Subject: [PATCH] dm: do not assign error to md->kworker_task
-Date: Mon, 17 Oct 2016 18:16:48 -0700
-Message-ID: <1476753409-16111-1-git-send-email-tahsin@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
-Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Tahsin Erdogan <tahsin@google.com>
+From: tang.junhui@zte.com.cn
+Subject: [PATCH 1/3] segment faulty occured in dm_get_status()
+Date: Tue, 18 Oct 2016 10:51:07 +0800
+Message-ID: <1476759069-9832-1-git-send-email-tang.junhui@zte.com.cn>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: zhang.kai16@zte.com.cn, "tang.junhui" <tang.junhui@zte.com.cn>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-cleanup_mapped_device() calls kthread_stop() if kworker_task is
-non-NULL. Currently the assigned value could be a valid task struct or
-an error code. Do not assign in case of error.
+From: "tang.junhui" <tang.junhui@zte.com.cn>
 
-Example failure when kthread_run() returns -ENOMEM:
+Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 
-[   22.255939] BUG: unable to handle kernel NULL pointer dereference at 000000000000000c
-[   22.258847] IP: [<ffffffff802973a4>] kthread_stop+0x34/0x260
-[   22.260130] PGD 78a23067 PUD 78b56067 PMD 0
-[   22.260130] Oops: 0002 [#1] SMP
-[   22.260130] CPU: 1 PID: 1849 Comm: dmsetup Tainted: G        W 4.8.0+ #3
-[   22.260130] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS Bochs 01/01/2011
-[   22.260130] task: ffff880078966400 task.stack: ffffc90001898000
-[   22.260130] RIP: 0010:[<ffffffff802973a4>]  [<ffffffff802973a4>] kthread_stop+0x34/0x260
-[   22.260130] RSP: 0018:ffffc9000189bc40  EFLAGS: 00010202
-[   22.260130] RAX: 0000000000000001 RBX: fffffffffffffff4 RCX: 0000000000000003
-[   22.260130] RDX: ffff88007fd18600 RSI: 0000000000000001 RDI: ffffffff81037080
-[   22.260130] RBP: ffffc9000189bc50 R08: 0000000000000000 R09: 0000000000000000
-[   22.260130] R10: 0000000000000001 R11: 0000000000000000 R12: 0000000000000000
-[   22.260130] R13: 0000000000000001 R14: ffff880077f539d8 R15: 0000000000000004
-[   22.260130] FS:  00007fc9ef2e2840(0000) GS:ffff88007fd00000(0000) knlGS:0000000000000000
-[   22.260130] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[   22.260130] CR2: 000000000000000c CR3: 0000000077fa2000 CR4: 00000000000006e0
-[   22.260130] Stack:
-[   22.260130]  ffff880077f53800 0000000000000000 ffffc9000189bc68 ffffffff808b26fa
-[   22.260130]  ffff880077f53800 ffffc9000189bcb0 ffffffff808b3c58 0000000000000000
-[   22.260130]  00000000808b534b ffffc9000189bd20 ffff880077f53800 0000000000000000
-[   22.260130] Call Trace:
-[   22.260130]  [<ffffffff808b26fa>] cleanup_mapped_device+0x2a/0xe0
-[   22.260130]  [<ffffffff808b3c58>] __dm_destroy+0x1a8/0x2b0
-[   22.260130]  [<ffffffff808b4b6e>] dm_destroy+0xe/0x10
-[   22.260130]  [<ffffffff808b9f49>] dev_remove+0xd9/0x120
-[   22.260130]  [<ffffffff808b9e70>] ? dev_suspend+0x210/0x210
-[   22.260130]  [<ffffffff808ba576>] ctl_ioctl+0x206/0x500
-[   22.260130]  [<ffffffff808ba87e>] dm_ctl_ioctl+0xe/0x20
-[   22.260130]  [<ffffffff803bca40>] do_vfs_ioctl+0x90/0x6b0
-[   22.260130]  [<ffffffff80b11fd7>] ?  entry_SYSCALL_64_fastpath+0x5/0xad
-[   22.260130]  [<ffffffff802bd974>] ?  trace_hardirqs_on_caller+0xf4/0x1c0
-[   22.260130]  [<ffffffff803bd0d4>] SyS_ioctl+0x74/0x80
-[   22.260130]  [<ffffffff80b11fea>] entry_SYSCALL_64_fastpath+0x18/0xad
-[   22.260130] Code: e5 41 54 85 c0 53 48 89 fb 0f 8f bb 01 00 00 65 8b
-05 a1 2d d7 7f 89 c0 48 0f a3 05 9f 94 e8 00 0f 92 c0 84 c0 0f 85 a3 00
-00 00 <f0> ff 43 18 48 89 df e8 10 f8 ff ff 48 85 c0 49 89 c4 74 29 f0
-[   22.260130] RIP  [<ffffffff802973a4>] kthread_stop+0x34/0x260
-[   22.260130]  RSP <ffffc9000189bc40>
-[   22.260130] CR2: 000000000000000c
-[   22.301062] ---[ end trace 22b4f4f62c04f3cf ]---
-
-Signed-off-by: Tahsin Erdogan <tahsin@google.com>
+segment faulty occured in dm_get_status(), the call trace is:
+----------------------------------------------------------------------
+(gdb) bt
+0  0x000000338ec328a5 in raise () from /lib64/libc.so.6
+1  0x000000338ec3400d in abort () from /lib64/libc.so.6
+2  0x000000000040596d in sigsegv ()
+3  <signal handler called>
+4  0x000000338ec480ac in vfprintf () from /lib64/libc.so.6
+5  0x000000338ec6f9d2 in vsnprintf () from /lib64/libc.so.6
+6  0x000000338ec4f4a3 in snprintf () from /lib64/libc.so.6
+7  0x00007f43fe66bbb9 in dm_get_status (name=0x7f43f0001eb0 "spathe",
+outstatus=<value optimized out>) at devmapper.c:521
+8  0x00007f43fe68c058 in update_multipath_status (mpp=0x7f43f000ad60,
+pathvec=<value optimized out>) at structs_vec.c:465
+9  update_multipath_strings (mpp=0x7f43f000ad60, pathvec=<value optimized
+out>) at structs_vec.c:495
+10 0x0000000000409056 in check_path ()
+11 0x0000000000409c7e in checkerloop ()
+12 0x0000003b27207851 in start_thread () from /lib64/libpthread.so.0
+13 0x000000338ece890d in clone () from /lib64/libc.so.6
+-----------------------------------------------------------------------
+we debuged the code, and found that targets information storing in the
+list dmt->head which fetching from kernel by executing dm_task_run()
+is null.
+-----------------------------------------------------------------------
+rbx            0x7f43c4000d60   139929027874144
+(gdb) p *(struct dm_task *)0x7f43c4000d60
+$3 = {type = 10, dev_name = 0x7f43c4000d40 "spathe", head = 0x0, tail =
+0x0, read_only = 0, event_nr = 0, major = -1, minor = -1,
+  allow_default_major_fallback = 1, uid = 0, gid = 0, mode = 384,
+  read_ahead = 4294967295, read_ahead_flags = 0, dmi = {
+      v4 = 0x7f43c40011e0, v1 = 0x7f43c40011e0}, newname = 0x0, message =
+      0x0, geometry = 0x0, sector = 0, no_flush = 0,
+        no_open_count = 1, skip_lockfs = 0, query_inactive_table = 0,
+	suppress_identical_reload = 0, existing_table_size = 0,
+	  cookie_set = 0, uuid = 0x0}
+-----------------------------------------------------------------------
+since status is not initioned to null, so after calling
+dm_get_next_target(dmt, next, &start, &length,&target_type,
+&status),status becaming wild pointer, which lead snprintf() into the
+situation of segment faulty.
 ---
- drivers/md/dm-rq.c | 11 +++++++----
- 1 file changed, 7 insertions(+), 4 deletions(-)
+ libmultipath/devmapper.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 5eacce1ef88b..6e5197414a57 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -841,6 +841,8 @@ static void dm_old_request_fn(struct request_queue *q)
-  */
- int dm_old_init_request_queue(struct mapped_device *md)
- {
-+	struct task_struct *task;
-+
- 	/* Fully initialize the queue */
- 	if (!blk_init_allocated_queue(md->queue, dm_old_request_fn, NULL))
- 		return -EINVAL;
-@@ -854,11 +856,12 @@ int dm_old_init_request_queue(struct mapped_device *md)
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 5eb1713..89aa5da 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -534,8 +534,8 @@ dm_get_status(char * name, char * outstatus)
+ 	int r = 1;
+ 	struct dm_task *dmt;
+ 	uint64_t start, length;
+-	char *target_type;
+-	char *status;
++	char *target_type = NULL;
++	char *status = NULL;
  
- 	/* Initialize the request-based DM worker thread */
- 	init_kthread_worker(&md->kworker);
--	md->kworker_task = kthread_run(kthread_worker_fn, &md->kworker,
--				       "kdmwork-%s", dm_device_name(md));
--	if (IS_ERR(md->kworker_task))
--		return PTR_ERR(md->kworker_task);
-+	task = kthread_run(kthread_worker_fn, &md->kworker, "kdmwork-%s",
-+			   dm_device_name(md));
-+	if (IS_ERR(task))
-+		return PTR_ERR(task);
+ 	if (!(dmt = dm_task_create(DM_DEVICE_STATUS)))
+ 		return 1;
+@@ -551,6 +551,10 @@ dm_get_status(char * name, char * outstatus)
+ 	/* Fetch 1st target */
+ 	dm_get_next_target(dmt, NULL, &start, &length,
+ 			   &target_type, &status);
++	if (!status) {
++		condlog(2, "get null status.");
++		goto out;
++	}
  
-+	md->kworker_task = task;
- 	elv_register_queue(md->queue);
- 
- 	return 0;
+ 	if (snprintf(outstatus, PARAMS_SIZE, "%s", status) <= PARAMS_SIZE)
+ 		r = 0;
 -- 
-2.8.0.rc3.226.g39d4020
+2.8.1.windows.1
