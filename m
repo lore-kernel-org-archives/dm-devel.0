@@ -1,58 +1,71 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: replace hardcoded
-	USER_FRIENDLY_NAMES_OFF by default
-Date: Tue, 18 Oct 2016 15:22:45 +0200
-Message-ID: <20161018132245.3061-1-xose.vazquez@gmail.com>
+Subject: Re: [PATCH] scsi: update rdac devices at scsi_dh_rdac
+Date: Tue, 18 Oct 2016 17:11:54 +0200
+Message-ID: <eb9d6973-2e0b-843b-4547-94b64dcd05fc@gmail.com>
+References: <20161007165549.6433-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20161007165549.6433-1-xose.vazquez@gmail.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+Cc: Sean Stewart <Sean.Stewart@netapp.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Babu Moger <babu.moger@oracle.com>
 List-Id: dm-devel.ids
 
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/defaults.h | 1 +
- libmultipath/propsel.c  | 2 +-
- 2 files changed, 2 insertions(+), 1 deletion(-)
+On 10/07/2016 06:55 PM, Xose Vazquez Perez wrote:
 
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index d00a86f..e9581a6 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -32,6 +32,7 @@
- #define DEFAULT_PRIO_ARGS	""
- #define DEFAULT_CHECKER		TUR
- #define DEFAULT_FLUSH		FLUSH_DISABLED
-+#define DEFAULT_USER_FRIENDLY_NAMES USER_FRIENDLY_NAMES_OFF
- 
- #define DEFAULT_CHECKINT	5
- #define MAX_CHECKINT(a)		(a << 2)
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 88a1916..aaf99fb 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -228,7 +228,7 @@ want_user_friendly_names(struct config *conf, struct multipath * mp)
- 	       "(controller setting)");
- 	do_set(user_friendly_names, conf, user_friendly_names,
- 	       "(config file setting)");
--	do_default(user_friendly_names, USER_FRIENDLY_NAMES_OFF);
-+	do_default(user_friendly_names, DEFAULT_USER_FRIENDLY_NAMES);
- out:
- 	condlog(3, "%s: user_friendly_names = %s %s", mp->wwid,
- 		(user_friendly_names == USER_FRIENDLY_NAMES_ON)? "yes" : "no",
--- 
-2.10.1
+This patch is pending, ACK is needed!
+The part of multipath-tools was done time ago.
+
+CC: Babu Moger, just in case.
+
+> Remove IBM/1745 ghost array.
+> There is no references nowhere, also removed from multipath-tools
+> Confirmed by the original manufacturer(NetApp), and Google shows no results.
+>
+> Replace too wide "TP9" regex with full names.
+> TP9100 is included, at it is not a RDAC array.
+> This reverts partially the commit 352047
+> 
+> Add IBM 3542 and 3552, they are FAStT200 and FAStT500
+> 
+> Cc: Sean Stewart <Sean.Stewart@netapp.com>
+> Cc: Hannes Reinecke <hare@suse.de>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
+> Cc: Martin K. Petersen <martin.petersen@oracle.com>
+> Cc: SCSI ML <linux-scsi@vger.kernel.org>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  drivers/scsi/scsi_dh.c | 8 ++++++--
+>  1 file changed, 6 insertions(+), 2 deletions(-)
+> 
+> diff --git a/drivers/scsi/scsi_dh.c b/drivers/scsi/scsi_dh.c
+> index b8d3b97..a64b5ce 100644
+> --- a/drivers/scsi/scsi_dh.c
+> +++ b/drivers/scsi/scsi_dh.c
+> @@ -49,14 +49,18 @@ static const struct scsi_dh_blist scsi_dh_blist[] = {
+>  	{"IBM", "1724",			"rdac", },
+>  	{"IBM", "1726",			"rdac", },
+>  	{"IBM", "1742",			"rdac", },
+> -	{"IBM", "1745",			"rdac", },
+>  	{"IBM", "1746",			"rdac", },
+>  	{"IBM", "1813",			"rdac", },
+>  	{"IBM", "1814",			"rdac", },
+>  	{"IBM", "1815",			"rdac", },
+>  	{"IBM", "1818",			"rdac", },
+>  	{"IBM", "3526",			"rdac", },
+> -	{"SGI", "TP9",			"rdac", },
+> +	{"IBM", "3542",			"rdac", },
+> +	{"IBM", "3552",			"rdac", },
+> +	{"SGI", "TP9300",		"rdac", },
+> +	{"SGI", "TP9400",		"rdac", },
+> +	{"SGI", "TP9500",		"rdac", },
+> +	{"SGI", "TP9700",		"rdac", },
+>  	{"SGI", "IS",			"rdac", },
+>  	{"STK", "OPENstorage D280",	"rdac", },
+>  	{"STK", "FLEXLINE 380",		"rdac", },
+> 
+
