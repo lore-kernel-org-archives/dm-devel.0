@@ -1,16 +1,15 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 2/3] access vecs memory outside of locking
- range in check_path()
-Date: Tue, 18 Oct 2016 11:22:16 -0500
-Message-ID: <20161018162216.GL1972@octiron.msp.redhat.com>
+Subject: Re: [PATCH 3/3] Treat PATH_TIMEOUT as PATH_DOWN
+Date: Tue, 18 Oct 2016 11:38:11 -0500
+Message-ID: <20161018163811.GM1972@octiron.msp.redhat.com>
 References: <1476759069-9832-1-git-send-email-tang.junhui@zte.com.cn>
-	<1476759069-9832-2-git-send-email-tang.junhui@zte.com.cn>
+	<1476759069-9832-3-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1476759069-9832-2-git-send-email-tang.junhui@zte.com.cn>
+In-Reply-To: <1476759069-9832-3-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,79 +23,56 @@ To: tang.junhui@zte.com.cn
 Cc: dm-devel@redhat.com, zhang.kai16@zte.com.cn
 List-Id: dm-devel.ids
 
-On Tue, Oct 18, 2016 at 10:51:08AM +0800, tang.junhui@zte.com.cn wrote:
+On Tue, Oct 18, 2016 at 10:51:09AM +0800, tang.junhui@zte.com.cn wrote:
 > From: "tang.junhui" <tang.junhui@zte.com.cn>
 > 
-> there are vecs->mpvec memory accesses outside of locking range in
-> check_path(), the judgments is not necessary since the they has
-> existed in vector_foreach_slot(), so delete them.
+> Treat PATH_TIMEOUT as PATH_DOWN since it is basically the same as
+> PATH_DOWN, except with a different state name. So change it to PATH_DOWN
+> immediately if it is PATH_TIMEOUT according to the method in pathinfo().
+> After the modification all PATH_TIMEOUTs are equal to PATH_DOWN since the
+> rest of pp->state is assigned all in pathinfo().
 
-ACK
+NACK. The whole point of PATH_TIMEOUT is to let the user know that
+instead of actually getting errors returned by the path checker, the
+path checker is timing out. To do this, we need to keep the state set to
+PATH_TIMEOUT, so that it will actually print the correct state string.
+
+Another possibility would be to remove PATH_TIMEOUT and instead keep
+track of the reason for the PATH_DOWN state, and then when printing the
+checker state in snprint_chk_state(), use that to print the correct
+state string.
 
 -Ben
 
-
+> 
 > Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 > ---
->  multipathd/main.c | 45 ++++++++++++++++++++++-----------------------
->  1 file changed, 22 insertions(+), 23 deletions(-)
+>  multipathd/main.c | 6 +++++-
+>  1 file changed, 5 insertions(+), 1 deletion(-)
 > 
 > diff --git a/multipathd/main.c b/multipathd/main.c
-> index b6eb696..e369a79 100644
+> index e369a79..f715eb5 100644
 > --- a/multipathd/main.c
 > +++ b/multipathd/main.c
-> @@ -1804,30 +1804,29 @@ checkerloop (void *ap)
->  			condlog(4, "timeout waiting for DAEMON_IDLE");
->  			continue;
->  		}
-> -		if (vecs->pathvec) {
-> -			pthread_cleanup_push(cleanup_lock, &vecs->lock);
-> -			lock(&vecs->lock);
-> -			pthread_testcancel();
-> -			vector_foreach_slot (vecs->pathvec, pp, i) {
-> -				rc = check_path(vecs, pp, ticks);
-> -				if (rc < 0) {
-> -					vector_del_slot(vecs->pathvec, i);
-> -					free_path(pp);
-> -					i--;
-> -				} else
-> -					num_paths += rc;
-> -			}
-> -			lock_cleanup_pop(vecs->lock);
-> -		}
-> -		if (vecs->mpvec) {
-> -			pthread_cleanup_push(cleanup_lock, &vecs->lock);
-> -			lock(&vecs->lock);
-> -			pthread_testcancel();
-> -			defered_failback_tick(vecs->mpvec);
-> -			retry_count_tick(vecs->mpvec);
-> -			missing_uev_wait_tick(vecs);
-> -			lock_cleanup_pop(vecs->lock);
+> @@ -1528,6 +1528,10 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  		put_multipath_config(conf);
+>  		return 1;
+>  	}
 > +
-> +		pthread_cleanup_push(cleanup_lock, &vecs->lock);
-> +		lock(&vecs->lock);
-> +		pthread_testcancel();
-> +		vector_foreach_slot (vecs->pathvec, pp, i) {
-> +			rc = check_path(vecs, pp, ticks);
-> +			if (rc < 0) {
-> +				vector_del_slot(vecs->pathvec, i);
-> +				free_path(pp);
-> +				i--;
-> +			} else
-> +				num_paths += rc;
->  		}
-> +		lock_cleanup_pop(vecs->lock);
+> +	if (newstate == PATH_TIMEOUT)
+> +		newstate = PATH_DOWN;
 > +
-> +		pthread_cleanup_push(cleanup_lock, &vecs->lock);
-> +		lock(&vecs->lock);
-> +		pthread_testcancel();
-> +		defered_failback_tick(vecs->mpvec);
-> +		retry_count_tick(vecs->mpvec);
-> +		missing_uev_wait_tick(vecs);
-> +		lock_cleanup_pop(vecs->lock);
-> +
->  		if (count)
->  			count--;
->  		else {
+>  	if (!pp->mpp) {
+>  		if (!strlen(pp->wwid) && pp->initialized != INIT_MISSING_UDEV &&
+>  		    (newstate == PATH_UP || newstate == PATH_GHOST)) {
+> @@ -1601,7 +1605,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  		pp->checkint = conf->checkint;
+>  		put_multipath_config(conf);
+>  
+> -		if (newstate == PATH_DOWN || newstate == PATH_SHAKY || newstate == PATH_TIMEOUT) {
+> +		if (newstate == PATH_DOWN || newstate == PATH_SHAKY) {
+>  			/*
+>  			 * proactively fail path in the DM
+>  			 */
 > -- 
 > 2.8.1.windows.1
