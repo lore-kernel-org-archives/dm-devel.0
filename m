@@ -1,118 +1,95 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: replace IO by I/O in
-	multipath.conf.5
-Date: Mon, 17 Oct 2016 23:29:32 +0200
-Message-ID: <20161017212932.2811-1-xose.vazquez@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+From: Tahsin Erdogan <tahsin@google.com>
+Subject: [PATCH] dm: do not assign error to md->kworker_task
+Date: Mon, 17 Oct 2016 18:16:48 -0700
+Message-ID: <1476753409-16111-1-git-send-email-tahsin@google.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
+Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Tahsin Erdogan <tahsin@google.com>
 List-Id: dm-devel.ids
 
-to be consistent with the rest of the text.
+cleanup_mapped_device() calls kthread_stop() if kworker_task is
+non-NULL. Currently the assigned value could be a valid task struct or
+an error code. Do not assign in case of error.
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Example failure when kthread_run() returns -ENOMEM:
+
+[   22.255939] BUG: unable to handle kernel NULL pointer dereference at 000000000000000c
+[   22.258847] IP: [<ffffffff802973a4>] kthread_stop+0x34/0x260
+[   22.260130] PGD 78a23067 PUD 78b56067 PMD 0
+[   22.260130] Oops: 0002 [#1] SMP
+[   22.260130] CPU: 1 PID: 1849 Comm: dmsetup Tainted: G        W 4.8.0+ #3
+[   22.260130] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS Bochs 01/01/2011
+[   22.260130] task: ffff880078966400 task.stack: ffffc90001898000
+[   22.260130] RIP: 0010:[<ffffffff802973a4>]  [<ffffffff802973a4>] kthread_stop+0x34/0x260
+[   22.260130] RSP: 0018:ffffc9000189bc40  EFLAGS: 00010202
+[   22.260130] RAX: 0000000000000001 RBX: fffffffffffffff4 RCX: 0000000000000003
+[   22.260130] RDX: ffff88007fd18600 RSI: 0000000000000001 RDI: ffffffff81037080
+[   22.260130] RBP: ffffc9000189bc50 R08: 0000000000000000 R09: 0000000000000000
+[   22.260130] R10: 0000000000000001 R11: 0000000000000000 R12: 0000000000000000
+[   22.260130] R13: 0000000000000001 R14: ffff880077f539d8 R15: 0000000000000004
+[   22.260130] FS:  00007fc9ef2e2840(0000) GS:ffff88007fd00000(0000) knlGS:0000000000000000
+[   22.260130] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[   22.260130] CR2: 000000000000000c CR3: 0000000077fa2000 CR4: 00000000000006e0
+[   22.260130] Stack:
+[   22.260130]  ffff880077f53800 0000000000000000 ffffc9000189bc68 ffffffff808b26fa
+[   22.260130]  ffff880077f53800 ffffc9000189bcb0 ffffffff808b3c58 0000000000000000
+[   22.260130]  00000000808b534b ffffc9000189bd20 ffff880077f53800 0000000000000000
+[   22.260130] Call Trace:
+[   22.260130]  [<ffffffff808b26fa>] cleanup_mapped_device+0x2a/0xe0
+[   22.260130]  [<ffffffff808b3c58>] __dm_destroy+0x1a8/0x2b0
+[   22.260130]  [<ffffffff808b4b6e>] dm_destroy+0xe/0x10
+[   22.260130]  [<ffffffff808b9f49>] dev_remove+0xd9/0x120
+[   22.260130]  [<ffffffff808b9e70>] ? dev_suspend+0x210/0x210
+[   22.260130]  [<ffffffff808ba576>] ctl_ioctl+0x206/0x500
+[   22.260130]  [<ffffffff808ba87e>] dm_ctl_ioctl+0xe/0x20
+[   22.260130]  [<ffffffff803bca40>] do_vfs_ioctl+0x90/0x6b0
+[   22.260130]  [<ffffffff80b11fd7>] ?  entry_SYSCALL_64_fastpath+0x5/0xad
+[   22.260130]  [<ffffffff802bd974>] ?  trace_hardirqs_on_caller+0xf4/0x1c0
+[   22.260130]  [<ffffffff803bd0d4>] SyS_ioctl+0x74/0x80
+[   22.260130]  [<ffffffff80b11fea>] entry_SYSCALL_64_fastpath+0x18/0xad
+[   22.260130] Code: e5 41 54 85 c0 53 48 89 fb 0f 8f bb 01 00 00 65 8b
+05 a1 2d d7 7f 89 c0 48 0f a3 05 9f 94 e8 00 0f 92 c0 84 c0 0f 85 a3 00
+00 00 <f0> ff 43 18 48 89 df e8 10 f8 ff ff 48 85 c0 49 89 c4 74 29 f0
+[   22.260130] RIP  [<ffffffff802973a4>] kthread_stop+0x34/0x260
+[   22.260130]  RSP <ffffc9000189bc40>
+[   22.260130] CR2: 000000000000000c
+[   22.301062] ---[ end trace 22b4f4f62c04f3cf ]---
+
+Signed-off-by: Tahsin Erdogan <tahsin@google.com>
 ---
- multipath/multipath.conf.5 | 24 ++++++++++++------------
- 1 file changed, 12 insertions(+), 12 deletions(-)
+ drivers/md/dm-rq.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 4ab2917..eec319f 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -7,7 +7,7 @@
- .\"
- .\" ----------------------------------------------------------------------------
- .
--.TH MULTIPATH.CONF 5 2016-08-12 "Linux"
-+.TH MULTIPATH.CONF 5 2016-10-18 "Linux"
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -162,19 +162,19 @@ kernel multipath target. There are three selector algorithms:
- .RS
- .TP 12
- .I "round-robin 0"
--Loop through every path in the path group, sending the same amount of IO to
-+Loop through every path in the path group, sending the same amount of I/O to
- each. Some aspects of behavior can be controlled with the attributes:
- \fIrr_min_io\fR, \fIrr_min_io_rq\fR and \fIrr_weight\fR.
- .TP
- .\" XXX
- .I "queue-length 0"
--(Since ??? kernel) Choose the path for the next bunch of IO based on the amount
--of outstanding IO to the path.
-+(Since ??? kernel) Choose the path for the next bunch of I/O based on the amount
-+of outstanding I/O to the path.
- .TP
- .\" XXX
- .I "service-time 0"
--(Since ??? kernel) Choose the path for the next bunch of IO based on the amount
--of outstanding IO to the path and its relative throughput.
-+(Since ??? kernel) Choose the path for the next bunch of I/O based on the amount
-+of outstanding I/O to the path and its relative throughput.
- .TP
- Default value is: \fBservice-time 0\fR
- .RE
-@@ -342,7 +342,7 @@ Possible values for the feature list are:
- .TP 12
- .\" XXX
- .I queue_if_no_path
--(Superseded by \fIno_path_retry\fR) (Since ??? kernel) Queue IO if no path is active.
-+(Superseded by \fIno_path_retry\fR) (Since ??? kernel) Queue I/O if no path is active.
- Identical to the \fIno_path_retry\fR with \fIqueue\fR value. See KNOWN ISSUES.
- .TP
- .I no_partitions
-@@ -448,7 +448,7 @@ Default value is: \fBmanual\fR
- .
- .TP
- .B  rr_min_io
--Number of IO requests to route to a path before switching to the next in the
-+Number of I/O requests to route to a path before switching to the next in the
- same path group. This is only for \fIBlock I/O\fR(BIO) based multipath and 
- only apply to \fIround-robin\fR path_selector.
- .RS
-@@ -459,7 +459,7 @@ Default value is: \fB1000\fR
- .
- .TP
- .B rr_min_io_rq
--Number of IO requests to route to a path before switching to the next in the
-+Number of I/O requests to route to a path before switching to the next in the
- same path group. This is only for \fIRequest\fR based multipath and
- only apply to \fIround-robin\fR path_selector.
- .RS
-@@ -523,9 +523,9 @@ If set to
- , when multipathd stops, queueing will be turned off for all devices.
- This is useful for devices that set no_path_retry. If a machine is
- shut down while all paths to a device are down, it is possible to hang waiting
--for IO to return from the device after multipathd has been stopped. Without
-+for I/O to return from the device after multipathd has been stopped. Without
- multipathd running, access to the paths cannot be restored, and the kernel
--cannot be told to stop queueing IO. Setting queue_without_daemon to
-+cannot be told to stop queueing I/O. Setting queue_without_daemon to
- .I no
- , avoids this problem.
- .RS
-@@ -574,7 +574,7 @@ Default value is: \fBno\fR
- .TP
- .B fast_io_fail_tmo
- Specify the number of seconds the SCSI layer will wait after a problem has been
--detected on a FC remote port before failing IO to devices on that remote port.
-+detected on a FC remote port before failing I/O to devices on that remote port.
- This should be smaller than dev_loss_tmo. Setting this to
- .I off
- will disable the timeout.
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 5eacce1ef88b..6e5197414a57 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -841,6 +841,8 @@ static void dm_old_request_fn(struct request_queue *q)
+  */
+ int dm_old_init_request_queue(struct mapped_device *md)
+ {
++	struct task_struct *task;
++
+ 	/* Fully initialize the queue */
+ 	if (!blk_init_allocated_queue(md->queue, dm_old_request_fn, NULL))
+ 		return -EINVAL;
+@@ -854,11 +856,12 @@ int dm_old_init_request_queue(struct mapped_device *md)
+ 
+ 	/* Initialize the request-based DM worker thread */
+ 	init_kthread_worker(&md->kworker);
+-	md->kworker_task = kthread_run(kthread_worker_fn, &md->kworker,
+-				       "kdmwork-%s", dm_device_name(md));
+-	if (IS_ERR(md->kworker_task))
+-		return PTR_ERR(md->kworker_task);
++	task = kthread_run(kthread_worker_fn, &md->kworker, "kdmwork-%s",
++			   dm_device_name(md));
++	if (IS_ERR(task))
++		return PTR_ERR(task);
+ 
++	md->kworker_task = task;
+ 	elv_register_queue(md->queue);
+ 
+ 	return 0;
 -- 
-2.10.1
+2.8.0.rc3.226.g39d4020
