@@ -1,12 +1,14 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH] dm raid: correct error messages on old metadata
-	validation
-Date: Tue, 18 Oct 2016 17:46:45 +0200
-Message-ID: <1476805605-19477-1-git-send-email-heinzm@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 1/3] segment faulty occured in dm_get_status()
+Date: Tue, 18 Oct 2016 11:21:09 -0500
+Message-ID: <20161018162109.GK1972@octiron.msp.redhat.com>
+References: <1476759069-9832-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1476759069-9832-1-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,132 +18,92 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, snitzer@redhat.com
+To: tang.junhui@zte.com.cn
+Cc: dm-devel@redhat.com, zhang.kai16@zte.com.cn
 List-Id: dm-devel.ids
 
-When target 1.9.1 gets takeover/reshape requests on devices with old superblock
-format not supporting such conversions and rejects them in super_init_validation(),
-it logs bogus error message (e.g. Reshape when a takeover is requested).
+On Tue, Oct 18, 2016 at 10:51:07AM +0800, tang.junhui@zte.com.cn wrote:
+> From: "tang.junhui" <tang.junhui@zte.com.cn>
+> 
+> Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 
-Whilst on it, add messages for disk adding/removing and stripe sectors
-reshape requests, use the newer rs_{takeover,reshape}_requested() API,
-address a false raid10 positive in checking array positions and
-remove rs_set_new() because device members are already set proper.
+ACK. Obviously we don't want uninitialized pointers.  But do you know
+what as going on with the device that caused it to return no target? Was
+there simply no table loaded for the device? 
 
-Resolves: rhbz1386194
+-Ben
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
----
- drivers/md/dm-raid.c | 71 +++++++++++++++++++++++++++++-----------------------
- 1 file changed, 39 insertions(+), 32 deletions(-)
-
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 6d53810..698b03e 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -2050,16 +2050,17 @@ static int super_init_validation(struct raid_set *rs, struct md_rdev *rdev)
- 
- 	mddev->reshape_position = MaxSector;
- 
-+	mddev->raid_disks = le32_to_cpu(sb->num_devices);
-+	mddev->level = le32_to_cpu(sb->level);
-+	mddev->layout = le32_to_cpu(sb->layout);
-+	mddev->chunk_sectors = le32_to_cpu(sb->stripe_sectors);
-+
- 	/*
- 	 * Reshaping is supported, e.g. reshape_position is valid
- 	 * in superblock and superblock content is authoritative.
- 	 */
- 	if (le32_to_cpu(sb->compat_features) & FEATURE_FLAG_SUPPORTS_V190) {
- 		/* Superblock is authoritative wrt given raid set layout! */
--		mddev->raid_disks = le32_to_cpu(sb->num_devices);
--		mddev->level = le32_to_cpu(sb->level);
--		mddev->layout = le32_to_cpu(sb->layout);
--		mddev->chunk_sectors = le32_to_cpu(sb->stripe_sectors);
- 		mddev->new_level = le32_to_cpu(sb->new_level);
- 		mddev->new_layout = le32_to_cpu(sb->new_layout);
- 		mddev->new_chunk_sectors = le32_to_cpu(sb->new_stripe_sectors);
-@@ -2087,38 +2088,44 @@ static int super_init_validation(struct raid_set *rs, struct md_rdev *rdev)
- 		/*
- 		 * No takeover/reshaping, because we don't have the extended v1.9.0 metadata
- 		 */
--		if (le32_to_cpu(sb->level) != mddev->new_level) {
--			DMERR("Reshaping/takeover raid sets not yet supported. (raid level/stripes/size change)");
--			return -EINVAL;
--		}
--		if (le32_to_cpu(sb->layout) != mddev->new_layout) {
--			DMERR("Reshaping raid sets not yet supported. (raid layout change)");
--			DMERR("	 0x%X vs 0x%X", le32_to_cpu(sb->layout), mddev->layout);
--			DMERR("	 Old layout: %s w/ %d copies",
--			      raid10_md_layout_to_format(le32_to_cpu(sb->layout)),
--			      raid10_md_layout_to_copies(le32_to_cpu(sb->layout)));
--			DMERR("	 New layout: %s w/ %d copies",
--			      raid10_md_layout_to_format(mddev->layout),
--			      raid10_md_layout_to_copies(mddev->layout));
--			return -EINVAL;
--		}
--		if (le32_to_cpu(sb->stripe_sectors) != mddev->new_chunk_sectors) {
--			DMERR("Reshaping raid sets not yet supported. (stripe sectors change)");
--			return -EINVAL;
--		}
-+		struct raid_type *rt_cur = get_raid_type_by_ll(mddev->level, mddev->layout);
-+		struct raid_type *rt_new = get_raid_type_by_ll(mddev->new_level, mddev->new_layout);
- 
--		/* We can only change the number of devices in raid1 with old (i.e. pre 1.0.7) metadata */
--		if (!rt_is_raid1(rs->raid_type) &&
--		    (le32_to_cpu(sb->num_devices) != mddev->raid_disks)) {
--			DMERR("Reshaping raid sets not yet supported. (device count change from %u to %u)",
--			      sb->num_devices, mddev->raid_disks);
-+		if (rs_takeover_requested(rs)) {
-+			if (rt_cur && rt_new)
-+				DMERR("Takeover raid sets from %s to %s not yet supported by metadata. (raid level change)",
-+				      rt_cur->name, rt_new->name);
-+			else
-+				DMERR("Takeover raid sets not yet supported by metadata. (raid level change)");
-+			return -EINVAL;
-+		} else if (rs_reshape_requested(rs)) {
-+			DMERR("Reshaping raid sets not yet supported by metadata. (raid layout change keeping level)");
-+			if (mddev->layout != mddev->new_layout) {
-+				if (rt_cur && rt_new)
-+					DMERR("	 current layout %s vs new layout %s",
-+					      rt_cur->name, rt_new->name);
-+				else
-+					DMERR("	 current layout 0x%X vs new layout 0x%X",
-+					      le32_to_cpu(sb->layout), mddev->new_layout);
-+			}
-+			if (mddev->chunk_sectors != mddev->new_chunk_sectors)
-+				DMERR("	 current stripe sectors %u vs new stripe sectors %u",
-+				      mddev->chunk_sectors, mddev->new_chunk_sectors);
-+			if (rs->delta_disks)
-+				DMERR("	 current %u disks vs new %u disks",
-+				      mddev->raid_disks, mddev->raid_disks + rs->delta_disks);
-+			if (rs_is_raid10(rs)) {
-+				DMERR("	 Old layout: %s w/ %u copies",
-+				      raid10_md_layout_to_format(mddev->layout),
-+				      raid10_md_layout_to_copies(mddev->layout));
-+				DMERR("	 New layout: %s w/ %u copies",
-+				      raid10_md_layout_to_format(mddev->new_layout),
-+				      raid10_md_layout_to_copies(mddev->new_layout));
-+			}
- 			return -EINVAL;
- 		}
- 
- 		DMINFO("Discovered old metadata format; upgrading to extended metadata format");
--
--		/* Table line is checked vs. authoritative superblock */
--		rs_set_new(rs);
- 	}
- 
- 	if (!test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags))
-@@ -2211,7 +2218,7 @@ static int super_init_validation(struct raid_set *rs, struct md_rdev *rdev)
- 				continue;
- 
- 			if (role != r->raid_disk) {
--				if (__is_raid10_near(mddev->layout)) {
-+				if (rs_is_raid10(rs) && __is_raid10_near(mddev->layout)) {
- 					if (mddev->raid_disks % __raid10_near_copies(mddev->layout) ||
- 					    rs->raid_disks % rs->raid10_copies) {
- 						rs->ti->error =
--- 
-2.7.4
+> 
+> segment faulty occured in dm_get_status(), the call trace is:
+> ----------------------------------------------------------------------
+> (gdb) bt
+> 0  0x000000338ec328a5 in raise () from /lib64/libc.so.6
+> 1  0x000000338ec3400d in abort () from /lib64/libc.so.6
+> 2  0x000000000040596d in sigsegv ()
+> 3  <signal handler called>
+> 4  0x000000338ec480ac in vfprintf () from /lib64/libc.so.6
+> 5  0x000000338ec6f9d2 in vsnprintf () from /lib64/libc.so.6
+> 6  0x000000338ec4f4a3 in snprintf () from /lib64/libc.so.6
+> 7  0x00007f43fe66bbb9 in dm_get_status (name=0x7f43f0001eb0 "spathe",
+> outstatus=<value optimized out>) at devmapper.c:521
+> 8  0x00007f43fe68c058 in update_multipath_status (mpp=0x7f43f000ad60,
+> pathvec=<value optimized out>) at structs_vec.c:465
+> 9  update_multipath_strings (mpp=0x7f43f000ad60, pathvec=<value optimized
+> out>) at structs_vec.c:495
+> 10 0x0000000000409056 in check_path ()
+> 11 0x0000000000409c7e in checkerloop ()
+> 12 0x0000003b27207851 in start_thread () from /lib64/libpthread.so.0
+> 13 0x000000338ece890d in clone () from /lib64/libc.so.6
+> -----------------------------------------------------------------------
+> we debuged the code, and found that targets information storing in the
+> list dmt->head which fetching from kernel by executing dm_task_run()
+> is null.
+> -----------------------------------------------------------------------
+> rbx            0x7f43c4000d60   139929027874144
+> (gdb) p *(struct dm_task *)0x7f43c4000d60
+> $3 = {type = 10, dev_name = 0x7f43c4000d40 "spathe", head = 0x0, tail =
+> 0x0, read_only = 0, event_nr = 0, major = -1, minor = -1,
+>   allow_default_major_fallback = 1, uid = 0, gid = 0, mode = 384,
+>   read_ahead = 4294967295, read_ahead_flags = 0, dmi = {
+>       v4 = 0x7f43c40011e0, v1 = 0x7f43c40011e0}, newname = 0x0, message =
+>       0x0, geometry = 0x0, sector = 0, no_flush = 0,
+>         no_open_count = 1, skip_lockfs = 0, query_inactive_table = 0,
+> 	suppress_identical_reload = 0, existing_table_size = 0,
+> 	  cookie_set = 0, uuid = 0x0}
+> -----------------------------------------------------------------------
+> since status is not initioned to null, so after calling
+> dm_get_next_target(dmt, next, &start, &length,&target_type,
+> &status),status becaming wild pointer, which lead snprintf() into the
+> situation of segment faulty.
+> ---
+>  libmultipath/devmapper.c | 8 ++++++--
+>  1 file changed, 6 insertions(+), 2 deletions(-)
+> 
+> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+> index 5eb1713..89aa5da 100644
+> --- a/libmultipath/devmapper.c
+> +++ b/libmultipath/devmapper.c
+> @@ -534,8 +534,8 @@ dm_get_status(char * name, char * outstatus)
+>  	int r = 1;
+>  	struct dm_task *dmt;
+>  	uint64_t start, length;
+> -	char *target_type;
+> -	char *status;
+> +	char *target_type = NULL;
+> +	char *status = NULL;
+>  
+>  	if (!(dmt = dm_task_create(DM_DEVICE_STATUS)))
+>  		return 1;
+> @@ -551,6 +551,10 @@ dm_get_status(char * name, char * outstatus)
+>  	/* Fetch 1st target */
+>  	dm_get_next_target(dmt, NULL, &start, &length,
+>  			   &target_type, &status);
+> +	if (!status) {
+> +		condlog(2, "get null status.");
+> +		goto out;
+> +	}
+>  
+>  	if (snprintf(outstatus, PARAMS_SIZE, "%s", status) <= PARAMS_SIZE)
+>  		r = 0;
+> -- 
+> 2.8.1.windows.1
