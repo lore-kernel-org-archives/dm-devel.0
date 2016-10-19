@@ -1,13 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: integrate Changelog file in
- README and update it
-Date: Wed, 19 Oct 2016 08:09:59 +0200
-Message-ID: <CABr-GnfZWGaxXw61hLLHE0mt2WwdxTR-u1gn_mpvcqpO0Nk_JA@mail.gmail.com>
-References: <20161018233422.5001-1-xose.vazquez@gmail.com>
+From: =?UTF-8?B?5ZSQ5Yab6L6JIA==?= <tang.junhui@zte.com.cn>
+Subject: =?utf-8?b?6L2s5Y+ROiBSZTogIFtQQVRDSCAxLzNdIHNlZ21lbnQg?=
+	=?utf-8?q?faulty_occured_in_dm=5Fget=5Fstatus=28=29?=
+Date: Wed, 19 Oct 2016 16:05:04 +0800 (CST)
+Message-ID: <201610191605047242560@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8538200667079296603=="
+Content-Type: multipart/mixed;
+	boundary="=====_001_next====="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161018233422.5001-1-xose.vazquez@gmail.com>
+References: OF24483360.DAC324D7-ON48258051.002ACAF4-48258051.002ACF4D@zte.com.cn
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,271 +17,263 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: bmarzins@redhat.com
+Cc: =?UTF-8?B?5byg5YevIA==?= <zhang.kai16@zte.com.cn>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============8538200667079296603==
-Content-Type: multipart/alternative; boundary=001a113f1886b8fe61053f31a8fb
-
---001a113f1886b8fe61053f31a8fb
-Content-Type: text/plain; charset=UTF-8
-
-Merged.
-
-On Wed, Oct 19, 2016 at 1:34 AM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
-
-> and httpS for everyone.
->
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  ChangeLog |  6 ------
->  README    | 38 ++++++++++++++++++++++++++++----------
->  2 files changed, 28 insertions(+), 16 deletions(-)
->  delete mode 100644 ChangeLog
->
-> diff --git a/ChangeLog b/ChangeLog
-> deleted file mode 100644
-> index 4b547bb..0000000
-> --- a/ChangeLog
-> +++ /dev/null
-> @@ -1,6 +0,0 @@
-> -Change logs are at :
-> -
-> -- pre-0.4.5
-> -  http://web.archive.org/web/20070309224034/http://
-> christophe.varoqui.free.fr/wiki/wakka.php?wiki=ChangeLog
-> -- post-0.4.5
-> -  http://git.opensvc.com/?p=multipath-tools/.git;a=log
-> diff --git a/README b/README
-> index 77b79b8..a18b325 100644
-> --- a/README
-> +++ b/README
-> @@ -1,8 +1,8 @@
-> -multipath-tools for Linux <http://christophe.varoqui.free.fr/>
-> +       multipath-tools for Linux <http://christophe.varoqui.free.fr/>
->
->
-> -This package provides the following binaries to drive the
-> -Device Mapper multipathing driver:
-> +This package provides the following binaries to drive the Device Mapper
-> +multipathing driver:
->
->  multipath - Device mapper target autoconfig.
->  multipathd - Multipath daemon.
-> @@ -10,20 +10,38 @@ mpathpersist - Manages SCSI persistent reservations on
-> dm multipath devices.
->  kpartx - Create device maps from partition tables.
->
->
-> -tarballs are not generated anymore, to get a specific release do:
-> -git clone http://git.opensvc.com/multipath-tools/.git
-> +Releases
-> +========
-> +Tarballs are not generated anymore, to get a specific release do:
-> +git clone https://git.opensvc.com/multipath-tools/.git
->  cd multipath-tools
->  git tag
->  git archive --format=tar.gz --prefix=multipath-tools-X.Y.Z/ X.Y.Z >
-> ../multipath-tools-X.Y.Z.tar.gz
->
->  Alternatively it may be obtained from gitweb, go to:
-> -http://git.opensvc.com/?p=multipath-tools/.git;a=tags
-> +https://git.opensvc.com/?p=multipath-tools/.git;a=tags
->  select a release-tag and then click on "snapshot".
->
->
-> -To get latest devel code: git clone http://git.opensvc.com/
-> multipath-tools/.git
-> +Source code
-> +===========
-> +To get latest devel code: git clone https://git.opensvc.com/
-> multipath-tools/.git
-> +Gitweb: https://git.opensvc.com/?p=multipath-tools/.git
->
-> -Mailing list: http://www.redhat.com/mailman/listinfo/dm-devel
-> -Gitweb: http://git.opensvc.com/?p=multipath-tools/.git
->
-> -Current maintainer is Christophe Varoqui <christophe.varoqui@opensvc.com>
-> +Mailing list (subscribers-only)
-> +============
-> +To subscribe and archives: https://www.redhat.com/
-> mailman/listinfo/dm-devel
-> +Searchable: https://marc.info/?l=dm-devel
-> +
-> +
-> +Changelog
-> +=========
-> +pre-0.4.5: https://web.archive.org/web/20070309224034/http://
-> christophe.varoqui.free.fr/wiki/wakka.php?wiki=ChangeLog
-> +post-0.4.5: https://git.opensvc.com/?p=multipath-tools/.git;a=log
-> +
-> +
-> +Maintainer
-> +==========
-> +Christophe Varoqui <christophe.varoqui@opensvc.com>
-> +Device-mapper development mailing list <dm-devel@redhat.com>
-> --
-> 2.10.1
->
->
-
---001a113f1886b8fe61053f31a8fb
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Merged.</div><div class=3D"gmail_extra"><br><div class=3D"=
-gmail_quote">On Wed, Oct 19, 2016 at 1:34 AM, Xose Vazquez Perez <span dir=
-=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" target=3D"_blank">xo=
-se.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_qu=
-ote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex=
-">and httpS for everyone.<br>
-<br>
-Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com=
-">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
-Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
--devel@redhat.com</a>&gt;<br>
-Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
-com">xose.vazquez@gmail.com</a>&gt;<br>
----<br>
-=C2=A0ChangeLog |=C2=A0 6 ------<br>
-=C2=A0README=C2=A0 =C2=A0 | 38 ++++++++++++++++++++++++++++--<wbr>--------<=
-br>
-=C2=A02 files changed, 28 insertions(+), 16 deletions(-)<br>
-=C2=A0delete mode 100644 ChangeLog<br>
-<br>
-diff --git a/ChangeLog b/ChangeLog<br>
-deleted file mode 100644<br>
-index 4b547bb..0000000<br>
---- a/ChangeLog<br>
-+++ /dev/null<br>
-@@ -1,6 +0,0 @@<br>
--Change logs are at :<br>
--<br>
--- pre-0.4.5<br>
--=C2=A0 <a href=3D"http://web.archive.org/web/20070309224034/http://christo=
-phe.varoqui.free.fr/wiki/wakka.php?wiki=3DChangeLog" rel=3D"noreferrer" tar=
-get=3D"_blank">http://web.archive.org/web/<wbr>20070309224034/http://<wbr>c=
-hristophe.varoqui.free.fr/<wbr>wiki/wakka.php?wiki=3DChangeLog</a><br>
--- post-0.4.5<br>
--=C2=A0 <a href=3D"http://git.opensvc.com/?p=3Dmultipath-tools/.git;a=3Dlog=
-" rel=3D"noreferrer" target=3D"_blank">http://git.opensvc.com/?p=3D<wbr>mul=
-tipath-tools/.git;a=3Dlog</a><br>
-diff --git a/README b/README<br>
-index 77b79b8..a18b325 100644<br>
---- a/README<br>
-+++ b/README<br>
-@@ -1,8 +1,8 @@<br>
--multipath-tools for Linux &lt;<a href=3D"http://christophe.varoqui.free.fr=
-/" rel=3D"noreferrer" target=3D"_blank">http://christophe.varoqui.<wbr>free=
-.fr/</a>&gt;<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0multipath-tools for Linux &lt;<a href=3D"http:/=
-/christophe.varoqui.free.fr/" rel=3D"noreferrer" target=3D"_blank">http://c=
-hristophe.varoqui.<wbr>free.fr/</a>&gt;<br>
-<br>
-<br>
--This package provides the following binaries to drive the<br>
--Device Mapper multipathing driver:<br>
-+This package provides the following binaries to drive the Device Mapper<br=
->
-+multipathing driver:<br>
-<br>
-=C2=A0multipath - Device mapper target autoconfig.<br>
-=C2=A0multipathd - Multipath daemon.<br>
-@@ -10,20 +10,38 @@ mpathpersist - Manages SCSI persistent reservations on =
-dm multipath devices.<br>
-=C2=A0kpartx - Create device maps from partition tables.<br>
-<br>
-<br>
--tarballs are not generated anymore, to get a specific release do:<br>
--git clone <a href=3D"http://git.opensvc.com/multipath-tools/.git" rel=3D"n=
-oreferrer" target=3D"_blank">http://git.opensvc.com/<wbr>multipath-tools/.g=
-it</a><br>
-+Releases<br>
-+=3D=3D=3D=3D=3D=3D=3D=3D<br>
-+Tarballs are not generated anymore, to get a specific release do:<br>
-+git clone <a href=3D"https://git.opensvc.com/multipath-tools/.git" rel=3D"=
-noreferrer" target=3D"_blank">https://git.opensvc.com/<wbr>multipath-tools/=
-.git</a><br>
-=C2=A0cd multipath-tools<br>
-=C2=A0git tag<br>
-=C2=A0git archive --format=3Dtar.gz --prefix=3Dmultipath-tools-X.Y.<wbr>Z/ =
-X.Y.Z &gt; ../multipath-tools-X.Y.Z.tar.<wbr>gz<br>
-<br>
-=C2=A0Alternatively it may be obtained from gitweb, go to:<br>
--<a href=3D"http://git.opensvc.com/?p=3Dmultipath-tools/.git;a=3Dtags" rel=
-=3D"noreferrer" target=3D"_blank">http://git.opensvc.com/?p=3D<wbr>multipat=
-h-tools/.git;a=3Dtags</a><br>
-+<a href=3D"https://git.opensvc.com/?p=3Dmultipath-tools/.git;a=3Dtags" rel=
-=3D"noreferrer" target=3D"_blank">https://git.opensvc.com/?p=3D<wbr>multipa=
-th-tools/.git;a=3Dtags</a><br>
-=C2=A0select a release-tag and then click on &quot;snapshot&quot;.<br>
-<br>
-<br>
--To get latest devel code: git clone <a href=3D"http://git.opensvc.com/mult=
-ipath-tools/.git" rel=3D"noreferrer" target=3D"_blank">http://git.opensvc.c=
-om/<wbr>multipath-tools/.git</a><br>
-+Source code<br>
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<br>
-+To get latest devel code: git clone <a href=3D"https://git.opensvc.com/mul=
-tipath-tools/.git" rel=3D"noreferrer" target=3D"_blank">https://git.opensvc=
-.com/<wbr>multipath-tools/.git</a><br>
-+Gitweb: <a href=3D"https://git.opensvc.com/?p=3Dmultipath-tools/.git" rel=
-=3D"noreferrer" target=3D"_blank">https://git.opensvc.com/?p=3D<wbr>multipa=
-th-tools/.git</a><br>
-<br>
--Mailing list: <a href=3D"http://www.redhat.com/mailman/listinfo/dm-devel" =
-rel=3D"noreferrer" target=3D"_blank">http://www.redhat.com/mailman/<wbr>lis=
-tinfo/dm-devel</a><br>
--Gitweb: <a href=3D"http://git.opensvc.com/?p=3Dmultipath-tools/.git" rel=
-=3D"noreferrer" target=3D"_blank">http://git.opensvc.com/?p=3D<wbr>multipat=
-h-tools/.git</a><br>
-<br>
--Current maintainer is Christophe Varoqui &lt;<a href=3D"mailto:christophe.=
-varoqui@opensvc.com">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
-+Mailing list (subscribers-only)<br>
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<br>
-+To subscribe and archives: <a href=3D"https://www.redhat.com/mailman/listi=
-nfo/dm-devel" rel=3D"noreferrer" target=3D"_blank">https://www.redhat.com/<=
-wbr>mailman/listinfo/dm-devel</a><br>
-+Searchable: <a href=3D"https://marc.info/?l=3Ddm-devel" rel=3D"noreferrer"=
- target=3D"_blank">https://marc.info/?l=3Ddm-devel</a><br>
-+<br>
-+<br>
-+Changelog<br>
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D<br>
-+pre-0.4.5: <a href=3D"https://web.archive.org/web/20070309224034/http://ch=
-ristophe.varoqui.free.fr/wiki/wakka.php?wiki=3DChangeLog
-+post-0.4.5" rel=3D"noreferrer" target=3D"_blank">https://web.archive.org/w=
-eb/<wbr>20070309224034/http://<wbr>christophe.varoqui.free.fr/<wbr>wiki/wak=
-ka.php?wiki=3DChangeLog<br>
-+post-0.4.5</a>: <a href=3D"https://git.opensvc.com/?p=3Dmultipath-tools/.g=
-it;a=3Dlog" rel=3D"noreferrer" target=3D"_blank">https://git.opensvc.com/?p=
-=3D<wbr>multipath-tools/.git;a=3Dlog</a><br>
-+<br>
-+<br>
-+Maintainer<br>
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<br>
-+Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com">c=
-hristophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
-+Device-mapper development mailing list &lt;<a href=3D"mailto:dm-devel@redh=
-at.com">dm-devel@redhat.com</a>&gt;<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.10.1<br>
-<br>
-</font></span></blockquote></div><br></div>
-
---001a113f1886b8fe61053f31a8fb--
 
 
---===============8538200667079296603==
+--=====_001_next=====
+Content-Type: multipart/related;
+	boundary="=====_002_next====="
+
+
+--=====_002_next=====
+Content-Type: multipart/alternative;
+	boundary="=====_003_next====="
+
+
+--=====_003_next=====
+Content-Transfer-Encoding: base64 
+Content-Type: text/plain;
+	charset="UTF-8"
+
+SGVsbG8gQmVuLA0KDQoNCg0KDQpUaGlzIGJ1Z3Mgb2NjdXJyZWQgaW4gb3V0IGF1dG9tYXRpYyB0
+ZXN0aW5nIGVudmlyb25tZW50LA0KDQoNCkkgdGhpbmsgaXQgaXMgdHJpZ2dlcmVkIGJ5ICJkbXNl
+dHVwIHJlbW92ZSBtYXBzIiBjb21tYW5kIGJlY2F1c2UgDQoNCg0KdGhlcmUgYXJlIG1hbnkgdWV2
+ZW50IG1lc3NhZ2VzIHdoaWNoIGluZGljYXRpbmcgdGhhdA0KDQoNCmRtIGRldmljZSBoYXZlIGJl
+ZW4gcmVtb3ZlZCBiZWZvcmUgdGhlIHNlZ21lbnQgZmF1bHQgb2NjdXJyZWQuDQoNCg0KDQoNCg0K
+DQpDaGVycnMsDQoNCg0KVGFuZw0KDQoNCg0KDQoNCg0KDQoNCg0KDQrlj5Hku7bkuro6IAkiQmVu
+amFtaW4gTWFyemluc2tpIiDvvJxibWFyemluc0ByZWRoYXQuY29t77yeDQog5pS25Lu25Lq6OiAJ
+dGFuZy5qdW5odWlAenRlLmNvbS5jbiwgDQog5oqE6YCBOglkbS1kZXZlbEByZWRoYXQuY29tLCB6
+aGFuZy5rYWkxNkB6dGUuY29tLmNuDQog5pel5pyfOiAJMjAxNi0xMC0xOSAwMDoyOQ0KIOS4u+mi
+mDoJUmU6IFtkbS1kZXZlbF0gW1BBVENIIDEvM10gc2VnbWVudCBmYXVsdHkgb2NjdXJlZCBpbiBk
+bV9nZXRfc3RhdHVzKCkNCiDlj5Hku7bkuro6CWRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbQ0K
+IA0KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0NCg0KIA0KIA0KIE9uIFR1ZSwgT2N0IDE4LCAyMDE2
+IGF0IDEwOjUxOjA3QU0gKzA4MDAsIHRhbmcuanVuaHVpQHp0ZS5jb20uY24gd3JvdGU6DQog77ye
+IEZyb206ICJ0YW5nLmp1bmh1aSIg77ycdGFuZy5qdW5odWlAenRlLmNvbS5jbu+8ng0KIO+8niAN
+CiDvvJ4gU2lnbmVkLW9mZi1ieTogdGFuZy5qdW5odWkg77ycdGFuZy5qdW5odWlAenRlLmNvbS5j
+bu+8ng0KIA0KIEFDSy4gT2J2aW91c2x5IHdlIGRvbid0IHdhbnQgdW5pbml0aWFsaXplZCBwb2lu
+dGVycy4gIEJ1dCBkbyB5b3Uga25vdw0KIHdoYXQgYXMgZ29pbmcgb24gd2l0aCB0aGUgZGV2aWNl
+IHRoYXQgY2F1c2VkIGl0IHRvIHJldHVybiBubyB0YXJnZXQ/IFdhcw0KIHRoZXJlIHNpbXBseSBu
+byB0YWJsZSBsb2FkZWQgZm9yIHRoZSBkZXZpY2U/IA0KIA0KIC1CZW4NCiANCiDvvJ4gDQog77ye
+IHNlZ21lbnQgZmF1bHR5IG9jY3VyZWQgaW4gZG1fZ2V0X3N0YXR1cygpLCB0aGUgY2FsbCB0cmFj
+ZSBpczoNCiDvvJ4gLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KIO+8niAoZ2RiKSBidA0KIO+8niAwICAweDAwMDAw
+MDMzOGVjMzI4YTUgaW4gcmFpc2UgKCkgZnJvbSAvbGliNjQvbGliYy5zby42DQog77yeIDEgIDB4
+MDAwMDAwMzM4ZWMzNDAwZCBpbiBhYm9ydCAoKSBmcm9tIC9saWI2NC9saWJjLnNvLjYNCiDvvJ4g
+MiAgMHgwMDAwMDAwMDAwNDA1OTZkIGluIHNpZ3NlZ3YgKCkNCiDvvJ4gMyAg77ycc2lnbmFsIGhh
+bmRsZXIgY2FsbGVk77yeDQog77yeIDQgIDB4MDAwMDAwMzM4ZWM0ODBhYyBpbiB2ZnByaW50ZiAo
+KSBmcm9tIC9saWI2NC9saWJjLnNvLjYNCiDvvJ4gNSAgMHgwMDAwMDAzMzhlYzZmOWQyIGluIHZz
+bnByaW50ZiAoKSBmcm9tIC9saWI2NC9saWJjLnNvLjYNCiDvvJ4gNiAgMHgwMDAwMDAzMzhlYzRm
+NGEzIGluIHNucHJpbnRmICgpIGZyb20gL2xpYjY0L2xpYmMuc28uNg0KIO+8niA3ICAweDAwMDA3
+ZjQzZmU2NmJiYjkgaW4gZG1fZ2V0X3N0YXR1cyAobmFtZT0weDdmNDNmMDAwMWViMCAic3BhdGhl
+IiwNCiDvvJ4gb3V0c3RhdHVzPe+8nHZhbHVlIG9wdGltaXplZCBvdXTvvJ4pIGF0IGRldm1hcHBl
+ci5jOjUyMQ0KIO+8niA4ICAweDAwMDA3ZjQzZmU2OGMwNTggaW4gdXBkYXRlX211bHRpcGF0aF9z
+dGF0dXMgKG1wcD0weDdmNDNmMDAwYWQ2MCwNCiDvvJ4gcGF0aHZlYz3vvJx2YWx1ZSBvcHRpbWl6
+ZWQgb3V077yeKSBhdCBzdHJ1Y3RzX3ZlYy5jOjQ2NQ0KIO+8niA5ICB1cGRhdGVfbXVsdGlwYXRo
+X3N0cmluZ3MgKG1wcD0weDdmNDNmMDAwYWQ2MCwgcGF0aHZlYz3vvJx2YWx1ZSBvcHRpbWl6ZWQN
+CiDvvJ4gb3V077yeKSBhdCBzdHJ1Y3RzX3ZlYy5jOjQ5NQ0KIO+8niAxMCAweDAwMDAwMDAwMDA0
+MDkwNTYgaW4gY2hlY2tfcGF0aCAoKQ0KIO+8niAxMSAweDAwMDAwMDAwMDA0MDljN2UgaW4gY2hl
+Y2tlcmxvb3AgKCkNCiDvvJ4gMTIgMHgwMDAwMDAzYjI3MjA3ODUxIGluIHN0YXJ0X3RocmVhZCAo
+KSBmcm9tIC9saWI2NC9saWJwdGhyZWFkLnNvLjANCiDvvJ4gMTMgMHgwMDAwMDAzMzhlY2U4OTBk
+IGluIGNsb25lICgpIGZyb20gL2xpYjY0L2xpYmMuc28uNg0KIO+8niAtLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0K
+IO+8niB3ZSBkZWJ1Z2VkIHRoZSBjb2RlLCBhbmQgZm91bmQgdGhhdCB0YXJnZXRzIGluZm9ybWF0
+aW9uIHN0b3JpbmcgaW4gdGhlDQog77yeIGxpc3QgZG10Le+8nmhlYWQgd2hpY2ggZmV0Y2hpbmcg
+ZnJvbSBrZXJuZWwgYnkgZXhlY3V0aW5nIGRtX3Rhc2tfcnVuKCkNCiDvvJ4gaXMgbnVsbC4NCiDv
+vJ4gLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0NCiDvvJ4gcmJ4ICAgICAgICAgICAgMHg3ZjQzYzQwMDBkNjAgICAx
+Mzk5MjkwMjc4NzQxNDQNCiDvvJ4gKGdkYikgcCAqKHN0cnVjdCBkbV90YXNrICopMHg3ZjQzYzQw
+MDBkNjANCiDvvJ4gJDMgPSB7dHlwZSA9IDEwLCBkZXZfbmFtZSA9IDB4N2Y0M2M0MDAwZDQwICJz
+cGF0aGUiLCBoZWFkID0gMHgwLCB0YWlsID0NCiDvvJ4gMHgwLCByZWFkX29ubHkgPSAwLCBldmVu
+dF9uciA9IDAsIG1ham9yID0gLTEsIG1pbm9yID0gLTEsDQog77yeICAgYWxsb3dfZGVmYXVsdF9t
+YWpvcl9mYWxsYmFjayA9IDEsIHVpZCA9IDAsIGdpZCA9IDAsIG1vZGUgPSAzODQsDQog77yeICAg
+cmVhZF9haGVhZCA9IDQyOTQ5NjcyOTUsIHJlYWRfYWhlYWRfZmxhZ3MgPSAwLCBkbWkgPSB7DQog
+77yeICAgICAgIHY0ID0gMHg3ZjQzYzQwMDExZTAsIHYxID0gMHg3ZjQzYzQwMDExZTB9LCBuZXdu
+YW1lID0gMHgwLCBtZXNzYWdlID0NCiDvvJ4gICAgICAgMHgwLCBnZW9tZXRyeSA9IDB4MCwgc2Vj
+dG9yID0gMCwgbm9fZmx1c2ggPSAwLA0KIO+8niAgICAgICAgIG5vX29wZW5fY291bnQgPSAxLCBz
+a2lwX2xvY2tmcyA9IDAsIHF1ZXJ5X2luYWN0aXZlX3RhYmxlID0gMCwNCiDvvJ4gCQkgc3VwcHJl
+c3NfaWRlbnRpY2FsX3JlbG9hZCA9IDAsIGV4aXN0aW5nX3RhYmxlX3NpemUgPSAwLA0KIO+8niAJ
+CSAgIGNvb2tpZV9zZXQgPSAwLCB1dWlkID0gMHgwfQ0KIO+8niAtLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KIO+8
+niBzaW5jZSBzdGF0dXMgaXMgbm90IGluaXRpb25lZCB0byBudWxsLCBzbyBhZnRlciBjYWxsaW5n
+DQog77yeIGRtX2dldF9uZXh0X3RhcmdldChkbXQsIG5leHQsICZzdGFydCwgJmxlbmd0aCwmdGFy
+Z2V0X3R5cGUsDQog77yeICZzdGF0dXMpLHN0YXR1cyBiZWNhbWluZyB3aWxkIHBvaW50ZXIsIHdo
+aWNoIGxlYWQgc25wcmludGYoKSBpbnRvIHRoZQ0KIO+8niBzaXR1YXRpb24gb2Ygc2VnbWVudCBm
+YXVsdHkuDQog77yeIC0tLQ0KIO+8niAgbGlibXVsdGlwYXRoL2Rldm1hcHBlci5jIHwgOCArKysr
+KystLQ0KIO+8niAgMSBmaWxlIGNoYW5nZWQsIDYgaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMo
+LSkNCiDvvJ4gDQog77yeIGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvZGV2bWFwcGVyLmMgYi9s
+aWJtdWx0aXBhdGgvZGV2bWFwcGVyLmMNCiDvvJ4gaW5kZXggNWViMTcxMy4uODlhYTVkYSAxMDA2
+NDQNCiDvvJ4gLS0tIGEvbGlibXVsdGlwYXRoL2Rldm1hcHBlci5jDQog77yeICsrKyBiL2xpYm11
+bHRpcGF0aC9kZXZtYXBwZXIuYw0KIO+8niBAQCAtNTM0LDggKzUzNCw4IEBAIGRtX2dldF9zdGF0
+dXMoY2hhciAqIG5hbWUsIGNoYXIgKiBvdXRzdGF0dXMpDQog77yeICAJCSBpbnQgciA9IDENCiDv
+vJ4gIAkJIHN0cnVjdCBkbV90YXNrICpkbXQNCiDvvJ4gIAkJIHVpbnQ2NF90IHN0YXJ0LCBsZW5n
+dGgNCiDvvJ4gLQkJIGNoYXIgKnRhcmdldF90eXBlDQog77yeIC0JCSBjaGFyICpzdGF0dXMNCiDv
+vJ4gKwkJIGNoYXIgKnRhcmdldF90eXBlID0gTlVMTA0KIO+8niArCQkgY2hhciAqc3RhdHVzID0g
+TlVMTA0KIO+8niAgDQog77yeICAJCSBpZiAoIShkbXQgPSBkbV90YXNrX2NyZWF0ZShETV9ERVZJ
+Q0VfU1RBVFVTKSkpDQog77yeICAJCSAJCSByZXR1cm4gMQ0KIO+8niBAQCAtNTUxLDYgKzU1MSwx
+MCBAQCBkbV9nZXRfc3RhdHVzKGNoYXIgKiBuYW1lLCBjaGFyICogb3V0c3RhdHVzKQ0KIO+8niAg
+CQkgLyogRmV0Y2ggMXN0IHRhcmdldCAqLw0KIO+8niAgCQkgZG1fZ2V0X25leHRfdGFyZ2V0KGRt
+dCwgTlVMTCwgJnN0YXJ0LCAmbGVuZ3RoLA0KIO+8niAgCQkgCQkgCQkgICAgJnRhcmdldF90eXBl
+LCAmc3RhdHVzKQ0KIO+8niArCQkgaWYgKCFzdGF0dXMpIHsNCiDvvJ4gKwkJIAkJIGNvbmRsb2co
+MiwgImdldCBudWxsIHN0YXR1cy4iKQ0KIO+8niArCQkgCQkgZ290byBvdXQNCiDvvJ4gKwkJIH0N
+CiDvvJ4gIA0KIO+8niAgCQkgaWYgKHNucHJpbnRmKG91dHN0YXR1cywgUEFSQU1TX1NJWkUsICIl
+cyIsIHN0YXR1cykg77ycPSBQQVJBTVNfU0laRSkNCiDvvJ4gIAkJIAkJIHIgPSAwDQog77yeIC0t
+IA0KIO+8niAyLjguMS53aW5kb3dzLjENCiANCiAtLQ0KIGRtLWRldmVsIG1haWxpbmcgbGlzdA0K
+IGRtLWRldmVsQHJlZGhhdC5jb20NCiBodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
+dGluZm8vZG0tZGV2ZWw=
+
+
+--=====_003_next=====
+Content-Transfer-Encoding: base64
+Content-Type: text/html ;
+	charset="UTF-8"
+
+PGRpdiBjbGFzcz0iemNvbnRlbnRSb3ciPiA8cD5IZWxsbyBCZW4sPC9wPjxwPjxicj48L3A+PHA+
+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTogMTNweDtmb250LWZhbWlseTogQXJpYWwsIHNhbnMtc2Vy
+aWYiPlRoaXMgYnVncyBvY2N1cnJlZCBpbiBvdXQgYXV0b21hdGljIHRlc3RpbmcgZW52aXJvbm1l
+bnQ8L3NwYW4+LDwvcD48cCBzdHlsZT0ibWFyZ2luLXRvcDo1cHg7bWFyZ2luLXJpZ2h0OjA7bWFy
+Z2luLWJvdHRvbTo1cHg7bWFyZ2luLWxlZnQ6IDA7bGluZS1oZWlnaHQ6MTlweCI+PHNwYW4gc3R5
+bGU9ImZvbnQtc2l6ZTogMTNweDtmb250LWZhbWlseTogQXJpYWwsIHNhbnMtc2VyaWYiPkkgdGhp
+bmsgaXQgaXMgdHJpZ2dlcmVkIGJ5ICJkbXNldHVwIHJlbW92ZSBtYXBzIiBjb21tYW5kIGJlY2F1
+c2UmbmJzcDs8L3NwYW4+PC9wPjxwIHN0eWxlPSJtYXJnaW4tdG9wOjVweDttYXJnaW4tcmlnaHQ6
+MDttYXJnaW4tYm90dG9tOjVweDttYXJnaW4tbGVmdDogMDtsaW5lLWhlaWdodDoxOXB4Ij48c3Bh
+biBzdHlsZT0iZm9udC1zaXplOiAxM3B4O2ZvbnQtZmFtaWx5OiBBcmlhbCwgc2Fucy1zZXJpZiI+
+dGhlcmUgYXJlIG1hbnkgdWV2ZW50IG1lc3NhZ2VzIHdoaWNoIGluZGljYXRpbmcgdGhhdDwvc3Bh
+bj48L3A+PHAgc3R5bGU9Im1hcmdpbi10b3A6NXB4O21hcmdpbi1yaWdodDowO21hcmdpbi1ib3R0
+b206NXB4O21hcmdpbi1sZWZ0OiAwO2xpbmUtaGVpZ2h0OjE5cHgiPjxzcGFuIHN0eWxlPSJmb250
+LXNpemU6IDEzcHg7Zm9udC1mYW1pbHk6IEFyaWFsLCBzYW5zLXNlcmlmIj5kbSBkZXZpY2UgaGF2
+ZSBiZWVuIHJlbW92ZWQgYmVmb3JlIHRoZSBzZWdtZW50IGZhdWx0IG9jY3VycmVkLjwvc3Bhbj48
+L3A+PHAgc3R5bGU9Im1hcmdpbi10b3A6NXB4O21hcmdpbi1yaWdodDowO21hcmdpbi1ib3R0b206
+NXB4O21hcmdpbi1sZWZ0OiAwO2xpbmUtaGVpZ2h0OjE5cHgiPjxzcGFuIHN0eWxlPSJmb250LXNp
+emU6IDEzcHg7Zm9udC1mYW1pbHk6IEFyaWFsLCBzYW5zLXNlcmlmIj48YnI+PC9zcGFuPjwvcD48
+cCBzdHlsZT0ibWFyZ2luOiA1cHggMHB4OyI+PGZvbnQgZmFjZT0iQXJpYWwsIHNhbnMtc2VyaWYi
+PjxzcGFuIHN0eWxlPSJmb250LXNpemU6IDEzcHg7IGxpbmUtaGVpZ2h0OiAxOS41cHg7Ij5DaGVy
+cnMsPC9zcGFuPjwvZm9udD48L3A+PHAgc3R5bGU9Im1hcmdpbjogNXB4IDBweDsiPjxmb250IGZh
+Y2U9IkFyaWFsLCBzYW5zLXNlcmlmIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOiAxM3B4OyBsaW5l
+LWhlaWdodDogMTkuNXB4OyI+VGFuZzwvc3Bhbj48L2ZvbnQ+PC9wPjxwPjxicj48L3A+PHA+PGJy
+PjwvcD48ZGl2PjxkaXYgY2xhc3M9InpoaXN0b3J5Um93IiBzdHlsZT0iZGlzcGxheTpibG9jayI+
+PGRpdiBpZD0iendyaXRlSGlzdG9yeUNvbnRhaW5lciI+PGRpdiBjbGFzcz0iY29udHJvbC1ncm91
+cCB6aGlzdG9yeVBhbmVsIj48ZGl2PjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTBweDtjb2xvcjoj
+NUY1RjVGO2ZvbnQtZmFtaWx5OnNhbnMtc2VyaWYiPuWPkeS7tuS6ujogCTwvc3Bhbj48c3BhbiBz
+dHlsZT0iZm9udC1zaXplOjEwcHg7Zm9udC1mYW1pbHk6c2Fucy1zZXJpZiI+IkJlbmphbWluIE1h
+cnppbnNraSIg77ycYm1hcnppbnNAcmVkaGF0LmNvbe+8njwvc3Bhbj48YnI+IDxzcGFuIHN0eWxl
+PSJmb250LXNpemU6MTBweDtjb2xvcjojNUY1RjVGO2ZvbnQtZmFtaWx5OnNhbnMtc2VyaWYiPuaU
+tuS7tuS6ujogCTwvc3Bhbj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwcHg7Zm9udC1mYW1pbHk6
+c2Fucy1zZXJpZiI+dGFuZy5qdW5odWlAenRlLmNvbS5jbiwgPC9zcGFuPjxicj4gPHNwYW4gc3R5
+bGU9ImZvbnQtc2l6ZToxMHB4O2NvbG9yOiM1RjVGNUY7Zm9udC1mYW1pbHk6c2Fucy1zZXJpZiI+
+5oqE6YCBOgk8L3NwYW4+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMHB4O2ZvbnQtZmFtaWx5OnNh
+bnMtc2VyaWYiPmRtLWRldmVsQHJlZGhhdC5jb20sIHpoYW5nLmthaTE2QHp0ZS5jb20uY248L3Nw
+YW4+PGJyPiA8c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwcHg7Y29sb3I6IzVGNUY1Rjtmb250LWZh
+bWlseTpzYW5zLXNlcmlmIj7ml6XmnJ86IAk8L3NwYW4+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTox
+MHB4O2ZvbnQtZmFtaWx5OnNhbnMtc2VyaWYiPjIwMTYtMTAtMTkgMDA6Mjk8L3NwYW4+PGJyPiA8
+c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwcHg7Y29sb3I6IzVGNUY1Rjtmb250LWZhbWlseTpzYW5z
+LXNlcmlmIj7kuLvpopg6CTwvc3Bhbj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwcHg7Zm9udC1m
+YW1pbHk6c2Fucy1zZXJpZiI+UmU6IFtkbS1kZXZlbF0gW1BBVENIIDEvM10gc2VnbWVudCBmYXVs
+dHkgb2NjdXJlZCBpbiBkbV9nZXRfc3RhdHVzKCk8L3NwYW4+PGJyPiA8c3BhbiBzdHlsZT0iZm9u
+dC1zaXplOjEwcHg7Y29sb3I6IzVGNUY1Rjtmb250LWZhbWlseTpzYW5zLXNlcmlmIj7lj5Hku7bk
+uro6CTwvc3Bhbj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwcHg7Zm9udC1mYW1pbHk6c2Fucy1z
+ZXJpZiI+ZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tPC9zcGFuPjxicj4gPGhyIHdpZHRoPSIx
+MDAlIiBzaXplPSIyIiBhbGlnbj0ibGVmdCIgbm9zaGFkZT0iIiBzdHlsZT0iY29sb3I6IzgwOTFB
+NTsgIj48YnI+IDxicj4gPGJyPiA8dHQ+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMnB4Ij5PbiBU
+dWUsIE9jdCAxOCwgMjAxNiBhdCAxMDo1MTowN0FNICswODAwLCB0YW5nLmp1bmh1aUB6dGUuY29t
+LmNuIHdyb3RlOjxicj4g77yeIEZyb206ICJ0YW5nLmp1bmh1aSIg77ycdGFuZy5qdW5odWlAenRl
+LmNvbS5jbu+8njxicj4g77yeIDxicj4g77yeIFNpZ25lZC1vZmYtYnk6IHRhbmcuanVuaHVpIO+8
+nHRhbmcuanVuaHVpQHp0ZS5jb20uY27vvJ48YnI+IDxicj4gQUNLLiBPYnZpb3VzbHkgd2UgZG9u
+J3Qgd2FudCB1bmluaXRpYWxpemVkIHBvaW50ZXJzLiAmbmJzcDtCdXQgZG8geW91IGtub3c8YnI+
+IHdoYXQgYXMgZ29pbmcgb24gd2l0aCB0aGUgZGV2aWNlIHRoYXQgY2F1c2VkIGl0IHRvIHJldHVy
+biBubyB0YXJnZXQ/IFdhczxicj4gdGhlcmUgc2ltcGx5IG5vIHRhYmxlIGxvYWRlZCBmb3IgdGhl
+IGRldmljZT8gPGJyPiA8YnI+IC1CZW48YnI+IDxicj4g77yeIDxicj4g77yeIHNlZ21lbnQgZmF1
+bHR5IG9jY3VyZWQgaW4gZG1fZ2V0X3N0YXR1cygpLCB0aGUgY2FsbCB0cmFjZSBpczo8YnI+IO+8
+niAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tPGJyPiDvvJ4gKGdkYikgYnQ8YnI+IO+8niAwICZuYnNwOzB4MDAwMDAw
+MzM4ZWMzMjhhNSBpbiByYWlzZSAoKSBmcm9tIC9saWI2NC9saWJjLnNvLjY8YnI+IO+8niAxICZu
+YnNwOzB4MDAwMDAwMzM4ZWMzNDAwZCBpbiBhYm9ydCAoKSBmcm9tIC9saWI2NC9saWJjLnNvLjY8
+YnI+IO+8niAyICZuYnNwOzB4MDAwMDAwMDAwMDQwNTk2ZCBpbiBzaWdzZWd2ICgpPGJyPiDvvJ4g
+MyAmbmJzcDvvvJxzaWduYWwgaGFuZGxlciBjYWxsZWTvvJ48YnI+IO+8niA0ICZuYnNwOzB4MDAw
+MDAwMzM4ZWM0ODBhYyBpbiB2ZnByaW50ZiAoKSBmcm9tIC9saWI2NC9saWJjLnNvLjY8YnI+IO+8
+niA1ICZuYnNwOzB4MDAwMDAwMzM4ZWM2ZjlkMiBpbiB2c25wcmludGYgKCkgZnJvbSAvbGliNjQv
+bGliYy5zby42PGJyPiDvvJ4gNiAmbmJzcDsweDAwMDAwMDMzOGVjNGY0YTMgaW4gc25wcmludGYg
+KCkgZnJvbSAvbGliNjQvbGliYy5zby42PGJyPiDvvJ4gNyAmbmJzcDsweDAwMDA3ZjQzZmU2NmJi
+YjkgaW4gZG1fZ2V0X3N0YXR1cyAobmFtZT0weDdmNDNmMDAwMWViMCAic3BhdGhlIiw8YnI+IO+8
+niBvdXRzdGF0dXM977ycdmFsdWUgb3B0aW1pemVkIG91dO+8nikgYXQgZGV2bWFwcGVyLmM6NTIx
+PGJyPiDvvJ4gOCAmbmJzcDsweDAwMDA3ZjQzZmU2OGMwNTggaW4gdXBkYXRlX211bHRpcGF0aF9z
+dGF0dXMgKG1wcD0weDdmNDNmMDAwYWQ2MCw8YnI+IO+8niBwYXRodmVjPe+8nHZhbHVlIG9wdGlt
+aXplZCBvdXTvvJ4pIGF0IHN0cnVjdHNfdmVjLmM6NDY1PGJyPiDvvJ4gOSAmbmJzcDt1cGRhdGVf
+bXVsdGlwYXRoX3N0cmluZ3MgKG1wcD0weDdmNDNmMDAwYWQ2MCwgcGF0aHZlYz3vvJx2YWx1ZSBv
+cHRpbWl6ZWQ8YnI+IO+8niBvdXTvvJ4pIGF0IHN0cnVjdHNfdmVjLmM6NDk1PGJyPiDvvJ4gMTAg
+MHgwMDAwMDAwMDAwNDA5MDU2IGluIGNoZWNrX3BhdGggKCk8YnI+IO+8niAxMSAweDAwMDAwMDAw
+MDA0MDljN2UgaW4gY2hlY2tlcmxvb3AgKCk8YnI+IO+8niAxMiAweDAwMDAwMDNiMjcyMDc4NTEg
+aW4gc3RhcnRfdGhyZWFkICgpIGZyb20gL2xpYjY0L2xpYnB0aHJlYWQuc28uMDxicj4g77yeIDEz
+IDB4MDAwMDAwMzM4ZWNlODkwZCBpbiBjbG9uZSAoKSBmcm9tIC9saWI2NC9saWJjLnNvLjY8YnI+
+IO+8niAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLTxicj4g77yeIHdlIGRlYnVnZWQgdGhlIGNvZGUsIGFuZCBmb3Vu
+ZCB0aGF0IHRhcmdldHMgaW5mb3JtYXRpb24gc3RvcmluZyBpbiB0aGU8YnI+IO+8niBsaXN0IGRt
+dC3vvJ5oZWFkIHdoaWNoIGZldGNoaW5nIGZyb20ga2VybmVsIGJ5IGV4ZWN1dGluZyBkbV90YXNr
+X3J1bigpPGJyPiDvvJ4gaXMgbnVsbC48YnI+IO+8niAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLTxicj4g77yeIHJi
+eCAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOzB4N2Y0M2M0MDAwZDYw
+ICZuYnNwOyAxMzk5MjkwMjc4NzQxNDQ8YnI+IO+8niAoZ2RiKSBwICooc3RydWN0IGRtX3Rhc2sg
+KikweDdmNDNjNDAwMGQ2MDxicj4g77yeICQzID0ge3R5cGUgPSAxMCwgZGV2X25hbWUgPSAweDdm
+NDNjNDAwMGQ0MCAic3BhdGhlIiwgaGVhZCA9IDB4MCwgdGFpbCA9PGJyPiDvvJ4gMHgwLCByZWFk
+X29ubHkgPSAwLCBldmVudF9uciA9IDAsIG1ham9yID0gLTEsIG1pbm9yID0gLTEsPGJyPiDvvJ4g
+Jm5ic3A7IGFsbG93X2RlZmF1bHRfbWFqb3JfZmFsbGJhY2sgPSAxLCB1aWQgPSAwLCBnaWQgPSAw
+LCBtb2RlID0gMzg0LDxicj4g77yeICZuYnNwOyByZWFkX2FoZWFkID0gNDI5NDk2NzI5NSwgcmVh
+ZF9haGVhZF9mbGFncyA9IDAsIGRtaSA9IHs8YnI+IO+8niAmbmJzcDsgJm5ic3A7ICZuYnNwOyB2
+NCA9IDB4N2Y0M2M0MDAxMWUwLCB2MSA9IDB4N2Y0M2M0MDAxMWUwfSwgbmV3bmFtZSA9IDB4MCwg
+bWVzc2FnZSA9PGJyPiDvvJ4gJm5ic3A7ICZuYnNwOyAmbmJzcDsgMHgwLCBnZW9tZXRyeSA9IDB4
+MCwgc2VjdG9yID0gMCwgbm9fZmx1c2ggPSAwLDxicj4g77yeICZuYnNwOyAmbmJzcDsgJm5ic3A7
+ICZuYnNwOyBub19vcGVuX2NvdW50ID0gMSwgc2tpcF9sb2NrZnMgPSAwLCBxdWVyeV9pbmFjdGl2
+ZV90YWJsZSA9IDAsPGJyPiDvvJ4gCQkgc3VwcHJlc3NfaWRlbnRpY2FsX3JlbG9hZCA9IDAsIGV4
+aXN0aW5nX3RhYmxlX3NpemUgPSAwLDxicj4g77yeIAkJICZuYnNwOyBjb29raWVfc2V0ID0gMCwg
+dXVpZCA9IDB4MH08YnI+IO+8niAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLTxicj4g77yeIHNpbmNlIHN0YXR1cyBp
+cyBub3QgaW5pdGlvbmVkIHRvIG51bGwsIHNvIGFmdGVyIGNhbGxpbmc8YnI+IO+8niBkbV9nZXRf
+bmV4dF90YXJnZXQoZG10LCBuZXh0LCAmYW1wO3N0YXJ0LCAmYW1wO2xlbmd0aCwmYW1wO3Rhcmdl
+dF90eXBlLDxicj4g77yeICZhbXA7c3RhdHVzKSxzdGF0dXMgYmVjYW1pbmcgd2lsZCBwb2ludGVy
+LCB3aGljaCBsZWFkIHNucHJpbnRmKCkgaW50byB0aGU8YnI+IO+8niBzaXR1YXRpb24gb2Ygc2Vn
+bWVudCBmYXVsdHkuPGJyPiDvvJ4gLS0tPGJyPiDvvJ4gJm5ic3A7bGlibXVsdGlwYXRoL2Rldm1h
+cHBlci5jIHwgOCArKysrKystLTxicj4g77yeICZuYnNwOzEgZmlsZSBjaGFuZ2VkLCA2IGluc2Vy
+dGlvbnMoKyksIDIgZGVsZXRpb25zKC0pPGJyPiDvvJ4gPGJyPiDvvJ4gZGlmZiAtLWdpdCBhL2xp
+Ym11bHRpcGF0aC9kZXZtYXBwZXIuYyBiL2xpYm11bHRpcGF0aC9kZXZtYXBwZXIuYzxicj4g77ye
+IGluZGV4IDVlYjE3MTMuLjg5YWE1ZGEgMTAwNjQ0PGJyPiDvvJ4gLS0tIGEvbGlibXVsdGlwYXRo
+L2Rldm1hcHBlci5jPGJyPiDvvJ4gKysrIGIvbGlibXVsdGlwYXRoL2Rldm1hcHBlci5jPGJyPiDv
+vJ4gQEAgLTUzNCw4ICs1MzQsOCBAQCBkbV9nZXRfc3RhdHVzKGNoYXIgKiBuYW1lLCBjaGFyICog
+b3V0c3RhdHVzKTxicj4g77yeICZuYnNwOwkJIGludCByID0gMTs8YnI+IO+8niAmbmJzcDsJCSBz
+dHJ1Y3QgZG1fdGFzayAqZG10Ozxicj4g77yeICZuYnNwOwkJIHVpbnQ2NF90IHN0YXJ0LCBsZW5n
+dGg7PGJyPiDvvJ4gLQkJIGNoYXIgKnRhcmdldF90eXBlOzxicj4g77yeIC0JCSBjaGFyICpzdGF0
+dXM7PGJyPiDvvJ4gKwkJIGNoYXIgKnRhcmdldF90eXBlID0gTlVMTDs8YnI+IO+8niArCQkgY2hh
+ciAqc3RhdHVzID0gTlVMTDs8YnI+IO+8niAmbmJzcDs8YnI+IO+8niAmbmJzcDsJCSBpZiAoIShk
+bXQgPSBkbV90YXNrX2NyZWF0ZShETV9ERVZJQ0VfU1RBVFVTKSkpPGJyPiDvvJ4gJm5ic3A7CQkg
+CQkgcmV0dXJuIDE7PGJyPiDvvJ4gQEAgLTU1MSw2ICs1NTEsMTAgQEAgZG1fZ2V0X3N0YXR1cyhj
+aGFyICogbmFtZSwgY2hhciAqIG91dHN0YXR1cyk8YnI+IO+8niAmbmJzcDsJCSAvKiBGZXRjaCAx
+c3QgdGFyZ2V0ICovPGJyPiDvvJ4gJm5ic3A7CQkgZG1fZ2V0X25leHRfdGFyZ2V0KGRtdCwgTlVM
+TCwgJmFtcDtzdGFydCwgJmFtcDtsZW5ndGgsPGJyPiDvvJ4gJm5ic3A7CQkgCQkgCQkgJm5ic3A7
+ICZuYnNwOyZhbXA7dGFyZ2V0X3R5cGUsICZhbXA7c3RhdHVzKTs8YnI+IO+8niArCQkgaWYgKCFz
+dGF0dXMpIHs8YnI+IO+8niArCQkgCQkgY29uZGxvZygyLCAiZ2V0IG51bGwgc3RhdHVzLiIpOzxi
+cj4g77yeICsJCSAJCSBnb3RvIG91dDs8YnI+IO+8niArCQkgfTxicj4g77yeICZuYnNwOzxicj4g
+77yeICZuYnNwOwkJIGlmIChzbnByaW50ZihvdXRzdGF0dXMsIFBBUkFNU19TSVpFLCAiJXMiLCBz
+dGF0dXMpIO+8nD0gUEFSQU1TX1NJWkUpPGJyPiDvvJ4gJm5ic3A7CQkgCQkgciA9IDA7PGJyPiDv
+vJ4gLS0gPGJyPiDvvJ4gMi44LjEud2luZG93cy4xPGJyPiA8YnI+IC0tPGJyPiBkbS1kZXZlbCBt
+YWlsaW5nIGxpc3Q8YnI+IGRtLWRldmVsQHJlZGhhdC5jb208YnI+IDwvc3Bhbj48L3R0Pjx0dD48
+c3BhbiBzdHlsZT0iZm9udC1zaXplOjEycHgiPjxhIGhyZWY9Imh0dHBzOi8vd3d3LnJlZGhhdC5j
+b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbCIgdGFyZ2V0PSJfYmxhbmsiPmh0dHBzOi8vd3d3
+LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbDwvYT48L3NwYW4+PC90dD48dHQ+
+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMnB4Ij48YnI+IDwvc3Bhbj48L3R0PjwvZGl2PjxwPjxi
+cj48L3A+PC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+PHA+PGJyPjwvcD4gPC9kaXY+
+
+
+--=====_003_next=====--
+
+--=====_002_next=====--
+
+--=====_001_next=====
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============8538200667079296603==--
+--=====_001_next=====--
