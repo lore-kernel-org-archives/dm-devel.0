@@ -1,8 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add DDN and rebranded arrays to
-	hwtable
-Date: Wed, 19 Oct 2016 23:55:31 +0200
-Message-ID: <20161019215531.3199-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add Promise arrays to hwtable
+Date: Thu, 20 Oct 2016 00:43:40 +0200
+Message-ID: <20161019224340.5143-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,69 +18,47 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
+and blacklist "VTrak V-LUN" also for ALUA.
+
+Based on info from manufacturer:
+https://downloadmirror.intel.com/18617/eng/RHEL6_MPIO_Setup.pdf
+http://www.promise.com/media_bank/Download%20Bank/Utility/SUG_v0.85.pdf
+
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 32 ++++++++++++++++++++++++++++++++
- 1 file changed, 32 insertions(+)
+ libmultipath/hwtable.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index e34032d..7f499db 100644
+index 7f499db..223dc08 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -163,6 +163,20 @@ static struct hwentry default_hw[] = {
- 		.product       = "SAN DataDirector",
+@@ -827,6 +827,7 @@ static struct hwentry default_hw[] = {
+ 	{
+ 		.vendor	       = "(Intel|INTEL)",
+ 		.product       = "Multi-Flex",
++		.bl_product    = "VTrak V-LUN",
+ 		.hwhandler     = "1 alua",
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+@@ -1002,6 +1003,16 @@ static struct hwentry default_hw[] = {
  		.pgpolicy      = MULTIBUS,
+ 		.no_path_retry = 30,
  	},
++	/*
++	 * Promise Technology
++	 */
 +	{
-+		.vendor        = "DDN",
-+		.product       = "^EF3010",
++		.vendor        = "Promise",
++		.product       = "VTrak",
++		.bl_product    = "VTrak V-LUN",
 +		.pgpolicy      = MULTIBUS,
 +		.no_path_retry = 30,
 +	},
-+	{
-+		.vendor        = "DDN",
-+		.product       = "^(EF3015|S2A|SFA)",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.prio_name     = PRIO_ALUA,
-+		.no_path_retry = 30,
-+	},
+ #if 0
  	/*
- 	 * Dell EMC
- 	 */
-@@ -532,6 +546,15 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_FAIL,
- 		.pgpolicy      = MULTIBUS,
- 	},
-+	{
-+		/* DDN */
-+		.vendor        = "IBM",
-+		.product       = "^(DCS9900|2851)",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.prio_name     = PRIO_ALUA,
-+		.no_path_retry = 30,
-+	},
- 		/*
- 		 * IBM Power Virtual SCSI Devices
- 		 *
-@@ -654,6 +677,15 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
- 	},
-+	{
-+		/* DDN */
-+		.vendor        = "SGI",
-+		.product       = "^DD[46]A-",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.prio_name     = PRIO_ALUA,
-+		.no_path_retry = 30,
-+	},
- 	/*
- 	 * NEC
- 	 */
+ 	 * Copy this TEMPLATE to add new hardware.
 -- 
 2.10.1
