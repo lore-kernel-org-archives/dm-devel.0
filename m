@@ -1,11 +1,15 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add Infortrend arrays to hwtable
-Date: Thu, 20 Oct 2016 18:52:57 +0200
-Message-ID: <20161020165258.6730-1-xose.vazquez@gmail.com>
+Subject: Re: [PATCH 2/2] multipathd: Avoid that a deadlock is
+ triggered sporadically during shutdown
+Date: Fri, 21 Oct 2016 00:28:19 +0200
+Message-ID: <4b86f060-4232-1483-8312-a61fcc5b3e95@gmail.com>
+References: <a7920385-9f76-d029-48dd-31ebcb06a212@sandisk.com>
+	<5832949e-aa89-ebf2-11e1-67bbb4d050bf@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <5832949e-aa89-ebf2-11e1-67bbb4d050bf@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,41 +19,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Based on info from manufacturer:
-http://infortrend.com/ImageLoader/LoadDoc/385/True/True
-
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index d67b217..98da295 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1013,6 +1013,18 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
- 		.no_path_retry = 30,
- 	},
-+	/*
-+	 * Infortrend Technology
-+	 */
-+	{
-+		/* EonStor / ESVA */
-+		.vendor        = "^IFT",
-+		.product       = ".*",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.prio_name     = PRIO_ALUA,
-+		.no_path_retry = 30,
-+	},
- #if 0
- 	/*
- 	 * Copy this TEMPLATE to add new hardware.
--- 
-2.10.1
+T24gMTAvMTQvMjAxNiAwNTozNSBQTSwgQmFydCBWYW4gQXNzY2hlIHdyb3RlOgoKPiBwdGhyZWFk
+X2NvbmRfd2FpdCgpIGlzIGEgdGhyZWFkIGNhbmNlbGxhdGlvbiBwb2ludC4gSWYgYSB0aHJlYWQg
+dGhhdAo+IGlzIHdhaXRpbmcgaW4gcHRocmVhZF9jb25kX3dhaXQoKSBpcyBjYW5jZWxlZCBpdCBp
+cyBwb3NzaWJsZSB0aGF0IHRoZQo+IG11dGV4IGlzIHJlLWFjcXVpcmVkIGJlZm9yZSB0aGUgZmly
+c3QgY2FuY2VsbGF0aW9uIGNsZWFudXAgaGFuZGxlcgo+IGlzIGNhbGxlZC4gSW4gdGhpcyBjYXNl
+IHRoZSBjbGVhbnVwIGhhbmRsZXIgaXMgdWV2cV9zdG9wKCkgYW5kIHRoYXQKPiBmdW5jdGlvbiBs
+b2NrcyB1ZXZxX2xvY2suIEF2b2lkIHRoYXQgY2FsbGluZyB1ZXZxX3N0b3AoKSByZXN1bHRzIGlu
+Cj4gYSBkZWFkbG9jayBkdWUgdG8gYW4gYXR0ZW1wdCB0byBsb2NrIGEgbm9uLXJlY3Vyc2l2ZSBt
+dXRleCByZWN1cnNpdmVseS4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBCYXJ0IFZhbiBBc3NjaGUgPGJh
+cnQudmFuYXNzY2hlQHNhbmRpc2suY29tPgo+IC0tLQo+ICBsaWJtdWx0aXBhdGgvdWV2ZW50LmMg
+fCAyICstCj4gIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlvbigrKSwgMSBkZWxldGlvbigtKQo+
+IAo+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvdWV2ZW50LmMgYi9saWJtdWx0aXBhdGgvdWV2
+ZW50LmMKPiBpbmRleCA2MjQ3ODk4Li44NWZkMmZiIDEwMDY0NAo+IC0tLSBhL2xpYm11bHRpcGF0
+aC91ZXZlbnQuYwo+ICsrKyBiL2xpYm11bHRpcGF0aC91ZXZlbnQuYwo+IEBAIC01Miw3ICs1Miw3
+IEBAIHR5cGVkZWYgaW50ICh1ZXZfdHJpZ2dlcikoc3RydWN0IHVldmVudCAqLCB2b2lkICogdHJp
+Z2dlcl9kYXRhKTsKPiAgCj4gIHB0aHJlYWRfdCB1ZXZxX3RocjsKPiAgTElTVF9IRUFEKHVldnEp
+Owo+IC1wdGhyZWFkX211dGV4X3QgdWV2cV9sb2NrID0gUFRIUkVBRF9NVVRFWF9JTklUSUFMSVpF
+UjsKPiArcHRocmVhZF9tdXRleF90IHVldnFfbG9jayA9IFBUSFJFQURfUkVDVVJTSVZFX01VVEVY
+X0lOSVRJQUxJWkVSX05QOwo+ICBwdGhyZWFkX211dGV4X3QgKnVldnFfbG9ja3AgPSAmdWV2cV9s
+b2NrOwo+ICBwdGhyZWFkX2NvbmRfdCB1ZXZfY29uZCA9IFBUSFJFQURfQ09ORF9JTklUSUFMSVpF
+UjsKPiAgcHRocmVhZF9jb25kX3QgKnVldl9jb25kcCA9ICZ1ZXZfY29uZDsKPiAKClBUSFJFQURf
+UkVDVVJTSVZFX01VVEVYX0lOSVRJQUxJWkVSX05QIGlzIG5vdCBkZWZpbmVkIGluIFBPU0lYLgoK
+VGhpcyBpcyBnb2luZyB0byBiZSBwcm9ibGVtYXRpYyBpbiBtdXNsLWxpYmMgYmFzZWQgZGlzdHJp
+YnV0aW9uczoKaHR0cDovL3dpa2kubXVzbC1saWJjLm9yZy93aWtpL1Byb2plY3RzX3VzaW5nX211
+c2wjRGlzdHJpYnV0aW9ucwoKCn4vbXVzbC1nY2MgLU8yIC1nIC1waXBlIC1XYWxsIC1XZXh0cmEg
+LVdmb3JtYXQ9MiAtV25vLXNpZ24tY29tcGFyZSAtV25vLXVudXNlZC1wYXJhbWV0ZXIgLVduby1j
+bG9iYmVyZWQgLVdwLC1EX0ZPUlRJRllfU09VUkNFPTIgLWZzdGFjay1wcm90ZWN0b3IgLS1wYXJh
+bT1zc3AtYnVmZmVyLXNpemU9NCAtZlBJQyAtRExJQl9TVFJJTkc9XCJsaWI2NFwiCi1EUlVOX0RJ
+Uj1cInJ1blwiIC1JLi4vbGlibXBhdGhjbWQgLURVU0VfU1lTVEVNRD0yMjkgLURMSUJETV9BUElf
+RkxVU0ggLURfR05VX1NPVVJDRSAtRExJQkRNX0FQSV9DT09LSUUgLURMSUJVREVWX0FQSV9SRUNW
+QlVGIC1ETElCRE1fQVBJX0RFRkVSUkVEIC1jIC1vIHVldmVudC5vIHVldmVudC5jCnVldmVudC5j
+OjU1OjI5OiBlcnJvcjogw6LigqzLnFBUSFJFQURfUkVDVVJTSVZFX01VVEVYX0lOSVRJQUxJWkVS
+X05Qw6LigqzihKIgdW5kZWNsYXJlZCBoZXJlIChub3QgaW4gYSBmdW5jdGlvbikKIHB0aHJlYWRf
+bXV0ZXhfdCB1ZXZxX2xvY2sgPSBQVEhSRUFEX1JFQ1VSU0lWRV9NVVRFWF9JTklUSUFMSVpFUl9O
+UDsKICAgICAgICAgICAgICAgICAgICAgICAgICAgICBefn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+
+fn5+fn5+fn5+fn5+fgouLi9NYWtlZmlsZS5pbmM6NzQ6IHJlY2lwZSBmb3IgdGFyZ2V0ICd1ZXZl
+bnQubycgZmFpbGVkCm1ha2VbMV06IFt1ZXZlbnQub10gRXJyb3IgMSAoaWdub3JlZCkKCi0tCmRt
+LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
+dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
