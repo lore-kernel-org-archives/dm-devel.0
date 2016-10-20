@@ -1,16 +1,12 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH 2/2] multipathd: Avoid that a deadlock is
- triggered sporadically during shutdown
-Date: Thu, 20 Oct 2016 15:47:53 -0700
-Message-ID: <5816570e-9c96-4845-6f51-1c19e63681a7@sandisk.com>
-References: <a7920385-9f76-d029-48dd-31ebcb06a212@sandisk.com>
-	<5832949e-aa89-ebf2-11e1-67bbb4d050bf@sandisk.com>
-	<4b86f060-4232-1483-8312-a61fcc5b3e95@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: replace pthread_yield with
+	sched_yield
+Date: Fri, 21 Oct 2016 01:16:20 +0200
+Message-ID: <20161020231620.636-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4b86f060-4232-1483-8312-a61fcc5b3e95@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,49 +16,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>, Leonardo Arena <rnalrd@alpinelinux.org>, Natanael Copa <ncopa@alpinelinux.org>
 List-Id: dm-devel.ids
 
-T24gMTAvMjAvMjAxNiAwMzoyOCBQTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+IE9uIDEw
-LzE0LzIwMTYgMDU6MzUgUE0sIEJhcnQgVmFuIEFzc2NoZSB3cm90ZToKPgo+PiBwdGhyZWFkX2Nv
-bmRfd2FpdCgpIGlzIGEgdGhyZWFkIGNhbmNlbGxhdGlvbiBwb2ludC4gSWYgYSB0aHJlYWQgdGhh
-dAo+PiBpcyB3YWl0aW5nIGluIHB0aHJlYWRfY29uZF93YWl0KCkgaXMgY2FuY2VsZWQgaXQgaXMg
-cG9zc2libGUgdGhhdCB0aGUKPj4gbXV0ZXggaXMgcmUtYWNxdWlyZWQgYmVmb3JlIHRoZSBmaXJz
-dCBjYW5jZWxsYXRpb24gY2xlYW51cCBoYW5kbGVyCj4+IGlzIGNhbGxlZC4gSW4gdGhpcyBjYXNl
-IHRoZSBjbGVhbnVwIGhhbmRsZXIgaXMgdWV2cV9zdG9wKCkgYW5kIHRoYXQKPj4gZnVuY3Rpb24g
-bG9ja3MgdWV2cV9sb2NrLiBBdm9pZCB0aGF0IGNhbGxpbmcgdWV2cV9zdG9wKCkgcmVzdWx0cyBp
-bgo+PiBhIGRlYWRsb2NrIGR1ZSB0byBhbiBhdHRlbXB0IHRvIGxvY2sgYSBub24tcmVjdXJzaXZl
-IG11dGV4IHJlY3Vyc2l2ZWx5Lgo+Pgo+PiBTaWduZWQtb2ZmLWJ5OiBCYXJ0IFZhbiBBc3NjaGUg
-PGJhcnQudmFuYXNzY2hlQHNhbmRpc2suY29tPgo+PiAtLS0KPj4gIGxpYm11bHRpcGF0aC91ZXZl
-bnQuYyB8IDIgKy0KPj4gIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlvbigrKSwgMSBkZWxldGlv
-bigtKQo+Pgo+PiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL3VldmVudC5jIGIvbGlibXVsdGlw
-YXRoL3VldmVudC5jCj4+IGluZGV4IDYyNDc4OTguLjg1ZmQyZmIgMTAwNjQ0Cj4+IC0tLSBhL2xp
-Ym11bHRpcGF0aC91ZXZlbnQuYwo+PiArKysgYi9saWJtdWx0aXBhdGgvdWV2ZW50LmMKPj4gQEAg
-LTUyLDcgKzUyLDcgQEAgdHlwZWRlZiBpbnQgKHVldl90cmlnZ2VyKShzdHJ1Y3QgdWV2ZW50ICos
-IHZvaWQgKiB0cmlnZ2VyX2RhdGEpOwo+Pgo+PiAgcHRocmVhZF90IHVldnFfdGhyOwo+PiAgTElT
-VF9IRUFEKHVldnEpOwo+PiAtcHRocmVhZF9tdXRleF90IHVldnFfbG9jayA9IFBUSFJFQURfTVVU
-RVhfSU5JVElBTElaRVI7Cj4+ICtwdGhyZWFkX211dGV4X3QgdWV2cV9sb2NrID0gUFRIUkVBRF9S
-RUNVUlNJVkVfTVVURVhfSU5JVElBTElaRVJfTlA7Cj4+ICBwdGhyZWFkX211dGV4X3QgKnVldnFf
-bG9ja3AgPSAmdWV2cV9sb2NrOwo+PiAgcHRocmVhZF9jb25kX3QgdWV2X2NvbmQgPSBQVEhSRUFE
-X0NPTkRfSU5JVElBTElaRVI7Cj4+ICBwdGhyZWFkX2NvbmRfdCAqdWV2X2NvbmRwID0gJnVldl9j
-b25kOwo+Pgo+Cj4gUFRIUkVBRF9SRUNVUlNJVkVfTVVURVhfSU5JVElBTElaRVJfTlAgaXMgbm90
-IGRlZmluZWQgaW4gUE9TSVguCj4KPiBUaGlzIGlzIGdvaW5nIHRvIGJlIHByb2JsZW1hdGljIGlu
-IG11c2wtbGliYyBiYXNlZCBkaXN0cmlidXRpb25zOgo+IGh0dHA6Ly93aWtpLm11c2wtbGliYy5v
-cmcvd2lraS9Qcm9qZWN0c191c2luZ19tdXNsI0Rpc3RyaWJ1dGlvbnMKPgo+Cj4gfi9tdXNsLWdj
-YyAtTzIgLWcgLXBpcGUgLVdhbGwgLVdleHRyYSAtV2Zvcm1hdD0yIC1Xbm8tc2lnbi1jb21wYXJl
-IC1Xbm8tdW51c2VkLXBhcmFtZXRlciAtV25vLWNsb2JiZXJlZCAtV3AsLURfRk9SVElGWV9TT1VS
-Q0U9MiAtZnN0YWNrLXByb3RlY3RvciAtLXBhcmFtPXNzcC1idWZmZXItc2l6ZT00IC1mUElDIC1E
-TElCX1NUUklORz1cImxpYjY0XCIKPiAtRFJVTl9ESVI9XCJydW5cIiAtSS4uL2xpYm1wYXRoY21k
-IC1EVVNFX1NZU1RFTUQ9MjI5IC1ETElCRE1fQVBJX0ZMVVNIIC1EX0dOVV9TT1VSQ0UgLURMSUJE
-TV9BUElfQ09PS0lFIC1ETElCVURFVl9BUElfUkVDVkJVRiAtRExJQkRNX0FQSV9ERUZFUlJFRCAt
-YyAtbyB1ZXZlbnQubyB1ZXZlbnQuYwo+IHVldmVudC5jOjU1OjI5OiBlcnJvcjogw6LigqzLnFBU
-SFJFQURfUkVDVVJTSVZFX01VVEVYX0lOSVRJQUxJWkVSX05Qw6LigqzihKIgdW5kZWNsYXJlZCBo
-ZXJlIChub3QgaW4gYSBmdW5jdGlvbikKPiAgcHRocmVhZF9tdXRleF90IHVldnFfbG9jayA9IFBU
-SFJFQURfUkVDVVJTSVZFX01VVEVYX0lOSVRJQUxJWkVSX05QOwo+ICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgXn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn4KPiAuLi9N
-YWtlZmlsZS5pbmM6NzQ6IHJlY2lwZSBmb3IgdGFyZ2V0ICd1ZXZlbnQubycgZmFpbGVkCj4gbWFr
-ZVsxXTogW3VldmVudC5vXSBFcnJvciAxIChpZ25vcmVkKQoKSGVsbG8gWG9zZSwKClRoYW5rcyBm
-b3IgcmVwb3J0aW5nIHRoaXMuIEkgd2lsbCByZXdvcmsgdGhhdCBwYXRjaC4KCkJhcnQuCgotLQpk
-bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+pthread_yield is not standard.
+It was added in 6e14b7b
+
+Please review.
+
+Patch from Alpine Linux: http://git.alpinelinux.org/cgit/aports/plain/main/multipath-tools/fix-yield.patch
+
+Cc: Natanael Copa <ncopa@alpinelinux.org>
+Cc: Leonardo Arena <rnalrd@alpinelinux.org>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ multipathd/uxlsnr.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index daaaa99..dfef03e 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -182,7 +182,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 				pthread_mutex_unlock(&client_lock);
+ 				condlog(0, "%s: failed to realloc %d poll fds",
+ 					"uxsock", 1 + num_clients);
+-				pthread_yield();
++				sched_yield();
+ 				continue;
+ 			}
+ 			old_clients = num_clients;
+-- 
+2.10.1
