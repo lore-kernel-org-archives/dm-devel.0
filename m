@@ -1,8 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: DF arrays were sold also under
-	HP mark
-Date: Thu, 20 Oct 2016 15:21:41 +0200
-Message-ID: <20161020132141.5111-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add Infortrend arrays to hwtable
+Date: Thu, 20 Oct 2016 18:52:57 +0200
+Message-ID: <20161020165258.6730-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,29 +15,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Matthias Rudolph <matthias.rudolph@hds.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Cc: Matthias Rudolph <matthias.rudolph@hds.com>
+Based on info from manufacturer:
+http://infortrend.com/ImageLoader/LoadDoc/385/True/True
+
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/hwtable.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 223dc08..d67b217 100644
+index d67b217..98da295 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -304,7 +304,7 @@ static struct hwentry default_hw[] = {
+@@ -1013,6 +1013,18 @@ static struct hwentry default_hw[] = {
+ 		.pgpolicy      = MULTIBUS,
+ 		.no_path_retry = 30,
  	},
- 	{
- 		/* AMS 2000 and HUS 100 families */
--		.vendor        = "HITACHI",
-+		.vendor        = "(HITACHI|HP)",
- 		.product       = "^DF",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 		.pgpolicy      = GROUP_BY_PRIO,
++	/*
++	 * Infortrend Technology
++	 */
++	{
++		/* EonStor / ESVA */
++		.vendor        = "^IFT",
++		.product       = ".*",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.prio_name     = PRIO_ALUA,
++		.no_path_retry = 30,
++	},
+ #if 0
+ 	/*
+ 	 * Copy this TEMPLATE to add new hardware.
 -- 
 2.10.1
