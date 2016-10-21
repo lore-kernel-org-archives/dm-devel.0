@@ -1,8 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 09/15] libmultipath/checkers/rbd: Use unsigned
- int for one-bit bitfields
-Date: Fri, 21 Oct 2016 11:44:31 -0700
-Message-ID: <3fea16e1-1c74-4e43-a108-329e7d03d858@sandisk.com>
+Subject: [PATCH 10/15] libmultipath: Move the definition of a
+ global variable from .h to .c
+Date: Fri, 21 Oct 2016 11:44:58 -0700
+Message-ID: <969ce5d1-2b69-7ddf-b8e0-ba5bee08d8b3@sandisk.com>
 References: <72bd7a6a-7fb9-5a2c-b22d-031d8feb01b0@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,25 +22,40 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Avoid that this bitfield is sign-extended. Detected by sparse.
+This change does not change the semantics of the code but makes
+it easier for sparse to analyze the source code.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmultipath/checkers/rbd.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/log.c | 2 ++
+ libmultipath/log.h | 2 +-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
-index f60914e..745e240 100644
---- a/libmultipath/checkers/rbd.c
-+++ b/libmultipath/checkers/rbd.c
-@@ -46,7 +46,7 @@ struct rbd_checker_context {
- 	char *username;
- 	int remapped;
- 	int blacklisted;
--	int lock_on_read:1;
-+	unsigned lock_on_read:1;
+diff --git a/libmultipath/log.c b/libmultipath/log.c
+index ab92e2a..debd36d 100644
+--- a/libmultipath/log.c
++++ b/libmultipath/log.c
+@@ -15,6 +15,8 @@
  
- 	rados_t cluster;
+ #define ALIGN(len, s) (((len)+(s)-1)/(s)*(s))
  
++struct logarea* la;
++
+ #if LOGDBG
+ static void dump_logarea (void)
+ {
+diff --git a/libmultipath/log.h b/libmultipath/log.h
+index 984f047..6551b5c 100644
+--- a/libmultipath/log.h
++++ b/libmultipath/log.h
+@@ -29,7 +29,7 @@ struct logarea {
+ 	char * buff;
+ };
+ 
+-struct logarea * la;
++extern struct logarea* la;
+ 
+ int log_init (char * progname, int size);
+ void log_close (void);
 -- 
 2.10.1
