@@ -1,7 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 05/15] libmultipath: Fix POLLIN checks
-Date: Fri, 21 Oct 2016 11:43:11 -0700
-Message-ID: <4abc7f19-0f90-6928-09ef-1379e25debe7@sandisk.com>
+Subject: [PATCH 06/15] libmultipath: Remove an unused function
+Date: Fri, 21 Oct 2016 11:43:31 -0700
+Message-ID: <1fcae43b-f64e-7001-ef0d-68ec0585c81d@sandisk.com>
 References: <72bd7a6a-7fb9-5a2c-b22d-031d8feb01b0@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,42 +21,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Instead of testing (pfd.revents == 0) & 1, test whether
-(pfd.revents & 1) == 0.
-
-This has been detected by the sparse static analyzer.
+The function snprint_config() is not used. Hence remove it.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmpathcmd/mpath_cmd.c | 2 +-
- libmultipath/uxsock.c   | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/print.c | 6 ------
+ 1 file changed, 6 deletions(-)
 
-diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
-index 667a2dc..d9c5790 100644
---- a/libmpathcmd/mpath_cmd.c
-+++ b/libmpathcmd/mpath_cmd.c
-@@ -31,7 +31,7 @@ static ssize_t read_all(int fd, void *buf, size_t len, unsigned int timeout)
- 			if (errno == EINTR)
- 				continue;
- 			return -1;
--		} else if (!pfd.revents & POLLIN)
-+		} else if (!(pfd.revents & POLLIN))
- 			continue;
- 		n = recv(fd, buf, len, 0);
- 		if (n < 0) {
-diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
-index 880257f..b158a56 100644
---- a/libmultipath/uxsock.c
-+++ b/libmultipath/uxsock.c
-@@ -116,7 +116,7 @@ ssize_t read_all(int fd, void *buf, size_t len, unsigned int timeout)
- 			if (errno == EINTR)
- 				continue;
- 			return -errno;
--		} else if (!pfd.revents & POLLIN)
-+		} else if (!(pfd.revents & POLLIN))
- 			continue;
- 		n = read(fd, buf, len);
- 		if (n < 0) {
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 9aa41ad..09e4a2e 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -1745,12 +1745,6 @@ snprint_devices (struct config *conf, char * buff, int len, struct vectors *vecs
+ 	return fwd;
+ }
+ 
+-extern int
+-snprint_config (char * buff, int len)
+-{
+-	return 0;
+-}
+-
+ /*
+  * stdout printing helpers
+  */
 -- 
 2.10.1
