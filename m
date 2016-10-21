@@ -1,7 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 08/15] libmultipath: Remove an unused variable
-Date: Fri, 21 Oct 2016 11:44:08 -0700
-Message-ID: <ca39c736-1810-73c7-48d3-6650501258f0@sandisk.com>
+Subject: [PATCH 09/15] libmultipath/checkers/rbd: Use unsigned
+ int for one-bit bitfields
+Date: Fri, 21 Oct 2016 11:44:31 -0700
+Message-ID: <3fea16e1-1c74-4e43-a108-329e7d03d858@sandisk.com>
 References: <72bd7a6a-7fb9-5a2c-b22d-031d8feb01b0@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,22 +22,25 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Avoid that this bitfield is sign-extended. Detected by sparse.
+
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmultipath/uevent.c | 1 -
- 1 file changed, 1 deletion(-)
+ libmultipath/checkers/rbd.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 7bc5837..19b910f 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -49,7 +49,6 @@
+diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
+index f60914e..745e240 100644
+--- a/libmultipath/checkers/rbd.c
++++ b/libmultipath/checkers/rbd.c
+@@ -46,7 +46,7 @@ struct rbd_checker_context {
+ 	char *username;
+ 	int remapped;
+ 	int blacklisted;
+-	int lock_on_read:1;
++	unsigned lock_on_read:1;
  
- typedef int (uev_trigger)(struct uevent *, void * trigger_data);
+ 	rados_t cluster;
  
--pthread_t uevq_thr;
- LIST_HEAD(uevq);
- pthread_mutex_t uevq_lock = PTHREAD_MUTEX_INITIALIZER;
- pthread_mutex_t *uevq_lockp = &uevq_lock;
 -- 
 2.10.1
