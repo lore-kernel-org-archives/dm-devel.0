@@ -1,8 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 02/15] libmultipath: Avoid that thread
- cancellation causes a hang
-Date: Fri, 21 Oct 2016 11:41:56 -0700
-Message-ID: <e131ace9-3e0f-8f9a-8332-bbaa94a21b80@sandisk.com>
+Subject: [PATCH 03/15] libmultipath: Remove an incorrect comment
+Date: Fri, 21 Oct 2016 11:42:19 -0700
+Message-ID: <78fc5a81-6da0-e60e-ed0a-57a067a17c17@sandisk.com>
 References: <72bd7a6a-7fb9-5a2c-b22d-031d8feb01b0@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,49 +21,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Apparently uevq_stop() hangs every now and then in pthread_mutex_lock()
-if the udev listener thread is canceled. Avoid this hang by removing
-code from uevq_stop(). This is safe because uevq_stop() is only called
-just before uevent_listen() returns and in that case neither clearing
-my_uev_trigger nor signaling uev_condp is needed. Additionally, rename
-uevq_stop() into uevent_cleanup() to make clear that its purpose is to
-clean up resources and not to stop the uevent listener.
+It is easy to see that uevq_lockp is not held while service_uevq()
+is called. Since no other code accesses the list that is processed
+by this function calling service_uevq() without holding uevq_lockp
+is safe. Hence remove the comment about locking above service_uevq().
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmultipath/uevent.c | 10 +++-------
- 1 file changed, 3 insertions(+), 7 deletions(-)
+ libmultipath/uevent.c | 3 ---
+ 1 file changed, 3 deletions(-)
 
 diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 6247898..0f32dbc 100644
+index 0f32dbc..f844294 100644
 --- a/libmultipath/uevent.c
 +++ b/libmultipath/uevent.c
-@@ -124,15 +124,11 @@ service_uevq(struct list_head *tmpq)
+@@ -104,9 +104,6 @@ setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached)
  	}
  }
  
--static void uevq_stop(void *arg)
-+static void uevent_cleanup(void *arg)
+-/*
+- * Called with uevq_lockp held
+- */
+ void
+ service_uevq(struct list_head *tmpq)
  {
- 	struct udev *udev = arg;
- 
--	condlog(3, "Stopping uev queue");
--	pthread_mutex_lock(uevq_lockp);
--	my_uev_trigger = NULL;
--	pthread_cond_signal(uev_condp);
--	pthread_mutex_unlock(uevq_lockp);
-+	condlog(3, "Releasing uevent_listen() resources");
- 	udev_unref(udev);
- }
- 
-@@ -495,7 +491,7 @@ int uevent_listen(struct udev *udev)
- 		return 1;
- 	}
- 	udev_ref(udev);
--	pthread_cleanup_push(uevq_stop, udev);
-+	pthread_cleanup_push(uevent_cleanup, udev);
- 
- 	monitor = udev_monitor_new_from_netlink(udev, "udev");
- 	if (!monitor) {
 -- 
 2.10.1
