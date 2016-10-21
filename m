@@ -1,8 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 10/15] libmultipath: Move the definition of a
+Subject: [PATCH 11/15] libmpathpersist: Move the definition of a
  global variable from .h to .c
-Date: Fri, 21 Oct 2016 11:44:58 -0700
-Message-ID: <969ce5d1-2b69-7ddf-b8e0-ba5bee08d8b3@sandisk.com>
+Date: Fri, 21 Oct 2016 11:45:32 -0700
+Message-ID: <480d817e-7139-445d-756f-cf20bd9f1cde@sandisk.com>
 References: <72bd7a6a-7fb9-5a2c-b22d-031d8feb01b0@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,40 +22,36 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This change does not change the semantics of the code but makes
-it easier for sparse to analyze the source code.
-
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmultipath/log.c | 2 ++
- libmultipath/log.h | 2 +-
- 2 files changed, 3 insertions(+), 1 deletion(-)
+ libmpathpersist/mpath_persist.c | 1 +
+ libmpathpersist/mpathpr.h       | 2 +-
+ 2 files changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/log.c b/libmultipath/log.c
-index ab92e2a..debd36d 100644
---- a/libmultipath/log.c
-+++ b/libmultipath/log.c
-@@ -15,6 +15,8 @@
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index edd4246..6cc6dbc 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -35,6 +35,7 @@
+ #define __STDC_FORMAT_MACROS 1
  
- #define ALIGN(len, s) (((len)+(s)-1)/(s)*(s))
+ struct udev *udev;
++struct config *conf;
  
-+struct logarea* la;
-+
- #if LOGDBG
- static void dump_logarea (void)
- {
-diff --git a/libmultipath/log.h b/libmultipath/log.h
-index 984f047..6551b5c 100644
---- a/libmultipath/log.h
-+++ b/libmultipath/log.h
-@@ -29,7 +29,7 @@ struct logarea {
- 	char * buff;
+ struct config *
+ mpath_lib_init (struct udev *udev)
+diff --git a/libmpathpersist/mpathpr.h b/libmpathpersist/mpathpr.h
+index cd58201..056c547 100644
+--- a/libmpathpersist/mpathpr.h
++++ b/libmpathpersist/mpathpr.h
+@@ -26,7 +26,7 @@ struct threadinfo {
  };
  
--struct logarea * la;
-+extern struct logarea* la;
  
- int log_init (char * progname, int size);
- void log_close (void);
+-struct config * conf;
++extern struct config *conf;
+ 
+ 
+ int prin_do_scsi_ioctl(char * dev, int rq_servact, struct prin_resp * resp, int noisy);
 -- 
 2.10.1
