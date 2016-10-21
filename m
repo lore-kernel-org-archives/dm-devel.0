@@ -1,7 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 03/15] libmultipath: Remove an incorrect comment
-Date: Fri, 21 Oct 2016 11:42:19 -0700
-Message-ID: <78fc5a81-6da0-e60e-ed0a-57a067a17c17@sandisk.com>
+Subject: [PATCH 05/15] libmultipath: Fix POLLIN checks
+Date: Fri, 21 Oct 2016 11:43:11 -0700
+Message-ID: <4abc7f19-0f90-6928-09ef-1379e25debe7@sandisk.com>
 References: <72bd7a6a-7fb9-5a2c-b22d-031d8feb01b0@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,29 +21,42 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-It is easy to see that uevq_lockp is not held while service_uevq()
-is called. Since no other code accesses the list that is processed
-by this function calling service_uevq() without holding uevq_lockp
-is safe. Hence remove the comment about locking above service_uevq().
+Instead of testing (pfd.revents == 0) & 1, test whether
+(pfd.revents & 1) == 0.
+
+This has been detected by the sparse static analyzer.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmultipath/uevent.c | 3 ---
- 1 file changed, 3 deletions(-)
+ libmpathcmd/mpath_cmd.c | 2 +-
+ libmultipath/uxsock.c   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 0f32dbc..f844294 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -104,9 +104,6 @@ setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached)
- 	}
- }
- 
--/*
-- * Called with uevq_lockp held
-- */
- void
- service_uevq(struct list_head *tmpq)
- {
+diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
+index 667a2dc..d9c5790 100644
+--- a/libmpathcmd/mpath_cmd.c
++++ b/libmpathcmd/mpath_cmd.c
+@@ -31,7 +31,7 @@ static ssize_t read_all(int fd, void *buf, size_t len, unsigned int timeout)
+ 			if (errno == EINTR)
+ 				continue;
+ 			return -1;
+-		} else if (!pfd.revents & POLLIN)
++		} else if (!(pfd.revents & POLLIN))
+ 			continue;
+ 		n = recv(fd, buf, len, 0);
+ 		if (n < 0) {
+diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
+index 880257f..b158a56 100644
+--- a/libmultipath/uxsock.c
++++ b/libmultipath/uxsock.c
+@@ -116,7 +116,7 @@ ssize_t read_all(int fd, void *buf, size_t len, unsigned int timeout)
+ 			if (errno == EINTR)
+ 				continue;
+ 			return -errno;
+-		} else if (!pfd.revents & POLLIN)
++		} else if (!(pfd.revents & POLLIN))
+ 			continue;
+ 		n = read(fd, buf, len);
+ 		if (n < 0) {
 -- 
 2.10.1
