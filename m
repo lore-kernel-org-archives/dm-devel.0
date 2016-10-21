@@ -1,9 +1,9 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: device mapper and the BLKFLSBUF ioctl
-Date: Fri, 21 Oct 2016 14:33:00 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1610211406290.9197@file01.intranet.prod.int.rdu2.redhat.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: [PATCH 0/15] Fifteen multipath-tools patches
+Date: Fri, 21 Oct 2016 11:40:29 -0700
+Message-ID: <72bd7a6a-7fb9-5a2c-b22d-031d8feb01b0@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -15,41 +15,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+Hello Christophe,
 
-I found a bug in dm regarding the BLKFLSBUF ioctl.
+It would be appreciated if you would consider this patch series for 
+inclusion in the multipath-tools repository. The changes in this patch 
+series are:
+- A build fix for musl-libc.
+- A fix for a deadlock during shutdown.
+- A bunch of patches that address warnings reported by the sparse
+   static analyzer.
 
-The BLKFLSBUF ioctl can be called on a block device and it flushes the 
-buffer cache. There is one exception - when it is called on ramdisk, it 
-actually destroys all ramdisk data (it works like a discard on the full 
-device).
+Thanks,
 
-The device mapper passes this ioctl down to the underlying device, so when 
-the ioctl is called on a logical volume, it can be used to destroy the 
-underlying volume group if the volume group is on ramdisk.
-
-For example:
-# modprobe brd rd_size=1048576
-# pvcreate /dev/ram0
-# vgcreate ram_vg /dev/ram0
-# lvcreate -L 16M -n ram_lv ram_vg
-# blockdev --flushbufs /dev/ram_vg/ram_lv
-	--- and now the whole volume group is gone, all data on the 
-		ramdisk were replaced with zeroes
-
-The BLKFLSBUF ioctl is only allowed with CAP_SYS_ADMIN, so there shouldn't 
-be security implications with this.
-
-Whan to do with it? The best thing would be to drop this special ramdisk 
-behavior and make the BLKFLSBUF ioctl flush the buffer cache on ramdisk 
-like on all other block devices. But there may be many users having 
-scripts that depend on this special behavior.
-
-Another possibility is to stop the device mapper from passing the 
-BLKFLSBUF ioctl down.
-
-Mikulas
+Bart.
