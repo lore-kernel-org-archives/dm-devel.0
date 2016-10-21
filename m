@@ -1,7 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 07/15] libmpathpersist: Remove an unused function
-Date: Fri, 21 Oct 2016 11:43:50 -0700
-Message-ID: <8a90c01d-bbdd-7eea-9549-c0af172d54f1@sandisk.com>
+Subject: [PATCH 08/15] libmultipath: Remove an unused variable
+Date: Fri, 21 Oct 2016 11:44:08 -0700
+Message-ID: <ca39c736-1810-73c7-48d3-6650501258f0@sandisk.com>
 References: <72bd7a6a-7fb9-5a2c-b22d-031d8feb01b0@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,30 +23,20 @@ List-Id: dm-devel.ids
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmpathpersist/mpath_persist.c | 11 -----------
- 1 file changed, 11 deletions(-)
+ libmultipath/uevent.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 7501651..edd4246 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -414,17 +414,6 @@ get_mpvec (vector curmp, vector pathvec, char * refwwid)
- 	return MPATH_PR_SUCCESS ;
- }
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 7bc5837..19b910f 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -49,7 +49,6 @@
  
--void * mpath_prin_pthread_fn (void *p)
--{
--	int ret;
--	struct prin_param * pparam = (struct prin_param *)p;
--
--	ret = prin_do_scsi_ioctl(pparam->dev, pparam->rq_servact,
--				 pparam->resp,  pparam->noisy);
--	pparam->status = ret;
--	pthread_exit(NULL);
--}
--
- int mpath_send_prin_activepath (char * dev, int rq_servact,
- 				struct prin_resp * resp, int noisy)
- {
+ typedef int (uev_trigger)(struct uevent *, void * trigger_data);
+ 
+-pthread_t uevq_thr;
+ LIST_HEAD(uevq);
+ pthread_mutex_t uevq_lock = PTHREAD_MUTEX_INITIALIZER;
+ pthread_mutex_t *uevq_lockp = &uevq_lock;
 -- 
 2.10.1
