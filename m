@@ -1,99 +1,58 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] scsi: update rdac devices at scsi_dh_rdac
-Date: Sat, 22 Oct 2016 23:41:50 +0200
-Message-ID: <b0fe9b75-6288-3ac5-9d77-f7f43e9a5756@gmail.com>
-References: <20161007165549.6433-1-xose.vazquez@gmail.com>
- <eb9d6973-2e0b-843b-4547-94b64dcd05fc@gmail.com>
- <39e5713e-5329-80a2-d2c5-d193f974e270@oracle.com>
+Subject: [PATCH] multipath-tools: convert kpartx/lopart.c to
+	UTF-8 to fix Arkadiusz's name
+Date: Sun, 23 Oct 2016 16:57:59 +0200
+Message-ID: <20161023145759.3346-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <39e5713e-5329-80a2-d2c5-d193f974e270@oracle.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Babu Moger <babu.moger@oracle.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
-Cc: Sean Stewart <Sean.Stewart@netapp.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>
+Content-Type: multipart/mixed; boundary="===============0095898604086154323=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, =?UTF-8?q?Arkadiusz=20Mi=C5=9Bkiewicz?= <arekm@maven.pl>, =?UTF-8?q?Arkadiusz=20Mi=C5=9Bkiewicz?= <misiek@ghs.l.google.com>
 List-Id: dm-devel.ids
 
-On 10/18/2016 09:47 PM, Babu Moger wrote:
+--===============0095898604086154323==
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-> At this point, I am not the right person to ack this change.
+Cc: Arkadiusz Miśkiewicz <arekm@maven.pl>
+Cc: Arkadiusz Miśkiewicz <misiek@pld.ORG.PL>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ kpartx/lopart.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Thank you anyway.
+diff --git a/kpartx/lopart.c b/kpartx/lopart.c
+index 0ab1688..023d5ae 100644
+--- a/kpartx/lopart.c
++++ b/kpartx/lopart.c
+@@ -2,7 +2,7 @@
+ /* Added vfs mount options - aeb - 960223 */
+ /* Removed lomount - aeb - 960224 */
+ 
+-/* 1999-02-22 Arkadiusz Mi�kiewicz <misiek@pld.ORG.PL>
++/* 1999-02-22 Arkadiusz Miśkiewicz <misiek@pld.ORG.PL>
+  * - added Native Language Support
+  * Sun Mar 21 1999 - Arnaldo Carvalho de Melo <acme@conectiva.com.br>
+  * - fixed strerr(errno) in gettext calls
+-- 
+2.10.1
 
-Last chance before this patch is lost in the mailing list noise.
 
-> However, adding new vendor id's is mostly not an issue.
+--===============0095898604086154323==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> But, removing could be a problem. Sean has to confirm this.
 
-It already was done, all changes are already included in
-multipath-tools. See below.
-
-> On 10/18/2016 10:11 AM, Xose Vazquez Perez wrote:
->> On 10/07/2016 06:55 PM, Xose Vazquez Perez wrote:
->>
->> This patch is pending, ACK is needed!
->> The part of multipath-tools was done time ago.
->>
->> CC: Babu Moger, just in case.
-
->>> Remove IBM/1745 ghost array.
->>> There is no references nowhere, also removed from multipath-tools
->>> Confirmed by the original manufacturer(NetApp), and Google shows no results.
-
-http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=commitdiff;h=ae9c385ab793600c3595c1ee513463d8d4ccf885
-
->>> Replace too wide "TP9" regex with full names.
->>> TP9100 is included, at it is not a RDAC array.
->>> This reverts partially the commit 352047
-
-https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=352047
-http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=commitdiff;h=c6fbd3725c06b3ee240ce0fe4e5eedb97f934e09
-
->>> Add IBM 3542 and 3552, they are FAStT200 and FAStT500
-
-http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=commitdiff;h=4080b06683f8045a331631a0b8cb12be2becd0cf
-http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=commitdiff;h=e39610b0d3a4b5da16adcd10f18460dde609c41b
-
->>> Cc: Sean Stewart <Sean.Stewart@netapp.com>
->>> Cc: Hannes Reinecke <hare@suse.de>
->>> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
->>> Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
->>> Cc: Martin K. Petersen <martin.petersen@oracle.com>
->>> Cc: SCSI ML <linux-scsi@vger.kernel.org>
->>> Cc: device-mapper development <dm-devel@redhat.com>
->>> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
->>> ---
->>>   drivers/scsi/scsi_dh.c | 8 ++++++--
->>>   1 file changed, 6 insertions(+), 2 deletions(-)
->>>
->>> diff --git a/drivers/scsi/scsi_dh.c b/drivers/scsi/scsi_dh.c
->>> index b8d3b97..a64b5ce 100644
->>> --- a/drivers/scsi/scsi_dh.c
->>> +++ b/drivers/scsi/scsi_dh.c
->>> @@ -49,14 +49,18 @@ static const struct scsi_dh_blist scsi_dh_blist[] = {
->>>       {"IBM", "1724",            "rdac", },
->>>       {"IBM", "1726",            "rdac", },
->>>       {"IBM", "1742",            "rdac", },
->>> -    {"IBM", "1745",            "rdac", },
->>>       {"IBM", "1746",            "rdac", },
->>>       {"IBM", "1813",            "rdac", },
->>>       {"IBM", "1814",            "rdac", },
->>>       {"IBM", "1815",            "rdac", },
->>>       {"IBM", "1818",            "rdac", },
->>>       {"IBM", "3526",            "rdac", },
->>> -    {"SGI", "TP9",            "rdac", },
->>> +    {"IBM", "3542",            "rdac", },
->>> +    {"IBM", "3552",            "rdac", },
->>> +    {"SGI", "TP9300",        "rdac", },
->>> +    {"SGI", "TP9400",        "rdac", },
->>> +    {"SGI", "TP9500",        "rdac", },
->>> +    {"SGI", "TP9700",        "rdac", },
->>>       {"SGI", "IS",            "rdac", },
->>>       {"STK", "OPENstorage D280",    "rdac", },
->>>       {"STK", "FLEXLINE 380",        "rdac", },
->>>
-> 
-> 
-
+--===============0095898604086154323==--
