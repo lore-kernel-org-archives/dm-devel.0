@@ -1,11 +1,14 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: identify more arrays in hwtable
-Date: Sun, 23 Oct 2016 23:51:02 +0200
-Message-ID: <20161023215102.8890-1-xose.vazquez@gmail.com>
+From: Germano Percossi <germano.percossi@citrix.com>
+Subject: Re: [PATCH 06/15] libmultipath: Remove an unused function
+Date: Mon, 24 Oct 2016 11:50:10 +0100
+Message-ID: <2b174b78-f42b-2c7f-90da-00b05cba1f6d@citrix.com>
+References: <72bd7a6a-7fb9-5a2c-b22d-031d8feb01b0@sandisk.com>
+	<1fcae43b-f64e-7001-ef0d-68ec0585c81d@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1fcae43b-f64e-7001-ef0d-68ec0585c81d@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,88 +18,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 13 ++++++++-----
- 1 file changed, 8 insertions(+), 5 deletions(-)
+Removing functions packaged in a library just because they are
+not used in multipath does not seem fine, in general.
+They could still be used by third party.
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index de10ebf..d8e2c01 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -224,6 +224,7 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 	},
-+		/* MD Series */
- 	{
- 		.vendor        = "DELL",
- 		.product       = "MD3000",
-@@ -349,7 +350,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 30,
- 	},
- 	{
--		/* DS3200 / DS3300 / DS3400 / Boot DS */
-+		/* DS3000 / DS3200 / DS3300 / DS3400 / Boot DS */
- 		.vendor        = "IBM",
- 		.product       = "^1726",
- 		.bl_product    = "Universal Xport",
-@@ -473,7 +474,7 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
- 	},
- 	{
--		/* DS6000 */
-+		/* DS6000 / DS6800 */
- 		.vendor        = "IBM",
- 		.product       = "^1750500",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
-@@ -482,7 +483,7 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_ALUA,
- 	},
- 	{
--		/* DS8000 */
-+		/* DS8000 family */
- 		.vendor        = "IBM",
- 		.product       = "^2107900",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
-@@ -653,6 +654,7 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
- 	},
- 	{
-+		/* Total Performance family */
- 		.vendor        = "SGI",
- 		.product       = "TP9[3457]00",
- 		.bl_product    = "Universal Xport",
-@@ -665,7 +667,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 30,
- 	},
- 	{
--		/* InfiniteStorage ??? */
-+		/* InfiniteStorage family */
- 		.vendor        = "SGI",
- 		.product       = "IS",
- 		.bl_product    = "Universal Xport",
-@@ -972,6 +974,7 @@ static struct hwentry default_hw[] = {
- 	 * Xiotech
- 	 */
- 	{
-+		/* Intelligent Storage Elements family */
- 		.vendor        = "(XIOTECH|XIOtech)",
- 		.product       = "ISE",
- 		.pgpolicy      = MULTIBUS,
-@@ -981,7 +984,7 @@ static struct hwentry default_hw[] = {
- 	 * Violin Memory
- 	 */
- 	{
--		/* V3000 / V6000 Series */
-+		/* 3000 / 6000 Series */
- 		.vendor        = "VIOLIN",
- 		.product       = "SAN ARRAY$",
- 		.pgpolicy      = GROUP_BY_SERIAL,
--- 
-2.10.1
+Germano
+
+On 10/21/2016 07:43 PM, Bart Van Assche wrote:
+> The function snprint_config() is not used. Hence remove it.
+> 
+> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+> ---
+>  libmultipath/print.c | 6 ------
+>  1 file changed, 6 deletions(-)
+> 
+> diff --git a/libmultipath/print.c b/libmultipath/print.c
+> index 9aa41ad..09e4a2e 100644
+> --- a/libmultipath/print.c
+> +++ b/libmultipath/print.c
+> @@ -1745,12 +1745,6 @@ snprint_devices (struct config *conf, char * buff, int len, struct vectors *vecs
+>  	return fwd;
+>  }
+>  
+> -extern int
+> -snprint_config (char * buff, int len)
+> -{
+> -	return 0;
+> -}
+> -
+>  /*
+>   * stdout printing helpers
+>   */
+> 
