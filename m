@@ -1,16 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: device mapper and the BLKFLSBUF ioctl
-Date: Mon, 24 Oct 2016 11:57:56 -0400
-Message-ID: <20161024155756.GA48306@redhat.com>
-References: <alpine.LRH.2.02.1610211406290.9197@file01.intranet.prod.int.rdu2.redhat.com>
-	<20161021200022.GA12580@redhat.com>
-	<alpine.LRH.2.02.1610211616450.31606@file01.intranet.prod.int.rdu2.redhat.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: [PATCH 06/15] libmultipath: Remove an unused function
+Date: Mon, 24 Oct 2016 09:02:43 -0700
+Message-ID: <1b4e7eb8-c033-0f51-a448-0bdeb01f7ddd@sandisk.com>
+References: <72bd7a6a-7fb9-5a2c-b22d-031d8feb01b0@sandisk.com>
+	<1fcae43b-f64e-7001-ef0d-68ec0585c81d@sandisk.com>
+	<2b174b78-f42b-2c7f-90da-00b05cba1f6d@citrix.com>
+	<c29b1e88-4dac-9bb7-e701-527cae23dbe6@acm.org>
+	<d5cc4da4-3c6a-7bef-aff9-18e40922f07d@citrix.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1610211616450.31606@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <d5cc4da4-3c6a-7bef-aff9-18e40922f07d@citrix.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,94 +21,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: Germano Percossi <germano.percossi@citrix.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 21 2016 at  4:18P -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On 10/24/2016 07:55 AM, Germano Percossi wrote:
+> Sorry, my reply was meant for mpath_prin_pthread_fn patch but,
+> I guess, given the lack of a declaration in a header file,
+> your answer will be the same.
 
-> 
-> 
-> On Fri, 21 Oct 2016, Mike Snitzer wrote:
-> 
-> > On Fri, Oct 21 2016 at  2:33pm -0400,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> > > Hi
-> > > 
-> > > I found a bug in dm regarding the BLKFLSBUF ioctl.
-> > > 
-> > > The BLKFLSBUF ioctl can be called on a block device and it flushes the 
-> > > buffer cache. There is one exception - when it is called on ramdisk, it 
-> > > actually destroys all ramdisk data (it works like a discard on the full 
-> > > device).
-> > > 
-> > > The device mapper passes this ioctl down to the underlying device, so when 
-> > > the ioctl is called on a logical volume, it can be used to destroy the 
-> > > underlying volume group if the volume group is on ramdisk.
-> > > 
-> > > For example:
-> > > # modprobe brd rd_size=1048576
-> > > # pvcreate /dev/ram0
-> > > # vgcreate ram_vg /dev/ram0
-> > > # lvcreate -L 16M -n ram_lv ram_vg
-> > > # blockdev --flushbufs /dev/ram_vg/ram_lv
-> > > 	--- and now the whole volume group is gone, all data on the 
-> > > 		ramdisk were replaced with zeroes
-> > > 
-> > > The BLKFLSBUF ioctl is only allowed with CAP_SYS_ADMIN, so there shouldn't 
-> > > be security implications with this.
-> > > 
-> > > Whan to do with it? The best thing would be to drop this special ramdisk 
-> > > behavior and make the BLKFLSBUF ioctl flush the buffer cache on ramdisk 
-> > > like on all other block devices. But there may be many users having 
-> > > scripts that depend on this special behavior.
-> > > 
-> > > Another possibility is to stop the device mapper from passing the 
-> > > BLKFLSBUF ioctl down.
-> > 
-> > If anything DM is being consistent with what the underlying device is
-> > meant to do.
-> > 
-> > brd_ioctl() destroys the data in response to BLKFLSBUF.. I'm missing why
-> > this is a DM-specific problem.
-> 
-> The problem is that if we call it on a logical volume, it destroys all 
-> logical volumes on the give physical volume.
+Hello Germano,
 
-Yeah, pretty awful.  But this isn't a DM-specific concern.  Could easily
-happen with normal block partitions too right?
+Inspection of the git log -p output learned me that also 
+mpath_prin_pthread_fn() was never declared in any multipath-tools header 
+file.
 
-We _could_ add a DM-specific hack like this but it feels wrong to me:
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index ec513ee..e91607f 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -10,6 +10,8 @@
- #include "dm-uevent.h"
- 
- #include <linux/init.h>
-+#include <linux/fs.h>
-+#include <linux/major.h>
- #include <linux/module.h>
- #include <linux/mutex.h>
- #include <linux/blkpg.h>
-@@ -470,6 +472,16 @@ static int dm_blk_ioctl(struct block_device *bdev, fmode_t mode,
- 		 * a logical partition of the parent bdev; so extra
- 		 * validation is needed.
- 		 */
-+		if (MAJOR(disk_devt(bdev->bd_disk)) == RAMDISK_MAJOR &&
-+		    cmd == BLKFLSBUF) {
-+			/*
-+			 * Disallow BLKFLSBUF on ramdisk because it can easily
-+			 * destroy data outside of this logical volume.
-+			 */
-+			r = -EIO;
-+			goto out;
-+		}
-+
- 		r = scsi_verify_blk_ioctl(NULL, cmd);
- 		if (r)
- 			goto out;
+Bart.
