@@ -1,17 +1,15 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
+From: Bart Van Assche <bvanassche@acm.org>
 Subject: Re: [PATCH 06/15] libmultipath: Remove an unused function
-Date: Mon, 24 Oct 2016 09:02:43 -0700
-Message-ID: <1b4e7eb8-c033-0f51-a448-0bdeb01f7ddd@sandisk.com>
+Date: Mon, 24 Oct 2016 07:26:24 -0700
+Message-ID: <c29b1e88-4dac-9bb7-e701-527cae23dbe6@acm.org>
 References: <72bd7a6a-7fb9-5a2c-b22d-031d8feb01b0@sandisk.com>
 	<1fcae43b-f64e-7001-ef0d-68ec0585c81d@sandisk.com>
 	<2b174b78-f42b-2c7f-90da-00b05cba1f6d@citrix.com>
-	<c29b1e88-4dac-9bb7-e701-527cae23dbe6@acm.org>
-	<d5cc4da4-3c6a-7bef-aff9-18e40922f07d@citrix.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d5cc4da4-3c6a-7bef-aff9-18e40922f07d@citrix.com>
+In-Reply-To: <2b174b78-f42b-2c7f-90da-00b05cba1f6d@citrix.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,15 +22,45 @@ Errors-To: dm-devel-bounces@redhat.com
 To: Germano Percossi <germano.percossi@citrix.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 10/24/2016 07:55 AM, Germano Percossi wrote:
-> Sorry, my reply was meant for mpath_prin_pthread_fn patch but,
-> I guess, given the lack of a declaration in a header file,
-> your answer will be the same.
+On 10/24/16 03:50, Germano Percossi wrote:
+> On 10/21/2016 07:43 PM, Bart Van Assche wrote:
+>> The function snprint_config() is not used. Hence remove it.
+>>
+>> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+>> ---
+>>  libmultipath/print.c | 6 ------
+>>  1 file changed, 6 deletions(-)
+>>
+>> diff --git a/libmultipath/print.c b/libmultipath/print.c
+>> index 9aa41ad..09e4a2e 100644
+>> --- a/libmultipath/print.c
+>> +++ b/libmultipath/print.c
+>> @@ -1745,12 +1745,6 @@ snprint_devices (struct config *conf, char * buff, int len, struct vectors *vecs
+>>  	return fwd;
+>>  }
+>>
+>> -extern int
+>> -snprint_config (char * buff, int len)
+>> -{
+>> -	return 0;
+>> -}
+>> -
+>>  /*
+>>   * stdout printing helpers
+>>   */
+>
+ > Removing functions packaged in a library just because they are
+ > not used in multipath does not seem fine, in general.
+ > They could still be used by third party.
 
 Hello Germano,
 
-Inspection of the git log -p output learned me that also 
-mpath_prin_pthread_fn() was never declared in any multipath-tools header 
-file.
+The snprint_config() function has never been declared in any 
+multipath-tools header file so if someone would want to use this 
+function without triggering a compiler warning they would have to add 
+something like "extern int snprint_config (char * buff, int len)" to 
+their source code. Because of this reason and also because of the empty 
+implementation I think that is unlikely that any project is using this 
+function.
 
 Bart.
