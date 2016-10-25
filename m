@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: identify STK/SUN array
-Date: Tue, 25 Oct 2016 23:01:32 +0200
-Message-ID: <20161025210132.3531-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add StorageTek BladeStore to
+	hwtable
+Date: Wed, 26 Oct 2016 01:25:28 +0200
+Message-ID: <20161025232528.7228-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -18,26 +19,36 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-FlexLine FLX380 was renamed to StorageTek 6540
-
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/hwtable.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 8d98800..0199bf8 100644
+index 0199bf8..8c3eff7 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -738,6 +738,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 30,
+@@ -725,6 +725,19 @@ static struct hwentry default_hw[] = {
  	},
+ 		/* Sun - StorageTek */
  	{
-+		/* 6540 */
++		/* B210, B220, B240 and B280 */
++		.vendor        = "STK",
++		.product       = "BladeCtlr",
++		.bl_product    = "Universal Xport",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.checker_name  = RDAC,
++		.features      = "2 pg_init_retries 50",
++		.hwhandler     = "1 rdac",
++		.prio_name     = PRIO_RDAC,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.no_path_retry = 30,
++	},
++	{
+ 		/* 9176, D173, D178, D210, D220, D240 and D280 */
  		.vendor        = "STK",
- 		.product       = "FLEXLINE 380",
- 		.bl_product    = "Universal Xport",
+ 		.product       = "OPENstorage",
 -- 
 2.10.1
