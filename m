@@ -1,37 +1,40 @@
-From: Ming Lei <tom.leiming@gmail.com>
-Subject: [PATCH 09/60] dm: dm.c: replace 'bio->bi_vcnt == 1' with !bio_multiple_segments
-Date: Sat, 29 Oct 2016 16:08:08 +0800
-Message-ID: <1477728600-12938-10-git-send-email-tom.leiming@gmail.com>
-References: <1477728600-12938-1-git-send-email-tom.leiming@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1477728600-12938-1-git-send-email-tom.leiming@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@fb.com>, linux-kernel@vger.kernel.org
-Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Ming Lei <tom.leiming@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "maintainer:DEVICE-MAPPER LVM" <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "open list:SOFTWARE RAID Multiple Disks
-        SUPPORT" <linux-raid@vger.kernel.org>
+From: ding.yemin@zte.com.cn
+Subject: [PATCH] RCU protection for variable conf in
+	add_map_with_path()
+Date: Tue, 25 Oct 2016 16:41:52 +0800
+Message-ID: <1477384912-10940-1-git-send-email-ding.yemin@zte.com.cn>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn, "ding.yemin" <ding.yemin@zte.com.cn>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Avoid to access .bi_vcnt directly, because it may be not what
-the driver expected any more after supporting multipage bvec.
-
-Signed-off-by: Ming Lei <tom.leiming@gmail.com>
----
- drivers/md/dm-rq.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 1d0d2adc050a..8534cbf8ce35 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -819,7 +819,8 @@ static void dm_old_request_fn(struct request_queue *q)
- 			pos = blk_rq_pos(rq);
- 
- 		if ((dm_old_request_peeked_before_merge_deadline(md) &&
--		     md_in_flight(md) && rq->bio && rq->bio->bi_vcnt == 1 &&
-+		     md_in_flight(md) && rq->bio &&
-+		     !bio_multiple_segments(rq->bio) &&
- 		     md->last_rq_pos == pos && md->last_rq_rw == rq_data_dir(rq)) ||
- 		    (ti->type->busy && ti->type->busy(ti))) {
- 			blk_delay_queue(q, 10);
--- 
-2.7.4
+RnJvbTogImRpbmcueWVtaW4iIDxkaW5nLnllbWluQHp0ZS5jb20uY24+CgpUYWtlIHRoZSB2YXJp
+YWJsZSAiY29uZiIgdW5kZXIgUkNVIHByb3RlY3Rpb24gaW4gYWRkX21hcF93aXRoX3BhdGgoKeOA
+ggoKU2lnbmVkLW9mZi1ieTogZGluZy55ZW1pbiA8ZGluZy55ZW1pbkB6dGUuY29tLmNuPgotLS0K
+IGxpYm11bHRpcGF0aC9zdHJ1Y3RzX3ZlYy5jIHwgNiArKysrLS0KIDEgZmlsZSBjaGFuZ2VkLCA0
+IGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRo
+L3N0cnVjdHNfdmVjLmMgYi9saWJtdWx0aXBhdGgvc3RydWN0c192ZWMuYwppbmRleCBhMGM4ODY5
+Li5iOGFlODdjIDEwMDY0NAotLS0gYS9saWJtdWx0aXBhdGgvc3RydWN0c192ZWMuYworKysgYi9s
+aWJtdWx0aXBhdGgvc3RydWN0c192ZWMuYwpAQCAtNDg5LDEyICs0ODksMTQgQEAgYWRkX21hcF93
+aXRoX3BhdGggKHN0cnVjdCB2ZWN0b3JzICogdmVjcywKIAljb25mID0gZ2V0X211bHRpcGF0aF9j
+b25maWcoKTsKIAltcHAtPm1wZSA9IGZpbmRfbXBlKGNvbmYtPm1wdGFibGUsIHBwLT53d2lkKTsK
+IAltcHAtPmh3ZSA9IHBwLT5od2U7Ci0JcHV0X211bHRpcGF0aF9jb25maWcoY29uZik7CiAKIAlz
+dHJjcHkobXBwLT53d2lkLCBwcC0+d3dpZCk7CiAJZmluZF9leGlzdGluZ19hbGlhcyhtcHAsIHZl
+Y3MpOwotCWlmIChzZWxlY3RfYWxpYXMoY29uZiwgbXBwKSkKKwlpZiAoc2VsZWN0X2FsaWFzKGNv
+bmYsIG1wcCkpIHsKKwkJcHV0X211bHRpcGF0aF9jb25maWcoY29uZik7CiAJCWdvdG8gb3V0Owor
+CX0KKwlwdXRfbXVsdGlwYXRoX2NvbmZpZyhjb25mKTsKIAltcHAtPnNpemUgPSBwcC0+c2l6ZTsK
+IAogCWlmIChhZG9wdF9wYXRocyh2ZWNzLT5wYXRodmVjLCBtcHApKQotLSAKMi44LjEud2luZG93
+cy4xCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
+Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
