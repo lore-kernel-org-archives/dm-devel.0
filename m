@@ -1,8 +1,8 @@
 From: ding.yemin@zte.com.cn
-Subject: [PATCH] Remove duplicated code in
-	mpath_alloc_prin_response()
-Date: Tue, 25 Oct 2016 16:19:23 +0800
-Message-ID: <1477383563-10684-1-git-send-email-ding.yemin@zte.com.cn>
+Subject: [PATCH] Add break for switch-case in
+	prin_do_scsi_ioctl().
+Date: Tue, 25 Oct 2016 14:56:36 +0800
+Message-ID: <1477378596-4916-1-git-send-email-ding.yemin@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -22,51 +22,24 @@ List-Id: dm-devel.ids
 
 From: "ding.yemin" <ding.yemin@zte.com.cn>
 
-Remove duplicated code in mpath_alloc_prin_response().
+Add break for switch-case in prin_do_scsi_ioctl().
 
 Signed-off-by: ding.yemin <ding.yemin@zte.com.cn>
 ---
- libmpathpersist/mpath_persist.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ libmpathpersist/mpath_pr_ioctl.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 7501651..5962756 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -833,26 +833,26 @@ void * mpath_alloc_prin_response(int prin_sa)
- 	{
- 		case MPATH_PRIN_RKEY_SA:
- 			size = sizeof(struct prin_readdescr);
--			ptr = malloc(size);
--			memset(ptr, 0, size);
+diff --git a/libmpathpersist/mpath_pr_ioctl.c b/libmpathpersist/mpath_pr_ioctl.c
+index 8b9ac3d..ffe7468 100644
+--- a/libmpathpersist/mpath_pr_ioctl.c
++++ b/libmpathpersist/mpath_pr_ioctl.c
+@@ -392,6 +392,7 @@ retry :
  			break;
- 		case MPATH_PRIN_RRES_SA:
- 			size = sizeof(struct prin_resvdescr);
--			ptr = malloc(size);
--			memset(ptr, 0, size);
- 			break;
- 		case MPATH_PRIN_RCAP_SA:
- 			size=sizeof(struct prin_capdescr);
--			ptr = malloc(size);
--			memset(ptr, 0, size);
- 			break;
- 		case MPATH_PRIN_RFSTAT_SA:
- 			size = sizeof(struct print_fulldescr_list) +
- 				sizeof(struct prin_fulldescr *)*MPATH_MX_TIDS;
--			ptr = malloc(size);
--			memset(ptr, 0, size);
- 			break;
+ 		case MPATH_PRIN_RFSTAT_SA :
+ 			mpath_format_readfullstatus(resp, got, noisy);
++			break;
  	}
-+	if (size > 0)
-+	{
-+		ptr = malloc(size);
-+		if (ptr)
-+		{
-+			memset(ptr, 0, size);
-+		}
-+	}
- 	return ptr;
- }
  
+ out:
 -- 
 2.8.1.windows.1
