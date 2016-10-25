@@ -1,111 +1,99 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: how to refresh LV to apply fstrim online
-Date: Tue, 25 Oct 2016 16:12:39 +0200
-Message-ID: <fc98716c-2bc8-07a5-d0d3-d39a14397127@redhat.com>
-References: <CAG2kNCwwDEeY0jHMvD6JxVb2WFHncY3pRM_Cy=QvAgJxaoa5MA@mail.gmail.com>
-	<da58a0be-bdd9-a06d-f1a9-6b8c6e07b052@redhat.com>
-	<CAG2kNCztXfyeU7xoT2KuN=YwNwhYj78J7XoriwcOPyBHimG9OQ@mail.gmail.com>
-	<CAG2kNCwn57jjbsCNq+b0Mkku9fA2oZJXCw9EUSpyj=F0CABjRg@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] brd: remove support for BLKFLSBUF
+Date: Tue, 25 Oct 2016 10:37:19 -0400
+Message-ID: <20161025143719.GA51266@redhat.com>
+References: <alpine.LRH.2.02.1610211406290.9197@file01.intranet.prod.int.rdu2.redhat.com>
+ <20161021200022.GA12580@redhat.com>
+ <alpine.LRH.2.02.1610211616450.31606@file01.intranet.prod.int.rdu2.redhat.com>
+ <20161024155756.GA48306@redhat.com>
+ <20161025130712.GA12717@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAG2kNCwn57jjbsCNq+b0Mkku9fA2oZJXCw9EUSpyj=F0CABjRg@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Gianluca Cecchi <gianluca.cecchi@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20161025130712.GA12717@infradead.org>
+Sender: linux-block-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>, axboe@kernel.dk
+Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Dne 25.10.2016 v 16:04 Gianluca Cecchi napsal(a):
->
->
-> On Fri, Oct 21, 2016 at 1:32 AM, Gianluca Cecchi <gianluca.cecchi@gmail.com
-> <mailto:gianluca.cecchi@gmail.com>> wrote:
->
->
->     On Thu, Oct 20, 2016 at 1:40 PM, Zdenek Kabelac <zkabelac@redhat.com
->     <mailto:zkabelac@redhat.com>> wrote:
->
->
->         Hi
->
->         Please provide listing of all your 'multipath'  leg devices - are
->         they support TRIM ?
->         Then 'check' dm device.
->
->         See  (and attach)
->
->          grep "" /sys/block/*/queue/discard_granularity
->
->
->         Also make sure you are NOT using 'ext2' filesystem which does not
->         support discard on RHEL6 and you are on latest available RHEL6 kernel.
->
->
->         Regards
->
->         Zdenek
->
->
->
->     Hello,
->     thanks for answer.
->     I'm using ext3 filesystem that supports discard.
->     Currently I'm on this kernel
->
->     [root@dbatest1 ~]# uname -r
->     2.6.32-431.29.2.el6.x86_64
->     [root@dbatest1 ~]#
->
->
->     It seems that I was myself able to find a way to online refresh the
->     logical volume and so to successfully run fstrim command against the
->     related file system, without deactivating the lv and most important
->     without generating downtime for my users.
->     Please note that what I'm doing is working on a test system where I have
->     the same situation as in production.
->     Can you certify my approach and comment about it, so that I can eventually
->     apply in production?
->
->
-> [snip]
->
->
->
->     [root@dbatest1 ~]# dmsetup suspend /dev/dm-4 ; dmsetup reload /dev/dm-4
->     my_dm_table ; dmsetup resume /dev/dm-4
->     [root@dbatest1 ~]# echo $?
->     0
->     [root@dbatest1 ~]#
->
->     And now the magic:
->
->     [root@dbatest1 ~]# fstrim /ALM/rdoffline
-t giving downtime, in a safe way.
+On Tue, Oct 25 2016 at  9:07P -0400,
+Christoph Hellwig <hch@infradead.org> wrote:
 
+> I think the right fix is to kill off the BLKFLSBUF special case in
+> brd.  Yes, it break compatibility - but in this case the compatibility
+> breaks more than it helps.
 
-Normally it's not advised  to use 'dmsetup' command for  LV.
-The above sequence should be equivalent to:
+Jens, please pick up this patch:
 
-lvchange --refresh  vg/lv
-(or  vgchange --refresh vg  -  doing it for every active LV in VG)
+From: Mike Snitzer <snitzer@redhat.com>
+Date: Tue, 25 Oct 2016 10:25:07 -0400
+Subject: [PATCH] brd: remove support for BLKFLSBUF
 
-It's unclear how this could help  - unless you we doing some 'pvmove'
-operations (which might be worth a BZ).
+Discontinue having the brd driver destructively free all pages in the
+ramdisk in response to the BLKFLSBUF ioctl.  Doing so allows a BLKFLSBUF
+ioctl issued to a logical partition to destroy pages of the parent brd
+device (and all other partitions of that brd device).
 
-You should collect all states  while it 'DOES NOT' work.
-And then  run  the --refresh (which you thing it's fixing it for your)
-ATM I'm clueless how you get mapping without TRIM where --refresh can fix it.
+This change breaks compatibility - but in this case the compatibility
+breaks more than it helps.
 
+Reported-by: Mikulas Patocka <mpatocka@redhat.com>
+Suggested-by: Christoph Hellwig <hch@infradead.org>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/block/brd.c | 35 -----------------------------------
+ 1 file changed, 35 deletions(-)
 
-Regards
+diff --git a/drivers/block/brd.c b/drivers/block/brd.c
+index 0c76d40..45c998a 100644
+--- a/drivers/block/brd.c
++++ b/drivers/block/brd.c
+@@ -395,44 +395,9 @@ static long brd_direct_access(struct block_device *bdev, sector_t sector,
+ #define brd_direct_access NULL
+ #endif
+ 
+-static int brd_ioctl(struct block_device *bdev, fmode_t mode,
+-			unsigned int cmd, unsigned long arg)
+-{
+-	int error;
+-	struct brd_device *brd = bdev->bd_disk->private_data;
+-
+-	if (cmd != BLKFLSBUF)
+-		return -ENOTTY;
+-
+-	/*
+-	 * ram device BLKFLSBUF has special semantics, we want to actually
+-	 * release and destroy the ramdisk data.
+-	 */
+-	mutex_lock(&brd_mutex);
+-	mutex_lock(&bdev->bd_mutex);
+-	error = -EBUSY;
+-	if (bdev->bd_openers <= 1) {
+-		/*
+-		 * Kill the cache first, so it isn't written back to the
+-		 * device.
+-		 *
+-		 * Another thread might instantiate more buffercache here,
+-		 * but there is not much we can do to close that race.
+-		 */
+-		kill_bdev(bdev);
+-		brd_free_pages(brd);
+-		error = 0;
+-	}
+-	mutex_unlock(&bdev->bd_mutex);
+-	mutex_unlock(&brd_mutex);
+-
+-	return error;
+-}
+-
+ static const struct block_device_operations brd_fops = {
+ 	.owner =		THIS_MODULE,
+ 	.rw_page =		brd_rw_page,
+-	.ioctl =		brd_ioctl,
+ 	.direct_access =	brd_direct_access,
+ };
+ 
+-- 
+2.8.4 (Apple Git-73)
 
-Zdenek
