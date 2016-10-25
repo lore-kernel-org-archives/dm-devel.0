@@ -1,8 +1,8 @@
-From: li.minghui7@zte.com.cn
-Subject: [PATCH] multipathd/main.c: delete redundant judgment
-	before LOG_MSG()
-Date: Tue, 18 Oct 2016 17:11:45 +0800
-Message-ID: <1476781905-8584-1-git-send-email-li.minghui7@zte.com.cn>
+From: ding.yemin@zte.com.cn
+Subject: [PATCH] Add break for switch-case in
+	prin_do_scsi_ioctl().
+Date: Tue, 25 Oct 2016 14:41:56 +0800
+Message-ID: <1477377716-9528-1-git-send-email-ding.yemin@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -17,54 +17,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: zhang.kai16@zte.com.cn, "li.minghui" <li.minghui7@zte.com.cn>, dm-devel@redhat.com
+Cc: tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn, "ding.yemin" <ding.yemin@zte.com.cn>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: "li.minghui" <li.minghui7@zte.com.cn>
+From: "ding.yemin" <ding.yemin@zte.com.cn>
 
-Problem:the LOG_MSG() doesn't note the path info "path offline" when the
-path is in offline with the pp->offline = 1.
-
-Reasons:There is no need to judge the strlen(b) again before calling
-LOG_MSG(a, b) because there exists the judgmnet of strlen(b) in
-defination of LOG_MSG(a,b).
+Add break for switch-case in prin_do_scsi_ioctl().
 ---
- multipathd/main.c | 9 +++------
- 1 file changed, 3 insertions(+), 6 deletions(-)
+ libmpathpersist/mpath_pr_ioctl.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index b6eb696..b147ca5 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1454,8 +1454,7 @@ void repair_path(struct path * pp)
- 		return;
- 
- 	checker_repair(&pp->checker);
--	if (strlen(checker_message(&pp->checker)))
--		LOG_MSG(1, checker_message(&pp->checker));
-+	LOG_MSG(1, checker_message(&pp->checker));
- }
- 
- /*
-@@ -1590,8 +1589,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 		int oldstate = pp->state;
- 		pp->state = newstate;
- 
--		if (strlen(checker_message(&pp->checker)))
--			LOG_MSG(1, checker_message(&pp->checker));
-+		LOG_MSG(1, checker_message(&pp->checker));
- 
- 		/*
- 		 * upon state change, reset the checkint
-@@ -1703,8 +1701,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 			pp->tick = pp->checkint;
- 		}
+diff --git a/libmpathpersist/mpath_pr_ioctl.c b/libmpathpersist/mpath_pr_ioctl.c
+index 8b9ac3d..ffe7468 100644
+--- a/libmpathpersist/mpath_pr_ioctl.c
++++ b/libmpathpersist/mpath_pr_ioctl.c
+@@ -392,6 +392,7 @@ retry :
+ 			break;
+ 		case MPATH_PRIN_RFSTAT_SA :
+ 			mpath_format_readfullstatus(resp, got, noisy);
++			break;
  	}
--	else if (newstate == PATH_DOWN &&
--		 strlen(checker_message(&pp->checker))) {
-+	else if (newstate == PATH_DOWN) {
- 		int log_checker_err;
  
- 		conf = get_multipath_config();
+ out:
 -- 
 2.8.1.windows.1
