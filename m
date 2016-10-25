@@ -1,7 +1,8 @@
-From: peng.liang5@zte.com.cn
-Subject: [PATCH] libmultipath: fix setting of fast_io_fail_tmo
-Date: Tue, 25 Oct 2016 18:39:23 +0800
-Message-ID: <1477391963-9364-1-git-send-email-peng.liang5@zte.com.cn>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add support all STK OPENstorage
+	rdac arrays
+Date: Tue, 25 Oct 2016 14:57:06 +0200
+Message-ID: <20161025125706.4131-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,35 +16,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: zhang.kai16@zte.com.cn, PengLiang <peng.liang5@zte.com.cn>, dm-devel@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-From: PengLiang <peng.liang5@zte.com.cn>
+9176, D173, D178, D210, D220, D240 and D280.
 
-As MP_FAST_IO_FAIL_ZERO define to -2, it means -1 and -2 will be sscanf to
-*int_ptr in set_fast_io_fail. Then, -1 will be snprintf to 'off' and -2 will
-be snprintf to '0' in print_fast_io_fail.
-So it will showing the wrong config if user set fast_io_fail_tmo to -1 or -2.
-But in fact, -1 or -2 is a invalid config.
-
-Signed-off-by: PengLiang <peng.liang5@zte.com.cn>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/dict.c | 2 +-
+ libmultipath/hwtable.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 7c21e72..b02a29b 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -573,7 +573,7 @@ set_fast_io_fail(vector strvec, void *ptr)
- 	if (strcmp(buff, "off") == 0)
- 		*int_ptr = MP_FAST_IO_FAIL_OFF;
- 	else if (sscanf(buff, "%d", int_ptr) != 1 ||
--		 *int_ptr < MP_FAST_IO_FAIL_ZERO)
-+		 *int_ptr < 0)
- 		*int_ptr = MP_FAST_IO_FAIL_UNSET;
- 	else if (*int_ptr == 0)
- 		*int_ptr = MP_FAST_IO_FAIL_ZERO;
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 1aa9ec3..b56d2bc 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -726,7 +726,7 @@ static struct hwentry default_hw[] = {
+ 		/* Sun - StorageTek */
+ 	{
+ 		.vendor        = "STK",
+-		.product       = "OPENstorage D280",
++		.product       = "OPENstorage",
+ 		.bl_product    = "Universal Xport",
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.checker_name  = RDAC,
 -- 
-2.8.1.windows.1
+2.10.1
