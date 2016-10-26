@@ -1,8 +1,8 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add StorageTek BladeStore to
-	hwtable
-Date: Wed, 26 Oct 2016 01:25:28 +0200
-Message-ID: <20161025232528.7228-1-xose.vazquez@gmail.com>
+From: zhou.guichun@zte.com.cn
+Subject: [PATCH 1/2] multipath-tools: replace static and define
+	default values for config options
+Date: Wed, 26 Oct 2016 10:33:39 +0800
+Message-ID: <1477449220-11020-1-git-send-email-zhou.guichun@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,39 +16,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 10184522@zte.com.cn, 10072500@zte.com.cn, 10074136@zte.com.cn
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+
+Replace "const" by PRIO_CONST.
+Replace static force_sync and partition_delim values, and define
+DEFAULT_FORCE_SYNC and DEFAULT_PARTITION_DELIM
+
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ libmultipath/config.c   | 4 ++--
+ libmultipath/defaults.h | 4 +++-
+ 2 files changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 0199bf8..8c3eff7 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -725,6 +725,19 @@ static struct hwentry default_hw[] = {
- 	},
- 		/* Sun - StorageTek */
- 	{
-+		/* B210, B220, B240 and B280 */
-+		.vendor        = "STK",
-+		.product       = "BladeCtlr",
-+		.bl_product    = "Universal Xport",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.checker_name  = RDAC,
-+		.features      = "2 pg_init_retries 50",
-+		.hwhandler     = "1 rdac",
-+		.prio_name     = PRIO_RDAC,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.no_path_retry = 30,
-+	},
-+	{
- 		/* 9176, D173, D178, D210, D220, D240 and D280 */
- 		.vendor        = "STK",
- 		.product       = "OPENstorage",
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 92e4deb..ed51afb 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -606,8 +606,8 @@ load_config (char * file)
+ 	conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
+ 	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
+ 	conf->detect_prio = DEFAULT_DETECT_PRIO;
+-	conf->force_sync = 0;
+-	conf->partition_delim = NULL;
++	conf->force_sync = DEFAULT_FORCE_SYNC;
++	conf->partition_delim = DEFAULT_PARTITION_DELIM;
+ 	conf->processed_main_config = 0;
+ 	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
+ 	conf->uxsock_timeout = DEFAULT_REPLY_TIMEOUT;
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index e9581a6..9af9a9a 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -28,11 +28,13 @@
+ #define DEFAULT_RETRIGGER_DELAY	10
+ #define DEFAULT_RETRIGGER_TRIES	3
+ #define DEFAULT_UEV_WAIT_TIMEOUT 30
+-#define DEFAULT_PRIO		"const"
++#define DEFAULT_PRIO		PRIO_CONST
+ #define DEFAULT_PRIO_ARGS	""
+ #define DEFAULT_CHECKER		TUR
+ #define DEFAULT_FLUSH		FLUSH_DISABLED
+ #define DEFAULT_USER_FRIENDLY_NAMES USER_FRIENDLY_NAMES_OFF
++#define DEFAULT_FORCE_SYNC	0
++#define DEFAULT_PARTITION_DELIM	NULL
+ 
+ #define DEFAULT_CHECKINT	5
+ #define MAX_CHECKINT(a)		(a << 2)
 -- 
-2.10.1
+2.8.1.windows.1
