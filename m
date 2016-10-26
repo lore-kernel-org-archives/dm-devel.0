@@ -1,79 +1,45 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH 1/2] multipath-tools: replace static and
- define default values for config options
-Date: Wed, 26 Oct 2016 21:17:36 +0200
-Message-ID: <2cfa5ab7-9b4c-c841-eacc-66def46bb8f0@gmail.com>
-References: <1477449220-11020-1-git-send-email-zhou.guichun@zte.com.cn>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 0/4] brd: support discard
+Date: Wed, 26 Oct 2016 16:25:51 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1610261624100.12287@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1610211406290.9197@file01.intranet.prod.int.rdu2.redhat.com> <20161021200022.GA12580@redhat.com> <alpine.LRH.2.02.1610211616450.31606@file01.intranet.prod.int.rdu2.redhat.com> <20161024155756.GA48306@redhat.com>
+ <20161025130712.GA12717@infradead.org> <20161025143719.GA51266@redhat.com> <710b07a3-9091-6935-37c4-ea1dcedcab4f@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1477449220-11020-1-git-send-email-zhou.guichun@zte.com.cn>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: zhou.guichun@zte.com.cn, 10184522@zte.com.cn, 10072500@zte.com.cn, 10074136@zte.com.cn
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <710b07a3-9091-6935-37c4-ea1dcedcab4f@kernel.dk>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 10/26/2016 04:33 AM, zhou.guichun@zte.com.cn wrote:
-> From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
-This patch already was applied: http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=commitdiff;h=906c098284afc9573d710ba25580b6919352a3ff
-This looks like an internal e-mail, please fix your mailer.
 
-> Replace "const" by PRIO_CONST.
-> Replace static force_sync and partition_delim values, and define
-> DEFAULT_FORCE_SYNC and DEFAULT_PARTITION_DELIM
+On Tue, 25 Oct 2016, Jens Axboe wrote:
+
+> On 10/25/2016 08:37 AM, Mike Snitzer wrote:
+> > On Tue, Oct 25 2016 at  9:07P -0400,
+> > Christoph Hellwig <hch@infradead.org> wrote:
+> > 
+> > > I think the right fix is to kill off the BLKFLSBUF special case in
+> > > brd.  Yes, it break compatibility - but in this case the compatibility
+> > > breaks more than it helps.
+> > 
+> > Jens, please pick up this patch:
+> > 
+> > From: Mike Snitzer <snitzer@redhat.com>
+> > Date: Tue, 25 Oct 2016 10:25:07 -0400
+> > Subject: [PATCH] brd: remove support for BLKFLSBUF
 > 
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Hannes Reinecke <hare@suse.de>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/config.c   | 4 ++--
->  libmultipath/defaults.h | 4 +++-
->  2 files changed, 5 insertions(+), 3 deletions(-)
+> Added, thanks.
 > 
-> diff --git a/libmultipath/config.c b/libmultipath/config.c
-> index 92e4deb..ed51afb 100644
-> --- a/libmultipath/config.c
-> +++ b/libmultipath/config.c
-> @@ -606,8 +606,8 @@ load_config (char * file)
->  	conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
->  	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
->  	conf->detect_prio = DEFAULT_DETECT_PRIO;
-> -	conf->force_sync = 0;
-> -	conf->partition_delim = NULL;
-> +	conf->force_sync = DEFAULT_FORCE_SYNC;
-> +	conf->partition_delim = DEFAULT_PARTITION_DELIM;
->  	conf->processed_main_config = 0;
->  	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
->  	conf->uxsock_timeout = DEFAULT_REPLY_TIMEOUT;
-> diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-> index e9581a6..9af9a9a 100644
-> --- a/libmultipath/defaults.h
-> +++ b/libmultipath/defaults.h
-> @@ -28,11 +28,13 @@
->  #define DEFAULT_RETRIGGER_DELAY	10
->  #define DEFAULT_RETRIGGER_TRIES	3
->  #define DEFAULT_UEV_WAIT_TIMEOUT 30
-> -#define DEFAULT_PRIO		"const"
-> +#define DEFAULT_PRIO		PRIO_CONST
->  #define DEFAULT_PRIO_ARGS	""
->  #define DEFAULT_CHECKER		TUR
->  #define DEFAULT_FLUSH		FLUSH_DISABLED
->  #define DEFAULT_USER_FRIENDLY_NAMES USER_FRIENDLY_NAMES_OFF
-> +#define DEFAULT_FORCE_SYNC	0
-> +#define DEFAULT_PARTITION_DELIM	NULL
->  
->  #define DEFAULT_CHECKINT	5
->  #define MAX_CHECKINT(a)		(a << 2)
-> 
+> -- 
+> Jens Axboe
+
+Hi
+
+With the removal of BLKFLSBUF, there is no way to free memory allocated by 
+ramdisk, so I created these 4 patches that add DISCARD support for 
+ramdisk.
+
+Mikulas
