@@ -1,14 +1,14 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH] libmultipath: I/O access overrun occured in
- mutipath device under the displayed capacity
-Date: Wed, 26 Oct 2016 11:10:01 -0700
-Message-ID: <0641fe0a-3299-7eb5-2aed-2115946222e6@sandisk.com>
-References: <1477451932-7756-1-git-send-email-zhou.guichun@zte.com.cn>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH 1/2] multipath-tools: replace static and
+ define default values for config options
+Date: Wed, 26 Oct 2016 21:17:36 +0200
+Message-ID: <2cfa5ab7-9b4c-c841-eacc-66def46bb8f0@gmail.com>
+References: <1477449220-11020-1-git-send-email-zhou.guichun@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1477451932-7756-1-git-send-email-zhou.guichun@zte.com.cn>
+In-Reply-To: <1477449220-11020-1-git-send-email-zhou.guichun@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,28 +18,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: zhou.guichun@zte.com.cn, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn
+To: zhou.guichun@zte.com.cn, 10184522@zte.com.cn, 10072500@zte.com.cn, 10074136@zte.com.cn
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 10/25/2016 08:18 PM, zhou.guichun@zte.com.cn wrote:
-> From: zhouguichun <zhou.guichun@zte.com.cn>
->
-> I/O access overrun occured in mutipath device under
-> the displayed capacity since that the displayed
-> capacity is greater than the real capacity
-> (Eg. a 3456M disk display as 3.4G).
->
-> In this patch, we keep the displayed capacity three
-> decimals by abandoning the rest of decimals instead
-> of by rounding up(Eg. a 3.4567G disk display as
-> 3.456G), so that the displayed capacity will not be
-> greater than the real capacity, and the error will
-> also be in a permissible range.
+On 10/26/2016 04:33 AM, zhou.guichun@zte.com.cn wrote:
+> From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
-The motivation of this patch looks really weird to me. How could the 
-rounding in snprint_size() cause an access past the end of a block 
-device? Using the output of that function as block device size is wrong. 
-Please use /sys/class/block/dm*/size instead.
+This patch already was applied: http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=commitdiff;h=906c098284afc9573d710ba25580b6919352a3ff
+This looks like an internal e-mail, please fix your mailer.
 
-Bart.
+> Replace "const" by PRIO_CONST.
+> Replace static force_sync and partition_delim values, and define
+> DEFAULT_FORCE_SYNC and DEFAULT_PARTITION_DELIM
+> 
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Hannes Reinecke <hare@suse.de>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  libmultipath/config.c   | 4 ++--
+>  libmultipath/defaults.h | 4 +++-
+>  2 files changed, 5 insertions(+), 3 deletions(-)
+> 
+> diff --git a/libmultipath/config.c b/libmultipath/config.c
+> index 92e4deb..ed51afb 100644
+> --- a/libmultipath/config.c
+> +++ b/libmultipath/config.c
+> @@ -606,8 +606,8 @@ load_config (char * file)
+>  	conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
+>  	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
+>  	conf->detect_prio = DEFAULT_DETECT_PRIO;
+> -	conf->force_sync = 0;
+> -	conf->partition_delim = NULL;
+> +	conf->force_sync = DEFAULT_FORCE_SYNC;
+> +	conf->partition_delim = DEFAULT_PARTITION_DELIM;
+>  	conf->processed_main_config = 0;
+>  	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
+>  	conf->uxsock_timeout = DEFAULT_REPLY_TIMEOUT;
+> diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+> index e9581a6..9af9a9a 100644
+> --- a/libmultipath/defaults.h
+> +++ b/libmultipath/defaults.h
+> @@ -28,11 +28,13 @@
+>  #define DEFAULT_RETRIGGER_DELAY	10
+>  #define DEFAULT_RETRIGGER_TRIES	3
+>  #define DEFAULT_UEV_WAIT_TIMEOUT 30
+> -#define DEFAULT_PRIO		"const"
+> +#define DEFAULT_PRIO		PRIO_CONST
+>  #define DEFAULT_PRIO_ARGS	""
+>  #define DEFAULT_CHECKER		TUR
+>  #define DEFAULT_FLUSH		FLUSH_DISABLED
+>  #define DEFAULT_USER_FRIENDLY_NAMES USER_FRIENDLY_NAMES_OFF
+> +#define DEFAULT_FORCE_SYNC	0
+> +#define DEFAULT_PARTITION_DELIM	NULL
+>  
+>  #define DEFAULT_CHECKINT	5
+>  #define MAX_CHECKINT(a)		(a << 2)
+> 
