@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add SUN ZFS Storage Appliances
-	to hwtable
-Date: Wed, 26 Oct 2016 13:58:38 +0200
-Message-ID: <20161026115838.5021-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: alua: replace output for
+	reserved return codes
+Date: Wed, 26 Oct 2016 19:23:24 +0200
+Message-ID: <20161026172324.11421-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,35 +16,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Show an explicit error.
+The current message could be misread, it is not related to the state of the port.
+
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ libmultipath/prioritizers/alua.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 8c3eff7..c1c15b9 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -819,6 +819,15 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
- 	},
-+	{
-+		/* ZFS Storage Appliances */
-+		.vendor        = "SUN",
-+		.product       = "(Sun Storage|ZFS Storage|COMSTAR)",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.prio_name     = PRIO_ALUA,
-+		.no_path_retry = 30,
-+	},
- 	/*
- 	 * Pivot3
- 	 *
+diff --git a/libmultipath/prioritizers/alua.c b/libmultipath/prioritizers/alua.c
+index 5636974..cfbf7df 100644
+--- a/libmultipath/prioritizers/alua.c
++++ b/libmultipath/prioritizers/alua.c
+@@ -32,7 +32,7 @@ static const char * aas_string[] = {
+ 	[AAS_STANDBY]		= "standby",
+ 	[AAS_UNAVAILABLE]	= "unavailable",
+ 	[AAS_LBA_DEPENDENT]	= "lba dependent",
+-	[AAS_RESERVED]		= "invalid/reserved",
++	[AAS_RESERVED]		= "ARRAY BUG: invalid TPGs state!",
+ 	[AAS_OFFLINE]		= "offline",
+ 	[AAS_TRANSITIONING]	= "transitioning between states",
+ };
 -- 
 2.10.1
