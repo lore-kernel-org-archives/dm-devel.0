@@ -1,8 +1,8 @@
 From: zhou.guichun@zte.com.cn
-Subject: [PATCH 1/2] multipath-tools: replace static and define
-	default values for config options
-Date: Wed, 26 Oct 2016 10:33:39 +0800
-Message-ID: <1477449220-11020-1-git-send-email-zhou.guichun@zte.com.cn>
+Subject: [PATCH] libmultipath: I/O access overrun occured in
+	mutipath device under the displayed capacity
+Date: Wed, 26 Oct 2016 11:18:52 +0800
+Message-ID: <1477451932-7756-1-git-send-email-zhou.guichun@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,59 +16,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: 10184522@zte.com.cn, 10072500@zte.com.cn, 10074136@zte.com.cn
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: tang.junhui@zte.com.cn, zhouguichun <zhou.guichun@zte.com.cn>, zhang.kai16@zte.com.cn, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+From: zhouguichun <zhou.guichun@zte.com.cn>
 
-Replace "const" by PRIO_CONST.
-Replace static force_sync and partition_delim values, and define
-DEFAULT_FORCE_SYNC and DEFAULT_PARTITION_DELIM
+I/O access overrun occured in mutipath device under
+the displayed capacity since that the displayed
+capacity is greater than the real capacity
+(Eg. a 3456M disk display as 3.4G).
 
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In this patch, we keep the displayed capacity three
+decimals by abandoning the rest of decimals instead
+of by rounding up(Eg. a 3.4567G disk display as
+3.456G), so that the displayed capacity will not be
+greater than the real capacity, and the error will
+also be in a permissible range.
+
+Signed-off-by: zhouguichun <zhou.guichun@zte.com.cn>
 ---
- libmultipath/config.c   | 4 ++--
- libmultipath/defaults.h | 4 +++-
- 2 files changed, 5 insertions(+), 3 deletions(-)
+ libmultipath/print.c  | 8 ++++++--
+ mpathpersist/Makefile | 2 +-
+ multipath/Makefile    | 2 +-
+ multipathd/Makefile   | 2 +-
+ 4 files changed, 9 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 92e4deb..ed51afb 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -606,8 +606,8 @@ load_config (char * file)
- 	conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
- 	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
- 	conf->detect_prio = DEFAULT_DETECT_PRIO;
--	conf->force_sync = 0;
--	conf->partition_delim = NULL;
-+	conf->force_sync = DEFAULT_FORCE_SYNC;
-+	conf->partition_delim = DEFAULT_PARTITION_DELIM;
- 	conf->processed_main_config = 0;
- 	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
- 	conf->uxsock_timeout = DEFAULT_REPLY_TIMEOUT;
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index e9581a6..9af9a9a 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -28,11 +28,13 @@
- #define DEFAULT_RETRIGGER_DELAY	10
- #define DEFAULT_RETRIGGER_TRIES	3
- #define DEFAULT_UEV_WAIT_TIMEOUT 30
--#define DEFAULT_PRIO		"const"
-+#define DEFAULT_PRIO		PRIO_CONST
- #define DEFAULT_PRIO_ARGS	""
- #define DEFAULT_CHECKER		TUR
- #define DEFAULT_FLUSH		FLUSH_DISABLED
- #define DEFAULT_USER_FRIENDLY_NAMES USER_FRIENDLY_NAMES_OFF
-+#define DEFAULT_FORCE_SYNC	0
-+#define DEFAULT_PARTITION_DELIM	NULL
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 9aa41ad..4635e5a 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -11,6 +11,7 @@
+ #include <string.h>
+ #include <errno.h>
+ #include <libudev.h>
++#include <math.h>
  
- #define DEFAULT_CHECKINT	5
- #define MAX_CHECKINT(a)		(a << 2)
+ #include "checkers.h"
+ #include "vector.h"
+@@ -72,16 +73,19 @@ snprint_uint (char * buff, size_t len, unsigned int val)
+ static int
+ snprint_size (char * buff, size_t len, unsigned long long size)
+ {
+-	float s = (float)(size >> 1); /* start with KB */
++	double s = (float)(size >> 1); /* start with KB */
+ 	char units[] = {'K','M','G','T','P'};
+ 	char *u = units;
++	double tmp = 0.0;
+ 
+ 	while (s >= 1024 && *u != 'P') {
+ 		s = s / 1024;
+ 		u++;
+ 	}
+ 
+-	return snprintf(buff, len, "%.*f%c", s < 10, s, *u);
++	tmp = floor(s * 1000);
++	s = tmp / 1000;
++	return snprintf(buff, len, "%.3f%c", s, *u);
+ }
+ 
+ /*
+diff --git a/mpathpersist/Makefile b/mpathpersist/Makefile
+index 47043bb..e9691b3 100644
+--- a/mpathpersist/Makefile
++++ b/mpathpersist/Makefile
+@@ -3,7 +3,7 @@ include ../Makefile.inc
+ CFLAGS += -I$(multipathdir) -I$(mpathpersistdir)
+ 
+ LIBDEPS += -lpthread -ldevmapper -L$(mpathpersistdir) -lmpathpersist \
+-	   -L$(multipathdir) -L$(mpathcmddir) -lmpathcmd -lmultipath -ludev
++	   -L$(multipathdir) -L$(mpathcmddir) -lmpathcmd -lmultipath -ludev -lm
+ 
+ EXEC = mpathpersist
+ 
+diff --git a/multipath/Makefile b/multipath/Makefile
+index cad34bf..1f3f0ee 100644
+--- a/multipath/Makefile
++++ b/multipath/Makefile
+@@ -6,7 +6,7 @@ include ../Makefile.inc
+ CFLAGS += -I$(multipathdir) -I$(mpathcmddir)
+ 
+ LIBDEPS += -lpthread -ldevmapper -ldl -L$(multipathdir) -lmultipath -ludev \
+-	   -L$(mpathcmddir) -lmpathcmd
++	   -L$(mpathcmddir) -lmpathcmd -lm
+ 
+ EXEC = multipath
+ 
+diff --git a/multipathd/Makefile b/multipathd/Makefile
+index ae06f9e..4db6397 100644
+--- a/multipathd/Makefile
++++ b/multipathd/Makefile
+@@ -11,7 +11,7 @@ CFLAGS += -I$(multipathdir) -I$(mpathpersistdir) -I$(mpathcmddir) \
+ 
+ LIBDEPS += -ludev -ldl -L$(multipathdir) -lmultipath -L$(mpathpersistdir) \
+ 	   -lmpathpersist -L$(mpathcmddir) -lmpathcmd -lurcu -lpthread \
+-	   -ldevmapper -lreadline
++	   -ldevmapper -lreadline -lm
+ 
+ ifdef SYSTEMD
+ 	CFLAGS += -DUSE_SYSTEMD=$(SYSTEMD)
 -- 
 2.8.1.windows.1
