@@ -1,57 +1,49 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [dm-devel] [PATCH 1/4] brd: handle misaligned discard
-Date: Fri, 28 Oct 2016 08:55:26 -0700
-Message-ID: <f3257790-19a5-8512-df37-78e5fd8a8973@sandisk.com>
-References: <alpine.LRH.2.02.1610211406290.9197@file01.intranet.prod.int.rdu2.redhat.com>
- <20161021200022.GA12580@redhat.com>
- <alpine.LRH.2.02.1610211616450.31606@file01.intranet.prod.int.rdu2.redhat.com>
- <20161024155756.GA48306@redhat.com> <20161025130712.GA12717@infradead.org>
- <20161025143719.GA51266@redhat.com>
- <710b07a3-9091-6935-37c4-ea1dcedcab4f@kernel.dk>
- <alpine.LRH.2.02.1610261624100.12287@file01.intranet.prod.int.rdu2.redhat.com>
- <alpine.LRH.2.02.1610261625580.12287@file01.intranet.prod.int.rdu2.redhat.com>
- <338b76f0-40d1-904f-66e0-f6455c5287e7@sandisk.com>
- <alpine.LRH.2.02.1610261733190.25893@file01.intranet.prod.int.rdu2.redhat.com>
- <9ee4e796-2a85-3b81-ebaa-90ed50f8bf66@sandisk.com>
- <alpine.LRH.2.02.1610280731410.22676@file01.intranet.prod.int.rdu2.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] block: disallow changing max_sectors_kb on a request stacking device
+Date: Fri, 28 Oct 2016 15:45:49 -0400
+Message-ID: <20161028194549.14556-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1610280731410.22676@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: axboe@kernel.dk
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 10/28/2016 04:39 AM, Mikulas Patocka wrote:
-> On Wed, 26 Oct 2016, Bart Van Assche wrote:
->> On 10/26/2016 02:46 PM, Mikulas Patocka wrote:
->>> I think the proper thing would be to move "discard_zeroes_data" flag into
->>> the bio itself - there would be REQ_OP_DISCARD and REQ_OP_DISCARD_ZERO -
->>> and if the device doesn't support REQ_OP_DISCARD_ZERO, it rejects the bio
->>> and the caller is supposed to do zeroing manually.
->>
->> Sorry but I don't like this proposal. I think that a much better solution
->> would be to pause I/O before making any changes to the discard_zeroes_data
->> flag.
->
-> The device mapper pauses all bios when it switches the table - but the bio
-> was submitted with assumption that it goes to a device withe
-> "discard_zeroes_data" set, then the bio is paused, device mapper table is
-> switched, the bio is unpaused, and now it can go to a device without
-> "discard_zeroes_data".
+Otherwise users can easily shoot themselves in the foot by creating the
+situation where the top-level stacked device (e.g. DM multipath) has a
+larger max_sectors_kb than the underlying device(s).  Which will
+certainly lead to IO errors due to the "over max size limit" check in
+blk_cloned_rq_check_limits().
 
-Hello Mikulas,
+Use of WARN_ON_ONCE() gives users visibility into which application
+attempted to perform this unsupported max_sectors_kb change.
 
-Sorry if I wasn't clear enough. What I meant is to wait until all 
-outstanding requests have finished before modifying the 
-discard_zeroes_data flag - the kind of operation that is performed by 
-e.g. blk_mq_freeze_queue(). Modifying the discard_zeroes_data flag after 
-a bio has been submitted and before it has completed could lead to 
-several classes of subtle bugs. Functions like __blkdev_issue_discard() 
-assume that the value of the discard_zeroes_data flag does not change 
-after this function has been called and before the submitted requests 
-completed.
+This is a crude, yet effective, solution that forces the use of system
+software (e.g. udev rules or multipathd) to tweak max_sectors_kb of the
+underlying devices _before_ a layer like DM multipath is layered ontop.
 
-Bart.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ block/blk-sysfs.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+index 9cc8d7c..cce43d7 100644
+--- a/block/blk-sysfs.c
++++ b/block/blk-sysfs.c
+@@ -199,8 +199,12 @@ queue_max_sectors_store(struct request_queue *q, const char *page, size_t count)
+ 	unsigned long max_sectors_kb,
+ 		max_hw_sectors_kb = queue_max_hw_sectors(q) >> 1,
+ 			page_kb = 1 << (PAGE_SHIFT - 10);
+-	ssize_t ret = queue_var_store(&max_sectors_kb, page, count);
++	ssize_t ret;
++
++	if (WARN_ON_ONCE(blk_queue_stackable(q)))
++		return -EINVAL;
+ 
++	ret = queue_var_store(&max_sectors_kb, page, count);
+ 	if (ret < 0)
+ 		return ret;
+ 
+-- 
+2.8.4 (Apple Git-73)
+
