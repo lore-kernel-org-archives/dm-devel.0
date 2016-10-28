@@ -1,74 +1,57 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH] add_feature: coredump
-Date: Fri, 28 Oct 2016 08:14:22 -0700
-Message-ID: <eadb5017-c276-b304-f95d-793b41d32a1f@sandisk.com>
-References: <1476410880-7156-1-git-send-email-huang.wei56@zte.com.cn>
+Subject: Re: [dm-devel] [PATCH 1/4] brd: handle misaligned discard
+Date: Fri, 28 Oct 2016 08:55:26 -0700
+Message-ID: <f3257790-19a5-8512-df37-78e5fd8a8973@sandisk.com>
+References: <alpine.LRH.2.02.1610211406290.9197@file01.intranet.prod.int.rdu2.redhat.com>
+ <20161021200022.GA12580@redhat.com>
+ <alpine.LRH.2.02.1610211616450.31606@file01.intranet.prod.int.rdu2.redhat.com>
+ <20161024155756.GA48306@redhat.com> <20161025130712.GA12717@infradead.org>
+ <20161025143719.GA51266@redhat.com>
+ <710b07a3-9091-6935-37c4-ea1dcedcab4f@kernel.dk>
+ <alpine.LRH.2.02.1610261624100.12287@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.02.1610261625580.12287@file01.intranet.prod.int.rdu2.redhat.com>
+ <338b76f0-40d1-904f-66e0-f6455c5287e7@sandisk.com>
+ <alpine.LRH.2.02.1610261733190.25893@file01.intranet.prod.int.rdu2.redhat.com>
+ <9ee4e796-2a85-3b81-ebaa-90ed50f8bf66@sandisk.com>
+ <alpine.LRH.2.02.1610280731410.22676@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1476410880-7156-1-git-send-email-huang.wei56@zte.com.cn>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: huang.wei56@zte.com.cn, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.1610280731410.22676@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 10/13/2016 07:08 PM, huang.wei56@zte.com.cn wrote:
-> From: "wei.huang" <huang.wei56@zte.com.cn>
+On 10/28/2016 04:39 AM, Mikulas Patocka wrote:
+> On Wed, 26 Oct 2016, Bart Van Assche wrote:
+>> On 10/26/2016 02:46 PM, Mikulas Patocka wrote:
+>>> I think the proper thing would be to move "discard_zeroes_data" flag into
+>>> the bio itself - there would be REQ_OP_DISCARD and REQ_OP_DISCARD_ZERO -
+>>> and if the device doesn't support REQ_OP_DISCARD_ZERO, it rejects the bio
+>>> and the caller is supposed to do zeroing manually.
+>>
+>> Sorry but I don't like this proposal. I think that a much better solution
+>> would be to pause I/O before making any changes to the discard_zeroes_data
+>> flag.
 >
-> Problem:
-> when we configure device like vendor is COMPELNT in multipath.conf, multipathd will be coredump.
->
-> Reasons:
-> some vonders are not configured features in default_hw. In add_feature, strstr's first parameter *f maybe null.
->
-> Signed-off-by: wei.huang <huang.wei56@zte.com.cn>
-> ---
->  libmultipath/structs.c | 14 ++++++++++++++
->  1 file changed, 14 insertions(+)
->
-> diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-> index fee58e5..41e142f 100644
-> --- a/libmultipath/structs.c
-> +++ b/libmultipath/structs.c
-> @@ -520,6 +520,20 @@ add_feature (char **f, char *n)
->  	if (!n || *n == '0')
->  		return 0;
->
-> +	/* default feature is null */
-> +	if(!*f)
-> +	{
-> +		l = strlen("1 ") + strlen(n) + 1;
-> +		t = MALLOC(l);
-> +		if (!t)
-> +			return 1;
-> +
-> +		snprintf(t, l, "1 %s", n);
-> +		*f = t;
-> +	
-> +		return 0;
-> +	}
-> +
->  	/* Check if feature is already present */
->  	if (strstr(*f, n))
->  		return 0;
->
+> The device mapper pauses all bios when it switches the table - but the bio
+> was submitted with assumption that it goes to a device withe
+> "discard_zeroes_data" set, then the bio is paused, device mapper table is
+> switched, the bio is unpaused, and now it can go to a device without
+> "discard_zeroes_data".
 
-Hello Wei Huang,
+Hello Mikulas,
 
-Please use asprintf() instead of open coding it and please also make the 
-title of your patch comprehensible. Your patch avoids that multipathd 
-triggers a core dump for a certain vendor name but that's not clear from 
-the "add_feature: coredump".
-
-Thanks,
+Sorry if I wasn't clear enough. What I meant is to wait until all 
+outstanding requests have finished before modifying the 
+discard_zeroes_data flag - the kind of operation that is performed by 
+e.g. blk_mq_freeze_queue(). Modifying the discard_zeroes_data flag after 
+a bio has been submitted and before it has completed could lead to 
+several classes of subtle bugs. Functions like __blkdev_issue_discard() 
+assume that the value of the discard_zeroes_data flag does not change 
+after this function has been called and before the submitted requests 
+completed.
 
 Bart.
