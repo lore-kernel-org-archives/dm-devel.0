@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 08/10] fix INIT_REQUESTED_UDEV code
-Date: Fri, 28 Oct 2016 21:55:24 -0500
-Message-ID: <1477709726-5442-9-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 05/10] mpath: don't wait for udev if all paths
+	are down
+Date: Fri, 28 Oct 2016 21:55:21 -0500
+Message-ID: <1477709726-5442-6-git-send-email-bmarzins@redhat.com>
 References: <1477709726-5442-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,97 +21,30 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-uev_update_path was not checking pp->initialized to see if multipathd
-had requested that the path be reinitialized unless the path's read-only
-state had changed.  This kept the reinitialization code from running in
-most cases where it was supposed to. This patch reorders the function to
-move that check outside the read-only status change code block. This
-does mean that uev_update_path now always grabs the vecs lock, where
-before it would only be grabbed if the read-only status had changed. If
-people are worried about this, I can add some code to limit this so that
-uev_update_path will only grab it if there is a chance that it needs to
-reinitialize the path.
+Normally multipath waits for udev to create a device before adding
+more paths, which could trigger a reload. But, if the first path
+discovered is not usable, you should add the next path right away.
 
-Cc: Hannes Reinecke <hare@suse.de>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 54 +++++++++++++++++++-----------------------------------
- 1 file changed, 19 insertions(+), 35 deletions(-)
+ multipathd/main.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index f423e35..dbb4554 100644
+index dbcaa03..15c957a 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -957,51 +957,35 @@ static int
- uev_update_path (struct uevent *uev, struct vectors * vecs)
- {
- 	int ro, retval = 0;
-+	struct path * pp;
- 
- 	ro = uevent_get_disk_ro(uev);
- 
--	if (ro >= 0) {
--		struct path * pp;
--		struct multipath *mpp = NULL;
-+	pthread_cleanup_push(cleanup_lock, &vecs->lock);
-+	lock(&vecs->lock);
-+	pthread_testcancel();
- 
--		condlog(2, "%s: update path write_protect to '%d' (uevent)",
--			uev->kernel, ro);
--		pthread_cleanup_push(cleanup_lock, &vecs->lock);
--		lock(&vecs->lock);
--		pthread_testcancel();
--		/*
--		 * pthread_mutex_lock() and pthread_mutex_unlock()
--		 * need to be at the same indentation level, hence
--		 * this slightly convoluted codepath.
--		 */
--		pp = find_path_by_dev(vecs->pathvec, uev->kernel);
--		if (pp) {
--			if (pp->initialized == INIT_REQUESTED_UDEV) {
--				retval = 2;
--			} else {
--				mpp = pp->mpp;
--				if (mpp && mpp->wait_for_udev) {
--					mpp->wait_for_udev = 2;
--					mpp = NULL;
--					retval = 0;
--				}
--			}
--			if (mpp) {
--				retval = reload_map(vecs, mpp, 0, 1);
-+	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
-+	if (pp) {
-+		struct multipath *mpp = pp->mpp;
-+
-+		if (pp->initialized == INIT_REQUESTED_UDEV)
-+			retval = uev_add_path(uev, vecs);
-+		else if (mpp && ro >= 0) {
-+			condlog(2, "%s: update path write_protect to '%d' (uevent)", uev->kernel, ro);
- 
-+			if (mpp->wait_for_udev)
-+				mpp->wait_for_udev = 2;
-+			else {
-+				retval = reload_map(vecs, mpp, 0, 1);
- 				condlog(2, "%s: map %s reloaded (retval %d)",
- 					uev->kernel, mpp->alias, retval);
- 			}
- 		}
--		lock_cleanup_pop(vecs->lock);
--		if (!pp) {
--			condlog(0, "%s: spurious uevent, path not found",
--				uev->kernel);
--			return 1;
--		}
--		if (retval == 2)
--			return uev_add_path(uev, vecs);
+@@ -715,7 +715,10 @@ ev_add_path (struct path * pp, struct vectors * vecs)
+ 		goto fail; /* leave path added to pathvec */
  	}
-+	lock_cleanup_pop(vecs->lock);
-+	if (!pp)
-+		condlog(0, "%s: spurious uevent, path not found", uev->kernel);
- 
- 	return retval;
- }
+ 	mpp = find_mp_by_wwid(vecs->mpvec, pp->wwid);
+-	if (mpp && mpp->wait_for_udev) {
++	if (mpp && mpp->wait_for_udev &&
++	    (pathcount(mpp, PATH_UP) > 0 ||
++	     (pathcount(mpp, PATH_GHOST) > 0 && pp->tpgs != TPGS_IMPLICIT))) {
++		/* if wait_for_udev is set and valid paths exist */
+ 		mpp->wait_for_udev = 2;
+ 		orphan_path(pp, "waiting for create to complete");
+ 		return 0;
 -- 
 1.8.3.1
