@@ -1,50 +1,36 @@
 From: Ming Lei <tom.leiming@gmail.com>
-Subject: [PATCH 07/60] dm: crypt: use bio_add_page()
-Date: Sat, 29 Oct 2016 16:08:06 +0800
-Message-ID: <1477728600-12938-8-git-send-email-tom.leiming@gmail.com>
+Subject: [PATCH 58/60] dm-crypt: convert to bio_for_each_segment_all_rd()
+Date: Sat, 29 Oct 2016 16:08:57 +0800
+Message-ID: <1477728600-12938-59-git-send-email-tom.leiming@gmail.com>
 References: <1477728600-12938-1-git-send-email-tom.leiming@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <1477728600-12938-1-git-send-email-tom.leiming@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: Jens Axboe <axboe@fb.com>, linux-kernel@vger.kernel.org
 Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Ming Lei <tom.leiming@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "maintainer:DEVICE-MAPPER LVM" <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "open list:SOFTWARE RAID Multiple Disks
         SUPPORT" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-We have the standard interface to add page to bio, so don't
-do that in hacking way.
-
-Reviewed-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Ming Lei <tom.leiming@gmail.com>
 ---
- drivers/md/dm-crypt.c | 8 +-------
- 1 file changed, 1 insertion(+), 7 deletions(-)
+ drivers/md/dm-crypt.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index a2768835d394..4999c7497f95 100644
+index 4999c7497f95..ed0f54e51638 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -994,7 +994,6 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
- 	gfp_t gfp_mask = GFP_NOWAIT | __GFP_HIGHMEM;
- 	unsigned i, len, remaining_size;
- 	struct page *page;
--	struct bio_vec *bvec;
+@@ -1034,8 +1034,9 @@ static void crypt_free_buffer_pages(struct crypt_config *cc, struct bio *clone)
+ {
+ 	unsigned int i;
+ 	struct bio_vec *bv;
++	struct bvec_iter_all bia;
  
- retry:
- 	if (unlikely(gfp_mask & __GFP_DIRECT_RECLAIM))
-@@ -1019,12 +1018,7 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
- 
- 		len = (remaining_size > PAGE_SIZE) ? PAGE_SIZE : remaining_size;
- 
--		bvec = &clone->bi_io_vec[clone->bi_vcnt++];
--		bvec->bv_page = page;
--		bvec->bv_len = len;
--		bvec->bv_offset = 0;
--
--		clone->bi_iter.bi_size += len;
-+		bio_add_page(clone, page, len, 0);
- 
- 		remaining_size -= len;
- 	}
+-	bio_for_each_segment_all(bv, clone, i) {
++	bio_for_each_segment_all_rd(bv, clone, i, bia) {
+ 		BUG_ON(!bv->bv_page);
+ 		mempool_free(bv->bv_page, cc->page_pool);
+ 		bv->bv_page = NULL;
 -- 
 2.7.4
+
