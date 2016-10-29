@@ -1,36 +1,46 @@
 From: Ming Lei <tom.leiming@gmail.com>
-Subject: [PATCH 58/60] dm-crypt: convert to bio_for_each_segment_all_rd()
-Date: Sat, 29 Oct 2016 16:08:57 +0800
-Message-ID: <1477728600-12938-59-git-send-email-tom.leiming@gmail.com>
+Subject: [PATCH 29/60] dm: limit the max bio size as BIO_SP_MAX_SECTORS << SECTOR_SHIFT
+Date: Sat, 29 Oct 2016 16:08:28 +0800
+Message-ID: <1477728600-12938-30-git-send-email-tom.leiming@gmail.com>
 References: <1477728600-12938-1-git-send-email-tom.leiming@gmail.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1477728600-12938-1-git-send-email-tom.leiming@gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Jens Axboe <axboe@fb.com>, linux-kernel@vger.kernel.org
 Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Ming Lei <tom.leiming@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "maintainer:DEVICE-MAPPER LVM" <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "open list:SOFTWARE RAID Multiple Disks
         SUPPORT" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
+For BIO based DM, some targets aren't ready for dealing with
+bigger incoming bio than 1Mbyte, such as crypt and log write
+targets.
+
 Signed-off-by: Ming Lei <tom.leiming@gmail.com>
 ---
- drivers/md/dm-crypt.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ drivers/md/dm.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 4999c7497f95..ed0f54e51638 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1034,8 +1034,9 @@ static void crypt_free_buffer_pages(struct crypt_config *cc, struct bio *clone)
- {
- 	unsigned int i;
- 	struct bio_vec *bv;
-+	struct bvec_iter_all bia;
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index ef7bf1dd6900..ce454c6c1a4e 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -899,7 +899,16 @@ int dm_set_target_max_io_len(struct dm_target *ti, sector_t len)
+ 		return -EINVAL;
+ 	}
  
--	bio_for_each_segment_all(bv, clone, i) {
-+	bio_for_each_segment_all_rd(bv, clone, i, bia) {
- 		BUG_ON(!bv->bv_page);
- 		mempool_free(bv->bv_page, cc->page_pool);
- 		bv->bv_page = NULL;
+-	ti->max_io_len = (uint32_t) len;
++	/*
++	 * BIO based queue uses its own splitting. When multipage bvecs
++	 * is switched on, size of the incoming bio may be too big to
++	 * be handled in some targets, such as crypt and log write.
++	 *
++	 * When these targets are ready for the big bio, we can remove
++	 * the limit.
++	 */
++	ti->max_io_len = min_t(uint32_t, len,
++			       BIO_SP_MAX_SECTORS << SECTOR_SHIFT);
+ 
+ 	return 0;
+ }
 -- 
 2.7.4
-
