@@ -1,49 +1,52 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] block: disallow changing max_sectors_kb on a request stacking device
-Date: Fri, 28 Oct 2016 15:45:49 -0400
-Message-ID: <20161028194549.14556-1-snitzer@redhat.com>
-Return-path: <linux-block-owner@vger.kernel.org>
-Sender: linux-block-owner@vger.kernel.org
-To: axboe@kernel.dk
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 03/10] do not allow in-use path to change wwid
+Date: Fri, 28 Oct 2016 21:55:19 -0500
+Message-ID: <1477709726-5442-4-git-send-email-bmarzins@redhat.com>
+References: <1477709726-5442-1-git-send-email-bmarzins@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1477709726-5442-1-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Otherwise users can easily shoot themselves in the foot by creating the
-situation where the top-level stacked device (e.g. DM multipath) has a
-larger max_sectors_kb than the underlying device(s).  Which will
-certainly lead to IO errors due to the "over max size limit" check in
-blk_cloned_rq_check_limits().
+When a path is part of a multipath device, it must not change it's wwid.
+If it can, when multipathd is reconfigured, you can end up with two
+multipath devices owning the same path, eventually leading to a crash.
 
-Use of WARN_ON_ONCE() gives users visibility into which application
-attempted to perform this unsupported max_sectors_kb change.
-
-This is a crude, yet effective, solution that forces the use of system
-software (e.g. udev rules or multipathd) to tweak max_sectors_kb of the
-underlying devices _before_ a layer like DM multipath is layered ontop.
-
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- block/blk-sysfs.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ libmultipath/dmparser.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-index 9cc8d7c..cce43d7 100644
---- a/block/blk-sysfs.c
-+++ b/block/blk-sysfs.c
-@@ -199,8 +199,12 @@ queue_max_sectors_store(struct request_queue *q, const char *page, size_t count)
- 	unsigned long max_sectors_kb,
- 		max_hw_sectors_kb = queue_max_hw_sectors(q) >> 1,
- 			page_kb = 1 << (PAGE_SHIFT - 10);
--	ssize_t ret = queue_var_store(&max_sectors_kb, page, count);
-+	ssize_t ret;
-+
-+	if (WARN_ON_ONCE(blk_queue_stackable(q)))
-+		return -EINVAL;
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 9e79ecd..87e8398 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -380,6 +380,14 @@ disassemble_map (vector pathvec, char * params, struct multipath * mpp,
+ 				strncpy(pp->wwid, mpp->wwid,
+ 					WWID_SIZE - 1);
  
-+	ret = queue_var_store(&max_sectors_kb, page, count);
- 	if (ret < 0)
- 		return ret;
++			/*
++			 * Do not allow in-use patch to change wwid
++			 */
++			else if (strcmp(pp->wwid, mpp->wwid) != 0) {
++				condlog(0, "%s: path wwid appears to have changed. Using map wwid.\n", pp->dev_t);
++				strncpy(pp->wwid, mpp->wwid, WWID_SIZE);
++			}
++
+ 			pgp->id ^= (long)pp;
+ 			pp->pgindex = i + 1;
  
 -- 
-2.8.4 (Apple Git-73)
-
+1.8.3.1
