@@ -1,14 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 06/10] multipath: set cookie before using it.
-Date: Sun, 30 Oct 2016 14:46:41 +0100
-Message-ID: <9d326d19-f9b1-4036-13df-38ac5be2b6ca@suse.de>
+Subject: Re: [PATCH 07/10] recover from errors in multipathd
+ startup
+Date: Sun, 30 Oct 2016 14:47:43 +0100
+Message-ID: <f483d488-80f5-c234-c301-5a545c320f5c@suse.de>
 References: <1477709726-5442-1-git-send-email-bmarzins@redhat.com>
-	<1477709726-5442-7-git-send-email-bmarzins@redhat.com>
+	<1477709726-5442-8-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"; Format="flowed"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1477709726-5442-7-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1477709726-5442-8-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,32 +23,20 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 10/29/2016 04:55 AM, Benjamin Marzinski wrote:
-> dm_task_set_cookie() expects the cookie to be initialized when it is
-> called, but dm_rename() didn't initialized it, causing renames to fail
-> some of the time.
+> When multipathd does it's initial configuration during startup, it fails
+> the daemon for many errors that it would simply recover from if they
+> occured when adding paths or maps later.  It should recover from these
+> errors during startup as well.  Also, if multipathd hits a
+> nonrecoverable error, it should log a message before quitting.
 >
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/devmapper.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  libmultipath/configure.c |  8 +++++---
+>  multipathd/main.c        | 45 ++++++++++++++++++++++++++++++++----------=
+---
+>  2 files changed, 37 insertions(+), 16 deletions(-)
 >
-> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> index ee61ff0..546e227 100644
-> --- a/libmultipath/devmapper.c
-> +++ b/libmultipath/devmapper.c
-> @@ -1424,7 +1424,7 @@ dm_rename (const char * old, char * new, char *deli=
-m, int skip_kpartx)
->  {
->  	int r =3D 0;
->  	struct dm_task *dmt;
-> -	uint32_t cookie;
-> +	uint32_t cookie =3D 0;
->  	uint16_t udev_flags =3D DM_UDEV_DISABLE_LIBRARY_FALLBACK | ((skip_kpart=
-x =3D=3D SKIP_KPARTX_ON)? MPATH_UDEV_NO_KPARTX_FLAG : 0);
->
->  	if (dm_rename_partmaps(old, new, delim))
->
-We never get this 'cookie' business right ...
+Very nice.
 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 
