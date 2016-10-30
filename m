@@ -1,15 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 05/10] mpath: don't wait for udev if all
- paths are down
-Date: Sun, 30 Oct 2016 14:46:08 +0100
-Message-ID: <f5d6a290-2a3a-a26f-f3ba-6321cab643a1@suse.de>
+Subject: Re: [PATCH 06/10] multipath: set cookie before using it.
+Date: Sun, 30 Oct 2016 14:46:41 +0100
+Message-ID: <9d326d19-f9b1-4036-13df-38ac5be2b6ca@suse.de>
 References: <1477709726-5442-1-git-send-email-bmarzins@redhat.com>
-	<1477709726-5442-6-git-send-email-bmarzins@redhat.com>
+	<1477709726-5442-7-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"; Format="flowed"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1477709726-5442-6-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1477709726-5442-7-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,32 +22,33 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 10/29/2016 04:55 AM, Benjamin Marzinski wrote:
-> Normally multipath waits for udev to create a device before adding
-> more paths, which could trigger a reload. But, if the first path
-> discovered is not usable, you should add the next path right away.
+> dm_task_set_cookie() expects the cookie to be initialized when it is
+> called, but dm_rename() didn't initialized it, causing renames to fail
+> some of the time.
 >
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  multipathd/main.c | 5 ++++-
->  1 file changed, 4 insertions(+), 1 deletion(-)
+>  libmultipath/devmapper.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 >
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index dbcaa03..15c957a 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -715,7 +715,10 @@ ev_add_path (struct path * pp, struct vectors * vecs)
->  		goto fail; /* leave path added to pathvec */
->  	}
->  	mpp =3D find_mp_by_wwid(vecs->mpvec, pp->wwid);
-> -	if (mpp && mpp->wait_for_udev) {
-> +	if (mpp && mpp->wait_for_udev &&
-> +	    (pathcount(mpp, PATH_UP) > 0 ||
-> +	     (pathcount(mpp, PATH_GHOST) > 0 && pp->tpgs !=3D TPGS_IMPLICIT))) {
-> +		/* if wait_for_udev is set and valid paths exist */
->  		mpp->wait_for_udev =3D 2;
->  		orphan_path(pp, "waiting for create to complete");
->  		return 0;
+> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+> index ee61ff0..546e227 100644
+> --- a/libmultipath/devmapper.c
+> +++ b/libmultipath/devmapper.c
+> @@ -1424,7 +1424,7 @@ dm_rename (const char * old, char * new, char *deli=
+m, int skip_kpartx)
+>  {
+>  	int r =3D 0;
+>  	struct dm_task *dmt;
+> -	uint32_t cookie;
+> +	uint32_t cookie =3D 0;
+>  	uint16_t udev_flags =3D DM_UDEV_DISABLE_LIBRARY_FALLBACK | ((skip_kpart=
+x =3D=3D SKIP_KPARTX_ON)? MPATH_UDEV_NO_KPARTX_FLAG : 0);
 >
+>  	if (dm_rename_partmaps(old, new, delim))
+>
+We never get this 'cookie' business right ...
+
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 
 Cheers,
