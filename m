@@ -1,14 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 09/10] add disable_changed_wwids option
-Date: Sun, 30 Oct 2016 14:54:14 +0100
-Message-ID: <55d8a18c-5c35-5d84-3b4a-557075aaa69d@suse.de>
+Subject: Re: [PATCH 10/10] set retrigger_tries to 0 for multipath
+Date: Sun, 30 Oct 2016 14:54:56 +0100
+Message-ID: <bc70efb7-a4ed-6738-b664-454d79e4ba0e@suse.de>
 References: <1477709726-5442-1-git-send-email-bmarzins@redhat.com>
-	<1477709726-5442-10-git-send-email-bmarzins@redhat.com>
+	<1477709726-5442-11-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"; Format="flowed"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1477709726-5442-10-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1477709726-5442-11-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,33 +22,34 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 10/29/2016 04:55 AM, Benjamin Marzinski wrote:
-> If a LUN on a storage device gets remapped while in-use by multipath,
-> it's possible that the multipath device will continue writing to this
-> new LUN, causing corruption.  This is not multipath's fault (users
-> should go remapping in-use LUNs), but it's possible for multipath to
-> detect this and disable IO to the device. If disable_changed_wwids
-> is set to "yes", multipathd will detect when a LUN changes wwids when it
-> receives the uevent for this, and will disable access to the device
-> until the LUN is mapped back.
+> Multipathd uses retrigger_tries to give udev more chances to to fill in
+> the uid_attribute, so that the path device is correctly set up in the
+> udev database. However the multipath command can't do this, so it should
+> just immediately give up on udev, and try to get the wwid directly.
 >
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/config.c    |  1 +
->  libmultipath/config.h    |  1 +
->  libmultipath/defaults.h  |  1 +
->  libmultipath/dict.c      |  4 ++++
->  libmultipath/discovery.c | 15 +++++++--------
->  libmultipath/discovery.h |  1 +
->  libmultipath/structs.h   |  1 +
->  multipathd/main.c        | 32 ++++++++++++++++++++++++++++++++
->  8 files changed, 48 insertions(+), 8 deletions(-)
+>  multipath/main.c | 1 +
+>  1 file changed, 1 insertion(+)
 >
-Hmm. Not sure if the really buys us anything. By the time we process the =
+> diff --git a/multipath/main.c b/multipath/main.c
+> index ee00fdb..06add30 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -521,6 +521,7 @@ main (int argc, char *argv[])
+>  	if (!conf)
+>  		exit(1);
+>  	multipath_conf =3D conf;
+> +	conf->retrigger_tries =3D 0;
+>  	while ((arg =3D getopt(argc, argv, ":adchl::FfM:v:p:b:BritquwW")) !=3D =
+EOF ) {
+>  		switch(arg) {
+>  		case 1: printf("optarg : %s\n",optarg);
+>
+Hehe.
+I've come across the very same issue.
 
-uevent it might already be too late, and I/O might already have been =
-
-written to that device.
-I do agree on the warning, though.
+Reviewed-by: Hannes Reinecke <hare@suse.com>
 
 Cheers,
 
