@@ -1,14 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 03/10] do not allow in-use path to change wwid
-Date: Sun, 30 Oct 2016 14:45:01 +0100
-Message-ID: <04fc0201-86a7-d83c-f2dd-5b24e6393a64@suse.de>
+Subject: Re: [PATCH 04/10] multipathd: add "map failures" format
+ wildcard
+Date: Sun, 30 Oct 2016 14:45:30 +0100
+Message-ID: <11d54158-fc3b-863a-b22a-e6fd31bf2bf9@suse.de>
 References: <1477709726-5442-1-git-send-email-bmarzins@redhat.com>
-	<1477709726-5442-4-git-send-email-bmarzins@redhat.com>
+	<1477709726-5442-5-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"; Format="flowed"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1477709726-5442-4-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1477709726-5442-5-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,27 +19,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Benjamin Marzinski <bmarzins@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 10/29/2016 04:55 AM, Benjamin Marzinski wrote:
-> When a path is part of a multipath device, it must not change it's wwid.
-> If it can, when multipathd is reconfigured, you can end up with two
-> multipath devices owning the same path, eventually leading to a crash.
+> This patch adds a new wildcard, 'x', for the "show maps format" command.
+> This wildcard show the number of map failures that have occurred. A map
+> failure is any time that the multipath device enters a state where it
+> has no paths and is not set to queue_if_no_paths. It can be used to see
+> if a multipath device was ever in a state were it could fail IO errors
+> up.
 >
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/dmparser.c | 8 ++++++++
->  1 file changed, 8 insertions(+)
+>  libmultipath/print.c       |  7 +++++++
+>  libmultipath/structs.h     |  1 +
+>  libmultipath/structs_vec.c | 28 ++++++++++++++++------------
+>  multipathd/cli_handlers.c  | 11 ++++++++++-
+>  multipathd/main.c          |  2 ++
+>  5 files changed, 36 insertions(+), 13 deletions(-)
 >
-Hmm. While I do see that this is an issue, just continuing is probably =
-
-as bad; the wwid change might be genuine, in which case this device has =
-
-no business being part of that particular multipath device.
-Can't we just evict that offending path eg by orphaning it and let the =
-
-admin figure things out?
+Reviewed-by: Hannes Reinecke <hare@suse.com>
 
 Cheers,
 
