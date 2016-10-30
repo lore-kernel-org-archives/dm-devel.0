@@ -1,15 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 04/10] multipathd: add "map failures" format
- wildcard
-Date: Sun, 30 Oct 2016 14:45:30 +0100
-Message-ID: <11d54158-fc3b-863a-b22a-e6fd31bf2bf9@suse.de>
+Subject: Re: [PATCH 05/10] mpath: don't wait for udev if all
+ paths are down
+Date: Sun, 30 Oct 2016 14:46:08 +0100
+Message-ID: <f5d6a290-2a3a-a26f-f3ba-6321cab643a1@suse.de>
 References: <1477709726-5442-1-git-send-email-bmarzins@redhat.com>
-	<1477709726-5442-5-git-send-email-bmarzins@redhat.com>
+	<1477709726-5442-6-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"; Format="flowed"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1477709726-5442-5-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1477709726-5442-6-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,21 +23,31 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 10/29/2016 04:55 AM, Benjamin Marzinski wrote:
-> This patch adds a new wildcard, 'x', for the "show maps format" command.
-> This wildcard show the number of map failures that have occurred. A map
-> failure is any time that the multipath device enters a state where it
-> has no paths and is not set to queue_if_no_paths. It can be used to see
-> if a multipath device was ever in a state were it could fail IO errors
-> up.
+> Normally multipath waits for udev to create a device before adding
+> more paths, which could trigger a reload. But, if the first path
+> discovered is not usable, you should add the next path right away.
 >
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/print.c       |  7 +++++++
->  libmultipath/structs.h     |  1 +
->  libmultipath/structs_vec.c | 28 ++++++++++++++++------------
->  multipathd/cli_handlers.c  | 11 ++++++++++-
->  multipathd/main.c          |  2 ++
->  5 files changed, 36 insertions(+), 13 deletions(-)
+>  multipathd/main.c | 5 ++++-
+>  1 file changed, 4 insertions(+), 1 deletion(-)
+>
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index dbcaa03..15c957a 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -715,7 +715,10 @@ ev_add_path (struct path * pp, struct vectors * vecs)
+>  		goto fail; /* leave path added to pathvec */
+>  	}
+>  	mpp =3D find_mp_by_wwid(vecs->mpvec, pp->wwid);
+> -	if (mpp && mpp->wait_for_udev) {
+> +	if (mpp && mpp->wait_for_udev &&
+> +	    (pathcount(mpp, PATH_UP) > 0 ||
+> +	     (pathcount(mpp, PATH_GHOST) > 0 && pp->tpgs !=3D TPGS_IMPLICIT))) {
+> +		/* if wait_for_udev is set and valid paths exist */
+>  		mpp->wait_for_udev =3D 2;
+>  		orphan_path(pp, "waiting for create to complete");
+>  		return 0;
 >
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 
