@@ -1,14 +1,12 @@
 From: ding.yemin@zte.com.cn
-Subject: Re: [PATCH] Remove duplicated code in
- mpath_alloc_prin_response()
-Date: Mon, 31 Oct 2016 10:03:15 +0800
-Message-ID: <OF4A4409C2.FCA3FBAE-ON4825805D.000B23A2-4825805D.000B4C6F@zte.com.cn>
-References: <1477383563-10684-1-git-send-email-ding.yemin@zte.com.cn>
-	<4109416b-9d3c-9b31-90bc-1f8695d9aca9@sandisk.com>
+Subject: [PATCH] Remove duplicated code in
+	mpath_alloc_prin_response()
+Date: Mon, 31 Oct 2016 10:55:07 +0800
+Message-ID: <1477882507-6408-1-git-send-email-ding.yemin@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5878662747311458877=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4109416b-9d3c-9b31-90bc-1f8695d9aca9@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,99 +16,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: dm-devel@redhat.com, tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn, "ding.yemin" <ding.yemin@zte.com.cn>, dm-devel@redhat.com, bart.vanassche@sandisk.com
 List-Id: dm-devel.ids
 
-This is a multipart message in MIME format.
---===============5878662747311458877==
-Content-Type: multipart/alternative;
-	boundary="=_alternative 000B4C6E4825805D_="
+From: "ding.yemin" <ding.yemin@zte.com.cn>
 
-This is a multipart message in MIME format.
---=_alternative 000B4C6E4825805D_=
-Content-Type: text/plain; charset="GB2312"
-Content-Transfer-Encoding: base64
+Remove duplicated code in mpath_alloc_prin_response().
 
-SGVsbG8gQmFydCwNCg0KVGhhbmtzIGZvciB5b3VyIHJldmlldy4gVXNpbmcgY2FsbG9jKCkgaXMg
-cmVhbGx5IGJldHRlciB0aGFuIG1hbGxvYygpLiBJIA0Kd2lsbCBtb2RpZnkgYW5kIGNvbW1pdCBp
-dCBsYXRlci4NCg0KVGhhbmtzLA0KDQpEaW5nIFllbWluLg0KIA0KDQoNCg0KQmFydCBWYW4gQXNz
-Y2hlIDxiYXJ0LnZhbmFzc2NoZUBzYW5kaXNrLmNvbT4gDQoyMDE2LTEwLTI4IDIzOjE2DQoNCsrV
-vP7Iyw0KPGRpbmcueWVtaW5AenRlLmNvbS5jbj4sIENocmlzdG9waGUgVmFyb3F1aSANCjxjaHJp
-c3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20+LCANCrOty80NCjx0YW5nLmp1bmh1aUB6dGUuY29t
-LmNuPiwgPHpoYW5nLmthaTE2QHp0ZS5jb20uY24+LCA8ZG0tZGV2ZWxAcmVkaGF0LmNvbT4NCtb3
-zOINClJlOiBbZG0tZGV2ZWxdIFtQQVRDSF0gUmVtb3ZlIGR1cGxpY2F0ZWQgY29kZSBpbiANCm1w
-YXRoX2FsbG9jX3ByaW5fcmVzcG9uc2UoKQ0KDQoNCg0KDQoNCg0KT24gMTAvMjUvMjAxNiAwMTox
-OSBBTSwgZGluZy55ZW1pbkB6dGUuY29tLmNuIHdyb3RlOg0KPiAgICAgICAgICAgICAgICB9DQo+
-ICsgICAgICAgICAgICAgIGlmIChzaXplID4gMCkNCj4gKyAgICAgICAgICAgICAgew0KPiArICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgcHRyID0gbWFsbG9jKHNpemUpOw0KPiArICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgaWYgKHB0cikNCj4gKyAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgIHsNCj4gKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICBtZW1zZXQocHRyLCAwLCBzaXplKTsNCj4gKyAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgIH0NCj4gKyAgICAgICAgICAgICAgfQ0KPiAgICAgICAgICAgICAgICByZXR1cm4gcHRyOw0K
-PiAgfQ0KDQpIZWxsbyBEaW5nIFllbWluLA0KDQpQbGVhc2UgdXNlIGNhbGxvYygpIGluc3RlYWQg
-b2Ygb3BlbiBjb2RpbmcgaXQuDQoNClRoYW5rcywNCg0KQmFydC4NCg0KDQoNCg==
---=_alternative 000B4C6E4825805D_=
-Content-Type: text/html; charset="GB2312"
-Content-Transfer-Encoding: base64
+Signed-off-by: ding.yemin <ding.yemin@zte.com.cn>
+---
+ libmpathpersist/mpath_persist.c | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
 
-PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPkhlbGxvIEJhcnQsPC9mb250Pg0KPGJyPg0K
-PGJyPjxmb250IHNpemU9MiBmYWNlPSJzYW5zLXNlcmlmIj5UaGFua3MgZm9yIHlvdXIgcmV2aWV3
-LiBVc2luZyBjYWxsb2MoKQ0KaXMgcmVhbGx5IGJldHRlciB0aGFuIG1hbGxvYygpLiBJIHdpbGwg
-bW9kaWZ5IGFuZCBjb21taXQgaXQgbGF0ZXIuPC9mb250Pg0KPGJyPg0KPGJyPjxmb250IHNpemU9
-MiBmYWNlPSJzYW5zLXNlcmlmIj5UaGFua3MsPC9mb250Pg0KPGJyPg0KPGJyPjxmb250IHNpemU9
-MiBmYWNlPSJzYW5zLXNlcmlmIj5EaW5nIFllbWluLjxicj4NCjwvZm9udD48Zm9udCBzaXplPTM+
-IDwvZm9udD4NCjxicj4NCjxicj4NCjxicj4NCjx0YWJsZSB3aWR0aD0xMDAlPg0KPHRyIHZhbGln
-bj10b3A+DQo8dGQgd2lkdGg9MzYlPjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj48Yj5C
-YXJ0IFZhbiBBc3NjaGUgJmx0O2JhcnQudmFuYXNzY2hlQHNhbmRpc2suY29tJmd0OzwvYj4NCjwv
-Zm9udD4NCjxwPjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj4yMDE2LTEwLTI4IDIzOjE2
-PC9mb250Pg0KPHRkIHdpZHRoPTYzJT4NCjx0YWJsZSB3aWR0aD0xMDAlPg0KPHRyIHZhbGlnbj10
-b3A+DQo8dGQ+DQo8ZGl2IGFsaWduPXJpZ2h0Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlm
-Ij7K1bz+yMs8L2ZvbnQ+PC9kaXY+DQo8dGQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYi
-PiZsdDtkaW5nLnllbWluQHp0ZS5jb20uY24mZ3Q7LCBDaHJpc3RvcGhlDQpWYXJvcXVpICZsdDtj
-aHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20mZ3Q7LCA8L2ZvbnQ+DQo8dHIgdmFsaWduPXRv
-cD4NCjx0ZD4NCjxkaXYgYWxpZ249cmlnaHQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYi
-PrOty808L2ZvbnQ+PC9kaXY+DQo8dGQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPiZs
-dDt0YW5nLmp1bmh1aUB6dGUuY29tLmNuJmd0OywgJmx0O3poYW5nLmthaTE2QHp0ZS5jb20uY24m
-Z3Q7LA0KJmx0O2RtLWRldmVsQHJlZGhhdC5jb20mZ3Q7PC9mb250Pg0KPHRyIHZhbGlnbj10b3A+
-DQo8dGQ+DQo8ZGl2IGFsaWduPXJpZ2h0Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj7W
-98ziPC9mb250PjwvZGl2Pg0KPHRkPjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj5SZTog
-W2RtLWRldmVsXSBbUEFUQ0hdIFJlbW92ZSBkdXBsaWNhdGVkDQpjb2RlIGluIG1wYXRoX2FsbG9j
-X3ByaW5fcmVzcG9uc2UoKTwvZm9udD48L3RhYmxlPg0KPGJyPg0KPHRhYmxlPg0KPHRyIHZhbGln
-bj10b3A+DQo8dGQ+DQo8dGQ+PC90YWJsZT4NCjxicj48L3RhYmxlPg0KPGJyPg0KPGJyPg0KPGJy
-Pjx0dD48Zm9udCBzaXplPTI+T24gMTAvMjUvMjAxNiAwMToxOSBBTSwgZGluZy55ZW1pbkB6dGUu
-Y29tLmNuIHdyb3RlOjxicj4NCiZndDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCn08YnI+DQomZ3Q7ICsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KaWYgKHNpemUgJmd0
-OyAwKTxicj4NCiZndDsgKyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7DQp7PGJyPg0KJmd0OyArICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7cHRyDQo9IG1hbGxvYyhzaXplKTs8
-YnI+DQomZ3Q7ICsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDtpZg0KKHB0cik8YnI+DQomZ3Q7ICsgJm5ic3A7ICZuYnNwOyAmbmJz
-cDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJz
-cDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDt7PGJyPg0KJmd0OyAr
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsN
-CiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
-Jm5ic3A7DQptZW1zZXQocHRyLCAwLCBzaXplKTs8YnI+DQomZ3Q7ICsgJm5ic3A7ICZuYnNwOyAm
-bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAm
-bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDt9PGJyPg0KJmd0
-OyArICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
-cDsNCn08YnI+DQomZ3Q7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQpyZXR1cm4gcHRyOzxicj4NCiZndDsgJm5ic3A7fTxicj4N
-Cjxicj4NCkhlbGxvIERpbmcgWWVtaW4sPGJyPg0KPGJyPg0KUGxlYXNlIHVzZSBjYWxsb2MoKSBp
-bnN0ZWFkIG9mIG9wZW4gY29kaW5nIGl0Ljxicj4NCjxicj4NClRoYW5rcyw8YnI+DQo8YnI+DQpC
-YXJ0Ljxicj4NCjxicj4NCjwvZm9udD48L3R0Pg0KPGJyPg0K
---=_alternative 000B4C6E4825805D_=--
-
-
---===============5878662747311458877==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5878662747311458877==--
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 7501651..633e462 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -833,26 +833,22 @@ void * mpath_alloc_prin_response(int prin_sa)
+ 	{
+ 		case MPATH_PRIN_RKEY_SA:
+ 			size = sizeof(struct prin_readdescr);
+-			ptr = malloc(size);
+-			memset(ptr, 0, size);
+ 			break;
+ 		case MPATH_PRIN_RRES_SA:
+ 			size = sizeof(struct prin_resvdescr);
+-			ptr = malloc(size);
+-			memset(ptr, 0, size);
+ 			break;
+ 		case MPATH_PRIN_RCAP_SA:
+ 			size=sizeof(struct prin_capdescr);
+-			ptr = malloc(size);
+-			memset(ptr, 0, size);
+ 			break;
+ 		case MPATH_PRIN_RFSTAT_SA:
+ 			size = sizeof(struct print_fulldescr_list) +
+ 				sizeof(struct prin_fulldescr *)*MPATH_MX_TIDS;
+-			ptr = malloc(size);
+-			memset(ptr, 0, size);
+ 			break;
+ 	}
++	if (size > 0)
++	{
++		ptr = calloc(size, 1);
++	}
+ 	return ptr;
+ }
+ 
+-- 
+2.8.1.windows.1
