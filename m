@@ -1,28 +1,26 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 00/60] block: support multipage bvec
-Date: Mon, 31 Oct 2016 08:25:19 -0700
-Message-ID: <20161031152519.GA25791@infradead.org>
+Subject: Re: [PATCH 09/60] dm: dm.c: replace 'bio->bi_vcnt == 1' with
+ !bio_multiple_segments
+Date: Mon, 31 Oct 2016 08:29:01 -0700
+Message-ID: <20161031152901.GD30919@infradead.org>
 References: <1477728600-12938-1-git-send-email-tom.leiming@gmail.com>
+ <1477728600-12938-10-git-send-email-tom.leiming@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1477728600-12938-1-git-send-email-tom.leiming@gmail.com>
-Sender: owner-linux-mm@kvack.org
+In-Reply-To: <1477728600-12938-10-git-send-email-tom.leiming@gmail.com>
+Sender: linux-block-owner@vger.kernel.org
 To: Ming Lei <tom.leiming@gmail.com>
-Cc: Jens Axboe <axboe@fb.com>, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Al Viro <viro@ZenIV.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Bart Van Assche <bart.vanassche@sandisk.com>, "open list:GFS2 FILE SYSTEM" <cluster-devel@redhat.com>, Coly Li <colyli@suse.de>, Dan Williams <dan.j.williams@intel.com>, "open list:DEVICE-MAPPER  (LVM)" <dm-devel@redhat.com>, "open list:DRBD DRIVER" <drbd-dev@lists.linbit.com>, Eric Wheeler <git@linux.ewheeler.net>, Guoqing Jiang <gqjiang@suse.com>, Hannes Reinecke <hare@suse.com>, Hannes Reinecke <hare@suse.de>, Jiri Kosina <jkosina@suse.cz>, Joe Perches <joe@perches.com>, Johannes Berg <johannes.berg@intel.com>, Johannes Thumshirn <jthumshirn@suse.de>, Keith Busch <keith.busch@in>
+Cc: Jens Axboe <axboe@fb.com>, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "maintainer:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi Ming,
+On Sat, Oct 29, 2016 at 04:08:08PM +0800, Ming Lei wrote:
+> Avoid to access .bi_vcnt directly, because it may be not what
+> the driver expected any more after supporting multipage bvec.
+> 
+> Signed-off-by: Ming Lei <tom.leiming@gmail.com>
 
-can you send a first patch just doing the obvious cleanups like
-converting to bio_add_page and replacing direct poking into the
-bio with the proper accessors?  That should help reducing the
-actual series to a sane size, and it should also help to cut
-down the Cc list.
+It would be really nice to have a comment in the code why it's
+even checking for multiple segments.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
