@@ -1,12 +1,14 @@
-From: ding.yemin@zte.com.cn
-Subject: [PATCH] Remove duplicated code in
-	mpath_alloc_prin_response()
-Date: Mon, 31 Oct 2016 10:55:07 +0800
-Message-ID: <1477882507-6408-1-git-send-email-ding.yemin@zte.com.cn>
+From: Edward Thornber <thornber@redhat.com>
+Subject: Re: dm-era: metadata reuse after reboot possible?
+Date: Mon, 31 Oct 2016 07:37:50 -0400
+Message-ID: <20161031113749.GA27906@roamer.bos.redhat.com>
+References: <c06844f1-bed2-7de3-5338-67f6a9d84f5a@cloudandheat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <c06844f1-bed2-7de3-5338-67f6a9d84f5a@cloudandheat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,53 +18,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn, "ding.yemin" <ding.yemin@zte.com.cn>, dm-devel@redhat.com, bart.vanassche@sandisk.com
+To: Markus Hentsch <markus.hentsch@cloudandheat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: "ding.yemin" <ding.yemin@zte.com.cn>
+On Fri, Oct 21, 2016 at 11:29:26AM +0200, Markus Hentsch wrote:
+> Hello,
+> 
+> is it possible for the dm-era metadata to survive reboots?
 
-Remove duplicated code in mpath_alloc_prin_response().
+No, you certainly should be able to continue using the metadata.  I
+don't have time to look at this for the next couple of weeks, but
+after that will definitely fix.
 
-Signed-off-by: ding.yemin <ding.yemin@zte.com.cn>
----
- libmpathpersist/mpath_persist.c | 12 ++++--------
- 1 file changed, 4 insertions(+), 8 deletions(-)
-
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 7501651..633e462 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -833,26 +833,22 @@ void * mpath_alloc_prin_response(int prin_sa)
- 	{
- 		case MPATH_PRIN_RKEY_SA:
- 			size = sizeof(struct prin_readdescr);
--			ptr = malloc(size);
--			memset(ptr, 0, size);
- 			break;
- 		case MPATH_PRIN_RRES_SA:
- 			size = sizeof(struct prin_resvdescr);
--			ptr = malloc(size);
--			memset(ptr, 0, size);
- 			break;
- 		case MPATH_PRIN_RCAP_SA:
- 			size=sizeof(struct prin_capdescr);
--			ptr = malloc(size);
--			memset(ptr, 0, size);
- 			break;
- 		case MPATH_PRIN_RFSTAT_SA:
- 			size = sizeof(struct print_fulldescr_list) +
- 				sizeof(struct prin_fulldescr *)*MPATH_MX_TIDS;
--			ptr = malloc(size);
--			memset(ptr, 0, size);
- 			break;
- 	}
-+	if (size > 0)
-+	{
-+		ptr = calloc(size, 1);
-+	}
- 	return ptr;
- }
- 
--- 
-2.8.1.windows.1
+- Joe
