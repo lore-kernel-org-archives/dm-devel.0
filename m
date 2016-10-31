@@ -1,65 +1,28 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 03/10] do not allow in-use path to change wwid
-Date: Mon, 31 Oct 2016 09:30:03 -0500
-Message-ID: <20161031143003.GW1972@octiron.msp.redhat.com>
-References: <1477709726-5442-1-git-send-email-bmarzins@redhat.com>
-	<1477709726-5442-4-git-send-email-bmarzins@redhat.com>
-	<04fc0201-86a7-d83c-f2dd-5b24e6393a64@suse.de>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 00/60] block: support multipage bvec
+Date: Mon, 31 Oct 2016 08:25:19 -0700
+Message-ID: <20161031152519.GA25791@infradead.org>
+References: <1477728600-12938-1-git-send-email-tom.leiming@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <04fc0201-86a7-d83c-f2dd-5b24e6393a64@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+In-Reply-To: <1477728600-12938-1-git-send-email-tom.leiming@gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Ming Lei <tom.leiming@gmail.com>
+Cc: Jens Axboe <axboe@fb.com>, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Al Viro <viro@ZenIV.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Bart Van Assche <bart.vanassche@sandisk.com>, "open list:GFS2 FILE SYSTEM" <cluster-devel@redhat.com>, Coly Li <colyli@suse.de>, Dan Williams <dan.j.williams@intel.com>, "open list:DEVICE-MAPPER  (LVM)" <dm-devel@redhat.com>, "open list:DRBD DRIVER" <drbd-dev@lists.linbit.com>, Eric Wheeler <git@linux.ewheeler.net>, Guoqing Jiang <gqjiang@suse.com>, Hannes Reinecke <hare@suse.com>, Hannes Reinecke <hare@suse.de>, Jiri Kosina <jkosina@suse.cz>, Joe Perches <joe@perches.com>, Johannes Berg <johannes.berg@intel.com>, Johannes Thumshirn <jthumshirn@suse.de>, Keith Busch <keith.busch@in>
 List-Id: dm-devel.ids
 
-On Sun, Oct 30, 2016 at 02:45:01PM +0100, Hannes Reinecke wrote:
-> On 10/29/2016 04:55 AM, Benjamin Marzinski wrote:
-> >When a path is part of a multipath device, it must not change it's wwid.
-> >If it can, when multipathd is reconfigured, you can end up with two
-> >multipath devices owning the same path, eventually leading to a crash.
-> >
-> >Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> >---
-> > libmultipath/dmparser.c | 8 ++++++++
-> > 1 file changed, 8 insertions(+)
-> >
-> Hmm. While I do see that this is an issue, just continuing is probably as
-> bad; the wwid change might be genuine, in which case this device has no
-> business being part of that particular multipath device.
-> Can't we just evict that offending path eg by orphaning it and let the ad=
-min
-> figure things out?
+Hi Ming,
 
-Possibly, but sometimes devices change wwids temporarily when they get
-temporarily unmapped, which can happen when you resize them. When I
-tried orphaning them, I could get multipath devices getting created for
-that temporary wwid, which was pretty confusing.  My later patch also
-disables access to these paths, so multipath can't keep writing to them,
-but you don't get these annoying fake mutipath devices.
+can you send a first patch just doing the obvious cleanups like
+converting to bio_add_page and replacing direct poking into the
+bio with the proper accessors?  That should help reducing the
+actual series to a sane size, and it should also help to cut
+down the Cc list.
 
--Ben
-
-> =
-
-> Cheers,
-> =
-
-> Hannes
-> -- =
-
-> Dr. Hannes Reinecke		      zSeries & Storage
-> hare@suse.de			      +49 911 74053 688
-> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
