@@ -1,11 +1,13 @@
 From: huang.wei56@zte.com.cn
-Subject: [PATCH] segment faulty occured in add_feature()
-Date: Tue, 1 Nov 2016 08:44:49 +0800
-Message-ID: <1477961089-9164-1-git-send-email-huang.wei56@zte.com.cn>
+Subject: Re: [PATCH] add_feature: coredump
+Date: Tue, 1 Nov 2016 08:53:30 +0800
+Message-ID: <OFBDE88724.5C0624BC-ON4825805E.0002B6D5-4825805E.0004E056@zte.com.cn>
+References: <1476410880-7156-1-git-send-email-huang.wei56@zte.com.cn>
+	<eadb5017-c276-b304-f95d-793b41d32a1f@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1962849838175760323=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <eadb5017-c276-b304-f95d-793b41d32a1f@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,74 +17,156 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: wei huang <huang.wei56@zte.com.cn>, tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: dm-devel@redhat.com, tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn
 List-Id: dm-devel.ids
 
-From: wei huang <huang.wei56@zte.com.cn>
+This is a multipart message in MIME format.
+--===============1962849838175760323==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 0004E0524825805E_="
 
-Problem:
-Multipathd segment faulty occured when device policy was configured in multipath.conf as follow:
-#This is a device configuration just for COMPELNT device
-devices {
-       device {
-               vendor                  COMPELNT
-               dev_loss_tmo            120
-               scheduler               deadline
-       }
-}
+This is a multipart message in MIME format.
+--=_alternative 0004E0524825805E_=
+Content-Type: text/plain; charset="GB2312"
+Content-Transfer-Encoding: base64
 
-The call trace is:
-Program received signal SIGSEGV, Segmentation fault.
-0x00007f4eaaf49251 in __strstr_sse2 () from /lib64/libc.so.6
-(gdb) bt
-#0  0x00007f4eaaf49251 in __strstr_sse2 () from /lib64/libc.so.6
-#1  0x00007f4eabba879c in add_feature (f=f@entry=0x211b248, n=n@entry=0x7f4eabbc530a queue_if_no_path)
-    at structs.c:524
-#2  0x00007f4eabba6993 in merge_hwe (src=0x2148c70, dst=0x211b220) at config.c:359
-#3  factorize_hwtable (hw=0x214b800, n=n@entry=77) at config.c:452
-#4  0x00007f4eabba7850 in load_config (file=file@entry=0x4144c8 /etc/multipath.conf) at config.c:651
-#5  0x0000000000408959 in reconfigure (vecs=vecs@entry=0x2128ae0) at main.c:2078
-#6  0x00000000004063c6 in child (param=0x0) at main.c:2483
-#7  main (argc=<optimized out>, argv=<optimized out>) at main.c:2725
-(gdb) up
-#1  0x00007f4eabba879c in add_feature (f=f@entry=0x211b248, n=n@entry=0x7f4eabbc530a queue_if_no_path)
-    at structs.c:524
-524             if (strstr(*f, n))
-(gdb) p *f
- = 0x0
+SGkgQmFydCwNCg0KVGhhbmtzIGZvciB5b3VyIGFuc3dlci4NCg0KSSBjb21taXQgdGhlIGNvZGUg
+YWdhaW4gd2l0aCB0aGUgdGl0bGUgInNlZ21lbnQgZmF1bHR5IG9jY3VyZWQgaW4gDQphZGRfZmVh
+dHVyZSgpIiwgcGxlYXNlIHJldmlldy4NCg0KVGhhbmtzLA0KDQpXZWkgaHVhbmcuDQoNCg0KDQpC
+YXJ0IFZhbiBBc3NjaGUgPGJhcnQudmFuYXNzY2hlQHNhbmRpc2suY29tPiANCjIwMTYtMTAtMjgg
+MjM6MTQNCg0KytW8/sjLDQo8aHVhbmcud2VpNTZAenRlLmNvbS5jbj4sIENocmlzdG9waGUgVmFy
+b3F1aSANCjxjaHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20+LCANCrOty80NCjx0YW5nLmp1
+bmh1aUB6dGUuY29tLmNuPiwgPHpoYW5nLmthaTE2QHp0ZS5jb20uY24+LCA8ZG0tZGV2ZWxAcmVk
+aGF0LmNvbT4NCtb3zOINClJlOiBbZG0tZGV2ZWxdIFtQQVRDSF0gYWRkX2ZlYXR1cmU6IGNvcmVk
+dW1wDQoNCg0KDQoNCg0KDQpPbiAxMC8xMy8yMDE2IDA3OjA4IFBNLCBodWFuZy53ZWk1NkB6dGUu
+Y29tLmNuIHdyb3RlOg0KPiBGcm9tOiAid2VpLmh1YW5nIiA8aHVhbmcud2VpNTZAenRlLmNvbS5j
+bj4NCj4NCj4gUHJvYmxlbToNCj4gd2hlbiB3ZSBjb25maWd1cmUgZGV2aWNlIGxpa2UgdmVuZG9y
+IGlzIENPTVBFTE5UIGluIG11bHRpcGF0aC5jb25mLCANCm11bHRpcGF0aGQgd2lsbCBiZSBjb3Jl
+ZHVtcC4NCj4NCj4gUmVhc29uczoNCj4gc29tZSB2b25kZXJzIGFyZSBub3QgY29uZmlndXJlZCBm
+ZWF0dXJlcyBpbiBkZWZhdWx0X2h3LiBJbiBhZGRfZmVhdHVyZSwgDQpzdHJzdHIncyBmaXJzdCBw
+YXJhbWV0ZXIgKmYgbWF5YmUgbnVsbC4NCj4NCj4gU2lnbmVkLW9mZi1ieTogd2VpLmh1YW5nIDxo
+dWFuZy53ZWk1NkB6dGUuY29tLmNuPg0KPiAtLS0NCj4gIGxpYm11bHRpcGF0aC9zdHJ1Y3RzLmMg
+fCAxNCArKysrKysrKysrKysrKw0KPiAgMSBmaWxlIGNoYW5nZWQsIDE0IGluc2VydGlvbnMoKykN
+Cj4NCj4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9zdHJ1Y3RzLmMgYi9saWJtdWx0aXBhdGgv
+c3RydWN0cy5jDQo+IGluZGV4IGZlZTU4ZTUuLjQxZTE0MmYgMTAwNjQ0DQo+IC0tLSBhL2xpYm11
+bHRpcGF0aC9zdHJ1Y3RzLmMNCj4gKysrIGIvbGlibXVsdGlwYXRoL3N0cnVjdHMuYw0KPiBAQCAt
+NTIwLDYgKzUyMCwyMCBAQCBhZGRfZmVhdHVyZSAoY2hhciAqKmYsIGNoYXIgKm4pDQo+ICAgICAg
+ICAgICAgICAgIGlmICghbiB8fCAqbiA9PSAnMCcpDQo+ICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICByZXR1cm4gMDsNCj4NCj4gKyAgICAgICAgICAgICAgLyogZGVmYXVsdCBmZWF0dXJl
+IGlzIG51bGwgKi8NCj4gKyAgICAgICAgICAgICAgaWYoISpmKQ0KPiArICAgICAgICAgICAgICB7
+DQo+ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBsID0gc3RybGVuKCIxICIpICsgc3Ry
+bGVuKG4pICsgMTsNCj4gKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHQgPSBNQUxMT0Mo
+bCk7DQo+ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBpZiAoIXQpDQo+ICsgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgcmV0dXJuIDE7DQo+ICsNCj4g
+KyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHNucHJpbnRmKHQsIGwsICIxICVzIiwgbik7
+DQo+ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAqZiA9IHQ7DQo+ICsgDQo+ICsgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICByZXR1cm4gMDsNCj4gKyAgICAgICAgICAgICAgfQ0K
+PiArDQo+ICAgICAgICAgICAgICAgIC8qIENoZWNrIGlmIGZlYXR1cmUgaXMgYWxyZWFkeSBwcmVz
+ZW50ICovDQo+ICAgICAgICAgICAgICAgIGlmIChzdHJzdHIoKmYsIG4pKQ0KPiAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgcmV0dXJuIDA7DQo+DQoNCkhlbGxvIFdlaSBIdWFuZywNCg0K
+UGxlYXNlIHVzZSBhc3ByaW50ZigpIGluc3RlYWQgb2Ygb3BlbiBjb2RpbmcgaXQgYW5kIHBsZWFz
+ZSBhbHNvIG1ha2UgdGhlIA0KdGl0bGUgb2YgeW91ciBwYXRjaCBjb21wcmVoZW5zaWJsZS4gWW91
+ciBwYXRjaCBhdm9pZHMgdGhhdCBtdWx0aXBhdGhkIA0KdHJpZ2dlcnMgYSBjb3JlIGR1bXAgZm9y
+IGEgY2VydGFpbiB2ZW5kb3IgbmFtZSBidXQgdGhhdCdzIG5vdCBjbGVhciBmcm9tIA0KdGhlICJh
+ZGRfZmVhdHVyZTogY29yZWR1bXAiLg0KDQpUaGFua3MsDQoNCkJhcnQuDQoNCg0K
+--=_alternative 0004E0524825805E_=
+Content-Type: text/html; charset="GB2312"
+Content-Transfer-Encoding: base64
 
-Reasons:
-When multipathd loads config, it will call merge_hwe() to merge the features between default_hw[] and config.
-If the vender is not configured features in default_hw[], dst->features's value will be null. So strstr()'s first
-parameter *f is null in add_feature(),too.
+PGZvbnQgc2l6ZT0zPkhpPC9mb250Pjx0dD48Zm9udCBzaXplPTI+IEJhcnQsPC9mb250PjwvdHQ+
+DQo8YnI+DQo8YnI+PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPlRoYW5rcyBmb3IgeW91
+ciBhbnN3ZXIuPC9mb250Pg0KPGJyPg0KPGJyPjxmb250IHNpemU9MiBmYWNlPSJzYW5zLXNlcmlm
+Ij5JIGNvbW1pdCB0aGUgY29kZSBhZ2FpbiB3aXRoIHRoZSB0aXRsZQ0KJnF1b3Q7c2VnbWVudCBm
+YXVsdHkgb2NjdXJlZCBpbiBhZGRfZmVhdHVyZSgpJnF1b3Q7LCBwbGVhc2UgcmV2aWV3LjwvZm9u
+dD4NCjxicj4NCjxicj48Zm9udCBzaXplPTIgZmFjZT0ic2Fucy1zZXJpZiI+VGhhbmtzLDwvZm9u
+dD4NCjxicj4NCjxicj48Zm9udCBzaXplPTIgZmFjZT0ic2Fucy1zZXJpZiI+V2VpIGh1YW5nLjwv
+Zm9udD4NCjxicj4NCjxicj4NCjxicj4NCjx0YWJsZSB3aWR0aD0xMDAlPg0KPHRyIHZhbGlnbj10
+b3A+DQo8dGQgd2lkdGg9MzYlPjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj48Yj5CYXJ0
+IFZhbiBBc3NjaGUgJmx0O2JhcnQudmFuYXNzY2hlQHNhbmRpc2suY29tJmd0OzwvYj4NCjwvZm9u
+dD4NCjxwPjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj4yMDE2LTEwLTI4IDIzOjE0PC9m
+b250Pg0KPHRkIHdpZHRoPTYzJT4NCjx0YWJsZSB3aWR0aD0xMDAlPg0KPHRyIHZhbGlnbj10b3A+
+DQo8dGQ+DQo8ZGl2IGFsaWduPXJpZ2h0Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj7K
+1bz+yMs8L2ZvbnQ+PC9kaXY+DQo8dGQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPiZs
+dDtodWFuZy53ZWk1NkB6dGUuY29tLmNuJmd0OywgQ2hyaXN0b3BoZQ0KVmFyb3F1aSAmbHQ7Y2hy
+aXN0b3BoZS52YXJvcXVpQG9wZW5zdmMuY29tJmd0OywgPC9mb250Pg0KPHRyIHZhbGlnbj10b3A+
+DQo8dGQ+DQo8ZGl2IGFsaWduPXJpZ2h0Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj6z
+rcvNPC9mb250PjwvZGl2Pg0KPHRkPjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj4mbHQ7
+dGFuZy5qdW5odWlAenRlLmNvbS5jbiZndDssICZsdDt6aGFuZy5rYWkxNkB6dGUuY29tLmNuJmd0
+OywNCiZsdDtkbS1kZXZlbEByZWRoYXQuY29tJmd0OzwvZm9udD4NCjx0ciB2YWxpZ249dG9wPg0K
+PHRkPg0KPGRpdiBhbGlnbj1yaWdodD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+1vfM
+4jwvZm9udD48L2Rpdj4NCjx0ZD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+UmU6IFtk
+bS1kZXZlbF0gW1BBVENIXSBhZGRfZmVhdHVyZToNCmNvcmVkdW1wPC9mb250PjwvdGFibGU+DQo8
+YnI+DQo8dGFibGU+DQo8dHIgdmFsaWduPXRvcD4NCjx0ZD4NCjx0ZD48L3RhYmxlPg0KPGJyPjwv
+dGFibGU+DQo8YnI+DQo8YnI+DQo8YnI+PHR0Pjxmb250IHNpemU9Mj5PbiAxMC8xMy8yMDE2IDA3
+OjA4IFBNLCBodWFuZy53ZWk1NkB6dGUuY29tLmNuIHdyb3RlOjxicj4NCiZndDsgRnJvbTogJnF1
+b3Q7d2VpLmh1YW5nJnF1b3Q7ICZsdDtodWFuZy53ZWk1NkB6dGUuY29tLmNuJmd0Ozxicj4NCiZn
+dDs8YnI+DQomZ3Q7IFByb2JsZW06PGJyPg0KJmd0OyB3aGVuIHdlIGNvbmZpZ3VyZSBkZXZpY2Ug
+bGlrZSB2ZW5kb3IgaXMgQ09NUEVMTlQgaW4gbXVsdGlwYXRoLmNvbmYsDQptdWx0aXBhdGhkIHdp
+bGwgYmUgY29yZWR1bXAuPGJyPg0KJmd0Ozxicj4NCiZndDsgUmVhc29uczo8YnI+DQomZ3Q7IHNv
+bWUgdm9uZGVycyBhcmUgbm90IGNvbmZpZ3VyZWQgZmVhdHVyZXMgaW4gZGVmYXVsdF9ody4gSW4g
+YWRkX2ZlYXR1cmUsDQpzdHJzdHIncyBmaXJzdCBwYXJhbWV0ZXIgKmYgbWF5YmUgbnVsbC48YnI+
+DQomZ3Q7PGJyPg0KJmd0OyBTaWduZWQtb2ZmLWJ5OiB3ZWkuaHVhbmcgJmx0O2h1YW5nLndlaTU2
+QHp0ZS5jb20uY24mZ3Q7PGJyPg0KJmd0OyAtLS08YnI+DQomZ3Q7ICZuYnNwO2xpYm11bHRpcGF0
+aC9zdHJ1Y3RzLmMgfCAxNCArKysrKysrKysrKysrKzxicj4NCiZndDsgJm5ic3A7MSBmaWxlIGNo
+YW5nZWQsIDE0IGluc2VydGlvbnMoKyk8YnI+DQomZ3Q7PGJyPg0KJmd0OyBkaWZmIC0tZ2l0IGEv
+bGlibXVsdGlwYXRoL3N0cnVjdHMuYyBiL2xpYm11bHRpcGF0aC9zdHJ1Y3RzLmM8YnI+DQomZ3Q7
+IGluZGV4IGZlZTU4ZTUuLjQxZTE0MmYgMTAwNjQ0PGJyPg0KJmd0OyAtLS0gYS9saWJtdWx0aXBh
+dGgvc3RydWN0cy5jPGJyPg0KJmd0OyArKysgYi9saWJtdWx0aXBhdGgvc3RydWN0cy5jPGJyPg0K
+Jmd0OyBAQCAtNTIwLDYgKzUyMCwyMCBAQCBhZGRfZmVhdHVyZSAoY2hhciAqKmYsIGNoYXIgKm4p
+PGJyPg0KJmd0OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
+cDsgJm5ic3A7ICZuYnNwOw0KaWYgKCFuIHx8ICpuID09ICcwJyk8YnI+DQomZ3Q7ICZuYnNwOyAm
+bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQom
+bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
+YnNwO3JldHVybg0KMDs8YnI+DQomZ3Q7PGJyPg0KJmd0OyArICZuYnNwOyAmbmJzcDsgJm5ic3A7
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCi8qIGRlZmF1bHQgZmVhdHVyZSBp
+cyBudWxsICovPGJyPg0KJmd0OyArICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
+Jm5ic3A7ICZuYnNwOyAmbmJzcDsNCmlmKCEqZik8YnI+DQomZ3Q7ICsgJm5ic3A7ICZuYnNwOyAm
+bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0Kezxicj4NCiZndDsgKyAm
+bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQom
+bmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
+YnNwO2wNCj0gc3RybGVuKCZxdW90OzEgJnF1b3Q7KSArIHN0cmxlbihuKSArIDE7PGJyPg0KJmd0
+OyArICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
+cDsNCiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
+cDsgJm5ic3A7dA0KPSBNQUxMT0MobCk7PGJyPg0KJmd0OyArICZuYnNwOyAmbmJzcDsgJm5ic3A7
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5ic3A7
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7aWYNCighdCk8YnI+DQom
+Z3Q7ICsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
+YnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
+YnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
+YnNwOyAmbmJzcDsNCnJldHVybiAxOzxicj4NCiZndDsgKzxicj4NCiZndDsgKyAmbmJzcDsgJm5i
+c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5i
+c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO3NucHJp
+bnRmKHQsDQpsLCAmcXVvdDsxICVzJnF1b3Q7LCBuKTs8YnI+DQomZ3Q7ICsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsqZg0KPSB0
+Ozxicj4NCiZndDsgKyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAm
+bmJzcDsgJm5ic3A7DQo8YnI+DQomZ3Q7ICsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
+YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
+YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtyZXR1cm4NCjA7PGJyPg0KJmd0OyArICZu
+YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCn08
+YnI+DQomZ3Q7ICs8YnI+DQomZ3Q7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsg
+Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7DQovKiBDaGVjayBpZiBmZWF0dXJlIGlzIGFscmVh
+ZHkgcHJlc2VudCAqLzxicj4NCiZndDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsNCmlmIChzdHJzdHIoKmYsIG4pKTxicj4NCiZn
+dDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7cmV0dXJuDQowOzxicj4NCiZndDs8YnI+DQo8YnI+DQpIZWxsbyBXZWkg
+SHVhbmcsPGJyPg0KPGJyPg0KUGxlYXNlIHVzZSBhc3ByaW50ZigpIGluc3RlYWQgb2Ygb3BlbiBj
+b2RpbmcgaXQgYW5kIHBsZWFzZSBhbHNvIG1ha2UgdGhlDQo8YnI+DQp0aXRsZSBvZiB5b3VyIHBh
+dGNoIGNvbXByZWhlbnNpYmxlLiBZb3VyIHBhdGNoIGF2b2lkcyB0aGF0IG11bHRpcGF0aGQgPGJy
+Pg0KdHJpZ2dlcnMgYSBjb3JlIGR1bXAgZm9yIGEgY2VydGFpbiB2ZW5kb3IgbmFtZSBidXQgdGhh
+dCdzIG5vdCBjbGVhciBmcm9tDQo8YnI+DQp0aGUgJnF1b3Q7YWRkX2ZlYXR1cmU6IGNvcmVkdW1w
+JnF1b3Q7Ljxicj4NCjxicj4NClRoYW5rcyw8YnI+DQo8YnI+DQpCYXJ0Ljxicj4NCjwvZm9udD48
+L3R0Pg0KPGJyPg0K
+--=_alternative 0004E0524825805E_=--
 
-Signed-off-by: wei huang <huang.wei56@zte.com.cn>
----
- libmultipath/structs.c | 11 +++++++++++
- 1 file changed, 11 insertions(+)
 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index fee58e5..f673325 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -520,6 +520,17 @@ add_feature (char **f, char *n)
- 	if (!n || *n == '0')
- 		return 0;
- 
-+	/* default feature is null */
-+	if(!*f)
-+	{
-+		l = asprintf(&t, "1 %s", n);
-+		if(l == -1)
-+			return 1;
-+			
-+		*f = t;
-+		return 0;
-+	}
-+
- 	/* Check if feature is already present */
- 	if (strstr(*f, n))
- 		return 0;
--- 
-2.8.1.windows.1
+--===============1962849838175760323==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1962849838175760323==--
