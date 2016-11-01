@@ -1,12 +1,15 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: clean up and organize
-	libmpathpersist/mpath_persistent_reserve_{out, in}.3
-Date: Tue,  1 Nov 2016 13:48:56 +0100
-Message-ID: <20161101124856.7360-1-xose.vazquez@gmail.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH] hwe_regmatch: match error
+Date: Tue, 1 Nov 2016 11:05:57 -0500
+Message-ID: <20161101160557.GB1972@octiron.msp.redhat.com>
+References: <OF7CB3362D.2C97E5BB-ON4825805E.00108B17-4825805E.0010903E@LocalDomain>
+	<OF9054AD97.BF5E1EA4-ON4825805E.0010B7C3-4825805E.0011A078@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <OF9054AD97.BF5E1EA4-ON4825805E.0010B7C3-4825805E.0011A078@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,424 +19,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: tang.junhui@zte.com.cn
+Cc: dm-devel@redhat.com, huang.wei56@zte.com.cn, zhang.kai16@zte.com.cn
 List-Id: dm-devel.ids
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmpathpersist/mpath_persistent_reserve_in.3  | 172 ++++++++++++---------
- libmpathpersist/mpath_persistent_reserve_out.3 | 200 +++++++++++++++----------
- 2 files changed, 226 insertions(+), 146 deletions(-)
-
-diff --git a/libmpathpersist/mpath_persistent_reserve_in.3 b/libmpathpersist/mpath_persistent_reserve_in.3
-index 8601645..5ed0779 100644
---- a/libmpathpersist/mpath_persistent_reserve_in.3
-+++ b/libmpathpersist/mpath_persistent_reserve_in.3
-@@ -1,80 +1,116 @@
-+.\" ----------------------------------------------------------------------------
-+.\" Update the date below if you make any significant change.
-+.\" Make sure there are no errors with:
-+.\" groff -z -wall -b -e -t libmpathpersist/mpath_persistent_reserve_in.3
- .\"
--.TH MPATH_PERSISTENT_RESERVE_IN 3  2011-04-08 "Linux Manpage"
-+.\" ----------------------------------------------------------------------------
-+.
-+.TH MPATH_PERSISTENT_RESERVE_IN 3 2016-11-01 "Linux"
-+.
-+.
-+.\" ----------------------------------------------------------------------------
- .SH NAME
-+.\" ----------------------------------------------------------------------------
-+.
- mpath_persistent_reserve_in
-+.
-+.
-+.\" ----------------------------------------------------------------------------
- .SH SYNOPSIS
-+.\" ----------------------------------------------------------------------------
-+.
- .B #include <mpath_persist.h>
--.sp
--.BI "int mpath_persistent_reserve_in (int fd, int rq_servact, struct prin_resp *resp, int noisy, int verbose)"
--.sp
-+.P
-+.BI "int mpath_persistent_reserve_in" "(int fd, int rq_servact, struct prin_resp *resp, int noisy, int verbose)"
-+.P
-+.
-+.
-+.\" ----------------------------------------------------------------------------
- .SH DESCRIPTION
--The function in the
--.BR mpath_persistent_reserve_in ()
--sends PRIN command to the DM device and gets the response.
--.br
--.BI Parameters:
--.br
-+.\" ----------------------------------------------------------------------------
-+.
-+The function in the \fBmpath_persistent_reserve_in ()\fR sends PRIN command to
-+the DM device and gets the response.
-+.TP
-+.B Parameters:
-+.RS
-+.TP 12
- .I fd
--.B The file descriptor of a multipath device. Input argument.
--.br
-+The file descriptor of a multipath device. Input argument.
-+.TP
- .I rq_servact
--.B PRIN command service action. Input argument
--.br
-+PRIN command service action. Input argument.
-+.TP
- .I resp
--.B The response from PRIN service action. The caller should manage the memory allocation of this structure
--.br
-+The response from PRIN service action. The caller should manage the memory allocation of this structure.
-+.TP
- .I noisy
--.B Turn on debugging trace: Input argument. 0->Disable, 1->Enable
--.br
-+Turn on debugging trace: Input argument. 0->Disable, 1->Enable.
-+.TP
- .I verbose
--.B Set verbosity level. Input argument. value:[0-3]. 0->Crits and Errors, 1->Warnings, 2->Info, 3->Debug
--.br
--
--.SH "RETURNS"
--.I MPATH_PR_SUCCESS
--.B if PR command successful
--.br
--.I MPATH_PR_SYNTAX_ERROR
--.B if  syntax error or invalid parameter
--.br
--.I MPATH_PR_SENSE_NOT_READY
--.B  if command fails with [sk,asc,ascq: 0x2,*,*]
--.br
--.I MPATH_PR_SENSE_MEDIUM_ERROR
--.B  if command fails with [sk,asc,ascq: 0x3,*,*]
--.br
--.I MPATH_PR_SENSE_HARDWARE_ERROR
--.B  if command fails with [sk,asc,ascq: 0x4,*,*]
--.br
--.I MPATH_PR_SENSE_INVALID_OP
--.B  if command fails with [sk,asc,ascq: 0x5,0x20,0x0]
--.br
--.I MPATH_PR_ILLEGAL_REQ
--.B  if command fails with [sk,asc,ascq: 0x5,*,*]
--.br
--.I MPATH_PR_SENSE_UNIT_ATTENTION
--.B  if command fails with [sk,asc,ascq: 0x6,*,*]
--.br
--.I MPATH_PR_SENSE_ABORTED_COMMAND
--.B  if command fails with [sk,asc,ascq: 0xb,*,*]
--.br
--.I MPATH_PR_NO_SENSE
--.B  if command fails with [sk,asc,ascq: 0x0,*,*]
--.br
--.I MPATH_PR_SENSE_MALFORMED
--.B if command fails with SCSI command malformed
--.br
--.I MPATH_PR_FILE_ERROR
--.B if command fails while accessing file (device node) problems(e.g. not found)
--.br
--.I MPATH_PR_DMMP_ERROR
--.B if Device Mapper related error.(e.g Error in getting dm info)
--.br
--.I MPATH_PR_OTHER
--.B if other error/warning has occurred(e.g transport or driver error)
--.br
--
--
-+Set verbosity level. Input argument. value:[0-3]. 0->Crits and Errors, 1->Warnings, 2->Info, 3->Debug.
-+.RE
-+.
-+.
-+.\" ----------------------------------------------------------------------------
-+.SH RETURNS
-+.\" ----------------------------------------------------------------------------
-+.
-+.TP 12
-+.B MPATH_PR_SUCCESS
-+If PR command successful.
-+.TP
-+.B MPATH_PR_SYNTAX_ERROR
-+If syntax error or invalid parameter.
-+.TP
-+.B MPATH_PR_SENSE_NOT_READY
-+If command fails with [sk,asc,ascq: 0x2,*,*].
-+.TP
-+.B MPATH_PR_SENSE_MEDIUM_ERROR
-+If command fails with [sk,asc,ascq: 0x3,*,*].
-+.TP
-+.B MPATH_PR_SENSE_HARDWARE_ERROR
-+If command fails with [sk,asc,ascq: 0x4,*,*].
-+.TP
-+.B MPATH_PR_SENSE_INVALID_OP
-+If command fails with [sk,asc,ascq: 0x5,0x20,0x0].
-+.TP
-+.B MPATH_PR_ILLEGAL_REQ
-+If command fails with [sk,asc,ascq: 0x5,*,*].
-+.TP
-+.B MPATH_PR_SENSE_UNIT_ATTENTION
-+If command fails with [sk,asc,ascq: 0x6,*,*].
-+.TP
-+.B MPATH_PR_SENSE_ABORTED_COMMAND
-+If command fails with [sk,asc,ascq: 0xb,*,*].
-+.TP
-+.B MPATH_PR_NO_SENSE
-+If command fails with [sk,asc,ascq: 0x0,*,*].
-+.TP
-+.B MPATH_PR_SENSE_MALFORMED
-+If command fails with SCSI command malformed.
-+.TP
-+.B MPATH_PR_FILE_ERROR
-+If command fails while accessing file (device node) problems(e.g. not found).
-+.TP
-+.B MPATH_PR_DMMP_ERROR
-+If Device Mapper related error.(e.g Error in getting dm info).
-+.TP
-+.B MPATH_PR_OTHER
-+If other error/warning has occurred(e.g transport or driver error).
-+.
-+.
-+.\" ----------------------------------------------------------------------------
- .SH "SEE ALSO"
--.I  mpath_persistent_reserve_out      mpathpersist     /usr/share/doc/mpathpersist/README
--.br
-+.\" ----------------------------------------------------------------------------
-+.
-+.BR mpathpersist (8).
-+.
-+.
-+.\" ----------------------------------------------------------------------------
-+.SH AUTHORS
-+.\" ----------------------------------------------------------------------------
-+.
-+\fImultipath-tools\fR was developed by Christophe Varoqui <christophe.varoqui@opensvc.com>
-+and others.
-+.\" EOF
-diff --git a/libmpathpersist/mpath_persistent_reserve_out.3 b/libmpathpersist/mpath_persistent_reserve_out.3
-index 8a3b52c..e11eb57 100644
---- a/libmpathpersist/mpath_persistent_reserve_out.3
-+++ b/libmpathpersist/mpath_persistent_reserve_out.3
-@@ -1,92 +1,136 @@
-+.\" ----------------------------------------------------------------------------
-+.\" Update the date below if you make any significant change.
-+.\" Make sure there are no errors with:
-+.\" groff -z -wall -b -e -t libmpathpersist/mpath_persistent_reserve_out.3
- .\"
--.TH MPATH_PERSISTENT_RESERVE_OUT 3  2011-04-08 "Linux Manpage"
-+.\" ----------------------------------------------------------------------------
-+.
-+.TH MPATH_PERSISTENT_RESERVE_OUT 3 2016-11-01 "Linux"
-+.
-+.
-+.\" ----------------------------------------------------------------------------
- .SH NAME
-+.\" ----------------------------------------------------------------------------
-+.
- mpath_persistent_reserve_out
-+.
-+.
-+.\" ----------------------------------------------------------------------------
- .SH SYNOPSIS
-+.\" ----------------------------------------------------------------------------
-+.
- .B #include <mpath_persist.h>
--.sp
--.BI "int mpath_persistent_reserve_out (int fd, int rq_servact, struct prin_resp *resp, int noisy, int verbose)"
--.sp
-+.P
-+.BI "int mpath_persistent_reserve_out" "(int fd, int rq_servact, struct prin_resp *resp, int noisy, int verbose)"
-+.P
-+.
-+.
-+.\" ----------------------------------------------------------------------------
- .SH DESCRIPTION
--The function in the
--.BR mpath_persistent_reserve_out ()
--sends PR OUT command to the DM device and gets the response.
--.br
--.BI Parameters:
--.br
-+.\" ----------------------------------------------------------------------------
-+.
-+The function in the \fBmpath_persistent_reserve_out ()\fR sends PROUT command to
-+the DM device and gets the response.
-+.TP
-+.B Parameters:
-+.RS
-+.TP 12
- .I fd
--.B The file descriptor of a multipath device. Input argument.
--.br
-+The file descriptor of a multipath device. Input argument.
-+.TP
- .I rq_servact
--.B PROUT command service action. Input argument
--.br
-+PROUT command service action. Input argument.
-+.TP
- .I rq_scope
--.B Persistent reservation scope. The value should be always LU_SCOPE (0h).
--.br
-+Persistent reservation scope. The value should be always LU_SCOPE (0h).
-+.TP
- .I rq_type
--.B Persistent reservation type. The valid values of persistent reservation types are
--      5h (Write exclusive - registrants only)
--      6h (Exclusive access - registrants only)
--      7h (Write exclusive - All registrants)
--      8h (Exclusive access - All registrants).
--.br
-+Persistent reservation type. The valid values of persistent reservation types are:
-+.RS
-+.IP
-+5h (Write exclusive - registrants only).
-+.IP
-+6h (Exclusive access - registrants only).
-+.IP
-+7h (Write exclusive - All registrants).
-+.IP
-+8h (Exclusive access - All registrants).
-+.RE
-+.TP
- .I paramp
--.B PROUT command parameter data. The paramp is a struct which describes PROUT parameter list. Caller should manage the memory allocation of this structure.
--.br
-+PROUT command parameter data. The paramp is a struct which describes PROUT
-+parameter list. Caller should manage the memory allocation of this structure.
-+.TP
- .I noisy
--.B Turn on debugging trace: Input argument. 0->Disable, 1->Enable.
--.br
-+Turn on debugging trace: Input argument. 0->Disable, 1->Enable.
-+.TP
- .I verbose
--.B Set verbosity level. Input argument. value: 0 to 3. 0->Crits and Errors, 1->Warnings, 2->Info, 3->Debug
--
--.SH "RETURNS"
--.I MPATH_PR_SUCCESS
--.B if PR command successful else returns any one of the status mentioned below
--.br
--.I MPATH_PR_SYNTAX_ERROR
--.B if  syntax error or invalid parameter
--.br
--.I MPATH_PR_SENSE_NOT_READY
--.B  if command fails with [sk,asc,ascq: 0x2,*,*]
--.br
--.I MPATH_PR_SENSE_MEDIUM_ERROR
--.B  if command fails with [sk,asc,ascq: 0x3,*,*]
--.br
--.I MPATH_PR_SENSE_HARDWARE_ERROR
--.B  if command fails with [sk,asc,ascq: 0x4,*,*]
--.br
--.I MPATH_PR_SENSE_INVALID_OP
--.B  if command fails with [sk,asc,ascq: 0x5,0x20,0x0]
--.br
--.I MPATH_PR_ILLEGAL_REQ
--.B  if command fails with [sk,asc,ascq: 0x5,*,*]
--.br
--.I MPATH_PR_SENSE_UNIT_ATTENTION
--.B  if command fails with [sk,asc,ascq: 0x6,*,*]
--.br
--.I MPATH_PR_SENSE_ABORTED_COMMAND
--.B  if command fails with [sk,asc,ascq: 0xb,*,*]
--.br
--.I MPATH_PR_NO_SENSE
--.B  if command fails with [sk,asc,ascq: 0x0,*,*]
--.br
--.I MPATH_PR_SENSE_MALFORMED
--.B if command fails with SCSI command malformed
--.br
--.I MPATH_PR_RESERV_CONFLICT
--.B if command fails with reservation conflict
--.br
--.I MPATH_PR_FILE_ERROR
--.B if command fails while accessing file (device node) problems(e.g. not found)
--.br
--.I MPATH_PR_DMMP_ERROR
--.B if Device Mapper related error.(e.g Error in getting dm info)
--.br
--.I MPATH_PR_OTHER
--.B if other error/warning has occurred(e.g transport or driver error)
--.br
--
--
-+Set verbosity level. Input argument. value: 0 to 3. 0->Crits and Errors, 1->Warnings, 2->Info, 3->Debug.
-+.RE
-+.
-+.
-+.\" ----------------------------------------------------------------------------
-+.SH RETURNS
-+.\" ----------------------------------------------------------------------------
-+.
-+.TP 12
-+.B MPATH_PR_SUCCESS
-+If PR command successful else returns any one of the status mentioned below.
-+.TP
-+.B MPATH_PR_SYNTAX_ERROR
-+If syntax error or invalid parameter.
-+.TP
-+.B MPATH_PR_SENSE_NOT_READY
-+If command fails with [sk,asc,ascq: 0x2,*,*].
-+.TP
-+.B MPATH_PR_SENSE_MEDIUM_ERROR
-+If command fails with [sk,asc,ascq: 0x3,*,*].
-+.TP
-+.B MPATH_PR_SENSE_HARDWARE_ERROR
-+If command fails with [sk,asc,ascq: 0x4,*,*].
-+.TP
-+.B MPATH_PR_SENSE_INVALID_OP
-+If command fails with [sk,asc,ascq: 0x5,0x20,0x0].
-+.TP
-+.B MPATH_PR_ILLEGAL_REQ
-+If command fails with [sk,asc,ascq: 0x5,*,*].
-+.TP
-+.B MPATH_PR_SENSE_UNIT_ATTENTION
-+If command fails with [sk,asc,ascq: 0x6,*,*].
-+.TP
-+.B MPATH_PR_SENSE_ABORTED_COMMAND
-+If command fails with [sk,asc,ascq: 0xb,*,*].
-+.TP
-+.B MPATH_PR_NO_SENSE
-+If command fails with [sk,asc,ascq: 0x0,*,*].
-+.TP
-+.B MPATH_PR_SENSE_MALFORMED
-+If command fails with SCSI command malformed.
-+.TP
-+.B MPATH_PR_FILE_ERROR
-+If command fails while accessing file (device node) problems(e.g. not found).
-+.TP
-+.B MPATH_PR_DMMP_ERROR
-+If Device Mapper related error.(e.g Error in getting dm info).
-+.TP
-+.B MPATH_PR_OTHER
-+If other error/warning has occurred(e.g transport or driver error).
-+.TP
-+.B MPATH_PR_RESERV_CONFLICT
-+If command fails with reservation conflict.
-+.
-+.
-+.\" ----------------------------------------------------------------------------
- .SH "SEE ALSO"
--.I mpath_persistent_reserve_in mpathpersist /usr/share/doc/mpathpersist/README
--.br
-+.\" ----------------------------------------------------------------------------
-+.
-+.BR mpathpersist (8).
-+.
-+.
-+.\" ----------------------------------------------------------------------------
-+.SH AUTHORS
-+.\" ----------------------------------------------------------------------------
-+.
-+\fImultipath-tools\fR was developed by Christophe Varoqui <christophe.varoqui@opensvc.com>
-+and others.
-+.\" EOF
--- 
-2.10.2
+T24gVHVlLCBOb3YgMDEsIDIwMTYgYXQgMTE6MTI6NDZBTSArMDgwMCwgdGFuZy5qdW5odWlAenRl
+LmNvbS5jbiB3cm90ZToKPiAgICBIZWxsbyBDaHJpc3RvcGhlLAoKQUNLCgotQmVuCgo+IAo+ICAg
+IFRoaXMgaXNzdWUgYWZmZWN0cyB0aGUgYWNjdXJhY3kgb2YgcmVndWxhciBtYXRjaGluZywKPiAg
+ICBhbmQgdGhlIHBhdGNoIGJlbGxvdyBoYWQgYmVlbiByZXZpZXdlZCBieSBIYW5uZXMsCj4gICAg
+Q2FuIHlvdSBtZXJnZSBpdCB0byBPcGVuc3ZjPwo+IAo+ICAgIFRoYW5rcwo+ICAgIFRhbmcKPiAK
+PiAgICBPbiAxMC8xNC8yMDE2IDA0OjAzIEFNLCBodWFuZy53ZWk1NkB6dGUuY29tLmNuIHdyb3Rl
+Ogo+ICAgID4gRnJvbTogIndlaS5odWFuZyIgPGh1YW5nLndlaTU2QHp0ZS5jb20uY24+Cj4gICAg
+Pgo+ICAgID4gUHJvYmxlbToKPiAgICA+IHdoZW4gd2UgY29uZmlndXJlIGEgZGV2aWNlIGxpa2Ug
+dmVuZG9yLCBwcm9kdWN0LCByZXZpc2lvbiBhbGwgbnVsbCBpbgo+ICAgIG11bHRpcGF0aC5jb25m
+LCBod2VfcmVnbWF0Y2ggYWx3YXlzIHJldHVybiAwLgo+ICAgID4KPiAgICA+IFJlYXNvbnM6Cj4g
+ICAgPiBcIWh3ZTItPnZlbmRvciwgXCFod2UyLT5wcm9kdWN0IGFuZCBcIWh3ZTItPnJldmlzaW9u
+IGFyZSBhbGwgdHJ1ZS4KPiAgICA+Cj4gICAgPiBTaWduZWQtb2ZmLWJ5OiB3ZWkuaHVhbmcgPGh1
+YW5nLndlaTU2QHp0ZS5jb20uY24+Cj4gICAgPiAtLS0KPiAgICA+IMKgbGlibXVsdGlwYXRoL2Nv
+bmZpZy5jIHwgMyArKy0KPiAgICA+IMKgMSBmaWxlIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKSwg
+MSBkZWxldGlvbigtKQo+ICAgID4KPiAgICA+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvY29u
+ZmlnLmMgYi9saWJtdWx0aXBhdGgvY29uZmlnLmMKPiAgICA+IGluZGV4IGE0OGI4YWYuLmQ5OWNk
+NzUgMTAwNjQ0Cj4gICAgPiAtLS0gYS9saWJtdWx0aXBhdGgvY29uZmlnLmMKPiAgICA+ICsrKyBi
+L2xpYm11bHRpcGF0aC9jb25maWcuYwo+ICAgID4gQEAgLTgwLDcgKzgwLDggQEAgaHdlX3JlZ21h
+dGNoIChzdHJ1Y3QgaHdlbnRyeSAqaHdlMSwgc3RydWN0IGh3ZW50cnkKPiAgICAqaHdlMikKPiAg
+ICA+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHJlZ2NvbXAoJnJyZSwgaHdlMS0+
+cmV2aXNpb24sCj4gICAgUkVHX0VYVEVOREVEfFJFR19OT1NVQikpCj4gICAgPiDCoCDCoCDCoCDC
+oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoGdvdG8gb3V0X3ByZTsK
+PiAgICA+IMKgCj4gICAgPiAtIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGlmICgoIWh3ZTEtPnZl
+bmRvciB8fCAhaHdlMi0+dmVuZG9yIHx8Cj4gICAgPiArIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IGlmICgoaHdlMi0+dmVuZG9yIHx8IGh3ZTItPnByb2R1Y3QgfHwgaHdlMi0+cmV2aXNpb24pCj4g
+ICAgJiYKPiAgICA+ICsgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgKCFod2UxLT52ZW5k
+b3IgfHwgIWh3ZTItPnZlbmRvciB8fAo+ICAgID4gwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAhcmVnZXhlYygmdnJlLCBod2UyLT52ZW5kb3IsIDAsIE5VTEwsIDApKSAmJgo+ICAg
+ID4gwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgKCFod2UxLT5wcm9kdWN0IHx8ICFo
+d2UyLT5wcm9kdWN0IHx8Cj4gICAgPiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oCFyZWdleGVjKCZwcmUsIGh3ZTItPnByb2R1Y3QsIDAsIE5VTEwsIDApKSAmJgo+ICAgID4KPiAg
+ICBHb29kIHBvaW50Lgo+IAo+ICAgIFJldmlld2VkLWJ5OiBIYW5uZXMgUmVpbmVja2UgPGhhcmVA
+c3VzZS5jb20+Cj4gCj4gICAgQ2hlZXJzLAo+IAo+ICAgIEhhbm5lcwo+ICAgIC0tCj4gICAgRHIu
+IEhhbm5lcyBSZWluZWNrZSDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoCDCoCBUZWFtbGVhZCBTdG9yYWdlICYKPiAgICBOZXR3b3JraW5nCj4gICAgaGFy
+ZUBzdXNlLmRlIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gICAgwqAgwqAr
+NDkgOTExIDc0MDUzIDY4OAo+ICAgIFNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0
+MDkgTu+/ve+/vXJuYmVyZwo+ICAgIEdGOiBGLiBJbWVuZD9yZmZlciwgSi4gU21pdGhhcmQsIEou
+IEd1aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b24KPiAgICBIUkIgMjEyODQgKEFHIE7vv73vv71y
+bmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
+czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
