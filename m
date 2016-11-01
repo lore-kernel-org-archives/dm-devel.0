@@ -1,15 +1,14 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH] hwe_regmatch: match error
-Date: Tue, 1 Nov 2016 11:05:57 -0500
-Message-ID: <20161101160557.GB1972@octiron.msp.redhat.com>
-References: <OF7CB3362D.2C97E5BB-ON4825805E.00108B17-4825805E.0010903E@LocalDomain>
-	<OF9054AD97.BF5E1EA4-ON4825805E.0010B7C3-4825805E.0011A078@zte.com.cn>
+Subject: Re: [PATCH] segment faulty occured in add_feature()
+Date: Tue, 1 Nov 2016 11:05:29 -0500
+Message-ID: <20161101160529.GA1972@octiron.msp.redhat.com>
+References: <1477961089-9164-1-git-send-email-huang.wei56@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <OF9054AD97.BF5E1EA4-ON4825805E.0010B7C3-4825805E.0011A078@zte.com.cn>
+In-Reply-To: <1477961089-9164-1-git-send-email-huang.wei56@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,49 +18,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: tang.junhui@zte.com.cn
-Cc: dm-devel@redhat.com, huang.wei56@zte.com.cn, zhang.kai16@zte.com.cn
+To: huang.wei56@zte.com.cn
+Cc: tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com
 List-Id: dm-devel.ids
 
-T24gVHVlLCBOb3YgMDEsIDIwMTYgYXQgMTE6MTI6NDZBTSArMDgwMCwgdGFuZy5qdW5odWlAenRl
-LmNvbS5jbiB3cm90ZToKPiAgICBIZWxsbyBDaHJpc3RvcGhlLAoKQUNLCgotQmVuCgo+IAo+ICAg
-IFRoaXMgaXNzdWUgYWZmZWN0cyB0aGUgYWNjdXJhY3kgb2YgcmVndWxhciBtYXRjaGluZywKPiAg
-ICBhbmQgdGhlIHBhdGNoIGJlbGxvdyBoYWQgYmVlbiByZXZpZXdlZCBieSBIYW5uZXMsCj4gICAg
-Q2FuIHlvdSBtZXJnZSBpdCB0byBPcGVuc3ZjPwo+IAo+ICAgIFRoYW5rcwo+ICAgIFRhbmcKPiAK
-PiAgICBPbiAxMC8xNC8yMDE2IDA0OjAzIEFNLCBodWFuZy53ZWk1NkB6dGUuY29tLmNuIHdyb3Rl
-Ogo+ICAgID4gRnJvbTogIndlaS5odWFuZyIgPGh1YW5nLndlaTU2QHp0ZS5jb20uY24+Cj4gICAg
-Pgo+ICAgID4gUHJvYmxlbToKPiAgICA+IHdoZW4gd2UgY29uZmlndXJlIGEgZGV2aWNlIGxpa2Ug
-dmVuZG9yLCBwcm9kdWN0LCByZXZpc2lvbiBhbGwgbnVsbCBpbgo+ICAgIG11bHRpcGF0aC5jb25m
-LCBod2VfcmVnbWF0Y2ggYWx3YXlzIHJldHVybiAwLgo+ICAgID4KPiAgICA+IFJlYXNvbnM6Cj4g
-ICAgPiBcIWh3ZTItPnZlbmRvciwgXCFod2UyLT5wcm9kdWN0IGFuZCBcIWh3ZTItPnJldmlzaW9u
-IGFyZSBhbGwgdHJ1ZS4KPiAgICA+Cj4gICAgPiBTaWduZWQtb2ZmLWJ5OiB3ZWkuaHVhbmcgPGh1
-YW5nLndlaTU2QHp0ZS5jb20uY24+Cj4gICAgPiAtLS0KPiAgICA+IMKgbGlibXVsdGlwYXRoL2Nv
-bmZpZy5jIHwgMyArKy0KPiAgICA+IMKgMSBmaWxlIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKSwg
-MSBkZWxldGlvbigtKQo+ICAgID4KPiAgICA+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvY29u
-ZmlnLmMgYi9saWJtdWx0aXBhdGgvY29uZmlnLmMKPiAgICA+IGluZGV4IGE0OGI4YWYuLmQ5OWNk
-NzUgMTAwNjQ0Cj4gICAgPiAtLS0gYS9saWJtdWx0aXBhdGgvY29uZmlnLmMKPiAgICA+ICsrKyBi
-L2xpYm11bHRpcGF0aC9jb25maWcuYwo+ICAgID4gQEAgLTgwLDcgKzgwLDggQEAgaHdlX3JlZ21h
-dGNoIChzdHJ1Y3QgaHdlbnRyeSAqaHdlMSwgc3RydWN0IGh3ZW50cnkKPiAgICAqaHdlMikKPiAg
-ICA+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHJlZ2NvbXAoJnJyZSwgaHdlMS0+
-cmV2aXNpb24sCj4gICAgUkVHX0VYVEVOREVEfFJFR19OT1NVQikpCj4gICAgPiDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoGdvdG8gb3V0X3ByZTsK
-PiAgICA+IMKgCj4gICAgPiAtIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGlmICgoIWh3ZTEtPnZl
-bmRvciB8fCAhaHdlMi0+dmVuZG9yIHx8Cj4gICAgPiArIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IGlmICgoaHdlMi0+dmVuZG9yIHx8IGh3ZTItPnByb2R1Y3QgfHwgaHdlMi0+cmV2aXNpb24pCj4g
-ICAgJiYKPiAgICA+ICsgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgKCFod2UxLT52ZW5k
-b3IgfHwgIWh3ZTItPnZlbmRvciB8fAo+ICAgID4gwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAhcmVnZXhlYygmdnJlLCBod2UyLT52ZW5kb3IsIDAsIE5VTEwsIDApKSAmJgo+ICAg
-ID4gwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgKCFod2UxLT5wcm9kdWN0IHx8ICFo
-d2UyLT5wcm9kdWN0IHx8Cj4gICAgPiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCFyZWdleGVjKCZwcmUsIGh3ZTItPnByb2R1Y3QsIDAsIE5VTEwsIDApKSAmJgo+ICAgID4KPiAg
-ICBHb29kIHBvaW50Lgo+IAo+ICAgIFJldmlld2VkLWJ5OiBIYW5uZXMgUmVpbmVja2UgPGhhcmVA
-c3VzZS5jb20+Cj4gCj4gICAgQ2hlZXJzLAo+IAo+ICAgIEhhbm5lcwo+ICAgIC0tCj4gICAgRHIu
-IEhhbm5lcyBSZWluZWNrZSDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCBUZWFtbGVhZCBTdG9yYWdlICYKPiAgICBOZXR3b3JraW5nCj4gICAgaGFy
-ZUBzdXNlLmRlIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gICAgwqAgwqAr
-NDkgOTExIDc0MDUzIDY4OAo+ICAgIFNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0
-MDkgTu+/ve+/vXJuYmVyZwo+ICAgIEdGOiBGLiBJbWVuZD9yZmZlciwgSi4gU21pdGhhcmQsIEou
-IEd1aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b24KPiAgICBIUkIgMjEyODQgKEFHIE7vv73vv71y
-bmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
-czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Tue, Nov 01, 2016 at 08:44:49AM +0800, huang.wei56@zte.com.cn wrote:
+
+ACK
+
+-Ben
+
+> From: wei huang <huang.wei56@zte.com.cn>
+> 
+> Problem:
+> Multipathd segment faulty occured when device policy was configured in multipath.conf as follow:
+> #This is a device configuration just for COMPELNT device
+> devices {
+>        device {
+>                vendor                  COMPELNT
+>                dev_loss_tmo            120
+>                scheduler               deadline
+>        }
+> }
+> 
+> The call trace is:
+> Program received signal SIGSEGV, Segmentation fault.
+> 0x00007f4eaaf49251 in __strstr_sse2 () from /lib64/libc.so.6
+> (gdb) bt
+> #0  0x00007f4eaaf49251 in __strstr_sse2 () from /lib64/libc.so.6
+> #1  0x00007f4eabba879c in add_feature (f=f@entry=0x211b248, n=n@entry=0x7f4eabbc530a queue_if_no_path)
+>     at structs.c:524
+> #2  0x00007f4eabba6993 in merge_hwe (src=0x2148c70, dst=0x211b220) at config.c:359
+> #3  factorize_hwtable (hw=0x214b800, n=n@entry=77) at config.c:452
+> #4  0x00007f4eabba7850 in load_config (file=file@entry=0x4144c8 /etc/multipath.conf) at config.c:651
+> #5  0x0000000000408959 in reconfigure (vecs=vecs@entry=0x2128ae0) at main.c:2078
+> #6  0x00000000004063c6 in child (param=0x0) at main.c:2483
+> #7  main (argc=<optimized out>, argv=<optimized out>) at main.c:2725
+> (gdb) up
+> #1  0x00007f4eabba879c in add_feature (f=f@entry=0x211b248, n=n@entry=0x7f4eabbc530a queue_if_no_path)
+>     at structs.c:524
+> 524             if (strstr(*f, n))
+> (gdb) p *f
+>  = 0x0
+> 
+> Reasons:
+> When multipathd loads config, it will call merge_hwe() to merge the features between default_hw[] and config.
+> If the vender is not configured features in default_hw[], dst->features's value will be null. So strstr()'s first
+> parameter *f is null in add_feature(),too.
+> 
+> Signed-off-by: wei huang <huang.wei56@zte.com.cn>
+> ---
+>  libmultipath/structs.c | 11 +++++++++++
+>  1 file changed, 11 insertions(+)
+> 
+> diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+> index fee58e5..f673325 100644
+> --- a/libmultipath/structs.c
+> +++ b/libmultipath/structs.c
+> @@ -520,6 +520,17 @@ add_feature (char **f, char *n)
+>  	if (!n || *n == '0')
+>  		return 0;
+>  
+> +	/* default feature is null */
+> +	if(!*f)
+> +	{
+> +		l = asprintf(&t, "1 %s", n);
+> +		if(l == -1)
+> +			return 1;
+> +			
+> +		*f = t;
+> +		return 0;
+> +	}
+> +
+>  	/* Check if feature is already present */
+>  	if (strstr(*f, n))
+>  		return 0;
+> -- 
+> 2.8.1.windows.1
