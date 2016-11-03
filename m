@@ -1,14 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] dm mpath: remove unusable kmultipathd work
- queue
-Date: Thu, 3 Nov 2016 13:44:48 +0100
-Message-ID: <5339a165-9c9d-5fd1-22ae-1abae2ea6dec@suse.de>
-References: <1478168994-9376-1-git-send-email-tang.junhui@zte.com.cn>
+From: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+Subject: Re: Multipaths getting cross-linked on IBM Power-8 after
+ adding wwids
+Date: Thu, 3 Nov 2016 11:13:30 -0200
+Message-ID: <f6d6500d-9b82-4c7b-0fbd-b6cbfac09cd9@linux.vnet.ibm.com>
+References: <3B555D3246724D4EB3187D3CFCD9D0482DC98E20@NOTTSVEX01.uk.csi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1478168994-9376-1-git-send-email-tang.junhui@zte.com.cn>
+In-Reply-To: <3B555D3246724D4EB3187D3CFCD9D0482DC98E20@NOTTSVEX01.uk.csi>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,32 +18,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Andy D'Arcy Jewell <Andy.D'ArcyJewell@csiltd.co.uk>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Mike Leigh <Mike.Leigh@csiltd.co.uk>
 List-Id: dm-devel.ids
 
-On 11/03/2016 11:29 AM, tang.junhui@zte.com.cn wrote:
-> From: "tang.junhui" <tang.junhui@zte.com.cn>
->
-> kmultipathd work queue is used to process queued IOs for multipath
-> target when IOs need to retry, but now these IOs have been requeued
-> to block queue of DM device, hence this work queue is not useful
-> anymore, and this patch deletes it.
->
-> Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
-> ---
->  drivers/md/dm-mpath.c | 13 +------------
->  1 file changed, 1 insertion(+), 12 deletions(-)
->
-Good point.
+Hey Andy,
 
-Reviewed-by: Hannes Reinecke <hare@suse.com>
+On 10/31/2016 11:40 AM, Andy D'Arcy Jewell wrote:
 
-Cheers,
+ > We have been battling with this issue with help from IBM support,
+ > but I'd like to understand the situation a bit better, so thought
+ > I'd go to the source ;-)
 
-Hannes
--- =
+Thanks for reaching out; you've found someone. ;)
 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+> cat /etc/issue
+> IBM_PowerKVM release 2.1.1 build 62 service (pkvm2_1_1)
+> Kernel \r on a \m (\l)
+
+The multipath-tools source code in PowerKVM 2.1.1 is older than
+what the upstream community works with -- this problem probably
+doesn't occur w/ the upstream sources.
+
+So, let me help you off list; I'll follow up w/ you privately.
+
+> So my questions are:
+> a) Is this expected behaviour or a bug?
+
+No, data corruption and WWID confusion are not expected; although
+the correspondence between bindings/wwids in initramfs and rootfs
+has been required on multipath-tools/distros for some time now.
+
+If you're right about no reboots (so the difference between wwids/
+bindings in initramfs & rootfs is not a problem), then this is a
+bug.
+
+> b) If a bug, is there a fix?
+
+Once we confirm the initramfs/rootfs mismatch is not a concern,
+and this is reproducible, yes, I'll be happy to land you a fix.
+
+> c) Is there any further information you need to help diagnose?
+
+Yup.
+
+1) Is this problem reproducible? ie, you can recreate it with a
+some steps in house?
+
+2) If so, please enable verbosity 3 in multipath.conf, restart
+multipathd, and try to reproduce the problem. Then let's check
+the logs.
+
+I'll reply to your e-mail so we can follow up.
+
+cheers,
+
+-- 
+Mauricio Faria de Oliveira
+IBM Linux Technology Center
