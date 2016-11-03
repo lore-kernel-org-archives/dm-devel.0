@@ -1,14 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm mpath: remove unusable kmultipathd work queue
-Date: Thu, 3 Nov 2016 10:48:26 -0400
-Message-ID: <20161103144826.GA21719@redhat.com>
-References: <1478168994-9376-1-git-send-email-tang.junhui@zte.com.cn>
+Subject: Re: dm mpath: add check for count of groups to avoid
+ wild pointer access
+Date: Thu, 3 Nov 2016 11:24:37 -0400
+Message-ID: <20161103152436.GB21719@redhat.com>
+References: <1478170170-4748-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1478168994-9376-1-git-send-email-tang.junhui@zte.com.cn>
+In-Reply-To: <1478170170-4748-1-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,20 +23,42 @@ To: tang.junhui@zte.com.cn
 Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Nov 03 2016 at  6:29am -0400,
+On Thu, Nov 03 2016 at  6:49am -0400,
 tang.junhui@zte.com.cn <tang.junhui@zte.com.cn> wrote:
 
 > From: "tang.junhui" <tang.junhui@zte.com.cn>
 > 
-> kmultipathd work queue is used to process queued IOs for multipath
-> target when IOs need to retry, but now these IOs have been requeued
-> to block queue of DM device, hence this work queue is not useful
-> anymore, and this patch deletes it.
+> pg is not assigned to a group address when count of multipath groups
+> is zero in bypass_pg_num(), then it is used in bypass_pg(), which may
+> cause wild pointer access.
 > 
 > Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+> ---
+>  drivers/md/dm-mpath.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index d376dc8..8c1359c 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -1084,7 +1084,7 @@ static int switch_pg_num(struct multipath *m, const char *pgstr)
+>  	char dummy;
+>  
+>  	if (!pgstr || (sscanf(pgstr, "%u%c", &pgnum, &dummy) != 1) || !pgnum ||
+> -	    (pgnum > m->nr_priority_groups)) {
+> +	    !m->nr_priority_groups || (pgnum > m->nr_priority_groups)) {
+>  		DMWARN("invalid PG number supplied to switch_pg_num");
+>  		return -EINVAL;
+>  	}
+> -- 
+> 2.8.1.windows.1
+> 
+> 
 
-Nack, you must be looking at older code.  bio-based DM multipath makes
-use of kmultipathd.
+You mention bypass_pg_num() going on to hit a NULL/"wild" pointer.  Not
+immediately seeing the relation between switch_pg_num() and
+bypass_pg_num().  But shouldn't bypass_pg_num() have improved bounds
+checking (and/or NULL pointer checks) too?
 
-When suggesting changes please always make sure you're working with the
-latest upstream Linux code.
+Maybe your patch was applied with an offset and it modified
+switch_pg_num() when you really meant to modify bypass_pg_num()?
