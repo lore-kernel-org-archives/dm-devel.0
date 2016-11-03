@@ -1,12 +1,14 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] libmultipath: safe limit max_fds
-Date: Thu, 3 Nov 2016 14:15:48 +0100
-Message-ID: <CABr-Gneo0Z1jk=FFBk9p6LMEwXZC1TH9wda3Fq=39npN1igLXQ@mail.gmail.com>
-References: <1477560172-8256-1-git-send-email-peng.liang5@zte.com.cn>
+Subject: Re: [PATCH] hwe_regmatch: match error
+Date: Thu, 3 Nov 2016 14:44:24 +0100
+Message-ID: <CABr-GnfrTEujfXi6AnQHuujgu=PaqaSH=yMEaDX=cpdZHX6QUw@mail.gmail.com>
+References: <OF7CB3362D.2C97E5BB-ON4825805E.00108B17-4825805E.0010903E@LocalDomain>
+	<OF9054AD97.BF5E1EA4-ON4825805E.0010B7C3-4825805E.0011A078@zte.com.cn>
+	<20161101160557.GB1972@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7493584957040602951=="
+Content-Type: multipart/mixed; boundary="===============7534508663415927274=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1477560172-8256-1-git-send-email-peng.liang5@zte.com.cn>
+In-Reply-To: <20161101160557.GB1972@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,118 +18,206 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: peng.liang5@zte.com.cn
-Cc: zhang.kai16@zte.com.cn, device-mapper development <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: zhang.kai16@zte.com.cn, device-mapper development <dm-devel@redhat.com>, huang.wei56@zte.com.cn, tang.junhui@zte.com.cn
 List-Id: dm-devel.ids
 
---===============7493584957040602951==
-Content-Type: multipart/alternative; boundary=001a113d972431ac400540655bb7
+--===============7534508663415927274==
+Content-Type: multipart/alternative; boundary=001a114080466eb1e1054065c1fc
 
---001a113d972431ac400540655bb7
+--001a114080466eb1e1054065c1fc
 Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-Hi PengLiang,
-
-As no objection was raised, I'll merge this patch.
-Can you resend with the necessary man page update explaining the new policy
-for max_fds ?
-
+Merged.
 Thanks.
 
+On Tue, Nov 1, 2016 at 5:05 PM, Benjamin Marzinski <bmarzins@redhat.com>
+wrote:
 
+> On Tue, Nov 01, 2016 at 11:12:46AM +0800, tang.junhui@zte.com.cn wrote:
+> >    Hello Christophe,
+>
+> ACK
+>
+> -Ben
+>
+> >
+> >    This issue affects the accuracy of regular matching,
+> >    and the patch bellow had been reviewed by Hannes,
+> >    Can you merge it to Opensvc?
+> >
+> >    Thanks
+> >    Tang
+> >
+> >    On 10/14/2016 04:03 AM, huang.wei56@zte.com.cn wrote:
+> >    > From: "wei.huang" <huang.wei56@zte.com.cn>
+> >    >
+> >    > Problem:
+> >    > when we configure a device like vendor, product, revision all null
+> in
+> >    multipath.conf, hwe_regmatch always return 0.
+> >    >
+> >    > Reasons:
+> >    > \!hwe2->vendor, \!hwe2->product and \!hwe2->revision are all true.
+> >    >
+> >    > Signed-off-by: wei.huang <huang.wei56@zte.com.cn>
+> >    > ---
+> >    >  libmultipath/config.c | 3 ++-
+> >    >  1 file changed, 2 insertions(+), 1 deletion(-)
+> >    >
+> >    > diff --git a/libmultipath/config.c b/libmultipath/config.c
+> >    > index a48b8af..d99cd75 100644
+> >    > --- a/libmultipath/config.c
+> >    > +++ b/libmultipath/config.c
+> >    > @@ -80,7 +80,8 @@ hwe_regmatch (struct hwentry *hwe1, struct hwent=
+ry
+> >    *hwe2)
+> >    >                       regcomp(&rre, hwe1->revision,
+> >    REG_EXTENDED|REG_NOSUB))
+> >    >                                    goto out_pre;
+> >    >
+> >    > -                 if ((!hwe1->vendor || !hwe2->vendor ||
+> >    > +                 if ((hwe2->vendor || hwe2->product ||
+> hwe2->revision)
+> >    &&
+> >    > +                     (!hwe1->vendor || !hwe2->vendor ||
+> >    >                        !regexec(&vre, hwe2->vendor, 0, NULL, 0)) &=
+&
+> >    >                       (!hwe1->product || !hwe2->product ||
+> >    >                        !regexec(&pre, hwe2->product, 0, NULL, 0)) =
+&&
+> >    >
+> >    Good point.
+> >
+> >    Reviewed-by: Hannes Reinecke <hare@suse.com>
+> >
+> >    Cheers,
+> >
+> >    Hannes
+> >    --
+> >    Dr. Hannes Reinecke                                     Teamlead
+> Storage &
+> >    Networking
+> >    hare@suse.de
+>
+> >       +49 911 74053 688
+> >    SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=EF=BF=BD=EF=BF=BDrnberg
+> >    GF: F. Imend?rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+> >    HRB 21284 (AG N=EF=BF=BD=EF=BF=BDrnberg)
+>
 
-On Thu, Oct 27, 2016 at 11:22 AM, <peng.liang5@zte.com.cn> wrote:
-
-> From: PengLiang <peng.liang5@zte.com.cn>
->
-> If user config the max_fds too small to less than actual open files of
-> multipath,
-> it will occur the error like "/lib/superpath/libchecktur.so: cannot open
-> shared
-> object file: Too many open files".
-> So set a safe limit to 4096 when user config max_fds less than 4096.
->
-> Signed-off-by: PengLiang <peng.liang5@zte.com.cn>
-> ---
->  libmultipath/dict.c | 3 +++
->  1 file changed, 3 insertions(+)
->
-> diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-> index 7c21e72..7291e0e 100644
-> --- a/libmultipath/dict.c
-> +++ b/libmultipath/dict.c
-> @@ -733,6 +733,9 @@ max_fds_handler(struct config *conf, vector strvec)
->         if (conf->max_fds > max_fds)
->                 conf->max_fds = max_fds;
->
-> +       if (conf->max_fds < 4096)
-> +               conf->max_fds = 4096;
-> +
->         FREE(buff);
->
->         return r;
-> --
-> 2.8.1.windows.1
->
->
-
---001a113d972431ac400540655bb7
+--001a114080466eb1e1054065c1fc
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Hi PengLiang,<div><br></div><div>As no objection was raise=
-d, I&#39;ll merge this patch.</div><div>Can you resend with the necessary m=
-an page update explaining the new policy for max_fds ?</div><div><br></div>=
-<div>Thanks.<br><div><br></div><div><br></div></div></div><div class=3D"gma=
-il_extra"><br><div class=3D"gmail_quote">On Thu, Oct 27, 2016 at 11:22 AM, =
- <span dir=3D"ltr">&lt;<a href=3D"mailto:peng.liang5@zte.com.cn" target=3D"=
-_blank">peng.liang5@zte.com.cn</a>&gt;</span> wrote:<br><blockquote class=
+<div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
+<br><div class=3D"gmail_quote">On Tue, Nov 1, 2016 at 5:05 PM, Benjamin Mar=
+zinski <span dir=3D"ltr">&lt;<a href=3D"mailto:bmarzins@redhat.com" target=
+=3D"_blank">bmarzins@redhat.com</a>&gt;</span> wrote:<br><blockquote class=
 =3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
-ing-left:1ex">From: PengLiang &lt;<a href=3D"mailto:peng.liang5@zte.com.cn"=
->peng.liang5@zte.com.cn</a>&gt;<br>
+ing-left:1ex">On Tue, Nov 01, 2016 at 11:12:46AM +0800, <a href=3D"mailto:t=
+ang.junhui@zte.com.cn">tang.junhui@zte.com.cn</a> wrote:<br>
+&gt;=C2=A0 =C2=A0 Hello Christophe,<br>
 <br>
-If user config the max_fds too small to less than actual open files of mult=
-ipath,<br>
-it will occur the error like &quot;/lib/superpath/libchecktur.<wbr>so: cann=
-ot open shared<br>
-object file: Too many open files&quot;.<br>
-So set a safe limit to 4096 when user config max_fds less than 4096.<br>
+ACK<br>
 <br>
-Signed-off-by: PengLiang &lt;<a href=3D"mailto:peng.liang5@zte.com.cn">peng=
-.liang5@zte.com.cn</a>&gt;<br>
----<br>
-=C2=A0libmultipath/dict.c | 3 +++<br>
-=C2=A01 file changed, 3 insertions(+)<br>
+-Ben<br>
+<div><div class=3D"h5"><br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 This issue affects the accuracy of regular matching,<br>
+&gt;=C2=A0 =C2=A0 and the patch bellow had been reviewed by Hannes,<br>
+&gt;=C2=A0 =C2=A0 Can you merge it to Opensvc?<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 Thanks<br>
+&gt;=C2=A0 =C2=A0 Tang<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 On 10/14/2016 04:03 AM, <a href=3D"mailto:huang.wei56@zte=
+.com.cn">huang.wei56@zte.com.cn</a> wrote:<br>
+&gt;=C2=A0 =C2=A0 &gt; From: &quot;wei.huang&quot; &lt;<a href=3D"mailto:hu=
+ang.wei56@zte.com.cn">huang.wei56@zte.com.cn</a>&gt;<br>
+&gt;=C2=A0 =C2=A0 &gt;<br>
+&gt;=C2=A0 =C2=A0 &gt; Problem:<br>
+&gt;=C2=A0 =C2=A0 &gt; when we configure a device like vendor, product, rev=
+ision all null in<br>
+&gt;=C2=A0 =C2=A0 multipath.conf, hwe_regmatch always return 0.<br>
+&gt;=C2=A0 =C2=A0 &gt;<br>
+&gt;=C2=A0 =C2=A0 &gt; Reasons:<br>
+&gt;=C2=A0 =C2=A0 &gt; \!hwe2-&gt;vendor, \!hwe2-&gt;product and \!hwe2-&gt=
+;revision are all true.<br>
+&gt;=C2=A0 =C2=A0 &gt;<br>
+&gt;=C2=A0 =C2=A0 &gt; Signed-off-by: wei.huang &lt;<a href=3D"mailto:huang=
+.wei56@zte.com.cn">huang.wei56@zte.com.cn</a>&gt;<br>
+&gt;=C2=A0 =C2=A0 &gt; ---<br>
+&gt;=C2=A0 =C2=A0 &gt; =C2=A0libmultipath/config.c | 3 ++-<br>
+&gt;=C2=A0 =C2=A0 &gt; =C2=A01 file changed, 2 insertions(+), 1 deletion(-)=
 <br>
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c<br>
-index 7c21e72..7291e0e 100644<br>
---- a/libmultipath/dict.c<br>
-+++ b/libmultipath/dict.c<br>
-@@ -733,6 +733,9 @@ max_fds_handler(struct config *conf, vector strvec)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (conf-&gt;max_fds &gt; max_fds)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 conf-&gt;max_fds =
-=3D max_fds;<br>
-<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0if (conf-&gt;max_fds &lt; 4096)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0conf-&gt;max_fds =
-=3D 4096;<br>
-+<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 FREE(buff);<br>
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 return r;<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.8.1.windows.1<br>
-<br>
-</font></span></blockquote></div><br></div>
+&gt;=C2=A0 =C2=A0 &gt;<br>
+&gt;=C2=A0 =C2=A0 &gt; diff --git a/libmultipath/config.c b/libmultipath/co=
+nfig.c<br>
+&gt;=C2=A0 =C2=A0 &gt; index a48b8af..d99cd75 100644<br>
+&gt;=C2=A0 =C2=A0 &gt; --- a/libmultipath/config.c<br>
+&gt;=C2=A0 =C2=A0 &gt; +++ b/libmultipath/config.c<br>
+&gt;=C2=A0 =C2=A0 &gt; @@ -80,7 +80,8 @@ hwe_regmatch (struct hwentry *hwe1=
+, struct hwentry<br>
+&gt;=C2=A0 =C2=A0 *hwe2)<br>
+&gt;=C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 regcomp(&amp;rre, hwe1-&gt;revision,<br>
+&gt;=C2=A0 =C2=A0 REG_EXTENDED|REG_NOSUB))<br>
+&gt;=C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0go=
+to out_pre;<br>
+&gt;=C2=A0 =C2=A0 &gt; =C2=A0<br>
+&gt;=C2=A0 =C2=A0 &gt; - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 if ((!hwe1-&gt;vendor || !hwe2-&gt;vendor ||<br>
+&gt;=C2=A0 =C2=A0 &gt; + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 if ((hwe2-&gt;vendor || hwe2-&gt;product || hwe2-&gt;revision)<br>
+&gt;=C2=A0 =C2=A0 &amp;&amp;<br>
+&gt;=C2=A0 =C2=A0 &gt; + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 (!hwe1-&gt;vendor || !hwe2-&gt;vendor ||<br>
+&gt;=C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0!regexec(&amp;vre, hwe2-&gt;vendor, 0, NULL,=
+ 0)) &amp;&amp;<br>
+&gt;=C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 (!hwe1-&gt;product || !hwe2-&gt;product ||<br>
+&gt;=C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0!regexec(&amp;pre, hwe2-&gt;product, 0, NULL=
+, 0)) &amp;&amp;<br>
+&gt;=C2=A0 =C2=A0 &gt;<br>
+&gt;=C2=A0 =C2=A0 Good point.<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 Reviewed-by: Hannes Reinecke &lt;<a href=3D"mailto:hare@s=
+use.com">hare@suse.com</a>&gt;<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 Cheers,<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 Hannes<br>
+&gt;=C2=A0 =C2=A0 --<br>
+&gt;=C2=A0 =C2=A0 Dr. Hannes Reinecke =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 Teamlead Storage &amp;<br>
+&gt;=C2=A0 =C2=A0 Networking<br>
+&gt;=C2=A0 =C2=A0 <a href=3D"mailto:hare@suse.de">hare@suse.de</a> =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0<a href=3D"tel:%2B49%20911%2074053%20688" va=
+lue=3D"+4991174053688">+49 911 74053 688</a><br>
+</div></div>&gt;=C2=A0 =C2=A0 SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=EF=BF=
+=BD=EF=BF=BDrnberg<br>
+<span class=3D"">&gt;=C2=A0 =C2=A0 GF: F. Imend?rffer, J. Smithard, J. Guil=
+d, D. Upmanyu, G. Norton<br>
+</span>&gt;=C2=A0 =C2=A0 HRB 21284 (AG N=EF=BF=BD=EF=BF=BDrnberg)<br>
+</blockquote></div><br></div>
 
---001a113d972431ac400540655bb7--
+--001a114080466eb1e1054065c1fc--
 
 
---===============7493584957040602951==
+--===============7534508663415927274==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============7493584957040602951==--
+--===============7534508663415927274==--
