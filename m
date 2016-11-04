@@ -1,14 +1,15 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: multipath bug and patch
-Date: Fri, 4 Nov 2016 11:45:31 -0500
-Message-ID: <20161104164531.GH1972@octiron.msp.redhat.com>
-References: <CALRmJ1tJvjrVe9V9ZTeX+K-R9BMVf9wzbVVY5PV5jSXU3EG6Fg@mail.gmail.com>
+Subject: Re: [PATCH] libmultipath/checkers/rbd: fix free in
+	libcheck_init
+Date: Fri, 4 Nov 2016 12:50:21 -0500
+Message-ID: <20161104175021.GJ1972@octiron.msp.redhat.com>
+References: <1478246069-3448-1-git-send-email-peng.liang5@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CALRmJ1tJvjrVe9V9ZTeX+K-R9BMVf9wzbVVY5PV5jSXU3EG6Fg@mail.gmail.com>
+In-Reply-To: <1478246069-3448-1-git-send-email-peng.liang5@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,44 +19,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: James Shoemaker <james@dhlake.com>
-Cc: dm-devel@redhat.com
+To: peng.liang5@zte.com.cn
+Cc: dm-devel@redhat.com, zhang.kai16@zte.com.cn
 List-Id: dm-devel.ids
 
-On Thu, Nov 03, 2016 at 01:34:17PM -0500, James Shoemaker wrote:
->    =A0=A0 If a device returns an empty string for inquiry data the current
->    multipath tool ignores it on reload.=A0 I added the following patch an=
-d I
->    can hotplug these devices that don't return all the proper data.
+On Fri, Nov 04, 2016 at 03:54:29PM +0800, peng.liang5@zte.com.cn wrote:
+> From: PengLiang <peng.liang5@zte.com.cn>
 
-I feel like returning "none" if you try and strchop an empty string is
-pretty surprising behavior. I'd rather see this dealt with in the
-function that has problems with the empty string.
+ACK
 
 -Ben
 
-> =
-
->    diff --git a/libmultipath/util.c b/libmultipath/util.c
->    index ac0d1b2..045e660 100644
->    --- a/libmultipath/util.c
->    +++ b/libmultipath/util.c
->    @@ -17,6 +17,10 @@ strchop(char *str)
->    =A0
->    =A0=A0=A0=A0=A0=A0=A0 for (i=3Dstrlen(str)-1; i >=3D0 && isspace(str[i=
-]); --i) ;
->    =A0=A0=A0=A0=A0=A0=A0 str[++i] =3D '\0';
->    +=A0=A0=A0=A0=A0=A0 if(strlen(str)=3D=3D0)
->    +=A0=A0=A0=A0=A0=A0 {
->    +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 strcpy(str,"none");
->    +=A0=A0=A0=A0=A0=A0 }
->    =A0=A0=A0=A0=A0=A0=A0 return strlen(str);
->    =A0}
-> =
-
->    James Shoemaker
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> There is an incorrect free maybe causing memory leak.
+> 
+> Signed-off-by: PengLiang <peng.liang5@zte.com.cn>
+> ---
+>  libmultipath/checkers/rbd.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
+> index 481d860..9ea0572 100644
+> --- a/libmultipath/checkers/rbd.c
+> +++ b/libmultipath/checkers/rbd.c
+> @@ -174,7 +174,7 @@ int libcheck_init(struct checker * c)
+>  
+>  	ct->image = strdup(image);
+>  	if (!ct->image)
+> -		goto free_info;
+> +		goto free_username;
+>  
+>  	pool = udev_device_get_sysattr_value(bus_dev, "pool");
+>  	if (!pool)
+> -- 
+> 2.8.1.windows.1
