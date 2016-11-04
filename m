@@ -1,15 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm mpath: add check for count of groups to avoid
- wild pointer access
-Date: Thu, 3 Nov 2016 11:24:37 -0400
-Message-ID: <20161103152436.GB21719@redhat.com>
-References: <1478170170-4748-1-git-send-email-tang.junhui@zte.com.cn>
+From: tang.junhui@zte.com.cn
+Subject: Re: dm mpath: remove unusable kmultipathd work queue
+Date: Fri, 4 Nov 2016 09:07:56 +0800
+Message-ID: <OFBB02F136.547ACA65-ON48258061.0005B0D1-48258061.00062CE6@zte.com.cn>
+References: <1478168994-9376-1-git-send-email-tang.junhui@zte.com.cn>
+	<20161103144826.GA21719@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============5594481156369289863=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1478170170-4748-1-git-send-email-tang.junhui@zte.com.cn>
+In-Reply-To: <20161103144826.GA21719@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,46 +17,101 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: tang.junhui@zte.com.cn
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, agk@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, dm-devel-bounces@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Nov 03 2016 at  6:49am -0400,
-tang.junhui@zte.com.cn <tang.junhui@zte.com.cn> wrote:
+This is a multipart message in MIME format.
+--===============5594481156369289863==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 00062CE348258061_="
 
-> From: "tang.junhui" <tang.junhui@zte.com.cn>
-> 
-> pg is not assigned to a group address when count of multipath groups
-> is zero in bypass_pg_num(), then it is used in bypass_pg(), which may
-> cause wild pointer access.
-> 
-> Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
-> ---
->  drivers/md/dm-mpath.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index d376dc8..8c1359c 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -1084,7 +1084,7 @@ static int switch_pg_num(struct multipath *m, const char *pgstr)
->  	char dummy;
->  
->  	if (!pgstr || (sscanf(pgstr, "%u%c", &pgnum, &dummy) != 1) || !pgnum ||
-> -	    (pgnum > m->nr_priority_groups)) {
-> +	    !m->nr_priority_groups || (pgnum > m->nr_priority_groups)) {
->  		DMWARN("invalid PG number supplied to switch_pg_num");
->  		return -EINVAL;
->  	}
-> -- 
-> 2.8.1.windows.1
-> 
-> 
+This is a multipart message in MIME format.
+--=_alternative 00062CE348258061_=
+Content-Type: text/plain; charset="GB2312"
+Content-Transfer-Encoding: base64
 
-You mention bypass_pg_num() going on to hit a NULL/"wild" pointer.  Not
-immediately seeing the relation between switch_pg_num() and
-bypass_pg_num().  But shouldn't bypass_pg_num() have improved bounds
-checking (and/or NULL pointer checks) too?
+SGVsbG8gTWlrZSwNCg0KSSB1c2VkIHRoZSBtYXN0ZXIgYnJhbmNoLCB0aGUgY29kZSBzZWVtcyBh
+IGxpdHRsZSBvbGRlciwNCkl0J3MgdHJ1ZSB0aGF0IHRoZSBuZXdlciBicmFuY2hlcyBzdWNoIGFz
+IGRtLTQuMTAgaGF2ZSByZXVzZWQgDQprbXVsdGlwYXRoZC4NCg0KVGhhbmtzLA0KVGFuZw0KDQoN
+Cg0Kt6K8/sjLOiAgICAgICAgIE1pa2UgU25pdHplciA8c25pdHplckByZWRoYXQuY29tPg0KytW8
+/sjLOiAgICAgICAgIHRhbmcuanVuaHVpQHp0ZS5jb20uY24sIA0Ks63LzTogICB6aGFuZy5rYWkx
+NkB6dGUuY29tLmNuLCBkbS1kZXZlbEByZWRoYXQuY29tLCBhZ2tAcmVkaGF0LmNvbQ0KyNXG2jog
+ICAyMDE2LzExLzAzIDIyOjU3DQrW98ziOiAgIFJlOiBbZG0tZGV2ZWxdIGRtIG1wYXRoOiByZW1v
+dmUgdW51c2FibGUga211bHRpcGF0aGQgd29yayBxdWV1ZQ0Kt6K8/sjLOiBkbS1kZXZlbC1ib3Vu
+Y2VzQHJlZGhhdC5jb20NCg0KDQoNCk9uIFRodSwgTm92IDAzIDIwMTYgYXQgIDY6MjlhbSAtMDQw
+MCwNCnRhbmcuanVuaHVpQHp0ZS5jb20uY24gPHRhbmcuanVuaHVpQHp0ZS5jb20uY24+IHdyb3Rl
+Og0KDQo+IEZyb206ICJ0YW5nLmp1bmh1aSIgPHRhbmcuanVuaHVpQHp0ZS5jb20uY24+DQo+IA0K
+PiBrbXVsdGlwYXRoZCB3b3JrIHF1ZXVlIGlzIHVzZWQgdG8gcHJvY2VzcyBxdWV1ZWQgSU9zIGZv
+ciBtdWx0aXBhdGgNCj4gdGFyZ2V0IHdoZW4gSU9zIG5lZWQgdG8gcmV0cnksIGJ1dCBub3cgdGhl
+c2UgSU9zIGhhdmUgYmVlbiByZXF1ZXVlZA0KPiB0byBibG9jayBxdWV1ZSBvZiBETSBkZXZpY2Us
+IGhlbmNlIHRoaXMgd29yayBxdWV1ZSBpcyBub3QgdXNlZnVsDQo+IGFueW1vcmUsIGFuZCB0aGlz
+IHBhdGNoIGRlbGV0ZXMgaXQuDQo+IA0KPiBTaWduZWQtb2ZmLWJ5OiB0YW5nLmp1bmh1aSA8dGFu
+Zy5qdW5odWlAenRlLmNvbS5jbj4NCg0KTmFjaywgeW91IG11c3QgYmUgbG9va2luZyBhdCBvbGRl
+ciBjb2RlLiAgYmlvLWJhc2VkIERNIG11bHRpcGF0aCBtYWtlcw0KdXNlIG9mIGttdWx0aXBhdGhk
+Lg0KDQpXaGVuIHN1Z2dlc3RpbmcgY2hhbmdlcyBwbGVhc2UgYWx3YXlzIG1ha2Ugc3VyZSB5b3Un
+cmUgd29ya2luZyB3aXRoIHRoZQ0KbGF0ZXN0IHVwc3RyZWFtIExpbnV4IGNvZGUuDQoNCi0tDQpk
+bS1kZXZlbCBtYWlsaW5nIGxpc3QNCmRtLWRldmVsQHJlZGhhdC5jb20NCmh0dHBzOi8vd3d3LnJl
+ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA0KDQoNCg==
+--=_alternative 00062CE348258061_=
+Content-Type: text/html; charset="GB2312"
+Content-Transfer-Encoding: base64
 
-Maybe your patch was applied with an offset and it modified
-switch_pg_num() when you really meant to modify bypass_pg_num()?
+PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPkhlbGxvIE1pa2UsPC9mb250Pg0KPGJyPg0K
+PGJyPjxmb250IHNpemU9MiBmYWNlPSJzYW5zLXNlcmlmIj5JIHVzZWQgdGhlIG1hc3RlciBicmFu
+Y2gsIHRoZSBjb2RlIHNlZW1zDQphIGxpdHRsZSBvbGRlciw8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6
+ZT0yIGZhY2U9InNhbnMtc2VyaWYiPkl0J3MgdHJ1ZSB0aGF0IHRoZSBuZXdlciBicmFuY2hlcyBz
+dWNoDQphcyA8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9Ikx1Y2lkYSBDb25zb2xlIj5kbS00LjEw
+IGhhdmUgcmV1c2VkIDwvZm9udD4NCjxicj48dHQ+PGZvbnQgc2l6ZT0yPmttdWx0aXBhdGhkPC9m
+b250PjwvdHQ+PGZvbnQgc2l6ZT0xIGZhY2U9Ikx1Y2lkYSBDb25zb2xlIj4uPC9mb250Pg0KPGJy
+Pg0KPGJyPjxmb250IHNpemU9MSBmYWNlPSJMdWNpZGEgQ29uc29sZSI+VGhhbmtzLDwvZm9udD4N
+Cjxicj48Zm9udCBzaXplPTEgZmFjZT0iTHVjaWRhIENvbnNvbGUiPlRhbmc8L2ZvbnQ+DQo8YnI+
+DQo8YnI+DQo8YnI+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1z
+ZXJpZiI+t6K8/sjLOiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7IDwvZm9udD48Zm9udCBz
+aXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+TWlrZSBTbml0emVyDQombHQ7c25pdHplckByZWRoYXQu
+Y29tJmd0OzwvZm9udD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5z
+LXNlcmlmIj7K1bz+yMs6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgPC9mb250Pjxmb250
+IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj50YW5nLmp1bmh1aUB6dGUuY29tLmNuLA0KPC9mb250
+Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPrOty806
+ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDs8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNh
+bnMtc2VyaWYiPnpoYW5nLmthaTE2QHp0ZS5jb20uY24sDQpkbS1kZXZlbEByZWRoYXQuY29tLCBh
+Z2tAcmVkaGF0LmNvbTwvZm9udD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNl
+PSJzYW5zLXNlcmlmIj7I1cbaOiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7IDwvZm9udD48
+Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+MjAxNi8xMS8wMw0KMjI6NTc8L2ZvbnQ+DQo8
+YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+1vfM4jogJm5i
+c3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOzwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1z
+ZXJpZiI+UmU6IFtkbS1kZXZlbF0NCmRtIG1wYXRoOiByZW1vdmUgdW51c2FibGUga211bHRpcGF0
+aGQgd29yayBxdWV1ZTwvZm9udD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNl
+PSJzYW5zLXNlcmlmIj63orz+yMs6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDs8L2ZvbnQ+
+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPmRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNv
+bTwvZm9udD4NCjxicj4NCjxociBub3NoYWRlPg0KPGJyPg0KPGJyPg0KPGJyPjx0dD48Zm9udCBz
+aXplPTI+T24gVGh1LCBOb3YgMDMgMjAxNiBhdCAmbmJzcDs2OjI5YW0gLTA0MDAsPGJyPg0KdGFu
+Zy5qdW5odWlAenRlLmNvbS5jbiAmbHQ7dGFuZy5qdW5odWlAenRlLmNvbS5jbiZndDsgd3JvdGU6
+PGJyPg0KPGJyPg0KJmd0OyBGcm9tOiAmcXVvdDt0YW5nLmp1bmh1aSZxdW90OyAmbHQ7dGFuZy5q
+dW5odWlAenRlLmNvbS5jbiZndDs8YnI+DQomZ3Q7IDxicj4NCiZndDsga211bHRpcGF0aGQgd29y
+ayBxdWV1ZSBpcyB1c2VkIHRvIHByb2Nlc3MgcXVldWVkIElPcyBmb3IgbXVsdGlwYXRoPGJyPg0K
+Jmd0OyB0YXJnZXQgd2hlbiBJT3MgbmVlZCB0byByZXRyeSwgYnV0IG5vdyB0aGVzZSBJT3MgaGF2
+ZSBiZWVuIHJlcXVldWVkPGJyPg0KJmd0OyB0byBibG9jayBxdWV1ZSBvZiBETSBkZXZpY2UsIGhl
+bmNlIHRoaXMgd29yayBxdWV1ZSBpcyBub3QgdXNlZnVsPGJyPg0KJmd0OyBhbnltb3JlLCBhbmQg
+dGhpcyBwYXRjaCBkZWxldGVzIGl0Ljxicj4NCiZndDsgPGJyPg0KJmd0OyBTaWduZWQtb2ZmLWJ5
+OiB0YW5nLmp1bmh1aSAmbHQ7dGFuZy5qdW5odWlAenRlLmNvbS5jbiZndDs8YnI+DQo8YnI+DQpO
+YWNrLCB5b3UgbXVzdCBiZSBsb29raW5nIGF0IG9sZGVyIGNvZGUuICZuYnNwO2Jpby1iYXNlZCBE
+TSBtdWx0aXBhdGggbWFrZXM8YnI+DQp1c2Ugb2Yga211bHRpcGF0aGQuPGJyPg0KPGJyPg0KV2hl
+biBzdWdnZXN0aW5nIGNoYW5nZXMgcGxlYXNlIGFsd2F5cyBtYWtlIHN1cmUgeW91J3JlIHdvcmtp
+bmcgd2l0aCB0aGU8YnI+DQpsYXRlc3QgdXBzdHJlYW0gTGludXggY29kZS48YnI+DQo8YnI+DQot
+LTxicj4NCmRtLWRldmVsIG1haWxpbmcgbGlzdDxicj4NCmRtLWRldmVsQHJlZGhhdC5jb208YnI+
+DQo8L2ZvbnQ+PC90dD48YSBocmVmPSJodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
+dGluZm8vZG0tZGV2ZWwiPjx0dD48Zm9udCBzaXplPTI+aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
+YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsPC9mb250PjwvdHQ+PC9hPjx0dD48Zm9udCBzaXplPTI+
+PGJyPg0KPC9mb250PjwvdHQ+DQo8YnI+DQo=
+--=_alternative 00062CE348258061_=--
+
+
+--===============5594481156369289863==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5594481156369289863==--
