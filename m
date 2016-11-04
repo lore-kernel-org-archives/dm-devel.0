@@ -1,10 +1,16 @@
-From: James Shoemaker <james@dhlake.com>
-Subject: multipath bug and patch
-Date: Thu, 3 Nov 2016 13:34:17 -0500
-Message-ID: <CALRmJ1tJvjrVe9V9ZTeX+K-R9BMVf9wzbVVY5PV5jSXU3EG6Fg@mail.gmail.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 09/10] add disable_changed_wwids option
+Date: Fri, 4 Nov 2016 10:32:40 -0500
+Message-ID: <20161104153240.GF1972@octiron.msp.redhat.com>
+References: <1477709726-5442-1-git-send-email-bmarzins@redhat.com>
+	<1477709726-5442-10-git-send-email-bmarzins@redhat.com>
+	<55d8a18c-5c35-5d84-3b4a-557075aaa69d@suse.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5402438507825764055=="
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <55d8a18c-5c35-5d84-3b4a-557075aaa69d@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,63 +20,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com, dm-devel@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============5402438507825764055==
-Content-Type: multipart/alternative; boundary=94eb2c0d90582ad866054069ce07
+On Sun, Oct 30, 2016 at 02:54:14PM +0100, Hannes Reinecke wrote:
+> On 10/29/2016 04:55 AM, Benjamin Marzinski wrote:
+> >If a LUN on a storage device gets remapped while in-use by multipath,
+> >it's possible that the multipath device will continue writing to this
+> >new LUN, causing corruption.  This is not multipath's fault (users
+> >should go remapping in-use LUNs), but it's possible for multipath to
+> >detect this and disable IO to the device. If disable_changed_wwids
+> >is set to "yes", multipathd will detect when a LUN changes wwids when it
+> >receives the uevent for this, and will disable access to the device
+> >until the LUN is mapped back.
+> >
+> >Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> >---
+> > libmultipath/config.c    |  1 +
+> > libmultipath/config.h    |  1 +
+> > libmultipath/defaults.h  |  1 +
+> > libmultipath/dict.c      |  4 ++++
+> > libmultipath/discovery.c | 15 +++++++--------
+> > libmultipath/discovery.h |  1 +
+> > libmultipath/structs.h   |  1 +
+> > multipathd/main.c        | 32 ++++++++++++++++++++++++++++++++
+> > 8 files changed, 48 insertions(+), 8 deletions(-)
+> >
+> Hmm. Not sure if the really buys us anything. By the time we process the
+> uevent it might already be too late, and I/O might already have been writ=
+ten
+> to that device.
+> I do agree on the warning, though.
 
---94eb2c0d90582ad866054069ce07
-Content-Type: text/plain; charset=UTF-8
+I have taken some pains to try to explain this short-coming to the
+customer who filed this bugzilla. The good news is that in practice, the
+device ususally goes down when you are remapping the LUN, and you
+disable the device before it ever comes back.  In my testing, I wasn't
+able to actually ever write to the wrong device with
+disable_changed_wwids enabled, but I do agree that you have the
+potential to race here.
 
-   If a device returns an empty string for inquiry data the current
-multipath tool ignores it on reload.  I added the following patch and I can
-hotplug these devices that don't return all the proper data.
+-Ben
 
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index ac0d1b2..045e660 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -17,6 +17,10 @@ strchop(char *str)
+> =
 
-        for (i=strlen(str)-1; i >=0 && isspace(str[i]); --i) ;
-        str[++i] = '\0';
-+       if(strlen(str)==0)
-+       {
-+               strcpy(str,"none");
-+       }
-        return strlen(str);
- }
+> Cheers,
+> =
 
-James Shoemaker
+> Hannes
+> -- =
 
---94eb2c0d90582ad866054069ce07
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+> Dr. Hannes Reinecke		      zSeries & Storage
+> hare@suse.de			      +49 911 74053 688
+> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+> GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+> =
 
-<div dir=3D"ltr"><div>=C2=A0=C2=A0 If a device returns an empty string for =
-inquiry data the current multipath tool ignores it on reload.=C2=A0 I added=
- the following patch and I can hotplug these devices that don&#39;t return =
-all the proper data.<br><br>diff --git a/libmultipath/util.c b/libmultipath=
-/util.c<br>index ac0d1b2..045e660 100644<br>--- a/libmultipath/util.c<br>++=
-+ b/libmultipath/util.c<br>@@ -17,6 +17,10 @@ strchop(char *str)<br>=C2=A0<=
-br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 for (i=3Dstrlen(str)-1; i &gt=
-;=3D0 &amp;&amp; isspace(str[i]); --i) ;<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0 str[++i] =3D &#39;\0&#39;;<br>+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0 if(strlen(str)=3D=3D0)<br>+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 {<br=
->+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0 strcpy(str,&quot;none&quot;);<br>+=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0 }<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return strlen(str=
-);<br>=C2=A0}<br><br></div>James Shoemaker<br></div>
-
---94eb2c0d90582ad866054069ce07--
-
-
---===============5402438507825764055==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5402438507825764055==--
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
