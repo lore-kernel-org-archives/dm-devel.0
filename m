@@ -1,15 +1,11 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH] libmultipath/checkers/rbd: fix free in
-	libcheck_init
-Date: Fri, 4 Nov 2016 12:50:21 -0500
-Message-ID: <20161104175021.GJ1972@octiron.msp.redhat.com>
-References: <1478246069-3448-1-git-send-email-peng.liang5@zte.com.cn>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: remove getuid/usb_id
+Date: Sat,  5 Nov 2016 00:24:14 +0100
+Message-ID: <20161104232414.5695-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1478246069-3448-1-git-send-email-peng.liang5@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,37 +15,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: peng.liang5@zte.com.cn
-Cc: dm-devel@redhat.com, zhang.kai16@zte.com.cn
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Nov 04, 2016 at 03:54:29PM +0800, peng.liang5@zte.com.cn wrote:
-> From: PengLiang <peng.liang5@zte.com.cn>
+Unnecessary, because getuid_callout was superseded by uid_attribute.
 
-ACK
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ getuid/usb_id | 6 ------
+ 1 file changed, 6 deletions(-)
+ delete mode 100755 getuid/usb_id
 
--Ben
-
-> 
-> There is an incorrect free maybe causing memory leak.
-> 
-> Signed-off-by: PengLiang <peng.liang5@zte.com.cn>
-> ---
->  libmultipath/checkers/rbd.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
-> index 481d860..9ea0572 100644
-> --- a/libmultipath/checkers/rbd.c
-> +++ b/libmultipath/checkers/rbd.c
-> @@ -174,7 +174,7 @@ int libcheck_init(struct checker * c)
->  
->  	ct->image = strdup(image);
->  	if (!ct->image)
-> -		goto free_info;
-> +		goto free_username;
->  
->  	pool = udev_device_get_sysattr_value(bus_dev, "pool");
->  	if (!pool)
-> -- 
-> 2.8.1.windows.1
+diff --git a/getuid/usb_id b/getuid/usb_id
+deleted file mode 100755
+index 800e471..0000000
+--- a/getuid/usb_id
++++ /dev/null
+@@ -1,6 +0,0 @@
+-#!/bin/sh
+-#
+-# copy in /bin and add this line to a device block in multipath.conf :
+-# getuid_callout          "/bin/usb_id %n"
+-#
+-cd /sys/block/$1 && cd $(ls -l device|cut -d">" -f2) && cd ../../../.. && cat serial
+-- 
+2.10.2
