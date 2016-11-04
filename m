@@ -1,16 +1,15 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 09/10] add disable_changed_wwids option
-Date: Fri, 4 Nov 2016 10:32:40 -0500
-Message-ID: <20161104153240.GF1972@octiron.msp.redhat.com>
-References: <1477709726-5442-1-git-send-email-bmarzins@redhat.com>
-	<1477709726-5442-10-git-send-email-bmarzins@redhat.com>
-	<55d8a18c-5c35-5d84-3b4a-557075aaa69d@suse.de>
+Subject: Re: [PATCH] mpathpersistent: segment faulty occured in
+ mpath_persistent_reserve_in()
+Date: Fri, 4 Nov 2016 11:23:14 -0500
+Message-ID: <20161104162314.GG1972@octiron.msp.redhat.com>
+References: <1477558528-9416-1-git-send-email-tang.wenji@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <55d8a18c-5c35-5d84-3b4a-557075aaa69d@suse.de>
+In-Reply-To: <1477558528-9416-1-git-send-email-tang.wenji@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,63 +19,119 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+To: tang.wenji@zte.com.cn
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn, christophe varoqui <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
-On Sun, Oct 30, 2016 at 02:54:14PM +0100, Hannes Reinecke wrote:
-> On 10/29/2016 04:55 AM, Benjamin Marzinski wrote:
-> >If a LUN on a storage device gets remapped while in-use by multipath,
-> >it's possible that the multipath device will continue writing to this
-> >new LUN, causing corruption.  This is not multipath's fault (users
-> >should go remapping in-use LUNs), but it's possible for multipath to
-> >detect this and disable IO to the device. If disable_changed_wwids
-> >is set to "yes", multipathd will detect when a LUN changes wwids when it
-> >receives the uevent for this, and will disable access to the device
-> >until the LUN is mapped back.
-> >
-> >Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> >---
-> > libmultipath/config.c    |  1 +
-> > libmultipath/config.h    |  1 +
-> > libmultipath/defaults.h  |  1 +
-> > libmultipath/dict.c      |  4 ++++
-> > libmultipath/discovery.c | 15 +++++++--------
-> > libmultipath/discovery.h |  1 +
-> > libmultipath/structs.h   |  1 +
-> > multipathd/main.c        | 32 ++++++++++++++++++++++++++++++++
-> > 8 files changed, 48 insertions(+), 8 deletions(-)
-> >
-> Hmm. Not sure if the really buys us anything. By the time we process the
-> uevent it might already be too late, and I/O might already have been writ=
-ten
-> to that device.
-> I do agree on the warning, though.
+On Thu, Oct 27, 2016 at 04:55:28PM +0800, tang.wenji@zte.com.cn wrote:
 
-I have taken some pains to try to explain this short-coming to the
-customer who filed this bugzilla. The good news is that in practice, the
-device ususally goes down when you are remapping the LUN, and you
-disable the device before it ever comes back.  In my testing, I wasn't
-able to actually ever write to the wrong device with
-disable_changed_wwids enabled, but I do agree that you have the
-potential to race here.
+ACK
 
 -Ben
 
-> =
-
-> Cheers,
-> =
-
-> Hannes
-> -- =
-
-> Dr. Hannes Reinecke		      zSeries & Storage
-> hare@suse.de			      +49 911 74053 688
-> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
-> =
-
+> From: 10111224 <tang.wenji@zte.com.cn>
+> 
+> Segment faulty occured when executing "mpathpersist -i -k
+> /dev/mapper/mpath1" command.The reason is that an uninitialized global variable conf is used in mpath_persistent_reserve_in(). The same problem also exists in
+> mpath_persistent_reserve_out().
+> 
+> Signed-off-by: tang.wenji <tang.wenji@zte.com.cn>
+> ---
+>  libmpathpersist/mpath_persist.c | 21 +++++++++++++++++++--
+>  libmpathpersist/mpathpr.h       |  4 ----
+>  2 files changed, 19 insertions(+), 6 deletions(-)
+> 
+> diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+> index 7501651..582d4ef 100644
+> --- a/libmpathpersist/mpath_persist.c
+> +++ b/libmpathpersist/mpath_persist.c
+> @@ -78,6 +78,7 @@ updatepaths (struct multipath * mpp)
+>  	int i, j;
+>  	struct pathgroup * pgp;
+>  	struct path * pp;
+> +	struct config *conf;
+>  
+>  	if (!mpp->pg)
+>  		return 0;
+> @@ -97,16 +98,24 @@ updatepaths (struct multipath * mpp)
+>  					continue;
+>  				}
+>  				pp->mpp = mpp;
+> +				conf = get_multipath_config();
+>  				pathinfo(pp, conf, DI_ALL);
+> +				put_multipath_config(conf);
+>  				continue;
+>  			}
+>  			pp->mpp = mpp;
+>  			if (pp->state == PATH_UNCHECKED ||
+> -					pp->state == PATH_WILD)
+> +					pp->state == PATH_WILD){
+> +				conf = get_multipath_config();
+>  				pathinfo(pp, conf, DI_CHECKER);
+> +				put_multipath_config(conf);
+> +			}
+>  
+> -			if (pp->priority == PRIO_UNDEF)
+> +			if (pp->priority == PRIO_UNDEF){
+> +				conf = get_multipath_config();
+>  				pathinfo(pp, conf, DI_PRIO);
+> +				put_multipath_config(conf);
+> +			}
+>  		}
+>  	}
+>  	return 0;
+> @@ -159,8 +168,11 @@ int mpath_persistent_reserve_in (int fd, int rq_servact,
+>  	int map_present;
+>  	int major, minor;
+>  	int ret;
+> +	struct config *conf;
+>  
+> +	conf = get_multipath_config();
+>  	conf->verbosity = verbose;
+> +	put_multipath_config( conf);
+>  
+>  	if (fstat( fd, &info) != 0){
+>  		condlog(0, "stat error %d", fd);
+> @@ -252,8 +264,11 @@ int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
+>  	int j;
+>  	unsigned char *keyp;
+>  	uint64_t prkey;
+> +	struct config *conf;
+>  
+> +	conf = get_multipath_config();
+>  	conf->verbosity = verbose;
+> +	put_multipath_config(conf);
+>  
+>  	if (fstat( fd, &info) != 0){
+>  		condlog(0, "stat error fd=%d", fd);
+> @@ -320,7 +335,9 @@ int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
+>  		goto out1;
+>  	}
+>  
+> +	conf = get_multipath_config();
+>  	select_reservation_key(conf, mpp);
+> +	put_multipath_config(conf);
+>  
+>  	switch(rq_servact)
+>  	{
+> diff --git a/libmpathpersist/mpathpr.h b/libmpathpersist/mpathpr.h
+> index cd58201..e6c2ded 100644
+> --- a/libmpathpersist/mpathpr.h
+> +++ b/libmpathpersist/mpathpr.h
+> @@ -25,10 +25,6 @@ struct threadinfo {
+>  	struct prout_param param;
+>  };
+>  
+> -
+> -struct config * conf;
+> -
+> -
+>  int prin_do_scsi_ioctl(char * dev, int rq_servact, struct prin_resp * resp, int noisy);
+>  int prout_do_scsi_ioctl( char * dev, int rq_servact, int rq_scope,
+>  		unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy);
+> -- 
+> 2.8.1.windows.1
+> 
 > --
 > dm-devel mailing list
 > dm-devel@redhat.com
