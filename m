@@ -1,16 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm mpath: remove unusable kmultipathd work queue
-Date: Thu, 3 Nov 2016 21:42:07 -0400
-Message-ID: <20161104014207.GA739@redhat.com>
-References: <1478168994-9376-1-git-send-email-tang.junhui@zte.com.cn>
-	<20161103144826.GA21719@redhat.com>
-	<OFBB02F136.547ACA65-ON48258061.0005B0D1-48258061.00062CE6@zte.com.cn>
+From: li.minghui7@zte.com.cn
+Subject: [PATCH] multipath-tools:replace the "strict_timinig"
+	with "strict_timing"
+Date: Fri, 4 Nov 2016 11:26:54 +0800
+Message-ID: <1478230014-8968-1-git-send-email-li.minghui7@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <OFBB02F136.547ACA65-ON48258061.0005B0D1-48258061.00062CE6@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,36 +16,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: tang.junhui@zte.com.cn
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, dm-devel-bounces@redhat.com, agk@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: zhang.kai16@zte.com.cn, "li.minghui" <li.minghui7@zte.com.cn>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Q29tbWl0IDc2ZTMzZmU0ZTJjNDMgKCJkbSBtcGF0aDogcmVpbnN0YXRlIGJpby1iYXNlZCBzdXBw
-b3J0Iikgd2FzCmluY2x1ZGVkIGluIExpbnV4IDQuOC4gIE5vdCBzdXJlIGhvdyB5b3UgbWlzc2Vk
-IHRoaXMuCgpPbiBUaHUsIE5vdiAwMyAyMDE2IGF0ICA5OjA3cG0gLTA0MDAsCnRhbmcuanVuaHVp
-QHp0ZS5jb20uY24gPHRhbmcuanVuaHVpQHp0ZS5jb20uY24+IHdyb3RlOgoKPiBIZWxsbyBNaWtl
-LAo+IAo+IEkgdXNlZCB0aGUgbWFzdGVyIGJyYW5jaCwgdGhlIGNvZGUgc2VlbXMgYSBsaXR0bGUg
-b2xkZXIsCj4gSXQncyB0cnVlIHRoYXQgdGhlIG5ld2VyIGJyYW5jaGVzIHN1Y2ggYXMgZG0tNC4x
-MCBoYXZlIHJldXNlZCAKPiBrbXVsdGlwYXRoZC4KPiAKPiBUaGFua3MsCj4gVGFuZwo+IAo+IAo+
-IAo+IOWPkeS7tuS6ujogICAgICAgICBNaWtlIFNuaXR6ZXIgPHNuaXR6ZXJAcmVkaGF0LmNvbT4K
-PiDmlLbku7bkuro6ICAgICAgICAgdGFuZy5qdW5odWlAenRlLmNvbS5jbiwgCj4g5oqE6YCBOiAg
-IHpoYW5nLmthaTE2QHp0ZS5jb20uY24sIGRtLWRldmVsQHJlZGhhdC5jb20sIGFna0ByZWRoYXQu
-Y29tCj4g5pel5pyfOiAgIDIwMTYvMTEvMDMgMjI6NTcKPiDkuLvpopg6ICAgUmU6IFtkbS1kZXZl
-bF0gZG0gbXBhdGg6IHJlbW92ZSB1bnVzYWJsZSBrbXVsdGlwYXRoZCB3b3JrIHF1ZXVlCj4g5Y+R
-5Lu25Lq6OiBkbS1kZXZlbC1ib3VuY2VzQHJlZGhhdC5jb20KPiAKPiAKPiAKPiBPbiBUaHUsIE5v
-diAwMyAyMDE2IGF0ICA2OjI5YW0gLTA0MDAsCj4gdGFuZy5qdW5odWlAenRlLmNvbS5jbiA8dGFu
-Zy5qdW5odWlAenRlLmNvbS5jbj4gd3JvdGU6Cj4gCj4gPiBGcm9tOiAidGFuZy5qdW5odWkiIDx0
-YW5nLmp1bmh1aUB6dGUuY29tLmNuPgo+ID4gCj4gPiBrbXVsdGlwYXRoZCB3b3JrIHF1ZXVlIGlz
-IHVzZWQgdG8gcHJvY2VzcyBxdWV1ZWQgSU9zIGZvciBtdWx0aXBhdGgKPiA+IHRhcmdldCB3aGVu
-IElPcyBuZWVkIHRvIHJldHJ5LCBidXQgbm93IHRoZXNlIElPcyBoYXZlIGJlZW4gcmVxdWV1ZWQK
-PiA+IHRvIGJsb2NrIHF1ZXVlIG9mIERNIGRldmljZSwgaGVuY2UgdGhpcyB3b3JrIHF1ZXVlIGlz
-IG5vdCB1c2VmdWwKPiA+IGFueW1vcmUsIGFuZCB0aGlzIHBhdGNoIGRlbGV0ZXMgaXQuCj4gPiAK
-PiA+IFNpZ25lZC1vZmYtYnk6IHRhbmcuanVuaHVpIDx0YW5nLmp1bmh1aUB6dGUuY29tLmNuPgo+
-IAo+IE5hY2ssIHlvdSBtdXN0IGJlIGxvb2tpbmcgYXQgb2xkZXIgY29kZS4gIGJpby1iYXNlZCBE
-TSBtdWx0aXBhdGggbWFrZXMKPiB1c2Ugb2Yga211bHRpcGF0aGQuCj4gCj4gV2hlbiBzdWdnZXN0
-aW5nIGNoYW5nZXMgcGxlYXNlIGFsd2F5cyBtYWtlIHN1cmUgeW91J3JlIHdvcmtpbmcgd2l0aCB0
-aGUKPiBsYXRlc3QgdXBzdHJlYW0gTGludXggY29kZS4KPiAKPiAtLQo+IGRtLWRldmVsIG1haWxp
-bmcgbGlzdAo+IGRtLWRldmVsQHJlZGhhdC5jb20KPiBodHRwczovL3d3dy5yZWRoYXQuY29tL21h
-aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKPiAKPiAKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApk
-bS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
-by9kbS1kZXZlbA==
+From: "li.minghui" <li.minghui7@zte.com.cn>
+
+multipath-tools:replace the "strict_timinig" with "strict_timing"
+---
+ multipath/multipath.conf.5 | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index b7d7e59..4f90cf5 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -692,7 +692,7 @@ Default value is: \fBno\fR
+ .
+ .
+ .TP
+-.B strict_timinig
++.B strict_timing
+ If set to
+ .I yes
+ , multipathd will start a new path checker loop after exactly one second,
+-- 
+2.8.1.windows.1
