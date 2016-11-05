@@ -1,8 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: fix indent and replace spaces
-	with tab
-Date: Sat,  5 Nov 2016 11:50:46 +0100
-Message-ID: <20161105105046.2388-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: Remove trailing whitespace
+Date: Sat,  5 Nov 2016 17:58:32 +0100
+Message-ID: <20161105165832.23273-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -23,23 +22,35 @@ Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/checkers.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ multipath/multipath.conf.5 | 2 +-
+ multipathd/main.c          | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index fedc330..1d225de 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -112,8 +112,8 @@ struct checker {
- 						multipath-wide. Use MALLOC if
- 						you want to stuff data in. */
- 	int (*check)(struct checker *);
--	void (*repair)(struct checker *);     /* called if check returns
--					        PATH_DOWN to bring path into
-+	void (*repair)(struct checker *);    /* called if check returns
-+						PATH_DOWN to bring path into
- 						usable state */
- 	int (*init)(struct checker *);       /* to allocate the context */
- 	void (*free)(struct checker *);      /* to free the context */
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 4f90cf5..a1f25d5 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -449,7 +449,7 @@ Default value is: \fBmanual\fR
+ .TP
+ .B  rr_min_io
+ Number of I/O requests to route to a path before switching to the next in the
+-same path group. This is only for \fIBlock I/O\fR(BIO) based multipath and 
++same path group. This is only for \fIBlock I/O\fR(BIO) based multipath and
+ only apply to \fIround-robin\fR path_selector.
+ .RS
+ .TP
+diff --git a/multipathd/main.c b/multipathd/main.c
+index aec89e7..d6f081f 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2579,7 +2579,7 @@ main (int argc, char *argv[])
+ 	umask(umask(077) | 022);
+ 
+ 	pthread_cond_init_mono(&config_cond);
+-	
++
+ 	udev = udev_new();
+ 
+ 	while ((arg = getopt(argc, argv, ":dsv:k::Bn")) != EOF ) {
 -- 
 2.10.2
