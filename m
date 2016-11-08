@@ -1,77 +1,41 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH 3/3] multipathd: Add 'sysfs' prioritizer
-Date: Tue, 8 Nov 2016 19:52:55 +0100
-Message-ID: <60729efa-12ad-aa28-f657-1b8ec6dbd4d2@gmail.com>
-References: <1468565337-5178-1-git-send-email-hare@suse.de>
-	<1468565337-5178-4-git-send-email-hare@suse.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1468565337-5178-4-git-send-email-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+Subject: [PATCH] scsi_devinfo: remove synchronous ALUA for NETAPP/RDAC devices
+Date: Tue,  8 Nov 2016 20:32:42 +0100
+Message-ID: <20161108193242.3454-1-xose.vazquez@gmail.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin George <Martin.George@netapp.com>, Robert Stankey <Robert.Stankey@netapp.com>, Steven Schremmer <Steven.Schremmer@netapp.com>, Sean Stewart <Sean.Stewart@netapp.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 07/15/2016 08:48 AM, Hannes Reinecke wrote:
+NetApp did confirm this is only required for ONTAP(LUN C-Mode).
 
-> Recent kernels have an 'access_state' attribute which allows
-> us to read the asymmetric access state directly from sysfs.
+Cc: Martin George <Martin.George@netapp.com>
+Cc: Robert Stankey <Robert.Stankey@netapp.com>
+Cc: Steven Schremmer <Steven.Schremmer@netapp.com>
+Cc: Sean Stewart <Sean.Stewart@netapp.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
+Cc: Martin K. Petersen <martin.petersen@oracle.com>
+Cc: SCSI ML <linux-scsi@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ drivers/scsi/scsi_devinfo.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-Hi Hannes,
+diff --git a/drivers/scsi/scsi_devinfo.c b/drivers/scsi/scsi_devinfo.c
+index 2464569..1fb7964 100644
+--- a/drivers/scsi/scsi_devinfo.c
++++ b/drivers/scsi/scsi_devinfo.c
+@@ -221,7 +221,6 @@ static struct {
+ 	{"NEC", "PD-1 ODX654P", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
+ 	{"NEC", "iStorage", NULL, BLIST_REPORTLUN2},
+ 	{"NETAPP", "LUN C-Mode", NULL, BLIST_SYNC_ALUA},
+-	{"NETAPP", "INF-01-00", NULL, BLIST_SYNC_ALUA},
+ 	{"NRC", "MBR-7", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
+ 	{"NRC", "MBR-7.4", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
+ 	{"PIONEER", "CD-ROM DRM-600", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
+-- 
+2.10.2
 
-with this patch it's impossible to select/autodetect ALUA.
-sysfs always takes precedence over alua.
-
-"detect_prio no" was added to overrides section, to make
-it work again.
-
-SLES 12-SP2
-
-Thank you.
-
-> ---
->  libmultipath/discovery.c           | 33 +++++++++++++++++++++
->  libmultipath/discovery.h           |  2 ++
->  libmultipath/prio.h                |  1 +
->  libmultipath/prioritizers/Makefile |  3 +-
->  libmultipath/prioritizers/sysfs.c  | 61 ++++++++++++++++++++++++++++++++++++++
->  libmultipath/propsel.c             |  6 +++-
->  multipath/multipath.conf.5         | 19 ++++++++++--
->  7 files changed, 120 insertions(+), 5 deletions(-)
->  create mode 100644 libmultipath/prioritizers/sysfs.c
-> 
-
-[ ...]
-
-> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-> index beb0798..0caf269 100644
-> --- a/libmultipath/propsel.c
-> +++ b/libmultipath/propsel.c
-> @@ -375,6 +375,8 @@ detect_prio(struct config *conf, struct path * pp)
->  	struct prio *p = &pp->prio;
->  	int tpgs = 0;
->  	unsigned int timeout = conf->checker_timeout;
-> +	char buff[512];
-> +	char *default_prio = PRIO_ALUA;
->  
->  	if ((tpgs = get_target_port_group_support(pp->fd, timeout)) <= 0)
->  		return;
-> @@ -384,7 +386,9 @@ detect_prio(struct config *conf, struct path * pp)
->  		return;
->  	if (get_asymmetric_access_state(pp->fd, ret, timeout) < 0)
->  		return;
-> -	prio_get(conf->multipath_dir, p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
-> +	if (sysfs_get_asymmetric_access_state(pp, buff, 512) >= 0)
-> +		default_prio = PRIO_SYSFS;
-> +	prio_get(conf->multipath_dir, p, default_prio, DEFAULT_PRIO_ARGS);
->  }
