@@ -1,51 +1,81 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 3/3] multipathd: Add 'sysfs' prioritizer
-Date: Wed, 9 Nov 2016 07:49:11 +0100
-Message-ID: <a6e52ead-dda3-13e5-c033-2719102aeaa9@suse.de>
-References: <1468565337-5178-1-git-send-email-hare@suse.de>
-	<1468565337-5178-4-git-send-email-hare@suse.de>
-	<60729efa-12ad-aa28-f657-1b8ec6dbd4d2@gmail.com>
+From: "George, Martin" <Martin.George@netapp.com>
+Subject: RE: [PATCH] scsi_devinfo: remove synchronous ALUA for NETAPP/RDAC
+ devices
+Date: Wed, 9 Nov 2016 07:38:31 +0000
+Message-ID: <BN1PR06MB1521E99DDAD4D921182C97695B90@BN1PR06MB152.namprd06.prod.outlook.com>
+References: <20161108193242.3454-1-xose.vazquez@gmail.com>
+ <e6686f70-5de7-2618-0ba7-5a7b98eba068@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <60729efa-12ad-aa28-f657-1b8ec6dbd4d2@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <e6686f70-5de7-2618-0ba7-5a7b98eba068@suse.de>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: "Stankey, Robert" <Robert.Stankey@netapp.com>, "Schremmer, Steven" <Steve.Schremmer@netapp.com>, "Stewart, Sean" <Sean.Stewart@netapp.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMTEvMDgvMjAxNiAwNzo1MiBQTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+IE9uIDA3
-LzE1LzIwMTYgMDg6NDggQU0sIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPgo+PiBSZWNlbnQga2Vy
-bmVscyBoYXZlIGFuICdhY2Nlc3Nfc3RhdGUnIGF0dHJpYnV0ZSB3aGljaCBhbGxvd3MKPj4gdXMg
-dG8gcmVhZCB0aGUgYXN5bW1ldHJpYyBhY2Nlc3Mgc3RhdGUgZGlyZWN0bHkgZnJvbSBzeXNmcy4K
-Pgo+IEhpIEhhbm5lcywKPgo+IHdpdGggdGhpcyBwYXRjaCBpdCdzIGltcG9zc2libGUgdG8gc2Vs
-ZWN0L2F1dG9kZXRlY3QgQUxVQS4KPiBzeXNmcyBhbHdheXMgdGFrZXMgcHJlY2VkZW5jZSBvdmVy
-IGFsdWEuCj4KPiAiZGV0ZWN0X3ByaW8gbm8iIHdhcyBhZGRlZCB0byBvdmVycmlkZXMgc2VjdGlv
-biwgdG8gbWFrZQo+IGl0IHdvcmsgYWdhaW4uCj4KPiBTTEVTIDEyLVNQMgo+Cj4gVGhhbmsgeW91
-Lgo+CkJ1dCB0aGlzIHdhcyBwcmVjaXNlbHkgdGhlIGlkZWEuCihBZnRlciBhbGwsIGl0IHNheXMg
-J2F1dG8tZGV0ZWN0JywgcmlnaHQ/KQoKRm9yIEFMVUEtY2FwYWJsZSBhcnJheXMgd2UgaGF2ZSBh
-IHJlbGlhYmxlIHByaW9yaXR5IGRldGVjdGlvbiB3aXRoIHRoZSAKQUxVQSBkZXZpY2UtaGFuZGxl
-ci4KU28gaXQncyBmYXIgcHJlZmVyYWJsZSB0byB1c2UgdGhlIHN5c2ZzLXByb3ZpZGVkIGluZm9y
-bWF0aW9uIChhcyB0aGV5IAphcmUgcG9wdWxhdGVkIGJ5IHRoZSBBTFVBIGRldmljZS1oYW5kbGVy
-KTsgdGhlIEFMVUEgcHJpb3JpdGl6ZXIgaW4gCm11bHRpcGF0aC10b29scyB3aWxsIGJlIHVzZWQg
-YXMgYSBmYWxsYmFjayBpbiBjYXNlIHRoZSBkZXZpY2UgaGFuZGxlciAKaXNuJ3QgbG9hZGVkIG9y
-IHRoZSBzeXNmcyBmaWxlcyBhcmUgbm90IHByZXNlbnQuClVzaW5nIHRoZSBzeXNmcyBoYW5kbGVy
-IGhhcyB0aGUgbmVhdCBzaWRlIGVmZmVjdCB0aGF0IHlvdSBkb24ndCBuZWVkIHRvIApkbyBJL08g
-Zm9yIGRldGVjdGluZyB0aGUgcHJpb3JpdHksIHRoZXJlYnkgZWxpbWluYXRpbmcgb25lIHBvc3Np
-YmxlIApjYXVzZSBmb3IgbXVsdGlwYXRoIGJlaW5nIHN0dWNrIGR1cmluZyBmYWlsb3Zlci4KCkNo
-ZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgVGVhbWxlYWQgU3RvcmFn
-ZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1
-MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKR0Y6
-IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxkLCBELiBVcG1hbnl1LCBHLiBO
-b3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QK
-ZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
-Zm8vZG0tZGV2ZWw=
+As discussed with Hannes, this is not required for ONTAP's LUN C-Mode as we=
+ll. So the ALUA blacklisting may be removed here as well, and not just for =
+NetApp RDAC.
+
+-Martin
+
+-----Original Message-----
+From: Hannes Reinecke [mailto:hare@suse.de]=20
+Sent: Wednesday, November 9, 2016 12:20 PM
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: George, Martin <Martin.George@netapp.com>; Stankey, Robert <Robert.Stan=
+key@netapp.com>; Schremmer, Steven <Steve.Schremmer@netapp.com>; Stewart, S=
+ean <Sean.Stewart@netapp.com>; Christophe Varoqui <christophe.varoqui@opens=
+vc.com>; James E . J . Bottomley <jejb@linux.vnet.ibm.com>; Martin K . Pete=
+rsen <martin.petersen@oracle.com>; SCSI ML <linux-scsi@vger.kernel.org>; de=
+vice-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH] scsi_devinfo: remove synchronous ALUA for NETAPP/RDAC =
+devices
+
+On 11/08/2016 08:32 PM, Xose Vazquez Perez wrote:
+> NetApp did confirm this is only required for ONTAP(LUN C-Mode).
+>
+> Cc: Martin George <Martin.George@netapp.com>
+> Cc: Robert Stankey <Robert.Stankey@netapp.com>
+> Cc: Steven Schremmer <Steven.Schremmer@netapp.com>
+> Cc: Sean Stewart <Sean.Stewart@netapp.com>
+> Cc: Hannes Reinecke <hare@suse.de>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
+> Cc: Martin K. Petersen <martin.petersen@oracle.com>
+> Cc: SCSI ML <linux-scsi@vger.kernel.org>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  drivers/scsi/scsi_devinfo.c | 1 -
+>  1 file changed, 1 deletion(-)
+>
+> diff --git a/drivers/scsi/scsi_devinfo.c b/drivers/scsi/scsi_devinfo.c=20
+> index 2464569..1fb7964 100644
+> --- a/drivers/scsi/scsi_devinfo.c
+> +++ b/drivers/scsi/scsi_devinfo.c
+> @@ -221,7 +221,6 @@ static struct {
+>  	{"NEC", "PD-1 ODX654P", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
+>  	{"NEC", "iStorage", NULL, BLIST_REPORTLUN2},
+>  	{"NETAPP", "LUN C-Mode", NULL, BLIST_SYNC_ALUA},
+> -	{"NETAPP", "INF-01-00", NULL, BLIST_SYNC_ALUA},
+>  	{"NRC", "MBR-7", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
+>  	{"NRC", "MBR-7.4", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
+>  	{"PIONEER", "CD-ROM DRM-600", NULL, BLIST_FORCELUN |=20
+> BLIST_SINGLELUN},
+>
+
+Reviewed-by: Hannes Reinecke <hare@suse.com>
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton HRB 2128=
+4 (AG N=FCrnberg)
