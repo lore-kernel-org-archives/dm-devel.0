@@ -1,8 +1,7 @@
-From: tang.wenji@zte.com.cn
-Subject: [PATCH] multipath-tools: increase the print length of
-	the multipath fields
-Date: Thu, 10 Nov 2016 20:32:01 +0800
-Message-ID: <1478781121-10924-1-git-send-email-tang.wenji@zte.com.cn>
+From: Gioh Kim <gi-oh.kim@profitbricks.com>
+Subject: [PATCH] multipathd: deferred device adding
+Date: Thu, 10 Nov 2016 16:05:21 +0100
+Message-ID: <1478790321-8539-1-git-send-email-gi-oh.kim@profitbricks.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,35 +15,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, "tang.wenji" <tang.wenji@zte.com.cn>
+To: hare@suse.de, christophe.varoqui@opensvc.com
+Cc: dm-devel@redhat.com, benjamin.drung@profitbricks.com, Gioh Kim <gi-oh.kim@profitbricks.com>
 List-Id: dm-devel.ids
 
-From: "tang.wenji" <tang.wenji@zte.com.cn>
+Current multipathd always receives events from udev
+and add devices to topology immediately. For example,
+if sdb is added, multipathd receives the event from sdb
+and add sdb into the topology.
+But some platform needs to defer adding new device
+until user adds device manually, for instance, with "multipathd add sdb".
 
-The maximum field length is set to 64, which may be truncated when
-displayed.
-E.g:the multipath's 'features' field sets as "6 queue_if_no_path
-pg_init_retries 3 pg_init_delay_msecs 30 retain_attached_hw_handler",  but
-it shows as "6 queue_if_no_path pg_init_retries 3 pg_init_delay_msecs 30 ret" .
+I tested this patch to disable ueventloop.
+There was no problem on my platform.
 
-Signed-off-by: tang.wenji <tang.wenji@zte.com.cn>
+Is there a configuration for multipath.conf or udev rule
+for deferred device adding?
+Or what about adding new configuration for that?
+
+Signed-off-by: Gioh Kim <gi-oh.kim@profitbricks.com>
 ---
- libmultipath/print.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/main.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/print.h b/libmultipath/print.h
-index 6839fc7..b8c3436 100644
---- a/libmultipath/print.h
-+++ b/libmultipath/print.h
-@@ -66,7 +66,7 @@
+diff --git a/multipathd/main.c b/multipathd/main.c
+index d6f081f..da38d02 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2372,10 +2372,12 @@ child (void * param)
+ 	/*
+ 	 * Start uevent listener early to catch events
+ 	 */
++	/*
+ 	if ((rc = pthread_create(&uevent_thr, &uevent_attr, ueventloop, udev))) {
+ 		condlog(0, "failed to create uevent thread: %d", rc);
+ 		goto failed;
+ 	}
++	*/
+ 	pthread_attr_destroy(&uevent_attr);
+ 	if ((rc = pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs))) {
+ 		condlog(0, "failed to create cli listener: %d", rc);
+@@ -2433,12 +2435,12 @@ child (void * param)
+ 	unlock(&vecs->lock);
  
- #define MAX_LINE_LEN  80
- #define MAX_LINES     64
--#define MAX_FIELD_LEN 64
-+#define MAX_FIELD_LEN 128
- #define PROGRESS_LEN  10
+ 	pthread_cancel(check_thr);
+-	pthread_cancel(uevent_thr);
++	/* pthread_cancel(uevent_thr); */
+ 	pthread_cancel(uxlsnr_thr);
+ 	pthread_cancel(uevq_thr);
  
- struct path_data {
+ 	pthread_join(check_thr, NULL);
+-	pthread_join(uevent_thr, NULL);
++	/* pthread_join(uevent_thr, NULL); */
+ 	pthread_join(uxlsnr_thr, NULL);
+ 	pthread_join(uevq_thr, NULL);
+ 
 -- 
-2.8.1.windows.1
+2.5.0
