@@ -1,54 +1,63 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: document exclusive_pref_bit for
-	sysfs
-Date: Thu, 10 Nov 2016 18:24:36 +0100
-Message-ID: <20161110172436.1873-1-xose.vazquez@gmail.com>
+From: Eugene Syromyatnikov <evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] device mapper ioctl
+Date: Thu, 10 Nov 2016 21:01:29 +0000
+Message-ID: <CACGkJdts9AKHnXb+b6J2kfpDNZJZW12WaNaYukrA11PHtAydag@mail.gmail.com>
+References: <20161005.192828.566127461630656590.yamato@redhat.com>
+	<20161011223803.GA30714@obsidian>
+	<alpine.LRH.2.02.1610191626360.628@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Return-path: <strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+In-Reply-To: <alpine.LRH.2.02.1610191626360.628-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/strace-devel>,
+	<mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=strace-devel>
+List-Post: <mailto:strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/strace-devel>,
+	<mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Errors-To: strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 List-Id: dm-devel.ids
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- multipath/multipath.conf.5 | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+On Wed, Oct 19, 2016 at 8:31 PM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>
+> Hi
+>
+> Here I'm sending the device mapper ioctl patch with these changes merged.
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index a1f25d5..f8e413c 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -7,7 +7,7 @@
- .\"
- .\" ----------------------------------------------------------------------------
- .
--.TH MULTIPATH.CONF 5 2016-10-18 "Linux"
-+.TH MULTIPATH.CONF 5 2016-11-10 "Linux"
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -321,6 +321,10 @@ these values can be looked up through sysfs or by running \fImultipathd show pat
- If \fIexclusive_pref_bit\fR is set, paths with the \fIpreferred path\fR bit
- set will always be in their own path group.
- .TP
-+.I sysfs
-+If \fIexclusive_pref_bit\fR is set, paths with the \fIpreferred path\fR bit
-+set will always be in their own path group.
-+.TP
- .I datacore
- .\" XXX
- \fIpreferredsds\fR ???.
+Hello.
+
+Thank you for your contribution. The implementation of DM_* ioctl
+decoding is now in strace's master, you can check it out at
+https://github.com/strace/strace/commit/a507a0bb777c552e43e1e45f302703a09ffea1b8
+
+Could you please review it and let us know if there are any issues?
+
+> In this piece of code:
+> +       dm_arg_open3->target3.next = 0xdeadbeef;
+> +       dm_arg_open3->param3[0] = '\1';
+> +       dm_arg_open3->param3[1] = '\2';
+> +       dm_arg_open3->param1[2] = '\0';
+> there should be "dm_arg_open3->param3[2]" instead of
+> "dm_arg_open3->param1[2]". "dm_arg_open3->param1[2]" produces a warning
+> about access beyond the end of array.
+Thank you for noticing, it was an oversight on my part.
+
+> Mikulas
+
+
 -- 
-2.10.2
+Eugene "eSyr" Syromyatnikov
+mailto:evgSyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+xmpp:eSyr@jabber.{ru|org}
+
+------------------------------------------------------------------------------
+Developer Access Program for Intel Xeon Phi Processors
+Access to Intel Xeon Phi processor-based developer platforms.
+With one year of Intel Parallel Studio XE.
+Training and support from Colfax.
+Order your platform today. http://sdm.link/xeonphi
