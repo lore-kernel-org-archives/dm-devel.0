@@ -1,13 +1,12 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: multipath.rules placement
-Date: Wed, 9 Nov 2016 08:52:02 +0100
-Message-ID: <1496f8ec-b795-bdfa-6eaa-a21816fd8896@suse.de>
-References: <20161108195625.GQ1972@octiron.msp.redhat.com>
+From: tang.wenji@zte.com.cn
+Subject: [PATCH] multipath-tools: increase the print length of
+	the multipath fields
+Date: Thu, 10 Nov 2016 20:32:01 +0800
+Message-ID: <1478781121-10924-1-git-send-email-tang.wenji@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161108195625.GQ1972@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,79 +16,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, "tang.wenji" <tang.wenji@zte.com.cn>
 List-Id: dm-devel.ids
 
-On 11/08/2016 08:56 PM, Benjamin Marzinski wrote:
-> I'm looking through the multipath udev rules again to see if we can come
-> closer to one consistent set, or at least understand why we need to
-> agree to disagree and right now I'm trying to figure out why it's
-> important for SUSE to have 56-multipath.rules run before
-> 60-persistent-storage.rules.
->
-> We use 62-multipath.rules in RHEL for two main reasons. First, scsi_id
-> is run in 60-persistent-storage.rules, which is what sets ID_SERIAL, so
-> if multipath.rules is run before that, we'll never be able to get our
-> information from udev. I know that you've added code to cope with this,
-> assuming the standard uid_attribute, but it seems better to me to just
-> wait for udev to fill in these values itself.
->
-> Second, 60-persistent-storage.rules runs blkid, which should set
-> ID_FS_TYPE.  Setting it in 56-multipath.rules just means that
-> 60-persistent-storage.rules will overwrite it.
->
-> So, what do we gain by running multipath.rules before
-> 60-persistent-storage.rules?
->
-Yeah, it's slightly inconsistent.
+From: "tang.wenji" <tang.wenji@zte.com.cn>
 
-Actually we are using the rules from sg3_utils (55-scsi-sg_id.rules and =
+The maximum field length is set to 64, which may be truncated when
+displayed.
+E.g:the multipath's 'features' field sets as "6 queue_if_no_path
+pg_init_retries 3 pg_init_delay_msecs 30 retain_attached_hw_handler",  but
+it shows as "6 queue_if_no_path pg_init_retries 3 pg_init_delay_msecs 30 ret" .
 
-58-scsi-sg3_symlink.rules), which will set ID_SERIAL prior to calling =
+Signed-off-by: tang.wenji <tang.wenji@zte.com.cn>
+---
+ libmultipath/print.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-56-multipath.rules.
-Hence it works for us :-)
-
-The main idea here is to deprecate scsi_id, with the goal of eventually =
-
-dropping it from systemd/udev.
-
-However, the idea of this particular placement is precisely that we do =
-
-_not_ call scsi_id and blkid in 60-persistent-storage.rules for any =
-
-devices which are found to be part of a multipath device.
-Doing so would not only give pointless information, but also there's a =
-
-fair chance that it wouldn't get you any information whatsoever in the =
-
-case of standby paths or during failover.
-Or even stall the entire rule as it's stuck doing I/O.
-
-My plan is to split off the call to 'scsi_id' from =
-
-60-persistent-storage.rules, (eg to 56-scsi-scsi_id.rules), and my =
-
-multipath to 57.
-Then we would have:
-
-55-scsi-sg_id.rules
-56-scsi-scsi_id.rules
--> ID_SERIAL is set from this point on
-57-multipath.rules
-58-sg3_symlink.rules
-60-persistent-storage.rules
-
-and then everything would be far more consistent.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+diff --git a/libmultipath/print.h b/libmultipath/print.h
+index 6839fc7..b8c3436 100644
+--- a/libmultipath/print.h
++++ b/libmultipath/print.h
+@@ -66,7 +66,7 @@
+ 
+ #define MAX_LINE_LEN  80
+ #define MAX_LINES     64
+-#define MAX_FIELD_LEN 64
++#define MAX_FIELD_LEN 128
+ #define PROGRESS_LEN  10
+ 
+ struct path_data {
+-- 
+2.8.1.windows.1
