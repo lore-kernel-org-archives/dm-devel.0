@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 2/3] allow multipath to retry removes of in-use
-	devices
-Date: Fri, 11 Nov 2016 16:58:22 -0600
-Message-ID: <1478905103-9735-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 3/3] add "max_sectors_kb" config parameter
+Date: Fri, 11 Nov 2016 16:58:23 -0600
+Message-ID: <1478905103-9735-4-git-send-email-bmarzins@redhat.com>
 References: <1478905103-9735-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,274 +20,303 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Occasionally, a multipath device is temporarily opened by things like
-udev. This can cause the multipath flush commands to fail. While it is
-possible to simply rerun the command, it can be very annoying for
-scripts that are working with multipath devices. To deal with that,
-it is now possible to tell multipath to retry failed removes. Either
-running multipath with "-R <num>" or setting "remove_retries <num>"
-in /etc/multipath.conf will make multipath retry failed removes
-the specified number of times, with a 1 second delay between tries.
+This patch adds the "max_sectors_kb" parameter to all multipath.conf
+sections. Setting this will cause multipath to set the max_sectors_kb
+queue parameter to the specified value on all of the paths before
+creating the multipath device, which will inherit the value from the
+paths.
+
+If max_sectors_kb is out of sync between the multipath device and the
+path devices, it's possible for multpiath to send down a request that is
+too large for the path to handle.  When devices are discovered,
+multipathd automatically sets up multipath devices on top of them. LVM
+and filesystems can get mounted on top of that.  This means that users
+who what to modify max_sectors_kb manually, may have to do it after
+these devices are already in use.  This config option lets them simply
+have multipath set up the values before creating the device.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/config.c      |  1 +
- libmultipath/config.h      |  1 +
- libmultipath/devmapper.c   | 38 ++++++++++++++++++++------------------
- libmultipath/devmapper.h   |  4 ++--
- libmultipath/dict.c        |  4 ++++
- multipath/main.c           | 17 ++++++++++++-----
- multipath/multipath.8      |  7 +++++++
- multipath/multipath.conf.5 | 10 ++++++++++
- 8 files changed, 57 insertions(+), 25 deletions(-)
+ libmultipath/config.c      |  2 ++
+ libmultipath/config.h      |  3 +++
+ libmultipath/configure.c   |  2 ++
+ libmultipath/defaults.h    |  1 +
+ libmultipath/dict.c        | 13 +++++++++++++
+ libmultipath/discovery.c   | 23 +++++++++++++++++++++++
+ libmultipath/discovery.h   |  1 +
+ libmultipath/propsel.c     | 16 ++++++++++++++++
+ libmultipath/propsel.h     |  1 +
+ libmultipath/structs.h     |  6 ++++++
+ multipath/multipath.conf.5 | 14 ++++++++++++++
+ 11 files changed, 82 insertions(+)
 
 diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 2d629ef..342f326 100644
+index 342f326..2e02061 100644
 --- a/libmultipath/config.c
 +++ b/libmultipath/config.c
-@@ -620,6 +620,7 @@ load_config (char * file)
- 	conf->deferred_remove = DEFAULT_DEFERRED_REMOVE;
+@@ -349,6 +349,7 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
+ 	merge_num(delay_watch_checks);
+ 	merge_num(delay_wait_checks);
+ 	merge_num(skip_kpartx);
++	merge_num(max_sectors_kb);
+ 
+ 	/*
+ 	 * Make sure features is consistent with
+@@ -621,6 +622,7 @@ load_config (char * file)
  	conf->skip_kpartx = DEFAULT_SKIP_KPARTX;
  	conf->disable_changed_wwids = DEFAULT_DISABLE_CHANGED_WWIDS;
-+	conf->remove_retries = 0;
+ 	conf->remove_retries = 0;
++	conf->max_sectors_kb = DEFAULT_MAX_SECTORS_KB;
  
  	/*
  	 * preload default hwtable
 diff --git a/libmultipath/config.h b/libmultipath/config.h
-index dbdaa44..eee28e7 100644
+index eee28e7..9670020 100644
 --- a/libmultipath/config.h
 +++ b/libmultipath/config.h
-@@ -145,6 +145,7 @@ struct config {
- 	int uev_wait_timeout;
+@@ -66,6 +66,7 @@ struct hwentry {
+ 	int delay_watch_checks;
+ 	int delay_wait_checks;
+ 	int skip_kpartx;
++	int max_sectors_kb;
+ 	char * bl_product;
+ };
+ 
+@@ -93,6 +94,7 @@ struct mpentry {
+ 	int delay_watch_checks;
+ 	int delay_wait_checks;
+ 	int skip_kpartx;
++	int max_sectors_kb;
+ 	uid_t uid;
+ 	gid_t gid;
+ 	mode_t mode;
+@@ -146,6 +148,7 @@ struct config {
  	int skip_kpartx;
  	int disable_changed_wwids;
-+	int remove_retries;
+ 	int remove_retries;
++	int max_sectors_kb;
  	unsigned int version[3];
  
  	char * multipath_dir;
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 5aea5b6..aaab824 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -845,9 +845,9 @@ dm_flush_map_nopaths(const char * mapname, int deferred_remove)
- #endif
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index d428099..0002d14 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -296,8 +296,10 @@ setup_map (struct multipath * mpp, char * params, int params_size)
+ 	select_delay_watch_checks(conf, mpp);
+ 	select_delay_wait_checks(conf, mpp);
+ 	select_skip_kpartx(conf, mpp);
++	select_max_sectors_kb(conf, mpp);
  
- extern int
--dm_suspend_and_flush_map (const char * mapname)
-+dm_suspend_and_flush_map (const char * mapname, int retries)
- {
--	int s = 0, queue_if_no_path = 0;
-+	int need_reset = 0, queue_if_no_path = 0;
- 	unsigned long long mapsize;
- 	char params[PARAMS_SIZE] = {0};
- 	int udev_flags = 0;
-@@ -865,27 +865,29 @@ dm_suspend_and_flush_map (const char * mapname)
- 			queue_if_no_path = 1;
- 	}
+ 	sysfs_set_scsi_tmo(mpp, conf->checkint);
++	sysfs_set_max_sectors_kb(mpp);
+ 	put_multipath_config(conf);
+ 	/*
+ 	 * assign paths to path groups -- start with no groups and all paths
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index a72078f..b9b0a37 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -37,6 +37,7 @@
+ #define DEFAULT_PARTITION_DELIM	NULL
+ #define DEFAULT_SKIP_KPARTX SKIP_KPARTX_OFF
+ #define DEFAULT_DISABLE_CHANGED_WWIDS 0
++#define DEFAULT_MAX_SECTORS_KB MAX_SECTORS_KB_UNDEF
  
--	if (queue_if_no_path)
--		s = dm_queue_if_no_path((char *)mapname, 0);
--	/* Leave queue_if_no_path alone if unset failed */
--	if (s)
--		queue_if_no_path = 0;
--	else
--		s = dm_simplecmd_flush(DM_DEVICE_SUSPEND, mapname, 0);
-+	if (queue_if_no_path && dm_queue_if_no_path((char *)mapname, 0) == 0)
-+		need_reset = 1;
- 
--	if (!dm_flush_map(mapname)) {
--		condlog(4, "multipath map %s removed", mapname);
--		return 0;
--	}
-+	do {
-+		if (!queue_if_no_path || need_reset)
-+			dm_simplecmd_flush(DM_DEVICE_SUSPEND, mapname, 0);
-+
-+		if (!dm_flush_map(mapname)) {
-+			condlog(4, "multipath map %s removed", mapname);
-+			return 0;
-+		}
-+		dm_simplecmd_noflush(DM_DEVICE_RESUME, mapname, udev_flags);
-+		if (retries)
-+			sleep(1);
-+	} while (retries-- > 0);
- 	condlog(2, "failed to remove multipath map %s", mapname);
--	dm_simplecmd_noflush(DM_DEVICE_RESUME, mapname, udev_flags);
--	if (queue_if_no_path)
--		s = dm_queue_if_no_path((char *)mapname, 1);
-+	if (need_reset)
-+		dm_queue_if_no_path((char *)mapname, 1);
- 	return 1;
- }
- 
- extern int
--dm_flush_maps (void)
-+dm_flush_maps (int retries)
- {
- 	int r = 0;
- 	struct dm_task *dmt;
-@@ -907,7 +909,7 @@ dm_flush_maps (void)
- 		goto out;
- 
- 	do {
--		r |= dm_suspend_and_flush_map(names->name);
-+		r |= dm_suspend_and_flush_map(names->name, retries);
- 		next = names->next;
- 		names = (void *) names + next;
- 	} while (next);
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index e6d1090..411177d 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -35,8 +35,8 @@ int dm_flush_map_nopaths(const char * mapname, int deferred_remove);
- #define dm_flush_map(mapname) _dm_flush_map(mapname, 1, 0)
- #define dm_flush_map_nosync(mapname) _dm_flush_map(mapname, 0, 0)
- int dm_cancel_deferred_remove(struct multipath *mpp);
--int dm_suspend_and_flush_map(const char * mapname);
--int dm_flush_maps (void);
-+int dm_suspend_and_flush_map(const char * mapname, int retries);
-+int dm_flush_maps (int retries);
- int dm_fail_path(char * mapname, char * path);
- int dm_reinstate_path(char * mapname, char * path);
- int dm_queue_if_no_path(char *mapname, int enable);
+ #define DEFAULT_CHECKINT	5
+ #define MAX_CHECKINT(a)		(a << 2)
 diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 61b6910..6e4ec71 100644
+index 6e4ec71..dc21846 100644
 --- a/libmultipath/dict.c
 +++ b/libmultipath/dict.c
-@@ -415,6 +415,9 @@ declare_mp_snprint(skip_kpartx, print_yes_no_undef)
- declare_def_handler(disable_changed_wwids, set_yes_no)
- declare_def_snprint(disable_changed_wwids, print_yes_no)
+@@ -418,6 +418,15 @@ declare_def_snprint(disable_changed_wwids, print_yes_no)
+ declare_def_handler(remove_retries, set_int)
+ declare_def_snprint(remove_retries, print_int)
  
-+declare_def_handler(remove_retries, set_int)
-+declare_def_snprint(remove_retries, print_int)
++declare_def_handler(max_sectors_kb, set_int)
++declare_def_snprint(max_sectors_kb, print_nonzero)
++declare_ovr_handler(max_sectors_kb, set_int)
++declare_ovr_snprint(max_sectors_kb, print_nonzero)
++declare_hw_handler(max_sectors_kb, set_int)
++declare_hw_snprint(max_sectors_kb, print_nonzero)
++declare_mp_handler(max_sectors_kb, set_int)
++declare_mp_snprint(max_sectors_kb, print_nonzero)
 +
  static int
  def_config_dir_handler(struct config *conf, vector strvec)
  {
-@@ -1399,6 +1402,7 @@ init_keywords(vector keywords)
- 	install_keyword("missing_uev_wait_timeout", &def_uev_wait_timeout_handler, &snprint_def_uev_wait_timeout);
+@@ -1403,6 +1412,7 @@ init_keywords(vector keywords)
  	install_keyword("skip_kpartx", &def_skip_kpartx_handler, &snprint_def_skip_kpartx);
  	install_keyword("disable_changed_wwids", &def_disable_changed_wwids_handler, &snprint_def_disable_changed_wwids);
-+	install_keyword("remove_retries", &def_remove_retries_handler, &snprint_def_remove_retries);
+ 	install_keyword("remove_retries", &def_remove_retries_handler, &snprint_def_remove_retries);
++	install_keyword("max_sectors_kb", &def_max_sectors_kb_handler, &snprint_def_max_sectors_kb);
  	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
  	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
  	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
-diff --git a/multipath/main.c b/multipath/main.c
-index 06add30..171c08b 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -103,8 +103,8 @@ usage (char * progname)
- 	fprintf (stderr, VERSION_STRING);
- 	fprintf (stderr, "Usage:\n");
- 	fprintf (stderr, "  %s [-a|-c|-w|-W] [-d] [-r] [-i] [-v lvl] [-p pol] [-b fil] [-q] [dev]\n", progname);
--	fprintf (stderr, "  %s -l|-ll|-f [-v lvl] [-b fil] [dev]\n", progname);
--	fprintf (stderr, "  %s -F [-v lvl]\n", progname);
-+	fprintf (stderr, "  %s -l|-ll|-f [-v lvl] [-b fil] [-R num] [dev]\n", progname);
-+	fprintf (stderr, "  %s -F [-v lvl] [-R num]\n", progname);
- 	fprintf (stderr, "  %s -t\n", progname);
- 	fprintf (stderr, "  %s -h\n", progname);
- 	fprintf (stderr,
-@@ -137,6 +137,7 @@ usage (char * progname)
- 		"          . 1 print created devmap names only\n"
- 		"          . 2 default verbosity\n"
- 		"          . 3 print debug information\n"
-+		"  -R num  number of times to retry removes of in-use devices\n"
- 		"  dev     action limited to:\n"
- 		"          . multipath named 'dev' (ex: mpath0) or\n"
- 		"          . multipath whose wwid is 'dev' (ex: 60051..)\n"
-@@ -514,6 +515,7 @@ main (int argc, char *argv[])
- 	enum devtypes dev_type = DEV_NONE;
- 	char *dev = NULL;
- 	struct config *conf;
-+	int retries = -1;
+@@ -1477,6 +1487,7 @@ init_keywords(vector keywords)
+ 	install_keyword("delay_watch_checks", &hw_delay_watch_checks_handler, &snprint_hw_delay_watch_checks);
+ 	install_keyword("delay_wait_checks", &hw_delay_wait_checks_handler, &snprint_hw_delay_wait_checks);
+ 	install_keyword("skip_kpartx", &hw_skip_kpartx_handler, &snprint_hw_skip_kpartx);
++	install_keyword("max_sectors_kb", &hw_max_sectors_kb_handler, &snprint_hw_max_sectors_kb);
+ 	install_sublevel_end();
  
- 	udev = udev_new();
- 	logsink = 0;
-@@ -522,7 +524,7 @@ main (int argc, char *argv[])
- 		exit(1);
- 	multipath_conf = conf;
- 	conf->retrigger_tries = 0;
--	while ((arg = getopt(argc, argv, ":adchl::FfM:v:p:b:BritquwW")) != EOF ) {
-+	while ((arg = getopt(argc, argv, ":adchl::FfM:v:p:b:BrR:itquwW")) != EOF ) {
- 		switch(arg) {
- 		case 1: printf("optarg : %s\n",optarg);
- 			break;
-@@ -602,6 +604,9 @@ main (int argc, char *argv[])
- 		case 'a':
- 			cmd = CMD_ADD_WWID;
- 			break;
-+		case 'R':
-+			retries = atoi(optarg);
-+			break;
- 		case ':':
- 			fprintf(stderr, "Missing option argument\n");
- 			usage(argv[0]);
-@@ -708,16 +713,18 @@ main (int argc, char *argv[])
- 		vector_free(curmp);
- 		goto out;
- 	}
-+	if (retries < 0)
-+		retries = conf->remove_retries;
- 	if (conf->remove == FLUSH_ONE) {
- 		if (dev_type == DEV_DEVMAP) {
--			r = dm_suspend_and_flush_map(dev);
-+			r = dm_suspend_and_flush_map(dev, retries);
- 		} else
- 			condlog(0, "must provide a map name to remove");
+ 	install_keyword_root("overrides", &overrides_handler);
+@@ -1505,6 +1516,7 @@ init_keywords(vector keywords)
+ 	install_keyword("delay_watch_checks", &ovr_delay_watch_checks_handler, &snprint_ovr_delay_watch_checks);
+ 	install_keyword("delay_wait_checks", &ovr_delay_wait_checks_handler, &snprint_ovr_delay_wait_checks);
+ 	install_keyword("skip_kpartx", &ovr_skip_kpartx_handler, &snprint_ovr_skip_kpartx);
++	install_keyword("max_sectors_kb", &ovr_max_sectors_kb_handler, &snprint_ovr_max_sectors_kb);
  
- 		goto out;
- 	}
- 	else if (conf->remove == FLUSH_ALL) {
--		r = dm_flush_maps();
-+		r = dm_flush_maps(retries);
- 		goto out;
- 	}
- 	while ((r = configure(cmd, dev_type, dev)) < 0)
-diff --git a/multipath/multipath.8 b/multipath/multipath.8
-index f0b1ff0..b9436e5 100644
---- a/multipath/multipath.8
-+++ b/multipath/multipath.8
-@@ -28,6 +28,8 @@ multipath \- Device mapper target autoconfig.
- .RB [\| \-h | \-l | \-ll | \-f | \-t | \-F | \-B | \-c | \-q | \|-r | \|-i | \-a | \|-u | \-w | \-W \|]
- .RB [\| \-p\ \c
- .IR failover | multibus | group_by_serial | group_by_prio | group_by_node_name \|]
-+.RB [\| \-R\ \c
-+.IR retries \|]
- .RB [\| device \|]
- .
- .
-@@ -155,6 +157,11 @@ in \fI/sys/class/fc_transport/target*/node_name\fR.
- Existing maps are not modified.
- .
- .TP
-+.BI \-R " retries"
-+Number of times to retry flushing multipath devices that are in-use. The default
-+is \fI0\fR.
-+.
-+.TP
- .BI device
- Update only the devmap specified by
- .IR device ,
+ 	install_keyword_root("multipaths", &multipaths_handler);
+ 	install_keyword_multi("multipath", &multipath_handler, NULL);
+@@ -1532,5 +1544,6 @@ init_keywords(vector keywords)
+ 	install_keyword("delay_watch_checks", &mp_delay_watch_checks_handler, &snprint_mp_delay_watch_checks);
+ 	install_keyword("delay_wait_checks", &mp_delay_wait_checks_handler, &snprint_mp_delay_wait_checks);
+ 	install_keyword("skip_kpartx", &mp_skip_kpartx_handler, &snprint_mp_skip_kpartx);
++	install_keyword("max_sectors_kb", &mp_max_sectors_kb_handler, &snprint_mp_max_sectors_kb);
+ 	install_sublevel_end();
+ }
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 756344f..0d73ff7 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -212,6 +212,29 @@ declare_sysfs_get_str(rev);
+ declare_sysfs_get_str(access_state);
+ declare_sysfs_get_str(preferred_path);
+ 
++int
++sysfs_set_max_sectors_kb(struct multipath *mpp)
++{
++	struct path *pp;
++	char buff[11];
++	int i, ret, err = 0;
++
++	if (mpp->max_sectors_kb == MAX_SECTORS_KB_UNDEF)
++		return 0;
++	snprintf(buff, 11, "%d", mpp->max_sectors_kb);
++
++	vector_foreach_slot(mpp->paths, pp, i) {
++		ret = sysfs_attr_set_value(pp->udev, "queue/max_sectors_kb",
++					   buff, strlen(buff));
++		if (ret < 0) {
++			condlog(0, "failed setting max_sectors_kb on %s : %s",
++				pp->dev, strerror(-ret));
++			err = 1;
++		}
++	}
++	return err;
++}
++
+ ssize_t
+ sysfs_get_vpd (struct udev_device * udev, int pg,
+ 	       unsigned char * buff, size_t len)
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index 176eac1..97e5a32 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -50,6 +50,7 @@ ssize_t sysfs_get_vpd (struct udev_device * udev, int pg, unsigned char * buff,
+ int sysfs_get_asymmetric_access_state(struct path *pp,
+ 				      char *buff, int buflen);
+ int get_uid(struct path * pp, int path_state, struct udev_device *udev);
++int sysfs_set_max_sectors_kb(struct multipath *mpp);
+ 
+ /*
+  * discovery bitmask
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index ec1fd92..ac7c417 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -684,3 +684,19 @@ out:
+ 		origin);
+ 	return 0;
+ }
++
++extern int
++select_max_sectors_kb (struct config *conf, struct multipath * mp)
++{
++	char *origin;
++
++	mp_set_mpe(max_sectors_kb);
++	mp_set_ovr(max_sectors_kb);
++	mp_set_hwe(max_sectors_kb);
++	mp_set_conf(max_sectors_kb);
++	return 0;
++out:
++	condlog(3, "%s: max_sectors_kb = %i %s", mp->alias, mp->max_sectors_kb,
++		origin);
++	return 0;
++}
+diff --git a/libmultipath/propsel.h b/libmultipath/propsel.h
+index 3e6d607..ad98fa5 100644
+--- a/libmultipath/propsel.h
++++ b/libmultipath/propsel.h
+@@ -23,3 +23,4 @@ int select_deferred_remove(struct config *conf, struct multipath *mp);
+ int select_delay_watch_checks (struct config *conf, struct multipath * mp);
+ int select_delay_wait_checks (struct config *conf, struct multipath * mp);
+ int select_skip_kpartx (struct config *conf, struct multipath * mp);
++int select_max_sectors_kb (struct config *conf, struct multipath * mp);
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 58508f6..396f69d 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -134,6 +134,11 @@ enum skip_kpartx_states {
+ 	SKIP_KPARTX_ON = YNU_YES,
+ };
+ 
++enum max_sectors_kb_states {
++	MAX_SECTORS_KB_UNDEF = 0,
++	MAX_SECTORS_KB_MIN = 4,  /* can't be smaller than page size */
++};
++
+ enum scsi_protocol {
+ 	SCSI_PROTOCOL_FCP = 0,	/* Fibre Channel */
+ 	SCSI_PROTOCOL_SPI = 1,	/* parallel SCSI */
+@@ -251,6 +256,7 @@ struct multipath {
+ 	int delay_watch_checks;
+ 	int delay_wait_checks;
+ 	int skip_kpartx;
++	int max_sectors_kb;
+ 	unsigned int dev_loss;
+ 	uid_t uid;
+ 	gid_t gid;
 diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index fa2df48..266f06b 100644
+index 266f06b..eafd48a 100644
 --- a/multipath/multipath.conf.5
 +++ b/multipath/multipath.conf.5
-@@ -864,6 +864,16 @@ Default value is \fBno\fR
+@@ -874,6 +874,16 @@ Default value is \fB0\fR
  .RE
  .
  .
 +.TP
-+.B remove_retries
-+This sets how may times multipath will retry removing a device that is in-use.
-+Between each attempt, multipath will sleep 1 second.
++.B max_sectors_kb
++Sets the max_sectors_kb device parameter on all path devices and the multipath
++device to the specified value.
 +.RS
 +.TP
-+Default value is \fB0\fR
++Default is device dependent.
 +.RE
 +.
 +.
  .\" ----------------------------------------------------------------------------
  .SH "blacklist section"
  .\" ----------------------------------------------------------------------------
+@@ -1006,6 +1016,8 @@ are taken from the \fIdefaults\fR or \fIdevices\fR section:
+ .B delay_wait_checks
+ .TP
+ .B skip_kpartx
++.TP
++.B max_sectors_kb
+ .RE
+ .PD
+ .LP
+@@ -1117,6 +1129,8 @@ section:
+ .B delay_wait_checks
+ .TP
+ .B skip_kpartx
++.TP
++.B max_sectors_kb
+ .RE
+ .PD
+ .LP
 -- 
 1.8.3.1
