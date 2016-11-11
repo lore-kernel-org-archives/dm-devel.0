@@ -1,68 +1,40 @@
-From: Masatake YAMATO <yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] device mapper ioctl
-Date: Fri, 11 Nov 2016 12:13:35 +0900 (JST)
-Message-ID: <20161111.121335.2066742280452520368.yamato@redhat.com>
-References: <20161011223803.GA30714@obsidian>
-	<alpine.LRH.2.02.1610191626360.628@file01.intranet.prod.int.rdu2.redhat.com>
-	<CACGkJdts9AKHnXb+b6J2kfpDNZJZW12WaNaYukrA11PHtAydag@mail.gmail.com>
-Reply-To: strace development list <strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+From: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Subject: Re: [PATCH] multipathd: deferred device adding
+Date: Fri, 11 Nov 2016 03:21:44 +0000
+Message-ID: <BLUPR02MB16838FD500AD57DA92DF4C0A81BB0@BLUPR02MB1683.namprd02.prod.outlook.com>
+References: <1478790321-8539-1-git-send-email-gi-oh.kim@profitbricks.com>
+	<5a8c5ffb-2dae-0e5c-3341-1f02ab3cd4dc@suse.de>
+	<8806d3b0-c507-3e2b-a7ff-fed6fbdfcb0a@profitbricks.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-In-Reply-To: <CACGkJdts9AKHnXb+b6J2kfpDNZJZW12WaNaYukrA11PHtAydag-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/strace-devel>,
-	<mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=strace-devel>
-List-Post: <mailto:strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Help: <mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/strace-devel>,
-	<mailto:strace-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
-Errors-To: strace-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-To: evgsyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, strace-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Gioh Kim <gi-oh.kim@profitbricks.com>, Hannes Reinecke <hare@suse.de>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "benjamin.drung@profitbricks.com" <benjamin.drung@profitbricks.com>
 List-Id: dm-devel.ids
 
->>
->> Here I'm sending the device mapper ioctl patch with these changes merged.
-> 
-> Hello.
-> 
-> Thank you for your contribution. The implementation of DM_* ioctl
-> decoding is now in strace's master, you can check it out at
-> https://github.com/strace/strace/commit/a507a0bb777c552e43e1e45f302703a09ffea1b8
-> Could you please review it and let us know if there are any issues?
+On 11/10/16 07:54, Gioh Kim wrote:
+> And new sdX device is created when the remote storage volume is connected via SCST.
+> I don't want to create a dm device when sdX is created because there are other jobs before export the volume.
+> For example, I need to change the size or format or copy data into sdb.
+> I want to create the dm device when I finished the setup.
+> I could disabled the socket in multipath udev rule file with v0.4.9.
+> But I cannot find a way to ignore the uevent.
 
+Hello Gioh,
 
-It works fine on my Fedora 24(x86_64).
-"make check" says "PASS" about ioctl_dm.test and  ioctl_dm-v.test.
+Are you familiar with the SCST "enabled" target driver attribute? Have 
+you considered to force initiators to log out while making changes at 
+the target side be changing that attribute into 0 temporarily?
 
-Very useful. Thank you.
-
-Masatake YAMATO
-
-> 
->> In this piece of code:
->> +       dm_arg_open3->target3.next = 0xdeadbeef;
->> +       dm_arg_open3->param3[0] = '\1';
->> +       dm_arg_open3->param3[1] = '\2';
->> +       dm_arg_open3->param1[2] = '\0';
->> there should be "dm_arg_open3->param3[2]" instead of
->> "dm_arg_open3->param1[2]". "dm_arg_open3->param1[2]" produces a warning
->> about access beyond the end of array.
-> Thank you for noticing, it was an oversight on my part.
-> 
->> Mikulas
-> 
-> 
-> -- 
-> Eugene "eSyr" Syromyatnikov
-> mailto:evgSyr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-> xmpp:eSyr@jabber.{ru|org}
-
-------------------------------------------------------------------------------
-Developer Access Program for Intel Xeon Phi Processors
-Access to Intel Xeon Phi processor-based developer platforms.
-With one year of Intel Parallel Studio XE.
-Training and support from Colfax.
-Order your platform today. http://sdm.link/xeonphi
+Bart.
