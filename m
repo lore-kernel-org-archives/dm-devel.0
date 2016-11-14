@@ -1,44 +1,81 @@
-From: Alexey Dobriyan <adobriyan@gmail.com>
-Subject: Re: dm-crypt accepts '+' in the key
-Date: Mon, 14 Nov 2016 03:36:32 +0300
-Message-ID: <20161114003631.GA1304@avx2>
-References: <alpine.LRH.2.02.1611121511510.26536@file01.intranet.prod.int.rdu2.redhat.com>
- <3ee83e71-78e0-7ba3-0fb4-5d906f66aa04@gmail.com>
+From: Gioh Kim <gi-oh.kim@profitbricks.com>
+Subject: Re: [PATCH] multipathd: deferred device adding
+Date: Mon, 14 Nov 2016 10:23:36 +0100
+Message-ID: <4b591c27-f1eb-8859-a319-b19e2e3bd200@profitbricks.com>
+References: <1478790321-8539-1-git-send-email-gi-oh.kim@profitbricks.com>
+	<5a8c5ffb-2dae-0e5c-3341-1f02ab3cd4dc@suse.de>
+	<8806d3b0-c507-3e2b-a7ff-fed6fbdfcb0a@profitbricks.com>
+	<BLUPR02MB16838FD500AD57DA92DF4C0A81BB0@BLUPR02MB1683.namprd02.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <3ee83e71-78e0-7ba3-0fb4-5d906f66aa04@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <BLUPR02MB16838FD500AD57DA92DF4C0A81BB0@BLUPR02MB1683.namprd02.prod.outlook.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bart Van Assche <Bart.VanAssche@sandisk.com>, Hannes Reinecke <hare@suse.de>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "benjamin.drung@profitbricks.com" <benjamin.drung@profitbricks.com>
 List-Id: dm-devel.ids
 
-On Sun, Nov 13, 2016 at 03:45:27PM +0100, Milan Broz wrote:
-> On 11/12/2016 09:20 PM, Mikulas Patocka wrote:
-> > Hi
-> > 
-> > dm-crypt uses the function kstrtou8 to decode the encryption key. kstrtou8 
-> > calls kstrtoull and kstrtoull skips the first character if it is '+'.
-> > 
-> > Consequently, it is possible to load keys with '+' in it. For example, 
-> > this is possible:
-> > 
-> > dmsetup create cr --table "0 131072 crypt aes-cbc-essiv:sha256 +0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0 0 /dev/debian/tmptest 0"
-> > 
-> > Should this be fixed in dm-crypt or in kstrtou8? A fix in kstrtou8 could 
-> > be more appropriate, but we don't know how many other kernel parts depend 
-> > on this "skip plus" behavior...
-> 
-> I would way it should be checked in both places...
-> For dmcrypt, it should validate input here and should
-> not accept anything in key field in dm table that is not in hexa representation.
-> 
-> (Is this regression since code switched from simple_strtoul to  kstrtou8
-> or this bug was there always?)
 
-Well, before kernel would silently parse anything broken as "0".
 
-But since it is base-16, "0[xX]" will be accepted before every byte.
+On 11.11.2016 04:21, Bart Van Assche wrote:
+> On 11/10/16 07:54, Gioh Kim wrote:
+>> And new sdX device is created when the remote storage volume is connected via SCST.
+>> I don't want to create a dm device when sdX is created because there are other jobs before export the volume.
+>> For example, I need to change the size or format or copy data into sdb.
+>> I want to create the dm device when I finished the setup.
+>> I could disabled the socket in multipath udev rule file with v0.4.9.
+>> But I cannot find a way to ignore the uevent.
+> Hello Gioh,
+>
+> Are you familiar with the SCST "enabled" target driver attribute? Have 
+> you considered to force initiators to log out while making changes at 
+> the target side be changing that attribute into 0 temporarily?
+>
+> Bart.
 
-dm-crypt should parse key by hand, frankly.
+Hello Bart,
+
+I  consulted with target side developers in my company.
+They said there are many jobs that should be done on initiator side without disconnecting.
+
+I created following patch for example.
+It makes multipathd ignore "add" uevent from sdX devices.
+
+-----------------------8<-------------------------
+
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 6247898..c77de34 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -472,6 +472,20 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
+     /* print payload environment */
+     for (i = 0; uev->envp[i] != NULL; i++)
+         condlog(5, "%s", uev->envp[i]);
++
++    if (!strncmp(uev->action, "add", 3)) {
++        char *devname = strrchr(uev->devpath, '/');
++
++        if (!strncmp(devname + 1, "sd", 2)) {
++            condlog(3, "drop uevent '%s' from '%s'",
++                 uev->action, uev->devpath);
++            /* Freeing uev is copied from service_uevq() */
++            if (uev->udev)
++                udev_device_unref(uev->udev);
++            FREE(uev);
++        }
++    }
++
+     return uev;
+ }
+ 
+-- 
+2.1.4
