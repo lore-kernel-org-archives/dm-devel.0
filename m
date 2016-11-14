@@ -1,67 +1,54 @@
-From: Alexander Pashaliyski <al.pashaliyski@gmail.com>
-Subject: Re: dm-cache issue
-Date: Mon, 14 Nov 2016 18:05:18 +0200
-Message-ID: <dbe1951c-8fd8-2e73-53ec-ec70d4e0efa6@gmail.com>
-References: <CAJV2nOTJoWWc=N80e6WCpZUh6ZRxvCW8Wt=aZWTyYSKso+kQ5Q@mail.gmail.com>
-	<884adfe3-ac18-5e37-f4b4-478e5031f35f@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-crypt accepts '+' in the key
+Date: Mon, 14 Nov 2016 16:09:53 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1611141607250.21467@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1611121511510.26536@file01.intranet.prod.int.rdu2.redhat.com> <3ee83e71-78e0-7ba3-0fb4-5d906f66aa04@gmail.com> <20161114003631.GA1304@avx2>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <884adfe3-ac18-5e37-f4b4-478e5031f35f@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>, dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20161114003631.GA1304@avx2>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: Milan Broz <gmazyland@gmail.com>, Ondrej Kozina <okozina@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 11/14/2016 05:34 PM, Zdenek Kabelac wrote:
-> Dne 14.11.2016 v 16:02 Alexander Pashaliyski napsal(a):
->> Hi guys,
->>
->>
->> I am in a process of evaluating dm-cache for our backup system.
->>
->> Currently I have an issue when restart the backup server. The server is
->> booting for hours, because of IO load. It seems is triggered a flush 
->> from SSD
->> disk (that is used for a cache device) to the raid controllers (they 
->> are with
->> slow SATA disks).
->> I have 10 cached logical volumes in *writethrough mode*, each with 2T 
->> of data
->> over 2 raid controllers. I use a single SSD disk for the cache.
->> The backup system is with lvm2-2.02.164-1 & kernel 4.4.30.
->>
->>
->> Do you have any ideas why such flush is triggered? In writethrough 
->> cache mode
->> we shouldn't have dirty blocks in the cache.
->>
->
-> Hi
->
-> Have you ensured there was proper shutdown ?
-> Cache needs to be properly deactivated - if it's just turned off,
-> all metadata are marked dirty.
->
->
-> Regards
->
-> Zdenek
->
-Hi Zdenek,
-
-Thank you for your answer.
-Yes, I am sure. I have modified the lvm2 init script to de-activate all 
-logical volumes and then volume groups, but the issue still persist.
 
 
-Regards,
-Alex
+On Mon, 14 Nov 2016, Alexey Dobriyan wrote:
+
+> On Sun, Nov 13, 2016 at 03:45:27PM +0100, Milan Broz wrote:
+> > On 11/12/2016 09:20 PM, Mikulas Patocka wrote:
+> > > Hi
+> > > 
+> > > dm-crypt uses the function kstrtou8 to decode the encryption key. kstrtou8 
+> > > calls kstrtoull and kstrtoull skips the first character if it is '+'.
+> > > 
+> > > Consequently, it is possible to load keys with '+' in it. For example, 
+> > > this is possible:
+> > > 
+> > > dmsetup create cr --table "0 131072 crypt aes-cbc-essiv:sha256 +0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0 0 /dev/debian/tmptest 0"
+> > > 
+> > > Should this be fixed in dm-crypt or in kstrtou8? A fix in kstrtou8 could 
+> > > be more appropriate, but we don't know how many other kernel parts depend 
+> > > on this "skip plus" behavior...
+> > 
+> > I would way it should be checked in both places...
+> > For dmcrypt, it should validate input here and should
+> > not accept anything in key field in dm table that is not in hexa representation.
+> > 
+> > (Is this regression since code switched from simple_strtoul to  kstrtou8
+> > or this bug was there always?)
+> 
+> Well, before kernel would silently parse anything broken as "0".
+
+dm-crypt already validates that there are exactly two characters passed to 
+kstrtou8 or simple_strtoul.
+
+> But since it is base-16, "0[xX]" will be accepted before every byte.
+
+Yes, the old dm-crypt code that used simple_strtoul accepted "0x" in a key 
+(and parsed it as zero byte). It didn't accept "+" or "-".
+
+> dm-crypt should parse key by hand, frankly.
+
+Mikulas
