@@ -1,97 +1,50 @@
 From: Ming Lei <tom.leiming@gmail.com>
-Subject: Re: [PATCH 07/12] dm: use bvec iterator helpers to implement
- .get_page and .next_page
-Date: Tue, 15 Nov 2016 09:01:53 +0800
-Message-ID: <CACVXFVPbG6Dz2F=tc9o=jPdNCcXWDmtReaWGWQeTPa9HaGjh0A@mail.gmail.com>
-References: <1478865957-25252-1-git-send-email-tom.leiming@gmail.com> <1478865957-25252-8-git-send-email-tom.leiming@gmail.com>
+Subject: Re: [PATCH 08/12] dm: dm.c: replace 'bio->bi_vcnt == 1' with !bio_multiple_segments
+Date: Tue, 15 Nov 2016 09:03:14 +0800
+Message-ID: <CACVXFVOSRBGATu95CmP3YW+exAwMRTmTvCY1B5UigqH63uzHTw@mail.gmail.com>
+References: <1478865957-25252-1-git-send-email-tom.leiming@gmail.com> <1478865957-25252-9-git-send-email-tom.leiming@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <1478865957-25252-8-git-send-email-tom.leiming@gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <1478865957-25252-9-git-send-email-tom.leiming@gmail.com>
+Sender: linux-block-owner@vger.kernel.org
 To: Jens Axboe <axboe@fb.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 Cc: linux-block <linux-block@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, Ming Lei <tom.leiming@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "maintainer:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
 On Fri, Nov 11, 2016 at 8:05 PM, Ming Lei <tom.leiming@gmail.com> wrote:
-> Firstly we have mature bvec/bio iterator helper for iterate each
-> page in one bio, not necessary to reinvent a wheel to do that.
->
-> Secondly the coming multipage bvecs requires this patch.
->
-> Also add comments about the direct access to bvec table.
+> Avoid to access .bi_vcnt directly, because the bio can be
+> splitted from block layer, and .bi_vcnt should never have
+> been used here.
 >
 > Signed-off-by: Ming Lei <tom.leiming@gmail.com>
 > ---
->  drivers/md/dm-io.c | 34 ++++++++++++++++++++++++----------
->  1 file changed, 24 insertions(+), 10 deletions(-)
+>  drivers/md/dm-rq.c | 7 ++++++-
+>  1 file changed, 6 insertions(+), 1 deletion(-)
 >
-> diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-> index 0bf1a12e35fe..2ef573c220fc 100644
-> --- a/drivers/md/dm-io.c
-> +++ b/drivers/md/dm-io.c
-> @@ -162,7 +162,10 @@ struct dpages {
->                          struct page **p, unsigned long *len, unsigned *offset);
->         void (*next_page)(struct dpages *dp);
+> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+> index b2a9e2d161e4..d9cc8324e597 100644
+> --- a/drivers/md/dm-rq.c
+> +++ b/drivers/md/dm-rq.c
+> @@ -797,8 +797,13 @@ static void dm_old_request_fn(struct request_queue *q)
+>                 if (req_op(rq) != REQ_OP_FLUSH)
+>                         pos = blk_rq_pos(rq);
 >
-> -       unsigned context_u;
-> +       union {
-> +               unsigned context_u;
-> +               struct bvec_iter context_bi;
-> +       };
->         void *context_ptr;
->
->         void *vma_invalidate_address;
-> @@ -204,25 +207,36 @@ static void list_dp_init(struct dpages *dp, struct page_list *pl, unsigned offse
->  static void bio_get_page(struct dpages *dp, struct page **p,
->                          unsigned long *len, unsigned *offset)
->  {
-> -       struct bio_vec *bvec = dp->context_ptr;
-> -       *p = bvec->bv_page;
-> -       *len = bvec->bv_len - dp->context_u;
-> -       *offset = bvec->bv_offset + dp->context_u;
-> +       struct bio_vec bv = bvec_iter_bvec((struct bio_vec *)dp->context_ptr,
-> +                       dp->context_bi);
-> +
-> +       *p = bv.bv_page;
-> +       *len = bv.bv_len;
-> +       *offset = bv.bv_offset;
-> +
-> +       /* avoid to figure out it in bio_next_page() again */
-> +       dp->context_bi.bi_sector = (sector_t)bv.bv_len;
->  }
->
->  static void bio_next_page(struct dpages *dp)
->  {
-> -       struct bio_vec *bvec = dp->context_ptr;
-> -       dp->context_ptr = bvec + 1;
-> -       dp->context_u = 0;
-> +       unsigned int len = (unsigned int)dp->context_bi.bi_sector;
-> +
-> +       bvec_iter_advance((struct bio_vec *)dp->context_ptr,
-> +                       &dp->context_bi, len);
->  }
->
->  static void bio_dp_init(struct dpages *dp, struct bio *bio)
->  {
->         dp->get_page = bio_get_page;
->         dp->next_page = bio_next_page;
-> -       dp->context_ptr = __bvec_iter_bvec(bio->bi_io_vec, bio->bi_iter);
-> -       dp->context_u = bio->bi_iter.bi_bvec_done;
-> +
-> +       /*
-> +        * We just use bvec iterator to retrieve pages, so it is ok to
-> +        * access the bvec table directly here
-> +        */
-> +       dp->context_ptr = bio->bi_io_vec;
-> +       dp->context_bi = bio->bi_iter;
->  }
+> +               /*
+> +                * bio can be splitted from block layer, so use
+> +                * !bio_multiple_segments instead of 'bio->bi_vcnt == 1'
+> +                */
+>                 if ((dm_old_request_peeked_before_merge_deadline(md) &&
+> -                    md_in_flight(md) && rq->bio && rq->bio->bi_vcnt == 1 &&
+> +                    md_in_flight(md) && rq->bio &&
+> +                    !bio_multiple_segments(rq->bio) &&
+>                      md->last_rq_pos == pos && md->last_rq_rw == rq_data_dir(rq)) ||
+>                     (ti->type->busy && ti->type->busy(ti))) {
+>                         blk_delay_queue(q, 10);
 
 Hi Alasdair, Mike, Christoph and anyone,
 
 Could you give this one a review?
-
-From my test, it just works fine, and I believe it is a good cleanup.
 
 Thanks,
 Ming Lei
