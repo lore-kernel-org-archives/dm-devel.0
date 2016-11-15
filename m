@@ -1,30 +1,63 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 07/12] dm: use bvec iterator helpers to implement
- .get_page and .next_page
-Date: Tue, 15 Nov 2016 13:57:14 -0500
-Message-ID: <20161115185714.GA17614@redhat.com>
-References: <1478865957-25252-1-git-send-email-tom.leiming@gmail.com>
- <1478865957-25252-8-git-send-email-tom.leiming@gmail.com>
- <CACVXFVPbG6Dz2F=tc9o=jPdNCcXWDmtReaWGWQeTPa9HaGjh0A@mail.gmail.com>
- <20161115185551.GA14816@infradead.org>
+From: "John Stoffel" <john@stoffel.org>
+Subject: Re: dm-cache issue
+Date: Tue, 15 Nov 2016 14:57:31 -0500
+Message-ID: <22571.26795.779502.143833@quad.stoffel.home>
+References: <CAJV2nOTJoWWc=N80e6WCpZUh6ZRxvCW8Wt=aZWTyYSKso+kQ5Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20161115185551.GA14816@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Ming Lei <tom.leiming@gmail.com>, Jens Axboe <axboe@fb.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, "maintainer:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAJV2nOTJoWWc=N80e6WCpZUh6ZRxvCW8Wt=aZWTyYSKso+kQ5Q@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Alexander Pashaliyski <al.pashaliyski@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Nov 15 2016 at  1:55pm -0500,
-Christoph Hellwig <hch@infradead.org> wrote:
 
-> > Hi Alasdair, Mike, Christoph and anyone,
-> > 
-> > Could you give this one a review?
-> 
-> It looks nice, but I don't understand the code anywhere near well
-> enough to review it.  We'll need someone from the DM to look over it.
+Alexander> I am in a process of evaluating dm-cache for our backup system.
 
-I'll try to get to it this week.
+Why are you bothering to cache your backup destination?  What
+filesystems are you using for your destinations?
+
+Alexander> Currently I have an issue when restart the backup
+Alexander> server. The server is booting for hours, because of IO
+Alexander> load. It seems is triggered a flush from SSD disk (that is
+Alexander> used for a cache device) to the raid controllers (they are
+Alexander> with slow SATA disks).  I have 10 cached logical volumes in
+Alexander> writethrough mode, each with 2T of data over 2 raid
+Alexander> controllers. I use a single SSD disk for the cache.  The
+Alexander> backup system is with lvm2-2.02.164-1 & kernel 4.4.30.
+
+How big is the SSD cache?  Do you have any output from the bootup
+(syslog, dmesg, etc) you can share.  =
+
+
+Alexander> Do you have any ideas why such flush is triggered? In
+Alexander> writethrough cache mode we shouldn't have dirty blocks in
+Alexander> the cache. =A0
+
+I wonder if it makes more sense to use 'lvcache' instead, since you
+can add/remove cache from LVs at will.  With bcache, once you setup a
+volume with the cache, you're stuck with it.
+
+Also, did you mirror your SSD incase it fails?
+
+In my experience, using RAID6 on a bunch of SATA disks for backup is
+fine, you're writing large chunks of data in a few sets of files, so
+fragmentation and the Read-Modify-Write cycle is much less painful,
+since you tend to stream your writes to the storage, which is
+perfectly fine with SATA drives.
+
+Also, bcache skips sequential IO by default, which is what you want
+when doing backups... so I'm wondering what your thinking was here for
+using this?
+
+John
