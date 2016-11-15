@@ -1,8 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 4/7] dm-mpath: Change return type of
- pg_init_all_paths() from int into void
-Date: Tue, 15 Nov 2016 15:34:09 -0800
-Message-ID: <ad452a9a-ffd6-a2d5-5f47-fd1c7a978f63@sandisk.com>
+Subject: [PATCH 6/7] dm-mpath: Avoid code duplication in
+	__multipath_map()
+Date: Tue, 15 Nov 2016 15:34:52 -0800
+Message-ID: <4e810e44-8fd9-014e-d40d-12e895867096@sandisk.com>
 References: <e83f8718-9e73-5544-3bcc-4d9851b90ba1@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,37 +22,37 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-None of the callers of pg_init_all_paths() check its return value.
-Hence change the return type of pg_init_all_paths() from int into
-void.
+Move common code out of if (clone) { ... } else { ... }.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- drivers/md/dm-mpath.c | 7 ++-----
- 1 file changed, 2 insertions(+), 5 deletions(-)
+ drivers/md/dm-mpath.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index f1e226d..1c97f0e 100644
+index 5c73818..7559537 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -374,16 +374,13 @@ static int __pg_init_all_paths(struct multipath *m)
- 	return atomic_read(&m->pg_init_in_progress);
- }
+@@ -574,8 +574,6 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
+ 		 * Used by: .request_fn stacked on .request_fn path(s).
+ 		 */
+ 		clone->q = bdev_get_queue(bdev);
+-		clone->rq_disk = bdev->bd_disk;
+-		clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
+ 	} else {
+ 		/*
+ 		 * blk-mq request-based interface; used by both:
+@@ -591,9 +589,9 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
+ 		}
+ 		*__clone = clone;
+ 		clone->bio = clone->biotail = NULL;
+-		clone->rq_disk = bdev->bd_disk;
+-		clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
+ 	}
++	clone->rq_disk = bdev->bd_disk;
++	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
  
--static int pg_init_all_paths(struct multipath *m)
-+static void pg_init_all_paths(struct multipath *m)
- {
--	int r;
- 	unsigned long flags;
- 
- 	spin_lock_irqsave(&m->lock, flags);
--	r = __pg_init_all_paths(m);
-+	__pg_init_all_paths(m);
- 	spin_unlock_irqrestore(&m->lock, flags);
--
--	return r;
- }
- 
- static void __switch_pg(struct multipath *m, struct priority_group *pg)
+ 	if (pgpath->pg->ps.type->start_io)
+ 		pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
 -- 
 2.10.1
