@@ -1,8 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 6/7] dm-mpath: Avoid code duplication in
-	__multipath_map()
-Date: Tue, 15 Nov 2016 15:34:52 -0800
-Message-ID: <4e810e44-8fd9-014e-d40d-12e895867096@sandisk.com>
+Subject: [PATCH 5/7] dm-mpath: Do not touch *__clone if request
+ allocation fails
+Date: Tue, 15 Nov 2016 15:34:32 -0800
+Message-ID: <451fbed9-5b78-7b80-f894-88be842e238d@sandisk.com>
 References: <e83f8718-9e73-5544-3bcc-4d9851b90ba1@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,37 +22,43 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Move common code out of if (clone) { ... } else { ... }.
+Do not modify *__clone if blk_mq_alloc_request() fails. This makes
+it easier to figure out what is going on if the caller accidentally
+dereferences *__clone if blk_mq_alloc_request() failed.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- drivers/md/dm-mpath.c | 6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+ drivers/md/dm-mpath.c | 15 ++++++++-------
+ 1 file changed, 8 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 5c73818..7559537 100644
+index 1c97f0e..5c73818 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -574,8 +574,6 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
- 		 * Used by: .request_fn stacked on .request_fn path(s).
+@@ -582,16 +582,17 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
+ 		 * .request_fn stacked on blk-mq path(s) and
+ 		 * blk-mq stacked on blk-mq path(s).
  		 */
- 		clone->q = bdev_get_queue(bdev);
--		clone->rq_disk = bdev->bd_disk;
--		clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
- 	} else {
- 		/*
- 		 * blk-mq request-based interface; used by both:
-@@ -591,9 +589,9 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
+-		*__clone = blk_mq_alloc_request(bdev_get_queue(bdev),
+-						rq_data_dir(rq), BLK_MQ_REQ_NOWAIT);
+-		if (IS_ERR(*__clone)) {
+-			/* ENOMEM, requeue */
++		clone = blk_mq_alloc_request(bdev_get_queue(bdev),
++					rq_data_dir(rq), BLK_MQ_REQ_NOWAIT);
++		if (IS_ERR(clone)) {
++			/* EBUSY, ENODEV or EWOULDBLOCK; requeue */
+ 			clear_request_fn_mpio(m, map_context);
+ 			return r;
  		}
- 		*__clone = clone;
- 		clone->bio = clone->biotail = NULL;
--		clone->rq_disk = bdev->bd_disk;
--		clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
+-		(*__clone)->bio = (*__clone)->biotail = NULL;
+-		(*__clone)->rq_disk = bdev->bd_disk;
+-		(*__clone)->cmd_flags |= REQ_FAILFAST_TRANSPORT;
++		*__clone = clone;
++		clone->bio = clone->biotail = NULL;
++		clone->rq_disk = bdev->bd_disk;
++		clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
  	}
-+	clone->rq_disk = bdev->bd_disk;
-+	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
  
  	if (pgpath->pg->ps.type->start_io)
- 		pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
 -- 
 2.10.1
