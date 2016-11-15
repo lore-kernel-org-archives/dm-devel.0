@@ -1,8 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 5/7] dm-mpath: Do not touch *__clone if request
- allocation fails
-Date: Tue, 15 Nov 2016 15:34:32 -0800
-Message-ID: <451fbed9-5b78-7b80-f894-88be842e238d@sandisk.com>
+Subject: [PATCH 7/7] dm-mpath: Fix a race condition in
+	__multipath_map()
+Date: Tue, 15 Nov 2016 15:35:23 -0800
+Message-ID: <81bc399e-df90-099d-1b25-bdb0fda3f27c@sandisk.com>
 References: <e83f8718-9e73-5544-3bcc-4d9851b90ba1@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,43 +22,74 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Do not modify *__clone if blk_mq_alloc_request() fails. This makes
-it easier to figure out what is going on if the caller accidentally
-dereferences *__clone if blk_mq_alloc_request() failed.
+If a single-queue dm device is stacked on top of multi-queue block
+devices and map_tio_request() is called while there are no paths then
+the request will be prepared for a single-queue path. If a path is
+added after a request was prepared and before __multipath_map() is
+called return DM_MAPIO_REQUEUE such that it gets unprepared and
+reprepared as a blk-mq request.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- drivers/md/dm-mpath.c | 15 ++++++++-------
- 1 file changed, 8 insertions(+), 7 deletions(-)
+ drivers/md/dm-mpath.c | 21 ++++++++++++++++-----
+ 1 file changed, 16 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 1c97f0e..5c73818 100644
+index 7559537..6b20349 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -582,16 +582,17 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
+@@ -541,6 +541,7 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
+ 	size_t nr_bytes = clone ? blk_rq_bytes(clone) : blk_rq_bytes(rq);
+ 	struct pgpath *pgpath;
+ 	struct block_device *bdev;
++	struct request_queue *q;
+ 	struct dm_mpath_io *mpio;
+ 
+ 	/* Do we need to select a new pgpath? */
+@@ -558,6 +559,18 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
+ 		return r;
+ 	}
+ 
++	bdev = pgpath->path.dev->bdev;
++	q = bdev_get_queue(bdev);
++
++	/*
++	 * When a request is prepared if there are no paths it may happen that
++	 * the request was prepared for a single-queue path and that a
++	 * multiqueue path is added before __multipath_map() is called. If
++	 * that happens requeue to trigger unprepare and reprepare.
++	 */
++	if ((clone && q->mq_ops) || (!clone && !q->mq_ops))
++		return r;
++
+ 	mpio = set_mpio(m, map_context);
+ 	if (!mpio)
+ 		/* ENOMEM, requeue */
+@@ -566,22 +579,20 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
+ 	mpio->pgpath = pgpath;
+ 	mpio->nr_bytes = nr_bytes;
+ 
+-	bdev = pgpath->path.dev->bdev;
+-
+ 	if (clone) {
+ 		/*
+ 		 * Old request-based interface: allocated clone is passed in.
+ 		 * Used by: .request_fn stacked on .request_fn path(s).
+ 		 */
+-		clone->q = bdev_get_queue(bdev);
++		clone->q = q;
+ 	} else {
+ 		/*
+ 		 * blk-mq request-based interface; used by both:
  		 * .request_fn stacked on blk-mq path(s) and
  		 * blk-mq stacked on blk-mq path(s).
  		 */
--		*__clone = blk_mq_alloc_request(bdev_get_queue(bdev),
--						rq_data_dir(rq), BLK_MQ_REQ_NOWAIT);
--		if (IS_ERR(*__clone)) {
--			/* ENOMEM, requeue */
-+		clone = blk_mq_alloc_request(bdev_get_queue(bdev),
-+					rq_data_dir(rq), BLK_MQ_REQ_NOWAIT);
-+		if (IS_ERR(clone)) {
-+			/* EBUSY, ENODEV or EWOULDBLOCK; requeue */
+-		clone = blk_mq_alloc_request(bdev_get_queue(bdev),
+-					rq_data_dir(rq), BLK_MQ_REQ_NOWAIT);
++		clone = blk_mq_alloc_request(q, rq_data_dir(rq),
++					     BLK_MQ_REQ_NOWAIT);
+ 		if (IS_ERR(clone)) {
+ 			/* EBUSY, ENODEV or EWOULDBLOCK; requeue */
  			clear_request_fn_mpio(m, map_context);
- 			return r;
- 		}
--		(*__clone)->bio = (*__clone)->biotail = NULL;
--		(*__clone)->rq_disk = bdev->bd_disk;
--		(*__clone)->cmd_flags |= REQ_FAILFAST_TRANSPORT;
-+		*__clone = clone;
-+		clone->bio = clone->biotail = NULL;
-+		clone->rq_disk = bdev->bd_disk;
-+		clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
- 	}
- 
- 	if (pgpath->pg->ps.type->start_io)
 -- 
 2.10.1
