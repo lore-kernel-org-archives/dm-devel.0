@@ -1,7 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 3/7] dm-mpath: Document a locking assumption
-Date: Tue, 15 Nov 2016 15:33:42 -0800
-Message-ID: <951713a6-d3ff-43ac-489b-613944a2b085@sandisk.com>
+Subject: [PATCH 4/7] dm-mpath: Change return type of
+ pg_init_all_paths() from int into void
+Date: Tue, 15 Nov 2016 15:34:09 -0800
+Message-ID: <ad452a9a-ffd6-a2d5-5f47-fd1c7a978f63@sandisk.com>
 References: <e83f8718-9e73-5544-3bcc-4d9851b90ba1@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,26 +22,37 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Document that __pg_init_all_paths() must be called with
-multipath.lock held.
+None of the callers of pg_init_all_paths() check its return value.
+Hence change the return type of pg_init_all_paths() from int into
+void.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- drivers/md/dm-mpath.c | 2 ++
- 1 file changed, 2 insertions(+)
+ drivers/md/dm-mpath.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index e477af8..f1e226d 100644
+index f1e226d..1c97f0e 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -348,6 +348,8 @@ static int __pg_init_all_paths(struct multipath *m)
- 	struct pgpath *pgpath;
- 	unsigned long pg_init_delay = 0;
+@@ -374,16 +374,13 @@ static int __pg_init_all_paths(struct multipath *m)
+ 	return atomic_read(&m->pg_init_in_progress);
+ }
  
-+	lockdep_assert_held(&m->lock);
-+
- 	if (atomic_read(&m->pg_init_in_progress) || test_bit(MPATHF_PG_INIT_DISABLED, &m->flags))
- 		return 0;
+-static int pg_init_all_paths(struct multipath *m)
++static void pg_init_all_paths(struct multipath *m)
+ {
+-	int r;
+ 	unsigned long flags;
  
+ 	spin_lock_irqsave(&m->lock, flags);
+-	r = __pg_init_all_paths(m);
++	__pg_init_all_paths(m);
+ 	spin_unlock_irqrestore(&m->lock, flags);
+-
+-	return r;
+ }
+ 
+ static void __switch_pg(struct multipath *m, struct priority_group *pg)
 -- 
 2.10.1
