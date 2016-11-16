@@ -1,16 +1,12 @@
-From: Teodor Milkov <tm@del.bg>
-Subject: Re: dm-cache issue
-Date: Wed, 16 Nov 2016 15:45:52 +0200
-Message-ID: <9bab689e-edf4-c5a6-9954-75f0e9c3d2c6@del.bg>
-References: <CAJV2nOTJoWWc=N80e6WCpZUh6ZRxvCW8Wt=aZWTyYSKso+kQ5Q@mail.gmail.com>
-	<884adfe3-ac18-5e37-f4b4-478e5031f35f@redhat.com>
-	<55289e1d-5a24-73a5-4ccf-026c2640334d@del.bg>
-	<f01aaf8d-1f12-1a6f-5560-5cb6927a1b62@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: merge nvme in similar blacklist
+	regex
+Date: Wed, 16 Nov 2016 17:13:25 +0100
+Message-ID: <20161116161325.3326-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <f01aaf8d-1f12-1a6f-5560-5cb6927a1b62@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,62 +16,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zdenek.kabelac@gmail.com>, dm-devel@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gMTYuMTEuMjAxNiAxMToyNCwgWmRlbmVrIEthYmVsYWMgd3JvdGU6Cj4gRG5lIDE1LjExLjIw
-MTYgdiAxMzozOCBUZW9kb3IgTWlsa292IG5hcHNhbChhKToKPj4gT24gMTQuMTEuMjAxNiAxNzoz
-NCwgWmRlbmVrIEthYmVsYWMgd3JvdGU6Cj4+PiBEbmUgMTQuMTEuMjAxNiB2IDE2OjAyIEFsZXhh
-bmRlciBQYXNoYWxpeXNraSBuYXBzYWwoYSk6Cj4+Pj4gVGhlIHNlcnZlciBpcyBib290aW5nIGZv
-ciBob3VycywgYmVjYXVzZSBvZiBJTyBsb2FkLiBJdCBzZWVtcyBpcyAKPj4+PiB0cmlnZ2VyZWQK
-Pj4+PiBhIGZsdXNoIGZyb20gU1NEIGRpc2sgKHRoYXQgaXMgdXNlZCBmb3IgYSBjYWNoZSBkZXZp
-Y2UpIHRvIHRoZSByYWlkCj4+Pj4gY29udHJvbGxlcnMgKHRoZXkgYXJlIHdpdGggc2xvdyBTQVRB
-IGRpc2tzKS4KPj4+PiBJIGhhdmUgMTAgY2FjaGVkIGxvZ2ljYWwgdm9sdW1lcyBpbiAqd3JpdGV0
-aHJvdWdoIG1vZGUqLCBlYWNoIHdpdGggCj4+Pj4gMlQgb2YKPj4+PiBkYXRhIG92ZXIgMiByYWlk
-IGNvbnRyb2xsZXJzLiBJIHVzZSBhIHNpbmdsZSBTU0QgZGlzayBmb3IgdGhlIGNhY2hlLgo+Pj4+
-IFRoZSBiYWNrdXAgc3lzdGVtIGlzIHdpdGggbHZtMi0yLjAyLjE2NC0xICYga2VybmVsIDQuNC4z
-MC4KPj4+Pgo+Pj4+IERvIHlvdSBoYXZlIGFueSBpZGVhcyB3aHkgc3VjaCBmbHVzaCBpcyB0cmln
-Z2VyZWQ/IEluIHdyaXRldGhyb3VnaCAKPj4+PiBjYWNoZSBtb2RlCj4+Pj4gd2Ugc2hvdWxkbid0
-IGhhdmUgZGlydHkgYmxvY2tzIGluIHRoZSBjYWNoZS4KPj4+Pgo+Pj4KPj4+IEhhdmUgeW91IGVu
-c3VyZWQgdGhlcmUgd2FzIHByb3BlciBzaHV0ZG93biA/Cj4+PiBDYWNoZSBuZWVkcyB0byBiZSBw
-cm9wZXJseSBkZWFjdGl2YXRlZCAtIGlmIGl0J3MganVzdCB0dXJuZWQgb2ZmLAo+Pj4gYWxsIG1l
-dGFkYXRhIGFyZSBtYXJrZWQgZGlydHkuCj4+Pgo+Pj4gWmRlbmVrCj4+Cj4+IEhpLAo+Pgo+PiBJ
-J20gc2VlaW5nIHRoZSBzYW1lIGJlaGF2aW9yIGRlc2NyaWJlZCBieSBBbGV4YW5kZXIuIEV2ZW4g
-aWYgd2UgYXNzdW1lCj4+IHNvbWV0aGluZyBpcyB3cm9uZyB3aXRoIG15IHNodXRkb3duIHNjcmlw
-dHMsIHN0aWxsIGhvdyBjb3VsZCBkbS1jYWNoZSAKPj4gZXZlciBiZQo+PiBkaXJ0eSBpbiB3cml0
-ZXRocm91Z2ggbW9kZT8gV2hhdCBhYm91dCB0aGUgY2FzZSB3aGVyZSBzZXJ2ZXIgY3Jhc2hlcyBm
-b3IKPj4gd2hhdGV2ZXIgcmVhc29uIChrZXJuZWwgYnVnLCBwb3dlciBvdXRhZ2UsIG9wZXJhdG9y
-IGVycm9yIGV0Yy4pPyBXYWl0aW5nCj4+IHNldmVyYWwgaG91cnMsIG9yIGZvciBzdWZmaWNpZW50
-bHkgbGFyZ2UgY2FjaGUgZXZlbiBkYXlzIGZvciB0aGUgCj4+IHN5c3RlbSB0bwo+PiBjb21lIGJh
-Y2sgdXAgaXMgbm90IHByYWN0aWNhbC4KPj4KPj4gSSBmb3VuZCB0aGlzIDIwMTMgY29udmVyc2F0
-aW9uLCB3aGVyZSBIZWlueiBNYXVlbHNoYWdlbiA8aGVpbnptIAo+PiByZWRoYXQgY29tPgo+PiBz
-dGF0ZXMgdGhhdCAiaW4gd3JpdGV0aHJvdWdoIG1vZGUgdGhlIGNhY2hlIHdpbGwgYWx3YXlzIGJl
-IGNvaGVyZW50IAo+PiBhZnRlciBhCj4+IGNyYXNoIjogaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9h
-cmNoaXZlcy9kbS1kZXZlbC8yMDEzLUp1bHkvbXNnMDAxMTcuaHRtbAo+Pgo+PiBJJ20gdGhpbmtp
-bmcgZm9yIGEgd2F5IHRvIC0tdW5jYWNoZSBhbmQgcmVjcmVhdGUgY2FjaGUgZGV2aWNlcyBvbiAK
-Pj4gZXZlcnkgYm9vdCwKPj4gd2hpY2ggc2hvdWxkIGJlIHNhZmUgaW4gd3JpdGV0aHJvdWdoIG1v
-ZGUgYW5kIHRha2VzIHJlYXNvbmFibGUsIGFuZCBtb3JlCj4+IGltcG9ydGFudGx5IOKAkyBjb25z
-dGFudCBhbW91bnQgb2YgdGltZS4KPgo+IE15IGZpcnN0ICdndWVzcycgaW4gdGhpcyByZXBvcnRl
-ZCBjYXNlIGlzIC0gdGhlIGRpc2sgSS9PIHRyYWZmaWMgc2VlbiAKPiBpcyByZWxhdGVkIHRvIHRo
-ZSAncmVsb2FkJyBvZiBjYWNoZWQgY2h1bmtzIGZyb20gZGlzayBiYWNrIHRvIGNhY2hlLgo+Cj4g
-VGhpcyB3aWxsIGhhcHBlbiBpbiB0aGUgY2FzZSwgdGhlcmUgaGFzIGJlZW4gdW5jbGVhbiBjYWNo
-ZSBzaHV0ZG93bi4KPgo+IEhvd2V2ZXIgd2hhdCBpcyB1bmNsZWFuIGlzIC0gd2h5IGl0IHNsb3dz
-IGRvd24gYm9vdCBieSBob3Vycy4KPiBJcyB0aGUgY2FjaGUgdG9vIGJpZz8/CgpJbmRlZWQsIGNh
-Y2hlIGlzIHF1aXRlIGJpZyDigJMgYSA4MDBHQiBTU0QsIGJ1dCBJIGZvdW5kIGV4cGVyaW1lbnRh
-bGx5IAp0aGF0IHRoaXMgaXMgdGhlIHNpemUgd2hlcmUgSSBnZXQgZ29vZCBjYWNoZSBoaXQgcmF0
-aW9zIHdpdGggbXkgPjEwVEIgCmRhdGEgdm9sdW1lLgoKQXMgdG8gdGhlICdyZWxvYWQnIHZzICdm
-bHVzaCcg4oCTIEkgdGhpbmsgaXQgaXMgZmx1c2hpbmcsIGJlY2F1c2UgaWlyYyAKaW9zdGF0IHNo
-b3dlZCBsb3RzIG9mIFNTRCByZWFkaW5nIGFuZCBIREQgd3JpdGluZywgYnV0IEknbSBub3QgcmVh
-bGx5IApzdXJlIGFuZCBuZWVkIHRvIGNvbmZpcm0gdGhhdC4KClNvLCBhcmUgeW91IHNheWluZyB0
-aGF0IGluIGNhc2Ugb2YgdW5jbGVhbiBzaHV0ZG93biB0aGlzICdyZWxvYWQnIGlzIAppbmV2aXRh
-YmxlPwoKSG93IG11Y2ggdGltZSBpdCB0YWtlcyBvYnZpb3VzbHkgZGVwZW5kcyBvbiB0aGUgU1NE
-IHNpemUvc3BlZWQgJiBIREQgCnNwZWVkLCBidXQgd2l0aCA4MDBHQiBTU0QgaXQgaXMgcmVhc29u
-YWJsZSB0byBleHBlY3QgdmVyeSBsb25nIGJvb3QgdGltZXMuCgogPiBDYW4geW91IHByb3ZpZGUg
-ZnVsbCBsb2dzIGZyb20gJ2RlYWN0aXZhdGlvbicgYW5kIGZvbGxvd2luZyBhY3RpdmF0aW9uPwoK
-QW55IGhpbnRzIGFzIHRvIGhvdyB0byBjb2xsZWN0ICJmdWxsIGxvZ3MgZnJvbSAnZGVhY3RpdmF0
-aW9uJyBhbmQgCmZvbGxvd2luZyBhY3RpdmF0aW9uIj8gSXQgaGFwcGVucyBlYXJseSBpbiB0aGUg
-RGViaWFuIGJvb3QgcHJvY2VzcyAoSSAKdGhpbmsgdWRldiBkb2VzIHRoZSBhY3RpdmF0aW9uKSBh
-bmQgSSdtIG5vdCBzdXJlIGhvdyB0byBlbmFibGUgCmxvZ2dpbmcuLi4gc2hvdWxkIEkgdHdlYWsg
-L2V0Yy9sdm0vbHZtLmNvbmY/CgpCZXN0IHJlZ2FyZHMsClRlb2RvciBNaWxrb3YKCi0tCmRtLWRl
-dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5j
-b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Similar patterns, /dev/nvme[0-9] .
+
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/blacklist.c | 8 +-------
+ 1 file changed, 1 insertion(+), 7 deletions(-)
+
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+index f6c4506..9e225cd 100644
+--- a/libmultipath/blacklist.c
++++ b/libmultipath/blacklist.c
+@@ -172,7 +172,7 @@ setup_default_blist (struct config * conf)
+ 	char * str;
+ 	int i;
+ 
+-	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]");
++	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk|nvme)[0-9]");
+ 	if (!str)
+ 		return 1;
+ 	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+@@ -184,12 +184,6 @@ setup_default_blist (struct config * conf)
+ 	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+ 		return 1;
+ 
+-	str = STRDUP("^nvme");
+-	if (!str)
+-		return 1;
+-	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+-		return 1;
+-
+ 	str = STRDUP("(SCSI_IDENT_|ID_WWN)");
+ 	if (!str)
+ 		return 1;
+-- 
+2.10.2
