@@ -1,17 +1,15 @@
-From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
-Subject: Re: dm-cache issue
-Date: Wed, 16 Nov 2016 15:06:00 +0100
-Message-ID: <36a1bed8-b979-35de-155f-e07daf707fac@gmail.com>
-References: <CAJV2nOTJoWWc=N80e6WCpZUh6ZRxvCW8Wt=aZWTyYSKso+kQ5Q@mail.gmail.com>
-	<884adfe3-ac18-5e37-f4b4-478e5031f35f@redhat.com>
-	<55289e1d-5a24-73a5-4ccf-026c2640334d@del.bg>
-	<f01aaf8d-1f12-1a6f-5560-5cb6927a1b62@gmail.com>
-	<9bab689e-edf4-c5a6-9954-75f0e9c3d2c6@del.bg>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 2/7] dm: Simplify dm_table_determine_type()
+Date: Wed, 16 Nov 2016 09:54:26 -0500
+Message-ID: <20161116145426.GA23071@redhat.com>
+References: <e83f8718-9e73-5544-3bcc-4d9851b90ba1@sandisk.com>
+	<4b4da27f-1540-db69-dce7-431b61b164ef@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <9bab689e-edf4-c5a6-9954-75f0e9c3d2c6@del.bg>
+Content-Disposition: inline
+In-Reply-To: <4b4da27f-1540-db69-dce7-431b61b164ef@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,84 +19,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Teodor Milkov <tm@del.bg>, dm-devel@redhat.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-RG5lIDE2LjExLjIwMTYgdiAxNDo0NSBUZW9kb3IgTWlsa292IG5hcHNhbChhKToKPiBPbiAxNi4x
-MS4yMDE2IDExOjI0LCBaZGVuZWsgS2FiZWxhYyB3cm90ZToKPj4gRG5lIDE1LjExLjIwMTYgdiAx
-MzozOCBUZW9kb3IgTWlsa292IG5hcHNhbChhKToKPj4+IE9uIDE0LjExLjIwMTYgMTc6MzQsIFpk
-ZW5layBLYWJlbGFjIHdyb3RlOgo+Pj4+IERuZSAxNC4xMS4yMDE2IHYgMTY6MDIgQWxleGFuZGVy
-IFBhc2hhbGl5c2tpIG5hcHNhbChhKToKPj4+Pj4gVGhlIHNlcnZlciBpcyBib290aW5nIGZvciBo
-b3VycywgYmVjYXVzZSBvZiBJTyBsb2FkLiBJdCBzZWVtcyBpcyB0cmlnZ2VyZWQKPj4+Pj4gYSBm
-bHVzaCBmcm9tIFNTRCBkaXNrICh0aGF0IGlzIHVzZWQgZm9yIGEgY2FjaGUgZGV2aWNlKSB0byB0
-aGUgcmFpZAo+Pj4+PiBjb250cm9sbGVycyAodGhleSBhcmUgd2l0aCBzbG93IFNBVEEgZGlza3Mp
-Lgo+Pj4+PiBJIGhhdmUgMTAgY2FjaGVkIGxvZ2ljYWwgdm9sdW1lcyBpbiAqd3JpdGV0aHJvdWdo
-IG1vZGUqLCBlYWNoIHdpdGggMlQgb2YKPj4+Pj4gZGF0YSBvdmVyIDIgcmFpZCBjb250cm9sbGVy
-cy4gSSB1c2UgYSBzaW5nbGUgU1NEIGRpc2sgZm9yIHRoZSBjYWNoZS4KPj4+Pj4gVGhlIGJhY2t1
-cCBzeXN0ZW0gaXMgd2l0aCBsdm0yLTIuMDIuMTY0LTEgJiBrZXJuZWwgNC40LjMwLgo+Pj4+Pgo+
-Pj4+PiBEbyB5b3UgaGF2ZSBhbnkgaWRlYXMgd2h5IHN1Y2ggZmx1c2ggaXMgdHJpZ2dlcmVkPyBJ
-biB3cml0ZXRocm91Z2ggY2FjaGUKPj4+Pj4gbW9kZQo+Pj4+PiB3ZSBzaG91bGRuJ3QgaGF2ZSBk
-aXJ0eSBibG9ja3MgaW4gdGhlIGNhY2hlLgo+Pj4+Pgo+Pj4+Cj4+Pj4gSGF2ZSB5b3UgZW5zdXJl
-ZCB0aGVyZSB3YXMgcHJvcGVyIHNodXRkb3duID8KPj4+PiBDYWNoZSBuZWVkcyB0byBiZSBwcm9w
-ZXJseSBkZWFjdGl2YXRlZCAtIGlmIGl0J3MganVzdCB0dXJuZWQgb2ZmLAo+Pj4+IGFsbCBtZXRh
-ZGF0YSBhcmUgbWFya2VkIGRpcnR5Lgo+Pj4+Cj4+Pj4gWmRlbmVrCj4+Pgo+Pj4gSGksCj4+Pgo+
-Pj4gSSdtIHNlZWluZyB0aGUgc2FtZSBiZWhhdmlvciBkZXNjcmliZWQgYnkgQWxleGFuZGVyLiBF
-dmVuIGlmIHdlIGFzc3VtZQo+Pj4gc29tZXRoaW5nIGlzIHdyb25nIHdpdGggbXkgc2h1dGRvd24g
-c2NyaXB0cywgc3RpbGwgaG93IGNvdWxkIGRtLWNhY2hlIGV2ZXIgYmUKPj4+IGRpcnR5IGluIHdy
-aXRldGhyb3VnaCBtb2RlPyBXaGF0IGFib3V0IHRoZSBjYXNlIHdoZXJlIHNlcnZlciBjcmFzaGVz
-IGZvcgo+Pj4gd2hhdGV2ZXIgcmVhc29uIChrZXJuZWwgYnVnLCBwb3dlciBvdXRhZ2UsIG9wZXJh
-dG9yIGVycm9yIGV0Yy4pPyBXYWl0aW5nCj4+PiBzZXZlcmFsIGhvdXJzLCBvciBmb3Igc3VmZmlj
-aWVudGx5IGxhcmdlIGNhY2hlIGV2ZW4gZGF5cyBmb3IgdGhlIHN5c3RlbSB0bwo+Pj4gY29tZSBi
-YWNrIHVwIGlzIG5vdCBwcmFjdGljYWwuCj4+Pgo+Pj4gSSBmb3VuZCB0aGlzIDIwMTMgY29udmVy
-c2F0aW9uLCB3aGVyZSBIZWlueiBNYXVlbHNoYWdlbiA8aGVpbnptIHJlZGhhdCBjb20+Cj4+PiBz
-dGF0ZXMgdGhhdCAiaW4gd3JpdGV0aHJvdWdoIG1vZGUgdGhlIGNhY2hlIHdpbGwgYWx3YXlzIGJl
-IGNvaGVyZW50IGFmdGVyIGEKPj4+IGNyYXNoIjogaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9hcmNo
-aXZlcy9kbS1kZXZlbC8yMDEzLUp1bHkvbXNnMDAxMTcuaHRtbAo+Pj4KPj4+IEknbSB0aGlua2lu
-ZyBmb3IgYSB3YXkgdG8gLS11bmNhY2hlIGFuZCByZWNyZWF0ZSBjYWNoZSBkZXZpY2VzIG9uIGV2
-ZXJ5IGJvb3QsCj4+PiB3aGljaCBzaG91bGQgYmUgc2FmZSBpbiB3cml0ZXRocm91Z2ggbW9kZSBh
-bmQgdGFrZXMgcmVhc29uYWJsZSwgYW5kIG1vcmUKPj4+IGltcG9ydGFudGx5IOKAkyBjb25zdGFu
-dCBhbW91bnQgb2YgdGltZS4KPj4KPj4gTXkgZmlyc3QgJ2d1ZXNzJyBpbiB0aGlzIHJlcG9ydGVk
-IGNhc2UgaXMgLSB0aGUgZGlzayBJL08gdHJhZmZpYyBzZWVuIGlzCj4+IHJlbGF0ZWQgdG8gdGhl
-ICdyZWxvYWQnIG9mIGNhY2hlZCBjaHVua3MgZnJvbSBkaXNrIGJhY2sgdG8gY2FjaGUuCj4+Cj4+
-IFRoaXMgd2lsbCBoYXBwZW4gaW4gdGhlIGNhc2UsIHRoZXJlIGhhcyBiZWVuIHVuY2xlYW4gY2Fj
-aGUgc2h1dGRvd24uCj4+Cj4+IEhvd2V2ZXIgd2hhdCBpcyB1bmNsZWFuIGlzIC0gd2h5IGl0IHNs
-b3dzIGRvd24gYm9vdCBieSBob3Vycy4KPj4gSXMgdGhlIGNhY2hlIHRvbyBiaWc/Pwo+Cj4gSW5k
-ZWVkLCBjYWNoZSBpcyBxdWl0ZSBiaWcg4oCTIGEgODAwR0IgU1NELCBidXQgSSBmb3VuZCBleHBl
-cmltZW50YWxseSB0aGF0IHRoaXMKPiBpcyB0aGUgc2l6ZSB3aGVyZSBJIGdldCBnb29kIGNhY2hl
-IGhpdCByYXRpb3Mgd2l0aCBteSA+MTBUQiBkYXRhIHZvbHVtZS4KClllcCAtIHRoYXQncyB0aGUg
-Y3VycmVudCB0cm91YmxlIG9mIGV4aXN0aW5nICBkbS1jYWNoZSB0YXJnZXQuCkl0J3MgZ2V0dGlu
-ZyBpbmVmZmljaWVudCB3aGVuIG1haW50YWluaW5nIG1vcmUgdGhlbiAxIG1pbGxpb24KY2FjaGUg
-YmxvY2sgZW50cmllcyAtIHJlY2VudCB2ZXJzaW9ucyBvZiBsdm0yIGV2ZW4gZG8gbm90IGFsbG93
-CmNyZWF0ZSBzdWNoIGNhY2hlIHdpdGhvdXQgZW5mb3JjaW5nIGl0Lgooc28gZm9yIDMyayBibG9j
-a3MgaXQnICB+MzBHIGNhY2hlIGRhdGEgc2l6ZSkKCgo+IEFzIHRvIHRoZSAncmVsb2FkJyB2cyAn
-Zmx1c2gnIOKAkyBJIHRoaW5rIGl0IGlzIGZsdXNoaW5nLCBiZWNhdXNlIGlpcmMgaW9zdGF0Cj4g
-c2hvd2VkIGxvdHMgb2YgU1NEIHJlYWRpbmcgYW5kIEhERCB3cml0aW5nLCBidXQgSSdtIG5vdCBy
-ZWFsbHkgc3VyZSBhbmQgbmVlZAo+IHRvIGNvbmZpcm0gdGhhdC4KPgo+IFNvLCBhcmUgeW91IHNh
-eWluZyB0aGF0IGluIGNhc2Ugb2YgdW5jbGVhbiBzaHV0ZG93biB0aGlzICdyZWxvYWQnIGlzIGlu
-ZXZpdGFibGU/CgpZZXMgLSBjbGVhbiBzaHV0ZG93biBpcyBtYW5kYXRvcnkgLSBvdGhlcndpc2Ug
-Y2FjaGUgY2FuJ3Qga25vdyBjb25zaXRlbmN5CmFuZCBoYXMgdG8gcmVmcmVzaCBpdHNlbGYuICBP
-dGhlciBvcHRpb24gd291bGQgYmUgcHJvYmFibHkgdG8gZHJvcCBjYWNoZQphbmQgbGV0IGl0IHJl
-YnVpbGQgLSBidXQgeW91IGxvc2UgYWxyZWFkeSBnYWluZWQgJ2tub3dsZWRnZScgdGhpcyB3YXku
-CgpBbnl3YXkgQUZBSUsgdGhlcmUgaXMgb25nb2luZyBkZXZlbCBhbmQgdXAtc3RyZWFtaW5nIHBy
-b2Nlc3MgZm9yIG5ldyBjYWNoZSAKdGFyZ2V0IHdoaWNoIHdpbGwgb3RoZXJzIGNvdXBsZSBzaG9y
-dGNvbWluZ3MgYW5kIHNob3VsZCBwZXJmb3JtIG11Y2gKYmV0dGVyLiAgIGx2bTIgd2lsbCBzdXBw
-b3NlZGx5IGhhbmRsZSB0cmFuc2l0aW9uIHRvIGEgbmV3IGZvcm1hdCBpbiBzb21lIHdheQpsYXRl
-ci4KCgo+IEhvdyBtdWNoIHRpbWUgaXQgdGFrZXMgb2J2aW91c2x5IGRlcGVuZHMgb24gdGhlIFNT
-RCBzaXplL3NwZWVkICYgSEREIHNwZWVkLAo+IGJ1dCB3aXRoIDgwMEdCIFNTRCBpdCBpcyByZWFz
-b25hYmxlIHRvIGV4cGVjdCB2ZXJ5IGxvbmcgYm9vdCB0aW1lcy4KPgo+PiBDYW4geW91IHByb3Zp
-ZGUgZnVsbCBsb2dzIGZyb20gJ2RlYWN0aXZhdGlvbicgYW5kIGZvbGxvd2luZyBhY3RpdmF0aW9u
-Pwo+Cj4gQW55IGhpbnRzIGFzIHRvIGhvdyB0byBjb2xsZWN0ICJmdWxsIGxvZ3MgZnJvbSAnZGVh
-Y3RpdmF0aW9uJyBhbmQgZm9sbG93aW5nCj4gYWN0aXZhdGlvbiI/IEl0IGhhcHBlbnMgZWFybHkg
-aW4gdGhlIERlYmlhbiBib290IHByb2Nlc3MgKEkgdGhpbmsgdWRldiBkb2VzCj4gdGhlIGFjdGl2
-YXRpb24pIGFuZCBJJ20gbm90IHN1cmUgaG93IHRvIGVuYWJsZSBsb2dnaW5nLi4uIHNob3VsZCBJ
-IHR3ZWFrCj4gL2V0Yy9sdm0vbHZtLmNvbmY/CgoKQWxsIHlvdSBuZWVkIHRvIGNvbGxlY3QgaXMg
-YmFzaWNhbGx5ICdzZXJpYWwnIGNvbnNvbGUgbG9nIGZyb20geW91cgptYWNoaW5lICAtIHNvIGlm
-IHlvdSBoYXZlIG90aGVyIGJveCB0byB0cmFwIHNlcmlhbCBjb25zb2xlIGxvZyAtIGl0J3MKdGhl
-IG1vc3QgZWFzaWVzdCBvcHRpb24uCgpCdXQgc2luY2UgeW91IGFscmVhZHkgc2FpZCB5b3UgdXNl
-ICB+MzB0aW1lcyBiaWdnZXIgY2FjaGUgc2l6ZSB0aGVuIHRoZSBzaXplIAp3aXRoICdyZWFzb25h
-YmxlJyBwZXJmb3JtYW5jZSAtIEkgdGhpbmsgaXQncyBhbHJlYWR5IGNsZWFyIHdoZXJlIGlzIHlv
-dXIKcHJvYmxlbSBoaWRkZW4uCgpVbnRpbCBuZXcgdGFyZ2V0IHdpbGwgYmUgZGVwbG95ZWQgLSBw
-bGVhc2UgY29uc2lkZXIgdG8gdXNlIHNpZ25pZmljYW50bHkgCnNtYWxsZXIgY2FjaGUgc2l6ZSBz
-byB0aGUgbnVtYmVyIG9mIGNhY2hlIGNodW5rcyBpcyBub3QgYWJvdmUgMSAwMDAgMDAwLgoKUmVn
-YXJkcwoKWmRlbmVrCgoKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
-LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Tue, Nov 15 2016 at  6:33pm -0500,
+Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+
+> Use a single loop instead of two loops to determine whether or not
+> all_blk_mq has to be set.
+> 
+> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+> ---
+>  drivers/md/dm-table.c | 25 ++++++++++++-------------
+>  1 file changed, 12 insertions(+), 13 deletions(-)
+> 
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 49893fdc..fff4979 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -871,7 +871,7 @@ static int dm_table_determine_type(struct dm_table *t)
+>  {
+>  	unsigned i;
+>  	unsigned bio_based = 0, request_based = 0, hybrid = 0;
+> -	bool verify_blk_mq = false;
+> +	unsigned sq_count = 0, mq_count = 0;
+>  	struct dm_target *tgt;
+>  	struct dm_dev_internal *dd;
+>  	struct list_head *devices = dm_table_get_devices(t);
+> @@ -959,20 +959,15 @@ static int dm_table_determine_type(struct dm_table *t)
+>  		}
+>  
+>  		if (q->mq_ops)
+> -			verify_blk_mq = true;
+> +			mq_count++;
+> +		else
+> +			sq_count++;
+>  	}
+> -
+> -	if (verify_blk_mq) {
+> -		/* verify _all_ devices in the table are blk-mq devices */
+> -		list_for_each_entry(dd, devices, list)
+> -			if (!bdev_get_queue(dd->dm_dev->bdev)->mq_ops) {
+> -				DMERR("table load rejected: not all devices"
+> -				      " are blk-mq request-stackable");
+> -				return -EINVAL;
+> -			}
+> -
+> -		t->all_blk_mq = true;
+> +	if (sq_count && mq_count) {
+> +		DMERR("table load rejected: not all devices are blk-mq request-stackable");
+> +		return -EINVAL;
+>  	}
+> +	t->all_blk_mq = mq_count > 0;
+>  
+>  	return 0;
+>  }
+> @@ -1021,6 +1016,10 @@ bool dm_table_request_based(struct dm_table *t)
+>  	return __table_type_request_based(dm_table_get_type(t));
+>  }
+>  
+> +/*
+> + * Returns true if all paths are blk-mq devices. Returns false if all paths
+> + * are single queue block devices or if there are no paths.
+> + */
+
+This code isn't specific to multipath.  So "paths" is misplaced.
+"devices" is more appropriate.  Not seeing the need for the comment to
+be honest.  The function name is pretty descriptive.
+
+>  bool dm_table_all_blk_mq_devices(struct dm_table *t)
+>  {
+>  	return t->all_blk_mq;
+> -- 
+> 2.10.1
+> 
