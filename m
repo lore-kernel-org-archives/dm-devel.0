@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: merge nvme in similar blacklist
-	regex
-Date: Wed, 16 Nov 2016 17:13:25 +0100
-Message-ID: <20161116161325.3326-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: update bl info for nvme in
+	multipath.conf.5
+Date: Wed, 16 Nov 2016 17:20:21 +0100
+Message-ID: <20161116162021.3525-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,40 +19,25 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Similar patterns, /dev/nvme[0-9] .
-
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/blacklist.c | 8 +-------
- 1 file changed, 1 insertion(+), 7 deletions(-)
+ multipath/multipath.conf.5 | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
-index f6c4506..9e225cd 100644
---- a/libmultipath/blacklist.c
-+++ b/libmultipath/blacklist.c
-@@ -172,7 +172,7 @@ setup_default_blist (struct config * conf)
- 	char * str;
- 	int i;
- 
--	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]");
-+	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk|nvme)[0-9]");
- 	if (!str)
- 		return 1;
- 	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
-@@ -184,12 +184,6 @@ setup_default_blist (struct config * conf)
- 	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
- 		return 1;
- 
--	str = STRDUP("^nvme");
--	if (!str)
--		return 1;
--	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
--		return 1;
--
- 	str = STRDUP("(SCSI_IDENT_|ID_WWN)");
- 	if (!str)
- 		return 1;
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index f8e413c..fb2bc5b 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -873,7 +873,7 @@ The following keywords are recognized:
+ Regular expression of the device nodes to be excluded.
+ .RS
+ .TP
+-Default value is: \fB^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]\fR, \fB^(td|hd|vd)[a-z]\fR and \fB^nvme\fR
++Default value is: \fB^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk|nvme)[0-9]\fR and \fB^(td|hd|vd)[a-z]\fR
+ .RE
+ .TP
+ .B wwid
 -- 
 2.10.2
