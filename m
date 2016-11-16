@@ -1,15 +1,18 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH 0/7] dm-mpath: Fix a race condition in the
-	blk-mq path
-Date: Tue, 15 Nov 2016 16:57:06 -0800
-Message-ID: <51cae932-470e-aa27-8c7d-e33ed978f37e@sandisk.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 7/7] dm-mpath: Fix a race condition in
+	__multipath_map()
+Date: Tue, 15 Nov 2016 20:01:17 -0500
+Message-ID: <20161116010117.GE19059@redhat.com>
 References: <e83f8718-9e73-5544-3bcc-4d9851b90ba1@sandisk.com>
-	<20161116004752.GD19059@redhat.com>
+	<81bc399e-df90-099d-1b25-bdb0fda3f27c@sandisk.com>
+	<20161116003720.GA19059@redhat.com>
+	<8af6b1c0-3513-8a13-5ebb-8bdf90bf43e0@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161116004752.GD19059@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <8af6b1c0-3513-8a13-5ebb-8bdf90bf43e0@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,32 +22,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
+To: Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 11/15/2016 04:47 PM, Mike Snitzer wrote:
-> On Tue, Nov 15 2016 at  6:31pm -0500,
-> Bart Van Assche <bart.vanassche@sandisk.com> wrote:
->> The seven patches in this series is what I came up with while
->> reviewing and testing the dm-mpath single queue and multiqueue code.
->> It would be appreciated if these patches would be considered for
->> inclusion in the upstream kernel.
->
-> This series seems like it is not a product of need.  But that of changes
-> that fell out from code review.
->
-> If not, what test was failing that now passes with this patchset?
+On Tue, Nov 15 2016 at  7:40pm -0500,
+Bart Van Assche <bart.vanassche@sandisk.com> wrote:
 
-Hello Mike,
+> On 11/15/2016 04:37 PM, Mike Snitzer wrote:
+> >On Tue, Nov 15 2016 at  6:35pm -0500,
+> >Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+> >>If a single-queue dm device is stacked on top of multi-queue block
+> >>devices and map_tio_request() is called while there are no paths then
+> >>the request will be prepared for a single-queue path. If a path is
+> >>added after a request was prepared and before __multipath_map() is
+> >>called return DM_MAPIO_REQUEUE such that it gets unprepared and
+> >>reprepared as a blk-mq request.
+> >
+> >This patch makes little sense to me.  There isn't a scenario that I'm
+> >aware of that would allow the request_queue to transition between old
+> >.request_fn and new blk-mq.
+> >
+> >The dm-table code should prevent this.
+> 
+> Hello Mike,
+> 
+> Are you aware that dm_table_determine_type() sets "all_blk_mq" to
+> false if there are no paths, even if the dm device is in blk-mq
+> mode?
 
-Without this patch series I see sporadic I/O errors when running I/O on 
-top of dm-mq-on-mq. With this patch series my dm-mq-on-mq tests pass. 
-However, I still see sporadic I/O errors being reported when I run I/O 
-on top of dm-sq-on-mq and very sporadic I/O errors with my dm-sq-on-sq 
-tests. It is not yet clear to me what is causing these I/O errors but 
-it's probably something in either the dm core or the dm-mpath driver. My 
-tests scripts are available at https://github.com/bvanassche/srp-test in 
-case you would like to have a look.
-
-Bart.
+That shouldn't matter.  Once the type is established, it is used to
+initialize the DM device's request_queue, the type cannot change across
+different table loads.
