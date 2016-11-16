@@ -1,19 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [PATCH 0/7] dm-mpath: Fix a race condition in the
 	blk-mq path
-Date: Tue, 15 Nov 2016 20:53:57 -0500
-Message-ID: <20161116015357.GB19469@redhat.com>
+Date: Wed, 16 Nov 2016 08:39:34 +0100
+Message-ID: <05d83937-9fcc-7bee-8507-fd59ec25ec7f@suse.de>
 References: <e83f8718-9e73-5544-3bcc-4d9851b90ba1@sandisk.com>
-	<20161116004752.GD19059@redhat.com>
-	<51cae932-470e-aa27-8c7d-e33ed978f37e@sandisk.com>
-	<20161116010802.GF19059@redhat.com>
-	<37cbd516-da2a-7532-8231-3ae5d2e4caf8@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <37cbd516-da2a-7532-8231-3ae5d2e4caf8@sandisk.com>
+In-Reply-To: <e83f8718-9e73-5544-3bcc-4d9851b90ba1@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,22 +18,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
+To: Bart Van Assche <bart.vanassche@sandisk.com>, Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 15 2016 at  8:10pm -0500,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
-
-> On 11/15/2016 05:08 PM, Mike Snitzer wrote:
-> >I'm getting very tired of this.  Last I knew those tests pass.  Do you
-> >keep changing the tests or something?
-> 
-> If the dm code would work reliably I wouldn't have to post any dm
-> patches. The only factor that I changed is the number of test
-> iterations I ran.
-
-Now you're just baiting me.  In general your DM patches are appreciated
-but you also don't understand the code well enough to justify the
-changes you're proposing.  Aside from patch 1/7 I think this series is a
-misfire -- most of it churn and unnecessary.
+T24gMTEvMTYvMjAxNiAxMjozMSBBTSwgQmFydCBWYW4gQXNzY2hlIHdyb3RlOgo+IEhlbGxvIE1p
+a2UsCj4gCj4gVGhlIHNldmVuIHBhdGNoZXMgaW4gdGhpcyBzZXJpZXMgaXMgd2hhdCBJIGNhbWUg
+dXAgd2l0aCB3aGlsZSByZXZpZXdpbmcKPiBhbmQgdGVzdGluZyB0aGUgZG0tbXBhdGggc2luZ2xl
+IHF1ZXVlIGFuZCBtdWx0aXF1ZXVlIGNvZGUuIEl0IHdvdWxkIGJlCj4gYXBwcmVjaWF0ZWQgaWYg
+dGhlc2UgcGF0Y2hlcyB3b3VsZCBiZSBjb25zaWRlcmVkIGZvciBpbmNsdXNpb24gaW4gdGhlCj4g
+dXBzdHJlYW0ga2VybmVsLgo+IApGb3IgdGhlIHdob2xlIHNlcmllczoKClJldmlld2VkLWJ5OiBI
+YW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5jb20+CgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBI
+YW5uZXMgUmVpbmVja2UJCSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3Vz
+ZS5kZQkJCSAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21iSCwg
+TWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNt
+aXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8
+cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
+cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
