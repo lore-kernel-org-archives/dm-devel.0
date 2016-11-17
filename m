@@ -1,13 +1,13 @@
-From: Milan Broz <mbroz@redhat.com>
+From: Ondrej Kozina <okozina@redhat.com>
 Subject: Re: [PATCH v2] dm-crypt: add ability to use keys from
  the kernel key retention service
-Date: Thu, 17 Nov 2016 20:31:37 +0100
-Message-ID: <db962e6a-864b-171c-234c-73ad11527c05@redhat.com>
+Date: Thu, 17 Nov 2016 21:06:22 +0100
+Message-ID: <ff5e69b1-f43c-35c8-6a32-4d7732919075@redhat.com>
 References: <afaabcf3-0ea0-375d-c0f2-6892dd70de2a@gmail.com>
 	<1479329231-4572-1-git-send-email-okozina@redhat.com>
 	<8d8a7521-b69a-9616-410d-be8866580508@virtuozzo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <8d8a7521-b69a-9616-410d-be8866580508@virtuozzo.com>
@@ -20,8 +20,8 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrey Ryabinin <aryabinin@virtuozzo.com>, Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com
-Cc: mpatocka@redhat.com, snitzer@redhat.com
+To: Andrey Ryabinin <aryabinin@virtuozzo.com>, dm-devel@redhat.com
+Cc: mpatocka@redhat.com, agk@redhat.com, snitzer@redhat.com, mbroz@redhat.com
 List-Id: dm-devel.ids
 
 On 11/17/2016 05:35 PM, Andrey Ryabinin wrote:
@@ -45,21 +45,27 @@ On 11/17/2016 05:35 PM, Andrey Ryabinin wrote:
 >> Keys may be loaded in dm-crypt either via <key_string> or using
 >> classical method and pass the key in hex representation directly.
 >>
-> 
+>
 > I think we need to hexify key description too, because it can contain spaces.
+
+I see. You're right the kernel key description may really contain 
+whitespace chars, bummer. Well what I'm thinking atm is rejecting any 
+keys with descriptions containing whitespaces. But let me ask Mike or 
+Alasdair what do they think about it.
+
 > <key_size> seems like unnecessary complication. Kernel knows key_size, it doesn't need
 > that information from userspace.
 
-Userspace (integration in cryptsetup) need to know key size. It reads DM table and parses
-information from it. So it is opposite direction - userspace need to get expected key size
-from kernel and if key in keyring with logon type, we cannot get key size from kernel.
-
-Kernel obviously have this information directly from keyring.
+Milan already explained that. I just add that general rule for dm tables 
+is what you input via load ioctl() you should get back exactly the same 
+via table status ioctl(). And also there's no other way how to get 
+dm-crypt key size if you input it via kernel keyring key.
 
 > Handling different types is probably an overkill too. If it works with logon keys,
 > why would we need to use 'user' keys?
 
-Not sure if it is really needed but I do not think it is overkill, there will be more use cases
-than you original patch expected.
+Well your original patch used 'user' type so I assumed you have good 
+reason to use it. But anyway it's not so painful to add option to choose 
+from 2 different key types imo. Loading tables is not a hot path.
 
-Milan
+O.
