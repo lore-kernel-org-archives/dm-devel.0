@@ -1,12 +1,18 @@
-From: Barry Kauler <bkauler@gmail.com>
-Subject: Re: [PATCH v5 0/3] init: add support to directly boot to
- a mapped device
-Date: Thu, 17 Nov 2016 14:55:41 +0800
-Message-ID: <CABWT5yhN6C91gwiA6hJJR0FfAjFK6goYha0PsMV=rSEu1gVsBQ@mail.gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: Improve processing efficiency for addition and
+ deletion of multipath devices
+Date: Thu, 17 Nov 2016 11:48:32 +0100
+Message-ID: <1479379712.14706.23.camel@suse.com>
+References: <OF7C96E124.CD19B12D-ON4825806D.00095E60-4825806D.0009BD8C@zte.com.cn>
+	<9797787c-30c5-08fb-f92a-5e68ec0b6333@suse.de>
+	<OF1D9DC33E.849B3309-ON4825806D.002C52A8-4825806D.003020B2@zte.com.cn>
+	<1479289781.14706.16.camel@suse.com>
+	<OF233D7062.48FA865C-ON4825806E.000544C5-4825806E.00093C07@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <OF233D7062.48FA865C-ON4825806E.000544C5-4825806E.00093C07@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,46 +22,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: tang.junhui@zte.com.cn
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
-I have just joined this list. I am a newcomer to using device-mapper.
-I currently maintain Quirky Linux, prior to that, Puppy Linux. Puppy
-uses overlay filesystems, usually aufs, to achieve what could also be
-done, partly, with device-mapper.
-
-Puppy has a initramfs, however, Quirky is a traditional full install,
-and without an initramfs. When I cam across Kees Cook's v5 patches to
-setup device mapping at the kernel boot params, I could see
-possibilities for Quirky.
-
-However, it seems that the 'table' format when using 'dmsetup create',
-and also in the kernel boot params, that devices can only be specified
-by the normal name (sd*) or by major:minor numbers.
-
-This is what my understanding is, reading the docs. However, if I am
-booting from a removable drive, that is not satisfactory.
-
-I have sent a separate email direct to Kees, with more details. But
-basically, my question is, could the 'table' format be extended to
-accept PARTUUIDs, either the GUID format as used in GPT drives (use
-'gdisk' to get it), or <NT disk identifier>-<partition number> format
-for MBR disks.
-
-For example, gdisk provides this for one of my flash sticks, second partition:
-
-Partition GUID code: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
-
-And that can be used as a boot param:
-
-root=PARTUUID=0FC63DAF-8483-4772-8E79-3D69D8477DE4
-
-The kernel understands this type of UUID, so is it feasible for the
-'table' format in Kee's patch to also accept it?
-
-Please remember that I am a beginner to dm, so if you feel like
-responding, please keep the explanations simple!
-
-Regards,
-Barry Kauler
+SGkgVGFuZywKCj4gQXMgdG8gcHJvY2VzcyBzZXZlcmFsIHVldmVudHMgZm9yIHRoZSBzYW1lIHBo
+eXNpY2FsIGRldmljZXMsIEkgdGhpbmsKPiB0aGUgb3BpbmlvbnPCoAo+IGRpZmZlcmVudCBiZXR3
+ZWVuIHVzIGlzICJGSUxURVIiIG9yICJNRVJHRVIiLiBQZXJzb25hbGx5LCBJIHRoaW5rCj4gTWVy
+Z2VyIGlzIG1vcmXCoAo+IGFjY3VyYWN5LCBmb3IgZXhhbXBsZSwgd2UgcmVjZWl2ZSA0IHBhdGhz
+IGFkZGl0aW9uIHVldmVudCBtZXNzYWdlcwo+IGZyb20gdGhlIHNhbWXCoAo+IHBoeXNpY2FsIGRl
+dmljZXM6wqAKPiAxKXVldmVudCBhZGQgc2RiwqAKPiAyKXVldmVudCBhZGQgc2RjwqAKPiAzKXVl
+dmVudCBhZGQgc2RkwqAKPiA0KXVldmVudCBhZGQgc2RlwqAKPiAKPiBXZSBjYW5ub3QganVzdCBm
+aWx0ZXIgdGhlIDEpMikzKSB1ZXZlbnQgbWVzc2FnZXMgYnV0IG9ubHkgcHJvY2VzcyB0aGUKPiA0
+KXVldmVudCBtZXNzYWdlLMKgCj4gd2hpY2ggd291bGQgY2F1c2UgbG9zaW5nIHBhdGhzIG9mIHRo
+aXMgbXVsdGlwYXRoIGRldmljZXMuwqAKCk9mIGNvdXJzZS4gTXkgImZpbHRlcmluZyIgaWRlYSB3
+YXMgbWVhbnQgZm9yIGNhc2VzIHdoZXJlIHNldmVyYWwgZXZlbnRzCmZvciB0aGUgc2FtZSBkZXZp
+Y2UgYXJlIHF1ZXVlZCwgZS5nLgoKICAxKSBhZGQgc2RhCiAgMikgY2hhbmdlIHNkYQogIDMpIGRl
+bGV0ZSBzZGEKCklzIGl0IGFsd2F5cyBzdWZmaWNpZW50IHRvIGxvb2sgb25seSBhdCB0aGUgbGFz
+dCBldmVudCBpbiBzdWNoIGEgY2FzZT8KSSB0aGluayBzbywgYnV0IEknbSBub3QgMTAwJSBjZXJ0
+YWluLgoKUmVnYXJkcwpNYXJ0aW4KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
+ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
+bA==
