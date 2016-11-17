@@ -1,115 +1,132 @@
-From: Douglas Anderson <dianders@chromium.org>
-Subject: [PATCH] RFC: dm: avoid the mutex lock in dm_bufio_shrink_count()
-Date: Thu, 17 Nov 2016 13:16:38 -0800
-Message-ID: <1479417398-2593-1-git-send-email-dianders@chromium.org>
+From: Guenter Roeck <linux@roeck-us.net>
+Subject: Re: [PATCH] dm: Avoid sleeping while holding the dm_bufio lock
+Date: Thu, 17 Nov 2016 13:56:35 -0800
+Message-ID: <20161117215635.GB23571@roeck-us.net>
+References: <1479410660-31408-1-git-send-email-dianders@chromium.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1479410660-31408-1-git-send-email-dianders@chromium.org>
 Sender: linux-raid-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: David Rientjes <rientjes@google.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Sonny Rao <sonnyrao@chromium.org>, linux@roeck-us.net, Douglas Anderson <dianders@chromium.org>, dm-devel@redhat.com, shli@kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Douglas Anderson <dianders@chromium.org>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, David Rientjes <rientjes@google.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Sonny Rao <sonnyrao@chromium.org>, dm-devel@redhat.com, shli@kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-As reported in my recent patch ("dm: Avoid sleeping while holding the
-dm_bufio lock"), we've seen in-field reports of lots of tasks sitting
-blocked on:
+On Thu, Nov 17, 2016 at 11:24:20AM -0800, Douglas Anderson wrote:
+> We've seen in-field reports showing _lots_ (18 in one case, 41 in
+> another) of tasks all sitting there blocked on:
+> 
+>   mutex_lock+0x4c/0x68
+>   dm_bufio_shrink_count+0x38/0x78
+>   shrink_slab.part.54.constprop.65+0x100/0x464
+>   shrink_zone+0xa8/0x198
+> 
+> In the two cases analyzed, we see one task that looks like this:
+> 
+>   Workqueue: kverityd verity_prefetch_io
+> 
+>   __switch_to+0x9c/0xa8
+>   __schedule+0x440/0x6d8
+>   schedule+0x94/0xb4
+>   schedule_timeout+0x204/0x27c
+>   schedule_timeout_uninterruptible+0x44/0x50
+>   wait_iff_congested+0x9c/0x1f0
+>   shrink_inactive_list+0x3a0/0x4cc
+>   shrink_lruvec+0x418/0x5cc
+>   shrink_zone+0x88/0x198
+>   try_to_free_pages+0x51c/0x588
+>   __alloc_pages_nodemask+0x648/0xa88
+>   __get_free_pages+0x34/0x7c
+>   alloc_buffer+0xa4/0x144
+>   __bufio_new+0x84/0x278
+>   dm_bufio_prefetch+0x9c/0x154
+>   verity_prefetch_io+0xe8/0x10c
+>   process_one_work+0x240/0x424
+>   worker_thread+0x2fc/0x424
+>   kthread+0x10c/0x114
+> 
+> ...and that looks to be the one holding the mutex.
+> 
+> The problem has been reproduced on fairly easily:
+> 0. Be running Chrome OS w/ verity enabled on the root filesystem
+> 1. Pick test patch: http://crosreview.com/412360
+> 2. Install launchBalloons.sh and balloon.arm from
+>      http://crbug.com/468342
+>    ...that's just a memory stress test app.
+> 3. On a 4GB rk3399 machine, run
+>      nice ./launchBalloons.sh 4 900 100000
+>    ...that tries to eat 4 * 900 MB of memory and keep accessing.
+> 4. Login to the Chrome web browser and restore many tabs
+> 
+> With that, I've seen printouts like:
+>   DOUG: long bufio 90758 ms
+> ...and stack trace always show's we're in dm_bufio_prefetch().
+> 
+> The problem is that we try to allocate memory with GFP_NOIO while
+> we're holding the dm_bufio lock.  Instead we should be using
+> GFP_NOWAIT.  Using GFP_NOIO can cause us to sleep while holding the
+> lock and that causes the above problems.
+> 
+> The current behavior explained by David Rientjes:
+> 
+>   It will still try reclaim initially because __GFP_WAIT (or
+>   __GFP_KSWAPD_RECLAIM) is set by GFP_NOIO.  This is the cause of
+>   contention on dm_bufio_lock() that the thread holds.  You want to
+>   pass GFP_NOWAIT instead of GFP_NOIO to alloc_buffer() when holding a
+>   mutex that can be contended by a concurrent slab shrinker (if
+>   count_objects didn't use a trylock, this pattern would trivially
+>   deadlock).
+> 
+> Suggested-by: David Rientjes <rientjes@google.com>
+> Signed-off-by: Douglas Anderson <dianders@chromium.org>
 
-  mutex_lock+0x4c/0x68
-  dm_bufio_shrink_count+0x38/0x78
-  shrink_slab.part.54.constprop.65+0x100/0x464
-  shrink_zone+0xa8/0x198
+Reviewed-by: Guenter Roeck <linux@roeck-us.net>
 
-Analysis of dm_bufio_shrink_count() shows that it's not much work to
-avoid grabbing the mutex there.  Presumably if we can avoid grabbing
-this mutex then other tasks (including those handling swap) may
-sometimes return faster.
-
-Note that it's likely that this won't be a huge savings since we'll
-just need to grab the mutex if dm_bufio_shrink_scan() is called, but
-it still seems like it would be a sane tradeoff.
-
-This does slightly change the behavior of dm_bufio_shrink_count().  If
-anyone was relying on dm_bufio_shrink_count() to return the total
-count _after_ some in-progress operation finished then they'll no
-longer get that behavior.  It seems unlikely anyone would be relying
-on this behavior, though, because:
-- Someone would have to be certain that the operation was already in
-  progress _before_ dm_bufio_shrink_count() was called.  If the
-  operation wasn't already in progress then we'd get the lock first.
-- There aren't exactly lots of long-running operations where the
-  dm_bufio lock is held the whole time.  Most functions using the
-  dm_bufio lock grab and drop it almost constantly.  That means that
-  getting the dm_bufio doesn't mean that any in-progress dm_bufio
-  transactions are all done.
-Maybe the above argument would be obvious to someone wise in the ways
-of dm_bufio but it's a useful argument to make for those like me who
-are trying to make a small fix without full comprehension of all of
-dm_bufio's finer details.
-
-Signed-off-by: Douglas Anderson <dianders@chromium.org>
----
-It's a bit unclear if this is actually useful and I don't have any
-test cases showing the benefit, but posting it in case someone else
-has good test cases or thinks it's a clear win.
-
-Same caveat that this development was done on Chrome OS Kernel 4.4
-
- drivers/md/dm-bufio.c | 13 +++++--------
- 1 file changed, 5 insertions(+), 8 deletions(-)
-
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index b3ba142e59a4..885ba5482d9f 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -89,6 +89,7 @@ struct dm_bufio_client {
- 
- 	struct list_head lru[LIST_SIZE];
- 	unsigned long n_buffers[LIST_SIZE];
-+	unsigned long n_all_buffers;
- 
- 	struct block_device *bdev;
- 	unsigned block_size;
-@@ -485,6 +486,7 @@ static void __link_buffer(struct dm_buffer *b, sector_t block, int dirty)
- 	struct dm_bufio_client *c = b->c;
- 
- 	c->n_buffers[dirty]++;
-+	c->n_all_buffers++;
- 	b->block = block;
- 	b->list_mode = dirty;
- 	list_add(&b->lru_list, &c->lru[dirty]);
-@@ -502,6 +504,7 @@ static void __unlink_buffer(struct dm_buffer *b)
- 	BUG_ON(!c->n_buffers[b->list_mode]);
- 
- 	c->n_buffers[b->list_mode]--;
-+	c->n_all_buffers--;
- 	__remove(b->c, b);
- 	list_del(&b->lru_list);
- }
-@@ -515,6 +518,7 @@ static void __relink_lru(struct dm_buffer *b, int dirty)
- 
- 	BUG_ON(!c->n_buffers[b->list_mode]);
- 
-+	/* NOTE: don't update n_all_buffers: -1 + 1 = 0 */
- 	c->n_buffers[b->list_mode]--;
- 	c->n_buffers[dirty]++;
- 	b->list_mode = dirty;
-@@ -1588,17 +1592,10 @@ static unsigned long
- dm_bufio_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
- {
- 	struct dm_bufio_client *c;
--	unsigned long count;
- 
- 	c = container_of(shrink, struct dm_bufio_client, shrinker);
--	if (sc->gfp_mask & __GFP_FS)
--		dm_bufio_lock(c);
--	else if (!dm_bufio_trylock(c))
--		return 0;
- 
--	count = c->n_buffers[LIST_CLEAN] + c->n_buffers[LIST_DIRTY];
--	dm_bufio_unlock(c);
--	return count;
-+	return c->n_all_buffers;
- }
- 
- /*
--- 
-2.8.0.rc3.226.g39d4020
-
+> ---
+> Note that this change was developed and tested against the Chrome OS
+> 4.4 kernel tree, not mainline.  Due to slight differences in verity
+> between mainline and Chrome OS it became too difficult to reproduce my
+> testing setup on mainline.  This patch still seems correct and
+> relevant to upstream, so I'm posting it.  If this is not acceptible to
+> you then please ignore this patch.
+> 
+> Also note that when I tested the Chrome OS 3.14 kernel tree I couldn't
+> reproduce the long delays described in the patch.  Presumably
+> something changed in either the kernel config or the memory management
+> code between the two kernel versions that made this crop up.  In a
+> similar vein, it is possible that problems described in this patch are
+> no longer reproducible upstream.  However, the arguments made in this
+> patch (that we don't want to block while holding the mutex) still
+> apply so I think the patch may still have merit.
+> 
+>  drivers/md/dm-bufio.c | 6 ++++--
+>  1 file changed, 4 insertions(+), 2 deletions(-)
+> 
+> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+> index b3ba142e59a4..3c767399cc59 100644
+> --- a/drivers/md/dm-bufio.c
+> +++ b/drivers/md/dm-bufio.c
+> @@ -827,7 +827,8 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
+>  	 * dm-bufio is resistant to allocation failures (it just keeps
+>  	 * one buffer reserved in cases all the allocations fail).
+>  	 * So set flags to not try too hard:
+> -	 *	GFP_NOIO: don't recurse into the I/O layer
+> +	 *	GFP_NOWAIT: don't wait; if we need to sleep we'll release our
+> +	 *		    mutex and wait ourselves.
+>  	 *	__GFP_NORETRY: don't retry and rather return failure
+>  	 *	__GFP_NOMEMALLOC: don't use emergency reserves
+>  	 *	__GFP_NOWARN: don't print a warning in case of failure
+> @@ -837,7 +838,8 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
+>  	 */
+>  	while (1) {
+>  		if (dm_bufio_cache_size_latch != 1) {
+> -			b = alloc_buffer(c, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
+> +			b = alloc_buffer(c, GFP_NOWAIT | __GFP_NORETRY |
+> +					 __GFP_NOMEMALLOC | __GFP_NOWARN);
+>  			if (b)
+>  				return b;
+>  		}
+> -- 
+> 2.8.0.rc3.226.g39d4020
+> 
