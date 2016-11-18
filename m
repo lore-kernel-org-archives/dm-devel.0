@@ -1,7 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 08/14] dm, persistence: Remove a dead assignment
-Date: Fri, 18 Nov 2016 14:28:32 -0800
-Message-ID: <a5af7603-68f9-2f82-69f5-0140e1f2e736@sandisk.com>
+Subject: [PATCH 09/14] dm-mpath: Verify 'm->lock' locking
+ assumptions at runtime
+Date: Fri, 18 Nov 2016 14:28:49 -0800
+Message-ID: <afac3382-c159-db83-f057-086a68897a27@sandisk.com>
 References: <32edbd52-5b1a-b093-0195-2ec6fa73cd6f@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,31 +22,26 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-A value is assigned to 'nr_entries' but is never used. Hence remove
-that variable.
+Verify at runtime that __pg_init_all_paths() is called with
+multipath.lock held if lockdep is enabled.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- drivers/md/persistent-data/dm-array.c | 2 --
- 1 file changed, 2 deletions(-)
+ drivers/md/dm-mpath.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/drivers/md/persistent-data/dm-array.c b/drivers/md/persistent-data/dm-array.c
-index e83047c..7938cd2 100644
---- a/drivers/md/persistent-data/dm-array.c
-+++ b/drivers/md/persistent-data/dm-array.c
-@@ -700,13 +700,11 @@ static int populate_ablock_with_values(struct dm_array_info *info, struct array_
- {
- 	int r;
- 	unsigned i;
--	uint32_t nr_entries;
- 	struct dm_btree_value_type *vt = &info->value_type;
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index e477af8..f1e226d 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -348,6 +348,8 @@ static int __pg_init_all_paths(struct multipath *m)
+ 	struct pgpath *pgpath;
+ 	unsigned long pg_init_delay = 0;
  
- 	BUG_ON(le32_to_cpu(ab->nr_entries));
- 	BUG_ON(new_nr > le32_to_cpu(ab->max_entries));
++	lockdep_assert_held(&m->lock);
++
+ 	if (atomic_read(&m->pg_init_in_progress) || test_bit(MPATHF_PG_INIT_DISABLED, &m->flags))
+ 		return 0;
  
--	nr_entries = le32_to_cpu(ab->nr_entries);
- 	for (i = 0; i < new_nr; i++) {
- 		r = fn(base + i, element_at(info, ab, i), context);
- 		if (r)
 -- 
 2.10.1
