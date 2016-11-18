@@ -1,17 +1,11 @@
-From: Andrey Ryabinin <aryabinin@virtuozzo.com>
-Subject: Re: [PATCH v2] dm-crypt: add ability to use keys from
- the kernel key retention service
-Date: Fri, 18 Nov 2016 19:55:05 +0300
-Message-ID: <b13019ec-bc86-3d79-10ba-0defdfc6615c@virtuozzo.com>
-References: <afaabcf3-0ea0-375d-c0f2-6892dd70de2a@gmail.com>
-	<1479329231-4572-1-git-send-email-okozina@redhat.com>
-	<8d8a7521-b69a-9616-410d-be8866580508@virtuozzo.com>
-	<ff5e69b1-f43c-35c8-6a32-4d7732919075@redhat.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: [PATCH] Makefiles: Fix function availability checks
+Date: Fri, 18 Nov 2016 11:52:31 -0800
+Message-ID: <1c628eb2-589d-d8b8-952c-d64c5e74d785@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <ff5e69b1-f43c-35c8-6a32-4d7732919075@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,56 +15,103 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com
-Cc: mpatocka@redhat.com, agk@redhat.com, snitzer@redhat.com, mbroz@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 11/17/2016 11:06 PM, Ondrej Kozina wrote:
-> On 11/17/2016 05:35 PM, Andrey Ryabinin wrote:
->> On 11/16/2016 11:47 PM, Ondrej Kozina wrote:
->>> (Please still consider it to be RFC only, I need to modify the uspace teststuite
->>> again due to changes in key_string format. Also the changes to dm-crypt documentation
->>> will follow before final submit. Feature wide I'd consider the patch being complete
->>> unless any bugs would emerge)
->>>
->>> The kernel key service is a generic way to store keys for the use of
->>> other subsystems. Currently there is no way to use kernel keys in dm-crypt.
->>> This patch aims to fix that. Instead of key userspace may pass a key
->>> description with preceding ':'. So message that constructs encryption
->>> mapping now looks like this:
->>>
->>>   <cipher> [<key>|:<key_string>] <iv_offset> <dev_path> <start> [<#opt_params> <opt_params>]
->>>
->>> where <key_string> is in format: <key_size>:<key_type>:<key_description>
->>>
->>> Currently we only support two elementary key types: 'user' and 'logon'.
->>> Keys may be loaded in dm-crypt either via <key_string> or using
->>> classical method and pass the key in hex representation directly.
->>>
->>
->> I think we need to hexify key description too, because it can contain spaces.
-> 
-> I see. You're right the kernel key description may really contain whitespace chars, bummer. Well what I'm thinking atm is rejecting any keys with descriptions containing whitespaces. But let me ask Mike or Alasdair what do they think about it.
-> 
->> <key_size> seems like unnecessary complication. Kernel knows key_size, it doesn't need
->> that information from userspace.
-> 
-> Milan already explained that. I just add that general rule for dm tables is what you input via load ioctl() you should get back exactly the same via table status ioctl(). And also there's no other way how to get dm-crypt key size if you input it via kernel keyring key.
-> 
+The current implementation of the code that checks for function
+presence is not correct because it checks for a prefix match only.
+Introduce a function that checks for the exact function name.
+Additionally, report whether or not the function has been found.
+An example of the output produced by this function if 'make' is
+run:
 
-Yeah, I get that, but Milan said that we need to *get* that information from the kernel.
-My concern is about loading key_size into the kernel.
-If I understand you right, we need it just for consistency between table_load and table_status ioctls(). I guess it's ok then.
+Checking for dm_task_no_flush in /usr/include/libdevmapper.h ... yes
+Checking for dm_task_set_cookie in /usr/include/libdevmapper.h ... yes
+Checking for udev_monitor_set_receive_buffer_size in /usr/include/libudev.h ... yes
+Checking for dm_task_deferred_remove in /usr/include/libdevmapper.h ... yes
 
->> Handling different types is probably an overkill too. If it works with logon keys,
->> why would we need to use 'user' keys?
-> 
-> Well your original patch used 'user' type so I assumed you have good reason to use it.
+Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+---
+ Makefile.inc          | 14 ++++++++++++++
+ kpartx/Makefile       |  4 +---
+ libmultipath/Makefile | 16 ++++------------
+ 3 files changed, 19 insertions(+), 15 deletions(-)
 
-I used 'user' because I wasn't sure if userspace requires ability to read keys or not.
-
-
-> But anyway it's not so painful to add option to choose from 2 different key types imo. Loading tables is not a hot path.
-> 
-
-Ok, fair enough. 
+diff --git a/Makefile.inc b/Makefile.inc
+index 1cc8f44..e7f4e05 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -69,5 +69,19 @@ OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 \
+ CFLAGS		= $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
+ SHARED_FLAGS	= -shared
+ 
++# Check whether a function with name $1 has been declared in header file $2.
++check_func =								       \
++    $(shell								       \
++	if grep -Eq "^[^[:blank:]]+[[:blank:]]+$1[[:blank:]]*(.*)*" "$2"; then \
++	   found=1;							       \
++	   status="yes";						       \
++	else								       \
++	   found=0;							       \
++	   status="no";							       \
++	fi;								       \
++	echo 1>&2 "Checking for $1 in $2 ... $$status";			       \
++	echo "$$found"							       \
++    )
++
+ %.o:	%.c
+ 	$(CC) $(CFLAGS) -c -o $@ $<
+diff --git a/kpartx/Makefile b/kpartx/Makefile
+index e8a59f2..9441a2b 100644
+--- a/kpartx/Makefile
++++ b/kpartx/Makefile
+@@ -7,9 +7,7 @@ CFLAGS += -I. -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+ 
+ LIBDEPS += -ldevmapper
+ 
+-LIBDM_API_COOKIE = $(shell grep -Ecs '^[a-z]*[[:space:]]+dm_task_set_cookie' /usr/include/libdevmapper.h)
+-
+-ifneq ($(strip $(LIBDM_API_COOKIE)),0)
++ifneq ($(call check_func,dm_task_set_cookie,/usr/include/libdevmapper.h),0)
+ 	CFLAGS += -DLIBDM_API_COOKIE
+ endif
+ 
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index 495cebe..a11e483 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -20,27 +20,19 @@ ifdef SYSTEMD
+ 	endif
+ endif
+ 
+-LIBDM_API_FLUSH = $(shell grep -Ecs '^[a-z]*[[:space:]]+dm_task_no_flush' /usr/include/libdevmapper.h)
+-
+-ifneq ($(strip $(LIBDM_API_FLUSH)),0)
++ifneq ($(call check_func,dm_task_no_flush,/usr/include/libdevmapper.h),0)
+ 	CFLAGS += -DLIBDM_API_FLUSH -D_GNU_SOURCE
+ endif
+ 
+-LIBDM_API_COOKIE = $(shell grep -Ecs '^[a-z]*[[:space:]]+dm_task_set_cookie' /usr/include/libdevmapper.h)
+-
+-ifneq ($(strip $(LIBDM_API_COOKIE)),0)
++ifneq ($(call check_func,dm_task_set_cookie,/usr/include/libdevmapper.h),0)
+ 	CFLAGS += -DLIBDM_API_COOKIE
+ endif
+ 
+-LIBUDEV_API_RECVBUF = $(shell grep -Ecs '^[a-z]*[[:space:]]+udev_monitor_set_receive_buffer_size' /usr/include/libudev.h)
+-
+-ifneq ($(strip $(LIBUDEV_API_RECVBUF)),0)
++ifneq ($(call check_func,udev_monitor_set_receive_buffer_size,/usr/include/libudev.h),0)
+ 	CFLAGS += -DLIBUDEV_API_RECVBUF
+ endif
+ 
+-LIBDM_API_DEFERRED = $(shell grep -Ecs '^[a-z]*[[:space:]]+dm_task_deferred_remove' /usr/include/libdevmapper.h)
+-
+-ifneq ($(strip $(LIBDM_API_DEFERRED)),0)
++ifneq ($(call check_func,dm_task_deferred_remove,/usr/include/libdevmapper.h),0)
+ 	CFLAGS += -DLIBDM_API_DEFERRED
+ endif
+ 
+-- 
+2.10.1
