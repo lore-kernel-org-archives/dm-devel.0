@@ -1,8 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 10/14] dm-mpath: Change return type of
- pg_init_all_paths() from int into void
-Date: Fri, 18 Nov 2016 14:29:06 -0800
-Message-ID: <2b52336a-b711-df4b-8cf6-d919ac16d59c@sandisk.com>
+Subject: [PATCH 11/14] dm-mpath: Do not touch *__clone if request
+ allocation fails
+Date: Fri, 18 Nov 2016 14:29:23 -0800
+Message-ID: <fd88ce56-a9bc-d273-cc9b-f566a68efd3e@sandisk.com>
 References: <32edbd52-5b1a-b093-0195-2ec6fa73cd6f@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,37 +22,43 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-None of the callers of pg_init_all_paths() check its return value.
-Hence change the return type of pg_init_all_paths() from int into
-void.
+Do not modify *__clone if blk_mq_alloc_request() fails. This makes
+it easier to figure out what is going on if the caller accidentally
+dereferences *__clone if blk_mq_alloc_request() failed.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- drivers/md/dm-mpath.c | 7 ++-----
- 1 file changed, 2 insertions(+), 5 deletions(-)
+ drivers/md/dm-mpath.c | 15 ++++++++-------
+ 1 file changed, 8 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index f1e226d..1c97f0e 100644
+index 1c97f0e..5c73818 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -374,16 +374,13 @@ static int __pg_init_all_paths(struct multipath *m)
- 	return atomic_read(&m->pg_init_in_progress);
- }
+@@ -582,16 +582,17 @@ static int __multipath_map(struct dm_target *ti, struct request *clone,
+ 		 * .request_fn stacked on blk-mq path(s) and
+ 		 * blk-mq stacked on blk-mq path(s).
+ 		 */
+-		*__clone = blk_mq_alloc_request(bdev_get_queue(bdev),
+-						rq_data_dir(rq), BLK_MQ_REQ_NOWAIT);
+-		if (IS_ERR(*__clone)) {
+-			/* ENOMEM, requeue */
++		clone = blk_mq_alloc_request(bdev_get_queue(bdev),
++					rq_data_dir(rq), BLK_MQ_REQ_NOWAIT);
++		if (IS_ERR(clone)) {
++			/* EBUSY, ENODEV or EWOULDBLOCK; requeue */
+ 			clear_request_fn_mpio(m, map_context);
+ 			return r;
+ 		}
+-		(*__clone)->bio = (*__clone)->biotail = NULL;
+-		(*__clone)->rq_disk = bdev->bd_disk;
+-		(*__clone)->cmd_flags |= REQ_FAILFAST_TRANSPORT;
++		*__clone = clone;
++		clone->bio = clone->biotail = NULL;
++		clone->rq_disk = bdev->bd_disk;
++		clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
+ 	}
  
--static int pg_init_all_paths(struct multipath *m)
-+static void pg_init_all_paths(struct multipath *m)
- {
--	int r;
- 	unsigned long flags;
- 
- 	spin_lock_irqsave(&m->lock, flags);
--	r = __pg_init_all_paths(m);
-+	__pg_init_all_paths(m);
- 	spin_unlock_irqrestore(&m->lock, flags);
--
--	return r;
- }
- 
- static void __switch_pg(struct multipath *m, struct priority_group *pg)
+ 	if (pgpath->pg->ps.type->start_io)
 -- 
 2.10.1
