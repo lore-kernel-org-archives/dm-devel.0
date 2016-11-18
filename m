@@ -1,8 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 02/14] dm: Use blk_set_queue_dying() in
-	__dm_destroy()
-Date: Fri, 18 Nov 2016 14:26:47 -0800
-Message-ID: <a7dac630-0d7e-68c8-159f-459d8a6aa795@sandisk.com>
+Subject: [PATCH 03/14] dm: Fix a race condition in rq_completed()
+Date: Fri, 18 Nov 2016 14:27:08 -0800
+Message-ID: <719b58ac-3e7e-80fb-d5ca-313559a399fe@sandisk.com>
 References: <32edbd52-5b1a-b093-0195-2ec6fa73cd6f@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,29 +21,42 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-After QUEUE_FLAG_DYING has been set any code that is waiting in
-get_request() should be woken up. Hence call blk_set_queue_dying()
-instead of only setting QUEUE_FLAG_DYING.
+It is required to hold the queue lock when calling blk_run_queue_async()
+to avoid that a race between blk_run_queue_async() and
+blk_cleanup_queue() is triggered.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- drivers/md/dm.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ drivers/md/dm-rq.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 49c4d00..d19c372 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1885,9 +1885,7 @@ static void __dm_destroy(struct mapped_device *md, bool wait)
- 	set_bit(DMF_FREEING, &md->flags);
- 	spin_unlock(&_minor_lock);
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index f9f37ad..7df7948 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -210,6 +210,9 @@ static void rq_end_stats(struct mapped_device *md, struct request *orig)
+  */
+ static void rq_completed(struct mapped_device *md, int rw, bool run_queue)
+ {
++	struct request_queue *q = md->queue;
++	unsigned long flags;
++
+ 	atomic_dec(&md->pending[rw]);
  
--	spin_lock_irq(q->queue_lock);
--	queue_flag_set(QUEUE_FLAG_DYING, q);
--	spin_unlock_irq(q->queue_lock);
-+	blk_set_queue_dying(q);
+ 	/* nudge anyone waiting on suspend queue */
+@@ -222,8 +225,11 @@ static void rq_completed(struct mapped_device *md, int rw, bool run_queue)
+ 	 * back into ->request_fn() could deadlock attempting to grab the
+ 	 * queue lock again.
+ 	 */
+-	if (!md->queue->mq_ops && run_queue)
+-		blk_run_queue_async(md->queue);
++	if (!q->mq_ops && run_queue) {
++		spin_lock_irqsave(q->queue_lock, flags);
++		blk_run_queue_async(q);
++		spin_unlock_irqrestore(q->queue_lock, flags);
++	}
  
- 	if (dm_request_based(md) && md->kworker_task)
- 		kthread_flush_worker(&md->kworker);
+ 	/*
+ 	 * dm_put() must be at the end of this function. See the comment above
 -- 
 2.10.1
