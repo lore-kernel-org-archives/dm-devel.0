@@ -1,15 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
 Subject: Re: Avoid that reloading a map sporadically triggers I/O
 	errors
-Date: Fri, 18 Nov 2016 16:43:24 -0500
-Message-ID: <20161118214324.GA5953@redhat.com>
+Date: Fri, 18 Nov 2016 13:51:59 -0800
+Message-ID: <640cb390-27ec-4fcd-bd15-e8fefd167c57@sandisk.com>
 References: <85315cb2-6908-70c6-78b7-06b6c1071f6b@sandisk.com>
+	<20161118214324.GA5953@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <85315cb2-6908-70c6-78b7-06b6c1071f6b@sandisk.com>
+In-Reply-To: <20161118214324.GA5953@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,14 +19,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
+To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Nov 18 2016 at  4:33pm -0500,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+On 11/18/2016 01:43 PM, Mike Snitzer wrote:
+> On Fri, Nov 18 2016 at  4:33pm -0500,
+> Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+>> Avoid that reloading a map while there are no paths triggers a flush
+>> and hence unwanted I/O errors if 'queue_if_no_path' is enabled.
+>
+> I assume you meant: "if 'queue_if_no_path' is _not_ enabled." ?
 
-> Avoid that reloading a map while there are no paths triggers a flush
-> and hence unwanted I/O errors if 'queue_if_no_path' is enabled.
+No. Only with 'queue_if_no_path' enabled reporting an I/O error because 
+no paths are available is undesired.
 
-I assume you meant: "if 'queue_if_no_path' is _not_ enabled." ?
+Bart.
