@@ -1,18 +1,17 @@
-From: tang.junhui@zte.com.cn
-Subject: Re: Improve processing efficiency for addition and
- deletion of multipath devices
-Date: Fri, 18 Nov 2016 17:12:42 +0800
-Message-ID: <OF97F0B1E0.D8542B85-ON4825806F.0031A369-4825806F.003294EE@zte.com.cn>
-References: <OF7C96E124.CD19B12D-ON4825806D.00095E60-4825806D.0009BD8C@zte.com.cn>	<9797787c-30c5-08fb-f92a-5e68ec0b6333@suse.de>
-	<OF1D9DC33E.849B3309-ON4825806D.002C52A8-4825806D.003020B2@zte.com.cn>	<1479289781.14706.16.camel@suse.com>
-	<OF233D7062.48FA865C-ON4825806E.000544C5-4825806E.00093C07@zte.com.cn>	<1479379712.14706.23.camel@suse.com>
-	<OF3A4A70D0.4D2612E4-ON4825806F.00029856-4825806F.0005B3C7@zte.com.cn>	<1479454748.25031.4.camel@suse.com>
-	<OFDDCD5089.D3C390A2-ON4825806F.002B819E-4825806F.002E2347@zte.com.cn>
-	<1479457857.25031.8.camel@suse.com>
+From: Andrey Ryabinin <aryabinin@virtuozzo.com>
+Subject: Re: [PATCH v2] dm-crypt: add ability to use keys from
+ the kernel key retention service
+Date: Fri, 18 Nov 2016 19:55:05 +0300
+Message-ID: <b13019ec-bc86-3d79-10ba-0defdfc6615c@virtuozzo.com>
+References: <afaabcf3-0ea0-375d-c0f2-6892dd70de2a@gmail.com>
+	<1479329231-4572-1-git-send-email-okozina@redhat.com>
+	<8d8a7521-b69a-9616-410d-be8866580508@virtuozzo.com>
+	<ff5e69b1-f43c-35c8-6a32-4d7732919075@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6441996836165403864=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1479457857.25031.8.camel@suse.com>
+In-Reply-To: <ff5e69b1-f43c-35c8-6a32-4d7732919075@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,119 +21,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+To: Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com
+Cc: mpatocka@redhat.com, agk@redhat.com, snitzer@redhat.com, mbroz@redhat.com
 List-Id: dm-devel.ids
 
-This is a multipart message in MIME format.
---===============6441996836165403864==
-Content-Type: multipart/alternative;
-	boundary="=_alternative 003294EC4825806F_="
+On 11/17/2016 11:06 PM, Ondrej Kozina wrote:
+> On 11/17/2016 05:35 PM, Andrey Ryabinin wrote:
+>> On 11/16/2016 11:47 PM, Ondrej Kozina wrote:
+>>> (Please still consider it to be RFC only, I need to modify the uspace teststuite
+>>> again due to changes in key_string format. Also the changes to dm-crypt documentation
+>>> will follow before final submit. Feature wide I'd consider the patch being complete
+>>> unless any bugs would emerge)
+>>>
+>>> The kernel key service is a generic way to store keys for the use of
+>>> other subsystems. Currently there is no way to use kernel keys in dm-crypt.
+>>> This patch aims to fix that. Instead of key userspace may pass a key
+>>> description with preceding ':'. So message that constructs encryption
+>>> mapping now looks like this:
+>>>
+>>>   <cipher> [<key>|:<key_string>] <iv_offset> <dev_path> <start> [<#opt_params> <opt_params>]
+>>>
+>>> where <key_string> is in format: <key_size>:<key_type>:<key_description>
+>>>
+>>> Currently we only support two elementary key types: 'user' and 'logon'.
+>>> Keys may be loaded in dm-crypt either via <key_string> or using
+>>> classical method and pass the key in hex representation directly.
+>>>
+>>
+>> I think we need to hexify key description too, because it can contain spaces.
+> 
+> I see. You're right the kernel key description may really contain whitespace chars, bummer. Well what I'm thinking atm is rejecting any keys with descriptions containing whitespaces. But let me ask Mike or Alasdair what do they think about it.
+> 
+>> <key_size> seems like unnecessary complication. Kernel knows key_size, it doesn't need
+>> that information from userspace.
+> 
+> Milan already explained that. I just add that general rule for dm tables is what you input via load ioctl() you should get back exactly the same via table status ioctl(). And also there's no other way how to get dm-crypt key size if you input it via kernel keyring key.
+> 
 
-This is a multipart message in MIME format.
---=_alternative 003294EC4825806F_=
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: base64
+Yeah, I get that, but Milan said that we need to *get* that information from the kernel.
+My concern is about loading key_size into the kernel.
+If I understand you right, we need it just for consistency between table_load and table_status ioctls(). I guess it's ok then.
 
-SGkgTWFydGluLA0KDQrjgIlCdXQgb25jZSB5b3Ugc3RhcnQgbWVyZ2luZywgeW91J2QgcmF0aGVy
-IGJlIHByZXBhcmVkIGZvcg0K44CJc2V2ZXJhbCBldmVudHMgZm9yIHRoZSBzYW1lIHBoeXMgZGV2
-aWNlLCB0b28uDQoNCldlIGNhbiBiYXNlIG9uIHN1Y2ggYSB0aHJlc2hvbGQgdGhhdCB0aGVyZSBp
-cyBubyByZXBlYXQgdWV2ZW50cyBmcm9tIHRoZSANCnNhbWUgc2QgZGV2aWNlLA0Kb3RoZXJ3aXNl
-LCB3ZSBwYXVzZSBkb2luZyBtZXJnZXIsIGFuZCBraWNrIHVldmVudCBwcm9jZXNzaW5nIHRocmVh
-ZCB0byANCnByb2Nlc3MgdGhlIG1lcmdlZCB1ZXZlbnRzLg0KDQpSZWdhcmRzLA0KVGFuZw0KDQoN
-Cg0KDQrlj5Hku7bkuro6ICAgICAgICAgTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+DQrm
-lLbku7bkuro6ICAgICAgICAgdGFuZy5qdW5odWlAenRlLmNvbS5jbiwgDQrmioTpgIE6ICAgZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQ0K5pel5pyfOiAgIDIwMTYvMTEvMTggMTY6MzgNCuS4u+mimDogICBS
-ZTogW2RtLWRldmVsXSBJbXByb3ZlIHByb2Nlc3NpbmcgZWZmaWNpZW5jeSBmb3IgYWRkaXRpb24g
-YW5kIA0KZGVsZXRpb24gb2YgbXVsdGlwYXRoIGRldmljZXMNCuWPkeS7tuS6ujogZG0tZGV2ZWwt
-Ym91bmNlc0ByZWRoYXQuY29tDQoNCg0KDQpPbiBGcmksIDIwMTYtMTEtMTggYXQgMTY6MjQgKzA4
-MDAsIHRhbmcuanVuaHVpQHp0ZS5jb20uY24gd3JvdGU6DQo+IEhpIE1hcnRpbiwgDQo+IA0KPiBJ
-biB5b3VyIGNhc2UsIG15IGFjdGlvbiBpczogDQo+IDEpIG1lcmdlciB1ZXZlbnRzIDEpIDIpIHRv
-IG9uZSB1ZXZlbnQgImFkZCBzZGEgc2RiIiwgYW5kIHByb2Nlc3MgdGhlbQ0KPiB0b2dvdGhlciAN
-Cg0KVGhpcyB3aWxsIGZhaWwgYmVjYXVzZSBzZGIgaXMgbm9uLWV4aXN0ZW50IGF0IHRoZSB0aW1l
-IHlvdSB0cnkgLSBubz8NCg0KPiBUaG91Z2ggdGhlIHByb2Nlc3NpbmcgZWZmaWNpZW5jeSBpbiBz
-dWNoIHNjZW5hcmlvIGlzIGxvd2VyIHRoYW4NCj4geW91cnMsIGJ1dCBpdCBpcyBzaW1wbGUgYW5k
-IHJlbGlhYmxlLA0KPiBtb3JlIGltcG9ydGFudGx5LCBNYXJ0aW4sIHlvdSBzdGlsbCBmb2N1cyBv
-biBzdWNoIHNwZWNpYWwgc2NlbmUsDQo+IHdoaWNoIEkgY29uY2VybmVkIGlzIGxpa2UgdGhpczog
-DQoNClsuLi5dDQoNCkkgdW5kZXJzdGFuZCB3aGF0IHlvdSdyZSBjb25jZXJuZWQgd2l0aC4gSSBq
-dXN0IHRoaW5rIHdlIG5lZWQgdG8gZG8NCmJvdGguIEkgYWdyZWUgdGhhdCBtYW55IGV2ZW50cyBm
-b3IgbWFueSBkaWZmZXJlbnQgZGV2aWNlcyBhcmUgbW9yZQ0KbGlrZWx5LiBCdXQgb25jZSB5b3Ug
-c3RhcnQgbWVyZ2luZywgeW91J2QgcmF0aGVyIGJlIHByZXBhcmVkIGZvcg0Kc2V2ZXJhbCBldmVu
-dHMgZm9yIHRoZSBzYW1lIHBoeXMgZGV2aWNlLCB0b28uDQoNCk1hcnRpbg0KDQotLSANCkRyLiBN
-YXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3
-DQpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQs
-IEdyYWhhbSBOb3J0b24NCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQ0KDQotLQ0KZG0tZGV2ZWwg
-bWFpbGluZyBsaXN0DQpkbS1kZXZlbEByZWRoYXQuY29tDQpodHRwczovL3d3dy5yZWRoYXQuY29t
-L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwNCg0K
---=_alternative 003294EC4825806F_=
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: base64
+>> Handling different types is probably an overkill too. If it works with logon keys,
+>> why would we need to use 'user' keys?
+> 
+> Well your original patch used 'user' type so I assumed you have good reason to use it.
 
-PGZvbnQgc2l6ZT0yIGZhY2U9IlRpbWVzIE5ldyBSb21hbiI+SGkgTWFydGluLDwvZm9udD4NCjxi
-cj4NCjxicj48Zm9udCBzaXplPTI+44CJPC9mb250Pjxmb250IHNpemU9MiBmYWNlPSJUaW1lcyBO
-ZXcgUm9tYW4iPkJ1dCBvbmNlDQp5b3Ugc3RhcnQgbWVyZ2luZywgeW91J2QgcmF0aGVyIGJlIHBy
-ZXBhcmVkIGZvcjwvZm9udD4NCjxicj48Zm9udCBzaXplPTI+44CJPC9mb250Pjxmb250IHNpemU9
-MiBmYWNlPSJUaW1lcyBOZXcgUm9tYW4iPnNldmVyYWwNCmV2ZW50cyBmb3IgdGhlIHNhbWUgcGh5
-cyBkZXZpY2UsIHRvby48L2ZvbnQ+DQo8YnI+DQo8YnI+PGZvbnQgc2l6ZT0yIGZhY2U9IlRpbWVz
-IE5ldyBSb21hbiI+V2UgY2FuIGJhc2Ugb24gc3VjaCBhIHRocmVzaG9sZA0KdGhhdCB0aGVyZSBp
-cyBubyByZXBlYXQgdWV2ZW50cyBmcm9tIHRoZSBzYW1lIHNkIGRldmljZSw8L2ZvbnQ+DQo8YnI+
-PGZvbnQgc2l6ZT0yIGZhY2U9IlRpbWVzIE5ldyBSb21hbiI+b3RoZXJ3aXNlLCB3ZSBwYXVzZSBk
-b2luZyBtZXJnZXIsDQphbmQga2ljayB1ZXZlbnQgcHJvY2Vzc2luZyB0aHJlYWQ8L2ZvbnQ+PGZv
-bnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPg0KPC9mb250Pjxmb250IHNpemU9MiBmYWNlPSJU
-aW1lcyBOZXcgUm9tYW4iPnRvIHByb2Nlc3MgdGhlIG1lcmdlZCB1ZXZlbnRzLjwvZm9udD4NCjxk
-aXY+DQo8YnI+PGZvbnQgc2l6ZT0yIGZhY2U9IlRpbWVzIE5ldyBSb21hbiI+UmVnYXJkcyw8L2Zv
-bnQ+DQo8YnI+PGZvbnQgc2l6ZT0yIGZhY2U9IlRpbWVzIE5ldyBSb21hbiI+VGFuZzwvZm9udD4N
-Cjxicj4NCjxicj4NCjxicj4NCjxicj4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBm
-YWNlPSJzYW5zLXNlcmlmIj7lj5Hku7bkuro6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsg
-PC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj5NYXJ0aW4gV2lsY2sNCiZsdDtt
-d2lsY2tAc3VzZS5jb20mZ3Q7PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVm
-IGZhY2U9InNhbnMtc2VyaWYiPuaUtuS7tuS6ujogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNw
-OyA8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPnRhbmcuanVuaHVpQHp0ZS5j
-b20uY24sDQo8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fu
-cy1zZXJpZiI+5oqE6YCBOiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7PC9mb250Pjxmb250
-IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj5kbS1kZXZlbEByZWRoYXQuY29tPC9mb250Pg0KPGJy
-Pjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPuaXpeacnzogJm5i
-c3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyA8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9InNhbnMt
-c2VyaWYiPjIwMTYvMTEvMTgNCjE2OjM4PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0j
-NWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPuS4u+mimDogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZu
-YnNwOzwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+UmU6IFtkbS1kZXZlbF0N
-CkltcHJvdmUgcHJvY2Vzc2luZyBlZmZpY2llbmN5IGZvciBhZGRpdGlvbiBhbmQgZGVsZXRpb24g
-b2YgbXVsdGlwYXRoIGRldmljZXM8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVm
-NWYgZmFjZT0ic2Fucy1zZXJpZiI+5Y+R5Lu25Lq6OiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5i
-c3A7PC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj5kbS1kZXZlbC1ib3VuY2Vz
-QHJlZGhhdC5jb208L2ZvbnQ+DQo8YnI+DQo8aHIgbm9zaGFkZT4NCjxicj4NCjxicj4NCjxicj48
-dHQ+PGZvbnQgc2l6ZT0yPk9uIEZyaSwgMjAxNi0xMS0xOCBhdCAxNjoyNCArMDgwMCwgdGFuZy5q
-dW5odWlAenRlLmNvbS5jbg0Kd3JvdGU6PGJyPg0KJmd0OyBIaSBNYXJ0aW4sJm5ic3A7PGJyPg0K
-Jmd0OyA8YnI+DQomZ3Q7IEluIHlvdXIgY2FzZSwgbXkgYWN0aW9uIGlzOiZuYnNwOzxicj4NCiZn
-dDsgMSkgbWVyZ2VyIHVldmVudHMgMSkgMikgdG8gb25lIHVldmVudCAmcXVvdDthZGQgc2RhIHNk
-YiZxdW90OywgYW5kDQpwcm9jZXNzIHRoZW08YnI+DQomZ3Q7IHRvZ290aGVyJm5ic3A7PGJyPg0K
-PGJyPg0KVGhpcyB3aWxsIGZhaWwgYmVjYXVzZSBzZGIgaXMgbm9uLWV4aXN0ZW50IGF0IHRoZSB0
-aW1lIHlvdSB0cnkgLSBubz88YnI+DQo8YnI+DQomZ3Q7IFRob3VnaCB0aGUgcHJvY2Vzc2luZyBl
-ZmZpY2llbmN5IGluIHN1Y2ggc2NlbmFyaW8gaXMgbG93ZXIgdGhhbjxicj4NCiZndDsgeW91cnMs
-IGJ1dCBpdCBpcyBzaW1wbGUgYW5kIHJlbGlhYmxlLDxicj4NCiZndDsgbW9yZSBpbXBvcnRhbnRs
-eSwgTWFydGluLCB5b3Ugc3RpbGwgZm9jdXMgb24gc3VjaCBzcGVjaWFsIHNjZW5lLDxicj4NCiZn
-dDsgd2hpY2ggSSBjb25jZXJuZWQgaXMgbGlrZSB0aGlzOiZuYnNwOzxicj4NCjxicj4NClsuLi5d
-PGJyPg0KPGJyPg0KSSB1bmRlcnN0YW5kIHdoYXQgeW91J3JlIGNvbmNlcm5lZCB3aXRoLiBJIGp1
-c3QgdGhpbmsgd2UgbmVlZCB0byBkbzxicj4NCmJvdGguIEkgYWdyZWUgdGhhdCBtYW55IGV2ZW50
-cyBmb3IgbWFueSBkaWZmZXJlbnQgZGV2aWNlcyBhcmUgbW9yZTxicj4NCmxpa2VseS4gQnV0IG9u
-Y2UgeW91IHN0YXJ0IG1lcmdpbmcsIHlvdSdkIHJhdGhlciBiZSBwcmVwYXJlZCBmb3I8YnI+DQpz
-ZXZlcmFsIGV2ZW50cyBmb3IgdGhlIHNhbWUgcGh5cyBkZXZpY2UsIHRvby48YnI+DQo8YnI+DQpN
-YXJ0aW48YnI+DQo8YnI+DQotLSA8YnI+DQpEci4gTWFydGluIFdpbGNrICZsdDttd2lsY2tAc3Vz
-ZS5jb20mZ3Q7LCBUZWwuJm5ic3A7KzQ5ICgwKTkxMSA3NDA1MyAyMTA3PGJyPg0KU1VTRSBMaW51
-eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9y
-dG9uPGJyPg0KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpPGJyPg0KPGJyPg0KLS08YnI+DQpkbS1k
-ZXZlbCBtYWlsaW5nIGxpc3Q8YnI+DQpkbS1kZXZlbEByZWRoYXQuY29tPGJyPg0KPC9mb250Pjwv
-dHQ+PGEgaHJlZj0iaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
-dmVsIj48dHQ+PGZvbnQgc2l6ZT0yPmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
-aW5mby9kbS1kZXZlbDwvZm9udD48L3R0PjwvYT4NCjxicj48L2Rpdj4NCg==
---=_alternative 003294EC4825806F_=--
+I used 'user' because I wasn't sure if userspace requires ability to read keys or not.
 
 
---===============6441996836165403864==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+> But anyway it's not so painful to add option to choose from 2 different key types imo. Loading tables is not a hot path.
+> 
 
-
---===============6441996836165403864==--
+Ok, fair enough. 
