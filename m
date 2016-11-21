@@ -1,16 +1,24 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v3] dm-crypt: add ability to use keys from
- the kernel key retention service
-Date: Mon, 21 Nov 2016 10:40:49 -0500
-Message-ID: <20161121154049.GA13248@redhat.com>
-References: <1479329231-4572-1-git-send-email-okozina@redhat.com>
-	<1479740331-31573-1-git-send-email-okozina@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: Improve processing efficiency for addition and
+ deletion of multipath devices
+Date: Mon, 21 Nov 2016 12:19:03 -0600
+Message-ID: <20161121181903.GA1972@octiron.msp.redhat.com>
+References: <OF7C96E124.CD19B12D-ON4825806D.00095E60-4825806D.0009BD8C@zte.com.cn>
+	<9797787c-30c5-08fb-f92a-5e68ec0b6333@suse.de>
+	<OF1D9DC33E.849B3309-ON4825806D.002C52A8-4825806D.003020B2@zte.com.cn>
+	<1479289781.14706.16.camel@suse.com>
+	<OF233D7062.48FA865C-ON4825806E.000544C5-4825806E.00093C07@zte.com.cn>
+	<1479379712.14706.23.camel@suse.com>
+	<OF3A4A70D0.4D2612E4-ON4825806F.00029856-4825806F.0005B3C7@zte.com.cn>
+	<1479454748.25031.4.camel@suse.com>
+	<OFDDCD5089.D3C390A2-ON4825806F.002B819E-4825806F.002E2347@zte.com.cn>
+	<1479457857.25031.8.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1479740331-31573-1-git-send-email-okozina@redhat.com>
+In-Reply-To: <1479457857.25031.8.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,100 +28,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ondrej Kozina <okozina@redhat.com>
-Cc: aryabinin@virtuozzo.com, dm-devel@redhat.com, mpatocka@redhat.com, mbroz@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, tang.junhui@zte.com.cn
 List-Id: dm-devel.ids
 
-On Mon, Nov 21 2016 at  9:58P -0500,
-Ondrej Kozina <okozina@redhat.com> wrote:
+On Fri, Nov 18, 2016 at 09:30:57AM +0100, Martin Wilck wrote:
+> On Fri, 2016-11-18 at 16:24 +0800, tang.junhui@zte.com.cn wrote:
+> > Hi Martin,=A0
+> > =
 
-> Changes since v2:
->   - moved rcu_read_lock() closer to key payload processing (thanks Mikulas)
->   - updated dm-crypt documentation
->   - updated code comments and unified parameter names in kernel keyring function stubs
->     (#CONFIG_KEYS undefined)
-> 
-> The kernel key service is a generic way to store keys for the use of
-> other subsystems. Currently there is no way to use kernel keys in dm-crypt.
-> This patch aims to fix that. Instead of key userspace may pass a key
-> description with preceding ':'. So message that constructs encryption
-> mapping now looks like this:
-> 
->   <cipher> [<key>|:<key_string>] <iv_offset> <dev_path> <start> [<#opt_params> <opt_params>]
-> 
-> where <key_string> is in format: <key_size>:<key_type>:<key_description>
-> 
-> Currently we only support two elementary key types: 'user' and 'logon'.
-> Keys may be loaded in dm-crypt either via <key_string> or using
-> classical method and pass the key in hex representation directly.
-> 
-> dm-crypt device initialised with a key passed in hex representation may be
-> replaced with key passed in key_string format and vice versa.
-> 
-> (Patch is based on original work by Andrey Ryabinin)
-> 
-> Signed-off-by: Ondrej Kozina <okozina@redhat.com>
+> > In your case, my action is:=A0
+> > 1) merger uevents 1) 2) to one uevent "add sda sdb", and process them
+> > togother=A0
+> =
 
-Other than the following cleanup patch that I've put ontop of your v3,
-looks good to me.
+> This will fail because sdb is non-existent at the time you try - no?
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 7c2bbef..8fcc924 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1508,12 +1508,8 @@ static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string
- 	if (!new_key_string)
- 		return -ENOMEM;
- 
--	/*
--	 * FIXME: are there any key descriptions we should disallow users
--	 * from loading to dm-crypt? i.e.: kernel keys starting with '.'
--	 */
--
--	key = request_key(strncmp(key_string, "user", 4) ? &key_type_logon : &key_type_user, key_desc + 1, NULL);
-+	key = request_key(strncmp(key_string, "user", 4) ? &key_type_logon : &key_type_user,
-+			  key_desc + 1, NULL);
- 	if (IS_ERR(key)) {
- 		kzfree(new_key_string);
- 		return PTR_ERR(key);
-@@ -1602,25 +1598,25 @@ static int crypt_set_key(struct crypt_config *cc, char *key)
- 	if (!cc->key_size && strcmp(key, "-"))
- 		goto out;
- 
--	/* ':' means that the key is in kernel keyring */
--	if (key[0] == ':')
-+	/* ':' means the key is in kernel keyring, short-circuit normal key processing */
-+	if (key[0] == ':') {
- 		r = crypt_set_keyring_key(cc, key + 1);
--	else {
--		/* clear the flag since following operations may invalidate previously valid key */
--		clear_bit(DM_CRYPT_KEY_VALID, &cc->flags);
-+		goto out;
-+	}
- 
--		/* wipe references to any kernel keyring key */
--		kzfree(cc->key_string);
--		cc->key_string = NULL;
-+	/* clear the flag since following operations may invalidate previously valid key */
-+	clear_bit(DM_CRYPT_KEY_VALID, &cc->flags);
- 
--		if (cc->key_size &&
--		    crypt_decode_key(cc->key, key, cc->key_size) < 0)
--			goto out;
-+	/* wipe references to any kernel keyring key */
-+	kzfree(cc->key_string);
-+	cc->key_string = NULL;
- 
--		r = crypt_setkey(cc);
--		if (!r)
--			set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
--	}
-+	if (cc->key_size && crypt_decode_key(cc->key, key, cc->key_size) < 0)
-+		goto out;
-+
-+	r = crypt_setkey(cc);
-+	if (!r)
-+		set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
- out:
- 	/* Hex key string not needed after here, so wipe it. */
- 	memset(key, '0', key_string_len);
+Yes. If we get a cluster of events for a device, and the last event is a
+remove event, we don't need to precess them. Just like you mention,
+after that remove event is sent by udev, the device is gone.  There is
+nothing that multipathd could do with it even if it wanted to. So there
+is no point in trying the add and change event processing, since we
+already know that they will fail.
+
+-Ben
+
+> =
+
+> > Though the processing efficiency in such scenario is lower than
+> > yours, but it is simple and reliable,
+> > more importantly, Martin, you still focus on such special scene,
+> > which I concerned is like this:=A0
+> =
+
+> [...]
+> =
+
+> I understand what you're concerned with. I just think we need to do
+> both. I agree that many events for many different devices are more
+> likely. But once you start merging, you'd rather be prepared for
+> several events for the same phys device, too.
+> =
+
+> Martin
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
+> =
+
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
