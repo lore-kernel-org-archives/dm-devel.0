@@ -1,83 +1,229 @@
-From: Teodor Milkov <tm@del.bg>
-Subject: Re: dm-cache issue
-Date: Sat, 19 Nov 2016 19:07:50 +0200
-Message-ID: <689d0d91-70c9-b864-0a9c-0c00af96008e@del.bg>
-References: <CAJV2nOTJoWWc=N80e6WCpZUh6ZRxvCW8Wt=aZWTyYSKso+kQ5Q@mail.gmail.com>
-	<884adfe3-ac18-5e37-f4b4-478e5031f35f@redhat.com>
-	<55289e1d-5a24-73a5-4ccf-026c2640334d@del.bg>
-	<f01aaf8d-1f12-1a6f-5560-5cb6927a1b62@gmail.com>
-	<9bab689e-edf4-c5a6-9954-75f0e9c3d2c6@del.bg>
-	<36a1bed8-b979-35de-155f-e07daf707fac@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <36a1bed8-b979-35de-155f-e07daf707fac@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zdenek.kabelac@gmail.com>, dm-devel@redhat.com
+From: Binoy Jayan <binoy.jayan@linaro.org>
+Subject: [RFC PATCH] IV Generation algorithms for dm-crypt
+Date: Mon, 21 Nov 2016 15:40:08 +0530
+Message-ID: <1479723009-11113-1-git-send-email-binoy.jayan@linaro.org>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Binoy Jayan <binoy.jayan@linaro.org>
 List-Id: dm-devel.ids
 
-T24gMTYuMTEuMjAxNiAxNjowNiwgWmRlbmVrIEthYmVsYWMgd3JvdGU6Cj4gRG5lIDE2LjExLjIw
-MTYgdiAxNDo0NSBUZW9kb3IgTWlsa292IG5hcHNhbChhKToKPj4gT24gMTYuMTEuMjAxNiAxMToy
-NCwgWmRlbmVrIEthYmVsYWMgd3JvdGU6Cj4+PiBNeSBmaXJzdCAnZ3Vlc3MnIGluIHRoaXMgcmVw
-b3J0ZWQgY2FzZSBpcyAtIHRoZSBkaXNrIEkvTyB0cmFmZmljIAo+Pj4gc2VlbiBpcwo+Pj4gcmVs
-YXRlZCB0byB0aGUgJ3JlbG9hZCcgb2YgY2FjaGVkIGNodW5rcyBmcm9tIGRpc2sgYmFjayB0byBj
-YWNoZS4KPj4+Cj4+PiBUaGlzIHdpbGwgaGFwcGVuIGluIHRoZSBjYXNlLCB0aGVyZSBoYXMgYmVl
-biB1bmNsZWFuIGNhY2hlIHNodXRkb3duLgo+Pj4KPj4+IEhvd2V2ZXIgd2hhdCBpcyB1bmNsZWFu
-IGlzIC0gd2h5IGl0IHNsb3dzIGRvd24gYm9vdCBieSBob3Vycy4KPj4+IElzIHRoZSBjYWNoZSB0
-b28gYmlnPz8KPj4KPj4gSW5kZWVkLCBjYWNoZSBpcyBxdWl0ZSBiaWcg4oCTIGEgODAwR0IgU1NE
-LCBidXQgSSBmb3VuZCBleHBlcmltZW50YWxseSAKPj4gdGhhdCB0aGlzCj4+IGlzIHRoZSBzaXpl
-IHdoZXJlIEkgZ2V0IGdvb2QgY2FjaGUgaGl0IHJhdGlvcyB3aXRoIG15ID4xMFRCIGRhdGEgdm9s
-dW1lLgo+Cj4gWWVwIC0gdGhhdCdzIHRoZSBjdXJyZW50IHRyb3VibGUgb2YgZXhpc3RpbmcgIGRt
-LWNhY2hlIHRhcmdldC4KPiBJdCdzIGdldHRpbmcgaW5lZmZpY2llbnQgd2hlbiBtYWludGFpbmlu
-ZyBtb3JlIHRoZW4gMSBtaWxsaW9uCj4gY2FjaGUgYmxvY2sgZW50cmllcyAtIHJlY2VudCB2ZXJz
-aW9ucyBvZiBsdm0yIGV2ZW4gZG8gbm90IGFsbG93Cj4gY3JlYXRlIHN1Y2ggY2FjaGUgd2l0aG91
-dCBlbmZvcmNpbmcgaXQuCj4gKHNvIGZvciAzMmsgYmxvY2tzIGl0JyAgfjMwRyBjYWNoZSBkYXRh
-IHNpemUpCgpJJ20gc29ycnkgZm9yIG5vdCBiZWluZyBjbGVhcjogc2ltaWxhcmx5IHRvIHRoZSBP
-UCBteSBTU0QgaXMgc3BsaXQgYW1vbmcgCjEwIExWcywgc28gZWFjaGUgY2FjaGUgaXMgYXJvdW5k
-IDgwR0IuCgo+PiBBcyB0byB0aGUgJ3JlbG9hZCcgdnMgJ2ZsdXNoJyDigJMgSSB0aGluayBpdCBp
-cyBmbHVzaGluZywgYmVjYXVzZSBpaXJjIAo+PiBpb3N0YXQKPj4gc2hvd2VkIGxvdHMgb2YgU1NE
-IHJlYWRpbmcgYW5kIEhERCB3cml0aW5nLCBidXQgSSdtIG5vdCByZWFsbHkgc3VyZSAKPj4gYW5k
-IG5lZWQKPj4gdG8gY29uZmlybSB0aGF0Lgo+Pgo+PiBTbywgYXJlIHlvdSBzYXlpbmcgdGhhdCBp
-biBjYXNlIG9mIHVuY2xlYW4gc2h1dGRvd24gdGhpcyAncmVsb2FkJyBpcyAKPj4gaW5ldml0YWJs
-ZT8KPgo+IFllcyAtIGNsZWFuIHNodXRkb3duIGlzIG1hbmRhdG9yeSAtIG90aGVyd2lzZSBjYWNo
-ZSBjYW4ndCBrbm93IGNvbnNpdGVuY3kKPiBhbmQgaGFzIHRvIHJlZnJlc2ggaXRzZWxmLiAgT3Ro
-ZXIgb3B0aW9uIHdvdWxkIGJlIHByb2JhYmx5IHRvIGRyb3AgY2FjaGUKPiBhbmQgbGV0IGl0IHJl
-YnVpbGQgLSBidXQgeW91IGxvc2UgYWxyZWFkeSBnYWluZWQgJ2tub3dsZWRnZScgdGhpcyB3YXku
-Cj4KPiBBbnl3YXkgQUZBSUsgdGhlcmUgaXMgb25nb2luZyBkZXZlbCBhbmQgdXAtc3RyZWFtaW5n
-IHByb2Nlc3MgZm9yIG5ldyAKPiBjYWNoZSB0YXJnZXQgd2hpY2ggd2lsbCBvdGhlcnMgY291cGxl
-IHNob3J0Y29taW5ncyBhbmQgc2hvdWxkIHBlcmZvcm0gCj4gbXVjaAo+IGJldHRlci4gICBsdm0y
-IHdpbGwgc3VwcG9zZWRseSBoYW5kbGUgdHJhbnNpdGlvbiB0byBhIG5ldyBmb3JtYXQgaW4gCj4g
-c29tZSB3YXkKPiBsYXRlci4KPgo+PiBIb3cgbXVjaCB0aW1lIGl0IHRha2VzIG9idmlvdXNseSBk
-ZXBlbmRzIG9uIHRoZSBTU0Qgc2l6ZS9zcGVlZCAmIEhERCAKPj4gc3BlZWQsCj4+IGJ1dCB3aXRo
-IDgwMEdCIFNTRCBpdCBpcyByZWFzb25hYmxlIHRvIGV4cGVjdCB2ZXJ5IGxvbmcgYm9vdCB0aW1l
-cy4KPj4KPj4+IENhbiB5b3UgcHJvdmlkZSBmdWxsIGxvZ3MgZnJvbSAnZGVhY3RpdmF0aW9uJyBh
-bmQgZm9sbG93aW5nIGFjdGl2YXRpb24/Cj4+Cj4+IEFueSBoaW50cyBhcyB0byBob3cgdG8gY29s
-bGVjdCAiZnVsbCBsb2dzIGZyb20gJ2RlYWN0aXZhdGlvbicgYW5kIAo+PiBmb2xsb3dpbmcKPj4g
-YWN0aXZhdGlvbiI/IEl0IGhhcHBlbnMgZWFybHkgaW4gdGhlIERlYmlhbiBib290IHByb2Nlc3Mg
-KEkgdGhpbmsgCj4+IHVkZXYgZG9lcwo+PiB0aGUgYWN0aXZhdGlvbikgYW5kIEknbSBub3Qgc3Vy
-ZSBob3cgdG8gZW5hYmxlIGxvZ2dpbmcuLi4gc2hvdWxkIEkgdHdlYWsKPj4gL2V0Yy9sdm0vbHZt
-LmNvbmY/Cj4KPiBBbGwgeW91IG5lZWQgdG8gY29sbGVjdCBpcyBiYXNpY2FsbHkgJ3NlcmlhbCcg
-Y29uc29sZSBsb2cgZnJvbSB5b3VyCj4gbWFjaGluZSAgLSBzbyBpZiB5b3UgaGF2ZSBvdGhlciBi
-b3ggdG8gdHJhcCBzZXJpYWwgY29uc29sZSBsb2cgLSBpdCdzCj4gdGhlIG1vc3QgZWFzaWVzdCBv
-cHRpb24uCj4KPiBCdXQgc2luY2UgeW91IGFscmVhZHkgc2FpZCB5b3UgdXNlICB+MzB0aW1lcyBi
-aWdnZXIgY2FjaGUgc2l6ZSB0aGVuIAo+IHRoZSBzaXplIHdpdGggJ3JlYXNvbmFibGUnIHBlcmZv
-cm1hbmNlIC0gSSB0aGluayBpdCdzIGFscmVhZHkgY2xlYXIgCj4gd2hlcmUgaXMgeW91cgo+IHBy
-b2JsZW0gaGlkZGVuLgo+Cj4gVW50aWwgbmV3IHRhcmdldCB3aWxsIGJlIGRlcGxveWVkIC0gcGxl
-YXNlIGNvbnNpZGVyIHRvIHVzZSAKPiBzaWduaWZpY2FudGx5IHNtYWxsZXIgY2FjaGUgc2l6ZSBz
-byB0aGUgbnVtYmVyIG9mIGNhY2hlIGNodW5rcyBpcyBub3QgCj4gYWJvdmUgMSAwMDAgMDAwLgoK
-VGhhbmsgeW91IHZlcnkgbXVjaCBmb3IgeW91ciBoZWxwISBJJ2xsIGdpdmUgaXQgYW5vdGhlciBn
-byBhdCBkZWJ1Z2dpbmcgCndoYXQgdGhlIHByb2JsZW0gaXMuCkkgZm91bmQgZG0td3JpdGVib29z
-dCBpbiB3cml0ZV9hcm91bmRfbW9kZSAoa2luZGEgd3JpdGUtdGhyb3VnaCkgd29ya3MgCndlbGwg
-Zm9yIG1lLCBzbyBpZiBJIGRvbid0IG1hbmFnZSB0byBnZXQgYWxvbmcgd2l0aCBkbS1jYWNoZSBJ
-IGhhdmUgcGxhbiBCLgoKCkJlc3QgcmVnYXJkcywKVGVvZG9yCgotLQpkbS1kZXZlbCBtYWlsaW5n
-IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
-bGlzdGluZm8vZG0tZGV2ZWw=
+
+===============================================================================
+GENIV Template cipher
+===============================================================================
+
+Currently, the iv generation algorithms are implemented in dm-crypt.c. The goal
+is to move these algorithms from the dm layer to the kernel crypto layer by
+implementing them as template ciphers so they can be used in relation with
+algorithms like aes, and with multiple modes like cbc, ecb etc. As part of this
+patchset, the iv-generation code is moved from the dm layer to the crypto layer.
+The dm-layer can later be optimized to encrypt larger block sizes in a single
+call to the crypto engine.
+
+One challenge in doing so is with the 'essiv' which creates the IV by hashing
+the 512-byte sector number. This infact limits the block sizes to 512 bytes.
+A way to get around this problem has to be explored. Another thing to note is
+that the algorithms shares its context data structures (cipher context and
+request context) with the callee, i.e. dm-crypt here. Not sure if this coupling
+is accepted. If not, this has to be decoupled. A new crypto api
+'crypto_skcipher_set_ctx' defined in 'include/crypto/skcipher.h' which was
+initially written for addressing this is not used now. But even if it is used,
+the data structure definition would still be shared.
+
+The following ASCII art decomposes the kernel crypto API layers when using the
+skcipher with the automated IV generation. The shown example is used by the
+DM layer. For other use cases of cbc(aes), the ASCII art applies as well, but
+the caller may not use the same with a separate IV generator. In this case, the
+caller must generate the IV. The depicted example decomposes <ivgen>(cbc(aes))
+based on the generic C implementations (geniv.c, cbc.c and aes-generic.c).
+The generic implementation depicts the dependency between the templates ciphers
+used in implementing geniv using the kernel crypto API.
+Here, <geniv> indicates one of the following algorithms:
+
+1. plain
+2. plain64
+3. essiv
+4. benbi
+5. null
+6. lmk
+7. tcw
+
+It is possible that some streamlined cipher implementations (like AES-NI)
+provide implementations merging aspects which in the view of the kernel crypto
+API cannot be decomposed into layers any more. Each block in the following
+ASCII art is an independent cipher instance obtained from the kernel crypto
+API. Each block is accessed by the caller or by other blocks using the API
+functions defined by the kernel crypto API for the cipher implementation type.
+The blocks below indicate the cipher type as well as the specific logic
+implemented in the cipher.
+
+The ASCII art picture also indicates the call structure, i.e. who calls which
+component. The arrows point to the invoked block where the caller uses the API
+applicable to the cipher type specified for the block. For the purpose of
+illustration, here we take the example of the aes mode 'cbc'. However, the IV
+generation algorithm could be used with other aes modes like ecb as well.
+
+-------------------------------------------------------------------------------
+Geniv implementation
+-------------------------------------------------------------------------------
+
+NB: The ASCII art below is best viewed in a fixed-width font.
+
+                             crypt_convert_block()              (DM Layer)
+                                      |
+                                      | (1)
+                                      |
+                                      v
++------------+   +-----------+   +-----------+       +-----------+
+|            |   |           |   |           |  (2)  |           |
+|  skcipher  |   | skcipher  |   | skcipher  |----+  | skcipher  |   Blocks for
+| (plain/64) |   | (benbi)   |   | (essiv)   |    |  |  (null)   |   lmk, tcw
++------------+   +-----------+   +-----------+    |  +-----------+ 
+     |                |               |           v         |
+     | (3)            | (3)      (3)  |    +-----------+    |
+     |                |               |    |           |    |
+     |                |               |    |   ahash   |    | (3)
+     |                |               |    |           |    |
+     |                |               |    +-----------+    |
+     |                |               v                     |     (Crypto API
+     |                |         +-----------+               |        Layer)
+     |                v         |           |               |
+     +------------------------> |  skcipher | <-------------+
+                                |   (cbc)   |
+                                +-----------+  (AES Mode Template cipher)
+                                      | (4)
+                                      v
+                               +-----------+
+                               |           |
+                               |   cipher  |   (Base generic-AES cipher)
+                               |   (aes)   |
+                               +-----------+
+
+     
+The following call sequence is applicable when the DM layer triggers an
+encryption operation with the crypt_convert_block() function. During
+configuration, the administrator sets up the use of <geniv>(cbc(aes)) as the
+template cipher. 'geniv' can be one among plain, plain64, essiv, benbi, null,
+lmk, or tcw which are all implemented as seperate templates. 
+The following are the template ciphers implemented as part of 'geniv.c'
+
+1. plain(cbc(aes))
+2. plain64(cbc(aes))
+3. essiv(cbc(aes))
+4. benbi(cbc(aes))
+5. null(cbc(aes))
+6. lmk(cbc(aes))
+7. tcw(cbc(aes))
+
+The following call sequence is now depicted in the ASCII art above:
+
+1. crypt_convert_block invokes crypto_skcipher_encrypt() to trigger encryption
+   operation of a single block (i.e. sector) with the IV same as the sector no.
+   For example, with essiv, the IV generation implementation is registered with
+   a call to 'crypto_register_template(&crypto_essiv_tmpl)'
+
+2. During instantiation of the 'geniv' handle, the IV generation algorithm is
+   instantiated. For the purpose of illustration, we take the example of essiv.
+   In this case, the ahash cipher is instantiated to calculate the hash of the
+   sector to generate the IV.
+
+3. Now, geniv uses the skcipher api calls to invoke the associated cipher. In
+   our case, during the instantiation of geniv, the cipher handle for cbc is
+   provided to geniv. The geniv skcipher type implementation now invokes the
+   skcipher api with the instantiated cbc(aes) cipher handle. During the
+   instantiation of the cbc(aes) cipher, the cipher type generic-aes is also
+   instantiated. That means that the SKCIPHER implementation of cbc(aes) only
+   implements the Cipher-block chaining mode. After performing block chaining
+   operation, the cipher implementation of aes is invoked. The skcipher of
+   cbc(aes) now invokes the cipher api with the aes cipher handle to encrypt
+   one block.
+
+-------------------------------------------------------------------------------
+Clarifications
+-------------------------------------------------------------------------------
+
+1. Changes to testmgr.c
+2. How to encrypt blocks bigger than 512 bytes while using essiv?
+   As sectors are tied to IV in case of 'essiv'.
+   Will changing block size make it backward incompatible
+   and with other platforms (like windows) which support LUKS volumes.
+3. Did not move the key management code from dm-crypt to cryto layer
+   when keycount > 1 as multiple ciphers are instantiated from dm layer
+   with each cipher instance is allotted a part of the key provided.
+
+-------------------------------------------------------------------------------
+Test procedure
+-------------------------------------------------------------------------------
+
+The algorithms are tested using 'cryptsetup' utility to create LUKS
+compatible volumes on Qemu.
+
+NB: '/dev/sdb' is a second disk volume (configured in qemu)
+
+# One time setup - Format the device compatible with LUKS.
+# Choose one of the following IV generation alorithms at a time
+cryptsetup -y -c aes-cbc-plain -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes-cbc-plain64 -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes-cbc-essiv:sha256 -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes-cbc-benbi -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes-cbc-null -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes-cbc-lmk -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes-cbc-tcw -s 256 --hash sha256 luksFormat /dev/sdb
+
+# With a keycount
+cryptsetup -y -c aes:2-cbc-plain -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes:2-cbc-plain64 -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes:2-cbc-essiv:sha256 -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes:2-cbc-null -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes:2-cbc-lmk -s 256 --hash sha256 luksFormat /dev/sdb
+
+# Add additional key - optional
+cryptsetup luksAddKey /dev/sdb
+
+# The above lists only a limited number of tests with the aes cipher.
+# The IV generation algorithms may also be tested with other ciphers as well.
+
+cryptsetup luksDump --dump-master-key /dev/sdb
+
+# create a luks volume and open the device
+cryptsetup luksOpen /dev/sdb crypt_fun
+dmsetup table --showkeys
+
+# Write some data to the device
+cat data.txt > /dev/mapper/crypt_fun
+
+# Read 100 bytes back
+dd if=/dev/mapper/crypt_fun of=out.txt bs=100 count=1
+cat out.txt
+
+mkfs.ext4 -j /dev/mapper/crypt_fun
+
+# Mount if fs creation succeeds
+mount -t ext4 /dev/mapper/crypt_fun /mnt
+
+<-- Use the encrypted file system -->
+
+umount /mnt
+cryptsetup luksClose crypt_fun
+cryptsetup luksRemoveKey /dev/sdb
+
+This seems to work well. The file system mounts successfully and the files
+written to in the file system remain persistent across reboots.
+
+Binoy Jayan (1):
+  crypto: Add IV generation algorithms
+
+ crypto/Kconfig            |    8 +
+ crypto/Makefile           |    1 +
+ crypto/geniv.c            | 1113 +++++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-crypt.c     |  725 +++--------------------------
+ include/crypto/geniv.h    |  109 +++++
+ include/crypto/skcipher.h |   17 +
+ 6 files changed, 1309 insertions(+), 664 deletions(-)
+ create mode 100644 crypto/geniv.c
+ create mode 100644 include/crypto/geniv.h
+
+-- 
+Binoy Jayan
+
