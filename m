@@ -1,40 +1,42 @@
-From: Jens Axboe <axboe@fb.com>
-Subject: Re: [PATCH 00/12] block: cleanup direct access to bvec table
-Date: Tue, 22 Nov 2016 08:53:00 -0700
-Message-ID: <167c2511-349f-a8e6-17d1-f7ce438b2f14@fb.com>
-References: <1478865957-25252-1-git-send-email-tom.leiming@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: identify DataCore SANsymphony
+	in hwtable
+Date: Tue, 22 Nov 2016 21:05:16 +0100
+Message-ID: <20161122200516.5854-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <1478865957-25252-1-git-send-email-tom.leiming@gmail.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Ming Lei <tom.leiming@gmail.com>, linux-kernel@vger.kernel.org
-Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Adrian Hunter <adrian.hunter@intel.com>, Coly Li <colyli@suse.de>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, "open list:DRBD DRIVER" <drbd-dev@lists.linbit.com>, Eric Wheeler <git@linux.ewheeler.net>, Guoqing Jiang <gqjiang@suse.com>, Hannes Reinecke <hare@suse.com>, Jiri Kosina <jkosina@suse.cz>, Johannes Thumshirn <jthumshirn@suse.de>, Keith Busch <keith.busch@intel.com>, Kent Overstreet <kent.overstreet@gmail.com>, "open list:BCACHE (BLOCK LAYER CACHE)" <linux-bcache@vger.kernel.org>, "open list:NVM EXPRESS TARGET DRIVER" <linux-nvme@lists.infradead.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On 11/11/2016 05:05 AM, Ming Lei wrote:
-> Hi,
->
-> This patchset cleans up direct access to bvec table.
->
-> The 1st patch passes bvec table to bio_init(), so that
-> direct access to bvec table in bio initialization is avoided.
->
-> For other patches, most of them uses bio_add_page()
-> to replace hardcode style of adding page to bvec,
-> and others avoids to access bio->bi_vcnt.
->
-> The most special one is to use bvec iterator helpers
-> to implement .get_page/.next_page for dm-io.c
->
-> One big motivation is to prepare for supporting multipage
-> bvec, but this patchset is one good cleanup too even not
-> for that purpose.
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-I've added the series, except 6-8, the dm parts. I updated some of the
-descriptions/subjects to read a little better.
-
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index eb7a5a0..c0bfa75 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -884,6 +884,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	{
++		/* SANsymphony */
+ 		.vendor	       = "DataCore",
+ 		.product       = "Virtual Disk",
+ 		.pgpolicy      = GROUP_BY_PRIO,
 -- 
-Jens Axboe
-
+2.10.2
