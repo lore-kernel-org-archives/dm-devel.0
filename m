@@ -1,14 +1,16 @@
 From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: [PATCH] New device mapper target ZDM
-Date: Tue, 22 Nov 2016 15:44:30 +0000
-Message-ID: <20161122154430.GA22270@agk-dp.fab.redhat.com>
+Date: Tue, 22 Nov 2016 15:46:23 +0000
+Message-ID: <20161122154623.GB22270@agk-dp.fab.redhat.com>
 References: <20161121192311.14539-1-shaun@tancheff.com>
+	<BLUPR02MB1683056A1D78B1A481A38CC181B40@BLUPR02MB1683.namprd02.prod.outlook.com>
+	<CAJ48U8VwTCofzOC6n_RaG93WfxAxW2USy3dZ6w4Us_tx_Z3r1A@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20161121192311.14539-1-shaun@tancheff.com>
+In-Reply-To: <CAJ48U8VwTCofzOC6n_RaG93WfxAxW2USy3dZ6w4Us_tx_Z3r1A@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,23 +21,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Shaun Tancheff <shaun@tancheff.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Vineet Agarwal <vineet.agarwal@seagate.com>, dm-devel <dm-devel@redhat.com>, Michael T Lombardi <michael.t.lombardi@seagate.com>, Shaun Tancheff <shaun.tancheff@seagate.com>, Alasdair G Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Vineet Agarwal <vineet.agarwal@seagate.com>, dm-devel <dm-devel@redhat.com>, Shaun Tancheff <shaun.tancheff@seagate.com>, Michael T Lombardi <michael.t.lombardi@seagate.com>, Bart Van Assche <Bart.VanAssche@sandisk.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Well to start with some device-mapper basics, looks at the newer files
-(e.g.  thin-provisioning.txt, cache.txt) in the Documentation directory
-to see what format to use and how to document the interface.
-Constructor, status, examples using dmsetup only etc.
+On Tue, Nov 22, 2016 at 09:35:28AM -0600, Shaun Tancheff wrote:
+> I can move all but the 'status' to debugfs and move 'status' to sysfs
+> and reformat
+> the output as appropriate.... would that suffice?
+ 
+First concentrate on working out how to shoe-horn the code into the standard
+device-mapper interface model, like the existing dm targets.
 
-(BTW We don't use equals signs in our interfaces.)
-
-But even before any of that, I'm puzzled by the basics of how this can
-have been fitted into a device-mapper interface where the "sine qua non"
-resume function is still TODO, 'dmsetup table' appears unimplemented,
-'status' doesn't appear to provide the internal status, and 'load' has
-some keywords that also don't appear to fit.
-
-Look at how the existing dm targets divide up the work between each of
-the functions and model your interface on those.
+The right location for the assorted things you've placed in /proc will then
+drop out of that analysis.
 
 Alasdair
