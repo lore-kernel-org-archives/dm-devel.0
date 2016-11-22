@@ -1,38 +1,40 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] New device mapper target ZDM
-Date: Tue, 22 Nov 2016 15:46:23 +0000
-Message-ID: <20161122154623.GB22270@agk-dp.fab.redhat.com>
-References: <20161121192311.14539-1-shaun@tancheff.com>
-	<BLUPR02MB1683056A1D78B1A481A38CC181B40@BLUPR02MB1683.namprd02.prod.outlook.com>
-	<CAJ48U8VwTCofzOC6n_RaG93WfxAxW2USy3dZ6w4Us_tx_Z3r1A@mail.gmail.com>
+From: Jens Axboe <axboe@fb.com>
+Subject: Re: [PATCH 00/12] block: cleanup direct access to bvec table
+Date: Tue, 22 Nov 2016 08:53:00 -0700
+Message-ID: <167c2511-349f-a8e6-17d1-f7ce438b2f14@fb.com>
+References: <1478865957-25252-1-git-send-email-tom.leiming@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAJ48U8VwTCofzOC6n_RaG93WfxAxW2USy3dZ6w4Us_tx_Z3r1A@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Shaun Tancheff <shaun@tancheff.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Vineet Agarwal <vineet.agarwal@seagate.com>, dm-devel <dm-devel@redhat.com>, Shaun Tancheff <shaun.tancheff@seagate.com>, Michael T Lombardi <michael.t.lombardi@seagate.com>, Bart Van Assche <Bart.VanAssche@sandisk.com>, Alasdair G Kergon <agk@redhat.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <1478865957-25252-1-git-send-email-tom.leiming@gmail.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Ming Lei <tom.leiming@gmail.com>, linux-kernel@vger.kernel.org
+Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Adrian Hunter <adrian.hunter@intel.com>, Coly Li <colyli@suse.de>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, "open list:DRBD DRIVER" <drbd-dev@lists.linbit.com>, Eric Wheeler <git@linux.ewheeler.net>, Guoqing Jiang <gqjiang@suse.com>, Hannes Reinecke <hare@suse.com>, Jiri Kosina <jkosina@suse.cz>, Johannes Thumshirn <jthumshirn@suse.de>, Keith Busch <keith.busch@intel.com>, Kent Overstreet <kent.overstreet@gmail.com>, "open list:BCACHE (BLOCK LAYER CACHE)" <linux-bcache@vger.kernel.org>, "open list:NVM EXPRESS TARGET DRIVER" <linux-nvme@lists.infradead.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Tue, Nov 22, 2016 at 09:35:28AM -0600, Shaun Tancheff wrote:
-> I can move all but the 'status' to debugfs and move 'status' to sysfs
-> and reformat
-> the output as appropriate.... would that suffice?
- 
-First concentrate on working out how to shoe-horn the code into the standard
-device-mapper interface model, like the existing dm targets.
+On 11/11/2016 05:05 AM, Ming Lei wrote:
+> Hi,
+>
+> This patchset cleans up direct access to bvec table.
+>
+> The 1st patch passes bvec table to bio_init(), so that
+> direct access to bvec table in bio initialization is avoided.
+>
+> For other patches, most of them uses bio_add_page()
+> to replace hardcode style of adding page to bvec,
+> and others avoids to access bio->bi_vcnt.
+>
+> The most special one is to use bvec iterator helpers
+> to implement .get_page/.next_page for dm-io.c
+>
+> One big motivation is to prepare for supporting multipage
+> bvec, but this patchset is one good cleanup too even not
+> for that purpose.
 
-The right location for the assorted things you've placed in /proc will then
-drop out of that analysis.
+I've added the series, except 6-8, the dm parts. I updated some of the
+descriptions/subjects to read a little better.
 
-Alasdair
+-- 
+Jens Axboe
+
