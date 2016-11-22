@@ -1,64 +1,32 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH 7/7] dm-mpath: Fix a race condition in
-	__multipath_map()
-Date: Mon, 21 Nov 2016 15:57:24 -0800
-Message-ID: <d4a3879e-ec60-69f6-abb8-95aa7f305277@sandisk.com>
-References: <e83f8718-9e73-5544-3bcc-4d9851b90ba1@sandisk.com>
-	<81bc399e-df90-099d-1b25-bdb0fda3f27c@sandisk.com>
-	<20161116003720.GA19059@redhat.com>
-	<be828cfa-1121-8d99-0cd1-9021fab3adc8@sandisk.com>
-	<20161121234316.GA25362@redhat.com>
+From: Ming Lei <tom.leiming@gmail.com>
+Subject: Re: [PATCH 07/12] dm: use bvec iterator helpers to implement
+ .get_page and .next_page
+Date: Tue, 22 Nov 2016 08:26:19 +0800
+Message-ID: <CACVXFVOHLMC+qHZco7S675PnbbNQyDH+qobcjdtJEyTE41gEmw@mail.gmail.com>
+References: <1478865957-25252-1-git-send-email-tom.leiming@gmail.com>
+ <1478865957-25252-8-git-send-email-tom.leiming@gmail.com> <20161121144956.GB23051@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161121234316.GA25362@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20161121144956.GB23051@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: Jens Axboe <axboe@fb.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, Alasdair Kergon <agk@redhat.com>, "maintainer:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 11/21/2016 03:43 PM, Mike Snitzer wrote:
-> Shouldn't be possible.  The previous stacktrace you shared clearly
-> showed that the DM mpath request_queue was using blk-mq (dm_mq_queue_rq
-> was in the stack).
+On Mon, Nov 21, 2016 at 10:49 PM, Mike Snitzer <snitzer@redhat.com> wrote:
+> On Fri, Nov 11 2016 at  7:05am -0500,
+> Ming Lei <tom.leiming@gmail.com> wrote:
 >
-> Whereas the stacktrace above is clearly the old request_fn interface.
+>> Firstly we have mature bvec/bio iterator helper for iterate each
+>> page in one bio, not necessary to reinvent a wheel to do that.
+>>
+>> Secondly the coming multipage bvecs requires this patch.
+>>
+>> Also add comments about the direct access to bvec table.
+>>
+>> Signed-off-by: Ming Lei <tom.leiming@gmail.com>
 >
-> I'm unaware of how the existing code can allow this.  As I said in my
-> earlier mails on this: the request-queue shouldn't be able to change
-> from blk-mq back to .request_fn or vice-versa.
->
-> So if you think you're only testing blk-mq DM mpath on blk-mq paths,
-> then you need to determine how dm_old_init_request_queue() is getting
-> called to even setup .request_fn (dm_old_request_fn) to be used.
->
-> If the opposite is true (old request_fn DM mpath stack on blk-mq paths)
-> then determine how dm_mq_init_request_queue is getting called.
->
-> Basically dm_setup_md_queue() should only ever be called the first time
-> the "multipath" target is loaded.  If that isn't the case, then you've
-> exposed some seriously weird bug/regression.
+> I've staged this for 4.10
 
-Hello Mike,
-
-Sorry that I had not yet mentioned this, but the test I'm running is as 
-follows:
-
-# while true; do for t in mq sq sq-on-mq; do echo ==== $t; 
-srp-test/run_tests -s -t 02-$t; done
-
-In other words, I'm alternating mq-on-mq, sq-on-sq and sq-on-mq tests. 
-The above command does not log the time at which each test started so 
-I'm not sure whether it is possible to determine which test triggered 
-the call stack I posted in my previous e-mail.
-
-Bart.
+Thanks Mike!
