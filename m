@@ -1,95 +1,220 @@
-From: Ondrej Kozina <okozina@redhat.com>
-Subject: [PATCH] dm-crypt: check key payload pointer not null
-Date: Wed, 23 Nov 2016 21:51:17 +0100
-Message-ID: <1479934277-14913-1-git-send-email-okozina@redhat.com>
-References: <20161121154049.GA13248@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm: Avoid sleeping while holding the dm_bufio lock
+Date: Wed, 23 Nov 2016 15:57:04 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1611231543020.31481@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1479410660-31408-1-git-send-email-dianders@chromium.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161121154049.GA13248@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: dhowells@redhat.com, aryabinin@virtuozzo.com, mpatocka@redhat.com, snitzer@redhat.com, mbroz@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1479410660-31408-1-git-send-email-dianders@chromium.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Douglas Anderson <dianders@chromium.org>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, shli@kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Sonny Rao <sonnyrao@chromium.org>, linux@roeck-us.net
 List-Id: dm-devel.ids
 
-Hi Mike,
+Hi
 
-those are fixes for latest version (including your cleanup patch). I've fixed one
-awkward bug the rest is based on David's sugestions he gave me earlier today.
+The GFP_NOIO allocation frees clean cached pages. The GFP_NOWAIT 
+allocation doesn't. Your patch would incorrectly reuse buffers in a 
+situation when the memory is filled with clean cached pages.
 
-David, may I also kindly ask you for oficial 'Reviewed-by' stamp provided 
-it's correct now (with regard to kernel keyring bits)?
+Here I'm proposing an alternate patch that first tries GFP_NOWAIT 
+allocation, then drops the lock and tries GFP_NOIO allocation.
 
-bugfix: harden checks for 'user' or 'logon' keywords in key_string (it allowed
-to pass with :logo:... or "use:...)
+Note that the root cause why you are seeing this stacktrace is, that your 
+block device is congested - i.e. there are too many requests in the 
+device's queue - and note that fixing this wait won't fix the root cause 
+(congested device).
 
-bugfix: we have to check user_key_payload reference after rcu_read_lock().
-Otherwise keys revoked between request_key() and rcu_read_lock() calls would
-return NULL pointer.
+The congestion limits are set in blk_queue_congestion_threshold to 7/8 to 
+13/16 size of the nr_requests value.
 
-improvement: calling key_validate() right after request_key() is
-useless. Exactly same check is performed inside request_key()
-routine.
+If you don't want your device to report the congested status, you can 
+increase /sys/block/<device>/queue/nr_requests - you should test if your 
+chromebook is faster of slower with this setting increased. But note that 
+this setting won't increase the IO-per-second of the device.
 
-improvement: do not check the whole key_type string again. We already know
-it's either 'logon' or 'user'. Read just first char.
+Mikulas
+
+
+On Thu, 17 Nov 2016, Douglas Anderson wrote:
+
+> We've seen in-field reports showing _lots_ (18 in one case, 41 in
+> another) of tasks all sitting there blocked on:
+> 
+>   mutex_lock+0x4c/0x68
+>   dm_bufio_shrink_count+0x38/0x78
+>   shrink_slab.part.54.constprop.65+0x100/0x464
+>   shrink_zone+0xa8/0x198
+> 
+> In the two cases analyzed, we see one task that looks like this:
+> 
+>   Workqueue: kverityd verity_prefetch_io
+> 
+>   __switch_to+0x9c/0xa8
+>   __schedule+0x440/0x6d8
+>   schedule+0x94/0xb4
+>   schedule_timeout+0x204/0x27c
+>   schedule_timeout_uninterruptible+0x44/0x50
+>   wait_iff_congested+0x9c/0x1f0
+>   shrink_inactive_list+0x3a0/0x4cc
+>   shrink_lruvec+0x418/0x5cc
+>   shrink_zone+0x88/0x198
+>   try_to_free_pages+0x51c/0x588
+>   __alloc_pages_nodemask+0x648/0xa88
+>   __get_free_pages+0x34/0x7c
+>   alloc_buffer+0xa4/0x144
+>   __bufio_new+0x84/0x278
+>   dm_bufio_prefetch+0x9c/0x154
+>   verity_prefetch_io+0xe8/0x10c
+>   process_one_work+0x240/0x424
+>   worker_thread+0x2fc/0x424
+>   kthread+0x10c/0x114
+> 
+> ...and that looks to be the one holding the mutex.
+> 
+> The problem has been reproduced on fairly easily:
+> 0. Be running Chrome OS w/ verity enabled on the root filesystem
+> 1. Pick test patch: http://crosreview.com/412360
+> 2. Install launchBalloons.sh and balloon.arm from
+>      http://crbug.com/468342
+>    ...that's just a memory stress test app.
+> 3. On a 4GB rk3399 machine, run
+>      nice ./launchBalloons.sh 4 900 100000
+>    ...that tries to eat 4 * 900 MB of memory and keep accessing.
+> 4. Login to the Chrome web browser and restore many tabs
+> 
+> With that, I've seen printouts like:
+>   DOUG: long bufio 90758 ms
+> ...and stack trace always show's we're in dm_bufio_prefetch().
+> 
+> The problem is that we try to allocate memory with GFP_NOIO while
+> we're holding the dm_bufio lock.  Instead we should be using
+> GFP_NOWAIT.  Using GFP_NOIO can cause us to sleep while holding the
+> lock and that causes the above problems.
+> 
+> The current behavior explained by David Rientjes:
+> 
+>   It will still try reclaim initially because __GFP_WAIT (or
+>   __GFP_KSWAPD_RECLAIM) is set by GFP_NOIO.  This is the cause of
+>   contention on dm_bufio_lock() that the thread holds.  You want to
+>   pass GFP_NOWAIT instead of GFP_NOIO to alloc_buffer() when holding a
+>   mutex that can be contended by a concurrent slab shrinker (if
+>   count_objects didn't use a trylock, this pattern would trivially
+>   deadlock).
+> 
+> Suggested-by: David Rientjes <rientjes@google.com>
+> Signed-off-by: Douglas Anderson <dianders@chromium.org>
+> ---
+> Note that this change was developed and tested against the Chrome OS
+> 4.4 kernel tree, not mainline.  Due to slight differences in verity
+> between mainline and Chrome OS it became too difficult to reproduce my
+> testing setup on mainline.  This patch still seems correct and
+> relevant to upstream, so I'm posting it.  If this is not acceptible to
+> you then please ignore this patch.
+> 
+> Also note that when I tested the Chrome OS 3.14 kernel tree I couldn't
+> reproduce the long delays described in the patch.  Presumably
+> something changed in either the kernel config or the memory management
+> code between the two kernel versions that made this crop up.  In a
+> similar vein, it is possible that problems described in this patch are
+> no longer reproducible upstream.  However, the arguments made in this
+> patch (that we don't want to block while holding the mutex) still
+> apply so I think the patch may still have merit.
+> 
+>  drivers/md/dm-bufio.c | 6 ++++--
+>  1 file changed, 4 insertions(+), 2 deletions(-)
+> 
+> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+> index b3ba142e59a4..3c767399cc59 100644
+> --- a/drivers/md/dm-bufio.c
+> +++ b/drivers/md/dm-bufio.c
+> @@ -827,7 +827,8 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
+>  	 * dm-bufio is resistant to allocation failures (it just keeps
+>  	 * one buffer reserved in cases all the allocations fail).
+>  	 * So set flags to not try too hard:
+> -	 *	GFP_NOIO: don't recurse into the I/O layer
+> +	 *	GFP_NOWAIT: don't wait; if we need to sleep we'll release our
+> +	 *		    mutex and wait ourselves.
+>  	 *	__GFP_NORETRY: don't retry and rather return failure
+>  	 *	__GFP_NOMEMALLOC: don't use emergency reserves
+>  	 *	__GFP_NOWARN: don't print a warning in case of failure
+> @@ -837,7 +838,8 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
+>  	 */
+>  	while (1) {
+>  		if (dm_bufio_cache_size_latch != 1) {
+> -			b = alloc_buffer(c, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
+> +			b = alloc_buffer(c, GFP_NOWAIT | __GFP_NORETRY |
+> +					 __GFP_NOMEMALLOC | __GFP_NOWARN);
+>  			if (b)
+>  				return b;
+>  		}
+> -- 
+> 2.8.0.rc3.226.g39d4020
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+Subject: dm-bufio: drop the lock when doing GFP_NOIO alloaction
+
+Drop the lock when doing GFP_NOIO alloaction beacuse the allocation can
+take some time.
+
+Note that we won't do GFP_NOIO allocation when we loop for the second
+time, because the lock shouldn't be dropped between __wait_for_free_buffer
+and __get_unclaimed_buffer.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
 ---
- drivers/md/dm-crypt.c | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
+ drivers/md/dm-bufio.c |   13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index c6ff083..78ab5e8 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1501,31 +1501,31 @@ static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string
- 	if (!key_desc || key_desc == key_string || !strlen(key_desc + 1))
- 		return -EINVAL;
+Index: linux-2.6/drivers/md/dm-bufio.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-bufio.c
++++ linux-2.6/drivers/md/dm-bufio.c
+@@ -822,11 +822,13 @@ enum new_flag {
+ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client *c, enum new_flag nf)
+ {
+ 	struct dm_buffer *b;
++	bool tried_noio_alloc = false;
  
--	if (strncmp(key_string, "logon", key_desc - key_string) &&
--	    strncmp(key_string, "user", key_desc - key_string))
-+	if (strncmp(key_string, "logon:", key_desc - key_string + 1) &&
-+	    strncmp(key_string, "user:", key_desc - key_string + 1))
- 		return -EINVAL;
+ 	/*
+ 	 * dm-bufio is resistant to allocation failures (it just keeps
+ 	 * one buffer reserved in cases all the allocations fail).
+ 	 * So set flags to not try too hard:
++	 *	GFP_NOWAIT: don't sleep and don't release cache
+ 	 *	GFP_NOIO: don't recurse into the I/O layer
+ 	 *	__GFP_NORETRY: don't retry and rather return failure
+ 	 *	__GFP_NOMEMALLOC: don't use emergency reserves
+@@ -837,7 +839,7 @@ static struct dm_buffer *__alloc_buffer_
+ 	 */
+ 	while (1) {
+ 		if (dm_bufio_cache_size_latch != 1) {
+-			b = alloc_buffer(c, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
++			b = alloc_buffer(c, GFP_NOWAIT | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
+ 			if (b)
+ 				return b;
+ 		}
+@@ -845,6 +847,15 @@ static struct dm_buffer *__alloc_buffer_
+ 		if (nf == NF_PREFETCH)
+ 			return NULL;
  
- 	new_key_string = kstrdup(key_string, GFP_KERNEL);
- 	if (!new_key_string)
- 		return -ENOMEM;
- 
--	key = request_key(strncmp(key_string, "user", 4) ? &key_type_logon : &key_type_user,
-+	key = request_key(key_string[0] == 'l' ? &key_type_logon : &key_type_user,
- 			  key_desc + 1, NULL);
- 	if (IS_ERR(key)) {
- 		kzfree(new_key_string);
- 		return PTR_ERR(key);
- 	}
- 
--	ret = key_validate(key);
--	if (ret < 0) {
-+	rcu_read_lock();
++		if (dm_bufio_cache_size_latch != 1 && !tried_noio_alloc) {
++			dm_bufio_unlock(c);
++			b = alloc_buffer(c, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
++			dm_bufio_lock(c);
++			if (b)
++				return b;
++			tried_noio_alloc = true;
++		}
 +
-+	ukp = user_key_payload(key);
-+	if (!ukp) {
-+		rcu_read_unlock();
- 		key_put(key);
- 		kzfree(new_key_string);
--		return ret;
-+		return -EKEYREVOKED;
- 	}
- 
--	rcu_read_lock();
--
--	ukp = user_key_payload(key);
- 	if (cc->key_size != ukp->datalen) {
- 		rcu_read_unlock();
- 		key_put(key);
--- 
-2.7.4
+ 		if (!list_empty(&c->reserved_buffers)) {
+ 			b = list_entry(c->reserved_buffers.next,
+ 				       struct dm_buffer, lru_list);
