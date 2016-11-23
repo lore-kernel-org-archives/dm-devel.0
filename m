@@ -1,123 +1,95 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] RFC: dm: avoid the mutex lock in dm_bufio_shrink_count()
-Date: Wed, 23 Nov 2016 15:42:27 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1611231531340.31481@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1479417398-2593-1-git-send-email-dianders@chromium.org> <alpine.DEB.2.10.1611171413450.99747@chino.kir.corp.google.com>
+From: Ondrej Kozina <okozina@redhat.com>
+Subject: [PATCH] dm-crypt: check key payload pointer not null
+Date: Wed, 23 Nov 2016 21:51:17 +0100
+Message-ID: <1479934277-14913-1-git-send-email-okozina@redhat.com>
+References: <20161121154049.GA13248@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.10.1611171413450.99747@chino.kir.corp.google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Rientjes <rientjes@google.com>
-Cc: Douglas Anderson <dianders@chromium.org>, Mike Snitzer <snitzer@redhat.com>, shli@kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux@roeck-us.net, Sonny Rao <sonnyrao@chromium.org>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20161121154049.GA13248@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: dhowells@redhat.com, aryabinin@virtuozzo.com, mpatocka@redhat.com, snitzer@redhat.com, mbroz@redhat.com
 List-Id: dm-devel.ids
 
+Hi Mike,
 
+those are fixes for latest version (including your cleanup patch). I've fixed one
+awkward bug the rest is based on David's sugestions he gave me earlier today.
 
-On Thu, 17 Nov 2016, David Rientjes wrote:
+David, may I also kindly ask you for oficial 'Reviewed-by' stamp provided 
+it's correct now (with regard to kernel keyring bits)?
 
-> On Thu, 17 Nov 2016, Douglas Anderson wrote:
-> 
-> > diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-> > index b3ba142e59a4..885ba5482d9f 100644
-> > --- a/drivers/md/dm-bufio.c
-> > +++ b/drivers/md/dm-bufio.c
-> > @@ -89,6 +89,7 @@ struct dm_bufio_client {
-> >  
-> >  	struct list_head lru[LIST_SIZE];
-> >  	unsigned long n_buffers[LIST_SIZE];
-> > +	unsigned long n_all_buffers;
-> >  
-> >  	struct block_device *bdev;
-> >  	unsigned block_size;
-> > @@ -485,6 +486,7 @@ static void __link_buffer(struct dm_buffer *b, sector_t block, int dirty)
-> >  	struct dm_bufio_client *c = b->c;
-> >  
-> >  	c->n_buffers[dirty]++;
-> > +	c->n_all_buffers++;
-> >  	b->block = block;
-> >  	b->list_mode = dirty;
-> >  	list_add(&b->lru_list, &c->lru[dirty]);
-> > @@ -502,6 +504,7 @@ static void __unlink_buffer(struct dm_buffer *b)
-> >  	BUG_ON(!c->n_buffers[b->list_mode]);
-> >  
-> >  	c->n_buffers[b->list_mode]--;
-> > +	c->n_all_buffers--;
-> >  	__remove(b->c, b);
-> >  	list_del(&b->lru_list);
-> >  }
-> > @@ -515,6 +518,7 @@ static void __relink_lru(struct dm_buffer *b, int dirty)
-> >  
-> >  	BUG_ON(!c->n_buffers[b->list_mode]);
-> >  
-> > +	/* NOTE: don't update n_all_buffers: -1 + 1 = 0 */
-> >  	c->n_buffers[b->list_mode]--;
-> >  	c->n_buffers[dirty]++;
-> >  	b->list_mode = dirty;
-> > @@ -1588,17 +1592,10 @@ static unsigned long
-> >  dm_bufio_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
-> >  {
-> >  	struct dm_bufio_client *c;
-> > -	unsigned long count;
-> >  
-> >  	c = container_of(shrink, struct dm_bufio_client, shrinker);
-> > -	if (sc->gfp_mask & __GFP_FS)
-> > -		dm_bufio_lock(c);
-> > -	else if (!dm_bufio_trylock(c))
-> > -		return 0;
-> >  
-> > -	count = c->n_buffers[LIST_CLEAN] + c->n_buffers[LIST_DIRTY];
-> > -	dm_bufio_unlock(c);
-> > -	return count;
-> > +	return c->n_all_buffers;
-> >  }
-> >  
-> >  /*
-> 
-> Would be better to just avoid taking the mutex at all and returning 
-> c->n_buffers[LIST_CLEAN] + c->n_buffers[LIST_DIRTY] with a comment that 
-> the estimate might be wrong, but the actual count may vary between 
-> ->count_objects() and ->scan_objects() anyway, so we don't actually care?
+bugfix: harden checks for 'user' or 'logon' keywords in key_string (it allowed
+to pass with :logo:... or "use:...)
 
-Yes - here I'm sending a patch that reads c->n_buffers without the lock.
+bugfix: we have to check user_key_payload reference after rcu_read_lock().
+Otherwise keys revoked between request_key() and rcu_read_lock() calls would
+return NULL pointer.
 
+improvement: calling key_validate() right after request_key() is
+useless. Exactly same check is performed inside request_key()
+routine.
 
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-dm-bufio: don't take the lock in dm_bufio_shrink_count
-
-dm_bufio_shrink_count is called from do_shrink_slab to find out how many
-freeable objects are there. The reported value doesn't have to be precise,
-so we don't need to take the dm-bufio lock.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
+improvement: do not check the whole key_type string again. We already know
+it's either 'logon' or 'user'. Read just first char.
 ---
- drivers/md/dm-bufio.c |   13 ++-----------
- 1 file changed, 2 insertions(+), 11 deletions(-)
+ drivers/md/dm-crypt.c | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-bufio.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c
-+++ linux-2.6/drivers/md/dm-bufio.c
-@@ -1587,18 +1587,9 @@ dm_bufio_shrink_scan(struct shrinker *sh
- static unsigned long
- dm_bufio_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
- {
--	struct dm_bufio_client *c;
--	unsigned long count;
-+	struct dm_bufio_client *c = container_of(shrink, struct dm_bufio_client, shrinker);
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index c6ff083..78ab5e8 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1501,31 +1501,31 @@ static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string
+ 	if (!key_desc || key_desc == key_string || !strlen(key_desc + 1))
+ 		return -EINVAL;
  
--	c = container_of(shrink, struct dm_bufio_client, shrinker);
--	if (sc->gfp_mask & __GFP_FS)
--		dm_bufio_lock(c);
--	else if (!dm_bufio_trylock(c))
--		return 0;
+-	if (strncmp(key_string, "logon", key_desc - key_string) &&
+-	    strncmp(key_string, "user", key_desc - key_string))
++	if (strncmp(key_string, "logon:", key_desc - key_string + 1) &&
++	    strncmp(key_string, "user:", key_desc - key_string + 1))
+ 		return -EINVAL;
+ 
+ 	new_key_string = kstrdup(key_string, GFP_KERNEL);
+ 	if (!new_key_string)
+ 		return -ENOMEM;
+ 
+-	key = request_key(strncmp(key_string, "user", 4) ? &key_type_logon : &key_type_user,
++	key = request_key(key_string[0] == 'l' ? &key_type_logon : &key_type_user,
+ 			  key_desc + 1, NULL);
+ 	if (IS_ERR(key)) {
+ 		kzfree(new_key_string);
+ 		return PTR_ERR(key);
+ 	}
+ 
+-	ret = key_validate(key);
+-	if (ret < 0) {
++	rcu_read_lock();
++
++	ukp = user_key_payload(key);
++	if (!ukp) {
++		rcu_read_unlock();
+ 		key_put(key);
+ 		kzfree(new_key_string);
+-		return ret;
++		return -EKEYREVOKED;
+ 	}
+ 
+-	rcu_read_lock();
 -
--	count = c->n_buffers[LIST_CLEAN] + c->n_buffers[LIST_DIRTY];
--	dm_bufio_unlock(c);
--	return count;
-+	return ACCESS_ONCE(c->n_buffers[LIST_CLEAN]) + ACCESS_ONCE(c->n_buffers[LIST_DIRTY]);
- }
- 
- /*
+-	ukp = user_key_payload(key);
+ 	if (cc->key_size != ukp->datalen) {
+ 		rcu_read_unlock();
+ 		key_put(key);
+-- 
+2.7.4
