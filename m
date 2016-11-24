@@ -1,220 +1,132 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm: Avoid sleeping while holding the dm_bufio lock
-Date: Wed, 23 Nov 2016 15:57:04 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1611231543020.31481@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1479410660-31408-1-git-send-email-dianders@chromium.org>
+From: tang.junhui@zte.com.cn
+Subject: [PATCH 2/2] dm-mpath: Remove useless
+	retain_attached_hw_handler parameter
+Date: Thu, 24 Nov 2016 15:11:49 +0800
+Message-ID: <1479971509-6320-2-git-send-email-tang.junhui@zte.com.cn>
+References: <1479971509-6320-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1479410660-31408-1-git-send-email-dianders@chromium.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Douglas Anderson <dianders@chromium.org>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, shli@kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Sonny Rao <sonnyrao@chromium.org>, linux@roeck-us.net
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1479971509-6320-1-git-send-email-tang.junhui@zte.com.cn>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: snitzer@redhat.com, agk@redhat.com
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, "tang.junhui" <tang.junhui@zte.com.cn>
 List-Id: dm-devel.ids
 
-Hi
+From: "tang.junhui" <tang.junhui@zte.com.cn>
 
-The GFP_NOIO allocation frees clean cached pages. The GFP_NOWAIT 
-allocation doesn't. Your patch would incorrectly reuse buffers in a 
-situation when the memory is filled with clean cached pages.
+Hardware handle would be retained no matter parameter
+retain_attached_hw_handler is set or not in the logic
+of current code. So remove this useless parameter.
 
-Here I'm proposing an alternate patch that first tries GFP_NOWAIT 
-allocation, then drops the lock and tries GFP_NOIO allocation.
-
-Note that the root cause why you are seeing this stacktrace is, that your 
-block device is congested - i.e. there are too many requests in the 
-device's queue - and note that fixing this wait won't fix the root cause 
-(congested device).
-
-The congestion limits are set in blk_queue_congestion_threshold to 7/8 to 
-13/16 size of the nr_requests value.
-
-If you don't want your device to report the congested status, you can 
-increase /sys/block/<device>/queue/nr_requests - you should test if your 
-chromebook is faster of slower with this setting increased. But note that 
-this setting won't increase the IO-per-second of the device.
-
-Mikulas
-
-
-On Thu, 17 Nov 2016, Douglas Anderson wrote:
-
-> We've seen in-field reports showing _lots_ (18 in one case, 41 in
-> another) of tasks all sitting there blocked on:
-> 
->   mutex_lock+0x4c/0x68
->   dm_bufio_shrink_count+0x38/0x78
->   shrink_slab.part.54.constprop.65+0x100/0x464
->   shrink_zone+0xa8/0x198
-> 
-> In the two cases analyzed, we see one task that looks like this:
-> 
->   Workqueue: kverityd verity_prefetch_io
-> 
->   __switch_to+0x9c/0xa8
->   __schedule+0x440/0x6d8
->   schedule+0x94/0xb4
->   schedule_timeout+0x204/0x27c
->   schedule_timeout_uninterruptible+0x44/0x50
->   wait_iff_congested+0x9c/0x1f0
->   shrink_inactive_list+0x3a0/0x4cc
->   shrink_lruvec+0x418/0x5cc
->   shrink_zone+0x88/0x198
->   try_to_free_pages+0x51c/0x588
->   __alloc_pages_nodemask+0x648/0xa88
->   __get_free_pages+0x34/0x7c
->   alloc_buffer+0xa4/0x144
->   __bufio_new+0x84/0x278
->   dm_bufio_prefetch+0x9c/0x154
->   verity_prefetch_io+0xe8/0x10c
->   process_one_work+0x240/0x424
->   worker_thread+0x2fc/0x424
->   kthread+0x10c/0x114
-> 
-> ...and that looks to be the one holding the mutex.
-> 
-> The problem has been reproduced on fairly easily:
-> 0. Be running Chrome OS w/ verity enabled on the root filesystem
-> 1. Pick test patch: http://crosreview.com/412360
-> 2. Install launchBalloons.sh and balloon.arm from
->      http://crbug.com/468342
->    ...that's just a memory stress test app.
-> 3. On a 4GB rk3399 machine, run
->      nice ./launchBalloons.sh 4 900 100000
->    ...that tries to eat 4 * 900 MB of memory and keep accessing.
-> 4. Login to the Chrome web browser and restore many tabs
-> 
-> With that, I've seen printouts like:
->   DOUG: long bufio 90758 ms
-> ...and stack trace always show's we're in dm_bufio_prefetch().
-> 
-> The problem is that we try to allocate memory with GFP_NOIO while
-> we're holding the dm_bufio lock.  Instead we should be using
-> GFP_NOWAIT.  Using GFP_NOIO can cause us to sleep while holding the
-> lock and that causes the above problems.
-> 
-> The current behavior explained by David Rientjes:
-> 
->   It will still try reclaim initially because __GFP_WAIT (or
->   __GFP_KSWAPD_RECLAIM) is set by GFP_NOIO.  This is the cause of
->   contention on dm_bufio_lock() that the thread holds.  You want to
->   pass GFP_NOWAIT instead of GFP_NOIO to alloc_buffer() when holding a
->   mutex that can be contended by a concurrent slab shrinker (if
->   count_objects didn't use a trylock, this pattern would trivially
->   deadlock).
-> 
-> Suggested-by: David Rientjes <rientjes@google.com>
-> Signed-off-by: Douglas Anderson <dianders@chromium.org>
-> ---
-> Note that this change was developed and tested against the Chrome OS
-> 4.4 kernel tree, not mainline.  Due to slight differences in verity
-> between mainline and Chrome OS it became too difficult to reproduce my
-> testing setup on mainline.  This patch still seems correct and
-> relevant to upstream, so I'm posting it.  If this is not acceptible to
-> you then please ignore this patch.
-> 
-> Also note that when I tested the Chrome OS 3.14 kernel tree I couldn't
-> reproduce the long delays described in the patch.  Presumably
-> something changed in either the kernel config or the memory management
-> code between the two kernel versions that made this crop up.  In a
-> similar vein, it is possible that problems described in this patch are
-> no longer reproducible upstream.  However, the arguments made in this
-> patch (that we don't want to block while holding the mutex) still
-> apply so I think the patch may still have merit.
-> 
->  drivers/md/dm-bufio.c | 6 ++++--
->  1 file changed, 4 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-> index b3ba142e59a4..3c767399cc59 100644
-> --- a/drivers/md/dm-bufio.c
-> +++ b/drivers/md/dm-bufio.c
-> @@ -827,7 +827,8 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
->  	 * dm-bufio is resistant to allocation failures (it just keeps
->  	 * one buffer reserved in cases all the allocations fail).
->  	 * So set flags to not try too hard:
-> -	 *	GFP_NOIO: don't recurse into the I/O layer
-> +	 *	GFP_NOWAIT: don't wait; if we need to sleep we'll release our
-> +	 *		    mutex and wait ourselves.
->  	 *	__GFP_NORETRY: don't retry and rather return failure
->  	 *	__GFP_NOMEMALLOC: don't use emergency reserves
->  	 *	__GFP_NOWARN: don't print a warning in case of failure
-> @@ -837,7 +838,8 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
->  	 */
->  	while (1) {
->  		if (dm_bufio_cache_size_latch != 1) {
-> -			b = alloc_buffer(c, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-> +			b = alloc_buffer(c, GFP_NOWAIT | __GFP_NORETRY |
-> +					 __GFP_NOMEMALLOC | __GFP_NOWARN);
->  			if (b)
->  				return b;
->  		}
-> -- 
-> 2.8.0.rc3.226.g39d4020
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-Subject: dm-bufio: drop the lock when doing GFP_NOIO alloaction
-
-Drop the lock when doing GFP_NOIO alloaction beacuse the allocation can
-take some time.
-
-Note that we won't do GFP_NOIO allocation when we loop for the second
-time, because the lock shouldn't be dropped between __wait_for_free_buffer
-and __get_unclaimed_buffer.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
+Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 ---
- drivers/md/dm-bufio.c |   13 ++++++++++++-
- 1 file changed, 12 insertions(+), 1 deletion(-)
+ drivers/md/dm-mpath.c | 34 +++++-----------------------------
+ 1 file changed, 5 insertions(+), 29 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-bufio.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c
-+++ linux-2.6/drivers/md/dm-bufio.c
-@@ -822,11 +822,13 @@ enum new_flag {
- static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client *c, enum new_flag nf)
- {
- 	struct dm_buffer *b;
-+	bool tried_noio_alloc = false;
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index b1aba63..fe6a529 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -129,10 +129,9 @@ static void process_queued_bios(struct work_struct *work);
+ #define MPATHF_QUEUE_IO 0			/* Must we queue all I/O? */
+ #define MPATHF_QUEUE_IF_NO_PATH 1		/* Queue I/O if last path fails? */
+ #define MPATHF_SAVED_QUEUE_IF_NO_PATH 2		/* Saved state during suspension */
+-#define MPATHF_RETAIN_ATTACHED_HW_HANDLER 3	/* If there's already a hw_handler present, don't change it. */
+-#define MPATHF_PG_INIT_DISABLED 4		/* pg_init is not currently allowed */
+-#define MPATHF_PG_INIT_REQUIRED 5		/* pg_init needs calling? */
+-#define MPATHF_PG_INIT_DELAY_RETRY 6		/* Delay pg_init retry? */
++#define MPATHF_PG_INIT_DISABLED 3		/* pg_init is not currently allowed */
++#define MPATHF_PG_INIT_REQUIRED 4		/* pg_init needs calling? */
++#define MPATHF_PG_INIT_DELAY_RETRY 5		/* Delay pg_init retry? */
  
- 	/*
- 	 * dm-bufio is resistant to allocation failures (it just keeps
- 	 * one buffer reserved in cases all the allocations fail).
- 	 * So set flags to not try too hard:
-+	 *	GFP_NOWAIT: don't sleep and don't release cache
- 	 *	GFP_NOIO: don't recurse into the I/O layer
- 	 *	__GFP_NORETRY: don't retry and rather return failure
- 	 *	__GFP_NOMEMALLOC: don't use emergency reserves
-@@ -837,7 +839,7 @@ static struct dm_buffer *__alloc_buffer_
- 	 */
- 	while (1) {
- 		if (dm_bufio_cache_size_latch != 1) {
--			b = alloc_buffer(c, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-+			b = alloc_buffer(c, GFP_NOWAIT | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
- 			if (b)
- 				return b;
+ /*-----------------------------------------------
+  * Allocation routines
+@@ -240,11 +239,6 @@ static int alloc_multipath_stage2(struct dm_target *ti, struct multipath *m)
+ 	}
+ 	else if (m->queue_mode == DM_TYPE_BIO_BASED) {
+ 		INIT_WORK(&m->process_queued_bios, process_queued_bios);
+-		/*
+-		 * bio-based doesn't support any direct scsi_dh management;
+-		 * it just discovers if a scsi_dh is attached.
+-		 */
+-		set_bit(MPATHF_RETAIN_ATTACHED_HW_HANDLER, &m->flags);
+ 	}
+ 
+ 	dm_table_set_type(ti->table, m->queue_mode);
+@@ -842,11 +836,8 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ 		goto bad;
+ 	}
+ 
+-	if (test_bit(MPATHF_RETAIN_ATTACHED_HW_HANDLER, &m->flags) || m->hw_handler_name)
++	if (m->hw_handler_name) {
+ 		q = bdev_get_queue(p->path.dev->bdev);
+-
+-	if (test_bit(MPATHF_RETAIN_ATTACHED_HW_HANDLER, &m->flags)) {
+-retain:
+ 		attached_handler_name = scsi_dh_attached_handler_name(q, GFP_KERNEL);
+ 		if (attached_handler_name) {
+ 			/* clear any hw_handler_params associated with
+@@ -871,13 +862,6 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ 
+ 	if (m->hw_handler_name) {
+ 		r = scsi_dh_attach(q, m->hw_handler_name);
+-		if (r == -EBUSY) {
+-			char b[BDEVNAME_SIZE];
+-
+-			printk(KERN_INFO "dm-mpath: retaining handler on device %s\n",
+-				bdevname(p->path.dev->bdev, b));
+-			goto retain;
+-		}
+ 		if (r < 0) {
+ 			ti->error = "error attaching hardware handler";
+ 			dm_put_device(ti, p->path.dev);
+@@ -1040,7 +1024,7 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
+ 	const char *arg_name;
+ 
+ 	static struct dm_arg _args[] = {
+-		{0, 8, "invalid number of feature args"},
++		{0, 7, "invalid number of feature args"},
+ 		{1, 50, "pg_init_retries must be between 1 and 50"},
+ 		{0, 60000, "pg_init_delay_msecs must be between 0 and 60000"},
+ 	};
+@@ -1061,11 +1045,6 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
+ 			continue;
  		}
-@@ -845,6 +847,15 @@ static struct dm_buffer *__alloc_buffer_
- 		if (nf == NF_PREFETCH)
- 			return NULL;
  
-+		if (dm_bufio_cache_size_latch != 1 && !tried_noio_alloc) {
-+			dm_bufio_unlock(c);
-+			b = alloc_buffer(c, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-+			dm_bufio_lock(c);
-+			if (b)
-+				return b;
-+			tried_noio_alloc = true;
-+		}
-+
- 		if (!list_empty(&c->reserved_buffers)) {
- 			b = list_entry(c->reserved_buffers.next,
- 				       struct dm_buffer, lru_list);
+-		if (!strcasecmp(arg_name, "retain_attached_hw_handler")) {
+-			set_bit(MPATHF_RETAIN_ATTACHED_HW_HANDLER, &m->flags);
+-			continue;
+-		}
+-
+ 		if (!strcasecmp(arg_name, "pg_init_retries") &&
+ 		    (argc >= 1)) {
+ 			r = dm_read_arg(_args + 1, as, &m->pg_init_retries, &ti->error);
+@@ -1745,7 +1724,6 @@ static void multipath_status(struct dm_target *ti, status_type_t type,
+ 		DMEMIT("%u ", test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) +
+ 			      (m->pg_init_retries > 0) * 2 +
+ 			      (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT) * 2 +
+-			      test_bit(MPATHF_RETAIN_ATTACHED_HW_HANDLER, &m->flags) +
+ 			      (m->queue_mode != DM_TYPE_REQUEST_BASED) * 2);
+ 
+ 		if (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
+@@ -1754,8 +1732,6 @@ static void multipath_status(struct dm_target *ti, status_type_t type,
+ 			DMEMIT("pg_init_retries %u ", m->pg_init_retries);
+ 		if (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT)
+ 			DMEMIT("pg_init_delay_msecs %u ", m->pg_init_delay_msecs);
+-		if (test_bit(MPATHF_RETAIN_ATTACHED_HW_HANDLER, &m->flags))
+-			DMEMIT("retain_attached_hw_handler ");
+ 		if (m->queue_mode != DM_TYPE_REQUEST_BASED) {
+ 			switch(m->queue_mode) {
+ 			case DM_TYPE_BIO_BASED:
+-- 
+2.8.1.windows.1
