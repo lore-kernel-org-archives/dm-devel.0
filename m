@@ -1,20 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: Improve processing efficiency for addition and
- deletion of multipath devices
-Date: Thu, 24 Nov 2016 10:21:10 +0100
-Message-ID: <1479979270.13566.7.camel@suse.com>
-References: <OF7C96E124.CD19B12D-ON4825806D.00095E60-4825806D.0009BD8C@zte.com.cn>
-	<9797787c-30c5-08fb-f92a-5e68ec0b6333@suse.de>
-	<OF1D9DC33E.849B3309-ON4825806D.002C52A8-4825806D.003020B2@zte.com.cn>
-	<1479289781.14706.16.camel@suse.com>
-	<OF233D7062.48FA865C-ON4825806E.000544C5-4825806E.00093C07@zte.com.cn>
-	<1479379712.14706.23.camel@suse.com>
-	<20161118222618.GZ1972@octiron.msp.redhat.com>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH] dm-crypt: check key payload pointer not null
+Date: Thu, 24 Nov 2016 09:28:46 +0000
+Message-ID: <10923.1479979726@warthog.procyon.org.uk>
+References: <1479934277-14913-1-git-send-email-okozina@redhat.com>
+	<20161121154049.GA13248@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161118222618.GZ1972@octiron.msp.redhat.com>
+In-Reply-To: <1479934277-14913-1-git-send-email-okozina@redhat.com>
+Content-ID: <10922.1479979726.1@warthog.procyon.org.uk>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,39 +19,12 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, tang.junhui@zte.com.cn
+To: Ondrej Kozina <okozina@redhat.com>
+Cc: snitzer@redhat.com, dhowells@redhat.com, dm-devel@redhat.com, mpatocka@redhat.com, aryabinin@virtuozzo.com, mbroz@redhat.com
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE2LTExLTE4IGF0IDE2OjI2IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cgo+IFRoZSBpc3N1ZSBpcyB0aGF0IHdlIHNpbXBseSBuZWVkIHRvIHdvcmsgb24gcHJvY2Vz
-c2luZyB0aGUgd2hvbGUgbGlzdAo+IGF0Cj4gYSB0aW1lLsKgwqBNYXJ0aW4ncyBmaWx0ZXJpbmcg
-ZGVmaW5pdGVseSBoYXMgYSBwbGFjZSBoZXJlLiBIZSBpcwo+IGNvcnJlY3QKPiB0aGF0IGlmIHdl
-IGdldCBhIGRlbGV0ZSB1ZXZlbnQgZm9yIGEgZGV2aWNlLCB3ZSBkb24ndCBuZWVkIHRvIHByb2Nl
-c3MKPiBhbnkgb2YgdGhlIGVhcmxpZXIgb25lcy7CoMKgV2UgZG8gbmVlZCB0byBsb29rIGF0IGJv
-dGggdGhlIGFkZCBhbmQKPiBjaGFuZ2UKPiB1ZXZlbnRzIGluZGl2aWR1YWxseS4gRm9yIGluc3Rh
-bmNlLCBvbmUgb2YgdGhlIGNoYW5nZSB1ZXZlbnRzIG91dCBvZgo+IGEKPiBncm91cCBjb3VsZCBi
-ZSBmb3IgY2hhbmdpbmcgdGhlIHJlYWQtb25seSBzdGF0dXMgb2YgYSBkZXZpY2UuIElmIHdlCj4g
-anVzdAo+IHRvb2sgdGhlIG1vc3QgcmVjZW50LCB3ZSB3b3VsZCBtaXNzIHRoYXQgaW5mb3JtYXRp
-b24uwqDCoFRoZSBnb29kIG5ld3MKPiBpcwo+IHRoYXQgd2UgZG9uJ3QgbmVlZCB0byBhY3R1YWxs
-eSBjYWxsIHVldl9hZGRfcGF0aCBhbmQgdWV2X3VwZGF0ZV9wYXRoCj4gb25jZSBmb3IgZWFjaCBv
-ZiB0aGVzZSBldmVudHMuwqDCoEFsbCB3ZSBuZWVkIHRvIGRvIGlzIHJlYWQgdGhyb3VnaCB0aGUK
-PiB1ZXYgZW52aXJvbm1lbnQgdmFyaWFibGVzIGZvciBhbGwgb2YgdGhlbSB0byBmaW5kIHRoZSBp
-bmZvcm1hdGlvbiB3ZQo+IG5lZWQgKGxpa2UgY2hhbmdlIGluIHJvIHN0YXR1cyksIGFuZCB0aGVu
-IGNhbGwgdGhlIGZ1bmN0aW9uIG9uY2Ugd2l0aAo+IHRoYXQgaW5mb3JtYXRpb24uCgpEbyB3ZSBu
-ZWVkIHRvIGltcGxlbWVudCB0aGUgZW52aXJvbm1lbnQtbWVyZ2luZyBvdXJzZWx2ZXM/IEFGQUlD
-UyB0aGlzCmxvZ2ljIGlzIGltcGxlbWVudGVkIGluIHVkZXYgaXRzZWxmLiBTbyBpZiB0aGUgbGFz
-dCBldmVudCBmb3IgYSBnaXZlbgpkZXZpY2UgaXMgYSBjaGFuZ2UgZXZlbnQsIHdlJ2QganVzdCBu
-ZWVkIHRvIGZldGNoIHRoZSBkZXZpY2UgcHJvcGVydGllcwpmcm9tIHRoZSB1ZGV2IGRiLiBUaGVy
-ZWZvcmUgSU1PIHdlIGp1c3QgaGF2ZSB0byBsb29rIGF0IHRoZSBsYXN0CnJlY2VpdmVkIGV2ZW50
-IGZvciBhIGdpdmVuIHBhdGg6CgogLSBERUxFVEUgPT4gZGlzY2FyZCB0aGUgZGV2aWNlCiAtIEFE
-RCA9PiB1c2UgdGhlIHVkZXYgcHJvcGVydGllcyBjb21pbmcgd2l0aCB0aGUgZXZlbnQKIC0gQ0hB
-TkdFID0+IHF1ZXJ5IHVkZXYgZGIgZm9yIGN1cnJlbnQgc2V0IG9mIHByb3BlcnRpZXMKIAo+IEF0
-IGFueSByYXRlLCBJJ2QgcmF0aGVyIGdldCByaWQgb2YgdGhlIGdhemlsbGlvbiB3YWl0ZXIgdGhy
-ZWFkcwo+IGZpcnN0LgoKSG0sIEkgdGhvdWdodCB0aGUgdGhyZWFkcyBhcmUgZ29vZCBiZWNhdXNl
-IHRoaXMgYXZvaWRzIG9uZSB1bnJlc3BvbnNpdmUKZGV2aWNlIHRvIHN0YWxsIGV2ZXJ5dGhpbmc/
-CgpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuwqAr
-NDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJm
-ZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJn
-KQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93
-d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Looking at:
+
+	https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.10&id=3b0ef9ade65e299a8c13df5fe70352360c6bd05c
+
+Reviewed-by: David Howells <dhowells@redhat.com>
