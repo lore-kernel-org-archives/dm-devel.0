@@ -1,14 +1,11 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipath-tools: replace multipath
- configuration output
-Date: Fri, 25 Nov 2016 10:00:11 +0100
-Message-ID: <1480064411.23852.1.camel@suse.com>
-References: <20161124224427.12609-1-xose.vazquez@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: fix misspellings
+Date: Sat, 26 Nov 2016 02:33:49 +0100
+Message-ID: <20161126013349.10725-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161124224427.12609-1-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,183 +15,189 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-SSBhbSBub3Qgc3VyZSBJIHNlZSB0aGUgbWVyaXQgb2YgdGhlc2UgY2hhbmdlcy4gSWYgaXQncyBy
-ZWFsbHkKbmVjZXNzYXJ5IHRvIGNoYW5nZSB0aGUgd29yZGluZyBvZiB0aGUgbG9nIG1lc3NhZ2Vz
-IHdoaWNoIHBlb3BsZSBoYXZlCmdvdCB1c2VkIHRvLCB0aGUgbmV3IG9uZXMgc2hvdWxkIGJlIHJl
-YWxseSBtb3JlIHNlbGYtZXhwbGFuYXRvcnkgdGhhbgp0aGUgb2xkIG9uZXMuCgpUaGUgY29tbW9u
-ICJzZXR0aW5nOiAiIGZvcm1hdHRpbmcgaXMgbmljZSBidXQgSU1ITyB0aGlzIGFsb25lIGRvZXNu
-J3QKcmVhbGx5IGp1c3RpZnkgb3ZlcnRocm93aW5nIG9sZCBoYWJpdHMuCgpPbiBUaHUsIDIwMTYt
-MTEtMjQgYXQgMjM6NDQgKzAxMDAsIFhvc2UgVmF6cXVleiBQZXJleiB3cm90ZToKPiBzeXNmcyBz
-ZXR0aW5nwqDCoMKgwqDCoMKgwqDCoMKgwqDCoC0+IHNldHRpbmc6IGtlcm5lbCBzeXNmcwo+IAo+
-IGRldGVjdGVkIHNldHRpbmfCoMKgwqDCoMKgwqDCoMKgLT4gc2V0dGluZzogYXJyYXkgYXV0b2Rl
-dGVjdGVkCj4gCj4gY29udHJvbGxlciBzZXR0aW5nwqDCoMKgwqDCoMKgLT4gc2V0dGluZzogYXJy
-YXkgY29uZmlndXJhdGlvbgoKSXMgImFycmF5IiByZWFsbHkgbW9yZSB1bmRlcnN0YW5kYWJsZSB0
-byB1c2VycyB0aGFuICJjb250cm9sbGVyIj8KVGhlc2Ugc2V0dGluZ3MgY29tZSBmcm9tIGh3ZW50
-cmllcywgc28gaW4gcmVhbGl0eSB0aGV5J3JlIGVpdGhlciBwYXJ0Cm9mIHRoZSBidWlsdC1pbiBo
-d3RhYmxlIG9yIG9mIHRoZSBtdWx0aXBhdGguY29uZiAiZGV2aWNlcyIgc2VjdGlvbiwgb3IKYW0g
-SSB3cm9uZyBoZXJlPyAKCj4gaW50ZXJuYWwgZGVmYXVsdMKgwqDCoMKgwqDCoMKgwqAtPiBzZXR0
-aW5nOiBtdWx0aXBhdGggaW50ZXJuYWwKPiAKPiBvdmVycmlkZXMgc2V0dGluZ8KgwqDCoMKgwqDC
-oMKgLT4gc2V0dGluZzogbXVsdGlwYXRoLmNvbmYgb3ZlcnJpZGVzIHNlY3Rpb24KPiAKPiBMVU4g
-c2V0dGluZ8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgLT4gc2V0dGluZzogbXVsdGlwYXRoLmNv
-bmYgbXVsdGlwYXRocyBzZWN0aW9uCj4gCj4gY29uZmlnIGZpbGUgZGVmYXVsdAo+IGNvbmZpZyBm
-aWxlIHNldHRpbmfCoMKgwqDCoMKgLT4gc2V0dGluZzogbXVsdGlwYXRoLmNvbmYgZGVmYXVsdHMv
-ZGV2aWNlcwo+IHNlY3Rpb24KCkhhdmUgeW91IGRvdWJsZS1jaGVja2VkIGlmIHRoaXMgaXMgY29y
-cmVjdCBmb3IgYWxsIG9wdGlvbnM/IEl0IHdvdWxkIGJlCmhlbHBmdWwgZm9yIHVzZXJzIHRvIGJl
-IGFibGUgdG8gZGlzdGluZ3Vpc2ggd2hpY2ggY29uZmlnIGZpbGUgc2VjdGlvbgp0aGUgb3B0aW9u
-IHdhcyB0YWtlbiBmcm9tIChkZWZhdWx0cy9kZXZpY2VzL211bHRpcGF0aHMvb3ZlcnJpZGVzKS4g
-VGhlCnNhbWUgYXJndW1lbnQgYXBwbGllcyB0byB0aGUgaGFyZHdhcmUgZW5yaWVzIC0gYmVpbmcg
-YWJsZSB0bwpkaXN0aW5ndWlzaCBidWlsdCBpbiBoYXJkd2FyZSBkZWZhdWx0cyBmcm9tIGNvbmZp
-ZyBmaWxlICJkZXZpY2VzIgpzZXR0aW5ncyB3b3VsZCBiZSByZWFsbHkgaGVscGZ1bCwgYnV0IHRo
-aXMgcGF0Y2ggZG9lc24ndCBwcm92aWRlIHRoYXQKZnVuY3Rpb25hbGl0eS4KClJlZ2FyZHMKTWFy
-dGluCgoKCgo+IAo+IAo+IENjOiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJtYXJ6aW5zQHJlZGhhdC5j
-b20+Cj4gQ2M6IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmRlPgo+IENjOiBDaHJpc3RvcGhl
-IFZhcm9xdWkgPGNocmlzdG9waGUudmFyb3F1aUBvcGVuc3ZjLmNvbT4KPiBDYzogZGV2aWNlLW1h
-cHBlciBkZXZlbG9wbWVudCA8ZG0tZGV2ZWxAcmVkaGF0LmNvbT4KPiBTaWduZWQtb2ZmLWJ5OiBY
-b3NlIFZhenF1ZXogUGVyZXogPHhvc2UudmF6cXVlekBnbWFpbC5jb20+Cj4gLS0tCj4gwqBsaWJt
-dWx0aXBhdGgvcHJvcHNlbC5jIHwgNjYgKysrKysrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0t
-LS0tLS0tLQo+IC0tLS0tLS0tLS0KPiDCoDEgZmlsZSBjaGFuZ2VkLCAzMyBpbnNlcnRpb25zKCsp
-LCAzMyBkZWxldGlvbnMoLSkKPiAKPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL3Byb3BzZWwu
-YyBiL2xpYm11bHRpcGF0aC9wcm9wc2VsLmMKPiBpbmRleCBkMWRiN2MzLi5jMGJjNjE2IDEwMDY0
-NAo+IC0tLSBhL2xpYm11bHRpcGF0aC9wcm9wc2VsLmMKPiArKysgYi9saWJtdWx0aXBhdGgvcHJv
-cHNlbC5jCj4gQEAgLTQxLDI4ICs0MSwyOCBAQCBkbyB7CQkJCQkJCj4gCQkJXAo+IMKgI2RlZmlu
-ZSBkb19kZWZhdWx0KGRlc3QsIHZhbHVlKQkJCQkJCj4gCVwKPiDCoGRvIHsJCQkJCQkJCQkKPiBc
-Cj4gwqAJZGVzdCA9IHZhbHVlOwkJCQkJCQo+IAlcCj4gLQlvcmlnaW4gPSAiKGludGVybmFsIGRl
-ZmF1bHQpIjsJCQkJCj4gCVwKPiArCW9yaWdpbiA9ICIoc2V0dGluZzogbXVsdGlwYXRoIGludGVy
-bmFsKSI7CQkJCj4gXAo+IMKgfSB3aGlsZSgwKQo+IMKgCj4gwqAjZGVmaW5lIG1wX3NldF9tcGUo
-dmFyKQkJCQkJCQo+IAlcCj4gLWRvX3NldCh2YXIsIG1wLT5tcGUsIG1wLT52YXIsICIoTFVOIHNl
-dHRpbmcpIikKPiArZG9fc2V0KHZhciwgbXAtPm1wZSwgbXAtPnZhciwgIihzZXR0aW5nOiBtdWx0
-aXBhdGguY29uZiBtdWx0aXBhdGhzCj4gc2VjdGlvbikiKQo+IMKgI2RlZmluZSBtcF9zZXRfaHdl
-KHZhcikJCQkJCQkKPiAJXAo+IC1kb19zZXQodmFyLCBtcC0+aHdlLCBtcC0+dmFyLCAiKGNvbnRy
-b2xsZXIgc2V0dGluZykiKQo+ICtkb19zZXQodmFyLCBtcC0+aHdlLCBtcC0+dmFyLCAiKHNldHRp
-bmc6IGFycmF5IGNvbmZpZ3VyYXRpb24pIikKPiDCoCNkZWZpbmUgbXBfc2V0X292cih2YXIpCQkJ
-CQkJCj4gCVwKPiAtZG9fc2V0KHZhciwgY29uZi0+b3ZlcnJpZGVzLCBtcC0+dmFyLCAiKG92ZXJy
-aWRlcyBzZXR0aW5nKSIpCj4gK2RvX3NldCh2YXIsIGNvbmYtPm92ZXJyaWRlcywgbXAtPnZhciwg
-IihzZXR0aW5nOiBtdWx0aXBhdGguY29uZgo+IG92ZXJyaWRlcyBzZWN0aW9uKSIpCj4gwqAjZGVm
-aW5lIG1wX3NldF9jb25mKHZhcikJCQkJCQkKPiBcCj4gLWRvX3NldCh2YXIsIGNvbmYsIG1wLT52
-YXIsICIoY29uZmlnIGZpbGUgZGVmYXVsdCkiKQo+ICtkb19zZXQodmFyLCBjb25mLCBtcC0+dmFy
-LCAiKHNldHRpbmc6IG11bHRpcGF0aC5jb25mCj4gZGVmYXVsdHMvZGV2aWNlcyBzZWN0aW9uKSIp
-Cj4gwqAjZGVmaW5lIG1wX3NldF9kZWZhdWx0KHZhciwgdmFsdWUpCQkJCQkKPiBcCj4gwqBkb19k
-ZWZhdWx0KG1wLT52YXIsIHZhbHVlKQo+IMKgCj4gwqAjZGVmaW5lIHBwX3NldF9tcGUodmFyKQkJ
-CQkJCQo+IAlcCj4gLWRvX3NldCh2YXIsIG1wZSwgcHAtPnZhciwgIihMVU4gc2V0dGluZykiKQo+
-ICtkb19zZXQodmFyLCBtcGUsIHBwLT52YXIsICIoc2V0dGluZzogbXVsdGlwYXRoLmNvbmYgbXVs
-dGlwYXRocwo+IHNlY3Rpb24pIikKPiDCoCNkZWZpbmUgcHBfc2V0X2h3ZSh2YXIpCQkJCQkJCj4g
-CVwKPiAtZG9fc2V0KHZhciwgcHAtPmh3ZSwgcHAtPnZhciwgIihjb250cm9sbGVyIHNldHRpbmcp
-IikKPiArZG9fc2V0KHZhciwgcHAtPmh3ZSwgcHAtPnZhciwgIihzZXR0aW5nOiBhcnJheSBjb25m
-aWd1cmF0aW9uKSIpCj4gwqAjZGVmaW5lIHBwX3NldF9jb25mKHZhcikJCQkJCQkKPiBcCj4gLWRv
-X3NldCh2YXIsIGNvbmYsIHBwLT52YXIsICIoY29uZmlnIGZpbGUgZGVmYXVsdCkiKQo+ICtkb19z
-ZXQodmFyLCBjb25mLCBwcC0+dmFyLCAiKHNldHRpbmc6IG11bHRpcGF0aC5jb25mCj4gZGVmYXVs
-dHMvZGV2aWNlcyBzZWN0aW9uKSIpCj4gwqAjZGVmaW5lIHBwX3NldF9vdnIodmFyKQkJCQkJCQo+
-IAlcCj4gLWRvX3NldCh2YXIsIGNvbmYtPm92ZXJyaWRlcywgcHAtPnZhciwgIihvdmVycmlkZXMg
-c2V0dGluZykiKQo+ICtkb19zZXQodmFyLCBjb25mLT5vdmVycmlkZXMsIHBwLT52YXIsICIoc2V0
-dGluZzogbXVsdGlwYXRoLmNvbmYKPiBvdmVycmlkZXMgc2VjdGlvbikiKQo+IMKgI2RlZmluZSBw
-cF9zZXRfZGVmYXVsdCh2YXIsIHZhbHVlKQkJCQkJCj4gXAo+IMKgZG9fZGVmYXVsdChwcC0+dmFy
-LCB2YWx1ZSkKPiDCoAo+IEBAIC03Nyw5ICs3Nyw5IEBAIGRvIHsJCQkJCQkKPiAJCQlcCj4gwqB9
-IHdoaWxlKDApCj4gwqAKPiDCoCNkZWZpbmUgc2V0X2F0dHJfbXBlKHZhciwgc2hpZnQpCQkJCQkK
-PiBcCj4gLWRvX2F0dHJfc2V0KHZhciwgbXAtPm1wZSwgc2hpZnQsICIoTFVOIHNldHRpbmcpIikK
-PiArZG9fYXR0cl9zZXQodmFyLCBtcC0+bXBlLCBzaGlmdCwgIihzZXR0aW5nOiBtdWx0aXBhdGgu
-Y29uZgo+IG11bHRpcGF0aHMgc2VjdGlvbikiKQo+IMKgI2RlZmluZSBzZXRfYXR0cl9jb25mKHZh
-ciwgc2hpZnQpCQkJCQkKPiBcCj4gLWRvX2F0dHJfc2V0KHZhciwgY29uZiwgc2hpZnQsICIoY29u
-ZmlnIGZpbGUgZGVmYXVsdCkiKQo+ICtkb19hdHRyX3NldCh2YXIsIGNvbmYsIHNoaWZ0LCAiKHNl
-dHRpbmc6IG11bHRpcGF0aC5jb25mCj4gZGVmYXVsdHMvZGV2aWNlcyBzZWN0aW9uKSIpCj4gwqAK
-PiDCoGludCBzZWxlY3RfbW9kZShzdHJ1Y3QgY29uZmlnICpjb25mLCBzdHJ1Y3QgbXVsdGlwYXRo
-ICptcCkKPiDCoHsKPiBAQCAtMjE0LDEzICsyMTQsMTMgQEAgd2FudF91c2VyX2ZyaWVuZGx5X25h
-bWVzKHN0cnVjdCBjb25maWcgKmNvbmYsCj4gc3RydWN0IG11bHRpcGF0aCAqIG1wKQo+IMKgCWlu
-dCB1c2VyX2ZyaWVuZGx5X25hbWVzOwo+IMKgCj4gwqAJZG9fc2V0KHVzZXJfZnJpZW5kbHlfbmFt
-ZXMsIG1wLT5tcGUsIHVzZXJfZnJpZW5kbHlfbmFtZXMsCj4gLQnCoMKgwqDCoMKgwqDCoCIoTFVO
-IHNldHRpbmcpIik7Cj4gKwnCoMKgwqDCoMKgwqDCoCIoc2V0dGluZzogbXVsdGlwYXRoLmNvbmYg
-bXVsdGlwYXRocyBzZWN0aW9uKSIpOwo+IMKgCWRvX3NldCh1c2VyX2ZyaWVuZGx5X25hbWVzLCBj
-b25mLT5vdmVycmlkZXMsCj4gdXNlcl9mcmllbmRseV9uYW1lcywKPiAtCcKgwqDCoMKgwqDCoMKg
-IihvdmVycmlkZXMgc2V0dGluZykiKTsKPiArCcKgwqDCoMKgwqDCoMKgIihzZXR0aW5nOiBtdWx0
-aXBhdGguY29uZiBvdmVycmlkZXMgc2VjdGlvbikiKTsKPiDCoAlkb19zZXQodXNlcl9mcmllbmRs
-eV9uYW1lcywgbXAtPmh3ZSwgdXNlcl9mcmllbmRseV9uYW1lcywKPiAtCcKgwqDCoMKgwqDCoMKg
-Iihjb250cm9sbGVyIHNldHRpbmcpIik7Cj4gKwnCoMKgwqDCoMKgwqDCoCIoc2V0dGluZzogYXJy
-YXkgY29uZmlndXJhdGlvbikiKTsKPiDCoAlkb19zZXQodXNlcl9mcmllbmRseV9uYW1lcywgY29u
-ZiwgdXNlcl9mcmllbmRseV9uYW1lcywKPiAtCcKgwqDCoMKgwqDCoMKgIihjb25maWcgZmlsZSBz
-ZXR0aW5nKSIpOwo+ICsJwqDCoMKgwqDCoMKgwqAiKHNldHRpbmc6IG11bHRpcGF0aC5jb25mIGRl
-ZmF1bHRzL2RldmljZXMKPiBzZWN0aW9uKSIpOwo+IMKgCWRvX2RlZmF1bHQodXNlcl9mcmllbmRs
-eV9uYW1lcywKPiBERUZBVUxUX1VTRVJfRlJJRU5ETFlfTkFNRVMpOwo+IMKgb3V0Ogo+IMKgCWNv
-bmRsb2coMywgIiVzOiB1c2VyX2ZyaWVuZGx5X25hbWVzID0gJXMgJXMiLCBtcC0+d3dpZCwKPiBA
-QCAtMjM1LDcgKzIzNSw3IEBAIGludCBzZWxlY3RfYWxpYXMoc3RydWN0IGNvbmZpZyAqY29uZiwg
-c3RydWN0Cj4gbXVsdGlwYXRoICogbXApCj4gwqAKPiDCoAlpZiAobXAtPm1wZSAmJiBtcC0+bXBl
-LT5hbGlhcykgewo+IMKgCQltcC0+YWxpYXMgPSBTVFJEVVAobXAtPm1wZS0+YWxpYXMpOwo+IC0J
-CW9yaWdpbiA9ICIoTFVOIHNldHRpbmcpIjsKPiArCQlvcmlnaW4gPSAiKHNldHRpbmc6IG11bHRp
-cGF0aC5jb25mIG11bHRpcGF0aHMKPiBzZWN0aW9uKSI7Cj4gwqAJCWdvdG8gb3V0Owo+IMKgCX0K
-PiDCoAo+IEBAIC0zMTIsMjQgKzMxMiwyNCBAQCBpbnQgc2VsZWN0X2NoZWNrZXIoc3RydWN0IGNv
-bmZpZyAqY29uZiwgc3RydWN0Cj4gcGF0aCAqcHApCj4gwqAJY2hhciAqb3JpZ2luLCAqY2hlY2tl
-cl9uYW1lOwo+IMKgCXN0cnVjdCBjaGVja2VyICogYyA9ICZwcC0+Y2hlY2tlcjsKPiDCoAo+IC0J
-ZG9fc2V0KGNoZWNrZXJfbmFtZSwgY29uZi0+b3ZlcnJpZGVzLCBjaGVja2VyX25hbWUsCj4gIihv
-dmVycmlkZXMgc2V0dGluZykiKTsKPiAtCWRvX3NldChjaGVja2VyX25hbWUsIHBwLT5od2UsIGNo
-ZWNrZXJfbmFtZSwgIihjb250cm9sbGVyCj4gc2V0dGluZykiKTsKPiAtCWRvX3NldChjaGVja2Vy
-X25hbWUsIGNvbmYsIGNoZWNrZXJfbmFtZSwgIihjb25maWcgZmlsZQo+IHNldHRpbmcpIik7Cj4g
-Kwlkb19zZXQoY2hlY2tlcl9uYW1lLCBjb25mLT5vdmVycmlkZXMsIGNoZWNrZXJfbmFtZSwKPiAi
-KHNldHRpbmc6IG11bHRpcGF0aC5jb25mIG92ZXJyaWRlcyBzZWN0aW9uKSIpOwo+ICsJZG9fc2V0
-KGNoZWNrZXJfbmFtZSwgcHAtPmh3ZSwgY2hlY2tlcl9uYW1lLCAiKHNldHRpbmc6IGFycmF5Cj4g
-Y29uZmlndXJhdGlvbikiKTsKPiArCWRvX3NldChjaGVja2VyX25hbWUsIGNvbmYsIGNoZWNrZXJf
-bmFtZSwgIihzZXR0aW5nOgo+IG11bHRpcGF0aC5jb25mIGRlZmF1bHRzL2RldmljZXMgc2VjdGlv
-bikiKTsKPiDCoAlkb19kZWZhdWx0KGNoZWNrZXJfbmFtZSwgREVGQVVMVF9DSEVDS0VSKTsKPiDC
-oG91dDoKPiDCoAljaGVja2VyX2dldChjb25mLT5tdWx0aXBhdGhfZGlyLCBjLCBjaGVja2VyX25h
-bWUpOwo+IMKgCWNvbmRsb2coMywgIiVzOiBwYXRoX2NoZWNrZXIgPSAlcyAlcyIsIHBwLT5kZXYs
-IGMtPm5hbWUsCj4gb3JpZ2luKTsKPiDCoAlpZiAoY29uZi0+Y2hlY2tlcl90aW1lb3V0KSB7Cj4g
-wqAJCWMtPnRpbWVvdXQgPSBjb25mLT5jaGVja2VyX3RpbWVvdXQ7Cj4gLQkJY29uZGxvZygzLCAi
-JXM6IGNoZWNrZXIgdGltZW91dCA9ICV1IHMgKGNvbmZpZyBmaWxlCj4gZGVmYXVsdCkiLAo+ICsJ
-CWNvbmRsb2coMywgIiVzOiBjaGVja2VyIHRpbWVvdXQgPSAldSBzIChzZXR0aW5nOgo+IG11bHRp
-cGF0aC5jb25mIGRlZmF1bHRzL2RldmljZXMgc2VjdGlvbikiLAo+IMKgCQkJCXBwLT5kZXYsIGMt
-PnRpbWVvdXQpOwo+IMKgCX0KPiDCoAllbHNlIGlmIChzeXNmc19nZXRfdGltZW91dChwcCwgJmMt
-PnRpbWVvdXQpID4gMCkKPiAtCQljb25kbG9nKDMsICIlczogY2hlY2tlciB0aW1lb3V0ID0gJXUg
-bXMgKHN5c2ZzCj4gc2V0dGluZykiLAo+ICsJCWNvbmRsb2coMywgIiVzOiBjaGVja2VyIHRpbWVv
-dXQgPSAldSBtcyAoc2V0dGluZzoKPiBrZXJuZWwgc3lzZnMpIiwKPiDCoAkJCQlwcC0+ZGV2LCBj
-LT50aW1lb3V0KTsKPiDCoAllbHNlIHsKPiDCoAkJYy0+dGltZW91dCA9IERFRl9USU1FT1VUOwo+
-IC0JCWNvbmRsb2coMywgIiVzOiBjaGVja2VyIHRpbWVvdXQgPSAldSBtcyAoaW50ZXJuYWwKPiBk
-ZWZhdWx0KSIsCj4gKwkJY29uZGxvZygzLCAiJXM6IGNoZWNrZXIgdGltZW91dCA9ICV1IG1zIChz
-ZXR0aW5nOgo+IG11bHRpcGF0aCBpbnRlcm5hbCkiLAo+IMKgCQkJCXBwLT5kZXYsIGMtPnRpbWVv
-dXQpOwo+IMKgCX0KPiDCoAlyZXR1cm4gMDsKPiBAQCAtMzk3LDE3ICszOTcsMTcgQEAgaW50IHNl
-bGVjdF9wcmlvKHN0cnVjdCBjb25maWcgKmNvbmYsIHN0cnVjdAo+IHBhdGggKnBwKQo+IMKgCWlm
-IChwcC0+ZGV0ZWN0X3ByaW8gPT0gREVURUNUX1BSSU9fT04pIHsKPiDCoAkJZGV0ZWN0X3ByaW8o
-Y29uZiwgcHApOwo+IMKgCQlpZiAocHJpb19zZWxlY3RlZChwKSkgewo+IC0JCQlvcmlnaW4gPSAi
-KGRldGVjdGVkIHNldHRpbmcpIjsKPiArCQkJb3JpZ2luID0gIihzZXR0aW5nOiBhcnJheSBhdXRv
-ZGV0ZWN0ZWQpIjsKPiDCoAkJCWdvdG8gb3V0Owo+IMKgCQl9Cj4gwqAJfQo+IMKgCW1wZSA9IGZp
-bmRfbXBlKGNvbmYtPm1wdGFibGUsIHBwLT53d2lkKTsKPiAtCXNldF9wcmlvKGNvbmYtPm11bHRp
-cGF0aF9kaXIsIG1wZSwgIihMVU4gc2V0dGluZykiKTsKPiAtCXNldF9wcmlvKGNvbmYtPm11bHRp
-cGF0aF9kaXIsIGNvbmYtPm92ZXJyaWRlcywgIihvdmVycmlkZXMKPiBzZXR0aW5nKSIpOwo+IC0J
-c2V0X3ByaW8oY29uZi0+bXVsdGlwYXRoX2RpciwgcHAtPmh3ZSwgImNvbnRyb2xsZXIKPiBzZXR0
-aW5nKSIpOwo+IC0Jc2V0X3ByaW8oY29uZi0+bXVsdGlwYXRoX2RpciwgY29uZiwgIihjb25maWcg
-ZmlsZQo+IGRlZmF1bHQpIik7Cj4gKwlzZXRfcHJpbyhjb25mLT5tdWx0aXBhdGhfZGlyLCBtcGUs
-ICIoc2V0dGluZzogbXVsdGlwYXRoLmNvbmYKPiBtdWx0aXBhdGhzIHNlY3Rpb24pIik7Cj4gKwlz
-ZXRfcHJpbyhjb25mLT5tdWx0aXBhdGhfZGlyLCBjb25mLT5vdmVycmlkZXMsICIoc2V0dGluZzoK
-PiBtdWx0aXBhdGguY29uZiBvdmVycmlkZXMgc2VjdGlvbikiKTsKPiArCXNldF9wcmlvKGNvbmYt
-Pm11bHRpcGF0aF9kaXIsIHBwLT5od2UsICIoc2V0dGluZzogYXJyYXkKPiBjb25maWd1cmF0aW9u
-KSIpOwo+ICsJc2V0X3ByaW8oY29uZi0+bXVsdGlwYXRoX2RpciwgY29uZiwgIihzZXR0aW5nOgo+
-IG11bHRpcGF0aC5jb25mIGRlZmF1bHRzL2RldmljZXMgc2VjdGlvbikiKTsKPiDCoAlwcmlvX2dl
-dChjb25mLT5tdWx0aXBhdGhfZGlyLCBwLCBERUZBVUxUX1BSSU8sCj4gREVGQVVMVF9QUklPX0FS
-R1MpOwo+IC0Jb3JpZ2luID0gIihpbnRlcm5hbCBkZWZhdWx0KSI7Cj4gKwlvcmlnaW4gPSAiKHNl
-dHRpbmc6IG11bHRpcGF0aCBpbnRlcm5hbCkiOwo+IMKgb3V0Ogo+IMKgCS8qCj4gwqAJwqAqIGZl
-dGNoIHRwZ3MgbW9kZSBmb3IgYWx1YSwgaWYgaXRzIG5vdCBhbHJlYWR5IG9idGFpbmVkCj4gQEAg
-LTQ0OCw3ICs0NDgsNyBAQCBvdXQ6Cj4gwqAJCWNvbmRsb2coMywgIiVzOiBub19wYXRoX3JldHJ5
-ID0gJXMgKGluaGVyaXRlZAo+IHNldHRpbmcpIiwKPiDCoAkJCW1wLT5hbGlhcywgYnVmZik7Cj4g
-wqAJZWxzZQo+IC0JCWNvbmRsb2coMywgIiVzOiBub19wYXRoX3JldHJ5ID0gdW5kZWYgKGludGVy
-bmFsCj4gZGVmYXVsdCkiLAo+ICsJCWNvbmRsb2coMywgIiVzOiBub19wYXRoX3JldHJ5ID0gdW5k
-ZWYgKHNldHRpbmc6Cj4gbXVsdGlwYXRoIGludGVybmFsKSIsCj4gwqAJCQltcC0+YWxpYXMpOwo+
-IMKgCXJldHVybiAwOwo+IMKgfQo+IEBAIC00NTgsMTAgKzQ1OCwxMCBAQCBzZWxlY3RfbWluaW9f
-cnEgKHN0cnVjdCBjb25maWcgKmNvbmYsIHN0cnVjdAo+IG11bHRpcGF0aCAqIG1wKQo+IMKgewo+
-IMKgCWNoYXIgKm9yaWdpbjsKPiDCoAo+IC0JZG9fc2V0KG1pbmlvX3JxLCBtcC0+bXBlLCBtcC0+
-bWluaW8sICIoTFVOIHNldHRpbmcpIik7Cj4gLQlkb19zZXQobWluaW9fcnEsIGNvbmYtPm92ZXJy
-aWRlcywgbXAtPm1pbmlvLCAiKG92ZXJyaWRlcwo+IHNldHRpbmcpIik7Cj4gLQlkb19zZXQobWlu
-aW9fcnEsIG1wLT5od2UsIG1wLT5taW5pbywgIihjb250cm9sbGVyCj4gc2V0dGluZykiKTsKPiAt
-CWRvX3NldChtaW5pb19ycSwgY29uZiwgbXAtPm1pbmlvLCAiKGNvbmZpZyBmaWxlIHNldHRpbmcp
-Iik7Cj4gKwlkb19zZXQobWluaW9fcnEsIG1wLT5tcGUsIG1wLT5taW5pbywgIihzZXR0aW5nOgo+
-IG11bHRpcGF0aC5jb25mIG11bHRpcGF0aHMgc2VjdGlvbikiKTsKPiArCWRvX3NldChtaW5pb19y
-cSwgY29uZi0+b3ZlcnJpZGVzLCBtcC0+bWluaW8sICIoc2V0dGluZzoKPiBtdWx0aXBhdGguY29u
-ZiBvdmVycmlkZXMgc2VjdGlvbikiKTsKPiArCWRvX3NldChtaW5pb19ycSwgbXAtPmh3ZSwgbXAt
-Pm1pbmlvLCAiKHNldHRpbmc6IGFycmF5Cj4gY29uZmlndXJhdGlvbikiKTsKPiArCWRvX3NldCht
-aW5pb19ycSwgY29uZiwgbXAtPm1pbmlvLCAiKHNldHRpbmc6IG11bHRpcGF0aC5jb25mCj4gZGVm
-YXVsdHMvZGV2aWNlcyBzZWN0aW9uKSIpOwo+IMKgCWRvX2RlZmF1bHQobXAtPm1pbmlvLCBERUZB
-VUxUX01JTklPX1JRKTsKPiDCoG91dDoKPiDCoAljb25kbG9nKDMsICIlczogbWluaW8gPSAlaSAl
-cyIsIG1wLT5hbGlhcywgbXAtPm1pbmlvLAo+IG9yaWdpbik7CgotLSAKRHIuIE1hcnRpbiBXaWxj
-ayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLsKgKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGlu
-dXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5v
-cnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApk
-bS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
-by9kbS1kZXZlbA==
+Done with https://github.com/lucasdemarchi/codespell
+
+
+multipath-tools/kpartx/dasd.c:263: formated  ==> formatted
+multipath-tools/libmultipath/discovery.c:1808: unuseable  ==> unusable
+multipath-tools/libmultipath/discovery.h:20: exerpt  ==> excerpt
+multipath-tools/libmultipath/memory.c:150: formated  ==> formatted
+multipath-tools/libmultipath/checkers/directio.c:84: Sucessfully  ==> Successfully
+multipath-tools/libmultipath/prioritizers/hds.c:9: pathes  ==> paths
+multipath-tools/libmultipath/prioritizers/hds.c:14: pathes  ==> paths
+multipath-tools/libmultipath/prioritizers/ontap.c:119: Retuns  ==> Returns
+multipath-tools/third-party/valgrind/valgrind.h:6828: arbitary  ==> arbitrary
+multipath-tools/multipath/02_multipath:11: dynamicaly  ==> dynamically
+multipath-tools/multipath/multipath.conf.5:793: remeber  ==> remember
+multipath-tools/libmpathpersist/mpath_persist.h:15: lenght  ==> length
+
+-------8<-------
+SUMMARY:
+arbitary      1
+dynamicaly    1
+exerpt        1
+formated      2
+lenght        1
+pathes        2
+remeber       1
+retuns        1
+sucessfully   1
+unuseable     1
+
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ kpartx/dasd.c                     | 2 +-
+ libmpathpersist/mpath_persist.h   | 2 +-
+ libmultipath/checkers/directio.c  | 2 +-
+ libmultipath/discovery.c          | 2 +-
+ libmultipath/discovery.h          | 2 +-
+ libmultipath/memory.c             | 2 +-
+ libmultipath/prioritizers/hds.c   | 4 ++--
+ libmultipath/prioritizers/ontap.c | 2 +-
+ multipath/02_multipath            | 2 +-
+ multipath/multipath.conf.5        | 2 +-
+ 10 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/kpartx/dasd.c b/kpartx/dasd.c
+index faf5e2e..1206e45 100644
+--- a/kpartx/dasd.c
++++ b/kpartx/dasd.c
+@@ -261,7 +261,7 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
+ 				fmt_size = sectors512(vlabel.formatted_blocks,
+ 						      blocksize);
+ 			} else if (!strcmp(info.type, "ECKD")) {
+-				/* formated w/o large volume support */
++				/* formatted w/o large volume support */
+ 				fmt_size = geo.cylinders * geo.heads
+ 					* geo.sectors * (blocksize >> 9);
+ 			} else {
+diff --git a/libmpathpersist/mpath_persist.h b/libmpathpersist/mpath_persist.h
+index fde0416..79de5b5 100644
+--- a/libmpathpersist/mpath_persist.h
++++ b/libmpathpersist/mpath_persist.h
+@@ -13,7 +13,7 @@ extern "C" {
+ #define MPATH_MAX_PARAM_LEN	8192
+ 
+ #define MPATH_MX_TIDS		32	  /* Max number of transport ids"*/
+-#define MPATH_MX_TID_LEN	256	  /* Max lenght of transport id */
++#define MPATH_MX_TID_LEN	256	  /* Max length of transport id */
+ 
+ /* PRIN Service Actions */
+ #define MPATH_PRIN_RKEY_SA	0x00	   /* READ KEYS SA*/
+diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
+index eec12d5..ce60e4c 100644
+--- a/libmultipath/checkers/directio.c
++++ b/libmultipath/checkers/directio.c
+@@ -82,7 +82,7 @@ int libcheck_init (struct checker * c)
+ 	ct->ptr = (unsigned char *) (((unsigned long)ct->buf + pgsize - 1) &
+ 		  (~(pgsize - 1)));
+ 
+-	/* Sucessfully initialized, return the context. */
++	/* Successfully initialized, return the context. */
+ 	c->context = (void *) ct;
+ 	return 0;
+ 
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index aaa915c..0f912ba 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1806,7 +1806,7 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 				pp->state = PATH_DOWN;
+ 			if (pp->state == PATH_UP && !pp->size) {
+ 				condlog(3, "%s: device size is 0, "
+-					"path unuseable", pp->dev);
++					"path unusable", pp->dev);
+ 				pp->state = PATH_GHOST;
+ 			}
+ 		} else {
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index 97e5a32..3039268 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -18,7 +18,7 @@
+ #endif
+ 
+ /*
+- * exerpt from sg_err.h
++ * excerpt from sg_err.h
+  */
+ #define SCSI_CHECK_CONDITION    0x2
+ #define SCSI_COMMAND_TERMINATED 0x22
+diff --git a/libmultipath/memory.c b/libmultipath/memory.c
+index 293a688..ff5a030 100644
+--- a/libmultipath/memory.c
++++ b/libmultipath/memory.c
+@@ -148,7 +148,7 @@ dbg_strdup(char *str, char *file, char *function, int line)
+ 
+ 
+ 
+-/* Display a buffer into a HEXA formated output */
++/* Display a buffer into a HEXA formatted output */
+ static void
+ dump_buffer(char *buff, int count)
+ {
+diff --git a/libmultipath/prioritizers/hds.c b/libmultipath/prioritizers/hds.c
+index d161e68..70fb5d1 100644
+--- a/libmultipath/prioritizers/hds.c
++++ b/libmultipath/prioritizers/hds.c
+@@ -7,12 +7,12 @@
+  * Prioritizer for Device Mapper Multipath and HDS Storage
+  *
+  * Hitachis Modular Storage contains two controllers for redundancy. The
+- * Storage internal LUN (LDEV) will normally allocated via two pathes to the
++ * Storage internal LUN (LDEV) will normally allocated via two paths to the
+  * server (one path per controller). For performance reasons should the server
+  * access to a LDEV only via one controller. The other path to the other
+  * controller is stand-by. It is also possible to allocate more as one path
+  * for a LDEV per controller. Here is active/active access allowed. The other
+- * pathes via the other controller are stand-by.
++ * paths via the other controller are stand-by.
+  *
+  * This prioritizer checks with inquiry command the represented LDEV and
+  * Controller number and gives back a priority followed by this scheme:
+diff --git a/libmultipath/prioritizers/ontap.c b/libmultipath/prioritizers/ontap.c
+index 38495cd..ca06d6c 100644
+--- a/libmultipath/prioritizers/ontap.c
++++ b/libmultipath/prioritizers/ontap.c
+@@ -117,7 +117,7 @@ out:
+ }
+ 
+ /*
+- * Retuns:
++ * Returns:
+  * -1: Unable to obtain proxy info
+  *  0: Device _not_ proxy path
+  *  1: Device _is_ proxy path
+diff --git a/multipath/02_multipath b/multipath/02_multipath
+index 523f0ef..de6e247 100755
+--- a/multipath/02_multipath
++++ b/multipath/02_multipath
+@@ -9,7 +9,7 @@ cp /sbin/kpartx $INITRDDIR/sbin
+ 
+ #
+ # feed the dependencies too
+-# scsi_id is dynamicaly linked, so store the libs too
++# scsi_id is dynamically linked, so store the libs too
+ #
+ cp /lib/udev/scsi_id $INITRDDIR/lib/udev/
+ cp /bin/mountpoint $INITRDDIR/bin
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 8f5447d..c272dd6 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -791,7 +791,7 @@ a path has the same WWID as a multipath device that was previously created
+ while find_multipaths was set (even if that multipath device doesn't currently
+ exist).
+ Whenever a multipath device is created with find_multipaths set, multipath will
+-remeber the WWID of the device, so that it will automatically create the
++remember the WWID of the device, so that it will automatically create the
+ device again, as soon as it sees a path with that WWID. This should allow most
+ users to have multipath automatically choose the correct paths to make into
+ multipath devices, without having to edit the blacklist.
+-- 
+2.10.2
