@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [RESEND PATCH] multipath-tools: document
-	exclusive_pref_bit for sysfs
-Date: Sun, 27 Nov 2016 15:13:06 +0100
-Message-ID: <20161127141306.5341-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: minor edition of
+	multipath/multipath.conf.5
+Date: Sun, 27 Nov 2016 17:23:42 +0100
+Message-ID: <20161127162342.7188-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,37 +19,40 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Cc: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- multipath/multipath.conf.5 | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ multipath/multipath.conf.5 | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index cdfea6b..9a1ad04 100644
+index 9a1ad04..36589f5 100644
 --- a/multipath/multipath.conf.5
 +++ b/multipath/multipath.conf.5
-@@ -7,7 +7,7 @@
- .\"
- .\" ----------------------------------------------------------------------------
+@@ -147,11 +147,11 @@ The default is: \fBno\fR
  .
--.TH MULTIPATH.CONF 5 2016-10-18 "Linux"
-+.TH MULTIPATH.CONF 5 2016-11-27 "Linux"
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -321,6 +321,10 @@ these values can be looked up through sysfs or by running \fImultipathd show pat
- If \fIexclusive_pref_bit\fR is set, paths with the \fIpreferred path\fR bit
- set will always be in their own path group.
  .TP
-+.I sysfs
-+If \fIexclusive_pref_bit\fR is set, paths with the \fIpreferred path\fR bit
-+set will always be in their own path group.
-+.TP
- .I datacore
- .\" XXX
- \fIpreferredsds\fR ???.
+ .B multipath_dir
+-Directory where the dynamic shared objects are stored.
++Directory where the dynamic shared objects are stored. Defined at compile time,
++commonly \fI/lib64/multipath/\fR or \fI/lib/multipath/\fR.
+ .RS
+ .TP
+-The default is: \fB<system dependent>\fR. Defined at compile time, commonly
+-\fI/lib64/multipath/\fR.
++The default is: \fB<system dependent>\fR
+ .RE
+ .
+ .
+@@ -884,7 +884,7 @@ Sets the max_sectors_kb device parameter on all path devices and the multipath
+ device to the specified value.
+ .RS
+ .TP
+-Default is device dependent.
++The default is: \fB<device dependent>\fR
+ .RE
+ .
+ .
 -- 
 2.10.2
