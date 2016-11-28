@@ -1,15 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 1/2] dm-mpath: Enable hw_handler_params to
- take effect if hw_handler is the same between new and old
-Date: Mon, 28 Nov 2016 16:23:57 -0500
-Message-ID: <20161128212357.GA7844@redhat.com>
+Subject: Re: [PATCH 2/2] dm-mpath: Remove useless
+ retain_attached_hw_handler parameter
+Date: Mon, 28 Nov 2016 16:39:07 -0500
+Message-ID: <20161128213907.GB7844@redhat.com>
 References: <1479971509-6320-1-git-send-email-tang.junhui@zte.com.cn>
+	<1479971509-6320-2-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1479971509-6320-1-git-send-email-tang.junhui@zte.com.cn>
+In-Reply-To: <1479971509-6320-2-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,11 +29,21 @@ tang.junhui@zte.com.cn <tang.junhui@zte.com.cn> wrote:
 
 > From: "tang.junhui" <tang.junhui@zte.com.cn>
 > 
-> If the hardware handle which a device has already attached is the same
-> with m->hw_handler_name, m->hw_handler_params should not be ignored, but
-> be enabled to take effect.
-> 
-> Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+> Hardware handle would be retained no matter parameter
+> retain_attached_hw_handler is set or not in the logic
+> of current code. So remove this useless parameter.
 
-I tweaked this a little bit and staged it for 4.10, see:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.10&id=1422b33eda2ffbc70eb11163bf7ac1e59ebba222
+Right, that wasn't always the case.  Previously (before commit )
+dm-mpath would first detach the attached handler.
+
+I'm not completely opposed to removing the code that checks
+MPATHF_RETAIN_ATTACHED_HW_HANDLER in parse_path() but your proposed
+patch is broken in 2 ways:
+1) in parse_path() you need to always initialize q
+2) setting m->hw_handler_name to attached_handler_name needs to still
+   happen regardless of whether m->hw_handler_name was previously set
+3) the "retain_attached_hw_handler" feature should still be allowed on
+   the command line, no sense to break multipath-tools
+
+But honestly, I'm not seeing any reason to not just leave the existing
+code.
