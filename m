@@ -1,16 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
 Subject: Re: Improve processing efficiency for addition and
  deletion of multipath devices
-Date: Mon, 28 Nov 2016 10:07:08 -0600
-Message-ID: <20161128160708.GC1972@octiron.msp.redhat.com>
+Date: Mon, 28 Nov 2016 17:26:09 +0100
+Message-ID: <893401d0-1b0c-393b-e144-05039cdd15fa@redhat.com>
 References: <OF6C4379F8.661B1ACE-ON48258079.000B15EB-48258079.000CBE4F@zte.com.cn>
 	<9c955a41-83e0-12b4-72f6-8de797e93aed@suse.de>
+	<20161128160708.GC1972@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <9c955a41-83e0-12b4-72f6-8de797e93aed@suse.de>
+In-Reply-To: <20161128160708.GC1972@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,89 +20,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>, Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, tang.junhui@zte.com.cn, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCBOb3YgMjgsIDIwMTYgYXQgMTE6MDU6MjlBTSArMDEwMCwgSGFubmVzIFJlaW5lY2tl
-IHdyb3RlOgo+IEhpIEp1bmh1aSwKPiAKPiBPbiAxMS8yOC8yMDE2IDAzOjE5IEFNLCB0YW5nLmp1
-bmh1aUB6dGUuY29tLmNuIHdyb3RlOgo+ID4gSGVsbG8gQ2hyaXN0b3BoZSwgQmVuLCBIYW5uZXMs
-IE1hcnRpbiwgQmFydCwKPiA+IEkgYW0gYSBtZW1iZXIgb2YgaG9zdC1zaWRlIHNvZnR3YXJlIGRl
-dmVsb3BtZW50IHRlYW0gb2YgWlhVU1Agc3RvcmFnZQo+ID4gcHJvamVjdCBpbiBaVEUgQ29ycG9y
-YXRpb24uIEZhY2luZyB0aGUgbWFya2V0IGRlbWFuZCwgb3VyIHRlYW0gZGVjaWRlcyB0byB3cml0
-ZQo+ID4gY29kZSB0byBwcm9tb3RlIG11bHRpcGF0aCBlZmZpY2llbmN5IG5leHQgbW9udGguIFRo
-ZSB3aG9sZSBpZGVhIGlzIGluIHRoZSBtYWlsCj4gPiBiZWxvdy4gV2UgaG9wZSB0byBwYXJ0aWNp
-cGF0ZSBpbiBhbmQgbWFrZSBwcm9ncmVzcyB3aXRoIHRoZSBvcGVuIHNvdXJjZSBjb21tdW5pdHks
-Cj4gPiBzbyBhbnkgc3VnZ2VzdGlvbiBhbmQgY29tbWVudCB3b3VsZCBiZSB3ZWxjb21lLgo+ID4g
-Cj4gVGhhbmsgeW91IGZvciBsb29raW5nIGludG8gaXQuCj4gVGhpcyBpcyBvbmUgYXJlYSB3aGlj
-aCBkZWZpbml0ZWx5IG5lZWRzIGltcHJvdmVtZW50LCBzbyB5b3VyCj4gY29udHJpYnV0aW9uIHdv
-dWxkIGJlIG1vc3Qgd2VsY29tZS4KPiAKPiA+IAo+ID4gLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4gPiAKPiA+IC0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLQo+ID4gCj4gPiAxLiAgICAgICAgUHJvYmxlbQo+ID4gSW4gdGhlc2Ugc2NlbmFy
-aW9zLCBtdWx0aXBhdGggcHJvY2Vzc2luZyBlZmZpY2llbmN5IGlzIGxvdzoKPiA+IDEpIE1hbnkg
-cGF0aHMgZXhpc3QgaW4gZWFjaCBtdWx0aXBhdGggZGV2aWNlLAo+ID4gMikgRGV2aWNlcyBhZGRp
-dGlvbiBvciBkZWxldGlvbiBkdXJpbmcgaVNDU0kgbG9naW4vbG9nb3V0IG9yIEZDIGxpbmsKPiA+
-IHVwL2Rvd24uCj4gPiAKPiA+IDIuICAgICAgICBSZWFzb25zCj4gPiBNdWx0aXBhdGggcHJvY2Vz
-cyB1ZXZlbnRzIG9uZSBieSBvbmUsIGFuZCBlYWNoIG9uZSBhbHNvIHByb2R1Y2UgYSBuZXcgZG0K
-PiA+IGFkZGl0aW9uIGNoYW5nZSBvciBkZWxldGlvbnVldmVudCB0byBpbmNyZWFzZWQgc3lzdGVt
-IHJlc291cmNlIGNvbnN1bXB0aW9uLAo+ID4gYWN0dWFsbHkgbW9zdCBvZiB0aGVzZSB1ZXZlbnRz
-IGhhdmUgbm8gc2Vuc2UgYXQgYWxsLgo+ID4gCj4gWyAuLiBdCj4gPiBJbiBsaXN0X21lcmdlcl91
-ZXZlbnRzKCZ1ZXZxX3RtcCksIGVhY2ggbm9kZSBpcyB0cmF2ZXJzZWQgZnJvbSB0aGUKPiA+IGxh
-dGVzdCB0byB0aGUgb2xkZXN0LAo+ID4gYW5kIHRoZSBvbGRlciBub2RlIHdpdGggdGhlIHNhbWUg
-V1dJRCBhbmQgdWV2ZW50IHR5cGUoZS5nLiBhZGQpIHdvdWxkIGJlCj4gPiBtb3ZlZCB0bwo+ID4g
-dGhlIG1lcmdlcl9ub2RlIGxpc3Qgb2YgdGhlIGxhdGVyIG5vZGUuIElmIGEgZGVsZXRpb24gdWV2
-ZW50IG5vZGUKPiA+IG9jY3VycmVkLCBvdGhlciBvbGRlcgo+ID4gdWV2ZW50IG5vZGVzIGFib3V0
-IHRoaXMgZGV2aWNlIHdvdWxkIGJlIGZpbHRlcmVkKFRoYW5rcyB0byBNYXJ0aW7igJlzIGlkZWEp
-Lgo+ID4gCj4gPiBBZnRlciBhYm92ZSBwcm9jZXNzaW5nLCBhdHRlbnRpb24gbXVzdCBiZSBwYWlk
-IHRvIHRoYXQgdGhlIHBhcmFtZXRlcgo+ID4g4oCcc3RydWN0IHVldmVudCAqIHVlduKAnSBpcyBu
-b3QgYSBzaW5nbGUgdWV2ZW50IGFueSBtb3JlIGluIGFuZCBhZnRlcgo+ID4gdWV2X3RyaWdnZXIo
-KSwgY29kZQo+ID4gbmVlZCB0byBiZSBtb2RpZmllZCB0byBwcm9jZXNzIGJhdGNoIHVldmVudHMg
-aW4gdWV2X2FkZF9wYXRoKCkgYW5kIHNvIG9uLgo+ID4gCj4gVG8gaGFuZGxlIHRoaXMgcHJvcGVy
-bHkgeW91IG5lZWQgdG8gbW9kaWZ5IHVldl9hZGRfcGF0aCgpOyBiYXNpY2FsbHkgeW91Cj4gbmVl
-ZCB0byB0cmVhdCAndWV2X2FkZF9wYXRoKCknIGFuZCAnZXZfYWRkX3BhdGgoKScgYXMgdHdvIF9k
-aXN0aW5jdF8KPiBldmVudHMsIHdoZXJlIHRoZSBmb3JtZXIgcHJvY2Vzc2VzIHVldmVudHMgYW5k
-IGFkZCB0aGUgcGF0aCB0byBhbgo+IGludGVybmFsIGxpc3QgKC0+cGF0aHZlYyB3b3VsZCBiZSBp
-ZGVhbGx5IHN1aXRlZCBoZXJlKS4KPiAnZXZfYWRkX3BhdGgoKScgdGhlbiB3b3VsZCBuZWVkIHRv
-IGJlIGNhbGxlZCBvbmNlIGFsbCB1ZXZlbnRzIGFyZQo+IHByb2Nlc3NlZCwgYW5kIHdvdWxkIGJl
-IHByb2Nlc3NpbmcgYWxsIGVsZW1lbnRzIGluIC0+cGF0aHZlYywgY3JlYXRpbmcKPiB0aGUgcmVz
-dWx0aW5nIG11bHRpcGF0aCBtYXAgaW4gb25lIGdvLgo+IAo+IEFjdHVhbGx5IG5vdCBhIGJhZCBp
-ZGVhLgo+IAo+IFRyaWNreSBiaXQgd291bGQgYmUgdG8gZmlndXJlIG91dCBfd2hlbl8gdG8gc3Rv
-cCB1ZXZlbnQgcHJvY2Vzc2luZyBhbmQKPiBjYWxsaW5nICdldl9hZGRfcGF0aCcuCj4gSSBndWVz
-cyB3ZSdkIG5lZWQgdG8gbWFrZSAnZXZfYWRkX3BhdGgnIHJ1bm5pbmcgaW4gYSBzZXBhcmF0ZSB0
-aHJlYWQ7Cj4gdGhhdCB3YXkgd2UnZCBiZSBwdXR0aW5nIHByZXNzdXJlIG9mZiB0aGUgdWV2ZW50
-IHByb2Nlc3NpbmcgdGhyZWFkIGFuZAo+IHRoZSB3aG9sZSB0aGluZyBzaG91bGQgYmUgcnVubmlu
-ZyBmYXIgc21vb3RoZXIuCgpJIHN0aWxsIHRoaW5rIHRoYXQgd2UgZG9uJ3QgbmVlZCB0byBmb3Jj
-ZSBhIHdhaXQgaGVyZS4KdWV2ZW50X2Rpc3BhdGNoKCkgYWxyZWFkeSBwdWxscyBvZmYgYWxsIHRo
-ZSBxdWV1ZWQgZXZlbnRzIGluIGEgYmF0Y2guIFdlCmNvdWxkIGp1c3QgbWVyZ2Ugb3ZlciB0aGUg
-YmF0Y2ggdGhhdCB3ZSBhcmUgZ2l2ZW4uICBUaGlzIGhhcyB0aGUgbmljZQpwcm9wZXJ0eSB0aGF0
-IHdoZW4gdWV2ZW50cyBhcmVuJ3QgY29taW5nIGluIGEgc3Rvcm0sIHdlIHF1aWNrbHkgcHJvY2Vz
-cwp0aGUgbmV4dCBldmVudCwgYW5kIHdoZW4gdGhleSBhcmUsIHRoZSBmdXJ0aGVyIG11bHRpcGF0
-aGQgZ2V0cyBiZWhpbmQsIHRoZQpsYXJnZXIgdGhlIGxpc3QgaXQgd2lsbCBtZXJnZSBvdmVyLgog
-Cj4gQW5kIGxvb2tpbmcgYXQgaXQgY2xvc2VyLCB3aGVuIHlvdSBtb3ZlICdldl9hZGRfcGF0aCcg
-aW50byBhIHNlcGFyYXRlCj4gdGhyZWFkLCBhbmQgc2VwYXJhdGluZyBvdXQgJ3Vldl9hZGRfcGF0
-aCcgeW91IF9hbHJlYWR5XyBoYXZlIHlvdXIgZXZlbnQKPiBtZXJnaW5nIGltcGxlbWVudGVkLgoK
-TGlrZSBJIG1lbnRpb25lZCBiZWZvcmUsIEknbSBub3Qgc3VyZSB3aGF0IGEgc2VwZXJhdGUgdGhy
-ZWFkIHdpbGwgYnV5IHVzCmhlcmUsIHNpbmNlIHdlIGNhbid0IGNyZWF0ZSBtdWx0aXBhdGggZGV2
-aWNlcyB3aGlsZSBwYXRocyBtaWdodCBiZQpnZXR0aW5nIGRlbGV0ZWQuIEkgZG8gdGhpbmsgeW91
-ciBlYXJsaWVyIHBvaW50IHRoYXQgd2UgZG9uJ3QgbmVlZCBhbnkKbG9ja2luZyB1bnRpbCB0aGUg
-cGF0aHMgYXJlIGFkZGVkIHRvIHRoZSBwYXRodmVjIGlzIGltcG9ydGFudC4gIEluc3RlYWQKb2Yg
-Z29pbmcgYSBwYXRoIGF0IGEgdGltZSwgZ2V0dGluZyB0aGUgcGF0aCdzIGluZm9ybWF0aW9uIGFu
-ZCB0aGVuCmFkZGluZyBpdCB0byB0aGUgcGF0aHZlYywgd2UgY291bGQgZ2V0IHRoZSBpbmZvcm1h
-dGlvbiBvbiBhbGwgdGhlCm91dHN0YW5kaW5nIHBhdGhzIGFuZCB0aGVuIGFkZCB0aGVtIGFsbCBh
-dCBvbmNlLCBhbmQgdGhlbiBjYWxsIHRoZQptYXAgY3JlYXRpb24gY29kZSAoYmFzaWNhbGx5IHRo
-ZSB3b3JrIHRoYXQgZXZfYWRkX3BhdGggZG9lcykgb24gYWxsIHRoZQpwYXRocy4KCj4gV2l0aCBt
-dWNoIGxlc3MgZWZmb3J0IHRoZW4gdHJ5aW5nIHRvIG1lcmdlIHRoaW5ncyBhdCB0aGUgdWV2ZW50
-IGxldmVsLgoKWWVzLiBJJ2QgbXVjaCByYXRoZXIgZGVhbCB3aXRoIHRoZSB1ZXZlbnRzIGFzIHRo
-ZXkgYWN1dGFsbHkgYXJlLCBhbmQKaGF2ZSB1ZXZfYWRkX3BhdGggKHBvc3NpYmx5IG5vdyBjYWxs
-ZWQgdWV2X2FkZF9wYXRocykgZG8gdGhlIHdvcmsuCgo+IEknZCBiZSB3aWxsaW5nIHRvIGxvb2sg
-aW50byBpdDsgcGxlYXNlIGtlZXAgbWUgaW5mb3JtZWQgYWJvdXQgYW55Cj4gcHJvZ3Jlc3MgaGVy
-ZS4KPiAKPiBDaGVlcnMsCj4gCj4gSGFubmVzCj4gLS0gCj4gRHIuIEhhbm5lcyBSZWluZWNrZQkJ
-ICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKPiBoYXJlQHN1c2UuZGUJCQkgICAgICAg
-ICAgICAgICArNDkgOTExIDc0MDUzIDY4OAo+IFNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4g
-NSwgOTA0MDkgTsO8cm5iZXJnCj4gR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEou
-IEd1aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b24KPiBIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykK
-Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Dne 28.11.2016 v 17:07 Benjamin Marzinski napsal(a):
+> On Mon, Nov 28, 2016 at 11:05:29AM +0100, Hannes Reinecke wrote:
+>> Hi Junhui,
+>>
+>> Tricky bit would be to figure out _when_ to stop uevent processing and
+>> calling 'ev_add_path'.
+>> I guess we'd need to make 'ev_add_path' running in a separate thread;
+>> that way we'd be putting pressure off the uevent processing thread and
+>> the whole thing should be running far smoother.
+>
+> I still think that we don't need to force a wait here.
+> uevent_dispatch() already pulls off all the queued events in a batch. We
+> could just merge over the batch that we are given.  This has the nice
+> property that when uevents aren't coming in a storm, we quickly process
+> the next event, and when they are, the further multipathd gets behind, the
+> larger the list it will merge over.
+>
+
+
+It's worth to mention at this point   - libdevmapper  1.02  is NOT library
+with multithread support - there is 'certain' limited set of thread-safe 
+functions, but for sure not a whole library.
+
+So any threaded usage of libdevmapper.so would likely require mutex against
+access to do library code.
+
+Regards
+
+Zdenek
