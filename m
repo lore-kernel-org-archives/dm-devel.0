@@ -1,15 +1,15 @@
-From: Peter Rajnoha <prajnoha@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: Improve processing efficiency for addition and
  deletion of multipath devices
-Date: Mon, 28 Nov 2016 13:06:16 +0100
-Message-ID: <1d2f312b-5b16-3dad-53c4-a0f19632faf6@redhat.com>
+Date: Mon, 28 Nov 2016 13:08:51 +0100
+Message-ID: <0d34fede-29b3-1d6f-3fd0-167e1bcf7019@suse.de>
 References: <OF6C4379F8.661B1ACE-ON48258079.000B15EB-48258079.000CBE4F@zte.com.cn>
 	<597eba5c-3efa-8b05-3b7b-87792e3d896d@redhat.com>
 	<708c4e21-559c-5d50-2525-e1e10a289711@suse.de>
 	<61c3088c-062d-ad59-8138-bdd73784c7c0@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <61c3088c-062d-ad59-8138-bdd73784c7c0@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -21,92 +21,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>, Hannes Reinecke <hare@suse.de>, tang.junhui@zte.com.cn, Christophe Varoqui <christophe.varoqui@opensvc.com>, bmarzins@redhat.com, Martin Wilck <mwilck@suse.com>, Bart Van Assche <bart.vanassche@sandisk.com>
+To: Zdenek Kabelac <zkabelac@redhat.com>, tang.junhui@zte.com.cn, Christophe Varoqui <christophe.varoqui@opensvc.com>, bmarzins@redhat.com, Martin Wilck <mwilck@suse.com>, Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/28/2016 12:51 PM, Zdenek Kabelac wrote:
-> Dne 28.11.2016 v 11:42 Hannes Reinecke napsal(a):
->> On 11/28/2016 11:06 AM, Zdenek Kabelac wrote:
->>> Dne 28.11.2016 v 03:19 tang.junhui@zte.com.cn napsal(a):
->>>> Hello Christophe, Ben, Hannes, Martin, Bart,
->>>> I am a member of host-side software development team of ZXUSP storage
->>>> project
->>>> in ZTE Corporation. Facing the market demand, our team decides to
->>>> write code to
->>>> promote multipath efficiency next month. The whole idea is in the mail
->>>> below.We
->>>> hope to participate in and make progress with the open source
->>>> community, so any
->>>> suggestion and comment would be welcome.
->>>>
->>>
->>>
->>> Hi
->>>
->>> First - we are aware of these issue.
->>>
->>> The solution proposed in this mail would surely help - but there is
->>> likely a bigger issue to be solved first.
->>>
->>> The core trouble is to avoid  'blkid' disk identification to be
->>> executed.
->>> Recent version of multipath is already marking plain 'RELOAD' operation
->>> of table (which should not be changing disk content) with extra DM bit,
->>> so udev rules ATM skips 'pvscan' - we also would like to extend the
->>> functionality to skip rules more and reimport existing 'symlinks' from
->>> udev database (so they would not get deleted).
->>>
->>> I believe the processing of udev rules is 'relatively' quick as long
->>> as it does not need to read/write ANYTHING from real disks.
->>>
->> Hmm. You sure this is an issue?
->> We definitely need to skip uevent handling when a path goes down (but I
->> think we do that already), but for 'add' events we absolutely need to
->> call blkid to figure out if the device has changed.
->> There are storage arrays out there who use a 'path down/path up' cycle
->> to inform initiators about any device layout change.
->> So we wouldn't be able to handle those properly if we don't call blkid
->> here.
-> 
-> The core trouble is -
-> 
-> 
-> With multipath device - you ONLY want to 'scan' device (with blkid)  when
-> only the initial first member device of multipath gets in.
-> 
-> So you start multipath (resume -> CHANGE) - it should be the ONLY place
-> to run 'blkid' test (which really goes though over 3/4MB of disk read,
-> to check if there is not ZFS somewhere)
-> 
-> Then any next disk being a member of multipath (recognized by 'multipath
-> -c',
-> should NOT scan)  - as far  as  I can tell current order is opposite,
-> fist there is  'blkid' (60) and then rule (62) recognizes a mpath_member.
-> 
-> Thus every add disk fires very lengthy blkid scan.
-> 
-> Of course I'm not here an expert on dm multipath rules so passing this
-> on to prajnoha@ -  but I'd guess this is primary source of slowdowns.
-> 
-> There should be exactly ONE blkid for a single multipath device - as
-> long as 'RELOAD' only  add/remove  paths  (there is no reason to scan
-> component devices)
-
-That's true indeed - the blkid is executed in
-60-persistent-storage.rules (for all disks in general). And multipath rules
-are executed later - at the moment, if we detect that the disk is a
-multipath component, we overwrite the ID_FS_TYPE to mpath_member. But
-that means the blkid was executed uselessly before.
-
-So if we wanted to save some cycles, this could be the place to also
-look at optimization, as Zdenek already pointed out.
-
-When it comes to the need to detect whether the component has changed or
-not (as Hannes pointed out), that would be only for a change in
-signatures (that blkid detects only). But is that enough? If we care
-about the change in signatures that blkid detects, don't we care about
-data/content that may have changed the same way as those signatures?
-
--- 
-Peter
+T24gMTEvMjgvMjAxNiAxMjo1MSBQTSwgWmRlbmVrIEthYmVsYWMgd3JvdGU6Cj4gRG5lIDI4LjEx
+LjIwMTYgdiAxMTo0MiBIYW5uZXMgUmVpbmVja2UgbmFwc2FsKGEpOgo+PiBPbiAxMS8yOC8yMDE2
+IDExOjA2IEFNLCBaZGVuZWsgS2FiZWxhYyB3cm90ZToKPj4+IERuZSAyOC4xMS4yMDE2IHYgMDM6
+MTkgdGFuZy5qdW5odWlAenRlLmNvbS5jbiBuYXBzYWwoYSk6Cj4+Pj4gSGVsbG8gQ2hyaXN0b3Bo
+ZSwgQmVuLCBIYW5uZXMsIE1hcnRpbiwgQmFydCwKPj4+PiBJIGFtIGEgbWVtYmVyIG9mIGhvc3Qt
+c2lkZSBzb2Z0d2FyZSBkZXZlbG9wbWVudCB0ZWFtIG9mIFpYVVNQIHN0b3JhZ2UKPj4+PiBwcm9q
+ZWN0Cj4+Pj4gaW4gWlRFIENvcnBvcmF0aW9uLiBGYWNpbmcgdGhlIG1hcmtldCBkZW1hbmQsIG91
+ciB0ZWFtIGRlY2lkZXMgdG8KPj4+PiB3cml0ZSBjb2RlIHRvCj4+Pj4gcHJvbW90ZSBtdWx0aXBh
+dGggZWZmaWNpZW5jeSBuZXh0IG1vbnRoLiBUaGUgd2hvbGUgaWRlYSBpcyBpbiB0aGUgbWFpbAo+
+Pj4+IGJlbG93LldlCj4+Pj4gaG9wZSB0byBwYXJ0aWNpcGF0ZSBpbiBhbmQgbWFrZSBwcm9ncmVz
+cyB3aXRoIHRoZSBvcGVuIHNvdXJjZQo+Pj4+IGNvbW11bml0eSwgc28gYW55Cj4+Pj4gc3VnZ2Vz
+dGlvbiBhbmQgY29tbWVudCB3b3VsZCBiZSB3ZWxjb21lLgo+Pj4+Cj4+Pgo+Pj4KPj4+IEhpCj4+
+Pgo+Pj4gRmlyc3QgLSB3ZSBhcmUgYXdhcmUgb2YgdGhlc2UgaXNzdWUuCj4+Pgo+Pj4gVGhlIHNv
+bHV0aW9uIHByb3Bvc2VkIGluIHRoaXMgbWFpbCB3b3VsZCBzdXJlbHkgaGVscCAtIGJ1dCB0aGVy
+ZSBpcwo+Pj4gbGlrZWx5IGEgYmlnZ2VyIGlzc3VlIHRvIGJlIHNvbHZlZCBmaXJzdC4KPj4+Cj4+
+PiBUaGUgY29yZSB0cm91YmxlIGlzIHRvIGF2b2lkICAnYmxraWQnIGRpc2sgaWRlbnRpZmljYXRp
+b24gdG8gYmUKPj4+IGV4ZWN1dGVkLgo+Pj4gUmVjZW50IHZlcnNpb24gb2YgbXVsdGlwYXRoIGlz
+IGFscmVhZHkgbWFya2luZyBwbGFpbiAnUkVMT0FEJyBvcGVyYXRpb24KPj4+IG9mIHRhYmxlICh3
+aGljaCBzaG91bGQgbm90IGJlIGNoYW5naW5nIGRpc2sgY29udGVudCkgd2l0aCBleHRyYSBETSBi
+aXQsCj4+PiBzbyB1ZGV2IHJ1bGVzIEFUTSBza2lwcyAncHZzY2FuJyAtIHdlIGFsc28gd291bGQg
+bGlrZSB0byBleHRlbmQgdGhlCj4+PiBmdW5jdGlvbmFsaXR5IHRvIHNraXAgcnVsZXMgbW9yZSBh
+bmQgcmVpbXBvcnQgZXhpc3RpbmcgJ3N5bWxpbmtzJyBmcm9tCj4+PiB1ZGV2IGRhdGFiYXNlIChz
+byB0aGV5IHdvdWxkIG5vdCBnZXQgZGVsZXRlZCkuCj4+Pgo+Pj4gSSBiZWxpZXZlIHRoZSBwcm9j
+ZXNzaW5nIG9mIHVkZXYgcnVsZXMgaXMgJ3JlbGF0aXZlbHknIHF1aWNrIGFzIGxvbmcKPj4+IGFz
+IGl0IGRvZXMgbm90IG5lZWQgdG8gcmVhZC93cml0ZSBBTllUSElORyBmcm9tIHJlYWwgZGlza3Mu
+Cj4+Pgo+PiBIbW0uIFlvdSBzdXJlIHRoaXMgaXMgYW4gaXNzdWU/Cj4+IFdlIGRlZmluaXRlbHkg
+bmVlZCB0byBza2lwIHVldmVudCBoYW5kbGluZyB3aGVuIGEgcGF0aCBnb2VzIGRvd24gKGJ1dCBJ
+Cj4+IHRoaW5rIHdlIGRvIHRoYXQgYWxyZWFkeSksIGJ1dCBmb3IgJ2FkZCcgZXZlbnRzIHdlIGFi
+c29sdXRlbHkgbmVlZCB0bwo+PiBjYWxsIGJsa2lkIHRvIGZpZ3VyZSBvdXQgaWYgdGhlIGRldmlj
+ZSBoYXMgY2hhbmdlZC4KPj4gVGhlcmUgYXJlIHN0b3JhZ2UgYXJyYXlzIG91dCB0aGVyZSB3aG8g
+dXNlIGEgJ3BhdGggZG93bi9wYXRoIHVwJyBjeWNsZQo+PiB0byBpbmZvcm0gaW5pdGlhdG9ycyBh
+Ym91dCBhbnkgZGV2aWNlIGxheW91dCBjaGFuZ2UuCj4+IFNvIHdlIHdvdWxkbid0IGJlIGFibGUg
+dG8gaGFuZGxlIHRob3NlIHByb3Blcmx5IGlmIHdlIGRvbid0IGNhbGwgYmxraWQKPj4gaGVyZS4K
+PiAKPiBUaGUgY29yZSB0cm91YmxlIGlzIC0KPiAKPiAKPiBXaXRoIG11bHRpcGF0aCBkZXZpY2Ug
+LSB5b3UgT05MWSB3YW50IHRvICdzY2FuJyBkZXZpY2UgKHdpdGggYmxraWQpICB3aGVuCj4gb25s
+eSB0aGUgaW5pdGlhbCBmaXJzdCBtZW1iZXIgZGV2aWNlIG9mIG11bHRpcGF0aCBnZXRzIGluLgo+
+IAo+IFNvIHlvdSBzdGFydCBtdWx0aXBhdGggKHJlc3VtZSAtPiBDSEFOR0UpIC0gaXQgc2hvdWxk
+IGJlIHRoZSBPTkxZIHBsYWNlCj4gdG8gcnVuICdibGtpZCcgdGVzdCAod2hpY2ggcmVhbGx5IGdv
+ZXMgdGhvdWdoIG92ZXIgMy80TUIgb2YgZGlzayByZWFkLAo+IHRvIGNoZWNrIGlmIHRoZXJlIGlz
+IG5vdCBaRlMgc29tZXdoZXJlKQo+IAo+IFRoZW4gYW55IG5leHQgZGlzayBiZWluZyBhIG1lbWJl
+ciBvZiBtdWx0aXBhdGggKHJlY29nbml6ZWQgYnkgJ211bHRpcGF0aAo+IC1jJywKPiBzaG91bGQg
+Tk9UIHNjYW4pICAtIGFzIGZhciAgYXMgIEkgY2FuIHRlbGwgY3VycmVudCBvcmRlciBpcyBvcHBv
+c2l0ZSwKPiBmaXN0IHRoZXJlIGlzICAnYmxraWQnICg2MCkgYW5kIHRoZW4gcnVsZSAoNjIpIHJl
+Y29nbml6ZXMgYSBtcGF0aF9tZW1iZXIuCj4gCj4gVGh1cyBldmVyeSBhZGQgZGlzayBmaXJlcyB2
+ZXJ5IGxlbmd0aHkgYmxraWQgc2Nhbi4KPiAKPiBPZiBjb3Vyc2UgSSdtIG5vdCBoZXJlIGFuIGV4
+cGVydCBvbiBkbSBtdWx0aXBhdGggcnVsZXMgc28gcGFzc2luZyB0aGlzCj4gb24gdG8gcHJham5v
+aGFAIC0gIGJ1dCBJJ2QgZ3Vlc3MgdGhpcyBpcyBwcmltYXJ5IHNvdXJjZSBvZiBzbG93ZG93bnMu
+Cj4gCj4gVGhlcmUgc2hvdWxkIGJlIGV4YWN0bHkgT05FIGJsa2lkIGZvciBhIHNpbmdsZSBtdWx0
+aXBhdGggZGV2aWNlIC0gYXMKPiBsb25nIGFzICdSRUxPQUQnIG9ubHkgIGFkZC9yZW1vdmUgIHBh
+dGhzICAodGhlcmUgaXMgbm8gcmVhc29uIHRvIHNjYW4KPiBjb21wb25lbnQgZGV2aWNlcykKPiAK
+QVRNICdtdWx0aXBhdGggLWMnIGlzIGp1c3QgYSBzaW1wbGUgdGVzdCBpZiB0aGUgZGV2aWNlIGlz
+IHN1cHBvc2VkIHRvIGJlCmhhbmRsZWQgYnkgbXVsdGlwYXRoLgoKQW5kIHRoZSBudW1iZXIgb2Yg
+Ynl0ZXMgcmVhZCBieSBibGtpZCBzaG91bGQgYmUgX3RoYXRfIGxhcmdlOyBhIHNpbXBsZQonYmxr
+aWQnIG9uIG15IGRldmljZSBjYXVzZWQgaXQgdG8gcmVhZCAzNWsgLi4uCgpBbHNvIHVkZXYgd2ls
+bCBiZWNvbWUgdmVyeSB1bmhhcHB5IGlmIHdlJ3JlIG5vdCBjYWxsaW5nIGJsa2lkIGZvciBldmVy
+eQpkZXZpY2U7IHlvdSdkIGJlIGhhdmluZyBhIGhhcmQgdGltZSByZWNvbnN0cnVjdGluZyB0aGUg
+ZXZlbnQgZm9yIHRob3NlCmRldmljZXMuCldoaWxlIGl0J3MgdHJpdmlhbCB0byBpbXBvcnQgdmFy
+aWFibGVzIGZyb20gcGFyZW50IGRldmljZXMsIGl0J3MKaW1wb3NzaWJsZSB0byBkbyB0aGF0IGZy
+b20gdW5yZWxhdGVkIGRldmljZXM7IHlvdSdkIG5lZWQgYSBkZWRpY2F0ZWQKZGFlbW9uIGZvciB0
+aGF0LgpTbyB3ZSBjYW5ub3Qgc2tpcCBibGtpZCB3aXRob3V0IGFkZGl0aW9uYWwgdG9vbGluZy4K
+Cj4+Cj4+PiBTbyB3aGlsZSBhZ2dyZWdhdGlvbiBvZiAndWV2ZW50cycgaW4gbXVsdGlwYXRoIHdv
+dWxkICdzaG9ydGVuJyBxdWV1ZQo+Pj4gcHJvY2Vzc2luZyBvZiBldmVudHMgLSBpdCB3b3VsZCBz
+dGlsbCBub3Qgc3BlZWR1cCBzY2FuIGFsb25lLgo+Pj4KPj4+IFdlIG5lZWQgdG8gZHJhc3RpY2Fs
+bHkgc2hvcnRlbiB1bm5lY2Vzc2FyeSBkaXNrIHJlLXNjYW5uaW5nLgo+Pj4KPj4+IEFsc28gbm90
+ZSAtIGlmIHlvdSBoYXZlIGEgbG90IG9mIGRpc2tzIC0gIGl0IG1pZ2h0IGJlIHdvcnRoIHRvIGNo
+ZWNrb3V0Cj4+PiB3aGV0aGVyIHVkZXYgcGlja3MgICdyaWdodCBhbW91bnQgb2YgdWRldiB3b3Jr
+ZXJzJy4KPj4+IFRoZXJlIGlzIGhldXJpc3RpYyBsb2dpYyB0byBhdm9pZCBzeXN0ZW0gb3Zlcmxv
+YWQgLSBidXQgbWlnaHQgYmUgd29ydGgKPj4+IHRvIGNoZWNrIGlmIGluIHlvdSBzeXN0ZW0gd2l0
+aCB5b3VyIGFtb3VudCBvZiBDUFUvUkFNL0RJU0tTICB0aGUKPj4+IGNvbXB1dGVkIG51bWJlciBp
+cyB0aGUgYmVzdCBmb3Igc2NhbGluZyAtIGkuZS4gaWYgeW91IGRvdWJsZSB0aGUgYW1vdW50Cj4+
+PiBvZiB3b3JrZXJzIC0gZG8geW91Cj4+PiBnZXQgYW55IGJldHRlciBwZXJmb3JtYW5jZSA/Cj4+
+Pgo+PiBUaGF0IGRvZXNuJ3QgaGVscCwgYXMgd2Ugb25seSBoYXZlIG9uZSBxdWV1ZSAod2l0aGlu
+IG11bHRpcGF0aCkgdG8KPj4gaGFuZGxlIGFsbCB1ZXZlbnRzLgo+IAo+IFRoaXMgd2FzIG1lYW50
+IGZvciBzeXN0ZW1zIHdpdGggbWFueSBkaWZmZXJlbnQgbXVsdGlwYXRoIGRldmljZXMuCj4gT2J2
+aW91c2x5IHdvdWxkIG5vdCBoZWxwIHdpdGggYSBzaW5nbGUgbXVsdGlwYXRoIGRldmljZS4KPiAK
+SSdtIHRhbGtpbmcgYWJvdXQgdGhlIG11bHRpcGF0aCBkYWVtb24uClRoZXJlIHdpbGwgYmUgZXhh
+Y3RseSBfb25lXyBpbnN0YW5jZSBvZiB0aGUgbXVsdGlwYXRoIGRhZW1vbiBydW5uaW5nIGZvcgp0
+aGUgZW50aXJlIHN5c3RlbSwgd2hpY2ggd2lsbCBiZSBoYW5kbGluZyBfYWxsXyB1ZGV2IGV2ZW50
+cyB3aXRoIGEKc2luZ2xlIHF1ZXVlLgpJbmRlcGVuZGVudCBvbiB0aGUgbnVtYmVyIG9mIGF0dGFj
+aGVkIGRldmljZXMuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAg
+IFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZQkJCSAgICAgICAgICAg
+ICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0
+MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBKLiBHdWlsZCwg
+RC4gVXBtYW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2
+ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
+bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
