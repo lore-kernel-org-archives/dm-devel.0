@@ -1,15 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Zdenek Kabelac <zkabelac@redhat.com>
 Subject: Re: Improve processing efficiency for addition and
  deletion of multipath devices
-Date: Mon, 28 Nov 2016 11:42:09 +0100
-Message-ID: <708c4e21-559c-5d50-2525-e1e10a289711@suse.de>
+Date: Mon, 28 Nov 2016 12:51:49 +0100
+Message-ID: <61c3088c-062d-ad59-8138-bdd73784c7c0@redhat.com>
 References: <OF6C4379F8.661B1ACE-ON48258079.000B15EB-48258079.000CBE4F@zte.com.cn>
 	<597eba5c-3efa-8b05-3b7b-87792e3d896d@redhat.com>
+	<708c4e21-559c-5d50-2525-e1e10a289711@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <597eba5c-3efa-8b05-3b7b-87792e3d896d@redhat.com>
+In-Reply-To: <708c4e21-559c-5d50-2525-e1e10a289711@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,56 +20,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>, tang.junhui@zte.com.cn, Christophe Varoqui <christophe.varoqui@opensvc.com>, bmarzins@redhat.com, Martin Wilck <mwilck@suse.com>, Bart Van Assche <bart.vanassche@sandisk.com>
+To: Hannes Reinecke <hare@suse.de>, tang.junhui@zte.com.cn, Christophe Varoqui <christophe.varoqui@opensvc.com>, bmarzins@redhat.com, Martin Wilck <mwilck@suse.com>, Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gMTEvMjgvMjAxNiAxMTowNiBBTSwgWmRlbmVrIEthYmVsYWMgd3JvdGU6Cj4gRG5lIDI4LjEx
-LjIwMTYgdiAwMzoxOSB0YW5nLmp1bmh1aUB6dGUuY29tLmNuIG5hcHNhbChhKToKPj4gSGVsbG8g
-Q2hyaXN0b3BoZSwgQmVuLCBIYW5uZXMsIE1hcnRpbiwgQmFydCwKPj4gSSBhbSBhIG1lbWJlciBv
-ZiBob3N0LXNpZGUgc29mdHdhcmUgZGV2ZWxvcG1lbnQgdGVhbSBvZiBaWFVTUCBzdG9yYWdlCj4+
-IHByb2plY3QKPj4gaW4gWlRFIENvcnBvcmF0aW9uLiBGYWNpbmcgdGhlIG1hcmtldCBkZW1hbmQs
-IG91ciB0ZWFtIGRlY2lkZXMgdG8KPj4gd3JpdGUgY29kZSB0bwo+PiBwcm9tb3RlIG11bHRpcGF0
-aCBlZmZpY2llbmN5IG5leHQgbW9udGguIFRoZSB3aG9sZSBpZGVhIGlzIGluIHRoZSBtYWlsCj4+
-IGJlbG93LldlCj4+IGhvcGUgdG8gcGFydGljaXBhdGUgaW4gYW5kIG1ha2UgcHJvZ3Jlc3Mgd2l0
-aCB0aGUgb3BlbiBzb3VyY2UKPj4gY29tbXVuaXR5LCBzbyBhbnkKPj4gc3VnZ2VzdGlvbiBhbmQg
-Y29tbWVudCB3b3VsZCBiZSB3ZWxjb21lLgo+Pgo+IAo+IAo+IEhpCj4gCj4gRmlyc3QgLSB3ZSBh
-cmUgYXdhcmUgb2YgdGhlc2UgaXNzdWUuCj4gCj4gVGhlIHNvbHV0aW9uIHByb3Bvc2VkIGluIHRo
-aXMgbWFpbCB3b3VsZCBzdXJlbHkgaGVscCAtIGJ1dCB0aGVyZSBpcwo+IGxpa2VseSBhIGJpZ2dl
-ciBpc3N1ZSB0byBiZSBzb2x2ZWQgZmlyc3QuCj4gCj4gVGhlIGNvcmUgdHJvdWJsZSBpcyB0byBh
-dm9pZCAgJ2Jsa2lkJyBkaXNrIGlkZW50aWZpY2F0aW9uIHRvIGJlIGV4ZWN1dGVkLgo+IFJlY2Vu
-dCB2ZXJzaW9uIG9mIG11bHRpcGF0aCBpcyBhbHJlYWR5IG1hcmtpbmcgcGxhaW4gJ1JFTE9BRCcg
-b3BlcmF0aW9uCj4gb2YgdGFibGUgKHdoaWNoIHNob3VsZCBub3QgYmUgY2hhbmdpbmcgZGlzayBj
-b250ZW50KSB3aXRoIGV4dHJhIERNIGJpdCwKPiBzbyB1ZGV2IHJ1bGVzIEFUTSBza2lwcyAncHZz
-Y2FuJyAtIHdlIGFsc28gd291bGQgbGlrZSB0byBleHRlbmQgdGhlCj4gZnVuY3Rpb25hbGl0eSB0
-byBza2lwIHJ1bGVzIG1vcmUgYW5kIHJlaW1wb3J0IGV4aXN0aW5nICdzeW1saW5rcycgZnJvbQo+
-IHVkZXYgZGF0YWJhc2UgKHNvIHRoZXkgd291bGQgbm90IGdldCBkZWxldGVkKS4KPiAKPiBJIGJl
-bGlldmUgdGhlIHByb2Nlc3Npbmcgb2YgdWRldiBydWxlcyBpcyAncmVsYXRpdmVseScgcXVpY2sg
-YXMgbG9uZwo+IGFzIGl0IGRvZXMgbm90IG5lZWQgdG8gcmVhZC93cml0ZSBBTllUSElORyBmcm9t
-IHJlYWwgZGlza3MuCj4gCkhtbS4gWW91IHN1cmUgdGhpcyBpcyBhbiBpc3N1ZT8KV2UgZGVmaW5p
-dGVseSBuZWVkIHRvIHNraXAgdWV2ZW50IGhhbmRsaW5nIHdoZW4gYSBwYXRoIGdvZXMgZG93biAo
-YnV0IEkKdGhpbmsgd2UgZG8gdGhhdCBhbHJlYWR5KSwgYnV0IGZvciAnYWRkJyBldmVudHMgd2Ug
-YWJzb2x1dGVseSBuZWVkIHRvCmNhbGwgYmxraWQgdG8gZmlndXJlIG91dCBpZiB0aGUgZGV2aWNl
-IGhhcyBjaGFuZ2VkLgpUaGVyZSBhcmUgc3RvcmFnZSBhcnJheXMgb3V0IHRoZXJlIHdobyB1c2Ug
-YSAncGF0aCBkb3duL3BhdGggdXAnIGN5Y2xlCnRvIGluZm9ybSBpbml0aWF0b3JzIGFib3V0IGFu
-eSBkZXZpY2UgbGF5b3V0IGNoYW5nZS4KU28gd2Ugd291bGRuJ3QgYmUgYWJsZSB0byBoYW5kbGUg
-dGhvc2UgcHJvcGVybHkgaWYgd2UgZG9uJ3QgY2FsbCBibGtpZCBoZXJlLgoKPiBTbyB3aGlsZSBh
-Z2dyZWdhdGlvbiBvZiAndWV2ZW50cycgaW4gbXVsdGlwYXRoIHdvdWxkICdzaG9ydGVuJyBxdWV1
-ZQo+IHByb2Nlc3Npbmcgb2YgZXZlbnRzIC0gaXQgd291bGQgc3RpbGwgbm90IHNwZWVkdXAgc2Nh
-biBhbG9uZS4KPiAKPiBXZSBuZWVkIHRvIGRyYXN0aWNhbGx5IHNob3J0ZW4gdW5uZWNlc3Nhcnkg
-ZGlzayByZS1zY2FubmluZy4KPiAKPiBBbHNvIG5vdGUgLSBpZiB5b3UgaGF2ZSBhIGxvdCBvZiBk
-aXNrcyAtICBpdCBtaWdodCBiZSB3b3J0aCB0byBjaGVja291dAo+IHdoZXRoZXIgdWRldiBwaWNr
-cyAgJ3JpZ2h0IGFtb3VudCBvZiB1ZGV2IHdvcmtlcnMnLgo+IFRoZXJlIGlzIGhldXJpc3RpYyBs
-b2dpYyB0byBhdm9pZCBzeXN0ZW0gb3ZlcmxvYWQgLSBidXQgbWlnaHQgYmUgd29ydGgKPiB0byBj
-aGVjayBpZiBpbiB5b3Ugc3lzdGVtIHdpdGggeW91ciBhbW91bnQgb2YgQ1BVL1JBTS9ESVNLUyAg
-dGhlCj4gY29tcHV0ZWQgbnVtYmVyIGlzIHRoZSBiZXN0IGZvciBzY2FsaW5nIC0gaS5lLiBpZiB5
-b3UgZG91YmxlIHRoZSBhbW91bnQKPiBvZiB3b3JrZXJzIC0gZG8geW91Cj4gZ2V0IGFueSBiZXR0
-ZXIgcGVyZm9ybWFuY2UgPwo+IApUaGF0IGRvZXNuJ3QgaGVscCwgYXMgd2Ugb25seSBoYXZlIG9u
-ZSBxdWV1ZSAod2l0aGluIG11bHRpcGF0aCkgdG8KaGFuZGxlIGFsbCB1ZXZlbnRzLgoKQ2hlZXJz
-LAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICBUZWFtbGVhZCBTdG9yYWdlICYg
-TmV0d29ya2luZwpoYXJlQHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4
-OApTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogRi4g
-SW1lbmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgSi4gR3VpbGQsIEQuIFVwbWFueXUsIEcuIE5vcnRv
-bgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1k
-ZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
-bS1kZXZlbA==
+Dne 28.11.2016 v 11:42 Hannes Reinecke napsal(a):
+> On 11/28/2016 11:06 AM, Zdenek Kabelac wrote:
+>> Dne 28.11.2016 v 03:19 tang.junhui@zte.com.cn napsal(a):
+>>> Hello Christophe, Ben, Hannes, Martin, Bart,
+>>> I am a member of host-side software development team of ZXUSP storage
+>>> project
+>>> in ZTE Corporation. Facing the market demand, our team decides to
+>>> write code to
+>>> promote multipath efficiency next month. The whole idea is in the mail
+>>> below.We
+>>> hope to participate in and make progress with the open source
+>>> community, so any
+>>> suggestion and comment would be welcome.
+>>>
+>>
+>>
+>> Hi
+>>
+>> First - we are aware of these issue.
+>>
+>> The solution proposed in this mail would surely help - but there is
+>> likely a bigger issue to be solved first.
+>>
+>> The core trouble is to avoid  'blkid' disk identification to be executed.
+>> Recent version of multipath is already marking plain 'RELOAD' operation
+>> of table (which should not be changing disk content) with extra DM bit,
+>> so udev rules ATM skips 'pvscan' - we also would like to extend the
+>> functionality to skip rules more and reimport existing 'symlinks' from
+>> udev database (so they would not get deleted).
+>>
+>> I believe the processing of udev rules is 'relatively' quick as long
+>> as it does not need to read/write ANYTHING from real disks.
+>>
+> Hmm. You sure this is an issue?
+> We definitely need to skip uevent handling when a path goes down (but I
+> think we do that already), but for 'add' events we absolutely need to
+> call blkid to figure out if the device has changed.
+> There are storage arrays out there who use a 'path down/path up' cycle
+> to inform initiators about any device layout change.
+> So we wouldn't be able to handle those properly if we don't call blkid here.
+
+The core trouble is -
+
+
+With multipath device - you ONLY want to 'scan' device (with blkid)  when
+only the initial first member device of multipath gets in.
+
+So you start multipath (resume -> CHANGE) - it should be the ONLY place
+to run 'blkid' test (which really goes though over 3/4MB of disk read,
+to check if there is not ZFS somewhere)
+
+Then any next disk being a member of multipath (recognized by 'multipath -c',
+should NOT scan)  - as far  as  I can tell current order is opposite,
+fist there is  'blkid' (60) and then rule (62) recognizes a mpath_member.
+
+Thus every add disk fires very lengthy blkid scan.
+
+Of course I'm not here an expert on dm multipath rules so passing this on to 
+prajnoha@ -  but I'd guess this is primary source of slowdowns.
+
+There should be exactly ONE blkid for a single multipath device - as
+long as 'RELOAD' only  add/remove  paths  (there is no reason to scan
+component devices)
+
+>
+>> So while aggregation of 'uevents' in multipath would 'shorten' queue
+>> processing of events - it would still not speedup scan alone.
+>>
+>> We need to drastically shorten unnecessary disk re-scanning.
+>>
+>> Also note - if you have a lot of disks -  it might be worth to checkout
+>> whether udev picks  'right amount of udev workers'.
+>> There is heuristic logic to avoid system overload - but might be worth
+>> to check if in you system with your amount of CPU/RAM/DISKS  the
+>> computed number is the best for scaling - i.e. if you double the amount
+>> of workers - do you
+>> get any better performance ?
+>>
+> That doesn't help, as we only have one queue (within multipath) to
+> handle all uevents.
+
+This was meant for systems with many different multipath devices.
+Obviously would not help with a single multipath device.
+
+Regards
+
+Zdenek
