@@ -1,16 +1,22 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
 Subject: Re: Improve processing efficiency for addition and
  deletion of multipath devices
-Date: Mon, 28 Nov 2016 11:31:24 -0600
-Message-ID: <20161128173124.GE1972@octiron.msp.redhat.com>
-References: <OF6C4379F8.661B1ACE-ON48258079.000B15EB-48258079.000CBE4F@zte.com.cn>
-	<1480328936.23852.10.camel@suse.com>
+Date: Mon, 28 Nov 2016 12:46:24 -0600
+Message-ID: <20161128184624.GF1972@octiron.msp.redhat.com>
+References: <OF7C96E124.CD19B12D-ON4825806D.00095E60-4825806D.0009BD8C@zte.com.cn>
+	<9797787c-30c5-08fb-f92a-5e68ec0b6333@suse.de>
+	<OF1D9DC33E.849B3309-ON4825806D.002C52A8-4825806D.003020B2@zte.com.cn>
+	<1479289781.14706.16.camel@suse.com>
+	<OF233D7062.48FA865C-ON4825806E.000544C5-4825806E.00093C07@zte.com.cn>
+	<1479379712.14706.23.camel@suse.com>
+	<20161118222618.GZ1972@octiron.msp.redhat.com>
+	<1479979270.13566.7.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1480328936.23852.10.camel@suse.com>
+In-Reply-To: <1479979270.13566.7.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,57 +27,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <mwilck@suse.com>
-Cc: tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: dm-devel@redhat.com, tang.junhui@zte.com.cn
 List-Id: dm-devel.ids
 
-On Mon, Nov 28, 2016 at 11:28:56AM +0100, Martin Wilck wrote:
-> On Mon, 2016-11-28 at 10:19 +0800, tang.junhui@zte.com.cn wrote:
-> > =
-
-> > 4. =A0 =A0 =A0 =A0Proposal=A0
-> > Other than processing uevents one by one, uevents which coming from
-> > the=A0
-> > same LUN devices can be mergered to one, and then uevent processing=A0
-> > thread only needs to process it once, and it only produces one DM
-> > addition=A0
-> > uevent which could reduce system resource consumption.=A0
-> > =
-
+On Thu, Nov 24, 2016 at 10:21:10AM +0100, Martin Wilck wrote:
+> On Fri, 2016-11-18 at 16:26 -0600, Benjamin Marzinski wrote:
 > =
 
-> Here comes an idea how to achieve this without a lot of additional
-> code:
+> > The issue is that we simply need to work on processing the whole list
+> > at
+> > a time.=A0=A0Martin's filtering definitely has a place here. He is
+> > correct
+> > that if we get a delete uevent for a device, we don't need to process
+> > any of the earlier ones.=A0=A0We do need to look at both the add and
+> > change
+> > uevents individually. For instance, one of the change uevents out of
+> > a
+> > group could be for changing the read-only status of a device. If we
+> > just
+> > took the most recent, we would miss that information.=A0=A0The good news
+> > is
+> > that we don't need to actually call uev_add_path and uev_update_path
+> > once for each of these events.=A0=A0All we need to do is read through t=
+he
+> > uev environment variables for all of them to find the information we
+> > need (like change in ro status), and then call the function once with
+> > that information.
 > =
 
-> libmultipath already has code to check whether any maps need to be
-> updated (in coalesce_paths()). Instead of recording uevents, merging
-> them, and calling ev_add_path() for every affected WWID, it might be
-> sufficient to set daemon state to DAEMON_CONFIGURE and wake up the main
-> multipathd thread to call reconfigure(). Then we only need to make sure
-> that coalesce_paths() really reloads or creates maps only when
-> necessary. I have some patches here that I made for that purpose, for a
-> different scenario (multipathd to avoid RELOAD ioctls when it's started
-> in a scenario where most paths are already set up by udev).
+> Do we need to implement the environment-merging ourselves? AFAICS this
+> logic is implemented in udev itself. So if the last event for a given
+> device is a change event, we'd just need to fetch the device properties
+> from the udev db. Therefore IMO we just have to look at the last
+> received event for a given path:
+> =
 
-There is a long standing multipath issue that this will likely make a
-lot worse.  Currently, multipathd can drop paths that it doesn't have
-access to on reconfigure. This is wrong. When the path comes back, it
-won't issue another add uevent. This means that multipathd won't be able
-to re-enable it (since it stopped monitoring it during the reconfigure).
-In fact the only way to get the path back is to either manually
-intervene or to have the path actually get removed from the system and
-come back.
+>  - DELETE =3D> discard the device
+>  - ADD =3D> use the udev properties coming with the event
+>  - CHANGE =3D> query udev db for current set of properties
 
-The correct thing for multipath to do is to only remove paths when it is
-manually instructed to, when a reconfigure blacklists the path, or when
-it gets a remove uevent.  Now currently this isn't a huge issue since
-people don't commonly reconfigure their multipath device, but it we
-start running reconfigure all the time, it certainly will become one.
+The issue is that when we get a change event, there may be udev
+environment variables that tell us what that specific event is for. For
+instance, a change in the Read-only status of the path device. Future
+change events will not have those environment variables set.  However,
+if we want to only call uev_update_path once, we need to know all of the
+things that changed, so we need to examine the approriate udev
+environment variables for all the change events, so that when we call
+uev_update_path, we can take all the necessary actions (in this
+instance, changing the Read-only status of the multipath device).
+
+> > At any rate, I'd rather get rid of the gazillion waiter threads
+> > first.
+> =
+
+> Hm, I thought the threads are good because this avoids one unresponsive
+> device to stall everything?
+
+There is work making dm events pollable, so that you can wait for any
+number of them with one thread. At the moment, once we get an event, we
+lock the vecs lock, which pretty much keeps everything else from
+running, so this doesn't really change that.
 
 -Ben
  =
 
-> Regards
 > Martin
 > =
 
