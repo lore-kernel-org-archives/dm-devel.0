@@ -1,12 +1,12 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: Improve processing efficiency for addition and
  deletion of multipath devices
-Date: Mon, 28 Nov 2016 11:06:00 +0100
-Message-ID: <597eba5c-3efa-8b05-3b7b-87792e3d896d@redhat.com>
+Date: Mon, 28 Nov 2016 11:28:56 +0100
+Message-ID: <1480328936.23852.10.camel@suse.com>
 References: <OF6C4379F8.661B1ACE-ON48258079.000B15EB-48258079.000CBE4F@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <OF6C4379F8.661B1ACE-ON48258079.000B15EB-48258079.000CBE4F@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -18,49 +18,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: tang.junhui@zte.com.cn, Christophe Varoqui <christophe.varoqui@opensvc.com>, bmarzins@redhat.com, Hannes Reinecke <hare@suse.de>, Martin Wilck <mwilck@suse.com>, Bart Van Assche <bart.vanassche@sandisk.com>
+To: tang.junhui@zte.com.cn, Christophe Varoqui <christophe.varoqui@opensvc.com>, bmarzins@redhat.com, Hannes Reinecke <hare@suse.de>, Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Dne 28.11.2016 v 03:19 tang.junhui@zte.com.cn napsal(a):
-> Hello Christophe, Ben, Hannes, Martin, Bart,
-> I am a member of host-side software development team of ZXUSP storage project
-> in ZTE Corporation. Facing the market demand, our team decides to write code to
-> promote multipath efficiency next month. The whole idea is in the mail below.We
-> hope to participate in and make progress with the open source community, so any
-> suggestion and comment would be welcome.
->
-
-
-Hi
-
-First - we are aware of these issue.
-
-The solution proposed in this mail would surely help - but there is likely a 
-bigger issue to be solved first.
-
-The core trouble is to avoid  'blkid' disk identification to be executed.
-Recent version of multipath is already marking plain 'RELOAD' operation
-of table (which should not be changing disk content) with extra DM bit,
-so udev rules ATM skips 'pvscan' - we also would like to extend the 
-functionality to skip rules more and reimport existing 'symlinks' from
-udev database (so they would not get deleted).
-
-I believe the processing of udev rules is 'relatively' quick as long
-as it does not need to read/write ANYTHING from real disks.
-
-So while aggregation of 'uevents' in multipath would 'shorten' queue 
-processing of events - it would still not speedup scan alone.
-
-We need to drastically shorten unnecessary disk re-scanning.
-
-Also note - if you have a lot of disks -  it might be worth to checkout
-whether udev picks  'right amount of udev workers'.
-There is heuristic logic to avoid system overload - but might be worth to 
-check if in you system with your amount of CPU/RAM/DISKS  the computed number 
-is the best for scaling - i.e. if you double the amount of workers - do you
-get any better performance ?
-
-Regards
-
-Zdenek
+T24gTW9uLCAyMDE2LTExLTI4IGF0IDEwOjE5ICswODAwLCB0YW5nLmp1bmh1aUB6dGUuY29tLmNu
+IHdyb3RlOgo+IAo+IDQuIMKgIMKgIMKgIMKgUHJvcG9zYWzCoAo+IE90aGVyIHRoYW4gcHJvY2Vz
+c2luZyB1ZXZlbnRzIG9uZSBieSBvbmUsIHVldmVudHMgd2hpY2ggY29taW5nIGZyb20KPiB0aGXC
+oAo+IHNhbWUgTFVOIGRldmljZXMgY2FuIGJlIG1lcmdlcmVkIHRvIG9uZSwgYW5kIHRoZW4gdWV2
+ZW50IHByb2Nlc3NpbmfCoAo+IHRocmVhZCBvbmx5IG5lZWRzIHRvIHByb2Nlc3MgaXQgb25jZSwg
+YW5kIGl0IG9ubHkgcHJvZHVjZXMgb25lIERNCj4gYWRkaXRpb27CoAo+IHVldmVudCB3aGljaCBj
+b3VsZCByZWR1Y2Ugc3lzdGVtIHJlc291cmNlIGNvbnN1bXB0aW9uLsKgCj4gCgpIZXJlIGNvbWVz
+IGFuIGlkZWEgaG93IHRvIGFjaGlldmUgdGhpcyB3aXRob3V0IGEgbG90IG9mIGFkZGl0aW9uYWwK
+Y29kZToKCmxpYm11bHRpcGF0aCBhbHJlYWR5IGhhcyBjb2RlIHRvIGNoZWNrIHdoZXRoZXIgYW55
+IG1hcHMgbmVlZCB0byBiZQp1cGRhdGVkIChpbiBjb2FsZXNjZV9wYXRocygpKS4gSW5zdGVhZCBv
+ZiByZWNvcmRpbmcgdWV2ZW50cywgbWVyZ2luZwp0aGVtLCBhbmQgY2FsbGluZyBldl9hZGRfcGF0
+aCgpIGZvciBldmVyeSBhZmZlY3RlZCBXV0lELCBpdCBtaWdodCBiZQpzdWZmaWNpZW50IHRvIHNl
+dCBkYWVtb24gc3RhdGUgdG8gREFFTU9OX0NPTkZJR1VSRSBhbmQgd2FrZSB1cCB0aGUgbWFpbgpt
+dWx0aXBhdGhkIHRocmVhZCB0byBjYWxsIHJlY29uZmlndXJlKCkuIFRoZW4gd2Ugb25seSBuZWVk
+IHRvIG1ha2Ugc3VyZQp0aGF0IGNvYWxlc2NlX3BhdGhzKCkgcmVhbGx5IHJlbG9hZHMgb3IgY3Jl
+YXRlcyBtYXBzIG9ubHkgd2hlbgpuZWNlc3NhcnkuIEkgaGF2ZSBzb21lIHBhdGNoZXMgaGVyZSB0
+aGF0IEkgbWFkZSBmb3IgdGhhdCBwdXJwb3NlLCBmb3IgYQpkaWZmZXJlbnQgc2NlbmFyaW8gKG11
+bHRpcGF0aGQgdG8gYXZvaWQgUkVMT0FEIGlvY3RscyB3aGVuIGl0J3Mgc3RhcnRlZAppbiBhIHNj
+ZW5hcmlvIHdoZXJlIG1vc3QgcGF0aHMgYXJlIGFscmVhZHkgc2V0IHVwIGJ5IHVkZXYpLgoKUmVn
+YXJkcwpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwu
+wqArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTD
+tnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5i
+ZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
+Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
