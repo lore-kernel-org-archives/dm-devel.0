@@ -1,12 +1,12 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Zdenek Kabelac <zkabelac@redhat.com>
 Subject: Re: Improve processing efficiency for addition and
  deletion of multipath devices
-Date: Mon, 28 Nov 2016 11:05:29 +0100
-Message-ID: <9c955a41-83e0-12b4-72f6-8de797e93aed@suse.de>
+Date: Mon, 28 Nov 2016 11:06:00 +0100
+Message-ID: <597eba5c-3efa-8b05-3b7b-87792e3d896d@redhat.com>
 References: <OF6C4379F8.661B1ACE-ON48258079.000B15EB-48258079.000CBE4F@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <OF6C4379F8.661B1ACE-ON48258079.000B15EB-48258079.000CBE4F@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -18,66 +18,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: tang.junhui@zte.com.cn, Christophe Varoqui <christophe.varoqui@opensvc.com>, bmarzins@redhat.com, Martin Wilck <mwilck@suse.com>, Bart Van Assche <bart.vanassche@sandisk.com>
+To: tang.junhui@zte.com.cn, Christophe Varoqui <christophe.varoqui@opensvc.com>, bmarzins@redhat.com, Hannes Reinecke <hare@suse.de>, Martin Wilck <mwilck@suse.com>, Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SGkgSnVuaHVpLAoKT24gMTEvMjgvMjAxNiAwMzoxOSBBTSwgdGFuZy5qdW5odWlAenRlLmNvbS5j
-biB3cm90ZToKPiBIZWxsbyBDaHJpc3RvcGhlLCBCZW4sIEhhbm5lcywgTWFydGluLCBCYXJ0LAo+
-IEkgYW0gYSBtZW1iZXIgb2YgaG9zdC1zaWRlIHNvZnR3YXJlIGRldmVsb3BtZW50IHRlYW0gb2Yg
-WlhVU1Agc3RvcmFnZQo+IHByb2plY3QgaW4gWlRFIENvcnBvcmF0aW9uLiBGYWNpbmcgdGhlIG1h
-cmtldCBkZW1hbmQsIG91ciB0ZWFtIGRlY2lkZXMgdG8gd3JpdGUKPiBjb2RlIHRvIHByb21vdGUg
-bXVsdGlwYXRoIGVmZmljaWVuY3kgbmV4dCBtb250aC4gVGhlIHdob2xlIGlkZWEgaXMgaW4gdGhl
-IG1haWwKPiBiZWxvdy4gV2UgaG9wZSB0byBwYXJ0aWNpcGF0ZSBpbiBhbmQgbWFrZSBwcm9ncmVz
-cyB3aXRoIHRoZSBvcGVuIHNvdXJjZSBjb21tdW5pdHksCj4gc28gYW55IHN1Z2dlc3Rpb24gYW5k
-IGNvbW1lbnQgd291bGQgYmUgd2VsY29tZS4KPiAKVGhhbmsgeW91IGZvciBsb29raW5nIGludG8g
-aXQuClRoaXMgaXMgb25lIGFyZWEgd2hpY2ggZGVmaW5pdGVseSBuZWVkcyBpbXByb3ZlbWVudCwg
-c28geW91cgpjb250cmlidXRpb24gd291bGQgYmUgbW9zdCB3ZWxjb21lLgoKPiAKPiAtLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0KPiAKPiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KPiAKPiAxLiAgICAgICAgUHJvYmxlbQo+IEluIHRoZXNl
-IHNjZW5hcmlvcywgbXVsdGlwYXRoIHByb2Nlc3NpbmcgZWZmaWNpZW5jeSBpcyBsb3c6Cj4gMSkg
-TWFueSBwYXRocyBleGlzdCBpbiBlYWNoIG11bHRpcGF0aCBkZXZpY2UsCj4gMikgRGV2aWNlcyBh
-ZGRpdGlvbiBvciBkZWxldGlvbiBkdXJpbmcgaVNDU0kgbG9naW4vbG9nb3V0IG9yIEZDIGxpbmsK
-PiB1cC9kb3duLgo+IAo+IDIuICAgICAgICBSZWFzb25zCj4gTXVsdGlwYXRoIHByb2Nlc3MgdWV2
-ZW50cyBvbmUgYnkgb25lLCBhbmQgZWFjaCBvbmUgYWxzbyBwcm9kdWNlIGEgbmV3IGRtCj4gYWRk
-aXRpb24gY2hhbmdlIG9yIGRlbGV0aW9udWV2ZW50IHRvIGluY3JlYXNlZCBzeXN0ZW0gcmVzb3Vy
-Y2UgY29uc3VtcHRpb24sCj4gYWN0dWFsbHkgbW9zdCBvZiB0aGVzZSB1ZXZlbnRzIGhhdmUgbm8g
-c2Vuc2UgYXQgYWxsLgo+IApbIC4uIF0KPiBJbiBsaXN0X21lcmdlcl91ZXZlbnRzKCZ1ZXZxX3Rt
-cCksIGVhY2ggbm9kZSBpcyB0cmF2ZXJzZWQgZnJvbSB0aGUKPiBsYXRlc3QgdG8gdGhlIG9sZGVz
-dCwKPiBhbmQgdGhlIG9sZGVyIG5vZGUgd2l0aCB0aGUgc2FtZSBXV0lEIGFuZCB1ZXZlbnQgdHlw
-ZShlLmcuIGFkZCkgd291bGQgYmUKPiBtb3ZlZCB0bwo+IHRoZSBtZXJnZXJfbm9kZSBsaXN0IG9m
-IHRoZSBsYXRlciBub2RlLiBJZiBhIGRlbGV0aW9uIHVldmVudCBub2RlCj4gb2NjdXJyZWQsIG90
-aGVyIG9sZGVyCj4gdWV2ZW50IG5vZGVzIGFib3V0IHRoaXMgZGV2aWNlIHdvdWxkIGJlIGZpbHRl
-cmVkKFRoYW5rcyB0byBNYXJ0aW7igJlzIGlkZWEpLgo+IAo+IEFmdGVyIGFib3ZlIHByb2Nlc3Np
-bmcsIGF0dGVudGlvbiBtdXN0IGJlIHBhaWQgdG8gdGhhdCB0aGUgcGFyYW1ldGVyCj4g4oCcc3Ry
-dWN0IHVldmVudCAqIHVlduKAnSBpcyBub3QgYSBzaW5nbGUgdWV2ZW50IGFueSBtb3JlIGluIGFu
-ZCBhZnRlcgo+IHVldl90cmlnZ2VyKCksIGNvZGUKPiBuZWVkIHRvIGJlIG1vZGlmaWVkIHRvIHBy
-b2Nlc3MgYmF0Y2ggdWV2ZW50cyBpbiB1ZXZfYWRkX3BhdGgoKSBhbmQgc28gb24uCj4gClRvIGhh
-bmRsZSB0aGlzIHByb3Blcmx5IHlvdSBuZWVkIHRvIG1vZGlmeSB1ZXZfYWRkX3BhdGgoKTsgYmFz
-aWNhbGx5IHlvdQpuZWVkIHRvIHRyZWF0ICd1ZXZfYWRkX3BhdGgoKScgYW5kICdldl9hZGRfcGF0
-aCgpJyBhcyB0d28gX2Rpc3RpbmN0XwpldmVudHMsIHdoZXJlIHRoZSBmb3JtZXIgcHJvY2Vzc2Vz
-IHVldmVudHMgYW5kIGFkZCB0aGUgcGF0aCB0byBhbgppbnRlcm5hbCBsaXN0ICgtPnBhdGh2ZWMg
-d291bGQgYmUgaWRlYWxseSBzdWl0ZWQgaGVyZSkuCidldl9hZGRfcGF0aCgpJyB0aGVuIHdvdWxk
-IG5lZWQgdG8gYmUgY2FsbGVkIG9uY2UgYWxsIHVldmVudHMgYXJlCnByb2Nlc3NlZCwgYW5kIHdv
-dWxkIGJlIHByb2Nlc3NpbmcgYWxsIGVsZW1lbnRzIGluIC0+cGF0aHZlYywgY3JlYXRpbmcKdGhl
-IHJlc3VsdGluZyBtdWx0aXBhdGggbWFwIGluIG9uZSBnby4KCkFjdHVhbGx5IG5vdCBhIGJhZCBp
-ZGVhLgoKVHJpY2t5IGJpdCB3b3VsZCBiZSB0byBmaWd1cmUgb3V0IF93aGVuXyB0byBzdG9wIHVl
-dmVudCBwcm9jZXNzaW5nIGFuZApjYWxsaW5nICdldl9hZGRfcGF0aCcuCkkgZ3Vlc3Mgd2UnZCBu
-ZWVkIHRvIG1ha2UgJ2V2X2FkZF9wYXRoJyBydW5uaW5nIGluIGEgc2VwYXJhdGUgdGhyZWFkOwp0
-aGF0IHdheSB3ZSdkIGJlIHB1dHRpbmcgcHJlc3N1cmUgb2ZmIHRoZSB1ZXZlbnQgcHJvY2Vzc2lu
-ZyB0aHJlYWQgYW5kCnRoZSB3aG9sZSB0aGluZyBzaG91bGQgYmUgcnVubmluZyBmYXIgc21vb3Ro
-ZXIuCgpBbmQgbG9va2luZyBhdCBpdCBjbG9zZXIsIHdoZW4geW91IG1vdmUgJ2V2X2FkZF9wYXRo
-JyBpbnRvIGEgc2VwYXJhdGUKdGhyZWFkLCBhbmQgc2VwYXJhdGluZyBvdXQgJ3Vldl9hZGRfcGF0
-aCcgeW91IF9hbHJlYWR5XyBoYXZlIHlvdXIgZXZlbnQKbWVyZ2luZyBpbXBsZW1lbnRlZC4KCldp
-dGggbXVjaCBsZXNzIGVmZm9ydCB0aGVuIHRyeWluZyB0byBtZXJnZSB0aGluZ3MgYXQgdGhlIHVl
-dmVudCBsZXZlbC4KCkknZCBiZSB3aWxsaW5nIHRvIGxvb2sgaW50byBpdDsgcGxlYXNlIGtlZXAg
-bWUgaW5mb3JtZWQgYWJvdXQgYW55CnByb2dyZXNzIGhlcmUuCgpDaGVlcnMsCgpIYW5uZXMKLS0g
-CkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhh
-cmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVgg
-R21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIs
-IEouIFNtaXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAo
-QUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
-b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Dne 28.11.2016 v 03:19 tang.junhui@zte.com.cn napsal(a):
+> Hello Christophe, Ben, Hannes, Martin, Bart,
+> I am a member of host-side software development team of ZXUSP storage project
+> in ZTE Corporation. Facing the market demand, our team decides to write code to
+> promote multipath efficiency next month. The whole idea is in the mail below.We
+> hope to participate in and make progress with the open source community, so any
+> suggestion and comment would be welcome.
+>
+
+
+Hi
+
+First - we are aware of these issue.
+
+The solution proposed in this mail would surely help - but there is likely a 
+bigger issue to be solved first.
+
+The core trouble is to avoid  'blkid' disk identification to be executed.
+Recent version of multipath is already marking plain 'RELOAD' operation
+of table (which should not be changing disk content) with extra DM bit,
+so udev rules ATM skips 'pvscan' - we also would like to extend the 
+functionality to skip rules more and reimport existing 'symlinks' from
+udev database (so they would not get deleted).
+
+I believe the processing of udev rules is 'relatively' quick as long
+as it does not need to read/write ANYTHING from real disks.
+
+So while aggregation of 'uevents' in multipath would 'shorten' queue 
+processing of events - it would still not speedup scan alone.
+
+We need to drastically shorten unnecessary disk re-scanning.
+
+Also note - if you have a lot of disks -  it might be worth to checkout
+whether udev picks  'right amount of udev workers'.
+There is heuristic logic to avoid system overload - but might be worth to 
+check if in you system with your amount of CPU/RAM/DISKS  the computed number 
+is the best for scaling - i.e. if you double the amount of workers - do you
+get any better performance ?
+
+Regards
+
+Zdenek
