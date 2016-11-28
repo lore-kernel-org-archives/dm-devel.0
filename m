@@ -1,122 +1,64 @@
-From: Peter Rajnoha <prajnoha@redhat.com>
-Subject: Re: Improve processing efficiency for addition and
- deletion of multipath devices
-Date: Mon, 28 Nov 2016 13:23:55 +0100
-Message-ID: <0641fbd3-af5d-a2d0-9c26-caab789e9853@redhat.com>
-References: <OF6C4379F8.661B1ACE-ON48258079.000B15EB-48258079.000CBE4F@zte.com.cn>
-	<597eba5c-3efa-8b05-3b7b-87792e3d896d@redhat.com>
-	<708c4e21-559c-5d50-2525-e1e10a289711@suse.de>
-	<61c3088c-062d-ad59-8138-bdd73784c7c0@redhat.com>
-	<0d34fede-29b3-1d6f-3fd0-167e1bcf7019@suse.de>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [RFC PATCH] crypto: Add IV generation algorithms
+Date: Mon, 28 Nov 2016 20:47:23 +0800
+Message-ID: <20161128124722.GB2257@gondor.apana.org.au>
+References: <1479723009-11113-1-git-send-email-binoy.jayan@linaro.org>
+ <1479723009-11113-2-git-send-email-binoy.jayan@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <0d34fede-29b3-1d6f-3fd0-167e1bcf7019@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Zdenek Kabelac <zkabelac@redhat.com>, tang.junhui@zte.com.cn, Christophe Varoqui <christophe.varoqui@opensvc.com>, bmarzins@redhat.com, Martin Wilck <mwilck@suse.com>, Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1479723009-11113-2-git-send-email-binoy.jayan@linaro.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Binoy Jayan <binoy.jayan@linaro.org>
+Cc: Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 11/28/2016 01:08 PM, Hannes Reinecke wrote:
-> On 11/28/2016 12:51 PM, Zdenek Kabelac wrote:
->> Dne 28.11.2016 v 11:42 Hannes Reinecke napsal(a):
->>> On 11/28/2016 11:06 AM, Zdenek Kabelac wrote:
->>>> Dne 28.11.2016 v 03:19 tang.junhui@zte.com.cn napsal(a):
->>>>> Hello Christophe, Ben, Hannes, Martin, Bart,
->>>>> I am a member of host-side software development team of ZXUSP storage
->>>>> project
->>>>> in ZTE Corporation. Facing the market demand, our team decides to
->>>>> write code to
->>>>> promote multipath efficiency next month. The whole idea is in the mail
->>>>> below.We
->>>>> hope to participate in and make progress with the open source
->>>>> community, so any
->>>>> suggestion and comment would be welcome.
->>>>>
->>>>
->>>>
->>>> Hi
->>>>
->>>> First - we are aware of these issue.
->>>>
->>>> The solution proposed in this mail would surely help - but there is
->>>> likely a bigger issue to be solved first.
->>>>
->>>> The core trouble is to avoid  'blkid' disk identification to be
->>>> executed.
->>>> Recent version of multipath is already marking plain 'RELOAD' operation
->>>> of table (which should not be changing disk content) with extra DM bit,
->>>> so udev rules ATM skips 'pvscan' - we also would like to extend the
->>>> functionality to skip rules more and reimport existing 'symlinks' from
->>>> udev database (so they would not get deleted).
->>>>
->>>> I believe the processing of udev rules is 'relatively' quick as long
->>>> as it does not need to read/write ANYTHING from real disks.
->>>>
->>> Hmm. You sure this is an issue?
->>> We definitely need to skip uevent handling when a path goes down (but I
->>> think we do that already), but for 'add' events we absolutely need to
->>> call blkid to figure out if the device has changed.
->>> There are storage arrays out there who use a 'path down/path up' cycle
->>> to inform initiators about any device layout change.
->>> So we wouldn't be able to handle those properly if we don't call blkid
->>> here.
->>
->> The core trouble is -
->>
->>
->> With multipath device - you ONLY want to 'scan' device (with blkid)  when
->> only the initial first member device of multipath gets in.
->>
->> So you start multipath (resume -> CHANGE) - it should be the ONLY place
->> to run 'blkid' test (which really goes though over 3/4MB of disk read,
->> to check if there is not ZFS somewhere)
->>
->> Then any next disk being a member of multipath (recognized by 'multipath
->> -c',
->> should NOT scan)  - as far  as  I can tell current order is opposite,
->> fist there is  'blkid' (60) and then rule (62) recognizes a mpath_member.
->>
->> Thus every add disk fires very lengthy blkid scan.
->>
->> Of course I'm not here an expert on dm multipath rules so passing this
->> on to prajnoha@ -  but I'd guess this is primary source of slowdowns.
->>
->> There should be exactly ONE blkid for a single multipath device - as
->> long as 'RELOAD' only  add/remove  paths  (there is no reason to scan
->> component devices)
->>
-> ATM 'multipath -c' is just a simple test if the device is supposed to be
-> handled by multipath.
+On Mon, Nov 21, 2016 at 03:40:09PM +0530, Binoy Jayan wrote:
+> Currently, the iv generation algorithms are implemented in dm-crypt.c.
+> The goal is to move these algorithms from the dm layer to the kernel
+> crypto layer by implementing them as template ciphers so they can be used
+> in relation with algorithms like aes, and with multiple modes like cbc,
+> ecb etc. As part of this patchset, the iv-generation code is moved from the
+> dm layer to the crypto layer. The dm-layer can later be optimized to
+> encrypt larger block sizes in a single call to the crypto engine. The iv
+> generation algorithms implemented in geniv.c includes plain, plain64,
+> essiv, benbi, null, lmk and tcw. These templates are to be configured
+> and has to be invoked as:
 > 
-> And the number of bytes read by blkid should be _that_ large; a simple
-> 'blkid' on my device caused it to read 35k ...
+> crypto_alloc_skcipher("plain(cbc(aes))", 0, 0);
+> crypto_alloc_skcipher("essiv(cbc(aes))", 0, 0);
+> ...
 > 
-> Also udev will become very unhappy if we're not calling blkid for every
-> device; you'd be having a hard time reconstructing the event for those
-> devices.
+> from the dm layer.
+> 
+> Signed-off-by: Binoy Jayan <binoy.jayan@linaro.org>
 
-What do you mean with event reconstruction?
+Thanks a lot for working on this!
 
-I don't think we really need to call blkid for every device. If we have
-configured that certain device is surely an mpath component (based on
-WWN in mpath config), I think we don't need to call blkid at all - it's
-mpath component and the top-level device should be simply used for any
-scanning.
+> +static int crypto_geniv_set_ctx(struct crypto_skcipher *cipher,
+> +				void *newctx, unsigned int len)
+> +{
+> +	struct geniv_ctx *ctx = crypto_skcipher_ctx(cipher);
+> +	/*
+> +	 * TODO:
+> +	 * Do we really need this API or can we append the context
+> +	 * 'struct geniv_ctx' to the cipher from dm-crypt and use
+> +	 * the same here.
+> +	 */
+> +	memcpy(ctx, (char *) newctx, len);
+> +	return geniv_setkey_init_ctx(&ctx->data);
+> +}
 
-I mean, I still don't see why do we need to call blkid and then
-overwrite the ID_FS_TYPE variable right away based on the fact that it's
-multipath -c. If we reverse this order, we could save the extra blkid
-that's not actually needed.
+I think we should be able to do without adding another API for this.
+Can we instead put the information into the key and/or the IV?
 
+Also it would really help if you could attach a patch for dm-crypt
+that goes along with this (it doesn't have to be complete or
+functional, just showing how this is meant to be used)
+
+Thanks,
 -- 
-Peter
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
