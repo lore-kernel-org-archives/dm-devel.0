@@ -1,8 +1,8 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
 Subject: Re: Improve processing efficiency for addition and
  deletion of multipath devices
-Date: Tue, 29 Nov 2016 09:16:53 +0100
-Message-ID: <1480407413.7926.9.camel@suse.com>
+Date: Tue, 29 Nov 2016 09:24:26 +0100
+Message-ID: <6039aa0c-97ba-33b3-1c29-5fbb6e1676e1@redhat.com>
 References: <OF7C96E124.CD19B12D-ON4825806D.00095E60-4825806D.0009BD8C@zte.com.cn>
 	<9797787c-30c5-08fb-f92a-5e68ec0b6333@suse.de>
 	<OF1D9DC33E.849B3309-ON4825806D.002C52A8-4825806D.003020B2@zte.com.cn>
@@ -15,11 +15,12 @@ References: <OF7C96E124.CD19B12D-ON4825806D.00095E60-4825806D.0009BD8C@zte.com.c
 	<fba771cb-222d-88a9-5e9f-35e57206aecd@suse.de>
 	<1480406528.7926.7.camel@suse.com>
 	<17134173-b9c9-456f-43f6-55f1fbd180ea@redhat.com>
+	<1480407413.7926.9.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <17134173-b9c9-456f-43f6-55f1fbd180ea@redhat.com>
+In-Reply-To: <1480407413.7926.9.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,51 +30,87 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com, tang.junhui@zte.com.cn
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE2LTExLTI5IGF0IDA5OjEwICswMTAwLCBaZGVuZWsgS2FiZWxhYyB3cm90ZToK
-PiBEbmUgMjkuMTEuMjAxNiB2IDA5OjAyIE1hcnRpbiBXaWxjayBuYXBzYWwoYSk6Cj4gPiBPbiBU
-dWUsIDIwMTYtMTEtMjkgYXQgMDc6NDcgKzAxMDAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPiA+
-ID4gT24gMTEvMjgvMjAxNiAwNzo0NiBQTSwgQmVuamFtaW4gTWFyemluc2tpIHdyb3RlOgo+ID4g
-PiA+IE9uIFRodSwgTm92IDI0LCAyMDE2IGF0IDEwOjIxOjEwQU0gKzAxMDAsIE1hcnRpbiBXaWxj
-ayB3cm90ZToKPiA+ID4gPiA+IE9uIEZyaSwgMjAxNi0xMS0xOCBhdCAxNjoyNiAtMDYwMCwgQmVu
-amFtaW4gTWFyemluc2tpIHdyb3RlOgo+ID4gPiA+ID4gCj4gPiA+ID4gPiA+IEF0IGFueSByYXRl
-LCBJJ2QgcmF0aGVyIGdldCByaWQgb2YgdGhlIGdhemlsbGlvbiB3YWl0ZXIKPiA+ID4gPiA+ID4g
-dGhyZWFkcwo+ID4gPiA+ID4gPiBmaXJzdC4KPiA+ID4gPiA+IAo+ID4gPiA+ID4gSG0sIEkgdGhv
-dWdodCB0aGUgdGhyZWFkcyBhcmUgZ29vZCBiZWNhdXNlIHRoaXMgYXZvaWRzIG9uZQo+ID4gPiA+
-ID4gdW5yZXNwb25zaXZlCj4gPiA+ID4gPiBkZXZpY2UgdG8gc3RhbGwgZXZlcnl0aGluZz8KPiA+
-ID4gPiAKPiA+ID4gPiBUaGVyZSBpcyB3b3JrIG1ha2luZyBkbSBldmVudHMgcG9sbGFibGUsIHNv
-IHRoYXQgeW91IGNhbiB3YWl0Cj4gPiA+ID4gZm9yCj4gPiA+ID4gYW55Cj4gPiA+ID4gbnVtYmVy
-IG9mIHRoZW0gd2l0aCBvbmUgdGhyZWFkLiBBdCB0aGUgbW9tZW50LCBvbmNlIHdlIGdldCBhbgo+
-ID4gPiA+IGV2ZW50LCB3ZQo+ID4gPiA+IGxvY2sgdGhlIHZlY3MgbG9jaywgd2hpY2ggcHJldHR5
-IG11Y2gga2VlcHMgZXZlcnl0aGluZyBlbHNlCj4gPiA+ID4gZnJvbQo+ID4gPiA+IHJ1bm5pbmcs
-IHNvIHRoaXMgZG9lc24ndCByZWFsbHkgY2hhbmdlIHRoYXQuCj4gPiA+ID4gCj4gPiA+IAo+ID4g
-PiBXaGljaCBhZ2FpbiBsZWFkcyBtZSB0byB0aGUgcXVlc3Rpb246Cj4gPiA+IFdoeSBhcmUgd2Ug
-d2FpdGluZyBmb3IgZG0gZXZlbnRzPwo+ID4gPiBUaGUgY29kZSBoYW5kbGluZyB0aGVtIGlzIHBy
-ZXR0eSBhcmNhbmUsIGFuZCBmcm9tIHdoYXQgSSd2ZSBzZWVuCj4gPiA+IHRoZXJlCj4gPiA+IGlz
-IG5vdGhpbmcgaW4gdGhlcmUgd2hpY2ggd2Ugd291bGRuJ3QgYmUgaW5mb3JtZWQgdmlhIG90aGVy
-Cj4gPiA+IG1lY2hhbmlzbXMKPiA+ID4gKHBhdGggY2hlY2tlciwgdWV2ZW50cykuCj4gPiA+IFNv
-IHdoeSBkbyB3ZSBzdGlsbCBib3RoZXIgd2l0aCB0aGVtPwo+ID4gCj4gPiBJIHdhcyBhc2tpbmcg
-bXlzZWxmIHRoZSBzYW1lIHF1ZXN0aW9uLiBGcm9tIG15IGluc3BlY3Rpb24gb2YgdGhlCj4gPiBr
-ZXJuZWwKPiA+IGNvZGUsIHRoZXJlIGFyZSB0d28gY29kZSBwYXRocyB0aGF0IHRyaWdnZXIgYSBk
-bSBldmVudCBidXQgbm8KPiA+IHVldmVudAo+ID4gKGJ5cGFzc19wZygpIGFuZCBzd2l0Y2hfcGdf
-bnVtKCksIGJvdGggcmVsYXRlZCB0byBwYXRoIGdyb3VwCj4gPiBzd2l0Y2hpbmcpLiBJZiB0aGVz
-ZSBhcmUgY292ZXJlZCBieSB0aGUgcGF0aCBjaGVja2VyLCBJIHNlZSBubwo+ID4gcG9pbnQgaW4K
-PiA+IHdhaXRpbmcgZm9yIERNIGV2ZW50cy4gQnV0IG9mIGNvdXJzZSwgSSBtYXkgYmUgbWlzc2lu
-ZyBzb21ldGhpbmcuCj4gPiAKPiAKPiBQcm9jZXNzaW5nIG9mICdkbScgZXZlbnRzIGxpa2VseSBz
-aG91bGQgYmUgcG9zdHBvbmVkIHRvICdkbWV2ZW50ZCcgLQo+IHdoaWNoIGlzIGEgZGFlbW9uIHJl
-c29sdmluZyB0aGUgcHJvYmxlbSBoZXJlIHdpdGggd2FpdGluZyBmb3IgYW4KPiBldmVudC4KPiAK
-PiBQbHVnaW4ganVzdCB0YWtlcyB0aGUgYWN0aW9uLgo+IAo+IElNSE8gdGhlcmUgaXMgbm90aGlu
-ZyBlYXNpZXIgeW91IGNhbiBoYXZlLgoKPiBJdCdzIHRoZW4gdXB0byBkbWV2ZW50ZCB0byBtYWlu
-dGFpbiB0aGUgYmVzdCAnY29ubmVjdGlvbicgd2l0aCBrZXJuZWwKPiBhbmQgZXZlbnRzLgoKQnV0
-IHRoYXQgd291bGQgc2ltcGx5IG1vdmUgdGhlICJnYXppbGxpb24gd2FpdGVyIHRocmVhZHMiIGZy
-b20KbXVsdGlwYXRoZCB0byBkbWV2ZW50ZCwgcmlnaHQ/IEFuZCBpdCB3b3VsZCBpbnRyb2R1Y2Ug
-YW5vdGhlciBib290CnNlcXVlbmNlIGRlcGVuZGVuY3kgZm9yIG11bHRpcGF0aGQsIEknbSBub3Qg
-c3VyZSBpZiB0aGF0J3MgZGVzaXJhYmxlLgoKUmVnYXJkcwpNYXJ0aW4KCi0tIApEci4gTWFydGlu
-IFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuwqArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VT
-RSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFo
-YW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBs
-aXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xp
-c3RpbmZvL2RtLWRldmVs
+Dne 29.11.2016 v 09:16 Martin Wilck napsal(a):
+> On Tue, 2016-11-29 at 09:10 +0100, Zdenek Kabelac wrote:
+>> Dne 29.11.2016 v 09:02 Martin Wilck napsal(a):
+>>> On Tue, 2016-11-29 at 07:47 +0100, Hannes Reinecke wrote:
+>>>> On 11/28/2016 07:46 PM, Benjamin Marzinski wrote:
+>>>>> On Thu, Nov 24, 2016 at 10:21:10AM +0100, Martin Wilck wrote:
+>>>>>> On Fri, 2016-11-18 at 16:26 -0600, Benjamin Marzinski wrote:
+>>>>>>
+>>>>>>> At any rate, I'd rather get rid of the gazillion waiter
+>>>>>>> threads
+>>>>>>> first.
+>>>>>>
+>>>>>> Hm, I thought the threads are good because this avoids one
+>>>>>> unresponsive
+>>>>>> device to stall everything?
+>>>>>
+>>>>> There is work making dm events pollable, so that you can wait
+>>>>> for
+>>>>> any
+>>>>> number of them with one thread. At the moment, once we get an
+>>>>> event, we
+>>>>> lock the vecs lock, which pretty much keeps everything else
+>>>>> from
+>>>>> running, so this doesn't really change that.
+>>>>>
+>>>>
+>>>> Which again leads me to the question:
+>>>> Why are we waiting for dm events?
+>>>> The code handling them is pretty arcane, and from what I've seen
+>>>> there
+>>>> is nothing in there which we wouldn't be informed via other
+>>>> mechanisms
+>>>> (path checker, uevents).
+>>>> So why do we still bother with them?
+>>>
+>>> I was asking myself the same question. From my inspection of the
+>>> kernel
+>>> code, there are two code paths that trigger a dm event but no
+>>> uevent
+>>> (bypass_pg() and switch_pg_num(), both related to path group
+>>> switching). If these are covered by the path checker, I see no
+>>> point in
+>>> waiting for DM events. But of course, I may be missing something.
+>>>
+>>
+>> Processing of 'dm' events likely should be postponed to 'dmeventd' -
+>> which is a daemon resolving the problem here with waiting for an
+>> event.
+>>
+>> Plugin just takes the action.
+>>
+>> IMHO there is nothing easier you can have.
+>
+>> It's then upto dmeventd to maintain the best 'connection' with kernel
+>> and events.
+>
+> But that would simply move the "gazillion waiter threads" from
+> multipathd to dmeventd, right? And it would introduce another boot
+> sequence dependency for multipathd, I'm not sure if that's desirable.
+>
+
+
+Well - frankly how many multipath devices have you seen on a single machine?
+
+Have you noticed every single  "XFS" mounted device spreads around 9 threads 
+these days?
+
+But I'm not going to defend current 'thread' explosion with device monitoring 
+and this thing is BEING resolved.
+
+The main point here is - multipathd  does NOT need to solve this issue at all 
+and let dmeventd to resolve it - and once kernel will have better mechanism 
+with reliable event passing  (which is NOT udev btw)  - it will use it.
+
+The solution is not that everyone will write everything here...
+
+
+Regards
+
+Zdenek
