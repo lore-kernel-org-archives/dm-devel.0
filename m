@@ -1,19 +1,17 @@
-From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
+From: tang.junhui@zte.com.cn
 Subject: Re: Improve processing efficiency for addition and
  deletion of multipath devices
-Date: Tue, 29 Nov 2016 10:34:04 +0100
-Message-ID: <687462d0-9b6d-3263-b0c7-b7886a3cc4a0@gmail.com>
-References: <OF6C4379F8.661B1ACE-ON48258079.000B15EB-48258079.000CBE4F@zte.com.cn>
-	<597eba5c-3efa-8b05-3b7b-87792e3d896d@redhat.com>
-	<708c4e21-559c-5d50-2525-e1e10a289711@suse.de>
-	<61c3088c-062d-ad59-8138-bdd73784c7c0@redhat.com>
-	<0d34fede-29b3-1d6f-3fd0-167e1bcf7019@suse.de>
-	<20161128172226.GD1972@octiron.msp.redhat.com>
+Date: Tue, 29 Nov 2016 18:13:36 +0800
+Message-ID: <OF1C84F6AA.D5B5B61F-ON4825807A.00375F52-4825807A.00382BAC@zte.com.cn>
+References: <OF7C96E124.CD19B12D-ON4825806D.00095E60-4825806D.0009BD8C@zte.com.cn>	<9797787c-30c5-08fb-f92a-5e68ec0b6333@suse.de>
+	<OF1D9DC33E.849B3309-ON4825806D.002C52A8-4825806D.003020B2@zte.com.cn>	<1479289781.14706.16.camel@suse.com>
+	<OF233D7062.48FA865C-ON4825806E.000544C5-4825806E.00093C07@zte.com.cn>	<1479379712.14706.23.camel@suse.com>
+	<20161118222618.GZ1972@octiron.msp.redhat.com>	<OF6D9BF1A7.207DE4FF-ON48258073.002A20D1-48258074.000646A9@zte.com.cn>
+	<8e062253-9513-bb62-c939-8b065d703cc9@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============7399128117686397612=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161128172226.GD1972@octiron.msp.redhat.com>
+In-Reply-To: <8e062253-9513-bb62-c939-8b065d703cc9@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,89 +21,112 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>
-Cc: tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>, Martin Wilck <mwilck@suse.com>
+To: Zdenek Kabelac <zdenek.kabelac@gmail.com>
+Cc: zhang.kai16@zte.com.cn, dm-devel-bounces@redhat.com, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Dne 28.11.2016 v 18:22 Benjamin Marzinski napsal(a):
-> On Mon, Nov 28, 2016 at 01:08:51PM +0100, Hannes Reinecke wrote:
->> On 11/28/2016 12:51 PM, Zdenek Kabelac wrote:
->>> Dne 28.11.2016 v 11:42 Hannes Reinecke napsal(a):
->>>> On 11/28/2016 11:06 AM, Zdenek Kabelac wrote:
->>>
->>> With multipath device - you ONLY want to 'scan' device (with blkid)  when
->>> only the initial first member device of multipath gets in.
->>>
->>> So you start multipath (resume -> CHANGE) - it should be the ONLY place
->>> to run 'blkid' test (which really goes though over 3/4MB of disk read,
->>> to check if there is not ZFS somewhere)
->>>
->>> Then any next disk being a member of multipath (recognized by 'multipath
->>> -c',
->>> should NOT scan)  - as far  as  I can tell current order is opposite,
->>> fist there is  'blkid' (60) and then rule (62) recognizes a mpath_member.
->>>
->>> Thus every add disk fires very lengthy blkid scan.
->>>
->>> Of course I'm not here an expert on dm multipath rules so passing this
->>> on to prajnoha@ -  but I'd guess this is primary source of slowdowns.
->>>
->>> There should be exactly ONE blkid for a single multipath device - as
->>> long as 'RELOAD' only  add/remove  paths  (there is no reason to scan
->>> component devices)
->>>
->> ATM 'multipath -c' is just a simple test if the device is supposed to be
->> handled by multipath.
->
-> Well, "simple" might be stretching the truth a little. I'd really like
-> to not have to call multipath -c on every change event to a device since
-> this isn't a particularly quick callout either. In fact we do this with
-> the redhat code, but we use some horrible hacks, that could be solved if
-> udev would just allow rules to compare the value of two environment
-> variables. But this is impossible. I opened a bugzilla for allowing
-> this, but it recently got closed WONTFIX. The idea is that multipathd
+This is a multipart message in MIME format.
+--===============7399128117686397612==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 00382BA54825807A_="
 
-There are number of ways to solve this thing.
+This is a multipart message in MIME format.
+--=_alternative 00382BA54825807A_=
+Content-Type: text/plain; charset="GB2312"
+Content-Transfer-Encoding: base64
 
-One could be  udev built-in command plugin to make parsing of WWID efficient.
+SGVsbG8gWmRlbmVrDQoNCkkgdGhpbmsgeW91IHN1Z2dlc3Rpb24gaXMgY29uc3RydWN0aXZlo6wN
+CnNvbWUgdW5uZWNlc3Nhcnkgb3BlcmF0aW9ucyBpbiB1ZGV2IHJ1bGVzIHdhc3RlciB0b28gbXVj
+aCBzeXN0ZW0gDQpyZXNvdXJlKENQVSBldGMuKQ0KSXQgaXMgYW5vdGhlciB3YXkgdG8gcHJvbW90
+ZSBtdWx0aXBhdGggZWZmaWNpZW5jeSwNCmNvdWxkIHlvdSBwdXQgZm9yd2FyZCBtb3JlIHNwZWNp
+ZmljIGFtZW5kbWVudD8NCg0KUmVnYXJkcywNClRhbmcNCg0KDQoNCg0KDQq3orz+yMs6ICAgICAg
+ICAgWmRlbmVrIEthYmVsYWMgPHpkZW5lay5rYWJlbGFjQGdtYWlsLmNvbT4NCsrVvP7IyzogICAg
+ICAgICB0YW5nLmp1bmh1aUB6dGUuY29tLmNuLCBCZW5qYW1pbiBNYXJ6aW5za2kgDQo8Ym1hcnpp
+bnNAcmVkaGF0LmNvbT4sIA0Ks63LzTogICB6aGFuZy5rYWkxNkB6dGUuY29tLmNuLCBkbS1kZXZl
+bEByZWRoYXQuY29tLCBNYXJ0aW4gV2lsY2sgDQo8bXdpbGNrQHN1c2UuY29tPiwgQmFydCBWYW4g
+QXNzY2hlIDxiYXJ0LnZhbmFzc2NoZUBzYW5kaXNrLmNvbT4NCsjVxto6ICAgMjAxNi8xMS8yOSAx
+NzoyMg0K1vfM4jogICBSZTogW2RtLWRldmVsXSBJbXByb3ZlIHByb2Nlc3NpbmcgZWZmaWNpZW5j
+eSBmb3IgYWRkaXRpb24gYW5kIA0KZGVsZXRpb24gb2YgbXVsdGlwYXRoIGRldmljZXMNCreivP7I
+yzogZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tDQoNCg0KDQpEbmUgMjMuMTEuMjAxNiB2IDAy
+OjA4IHRhbmcuanVuaHVpQHp0ZS5jb20uY24gbmFwc2FsKGEpOg0KPiBTbywgbm93IHdlIGhhdmUg
+YXQgbGVhc3QgNCB3YXlzIHRvIGltcHJvdmUgbXV0bGlhcHRoIGVmZmljaWVuY3k6DQo+IDEpICBG
+aWx0ZXJpbmcgdWV2ZW50czsNCj4gMikgIE1lcmdlciB1ZXZlbnRzOw0KPiAzKSAgVXNpbmcgc2Vw
+YXJhdGUgbG9ja3MgZm9yIG1wdmVjIGFuZCBwYXRodmVjOw0KPiA0KSAgR2V0IHJpZCBvZiB0aGUg
+Z2F6aWxsaW9uIHdhaXRlciB0aHJlYWRzLg0KPg0KPiBUaGlzIGlzIGV4Y2l0aW5nLCBidXQgaG93
+IGRvIHdlIGFjaGlldmUgdGhpcyBibHVlcHJpbnQ/DQo+IENhbiB3ZSBzZXQgdXAgc29tZSB3b3Jr
+aW5nIGdyb3VwcyBhbmQgZGV2ZWxvcCBpdCBpbiBwYXJhbGxlbA0KPiB0byBpbXBsZW1lbnQgZWFj
+aCBpbXByb3ZlbWVudCBzaW5jZSBtb3N0IG9mIHRoZW0gYXJlIGluZGVwZW5kZW50Pw0KPg0KDQpJ
+J20gbWlzc2luZyBoZXJlIHRoZSBhbmFseXNpcyBvZiBpbXBhY3Qgb24gcGVyZm9ybWFuY2UuDQoN
+CkRvIHdlIGhhdmUgJ3BlcmYnIHRyYWNlcyBhbmQgb3RoZXIgcmVwb3J0cyB3aGVyZSBpcyB0aGUg
+Q1BVIHdhc3RlZCA/DQoNCldoaWxlIHN1cmVseSBzb2x2aW5nIGFsbCBpc3N1ZXMgbWFrZSBzZW5z
+ZSAtIHRoZXJlIGFyZSBzb21lIHRhc2tzIHdoaWNoIA0KaGF2ZSANCm1ham9yIGltcGFjdCBvbiBz
+cGVlZCAtIHdoaWxlIG90aGVycyB1c2VyIHdpbGwgbW9zdCBub3Qgbm90aWNlIGF0IGFsbC4NCg0K
+DQpSZWdhcmRzDQoNClpkZW5law0KDQotLQ0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0DQpkbS1kZXZl
+bEByZWRoYXQuY29tDQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0t
+ZGV2ZWwNCg0KDQo=
+--=_alternative 00382BA54825807A_=
+Content-Type: text/html; charset="GB2312"
+Content-Transfer-Encoding: base64
 
-multipath could also be able to generate udev rule dynamically
-(i.e. --makeudevrule)  which would check if udev rule is older then config 
-file and reload udev with new rule if necessary.
-In such generated rules you then could use  WWID constant for compare operation.
+PGZvbnQgc2l6ZT0yPkhlbGxvIFpkZW5lazwvZm9udD4NCjxicj4NCjxicj48Zm9udCBzaXplPTI+
+SSB0aGluayB5b3Ugc3VnZ2VzdGlvbiBpcyBjb25zdHJ1Y3RpdmWjrDwvZm9udD4NCjxicj48Zm9u
+dCBzaXplPTI+c29tZSB1bm5lY2Vzc2FyeSBvcGVyYXRpb25zIGluIHVkZXYgcnVsZXMgd2FzdGVy
+IHRvbyBtdWNoDQpzeXN0ZW0gcmVzb3VyZShDUFUgZXRjLik8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6
+ZT0yPkl0IGlzIGFub3RoZXIgd2F5IHRvIHByb21vdGUgbXVsdGlwYXRoIGVmZmljaWVuY3ksPC9m
+b250Pg0KPGJyPjxmb250IHNpemU9Mj5jb3VsZCB5b3UgcHV0IGZvcndhcmQgbW9yZSBzcGVjaWZp
+YyBhbWVuZG1lbnQ/PC9mb250Pg0KPGRpdj4NCjxicj48Zm9udCBzaXplPTI+UmVnYXJkcyw8L2Zv
+bnQ+DQo8YnI+PGZvbnQgc2l6ZT0yPlRhbmc8L2ZvbnQ+DQo8YnI+DQo8YnI+DQo8YnI+DQo8YnI+
+DQo8YnI+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+
+t6K8/sjLOiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7IDwvZm9udD48Zm9udCBzaXplPTEg
+ZmFjZT0ic2Fucy1zZXJpZiI+WmRlbmVrIEthYmVsYWMNCiZsdDt6ZGVuZWsua2FiZWxhY0BnbWFp
+bC5jb20mZ3Q7PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNh
+bnMtc2VyaWYiPsrVvP7IyzogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyA8L2ZvbnQ+PGZv
+bnQgc2l6ZT0xIGZhY2U9InNhbnMtc2VyaWYiPnRhbmcuanVuaHVpQHp0ZS5jb20uY24sDQpCZW5q
+YW1pbiBNYXJ6aW5za2kgJmx0O2JtYXJ6aW5zQHJlZGhhdC5jb20mZ3Q7LCA8L2ZvbnQ+DQo8YnI+
+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+s63LzTogJm5ic3A7
+ICZuYnNwOw0KJm5ic3A7ICZuYnNwOzwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1zZXJp
+ZiI+emhhbmcua2FpMTZAenRlLmNvbS5jbiwNCmRtLWRldmVsQHJlZGhhdC5jb20sIE1hcnRpbiBX
+aWxjayAmbHQ7bXdpbGNrQHN1c2UuY29tJmd0OywgQmFydCBWYW4gQXNzY2hlDQombHQ7YmFydC52
+YW5hc3NjaGVAc2FuZGlzay5jb20mZ3Q7PC9mb250Pg0KPGJyPjxmb250IHNpemU9MSBjb2xvcj0j
+NWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPsjVxto6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJz
+cDsgPC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj4yMDE2LzExLzI5DQoxNzoy
+MjwvZm9udD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlm
+Ij7W98ziOiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7PC9mb250Pjxmb250IHNpemU9MSBm
+YWNlPSJzYW5zLXNlcmlmIj5SZTogW2RtLWRldmVsXQ0KSW1wcm92ZSBwcm9jZXNzaW5nIGVmZmlj
+aWVuY3kgZm9yIGFkZGl0aW9uIGFuZCBkZWxldGlvbiBvZiBtdWx0aXBhdGggZGV2aWNlczwvZm9u
+dD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5zLXNlcmlmIj63orz+
+yMs6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDs8L2ZvbnQ+PGZvbnQgc2l6ZT0xIGZhY2U9
+InNhbnMtc2VyaWYiPmRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbTwvZm9udD4NCjxicj4NCjxo
+ciBub3NoYWRlPg0KPGJyPg0KPGJyPg0KPGJyPjx0dD48Zm9udCBzaXplPTI+RG5lIDIzLjExLjIw
+MTYgdiAwMjowOCB0YW5nLmp1bmh1aUB6dGUuY29tLmNuIG5hcHNhbChhKTo8YnI+DQomZ3Q7IFNv
+LCBub3cgd2UgaGF2ZSBhdCBsZWFzdCA0IHdheXMgdG8gaW1wcm92ZSBtdXRsaWFwdGggZWZmaWNp
+ZW5jeTo8YnI+DQomZ3Q7IDEpICZuYnNwO0ZpbHRlcmluZyB1ZXZlbnRzOzxicj4NCiZndDsgMikg
+Jm5ic3A7TWVyZ2VyIHVldmVudHM7PGJyPg0KJmd0OyAzKSAmbmJzcDtVc2luZyBzZXBhcmF0ZSBs
+b2NrcyBmb3IgbXB2ZWMgYW5kIHBhdGh2ZWM7PGJyPg0KJmd0OyA0KSAmbmJzcDtHZXQgcmlkIG9m
+IHRoZSBnYXppbGxpb24gd2FpdGVyIHRocmVhZHMuPGJyPg0KJmd0Ozxicj4NCiZndDsgVGhpcyBp
+cyBleGNpdGluZywgYnV0IGhvdyBkbyB3ZSBhY2hpZXZlIHRoaXMgYmx1ZXByaW50Pzxicj4NCiZn
+dDsgQ2FuIHdlIHNldCB1cCBzb21lIHdvcmtpbmcgZ3JvdXBzIGFuZCBkZXZlbG9wIGl0IGluIHBh
+cmFsbGVsPGJyPg0KJmd0OyB0byBpbXBsZW1lbnQgZWFjaCBpbXByb3ZlbWVudCBzaW5jZSBtb3N0
+IG9mIHRoZW0gYXJlIGluZGVwZW5kZW50Pzxicj4NCiZndDs8YnI+DQo8YnI+DQpJJ20gbWlzc2lu
+ZyBoZXJlIHRoZSBhbmFseXNpcyBvZiBpbXBhY3Qgb24gcGVyZm9ybWFuY2UuPGJyPg0KPGJyPg0K
+RG8gd2UgaGF2ZSAncGVyZicgdHJhY2VzIGFuZCBvdGhlciByZXBvcnRzIHdoZXJlIGlzIHRoZSBD
+UFUgd2FzdGVkID88YnI+DQo8YnI+DQpXaGlsZSBzdXJlbHkgc29sdmluZyBhbGwgaXNzdWVzIG1h
+a2Ugc2Vuc2UgLSB0aGVyZSBhcmUgc29tZSB0YXNrcyB3aGljaA0KaGF2ZSA8YnI+DQptYWpvciBp
+bXBhY3Qgb24gc3BlZWQgLSB3aGlsZSBvdGhlcnMgdXNlciB3aWxsIG1vc3Qgbm90IG5vdGljZSBh
+dCBhbGwuPGJyPg0KPGJyPg0KPGJyPg0KUmVnYXJkczxicj4NCjxicj4NClpkZW5lazxicj4NCjxi
+cj4NCi0tPGJyPg0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0PGJyPg0KZG0tZGV2ZWxAcmVkaGF0LmNv
+bTxicj4NCjwvZm9udD48L3R0PjxhIGhyZWY9Imh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
+bi9saXN0aW5mby9kbS1kZXZlbCI+PHR0Pjxmb250IHNpemU9Mj5odHRwczovL3d3dy5yZWRoYXQu
+Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw8L2ZvbnQ+PC90dD48L2E+PHR0Pjxmb250IHNp
+emU9Mj48YnI+DQo8L2ZvbnQ+PC90dD4NCjxicj48L2Rpdj4NCg==
+--=_alternative 00382BA54825807A_=--
 
-But even plain 'multipath -c' is still better - since it's executed already 
-anyway - my point here is - it should be executed before 'blkid' is attempted.
 
-> would set a timestamp when it started, when a new wwid was added to the
-> wwids file, and when it got reconfigured. These are the only times a
-> configuration could change (well, users could change /etc/multipath.conf
-> but not reload multipathd, but that will already cause problems). udev
-> would read this timestamp and save it to the database.  When change
-> events come along, as long as the timestamp hasn't changed, the old
-> value of "multipath -c" is still correect.
->
->> And the number of bytes read by blkid should be _that_ large; a simple
->> 'blkid' on my device caused it to read 35k ...
->>
->> Also udev will become very unhappy if we're not calling blkid for every
->> device; you'd be having a hard time reconstructing the event for those
->> devices.
->> While it's trivial to import variables from parent devices, it's
->> impossible to do that from unrelated devices; you'd need a dedicated
->> daemon for that.
->> So we cannot skip blkid without additional tooling.
->
-> We need to run blkid on the multipath device, but I'm not sure what it
-> gets us on the paths, once we have determined that they belong to
+--===============7399128117686397612==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-There is NO reason to run blkid on a path (component device) -  since the 
-discovered filesystem is later overwritten by mpath member info anyway.
 
-Now lvm2 even tries to detect if the user has tried to use  'path' instead of 
-real mpath device on misconfigured system - and already number of such 
-misusage have been detected.
-
-Regards
-
-Zdenek
+--===============7399128117686397612==--
