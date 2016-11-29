@@ -1,36 +1,70 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [RFC PATCH] crypto: Add IV generation algorithms
-Date: Tue, 29 Nov 2016 15:50:12 +0800
-Message-ID: <20161129075011.GA5331@gondor.apana.org.au>
-References: <1479723009-11113-1-git-send-email-binoy.jayan@linaro.org>
- <1479723009-11113-2-git-send-email-binoy.jayan@linaro.org>
- <20161128124722.GB2257@gondor.apana.org.au>
- <CAHv-k_93FRosd4GeW3NB6fPmjYUNZoe+p+i4ZnwBQqB605bxUA@mail.gmail.com>
- <20161129072824.GA5240@gondor.apana.org.au>
- <CAHv-k___PJA9t=V8Kh1_WVq=K_yBfmD2rUzE-xAd_SCrEgOjUA@mail.gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: Improve processing efficiency for addition and
+ deletion of multipath devices
+Date: Tue, 29 Nov 2016 08:52:17 +0100
+Message-ID: <1480405937.7926.3.camel@suse.com>
+References: <OF6C4379F8.661B1ACE-ON48258079.000B15EB-48258079.000CBE4F@zte.com.cn>
+	<1480328936.23852.10.camel@suse.com>
+	<20161128173124.GE1972@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHv-k___PJA9t=V8Kh1_WVq=K_yBfmD2rUzE-xAd_SCrEgOjUA@mail.gmail.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Binoy Jayan <binoy.jayan@linaro.org>
-Cc: Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20161128173124.GE1972@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Bart@redhat.com, tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 29, 2016 at 01:16:46PM +0530, Binoy Jayan wrote:
-> 
-> No one is using it as of now. It was just a thought to pass context
-> information, instead of making it part of the context which is shared
-> among dm-crypt and geniv.
-
-OK in that case we should just get rid of it until it's actually
-needed.  In any case, if there was a need for such information we
-should try to embed it into either the key (per-tfm) or the IV
-(per-request) as appropriate.
-
-Thanks,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+T24gTW9uLCAyMDE2LTExLTI4IGF0IDExOjMxIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gTW9uLCBOb3YgMjgsIDIwMTYgYXQgMTE6Mjg6NTZBTSArMDEwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gT24gTW9uLCAyMDE2LTExLTI4IGF0IDEwOjE5ICswODAwLCB0YW5nLmp1
+bmh1aUB6dGUuY29tLmNuIHdyb3RlOgo+ID4gPiAKPiA+ID4gNC4gwqAgwqAgwqAgwqBQcm9wb3Nh
+bMKgCj4gPiA+IE90aGVyIHRoYW4gcHJvY2Vzc2luZyB1ZXZlbnRzIG9uZSBieSBvbmUsIHVldmVu
+dHMgd2hpY2ggY29taW5nCj4gPiA+IGZyb20KPiA+ID4gdGhlwqAKPiA+ID4gc2FtZSBMVU4gZGV2
+aWNlcyBjYW4gYmUgbWVyZ2VyZWQgdG8gb25lLCBhbmQgdGhlbiB1ZXZlbnQKPiA+ID4gcHJvY2Vz
+c2luZ8KgCj4gPiA+IHRocmVhZCBvbmx5IG5lZWRzIHRvIHByb2Nlc3MgaXQgb25jZSwgYW5kIGl0
+IG9ubHkgcHJvZHVjZXMgb25lIERNCj4gPiA+IGFkZGl0aW9uwqAKPiA+ID4gdWV2ZW50IHdoaWNo
+IGNvdWxkIHJlZHVjZSBzeXN0ZW0gcmVzb3VyY2UgY29uc3VtcHRpb24uwqAKPiA+ID4gCj4gPiAK
+PiA+IEhlcmUgY29tZXMgYW4gaWRlYSBob3cgdG8gYWNoaWV2ZSB0aGlzIHdpdGhvdXQgYSBsb3Qg
+b2YgYWRkaXRpb25hbAo+ID4gY29kZToKPiA+IAo+ID4gbGlibXVsdGlwYXRoIGFscmVhZHkgaGFz
+IGNvZGUgdG8gY2hlY2sgd2hldGhlciBhbnkgbWFwcyBuZWVkIHRvIGJlCj4gPiB1cGRhdGVkIChp
+biBjb2FsZXNjZV9wYXRocygpKS4gSW5zdGVhZCBvZiByZWNvcmRpbmcgdWV2ZW50cywKPiA+IG1l
+cmdpbmcKPiA+IHRoZW0sIGFuZCBjYWxsaW5nIGV2X2FkZF9wYXRoKCkgZm9yIGV2ZXJ5IGFmZmVj
+dGVkIFdXSUQsIGl0IG1pZ2h0Cj4gPiBiZQo+ID4gc3VmZmljaWVudCB0byBzZXQgZGFlbW9uIHN0
+YXRlIHRvIERBRU1PTl9DT05GSUdVUkUgYW5kIHdha2UgdXAgdGhlCj4gPiBtYWluCj4gPiBtdWx0
+aXBhdGhkIHRocmVhZCB0byBjYWxsIHJlY29uZmlndXJlKCkuIFRoZW4gd2Ugb25seSBuZWVkIHRv
+IG1ha2UKPiA+IHN1cmUKPiA+IHRoYXQgY29hbGVzY2VfcGF0aHMoKSByZWFsbHkgcmVsb2FkcyBv
+ciBjcmVhdGVzIG1hcHMgb25seSB3aGVuCj4gPiBuZWNlc3NhcnkuIEkgaGF2ZSBzb21lIHBhdGNo
+ZXMgaGVyZSB0aGF0IEkgbWFkZSBmb3IgdGhhdCBwdXJwb3NlLAo+ID4gZm9yIGEKPiA+IGRpZmZl
+cmVudCBzY2VuYXJpbyAobXVsdGlwYXRoZCB0byBhdm9pZCBSRUxPQUQgaW9jdGxzIHdoZW4gaXQn
+cwo+ID4gc3RhcnRlZAo+ID4gaW4gYSBzY2VuYXJpbyB3aGVyZSBtb3N0IHBhdGhzIGFyZSBhbHJl
+YWR5IHNldCB1cCBieSB1ZGV2KS4KPiAKPiBUaGVyZSBpcyBhIGxvbmcgc3RhbmRpbmcgbXVsdGlw
+YXRoIGlzc3VlIHRoYXQgdGhpcyB3aWxsIGxpa2VseSBtYWtlIGEKPiBsb3Qgd29yc2UuwqDCoEN1
+cnJlbnRseSwgbXVsdGlwYXRoZCBjYW4gZHJvcCBwYXRocyB0aGF0IGl0IGRvZXNuJ3QgaGF2ZQo+
+IGFjY2VzcyB0byBvbiByZWNvbmZpZ3VyZS4gVGhpcyBpcyB3cm9uZy4gV2hlbiB0aGUgcGF0aCBj
+b21lcyBiYWNrLCBpdAo+IHdvbid0IGlzc3VlIGFub3RoZXIgYWRkIHVldmVudC4gVGhpcyBtZWFu
+cyB0aGF0IG11bHRpcGF0aGQgd29uJ3QgYmUKPiBhYmxlCj4gdG8gcmUtZW5hYmxlIGl0IChzaW5j
+ZSBpdCBzdG9wcGVkIG1vbml0b3JpbmcgaXQgZHVyaW5nIHRoZQo+IHJlY29uZmlndXJlKS4KPiBJ
+biBmYWN0IHRoZSBvbmx5IHdheSB0byBnZXQgdGhlIHBhdGggYmFjayBpcyB0byBlaXRoZXIgbWFu
+dWFsbHkKPiBpbnRlcnZlbmUgb3IgdG8gaGF2ZSB0aGUgcGF0aCBhY3R1YWxseSBnZXQgcmVtb3Zl
+ZCBmcm9tIHRoZSBzeXN0ZW0KPiBhbmQKPiBjb21lIGJhY2suCgpUaGFua3MgZm9yIHBvaW50aW5n
+IHRoaXMgb3V0LiBCdXQgZG9uJ3QgeW91IHRoaW5rIGl0IGNhbiBiZSBkZWFsdCB3aXRoCmJ5IGZp
+eGluZyB0aGUgcmVjb25maWd1cmUoKSBwYXRoPyAKCk15IHBvaW50IGlzOiBhbnkgY29kZSB0aGF0
+IG1lcmdlcyB1ZXZlbnRzIGFuZCB0cmllcyB0byBmaWd1cmUgb3V0IHRoZQpjb3JyZWN0ICJtaW5p
+bWFsIiBzZXQgRE0gb3BlcmF0aW9ucyB0byBwdXQgdGhlIGNoYW5nZXMgaW4gcGxhY2UgcmUtCmlt
+cGxlbWVudCBhdCBsZWFzdCBwYXJ0cyBvZiB0aGUgbG9naWMgb2YgY29hbGVzY2VfcGF0aHMoKSwg
+YW5kIGZhY2UKc2ltaWxhciBwcm9ibGVtcy4KClJlZ2FyZHMKTWFydGluCgotLSAKRHIuIE1hcnRp
+biBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLsKgKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNV
+U0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3Jh
+aGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcg
+bGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
+aXN0aW5mby9kbS1kZXZlbA==
