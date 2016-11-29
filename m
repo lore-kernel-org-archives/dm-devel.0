@@ -1,44 +1,28 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 2/2] dm-mpath: Remove useless
- retain_attached_hw_handler parameter
-Date: Mon, 28 Nov 2016 19:28:01 -0500
-Message-ID: <20161129002801.GA8989@redhat.com>
-References: <1479971509-6320-1-git-send-email-tang.junhui@zte.com.cn>
-	<1479971509-6320-2-git-send-email-tang.junhui@zte.com.cn>
-	<20161128213907.GB7844@redhat.com>
+From: David Rientjes <rientjes@google.com>
+Subject: Re: [PATCH] RFC: dm: avoid the mutex lock in
+ dm_bufio_shrink_count()
+Date: Mon, 28 Nov 2016 16:56:18 -0800 (PST)
+Message-ID: <alpine.DEB.2.10.1611281656020.107214@chino.kir.corp.google.com>
+References: <1479417398-2593-1-git-send-email-dianders@chromium.org> <alpine.DEB.2.10.1611171413450.99747@chino.kir.corp.google.com> <alpine.LRH.2.02.1611231531340.31481@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20161128213907.GB7844@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: tang.junhui@zte.com.cn
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, agk@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.1611231531340.31481@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Douglas Anderson <dianders@chromium.org>, Mike Snitzer <snitzer@redhat.com>, shli@kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux@roeck-us.net, Sonny Rao <sonnyrao@chromium.org>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Nov 28 2016 at  4:39pm -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Wed, 23 Nov 2016, Mikulas Patocka wrote:
 
-> On Thu, Nov 24 2016 at  2:11am -0500,
-> tang.junhui@zte.com.cn <tang.junhui@zte.com.cn> wrote:
+> From: Mikulas Patocka <mpatocka@redhat.com>
 > 
-> > From: "tang.junhui" <tang.junhui@zte.com.cn>
-> > 
-> > Hardware handle would be retained no matter parameter
-> > retain_attached_hw_handler is set or not in the logic
-> > of current code. So remove this useless parameter.
+> dm-bufio: don't take the lock in dm_bufio_shrink_count
 > 
-> Right, that wasn't always the case.  Previously (before commit )
-> dm-mpath would first detach the attached handler.
+> dm_bufio_shrink_count is called from do_shrink_slab to find out how many
+> freeable objects are there. The reported value doesn't have to be precise,
+> so we don't need to take the dm-bufio lock.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-meant to reference commit 1bab0de02 ("dm-mpath, scsi_dh: don't let dm
-detach device handlers")
+Acked-by: David Rientjes <rientjes@google.com>
