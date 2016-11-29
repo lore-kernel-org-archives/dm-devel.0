@@ -1,17 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 2/2] dm-mpath: Remove useless
- retain_attached_hw_handler parameter
-Date: Mon, 28 Nov 2016 16:42:27 -0500
-Message-ID: <20161128214227.GC7844@redhat.com>
-References: <1479971509-6320-1-git-send-email-tang.junhui@zte.com.cn>
-	<1479971509-6320-2-git-send-email-tang.junhui@zte.com.cn>
-	<20161128213907.GB7844@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH] libmultipath: ensure dev_loss_tmo will be
+ update to MAX_DEV_LOSS_TMO if no_path_retry set to queue
+Date: Mon, 28 Nov 2016 18:16:39 -0600
+Message-ID: <20161129001639.GG1972@octiron.msp.redhat.com>
+References: <1480055764-11124-1-git-send-email-peng.liang5@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20161128213907.GB7844@redhat.com>
+In-Reply-To: <1480055764-11124-1-git-send-email-peng.liang5@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,39 +19,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: tang.junhui@zte.com.cn
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, agk@redhat.com
+To: peng.liang5@zte.com.cn
+Cc: dm-devel@redhat.com, zhang.kai16@zte.com.cn
 List-Id: dm-devel.ids
 
-On Mon, Nov 28 2016 at  4:39pm -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Fri, Nov 25, 2016 at 02:36:04PM +0800, peng.liang5@zte.com.cn wrote:
+> From: PengLiang <peng.liang5@zte.com.cn>
+> 
+> If no_path_retry set to queue, we should make sure dev_loss_tmo update to MAX_DEV_LOSS_TMO.
+> But, it will be limit to 600 if fast_io_fail_tmo set to off or 0 meanwhile.
 
-> On Thu, Nov 24 2016 at  2:11am -0500,
-> tang.junhui@zte.com.cn <tang.junhui@zte.com.cn> wrote:
-> 
-> > From: "tang.junhui" <tang.junhui@zte.com.cn>
-> > 
-> > Hardware handle would be retained no matter parameter
-> > retain_attached_hw_handler is set or not in the logic
-> > of current code. So remove this useless parameter.
-> 
-> Right, that wasn't always the case.  Previously (before commit )
-> dm-mpath would first detach the attached handler.
-> 
-> I'm not completely opposed to removing the code that checks
-> MPATHF_RETAIN_ATTACHED_HW_HANDLER in parse_path() but your proposed
-> patch is broken in 2 ways:
-> 1) in parse_path() you need to always initialize q
-> 2) setting m->hw_handler_name to attached_handler_name needs to still
->    happen regardless of whether m->hw_handler_name was previously set
-> 3) the "retain_attached_hw_handler" feature should still be allowed on
->    the command line, no sense to break multipath-tools
-> 
-> But honestly, I'm not seeing any reason to not just leave the existing
-> code.
+Doesn't the system still limit dev_loss_tmo to 600 if fast_io_fail_tmo isn't set. Multipath
+was using this limit, since the underlying system uses it.
 
-In addition, your patch actually breaks the ability to cope with -EBUSY
-from the call to scsi_dh_attach().  Meaning we wouldn't properly fall
-back to retaining the attached hw handler.
+-Ben
 
-So NACK on this patch.
+> 
+> Signed-off-by: PengLiang <peng.liang5@zte.com.cn>
+> ---
+>  libmultipath/discovery.c | 3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
+> 
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index aaa915c..05b0842 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -608,7 +608,8 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+>  				goto out;
+>  			}
+>  		}
+> -	} else if (mpp->dev_loss > DEFAULT_DEV_LOSS_TMO) {
+> +	} else if (mpp->dev_loss > DEFAULT_DEV_LOSS_TMO &&
+> +		mpp->no_path_retry != NO_PATH_RETRY_QUEUE) {
+>  		condlog(3, "%s: limiting dev_loss_tmo to %d, since "
+>  			"fast_io_fail is not set",
+>  			rport_id, DEFAULT_DEV_LOSS_TMO);
+> -- 
+> 2.8.1.windows.1
