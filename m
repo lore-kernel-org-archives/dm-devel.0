@@ -1,7 +1,7 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH] dm raid: add raid4/5/6 journaling support
-Date: Wed, 30 Nov 2016 20:07:44 +0100
-Message-ID: <1480532864-29461-1-git-send-email-heinzm@redhat.com>
+Subject: [PATCH v2] dm raid: add raid4/5/6 journaling support
+Date: Wed, 30 Nov 2016 22:31:05 +0100
+Message-ID: <1480541465-25946-1-git-send-email-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -97,7 +97,7 @@ index 5e3786f..67f69b2 100644
  1.9.1   Fix activation of existing RAID 4/10 mapped devices
 +1.10.0  Add support for raid4/5/6 journal device
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 9d5c6bb..bdf00c4 100644
+index 9d5c6bb..215285b 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
 @@ -24,6 +24,11 @@
@@ -362,7 +362,7 @@ index 9d5c6bb..bdf00c4 100644
  		}
  
 +		/* We can't takeover a journaled radi4/5/6 */
-+		if (test_bit(CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags)) {
++		if (test_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags)) {
 +			ti->error = "Can't takeover a journaled raid4/5/6 set";
 +			r = -EPERM;
 +			goto bad;
@@ -380,7 +380,7 @@ index 9d5c6bb..bdf00c4 100644
 +		 */
 +
 +		/* We can't reshape a jorunaled radi4/5/6 */
-+		if (test_bit(CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags)) {
++		if (test_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags)) {
 +			ti->error = "Can't reshape a journaled raid4/5/6 set";
 +			r = -EPERM;
 +			goto bad;
