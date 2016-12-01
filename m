@@ -1,15 +1,15 @@
-From: Edward Thornber <thornber@redhat.com>
-Subject: Re: [PATCH] dm-persistent-data: free sm_metadata on
-	failed create
-Date: Thu, 1 Dec 2016 05:58:10 -0500
-Message-ID: <20161201105810.GD5643@roamer.bos.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-persistent-data: free sm_metadata on failed create
+Date: Thu, 1 Dec 2016 11:41:05 -0500
+Message-ID: <20161201164105.GA26457@redhat.com>
 References: <1480550174-8675-1-git-send-email-bmarzins@redhat.com>
+	<20161201105810.GD5643@roamer.bos.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1480550174-8675-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <20161201105810.GD5643@roamer.bos.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,56 +19,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
+To: Edward Thornber <thornber@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-ack
+Staged for 4.10 inclusion with a revised header, see:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.10&id=b34af3050734ba53a7afa4f3ab9fe9d6bbfbf802
 
-On Wed, Nov 30, 2016 at 05:56:14PM -0600, Benjamin Marzinski wrote:
-> In dm_sm_metadata_create we temporarily change the dm_space_map
-> operations from ops, whose destroy function deallocates the
-> sm_metadata, to bootstrap_ops, whose destroy function doesn't. If we
-> fail in dm_ll_new_metadata or sm_ll_extend, we exit back to
-> dm_tm_create_internal, which calls dm_sm_destroy with the intention
-> of freeing the sm_metadata, but it doesn't.
+On Thu, Dec 01 2016 at  5:58am -0500,
+Edward Thornber <thornber@redhat.com> wrote:
+
+> ack
 > 
-> This patch sets the dm_space_map operations back to ops if
-> dm_sm_metadata_create fails when it is set to bootstrap_ops.
+> On Wed, Nov 30, 2016 at 05:56:14PM -0600, Benjamin Marzinski wrote:
+> > In dm_sm_metadata_create we temporarily change the dm_space_map
+> > operations from ops, whose destroy function deallocates the
+> > sm_metadata, to bootstrap_ops, whose destroy function doesn't. If we
+> > fail in dm_ll_new_metadata or sm_ll_extend, we exit back to
+> > dm_tm_create_internal, which calls dm_sm_destroy with the intention
+> > of freeing the sm_metadata, but it doesn't.
+> > 
+> > This patch sets the dm_space_map operations back to ops if
+> > dm_sm_metadata_create fails when it is set to bootstrap_ops.
+> > 
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  drivers/md/persistent-data/dm-space-map-metadata.c | 14 ++++++--------
+> >  1 file changed, 6 insertions(+), 8 deletions(-)
+> > 
+> > diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
+> > index 7e44005..20557e2 100644
+> > --- a/drivers/md/persistent-data/dm-space-map-metadata.c
+> > +++ b/drivers/md/persistent-data/dm-space-map-metadata.c
+> > @@ -775,17 +775,15 @@ int dm_sm_metadata_create(struct dm_space_map *sm,
+> >  	memcpy(&smm->sm, &bootstrap_ops, sizeof(smm->sm));
+> >  
+> >  	r = sm_ll_new_metadata(&smm->ll, tm);
+> > +	if (!r) {
+> > +		if (nr_blocks > DM_SM_METADATA_MAX_BLOCKS)
+> > +			nr_blocks = DM_SM_METADATA_MAX_BLOCKS;
+> > +		r = sm_ll_extend(&smm->ll, nr_blocks);
+> > +	}
+> > +	memcpy(&smm->sm, &ops, sizeof(smm->sm));
+> >  	if (r)
+> >  		return r;
+> >  
+> > -	if (nr_blocks > DM_SM_METADATA_MAX_BLOCKS)
+> > -		nr_blocks = DM_SM_METADATA_MAX_BLOCKS;
+> > -	r = sm_ll_extend(&smm->ll, nr_blocks);
+> > -	if (r)
+> > -		return r;
+> > -
+> > -	memcpy(&smm->sm, &ops, sizeof(smm->sm));
+> > -
+> >  	/*
+> >  	 * Now we need to update the newly created data structures with the
+> >  	 * allocated blocks that they were built from.
+> > -- 
+> > 2.1.0
+> > 
 > 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  drivers/md/persistent-data/dm-space-map-metadata.c | 14 ++++++--------
->  1 file changed, 6 insertions(+), 8 deletions(-)
-> 
-> diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
-> index 7e44005..20557e2 100644
-> --- a/drivers/md/persistent-data/dm-space-map-metadata.c
-> +++ b/drivers/md/persistent-data/dm-space-map-metadata.c
-> @@ -775,17 +775,15 @@ int dm_sm_metadata_create(struct dm_space_map *sm,
->  	memcpy(&smm->sm, &bootstrap_ops, sizeof(smm->sm));
->  
->  	r = sm_ll_new_metadata(&smm->ll, tm);
-> +	if (!r) {
-> +		if (nr_blocks > DM_SM_METADATA_MAX_BLOCKS)
-> +			nr_blocks = DM_SM_METADATA_MAX_BLOCKS;
-> +		r = sm_ll_extend(&smm->ll, nr_blocks);
-> +	}
-> +	memcpy(&smm->sm, &ops, sizeof(smm->sm));
->  	if (r)
->  		return r;
->  
-> -	if (nr_blocks > DM_SM_METADATA_MAX_BLOCKS)
-> -		nr_blocks = DM_SM_METADATA_MAX_BLOCKS;
-> -	r = sm_ll_extend(&smm->ll, nr_blocks);
-> -	if (r)
-> -		return r;
-> -
-> -	memcpy(&smm->sm, &ops, sizeof(smm->sm));
-> -
->  	/*
->  	 * Now we need to update the newly created data structures with the
->  	 * allocated blocks that they were built from.
-> -- 
-> 2.1.0
-> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
