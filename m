@@ -1,15 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-persistent-data: free sm_metadata on failed create
-Date: Thu, 1 Dec 2016 11:41:05 -0500
-Message-ID: <20161201164105.GA26457@redhat.com>
-References: <1480550174-8675-1-git-send-email-bmarzins@redhat.com>
-	<20161201105810.GD5643@roamer.bos.redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH] libmultipath: ensure dev_loss_tmo will be
+ update to MAX_DEV_LOSS_TMO if no_path_retry set to queue
+Date: Thu, 1 Dec 2016 10:44:54 -0600
+Message-ID: <20161201164454.GF3099@octiron.msp.redhat.com>
+References: <201612010906149840484@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20161201105810.GD5643@roamer.bos.redhat.com>
+In-Reply-To: <201612010906149840484@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,67 +19,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Edward Thornber <thornber@redhat.com>
-Cc: dm-devel@redhat.com
+To: peng.liang5@zte.com.cn
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Staged for 4.10 inclusion with a revised header, see:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.10&id=b34af3050734ba53a7afa4f3ab9fe9d6bbfbf802
-
-On Thu, Dec 01 2016 at  5:58am -0500,
-Edward Thornber <thornber@redhat.com> wrote:
-
-> ack
-> 
-> On Wed, Nov 30, 2016 at 05:56:14PM -0600, Benjamin Marzinski wrote:
-> > In dm_sm_metadata_create we temporarily change the dm_space_map
-> > operations from ops, whose destroy function deallocates the
-> > sm_metadata, to bootstrap_ops, whose destroy function doesn't. If we
-> > fail in dm_ll_new_metadata or sm_ll_extend, we exit back to
-> > dm_tm_create_internal, which calls dm_sm_destroy with the intention
-> > of freeing the sm_metadata, but it doesn't.
-> > 
-> > This patch sets the dm_space_map operations back to ops if
-> > dm_sm_metadata_create fails when it is set to bootstrap_ops.
-> > 
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> >  drivers/md/persistent-data/dm-space-map-metadata.c | 14 ++++++--------
-> >  1 file changed, 6 insertions(+), 8 deletions(-)
-> > 
-> > diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
-> > index 7e44005..20557e2 100644
-> > --- a/drivers/md/persistent-data/dm-space-map-metadata.c
-> > +++ b/drivers/md/persistent-data/dm-space-map-metadata.c
-> > @@ -775,17 +775,15 @@ int dm_sm_metadata_create(struct dm_space_map *sm,
-> >  	memcpy(&smm->sm, &bootstrap_ops, sizeof(smm->sm));
-> >  
-> >  	r = sm_ll_new_metadata(&smm->ll, tm);
-> > +	if (!r) {
-> > +		if (nr_blocks > DM_SM_METADATA_MAX_BLOCKS)
-> > +			nr_blocks = DM_SM_METADATA_MAX_BLOCKS;
-> > +		r = sm_ll_extend(&smm->ll, nr_blocks);
-> > +	}
-> > +	memcpy(&smm->sm, &ops, sizeof(smm->sm));
-> >  	if (r)
-> >  		return r;
-> >  
-> > -	if (nr_blocks > DM_SM_METADATA_MAX_BLOCKS)
-> > -		nr_blocks = DM_SM_METADATA_MAX_BLOCKS;
-> > -	r = sm_ll_extend(&smm->ll, nr_blocks);
-> > -	if (r)
-> > -		return r;
-> > -
-> > -	memcpy(&smm->sm, &ops, sizeof(smm->sm));
-> > -
-> >  	/*
-> >  	 * Now we need to update the newly created data structures with the
-> >  	 * allocated blocks that they were built from.
-> > -- 
-> > 2.1.0
-> > 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+T24gVGh1LCBEZWMgMDEsIDIwMTYgYXQgMDk6MDY6MTRBTSArMDgwMCwgcGVuZy5saWFuZzVAenRl
+LmNvbS5jbiB3cm90ZToKPiAgICBJZiBmYXN0X2lvX2ZhaWxfdG1vIGlzbid0IHNldCwgaXQgd2ls
+bCBiZSB1c2UgdGhlwqBERUZBVUxUX0ZBU1RfSU9fRkFJTAo+ICAgIGluwqBzZWxlY3RfZmFzdF9p
+b19mYWlsLgo+IAo+ICAgIFNvLCBtdWx0aXBhdGggd2lsbCBub3QgcnVuIHRoZSBsaW1pdGVkIG9m
+IGRldl9sb3NzX3RtbyB0byA2MDAuCgpZZXMsIGJ1dCB0aGUga2VybmVsIHdpbGwuIFdpdGggeW91
+ciBwYXRjaCBpbnN0YWxsZWQsIGlmIEkgZGlzYWJsZQpmYXN0X2lvX2ZhaWxfdG1vIGFuZCBzZXQg
+bm9fcGF0aF9yZXRyeSB0byBxdWV1ZSwgSSBnZXQgdGhlc2UgbWVzc2FnZXMKCkRlYyAwMSAwNDox
+OTowMiB8IHJwb3J0LTExOjAtMDogZmFpbGVkIHRvIHNldCBkZXZfbG9zc190bW8gdG8KMjE0NzQ4
+MzY0NywgZXJyb3IgMjIKCkJlY2F1c2UgaWYgZmFzdF9pb19mYWlsX3RtbyBpcyBub3Qgc2V0LCB0
+aGUga2VybmVsIGl0c2VsZiB3aWxsIGJhcgpkZXZfbG9zc190bW8gZnJvbSBiZWluZyBhYm92ZSA2
+MDAgc2Vjb25kcy4gQWxzbywgZXZlbiBpZiB5b3UgY291bGQgc2V0CmRldl9sb3NzX3RtbyB0byBp
+dCdzIG1heGltdW0gd2l0aG91dCBmYXN0X2lvX2ZhaWxfdG1vIHNldCwgeW91IHdvdWxkCm5ldmVy
+IHdhbnQgdG8sIGJlY2F1c2UgeW91IHdvdWxkIGJyZWFrIG11bHRpcGF0aC4KCldpdGggZmFzdF9p
+b19mYWlsX3RtbyBkaXNhYmxlZCwgdGhlIHNjc2kgZGV2aWNlIHdpbGwgbmV2ZXIgcGFzcyB0aGUK
+ZmFpbGVkIElPIGJhY2sgdXAgdW50aWwgZGV2X2xvc3NfdG1vIHRyaWdnZXJzLiAgVGhpcyBtZWFu
+cyB0aGF0IGlmIHlvdQpsb3NlIGEgcGF0aCBvbiB5b3VyIG11bHRpcGF0aCBkZXZpY2Ugd2hpbGUg
+ZG9pbmcgSU8sIHlvdSB3b24ndCBiZSBhYmxlCnRvIHJlc2VuZCB0aGF0IElPIGRvd24gYW5vdGhl
+ciBwYXRoIGZvciA2OCB5ZWFycyAoMjE0NzQ4MzY0NyBzZWNvbmRzKS4KQWxzbywgYWxsIHRoZSBz
+eW5jaHJvbm91cyBjaGVja2VyIGZ1bmN0aW9ucyB3aWxsIG5vdCByZXR1cm4gZm9yIDY0OAp5ZWFy
+cy4gQW5kIGR1cmluZyBhbGwgdGhpcyB0aW1lIHRoZXNlIHByb2Nlc3NlcyB3aWxsIGJlIHVuaW50
+ZXJydXB0YWJsZQpzbGVlcC4gQXQgdGhhdCBwb2ludCwgdGhlcmUgd291bGQgYmUgbm8gcG9pbnQg
+dG8gZXZlbiBoYXZpbmcgbXVsdGlwbGUKcGF0aHMsIGJlY2F1c2UgeW91IGNvdWxkbid0IGV2ZXIg
+YWN0dWFsbHkgdXNlIHRoZW0gaWYgb25lIHdlbnQgZG93bi4KCj4gCj4gICAgQW5kIEkgdGhpbmsg
+dXNpbmfCoE1QX0ZBU1RfSU9fRkFJTF9VTlNFVCBhcyB0aGXCoGNvbmRpdGlvbiBpc8KgbWVhbmlu
+Z2xlc3MKPiAgICBhZnRlciBtdWx0aXBhdGgKPiAKPiAgICBydW7CoHNlbGVjdF9mYXN0X2lvX2Zh
+aWwgZXZlbiBpZiBpdCdzIG5vdCBzZXQuCgpUaGlzIGlzIHRydWUgaW4gdGhlIGRlZmF1bHQgY2Fz
+ZSwgYnV0IHdlIGNhbid0IHJlbHkgb24gdGhlIGRlZmF1bHQgY2FzZS4KU2luY2Ugd2UgYWxsb3cg
+dXNlcnMgdG8gdHVybiBpdCBvZmYsIHdlIG5lZWQgdG8gY29ycmVjdGx5IGNvbmZpZ3VyZQptdWx0
+aXBhdGggd2hlbiBpdCBpcyBvZmYuCgotQmVuCgo+ICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgIOWOn+Wni+mCruS7tgo+ICAgIOWPkeS7tuS6uu+8mkJlbmphbWluTWFyemluc2tp
+Cj4gICAg5pS25Lu25Lq677ya5b2t5LquMTAxMzcxMDI7Cj4gICAg5oqE6YCB5Lq677ya77ycZG0t
+ZGV2ZWxAcmVkaGF0LmNvbe+8nuW8oOWHrzEwMDcyNTAwOwo+ICAgIOaXpSDmnJ8g77yaMjAxNuW5
+tDEx5pyIMjnml6UgMDg6MzAKPiAgICDkuLsg6aKYIO+8mlJlOiBbZG0tZGV2ZWxdIFtQQVRDSF0g
+bGlibXVsdGlwYXRoOiBlbnN1cmUgZGV2X2xvc3NfdG1vIHdpbGwgYmUKPiAgICB1cGRhdGUgdG8g
+TUFYX0RFVl9MT1NTX1RNTyBpZiBub19wYXRoX3JldHJ5IHNldCB0byBxdWV1ZQo+IAo+ICAgIE9u
+wqBGcmkswqBOb3bCoDI1LMKgMjAxNsKgYXTCoDAyOjM2OjA0UE3CoCswODAwLMKgcGVuZy5saWFu
+ZzVAenRlLmNvbS5jbsKgd3JvdGU6Cj4gICAg77yewqBGcm9tOsKgUGVuZ0xpYW5nwqDvvJxwZW5n
+LmxpYW5nNUB6dGUuY29tLmNu77yeCj4gICAg77yewqAKPiAgICDvvJ7CoElmwqBub19wYXRoX3Jl
+dHJ5wqBzZXTCoHRvwqBxdWV1ZSzCoHdlwqBzaG91bGTCoG1ha2XCoHN1cmXCoGRldl9sb3NzX3Rt
+b8KgdXBkYXRlwqB0b8KgTUFYX0RFVl9MT1NTX1RNTy4KPiAgICDvvJ7CoEJ1dCzCoGl0wqB3aWxs
+wqBiZcKgbGltaXTCoHRvwqA2MDDCoGlmwqBmYXN0X2lvX2ZhaWxfdG1vwqBzZXTCoHRvwqBvZmbC
+oG9ywqAwwqBtZWFud2hpbGUuCj4gCj4gICAgRG9lc24ndMKgdGhlwqBzeXN0ZW3CoHN0aWxswqBs
+aW1pdMKgZGV2X2xvc3NfdG1vwqB0b8KgNjAwwqBpZsKgZmFzdF9pb19mYWlsX3Rtb8KgaXNuJ3TC
+oHNldC7CoE11bHRpcGF0aAo+ICAgIHdhc8KgdXNpbmfCoHRoaXPCoGxpbWl0LMKgc2luY2XCoHRo
+ZcKgdW5kZXJseWluZ8Kgc3lzdGVtwqB1c2VzwqBpdC4KPiAKPiAgICAtQmVuCj4gCj4gICAg77ye
+wqAKPiAgICDvvJ7CoFNpZ25lZC1vZmYtYnk6wqBQZW5nTGlhbmfCoO+8nHBlbmcubGlhbmc1QHp0
+ZS5jb20uY27vvJ4KPiAgICDvvJ7CoC0tLQo+ICAgIO+8nsKgwqBsaWJtdWx0aXBhdGgvZGlzY292
+ZXJ5LmPCoHzCoDPCoCsrLQo+ICAgIO+8nsKgwqAxwqBmaWxlwqBjaGFuZ2VkLMKgMsKgaW5zZXJ0
+aW9ucygrKSzCoDHCoGRlbGV0aW9uKC0pCj4gICAg77yewqAKPiAgICDvvJ7CoGRpZmbCoC0tZ2l0
+wqBhL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuY8KgYi9saWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMK
+PiAgICDvvJ7CoGluZGV4wqBhYWE5MTVjLi4wNWIwODQywqAxMDA2NDQKPiAgICDvvJ7CoC0tLcKg
+YS9saWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMKPiAgICDvvJ7CoCsrK8KgYi9saWJtdWx0aXBhdGgv
+ZGlzY292ZXJ5LmMKPiAgICDvvJ7CoEBAwqAtNjA4LDfCoCs2MDgsOMKgQEDCoHN5c2ZzX3NldF9y
+cG9ydF90bW8oc3RydWN0wqBtdWx0aXBhdGjCoCptcHAswqBzdHJ1Y3TCoHBhdGjCoCpwcCkKPiAg
+ICDvvJ7CoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqBnb3RvwqBvdXQ7Cj4gICAg
+77yewqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoH0KPiAgICDvvJ7CoMKgwqDCoMKgwqDCoMKg
+wqDCoH0KPiAgICDvvJ7CoC3CoMKgwqDCoH3CoGVsc2XCoGlmwqAobXBwLe+8nmRldl9sb3NzwqDv
+vJ7CoERFRkFVTFRfREVWX0xPU1NfVE1PKcKgewo+ICAgIO+8nsKgK8KgwqDCoMKgfcKgZWxzZcKg
+aWbCoChtcHAt77yeZGV2X2xvc3PCoO+8nsKgREVGQVVMVF9ERVZfTE9TU19UTU/CoCYmCj4gICAg
+77yewqArwqDCoMKgwqDCoMKgwqDCoG1wcC3vvJ5ub19wYXRoX3JldHJ5wqAhPcKgTk9fUEFUSF9S
+RVRSWV9RVUVVRSnCoHsKPiAgICDvvJ7CoMKgwqDCoMKgwqDCoMKgwqDCoGNvbmRsb2coMyzCoCIl
+czrCoGxpbWl0aW5nwqBkZXZfbG9zc190bW/CoHRvwqAlZCzCoHNpbmNlwqAiCj4gICAg77yewqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCJmYXN0X2lvX2ZhaWzCoGlzwqBub3TCoHNldCIsCj4g
+ICAg77yewqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHJwb3J0X2lkLMKgREVGQVVMVF9ERVZf
+TE9TU19UTU8pOwo+ICAgIO+8nsKgLS3CoAo+ICAgIO+8nsKgMi44LjEud2luZG93cy4xCj4gCj4g
+ICAgLS0KPiAgICBkbS1kZXZlbMKgbWFpbGluZ8KgbGlzdAo+ICAgIGRtLWRldmVsQHJlZGhhdC5j
+b20KPiAgICBodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
+dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
