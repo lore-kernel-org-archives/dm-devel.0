@@ -1,51 +1,34 @@
-From: Eric Biggers <ebiggers@google.com>
-Subject: Re: Crash in crypto mcryptd
-Date: Thu, 1 Dec 2016 23:06:58 -0800
-Message-ID: <20161202070658.GA18690@google.com>
-References: <alpine.LRH.2.02.1612011819540.27565@file01.intranet.prod.int.rdu2.redhat.com>
- <1480643222.3064.52.camel@linux.intel.com>
+From: Edward Thornber <thornber@redhat.com>
+Subject: Re: dm-persistent-data: free sm_metadata on failed create
+Date: Fri, 2 Dec 2016 06:45:56 -0500
+Message-ID: <20161202114556.GE5643@roamer.bos.redhat.com>
+References: <1480550174-8675-1-git-send-email-bmarzins@redhat.com>
+	<20161201105810.GD5643@roamer.bos.redhat.com>
+	<20161201164105.GA26457@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1480643222.3064.52.camel@linux.intel.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Tim Chen <tim.c.chen@linux.intel.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>, Megha Dey <megha.dey@linux.intel.com>
+In-Reply-To: <20161201164105.GA26457@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Dec 01, 2016 at 05:47:02PM -0800, Tim Chen wrote:
-> On Thu, 2016-12-01 at 19:00 -0500, Mikulas Patocka wrote:
-> > Hi
-> > 
-> > There is a bug in mcryptd initialization.
-> > 
-> > This is a test module that tries various hash algorithms. When you load 
-> > the module with "insmod test.ko 'alg=mcryptd(md5)'", the machine crashes.
-> 
-> I don't think your test setup is right.  The mcryptd supports only multi-buffer
-> algorithm.  I don't think there is such an implementation for md5.
-> 
-> Please refer to arch/x86/crypto/sha1-mb 
-> multi-buffer implementation of sha1 to see the proper
-> setup and usage with mcryptd.  You can also run tcrypt test to
-> exercise this code.
-> 
-> Tim
+On Thu, Dec 01, 2016 at 11:41:05AM -0500, Mike Snitzer wrote:
+> Staged for 4.10 inclusion with a revised header, see:
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.10&id=b34af3050734ba53a7afa4f3ab9fe9d6bbfbf802
 
-No, mcryptd must not crash the kernel if it's passed the wrong algorithm.
-Users can try to instantiate it with any algorithm using AF_ALG, for example:
-
-	struct sockaddr_alg addr = {
-		.salg_type = "hash",
-		.salg_name = "mcryptd(md5)",
-	};
-	
-	int fd = socket(AF_ALG, SOCK_SEQPACKET, 0);
-
-	bind(fd, (struct sockaddr *)&addr, sizeof(addr));
-
-Currently, this instantly crashes the kernel.
-
-Eric
+It's not urgent.  In general if something goes wrong with a persistent
+data transaction we just abort and roll back.  So there are a lot of
+error paths where we don't bother to repair metadata that's in the
+doomed transaction.
