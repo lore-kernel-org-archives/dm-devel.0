@@ -1,93 +1,131 @@
-From: Ondrej Kozina <okozina@redhat.com>
-Subject: [PATCH] dm-crypt: reject key strings containing
-	whitespace chars
-Date: Thu,  1 Dec 2016 18:20:52 +0100
-Message-ID: <1480612852-19878-1-git-send-email-okozina@redhat.com>
-References: <bb229097-56f7-0ef8-88f0-db2246a2c0c9@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Crash in crypto mcryptd
+Date: Thu, 1 Dec 2016 19:00:27 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1612011819540.27565@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <bb229097-56f7-0ef8-88f0-db2246a2c0c9@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: snitzer@redhat.com, mpatocka@redhat.com, Ondrej Kozina <okozina@redhat.com>, aryabinin@virtuozzo.com, agk@redhat.com, mbroz@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Tim Chen <tim.c.chen@linux.intel.com>
+Cc: linux-crypto@vger.kernel.org, dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Well, I was wrong. Unfortunately key_string may theoreticaly contain
-whitespace even after it's processed by dm_split_args(). The dm core
-driver supports escaping of almost all chars including any whitespace.
+Hi
 
-if uspace passes key in the kernel in format ":32:logon:my_prefix:my\ key"
-the dm-crypt will look up key "my_prefix:my key" in kernel keyring
-service. So far everything's fine.
+There is a bug in mcryptd initialization.
 
-Unfortunately if uspace later calls DM_TABLE_STATUS ioctl, it will not
-receive back expected ":32:logon:my_prefix:my\ key" but the unescaped version
-instead. Also uspace (most notably cryptsetup) is not ready to parse
-single target argument containing (even escaped) whitespace chars and any
-whitespace is simply taken as delimiter of another argument.
+This is a test module that tries various hash algorithms. When you load 
+the module with "insmod test.ko 'alg=mcryptd(md5)'", the machine crashes.
 
-This efect is mitigated by the fact libdevmapper curently performs
-double escaping of '\' char. Any user input in format "x\ x" is transformed
-into "x\\ x" before being passed to the kernel. Nonetheless dm-crypt may be
-used without go-between libdevmapper. Therefore I propose following patch
-to reject any key string containing whitespace.
+Mikulas
 
----
- drivers/md/dm-crypt.c | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 78ab5e8..11df7a9 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -24,6 +24,7 @@
- #include <linux/atomic.h>
- #include <linux/scatterlist.h>
- #include <linux/rbtree.h>
-+#include <linux/ctype.h>
- #include <asm/page.h>
- #include <asm/unaligned.h>
- #include <crypto/hash.h>
-@@ -1489,6 +1490,14 @@ static int crypt_setkey(struct crypt_config *cc)
- 
- #ifdef CONFIG_KEYS
- 
-+static int contains_whitespace(const char *str)
-+{
-+	while (*str)
-+		if (isspace(*str++))
-+			return 1;
-+	return 0;
-+}
-+
- static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string)
- {
- 	char *new_key_string, *key_desc;
-@@ -1496,6 +1505,15 @@ static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string
- 	struct key *key;
- 	const struct user_key_payload *ukp;
- 
-+	/*
-+	 * Reject key_string with whitespace. dm core currently lacks code for
-+	 * proper whitespace escaping in arguments on DM_TABLE_STATUS path.
-+	 */
-+	if (contains_whitespace(key_string)) {
-+		DMERR("whitespace chars currently not allowed in key string");
-+		return -EINVAL;
-+	}
-+
- 	/* look for next ':' separating key_type from key_description */
- 	key_desc = strpbrk(key_string, ":");
- 	if (!key_desc || key_desc == key_string || !strlen(key_desc + 1))
--- 
-2.7.4
+#include <linux/module.h>
+#include <linux/init.h>
+#include <crypto/hash.h>
+
+static char *alg = "md5";
+
+module_param_named(alg, alg, charp, 0444);
+MODULE_PARM_DESC(alg, "the algorith to test");
+
+static bool sync = true;
+
+module_param_named(sync, sync, bool, 0444);
+MODULE_PARM_DESC(alg, "sync flag");
+
+static int __init dump_init(void)
+{
+        struct crypto_shash *h;
+        char key[4];
+        int r;
+        printk("testing algorithm '%s'\n", alg);
+        h = crypto_alloc_shash(alg, 0, sync ? CRYPTO_ALG_ASYNC : 0);
+        if (IS_ERR(h)) {
+                printk("error %d\n", (int)PTR_ERR(h));
+                return PTR_ERR(h);
+        }
+        printk("setting key\n");
+        r = crypto_shash_setkey(h, key, sizeof key);
+        if (r)
+                printk("setkey: %d\n", r);
+        crypto_free_shash(h);
+        printk("module loaded\n");
+        return 0;
+}
+
+static void __exit dump_exit(void)
+{
+        printk("dump exit\n");
+}
+
+module_init(dump_init)
+module_exit(dump_exit)
+MODULE_LICENSE("GPL");
+
+
+[898029.802035] BUG: unable to handle kernel NULL pointer dereference at           
+(null)
+[898029.806060] IP: [<ffffffffa022014d>] md5_final+0xad/0x210 [md5]
+[898029.808156] PGD 11a5d8067 [898029.809051] PUD 11a491067 
+PMD 0 [898029.810280] 
+[898029.810904] Oops: 0002 [#1] PREEMPT SMP
+[898029.812239] Modules linked in: md5 testdump(O+) mcryptd uvesafb 
+cfbfillrect cfbimgblt cn cfbcopyarea fbcon bitblit fbcon_rotate fbcon_ccw 
+fbcon_ud fbcon_cw softcursor fb fbdev font ipv6 binfmt_misc mousedev 
+af_packet psmouse pcspkr virtio_net virtio_balloon button ext4 crc16 jbd2 
+mbcache dm_mod virtio_blk evdev virtio_pci virtio_ring virtio
+[898029.817178] CPU: 9 PID: 187 Comm: kworker/9:1 Tainted: G           O    
+4.9.0-rc7+ #6
+[898029.818066] Hardware name: Bochs Bochs, BIOS Bochs 01/01/2011
+[898029.818732] Workqueue: crypto mcryptd_queue_worker [mcryptd]
+[898029.819394] task: ffff88011aa2bd80 task.stack: ffff880118480000
+[898029.820077] RIP: 0010:[<ffffffffa022014d>]  [<ffffffffa022014d>] 
+md5_final+0xad/0x210 [md5]
+[898029.821050] RSP: 0018:ffff880118483d48  EFLAGS: 00010286
+[898029.821661] RAX: 04b2008fd98c1dd4 RBX: ffff880119cd7f28 RCX: 
+00000000980980e9
+[898029.822464] RDX: 7e42f8ec980980e9 RSI: 00000000ef1c4f74 RDI: 
+ffff880119cd7f30
+[898029.823293] RBP: ffff880118483d68 R08: 000000001b99d513 R09: 
+0000000000000000
+[898029.824117] R10: 0000000000000000 R11: 00000000b8b56373 R12: 
+ffff880119cd7f18
+[898029.824944] R13: 0000000000000000 R14: ffff880119cd7f38 R15: 
+ffffffffa01ee43c
+[898029.825776] FS:  0000000000000000(0000) GS:ffff88011fd20000(0000) 
+knlGS:0000000000000000
+[898029.826712] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[898029.827376] CR2: 0000000000000000 CR3: 000000011a6c9000 CR4: 
+00000000000006a0
+[898029.828204] Stack:
+[898029.828452]  ffff880119cd7f18 ffff88011fd3bb00 0000000000000000 
+ffff880119cd7e00
+[898029.829351]  ffff880118483da0 ffffffff8119f281 ffff880119cd7f18 
+ffff88011fd3bb00
+[898029.830242]  ffff88011fd3bae0 ffff880119cd7e00 ffffffffa01ee43c 
+ffff880119cd7ec8
+[898029.831141] Call Trace:
+[898029.831460]  [<ffffffff8119f281>] ? crypto_shash_final+0x31/0xb0
+[898029.832151]  [<ffffffffa01ee43c>] ? mcryptd_queue_worker+0x1c/0x190 
+[mcryptd]
+[898029.832980]  [<ffffffff8119f743>] ? shash_ahash_finup+0x73/0x80
+[898029.833672]  [<ffffffff81016a5f>] ? __switch_to+0x27f/0x460
+[898029.834305]  [<ffffffffa01eeabf>] ? mcryptd_hash_digest+0x4f/0x80 
+[mcryptd]
+[898029.835125]  [<ffffffffa01ee467>] ? mcryptd_queue_worker+0x47/0x190 
+[mcryptd]
+[898029.835963]  [<ffffffff8105974f>] ? process_one_work+0x1bf/0x3f0
+[898029.836681]  [<ffffffff810599c2>] ? worker_thread+0x42/0x4c0
+[898029.837362]  [<ffffffff81059980>] ? process_one_work+0x3f0/0x3f0
+[898029.838045]  [<ffffffff81059980>] ? process_one_work+0x3f0/0x3f0
+[898029.838739]  [<ffffffff8105ea49>] ? kthread+0xb9/0xd0
+[898029.839318]  [<ffffffff8105e990>] ? kthread_park+0x70/0x70
+[898029.839959]  [<ffffffff8131b965>] ? ret_from_fork+0x25/0x30
+[898029.840594] Code: 14 c5 00 00 00 00 48 c1 e8 1d 41 89 44 24 5c 41 89 
+54 24 58 e8 45 ea 0e e1 49 8b 44 24 10 49 8b 54 24 18 48 8d 7b 08 48 83 e7 
+f8 <49> 89 45 00 49 89 55 08 31 c0 49 c7 44 24 10 00 00 00 00 48 c7 
+[898029.843633] RIP  [<ffffffffa022014d>] md5_final+0xad/0x210 [md5]
+[898029.844354]  RSP <ffff880118483d48>
+[898029.844769] CR2: 0000000000000000
+[898029.845166] ---[ end trace 2ecde0bf66717337 ]---
