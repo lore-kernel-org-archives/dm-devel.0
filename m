@@ -1,34 +1,52 @@
-From: Tim Chen <tim.c.chen@linux.intel.com>
-Subject: Re: Crash in crypto mcryptd
-Date: Fri, 02 Dec 2016 16:16:28 -0800
-Message-ID: <1480724188.3064.62.camel@linux.intel.com>
-References: <alpine.LRH.2.02.1612011819540.27565@file01.intranet.prod.int.rdu2.redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH] dm space map: always set ev if sm_ll_mutate()
+	succeeds
+Date: Sun,  4 Dec 2016 23:26:38 -0600
+Message-ID: <1480915598-10169-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1612011819540.27565@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>
-Cc: linux-crypto@vger.kernel.org, dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Edward Thornber <thornber@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 2016-12-01 at 19:00 -0500, Mikulas Patocka wrote:
-> Hi
-> 
-> There is a bug in mcryptd initialization.
-> 
-> This is a test module that tries various hash algorithms. When you load 
-> the module with "insmod test.ko 'alg=mcryptd(md5)'", the machine crashes.
-> 
-> Mikulas
-> 
-> 
+If no block was allocated or freed, sm_ll_mutate() wasn't setting
+*ev, leaving the variable unitialized. sm_ll_insert(),
+sm_disk_inc_block(), and sm_disk_new_block() all check ev to see
+if there was an allocation event in sm_ll_mutate(), possibly
+reading unitialized data.
 
-Mikulas,
+If no allocation event occured, sm_ll_mutate() should set *ev
+to SM_NONE.
 
-Can you try out the patch that I've sent out in a separate mail?
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ drivers/md/persistent-data/dm-space-map-common.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-Thanks.
-
-Tim
+diff --git a/drivers/md/persistent-data/dm-space-map-common.c b/drivers/md/persistent-data/dm-space-map-common.c
+index 10978ba..4c28608 100644
+--- a/drivers/md/persistent-data/dm-space-map-common.c
++++ b/drivers/md/persistent-data/dm-space-map-common.c
+@@ -464,7 +464,8 @@ static int sm_ll_mutate(struct ll_disk *ll, dm_block_t b,
+ 		ll->nr_allocated--;
+ 		le32_add_cpu(&ie_disk.nr_free, 1);
+ 		ie_disk.none_free_before = cpu_to_le32(min(le32_to_cpu(ie_disk.none_free_before), bit));
+-	}
++	} else
++		*ev = SM_NONE;
+ 
+ 	return ll->save_ie(ll, index, &ie_disk);
+ }
+-- 
+2.1.0
