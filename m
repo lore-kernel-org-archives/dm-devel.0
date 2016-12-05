@@ -1,11 +1,9 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH] dm space map: always set ev if sm_ll_mutate()
-	succeeds
-Date: Sun,  4 Dec 2016 23:26:38 -0600
-Message-ID: <1480915598-10169-1-git-send-email-bmarzins@redhat.com>
+From: muneendra kumar <muneendra737@gmail.com>
+Subject: how do i push my changes in dm layer to main stream
+Date: Mon, 5 Dec 2016 11:59:24 +0530
+Message-ID: <CAAhcyzn4EJo2J9xiBDbO5k3qWO13qTmvwhxFgGVVHrGmGdVVcQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============7531755124278219218=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,37 +14,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Edward Thornber <thornber@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If no block was allocated or freed, sm_ll_mutate() wasn't setting
-*ev, leaving the variable unitialized. sm_ll_insert(),
-sm_disk_inc_block(), and sm_disk_new_block() all check ev to see
-if there was an allocation event in sm_ll_mutate(), possibly
-reading unitialized data.
+--===============7531755124278219218==
+Content-Type: multipart/alternative; boundary=001a11444cc4b6e0c00542e36810
 
-If no allocation event occured, sm_ll_mutate() should set *ev
-to SM_NONE.
+--001a11444cc4b6e0c00542e36810
+Content-Type: text/plain; charset=UTF-8
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- drivers/md/persistent-data/dm-space-map-common.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+Hi,
+This is a general question.
+If i do any changes in both multipath tool and dm driver (kernel).
+How do i push my changes into main stream.
+Can someone explain me the process so that it will help me a lot.
 
-diff --git a/drivers/md/persistent-data/dm-space-map-common.c b/drivers/md/persistent-data/dm-space-map-common.c
-index 10978ba..4c28608 100644
---- a/drivers/md/persistent-data/dm-space-map-common.c
-+++ b/drivers/md/persistent-data/dm-space-map-common.c
-@@ -464,7 +464,8 @@ static int sm_ll_mutate(struct ll_disk *ll, dm_block_t b,
- 		ll->nr_allocated--;
- 		le32_add_cpu(&ie_disk.nr_free, 1);
- 		ie_disk.none_free_before = cpu_to_le32(min(le32_to_cpu(ie_disk.none_free_before), bit));
--	}
-+	} else
-+		*ev = SM_NONE;
- 
- 	return ll->save_ie(ll, index, &ie_disk);
- }
--- 
-2.1.0
+Regards,
+Muneendra.
+
+--001a11444cc4b6e0c00542e36810
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<div>This is a general question.</div><div>If i do any =
+changes in both multipath tool and dm driver (kernel).</div><div>How do i p=
+ush my changes into main stream.</div><div>Can someone explain me the proce=
+ss so that it will help me a lot.</div><div><br></div><div>Regards,</div><d=
+iv>Muneendra.</div></div>
+
+--001a11444cc4b6e0c00542e36810--
+
+
+--===============7531755124278219218==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============7531755124278219218==--
