@@ -1,15 +1,13 @@
-From: Edward Thornber <thornber@redhat.com>
-Subject: Re: [PATCH] dm space map: always set ev if
-	sm_ll_mutate() succeeds
-Date: Mon, 5 Dec 2016 07:11:44 -0500
-Message-ID: <20161205121144.GA18297@roamer.bos.redhat.com>
-References: <1480915598-10169-1-git-send-email-bmarzins@redhat.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: how do i push my changes in dm layer to main stream
+Date: Mon, 5 Dec 2016 13:15:47 +0100
+Message-ID: <ecd4fe04-be9b-8a49-9175-413639fb6d7e@redhat.com>
+References: <CAAhcyzn4EJo2J9xiBDbO5k3qWO13qTmvwhxFgGVVHrGmGdVVcQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1480915598-10169-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <CAAhcyzn4EJo2J9xiBDbO5k3qWO13qTmvwhxFgGVVHrGmGdVVcQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,41 +17,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: muneendra kumar <muneendra737@gmail.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-ack
+Dne 5.12.2016 v 07:29 muneendra kumar napsal(a):
+> Hi,
+> This is a general question.
+> If i do any changes in both multipath tool and dm driver (kernel).
+> How do i push my changes into main stream.
+> Can someone explain me the process so that it will help me a lot.
+>
 
-On Sun, Dec 04, 2016 at 11:26:38PM -0600, Benjamin Marzinski wrote:
-> If no block was allocated or freed, sm_ll_mutate() wasn't setting
-> *ev, leaving the variable unitialized. sm_ll_insert(),
-> sm_disk_inc_block(), and sm_disk_new_block() all check ev to see
-> if there was an allocation event in sm_ll_mutate(), possibly
-> reading unitialized data.
-> 
-> If no allocation event occured, sm_ll_mutate() should set *ev
-> to SM_NONE.
-> 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  drivers/md/persistent-data/dm-space-map-common.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/persistent-data/dm-space-map-common.c b/drivers/md/persistent-data/dm-space-map-common.c
-> index 10978ba..4c28608 100644
-> --- a/drivers/md/persistent-data/dm-space-map-common.c
-> +++ b/drivers/md/persistent-data/dm-space-map-common.c
-> @@ -464,7 +464,8 @@ static int sm_ll_mutate(struct ll_disk *ll, dm_block_t b,
->  		ll->nr_allocated--;
->  		le32_add_cpu(&ie_disk.nr_free, 1);
->  		ie_disk.none_free_before = cpu_to_le32(min(le32_to_cpu(ie_disk.none_free_before), bit));
-> -	}
-> +	} else
-> +		*ev = SM_NONE;
->  
->  	return ll->save_ie(ll, index, &ie_disk);
->  }
-> -- 
-> 2.1.0
-> 
+
+Hi
+
+You propose your changes here on the list - you get a review and
+it the patches are found useful - maintainer of dm subsystem
+will accept them.
+
+Note - it's usually better to ask and discuss 'ahead' what is your problem
+and how do you want to improve/fix it.
+So you avoid losing time on implementing unacceptable patch.
+
+Regards
+
+Zdenek
