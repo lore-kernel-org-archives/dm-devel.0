@@ -1,84 +1,110 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: remove CFLAGS from shared libs
-	compilation options
-Date: Mon,  5 Dec 2016 23:39:08 +0100
-Message-ID: <20161205223908.5486-1-xose.vazquez@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 1/7] block: use legacy path for flush requests for MQ with
+ a scheduler
+Date: Mon, 5 Dec 2016 17:40:43 -0500
+Message-ID: <CAMM=eLct4w0R97RQcQRekpUVdWM_BM+192sFKr7CfrHtF9bjyg@mail.gmail.com>
+References: <1480734921-23701-1-git-send-email-axboe@fb.com>
+ <1480734921-23701-2-git-send-email-axboe@fb.com> <20161205130517.GA7100@infradead.org>
+ <4008ea37-3c08-a7ba-770d-00bbf69617e5@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>, device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <4008ea37-3c08-a7ba-770d-00bbf69617e5@fb.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@fb.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, paolo.valente@linaro.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Changed from:
-cc  -shared -Wl,-soname=libmpathcmd.so.0 -O2 -g -pipe -Wall -Wextra -Wformat=2 -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -o libmpathcmd.so.0 mpath_cmd.o
-cc  -shared -Wl,-soname=libmultipath.so.0 -O2 -g -pipe -Wall -Wextra -Wformat=2 -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -I../libmpathcmd -DUSE_SYSTEMD=231 -DLIBDM_API_FLUSH -D_GNU_SOURCE -DLIBDM_API_COOKIE -DLIBUDEV_API_RECVBUF -DLIBDM_API_DEFERRED -o libmultipath.so.0 memory.o parser.o vector.o devmapper.o callout.o hwtable.o blacklist.o util.o dmparser.o config.o structs.o discovery.o propsel.o dict.o pgpolicies.o debug.o defaults.o uevent.o time-util.o switchgroup.o uxsock.o print.o alias.o log_pthread.o log.o configure.o structs_vec.o sysfs.o prio.o checkers.o lock.o waiter.o file.o wwids.o prioritizers/alua_rtpg.o -lpthread -ldl -ldevmapper -ludev -L../libm
- pathcmd -lmpathcmd -lsystemd
-cc  -shared -lpthread -ldevmapper -ldl -L../libmultipath -lmultipath -L../libmpathcmd -lmpathcmd -Wl,-soname=libmpathpersist.so.0 -O2 -g -pipe -Wall -Wextra -Wformat=2 -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -I../libmultipath -I../libmpathpersist -I../libmpathcmd -o libmpathpersist.so.0 mpath_persist.o mpath_updatepr.o mpath_pr_ioctl.o
+On Mon, Dec 5, 2016 at 10:07 AM, Jens Axboe <axboe@fb.com> wrote:
+>
+> On 12/05/2016 06:05 AM, Christoph Hellwig wrote:
+> > On Fri, Dec 02, 2016 at 08:15:15PM -0700, Jens Axboe wrote:
+> >> No functional changes with this patch, it's just in preparation for
+> >> supporting legacy schedulers on blk-mq.
+> >
+> > Ewww.  I think without refactoring to clear what 'use_mq_path'
+> > means here and better naming this is a total non-started.  Even with
+> > that we'll now have yet another code path to worry about.  Is there
+> > any chance to instead consolidate into a single path?
+>
+> It's not pretty at all. I should have prefaced this patchset with saying
+> that it's an experiment in seeing what it would take to simply use the
+> old IO schedulers, as a temporary measure, on blk/scsi-mq. I did clean
+> it up a bit after posting:
+>
+> http://git.kernel.dk/cgit/linux-block/log/?h=blk-mq-legacy-sched
+>
+> but I'm not going to claim this is anywhere near merge read, nor clean.
 
-To:
-cc  -shared -Wl,-soname=libmpathcmd.so.0 -o libmpathcmd.so.0 mpath_cmd.o
-cc  -shared -Wl,-soname=libmultipath.so.0 -o libmultipath.so.0 memory.o parser.o vector.o devmapper.o callout.o hwtable.o blacklist.o util.o dmparser.o config.o structs.o discovery.o propsel.o dict.o pgpolicies.o debug.o defaults.o uevent.o time-util.o switchgroup.o uxsock.o print.o alias.o log_pthread.o log.o configure.o structs_vec.o sysfs.o prio.o checkers.o lock.o waiter.o file.o wwids.o prioritizers/alua_rtpg.o -lpthread -ldl -ldevmapper -ludev -L../libmpathcmd -lmpathcmd -lsystemd
-cc  -shared -lpthread -ldevmapper -ldl -L../libmultipath -lmultipath -L../libmpathcmd -lmpathcmd -Wl,-soname=libmpathpersist.so.0 -o libmpathpersist.so.0 mpath_persist.o mpath_updatepr.o mpath_pr_ioctl.o
+Nice to see you've lowered your standards...
 
+Maybe now we can revisit this line of work? ;)
+http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=wip
 
-Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmpathcmd/Makefile     | 2 +-
- libmpathpersist/Makefile | 2 +-
- libmultipath/Makefile    | 2 +-
- 3 files changed, 3 insertions(+), 3 deletions(-)
+To fix: https://bugzilla.kernel.org/show_bug.cgi?id=119841
 
-diff --git a/libmpathcmd/Makefile b/libmpathcmd/Makefile
-index 457c4ca..b8e29cb 100644
---- a/libmpathcmd/Makefile
-+++ b/libmpathcmd/Makefile
-@@ -9,7 +9,7 @@ OBJS = mpath_cmd.o
- all: $(LIBS)
- 
- $(LIBS): $(OBJS)
--	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ $(CFLAGS) -o $@ $(OBJS) $(LIBDEPS)
-+	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS) $(LIBDEPS)
- 	$(LN) $@ $(DEVLIB)
- 
- install: $(LIBS)
-diff --git a/libmpathpersist/Makefile b/libmpathpersist/Makefile
-index 6e43427..6ef5bab 100644
---- a/libmpathpersist/Makefile
-+++ b/libmpathpersist/Makefile
-@@ -15,7 +15,7 @@ all: $(LIBS)
- 
- $(LIBS):
- 	$(CC) -c $(CFLAGS) *.c
--	$(CC) $(LDFLAGS) $(SHARED_FLAGS) $(LIBDEPS) -Wl,-soname=$@ $(CFLAGS) -o $@ $(OBJS)
-+	$(CC) $(LDFLAGS) $(SHARED_FLAGS) $(LIBDEPS) -Wl,-soname=$@ -o $@ $(OBJS)
- 	$(LN) $(LIBS) $(DEVLIB)
- 	$(GZIP) mpath_persistent_reserve_in.3 > mpath_persistent_reserve_in.3.gz
- 	$(GZIP) mpath_persistent_reserve_out.3 > mpath_persistent_reserve_out.3.gz
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index a11e483..b5d54d8 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -47,7 +47,7 @@ OBJS = memory.o parser.o vector.o devmapper.o callout.o \
- all: $(LIBS)
- 
- $(LIBS): $(OBJS)
--	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ $(CFLAGS) -o $@ $(OBJS) $(LIBDEPS)
-+	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS) $(LIBDEPS)
- 	$(LN) $@ $(DEVLIB)
- 
- install:
--- 
-2.11.0
+> >>  struct request *blk_get_request(struct request_queue *q, int rw, gfp_t gfp_mask)
+> >>  {
+> >> -    if (q->mq_ops)
+> >> +    if (blk_use_mq_path(q))
+> >>              return blk_mq_alloc_request(q, rw,
+> >>                      (gfp_mask & __GFP_DIRECT_RECLAIM) ?
+> >>                              0 : BLK_MQ_REQ_NOWAIT);
+> >
+> > So now with blk-mq and an elevator set we go into blk_old_get_request,
+> > hich will simply allocate new requests.  How does this not break
+> > every existing driver?
+>
+> Since Johannes found that confusion, maybe I should explain how it all
+> works.
+>
+> Basically, if we are blk-mq (q->mq_ops) and now have an IO scheduler
+> attached (q->elevator), then the path from bio to request is essentially
+> the old one. We allocate a request through get_request() and friends,
+> and insert it with the elevator interface. When the queue is later run,
+> our blk_mq_sched_dispatch() asks the IO scheduler for a request, and if
+> successful, we allocate a real MQ request and dispatch that. So all the
+> driver ever sees is MQ requests, and it uses the MQ interface. Only the
+> internal bits now look at blk_use_mq_path() to tell whether they should
+> alloc+insert with that.
+>
+> The above will break if we have drivers manually allocating a request
+> through blk_get_request(), and then using MQ functions to insert/run it.
+> I didn't audit all of that, and I think most (all?) of them just use the
+> MQ interfaces. That would also currently be broken, we either/or the
+> logic to run software queues or run through the elevator.
+
+I'm not seeing anything in elevator_switch() that would prevent an
+elevator from attempting to be used on an mq device with > 1 hw queue.
+But I could easily be missing it.
+
+That aside, this patchset has all the makings of a _serious_ problem
+for dm-mq multipath (e.g. if dm_mod.use_blk_mq=Y and
+dm_mod.dm_mq_nr_hw_queues=1).  There is a bunch of code in
+drivers/dm/dm-rq.c that looks at q->mq_ops vs not to determine if mq
+is used vs old .request_fn.
+
+I think we really need a way to force an allocated mq request_queue
+(with a single hw_queue) to not support this technological terror
+you've constructed. (*cough*
+http://es.memegenerator.net/instance/58341711 )
+
+In fact I'd prefer there be a mechanism to only allow this if some
+opt-in interface is used... or the inverse: dm-mq can allocate a
+blk-mq request_requeue that will _never_ support this.
+
+I could be super dense on this line of work.  But what is the point of
+all this?  Seems like a really unfortunate distraction that makes the
+block code all the more encumbered with fiddley old vs new logic.  So
+now we're opening old .request_fn users up to blk-mq-with-scheduler vs
+non-blk-mq bugs.
+
+Color me skeptical.  In time, maybe I'll warm to all this but for now
+we need a big "OFF!" switch (aside from DEFAULT_MQ_SCHED_NONE, in
+request_queue allocation interface).
+
+FWIW, dm-multipath has supported a top-level .request_fn
+requeue_queue, legacy elevator and all, stacked on blk-mq queue(s) for
+quite a while.  If people _really_ want this you could easily give it
+to them by forcing the use of the DM "multipath" target with
+multipath's "queue_mode" feature set to "rq".
