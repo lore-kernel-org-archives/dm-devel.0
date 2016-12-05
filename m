@@ -1,44 +1,45 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: how do i push my changes in dm layer to main stream
-Date: Mon, 5 Dec 2016 13:15:47 +0100
-Message-ID: <ecd4fe04-be9b-8a49-9175-413639fb6d7e@redhat.com>
-References: <CAAhcyzn4EJo2J9xiBDbO5k3qWO13qTmvwhxFgGVVHrGmGdVVcQ@mail.gmail.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH] crypto/mcryptd: Check mcryptd algorithm compatability
+Date: Mon, 5 Dec 2016 20:34:03 +0800
+Message-ID: <20161205123403.GB10635@gondor.apana.org.au>
+References: <deb5f529a0ff9b454fcc62b849ac3aff96c3e684.1480724043.git.tim.c.chen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAAhcyzn4EJo2J9xiBDbO5k3qWO13qTmvwhxFgGVVHrGmGdVVcQ@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: muneendra kumar <muneendra737@gmail.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <deb5f529a0ff9b454fcc62b849ac3aff96c3e684.1480724043.git.tim.c.chen@linux.intel.com>
+Sender: stable-owner@vger.kernel.org
+To: Tim Chen <tim.c.chen@linux.intel.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, "David S. Miller" <davem@davemloft.net>, megha.dey@linux.intel.com, linux-crypto@vger.kernel.org, dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>, Eric Biggers <ebiggers@google.com>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-Dne 5.12.2016 v 07:29 muneendra kumar napsal(a):
-> Hi,
-> This is a general question.
-> If i do any changes in both multipath tool and dm driver (kernel).
-> How do i push my changes into main stream.
-> Can someone explain me the process so that it will help me a lot.
->
+On Fri, Dec 02, 2016 at 04:15:21PM -0800, Tim Chen wrote:
+> Algorithms not compatible with mcryptd could be spawned by mcryptd
+> with a direct crypto_alloc_tfm invocation using a "mcryptd(alg)"
+> name construct.  This causes mcryptd to crash the kernel if
+> "alg" is incompatible and not intended to be used with mcryptd.
+> 
+> A flag CRYPTO_ALG_MCRYPT is being added to mcryptd compatible
+> algorithms' cra_flags. The compatability is checked when mcryptd spawn
+> off an algorithm.
+> 
+> Link: http://marc.info/?l=linux-crypto-vger&m=148063683310477&w=2
+> Cc: stable@vger.kernel.org
+> Reported-by: Mikulas Patocka <mpatocka@redhat.com>
+> Tested-by: Megha Dey <megha.dey@linux.intel.com>
+> Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
 
+Tim, I think we should instead make mcryptd refuse to generate
+a non-internal algorithm.  This way the user would not be able
+to access it at all since they can only request for non-internal
+algorithms.
 
-Hi
+Basically you want to check at the start of mcryptd_create_hash
+that the INTERNAL bit is set on both the type and mask as returned
+by crypto_get_attr_type.
 
-You propose your changes here on the list - you get a review and
-it the patches are found useful - maintainer of dm subsystem
-will accept them.
-
-Note - it's usually better to ask and discuss 'ahead' what is your problem
-and how do you want to improve/fix it.
-So you avoid losing time on implementing unacceptable patch.
-
-Regards
-
-Zdenek
+Thanks,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
