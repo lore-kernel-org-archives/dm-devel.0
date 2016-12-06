@@ -1,15 +1,14 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: add CFLAGS to compilation
- options for prioritizers and checkers
-Date: Tue, 6 Dec 2016 15:26:04 +0100
-Message-ID: <4605234d-c1e0-61e4-fe5c-ad229978f0ee@gmail.com>
-References: <20161126222649.29409-1-xose.vazquez@gmail.com>
-	<BLUPR02MB16833109A27B319E7E1F319281880@BLUPR02MB1683.namprd02.prod.outlook.com>
+Subject: Re: [PATCH 10/10] set retrigger_tries to 0 for multipath
+Date: Tue, 6 Dec 2016 16:11:42 +0100
+Message-ID: <fbb6b068-fc38-ddd8-831b-98ce65a17954@gmail.com>
+References: <1477709726-5442-1-git-send-email-bmarzins@redhat.com>
+	<1477709726-5442-11-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <BLUPR02MB16833109A27B319E7E1F319281880@BLUPR02MB1683.namprd02.prod.outlook.com>
+In-Reply-To: <1477709726-5442-11-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,47 +18,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <Bart.VanAssche@sandisk.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 11/27/2016 12:00 AM, Bart Van Assche wrote:
+On 10/29/2016 04:55 AM, Benjamin Marzinski wrote:
 
-> On 11/26/16 14:26, Xose Vazquez Perez wrote:
+> Multipathd uses retrigger_tries to give udev more chances to to fill in
+> the uid_attribute, so that the path device is correctly set up in the
+> udev database. However the multipath command can't do this, so it should
+> just immediately give up on udev, and try to get the wwid directly.
+> 
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  multipath/main.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/multipath/main.c b/multipath/main.c
+> index ee00fdb..06add30 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -521,6 +521,7 @@ main (int argc, char *argv[])
+>  	if (!conf)
+>  		exit(1);
+>  	multipath_conf = conf;
+> +	conf->retrigger_tries = 0;
+>  	while ((arg = getopt(argc, argv, ":adchl::FfM:v:p:b:BritquwW")) != EOF ) {
+>  		switch(arg) {
+>  		case 1: printf("optarg : %s\n",optarg);
+> 
 
->> Is there anything else missing or leftover?
+I don't know how, but this patch(?) is overwriting the default value:
 
->> $ git grep "(CC)"
->> Makefile.inc:   $(CC) $(CFLAGS) -c -o $@ $<
->> kpartx/Makefile:        $(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
+libmultipath/defaults.h:#define DEFAULT_RETRIGGER_TRIES 3
+libmultipath/config.c:  conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
 
-->>> libmpathcmd/Makefile:   $(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ $(CFLAGS) -o $@ $(OBJS) $(LIBDEPS)
-
->> libmpathpersist/Makefile:       $(CC) -c $(CFLAGS) *.c
-
-->>> libmpathpersist/Makefile:       $(CC) $(LDFLAGS) $(SHARED_FLAGS) $(LIBDEPS) -Wl,-soname=$@ $(CFLAGS) -o $@ $(OBJS)
-->>> libmultipath/Makefile:  $(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ $(CFLAGS) -o $@ $(OBJS) $(LIBDEPS)
-
->> libmultipath/checkers/Makefile: $(CC) $(CFLAGS) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -lrados -ludev
->> libmultipath/checkers/Makefile: $(CC) $(CFLAGS) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -laio
->> libmultipath/checkers/Makefile: $(CC) $(CFLAGS) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
->> libmultipath/prioritizers/Makefile:     $(CC) $(CFLAGS) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
->> libmultipath/prioritizers/Makefile:     $(CC) $(CFLAGS) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
->> mpathpersist/Makefile:  $(CC) $(OBJS) -o $(EXEC) $(LDFLAGS) $(CFLAGS) $(LIBDEPS)
->> multipath/Makefile:     $(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
->> multipathd/Makefile:    $(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(EXEC) $(LIBDEPS)
->> [...]
-
-> What is the purpose of this patch and why do you think it is useful? It 
-> is already possible to specify flags for linking shared libraries 
-> through LDFLAGS. I don't see why CFLAGS should be added to the shared 
-> library creation commands. Additionally, automake also ignores CFLAGS 
-> when linking shared libraries. See also 
-> https://www.gnu.org/software/automake/manual/html_node/Libtool-Flags.html#Libtool-Flags.
-
-You are right.
-
-I sent a patch to delete CFLAGS from the libmpathcmd, libmultipath and
-libmpathpersist compilation flags.
-
-Thanks for the review.
+# multipath -t
+defaults {
+[...]
+        retrigger_tries 0
+[...]
+}
+[...]
