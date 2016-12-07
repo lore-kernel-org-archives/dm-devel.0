@@ -1,15 +1,16 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH] multipath-tools: replace multipath
  configuration output
-Date: Wed, 7 Dec 2016 16:44:22 +0100
-Message-ID: <d793306a-011a-2332-9c81-3dd898aff44a@gmail.com>
+Date: Wed, 07 Dec 2016 17:17:30 +0100
+Message-ID: <1481127450.3358.21.camel@suse.com>
 References: <20161124224427.12609-1-xose.vazquez@gmail.com>
 	<1480064411.23852.1.camel@suse.com>
+	<d793306a-011a-2332-9c81-3dd898aff44a@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1480064411.23852.1.camel@suse.com>
+In-Reply-To: <d793306a-011a-2332-9c81-3dd898aff44a@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,65 +20,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
-On 11/25/2016 10:00 AM, Martin Wilck wrote:
-
-> I am not sure I see the merit of these changes. If it's really
-> necessary to change the wording of the log messages which people have
-> got used to, the new ones should be really more self-explanatory than
-> the old ones.
-
-Some of them are a riddle, wrapped in a mystery, inside an enigma.
-For example "LUN setting". "setting: multipath.conf multipaths section"
-is, by far, a better description.
-
-> The common "setting: " formatting is nice but IMHO this alone doesn't
-> really justify overthrowing old habits.
-
-I really don't care the marker name, "setting:" "conf:" ...
-But a standard one should be used.
-
-> On Thu, 2016-11-24 at 23:44 +0100, Xose Vazquez Perez wrote:
->> sysfs setting           -> setting: kernel sysfs
->>
->> detected setting        -> setting: array autodetected
->>
->> controller setting      -> setting: array configuration
-
-> Is "array" really more understandable to users than "controller"?
-
-"controller", what controller? local hba? array controller?
-"array" is unequivocal.
-
-> These settings come from hwentries, so in reality they're either part
-> of the built-in hwtable or of the multipath.conf "devices" section, or
-> am I wrong here? 
-
-Also from /sys fs, from the array or auto-negotiated kernel<->array.
-
->> internal default        -> setting: multipath internal
->>
->> overrides setting       -> setting: multipath.conf overrides section
->>
->> LUN setting             -> setting: multipath.conf multipaths section
->>
->> config file default
->> config file setting     -> setting: multipath.conf defaults/devices
->> section
-
-> Have you double-checked if this is correct for all options?
-
-Yes. I don't do random patches.
-
-> It would be helpful for users to be able to distinguish which config file section
-> the option was taken from (defaults/devices/multipaths/overrides). The
-> same argument applies to the hardware enries - being able to
-> distinguish built in hardware defaults from config file "devices"
-> settings would be really helpful, but this patch doesn't provide that
-> functionality.
-
-This is a first step. Anyhow only "multipath.conf defaults/devices" could be split.
-overrides and multipaths sections already are independent as you can see in
-libmultipath/propsel.c
+T24gV2VkLCAyMDE2LTEyLTA3IGF0IDE2OjQ0ICswMTAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
+dGU6Cj4gT24gMTEvMjUvMjAxNiAxMDowMCBBTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IAo+ID4g
+SSBhbSBub3Qgc3VyZSBJIHNlZSB0aGUgbWVyaXQgb2YgdGhlc2UgY2hhbmdlcy4gSWYgaXQncyBy
+ZWFsbHkKPiA+IG5lY2Vzc2FyeSB0byBjaGFuZ2UgdGhlIHdvcmRpbmcgb2YgdGhlIGxvZyBtZXNz
+YWdlcyB3aGljaCBwZW9wbGUKPiA+IGhhdmUKPiA+IGdvdCB1c2VkIHRvLCB0aGUgbmV3IG9uZXMg
+c2hvdWxkIGJlIHJlYWxseSBtb3JlIHNlbGYtZXhwbGFuYXRvcnkKPiA+IHRoYW4KPiA+IHRoZSBv
+bGQgb25lcy4KPiAKPiBTb21lIG9mIHRoZW0gYXJlIGEgcmlkZGxlLCB3cmFwcGVkIGluIGEgbXlz
+dGVyeSwgaW5zaWRlIGFuIGVuaWdtYS4KPiBGb3IgZXhhbXBsZSAiTFVOIHNldHRpbmciLiAic2V0
+dGluZzogbXVsdGlwYXRoLmNvbmYgbXVsdGlwYXRocwo+IHNlY3Rpb24iCj4gaXMsIGJ5IGZhciwg
+YSBiZXR0ZXIgZGVzY3JpcHRpb24uCgpBZ3JlZWQuCgo+ID4gVGhlIGNvbW1vbiAic2V0dGluZzog
+IiBmb3JtYXR0aW5nIGlzIG5pY2UgYnV0IElNSE8gdGhpcyBhbG9uZQo+ID4gZG9lc24ndAo+ID4g
+cmVhbGx5IGp1c3RpZnkgb3ZlcnRocm93aW5nIG9sZCBoYWJpdHMuCj4gCj4gSSByZWFsbHkgZG9u
+J3QgY2FyZSB0aGUgbWFya2VyIG5hbWUsICJzZXR0aW5nOiIgImNvbmY6IiAuLi4KPiBCdXQgYSBz
+dGFuZGFyZCBvbmUgc2hvdWxkIGJlIHVzZWQuCgpBZ3JlZWQuCgo+ID4gT24gVGh1LCAyMDE2LTEx
+LTI0IGF0IDIzOjQ0ICswMTAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3JvdGU6Cj4gPiA+IHN5c2Zz
+IHNldHRpbmfCoMKgwqDCoMKgwqDCoMKgwqDCoMKgLT4gc2V0dGluZzoga2VybmVsIHN5c2ZzCj4g
+PiA+IAo+ID4gPiBkZXRlY3RlZCBzZXR0aW5nwqDCoMKgwqDCoMKgwqDCoC0+IHNldHRpbmc6IGFy
+cmF5IGF1dG9kZXRlY3RlZAo+ID4gPiAKPiA+ID4gY29udHJvbGxlciBzZXR0aW5nwqDCoMKgwqDC
+oMKgLT4gc2V0dGluZzogYXJyYXkgY29uZmlndXJhdGlvbgo+ID4gSXMgImFycmF5IiByZWFsbHkg
+bW9yZSB1bmRlcnN0YW5kYWJsZSB0byB1c2VycyB0aGFuICJjb250cm9sbGVyIj8KPiAKPiAiY29u
+dHJvbGxlciIsIHdoYXQgY29udHJvbGxlcj8gbG9jYWwgaGJhPyBhcnJheSBjb250cm9sbGVyPwo+
+ICJhcnJheSIgaXMgdW5lcXVpdm9jYWwuCgpJIHRlbmQgdG8gYXNzb2NpYXRlICJhcnJheSIgd2l0
+aCAiUkFJRCIsIGFuZCB0aGVyZWZvcmUgSSBmb3VuZCB0aGlzCnRlcm0gY29uZnVzaW5nLiBQZXJo
+YXBzICJzdG9yYWdlIiBvciAic3RvcmFnZSBhcnJheSI/IE9yIGV2ZW4gImRldmljZSIsCm92ZXJs
+b2FkZWQgYXMgaXQgbWF5IGJlLCBiZWNhdXNlIHRoYXQgd291bGQgbWF0Y2ggdGhlIHNlY3Rpb24g
+bmFtZSBpbgptdWx0aXBhdGguY29uZj8KCj4gPiBUaGVzZSBzZXR0aW5ncyBjb21lIGZyb20gaHdl
+bnRyaWVzLCBzbyBpbiByZWFsaXR5IHRoZXkncmUgZWl0aGVyCj4gPiBwYXJ0Cj4gPiBvZiB0aGUg
+YnVpbHQtaW4gaHd0YWJsZSBvciBvZiB0aGUgbXVsdGlwYXRoLmNvbmYgImRldmljZXMiCj4gPiBz
+ZWN0aW9uLCAKPiA+IG9yIGFtIEkgd3JvbmcgaGVyZT/CoAo+IEFsc28gZnJvbSAvc3lzIGZzLCBm
+cm9tIHRoZSBhcnJheSBvciBhdXRvLW5lZ290aWF0ZWQga2VybmVsPC0+YXJyYXkuCgo+ID4gSXQg
+d291bGQgYmUgaGVscGZ1bCBmb3IgdXNlcnMgdG8gYmUgYWJsZSB0byBkaXN0aW5ndWlzaCB3aGlj
+aAo+ID4gY29uZmlnIGZpbGUgc2VjdGlvbgo+ID4gdGhlIG9wdGlvbiB3YXMgdGFrZW4gZnJvbSAo
+ZGVmYXVsdHMvZGV2aWNlcy9tdWx0aXBhdGhzL292ZXJyaWRlcykuCj4gPiBUaGUKPiA+IHNhbWUg
+YXJndW1lbnQgYXBwbGllcyB0byB0aGUgaGFyZHdhcmUgZW5yaWVzIC0gYmVpbmcgYWJsZSB0bwo+
+ID4gZGlzdGluZ3Vpc2ggYnVpbHQgaW4gaGFyZHdhcmUgZGVmYXVsdHMgZnJvbSBjb25maWcgZmls
+ZSAiZGV2aWNlcyIKPiA+IHNldHRpbmdzIHdvdWxkIGJlIHJlYWxseSBoZWxwZnVsLCBidXQgdGhp
+cyBwYXRjaCBkb2Vzbid0IHByb3ZpZGUKPiA+IHRoYXQKPiA+IGZ1bmN0aW9uYWxpdHkuCj4gCj4g
+VGhpcyBpcyBhIGZpcnN0IHN0ZXAuIEFueWhvdyBvbmx5ICJtdWx0aXBhdGguY29uZiBkZWZhdWx0
+cy9kZXZpY2VzIgo+IGNvdWxkIGJlIHNwbGl0Lgo+IG92ZXJyaWRlcyBhbmQgbXVsdGlwYXRocyBz
+ZWN0aW9ucyBhbHJlYWR5IGFyZSBpbmRlcGVuZGVudCBhcyB5b3UgY2FuCj4gc2VlIGluCj4gbGli
+bXVsdGlwYXRoL3Byb3BzZWwuYwoKT0suCgo+RnJvbSBhbiBlbmQgdXNlciBwZXJzcGVjdGl2ZSwg
+ZmlndXJpbmcgb3V0IHRoZSAic3lzZnMiIGFuZCAiYXV0by0KbmVnb3RpYXRlZCIgY29uZmlnIG9w
+dGlvbiBvcmlnaW4sIGFzIHlvdSBtZW50aW9uZWQgYWJvdmUsIG1pZ2h0IGJlIG1vc3QKaW1wb3J0
+YW50LCBpbiBwYXJ0aWN1bGFyIHdoZW4gdGhlc2UgdGFrZSBwcmVjZWRlbmNlIG92ZXIgY29uZmln
+IGZpbGUKc2V0dGluZ3MuCgpBbnl3YXksIHRoYW5rcyBmb3IgcHV0dGluZyB0aG91Z2h0IGludG8g
+dGhpcy4KCkJlc3QgUmVnYXJkcwpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tA
+c3VzZS5jb20+LCBUZWwuwqArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBH
+RjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAy
+MTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
+ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
