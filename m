@@ -1,68 +1,48 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH 3/3] multipathd: Add 'sysfs' prioritizer
-Date: Wed, 7 Dec 2016 19:34:23 +0100
-Message-ID: <9d619546-b661-77a3-f487-2cf6e04cbbdd@gmail.com>
-References: <1468565337-5178-1-git-send-email-hare@suse.de>
-	<1468565337-5178-4-git-send-email-hare@suse.de>
-	<60729efa-12ad-aa28-f657-1b8ec6dbd4d2@gmail.com>
-	<a6e52ead-dda3-13e5-c033-2719102aeaa9@suse.de>
+From: "Stewart, Sean" <Sean.Stewart@netapp.com>
+Subject: Re: [PATCH v2] scsi_devinfo: remove synchronous ALUA for NETAPP
+ devices
+Date: Wed, 7 Dec 2016 19:35:54 +0000
+Message-ID: <2F2F999B-934D-4D63-A759-2FC777CF16B0@netapp.com>
+References: <20161111164949.2322-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <a6e52ead-dda3-13e5-c033-2719102aeaa9@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20161111164949.2322-1-xose.vazquez@gmail.com>
+Content-Language: en-US
+Content-ID: <1DC22D3889FD034483681408C42645FD@namprd06.prod.outlook.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: "George, Martin" <Martin.George@netapp.com>, "Stankey, Robert" <Robert.Stankey@netapp.com>, "Schremmer, Steven" <Steve.Schremmer@netapp.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 11/09/2016 07:49 AM, Hannes Reinecke wrote:
-
-> On 11/08/2016 07:52 PM, Xose Vazquez Perez wrote:
->> On 07/15/2016 08:48 AM, Hannes Reinecke wrote:
->>
->>> Recent kernels have an 'access_state' attribute which allows
->>> us to read the asymmetric access state directly from sysfs.
->>
->> Hi Hannes,
->>
->> with this patch it's impossible to select/autodetect ALUA.
->> sysfs always takes precedence over alua.
->>
->> "detect_prio no" was added to overrides section, to make
->> it work again.
->>
->> SLES 12-SP2
->>
->> Thank you.
->>
-> But this was precisely the idea.
-> (After all, it says 'auto-detect', right?)
-> 
-> For ALUA-capable arrays we have a reliable priority detection with the ALUA device-handler.
-> So it's far preferable to use the sysfs-provided information (as they are populated by the ALUA device-handler); the ALUA prioritizer in multipath-tools will be used as a fallback in case the device
-> handler isn't loaded or the sysfs files are not present.
-> Using the sysfs handler has the neat side effect that you don't need to do I/O for detecting the priority, thereby eliminating one possible cause for multipath being stuck during failover.
-
-Thanks for the explanation.
-
-
-As collateral effect, because the sysfs-handler output is too
-brief, the asymmetric access state(aas) was lost:
-
-
-Dec 07 19:26:51 | sda: prio = sysfs (detected setting)
-Dec 07 19:26:51 | sda: sysfs prio = 50
-----
-Dec 07 19:26:29 | sdc: prio = alua (detected setting)
-Dec 07 19:26:29 | reported target port group is 1		<----- lost
-Dec 07 19:26:29 | aas = 80 [active/optimized] [preferred]	<----- lost
-Dec 07 19:26:29 | sdc: alua prio = 50
+T24gMTEvMTEvMTYsIDEwOjQ5IEFNLCAiWG9zZSBWYXpxdWV6IFBlcmV6IiA8eG9zZS52YXpxdWV6
+QGdtYWlsLmNvbT4gd3JvdGU6DQoNCiAgICBOZXRBcHAgZGlkIGNvbmZpcm0gdGhpcyBpcyBub3Qg
+cmVxdWlyZWQuDQogICAgDQogICAgQ2M6IE1hcnRpbiBHZW9yZ2UgPE1hcnRpbi5HZW9yZ2VAbmV0
+YXBwLmNvbT4NCiAgICBDYzogUm9iZXJ0IFN0YW5rZXkgPFJvYmVydC5TdGFua2V5QG5ldGFwcC5j
+b20+DQogICAgQ2M6IFN0ZXZlbiBTY2hyZW1tZXIgPFN0ZXZlbi5TY2hyZW1tZXJAbmV0YXBwLmNv
+bT4NCiAgICBDYzogU2VhbiBTdGV3YXJ0IDxTZWFuLlN0ZXdhcnRAbmV0YXBwLmNvbT4NCiAgICBD
+YzogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuZGU+DQogICAgQ2M6IENocmlzdG9waGUgVmFy
+b3F1aSA8Y2hyaXN0b3BoZS52YXJvcXVpQG9wZW5zdmMuY29tPg0KICAgIENjOiBKYW1lcyBFLkou
+IEJvdHRvbWxleSA8amVqYkBsaW51eC52bmV0LmlibS5jb20+DQogICAgQ2M6IE1hcnRpbiBLLiBQ
+ZXRlcnNlbiA8bWFydGluLnBldGVyc2VuQG9yYWNsZS5jb20+DQogICAgQ2M6IFNDU0kgTUwgPGxp
+bnV4LXNjc2lAdmdlci5rZXJuZWwub3JnPg0KICAgIENjOiBkZXZpY2UtbWFwcGVyIGRldmVsb3Bt
+ZW50IDxkbS1kZXZlbEByZWRoYXQuY29tPg0KICAgIFNpZ25lZC1vZmYtYnk6IFhvc2UgVmF6cXVl
+eiBQZXJleiA8eG9zZS52YXpxdWV6QGdtYWlsLmNvbT4NCiAgICAtLS0NCiAgICAgZHJpdmVycy9z
+Y3NpL3Njc2lfZGV2aW5mby5jIHwgMiAtLQ0KICAgICAxIGZpbGUgY2hhbmdlZCwgMiBkZWxldGlv
+bnMoLSkNCiAgICANCiAgICBkaWZmIC0tZ2l0IGEvZHJpdmVycy9zY3NpL3Njc2lfZGV2aW5mby5j
+IGIvZHJpdmVycy9zY3NpL3Njc2lfZGV2aW5mby5jDQogICAgaW5kZXggMjQ2NDU2OS4uMjhmZWE4
+MyAxMDA2NDQNCiAgICAtLS0gYS9kcml2ZXJzL3Njc2kvc2NzaV9kZXZpbmZvLmMNCiAgICArKysg
+Yi9kcml2ZXJzL3Njc2kvc2NzaV9kZXZpbmZvLmMNCiAgICBAQCAtMjIwLDggKzIyMCw2IEBAIHN0
+YXRpYyBzdHJ1Y3Qgew0KICAgICAJeyJOQUtBTUlDSCIsICJNSi01LjE2UyIsIE5VTEwsIEJMSVNU
+X0ZPUkNFTFVOIHwgQkxJU1RfU0lOR0xFTFVOfSwNCiAgICAgCXsiTkVDIiwgIlBELTEgT0RYNjU0
+UCIsIE5VTEwsIEJMSVNUX0ZPUkNFTFVOIHwgQkxJU1RfU0lOR0xFTFVOfSwNCiAgICAgCXsiTkVD
+IiwgImlTdG9yYWdlIiwgTlVMTCwgQkxJU1RfUkVQT1JUTFVOMn0sDQogICAgLQl7Ik5FVEFQUCIs
+ICJMVU4gQy1Nb2RlIiwgTlVMTCwgQkxJU1RfU1lOQ19BTFVBfSwNCiAgICAtCXsiTkVUQVBQIiwg
+IklORi0wMS0wMCIsIE5VTEwsIEJMSVNUX1NZTkNfQUxVQX0sDQogICAgIAl7Ik5SQyIsICJNQlIt
+NyIsIE5VTEwsIEJMSVNUX0ZPUkNFTFVOIHwgQkxJU1RfU0lOR0xFTFVOfSwNCiAgICAgCXsiTlJD
+IiwgIk1CUi03LjQiLCBOVUxMLCBCTElTVF9GT1JDRUxVTiB8IEJMSVNUX1NJTkdMRUxVTn0sDQog
+ICAgIAl7IlBJT05FRVIiLCAiQ0QtUk9NIERSTS02MDAiLCBOVUxMLCBCTElTVF9GT1JDRUxVTiB8
+IEJMSVNUX1NJTkdMRUxVTn0sDQogICAgLS0gDQogICAgMi4xMC4yDQogICAgDQpSZXZpZXdlZC1i
+eTogU2VhbiBTdGV3YXJ0IDxzZWFuLnN0ZXdhcnRAbmV0YXBwLmNvbT4NCg0KVGhhbmtzLA0KU2Vh
+bg0KDQo=
