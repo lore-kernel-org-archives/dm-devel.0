@@ -1,37 +1,35 @@
 From: Herbert Xu <herbert@gondor.apana.org.au>
 Subject: Re: [PATCH v2] crypto/mcryptd: Check mcryptd algorithm compatibility
-Date: Wed, 7 Dec 2016 19:49:43 +0800
-Message-ID: <20161207114942.GA20525@gondor.apana.org.au>
+Date: Wed, 7 Dec 2016 20:09:41 +0800
+Message-ID: <20161207120941.GF20680@gondor.apana.org.au>
 References: <6825659d1f6a96d4ab2327aa0dcf357f6252e915.1480967128.git.tim.c.chen@linux.intel.com>
- <alpine.LRH.2.02.1612061604480.942@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <stable-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1612061604480.942@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <6825659d1f6a96d4ab2327aa0dcf357f6252e915.1480967128.git.tim.c.chen@linux.intel.com>
 Sender: stable-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, megha.dey@linux.intel.com, linux-crypto@vger.kernel.org, dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>, Eric Biggers <ebiggers@google.com>, stable@vger.kernel.org
+To: Tim Chen <tim.c.chen@linux.intel.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, "David S. Miller" <davem@davemloft.net>, megha.dey@linux.intel.com, linux-crypto@vger.kernel.org, dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>, Eric Biggers <ebiggers@google.com>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Dec 06, 2016 at 04:07:46PM -0500, Mikulas Patocka wrote:
-> I think a proper fix would be to find the reason why mcryptd crashes and 
-> fix that reason (i.e. make it fail in mcryptd_create_hash rather than 
-> crash).
+On Mon, Dec 05, 2016 at 11:46:31AM -0800, Tim Chen wrote:
+> Algorithms not compatible with mcryptd could be spawned by mcryptd
+> with a direct crypto_alloc_tfm invocation using a "mcryptd(alg)" name
+> construct.  This causes mcryptd to crash the kernel if an arbitrary
+> "alg" is incompatible and not intended to be used with mcryptd.  It is
+> an issue if AF_ALG tries to spawn mcryptd(alg) to expose it externally.
+> But such algorithms must be used internally and not be exposed.
 > 
-> Testing flags could fix the bug for now but it could backfire later when 
-> more algorithms are added.
+> We added a check to enforce that only internal algorithms are allowed
+> with mcryptd at the time mcryptd is spawning an algorithm.
+> 
+> Link: http://marc.info/?l=linux-crypto-vger&m=148063683310477&w=2
+> Cc: stable@vger.kernel.org
+> Reported-by: Mikulas Patocka <mpatocka@redhat.com>
+> Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
 
-I agree that a better solution is needed for the next merge window.
-The problem here is that mcryptd is only meant to be used on specific
-algorithms, so it shouldn't have been a template in the first place.
-
-It should instead switch over to the simd model of creating new
-algorithms.  So I'd like to see patch for the next merge window
-that converted mcryptd and its users to something similar to what
-we do in crypto/simd.c.
-
-Thanks,
+Patch applied.  Thanks.
 -- 
 Email: Herbert Xu <herbert@gondor.apana.org.au>
 Home Page: http://gondor.apana.org.au/~herbert/
