@@ -1,60 +1,50 @@
-From: Martin George <marting@netapp.com>
-Subject: Re: [PATCH v2] scsi_devinfo: remove synchronous ALUA for NETAPP
- devices
-Date: Fri, 9 Dec 2016 01:21:28 +0530
-Message-ID: <3dfc9887-0115-be36-2ab1-33cb82d83dc6@netapp.com>
-References: <20161111164949.2322-1-xose.vazquez@gmail.com>
- <2F2F999B-934D-4D63-A759-2FC777CF16B0@netapp.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: Refuse to load an sq table on an mq device
+Date: Thu, 8 Dec 2016 14:54:30 -0500
+Message-ID: <20161208195430.GA7742@redhat.com>
+References: <d6cb4e39-41ea-18e1-3347-398f17ba6e8d@sandisk.com>
+	<20161208021159.GA5944@redhat.com>
+	<d22b29da-c02d-ff75-54be-dfbf4c366642@sandisk.com>
+	<20161208171844.GA7305@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <2F2F999B-934D-4D63-A759-2FC777CF16B0@netapp.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Stewart, Sean" <Sean.Stewart@netapp.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: "Stankey, Robert" <Robert.Stankey@netapp.com>, "Schremmer, Steven" <Steve.Schremmer@netapp.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20161208171844.GA7305@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 12/8/2016 1:05 AM, Stewart, Sean wrote:
-> On 11/11/16, 10:49 AM, "Xose Vazquez Perez" <xose.vazquez@gmail.com> wrote:
->
->      NetApp did confirm this is not required.
->      
->      Cc: Martin George <Martin.George@netapp.com>
->      Cc: Robert Stankey <Robert.Stankey@netapp.com>
->      Cc: Steven Schremmer <Steven.Schremmer@netapp.com>
->      Cc: Sean Stewart <Sean.Stewart@netapp.com>
->      Cc: Hannes Reinecke <hare@suse.de>
->      Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
->      Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
->      Cc: Martin K. Petersen <martin.petersen@oracle.com>
->      Cc: SCSI ML <linux-scsi@vger.kernel.org>
->      Cc: device-mapper development <dm-devel@redhat.com>
->      Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
->      ---
->       drivers/scsi/scsi_devinfo.c | 2 --
->       1 file changed, 2 deletions(-)
->      
->      diff --git a/drivers/scsi/scsi_devinfo.c b/drivers/scsi/scsi_devinfo.c
->      index 2464569..28fea83 100644
->      --- a/drivers/scsi/scsi_devinfo.c
->      +++ b/drivers/scsi/scsi_devinfo.c
->      @@ -220,8 +220,6 @@ static struct {
->       	{"NAKAMICH", "MJ-5.16S", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
->       	{"NEC", "PD-1 ODX654P", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
->       	{"NEC", "iStorage", NULL, BLIST_REPORTLUN2},
->      -	{"NETAPP", "LUN C-Mode", NULL, BLIST_SYNC_ALUA},
->      -	{"NETAPP", "INF-01-00", NULL, BLIST_SYNC_ALUA},
->       	{"NRC", "MBR-7", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
->       	{"NRC", "MBR-7.4", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
->       	{"PIONEER", "CD-ROM DRM-600", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
->      --
->      2.10.2
->      
-> Reviewed-by: Sean Stewart <sean.stewart@netapp.com>
->
+On Thu, Dec 08 2016 at 12:18pm -0500,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-Reviewed-by: Martin George <marting@netapp.com>
+> On Thu, Dec 08 2016 at 11:52am -0500,
+> Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+> 
+> > On 12/07/2016 06:11 PM, Mike Snitzer wrote:
+> > >Should I still attribute authorship of this change to you?  Or would you
+> > >prefer I switch to you being the Reporter (via Reported-by)?
+> > 
+> > Hello Mike,
+> > 
+> > I'm fine with a Reported-by tag.
+> 
+> Thinking about rebasing this fix to come before this cleanup (so that
+> backporting to stable@ is easier):
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.10&id=db1c06dc2edd242146e25d38b1af61b681d49253
+> 
+> And then still attributing this fix to you.  I'll let you know what I
+> come up with later today.
 
-Thanks,
--Martin
+Done, please see:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.10&id=301fc3f5efb98633115bd887655b19f42c6dfaa8
