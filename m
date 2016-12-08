@@ -1,14 +1,14 @@
-From: Ian Pilcher <arequipeno@gmail.com>
-Subject: Re: dm-cache: please check/repair metadata
-Date: Thu, 8 Dec 2016 08:53:10 -0600
-Message-ID: <efe12356-a132-c517-914d-4a4cf3a902fc@gmail.com>
-References: <o2adej$eaa$1@blaine.gmane.org>
-	<2d776d72-744a-7aa7-a5ae-35192fe145d8@redhat.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: Re: dm: Refuse to load an sq table on an mq device
+Date: Thu, 8 Dec 2016 08:52:34 -0800
+Message-ID: <d22b29da-c02d-ff75-54be-dfbf4c366642@sandisk.com>
+References: <d6cb4e39-41ea-18e1-3347-398f17ba6e8d@sandisk.com>
+	<20161208021159.GA5944@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2d776d72-744a-7aa7-a5ae-35192fe145d8@redhat.com>
+In-Reply-To: <20161208021159.GA5944@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,42 +18,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>, dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 12/08/2016 04:23 AM, Zdenek Kabelac wrote:
-> I'm sorry but you've attached so little information there is no way to
-> give you some useful hint.
+On 12/07/2016 06:11 PM, Mike Snitzer wrote:
+> Should I still attribute authorship of this change to you?  Or would you
+> prefer I switch to you being the Reporter (via Reported-by)?
 
-Actually you did.  :-)  I was just asking what tool(s) I should be using
-to "check/repair" the metadata.  (Google is oddly silent on the
-subject.)
+Hello Mike,
 
-Your reference to "cache_check" was the hint I needed to get started.
+I'm fine with a Reported-by tag.
 
-Running cache_repair against the metadata device gives me this error:
+Thanks,
 
-   transaction_manager::new_block() couldn't allocate new block
-
-I strongly suspect that my metadata device is too small.  It was sized
-with the algorithm that I posted to this list about a year ago:
-
-   https://www.redhat.com/archives/dm-devel/2015-November/msg00221.html
-
-Looking at the source code for cache_metadata_size, I see that it adds
-additional space for "hints", which the old algorithm didn't account
-for.
-
-Assuming that my suspicion is correct, is there any straightforward way
-to recover this cache device?  I do need to reclaim the storage used by
-the origin device, so I'm guessing that my best course of action will be
-to simply recreate the cache device with a sufficiently large metadata
-device.
-
-Thanks!
-
--- 
-========================================================================
-Ian Pilcher                                         arequipeno@gmail.com
--------- "I grew up before Mark Zuckerberg invented friendship" --------
-========================================================================
+Bart.
