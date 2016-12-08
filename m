@@ -1,14 +1,11 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: Refuse to load an sq table on an mq device
-Date: Wed, 7 Dec 2016 21:11:59 -0500
-Message-ID: <20161208021159.GA5944@redhat.com>
-References: <d6cb4e39-41ea-18e1-3347-398f17ba6e8d@sandisk.com>
+From: Ian Pilcher <arequipeno@gmail.com>
+Subject: dm-cache: please check/repair metadata
+Date: Wed, 7 Dec 2016 19:36:23 -0600
+Message-ID: <o2adej$eaa$1@blaine.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <d6cb4e39-41ea-18e1-3347-398f17ba6e8d@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,101 +15,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Dec 07 2016 at  7:56P -0500,
-Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+I have a dm-cache device that throws the following error when I try to
+create it:
 
-> This patch avoids that the following call trace can be triggered:
-> 
-> ------------[ cut here ]------------
-> WARNING: CPU: 10 PID: 19102 at drivers/md/dm-mpath.c:543 __multipath_map.isra.17+0x23a/0x370 [dm_multipath]
-> CPU: 10 PID: 19102 Comm: mkfs.ext4 Not tainted 4.9.0-rc8-dbg+ #4
-> Call Trace:
->  [<ffffffff81329cd5>] dump_stack+0x68/0x93
->  [<ffffffff810650e6>] __warn+0xc6/0xe0
->  [<ffffffff810651b8>] warn_slowpath_null+0x18/0x20
->  [<ffffffffa004603a>] __multipath_map.isra.17+0x23a/0x370 [dm_multipath]
->  [<ffffffffa0046188>] multipath_clone_and_map+0x18/0x20 [dm_multipath]
->  [<ffffffffa002a54d>] map_request+0xed/0x300 [dm_mod]
->  [<ffffffffa002a807>] dm_mq_queue_rq+0x77/0x110 [dm_mod]
->  [<ffffffff81310fbf>] blk_mq_process_rq_list+0x23f/0x340
->  [<ffffffff813111e2>] __blk_mq_run_hw_queue+0x122/0x1c0
->  [<ffffffff81310d5f>] blk_mq_run_hw_queue+0x9f/0xc0
->  [<ffffffff81311ef5>] blk_mq_insert_requests+0x245/0x320
->  [<ffffffff813133f5>] blk_mq_flush_plug_list+0x125/0x140
->  [<ffffffff81306b12>] blk_flush_plug_list+0xa2/0x210
->  [<ffffffff81307157>] blk_finish_plug+0x27/0x40
->  [<ffffffff8116c119>] __do_page_cache_readahead+0x279/0x2f0
->  [<ffffffff8116c728>] force_page_cache_readahead+0xa8/0x100
->  [<ffffffff8116c7b9>] page_cache_sync_readahead+0x39/0x40
->  [<ffffffff8115c964>] generic_file_read_iter+0x234/0x780
->  [<ffffffff8121f8e0>] blkdev_read_iter+0x30/0x40
->  [<ffffffff811dd2db>] __vfs_read+0xbb/0x130
->  [<ffffffff811de341>] vfs_read+0x91/0x130
->  [<ffffffff811df6e4>] SyS_read+0x44/0xa0
->  [<ffffffff816401aa>] entry_SYSCALL_64_fastpath+0x18/0xad
-> ---[ end trace c5c6591c32eae6dd ]---
-> 
-> after having inserted the following code in __multipath_map():
-> 
-> 	WARN_ON_ONCE(clone && q->mq_ops);
-> 	WARN_ON_ONCE(!clone && !q->mq_ops);
-> 
-> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
-> Cc: <stable@vger.kernel.org>
-> ---
->  drivers/md/dm-ioctl.c | 5 +++++
->  1 file changed, 5 insertions(+)
-> 
-> diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-> index c72a77048b73..918e8b363015 100644
-> --- a/drivers/md/dm-ioctl.c
-> +++ b/drivers/md/dm-ioctl.c
-> @@ -1322,6 +1322,11 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
->  		DMWARN("can't change device type after initial table load.");
->  		r = -EINVAL;
->  		goto err_unlock_md_type;
-> +	} else if (dm_get_md_type(md) == DM_TYPE_MQ_REQUEST_BASED &&
-> +		   !dm_table_all_blk_mq_devices(t)) {
-> +		DMWARN("can't load a sq table on a blk-mq dm device.");
-> +		r = -EINVAL;
-> +		goto err_unlock_md_type;
->  	}
->  
->  	dm_unlock_md_type(md);
+  device-mapper: cache: 253:20: unable to switch cache to write mode 
+until repaired.
+  device-mapper: cache: 253:20: switching cache to read-only mode 
 
-Hi Bart,
+  device-mapper: table: 253:20: cache: Unable to get write access to 
+metadata, please check/repair metadata.
+  device-mapper: ioctl: error adding target to table 
 
-Thanks for catching this lack of table type verification.
 
-I'm not a fan of a patch header including a stack trace for debugging
-was temporarily introduced loclaly for debugging purposes; especially
-not for a patch that will cc stable.  As such I'll be re-writing the
-patch header.
+How can I go about checking/repairing the metadata?
 
-Also, I prefer the following variant of your fix (results in failing the
-table load a bit sooner and doesn't allow a table->type inconsistency to
-escape dm_table_determine_type()).
-
-Should I still attribute authorship of this change to you?  Or would you
-prefer I switch to you being the Reporter (via Reported-by)?
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 8ce81d0..0a427de 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -976,6 +976,11 @@ static int dm_table_determine_type(struct dm_table *t)
- 	}
- 	t->all_blk_mq = mq_count > 0;
- 
-+	if (t->type == DM_TYPE_MQ_REQUEST_BASED && !t->all_blk_mq) {
-+		DMERR("table load rejected: all devices are not blk-mq request-stackable");
-+		return -EINVAL;
-+	}
-+
- 	return 0;
- }
- 
+-- 
+========================================================================
+Ian Pilcher                                         arequipeno@gmail.com
+-------- "I grew up before Mark Zuckerberg invented friendship" --------
+========================================================================
