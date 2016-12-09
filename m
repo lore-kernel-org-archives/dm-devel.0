@@ -1,7 +1,7 @@
-From: Al Viro <viro@ZenIV.linux.org.uk>
+From: Michal Hocko <mhocko@kernel.org>
 Subject: Re: [RFC PATCH] mm: introduce kv[mz]alloc helpers
-Date: Fri, 9 Dec 2016 02:00:17 +0000
-Message-ID: <20161209020016.GX1555@ZenIV.linux.org.uk>
+Date: Fri, 9 Dec 2016 07:18:00 +0100
+Message-ID: <20161209061759.GA12012@dhcp22.suse.cz>
 References: <20161208103300.23217-1-mhocko@kernel.org>
  <20161209014417.GN4326@dastard>
 Mime-Version: 1.0
@@ -11,10 +11,10 @@ Content-Disposition: inline
 In-Reply-To: <20161209014417.GN4326@dastard>
 Sender: owner-linux-mm@kvack.org
 To: Dave Chinner <david@fromorbit.com>
-Cc: Michal Hocko <mhocko@kernel.org>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, David Rientjes <rientjes@google.com>, Mel Gorman <mgorman@suse.de>, Johannes Weiner <hannes@cmpxchg.org>, Anatoly Stepanov <astepanov@cloudlinux.com>, LKML <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Paolo Bonzini <pbonzini@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, "Michael S. Tsirkin" <mst@redhat.com>, Theodore Ts'o <tytso@mit.edu>, kvm@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org
+Cc: linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, David Rientjes <rientjes@google.com>, Mel Gorman <mgorman@suse.de>, Johannes Weiner <hannes@cmpxchg.org>, Anatoly Stepanov <astepanov@cloudlinux.com>, LKML <linux-kernel@vger.kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, "Michael S. Tsirkin" <mst@redhat.com>, Theodore Ts'o <tytso@mit.edu>, kvm@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Dec 09, 2016 at 12:44:17PM +1100, Dave Chinner wrote:
+On Fri 09-12-16 12:44:17, Dave Chinner wrote:
 > On Thu, Dec 08, 2016 at 11:33:00AM +0100, Michal Hocko wrote:
 > > From: Michal Hocko <mhocko@suse.com>
 > > 
@@ -40,9 +40,16 @@ On Fri, Dec 09, 2016 at 12:44:17PM +1100, Dave Chinner wrote:
 > functionality will have to play these memalloc_noio_save/
 > memalloc_noio_restore games to ensure they are GFP_NOFS safe....
 
-Easier to handle those in vmalloc() itself.  The problem I have with these
-helpers is that different places have different cutoff thresholds for
-switch from kmalloc to vmalloc; has anyone done an analysis of those?
+Well, I didn't want to play this games in the generic kvmalloc, at least
+not now, because all the converted users didn't really need it so far
+and I believe that the existing users need a) inspection to check
+whether NO{FS,IO} context is really needed and b) I still believe that
+the scope nofs api should be used longterm rather than an explicit
+GFP_NOFS. I am already working on ext[34] code.
+
+-- 
+Michal Hocko
+SUSE Labs
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
