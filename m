@@ -1,45 +1,53 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [LSF/MM TOPIC ATTEND] multipath for NVMe over Fabrics
-Date: Fri, 9 Dec 2016 07:43:59 +0100
-Message-ID: <cacc9915-97c0-d5ef-1b9f-cb05f20619b4@suse.de>
-References: <20161209011656.GA320@redhat.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC PATCH] mm: introduce kv[mz]alloc helpers
+Date: Fri, 9 Dec 2016 07:51:54 +0100
+Message-ID: <20161209065154.GD12012@dhcp22.suse.cz>
+References: <20161208103300.23217-1-mhocko@kernel.org>
+ <20161209014417.GN4326@dastard>
+ <20161209020016.GX1555@ZenIV.linux.org.uk>
+ <20161209062224.GB12012@dhcp22.suse.cz>
+ <20161209063803.GY1555@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20161209011656.GA320@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, lsf-pc@lists.linux-foundation.org
-Cc: linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20161209063803.GY1555@ZenIV.linux.org.uk>
+Sender: owner-linux-mm@kvack.org
+To: Al Viro <viro@ZenIV.linux.org.uk>
+Cc: Dave Chinner <david@fromorbit.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, David Rientjes <rientjes@google.com>, Mel Gorman <mgorman@suse.de>, Johannes Weiner <hannes@cmpxchg.org>, Anatoly Stepanov <astepanov@cloudlinux.com>, LKML <linux-kernel@vger.kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, "Michael S. Tsirkin" <mst@redhat.com>, Theodore Ts'o <tytso@mit.edu>, kvm@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 12/09/2016 02:16 AM, Mike Snitzer wrote:
-> I'd like to discuss $subject.  I haven't heard of much progress on this
-> (but I'm also not tracking NVMe development at the moment).
->
-> Last I heard about getting DM multipath to work with NVMe over Fabrics
-> was this: https://patchwork.kernel.org/patch/9208997/
->
-> I've reintroduced bio-based support for the DM multipath target.
-> Between now and LSF I hope to come to terms with what the various work
-> items are for making DM multipath work for NVMeoF.  I welcome any
-> ideas/thoughts others might have.
->
-Funny that you mention it.
+On Fri 09-12-16 06:38:04, Al Viro wrote:
+> On Fri, Dec 09, 2016 at 07:22:25AM +0100, Michal Hocko wrote:
+> 
+> > > Easier to handle those in vmalloc() itself.
+> > 
+> > I think there were some attempts in the past but some of the code paths
+> > are burried too deep and adding gfp_mask all the way down there seemed
+> > like a major surgery.
+> 
+> No need to propagate gfp_mask - the same trick XFS is doing right now can
+> be done in vmalloc.c in a couple of places and that's it; I'll resurrect the
+> patches and post them tomorrow after I get some sleep.
 
-I've got fed up with the mess that is multipath-tools, and decided to 
-rework the entire thing. Including the kernel side.
-I hope to have something ready soon, will be sending out an RFC once 
-it's presentable.
+That would work as an immediate mitigation. No question about that but
+what I've tried to point out in the reply to Dave is that longerm we
+shouldn't hide this trickiness inside the vmalloc and rather handle
+those users who are requesting NOFS/NOIO context from vmalloc. We
+already have a scope api for NOIO and I want to add the same for NOFS.
+I believe that much more sane approach is to use the API at those places
+which really start/stop reclaim recursion dangerous scope (e.g. the
+transaction context) rather than using GFP_NOFS randomly because this
+approach has proven to not work properly over years. We have so many
+place using GFP_NOFS just because nobody bothered to think whether it is
+needed but it must be safe for sure that it is not funny.
 
-So yes, I'd _definitely_ be interested in that.
-
-Cheers,
-
-Hannes
 -- 
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
-GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG Nürnberg)
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
