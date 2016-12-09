@@ -1,53 +1,54 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH] mm: introduce kv[mz]alloc helpers
-Date: Fri, 9 Dec 2016 07:51:54 +0100
-Message-ID: <20161209065154.GD12012@dhcp22.suse.cz>
-References: <20161208103300.23217-1-mhocko@kernel.org>
- <20161209014417.GN4326@dastard>
- <20161209020016.GX1555@ZenIV.linux.org.uk>
- <20161209062224.GB12012@dhcp22.suse.cz>
- <20161209063803.GY1555@ZenIV.linux.org.uk>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH] multipath-tools: add .skip_kpartx and
+ .max_sectors_kb to template in hwtable
+Date: Fri, 9 Dec 2016 10:03:09 -0600
+Message-ID: <20161209160309.GD25309@octiron.msp.redhat.com>
+References: <20161208214500.14514-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20161209063803.GY1555@ZenIV.linux.org.uk>
-Sender: owner-linux-mm@kvack.org
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: Dave Chinner <david@fromorbit.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, David Rientjes <rientjes@google.com>, Mel Gorman <mgorman@suse.de>, Johannes Weiner <hannes@cmpxchg.org>, Anatoly Stepanov <astepanov@cloudlinux.com>, LKML <linux-kernel@vger.kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, "Michael S. Tsirkin" <mst@redhat.com>, Theodore Ts'o <tytso@mit.edu>, kvm@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org
+In-Reply-To: <20161208214500.14514-1-xose.vazquez@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri 09-12-16 06:38:04, Al Viro wrote:
-> On Fri, Dec 09, 2016 at 07:22:25AM +0100, Michal Hocko wrote:
+ACK
+
+Thanks
+-Ben
+
+On Thu, Dec 08, 2016 at 10:45:00PM +0100, Xose Vazquez Perez wrote:
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  libmultipath/hwtable.c | 2 ++
+>  1 file changed, 2 insertions(+)
 > 
-> > > Easier to handle those in vmalloc() itself.
-> > 
-> > I think there were some attempts in the past but some of the code paths
-> > are burried too deep and adding gfp_mask all the way down there seemed
-> > like a major surgery.
-> 
-> No need to propagate gfp_mask - the same trick XFS is doing right now can
-> be done in vmalloc.c in a couple of places and that's it; I'll resurrect the
-> patches and post them tomorrow after I get some sleep.
-
-That would work as an immediate mitigation. No question about that but
-what I've tried to point out in the reply to Dave is that longerm we
-shouldn't hide this trickiness inside the vmalloc and rather handle
-those users who are requesting NOFS/NOIO context from vmalloc. We
-already have a scope api for NOIO and I want to add the same for NOFS.
-I believe that much more sane approach is to use the API at those places
-which really start/stop reclaim recursion dangerous scope (e.g. the
-transaction context) rather than using GFP_NOFS randomly because this
-approach has proven to not work properly over years. We have so many
-place using GFP_NOFS just because nobody bothered to think whether it is
-needed but it must be safe for sure that it is not funny.
-
--- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index c6fc3d1..f5a5f7b 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -1115,6 +1115,8 @@ static struct hwentry default_hw[] = {
+>  		.deferred_remove = DEFERRED_REMOVE_OFF,
+>  		.delay_watch_checks = DELAY_CHECKS_OFF,
+>  		.delay_wait_checks = DELAY_CHECKS_OFF,
+> +		.skip_kpartx = SKIP_KPARTX_OFF,
+> +		.max_sectors_kb = MAX_SECTORS_KB_UNDEF,
+>  	},
+>  #endif
+>  	/*
+> -- 
+> 2.11.0
