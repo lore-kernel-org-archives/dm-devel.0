@@ -1,16 +1,14 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: dm: Refuse to load an sq table on an mq device
-Date: Fri, 9 Dec 2016 13:01:26 -0800
-Message-ID: <1f386ba7-215b-eab0-3d8e-aa2e7c1346ba@sandisk.com>
-References: <d6cb4e39-41ea-18e1-3347-398f17ba6e8d@sandisk.com>
-	<20161208021159.GA5944@redhat.com>
-	<d22b29da-c02d-ff75-54be-dfbf4c366642@sandisk.com>
-	<20161208171844.GA7305@redhat.com> <20161208195430.GA7742@redhat.com>
+From: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+Subject: [PATCH 2/2] multipathd: skip spurious event message for
+	blacklisted paths
+Date: Sat, 10 Dec 2016 14:05:23 -0200
+Message-ID: <1481385923-12407-2-git-send-email-mauricfo@linux.vnet.ibm.com>
+References: <1481385923-12407-1-git-send-email-mauricfo@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161208195430.GA7742@redhat.com>
+In-Reply-To: <1481385923-12407-1-git-send-email-mauricfo@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,25 +18,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com, christophe.varoqui@opensvc.com
 List-Id: dm-devel.ids
 
-On 12/08/2016 11:54 AM, Mike Snitzer wrote:
-> On Thu, Dec 08 2016 at 12:18pm -0500,
-> Mike Snitzer <snitzer@redhat.com> wrote:
->> Thinking about rebasing this fix to come before this cleanup (so that
->> backporting to stable@ is easier):
->> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.10&id=db1c06dc2edd242146e25d38b1af61b681d49253
->>
->> And then still attributing this fix to you.  I'll let you know what I
->> come up with later today.
->
-> Done, please see:
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.10&id=301fc3f5efb98633115bd887655b19f42c6dfaa8
+Currently, multipath still prints the 'spurious uevent, path not found'
+message if a path is blacklisted by something different than a devnode
+in the 'change' uevent handling. (uev_trigger() calls filter_devnode()).
 
-That patch works fine on my test setup.
+Thus blacklisting by device vendor/product and wwid still renders that
+message in the system log -- since it's verbosity level 0 -- for paths
+that are explicitly marked to be ignored.
 
-Thanks,
+This problem happens on common scenarios such as creating filesystems
+on a blacklisted device (e.g., mkfs.* /dev/sdX), which is usually run
+several times on test environments, and the error message may mislead
+the error checker/monitor tools with false negatives.
 
-Bart.
+This patch resolves this problem by calling/checking path_discover()
+for PATHINFO_SKIPPED with just enough device information flags for
+blacklist verification -- and it prints a debug message (verbosity
+level 3) instead of an error message since this case is not an error.
+
+Even though it introduces a bit of overhead to get the path info,
+it is only exercised in the error/non-default path -- so not a problem.
+
+Test-case (on QEMU):
+
+  /etc/multipath.conf:
+
+  blacklist {
+      device {
+          vendor "QEMU"
+       }
+  }
+
+  # multipathd -d &
+  ...
+  Dec 10 08:06:27 | sda: (QEMU:QEMU HARDDISK) vendor/product blacklisted
+  ...
+
+  # mkfs.ext3 -F /dev/sda
+  ...
+
+  Dec 10 08:07:05 | sda: spurious uevent, path not found
+
+With the patch applied, no message is printed by default.
+It's still possible to get the event logged for debug with '-v3':
+
+  Dec 10 09:08:51 | sda: spurious uevent, path blacklisted
+
+Reported-by: Yueh Chyong (Ida) Jackson <idaj@us.ibm.com>
+Signed-off-by: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+---
+ multipathd/main.c | 22 +++++++++++++++++++++-
+ 1 file changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index d6f081f..364fecb 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1010,8 +1010,28 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 	}
+ out:
+ 	lock_cleanup_pop(vecs->lock);
+-	if (!pp)
++	if (!pp) {
++		/* If the path is blacklisted, print a debug/non-default verbosity message. */
++		if (uev->udev) {
++			int flag = DI_BLACKLIST | DI_SYSFS | DI_WWID;
++			struct udev_device *udevice;
++
++			udevice = udev_device_ref(uev->udev);
++			conf = get_multipath_config();
++
++			retval = path_discover(NULL, conf, udevice, flag);
++
++			put_multipath_config(conf);
++			udev_device_unref(uev->udev);
++
++			if (retval == PATHINFO_SKIPPED) {
++				condlog(3, "%s: spurious uevent, path blacklisted", uev->kernel);
++				return 0;
++			}
++		}
++
+ 		condlog(0, "%s: spurious uevent, path not found", uev->kernel);
++	}
+ 
+ 	return retval;
+ }
+-- 
+2.7.4
