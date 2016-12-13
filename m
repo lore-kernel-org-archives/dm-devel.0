@@ -1,173 +1,251 @@
-From: Doug Anderson <dianders@chromium.org>
-Subject: Re: [PATCH] dm: Avoid sleeping while holding the dm_bufio lock
-Date: Mon, 12 Dec 2016 16:08:12 -0800
-Message-ID: <CAD=FV=U+1VA23s1WMn4srH5U3Cjuz+0OLhq1qD5qw0oTE34xFQ@mail.gmail.com>
-References: <1479410660-31408-1-git-send-email-dianders@chromium.org>
- <alpine.LRH.2.02.1611231543020.31481@file01.intranet.prod.int.rdu2.redhat.com>
- <CAD=FV=V85=ZTXURVZ3Xo1gS80rqA8gOhr+Xm47axrwVUpjQFuw@mail.gmail.com> <alpine.LRH.2.02.1612081758250.25149@file01.intranet.prod.int.rdu2.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1612081758250.25149@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Sonny Rao <sonnyrao@chromium.org>, Guenter Roeck <linux@roeck-us.net>
+From: Binoy Jayan <binoy.jayan@linaro.org>
+Subject: [RFC PATCH v2] IV Generation algorithms for dm-crypt
+Date: Tue, 13 Dec 2016 14:19:08 +0530
+Message-ID: <1481618949-20086-1-git-send-email-binoy.jayan@linaro.org>
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>, Binoy Jayan <binoy.jayan@linaro.org>
 List-Id: dm-devel.ids
 
-Hi,
+===============================================================================
+GENIV Template cipher
+===============================================================================
 
-On Thu, Dec 8, 2016 at 3:20 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
->
->
-> On Wed, 7 Dec 2016, Doug Anderson wrote:
->
->> Hi,
->>
->> On Wed, Nov 23, 2016 at 12:57 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
->> > Hi
->> >
->> > The GFP_NOIO allocation frees clean cached pages. The GFP_NOWAIT
->> > allocation doesn't. Your patch would incorrectly reuse buffers in a
->> > situation when the memory is filled with clean cached pages.
->> >
->> > Here I'm proposing an alternate patch that first tries GFP_NOWAIT
->> > allocation, then drops the lock and tries GFP_NOIO allocation.
->> >
->> > Note that the root cause why you are seeing this stacktrace is, that your
->> > block device is congested - i.e. there are too many requests in the
->> > device's queue - and note that fixing this wait won't fix the root cause
->> > (congested device).
->> >
->> > The congestion limits are set in blk_queue_congestion_threshold to 7/8 to
->> > 13/16 size of the nr_requests value.
->> >
->> > If you don't want your device to report the congested status, you can
->> > increase /sys/block/<device>/queue/nr_requests - you should test if your
->> > chromebook is faster of slower with this setting increased. But note that
->> > this setting won't increase the IO-per-second of the device.
->>
->> Cool, thanks for the insight!
->>
->> Can you clarify which block device is relevant here?  Is this the DM
->> block device, the underlying block device, or the swap block device?
->> I'm not at all an expert on DM, but I think we have:
->>
->> 1. /dev/mmcblk0 - the underlying storage device.
->> 2. /dev/dm-0 - The verity device that's run atop /dev/mmcblk0p3
->> 3. /dev/zram0 - Our swap device
->
-> The /dev/mmcblk0 device is congested. You can see the number of requests
-> in /sys/block/mmcblk0/inflight
-
-Hrm.  Doing some tests doesn't show that to be true.
-
-I ran this command while doing my test (the "balloon" test described
-in my patch, not the running the computer as a real user):
-
-  while true;
-    do grep -v '0 *0' /sys/block/*/inflight;
-    sleep .1;
-  done
-
-The largest numbers I ever saw was:
-
-  /sys/block/mmcblk0/inflight:       6        0
-
-...and in one case when I saw a "long bufio" mesage I was seeing:
-
-/sys/block/zram0/inflight:       1        0
-/sys/block/zram0/inflight:       0        1
-/sys/block/zram0/inflight:       0        1
-/sys/block/zram0/inflight:       1        1
-/sys/block/zram0/inflight:       0        1
+Currently, the iv generation algorithms are implemented in dm-crypt.c. The goal
+is to move these algorithms from the dm layer to the kernel crypto layer by
+implementing them as template ciphers so they can be used in relation with
+algorithms like aes, and with multiple modes like cbc, ecb etc. As part of this
+patchset, the iv-generation code is moved from the dm layer to the crypto layer
+and adapt the dm-layer to send a whole 'bio' (as defined in the block layer)
+at a time. Each bio contains the in memory representation of physically
+contiguous disk blocks. Since the bio itself may not be contiguous in main
+memory, the dm layer sets up a chained scatterlist of these blocks split into
+physically contiguous segments in memory so that DMA can be performed.
 
 
->> As stated in the original email, I'm running on a downstream kernel
->> (kernel-4.4) with bunches of local patches, so it's plausible that
->> things have changed in the meantime, but:
->>
->> * At boot time the "nr_requests" for all block devices was 128
->> * I was unable to set the "nr_requests" for dm-0 and zram0 (it just
->> gives an error in sysfs).
->> * When I set "nr_requests" to 4096 for /dev/mmcblk0 it didn't seem to
->> affect the problem.
->
-> The eMMC has some IOPS and the IOPS can't be improved. Use faster block
-> device - but it will cost more money.
+v1 --> v2
+----------
 
-It's so strange since when I see this failure I'm not even doing lots
-of eMMC traffic.  As per above my swap goes to zram and there's no
-disk backing, so there should be very minimal disk usage.
+1. dm-crypt changes to process larger block sizes (one segment in a bio)
+2. Incorporated changes w.r.t. comments from Herbert.
 
-If I run iostat now after having been running my test for a while (and
-having seen a bunch of "long bufio" messages, you can see that there
-hasn't exactly been lots of activity.
+v1: https://patchwork.kernel.org/patch/9439175
 
-localhost debug # iostat
-Linux 4.4.21 (localhost)        12/09/16        _aarch64_       (6 CPU)
+One challenge in doing so is that the IVs are generated based on a 512-byte
+sector number. This infact limits the block sizes to 512 bytes. But this should
+not be a problem if a hardware with iv generation support is used. The geniv
+itself splits the segments into sectors so it could choose the IV based on
+sector number. But it could be modelled in hardware effectively by not
+splitting up the segments in the bio.
 
-avg-cpu:  %user   %nice %system %iowait  %steal   %idle
-           6.11   33.87   36.63    1.78    0.00   21.61
+Another challenge faced is that dm-crypt has an option to use multiple keys.
+The key selection is done based on the sector number. If the whole bio is
+encrypted / decrypted with the same key, the encrypted volumes will not be
+compatible with the original dm-crypt [without the changes].
 
-Device:            tps    kB_read/s    kB_wrtn/s    kB_read    kB_wrtn
-loop0             2.74        39.01        68.95      33529      59264
-loop1             0.07         1.23         0.00       1055          0
-loop2             0.04         0.13         0.00        112          0
-loop3             0.00         0.00         0.00          4          0
-loop4             0.00         0.01         0.00          8          0
-loop5             0.00         0.01         0.00          8          0
-mmcblk1           0.56        44.45         0.00      38202          0
-mmcblk0          14.37       636.29        38.74     546888      33300
-mmcblk0rpmb       0.01         0.03         0.00         28          0
-mmcblk0boot1      0.03         0.15         0.00        128          0
-mmcblk0boot0      0.03         0.15         0.00        128          0
-dm-0             11.50       419.25         0.00     360344          0
-dm-1              2.15        36.53        68.95      31401      59264
-zram0         42103.26     84111.64     84301.42   72293956   72457068
+The following ASCII art decomposes the kernel crypto API layers when using the
+skcipher with the automated IV generation. The shown example is used by the
+DM layer. For other use cases of cbc(aes), the ASCII art applies as well, but
+the caller may not use the same with a separate IV generator. In this case, the
+caller must generate the IV. The depicted example decomposes <ivgen>(cbc(aes))
+based on the generic C implementations (geniv.c, cbc.c and aes-generic.c).
+The generic implementation depicts the dependency between the templates ciphers
+used in implementing geniv using the kernel crypto API.
+Here, <geniv> indicates one of the following algorithms:
 
----
+1. plain
+2. plain64
+3. essiv
+4. benbi
+5. null
+6. lmk
+7. tcw
 
-OK, so I just put a printk in wait_iff_congested() and it didn't show
-me waiting for the timeout (!).  I know that I saw
-wait_iff_congested() in the originally reproduction of this problem,
-but it appears that in my little "balloon" reproduction it's not
-actually involved...
+It is possible that some streamlined cipher implementations (like AES-NI)
+provide implementations merging aspects which in the view of the kernel crypto
+API cannot be decomposed into layers any more. Each block in the following
+ASCII art is an independent cipher instance obtained from the kernel crypto
+API. Each block is accessed by the caller or by other blocks using the API
+functions defined by the kernel crypto API for the cipher implementation type.
+The blocks below indicate the cipher type as well as the specific logic
+implemented in the cipher.
 
+The ASCII art picture also indicates the call structure, i.e. who calls which
+component. The arrows point to the invoked block where the caller uses the API
+applicable to the cipher type specified for the block. For the purpose of
+illustration, here we take the example of the aes mode 'cbc'. However, the IV
+generation algorithm could be used with other aes modes like ecb as well.
 
-...I dug further and it appears that __alloc_pages_direct_reclaim() is
-actually what's slow.  Specifically it looks as if shrink_zone() can
-actually take quite a while.  As I've said, I'm not an expert on the
-memory manager but I'm not convinced that it's wrong for the direct
-reclaim path to be pretty slow at times, especially when I'm putting
-an abnormally high amount of stress on it.
+-------------------------------------------------------------------------------
+Geniv implementation
+-------------------------------------------------------------------------------
 
-I'm going to take this as further evidence that the patch being
-discussed in this thread is a good one (AKA don't hold the dm bufio
-lock while allocating memory).  :)  If it's unexpected that
-shrink_zone() might take several seconds when under extreme memory
-pressure then I can do some additional digging.  Do note that I am
-running with "zram" and remember that I'm on an ancient 4.4-based
-kernel, so perhaps one of those two factors causes problems.
+NB: The ASCII art below is best viewed in a fixed-width font.
 
+                             crypt_convert_block()              (DM Layer)
+                                      |
+                                      | (1)
+                                      |
+                                      v
++------------+   +-----------+   +-----------+       +-----------+
+|            |   |           |   |           |  (2)  |           |
+|  skcipher  |   | skcipher  |   | skcipher  |----+  | skcipher  |   Blocks for
+| (plain/64) |   | (benbi)   |   | (essiv)   |    |  |  (null)   |   lmk, tcw
++------------+   +-----------+   +-----------+    |  +-----------+ 
+     |                |               |           v         |
+     | (3)            | (3)      (3)  |    +-----------+    |
+     |                |               |    |           |    |
+     |                |               |    |   ahash   |    | (3)
+     |                |               |    |           |    |
+     |                |               |    +-----------+    |
+     |                |               v                     |     (Crypto API
+     |                |         +-----------+               |        Layer)
+     |                v         |           |               |
+     +------------------------> |  skcipher | <-------------+
+                                |   (cbc)   |
+                                +-----------+  (AES Mode Template cipher)
+                                      | (4)
+                                      v
+                               +-----------+
+                               |           |
+                               |   cipher  |   (Base generic-AES cipher)
+                               |   (aes)   |
+                               +-----------+
 
-> If you want to handle such a situation where you run 4 tasks each eating
-> 900MB, just use more memory, don't expect that this will work smoothly on
-> 4GB machine.
->
-> If you want to protect the chromebook from runaway memory allocations, you
-> can detect this situation in some watchdog process and either kill the
-> process that consumes most memory with the kill syscall or trigger the
-> kernel OOM killer by writing 'f' to /proc/sysrq-trigger.
->
-> The question is what you really want - handle this situation smoothly
-> (then, you must add more memory) or protect chromeOS from applications
-> allocating too much memory?
+     
+The following call sequence is applicable when the DM layer triggers an
+encryption operation with the crypt_convert_block() function. During
+configuration, the administrator sets up the use of <geniv>(cbc(aes)) as the
+template cipher. 'geniv' can be one among plain, plain64, essiv, benbi, null,
+lmk, or tcw which are all implemented as seperate templates. 
+The following are the template ciphers implemented as part of 'geniv.c'
 
-These are definitely important things to think about.  In the end user
-bug report, though, we were seeing this super slow / janky behavior
-_without_ a runaway process--they were just using memory (and swap)
-normally.  I've simulated it with the "balloon" process, but users
-were seeing it without anything so crazy.
+1. plain(cbc(aes))
+2. plain64(cbc(aes))
+3. essiv(cbc(aes))
+4. benbi(cbc(aes))
+5. null(cbc(aes))
+6. lmk(cbc(aes))
+7. tcw(cbc(aes))
 
+The following call sequence is now depicted in the ASCII art above:
 
--Doug
+1. crypt_convert_block invokes crypto_skcipher_encrypt() to trigger encryption
+   operation of a single block (i.e. sector) with the IV same as the sector no.
+   For example, with essiv, the IV generation implementation is registered with
+   a call to 'crypto_register_template(&crypto_essiv_tmpl)'
+
+2. During instantiation of the 'geniv' handle, the IV generation algorithm is
+   instantiated. For the purpose of illustration, we take the example of essiv.
+   In this case, the ahash cipher is instantiated to calculate the hash of the
+   sector to generate the IV.
+
+3. Now, geniv uses the skcipher api calls to invoke the associated cipher. In
+   our case, during the instantiation of geniv, the cipher handle for cbc is
+   provided to geniv. The geniv skcipher type implementation now invokes the
+   skcipher api with the instantiated cbc(aes) cipher handle. During the
+   instantiation of the cbc(aes) cipher, the cipher type generic-aes is also
+   instantiated. That means that the SKCIPHER implementation of cbc(aes) only
+   implements the Cipher-block chaining mode. After performing block chaining
+   operation, the cipher implementation of aes is invoked. The skcipher of
+   cbc(aes) now invokes the cipher api with the aes cipher handle to encrypt
+   one block.
+
+-------------------------------------------------------------------------------
+To be discussed
+-------------------------------------------------------------------------------
+
+1. Changes to testmgr.c
+2. How to use multiple keys.
+   When using multiple keys with the original dm-crypt, the key selection is
+   made based on the sector number as:
+
+   key_index = sector & (key_count - 1)
+
+   This restricts the usage of the same key for encrypting/decrypting a single
+   bio. One way to solve this is to move the key management code from dm-crypt
+   to cryto layer. But this seems tricky when using template ciphers because,
+   when multiple ciphers are instantiated from dm layer, each cipher instance
+   set with a unique subkey (part of the bigger master key) and these instances
+   themselves do not have access to each other's instances or contexts. This
+   way, a single instance cannot encryt/decrypt a whole bio. I have not been
+   able to get around this problem.
+
+-------------------------------------------------------------------------------
+Test procedure
+-------------------------------------------------------------------------------
+
+The algorithms are tested using 'cryptsetup' utility to create LUKS
+compatible volumes on Qemu.
+
+NB: '/dev/sdb' is a second disk volume (configured in qemu)
+
+# One time setup - Format the device compatible with LUKS.
+# Choose one of the following IV generation alorithms at a time
+cryptsetup -y -c aes-cbc-plain -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes-cbc-plain64 -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes-cbc-essiv:sha256 -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes-cbc-benbi -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes-cbc-null -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes-cbc-lmk -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes-cbc-tcw -s 256 --hash sha256 luksFormat /dev/sdb
+
+# With a keycount >= 2
+# These were tested ok but not compatible with the older dm-crypt
+# because the keys were selected based on the IV number when multiple
+# keys are involved. This needs to be fixed.
+
+cryptsetup -y -c aes:2-cbc-plain -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes:2-cbc-plain64 -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes:2-cbc-essiv:sha256 -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes:2-cbc-null -s 256 --hash sha256 luksFormat /dev/sdb
+cryptsetup -y -c aes:2-cbc-lmk -s 256 --hash sha256 luksFormat /dev/sdb
+
+# Add additional key - optional
+cryptsetup luksAddKey /dev/sdb
+
+# The above lists only a limited number of tests with the aes cipher.
+# The IV generation algorithms may also be tested with other ciphers as well.
+
+cryptsetup luksDump --dump-master-key /dev/sdb
+
+# create a luks volume and open the device
+cryptsetup luksOpen /dev/sdb crypt_fun
+dmsetup table --showkeys
+
+# Write some data to the device
+cat data.txt > /dev/mapper/crypt_fun
+
+# Read 100 bytes back
+dd if=/dev/mapper/crypt_fun of=out.txt bs=100 count=1
+cat out.txt
+
+mkfs.ext4 -j /dev/mapper/crypt_fun
+
+# Mount if fs creation succeeds
+mount -t ext4 /dev/mapper/crypt_fun /mnt
+
+<-- Use the encrypted file system -->
+
+umount /mnt
+cryptsetup luksClose crypt_fun
+cryptsetup luksRemoveKey /dev/sdb
+
+This seems to work well. The file system mounts successfully and the files
+written to in the file system remain persistent across reboots.
+
+Binoy Jayan (1):
+  crypto: Add IV generation algorithms
+
+ crypto/Kconfig         |   10 +
+ crypto/Makefile        |    1 +
+ crypto/geniv.c         | 1294 ++++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-crypt.c  |  894 +++++----------------------------
+ include/crypto/geniv.h |   60 +++
+ 5 files changed, 1499 insertions(+), 760 deletions(-)
+ create mode 100644 crypto/geniv.c
+ create mode 100644 include/crypto/geniv.h
+
+-- 
+Binoy Jayan
