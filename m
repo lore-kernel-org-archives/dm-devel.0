@@ -1,14 +1,12 @@
-From: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
-Subject: [PATCH v2 2/2] multipathd: skip spurious event message
-	for blacklisted paths
-Date: Tue, 13 Dec 2016 16:27:09 -0200
-Message-ID: <1481653629-22430-2-git-send-email-mauricfo@linux.vnet.ibm.com>
-References: <1481653629-22430-1-git-send-email-mauricfo@linux.vnet.ibm.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH] dm raid: change raid4/5/6 journal device status
+	health char to 'A' rather than 'J'
+Date: Tue, 13 Dec 2016 19:28:52 +0100
+Message-ID: <20161213182852.21749-1-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1481653629-22430-1-git-send-email-mauricfo@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,133 +16,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, bmarzins@redhat.com, christophe.varoqui@opensvc.com
+To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-Currently, multipath still prints the 'spurious uevent, path not found'
-message if a path is blacklisted by something different than a devnode
-in the 'change' uevent handling. (uev_trigger() calls filter_devnode()).
+There's no need to create a tautology by introducing a new device health char 'J',
+because the position of the status line field uniquely defines the char refering
+to the journal.
 
-Thus blacklisting by vendor/product, wwid, and udev property still get
-that message in the system log for paths that are explicitly marked to
-be ignored (since it's verbosity level 0).
+This patch is on top of
+"[PATCH v2] dm raid: add raid4/5/6 journaling support"
+dated 11/30/2016.
 
-This problem happens on common scenarios such as creating filesystems
-on a blacklisted device (e.g., mkfs.* /dev/sdX), which is usually run
-several times on test environments, and the error message may mislead
-the error checker/monitor tools with false negatives.
-
-This patch resolves this by checking the udev property and path_info()
-for PATHINFO_SKIPPED with just enough device information flags for
-blacklist verification -- and it prints a debug message (verbosity
-level 3) instead of an error message since this case is not an error.
-
-Even though this introduces a bit of overhead (to get the path info),
-it only happens in a corner case of an error path; so, not a problem.
-
-Test-cases (on QEMU):
-----------
-
-Several versions of /etc/multipath.conf:
-
-  blacklist {
-      devnode "sdb"
-  }
-
-  blacklist {
-      property "ID_SERIAL"
-  }
-
-  blacklist {
-      wwid "0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1"
-  }
-
-  blacklist {
-      device {
-          vendor "QEMU"
-      }
-  }
-
-Either command can be used to generate a 'change' uevent:
-
-  # echo change > /sys/block/sdb/uevent
-
-  # mkfs.ext3 -F /dev/sdb
-
-The output of multipathd is monitored with:
-
-  # multipathd -d -s
-  ...
-
-Without the patch, only the devnode blacklisting is silent;
-all other cases (property, wwid, device) print the message:
-
-  sdb: spurious uevent, path not found
-
-With the patch applied, no message is printed by default
-(that is, verbosity level 2) in any case.
-
-With verbosity level 3 (debug), the following messages
-are printed, according to the performed test-case:
-
-  sdb: udev property ID_SERIAL blacklisted
-  sdb: spurious uevent, path is blacklisted
-
-  sdb: wwid 0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1 blacklisted
-  sdb: spurious uevent, path is blacklisted
-
-  (null): (QEMU:QEMU HARDDISK) vendor/product blacklisted
-  sdb: spurious uevent, path is blacklisted
-
-Reported-by: Yueh Chyong (Ida) Jackson <idaj@us.ibm.com>
-Signed-off-by: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+Related: rhbz1400194
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- multipathd/main.c | 32 +++++++++++++++++++++++++++++++-
- 1 file changed, 31 insertions(+), 1 deletion(-)
+ Documentation/device-mapper/dm-raid.txt | 2 +-
+ drivers/md/dm-raid.c                    | 7 +++----
+ 2 files changed, 4 insertions(+), 5 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d6f081f2f83a..dd7e8d69491e 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1010,8 +1010,38 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 	}
- out:
- 	lock_cleanup_pop(vecs->lock);
--	if (!pp)
-+	if (!pp) {
-+		/*
-+		 *  If the path is blacklisted, print a debug/non-default verbosity message.
-+		 *  - filter_devnode()	- checked by uev_trigger() (caller);
-+		 *  - filter_device()	- checked by pathinfo() (DI_BLACKLIST | DI_SYSFS);
-+		 *  - filter_wwid()	- checked by pathinfo() (DI_BLACKLIST | DI_WWID);
-+		 *  - filter_property()	- checked here).
-+		 */
-+		if (uev->udev) {
-+			int flag = DI_SYSFS | DI_WWID;
-+			struct udev_device *udevice;
-+
-+			udevice = udev_device_ref(uev->udev);
-+
-+			if (filter_property(conf, udevice) > 0)
-+				retval = PATHINFO_SKIPPED;
-+			else {
-+				conf = get_multipath_config();
-+				retval = alloc_path_with_pathinfo(conf, udevice, flag, NULL);
-+				put_multipath_config(conf);
-+			}
-+
-+			udev_device_unref(uev->udev);
-+
-+			if (retval == PATHINFO_SKIPPED) {
-+				condlog(3, "%s: spurious uevent, path is blacklisted", uev->kernel);
-+				return 0;
-+			}
-+		}
-+
- 		condlog(0, "%s: spurious uevent, path not found", uev->kernel);
-+	}
+diff --git a/Documentation/device-mapper/dm-raid.txt b/Documentation/device-mapper/dm-raid.txt
+index 67f69b2..8e6d910 100644
+--- a/Documentation/device-mapper/dm-raid.txt
++++ b/Documentation/device-mapper/dm-raid.txt
+@@ -254,7 +254,7 @@ recovery.  Here is a fuller description of the individual fields:
+ 	<data_offset>   The current data offset to the start of the user data on
+ 			each component device of a raid set (see the respective
+ 			raid parameter to support out-of-place reshaping).
+-	<journal_char>	'J' - active raid4/5/6 journal device.
++	<journal_char>	'A' - active raid4/5/6 journal device.
+ 			'D' - dead journal device.
+ 			'-' - no journal device.
  
- 	return retval;
- }
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 215285b..25bb5ab 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3170,17 +3170,16 @@ static const char *decipher_sync_action(struct mddev *mddev)
+  *
+  * Status characters:
+  *
+- *  'D' = Dead/Failed device
++ *  'D' = Dead/Failed raid set component or raid4/5/6 journal device
+  *  'a' = Alive but not in-sync
+- *  'A' = Alive and in-sync
+- *  'J' = Journal device (raid4/5/6)
++ *  'A' = Alive and in-sync raid set component or alive raid4/5/6 journal device
+  */
+ static const char *__raid_dev_status(struct md_rdev *rdev, bool array_in_sync)
+ {
+ 	if (test_bit(Faulty, &rdev->flags))
+ 		return "D";
+ 	else if (test_bit(Journal, &rdev->flags))
+-		return "J";
++		return "A";
+ 	else if (!array_in_sync || !test_bit(In_sync, &rdev->flags))
+ 		return "a";
+ 	else
 -- 
-1.8.3.1
+2.9.3
