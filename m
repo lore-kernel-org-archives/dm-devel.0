@@ -1,112 +1,61 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 2/2] multipathd: skip spurious event
- message for blacklisted paths
-Date: Tue, 13 Dec 2016 15:50:25 -0600
-Message-ID: <20161213215024.GB19659@octiron.msp.redhat.com>
-References: <1481653629-22430-1-git-send-email-mauricfo@linux.vnet.ibm.com>
-	<1481653629-22430-2-git-send-email-mauricfo@linux.vnet.ibm.com>
+From: Doug Anderson <dianders@chromium.org>
+Subject: Re: [PATCH] dm: Avoid sleeping while holding the dm_bufio lock
+Date: Tue, 13 Dec 2016 14:01:40 -0800
+Message-ID: <CAD=FV=WJN8DaY5NAFwMvO7rfir9BJ38OxKJtG5Q3W8TCg_sNPg@mail.gmail.com>
+References: <1479410660-31408-1-git-send-email-dianders@chromium.org>
+ <alpine.LRH.2.02.1611231543020.31481@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAD=FV=V85=ZTXURVZ3Xo1gS80rqA8gOhr+Xm47axrwVUpjQFuw@mail.gmail.com>
+ <alpine.LRH.2.02.1612081758250.25149@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAD=FV=U+1VA23s1WMn4srH5U3Cjuz+0OLhq1qD5qw0oTE34xFQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1481653629-22430-2-git-send-email-mauricfo@linux.vnet.ibm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAD=FV=U+1VA23s1WMn4srH5U3Cjuz+0OLhq1qD5qw0oTE34xFQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Sonny Rao <sonnyrao@chromium.org>, Guenter Roeck <linux@roeck-us.net>
 List-Id: dm-devel.ids
 
-On Tue, Dec 13, 2016 at 04:27:09PM -0200, Mauricio Faria de Oliveira wrote:
+Hi,
 
-Thanks for working on this. I like this version much better, but I still
-have some issues. First off, I don't see why the udev_device_ref/unref
-is necessary. While servicing uevents, when we first get the udevice
-from udev_monitor_receive_device() in uevent_listen() it comes with a
-reference. After we finish servicing the uevent, we drop this reference
-in service_uevq(). If we attach this udevice to a path (by setting
-pp->udev), we need to get another reference, so that the udevice isn't
-deleted when we drop the reference after servicing the event in
-service_uevq(). Otherwise pp->udev would be pointing to freed memory.
-We drop this reference when we free the path in free_path().
+On Mon, Dec 12, 2016 at 4:08 PM, Doug Anderson <dianders@chromium.org> wrote:
+> OK, so I just put a printk in wait_iff_congested() and it didn't show
+> me waiting for the timeout (!).  I know that I saw
+> wait_iff_congested() in the originally reproduction of this problem,
+> but it appears that in my little "balloon" reproduction it's not
+> actually involved...
+>
+>
+> ...I dug further and it appears that __alloc_pages_direct_reclaim() is
+> actually what's slow.  Specifically it looks as if shrink_zone() can
+> actually take quite a while.  As I've said, I'm not an expert on the
+> memory manager but I'm not convinced that it's wrong for the direct
+> reclaim path to be pretty slow at times, especially when I'm putting
+> an abnormally high amount of stress on it.
+>
+> I'm going to take this as further evidence that the patch being
+> discussed in this thread is a good one (AKA don't hold the dm bufio
+> lock while allocating memory).  :)  If it's unexpected that
+> shrink_zone() might take several seconds when under extreme memory
+> pressure then I can do some additional digging.  Do note that I am
+> running with "zram" and remember that I'm on an ancient 4.4-based
+> kernel, so perhaps one of those two factors causes problems.
 
-When you call alloc_path_with_pathinfo(), it already grabs the second
-reference before calling pathinfo. When it exits without pp_ptr being
-set, it frees that extra reference in free_path(). But this whole time,
-we are still servicing the uevent, and that originl reference is always
-held, so we don't ever need to worry about the udevice getting deleted
-out from under us. I don't see any possible danger in removing the
-udev_device_ref/unref calls from your code. They don't hurt anything,
-but grabbing references when we don't need them just confuses other
-people who are trying reading the code, and makes the purpose of the
-references harder to understand.
+Sadly, I couldn't get this go as just "the way things were" in case
+there was some major speedup to be had here.  :-P
 
-My second issue is more for Hannes. Is there a reason why we don't check
-filter_property in pathinfo if we call it with (DI_BLACKLIST | DI_WWID).
-If we have the information to get the WWID, then we have the information
-to check filter_property.  Looking at the code, I don't see how we could
-be checking filter_property for paths added via uev_add_path. Am I
-missing something subtle here, or should we just add a filter_property()
-check to pathinfo()?
+I tracked this down to shrink_list() taking 1 ms per call (perhaps
+because I have HZ=1000?) and in shrink_lruvec() the outer loop ran
+many thousands of times.  Thus the total time taken by shrink_lruvec()
+could easily be many seconds.
 
--Ben
+Wow, interesting, when I change HZ to 100 instead of 1000 then the
+behavior changes quite a bit.  I can still get my bufio lock warning
+easily, but all of a sudden shrink_lruvec() isn't slow.  :-P
 
-> Reported-by: Yueh Chyong (Ida) Jackson <idaj@us.ibm.com>
-> Signed-off-by: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
-> ---
->  multipathd/main.c | 32 +++++++++++++++++++++++++++++++-
->  1 file changed, 31 insertions(+), 1 deletion(-)
-> 
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index d6f081f2f83a..dd7e8d69491e 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -1010,8 +1010,38 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
->  	}
->  out:
->  	lock_cleanup_pop(vecs->lock);
-> -	if (!pp)
-> +	if (!pp) {
-> +		/*
-> +		 *  If the path is blacklisted, print a debug/non-default verbosity message.
-> +		 *  - filter_devnode()	- checked by uev_trigger() (caller);
-> +		 *  - filter_device()	- checked by pathinfo() (DI_BLACKLIST | DI_SYSFS);
-> +		 *  - filter_wwid()	- checked by pathinfo() (DI_BLACKLIST | DI_WWID);
-> +		 *  - filter_property()	- checked here).
-> +		 */
-> +		if (uev->udev) {
-> +			int flag = DI_SYSFS | DI_WWID;
-> +			struct udev_device *udevice;
-> +
-> +			udevice = udev_device_ref(uev->udev);
-> +
-> +			if (filter_property(conf, udevice) > 0)
-> +				retval = PATHINFO_SKIPPED;
-> +			else {
-> +				conf = get_multipath_config();
-> +				retval = alloc_path_with_pathinfo(conf, udevice, flag, NULL);
-> +				put_multipath_config(conf);
-> +			}
-> +
-> +			udev_device_unref(uev->udev);
-> +
-> +			if (retval == PATHINFO_SKIPPED) {
-> +				condlog(3, "%s: spurious uevent, path is blacklisted", uev->kernel);
-> +				return 0;
-> +			}
-> +		}
-> +
->  		condlog(0, "%s: spurious uevent, path not found", uev->kernel);
-> +	}
->  
->  	return retval;
->  }
-> -- 
-> 1.8.3.1
+OK, really truly going to stop digging further now...  ;)  Presumably
+reporting weird behaviors with old kernels doesn't help anyone in
+mainline, and I can buy the whole "memory accesses are slow when you
+start thrashing the system" argument.
+
+-Doug
