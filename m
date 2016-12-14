@@ -1,160 +1,115 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH v4 0/3] multipathd: skip spurious event
- message for blacklisted paths
-Date: Wed, 14 Dec 2016 19:39:00 +0100
-Message-ID: <CABr-GndfXVagGRMT1LHBOpLDx6YcDFzONWULTm9C1qxfdUTwBg@mail.gmail.com>
-References: <1481720731-22503-1-git-send-email-mauricfo@linux.vnet.ibm.com>
-	<20161214155929.GD19659@octiron.msp.redhat.com>
+From: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Subject: [PATCH] dm-crypt: fix lost ioprio when queuing crypto bios from task
+ with ioprio
+Date: Wed, 14 Dec 2016 10:55:19 -0800 (PST)
+Message-ID: <alpine.LRH.2.11.1612141049250.13402@mail.ewheeler.net>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7036940874629542454=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161214155929.GD19659@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============7036940874629542454==
-Content-Type: multipart/alternative; boundary=94eb2c1ab7b88d50180543a2a62f
+Since dm-crypt queues writes (and sometimes reads) to a different kernel
+thread (workqueue), the bios will dispatch from tasks with different
+io_context->ioprio settings than the submitting task, thus giving
+incorrect ioprio hints to the io scheduler.
 
---94eb2c1ab7b88d50180543a2a62f
-Content-Type: text/plain; charset=UTF-8
+By assigning the ioprio to the bio before queuing to a workqueue, the
+original submitting task's io_context->ioprio setting can be retained
+through the life of the bio.  We only set the bio's ioprio in dm-crypt
+if not already set (by somewhere else, higher in the stack).
 
-This set is merged.
-Thanks.
+Signed-off-by: Eric Wheeler <dm-devel@linux.ewheeler.net>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: Shaohua Li <shli@kernel.org>
+Cc: Jens Axboe <axboe@kernel.dk>
+Cc: stable@vger.kernel.org
+---
+ block/bio.c           |  1 +
+ drivers/md/dm-crypt.c | 11 +++++++++--
+ include/linux/bio.h   | 23 +++++++++++++++++++++++
+ 3 files changed, 33 insertions(+), 2 deletions(-)
 
-On Wed, Dec 14, 2016 at 4:59 PM, Benjamin Marzinski <bmarzins@redhat.com>
-wrote:
+diff --git a/block/bio.c b/block/bio.c
+index db85c57..1a529ff 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -584,6 +584,7 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
+ 	bio->bi_iter = bio_src->bi_iter;
+ 	bio->bi_io_vec = bio_src->bi_io_vec;
+ 
++	bio_set_prio(bio, bio_prio(bio_src));
+ 	bio_clone_blkcg_association(bio, bio_src);
+ }
+ EXPORT_SYMBOL(__bio_clone_fast);
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 9b99ee9..ea7e102 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1133,6 +1133,7 @@ static void clone_init(struct dm_crypt_io *io, struct bio *clone)
+ 	clone->bi_private = io;
+ 	clone->bi_end_io  = crypt_endio;
+ 	clone->bi_bdev    = cc->dev->bdev;
++	bio_set_prio(clone, bio_prio(io->base_bio));
+ 	bio_set_op_attrs(clone, bio_op(io->base_bio), bio_flags(io->base_bio));
+ }
+ 
+@@ -2070,10 +2071,16 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
+ 	io->ctx.req = (struct skcipher_request *)(io + 1);
+ 
+ 	if (bio_data_dir(io->base_bio) == READ) {
+-		if (kcryptd_io_read(io, GFP_NOWAIT))
++		if (kcryptd_io_read(io, GFP_NOWAIT)) {
++			if (!ioprio_valid(bio_prio(io->base_bio)))
++				bio_set_task_prio(io->base_bio, current);
+ 			kcryptd_queue_read(io);
+-	} else
++		}
++	} else {
++		if (!ioprio_valid(bio_prio(io->base_bio)))
++			bio_set_task_prio(io->base_bio, current);
+ 		kcryptd_queue_crypt(io);
++	}
+ 
+ 	return DM_MAPIO_SUBMITTED;
+ }
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 97cb48f..0b4f8bb 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -62,6 +62,29 @@
+ #define bio_sectors(bio)	((bio)->bi_iter.bi_size >> 9)
+ #define bio_end_sector(bio)	((bio)->bi_iter.bi_sector + bio_sectors((bio)))
+ 
++/* Set the bio's ioprio to that of the task's io_context->ioprio, if any.
++ * Always returns io_context->ioprio (or 0 if none); bio can be NULL.
++ */
++static inline unsigned short bio_set_task_prio(
++	struct bio *bio, struct task_struct *task)
++{
++	struct io_context *ioc;
++	unsigned short ioprio = 0;
++
++	ioc = get_task_io_context(current, GFP_NOIO, NUMA_NO_NODE);
++	if (ioc) {
++		if (ioprio_valid(ioc->ioprio)) {
++			ioprio = ioc->ioprio;
++			put_io_context(ioc);
++		}
++
++		if (bio != NULL && ioprio_valid(ioprio))
++			bio_set_prio(bio, ioc->ioprio);
++	}
++
++	return ioprio;
++}
++
+ /*
+  * Check whether this bio carries any data or not. A NULL bio is allowed.
+  */
+-- 
+1.8.3.1
 
-> ACK for the set.
->
-> -Ben
->
-> On Wed, Dec 14, 2016 at 11:05:28AM -0200, Mauricio Faria de Oliveira wrote:
-> > This patch-set prevents this error message on 'change'
-> > uevents of paths that are blacklisted:
-> >
-> >     sdb: spurious uevent, path not found
-> >
-> > And in that case, replaces it with this _debug_ message
-> > (so it's not logged by default; only when requested):
-> >
-> >     sdb: spurious uevent, path is blacklisted
-> >
-> > Patch 1/3 fixes a potential leak observed while doing that.
-> > Patch 2/3 minor refactors two blacklist/filter checks into
-> >           pathinfo() to clean-up a bit and fix a couple of
-> >           bugs (reported by Ben and Hannes)
-> > Patch 3/3 finally does what the patch-set is supposed to.
-> >
-> > Changelog:
-> >  - v2: switch approach from using path_discover() to using
-> >        alloc_path_with_pathinfo() (Benjamin Marzinski).
-> >  - v3: drop calls to udev_device_ref/unref() (Benjamin Marzinski)
-> >        move filter_property() into pathinfo() (Benjamin Marzinski)
-> >  - v4: move filter_devnode() into pathinfo() (Hannes Reinecke)
-> >        ensure equivalency between path_discover() and pathinfo()
-> >        for multipathd behavior.
-> >
-> > Mauricio Faria de Oliveira (3):
-> >   libmultipath: prevent memory leak in alloc_path_with_pathinfo() if
-> >     pp_ptr is NULL
-> >   libmultipath: move filter_property|devnode() from path_discover() into
-> >     pathinfo()
-> >   multipathd: skip spurious event message for blacklisted paths
-> >
-> >  libmultipath/blacklist.c |  4 ++++
-> >  libmultipath/discovery.c | 23 +++++++++++++++--------
-> >  multipathd/main.c        | 17 ++++++++++++++++-
-> >  3 files changed, 35 insertions(+), 9 deletions(-)
-> >
-> > --
-> > 1.8.3.1
->
-
---94eb2c1ab7b88d50180543a2a62f
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">This set is merged.<div>Thanks.</div></div><div class=3D"g=
-mail_extra"><br><div class=3D"gmail_quote">On Wed, Dec 14, 2016 at 4:59 PM,=
- Benjamin Marzinski <span dir=3D"ltr">&lt;<a href=3D"mailto:bmarzins@redhat=
-.com" target=3D"_blank">bmarzins@redhat.com</a>&gt;</span> wrote:<br><block=
-quote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc=
- solid;padding-left:1ex">ACK for the set.<br>
-<br>
--Ben<br>
-<div class=3D"HOEnZb"><div class=3D"h5"><br>
-On Wed, Dec 14, 2016 at 11:05:28AM -0200, Mauricio Faria de Oliveira wrote:=
-<br>
-&gt; This patch-set prevents this error message on &#39;change&#39;<br>
-&gt; uevents of paths that are blacklisted:<br>
-&gt;<br>
-&gt;=C2=A0 =C2=A0 =C2=A0sdb: spurious uevent, path not found<br>
-&gt;<br>
-&gt; And in that case, replaces it with this _debug_ message<br>
-&gt; (so it&#39;s not logged by default; only when requested):<br>
-&gt;<br>
-&gt;=C2=A0 =C2=A0 =C2=A0sdb: spurious uevent, path is blacklisted<br>
-&gt;<br>
-&gt; Patch 1/3 fixes a potential leak observed while doing that.<br>
-&gt; Patch 2/3 minor refactors two blacklist/filter checks into<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0pathinfo() to clean-up a bit a=
-nd fix a couple of<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0bugs (reported by Ben and Hann=
-es)<br>
-&gt; Patch 3/3 finally does what the patch-set is supposed to.<br>
-&gt;<br>
-&gt; Changelog:<br>
-&gt;=C2=A0 - v2: switch approach from using path_discover() to using<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 alloc_path_with_pathinfo() (Benjamin Marzin=
-ski).<br>
-&gt;=C2=A0 - v3: drop calls to udev_device_ref/unref() (Benjamin Marzinski)=
-<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 move filter_property() into pathinfo() (Ben=
-jamin Marzinski)<br>
-&gt;=C2=A0 - v4: move filter_devnode() into pathinfo() (Hannes Reinecke)<br=
->
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 ensure equivalency between path_discover() =
-and pathinfo()<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 for multipathd behavior.<br>
-&gt;<br>
-&gt; Mauricio Faria de Oliveira (3):<br>
-&gt;=C2=A0 =C2=A0libmultipath: prevent memory leak in alloc_path_with_pathi=
-nfo() if<br>
-&gt;=C2=A0 =C2=A0 =C2=A0pp_ptr is NULL<br>
-&gt;=C2=A0 =C2=A0libmultipath: move filter_property|devnode() from path_dis=
-cover() into<br>
-&gt;=C2=A0 =C2=A0 =C2=A0pathinfo()<br>
-&gt;=C2=A0 =C2=A0multipathd: skip spurious event message for blacklisted pa=
-ths<br>
-&gt;<br>
-&gt;=C2=A0 libmultipath/blacklist.c |=C2=A0 4 ++++<br>
-&gt;=C2=A0 libmultipath/discovery.c | 23 +++++++++++++++--------<br>
-&gt;=C2=A0 multipathd/main.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 | 17 ++++++++++++++=
-++-<br>
-&gt;=C2=A0 3 files changed, 35 insertions(+), 9 deletions(-)<br>
-&gt;<br>
-&gt; --<br>
-&gt; 1.8.3.1<br>
-</div></div></blockquote></div><br></div>
-
---94eb2c1ab7b88d50180543a2a62f--
-
-
---===============7036940874629542454==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7036940874629542454==--
