@@ -1,8 +1,8 @@
 From: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
-Subject: [PATCH v4 1/3] libmultipath: prevent memory leak in
-	alloc_path_with_pathinfo() if pp_ptr is NULL
-Date: Wed, 14 Dec 2016 11:05:29 -0200
-Message-ID: <1481720731-22503-2-git-send-email-mauricfo@linux.vnet.ibm.com>
+Subject: [PATCH v4 3/3] multipathd: skip spurious event message
+	for blacklisted paths
+Date: Wed, 14 Dec 2016 11:05:31 -0200
+Message-ID: <1481720731-22503-4-git-send-email-mauricfo@linux.vnet.ibm.com>
 References: <1481720731-22503-1-git-send-email-mauricfo@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,31 +21,122 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com, bmarzins@redhat.com, christophe.varoqui@opensvc.com, hare@suse.de
 List-Id: dm-devel.ids
 
-In alloc_path_with_pathinfo(), if the 'pp_ptr' argument is NULL
-(which is acceptable and checked in the function in two places)
-the 'pp' pointer is lost as it is not referenced anywhere else;
-thus the memory allocated for it is leaked.
+Currently, multipath still prints the 'spurious uevent, path not found'
+message if a path is blacklisted by something different than a devnode
+in the 'change' uevent handling. (uev_trigger() calls filter_devnode()).
 
-So, call free_path() in the case 'pp_ptr' is NULL too.
+Thus blacklisting by vendor/product, wwid, and udev property still get
+that message in the system log for paths that are explicitly marked to
+be ignored (since it's verbosity level 0).
+
+This problem happens on common scenarios such as creating filesystems
+on a blacklisted device (e.g., mkfs.* /dev/sdX), which is usually run
+several times on test environments, and the error message may mislead
+the error checker/monitor tools with false negatives.
+
+This patch resolves it by checking alloc_path_with_pathinfo()/pathinfo()
+for PATHINFO_SKIPPED with just enough device information flags for
+blacklist verification -- and it prints a debug message (verbosity
+level 3) instead of an error message since this case is not an error.
+
+Even though this introduces a bit of overhead (to get the path info),
+it only happens in a corner case of an error path; so, not a problem.
+
+Test-cases (on QEMU):
+----------
+
+Several versions of /etc/multipath.conf:
+
+  blacklist {
+      devnode "sdb"
+  }
+
+  blacklist {
+      property "ID_SERIAL"
+  }
+
+  blacklist {
+      wwid "0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1"
+  }
+
+  blacklist {
+      device {
+          vendor "QEMU"
+      }
+  }
+
+Either command can be used to generate a 'change' uevent:
+
+  # echo change > /sys/block/sdb/uevent
+
+  # mkfs.ext3 -F /dev/sdb
+
+The output of multipathd is monitored with:
+
+  # multipathd -d -s
+  ...
+
+Without the patch, only the devnode blacklisting is silent;
+all other cases (property, wwid, device) print the message:
+
+  sdb: spurious uevent, path not found
+
+With the patch applied, no message is printed by default
+(that is, verbosity level 2) in any case.
+
+With verbosity level 3 (debug), the following messages
+are printed, according to the performed test-case:
+
+  uevent 'change' from '/devices/.../block/sdb'
+  Forwarding 1 uevents
+  < and either of >
+
+  sdb: device node name blacklisted
+
+  sdb: udev property ID_SERIAL blacklisted
+  sdb: spurious uevent, path is blacklisted
+
+  sdb: wwid 0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1 blacklisted
+  sdb: spurious uevent, path is blacklisted
+
+  (null): (QEMU:QEMU HARDDISK) vendor/product blacklisted
+  sdb: spurious uevent, path is blacklisted
 
 Signed-off-by: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+Reported-by: Yueh Chyong (Ida) Jackson <idaj@us.ibm.com>
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/main.c | 17 ++++++++++++++++-
+ 1 file changed, 16 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 7b5b4344b2a1..3c5c808436b2 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -58,7 +58,7 @@ alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
- 		err = pathinfo(pp, conf, flag | DI_BLACKLIST);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index d6f081f2f83a..adc325898c76 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1010,8 +1010,23 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
  	}
+ out:
+ 	lock_cleanup_pop(vecs->lock);
+-	if (!pp)
++	if (!pp) {
++		/* If the path is blacklisted, print a debug/non-default verbosity message. */
++		if (uev->udev) {
++			int flag = DI_SYSFS | DI_WWID;
++
++			conf = get_multipath_config();
++			retval = alloc_path_with_pathinfo(conf, uev->udev, flag, NULL);
++			put_multipath_config(conf);
++
++			if (retval == PATHINFO_SKIPPED) {
++				condlog(3, "%s: spurious uevent, path is blacklisted", uev->kernel);
++				return 0;
++			}
++		}
++
+ 		condlog(0, "%s: spurious uevent, path not found", uev->kernel);
++	}
  
--	if (err)
-+	if (err || !pp_ptr)
- 		free_path(pp);
- 	else if (pp_ptr)
- 		*pp_ptr = pp;
+ 	return retval;
+ }
 -- 
 1.8.3.1
