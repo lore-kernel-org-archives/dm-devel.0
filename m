@@ -1,17 +1,14 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: replace multipath
- configuration output
-Date: Wed, 14 Dec 2016 19:29:35 +0100
-Message-ID: <CABr-Gnfz8xR1UkP-KAb-jD3mNU1KCbA0RCw3JwHnhERYbkLy2Q@mail.gmail.com>
-References: <20161124224427.12609-1-xose.vazquez@gmail.com>
-	<1480064411.23852.1.camel@suse.com>
-	<CABr-Gne32p_=xy7rrZ9ZgvPnEbkocYF=mded-8HEk37pofgTug@mail.gmail.com>
-	<20161202035207.GG3099@octiron.msp.redhat.com>
-	<7340eba3-ae61-9933-597e-56c176d22bef@gmail.com>
+Subject: Re: [PATCH] multipath-tools: add .skip_kpartx and
+ .max_sectors_kb to template in hwtable
+Date: Wed, 14 Dec 2016 19:33:10 +0100
+Message-ID: <CABr-Gnf5S6=j0XYLJvw9RwtsCg341gaqj4CYK6sCOf3ga_0kDQ@mail.gmail.com>
+References: <20161208214500.14514-1-xose.vazquez@gmail.com>
+	<20161209160309.GD25309@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1573845253173927371=="
+Content-Type: multipart/mixed; boundary="===============1515708835968462177=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <7340eba3-ae61-9933-597e-56c176d22bef@gmail.com>
+In-Reply-To: <20161209160309.GD25309@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,58 +18,109 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
---===============1573845253173927371==
-Content-Type: multipart/alternative; boundary=001a113d9724de96040543a2842c
+--===============1515708835968462177==
+Content-Type: multipart/alternative; boundary=94eb2c0ec214a63b6d0543a291ce
 
---001a113d9724de96040543a2842c
+--94eb2c0ec214a63b6d0543a291ce
 Content-Type: text/plain; charset=UTF-8
 
-Then merged.
-Thanks for the work and the comments.
+Merged.
 
-On Wed, Dec 7, 2016 at 11:48 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
+On Fri, Dec 9, 2016 at 5:03 PM, Benjamin Marzinski <bmarzins@redhat.com>
 wrote:
 
-> On 12/02/2016 04:52 AM, Benjamin Marzinski wrote:
+> ACK
 >
-> > I don't really see the need for this change. But we wouldn't be pulling
-> > it in until the next major RHEL release [...]
+> Thanks
+> -Ben
 >
-> BTW, do you(SUSE/RH) have any distro fixes/features pending for upstream?
+> On Thu, Dec 08, 2016 at 10:45:00PM +0100, Xose Vazquez Perez wrote:
+> > Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> > Cc: device-mapper development <dm-devel@redhat.com>
+> > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> > ---
+> >  libmultipath/hwtable.c | 2 ++
+> >  1 file changed, 2 insertions(+)
+> >
+> > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> > index c6fc3d1..f5a5f7b 100644
+> > --- a/libmultipath/hwtable.c
+> > +++ b/libmultipath/hwtable.c
+> > @@ -1115,6 +1115,8 @@ static struct hwentry default_hw[] = {
+> >               .deferred_remove = DEFERRED_REMOVE_OFF,
+> >               .delay_watch_checks = DELAY_CHECKS_OFF,
+> >               .delay_wait_checks = DELAY_CHECKS_OFF,
+> > +             .skip_kpartx = SKIP_KPARTX_OFF,
+> > +             .max_sectors_kb = MAX_SECTORS_KB_UNDEF,
+> >       },
+> >  #endif
+> >       /*
+> > --
+> > 2.11.0
 >
 
---001a113d9724de96040543a2842c
+--94eb2c0ec214a63b6d0543a291ce
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Then merged.<div>Thanks for the work and the comments.</di=
-v></div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Wed, D=
-ec 7, 2016 at 11:48 PM, Xose Vazquez Perez <span dir=3D"ltr">&lt;<a href=3D=
-"mailto:xose.vazquez@gmail.com" target=3D"_blank">xose.vazquez@gmail.com</a=
->&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 =
-0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span class=3D"">On 1=
-2/02/2016 04:52 AM, Benjamin Marzinski wrote:<br>
+<div dir=3D"ltr">Merged.</div><div class=3D"gmail_extra"><br><div class=3D"=
+gmail_quote">On Fri, Dec 9, 2016 at 5:03 PM, Benjamin Marzinski <span dir=
+=3D"ltr">&lt;<a href=3D"mailto:bmarzins@redhat.com" target=3D"_blank">bmarz=
+ins@redhat.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" s=
+tyle=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">ACK<=
+br>
 <br>
-&gt; I don&#39;t really see the need for this change. But we wouldn&#39;t b=
-e pulling<br>
-</span>&gt; it in until the next major RHEL release [...]<br>
-<br>
-BTW, do you(SUSE/RH) have any distro fixes/features pending for upstream?<b=
-r>
-</blockquote></div><br></div>
+Thanks<br>
+-Ben<br>
+<div class=3D"HOEnZb"><div class=3D"h5"><br>
+On Thu, Dec 08, 2016 at 10:45:00PM +0100, Xose Vazquez Perez wrote:<br>
+&gt; Cc: Benjamin Marzinski &lt;<a href=3D"mailto:bmarzins@redhat.com">bmar=
+zins@redhat.com</a>&gt;<br>
+&gt; Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensv=
+c.com">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
+&gt; Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.co=
+m">dm-devel@redhat.com</a>&gt;<br>
+&gt; Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@g=
+mail.com">xose.vazquez@gmail.com</a>&gt;<br>
+&gt; ---<br>
+&gt;=C2=A0 libmultipath/hwtable.c | 2 ++<br>
+&gt;=C2=A0 1 file changed, 2 insertions(+)<br>
+&gt;<br>
+&gt; diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c<br>
+&gt; index c6fc3d1..f5a5f7b 100644<br>
+&gt; --- a/libmultipath/hwtable.c<br>
+&gt; +++ b/libmultipath/hwtable.c<br>
+&gt; @@ -1115,6 +1115,8 @@ static struct hwentry default_hw[] =3D {<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.deferred_remove=
+ =3D DEFERRED_REMOVE_OFF,<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.delay_watch_che=
+cks =3D DELAY_CHECKS_OFF,<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.delay_wait_chec=
+ks =3D DELAY_CHECKS_OFF,<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.skip_kpartx =3D SKIP=
+_KPARTX_OFF,<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.max_sectors_kb =3D M=
+AX_SECTORS_KB_UNDEF,<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0},<br>
+&gt;=C2=A0 #endif<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0/*<br>
+&gt; --<br>
+&gt; 2.11.0<br>
+</div></div></blockquote></div><br></div>
 
---001a113d9724de96040543a2842c--
+--94eb2c0ec214a63b6d0543a291ce--
 
 
---===============1573845253173927371==
+--===============1515708835968462177==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1573845253173927371==--
+--===============1515708835968462177==--
