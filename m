@@ -1,8 +1,8 @@
 From: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
-Subject: [PATCH v3 3/3] multipathd: skip spurious event message
-	for blacklisted paths
-Date: Wed, 14 Dec 2016 00:02:01 -0200
-Message-ID: <1481680921-6489-3-git-send-email-mauricfo@linux.vnet.ibm.com>
+Subject: [PATCH v3 2/3] libmultipath: move filter_property() from
+	path_discover() into pathinfo()
+Date: Wed, 14 Dec 2016 00:02:00 -0200
+Message-ID: <1481680921-6489-2-git-send-email-mauricfo@linux.vnet.ibm.com>
 References: <1481680921-6489-1-git-send-email-mauricfo@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,121 +21,100 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com, bmarzins@redhat.com, christophe.varoqui@opensvc.com
 List-Id: dm-devel.ids
 
-Currently, multipath still prints the 'spurious uevent, path not found'
-message if a path is blacklisted by something different than a devnode
-in the 'change' uevent handling. (uev_trigger() calls filter_devnode()).
+The udev property blacklisting is ignored on 'add' uevents
+because uev_add_path() calls pathinfo() directly - but the
+filter_property() check is only performed in path_discover().
 
-Thus blacklisting by vendor/product, wwid, and udev property still get
-that message in the system log for paths that are explicitly marked to
-be ignored (since it's verbosity level 0).
+So, move the call out from path_discover() into pathinfo().
 
-This problem happens on common scenarios such as creating filesystems
-on a blacklisted device (e.g., mkfs.* /dev/sdX), which is usually run
-several times on test environments, and the error message may mislead
-the error checker/monitor tools with false negatives.
+Since path_discover() always calls pathinfo() to return,
+either directly or via store_pathinfo(), the change is
+equivalent for callers of path_discover(), which turns
+out to be only path_discovery().
 
-This patch resolves this by checking alloc_path_with_pathinfo()
-for PATHINFO_SKIPPED with just enough device information flags for
-blacklist verification -- and it prints a debug message (verbosity
-level 3) instead of an error message since this case is not an error.
+Interestingly, multipathd calls path_discovery() without
+DI_BLACKLIST and then calls filter_path() to remove paths,
+so make sure filter_path() also considers filter_property().
 
-Even though this introduces a bit of overhead (to get the path info),
-it only happens in a corner case of an error path; so, not a problem.
+Test-case:
 
-Test-cases (on QEMU):
-----------
-
-Several versions of /etc/multipath.conf:
-
-  blacklist {
-      devnode "sdb"
-  }
-
+  # cat /etc/multipath.conf
   blacklist {
       property "ID_SERIAL"
   }
 
-  blacklist {
-      wwid "0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1"
-  }
+  # udevadm info --query=property /dev/sdb | grep ID_SERIAL=
+  ID_SERIAL=0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1
 
-  blacklist {
-      device {
-          vendor "QEMU"
-      }
-  }
+  # multipathd -d -s -v3 &
 
-Either command can be used to generate a 'change' uevent:
+  # echo add > /sys/block/sdb/uevent
 
-  # echo change > /sys/block/sdb/uevent
+Before:
 
-  # mkfs.ext3 -F /dev/sdb
-
-The output of multipathd is monitored with:
-
-  # multipathd -d -s
+  uevent 'add' from '/devices/.../block/sdb'
+  Forwarding 1 uevents
+  sdb: add path (uevent)
   ...
+  0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1: load table [0 4194304 multipath 1
+  retain_attached_hw_handler 0 1 1 service-time 0 1 1 8:16 1]
+  ...
+  sdb [8:16]: path added to devmap 0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1
 
-Without the patch, only the devnode blacklisting is silent;
-all other cases (property, wwid, device) print the message:
+After:
 
-  sdb: spurious uevent, path not found
-
-With the patch applied, no message is printed by default
-(that is, verbosity level 2) in any case.
-
-With verbosity level 3 (debug), the following messages
-are printed, according to the performed test-case:
-
+  uevent 'add' from '/devices/.../block/sdb'
+  Forwarding 1 uevents
+  sdb: add path (uevent)
+  sdb: mask = 0x3f
   sdb: udev property ID_SERIAL blacklisted
-  sdb: spurious uevent, path is blacklisted
 
-  sdb: wwid 0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1 blacklisted
-  sdb: spurious uevent, path is blacklisted
-
-  (null): (QEMU:QEMU HARDDISK) vendor/product blacklisted
-  sdb: spurious uevent, path is blacklisted
-
-Reported-by: Yueh Chyong (Ida) Jackson <idaj@us.ibm.com>
 Signed-off-by: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+Reported-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 23 ++++++++++++++++++++++-
- 1 file changed, 22 insertions(+), 1 deletion(-)
+ libmultipath/blacklist.c | 4 ++++
+ libmultipath/discovery.c | 7 ++++---
+ 2 files changed, 8 insertions(+), 3 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d6f081f2f83a..ee7a410e4782 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1010,8 +1010,29 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 	}
- out:
- 	lock_cleanup_pop(vecs->lock);
--	if (!pp)
-+	if (!pp) {
-+		/*
-+		 *  If the path is blacklisted, print a debug/non-default verbosity message.
-+		 *  - filter_devnode()	- checked by uev_trigger() (caller);
-+		 *  - filter_device()	- checked by pathinfo() (DI_BLACKLIST | DI_SYSFS);
-+		 *  - filter_wwid()	- checked by pathinfo() (DI_BLACKLIST | DI_WWID);
-+		 *  - filter_property()	- checked by pathinfo() (DI_BLACKLIST)
-+		 */
-+		if (uev->udev) {
-+			int flag = DI_SYSFS | DI_WWID;
-+
-+			conf = get_multipath_config();
-+			retval = alloc_path_with_pathinfo(conf, uev->udev, flag, NULL);
-+			put_multipath_config(conf);
-+
-+			if (retval == PATHINFO_SKIPPED) {
-+				condlog(3, "%s: spurious uevent, path is blacklisted", uev->kernel);
-+				return 0;
-+			}
-+		}
-+
- 		condlog(0, "%s: spurious uevent, path not found", uev->kernel);
-+	}
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+index 676225f9c2e0..36af28213212 100644
+--- a/libmultipath/blacklist.c
++++ b/libmultipath/blacklist.c
+@@ -327,6 +327,10 @@ _filter_path (struct config * conf, struct path * pp)
+ {
+ 	int r;
  
- 	return retval;
- }
++	r = filter_property(conf, pp->udev);
++	if (r > 0)
++		return r;
++
+ 	r = _filter_devnode(conf->blist_devnode, conf->elist_devnode,pp->dev);
+ 	if (r > 0)
+ 		return r;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 3c5c808436b2..52abd4e75c89 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -117,9 +117,6 @@ path_discover (vector pathvec, struct config * conf,
+ 	if (!devname)
+ 		return PATHINFO_FAILED;
+ 
+-	if (filter_property(conf, udevice) > 0)
+-		return PATHINFO_SKIPPED;
+-
+ 	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
+ 			   (char *)devname) > 0)
+ 		return PATHINFO_SKIPPED;
+@@ -1747,6 +1744,10 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 
+ 	condlog(3, "%s: mask = 0x%x", pp->dev, mask);
+ 
++	if (mask & DI_BLACKLIST && pp->udev)
++		if (filter_property(conf, pp->udev) > 0)
++			return PATHINFO_SKIPPED;
++
+ 	/*
+ 	 * Sanity check: we need the device number to
+ 	 * avoid inconsistent information in
 -- 
 1.8.3.1
