@@ -1,14 +1,14 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: add .skip_kpartx and
- .max_sectors_kb to template in hwtable
-Date: Wed, 14 Dec 2016 19:33:10 +0100
-Message-ID: <CABr-Gnf5S6=j0XYLJvw9RwtsCg341gaqj4CYK6sCOf3ga_0kDQ@mail.gmail.com>
-References: <20161208214500.14514-1-xose.vazquez@gmail.com>
-	<20161209160309.GD25309@octiron.msp.redhat.com>
+Subject: Re: [PATCH v4 0/3] multipathd: skip spurious event
+ message for blacklisted paths
+Date: Wed, 14 Dec 2016 19:39:00 +0100
+Message-ID: <CABr-GndfXVagGRMT1LHBOpLDx6YcDFzONWULTm9C1qxfdUTwBg@mail.gmail.com>
+References: <1481720731-22503-1-git-send-email-mauricfo@linux.vnet.ibm.com>
+	<20161214155929.GD19659@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1515708835968462177=="
+Content-Type: multipart/mixed; boundary="===============7036940874629542454=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161209160309.GD25309@octiron.msp.redhat.com>
+In-Reply-To: <20161214155929.GD19659@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,108 +19,142 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
---===============1515708835968462177==
-Content-Type: multipart/alternative; boundary=94eb2c0ec214a63b6d0543a291ce
+--===============7036940874629542454==
+Content-Type: multipart/alternative; boundary=94eb2c1ab7b88d50180543a2a62f
 
---94eb2c0ec214a63b6d0543a291ce
+--94eb2c1ab7b88d50180543a2a62f
 Content-Type: text/plain; charset=UTF-8
 
-Merged.
+This set is merged.
+Thanks.
 
-On Fri, Dec 9, 2016 at 5:03 PM, Benjamin Marzinski <bmarzins@redhat.com>
+On Wed, Dec 14, 2016 at 4:59 PM, Benjamin Marzinski <bmarzins@redhat.com>
 wrote:
 
-> ACK
+> ACK for the set.
 >
-> Thanks
 > -Ben
 >
-> On Thu, Dec 08, 2016 at 10:45:00PM +0100, Xose Vazquez Perez wrote:
-> > Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> > Cc: device-mapper development <dm-devel@redhat.com>
-> > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> > ---
-> >  libmultipath/hwtable.c | 2 ++
-> >  1 file changed, 2 insertions(+)
+> On Wed, Dec 14, 2016 at 11:05:28AM -0200, Mauricio Faria de Oliveira wrote:
+> > This patch-set prevents this error message on 'change'
+> > uevents of paths that are blacklisted:
 > >
-> > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> > index c6fc3d1..f5a5f7b 100644
-> > --- a/libmultipath/hwtable.c
-> > +++ b/libmultipath/hwtable.c
-> > @@ -1115,6 +1115,8 @@ static struct hwentry default_hw[] = {
-> >               .deferred_remove = DEFERRED_REMOVE_OFF,
-> >               .delay_watch_checks = DELAY_CHECKS_OFF,
-> >               .delay_wait_checks = DELAY_CHECKS_OFF,
-> > +             .skip_kpartx = SKIP_KPARTX_OFF,
-> > +             .max_sectors_kb = MAX_SECTORS_KB_UNDEF,
-> >       },
-> >  #endif
-> >       /*
+> >     sdb: spurious uevent, path not found
+> >
+> > And in that case, replaces it with this _debug_ message
+> > (so it's not logged by default; only when requested):
+> >
+> >     sdb: spurious uevent, path is blacklisted
+> >
+> > Patch 1/3 fixes a potential leak observed while doing that.
+> > Patch 2/3 minor refactors two blacklist/filter checks into
+> >           pathinfo() to clean-up a bit and fix a couple of
+> >           bugs (reported by Ben and Hannes)
+> > Patch 3/3 finally does what the patch-set is supposed to.
+> >
+> > Changelog:
+> >  - v2: switch approach from using path_discover() to using
+> >        alloc_path_with_pathinfo() (Benjamin Marzinski).
+> >  - v3: drop calls to udev_device_ref/unref() (Benjamin Marzinski)
+> >        move filter_property() into pathinfo() (Benjamin Marzinski)
+> >  - v4: move filter_devnode() into pathinfo() (Hannes Reinecke)
+> >        ensure equivalency between path_discover() and pathinfo()
+> >        for multipathd behavior.
+> >
+> > Mauricio Faria de Oliveira (3):
+> >   libmultipath: prevent memory leak in alloc_path_with_pathinfo() if
+> >     pp_ptr is NULL
+> >   libmultipath: move filter_property|devnode() from path_discover() into
+> >     pathinfo()
+> >   multipathd: skip spurious event message for blacklisted paths
+> >
+> >  libmultipath/blacklist.c |  4 ++++
+> >  libmultipath/discovery.c | 23 +++++++++++++++--------
+> >  multipathd/main.c        | 17 ++++++++++++++++-
+> >  3 files changed, 35 insertions(+), 9 deletions(-)
+> >
 > > --
-> > 2.11.0
+> > 1.8.3.1
 >
 
---94eb2c0ec214a63b6d0543a291ce
+--94eb2c1ab7b88d50180543a2a62f
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Merged.</div><div class=3D"gmail_extra"><br><div class=3D"=
-gmail_quote">On Fri, Dec 9, 2016 at 5:03 PM, Benjamin Marzinski <span dir=
-=3D"ltr">&lt;<a href=3D"mailto:bmarzins@redhat.com" target=3D"_blank">bmarz=
-ins@redhat.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" s=
-tyle=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">ACK<=
-br>
+<div dir=3D"ltr">This set is merged.<div>Thanks.</div></div><div class=3D"g=
+mail_extra"><br><div class=3D"gmail_quote">On Wed, Dec 14, 2016 at 4:59 PM,=
+ Benjamin Marzinski <span dir=3D"ltr">&lt;<a href=3D"mailto:bmarzins@redhat=
+.com" target=3D"_blank">bmarzins@redhat.com</a>&gt;</span> wrote:<br><block=
+quote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc=
+ solid;padding-left:1ex">ACK for the set.<br>
 <br>
-Thanks<br>
 -Ben<br>
 <div class=3D"HOEnZb"><div class=3D"h5"><br>
-On Thu, Dec 08, 2016 at 10:45:00PM +0100, Xose Vazquez Perez wrote:<br>
-&gt; Cc: Benjamin Marzinski &lt;<a href=3D"mailto:bmarzins@redhat.com">bmar=
-zins@redhat.com</a>&gt;<br>
-&gt; Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensv=
-c.com">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
-&gt; Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.co=
-m">dm-devel@redhat.com</a>&gt;<br>
-&gt; Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@g=
-mail.com">xose.vazquez@gmail.com</a>&gt;<br>
-&gt; ---<br>
-&gt;=C2=A0 libmultipath/hwtable.c | 2 ++<br>
-&gt;=C2=A0 1 file changed, 2 insertions(+)<br>
+On Wed, Dec 14, 2016 at 11:05:28AM -0200, Mauricio Faria de Oliveira wrote:=
+<br>
+&gt; This patch-set prevents this error message on &#39;change&#39;<br>
+&gt; uevents of paths that are blacklisted:<br>
 &gt;<br>
-&gt; diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c<br>
-&gt; index c6fc3d1..f5a5f7b 100644<br>
-&gt; --- a/libmultipath/hwtable.c<br>
-&gt; +++ b/libmultipath/hwtable.c<br>
-&gt; @@ -1115,6 +1115,8 @@ static struct hwentry default_hw[] =3D {<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.deferred_remove=
- =3D DEFERRED_REMOVE_OFF,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.delay_watch_che=
-cks =3D DELAY_CHECKS_OFF,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.delay_wait_chec=
-ks =3D DELAY_CHECKS_OFF,<br>
-&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.skip_kpartx =3D SKIP=
-_KPARTX_OFF,<br>
-&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.max_sectors_kb =3D M=
-AX_SECTORS_KB_UNDEF,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0},<br>
-&gt;=C2=A0 #endif<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0/*<br>
+&gt;=C2=A0 =C2=A0 =C2=A0sdb: spurious uevent, path not found<br>
+&gt;<br>
+&gt; And in that case, replaces it with this _debug_ message<br>
+&gt; (so it&#39;s not logged by default; only when requested):<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0sdb: spurious uevent, path is blacklisted<br>
+&gt;<br>
+&gt; Patch 1/3 fixes a potential leak observed while doing that.<br>
+&gt; Patch 2/3 minor refactors two blacklist/filter checks into<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0pathinfo() to clean-up a bit a=
+nd fix a couple of<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0bugs (reported by Ben and Hann=
+es)<br>
+&gt; Patch 3/3 finally does what the patch-set is supposed to.<br>
+&gt;<br>
+&gt; Changelog:<br>
+&gt;=C2=A0 - v2: switch approach from using path_discover() to using<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 alloc_path_with_pathinfo() (Benjamin Marzin=
+ski).<br>
+&gt;=C2=A0 - v3: drop calls to udev_device_ref/unref() (Benjamin Marzinski)=
+<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 move filter_property() into pathinfo() (Ben=
+jamin Marzinski)<br>
+&gt;=C2=A0 - v4: move filter_devnode() into pathinfo() (Hannes Reinecke)<br=
+>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 ensure equivalency between path_discover() =
+and pathinfo()<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 for multipathd behavior.<br>
+&gt;<br>
+&gt; Mauricio Faria de Oliveira (3):<br>
+&gt;=C2=A0 =C2=A0libmultipath: prevent memory leak in alloc_path_with_pathi=
+nfo() if<br>
+&gt;=C2=A0 =C2=A0 =C2=A0pp_ptr is NULL<br>
+&gt;=C2=A0 =C2=A0libmultipath: move filter_property|devnode() from path_dis=
+cover() into<br>
+&gt;=C2=A0 =C2=A0 =C2=A0pathinfo()<br>
+&gt;=C2=A0 =C2=A0multipathd: skip spurious event message for blacklisted pa=
+ths<br>
+&gt;<br>
+&gt;=C2=A0 libmultipath/blacklist.c |=C2=A0 4 ++++<br>
+&gt;=C2=A0 libmultipath/discovery.c | 23 +++++++++++++++--------<br>
+&gt;=C2=A0 multipathd/main.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 | 17 ++++++++++++++=
+++-<br>
+&gt;=C2=A0 3 files changed, 35 insertions(+), 9 deletions(-)<br>
+&gt;<br>
 &gt; --<br>
-&gt; 2.11.0<br>
+&gt; 1.8.3.1<br>
 </div></div></blockquote></div><br></div>
 
---94eb2c0ec214a63b6d0543a291ce--
+--94eb2c1ab7b88d50180543a2a62f--
 
 
---===============1515708835968462177==
+--===============7036940874629542454==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1515708835968462177==--
+--===============7036940874629542454==--
