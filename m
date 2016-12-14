@@ -1,12 +1,14 @@
 From: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
-Subject: [PATCH v4 0/3] multipathd: skip spurious event message
-	for blacklisted paths
-Date: Wed, 14 Dec 2016 11:05:28 -0200
-Message-ID: <1481720731-22503-1-git-send-email-mauricfo@linux.vnet.ibm.com>
+Subject: [PATCH v4 1/3] libmultipath: prevent memory leak in
+	alloc_path_with_pathinfo() if pp_ptr is NULL
+Date: Wed, 14 Dec 2016 11:05:29 -0200
+Message-ID: <1481720731-22503-2-git-send-email-mauricfo@linux.vnet.ibm.com>
+References: <1481720731-22503-1-git-send-email-mauricfo@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1481720731-22503-1-git-send-email-mauricfo@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,42 +21,31 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com, bmarzins@redhat.com, christophe.varoqui@opensvc.com, hare@suse.de
 List-Id: dm-devel.ids
 
-This patch-set prevents this error message on 'change'
-uevents of paths that are blacklisted:
+In alloc_path_with_pathinfo(), if the 'pp_ptr' argument is NULL
+(which is acceptable and checked in the function in two places)
+the 'pp' pointer is lost as it is not referenced anywhere else;
+thus the memory allocated for it is leaked.
 
-    sdb: spurious uevent, path not found
+So, call free_path() in the case 'pp_ptr' is NULL too.
 
-And in that case, replaces it with this _debug_ message
-(so it's not logged by default; only when requested):
+Signed-off-by: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+Reviewed-by: Hannes Reinecke <hare@suse.com>
+---
+ libmultipath/discovery.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-    sdb: spurious uevent, path is blacklisted
-
-Patch 1/3 fixes a potential leak observed while doing that.
-Patch 2/3 minor refactors two blacklist/filter checks into
-          pathinfo() to clean-up a bit and fix a couple of
-          bugs (reported by Ben and Hannes)
-Patch 3/3 finally does what the patch-set is supposed to.
-
-Changelog:
- - v2: switch approach from using path_discover() to using
-       alloc_path_with_pathinfo() (Benjamin Marzinski).
- - v3: drop calls to udev_device_ref/unref() (Benjamin Marzinski)
-       move filter_property() into pathinfo() (Benjamin Marzinski)
- - v4: move filter_devnode() into pathinfo() (Hannes Reinecke)
-       ensure equivalency between path_discover() and pathinfo()
-       for multipathd behavior.
-
-Mauricio Faria de Oliveira (3):
-  libmultipath: prevent memory leak in alloc_path_with_pathinfo() if
-    pp_ptr is NULL
-  libmultipath: move filter_property|devnode() from path_discover() into
-    pathinfo()
-  multipathd: skip spurious event message for blacklisted paths
-
- libmultipath/blacklist.c |  4 ++++
- libmultipath/discovery.c | 23 +++++++++++++++--------
- multipathd/main.c        | 17 ++++++++++++++++-
- 3 files changed, 35 insertions(+), 9 deletions(-)
-
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 7b5b4344b2a1..3c5c808436b2 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -58,7 +58,7 @@ alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
+ 		err = pathinfo(pp, conf, flag | DI_BLACKLIST);
+ 	}
+ 
+-	if (err)
++	if (err || !pp_ptr)
+ 		free_path(pp);
+ 	else if (pp_ptr)
+ 		*pp_ptr = pp;
 -- 
 1.8.3.1
