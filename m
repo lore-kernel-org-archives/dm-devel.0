@@ -1,16 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2 2/2] multipathd: skip spurious event
- message for blacklisted paths
-Date: Wed, 14 Dec 2016 13:53:09 +0100
-Message-ID: <1481719989.23867.5.camel@suse.com>
-References: <1481653629-22430-1-git-send-email-mauricfo@linux.vnet.ibm.com>
-	<1481653629-22430-2-git-send-email-mauricfo@linux.vnet.ibm.com>
-	<20161213215024.GB19659@octiron.msp.redhat.com>
+From: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+Subject: [PATCH v4 2/3] libmultipath: move
+	filter_property|devnode() from path_discover() into pathinfo()
+Date: Wed, 14 Dec 2016 11:05:30 -0200
+Message-ID: <1481720731-22503-3-git-send-email-mauricfo@linux.vnet.ibm.com>
+References: <1481720731-22503-1-git-send-email-mauricfo@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161213215024.GB19659@octiron.msp.redhat.com>
+In-Reply-To: <1481720731-22503-1-git-send-email-mauricfo@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,37 +18,123 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-devel@redhat.com, bmarzins@redhat.com, christophe.varoqui@opensvc.com, hare@suse.de
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE2LTEyLTEzIGF0IDE1OjUwIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cgo+IE9uIFR1ZSwgRGVjIDEzLCAyMDE2IGF0IDA0OjI3OjA5UE0gLTAyMDAsIE1hdXJpY2lv
-IEZhcmlhIGRlIE9saXZlaXJhCj4gd3JvdGU6Cj4gV2hlbiB5b3UgY2FsbCBhbGxvY19wYXRoX3dp
-dGhfcGF0aGluZm8oKSwgaXQgYWxyZWFkeSBncmFicyB0aGUgc2Vjb25kCj4gcmVmZXJlbmNlIGJl
-Zm9yZSBjYWxsaW5nIHBhdGhpbmZvLiBXaGVuIGl0IGV4aXRzIHdpdGhvdXQgcHBfcHRyIGJlaW5n
-Cj4gc2V0LCBpdCBmcmVlcyB0aGF0IGV4dHJhIHJlZmVyZW5jZSBpbiBmcmVlX3BhdGgoKS4gQnV0
-IHRoaXMgd2hvbGUKPiB0aW1lLAo+IHdlIGFyZSBzdGlsbCBzZXJ2aWNpbmcgdGhlIHVldmVudCwg
-YW5kIHRoYXQgb3JpZ2lubCByZWZlcmVuY2UgaXMKPiBhbHdheXMKPiBoZWxkLCBzbyB3ZSBkb24n
-dCBldmVyIG5lZWQgdG8gd29ycnkgYWJvdXQgdGhlIHVkZXZpY2UgZ2V0dGluZwo+IGRlbGV0ZWQK
-PiBvdXQgZnJvbSB1bmRlciB1cy4gSSBkb24ndCBzZWUgYW55IHBvc3NpYmxlIGRhbmdlciBpbiBy
-ZW1vdmluZyB0aGUKPiB1ZGV2X2RldmljZV9yZWYvdW5yZWYgY2FsbHMgZnJvbSB5b3VyIGNvZGUu
-IFRoZXkgZG9uJ3QgaHVydCBhbnl0aGluZywKPiBidXQgZ3JhYmJpbmcgcmVmZXJlbmNlcyB3aGVu
-IHdlIGRvbid0IG5lZWQgdGhlbSBqdXN0IGNvbmZ1c2VzIG90aGVyCj4gcGVvcGxlIHdobyBhcmUg
-dHJ5aW5nIHJlYWRpbmcgdGhlIGNvZGUsIGFuZCBtYWtlcyB0aGUgcHVycG9zZSBvZiB0aGUKPiBy
-ZWZlcmVuY2VzIGhhcmRlciB0byB1bmRlcnN0YW5kLgoKQXMgc29tZW9uZSB3aG8gaGFzIGp1c3Qg
-cmVjZW50bHkgc3RhcnRlZCByZWFkaW5nIHRoZSBtdWx0aXBhdGgtdG9vbHMKY29kZSBpbiBkZXB0
-aCwgSSB0ZW5kIHRvIGRpc2FncmVlLiBTb21lb25lIHJlYWRpbmcgdGhlIGZ1bmN0aW9uCmluY2x1
-ZGluZyB0aGUgdWRldl9kZXZpY2VfcmVmKCkvdW5yZWYoKSBjYWxscyB3b3VsZCBzZWUgdGhhdCB0
-aGUgZGV2aWNlCnJlZmVyZW5jZXMgYXJlIGhhbmRsZWQgY29ycmVjdGx5IGluIHRoZSBmdW5jdGlv
-biBpdHNlbGYsIHdpdGhvdXQgaGF2aW5nCnRvIGtub3cgb3IgaGF2aW5nIHRvIHRyYWNrIGRvd24g
-aG93IHRoZSBkZXZpY2UgcmVmZXJlbmNlcyBhcmUgY3JlYXRlZAphbmQgZHJvcHBlZCBpbiBvdGhl
-ciBwYXJ0cyBvZiB0aGUgY29kZS4gTW9yZW92ZXIsIGlmIHRoZSBnbG9iYWwgcmVmCmhhbmRsaW5n
-IHdhcyBldmVyIHRvIGJlIGNoYW5nZWQgaW4gdGhlIGZ1dHVyZSwgdGhpcyBmdW5jdGlvbiB3b3Vs
-ZApzdGlsbCBiZSAic2FmZSIuCgpJZiB0aGUgdWRldl9kZXZpY2VfcmVmL3VucmVmIGNhbGxzIGFy
-ZSByZW1vdmVkLCBhdCBsZWFzdCBhIGNvbW1lbnQKZXhwbGFpbmluZyB3aHkgdGhleSBhcmVuJ3Qg
-bmVlZGVkIHdvdWxkIGhlbHAgbmV3IHJlYWRlcnMgb2YgdGhlIGNvZGUuCgpSZWdhcmRzCk1hcnRp
-bgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC7CoCs0OSAoMCk5
-MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEph
-bmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpk
-bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+The udev property blacklisting is ignored on 'add' uevents
+because uev_add_path() calls pathinfo() directly - but the
+filter_property() check is only performed in path_discover().
+
+So, move the call out from path_discover() into pathinfo().
+While in there, do that for filter_devnode() too.
+
+Since path_discover() always calls pathinfo() to return,
+either directly or via store_pathinfo(), the change is
+equivalent for callers of path_discover(), which turns
+out to be only path_discovery().
+
+Interestingly, multipathd calls path_discovery() without
+DI_BLACKLIST and then calls filter_path() to remove paths.
+Thus, in order to guarantee equivalency (and prevent lots
+of more debug messages for discovery of devices that will
+be removed afterward), perform filter_property|devnode()
+without checking for DI_BLACKLIST; and make sure that
+filter_path() checks filter_property() (it already checks
+filter_devnode()).
+
+Test-case:
+
+  # cat /etc/multipath.conf
+  blacklist {
+      property "ID_SERIAL"
+  }
+
+  # multipathd -d -s -v3 &
+  ...
+  sdb: udev property ID_SERIAL blacklisted
+  ...
+
+  # echo add > /sys/block/sdb/uevent
+
+Before:
+
+  uevent 'add' from '/devices/.../block/sdb'
+  Forwarding 1 uevents
+  sdb: add path (uevent)
+  ...
+  0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1: load table [0 4194304 multipath 1
+  retain_attached_hw_handler 0 1 1 service-time 0 1 1 8:16 1]
+  ...
+  sdb [8:16]: path added to devmap 0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1
+
+After:
+
+  uevent 'add' from '/devices/.../block/sdb'
+  Forwarding 1 uevents
+  sdb: add path (uevent)
+  sdb: udev property ID_SERIAL blacklisted
+
+Signed-off-by: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+Reported-by: Benjamin Marzinski <bmarzins@redhat.com>
+Reported-by: Hannes Reinecke <hare@suse.de>
+---
+ libmultipath/blacklist.c |  4 ++++
+ libmultipath/discovery.c | 21 ++++++++++++++-------
+ 2 files changed, 18 insertions(+), 7 deletions(-)
+
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+index 676225f9c2e0..36af28213212 100644
+--- a/libmultipath/blacklist.c
++++ b/libmultipath/blacklist.c
+@@ -327,6 +327,10 @@ _filter_path (struct config * conf, struct path * pp)
+ {
+ 	int r;
+ 
++	r = filter_property(conf, pp->udev);
++	if (r > 0)
++		return r;
++
+ 	r = _filter_devnode(conf->blist_devnode, conf->elist_devnode,pp->dev);
+ 	if (r > 0)
+ 		return r;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 3c5c808436b2..d1aec31ea0f8 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -117,13 +117,6 @@ path_discover (vector pathvec, struct config * conf,
+ 	if (!devname)
+ 		return PATHINFO_FAILED;
+ 
+-	if (filter_property(conf, udevice) > 0)
+-		return PATHINFO_SKIPPED;
+-
+-	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
+-			   (char *)devname) > 0)
+-		return PATHINFO_SKIPPED;
+-
+ 	pp = find_path_by_dev(pathvec, (char *)devname);
+ 	if (!pp) {
+ 		return store_pathinfo(pathvec, conf,
+@@ -1745,6 +1738,20 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 	if (!pp)
+ 		return PATHINFO_FAILED;
+ 
++	/*
++	 * For behavior backward-compatibility with multipathd,
++	 * the blacklisting by filter_property|devnode() is not
++	 * limited by DI_BLACKLIST and occurs before this debug
++	 * message with the mask value.
++	 */
++	if (pp->udev && filter_property(conf, pp->udev) > 0)
++		return PATHINFO_SKIPPED;
++
++	if (filter_devnode(conf->blist_devnode,
++			   conf->elist_devnode,
++			   pp->dev) > 0)
++		return PATHINFO_SKIPPED;
++
+ 	condlog(3, "%s: mask = 0x%x", pp->dev, mask);
+ 
+ 	/*
+-- 
+1.8.3.1
