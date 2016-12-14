@@ -1,14 +1,16 @@
 From: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
-Subject: [PATCH v4 3/3] multipathd: skip spurious event message
-	for blacklisted paths
-Date: Wed, 14 Dec 2016 11:05:31 -0200
-Message-ID: <1481720731-22503-4-git-send-email-mauricfo@linux.vnet.ibm.com>
-References: <1481720731-22503-1-git-send-email-mauricfo@linux.vnet.ibm.com>
+Subject: Re: [PATCH v3 2/3] libmultipath: move filter_property()
+ from path_discover() into pathinfo()
+Date: Wed, 14 Dec 2016 11:07:18 -0200
+Message-ID: <74877e30-eba6-d73f-cbd2-9aa8e5fb0894@linux.vnet.ibm.com>
+References: <1481680921-6489-1-git-send-email-mauricfo@linux.vnet.ibm.com>
+	<1481680921-6489-2-git-send-email-mauricfo@linux.vnet.ibm.com>
+	<77bf0fec-a848-93dc-095b-24b70019dd64@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1481720731-22503-1-git-send-email-mauricfo@linux.vnet.ibm.com>
+In-Reply-To: <77bf0fec-a848-93dc-095b-24b70019dd64@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,125 +20,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, bmarzins@redhat.com, christophe.varoqui@opensvc.com, hare@suse.de
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Currently, multipath still prints the 'spurious uevent, path not found'
-message if a path is blacklisted by something different than a devnode
-in the 'change' uevent handling. (uev_trigger() calls filter_devnode()).
+Hi Hannes,
 
-Thus blacklisting by vendor/product, wwid, and udev property still get
-that message in the system log for paths that are explicitly marked to
-be ignored (since it's verbosity level 0).
+Thanks for reviewing.
 
-This problem happens on common scenarios such as creating filesystems
-on a blacklisted device (e.g., mkfs.* /dev/sdX), which is usually run
-several times on test environments, and the error message may mislead
-the error checker/monitor tools with false negatives.
+On 12/14/2016 05:04 AM, Hannes Reinecke wrote:
+> So wouldn't it make more sense to move filter_devnode() into pathinfo(),
+> too, to avoid further inconsistencies between _filter_path() and
+> pathinfo()?
 
-This patch resolves it by checking alloc_path_with_pathinfo()/pathinfo()
-for PATHINFO_SKIPPED with just enough device information flags for
-blacklist verification -- and it prints a debug message (verbosity
-level 3) instead of an error message since this case is not an error.
+Agree.
 
-Even though this introduces a bit of overhead (to get the path info),
-it only happens in a corner case of an error path; so, not a problem.
+> Especially as it looks that if we need to call filter_devnode() in
+> get_refwwid(), too; starting with line 976 we're just calling
+> 'store_pathinfo' for the device node, with no check for blacklisted
+> devnode at all.
+> (Which also goes to explain why I have this mysterious bug where
+> blacklisting by device node doesn't properly work ...).
+> So moving filter_devnode() in pathinfo would be more sensible and clean
+> up the overall programming model.
 
-Test-cases (on QEMU):
-----------
+I see. Ok, changed/submitted v4.  Hope it helps w/ that mysterious bug.
 
-Several versions of /etc/multipath.conf:
-
-  blacklist {
-      devnode "sdb"
-  }
-
-  blacklist {
-      property "ID_SERIAL"
-  }
-
-  blacklist {
-      wwid "0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1"
-  }
-
-  blacklist {
-      device {
-          vendor "QEMU"
-      }
-  }
-
-Either command can be used to generate a 'change' uevent:
-
-  # echo change > /sys/block/sdb/uevent
-
-  # mkfs.ext3 -F /dev/sdb
-
-The output of multipathd is monitored with:
-
-  # multipathd -d -s
-  ...
-
-Without the patch, only the devnode blacklisting is silent;
-all other cases (property, wwid, device) print the message:
-
-  sdb: spurious uevent, path not found
-
-With the patch applied, no message is printed by default
-(that is, verbosity level 2) in any case.
-
-With verbosity level 3 (debug), the following messages
-are printed, according to the performed test-case:
-
-  uevent 'change' from '/devices/.../block/sdb'
-  Forwarding 1 uevents
-  < and either of >
-
-  sdb: device node name blacklisted
-
-  sdb: udev property ID_SERIAL blacklisted
-  sdb: spurious uevent, path is blacklisted
-
-  sdb: wwid 0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1 blacklisted
-  sdb: spurious uevent, path is blacklisted
-
-  (null): (QEMU:QEMU HARDDISK) vendor/product blacklisted
-  sdb: spurious uevent, path is blacklisted
-
-Signed-off-by: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
-Reported-by: Yueh Chyong (Ida) Jackson <idaj@us.ibm.com>
-Reviewed-by: Hannes Reinecke <hare@suse.com>
----
- multipathd/main.c | 17 ++++++++++++++++-
- 1 file changed, 16 insertions(+), 1 deletion(-)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d6f081f2f83a..adc325898c76 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1010,8 +1010,23 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 	}
- out:
- 	lock_cleanup_pop(vecs->lock);
--	if (!pp)
-+	if (!pp) {
-+		/* If the path is blacklisted, print a debug/non-default verbosity message. */
-+		if (uev->udev) {
-+			int flag = DI_SYSFS | DI_WWID;
-+
-+			conf = get_multipath_config();
-+			retval = alloc_path_with_pathinfo(conf, uev->udev, flag, NULL);
-+			put_multipath_config(conf);
-+
-+			if (retval == PATHINFO_SKIPPED) {
-+				condlog(3, "%s: spurious uevent, path is blacklisted", uev->kernel);
-+				return 0;
-+			}
-+		}
-+
- 		condlog(0, "%s: spurious uevent, path not found", uev->kernel);
-+	}
- 
- 	return retval;
- }
 -- 
-1.8.3.1
+Mauricio Faria de Oliveira
+IBM Linux Technology Center
