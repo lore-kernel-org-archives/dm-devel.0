@@ -1,64 +1,56 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH] mm: introduce kv[mz]alloc helpers
-Date: Wed, 14 Dec 2016 10:05:02 +0100
-Message-ID: <20161214090502.GC25573@dhcp22.suse.cz>
-References: <20161208103300.23217-1-mhocko@kernel.org>
- <20161213101451.GB10492@dhcp22.suse.cz>
- <C2C892CD-BAF7-4E72-927D-B79D95A9B7FA@dilger.ca>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2 2/2] multipathd: skip spurious event
+ message for blacklisted paths
+Date: Wed, 14 Dec 2016 13:53:09 +0100
+Message-ID: <1481719989.23867.5.camel@suse.com>
+References: <1481653629-22430-1-git-send-email-mauricfo@linux.vnet.ibm.com>
+	<1481653629-22430-2-git-send-email-mauricfo@linux.vnet.ibm.com>
+	<20161213215024.GB19659@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <C2C892CD-BAF7-4E72-927D-B79D95A9B7FA@dilger.ca>
-Sender: owner-linux-mm@kvack.org
-To: Andreas Dilger <adilger@dilger.ca>
-Cc: Linux MM <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, David Rientjes <rientjes@google.com>, Mel Gorman <mgorman@suse.de>, Johannes Weiner <hannes@cmpxchg.org>, Anatoly Stepanov <astepanov@cloudlinux.com>, LKML <linux-kernel@vger.kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, "Michael S. Tsirkin" <mst@redhat.com>, Theodore Ts'o <tytso@mit.edu>, kvm@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Al Viro <viro@zeniv.linux.org.uk>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20161213215024.GB19659@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue 13-12-16 13:55:46, Andreas Dilger wrote:
-> On Dec 13, 2016, at 3:14 AM, Michal Hocko <mhocko@kernel.org> wrote:
-> > 
-> > Are there any more comments or objections to this patch? Is this a good
-> > start or kv[mz]alloc has to provide a way to cover GFP_NOFS users as
-> > well in the initial version.
-> 
-> I'm in favour of this cleanup as a starting point.  I definitely agree
-> that this same functionality is in use in a number of places and should
-> be consolidated.
-> 
-> The vmalloc() from GFP_NOFS can be addressed separately in later patches.
-> That is an issue for several filesystems, and while XFS works around this,
-> it would be better to lift that out of the filesystem code into the VM.
-
-Well, my longer term plan is to change how GFP_NOFS is used from the fs
-code rather than tweak the VM layer. The current situation with the nofs
-is messy and confusing. In many contexts it is used without a good
-reason - just to be sure that nothing will break. I strongly believe
-that we should use a scope api [1] which marks whole regions of
-potentially reclaim dangerous code paths and all the allocations within
-that region will inherit the nofs protection automatically. That would
-solve the vmalloc(GFP_NOFS) problem as well. The route to get there is
-no short or easy. I am planning to repost the scope patchset hopefully
-soon with ext4 converted.
-
-[1] http://lkml.kernel.org/r/1461671772-1269-1-git-send-email-mhocko@kernel.org
-
-> Really, there are several of things about vmalloc() that could improve
-> if we decided to move it out of the dog house and allow it to become a
-> first class citizen, but that needs a larger discussion, and you can
-> already do a lot of cleanup with just the introduction of kvmalloc().
-> 
-> Since this is changing the ext4 code, you can add my:
-> 
-> Reviewed-by: Andreas Dilger <adilger@dilger.ca>
-
-thanks!
--- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+T24gVHVlLCAyMDE2LTEyLTEzIGF0IDE1OjUwIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cgo+IE9uIFR1ZSwgRGVjIDEzLCAyMDE2IGF0IDA0OjI3OjA5UE0gLTAyMDAsIE1hdXJpY2lv
+IEZhcmlhIGRlIE9saXZlaXJhCj4gd3JvdGU6Cj4gV2hlbiB5b3UgY2FsbCBhbGxvY19wYXRoX3dp
+dGhfcGF0aGluZm8oKSwgaXQgYWxyZWFkeSBncmFicyB0aGUgc2Vjb25kCj4gcmVmZXJlbmNlIGJl
+Zm9yZSBjYWxsaW5nIHBhdGhpbmZvLiBXaGVuIGl0IGV4aXRzIHdpdGhvdXQgcHBfcHRyIGJlaW5n
+Cj4gc2V0LCBpdCBmcmVlcyB0aGF0IGV4dHJhIHJlZmVyZW5jZSBpbiBmcmVlX3BhdGgoKS4gQnV0
+IHRoaXMgd2hvbGUKPiB0aW1lLAo+IHdlIGFyZSBzdGlsbCBzZXJ2aWNpbmcgdGhlIHVldmVudCwg
+YW5kIHRoYXQgb3JpZ2lubCByZWZlcmVuY2UgaXMKPiBhbHdheXMKPiBoZWxkLCBzbyB3ZSBkb24n
+dCBldmVyIG5lZWQgdG8gd29ycnkgYWJvdXQgdGhlIHVkZXZpY2UgZ2V0dGluZwo+IGRlbGV0ZWQK
+PiBvdXQgZnJvbSB1bmRlciB1cy4gSSBkb24ndCBzZWUgYW55IHBvc3NpYmxlIGRhbmdlciBpbiBy
+ZW1vdmluZyB0aGUKPiB1ZGV2X2RldmljZV9yZWYvdW5yZWYgY2FsbHMgZnJvbSB5b3VyIGNvZGUu
+IFRoZXkgZG9uJ3QgaHVydCBhbnl0aGluZywKPiBidXQgZ3JhYmJpbmcgcmVmZXJlbmNlcyB3aGVu
+IHdlIGRvbid0IG5lZWQgdGhlbSBqdXN0IGNvbmZ1c2VzIG90aGVyCj4gcGVvcGxlIHdobyBhcmUg
+dHJ5aW5nIHJlYWRpbmcgdGhlIGNvZGUsIGFuZCBtYWtlcyB0aGUgcHVycG9zZSBvZiB0aGUKPiBy
+ZWZlcmVuY2VzIGhhcmRlciB0byB1bmRlcnN0YW5kLgoKQXMgc29tZW9uZSB3aG8gaGFzIGp1c3Qg
+cmVjZW50bHkgc3RhcnRlZCByZWFkaW5nIHRoZSBtdWx0aXBhdGgtdG9vbHMKY29kZSBpbiBkZXB0
+aCwgSSB0ZW5kIHRvIGRpc2FncmVlLiBTb21lb25lIHJlYWRpbmcgdGhlIGZ1bmN0aW9uCmluY2x1
+ZGluZyB0aGUgdWRldl9kZXZpY2VfcmVmKCkvdW5yZWYoKSBjYWxscyB3b3VsZCBzZWUgdGhhdCB0
+aGUgZGV2aWNlCnJlZmVyZW5jZXMgYXJlIGhhbmRsZWQgY29ycmVjdGx5IGluIHRoZSBmdW5jdGlv
+biBpdHNlbGYsIHdpdGhvdXQgaGF2aW5nCnRvIGtub3cgb3IgaGF2aW5nIHRvIHRyYWNrIGRvd24g
+aG93IHRoZSBkZXZpY2UgcmVmZXJlbmNlcyBhcmUgY3JlYXRlZAphbmQgZHJvcHBlZCBpbiBvdGhl
+ciBwYXJ0cyBvZiB0aGUgY29kZS4gTW9yZW92ZXIsIGlmIHRoZSBnbG9iYWwgcmVmCmhhbmRsaW5n
+IHdhcyBldmVyIHRvIGJlIGNoYW5nZWQgaW4gdGhlIGZ1dHVyZSwgdGhpcyBmdW5jdGlvbiB3b3Vs
+ZApzdGlsbCBiZSAic2FmZSIuCgpJZiB0aGUgdWRldl9kZXZpY2VfcmVmL3VucmVmIGNhbGxzIGFy
+ZSByZW1vdmVkLCBhdCBsZWFzdCBhIGNvbW1lbnQKZXhwbGFpbmluZyB3aHkgdGhleSBhcmVuJ3Qg
+bmVlZGVkIHdvdWxkIGhlbHAgbmV3IHJlYWRlcnMgb2YgdGhlIGNvZGUuCgpSZWdhcmRzCk1hcnRp
+bgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC7CoCs0OSAoMCk5
+MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEph
+bmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpk
+bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
+YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
