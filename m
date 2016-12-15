@@ -1,47 +1,136 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH 5/8] linux: drop __bitwise__ everywhere
-Date: Thu, 15 Dec 2016 03:51:46 -0800
-Message-ID: <20161215115146.GB22750@kroah.com>
-References: <1481778865-27667-1-git-send-email-mst@redhat.com>
- <1481778865-27667-6-git-send-email-mst@redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: remove old
+ multipath/{01_udev, 02_multipath} scripts
+Date: Thu, 15 Dec 2016 15:12:29 +0100
+Message-ID: <173688c0-8160-b249-da19-a35d9c8d5e38@gmail.com>
+References: <20161104234812.6414-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <1481778865-27667-6-git-send-email-mst@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: linux-kernel@vger.kernel.org, Kukjin Kim <kgene@kernel.org>, Krzysztof Kozlowski <krzk@kernel.org>, Javier Martinez Canillas <javier@osg.samsung.com>, Russell King <linux@armlinux.org.uk>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Johannes Berg <johannes.berg@intel.com>, Emmanuel Grumbach <emmanuel.grumbach@intel.com>, Luca Coelho <luciano.coelho@intel.com>, Intel Linux Wireless <linuxwifi@intel.com>, Kalle Valo <kvalo@codeaurora.org>, Jiri Slaby <jslaby@suse.com>, Lee Duncan <lduncan@suse.com>, Chris Leech <cleech@redhat.com>, "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "Nicholas A. Bellinger" <nab@linux-iscsi.org>, Jason Wang <jasowang@redhat.com>, Alexander Aring <aar@pengutronix.de>, Stefan Schmidt <stefan@osg.samsung.com>, Davi
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20161104234812.6414-1-xose.vazquez@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Dec 15, 2016 at 07:15:20AM +0200, Michael S. Tsirkin wrote:
-> __bitwise__ used to mean "yes, please enable sparse checks
-> unconditionally", but now that we dropped __CHECK_ENDIAN__
-> __bitwise is exactly the same.
-> There aren't many users, replace it by __bitwise everywhere.
-> 
-> Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+On 11/05/2016 12:48 AM, Xose Vazquez Perez wrote:
+
+> Irrelevant nowadays.
+
+You can delete these two files safely. They are pretty old,
+unmaintained and unused by distributions.
+
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 > ---
->  arch/arm/plat-samsung/include/plat/gpio-cfg.h    | 2 +-
->  drivers/md/dm-cache-block-types.h                | 6 +++---
->  drivers/net/ethernet/sun/sunhme.h                | 2 +-
->  drivers/net/wireless/intel/iwlwifi/iwl-fw-file.h | 4 ++--
->  include/linux/mmzone.h                           | 2 +-
->  include/linux/serial_core.h                      | 4 ++--
->  include/linux/types.h                            | 4 ++--
->  include/scsi/iscsi_proto.h                       | 2 +-
->  include/target/target_core_base.h                | 2 +-
->  include/uapi/linux/virtio_types.h                | 6 +++---
->  net/ieee802154/6lowpan/6lowpan_i.h               | 2 +-
->  net/mac80211/ieee80211_i.h                       | 4 ++--
->  12 files changed, 20 insertions(+), 20 deletions(-)
-
-for include/linux/serial_core.h:
-
-Acked-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+>  multipath/01_udev      | 50 --------------------------------------------------
+>  multipath/02_multipath | 32 --------------------------------
+>  2 files changed, 82 deletions(-)
+>  delete mode 100755 multipath/01_udev
+>  delete mode 100755 multipath/02_multipath
+> 
+> diff --git a/multipath/01_udev b/multipath/01_udev
+> deleted file mode 100755
+> index c4e4c53..0000000
+> --- a/multipath/01_udev
+> +++ /dev/null
+> @@ -1,50 +0,0 @@
+> -#!/bin/sh
+> -#
+> -cp /sbin/udev $INITRDDIR/sbin/hotplug
+> -cp /sbin/udevstart $INITRDDIR/sbin/
+> -cp /bin/mountpoint $INITRDDIR/bin/
+> -cp /bin/readlink $INITRDDIR/bin/
+> -
+> -PROGS="/sbin/udev /sbin/udevstart /bin/mountpoint /bin/readlink"
+> -LIBS=`ldd $PROGS | grep -v linux-gate.so | sort -u | \
+> -awk '{print $3}'`
+> -for i in $LIBS
+> -do
+> -	mkdir -p `dirname $INITRDDIR/$i`
+> -	cp $i $INITRDDIR/$i
+> -done
+> -
+> -#
+> -# config files
+> -#
+> -if [ -d /etc/dev.d ]
+> -then
+> -	cp -a /etc/dev.d $INITRDDIR/etc/
+> -fi
+> -
+> -if [ -d /etc/udev ]
+> -then
+> -	cp -a /etc/udev $INITRDDIR/etc/
+> -fi
+> -
+> -#
+> -# run udev from initrd
+> -#
+> -cat <<EOF >| $INITRDDIR/scripts/10_udev.sh
+> -
+> -cd /
+> -mount -nt proc proc proc
+> -mount -nt sysfs sysfs sys
+> -mount -nt tmpfs tmpfs dev || mount -nt ramfs ramfs dev
+> -mount -nt tmpfs tmpfs tmp || mount -nt ramfs ramfs tmp
+> -
+> -#modprobe dm-mod
+> -#modprobe dm-multipath
+> -/sbin/udevstart
+> -
+> -umount -n tmp
+> -umount -n sys
+> -umount -n proc
+> -
+> -sleep 2
+> -EOF
+> diff --git a/multipath/02_multipath b/multipath/02_multipath
+> deleted file mode 100755
+> index 523f0ef..0000000
+> --- a/multipath/02_multipath
+> +++ /dev/null
+> @@ -1,32 +0,0 @@
+> -#!/bin/sh
+> -#
+> -# store the multipath tool in the initrd
+> -# hotplug & udev will take care of calling it when appropriate
+> -# this tool is statically linked against klibc : no additional libs
+> -#
+> -cp /sbin/multipath $INITRDDIR/sbin
+> -cp /sbin/kpartx $INITRDDIR/sbin
+> -
+> -#
+> -# feed the dependencies too
+> -# scsi_id is dynamicaly linked, so store the libs too
+> -#
+> -cp /lib/udev/scsi_id $INITRDDIR/lib/udev/
+> -cp /bin/mountpoint $INITRDDIR/bin
+> -
+> -PROGS="/lib/udev/scsi_id /bin/mountpoint"
+> -LIBS=`ldd $PROGS | grep -v linux-gate.so | sort -u | \
+> -awk '{print $3}'`
+> -for i in $LIBS
+> -do
+> -	mkdir -p `dirname $INITRDDIR/$i`
+> -	cp $i $INITRDDIR/$i
+> -done
+> -
+> -#
+> -# config file ?
+> -#
+> -if [ -f /etc/multipath.conf ]
+> -then
+> -	cp /etc/multipath.conf $INITRDDIR/etc/
+> -fi
+> 
