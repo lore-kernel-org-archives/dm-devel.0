@@ -1,14 +1,10 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: remove old
- multipath/{01_udev, 02_multipath} scripts
-Date: Thu, 15 Dec 2016 15:12:29 +0100
-Message-ID: <173688c0-8160-b249-da19-a35d9c8d5e38@gmail.com>
-References: <20161104234812.6414-1-xose.vazquez@gmail.com>
+From: muneendra kumar <muneendra737@gmail.com>
+Subject: adding new config paremeters
+Date: Thu, 15 Dec 2016 16:08:00 +0530
+Message-ID: <CAAhcyzmSEZnqaZCL8RCrU5hvKMwBwgTE+EL=9gzWaDqms86ChA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0431758151792501164=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20161104234812.6414-1-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,119 +14,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/05/2016 12:48 AM, Xose Vazquez Perez wrote:
+--===============0431758151792501164==
+Content-Type: multipart/alternative; boundary=94eb2c12fffc2c2f9c0543b00cfb
 
-> Irrelevant nowadays.
+--94eb2c12fffc2c2f9c0543b00cfb
+Content-Type: text/plain; charset=UTF-8
 
-You can delete these two files safely. They are pretty old,
-unmaintained and unused by distributions.
+Hi,
+If i want to add any new parameter in  config(mulitpath.conf) file (like
+max_fds) what all the files i need to modify
+and how can i pass the same info to the kernel.
+Could you please let me know in the kernel which file  i need to  do
+changes to print the same config values which has been defined in config
+file.
+Any help  in this will be great.
 
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  multipath/01_udev      | 50 --------------------------------------------------
->  multipath/02_multipath | 32 --------------------------------
->  2 files changed, 82 deletions(-)
->  delete mode 100755 multipath/01_udev
->  delete mode 100755 multipath/02_multipath
-> 
-> diff --git a/multipath/01_udev b/multipath/01_udev
-> deleted file mode 100755
-> index c4e4c53..0000000
-> --- a/multipath/01_udev
-> +++ /dev/null
-> @@ -1,50 +0,0 @@
-> -#!/bin/sh
-> -#
-> -cp /sbin/udev $INITRDDIR/sbin/hotplug
-> -cp /sbin/udevstart $INITRDDIR/sbin/
-> -cp /bin/mountpoint $INITRDDIR/bin/
-> -cp /bin/readlink $INITRDDIR/bin/
-> -
-> -PROGS="/sbin/udev /sbin/udevstart /bin/mountpoint /bin/readlink"
-> -LIBS=`ldd $PROGS | grep -v linux-gate.so | sort -u | \
-> -awk '{print $3}'`
-> -for i in $LIBS
-> -do
-> -	mkdir -p `dirname $INITRDDIR/$i`
-> -	cp $i $INITRDDIR/$i
-> -done
-> -
-> -#
-> -# config files
-> -#
-> -if [ -d /etc/dev.d ]
-> -then
-> -	cp -a /etc/dev.d $INITRDDIR/etc/
-> -fi
-> -
-> -if [ -d /etc/udev ]
-> -then
-> -	cp -a /etc/udev $INITRDDIR/etc/
-> -fi
-> -
-> -#
-> -# run udev from initrd
-> -#
-> -cat <<EOF >| $INITRDDIR/scripts/10_udev.sh
-> -
-> -cd /
-> -mount -nt proc proc proc
-> -mount -nt sysfs sysfs sys
-> -mount -nt tmpfs tmpfs dev || mount -nt ramfs ramfs dev
-> -mount -nt tmpfs tmpfs tmp || mount -nt ramfs ramfs tmp
-> -
-> -#modprobe dm-mod
-> -#modprobe dm-multipath
-> -/sbin/udevstart
-> -
-> -umount -n tmp
-> -umount -n sys
-> -umount -n proc
-> -
-> -sleep 2
-> -EOF
-> diff --git a/multipath/02_multipath b/multipath/02_multipath
-> deleted file mode 100755
-> index 523f0ef..0000000
-> --- a/multipath/02_multipath
-> +++ /dev/null
-> @@ -1,32 +0,0 @@
-> -#!/bin/sh
-> -#
-> -# store the multipath tool in the initrd
-> -# hotplug & udev will take care of calling it when appropriate
-> -# this tool is statically linked against klibc : no additional libs
-> -#
-> -cp /sbin/multipath $INITRDDIR/sbin
-> -cp /sbin/kpartx $INITRDDIR/sbin
-> -
-> -#
-> -# feed the dependencies too
-> -# scsi_id is dynamicaly linked, so store the libs too
-> -#
-> -cp /lib/udev/scsi_id $INITRDDIR/lib/udev/
-> -cp /bin/mountpoint $INITRDDIR/bin
-> -
-> -PROGS="/lib/udev/scsi_id /bin/mountpoint"
-> -LIBS=`ldd $PROGS | grep -v linux-gate.so | sort -u | \
-> -awk '{print $3}'`
-> -for i in $LIBS
-> -do
-> -	mkdir -p `dirname $INITRDDIR/$i`
-> -	cp $i $INITRDDIR/$i
-> -done
-> -
-> -#
-> -# config file ?
-> -#
-> -if [ -f /etc/multipath.conf ]
-> -then
-> -	cp /etc/multipath.conf $INITRDDIR/etc/
-> -fi
-> 
+
+Regards,
+Muneendra.
+
+--94eb2c12fffc2c2f9c0543b00cfb
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div style=3D"font-size:12.8px"><span style=3D"font-size:1=
+2.8px">Hi,</span></div><div style=3D"font-size:12.8px"><span style=3D"font-=
+size:12.8px">If i want to add any new parameter in =C2=A0config(mulitpath.c=
+onf) file (like max_fds) what all the files i need to modify=C2=A0</span></=
+div><div style=3D"font-size:12.8px"><span style=3D"font-size:12.8px">and ho=
+w can i pass the same info to the kernel.</span></div><div style=3D"font-si=
+ze:12.8px"><span style=3D"font-size:12.8px">Could you please let me know in=
+ the kernel which file =C2=A0i need to =C2=A0do changes to print the same c=
+onfig values which has been defined in config file.</span></div><div style=
+=3D"font-size:12.8px"><span style=3D"font-size:12.8px">Any help =C2=A0in th=
+is will be great.</span></div><div style=3D"font-size:12.8px"><span style=
+=3D"font-size:12.8px"><br></span></div><div style=3D"font-size:12.8px"><spa=
+n style=3D"font-size:12.8px"><br></span></div><div style=3D"font-size:12.8p=
+x"><span style=3D"font-size:12.8px">Regards,</span></div><div style=3D"font=
+-size:12.8px"><span style=3D"font-size:12.8px">Muneendra.</span></div></div=
+>
+
+--94eb2c12fffc2c2f9c0543b00cfb--
+
+
+--===============0431758151792501164==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0431758151792501164==--
