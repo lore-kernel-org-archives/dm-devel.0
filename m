@@ -1,70 +1,63 @@
-From: muneendra kumar <muneendra737@gmail.com>
-Subject: adding new config paremeters
-Date: Thu, 15 Dec 2016 16:08:00 +0530
-Message-ID: <CAAhcyzmSEZnqaZCL8RCrU5hvKMwBwgTE+EL=9gzWaDqms86ChA@mail.gmail.com>
+From: Krzysztof Kozlowski <krzk@kernel.org>
+Subject: Re: [PATCH 5/8] linux: drop __bitwise__ everywhere
+Date: Thu, 15 Dec 2016 19:28:39 +0200
+Message-ID: <20161215172839.GA6520@kozik-lap>
+References: <1481778865-27667-1-git-send-email-mst@redhat.com>
+ <1481778865-27667-6-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0431758151792501164=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=utf-8
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1481778865-27667-6-git-send-email-mst@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Kukjin Kim <kgene@kernel.org>, Krzysztof Kozlowski <krzk@kernel.org>, Javier Martinez Canillas <javier@osg.samsung.com>, Russell King <linux@armlinux.org.uk>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Johannes Berg <johannes.berg@intel.com>, Emmanuel Grumbach <emmanuel.grumbach@intel.com>, Luca Coelho <luciano.coelho@intel.com>, Intel Linux Wireless <linuxwifi@intel.com>, Kalle Valo <kvalo@codeaurora.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.com>, Lee Duncan <lduncan@suse.com>, Chris Leech <cleech@redhat.com>, "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "Nicholas A. Bellinger" <nab@linux-iscsi.org>, Jason Wang <jasowang@redhat.com>, Alexander Aring <aar@pengutronix.de>
 List-Id: dm-devel.ids
 
---===============0431758151792501164==
-Content-Type: multipart/alternative; boundary=94eb2c12fffc2c2f9c0543b00cfb
+On Thu, Dec 15, 2016 at 07:15:20AM +0200, Michael S. Tsirkin wrote:
+> __bitwise__ used to mean "yes, please enable sparse checks
+> unconditionally", but now that we dropped __CHECK_ENDIAN__
+> __bitwise is exactly the same.
+> There aren't many users, replace it by __bitwise everywhere.
+> 
+> Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+> ---
+>  arch/arm/plat-samsung/include/plat/gpio-cfg.h    | 2 +-
+>  drivers/md/dm-cache-block-types.h                | 6 +++---
+>  drivers/net/ethernet/sun/sunhme.h                | 2 +-
+>  drivers/net/wireless/intel/iwlwifi/iwl-fw-file.h | 4 ++--
+>  include/linux/mmzone.h                           | 2 +-
+>  include/linux/serial_core.h                      | 4 ++--
+>  include/linux/types.h                            | 4 ++--
+>  include/scsi/iscsi_proto.h                       | 2 +-
+>  include/target/target_core_base.h                | 2 +-
+>  include/uapi/linux/virtio_types.h                | 6 +++---
+>  net/ieee802154/6lowpan/6lowpan_i.h               | 2 +-
+>  net/mac80211/ieee80211_i.h                       | 4 ++--
+>  12 files changed, 20 insertions(+), 20 deletions(-)
+> 
+> diff --git a/arch/arm/plat-samsung/include/plat/gpio-cfg.h b/arch/arm/plat-samsung/include/plat/gpio-cfg.h
+> index 21391fa..e55d1f5 100644
+> --- a/arch/arm/plat-samsung/include/plat/gpio-cfg.h
+> +++ b/arch/arm/plat-samsung/include/plat/gpio-cfg.h
+> @@ -26,7 +26,7 @@
+>  
+>  #include <linux/types.h>
+>  
+> -typedef unsigned int __bitwise__ samsung_gpio_pull_t;
+> +typedef unsigned int __bitwise samsung_gpio_pull_t;
+>  
+>  /* forward declaration if gpio-core.h hasn't been included */
+>  struct samsung_gpio_chip;
 
---94eb2c12fffc2c2f9c0543b00cfb
-Content-Type: text/plain; charset=UTF-8
+For plat-samsung:
+Acked-by: Krzysztof Kozlowski <krzk@kernel.org>
 
-Hi,
-If i want to add any new parameter in  config(mulitpath.conf) file (like
-max_fds) what all the files i need to modify
-and how can i pass the same info to the kernel.
-Could you please let me know in the kernel which file  i need to  do
-changes to print the same config values which has been defined in config
-file.
-Any help  in this will be great.
+Best regards,
+Krzysztof
 
-
-Regards,
-Muneendra.
-
---94eb2c12fffc2c2f9c0543b00cfb
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><div style=3D"font-size:12.8px"><span style=3D"font-size:1=
-2.8px">Hi,</span></div><div style=3D"font-size:12.8px"><span style=3D"font-=
-size:12.8px">If i want to add any new parameter in =C2=A0config(mulitpath.c=
-onf) file (like max_fds) what all the files i need to modify=C2=A0</span></=
-div><div style=3D"font-size:12.8px"><span style=3D"font-size:12.8px">and ho=
-w can i pass the same info to the kernel.</span></div><div style=3D"font-si=
-ze:12.8px"><span style=3D"font-size:12.8px">Could you please let me know in=
- the kernel which file =C2=A0i need to =C2=A0do changes to print the same c=
-onfig values which has been defined in config file.</span></div><div style=
-=3D"font-size:12.8px"><span style=3D"font-size:12.8px">Any help =C2=A0in th=
-is will be great.</span></div><div style=3D"font-size:12.8px"><span style=
-=3D"font-size:12.8px"><br></span></div><div style=3D"font-size:12.8px"><spa=
-n style=3D"font-size:12.8px"><br></span></div><div style=3D"font-size:12.8p=
-x"><span style=3D"font-size:12.8px">Regards,</span></div><div style=3D"font=
--size:12.8px"><span style=3D"font-size:12.8px">Muneendra.</span></div></div=
->
-
---94eb2c12fffc2c2f9c0543b00cfb--
-
-
---===============0431758151792501164==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0431758151792501164==--
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
