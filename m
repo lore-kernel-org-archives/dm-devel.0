@@ -1,41 +1,36 @@
-From: Binoy Jayan <binoy.jayan@linaro.org>
-Subject: Re: [RFC PATCH v2] crypto: Add IV generation algorithms
-Date: Fri, 16 Dec 2016 11:25:16 +0530
-Message-ID: <CAHv-k_997mzCDih46psH_m4URLFYJzE0mtk8ciLSAHFeZyVtZg@mail.gmail.com>
-References: <1481618949-20086-1-git-send-email-binoy.jayan@linaro.org>
- <1481618949-20086-2-git-send-email-binoy.jayan@linaro.org> <d6d92865-98fa-4d02-035f-9080bc265c35@gmail.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: trouble with generic/081
+Date: Fri, 16 Dec 2016 00:15:23 -0800
+Message-ID: <20161216081523.GA13847@infradead.org>
+References: <20161214164314.GA25105@infradead.org>
+ <20161215063650.GJ4326@dastard>
+ <20161215084224.GA14395@infradead.org>
+ <c05b64b6-80d3-655d-db9b-6f49038e53ee@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <d6d92865-98fa-4d02-035f-9080bc265c35@gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <fstests-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <c05b64b6-80d3-655d-db9b-6f49038e53ee@redhat.com>
+Sender: fstests-owner@vger.kernel.org
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Dave Chinner <david@fromorbit.com>, eguan@redhat.com, fstests@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Milan,
+On Thu, Dec 15, 2016 at 10:16:23AM +0100, Zdenek Kabelac wrote:
+> So let me explain the logic behind this 'amazingly stupid' idea.
 
-On 13 December 2016 at 15:31, Milan Broz <gmazyland@gmail.com> wrote:
+And that logic doesn't make any sense at all.  invibly unmounting
+a file system behind the users back is actively harmful, as it is
+contradicting the principle of least surprise, and the xfstests mess
+is one simple example for it.  Add a callback in-kernel to tell the
+fs to shut down but NOT unmount and expose the namespace below it,
+which the administrator has probably intentionally hid.
 
-> I think that IV generators should not modify or read encrypted data directly,
-> it should only generate IV.
+Even worse unmount may trigger further writes and with fses not
+handling them the fs might now be stuck after being detached from
+the namespace without a way for the admin to detect or recover this.
 
-I was trying to find more information about what you said and how a
-iv generator should be written. I saw two examples of IV generators
-too used with AEAD ciphers (crypto/seqiv.c and crypto/echainiv.c)
-
-Excerpt from crypto api doc:
-http://www.chronox.de/crypto-API/crypto/architecture.html#crypto-api-cipher-references-and-priority
-
-2. Now, SEQIV uses the AEAD API function calls to invoke the associated
-AEAD cipher. In our case, during the instantiation of SEQIV, the cipher
-handle for GCM is provided to SEQIV. This means that SEQIV invokes
-AEAD cipher operations with the GCM cipher handle.
-
-Here, it says seqiv invokes cipher operations. However the code crypto/seqiv.c
-does not look similar to how the modes are implemented which is confusing. I
-was looking for an example of an IV generator used with a regular block cipher
-and not a AEAD cipher. Could you point me out to some?
-
-Thanks,
-Binoy
+What XFS did on IRIX was to let the volume manager call into the fs
+and shut it down.  At this point no further writes are possible,
+but we do not expose the namespace under the mount point, and the
+admin can fix the situation with all the normal tools.
