@@ -1,16 +1,17 @@
-From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
+From: Ian Pilcher <arequipeno@gmail.com>
 Subject: Re: dm-cache: please check/repair metadata
-Date: Sun, 18 Dec 2016 13:44:40 +0100
-Message-ID: <5a00ced3-0688-827a-f001-fd4677e46425@gmail.com>
+Date: Sun, 18 Dec 2016 09:51:41 -0600
+Message-ID: <a58b3198-90a3-124e-b8ee-464e3f150057@gmail.com>
 References: <o2adej$eaa$1@blaine.gmane.org>
 	<2d776d72-744a-7aa7-a5ae-35192fe145d8@redhat.com>
 	<efe12356-a132-c517-914d-4a4cf3a902fc@gmail.com>
 	<o34lim$19u$1@blaine.gmane.org>
+	<5a00ced3-0688-827a-f001-fd4677e46425@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <o34lim$19u$1@blaine.gmane.org>
+In-Reply-To: <5a00ced3-0688-827a-f001-fd4677e46425@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,55 +21,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ian Pilcher <arequipeno@gmail.com>, dm-devel@redhat.com
+To: Zdenek Kabelac <zdenek.kabelac@gmail.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Dne 18.12.2016 v 01:34 Ian Pilcher napsal(a):
-> On 12/08/2016 08:53 AM, Ian Pilcher wrote:
->> Running cache_repair against the metadata device gives me this error:
->>
->>   transaction_manager::new_block() couldn't allocate new block
->>
->> I strongly suspect that my metadata device is too small.  It was sized
->> with the algorithm that I posted to this list about a year ago:
->>
->>   https://www.redhat.com/archives/dm-devel/2015-November/msg00221.html
->>
->> Looking at the source code for cache_metadata_size, I see that it adds
->> additional space for "hints", which the old algorithm didn't account
->> for.
->
-> I finally got around to testing my hypothesis, and I can confirm that
-> the size of the metadata device is indeed the problem.  With a larger
-> metadata device, cache_repair succeeds, and I am able to assemble the
-> cache device.
->
-> So I obviously need to change the formula that I'm using to calculate
-> the size of the metadata device, which begs the question ... what is the
-> CANONICAL formula for doing this?
->
-> lvmcache(7) says, "The size of this LV should be 1000 times smaller
-> than the cache data LV, with a minimum size of 8MiB."  But this is
-> definitely *not* the formula used by cache_metadata_size, and
-> cache_metadata_size seems to assume that hints will never be larger
-> than 4 bytes.
+> I'm not exactly sure what are you doing, are you maintaining your own dm
+> cache volumes ?  (Writing your own volume manager and not using lvm2 -
+> what is lvm2 missing/doing wrong ?)
 
-Hi
+Yup.  I've continuing to use my "zodcache" system for assembling
+dm-cache devices.
 
-I'm not exactly sure what are you doing, are you maintaining your own dm cache 
-volumes ?  (Writing your own volume manager and not using lvm2 - what is lvm2 
-missing/doing wrong ?)
-Are you going to write also your own recovery support ?
+As to what lvm2 is missing or doing wrong ... It's not that there's
+anything "wrong" with it.  It's just that I prefer to have a "simpler"
+setup with a cached PVs/VGs, rather than cached LVs.  I've also always
+found the fact that LVM cache puts both the fast and slow devices into
+the same VG to be counterintuitive.
 
-Otherwise it's normally a business of lvm2 to maintain proper size of
-cached LVs (and even resize them when needed via monitoring)
-This will be necessary once we will support online resize of cache pools & 
-cached volumes.
+These are really matters of personal preference, though.  I want to be
+very, very clear that I don't think that there's anything wrong with
+LVM.  (To be perfectly honest, my preferences are probably colored by
+the fact that I first used bcache, so I'm used to its "model".)
 
- From the source code of lvm2 it seems it uses about 44  bytes per cache chunk 
-and with some transaction overhead for metadata (this could be possible 
-lowered for 'smq' policy...)
+> Are you going to write also your own recovery support ?
 
-Regards
+Until a few days ago I wasn't aware that such a thing might even be
+necessary.  :-)
 
-Zdenek
+> Otherwise it's normally a business of lvm2 to maintain proper size of
+> cached LVs (and even resize them when needed via monitoring)
+> This will be necessary once we will support online resize of cache pools
+> & cached volumes.
+
+I didn't realize that LVM did that.  That's cool.
+
+> From the source code of lvm2 it seems it uses about 44  bytes per cache
+> chunk and with some transaction overhead for metadata (this could be
+> possible lowered for 'smq' policy...)
+
+I came across this in one of my Google searches.
+
+ 
+http://people.redhat.com/msnitzer/patches/upstream/dm-cache-for-v3.13/dm-cache-variable-hints.patch
+
+I wonder if I should just use 128.  It would be a bit wasteful, but
+hopefully it would be future-proof.
+
+-- 
+========================================================================
+Ian Pilcher                                         arequipeno@gmail.com
+-------- "I grew up before Mark Zuckerberg invented friendship" --------
+========================================================================
