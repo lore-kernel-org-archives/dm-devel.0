@@ -1,72 +1,46 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: dm-cache: please check/repair metadata
-Date: Sun, 18 Dec 2016 20:37:13 +0100
-Message-ID: <de8f5ebd-6918-4785-71a1-89967406b0e3@redhat.com>
-References: <o2adej$eaa$1@blaine.gmane.org>
-	<2d776d72-744a-7aa7-a5ae-35192fe145d8@redhat.com>
-	<efe12356-a132-c517-914d-4a4cf3a902fc@gmail.com>
-	<o34lim$19u$1@blaine.gmane.org>
-	<5a00ced3-0688-827a-f001-fd4677e46425@gmail.com>
-	<a58b3198-90a3-124e-b8ee-464e3f150057@gmail.com>
+From: Kent Overstreet <kent.overstreet@gmail.com>
+Subject: Re: dm-crypt: fix lost ioprio when queuing crypto bios from task
+ with ioprio
+Date: Sun, 18 Dec 2016 13:54:06 -0900
+Message-ID: <20161218225406.eqbcn7fpg4cehjb6@kmo-pixel>
+References: <alpine.LRH.2.11.1612141049250.13402@mail.ewheeler.net>
+ <alpine.LRH.2.11.1612161414280.9898@mail.ewheeler.net>
+ <20161217155800.GA6580@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <a58b3198-90a3-124e-b8ee-464e3f150057@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ian Pilcher <arequipeno@gmail.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20161217155800.GA6580@redhat.com>
+Sender: linux-bcache-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Eric Wheeler <dm-devel@lists.ewheeler.net>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>, Shaohua Li <shli@kernel.org>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, Vivek Goyal <vgoyal@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 18.12.2016 v 16:51 Ian Pilcher napsal(a):
->> I'm not exactly sure what are you doing, are you maintaining your own dm
->> cache volumes ?  (Writing your own volume manager and not using lvm2 -
->> what is lvm2 missing/doing wrong ?)
->
-> Yup.  I've continuing to use my "zodcache" system for assembling
-> dm-cache devices.
->
-> As to what lvm2 is missing or doing wrong ... It's not that there's
-> anything "wrong" with it.  It's just that I prefer to have a "simpler"
-> setup with a cached PVs/VGs, rather than cached LVs.  I've also always
-> found the fact that LVM cache puts both the fast and slow devices into
-> the same VG to be counterintuitive.
+On Sat, Dec 17, 2016 at 10:58:00AM -0500, Mike Snitzer wrote:
+> The time for 4.10 inclusion has passed.  This needs to wait until 4.11.
+> 
+> It also needs more review, testing and possible re-working.  Each DM
+> target shouldn't have to worry about these details (though I do grant
+> that dm-crypt.c:clone_init call to bio_set_prio makes sense).
+> 
+> A more generic solution is needed (likely in DM core).
+> 
+> A while ago, Vivek floated a patch that spoke to the need for iocontext
+> (for the purposes of cgroups):
+>  https://patchwork.kernel.org/patch/8485451/
+> 
+> I don't consider your patch too dissimilar.  But it just needs to be
+> worked on during a development window.  On to 4.11 ;)
 
-It's not counterintuitive - lvm2 gives you FULL control where to place cache 
-data and metadata...
+Mike, this current patch is a pure bugfix, and you can't fault Eric for not
+wanting to do work on dm-cache too when all he's trying to do is solve a
+particular real world problem. He should be able to do that without having to
+dive into dm-cache code too.
 
-ATM lvm2 has no notation what is 'slow' and what is 'fast'
-For the 'cache'  both  data & metadata are supposed to be on 'fast'.
+Furthermore, pretty much every filesystem has private ioctls and interfaces -
+this is no different.
 
-Please check 'man lvmcache' for full description.
-
-> These are really matters of personal preference, though.  I want to be
-> very, very clear that I don't think that there's anything wrong with
-> LVM.  (To be perfectly honest, my preferences are probably colored by
-> the fact that I first used bcache, so I'm used to its "model".)
->
->> Are you going to write also your own recovery support ?
->
-> Until a few days ago I wasn't aware that such a thing might even be
-> necessary.  :-)
-
-Well errors do happen and having repair logic at hands is always useful.
-
-There are also quite some types of failures - so I probably need to wish best 
-luck with rediscovering all this.
-
-Unless your  'zodcache' is meant to be used as quick 'experimental' sort of 
-device where you do not care mostly about data being unusable.  In this case 
-plain  activation of 'dm' device via couple ioctl  calls surely can't be 
-beaten by lvm2 - but that's not where lvm2 usage is targeted.
-
-Regards
-
-Zdenek
+If you dm guys want to standardize something, that's awesome - and in hindsight,
+it wouldn't have been a bad idea to CC you guys on the original patches. But
+please keep in mind Eric's not a full time kernel developer, and don't crap on
+his work just becausue he's not working on dm-cache too.
