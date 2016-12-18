@@ -1,65 +1,58 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-crypt: fix lost ioprio when queuing crypto bios from task
- with ioprio
-Date: Sat, 17 Dec 2016 10:58:00 -0500
-Message-ID: <20161217155800.GA6580@redhat.com>
-References: <alpine.LRH.2.11.1612141049250.13402@mail.ewheeler.net>
- <alpine.LRH.2.11.1612161414280.9898@mail.ewheeler.net>
+From: Ian Pilcher <arequipeno@gmail.com>
+Subject: Re: dm-cache: please check/repair metadata
+Date: Sat, 17 Dec 2016 18:34:34 -0600
+Message-ID: <o34lim$19u$1@blaine.gmane.org>
+References: <o2adej$eaa$1@blaine.gmane.org>
+	<2d776d72-744a-7aa7-a5ae-35192fe145d8@redhat.com>
+	<efe12356-a132-c517-914d-4a4cf3a902fc@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.11.1612161414280.9898@mail.ewheeler.net>
-Sender: linux-bcache-owner@vger.kernel.org
-To: Eric Wheeler <dm-devel@lists.ewheeler.net>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>, Shaohua Li <shli@kernel.org>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, Vivek Goyal <vgoyal@redhat.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <efe12356-a132-c517-914d-4a4cf3a902fc@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Dec 16 2016 at  5:29pm -0500,
-Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
+On 12/08/2016 08:53 AM, Ian Pilcher wrote:
+> Running cache_repair against the metadata device gives me this error:
+>
+>   transaction_manager::new_block() couldn't allocate new block
+>
+> I strongly suspect that my metadata device is too small.  It was sized
+> with the algorithm that I posted to this list about a year ago:
+>
+>   https://www.redhat.com/archives/dm-devel/2015-November/msg00221.html
+>
+> Looking at the source code for cache_metadata_size, I see that it adds
+> additional space for "hints", which the old algorithm didn't account
+> for.
 
-> On Wed, 14 Dec 2016, Eric Wheeler wrote:
-> > Since dm-crypt queues writes (and sometimes reads) to a different kernel
-> > thread (workqueue), the bios will dispatch from tasks with different
-> > io_context->ioprio settings than the submitting task, thus giving
-> > incorrect ioprio hints to the io scheduler.
-> 
-> The motivation of this patch is for ioprio-driven writebackup/bypass 
-> hinting inside bcache when bcache is under dm-crypt which Jens is picking 
-> up for 4.10:
->   https://lkml.org/lkml/2016/12/6/607
+I finally got around to testing my hypothesis, and I can confirm that
+the size of the metadata device is indeed the problem.  With a larger
+metadata device, cache_repair succeeds, and I am able to assemble the
+cache device.
 
-I now see your commits:
-b71de4659fba4e42c7 bcache: introduce per-process ioprio-based bypass/writeback hints
-82e7192711c3855038 bcache: documentation for ioprio cache hinting
+So I obviously need to change the formula that I'm using to calculate
+the size of the metadata device, which begs the question ... what is the
+CANONICAL formula for doing this?
 
-You'd think this is the type of thing that you'd have proposed to a
-wider audience.  I'm sure you're aware that dm-cache exists?
+lvmcache(7) says, "The size of this LV should be 1000 times smaller
+than the cache data LV, with a minimum size of 8MiB."  But this is
+definitely *not* the formula used by cache_metadata_size, and
+cache_metadata_size seems to assume that hints will never be larger
+than 4 bytes.
 
-If you did then it would've been on my radar with a shot of having DM in
-shape in time for 4.10.
-
-> Without assigning the ioprio before queuing to the en/decrypt queues, 
-> bcache isn't notified of the priority---and presumably neither is the IO 
-> scheduler.
-> 
-> The ioprio aware schedulers like CFQ and BFQ also benefit with more 
-> knowledge about the bio's when passing through dm-crypt.  It would be 
-> great if this can be accepted for 4.10, too.
-
-The time for 4.10 inclusion has passed.  This needs to wait until 4.11.
-
-It also needs more review, testing and possible re-working.  Each DM
-target shouldn't have to worry about these details (though I do grant
-that dm-crypt.c:clone_init call to bio_set_prio makes sense).
-
-A more generic solution is needed (likely in DM core).
-
-A while ago, Vivek floated a patch that spoke to the need for iocontext
-(for the purposes of cgroups):
- https://patchwork.kernel.org/patch/8485451/
-
-I don't consider your patch too dissimilar.  But it just needs to be
-worked on during a development window.  On to 4.11 ;)
-
-Mike
+-- 
+========================================================================
+Ian Pilcher                                         arequipeno@gmail.com
+-------- "I grew up before Mark Zuckerberg invented friendship" --------
+========================================================================
