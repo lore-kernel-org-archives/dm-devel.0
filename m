@@ -1,11 +1,13 @@
-From: Muneendra Kumar M <mmandala@Brocade.com>
-Subject: deterministic io throughput in multipath
-Date: Mon, 19 Dec 2016 11:50:36 +0000
-Message-ID: <1649d4b8538d4b4cb1efacdfe8cf31eb@BRMWP-EXMB12.corp.brocade.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: deterministic io throughput in multipath
+Date: Mon, 19 Dec 2016 13:09:00 +0100
+Message-ID: <dd06c6d1-5b0e-a06c-6923-8caee729fd6c@suse.de>
+References: <1649d4b8538d4b4cb1efacdfe8cf31eb@BRMWP-EXMB12.corp.brocade.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2455925303803120355=="
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <1649d4b8538d4b4cb1efacdfe8cf31eb@BRMWP-EXMB12.corp.brocade.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,132 +17,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============2455925303803120355==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_1649d4b8538d4b4cb1efacdfe8cf31ebBRMWPEXMB12corpbrocadec_"
+On 12/19/2016 12:50 PM, Muneendra Kumar M wrote:
+> Customers using Linux host (mostly RHEL host) using a SAN network for
+> block storage, complain the Linux multipath stack is not resilient to
+> handle non-deterministic storage network behaviors. This has caused many
+> customer move away to non-linux based servers. The intent of the below
+> patch and the prevailing issues are given below. With the below design
+> we are seeing the Linux multipath stack becoming resilient to such
+> network issues. We hope by getting this patch accepted will help in more
+> Linux server adoption that use SAN network.
+> =
 
---_000_1649d4b8538d4b4cb1efacdfe8cf31ebBRMWPEXMB12corpbrocadec_
-Content-Type: text/plain; charset="us-ascii"
+> I have already sent the design details to the community in a different
+> mail chain and the details are available in the below link.
+> =
 
-Customers using Linux host (mostly RHEL host) using a SAN network for block storage, complain the Linux multipath stack is not resilient to handle non-deterministic storage network behaviors. This has caused many customer move away to non-linux based servers. The intent of the below patch and the prevailing issues are given below. With the below design we are seeing the Linux multipath stack becoming resilient to such network issues. We hope by getting this patch accepted will help in more Linux server adoption that use SAN network.
-I have already sent the design details to the community in a different mail chain and the details are available in the below link.
-https://www.redhat.com/archives/dm-devel/2016-December/msg00122.html.
-Can you please go through the design and send the comments to us.
+> https://www.redhat.com/archives/dm-devel/2016-December/msg00122.html.
+> =
 
-Regards,
-Muneendra.
+> Can you please go through the design and send the comments to us.  =
 
+> =
 
+This issue is coming up from time to time.
+Standard answer here is that  using 'service-time' as a path selector
+_should_ already give you the expected results; namely any path
+exhibiting intermediate I/O errors should have a higher latency than any
+functional path.
+Hence the 'service-time' path selector should switch away from those
+paths automatically.
 
---_000_1649d4b8538d4b4cb1efacdfe8cf31ebBRMWPEXMB12corpbrocadec_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Have you tried this?
 
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
-//www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
->
-<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
-<style><!--
-/* Font Definitions */
-@font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-@font-face
-	{font-family:"Segoe UI";
-	panose-1:2 11 5 2 4 2 4 2 2 3;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin-top:0in;
-	margin-right:0in;
-	margin-bottom:8.0pt;
-	margin-left:0in;
-	line-height:106%;
-	font-size:11.0pt;
-	font-family:"Calibri",sans-serif;}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:#0563C1;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:#954F72;
-	text-decoration:underline;}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"Calibri",sans-serif;
-	color:windowtext;}
-.MsoChpDefault
-	{mso-style-type:export-only;
-	font-family:"Calibri",sans-serif;}
-@page WordSection1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.0in 1.0in 1.0in;}
-div.WordSection1
-	{page:WordSection1;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]-->
-</head>
-<body lang=3D"EN-US" link=3D"#0563C1" vlink=3D"#954F72">
-<div class=3D"WordSection1">
-<p class=3D"MsoNormal" style=3D"margin-bottom:0in;margin-bottom:.0001pt;lin=
-e-height:normal;text-autospace:none">
-<span style=3D"font-size:10.0pt;font-family:&quot;Segoe UI&quot;,sans-serif=
-;color:black">Customers using Linux host (mostly RHEL host) using a SAN net=
-work for block storage, complain the Linux multipath stack is not resilient=
- to handle non-deterministic storage network
- behaviors. This has caused many customer move away to non-linux based serv=
-ers. The intent of the below patch and the prevailing issues are given belo=
-w. With the below design we are seeing the Linux multipath stack becoming r=
-esilient to such network issues.
- We hope by getting this patch accepted will help in more Linux server adop=
-tion that use SAN network.
-<o:p></o:p></span></p>
-<p class=3D"MsoNormal" style=3D"margin-bottom:0in;margin-bottom:.0001pt;lin=
-e-height:normal;text-autospace:none">
-<span style=3D"font-size:10.0pt;font-family:&quot;Segoe UI&quot;,sans-serif=
-;color:black">I have already sent the design details to the community in a =
-different mail chain and the details are available in the below link.</span=
-><o:p></o:p></p>
-<p class=3D"MsoNormal"><a href=3D"https://www.redhat.com/archives/dm-devel/=
-2016-December/msg00122.html">https://www.redhat.com/archives/dm-devel/2016-=
-December/msg00122.html</a>.<o:p></o:p></p>
-<p class=3D"MsoNormal" style=3D"margin-bottom:0in;margin-bottom:.0001pt;lin=
-e-height:normal;text-autospace:none">
-<span style=3D"font-size:10.0pt;font-family:&quot;Segoe UI&quot;,sans-serif=
-;color:black">Can you please go through the design and send the comments to=
- us. &nbsp;<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">Regards,<o:p></o:p></p>
-<p class=3D"MsoNormal">Muneendra.<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-</div>
-</body>
-</html>
+Cheers,
 
---_000_1649d4b8538d4b4cb1efacdfe8cf31ebBRMWPEXMB12corpbrocadec_--
+Hannes
+-- =
 
-
---===============2455925303803120355==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2455925303803120355==--
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG N=FCrnberg)
