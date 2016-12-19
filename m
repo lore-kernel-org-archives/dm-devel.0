@@ -1,53 +1,43 @@
-From: Kent Overstreet <kent.overstreet@gmail.com>
-Subject: Re: dm-crypt: fix lost ioprio when queuing crypto bios from task
- with ioprio
-Date: Sun, 18 Dec 2016 14:23:40 -0900
-Message-ID: <20161218232340.r4rfnodd5gnxu7x6@kmo-pixel>
-References: <alpine.LRH.2.11.1612141049250.13402@mail.ewheeler.net>
- <alpine.LRH.2.11.1612161414280.9898@mail.ewheeler.net>
- <20161217155800.GA6580@redhat.com>
- <20161218225406.eqbcn7fpg4cehjb6@kmo-pixel>
- <20161218231755.GA14929@redhat.com>
+From: Luca Coelho <luca@coelho.fi>
+Subject: Re: [PATCH 5/8] linux: drop __bitwise__ everywhere
+Date: Mon, 19 Dec 2016 11:09:28 +0200
+Message-ID: <1482138568.26174.8.camel@coelho.fi>
+References: <1481778865-27667-1-git-send-email-mst@redhat.com>
+	 <1481778865-27667-6-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20161218231755.GA14929@redhat.com>
-Sender: linux-bcache-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Eric Wheeler <dm-devel@lists.ewheeler.net>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>, Shaohua Li <shli@kernel.org>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, Vivek Goyal <vgoyal@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1481778865-27667-6-git-send-email-mst@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: "Michael S. Tsirkin" <mst@redhat.com>, linux-kernel@vger.kernel.org
+Cc: Kukjin Kim <kgene@kernel.org>, Krzysztof Kozlowski <krzk@kernel.org>, Javier Martinez Canillas <javier@osg.samsung.com>, Russell King <linux@armlinux.org.uk>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Johannes Berg <johannes.berg@intel.com>, Emmanuel Grumbach <emmanuel.grumbach@intel.com>, Intel Linux Wireless <linuxwifi@intel.com>, Kalle Valo <kvalo@codeaurora.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.com>, Lee Duncan <lduncan@suse.com>, Chris Leech <cleech@redhat.com>, "James E.J.
+ Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "Nicholas A. Bellinger" <nab@linux-iscsi.org>, Jason Wang <jasowang@redhat.com>, Alexander Aring <aar@pengutronix.de>, Stefan Schmidt <stefan@osg.samsung.com>, "David S.
+ Miller" <davem@d>
 List-Id: dm-devel.ids
 
-On Sun, Dec 18, 2016 at 06:17:55PM -0500, Mike Snitzer wrote:
-> Spinning it as a pure bugfix is a reach (as Eric's header documents the
-> patch, the case is weak for cc'ing stable).  Reality is the change is
-> needed to enable a new bcache feature.  I'm not going to rush
-> feature-enabling change that arrived in the last minute.
-
-I do agree that it can wait for 4.11 and isn't a candidate for stable, I
-should've said that earlier.
-
+On Thu, 2016-12-15 at 07:15 +0200, Michael S. Tsirkin wrote:
+> __bitwise__ used to mean "yes, please enable sparse checks
+> unconditionally", but now that we dropped __CHECK_ENDIAN__
+> __bitwise is exactly the same.
+> There aren't many users, replace it by __bitwise everywhere.
 > 
-> > and you can't fault Eric for not
-> > wanting to do work on dm-cache too when all he's trying to do is solve a
-> > particular real world problem. He should be able to do that without having to
-> > dive into dm-cache code too.
-> > 
-> > Furthermore, pretty much every filesystem has private ioctls and interfaces -
-> > this is no different.
-> 
-> You're completely misreading my having raised dm-cache.  I was poinitng
-> out that Eric's patch to enable a new bcache feature ontop of dm-crypt
-> was too late.  Had Eric known of this limitation sooner or thought to
-> engage me or the rest of dm-devel then DM could've been fixed with
-> precision during the 4.10 development window.
-> 
-> I wasn't saying Eric should've worked on dm-cache.  But had he raised
-> this bcache feature to my attention, in the context of missing ioprio
-> and why dm-cache would/could use it in the future too, then it'd have
-> been all the better.  Simple as that.  I was trying to be helpful.  Not
-> trying to be a PITA in any way.
+> Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+> ---
+>  arch/arm/plat-samsung/include/plat/gpio-cfg.h    | 2 +-
+>  drivers/md/dm-cache-block-types.h                | 6 +++---
+>  drivers/net/ethernet/sun/sunhme.h                | 2 +-
+>  drivers/net/wireless/intel/iwlwifi/iwl-fw-file.h | 4 ++--
 
-I took your email to mean that the original patches shouldn't have gone in
-without involving dm-cache. If that wasn't what you meant, let's just chalk this
-up to a miscommunication.
+For drivers/net/wireless/intel/iwlwifi/iwl-fw-file.h:
+
+Acked-by: Luca Coelho <luciano.coelho@intel.com>
+
+--
+Luca.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
