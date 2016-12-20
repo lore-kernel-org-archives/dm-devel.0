@@ -1,72 +1,42 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH] mm: introduce kv[mz]alloc helpers
-Date: Tue, 20 Dec 2016 14:50:16 +0100
-Message-ID: <20161220135016.GH3769@dhcp22.suse.cz>
-References: <20161208103300.23217-1-mhocko@kernel.org>
- <20161213101451.GB10492@dhcp22.suse.cz>
- <1481666853.29291.33.camel@perches.com>
- <20161214085916.GB25573@dhcp22.suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20161214085916.GB25573@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, David Rientjes <rientjes@google.com>, Mel Gorman <mgorman@suse.de>, Johannes Weiner <hannes@cmpxchg.org>, Anatoly Stepanov <astepanov@cloudlinux.com>, LKML <linux-kernel@vger.kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, "Michael S. Tsirkin" <mst@redhat.com>, Theodore Ts'o <tytso@mit.edu>, kvm@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-security-module@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Al Viro <viro@zeniv.linux.org.uk>, Mikulas Patocka <mpatocka@redhat.com>, Joe Perches <joe@perches.com>
+From: Geliang Tang <geliangtang@gmail.com>
+Subject: [PATCH] dm bufio: use rb_entry()
+Date: Tue, 20 Dec 2016 22:02:10 +0800
+Message-ID: <ddabc96c798df194791134d8e070d728e2a7b59f.1482203698.git.geliangtang@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>
+Cc: Geliang Tang <geliangtang@gmail.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed 14-12-16 09:59:16, Michal Hocko wrote:
-> On Tue 13-12-16 14:07:33, Joe Perches wrote:
-> > On Tue, 2016-12-13 at 11:14 +0100, Michal Hocko wrote:
-> > > Are there any more comments or objections to this patch? Is this a good
-> > > start or kv[mz]alloc has to provide a way to cover GFP_NOFS users as
-> > > well in the initial version.
-> > 
-> > Did Andrew Morton ever comment on this?
-> > I believe he was the primary objector in the past.
-> > 
-> > Last I recollect was over a year ago:
-> > 
-> > https://lkml.org/lkml/2015/7/7/1050
-> 
-> Let me quote:
-> : Sigh.  We've resisted doing this because vmalloc() is somewhat of a bad
-> : thing, and we don't want to make it easy for people to do bad things.
-> : 
-> : And vmalloc is bad because a) it's slow and b) it does GFP_KERNEL
-> : allocations for page tables and c) it is susceptible to arena
-> : fragmentation.
-> : 
-> : We'd prefer that people fix their junk so it doesn't depend upon large
-> : contiguous allocations.  This isn't userspace - kernel space is hostile
-> : and kernel code should be robust.
-> : 
-> : So I dunno.  Should we continue to make it a bit more awkward to use
-> : vmalloc()?  Probably that tactic isn't being very successful - people
-> : will just go ahead and open-code it.  And given the surprising amount
-> : of stuff you've placed in kvmalloc_node(), they'll implement it
-> : incorrectly...
-> : 
-> : How about we compromise: add kvmalloc_node(), but include a BUG_ON("you
-> : suck") to it?
-> 
-> While I agree with some of those points, the reality really sucks,
-> though. We have tried the same tactic with __GFP_NOFAIL and failed as
-> well. I guess we should just bite the bullet and provide an api which is
-> so common that people keep reinventing their own ways around that, many
-> times wrongly or suboptimally. BUG_ON("you suck") is just not going to
-> help much I am afraid.
-> 
-> What do you think Andrew?
+To make the code clearer, use rb_entry() instead of container_of() to
+deal with rbtree.
 
-So what are we going to do about this patch?
+Signed-off-by: Geliang Tang <geliangtang@gmail.com>
+---
+ drivers/md/dm-bufio.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index 84d2f0e..ae3c396 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -266,7 +266,7 @@ static struct dm_buffer *__find(struct dm_bufio_client *c, sector_t block)
+ 	struct dm_buffer *b;
+ 
+ 	while (n) {
+-		b = container_of(n, struct dm_buffer, node);
++		b = rb_entry(n, struct dm_buffer, node);
+ 
+ 		if (b->block == block)
+ 			return b;
+@@ -283,7 +283,7 @@ static void __insert(struct dm_bufio_client *c, struct dm_buffer *b)
+ 	struct dm_buffer *found;
+ 
+ 	while (*new) {
+-		found = container_of(*new, struct dm_buffer, node);
++		found = rb_entry(*new, struct dm_buffer, node);
+ 
+ 		if (found->block == b->block) {
+ 			BUG_ON(found != b);
 -- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+2.9.3
