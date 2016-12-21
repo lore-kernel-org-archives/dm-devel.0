@@ -1,144 +1,102 @@
-From: "Nalla, Ravikanth" <ravikanth.nalla@hpe.com>
-Subject: : Query on dmstats(8)
-Date: Wed, 21 Dec 2016 12:38:12 +0000
-Message-ID: <DF4PR84MB00449C0F38A0CCF78B720D31FC930@DF4PR84MB0044.NAMPRD84.PROD.OUTLOOK.COM>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: dm-crypt optimization
+Date: Wed, 21 Dec 2016 13:47:18 +0100
+Message-ID: <bf5e7237-2f5c-3fc6-c7d6-38c3b13ac2c3@gmail.com>
+References: <CAHv-k_98w-9whFiCLAnTGL2QAirExsix_S8ZWc8tM7wj=gzD6Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7653573040640604932=="
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <CAHv-k_98w-9whFiCLAnTGL2QAirExsix_S8ZWc8tM7wj=gzD6Q@mail.gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Binoy Jayan <binoy.jayan@linaro.org>, Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, Herbert Xu <herbert@gondor.apana.org.au>, Arnd Bergmann <arnd@arndb.de>, Mark Brown <broonie@kernel.org>, Alasdair Kergon <agk@redhat.com>, "David S. Miller" <davem@davemloft.net>, private-kwg@linaro.org
+Cc: dm-devel@redhat.com, linux-crypto@vger.kernel.org, Rajendra <rnayak@codeaurora.org>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, Shaohua Li <shli@kernel.org>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
---===============7653573040640604932==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_DF4PR84MB00449C0F38A0CCF78B720D31FC930DF4PR84MB0044NAMP_"
+On 12/20/2016 10:41 AM, Binoy Jayan wrote:
+> At a high level the goal is to maximize the size of data blocks that get passed
+> to hardware accelerators, minimizing the overhead from setting up and tearing
+> down operations in the hardware. Currently dm-crypt itself is a big blocker as
+> it manually implements ESSIV and similar algorithms which allow per-block
+> encryption of the data so the low level operations from the crypto API can
+> only operate on a single block. This is done because currently the crypto API
+> doesn't have software implementations of these algorithms itself so dm-crypt
+> can't rely on it being able to provide the functionality. The plan to address
+> this was to provide some software implementations in the crypto API, then
+> update dm-crypt to rely on those. Even for a pure software implementation
+> with no hardware acceleration that should hopefully provide a small
+> optimization as we need to call into the crypto API less often but it's likely
+> to be marginal given the overhead of crypto, the real win would be on a system
+> that has an accelerator that can replace the software implementation.
+> 
+> Currently dm-crypt handles data only in single blocks. This means that it can't
+> make good use of hardware cryptography engines since there is an overhead to
+> each transaction with the engine but transfers must be split into block sized
+> chunks. Allowing the transfer of larger blocks e.g. 'struct bio', could
+> mitigate against these costs and could improve performance in operating systems
+> with encrypted filesystems. Although qualcomm chipsets support another variant
+> of the device-mapper dm-req-crypt, it is not something generic and in
+> mainline-able state. Also, it only supports 'XTS-AES' mode of encryption and
+> is not compatible with other modes supported by dm-crypt.
 
---_000_DF4PR84MB00449C0F38A0CCF78B720D31FC930DF4PR84MB0044NAMP_
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+So the core problem is that your crypto accelerator can operate efficiently only
+with bigger batch sizes.
 
+How big blocks your crypto hw need to be able to operate more efficiently?
+What about 4k blocks (no batches), could it be usable trade-off?
 
-In dmstats(8) man page, what is the exact difference between "read_time" an=
-d "read_ticks"
-and also the  exact difference between "write_nsecs" and "write_ticks"?
+With some (backward incompatible) changes in LUKS format I would like to see support
+for encryption blocks equivalent to sectors size, so it basically means for 4k drive 4k
+encryption block.
+(This should decrease overhead, now is everything processed on 512 blocks only.)
 
-read_time
-              Accumulated duration of all read requests (ns).
-read_ticks
-              Nanoseconds spent servicing reads.
+Support of bigger block sizes would be unsafe without additional mechanism that provides
+atomic writes of multiple sectors. Maybe it applies to 4k as well on some devices though...)
 
-write_nsecs
-              Accumulated duration of all write requests (ns).
-write_ticks
-              Nanoseconds spent servicing writes.
+The above is not going against your proposal, I am just curious if this is enough
+to provide better performance on your hw accelerator or not.
 
-Thanks,
-Ravi
+Milan
 
---_000_DF4PR84MB00449C0F38A0CCF78B720D31FC930DF4PR84MB0044NAMP_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+> However, there are some challenges and a few possibilities to address this. I
+> request you to provide your suggestions on whether the points mentioned below
+> makes sense and if it could be done differently.
+> 
+> 1. Move the 'real' IV generation algorithms to crypto layer (e.g. essiv)
+> 2. Increase the 'length' of the scatterlist nodes used in the crypto api. It
+>    can be made equal to the size of a main memory segment (as defined in
+>    'struct bio') as they are physcially contiguous.
+> 3. Multiple segments in 'struct bio' can be represented as scatterlist of all
+>    segments in a 'struct bio'.
+> 
+> 4. Move algorithms 'lmk' and 'tcw' (which are IV combined with hacks to the
+>    cbc mode) to create a customized cbc algorithm, implemented in a seperate
+>    file (e.g. cbc_lmk.c/cbc_tcw.c). As Milan suggested, these can't be treated
+>    as real IVs as these include hacks to the cbc mode (and directly manipulate
+>    encrypted data).
+> 
+> 5. Move key selection logic to user space or always assume keycount as '1'
+>    (as mentioned in the dm-crypt param format below) so that the key selection
+>    logic does not have to be dependent on the sector number. This is necessary
+>    as the key is selected otherwise based on sector number:
+> 
+>    key_index = sector & (key_count - 1)
+> 
+>    If block size for scatterlist nodes are increased beyond sector boundary
+>    (which is what we plan to achieve, for performance), the key set for every
+>    cipher operation cannot be changed at the sector level.
+> 
+>    dm-crypt param format : cipher[:keycount]-mode-iv:ivopts
+>    Example               : aes:2-cbc-essiv:sha256
+> 
+>    Also as Milan suggested, it is not wise to move the key selection logic to
+>    the crypto layer as it will prevent any changes to the key structure later.
+> 
+> The following is a reference to an earlier patchset. It had the cipher mode
+> 'cbc' mixed up with the IV algorithms and is usually not the preferred way.
+> 
+> Reference:
+> https://lkml.org/lkml/2016/12/13/65
+> https://lkml.org/lkml/2016/12/13/66
+> 
 
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
-//www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
->
-<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
-<style><!--
-/* Font Definitions */
-@font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri",sans-serif;}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:#0563C1;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:#954F72;
-	text-decoration:underline;}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"Calibri",sans-serif;
-	color:windowtext;}
-.MsoChpDefault
-	{mso-style-type:export-only;
-	font-family:"Calibri",sans-serif;}
-@page WordSection1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.0in 1.0in 1.0in;}
-div.WordSection1
-	{page:WordSection1;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]-->
-</head>
-<body lang=3D"EN-US" link=3D"#0563C1" vlink=3D"#954F72">
-<div class=3D"WordSection1">
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">In dmstats(8) man page, what is the exact difference=
- between &#8220;read_time&#8221; and &#8220;read_ticks&#8221;
-<o:p></o:p></p>
-<p class=3D"MsoNormal">and also the &nbsp;exact difference between &#8220;w=
-rite_nsecs&#8221; and &#8220;write_ticks&#8221;?<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">read_time<o:p></o:p></p>
-<p class=3D"MsoNormal">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp; Accumulated duration of all read requests (ns).<=
-o:p></o:p></p>
-<p class=3D"MsoNormal">read_ticks<o:p></o:p></p>
-<p class=3D"MsoNormal">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp; Nanoseconds spent servicing reads.<o:p></o:p></p=
->
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">write_nsecs<o:p></o:p></p>
-<p class=3D"MsoNormal">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nb=
-sp;&nbsp;&nbsp;&nbsp;&nbsp;Accumulated duration of all write requests (ns).=
-<o:p></o:p></p>
-<p class=3D"MsoNormal">write_ticks<o:p></o:p></p>
-<p class=3D"MsoNormal">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp; Nanoseconds spent servicing writes.<o:p></o:p></=
-p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">Thanks,<o:p></o:p></p>
-<p class=3D"MsoNormal">Ravi<o:p></o:p></p>
-</div>
-</body>
-</html>
-
---_000_DF4PR84MB00449C0F38A0CCF78B720D31FC930DF4PR84MB0044NAMP_--
-
-
---===============7653573040640604932==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7653573040640604932==--
