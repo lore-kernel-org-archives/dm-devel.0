@@ -1,14 +1,15 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: : Query on dmstats(8)
-Date: Wed, 21 Dec 2016 17:09:52 +0000
-Message-ID: <20161221170952.GB26970@localhost.localdomain>
-References: <DF4PR84MB00449C0F38A0CCF78B720D31FC930@DF4PR84MB0044.NAMPRD84.PROD.OUTLOOK.COM>
+From: Muneendra Kumar M <mmandala@Brocade.com>
+Subject: Re: deterministic io throughput in multipath
+Date: Thu, 22 Dec 2016 05:39:36 +0000
+Message-ID: <0df0f2cc11584ced9242a57b6457fa5d@BRMWP-EXMB12.corp.brocade.com>
+References: <1649d4b8538d4b4cb1efacdfe8cf31eb@BRMWP-EXMB12.corp.brocade.com>
+	<20161221160940.GG19659@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <DF4PR84MB00449C0F38A0CCF78B720D31FC930@DF4PR84MB0044.NAMPRD84.PROD.OUTLOOK.COM>
+In-Reply-To: <20161221160940.GG19659@octiron.msp.redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,43 +19,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Nalla, Ravikanth" <ravikanth.nalla@hpe.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Ravi,
+Hi Ben,
 
-On Wed, Dec 21, 2016 at 12:38:12PM +0000, Nalla, Ravikanth wrote:
-> 
-> In dmstats(8) man page, what is the exact difference between "read_time" and "read_ticks"
-> and also the  exact difference between "write_nsecs" and "write_ticks"?
-> 
-> read_time
->               Accumulated duration of all read requests (ns).
-
-The two "time" fields are the accumulated durations of reads and writes - i.e. the
-difference between the operation end and start times, summed for all reads or writes
-during the current interval.
- 
-
-> write_nsecs
-
-'write_nsecs' is a typo in the man page - it should be 'write_time': I'll get that
-fixed. The tool help ('dmstats help') has the correct names:
-
-  write_time            - Accumulated duration of all writes (ns).
-
-> read_ticks
->               Nanoseconds spent servicing reads.
-> write_ticks
->               Nanoseconds spent servicing writes.
-
-These are the times spent actively servicing requests (as opposed to the time
-spent in queues, or waiting for hardware IO to finish etc).
-
-The tool help output will always give you up-to-date information on the
-supported columns - there's also a bit more detail in the kernel documentation
-at Documentation/device-mapper/statistics.txt.
+Thanks for the reply.
+I will look into this parameters will do the internal testing and let you k=
+now the results.
 
 Regards,
-Bryn.
+Muneendra.
+
+-----Original Message-----
+From: Benjamin Marzinski [mailto:bmarzins@redhat.com] =
+
+Sent: Wednesday, December 21, 2016 9:40 PM
+To: Muneendra Kumar M <mmandala@Brocade.com>
+Cc: dm-devel@redhat.com
+Subject: Re: [dm-devel] deterministic io throughput in multipath
+
+Have you looked into the delay_watch_checks and delay_wait_checks configura=
+tion parameters?  The idea behind them is to minimize the use of paths that=
+ are intermittently failing.
+
+-Ben
+
+On Mon, Dec 19, 2016 at 11:50:36AM +0000, Muneendra Kumar M wrote:
+>    Customers using Linux host (mostly RHEL host) using a SAN network for
+>    block storage, complain the Linux multipath stack is not resilient to
+>    handle non-deterministic storage network behaviors. This has caused ma=
+ny
+>    customer move away to non-linux based servers. The intent of the below
+>    patch and the prevailing issues are given below. With the below design=
+ we
+>    are seeing the Linux multipath stack becoming resilient to such network
+>    issues. We hope by getting this patch accepted will help in more Linux
+>    server adoption that use SAN network.
+> =
+
+>    I have already sent the design details to the community in a different
+>    mail chain and the details are available in the below link.
+> =
+
+>    [1]https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.c=
+om_archives_dm-2Ddevel_2016-2DDecember_msg00122.html&d=3DDgIDAw&c=3DIL_XqQW=
+OjubgfqINi2jTzg&r=3DE3ftc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6=
+e1KXtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_Uj7MRu=
+52hG3MKzM&e=3D .
+> =
+
+>    Can you please go through the design and send the comments to us.
+> =
+
+>    =A0
+> =
+
+>    Regards,
+> =
+
+>    Muneendra.
+> =
+
+>    =A0
+> =
+
+>    =A0
+> =
+
+> References
+> =
+
+>    Visible links
+>    1. =
+
+> https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.com_ar
+> chives_dm-2Ddevel_2016-2DDecember_msg00122.html&d=3DDgIDAw&c=3DIL_XqQWOjub
+> gfqINi2jTzg&r=3DE3ftc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6e1K
+> XtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_Uj7MRu
+> 52hG3MKzM&e=3D
+
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.com_ma
+> ilman_listinfo_dm-2Ddevel&d=3DDgIDAw&c=3DIL_XqQWOjubgfqINi2jTzg&r=3DE3ftc=
+47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6e1KXtRA0ctwHYJ7cDmPsLi2C1=
+L9pox7uexsY&s=3DUyE46dXOrNTbPz_TVGtpoHl3J3h_n0uYhI4TI-PgyWg&e=3D
