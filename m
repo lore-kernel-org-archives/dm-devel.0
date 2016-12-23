@@ -1,40 +1,55 @@
-From: Michael Wang <yun.wang@profitbricks.com>
-Subject: Re: [PATCH v2 1/1] block: fix blk_queue_split() resource exhaustion
-Date: Fri, 23 Dec 2016 09:49:53 +0100
-Message-ID: <76d9bf14-d848-4405-8358-3771c0a93d39@profitbricks.com>
+From: Lars Ellenberg <lars.ellenberg@linbit.com>
+Subject: Re: [PATCH v2 1/1] block: fix blk_queue_split() resource
+	exhaustion
+Date: Fri, 23 Dec 2016 12:45:53 +0100
+Message-ID: <20161223114553.GP4138@soda.linbit>
 References: <1467990243-3531-1-git-send-email-lars.ellenberg@linbit.com>
- <1467990243-3531-2-git-send-email-lars.ellenberg@linbit.com>
- <20160711141042.GY13335@soda.linbit>
+	<1467990243-3531-2-git-send-email-lars.ellenberg@linbit.com>
+	<20160711141042.GY13335@soda.linbit>
+	<76d9bf14-d848-4405-8358-3771c0a93d39@profitbricks.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20160711141042.GY13335@soda.linbit>
-Sender: linux-raid-owner@vger.kernel.org
-To: Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>
-Cc: NeilBrown <neilb@suse.com>, linux-raid@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, Ming Lei <ming.lei@canonical.com>, linux-kernel@vger.kernel.org, Zheng Liu <gnehzuil.liu@gmail.com>, linux-block@vger.kernel.org, Takashi Iwai <tiwai@suse.de>, linux-bcache@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Alasdair Kergon <agk@redhat.com>, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Roland Kammerer <roland.kammerer@linbit.com>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <76d9bf14-d848-4405-8358-3771c0a93d39@profitbricks.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Michael Wang <yun.wang@profitbricks.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, Ming Lei <ming.lei@canonical.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, NeilBrown <neilb@suse.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Takashi Iwai <tiwai@suse.de>, linux-bcache@vger.kernel.org, Zheng Liu <gnehzuil.liu@gmail.com>, Kent Overstreet <kent.overstreet@gmail.com>, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Ingo Molnar <mingo@redhat.com>, Alasdair Kergon <agk@redhat.com>, Roland Kammerer <roland.kammerer@linbit.com>
 List-Id: dm-devel.ids
 
-Dear Maintainers
+On Fri, Dec 23, 2016 at 09:49:53AM +0100, Michael Wang wrote:
+> Dear Maintainers
+> 
+> I'd like to ask for the status of this patch since we hit the
+> issue too during our testing on md raid1.
+> 
+> Split remainder bio_A was queued ahead, following by bio_B for
+> lower device, at this moment raid start freezing, the loop take
+> out bio_A firstly and deliver it, which will hung since raid is
+> freezing, while the freezing never end since it waiting for
+> bio_B to finish, and bio_B is still on the queue, waiting for
+> bio_A to finish...
+> 
+> We're looking for a good solution and we found this patch
+> already progressed a lot, but we can't find it on linux-next,
+> so we'd like to ask are we still planning to have this fix
+> in upstream?
 
-I'd like to ask for the status of this patch since we hit the
-issue too during our testing on md raid1.
+I don't see why not, I'd even like to have it in older kernels,
+but did not have the time and energy to push it.
 
-Split remainder bio_A was queued ahead, following by bio_B for
-lower device, at this moment raid start freezing, the loop take
-out bio_A firstly and deliver it, which will hung since raid is
-freezing, while the freezing never end since it waiting for
-bio_B to finish, and bio_B is still on the queue, waiting for
-bio_A to finish...
+Thanks for the bump.
 
-We're looking for a good solution and we found this patch
-already progressed a lot, but we can't find it on linux-next,
-so we'd like to ask are we still planning to have this fix
-in upstream?
-
-Regards,
-Michael Wang
-
+	Lars
 
 On 07/11/2016 04:10 PM, Lars Ellenberg wrote:
 > For a long time, generic_make_request() converts recursion into
