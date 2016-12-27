@@ -1,7 +1,8 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 03/12] libmultipath: add two list iteration macros
-Date: Tue, 27 Dec 2016 16:03:20 +0800
-Message-ID: <1482825809-9528-4-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH 01/12] libmultipath: add wwid for "struct uevent"
+	to record wwid of uevent
+Date: Tue, 27 Dec 2016 16:03:18 +0800
+Message-ID: <1482825809-9528-2-git-send-email-tang.junhui@zte.com.cn>
 References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,57 +24,43 @@ List-Id: dm-devel.ids
 
 From: tang.junhui <tang.junhui@zte.com.cn>
 
-Add two list iteration macros, they are used to iterate list forwards
-or backwards from the given begin node to the given end node, which
-would be used in merging uevents.
+Add "char *wwid" to point WWID of uevent. This member identifies
+the LUN ID which the path belongs to, and it is used for merging
+uevents. WWID possibly did not exist in uevent yet, so ->wwid
+would be NULL, those uevents would not be merged, but be proccessed
+as old way.
 
-Change-Id: I8bb53fef9276bb62a5e0f4fdac6455086dc03d9b
+Change-Id: Ie6b076363b3735dc7de10184b27fa799b499af0e
 Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 ---
- libmultipath/list.h | 24 ++++++++++++++++++++++++
- 1 file changed, 24 insertions(+)
+ libmultipath/uevent.c | 2 ++
+ libmultipath/uevent.h | 1 +
+ 2 files changed, 3 insertions(+)
 
-diff --git a/libmultipath/list.h b/libmultipath/list.h
-index ceaa381..e728ff0 100644
---- a/libmultipath/list.h
-+++ b/libmultipath/list.h
-@@ -294,6 +294,18 @@ static inline void list_splice_tail_init(struct list_head *list,
- 	     pos = list_entry(pos->member.next, typeof(*pos), member))
- 
- /**
-+ * list_for_some_entry	-	iterate list of given interval
-+ * @pos:	the type * to use as a loop counter.
-+ * @from:	the begin node of the iteration.
-+ * @to:		the end node of the iteration.
-+ * @member:	the name of the list_struct within the struct.
-+ */
-+#define list_for_some_entry(pos, from, to, member)				\
-+	for (pos = list_entry((from)->next, typeof(*pos), member);	\
-+	     &pos->member != (to);					\
-+	     pos = list_entry(pos->member.next, typeof(*pos), member))
-+
-+/**
-  * list_for_each_entry_reverse - iterate backwards over list of given type.
-  * @pos:	the type * to use as a loop counter.
-  * @head:	the head for your list.
-@@ -305,6 +317,18 @@ static inline void list_splice_tail_init(struct list_head *list,
- 	     pos = list_entry(pos->member.prev, typeof(*pos), member))
- 
- /**
-+ * list_for_some_entry_reverse	-	iterate backwards list of given interval
-+ * @pos:	the type * to use as a loop counter.
-+ * @from:	the begin node of the iteration.
-+ * @to:		the end node of the iteration.
-+ * @member:	the name of the list_struct within the struct.
-+ */
-+#define list_for_some_entry_reverse(pos, from, to, member)			\
-+	for (pos = list_entry((from)->prev, typeof(*pos), member);	\
-+	     &pos->member != (to);					\
-+	     pos = list_entry(pos->member.prev, typeof(*pos), member))
-+
-+/**
-  * list_for_each_entry_safe - iterate over list of given type safe against removal of list entry
-  * @pos:	the type * to use as a loop counter.
-  * @n:		another type * to use as temporary storage
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 7edcce1..ef1bafe 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -424,6 +424,8 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
+ 			uev->devpath = uev->envp[i] + 8;
+ 		if (strcmp(name, "ACTION") == 0)
+ 			uev->action = uev->envp[i] + 7;
++		if (strcmp(name, "ID_SERIAL") == 0)
++			uev->wwid = uev->envp[i] + 10;
+ 		i++;
+ 		if (i == HOTPLUG_NUM_ENVP - 1)
+ 			break;
+diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
+index 9d22dcd..7bfccef 100644
+--- a/libmultipath/uevent.h
++++ b/libmultipath/uevent.h
+@@ -22,6 +22,7 @@ struct uevent {
+ 	char *devpath;
+ 	char *action;
+ 	char *kernel;
++	char *wwid;
+ 	unsigned long seqnum;
+ 	char *envp[HOTPLUG_NUM_ENVP];
+ };
 -- 
 2.8.1.windows.1
