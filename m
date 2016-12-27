@@ -1,8 +1,8 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 10/12] libmultipath: filter uevents before
+Subject: [PATCH 09/12] multipathd: merge uevents before
 	proccessing
-Date: Tue, 27 Dec 2016 16:03:27 +0800
-Message-ID: <1482825809-9528-11-git-send-email-tang.junhui@zte.com.cn>
+Date: Tue, 27 Dec 2016 16:03:26 +0800
+Message-ID: <1482825809-9528-10-git-send-email-tang.junhui@zte.com.cn>
 References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,54 +24,105 @@ List-Id: dm-devel.ids
 
 From: tang.junhui <tang.junhui@zte.com.cn>
 
-Before merging uevents, these uevents are going to be filtered:
-Change or addition uevent of a removed path (it indicate by an
-deletion uevent occurred later).
+These uevents are going to be merged:
+1) uevents come from paths and
+2) uevents type is same and
+3) uevents type is addition or deletion and
+4) uevents wwid is same.
 
-Change-Id: If00c2c2e23ea466c1d4643c541ed2d8f9a0c8dea
+Change-Id: I05ee057391c092aa0c5f989b7a4f9cb550bb4d98
 Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 ---
- libmultipath/uevent.c | 55 +++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 55 insertions(+)
+ libmultipath/uevent.c | 125 +++++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 114 insertions(+), 11 deletions(-)
 
 diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 114068c..424f272 100644
+index b0b05e9..114068c 100644
 --- a/libmultipath/uevent.c
 +++ b/libmultipath/uevent.c
-@@ -140,6 +140,28 @@ uevent_can_discard(char *devpath, char *kernel)
+@@ -85,6 +85,20 @@ struct uevent * alloc_uevent (void)
+ 	return uev;
  }
  
- bool
-+uevent_can_filter(struct uevent *earlier, struct uevent *later)
++void
++uevq_cleanup(struct list_head *tmpq)
 +{
++	struct uevent *uev, *tmp;
++
++	list_for_each_entry_safe(uev, tmp, tmpq, node) {
++		list_del_init(&uev->node);
++
++		if (uev->udev)
++			udev_device_unref(uev->udev);
++		FREE(uev);
++	}
++}
++
+ bool
+ uevent_can_discard(char *devpath, char *kernel)
+ {
+@@ -125,6 +139,103 @@ uevent_can_discard(char *devpath, char *kernel)
+ 	return false;
+ }
+ 
++bool
++merge_need_stop(struct uevent *earlier, struct uevent *later)
++{
++	/*
++	 * dm uevent do not try to merge with left uevents
++	 */
++	if (!strncmp(later->kernel, "dm-", 3))
++		return true;
 +
 +	/*
-+	 * filter earlier uvents if path has removed later, eg:
-+	 * "add path3 |chang path3 |add path2 |remove path3"
-+	 * can filter as:
-+	 * "add path2 |remove path3"
-+	 * uevent "add path3" and "chang path3" are filtered out
++	 * we can not make a jugement without wwid,
++	 * so it is sensible to stop merging
++	 */
++	if (!earlier->wwid || !later->wwid)
++		return true;
++	/*
++	 * uevents merging stoped
++	 * when we meet an opposite action uevent from the same LUN to AVOID
++	 * "add path1 |remove path1 |add path2 |remove path2 |add path3"
++	 * to merge as "remove path1, path2" and "add path1, path2, path3"
++	 * OR
++	 * "remove path1 |add path1 |remove path2 |add path2 |remove path3"
++	 * to merge as "add path1, path2" and "remove path1, path2, path3"
++	 * SO
++	 * when we meet a non-change uevent from the same LUN
++	 * with the same wwid and different action
++	 * it would be better to stop merging.
++	 */
++	if (!strcmp(earlier->wwid, later->wwid) &&
++	    strcmp(earlier->action, later->action) &&
++	    strcmp(earlier->action, "change") &&
++	    strcmp(later->action, "change"))
++		return true;
++
++	return false;
++}
++
++bool
++uevent_can_merge(struct uevent *earlier, struct uevent *later)
++{
++	/* merge paths uevents
++	 * whose wwids exsit and are same
++	 * and actions are same,
++	 * and actions are addition or deletion
 +	 */
 +	if (earlier->wwid && later->wwid &&
-+		!strcmp(earlier->wwid, later->wwid) &&
-+		strncmp(later->kernel, "dm-", 3) &&
-+		!strcmp(later->action, "remove") &&
-+		!strcmp(earlier->kernel, later->kernel)) {
++	    !strcmp(earlier->wwid, later->wwid) &&
++	    !strcmp(earlier->action, later->action) &&
++	    strncmp(earlier->action, "change", 6) &&
++	    strncmp(earlier->kernel, "dm-", 3)) {
 +		return true;
 +	}
 +
 +	return false;
 +}
 +
-+bool
- merge_need_stop(struct uevent *earlier, struct uevent *later)
- {
- 	/*
-@@ -196,6 +218,38 @@ uevent_can_merge(struct uevent *earlier, struct uevent *later)
- }
- 
- void
-+uevent_filter(struct uevent *later, struct list_head *tmpq)
++void
++uevent_merge(struct uevent *later, struct list_head *tmpq)
 +{
 +	struct uevent *earlier, *temp;
 +	/*
@@ -79,20 +130,19 @@ index 114068c..424f272 100644
 +	 */
 +	list_for_some_entry_reverse(earlier, &later->node, tmpq, node) {
 +next_earlier_node:
++		if (merge_need_stop(earlier, later))
++			break;
 +		/*
-+		 * filter unnessary earlier uevents by the later uevent
++		 * try to merge earlier uevents to the later uevent
 +		 */
-+		if (uevent_can_filter(earlier, later)) {
-+			condlog(2, "uevent: %s-%s-%s has removed by uevent: %s-%s-%s, filtered",
++		if (uevent_can_merge(earlier, later)) {
++			condlog(3, "merged uevent: %s-%s-%s with uevent: %s-%s-%s",
 +				earlier->action, earlier->kernel, earlier->wwid,
 +				later->action, later->kernel, later->wwid);
-+
 +			temp = earlier;
++
 +			earlier = list_entry(earlier->node.prev, typeof(struct uevent), node);
-+			list_del_init(&temp->node);
-+			if (temp->udev)
-+				udev_device_unref(temp->udev);
-+			FREE(temp);
++			list_move(&temp->node, &later->merge_node);
 +
 +			if (earlier ==  list_entry(tmpq, typeof(struct uevent), node))
 +				break;
@@ -103,16 +153,52 @@ index 114068c..424f272 100644
 +}
 +
 +void
- uevent_merge(struct uevent *later, struct list_head *tmpq)
++merge_uevq(struct list_head *tmpq)
++{
++	struct uevent *later;
++
++	list_for_each_entry_reverse(later, tmpq, node) {
++		uevent_merge(later, tmpq);
++	}
++}
++
+ void
+ service_uevq(struct list_head *tmpq)
  {
- 	struct uevent *earlier, *temp;
-@@ -232,6 +286,7 @@ merge_uevq(struct list_head *tmpq)
- 	struct uevent *later;
+@@ -136,6 +247,8 @@ service_uevq(struct list_head *tmpq)
+ 		if (my_uev_trigger && my_uev_trigger(uev, my_trigger_data))
+ 			condlog(0, "uevent trigger error");
  
- 	list_for_each_entry_reverse(later, tmpq, node) {
-+		uevent_filter(later, tmpq);
- 		uevent_merge(later, tmpq);
- 	}
++		uevq_cleanup(&uev->merge_node);
++
+ 		if (uev->udev)
+ 			udev_device_unref(uev->udev);
+ 		FREE(uev);
+@@ -150,17 +263,6 @@ static void uevent_cleanup(void *arg)
+ 	udev_unref(udev);
  }
+ 
+-void
+-uevq_cleanup(struct list_head *tmpq)
+-{
+-	struct uevent *uev, *tmp;
+-
+-	list_for_each_entry_safe(uev, tmp, tmpq, node) {
+-		list_del_init(&uev->node);
+-		FREE(uev);
+-	}
+-}
+-
+ /*
+  * Service the uevent queue.
+  */
+@@ -189,6 +291,7 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent *, void * trigger_data),
+ 		pthread_mutex_unlock(uevq_lockp);
+ 		if (!my_uev_trigger)
+ 			break;
++		merge_uevq(&uevq_tmp);
+ 		service_uevq(&uevq_tmp);
+ 	}
+ 	condlog(3, "Terminating uev service queue");
 -- 
 2.8.1.windows.1
