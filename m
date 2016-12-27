@@ -1,14 +1,12 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 04/12] multipathd: add need_do_map to indicate
-	whether need calling domap() in ev_add_path()
-Date: Tue, 27 Dec 2016 16:03:21 +0800
-Message-ID: <1482825809-9528-5-git-send-email-tang.junhui@zte.com.cn>
-References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH 00/12] multipath-tools: improve processing
+	efficiency for addition and deletion of multipath devices
+Date: Tue, 27 Dec 2016 16:03:17 +0800
+Message-ID: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,144 +22,50 @@ List-Id: dm-devel.ids
 
 From: tang.junhui <tang.junhui@zte.com.cn>
 
-Usually calling domap() in ev_add_path() is needed, but only last path
-need to call domap() in processing for merged uevents to reduce the
-count of calling domap() and promote efficiency. So add input parameter
-need_do_map to indicate whether need calling domap() in ev_add_path().
+Hello Christophe, Ben, Hannes, Martin, Bart, and other guys:
 
-Change-Id: I7f33de49a1d89d91180dcb95cd94e4944ae7ff36
-Signed-off-by: tang.wenjun <tang.wenjun3@zte.com.cn>
----
- multipathd/cli_handlers.c |  3 ++-
- multipathd/main.c         | 25 ++++++++++++++++---------
- multipathd/main.h         |  2 +-
- 3 files changed, 19 insertions(+), 11 deletions(-)
+The twelve patches in this series are used to improve processing
+efficiency for addition and deletion of multipath devices.
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index b0eeca6..3a46c09 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -670,7 +670,8 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
- 		pp->checkint = conf->checkint;
- 	}
- 	put_multipath_config(conf);
--	return ev_add_path(pp, vecs);
-+	return ev_add_path(pp, vecs, 1);
-+
- blacklisted:
- 	*reply = strdup("blacklisted\n");
- 	*len = strlen(*reply) + 1;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index adc3258..34b1b64 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -608,7 +608,7 @@ ev_remove_map (char * devname, char * alias, int minor, struct vectors * vecs)
- }
- 
- static int
--uev_add_path (struct uevent *uev, struct vectors * vecs)
-+uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
- {
- 	struct path *pp;
- 	int ret = 0, i;
-@@ -641,7 +641,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
- 				     DI_ALL | DI_BLACKLIST);
- 			put_multipath_config(conf);
- 			if (r == PATHINFO_OK)
--				ret = ev_add_path(pp, vecs);
-+				ret = ev_add_path(pp, vecs, need_do_map);
- 			else if (r == PATHINFO_SKIPPED) {
- 				condlog(3, "%s: remove blacklisted path",
- 					uev->kernel);
-@@ -681,7 +681,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
- 		conf = get_multipath_config();
- 		pp->checkint = conf->checkint;
- 		put_multipath_config(conf);
--		ret = ev_add_path(pp, vecs);
-+		ret = ev_add_path(pp, vecs, need_do_map);
- 	} else {
- 		condlog(0, "%s: failed to store path info, "
- 			"dropping event",
-@@ -699,7 +699,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
-  * 1: error
-  */
- int
--ev_add_path (struct path * pp, struct vectors * vecs)
-+ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
- {
- 	struct multipath * mpp;
- 	char params[PARAMS_SIZE] = {0};
-@@ -767,6 +767,13 @@ rescan:
- 	/* persistent reservation check*/
- 	mpath_pr_event_handle(pp);
- 
-+	if (!need_do_map)
-+		return 0;
-+
-+	if (!dm_map_present(mpp->alias)) {
-+		mpp->action = ACT_CREATE;
-+		start_waiter = 1;
-+	}
- 	/*
- 	 * push the map to the device-mapper
- 	 */
-@@ -995,7 +1002,7 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 		}
- 
- 		if (pp->initialized == INIT_REQUESTED_UDEV)
--			retval = uev_add_path(uev, vecs);
-+			retval = uev_add_path(uev, vecs, 1);
- 		else if (mpp && ro >= 0) {
- 			condlog(2, "%s: update path write_protect to '%d' (uevent)", uev->kernel, ro);
- 
-@@ -1150,7 +1157,7 @@ uev_trigger (struct uevent * uev, void * trigger_data)
- 	put_multipath_config(conf);
- 
- 	if (!strncmp(uev->action, "add", 3)) {
--		r = uev_add_path(uev, vecs);
-+		r = uev_add_path(uev, vecs, 1);
- 		goto out;
- 	}
- 	if (!strncmp(uev->action, "remove", 6)) {
-@@ -1570,7 +1577,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 			conf = get_multipath_config();
- 			ret = pathinfo(pp, conf, DI_ALL | DI_BLACKLIST);
- 			if (ret == PATHINFO_OK) {
--				ev_add_path(pp, vecs);
-+				ev_add_path(pp, vecs, 1);
- 				pp->tick = 1;
- 			} else if (ret == PATHINFO_SKIPPED) {
- 				put_multipath_config(conf);
-@@ -1686,7 +1693,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 		}
- 		if (!disable_reinstate && reinstate_path(pp, add_active)) {
- 			condlog(3, "%s: reload map", pp->dev);
--			ev_add_path(pp, vecs);
-+			ev_add_path(pp, vecs, 1);
- 			pp->tick = 1;
- 			return 0;
- 		}
-@@ -1709,7 +1716,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 			/* Clear IO errors */
- 			if (reinstate_path(pp, 0)) {
- 				condlog(3, "%s: reload map", pp->dev);
--				ev_add_path(pp, vecs);
-+				ev_add_path(pp, vecs, 1);
- 				pp->tick = 1;
- 				return 0;
- 			}
-diff --git a/multipathd/main.h b/multipathd/main.h
-index f72580d..f810d41 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -22,7 +22,7 @@ void exit_daemon(void);
- const char * daemon_status(void);
- int need_to_delay_reconfig (struct vectors *);
- int reconfigure (struct vectors *);
--int ev_add_path (struct path *, struct vectors *);
-+int ev_add_path (struct path *, struct vectors *, int);
- int ev_remove_path (struct path *, struct vectors *);
- int ev_add_map (char *, char *, struct vectors *);
- int ev_remove_map (char *, char *, int, struct vectors *);
--- 
-2.8.1.windows.1
+These patches are tested pass by ZTE multipath automatic testing syetem.
+The modification reduces the system consumption(such as CPU) and shortens
+the processing time obviously in scene of massive multipath devices
+addition or deletion.
+
+The main processing flow of code is:
+1)uevents accumulation in uevents burst scene:
+  --[pacth]libmultipath: wait one seconds for more uevents in
+    uevent_listen() in uevents burst situations
+2)uevents filtering and merging:
+  --[pacth]multipathd: merge uevents before proccessing
+  --[pacth]libmultipath: filter uevents before proccessing
+3)uevents proccessing:
+  --[pacth]multipathd: add need_do_map to indicate whether need calling
+    domap() in ev_add_path()
+  --[pacth]multipathd: add need_do_map to indicate whether need calling
+    domap() in ev_remove_path()
+  --[pacth]multipathd: proccess merged uevents
+
+There are some patches providing basic struct members or maros which
+would used in above pathes:
+  --[patch]libmultipath: add wwid for "struct uevent" to record wwid of
+    uevent
+  --[patch]libmultipath: add merge_node for "struct uevent" to record
+    nodes of merged uevents
+  --[patch]libmultipath: add two list iteration macros
+
+There are also some independent optimization pathes for further
+improvement:
+  --[patch]multipathd: move uev_discard() to uevent.c and change its name
+    to uevent_can_discard()
+  --[patch]multipathd: move calling filter_devnode() from uev_trigger() to
+    uevent_can_discard()
+  --[patch]libmultipath: use existing wwid when wwid has already been
+    existed in uevent
+
+Any comment will be welcome, and it would be appreciated if these
+patches would be considered for inclusion in the upstream
+multipath-tools.
+
+Thank you all,
+Tang Junhui
