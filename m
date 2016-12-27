@@ -1,12 +1,13 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 00/12] multipath-tools: improve processing
-	efficiency for addition and deletion of multipath devices
-Date: Tue, 27 Dec 2016 16:03:17 +0800
-Message-ID: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH 11/12] multipathd: proccess merged uevents
+Date: Tue, 27 Dec 2016 16:03:28 +0800
+Message-ID: <1482825809-9528-12-git-send-email-tang.junhui@zte.com.cn>
+References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,52 +21,39 @@ To: christophe.varoqui@opensvc.com, hare@suse.de, bmarzins@redhat.com, mwilck@su
 Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn, tang.wenjun3@zte.com.cn
 List-Id: dm-devel.ids
 
-From: tang.junhui <tang.junhui@zte.com.cn>
-
-Hello Christophe, Ben, Hannes, Martin, Bart, and other guys:
-
-The twelve patches in this series are used to improve processing
-efficiency for addition and deletion of multipath devices.
-
-These patches are tested pass by ZTE multipath automatic testing syetem.
-The modification reduces the system consumption(such as CPU) and shortens
-the processing time obviously in scene of massive multipath devices
-addition or deletion.
-
-The main processing flow of code is:
-1)uevents accumulation in uevents burst scene:
-  --[pacth]libmultipath: wait one seconds for more uevents in
-    uevent_listen() in uevents burst situations
-2)uevents filtering and merging:
-  --[pacth]multipathd: merge uevents before proccessing
-  --[pacth]libmultipath: filter uevents before proccessing
-3)uevents proccessing:
-  --[pacth]multipathd: add need_do_map to indicate whether need calling
-    domap() in ev_add_path()
-  --[pacth]multipathd: add need_do_map to indicate whether need calling
-    domap() in ev_remove_path()
-  --[pacth]multipathd: proccess merged uevents
-
-There are some patches providing basic struct members or maros which
-would used in above pathes:
-  --[patch]libmultipath: add wwid for "struct uevent" to record wwid of
-    uevent
-  --[patch]libmultipath: add merge_node for "struct uevent" to record
-    nodes of merged uevents
-  --[patch]libmultipath: add two list iteration macros
-
-There are also some independent optimization pathes for further
-improvement:
-  --[patch]multipathd: move uev_discard() to uevent.c and change its name
-    to uevent_can_discard()
-  --[patch]multipathd: move calling filter_devnode() from uev_trigger() to
-    uevent_can_discard()
-  --[patch]libmultipath: use existing wwid when wwid has already been
-    existed in uevent
-
-Any comment will be welcome, and it would be appreciated if these
-patches would be considered for inclusion in the upstream
-multipath-tools.
-
-Thank you all,
-Tang Junhui
+RnJvbTogInRhbmcuanVuaHVpIiA8dGFuZy5qdW5odWlAenRlLmNvbS5jbj4KCkFmdGVyIGZpbHRl
+cmluZyBhbmQgbWVyZ2luZywgdGhlbiB1ZXZlbnRzIGFyZSBwcm9jZXNzZWQgaW4KdWV2X3RyaWdn
+ZXIoKSwgZmlyc3RseSwgZWFjaCBvZiBtZXJnZWQgdWV2ZW50cyB3b3VsZCBiZSBwcm9jZXNzZWQg
+b25lCmJ5IG9uZSB3aXRoIG5lZWRfZG9fbWFwIGluIHZhbHVlIG9mIDAuIEZpbmFsbHksIHRoZSBu
+b2RlIOKAnHVlduKAnSBpdHNlbGYKd291bGQgYmUgcHJvY2Vzc2VkIHdpdGggbmVlZF9kb19tYXAg
+aW4gdmFsdWUgb2YgMSwgd2hpY2ggd291bGQgcmVsb2FkCmtlcm5lbCB0YWJsZSwgYW5kIGNyZWF0
+ZSBvciByZW1vdmUgdGhlIGRtIGRldmljZS4KCkNoYW5nZS1JZDogSWZiNGRlMGNhMzYxODBhOGFm
+MTY3MjljMmY3MGJjMjUwODU4ODc3YmQKU2lnbmVkLW9mZi1ieTogdGFuZy5qdW5odWkgPHRhbmcu
+anVuaHVpQHp0ZS5jb20uY24+Ci0tLQogbXVsdGlwYXRoZC9tYWluLmMgfCAyOCArKysrKysrKysr
+KysrKystLS0tLS0tLS0tLS0tCiAxIGZpbGUgY2hhbmdlZCwgMTUgaW5zZXJ0aW9ucygrKSwgMTMg
+ZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9tYWluLmMgYi9tdWx0aXBhdGhk
+L21haW4uYwppbmRleCAxNWE2MTc1Li4wYjE4ZjZjIDEwMDY0NAotLS0gYS9tdWx0aXBhdGhkL21h
+aW4uYworKysgYi9tdWx0aXBhdGhkL21haW4uYwpAQCAtMTA5Miw2ICsxMDkyLDcgQEAgdWV2X3Ry
+aWdnZXIgKHN0cnVjdCB1ZXZlbnQgKiB1ZXYsIHZvaWQgKiB0cmlnZ2VyX2RhdGEpCiB7CiAJaW50
+IHIgPSAwOwogCXN0cnVjdCB2ZWN0b3JzICogdmVjczsKKwlzdHJ1Y3QgdWV2ZW50ICptZXJnZV91
+ZXYsICp0bXA7CiAKIAl2ZWNzID0gKHN0cnVjdCB2ZWN0b3JzICopdHJpZ2dlcl9kYXRhOwogCkBA
+IC0xMTIzLDIwICsxMTI0LDIxIEBAIHVldl90cmlnZ2VyIChzdHJ1Y3QgdWV2ZW50ICogdWV2LCB2
+b2lkICogdHJpZ2dlcl9kYXRhKQogCX0KIAogCS8qCi0JICogcGF0aCBhZGQvcmVtb3ZlIGV2ZW50
+CisJICogcGF0aCBhZGQvcmVtb3ZlL2NoYW5nZSBldmVudCwgYWRkL3JlbW92ZSBtYXliZSBtZXJn
+ZWQKIAkgKi8KLQlpZiAoIXN0cm5jbXAodWV2LT5hY3Rpb24sICJhZGQiLCAzKSkgewotCQlyID0g
+dWV2X2FkZF9wYXRoKHVldiwgdmVjcywgMSk7Ci0JCWdvdG8gb3V0OwotCX0KLQlpZiAoIXN0cm5j
+bXAodWV2LT5hY3Rpb24sICJyZW1vdmUiLCA2KSkgewotCQlyID0gdWV2X3JlbW92ZV9wYXRoKHVl
+diwgdmVjcywgMSk7Ci0JCWdvdG8gb3V0OwotCX0KLQlpZiAoIXN0cm5jbXAodWV2LT5hY3Rpb24s
+ICJjaGFuZ2UiLCA2KSkgewotCQlyID0gdWV2X3VwZGF0ZV9wYXRoKHVldiwgdmVjcyk7Ci0JCWdv
+dG8gb3V0OwotCX0KKwlsaXN0X2Zvcl9lYWNoX2VudHJ5X3NhZmUobWVyZ2VfdWV2LCB0bXAsICZ1
+ZXYtPm1lcmdlX25vZGUsIG5vZGUpIHsKKwkJaWYgKCFzdHJuY21wKG1lcmdlX3Vldi0+YWN0aW9u
+LCAiYWRkIiwgMykpCisJCQlyICs9IHVldl9hZGRfcGF0aChtZXJnZV91ZXYsIHZlY3MsIDApOwor
+CQlpZiAoIXN0cm5jbXAobWVyZ2VfdWV2LT5hY3Rpb24sICJyZW1vdmUiLCA2KSkKKwkJCXIgKz0g
+dWV2X3JlbW92ZV9wYXRoKG1lcmdlX3VldiwgdmVjcywgMCk7CisJfQorCisJaWYgKCFzdHJuY21w
+KHVldi0+YWN0aW9uLCAiYWRkIiwgMykpCisJCXIgKz0gdWV2X2FkZF9wYXRoKHVldiwgdmVjcywg
+MSk7CisJaWYgKCFzdHJuY21wKHVldi0+YWN0aW9uLCAicmVtb3ZlIiwgNikpCisJCXIgKz0gdWV2
+X3JlbW92ZV9wYXRoKHVldiwgdmVjcywgMSk7CisJaWYgKCFzdHJuY21wKHVldi0+YWN0aW9uLCAi
+Y2hhbmdlIiwgNikpCisJCXIgKz0gdWV2X3VwZGF0ZV9wYXRoKHVldiwgdmVjcyk7CiAKIG91dDoK
+IAlyZXR1cm4gcjsKLS0gCjIuOC4xLndpbmRvd3MuMQoKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxp
+c3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
+dGluZm8vZG0tZGV2ZWw=
