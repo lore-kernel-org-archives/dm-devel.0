@@ -1,188 +1,104 @@
-From: Muneendra Kumar M <mmandala@Brocade.com>
-Subject: query on delay_watch_checks and delay_wait_checks
-Date: Tue, 27 Dec 2016 09:02:14 +0000
-Message-ID: <1b84586314f0405380f506619bf3d15a@BRMWP-EXMB12.corp.brocade.com>
+From: Pali =?utf-8?q?Roh=C3=A1r?= <pali.rohar@gmail.com>
+Subject: Re: [PATCH v2 1/3] PM suspend/hibernate: Call notifier after freezing processes
+Date: Tue, 27 Dec 2016 15:29:59 +0100
+Message-ID: <201612271529.59652@pali>
+References: <1428254419-7334-1-git-send-email-pali.rohar@gmail.com> <CAJZ5v0h-0Jo7A0hmPSfHcZbkRU7wKwVtSqTCCwX1rs=iBE9G5g@mail.gmail.com> <CAJZ5v0jGuLTJbsjW3WPe2Y8OgwMgcSSwTRNB8+PWaxwKpSDP-g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7824894469508507094=="
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: multipart/signed;
+  boundary="nextPart4057816.mhXr7E65Lq";
+  protocol="application/pgp-signature";
+  micalg=pgp-sha1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-pm-owner@vger.kernel.org>
+In-Reply-To: <CAJZ5v0jGuLTJbsjW3WPe2Y8OgwMgcSSwTRNB8+PWaxwKpSDP-g@mail.gmail.com>
+Sender: linux-pm-owner@vger.kernel.org
+To: "Rafael J. Wysocki" <rafael@kernel.org>
+Cc: NeilBrown <neilb@suse.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-raid@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "linux-pm@vger.kernel.org" <linux-pm@vger.kernel.org>
 List-Id: dm-devel.ids
 
---===============7824894469508507094==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_1b84586314f0405380f506619bf3d15aBRMWPEXMB12corpbrocadec_"
-
---_000_1b84586314f0405380f506619bf3d15aBRMWPEXMB12corpbrocadec_
-Content-Type: text/plain; charset="us-ascii"
-
-If there are two paths on a dm-1 say sda and sdb as below.
-
-#  multipath -ll
-        mpathd (3600110d001ee7f0102050001cc0b6751) dm-1 SANBlaze,VLUN MyLun
-        size=8.0M features='0' hwhandler='0' wp=rw
-        `-+- policy='round-robin 0' prio=50 status=active
-          |- 8:0:1:0  sda 8:48 active ready  running
-          `- 9:0:1:0  sdb 8:64 active ready  running
-
-And on sda if iam seeing lot of errors due to which the sda path is fluctuating from failed state to active state and vicevera.
-
-My requirement is something like this if sda is failed for more then 5 times in a hour duration ,then I want to keep the sda in failed state for few hours (3hrs)
-
-And the data should travel only thorugh sdb path.
-Will this be possible with the below parameters.
-Can you just let me know what values I should add for delay_watch_checks and delay_wait_checks.
-
-Regards,
-Muneendra.
-
-
---_000_1b84586314f0405380f506619bf3d15aBRMWPEXMB12corpbrocadec_
-Content-Type: text/html; charset="us-ascii"
+--nextPart4057816.mhXr7E65Lq
+Content-Type: Text/Plain;
+  charset="utf-8"
 Content-Transfer-Encoding: quoted-printable
 
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
-//www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
->
-<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
-<style><!--
-/* Font Definitions */
-@font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri",sans-serif;}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:#0563C1;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:#954F72;
-	text-decoration:underline;}
-pre
-	{mso-style-priority:99;
-	mso-style-link:"HTML Preformatted Char";
-	margin:0in;
-	margin-bottom:.0001pt;
-	font-size:10.0pt;
-	font-family:"Courier New";}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"Calibri",sans-serif;
-	color:windowtext;}
-span.HTMLPreformattedChar
-	{mso-style-name:"HTML Preformatted Char";
-	mso-style-priority:99;
-	mso-style-link:"HTML Preformatted";
-	font-family:"Courier New";}
-.MsoChpDefault
-	{mso-style-type:export-only;
-	font-family:"Calibri",sans-serif;}
-@page WordSection1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.0in 1.0in 1.0in;}
-div.WordSection1
-	{page:WordSection1;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]-->
-</head>
-<body lang=3D"EN-US" link=3D"#0563C1" vlink=3D"#954F72">
-<div class=3D"WordSection1">
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">If there are two paths on a dm-1 say sda and s=
-db as below.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">#&nbsp; multipath -ll<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mpa=
-thd (3600110d001ee7f0102050001cc0b6751) dm-1 SANBlaze,VLUN MyLun<o:p></o:p>=
-</span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; siz=
-e=3D8.0M features=3D'0' hwhandler=3D'0' wp=3Drw<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `-&=
-#43;- policy=3D'round-robin 0' prio=3D50 status=3Dactive<o:p></o:p></span><=
-/p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nb=
-sp; |- 8:0:1:0&nbsp; sda 8:48 active ready&nbsp; running<o:p></o:p></span><=
-/p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nb=
-sp; `- 9:0:1:0&nbsp; sdb 8:64 active ready&nbsp; running&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">And on sda if iam seeing lot of errors due to =
-which the sda path is fluctuating from failed state to active state and vic=
-evera.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">My requirement is something like this if sda i=
-s failed for more then 5 times in a hour duration ,then I want to keep the =
-sda in failed state for few hours (3hrs)<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">And the data should travel only thorugh sdb pa=
-th.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">Will this be possible with the below parameter=
-s.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">Can you just let me know what values I should =
-add for delay_watch_checks and delay_wait_checks.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">Regards,<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">Muneendra.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-</div>
-</body>
-</html>
+On Wednesday 22 July 2015 01:03:23 Rafael J. Wysocki wrote:
+> On Wed, Jul 22, 2015 at 1:00 AM, Rafael J. Wysocki <rafael@kernel.org>
+> wrote:
+> > Hi Neil,
+> >=20
+> > On Wed, Jul 22, 2015 at 12:08 AM, NeilBrown <neilb@suse.com> wrote:
+> >> On Mon, 20 Jul 2015 23:46:32 +0200 "Rafael J. Wysocki"
+> >>=20
+> >> <rjw@rjwysocki.net> wrote:
+> >>> On Monday, July 20, 2015 09:32:26 AM Pali Roh=C3=A1r wrote:
+> >>> > On Saturday 18 July 2015 01:27:15 Rafael J. Wysocki wrote:
+> >>> > > On Thursday, July 16, 2015 09:33:02 AM Pali Roh=C3=A1r wrote:
+> >>> > > > On Thursday 16 July 2015 03:02:03 Rafael J. Wysocki wrote:
+> >>> > > > > Also, if you're adding AFTER_FREEZE, it would be good to
+> >>> > > > > add BEFORE_THAW too for symmetry.
+> >>> > > >=20
+> >>> > > > But there is no use case for BEFORE_THAW. At least it is
+> >>> > > > not needed for now.
+> >>> > >=20
+> >>> > > For your use case, a single function pointer would be
+> >>> > > sufficient too.
+> >>> >=20
+> >>> > What do you mean by single function pointer? kernel/power is
+> >>> > part of kernel image and dm-crypt is external kernel module.
+> >>>=20
+> >>> Well, if there is a function pointer in the core suspend code
+> >>> initially set to NULL and exported to modules such that the
+> >>> dm-crypt code can set it to something else, that should be
+> >>> sufficient, shouldn't it?
+> >>=20
+> >> As long as the dm-crypt module is never unloaded.
+> >=20
+> > OK, there is a race related to that.
+> >=20
+> >> And as long as no other module could very possible want
+> >> functionality like this. Ever.
+> >=20
+> > The point was that there were no other users currently, so dm-crypt
+> > is going to be the only user for the time being.
+> >=20
+> >> If a module wants to be notified - the providing a notifier chain
+> >> really seems like the right thing to do...
+> >=20
+> > Well, so please see my last response in this thread. :-)
+>=20
+> So it was below: "Anyway, I guess the "post freeze" new one should be
+> enough for now" which doesn't mean I'm really against the notifier.
+> Or at least it is not supposed to mean so.  If there's any confusion
+> related to that, I'm sorry.
+>=20
+> Thanks,
+> Rafael
 
---_000_1b84586314f0405380f506619bf3d15aBRMWPEXMB12corpbrocadec_--
+In that case we are not able to distinguish if computer is going to be=20
+hibernated or just suspended to RAM.
 
+If we have both notifier (one for suspend and for hibernate) then=20
+different actions can be configured for suspend and hibernate.
 
---===============7824894469508507094==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+And it makes sense to configure different behaviour for suspend and for=20
+hibernate. E.g. when you have encrypted partition where is stored=20
+hibernation image then you do not have to wipe keys before going to do=20
+hibernation. But for suspend to RAM you may want to wipe them.
 
+=2D-=20
+Pali Roh=C3=A1r
+pali.rohar@gmail.com
 
---===============7824894469508507094==--
+--nextPart4057816.mhXr7E65Lq
+Content-Type: application/pgp-signature; name=signature.asc 
+Content-Description: This is a digitally signed message part.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+
+iEYEABECAAYFAlhieucACgkQi/DJPQPkQ1JBTQCfR4Ic5rHsu15SxmiTkMkc5p1e
+SgMAnjr32h44Mspa3FV/NART53tkYicj
+=tOeL
+-----END PGP SIGNATURE-----
+
+--nextPart4057816.mhXr7E65Lq--
