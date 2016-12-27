@@ -1,14 +1,14 @@
-From: Muneendra Kumar M <mmandala@Brocade.com>
-Subject: Re: deterministic io throughput in multipath
-Date: Mon, 26 Dec 2016 09:42:48 +0000
-Message-ID: <8cd4cc5f20b540a1b8312ad485711152@BRMWP-EXMB12.corp.brocade.com>
-References: <1649d4b8538d4b4cb1efacdfe8cf31eb@BRMWP-EXMB12.corp.brocade.com>
-	<20161221160940.GG19659@octiron.msp.redhat.com>
+From: tang.junhui@zte.com.cn
+Subject: [PATCH 06/12] multipathd: move uev_discard() to uevent.c
+	and change its name to uevent_can_discard()
+Date: Tue, 27 Dec 2016 16:03:23 +0800
+Message-ID: <1482825809-9528-7-git-send-email-tang.junhui@zte.com.cn>
+References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,128 +18,117 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: christophe.varoqui@opensvc.com, hare@suse.de, bmarzins@redhat.com, mwilck@suse.com, bart.vanassche@sandisk.com
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn, tang.wenjun3@zte.com.cn
 List-Id: dm-devel.ids
 
-Hi Ben,
+From: tang.junhui <tang.junhui@zte.com.cn>
 
-If there are two paths on a dm-1 say sda and sdb as below.
+Move uev_discard() form uevent processing thread to uevent listening
+thread to discard unnecessary uevents as soon as possible.
 
-#  multipath -ll
-	mpathd (3600110d001ee7f0102050001cc0b6751) dm-1 SANBlaze,VLUN MyLun
-	size=3D8.0M features=3D'0' hwhandler=3D'0' wp=3Drw
-	`-+- policy=3D'round-robin 0' prio=3D50 status=3Dactive
-	  |- 8:0:1:0  sda 8:48 active ready  running
-	  `- 9:0:1:0  sdb 8:64 active ready  running          =
+Change-Id: Iaac159ffe3930e53c3325d1069c3ed497e440c0c
+Signed-off-by: tang.wenjun <tang.wenjun3@zte.com.cn>
+---
+ libmultipath/uevent.c | 28 ++++++++++++++++++++++++++++
+ multipathd/main.c     | 25 -------------------------
+ 2 files changed, 28 insertions(+), 25 deletions(-)
 
-
-And on sda if iam seeing lot of errors due to which the sda path is fluctua=
-ting from failed state to active state and vicevera.
-
-My requirement is something like this if sda is failed for more then 5 time=
-s in a hour duration ,then I want to keep the sda in failed state for few h=
-ours (3hrs)
-
-And the data should travel only thorugh sdb path.
-Will this be possible with the below parameters.
-Can you just let me know what values I should add for delay_watch_checks an=
-d delay_wait_checks.
-
-Regards,
-Muneendra.
-
-
-
------Original Message-----
-From: Muneendra Kumar M =
-
-Sent: Thursday, December 22, 2016 11:10 AM
-To: 'Benjamin Marzinski' <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
-Subject: RE: [dm-devel] deterministic io throughput in multipath
-
-Hi Ben,
-
-Thanks for the reply.
-I will look into this parameters will do the internal testing and let you k=
-now the results.
-
-Regards,
-Muneendra.
-
------Original Message-----
-From: Benjamin Marzinski [mailto:bmarzins@redhat.com] =
-
-Sent: Wednesday, December 21, 2016 9:40 PM
-To: Muneendra Kumar M <mmandala@Brocade.com>
-Cc: dm-devel@redhat.com
-Subject: Re: [dm-devel] deterministic io throughput in multipath
-
-Have you looked into the delay_watch_checks and delay_wait_checks configura=
-tion parameters?  The idea behind them is to minimize the use of paths that=
- are intermittently failing.
-
--Ben
-
-On Mon, Dec 19, 2016 at 11:50:36AM +0000, Muneendra Kumar M wrote:
->    Customers using Linux host (mostly RHEL host) using a SAN network for
->    block storage, complain the Linux multipath stack is not resilient to
->    handle non-deterministic storage network behaviors. This has caused ma=
-ny
->    customer move away to non-linux based servers. The intent of the below
->    patch and the prevailing issues are given below. With the below design=
- we
->    are seeing the Linux multipath stack becoming resilient to such network
->    issues. We hope by getting this patch accepted will help in more Linux
->    server adoption that use SAN network.
-> =
-
->    I have already sent the design details to the community in a different
->    mail chain and the details are available in the below link.
-> =
-
->    [1]https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.c=
-om_archives_dm-2Ddevel_2016-2DDecember_msg00122.html&d=3DDgIDAw&c=3DIL_XqQW=
-OjubgfqINi2jTzg&r=3DE3ftc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6=
-e1KXtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_Uj7MRu=
-52hG3MKzM&e=3D .
-> =
-
->    Can you please go through the design and send the comments to us.
-> =
-
->    =A0
-> =
-
->    Regards,
-> =
-
->    Muneendra.
-> =
-
->    =A0
-> =
-
->    =A0
-> =
-
-> References
-> =
-
->    Visible links
->    1. =
-
-> https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.com_ar
-> chives_dm-2Ddevel_2016-2DDecember_msg00122.html&d=3DDgIDAw&c=3DIL_XqQWOjub
-> gfqINi2jTzg&r=3DE3ftc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6e1K
-> XtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_Uj7MRu
-> 52hG3MKzM&e=3D
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.com_ma
-> ilman_listinfo_dm-2Ddevel&d=3DDgIDAw&c=3DIL_XqQWOjubgfqINi2jTzg&r=3DE3ftc=
-47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6e1KXtRA0ctwHYJ7cDmPsLi2C1=
-L9pox7uexsY&s=3DUyE46dXOrNTbPz_TVGtpoHl3J3h_n0uYhI4TI-PgyWg&e=3D
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 181b3b8..ac49cac 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -24,6 +24,7 @@
+ 
+ #include <unistd.h>
+ #include <stdio.h>
++#include <stdbool.h>
+ #include <errno.h>
+ #include <stdlib.h>
+ #include <stddef.h>
+@@ -80,6 +81,28 @@ struct uevent * alloc_uevent (void)
+ 	return uev;
+ }
+ 
++bool
++uevent_can_discard(char *devpath)
++{
++	char *tmp;
++	char a[11], b[11];
++
++	/*
++	 * keep only block devices, discard partitions
++	 */
++	tmp = strstr(devpath, "/block/");
++	if (tmp == NULL){
++		condlog(4, "no /block/ in '%s'", devpath);
++		return true;
++	}
++	if (sscanf(tmp, "/block/%10s", a) != 1 ||
++	    sscanf(tmp, "/block/%10[^/]/%10s", a, b) == 2) {
++		condlog(4, "discard event on %s", devpath);
++		return true;
++	}
++	return false;
++}
++
+ void
+ service_uevq(struct list_head *tmpq)
+ {
+@@ -527,6 +550,11 @@ int uevent_listen(struct udev *udev)
+ 			uev = uevent_from_udev_device(dev);
+ 			if (!uev)
+ 				continue;
++			if (uevent_can_discard(uev->devpath)) {
++				 udev_device_unref(uev->udev);
++				 FREE(uev);
++				 continue;
++			}
+ 			list_add_tail(&uev->node, &uevlisten_tmp);
+ 			events++;
+ 			continue;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 68c8e17..51f7b60 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1087,28 +1087,6 @@ uxsock_trigger (char * str, char ** reply, int * len, void * trigger_data)
+ 	return r;
+ }
+ 
+-static int
+-uev_discard(char * devpath)
+-{
+-	char *tmp;
+-	char a[11], b[11];
+-
+-	/*
+-	 * keep only block devices, discard partitions
+-	 */
+-	tmp = strstr(devpath, "/block/");
+-	if (tmp == NULL){
+-		condlog(4, "no /block/ in '%s'", devpath);
+-		return 1;
+-	}
+-	if (sscanf(tmp, "/block/%10s", a) != 1 ||
+-	    sscanf(tmp, "/block/%10[^/]/%10s", a, b) == 2) {
+-		condlog(4, "discard event on %s", devpath);
+-		return 1;
+-	}
+-	return 0;
+-}
+-
+ int
+ uev_trigger (struct uevent * uev, void * trigger_data)
+ {
+@@ -1118,9 +1096,6 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 
+ 	vecs = (struct vectors *)trigger_data;
+ 
+-	if (uev_discard(uev->devpath))
+-		return 0;
+-
+ 	pthread_cleanup_push(config_cleanup, NULL);
+ 	pthread_mutex_lock(&config_lock);
+ 	if (running_state != DAEMON_IDLE &&
+-- 
+2.8.1.windows.1
