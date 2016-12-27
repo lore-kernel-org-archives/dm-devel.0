@@ -1,8 +1,8 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 07/12] multipathd: move calling filter_devnode()
-	from uev_trigger() to uevent_can_discard()
-Date: Tue, 27 Dec 2016 16:03:24 +0800
-Message-ID: <1482825809-9528-8-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH 02/12] libmultipath: add merge_node for "struct
+	uevent" to record nodes of merged uevents
+Date: Tue, 27 Dec 2016 16:03:19 +0800
+Message-ID: <1482825809-9528-3-git-send-email-tang.junhui@zte.com.cn>
 References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,102 +24,52 @@ List-Id: dm-devel.ids
 
 From: tang.junhui <tang.junhui@zte.com.cn>
 
-Move calling filter_devnode() from uev_trigger() to uevent_can_discard()
-since they do the similar work.
+Add merged nodes list to store nodes of merged uevents. By Adding
+this member, after merging, the list of uevents would be linked like
+this:
+uevent
+ ---------------------------
+|struct list_head node      |----->list node of un-merged uevents
+ ---------------------------
+|struct list_head merge_node|----->list node of merged uevents, which
+----------------------------       moved from the origin un-merged list
+|...                        |
+ ---------------------------
 
-Change-Id: I0322443fa551b21aa3211bf1ce3fad7d37aeeab4
+Change-Id: I5fbfc7656ede77e03ca35c855212e2d2d60706b2
 Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 ---
- libmultipath/uevent.c | 25 +++++++++++++++++++++++--
- multipathd/main.c     |  9 ---------
- 2 files changed, 23 insertions(+), 11 deletions(-)
+ libmultipath/uevent.c | 4 +++-
+ libmultipath/uevent.h | 1 +
+ 2 files changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index ac49cac..cc10d65 100644
+index ef1bafe..181b3b8 100644
 --- a/libmultipath/uevent.c
 +++ b/libmultipath/uevent.c
-@@ -47,6 +47,9 @@
- #include "list.h"
- #include "uevent.h"
- #include "vector.h"
-+#include "structs.h"
-+#include "config.h"
-+#include "blacklist.h"
- 
- typedef int (uev_trigger)(struct uevent *, void * trigger_data);
- 
-@@ -82,10 +85,11 @@ struct uevent * alloc_uevent (void)
- }
- 
- bool
--uevent_can_discard(char *devpath)
-+uevent_can_discard(char *devpath, char *kernel)
+@@ -72,8 +72,10 @@ struct uevent * alloc_uevent (void)
  {
- 	char *tmp;
- 	char a[11], b[11];
-+	struct config * conf;
+ 	struct uevent *uev = MALLOC(sizeof(struct uevent));
  
- 	/*
- 	 * keep only block devices, discard partitions
-@@ -100,6 +104,23 @@ uevent_can_discard(char *devpath)
- 		condlog(4, "discard event on %s", devpath);
- 		return true;
- 	}
-+
-+	/* 
-+	 * do not filter dm devices by devnode
-+	 */
-+	if (!strncmp(kernel, "dm-", 3))
-+		return false;
-+	/* 
-+	 * filter paths devices by devnode
-+	 */
-+	conf = get_multipath_config();
-+	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
-+			   kernel) > 0) {
-+		put_multipath_config(conf);
-+		return true;
+-	if (uev)
++	if (uev) {
+ 		INIT_LIST_HEAD(&uev->node);
++		INIT_LIST_HEAD(&uev->merge_node);
 +	}
-+	put_multipath_config(conf);
-+
- 	return false;
+ 
+ 	return uev;
  }
+diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
+index 7bfccef..61a4207 100644
+--- a/libmultipath/uevent.h
++++ b/libmultipath/uevent.h
+@@ -17,6 +17,7 @@ struct udev;
  
-@@ -550,7 +571,7 @@ int uevent_listen(struct udev *udev)
- 			uev = uevent_from_udev_device(dev);
- 			if (!uev)
- 				continue;
--			if (uevent_can_discard(uev->devpath)) {
-+			if (uevent_can_discard(uev->devpath, uev->kernel)) {
- 				 udev_device_unref(uev->udev);
- 				 FREE(uev);
- 				 continue;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 51f7b60..15a6175 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1092,7 +1092,6 @@ uev_trigger (struct uevent * uev, void * trigger_data)
- {
- 	int r = 0;
- 	struct vectors * vecs;
--	struct config *conf;
- 
- 	vecs = (struct vectors *)trigger_data;
- 
-@@ -1126,14 +1125,6 @@ uev_trigger (struct uevent * uev, void * trigger_data)
- 	/*
- 	 * path add/remove event
- 	 */
--	conf = get_multipath_config();
--	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
--			   uev->kernel) > 0) {
--		put_multipath_config(conf);
--		goto out;
--	}
--	put_multipath_config(conf);
--
- 	if (!strncmp(uev->action, "add", 3)) {
- 		r = uev_add_path(uev, vecs, 1);
- 		goto out;
+ struct uevent {
+ 	struct list_head node;
++	struct list_head merge_node;
+ 	struct udev_device *udev;
+ 	char buffer[HOTPLUG_BUFFER_SIZE + OBJECT_SIZE];
+ 	char *devpath;
 -- 
 2.8.1.windows.1
