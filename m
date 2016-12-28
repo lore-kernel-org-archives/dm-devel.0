@@ -1,35 +1,88 @@
-From: Ming Lei <tom.leiming@gmail.com>
-Subject: [PATCH v1 37/54] dm-crypt: convert to bio_for_each_segment_all_sp()
-Date: Wed, 28 Dec 2016 00:04:46 +0800
-Message-ID: <1482854706-14128-6-git-send-email-tom.leiming@gmail.com>
-References: <1482854706-14128-1-git-send-email-tom.leiming@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1482854706-14128-1-git-send-email-tom.leiming@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@fb.com>, linux-kernel@vger.kernel.org
-Cc: linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Ming Lei <tom.leiming@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "maintainer:DEVICE-MAPPER LVM" <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "open list:SOFTWARE RAID Multiple Disks
-        SUPPORT" <linux-raid@vger.kernel.org>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 08/12] libmultipath: wait one seconds for
+ more uevents in uevent_listen() in uevents burst situations
+Date: Wed, 28 Dec 2016 21:25:42 +0100
+Message-ID: <1482956742.23348.3.camel@suse.com>
+References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
+	<1482825809-9528-9-git-send-email-tang.junhui@zte.com.cn>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1482825809-9528-9-git-send-email-tang.junhui@zte.com.cn>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: tang.junhui@zte.com.cn, christophe.varoqui@opensvc.com, hare@suse.de, bmarzins@redhat.com, bart.vanassche@sandisk.com
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.wenjun3@zte.com.cn
 List-Id: dm-devel.ids
 
-Signed-off-by: Ming Lei <tom.leiming@gmail.com>
----
- drivers/md/dm-crypt.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 593cdf88bf5f..c6932fb85418 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1038,8 +1038,9 @@ static void crypt_free_buffer_pages(struct crypt_config *cc, struct bio *clone)
- {
- 	unsigned int i;
- 	struct bio_vec *bv;
-+	struct bvec_iter_all bia;
- 
--	bio_for_each_segment_all(bv, clone, i) {
-+	bio_for_each_segment_all_sp(bv, clone, i, bia) {
- 		BUG_ON(!bv->bv_page);
- 		mempool_free(bv->bv_page, cc->page_pool);
- 	}
--- 
-2.7.4
+T24gVHVlLCAyMDE2LTEyLTI3IGF0IDE2OjAzICswODAwLCB0YW5nLmp1bmh1aUB6dGUuY29tLmNu
+IHdyb3RlOgo+IEZyb206IHRhbmcuanVuaHVpIDx0YW5nLmp1bmh1aUB6dGUuY29tLmNuPgo+IAo+
+IFRoZSBtb3JlIHVldmVudHMgYXJlIG1lcmdlZCwgdGhlIGhpZ2hlciBlZmZpY2llbmN5IHByb2dy
+YW0gd2lsbAo+IHBlcmZvcm1zLgo+IFNvLCBkbyBub3QgcHJvY2VzcyB1ZXZlbnRzIGFmdGVyIHJl
+Y2VpdmluZyBpbW1lZGlhdGVseSBpbiB1ZXZlbnRzCj4gYnVyc3QKPiBzaXR1YXRpb25zLCBidXQg
+Y29udGludWUgd2FpdCAxIHNlY29uZHMgZm9yIG1vcmUgdWV2ZW50cyBleGNlcHQgdGhhdAo+IHRv
+bwo+IG11Y2ggdWV2ZW50cyAoMjA0OCkgaGF2ZSBhbHJlYWR5IGJlZW4gcmVjZWl2ZWQgb3IgdG9v
+IG11Y2ggdGltZQo+IGVjbGlwc2UKPiAoNjAgc2Vjb25kcykuCgpIaSBUYW5nLAoKdGhhbmtzIGZv
+ciB0aGlzIGltcHJlc3NpdmUgcGF0Y2ggc2V0LiBXaGlsZSBJIGhhdmVuJ3QgaGFkIHRpbWUgdG8g
+cmVhZAp0aHJvdWdoIHRoZSBtb3JlIGNvbXBsZXggcGFydHMgeWV0LCBvbmUgc21hbGwgbml0cGlj
+ayBvbiB0aGlzIHBhdGNoOgpwbGVhc2UgdXNlIG5hbWVkIGNvbnN0YW50cyByYXRoZXIgdGhhbiBl
+eHBsaWNpdCBudW1iZXJzIGluIHRoZSBjb2RlLgoKUmVnYXJkcywKTWFydGluCgoKPiAKPiBDaGFu
+Z2UtSWQ6IEk3NjNkNDkxNTQwZTgxMTRhODFkMTJkNjAzMjgxNTQwYTgxNTAyNzQyCj4gU2lnbmVk
+LW9mZi1ieTogdGFuZy5qdW5odWkgPHRhbmcuanVuaHVpQHp0ZS5jb20uY24+Cj4gLS0tCj4gwqBs
+aWJtdWx0aXBhdGgvdWV2ZW50LmMgfCAzNSArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KystLQo+IMKgMSBmaWxlIGNoYW5nZWQsIDMzIGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0p
+Cj4gCj4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC91ZXZlbnQuYyBiL2xpYm11bHRpcGF0aC91
+ZXZlbnQuYwo+IGluZGV4IGNjMTBkNjUuLmIwYjA1ZTkgMTAwNjQ0Cj4gLS0tIGEvbGlibXVsdGlw
+YXRoL3VldmVudC5jCj4gKysrIGIvbGlibXVsdGlwYXRoL3VldmVudC5jCj4gQEAgLTM5LDYgKzM5
+LDcgQEAKPiDCoCNpbmNsdWRlIDxsaW51eC9uZXRsaW5rLmg+Cj4gwqAjaW5jbHVkZSA8cHRocmVh
+ZC5oPgo+IMKgI2luY2x1ZGUgPHN5cy9tbWFuLmg+Cj4gKyNpbmNsdWRlIDxzeXMvdGltZS5oPgo+
+IMKgI2luY2x1ZGUgPGxpYnVkZXYuaD4KPiDCoCNpbmNsdWRlIDxlcnJuby5oPgo+IMKgCj4gQEAg
+LTQ5MCwxMSArNDkxLDM3IEBAIHN0cnVjdCB1ZXZlbnQgKnVldmVudF9mcm9tX3VkZXZfZGV2aWNl
+KHN0cnVjdAo+IHVkZXZfZGV2aWNlICpkZXYpCj4gwqAJcmV0dXJuIHVldjsKPiDCoH0KPiDCoAo+
+ICtib29sIHVldmVudF9idXJzdChzdHJ1Y3QgdGltZXZhbCAqc3RhcnRfdGltZSwgaW50IGV2ZW50
+cykKPiArewo+ICsJc3RydWN0IHRpbWV2YWwgZGlmZl90aW1lLCBlbmRfdGltZTsKPiArCXVuc2ln
+bmVkIGxvbmcgc3BlZWQ7Cj4gKwl1bnNpZ25lZCBsb25nIGVjbGlwc2VfbXM7Cj4gKwo+ICsJZ2V0
+dGltZW9mZGF5KCZlbmRfdGltZSwgTlVMTCk7Cj4gKwl0aW1lcnN1YigmZW5kX3RpbWUsIHN0YXJ0
+X3RpbWUsICZkaWZmX3RpbWUpOwo+ICsKPiArCWVjbGlwc2VfbXMgPSBkaWZmX3RpbWUudHZfc2Vj
+ICogMTAwMCArIGRpZmZfdGltZS50dl91c2VjIC8KPiAxMDAwOwo+ICsJaWYgKGVjbGlwc2VfbXMg
+PT0gMCkKPiArCQlyZXR1cm4gdHJ1ZTsKPiArCS8qIG1heCB3YWl0IDYwcyAqLwo+ICsJaWYgKGVj
+bGlwc2VfbXMgPiA2MCoxMDAwKSB7Cj4gKwkJY29uZGxvZygxLCAiYnVyc3QgY29udGludWVkID0l
+bHUgbXMsIHN0b3BlZCIsCj4gZWNsaXBzZV9tcyk7Cj4gKwkJcmV0dXJuIGZhbHNlOwo+ICsJfQo+
+ICsKPiArCXNwZWVkID0gKGV2ZW50cyAqIDEwMDApIC8gZWNsaXBzZV9tczsKPiArCWlmIChzcGVl
+ZCA+IDEwKQo+ICsJCXJldHVybiB0cnVlOwo+ICsKPiArCXJldHVybiBmYWxzZTsKPiArfQo+ICsK
+PiDCoGludCB1ZXZlbnRfbGlzdGVuKHN0cnVjdCB1ZGV2ICp1ZGV2KQo+IMKgewo+IMKgCWludCBl
+cnIgPSAyOwo+IMKgCXN0cnVjdCB1ZGV2X21vbml0b3IgKm1vbml0b3IgPSBOVUxMOwo+IMKgCWlu
+dCBmZCwgc29ja2V0X2ZsYWdzLCBldmVudHM7Cj4gKwlzdHJ1Y3QgdGltZXZhbCBzdGFydF90aW1l
+Owo+IMKgCWludCBuZWVkX2ZhaWxiYWNrID0gMTsKPiDCoAlpbnQgdGltZW91dCA9IDMwOwo+IMKg
+CUxJU1RfSEVBRCh1ZXZsaXN0ZW5fdG1wKTsKPiBAQCAtNTQ4LDYgKzU3NSw3IEBAIGludCB1ZXZl
+bnRfbGlzdGVuKHN0cnVjdCB1ZGV2ICp1ZGV2KQo+IMKgCX0KPiDCoAo+IMKgCWV2ZW50cyA9IDA7
+Cj4gKwlnZXR0aW1lb2ZkYXkoJnN0YXJ0X3RpbWUsIE5VTEwpOwo+IMKgCXdoaWxlICgxKSB7Cj4g
+wqAJCXN0cnVjdCB1ZXZlbnQgKnVldjsKPiDCoAkJc3RydWN0IHVkZXZfZGV2aWNlICpkZXY7Cj4g
+QEAgLTU2Miw3ICs1OTAsOCBAQCBpbnQgdWV2ZW50X2xpc3RlbihzdHJ1Y3QgdWRldiAqdWRldikK
+PiDCoAkJZXJybm8gPSAwOwo+IMKgCQlmZGNvdW50ID0gcG9sbCgmZXZfcG9sbCwgMSwgcG9sbF90
+aW1lb3V0KTsKPiDCoAkJaWYgKGZkY291bnQgJiYgZXZfcG9sbC5yZXZlbnRzICYgUE9MTElOKSB7
+Cj4gLQkJCXRpbWVvdXQgPSAwOwo+ICsJCQl0aW1lb3V0ID0gdWV2ZW50X2J1cnN0KCZzdGFydF90
+aW1lLCBldmVudHMgKwo+IDEpID8gMTowOwo+ICsKPiDCoAkJCWRldiA9IHVkZXZfbW9uaXRvcl9y
+ZWNlaXZlX2RldmljZShtb25pdG9yKTsKPiDCoAkJCWlmICghZGV2KSB7Cj4gwqAJCQkJY29uZGxv
+ZygwLCAiZmFpbGVkIGdldHRpbmcgdWRldgo+IGRldmljZSIpOwo+IEBAIC01NzgsNyArNjA3LDgg
+QEAgaW50IHVldmVudF9saXN0ZW4oc3RydWN0IHVkZXYgKnVkZXYpCj4gwqAJCQl9Cj4gwqAJCQls
+aXN0X2FkZF90YWlsKCZ1ZXYtPm5vZGUsICZ1ZXZsaXN0ZW5fdG1wKTsKPiDCoAkJCWV2ZW50cysr
+Owo+IC0JCQljb250aW51ZTsKPiArCQkJaWYoZXZlbnRzIDwgMjA0OCkKPiArCQkJCWNvbnRpbnVl
+Owo+IMKgCQl9Cj4gwqAJCWlmIChmZGNvdW50IDwgMCkgewo+IMKgCQkJaWYgKGVycm5vID09IEVJ
+TlRSKQo+IEBAIC02MDAsNiArNjMwLDcgQEAgaW50IHVldmVudF9saXN0ZW4oc3RydWN0IHVkZXYg
+KnVkZXYpCj4gwqAJCQlwdGhyZWFkX211dGV4X3VubG9jayh1ZXZxX2xvY2twKTsKPiDCoAkJCWV2
+ZW50cyA9IDA7Cj4gwqAJCX0KPiArCQlnZXR0aW1lb2ZkYXkoJnN0YXJ0X3RpbWUsIE5VTEwpOwo+
+IMKgCQl0aW1lb3V0ID0gMzA7Cj4gwqAJfQo+IMKgCW5lZWRfZmFpbGJhY2sgPSAwOwoKLS0gCkRy
+LiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC7CoCs0OSAoMCk5MTEgNzQwNTMg
+MjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhh
+cmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBt
+YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
+aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
