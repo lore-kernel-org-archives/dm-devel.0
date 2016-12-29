@@ -1,8 +1,7 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 08/12] libmultipath: wait one seconds for more
-	uevents in uevent_listen() in uevents burst situations
-Date: Thu, 29 Dec 2016 09:54:58 +0800
-Message-ID: <1482976498-11424-1-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH] multipathd: fix SIGUSR2 handling
+Date: Thu, 29 Dec 2016 15:56:14 +0800
+Message-ID: <1482998174-11884-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,116 +15,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mwilck@suse.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, hare@suse.de, bart.vanassche@sandisk.com
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn, tang.wenjun3@zte.com.cn
+To: christophe.varoqui@opensvc.com
+Cc: tang.junhui@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com, mwilck@suse.com
 List-Id: dm-devel.ids
 
-From: tang.junhui <tang.junhui@zte.com.cn>
+From: "tang.junhui" <tang.junhui@zte.com.cn>
 
-The more uevents are merged, the higher efficiency program will performs.
-So, do not process uevents after receiving immediately in uevents burst
-situations, but continue wait one seconds for more uevents except that
-too much uevents (2048) have already been received or too much time
-eclipse (30 seconds).
+SIGUSR2 is not blocked by default, it would cause bellow conflict
+in removing of the last path:
+-------------------------------------------------------------
+uevent processing thread                 | waiter thread
+-----------------------------------------|-------------------
+uev_remove_path()                        |   waiteventloop()
+  lock(&vecs->lock)                      |
+  ev_remove_path()                       |     
+    dm_queue_if_no_path()----------------|----> dm_task_run()	
+    flush_map()                          |      |
+      remove_map_and_stop_waiter()       |      -> pthread_cleanup_push(cleanup_lock, &waiter->vecs->lock);
+        _remove_map()                    |         lock(&waiter->vecs->lock)//wait for the locker	
+          stop_waiter_thread()           |         
+            pthread_cancel(thread)       |          
+            pthread_kill(thread,SIGUSR2)-|------> sigusr2 (int sig)
+                                         |          condlog()
+                                         |          fprintf() //it has test cancel point
+                                         |          cleanup_lock() //thread cancel, and pop, which unlock the 
+                                         |                           locker of uevent processing thread 
+--------------------------------------------------------------
+Since SIGUSR2 is only needed when waiter thread running in dm_task_run(),
+and it has already been unblocked before dm_task_run(), so this patch block 
+SIGUSR2 for other times.
 
-Change-Id: I763d491540e8114a81d12d603281540a81502742
+Change-Id: I8c46292dc954415764ebbe054498b4f7ea53c1c6
 Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 ---
- libmultipath/uevent.c | 42 +++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 41 insertions(+), 1 deletion(-)
+ multipathd/main.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index cc10d65..0345e6e 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -39,6 +39,7 @@
- #include <linux/netlink.h>
- #include <pthread.h>
- #include <sys/mman.h>
-+#include <sys/time.h>
- #include <libudev.h>
- #include <errno.h>
- 
-@@ -51,6 +52,10 @@
- #include "config.h"
- #include "blacklist.h"
- 
-+#define MAX_ACCUMULATION_COUNT 2048
-+#define MAX_ACCUMULATION_TIME 30*1000
-+#define MIN_BURST_SPEED 10
-+
- typedef int (uev_trigger)(struct uevent *, void * trigger_data);
- 
- LIST_HEAD(uevq);
-@@ -490,11 +495,43 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
- 	return uev;
- }
- 
-+bool uevent_burst(struct timeval *start_time, int events)
-+{
-+	struct timeval diff_time, end_time;
-+	unsigned long speed;
-+	unsigned long eclipse_ms;
-+
-+	if(events > MAX_ACCUMULATION_COUNT) {
-+		condlog(2, "burst got %u uevents, too much uevents, stopped", events);
-+		return false;
-+	}
-+
-+	gettimeofday(&end_time, NULL);
-+	timersub(&end_time, start_time, &diff_time);
-+
-+	eclipse_ms = diff_time.tv_sec * 1000 + diff_time.tv_usec / 1000;
-+
-+	if (eclipse_ms == 0)
-+		return true;
-+
-+	if (eclipse_ms > MAX_ACCUMULATION_TIME) {
-+		condlog(2, "burst continued %lu ms, too long time, stopped", eclipse_ms);
-+		return false;
-+	}
-+
-+	speed = (events * 1000) / eclipse_ms;
-+	if (speed > MIN_BURST_SPEED)
-+		return true;
-+
-+	return false;
-+}
-+
- int uevent_listen(struct udev *udev)
+diff --git a/multipathd/main.c b/multipathd/main.c
+index adc3258..fe69abd 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2181,6 +2181,12 @@ sigusr2 (int sig)
+ static void
+ signal_init(void)
  {
- 	int err = 2;
- 	struct udev_monitor *monitor = NULL;
- 	int fd, socket_flags, events;
-+	struct timeval start_time;
- 	int need_failback = 1;
- 	int timeout = 30;
- 	LIST_HEAD(uevlisten_tmp);
-@@ -548,6 +585,7 @@ int uevent_listen(struct udev *udev)
- 	}
- 
- 	events = 0;
-+	gettimeofday(&start_time, NULL);
- 	while (1) {
- 		struct uevent *uev;
- 		struct udev_device *dev;
-@@ -562,7 +600,8 @@ int uevent_listen(struct udev *udev)
- 		errno = 0;
- 		fdcount = poll(&ev_poll, 1, poll_timeout);
- 		if (fdcount && ev_poll.revents & POLLIN) {
--			timeout = 0;
-+			timeout = uevent_burst(&start_time, events + 1) ? 1 : 0;
++	sigset_t set;
 +
- 			dev = udev_monitor_receive_device(monitor);
- 			if (!dev) {
- 				condlog(0, "failed getting udev device");
-@@ -600,6 +639,7 @@ int uevent_listen(struct udev *udev)
- 			pthread_mutex_unlock(uevq_lockp);
- 			events = 0;
- 		}
-+		gettimeofday(&start_time, NULL);
- 		timeout = 30;
- 	}
- 	need_failback = 0;
++	sigemptyset(&set);
++	sigaddset(&set, SIGUSR2);
++	pthread_sigmask(SIG_SETMASK, &set, NULL);
++
+ 	signal_set(SIGHUP, sighup);
+ 	signal_set(SIGUSR1, sigusr1);
+ 	signal_set(SIGUSR2, sigusr2);
 -- 
 2.8.1.windows.1
