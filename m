@@ -1,49 +1,81 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [RFC PATCH v2] crypto: Add IV generation algorithms
-Date: Fri, 30 Dec 2016 18:27:23 +0800
-Message-ID: <20161230102723.GA15713@gondor.apana.org.au>
-References: <1481618949-20086-1-git-send-email-binoy.jayan@linaro.org>
- <1481618949-20086-2-git-send-email-binoy.jayan@linaro.org>
- <d6d92865-98fa-4d02-035f-9080bc265c35@gmail.com>
- <20161222085509.GA2160@gondor.apana.org.au>
- <CAHv-k_-EKq2g=Wb+YkPVp9gCXTDEyrxZhQpT5JMSw=WtZ1OC9w@mail.gmail.com>
- <20161223075114.GA3580@gondor.apana.org.au>
- <CAHv-k_9SynECq7qDbrW59=LsV_WNj+9Ffa=6tATyNKOt36he6Q@mail.gmail.com>
+From: Andy Shevchenko <andy.shevchenko@gmail.com>
+Subject: Re: [PATCH v1] dm-crypt: replace custom implementation of hex2bin()
+Date: Fri, 30 Dec 2016 23:51:24 +0200
+Message-ID: <CAHp75VdZWT5vH-JNh_PJgRjzFcwwAGT93igfzLBewFGjwu31nA@mail.gmail.com>
+References: <1462922651-6465-1-git-send-email-andy.shevchenko@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHv-k_9SynECq7qDbrW59=LsV_WNj+9Ffa=6tATyNKOt36he6Q@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Binoy Jayan <binoy.jayan@linaro.org>
-Cc: Milan Broz <gmazyland@gmail.com>, Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <1462922651-6465-1-git-send-email-andy.shevchenko@gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, linux-raid@vger.kernel.org
+Cc: Andy Shevchenko <andy.shevchenko@gmail.com>
 List-Id: dm-devel.ids
 
-On Thu, Dec 29, 2016 at 02:53:25PM +0530, Binoy Jayan wrote:
+On Wed, May 11, 2016 at 2:24 AM, Andy Shevchenko
+<andy.shevchenko@gmail.com> wrote:
+> There is no need to have a duplication of the generic library, i.e. hex2bin().
+> Replace the open coded variant.
 >
-> When we keep these in dm-crypt and if more than one key is used
-> (it is actually more than one parts of the original key),
-> there are more than one cipher instance created - one for each
-> unique part of the key. Since the crypto requests are modelled
-> to go through the template ciphers in the order:
-> 
-> "essiv -> cbc -> aes"
-> 
-> a particular cipher instance of the IV (essiv in this example) is
-> responsible to encrypt an entire bigger block. If this bigger block
-> is to be later split into 512 bytes blocks and then encrypted using
-> the other cipher instance depending on the following formula:
-> 
-> key_index = sector & (key_count - 1)
 
-This is just a matter of structuring the key for the IV generator.
-The IV generator's key in this case should be a combination of the
-key to the underlying CBC plus the set of all keys for the IV
-generator itself.  It should then allocate the required number of
-tfms as is currently done by crypt_alloc_tfms in dm-crypt.
+Ping?
 
-Cheers,
+> Signed-off-by: Andy Shevchenko <andy.shevchenko@gmail.com>
+> ---
+>  drivers/md/dm-crypt.c | 27 ++-------------------------
+>  1 file changed, 2 insertions(+), 25 deletions(-)
+>
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 4f3cb35..eb30284 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -1407,30 +1407,6 @@ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
+>         queue_work(cc->crypt_queue, &io->work);
+>  }
+>
+> -/*
+> - * Decode key from its hex representation
+> - */
+> -static int crypt_decode_key(u8 *key, char *hex, unsigned int size)
+> -{
+> -       char buffer[3];
+> -       unsigned int i;
+> -
+> -       buffer[2] = '\0';
+> -
+> -       for (i = 0; i < size; i++) {
+> -               buffer[0] = *hex++;
+> -               buffer[1] = *hex++;
+> -
+> -               if (kstrtou8(buffer, 16, &key[i]))
+> -                       return -EINVAL;
+> -       }
+> -
+> -       if (*hex != '\0')
+> -               return -EINVAL;
+> -
+> -       return 0;
+> -}
+> -
+>  static void crypt_free_tfms(struct crypt_config *cc)
+>  {
+>         unsigned i;
+> @@ -1502,7 +1478,8 @@ static int crypt_set_key(struct crypt_config *cc, char *key)
+>         if (!cc->key_size && strcmp(key, "-"))
+>                 goto out;
+>
+> -       if (cc->key_size && crypt_decode_key(cc->key, key, cc->key_size) < 0)
+> +       /* Decode key from its hex representation. */
+> +       if (cc->key_size && hex2bin(cc->key, key, cc->key_size) < 0)
+>                 goto out;
+>
+>         set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
+> --
+> 2.8.2
+>
+
+
+
 -- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+With Best Regards,
+Andy Shevchenko
