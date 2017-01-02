@@ -1,9 +1,9 @@
-From: "A M, Ashalatha" <ashalatha-a.a@hpe.com>
-Subject: dm stats
-Date: Wed, 21 Dec 2016 10:49:06 +0000
-Message-ID: <DF4PR84MB01530961D1F61928EF4B4101A0930@DF4PR84MB0153.NAMPRD84.PROD.OUTLOOK.COM>
+From: Muneendra Kumar M <mmandala@Brocade.com>
+Subject: Re: query on delay_watch_checks and delay_wait_checks
+Date: Mon, 2 Jan 2017 11:06:52 +0000
+Message-ID: <2c156dbb882e4d3ba6817fcccb742660@BRMWP-EXMB12.corp.brocade.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5125863906138618676=="
+Content-Type: multipart/mixed; boundary="===============1288657408878113329=="
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -18,49 +18,46 @@ Errors-To: dm-devel-bounces@redhat.com
 To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============5125863906138618676==
+--===============1288657408878113329==
 Content-Language: en-US
 Content-Type: multipart/alternative;
-	boundary="_000_DF4PR84MB01530961D1F61928EF4B4101A0930DF4PR84MB0153NAMP_"
+	boundary="_000_2c156dbb882e4d3ba6817fcccb742660BRMWPEXMB12corpbrocadec_"
 
---_000_DF4PR84MB01530961D1F61928EF4B4101A0930DF4PR84MB0153NAMP_
+--_000_2c156dbb882e4d3ba6817fcccb742660BRMWPEXMB12corpbrocadec_
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-Hi,
-
-Just want a clarification about device mapper stats:
-
-http://lxr.free-electrons.com/source/Documentation/device-mapper/statistics=
-.txt?v=3D3.14
-
-In this documentation, would like to know what is the command to be used to=
- create/print/list stats.
-
-@stats_create <range> <step> [<program_id> [<aux_data>]]
-
-@stats_print <region_id> [<starting_line> <number_of_lines>]
-
-@stats_list [<program_id>]
 
 
+Can anyone help  regarding the below query.
 
-Also, it is documented that 11 stats(Documentation/iostats.txt) would be re=
-ported and additional counters as well:
+Regards,
+Muneendra.
+From: Muneendra Kumar M
+Sent: Tuesday, December 27, 2016 2:32 PM
+To: 'dm-devel@redhat.com' <dm-devel@redhat.com>
+Subject: query on delay_watch_checks and delay_wait_checks
+
+If there are two paths on a dm-1 say sda and sdb as below.
+
+#  multipath -ll
+        mpathd (3600110d001ee7f0102050001cc0b6751) dm-1 SANBlaze,VLUN MyLun
+        size=8.0M features='0' hwhandler='0' wp=rw
+        `-+- policy='round-robin 0' prio=50 status=active
+          |- 8:0:1:0  sda 8:48 active ready  running
+          `- 9:0:1:0  sdb 8:64 active ready  running
+
+And on sda if iam seeing lot of errors due to which the sda path is fluctuating from failed state to active state and vicevera.
+
+My requirement is something like this if sda is failed for more then 5 times in a hour duration ,then I want to keep the sda in failed state for few hours (3hrs)
+
+And the data should travel only thorugh sdb path.
+Will this be possible with the below parameters.
+Can you just let me know what values I should add for delay_watch_checks and delay_wait_checks.
+
+Regards,
+Muneendra.
 
 
-
-12. the total time spent reading in milliseconds
-
-13. the total time spent writing in milliseconds
-
-So are these same as "read_ticks" and "write_ticks" else how different from=
- the ticks?
-
-Thanks,
-Asha
-
---_000_DF4PR84MB01530961D1F61928EF4B4101A0930DF4PR84MB0153NAMP_
+--_000_2c156dbb882e4d3ba6817fcccb742660BRMWPEXMB12corpbrocadec_
 Content-Type: text/html; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
@@ -101,18 +98,22 @@ pre
 	margin-bottom:.0001pt;
 	font-size:10.0pt;
 	font-family:"Courier New";}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"Calibri",sans-serif;
-	color:windowtext;}
 span.HTMLPreformattedChar
 	{mso-style-name:"HTML Preformatted Char";
 	mso-style-priority:99;
 	mso-style-link:"HTML Preformatted";
 	font-family:"Courier New";}
+span.EmailStyle19
+	{mso-style-type:personal;
+	font-family:"Calibri",sans-serif;
+	color:windowtext;}
+span.EmailStyle20
+	{mso-style-type:personal-reply;
+	font-family:"Calibri",sans-serif;
+	color:#1F497D;}
 .MsoChpDefault
 	{mso-style-type:export-only;
-	font-family:"Calibri",sans-serif;}
+	font-size:10.0pt;}
 @page WordSection1
 	{size:8.5in 11.0in;
 	margin:1.0in 1.0in 1.0in 1.0in;}
@@ -127,67 +128,97 @@ div.WordSection1
 </head>
 <body lang=3D"EN-US" link=3D"#0563C1" vlink=3D"#954F72">
 <div class=3D"WordSection1">
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Hi,<o:p></o:p></span><=
-/p>
 <p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
 n></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Just want a clarificat=
-ion about device mapper stats:<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><a name=3D"_MailEndCompose"><span style=3D"color:#1F=
+497D">Can anyone help &nbsp;regarding the below query.<o:p></o:p></span></a=
+></p>
 <p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
 n></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D"><a href=3D"http://lxr.=
-free-electrons.com/source/Documentation/device-mapper/statistics.txt?v=3D3.=
-14">http://lxr.free-electrons.com/source/Documentation/device-mapper/statis=
-tics.txt?v=3D3.14</a><o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
-n></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">In this documentation,=
- would like to know what is the command to be used to create/print/list sta=
-ts.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
-n></p>
-<p class=3D"MsoNormal" style=3D"background:white"><b><span style=3D"font-si=
-ze:11.5pt;font-family:&quot;Courier New&quot;;color:#787878">@stats_create =
-&lt;range&gt; &lt;step&gt; [&lt;program_id&gt; [&lt;aux_data&gt;]]<o:p></o:=
-p></span></b></p>
-<pre style=3D"background:white"><b><span style=3D"font-size:11.5pt;color:#7=
-87878">@stats_print &lt;region_id&gt; [&lt;starting_line&gt; &lt;number_of_=
-lines&gt;]<o:p></o:p></span></b></pre>
-<pre style=3D"background:white"><b><span style=3D"font-size:11.5pt;color:#7=
-87878">@stats_list [&lt;program_id&gt;]<o:p></o:p></span></b></pre>
-<pre style=3D"background:white"><b><span style=3D"font-size:11.5pt;color:#7=
-87878"><o:p>&nbsp;</o:p></span></b></pre>
-<pre style=3D"background:white"><b><span style=3D"font-size:11.5pt;color:#7=
-87878">Also, it is documented that 11 stats(Documentation/iostats.txt) woul=
-d be reported and additional counters as well:<o:p></o:p></span></b></pre>
-<pre style=3D"background:white"><b><span style=3D"font-size:11.5pt;color:#7=
-87878"><o:p>&nbsp;</o:p></span></b></pre>
-<pre style=3D"background:white"><b><span style=3D"font-size:11.5pt;color:#7=
-87878">12. the total time spent reading in milliseconds<o:p></o:p></span></=
-b></pre>
-<pre style=3D"background:white"><b><span style=3D"font-size:11.5pt;color:#7=
-87878">13. the total time spent writing in milliseconds<o:p></o:p></span></=
-b></pre>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
-n></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">So are these same as &=
-#8220;read_ticks&#8221; and &#8220;write_ticks&#8221; else how different fr=
-om the ticks?<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Regards,<o:p></o:p></s=
+pan></p>
+<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Muneendra.<o:p></o:p><=
+/span></p>
+<div>
+<div style=3D"border:none;border-top:solid #E1E1E1 1.0pt;padding:3.0pt 0in =
+0in 0in">
+<p class=3D"MsoNormal"><b>From:</b> Muneendra Kumar M <br>
+<b>Sent:</b> Tuesday, December 27, 2016 2:32 PM<br>
+<b>To:</b> 'dm-devel@redhat.com' &lt;dm-devel@redhat.com&gt;<br>
+<b>Subject:</b> query on delay_watch_checks and delay_wait_checks<o:p></o:p=
+></p>
+</div>
+</div>
 <p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">Thanks,<o:p></o:p></p>
-<p class=3D"MsoNormal">Asha<o:p></o:p></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">If there are two paths on a dm-1 say sda and s=
+db as below.<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">#&nbsp; multipath -ll<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mpa=
+thd (3600110d001ee7f0102050001cc0b6751) dm-1 SANBlaze,VLUN MyLun<o:p></o:p>=
+</span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; siz=
+e=3D8.0M features=3D'0' hwhandler=3D'0' wp=3Drw<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `-&=
+#43;- policy=3D'round-robin 0' prio=3D50 status=3Dactive<o:p></o:p></span><=
+/p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nb=
+sp; |- 8:0:1:0&nbsp; sda 8:48 active ready&nbsp; running<o:p></o:p></span><=
+/p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nb=
+sp; `- 9:0:1:0&nbsp; sdb 8:64 active ready&nbsp; running&nbsp;&nbsp;&nbsp;&=
+nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">And on sda if iam seeing lot of errors due to =
+which the sda path is fluctuating from failed state to active state and vic=
+evera.<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">My requirement is something like this if sda i=
+s failed for more then 5 times in a hour duration ,then I want to keep the =
+sda in failed state for few hours (3hrs)<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">And the data should travel only thorugh sdb pa=
+th.<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">Will this be possible with the below parameter=
+s.<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">Can you just let me know what values I should =
+add for delay_watch_checks and delay_wait_checks.<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">Regards,<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
+urier New&quot;;color:black">Muneendra.<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
 </div>
 </body>
 </html>
 
---_000_DF4PR84MB01530961D1F61928EF4B4101A0930DF4PR84MB0153NAMP_--
+--_000_2c156dbb882e4d3ba6817fcccb742660BRMWPEXMB12corpbrocadec_--
 
 
---===============5125863906138618676==
+--===============1288657408878113329==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============5125863906138618676==--
+--===============1288657408878113329==--
