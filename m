@@ -1,224 +1,108 @@
-From: Muneendra Kumar M <mmandala@Brocade.com>
-Subject: Re: query on delay_watch_checks and delay_wait_checks
-Date: Mon, 2 Jan 2017 11:06:52 +0000
-Message-ID: <2c156dbb882e4d3ba6817fcccb742660@BRMWP-EXMB12.corp.brocade.com>
+From: Jack Wang <jack.wang.usish@gmail.com>
+Subject: Re: [dm-devel] [PATCH v2 1/1] block: fix blk_queue_split() resource exhaustion
+Date: Mon, 2 Jan 2017 15:33:02 +0100
+Message-ID: <CA+res+SjL6FrYWMroB-xjBO5gyz9pca6FQCy-arr7+4RQHeJGw@mail.gmail.com>
+References: <1467990243-3531-1-git-send-email-lars.ellenberg@linbit.com>
+ <1467990243-3531-2-git-send-email-lars.ellenberg@linbit.com>
+ <20160711141042.GY13335@soda.linbit> <76d9bf14-d848-4405-8358-3771c0a93d39@profitbricks.com>
+ <20161223114553.GP4138@soda.linbit>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1288657408878113329=="
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: multipart/mixed; boundary=94eb2c08da88da64b605451d6d02
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20161223114553.GP4138@soda.linbit>
+Sender: linux-block-owner@vger.kernel.org
+To: Lars Ellenberg <lars.ellenberg@linbit.com>
+Cc: Michael Wang <yun.wang@profitbricks.com>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, Ming Lei <ming.lei@canonical.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, NeilBrown <neilb@suse.com>, linux-kernel@vger.kernel.org, linux-raid <linux-raid@vger.kernel.org>, Takashi Iwai <tiwai@suse.de>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, Zheng Liu <gnehzuil.liu@gmail.com>, Kent Overstreet <kent.overstreet@gmail.com>, Keith Busch <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, Ingo Molnar <mingo@redhat.com>
 List-Id: dm-devel.ids
 
---===============1288657408878113329==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_2c156dbb882e4d3ba6817fcccb742660BRMWPEXMB12corpbrocadec_"
+--94eb2c08da88da64b605451d6d02
+Content-Type: text/plain; charset=UTF-8
 
---_000_2c156dbb882e4d3ba6817fcccb742660BRMWPEXMB12corpbrocadec_
-Content-Type: text/plain; charset="us-ascii"
-
-
-Can anyone help  regarding the below query.
-
-Regards,
-Muneendra.
-From: Muneendra Kumar M
-Sent: Tuesday, December 27, 2016 2:32 PM
-To: 'dm-devel@redhat.com' <dm-devel@redhat.com>
-Subject: query on delay_watch_checks and delay_wait_checks
-
-If there are two paths on a dm-1 say sda and sdb as below.
-
-#  multipath -ll
-        mpathd (3600110d001ee7f0102050001cc0b6751) dm-1 SANBlaze,VLUN MyLun
-        size=8.0M features='0' hwhandler='0' wp=rw
-        `-+- policy='round-robin 0' prio=50 status=active
-          |- 8:0:1:0  sda 8:48 active ready  running
-          `- 9:0:1:0  sdb 8:64 active ready  running
-
-And on sda if iam seeing lot of errors due to which the sda path is fluctuating from failed state to active state and vicevera.
-
-My requirement is something like this if sda is failed for more then 5 times in a hour duration ,then I want to keep the sda in failed state for few hours (3hrs)
-
-And the data should travel only thorugh sdb path.
-Will this be possible with the below parameters.
-Can you just let me know what values I should add for delay_watch_checks and delay_wait_checks.
-
-Regards,
-Muneendra.
-
-
---_000_2c156dbb882e4d3ba6817fcccb742660BRMWPEXMB12corpbrocadec_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
-//www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
+2016-12-23 12:45 GMT+01:00 Lars Ellenberg <lars.ellenberg@linbit.com>:
+> On Fri, Dec 23, 2016 at 09:49:53AM +0100, Michael Wang wrote:
+>> Dear Maintainers
+>>
+>> I'd like to ask for the status of this patch since we hit the
+>> issue too during our testing on md raid1.
+>>
+>> Split remainder bio_A was queued ahead, following by bio_B for
+>> lower device, at this moment raid start freezing, the loop take
+>> out bio_A firstly and deliver it, which will hung since raid is
+>> freezing, while the freezing never end since it waiting for
+>> bio_B to finish, and bio_B is still on the queue, waiting for
+>> bio_A to finish...
+>>
+>> We're looking for a good solution and we found this patch
+>> already progressed a lot, but we can't find it on linux-next,
+>> so we'd like to ask are we still planning to have this fix
+>> in upstream?
 >
-<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
-<style><!--
-/* Font Definitions */
-@font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri",sans-serif;}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:#0563C1;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:#954F72;
-	text-decoration:underline;}
-pre
-	{mso-style-priority:99;
-	mso-style-link:"HTML Preformatted Char";
-	margin:0in;
-	margin-bottom:.0001pt;
-	font-size:10.0pt;
-	font-family:"Courier New";}
-span.HTMLPreformattedChar
-	{mso-style-name:"HTML Preformatted Char";
-	mso-style-priority:99;
-	mso-style-link:"HTML Preformatted";
-	font-family:"Courier New";}
-span.EmailStyle19
-	{mso-style-type:personal;
-	font-family:"Calibri",sans-serif;
-	color:windowtext;}
-span.EmailStyle20
-	{mso-style-type:personal-reply;
-	font-family:"Calibri",sans-serif;
-	color:#1F497D;}
-.MsoChpDefault
-	{mso-style-type:export-only;
-	font-size:10.0pt;}
-@page WordSection1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.0in 1.0in 1.0in;}
-div.WordSection1
-	{page:WordSection1;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]-->
-</head>
-<body lang=3D"EN-US" link=3D"#0563C1" vlink=3D"#954F72">
-<div class=3D"WordSection1">
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
-n></p>
-<p class=3D"MsoNormal"><a name=3D"_MailEndCompose"><span style=3D"color:#1F=
-497D">Can anyone help &nbsp;regarding the below query.<o:p></o:p></span></a=
-></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
-n></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Regards,<o:p></o:p></s=
-pan></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Muneendra.<o:p></o:p><=
-/span></p>
-<div>
-<div style=3D"border:none;border-top:solid #E1E1E1 1.0pt;padding:3.0pt 0in =
-0in 0in">
-<p class=3D"MsoNormal"><b>From:</b> Muneendra Kumar M <br>
-<b>Sent:</b> Tuesday, December 27, 2016 2:32 PM<br>
-<b>To:</b> 'dm-devel@redhat.com' &lt;dm-devel@redhat.com&gt;<br>
-<b>Subject:</b> query on delay_watch_checks and delay_wait_checks<o:p></o:p=
-></p>
-</div>
-</div>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">If there are two paths on a dm-1 say sda and s=
-db as below.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">#&nbsp; multipath -ll<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mpa=
-thd (3600110d001ee7f0102050001cc0b6751) dm-1 SANBlaze,VLUN MyLun<o:p></o:p>=
-</span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; siz=
-e=3D8.0M features=3D'0' hwhandler=3D'0' wp=3Drw<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `-&=
-#43;- policy=3D'round-robin 0' prio=3D50 status=3Dactive<o:p></o:p></span><=
-/p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nb=
-sp; |- 8:0:1:0&nbsp; sda 8:48 active ready&nbsp; running<o:p></o:p></span><=
-/p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nb=
-sp; `- 9:0:1:0&nbsp; sdb 8:64 active ready&nbsp; running&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">And on sda if iam seeing lot of errors due to =
-which the sda path is fluctuating from failed state to active state and vic=
-evera.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">My requirement is something like this if sda i=
-s failed for more then 5 times in a hour duration ,then I want to keep the =
-sda in failed state for few hours (3hrs)<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">And the data should travel only thorugh sdb pa=
-th.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">Will this be possible with the below parameter=
-s.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">Can you just let me know what values I should =
-add for delay_watch_checks and delay_wait_checks.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">Regards,<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;;color:black">Muneendra.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-</div>
-</body>
-</html>
+> I don't see why not, I'd even like to have it in older kernels,
+> but did not have the time and energy to push it.
+>
+> Thanks for the bump.
+>
+>         Lars
+>
+Hi folks,
 
---_000_2c156dbb882e4d3ba6817fcccb742660BRMWPEXMB12corpbrocadec_--
+As Michael mentioned, we hit a bug this patch is trying to fix.
+Neil suggested another way to fix it.  I attached below.
+I personal prefer Neil's version as it's less code change, and straight forward.
 
+Could you share your comments, we can get one fix into mainline.
 
---===============1288657408878113329==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Thanks,
+Jinpu
 
+--94eb2c08da88da64b605451d6d02
+Content-Type: text/x-patch; charset=US-ASCII;
+	name="0001-block-fix-deadlock-between-freeze_array-and-wait_bar.patch"
+Content-Disposition: attachment;
+	filename="0001-block-fix-deadlock-between-freeze_array-and-wait_bar.patch"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_ixg6glqx0
 
---===============1288657408878113329==--
+RnJvbSA2OWE0ODI5YTU1NTAzZTQ5NmNlOWM3MzBkMmM4ZTNkZDhhMDg4NzRhIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBOZWlsQnJvd24gPG5laWxiQHN1c2UuY29tPgpEYXRlOiBXZWQs
+IDE0IERlYyAyMDE2IDE2OjU1OjUyICswMTAwClN1YmplY3Q6IFtQQVRDSF0gYmxvY2s6IGZpeCBk
+ZWFkbG9jayBiZXR3ZWVuIGZyZWV6ZV9hcnJheSgpIGFuZCB3YWl0X2JhcnJpZXIoKQoKV2hlbiB3
+ZSBjYWxsIHdhaXRfYmFycmllciwgd2UgbWlnaHQgaGF2ZSBzb21lIGJpb3Mgd2FpdGluZwppbiBj
+dXJyZW50LT5iaW9fbGlzdCwgd2hpY2ggcHJldmVudHMgdGhlIGFycmF5X2ZyZWV6ZSBjYWxsIHRv
+CmNvbXBsZXRlLiBUaG9zZSBjYW4gb25seSBiZSBpbnRlcm5hbCBSRUFEcywgd2hpY2ggaGF2ZSBh
+bHJlYWR5CnBhc3NlZCB0aGUgd2FpdF9iYXJyaWVyIGNhbGwgKHRodXMgaW5jcmVtZW50aW5nIG5y
+X3BlbmRpbmcpLCBidXQKc3RpbGwgd2VyZSBub3Qgc3VibWl0dGVkIHRvIHRoZSBsb3dlciBsZXZl
+bCwgZHVlIHRvIGdlbmVyaWNfbWFrZV9yZXF1ZXN0CmxvZ2ljIHRvIGF2b2lkIHJlY3Vyc2l2ZSBj
+YWxscy4gSW4gc3VjaCBjYXNlLCB3ZSBoYXZlIGEgZGVhZGxvY2s6Ci0gYXJyYXlfZnJvemVuIGlz
+IGFscmVhZHkgc2V0IHRvIDEsIHNvIHdhaXRfYmFycmllciB1bmNvbmRpdGlvbmFsbHkgd2FpdHMs
+IHNvCi0gaW50ZXJuYWwgUkVBRCBiaW9zIHdpbGwgbm90IGJlIHN1Ym1pdHRlZCwgdGh1cyBmcmVl
+emVfYXJyYXkgd2lsbApuZXZlciBjb21wbGV0ZXMuCgpUbyBmaXggdGhpcywgbW9kaWZ5IGdlbmVy
+aWNfbWFrZV9yZXF1ZXN0IHRvIGFsd2F5cyBzb3J0IGJpb19saXN0X29uX3N0YWNrCmZpcnN0IHdp
+dGggbG93ZXN0IGxldmVsLCB0aGVuIGhpZ2hlciwgdW50aWwgc2FtZSBsZXZlbC4KClNlbnQgdG8g
+bGludXgtcmFpZCBtYWlsIGxpc3Q6Cmh0dHBzOi8vbWFyYy5pbmZvLz9sPWxpbnV4LXJhaWQmbT0x
+NDgyMzI0NTMxMDc2ODUmdz0yCgpTdWdnZXN0ZWQtYnk6IE5laWxCcm93biA8bmVpbGJAc3VzZS5j
+b20+ClNpZ25lZC1vZmYtYnk6IEphY2sgV2FuZyA8amlucHUud2FuZ0Bwcm9maXRicmlja3MuY29t
+PgotLS0KIGJsb2NrL2Jsay1jb3JlLmMgfCAyMCArKysrKysrKysrKysrKysrKysrKwogMSBmaWxl
+IGNoYW5nZWQsIDIwIGluc2VydGlvbnMoKykKCmRpZmYgLS1naXQgYS9ibG9jay9ibGstY29yZS5j
+IGIvYmxvY2svYmxrLWNvcmUuYwppbmRleCA5ZTNhYzU2Li40N2VmMzczIDEwMDY0NAotLS0gYS9i
+bG9jay9ibGstY29yZS5jCisrKyBiL2Jsb2NrL2Jsay1jb3JlLmMKQEAgLTIxMzgsMTAgKzIxMzgs
+MzAgQEAgYmxrX3FjX3QgZ2VuZXJpY19tYWtlX3JlcXVlc3Qoc3RydWN0IGJpbyAqYmlvKQogCQlz
+dHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcSA9IGJkZXZfZ2V0X3F1ZXVlKGJpby0+YmlfYmRldik7CiAK
+IAkJaWYgKGxpa2VseShibGtfcXVldWVfZW50ZXIocSwgX19HRlBfRElSRUNUX1JFQ0xBSU0pID09
+IDApKSB7CisJCQlzdHJ1Y3QgYmlvX2xpc3QgbG93ZXIsIHNhbWUsIGhvbGQ7CisKKwkJCS8qIENy
+ZWF0ZSBhIGZyZXNoIGJpb19saXN0IGZvciBhbGwgc3Vib3JkaW5hdGUgcmVxdWVzdHMgKi8KKwkJ
+CWJpb19saXN0X2luaXQoJmhvbGQpOworCQkJYmlvX2xpc3RfbWVyZ2UoJmhvbGQsICZiaW9fbGlz
+dF9vbl9zdGFjayk7CisJCQliaW9fbGlzdF9pbml0KCZiaW9fbGlzdF9vbl9zdGFjayk7CiAKIAkJ
+CXJldCA9IHEtPm1ha2VfcmVxdWVzdF9mbihxLCBiaW8pOwogCiAJCQlibGtfcXVldWVfZXhpdChx
+KTsKKwkJCS8qIHNvcnQgbmV3IGJpb3MgaW50byB0aG9zZSBmb3IgYSBsb3dlciBsZXZlbAorCQkJ
+ICogYW5kIHRob3NlIGZvciB0aGUgc2FtZSBsZXZlbAorCQkJICovCisJCQliaW9fbGlzdF9pbml0
+KCZsb3dlcik7CisJCQliaW9fbGlzdF9pbml0KCZzYW1lKTsKKwkJCXdoaWxlICgoYmlvID0gYmlv
+X2xpc3RfcG9wKCZiaW9fbGlzdF9vbl9zdGFjaykpICE9IE5VTEwpCisJCQkJaWYgKHEgPT0gYmRl
+dl9nZXRfcXVldWUoYmlvLT5iaV9iZGV2KSkKKwkJCQkJYmlvX2xpc3RfYWRkKCZzYW1lLCBiaW8p
+OworCQkJCWVsc2UKKwkJCQkJYmlvX2xpc3RfYWRkKCZsb3dlciwgYmlvKTsKKwkJCS8qIG5vdyBh
+c3NlbWJsZSBzbyB3ZSBoYW5kbGUgdGhlIGxvd2VzdCBsZXZlbCBmaXJzdCAqLworCQkJYmlvX2xp
+c3RfbWVyZ2UoJmJpb19saXN0X29uX3N0YWNrLCAmbG93ZXIpOworCQkJYmlvX2xpc3RfbWVyZ2Uo
+JmJpb19saXN0X29uX3N0YWNrLCAmc2FtZSk7CisJCQliaW9fbGlzdF9tZXJnZSgmYmlvX2xpc3Rf
+b25fc3RhY2ssICZob2xkKTsKIAogCQkJYmlvID0gYmlvX2xpc3RfcG9wKGN1cnJlbnQtPmJpb19s
+aXN0KTsKIAkJfSBlbHNlIHsKLS0gCjIuNy40Cgo=
+--94eb2c08da88da64b605451d6d02--
