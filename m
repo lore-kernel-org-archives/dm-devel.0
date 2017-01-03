@@ -1,16 +1,14 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: deterministic io throughput in multipath
-Date: Tue, 3 Jan 2017 11:12:00 -0600
-Message-ID: <20170103171159.GA2732@octiron.msp.redhat.com>
-References: <1649d4b8538d4b4cb1efacdfe8cf31eb@BRMWP-EXMB12.corp.brocade.com>
-	<20161221160940.GG19659@octiron.msp.redhat.com>
-	<8cd4cc5f20b540a1b8312ad485711152@BRMWP-EXMB12.corp.brocade.com>
+Subject: Re: [PATCH] multipathd: fix SIGUSR2 handling
+Date: Tue, 3 Jan 2017 12:59:09 -0600
+Message-ID: <20170103185909.GB2732@octiron.msp.redhat.com>
+References: <1482998174-11884-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <8cd4cc5f20b540a1b8312ad485711152@BRMWP-EXMB12.corp.brocade.com>
+In-Reply-To: <1482998174-11884-1-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,168 +18,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Muneendra Kumar M <mmandala@Brocade.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: tang.junhui@zte.com.cn
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com, mwilck@suse.com
 List-Id: dm-devel.ids
 
-On Mon, Dec 26, 2016 at 09:42:48AM +0000, Muneendra Kumar M wrote:
-> Hi Ben,
-> =
+On Thu, Dec 29, 2016 at 03:56:14PM +0800, tang.junhui@zte.com.cn wrote:
+> From: "tang.junhui" <tang.junhui@zte.com.cn>
+> 
+> SIGUSR2 is not blocked by default, it would cause bellow conflict
+> in removing of the last path:
 
-> If there are two paths on a dm-1 say sda and sdb as below.
-> =
-
-> #  multipath -ll
-> 	mpathd (3600110d001ee7f0102050001cc0b6751) dm-1 SANBlaze,VLUN MyLun
-> 	size=3D8.0M features=3D'0' hwhandler=3D'0' wp=3Drw
-> 	`-+- policy=3D'round-robin 0' prio=3D50 status=3Dactive
-> 	  |- 8:0:1:0  sda 8:48 active ready  running
-> 	  `- 9:0:1:0  sdb 8:64 active ready  running          =
-
-> =
-
-> And on sda if iam seeing lot of errors due to which the sda path is fluct=
-uating from failed state to active state and vicevera.
-> =
-
-> My requirement is something like this if sda is failed for more then 5 ti=
-mes in a hour duration ,then I want to keep the sda in failed state for few=
- hours (3hrs)
-> =
-
-> And the data should travel only thorugh sdb path.
-> Will this be possible with the below parameters.
-
-No. delay_watch_checks sets how may path checks you watch a path that
-has recently come back from the failed state. If the path fails again
-within this time, multipath device delays it.  This means that the delay
-is always trigger by two failures within the time limit.  It's possible
-to adapt this to count numbers of failures, and act after a certain
-number within a certain timeframe, but it would take a bit more work.
-
-delay_wait_checks doesn't guarantee that it will delay for any set
-length of time.  Instead, it sets the number of consecutive successful
-path checks that must occur before the path is usable again. You could
-set this for 3 hours of path checks, but if a check failed during this
-time, you would restart the 3 hours over again.
+ACK
 
 -Ben
 
-> Can you just let me know what values I should add for delay_watch_checks =
-and delay_wait_checks.
-> =
-
-> Regards,
-> Muneendra.
-> =
-
-> =
-
-> =
-
-> -----Original Message-----
-> From: Muneendra Kumar M =
-
-> Sent: Thursday, December 22, 2016 11:10 AM
-> To: 'Benjamin Marzinski' <bmarzins@redhat.com>
-> Cc: dm-devel@redhat.com
-> Subject: RE: [dm-devel] deterministic io throughput in multipath
-> =
-
-> Hi Ben,
-> =
-
-> Thanks for the reply.
-> I will look into this parameters will do the internal testing and let you=
- know the results.
-> =
-
-> Regards,
-> Muneendra.
-> =
-
-> -----Original Message-----
-> From: Benjamin Marzinski [mailto:bmarzins@redhat.com] =
-
-> Sent: Wednesday, December 21, 2016 9:40 PM
-> To: Muneendra Kumar M <mmandala@Brocade.com>
-> Cc: dm-devel@redhat.com
-> Subject: Re: [dm-devel] deterministic io throughput in multipath
-> =
-
-> Have you looked into the delay_watch_checks and delay_wait_checks configu=
-ration parameters?  The idea behind them is to minimize the use of paths th=
-at are intermittently failing.
-> =
-
-> -Ben
-> =
-
-> On Mon, Dec 19, 2016 at 11:50:36AM +0000, Muneendra Kumar M wrote:
-> >    Customers using Linux host (mostly RHEL host) using a SAN network for
-> >    block storage, complain the Linux multipath stack is not resilient to
-> >    handle non-deterministic storage network behaviors. This has caused =
-many
-> >    customer move away to non-linux based servers. The intent of the bel=
-ow
-> >    patch and the prevailing issues are given below. With the below desi=
-gn we
-> >    are seeing the Linux multipath stack becoming resilient to such netw=
-ork
-> >    issues. We hope by getting this patch accepted will help in more Lin=
-ux
-> >    server adoption that use SAN network.
-> > =
-
-> >    I have already sent the design details to the community in a differe=
-nt
-> >    mail chain and the details are available in the below link.
-> > =
-
-> >    [1]https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat=
-.com_archives_dm-2Ddevel_2016-2DDecember_msg00122.html&d=3DDgIDAw&c=3DIL_Xq=
-QWOjubgfqINi2jTzg&r=3DE3ftc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpV=
-p6e1KXtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_Uj7M=
-Ru52hG3MKzM&e=3D .
-> > =
-
-> >    Can you please go through the design and send the comments to us.
-> > =
-
-> >    =A0
-> > =
-
-> >    Regards,
-> > =
-
-> >    Muneendra.
-> > =
-
-> >    =A0
-> > =
-
-> >    =A0
-> > =
-
-> > References
-> > =
-
-> >    Visible links
-> >    1. =
-
-> > https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.com_ar
-> > chives_dm-2Ddevel_2016-2DDecember_msg00122.html&d=3DDgIDAw&c=3DIL_XqQWO=
-jub
-> > gfqINi2jTzg&r=3DE3ftc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6=
-e1K
-> > XtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_Uj7MRu
-> > 52hG3MKzM&e=3D
-> =
-
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.com_ma
-> > ilman_listinfo_dm-2Ddevel&d=3DDgIDAw&c=3DIL_XqQWOjubgfqINi2jTzg&r=3DE3f=
-tc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6e1KXtRA0ctwHYJ7cDmPsLi2=
-C1L9pox7uexsY&s=3DUyE46dXOrNTbPz_TVGtpoHl3J3h_n0uYhI4TI-PgyWg&e=3D
+> -------------------------------------------------------------
+> uevent processing thread                 | waiter thread
+> -----------------------------------------|-------------------
+> uev_remove_path()                        |   waiteventloop()
+>   lock(&vecs->lock)                      |
+>   ev_remove_path()                       |     
+>     dm_queue_if_no_path()----------------|----> dm_task_run()	
+>     flush_map()                          |      |
+>       remove_map_and_stop_waiter()       |      -> pthread_cleanup_push(cleanup_lock, &waiter->vecs->lock);
+>         _remove_map()                    |         lock(&waiter->vecs->lock)//wait for the locker	
+>           stop_waiter_thread()           |         
+>             pthread_cancel(thread)       |          
+>             pthread_kill(thread,SIGUSR2)-|------> sigusr2 (int sig)
+>                                          |          condlog()
+>                                          |          fprintf() //it has test cancel point
+>                                          |          cleanup_lock() //thread cancel, and pop, which unlock the 
+>                                          |                           locker of uevent processing thread 
+> --------------------------------------------------------------
+> Since SIGUSR2 is only needed when waiter thread running in dm_task_run(),
+> and it has already been unblocked before dm_task_run(), so this patch block 
+> SIGUSR2 for other times.
+> 
+> Change-Id: I8c46292dc954415764ebbe054498b4f7ea53c1c6
+> Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+> ---
+>  multipathd/main.c | 6 ++++++
+>  1 file changed, 6 insertions(+)
+> 
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index adc3258..fe69abd 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -2181,6 +2181,12 @@ sigusr2 (int sig)
+>  static void
+>  signal_init(void)
+>  {
+> +	sigset_t set;
+> +
+> +	sigemptyset(&set);
+> +	sigaddset(&set, SIGUSR2);
+> +	pthread_sigmask(SIG_SETMASK, &set, NULL);
+> +
+>  	signal_set(SIGHUP, sighup);
+>  	signal_set(SIGUSR1, sigusr1);
+>  	signal_set(SIGUSR2, sigusr2);
+> -- 
+> 2.8.1.windows.1
+> 
