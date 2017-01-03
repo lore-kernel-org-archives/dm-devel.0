@@ -1,60 +1,187 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v1 12/54] dm: limit the max bio size as BIO_MAX_PAGES *
- PAGE_SIZE
-Date: Tue, 3 Jan 2017 11:43:13 -0500
-Message-ID: <20170103164312.GA20421@redhat.com>
-References: <1482854250-13481-1-git-send-email-tom.leiming@gmail.com>
- <1482854250-13481-13-git-send-email-tom.leiming@gmail.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: deterministic io throughput in multipath
+Date: Tue, 3 Jan 2017 11:12:00 -0600
+Message-ID: <20170103171159.GA2732@octiron.msp.redhat.com>
+References: <1649d4b8538d4b4cb1efacdfe8cf31eb@BRMWP-EXMB12.corp.brocade.com>
+	<20161221160940.GG19659@octiron.msp.redhat.com>
+	<8cd4cc5f20b540a1b8312ad485711152@BRMWP-EXMB12.corp.brocade.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1482854250-13481-13-git-send-email-tom.leiming@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ming Lei <tom.leiming@gmail.com>
-Cc: Jens Axboe <axboe@fb.com>, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, linux-block@vger.kernel.org, "maintainer:DEVICE-MAPPER LVM, Shaohua Li <shli@kernel.org>,
-        linux-raid@vger.kernel.org open list:SOFTWARE RAID Multiple DisksSUPPORT" <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
+In-Reply-To: <8cd4cc5f20b540a1b8312ad485711152@BRMWP-EXMB12.corp.brocade.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Muneendra Kumar M <mmandala@Brocade.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Dec 27 2016 at 10:56am -0500,
-Ming Lei <tom.leiming@gmail.com> wrote:
+On Mon, Dec 26, 2016 at 09:42:48AM +0000, Muneendra Kumar M wrote:
+> Hi Ben,
+> =
 
-> For BIO based DM, some targets aren't ready for dealing with
-> bigger incoming bio than 1Mbyte, such as crypt target.
-> 
-> Signed-off-by: Ming Lei <tom.leiming@gmail.com>
-> ---
->  drivers/md/dm.c | 11 ++++++++++-
->  1 file changed, 10 insertions(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 3086da5664f3..6139bf7623f7 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -899,7 +899,16 @@ int dm_set_target_max_io_len(struct dm_target *ti, sector_t len)
->  		return -EINVAL;
->  	}
->  
-> -	ti->max_io_len = (uint32_t) len;
-> +	/*
-> +	 * BIO based queue uses its own splitting. When multipage bvecs
-> +	 * is switched on, size of the incoming bio may be too big to
-> +	 * be handled in some targets, such as crypt.
-> +	 *
-> +	 * When these targets are ready for the big bio, we can remove
-> +	 * the limit.
-> +	 */
-> +	ti->max_io_len = min_t(uint32_t, len,
-> +			       (BIO_MAX_PAGES * PAGE_SIZE));
->  
->  	return 0;
->  }
-> -- 
-> 2.7.4
+> If there are two paths on a dm-1 say sda and sdb as below.
+> =
 
-dm_set_target_max_io_len() is already meant to be called by the .ctr
-hook for each DM target.  So why not just have the dm-crypt target (and
-other targets if needed) pass your reduced $len?
+> #  multipath -ll
+> 	mpathd (3600110d001ee7f0102050001cc0b6751) dm-1 SANBlaze,VLUN MyLun
+> 	size=3D8.0M features=3D'0' hwhandler=3D'0' wp=3Drw
+> 	`-+- policy=3D'round-robin 0' prio=3D50 status=3Dactive
+> 	  |- 8:0:1:0  sda 8:48 active ready  running
+> 	  `- 9:0:1:0  sdb 8:64 active ready  running          =
 
-That way only targets that need to be fixed (e.g. dm-crypt) impose this
-limit.
+> =
+
+> And on sda if iam seeing lot of errors due to which the sda path is fluct=
+uating from failed state to active state and vicevera.
+> =
+
+> My requirement is something like this if sda is failed for more then 5 ti=
+mes in a hour duration ,then I want to keep the sda in failed state for few=
+ hours (3hrs)
+> =
+
+> And the data should travel only thorugh sdb path.
+> Will this be possible with the below parameters.
+
+No. delay_watch_checks sets how may path checks you watch a path that
+has recently come back from the failed state. If the path fails again
+within this time, multipath device delays it.  This means that the delay
+is always trigger by two failures within the time limit.  It's possible
+to adapt this to count numbers of failures, and act after a certain
+number within a certain timeframe, but it would take a bit more work.
+
+delay_wait_checks doesn't guarantee that it will delay for any set
+length of time.  Instead, it sets the number of consecutive successful
+path checks that must occur before the path is usable again. You could
+set this for 3 hours of path checks, but if a check failed during this
+time, you would restart the 3 hours over again.
+
+-Ben
+
+> Can you just let me know what values I should add for delay_watch_checks =
+and delay_wait_checks.
+> =
+
+> Regards,
+> Muneendra.
+> =
+
+> =
+
+> =
+
+> -----Original Message-----
+> From: Muneendra Kumar M =
+
+> Sent: Thursday, December 22, 2016 11:10 AM
+> To: 'Benjamin Marzinski' <bmarzins@redhat.com>
+> Cc: dm-devel@redhat.com
+> Subject: RE: [dm-devel] deterministic io throughput in multipath
+> =
+
+> Hi Ben,
+> =
+
+> Thanks for the reply.
+> I will look into this parameters will do the internal testing and let you=
+ know the results.
+> =
+
+> Regards,
+> Muneendra.
+> =
+
+> -----Original Message-----
+> From: Benjamin Marzinski [mailto:bmarzins@redhat.com] =
+
+> Sent: Wednesday, December 21, 2016 9:40 PM
+> To: Muneendra Kumar M <mmandala@Brocade.com>
+> Cc: dm-devel@redhat.com
+> Subject: Re: [dm-devel] deterministic io throughput in multipath
+> =
+
+> Have you looked into the delay_watch_checks and delay_wait_checks configu=
+ration parameters?  The idea behind them is to minimize the use of paths th=
+at are intermittently failing.
+> =
+
+> -Ben
+> =
+
+> On Mon, Dec 19, 2016 at 11:50:36AM +0000, Muneendra Kumar M wrote:
+> >    Customers using Linux host (mostly RHEL host) using a SAN network for
+> >    block storage, complain the Linux multipath stack is not resilient to
+> >    handle non-deterministic storage network behaviors. This has caused =
+many
+> >    customer move away to non-linux based servers. The intent of the bel=
+ow
+> >    patch and the prevailing issues are given below. With the below desi=
+gn we
+> >    are seeing the Linux multipath stack becoming resilient to such netw=
+ork
+> >    issues. We hope by getting this patch accepted will help in more Lin=
+ux
+> >    server adoption that use SAN network.
+> > =
+
+> >    I have already sent the design details to the community in a differe=
+nt
+> >    mail chain and the details are available in the below link.
+> > =
+
+> >    [1]https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat=
+.com_archives_dm-2Ddevel_2016-2DDecember_msg00122.html&d=3DDgIDAw&c=3DIL_Xq=
+QWOjubgfqINi2jTzg&r=3DE3ftc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpV=
+p6e1KXtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_Uj7M=
+Ru52hG3MKzM&e=3D .
+> > =
+
+> >    Can you please go through the design and send the comments to us.
+> > =
+
+> >    =A0
+> > =
+
+> >    Regards,
+> > =
+
+> >    Muneendra.
+> > =
+
+> >    =A0
+> > =
+
+> >    =A0
+> > =
+
+> > References
+> > =
+
+> >    Visible links
+> >    1. =
+
+> > https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.com_ar
+> > chives_dm-2Ddevel_2016-2DDecember_msg00122.html&d=3DDgIDAw&c=3DIL_XqQWO=
+jub
+> > gfqINi2jTzg&r=3DE3ftc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6=
+e1K
+> > XtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_Uj7MRu
+> > 52hG3MKzM&e=3D
+> =
+
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.com_ma
+> > ilman_listinfo_dm-2Ddevel&d=3DDgIDAw&c=3DIL_XqQWOjubgfqINi2jTzg&r=3DE3f=
+tc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6e1KXtRA0ctwHYJ7cDmPsLi2=
+C1L9pox7uexsY&s=3DUyE46dXOrNTbPz_TVGtpoHl3J3h_n0uYhI4TI-PgyWg&e=3D
