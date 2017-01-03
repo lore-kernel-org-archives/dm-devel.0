@@ -1,14 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH] multipathd: fix SIGUSR2 handling
-Date: Tue, 3 Jan 2017 12:59:09 -0600
-Message-ID: <20170103185909.GB2732@octiron.msp.redhat.com>
-References: <1482998174-11884-1-git-send-email-tang.junhui@zte.com.cn>
+Subject: Re: [PATCH 01/12] libmultipath: add wwid for "struct
+ uevent" to record wwid of uevent
+Date: Tue, 3 Jan 2017 16:02:54 -0600
+Message-ID: <20170103220254.GD2732@octiron.msp.redhat.com>
+References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
+	<1482825809-9528-2-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1482998174-11884-1-git-send-email-tang.junhui@zte.com.cn>
+In-Reply-To: <1482825809-9528-2-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,64 +21,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: tang.junhui@zte.com.cn
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com, mwilck@suse.com
+Cc: tang.wenjun3@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com, mwilck@suse.com
 List-Id: dm-devel.ids
 
-On Thu, Dec 29, 2016 at 03:56:14PM +0800, tang.junhui@zte.com.cn wrote:
-> From: "tang.junhui" <tang.junhui@zte.com.cn>
+On Tue, Dec 27, 2016 at 04:03:18PM +0800, tang.junhui@zte.com.cn wrote:
+> From: tang.junhui <tang.junhui@zte.com.cn>
 > 
-> SIGUSR2 is not blocked by default, it would cause bellow conflict
-> in removing of the last path:
+> Add "char *wwid" to point WWID of uevent. This member identifies
+> the LUN ID which the path belongs to, and it is used for merging
+> uevents. WWID possibly did not exist in uevent yet, so ->wwid
+> would be NULL, those uevents would not be merged, but be proccessed
+> as old way.
 
-ACK
+Right now, multipath users are allowed configure devices to set the wwid
+based on any udev environment variable (or even use a callout, although
+this is deprecated). With this patch, that breaks. If the udev sets
+ID_SERIAL for a device, that is its wwid, right?  Do you know if rbd
+devices have ID_SERIAL set? If so, this change will break them.  Even if
+this change doesn't break any devices in their default configurations,
+we would need to disallow changing how the wwid is set for this patch
+to be safe.
 
--Ben
+-Ben 
 
-> -------------------------------------------------------------
-> uevent processing thread                 | waiter thread
-> -----------------------------------------|-------------------
-> uev_remove_path()                        |   waiteventloop()
->   lock(&vecs->lock)                      |
->   ev_remove_path()                       |     
->     dm_queue_if_no_path()----------------|----> dm_task_run()	
->     flush_map()                          |      |
->       remove_map_and_stop_waiter()       |      -> pthread_cleanup_push(cleanup_lock, &waiter->vecs->lock);
->         _remove_map()                    |         lock(&waiter->vecs->lock)//wait for the locker	
->           stop_waiter_thread()           |         
->             pthread_cancel(thread)       |          
->             pthread_kill(thread,SIGUSR2)-|------> sigusr2 (int sig)
->                                          |          condlog()
->                                          |          fprintf() //it has test cancel point
->                                          |          cleanup_lock() //thread cancel, and pop, which unlock the 
->                                          |                           locker of uevent processing thread 
-> --------------------------------------------------------------
-> Since SIGUSR2 is only needed when waiter thread running in dm_task_run(),
-> and it has already been unblocked before dm_task_run(), so this patch block 
-> SIGUSR2 for other times.
 > 
-> Change-Id: I8c46292dc954415764ebbe054498b4f7ea53c1c6
+> Change-Id: Ie6b076363b3735dc7de10184b27fa799b499af0e
 > Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 > ---
->  multipathd/main.c | 6 ++++++
->  1 file changed, 6 insertions(+)
+>  libmultipath/uevent.c | 2 ++
+>  libmultipath/uevent.h | 1 +
+>  2 files changed, 3 insertions(+)
 > 
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index adc3258..fe69abd 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -2181,6 +2181,12 @@ sigusr2 (int sig)
->  static void
->  signal_init(void)
->  {
-> +	sigset_t set;
-> +
-> +	sigemptyset(&set);
-> +	sigaddset(&set, SIGUSR2);
-> +	pthread_sigmask(SIG_SETMASK, &set, NULL);
-> +
->  	signal_set(SIGHUP, sighup);
->  	signal_set(SIGUSR1, sigusr1);
->  	signal_set(SIGUSR2, sigusr2);
+> diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+> index 7edcce1..ef1bafe 100644
+> --- a/libmultipath/uevent.c
+> +++ b/libmultipath/uevent.c
+> @@ -424,6 +424,8 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
+>  			uev->devpath = uev->envp[i] + 8;
+>  		if (strcmp(name, "ACTION") == 0)
+>  			uev->action = uev->envp[i] + 7;
+> +		if (strcmp(name, "ID_SERIAL") == 0)
+> +			uev->wwid = uev->envp[i] + 10;
+>  		i++;
+>  		if (i == HOTPLUG_NUM_ENVP - 1)
+>  			break;
+> diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
+> index 9d22dcd..7bfccef 100644
+> --- a/libmultipath/uevent.h
+> +++ b/libmultipath/uevent.h
+> @@ -22,6 +22,7 @@ struct uevent {
+>  	char *devpath;
+>  	char *action;
+>  	char *kernel;
+> +	char *wwid;
+>  	unsigned long seqnum;
+>  	char *envp[HOTPLUG_NUM_ENVP];
+>  };
 > -- 
 > 2.8.1.windows.1
 > 
