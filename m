@@ -1,11 +1,14 @@
-From: Anthony Ryan <anthonyryan1@gmail.com>
-Subject: [PATCH] Include sys/sysmacros.h
-Date: Tue, 3 Jan 2017 23:34:53 -0500
-Message-ID: <CACqULmPQdDPnHkM701=XJ1qSc8y87-6Fb=kbvEGGeHyrrBXvEg@mail.gmail.com>
+From: "Bryn M. Reeves" <bmr@redhat.com>
+Subject: Re: dm stats
+Date: Wed, 4 Jan 2017 11:33:46 +0000
+Message-ID: <20170104113345.GB6906@dhcp-24-182.fab.redhat.com>
+References: <DF4PR84MB01530961D1F61928EF4B4101A0930@DF4PR84MB0153.NAMPRD84.PROD.OUTLOOK.COM>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <DF4PR84MB01530961D1F61928EF4B4101A0930@DF4PR84MB0153.NAMPRD84.PROD.OUTLOOK.COM>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,82 +18,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: "A M, Ashalatha" <ashalatha-a.a@hpe.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The major, minor & makedev macros are not supposed to be included
-with sys/types.h but glibc has done this against POSIX standards.
+On Wed, Dec 21, 2016 at 10:49:06AM +0000, A M, Ashalatha wrote:
+> In this documentation, would like to know what is the command to be used to create/print/list stats.
+> 
+> @stats_create <range> <step> [<program_id> [<aux_data>]]
+> 
+> @stats_print <region_id> [<starting_line> <number_of_lines>]
+> 
+> @stats_list [<program_id>]
 
-Alternative libcs aren't able to be used because of this and glibc
-has expressed interest in correcting this behaviour in a future
-release.
----
- kpartx/dasd.c               | 1 +
- kpartx/kpartx.c             | 1 +
- libmultipath/checkers/tur.c | 1 +
- libmultipath/devmapper.c    | 1 +
- libmultipath/util.c         | 1 +
- 5 files changed, 5 insertions(+)
+These are device-mapper messages that you can send to a device to
+create, print, or list statistics regions.
 
-diff --git a/kpartx/dasd.c b/kpartx/dasd.c
-index 1206e45..f50c1bd 100644
---- a/kpartx/dasd.c
-+++ b/kpartx/dasd.c
-@@ -28,6 +28,7 @@
- #include <inttypes.h>
- #include <sys/types.h>
- #include <sys/stat.h>
-+#include <sys/sysmacros.h>
- #include <sys/ioctl.h>
- #include <linux/hdreg.h>
- #include <errno.h>
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index d31fea8..3452787 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -28,6 +28,7 @@
- #include <stdint.h>
- #include <sys/ioctl.h>
- #include <sys/stat.h>
-+#include <sys/sysmacros.h>
- #include <sys/types.h>
- #include <ctype.h>
- #include <libdevmapper.h>
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 4d6c3c2..d9a9e67 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -11,6 +11,7 @@
- #include <unistd.h>
- #include <fcntl.h>
- #include <sys/ioctl.h>
-+#include <sys/sysmacros.h>
- #include <errno.h>
- #include <sys/time.h>
- #include <pthread.h>
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 4f8ef13..9c0b240 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -12,6 +12,7 @@
- #include <ctype.h>
- #include <unistd.h>
- #include <errno.h>
-+#include <sys/sysmacros.h>
+All range and step arguments are in sectors and the messages are
+issued with the 'dmsetup message' command.
 
- #include "checkers.h"
- #include "vector.h"
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index 03a5738..1841f35 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -4,6 +4,7 @@
- #include <pthread.h>
- #include <string.h>
- #include <sys/stat.h>
-+#include <sys/sysmacros.h>
- #include <sys/types.h>
- #include <unistd.h>
+For example:
 
--- 
-2.11.0
+  # dmsetup message vg_hex/root 0 "@stats_list" 
+  0: 35325952+2048 2048 dmstats -
+  1: 35325952+2048 2048 dmstats -
+  2: 44908544+16384 16384 dmstats DMS_GROUP=vm.img:2#-
+
+This is however a very low-level interface to the dmstats facility;
+users are encouraged to use the userspace library (part of libdevmapper
+- see libdevmapper.h for API documentation), or the 'dmstats' command
+to manage device-mapper statistics.
+
+  # dmstats list
+  Name             GrpID RgID ObjType RgStart RgSize  #Areas ArSize  ProgID 
+  vg_hex-root          -    0 region   16.84g   1.00m      1   1.00m dmstats
+  vg_hex-root          -    1 region   16.84g   1.00m      1   1.00m dmstats
+  vm.img               2    2 region   21.41g   8.00m      1   8.00m dmstats
+  
+This has the benefit of a simpler command interface, automatic rate
+conversion for derived metrics (MB/s, queue length, etc.), configurable
+time and size units, flexible field control, grouping, aliasing and many
+other convenient features - see man 8 dmstats for further details of the
+command interface.
+
+> Also, it is documented that 11 stats(Documentation/iostats.txt) would be reported and additional counters as well:
+> 
+> 12. the total time spent reading in milliseconds
+> 
+> 13. the total time spent writing in milliseconds
+> 
+> So are these same as "read_ticks" and "write_ticks" else how different from the ticks?
+
+Yes: these are the fields reported by dmstats as 'read_ticks' and
+'write_ticks'. They differ from 'read_time' and 'write_time' in that
+they are the time spent _servicing_ (i.e. actively processing) read and
+write requests - the two '_time' fields instead track the total
+accumulated time for all requests (the time from the request being
+submitted to the time when it is completed, summed for all requests).
+
+Regards,
+Bryn.
