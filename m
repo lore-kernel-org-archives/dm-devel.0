@@ -1,16 +1,18 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH] Avoid that reloading a map sporadically
- triggers I/O errors
-Date: Wed, 4 Jan 2017 13:56:43 -0600
-Message-ID: <20170104195643.GK2732@octiron.msp.redhat.com>
-References: <85315cb2-6908-70c6-78b7-06b6c1071f6b@sandisk.com>
-	<d044817b-ea55-f42f-3895-5c539260ed80@sandisk.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 01/12] libmultipath: add wwid for "struct
+ uevent" to record wwid of uevent
+Date: Wed, 04 Jan 2017 21:33:26 +0100
+Message-ID: <1483562006.23429.1.camel@suse.com>
+References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
+	<1482825809-9528-2-git-send-email-tang.junhui@zte.com.cn>
+	<20170103220254.GD2732@octiron.msp.redhat.com>
+	<OF623EC6A9.F5A76A08-ON4825809E.00140EC1-4825809E.00262117@zte.com.cn>
+	<20170104181452.GJ2732@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <d044817b-ea55-f42f-3895-5c539260ed80@sandisk.com>
+In-Reply-To: <20170104181452.GJ2732@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,49 +22,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, tang.junhui@zte.com.cn
+Cc: tang.wenjun3@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com
 List-Id: dm-devel.ids
 
-On Wed, Dec 07, 2016 at 03:37:44PM -0800, Bart Van Assche wrote:
-
-ACK
-
--Ben
-
-> Christophe and Hannes, do you want to comment on this patch?
-> 
-> Thanks,
-> 
-> Bart.
-> 
-> On 11/18/2016 01:33 PM, Bart Van Assche wrote:
-> >Avoid that reloading a map while there are no paths triggers a flush
-> >and hence unwanted I/O errors if 'queue_if_no_path' is enabled.
-> >
-> >Fixes: commit d569988e7528 ("libmultipath: Fixup 'DM_DEVICE_RELOAD' handling")
-> >Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
-> >Cc: Hannes Reinecke <hare@suse.de>
-> >---
-> > libmultipath/devmapper.c | 2 +-
-> > 1 file changed, 1 insertion(+), 1 deletion(-)
-> >
-> >diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> >index f92ebce..31f1962 100644
-> >--- a/libmultipath/devmapper.c
-> >+++ b/libmultipath/devmapper.c
-> >@@ -390,7 +390,7 @@ int dm_addmap_reload(struct multipath *mpp, char *params, int flush)
-> > 			      params, ADDMAP_RO, SKIP_KPARTX_OFF);
-> > 	}
-> > 	if (r)
-> >-		r = dm_simplecmd(DM_DEVICE_RESUME, mpp->alias, flush,
-> >+		r = dm_simplecmd(DM_DEVICE_RESUME, mpp->alias, !flush,
-> > 				 1, udev_flags, 0);
-> > 	return r;
-> > }
-> >
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+T24gV2VkLCAyMDE3LTAxLTA0IGF0IDEyOjE0IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gCj4gVGhlIG90aGVyIG9wdGlvbiB3b3VsZCBiZSB0byBub3QgYWN0dWFsbHkgbWVyZ2Ug
+dGhlIHVldmVudHMsIGJ1dAo+IHNpbXBseQo+IHJ1biB0aHJvdWdoIHRoZSBmaWx0ZXJlZCBidXQg
+dW5tZXJnZWQgbGlzdCBvZiB1ZXZlbnRzLCBhbmQgc2tpcCB0aGUKPiBkb21hcCBzdHVmZiBidXQg
+cmVtZW1iZXIgdGhlIG1hcHMgdGhhdCBuZWVkIHB1c2hpbmcgdG8gZGV2aWNlLW1hcHBlci4KPiBP
+bmNlIHlvdSBhcmUgZG9uZSBwcm9jZXNzaW5nIGFsbCB0aGUgdWV2ZW50cywgZXhjZXB0IGZvciB1
+cGRhdGluZyB0aGUKPiBtYXBzIGluIGRldmljZS1tYXBwZXIsIHlvdSBnbyBiYWNrIGFuZCB1cGRh
+dGUgYWxsIHRoZSBtYXBzIHRoYXQgbmVlZAo+IHVwZGF0aW5nLiBUaGVyZSdzIG1vcmUgY29kZSBy
+ZWZhY3RvcmluZyBpbiB0aGlzIGFwcHJvYWNoLCBidXQgaXQKPiBrZWVwcwo+IHRoZSB1aWQgYmVp
+bmcgc2V0IGluIHBhdGhpbmZvLCB3aGVyZSB5b3UgaGF2ZSBhbGwgdGhlIGluZm9ybWF0aW9uCj4g
+bmVjZXNzYXJ5IHRvIHNldCBpdCB1c2luZyB1aWRfYXR0cmlidXRlLCBnZXR1aWQsIG9yIHNwZWNp
+YWxpemVkIGNvZGUKPiBsaWtlIHJiZCB1c2VzLgoKVGhhdCBzb3VuZHMgYSBsb3QgbGlrZSBjb25m
+aWd1cmUoKS9jb2FsZXNjZV9wYXRocygpIHRvIG1lLiBXb3VsZCBpdApwZXJoYXBzIG1ha2Ugc2Vu
+c2UsIGluc3RlYWQgb2YgcmVmYWN0b3JpbmcvcmV3cml0aW5nIGEgd2hvbGUgbG90IG9mCmNvZGUs
+IHRvIHJlLXVzZSB0aGF0IG1hdHVyZSBjb2RlIHBhdGg/CgpDaGVlcnMsCk1hcnRpbgoKLS0gCkRy
+LiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC7CoCs0OSAoMCk5MTEgNzQwNTMg
+MjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhh
+cmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBt
+YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
+aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
