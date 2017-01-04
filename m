@@ -1,17 +1,18 @@
-From: Muneendra Kumar M <mmandala@Brocade.com>
-Subject: Re: deterministic io throughput in multipath
-Date: Wed, 4 Jan 2017 13:26:01 +0000
-Message-ID: <5622482d0db74f25b7780e32678efcac@BRMWP-EXMB12.corp.brocade.com>
-References: <1649d4b8538d4b4cb1efacdfe8cf31eb@BRMWP-EXMB12.corp.brocade.com>
-	<20161221160940.GG19659@octiron.msp.redhat.com>
-	<8cd4cc5f20b540a1b8312ad485711152@BRMWP-EXMB12.corp.brocade.com>
-	<20170103171159.GA2732@octiron.msp.redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 01/12] libmultipath: add wwid for "struct
+ uevent" to record wwid of uevent
+Date: Wed, 4 Jan 2017 12:14:52 -0600
+Message-ID: <20170104181452.GJ2732@octiron.msp.redhat.com>
+References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
+	<1482825809-9528-2-git-send-email-tang.junhui@zte.com.cn>
+	<20170103220254.GD2732@octiron.msp.redhat.com>
+	<OF623EC6A9.F5A76A08-ON4825809E.00140EC1-4825809E.00262117@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170103171159.GA2732@octiron.msp.redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <OF623EC6A9.F5A76A08-ON4825809E.00140EC1-4825809E.00262117@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,190 +22,122 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: tang.junhui@zte.com.cn
+Cc: tang.wenjun3@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com, mwilck@suse.com
 List-Id: dm-devel.ids
 
-Hi Ben,
-Thanks for the information.
-
-Regards,
-Muneendra.
-
------Original Message-----
-From: Benjamin Marzinski [mailto:bmarzins@redhat.com] =
-
-Sent: Tuesday, January 03, 2017 10:42 PM
-To: Muneendra Kumar M <mmandala@Brocade.com>
-Cc: dm-devel@redhat.com
-Subject: Re: [dm-devel] deterministic io throughput in multipath
-
-On Mon, Dec 26, 2016 at 09:42:48AM +0000, Muneendra Kumar M wrote:
-> Hi Ben,
-> =
-
-> If there are two paths on a dm-1 say sda and sdb as below.
-> =
-
-> #  multipath -ll
-> 	mpathd (3600110d001ee7f0102050001cc0b6751) dm-1 SANBlaze,VLUN MyLun
-> 	size=3D8.0M features=3D'0' hwhandler=3D'0' wp=3Drw
-> 	`-+- policy=3D'round-robin 0' prio=3D50 status=3Dactive
-> 	  |- 8:0:1:0  sda 8:48 active ready  running
-> 	  `- 9:0:1:0  sdb 8:64 active ready  running          =
-
-> =
-
-> And on sda if iam seeing lot of errors due to which the sda path is fluct=
-uating from failed state to active state and vicevera.
-> =
-
-> My requirement is something like this if sda is failed for more then 5 =
-
-> times in a hour duration ,then I want to keep the sda in failed state =
-
-> for few hours (3hrs)
-> =
-
-> And the data should travel only thorugh sdb path.
-> Will this be possible with the below parameters.
-
-No. delay_watch_checks sets how may path checks you watch a path that has r=
-ecently come back from the failed state. If the path fails again within thi=
-s time, multipath device delays it.  This means that the delay is always tr=
-igger by two failures within the time limit.  It's possible to adapt this t=
-o count numbers of failures, and act after a certain number within a certai=
-n timeframe, but it would take a bit more work.
-
-delay_wait_checks doesn't guarantee that it will delay for any set length o=
-f time.  Instead, it sets the number of consecutive successful path checks =
-that must occur before the path is usable again. You could set this for 3 h=
-ours of path checks, but if a check failed during this time, you would rest=
-art the 3 hours over again.
-
--Ben
-
-> Can you just let me know what values I should add for delay_watch_checks =
-and delay_wait_checks.
-> =
-
-> Regards,
-> Muneendra.
-> =
-
-> =
-
-> =
-
-> -----Original Message-----
-> From: Muneendra Kumar M
-> Sent: Thursday, December 22, 2016 11:10 AM
-> To: 'Benjamin Marzinski' <bmarzins@redhat.com>
-> Cc: dm-devel@redhat.com
-> Subject: RE: [dm-devel] deterministic io throughput in multipath
-> =
-
-> Hi Ben,
-> =
-
-> Thanks for the reply.
-> I will look into this parameters will do the internal testing and let you=
- know the results.
-> =
-
-> Regards,
-> Muneendra.
-> =
-
-> -----Original Message-----
-> From: Benjamin Marzinski [mailto:bmarzins@redhat.com]
-> Sent: Wednesday, December 21, 2016 9:40 PM
-> To: Muneendra Kumar M <mmandala@Brocade.com>
-> Cc: dm-devel@redhat.com
-> Subject: Re: [dm-devel] deterministic io throughput in multipath
-> =
-
-> Have you looked into the delay_watch_checks and delay_wait_checks configu=
-ration parameters?  The idea behind them is to minimize the use of paths th=
-at are intermittently failing.
-> =
-
-> -Ben
-> =
-
-> On Mon, Dec 19, 2016 at 11:50:36AM +0000, Muneendra Kumar M wrote:
-> >    Customers using Linux host (mostly RHEL host) using a SAN network for
-> >    block storage, complain the Linux multipath stack is not resilient to
-> >    handle non-deterministic storage network behaviors. This has caused =
-many
-> >    customer move away to non-linux based servers. The intent of the bel=
-ow
-> >    patch and the prevailing issues are given below. With the below desi=
-gn we
-> >    are seeing the Linux multipath stack becoming resilient to such netw=
-ork
-> >    issues. We hope by getting this patch accepted will help in more Lin=
-ux
-> >    server adoption that use SAN network.
-> > =
-
-> >    I have already sent the design details to the community in a differe=
-nt
-> >    mail chain and the details are available in the below link.
-> > =
-
-> >    [1]https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat=
-.com_archives_dm-2Ddevel_2016-2DDecember_msg00122.html&d=3DDgIDAw&c=3DIL_Xq=
-QWOjubgfqINi2jTzg&r=3DE3ftc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpV=
-p6e1KXtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_Uj7M=
-Ru52hG3MKzM&e=3D .
-> > =
-
-> >    Can you please go through the design and send the comments to us.
-> > =
-
-> >    =A0
-> > =
-
-> >    Regards,
-> > =
-
-> >    Muneendra.
-> > =
-
-> >    =A0
-> > =
-
-> >    =A0
-> > =
-
-> > References
-> > =
-
-> >    Visible links
-> >    1. =
-
-> > https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.com_
-> > ar =
-
-> > chives_dm-2Ddevel_2016-2DDecember_msg00122.html&d=3DDgIDAw&c=3DIL_XqQWOj
-> > ub =
-
-> > gfqINi2jTzg&r=3DE3ftc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6e
-> > 1K =
-
-> > XtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_Uj7M
-> > Ru
-> > 52hG3MKzM&e=3D
-> =
-
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.com_
-> > ma =
-
-> > ilman_listinfo_dm-2Ddevel&d=3DDgIDAw&c=3DIL_XqQWOjubgfqINi2jTzg&r=3DE3f=
-tc4
-> > 7B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6e1KXtRA0ctwHYJ7cDmPsL
-> > i2C1L9pox7uexsY&s=3DUyE46dXOrNTbPz_TVGtpoHl3J3h_n0uYhI4TI-PgyWg&e=3D
+T24gV2VkLCBKYW4gMDQsIDIwMTcgYXQgMDI6NTY6NDZQTSArMDgwMCwgdGFuZy5qdW5odWlAenRl
+LmNvbS5jbiB3cm90ZToKPiAgICBIZWxsbyBCZW4sCj4gCj4gICAgPiBSaWdodCBub3csIG11bHRp
+cGF0aCB1c2VycyBhcmUgYWxsb3dlZCBjb25maWd1cmUgZGV2aWNlcyB0byBzZXQgdGhlIHd3aWQK
+PiAgICA+IGJhc2VkIG9uIGFueSB1ZGV2IGVudmlyb25tZW50IHZhcmlhYmxlIChvciBldmVuIHVz
+ZSBhIGNhbGxvdXQsIGFsdGhvdWdoCj4gICAgPiB0aGlzIGlzIGRlcHJlY2F0ZWQpLiBXaXRoIHRo
+aXMgcGF0Y2gsIHRoYXQgYnJlYWtzLgo+ICAgIERvZXMgV1dJRCBvYnRhaW5lZCBieSBkaWZmZXJl
+bnQgbWV0aG9kcyBjaGFuZ2U/IElmIGl0IGNoYW5nZXMsIHdlIHdvdWxkCj4gICAgYmV0dGVyIHRv
+IG1vZGlmeSBjb2RlIHRvIGtlZXAgaXQgbm8gY2hhbmdlLgoKWWVzLiB1c2VycyBjYW4gcGljayBh
+bnkgdWRldiBlbnZpcm9ubWVudCB2YXJpYWJsZSAoYW5kIGN1cnJlbnRseSwgYW55CmNhbGxvdXQg
+cHJvZ3JhbSB0aGF0IHRoZXkgd3JpdGUpIHRvIHVzZSBhcyB0aGUgd3dpZC4KCj4gICAgPiBJZiB0
+aGUgdWRldiBzZXRzCj4gICAgPiBJRF9TRVJJQUwgZm9yIGEgZGV2aWNlLCB0aGF0IGlzIGl0cyB3
+d2lkLCByaWdodD8KPiAgICBZZXMKPiAKPiAgICA+IERvIHlvdSBrbm93IGlmIHJiZAo+ICAgID4g
+ZGV2aWNlcyBoYXZlIElEX1NFUklBTCBzZXQ/Cj4gICAgV1dJRCBoYXMgZGlmZmVyZW50IGxhYmVs
+IGluIHVldmVudHMgZm9yIGRpZmZlcmVudCBkZXZpY2VzLCBJIG9ubHkgdGVzdCBmb3IKPiAgICBT
+Q1NJIGRldmljZXMuCgpXaGVyZSBpcyB0aGF0IGNoZWNrPyBJIG9ubHkgc2VlIGEgY2hlY2sgZm9y
+IHdoZXRoZXIgSURfU0VSSUFMIGV4aXN0cy4gSWYKaXQgZXhpc3RzIG9uIHRoaW5ncyB0aGF0IGFy
+ZSBub3Qgc2NzaSBkZXZpY2VzLCB5b3Ugd2lsbCBzZXQgdGhlIHd3aWQgZm9yCnRoZXNlIGRldmlj
+ZXMgd2l0aCBpdCBhcyB3ZWxsLCBldmVuIGlmIGl0IGRvZXNuJ3Qgd29yayBmb3IgdGhlbS4KCj4g
+ICAgTm93IHdlIGRvIG5vdCBzdXBwb3J0IHJiZCBkaXZpY2UgZm9yIHVldmVudHMgbWVyZ2luZywg
+dGhlc2UKPiAgICBkZXZpY2UgcHJvY2VzcyBhcyBvbGQgd2F5LCBpdCBoYXMgbm8gaGFybSBpbiBs
+b2dpYy4gSWYgd2UgbmVlZCB0byBtZXJnZQo+ICAgIHJiZCB1ZXZlbnRzIGZvciB0aGVzZSBkZXZp
+Y2VzLCB3ZSBjYW4gYWRkIGNvZGUgdG8gZ2V0IHd3aWQgZnJvbSB1ZXZlbnRzCj4gICAgYW5kIGl0
+IGNhbiBiZSBzdXBwb3J0ZWQgZWFzaWx5LgoKTG9vayBhdCBnZXRfcmJkX3VpZCgpLCBhbmQgaG93
+IGl0J3MgY2FsbGVkLiByYmQgZGV2aWNlcyBkb24ndCBldmVuIHVzZQp0aGUgZ2V0dWlkIGNhbGxv
+dXQgb3IgdWlkX2F0dHJpYnV0ZS4gVGhleSB1c2Ugc3BlY2lhbCBjb2RlIGNhbGxlZCBieQpnZXRf
+dWlkLgoKTm93IHlvdSBjb3VsZCBhZGQgZXhwbGljaXQgY2hlY2tzIHNvIHdlIG9ubHkgY2hlY2sg
+SURfU0VSSUFMIGZvciBzY3NpCmRldmljZXMsIElEX1VJRCBmb3IgZGFzZCBkZXZpY2VzLCBhbmQg
+bmV2ZXIgc2V0IHRoZSB3d2lkIG90aGVyd2lzZS4gIFlvdQpjb3VsZCBldmVuIG1ha2UgdGhlIGF0
+dHJpYnV0ZSB3ZSBjaGVjayBjb25maWd1cmFibGUgYnkgZGV2aWNlIHR5cGUgd2l0aAphbiBvcHRp
+b24gbGlrZQoKdWlkX2F0dHJzICJzZDpJRF9TRVJJQUwgZGFzZDpJRF9VSUQiCgppbiB0aGUgZGVm
+YXVsdHMgc2VjdGlvbiwgdGhhdCB3b3VsZCBzZXQgdXAgbWFwcGluZ3MgYmV0d2VlbiBkZXZpY2Ug
+dHlwZXMKYW5kIHVldmVudCBhdHRyaWJ1dGVzIHRvIGNoZWNrIGZvciB0aGUgdWlkLiBCdXQgdGhp
+cyB3b3VsZCBiZSBvbiBwZXIKZGV2aWNlIHR5cGVzLCBub3QgcGVyIHN0b3JhZ2UgYXJyYXksIGxp
+a2UgaXQgY3VycmVudGx5IGlzLiB1aWRfYXR0cmlidXRlCmFuZCBnZXR1aWQgYXR0cmlidXRlIHdv
+dWxkIG9ubHkgZXZlciBiZSB1c2VkIGZvciBkZXZpY2UgdHlwZXMgdGhhdAp3ZXJlbid0IGluIHRo
+ZSB1aWRfYXR0cnMgbGlzdC4KClRoZSBvdGhlciBvcHRpb24gd291bGQgYmUgdG8gbm90IGFjdHVh
+bGx5IG1lcmdlIHRoZSB1ZXZlbnRzLCBidXQgc2ltcGx5CnJ1biB0aHJvdWdoIHRoZSBmaWx0ZXJl
+ZCBidXQgdW5tZXJnZWQgbGlzdCBvZiB1ZXZlbnRzLCBhbmQgc2tpcCB0aGUKZG9tYXAgc3R1ZmYg
+YnV0IHJlbWVtYmVyIHRoZSBtYXBzIHRoYXQgbmVlZCBwdXNoaW5nIHRvIGRldmljZS1tYXBwZXIu
+Ck9uY2UgeW91IGFyZSBkb25lIHByb2Nlc3NpbmcgYWxsIHRoZSB1ZXZlbnRzLCBleGNlcHQgZm9y
+IHVwZGF0aW5nIHRoZQptYXBzIGluIGRldmljZS1tYXBwZXIsIHlvdSBnbyBiYWNrIGFuZCB1cGRh
+dGUgYWxsIHRoZSBtYXBzIHRoYXQgbmVlZAp1cGRhdGluZy4gVGhlcmUncyBtb3JlIGNvZGUgcmVm
+YWN0b3JpbmcgaW4gdGhpcyBhcHByb2FjaCwgYnV0IGl0IGtlZXBzCnRoZSB1aWQgYmVpbmcgc2V0
+IGluIHBhdGhpbmZvLCB3aGVyZSB5b3UgaGF2ZSBhbGwgdGhlIGluZm9ybWF0aW9uCm5lY2Vzc2Fy
+eSB0byBzZXQgaXQgdXNpbmcgdWlkX2F0dHJpYnV0ZSwgZ2V0dWlkLCBvciBzcGVjaWFsaXplZCBj
+b2RlCmxpa2UgcmJkIHVzZXMuCgpBcyBsb25nIGFzIHdlIG1ha2Ugc3VyZSB0aGF0IHdlIGFyZSBv
+bmx5IGNoZWNraW5nIHNwZWNpZmljIHVldmVudAphdHRyaWJ1dGVzIGZvciBzcGVjaWZpYyBkZXZp
+Y2UgdHlwZXMsIEknbSBvLmsuIHdpdGggeW91ciB3YXksIGJ1dCB3ZSBhcmUKbG9zaW5nIGZsZXhp
+YmlsaXR5IHRoYXQgbXVsdGlwYXRoIGhhcyBhbHdheXMgaGFkIGluIHJlZ2FyZHMgdG8gc2V0dGlu
+Zwp0aGUgd3dpZC4gSSB3YW50IHRvIHBvaW50IHRoYXQgb3V0IHNvIHRoYXQgYW55b25lIHdobyBu
+ZWVkcyB0aGlzIGtub3dzCnRoYXQgaXQgaXMgY2hhbmdpbmcuCgotQmVuIAoKPiAgICBSZWdhcmRz
+Cj4gICAgVGFuZyBKdW5odWkKPiAKPiAgICDvv73vv73vv73vv73vv73vv706IMKgIMKgIMKgIMKg
+ICJCZW5qYW1pbiBNYXJ6aW5za2kiIDxibWFyemluc0ByZWRoYXQuY29tPgo+ICAgIO+/vdW877+9
+77+977+9OiDCoCDCoCDCoCDCoCB0YW5nLmp1bmh1aUB6dGUuY29tLmNuLAo+ICAgIO+/ve+/ve+/
+ve+/vTogwqAgwqAgwqAgwqBjaHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20sIGhhcmVAc3Vz
+ZS5kZSwKPiAgICBtd2lsY2tAc3VzZS5jb20sIGJhcnQudmFuYXNzY2hlQHNhbmRpc2suY29tLCBk
+bS1kZXZlbEByZWRoYXQuY29tLAo+ICAgIHpoYW5nLmthaTE2QHp0ZS5jb20uY24sIHRhbmcud2Vu
+anVuM0B6dGUuY29tLmNuCj4gICAg77+977+977+977+9OiDCoCDCoCDCoCDCoCAyMDE3LzAxLzA0
+IDA2OjAzCj4gICAg77+977+977+977+9OiDCoCDCoCDCoCDCoFJlOiBbUEFUQ0ggMDEvMTJdIGxp
+Ym11bHRpcGF0aDogYWRkIHd3aWQgZm9yICJzdHJ1Y3QgdWV2ZW50Igo+ICAgIHRvIHJlY29yZCB3
+d2lkIG9mIHVldmVudAo+IAo+ICAgIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4gCj4gICAgT24gVHVlLCBE
+ZWMgMjcsIDIwMTYgYXQgMDQ6MDM6MThQTSArMDgwMCwgdGFuZy5qdW5odWlAenRlLmNvbS5jbiB3
+cm90ZToKPiAgICA+IEZyb206IHRhbmcuanVuaHVpIDx0YW5nLmp1bmh1aUB6dGUuY29tLmNuPgo+
+ICAgID4KPiAgICA+IEFkZCAiY2hhciAqd3dpZCIgdG8gcG9pbnQgV1dJRCBvZiB1ZXZlbnQuIFRo
+aXMgbWVtYmVyIGlkZW50aWZpZXMKPiAgICA+IHRoZSBMVU4gSUQgd2hpY2ggdGhlIHBhdGggYmVs
+b25ncyB0bywgYW5kIGl0IGlzIHVzZWQgZm9yIG1lcmdpbmcKPiAgICA+IHVldmVudHMuIFdXSUQg
+cG9zc2libHkgZGlkIG5vdCBleGlzdCBpbiB1ZXZlbnQgeWV0LCBzbyAtPnd3aWQKPiAgICA+IHdv
+dWxkIGJlIE5VTEwsIHRob3NlIHVldmVudHMgd291bGQgbm90IGJlIG1lcmdlZCwgYnV0IGJlIHBy
+b2NjZXNzZWQKPiAgICA+IGFzIG9sZCB3YXkuCj4gCj4gICAgUmlnaHQgbm93LCBtdWx0aXBhdGgg
+dXNlcnMgYXJlIGFsbG93ZWQgY29uZmlndXJlIGRldmljZXMgdG8gc2V0IHRoZSB3d2lkCj4gICAg
+YmFzZWQgb24gYW55IHVkZXYgZW52aXJvbm1lbnQgdmFyaWFibGUgKG9yIGV2ZW4gdXNlIGEgY2Fs
+bG91dCwgYWx0aG91Z2gKPiAgICB0aGlzIGlzIGRlcHJlY2F0ZWQpLiBXaXRoIHRoaXMgcGF0Y2gs
+IHRoYXQgYnJlYWtzLiBJZiB0aGUgdWRldiBzZXRzCj4gICAgSURfU0VSSUFMIGZvciBhIGRldmlj
+ZSwgdGhhdCBpcyBpdHMgd3dpZCwgcmlnaHQ/IMKgRG8geW91IGtub3cgaWYgcmJkCj4gICAgZGV2
+aWNlcyBoYXZlIElEX1NFUklBTCBzZXQ/IElmIHNvLCB0aGlzIGNoYW5nZSB3aWxsIGJyZWFrIHRo
+ZW0uIMKgRXZlbiBpZgo+ICAgIHRoaXMgY2hhbmdlIGRvZXNuJ3QgYnJlYWsgYW55IGRldmljZXMg
+aW4gdGhlaXIgZGVmYXVsdCBjb25maWd1cmF0aW9ucywKPiAgICB3ZSB3b3VsZCBuZWVkIHRvIGRp
+c2FsbG93IGNoYW5naW5nIGhvdyB0aGUgd3dpZCBpcyBzZXQgZm9yIHRoaXMgcGF0Y2gKPiAgICB0
+byBiZSBzYWZlLgo+IAo+ICAgIC1CZW4KPiAKPiAgICA+Cj4gICAgPiBDaGFuZ2UtSWQ6IEllNmIw
+NzYzNjNiMzczNWRjN2RlMTAxODRiMjdmYTc5OWI0OTlhZjBlCj4gICAgPiBTaWduZWQtb2ZmLWJ5
+OiB0YW5nLmp1bmh1aSA8dGFuZy5qdW5odWlAenRlLmNvbS5jbj4KPiAgICA+IC0tLQo+ICAgID4g
+wqBsaWJtdWx0aXBhdGgvdWV2ZW50LmMgfCAyICsrCj4gICAgPiDCoGxpYm11bHRpcGF0aC91ZXZl
+bnQuaCB8IDEgKwo+ICAgID4gwqAyIGZpbGVzIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKQo+ICAg
+ID4KPiAgICA+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvdWV2ZW50LmMgYi9saWJtdWx0aXBh
+dGgvdWV2ZW50LmMKPiAgICA+IGluZGV4IDdlZGNjZTEuLmVmMWJhZmUgMTAwNjQ0Cj4gICAgPiAt
+LS0gYS9saWJtdWx0aXBhdGgvdWV2ZW50LmMKPiAgICA+ICsrKyBiL2xpYm11bHRpcGF0aC91ZXZl
+bnQuYwo+ICAgID4gQEAgLTQyNCw2ICs0MjQsOCBAQCBzdHJ1Y3QgdWV2ZW50ICp1ZXZlbnRfZnJv
+bV91ZGV2X2RldmljZShzdHJ1Y3QKPiAgICB1ZGV2X2RldmljZSAqZGV2KQo+ICAgID4gwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgdWV2LT5kZXZwYXRoID0KPiAgICB1ZXYtPmVudnBbaV0gKyA4Owo+ICAg
+ID4gwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBp
+ZiAoc3RyY21wKG5hbWUsICJBQ1RJT04iKSA9PSAwKQo+ICAgID4gwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgdWV2LT5hY3Rpb24gPQo+ICAgIHVldi0+ZW52cFtpXSArIDc7Cj4gICAgPiArIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgaWYgKHN0cmNtcChuYW1l
+LCAiSURfU0VSSUFMIikgPT0gMCkKPiAgICA+ICsgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgdWV2LT53d2lk
+ID0KPiAgICB1ZXYtPmVudnBbaV0gKyAxMDsKPiAgICA+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgaSsrOwo+ICAgID4gwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBpZiAoaSA9PSBIT1RQTFVHX05V
+TV9FTlZQIC0gMSkKPiAgICA+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGJyZWFrOwo+ICAgID4gZGlm
+ZiAtLWdpdCBhL2xpYm11bHRpcGF0aC91ZXZlbnQuaCBiL2xpYm11bHRpcGF0aC91ZXZlbnQuaAo+
+ICAgID4gaW5kZXggOWQyMmRjZC4uN2JmY2NlZiAxMDA2NDQKPiAgICA+IC0tLSBhL2xpYm11bHRp
+cGF0aC91ZXZlbnQuaAo+ICAgID4gKysrIGIvbGlibXVsdGlwYXRoL3VldmVudC5oCj4gICAgPiBA
+QCAtMjIsNiArMjIsNyBAQCBzdHJ1Y3QgdWV2ZW50IHsKPiAgICA+IMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIGNoYXIgKmRldnBhdGg7Cj4gICAgPiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oCBjaGFyICphY3Rpb247Cj4gICAgPiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBjaGFyICpr
+ZXJuZWw7Cj4gICAgPiArIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGNoYXIgKnd3aWQ7Cj4gICAg
+PiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCB1bnNpZ25lZCBsb25nIHNlcW51bTsKPiAgICA+
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGNoYXIgKmVudnBbSE9UUExVR19OVU1fRU5WUF07
+Cj4gICAgPiDCoH07Cj4gICAgPiAtLQo+ICAgID4gMi44LjEud2luZG93cy4xCj4gICAgPgoKLS0K
+ZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVk
+aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
