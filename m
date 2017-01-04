@@ -1,16 +1,15 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 09/12] multipathd: merge uevents before
-	proccessing
-Date: Tue, 3 Jan 2017 18:30:49 -0600
-Message-ID: <20170104003049.GF2732@octiron.msp.redhat.com>
+Subject: Re: [PATCH 11/12] multipathd: proccess merged uevents
+Date: Tue, 3 Jan 2017 19:03:22 -0600
+Message-ID: <20170104010322.GG2732@octiron.msp.redhat.com>
 References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
-	<1482825809-9528-10-git-send-email-tang.junhui@zte.com.cn>
+	<1482825809-9528-12-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1482825809-9528-10-git-send-email-tang.junhui@zte.com.cn>
+In-Reply-To: <1482825809-9528-12-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,195 +23,66 @@ To: tang.junhui@zte.com.cn
 Cc: tang.wenjun3@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com, mwilck@suse.com
 List-Id: dm-devel.ids
 
-On Tue, Dec 27, 2016 at 04:03:26PM +0800, tang.junhui@zte.com.cn wrote:
-> From: tang.junhui <tang.junhui@zte.com.cn>
-> 
-> These uevents are going to be merged:
-> 1) uevents come from paths and
-> 2) uevents type is same and
-> 3) uevents type is addition or deletion and
-> 4) uevents wwid is same.
-
-This is just a nit, and I might be missing something subtle here, but it
-seems like instead of adding list_for_some_entry_reverse, and then
-breaking the abstraction to manually get previous entries, you could
-have just added list_for_some_entry_reverse_safe in your earlier patch,
-and hid the work of traversing a list while removing elements behind the
-well understood abstraction of a *_safe list traversal method.
-
--Ben
-
-> 
-> Change-Id: I05ee057391c092aa0c5f989b7a4f9cb550bb4d98
-> Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
-> ---
->  libmultipath/uevent.c | 125 +++++++++++++++++++++++++++++++++++++++++++++-----
->  1 file changed, 114 insertions(+), 11 deletions(-)
-> 
-> diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-> index b0b05e9..114068c 100644
-> --- a/libmultipath/uevent.c
-> +++ b/libmultipath/uevent.c
-> @@ -85,6 +85,20 @@ struct uevent * alloc_uevent (void)
->  	return uev;
->  }
->  
-> +void
-> +uevq_cleanup(struct list_head *tmpq)
-> +{
-> +	struct uevent *uev, *tmp;
-> +
-> +	list_for_each_entry_safe(uev, tmp, tmpq, node) {
-> +		list_del_init(&uev->node);
-> +
-> +		if (uev->udev)
-> +			udev_device_unref(uev->udev);
-> +		FREE(uev);
-> +	}
-> +}
-> +
->  bool
->  uevent_can_discard(char *devpath, char *kernel)
->  {
-> @@ -125,6 +139,103 @@ uevent_can_discard(char *devpath, char *kernel)
->  	return false;
->  }
->  
-> +bool
-> +merge_need_stop(struct uevent *earlier, struct uevent *later)
-> +{
-> +	/*
-> +	 * dm uevent do not try to merge with left uevents
-> +	 */
-> +	if (!strncmp(later->kernel, "dm-", 3))
-> +		return true;
-> +
-> +	/*
-> +	 * we can not make a jugement without wwid,
-> +	 * so it is sensible to stop merging
-> +	 */
-> +	if (!earlier->wwid || !later->wwid)
-> +		return true;
-> +	/*
-> +	 * uevents merging stoped
-> +	 * when we meet an opposite action uevent from the same LUN to AVOID
-> +	 * "add path1 |remove path1 |add path2 |remove path2 |add path3"
-> +	 * to merge as "remove path1, path2" and "add path1, path2, path3"
-> +	 * OR
-> +	 * "remove path1 |add path1 |remove path2 |add path2 |remove path3"
-> +	 * to merge as "add path1, path2" and "remove path1, path2, path3"
-> +	 * SO
-> +	 * when we meet a non-change uevent from the same LUN
-> +	 * with the same wwid and different action
-> +	 * it would be better to stop merging.
-> +	 */
-> +	if (!strcmp(earlier->wwid, later->wwid) &&
-> +	    strcmp(earlier->action, later->action) &&
-> +	    strcmp(earlier->action, "change") &&
-> +	    strcmp(later->action, "change"))
-> +		return true;
-> +
-> +	return false;
-> +}
-> +
-> +bool
-> +uevent_can_merge(struct uevent *earlier, struct uevent *later)
-> +{
-> +	/* merge paths uevents
-> +	 * whose wwids exsit and are same
-> +	 * and actions are same,
-> +	 * and actions are addition or deletion
-> +	 */
-> +	if (earlier->wwid && later->wwid &&
-> +	    !strcmp(earlier->wwid, later->wwid) &&
-> +	    !strcmp(earlier->action, later->action) &&
-> +	    strncmp(earlier->action, "change", 6) &&
-> +	    strncmp(earlier->kernel, "dm-", 3)) {
-> +		return true;
-> +	}
-> +
-> +	return false;
-> +}
-> +
-> +void
-> +uevent_merge(struct uevent *later, struct list_head *tmpq)
-> +{
-> +	struct uevent *earlier, *temp;
-> +	/*
-> +	 * compare the uevent with earlier uevents
-> +	 */
-> +	list_for_some_entry_reverse(earlier, &later->node, tmpq, node) {
-> +next_earlier_node:
-> +		if (merge_need_stop(earlier, later))
-> +			break;
-> +		/*
-> +		 * try to merge earlier uevents to the later uevent
-> +		 */
-> +		if (uevent_can_merge(earlier, later)) {
-> +			condlog(3, "merged uevent: %s-%s-%s with uevent: %s-%s-%s",
-> +				earlier->action, earlier->kernel, earlier->wwid,
-> +				later->action, later->kernel, later->wwid);
-> +			temp = earlier;
-> +
-> +			earlier = list_entry(earlier->node.prev, typeof(struct uevent), node);
-> +			list_move(&temp->node, &later->merge_node);
-> +
-> +			if (earlier ==  list_entry(tmpq, typeof(struct uevent), node))
-> +				break;
-> +			else
-> +				goto next_earlier_node;
-> +		}
-> +	}
-> +}
-> +
-> +void
-> +merge_uevq(struct list_head *tmpq)
-> +{
-> +	struct uevent *later;
-> +
-> +	list_for_each_entry_reverse(later, tmpq, node) {
-> +		uevent_merge(later, tmpq);
-> +	}
-> +}
-> +
->  void
->  service_uevq(struct list_head *tmpq)
->  {
-> @@ -136,6 +247,8 @@ service_uevq(struct list_head *tmpq)
->  		if (my_uev_trigger && my_uev_trigger(uev, my_trigger_data))
->  			condlog(0, "uevent trigger error");
->  
-> +		uevq_cleanup(&uev->merge_node);
-> +
->  		if (uev->udev)
->  			udev_device_unref(uev->udev);
->  		FREE(uev);
-> @@ -150,17 +263,6 @@ static void uevent_cleanup(void *arg)
->  	udev_unref(udev);
->  }
->  
-> -void
-> -uevq_cleanup(struct list_head *tmpq)
-> -{
-> -	struct uevent *uev, *tmp;
-> -
-> -	list_for_each_entry_safe(uev, tmp, tmpq, node) {
-> -		list_del_init(&uev->node);
-> -		FREE(uev);
-> -	}
-> -}
-> -
->  /*
->   * Service the uevent queue.
->   */
-> @@ -189,6 +291,7 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent *, void * trigger_data),
->  		pthread_mutex_unlock(uevq_lockp);
->  		if (!my_uev_trigger)
->  			break;
-> +		merge_uevq(&uevq_tmp);
->  		service_uevq(&uevq_tmp);
->  	}
->  	condlog(3, "Terminating uev service queue");
-> -- 
-> 2.8.1.windows.1
-> 
+T24gVHVlLCBEZWMgMjcsIDIwMTYgYXQgMDQ6MDM6MjhQTSArMDgwMCwgdGFuZy5qdW5odWlAenRl
+LmNvbS5jbiB3cm90ZToKPiBGcm9tOiAidGFuZy5qdW5odWkiIDx0YW5nLmp1bmh1aUB6dGUuY29t
+LmNuPgo+IAo+IEFmdGVyIGZpbHRlcmluZyBhbmQgbWVyZ2luZywgdGhlbiB1ZXZlbnRzIGFyZSBw
+cm9jZXNzZWQgaW4KPiB1ZXZfdHJpZ2dlcigpLCBmaXJzdGx5LCBlYWNoIG9mIG1lcmdlZCB1ZXZl
+bnRzIHdvdWxkIGJlIHByb2Nlc3NlZCBvbmUKPiBieSBvbmUgd2l0aCBuZWVkX2RvX21hcCBpbiB2
+YWx1ZSBvZiAwLiBGaW5hbGx5LCB0aGUgbm9kZSDigJx1ZXbigJ0gaXRzZWxmCj4gd291bGQgYmUg
+cHJvY2Vzc2VkIHdpdGggbmVlZF9kb19tYXAgaW4gdmFsdWUgb2YgMSwgd2hpY2ggd291bGQgcmVs
+b2FkCj4ga2VybmVsIHRhYmxlLCBhbmQgY3JlYXRlIG9yIHJlbW92ZSB0aGUgZG0gZGV2aWNlLgoK
+V2FpdCwgZG9lc24ndCB0aGlzIG1lYW4gdGhhdCB5b3Ugd291bGQgY2hhbmdlCgoiYWRkIHBhdGgx
+IHwgY2hhbmdlIHBhdGgxIHwgYWRkIHBhdGgyIgoKdG8KCiJjaGFuZ2UgcGF0aDEgfCBhZGQgcGF0
+aDEsIHBhdGgyIgoKSXQgZG9lc24ndCBtYWtlIHNlbnNlIHRvIHByb2Nlc3MgYSBjaGFuZ2UgZXZl
+bnQgYmVmb3JlIGFuIGFkZCBldmVudC4KTG9va2luZyBhdCB1ZXZfdXBkYXRlX3BhdGgsIHRoZSB0
+aHJlZSB0aGluZ3MgaXQgY3VycmVudGx5IGRvZXMgYWxsIGNhbgpiZSBzYWZlbHkgaWdub3JlZCBp
+ZiB5b3UgZG9uJ3QgcHJvY2VzcyB0aGUgYWRkIGV2ZW50IHVudGlsIGFmdGVyIHlvdQpyZWNlaXZl
+IHRoZSBjaGFuZ2UgZXZlbnQuIFRoZXkgYXJlOgoKZGlzYWJsZSBwYXRoIG9uIGNoYW5nZWQgd3dp
+ZDogdGhlIG11bHRpcGF0aCBkZXZpY2UgaGFzbid0IGJlZW4gY3JlYXRlZAp5ZXQsIHNvIGl0IHdp
+bGwgc2ltcGx5IGJlIGNyZWF0ZWQgd2l0aCB0aGUgbmV3IHd3aWQuIFRoYXQncyBmaW5lLgoKYXR0
+ZW1wdCB0byBnZXQgdGhlIHBhdGhpbmZvIGFnYWluIGlmIHlvdSBmYWlsZWQgd2hlbiBhZGRpbmcg
+aXQ6IEVpdGhlcgp5b3UgZG9uJ3QgaGF2ZSB0aGUgbmVjZXNzYXJ5IHVkZXYgaW5mb3JtYXRpb24g
+aW4gdGhlIGFkZCBldmVudCwgaW4gd2hpY2gKY2FzZSB0aGF0IHVldmVudCB3b24ndCBnZXQgbWVy
+Z2VkIGluIHRoZSBmaXJzdCBwbGFjZSBhbmQgdGhleSB3aWxsCnJlbWFpbiBpbiBvcmRlciwgb3Ig
+eW91IGRvIGhhdmUgdGhlIGluZm9ybWF0aW9uLCBhbmQgdGhlcmUncyBubyBwb2ludCBpbgpwcm9j
+ZXNzaW5nIHRoZSBjaGFuZ2UgZXZlbnQgaW4gdGhhdCBjYXNlLgoKY2hhbmdlIHRoZSBSZWFkLU9u
+bHkgc3RhdGUgb2YgdGhlIGRldmljZTogc2luY2UgYm90aCBldmVudHMgKHRoZSBjaGFuZ2UKYW5k
+IHRoZSBhZGQgZXZlbnQpIGhhdmUgYWxyZWFkeSBoYXBwZW5lZCwgd2hlbiB5b3UgbG9vayBhdCB0
+aGUgZGV2aWNlCmZvciB0aGUgYWRkIGV2ZW50LCB5b3Ugd2lsbCBhbHJlYWR5IGdldCB0aGUgY3Vy
+cmVudCByZWFkLW9ubHkgc3RhdGUuCgpTbywgYXMgZmFyIGFzIEkgY2FuIHRlbGwsIGlmIHlvdSBo
+YXZlIGNoYW5nZSBldmVudHMgaW4geW91ciBxdWV1ZSBhcwp3ZWxsIGFzIGFuIGFkZCBldmVudCBm
+b3IgdGhlIHNhbWUgZGV2aWNlLCB5b3UgbWlnaHQgYXMgd2VsbCBqdXN0IGZpbHRlcgpvdXQgdGhl
+IGNoYW5nZSBldmVudHMsIHNpbmNlIHByb2Nlc3NpbmcgaXQgaW1tZWRpYXRlbHkgYWZ0ZXIgdGhl
+IGFkZApldmVudCB3aWxsIG5ldmVyIGFjdHVhbGx5IGNoYW5nZSBhbnl0aGluZywgYW5kIHByb2Nl
+c3NpbmcgaXQgYmVmb3JlaGFuZAptYWtlcyBubyBzZW5zZS4KCi1CZW4KCj4gCj4gQ2hhbmdlLUlk
+OiBJZmI0ZGUwY2EzNjE4MGE4YWYxNjcyOWMyZjcwYmMyNTA4NTg4NzdiZAo+IFNpZ25lZC1vZmYt
+Ynk6IHRhbmcuanVuaHVpIDx0YW5nLmp1bmh1aUB6dGUuY29tLmNuPgo+IC0tLQo+ICBtdWx0aXBh
+dGhkL21haW4uYyB8IDI4ICsrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0KPiAgMSBmaWxlIGNo
+YW5nZWQsIDE1IGluc2VydGlvbnMoKyksIDEzIGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1naXQg
+YS9tdWx0aXBhdGhkL21haW4uYyBiL211bHRpcGF0aGQvbWFpbi5jCj4gaW5kZXggMTVhNjE3NS4u
+MGIxOGY2YyAxMDA2NDQKPiAtLS0gYS9tdWx0aXBhdGhkL21haW4uYwo+ICsrKyBiL211bHRpcGF0
+aGQvbWFpbi5jCj4gQEAgLTEwOTIsNiArMTA5Miw3IEBAIHVldl90cmlnZ2VyIChzdHJ1Y3QgdWV2
+ZW50ICogdWV2LCB2b2lkICogdHJpZ2dlcl9kYXRhKQo+ICB7Cj4gIAlpbnQgciA9IDA7Cj4gIAlz
+dHJ1Y3QgdmVjdG9ycyAqIHZlY3M7Cj4gKwlzdHJ1Y3QgdWV2ZW50ICptZXJnZV91ZXYsICp0bXA7
+Cj4gIAo+ICAJdmVjcyA9IChzdHJ1Y3QgdmVjdG9ycyAqKXRyaWdnZXJfZGF0YTsKPiAgCj4gQEAg
+LTExMjMsMjAgKzExMjQsMjEgQEAgdWV2X3RyaWdnZXIgKHN0cnVjdCB1ZXZlbnQgKiB1ZXYsIHZv
+aWQgKiB0cmlnZ2VyX2RhdGEpCj4gIAl9Cj4gIAo+ICAJLyoKPiAtCSAqIHBhdGggYWRkL3JlbW92
+ZSBldmVudAo+ICsJICogcGF0aCBhZGQvcmVtb3ZlL2NoYW5nZSBldmVudCwgYWRkL3JlbW92ZSBt
+YXliZSBtZXJnZWQKPiAgCSAqLwo+IC0JaWYgKCFzdHJuY21wKHVldi0+YWN0aW9uLCAiYWRkIiwg
+MykpIHsKPiAtCQlyID0gdWV2X2FkZF9wYXRoKHVldiwgdmVjcywgMSk7Cj4gLQkJZ290byBvdXQ7
+Cj4gLQl9Cj4gLQlpZiAoIXN0cm5jbXAodWV2LT5hY3Rpb24sICJyZW1vdmUiLCA2KSkgewo+IC0J
+CXIgPSB1ZXZfcmVtb3ZlX3BhdGgodWV2LCB2ZWNzLCAxKTsKPiAtCQlnb3RvIG91dDsKPiAtCX0K
+PiAtCWlmICghc3RybmNtcCh1ZXYtPmFjdGlvbiwgImNoYW5nZSIsIDYpKSB7Cj4gLQkJciA9IHVl
+dl91cGRhdGVfcGF0aCh1ZXYsIHZlY3MpOwo+IC0JCWdvdG8gb3V0Owo+IC0JfQo+ICsJbGlzdF9m
+b3JfZWFjaF9lbnRyeV9zYWZlKG1lcmdlX3VldiwgdG1wLCAmdWV2LT5tZXJnZV9ub2RlLCBub2Rl
+KSB7Cj4gKwkJaWYgKCFzdHJuY21wKG1lcmdlX3Vldi0+YWN0aW9uLCAiYWRkIiwgMykpCj4gKwkJ
+CXIgKz0gdWV2X2FkZF9wYXRoKG1lcmdlX3VldiwgdmVjcywgMCk7Cj4gKwkJaWYgKCFzdHJuY21w
+KG1lcmdlX3Vldi0+YWN0aW9uLCAicmVtb3ZlIiwgNikpCj4gKwkJCXIgKz0gdWV2X3JlbW92ZV9w
+YXRoKG1lcmdlX3VldiwgdmVjcywgMCk7Cj4gKwl9Cj4gKwo+ICsJaWYgKCFzdHJuY21wKHVldi0+
+YWN0aW9uLCAiYWRkIiwgMykpCj4gKwkJciArPSB1ZXZfYWRkX3BhdGgodWV2LCB2ZWNzLCAxKTsK
+PiArCWlmICghc3RybmNtcCh1ZXYtPmFjdGlvbiwgInJlbW92ZSIsIDYpKQo+ICsJCXIgKz0gdWV2
+X3JlbW92ZV9wYXRoKHVldiwgdmVjcywgMSk7Cj4gKwlpZiAoIXN0cm5jbXAodWV2LT5hY3Rpb24s
+ICJjaGFuZ2UiLCA2KSkKPiArCQlyICs9IHVldl91cGRhdGVfcGF0aCh1ZXYsIHZlY3MpOwo+ICAK
+PiAgb3V0Ogo+ICAJcmV0dXJuIHI7Cj4gLS0gCj4gMi44LjEud2luZG93cy4xCj4gCgotLQpkbS1k
+ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
+Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
