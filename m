@@ -1,21 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2 1/1] block: fix blk_queue_split() resource
-	exhaustion
-Date: Wed, 4 Jan 2017 13:50:46 -0500
-Message-ID: <20170104185046.GA982@redhat.com>
-References: <1467990243-3531-1-git-send-email-lars.ellenberg@linbit.com>
-	<1467990243-3531-2-git-send-email-lars.ellenberg@linbit.com>
-	<20160711141042.GY13335@soda.linbit>
-	<76d9bf14-d848-4405-8358-3771c0a93d39@profitbricks.com>
-	<20161223114553.GP4138@soda.linbit>
-	<CA+res+SjL6FrYWMroB-xjBO5gyz9pca6FQCy-arr7+4RQHeJGw@mail.gmail.com>
-	<878tqrmmqx.fsf@notabene.neil.brown.name>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: [RFC PATCH 0/4] Data integrity protection with
+	dm-integrity and dm-crypt
+Date: Wed,  4 Jan 2017 20:23:50 +0100
+Message-ID: <cover.1483551181.git.gmazyland@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <878tqrmmqx.fsf@notabene.neil.brown.name>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,148 +16,150 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: NeilBrown <neilb@suse.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, Ming Lei <ming.lei@canonical.com>, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, Jack Wang <jack.wang.usish@gmail.com>, Alasdair Kergon <agk@redhat.com>, Roland Kammerer <roland.kammerer@linbit.com>, Michael Wang <yun.wang@profitbricks.com>, Takashi Iwai <tiwai@suse.de>, Ingo Molnar <mingo@redhat.com>, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, linux-block@vger.kernel.org, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, linux-raid <linux-raid@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Jiri Kosina <jkosina@suse.cz>, linux-kernel@vger.kernel.org, Lars
+To: dm-devel@redhat.com
+Cc: Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, Jan 04 2017 at 12:12am -0500,
-NeilBrown <neilb@suse.com> wrote:
+Hello,
 
-> On Tue, Jan 03 2017, Jack Wang wrote:
-> 
-> > 2016-12-23 12:45 GMT+01:00 Lars Ellenberg <lars.ellenberg@linbit.com>:
-> >> On Fri, Dec 23, 2016 at 09:49:53AM +0100, Michael Wang wrote:
-> >>> Dear Maintainers
-> >>>
-> >>> I'd like to ask for the status of this patch since we hit the
-> >>> issue too during our testing on md raid1.
-> >>>
-> >>> Split remainder bio_A was queued ahead, following by bio_B for
-> >>> lower device, at this moment raid start freezing, the loop take
-> >>> out bio_A firstly and deliver it, which will hung since raid is
-> >>> freezing, while the freezing never end since it waiting for
-> >>> bio_B to finish, and bio_B is still on the queue, waiting for
-> >>> bio_A to finish...
-> >>>
-> >>> We're looking for a good solution and we found this patch
-> >>> already progressed a lot, but we can't find it on linux-next,
-> >>> so we'd like to ask are we still planning to have this fix
-> >>> in upstream?
-> >>
-> >> I don't see why not, I'd even like to have it in older kernels,
-> >> but did not have the time and energy to push it.
-> >>
-> >> Thanks for the bump.
-> >>
-> >>         Lars
-> >>
-> > Hi folks,
-> >
-> > As Michael mentioned, we hit a bug this patch is trying to fix.
-> > Neil suggested another way to fix it.  I attached below.
-> > I personal prefer Neil's version as it's less code change, and straight forward.
-> >
-> > Could you share your comments, we can get one fix into mainline.
-> >
-> > Thanks,
-> > Jinpu
-> > From 69a4829a55503e496ce9c730d2c8e3dd8a08874a Mon Sep 17 00:00:00 2001
-> > From: NeilBrown <neilb@suse.com>
-> > Date: Wed, 14 Dec 2016 16:55:52 +0100
-> > Subject: [PATCH] block: fix deadlock between freeze_array() and wait_barrier()
-> >
-> > When we call wait_barrier, we might have some bios waiting
-> > in current->bio_list, which prevents the array_freeze call to
-> > complete. Those can only be internal READs, which have already
-> > passed the wait_barrier call (thus incrementing nr_pending), but
-> > still were not submitted to the lower level, due to generic_make_request
-> > logic to avoid recursive calls. In such case, we have a deadlock:
-> > - array_frozen is already set to 1, so wait_barrier unconditionally waits, so
-> > - internal READ bios will not be submitted, thus freeze_array will
-> > never completes.
-> >
-> > To fix this, modify generic_make_request to always sort bio_list_on_stack
-> > first with lowest level, then higher, until same level.
-> >
-> > Sent to linux-raid mail list:
-> > https://marc.info/?l=linux-raid&m=148232453107685&w=2
-> >
-> 
-> This should probably also have
-> 
->   Inspired-by: Lars Ellenberg <lars.ellenberg@linbit.com>
-> 
-> or something that, as I was building on Lars' ideas when I wrote this.
-> 
-> It would also be worth noting in the description that this addresses
-> issues with dm and drbd as well as md.
+following patches are the first iteration of our work on providing
+data integrity protection on the block device level.
 
-I never saw this patch but certainly like the relative simplicity of the
-solution when compared with other approaches taken, e.g. (5 topmost
-commits on this branch):
-http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=wip
+This covering mail is very simple introduction to motivation of this work,
+more rigorous description will come in the form of some paper later.
 
-> In fact, I think that with this patch in place, much of the need for the
-> rescue_workqueue won't exist any more.  I cannot promise it can be
-> removed completely, but it should be to hard to make it optional and
-> only enabled for those few block devices that will still need it.
-> The rescuer should only be needed for a bioset which can be allocated
-> From twice in the one call the ->make_request_fn.  This would include
-> raid0 for example, though raid0_make_reqest could be re-written to not
-> use a loop and to just call generic_make_request(bio) if bio != split.
+Our main goal is to provide an option to implement strong data integrity
+protection on the low block device level, without need of any specialized
+hardware - just as an extension of device-mapper infrastructure.
 
-Mikulas, would you be willing to try the below patch with the
-dm-snapshot deadlock scenario and report back on whether it fixes that?
+The solution is meant to be used over a standard common-off-the-shelf device.
+N.B. we are not replacing nor disputing a need to implement some data integrity
+protection on the higher level. But the state of integrity protection
+on higher level is in sad state in Linux in general and we believe that
+this target can provide at least something to the rescue :)
 
-Patch below looks to be the same as here:
-https://marc.info/?l=linux-raid&m=148232453107685&q=p3
+My special focus (and my academic motivation) is to provide cryptographically
+strong data protection in combination with full disk encryption algorithms.
 
-Neil and/or others if that isn't the patch that should be tested please
-provide a pointer to the latest.
+In principle, so-called authenticated encryption provides guaranties that data
+were not tampered with, so only authorised user can decrypt, change or verify data
+integrity.
+N.B. Current full disk encryption algorithms provide only confidentiality,
+they does NOT provide any data integrity protection (because of its
+length-preserving nature).
+Corrupted data cannot be easily detected (except detection that decrypted
+data seems to be garbage).
+
+I. dm-integrity - a "simulated" data integrity profile
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Any integrity protection requires additional data to store data protection tags.
+Because we are operating on the sector level, we need an additional
+per-sector metadata for any integrity (or other) tags.
+
+Attached patches include new dm-integrity target that provides basic logic
+to store additional metadata per-sector.
+
+On top of it we can provide data integrity protection, either inside
+dm-integrity itself or in stacked device like dm-crypt.
+
+The basic idea of dm-integrity is to "simulate" DIF/IP profile over
+a normal block device and store a per-sector metadata in interleaved metadata
+sectors. It using existing implementation of integrity profile metadata
+already present in kernel, just registering own configurable profile.
+
+To provide atomic update of data + metadata sectors, dm-integrity implements
+also optional data journal.
+
+The dm-integrity target can operate in two modes:
+    * it can use metadata itself and calculate non-cryptographic data integrity
+      (for example CRC or hash-based checksum)
+
+    * it can receive bio structure with attached integrity fields and
+      just provide handler for these metadata (read/store them to metadata sectors).
+      It is up to higher target how the metadata are used.
+
+The second mode is used for the dm-crypt authenticated encryption extension.
+
+II. dm-crypt and authenticated encryption
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The second part adds possibility to use Authenticated Encryption with Additional
+Data (AEAD) algorithms for dm-crypt.
+
+These algorithms can encrypt data and also produce additional authentication
+tag that provides cryptographically sound integrity protection.
+There can be also additional data (that are only authenticated but not encrypted),
+in disk encryption is it for example sector number (so the sector fails
+integrity validation if ciphertext sector is relocated).
+
+This authentication tag is then stored into metadata space provided
+by underlying dm-integrity target. On top of this we can also store
+another metadata like randomly generated, Initialization Vector (IV).
+(This could increase security of disk-encryption model. Basically if IV
+can be randomly regenerated on every write, ciphertext sector will change
+pseudo-randomly on every write, even with the same written data.
+This is the best possible achievable security scenario for disk-encryption.)
+
+In principle we can use any authenticated mode provided by kernel crypto API
+(but not all authenticated mode are secure in this environment, this applies
+mainly for standard GCM mode).
+
+We can also compose AEAD mode using existing disk encryption mode (XTS) and
+combine it with keyed hash (HMAC) like HMAC(SHA256).
+
+For illustration, the dm-crypt authenticated encryption uses following format:
+
+ |-ADDITIONAL DATA-|------ DATA -------|-- AUTH TAG --| 
+ | (authenticated) | (auth+encryption) |              |
+ | sector_LE |  IV |  sector in/out    |  tag in/out  |
+
+Sector_LE is sector number in little-endian, IV is authenticated as well.
+
+The logic is in principle compatible with IEEE 1619.1 standard recommendation.
+
+~~~~~~~~~~~~~~~~~~~
+
+For more information please see individual patches.
+
+The price for this solution is obviously storage space and performance.
+Our solution can be quite easily extended of other information stored in metadata,
+for example of Forward Error Correction (FEC) codes.
+(I plan to experiment with this later).
+
+I will try to provide some testing examples soon (we have already experimental
+support in LUKS userspace based on experimental LUKS2 format).
+
+(I hope I can show more on DevConf.cz talk later this January in Brno,
+I hope we can discuss it there as well.)
+
+Any constructive feedback welcome!
 
 Thanks,
-Mike
+Milan (and Mikulas)
 
-> > Suggested-by: NeilBrown <neilb@suse.com>
-> > Signed-off-by: Jack Wang <jinpu.wang@profitbricks.com>
-> > ---
-> >  block/blk-core.c | 20 ++++++++++++++++++++
-> >  1 file changed, 20 insertions(+)
-> >
-> > diff --git a/block/blk-core.c b/block/blk-core.c
-> > index 9e3ac56..47ef373 100644
-> > --- a/block/blk-core.c
-> > +++ b/block/blk-core.c
-> > @@ -2138,10 +2138,30 @@ blk_qc_t generic_make_request(struct bio *bio)
-> >  		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
-> >  
-> >  		if (likely(blk_queue_enter(q, __GFP_DIRECT_RECLAIM) == 0)) {
-> > +			struct bio_list lower, same, hold;
-> > +
-> > +			/* Create a fresh bio_list for all subordinate requests */
-> > +			bio_list_init(&hold);
-> > +			bio_list_merge(&hold, &bio_list_on_stack);
-> > +			bio_list_init(&bio_list_on_stack);
-> >  
-> >  			ret = q->make_request_fn(q, bio);
-> >  
-> >  			blk_queue_exit(q);
-> > +			/* sort new bios into those for a lower level
-> > +			 * and those for the same level
-> > +			 */
-> > +			bio_list_init(&lower);
-> > +			bio_list_init(&same);
-> > +			while ((bio = bio_list_pop(&bio_list_on_stack)) != NULL)
-> > +				if (q == bdev_get_queue(bio->bi_bdev))
-> > +					bio_list_add(&same, bio);
-> > +				else
-> > +					bio_list_add(&lower, bio);
-> > +			/* now assemble so we handle the lowest level first */
-> > +			bio_list_merge(&bio_list_on_stack, &lower);
-> > +			bio_list_merge(&bio_list_on_stack, &same);
-> > +			bio_list_merge(&bio_list_on_stack, &hold);
-> >  
-> >  			bio = bio_list_pop(current->bio_list);
-> >  		} else {
-> > -- 
-> > 2.7.4
+Mikulas Patocka (2):
+  Add sector start offset to dm-bufio interface.
+  Add the dm-integrity target
+
+Milan Broz (2):
+  dm-table: Add flag to allow own target handling of integrity metadata.
+  Add cryptographic data integrity protection (authenticated encryption)
+    to dm-crypt.
+
+ Documentation/device-mapper/dm-crypt.txt     |   16 +
+ Documentation/device-mapper/dm-integrity.txt |  189 ++
+ drivers/md/Kconfig                           |   10 +
+ drivers/md/Makefile                          |    1 +
+ drivers/md/dm-bufio.c                        |   51 +-
+ drivers/md/dm-bufio.h                        |    7 +
+ drivers/md/dm-crypt.c                        |  857 ++++++--
+ drivers/md/dm-integrity.c                    | 3031 ++++++++++++++++++++++++++
+ drivers/md/dm-table.c                        |   11 +
+ include/linux/device-mapper.h                |    6 +
+ 10 files changed, 4029 insertions(+), 150 deletions(-)
+ create mode 100644 Documentation/device-mapper/dm-integrity.txt
+ create mode 100644 drivers/md/dm-integrity.c
+
+-- 
+2.11.0
