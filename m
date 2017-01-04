@@ -1,18 +1,21 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 01/12] libmultipath: add wwid for "struct
- uevent" to record wwid of uevent
-Date: Wed, 4 Jan 2017 12:14:52 -0600
-Message-ID: <20170104181452.GJ2732@octiron.msp.redhat.com>
-References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
-	<1482825809-9528-2-git-send-email-tang.junhui@zte.com.cn>
-	<20170103220254.GD2732@octiron.msp.redhat.com>
-	<OF623EC6A9.F5A76A08-ON4825809E.00140EC1-4825809E.00262117@zte.com.cn>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2 1/1] block: fix blk_queue_split() resource
+	exhaustion
+Date: Wed, 4 Jan 2017 13:50:46 -0500
+Message-ID: <20170104185046.GA982@redhat.com>
+References: <1467990243-3531-1-git-send-email-lars.ellenberg@linbit.com>
+	<1467990243-3531-2-git-send-email-lars.ellenberg@linbit.com>
+	<20160711141042.GY13335@soda.linbit>
+	<76d9bf14-d848-4405-8358-3771c0a93d39@profitbricks.com>
+	<20161223114553.GP4138@soda.linbit>
+	<CA+res+SjL6FrYWMroB-xjBO5gyz9pca6FQCy-arr7+4RQHeJGw@mail.gmail.com>
+	<878tqrmmqx.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <OF623EC6A9.F5A76A08-ON4825809E.00140EC1-4825809E.00262117@zte.com.cn>
+In-Reply-To: <878tqrmmqx.fsf@notabene.neil.brown.name>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,122 +25,148 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: tang.junhui@zte.com.cn
-Cc: tang.wenjun3@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com, mwilck@suse.com
+To: NeilBrown <neilb@suse.com>, Mikulas Patocka <mpatocka@redhat.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, Ming Lei <ming.lei@canonical.com>, Zheng Liu <gnehzuil.liu@gmail.com>, Keith Busch <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, Jack Wang <jack.wang.usish@gmail.com>, Alasdair Kergon <agk@redhat.com>, Roland Kammerer <roland.kammerer@linbit.com>, Michael Wang <yun.wang@profitbricks.com>, Takashi Iwai <tiwai@suse.de>, Ingo Molnar <mingo@redhat.com>, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, linux-block@vger.kernel.org, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, linux-raid <linux-raid@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Jiri Kosina <jkosina@suse.cz>, linux-kernel@vger.kernel.org, Lars
 List-Id: dm-devel.ids
 
-T24gV2VkLCBKYW4gMDQsIDIwMTcgYXQgMDI6NTY6NDZQTSArMDgwMCwgdGFuZy5qdW5odWlAenRl
-LmNvbS5jbiB3cm90ZToKPiAgICBIZWxsbyBCZW4sCj4gCj4gICAgPiBSaWdodCBub3csIG11bHRp
-cGF0aCB1c2VycyBhcmUgYWxsb3dlZCBjb25maWd1cmUgZGV2aWNlcyB0byBzZXQgdGhlIHd3aWQK
-PiAgICA+IGJhc2VkIG9uIGFueSB1ZGV2IGVudmlyb25tZW50IHZhcmlhYmxlIChvciBldmVuIHVz
-ZSBhIGNhbGxvdXQsIGFsdGhvdWdoCj4gICAgPiB0aGlzIGlzIGRlcHJlY2F0ZWQpLiBXaXRoIHRo
-aXMgcGF0Y2gsIHRoYXQgYnJlYWtzLgo+ICAgIERvZXMgV1dJRCBvYnRhaW5lZCBieSBkaWZmZXJl
-bnQgbWV0aG9kcyBjaGFuZ2U/IElmIGl0IGNoYW5nZXMsIHdlIHdvdWxkCj4gICAgYmV0dGVyIHRv
-IG1vZGlmeSBjb2RlIHRvIGtlZXAgaXQgbm8gY2hhbmdlLgoKWWVzLiB1c2VycyBjYW4gcGljayBh
-bnkgdWRldiBlbnZpcm9ubWVudCB2YXJpYWJsZSAoYW5kIGN1cnJlbnRseSwgYW55CmNhbGxvdXQg
-cHJvZ3JhbSB0aGF0IHRoZXkgd3JpdGUpIHRvIHVzZSBhcyB0aGUgd3dpZC4KCj4gICAgPiBJZiB0
-aGUgdWRldiBzZXRzCj4gICAgPiBJRF9TRVJJQUwgZm9yIGEgZGV2aWNlLCB0aGF0IGlzIGl0cyB3
-d2lkLCByaWdodD8KPiAgICBZZXMKPiAKPiAgICA+IERvIHlvdSBrbm93IGlmIHJiZAo+ICAgID4g
-ZGV2aWNlcyBoYXZlIElEX1NFUklBTCBzZXQ/Cj4gICAgV1dJRCBoYXMgZGlmZmVyZW50IGxhYmVs
-IGluIHVldmVudHMgZm9yIGRpZmZlcmVudCBkZXZpY2VzLCBJIG9ubHkgdGVzdCBmb3IKPiAgICBT
-Q1NJIGRldmljZXMuCgpXaGVyZSBpcyB0aGF0IGNoZWNrPyBJIG9ubHkgc2VlIGEgY2hlY2sgZm9y
-IHdoZXRoZXIgSURfU0VSSUFMIGV4aXN0cy4gSWYKaXQgZXhpc3RzIG9uIHRoaW5ncyB0aGF0IGFy
-ZSBub3Qgc2NzaSBkZXZpY2VzLCB5b3Ugd2lsbCBzZXQgdGhlIHd3aWQgZm9yCnRoZXNlIGRldmlj
-ZXMgd2l0aCBpdCBhcyB3ZWxsLCBldmVuIGlmIGl0IGRvZXNuJ3Qgd29yayBmb3IgdGhlbS4KCj4g
-ICAgTm93IHdlIGRvIG5vdCBzdXBwb3J0IHJiZCBkaXZpY2UgZm9yIHVldmVudHMgbWVyZ2luZywg
-dGhlc2UKPiAgICBkZXZpY2UgcHJvY2VzcyBhcyBvbGQgd2F5LCBpdCBoYXMgbm8gaGFybSBpbiBs
-b2dpYy4gSWYgd2UgbmVlZCB0byBtZXJnZQo+ICAgIHJiZCB1ZXZlbnRzIGZvciB0aGVzZSBkZXZp
-Y2VzLCB3ZSBjYW4gYWRkIGNvZGUgdG8gZ2V0IHd3aWQgZnJvbSB1ZXZlbnRzCj4gICAgYW5kIGl0
-IGNhbiBiZSBzdXBwb3J0ZWQgZWFzaWx5LgoKTG9vayBhdCBnZXRfcmJkX3VpZCgpLCBhbmQgaG93
-IGl0J3MgY2FsbGVkLiByYmQgZGV2aWNlcyBkb24ndCBldmVuIHVzZQp0aGUgZ2V0dWlkIGNhbGxv
-dXQgb3IgdWlkX2F0dHJpYnV0ZS4gVGhleSB1c2Ugc3BlY2lhbCBjb2RlIGNhbGxlZCBieQpnZXRf
-dWlkLgoKTm93IHlvdSBjb3VsZCBhZGQgZXhwbGljaXQgY2hlY2tzIHNvIHdlIG9ubHkgY2hlY2sg
-SURfU0VSSUFMIGZvciBzY3NpCmRldmljZXMsIElEX1VJRCBmb3IgZGFzZCBkZXZpY2VzLCBhbmQg
-bmV2ZXIgc2V0IHRoZSB3d2lkIG90aGVyd2lzZS4gIFlvdQpjb3VsZCBldmVuIG1ha2UgdGhlIGF0
-dHJpYnV0ZSB3ZSBjaGVjayBjb25maWd1cmFibGUgYnkgZGV2aWNlIHR5cGUgd2l0aAphbiBvcHRp
-b24gbGlrZQoKdWlkX2F0dHJzICJzZDpJRF9TRVJJQUwgZGFzZDpJRF9VSUQiCgppbiB0aGUgZGVm
-YXVsdHMgc2VjdGlvbiwgdGhhdCB3b3VsZCBzZXQgdXAgbWFwcGluZ3MgYmV0d2VlbiBkZXZpY2Ug
-dHlwZXMKYW5kIHVldmVudCBhdHRyaWJ1dGVzIHRvIGNoZWNrIGZvciB0aGUgdWlkLiBCdXQgdGhp
-cyB3b3VsZCBiZSBvbiBwZXIKZGV2aWNlIHR5cGVzLCBub3QgcGVyIHN0b3JhZ2UgYXJyYXksIGxp
-a2UgaXQgY3VycmVudGx5IGlzLiB1aWRfYXR0cmlidXRlCmFuZCBnZXR1aWQgYXR0cmlidXRlIHdv
-dWxkIG9ubHkgZXZlciBiZSB1c2VkIGZvciBkZXZpY2UgdHlwZXMgdGhhdAp3ZXJlbid0IGluIHRo
-ZSB1aWRfYXR0cnMgbGlzdC4KClRoZSBvdGhlciBvcHRpb24gd291bGQgYmUgdG8gbm90IGFjdHVh
-bGx5IG1lcmdlIHRoZSB1ZXZlbnRzLCBidXQgc2ltcGx5CnJ1biB0aHJvdWdoIHRoZSBmaWx0ZXJl
-ZCBidXQgdW5tZXJnZWQgbGlzdCBvZiB1ZXZlbnRzLCBhbmQgc2tpcCB0aGUKZG9tYXAgc3R1ZmYg
-YnV0IHJlbWVtYmVyIHRoZSBtYXBzIHRoYXQgbmVlZCBwdXNoaW5nIHRvIGRldmljZS1tYXBwZXIu
-Ck9uY2UgeW91IGFyZSBkb25lIHByb2Nlc3NpbmcgYWxsIHRoZSB1ZXZlbnRzLCBleGNlcHQgZm9y
-IHVwZGF0aW5nIHRoZQptYXBzIGluIGRldmljZS1tYXBwZXIsIHlvdSBnbyBiYWNrIGFuZCB1cGRh
-dGUgYWxsIHRoZSBtYXBzIHRoYXQgbmVlZAp1cGRhdGluZy4gVGhlcmUncyBtb3JlIGNvZGUgcmVm
-YWN0b3JpbmcgaW4gdGhpcyBhcHByb2FjaCwgYnV0IGl0IGtlZXBzCnRoZSB1aWQgYmVpbmcgc2V0
-IGluIHBhdGhpbmZvLCB3aGVyZSB5b3UgaGF2ZSBhbGwgdGhlIGluZm9ybWF0aW9uCm5lY2Vzc2Fy
-eSB0byBzZXQgaXQgdXNpbmcgdWlkX2F0dHJpYnV0ZSwgZ2V0dWlkLCBvciBzcGVjaWFsaXplZCBj
-b2RlCmxpa2UgcmJkIHVzZXMuCgpBcyBsb25nIGFzIHdlIG1ha2Ugc3VyZSB0aGF0IHdlIGFyZSBv
-bmx5IGNoZWNraW5nIHNwZWNpZmljIHVldmVudAphdHRyaWJ1dGVzIGZvciBzcGVjaWZpYyBkZXZp
-Y2UgdHlwZXMsIEknbSBvLmsuIHdpdGggeW91ciB3YXksIGJ1dCB3ZSBhcmUKbG9zaW5nIGZsZXhp
-YmlsaXR5IHRoYXQgbXVsdGlwYXRoIGhhcyBhbHdheXMgaGFkIGluIHJlZ2FyZHMgdG8gc2V0dGlu
-Zwp0aGUgd3dpZC4gSSB3YW50IHRvIHBvaW50IHRoYXQgb3V0IHNvIHRoYXQgYW55b25lIHdobyBu
-ZWVkcyB0aGlzIGtub3dzCnRoYXQgaXQgaXMgY2hhbmdpbmcuCgotQmVuIAoKPiAgICBSZWdhcmRz
-Cj4gICAgVGFuZyBKdW5odWkKPiAKPiAgICDvv73vv73vv73vv73vv73vv706IMKgIMKgIMKgIMKg
-ICJCZW5qYW1pbiBNYXJ6aW5za2kiIDxibWFyemluc0ByZWRoYXQuY29tPgo+ICAgIO+/vdW877+9
-77+977+9OiDCoCDCoCDCoCDCoCB0YW5nLmp1bmh1aUB6dGUuY29tLmNuLAo+ICAgIO+/ve+/ve+/
-ve+/vTogwqAgwqAgwqAgwqBjaHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20sIGhhcmVAc3Vz
-ZS5kZSwKPiAgICBtd2lsY2tAc3VzZS5jb20sIGJhcnQudmFuYXNzY2hlQHNhbmRpc2suY29tLCBk
-bS1kZXZlbEByZWRoYXQuY29tLAo+ICAgIHpoYW5nLmthaTE2QHp0ZS5jb20uY24sIHRhbmcud2Vu
-anVuM0B6dGUuY29tLmNuCj4gICAg77+977+977+977+9OiDCoCDCoCDCoCDCoCAyMDE3LzAxLzA0
-IDA2OjAzCj4gICAg77+977+977+977+9OiDCoCDCoCDCoCDCoFJlOiBbUEFUQ0ggMDEvMTJdIGxp
-Ym11bHRpcGF0aDogYWRkIHd3aWQgZm9yICJzdHJ1Y3QgdWV2ZW50Igo+ICAgIHRvIHJlY29yZCB3
-d2lkIG9mIHVldmVudAo+IAo+ICAgIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4gCj4gICAgT24gVHVlLCBE
-ZWMgMjcsIDIwMTYgYXQgMDQ6MDM6MThQTSArMDgwMCwgdGFuZy5qdW5odWlAenRlLmNvbS5jbiB3
-cm90ZToKPiAgICA+IEZyb206IHRhbmcuanVuaHVpIDx0YW5nLmp1bmh1aUB6dGUuY29tLmNuPgo+
-ICAgID4KPiAgICA+IEFkZCAiY2hhciAqd3dpZCIgdG8gcG9pbnQgV1dJRCBvZiB1ZXZlbnQuIFRo
-aXMgbWVtYmVyIGlkZW50aWZpZXMKPiAgICA+IHRoZSBMVU4gSUQgd2hpY2ggdGhlIHBhdGggYmVs
-b25ncyB0bywgYW5kIGl0IGlzIHVzZWQgZm9yIG1lcmdpbmcKPiAgICA+IHVldmVudHMuIFdXSUQg
-cG9zc2libHkgZGlkIG5vdCBleGlzdCBpbiB1ZXZlbnQgeWV0LCBzbyAtPnd3aWQKPiAgICA+IHdv
-dWxkIGJlIE5VTEwsIHRob3NlIHVldmVudHMgd291bGQgbm90IGJlIG1lcmdlZCwgYnV0IGJlIHBy
-b2NjZXNzZWQKPiAgICA+IGFzIG9sZCB3YXkuCj4gCj4gICAgUmlnaHQgbm93LCBtdWx0aXBhdGgg
-dXNlcnMgYXJlIGFsbG93ZWQgY29uZmlndXJlIGRldmljZXMgdG8gc2V0IHRoZSB3d2lkCj4gICAg
-YmFzZWQgb24gYW55IHVkZXYgZW52aXJvbm1lbnQgdmFyaWFibGUgKG9yIGV2ZW4gdXNlIGEgY2Fs
-bG91dCwgYWx0aG91Z2gKPiAgICB0aGlzIGlzIGRlcHJlY2F0ZWQpLiBXaXRoIHRoaXMgcGF0Y2gs
-IHRoYXQgYnJlYWtzLiBJZiB0aGUgdWRldiBzZXRzCj4gICAgSURfU0VSSUFMIGZvciBhIGRldmlj
-ZSwgdGhhdCBpcyBpdHMgd3dpZCwgcmlnaHQ/IMKgRG8geW91IGtub3cgaWYgcmJkCj4gICAgZGV2
-aWNlcyBoYXZlIElEX1NFUklBTCBzZXQ/IElmIHNvLCB0aGlzIGNoYW5nZSB3aWxsIGJyZWFrIHRo
-ZW0uIMKgRXZlbiBpZgo+ICAgIHRoaXMgY2hhbmdlIGRvZXNuJ3QgYnJlYWsgYW55IGRldmljZXMg
-aW4gdGhlaXIgZGVmYXVsdCBjb25maWd1cmF0aW9ucywKPiAgICB3ZSB3b3VsZCBuZWVkIHRvIGRp
-c2FsbG93IGNoYW5naW5nIGhvdyB0aGUgd3dpZCBpcyBzZXQgZm9yIHRoaXMgcGF0Y2gKPiAgICB0
-byBiZSBzYWZlLgo+IAo+ICAgIC1CZW4KPiAKPiAgICA+Cj4gICAgPiBDaGFuZ2UtSWQ6IEllNmIw
-NzYzNjNiMzczNWRjN2RlMTAxODRiMjdmYTc5OWI0OTlhZjBlCj4gICAgPiBTaWduZWQtb2ZmLWJ5
-OiB0YW5nLmp1bmh1aSA8dGFuZy5qdW5odWlAenRlLmNvbS5jbj4KPiAgICA+IC0tLQo+ICAgID4g
-wqBsaWJtdWx0aXBhdGgvdWV2ZW50LmMgfCAyICsrCj4gICAgPiDCoGxpYm11bHRpcGF0aC91ZXZl
-bnQuaCB8IDEgKwo+ICAgID4gwqAyIGZpbGVzIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKQo+ICAg
-ID4KPiAgICA+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvdWV2ZW50LmMgYi9saWJtdWx0aXBh
-dGgvdWV2ZW50LmMKPiAgICA+IGluZGV4IDdlZGNjZTEuLmVmMWJhZmUgMTAwNjQ0Cj4gICAgPiAt
-LS0gYS9saWJtdWx0aXBhdGgvdWV2ZW50LmMKPiAgICA+ICsrKyBiL2xpYm11bHRpcGF0aC91ZXZl
-bnQuYwo+ICAgID4gQEAgLTQyNCw2ICs0MjQsOCBAQCBzdHJ1Y3QgdWV2ZW50ICp1ZXZlbnRfZnJv
-bV91ZGV2X2RldmljZShzdHJ1Y3QKPiAgICB1ZGV2X2RldmljZSAqZGV2KQo+ICAgID4gwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgdWV2LT5kZXZwYXRoID0KPiAgICB1ZXYtPmVudnBbaV0gKyA4Owo+ICAg
-ID4gwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBp
-ZiAoc3RyY21wKG5hbWUsICJBQ1RJT04iKSA9PSAwKQo+ICAgID4gwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgdWV2LT5hY3Rpb24gPQo+ICAgIHVldi0+ZW52cFtpXSArIDc7Cj4gICAgPiArIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgaWYgKHN0cmNtcChuYW1l
-LCAiSURfU0VSSUFMIikgPT0gMCkKPiAgICA+ICsgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgdWV2LT53d2lk
-ID0KPiAgICB1ZXYtPmVudnBbaV0gKyAxMDsKPiAgICA+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgaSsrOwo+ICAgID4gwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBpZiAoaSA9PSBIT1RQTFVHX05V
-TV9FTlZQIC0gMSkKPiAgICA+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGJyZWFrOwo+ICAgID4gZGlm
-ZiAtLWdpdCBhL2xpYm11bHRpcGF0aC91ZXZlbnQuaCBiL2xpYm11bHRpcGF0aC91ZXZlbnQuaAo+
-ICAgID4gaW5kZXggOWQyMmRjZC4uN2JmY2NlZiAxMDA2NDQKPiAgICA+IC0tLSBhL2xpYm11bHRp
-cGF0aC91ZXZlbnQuaAo+ICAgID4gKysrIGIvbGlibXVsdGlwYXRoL3VldmVudC5oCj4gICAgPiBA
-QCAtMjIsNiArMjIsNyBAQCBzdHJ1Y3QgdWV2ZW50IHsKPiAgICA+IMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIGNoYXIgKmRldnBhdGg7Cj4gICAgPiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCBjaGFyICphY3Rpb247Cj4gICAgPiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBjaGFyICpr
-ZXJuZWw7Cj4gICAgPiArIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGNoYXIgKnd3aWQ7Cj4gICAg
-PiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCB1bnNpZ25lZCBsb25nIHNlcW51bTsKPiAgICA+
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGNoYXIgKmVudnBbSE9UUExVR19OVU1fRU5WUF07
-Cj4gICAgPiDCoH07Cj4gICAgPiAtLQo+ICAgID4gMi44LjEud2luZG93cy4xCj4gICAgPgoKLS0K
-ZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVk
-aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Wed, Jan 04 2017 at 12:12am -0500,
+NeilBrown <neilb@suse.com> wrote:
+
+> On Tue, Jan 03 2017, Jack Wang wrote:
+> 
+> > 2016-12-23 12:45 GMT+01:00 Lars Ellenberg <lars.ellenberg@linbit.com>:
+> >> On Fri, Dec 23, 2016 at 09:49:53AM +0100, Michael Wang wrote:
+> >>> Dear Maintainers
+> >>>
+> >>> I'd like to ask for the status of this patch since we hit the
+> >>> issue too during our testing on md raid1.
+> >>>
+> >>> Split remainder bio_A was queued ahead, following by bio_B for
+> >>> lower device, at this moment raid start freezing, the loop take
+> >>> out bio_A firstly and deliver it, which will hung since raid is
+> >>> freezing, while the freezing never end since it waiting for
+> >>> bio_B to finish, and bio_B is still on the queue, waiting for
+> >>> bio_A to finish...
+> >>>
+> >>> We're looking for a good solution and we found this patch
+> >>> already progressed a lot, but we can't find it on linux-next,
+> >>> so we'd like to ask are we still planning to have this fix
+> >>> in upstream?
+> >>
+> >> I don't see why not, I'd even like to have it in older kernels,
+> >> but did not have the time and energy to push it.
+> >>
+> >> Thanks for the bump.
+> >>
+> >>         Lars
+> >>
+> > Hi folks,
+> >
+> > As Michael mentioned, we hit a bug this patch is trying to fix.
+> > Neil suggested another way to fix it.  I attached below.
+> > I personal prefer Neil's version as it's less code change, and straight forward.
+> >
+> > Could you share your comments, we can get one fix into mainline.
+> >
+> > Thanks,
+> > Jinpu
+> > From 69a4829a55503e496ce9c730d2c8e3dd8a08874a Mon Sep 17 00:00:00 2001
+> > From: NeilBrown <neilb@suse.com>
+> > Date: Wed, 14 Dec 2016 16:55:52 +0100
+> > Subject: [PATCH] block: fix deadlock between freeze_array() and wait_barrier()
+> >
+> > When we call wait_barrier, we might have some bios waiting
+> > in current->bio_list, which prevents the array_freeze call to
+> > complete. Those can only be internal READs, which have already
+> > passed the wait_barrier call (thus incrementing nr_pending), but
+> > still were not submitted to the lower level, due to generic_make_request
+> > logic to avoid recursive calls. In such case, we have a deadlock:
+> > - array_frozen is already set to 1, so wait_barrier unconditionally waits, so
+> > - internal READ bios will not be submitted, thus freeze_array will
+> > never completes.
+> >
+> > To fix this, modify generic_make_request to always sort bio_list_on_stack
+> > first with lowest level, then higher, until same level.
+> >
+> > Sent to linux-raid mail list:
+> > https://marc.info/?l=linux-raid&m=148232453107685&w=2
+> >
+> 
+> This should probably also have
+> 
+>   Inspired-by: Lars Ellenberg <lars.ellenberg@linbit.com>
+> 
+> or something that, as I was building on Lars' ideas when I wrote this.
+> 
+> It would also be worth noting in the description that this addresses
+> issues with dm and drbd as well as md.
+
+I never saw this patch but certainly like the relative simplicity of the
+solution when compared with other approaches taken, e.g. (5 topmost
+commits on this branch):
+http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=wip
+
+> In fact, I think that with this patch in place, much of the need for the
+> rescue_workqueue won't exist any more.  I cannot promise it can be
+> removed completely, but it should be to hard to make it optional and
+> only enabled for those few block devices that will still need it.
+> The rescuer should only be needed for a bioset which can be allocated
+> From twice in the one call the ->make_request_fn.  This would include
+> raid0 for example, though raid0_make_reqest could be re-written to not
+> use a loop and to just call generic_make_request(bio) if bio != split.
+
+Mikulas, would you be willing to try the below patch with the
+dm-snapshot deadlock scenario and report back on whether it fixes that?
+
+Patch below looks to be the same as here:
+https://marc.info/?l=linux-raid&m=148232453107685&q=p3
+
+Neil and/or others if that isn't the patch that should be tested please
+provide a pointer to the latest.
+
+Thanks,
+Mike
+
+> > Suggested-by: NeilBrown <neilb@suse.com>
+> > Signed-off-by: Jack Wang <jinpu.wang@profitbricks.com>
+> > ---
+> >  block/blk-core.c | 20 ++++++++++++++++++++
+> >  1 file changed, 20 insertions(+)
+> >
+> > diff --git a/block/blk-core.c b/block/blk-core.c
+> > index 9e3ac56..47ef373 100644
+> > --- a/block/blk-core.c
+> > +++ b/block/blk-core.c
+> > @@ -2138,10 +2138,30 @@ blk_qc_t generic_make_request(struct bio *bio)
+> >  		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
+> >  
+> >  		if (likely(blk_queue_enter(q, __GFP_DIRECT_RECLAIM) == 0)) {
+> > +			struct bio_list lower, same, hold;
+> > +
+> > +			/* Create a fresh bio_list for all subordinate requests */
+> > +			bio_list_init(&hold);
+> > +			bio_list_merge(&hold, &bio_list_on_stack);
+> > +			bio_list_init(&bio_list_on_stack);
+> >  
+> >  			ret = q->make_request_fn(q, bio);
+> >  
+> >  			blk_queue_exit(q);
+> > +			/* sort new bios into those for a lower level
+> > +			 * and those for the same level
+> > +			 */
+> > +			bio_list_init(&lower);
+> > +			bio_list_init(&same);
+> > +			while ((bio = bio_list_pop(&bio_list_on_stack)) != NULL)
+> > +				if (q == bdev_get_queue(bio->bi_bdev))
+> > +					bio_list_add(&same, bio);
+> > +				else
+> > +					bio_list_add(&lower, bio);
+> > +			/* now assemble so we handle the lowest level first */
+> > +			bio_list_merge(&bio_list_on_stack, &lower);
+> > +			bio_list_merge(&bio_list_on_stack, &same);
+> > +			bio_list_merge(&bio_list_on_stack, &hold);
+> >  
+> >  			bio = bio_list_pop(current->bio_list);
+> >  		} else {
+> > -- 
+> > 2.7.4
