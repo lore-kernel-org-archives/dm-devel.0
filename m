@@ -1,48 +1,47 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 01/12] libmultipath: add wwid for "struct
- uevent" to record wwid of uevent
-Date: Wed, 04 Jan 2017 21:33:26 +0100
-Message-ID: <1483562006.23429.1.camel@suse.com>
-References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
-	<1482825809-9528-2-git-send-email-tang.junhui@zte.com.cn>
-	<20170103220254.GD2732@octiron.msp.redhat.com>
-	<OF623EC6A9.F5A76A08-ON4825809E.00140EC1-4825809E.00262117@zte.com.cn>
-	<20170104181452.GJ2732@octiron.msp.redhat.com>
+From: Eric Sandeen <sandeen@sandeen.net>
+Subject: Re: trouble with generic/081
+Date: Wed, 4 Jan 2017 17:03:46 -0600
+Message-ID: <5806882c-4807-cb2a-80dd-147de5bf176a@sandeen.net>
+References: <20161214164314.GA25105@infradead.org>
+ <20161215063650.GJ4326@dastard> <20161215084224.GA14395@infradead.org>
+ <c05b64b6-80d3-655d-db9b-6f49038e53ee@redhat.com>
+ <20161216081523.GA13847@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170104181452.GJ2732@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, tang.junhui@zte.com.cn
-Cc: tang.wenjun3@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <fstests-owner@vger.kernel.org>
+In-Reply-To: <20161216081523.GA13847@infradead.org>
+Sender: fstests-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: Dave Chinner <david@fromorbit.com>, eguan@redhat.com, fstests@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE3LTAxLTA0IGF0IDEyOjE0IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gCj4gVGhlIG90aGVyIG9wdGlvbiB3b3VsZCBiZSB0byBub3QgYWN0dWFsbHkgbWVyZ2Ug
-dGhlIHVldmVudHMsIGJ1dAo+IHNpbXBseQo+IHJ1biB0aHJvdWdoIHRoZSBmaWx0ZXJlZCBidXQg
-dW5tZXJnZWQgbGlzdCBvZiB1ZXZlbnRzLCBhbmQgc2tpcCB0aGUKPiBkb21hcCBzdHVmZiBidXQg
-cmVtZW1iZXIgdGhlIG1hcHMgdGhhdCBuZWVkIHB1c2hpbmcgdG8gZGV2aWNlLW1hcHBlci4KPiBP
-bmNlIHlvdSBhcmUgZG9uZSBwcm9jZXNzaW5nIGFsbCB0aGUgdWV2ZW50cywgZXhjZXB0IGZvciB1
-cGRhdGluZyB0aGUKPiBtYXBzIGluIGRldmljZS1tYXBwZXIsIHlvdSBnbyBiYWNrIGFuZCB1cGRh
-dGUgYWxsIHRoZSBtYXBzIHRoYXQgbmVlZAo+IHVwZGF0aW5nLiBUaGVyZSdzIG1vcmUgY29kZSBy
-ZWZhY3RvcmluZyBpbiB0aGlzIGFwcHJvYWNoLCBidXQgaXQKPiBrZWVwcwo+IHRoZSB1aWQgYmVp
-bmcgc2V0IGluIHBhdGhpbmZvLCB3aGVyZSB5b3UgaGF2ZSBhbGwgdGhlIGluZm9ybWF0aW9uCj4g
-bmVjZXNzYXJ5IHRvIHNldCBpdCB1c2luZyB1aWRfYXR0cmlidXRlLCBnZXR1aWQsIG9yIHNwZWNp
-YWxpemVkIGNvZGUKPiBsaWtlIHJiZCB1c2VzLgoKVGhhdCBzb3VuZHMgYSBsb3QgbGlrZSBjb25m
-aWd1cmUoKS9jb2FsZXNjZV9wYXRocygpIHRvIG1lLiBXb3VsZCBpdApwZXJoYXBzIG1ha2Ugc2Vu
-c2UsIGluc3RlYWQgb2YgcmVmYWN0b3JpbmcvcmV3cml0aW5nIGEgd2hvbGUgbG90IG9mCmNvZGUs
-IHRvIHJlLXVzZSB0aGF0IG1hdHVyZSBjb2RlIHBhdGg/CgpDaGVlcnMsCk1hcnRpbgoKLS0gCkRy
-LiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC7CoCs0OSAoMCk5MTEgNzQwNTMg
-MjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhh
-cmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBt
-YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
-aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+
+
+On 12/16/16 2:15 AM, Christoph Hellwig wrote:
+> On Thu, Dec 15, 2016 at 10:16:23AM +0100, Zdenek Kabelac wrote:
+>> So let me explain the logic behind this 'amazingly stupid' idea.
+> 
+> And that logic doesn't make any sense at all.  invibly unmounting
+> a file system behind the users back is actively harmful, as it is
+> contradicting the principle of least surprise, and the xfstests mess
+> is one simple example for it.  Add a callback in-kernel to tell the
+> fs to shut down but NOT unmount and expose the namespace below it,
+> which the administrator has probably intentionally hid.
+> 
+> Even worse unmount may trigger further writes and with fses not
+> handling them the fs might now be stuck after being detached from
+> the namespace without a way for the admin to detect or recover this.
+> 
+> What XFS did on IRIX was to let the volume manager call into the fs
+> and shut it down.  At this point no further writes are possible,
+> but we do not expose the namespace under the mount point, and the
+> admin can fix the situation with all the normal tools.
+
+<late to the party>
+
+Is there a need for this kind of call-up when xfs now has the configurable
+error handling so that it will shut down after X retries or Y seconds 
+of a persistent error?
+
+-Eric
