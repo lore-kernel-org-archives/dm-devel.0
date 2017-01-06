@@ -1,65 +1,47 @@
-From: Ming Lei <tom.leiming@gmail.com>
-Subject: Re: [PATCH v1 12/54] dm: limit the max bio size as BIO_MAX_PAGES * PAGE_SIZE
-Date: Fri, 6 Jan 2017 11:30:26 +0800
-Message-ID: <CACVXFVNLx7PRXDcKDTf4bW6oDdo7YrUp3ES7JJ-NJ5TmN2FQfw@mail.gmail.com>
-References: <1482854250-13481-1-git-send-email-tom.leiming@gmail.com>
- <1482854250-13481-13-git-send-email-tom.leiming@gmail.com> <20170103164312.GA20421@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [LSF/MM TOPIC ATTEND] device-mapper compression
+	target
+Date: Fri, 6 Jan 2017 10:57:09 +0100
+Message-ID: <2d34201f-2b18-16f8-6b10-9da7f2eb350c@suse.de>
+References: <20170105191614.GP2732@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170103164312.GA20421@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <axboe@fb.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, linux-block <linux-block@vger.kernel.org>, "maintainer:DEVICE-MAPPER LVM, Shaohua Li <shli@kernel.org>,
-        linux-raid@vger.kernel.org open list:SOFTWARE RAID Multiple DisksSUPPORT" <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170105191614.GP2732@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, lsf-pc@lists.linux-foundation.org
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jan 4, 2017 at 12:43 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> On Tue, Dec 27 2016 at 10:56am -0500,
-> Ming Lei <tom.leiming@gmail.com> wrote:
->
->> For BIO based DM, some targets aren't ready for dealing with
->> bigger incoming bio than 1Mbyte, such as crypt target.
->>
->> Signed-off-by: Ming Lei <tom.leiming@gmail.com>
->> ---
->>  drivers/md/dm.c | 11 ++++++++++-
->>  1 file changed, 10 insertions(+), 1 deletion(-)
->>
->> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
->> index 3086da5664f3..6139bf7623f7 100644
->> --- a/drivers/md/dm.c
->> +++ b/drivers/md/dm.c
->> @@ -899,7 +899,16 @@ int dm_set_target_max_io_len(struct dm_target *ti, sector_t len)
->>               return -EINVAL;
->>       }
->>
->> -     ti->max_io_len = (uint32_t) len;
->> +     /*
->> +      * BIO based queue uses its own splitting. When multipage bvecs
->> +      * is switched on, size of the incoming bio may be too big to
->> +      * be handled in some targets, such as crypt.
->> +      *
->> +      * When these targets are ready for the big bio, we can remove
->> +      * the limit.
->> +      */
->> +     ti->max_io_len = min_t(uint32_t, len,
->> +                            (BIO_MAX_PAGES * PAGE_SIZE));
->>
->>       return 0;
->>  }
->> --
->> 2.7.4
->
-> dm_set_target_max_io_len() is already meant to be called by the .ctr
-> hook for each DM target.  So why not just have the dm-crypt target (and
-> other targets if needed) pass your reduced $len?
->
-> That way only targets that need to be fixed (e.g. dm-crypt) impose this
-> limit.
+On 01/05/2017 08:16 PM, Benjamin Marzinski wrote:
+> I've been working on a proof-of-concept device-mapper compression  =
 
-Looks better way, and I will do it in V2.
+> target. I'd like to discuss block-layer compression and IO hints.  I'd
+> also be interested in attending any discussions on multipathing.
+> =
 
+I have been thinking about a similar thing, namely using compression for
+iSCSI. So having a device-mapper target here would make for a good testbed.
+But having it in the block-layer would be really cool, and would have
+applications in other areas (eg swap from zram?).
 
-Thanks,
-Ming Lei
+So yeah, I'm in for it.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
