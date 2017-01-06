@@ -1,339 +1,411 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 01/12] libmultipath: add wwid for "struct
- uevent" to record wwid of uevent
-Date: Fri, 6 Jan 2017 10:02:09 -0600
-Message-ID: <20170106160209.GQ2732@octiron.msp.redhat.com>
-References: <1482825809-9528-1-git-send-email-tang.junhui@zte.com.cn>
-	<1482825809-9528-2-git-send-email-tang.junhui@zte.com.cn>
-	<20170103220254.GD2732@octiron.msp.redhat.com>
-	<OF623EC6A9.F5A76A08-ON4825809E.00140EC1-4825809E.00262117@zte.com.cn>
-	<20170104181452.GJ2732@octiron.msp.redhat.com>
-	<OF729E5BF0.FB582F2B-ON4825809F.000DCD4E-4825809F.00116F22@zte.com.cn>
-	<20170105173647.GO2732@octiron.msp.redhat.com>
-	<OFF13E5263.E1B1DC74-ON482580A0.0003EADA-482580A0.00056A55@zte.com.cn>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH v2 1/1] block: fix blk_queue_split() resource
+ exhaustion
+Date: Fri, 6 Jan 2017 11:50:45 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1701061139160.13944@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1467990243-3531-1-git-send-email-lars.ellenberg@linbit.com> <1467990243-3531-2-git-send-email-lars.ellenberg@linbit.com> <20160711141042.GY13335@soda.linbit> <76d9bf14-d848-4405-8358-3771c0a93d39@profitbricks.com> <20161223114553.GP4138@soda.linbit>
+ <CA+res+SjL6FrYWMroB-xjBO5gyz9pca6FQCy-arr7+4RQHeJGw@mail.gmail.com> <878tqrmmqx.fsf@notabene.neil.brown.name> <20170104185046.GA982@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <OFF13E5263.E1B1DC74-ON482580A0.0003EADA-482580A0.00056A55@zte.com.cn>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: tang.junhui@zte.com.cn
-Cc: tang.wenjun3@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel-bounces@redhat.com, dm-devel@redhat.com, bart.vanassche@sandisk.com, mwilck@suse.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170104185046.GA982@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: NeilBrown <neilb@suse.com>, Jack Wang <jack.wang.usish@gmail.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>, linux-raid <linux-raid@vger.kernel.org>, Michael Wang <yun.wang@profitbricks.com>, Peter Zijlstra <peterz@infradead.org>, Jiri Kosina <jkosina@suse.cz>, Ming Lei <ming.lei@canonical.com>, linux-kernel@vger.kernel.org, Zheng Liu <gnehzuil.liu@gmail.com>, linux-block@vger.kernel.org, Takashi Iwai <tiwai@suse.de>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, Ingo Molnar <mingo@redhat.com>, Alasdair Kergon <agk@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Keith Busch <keith.busch@intel.com>, device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, Kent
 List-Id: dm-devel.ids
 
-T24gRnJpLCBKYW4gMDYsIDIwMTcgYXQgMDg6NTk6MjdBTSArMDgwMCwgdGFuZy5qdW5odWlAenRl
-LmNvbS5jbiB3cm90ZToKPiAgICBIZWxsbyBCZW4sCj4gCj4gICAgPiDCoCDCoD4gwqAgwqBUaGUg
-cHJlbWlzZSBpcyB0aGF0LCBkZXZpY2VzIHdob3NlICJtZXJnZV9pZCIgaXMgdGhlIHNhbWUgaGF2
-ZQo+ICAgIHRoZQo+ICAgID4gwqAgwqA+IMKgIMKgc2FtZSAid3dpZCIuIEkgdGhpbmsgdGhpcyBw
-cmVtaXNlIGNhbiBiZSBlc3RhYmxpc2hlZC4KPiAKPiAgICA+IMKgIMKgU28sIGlmIHlvdSBoYXZl
-IGRldmljZSB3aGVyZSB0aGUgbWVyZ2VfaWQgZG9lc24ndCBlcXVhbCB0aGUgd3dpZCwgeW91Cj4g
-ICAgPiDCoCDCoGNhbGwgZG9tYXAgb24gdGhhdCBkZXZpY2UsIGFzIGl0IGl0IHdhc24ndCBwYXJ0
-IG9mIGEgbWVyZ2VkIHNldD8KPiAKPiAgICBNYXliZSBJIGRpZCBub3Qgc2F5IGNsZWFybHkuICJt
-ZXJnZV9pZCIgaXMgb25seSB1c2VkIGZvciB1ZXZlbnRzIG1lcmdpbmcsCj4gICAgYW5kCj4gICAg
-aXQgaGFzIG5vdGhpbmcgdG8gZG8gd2l0aCAid3dpZCIuIEkgb25seSBwcmltc2UgZGV2aWNlcyB3
-aG9zZSAibWVyZ2VfaWQiCj4gICAgYXJlCj4gICAgc2FtZSBoYXZlIHNhbWUgInd3aWQiIChTb3Jy
-eSwgbWF5YmUgSSBoYWQgYSBtaXNsZWFkaW5nIHN0YXRlbWVudCBpbgo+ICAgIHByZXZpb3VzIGVt
-YWlsKS4KPiAgICAibWVyZ2VfaWQiIGFuZCAid3dpZCIgY2FuIGJlIHNhbWUgb3Igbm90IHNhbWUu
-IFRoZSBtZXJnZWQgdWV2ZW50cyBhcmUKPiAgICBzdGlsbAo+ICAgIHByb2Nlc3NlZCBhcyBiZWxs
-b3cgcGF0Y2ggSSBzZW5kIHByZXZpb3VzOgo+ICAgIFtkbS1kZXZlbF0gW1BBVENIIDExLzEyXSBt
-dWx0aXBhdGhkOiBwcm9jY2VzcyBtZXJnZWQgdWV2ZW50cwoKTGV0IG1lIGJhY2sgdXAuIFNheSB5
-b3UgaGF2ZSBhIGJhdGNoIG9mIG1lcmdlZCB1ZXZlbnRzCgoiYWRkIHBhdGgxLCBwYXRoMiwgcGF0
-aDMiCgp3aGVyZSBwYXRoMSBhbmQgcGF0aDIgYXJlIG9uIHBhdGgzJ3MgbWVyZ2Vfbm9kZSBsaXN0
-LiBUaGlzIG1lYW5zIHRoYXQKd2hlbiB5b3UgY2FsbCB1ZXZfYWRkX3BhdGgoKSBmb3IgcGF0aDEg
-YW5kIHBhdGgyLCB5b3Ugd2lsbCBjYWxsIGl0IHdpdGgKbmVlZF9kb19tYXAgc2V0IHRvIDAsIGFu
-ZCBubyBtdWx0aXBhdGggZGV2aWNlIHdpbGwgYmUgY3JlYXRlZC4gVGhlCm11bHRpcGF0aCBkZXZp
-Y2Ugd2lsbCBiZSBjcmVhdGVkIHdoZW4geW91IGNhbGwgdWV2X2FkZF9wYXRoKCkgZm9yIHBhdGgz
-LAp3aXRoIG5lZWRfbm9fbWFwIHNldCB0byAxLiBOb3cgbGV0cyBzYXkgdGhhdCB3aGVuIHlvdSBj
-YWxsIHBhdGhpbmZvIG9uCnBhdGgyLCB5b3UgZ2V0IGEgZGlmZmVyZW50IHd3aWQgdGhhbiB5b3Vy
-IG1lcmdlX2lkLiAgcGF0aDEgYW5kIHBhdGgzIGdldAp0aGUgc2FtZSB3d2lkIGFzIHRoZWlyIG1l
-cmdlX2lkLiBJbiB0aGlzIHNpdHVhdGlvbiB5b3Ugd291bGQgY2FsbCBkb21hcApvbiBwYXRoMSBh
-bmQgcGF0aDMsIGJ1dCBub3RoaW5nIHdvdWxkIGNyZWF0ZSB0aGUgbXVsdGlwYXRoIGRldmljZSBm
-b3IKcGF0aDIuCgpMaWtlIEkgc2FpZCwgdGhpcyBpcyB1bmxpa2VseSB0byBoYXBwZW4uICBCdXQg
-aXQgY291bGQuIEltYWdpbmUgdGhhdAp0aGVyZSB3YXMgc29tZSBkZXZpY2UgdGhhdCBwcmVzZW50
-ZWQgaXRzZWxmIGxpa2UgYSBzY3NpIGRldmljZSwgYnV0CklEX1NFUklBTCBjb3VsZCBoYXZlIHRo
-ZSBzYW1lIHZhbHVlIGZvciBkZXZpY2VzIHRoYXQgc2hvdWxkIG5vdCBiZQptdWx0aXBhdGhlZCB0
-b2dldGhlci4gVG8gZmlndXJlIG91dCB3aGljaCBkZXZpY2VzIGFjdHVhbGx5IHNob3VsZCBiZQpt
-dWx0aXBhdGhlZCB0b2dldGhlciwgeW91IG5lZWQgdG8gY2FsbCBwYXRoaW5mbyBhbmQgZ2V0IHRo
-ZSBjb3JyZWN0Cnd3aWQuIEluIHRoaXMgY2FzZSB5b3Ugd291bGQgZmluZCB0aGF0IHlvdSBoYWQg
-aW5jb3JyZWN0bHkgYmF0Y2hlZApkZXZpY2VzIHdpdGggZGlmZmVyZW50IHd3aWRzIHRvZ2V0aGVy
-LgoKVG8gc29sdmUgdGhpcywgeW91IHdvdWxkIG5lZWQgdG8gbWFrZSBzdXJlIHRvIGNhbGwgZG9t
-YXAgb24gdGhlIGRldmljZQppZiBpdHMgd3dpZCBlbmRlZCB1cCBiZWluZyBkaWZmZXJlbnQgZnJv
-bSBpdHMgbWVyZ2VfaWQuICBUaGUgaXNzdWUKdGhhdCBteSBsYXN0IGVtYWlsIHBvaW50ZWQgb3V0
-IHdhcyB0aGF0IGlmIHRoZSBtYWluIHVldmVudCwgcGF0aDMgaW4gdGhlCmFib3ZlIGV4YW1wbGUs
-IHdhcyB0aGUgb25seSBvbmUgdG8gaGF2ZSBhIGRpZmZlcmVudCB3d2lkLCB0aGVuIHlvdSB3b3Vs
-ZApuZWVkIHRvIG1ha2Ugc3VyZSB0byBjYWxsIGRvbWFwIG9uIHRoZSBvdGhlciBkZXZpY2VzIGFz
-IHdlbGwuIE90aGVyd2lzZQp5b3Ugd291bGQgY3JlYXRlIGEgbXVsdGlwYXRoIGRldmljZSBmb3Ig
-cGF0aDMsIGJ1dCBub3QgcGF0aDEgYW5kIHBhdGgyLgoKSWYgeW91IGRvbid0IGhhbmRsZSB0aGVz
-ZSBjYXNlcywgeW91IHdpbGwgb25seSB3b3JrIGNvcnJlY3RseSBvbiB0aGUKKGFkbWl0dGVkbHkg
-dmFzdGx5IG1vcmUgY29tbW9uKSBjYXNlIHdoZXJlIGV2ZW4gaWYgdGhlIHd3aWQgYW5kIG1lcmdl
-X2lkCmRvbid0IG1hdGNoLCB0aGUgd3dpZCBpcyBzdGlsbCB0aGUgc2FtZSBmb3IgYWxsIHRoZSBi
-YXRjaGVkIGRldmljZXMuCkJ1dCBpZiB5b3UgYXJlIGFscmVhZHkgYXNzdW1pbmcgdGhhdCB0aGUg
-bWVyZ2VfaWQgd2lsbCBjb3JyZWN0bHkgZ3JvdXAKdGhlIGRldmljZXMsIHRoZW4gd2hhdCBpcyB0
-aGUgcHVycG9zZSBpbiBmZXRjaGluZyB0aGUgd3dpZCBhdCBhbGw/IEl0Cm1heSBiZSBkaWZmZXJl
-bnQgZnJvbSB0aGUgbWVyZ2VfaWQsIGJ1dCBpdCB3aWxsIHN0aWxsIGdyb3VwIHRoZSBkZXZpY2Vz
-CnRoZSBzYW1lIHdheS4gVGhlcmUncyBub3RoaW5nIHNwZWNpYWwgYWJvdXQgdGhlIHd3aWQgdmFs
-dWUgaXRzZWxmLiBJdCBpcwpqdXN0IGEgdG9vbCB0byBjb3JyZWN0bHkgZ3JvdXAgdGhlIGRldmlj
-ZXMuIFNvLCBJIHdvdWxkIHNheSB0aGF0IHlvdQpzaG91bGQgZWl0aGVyIG5vdCBncmFiIHRoZSB3
-d2lkIGF0IGFsbCBpZiB5b3UgZ290IGl0IGZyb20gdGhlIHVldmVudCwgb3IKZG8gZ3JhYiB0aGUg
-d3dpZCwgYnV0IGJlIHByZXBhcmVkIHRvIGRlYWwgd2l0aCB0aGUgY2FzZSB3aGVyZSBub3QgYWxs
-IG9mCnRoZSBkZXZpY2VzIHRoYXQgeW91IGhhdmUgYmF0Y2hlZCBoYXZpbmcgdGhlIHNhbWUgd3dp
-ZC4KCkRvZXMgdGhhdCBtYWtlIG1vcmUgc2Vuc2U/CgotQmVuCgo+IAo+ICAgIFJlZ2FyZHMsCj4g
-ICAgVGFuZyBKdW5odWkKPiAKPiAgICDlj5Hku7bkuro6IMKgIMKgIMKgIMKgICJCZW5qYW1pbiBN
-YXJ6aW5za2kiIDxibWFyemluc0ByZWRoYXQuY29tPgo+ICAgIOaUtuS7tuS6ujogwqAgwqAgwqAg
-wqAgdGFuZy5qdW5odWlAenRlLmNvbS5jbiwKPiAgICDmioTpgIE6IMKgIMKgIMKgIMKgbXdpbGNr
-QHN1c2UuY29tLCBiYXJ0LnZhbmFzc2NoZUBzYW5kaXNrLmNvbSwKPiAgICBkbS1kZXZlbEByZWRo
-YXQuY29tLCBkbS1kZXZlbC1ib3VuY2VzQHJlZGhhdC5jb20sIHRhbmcud2VuanVuM0B6dGUuY29t
-LmNuLAo+ICAgIHpoYW5nLmthaTE2QHp0ZS5jb20uY24KPiAgICDml6XmnJ86IMKgIMKgIMKgIMKg
-IDIwMTcvMDEvMDYgMDE6MzcKPiAgICDkuLvpopg6IMKgIMKgIMKgIMKgUmU6IFJlOiBbZG0tZGV2
-ZWxdIFtQQVRDSCAwMS8xMl0gbGlibXVsdGlwYXRoOiBhZGQgd3dpZCBmb3IKPiAgICAic3RydWN0
-IHVldmVudCIgdG8gcmVjb3JkIHd3aWQgb2YgdWV2ZW50Cj4gCj4gICAgLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0KPiAKPiAgICBPbiBUaHUsIEphbiAwNSwgMjAxNyBhdCAxMToxMDo0M0FNICswODAwLCB0YW5n
-Lmp1bmh1aUB6dGUuY29tLmNuIHdyb3RlOgo+ICAgID4gwqAgwqBIZWxsbyBCZW4sCj4gICAgPgo+
-ICAgID4gwqAgwqBJIGtub3cgd2hhdCB5b3UgY29uY2VybiBhYm91dC4gTWF5YmUgd2UgY2FuIGNo
-YW5nZSB0aGUgInd3aWQiIG1lbWJlcgo+ICAgID4gwqAgwqBpbiAic3RydWN0IHVldmVudCIgdG8g
-YW5vdGhlciBuYW1lIHN1Y2ggYXMgIm1lcmdlX2lkIiB0byBvbmx5Cj4gICAgPiDCoCDCoGlkZW50
-aWZ5IHdoaWNoIHVldmVudHMgY2FuIG1lcmdlIHRvZ2V0aGVyLiBUaGUgdmFsdWUgb2YgIm1lcmdl
-X2lkIgo+ICAgIGNhbgo+ICAgID4gwqAgwqBzZXQgYnkgIklEX1NFUklBTCIgb3IgIklEX1VJRCIg
-aW4gdWV2ZW50LiBJZiB3ZSBnZXQgdGhlICJtZXJnZV9pZCIKPiAgICA+IMKgIMKgZnJvbSB1ZXZl
-bnRzLCB3ZSBjYW4gbWVyZ2UgYW5kIHByb2Nlc3MgaXQgYXMgbWVyZ2luZyB3YXksIG90aGVyd2lz
-ZQo+ICAgID4gwqAgwqB3ZSBwcm9jZXNzIGl0IGFzIG9sZCB3YXkgKHByb2Nlc3NlZCBvbmUgYnkg
-b25lKS4KPiAKPiAgICA+IMKgIMKgQW5kIHdlIHJldmVydCB0aGlzIHBhdGNoOgo+ICAgID4gwqAg
-wqAiW2RtLWRldmVsXSBbUEFUQ0ggMTIvMTJdIGxpYm11bHRpcGF0aDogdXNlIGV4aXN0aW5nIHd3
-aWQgd2hlbiB3d2lkCj4gICAgPiDCoCDCoGhhcyBhbHJlYWR5IGJlZW4gZXhpc3RlZCBpbiB1ZXZl
-bnQiCj4gICAgPiDCoCDCoHRodXMgd3dpZCBvZiBlYWNoIHBhdGggd2lsbCBnZXQgYnkgbWV0aG9k
-cyBvZiBjb25maWd1cmF0aW9uIGFzIG9sZAo+ICAgID4gwqAgwqB3YXlzLgo+ICAgID4KPiAgICA+
-IMKgIMKgVGhlIHByZW1pc2UgaXMgdGhhdCwgZGV2aWNlcyB3aG9zZSAibWVyZ2VfaWQiIGlzIHRo
-ZSBzYW1lIGhhdmUgdGhlCj4gICAgPiDCoCDCoHNhbWUgInd3aWQiLiBJIHRoaW5rIHRoaXMgcHJl
-bWlzZSBjYW4gYmUgZXN0YWJsaXNoZWQuCj4gCj4gICAgU28sIGlmIHlvdSBoYXZlIGRldmljZSB3
-aGVyZSB0aGUgbWVyZ2VfaWQgZG9lc24ndCBlcXVhbCB0aGUgd3dpZCwgeW91Cj4gICAgY2FsbCBk
-b21hcCBvbiB0aGF0IGRldmljZSwgYXMgaXQgaXQgd2Fzbid0IHBhcnQgb2YgYSBtZXJnZWQgc2V0
-Pwo+IAo+ICAgIFRoYXQgd291bGQgd29yaywgYnV0IHlvdSB3b3VsZCBoYXZlIHRvIGJlIGNhcmVm
-dWwgdG8gZGVhbCB3aXRoIHRoZSBjYXNlCj4gICAgd2hlcmUgdGhlIGxhc3QgdWV2ZW50IGluIHRo
-ZSBzZXQsIHRoZSBvbmUgdGhhdCB3b3VsZCBiZSB1c2VkIHRvIGNhbGwKPiAgICBkb21hcCBmb3Ig
-dGhlIHdob2xlIG1lcmdlZCBzZXQsIHN1ZGRlbmx5IGdldHMgcHJvY2Vzc2VkIGFsbCBvbiBpdCdz
-IG93biwKPiAgICBiZWNhdXNlIGl0IGhhZCBhIGRpZmZlcmVudCB3d2lkIGZyb20gdGhlIHJlc3Qg
-b2YgdGhlIHNldC4gSW4gdGhhdCBjYXNlCj4gICAgWW91IHdvdWxkIG5lZWQgdG8gbWFrZSBzdXJl
-IHRoYXQgc29tZXRoaW5nIGNhbGxlZCBkb21hcCBvbiB0aGUgb3RoZXIKPiAgICBtZW1iZXJzIG9m
-IHRoZSBtZXJnZWQgc2V0LiDCoE5vdywgSSBhZG1pdCB0aGF0IHRoaXMgaXMgYSB2ZXJ5IHVubGlr
-ZWx5Cj4gICAgdGhpbmcgdG8gaGFwcGVuLgo+IAo+ICAgIEkgdGhvdWdodCBhYm91dCBwcm9wb3Np
-bmcgdGhhdCB3ZSByZXZlcnQgcGF0Y2ggMTIsIGJ1dCBpdCBkb2VzIGFkZAo+ICAgIGNvbXBsZXhp
-dHkgaWYgeW91IGZpbmQgdGhhdCBvbmx5IHNvbWUgb2YgeW91ciBtZXJnZWQgZGV2aWNlcyBjaGFu
-Z2UKPiAgICB3d2lkLiBBbHNvLCBpZiBhbGwgb2YgdGhlbSBjaGFuZ2UgdG8gdGhlIHNhbWUgbmV3
-IHd3aWQsIHlvdSBqdXN0IHNraXBwZWQKPiAgICBtZXJnaW5nIHdoZW4geW91IHNob3VsZCBiZSBh
-YmxlIHRvLiBCdXQgSSdtIG5vdCBhZ2FpbnN0IHJldmVydGluZyBpdCwgYXMKPiAgICBsb25nIGFz
-IHdlIGhhbmRsZSBldmVyeXRoaW5nIG8uay4gUmV2ZXJ0aW5nIGl0IHdvdWxkIG1lYW4gdGhhdCB3
-ZSBkb24ndAo+ICAgIGhhdmUgdG8gd29ycnkgYWJvdXQgcmVtb3ZpbmcgYSBjYXBhYmlsaXR5IHRo
-YXQgbXVsdGlwYXRoIHByZXZpb3VzbHkgaGFkLgo+ICAgIFRoZXJlJ3MganVzdCBhIHRyYWRlLW9m
-ZiBiZXR3ZWVuIHN1cHBvcnRpbmcgYSBjYXBhYmlsaXR5ICh0aGF0IHdlIGRvbid0Cj4gICAga25v
-dyBpZiBhbnlvbmUgdXNlcyksIGFuZCBtYWludGFpbmluZyBsZXNzIGNvbXBsZXggY29kZS4KPiAK
-PiAgICBBcyBsb25nIGFzIGl0IGlzIHBvc3NpYmxlIHRvIGNvbmZpZ3VyZSB3aGF0IHVldmVudCB2
-YXJpYWJsZSB5b3UgY2hlY2sKPiAgICBmb3IgYnkgZGV2aWNlIHR5cGUsIEkgZG9uJ3Qga25vdyBv
-ZiBhIHNpdHVhdGlvbiB3aGVyZSB0aGlzIHdpbGwgY2F1c2UKPiAgICByZWFsIHdvcmxkIHByb2Js
-ZW1zLiBJdCdzIHBvc3NpYmxlIHRoYXQgc29tZSB1c2VycyBhcmUgY2hhbmdpbmcKPiAgICB1aWRf
-YXR0cmlidXRlIGZvciBvbmx5IGNlcnRhaW4gc2NzaS1iYXNlZCBhcnJheXMsIGJ1dCBJIGRvbid0
-IGtub3cgb2YKPiAgICBhbnkgY2FzZXMuIElmIHNvbWVib2R5IHJlYWRpbmcgdGhpcyBrbm93cyBv
-ZiBhbnkgY2FzZXMsIHBsZWFzZSBzcGVhayB1cC4KPiAgICBCdXQgSSB3b3VsZCBsaWtlIHRvIGhh
-dmUgdGhlIHZhcmlhYmxlIHlvdSBjaGVjayBiZSBjb25maWd1cmFibGUgc28gdGhhdAo+ICAgIGl0
-J3MgZmxleGlibGUgd2l0aCByZWdhcmRzIHRvIG5ldyBkZXZpY2UgdHlwZXMgb3IgdGhlIHBvc3Np
-YmxpdHkgb2YKPiAgICBkaWZmZXJpbmcgdWV2ZW50IHZhcmlhYmxlIG5hbWVzIGVpdGhlciBiZXR3
-ZWVuIGRpc3RyaWJ1dGlvbnMgb3Igb3Zlcgo+ICAgIHRpbWUuIERvZXMgdGhhdCBzb3VuZCByZWFz
-b25hYmxlPwo+IAo+ICAgIC1CZW4KPiAKPiAgICA+Cj4gICAgPiDCoCDCoGhvdyBkbyB5b3UgdGhp
-bmsgYWJvdXQgdGhlIGFib3ZlIHByb3Bvc2FsPwo+ICAgID4KPiAgICA+IMKgIMKgPiDCoCDCoFRo
-ZSBvdGhlciBvcHRpb24gd291bGQgYmUgdG8gbm90IGFjdHVhbGx5IG1lcmdlIHRoZSB1ZXZlbnRz
-LCBidXQKPiAgICA+IMKgIMKgc2ltcGx5Cj4gICAgPiDCoCDCoD4gwqAgwqBydW4gdGhyb3VnaCB0
-aGUgZmlsdGVyZWQgYnV0IHVubWVyZ2VkIGxpc3Qgb2YgdWV2ZW50cywgYW5kIHNraXAKPiAgICB0
-aGUKPiAgICA+IMKgIMKgPiDCoCDCoGRvbWFwIHN0dWZmIGJ1dCByZW1lbWJlciB0aGUgbWFwcyB0
-aGF0IG5lZWQgcHVzaGluZyB0bwo+ICAgIGRldmljZS1tYXBwZXIuCj4gICAgPiDCoCDCoD4gwqAg
-wqBPbmNlIHlvdSBhcmUgZG9uZSBwcm9jZXNzaW5nIGFsbCB0aGUgdWV2ZW50cywgZXhjZXB0IGZv
-cgo+ICAgIHVwZGF0aW5nIHRoZQo+ICAgID4gwqAgwqA+IMKgIMKgbWFwcyBpbiBkZXZpY2UtbWFw
-cGVyLCB5b3UgZ28gYmFjayBhbmQgdXBkYXRlIGFsbCB0aGUgbWFwcyB0aGF0Cj4gICAgbmVlZAo+
-ICAgID4gwqAgwqA+IMKgIMKgdXBkYXRpbmcuIFRoZXJlJ3MgbW9yZSBjb2RlIHJlZmFjdG9yaW5n
-IGluIHRoaXMgYXBwcm9hY2gsIGJ1dCBpdAo+ICAgID4gwqAgwqBrZWVwcwo+ICAgID4gwqAgwqA+
-IMKgIMKgdGhlIHVpZCBiZWluZyBzZXQgaW4gcGF0aGluZm8sIHdoZXJlIHlvdSBoYXZlIGFsbCB0
-aGUKPiAgICBpbmZvcm1hdGlvbgo+ICAgID4gwqAgwqA+IMKgIMKgbmVjZXNzYXJ5IHRvIHNldCBp
-dCB1c2luZyB1aWRfYXR0cmlidXRlLCBnZXR1aWQsIG9yIHNwZWNpYWxpemVkCj4gICAgY29kZQo+
-ICAgID4gwqAgwqA+IMKgIMKgbGlrZSByYmQgdXNlcy4KPiAgICA+IMKgIMKgSSB0aGluayBpdCBp
-cyBvaywgYnV0IGEgbGl0dGxlIGNvbXBsZXguIGFuZCBpZiB3ZSBjYW4gZ2V0IHJpZCBvZiB0aGUK
-PiAgICA+IMKgIMKgInd3aWQiIGlzc3VlLCB3ZSBkbyBub3QgbmVlZCB0byBkbyBzby4KPiAgICA+
-Cj4gICAgPiDCoCDCoFJlZ2FyZHMKPiAgICA+IMKgIMKgVGFuZyBKdW5odWkKPiAgICA+Cj4gICAg
-PiDCoCDCoOWPkeS7tuS6ujogwqAgwqAgwqAgwqAgIkJlbmphbWluIE1hcnppbnNraSIgPGJtYXJ6
-aW5zQHJlZGhhdC5jb20+Cj4gICAgPiDCoCDCoOaUtuS7tuS6ujogwqAgwqAgwqAgwqAgdGFuZy5q
-dW5odWlAenRlLmNvbS5jbiwKPiAgICA+IMKgIMKg5oqE6YCBOiDCoCDCoCDCoCDCoHRhbmcud2Vu
-anVuM0B6dGUuY29tLmNuLCB6aGFuZy5rYWkxNkB6dGUuY29tLmNuLAo+ICAgID4gwqAgwqBkbS1k
-ZXZlbEByZWRoYXQuY29tLCBiYXJ0LnZhbmFzc2NoZUBzYW5kaXNrLmNvbSwgbXdpbGNrQHN1c2Uu
-Y29tCj4gICAgPiDCoCDCoOaXpeacnzogwqAgwqAgwqAgwqAgMjAxNy8wMS8wNSAwMjoyMwo+ICAg
-ID4gwqAgwqDkuLvpopg6IMKgIMKgIMKgIMKgUmU6IFtkbS1kZXZlbF0gW1BBVENIIDAxLzEyXSBs
-aWJtdWx0aXBhdGg6IGFkZCB3d2lkIGZvcgo+ICAgID4gwqAgwqAic3RydWN0IHVldmVudCIgdG8g
-cmVjb3JkIHd3aWQgb2YgdWV2ZW50Cj4gICAgPiDCoCDCoOWPkeS7tuS6ujogwqAgwqAgwqAgwqBk
-bS1kZXZlbC1ib3VuY2VzQHJlZGhhdC5jb20KPiAgICA+Cj4gICAgPiDCoAo+ICAgIMKgLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0KPiAgICA+Cj4gICAgPiDCoCDCoE9uIFdlZCwgSmFuIDA0LCAyMDE3IGF0IDAy
-OjU2OjQ2UE0gKzA4MDAsIHRhbmcuanVuaHVpQHp0ZS5jb20uY24KPiAgICB3cm90ZToKPiAgICA+
-IMKgIMKgPiDCoCDCoEhlbGxvIEJlbiwKPiAgICA+IMKgIMKgPgo+ICAgID4gwqAgwqA+IMKgIMKg
-PiBSaWdodCBub3csIG11bHRpcGF0aCB1c2VycyBhcmUgYWxsb3dlZCBjb25maWd1cmUgZGV2aWNl
-cyB0bwo+ICAgIHNldCB0aGUKPiAgICA+IMKgIMKgd3dpZAo+ICAgID4gwqAgwqA+IMKgIMKgPiBi
-YXNlZCBvbiBhbnkgdWRldiBlbnZpcm9ubWVudCB2YXJpYWJsZSAob3IgZXZlbiB1c2UgYSBjYWxs
-b3V0LAo+ICAgID4gwqAgwqBhbHRob3VnaAo+ICAgID4gwqAgwqA+IMKgIMKgPiB0aGlzIGlzIGRl
-cHJlY2F0ZWQpLiBXaXRoIHRoaXMgcGF0Y2gsIHRoYXQgYnJlYWtzLgo+ICAgID4gwqAgwqA+IMKg
-IMKgRG9lcyBXV0lEIG9idGFpbmVkIGJ5IGRpZmZlcmVudCBtZXRob2RzIGNoYW5nZT8gSWYgaXQg
-Y2hhbmdlcywKPiAgICB3ZQo+ICAgID4gwqAgwqB3b3VsZAo+ICAgID4gwqAgwqA+IMKgIMKgYmV0
-dGVyIHRvIG1vZGlmeSBjb2RlIHRvIGtlZXAgaXQgbm8gY2hhbmdlLgo+ICAgID4KPiAgICA+IMKg
-IMKgWWVzLiB1c2VycyBjYW4gcGljayBhbnkgdWRldiBlbnZpcm9ubWVudCB2YXJpYWJsZSAoYW5k
-IGN1cnJlbnRseSwgYW55Cj4gICAgPiDCoCDCoGNhbGxvdXQgcHJvZ3JhbSB0aGF0IHRoZXkgd3Jp
-dGUpIHRvIHVzZSBhcyB0aGUgd3dpZC4KPiAgICA+Cj4gICAgPiDCoCDCoD4gwqAgwqA+IElmIHRo
-ZSB1ZGV2IHNldHMKPiAgICA+IMKgIMKgPiDCoCDCoD4gSURfU0VSSUFMIGZvciBhIGRldmljZSwg
-dGhhdCBpcyBpdHMgd3dpZCwgcmlnaHQ/Cj4gICAgPiDCoCDCoD4gwqAgwqBZZXMKPiAgICA+IMKg
-IMKgPgo+ICAgID4gwqAgwqA+IMKgIMKgPiBEbyB5b3Uga25vdyBpZiByYmQKPiAgICA+IMKgIMKg
-PiDCoCDCoD4gZGV2aWNlcyBoYXZlIElEX1NFUklBTCBzZXQ/Cj4gICAgPiDCoCDCoD4gwqAgwqBX
-V0lEIGhhcyBkaWZmZXJlbnQgbGFiZWwgaW4gdWV2ZW50cyBmb3IgZGlmZmVyZW50IGRldmljZXMs
-IEkKPiAgICBvbmx5Cj4gICAgPiDCoCDCoHRlc3QgZm9yCj4gICAgPiDCoCDCoD4gwqAgwqBTQ1NJ
-IGRldmljZXMuCj4gICAgPgo+ICAgID4gwqAgwqBXaGVyZSBpcyB0aGF0IGNoZWNrPyBJIG9ubHkg
-c2VlIGEgY2hlY2sgZm9yIHdoZXRoZXIgSURfU0VSSUFMIGV4aXN0cy4KPiAgICBJZgo+ICAgID4g
-wqAgwqBpdCBleGlzdHMgb24gdGhpbmdzIHRoYXQgYXJlIG5vdCBzY3NpIGRldmljZXMsIHlvdSB3
-aWxsIHNldCB0aGUgd3dpZAo+ICAgIGZvcgo+ICAgID4gwqAgwqB0aGVzZSBkZXZpY2VzIHdpdGgg
-aXQgYXMgd2VsbCwgZXZlbiBpZiBpdCBkb2Vzbid0IHdvcmsgZm9yIHRoZW0uCj4gICAgPgo+ICAg
-ID4gwqAgwqA+IMKgIMKgTm93IHdlIGRvIG5vdCBzdXBwb3J0IHJiZCBkaXZpY2UgZm9yIHVldmVu
-dHMgbWVyZ2luZywgdGhlc2UKPiAgICA+IMKgIMKgPiDCoCDCoGRldmljZSBwcm9jZXNzIGFzIG9s
-ZCB3YXksIGl0IGhhcyBubyBoYXJtIGluIGxvZ2ljLiBJZiB3ZSBuZWVkCj4gICAgdG8KPiAgICA+
-IMKgIMKgbWVyZ2UKPiAgICA+IMKgIMKgPiDCoCDCoHJiZCB1ZXZlbnRzIGZvciB0aGVzZSBkZXZp
-Y2VzLCB3ZSBjYW4gYWRkIGNvZGUgdG8gZ2V0IHd3aWQgZnJvbQo+ICAgID4gwqAgwqB1ZXZlbnRz
-Cj4gICAgPiDCoCDCoD4gwqAgwqBhbmQgaXQgY2FuIGJlIHN1cHBvcnRlZCBlYXNpbHkuCj4gICAg
-Pgo+ICAgID4gwqAgwqBMb29rIGF0IGdldF9yYmRfdWlkKCksIGFuZCBob3cgaXQncyBjYWxsZWQu
-IHJiZCBkZXZpY2VzIGRvbid0IGV2ZW4KPiAgICB1c2UKPiAgICA+IMKgIMKgdGhlIGdldHVpZCBj
-YWxsb3V0IG9yIHVpZF9hdHRyaWJ1dGUuIFRoZXkgdXNlIHNwZWNpYWwgY29kZSBjYWxsZWQgYnkK
-PiAgICA+IMKgIMKgZ2V0X3VpZC4KPiAgICA+Cj4gICAgPiDCoCDCoE5vdyB5b3UgY291bGQgYWRk
-IGV4cGxpY2l0IGNoZWNrcyBzbyB3ZSBvbmx5IGNoZWNrIElEX1NFUklBTCBmb3Igc2NzaQo+ICAg
-ID4gwqAgwqBkZXZpY2VzLCBJRF9VSUQgZm9yIGRhc2QgZGV2aWNlcywgYW5kIG5ldmVyIHNldCB0
-aGUgd3dpZCBvdGhlcndpc2UuCj4gICAgwqBZb3UKPiAgICA+IMKgIMKgY291bGQgZXZlbiBtYWtl
-IHRoZSBhdHRyaWJ1dGUgd2UgY2hlY2sgY29uZmlndXJhYmxlIGJ5IGRldmljZSB0eXBlCj4gICAg
-d2l0aAo+ICAgID4gwqAgwqBhbiBvcHRpb24gbGlrZQo+ICAgID4KPiAgICA+IMKgIMKgdWlkX2F0
-dHJzICJzZDpJRF9TRVJJQUwgZGFzZDpJRF9VSUQiCj4gICAgPgo+ICAgID4gwqAgwqBpbiB0aGUg
-ZGVmYXVsdHMgc2VjdGlvbiwgdGhhdCB3b3VsZCBzZXQgdXAgbWFwcGluZ3MgYmV0d2VlbiBkZXZp
-Y2UKPiAgICB0eXBlcwo+ICAgID4gwqAgwqBhbmQgdWV2ZW50IGF0dHJpYnV0ZXMgdG8gY2hlY2sg
-Zm9yIHRoZSB1aWQuIEJ1dCB0aGlzIHdvdWxkIGJlIG9uIHBlcgo+ICAgID4gwqAgwqBkZXZpY2Ug
-dHlwZXMsIG5vdCBwZXIgc3RvcmFnZSBhcnJheSwgbGlrZSBpdCBjdXJyZW50bHkgaXMuCj4gICAg
-dWlkX2F0dHJpYnV0ZQo+ICAgID4gwqAgwqBhbmQgZ2V0dWlkIGF0dHJpYnV0ZSB3b3VsZCBvbmx5
-IGV2ZXIgYmUgdXNlZCBmb3IgZGV2aWNlIHR5cGVzIHRoYXQKPiAgICA+IMKgIMKgd2VyZW4ndCBp
-biB0aGUgdWlkX2F0dHJzIGxpc3QuCj4gICAgPgo+ICAgID4gwqAgwqBUaGUgb3RoZXIgb3B0aW9u
-IHdvdWxkIGJlIHRvIG5vdCBhY3R1YWxseSBtZXJnZSB0aGUgdWV2ZW50cywgYnV0Cj4gICAgc2lt
-cGx5Cj4gICAgPiDCoCDCoHJ1biB0aHJvdWdoIHRoZSBmaWx0ZXJlZCBidXQgdW5tZXJnZWQgbGlz
-dCBvZiB1ZXZlbnRzLCBhbmQgc2tpcCB0aGUKPiAgICA+IMKgIMKgZG9tYXAgc3R1ZmYgYnV0IHJl
-bWVtYmVyIHRoZSBtYXBzIHRoYXQgbmVlZCBwdXNoaW5nIHRvIGRldmljZS1tYXBwZXIuCj4gICAg
-PiDCoCDCoE9uY2UgeW91IGFyZSBkb25lIHByb2Nlc3NpbmcgYWxsIHRoZSB1ZXZlbnRzLCBleGNl
-cHQgZm9yIHVwZGF0aW5nIHRoZQo+ICAgID4gwqAgwqBtYXBzIGluIGRldmljZS1tYXBwZXIsIHlv
-dSBnbyBiYWNrIGFuZCB1cGRhdGUgYWxsIHRoZSBtYXBzIHRoYXQgbmVlZAo+ICAgID4gwqAgwqB1
-cGRhdGluZy4gVGhlcmUncyBtb3JlIGNvZGUgcmVmYWN0b3JpbmcgaW4gdGhpcyBhcHByb2FjaCwg
-YnV0IGl0Cj4gICAga2VlcHMKPiAgICA+IMKgIMKgdGhlIHVpZCBiZWluZyBzZXQgaW4gcGF0aGlu
-Zm8sIHdoZXJlIHlvdSBoYXZlIGFsbCB0aGUgaW5mb3JtYXRpb24KPiAgICA+IMKgIMKgbmVjZXNz
-YXJ5IHRvIHNldCBpdCB1c2luZyB1aWRfYXR0cmlidXRlLCBnZXR1aWQsIG9yIHNwZWNpYWxpemVk
-IGNvZGUKPiAgICA+IMKgIMKgbGlrZSByYmQgdXNlcy4KPiAgICA+Cj4gICAgPiDCoCDCoEFzIGxv
-bmcgYXMgd2UgbWFrZSBzdXJlIHRoYXQgd2UgYXJlIG9ubHkgY2hlY2tpbmcgc3BlY2lmaWMgdWV2
-ZW50Cj4gICAgPiDCoCDCoGF0dHJpYnV0ZXMgZm9yIHNwZWNpZmljIGRldmljZSB0eXBlcywgSSdt
-IG8uay4gd2l0aCB5b3VyIHdheSwgYnV0IHdlCj4gICAgYXJlCj4gICAgPiDCoCDCoGxvc2luZyBm
-bGV4aWJpbGl0eSB0aGF0IG11bHRpcGF0aCBoYXMgYWx3YXlzIGhhZCBpbiByZWdhcmRzIHRvCj4g
-ICAgc2V0dGluZwo+ICAgID4gwqAgwqB0aGUgd3dpZC4gSSB3YW50IHRvIHBvaW50IHRoYXQgb3V0
-IHNvIHRoYXQgYW55b25lIHdobyBuZWVkcyB0aGlzCj4gICAga25vd3MKPiAgICA+IMKgIMKgdGhh
-dCBpdCBpcyBjaGFuZ2luZy4KPiAgICA+Cj4gICAgPiDCoCDCoC1CZW4KPiAgICA+Cj4gICAgPiDC
-oCDCoD4gwqAgwqBSZWdhcmRzCj4gICAgPiDCoCDCoD4gwqAgwqBUYW5nIEp1bmh1aQo+ICAgID4g
-wqAgwqA+Cj4gICAgPiDCoCDCoD4gwqAgwqDvv73vv73vv73vv73vv73vv706IMKgIMKgIMKgIMKg
-ICJCZW5qYW1pbiBNYXJ6aW5za2kiIDxibWFyemluc0ByZWRoYXQuY29tPgo+ICAgID4gwqAgwqA+
-IMKgIMKg77+91bzvv73vv73vv706IMKgIMKgIMKgIMKgIHRhbmcuanVuaHVpQHp0ZS5jb20uY24s
-Cj4gICAgPiDCoCDCoD4gwqAgwqDvv73vv73vv73vv706IMKgIMKgIMKgIMKgY2hyaXN0b3BoZS52
-YXJvcXVpQG9wZW5zdmMuY29tLCBoYXJlQHN1c2UuZGUsCj4gICAgPiDCoCDCoD4gwqAgwqBtd2ls
-Y2tAc3VzZS5jb20sIGJhcnQudmFuYXNzY2hlQHNhbmRpc2suY29tLAo+ICAgIGRtLWRldmVsQHJl
-ZGhhdC5jb20sCj4gICAgPiDCoCDCoD4gwqAgwqB6aGFuZy5rYWkxNkB6dGUuY29tLmNuLCB0YW5n
-Lndlbmp1bjNAenRlLmNvbS5jbgo+ICAgID4gwqAgwqA+IMKgIMKg77+977+977+977+9OiDCoCDC
-oCDCoCDCoCAyMDE3LzAxLzA0IDA2OjAzCj4gICAgPiDCoCDCoD4gwqAgwqDvv73vv73vv73vv706
-IMKgIMKgIMKgIMKgUmU6IFtQQVRDSCAwMS8xMl0gbGlibXVsdGlwYXRoOiBhZGQgd3dpZCBmb3IK
-PiAgICAic3RydWN0Cj4gICAgPiDCoCDCoHVldmVudCIKPiAgICA+IMKgIMKgPiDCoCDCoHRvIHJl
-Y29yZCB3d2lkIG9mIHVldmVudAo+ICAgID4gwqAgwqA+Cj4gICAgPiDCoCDCoD4gwqAKPiAgICA+
-IMKgCj4gICAgwqDCoC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4gICAgPiDCoCDCoD4KPiAgICA+IMKgIMKg
-PiDCoCDCoE9uIFR1ZSwgRGVjIDI3LCAyMDE2IGF0IDA0OjAzOjE4UE0gKzA4MDAsIHRhbmcuanVu
-aHVpQHp0ZS5jb20uY24KPiAgICA+IMKgIMKgd3JvdGU6Cj4gICAgPiDCoCDCoD4gwqAgwqA+IEZy
-b206IHRhbmcuanVuaHVpIDx0YW5nLmp1bmh1aUB6dGUuY29tLmNuPgo+ICAgID4gwqAgwqA+IMKg
-IMKgPgo+ICAgID4gwqAgwqA+IMKgIMKgPiBBZGQgImNoYXIgKnd3aWQiIHRvIHBvaW50IFdXSUQg
-b2YgdWV2ZW50LiBUaGlzIG1lbWJlcgo+ICAgIGlkZW50aWZpZXMKPiAgICA+IMKgIMKgPiDCoCDC
-oD4gdGhlIExVTiBJRCB3aGljaCB0aGUgcGF0aCBiZWxvbmdzIHRvLCBhbmQgaXQgaXMgdXNlZCBm
-b3IKPiAgICBtZXJnaW5nCj4gICAgPiDCoCDCoD4gwqAgwqA+IHVldmVudHMuIFdXSUQgcG9zc2li
-bHkgZGlkIG5vdCBleGlzdCBpbiB1ZXZlbnQgeWV0LCBzbyAtPnd3aWQKPiAgICA+IMKgIMKgPiDC
-oCDCoD4gd291bGQgYmUgTlVMTCwgdGhvc2UgdWV2ZW50cyB3b3VsZCBub3QgYmUgbWVyZ2VkLCBi
-dXQgYmUKPiAgICBwcm9jY2Vzc2VkCj4gICAgPiDCoCDCoD4gwqAgwqA+IGFzIG9sZCB3YXkuCj4g
-ICAgPiDCoCDCoD4KPiAgICA+IMKgIMKgPiDCoCDCoFJpZ2h0IG5vdywgbXVsdGlwYXRoIHVzZXJz
-IGFyZSBhbGxvd2VkIGNvbmZpZ3VyZSBkZXZpY2VzIHRvIHNldAo+ICAgIHRoZQo+ICAgID4gwqAg
-wqB3d2lkCj4gICAgPiDCoCDCoD4gwqAgwqBiYXNlZCBvbiBhbnkgdWRldiBlbnZpcm9ubWVudCB2
-YXJpYWJsZSAob3IgZXZlbiB1c2UgYSBjYWxsb3V0LAo+ICAgID4gwqAgwqBhbHRob3VnaAo+ICAg
-ID4gwqAgwqA+IMKgIMKgdGhpcyBpcyBkZXByZWNhdGVkKS4gV2l0aCB0aGlzIHBhdGNoLCB0aGF0
-IGJyZWFrcy4gSWYgdGhlIHVkZXYKPiAgICBzZXRzCj4gICAgPiDCoCDCoD4gwqAgwqBJRF9TRVJJ
-QUwgZm9yIGEgZGV2aWNlLCB0aGF0IGlzIGl0cyB3d2lkLCByaWdodD8gwqBEbyB5b3Uga25vdyBp
-Zgo+ICAgIHJiZAo+ICAgID4gwqAgwqA+IMKgIMKgZGV2aWNlcyBoYXZlIElEX1NFUklBTCBzZXQ/
-IElmIHNvLCB0aGlzIGNoYW5nZSB3aWxsIGJyZWFrIHRoZW0uCj4gICAgwqBFdmVuCj4gICAgPiDC
-oCDCoGlmCj4gICAgPiDCoCDCoD4gwqAgwqB0aGlzIGNoYW5nZSBkb2Vzbid0IGJyZWFrIGFueSBk
-ZXZpY2VzIGluIHRoZWlyIGRlZmF1bHQKPiAgICA+IMKgIMKgY29uZmlndXJhdGlvbnMsCj4gICAg
-PiDCoCDCoD4gwqAgwqB3ZSB3b3VsZCBuZWVkIHRvIGRpc2FsbG93IGNoYW5naW5nIGhvdyB0aGUg
-d3dpZCBpcyBzZXQgZm9yIHRoaXMKPiAgICBwYXRjaAo+ICAgID4gwqAgwqA+IMKgIMKgdG8gYmUg
-c2FmZS4KPiAgICA+IMKgIMKgPgo+ICAgID4gwqAgwqA+IMKgIMKgLUJlbgo+ICAgID4gwqAgwqA+
-Cj4gICAgPiDCoCDCoD4gwqAgwqA+Cj4gICAgPiDCoCDCoD4gwqAgwqA+IENoYW5nZS1JZDogSWU2
-YjA3NjM2M2IzNzM1ZGM3ZGUxMDE4NGIyN2ZhNzk5YjQ5OWFmMGUKPiAgICA+IMKgIMKgPiDCoCDC
-oD4gU2lnbmVkLW9mZi1ieTogdGFuZy5qdW5odWkgPHRhbmcuanVuaHVpQHp0ZS5jb20uY24+Cj4g
-ICAgPiDCoCDCoD4gwqAgwqA+IC0tLQo+ICAgID4gwqAgwqA+IMKgIMKgPiDCoGxpYm11bHRpcGF0
-aC91ZXZlbnQuYyB8IDIgKysKPiAgICA+IMKgIMKgPiDCoCDCoD4gwqBsaWJtdWx0aXBhdGgvdWV2
-ZW50LmggfCAxICsKPiAgICA+IMKgIMKgPiDCoCDCoD4gwqAyIGZpbGVzIGNoYW5nZWQsIDMgaW5z
-ZXJ0aW9ucygrKQo+ICAgID4gwqAgwqA+IMKgIMKgPgo+ICAgID4gwqAgwqA+IMKgIMKgPiBkaWZm
-IC0tZ2l0IGEvbGlibXVsdGlwYXRoL3VldmVudC5jIGIvbGlibXVsdGlwYXRoL3VldmVudC5jCj4g
-ICAgPiDCoCDCoD4gwqAgwqA+IGluZGV4IDdlZGNjZTEuLmVmMWJhZmUgMTAwNjQ0Cj4gICAgPiDC
-oCDCoD4gwqAgwqA+IC0tLSBhL2xpYm11bHRpcGF0aC91ZXZlbnQuYwo+ICAgID4gwqAgwqA+IMKg
-IMKgPiArKysgYi9saWJtdWx0aXBhdGgvdWV2ZW50LmMKPiAgICA+IMKgIMKgPiDCoCDCoD4gQEAg
-LTQyNCw2ICs0MjQsOCBAQCBzdHJ1Y3QgdWV2ZW50Cj4gICAgKnVldmVudF9mcm9tX3VkZXZfZGV2
-aWNlKHN0cnVjdAo+ICAgID4gwqAgwqA+IMKgIMKgdWRldl9kZXZpY2UgKmRldikKPiAgICA+IMKg
-IMKgPiDCoCDCoD4gwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiAgICB1ZXYtPmRldnBhdGggPQo+ICAg
-ID4gwqAgwqA+IMKgIMKgdWV2LT5lbnZwW2ldICsgODsKPiAgICA+IMKgIMKgPiDCoCDCoD4gwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBpZiAoc3Ry
-Y21wKG5hbWUsICJBQ1RJT04iKQo+ICAgID09IDApCj4gICAgPiDCoCDCoD4gwqAgwqA+IMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgCj4gICAgdWV2LT5hY3Rpb24gPQo+ICAgID4gwqAgwqA+IMKgIMKgdWV2
-LT5lbnZwW2ldICsgNzsKPiAgICA+IMKgIMKgPiDCoCDCoD4gKyDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoGlmIChzdHJjbXAobmFtZSwKPiAgICAiSURf
-U0VSSUFMIikgPT0KPiAgICA+IMKgIMKgMCkKPiAgICA+IMKgIMKgPiDCoCDCoD4gKyDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCB1ZXYtPnd3aWQKPiAgICA9Cj4gICAgPiDCoCDCoD4gwqAgwqB1ZXYtPmVudnBb
-aV0gKyAxMDsKPiAgICA+IMKgIMKgPiDCoCDCoD4gwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBpKys7Cj4gICAgPiDCoCDCoD4gwqAgwqA+IMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgaWYgKGkgPT0g
-SE9UUExVR19OVU1fRU5WUCAtCj4gICAgMSkKPiAgICA+IMKgIMKgPiDCoCDCoD4gwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgYnJlYWs7Cj4gICAgPiDCoCDCoD4gwqAgwqA+IGRpZmYgLS1naXQgYS9saWJt
-dWx0aXBhdGgvdWV2ZW50LmggYi9saWJtdWx0aXBhdGgvdWV2ZW50LmgKPiAgICA+IMKgIMKgPiDC
-oCDCoD4gaW5kZXggOWQyMmRjZC4uN2JmY2NlZiAxMDA2NDQKPiAgICA+IMKgIMKgPiDCoCDCoD4g
-LS0tIGEvbGlibXVsdGlwYXRoL3VldmVudC5oCj4gICAgPiDCoCDCoD4gwqAgwqA+ICsrKyBiL2xp
-Ym11bHRpcGF0aC91ZXZlbnQuaAo+ICAgID4gwqAgwqA+IMKgIMKgPiBAQCAtMjIsNiArMjIsNyBA
-QCBzdHJ1Y3QgdWV2ZW50IHsKPiAgICA+IMKgIMKgPiDCoCDCoD4gwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgY2hhciAqZGV2cGF0aDsKPiAgICA+IMKgIMKgPiDCoCDCoD4gwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgY2hhciAqYWN0aW9uOwo+ICAgID4gwqAgwqA+IMKgIMKgPiDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCBjaGFyICprZXJuZWw7Cj4gICAgPiDCoCDCoD4gwqAgwqA+ICsg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgY2hhciAqd3dpZDsKPiAgICA+IMKgIMKgPiDCoCDCoD4g
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgdW5zaWduZWQgbG9uZyBzZXFudW07Cj4gICAgPiDC
-oCDCoD4gwqAgwqA+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGNoYXIgKmVudnBbSE9UUExV
-R19OVU1fRU5WUF07Cj4gICAgPiDCoCDCoD4gwqAgwqA+IMKgfTsKPiAgICA+IMKgIMKgPiDCoCDC
-oD4gLS0KPiAgICA+IMKgIMKgPiDCoCDCoD4gMi44LjEud2luZG93cy4xCj4gICAgPiDCoCDCoD4g
-wqAgwqA+Cj4gICAgPgo+ICAgID4gwqAgwqAtLQo+ICAgID4gwqAgwqBkbS1kZXZlbCBtYWlsaW5n
-IGxpc3QKPiAgICA+IMKgIMKgZG0tZGV2ZWxAcmVkaGF0LmNvbQo+ICAgID4gwqAgwqBbMV1bMV1o
-dHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKPiAgICA+Cj4g
-ICAgPiBSZWZlcmVuY2VzCj4gICAgPgo+ICAgID4gwqAgwqBWaXNpYmxlIGxpbmtzCj4gICAgPiDC
-oCDCoDEuIFsyXWh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
-bAo+IAo+IFJlZmVyZW5jZXMKPiAKPiAgICBWaXNpYmxlIGxpbmtzCj4gICAgMS4gaHR0cHM6Ly93
-d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCj4gICAgMi4gaHR0cHM6Ly93
-d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCgotLQpkbS1kZXZlbCBtYWls
-aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
-YW4vbGlzdGluZm8vZG0tZGV2ZWw=
+
+
+On Wed, 4 Jan 2017, Mike Snitzer wrote:
+
+> On Wed, Jan 04 2017 at 12:12am -0500,
+> NeilBrown <neilb@suse.com> wrote:
+> 
+> > On Tue, Jan 03 2017, Jack Wang wrote:
+> > 
+> > > 2016-12-23 12:45 GMT+01:00 Lars Ellenberg <lars.ellenberg@linbit.com>:
+> > >> On Fri, Dec 23, 2016 at 09:49:53AM +0100, Michael Wang wrote:
+> > >>> Dear Maintainers
+> > >>>
+> > >>> I'd like to ask for the status of this patch since we hit the
+> > >>> issue too during our testing on md raid1.
+> > >>>
+> > >>> Split remainder bio_A was queued ahead, following by bio_B for
+> > >>> lower device, at this moment raid start freezing, the loop take
+> > >>> out bio_A firstly and deliver it, which will hung since raid is
+> > >>> freezing, while the freezing never end since it waiting for
+> > >>> bio_B to finish, and bio_B is still on the queue, waiting for
+> > >>> bio_A to finish...
+> > >>>
+> > >>> We're looking for a good solution and we found this patch
+> > >>> already progressed a lot, but we can't find it on linux-next,
+> > >>> so we'd like to ask are we still planning to have this fix
+> > >>> in upstream?
+> > >>
+> > >> I don't see why not, I'd even like to have it in older kernels,
+> > >> but did not have the time and energy to push it.
+> > >>
+> > >> Thanks for the bump.
+> > >>
+> > >>         Lars
+> > >>
+> > > Hi folks,
+> > >
+> > > As Michael mentioned, we hit a bug this patch is trying to fix.
+> > > Neil suggested another way to fix it.  I attached below.
+> > > I personal prefer Neil's version as it's less code change, and straight forward.
+> > >
+> > > Could you share your comments, we can get one fix into mainline.
+> > >
+> > > Thanks,
+> > > Jinpu
+> > > From 69a4829a55503e496ce9c730d2c8e3dd8a08874a Mon Sep 17 00:00:00 2001
+> > > From: NeilBrown <neilb@suse.com>
+> > > Date: Wed, 14 Dec 2016 16:55:52 +0100
+> > > Subject: [PATCH] block: fix deadlock between freeze_array() and wait_barrier()
+> > >
+> > > When we call wait_barrier, we might have some bios waiting
+> > > in current->bio_list, which prevents the array_freeze call to
+> > > complete. Those can only be internal READs, which have already
+> > > passed the wait_barrier call (thus incrementing nr_pending), but
+> > > still were not submitted to the lower level, due to generic_make_request
+> > > logic to avoid recursive calls. In such case, we have a deadlock:
+> > > - array_frozen is already set to 1, so wait_barrier unconditionally waits, so
+> > > - internal READ bios will not be submitted, thus freeze_array will
+> > > never completes.
+> > >
+> > > To fix this, modify generic_make_request to always sort bio_list_on_stack
+> > > first with lowest level, then higher, until same level.
+> > >
+> > > Sent to linux-raid mail list:
+> > > https://marc.info/?l=linux-raid&m=148232453107685&w=2
+> > >
+> > 
+> > This should probably also have
+> > 
+> >   Inspired-by: Lars Ellenberg <lars.ellenberg@linbit.com>
+> > 
+> > or something that, as I was building on Lars' ideas when I wrote this.
+> > 
+> > It would also be worth noting in the description that this addresses
+> > issues with dm and drbd as well as md.
+> 
+> I never saw this patch but certainly like the relative simplicity of the
+> solution when compared with other approaches taken, e.g. (5 topmost
+> commits on this branch):
+> http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=wip
+> 
+> > In fact, I think that with this patch in place, much of the need for the
+> > rescue_workqueue won't exist any more.  I cannot promise it can be
+> > removed completely, but it should be to hard to make it optional and
+> > only enabled for those few block devices that will still need it.
+> > The rescuer should only be needed for a bioset which can be allocated
+> > From twice in the one call the ->make_request_fn.  This would include
+> > raid0 for example, though raid0_make_reqest could be re-written to not
+> > use a loop and to just call generic_make_request(bio) if bio != split.
+> 
+> > > Suggested-by: NeilBrown <neilb@suse.com>
+> > > Signed-off-by: Jack Wang <jinpu.wang@profitbricks.com>
+> > > ---
+> > >  block/blk-core.c | 20 ++++++++++++++++++++
+> > >  1 file changed, 20 insertions(+)
+> > >
+> > > diff --git a/block/blk-core.c b/block/blk-core.c
+> > > index 9e3ac56..47ef373 100644
+> > > --- a/block/blk-core.c
+> > > +++ b/block/blk-core.c
+> > > @@ -2138,10 +2138,30 @@ blk_qc_t generic_make_request(struct bio *bio)
+> > >  		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
+> > >  
+> > >  		if (likely(blk_queue_enter(q, __GFP_DIRECT_RECLAIM) == 0)) {
+> > > +			struct bio_list lower, same, hold;
+> > > +
+> > > +			/* Create a fresh bio_list for all subordinate requests */
+> > > +			bio_list_init(&hold);
+> > > +			bio_list_merge(&hold, &bio_list_on_stack);
+> > > +			bio_list_init(&bio_list_on_stack);
+> > >  
+> > >  			ret = q->make_request_fn(q, bio);
+> > >  
+> > >  			blk_queue_exit(q);
+> > > +			/* sort new bios into those for a lower level
+> > > +			 * and those for the same level
+> > > +			 */
+> > > +			bio_list_init(&lower);
+> > > +			bio_list_init(&same);
+> > > +			while ((bio = bio_list_pop(&bio_list_on_stack)) != NULL)
+> > > +				if (q == bdev_get_queue(bio->bi_bdev))
+> > > +					bio_list_add(&same, bio);
+> > > +				else
+> > > +					bio_list_add(&lower, bio);
+> > > +			/* now assemble so we handle the lowest level first */
+> > > +			bio_list_merge(&bio_list_on_stack, &lower);
+> > > +			bio_list_merge(&bio_list_on_stack, &same);
+> > > +			bio_list_merge(&bio_list_on_stack, &hold);
+> > >  
+> > >  			bio = bio_list_pop(current->bio_list);
+> > >  		} else {
+> > > -- 
+> > > 2.7.4
+> 
+> Mikulas, would you be willing to try the below patch with the
+> dm-snapshot deadlock scenario and report back on whether it fixes that?
+> 
+> Patch below looks to be the same as here:
+> https://marc.info/?l=linux-raid&m=148232453107685&q=p3
+> 
+> Neil and/or others if that isn't the patch that should be tested please
+> provide a pointer to the latest.
+> 
+> Thanks,
+> Mike
+
+The bad news is that this doesn't fix the snapshot deadlock.
+
+I created a test program for the snapshot deadlock bug (it was originally 
+created years ago to test for a different bug, so it contains some cruft). 
+You also need to insert "if (ci->sector_count) msleep(100);" to the end of 
+__split_and_process_non_flush to make the kernel sleep when splitting the 
+bio.
+
+And with the above above patch, the snapshot deadlock bug still happens.
+
+Mikulas
+
+
+#define _XOPEN_SOURCE 500
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+#include <errno.h>
+#include <malloc.h>
+#include <pthread.h>
+#include <asm/unistd.h>
+
+/*
+ * Change "VG" symbol to a volume group name that you are using.
+ *
+ * You must apply this patch to the kernel to trigger the bug:
+ * Index: linux-4.10-rc2/drivers/md/dm.c
+ * ===================================================================
+ * --- linux-4.10-rc2.orig/drivers/md/dm.c
+ * +++ linux-4.10-rc2/drivers/md/dm.c
+ * @@ -1223,6 +1223,9 @@ static int __split_and_process_non_flush
+ *         ci->sector += len;
+ *         ci->sector_count -= len;
+ * 
+ * +       if (ci->sector_count)
+ * +               msleep(100);
+ * +
+ *         return 0;
+ *  }
+ * 
+ */
+
+#define VG		"vg1"
+#define LV		"test_lv"
+#define LV_SNAP		"test_snap"
+#define MEGABYTES	"12"
+#define SNAP_MEGABYTES	"16"
+#define THREADS		1
+#define BS		4096
+#define SKEW		512
+#define ORIG_PATTERN	'p'
+#define NEW_PATTERN	'n'
+
+enum {
+	IOPRIO_CLASS_NONE,
+	IOPRIO_CLASS_RT,
+	IOPRIO_CLASS_BE,
+	IOPRIO_CLASS_IDLE,
+};
+
+enum {
+	IOPRIO_WHO_PROCESS = 1,
+	IOPRIO_WHO_PGRP,
+	IOPRIO_WHO_USER,
+};
+
+#define IOPRIO_CLASS_SHIFT	13
+
+static inline int ioprio_set(int which, int who, int ioprio)
+{
+	return syscall(__NR_ioprio_set, which, who, ioprio);
+}
+
+static inline int ioprio_get(int which, int who)
+{
+	return syscall(__NR_ioprio_get, which, who);
+}
+
+#define PRIO_READER	((IOPRIO_CLASS_IDLE << IOPRIO_CLASS_SHIFT) | 0xff)
+#define PRIO_WRITER	(IOPRIO_CLASS_RT << IOPRIO_CLASS_SHIFT)
+
+static void do_cmd(char *cmd, int ign_err)
+{
+	int r;
+	fprintf(stderr, "* %s\n", cmd);
+	r = system(cmd);
+	if (r) {
+		if (r == -1) {
+			perror("system");
+		} else {
+			if (ign_err) return;
+			fprintf(stderr, "return code %x\n", r);
+		}
+		exit(1);
+	}
+}
+
+static char pattern[BS];
+
+static int h_orig, h_snap;
+static int n;
+static long long test_of;
+static pthread_rwlock_t rw_lock_1;
+static pthread_rwlock_t rw_lock_2;
+static pthread_rwlock_t rw_lock_3;
+static volatile int started = 0;
+
+static void pthread_error(int r)
+{
+	fprintf(stderr, "pthread_error: %s\n", strerror(r));
+	exit(1);
+}
+
+static void *test_read(long long of)
+{
+	int r;
+	char *t = memalign(BS, BS);
+	if (!t) perror("memalign"), exit(1);
+	if ((r = pread(h_snap, t, BS, of)) != BS) {
+		fprintf(stderr, "can't read (%d): %s\n", r, strerror(errno));
+		exit(1);
+	}
+	if (memcmp(pattern, t, BS)) {
+		int i;
+		for (i = 0; i < BS; i++) if (t[i] != pattern[i]) break;
+		fprintf(stderr, "!!!! SNAPSHOT VOLUME DAMAGE AT BLOCK OFFSET %llX, BYTE OFFSET %X: %02x != %02x\n", of, i, (unsigned char)t[i], (unsigned char)pattern[i]);
+		exit(2);
+	}
+	free(t);
+	return NULL;
+}
+
+static void *test_thread(void *_)
+{
+	int r;
+	_ = _;
+	//fprintf(stderr, "start\n");
+	if ((r = ioprio_set(IOPRIO_WHO_PROCESS, 0, PRIO_READER))) perror("ioprio_set"), exit(1);
+	if ((r = pthread_rwlock_rdlock(&rw_lock_2))) pthread_error(r);
+	started = 1;
+	if ((r = ioprio_get(IOPRIO_WHO_PROCESS, 0)) != PRIO_READER) {
+		if (r == -1) perror("ioprio_get");
+		else fprintf(stderr, "reader priority not set: %x\n", r);
+		exit(1);
+	}
+	again:
+	if ((r = pthread_rwlock_rdlock(&rw_lock_1))) pthread_error(r);
+	if ((r = pthread_rwlock_unlock(&rw_lock_2))) pthread_error(r);
+	if (test_of == -1) {
+		if ((r = pthread_rwlock_unlock(&rw_lock_1))) pthread_error(r);
+		//fprintf(stderr, "return\n");
+		return NULL;
+	}
+	//fprintf(stderr, "test(%lld)\n", test_of);
+	test_read(test_of);
+	if ((r = pthread_rwlock_rdlock(&rw_lock_3))) pthread_error(r);
+	if ((r = pthread_rwlock_unlock(&rw_lock_1))) pthread_error(r);
+	if ((r = pthread_rwlock_rdlock(&rw_lock_2))) pthread_error(r);
+	if ((r = pthread_rwlock_unlock(&rw_lock_3))) pthread_error(r);
+	goto again;
+}
+
+int main(void)
+{
+	int i, j, r;
+	char *np;
+	pthread_t thr[THREADS];
+
+	memset(pattern, ORIG_PATTERN, sizeof pattern);
+
+	do_cmd("lvremove -f "VG"/"LV_SNAP"", 1);
+	do_cmd("lvremove -f "VG"/"LV"", 1);
+	do_cmd("lvcreate -L "MEGABYTES" -n "LV" "VG"", 0);
+
+	h_orig = open("/dev/mapper/"VG"-"LV"", O_RDWR);
+	if (h_orig < 0) perror("open orig"), exit(1);
+	if (lseek(h_orig, SKEW, SEEK_SET) == -1) perror("lseek"), exit(1);
+	n = 0;
+	while (write(h_orig, pattern, BS) == BS) {
+		n++;
+		fprintf(stderr, "creating %llx...\r", (long long)n * BS + SKEW);
+	}
+	if (fsync(h_orig)) perror("fsync"), exit(1);
+	fprintf(stderr,"\n");
+	lseek(h_orig, 0, SEEK_SET);
+	close(h_orig);
+
+	do_cmd("lvcreate -L "SNAP_MEGABYTES" -n "LV_SNAP" -s "VG"/"LV"", 0);
+
+	h_orig = open("/dev/mapper/"VG"-"LV"", O_RDWR | O_DIRECT);
+	if (h_orig < 0) perror("open orig"), exit(1);
+
+	h_snap = open("/dev/mapper/"VG"-"LV_SNAP"", O_RDONLY | O_DIRECT);
+	if (h_snap < 0) perror("open snap"), exit(1);
+
+	if ((r = pthread_rwlock_init(&rw_lock_1, NULL))) pthread_error(r);
+	if ((r = pthread_rwlock_init(&rw_lock_2, NULL))) pthread_error(r);
+	if ((r = pthread_rwlock_init(&rw_lock_3, NULL))) pthread_error(r);
+	if ((r = pthread_rwlock_wrlock(&rw_lock_1))) pthread_error(r);
+	if ((r = pthread_rwlock_wrlock(&rw_lock_3))) pthread_error(r);
+
+	if ((r = ioprio_set(IOPRIO_WHO_PROCESS, 0, PRIO_WRITER))) perror("ioprio_set"), exit(1);
+
+	for (j = 0; j < THREADS; j++) {
+		if ((r = pthread_create(&thr[j], NULL, test_thread, NULL))) pthread_error(r);
+	}
+	while (!started) usleep(1000);
+
+	if ((r = ioprio_get(IOPRIO_WHO_PROCESS, 0)) != PRIO_WRITER) {
+		if (r == -1) perror("ioprio_get");
+		else fprintf(stderr, "writer priority not set: %x\n", r);
+		exit(1);
+	}
+
+	np = memalign(BS, BS);
+	if (!np) perror("memalign"), exit(1);
+	memset(np, NEW_PATTERN, BS);
+	for (i = 0; i < n; i++) {
+		test_of = (off_t)i * BS + SKEW;
+		fprintf(stderr, "testing %llx...\r", test_of);
+		if ((r = pthread_rwlock_unlock(&rw_lock_1))) pthread_error(r);
+		sched_yield();
+		if (pwrite(h_orig, np, BS, test_of) != BS) {
+			fprintf(stderr, "can't write (%d): %s\n", r, strerror(errno));
+			exit(1);
+		}
+		if ((r = pthread_rwlock_wrlock(&rw_lock_2))) pthread_error(r);
+		if ((r = pthread_rwlock_unlock(&rw_lock_3))) pthread_error(r);
+		if ((r = pthread_rwlock_wrlock(&rw_lock_1))) pthread_error(r);
+		if ((r = pthread_rwlock_unlock(&rw_lock_2))) pthread_error(r);
+		if ((r = pthread_rwlock_wrlock(&rw_lock_3))) pthread_error(r);
+	}
+	fprintf(stderr,"\n");
+
+	test_of = -1;
+	if ((r = pthread_rwlock_unlock(&rw_lock_1))) pthread_error(r);
+
+	for (j = 0; j < THREADS; j++) {
+		if ((r = pthread_join(thr[j], NULL))) pthread_error(r);
+	}
+
+	fprintf(stderr, "TEST PASSED OK.\n");
+
+	return 0;
+}
+
