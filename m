@@ -1,22 +1,22 @@
-From: Eric Sandeen <sandeen@sandeen.net>
+From: Christoph Hellwig <hch@infradead.org>
 Subject: Re: trouble with generic/081
-Date: Mon, 9 Jan 2017 08:54:02 -0600
-Message-ID: <0cb45b07-4cae-0dc5-0605-752f2e0dfda1@sandeen.net>
-References: <20161215084224.GA14395@infradead.org>
-	<c05b64b6-80d3-655d-db9b-6f49038e53ee@redhat.com>
-	<20161216081523.GA13847@infradead.org>
+Date: Mon, 9 Jan 2017 07:01:26 -0800
+Message-ID: <20170109150126.GA7501@infradead.org>
+References: <20161216081523.GA13847@infradead.org>
 	<5806882c-4807-cb2a-80dd-147de5bf176a@sandeen.net>
 	<a0c8e06f-db87-393b-419d-d6f8c345fbc8@redhat.com>
 	<86b3a61e-5088-4614-1a27-60a5d095ee24@sandeen.net>
 	<577228bb-523c-2dbf-1387-e1cb03d07905@redhat.com>
 	<18e7613b-5a83-d802-a38f-35a9a604fdb3@sandeen.net>
 	<7b8fa79f-89f8-bb9a-a2fc-8a3b966a877d@redhat.com>
-	<20170105224600.GC4326@dastard> <20170109133919.GB19577@infradead.org>
+	<20170105224600.GC4326@dastard>
+	<20170109133919.GB19577@infradead.org>
 	<15605149-0590-1555-6522-38d2eff69026@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 In-Reply-To: <15605149-0590-1555-6522-38d2eff69026@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -27,77 +27,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>, Christoph Hellwig <hch@infradead.org>, Dave Chinner <david@fromorbit.com>
-Cc: dm-devel@redhat.com, eguan@redhat.com
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Eric Sandeen <sandeen@sandeen.net>, dm-devel@redhat.com, Dave Chinner <david@fromorbit.com>, eguan@redhat.com
 List-Id: dm-devel.ids
 
-On 1/9/17 8:22 AM, Zdenek Kabelac wrote:
-> But could anyone from XFS specify -  why  umount is causing some
-> 'more' damage, then  no umount at all ?
+On Mon, Jan 09, 2017 at 03:22:00PM +0100, Zdenek Kabelac wrote:
+> lvm2 will initiate lazy umount of ALL thin devices from a thin-pool
+> when it gets about 95% fullness  (so it's a bit sooner then 100%
+> with still some 5% 'free-space'.
 
-Please reread this thread...  it /started/ with problems
-/caused by unmount/ for Christoph.
+Yes, and we want this not to be done.  Not for XFS and not for any
+other file system.  umounting is something neither lvm nor the
+filesystem should do, but instead the administrator.
 
-It's not that unmount damages the filesystem per se; it damages the
-/system/ when it uncovers the underlying mountpoint and applications
-continue writing without error, to the /wrong filesystem/.
+> So it should get into EXACT same state as  is advocated here - do nothing
+> case - without invoking 'lazy umount' but significantly later
+> (so IMHO causing possibly more damage to a user).
 
-Further, if unmount requires IO that can't complete due to ENOSPC,
-then launching the unmount behind the admin's back may cause other
-problems when it gets detached from the namespace.
+The lazy unmount does not help.  If LVM want to give the fs a headups
+about running out of space please do so, this would be useful as we
+could then do sensible things, like doing a discard of all free blocks
+or an explicit, early fs shutdown.  But don't just lazy unmount the fs
+which only creates lots of problems.
 
-Christoph later clarified:
+> But could anyone from XFS specify -  why  umount is causing some 'more'
+> damage, then  no umount at all ?
 
-> Even on a production system I'd much rather have a shutdown XFS fs
-> than LVM trying to unmount, probably hanging because there are busy
-> fds on the fs, and if not the application might not write to another
-> fs becaus of this.  It's just an amazingly stupid idea.
+It is causing damage because unmount cause additional I/O, at a point
+where we possibly might not want more I/O.  It also doesn't let the
+file system to do useful things.  And last but not least it changes the
+namespace (aka mount topology) in an absolutely unexpected way, which
+might even introduce security issues because now users could write
+into otherwise hidden directories in the parent mountpoint.
 
-And again:
+> Also please note - since its mentioned namespaces here - if this is
+> something Docker related - be aware for Docker thins  - lvm2 for awhile is
+> leaving such volumes intact already (-> no umount for docker thins volume).
 
-> invi[si]bly unmounting
-> a file system behind the users back is actively harmful, as it is
-> contradicting the principle of least surprise, and the xfstests mess
-> is one simple example for it.
-...
-> [ it's undesirable to ] unmount and expose the namespace below it,
-> which the administrator has probably intentionally hid.
-
-> Even worse unmount may trigger further writes and with fses not
-> handling them the fs might now be stuck after being detached from
-> the namespace without a way for the admin to detect or recover this.
-
-Dave agreed:
-
-> And my 2c worth on the "lvm unmounting filesystems on error" - stop
-> it, now. It's the wrong thing to do, and it makes it impossible for
-> filesystems to handle the error and recover gracefully when
-> possible.
-
-Now, as for:
-
-> Is xfs refusing to umount 'erroring' device ? 
-
-I'm not sure what you mean by this.  XFS never unmounts itself.
-If you're asking if an XFS filesystem in an error state (i.e., shutdown,
-or with failing IOs) can unmount - yes, it is possible to unmount
-a filesystem in this state.  The administrator can make that choice.
-
-
-
-You've had two preeminent XFS developers ask repeatedly that
-you stop unmounting xfs from lvm2.  I really wish you would take their
-advice.
-
-We need to work together to ensure that these subsystems react
-in the best possible way to overprovisioned storage, and give the admin
-the best chance at recovery without more adverse affects.  For the reasons
-stated above, unmounting the filesystem does not achieve this goal.
-
-It leads to application IO to wrong filesystems (quite possibly root),
-detached filesystems which can no longer be administered, possible hung
-unmounts, etc.  Automatic unmount is the wrong reaction, please stop doing
-it.
-
-Thanks,
--Eric
+The filesystem namespace has nothing to do with docker at all.
