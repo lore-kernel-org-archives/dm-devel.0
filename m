@@ -1,97 +1,49 @@
-From: =?UTF-8?B?T25kcmVqIE1vc27DocSNZWs=?=
-        <omosnacek+linux-crypto@gmail.com>
-Subject: Re: [RFC PATCH v2] crypto: Add IV generation algorithms
-Date: Wed, 11 Jan 2017 15:55:11 +0100
-Message-ID: <CAAUqJDvA9Qwci7DFF4j4_D_=zYz81Rn1cgEnmQhhOS-JWrpXGA@mail.gmail.com>
-References: <1481618949-20086-1-git-send-email-binoy.jayan@linaro.org> <1481618949-20086-2-git-send-email-binoy.jayan@linaro.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 14/15] block/bsg: move queue creation into bsg_setup_queue
+Date: Wed, 11 Jan 2017 17:01:22 -0500
+Message-ID: <20170111220122.GA19051@redhat.com>
+References: <1484060780-15592-1-git-send-email-hch@lst.de>
+ <1484060780-15592-15-git-send-email-hch@lst.de>
+ <20170111084218.GB6286@linux-x5ow.site>
+ <20170111084512.GA6937@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <1481618949-20086-2-git-send-email-binoy.jayan@linaro.org>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Binoy Jayan <binoy.jayan@linaro.org>
-Cc: Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170111084512.GA6937@lst.de>
+Sender: linux-block-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Johannes Thumshirn <jthumshirn@suse.de>, Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Binoy,
+On Wed, Jan 11 2017 at  3:45am -0500,
+Christoph Hellwig <hch@lst.de> wrote:
 
-2016-12-13 9:49 GMT+01:00 Binoy Jayan <binoy.jayan@linaro.org>:
-> Currently, the iv generation algorithms are implemented in dm-crypt.c.
-> The goal is to move these algorithms from the dm layer to the kernel
-> crypto layer by implementing them as template ciphers so they can be
-> implemented in hardware for performance. As part of this patchset, the
-> iv-generation code is moved from the dm layer to the crypto layer and
-> adapt the dm-layer to send a whole 'bio' (as defined in the block layer)
-> at a time. Each bio contains the in memory representation of physically
-> contiguous disk blocks. The dm layer sets up a chained scatterlist of
-> these blocks split into physically contiguous segments in memory so that
-> DMA can be performed. The iv generation algorithms implemented in geniv.c
-> include plain, plain64, essiv, benbi, null, lmk and tcw.
+> On Wed, Jan 11, 2017 at 09:42:44AM +0100, Johannes Thumshirn wrote:
+> > On Tue, Jan 10, 2017 at 04:06:19PM +0100, Christoph Hellwig wrote:
+> > > Simply the boilerplate code needed for bsg nodes a bit.
+> > > 
+> > > Signed-off-by: Christoph Hellwig <hch@lst.de>
+> > > ---
+> > 
+> > that reminds me of posting my SAS bsg-lib patch...
+> 
+> Yes.  Having SAS use bsg-lib, and bsg-lib switched away from abusing
+> struct request_queue would make this series a lot cleaner.
+> 
+> So maybe we should get that into the scsi tree for 4.10 together
+> with the prep patches in this series as a priority and defer the actual
+> struct request changes once again.  That should also give us some more
+> time to sort out the dm-mpath story..
 
-I like what you are trying to achieve, however I don't think the
-solution you are heading towards (passing sector number to a special
-crypto template) would be the best approach here. Milan is currently
-trying to add authenticated encryption support to dm-crypt (see [1])
-and as part of this change, a new random IV mode would be introduced.
-This mode generates a random IV for each sector write, includes it in
-the authenticated data and stores it in the sector's metadata (in a
-separate part of the disk). In this case dm-crypt will need to have
-control over the IV generation (or at least be able to somehow
-retrieve it after the crypto operation).
+I'm not aware of the story you're referring to.  I'm missing the actual
+challenge you're facing.
 
-That said, I believe a different approach would be preferable here. I
-would suggest, instead of moving the IV generation to the crypto
-layer, to add a new type of request to skcipher API (let's call it
-'skcipher_bulk_request'), which could be used to submit several
-messages at once (together in a single sg list), each with their own
-IV, to a skcipher. This would allow drivers to optimize handling of
-such requests (e.g. the SIMD ciphers could call kernel_fpu_begin/end
-just once for the whole request). It could be done in such a way, that
-implementing this type of requests would be optional and a fallback
-implementation, which would just split the request into regular
-skcipher_requests, would be automatically set for the ciphers that do
-not set it themselves. That way this would require no changes to
-crypto drivers in the beginning and optimizations could be added
-incrementally.
+But I've seen you reference the need to stop multipath from allocating
+its own requests.  Are you referring to old request_fn request-based
+multipath's clone_old_rq:alloc_old_clone_request?
 
-The advantage of this approach to handling such "bulk" requests is
-that crypto drivers could just optimize regular algorithms (xts(aes),
-cbc(aes), etc.) and wouldn't need to mess with dm-crypt-specific IV
-generation. This also means that other users that could potentially
-benefit from bulking requests (perhaps network stack?) could use the
-same functionality.
+Or how blk-mq request-based multipath gets a request from the blk-mq tag
+space (via blk_mq_alloc_request)?
 
-I have been playing with this idea for some time now and I should have
-an RFC patchset ready soon...
-
-Binoy, Herbert, what do you think about such approach?
-
-[1] https://www.redhat.com/archives/dm-devel/2017-January/msg00028.html
-
-> When using multiple keys with the original dm-crypt, the key selection is
-> made based on the sector number as:
->
-> key_index = sector & (key_count - 1)
->
-> This restricts the usage of the same key for encrypting/decrypting a
-> single bio. One way to solve this is to move the key management code from
-> dm-crypt to cryto layer. But this seems tricky when using template ciphers
-> because, when multiple ciphers are instantiated from dm layer, each cipher
-> instance set with a unique subkey (part of the bigger master key) and
-> these instances themselves do not have access to each other's instances
-> or contexts. This way, a single instance cannot encryt/decrypt a whole bio.
-> This has to be fixed.
-
-Please note that the "keycount" parameter was added to dm-crypt solely
-for the purpose of implementing the loop-AES partition format. In
-general, the security benefit gained by using keycount > 1 is
-debatable, so it does not really make sense to use it for anything
-else than accessing legacy loopAES partitions. Since Milan decided to
-add it as a generic parameter, instead of hard-coding the
-functionality for the LMK mode, it can be technically used also in
-other combinations, but IMHO it is perfectly reasonable to just give
-up on optimizing the cases when keycount > 1. I believe the loop-AES
-partition support is just not that important :)
-
-Thanks,
-Ondrej
+Or both?  How is that holding you back?
