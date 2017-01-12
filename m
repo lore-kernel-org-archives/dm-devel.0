@@ -1,282 +1,168 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH] dm raid: fix transient device failure
- processing
-Date: Thu, 12 Jan 2017 17:50:48 +0100
-Message-ID: <3b588c53-7a51-9210-d921-cc17a521fb8c@redhat.com>
-References: <20161222202601.20274-1-heinzm@redhat.com>
-	<30EAC121-D4D9-4F6B-A98C-CD4F425F9AE9@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [dm-devel] [LSF/MM TOPIC][LSF/MM ATTEND] multipath redesign
+Date: Thu, 12 Jan 2017 11:29:59 -0600
+Message-ID: <20170112172959.GT2732@octiron.msp.redhat.com>
+References: <00700606-3005-c82b-ee37-127417fbd201@suse.de>
+ <20170111222339.GC19051@redhat.com>
+ <19415684-1ec7-1926-b420-3b53ea247e1b@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <30EAC121-D4D9-4F6B-A98C-CD4F425F9AE9@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Brassow Jonathan <jbrassow@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <19415684-1ec7-1926-b420-3b53ea247e1b@suse.de>
+Sender: linux-block-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, "linux-scsi@vger.kernel.org" <Linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Ckl0IG5lZWRzIHJlc3BlY3RpdmUgcHJlcmVxdWlzaXRlIHBhdGNoZXMgdG8gYWRkIHJhaWQ0LzUv
-NiBqb3VybmFsIGRldmljZSAKc3VwcG9ydCByYWlzaW5nIHZlcnNpb24gdG8gMS4xMC4wLgoKV2ls
-bCBzZXBlcmF0ZSBtaW5vciBjbGVhbnVwcyBvdXQgYW5kIHJlc3VibWl0LgoKSGVpbnoKCgpPbiAw
-MS8wNS8yMDE3IDAyOjU4IEFNLCBCcmFzc293IEpvbmF0aGFuIHdyb3RlOgo+IEkgdGhpbmsgdGhp
-cyBwYXRjaCBpcyBub3QgaW5saW5lIHdpdGggdXBzdHJlYW0uICAoVmVyc2lvbiAxLjEwLjAgaXMg
-bm90IHlldCBhdmFpbGFibGUgdXBzdHJlYW0gLSBjdXJyZW50bHkgMS45LjEuKQo+Cj4gSWYgeW91
-IGFyZSByZXN1Ym1pdHRpbmcgdGhlIHBhdGNoLCBpdOKAmWQgYmUgZ3JlYXQgaWYgeW91IGNvdWxk
-IHNlcGFyYXRlIHRoZSBjbGVhbi11cCAoZS5nLiBzL2RldlswXS9tZC8pIGZyb20gdGhlIG5lY2Vz
-c2FyeSBjaGFuZ2VzLgo+Cj4gICBicmFzc293Cj4KPj4gT24gRGVjIDIyLCAyMDE2LCBhdCAyOjI2
-IFBNLCBIZWlueiBNYXVlbHNoYWdlbiA8aGVpbnptQHJlZGhhdC5jb20+IHdyb3RlOgo+Pgo+PiBU
-aGlzIHBhdGNoIGFkZHJlc3NlcyB0aGUgZm9sbG93aW5nIDMgZmFpbHVyZSBzY2VuYXJpb3M6Cj4+
-Cj4+IDEpIElmIGEgKHRyYW5zaWVudGx5KSBpbmFjY2Vzc2libGUgbWV0YWRhdGEgZGV2aWNlIGlz
-IGJlaW5nIHBhc3NlZCBpbnRvIHRoZQo+PiBjb25zdHJ1Y3RvciAoZS5nLiBhIGRldmljZSB0dXBs
-ZSAnMjU0OjQgMjU0OjUnKSwgaXQgaXMgcHJvY2Vzc2VkIGFzIGlmCj4+ICctIC0nIHdhcyBnaXZl
-bi4gIFRoaXMgZXJyb25lb3VzbHkgcmVzdWx0cyBpbiBhIHN0YXR1cyB0YWJsZSBsaW5lIGNvbnRh
-aW5pbmcKPj4gJy0gLScsIHdoaWNoIG1pc3Rha2VubHkgZGlmZmVycyBmcm9tIHdoYXQgaGFzIGJl
-ZW4gcGFzc2VkIGluLiAgQXMgYSByZXN1bHQsCj4+IHVzZXJzcGFjZSBsaWJkZXZtYXBwZXIgcHV0
-cyB0aGUgZGV2aWNlIHR1cGxlIHNlcGVyYXRlIGZyb20gdGhlIFJBSUQgZGV2aWNlCj4+IHRodXMg
-bm90IHByb2Nlc3NpbmcgdGhlIGRlcGVuZGVuY2llcyBwcm9wZXJseS4KPj4KPj4gMikgRmFsc2Ug
-aGVhbHRoIHN0YXR1cyBjaGFyICdBJyBpbnN0ZWFkIG9mICdEJyBpcyBlbWl0dGVkIG9uIHRoZSBz
-dGF0dXMKPj4gc3RhdHVzIGluZm8gbGluZSBmb3IgdGhlIG1ldGEvZGF0YSBkZXZpY2UgdHVwbGUg
-aW4gdGhpcyBtZXRhZGF0YSBkZXZpY2UKPj4gZmFpbHVyZSBjYXNlLgo+Pgo+PiAzKSBJZiB0aGUg
-bWV0YWRhdGEgZGV2aWNlIGlzIGFjY2Vzc2libGUgd2hlbiBwYXNzZWQgaW50byB0aGUgY29uc3Ry
-dWN0b3IKPj4gYnV0IHRoZSBkYXRhIGRldmljZSAocGFydGlhbGx5KSBpc24ndCwgdGhhdCBsZWcg
-bWF5IGJlIHNldCBmYXVsdHkgYnkgdGhlCj4+IHJhaWQgcGVyc29uYWxpdHkgb24gYWNjZXNzIHRv
-IHRoZSAocGFydGlhbGx5KSB1bmF2YWlsYWJsZSBsZWcuICBSZXN0b3JlCj4+IHRyaWVkIGluIGEg
-c2Vjb25kIHJhaWQgZGV2aWNlIHJlc3VtZSBvbiBzdWNoIGZhaWxlZCBsZWcgKHN0YXR1cyBjaGFy
-ICdEJykKPj4gZmFpbHMgYWZ0ZXIgdGhlIChwYXJ0aWFsKSBsZWcgcmV0dXJuZWQuCj4+Cj4+IEZp
-eGVzIGZvciBhZm9yZW1lbnRpb25lZCBmYWlsdXJlIHNjZW5hcmlvczoKPj4KPj4gLSBkb24ndCBy
-ZWxlYXNlIHBhc3NlZCBpbiBkZXZpY2VzIGluIHRoZSBjb25zdHJ1Y3RvciB0aHVzIGFsbG93aW5n
-IHRoZQo+PiAgIHN0YXR1cyB0YWJsZSBsaW5lIHRvIGUuZy4gY29udGFpbiAnMjU0OjQgMjU0OjUn
-IHJhdGhlciB0aGFuICctIC0nCj4+Cj4+IC0gZW1pdCBkZXZpY2Ugc3RhdHVzIGNoYXIgJ0QnIHJh
-dGhlciB0aGFuICdBJyBmb3IgdGhlIGRldmljZSB0dXBsZQo+PiAgIHdpdGggdGhlIGZhaWxlZCBt
-ZXRhZGF0YSBkZXZpY2Ugb24gdGhlIHN0YXR1cyBpbmZvIGxpbmUKPj4KPj4gLSB3aGVuIGF0dGVt
-cHRpbmcgdG8gcmVzdG9yZSBmYXVsdHkgZGV2aWNlcyBpbiBhIHNlY29uZCByZXN1bWUsIGFsbG93
-IHRoZQo+PiAgIGRldmljZSBob3QgcmVtb3ZlIGZ1bmN0aW9uIHRvIHN1Y2NlZWQgYnkgc2V0dGlu
-ZyB0aGUgZGV2aWNlIHRvIG5vdCBpbi1zeW5jCj4+Cj4+IEluIGNhc2UgdXNlcnNwYWNlIGludGVu
-dGlvbmFsbHkgcGFzc2VzICctIC0nIGludG8gdGhlIGNvbnN0cnVjdG9yIHRvIGF2b2lkIHRoYXQK
-Pj4gZGV2aWNlIHR1cGxlIChlLmcuIHRvIHNwbGl0IG9mZiBhIHJhaWQxIGxlZyB0ZW1wb3Jhcmls
-eSBmb3IgbGF0ZXIgcmUtYWRkaXRpb24pLAo+PiB0aGUgc3RhdHVzIHRhYmxlIGxpbmUgd2lsbCBj
-b3JyZWN0bHkgc2hvdyAnLSAtJyBhbmQgdGhlIHN0YXR1cyBpbmZvIGxpbmUgd2lsbAo+PiBwcm92
-aWRlIGEgJy0nIGRldmljZSBoZWFsdGggY2hhcmFjdGVyIGZvciB0aGUgbm9uLWRlZmluZWQgZGV2
-aWNlIHR1cGxlLgo+Pgo+PiBDbGVhbnVwczoKPj4KPj4gLSB1c2UgcnMtPm1kLmRldl9zZWN0b3Jz
-IHRocm91Z2hvdXQgaW5zdGVhZCBvZiBycy0+ZGV2WzBdLnJkZXYuc2VjdG9ycyB0byBiZQo+PiAg
-IHByZXBhcmVkIGZvciB1c2Vyc3BhY2UgZXZlciBwYXNzaW5nIGluICctIC0nIGZvciB0aGUgZmly
-c3QgdHVwbGUKPj4KPj4gLSBhdm9pZCBzeW5jX3BhZ2VfaW8oKSBpbiBmYXZvdXIgb2YgcmVhZF9k
-aXNrX3NiKCkKPj4KPj4gLSBjb25zaXN0ZW50bHkgdXNlIG1kZGV2LT4gaW5zdGVhZCBvZiByZGV2
-LT5tZGRldiBvbiBiaXRtYXAgc2V0dXAKPj4KPj4KPj4gVGhpcyBwYXRjaCBpcyBvbiB0b3Agb2YK
-Pj4gIltQQVRDSF0gZG0gcmFpZDogY2hhbmdlIHJhaWQ0LzUvNiBqb3VybmFsIGRldmljZSBzdGF0
-dXMgaGVhbHRoIGNoYXIgdG8gJ0EnIHJhdGhlciB0aGFuICdKJyIKPj4gZGF0ZWQgMTIvMTMvMjAx
-Ni4KPj4KPj4gUmVzb2x2ZXM6IHJoYnoxNDA0NDI1Cj4+Cj4+IFNpZ25lZC1vZmYtYnk6IEhlaW56
-IE1hdWVsc2hhZ2VuIDxoZWluem1AcmVkaGF0LmNvbT4KPj4gLS0tCj4+IERvY3VtZW50YXRpb24v
-ZGV2aWNlLW1hcHBlci9kbS1yYWlkLnR4dCB8ICAgNCArKwo+PiBkcml2ZXJzL21kL2RtLXJhaWQu
-YyAgICAgICAgICAgICAgICAgICAgfCAxMjEgKysrKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0t
-LS0KPj4gMiBmaWxlcyBjaGFuZ2VkLCA2MCBpbnNlcnRpb25zKCspLCA2NSBkZWxldGlvbnMoLSkK
-Pj4KPj4gZGlmZiAtLWdpdCBhL0RvY3VtZW50YXRpb24vZGV2aWNlLW1hcHBlci9kbS1yYWlkLnR4
-dCBiL0RvY3VtZW50YXRpb24vZGV2aWNlLW1hcHBlci9kbS1yYWlkLnR4dAo+PiBpbmRleCA4ZTZk
-OTEwLi5mMGY0M2E3IDEwMDY0NAo+PiAtLS0gYS9Eb2N1bWVudGF0aW9uL2RldmljZS1tYXBwZXIv
-ZG0tcmFpZC50eHQKPj4gKysrIGIvRG9jdW1lbnRhdGlvbi9kZXZpY2UtbWFwcGVyL2RtLXJhaWQu
-dHh0Cj4+IEBAIC0zMjcsMyArMzI3LDcgQEAgVmVyc2lvbiBIaXN0b3J5Cj4+IAlhbmQgc2V0IHNp
-emUgcmVkdWN0aW9uLgo+PiAxLjkuMSAgIEZpeCBhY3RpdmF0aW9uIG9mIGV4aXN0aW5nIFJBSUQg
-NC8xMCBtYXBwZWQgZGV2aWNlcwo+PiAxLjEwLjAgIEFkZCBzdXBwb3J0IGZvciByYWlkNC81LzYg
-am91cm5hbCBkZXZpY2UKPj4gKzEuMTAuMSAgRG9uJ3QgZW1pdCAnLSAtJyBvbiB0aGUgc3RhdHVz
-IHRhYmxlIGxpbmUgaW4gY2FzZSB0aGUgY29uc3RydWN0b3IKPj4gKyAgICAgICAgZmFpbHMgcmVh
-ZGluZyBhIHN1cGVyYmxvY2suIENvcnJlY3RseSBlbWl0ICdtYWo6bWluMSBtYWo6bWluMicgYW5k
-Cj4+ICsgICAgICAgICdEJyBvbiB0aGUgc3RhdHVzIGxpbmUuICBJZiAnLSAtJyBpcyBwYXNzZWQg
-aW50byB0aGUgY29uc3RydWN0b3IsIGVtaXQKPj4gKyAgICAgICAgJy0gLScgb24gdGhlIHRhYmxl
-IGxpbmUgYW5kICctJyBhcyB0aGUgc3RhdHVzIGxpbmUgaGVhbHRoIGNoYXJhY3Rlci4KPj4gZGlm
-ZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0tcmFpZC5jIGIvZHJpdmVycy9tZC9kbS1yYWlkLmMKPj4g
-aW5kZXggMjViYjVhYi4uZjI5YWJiMiAxMDA2NDQKPj4gLS0tIGEvZHJpdmVycy9tZC9kbS1yYWlk
-LmMKPj4gKysrIGIvZHJpdmVycy9tZC9kbS1yYWlkLmMKPj4gQEAgLTM4OCw3ICszODgsNyBAQCBz
-dGF0aWMgYm9vbCByc19pc19yZXNoYXBhYmxlKHN0cnVjdCByYWlkX3NldCAqcnMpCj4+IC8qIFJl
-dHVybiB0cnVlLCBpZiByYWlkIHNldCBpbiBAcnMgaXMgcmVjb3ZlcmluZyAqLwo+PiBzdGF0aWMg
-Ym9vbCByc19pc19yZWNvdmVyaW5nKHN0cnVjdCByYWlkX3NldCAqcnMpCj4+IHsKPj4gLQlyZXR1
-cm4gcnMtPm1kLnJlY292ZXJ5X2NwIDwgcnMtPmRldlswXS5yZGV2LnNlY3RvcnM7Cj4+ICsJcmV0
-dXJuIHJzLT5tZC5yZWNvdmVyeV9jcCA8IHJzLT5tZC5kZXZfc2VjdG9yczsKPj4gfQo+Pgo+PiAv
-KiBSZXR1cm4gdHJ1ZSwgaWYgcmFpZCBzZXQgaW4gQHJzIGlzIHJlc2hhcGluZyAqLwo+PiBAQCAt
-MTU3Niw5ICsxNTc2LDkgQEAgc3RhdGljIHZvaWQgcnNfc2V0dXBfcmVjb3Zlcnkoc3RydWN0IHJh
-aWRfc2V0ICpycywgc2VjdG9yX3QgZGV2X3NlY3RvcnMpCj4+IAllbHNlIGlmIChkZXZfc2VjdG9y
-cyA9PSBNYXhTZWN0b3IpCj4+IAkJLyogUHJldmVudCByZWNvdmVyeSAqLwo+PiAJCV9fcnNfc2V0
-dXBfcmVjb3ZlcnkocnMsIE1heFNlY3Rvcik7Cj4+IC0JZWxzZSBpZiAocnMtPmRldlswXS5yZGV2
-LnNlY3RvcnMgPCBkZXZfc2VjdG9ycykKPj4gKwllbHNlIGlmIChycy0+bWQuZGV2X3NlY3RvcnMg
-PCBkZXZfc2VjdG9ycykKPj4gCQkvKiBHcm93biByYWlkIHNldCAqLwo+PiAtCQlfX3JzX3NldHVw
-X3JlY292ZXJ5KHJzLCBycy0+ZGV2WzBdLnJkZXYuc2VjdG9ycyk7Cj4+ICsJCV9fcnNfc2V0dXBf
-cmVjb3ZlcnkocnMsIHJzLT5tZC5kZXZfc2VjdG9ycyk7Cj4+IAllbHNlCj4+IAkJX19yc19zZXR1
-cF9yZWNvdmVyeShycywgTWF4U2VjdG9yKTsKPj4gfQo+PiBAQCAtMTkxNywxOCArMTkxNywyMSBA
-QCBzdGF0aWMgaW50IHJzX2NoZWNrX3Jlc2hhcGUoc3RydWN0IHJhaWRfc2V0ICpycykKPj4gCXJl
-dHVybiAtRVBFUk07Cj4+IH0KPj4KPj4gLXN0YXRpYyBpbnQgcmVhZF9kaXNrX3NiKHN0cnVjdCBt
-ZF9yZGV2ICpyZGV2LCBpbnQgc2l6ZSkKPj4gK3N0YXRpYyBpbnQgcmVhZF9kaXNrX3NiKHN0cnVj
-dCBtZF9yZGV2ICpyZGV2LCBpbnQgc2l6ZSwgYm9vbCBmb3JjZV9yZWxvYWQpCj4+IHsKPj4gCUJV
-R19PTighcmRldi0+c2JfcGFnZSk7Cj4+Cj4+IC0JaWYgKHJkZXYtPnNiX2xvYWRlZCkKPj4gKwlp
-ZiAocmRldi0+c2JfbG9hZGVkICYmICFmb3JjZV9yZWxvYWQpCj4+IAkJcmV0dXJuIDA7Cj4+Cj4+
-ICsJcmRldi0+c2JfbG9hZGVkID0gMDsKPj4gKwo+PiAJaWYgKCFzeW5jX3BhZ2VfaW8ocmRldiwg
-MCwgc2l6ZSwgcmRldi0+c2JfcGFnZSwgUkVRX09QX1JFQUQsIDAsIHRydWUpKSB7Cj4+IAkJRE1F
-UlIoIkZhaWxlZCB0byByZWFkIHN1cGVyYmxvY2sgb2YgZGV2aWNlIGF0IHBvc2l0aW9uICVkIiwK
-Pj4gCQkgICAgICByZGV2LT5yYWlkX2Rpc2spOwo+PiAJCW1kX2Vycm9yKHJkZXYtPm1kZGV2LCBy
-ZGV2KTsKPj4gLQkJcmV0dXJuIC1FSU5WQUw7Cj4+ICsJCXNldF9iaXQoRmF1bHR5LCAmcmRldi0+
-ZmxhZ3MpOwo+PiArCQlyZXR1cm4gLUVJTzsKPj4gCX0KPj4KPj4gCXJkZXYtPnNiX2xvYWRlZCA9
-IDE7Cj4+IEBAIC0yMDU2LDcgKzIwNTksNyBAQCBzdGF0aWMgaW50IHN1cGVyX2xvYWQoc3RydWN0
-IG1kX3JkZXYgKnJkZXYsIHN0cnVjdCBtZF9yZGV2ICpyZWZkZXYpCj4+IAkJcmV0dXJuIC1FSU5W
-QUw7Cj4+IAl9Cj4+Cj4+IC0JciA9IHJlYWRfZGlza19zYihyZGV2LCByZGV2LT5zYl9zaXplKTsK
-Pj4gKwlyID0gcmVhZF9kaXNrX3NiKHJkZXYsIHJkZXYtPnNiX3NpemUsIGZhbHNlKTsKPj4gCWlm
-IChyKQo+PiAJCXJldHVybiByOwo+Pgo+PiBAQCAtMjMyMyw3ICsyMzI2LDcgQEAgc3RhdGljIGlu
-dCBzdXBlcl92YWxpZGF0ZShzdHJ1Y3QgcmFpZF9zZXQgKnJzLCBzdHJ1Y3QgbWRfcmRldiAqcmRl
-dikKPj4gCXN0cnVjdCBtZGRldiAqbWRkZXYgPSAmcnMtPm1kOwo+PiAJc3RydWN0IGRtX3JhaWRf
-c3VwZXJibG9jayAqc2I7Cj4+Cj4+IC0JaWYgKHJzX2lzX3JhaWQwKHJzKSB8fCAhcmRldi0+c2Jf
-cGFnZSkKPj4gKwlpZiAocnNfaXNfcmFpZDAocnMpIHx8ICFyZGV2LT5zYl9wYWdlIHx8IHJkZXYt
-PnJhaWRfZGlzayA8IDApCj4+IAkJcmV0dXJuIDA7Cj4+Cj4+IAlzYiA9IHBhZ2VfYWRkcmVzcyhy
-ZGV2LT5zYl9wYWdlKTsKPj4gQEAgLTIzNDgsNyArMjM1MSw3IEBAIHN0YXRpYyBpbnQgc3VwZXJf
-dmFsaWRhdGUoc3RydWN0IHJhaWRfc2V0ICpycywgc3RydWN0IG1kX3JkZXYgKnJkZXYpCj4+Cj4+
-IAkvKiBFbmFibGUgYml0bWFwIGNyZWF0aW9uIGZvciBSQUlEIGxldmVscyAhPSAwICovCj4+IAlt
-ZGRldi0+Yml0bWFwX2luZm8ub2Zmc2V0ID0gcnRfaXNfcmFpZDAocnMtPnJhaWRfdHlwZSkgPyAw
-IDogdG9fc2VjdG9yKDQwOTYpOwo+PiAtCXJkZXYtPm1kZGV2LT5iaXRtYXBfaW5mby5kZWZhdWx0
-X29mZnNldCA9IG1kZGV2LT5iaXRtYXBfaW5mby5vZmZzZXQ7Cj4+ICsJbWRkZXYtPmJpdG1hcF9p
-bmZvLmRlZmF1bHRfb2Zmc2V0ID0gbWRkZXYtPmJpdG1hcF9pbmZvLm9mZnNldDsKPj4KPj4gCWlm
-ICghdGVzdF9hbmRfY2xlYXJfYml0KEZpcnN0VXNlLCAmcmRldi0+ZmxhZ3MpKSB7Cj4+IAkJLyog
-UmV0cmlldmUgZGV2aWNlIHNpemUgc3RvcmVkIGluIHN1cGVyYmxvY2sgdG8gYmUgcHJlcGFyZWQg
-Zm9yIHNocmluayAqLwo+PiBAQCAtMjM4NiwxMiArMjM4OSwxMSBAQCBzdGF0aWMgaW50IHN1cGVy
-X3ZhbGlkYXRlKHN0cnVjdCByYWlkX3NldCAqcnMsIHN0cnVjdCBtZF9yZGV2ICpyZGV2KQo+PiBz
-dGF0aWMgaW50IGFuYWx5c2Vfc3VwZXJibG9ja3Moc3RydWN0IGRtX3RhcmdldCAqdGksIHN0cnVj
-dCByYWlkX3NldCAqcnMpCj4+IHsKPj4gCWludCByOwo+PiAtCXN0cnVjdCByYWlkX2RldiAqZGV2
-Owo+PiAtCXN0cnVjdCBtZF9yZGV2ICpyZGV2LCAqdG1wLCAqZnJlc2hlc3Q7Cj4+ICsJc3RydWN0
-IG1kX3JkZXYgKnJkZXYsICpmcmVzaGVzdDsKPj4gCXN0cnVjdCBtZGRldiAqbWRkZXYgPSAmcnMt
-Pm1kOwo+Pgo+PiAJZnJlc2hlc3QgPSBOVUxMOwo+PiAtCXJkZXZfZm9yX2VhY2hfc2FmZShyZGV2
-LCB0bXAsIG1kZGV2KSB7Cj4+ICsJcmRldl9mb3JfZWFjaChyZGV2LCBtZGRldikgewo+PiAJCWlm
-ICh0ZXN0X2JpdChKb3VybmFsLCAmcmRldi0+ZmxhZ3MpKQo+PiAJCQljb250aW51ZTsKPj4KPj4g
-QEAgLTI0MDEsOSArMjQwMyw4IEBAIHN0YXRpYyBpbnQgYW5hbHlzZV9zdXBlcmJsb2NrcyhzdHJ1
-Y3QgZG1fdGFyZ2V0ICp0aSwgc3RydWN0IHJhaWRfc2V0ICpycykKPj4gCQkgKiB0aG91Z2ggaXQg
-d2VyZSBuZXcuCVRoaXMgaXMgdGhlIGludGVuZGVkIGVmZmVjdAo+PiAJCSAqIG9mIHRoZSAic3lu
-YyIgZGlyZWN0aXZlLgo+PiAJCSAqCj4+IC0JCSAqIFdoZW4gcmVzaGFwaW5nIGNhcGFiaWxpdHkg
-aXMgYWRkZWQsIHdlIG11c3QgZW5zdXJlCj4+IC0JCSAqIHRoYXQgdGhlICJzeW5jIiBkaXJlY3Rp
-dmUgaXMgZGlzYWxsb3dlZCBkdXJpbmcgdGhlCj4+IC0JCSAqIHJlc2hhcGUuCj4+ICsJCSAqIFdp
-dGggcmVzaGFwaW5nIGNhcGFiaWxpdHkgYWRkZWQsIHdlIG11c3QgZW5zdXJlIHRoYXQKPj4gKwkJ
-ICogdGhhdCB0aGUgInN5bmMiIGRpcmVjdGl2ZSBpcyBkaXNhbGxvd2VkIGR1cmluZyB0aGUgcmVz
-aGFwZS4KPj4gCQkgKi8KPj4gCQlpZiAodGVzdF9iaXQoX19DVFJfRkxBR19TWU5DLCAmcnMtPmN0
-cl9mbGFncykpCj4+IAkJCWNvbnRpbnVlOwo+PiBAQCAtMjQyMCw2ICsyNDIxLDcgQEAgc3RhdGlj
-IGludCBhbmFseXNlX3N1cGVyYmxvY2tzKHN0cnVjdCBkbV90YXJnZXQgKnRpLCBzdHJ1Y3QgcmFp
-ZF9zZXQgKnJzKQo+PiAJCWNhc2UgMDoKPj4gCQkJYnJlYWs7Cj4+IAkJZGVmYXVsdDoKPj4gKwkJ
-CS8qIFRoaXMgaXMgYSBmYWlsdXJlIHRvIHJlYWQgdGhlIHN1cGVyYmxvY2sgb2ZmIHRoZSBtZXRh
-ZGF0YSBkZXZpY2UuICovCj4+IAkJCS8qCj4+IAkJCSAqIFdlIGhhdmUgdG8ga2VlcCBhbnkgcmFp
-ZDAgZGF0YS9tZXRhZGF0YSBkZXZpY2UgcGFpcnMgb3IKPj4gCQkJICogdGhlIE1EIHJhaWQwIHBl
-cnNvbmFsaXR5IHdpbGwgZmFpbCB0byBzdGFydCB0aGUgYXJyYXkuCj4+IEBAIC0yNDI3LDMzICsy
-NDI5LDE3IEBAIHN0YXRpYyBpbnQgYW5hbHlzZV9zdXBlcmJsb2NrcyhzdHJ1Y3QgZG1fdGFyZ2V0
-ICp0aSwgc3RydWN0IHJhaWRfc2V0ICpycykKPj4gCQkJaWYgKHJzX2lzX3JhaWQwKHJzKSkKPj4g
-CQkJCWNvbnRpbnVlOwo+Pgo+PiAtCQkJZGV2ID0gY29udGFpbmVyX29mKHJkZXYsIHN0cnVjdCBy
-YWlkX2RldiwgcmRldik7Cj4+IC0JCQlpZiAoZGV2LT5tZXRhX2RldikKPj4gLQkJCQlkbV9wdXRf
-ZGV2aWNlKHRpLCBkZXYtPm1ldGFfZGV2KTsKPj4gLQo+PiAtCQkJZGV2LT5tZXRhX2RldiA9IE5V
-TEw7Cj4+IC0JCQlyZGV2LT5tZXRhX2JkZXYgPSBOVUxMOwo+PiAtCj4+IC0JCQlpZiAocmRldi0+
-c2JfcGFnZSkKPj4gLQkJCQlwdXRfcGFnZShyZGV2LT5zYl9wYWdlKTsKPj4gLQo+PiAtCQkJcmRl
-di0+c2JfcGFnZSA9IE5VTEw7Cj4+IC0KPj4gLQkJCXJkZXYtPnNiX2xvYWRlZCA9IDA7Cj4+IC0K
-Pj4gCQkJLyoKPj4gLQkJCSAqIFdlIG1pZ2h0IGJlIGFibGUgdG8gc2FsdmFnZSB0aGUgZGF0YSBk
-ZXZpY2UKPj4gLQkJCSAqIGV2ZW4gdGhvdWdoIHRoZSBtZXRhIGRldmljZSBoYXMgZmFpbGVkLiAg
-Rm9yCj4+IC0JCQkgKiBub3csIHdlIGJlaGF2ZSBhcyB0aG91Z2ggJy0gLScgaGFkIGJlZW4KPj4g
-LQkJCSAqIHNldCBmb3IgdGhpcyBkZXZpY2UgaW4gdGhlIHRhYmxlLgo+PiArCQkJICogV2Uga2Vl
-cCB0aGUgZG1fZGV2cyB0byBiZSBhYmxlIHRvIGVtaXQgdGhlIGRldmljZSB0dXBsZQo+PiArCQkJ
-ICogcHJvcGVybHkgb24gdGhlIHRhYmxlIGxpbmUgaW4gcmFpZF9zdGF0dXMoKSAocmF0aGVyIHRo
-YW4KPj4gKwkJCSAqIG1pc3Rha2VubHkgYWN0aW5nIGFzIGlmICctIC0nIGdvdCBwYXNzZWQgaW50
-byB0aGUgY29uc3RydWN0b3IpLgo+PiArCQkJICoKPj4gKwkJCSAqIFRoZSByZGV2IGhhcyB0byBz
-dGF5IG9uIHRoZSBzYW1lX3NldCBsaXN0IHRvIGFsbG93IGZvcgo+PiArCQkJICogdGhlIGF0dGVt
-cHQgdG8gcmVzdG9yZSBmYXVsdHkgZGV2aWNlcyBvbiBzZWNvbmQgcmVzdW1lLgo+PiAJCQkgKi8K
-Pj4gLQkJCWlmIChkZXYtPmRhdGFfZGV2KQo+PiAtCQkJCWRtX3B1dF9kZXZpY2UodGksIGRldi0+
-ZGF0YV9kZXYpOwo+PiAtCj4+IC0JCQlkZXYtPmRhdGFfZGV2ID0gTlVMTDsKPj4gLQkJCXJkZXYt
-PmJkZXYgPSBOVUxMOwo+PiAtCj4+IC0JCQlsaXN0X2RlbCgmcmRldi0+c2FtZV9zZXQpOwo+PiAr
-CQkJc2V0X2JpdChGYXVsdHksICZyZGV2LT5mbGFncyk7Cj4+ICsJCQlyZGV2LT5yYWlkX2Rpc2sg
-PSByZGV2LT5zYXZlZF9yYWlkX2Rpc2sgPSAtMTsKPj4gKwkJCWJyZWFrOwo+PiAJCX0KPj4gCX0K
-Pj4KPj4gQEAgLTI5MjQsNyArMjkxMCw3IEBAIHN0YXRpYyBpbnQgcmFpZF9jdHIoc3RydWN0IGRt
-X3RhcmdldCAqdGksIHVuc2lnbmVkIGludCBhcmdjLCBjaGFyICoqYXJndikKPj4gCWlmIChyKQo+
-PiAJCWdvdG8gYmFkOwo+Pgo+PiAtCWNhbGN1bGF0ZWRfZGV2X3NlY3RvcnMgPSBycy0+ZGV2WzBd
-LnJkZXYuc2VjdG9yczsKPj4gKwljYWxjdWxhdGVkX2Rldl9zZWN0b3JzID0gcnMtPm1kLmRldl9z
-ZWN0b3JzOwo+Pgo+PiAJLyoKPj4gCSAqIEJhY2t1cCBhbnkgbmV3IHJhaWQgc2V0IGxldmVsLCBs
-YXlvdXQsIC4uLgo+PiBAQCAtMjkzNyw3ICsyOTIzLDcgQEAgc3RhdGljIGludCByYWlkX2N0cihz
-dHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgdW5zaWduZWQgaW50IGFyZ2MsIGNoYXIgKiphcmd2KQo+PiAJ
-aWYgKHIpCj4+IAkJZ290byBiYWQ7Cj4+Cj4+IC0JcmVzaXplID0gY2FsY3VsYXRlZF9kZXZfc2Vj
-dG9ycyAhPSBycy0+ZGV2WzBdLnJkZXYuc2VjdG9yczsKPj4gKwlyZXNpemUgPSBjYWxjdWxhdGVk
-X2Rldl9zZWN0b3JzICE9IHJzLT5tZC5kZXZfc2VjdG9yczsKPj4KPj4gCUlOSVRfV09SSygmcnMt
-Pm1kLmV2ZW50X3dvcmssIGRvX3RhYmxlX2V2ZW50KTsKPj4gCXRpLT5wcml2YXRlID0gcnM7Cj4+
-IEBAIC0zMDE0LDcgKzMwMDAsNyBAQCBzdGF0aWMgaW50IHJhaWRfY3RyKHN0cnVjdCBkbV90YXJn
-ZXQgKnRpLCB1bnNpZ25lZCBpbnQgYXJnYywgY2hhciAqKmFyZ3YpCj4+IAkJICogaXMgYW4gaW5z
-dGFudCBvcGVyYXRpb24gYXMgb3Bvc2VkIHRvIGFuIG9uZ29pbmcgcmVzaGFwZS4KPj4gCQkgKi8K
-Pj4KPj4gLQkJLyogV2UgY2FuJ3QgcmVzaGFwZSBhIGpvcnVuYWxlZCByYWRpNC81LzYgKi8KPj4g
-KwkJLyogV2UgY2FuJ3QgcmVzaGFwZSBhIGpvdXJuYWxlZCByYWRpNC81LzYgKi8KPj4gCQlpZiAo
-dGVzdF9iaXQoX19DVFJfRkxBR19KT1VSTkFMX0RFViwgJnJzLT5jdHJfZmxhZ3MpKSB7Cj4+IAkJ
-CXRpLT5lcnJvciA9ICJDYW4ndCByZXNoYXBlIGEgam91cm5hbGVkIHJhaWQ0LzUvNiBzZXQiOwo+
-PiAJCQlyID0gLUVQRVJNOwo+PiBAQCAtMzE2NiwxNyArMzE1MiwyMCBAQCBzdGF0aWMgY29uc3Qg
-Y2hhciAqZGVjaXBoZXJfc3luY19hY3Rpb24oc3RydWN0IG1kZGV2ICptZGRldikKPj4gfQo+Pgo+
-PiAvKgo+PiAtICogUmV0dXJuIHN0YXR1cyBzdHJpbmcgQHJkZXYKPj4gKyAqIFJldHVybiBzdGF0
-dXMgc3RyaW5nIGZvciBAcmRldgo+PiAgICoKPj4gICAqIFN0YXR1cyBjaGFyYWN0ZXJzOgo+PiAg
-ICoKPj4gICAqICAnRCcgPSBEZWFkL0ZhaWxlZCByYWlkIHNldCBjb21wb25lbnQgb3IgcmFpZDQv
-NS82IGpvdXJuYWwgZGV2aWNlCj4+ICAgKiAgJ2EnID0gQWxpdmUgYnV0IG5vdCBpbi1zeW5jCj4+
-ICAgKiAgJ0EnID0gQWxpdmUgYW5kIGluLXN5bmMgcmFpZCBzZXQgY29tcG9uZW50IG9yIGFsaXZl
-IHJhaWQ0LzUvNiBqb3VybmFsIGRldmljZQo+PiArICogICctJyA9IE5vbi1leGlzdGluZyBkZXZp
-Y2UgKGkuZS4gdXNwYWNlIHBhc3NlZCAnLSAtJyBpbnRvIHRoZSBjdHIpCj4+ICAgKi8KPj4gc3Rh
-dGljIGNvbnN0IGNoYXIgKl9fcmFpZF9kZXZfc3RhdHVzKHN0cnVjdCBtZF9yZGV2ICpyZGV2LCBi
-b29sIGFycmF5X2luX3N5bmMpCj4+IHsKPj4gLQlpZiAodGVzdF9iaXQoRmF1bHR5LCAmcmRldi0+
-ZmxhZ3MpKQo+PiArCWlmICghcmRldi0+YmRldikKPj4gKwkJcmV0dXJuICItIjsKPj4gKwllbHNl
-IGlmICh0ZXN0X2JpdChGYXVsdHksICZyZGV2LT5mbGFncykpCj4+IAkJcmV0dXJuICJEIjsKPj4g
-CWVsc2UgaWYgKHRlc3RfYml0KEpvdXJuYWwsICZyZGV2LT5mbGFncykpCj4+IAkJcmV0dXJuICJB
-IjsKPj4gQEAgLTMyODEsNyArMzI3MCw2IEBAIHN0YXRpYyB2b2lkIHJhaWRfc3RhdHVzKHN0cnVj
-dCBkbV90YXJnZXQgKnRpLCBzdGF0dXNfdHlwZV90IHR5cGUsCj4+IAlzZWN0b3JfdCBwcm9ncmVz
-cywgcmVzeW5jX21heF9zZWN0b3JzLCByZXN5bmNfbWlzbWF0Y2hlczsKPj4gCWNvbnN0IGNoYXIg
-KnN5bmNfYWN0aW9uOwo+PiAJc3RydWN0IHJhaWRfdHlwZSAqcnQ7Cj4+IC0Jc3RydWN0IG1kX3Jk
-ZXYgKnJkZXY7Cj4+Cj4+IAlzd2l0Y2ggKHR5cGUpIHsKPj4gCWNhc2UgU1RBVFVTVFlQRV9JTkZP
-Ogo+PiBAQCAtMzMwMiwxMCArMzI5MCw5IEBAIHN0YXRpYyB2b2lkIHJhaWRfc3RhdHVzKHN0cnVj
-dCBkbV90YXJnZXQgKnRpLCBzdGF0dXNfdHlwZV90IHR5cGUsCj4+IAkJCQkgICAgYXRvbWljNjRf
-cmVhZCgmbWRkZXYtPnJlc3luY19taXNtYXRjaGVzKSA6IDA7Cj4+IAkJc3luY19hY3Rpb24gPSBk
-ZWNpcGhlcl9zeW5jX2FjdGlvbigmcnMtPm1kKTsKPj4KPj4gLQkJLyogSE0gRklYTUU6IGRvIHdl
-IHdhbnQgYW5vdGhlciBzdGF0ZSBjaGFyIGZvciByYWlkMD8gSXQgc2hvd3MgJ0QnIG9yICdBJyBu
-b3cgKi8KPj4gLQkJcmRldl9mb3JfZWFjaChyZGV2LCBtZGRldikKPj4gLQkJCWlmICghdGVzdF9i
-aXQoSm91cm5hbCwgJnJkZXYtPmZsYWdzKSkKPj4gLQkJCQlETUVNSVQoX19yYWlkX2Rldl9zdGF0
-dXMocmRldiwgYXJyYXlfaW5fc3luYykpOwo+PiArCQkvKiBITSBGSVhNRTogZG8gd2Ugd2FudCBh
-bm90aGVyIHN0YXRlIGNoYXIgZm9yIHJhaWQwPyBJdCBzaG93cyAnRCcvJ0EnLyctJyBub3cgKi8K
-Pj4gKwkJZm9yIChpID0gMDsgaSA8IHJzLT5yYWlkX2Rpc2tzOyBpKyspCj4+ICsJCQlETUVNSVQo
-X19yYWlkX2Rldl9zdGF0dXMoJnJzLT5kZXZbaV0ucmRldiwgYXJyYXlfaW5fc3luYykpOwo+Pgo+
-PiAJCS8qCj4+IAkJICogSW4tc3luYy9SZXNoYXBlIHJhdGlvOgo+PiBAQCAtMzUzNiwxMSArMzUy
-MywxMiBAQCBzdGF0aWMgdm9pZCBhdHRlbXB0X3Jlc3RvcmVfb2ZfZmF1bHR5X2RldmljZXMoc3Ry
-dWN0IHJhaWRfc2V0ICpycykKPj4KPj4gCW1lbXNldChjbGVhcmVkX2ZhaWxlZF9kZXZpY2VzLCAw
-LCBzaXplb2YoY2xlYXJlZF9mYWlsZWRfZGV2aWNlcykpOwo+Pgo+PiAtCWZvciAoaSA9IDA7IGkg
-PCBycy0+bWQucmFpZF9kaXNrczsgaSsrKSB7Cj4+ICsJZm9yIChpID0gMDsgaSA8IG1kZGV2LT5y
-YWlkX2Rpc2tzOyBpKyspIHsKPj4gCQlyID0gJnJzLT5kZXZbaV0ucmRldjsKPj4gLQkJaWYgKHRl
-c3RfYml0KEZhdWx0eSwgJnItPmZsYWdzKSAmJiByLT5zYl9wYWdlICYmCj4+IC0JCSAgICBzeW5j
-X3BhZ2VfaW8ociwgMCwgci0+c2Jfc2l6ZSwgci0+c2JfcGFnZSwKPj4gLQkJCQkgUkVRX09QX1JF
-QUQsIDAsIHRydWUpKSB7Cj4+ICsJCWlmICh0ZXN0X2JpdChKb3VybmFsLCAmci0+ZmxhZ3MpKQo+
-PiArCQkJY29udGludWU7Cj4+ICsKPj4gKwkJaWYgKHRlc3RfYml0KEZhdWx0eSwgJnItPmZsYWdz
-KSAmJiAhcmVhZF9kaXNrX3NiKHIsIHItPnNiX3NpemUsIHRydWUpKSB7Cj4+IAkJCURNSU5GTygi
-RmF1bHR5ICVzIGRldmljZSAjJWQgaGFzIHJlYWRhYmxlIHN1cGVyIGJsb2NrLiIKPj4gCQkJICAg
-ICAgICIgIEF0dGVtcHRpbmcgdG8gcmV2aXZlIGl0LiIsCj4+IAkJCSAgICAgICBycy0+cmFpZF90
-eXBlLT5uYW1lLCBpKTsKPj4gQEAgLTM1NTQsMjIgKzM1NDIsMjUgQEAgc3RhdGljIHZvaWQgYXR0
-ZW1wdF9yZXN0b3JlX29mX2ZhdWx0eV9kZXZpY2VzKHN0cnVjdCByYWlkX3NldCAqcnMpCj4+IAkJ
-CSAqICc+PSAwJyAtIG1lYW5pbmcgd2UgbXVzdCBjYWxsIHRoaXMgZnVuY3Rpb24KPj4gCQkJICog
-b3Vyc2VsdmVzLgo+PiAJCQkgKi8KPj4gLQkJCWlmICgoci0+cmFpZF9kaXNrID49IDApICYmCj4+
-IC0JCQkgICAgKG1kZGV2LT5wZXJzLT5ob3RfcmVtb3ZlX2Rpc2sobWRkZXYsIHIpICE9IDApKQo+
-PiAtCQkJCS8qIEZhaWxlZCB0byByZXZpdmUgdGhpcyBkZXZpY2UsIHRyeSBuZXh0ICovCj4+IC0J
-CQkJY29udGludWU7Cj4+IC0KPj4gLQkJCXItPnJhaWRfZGlzayA9IGk7Cj4+IC0JCQlyLT5zYXZl
-ZF9yYWlkX2Rpc2sgPSBpOwo+PiAJCQlmbGFncyA9IHItPmZsYWdzOwo+PiArCQkJY2xlYXJfYml0
-KEluX3N5bmMsICZyLT5mbGFncyk7IC8qIE1hbmRhdG9yeSBmb3IgaG90IHJlbW92ZS4gKi8KPj4g
-KwkJCWlmIChyLT5yYWlkX2Rpc2sgPj0gMCkgewo+PiArCQkJCWlmIChtZGRldi0+cGVycy0+aG90
-X3JlbW92ZV9kaXNrKG1kZGV2LCByKSkgewo+PiArCQkJCQkvKiBGYWlsZWQgdG8gcmV2aXZlIHRo
-aXMgZGV2aWNlLCB0cnkgbmV4dCAqLwo+PiArCQkJCQlyLT5mbGFncyA9IGZsYWdzOwo+PiArCQkJ
-CQljb250aW51ZTsKPj4gKwkJCQl9Cj4+ICsJCQl9IGVsc2UKPj4gKwkJCQlyLT5yYWlkX2Rpc2sg
-PSByLT5zYXZlZF9yYWlkX2Rpc2sgPSBpOwo+PiArCj4+IAkJCWNsZWFyX2JpdChGYXVsdHksICZy
-LT5mbGFncyk7Cj4+IAkJCWNsZWFyX2JpdChXcml0ZUVycm9yU2VlbiwgJnItPmZsYWdzKTsKPj4g
-LQkJCWNsZWFyX2JpdChJbl9zeW5jLCAmci0+ZmxhZ3MpOwo+PiArCj4+IAkJCWlmIChtZGRldi0+
-cGVycy0+aG90X2FkZF9kaXNrKG1kZGV2LCByKSkgewo+PiAtCQkJCXItPnJhaWRfZGlzayA9IC0x
-Owo+PiAtCQkJCXItPnNhdmVkX3JhaWRfZGlzayA9IC0xOwo+PiArCQkJCXItPnJhaWRfZGlzayA9
-IHItPnNhdmVkX3JhaWRfZGlzayA9IC0xOwo+PiAJCQkJci0+ZmxhZ3MgPSBmbGFnczsKPj4gCQkJ
-fSBlbHNlIHsKPj4gKwkJCQljbGVhcl9iaXQoSW5fc3luYywgJnItPmZsYWdzKTsKPj4gCQkJCXIt
-PnJlY292ZXJ5X29mZnNldCA9IDA7Cj4+IAkJCQlzZXRfYml0KGksICh2b2lkICopIGNsZWFyZWRf
-ZmFpbGVkX2RldmljZXMpOwo+PiAJCQkJY2xlYXJlZCA9IHRydWU7Cj4+IEBAIC0zNzY5LDcgKzM3
-NjAsNyBAQCBzdGF0aWMgdm9pZCByYWlkX3Jlc3VtZShzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSkKPj4K
-Pj4gc3RhdGljIHN0cnVjdCB0YXJnZXRfdHlwZSByYWlkX3RhcmdldCA9IHsKPj4gCS5uYW1lID0g
-InJhaWQiLAo+PiAtCS52ZXJzaW9uID0gezEsIDEwLCAwfSwKPj4gKwkudmVyc2lvbiA9IHsxLCAx
-MCwgMX0sCj4+IAkubW9kdWxlID0gVEhJU19NT0RVTEUsCj4+IAkuY3RyID0gcmFpZF9jdHIsCj4+
-IAkuZHRyID0gcmFpZF9kdHIsCj4+IC0tIAo+PiAyLjkuMwo+Pgo+PiAtLQo+PiBkbS1kZXZlbCBt
-YWlsaW5nIGxpc3QKPj4gZG0tZGV2ZWxAcmVkaGF0LmNvbQo+PiBodHRwczovL3d3dy5yZWRoYXQu
-Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApk
-bS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
-by9kbS1kZXZlbA==
+On Thu, Jan 12, 2017 at 09:27:40AM +0100, Hannes Reinecke wrote:
+> On 01/11/2017 11:23 PM, Mike Snitzer wrote:
+> >On Wed, Jan 11 2017 at  4:44am -0500,
+> >Hannes Reinecke <hare@suse.de> wrote:
+> >
+> >>Hi all,
+> >>
+> >>I'd like to attend LSF/MM this year, and would like to discuss a
+> >>redesign of the multipath handling.
+> >>
+> >>With recent kernels we've got quite some functionality required for
+> >>multipathing already implemented, making some design decisions of the
+> >>original multipath-tools implementation quite pointless.
+> >>
+> >>I'm working on a proof-of-concept implementation which just uses a
+> >>simple configfs interface and doesn't require a daemon altogether.
+> >>
+> >>At LSF/MM I'd like to discuss how to move forward here, and whether we'd
+> >>like to stay with the current device-mapper integration or move away
+> >>from that towards a stand-alone implementation.
+> >
+> >I'd really like open exchange of the problems you're having with the
+> >current multipath-tools and DM multipath _before LSF_.  Last LSF only
+> >scratched the surface on people having disdain for the complexity that is
+> >the multipath-tools userspace.  But considering how much of the
+> >multipath-tools you've written I find it fairly comical that you're the
+> >person advocating switching away from it.
+> >
+> Yeah, I know.
+> 
+> But I've stared long and hard at the code, and found some issues really hard
+> to overcome. Even more so as most things it does are really pointless.
+> 
+> multipathd _insists_ on redoing the _entire_ device layout for basically any
+> operation (except for path checking).
+> As the data structures allow only for a single setup it uses a lock per
+> multipath device to protect against concurrent changes.
+> When lots of uevents are to be processed this lock is heavily contended,
+> leading to a slow-down of uevent processing.
+> (cf the patchseries from Tang Junhui and my earlier pathset for
+> lock pushdown)
+> 
+> I've tried to move that lock down even further with distinct locks for
+> device paths and multipath devices, but ultimately failed as it would amount
+> to essentially a rewrite of the core engine.
+
+The multipath user-space tools locking IS horrible and touches
+everything.  I could never see a way around it that didn't involve
+a ground-up redesign.
+ 
+> >But if less userspace involvement is needed then fix userspace.  Fail to
+> >see how configfs is any different than the established DM ioctl interface.
+> >
+> >As I just said in another email DM multipath could benefit from
+> >factoring out the SCSI-specific bits so that they are nicely optimized
+> >away if using new transports (e.g. NVMEoF).
+> >
+> >Could be lessons can be learned from your approach but I'd prefer we
+> >provably exhaust the utility of the current DM multipath kernel
+> >implementation.  DM multipath is one of the most actively maintained and
+> >updated DM targets (aside from thinp and cache).  As you know DM
+> >multipath has grown blk-mq support which yielded serious performance
+> >improvement.  You also noted (in an earlier email) that I reintroduced
+> >bio-based DM multipath.  On a data path level we have all possible block
+> >core interfaces plumbed.  And yes, they all involve cloning due to the
+> >underlying Device Mapper core.  Open to any ideas on optimization.  If
+> >DM is imposing some inherent performance limitation then please report
+> >it accordingly.
+> >
+> Ah. And I thought you disliked request-based multipathing ...
+> 
+> It's not _actually_ the DM interface which I'm objecting to, it's more the
+> user-space implementation.
+> The daemon is build around some design decisions which are simply not
+> applicable anymore:
+> - we now _do_ have reliable device identifications, so the the 'path_id'
+> functionality is pointless.
+
+This could be largely fixed in the existing code. The route that the
+latest patch from Tang Junhui are going still grabs the wwid if we got
+it from the uevent, but it isn't necesary, as long was we're careful.
+Currently rbd devices don't get their wwid from the uevent but all other
+devices do. It would probably be possible to write an rbd device udev
+rule to set a variable so that they can work through udev environment
+variables too.
+
+> - The 'alua' device handler also provides you with reliable priority
+> information, so it should be possible to do away with the 'prio' setting,
+> too.
+
+But this isn't true for all devices. Also, Like I mentioned last year
+when this got brought up, no matter how we group the paths, there end up
+being users that have good reasons why they want them grouped
+differently in their case.  The path priority/grouping seems like one
+place where evidence has shown that we should give users the tools to
+make policy decisions, instead of making them ourselves.
+
+> - And for (most) SCSI devices the 'state' setting provides a reliable
+> indicator if the device is useable.
+
+This is also not true for all devices.
+
+So, are you planning on creating a multipath implementation that only
+handles some devices? Obviously, the current userspace tools are still
+around to handle setups that this wouldn't.
+
+While I've daydreamed of rewriting the multipath tools multiple times,
+and having nothing aginst you doing it in concept, I would be happier
+knowing that it won't simply mean that there are two sets of tools, that
+both need to be supported to deal with all customer configurations.
+
+-Ben 
+
+> 
+> Hence I've implemented a notifier chain (hooked onto 'struct gendisk') which
+> provides events for path up/path down etc.
+> With that it's possible to automatically fail and reinstate paths.
+> However, what's missing is an automatic pathgroup switch once all paths in a
+> group are down.
+> In the current implementation the device-mapper target doesn't have any
+> inkling about path priorities; it just sees path groups as such.
+> As it stands should reasonably trivial to switch to the next available
+> pathgroup, but fallback will become ... interesting.
+> So we would need to update the interface here to allow for path group
+> priorities and also for transmitting the fallback information.
+> 
+> Nothing insurmountable, agreed.
+> But once we do this most of the current functionality of the multipath-tools
+> daemon will become obsolete.
+> 
+> Plus I wasn't quite sure about the direction device-mapper itself will be
+> going, so I decided to implement a stand-alone version as a testbed.
+> I'm not trying to push that at all costs; I'm perfectly happy with updating
+> device-mapper.
+> As long as no-one insists we're having to use the bio-based interface ...
+> 
+> Cheers,
+> 
+> Hannes
+> -- 
+> Dr. Hannes Reinecke		   Teamlead Storage & Networking
+> hare@suse.de			               +49 911 74053 688
+> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
+> GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+> HRB 21284 (AG Nürnberg)
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
