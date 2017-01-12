@@ -1,11 +1,12 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 11/11] multipathd: proccess merged uevents
-Date: Thu, 12 Jan 2017 13:52:27 +0800
-Message-ID: <1484200347-11188-12-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH 02/11] libmultipath: add merge_node for "struct
+	uevent" to record nodes of merged uevents
+Date: Thu, 12 Jan 2017 13:52:18 +0800
+Message-ID: <1484200347-11188-3-git-send-email-tang.junhui@zte.com.cn>
 References: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -21,39 +22,54 @@ To: christophe.varoqui@opensvc.com, bmarzins@redhat.com, hare@suse.de, mwilck@su
 Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn, tang.wenjun3@zte.com.cn
 List-Id: dm-devel.ids
 
-RnJvbTogInRhbmcuanVuaHVpIiA8dGFuZy5qdW5odWlAenRlLmNvbS5jbj4KCkFmdGVyIGZpbHRl
-cmluZyBhbmQgbWVyZ2luZywgdGhlbiB1ZXZlbnRzIGFyZSBwcm9jZXNzZWQgaW4KdWV2X3RyaWdn
-ZXIoKSwgZmlyc3RseSwgZWFjaCBvZiBtZXJnZWQgdWV2ZW50cyB3b3VsZCBiZSBwcm9jZXNzZWQg
-b25lCmJ5IG9uZSB3aXRoIG5lZWRfZG9fbWFwIGluIHZhbHVlIG9mIDAuIEZpbmFsbHksIHRoZSBu
-b2RlIOKAnHVlduKAnSBpdHNlbGYKd291bGQgYmUgcHJvY2Vzc2VkIHdpdGggbmVlZF9kb19tYXAg
-aW4gdmFsdWUgb2YgMSwgd2hpY2ggd291bGQgcmVsb2FkCmtlcm5lbCB0YWJsZSwgYW5kIGNyZWF0
-ZSBvciByZW1vdmUgdGhlIGRtIGRldmljZS4KCkNoYW5nZS1JZDogSWZiNGRlMGNhMzYxODBhOGFm
-MTY3MjljMmY3MGJjMjUwODU4ODc3YmQKU2lnbmVkLW9mZi1ieTogdGFuZy5qdW5odWkgPHRhbmcu
-anVuaHVpQHp0ZS5jb20uY24+Ci0tLQogbXVsdGlwYXRoZC9tYWluLmMgfCAyOCArKysrKysrKysr
-KysrKystLS0tLS0tLS0tLS0tCiAxIGZpbGUgY2hhbmdlZCwgMTUgaW5zZXJ0aW9ucygrKSwgMTMg
-ZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9tYWluLmMgYi9tdWx0aXBhdGhk
-L21haW4uYwppbmRleCAyNDExNmUzLi41YjYzNTc3IDEwMDY0NAotLS0gYS9tdWx0aXBhdGhkL21h
-aW4uYworKysgYi9tdWx0aXBhdGhkL21haW4uYwpAQCAtMTEyMCw2ICsxMTIwLDcgQEAgdWV2X3Ry
-aWdnZXIgKHN0cnVjdCB1ZXZlbnQgKiB1ZXYsIHZvaWQgKiB0cmlnZ2VyX2RhdGEpCiB7CiAJaW50
-IHIgPSAwOwogCXN0cnVjdCB2ZWN0b3JzICogdmVjczsKKwlzdHJ1Y3QgdWV2ZW50ICptZXJnZV91
-ZXYsICp0bXA7CiAKIAl2ZWNzID0gKHN0cnVjdCB2ZWN0b3JzICopdHJpZ2dlcl9kYXRhOwogCkBA
-IC0xMTUxLDIwICsxMTUyLDIxIEBAIHVldl90cmlnZ2VyIChzdHJ1Y3QgdWV2ZW50ICogdWV2LCB2
-b2lkICogdHJpZ2dlcl9kYXRhKQogCX0KIAogCS8qCi0JICogcGF0aCBhZGQvcmVtb3ZlIGV2ZW50
-CisJICogcGF0aCBhZGQvcmVtb3ZlL2NoYW5nZSBldmVudCwgYWRkL3JlbW92ZSBtYXliZSBtZXJn
-ZWQKIAkgKi8KLQlpZiAoIXN0cm5jbXAodWV2LT5hY3Rpb24sICJhZGQiLCAzKSkgewotCQlyID0g
-dWV2X2FkZF9wYXRoKHVldiwgdmVjcywgMSk7Ci0JCWdvdG8gb3V0OwotCX0KLQlpZiAoIXN0cm5j
-bXAodWV2LT5hY3Rpb24sICJyZW1vdmUiLCA2KSkgewotCQlyID0gdWV2X3JlbW92ZV9wYXRoKHVl
-diwgdmVjcywgMSk7Ci0JCWdvdG8gb3V0OwotCX0KLQlpZiAoIXN0cm5jbXAodWV2LT5hY3Rpb24s
-ICJjaGFuZ2UiLCA2KSkgewotCQlyID0gdWV2X3VwZGF0ZV9wYXRoKHVldiwgdmVjcyk7Ci0JCWdv
-dG8gb3V0OwotCX0KKwlsaXN0X2Zvcl9lYWNoX2VudHJ5X3NhZmUobWVyZ2VfdWV2LCB0bXAsICZ1
-ZXYtPm1lcmdlX25vZGUsIG5vZGUpIHsKKwkJaWYgKCFzdHJuY21wKG1lcmdlX3Vldi0+YWN0aW9u
-LCAiYWRkIiwgMykpCisJCQlyICs9IHVldl9hZGRfcGF0aChtZXJnZV91ZXYsIHZlY3MsIDApOwor
-CQlpZiAoIXN0cm5jbXAobWVyZ2VfdWV2LT5hY3Rpb24sICJyZW1vdmUiLCA2KSkKKwkJCXIgKz0g
-dWV2X3JlbW92ZV9wYXRoKG1lcmdlX3VldiwgdmVjcywgMCk7CisJfQorCisJaWYgKCFzdHJuY21w
-KHVldi0+YWN0aW9uLCAiYWRkIiwgMykpCisJCXIgKz0gdWV2X2FkZF9wYXRoKHVldiwgdmVjcywg
-MSk7CisJaWYgKCFzdHJuY21wKHVldi0+YWN0aW9uLCAicmVtb3ZlIiwgNikpCisJCXIgKz0gdWV2
-X3JlbW92ZV9wYXRoKHVldiwgdmVjcywgMSk7CisJaWYgKCFzdHJuY21wKHVldi0+YWN0aW9uLCAi
-Y2hhbmdlIiwgNikpCisJCXIgKz0gdWV2X3VwZGF0ZV9wYXRoKHVldiwgdmVjcyk7CiAKIG91dDoK
-IAlyZXR1cm4gcjsKLS0gCjIuOC4xLndpbmRvd3MuMQoKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxp
-c3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
-dGluZm8vZG0tZGV2ZWw=
+From: tang.junhui <tang.junhui@zte.com.cn>
+
+Add merged nodes list to store nodes of merged uevents. By Adding
+this member, after merging, the list of uevents would be linked like
+this:
+uevent
+ ---------------------------
+|struct list_head node      |----->list node of un-merged uevents
+ ---------------------------
+|struct list_head merge_node|----->list node of merged uevents, which
+----------------------------       moved from the origin un-merged list
+|...                        |
+ ---------------------------
+
+Change-Id: I5fbfc7656ede77e03ca35c855212e2d2d60706b2
+Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+---
+ libmultipath/uevent.c | 4 +++-
+ libmultipath/uevent.h | 1 +
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 5bde864..9b6b1d1 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -72,8 +72,10 @@ struct uevent * alloc_uevent (void)
+ {
+ 	struct uevent *uev = MALLOC(sizeof(struct uevent));
+ 
+-	if (uev)
++	if (uev) {
+ 		INIT_LIST_HEAD(&uev->node);
++		INIT_LIST_HEAD(&uev->merge_node);
++	}
+ 
+ 	return uev;
+ }
+diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
+index 3f83bab..9f65327 100644
+--- a/libmultipath/uevent.h
++++ b/libmultipath/uevent.h
+@@ -17,6 +17,7 @@ struct udev;
+ 
+ struct uevent {
+ 	struct list_head node;
++	struct list_head merge_node;
+ 	struct udev_device *udev;
+ 	char buffer[HOTPLUG_BUFFER_SIZE + OBJECT_SIZE];
+ 	char *devpath;
+-- 
+2.8.1.windows.1
