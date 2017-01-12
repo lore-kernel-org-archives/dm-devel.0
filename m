@@ -1,8 +1,8 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 03/11] libmultipath: add three list iteration
-	macros
-Date: Thu, 12 Jan 2017 13:52:19 +0800
-Message-ID: <1484200347-11188-4-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH 06/11] multipathd: move uev_discard() to uevent.c
+	and change its name to uevent_can_discard()
+Date: Thu, 12 Jan 2017 13:52:22 +0800
+Message-ID: <1484200347-11188-7-git-send-email-tang.junhui@zte.com.cn>
 References: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,66 +24,123 @@ List-Id: dm-devel.ids
 
 From: tang.junhui <tang.junhui@zte.com.cn>
 
-Add three list iteration macros, list_for_each_entry_reverse_safe
-is used for safe list iteration, and the other two macros are used
-to iterate list forwards or backwards from the given begin node to
-the given end node, which would be used in merging uevents.
+This patch is mainly done to adjust the code for the preparation of
+uevents merging.
 
-Change-Id: I8bb53fef9276bb62a5e0f4fdac6455086dc03d9b
-Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+Change-Id: Iaac159ffe3930e53c3325d1069c3ed497e440c0c
+Signed-off-by: tang.wenjun <tang.wenjun3@zte.com.cn>
 ---
- libmultipath/list.h | 41 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 41 insertions(+)
+ libmultipath/uevent.c | 40 ++++++++++++++++++++++++++++++++++++++++
+ multipathd/main.c     | 25 -------------------------
+ 2 files changed, 40 insertions(+), 25 deletions(-)
 
-diff --git a/libmultipath/list.h b/libmultipath/list.h
-index ceaa381..4433167 100644
---- a/libmultipath/list.h
-+++ b/libmultipath/list.h
-@@ -317,4 +317,45 @@ static inline void list_splice_tail_init(struct list_head *list,
- 	     &pos->member != (head);					\
- 	     pos = n, n = list_entry(n->member.next, typeof(*n), member))
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 9b6b1d1..d6c02a6 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -24,6 +24,7 @@
  
-+/**
-+ * list_for_each_entry_reverse - iterate backwards over list of given type.
-+ * @pos:	the type * to use as a loop counter.
-+ * @n:		another type * to use as temporary storage
-+ * @head:	the head for your list.
-+ * @member:	the name of the list_struct within the struct.
-+ */
-+#define list_for_each_entry_reverse_safe(pos, n, head, member)	 \
-+	for (pos = list_entry((head)->prev, typeof(*pos), member),	 \
-+		 n = list_entry(pos->member.prev, typeof(*pos), member); \
-+	     &pos->member != (head);					\
-+	     pos = n, n = list_entry(n->member.prev, typeof(*n), member))
+ #include <unistd.h>
+ #include <stdio.h>
++#include <stdbool.h>
+ #include <errno.h>
+ #include <stdlib.h>
+ #include <stddef.h>
+@@ -80,6 +81,44 @@ struct uevent * alloc_uevent (void)
+ 	return uev;
+ }
+ 
++bool
++uevent_can_discard(struct uevent *uev)
++{
++	char *tmp;
++	char a[11], b[11];
 +
-+/**
-+ * list_for_some_entry	-	iterate list of given interval
-+ * @pos:	the type * to use as a loop counter.
-+ * @n:		another type * to use as temporary storage
-+ * @from:	the begin node of the iteration.
-+ * @to:		the end node of the iteration.
-+ * @member:	the name of the list_struct within the struct.
-+ */
-+#define list_for_some_entry_safe(pos, n, from, to, member)		 \
-+	for (pos = list_entry((from)->next, typeof(*pos), member),	 \
-+	     n = list_entry(pos->member.next, typeof(*pos), member); \
-+	     &pos->member != (to);					                 \
-+	     pos = n, n = list_entry(n->member.next, typeof(*n), member))
++	/*
++	 * keep only block devices, discard partitions
++	 */
++	tmp = strstr(uev->devpath, "/block/");
++	if (tmp == NULL){
++		condlog(4, "no /block/ in '%s'", uev->devpath);
++		return true;
++	}
++	if (sscanf(tmp, "/block/%10s", a) != 1 ||
++	    sscanf(tmp, "/block/%10[^/]/%10s", a, b) == 2) {
++		condlog(4, "discard event on %s", uev->devpath);
++		return true;
++	}
 +
-+/**
-+ * list_for_some_entry_reverse	-	iterate backwards list of given interval
-+ * @pos:	the type * to use as a loop counter.
-+ * @n:		another type * to use as temporary storage
-+ * @from:	the begin node of the iteration.
-+ * @to:		the end node of the iteration.
-+ * @member:	the name of the list_struct within the struct.
-+ */
-+#define list_for_some_entry_reverse_safe(pos, n, from, to, member) \
-+	for (pos = list_entry((from)->prev, typeof(*pos), member),	   \
-+	     n = list_entry(pos->member.prev, typeof(*pos), member);   \
-+	     &pos->member != (to);					                   \
-+	     pos = n, n = list_entry(n->member.prev, typeof(*n), member))
++	return false;
++}
 +
- #endif /* _LIST_H */
++void
++uevent_discard(struct list_head *tmpq)
++{
++	struct uevent *uev, *tmp;
++
++	list_for_each_entry_reverse_safe(uev, tmp, tmpq, node) {
++		if (uevent_can_discard(uev)) {
++			list_del_init(&uev->node);
++			if (uev->udev)
++				udev_device_unref(uev->udev);
++			FREE(uev);
++		}
++	}
++}
++
+ void
+ service_uevq(struct list_head *tmpq)
+ {
+@@ -144,6 +183,7 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent *, void * trigger_data),
+ 		pthread_mutex_unlock(uevq_lockp);
+ 		if (!my_uev_trigger)
+ 			break;
++		uevent_discard(&uevq_tmp);
+ 		service_uevq(&uevq_tmp);
+ 	}
+ 	condlog(3, "Terminating uev service queue");
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 718c5e7..66d5c3d 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1115,28 +1115,6 @@ uxsock_trigger (char * str, char ** reply, int * len, void * trigger_data)
+ 	return r;
+ }
+ 
+-static int
+-uev_discard(char * devpath)
+-{
+-	char *tmp;
+-	char a[11], b[11];
+-
+-	/*
+-	 * keep only block devices, discard partitions
+-	 */
+-	tmp = strstr(devpath, "/block/");
+-	if (tmp == NULL){
+-		condlog(4, "no /block/ in '%s'", devpath);
+-		return 1;
+-	}
+-	if (sscanf(tmp, "/block/%10s", a) != 1 ||
+-	    sscanf(tmp, "/block/%10[^/]/%10s", a, b) == 2) {
+-		condlog(4, "discard event on %s", devpath);
+-		return 1;
+-	}
+-	return 0;
+-}
+-
+ int
+ uev_trigger (struct uevent * uev, void * trigger_data)
+ {
+@@ -1146,9 +1124,6 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 
+ 	vecs = (struct vectors *)trigger_data;
+ 
+-	if (uev_discard(uev->devpath))
+-		return 0;
+-
+ 	pthread_cleanup_push(config_cleanup, NULL);
+ 	pthread_mutex_lock(&config_lock);
+ 	if (running_state != DAEMON_IDLE &&
 -- 
 2.8.1.windows.1
