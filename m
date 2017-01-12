@@ -1,12 +1,11 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 05/11] multipathd: add need_do_map to indicate
-	whether need calling domap() in ev_remove_path()
-Date: Thu, 12 Jan 2017 13:52:21 +0800
-Message-ID: <1484200347-11188-6-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH 11/11] multipathd: proccess merged uevents
+Date: Thu, 12 Jan 2017 13:52:27 +0800
+Message-ID: <1484200347-11188-12-git-send-email-tang.junhui@zte.com.cn>
 References: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -22,108 +21,39 @@ To: christophe.varoqui@opensvc.com, bmarzins@redhat.com, hare@suse.de, mwilck@su
 Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn, tang.wenjun3@zte.com.cn
 List-Id: dm-devel.ids
 
-From: tang.junhui <tang.junhui@zte.com.cn>
-
-Usually calling domap() in ev_remove_path() is needed, but only last
-path need to call domap() in processing for merged uevents to reduce the
-count of calling domap() and promote efficiency. So add input parameter
-need_do_map to indicate whether need calling domap() in ev_remove_path().
-
-Change-Id: I0a787330a249608396cc3e655465dc820f940539
-Signed-off-by: tang.wenjun <tang.wenjun3@zte.com.cn>
----
- multipathd/cli_handlers.c |  2 +-
- multipathd/main.c         | 23 ++++++++++++++++++-----
- multipathd/main.h         |  2 +-
- 3 files changed, 20 insertions(+), 7 deletions(-)
-
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 3a46c09..302fd02 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -693,7 +693,7 @@ cli_del_path (void * v, char ** reply, int * len, void * data)
- 		condlog(0, "%s: path already removed", param);
- 		return 1;
- 	}
--	return ev_remove_path(pp, vecs);
-+	return ev_remove_path(pp, vecs, 1);
- }
- 
- int
-diff --git a/multipathd/main.c b/multipathd/main.c
-index ebd7de1..718c5e7 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -858,7 +858,7 @@ fail:
- }
- 
- static int
--uev_remove_path (struct uevent *uev, struct vectors * vecs)
-+uev_remove_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
- {
- 	struct path *pp;
- 	int ret;
-@@ -868,8 +868,18 @@ uev_remove_path (struct uevent *uev, struct vectors * vecs)
- 	lock(&vecs->lock);
- 	pthread_testcancel();
- 	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
--	if (pp)
--		ret = ev_remove_path(pp, vecs);
-+	if (pp) {
-+		/*
-+		 * Make sure merging use the correct wwid
-+		 * Othterwise calling domap()
-+		 */
-+		if (!need_do_map &&
-+		    uev->merge_id &&
-+		    strcmp(uev->merge_id, pp->wwid))
-+			need_do_map = 1;
-+		
-+		ret = ev_remove_path(pp, vecs, need_do_map);
-+	}
- 	lock_cleanup_pop(vecs->lock);
- 	if (!pp) {
- 		/* Not an error; path might have been purged earlier */
-@@ -880,7 +890,7 @@ uev_remove_path (struct uevent *uev, struct vectors * vecs)
- }
- 
- int
--ev_remove_path (struct path *pp, struct vectors * vecs)
-+ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
- {
- 	struct multipath * mpp;
- 	int i, retval = 0;
-@@ -902,6 +912,9 @@ ev_remove_path (struct path *pp, struct vectors * vecs)
- 		if ((i = find_slot(mpp->paths, (void *)pp)) != -1)
- 			vector_del_slot(mpp->paths, i);
- 
-+		if(!need_do_map)
-+			goto out;
-+
- 		/*
- 		 * remove the map IFF removing the last path
- 		 */
-@@ -1179,7 +1192,7 @@ uev_trigger (struct uevent * uev, void * trigger_data)
- 		goto out;
- 	}
- 	if (!strncmp(uev->action, "remove", 6)) {
--		r = uev_remove_path(uev, vecs);
-+		r = uev_remove_path(uev, vecs, 1);
- 		goto out;
- 	}
- 	if (!strncmp(uev->action, "change", 6)) {
-diff --git a/multipathd/main.h b/multipathd/main.h
-index f810d41..094b04f 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -23,7 +23,7 @@ const char * daemon_status(void);
- int need_to_delay_reconfig (struct vectors *);
- int reconfigure (struct vectors *);
- int ev_add_path (struct path *, struct vectors *, int);
--int ev_remove_path (struct path *, struct vectors *);
-+int ev_remove_path (struct path *, struct vectors *, int);
- int ev_add_map (char *, char *, struct vectors *);
- int ev_remove_map (char *, char *, int, struct vectors *);
- void sync_map_state (struct multipath *);
--- 
-2.8.1.windows.1
+RnJvbTogInRhbmcuanVuaHVpIiA8dGFuZy5qdW5odWlAenRlLmNvbS5jbj4KCkFmdGVyIGZpbHRl
+cmluZyBhbmQgbWVyZ2luZywgdGhlbiB1ZXZlbnRzIGFyZSBwcm9jZXNzZWQgaW4KdWV2X3RyaWdn
+ZXIoKSwgZmlyc3RseSwgZWFjaCBvZiBtZXJnZWQgdWV2ZW50cyB3b3VsZCBiZSBwcm9jZXNzZWQg
+b25lCmJ5IG9uZSB3aXRoIG5lZWRfZG9fbWFwIGluIHZhbHVlIG9mIDAuIEZpbmFsbHksIHRoZSBu
+b2RlIOKAnHVlduKAnSBpdHNlbGYKd291bGQgYmUgcHJvY2Vzc2VkIHdpdGggbmVlZF9kb19tYXAg
+aW4gdmFsdWUgb2YgMSwgd2hpY2ggd291bGQgcmVsb2FkCmtlcm5lbCB0YWJsZSwgYW5kIGNyZWF0
+ZSBvciByZW1vdmUgdGhlIGRtIGRldmljZS4KCkNoYW5nZS1JZDogSWZiNGRlMGNhMzYxODBhOGFm
+MTY3MjljMmY3MGJjMjUwODU4ODc3YmQKU2lnbmVkLW9mZi1ieTogdGFuZy5qdW5odWkgPHRhbmcu
+anVuaHVpQHp0ZS5jb20uY24+Ci0tLQogbXVsdGlwYXRoZC9tYWluLmMgfCAyOCArKysrKysrKysr
+KysrKystLS0tLS0tLS0tLS0tCiAxIGZpbGUgY2hhbmdlZCwgMTUgaW5zZXJ0aW9ucygrKSwgMTMg
+ZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9tYWluLmMgYi9tdWx0aXBhdGhk
+L21haW4uYwppbmRleCAyNDExNmUzLi41YjYzNTc3IDEwMDY0NAotLS0gYS9tdWx0aXBhdGhkL21h
+aW4uYworKysgYi9tdWx0aXBhdGhkL21haW4uYwpAQCAtMTEyMCw2ICsxMTIwLDcgQEAgdWV2X3Ry
+aWdnZXIgKHN0cnVjdCB1ZXZlbnQgKiB1ZXYsIHZvaWQgKiB0cmlnZ2VyX2RhdGEpCiB7CiAJaW50
+IHIgPSAwOwogCXN0cnVjdCB2ZWN0b3JzICogdmVjczsKKwlzdHJ1Y3QgdWV2ZW50ICptZXJnZV91
+ZXYsICp0bXA7CiAKIAl2ZWNzID0gKHN0cnVjdCB2ZWN0b3JzICopdHJpZ2dlcl9kYXRhOwogCkBA
+IC0xMTUxLDIwICsxMTUyLDIxIEBAIHVldl90cmlnZ2VyIChzdHJ1Y3QgdWV2ZW50ICogdWV2LCB2
+b2lkICogdHJpZ2dlcl9kYXRhKQogCX0KIAogCS8qCi0JICogcGF0aCBhZGQvcmVtb3ZlIGV2ZW50
+CisJICogcGF0aCBhZGQvcmVtb3ZlL2NoYW5nZSBldmVudCwgYWRkL3JlbW92ZSBtYXliZSBtZXJn
+ZWQKIAkgKi8KLQlpZiAoIXN0cm5jbXAodWV2LT5hY3Rpb24sICJhZGQiLCAzKSkgewotCQlyID0g
+dWV2X2FkZF9wYXRoKHVldiwgdmVjcywgMSk7Ci0JCWdvdG8gb3V0OwotCX0KLQlpZiAoIXN0cm5j
+bXAodWV2LT5hY3Rpb24sICJyZW1vdmUiLCA2KSkgewotCQlyID0gdWV2X3JlbW92ZV9wYXRoKHVl
+diwgdmVjcywgMSk7Ci0JCWdvdG8gb3V0OwotCX0KLQlpZiAoIXN0cm5jbXAodWV2LT5hY3Rpb24s
+ICJjaGFuZ2UiLCA2KSkgewotCQlyID0gdWV2X3VwZGF0ZV9wYXRoKHVldiwgdmVjcyk7Ci0JCWdv
+dG8gb3V0OwotCX0KKwlsaXN0X2Zvcl9lYWNoX2VudHJ5X3NhZmUobWVyZ2VfdWV2LCB0bXAsICZ1
+ZXYtPm1lcmdlX25vZGUsIG5vZGUpIHsKKwkJaWYgKCFzdHJuY21wKG1lcmdlX3Vldi0+YWN0aW9u
+LCAiYWRkIiwgMykpCisJCQlyICs9IHVldl9hZGRfcGF0aChtZXJnZV91ZXYsIHZlY3MsIDApOwor
+CQlpZiAoIXN0cm5jbXAobWVyZ2VfdWV2LT5hY3Rpb24sICJyZW1vdmUiLCA2KSkKKwkJCXIgKz0g
+dWV2X3JlbW92ZV9wYXRoKG1lcmdlX3VldiwgdmVjcywgMCk7CisJfQorCisJaWYgKCFzdHJuY21w
+KHVldi0+YWN0aW9uLCAiYWRkIiwgMykpCisJCXIgKz0gdWV2X2FkZF9wYXRoKHVldiwgdmVjcywg
+MSk7CisJaWYgKCFzdHJuY21wKHVldi0+YWN0aW9uLCAicmVtb3ZlIiwgNikpCisJCXIgKz0gdWV2
+X3JlbW92ZV9wYXRoKHVldiwgdmVjcywgMSk7CisJaWYgKCFzdHJuY21wKHVldi0+YWN0aW9uLCAi
+Y2hhbmdlIiwgNikpCisJCXIgKz0gdWV2X3VwZGF0ZV9wYXRoKHVldiwgdmVjcyk7CiAKIG91dDoK
+IAlyZXR1cm4gcjsKLS0gCjIuOC4xLndpbmRvd3MuMQoKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxp
+c3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
+dGluZm8vZG0tZGV2ZWw=
