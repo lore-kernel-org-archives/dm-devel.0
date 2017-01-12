@@ -1,168 +1,55 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [dm-devel] [LSF/MM TOPIC][LSF/MM ATTEND] multipath redesign
-Date: Thu, 12 Jan 2017 11:29:59 -0600
-Message-ID: <20170112172959.GT2732@octiron.msp.redhat.com>
-References: <00700606-3005-c82b-ee37-127417fbd201@suse.de>
- <20170111222339.GC19051@redhat.com>
- <19415684-1ec7-1926-b420-3b53ea247e1b@suse.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 05/15] dm: remove incomple BLOCK_PC support
+Date: Thu, 12 Jan 2017 17:28:45 -0500
+Message-ID: <20170112222845.GA25349@redhat.com>
+References: <1484060780-15592-1-git-send-email-hch@lst.de>
+ <1484060780-15592-6-git-send-email-hch@lst.de>
+ <20170112010936.GA19953@redhat.com>
+ <20170112080054.GD7567@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <19415684-1ec7-1926-b420-3b53ea247e1b@suse.de>
-Sender: linux-block-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: Mike Snitzer <snitzer@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, "linux-scsi@vger.kernel.org" <Linux-scsi@vger.kernel.org>
+In-Reply-To: <20170112080054.GD7567@lst.de>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Jan 12, 2017 at 09:27:40AM +0100, Hannes Reinecke wrote:
-> On 01/11/2017 11:23 PM, Mike Snitzer wrote:
-> >On Wed, Jan 11 2017 at  4:44am -0500,
-> >Hannes Reinecke <hare@suse.de> wrote:
-> >
-> >>Hi all,
-> >>
-> >>I'd like to attend LSF/MM this year, and would like to discuss a
-> >>redesign of the multipath handling.
-> >>
-> >>With recent kernels we've got quite some functionality required for
-> >>multipathing already implemented, making some design decisions of the
-> >>original multipath-tools implementation quite pointless.
-> >>
-> >>I'm working on a proof-of-concept implementation which just uses a
-> >>simple configfs interface and doesn't require a daemon altogether.
-> >>
-> >>At LSF/MM I'd like to discuss how to move forward here, and whether we'd
-> >>like to stay with the current device-mapper integration or move away
-> >>from that towards a stand-alone implementation.
-> >
-> >I'd really like open exchange of the problems you're having with the
-> >current multipath-tools and DM multipath _before LSF_.  Last LSF only
-> >scratched the surface on people having disdain for the complexity that is
-> >the multipath-tools userspace.  But considering how much of the
-> >multipath-tools you've written I find it fairly comical that you're the
-> >person advocating switching away from it.
-> >
-> Yeah, I know.
-> 
-> But I've stared long and hard at the code, and found some issues really hard
-> to overcome. Even more so as most things it does are really pointless.
-> 
-> multipathd _insists_ on redoing the _entire_ device layout for basically any
-> operation (except for path checking).
-> As the data structures allow only for a single setup it uses a lock per
-> multipath device to protect against concurrent changes.
-> When lots of uevents are to be processed this lock is heavily contended,
-> leading to a slow-down of uevent processing.
-> (cf the patchseries from Tang Junhui and my earlier pathset for
-> lock pushdown)
-> 
-> I've tried to move that lock down even further with distinct locks for
-> device paths and multipath devices, but ultimately failed as it would amount
-> to essentially a rewrite of the core engine.
+On Thu, Jan 12 2017 at  3:00am -0500,
+Christoph Hellwig <hch@lst.de> wrote:
 
-The multipath user-space tools locking IS horrible and touches
-everything.  I could never see a way around it that didn't involve
-a ground-up redesign.
- 
-> >But if less userspace involvement is needed then fix userspace.  Fail to
-> >see how configfs is any different than the established DM ioctl interface.
-> >
-> >As I just said in another email DM multipath could benefit from
-> >factoring out the SCSI-specific bits so that they are nicely optimized
-> >away if using new transports (e.g. NVMEoF).
-> >
-> >Could be lessons can be learned from your approach but I'd prefer we
-> >provably exhaust the utility of the current DM multipath kernel
-> >implementation.  DM multipath is one of the most actively maintained and
-> >updated DM targets (aside from thinp and cache).  As you know DM
-> >multipath has grown blk-mq support which yielded serious performance
-> >improvement.  You also noted (in an earlier email) that I reintroduced
-> >bio-based DM multipath.  On a data path level we have all possible block
-> >core interfaces plumbed.  And yes, they all involve cloning due to the
-> >underlying Device Mapper core.  Open to any ideas on optimization.  If
-> >DM is imposing some inherent performance limitation then please report
-> >it accordingly.
-> >
-> Ah. And I thought you disliked request-based multipathing ...
+> On Wed, Jan 11, 2017 at 08:09:37PM -0500, Mike Snitzer wrote:
+> > I'm not following your reasoning.
+> > 
+> > dm_blk_ioctl calls __blkdev_driver_ioctl and will call scsi_cmd_ioctl
+> > (sd_ioctl -> scsi_cmd_blk_ioctl -> scsi_cmd_ioctl) if DM's underlying
+> > block device is a scsi device.
 > 
-> It's not _actually_ the DM interface which I'm objecting to, it's more the
-> user-space implementation.
-> The daemon is build around some design decisions which are simply not
-> applicable anymore:
-> - we now _do_ have reliable device identifications, so the the 'path_id'
-> functionality is pointless.
+> Yes, it it does.  But scsi_cmd_ioctl as called from sd_ioctl will
+> operate entirely on the SCSI request_queue - dm-mpath will never see
+> the BLOCK_PC request generated by it.
 
-This could be largely fixed in the existing code. The route that the
-latest patch from Tang Junhui are going still grabs the wwid if we got
-it from the uevent, but it isn't necesary, as long was we're careful.
-Currently rbd devices don't get their wwid from the uevent but all other
-devices do. It would probably be possible to write an rbd device udev
-rule to set a variable so that they can work through udev environment
-variables too.
+I lost sight of the fact that BLOCK_PC requests are sent down via the
+normal request submission (and not the ioctl path).  So my previous
+reply wasn't relevant.
 
-> - The 'alua' device handler also provides you with reliable priority
-> information, so it should be possible to do away with the 'prio' setting,
-> too.
+What is "incomplete" about request-based DM's BLOCK_PC support?
 
-But this isn't true for all devices. Also, Like I mentioned last year
-when this got brought up, no matter how we group the paths, there end up
-being users that have good reasons why they want them grouped
-differently in their case.  The path priority/grouping seems like one
-place where evidence has shown that we should give users the tools to
-make policy decisions, instead of making them ourselves.
+This code goes back to when request-based DM multipath was first
+introduced via commit cec47e3d4a -- but I've never used the BLOCK_PC
+requests for SCSI pass through myself.  I don't know who is using
+it.. are you aware of some upper layer filesystem or userspace
+submission path for these BLOCK_PC requests that they'd be passing
+through DM?
 
-> - And for (most) SCSI devices the 'state' setting provides a reliable
-> indicator if the device is useable.
+I'm also missing how you're saying the new blk-mq request-based DM will
+work with your new model.  I appreciate that we get the request from the
+underlying blk-mq request_queue and it'll be properly sized.  But
+wouldn't we need to pass data back up for these SCSI pass-through
+requests?  So wouldn't the top-level multipath request_queue need to
+setup cmd_size?
 
-This is also not true for all devices.
-
-So, are you planning on creating a multipath implementation that only
-handles some devices? Obviously, the current userspace tools are still
-around to handle setups that this wouldn't.
-
-While I've daydreamed of rewriting the multipath tools multiple times,
-and having nothing aginst you doing it in concept, I would be happier
-knowing that it won't simply mean that there are two sets of tools, that
-both need to be supported to deal with all customer configurations.
-
--Ben 
-
-> 
-> Hence I've implemented a notifier chain (hooked onto 'struct gendisk') which
-> provides events for path up/path down etc.
-> With that it's possible to automatically fail and reinstate paths.
-> However, what's missing is an automatic pathgroup switch once all paths in a
-> group are down.
-> In the current implementation the device-mapper target doesn't have any
-> inkling about path priorities; it just sees path groups as such.
-> As it stands should reasonably trivial to switch to the next available
-> pathgroup, but fallback will become ... interesting.
-> So we would need to update the interface here to allow for path group
-> priorities and also for transmitting the fallback information.
-> 
-> Nothing insurmountable, agreed.
-> But once we do this most of the current functionality of the multipath-tools
-> daemon will become obsolete.
-> 
-> Plus I wasn't quite sure about the direction device-mapper itself will be
-> going, so I decided to implement a stand-alone version as a testbed.
-> I'm not trying to push that at all costs; I'm perfectly happy with updating
-> device-mapper.
-> As long as no-one insists we're having to use the bio-based interface ...
-> 
-> Cheers,
-> 
-> Hannes
-> -- 
-> Dr. Hannes Reinecke		   Teamlead Storage & Networking
-> hare@suse.de			               +49 911 74053 688
-> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
-> GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-> HRB 21284 (AG Nürnberg)
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Sorry for the naive questions (that clearly speak to me not
+understanding how this aspect of the block and SCSI code work).. but I'd
+like to understand where DM will be lacking going forward.
