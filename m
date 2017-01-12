@@ -1,133 +1,33 @@
-From: tang.junhui@zte.com.cn
-Subject: [PATCH 08/11] libmultipath: wait one seconds for more
-	uevents in uevent_listen() in uevents burst situations
-Date: Thu, 12 Jan 2017 13:52:24 +0800
-Message-ID: <1484200347-11188-9-git-send-email-tang.junhui@zte.com.cn>
-References: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 14/15] block/bsg: move queue creation into
+        bsg_setup_queue
+Date: Thu, 12 Jan 2017 08:57:54 +0100
+Message-ID: <20170112075754.GB7567@lst.de>
+References: <1484060780-15592-1-git-send-email-hch@lst.de> <1484060780-15592-15-git-send-email-hch@lst.de> <20170111084218.GB6286@linux-x5ow.site> <20170111084512.GA6937@lst.de> <20170111220122.GA19051@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com, bmarzins@redhat.com, hare@suse.de, mwilck@suse.com, bart.vanassche@sandisk.com
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn, tang.wenjun3@zte.com.cn
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170111220122.GA19051@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, Johannes Thumshirn <jthumshirn@suse.de>, Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: tang.junhui <tang.junhui@zte.com.cn>
+On Wed, Jan 11, 2017 at 05:01:22PM -0500, Mike Snitzer wrote:
+> But I've seen you reference the need to stop multipath from allocating
+> its own requests.  Are you referring to old request_fn request-based
+> multipath's clone_old_rq:alloc_old_clone_request?
 
-The more uevents are merged, the higher efficiency program will performs.
-So, do not process uevents after receiving immediately in uevents burst
-situations, but continue wait one seconds for more uevents except that
-too much uevents (2048) have already been received or too much time
-eclipse (30 seconds).
+Yes, that one is the issue.  It allocates a struct request "blind",
+that is without known what queue it goes to.  With this queue (or blk-mq
+for that matter) we need to know the queue, because the request structures
+might have additional data behind it and require additional initialization
+for drivers that require per-request data.  We make use of the per-request
+data for SCSI passthrough in this patch.
 
-Change-Id: I763d491540e8114a81d12d603281540a81502742
-Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
----
- libmultipath/uevent.c | 42 +++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 41 insertions(+), 1 deletion(-)
+> Or how blk-mq request-based multipath gets a request from the blk-mq tag
+> space (via blk_mq_alloc_request)?
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index b560a50..f231dad 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -39,6 +39,7 @@
- #include <linux/netlink.h>
- #include <pthread.h>
- #include <sys/mman.h>
-+#include <sys/time.h>
- #include <libudev.h>
- #include <errno.h>
- 
-@@ -51,6 +52,10 @@
- #include "config.h"
- #include "blacklist.h"
- 
-+#define MAX_ACCUMULATION_COUNT 2048
-+#define MAX_ACCUMULATION_TIME 30*1000
-+#define MIN_BURST_SPEED 10
-+
- typedef int (uev_trigger)(struct uevent *, void * trigger_data);
- 
- LIST_HEAD(uevq);
-@@ -520,11 +525,43 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
- 	return uev;
- }
- 
-+bool uevent_burst(struct timeval *start_time, int events)
-+{
-+	struct timeval diff_time, end_time;
-+	unsigned long speed;
-+	unsigned long eclipse_ms;
-+
-+	if(events > MAX_ACCUMULATION_COUNT) {
-+		condlog(2, "burst got %u uevents, too much uevents, stopped", events);
-+		return false;
-+	}
-+
-+	gettimeofday(&end_time, NULL);
-+	timersub(&end_time, start_time, &diff_time);
-+
-+	eclipse_ms = diff_time.tv_sec * 1000 + diff_time.tv_usec / 1000;
-+
-+	if (eclipse_ms == 0)
-+		return true;
-+
-+	if (eclipse_ms > MAX_ACCUMULATION_TIME) {
-+		condlog(2, "burst continued %lu ms, too long time, stopped", eclipse_ms);
-+		return false;
-+	}
-+
-+	speed = (events * 1000) / eclipse_ms;
-+	if (speed > MIN_BURST_SPEED)
-+		return true;
-+
-+	return false;
-+}
-+
- int uevent_listen(struct udev *udev)
- {
- 	int err = 2;
- 	struct udev_monitor *monitor = NULL;
- 	int fd, socket_flags, events;
-+	struct timeval start_time;
- 	int need_failback = 1;
- 	int timeout = 30;
- 	LIST_HEAD(uevlisten_tmp);
-@@ -578,6 +615,7 @@ int uevent_listen(struct udev *udev)
- 	}
- 
- 	events = 0;
-+	gettimeofday(&start_time, NULL);
- 	while (1) {
- 		struct uevent *uev;
- 		struct udev_device *dev;
-@@ -592,7 +630,8 @@ int uevent_listen(struct udev *udev)
- 		errno = 0;
- 		fdcount = poll(&ev_poll, 1, poll_timeout);
- 		if (fdcount && ev_poll.revents & POLLIN) {
--			timeout = 0;
-+			timeout = uevent_burst(&start_time, events + 1) ? 1 : 0;
-+
- 			dev = udev_monitor_receive_device(monitor);
- 			if (!dev) {
- 				condlog(0, "failed getting udev device");
-@@ -625,6 +664,7 @@ int uevent_listen(struct udev *udev)
- 			pthread_mutex_unlock(uevq_lockp);
- 			events = 0;
- 		}
-+		gettimeofday(&start_time, NULL);
- 		timeout = 30;
- 	}
- 	need_failback = 0;
--- 
-2.8.1.windows.1
+That's fine because it works on the queue of the device that I/O is
+submitted to.
