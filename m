@@ -1,125 +1,75 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [LSF/MM TOPIC][LSF/MM ATTEND] multipath redesign
-Date: Thu, 12 Jan 2017 09:27:40 +0100
-Message-ID: <19415684-1ec7-1926-b420-3b53ea247e1b@suse.de>
-References: <00700606-3005-c82b-ee37-127417fbd201@suse.de>
- <20170111222339.GC19051@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20170111222339.GC19051@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, device-mapper development <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-scsi@vger.kernel.org" <Linux-scsi@vger.kernel.org>
+From: Ondrej Mosnacek <omosnacek@gmail.com>
+Subject: [RFC PATCH 0/6] Add bulk skcipher requests to crypto API and dm-crypt
+Date: Thu, 12 Jan 2017 13:59:52 +0100
+Message-ID: <cover.1484215956.git.omosnacek@gmail.com>
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Ondrej Mosnacek <omosnacek@gmail.com>, linux-crypto@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, Binoy Jayan <binoy.jayan@linaro.org>
 List-Id: dm-devel.ids
 
-On 01/11/2017 11:23 PM, Mike Snitzer wrote:
-> On Wed, Jan 11 2017 at  4:44am -0500,
-> Hannes Reinecke <hare@suse.de> wrote:
->
->> Hi all,
->>
->> I'd like to attend LSF/MM this year, and would like to discuss a
->> redesign of the multipath handling.
->>
->> With recent kernels we've got quite some functionality required for
->> multipathing already implemented, making some design decisions of the
->> original multipath-tools implementation quite pointless.
->>
->> I'm working on a proof-of-concept implementation which just uses a
->> simple configfs interface and doesn't require a daemon altogether.
->>
->> At LSF/MM I'd like to discuss how to move forward here, and whether we'd
->> like to stay with the current device-mapper integration or move away
->> from that towards a stand-alone implementation.
->
-> I'd really like open exchange of the problems you're having with the
-> current multipath-tools and DM multipath _before LSF_.  Last LSF only
-> scratched the surface on people having disdain for the complexity that is
-> the multipath-tools userspace.  But considering how much of the
-> multipath-tools you've written I find it fairly comical that you're the
-> person advocating switching away from it.
->
-Yeah, I know.
+Hi,
 
-But I've stared long and hard at the code, and found some issues really 
-hard to overcome. Even more so as most things it does are really pointless.
+the goal of this patchset is to allow those skcipher API users that need to
+process batches of small messages (especially dm-crypt) to do so efficiently.
 
-multipathd _insists_ on redoing the _entire_ device layout for basically 
-any operation (except for path checking).
-As the data structures allow only for a single setup it uses a lock per 
-multipath device to protect against concurrent changes.
-When lots of uevents are to be processed this lock is heavily contended, 
-leading to a slow-down of uevent processing.
-(cf the patchseries from Tang Junhui and my earlier pathset for
-lock pushdown)
+The first patch introduces a new request type (and corresponding encrypt/decrypt
+functions) to the skcipher API. The new API can be used to submit multiple
+messages at once, thus enabling the drivers to reduce overhead as opposed to
+processing each message separately.
 
-I've tried to move that lock down even further with distinct locks for 
-device paths and multipath devices, but ultimately failed as it would 
-amount to essentially a rewrite of the core engine.
+The skcipher drivers can provide support for the new request type by setting the
+corresponding fields of their skcipher_alg structure. If 'native' support is not
+provided by a driver (i.e. the fields are left NULL), the crypto API
+transparently provides a generic fallback implementation, which simply processes
+the bulk request as a set of standard requests on the same tfm.
 
-> But if less userspace involvement is needed then fix userspace.  Fail to
-> see how configfs is any different than the established DM ioctl interface.
->
-> As I just said in another email DM multipath could benefit from
-> factoring out the SCSI-specific bits so that they are nicely optimized
-> away if using new transports (e.g. NVMEoF).
->
-> Could be lessons can be learned from your approach but I'd prefer we
-> provably exhaust the utility of the current DM multipath kernel
-> implementation.  DM multipath is one of the most actively maintained and
-> updated DM targets (aside from thinp and cache).  As you know DM
-> multipath has grown blk-mq support which yielded serious performance
-> improvement.  You also noted (in an earlier email) that I reintroduced
-> bio-based DM multipath.  On a data path level we have all possible block
-> core interfaces plumbed.  And yes, they all involve cloning due to the
-> underlying Device Mapper core.  Open to any ideas on optimization.  If
-> DM is imposing some inherent performance limitation then please report
-> it accordingly.
->
-Ah. And I thought you disliked request-based multipathing ...
+The second patch extends skcipher_walk so it can be used for processing the new
+bulk requests, while preserving equivalent functionality when used with standard
+requests.
 
-It's not _actually_ the DM interface which I'm objecting to, it's more 
-the user-space implementation.
-The daemon is build around some design decisions which are simply not 
-applicable anymore:
-- we now _do_ have reliable device identifications, so the the 'path_id' 
-functionality is pointless.
-- The 'alua' device handler also provides you with reliable priority 
-information, so it should be possible to do away with the 'prio' 
-setting, too.
-- And for (most) SCSI devices the 'state' setting provides a reliable 
-indicator if the device is useable.
+The third and fourth patches add native bulk request support to the cryptd and
+SIMD helper wrappers, respectively.
 
-Hence I've implemented a notifier chain (hooked onto 'struct gendisk') 
-which provides events for path up/path down etc.
-With that it's possible to automatically fail and reinstate paths.
-However, what's missing is an automatic pathgroup switch once all paths 
-in a group are down.
-In the current implementation the device-mapper target doesn't have any 
-inkling about path priorities; it just sees path groups as such.
-As it stands should reasonably trivial to switch to the next available 
-pathgroup, but fallback will become ... interesting.
-So we would need to update the interface here to allow for path group 
-priorities and also for transmitting the fallback information.
+The fifth patch adds bulk request support to the AES-NI skcipher drivers, in
+order to provide an example for both implementing the bulk request processing
+and the usage of the extended skcipher_walk in such implementation. Also, this
+patch provides a slight optimization, since the kernel_fpu_* functions are
+called just once per the whole bulk request. Note that both the standard and
+bulk implementation mostly use the same code under the hood.
 
-Nothing insurmountable, agreed.
-But once we do this most of the current functionality of the 
-multipath-tools daemon will become obsolete.
+The last patch converts dm-crypt to use bulk requests and makes it submit
+multiple sectors at once, whenever they are stored sequentially within a single
+page.
 
-Plus I wasn't quite sure about the direction device-mapper itself will 
-be going, so I decided to implement a stand-alone version as a testbed.
-I'm not trying to push that at all costs; I'm perfectly happy with 
-updating device-mapper.
-As long as no-one insists we're having to use the bio-based interface ...
+With all the patches applied, I was able to measure a small speedup (~5-10%)
+with AES-NI ciphers and dm-crypt device mapped over a ramdisk.
 
-Cheers,
+To-be-done:
+    testing the bulk API in testmgr.c
+    documentation update
 
-Hannes
+Ondrej Mosnacek (6):
+  crypto: skcipher - Add bulk request processing API
+  crypto: skcipher - Add bulk request support to walk
+  crypto: cryptd - Add skcipher bulk request support
+  crypto: simd - Add bulk request support
+  crypto: aesni-intel - Add bulk request support
+  dm-crypt: Add bulk crypto processing support
+
+ arch/x86/crypto/aesni-intel_glue.c        | 267 +++++++++++++++++++------
+ arch/x86/crypto/glue_helper.c             |  23 +--
+ arch/x86/include/asm/crypto/glue_helper.h |   2 +-
+ crypto/Makefile                           |   1 +
+ crypto/cryptd.c                           | 111 +++++++++++
+ crypto/simd.c                             |  61 ++++++
+ crypto/skcipher.c                         | 207 +++++++++++++++-----
+ crypto/skcipher_bulk.c                    | 312 ++++++++++++++++++++++++++++++
+ drivers/md/dm-crypt.c                     | 254 +++++++++++++++---------
+ include/crypto/internal/skcipher.h        |  42 +++-
+ include/crypto/skcipher.h                 | 299 +++++++++++++++++++++++++++-
+ 11 files changed, 1369 insertions(+), 210 deletions(-)
+ create mode 100644 crypto/skcipher_bulk.c
+
 -- 
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
-GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG Nürnberg)
+2.9.3
